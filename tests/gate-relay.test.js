@@ -363,7 +363,7 @@ test("a gate made before 5.70.00 (meta.th) still works and can take a second dev
   assert.equal(m.th, undefined);
 });
 
-test("app switches are shared: a device's change is kept and passed to the others (5.76.00)", async () => {
+test("app switches are shared: a device's change is kept and passed to the others (5.77.00)", async () => {
   const w = world();
   await newGate(w);
   const inv = await (await dev(w, { act: "invite", tok: TOK })).json();
@@ -388,7 +388,7 @@ test("app switches are shared: a device's change is kept and passed to the other
   assert.deepEqual((await b.st.storage.get("meta")).lv, { budget: "write", kanban: "read" });
 });
 
-test("a synced device sits in the gate with its seat secret, no code (5.76.00)", async () => {
+test("a synced device sits in the gate with its seat secret, no code (5.77.00)", async () => {
   const w = world();
   await newGate(w);
   const SS = "S".repeat(43);

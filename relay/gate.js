@@ -797,7 +797,7 @@ export class GateBox {
       await this.st.setAlarm(now + GATE_LIMITS.idleMs);
       return jsonRes(200, { ok: true, data: { ok: true } });
     }
-    // "sit" (5.76.00): a device of the same person, which got the gate's
+    // "sit" (5.77.00): a device of the same person, which got the gate's
     // seat secret through orOS's own encrypted sync, joins without a code.
     // Wrong secrets count against the gate like wrong pairing codes.
     if (b.act === "sit") {
@@ -946,7 +946,7 @@ export class GateBox {
     const client = pair[0], server = pair[1];
     this.state.acceptWebSocket(server);
     setAtt(server, { th: th, v: 1, at: now });
-    // The app switches the devices share (5.76.00): the newest set goes to a device as it connects.
+    // The app switches the devices share (5.77.00): the newest set goes to a device as it connects.
     if (m.lv) { try { server.send(JSON.stringify({ lv: m.lv, lvt: m.lvt || 0 })); } catch (e) {} }
     return new Response(null, { status: 101, webSocket: client, headers: { "Sec-WebSocket-Protocol": "gt1" } });
   }

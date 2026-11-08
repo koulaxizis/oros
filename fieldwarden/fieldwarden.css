@@ -1,0 +1,434 @@
+/* ============================================================
+   orOS Fieldwarden — App stylesheet
+   Inherits the shell palette (inheritPalette + watchPalette).
+   Toolbar, dialog and toast styles as the other games (Wayfarers).
+   Sections:
+     1. Palette fallback + farm colours + reset
+     2. Toolbar
+     3. Status row (turn, weather, harvest, coins)
+     4. Scene (the farm, one canvas)
+     5. Folk bar
+     6. Dialogs — centered (R32)
+     7. Toast + screen-reader helper
+     8. Mobile + touch adaptations
+     9. Reduced motion
+   ============================================================ */
+
+/* ---------- 1. Palette fallback + reset ---------- */
+:root {
+  --bg:           #14120d;
+  --bg-desktop:   #1a1712;
+  --bar-bg:       rgba(20, 18, 13, 0.93);
+  --text:         #f0ead9;
+  --text-dim:     #a89f8a;
+  --accent:       #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --panel-bg:     #1d1a13;
+  --border:       #322d20;
+  --shadow:       rgba(0, 0, 0, 0.50);
+  --danger:       #e06c75;
+  /* Farm: dirt, mud, fields by stage, hedge, pond, hay, barn, pieces, marks */
+  --fw-ground: #1b1913;
+  --fw-dirt:   #4a3b2a;
+  --fw-dirt2:  #54432f;
+  --fw-mud:    #33281c;
+  --fw-sprout: #6f9a4a;
+  --fw-green:  #4f9a3e;
+  --fw-gold:   #d9b54a;
+  --fw-hedge:  #2f5a2c;
+  --fw-pond:   #3c6fa0;
+  --fw-hay:    #c9a24a;
+  --fw-barn:   #a5483c;
+  --fw-folk:   #d4af37;
+  --fw-foe:    #e06c75;
+  --fw-move:   #5bb88a;
+  --fw-aim:    #e8944a;
+  --fw-threat: #e05d5d;
+}
+html[data-theme="light"] {
+  --fw-ground: #e8e2d2;
+  --fw-dirt:   #b59a76;
+  --fw-dirt2:  #a88e6b;
+  --fw-mud:    #8a7458;
+  --fw-sprout: #7fae55;
+  --fw-green:  #4f9a3e;
+  --fw-gold:   #d1a933;
+  --fw-hedge:  #3f7a3a;
+  --fw-pond:   #5b8fc4;
+  --fw-hay:    #d8b55e;
+  --fw-barn:   #b5544a;
+  --fw-folk:   #9a7a12;
+  --fw-move:   #2f8f5f;
+  --fw-aim:    #c96a1c;
+  --fw-threat: #c93c3c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+dialog { margin: auto; }
+
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+
+body {
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+button, select, input { font-family: inherit; color: inherit; }
+button, select { cursor: pointer; }
+.spacer { flex: 1 1 0; min-width: 0; }
+
+/* ---------- 2. Toolbar ---------- */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+/* Wide screen: both strips flow as one line. */
+.tb-row { display: contents; }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.icon-btn[aria-pressed="true"] { color: var(--accent); }
+.icon-btn:disabled { opacity: 0.4; cursor: default; }
+.icon-btn:disabled:hover { color: var(--text-dim); border-color: var(--border); background: var(--panel-bg); }
+.icon-btn svg { width: 18px; height: 18px; display: block; }
+
+.end-btn {
+  min-height: 38px;
+  padding: 4px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.end-btn:hover { background: var(--accent-hover); }
+.end-btn:disabled { opacity: 0.45; cursor: default; }
+
+
+/* ---------- 3. Status row ---------- */
+#status {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.stat { display: flex; align-items: center; gap: 4px; min-width: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.stat .ic svg { width: 15px; height: 15px; display: block; }
+.stat .v { color: var(--text); }
+.stat .nx { color: var(--text-dim); font-weight: 600; }
+.stat .nx svg { width: 13px; height: 13px; display: block; opacity: 0.8; }
+.stat.crop .v.low { color: var(--danger); }
+.stat.crop .v.ok { color: var(--fw-move); }
+.stat.gold .v { color: var(--accent); }
+#msg {
+  flex-shrink: 0;
+  min-height: 24px;
+  padding: 3px 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---------- 4. Scene ---------- */
+#scene {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--fw-ground);
+}
+#view { display: block; touch-action: none; cursor: pointer; }
+#scene.shake { animation: fw-shake 0.3s; }
+@keyframes fw-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+/* ---------- 5. Action bar ---------- */
+#acts {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  background: var(--bar-bg);
+  border-top: 1px solid var(--border);
+  justify-content: center;
+  min-height: 60px;
+}
+.act {
+  flex: 1 0 72px;
+  min-width: 72px;
+  max-width: 140px;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 4px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+}
+.act .nm { font-size: 12px; font-weight: 800; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.act .cost { font-size: 11px; font-weight: 700; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.act .pips { display: flex; gap: 3px; margin-top: 2px; }
+.act .pips i { width: 7px; height: 7px; border-radius: 50%; background: var(--fw-move); }
+.act .pips i.off { background: var(--border); }
+.act.home { opacity: 0.5; }
+.act:hover { border-color: var(--accent); }
+.act[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); }
+.act:disabled { opacity: 0.4; cursor: default; }
+.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.acts-note { align-self: center; font-size: 13px; color: var(--text-dim); text-align: center; padding: 4px 8px; }
+
+/* ---------- 6. Dialogs (R32: margin auto, scroll inside) ---------- */
+dialog.mm-dlg {
+  margin: auto;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  width: min(360px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+  color: var(--text);
+  box-shadow: 0 10px 40px var(--shadow);
+}
+dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
+.dlg-title {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.dlg-hero {
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--accent);
+  margin: 4px 0 12px;
+}
+.dlg-hero.lost { color: var(--text); }
+.dlg-badge {
+  display: block;
+  width: max-content;
+  margin: 0 auto 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--bg);
+  background: var(--accent);
+}
+.dlg-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.dlg-row span { color: var(--text-dim); }
+.dlg-row strong { color: var(--accent); font-variant-numeric: tabular-nums; text-align: right; }
+.dlg-sub {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin: 14px 0 2px;
+}
+.dlg-msg { font-size: 14px; line-height: 1.45; margin-bottom: 4px; }
+.dlg-actions { display: flex; gap: 8px; margin-top: 16px; }
+.dlg-btn {
+  flex: 1;
+  min-height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+}
+.dlg-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+.dlg-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.dlg-btn.primary:hover { background: var(--accent-hover); }
+.dlg-btn.danger { color: var(--danger); border-color: var(--danger); }
+.dlg-btn.danger:hover { background: rgba(224, 108, 117, 0.15); }
+
+
+/* ---------- 7. Toast + screen reader ---------- */
+#toast {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  transform: translateY(-8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+#toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+#toast button {
+  min-height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 2px 6px;
+  pointer-events: auto;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.dlg-field { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+.dlg-label { font-size: 12px; font-weight: 700; color: var(--text-dim); }
+.dlg-field .seg { align-self: flex-start; }
+.seg { display: flex; flex-wrap: wrap; gap: 2px; padding: 2px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+.seg-btn {
+  min-height: 34px; padding: 4px 12px; font-size: 13px; font-weight: 700;
+  background: transparent; border: 1px solid transparent; border-radius: 6px; color: var(--text-dim);
+}
+.seg-btn:hover { color: var(--text); background: var(--accent-soft); }
+.seg-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.dlg-select, .dlg-input {
+  min-height: 38px; padding: 4px 10px; font-size: 15px; font-weight: 600;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px; outline: none;
+  -webkit-user-select: text; user-select: text;
+}
+.dlg-select { align-self: flex-start; min-width: 80px; }
+.dlg-select:focus, .dlg-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.dlg-check { display: flex; align-items: center; gap: 8px; margin: 12px 0 4px; font-size: 13px; }
+.dlg-check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.dlg-note { font-size: 12px; color: var(--text-dim); margin-top: 8px; -webkit-user-select: text; user-select: text; overflow-wrap: anywhere; }
+.dlg-note.bad { color: var(--danger); font-weight: 700; }
+
+/* Folk picker, the market */
+.pc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 6px 0; }
+.pc-btn { text-align: left; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-bg); min-height: 44px; }
+.pc-btn .nm { font-weight: 800; display: block; }
+.pc-btn .fx { font-size: 11px; color: var(--text-dim); display: block; line-height: 1.3; }
+.pc-btn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.sh-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.sh-tx { flex: 1; min-width: 0; }
+.sh-tx .nm { font-weight: 700; overflow-wrap: anywhere; }
+.sh-tx .fx { font-size: 12px; opacity: 0.75; overflow-wrap: anywhere; }
+.sh-row button { flex: none; min-height: 40px; }
+.hero-card { border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin: 8px 0; }
+.hero-card .hd { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-weight: 800; }
+.hero-card .hd span { font-size: 12px; color: var(--text-dim); font-weight: 700; }
+.hero-card .sts { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--text-dim); margin: 4px 0; font-variant-numeric: tabular-nums; }
+.hero-card .sts b { color: var(--text); }
+.hero-card .sk { font-size: 12px; margin: 2px 0; overflow-wrap: anywhere; }
+.hero-card .sk b { color: var(--accent); }
+.ev-text { line-height: 1.5; margin: 6px 0 10px; overflow-wrap: anywhere; }
+.dlg-scroll { max-height: 56vh; overflow: auto; }
+
+/* ---------- 8. Mobile + touch ---------- */
+@media (max-width: 920px) {
+  #toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .tb-row { display: flex; align-items: center; gap: 8px; }
+  #tb-a .end-btn { margin-left: auto; }
+}
+@media (max-width: 480px) {
+  #toolbar { padding-left: 8px; padding-right: 8px; gap: 6px; }
+  .tb-row { gap: 6px; }
+  #status { padding: 6px 8px; gap: 8px; font-size: 12px; }
+  #acts { padding-left: 6px; padding-right: 6px; gap: 4px; }
+  .act { flex-basis: 64px; min-width: 64px; }
+  .dlg-select, .dlg-input { font-size: 16px; }   /* ≥16px: no iOS zoom */
+  dialog.mm-dlg { width: calc(100vw - 20px); padding: 14px; }
+}
+@media (pointer: coarse) {
+  .icon-btn, .end-btn, .dlg-btn, .seg-btn, .dlg-select, .dlg-input, .act { min-height: 44px; }
+  .icon-btn { width: 44px; }
+  #toast button { min-height: 44px; }
+}
+/* Phone held sideways: the action bar joins the left column (gamekit/layout.css). */
+@media (orientation: landscape) and (max-height: 520px) {
+  #acts { border-top: 0; min-height: 0; }
+  .act { min-height: 40px; flex: 1 0 60px; min-width: 60px; }
+}
+
+/* ---------- 9. Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #scene.shake { animation: none; }
+}
+
+[hidden] { display: none !important; }
+/* The market between seasons */
+.coins-line { font-size: 14px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+.sh-row button.owned { opacity: 0.6; }
+.wish-ok { color: var(--fw-move); font-weight: 700; }
+.wish-no { color: var(--text-dim); }

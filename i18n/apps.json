@@ -297,6 +297,12 @@
    ]
   },
   {
+   "app": "fieldwarden",
+   "files": [
+    "fieldwarden/fieldwarden.js"
+   ]
+  },
+  {
    "app": "fileopen",
    "files": [
     "fileopen.js"

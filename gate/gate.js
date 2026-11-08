@@ -19,7 +19,7 @@
 (function (root) {
   "use strict";
 
-  var SEAT_KEY = "oros-gate-seat";   // synced slice "gate": { id, ss, r, m } (5.76.00)
+  var SEAT_KEY = "oros-gate-seat";   // synced slice "gate": { id, ss, r, m } (5.77.00)
   var PREF_KEY = "oros-gate", LOG_KEY = "oros-gate-log", LOG_MAX = 300, UNDO_KEY = "oros-gate-undo", UNDO_MAX = 20;
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js; the gate box lives there
   // Never offered, whatever a setting says (BR-GATE).
@@ -703,7 +703,7 @@
   }
   // App switches from another device of the gate (via the relay):
   // only "read", and "write" for apps that may be changed; never-apps
-  // stay off whatever arrives (5.76.00).
+  // stay off whatever arrives (5.77.00).
   function lvFrom(raw) {
     var out = {};
     if (!isObj(raw)) return out;
@@ -758,7 +758,7 @@
       return Array.prototype.map.call(new Uint8Array(buf), function (x) { return (x < 16 ? "0" : "") + x.toString(16); }).join("");
     });
   }
-  // The gate's seat (synced slice "gate", 5.76.00): the gate id, a
+  // The gate's seat (synced slice "gate", 5.77.00): the gate id, a
   // secret whose hash the gate box keeps, and the relay. Every device
   // of the owner gets it through orOS's encrypted sync and joins the
   // gate with it by itself (act "sit"). The newer seat wins.
@@ -884,7 +884,7 @@
     if (S && typeof S.registerSlice === "function") { S.registerSlice("gate", seatGet, seatSet, SEAT_KEY, seatMerge); return; }
     if (n < 40) setTimeout(function () { seatSlice(n + 1); }, 500);
   }
-  // The app switches are shared by the gate's devices (5.76.00): a
+  // The app switches are shared by the gate's devices (5.77.00): a
   // change here goes to the relay, which passes it to the others; one
   // made while offline (lvd) goes on the next connection and wins.
   function sendLv(sock) {

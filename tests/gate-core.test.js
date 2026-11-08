@@ -253,14 +253,14 @@ test("write rules: only write level, only inside the window", () => {
   assert.deepEqual(G.allowed([{ id: "budget" }], { budget: "write" }).map((a) => a.id), ["budget"], "write also reads");
 });
 
-test("switches from another device: never-apps off, write only where allowed (5.76.00)", () => {
+test("switches from another device: never-apps off, write only where allowed (5.77.00)", () => {
   assert.deepEqual(G.lvFrom({ budget: "write", diary: "read", passwords: "write", invoices: "write", kanban: "write", stock: "read", x: "maybe" }),
     { budget: "write", invoices: "read", kanban: "write", stock: "read" });
   assert.deepEqual(G.lvFrom(null), {});
   assert.deepEqual(G.lvFrom(["budget"]), {});
 });
 
-test("join QR link: #gate-join=CODE, only the code alphabet (5.76.00)", () => {
+test("join QR link: #gate-join=CODE, only the code alphabet (5.77.00)", () => {
   assert.equal(G.joinHash("#gate-join=ABCD2345"), "ABCD2345");
   assert.equal(G.joinHash("#gate-join=abcd2345"), "");
   assert.equal(G.joinHash("#gate-join=ABCD1345"), "", "no 1 in the code alphabet");
@@ -268,7 +268,7 @@ test("join QR link: #gate-join=CODE, only the code alphabet (5.76.00)", () => {
   assert.equal(G.joinHash(""), "");
 });
 
-test("the synced seat: bad shapes dropped, the newer one wins, merge is symmetric (5.76.00)", () => {
+test("the synced seat: bad shapes dropped, the newer one wins, merge is symmetric (5.77.00)", () => {
   const a = { id: "abcdefghijklmnopqrstuv", ss: "x".repeat(43), r: "https://relay.example", m: 5 };
   const b = { id: "bbcdefghijklmnopqrstuv", ss: "y".repeat(43), r: "https://relay.example", m: 9, extra: 1 };
   assert.deepEqual(G.seatMerge(a, b), { id: b.id, ss: b.ss, r: b.r, m: 9 });

@@ -52,6 +52,7 @@ orosPack("de", "shell", {
  "app.together": "Zusammen",
  "app.household": "Haushalt",
  "app.feeds": "Reader",
+ "app.fieldwarden": "Feldhüter",
  "app.files": "Dateien",
  "app.fitness": "Training",
  "app.flashcards": "Karteikarten",
