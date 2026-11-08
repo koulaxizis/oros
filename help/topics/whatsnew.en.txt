@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.92.00
+- **Invoice drafts and quotes straight from the Assistant or Claude.** Ask the Assistant, or Claude through orOS Gate, for an invoice or a quote: it is saved at once as a draft in Invoices or Quote, with the client, lines, VAT, currency and notes, and `Undo` takes it back while you haven't changed it. An invoice is never issued for you: you check it and press `Issue` in Invoices, which gives the number. A quote gets its next number and a new client is added to Quote by name.
+- **Wiki articles, study cards and shared expenses too.** The same way, the Assistant and Claude can write a new Wiki article, add Flashcards cards (front and back, both ways, or a gap text) to a deck you have, and add a shared expense to a Split group, split equally. Each comes with `Undo`.
+
 ## Version 5.91.00
 - **Today: details, tips and actions on every row.** Many rows now have an (i) button with more about them: an event's start and end, the first line of its note, a task's priority and steps, a habit's streak. It also gives one tip, such as checking the way before an appointment with a place, getting ready the night before an early start, a gift a few days before a birthday, or a new date for a task late more than a week. And it has buttons that open the app that does the job: `Directions` in Maps, `Open the card`, `Gift idea to To-Do`, `Tomorrow` for a late task (with `Undo` in To-Do), `Tick it` for a habit, and `+1 glass` next to the water line. Today itself changes nothing, and the tips are made on your device, with no network and no AI.
 
