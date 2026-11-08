@@ -1,9 +1,9 @@
 # Fieldwarden
-Fieldwarden is a turn-based tactics game on a small farm. Three village folk guard the fields through a growing season, until the harvest is in. Wolves, boars, crows and bandits come out of the woods at the edges of the farm, and every one of them shows what it will do before it acts. You never guess: you answer what you see coming.
+Fieldwarden is a turn-based tactics game on a small farm. Three village folk guard the fields through a growing season, until the harvest is in. Wolves, boars, crows, foxes and bandits come out of the woods at the edges of the farm, and every one of them shows what it will do before it acts. You never guess: you answer what you see coming.
 
 ## How to play
 The farm has 6 by 6 tiles. A season lasts 5 turns. In each turn:
-1. **The invaders show their acts.** An arrow points from each invader to the tile it will hit, with an icon for what it will do (bite, eat, dig, trample, club, charge) and a number for the order. Tiles in danger are red. Dashed circles at the edges show the invaders that come in at the end of the turn.
+1. **The invaders show their acts.** An arrow points from each invader to the tile it will hit, with an icon for what it will do (bite, eat, dig, trample, club, charge, raid, steal, set fire) and a number for the order. Tiles in danger are red. Dashed circles at the edges show the invaders that come in at the end of the turn.
 2. **Your folk act.** Tap a farmhand (on the farm or its card at the bottom). Green tiles show where it can move, orange tiles what its tool can reach. Each farmhand may move once and then use its tool once, in any order you like. Tap an orange tile once to see what will happen (ghost arrows show where each piece will go), and again to do it.
 3. **End turn.** The invaders act in the order shown, the wind blows, the fields grow, and new invaders come in.
 
@@ -42,26 +42,46 @@ A farmhand at 0 Health goes home for the rest of the season and comes back for t
 - **Boar:** charges in a straight line until something stops it, trampling every field on the way. What stops it takes 2 (a hedge loses a stage of its two, the barn takes 1).
 - **Crow:** flies over anything to the ripest field and eats a stage. The wind blows it a tile.
 - **Mole:** goes for the nearest field and digs two stages away.
-- **Bandit captain:** comes in the last season of the farm. He clubs a farmhand for 2 and pushes them, or the barn. Once he is hurt to half his Health, he whistles for a wolf every turn.
+- **Bandit captain:** comes in the last season of each farm. He clubs a farmhand for 2 and pushes them, or the barn. Once he is hurt to half his Health, he whistles for a wolf every turn.
+
+From the second farm on:
+- **Fox:** quick. It runs at the barn and bites it for 1, or at the nearest field once the barn is down.
+- **Thief:** goes for the ripest field and takes the whole crop: three stages lost.
+- **Torch-bearer:** sets fire to the ripest field or a haystack (see Fire).
+- **Loudmouth:** keeps away from your folk and shouts for a thief, who comes in at the end of the turn. A megaphone above him is the sign. Bump him, push him off the farm or into the pond, and nobody comes.
+
+Raiders (the thief, the torch-bearer, the loudmouth) are washed away by the pond just like the animals.
 
 ## Weather
 The status row shows the weather now and in the next turn:
 - **Calm:** nothing happens.
 - **Wind:** at the end of the turn every crow is blown a tile with the wind; a crow blown off the farm is gone.
-- **Rain:** bare dirt turns to mud. A piece pushed onto mud stops there, and a charging boar stops in the mud.
+- **Rain:** bare dirt turns to mud. A piece pushed onto mud stops there, and a charging boar stops in the mud. The rain also puts out every fire.
+- **Drought:** at the end of the turn every haystack with no farmhand next to it catches fire. Stand next to the hay to keep it safe.
+
+## Fire
+A burning tile has a flame in its corner. At the end of the turn, after the invaders and the wind:
+1. The fire burns: a field loses a stage and stops growing, a haystack or a hedge burns away, and a piece standing on it takes 1. The hedger's hedges do not burn.
+2. Then, if the wind blows, it spreads a tile downwind to a field, a haystack or a hedge.
+3. A fire with nothing left to burn goes out.
+
+A farmhand who steps onto a burning tile stamps the fire out at once.
 
 ## The year
-A year is four seasons on the Lowland; the last one brings the bandit captain. After each harvest you get a coin for every sheaf above the quota, plus the village wish. Spend them at the **market**: +1 Health, +1 Move, the two tool upgrades of each farmhand, or a field that starts the next season a stage ahead. If a harvest misses its quota, the year ends.
+A year crosses three farms of four seasons each, twelve seasons in all: the Lowland, Orchard Hill (foxes and thieves, dry summers) and River Bend (more ponds, torch-bearers and loudmouths). The last season of each farm brings the bandit captain. After each harvest you get a coin for every sheaf above the quota, plus the village wish. Spend them at the **market**: +1 Health, +1 Move, the two tool upgrades of each farmhand, or a field that starts the next season a stage ahead. If a harvest misses its quota, the year ends.
 
 ## Difficulty and years
 `New year (N)` asks for the difficulty and your three folk:
 - `Mild`: a lower quota, and once a season `Rewind` takes back the whole last turn after you have seen it.
-- `Harsh`: a higher quota, one invader more at the start of every season and another one during it.
+- `Harsh`: a higher quota, one invader more at the start of every season and another one during it, and from the second farm every invader has 1 more Health.
 
 Every quota can be met: the season maker plays each season with your folk before you do and never asks for more than it brought in. Every year has a code, shown in the result window and in `Records`. Type a code in `New year` to play the same year again with the same folk; leave it empty for a new one.
 
+## Daily season
+The calendar button in the toolbar (a dot while today's season is open) starts the Daily season: one season on Harsh, with the farm, the season and three folk of the day, the same for everyone. One try: leaving it counts as a missed quota. Your score is the sheaves you bring in plus 2 for the village wish. The result window shows your score and your streak of days with the quota met; `Share` copies a line with one square per field (yellow ripe, green, brown the rest) and no spoilers. The Daily season also has a card in the [Game Center](help:a/gamecenter)'s Today, and its `Play` opens it straight away.
+
 ## Records and sync
-`Records` shows your years, the years you finished and the most seasons won for each difficulty, the most sheaves in a season, and the finished years of each farmhand. They sync between your devices through [orOS sync](help:t/sync), adding up the years from every device, and they count in the [Game Center](help:a/gamecenter). The year in progress, your last folk and the sound setting stay on this device, and an unfinished year continues where you left it. A year left for a new one counts as lost. `Reset records` clears the records on every device.
+`Records` shows your years, the years you finished and the most seasons won for each difficulty, the most sheaves in a season, the finished years of each farmhand, your Daily seasons (played, quota met, streak, best score) and your **Last years**: the ten newest from every device, each with `Replay` (a Daily season replays as a whole year on Harsh with its folk). They sync between your devices through [orOS sync](help:t/sync), adding up the years from every device, and they count in the [Game Center](help:a/gamecenter). The year in progress, your last folk and the sound setting stay on this device, and an unfinished year continues where you left it. A year left for a new one counts as lost. `Reset records` clears the records on every device.
 
 ## Keyboard
 - Arrow keys move the cursor; [[Enter]] chooses a farmhand or a tile; [[Tab]] goes to the next farmhand; [[Esc]] cancels.
@@ -73,4 +93,6 @@ Every quota can be met: the season maker plays each season with your folk before
 - Read the numbers: the first invader to act is the one whose push can spoil the others' plans.
 - Pushing an invader into another stops both acts at once.
 - The pond and the edges are your friends: an invader that leaves the farm is gone for the season.
+- Before a drought, park a farmhand between two haystacks: one farmhand keeps both safe.
+- Deal with a loudmouth early: every thief he calls is one more to stop.
 - Young fields are worth more than ripe ones early in the season; ripe ones matter most at the end.

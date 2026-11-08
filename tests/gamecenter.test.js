@@ -255,3 +255,13 @@ test("gamecenter: the Wayfarers Daily trial counts in Today and the streak when 
   wf.days[TODAY] = { b: 0, w: 0, c: 3, t: 50 };
   assert.equal(sum({ "oros-wayfarers-data": wf }).games.wayfarers.today, 2, "a fall today: tried, not through");
 });
+
+test("gamecenter: the Fieldwarden Daily season counts in Today and the streak when the quota is met, never in years", () => {
+  const fw = { ver: 1, br: 0, rows: { aaaaaa: { b: 0, s: { m: [3, 1, 12] }, hb: 30, c: {} } },
+    days: { [TODAY]: { b: 0, w: 1, h: 26, t: 40, f: [0, 1, 2, 7] }, [TODAY - 1]: { b: 0, w: 1, h: 20, t: 35, f: [1, 1, 2, 5] } }, last: [] };
+  const s = sum({ "oros-fieldwarden-data": fw });
+  assert.ok(C.DAILY.includes("fieldwarden"));
+  assert.deepEqual([s.games.fieldwarden.p, s.games.fieldwarden.w, s.games.fieldwarden.dn, s.games.fieldwarden.cur, s.games.fieldwarden.today], [3, 1, 2, 2, 1]);
+  fw.days[TODAY] = { b: 0, w: 0, h: 9, t: 20, f: [3, 3, 2, 1] };
+  assert.equal(sum({ "oros-fieldwarden-data": fw }).games.fieldwarden.today, 2, "quota missed today: tried, not solved");
+});
