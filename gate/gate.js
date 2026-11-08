@@ -19,6 +19,7 @@
 (function (root) {
   "use strict";
 
+  var SEAT_KEY = "oros-gate-seat";   // synced slice "gate": { id, ss, r, m } (5.76.00)
   var PREF_KEY = "oros-gate", LOG_KEY = "oros-gate-log", LOG_MAX = 300, UNDO_KEY = "oros-gate-undo", UNDO_MAX = 20;
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js; the gate box lives there
   // Never offered, whatever a setting says (BR-GATE).
@@ -728,7 +729,7 @@
 
   var core = { NEVER: NEVER, budgetLines: budgetLines, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
-               kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash,
+               kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, seatMerge: seatMerge, seatClean: seatClean,
                WRITES: WRITES, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
@@ -756,6 +757,22 @@
     return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function (buf) {
       return Array.prototype.map.call(new Uint8Array(buf), function (x) { return (x < 16 ? "0" : "") + x.toString(16); }).join("");
     });
+  }
+  // The gate's seat (synced slice "gate", 5.76.00): the gate id, a
+  // secret whose hash the gate box keeps, and the relay. Every device
+  // of the owner gets it through orOS's encrypted sync and joins the
+  // gate with it by itself (act "sit"). The newer seat wins.
+  function seatOk(x) {
+    return isObj(x) && typeof x.id === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(x.id) &&
+      typeof x.ss === "string" && /^[A-Za-z0-9_-]{43}$/.test(x.ss) &&
+      typeof x.r === "string" && /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(x.r) && typeof x.m === "number" && x.m > 0;
+  }
+  function seatClean(x) { return seatOk(x) ? { id: x.id, ss: x.ss, r: x.r, m: Math.floor(x.m) } : null; }
+  function seatMerge(a, b) {
+    var A = seatClean(a), B = seatClean(b);
+    if (!A || !B) return A || B;
+    if (A.m !== B.m) return A.m > B.m ? A : B;
+    return JSON.stringify(A) >= JSON.stringify(B) ? A : B;
   }
   // A device joins by scanning the code's QR: "#gate-join=XXXXXXXX".
   function joinHash(h) {
@@ -811,6 +828,61 @@
       schedule();
     };
     sock.onerror = function () {};
+  }
+  function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
+  function dirty() { try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {} }
+  // This device has the gate: give the owner's other devices its seat.
+  function makeSeat() {
+    var p = pref(), cur = seatRead();
+    if (!p.on || !p.id || !p.tok) return;
+    if (cur && cur.id === p.id) return;
+    if (cur && cur.m > (p.at || 0)) return;            // a newer gate of the owner: leave it
+    var ss = randomB64u(32);
+    sha256hex(ss).then(function (sh) { return devCall({ act: "seat", id: p.id, tok: p.tok, sh: sh }); }).then(function () {
+      var q = pref();
+      if (!q.on || q.id !== p.id) return;
+      if (writeJSON(SEAT_KEY, { id: p.id, ss: ss, r: relay(), m: Date.now() })) dirty();
+    }, function () {});
+  }
+  // Join the gate from its seat (no code). force: the owner turned the
+  // switch on here; else only when this device was never turned off.
+  // → Promise<boolean> (true = joined).
+  var sitBusy = false;
+  function sit(force) {
+    var p = pref(), seat = seatRead();
+    if (sitBusy || p.on || !seat || (!force && (p.out || p.sf === seat.m))) return Promise.resolve(false);
+    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked() && !force) return Promise.resolve(false);
+    sitBusy = true;
+    var tok = randomB64u(32);
+    return sha256hex(tok).then(function (th) { return devCall({ act: "sit", id: seat.id, ss: seat.ss, th: th }, seat.r); }).then(function (d) {
+      sitBusy = false;
+      var lv = lvFrom(d && d.lv);
+      var np = { on: true, id: seat.id, tok: tok, r: seat.r, at: Date.now(), lv: Object.keys(lv).length ? lv : (isObj(p.lv) ? p.lv : {}) };
+      if (!writeJSON(PREF_KEY, np)) return false;
+      if (np.lv.kanban === "write") kanbanModel().then(null, function () {});
+      changed();
+      connect();
+      return true;
+    }, function () {
+      sitBusy = false;
+      var q = pref(); q.sf = seat.m;                  // this seat failed here: not again until a new one comes
+      writeJSON(PREF_KEY, q);
+      return false;
+    });
+  }
+  function seatGet() { var raw = null; try { raw = localStorage.getItem(SEAT_KEY); } catch (e) {} return raw ? seatRead() : null; }
+  function seatSet(data) {
+    var v = seatClean(data);
+    if (!v) return;
+    var cur = seatRead();
+    if (cur && JSON.stringify(cur) === JSON.stringify(v)) return;
+    writeJSON(SEAT_KEY, v);                            // pulled: never markDirty
+    setTimeout(function () { sit(false); }, 0);
+  }
+  function seatSlice(n) {
+    var S = root.orosSync;
+    if (S && typeof S.registerSlice === "function") { S.registerSlice("gate", seatGet, seatSet, SEAT_KEY, seatMerge); return; }
+    if (n < 40) setTimeout(function () { seatSlice(n + 1); }, 500);
   }
   // The app switches are shared by the gate's devices (5.76.00): a
   // change here goes to the relay, which passes it to the others; one
@@ -1126,12 +1198,19 @@
     enable: function () {
       var p = pref();
       if (p.on && p.id && p.tok) { connect(); return Promise.resolve(); }
-      var id = randomB64u(16).slice(0, 22), tok = randomB64u(32), base = relayNow();
-      return sha256hex(tok).then(function (th) { return devCall({ act: "new", id: id, th: th }, base); }).then(function () {
-        p.on = true; p.id = id; p.tok = tok; p.r = base; p.at = Date.now(); p.lv = isObj(p.lv) ? p.lv : {};
-        if (!writeJSON(PREF_KEY, p)) throw new Error("save");
-        changed();
-        connect();
+      // A gate of this owner already exists (its seat came through sync): sit in it.
+      return sit(true).then(function (done) {
+        if (done) return;
+        p = pref();
+        var id = randomB64u(16).slice(0, 22), tok = randomB64u(32), base = relayNow();
+        return sha256hex(tok).then(function (th) { return devCall({ act: "new", id: id, th: th }, base); }).then(function () {
+          p.on = true; p.id = id; p.tok = tok; p.r = base; p.at = Date.now(); p.lv = isObj(p.lv) ? p.lv : {};
+          delete p.out;
+          if (!writeJSON(PREF_KEY, p)) throw new Error("save");
+          changed();
+          connect();
+          makeSeat();
+        });
       });
     },
     // Another device of the owner: this one asks the relay for a join
@@ -1163,7 +1242,7 @@
       var gone = p.id && p.tok ? devCall({ act: "del", id: p.id, tok: p.tok }).catch(function () {}) : Promise.resolve();
       drop();
       return gone.then(function () {
-        writeJSON(PREF_KEY, { on: false, lv: isObj(p.lv) ? p.lv : {} });
+        writeJSON(PREF_KEY, { on: false, lv: isObj(p.lv) ? p.lv : {}, out: 1 });   // out: no automatic join here
         changed();
       });
     },
@@ -1305,6 +1384,8 @@
       whenUnlocked(function () { setTimeout(function () { openJ(0); }, 600); });
     }
     connect();
+    seatSlice(0);
+    setTimeout(function () { if (pref().on) makeSeat(); else whenUnlocked(function () { sit(false); }); }, 3000);
     document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") api.reconnect(); });
     root.addEventListener("online", function () { api.reconnect(); });
   }

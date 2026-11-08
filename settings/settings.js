@@ -899,6 +899,7 @@
           }
           c.appendChild(el("div", "hint", t("gt.invite.wait")));
         }
+        c.appendChild(el("div", "hint", t("gt.seat")));
         c.appendChild(actions(button(t("gt.invite"), "gt.invite", function () {
           gateNote = "";
           G.invite().then(function (d) { gateJoin = d; render(); gateWatchJoin(G); },

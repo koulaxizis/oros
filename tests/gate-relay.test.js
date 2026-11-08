@@ -387,3 +387,26 @@ test("app switches are shared: a device's change is kept and passed to the other
   await b.box.webSocketMessage(s1, JSON.stringify({ lv: ["budget"] }));
   assert.deepEqual((await b.st.storage.get("meta")).lv, { budget: "write", kanban: "read" });
 });
+
+test("a synced device sits in the gate with its seat secret, no code (5.76.00)", async () => {
+  const w = world();
+  await newGate(w);
+  const SS = "S".repeat(43);
+  assert.equal((await dev(w, { act: "seat", tok: TOK, sh: "nothex" })).status, 400);
+  assert.equal((await dev(w, { act: "seat", tok: TOK, sh: hex(SS) })).status, 200);
+  const b = w.boxes.get(ID);
+  const m = await b.st.storage.get("meta");
+  m.lv = { budget: "read" }; await b.st.storage.put("meta", m);
+  const sit = (ss, tok) => call(w, "POST", "/gate/dev", { origin: ORIGIN, json: { act: "sit", id: ID, ss, th: hex(tok) } });
+  assert.equal((await sit("T".repeat(43), TOK2)).status, 404, "wrong secret");
+  const ok = await sit(SS, TOK2);
+  assert.equal(ok.status, 200);
+  const d = (await ok.json()).data;
+  assert.deepEqual(d.lv, { budget: "read" });
+  assert.equal(d.devices, 2);
+  assert.equal((await dev(w, { act: "info", tok: TOK2 })).status, 200, "the seated device is a device of the gate");
+  assert.equal((await (await sit(SS, TOK2)).json()).data.devices, 2, "sitting again adds no device");
+  // wrong secrets are limited like pairing codes
+  for (let i = 0; i < 5; i++) await sit("U".repeat(43), TOK3);
+  assert.equal((await sit(SS, TOK3)).status, 429);
+});

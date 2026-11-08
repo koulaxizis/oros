@@ -267,3 +267,14 @@ test("join QR link: #gate-join=CODE, only the code alphabet (5.76.00)", () => {
   assert.equal(G.joinHash("#gate-join=ABCD2345&x"), "");
   assert.equal(G.joinHash(""), "");
 });
+
+test("the synced seat: bad shapes dropped, the newer one wins, merge is symmetric (5.76.00)", () => {
+  const a = { id: "abcdefghijklmnopqrstuv", ss: "x".repeat(43), r: "https://relay.example", m: 5 };
+  const b = { id: "bbcdefghijklmnopqrstuv", ss: "y".repeat(43), r: "https://relay.example", m: 9, extra: 1 };
+  assert.deepEqual(G.seatMerge(a, b), { id: b.id, ss: b.ss, r: b.r, m: 9 });
+  assert.deepEqual(G.seatMerge(b, a), G.seatMerge(a, b));
+  assert.deepEqual(G.seatMerge(a, a), a);
+  assert.equal(G.seatClean({ id: "short", ss: "x".repeat(43), r: "https://r", m: 1 }), null);
+  assert.equal(G.seatClean(Object.assign({}, a, { r: "http://insecure" })), null);
+  assert.deepEqual(G.seatMerge(null, a), a);
+});
