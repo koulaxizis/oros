@@ -742,8 +742,8 @@ the op answers 503 `nohook` and `/wh/` answers 503. Tests:
 
 ## orOS Gate (`/mcp`, `/gate/`)
 
-Claude reads a person's orOS through their own open orOS and, inside a
-write window the person opens there, changes Budget and Kanban. The person adds `https://<this worker>/mcp` as a custom
+Claude reads a person's orOS through their own open orOS and changes
+Budget and Kanban where the person's switches allow it, unless they paused changes (5.78.00). The person adds `https://<this worker>/mcp` as a custom
 connector in claude.ai; nothing else is configured here. Contract:
 OROS_BIBLE.md, BR-GATE.
 
@@ -780,7 +780,7 @@ counter. No orOS data, no request or answer, nothing logged.
   `kanban_add_cards`, `kanban_move_cards`, `kanban_change_card`,
   `kanban_add_columns` (5.72.00). The
   relay only describes them; the device checks every call again (the
-  app's level, the write window, the lock) and asks the person itself
+  app's level, a pause, the lock) and asks the person itself
   before more than 5 deletions.
 - **Whose relay:** everyone on useoros.online uses this one, each with
   their own box. A person whose Mail is set up with their own relay

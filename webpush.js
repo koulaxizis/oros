@@ -476,10 +476,11 @@
       if (!p.on || !p.id) return Promise.resolve();
       return relay({ act: "wdel", id: p.id, tok: p.tok, wt: wt });
     },
-    wakePacket: function (k, title, body, link) {
+    // ns: "household" (default) or "gate" (orOS Gate, 5.78.00).
+    wakePacket: function (k, title, body, link, ns) {
       var p = prefs(), dev = p.id && list().d[p.id];
       if (!p.on || !dev || dev.x) return Promise.reject(fail("off"));
-      return encrypt(payload({ id: k, at: Date.now(), ns: "household", kind: "note", title: title, body: body, link: link }), dev.k1, dev.k2);
+      return encrypt(payload({ id: k, at: Date.now(), ns: ns === "gate" ? "gate" : "household", kind: "note", title: title, body: body, link: link }), dev.k1, dev.k2);
     },
     refresh: function () { return schedule(true); },
     onChange: function (fn) {
