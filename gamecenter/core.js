@@ -28,9 +28,9 @@
   // The games with a Daily challenge (Wave 49; Realm's Daily island
   // since 5.50, Crypt's Daily crypt since 5.55, Banner's Daily battle
   // since 5.64, Wayfarers' Daily trial since 5.71, Fieldwarden's Daily
-  // season since 5.81), in the order the Today
+  // season since 5.81, Roots' Daily glade since 5.91), in the order the Today
   // section shows them.
-  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm", "banner", "crypt", "wayfarers", "fieldwarden"];
+  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm", "banner", "crypt", "wayfarers", "fieldwarden", "roots"];
   // The "Clean sweep" achievement stays the six daily puzzles, so a
   // sweep reached before Realm had a Daily is never taken back.
   var SWEEP = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper"];
@@ -148,7 +148,7 @@
   // Daily results of Sudoku / Nonogram / Flow Free (hints h),
   // Minesweeper and Realm (won w): fills S.dn, the streaks and today.
   function dailyPart(d, S, X, today, game) {
-    var won = game === "minesweeper" || game === "realm" || game === "banner" || game === "crypt" || game === "wayfarers" || game === "fieldwarden";
+    var won = game === "minesweeper" || game === "realm" || game === "banner" || game === "crypt" || game === "wayfarers" || game === "fieldwarden" || game === "roots";
     var on = {}, tried = {};
     S.dn = 0;
     eachDay(d, function (day, v) {
@@ -391,14 +391,17 @@
       dailyPart(d, S, X, today, "fieldwarden");
     },
     // Roots: "<diff>" (m Mild, h Hardy) → [years, finished, best year
-    // score]; a Hardy year finished counts as a win on the hardest level
-    roots: function (d, S, X) {
+    // score]; a Hardy year finished counts as a win on the hardest level;
+    // days{day: {w, h, t, n, q}} the Daily glade (solved = quota met; not
+    // in years and wins)
+    roots: function (d, S, X, today) {
       S.w = 0;
       eachCell(d, function (k, v) {
         if (!Array.isArray(v) || v.length < 3) return;
         S.p += nat(v[0]); S.w += nat(v[1]);
         if (k === "h" && nat(v[1])) X.hard = true;
       });
+      dailyPart(d, S, X, today, "roots");
     },
     xeri: function (d, S, X) {
       S.w = 0;
