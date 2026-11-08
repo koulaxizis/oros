@@ -10634,6 +10634,12 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** gate/gate.js (`setApps`), settings/{settings.js,core.js,settings.css,help.en.txt,help.el.txt}, i18n/de/settings.js, tests/settings.test.js, whatsnew EN/EL, shell.js, sw.js, manifest.webmanifest.
 - **Tests:** full `node --test tests/*.test.js`; Playwright Chromium (LANG=C.UTF-8) in the real shell, 1100 px EN and 360 px EL: find keeps focus, bulk on a search result, Turn all on sets every non-personal app and no personal or never app, revoke/off clear, the personal warning in its box, no overflow, no page errors. Not tested: a live gate on a relay, a real phone, Safari.
 
+### 2026-11-08 — 5.92.01 — CRM: a partner's Publishing titles open the title (BR-CRM)
+
+- **What:** Chris (18:07, screenshot): on a CRM partner linked to one Publishing title, «Open» in the Publishing section did not open the title (it opened Royalties). Now «Open» opens the title when there is one (Royalties when there are several), and each title's name is a button that opens it (`{ title: id }`, publish/app.js `__orosOpenAt`).
+- **Files:** crm/crm.js (`renderOverview`).
+- **Tests:** full `node --test tests/*.test.js`. Playwright in the real shell: a partner with one title, the title's button opens it in Publishing, no page errors.
+
 ### 2026-11-08 — 5.93.00 — The Assistant and the Gate save invoice drafts and quotes straight away (AS-ADD8, GATE-PAR P4 wave 1)
 
 - **What:** Chris 13:47: the publishing work is done in Claude, so each app needs full abilities behind its switch, and the Assistant the same. `create_items` takes `app: invoices` (rule AS-ADD8, Part II): new invoice drafts saved at once with Undo, one card with a tick per draft; through the Gate (write window on) the same tool saves them on the device. Drafts only: issuing (number, series) stays the owner's step. `app: quote` does the same for Quote Builder (new quotes as drafts with their OFF number, a new client made by name); Quote's canonical form and merge moved into `quote/core.js` 1.3 so the write equals the app's; `quote` joins the gate's ACT.

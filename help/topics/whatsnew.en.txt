@@ -5,6 +5,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 - **Invoice drafts and quotes straight from the Assistant or Claude.** Ask the Assistant, or Claude through orOS Gate, for an invoice or a quote: it is saved at once as a draft in Invoices or Quote, with the client, lines, VAT, currency and notes, and `Undo` takes it back while you haven't changed it. An invoice is never issued for you: you check it and press `Issue` in Invoices, which gives the number. A quote gets its next number and a new client is added to Quote by name.
 - **Wiki articles, study cards and shared expenses too.** The same way, the Assistant and Claude can write a new Wiki article, add Flashcards cards (front and back, both ways, or a gap text) to a deck you have, and add a shared expense to a Split group, split equally. Each comes with `Undo`.
 
+## Version 5.92.01
+- **CRM opens a partner's titles.** On a partner's card, each Publishing title opens in Publishing, and `Open` goes straight to the title when there is only one.
+
 ## Version 5.92.00
 - **Tidier Claude switches.** In `Settings › Connected services › orOS Gate`, every app now has its own box with its switch, and the apps Claude can change have `May change` right under it, so the columns stay straight. A search field finds an app or service, and `Turn all on`, `Turn all off`, `Allow all changes` and `Revoke all changes` act on the apps shown (the two that give Claude more ask for a second press). Personal apps stay in their own group: the buttons never turn one on, each still needs its own warning.
 
