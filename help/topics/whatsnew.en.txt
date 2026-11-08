@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.92.01
+- **CRM opens a partner's titles.** On a partner's card, each Publishing title opens in Publishing, and `Open` goes straight to the title when there is only one.
+
+## Version 5.92.00
+- **Tidier Claude switches.** In `Settings › Connected services › orOS Gate`, every app now has its own box with its switch, and the apps Claude can change have `May change` right under it, so the columns stay straight. A search field finds an app or service, and `Turn all on`, `Turn all off`, `Allow all changes` and `Revoke all changes` act on the apps shown (the two that give Claude more ask for a second press). Personal apps stay in their own group: the buttons never turn one on, each still needs its own warning.
+
 ## Version 5.91.00
 - **Today: details, tips and actions on every row.** Many rows now have an (i) button with more about them: an event's start and end, the first line of its note, a task's priority and steps, a habit's streak. It also gives one tip, such as checking the way before an appointment with a place, getting ready the night before an early start, a gift a few days before a birthday, or a new date for a task late more than a week. And it has buttons that open the app that does the job: `Directions` in Maps, `Open the card`, `Gift idea to To-Do`, `Tomorrow` for a late task (with `Undo` in To-Do), `Tick it` for a habit, and `+1 glass` next to the water line. Today itself changes nothing, and the tips are made on your device, with no network and no AI.
 
