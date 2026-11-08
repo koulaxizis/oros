@@ -18,7 +18,9 @@
       if (!data || !C.hasAny(data)) return [];
       var goal = C.goalFor(data, ctx.today), total = C.dayTotal(data, ctx.today);
       return [{ id: "day", kind: "info", title: C.text(ctx.lang, "today.line",
-        { a: C.fmtAmount(total, data.prefs, ctx.lang), g: C.fmtAmount(goal, data.prefs, ctx.lang) }) }];
+        { a: C.fmtAmount(total, data.prefs, ctx.lang), g: C.fmtAmount(goal, data.prefs, ctx.lang) }),
+        // "+1 glass" (BR-TODAY-15): Water's own receiver { sip: "glass" }, with its Undo
+        acts: total < goal ? [{ k: "sip", target: { sip: "glass" } }] : [] }];
     },
     open: function (target, win) {
       if (typeof win.__orosOpenApp === "function") win.__orosOpenApp("water");

@@ -15,6 +15,19 @@ Tap or click a group's title to fold it. Tap or click a row to open it in its ap
 
 Tasks from [To-Do](app:todo) and [Plant Care](app:plants) also have a tick button, `Done (opens the app)`. It opens that app, which marks the task done itself: To-Do ticks it (untick it there to take it back) and Plant Care logs it, with `Undo` in its message.
 
+## Details and suggestions
+Many rows have an (i) button, `Details and suggestions`. It opens a small panel under the row with:
+- details: an event's start and end time, the days of a trip or a fair, the first line of its note; a task's priority, how many of its steps are done and the first line of its note; a habit's streak;
+- one tip, such as checking the way before a timed event with a place, getting ready the night before an early start, a gift a few days before a birthday, or giving a new date to a task late a week or more;
+- up to three buttons that open the app that does the job:
+- `Directions`: [Maps](app:maps) with the way to the event's place.
+- `Open the card`: the contact in [Contacts](app:contacts).
+- `Gift idea to To-Do` and `Add to To-Do`: [To-Do](app:todo)'s Add dialog with the line filled in; nothing is added until you press Add there.
+- `Tomorrow`: To-Do gives a late task, or one due today, tomorrow's date, with `Undo` in its message.
+- `Tick it`: [Habits](app:habits) ticks the habit for today (a habit you count opens its day there).
+- The water line has `+1 glass` next to it while today's goal is not met; [Water](app:water) adds it, with `Undo`.
+Today itself never changes anything: each app does the work with its own code. The tips are made on this device from your own data, with no network and no AI. When you ask the Assistant about a row, the details go with the question.
+
 ## Widgets
 Make Today your own screen, like the widgets on a phone's home screen. Press the `Customise` button (the four squares) at the top:
 - Drag a widget by its handle (the six dots) to move it, with the mouse or a finger. The up and down arrows move it one place too, handy on a touch screen or with the keyboard.

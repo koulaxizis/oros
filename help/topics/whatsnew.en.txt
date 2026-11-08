@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.91.00
+- **Today: details, tips and actions on every row.** Many rows now have an (i) button with more about them: an event's start and end, the first line of its note, a task's priority and steps, a habit's streak. It also gives one tip, such as checking the way before an appointment with a place, getting ready the night before an early start, a gift a few days before a birthday, or a new date for a task late more than a week. And it has buttons that open the app that does the job: `Directions` in Maps, `Open the card`, `Gift idea to To-Do`, `Tomorrow` for a late task (with `Undo` in To-Do), `Tick it` for a habit, and `+1 glass` next to the water line. Today itself changes nothing, and the tips are made on your device, with no network and no AI.
+
 ## Version 5.90.02
 - **Publishing prices read right.** Claude and the Assistant read a Publishing title at 18 € as 0.18 €; they now see the real price, and a title's notes as well.
 
