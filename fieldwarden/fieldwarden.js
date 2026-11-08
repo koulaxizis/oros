@@ -22,6 +22,8 @@
 //     per-device counter rows (each device only grows its own row;
 //     merge = per-row max, a join) + reset stamp br (as Realm, Crypt,
 //     Banner and Wayfarers)
+//   - Endless (5.82.00): a third difficulty, the farms come round harder
+//     until a quota is missed
 //   - days (5.81.00): one Daily season per calendar day, one try;
 //     last (5.81.00): the last 10 years of every device, with Replay
 //   - device-local (R10): oros-fieldwarden-prefs (difficulty, folk,
@@ -53,11 +55,13 @@
   var DEVICE_KEY  = "oros-fieldwarden-device";
   var SFX_KEY     = "oros-fieldwarden-sfx";
   var DATA_VER    = 1;
-  var DIFFS = E.DIFFS;                 // m Mild, h Harsh
+  var DIFFS = E.DIFFS;                 // m Mild, h Harsh, e Endless
   var FOLK_IDS = E.FOLK_IDS;
   var N = E.N, SIZE = E.SIZE;
   var BIG = 1e9;
   var MAX_SEASONS = E.FARMS.length * E.SEASONS;
+  // the most seasons one year can win: Endless goes on to MAX_FARM farms
+  function maxSeasons(d) { return d === "e" ? E.MAX_FARM * E.SEASONS : MAX_SEASONS; }
   var MAX_SHEAVES = SIZE * E.MAX_STAGE;
   var DK = window.orosDaily || null;   // gamekit/daily.js (the Daily season, the Game Center link)
   var LAST_N = 10;                     // Last years kept
@@ -84,7 +88,8 @@
       "view.label": "The farm, 6 by 6 tiles. The arrow keys move the cursor, Enter chooses a farmhand or a tile, Tab goes to the next farmhand, Escape cancels, Z undoes, E ends the turn.",
       "st.turn": "Turn {n} of {m}", "st.wx": "Weather now: {a}. Next turn: {b}", "st.crop": "Harvest if nothing more is lost: {n} sheaves. Quota: {q}",
       "st.coins": "{n} coins", "st.shop": "The market",
-      "diff.m": "Mild", "diff.h": "Harsh",
+      "diff.m": "Mild", "diff.h": "Harsh", "diff.e": "Endless",
+      "diff.e.note": "Harsh, and the year never ends: after the River Bend the three farms come round again, every round with +1 Health for the invaders, until a quota is missed.",
       "diff.m.note": "A lower quota, and once a season you can rewind the last turn.",
       "diff.h.note": "A higher quota and more invaders, with +1 Health from the second farm. No rewinds.",
       "folk.shepherd": "Shepherd", "folk.smith": "Smith", "folk.hedger": "Hedger",
@@ -140,13 +145,13 @@
       "ev.hit": "-{n}", "ev.field": "-{n}", "ev.flee": "Off!", "ev.home": "Home", "ev.wash": "Washed away", "ev.mend": "+1",
       "ev.bee": "+1", "ev.enter": "{k} comes in", "ev.block": "Kept out", "ev.plant": "Hedge",
       "ev.fire": "Fire!", "ev.douse": "Out", "ev.burnt": "Burnt", "ev.call": "{k}!", "ev.rainout": "The rain puts out the fires",
-      "msg.season": "Season {n} of {m} · {f}. Quota: {q} sheaves.", "msg.turn": "Turn {n}: the invaders show their acts",
+      "msg.season": "Season {n} of {m} · {f}. Quota: {q} sheaves.", "msg.seasonE": "Season {n} · {f}. Quota: {q} sheaves.", "msg.turn": "Turn {n}: the invaders show their acts",
       "msg.shop": "The harvest is in. Visit the market, then start the next season.",
       "live.end": "Turn {n}. Harvest so far {h} of {q}.",
-      "res.harvest": "Harvest", "res.season": "Season {n} of {m}", "res.sheaves": "{n} sheaves", "res.quota": "Quota",
+      "res.harvest": "Harvest", "res.season": "Season {n} of {m}", "res.seasonE": "Season {n}", "res.sheaves": "{n} sheaves", "res.quota": "Quota",
       "res.wish": "Village wish", "res.wishOk": "Granted", "res.wishNo": "Not this time", "res.coins": "Coins earned",
       "res.miss": "The quota was missed. The year ends here.", "res.toShop": "To the market",
-      "res.won": "The year is done!", "res.lost": "A lean year", "res.seasons": "Seasons won", "res.total": "Sheaves in all", "res.best": "Most in a season",
+      "res.won": "The year is done!", "res.lost": "A lean year", "res.endless": "The year ends after {n} seasons", "res.seasons": "Seasons won", "res.total": "Sheaves in all", "res.best": "Most in a season",
       "res.code": "Year code: {seed}", "res.same": "The same year", "res.new": "New year",
       "mk.title": "The market", "mk.coins": "Your coins: {n}", "mk.hp": "+1 Health (now {n})", "mk.mv": "+1 Move (now {n})", "mk.stats": "Health {h} · Move {m}",
       "mk.price": "{n} coins", "mk.buy": "Buy", "mk.owned": "Learned", "mk.max": "Most",
@@ -168,7 +173,7 @@
       "daily.giveUp": "Start today's season? The year in progress counts as lost.", "daily.go": "Start the season",
       "stats.daily": "Daily season", "stats.dailyRow": "Played · quota met · streak · best score",
       "share.won": "{n} sheaves, quota met", "share.lost": "{n} sheaves, quota missed",
-      "last.title": "Last years", "last.won": "Year done", "last.met": "Quota met", "last.missed": "Quota missed", "last.seasons": "{n} of {m} seasons",
+      "last.title": "Last years", "last.won": "Year done", "last.met": "Quota met", "last.missed": "Quota missed", "last.seasons": "{n} of {m} seasons", "last.seasonsE": "{n} seasons",
       "last.replay": "Replay", "last.replayLabel": "Replay year {seed}",
       "toast.dailyGone": "The Daily season needs the gamekit file: reload orOS",
       "toast.copied": "Copied: paste it into a chat", "toast.shared": "Shared", "toast.copyFail": "Could not copy",
@@ -192,9 +197,10 @@
       "view.label": "Το αγρόκτημα, 6 επί 6 τετράγωνα. Τα βελάκια κινούν τον κέρσορα, το Enter διαλέγει χωρικό ή τετράγωνο, το Tab πάει στον επόμενο χωρικό, το Escape ακυρώνει, το Z αναιρεί, το E τελειώνει τον γύρο.",
       "st.turn": "Γύρος {n} από {m}", "st.wx": "Καιρός τώρα: {a}. Τον επόμενο γύρο: {b}", "st.crop": "Σοδειά αν δεν χαθεί τίποτα άλλο: {n} δεμάτια. Στόχος: {q}",
       "st.coins": "{n} νομίσματα", "st.shop": "Το παζάρι",
-      "diff.m": "Ήπια", "diff.h": "Σκληρή",
+      "diff.m": "Ήπια", "diff.h": "Σκληρή", "diff.e": "Ατέλειωτη",
+      "diff.e.note": "Σκληρή, και η χρονιά δεν τελειώνει: μετά τη Στροφή του ποταμού τα τρία κτήματα ξανάρχονται, κάθε γύρο με +1 Ζωή για τους εισβολείς, ώσπου να χαθεί ένας στόχος.",
       "diff.m.note": "Χαμηλότερος στόχος, και μία φορά την εποχή γυρνάς πίσω τον τελευταίο γύρο.",
-      "diff.h.note": "Ψηλότερος στόχος και περισσότεροι εισβολείς, με +1 Ζωή από τη δεύτερη φάρμα. Χωρίς γυρίσματα.",
+      "diff.h.note": "Ψηλότερος στόχος και περισσότεροι εισβολείς, με +1 Ζωή από το δεύτερο κτήμα. Χωρίς γυρίσματα.",
       "folk.shepherd": "Βοσκοπούλα", "folk.smith": "Σιδεράς", "folk.hedger": "Φυτουργός",
       "folk.beekeeper": "Μελισσοκόμα", "folk.ferryman": "Βαρκάρης", "folk.scarecrow": "Σκιαχτροποιός",
       "folk.shepherd.note": "Γκλίτσα: τραβά ένα κομμάτι έως 3 τετράγωνα μακριά ένα τετράγωνο πιο κοντά. Τα ζώα δίπλα της παίζουν τελευταία.",
@@ -248,13 +254,13 @@
       "ev.hit": "-{n}", "ev.field": "-{n}", "ev.flee": "Έφυγε!", "ev.home": "Σπίτι", "ev.wash": "Το πήρε το νερό", "ev.mend": "+1",
       "ev.bee": "+1", "ev.enter": "Μπαίνει: {k}", "ev.block": "Έμεινε έξω", "ev.plant": "Φράχτης",
       "ev.fire": "Φωτιά!", "ev.douse": "Έσβησε", "ev.burnt": "Κάηκε", "ev.call": "{k}!", "ev.rainout": "Η βροχή σβήνει τις φωτιές",
-      "msg.season": "Εποχή {n} από {m} · {f}. Στόχος: {q} δεμάτια.", "msg.turn": "Γύρος {n}: οι εισβολείς δείχνουν τι θα κάνουν",
+      "msg.season": "Εποχή {n} από {m} · {f}. Στόχος: {q} δεμάτια.", "msg.seasonE": "Εποχή {n} · {f}. Στόχος: {q} δεμάτια.", "msg.turn": "Γύρος {n}: οι εισβολείς δείχνουν τι θα κάνουν",
       "msg.shop": "Η σοδειά μαζεύτηκε. Πέρασε από το παζάρι και ξεκίνα την επόμενη εποχή.",
       "live.end": "Γύρος {n}. Σοδειά ως τώρα {h} από {q}.",
-      "res.harvest": "Σοδειά", "res.season": "Εποχή {n} από {m}", "res.sheaves": "{n} δεμάτια", "res.quota": "Στόχος",
+      "res.harvest": "Σοδειά", "res.season": "Εποχή {n} από {m}", "res.seasonE": "Εποχή {n}", "res.sheaves": "{n} δεμάτια", "res.quota": "Στόχος",
       "res.wish": "Ευχή του χωριού", "res.wishOk": "Έγινε", "res.wishNo": "Όχι αυτή τη φορά", "res.coins": "Νομίσματα",
       "res.miss": "Ο στόχος δεν πιάστηκε. Η χρονιά τελειώνει εδώ.", "res.toShop": "Στο παζάρι",
-      "res.won": "Η χρονιά ολοκληρώθηκε!", "res.lost": "Φτωχή χρονιά", "res.seasons": "Εποχές που πέτυχαν", "res.total": "Δεμάτια συνολικά", "res.best": "Τα περισσότερα σε μια εποχή",
+      "res.won": "Η χρονιά ολοκληρώθηκε!", "res.lost": "Φτωχή χρονιά", "res.endless": "Η χρονιά τελειώνει μετά από {n} εποχές", "res.seasons": "Εποχές που πέτυχαν", "res.total": "Δεμάτια συνολικά", "res.best": "Τα περισσότερα σε μια εποχή",
       "res.code": "Κωδικός χρονιάς: {seed}", "res.same": "Η ίδια χρονιά", "res.new": "Νέα χρονιά",
       "mk.title": "Το παζάρι", "mk.coins": "Τα νομίσματά σου: {n}", "mk.hp": "+1 Ζωή (τώρα {n})", "mk.mv": "+1 Κίνηση (τώρα {n})", "mk.stats": "Ζωή {h} · Κίνηση {m}",
       "mk.price": "{n} νομίσματα", "mk.buy": "Αγορά", "mk.owned": "Το έμαθε", "mk.max": "Το μέγιστο",
@@ -276,7 +282,7 @@
       "daily.giveUp": "Να ξεκινήσει η σημερινή εποχή; Η χρονιά που παίζεις μετρά ως χαμένη.", "daily.go": "Ξεκίνα την εποχή",
       "stats.daily": "Εποχή της ημέρας", "stats.dailyRow": "Παιγμένες · στόχοι · σερί · καλύτεροι πόντοι",
       "share.won": "{n} δεμάτια, ο στόχος πιάστηκε", "share.lost": "{n} δεμάτια, ο στόχος δεν πιάστηκε",
-      "last.title": "Τελευταίες χρονιές", "last.won": "Ολοκληρώθηκε", "last.met": "Στόχος", "last.missed": "Χωρίς στόχο", "last.seasons": "{n} από {m} εποχές",
+      "last.title": "Τελευταίες χρονιές", "last.won": "Ολοκληρώθηκε", "last.met": "Στόχος", "last.missed": "Χωρίς στόχο", "last.seasons": "{n} από {m} εποχές", "last.seasonsE": "{n} εποχές",
       "last.replay": "Ξανά", "last.replayLabel": "Ξανά η χρονιά {seed}",
       "toast.dailyGone": "Η εποχή της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
       "toast.copied": "Αντιγράφηκε: επικόλλησέ το σε μια συνομιλία", "toast.shared": "Κοινοποιήθηκε", "toast.copyFail": "Δεν αντιγράφηκε",
@@ -337,6 +343,8 @@
   //                                           c: { <folk>: finished years } } } }
   // Each device only grows its own row, so a per-row max is a join and
   // nothing is double-counted however the devices meet.
+  // Endless (e, 5.82.00): [years, 0, most seasons], seasons up to MAX_FARM × 4;
+  // an Endless year is never "finished", so a cell with finished > 0 drops.
   // days (5.81.00, older data has none): one Daily season per calendar
   // day (day 0 = 1 Jan 2026, gamekit/daily.js), one try:
   // { "<day>": { b, w: 1 quota met | 0, h: score (sheaves + the wish
@@ -345,7 +353,7 @@
   // (quota met, then the higher score, then fewer actions, then the
   // larger JSON: a total order, so a join). Never counted in rows.
   // last (5.81.00): the last 10 years of every device,
-  // [{ a: end time ms, d: m|h|d (d = Daily), p: [3 folk], n: seasons
+  // [{ a: end time ms, d: m|h|e|d (e = Endless, d = Daily), p: [3 folk], n: seasons
   //    won, w: 1 finished (Daily: quota met) | 0, s: year code }].
   // Union by a + s, newest first, the first 10: a join; entries older
   // than the reset stamp br drop.
@@ -368,8 +376,8 @@
     return cmpStr(JSON.stringify(x), JSON.stringify(y)) > 0;
   }
   function normLast(v) {
-    if (!v || typeof v !== "object" || !isInt(v.a) || v.a < 0 || ["m", "h", "d"].indexOf(v.d) < 0 || !E.trioOk(v.p) ||
-        !isInt(v.n) || v.n < 0 || v.n > MAX_SEASONS || (v.w !== 0 && v.w !== 1) ||
+    if (!v || typeof v !== "object" || !isInt(v.a) || v.a < 0 || ["m", "h", "e", "d"].indexOf(v.d) < 0 || !E.trioOk(v.p) ||
+        !isInt(v.n) || v.n < 0 || v.n > maxSeasons(v.d) || (v.d === "e" && v.w !== 0) || (v.w !== 0 && v.w !== 1) ||
         typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s)) return null;
     return { a: v.a, d: v.d, p: v.p.slice(), n: v.n, w: v.w, s: v.s };
   }
@@ -378,7 +386,7 @@
     var s = {}, c = {}, any = false;
     DIFFS.forEach(function (k) {
       var v = row.s && row.s[k];
-      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0 && x < BIG; }) && v[1] <= v[0] && v[2] <= MAX_SEASONS) {
+      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0 && x < BIG; }) && v[1] <= v[0] && v[2] <= maxSeasons(k) && (k !== "e" || v[1] === 0)) {
         s[k] = [v[0], v[1], v[2]];
         any = true;
       }
@@ -514,7 +522,7 @@
     var v = row.s[diff] ? row.s[diff].slice() : [0, 0, 0];
     v[0]++;
     if (won) v[1]++;
-    v[2] = Math.max(v[2], clamp(seasons, 0, MAX_SEASONS));
+    v[2] = Math.max(v[2], clamp(seasons, 0, maxSeasons(diff)));
     row.s[diff] = v;
     row.hb = Math.max(row.hb, clamp(best, 0, MAX_SHEAVES));
     if (won) trio.forEach(function (k) { row.c[k] = (row.c[k] || 0) + 1; });
@@ -545,7 +553,7 @@
   // A year (or a Daily season) ended: into Last years.
   function logYear(won) {
     var v = normLast({ a: Date.now(), d: game.opts.day !== undefined ? "d" : game.opts.diff, p: game.opts.trio,
-      n: clamp(st.won, 0, MAX_SEASONS), w: won ? 1 : 0, s: game.opts.seed });
+      n: clamp(st.won, 0, maxSeasons(game.opts.diff)), w: won ? 1 : 0, s: game.opts.seed });
     if (!v) return;
     data.last = [v].concat(data.last || []);
     data = mergeFieldwarden(data, data);
@@ -657,11 +665,23 @@
     maybeTour();
   }
   function setMsg(text) { $("msg").textContent = text || ""; }
-  function farmName() { return t("farm." + E.FARMS[st.farm - 1].id); }
+  // Endless names the later rounds "The Lowland II", "III"…
+  function roman(n) {
+    var out = "", v = [[10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+    v.forEach(function (p) { while (n >= p[0]) { out += p[1]; n -= p[0]; } });
+    return out;
+  }
+  function farmName() {
+    var k = E.loopOf(st.farm);
+    return t("farm." + E.farmOf(st.farm).id) + (k ? " " + roman(k + 1) : "");
+  }
   function seasonNo() { return st.one ? 1 : (st.farm - 1) * E.SEASONS + st.sea; }
   function seasonsAll() { return st.one ? 1 : st.end * E.SEASONS; }
+  function endless() { return st.diff === "e"; }
+  function seasonLabel() { return endless() ? t("res.seasonE", { n: seasonNo() }) : t("res.season", { n: seasonNo(), m: seasonsAll() }); }
   function seasonMsg() {
-    setMsg(st.phase === "shop" ? t("msg.shop") : t("msg.season", { n: seasonNo(), m: seasonsAll(), f: farmName(), q: st.s.q }));
+    setMsg(st.phase === "shop" ? t("msg.shop") : endless() ? t("msg.seasonE", { n: seasonNo(), f: farmName(), q: st.s.q }) :
+      t("msg.season", { n: seasonNo(), m: seasonsAll(), f: farmName(), q: st.s.q }));
   }
   function nameOf(u) { return u.f === 1 ? t("folk." + u.k) : t("inv." + u.k); }
   function selUnit() {
@@ -1649,7 +1669,7 @@
     var r = st.res, won = r.h >= r.q;
     var dlg = makeDialog("fw-harvest");
     dlg.setAttribute("data-modal", "1");
-    dlg.appendChild(el("div", "dlg-title", t("res.harvest") + " · " + t("res.season", { n: seasonNo(), m: seasonsAll() })));
+    dlg.appendChild(el("div", "dlg-title", t("res.harvest") + " · " + seasonLabel()));
     dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), t("res.sheaves", { n: r.h })));
     dlg.appendChild(row(t("res.quota"), String(r.q)));
     dlg.appendChild(el("div", "dlg-note", wishText(st.s)));
@@ -1722,8 +1742,8 @@
     if (game.opts.day !== undefined) { dailyDialog(game.opts.day); return; }
     var dlg = makeDialog("fw-result"), won = st.over === 1;
     dlg.appendChild(el("div", "dlg-title", t("app.name") + " · " + t("diff." + game.opts.diff)));
-    dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : t("res.lost")));
-    dlg.appendChild(row(t("res.seasons"), st.won + "/" + seasonsAll()));
+    dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : endless() ? t("res.endless", { n: st.won }) : t("res.lost")));
+    dlg.appendChild(row(t("res.seasons"), endless() ? String(st.won) : st.won + "/" + seasonsAll()));
     dlg.appendChild(row(t("res.total"), String(st.total)));
     dlg.appendChild(row(t("res.best"), String(st.best)));
     dlg.appendChild(el("div", "dlg-note", t("res.code", { seed: game.opts.seed })));
@@ -1742,7 +1762,7 @@
     DIFFS.forEach(function (m) {
       var v = totals(m);
       if (v[0]) empty = false;
-      dlg.appendChild(row(t("diff." + m), v[0] + " · " + v[1] + " · " + v[2]));
+      dlg.appendChild(row(t("diff." + m), v[0] + " · " + (m === "e" ? "–" : v[1]) + " · " + v[2]));
     });
     dlg.appendChild(row(t("stats.best"), String(bestHarvest())));
     dlg.appendChild(el("div", "dlg-sub", t("stats.folk")));
@@ -1785,7 +1805,7 @@
     var box = el("div", "lr-list");
     list.forEach(function (v) {
       var r = el("div", "lr-row");
-      var what = v.d === "d" ? t(v.w ? "last.met" : "last.missed") : (v.w ? t("last.won") : t("last.seasons", { n: v.n, m: MAX_SEASONS }));
+      var what = v.d === "d" ? t(v.w ? "last.met" : "last.missed") : (v.w ? t("last.won") : v.d === "e" ? t("last.seasonsE", { n: v.n }) : t("last.seasons", { n: v.n, m: MAX_SEASONS }));
       var tx = el("div", "lr-tx");
       tx.appendChild(el("div", "nm", (v.d === "d" ? t("daily.label") : t("diff." + v.d)) + " · " + what));
       tx.appendChild(el("div", "fx", v.p.map(function (c) { return t("folk." + c); }).join(", ") + " · " +
