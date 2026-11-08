@@ -280,6 +280,17 @@
       "gt.log.clear": "Clear the activity",
       "gt.fail": "That did not work. Check the connection and try again.",
       "gt.write": "Claude may also change {app}",
+      "gt.change": "May change",
+      "gt.find": "Find an app or service",
+      "gt.find.none": "No app matches «{q}».",
+      "gt.count": "{n} of {m} apps on, {w} may change",
+      "gt.all.on": "Turn all on",
+      "gt.all.on.sure": "Press again: Claude reads them all",
+      "gt.all.off": "Turn all off",
+      "gt.all.write": "Allow all changes",
+      "gt.all.write.sure": "Press again: Claude may change them all",
+      "gt.all.read": "Revoke all changes",
+      "gt.all.shown": "The buttons act on the {n} apps shown.",
       "gt.undo": "Undo",
       "gt.hold.off": "Claude may change {apps} and you are notified of every change.",
       "gt.hold.on": "Claude's changes are paused until {when}; it can only read.",
@@ -1074,6 +1085,17 @@
       "gt.log.clear": "Καθαρισμός δραστηριότητας",
       "gt.fail": "Δεν έγινε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "gt.write": "Ο Claude μπορεί και να αλλάζει: {app}",
+      "gt.change": "Και αλλαγές",
+      "gt.find": "Αναζήτηση εφαρμογής ή υπηρεσίας",
+      "gt.find.none": "Καμία εφαρμογή δεν ταιριάζει με «{q}».",
+      "gt.count": "Ανοιχτές {n} από {m} εφαρμογές, {w} με αλλαγές",
+      "gt.all.on": "Άνοιγμα όλων",
+      "gt.all.on.sure": "Πάτα ξανά: ο Claude θα τα διαβάζει όλα",
+      "gt.all.off": "Κλείσιμο όλων",
+      "gt.all.write": "Να επιτρέπονται όλες οι αλλαγές",
+      "gt.all.write.sure": "Πάτα ξανά: ο Claude θα μπορεί να τα αλλάζει όλα",
+      "gt.all.read": "Ανάκληση όλων των αλλαγών",
+      "gt.all.shown": "Τα κουμπιά ισχύουν για τις {n} εφαρμογές που φαίνονται.",
       "gt.undo": "Αναίρεση",
       "gt.hold.off": "Ο Claude μπορεί να αλλάζει {apps} και σε ειδοποιεί για κάθε αλλαγή.",
       "gt.hold.on": "Οι αλλαγές του Claude είναι σε παύση μέχρι {when}· μόνο διαβάζει.",
@@ -1765,6 +1787,30 @@
     return s.replace(/ς/g, "σ");
   }
 
+  // orOS Gate app switches (Settings › orOS Gate): the apps whose name
+  // or id matches `query`, like the menu search.
+  function gateFilter(apps, query) {
+    var q = fold(String(query || "").trim());
+    return (Array.isArray(apps) ? apps : []).filter(function (a) {
+      return a && typeof a.id === "string" && (!q || fold(a.name).indexOf(q) >= 0 || fold(a.id).indexOf(q) >= 0);
+    });
+  }
+  // The levels one bulk button sets on `apps` (only the ones it changes):
+  // "on" every app off → read (a "may change" stays), "off" every app → off,
+  // "write" every app that can be changed → may change, "read" every
+  // "may change" → read only. Never-apps are dropped here as well.
+  function gateBulk(apps, action, never) {
+    var out = {}, nv = Array.isArray(never) ? never : [];
+    (Array.isArray(apps) ? apps : []).forEach(function (a) {
+      if (!a || typeof a.id !== "string" || nv.indexOf(a.id) >= 0) return;
+      if (action === "on" && !a.read) out[a.id] = "read";
+      else if (action === "off" && a.read) out[a.id] = false;
+      else if (action === "write" && a.canWrite && !a.write) out[a.id] = "write";
+      else if (action === "read" && a.write) out[a.id] = "read";
+    });
+    return out;
+  }
+
   // Menu apps for the Settings list: filtered by `query` (name, id or
   // category), grouped by category, groups and apps sorted by their
   // shown names in the UI language.
@@ -1862,7 +1908,7 @@
     POSITIONS: POSITIONS, STYLES: STYLES, SOUNDS: SOUNDS, DURATIONS: DURATIONS,
     t: t, langOf: langOf, isSection: isSection, sectionOf: sectionOf, scopeOf: scopeOf,
     hourLabel: hourLabel, quietValue: quietValue, readQuiet: readQuiet,
-    intervalLabel: intervalLabel, syncState: syncState, fold: fold, menuGroups: menuGroups,
+    intervalLabel: intervalLabel, syncState: syncState, fold: fold, menuGroups: menuGroups, gateFilter: gateFilter, gateBulk: gateBulk,
     findItem: findItem, findSettings: findSettings
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

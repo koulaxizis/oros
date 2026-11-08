@@ -1759,6 +1759,32 @@
       changed();
       return okW;
     },
+    // Many switches at once (Settings: all on/off, all may change):
+    // { id: "read" | "write" | false }, one save, one send to the relay.
+    // Never-apps and "write" for an app that cannot be changed are
+    // skipped, the rest still go. → the number of apps set, or -1 when
+    // the save failed.
+    setApps: function (levels) {
+      var p = pref(), n = 0, kb = false;
+      if (!isObj(levels)) return 0;
+      p.lv = isObj(p.lv) ? p.lv : {};
+      Object.keys(levels).forEach(function (id) {
+        var level = levels[id];
+        if (NEVER.indexOf(id) >= 0) return;
+        if (level === true) level = "read";
+        if (level === "write" && !writable(id)) return;
+        if (level === "read" || level === "write") p.lv[id] = level; else delete p.lv[id];
+        if (id === "kanban" && level === "write") kb = true;
+        n++;
+      });
+      if (!n) return 0;
+      if (kb) kanbanModel().then(null, function () {});
+      if (p.on) p.lvd = 1;
+      var okW = writeJSON(PREF_KEY, p);
+      if (okW && p.on && ws) sendLv(ws);
+      changed();
+      return okW ? n : -1;
+    },
     // Pause Claude's changes on this device for minutes (Infinity: until
     // resumed); minutes ≤ 0 resumes. Reads go on.
     setPause: function (minutes) {
