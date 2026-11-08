@@ -142,3 +142,131 @@ test("quote: a quote changed since is not undone; never opened = empty Quote", (
   const u = A.undo("quote", x, r.undo, NOW + 10);
   assert.equal(u.ok, false);
 });
+
+// ---------- Wiki (AS-ADD9) ----------
+const WC = require("../wiki/core.js");
+function witems(list) { const n = A.normItems({ app: "wiki", items: list }, CTX); assert.equal(n.ok, true, n.err); return n.items; }
+test("wiki: new articles as Wiki writes them, with their first revision file; titles taken refused; Undo", () => {
+  assert.ok(A.APP_IDS.includes("wiki"));
+  const d = WC.merge({ ver: 1, wikis: [{ id: "wabcdef1", m: 5, n: "Garden", main: "" }], arts: [{ id: "aabcdef1", m: 6, w: "wabcdef1", t: "Tomatoes", x: "Sun.", r: "rabcdef1", anc: [], alt: [] }], tombs: {} }, null);
+  assert.match(A.plan("wiki", clone(d), witems([{ title: "tomatoes", text: "x" }]), CTX).err, /already has an article/);
+  const it = witems([{ title: "Basil", text: "Needs [[Tomatoes]] nearby." }, { title: "Mint", text: "Spreads." }]);
+  const p = A.plan("wiki", clone(d), it, CTX);
+  assert.equal(p.ok, true, p.err);
+  const r = A.apply("wiki", clone(d), it, NOW, [false, false], CTX);
+  assert.equal(r.ok, true, r.err);
+  assert.equal(JSON.stringify(WC.merge(r.data, null)), JSON.stringify(r.data), "opening Wiki rewrites nothing");
+  assert.equal(r.data.arts.length, 3);
+  assert.equal(r.disk.length, 2);
+  const a = WC.byId(r.data, r.made[0].id);
+  assert.equal(a.t, "Basil"); assert.equal(a.w, "wabcdef1");
+  assert.equal(r.disk[0].path, WC.revPath(a.id, a.m, a.r));
+  assert.equal(WC.parseRevFile(r.disk[0].text).x, a.x);
+  const u = A.undo("wiki", clone(r.data), r.undo, NOW + 1000);
+  assert.equal(u.ok, true, u.err);
+  assert.deepEqual(u.data.arts.map((x) => x.t), ["Tomatoes"]);
+  assert.equal(WC.merge(r.data, u.data).arts.length, 1, "the deletion wins over the old copy");
+  // several wikis: the wiki must be named
+  const d2 = WC.merge(Object.assign(clone(d), { wikis: d.wikis.concat([{ id: "wabcdef2", m: 5, n: "Work", main: "" }]) }), null);
+  assert.match(A.plan("wiki", d2, witems([{ title: "X", text: "y" }]), CTX).err, /several wikis/);
+  assert.equal(A.plan("wiki", d2, witems([{ title: "X", text: "y", wiki: "work" }]), CTX).ok, true);
+  assert.match(A.plan("wiki", null, witems([{ title: "X", text: "y" }]), CTX).err, /no wiki yet/);
+});
+
+// ---------- Flashcards (AS-ADD9) ----------
+const FC = require("../flashcards/core.js");
+function fitems(list) { const n = A.normItems({ app: "flashcards", items: list }, CTX); assert.equal(n.ok, true, n.err); return n.items; }
+function fdata() {
+  const slice = FC.addDeck(FC.normalize(null), "Greek", 5, { id: "dgreek1" });
+  const old = { id: "nold0001", m: 7, k: "basic", dk: "d0", f: { q: "Hello", a: "Γεια" }, tg: [] };
+  return { slice, notes: [old], own: { path: FC.NOTES_DIR + "/x.json", dev: "devabc", items: [] } };
+}
+test("flashcards: basic, reversed and cloze notes go into the Assistant's own notes file; Undo deletes them", () => {
+  assert.ok(A.APP_IDS.includes("flashcards"));
+  const it = fitems([
+    { front: "Cat", back: "Γάτα", deck: "greek", labels: ["animals"] },
+    { front: "Dog", back: "Σκύλος", both: true },
+    { cloze: "{{c1::Athens}} is the capital of Greece", back: "Since 1834" }
+  ]);
+  const d = fdata();
+  const p = A.plan("flashcards", clone(d), it, CTX);
+  assert.equal(p.ok, true, p.err);
+  assert.equal(p.rows.length, 3);
+  const r = A.apply("flashcards", clone(d), it, NOW, [false, false, false], CTX);
+  assert.equal(r.ok, true, r.err);
+  assert.equal(r.data.own.items.length, 3);
+  assert.equal(r.data.notes.length, 4);
+  const byQ = (q) => r.data.own.items.find((n) => (n.f.q || n.f.x) === q);
+  assert.equal(byQ("Cat").dk, "dgreek1"); assert.deepEqual(byQ("Cat").tg, ["animals"]);
+  assert.equal(byQ("Dog").k, "rev"); assert.equal(byQ("Dog").dk, "d0");
+  const cz = r.data.own.items.find((n) => n.k === "cloze");
+  assert.equal(cz.f.e, "Since 1834");
+  r.data.own.items.forEach((n) => assert.deepEqual(FC.normNote(n), n, "as Flashcards writes it"));
+  const u = A.undo("flashcards", clone(r.data), r.undo, NOW + 1000);
+  assert.equal(u.ok, true, u.err);
+  assert.equal(FC.liveNotes(FC.foldNotes({}, u.data.notes)).length, 1);
+  assert.ok(u.data.own.items.every((n) => n.del));
+});
+test("flashcards: unknown deck, bad cloze, no disk, never opened are refused; a changed note is not undone", () => {
+  const d = fdata();
+  assert.match(A.plan("flashcards", clone(d), fitems([{ front: "a", back: "b", deck: "French" }]), CTX).err, /no deck named/);
+  assert.equal(A.normItems({ app: "flashcards", items: [{ cloze: "no gaps" }] }, CTX).ok, false);
+  assert.equal(A.normItems({ app: "flashcards", items: [{ front: "only front" }] }, CTX).ok, false);
+  assert.match(A.plan("flashcards", Object.assign(clone(d), { own: null }), fitems([{ front: "a", back: "b" }]), CTX).err, /disk is not reachable/);
+  assert.match(A.plan("flashcards", null, fitems([{ front: "a", back: "b" }]), CTX).err, /has not been opened/);
+  const p = A.plan("flashcards", clone(d), fitems([{ front: "hello", back: "x" }]), CTX);
+  assert.ok(p.rows[0].dup, "same front = already there");
+  const it = fitems([{ front: "Cat", back: "Γάτα" }]);
+  const r = A.apply("flashcards", clone(d), it, NOW, [false], CTX);
+  const n = r.data.notes.find((x) => x.f && x.f.q === "Cat");
+  const ch = Object.assign(clone(n), { m: NOW + 50, f: { q: "Cat", a: "Γατούλα" } });
+  const d3 = Object.assign(clone(r.data), { notes: FC.mergeNotes(r.data.notes, [ch]) });
+  assert.match(A.undo("flashcards", d3, r.undo, NOW + 100).err, /changed in Flashcards/);
+});
+test("flashcards in create_items: fields in the tool, the store prepared before plan and undo", () => {
+  const src = require("fs").readFileSync(require("path").join(__dirname, "../assistant/assistant.js"), "utf8");
+  assert.match(src, /key === "disk:flashcards" \? fcPrep\(\)/);
+  assert.match(src, /mem\.key === "disk:flashcards" \? fcPrep\(\)/);
+});
+
+// ---------- Split (AS-ADD9) ----------
+const SPsrc = require("fs").readFileSync(require("path").join(__dirname, "../split/split.js"), "utf8");
+function spBlock(from, to) { const i = SPsrc.indexOf(from), j = SPsrc.indexOf(to, i); assert.ok(i >= 0 && j >= 0, from); return SPsrc.slice(i, j); }
+const SPm = new Function(spBlock("  var STORAGE_KEY", "  // ---------- 1.") + spBlock("  function cmpStr(", "  function newId(") +
+  spBlock("  // ---------- 2. Money", "  // ---------- 6. Storage") + "\nreturn { mergeSplit, balancesOf, emptyData };")();
+function sitems(list) { const n = A.normItems({ app: "split", items: list }, CTX); assert.equal(n.ok, true, n.err); return n.items; }
+function sdata() {
+  return SPm.mergeSplit({ ver: 1, groups: [{ id: "g1", m: 1, n: "Naxos", col: 2, cur: "EUR", arch: 0 }, { id: "g2", m: 1, n: "Old", col: 0, cur: "EUR", arch: 1 }],
+    people: [{ id: "g1.a", m: 1, n: "Anna" }, { id: "g1.b", m: 1, n: "Nikos" }, { id: "g1.c", m: 1, n: "Maria" }],
+    exp: [], pay: [], mine: [{ id: "g1", m: 1, v: "g1.a" }], tombs: {} }, null);
+}
+test("split: an expense split equally, in Split's canonical form; payer = me by default; Undo tombstones it", () => {
+  assert.ok(A.APP_IDS.includes("split"));
+  const d = sdata();
+  const it = sitems([{ title: "Dinner", amount: 60, date: "2026-11-08", category: "food" },
+                     { title: "Taxi", amount: 10.01, paid_by: "nikos", shared_by: ["Anna", "Nikos"], split_group: "naxos" }]);
+  const p = A.plan("split", clone(d), it, CTX);
+  assert.equal(p.ok, true, p.err);
+  const r = A.apply("split", clone(d), it, NOW, [false, false], CTX);
+  assert.equal(r.ok, true, r.err);
+  assert.equal(JSON.stringify(SPm.mergeSplit(r.data, r.data)), JSON.stringify(r.data), "opening Split rewrites nothing");
+  const e1 = r.data.exp.find((x) => x.t === "Dinner"), e2 = r.data.exp.find((x) => x.t === "Taxi");
+  assert.deepEqual(e1.by, { "g1.a": 6000 }); assert.deepEqual(e1.w, { "g1.a": 1, "g1.b": 1, "g1.c": 1 }); assert.equal(e1.c, "food");
+  assert.deepEqual(e2.by, { "g1.b": 1001 }); assert.deepEqual(e2.w, { "g1.a": 1, "g1.b": 1 }); assert.equal(e2.c, "other");
+  const u = A.undo("split", clone(r.data), r.undo, NOW + 1000);
+  assert.equal(u.ok, true, u.err);
+  assert.equal(SPm.mergeSplit(r.data, u.data).exp.length, 0, "the deletion wins over the old copy");
+  const ch = clone(r.data); ch.exp.find((x) => x.t === "Taxi").t = "Taxi home";
+  assert.match(A.undo("split", ch, r.undo, NOW + 1000).err, /changed in Split/);
+});
+test("split: unknown group or person, archived group, no 'me', never opened are refused", () => {
+  const d = sdata();
+  assert.match(A.plan("split", clone(d), sitems([{ title: "x", amount: 1, split_group: "Old" }]), CTX).err, /no group named/);
+  assert.match(A.plan("split", clone(d), sitems([{ title: "x", amount: 1, paid_by: "Zoe" }]), CTX).err, /nobody named/);
+  assert.match(A.plan("split", clone(d), sitems([{ title: "x", amount: 1, shared_by: ["Anna", "Zoe"] }]), CTX).err, /nobody named/);
+  const d2 = clone(d); d2.mine = [];
+  assert.match(A.plan("split", d2, sitems([{ title: "x", amount: 1 }]), CTX).err, /who paid/);
+  assert.equal(A.normItems({ app: "split", items: [{ title: "x" }] }, CTX).ok, false);
+  assert.equal(A.normItems({ app: "split", items: [{ title: "x", amount: 2, category: "cars" }] }, CTX).ok, false);
+  assert.equal(A.plan("split", null, sitems([{ title: "x", amount: 1 }]), CTX).ok, false);
+});

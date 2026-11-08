@@ -1950,13 +1950,17 @@
     publish: "publish = a book the user PUBLISHES, as a title in Publishing (a whole list of titles goes in one call)",
     // AS-ADD8 (GATE-PAR P4, assistant/additems3.js): saved as a draft, never issued
     invoices: "invoices = a new invoice DRAFT in Invoices (saved as a draft; the user issues it in Invoices, which gives it its number)",
-    quote: "quote = a new quote (offer) in Quote, saved as a draft with its OFF number; the user sends it from Quote"
+    quote: "quote = a new quote (offer) in Quote, saved as a draft with its OFF number; the user sends it from Quote",
+    // AS-ADD9 (GATE-PAR P4 wave 2)
+    wiki: "wiki = a new article in Wiki (an article already there is changed with change_item)",
+    flashcards: "flashcards = a new note (card) in Flashcards: front and back, or cloze text with {{c1::gaps}}",
+    split: "split = a shared expense in one of the user's Split groups, split equally"
   };
   // [field, apps it is for, schema]
   var CR_FIELDS = [
     ["name", ["contacts", "crm"], { type: "string", description: "Full name (a person), or the company's name (a CRM company)." }],
     ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_followup", "crm_deal", "timesheet", "meals", "travel_plan", "travel_pack",
-               "habits", "fitness", "garage", "plants", "petcare", "shelf", "publish"], { type: "string", description: "The task, event, note, bookmark, card, follow-up, deal, recipe, itinerary entry, packing item, habit, workout, plant, shelf title or published book's title (budget: use note; timesheet: what was done; garage: what was done, e.g. Oil change, or what expires, e.g. Insurance; petcare: the vaccine, medicine or visit reason, none for a weight)." }],
+               "habits", "fitness", "garage", "plants", "petcare", "shelf", "publish", "wiki", "split"], { type: "string", description: "The task, event, note, bookmark, card, follow-up, deal, recipe, itinerary entry, packing item, habit, workout, plant, shelf title or published book's title (budget: use note; timesheet: what was done; garage: what was done, e.g. Oil change, or what expires, e.g. Insurance; petcare: the vaccine, medicine or visit reason, none for a weight; split: what was paid for)." }],
     ["days", ["habits"], { type: "array", items: { type: "integer" }, description: "habits: weekdays, 0 = Monday … 6 = Sunday (leave out for any day)." }],
     ["per_week", ["habits"], { type: "integer", description: "habits: times a week, instead of days." }],
     ["per_month", ["habits"], { type: "integer", description: "habits: times a month, instead of days." }],
@@ -2034,7 +2038,7 @@
                              region: { type: "string" }, country: { type: "string" },
                              type: { type: "string", "enum": ["home", "work", "other"] } } }],
     ["birthday", ["contacts"], { type: "string", description: "contacts: YYYY-MM-DD, or MM-DD without a year." }],
-    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal", "timesheet", "travel_plan", "stickies", "fitness", "garage", "petcare", "publish", "invoices", "quote"], { type: "string", description: "YYYY-MM-DD. publish: the release date; invoices, quote: the draft's date (default today); todo, kanban: the due date; calendar, crm_followup, timesheet: the day (required); budget, crm_activity, fitness, petcare, garage service: the day (default today, never later); crm_deal: the expected close; travel_plan: the day; stickies: the reminder's day (leave out for none); garage renewal: the day it expires (required)." }],
+    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal", "timesheet", "travel_plan", "stickies", "fitness", "garage", "petcare", "publish", "invoices", "quote", "split"], { type: "string", description: "YYYY-MM-DD. publish: the release date; invoices, quote: the draft's date (default today); todo, kanban: the due date; calendar, crm_followup, timesheet: the day (required); budget, crm_activity, fitness, petcare, garage service: the day (default today, never later); crm_deal: the expected close; travel_plan: the day; stickies: the reminder's day (leave out for none); garage renewal: the day it expires (required)." }],
     ["end_date", ["calendar", "travel_plan"], { type: "string", description: "calendar: last day of an event over several days. travel_plan: the arrival or check-out day." }],
     ["start", ["calendar", "crm_activity", "crm_followup", "timesheet", "travel_plan", "stickies", "fitness"], { type: "string", description: "HH:MM (24h). calendar: start time, leave out for all day; crm_*: the time, if said; timesheet, fitness: when it started (required); travel_plan: departure or start; stickies: the reminder's time." }],
     ["end", ["calendar", "timesheet", "travel_plan"], { type: "string", description: "End time HH:MM (timesheet: on the same day; else give minutes)." }],
@@ -2044,17 +2048,26 @@
     ["priority", ["todo"], { type: "integer", "enum": [1, 2, 3, 4], description: "todo: 1 = P1, most urgent." }],
     ["subtasks", ["todo", "kanban"], { type: "array", items: { type: "string" }, description: "todo, kanban: steps of the task or card." }],
     ["entry", ["budget"], { type: "string", "enum": ["expense", "income"], description: "budget: expense (default) or income." }],
-    ["amount", ["budget", "crm_deal", "garage", "petcare"], { type: "number", description: "budget, crm_deal, garage, petcare visit: the amount (cost) in the app's currency, e.g. 12.5." }],
-    ["category", ["budget"], { type: "string", description: "budget: groceries, eating-out, bills, home, transport, health, fun, clothes, gift, salary, freelance, other, or the name of one of the user's own categories." }],
-    ["text", ["notes", "stickies"], { type: "string", description: "notes: the page's text (Markdown). stickies: the note (up to 1000 characters, line breaks kept)." }],
+    ["amount", ["budget", "crm_deal", "garage", "petcare", "split"], { type: "number", description: "budget, crm_deal, garage, petcare visit: the amount (cost) in the app's currency, e.g. 12.5. split: the whole amount paid, in the group's currency." }],
+    ["category", ["budget", "split"], { type: "string", description: "budget: groceries, eating-out, bills, home, transport, health, fun, clothes, gift, salary, freelance, other, or the name of one of the user's own categories. split: food, groceries, stay, transport, bills, fun or other." }],
+    ["text", ["notes", "stickies", "wiki"], { type: "string", description: "notes: the page's text (Markdown). stickies: the note (up to 1000 characters, line breaks kept). wiki: the article in Wiki's Markdown, [[Other article]] links allowed (200000 characters)." }],
+    ["wiki", ["wiki"], { type: "string", description: "wiki: the wiki's name (may be left out when the user has one)." }],
+    ["front", ["flashcards"], { type: "string", description: "flashcards: the question side (20000 characters; Flashcards' Markdown)." }],
+    ["back", ["flashcards"], { type: "string", description: "flashcards: the answer side; with cloze, the extra shown after the answer." }],
+    ["cloze", ["flashcards"], { type: "string", description: "flashcards: instead of front, a text with gaps like {{c1::Athens}} is the capital (one card per gap number)." }],
+    ["both", ["flashcards"], { type: "boolean", description: "flashcards: true adds a reversed card too (back → front)." }],
+    ["split_group", ["split"], { type: "string", description: "split: the group's name (may be left out when the user has one group)." }],
+    ["paid_by", ["split"], { type: "string", description: "split: the name of the person in the group who paid (default: the user's own person there)." }],
+    ["shared_by", ["split"], { type: "array", items: { type: "string" }, description: "split: names of the group's people it is split between, equally (default: everyone in the group)." }],
+    ["deck", ["flashcards"], { type: "string", description: "flashcards: the name of a deck the user already has (default: the Default deck)." }],
     ["notebook", ["notes"], { type: "string", description: "notes: an existing notebook's name (default the first)." }],
     ["url", ["bookmarks", "meals"], { type: "string", description: "bookmarks: the http(s) address. meals: where the recipe comes from." }],
     ["folder", ["bookmarks"], { type: "string", description: "bookmarks: an existing folder's name (default Unsorted)." }],
     ["board", ["kanban"], { type: "string", description: "kanban: an existing board's name; required when there are several boards. To move existing cards use change_item move, never add them again." }],
     ["column", ["kanban"], { type: "string", description: "kanban: an existing column's name (default the first)." }],
     ["label", ["calendar"], { type: "string", description: "calendar: the name of one of the user's labels." }],
-    ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals", "shelf"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals, shelf: tags, any)." }],
-    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare", "publish", "invoices", "quote"], { type: "string", description: "A note (Publishing 4000, only for the user, Invoices and Quote 2000, printed on the document, Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],
+    ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals", "shelf", "flashcards"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals, shelf, flashcards: tags, any)." }],
+    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare", "publish", "invoices", "quote", "split"], { type: "string", description: "A note (Publishing 4000, only for the user, Invoices and Quote 2000, printed on the document, Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],
     ["kind", ["crm"], { type: "string", "enum": ["person", "company"], description: "crm: a person or a company (default company)." }],
     ["status", ["crm", "shelf", "publish"], { type: "string", "enum": ["lead", "active", "past", "want", "now", "done", "dropped", "idea", "production", "released", "out_of_print"], description: "crm: lead (default), active customer, or past. shelf: want (default), now (reading / watching), done or dropped. publish: idea (default), production, released or out_of_print." }],
     ["tax_id", ["crm", "invoices", "quote"], { type: "string", description: "crm: VAT / tax number (e.g. Greek ΑΦΜ). invoices: the client's tax number, to find the Invoices client; quote: kept on a new client." }],
@@ -3569,7 +3582,10 @@
                       plants: "plants (Plant Care)", petcare: "pet health records", shelf: "Media Shelf titles (books, films, games…)",
                       publish: "titles the user publishes (Publishing; a list or catalogue of titles: all of them in one create_items call, never one card per title)",
                       invoices: "invoice drafts (Invoices; saved as drafts, never issued: say the draft is ready for the user to check and issue in Invoices)",
-                      quote: "quotes (Quote; saved as drafts: say the quote is ready for the user to check and send from Quote)" };
+                      quote: "quotes (Quote; saved as drafts: say the quote is ready for the user to check and send from Quote)",
+                      wiki: "Wiki articles (a long text: one article per topic, linked with [[Title]])",
+                      flashcards: "Flashcards notes (study cards; many in one call)",
+                      split: "Split expenses (shared costs in a group, split equally; uneven splits are made in Split)" };
       lines.push("To add new " + opts.creates.map(function (a) { return CR_WHAT[a] || a; }).join(", ") +
         ", call create_items (all of one app in one call, even a single one) instead of propose_entry: the user ticks and adds them on one card. Say they were added only when the result says so, and which ones the user left out or were already there. When the user hasn't said where (which list, board, notebook…), leave it out and the app's default is used." +
         (opts.creates.indexOf("crm_deal") >= 0 ? " CRM history, follow-ups and deals belong to a customer: give its ref as customer (search_data first; add the customer first when it is missing), never a name. Something done or said for a customer is crm_activity; something still to do on a day is crm_followup." : "") +

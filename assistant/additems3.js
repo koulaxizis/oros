@@ -1299,6 +1299,393 @@
     return { ok: true, data: Q.canonState(d) };
   }
 
+  // ---------- 10. Wiki: new articles (AS-ADD9, GATE-PAR P4 wave 2) ----------
+  // wiki.js addArticles: an article { id, m, w, t, x, r, anc: [], alt:
+  // [], s, c } through WikiCore.normArt, the data through merge(d,
+  // null), and its first revision file on the orOS disk (revPath /
+  // revFile, as Wiki writes it; res.disk, written after the data). A
+  // title already in that wiki is refused (change it with change_item):
+  // Wiki's links find an article by its title. The wiki is named, or
+  // the only one; with none yet, the user opens Wiki once.
+  function wikiCore() {
+    if (root.WikiCore) return root.WikiCore;
+    if (NODE) { try { return require("../wiki/core.js"); } catch (e) { return null; } }
+    return null;
+  }
+  function normWikiArt(x, w) {
+    var C = wikiCore();
+    if (!C) return { err: "Wiki is not available right now." };
+    if (!empty(x, "title") && typeof x.title !== "string") return { err: w + "title must be text." };
+    var t = C.cleanTitle(x.title);
+    if (!t) return { err: w + "title (the article's title) is required." };
+    if (String(x.title).trim().length > 200) return { err: w + "title has more than 200 characters; Wiki keeps 200." };
+    if (typeof x.text !== "string" || !x.text.trim()) return { err: w + "text (the article, in Wiki's Markdown) is required." };
+    var tx = x.text.replace(/\r\n?/g, "\n");
+    if (tx.length > C.MAX_TEXT) return { err: w + "text has " + tx.length + " characters; a Wiki article keeps " + C.MAX_TEXT + ". Split it into several articles." };
+    var r = text1(x, "wiki", 80, w, "a wiki's name");
+    if (r.err) return r;
+    return { o: { t: t, x: tx, wiki: r.v }, key: fold(r.v) + "|" + C.fold(t) };
+  }
+  function wkBase(d) {
+    var C = wikiCore();
+    return d == null ? C.empty() : isObj(d) && Array.isArray(d.arts) && Array.isArray(d.wikis) ? C.merge(d, null) : null;
+  }
+  function wkWiki(C, d, name) {
+    var ws = d.wikis;
+    if (!ws.length) return { err: "Wiki has no wiki yet. Ask the user to open Wiki once." };
+    if (!name) return ws.length === 1 ? { v: ws[0] } : { err: "wiki: the user has several wikis (" + ws.map(function (x) { return x.n || x.id; }).join(", ") + "); give wiki." };
+    var hit = ws.filter(function (x) { return C.fold(x.n) === C.fold(name); });
+    return hit.length ? { v: hit[0] } : { err: "wiki " + name + " is not one of the user's wikis: " + ws.map(function (x) { return x.n || x.id; }).join(", ") + "." };
+  }
+  function wkPlanOf(d, items) {
+    var C = wikiCore(), out = [];
+    var room0 = C.live(d).length;
+    if (room0 + items.length > C.MAX_ARTS) return { err: "Wiki keeps " + C.MAX_ARTS + " articles and has " + room0 + "; add fewer." };
+    for (var i = 0; i < items.length; i++) {
+      var wr = wkWiki(C, d, items[i].wiki);
+      if (wr.err) return { err: "items[" + i + "]: " + wr.err };
+      var idx = C.titleIndex(d, wr.v.id), had = idx[C.fold(items[i].t)];
+      if (had) return { err: "items[" + i + "]: " + (wr.v.n || "the wiki") + " already has an article “" + had.t + "”. Change it with change_item (find it with search_data in wiki), or give another title." };
+      out.push(wr.v);
+    }
+    return { w: out };
+  }
+  function wkPlan(d, items) {
+    var C = wikiCore();
+    if (!C) return bad("Wiki is not available right now.");
+    d = wkBase(d);
+    if (!d) return notOpened("Wiki");
+    var r = wkPlanOf(d, items);
+    if (r.err) return bad(r.err);
+    return { ok: true, rows: items.map(function (o, i) {
+      var f = [];
+      if (d.wikis.length > 1) f.push(["wiki", r.w[i].n]);
+      f.push(["text", preview(C.snippet(o.x, 300) || o.x, 300)]);
+      return { title: o.t, fields: f, dup: null };
+    }) };
+  }
+  function wkApply(d, items, now, skip) {
+    var C = wikiCore();
+    d = wkBase(d);
+    var r = wkPlanOf(d, items);
+    if (r.err) return bad(r.err);
+    var made = [], undo = { app: "wiki", t: "new", items: [] }, disk = [];
+    items.forEach(function (o, i) {
+      if (skip && skip[i]) return;
+      var m = stampAfter(now + i, 0);
+      var a = C.normArt({ id: C.uid("a"), m: m, w: r.w[i].id, t: o.t, x: o.x, r: C.uid("r"), anc: [], alt: [], c: m });
+      d.arts.push(a);
+      made.push({ i: i, id: a.id, title: a.t, target: { w: a.w, a: a.id } });
+    });
+    d = C.merge(d, null);
+    made.forEach(function (m) {
+      var a = C.byId(d, m.id);
+      undo.items.push({ id: a.id, r: a.r });
+      disk.push({ path: C.revPath(a.id, a.m, a.r), text: JSON.stringify(C.revFile(a, "", "")) });
+    });
+    return { ok: true, data: d, made: made, undo: undo, disk: disk };
+  }
+  function wkUndo(d, u, now) {
+    var C = wikiCore();
+    if (!C || !isObj(d) || !Array.isArray(d.arts)) return bad("Wiki has no articles.");
+    d = C.merge(d, null);
+    for (var i = 0; i < u.items.length; i++) {
+      var a = C.byId(d, u.items[i].id);
+      if (a && a.r !== u.items[i].r) return bad("A new article was changed in Wiki since; nothing was undone (delete it in Wiki).");
+    }
+    u.items.forEach(function (it) {
+      var a = C.byId(d, it.id);
+      if (a) d.tombs[a.id] = stampAfter(now, Math.max(d.tombs[a.id] || 0, a.m));
+    });
+    return { ok: true, data: C.merge(d, null) };
+  }
+
+  // ---------- 11. Flashcards: new notes (AS-ADD9, GATE-PAR P4 wave 2) ----------
+  // The data is the Assistant's "disk:flashcards" copy (assistant.js
+  // fcPrep): { slice, notes, own: { path, dev, items } }. A new note
+  // goes into the Assistant's OWN notes file (its own device id, so one
+  // writer per file still holds, FLASHCARDS v1), as Flashcards' Add
+  // note: basic (front, back), rev (both: true, a reversed card too) or
+  // cloze (text with {{c1::gaps}}, back = its extra), in a deck named
+  // (else the default deck), with the user's tags. Undo writes a
+  // deletion version of each note while unchanged.
+  function fcCore() {
+    if (root.FlashcardsCore) return root.FlashcardsCore;
+    if (NODE) { try { return require("../flashcards/core.js"); } catch (e) { return null; } }
+    return null;
+  }
+  function normCard(x, w) {
+    var C = fcCore();
+    if (!C) return { err: "Flashcards is not available right now." };
+    var L = C.LIMITS.field, o = {};
+    var sides = ["front", "back", "cloze"];
+    for (var i = 0; i < sides.length; i++) {
+      var k = sides[i];
+      if (!empty(x, k) && typeof x[k] !== "string") return { err: w + k + " must be text." };
+      o[k] = empty(x, k) ? "" : x[k].replace(/\r\n?/g, "\n").trim();
+      if (o[k].length > L) return { err: w + k + " has " + o[k].length + " characters; a card side keeps " + L + "." };
+    }
+    if (o.cloze) {
+      if (!C.clozeNums(o.cloze).length) return { err: w + "cloze needs at least one gap, like {{c1::word}}." };
+      if (o.front) return { err: w + "give either cloze or front and back, not both." };
+    } else if (!o.front || !o.back) return { err: w + "a card needs front and back (or cloze with {{c1::gaps}})." };
+    if (!empty(x, "both") && typeof x.both !== "boolean") return { err: w + "both must be true or false." };
+    o.both = x.both === true && !o.cloze;
+    var r = text1(x, "deck", C.LIMITS.name, w, "a deck's name");
+    if (r.err) return r;
+    o.deck = r.v;
+    r = names(x, "labels", C.LIMITS.tags, C.LIMITS.tag, w, "a tag");
+    if (r.err) return r;
+    o.tags = C.normTags(r.v);
+    return { o: o, key: fold(o.cloze || o.front) + "|" + fold(o.back) };
+  }
+  function fcDeckOf(C, d, name) {
+    var decks = C.normalize(d.slice).decks;
+    if (!name) return { v: C.DEFAULT_DECK };
+    var f = fold(name), hit = decks.filter(function (k) { return fold(k.n) === f; })[0];
+    if (hit) return { v: hit.id };
+    if (f === "default") return { v: C.DEFAULT_DECK };
+    return { err: "Flashcards has no deck named “" + name + "”" + (decks.length ? " (its decks: " + decks.map(function (k) { return k.n; }).join(", ") + ")" : "") + ". New decks are made in Flashcards." };
+  }
+  function fcLive(d) {
+    return (Array.isArray(d.notes) ? d.notes : []).filter(function (n) { return isObj(n) && !n.del; });
+  }
+  function fcPlanOf(C, d, items) {
+    if (!isObj(d) || !isObj(d.slice)) return { err: "Flashcards has not been opened on this device yet. Ask the user to open Flashcards once." };
+    if (!isObj(d.own) || typeof d.own.path !== "string" || !d.own.path) return { err: "The orOS disk is not reachable, so no Flashcards notes can be added now." };
+    var have = fcLive(d).length;
+    if (have + items.length > C.LIMITS.notes) return { err: "Flashcards keeps " + C.LIMITS.notes + " notes and has " + have + "; add fewer." };
+    var dk = [];
+    for (var i = 0; i < items.length; i++) {
+      var r = fcDeckOf(C, d, items[i].deck);
+      if (r.err) return { err: "items[" + i + "]: " + r.err };
+      dk.push(r.v);
+    }
+    return { dk: dk };
+  }
+  function fcNoteOf(o, id, m, dk) {
+    var n = { id: id, m: m, dk: dk, k: o.cloze ? "cloze" : o.both ? "rev" : "basic", tg: o.tags };
+    n.f = o.cloze ? { x: o.cloze, e: o.back } : { q: o.front, a: o.back };
+    return n;
+  }
+  function fcPlan(d, items) {
+    var C = fcCore();
+    if (!C) return bad("Flashcards is not available right now.");
+    var r = fcPlanOf(C, d, items);
+    if (r.err) return bad(r.err);
+    var decks = C.normalize(d.slice).decks, live = fcLive(d);
+    return { ok: true, rows: items.map(function (o, i) {
+      var f = [], dup = null, q = o.cloze || o.front;
+      live.forEach(function (n) {
+        if (dup) return;
+        var nq = n.k === "cloze" ? n.f.x : n.f.q;
+        if (fold(nq) === fold(q)) dup = { id: n.id, title: nq.slice(0, 80), target: { note: n.id } };
+      });
+      var dn = decks.filter(function (k) { return k.id === r.dk[i]; })[0];
+      if (dn) f.push(["deck", dn.n]);
+      if (o.cloze) { if (o.back) f.push(["back", preview(o.back, 200)]); }
+      else f.push(["back", preview(o.back, 200)]);
+      if (o.both) f.push(["kind", "rev"]);
+      if (o.tags.length) f.push(["labels", o.tags.join(", ")]);
+      return { title: preview(q, 120), fields: f, dup: dup };
+    }) };
+  }
+  function fcApply(d, items, now, skip) {
+    var C = fcCore();
+    var r = fcPlanOf(C, d, items);
+    if (r.err) return bad(r.err);
+    d = clone(d);
+    var made = [], undo = { app: "flashcards", t: "new", items: [] }, vers = [], taken = {};
+    fcLive(d).concat(d.own.items || []).forEach(function (n) { if (isObj(n)) taken[n.id] = 1; });
+    items.forEach(function (o, i) {
+      if (skip && skip[i]) return;
+      var id;
+      do { id = C.newId("n", now, rnd(8)); } while (taken[id]);
+      taken[id] = 1;
+      var n = C.normNote(fcNoteOf(o, id, stampAfter(now, 0), r.dk[i]));
+      vers.push(n);
+      made.push({ i: i, id: id, title: (o.cloze || o.front).slice(0, 80), target: { note: id } });
+      undo.items.push({ id: id, x: clone(n) });
+    });
+    d.own.items = C.mergeNotes(d.own.items, vers);
+    d.notes = C.mergeNotes(d.notes, vers);
+    return { ok: true, data: d, made: made, undo: undo };
+  }
+  function fcUndo(d, u, now) {
+    var C = fcCore();
+    if (!C || !isObj(d) || !isObj(d.own) || !d.own.path) return bad("The orOS disk is not reachable; nothing was undone.");
+    d = clone(d);
+    var map = C.foldNotes({}, d.notes), dels = [];
+    for (var i = 0; i < u.items.length; i++) {
+      var n = map[u.items[i].id];
+      if (n && !n.del && JSON.stringify(n) !== JSON.stringify(u.items[i].x)) return bad("A new note was changed in Flashcards since; nothing was undone (delete it in Flashcards).");
+    }
+    u.items.forEach(function (it) {
+      var n = map[it.id];
+      if (n && !n.del) dels.push({ id: it.id, m: stampAfter(now, n.m), del: 1 });
+    });
+    d.own.items = C.mergeNotes(d.own.items, dels);
+    d.notes = C.mergeNotes(d.notes, dels);
+    return { ok: true, data: d };
+  }
+
+  // ---------- 12. Split: a shared expense (AS-ADD9, GATE-PAR P4 wave 2) ----------
+  // split.js normExp shape, split equally ("eq"): one payer (the user's
+  // own person in the group when left out), shared by the people named
+  // (all of the group when left out), in the group's currency. Only the
+  // user's own groups are in oros-split-data (household groups live in
+  // the household); an archived group takes nothing. The record is the
+  // canonical form (keys in normExp's order, lists by id), so opening
+  // Split rewrites nothing. Undo: a tombstone "exp:<id>" while unchanged.
+  var SPL = { title: 60, note: 140, max: 100000000000, exp: 3000, people: 30 };
+  var SPL_CATS = ["food", "groc", "stay", "trans", "bills", "fun", "other"];
+  var SPL_CAT_NAMES = { food: ["food", "eating out", "restaurant", "φαγητό"], groc: ["groceries", "supermarket", "ψώνια"], stay: ["stay", "hotel", "accommodation", "rent", "διαμονή"],
+                        trans: ["transport", "travel", "fuel", "taxi", "μεταφορά"], bills: ["bills", "utilities", "λογαριασμοί"], fun: ["fun", "entertainment", "διασκέδαση"], other: ["other", "άλλο"] };
+  function normSplit(x, w) {
+    var r = text1(x, "title", SPL.title, w, "an expense's title");
+    if (r.err) return r;
+    if (!r.v) return { err: w + "title (what was paid for) is required." };
+    var o = { t: r.v.replace(/\s+/g, " ") };
+    var a = cents(x, "amount", SPL.max, w);
+    if (a.err) return a;
+    if (!a.v) return { err: w + "amount (more than 0, in the group's currency) is required." };
+    o.a = a.v;
+    r = dateOf(x, "date", w);
+    if (r.err) return r;
+    o.d = r.v || "";
+    o.c = "other";
+    if (!empty(x, "category")) {
+      var f = fold(String(x.category)), hit = "";
+      SPL_CATS.forEach(function (c) { if (!hit && (fold(c) === f || SPL_CAT_NAMES[c].some(function (n) { return fold(n) === f; }))) hit = c; });
+      if (!hit) return { err: w + "category for Split is one of: food, groceries, stay, transport, bills, fun, other." };
+      o.c = hit;
+    }
+    r = text1(x, "note", SPL.note, w, "an expense's note");
+    if (r.err) return r;
+    o.n = r.v.replace(/\s+/g, " ");
+    r = text1(x, "split_group", 40, w, "a Split group's name");
+    if (r.err) return r;
+    o.g = r.v;
+    r = text1(x, "paid_by", 30, w, "a person's name");
+    if (r.err) return r;
+    o.by = r.v;
+    r = names(x, "shared_by", SPL.people, 30, w, "a person's name");
+    if (r.err) return r;
+    o.sh = r.v;
+    return { o: o, key: fold(o.t) + "|" + o.a };
+  }
+  function spLive(d, list, tomb) {
+    var tombs = isObj(d.tombs) ? d.tombs : {};
+    return (Array.isArray(d[list]) ? d[list] : []).filter(function (x) {
+      return isObj(x) && typeof x.id === "string" && !(typeof tombs[tomb + ":" + x.id] === "number" && tombs[tomb + ":" + x.id] >= x.m);
+    });
+  }
+  function spGid(id) { var i = id.indexOf("."); return i < 0 ? id : id.slice(0, i); }
+  function spGroup(d, name) {
+    var gs = spLive(d, "groups", "grp").filter(function (g) { return !g.arch; });
+    if (!gs.length) return { err: "Split has no group yet (or only shared or archived ones). Groups are made in Split." };
+    if (!name) {
+      if (gs.length === 1) return { v: gs[0] };
+      return { err: "Split has several groups (" + gs.map(function (g) { return g.n; }).join(", ") + "): give split_group." };
+    }
+    var f = fold(name), hit = gs.filter(function (g) { return fold(g.n) === f; })[0];
+    return hit ? { v: hit } : { err: "Split has no group named “" + name + "” (its groups: " + gs.map(function (g) { return g.n; }).join(", ") + "). New groups are made in Split." };
+  }
+  function spResolve(d, items, ctx) {
+    var out = [], count = {};
+    (Array.isArray(d.exp) ? d.exp : []).concat(Array.isArray(d.pay) ? d.pay : []).forEach(function (x) { if (isObj(x) && typeof x.id === "string") count[spGid(x.id)] = (count[spGid(x.id)] || 0) + 1; });
+    for (var i = 0; i < items.length; i++) {
+      var o = items[i], w = "items[" + i + "]: ";
+      var g = spGroup(d, o.g);
+      if (g.err) return { err: w + g.err };
+      g = g.v;
+      var ppl = spLive(d, "people", "per").filter(function (p) { return spGid(p.id) === g.id; });
+      if (!ppl.length) return { err: w + "the group " + g.n + " has nobody in it yet. People are added in Split." };
+      var byName = function (n) { var f = fold(n); return ppl.filter(function (p) { return fold(p.n) === f; })[0] || null; };
+      var payer = null;
+      if (o.by) {
+        payer = byName(o.by);
+        if (!payer) return { err: w + "the group " + g.n + " has nobody named “" + o.by + "” (its people: " + ppl.map(function (p) { return p.n; }).join(", ") + ")." };
+      } else {
+        var me = (Array.isArray(d.mine) ? d.mine : []).filter(function (m) { return isObj(m) && m.id === g.id; })[0];
+        payer = me && me.v ? ppl.filter(function (p) { return p.id === me.v; })[0] || null : null;
+        if (!payer) return { err: w + "who paid? Give paid_by (the user has not said who they are in " + g.n + ")." };
+      }
+      var among = [];
+      if (o.sh.length) {
+        for (var j = 0; j < o.sh.length; j++) {
+          var p = byName(o.sh[j]);
+          if (!p) return { err: w + "the group " + g.n + " has nobody named “" + o.sh[j] + "” (its people: " + ppl.map(function (q) { return q.n; }).join(", ") + ")." };
+          if (among.indexOf(p) < 0) among.push(p);
+        }
+      } else among = ppl.slice();
+      count[g.id] = (count[g.id] || 0) + 1;
+      if (count[g.id] > SPL.exp) return { err: w + "the group " + g.n + " keeps " + SPL.exp + " entries; add fewer." };
+      var day = o.d || todayOf(ctx);
+      var dup = null;
+      spLive(d, "exp", "exp").forEach(function (x) {
+        if (!dup && spGid(x.id) === g.id && x.d === day && x.a === o.a && fold(x.t) === fold(o.t)) dup = { id: x.id, title: x.t, target: { exp: x.id } };
+      });
+      out.push({ g: g, payer: payer, among: among, d: day, dup: dup });
+    }
+    return { res: out };
+  }
+  function spPlan(d, items, ctx) {
+    if (!isObj(d) || !Array.isArray(d.groups)) return notOpened("Split");
+    var r = spResolve(d, items, ctx);
+    if (r.err) return bad(r.err);
+    return { ok: true, rows: items.map(function (o, i) {
+      var x = r.res[i];
+      var f = [["group", x.g.n], ["amount", H.money(o.a) + " " + (x.g.cur || "EUR")], ["date", x.d], ["paid_by", x.payer.n],
+               ["shared_by", x.among.map(function (p) { return p.n; }).join(", ")]];
+      if (o.n) f.push(["note", o.n]);
+      return { title: o.t, fields: f, dup: x.dup };
+    }) };
+  }
+  function spApply(d, items, now, skip, ctx) {
+    if (!isObj(d) || !Array.isArray(d.groups)) return notOpened("Split");
+    var r = spResolve(d, items, ctx);
+    if (r.err) return bad(r.err);
+    d = clone(d);
+    if (!Array.isArray(d.exp)) d.exp = [];
+    if (!isObj(d.tombs)) d.tombs = {};
+    var taken = {}, made = [], undo = { app: "split", t: "new", items: [] };
+    d.exp.concat(d.pay || []).forEach(function (x) { if (isObj(x) && typeof x.id === "string") taken[x.id] = 1; });
+    Object.keys(d.tombs).forEach(function (k) { taken[k.replace(/^[a-z]+:/, "")] = 1; });
+    items.forEach(function (o, i) {
+      if (skip && skip[i]) return;
+      var x = r.res[i], id;
+      do { id = x.g.id + "." + (Math.floor(now).toString(36) + rnd(4)).slice(0, 24); } while (taken[id]);
+      taken[id] = 1;
+      var by = {}, w = {};
+      by[x.payer.id] = o.a;
+      x.among.map(function (p) { return p.id; }).sort(cmpStr).forEach(function (pid) { w[pid] = 1; });
+      // split.js normExp: id, m, t, a, d, c, by, mode, w, n
+      var e = { id: id, m: stampAfter(now, 0), t: o.t, a: o.a, d: x.d, c: o.c, by: by, mode: "eq", w: w, n: o.n };
+      d.exp.push(e);
+      made.push({ i: i, id: id, title: o.t, target: { exp: id } });
+      undo.items.push({ id: id, x: clone(e) });
+    });
+    sortById(d.exp);
+    return { ok: true, data: d, made: made, undo: undo };
+  }
+  function spUndo(d, u, now) {
+    if (!isObj(d) || !Array.isArray(d.exp)) return bad("Split has no expenses; nothing was undone.");
+    d = clone(d);
+    if (!isObj(d.tombs)) d.tombs = {};
+    for (var i = 0; i < u.items.length; i++) {
+      var x = byId(d.exp, u.items[i].id);
+      if (x && !unchanged(x, u.items[i].x)) return bad("A new expense was changed in Split since; nothing was undone (delete it in Split).");
+    }
+    u.items.forEach(function (it) {
+      var x = byId(d.exp, it.id);
+      if (!x) return;
+      d.tombs["exp:" + it.id] = stampAfter(now, x.m);
+      d.exp = d.exp.filter(function (y) { return !(isObj(y) && y.id === it.id); });
+    });
+    return { ok: true, data: d };
+  }
+
   A.extend({
     habits: { key: "oros-habits-data", name: "Habits", norm: normHabit, plan: hbPlan, apply: hbApply, undo: hbUndo },
     fitness: { key: "oros-fitness-data", name: "Workouts", norm: normWorkout, plan: ftPlan, apply: ftApply, undo: ftUndo },
@@ -1308,7 +1695,10 @@
     shelf: { key: "oros-shelf-data", name: "Media Shelf", norm: normMedia, plan: shPlan, apply: shApply, undo: shUndo },
     publish: { key: "oros-publish-data", name: "Publishing", norm: normPub, plan: pbPlan, apply: pbApply, undo: pbUndo },
     invoices: { key: "oros-invoices-data", name: "Invoices", norm: normInv, plan: ivPlan, apply: ivApply, undo: ivUndo },
-    quote: { key: "oros-quote-data", name: "Quote", norm: normQuote, plan: qtPlan, apply: qtApply, undo: qtUndo }
+    quote: { key: "oros-quote-data", name: "Quote", norm: normQuote, plan: qtPlan, apply: qtApply, undo: qtUndo },
+    wiki: { key: "oros-wiki-data", name: "Wiki", norm: normWikiArt, plan: wkPlan, apply: wkApply, undo: wkUndo },
+    flashcards: { key: "disk:flashcards", name: "Flashcards", norm: normCard, plan: fcPlan, apply: fcApply, undo: fcUndo },
+    split: { key: "oros-split-data", name: "Split", norm: normSplit, plan: spPlan, apply: spApply, undo: spUndo }
   });
   var api = { CORES: CORES, FT_ACT: FT_ACT, PC_KIND: PC_KIND, SH_TYPES: SH_TYPES, PB_ST: PB_ST, PB_FMT: PB_FMT };
   if (NODE) module.exports = api;
