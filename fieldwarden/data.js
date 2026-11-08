@@ -65,7 +65,7 @@
     crow:    { hp: 1, mv: 4, fly: 1, animal: 1, act: "eat" },
     mole:    { hp: 2, mv: 2, fly: 0, animal: 1, act: "dig" },
     captain: { hp: 6, mv: 2, fly: 0, animal: 0, act: "club", boss: 1 },
-    // farm 2 and 3 (W2, 5.79.00)
+    // farm 2 and 3 (W2, 5.81.00)
     fox:     { hp: 1, mv: 4, fly: 0, animal: 1, act: "raid" },
     thief:   { hp: 2, mv: 3, fly: 0, animal: 0, act: "steal" },
     torch:   { hp: 2, mv: 2, fly: 0, animal: 0, act: "burn" },

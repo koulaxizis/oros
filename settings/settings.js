@@ -955,6 +955,21 @@
                     button(t("gt.hold.inf"), "gt.hold.inf", function () { setHold(Infinity); })));
         var PP = window.orosPush;
         c.appendChild(el("div", "hint", PP && PP.enabled && PP.enabled() ? t("gt.push.on") : t("gt.push.off")));
+        // The daily email (5.79.00): from the owner's Mail account to itself.
+        if (typeof G.digest === "function") {
+          var dg = G.digest();
+          var dl = el("div", "pair");
+          dl.appendChild(el("span", "pair-label", t("gt.dig")));
+          dl.appendChild(switchBtn(dg.on, "gt.dig", function (v) { if (!G.setDigest({ on: v })) gateNote = "gt.fail"; render(); }, t("gt.dig")));
+          c.appendChild(dl);
+          if (dg.on && dg.accounts.length > 1) {
+            c.appendChild(row(t("gt.dig.acct"), select(dg.accounts.map(function (a) { return { value: a.id, label: a.email }; }),
+              dg.acct || dg.accounts[0].id, "gt-dig-acct", function (v) { if (!G.setDigest({ acct: v })) gateNote = "gt.fail"; render(); }), { forId: "f-gt-dig-acct" }));
+          }
+          c.appendChild(el("div", "hint", !dg.on ? t("gt.dig.off") : !dg.accounts.length ? t("gt.dig.nomail") :
+            t("gt.dig.hint", { addr: (dg.accounts.filter(function (a) { return a.id === dg.acct; })[0] || dg.accounts[0]).email }) +
+            (dg.at ? " " + t("gt.dig.last", { when: gateWhen(dg.at) }) : "") + (dg.fails ? " " + t("gt.dig.fail", { n: dg.fails }) : "")));
+        }
       }
       // Claude's changes from every device (synced), with Undo.
       var chg = typeof G.changes === "function" ? G.changes().slice(0, 30) : [];
@@ -986,6 +1001,7 @@
           (typeof gateInfo.devices === "number" ? " · " + t("gt.devs", { n: gateInfo.devices }) : "")));
       }
       c.appendChild(el("div", "hint", t("gt.shared")));
+      c.appendChild(el("div", "hint", t("gt.closed")));
       c.appendChild(actions(
         confirmBtn(t("gt.revoke"), t("gt.revoke.sure"), "gt.revoke", function () {
           G.revoke().then(function () { gateInfo = null; gateNote = "gt.revoked"; render(); }, function () { gateNote = "gt.fail"; render(); });

@@ -280,3 +280,43 @@ test("the synced seat: bad shapes dropped, the newer one wins, merge is symmetri
   assert.equal(G.seatClean(Object.assign({}, a, { r: "http://insecure" })), null);
   assert.deepEqual(G.seatMerge(null, a), a);
 });
+
+test("daily email: due after 20:00 on a day with changes, once, three tries at most (5.79.00)", () => {
+  const at = (h, m, d) => new Date(2026, 10, d || 8, h, m || 0).getTime();
+  const list = [{ id: "aaaa1", t: at(9, 5), app: "budget", n: "budget_add", k: 3, dv: "Laptop" },
+                { id: "aaaa2", t: at(9, 5, 7), app: "kanban", n: "kanban_move_cards", k: 1 }];
+  assert.equal(G.digDue({}, list, at(20, 30)), true, "on by default");
+  assert.equal(G.digDue({}, list, at(19, 59)), false, "not before 20:00");
+  assert.equal(G.digDue({ on: false }, list, at(21)), false);
+  assert.equal(G.digDue({ d: G.ymd(at(21)) }, list, at(21)), false, "sent today");
+  assert.equal(G.digDue({}, list.slice(1), at(21)), false, "no change today");
+  assert.equal(G.digDue({ fd: G.ymd(at(21)), fn: 3 }, list, at(21)), false, "three failures today");
+  assert.equal(G.digDue({ fd: G.ymd(at(21)), fn: 2 }, list, at(21)), true);
+  const m = G.digText(list, at(20, 30), "el");
+  assert.equal(m.subject, "orOS: οι αλλαγές του Claude στις 08/11/2026");
+  assert.match(m.text, /09:05 · πρόσθεσε εγγραφές στο Budget \(3 στοιχεία\) · Laptop/);
+  assert.doesNotMatch(m.text, /Kanban/, "only today's");
+  assert.match(G.digText([Object.assign({ done: 5 }, list[0])], at(21), "en").text, /added Budget entries \(3 items\) · Laptop · undone/);
+});
+
+test("daily email state merges: newer settings, one sender per day, symmetric (5.79.00)", () => {
+  const a = { on: true, acct: "acct01", m: 5, d: "2026-11-08", dv: "bbbbbbbb" };
+  const b = { on: false, acct: "", m: 9, d: "2026-11-08", dv: "aaaaaaaa", fd: "2026-11-08", fn: 1 };
+  const r = G.digMerge(a, b);
+  assert.deepEqual([r.on, r.acct, r.dv, r.fn], [false, "", "aaaaaaaa", 1]);
+  assert.deepEqual(G.digMerge(b, a), r);
+  assert.equal(G.digMerge({ d: "2026-11-09", dv: "zz" }, a).d, "2026-11-09", "the later day wins");
+  assert.equal(G.digClean({ acct: "../x", d: "today" }).acct, "");
+  assert.equal(G.digClean(null).on, true);
+});
+
+test("orOS closed: the seat carries the gate key; the copy's call keys match the relay's (5.80.00)", async () => {
+  const s = { id: "abcdefghijklmnopqrstuv", ss: "x".repeat(43), r: "https://relay.example", m: 5 };
+  assert.equal(G.seatClean(Object.assign({ k: "k".repeat(43) }, s)).k, "k".repeat(43));
+  assert.equal(G.seatClean(Object.assign({ k: "short" }, s)).k, undefined);
+  const R = await import("../relay/gate.js");
+  for (const a of [{}, { app: "budget", month: "2026-11" }, { month: "2026-11", app: "budget" }, { from: "", to: null, q: [1] }]) {
+    assert.equal(G.stableArgs(a), R.stableArgs(a));
+  }
+  assert.equal(G.stableArgs({ month: "2026-11", app: "budget" }), '{"app":"budget","month":"2026-11"}');
+});
