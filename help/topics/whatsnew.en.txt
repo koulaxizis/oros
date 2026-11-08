@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.83.00
+## Version 5.84.00
 - **The Assistant adds many Publishing titles at once.** Ask it to add a list or catalogue of the books you publish: they come on one card with a tick on each, with authors, translator, series, status, release date (and its release plan for a book still to come), back-cover text and editions with ISBN, price, pages and the product in your WooCommerce shop. Nothing is saved before you press `Add`, and `Undo` takes them back. A wrong ISBN, or one already on another title, is refused.
+
+## Version 5.83.00
+- **Fieldwarden: 30 puzzles.** The new puzzle button opens 30 one-turn puzzles, with one, two or three folk on the farm. The invaders already show their acts: save the harvest in a single turn. Undo and Reset turn are free, and solved puzzles get a tick on all your devices.
 
 ## Version 5.82.00
 - **Fieldwarden: Endless.** A third difficulty in `New year`: after the River Bend the three farms come round again, every round with tougher invaders, more of them and a higher quota, until a quota is missed. `Records` keeps the most seasons you won.

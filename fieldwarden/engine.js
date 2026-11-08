@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Fieldwarden — rules engine (v1.2.0)
+// orOS Fieldwarden — rules engine (v1.3.0)
 // NOT the UI: no DOM, no storage. Loaded by fieldwarden/index.html
 // (window.FieldwardenEngine, after fieldwarden/data.js) and by
 // tests/fieldwarden.test.js (module.exports).
@@ -62,6 +62,7 @@
 
   var D = root.FieldwardenData || (typeof require === "function" ? require("./data.js") : null);
   var FOLK = D.FOLK, FOLK_IDS = D.FOLK_IDS, TOOLS = D.TOOLS, UPS = D.UPS, INVADERS = D.INVADERS, ACTS = D.ACTS, FARMS = D.FARMS;
+  var PUZZLES = D.PUZZLES || [];
 
   var N = 6, SIZE = 36, T = 5, SEASONS = 4, MAX_STAGE = 3;
   var DIFFS = ["m", "h", "e"];
@@ -784,6 +785,33 @@
     st.s = makeSeason(st);
     return st;
   }
+  // A puzzle: the last turn of a season set up by hand (data.js PUZZLES);
+  // the quota is the most the fields can still give, one try per End
+  // turn, Reset turn is free. Folk not on the farm sit the puzzle out.
+  //   { f: [3 folk ids], t: 36 tiles, g: 36 stages, x: 36 bruised / hedge
+  //     Health, u: [[folk or invader id, tile]], w: weather of the turn,
+  //     fire: [tiles], q: quota }
+  function newPuzzle(n) {
+    var P = PUZZLES[n - 1];
+    var st = { v: 1, seed: "pz" + n, diff: "h", end: 1, farm: 1, sea: 1, one: 1, pz: n,
+      folk: P.f.map(function (c) { return { c: c, mh: FOLK[c].hp, mv: FOLK[c].mv, u: [0, 0] }; }),
+      coins: 0, won: 0, total: 0, best: 0, ready: 0, phase: "play", res: null, s: null, acts: 0, over: -1 };
+    var t = P.t.split(""), g = P.g.split("").map(Number), x = P.x.split("").map(Number), z = [], i;
+    for (i = 0; i < SIZE; i++) z.push(0);
+    var s = { turn: T, q: P.q, max: 0, wish: { k: "barn" }, drove: 0, t: t, g: g, x: x, p: z.slice(),
+      barn: BARN_HP, bi: t.indexOf("b"), u: [], nid: 1, next: [], wx: ["c", "c", "c", "c", "c", P.w], sched: [[], [], [], [], [], []],
+      rw: 0, r: hashStr("pz:" + n), done: 0, h: 0, fire: z.slice(), hb: 0 };
+    for (i = 0; i < SIZE; i++) if (t[i] === "f") s.max += MAX_STAGE;
+    (P.fire || []).forEach(function (j) { s.fire[j] = 1; });
+    P.u.forEach(function (e) {
+      var fi = P.f.indexOf(e[0]);
+      if (fi >= 0) s.u.push({ id: s.nid++, k: e[0], f: 1, fi: fi, at: e[1], hp: FOLK[e[0]].hp, mh: FOLK[e[0]].hp, mo: 0, ac: 0, it: null, sn: 0 });
+      else newInvader(s, e[0], e[1]);
+    });
+    st.s = s;
+    withRng(s, function () { reveal(st, s); });
+    return st;
+  }
   // A Daily season's score: the sheaves plus the wish bonus.
   function dailyScore(st) { return st.res ? st.res.h + (st.res.w ? WISH_BONUS : 0) : 0; }
   function lastSeason(st) { return st.one === 1 || (st.farm >= st.end && st.sea >= SEASONS); }
@@ -1051,6 +1079,7 @@
     if (st.diff === "e" ? st.end !== MAX_FARM : st.end > FARMS.length) return false;
     if (!isInt(st.farm) || st.farm < 1 || st.farm > st.end || !isInt(st.sea) || st.sea < 1 || st.sea > SEASONS) return false;
     if (st.one !== undefined && (st.one !== 1 || st.farm !== st.end || st.diff !== "h" || st.phase !== "play")) return false;
+    if (st.pz !== undefined && (!isInt(st.pz) || st.pz < 1 || st.pz > PUZZLES.length || st.one !== 1)) return false;
     if (!Array.isArray(st.folk) || st.folk.length !== 3 || !trioOk(st.folk.map(function (f) { return f && f.c; }))) return false;
     if (!st.folk.every(function (f) {
       return isInt(f.mh) && f.mh >= FOLK[f.c].hp && f.mh <= MAX_HP && isInt(f.mv) && f.mv >= FOLK[f.c].mv && f.mv <= MAX_MV &&
@@ -1074,7 +1103,7 @@
     hashStr: hashStr, step: step, dist: dist, dirTo: dirTo, unitAt: unitAt, unitById: unitById, folkUnit: folkUnit,
     trioOk: trioOk, newYear: newYear, toolOf: toolOf, actOrder: actOrder, intentTile: intentTile, chargePath: chargePath,
     harvestOf: harvestOf, wishOk: wishOk, shopOk: shopOk, lastSeason: lastSeason,
-    farmOf: farmOf, loopOf: loopOf, newDaily: newDaily, dailyOf: dailyOf, dailyScore: dailyScore, fireAt: fireAt,
+    farmOf: farmOf, loopOf: loopOf, newDaily: newDaily, dailyOf: dailyOf, newPuzzle: newPuzzle, PUZZLES: PUZZLES, dailyScore: dailyScore, fireAt: fireAt,
     moves: function (st, id) { return movesS(st, st.s, unitById(st.s, id)); },
     targets: function (st, id) { return targetsS(st, st.s, unitById(st.s, id)); },
     projected: function (s) {
