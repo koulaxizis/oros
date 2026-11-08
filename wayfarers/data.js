@@ -24,6 +24,7 @@
 //                 sum: [foe ids], pw: +Power }] }
 // MOVES    id → { k kind, tg target rule, f factor, and statuses }
 //   k: hit (one hero), all (every hero), heal (the most hurt foe),
+//      (hit and all may also Burn, Chill, or pierce = go through Guard)
 //      shell (itself Guards), rally (every foe +Power 2 turns)
 //   tg: low (lowest Health), front (front row first), back (back row
 //       first)
@@ -113,7 +114,12 @@
     heart:   { s: "c", t: 2, price: 26, hp: 12 },
     owl:     { s: "c", t: 2, price: 26, sp: 2 },
     stone:   { s: "c", t: 3, price: 40, gd: 2 },
-    sun:     { s: "c", t: 3, price: 40, sf: 2 }
+    sun:     { s: "c", t: 3, price: 40, sf: 2 },
+    // tier 4 (5.70.00): spoils of the Ash Hills and the Frost Gate, never sold
+    ember:   { s: "w", t: 4, price: 60, pw: 4, sp: 1 },
+    rime:    { s: "w", t: 4, price: 60, pw: 5 },
+    crown:   { s: "c", t: 4, price: 56, hp: 14, gd: 1 },
+    lantern: { s: "c", t: 4, price: 56, sf: 2, sp: 1 }
   };
 
   var ITEMS = {
@@ -132,7 +138,15 @@
     mend:   { k: "heal", n: 8 },
     shell:  { k: "shell" },
     howl:   { k: "rally", n: 1 },
-    rally:  { k: "rally", n: 2 }
+    rally:  { k: "rally", n: 2 },
+    // 5.70.00: the Ash Hills and the Frost Gate
+    scorch: { k: "hit", tg: "low", f: 0.8, burn: 2 },
+    slam:   { k: "hit", tg: "front", f: 1.5 },
+    quake:  { k: "all", f: 0.7 },
+    blaze:  { k: "all", f: 0.5, burn: 2 },
+    rimed:  { k: "hit", tg: "low", f: 0.9, chill: 2 },
+    breath: { k: "all", f: 0.6, chill: 1, pierce: 1 },
+    bolt:   { k: "hit", tg: "back", f: 1.2, pierce: 1 }
   };
 
   var FOES = {
@@ -146,7 +160,31 @@
     captain: { hp: 36, pw: 6, gd: 2, sp: 4, cyc: ["hit", "rally", "sweep"] },
     king:    { hp: 115, pw: 6, gd: 2, sp: 3, cyc: ["hit", "sweep"], boss: 1,
                ph: [{ at: 0.66, cyc: ["briar", "sweep", "hit"], sum: ["sprout", "sprout"] },
-                    { at: 0.33, cyc: ["charge", "sweep"], pw: 2 }] }
+                    { at: 0.33, cyc: ["charge", "sweep"], pw: 2 }] },
+    // the Ash Hills (5.70.00)
+    imp:     { hp: 18, pw: 5, gd: 0, sp: 6, cyc: ["scorch", "hit"] },
+    lizard:  { hp: 24, pw: 6, gd: 1, sp: 5, cyc: ["bite", "shell", "bite"] },
+    bat:     { hp: 14, pw: 5, gd: 0, sp: 8, cyc: ["shot"] },
+    golem:   { hp: 44, pw: 7, gd: 4, sp: 1, cyc: ["shell", "slam"] },
+    shaman:  { hp: 22, pw: 5, gd: 0, sp: 4, cyc: ["mend", "rally", "hit"] },
+    brute:   { hp: 38, pw: 8, gd: 1, sp: 2, cyc: ["hit", "quake"] },
+    salamander: { hp: 28, pw: 6, gd: 1, sp: 5, cyc: ["scorch", "scorch", "sweep"] },
+    raider:  { hp: 28, pw: 7, gd: 1, sp: 5, cyc: ["hit", "hit", "rally"] },
+    colossus: { hp: 180, pw: 8, gd: 3, sp: 2, cyc: ["slam", "quake"], boss: 1,
+               ph: [{ at: 0.66, cyc: ["blaze", "slam", "hit"], sum: ["imp", "imp"] },
+                    { at: 0.33, cyc: ["slam", "blaze"], pw: 2 }] },
+    // the Frost Gate (5.70.00)
+    wisp:    { hp: 20, pw: 6, gd: 0, sp: 7, cyc: ["rimed"] },
+    icewolf: { hp: 28, pw: 8, gd: 1, sp: 8, cyc: ["bite", "bite", "howl"] },
+    sentinel: { hp: 52, pw: 8, gd: 5, sp: 2, cyc: ["shell", "slam"] },
+    caller:  { hp: 28, pw: 8, gd: 0, sp: 5, wet: 1, cyc: ["bolt", "mend"] },
+    yeti:    { hp: 54, pw: 10, gd: 2, sp: 3, cyc: ["hit", "hit", "charge"] },
+    drake:   { hp: 40, pw: 8, gd: 2, sp: 6, cyc: ["rimed", "breath"] },
+    spirit:  { hp: 24, pw: 6, gd: 0, sp: 5, wet: 1, cyc: ["mend", "rimed"] },
+    reaver:  { hp: 38, pw: 9, gd: 2, sp: 4, cyc: ["hit", "rally", "sweep"] },
+    keeper:  { hp: 500, pw: 14, gd: 4, sp: 4, cyc: ["hit", "breath"], boss: 1,
+               ph: [{ at: 0.66, cyc: ["rimed", "breath", "hit"], sum: ["wisp", "wisp"] },
+                    { at: 0.33, cyc: ["charge", "breath"], pw: 2 }] }
   };
 
   var REGIONS = [
@@ -157,6 +195,22 @@
              ["boar", "wolf"], ["sprite", "sprite", "wolf"]],
         h:  [["captain", "archer"], ["boar", "boar", "witch"], ["moss", "moss", "sprite", "witch"]],
         g:  [["king"]]
+      } },
+    { id: "ash",
+      groups: {
+        t1: [["imp", "imp"], ["lizard", "bat"], ["imp", "shaman"], ["bat", "bat", "imp"], ["raider"]],
+        t2: [["golem", "imp"], ["brute", "shaman"], ["salamander", "bat"], ["raider", "raider"],
+             ["lizard", "lizard", "shaman"], ["salamander", "imp", "imp"]],
+        h:  [["golem", "golem", "shaman"], ["brute", "raider", "bat"], ["salamander", "salamander", "shaman", "imp"]],
+        g:  [["colossus"]]
+      } },
+    { id: "frost",
+      groups: {
+        t1: [["wisp", "wisp"], ["icewolf"], ["spirit", "wisp"], ["caller", "wisp"], ["reaver"]],
+        t2: [["icewolf", "icewolf"], ["sentinel", "caller"], ["drake", "wisp"], ["yeti", "spirit"],
+             ["reaver", "caller"], ["spirit", "spirit", "icewolf"]],
+        h:  [["yeti", "yeti", "spirit"], ["drake", "drake", "caller"], ["sentinel", "reaver", "caller", "wisp"]],
+        g:  [["keeper"]]
       } }
   ];
 
@@ -167,6 +221,7 @@
   //   tier n, fight (a fight
   //   of the region's middle kind, then gold n), none
   // cost: gold spent (the choice is shut without it).
+  // r: only in that region (1-3); without r, in any region.
   var EVENTS = [
     { id: "shrine", o: [{ k: "heal", n: 30 }, { k: "mhp", n: 6, cost: 15 }] },
     { id: "tinker", o: [{ k: "xp", n: 25 }, { k: "gold", n: 20 }] },
@@ -177,7 +232,30 @@
     { id: "well",   o: [{ k: "heal", n: 35, cost: 5 }, { k: "gold", n: 8 }] },
     { id: "spar",   o: [{ k: "xp", n: 35, hurt: 6 }, { k: "heal", n: 15 }] },
     { id: "fox",    o: [{ k: "item", id: "f" }, { k: "gold", n: 12 }] },
-    { id: "bridge", o: [{ k: "gold", n: 25, hurt: 4 }, { k: "none" }] }
+    { id: "bridge", o: [{ k: "gold", n: 25, hurt: 4 }, { k: "none" }] },
+    // 5.70.00: anywhere
+    { id: "peddler", o: [{ k: "item", id: "t", cost: 8 }, { k: "item", id: "p", cost: 6 }, { k: "none" }] },
+    { id: "statue",  o: [{ k: "xp", n: 20 }, { k: "gold", n: 15, hurt: 3 }] },
+    { id: "pilgrims", o: [{ k: "xp", n: 30, cost: 10 }, { k: "none" }] },
+    { id: "lost",    o: [{ k: "xp", n: 25, hurt: 4 }, { k: "gold", n: 10 }] },
+    { id: "campfire", o: [{ k: "heal", n: 25 }, { k: "item", id: "p" }] },
+    { id: "oldmap",  o: [{ k: "gold", n: 30, hurt: 5 }, { k: "none" }] },
+    // the Ash Hills
+    { id: "forge",   r: 2, o: [{ k: "gear", n: 3, cost: 25 }, { k: "gold", n: 12 }] },
+    { id: "spring",  r: 2, o: [{ k: "heal", n: 50 }, { k: "mhp", n: 6, cost: 20 }] },
+    { id: "ashfall", r: 2, o: [{ k: "none", hurt: 5 }, { k: "none", cost: 10 }] },
+    { id: "mine",    r: 2, o: [{ k: "gold", n: 35, hurt: 6 }, { k: "xp", n: 20 }] },
+    { id: "glass",   r: 2, o: [{ k: "gear", n: 2 }, { k: "gold", n: 18 }] },
+    { id: "raiders", r: 2, o: [{ k: "fight", n: 45 }, { k: "none" }] },
+    { id: "nest",    r: 2, o: [{ k: "item", id: "f", hurt: 6 }, { k: "none" }] },
+    // the Frost Gate
+    { id: "lake",    r: 3, o: [{ k: "gold", n: 40, hurt: 7 }, { k: "none" }] },
+    { id: "hut",     r: 3, o: [{ k: "heal", n: 60, cost: 10 }, { k: "heal", n: 25 }] },
+    { id: "cave",    r: 3, o: [{ k: "gear", n: 3, hurt: 8 }, { k: "none" }] },
+    { id: "aurora",  r: 3, o: [{ k: "xp", n: 45 }, { k: "heal", n: 30 }] },
+    { id: "sledge",  r: 3, o: [{ k: "fight", n: 55 }, { k: "item", id: "t" }] },
+    { id: "lamp",    r: 3, o: [{ k: "mhp", n: 6, cost: 20 }, { k: "item", id: "f", cost: 25 }] },
+    { id: "tracks",  r: 3, o: [{ k: "fight", n: 40 }, { k: "none", hurt: 4 }] }
   ];
 
   var api = { CLASSES: CLASSES, CLASS_IDS: CLASS_IDS, SKILLS: SKILLS, STAT_UPS: STAT_UPS, UPS: UPS,

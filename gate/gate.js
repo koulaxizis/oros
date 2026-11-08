@@ -789,7 +789,7 @@
     };
     sock.onerror = function () {};
   }
-  // The relay asks a device whose orOS is on screen first (5.71.00):
+  // The relay asks a device whose orOS is on screen first (5.73.00):
   // a phone in the background loses its socket, a computer keeps it.
   function sendVis(sock) {
     try { if (sock && sock.readyState === 1) sock.send(document.visibilityState === "hidden" ? "v0" : "v1"); } catch (e) {}

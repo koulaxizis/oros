@@ -14,15 +14,15 @@ const D = require("../wayfarers/data.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "wayfarers/wayfarers.js"), "utf8");
 const R = (() => {
-  const parts = ["var DATA_VER = 1; var DIFFS = ['g','h']; var CLASS_IDS = " + JSON.stringify(E.CLASS_IDS) + "; var REGIONS_N = " + E.REGIONS.length + "; var BIG = 1e9;"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "mergeWayfarers"].forEach((name) => {
+  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = ['g','h']; var CLASS_IDS = " + JSON.stringify(E.CLASS_IDS) + "; var REGIONS_N = " + E.REGIONS.length + "; var BIG = 1e9; var MAX_DAY = 100000; var MAX_ACTS = 99999; var LAST_N = 10;"];
+  ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeWayfarers"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const one = SRC.indexOf("\n", i);
     const line = SRC.slice(i, one);
     parts.push(/\}\s*$/.test(line) ? line : SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
-  return new Function(parts.join("\n") + "\nreturn { mergeWayfarers };")();
+  return new Function(parts.join("\n") + "\nreturn { mergeWayfarers };").call(E);
 })();
 
 const J = JSON.stringify;
@@ -83,6 +83,7 @@ function pend(st) {
     }
     return E.act(st, { t: "leave" });
   }
+  if (p.k === "tale") return E.act(st, { t: "on" });
   const ev = E.eventOf(p.id);
   for (let o = 0; o < ev.o.length; o++) if (E.choiceOk(st, ev.o[o]) && E.act(st, { t: "ev", o })) return true;
   return null;
@@ -134,10 +135,10 @@ function fightMove(st, smart) {
   const mk = alive.find((x) => x.st.mk > 0);
   tryA({ t: "atk", x: (mk || f).id });
 }
-function journey(seed, diff, classes, smart) {
-  const st = E.newJourney(seed, diff, classes);
+function journey(seed, diff, classes, smart, end) {
+  const st = E.newJourney(seed, diff, classes, end);
   let guard = 0;
-  while (st.over < 0 && guard++ < 5000) {
+  while (st.over < 0 && guard++ < 20000) {
     assert.ok(E.valid(st), "valid state " + seed + " at " + st.acts);
     const before = st.acts;
     if (st.fight) fightMove(st, smart);
@@ -461,6 +462,85 @@ test("wayfarers: camps, markets, events and gear", () => {
   assert.ok(st.fight && st.fight.kind === "e" && st.fight.re === 30);
 });
 
+test("wayfarers: three regions — a guardian down leads to the next map with a rest and a tale; the last one ends the journey", () => {
+  assert.deepEqual(E.REGIONS.map((r) => r.id), ["green", "ash", "frost"]);
+  const st = fight(["knight", "ranger", "mage"], ["king"]);
+  st.fight.kind = "g";
+  st.party[1].hp = 0;
+  st.party[0].hp = 5;
+  foe(st, 1).hp = 1;
+  turnOf(st, 2);
+  const ev = E.act(st, { t: "atk", x: 1 });
+  assert.ok(ev.some((e) => e.e === "region" && e.n === 2));
+  assert.equal(st.region, 2);
+  assert.equal(J(st.map), J(E.makeMap("t", 2)), "the map of region 2 comes from the code");
+  assert.equal(st.at, 0);
+  assert.deepEqual(st.path, [0]);
+  assert.equal(st.party[1].hp, Math.max(1, Math.round(E.heroStats(st, 1).mh / 4)), "the fallen stand at a quarter");
+  assert.ok(st.party[0].hp > 5, "the standing rest on the way");
+  assert.deepEqual(st.pend.map((p) => p.k).filter((k) => k !== "up"), ["loot", "tale"]);
+  assert.ok(st.pend.find((p) => p.k === "loot").o.every((g) => E.GEAR[g].t >= 2), "the Briar King leaves tier 2 or 3");
+  assert.ok(E.valid(st));
+  while (st.pend[0].k !== "tale") E.act(st, st.pend[0].k === "up" ? { t: "up", o: 0 } : { t: "loot", o: -1 });
+  assert.equal(E.act(st, { t: "rest" }), null);
+  assert.ok(E.act(st, { t: "on" }));
+  assert.ok(E.reach(st).length > 0, "walk on in the Ash Hills");
+  const bad = E.clone(st); bad.pend = [{ k: "tale", n: 3 }];
+  assert.equal(E.valid(bad), false, "a tale is only of the region reached");
+  // the last guardian ends it, with no tale
+  const end = fight(["knight", "ranger", "mage"], ["keeper"]);
+  end.region = 3;
+  end.fight.kind = "g";
+  foe(end, 1).hp = 1;
+  turnOf(end, 2);
+  const xp = end.xp;
+  const ev2 = E.act(end, { t: "atk", x: 1 });
+  assert.equal(end.over, 1);
+  assert.ok(ev2.some((e) => e.e === "won"));
+  assert.equal(ev2.find((e) => e.e === "win").xp, 80, "later regions pay double at the Frost Gate");
+  assert.equal(end.xp, xp + 80);
+  assert.equal(end.pend.length, 0);
+});
+
+test("wayfarers: the Ash Hills and the Frost Gate — Burn on every hero, Chill on a hero, hits through Guard; events of the region", () => {
+  // Rime Chills the hero it hits: 3 less Speed
+  const a = fight(["knight", "ranger", "mage"], ["wisp"]);
+  const sp = E.speedOf(a, "h1");
+  foe(a, 1).n = { m: "rimed", tg: 1 };
+  turnOf(a, 0);
+  a.fight.q = ["f1"];
+  E.act(a, { t: "guard" });
+  assert.ok(a.fight.hs[1].st.ch > 0);
+  assert.equal(E.speedOf(a, "h1"), sp - 3);
+  // Bolt goes through Guard: Power × 1.2 on a guarding Mage, halved only
+  const b = fight(["knight", "ranger", "mage"], ["caller"]);
+  foe(b, 1).n = { m: "bolt", tg: 2 };
+  b.party[2].w = "";
+  turnOf(b, 2);
+  b.fight.q = ["f1"];
+  const hp = b.party[2].hp;
+  E.act(b, { t: "guard" });
+  assert.equal(hp - b.party[2].hp, Math.floor(Math.round(D.FOES.caller.pw * 1.2) / 2));
+  // Blaze: every hero Burns
+  const c = fight(["knight", "ranger", "mage"], ["colossus"]);
+  foe(c, 1).n = { m: "blaze", tg: -1 };
+  turnOf(c, 0);
+  c.fight.q = ["f1"];
+  E.act(c, { t: "guard" });
+  assert.ok([0, 1, 2].every((i) => c.fight.hs[i].st.bu > 0));
+  // events: only those of the region (or of any region)
+  for (let k = 0; k < 30; k++) {
+    const st = E.newJourney("ev" + k, "g", ["knight", "ranger", "mage"]);
+    st.region = 2;
+    const n = st.map[0].e[0];
+    st.map[n].k = "e";
+    E.act(st, { t: "go", n });
+    const r = E.eventOf(st.pend[0].id).r;
+    assert.ok(r === undefined || r === 2, st.pend[0].id);
+  }
+  assert.ok(D.EVENTS.length >= 30);
+});
+
 test("wayfarers: valid() refuses broken saves", () => {
   const st = E.newJourney("v", "g", ["knight", "mage", "cleric"]);
   assert.ok(E.valid(st));
@@ -498,14 +578,15 @@ test("wayfarers: 300 bot journeys keep a valid state; the balance targets hold",
   for (let k = 0; k < 150; k++) {
     const p = PARTIES[k % PARTIES.length];
     const a = journey("bal" + k, "g", p, false);
-    if (a.over === 1) simple++;
+    if (a.over === 1 || a.region > 1) simple++;
     const b = journey("bal" + k, "h", p, true);
     if (b.over === 1) { smart++; p.forEach((c) => { wins[c] = (wins[c] || 0) + 1; }); }
     p.forEach((c) => { play[c] = (play[c] || 0) + 1; });
     n++;
   }
   assert.ok(simple / n > 0.7, "a simple bot clears the Greenway on Gentle most of the time: " + simple + "/" + n);
-  assert.ok(smart / n > 0.8, "a combo bot clears it on Hardy: " + smart + "/" + n);
+  console.log("wayfarers balance: simple Gentle past the Greenway " + simple + "/" + n + ", combo bot whole journey on Hardy " + smart + "/" + n);
+  assert.ok(smart / n > 0.4 && smart / n < 0.97, "a combo bot walks the whole road on Hardy often, not always: " + smart + "/" + n);
   E.CLASS_IDS.forEach((c) => assert.ok(wins[c] > 0, c + " is in a winning party"));
 });
 
@@ -521,4 +602,58 @@ test("wayfarers: the records merge is a join (symmetric, idempotent, reset wins)
   assert.equal(AB.rows.old111, undefined, "older than the reset");
   const broken = { ver: 1, br: 0, rows: { "x": { b: 0, s: { g: [1, 1, 1] } }, cccccc3: { b: 0, s: { g: [1, 2, 0] } }, dddddd4: { b: 0, s: { g: [1, 0, 9] } }, eeeeee5: { b: 0, s: { q: [1, 0, 0] } } } };
   assert.deepEqual(m(broken, broken).rows, {}, "bad rows drop");
+});
+
+test("wayfarers: Daily trial days and Last journeys merge as a join (better result wins, newest 10, reset drops)", () => {
+  const m = R.mergeWayfarers;
+  const P = ["knight", "mage", "cleric"];
+  const A = { ver: 1, br: 0, rows: {}, days: { 10: { b: 0, w: 0, c: 5, t: 90 }, 11: { b: 0, w: 1, c: 7, t: 200 } },
+    last: [{ a: 1000, d: "h", p: P, r: 2, w: 0, s: "abc" }, { a: 900, d: "d", p: P, r: 1, w: 1, s: "wf20260110" }] };
+  const B = { ver: 1, br: 0, rows: {}, days: { 10: { b: 0, w: 1, c: 7, t: 300 }, 11: { b: 0, w: 1, c: 7, t: 150 }, 12: { b: 0, w: 0, c: 3, t: 40 } },
+    last: [{ a: 1000, d: "h", p: P, r: 2, w: 0, s: "abc" }, { a: 1100, d: "g", p: P, r: 3, w: 1, s: "zzz" }] };
+  assert.equal(J(m(A, B)), J(m(B, A)));
+  assert.equal(J(m(m(A, B), B)), J(m(A, B)));
+  const AB = m(A, B);
+  assert.deepEqual(AB.days[10], { b: 0, w: 1, c: 7, t: 300 }, "through beats a fall");
+  assert.deepEqual(AB.days[11], { b: 0, w: 1, c: 7, t: 150 }, "fewer moves win");
+  assert.deepEqual(AB.last.map((v) => v.a), [1100, 1000, 900], "newest first, the same journey once");
+  const many = { ver: 1, br: 0, rows: {}, last: [] };
+  for (let k = 1; k <= 14; k++) many.last.push({ a: k, d: "g", p: P, r: 1, w: 0, s: "s" + k });
+  assert.equal(m(many, many).last.length, 10);
+  assert.equal(m(many, many).last[0].a, 14);
+  const reset = m(AB, { ver: 1, br: 950, rows: {} });
+  assert.deepEqual(Object.keys(reset.days), [], "days of an older epoch drop");
+  assert.deepEqual(reset.last.map((v) => v.a), [1100, 1000]);
+  const bad = { ver: 1, br: 0, rows: {}, days: { x: { b: 0, w: 1, c: 7, t: 9 }, 5: { b: 0, w: 2, c: 7, t: 9 }, 6: { b: 0, w: 1, c: 8, t: 9 } },
+    last: [{ a: 5, d: "q", p: P, r: 1, w: 0, s: "a" }, { a: 5, d: "g", p: ["mage", "mage", "bard"], r: 1, w: 0, s: "a" }, { a: 5, d: "g", p: P, r: 4, w: 0, s: "a" }] };
+  assert.deepEqual([m(bad, bad).days, m(bad, bad).last], [{}, []], "bad entries drop");
+  assert.equal(J(m({ ver: 1, br: 0, rows: {} }, { ver: 1, br: 0, rows: {} })), J({ ver: 1, br: 0, rows: {}, days: {}, last: [] }), "older data has no days");
+});
+
+test("wayfarers: the Daily trial — a party of the day from the code, the Greenway only, then the journey ends", () => {
+  const p1 = E.dailyParty("wf20261108");
+  assert.deepEqual(E.dailyParty("wf20261108"), p1, "the same party from the same code");
+  assert.ok(E.partyOk(p1));
+  const front = (c) => E.CLASSES[c].row === "f";
+  for (let k = 1; k < 3; k++) assert.ok(!(front(p1[k]) && !front(p1[k - 1])), "front row first");
+  const seen = {};
+  for (let d = 0; d < 60; d++) seen[E.dailyParty("wf" + d).join()] = 1;
+  assert.ok(Object.keys(seen).length >= 10, "the party changes with the day");
+  const st = E.newJourney("wf20261108", "h", p1, 1);
+  assert.equal(st.end, 1);
+  assert.ok(E.valid(st));
+  assert.equal(E.newJourney("x", "h", p1, 3).end, undefined, "end only below the last region");
+  // the guardian of the Greenway down: the journey is won, no second region
+  let through = 0;
+  for (let d = 0; d < 20; d++) {
+    const seed = "wf" + d, g = journey(seed, "h", E.dailyParty(seed), true, 1);
+    assert.equal(g.region, 1);
+    if (g.over === 1) { through++; assert.equal(g.map[g.at].k, "g"); }
+  }
+  assert.ok(through >= 12, "a combo bot passes most daily trials: " + through + "/20");
+  const bad = JSON.parse(JSON.stringify(st));
+  bad.region = 2;
+  assert.ok(!E.valid(bad), "a trial never walks past its last region");
+  bad.region = 1; bad.end = 3;
+  assert.ok(!E.valid(bad));
 });

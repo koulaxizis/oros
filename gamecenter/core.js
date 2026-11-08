@@ -27,9 +27,9 @@
 
   // The games with a Daily challenge (Wave 49; Realm's Daily island
   // since 5.50, Crypt's Daily crypt since 5.55, Banner's Daily battle
-  // since 5.64), in the order the Today
+  // since 5.64, Wayfarers' Daily trial since 5.71), in the order the Today
   // section shows them.
-  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm", "banner", "crypt"];
+  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm", "banner", "crypt", "wayfarers"];
   // The "Clean sweep" achievement stays the six daily puzzles, so a
   // sweep reached before Realm had a Daily is never taken back.
   var SWEEP = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper"];
@@ -147,7 +147,7 @@
   // Daily results of Sudoku / Nonogram / Flow Free (hints h),
   // Minesweeper and Realm (won w): fills S.dn, the streaks and today.
   function dailyPart(d, S, X, today, game) {
-    var won = game === "minesweeper" || game === "realm" || game === "banner" || game === "crypt";
+    var won = game === "minesweeper" || game === "realm" || game === "banner" || game === "crypt" || game === "wayfarers";
     var on = {}, tried = {};
     S.dn = 0;
     eachDay(d, function (day, v) {
@@ -362,14 +362,17 @@
       dailyPart(d, S, X, today, "crypt");
     },
     // Wayfarers: "<diff>" (g Gentle, h Hardy) → [journeys, won, regions
-    // cleared]; a Hardy win counts as a win on the hardest level
-    wayfarers: function (d, S, X) {
+    // cleared]; a Hardy win counts as a win on the hardest level;
+    // days{day: {w, c, t}} the Daily trial (solved = its guardian beaten;
+    // not in journeys and wins)
+    wayfarers: function (d, S, X, today) {
       S.w = 0;
       eachCell(d, function (k, v) {
         if (!Array.isArray(v) || v.length < 3) return;
         S.p += nat(v[0]); S.w += nat(v[1]);
         if (k === "h" && nat(v[1])) X.hard = true;
       });
+      dailyPart(d, S, X, today, "wayfarers");
     },
     xeri: function (d, S, X) {
       S.w = 0;

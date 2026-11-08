@@ -54,6 +54,11 @@
   var DK = window.orosDaily || null;  // gamekit/daily.js (the Game Center link)
   var REGIONS_N = E.REGIONS.length;
   var BIG = 1e9;
+  var DAILY_END = 1;                   // the Daily trial walks the Greenway…
+  var DAILY_DIFF = "h";                // …on Hardy
+  var MAX_DAY = 100000;
+  var MAX_ACTS = 99999;
+  var LAST_N = 10;
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -117,19 +122,47 @@
       "gear.heavy": "War hammer", "gear.star": "Star blade", "gear.oak": "Oak charm", "gear.plume": "Swallow pin",
       "gear.shell": "Shell charm", "gear.lamp": "Little lamp", "gear.heart": "Heart stone", "gear.owl": "Owl feather",
       "gear.stone": "Guard stone", "gear.sun": "Sun disc",
+      "gear.ember": "Ember blade", "gear.rime": "Rime spear",
+      "gear.crown": "Iron crown", "gear.lantern": "Wayfarer's lantern",
       "gear.w": "Weapon", "gear.c": "Charm", "gear.none": "none",
       "fx.pw": "Power {n}", "fx.hp": "Health {n}", "fx.gd": "Guard {n}", "fx.sp": "Speed {n}", "fx.fo": "Focus {n}", "fx.sf": "+{n} Focus to start a fight",
       "item.p": "Potion", "item.t": "Tonic", "item.f": "Phoenix feather",
       "item.p.d": "Heals 40 % of a hero's Health.", "item.t.d": "3 Focus for a hero, in a fight.", "item.f.d": "A fallen hero stands with half Health.",
       "foe.sprout": "Thornling", "foe.wolf": "Grey wolf", "foe.boar": "Boar", "foe.sprite": "River sprite", "foe.archer": "Bandit archer",
       "foe.moss": "Mossback", "foe.witch": "Thorn witch", "foe.captain": "Bandit captain", "foe.king": "Briar King",
+      "foe.imp": "Ember imp", "foe.lizard": "Ash lizard", "foe.bat": "Cinder bat",
+      "foe.golem": "Stone golem", "foe.shaman": "Ash shaman", "foe.brute": "Hill brute",
+      "foe.salamander": "Salamander", "foe.raider": "Hill raider", "foe.colossus": "Ember Colossus",
+      "foe.wisp": "Frost wisp", "foe.icewolf": "Ice wolf", "foe.sentinel": "Gate sentinel",
+      "foe.caller": "Storm caller", "foe.yeti": "Yeti", "foe.drake": "Ice drake",
+      "foe.spirit": "Snow spirit", "foe.reaver": "Frost reaver", "foe.keeper": "Keeper of the Gate",
       "hab.sprout": "Hits the weakest hero.", "hab.wolf": "Fast. Bites the weakest, then howls: every foe gets 1 more Power.",
       "hab.boar": "Slow. Every second turn it charges the front row for 1.8 ×.", "hab.sprite": "Always Wet. Mends a hurt foe, else hits.",
       "hab.archer": "Shoots the back row.", "hab.moss": "Always Wet. Its shell halves the damage until its next turn.",
       "hab.witch": "Briar: a hit that Burns. Then it mends a foe.", "hab.captain": "Hits, rallies the band (+2 Power), then sweeps every hero.",
       "hab.king": "The guardian of the Greenway. At two thirds of its Health it calls thornlings; at one third it rages.",
+      "hab.imp": "Scorch: a hit that Burns, then a plain hit.",
+      "hab.lizard": "Bites the weakest; every second turn it basks in its shell.",
+      "hab.bat": "Fast. Dives at the back row.",
+      "hab.golem": "Very slow and hard. Shell, then a slam on the front row for 1.5 ×.",
+      "hab.shaman": "Mends a hurt foe, rallies the band (+2 Power), then hits.",
+      "hab.brute": "Slow. A hit, then a quake on every hero.",
+      "hab.salamander": "Scorches twice (hits that Burn), then sweeps every hero.",
+      "hab.raider": "Hits twice, then rallies the band (+2 Power).",
+      "hab.colossus": "The guardian of the Ash Hills. At two thirds of its Health it calls imps and blazes (every hero Burns); at one third it rages.",
+      "hab.wisp": "Fast. Rime: a hit that Chills (3 less Speed).",
+      "hab.icewolf": "Very fast. Bites the weakest, then howls: every foe gets 1 more Power.",
+      "hab.sentinel": "Very hard. Shell, then a slam on the front row.",
+      "hab.caller": "Always Wet. Bolt: hits the back row through Guard. Then mends a foe.",
+      "hab.yeti": "Slow and strong. Two hits, then a charge on the front row.",
+      "hab.drake": "Rime on the weakest, then frost breath: every hero, through Guard, Chilled.",
+      "hab.spirit": "Always Wet. Mends a hurt foe, then Rime.",
+      "hab.reaver": "Hits, rallies the band (+2 Power), then sweeps every hero.",
+      "hab.keeper": "The guardian of the Frost Gate. Its breath goes through Guard. At two thirds of its Health it calls wisps; at one third it rages.",
       "mv.hit": "Hit", "mv.bite": "Bite", "mv.shot": "Shot", "mv.charge": "Charge", "mv.briar": "Briar", "mv.sweep": "Sweep",
       "mv.mend": "Mend", "mv.shell": "Shell", "mv.howl": "Howl", "mv.rally": "Rally",
+      "mv.scorch": "Scorch", "mv.slam": "Slam", "mv.quake": "Quake", "mv.blaze": "Blaze",
+      "mv.rimed": "Rime", "mv.breath": "Frost breath", "mv.bolt": "Bolt",
       "sts.bu": "Burn", "sts.ch": "Chill", "sts.sn": "Stun", "sts.mk": "Marked", "sts.gu": "Guard", "sts.hi": "Hidden",
       "sts.pb": "Anthem", "sts.sb": "Tempo", "sts.ta": "Taunting", "sts.cv": "Covered", "sts.sh": "Shell", "sts.rv": "Rallied", "sts.wet": "Wet",
       "info.foe": "{name} · Health {hp} of {mh} · Power {pw} · Guard {gd} · Speed {sp}",
@@ -137,12 +170,22 @@
       "info.next": "Next: {m}", "info.on": "{m} on {k}", "info.all": "{m} on every hero", "info.sts": "Now: {s}",
       "stop.s": "Start", "stop.f": "Fight", "stop.h": "Hard fight", "stop.c": "Camp", "stop.m": "Market", "stop.e": "Event", "stop.g": "Guardian",
       "region.green": "The Greenway",
+      "region.ash": "The Ash Hills", "region.frost": "The Frost Gate",
       "map.go": "Choose the next stop", "map.at": "{r} · stop {n} of {m}",
       "ev.hit": "{a} hits {b} for {n}", "ev.burn": "{b} burns for {n}", "ev.heal": "{b} heals {n}", "ev.fall": "{b} falls",
       "ev.stun": "{b} is stunned and loses the turn", "ev.sweep": "{a} sweeps the party", "ev.rally": "The foes rally: +{n} Power",
       "ev.shell": "{b} pulls into its shell", "ev.summon": "{b} joins the fight", "ev.phase": "{b} grows fierce!",
       "ev.stand": "{b} stands up", "ev.cover": "{b} takes the hit", "ev.wait": "{a} finds no one to hit",
       "ev.focus": "{b} gets {n} Focus", "ev.song": "{a} sings: {k}",
+      "ev.region": "On to {r}",
+      "tale.on": "Onward",
+      "tale.1": "Three wayfarers set out with a lantern. It must reach the Frost Gate before the long night falls.",
+      "tale.2": "The Briar King is down and the woods fall quiet behind you. Ahead the land turns grey: the Ash Hills, where the old forge still burns. Every hero rests on the way and the fallen stand again.",
+      "tale.3": "The Colossus cracks and its fire goes out. The air turns cold and the snow begins. The Frost Gate is close, and so is the long night. Every hero rests on the way and the fallen stand again.",
+      "tale.g1": "The Briar King rises from the thorns. It will not let the lantern pass.",
+      "tale.g2": "The ground shakes: the Ember Colossus steps out of the forge.",
+      "tale.g3": "The Keeper of the Gate wakes. Behind it waits the long night.",
+      "tale.end": "The lantern reached the Frost Gate! Its light holds the long night back for one more year.",
       "ev.win": "Victory! +{gold} gold, +{xp} XP", "ev.lvl": "Level {n}!", "ev.gear": "Into the bag: {g}", "ev.buy": "Bought: {g}",
       "ev.item": "+1 {i}", "ev.xp": "+{n} XP", "ev.goldUp": "+{n} gold", "ev.mhp": "Every hero gets 6 more most Health",
       "ev.hurt": "{b} loses {n} Health", "ev.train": "{b} trains: +1 Power", "ev.equip": "{b} changes gear",
@@ -175,18 +218,73 @@
       "evt.fox.0": "Follow it (+1 phoenix feather)", "evt.fox.1": "Look where it came from (+12 gold)",
       "evt.title.bridge": "The toll bridge", "evt.bridge": "A toll bridge with no keeper. The toll box fell in the stream.",
       "evt.bridge.0": "Climb down for it (+25 gold, every hero loses 4 Health)", "evt.bridge.1": "Cross and go on",
+      "evt.title.peddler": "A peddler", "evt.peddler": "A peddler with a tall pack waves you over. Everything smells of herbs.",
+      "evt.peddler.0": "A tonic for 8 gold", "evt.peddler.1": "A potion for 6 gold",
+      "evt.peddler.2": "No, thank you", "evt.title.statue": "The old statue",
+      "evt.statue": "A worn statue of a traveller points down the road. Coins glint in the cracks.", "evt.statue.0": "Read the words at its feet (+20 XP)",
+      "evt.statue.1": "Dig out the coins (+15 gold, every hero loses 3 Health)", "evt.title.pilgrims": "Pilgrims",
+      "evt.pilgrims": "Hungry pilgrims share their stories by the road.", "evt.pilgrims.0": "Buy them a meal and listen (10 gold, +30 XP)",
+      "evt.pilgrims.1": "Wish them well and go on", "evt.title.lost": "A lost traveller",
+      "evt.lost": "A traveller has lost the path in the brush.", "evt.lost.0": "Lead them back through the thorns (+25 XP, every hero loses 4 Health)",
+      "evt.lost.1": "Point the way (they give you 10 gold)", "evt.title.campfire": "A friendly fire",
+      "evt.campfire": "Other travellers share their fire and their soup.", "evt.campfire.0": "Rest a while (every hero heals 25 %)",
+      "evt.campfire.1": "Take a potion for the road", "evt.title.oldmap": "An old map",
+      "evt.oldmap": "An old map marks a cache under a fallen tree, deep in the brambles.", "evt.oldmap.0": "Dig it up (+30 gold, every hero loses 5 Health)",
+      "evt.oldmap.1": "Leave it", "evt.title.forge": "The old forge",
+      "evt.forge": "A smith still works the old forge in the hills.", "evt.forge.0": "Pay for her best work (25 gold, gear of tier 3)",
+      "evt.forge.1": "Sell her scrap you found (+12 gold)", "evt.title.spring": "A hot spring",
+      "evt.spring": "Steam rises from a spring between the black rocks.", "evt.spring.0": "Bathe (every hero heals 50 %)",
+      "evt.spring.1": "Leave 20 gold for the spirit of the spring (every hero +6 most Health, for good)", "evt.title.ashfall": "Ashfall",
+      "evt.ashfall": "Hot ash rains from the sky. A goat herder knows a cave.", "evt.ashfall.0": "Push on through it (every hero loses 5 Health)",
+      "evt.ashfall.1": "Pay the herder 10 gold to lead you", "evt.title.mine": "An empty mine",
+      "evt.mine": "An old mine, its rails still shining.", "evt.mine.0": "Search the deep tunnels (+35 gold, every hero loses 6 Health)",
+      "evt.mine.1": "Study the miners' marks (+20 XP)", "evt.title.glass": "Black glass",
+      "evt.glass": "A field of black glass, sharp and bright.", "evt.glass.0": "Make a piece of gear from it (gear of tier 2)",
+      "evt.glass.1": "Gather some to sell (+18 gold)", "evt.title.raiders": "The raiders' camp",
+      "evt.raiders": "Hill raiders sleep around a stolen chest.", "evt.raiders.0": "Attack (a fight, then +45 gold)",
+      "evt.raiders.1": "Sneak past", "evt.title.nest": "A fire nest",
+      "evt.nest": "High on a hot rock, a nest of bright feathers.", "evt.nest.0": "Climb for a feather (a phoenix feather, every hero loses 6 Health)",
+      "evt.nest.1": "Leave it", "evt.title.lake": "The frozen lake",
+      "evt.lake": "Something gold lies under the ice in the middle of the lake.", "evt.lake.0": "Break the ice for it (+40 gold, every hero loses 7 Health)",
+      "evt.lake.1": "Go around", "evt.title.hut": "A hunter's hut",
+      "evt.hut": "A hunter offers a warm bed and a stew.", "evt.hut.0": "Stay the night (10 gold, every hero heals 60 %)",
+      "evt.hut.1": "Warm up by the stove (every hero heals 25 %)", "evt.title.cave": "An ice cave",
+      "evt.cave": "Deep in an ice cave, a blade is frozen in the wall.", "evt.cave.0": "Cut it free (gear of tier 3, every hero loses 8 Health)",
+      "evt.cave.1": "Leave it", "evt.title.aurora": "Northern lights",
+      "evt.aurora": "Green light dances over the snow all night.", "evt.aurora.0": "Watch and learn the old songs (+45 XP)",
+      "evt.aurora.1": "Sleep under it (every hero heals 30 %)", "evt.title.sledge": "A stuck sledge",
+      "evt.sledge": "A sledge is stuck in the snow, and something guards it.", "evt.sledge.0": "Drive it off (a fight, then +55 gold)",
+      "evt.sledge.1": "Take a tonic from the load and go", "evt.title.lamp": "The lamp keeper",
+      "evt.lamp": "An old woman keeps a lamp lit at the roadside, as her mother did.", "evt.lamp.0": "Leave 20 gold for oil (every hero +6 most Health, for good)",
+      "evt.lamp.1": "Buy her phoenix feather (25 gold)", "evt.title.tracks": "Tracks in the snow",
+      "evt.tracks": "Big tracks lead to a cave full of bones and coins.", "evt.tracks.0": "Go in (a fight, then +40 gold)",
+      "evt.tracks.1": "Hurry on through the cold (every hero loses 4 Health)",
       "party.title": "Party", "party.bag": "Bag", "party.empty": "Empty", "party.equip": "Give to {k}", "party.off": "Take off",
       "party.use": "Use", "party.fallen": "fallen", "party.level": "Level {n} · {x} XP", "party.inFight": "Gear can change only between fights.",
       "party.ups": "Upgrades",
       "new.title": "New journey", "new.diff": "Difficulty", "new.party": "Party: choose three", "new.count": "{n} of 3 chosen",
       "new.seed": "Journey code (empty = new land)", "new.start": "Set out", "new.cancel": "Cancel", "new.giveUp": "The journey in progress counts as lost.",
-      "res.won": "The Greenway is safe!", "res.fell": "The party fell", "res.at": "At: {k}",
+      "res.won": "The journey is done!", "res.fell": "The party fell", "res.at": "At: {k}",
       "res.stops": "Stops", "res.kills": "Foes", "res.lvl": "Level", "res.gold": "Gold", "res.code": "Journey code: {seed}",
       "res.same": "Same journey again", "res.new": "New journey",
       "stats.title": "Records", "stats.head": "Journeys · won · regions cleared", "stats.reset": "Reset records",
       "stats.close": "Close", "stats.code": "This journey: {seed}", "stats.classes": "Wins by class", "daily.games": "All games",
       "confirm.reset": "Reset your Wayfarers records on all your devices?", "confirm.yes": "Reset", "confirm.no": "Cancel",
       "toast.reset": "Records reset", "toast.save": "Could not save: storage is full",
+      "btn.daily": "Daily trial", "daily.label": "Daily",
+      "daily.title": "Daily trial #{n}", "daily.won": "Through in {t} moves", "daily.lost": "Fell at stop {c} of {m}",
+      "daily.party": "Party", "daily.moves": "Moves", "daily.streak": "Streak", "daily.best": "Best streak",
+      "daily.oneTry": "The daily trial has one try.", "daily.next": "A new trial tomorrow.",
+      "daily.free": "Free journey", "daily.share": "Share",
+      "daily.rules": "Daily trial: the Greenway on Hardy with today's party. Beat its guardian; one try.",
+      "daily.leave": "Leave today's trial? It counts as your one try.", "daily.leaveYes": "Leave it", "daily.leaveNo": "Keep playing",
+      "daily.giveUp": "Start today's trial? The journey in progress counts as lost.", "daily.go": "Start the trial",
+      "stats.daily": "Daily trial", "stats.dailyRow": "Played · through · streak · best",
+      "share.won": "Through in {t} moves", "share.lost": "Fell at stop {c}/{m}",
+      "last.title": "Last journeys", "last.won": "Journey done", "last.passed": "Through", "last.fell": "Fell in {r}",
+      "last.replay": "Replay", "last.replayLabel": "Replay journey {seed}",
+      "toast.dailyGone": "The daily trial needs the gamekit file: reload orOS",
+      "toast.copied": "Copied: paste it into a chat", "toast.shared": "Shared", "toast.copyFail": "Could not copy",
       "tour.title": "How to play", "tour.next": "Next", "tour.skip": "Skip", "tour.done": "Play",
       "tour.1": "Lead three heroes across the land. Tap a lit stop on the map to go there; the guardian waits at the end.",
       "tour.2": "In a fight everyone acts in Speed order, shown at the top. Each foe shows its next move and whom it will hit.",
@@ -244,19 +342,47 @@
       "gear.heavy": "Πολεμικό σφυρί", "gear.star": "Λεπίδα των άστρων", "gear.oak": "Φυλαχτό βελανιδιάς", "gear.plume": "Καρφίτσα χελιδονιού",
       "gear.shell": "Φυλαχτό από όστρακο", "gear.lamp": "Λυχναράκι", "gear.heart": "Πέτρα της καρδιάς", "gear.owl": "Φτερό κουκουβάγιας",
       "gear.stone": "Πέτρα φρουράς", "gear.sun": "Δίσκος του ήλιου",
+      "gear.ember": "Λεπίδα της θράκας", "gear.rime": "Δόρυ της πάχνης",
+      "gear.crown": "Σιδερένιο στέμμα", "gear.lantern": "Φανάρι του οδοιπόρου",
       "gear.w": "Όπλο", "gear.c": "Φυλαχτό", "gear.none": "κανένα",
       "fx.pw": "Δύναμη {n}", "fx.hp": "Ζωή {n}", "fx.gd": "Άμυνα {n}", "fx.sp": "Ταχύτητα {n}", "fx.fo": "Συγκέντρωση {n}", "fx.sf": "+{n} Συγκέντρωση στην αρχή της μάχης",
       "item.p": "Φίλτρο", "item.t": "Τονωτικό", "item.f": "Φτερό του φοίνικα",
       "item.p.d": "Θεραπεύει το 40 % της ζωής ενός ήρωα.", "item.t.d": "3 Συγκέντρωση σε έναν ήρωα, μέσα στη μάχη.", "item.f.d": "Όποιος έπεσε σηκώνεται με μισή ζωή.",
       "foe.sprout": "Αγκαθάκι", "foe.wolf": "Γκρίζος λύκος", "foe.boar": "Αγριογούρουνο", "foe.sprite": "Νεράιδα του ποταμού", "foe.archer": "Ληστής τοξότης",
       "foe.moss": "Βρυοχελώνα", "foe.witch": "Μάγισσα των αγκαθιών", "foe.captain": "Αρχιληστής", "foe.king": "Βασιλιάς των Βάτων",
+      "foe.imp": "Δαιμονάκι της θράκας", "foe.lizard": "Σαύρα της στάχτης", "foe.bat": "Νυχτερίδα της θράκας",
+      "foe.golem": "Πέτρινος γίγαντας", "foe.shaman": "Σαμάνος της στάχτης", "foe.brute": "Θηρίο των λόφων",
+      "foe.salamander": "Σαλαμάνδρα", "foe.raider": "Ληστής των λόφων", "foe.colossus": "Κολοσσός της θράκας",
+      "foe.wisp": "Πνοή του πάγου", "foe.icewolf": "Λύκος του πάγου", "foe.sentinel": "Φρουρός της Πύλης",
+      "foe.caller": "Καλεστής της θύελλας", "foe.yeti": "Γέτι", "foe.drake": "Δράκος του πάγου",
+      "foe.spirit": "Πνεύμα του χιονιού", "foe.reaver": "Πλιατσικολόγος του πάγου", "foe.keeper": "Ο Φύλακας της Πύλης",
       "hab.sprout": "Χτυπά τον πιο αδύναμο ήρωα.", "hab.wolf": "Γρήγορος. Δαγκώνει τον πιο αδύναμο και μετά ουρλιάζει: κάθε εχθρός παίρνει 1 Δύναμη.",
       "hab.boar": "Αργό. Κάθε δεύτερο γύρο ορμά στην μπροστινή γραμμή με 1,8 ×.", "hab.sprite": "Πάντα βρεγμένη. Γιατρεύει έναν πληγωμένο εχθρό, αλλιώς χτυπά.",
       "hab.archer": "Ρίχνει στην πίσω γραμμή.", "hab.moss": "Πάντα βρεγμένη. Το καβούκι της κόβει τη ζημιά στη μέση ως τον επόμενο γύρο της.",
       "hab.witch": "Βάτα: χτύπημα που καίει. Μετά γιατρεύει έναν εχθρό.", "hab.captain": "Χτυπά, συσπειρώνει τη συμμορία (+2 Δύναμη), μετά σαρώνει όλους.",
       "hab.king": "Ο φύλακας του Πράσινου Δρόμου. Στα δύο τρίτα της ζωής του καλεί αγκαθάκια· στο ένα τρίτο λυσσάει.",
+      "hab.imp": "Πύρωμα: χτύπημα που καίει, μετά απλό χτύπημα.",
+      "hab.lizard": "Δαγκώνει τον πιο αδύναμο· κάθε δεύτερο γύρο λιάζεται μέσα στο καβούκι της.",
+      "hab.bat": "Γρήγορη. Βουτά στην πίσω γραμμή.",
+      "hab.golem": "Πολύ αργός και σκληρός. Καβούκι, μετά συντριβή στην μπροστινή γραμμή με 1,5 ×.",
+      "hab.shaman": "Γιατρεύει έναν πληγωμένο εχθρό, συσπειρώνει τη συμμορία (+2 Δύναμη), μετά χτυπά.",
+      "hab.brute": "Αργό. Ένα χτύπημα, μετά σεισμός σε όλους τους ήρωες.",
+      "hab.salamander": "Δύο πυρώματα (χτυπήματα που καίνε), μετά σαρώνει όλους.",
+      "hab.raider": "Χτυπά δύο φορές, μετά συσπειρώνει τη συμμορία (+2 Δύναμη).",
+      "hab.colossus": "Ο φύλακας των Λόφων της Στάχτης. Στα δύο τρίτα της ζωής του καλεί δαιμονάκια και φλέγεται (καίγονται όλοι)· στο ένα τρίτο λυσσάει.",
+      "hab.wisp": "Γρήγορη. Πάχνη: χτύπημα που παγώνει (3 λιγότερη Ταχύτητα).",
+      "hab.icewolf": "Πολύ γρήγορος. Δαγκώνει τον πιο αδύναμο και μετά ουρλιάζει: κάθε εχθρός παίρνει 1 Δύναμη.",
+      "hab.sentinel": "Πολύ σκληρός. Καβούκι, μετά συντριβή στην μπροστινή γραμμή.",
+      "hab.caller": "Πάντα βρεγμένος. Κεραυνός: χτυπά την πίσω γραμμή περνώντας την Άμυνα. Μετά γιατρεύει έναν εχθρό.",
+      "hab.yeti": "Αργό και δυνατό. Δύο χτυπήματα, μετά επέλαση στην μπροστινή γραμμή.",
+      "hab.drake": "Πάχνη στον πιο αδύναμο, μετά παγωμένη ανάσα: σε όλους, περνά την Άμυνα, παγώνει.",
+      "hab.spirit": "Πάντα βρεγμένο. Γιατρεύει έναν πληγωμένο εχθρό, μετά Πάχνη.",
+      "hab.reaver": "Χτυπά, συσπειρώνει τη συμμορία (+2 Δύναμη), μετά σαρώνει όλους.",
+      "hab.keeper": "Ο φύλακας της Παγωμένης Πύλης. Η ανάσα του περνά την Άμυνα. Στα δύο τρίτα της ζωής του καλεί πνοές του πάγου· στο ένα τρίτο λυσσάει.",
       "mv.hit": "Χτύπημα", "mv.bite": "Δάγκωμα", "mv.shot": "Βολή", "mv.charge": "Επέλαση", "mv.briar": "Βάτα", "mv.sweep": "Σάρωμα",
       "mv.mend": "Γιατρειά", "mv.shell": "Καβούκι", "mv.howl": "Ουρλιαχτό", "mv.rally": "Συσπείρωση",
+      "mv.scorch": "Πύρωμα", "mv.slam": "Συντριβή", "mv.quake": "Σεισμός", "mv.blaze": "Φλόγα",
+      "mv.rimed": "Πάχνη", "mv.breath": "Παγωμένη ανάσα", "mv.bolt": "Κεραυνός",
       "sts.bu": "Κάψιμο", "sts.ch": "Πάγωμα", "sts.sn": "Ζάλη", "sts.mk": "Σημάδι", "sts.gu": "Φύλαξη", "sts.hi": "Κρυμμένος",
       "sts.pb": "Ύμνος", "sts.sb": "Ρυθμός", "sts.ta": "Πρόκληση", "sts.cv": "Κάλυψη", "sts.sh": "Καβούκι", "sts.rv": "Συσπείρωση", "sts.wet": "Βρεγμένο",
       "info.foe": "{name} · Ζωή {hp} από {mh} · Δύναμη {pw} · Άμυνα {gd} · Ταχύτητα {sp}",
@@ -264,12 +390,22 @@
       "info.next": "Επόμενη κίνηση: {m}", "info.on": "{m} σε: {k}", "info.all": "{m} σε όλους τους ήρωες", "info.sts": "Τώρα: {s}",
       "stop.s": "Αφετηρία", "stop.f": "Μάχη", "stop.h": "Δύσκολη μάχη", "stop.c": "Κατασκήνωση", "stop.m": "Αγορά", "stop.e": "Συνάντηση", "stop.g": "Φύλακας",
       "region.green": "Ο Πράσινος Δρόμος",
+      "region.ash": "Οι Λόφοι της Στάχτης", "region.frost": "Η Παγωμένη Πύλη",
       "map.go": "Διάλεξε την επόμενη στάση", "map.at": "{r} · στάση {n} από {m}",
       "ev.hit": "{a} χτυπά: {b}, {n}", "ev.burn": "Καίγεται: {b}, {n}", "ev.heal": "Γιατρεύεται: {b}, {n}", "ev.fall": "Έπεσε: {b}",
       "ev.stun": "Ζαλισμένος: {b}, χάνει τον γύρο", "ev.sweep": "Σαρώνει την ομάδα: {a}", "ev.rally": "Οι εχθροί συσπειρώνονται: +{n} Δύναμη",
       "ev.shell": "Κλείνεται στο καβούκι: {b}", "ev.summon": "Μπαίνει στη μάχη: {b}", "ev.phase": "Αγριεύει: {b}!",
       "ev.stand": "Σηκώνεται: {b}", "ev.cover": "Δέχεται το χτύπημα: {b}", "ev.wait": "Δεν βρίσκει ποιον να χτυπήσει: {a}",
       "ev.focus": "{n} Συγκέντρωση: {b}", "ev.song": "Τραγουδά: {a}, {k}",
+      "ev.region": "Συνεχίζουμε: {r}",
+      "tale.on": "Συνέχεια",
+      "tale.1": "Τρεις οδοιπόροι ξεκινούν με ένα φανάρι. Πρέπει να φτάσει στην Παγωμένη Πύλη πριν πέσει η μεγάλη νύχτα.",
+      "tale.2": "Ο Βασιλιάς των Βάτων έπεσε και το δάσος ησυχάζει πίσω σας. Μπροστά η γη γκριζάρει: οι Λόφοι της Στάχτης, όπου καίει ακόμη το παλιό σιδηρουργείο. Όλοι ξεκουράζονται στον δρόμο και όσοι έπεσαν σηκώνονται ξανά.",
+      "tale.3": "Ο Κολοσσός ραγίζει και η φωτιά του σβήνει. Ο αέρας κρυώνει και αρχίζει το χιόνι. Η Παγωμένη Πύλη είναι κοντά, και η μεγάλη νύχτα επίσης. Όλοι ξεκουράζονται στον δρόμο και όσοι έπεσαν σηκώνονται ξανά.",
+      "tale.g1": "Ο Βασιλιάς των Βάτων υψώνεται μέσα από τα αγκάθια. Δεν αφήνει το φανάρι να περάσει.",
+      "tale.g2": "Η γη τρέμει: ο Κολοσσός της θράκας βγαίνει από το σιδηρουργείο.",
+      "tale.g3": "Ο Φύλακας της Πύλης ξυπνά. Πίσω του περιμένει η μεγάλη νύχτα.",
+      "tale.end": "Το φανάρι έφτασε στην Παγωμένη Πύλη! Το φως του κρατά τη μεγάλη νύχτα μακριά για έναν χρόνο ακόμη.",
       "ev.win": "Νίκη! +{gold} χρυσά, +{xp} XP", "ev.lvl": "Επίπεδο {n}!", "ev.gear": "Στο σακίδιο: {g}", "ev.buy": "Αγόρασες: {g}",
       "ev.item": "+1 {i}", "ev.xp": "+{n} XP", "ev.goldUp": "+{n} χρυσά", "ev.mhp": "Κάθε ήρωας παίρνει 6 ζωή παραπάνω",
       "ev.hurt": "Χάνει {n} ζωή: {b}", "ev.train": "Προπονείται: {b}, +1 Δύναμη", "ev.equip": "Αλλάζει εξοπλισμό: {b}",
@@ -302,18 +438,73 @@
       "evt.fox.0": "Ακολούθησέ την (+1 φτερό του φοίνικα)", "evt.fox.1": "Ψάξε από πού ήρθε (+12 χρυσά)",
       "evt.title.bridge": "Η γέφυρα με τα διόδια", "evt.bridge": "Μια γέφυρα με διόδια χωρίς φύλακα. Το κουτί των διοδίων έπεσε στο ρέμα.",
       "evt.bridge.0": "Κατέβα να το βρεις (+25 χρυσά, κάθε ήρωας χάνει 4 ζωή)", "evt.bridge.1": "Πέρνα απέναντι και συνέχισε",
+      "evt.title.peddler": "Ένας γυρολόγος", "evt.peddler": "Ένας γυρολόγος με ψηλό φορτίο σάς γνέφει. Όλα μυρίζουν βότανα.",
+      "evt.peddler.0": "Ένα τονωτικό για 8 χρυσά", "evt.peddler.1": "Ένα φίλτρο για 6 χρυσά",
+      "evt.peddler.2": "Όχι, ευχαριστώ", "evt.title.statue": "Το παλιό άγαλμα",
+      "evt.statue": "Ένα φθαρμένο άγαλμα οδοιπόρου δείχνει τον δρόμο. Νομίσματα λάμπουν στις ρωγμές.", "evt.statue.0": "Διάβασε τα λόγια στη βάση του (+20 XP)",
+      "evt.statue.1": "Βγάλε τα νομίσματα (+15 χρυσά, κάθε ήρωας χάνει 3 ζωή)", "evt.title.pilgrims": "Προσκυνητές",
+      "evt.pilgrims": "Πεινασμένοι προσκυνητές λένε τις ιστορίες τους στην άκρη του δρόμου.", "evt.pilgrims.0": "Κέρασέ τους φαγητό κι άκου (10 χρυσά, +30 XP)",
+      "evt.pilgrims.1": "Ευχήσου καλό δρόμο και συνέχισε", "evt.title.lost": "Ένας χαμένος ταξιδιώτης",
+      "evt.lost": "Ένας ταξιδιώτης έχασε το μονοπάτι μέσα στους θάμνους.", "evt.lost.0": "Οδήγησέ τον πίσω μέσα από τα αγκάθια (+25 XP, κάθε ήρωας χάνει 4 ζωή)",
+      "evt.lost.1": "Δείξ' του τον δρόμο (σου δίνει 10 χρυσά)", "evt.title.campfire": "Μια φιλική φωτιά",
+      "evt.campfire": "Άλλοι ταξιδιώτες μοιράζονται τη φωτιά και τη σούπα τους.", "evt.campfire.0": "Ξεκουράσου λίγο (κάθε ήρωας θεραπεύεται 25 %)",
+      "evt.campfire.1": "Πάρε ένα φίλτρο για τον δρόμο", "evt.title.oldmap": "Ένας παλιός χάρτης",
+      "evt.oldmap": "Ένας παλιός χάρτης δείχνει κρυψώνα κάτω από ένα πεσμένο δέντρο, βαθιά στα βάτα.", "evt.oldmap.0": "Σκάψε (+30 χρυσά, κάθε ήρωας χάνει 5 ζωή)",
+      "evt.oldmap.1": "Άφησέ τον", "evt.title.forge": "Το παλιό σιδηρουργείο",
+      "evt.forge": "Μια σιδηρουργός δουλεύει ακόμη το παλιό σιδηρουργείο στους λόφους.", "evt.forge.0": "Πλήρωσε για την καλύτερη δουλειά της (25 χρυσά, εξοπλισμός βαθμίδας 3)",
+      "evt.forge.1": "Πούλα της παλιοσίδερα που βρήκες (+12 χρυσά)", "evt.title.spring": "Μια ζεστή πηγή",
+      "evt.spring": "Ατμός βγαίνει από μια πηγή ανάμεσα στους μαύρους βράχους.", "evt.spring.0": "Κάνε μπάνιο (κάθε ήρωας θεραπεύεται 50 %)",
+      "evt.spring.1": "Άφησε 20 χρυσά στο πνεύμα της πηγής (κάθε ήρωας +6 ζωή, για πάντα)", "evt.title.ashfall": "Βροχή στάχτης",
+      "evt.ashfall": "Καυτή στάχτη πέφτει από τον ουρανό. Ένας γιδοβοσκός ξέρει μια σπηλιά.", "evt.ashfall.0": "Προχώρα μέσα της (κάθε ήρωας χάνει 5 ζωή)",
+      "evt.ashfall.1": "Δώσε 10 χρυσά στον βοσκό να σας οδηγήσει", "evt.title.mine": "Ένα άδειο ορυχείο",
+      "evt.mine": "Ένα παλιό ορυχείο με ράγες που ακόμη γυαλίζουν.", "evt.mine.0": "Ψάξε τις βαθιές στοές (+35 χρυσά, κάθε ήρωας χάνει 6 ζωή)",
+      "evt.mine.1": "Μελέτησε τα σημάδια των μεταλλωρύχων (+20 XP)", "evt.title.glass": "Μαύρο γυαλί",
+      "evt.glass": "Ένα χωράφι από μαύρο γυαλί, κοφτερό και λαμπερό.", "evt.glass.0": "Φτιάξε εξοπλισμό από αυτό (εξοπλισμός βαθμίδας 2)",
+      "evt.glass.1": "Μάζεψε λίγο για πούλημα (+18 χρυσά)", "evt.title.raiders": "Ο καταυλισμός των ληστών",
+      "evt.raiders": "Ληστές των λόφων κοιμούνται γύρω από ένα κλεμμένο σεντούκι.", "evt.raiders.0": "Επίθεση (μάχη, μετά +45 χρυσά)",
+      "evt.raiders.1": "Πέρνα κρυφά", "evt.title.nest": "Μια φωλιά της φωτιάς",
+      "evt.nest": "Ψηλά σε έναν καυτό βράχο, μια φωλιά με λαμπερά φτερά.", "evt.nest.0": "Σκαρφάλωσε για ένα φτερό (φτερό του φοίνικα, κάθε ήρωας χάνει 6 ζωή)",
+      "evt.nest.1": "Άφησέ τη", "evt.title.lake": "Η παγωμένη λίμνη",
+      "evt.lake": "Κάτι χρυσό βρίσκεται κάτω από τον πάγο στη μέση της λίμνης.", "evt.lake.0": "Σπάσε τον πάγο (+40 χρυσά, κάθε ήρωας χάνει 7 ζωή)",
+      "evt.lake.1": "Πέρνα γύρω της", "evt.title.hut": "Η καλύβα του κυνηγού",
+      "evt.hut": "Ένας κυνηγός προσφέρει ζεστό κρεβάτι και φαγητό.", "evt.hut.0": "Μείνε το βράδυ (10 χρυσά, κάθε ήρωας θεραπεύεται 60 %)",
+      "evt.hut.1": "Ζεστάσου στη σόμπα (κάθε ήρωας θεραπεύεται 25 %)", "evt.title.cave": "Μια σπηλιά από πάγο",
+      "evt.cave": "Βαθιά σε μια σπηλιά από πάγο, μια λεπίδα είναι παγωμένη στον τοίχο.", "evt.cave.0": "Ελευθέρωσέ τη (εξοπλισμός βαθμίδας 3, κάθε ήρωας χάνει 8 ζωή)",
+      "evt.cave.1": "Άφησέ τη", "evt.title.aurora": "Το βόρειο σέλας",
+      "evt.aurora": "Πράσινο φως χορεύει πάνω από το χιόνι όλη νύχτα.", "evt.aurora.0": "Κοίτα και μάθε τα παλιά τραγούδια (+45 XP)",
+      "evt.aurora.1": "Κοιμήσου από κάτω (κάθε ήρωας θεραπεύεται 30 %)", "evt.title.sledge": "Ένα κολλημένο έλκηθρο",
+      "evt.sledge": "Ένα έλκηθρο κόλλησε στο χιόνι, και κάτι το φυλάει.", "evt.sledge.0": "Διώξ' το (μάχη, μετά +55 χρυσά)",
+      "evt.sledge.1": "Πάρε ένα τονωτικό από το φορτίο και φύγε", "evt.title.lamp": "Η φύλακας του λυχναριού",
+      "evt.lamp": "Μια γριά κρατά ένα λυχνάρι αναμμένο στην άκρη του δρόμου, όπως η μάνα της.", "evt.lamp.0": "Άφησε 20 χρυσά για λάδι (κάθε ήρωας +6 ζωή, για πάντα)",
+      "evt.lamp.1": "Αγόρασε το φτερό του φοίνικα που έχει (25 χρυσά)", "evt.title.tracks": "Πατημασιές στο χιόνι",
+      "evt.tracks": "Μεγάλες πατημασιές οδηγούν σε μια σπηλιά γεμάτη κόκαλα και νομίσματα.", "evt.tracks.0": "Μπες μέσα (μάχη, μετά +40 χρυσά)",
+      "evt.tracks.1": "Βιάσου μέσα στο κρύο (κάθε ήρωας χάνει 4 ζωή)",
       "party.title": "Ομάδα", "party.bag": "Σακίδιο", "party.empty": "Άδειο", "party.equip": "Δώσ' το: {k}", "party.off": "Βγάλ' το",
       "party.use": "Χρήση", "party.fallen": "έπεσε", "party.level": "Επίπεδο {n} · {x} XP", "party.inFight": "Ο εξοπλισμός αλλάζει μόνο ανάμεσα στις μάχες.",
       "party.ups": "Βελτιώσεις",
       "new.title": "Νέο ταξίδι", "new.diff": "Δυσκολία", "new.party": "Ομάδα: διάλεξε τρεις", "new.count": "{n} από 3",
       "new.seed": "Κωδικός ταξιδιού (κενό = νέος τόπος)", "new.start": "Ξεκίνα", "new.cancel": "Άκυρο", "new.giveUp": "Το ταξίδι που παίζεις μετρά ως χαμένο.",
-      "res.won": "Ο Πράσινος Δρόμος είναι ασφαλής!", "res.fell": "Η ομάδα έπεσε", "res.at": "Στο: {k}",
+      "res.won": "Το ταξίδι ολοκληρώθηκε!", "res.fell": "Η ομάδα έπεσε", "res.at": "Στο: {k}",
       "res.stops": "Στάσεις", "res.kills": "Εχθροί", "res.lvl": "Επίπεδο", "res.gold": "Χρυσός", "res.code": "Κωδικός ταξιδιού: {seed}",
       "res.same": "Ίδιο ταξίδι ξανά", "res.new": "Νέο ταξίδι",
       "stats.title": "Ρεκόρ", "stats.head": "Ταξίδια · νίκες · περιοχές", "stats.reset": "Μηδενισμός ρεκόρ",
       "stats.close": "Κλείσιμο", "stats.code": "Αυτό το ταξίδι: {seed}", "stats.classes": "Νίκες ανά τάξη", "daily.games": "Όλα τα παιχνίδια",
       "confirm.reset": "Να μηδενιστούν τα ρεκόρ των Οδοιπόρων σε όλες τις συσκευές σου;", "confirm.yes": "Μηδενισμός", "confirm.no": "Άκυρο",
       "toast.reset": "Τα ρεκόρ μηδενίστηκαν", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
+      "btn.daily": "Δοκιμασία της ημέρας", "daily.label": "Ημέρας",
+      "daily.title": "Δοκιμασία της ημέρας #{n}", "daily.won": "Πέρασες σε {t} κινήσεις", "daily.lost": "Έπεσες στη στάση {c} από {m}",
+      "daily.party": "Ομάδα", "daily.moves": "Κινήσεις", "daily.streak": "Σερί", "daily.best": "Καλύτερο σερί",
+      "daily.oneTry": "Η δοκιμασία της ημέρας παίζεται μία φορά.", "daily.next": "Νέα δοκιμασία αύριο.",
+      "daily.free": "Ελεύθερο ταξίδι", "daily.share": "Κοινοποίηση",
+      "daily.rules": "Δοκιμασία της ημέρας: ο Πράσινος Δρόμος στο Σκληρό με τη σημερινή ομάδα. Νίκησε τον φύλακά του· μία προσπάθεια.",
+      "daily.leave": "Να αφήσεις τη σημερινή δοκιμασία; Μετρά ως η μία σου προσπάθεια.", "daily.leaveYes": "Άφησέ την", "daily.leaveNo": "Συνέχισε",
+      "daily.giveUp": "Να ξεκινήσει η σημερινή δοκιμασία; Το ταξίδι που παίζεις μετρά ως χαμένο.", "daily.go": "Ξεκίνα τη δοκιμασία",
+      "stats.daily": "Δοκιμασία της ημέρας", "stats.dailyRow": "Δοκιμασίες · περάσματα · σερί · καλύτερο",
+      "share.won": "Πέρασα σε {t} κινήσεις", "share.lost": "Έπεσα στη στάση {c}/{m}",
+      "last.title": "Τελευταία ταξίδια", "last.won": "Ολοκληρώθηκε", "last.passed": "Πέρασε", "last.fell": "Έπεσε: {r}",
+      "last.replay": "Ξανά", "last.replayLabel": "Ξανά το ταξίδι {seed}",
+      "toast.dailyGone": "Η δοκιμασία της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
+      "toast.copied": "Αντιγράφηκε: επικόλλησέ το σε μια συνομιλία", "toast.shared": "Κοινοποιήθηκε", "toast.copyFail": "Δεν αντιγράφηκε",
       "tour.title": "Πώς παίζεται", "tour.next": "Επόμενο", "tour.skip": "Παράλειψη", "tour.done": "Παίξε",
       "tour.1": "Οδήγησε τρεις ήρωες μέσα από τον τόπο. Πάτα μια φωτισμένη στάση στον χάρτη για να πας εκεί· στο τέλος περιμένει ο φύλακας.",
       "tour.2": "Στη μάχη ο καθένας παίζει με σειρά Ταχύτητας, που φαίνεται πάνω. Κάθε εχθρός δείχνει την επόμενη κίνησή του και ποιον θα χτυπήσει.",
@@ -365,10 +556,38 @@
   //                                           c: { <class>: wins } } } }
   // Each device only grows its own row, so a per-row max is a join and
   // nothing is double-counted however the devices meet.
+  // days (5.71.00, older data has none): one Daily trial per calendar
+  // day (day 0 = 1 Jan 2026, gamekit/daily.js), one try:
+  // { "<day>": { b, w: 1 through | 0 fell, c: map column reached (0–7),
+  //   t: moves } }. The newer epoch wins; equal epochs keep the better
+  // result (through, then further, then fewer moves: a total order, so
+  // a join). Daily trials never count in rows.
+  // last (5.71.00): the last 10 journeys of every device,
+  // [{ a: end time ms, d: g|h|d (d = Daily), p: [3 classes],
+  //    r: region reached, w: 1 won | 0, s: seed }].
+  // Union by a + s, newest first, the first 10: a join; entries older
+  // than the reset stamp br drop.
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {} }; }
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [] }; }
+  function normDay(v) {
+    if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
+        !isInt(v.c) || v.c < 0 || v.c >= E.COLS || !isInt(v.t) || v.t < 1 || v.t > MAX_ACTS) return null;
+    return { b: v.b, w: v.w, c: v.c, t: v.t };
+  }
+  function dayKeyOk(k) { return /^\d{1,6}$/.test(k) && +k <= MAX_DAY; }
+  function dayBetter(a, c) {
+    if (a.w !== c.w) return a.w > c.w;
+    if (a.c !== c.c) return a.c > c.c;
+    return a.t < c.t;
+  }
+  function normLast(v) {
+    if (!v || typeof v !== "object" || !isInt(v.a) || v.a <= 0 || v.a > 1e13 || ["g", "h", "d"].indexOf(v.d) < 0 ||
+        !E.partyOk(v.p) || !isInt(v.r) || v.r < 1 || v.r > REGIONS_N || (v.w !== 0 && v.w !== 1) ||
+        typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s)) return null;
+    return { a: v.a, d: v.d, p: v.p.slice(), r: v.r, w: v.w, s: v.s };
+  }
   function normRow(row) {
     if (!row || typeof row !== "object" || !isInt(row.b) || row.b < 0) return null;
     var s = {}, c = {}, any = false;
@@ -421,7 +640,33 @@
       CLASS_IDS.forEach(function (k) { if (r.c[k]) c[k] = r.c[k]; });
       sorted[id] = { b: r.b, s: s, c: c };
     });
-    return { ver: DATA_VER, br: br, rows: sorted };
+    var days = {};
+    [a.days, b.days].forEach(function (m) {
+      if (!m || typeof m !== "object" || Array.isArray(m)) return;
+      Object.keys(m).forEach(function (k) {
+        if (!dayKeyOk(k)) return;
+        var v = normDay(m[k]);
+        if (!v || v.b < br) return;
+        var cur = days[+k];
+        if (!cur || v.b > cur.b || (v.b === cur.b && dayBetter(v, cur))) days[+k] = v;
+      });
+    });
+    var sd = {};
+    Object.keys(days).map(Number).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
+    var seen = {}, last = [];
+    [a.last, b.last].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (x) {
+        var v = normLast(x);
+        if (!v || v.a < br) return;
+        var key = v.a + ":" + v.s;
+        // the same journey twice: keep one, by a fixed order
+        if (!seen[key] || cmpStr(JSON.stringify(v), JSON.stringify(seen[key])) > 0) seen[key] = v;
+      });
+    });
+    Object.keys(seen).forEach(function (k) { last.push(seen[k]); });
+    last.sort(function (x, y) { return y.a - x.a || cmpStr(x.s, y.s); });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N) };
   }
   // [journeys, won, regions cleared] for a difficulty, all devices.
   function totals(diff) {
@@ -486,6 +731,36 @@
     save();
   }
 
+  // Daily results: trials played and passed, the current and best
+  // streak of passed days.
+  function dailyStats(todayIdx) {
+    var on = {}, n = 0, w = 0;
+    Object.keys(data.days).forEach(function (k) {
+      n++;
+      if (data.days[k].w) { on[k] = true; w++; }
+    });
+    var s2 = DK ? DK.streaks(on, todayIdx) : { cur: 0, best: 0 };
+    return { n: n, w: w, cur: s2.cur, best: s2.best };
+  }
+  // A journey ended: into Last journeys (once per journey).
+  function logJourney(won) {
+    if (!game || game.logged) return;
+    game.logged = true;
+    var v = normLast({ a: Date.now(), d: game.opts.day !== undefined ? "d" : game.opts.diff, p: game.opts.party,
+      r: st.region, w: won ? 1 : 0, s: game.opts.seed });
+    if (!v) return;
+    data.last = [v].concat(data.last || []);
+    data = mergeWayfarers(data, data);
+    save();
+  }
+  // One try a day: the first result counts.
+  function countDaily(day, won, col, moves) {
+    if (data.days[day] && data.days[day].b >= data.br) return;
+    data.days[day] = { b: data.br, w: won ? 1 : 0, c: clamp(col, 0, E.COLS - 1), t: clamp(moves, 1, MAX_ACTS) };
+    data = mergeWayfarers(data, data);
+    save();
+  }
+
   // ---------- 3. Device-local prefs + session ----------
   var prefs = { diff: "g", party: ["knight", "mage", "cleric"], tour: false, fast: false };
   function loadPrefs() {
@@ -505,8 +780,9 @@
 
   // game = {
   //   g: engine state,
-  //   opts: { diff, seed, party: [3 classes] },
+  //   opts: { diff, seed, party: [3 classes], day (the Daily trial only) },
   //   counted: bool   the journey's end is in the records
+  //   logged: bool    the journey is in Last journeys
   // }
   var game = null;
 
@@ -515,14 +791,16 @@
     var o = s.opts;
     if (!o || DIFFS.indexOf(o.diff) < 0 || o.diff !== s.g.diff || typeof o.seed !== "string" || o.seed !== s.g.seed) return false;
     if (!E.partyOk(o.party) || o.party.join() !== s.g.party.map(function (h) { return h.c; }).join()) return false;
+    if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || s.g.end !== DAILY_END || o.diff !== DAILY_DIFF)) return false;
     return true;
   }
   function loadSession() {
     try {
       var s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
       if (validSession(s)) {
-        s.counted = s.counted === true;
-        return { g: s.g, opts: s.opts, counted: s.counted };
+        var o = { diff: s.opts.diff, seed: s.opts.seed, party: s.opts.party.slice() };
+        if (s.opts.day !== undefined) o.day = s.opts.day;
+        return { g: s.g, opts: o, counted: s.counted === true, logged: s.logged === true };
       }
     } catch (e) {}
     return null;
@@ -545,27 +823,39 @@
 
   function inProgressOf(g) { return !!(g && !g.counted && g.g.over < 0 && g.g.acts > 0); }
   function makeGame(opts) {
-    return { g: E.newJourney(opts.seed, opts.diff, opts.party), opts: { diff: opts.diff, seed: opts.seed, party: opts.party.slice() }, counted: false };
+    var daily = opts.day !== undefined;
+    var o = { diff: opts.diff, seed: opts.seed, party: opts.party.slice() };
+    if (daily) o.day = opts.day;
+    return { g: E.newJourney(opts.seed, opts.diff, opts.party, daily ? DAILY_END : undefined), opts: o, counted: false, logged: false };
   }
   // Regions cleared so far (the guardian of the region in play not yet).
   function cleared(g) { return g.over === 1 ? REGIONS_N : g.region - 1; }
+  // A journey ended: the records (a Daily trial only in its day) and
+  // Last journeys.
+  function endJourney(won) {
+    game.counted = true;
+    if (game.opts.day !== undefined) countDaily(game.opts.day, won, st.map[st.at].c, st.acts);
+    else count(game.opts.diff, won, cleared(st), game.opts.party);
+    logJourney(won);
+  }
   function finishIfOver() {
     if (!game || st.over < 0 || game.counted) return;
-    game.counted = true;
-    count(game.opts.diff, st.over === 1, cleared(st), game.opts.party);
+    endJourney(st.over === 1);
     saveSession();
   }
   function startGame(opts) {
-    // a journey under way and left counts as lost
-    if (game && inProgressOf(game)) { game.counted = true; count(game.opts.diff, false, cleared(st), game.opts.party); }
+    // a journey under way and left counts as lost (a Daily trial too:
+    // its one try)
+    if (game && inProgressOf(game)) endJourney(false);
     game = makeGame(opts);
     st = game.g;
     sel = null;
     cursor = 0;
     saveSession();
-    setMsg(t("map.go"));
+    var first = game.opts.day !== undefined ? t("daily.rules") : t("tale.1");
+    setMsg(first);
     renderAll();
-    live(t("region." + E.REGIONS[st.region - 1].id));
+    live(first + " " + t("region." + E.REGIONS[st.region - 1].id));
     maybeTour();
   }
   function setMsg(text) { $("msg").textContent = text || ""; }
@@ -618,6 +908,7 @@
       case "xp": return t("ev.xp", p);
       case "goldUp": return t("ev.goldUp", p);
       case "mhp": return t("ev.mhp");
+      case "region": return t("ev.region", { r: t("region." + E.REGIONS[e.n - 1].id) });
     }
     return "";
   }
@@ -648,6 +939,7 @@
     ["fight", "hit", "hurt", "heal", "use", "fall", "lvl", "win", "end"].forEach(function (k) { if (sounds[k]) sfx(k); });
     // the message line walks through what happened
     if (!wasFight && st.fight) lines.push(t("fight." + st.fight.kind));
+    if (!wasFight && st.fight && st.fight.kind === "g") lines.push(t("tale.g" + st.region));
     if (st.fight && curHero() >= 0) lines.push(t("fight.your", { k: heroName(curHero()) }));
     var shown = lines.filter(function (x) { return x; });
     if (!shown.length) return;
@@ -733,6 +1025,24 @@
     witch: "M3 20h18M7 20l5-17 5 17M9 14h6",
     captain: "M5 18v-6a7 7 0 0 1 14 0v6zM5 13h14M12 5v8",
     king: "M3 18l2-11 5 5 2-7 2 7 5-5 2 11z",
+    imp: "M8 8 6 3l4 3h4l4-3-2 5M6 12a6 6 0 1 0 12 0 6 6 0 1 0-12 0zM10 12h.01M14 12h.01M12 18v3",
+    lizard: "M3 14c3-3 7-3 10-1s6 2 8 0M7 12l-1-3M11 12l1-3M7 15l-1 3M12 15l1 3",
+    bat: "M2 9c3 0 4 2 5 4 1-2 3-3 5-3s4 1 5 3c1-2 2-4 5-4-1 4-3 7-6 8l-4-2-4 2c-3-1-5-4-6-8z",
+    golem: "M7 4h10v6H7zM5 10h14v8H5zM8 18v3M16 18v3M10 7h.01M14 7h.01",
+    shaman: "M12 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM6 21l2-10h8l2 10M19 5v16",
+    brute: "M5 10a7 7 0 0 1 14 0v4H5zM5 14l-2 6M19 14l2 6M9 18h6M9 9h.01M15 9h.01",
+    salamander: "M4 16c2-6 8-8 12-6s4 6 1 7-5-2-3-4M6 16l-2 3M10 14l-1 4",
+    raider: "M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7zM9 11h6",
+    colossus: "M8 3h8v5H8zM4 8h16v8H4zM7 16l-1 5M17 16l1 5M10 12h4",
+    wisp: "M12 3l1.5 5 5-1.5-3.5 4 3.5 4-5-1.5L12 18l-1.5-5-5 1.5 3.5-4-3.5-4 5 1.5zM12 18v3",
+    icewolf: "M4 20l2-15 4 5h4l4-5 2 15-8 2zM9 14h.01M15 14h.01M12 2v4M10 4h4",
+    sentinel: "M8 3h8v18H8zM8 8h8M8 14h8M12 3v18",
+    caller: "M13 2 6 13h6l-1 9 7-12h-6z",
+    yeti: "M6 21v-9a6 6 0 0 1 12 0v9M4 12l2 4M20 12l-2 4M9 10h.01M15 10h.01M10 14h4",
+    drake: "M3 12l5-3 4 2 4-6 2 6 3 1-3 2-1 5-4-2-4 2-1-4z",
+    spirit: "M6 20V10a6 6 0 0 1 12 0v10l-2-2-2 2-2-2-2 2-2-2zM10 10h.01M14 10h.01",
+    reaver: "M4 20 18 6M14 4h6v6M6 14l4 4",
+    keeper: "M5 21V9l7-6 7 6v12zM9 21v-6h6v6M12 3v4",
     s: "M6 22V3M6 4h12l-3 4.5 3 4.5H6",
     f: "M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2",
     h: "M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2",
@@ -1039,7 +1349,7 @@
     if (M.k === "hit" && f.n.tg >= 0) {
       var tgt = f.n.tg;
       for (var k = 0; k < 3; k++) if (k !== tgt && st.party[k].hp > 0 && st.fight.hs[k].st.cv === tgt + 1) tgt = k;
-      n -= E.heroStats(st, tgt).gd;
+      if (!M.pierce) n -= E.heroStats(st, tgt).gd;
       if (st.fight.hs[tgt].st.gu) n = Math.floor(n / 2);
     }
     return Math.max(1, n);
@@ -1215,6 +1525,10 @@
       n.title = t("st." + k, { n: st.inv[k] });
       n.setAttribute("aria-label", n.title);
     });
+    var db = $("daily-btn");
+    db.hidden = !DK;
+    db.classList.toggle("due", !!DK && !data.days[today()]);
+    db.classList.toggle("on", game.opts.day !== undefined && !game.counted);
   }
   function actBtn(label, cost, on, pressed, fn, title) {
     var b = el("button", "act");
@@ -1310,6 +1624,11 @@
 
   function newDialog() {
     cancelTourWait();
+    // Today's trial under way: leaving it uses the one try.
+    if (game && game.opts.day !== undefined && inProgressOf(game)) {
+      confirmDialog(t("daily.leave"), function () { leaveDaily(); newDialog(); }, t("daily.leaveYes"), t("daily.leaveNo"));
+      return;
+    }
     var o = { diff: prefs.diff, party: prefs.party.slice() };
     var dlg = makeDialog("wf-new");
     dlg.appendChild(el("div", "dlg-title", t("new.title")));
@@ -1567,6 +1886,10 @@
     } else if (p.k === "mk") {
       marketDialog();
       return;
+    } else if (p.k === "tale") {
+      dlg.appendChild(el("div", "dlg-title", t("region." + E.REGIONS[p.n - 1].id)));
+      dlg.appendChild(el("div", "ev-text", t("tale." + p.n)));
+      choice(t("tale.on"), function () { doAct({ t: "on" }); });
     } else if (p.k === "ev") {
       var ev = E.eventOf(p.id);
       dlg.appendChild(el("div", "dlg-title", t("evt.title." + p.id)));
@@ -1612,10 +1935,12 @@
 
   function resultDialog() {
     if (!game || st.over < 0 || document.querySelector("dialog[open]")) return;
+    if (game.opts.day !== undefined && data.days[game.opts.day]) { dailyDialog(game.opts.day); return; }
     var dlg = makeDialog("wf-result");
     var won = st.over === 1;
     dlg.appendChild(el("div", "dlg-title", t("app.name") + " · " + t("diff." + game.opts.diff)));
     dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : t("res.fell")));
+    if (won) dlg.appendChild(el("div", "ev-text", t("tale.end")));
     if (!won) dlg.appendChild(el("div", "dlg-msg", t("res.at", { k: t("stop." + st.map[st.at].k) + " · " + t("region." + E.REGIONS[st.region - 1].id) })));
     dlg.appendChild(row(t("res.lvl"), String(st.lvl)));
     dlg.appendChild(row(t("res.stops"), String(st.stops)));
@@ -1642,9 +1967,14 @@
     });
     dlg.appendChild(el("div", "dlg-sub", t("stats.classes")));
     CLASS_IDS.forEach(function (k) { dlg.appendChild(row(t("cls." + k), String(classWins(k)))); });
-    if (game) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
+    var ds = dailyStats(today());
+    if (ds.n || (data.last || []).length) empty = false;
+    dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
+    dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.best : "–"));
+    lastJourneys(dlg);
+    if (game && game.opts.day === undefined) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
     var acts = el("div", "dlg-actions wrap");
-    if (DK && DK.hasHub()) acts.appendChild(button(t("daily.games"), "", function () { dlg.close(); DK.openHub("wayfarers"); }));
+    hubLink(acts, dlg);
     var reset = button(t("stats.reset"), "danger", function () {
       dlg.close();
       confirmDialog(t("confirm.reset"), resetRecords);
@@ -1666,6 +1996,104 @@
     dlg.appendChild(acts);
     show(dlg, no);
   }
+  // Records › Last journeys: how each one ended, and its code to replay
+  // (a Daily trial replays as a whole journey on Hardy, same land and
+  // party, counted as a normal journey).
+  function lastJourneys(dlg) {
+    var list = data.last || [];
+    if (!list.length) return;
+    dlg.appendChild(el("div", "dlg-sub", t("last.title")));
+    var box = el("div", "lr-list");
+    list.forEach(function (v) {
+      var r = el("div", "lr-row");
+      var what = v.w ? t(v.d === "d" ? "last.passed" : "last.won") : t("last.fell", { r: t("region." + E.REGIONS[v.r - 1].id) });
+      var tx = el("div", "lr-tx");
+      tx.appendChild(el("div", "nm", (v.d === "d" ? t("daily.label") : t("diff." + v.d)) + " · " + what));
+      tx.appendChild(el("div", "fx", v.p.map(function (c) { return t("cls." + c); }).join(", ") + " · " +
+        (DK ? DK.dateLabel(DK.dayIndex(new Date(v.a)), LANG) + " · " : "") + v.s));
+      r.appendChild(tx);
+      var b = button(t("last.replay"), "", function () {
+        dlg.close();
+        var go = function () { startGame({ diff: v.d === "d" ? DAILY_DIFF : v.d, seed: v.s, party: v.p }); };
+        if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), go, t("daily.leaveYes"), t("daily.leaveNo"));
+        else go();
+      });
+      b.setAttribute("aria-label", t("last.replayLabel", { seed: v.s }));
+      r.appendChild(b);
+      box.appendChild(r);
+    });
+    dlg.appendChild(box);
+  }
+
+  // ---------- Daily trial ----------
+  // The Greenway on Hardy, the same land, party and spoils for everyone
+  // that day (the seed "wf" + the date: the game id would make the code
+  // longer than 16 letters), one try.
+  function today() { return DK ? DK.today() : 0; }
+  function dailyOpts(day) {
+    var seed = cleanSeed(DK.seedOf("wf", day));
+    return { diff: DAILY_DIFF, seed: seed, party: E.dailyParty(seed), day: day };
+  }
+  // A Daily trial left before its end counts as a fall where it was.
+  function leaveDaily() {
+    if (game && game.opts.day !== undefined && inProgressOf(game)) {
+      endJourney(false);
+      saveSession();
+      renderAll();
+    }
+  }
+  // The Daily button: today's result when it is played (here or on
+  // another device), else today's trial (resumed when it is open).
+  function openDaily() {
+    if (!DK) { showToast(t("toast.dailyGone")); return; }
+    var d = today();
+    if (data.days[d]) { dailyDialog(d); return; }
+    if (game && game.opts.day === d && !game.counted) return;
+    var go = function () { startGame(dailyOpts(d)); };
+    if (game && inProgressOf(game)) confirmDialog(t("daily.giveUp"), go, t("daily.go"), t("daily.leaveNo"));
+    else go();
+  }
+  function dailyDialog(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var s2 = dailyStats(today());
+    var dlg = makeDialog("wf-daily");
+    dlg.appendChild(el("div", "dlg-title", t("daily.title", { n: day + 1 }) + " · " + DK.dateLabel(day, LANG)));
+    dlg.appendChild(el("div", "dlg-hero" + (r.w ? "" : " lost"), r.w ? t("daily.won", { t: r.t }) : t("daily.lost", { c: r.c + 1, m: E.COLS })));
+    dlg.appendChild(row(t("daily.party"), E.dailyParty(cleanSeed(DK.seedOf("wf", day))).map(function (c) { return t("cls." + c); }).join(", ")));
+    dlg.appendChild(row(t("daily.moves"), String(r.t)));
+    dlg.appendChild(row(t("daily.streak"), String(s2.cur)));
+    dlg.appendChild(row(t("daily.best"), String(s2.best)));
+    if (day === today()) dlg.appendChild(el("div", "dlg-note", t("daily.oneTry") + " " + t("daily.next")));
+    var acts = el("div", "dlg-actions wrap");
+    hubLink(acts, dlg);
+    acts.appendChild(button(t("daily.share"), "", function () { shareDaily(day); }));
+    var free = button(t("daily.free"), "primary", function () { dlg.close(); newDialog(); });
+    acts.appendChild(free);
+    dlg.appendChild(acts);
+    show(dlg, free);
+  }
+  // Spoiler-free: through or not, the stops reached as squares and the
+  // moves. Never what was where.
+  function shareDaily(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var sq = "";
+    for (var k = 1; k < E.COLS; k++) sq += k < r.c || (k === r.c && r.w) ? "🟪" : (k === r.c ? "🟥" : "⬜");
+    var text = DK.shareText({ game: t("app.name"), label: t("daily.label"), day: day, grid: [sq],
+      line: r.w ? "⚔ " + t("share.won", { t: r.t }) : "💀 " + t("share.lost", { c: r.c + 1, m: E.COLS }) });
+    DK.share(text, "orOS " + t("app.name")).then(function (how) {
+      if (how === "copied") showToast(t("toast.copied"));
+      else if (how === "shared") live(t("toast.shared"));
+      else if (how === "failed") showToast(t("toast.copyFail"));
+    });
+  }
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(acts, dlg) {
+    if (!DK || !DK.hasHub()) return;
+    acts.appendChild(button(t("daily.games"), "", function () { dlg.close(); DK.openHub("wayfarers"); }));
+  }
+
   // Reset = a new epoch: every device drops rows older than br.
   function resetRecords() {
     data.br = Math.max(Date.now(), data.br + 1);
@@ -1778,7 +2206,8 @@
     gold:   SVG + '<circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10.5h4a1.5 1.5 0 0 1 0 3h-3"/></svg>',
     p:      SVG + '<path d="M9 3h6M10 3v5l-4 7a4 4 0 0 0 3.5 6h5A4 4 0 0 0 18 15l-4-7V3"/></svg>',
     t:      SVG + '<path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"/></svg>',
-    f:      SVG + '<path d="M20 4C10 4 5 10 4 20M20 4c0 6-4 11-12 12M9 15c2-2 5-6 7-8"/></svg>'
+    f:      SVG + '<path d="M20 4C10 4 5 10 4 20M20 4c0 6-4 11-12 12M9 15c2-2 5-6 7-8"/></svg>',
+    daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M12 13l1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z"/></svg>'
   };
   function paintSfxBtn() {
     var b = $("sfx-btn"), on = sfxOn();
@@ -1859,7 +2288,7 @@
     $("party-btn").title = t("btn.partyKey");
   }
   function paintStatic() {
-    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"], ["daily-btn", "daily", "btn.daily"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1875,6 +2304,9 @@
     $("new-btn").addEventListener("click", function () { newDialog(); });
     $("party-btn").addEventListener("click", partyDialog);
     $("stats-btn").addEventListener("click", statsDialog);
+    $("daily-btn").addEventListener("click", openDaily);
+    // Deep link from the Game Center: { daily: true } opens today's trial.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("fast-btn").addEventListener("click", function () { prefs.fast = !prefs.fast; savePrefs(); paintFastBtn(); });
     $("sfx-btn").addEventListener("click", function () {
       try { localStorage.setItem(SFX_KEY, sfxOn() ? "0" : "1"); } catch (e) {}
@@ -1903,13 +2335,20 @@
     inheritPalette();
     watchPalette();
     game = loadSession();
+    var tg = DK ? DK.takeTarget("wayfarers") : null;
+    var daily = !!(tg && tg.daily && DK);
+    if (daily && !data.days[today()] && !(game && game.opts.day === today() && !game.counted)) {
+      // today's trial straight away, unless a journey under way would count as lost
+      if (!game || !inProgressOf(game)) { game = makeGame(dailyOpts(today())); daily = false; }
+    }
     if (!game) game = makeGame({ diff: prefs.diff, seed: newSeed(), party: prefs.party });
     st = game.g;
     saveSession();
-    setMsg(st.fight ? t("fight." + st.fight.kind) : t("map.go"));
+    setMsg(st.fight ? t("fight." + st.fight.kind) : (game.opts.day !== undefined && !st.acts ? t("daily.rules") : t("map.go")));
     resize();
     renderAll();
-    if (st.over >= 0) setTimeout(resultDialog, 300);
+    if (daily) setTimeout(openDaily, 300);
+    else if (st.over >= 0) setTimeout(resultDialog, 300);
     else if (!st.fight && st.pend.length) setTimeout(pendDialog, 300);
     else maybeTour();
   }
