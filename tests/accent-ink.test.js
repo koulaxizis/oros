@@ -104,3 +104,18 @@ test("no app rule puts a fixed text colour on an accent fill", () => {
   }
   assert.deepEqual(bad, []);
 });
+
+// ACCENT-INK-2 (Tux follow-up 2): --accent-text was never defined, so
+// var(--accent-text, #fff) always fell back to white. The desktop-menu
+// dialog's Close button (quickmenu.js), the PC dialog, Profiles and the
+// Mix timer were white on the near-white Tux dark accent.
+test("no file uses the undefined --accent-text token", () => {
+  const bad = [];
+  for (const f of ALL) {
+    const src = fs.readFileSync(f, "utf8");
+    src.split("\n").forEach((line, i) => {
+      if (/var\(\s*--accent-text\b/.test(line)) bad.push(path.relative(ROOT, f) + ":" + (i + 1));
+    });
+  }
+  assert.deepEqual(bad, []);
+});

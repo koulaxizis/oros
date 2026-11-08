@@ -402,7 +402,7 @@
     "#qm-dlg .qm-actions .qm-left{margin-right:auto}",
     "#qm-dlg .qm-btn{min-height:40px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:transparent;",
     "color:var(--text);font-size:14px;cursor:pointer}",
-    "#qm-dlg .qm-btn.qm-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text,#fff)}",
+    "#qm-dlg .qm-btn.qm-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink, #fff)}",
     "#qm-dlg label.qm-field{display:flex;flex-direction:column;gap:4px;font-size:13px}",
     "#qm-dlg input[type=text],#qm-dlg textarea,#qm-dlg select{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--border);",
     "border-radius:8px;background:var(--input-bg,var(--panel-bg));color:var(--text);width:100%;box-sizing:border-box}",

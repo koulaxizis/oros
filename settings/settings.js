@@ -798,7 +798,7 @@
 
   // orOS Gate (gate.js, BR-GATE): Claude reads the apps set to Read,
   // through this device while orOS is open. Off by default, per device.
-  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "", gateNoSync = false, gateFind = "";
+  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "", gateNoSync = false, gateSens = "", gateFind = "";
   // The join code as a QR (qr/qr-encode.js): an <svg> of dark squares on white.
   function gateQr(text) {
     var Q = window.orosQR;
@@ -905,6 +905,7 @@
       url.readOnly = true;
       url.value = G.relayUrl();
       c.appendChild(row(t("gt.url"), url, { hint: t("gt.url.hint"), forId: "f-gt-url", stack: true }));
+      if (st.gid) c.appendChild(el("div", "hint", t("gt.gid", { id: st.gid })));
       if (st.moved) c.appendChild(el("div", "hint", t("gt.moved")));
       c.appendChild(actions(button(t("gt.copy"), "gt.copy", function () {
         var done = function () { gateNote = "gt.copied"; render(); };
@@ -994,18 +995,37 @@
       c.appendChild(actions(bOn, bOff, bW, bR));
       if (gateFind.trim() && shownApps.length) c.appendChild(el("div", "hint", t("gt.all.shown", { n: shownApps.length })));
       if (!shownApps.length) c.appendChild(el("p", "hint", t("gt.find.none", { q: gateFind.trim() })));
-      var list = el("div", "gt-apps");
-      shownApps.forEach(function (a) {
-        var box = el("div", "gt-app" + (a.read ? " on" : ""));
+      // The personal apps (5.90.00) last, in their own grid under their
+      // warning; a bulk button never turns one on (each needs its warning).
+      var boxOf = function (a) {
+        var box = el("div", "gt-app" + (a.read ? " on" : "") + (a.sensitive ? " sens" : ""));
         var line = el("div", "gt-line");
-        var nm = el("span", "gt-name", a.name);
+        var nm = el("span", "gt-name", a.sensitive ? a.name + " · " + t("gt.sens.tag") : a.name);
         nm.title = a.name;
         line.appendChild(nm);
         line.appendChild(switchBtn(a.read, "gt.app:" + a.id, function (v) {
+          // A personal app: the switch first shows the warning; only
+          // «Allow anyway» turns it on.
+          if (v && a.sensitive) { gateSens = a.id; render(); return; }
+          if (gateSens === a.id) gateSens = "";
           if (!G.setApp(a.id, v ? "read" : false)) gateNote = "gt.fail";
           render();
         }, t("gt.read", { app: a.name })));
         box.appendChild(line);
+        if (a.sensitive && gateSens === a.id && !a.read) {
+          box.classList.add("warn");
+          var wb = el("div", "gt-sens-warn");
+          wb.setAttribute("role", "alert");
+          wb.appendChild(el("div", "hint", t("gt.sens.warn", { app: a.name })));
+          wb.appendChild(actions(
+            button(t("gt.sens.yes"), "gt.sens.yes:" + a.id, function () {
+              gateSens = "";
+              if (!G.setApp(a.id, "read")) gateNote = "gt.fail";
+              render();
+            }, "danger"),
+            button(t("gt.sens.no"), "gt.sens.no:" + a.id, function () { gateSens = ""; render(); })));
+          box.appendChild(wb);
+        }
         if (a.canWrite) {
           var wl = el("div", "gt-line gt-sub");
           wl.appendChild(el("span", "gt-name", t("gt.change")));
@@ -1015,9 +1035,21 @@
           }, t("gt.write", { app: a.name })));
           box.appendChild(wl);
         }
-        list.appendChild(box);
-      });
-      c.appendChild(list);
+        return box;
+      };
+      var plain = shownApps.filter(function (a) { return !a.sensitive; });
+      var pers = shownApps.filter(function (a) { return a.sensitive; });
+      if (plain.length) {
+        var list = el("div", "gt-apps");
+        plain.forEach(function (a) { list.appendChild(boxOf(a)); });
+        c.appendChild(list);
+      }
+      if (pers.length) {
+        c.appendChild(el("div", "hint gt-sens-head", t("gt.sens.head")));
+        var plist = el("div", "gt-apps");
+        pers.forEach(function (a) { plist.appendChild(boxOf(a)); });
+        c.appendChild(plist);
+      }
       var writers = G.apps().filter(function (a) { return a.write; }).map(function (a) { return a.name; });
       if (writers.length) {
         // One rule (5.78.00): no write window; changes can be paused.

@@ -257,7 +257,13 @@
       "gt.invite.code": "On the other device, in Settings › orOS Gate, type {code} under Code from your other device (10 minutes, once).",
       "gt.apps.hint": "What Claude may read (each one off until you turn it on):",
       "gt.read": "Claude may read {app}",
-      "gt.never": "Passwords, Mail, Diary, Mood, Cycle, Health, Fitness, Baby and the Assistant are never offered.",
+      "gt.never": "Passwords and the Assistant are never offered.",
+      "gt.gid": "Gate id: {id}. When orOS is closed, Claude says which gate its link points to; if it is not this one, disconnect and connect the connector in claude.ai again.",
+      "gt.sens.head": "Personal apps (off unless you choose otherwise; read only):",
+      "gt.sens.tag": "personal",
+      "gt.sens.warn": "Careful: {app} holds private data. Whatever Claude reads from it leaves this device and goes to Anthropic, like anything you show Claude, and may stay in your Claude chats. Claude only reads it (never changes it), only while orOS is open, and it is never in the closed-orOS copy. Allow it only if you need Claude to work with {app}; you can turn it off at any time.",
+      "gt.sens.yes": "Allow anyway",
+      "gt.sens.no": "Keep it off",
       "gt.seat": "Your other devices with orOS sync join this gate by themselves when orOS opens there (turning the gate off on one keeps it off there). The code and QR are for a device without sync.",
       "gt.invite.qr": "QR code to join the gate",
       "gt.invite.qr.hint": "Or scan this with the other device's camera: orOS opens with the code filled in.",
@@ -1062,7 +1068,13 @@
       "gt.invite.code": "Στην άλλη συσκευή, στις Ρυθμίσεις › orOS Gate, γράψε {code} στο «Κωδικός από άλλη συσκευή σου» (10 λεπτά, μία φορά).",
       "gt.apps.hint": "Τι μπορεί να διαβάζει ο Claude (όλα κλειστά μέχρι να τα ανοίξεις):",
       "gt.read": "Ο Claude διαβάζει: {app}",
-      "gt.never": "Κωδικοί, Mail, Ημερολόγιο σκέψεων, Διάθεση, Κύκλος, Υγεία, Fitness, Μωρό και ο Βοηθός δεν δίνονται ποτέ.",
+      "gt.never": "Οι Κωδικοί και ο Βοηθός δεν δίνονται ποτέ.",
+      "gt.gid": "Κωδικός πύλης: {id}. Όταν το orOS είναι κλειστό, ο Claude λέει σε ποια πύλη δείχνει η σύνδεσή του· αν δεν είναι αυτή, αποσύνδεσε και σύνδεσε ξανά τον connector στο claude.ai.",
+      "gt.sens.head": "Προσωπικές εφαρμογές (κλειστές, εκτός αν αποφασίσεις αλλιώς· μόνο ανάγνωση):",
+      "gt.sens.tag": "προσωπική",
+      "gt.sens.warn": "Προσοχή: το {app} έχει ιδιωτικά δεδομένα. Ό,τι διαβάζει ο Claude από εκεί φεύγει από αυτή τη συσκευή και πηγαίνει στην Anthropic, όπως ό,τι άλλο δείχνεις στον Claude, και μπορεί να μείνει στις συζητήσεις σου με τον Claude. Ο Claude μόνο το διαβάζει (ποτέ δεν το αλλάζει), μόνο όσο το orOS είναι ανοιχτό, και δεν μπαίνει ποτέ στο αντίγραφο για όταν το orOS είναι κλειστό. Άνοιξέ το μόνο αν χρειάζεσαι τον Claude να δουλέψει με το {app}· το κλείνεις όποτε θέλεις.",
+      "gt.sens.yes": "Επίτρεψέ το",
+      "gt.sens.no": "Κράτα το κλειστό",
       "gt.seat": "Οι άλλες συσκευές σου με συγχρονισμό orOS μπαίνουν μόνες τους στην πύλη μόλις ανοίξει εκεί το orOS (αν την κλείσεις σε μία, μένει κλειστή σε εκείνη). Ο κωδικός και το QR είναι για συσκευή χωρίς συγχρονισμό.",
       "gt.invite.qr": "Κωδικός QR για σύνδεση στην πύλη",
       "gt.invite.qr.hint": "Ή σκάναρέ τον με την κάμερα της άλλης συσκευής: το orOS ανοίγει με τον κωδικό συμπληρωμένο.",
@@ -1798,12 +1810,13 @@
   // The levels one bulk button sets on `apps` (only the ones it changes):
   // "on" every app off → read (a "may change" stays), "off" every app → off,
   // "write" every app that can be changed → may change, "read" every
-  // "may change" → read only. Never-apps are dropped here as well.
+  // "may change" → read only. Never-apps are dropped here as well, and a
+  // personal app (sensitive) is never turned on: it needs its warning.
   function gateBulk(apps, action, never) {
     var out = {}, nv = Array.isArray(never) ? never : [];
     (Array.isArray(apps) ? apps : []).forEach(function (a) {
       if (!a || typeof a.id !== "string" || nv.indexOf(a.id) >= 0) return;
-      if (action === "on" && !a.read) out[a.id] = "read";
+      if (action === "on" && !a.read && !a.sensitive) out[a.id] = "read";
       else if (action === "off" && a.read) out[a.id] = false;
       else if (action === "write" && a.canWrite && !a.write) out[a.id] = "write";
       else if (action === "read" && a.write) out[a.id] = "read";
