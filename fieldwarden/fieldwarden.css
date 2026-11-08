@@ -432,7 +432,7 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .sh-row button.owned { opacity: 0.6; }
 .wish-ok { color: var(--fw-move); font-weight: 700; }
 .wish-no { color: var(--text-dim); }
-/* Daily season (5.77.00): a dot while today's season is not played; lit while playing it */
+/* Daily season (5.78.00): a dot while today's season is not played; lit while playing it */
 #daily-btn { position: relative; }
 #daily-btn.due::after {
   content: "";

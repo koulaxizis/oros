@@ -801,6 +801,16 @@ counter. No orOS data, no request or answer, nothing logged.
   device; a call goes to a device with orOS on screen (`v1` / `v0`
   messages) first, else the newest socket. `del` removes one device; the
   last one wipes the box.
+- **Shared app switches (5.77.00):** a device sends `{"lv": {...}}` on
+  its socket when the owner changes an app switch; the box keeps the
+  newest set (`meta.lv`, cleaned; only from a socket of one of its
+  devices), sends it to the other sockets and to every device as it
+  connects. Each device checks it again. `invite` also answers
+  `devices`, so the inviting device can say when the new one joined.
+- **Seat (5.77.00):** `seat { tok, sh }` keeps the hash of a secret the
+  devices share through orOS's encrypted sync; `sit { id, ss, th }` (no
+  token) adds a device that knows the secret (wrong ones count against
+  `pairTries`) and answers the shared switches.
 - **Limits (`GATE_LIMITS`):** request 64 KB, an answer from the device
   900 KB, 25 s for the device to answer, 60 tool calls a minute per
   gate, codes 5 minutes, access tokens 1 hour, refresh tokens 30 days

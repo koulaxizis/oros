@@ -798,7 +798,43 @@
 
   // orOS Gate (gate.js, BR-GATE): Claude reads the apps set to Read,
   // through this device while orOS is open. Off by default, per device.
-  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null;
+  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "";
+  // The join code as a QR (qr/qr-encode.js): an <svg> of dark squares on white.
+  function gateQr(text) {
+    var Q = window.orosQR;
+    if (!Q || typeof Q.encode !== "function") return null;
+    var mods;
+    try { mods = Q.encode(text, { ecl: "M" }).modules; } catch (e) { return null; }
+    var n = mods.length, q = 4, size = n + q * 2, d = "";
+    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) if (mods[y][x]) d += "M" + (x + q) + " " + (y + q) + "h1v1h-1z";
+    var ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+    svg.setAttribute("class", "gt-qr");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", t("gt.invite.qr"));
+    var bg = document.createElementNS(ns, "rect");
+    bg.setAttribute("width", size); bg.setAttribute("height", size); bg.setAttribute("fill", "#ffffff");
+    var path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d); path.setAttribute("fill", "#000000");
+    svg.appendChild(bg); svg.appendChild(path);
+    return svg;
+  }
+  // While a join code is shown, ask the relay every 3 s whether a new
+  // device came in, and say so here (the joining device says it too).
+  function gateWatchJoin(G) {
+    clearTimeout(gateWatch);
+    if (!gateJoin || gateJoin.exp <= Date.now() || typeof gateJoin.devices !== "number") return;
+    gateWatch = setTimeout(function () {
+      G.info().then(function (d) {
+        if (!gateJoin) return;
+        if (d && typeof d.devices === "number" && d.devices > gateJoin.devices) {
+          gateJoin = null; gateNote = "gt.invite.done"; gateInfo = d; render();
+          return;
+        }
+        gateWatchJoin(G);
+      }, function () { gateWatchJoin(G); });
+    }, 3000);
+  }
   function gateApi() {
     var p = parentWin();
     try { return p && p.orosGate && typeof p.orosGate.enable === "function" ? p.orosGate : null; } catch (e) { return null; }
@@ -826,10 +862,13 @@
       jn.autocomplete = "off";
       jn.spellcheck = false;
       jn.placeholder = "XXXX-XXXX";
+      if (!gatePre && typeof G.takeJoin === "function") gatePre = G.takeJoin() || "";
+      if (gatePre) jn.value = gatePre.slice(0, 4) + "-" + gatePre.slice(4);
       c.appendChild(row(t("gt.join"), jn, { hint: t("gt.join.hint"), forId: "f-gt-join", stack: true }));
+      if (gatePre) c.appendChild(el("div", "hint", t("gt.join.scanned")));
       var sendJoin = function () {
         gateNote = "";
-        G.join(jn.value).then(function () { gateNote = "gt.join.ok"; render(); },
+        G.join(jn.value).then(function () { gatePre = ""; gateNote = "gt.join.ok"; gateInfo = null; render(); },
           function (e) { gateNote = e && e.code === "nojoin" ? "gt.join.bad" : e && e.code === "full" ? "gt.join.full" : "gt.fail"; render(); });
       };
       jn.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); sendJoin(); } });
@@ -851,10 +890,19 @@
       if (typeof G.invite === "function") {
         if (gateJoin && gateJoin.exp > Date.now()) {
           c.appendChild(el("div", "hint", t("gt.invite.code", { code: gateJoin.code.slice(0, 4) + "-" + gateJoin.code.slice(4) })));
+          var qr = typeof G.joinLink === "function" ? gateQr(G.joinLink(gateJoin.code)) : null;
+          if (qr) {
+            var qb = el("div", "gt-qr-box");
+            qb.appendChild(qr);
+            c.appendChild(qb);
+            c.appendChild(el("div", "hint", t("gt.invite.qr.hint")));
+          }
+          c.appendChild(el("div", "hint", t("gt.invite.wait")));
         }
+        c.appendChild(el("div", "hint", t("gt.seat")));
         c.appendChild(actions(button(t("gt.invite"), "gt.invite", function () {
           gateNote = "";
-          G.invite().then(function (d) { gateJoin = d; render(); },
+          G.invite().then(function (d) { gateJoin = d; render(); gateWatchJoin(G); },
             function (e) { gateNote = e && e.code === "full" ? "gt.join.full" : "gt.fail"; render(); });
         })));
       }
@@ -911,8 +959,10 @@
       }
       if (gateInfo.links !== null) {
         c.appendChild(el("div", "hint", gateInfo.links < 0 ? t("gt.info.fail") :
-          t("gt.links", { n: gateInfo.links }) + (gateInfo.last ? " · " + t("gt.last", { when: gateWhen(gateInfo.last) }) : "")));
+          t("gt.links", { n: gateInfo.links }) + (gateInfo.last ? " · " + t("gt.last", { when: gateWhen(gateInfo.last) }) : "") +
+          (typeof gateInfo.devices === "number" ? " · " + t("gt.devs", { n: gateInfo.devices }) : "")));
       }
+      c.appendChild(el("div", "hint", t("gt.shared")));
       c.appendChild(actions(
         confirmBtn(t("gt.revoke"), t("gt.revoke.sure"), "gt.revoke", function () {
           G.revoke().then(function () { gateInfo = null; gateNote = "gt.revoked"; render(); }, function () { gateNote = "gt.fail"; render(); });

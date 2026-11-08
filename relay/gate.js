@@ -639,14 +639,16 @@ async function devCall(request, env, now) {
   try { b = JSON.parse(text); } catch (e) { return devErr(400, "bad-request"); }
   if (b && b.act === "join") return await joinCall(b, env, now);
   if (!b || typeof b !== "object" || !ID_RE.test(b.id || "")) return devErr(400, "bad-request");
-  if (["new", "code", "pair", "invite", "revoke", "info", "del"].indexOf(b.act) < 0) return devErr(400, "bad-request");
-  if (b.act === "new" ? !HEX64_RE.test(b.th || "") : !TOK_RE.test(b.tok || "")) return devErr(400, "bad-request");
+  if (["new", "code", "pair", "invite", "revoke", "info", "del", "seat", "sit"].indexOf(b.act) < 0) return devErr(400, "bad-request");
+  if (b.act === "new" || b.act === "sit" ? !HEX64_RE.test(b.th || "") : !TOK_RE.test(b.tok || "")) return devErr(400, "bad-request");
+  if (b.act === "seat" && !HEX64_RE.test(b.sh || "")) return devErr(400, "bad-request");
+  if (b.act === "sit" && !TOK_RE.test(b.ss || "")) return devErr(400, "bad-request");
   if (b.act === "code" && (!TOK_RE.test(b.c || "") || !validRedirect(b.r))) return devErr(400, "bad-request");
   if (b.act === "pair" && !normPair(b.pc)) return devErr(400, "bad-request");
   return stub(env, b.id).fetch(new Request("https://gate/dev", {
     method: "POST",
     headers: { "X-Now": String(now) },
-    body: JSON.stringify({ act: b.act, id: b.id, th: b.th, tok: b.tok, c: b.c, r: b.r, pc: normPair(b.pc), lv: cleanLv(b.lv) })
+    body: JSON.stringify({ act: b.act, id: b.id, th: b.th, tok: b.tok, c: b.c, r: b.r, pc: normPair(b.pc), lv: cleanLv(b.lv), sh: b.sh, ss: b.ss })
   }));
 }
 
@@ -795,9 +797,37 @@ export class GateBox {
       await this.st.setAlarm(now + GATE_LIMITS.idleMs);
       return jsonRes(200, { ok: true, data: { ok: true } });
     }
+    // "sit" (5.77.00): a device of the same person, which got the gate's
+    // seat secret through orOS's own encrypted sync, joins without a code.
+    // Wrong secrets count against the gate like wrong pairing codes.
+    if (b.act === "sit") {
+      const m0 = await this.meta();
+      if (!m0) return devErr(404, "gone");
+      const t = Array.isArray(m0.pt) ? m0.pt.filter((x) => now - x < GATE_LIMITS.pairMs) : [];
+      if (t.length >= GATE_LIMITS.pairTries) return devErr(429, "rate");
+      if (!m0.sh || !sameText(await sha256hex(b.ss), m0.sh)) {
+        t.push(now); m0.pt = t;
+        await this.st.put("meta", m0);
+        return devErr(404, "noseat");
+      }
+      const list = devList(m0);
+      if (!list.some((d) => d.th === b.th)) {
+        if (list.length >= GATE_LIMITS.devices) return devErr(429, "full");
+        list.push({ th: b.th, at: now });
+      }
+      m0.devs = list; delete m0.th;
+      await this.st.put("meta", m0);
+      await this.touch(m0, now);
+      return jsonRes(200, { ok: true, data: { lv: m0.lv || {}, devices: list.length } });
+    }
     const m = await this.devOk(b);
     if (!m) return devErr(404, "gone");
     await this.touch(m, now);
+    if (b.act === "seat") {                        // the seat secret's hash (the secret itself travels in sync)
+      m.sh = b.sh;
+      await this.st.put("meta", m);
+      return jsonRes(200, { ok: true, data: { ok: true } });
+    }
     if (b.act === "del") {                         // this device leaves; the last one wipes the gate
       const th = await sha256hex(b.tok);
       const rest = devList(m).filter((d) => d.th !== th);
@@ -814,7 +844,7 @@ export class GateBox {
         method: "POST", headers: { "X-Now": String(now) }, body: JSON.stringify({ id: b.id, lv: b.lv })
       }));
       if (!res.ok) return devErr(503, "nostore");
-      return jsonRes(200, { ok: true, data: { code: jc, exp: now + GATE_LIMITS.pairMs } });
+      return jsonRes(200, { ok: true, data: { code: jc, exp: now + GATE_LIMITS.pairMs, devices: devList(m).length } });
     }
     if (b.act === "revoke") {
       const all = await this.tokens();
@@ -916,6 +946,8 @@ export class GateBox {
     const client = pair[0], server = pair[1];
     this.state.acceptWebSocket(server);
     setAtt(server, { th: th, v: 1, at: now });
+    // The app switches the devices share (5.77.00): the newest set goes to a device as it connects.
+    if (m.lv) { try { server.send(JSON.stringify({ lv: m.lv, lvt: m.lvt || 0 })); } catch (e) {} }
     return new Response(null, { status: 101, webSocket: client, headers: { "Sec-WebSocket-Protocol": "gt1" } });
   }
 
@@ -931,12 +963,26 @@ export class GateBox {
     }
     let o;
     try { o = JSON.parse(msg); } catch (e) { return; }
+    if (o && o.lv !== undefined && o.r === undefined) { await this.shareLv(ws, o.lv); return; }
     if (!o || typeof o.r !== "string") return;
     const w = this.wait.get(o.r);
     if (!w) return;
     this.wait.delete(o.r);
     clearTimeout(w.timer);
     w.done(o);
+  }
+  // A device changed its app switches: keep them (the newest wins) and
+  // pass them to the gate's other devices. Each device checks them again
+  // against its own NEVER list and the apps that may be changed.
+  async shareLv(ws, raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return;
+    const lv = cleanLv(raw);
+    const m = await this.meta();
+    if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    m.lv = lv; m.lvt = Date.now();
+    await this.st.put("meta", m);
+    const msg = JSON.stringify({ lv: lv, lvt: m.lvt });
+    for (const s of this.sockets()) { if (s !== ws) { try { s.send(msg); } catch (e) {} } }
   }
   async webSocketClose(ws) { try { ws.close(1000, "bye"); } catch (e) {} }
   async webSocketError(ws) { await this.webSocketClose(ws); }

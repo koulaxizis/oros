@@ -22,8 +22,8 @@
 //     per-device counter rows (each device only grows its own row;
 //     merge = per-row max, a join) + reset stamp br (as Realm, Crypt,
 //     Banner and Wayfarers)
-//   - days (5.77.00): one Daily season per calendar day, one try;
-//     last (5.77.00): the last 10 years of every device, with Replay
+//   - days (5.78.00): one Daily season per calendar day, one try;
+//     last (5.78.00): the last 10 years of every device, with Replay
 //   - device-local (R10): oros-fieldwarden-prefs (difficulty, folk,
 //     tour seen, quick, threats), oros-fieldwarden-session (the year in
 //     progress), oros-fieldwarden-device (counter row id),
@@ -337,14 +337,14 @@
   //                                           c: { <folk>: finished years } } } }
   // Each device only grows its own row, so a per-row max is a join and
   // nothing is double-counted however the devices meet.
-  // days (5.77.00, older data has none): one Daily season per calendar
+  // days (5.78.00, older data has none): one Daily season per calendar
   // day (day 0 = 1 Jan 2026, gamekit/daily.js), one try:
   // { "<day>": { b, w: 1 quota met | 0, h: score (sheaves + the wish
   //   bonus), t: actions, f: [fields sown, sprout, green, ripe at the
   //   end] } }. The newer epoch wins; equal epochs keep the better result
   // (quota met, then the higher score, then fewer actions, then the
   // larger JSON: a total order, so a join). Never counted in rows.
-  // last (5.77.00): the last 10 years of every device,
+  // last (5.78.00): the last 10 years of every device,
   // [{ a: end time ms, d: m|h|d (d = Daily), p: [3 folk], n: seasons
   //    won, w: 1 finished (Daily: quota met) | 0, s: year code }].
   // Union by a + s, newest first, the first 10: a join; entries older
