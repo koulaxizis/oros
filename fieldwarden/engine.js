@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Fieldwarden — rules engine (v1.3.0)
+// orOS Fieldwarden — rules engine (v1.4.0)
 // NOT the UI: no DOM, no storage. Loaded by fieldwarden/index.html
 // (window.FieldwardenEngine, after fieldwarden/data.js) and by
 // tests/fieldwarden.test.js (module.exports).
@@ -17,6 +17,8 @@
 //     year; Endless MAX_FARM, farm n plays farm ((n - 1) mod 3) + 1),
 //     farm 1…, sea season of the farm 1-4, one: 1 (a Daily season: this
 //     season only; absent in a year),
+//     pz: puzzle number (5.83.00, with one), cu: farm code (a farm built in
+//     the editor, 5.84.00, with one; never with pz),
 //     folk: [{ c folk id, mh most Health, mv Move, u: [0|1, 0|1] upgrades }] × 3,
 //     coins, won seasons won, total sheaves, best (most in a season),
 //     ready (fields bought a stage ahead for the next season),
@@ -812,6 +814,125 @@
     withRng(s, function () { reveal(st, s); });
     return st;
   }
+  // ---------- Farm codes (the farm editor) ----------
+  // A farm built by hand is one season on Harsh rules, shared as a code:
+  //   "f1" + 36 tiles (0 dirt, 1-4 a field of stage 0-3, 5 hedge, 6 pond,
+  //   7 haystack, 8 barn) + 3 folk (index in FOLK_IDS) + their 3 tiles
+  //   (base 36) + the weather of turns 2-5 (c r d n e s w) + the number
+  //   of invaders on the farm (base 36) and per invader its kind (index in
+  //   INV_IDS, base 36) and tile + the number of arrivals and per arrival
+  //   its kind and turn (2-5) + 2 check characters (FNV-1a of the rest mod
+  //   1296, base 36). Reading ignores case and anything not a letter or
+  //   digit. Ids are only ever appended to their tables, so a code keeps
+  //   its meaning; a new format takes a new prefix.
+  var INV_IDS = Object.keys(INVADERS);
+  var TILE_CODE = ["d", "f", "f", "f", "f", "h", "p", "s", "b"];
+  var WX_CODE = "crdnesw";
+  var MAX_INV = 12, MAX_ARR = 8;
+  function b36(n) { return n.toString(36); }
+  function farmCheck(rest) { var h = hashStr(rest) % 1296; return (h < 36 ? "0" : "") + b36(h); }
+  // The model the editor works on: { t[36], g[36], f[3 folk], fa[3 tiles],
+  // wx[4] turns 2-5, inv[[kind, tile]], arr[[kind, turn]] }
+  function farmProblem(m) {
+    var i;
+    if (!m || !Array.isArray(m.t) || m.t.length !== SIZE || !Array.isArray(m.g) || m.g.length !== SIZE) return "bad";
+    for (i = 0; i < SIZE; i++) {
+      if (TILE_CODE.indexOf(m.t[i]) < 0) return "bad";
+      if (!isInt(m.g[i]) || m.g[i] < 0 || m.g[i] > MAX_STAGE || (m.t[i] !== "f" && m.g[i])) return "bad";
+    }
+    if (!trioOk(m.f) || !Array.isArray(m.fa) || m.fa.length !== 3) return "bad";
+    if (!Array.isArray(m.wx) || m.wx.length !== 4 || !m.wx.every(function (c) { return typeof c === "string" && c.length === 1 && WX_CODE.indexOf(c) >= 0; })) return "bad";
+    if (!Array.isArray(m.inv) || !Array.isArray(m.arr)) return "bad";
+    if (m.t.filter(function (c) { return c === "b"; }).length !== 1) return "barn";
+    if (m.t.indexOf("f") < 0) return "field";
+    if (!connected(m.t)) return "closed";
+    var used = {}, bad = "";
+    m.fa.forEach(function (at, fi) {
+      if (bad) return;
+      if (!isInt(at) || at < 0 || at >= SIZE || used[at]) { bad = "folk"; return; }
+      if (BLOCK[m.t[at]] || (m.t[at] === "p" && m.f[fi] !== "ferryman")) { bad = "folk"; return; }
+      used[at] = 1;
+    });
+    if (bad) return bad;
+    if (m.inv.length > MAX_INV || m.arr.length > MAX_ARR) return "many";
+    if (!m.inv.length && !m.arr.length) return "none";
+    m.inv.forEach(function (e) {
+      if (bad) return;
+      if (!Array.isArray(e) || INV_IDS.indexOf(e[0]) < 0 || !isInt(e[1]) || e[1] < 0 || e[1] >= SIZE || used[e[1]]) { bad = "inv"; return; }
+      if (BLOCK[m.t[e[1]]] || m.t[e[1]] === "p") { bad = "inv"; return; }
+      used[e[1]] = 1;
+    });
+    if (bad) return bad;
+    m.arr.forEach(function (e) {
+      if (!Array.isArray(e) || INV_IDS.indexOf(e[0]) < 0 || !isInt(e[1]) || e[1] < 2 || e[1] > T) bad = "inv";
+    });
+    return bad;
+  }
+  function writeFarmCode(m) {
+    if (farmProblem(m)) return "";
+    var c = "f1", i;
+    for (i = 0; i < SIZE; i++) c += m.t[i] === "f" ? String(1 + m.g[i]) : String(TILE_CODE.indexOf(m.t[i]));
+    m.f.forEach(function (k) { c += FOLK_IDS.indexOf(k); });
+    m.fa.forEach(function (at) { c += b36(at); });
+    c += m.wx.join("") + b36(m.inv.length);
+    m.inv.forEach(function (e) { c += b36(INV_IDS.indexOf(e[0])) + b36(e[1]); });
+    c += b36(m.arr.length);
+    m.arr.forEach(function (e) { c += b36(INV_IDS.indexOf(e[0])) + e[1]; });
+    return c + farmCheck(c);
+  }
+  function readFarmCode(code) {
+    if (typeof code !== "string") return null;
+    var c = code.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (c.length < 2 + SIZE + 6 + 4 + 2 + 2 || c.slice(0, 2) !== "f1") return null;
+    var body = c.slice(0, -2);
+    if (farmCheck(body) !== c.slice(-2)) return null;
+    var p = 2, m = { t: [], g: [], f: [], fa: [], wx: [], inv: [], arr: [] }, i, n, v;
+    var num = function (len) { var s2 = body.substr(p, len); p += len; return s2.length === len && /^[0-9a-z]+$/.test(s2) ? parseInt(s2, 36) : NaN; };
+    for (i = 0; i < SIZE; i++) {
+      v = num(1);
+      if (!(v >= 0 && v <= 8)) return null;
+      m.t.push(TILE_CODE[v]);
+      m.g.push(v >= 1 && v <= 4 ? v - 1 : 0);
+    }
+    for (i = 0; i < 3; i++) { v = num(1); if (!(v >= 0 && v < FOLK_IDS.length)) return null; m.f.push(FOLK_IDS[v]); }
+    for (i = 0; i < 3; i++) m.fa.push(num(1));
+    for (i = 0; i < 4; i++) { m.wx.push(body.charAt(p)); p++; }
+    n = num(1);
+    if (!(n >= 0 && n <= MAX_INV)) return null;
+    for (i = 0; i < n; i++) { v = num(1); m.inv.push([INV_IDS[v], num(1)]); }
+    n = num(1);
+    if (!(n >= 0 && n <= MAX_ARR)) return null;
+    for (i = 0; i < n; i++) { v = num(1); m.arr.push([INV_IDS[v], num(1)]); }
+    if (p !== body.length || farmProblem(m)) return null;
+    return m;
+  }
+  // The season of a farm code (state as a Daily season: one season, no
+  // market); cu holds the code. preview: no solver, quota 1 (the editor).
+  function newCustom(code, preview) {
+    var m = readFarmCode(code);
+    if (!m) return null;
+    var st = { v: 1, seed: "cf" + b36(hashStr(code.toLowerCase().replace(/[^a-z0-9]/g, ""))), diff: "h", end: 1, farm: 1, sea: 1, one: 1,
+      cu: writeFarmCode(m),
+      folk: m.f.map(function (c) { return { c: c, mh: FOLK[c].hp, mv: FOLK[c].mv, u: [0, 0] }; }),
+      coins: 0, won: 0, total: 0, best: 0, ready: 0, phase: "play", res: null, s: null, acts: 0, over: -1 };
+    var z = [], i;
+    for (i = 0; i < SIZE; i++) z.push(0);
+    var x = m.t.map(function (c) { return c === "h" ? HEDGE_HP : 0; });
+    var sched = [[], [], [], [], [], []];
+    m.arr.forEach(function (e) { sched[e[1] - 1].push(e[0]); });
+    var s = { turn: 1, q: 1, max: 0, wish: { k: "barn" }, drove: 0, t: m.t.slice(), g: m.g.slice(), x: x, p: z.slice(),
+      barn: BARN_HP, bi: m.t.indexOf("b"), u: [], nid: 1, next: [], wx: ["c", "c"].concat(m.wx), sched: sched,
+      rw: 0, r: hashStr("cu:" + st.cu), done: 0, h: 0, fire: z.slice(), hb: 0 };
+    for (i = 0; i < SIZE; i++) if (s.t[i] === "f") s.max += MAX_STAGE;
+    m.f.forEach(function (c, fi) {
+      s.u.push({ id: s.nid++, k: c, f: 1, fi: fi, at: m.fa[fi], hp: FOLK[c].hp, mh: FOLK[c].hp, mo: 0, ac: 0, it: null, sn: 0 });
+    });
+    m.inv.forEach(function (e) { newInvader(s, e[0], e[1]); });
+    st.s = s;
+    withRng(s, function () { pickNext(s, sched[1]); reveal(st, s); });
+    if (!preview) s.q = Math.max(1, Math.min(Math.ceil(s.max * QUOTA.h), solve(st, s)));
+    return st;
+  }
   // A Daily season's score: the sheaves plus the wish bonus.
   function dailyScore(st) { return st.res ? st.res.h + (st.res.w ? WISH_BONUS : 0) : 0; }
   function lastSeason(st) { return st.one === 1 || (st.farm >= st.end && st.sea >= SEASONS); }
@@ -1080,6 +1201,7 @@
     if (!isInt(st.farm) || st.farm < 1 || st.farm > st.end || !isInt(st.sea) || st.sea < 1 || st.sea > SEASONS) return false;
     if (st.one !== undefined && (st.one !== 1 || st.farm !== st.end || st.diff !== "h" || st.phase !== "play")) return false;
     if (st.pz !== undefined && (!isInt(st.pz) || st.pz < 1 || st.pz > PUZZLES.length || st.one !== 1)) return false;
+    if (st.cu !== undefined && (typeof st.cu !== "string" || st.one !== 1 || st.pz !== undefined || !readFarmCode(st.cu))) return false;
     if (!Array.isArray(st.folk) || st.folk.length !== 3 || !trioOk(st.folk.map(function (f) { return f && f.c; }))) return false;
     if (!st.folk.every(function (f) {
       return isInt(f.mh) && f.mh >= FOLK[f.c].hp && f.mh <= MAX_HP && isInt(f.mv) && f.mv >= FOLK[f.c].mv && f.mv <= MAX_MV &&
@@ -1098,12 +1220,13 @@
 
   var api = {
     N: N, SIZE: SIZE, T: T, SEASONS: SEASONS, MAX_STAGE: MAX_STAGE, DIFFS: DIFFS, MAX_FARM: MAX_FARM, MAX_HB: MAX_HB, COST: COST, MAX_HP: MAX_HP, MAX_MV: MAX_MV,
-    MAX_READY: MAX_READY, WISH_BONUS: WISH_BONUS, DRIVE_N: DRIVE_N, BARN_HP: BARN_HP, WIND: WIND, BLOCK: BLOCK,
+    MAX_READY: MAX_READY, WISH_BONUS: WISH_BONUS, DRIVE_N: DRIVE_N, BARN_HP: BARN_HP, HEDGE_HP: HEDGE_HP, WIND: WIND, BLOCK: BLOCK,
     FOLK: FOLK, FOLK_IDS: FOLK_IDS, TOOLS: TOOLS, UPS: UPS, INVADERS: INVADERS, ACTS: ACTS, FARMS: FARMS,
     hashStr: hashStr, step: step, dist: dist, dirTo: dirTo, unitAt: unitAt, unitById: unitById, folkUnit: folkUnit,
     trioOk: trioOk, newYear: newYear, toolOf: toolOf, actOrder: actOrder, intentTile: intentTile, chargePath: chargePath,
     harvestOf: harvestOf, wishOk: wishOk, shopOk: shopOk, lastSeason: lastSeason,
-    farmOf: farmOf, loopOf: loopOf, newDaily: newDaily, dailyOf: dailyOf, newPuzzle: newPuzzle, PUZZLES: PUZZLES, dailyScore: dailyScore, fireAt: fireAt,
+    farmOf: farmOf, loopOf: loopOf, newDaily: newDaily, dailyOf: dailyOf, newPuzzle: newPuzzle, PUZZLES: PUZZLES,
+    newCustom: newCustom, readFarmCode: readFarmCode, writeFarmCode: writeFarmCode, farmProblem: farmProblem, INV_IDS: INV_IDS, MAX_INV: MAX_INV, MAX_ARR: MAX_ARR, dailyScore: dailyScore, fireAt: fireAt,
     moves: function (st, id) { return movesS(st, st.s, unitById(st.s, id)); },
     targets: function (st, id) { return targetsS(st, st.s, unitById(st.s, id)); },
     projected: function (s) {
