@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.90.00
+- **orOS Gate: personal apps by choice, and the gate id.** Mail, Diary, Mood, Cycle, Health, Fitness and Baby can now be offered to Claude, each after a clear warning: Claude only reads them, only while orOS is open, and they are never in the copy Claude reads while orOS is closed. Passwords and the Assistant are still never offered. Settings › orOS Gate also shows a short `Gate id`; when orOS is closed Claude says which gate its link points to, so a connector that needs connecting again shows at once.
+
 ## Version 5.89.01
 - **Tux: readable buttons.** In the Tux theme the `Close` button of the Desktop menu (Assistant › Settings) was white on white. It now has dark text in Tux dark and white text in Tux light, as do the selected row and buttons of the PC dialog, the Profiles chooser and the Mix timer. The Assistant's main and send buttons use the same readable colour in every theme.
 
