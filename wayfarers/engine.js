@@ -11,7 +11,7 @@
 // "Wayfarers").
 //
 // State (plain JSON, kept as is in the device-local session):
-//   { v: 1, seed, diff "g" Gentle | "h" Hardy | "e" Endless (5.73.00: Hardy rules, the road
+//   { v: 1, seed, diff "g" Gentle | "h" Hardy | "e" Endless (5.74.00: Hardy rules, the road
 //     goes on after the Frost Gate), region 1… (Endless: up to MAX_REGION),
 //     end (optional: last region, 5.71.00),
 //     party: [{ c class, hp, up: [upgrade ids], w weapon | "", ch charm | "", tr trained }] × 3,
@@ -25,7 +25,7 @@
 //                     q: [unit refs left this round], cur: unit ref, round, nid, rz: 1 Raise used },
 //     rng (uint32), acts, stops, kills, over: -1 playing | 0 fallen | 1 won }
 //   foe = { id, k, hp, mh, st, t move count, ph phase, n: { m move, tg hero index | -1 },
-//           lv (optional, 5.73.00: the Endless loop, 1… = stronger) }
+//           lv (optional, 5.74.00: the Endless loop, 1… = stronger) }
 //   unit refs: "h0"-"h2" heroes, "f<id>" foes.
 //   st (statuses, whole numbers): bu Burn turns, bd Burn damage, ch Chill
 //   turns, sn Stun turns, mk Mark turns, gu Guarding, hi Hidden, hb Hide

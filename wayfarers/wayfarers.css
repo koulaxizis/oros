@@ -433,7 +433,7 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .lr-tx .fx { font-size: 12px; opacity: 0.75; overflow-wrap: anywhere; }
 .lr-row button { flex: none; min-height: 40px; }
 .lr-list { max-height: 40vh; overflow: auto; padding-right: 4px; }
-/* Party codes and the lore book (5.73.00) */
+/* Party codes and the lore book (5.74.00) */
 .dlg-input.code { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.02em; margin: 8px 0 4px; }
 .pc-box:empty { display: none; }
 .pc-box { margin-top: 6px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }

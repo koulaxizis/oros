@@ -1,7 +1,7 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.73.00
+## Version 5.74.00
 - **Wayfarers: Endless, the lore book and party codes.** A third difficulty, `Endless`: Hardy rules, and after the Frost Gate the road goes on, the three lands again and again with ever stronger foes, until the party falls; `Records` keeps the most regions cleared. Every foe you meet gets a page in the new lore book (in `Records`), with its numbers, its habit and a short line. At the end of a journey, `Party code` turns your party into a code to share: a friend types it in `New journey` and walks the same land with the same classes, knowing how far you got.
 
 ## Version 5.71.00

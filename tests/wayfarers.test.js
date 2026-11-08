@@ -25,7 +25,7 @@ const R = (() => {
   return new Function(parts.join("\n") + "\nreturn { mergeWayfarers };").call(E);
 })();
 
-// Party codes (5.73.00), taken from the UI file the same way.
+// Party codes (5.74.00), taken from the UI file the same way.
 const PC = (() => {
   const parts = ["var E = this; var CLASS_IDS = E.CLASS_IDS; var REGIONS_N = E.REGIONS.length; var MAX_REGION = E.MAX_REGION; var GEAR_IDS = Object.keys(E.GEAR);"];
   ["classUps", "b36", "checkOf", "partyCode", "readPartyCode"].forEach((name) => {

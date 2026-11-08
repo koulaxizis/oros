@@ -774,6 +774,7 @@
     sock.onopen = function () {
       retry = 0;
       setWs("on");
+      sendVis(sock);
       clearInterval(pingTimer);
       pingTimer = setInterval(function () { try { sock.send("ping"); } catch (e) {} }, 45000);
     };
@@ -788,6 +789,17 @@
     };
     sock.onerror = function () {};
   }
+  // The relay asks a device whose orOS is on screen first (5.73.00):
+  // a phone in the background loses its socket, a computer keeps it.
+  function sendVis(sock) {
+    try { if (sock && sock.readyState === 1) sock.send(document.visibilityState === "hidden" ? "v0" : "v1"); } catch (e) {}
+  }
+  try {
+    document.addEventListener("visibilitychange", function () {
+      if (ws) { sendVis(ws); return; }
+      if (document.visibilityState === "visible" && pref().on && wsState !== "gone") { retry = 0; clearTimeout(retryTimer); connect(); }
+    });
+  } catch (e) {}
   function schedule() {
     if (!pref().on) { setWs("off"); return; }
     setWs("connecting");
@@ -1061,6 +1073,30 @@
       return sha256hex(tok).then(function (th) { return devCall({ act: "new", id: id, th: th }, base); }).then(function () {
         p.on = true; p.id = id; p.tok = tok; p.r = base; p.at = Date.now(); p.lv = isObj(p.lv) ? p.lv : {};
         if (!writeJSON(PREF_KEY, p)) throw new Error("save");
+        changed();
+        connect();
+      });
+    },
+    // Another device of the owner: this one asks the relay for a join
+    // code (10 minutes, one use), the other types it in (join).
+    invite: function () {
+      var p = pref();
+      if (!p.on) return Promise.reject(new Error("off"));
+      return devCall({ act: "invite", id: p.id, tok: p.tok, lv: isObj(p.lv) ? p.lv : {} });
+    },
+    join: function (code) {
+      var p = pref(), jc = String(code || "").toUpperCase().replace(/[\s-]+/g, "");
+      if (p.on && p.id && p.tok) return Promise.reject(new Error("on"));
+      if (!/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/.test(jc)) { var e = new Error("gate"); e.code = "nojoin"; return Promise.reject(e); }
+      var tok = randomB64u(32), base = relayNow();
+      return sha256hex(tok).then(function (th) { return devCall({ act: "join", jc: jc, th: th }, base); }).then(function (d) {
+        var lv = {};
+        if (isObj(d.lv)) Object.keys(d.lv).forEach(function (k) {
+          if (NEVER.indexOf(k) < 0 && (d.lv[k] === "read" || (d.lv[k] === "write" && WRITES[k]))) lv[k] = d.lv[k];
+        });
+        var np = { on: true, id: d.id, tok: tok, r: base, at: Date.now(), lv: lv };
+        if (!writeJSON(PREF_KEY, np)) throw new Error("save");
+        if (lv.kanban === "write") kanbanModel().then(null, function () {});
         changed();
         connect();
       });

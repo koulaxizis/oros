@@ -59,7 +59,7 @@
   var MAX_DAY = 100000;
   var MAX_ACTS = 99999;
   var LAST_N = 10;
-  var MAX_REGION = E.MAX_REGION;       // Endless (5.73.00)
+  var MAX_REGION = E.MAX_REGION;       // Endless (5.74.00)
   var FOE_IDS = Object.keys(E.FOES);
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -661,8 +661,8 @@
   // last (5.71.00): the last 10 journeys of every device,
   // [{ a: end time ms, d: g|h|d (d = Daily), p: [3 classes],
   //    r: region reached, w: 1 won | 0, s: seed }]; d is also "e"
-  //    (Endless, 5.73.00) with r up to MAX_REGION.
-  // lore (5.73.00): the foes met (ids, sorted); a union, so a join.
+  //    (Endless, 5.74.00) with r up to MAX_REGION.
+  // lore (5.74.00): the foes met (ids, sorted); a union, so a join.
   // Never cleared by Reset records.
   // Union by a + s, newest first, the first 10: a join; entries older
   // than the reset stamp br drop.
@@ -2153,7 +2153,7 @@
     dlg.appendChild(acts);
     show(dlg, no);
   }
-  // ---------- Party codes (5.73.00) ----------
+  // ---------- Party codes (5.74.00) ----------
   // A finished party as text: "w1", difficulty, the 3 classes (digits
   // 0–5 in CLASS_IDS), level (base 36), region reached (2 × base 36),
   // won 0|1, then per hero weapon and charm (index + 1 in the gear
@@ -2236,7 +2236,7 @@
     show(dlg, copy);
   }
 
-  // ---------- Lore book (5.73.00) ----------
+  // ---------- Lore book (5.74.00) ----------
   // Every foe met gets a page: its numbers, its habit and a short line.
   function regionFoes(r) {
     var out = [], G = E.REGIONS[r].groups;
