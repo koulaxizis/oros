@@ -56,6 +56,27 @@ test("gate tools: only the gate's set, no card or press in any text", () => {
   G.ACT_WRITE.forEach((n) => assert.ok(G.ACT_TOOLS.indexOf(n) >= 0, n));
 });
 
+test("W5: documents and actions through the gate", () => {
+  assert.deepEqual(G.DOCS.slice().sort(), Object.keys(C.EDIT_APP).sort(), "DOCS = the apps edit_in_app changes");
+  G.DOCS.forEach((id) => { assert.equal(G.writable(id), true, id); assert.equal(G.NEVER.indexOf(id), -1, id); assert.ok(G.toolsOf(id).indexOf("read_in_app") >= 0, id); });
+  assert.equal(G.canWrite({ writer: "write" }, 2000, "writer", 1000), true);
+  const guide = "WRITER COMMANDS: press the card";
+  const g = C.gateTools(C.toolsFor({ data: true, history: true, changes: true, actions: ["timer", "alarm", "open", "play", "directions"],
+                                     edits: { writer: { CATALOG: { text: { args: { find: { t: "str" } } } }, GUIDE: guide } } }));
+  const ed = g.find((t) => t.name === "edit_in_app"), act = g.find((t) => t.name === "do_action");
+  assert.ok(ed && act, "both offered");
+  assert.equal(ed.description.indexOf(guide), -1, "the long guides come with read_in_app instead");
+  assert.match(ed.description, /read_in_app/);
+  assert.match(ed.description, /owner's screen/);
+  assert.equal(ed.annotations.destructiveHint, true);
+  assert.equal(act.annotations.readOnlyHint, false);
+  assert.equal(act.annotations.destructiveHint, false);
+  assert.match(act.description, /write window/);
+  [ed, act].forEach((t) => assert.equal(C.GATE_BAD.test(t.description), false, t.name));
+  assert.ok(G.ACT_WRITE.indexOf("edit_in_app") >= 0);
+  assert.equal(G.ACT_WRITE.indexOf("do_action"), -1, "an action needs the window, not a change switch per app");
+});
+
 test("relay: the device's tools are cleaned and merged", () => {
   const ok = { name: "change_item", description: "x", inputSchema: { type: "object", properties: {} }, annotations: { destructiveHint: true } };
   const clean = R.cleanDevTools([

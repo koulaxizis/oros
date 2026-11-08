@@ -287,6 +287,7 @@
   function toolsOf(id) {
     var t = ["search_data", "read_item"];
     if (SUMMARY[id] || ACT.indexOf(id) >= 0) t.push("app_summary");
+    if (DOCS.indexOf(id) >= 0) t.push("read_in_app");
     if (LINES[id]) t.push(LINES[id]);
     return t;
   }
@@ -711,9 +712,15 @@
   var ACT = ["bookmarks", "calendar", "chores", "contacts", "crm", "feeds", "flashcards", "garage", "habits", "invoices",
              "library", "meals", "music", "notes", "petcare", "plants", "podcasts", "shelf", "split", "stickies", "stock",
              "timesheet", "todo", "travel", "wiki"];
-  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
-  var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change"];
-  function writable(id) { return !!WRITES[id] || ACT.indexOf(id) >= 0; }
+  // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): the documents the
+  // Assistant changes with edit_in_app (assistant.js EDIT_SRC). The app
+  // opens on the owner's screen and applies the commands there.
+  var DOCS = ["atelier", "layout", "mindmap", "montage", "photolab", "slides", "spreadsheet", "studio", "whiteboard", "writer"];
+  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
+  var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"];
+  var DOC_WRITE = ["edit_in_app", "undo_change"];
+  function writable(id) { return !!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0; }
+  function actable(id) { return ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0; }
   function canWrite(lv, win, id, now) {
     return !!(isObj(lv) && lv[id] === "write" && writable(id) && NEVER.indexOf(id) < 0 && typeof win === "number" && win > now);
   }
@@ -727,7 +734,7 @@
   var core = { NEVER: NEVER, budgetLines: budgetLines, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo,
-               WRITES: WRITES, ACT: ACT, ACT_TOOLS: ACT_TOOLS, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
+               WRITES: WRITES, ACT: ACT, DOCS: DOCS, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
   if (!root || !root.document) return;
@@ -864,7 +871,7 @@
         apps: ok.map(function (a) {
           var o = { id: a.id, name: a.name, tools: toolsOf(a.id) };
           if (p.lv[a.id] === "write" && writable(a.id)) {
-            o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : ACT_WRITE.slice();
+            o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : DOCS.indexOf(a.id) >= 0 ? DOC_WRITE.slice() : ACT_WRITE.filter(function (n) { return n !== "edit_in_app"; });
             o.write_window = canWrite(p.lv, p.w, a.id, Date.now()) ? "open until " + new Date(p.w).toISOString() : "closed";
           }
           return o;
@@ -881,7 +888,7 @@
     }
     var budgetish = name === "app_summary" && (args.app === "budget" || args.app === "stock" || args.app === "kanban");
     if (ACT_TOOLS.indexOf(name) >= 0 && !budgetish) {
-      if (ACT_WRITE.indexOf(name) >= 0 && !ok.some(function (a) { return p.lv[a.id] === "write" && ACT.indexOf(a.id) >= 0; })) {
+      if ((ACT_WRITE.indexOf(name) >= 0 || name === "do_action") && !ok.some(function (a) { return p.lv[a.id] === "write" && actable(a.id); })) {
         return Promise.resolve({ ok: false, c: "The owner lets Claude change none of these apps (orOS › Settings › Connected services › orOS Gate: a change switch per app, then a write window)." });
       }
       return actFrame().then(function (F) {
@@ -1072,7 +1079,7 @@
   var api = {
     // For the hidden Assistant frame (assistant.js GATE).
     frameReady: function () { if (actReady) actReady(); },
-    act: ACT.slice(),
+    act: ACT.concat(DOCS),
     levels: function () {
       var p = pref(), out = {};
       if (!p.on || !isObj(p.lv)) return out;
@@ -1084,8 +1091,17 @@
       var p = pref(), now = Date.now();
       if (!p.on) return "The gate is off.";
       if (root.orosLock && typeof root.orosLock.isLocked === "function" && root.orosLock.isLocked()) return "orOS is locked on the owner's device.";
-      if (!id || ACT.indexOf(id) < 0 || !isObj(p.lv) || p.lv[id] !== "write") return "The owner does not let Claude change " + (id || "this app") + " (orOS › Settings › Connected services › orOS Gate).";
+      if (!id || !actable(id) || !isObj(p.lv) || p.lv[id] !== "write") return "The owner does not let Claude change " + (id || "this app") + " (orOS › Settings › Connected services › orOS Gate).";
       if (!canWrite(p.lv, p.w, id, now)) return "Changes are closed: the owner's write window is not open. Ask the owner to open it in orOS › Settings › Connected services › orOS Gate (or Quick settings).";
+      return "";
+    },
+    // do_action (W5): "" = Claude may do it now in this app; else why not.
+    actionOk: function (id) {
+      var p = pref(), now = Date.now();
+      if (!p.on) return "The gate is off.";
+      if (root.orosLock && typeof root.orosLock.isLocked === "function" && root.orosLock.isLocked()) return "orOS is locked on the owner's device.";
+      if (!id || NEVER.indexOf(id) >= 0) return "Claude may never open " + (id || "this app") + ".";
+      if (!(typeof p.w === "number" && p.w > now)) return "Changes are closed: the owner's write window is not open. Ask the owner to open it in orOS › Settings › Connected services › orOS Gate (or Quick settings).";
       return "";
     },
     askDelete: function (n) { return askDelete(n); },

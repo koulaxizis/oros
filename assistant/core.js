@@ -3057,7 +3057,9 @@
   // is open, more than 5 deletions are asked on the device. Only these
   // tools are offered, and every sentence about cards, presses or the
   // user's consent is replaced (tests/gate-act.test.js keeps it so).
-  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
+  // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): edit_in_app and
+  // do_action too; the app opens on the owner's screen and does it there.
+  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
   var GATE_SAY = [
     [" The user sees every result first and may share only some of them, or none.", ""],
     [" The user may be asked first.", ""],
@@ -3075,8 +3077,16 @@
     [" The user sees the list as a card with Undo next to each change that can still be undone.", ""],
     ["Take back changes you (the assistant) made, when the user asks", "Take back changes made through orOS Gate or by the Assistant, when the owner asks"],
     [" The user sees them on one card and presses Undo once; never say it is undone before the result says so, and never tell the user you cannot undo.",
-     " They are undone at once while the owner's write window is open; never say it is undone before the result says so."]
+     " They are undone at once while the owner's write window is open; never say it is undone before the result says so."],
+    [" The user sees the commands in plain words and how many things each design will get changed on a card, and presses Apply; nothing changes before that, and the card's Undo takes everything back.",
+     " The app opens on the owner's screen and applies them at once while the owner's write window is open; undo_change takes everything back. Removing more than 5 things is asked on the device first."],
+    ["Do one thing for the user in an orOS app when they press the card's button: ", "Do one thing for the owner in an orOS app, on their screen: "],
+    ["fills Time's alarm form; the user presses Add", "fills Time's alarm form on the owner's screen; the alarm is kept once the owner confirms it there"],
+    ["Nothing happens before the press, so say it is ready, never that it is done.", "It happens at once while the owner's write window is open; it cannot be undone, but the owner can stop it in the app."]
   ];
+  // edit_in_app's per-app command guides are long; through the gate
+  // they come with read_in_app's result for that app instead.
+  var GATE_EDIT_GUIDE = " Call read_in_app for the document first: its result lists that app's commands (commands), the only ones edit_in_app takes.";
   var GATE_BAD = /\bpress(es)?\b|user sees|may be asked|hold it back|untick|must press|a card\b|one card\b|on a card\b/i;
   // tools (toolsFor output) → MCP tool list { name, description, inputSchema, annotations }
   function gateTools(tools) {
@@ -3093,10 +3103,11 @@
         Object.keys(o).forEach(function (k) { if (o[k] && typeof o[k] === "object") walk(o[k]); });
       }
       x.description = say(x.description);
+      if (x.name === "edit_in_app") x.description = x.description.split("\n")[0] + GATE_EDIT_GUIDE;
       walk(x.params);
       var ro = /^(search_data|read_item|app_summary|read_in_app|change_history)$/.test(x.name);
       return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
-               annotations: { readOnlyHint: ro, destructiveHint: x.name === "change_item" || x.name === "undo_change" } };
+               annotations: { readOnlyHint: ro, destructiveHint: /^(change_item|undo_change|edit_in_app)$/.test(x.name) } };
     });
   }
 

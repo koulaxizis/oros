@@ -3617,8 +3617,12 @@
     });
     if (hit) renderMessages();
   }
-  attStore.onRb = onRb;
-  window.addEventListener("pagehide", function () { if (attStore.onRb === onRb) attStore.onRb = null; });
+  // (the hidden orOS Gate frame never takes it from an open Assistant;
+  // it looks for its own reports itself, gateWatch)
+  if (!GATE) {
+    attStore.onRb = onRb;
+    window.addEventListener("pagehide", function () { if (attStore.onRb === onRb) attStore.onRb = null; });
+  }
 
   // ---------- read_in_app / edit_in_app (AS-EDIT, wave AC1) ----------
   // Anything in an app's documents changes through the app's fixed
@@ -3783,7 +3787,10 @@
     var okP = app.perm === "always" ? Promise.resolve(true) : askRead(title, app.name, text);
     return okP.then(function (ok) {
       if (!ok) return { content: JSON.stringify({ note: "The user chose not to share this " + C.EDIT_APP[n.app].noun + "." }), ui: { k: "readNo", title: title } };
-      return { content: JSON.stringify({ app: n.app, design: o }), ui: { k: "read", title: title } };
+      var res = { app: n.app, design: o };
+      // orOS Gate: the commands for this app come here (core.js GATE_EDIT_GUIDE)
+      if (GATE && gateCtx && gateCtx.write.some(function (a) { return a.id === n.app; }) && mod.GUIDE) res.commands = String(mod.GUIDE);
+      return { content: JSON.stringify(res), ui: { k: "read", title: title } };
     });
   }
   // The stored arguments → { ok, app, docs, steps, pv } (checked again
@@ -3921,6 +3928,7 @@
       };
       try { sh.__orosOpenAt(mem.app, { editUndo: { key: key, tok: mem.tok } }); }
       catch (e) { clearTimeout(timer); delete rbWait[key]; resolve(undoFail(t("hist.noMod"))); }
+      if (GATE) gateWatch();
     });
   }
   function takeUndoAnswers() {
@@ -8523,10 +8531,22 @@
                              changes: chg.length > 0, creates: crIds,
                              links: crIds.indexOf("crm") >= 0 && crIds.indexOf("contacts") >= 0,
                              partnerLinks: partnerLinksOn(crIds, ga.write), history: ga.write.length > 0,
-                             edits: editCats(ga.read) });   // W5: read_in_app (documents, read only)
+                             edits: editCats(ga.read),   // W5: read_in_app (the documents Claude may read)
+                             actions: gateKinds(ga) });
+    // edit_in_app only for the documents Claude may change
+    var wc = editCats(ga.write), ed = Object.keys(wc).length ? C.toolsFor({ data: true, edits: wc }).filter(function (x) { return x.name === "edit_in_app"; }) : [];
+    tools = tools.filter(function (x) { return x.name !== "edit_in_app"; }).concat(ed);
     return C.gateTools(tools);
   }
-  var GATE_WRITE = { change_item: 1, create_items: 1, link_contact: 1, link_items: 1, undo_change: 1 };
+  // do_action's kinds through the gate: offered once the owner lets
+  // Claude change some app; play only for apps Claude may read.
+  function gateKinds(ga) {
+    if (!ga.write.length) return [];
+    var rd = {};
+    ga.read.forEach(function (a) { rd[a.id] = 1; });
+    return actionKinds().filter(function (k) { return k !== "play" || rd.music || rd.radio || rd.podcasts; });
+  }
+  var GATE_WRITE = { change_item: 1, create_items: 1, link_contact: 1, link_items: 1, undo_change: 1, edit_in_app: 1 };
   // One call → Promise<{ ok, c (text), a (apps) }>.
   function gateRun(name, args) {
     if (C.GATE_TOOLS.indexOf(name) < 0) return Promise.resolve({ ok: false, c: "Unknown tool." });
@@ -8540,6 +8560,8 @@
         : "The owner has not allowed any app yet." });
     }
     var call = { id: "g", name: name, args: args && typeof args === "object" && !Array.isArray(args) ? args : {} };
+    if (name === "edit_in_app") return gateEdit(call.args, apps, Date.now() + 21000);
+    if (name === "do_action") return Promise.resolve(gateDo(call.args, apps));
     return runTool(gateConv, call, apps).then(function (r) {
       var text = gateSay(typeof r.content === "string" ? r.content : "");
       if (gateNote) return { ok: false, c: gateNote };
@@ -8553,7 +8575,93 @@
   // The results speak of "the user" pressing; through the gate nobody did.
   function gateSay(text) {
     return text.replace(/The user applied the changes?\b/g, "Applied").replace(/The user (added|linked|deleted|moved|made) /g, function (m, v) { return v.charAt(0).toUpperCase() + v.slice(1) + " "; })
-      .replace(/The user pressed Apply, but /g, "").replace(/They can undo it\./g, "The owner can undo it (or call undo_change).");
+      .replace(/The user pressed Apply, but /g, "").replace(/They can undo it\./g, "The owner can undo it (or call undo_change).").replace(/ The user sees them on a card with Undo\./g, "");
+  }
+  // ---- W5: documents and actions, on the owner's screen ----
+  // The app's report comes back into the shell (orosAssistAtt.rb, as
+  // AS-RB); this frame looks for it while it waits (and for Undo's
+  // answers), never through onRb, which an open Assistant keeps.
+  var gateWait = {}, gateTimer = 0;
+  function gateTick() {
+    takeUndoAnswers();
+    Object.keys(gateWait).forEach(function (key) {
+      if (attRb[key]) { var rep = attRb[key]; delete attRb[key]; gateWait[key](rep); }
+    });
+    if (!Object.keys(gateWait).length && !Object.keys(rbWait).length) { clearInterval(gateTimer); gateTimer = 0; }
+  }
+  function gateWatch() { if (!gateTimer) gateTimer = setInterval(gateTick, 250); }
+  // edit_in_app: checked and counted as the card does, then handed to
+  // the app (it opens on the owner's screen and checks the commands
+  // again); the answer waits for its report until the deadline (the
+  // relay waits 25 s), a later report still goes to the change history.
+  function gateEdit(args, apps, deadline) {
+    var app = String(args.app || ""), g0 = gateShell();
+    if (app && !appOf(apps, app)) return Promise.resolve({ ok: false, c: g0 && typeof g0.writeOk === "function" && g0.writeOk(app) || "Claude may not change " + app + "." });
+    return editLoadFor(app, args).then(function () {
+      var r0 = proposeEditNow(gateConv, args, apps);
+      if (r0.err) return { ok: false, c: String(r0.content || "").replace(/^Error: /, "") };
+      var p = editPlan(args, apps), a = appOf(apps, p.app), name = a ? a.name : p.app;
+      if (!p.ok || !a) return { ok: false, c: p.err || "Claude may not change this app." };
+      var g = gateShell(), why = g && typeof g.writeOk === "function" ? g.writeOk(p.app) : "orOS Gate is not running.";
+      if (why) return { ok: false, c: why };
+      var removes = p.steps.some(function (s) { return s.op === "remove" || s.op === "delpages" || s.op === "deltrack"; });
+      var askP = removes && p.pv.n > 5 && typeof g.askDelete === "function" ? Promise.resolve(g.askDelete(p.pv.n)) : Promise.resolve(true);
+      return askP.then(function (yes) {
+        if (!yes) return { ok: false, c: "The owner did not confirm removing " + p.pv.n + " things on the device; nothing was changed." };
+        var ui = { key: attId() };
+        if (!runEdit(ui, gateConv, p)) return { ok: false, c: "The commands could not be handed to " + name + ". Nothing was changed." };
+        return new Promise(function (resolve) {
+          var key = ui.key;
+          var timer = setTimeout(function () {
+            gateWait[key] = function (rep) { delete gateWait[key]; gateTake(rep, p, name); };
+            setTimeout(function () { delete gateWait[key]; }, 120000);
+            resolve({ ok: true, a: [p.app], k: 0, c: name + " is open on the owner's screen and still applying the commands. Check with change_history in a moment before saying it is done." });
+          }, Math.max(2000, deadline - Date.now()));
+          gateWait[key] = function (rep) { clearTimeout(timer); delete gateWait[key]; resolve(gateTake(rep, p, name)); };
+          gateWatch();
+        });
+      });
+    });
+  }
+  // The app's report → the gate's answer; with Undo in the change history.
+  function gateTake(rep, p, name) {
+    if (!rep || rep.failed || !rep.ok) return { ok: false, c: name + " could not apply the commands (" + String(rep && rep.why || "error") + "). Nothing was changed." };
+    var per = Array.isArray(rep.per) ? rep.per.slice(0, 50).map(function (x) { return { name: String(x && x.name || "").slice(0, 120), n: +(x && x.n) || 0 }; }) : [];
+    var out = { applied: true, changed: +rep.n || 0, designs: per };
+    if (+rep.cut) out.backgrounds_removed = +rep.cut;
+    if (+rep.made) out.new_designs = +rep.made;
+    if (+rep.files) out.files_for_the_owner = +rep.files;
+    if (Array.isArray(rep.notes) && rep.notes.length) out.notes = rep.notes.slice(0, 10).map(String);
+    if (rep.stopped) out.stopped_by_owner = true;
+    var uid = "";
+    if (typeof rep.tok === "string" && rep.tok) {
+      uid = attId();
+      remember(uid, { edit: { app: p.app, tok: rep.tok } }, { app: p.app, name: name, kind: "change", act: "edit",
+        items: per.map(function (x) { return x.name || t("ed.untitled"); }), n: per.length });
+    }
+    return { ok: true, u: uid, a: [p.app], k: out.changed, c: name + " applied the commands on the owner's screen. " + JSON.stringify(out) };
+  }
+  // do_action: done at once in the app on the owner's screen, while the
+  // write window is open; an app is opened only when Claude may read it.
+  function gateDo(args, apps) {
+    var ref = typeof args.ref === "string" ? args.ref.replace(/^oros:/, "").trim() : "";
+    var r = ref ? gateConv.refs[ref] : null;
+    var snap = r ? { ref: ref, app: r.app, target: r.target === undefined ? null : JSON.parse(JSON.stringify(r.target)), title: r.title } : null;
+    if (ref && !snap) return { ok: false, c: "Unknown ref " + JSON.stringify(ref) + ": find the item with search_data first." };
+    var kinds = gateKinds(gateCtx || gateApps());
+    if (kinds.indexOf(String(args.kind || "")) < 0) return { ok: false, c: "kind must be one of: " + (kinds.join(", ") || "none (the owner lets Claude change no app)") + "." };
+    var a = normDo(args, snap);
+    if (!a.ok) return { ok: false, c: a.err };
+    var rd = {};
+    apps.forEach(function (x) { rd[x.id] = 1; });
+    if ((a.kind === "open" || a.kind === "play") && !rd[a.app]) return { ok: false, c: "The owner does not let Claude open " + a.app + "." };
+    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk(a.app) : "orOS Gate is not running.";
+    if (why) return { ok: false, c: why };
+    if (!runEntry(a)) return { ok: false, c: "The app could not do it on the device." };
+    var out = { done: a.kind, app: a.app };
+    if (a.view && a.view.title) out.title = String(a.view.title).slice(0, 200);
+    if (a.kind === "alarm") out.note = "Time's alarm form is filled on the owner's screen; the alarm is kept once the owner confirms it there.";
+    return { ok: true, a: [a.app], k: 1, c: JSON.stringify(out) };
   }
   function gateBoot() {
     load();
