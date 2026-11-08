@@ -12,8 +12,8 @@ const E = require("../roots/engine.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "roots/roots.js"), "utf8");
 const R = (() => {
-  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SCORE = 999;"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "mergeRoots"].forEach((name) => {
+  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SCORE = 999; var MAX_DAY = 99999; var LAST_N = 10;"];
+  ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeRoots"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const line = SRC.slice(i, SRC.indexOf("\n", i));
@@ -319,4 +319,70 @@ test("roots: records merge as a join", () => {
   assert.ok(!m({ rows: { zzzzzz: { b: 0, s: { m: [1, 2, 0] } } } }, {}).rows.zzzzzz, "finished > played drops");
   assert.ok(!m({ rows: { "BAD!": { b: 0, s: { m: [1, 0, 0] } } } }, {}).rows["BAD!"], "a bad row id drops");
   assert.equal(m({ rows: { cccccc: { b: 0, s: { m: [1, 0, 5] }, lr: 999 } } }, {}).rows.cccccc.lr, 0, "a root longer than the glade drops to 0");
+});
+
+test("roots: the Daily glade is one Hardy season from a bare tree, the same for the same code", () => {
+  const seeds = {};
+  for (let k = 0; k < 24; k++) {
+    const seed = "rt2026" + (1000 + k), st = E.newDaily(seed);
+    assert.equal(J(st), J(E.newDaily(seed)), "the same code, the same glade");
+    assert.ok(E.valid(st), "valid " + seed);
+    assert.equal(st.one, 1);
+    assert.equal(st.diff, "h");
+    assert.equal(st.sea, E.dailyOf(seed).sea);
+    assert.equal(J(st.t), J(E.newYear(seed, "h").t), "the glade of the code");
+    assert.equal(st.r.filter((v) => v).length, 1, "only the base root");
+    seeds[st.sea] = 1;
+  }
+  assert.deepEqual(Object.keys(seeds).sort(), ["1", "2", "3"], "every season comes up");
+  const bad = E.newDaily("rt20261108");
+  bad.diff = "m";
+  assert.ok(!E.valid(bad), "a Daily glade is always Hardy");
+  const two = E.newDaily("rt20261108");
+  two.one = 2;
+  assert.ok(!E.valid(two));
+});
+
+test("roots: the Daily glade ends with its one season, quota met or missed", () => {
+  for (const seed of ["rt20261108", "rt20261109", "rt20261110"]) {
+    const st = E.newDaily(seed);
+    let guard = 0;
+    while (st.over < 0 && guard++ < 10) E.botTurn(st);
+    assert.ok(st.over >= 0, "over after one season");
+    assert.equal(st.bloom.length, 1);
+    assert.equal(st.over, st.res.b >= st.res.q ? 1 : 0);
+    assert.equal(st.phase, "play", "no rest between seasons");
+    assert.equal(E.act(st, { t: "next" }), null, "no next season");
+    assert.ok(E.valid(st));
+  }
+  const st = blank("h", 2);
+  st.one = 1;
+  st.s.turn = E.T;
+  st.bk[1] = 4;
+  st.r[at(1, 1)] = 1; st.r[at(2, 1)] = 1;
+  end(st);
+  assert.equal(st.over, 1, "the quota met ends the Daily glade as done");
+});
+
+test("roots: Daily results and Last years merge as a join", () => {
+  const m = R.mergeRoots;
+  const A = { ver: 1, br: 5, rows: {}, days: { 310: { b: 5, w: 1, h: 20, t: 30, n: 3, q: 2 }, 311: { b: 5, w: 0, h: 9, t: 12, n: 1, q: 2 } },
+    last: [{ a: 100, d: "d", n: 1, w: 1, h: 20, s: "rt20261107" }, { a: 90, d: "m", n: 2, w: 0, h: 15, s: "abcdef" }] };
+  const B = { ver: 1, br: 5, rows: {}, days: { 311: { b: 5, w: 1, h: 14, t: 20, n: 2, q: 2 }, 312: { b: 1, w: 1, h: 30, t: 9, n: 4, q: 2 } },
+    last: [{ a: 120, d: "h", n: 3, w: 1, h: 33, s: "ghjkmn" }, { a: 100, d: "d", n: 1, w: 1, h: 20, s: "rt20261107" }] };
+  assert.equal(J(m(A, B)), J(m(B, A)));
+  assert.equal(J(m(m(A, B), B)), J(m(A, B)));
+  assert.equal(J(m(m(A, B), A)), J(m(A, B)));
+  const x = m(A, B);
+  assert.deepEqual(Object.keys(x.days), ["310", "311"], "a day from before the reset drops");
+  assert.equal(x.days[311].w, 1, "the quota met wins on the same epoch");
+  assert.deepEqual(x.last.map((v) => v.s), ["ghjkmn", "rt20261107", "abcdef"], "newest first, the same year once");
+  assert.ok(!m({ days: { 9: { b: 0, w: 1, h: 5, t: 3, n: 1, q: 2 } } }, {}).days[9], "met with bloom under the quota drops");
+  assert.ok(!m({ last: [{ a: 1, d: "d", n: 2, w: 1, h: 5, s: "abc" }] }, {}).last.length, "a Daily glade has one season");
+  const many = [];
+  for (let k = 0; k < 15; k++) many.push({ a: 1000 + k, d: "m", n: 1, w: 0, h: k, s: "s" + k });
+  const y = m({ last: many }, {});
+  assert.equal(y.last.length, 10, "the last 10");
+  assert.equal(y.last[0].s, "s14");
+  assert.deepEqual(m({ rows: {} }, {}).days, {}, "older data: no days");
 });

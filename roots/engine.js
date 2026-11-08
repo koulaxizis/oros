@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Roots — rules engine (v1.0.0)
+// orOS Roots — rules engine (v1.1.0)
 // NOT the UI: no DOM, no storage. Loaded by roots/index.html
 // (window.RootsEngine) and by tests/roots.test.js (module.exports).
 //
@@ -17,7 +17,8 @@
 //     cut: [63 turns left before a cut root withers, 0 = joined],
 //     bk: [63 surface 0 | 1 leaf bud | 2 flower bud | 3 leaf | 4 flower], ba: [63 bud turns left],
 //     bloom: [bloom of each season played], best (longest root), phase "play" | "rest",
-//     res: null | { b bloom, q quota }, s: season, acts, over: -1 | 0 a quota missed | 1 the year done }
+//     res: null | { b bloom, q quota }, s: season, acts, over: -1 | 0 a quota missed | 1 the year done,
+//     one: 1 (a Daily glade, 5.91.00: this season only, always Hardy; absent in a year) }
 //   season = { turn 1-T, q quota, u: [pest], nid, next: [{ k, at }], sched: [T + 1 lists], rw rewinds left, r rng, done 0|1 }
 //   pest = { id, k, at, hp, lt turns left (blight 99), it: intent | null }
 //   tiles: T trunk, a surface, . soil, # stone, w spring, m mineral, c clay.
@@ -460,7 +461,7 @@
     st.best = Math.max(st.best, longest(st));
     note(ev, { k: "bloom", n: b, q: q });
     if (b < q) { st.over = 0; return; }
-    if (st.sea >= SEASONS) { st.over = 1; return; }
+    if (st.sea >= SEASONS || st.one === 1) { st.over = 1; return; }
     st.phase = "rest";
   }
   // The year's score at winter: bloom of every season + springs reached + the longest root.
@@ -492,11 +493,28 @@
     s.q = Math.max(1, Math.floor(got * QUOTA[st.diff]));
     return s;
   }
-  function newYear(seed, diff) {
-    var st = { v: 1, seed: String(seed), diff: diff, sea: 1, sap: START_SAP, t: layout(String(seed)),
+  // A bare tree on the glade of the code, before its first season.
+  function bare(seed, diff, sea) {
+    var st = { v: 1, seed: String(seed), diff: diff, sea: sea, sap: START_SAP, t: layout(String(seed)),
       r: [], th: [], cut: [], bk: [], ba: [], bloom: [], best: 0, phase: "play", res: null, s: null, acts: 0, over: -1 };
     for (var i = 0; i < SIZE; i++) { st.r.push(0); st.th.push(0); st.cut.push(0); st.bk.push(0); st.ba.push(0); }
     st.r[BASE] = 2;
+    return st;
+  }
+  function newYear(seed, diff) {
+    var st = bare(seed, diff, 1);
+    st.s = makeSeason(st);
+    return st;
+  }
+  // The Daily glade (5.91.00): one season on Hardy from a bare tree; the
+  // glade and the season come from the code (the same for everyone that day).
+  function dailyOf(seed) {
+    var r = { s: hashStr(String(seed) + ":daily") };
+    return { sea: 1 + rint(r, SEASONS) };
+  }
+  function newDaily(seed) {
+    var st = bare(seed, "h", dailyOf(seed).sea);
+    st.one = 1;
     st.s = makeSeason(st);
     return st;
   }
@@ -592,6 +610,7 @@
     if (!Array.isArray(st.bloom) || st.bloom.length > SEASONS || !st.bloom.every(function (v) { return isInt(v) && v >= 0 && v <= 99; })) return false;
     if (!isInt(st.best) || st.best < 0 || st.best > SIZE || !isInt(st.acts) || st.acts < 0 || st.acts > BIG) return false;
     if (st.phase !== "play" && st.phase !== "rest") return false;
+    if (st.one !== undefined && (st.one !== 1 || st.diff !== "h" || st.phase === "rest" || st.bloom.length > 1)) return false;
     if (st.over !== -1 && st.over !== 0 && st.over !== 1) return false;
     if (st.res !== null && !(st.res && isInt(st.res.b) && isInt(st.res.q))) return false;
     var s = st.s;
@@ -616,7 +635,7 @@
     CUT_TURNS: CUT_TURNS, BUD_TURNS: BUD_TURNS, PESTS: PESTS, PEST_IDS: PEST_IDS, WAVES: WAVES,
     hashStr: hashStr, step: step, soil: soil, surface: surface, pestAt: pestAt, pestById: pestById,
     joined: joined, longest: longest, springs: springs, income: income, flowers: flowers, bloomOf: bloomOf, frost: frost,
-    newYear: newYear, options: options, legal: legal, act: act, score: score, rootCost: rootCost,
+    newYear: newYear, dailyOf: dailyOf, newDaily: newDaily, options: options, legal: legal, act: act, score: score, rootCost: rootCost,
     valid: valid, clone: clone, solve: solve, botTurn: botTurn, planTurn: planTurn
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

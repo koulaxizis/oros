@@ -409,3 +409,26 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 
 [hidden] { display: none !important; }
+
+/* Daily glade (5.91.00): a dot while today's glade is not played; lit while playing it */
+#daily-btn { position: relative; }
+#daily-btn.due::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+#daily-btn.on { color: var(--accent); border-color: var(--accent); }
+.dlg-actions.wrap { flex-wrap: wrap; }
+.dlg-actions.wrap .dlg-btn { flex: 1 1 120px; }
+/* Last years */
+.lr-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.lr-tx { flex: 1; min-width: 0; }
+.lr-tx .nm { font-weight: 600; overflow-wrap: anywhere; }
+.lr-tx .fx { font-size: 12px; opacity: 0.75; overflow-wrap: anywhere; }
+.lr-row button { flex: none; min-height: 40px; }
+.lr-list { max-height: 40vh; overflow: auto; padding-right: 4px; }

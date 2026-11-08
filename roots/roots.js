@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Roots — App logic (v1.0.0)
+// orOS Roots — App logic (v1.1.0)
 // A turn-based growing game: an old tree grows roots under a 7 × 9 glade
 // to reach springs and minerals, and buds on the surface that open into
 // leaves and flowers. Pests show what they will do before they act;
@@ -13,11 +13,15 @@
 //     bud), then tap a lit tile; Undo and Reset turn are free
 //   - a long press on any tile shows its text
 //   - a short "How to play" on the first year
+//   - the Daily glade (5.91.00): one season on Hardy, the same for
+//     everyone that day, one try; in the Game Center's Today
+//   - Last years with Replay (5.91.00)
 // Data:
 //   - synced slice "roots" (oros-roots-data): years, years finished and
 //     the best year score per difficulty, and the longest root, as
 //     per-device counter rows (each device only grows its own row;
-//     merge = per-row max, a join) + reset stamp br (as Fieldwarden)
+//     merge = per-row max, a join) + reset stamp br (as Fieldwarden),
+//     days (the Daily glade) and last (Last years), 5.91.00
 //   - device-local (R10): oros-roots-prefs (difficulty, tour seen,
 //     quick, threats), oros-roots-session (the year in progress),
 //     oros-roots-device (counter row id), oros-roots-sfx (sound)
@@ -29,7 +33,8 @@
 //   5. Scene (layout, drawing the glade)
 //   6. Input (tap, long press, keyboard)
 //   7. Panels (status, growth bar)
-//   8. Dialogs (new year, info, bloom, result, records, tour)
+//   8. Dialogs (new year, info, bloom, result, records, Last years,
+//      Daily glade, tour)
 //   9. Toasts
 //  10. Sound
 //  11. Sync slice + palette
@@ -39,6 +44,7 @@
   "use strict";
 
   var E = window.RootsEngine;
+  var DK = window.orosDaily || null;   // gamekit/daily.js (the Daily glade, the Game Center link)
 
   var STORAGE_KEY = "oros-roots-data";
   var PREFS_KEY   = "oros-roots-prefs";
@@ -50,6 +56,8 @@
   var BW = E.W, BH = E.H, SIZE = E.SIZE;
   var BIG = 1e9;
   var MAX_SCORE = 999;
+  var MAX_DAY = 99999;
+  var LAST_N = 10;
   var GROW = ["root", "thick", "thorn", "leaf", "flower"];
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -100,7 +108,7 @@
       "dir.0": "up", "dir.1": "right", "dir.2": "down", "dir.3": "left",
       "info.comes": "{k} comes in here at the end of the turn",
       "info.close": "Close",
-      "msg.season": "{s} · season {n} of 3. Bloom quota: {q}.", "msg.turn": "Turn {n}.", "msg.pick": "{g}: tap a lit tile.",
+      "msg.season": "{s} · season {n} of 3. Bloom quota: {q}.", "msg.daily": "{s} · Daily glade. Bloom quota: {q}.", "msg.turn": "Turn {n}.", "msg.pick": "{g}: tap a lit tile.",
       "msg.frost": "Frost tonight: buds with no leaf beside them freeze.",
       "msg.none": "Nothing to grow there.", "msg.sap": "Not enough sap.",
       "live.end": "Turn {n}. Sap {s}. Bloom {b} of {q}.",
@@ -119,6 +127,22 @@
       "confirm.new": "Start a new year? The year in progress counts as not finished.", "confirm.newYes": "New year",
       "toast.save": "Not saved: the browser's storage is full", "toast.reset": "Records reset",
       "toast.rewind": "The last turn is rewound ({n} left)",
+      "btn.daily": "Daily glade", "daily.label": "Daily",
+      "daily.title": "Daily glade #{n}", "daily.won": "Score {n}, quota met", "daily.lost": "Score {n}, quota missed",
+      "daily.season": "Season", "daily.bloom": "Bloom · quota", "daily.score": "Score", "daily.scoreNote": "The bloom, the springs reached and the longest root.",
+      "daily.streak": "Streak", "daily.best": "Best streak",
+      "daily.oneTry": "The Daily glade has one try.", "daily.next": "A new one tomorrow.",
+      "daily.free": "New year", "daily.share": "Share", "daily.games": "All games",
+      "daily.rules": "Daily glade: one season on Hardy from a bare tree, the same for everyone today. Meet the bloom quota; the score is the bloom, the springs and the longest root.",
+      "daily.leave": "Leave today's glade? It counts as your one try.", "daily.leaveYes": "Leave it", "daily.leaveNo": "Keep playing",
+      "daily.giveUp": "Start today's glade? The year in progress counts as not finished.", "daily.go": "Start the glade",
+      "stats.daily": "Daily glade", "stats.dailyRow": "Played · quota met · streak · best score",
+      "last.title": "Last years", "last.won": "Year done", "last.met": "Quota met", "last.missed": "Quota missed",
+      "last.seasons": "{n} of {m} seasons", "last.score": "score {n}",
+      "last.replay": "Replay", "last.replayLabel": "Replay year {seed}",
+      "share.won": "Score {n}, quota met", "share.lost": "Score {n}, quota missed",
+      "toast.copied": "Copied: paste it into a chat", "toast.shared": "Shared", "toast.copyFail": "Could not copy",
+      "toast.dailyGone": "The Daily glade needs the gamekit file: reload orOS",
       "tour.title": "How to play", "tour.next": "Next", "tour.skip": "Skip", "tour.done": "Play",
       "tour.1": "You are an old tree. Grow roots through the soil from the trunk to reach springs and minerals: every joined one gives sap each turn.",
       "tour.2": "On the surface, buds open into leaves (more sap) and flowers. At the end of each season, flowers and springs reached must meet the bloom quota.",
@@ -162,7 +186,7 @@
       "dir.0": "πάνω", "dir.1": "δεξιά", "dir.2": "κάτω", "dir.3": "αριστερά",
       "info.comes": "{k}: μπαίνει εδώ στο τέλος του γύρου",
       "info.close": "Κλείσιμο",
-      "msg.season": "{s} · εποχή {n} από 3. Στόχος άνθισης: {q}.", "msg.turn": "Γύρος {n}.", "msg.pick": "{g}: πάτα ένα φωτισμένο τετράγωνο.",
+      "msg.season": "{s} · εποχή {n} από 3. Στόχος άνθισης: {q}.", "msg.daily": "{s} · Ξέφωτο της ημέρας. Στόχος άνθισης: {q}.", "msg.turn": "Γύρος {n}.", "msg.pick": "{g}: πάτα ένα φωτισμένο τετράγωνο.",
       "msg.frost": "Παγωνιά απόψε: τα μπουμπούκια χωρίς φύλλο δίπλα τους παγώνουν.",
       "msg.none": "Δεν φυτρώνει τίποτα εκεί.", "msg.sap": "Δεν φτάνει ο χυμός.",
       "live.end": "Γύρος {n}. Χυμός {s}. Άνθιση {b} από {q}.",
@@ -181,6 +205,22 @@
       "confirm.new": "Να ξεκινήσει νέα χρονιά; Αυτή που παίζεις μετρά ως μη ολοκληρωμένη.", "confirm.newYes": "Νέα χρονιά",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος του προγράμματος περιήγησης γέμισε", "toast.reset": "Το αρχείο μηδενίστηκε",
       "toast.rewind": "Ο τελευταίος γύρος αναιρέθηκε (μένουν {n})",
+      "btn.daily": "Ξέφωτο της ημέρας", "daily.label": "Ημέρας",
+      "daily.title": "Ξέφωτο της ημέρας #{n}", "daily.won": "{n} πόντοι, ο στόχος πιάστηκε", "daily.lost": "{n} πόντοι, ο στόχος δεν πιάστηκε",
+      "daily.season": "Εποχή", "daily.bloom": "Άνθιση · στόχος", "daily.score": "Πόντοι", "daily.scoreNote": "Η άνθιση, οι πηγές που έφτασες και η πιο μακριά ρίζα.",
+      "daily.streak": "Σερί", "daily.best": "Καλύτερο σερί",
+      "daily.oneTry": "Το ξέφωτο της ημέρας παίζεται μία φορά.", "daily.next": "Νέο αύριο.",
+      "daily.free": "Νέα χρονιά", "daily.share": "Κοινοποίηση", "daily.games": "Όλα τα παιχνίδια",
+      "daily.rules": "Ξέφωτο της ημέρας: μία εποχή στη Σκληρή από γυμνό δέντρο, ίδια για όλους σήμερα. Πιάσε τον στόχο άνθισης· οι πόντοι είναι η άνθιση, οι πηγές και η πιο μακριά ρίζα.",
+      "daily.leave": "Να αφήσεις το σημερινό ξέφωτο; Μετρά ως η μία σου προσπάθεια.", "daily.leaveYes": "Άφησέ το", "daily.leaveNo": "Συνέχισε",
+      "daily.giveUp": "Να ξεκινήσει το σημερινό ξέφωτο; Η χρονιά που παίζεις μετρά ως μη ολοκληρωμένη.", "daily.go": "Ξεκίνα το ξέφωτο",
+      "stats.daily": "Ξέφωτο της ημέρας", "stats.dailyRow": "Παιγμένα · στόχοι · σερί · καλύτεροι πόντοι",
+      "last.title": "Τελευταίες χρονιές", "last.won": "Ολοκληρώθηκε", "last.met": "Στόχος", "last.missed": "Χωρίς στόχο",
+      "last.seasons": "{n} από {m} εποχές", "last.score": "{n} πόντοι",
+      "last.replay": "Ξανά", "last.replayLabel": "Ξανά η χρονιά {seed}",
+      "share.won": "{n} πόντοι, ο στόχος πιάστηκε", "share.lost": "{n} πόντοι, ο στόχος δεν πιάστηκε",
+      "toast.copied": "Αντιγράφηκε: επικόλλησέ το σε μια συνομιλία", "toast.shared": "Κοινοποιήθηκε", "toast.copyFail": "Δεν αντιγράφηκε",
+      "toast.dailyGone": "Το ξέφωτο της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
       "tour.title": "Πώς παίζεται", "tour.next": "Επόμενο", "tour.skip": "Παράλειψη", "tour.done": "Παίξε",
       "tour.1": "Είσαι ένα γέρικο δέντρο. Άπλωσε ρίζες στο χώμα από τον κορμό ως τις πηγές και τα μεταλλεύματα: καθένα που ενώνεται δίνει χυμό κάθε γύρο.",
       "tour.2": "Στην επιφάνεια τα μπουμπούκια ανοίγουν σε φύλλα (περισσότερος χυμός) και λουλούδια. Στο τέλος κάθε εποχής τα λουλούδια και οι πηγές που έφτασες πρέπει να πιάσουν τον στόχο άνθισης.",
@@ -232,10 +272,40 @@
   //                                           lr: the longest root } } }
   // Each device only grows its own row, so a per-row max is a join and
   // nothing is double-counted however the devices meet.
+  // days (5.91.00, older data has none): one Daily glade per calendar
+  // day (day 0 = 1 Jan 2026, gamekit/daily.js), one try:
+  // { "<day>": { b, w: 1 quota met | 0, h: score, t: actions, n: bloom,
+  //   q: quota } }. The newer epoch wins; equal epochs keep the better
+  // result (quota met, then the higher score, then fewer actions, then
+  // the larger JSON: a total order, so a join). Never counted in rows.
+  // last (5.91.00): the last 10 years of every device,
+  // [{ a: end time ms, d: m|h|d (d = Daily), n: seasons met, w: 1
+  //    finished (Daily: quota met) | 0, h: score, s: year code }].
+  // Union by a + s, newest first, the first 10: a join; entries older
+  // than the reset stamp br drop.
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {} }; }
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [] }; }
+  function normDay(v) {
+    if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
+        !isInt(v.h) || v.h < 0 || v.h > MAX_SCORE || !isInt(v.t) || v.t < 1 || v.t >= BIG ||
+        !isInt(v.n) || v.n < 0 || v.n > 99 || !isInt(v.q) || v.q < 1 || v.q > 99 || (v.w === 1) !== (v.n >= v.q)) return null;
+    return { b: v.b, w: v.w, h: v.h, t: v.t, n: v.n, q: v.q };
+  }
+  function dayKeyOk(k) { return /^\d{1,6}$/.test(k) && +k <= MAX_DAY; }
+  function dayBetter(x, y) {
+    if (x.w !== y.w) return x.w > y.w;
+    if (x.h !== y.h) return x.h > y.h;
+    if (x.t !== y.t) return x.t < y.t;
+    return cmpStr(JSON.stringify(x), JSON.stringify(y)) > 0;
+  }
+  function normLast(v) {
+    if (!v || typeof v !== "object" || !isInt(v.a) || v.a < 0 || ["m", "h", "d"].indexOf(v.d) < 0 ||
+        !isInt(v.n) || v.n < 0 || v.n > (v.d === "d" ? 1 : E.SEASONS) || (v.w !== 0 && v.w !== 1) ||
+        !isInt(v.h) || v.h < 0 || v.h > MAX_SCORE || typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s)) return null;
+    return { a: v.a, d: v.d, n: v.n, w: v.w, h: v.h, s: v.s };
+  }
   function normRow(row) {
     if (!row || typeof row !== "object" || !isInt(row.b) || row.b < 0) return null;
     var s = {}, any = false;
@@ -280,7 +350,33 @@
       DIFFS.forEach(function (k) { if (r.s[k]) s[k] = r.s[k].slice(); });
       sorted[id] = { b: r.b, s: s, lr: r.lr };
     });
-    return { ver: DATA_VER, br: br, rows: sorted };
+    var days = {};
+    [a.days, b.days].forEach(function (m) {
+      if (!m || typeof m !== "object" || Array.isArray(m)) return;
+      Object.keys(m).forEach(function (k) {
+        if (!dayKeyOk(k)) return;
+        var v = normDay(m[k]);
+        if (!v || v.b < br) return;
+        var cur = days[+k];
+        if (!cur || v.b > cur.b || (v.b === cur.b && dayBetter(v, cur))) days[+k] = v;
+      });
+    });
+    var sd = {};
+    Object.keys(days).map(Number).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
+    var seen = {}, last = [];
+    [a.last, b.last].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (x) {
+        var v = normLast(x);
+        if (!v || v.a < br) return;
+        var key = v.a + ":" + v.s;
+        // the same year twice: keep one, by a fixed order
+        if (!seen[key] || cmpStr(JSON.stringify(v), JSON.stringify(seen[key])) > 0) seen[key] = v;
+      });
+    });
+    Object.keys(seen).forEach(function (k) { last.push(seen[k]); });
+    last.sort(function (x, y) { return y.a - x.a || cmpStr(x.s, y.s); });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N) };
   }
   // [years, finished, best score] for a difficulty, all devices.
   function totals(diff) {
@@ -344,6 +440,39 @@
     data = mergeRoots(data, data);
     save();
   }
+  // Daily results: glades played, quota met, the current and best
+  // streak of days with the quota met, the best score.
+  function dailyStats(todayIdx) {
+    var on = {}, n = 0, w = 0, best = 0;
+    Object.keys(data.days).forEach(function (k) {
+      var v = data.days[k];
+      n++;
+      best = Math.max(best, v.h);
+      if (v.w) { on[k] = true; w++; }
+    });
+    var s2 = DK ? DK.streaks(on, todayIdx) : { cur: 0, best: 0 };
+    return { n: n, w: w, cur: s2.cur, best: s2.best, top: best };
+  }
+  // One try a day: the first result counts.
+  function countDaily(day, won, score, acts, bloom, quota) {
+    if (data.days[day] && data.days[day].b >= data.br) return;
+    var q = clamp(quota, 1, 99), n = clamp(bloom, 0, 99);
+    data.days[day] = { b: data.br, w: n >= q ? 1 : 0, h: clamp(score, 0, MAX_SCORE), t: clamp(acts, 1, BIG - 1), n: n, q: q };
+    data = mergeRoots(data, data);
+    save();
+  }
+  // A year (or a Daily glade) ended: into Last years.
+  function logYear(won) {
+    var daily = game.opts.day !== undefined;
+    // every season in bloom[] met its quota but a missed last one
+    var met = st.bloom.length - (st.over === 0 ? 1 : 0);
+    var v = normLast({ a: Date.now(), d: daily ? "d" : game.opts.diff, n: clamp(met, 0, daily ? 1 : E.SEASONS),
+      w: won ? 1 : 0, h: clamp(E.score(st), 0, MAX_SCORE), s: game.opts.seed });
+    if (!v) return;
+    data.last = [v].concat(data.last || []);
+    data = mergeRoots(data, data);
+    save();
+  }
 
   // ---------- 3. Device-local prefs + session ----------
   var prefs = { diff: "m", tour: false, fast: false, threat: false };
@@ -364,7 +493,7 @@
 
   // game = {
   //   g: engine state,
-  //   opts: { diff, seed },
+  //   opts: { diff, seed, day (the Daily glade only) },
   //   ts: the state at the start of this turn (Reset turn),
   //   pt: the state at the start of the turn before (Rewind, Mild) | null,
   //   counted: bool   the year's end is in the records
@@ -376,6 +505,8 @@
     if (!s || typeof s !== "object" || !E.valid(s.g)) return false;
     var o = s.opts;
     if (!o || DIFFS.indexOf(o.diff) < 0 || o.diff !== s.g.diff || typeof o.seed !== "string" || o.seed !== s.g.seed) return false;
+    if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || s.g.one !== 1)) return false;
+    if (o.day === undefined && s.g.one !== undefined) return false;
     if (!E.valid(s.ts) || s.ts.seed !== s.g.seed) return false;
     if (s.pt !== null && !(E.valid(s.pt) && s.pt.seed === s.g.seed)) return false;
     return true;
@@ -383,7 +514,11 @@
   function loadSession() {
     try {
       var s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
-      if (validSession(s)) return { g: s.g, opts: { diff: s.opts.diff, seed: s.opts.seed }, ts: s.ts, pt: s.pt, counted: s.counted === true };
+      if (validSession(s)) {
+        var o = { diff: s.opts.diff, seed: s.opts.seed };
+        if (s.opts.day !== undefined) o.day = s.opts.day;
+        return { g: s.g, opts: o, ts: s.ts, pt: s.pt, counted: s.counted === true };
+      }
     } catch (e) {}
     return null;
   }
@@ -405,8 +540,11 @@
 
   function inProgressOf(g) { return !!(g && !g.counted && g.g.over < 0 && g.g.acts > 0); }
   function makeGame(opts) {
-    var g = E.newYear(opts.seed, opts.diff);
-    return { g: g, opts: { diff: opts.diff, seed: opts.seed }, ts: E.clone(g), pt: null, counted: false };
+    var daily = opts.day !== undefined;
+    var g = daily ? E.newDaily(opts.seed) : E.newYear(opts.seed, opts.diff);
+    var o = { diff: g.diff, seed: g.seed };
+    if (daily) o.day = opts.day;
+    return { g: g, opts: o, ts: E.clone(g), pt: null, counted: false };
   }
   function setState(g) {
     game.g = g;
@@ -414,7 +552,9 @@
   }
   function endYear(won) {
     game.counted = true;
-    count(game.opts.diff, won, E.score(st), Math.max(st.best, E.longest(st)));
+    if (game.opts.day !== undefined) countDaily(game.opts.day, won, E.score(st), Math.max(1, st.acts), st.res ? st.res.b : 0, st.s.q);
+    else count(game.opts.diff, won, E.score(st), Math.max(st.best, E.longest(st)));
+    logYear(won);
   }
   function startGame(opts) {
     // a year under way and left counts as not finished
@@ -424,6 +564,7 @@
     undo = [];
     saveSession();
     seasonMsg();
+    if (game.opts.day !== undefined) setMsg(t("daily.rules"));
     renderAll();
     live($("msg").textContent);
     maybeTour();
@@ -431,7 +572,7 @@
   function setMsg(text) { $("msg").textContent = text || ""; }
   function seasonMsg() {
     if (st.phase === "rest") { setMsg(t("res.met")); return; }
-    var m = t("msg.season", { s: t("sea." + st.sea), n: st.sea, q: st.s.q });
+    var m = st.one ? t("msg.daily", { s: t("sea." + st.sea), q: st.s.q }) : t("msg.season", { s: t("sea." + st.sea), n: st.sea, q: st.s.q });
     if (E.frost(st, st.s)) m += " " + t("msg.frost");
     setMsg(m);
   }
@@ -516,7 +657,7 @@
     if (st.over >= 0 && !game.counted) endYear(st.over === 1);
     saveSession();
     if (st.s.done) {
-      setMsg(st.over === 0 ? t("res.miss") : st.over === 1 ? t("res.won") : t("res.met"));
+      setMsg(st.one ? t(st.over === 1 ? "daily.won" : "daily.lost", { n: E.score(st) }) : st.over === 0 ? t("res.miss") : st.over === 1 ? t("res.won") : t("res.met"));
       setTimeout(bloomDialog, Math.max(300, busyUntil - Date.now() + 200));
     }
     else {
@@ -1105,6 +1246,10 @@
     var rw = $("rewind-btn");
     rw.hidden = !(st && st.diff === "m");
     rw.disabled = !canRewind();
+    var db = $("daily-btn");
+    db.hidden = !DK;
+    db.classList.toggle("due", !!DK && !data.days[today()]);
+    db.classList.toggle("on", !!(game && game.opts.day !== undefined && !game.counted));
   }
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -1204,7 +1349,8 @@
 
   function askNew() {
     cancelTourWait();
-    if (game && inProgressOf(game)) confirmDialog(t("confirm.new"), newDialog, t("confirm.newYes"));
+    if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), function () { leaveDaily(); newDialog(); }, t("daily.leaveYes"), t("daily.leaveNo"));
+    else if (game && inProgressOf(game)) confirmDialog(t("confirm.new"), newDialog, t("confirm.newYes"));
     else newDialog();
   }
   function newDialog() {
@@ -1270,7 +1416,7 @@
     dlg.appendChild(row(t("res.flowers"), String(E.flowers(st))));
     dlg.appendChild(row(t("res.springs"), String(E.springs(st, on))));
     dlg.appendChild(row(t("res.quota"), String(r.q)));
-    dlg.appendChild(el("div", "dlg-msg", met ? (st.over === 1 ? t("res.won") : t("res.met")) : t("res.miss")));
+    dlg.appendChild(el("div", "dlg-msg", st.one ? t(met ? "daily.won" : "daily.lost", { n: E.score(st) }) : met ? (st.over === 1 ? t("res.won") : t("res.met")) : t("res.miss")));
     var acts = el("div", "dlg-actions");
     var go = button(st.over >= 0 ? t("info.close") : t("res.next"), "primary", function () {
       dlg.close();
@@ -1285,6 +1431,7 @@
   }
   function resultDialog() {
     if (!game || st.over < 0 || document.querySelector("dialog[open]")) return;
+    if (game.opts.day !== undefined) { dailyDialog(game.opts.day); return; }
     var dlg = makeDialog("rt-result"), won = st.over === 1;
     dlg.appendChild(el("div", "dlg-title", t("app.name") + " · " + t("diff." + game.opts.diff)));
     dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : t("res.lost")));
@@ -1312,6 +1459,14 @@
       dlg.appendChild(row(t("diff." + m), v[0] + " · " + v[1] + " · " + v[2]));
     });
     dlg.appendChild(row(t("stats.long"), String(longestEver())));
+    if (DK) {
+      var ds = dailyStats(today());
+      if (ds.n) empty = false;
+      dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
+      dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.top : "–"));
+    }
+    if ((data.last || []).length) empty = false;
+    lastYears(dlg);
     if (game) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
     var acts = el("div", "dlg-actions");
     var reset = button(t("stats.reset"), "danger", function () {
@@ -1335,6 +1490,105 @@
     dlg.appendChild(acts);
     show(dlg, no);
   }
+  function lastYears(dlg) {
+    var list = data.last || [];
+    if (!list.length) return;
+    dlg.appendChild(el("div", "dlg-sub", t("last.title")));
+    var box = el("div", "lr-list");
+    list.forEach(function (v) {
+      var r = el("div", "lr-row");
+      var what = v.d === "d" ? t(v.w ? "last.met" : "last.missed") : (v.w ? t("last.won") : t("last.seasons", { n: v.n, m: E.SEASONS }));
+      var tx = el("div", "lr-tx");
+      tx.appendChild(el("div", "nm", (v.d === "d" ? t("daily.label") : t("diff." + v.d)) + " · " + what));
+      tx.appendChild(el("div", "fx", t("last.score", { n: v.h }) + " · " +
+        (DK ? DK.dateLabel(DK.dayIndex(new Date(v.a)), LANG) + " · " : "") + v.s));
+      r.appendChild(tx);
+      // a Daily glade replays as a whole year on Hardy on its glade
+      var b = button(t("last.replay"), "", function () {
+        dlg.close();
+        var go = function () { startGame({ diff: v.d === "d" ? "h" : v.d, seed: v.s }); };
+        if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), function () { leaveDaily(); go(); }, t("daily.leaveYes"), t("daily.leaveNo"));
+        else if (game && inProgressOf(game)) confirmDialog(t("confirm.new"), go, t("confirm.newYes"));
+        else go();
+      });
+      b.setAttribute("aria-label", t("last.replayLabel", { seed: v.s }));
+      r.appendChild(b);
+      box.appendChild(r);
+    });
+    dlg.appendChild(box);
+  }
+
+  // ---------- Daily glade ----------
+  // One season on Hardy from a bare tree: the glade and the season come
+  // from the seed "rt" + the date, the same for everyone that day; one try.
+  function today() { return DK ? DK.today() : 0; }
+  function dailyOpts(day) {
+    return { diff: "h", seed: cleanSeed(DK.seedOf("rt", day)), day: day };
+  }
+  // A Daily glade left before its end counts as a missed quota.
+  function leaveDaily() {
+    if (game && game.opts.day !== undefined && inProgressOf(game)) {
+      endYear(false);
+      saveSession();
+      renderAll();
+    }
+  }
+  // The Daily button: today's result when it is played (here or on
+  // another device), else today's glade (resumed when it is open).
+  function openDaily() {
+    cancelTourWait();
+    if (!DK) { showToast(t("toast.dailyGone")); return; }
+    var d = today();
+    if (data.days[d]) { dailyDialog(d); return; }
+    if (game && game.opts.day === d && !game.counted) return;
+    var go = function () { startGame(dailyOpts(d)); };
+    if (game && inProgressOf(game)) confirmDialog(t("daily.giveUp"), go, t("daily.go"), t("daily.leaveNo"));
+    else go();
+  }
+  function dailyDialog(day) {
+    var r = data.days[day];
+    if (!r || !DK || document.querySelector("dialog[open]")) return;
+    var s2 = dailyStats(today()), info = E.dailyOf(cleanSeed(DK.seedOf("rt", day)));
+    var dlg = makeDialog("rt-daily");
+    dlg.appendChild(el("div", "dlg-title", t("daily.title", { n: day + 1 }) + " · " + DK.dateLabel(day, LANG)));
+    dlg.appendChild(el("div", "dlg-hero" + (r.w ? "" : " lost"), t(r.w ? "daily.won" : "daily.lost", { n: r.h })));
+    dlg.appendChild(el("div", "dlg-note", t("daily.scoreNote")));
+    dlg.appendChild(row(t("daily.season"), t("sea." + info.sea)));
+    dlg.appendChild(row(t("daily.bloom"), r.n + " · " + r.q));
+    dlg.appendChild(row(t("daily.streak"), String(s2.cur)));
+    dlg.appendChild(row(t("daily.best"), String(s2.best)));
+    if (day === today()) dlg.appendChild(el("div", "dlg-note", t("daily.oneTry") + " " + t("daily.next")));
+    var acts = el("div", "dlg-actions wrap");
+    hubLink(acts, dlg);
+    acts.appendChild(button(t("daily.share"), "", function () { shareDaily(day); }));
+    var free = button(t("daily.free"), "primary", function () { dlg.close(); newDialog(); });
+    acts.appendChild(free);
+    dlg.appendChild(acts);
+    show(dlg, free);
+  }
+  // Spoiler-free: a flower for every bloom up to the quota (a bare
+  // square for each one missing), the score and whether it was met.
+  function shareDaily(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var sq = "", k;
+    for (k = 0; k < Math.min(r.n, r.q); k++) sq += "🌸";
+    for (k = r.n; k < r.q; k++) sq += "🟫";
+    if (r.n > r.q) sq += " +" + (r.n - r.q);
+    var text = DK.shareText({ game: t("app.name"), label: t("daily.label"), day: day, grid: [sq],
+      line: (r.w ? "🌳 " : "🍂 ") + t(r.w ? "share.won" : "share.lost", { n: r.h }) });
+    DK.share(text, "orOS " + t("app.name")).then(function (how) {
+      if (how === "copied") showToast(t("toast.copied"));
+      else if (how === "shared") live(t("toast.shared"));
+      else if (how === "failed") showToast(t("toast.copyFail"));
+    });
+  }
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(acts, dlg) {
+    if (!DK || !DK.hasHub()) return;
+    acts.appendChild(button(t("daily.games"), "", function () { dlg.close(); DK.openHub("roots"); }));
+  }
+
   function resetRecords() {
     data.br = Math.max(Date.now(), data.br + 1);
     data = mergeRoots(data, data);
@@ -1441,6 +1695,7 @@
     undo:   SVG + '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>',
     reset:  SVG + '<path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>',
     rewind: SVG + '<path d="M11 6 4 12l7 6zM20 6l-7 6 7 6z"/></svg>',
+    daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M12 20v-5M12 15c0-2-1.5-3-3.5-3M12 17c0-2 1.5-3 3.5-3"/></svg>',
     stats:  SVG + '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn:  SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
@@ -1535,7 +1790,7 @@
     $("end-btn").title = t("btn.endKey");
   }
   function paintStatic() {
-    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"], ["undo-btn", "undo", "btn.undo"],
+    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"], ["daily-btn", "daily", "btn.daily"], ["undo-btn", "undo", "btn.undo"],
      ["reset-btn", "reset", "btn.reset"], ["rewind-btn", "rewind", "btn.rewind"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
@@ -1556,6 +1811,9 @@
     $("reset-btn").addEventListener("click", resetTurn);
     $("rewind-btn").addEventListener("click", rewind);
     $("stats-btn").addEventListener("click", statsDialog);
+    $("daily-btn").addEventListener("click", openDaily);
+    // Deep link from the Game Center: { daily: true } opens today's glade.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("threat-btn").addEventListener("click", toggleThreat);
     $("fast-btn").addEventListener("click", function () { prefs.fast = !prefs.fast; savePrefs(); paintFastBtn(); });
     $("sfx-btn").addEventListener("click", function () {
@@ -1585,13 +1843,21 @@
     inheritPalette();
     watchPalette();
     game = loadSession();
+    var tg = DK ? DK.takeTarget("roots") : null;
+    var daily = !!(tg && tg.daily && DK);
+    if (daily && !data.days[today()] && !(game && game.opts.day === today() && !game.counted)) {
+      // today's glade straight away, unless a year under way would count as not finished
+      if (!game || !inProgressOf(game)) { game = makeGame(dailyOpts(today())); daily = false; }
+    }
     if (!game) game = makeGame({ diff: prefs.diff, seed: newSeed() });
     st = game.g;
     saveSession();
     seasonMsg();
+    if (game.opts.day !== undefined && !st.acts) setMsg(t("daily.rules"));
     resize();
     renderAll();
-    if (st.res && (st.phase === "rest" || st.over >= 0)) setTimeout(bloomDialog, 300);
+    if (daily) setTimeout(openDaily, 300);
+    else if (st.res && (st.phase === "rest" || st.over >= 0)) setTimeout(bloomDialog, 300);
     else maybeTour();
   }
 

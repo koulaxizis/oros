@@ -35,8 +35,14 @@ Ein Jahr hat 3 Jahreszeiten: Frühling, Sommer und Herbst. Der Winter bewertet e
 
 Jedes Jahr hat einen Code. Derselbe Code ergibt dieselbe Lichtung und dieselben Schädlinge, also kannst du ein Jahr noch einmal spielen oder den Code einem Freund geben.
 
+## Die Lichtung des Tages
+Die Kalender-Schaltfläche in der Werkzeugleiste öffnet die **Lichtung des Tages**: eine Jahreszeit auf Rau mit einem kahlen Baum, für alle an diesem Tag dieselbe Lichtung, Jahreszeit und dieselben Schädlinge. Es gibt einen Versuch. Erreichst du das Blütenziel, zählt der Tag für deine Serie; die Punkte sind die Blüte der Jahreszeit plus die erreichten Quellen plus die längste Wurzel. Ein Punkt auf der Schaltfläche heißt, dass die heutige Lichtung noch offen ist. Danach zeigt die Schaltfläche dein Ergebnis, mit `Teilen` (eine Zeile Blumen ohne Spoiler, die Punkte und ob das Ziel erreicht wurde) und `Alle Spiele` für das [Game Center](help:a/gamecenter), wo sie unter Heute steht. Wer die heutige Lichtung vor ihrem Ende verlässt, hat das Ziel verfehlt, und ein laufendes Jahr, das du dafür verlässt, zählt als nicht geschafft.
+
+## Letzte Jahre
+`Bestwerte` listet deine letzten 10 Jahre und Lichtungen des Tages von allen Geräten, die neuesten zuerst: die Schwierigkeit, wie weit du gekommen bist, die Punkte, den Tag und den Code. `Nochmal` startet dieses Jahr mit seinem Code neu; eine Lichtung des Tages wird als ganzes Jahr auf Rau auf ihrer Lichtung gespielt.
+
 ## Bestwerte und Synchronisierung
-`Bestwerte` zeigt deine Jahre, die geschafften Jahre und die besten Jahrespunkte für jede Schwierigkeit sowie deine längste Wurzel. Sie werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, wobei die Jahre aller Geräte zusammengezählt werden, und sie zählen im [Game Center](help:a/gamecenter). Das laufende Jahr und der Ton bleiben auf diesem Gerät, und ein nicht beendetes Jahr geht dort weiter, wo du aufgehört hast. Ein Jahr, das du für ein neues verlässt, zählt als nicht geschafft. `Bestwerte zurücksetzen` löscht sie auf allen Geräten.
+`Bestwerte` zeigt deine Jahre, die geschafften Jahre und die besten Jahrespunkte für jede Schwierigkeit, deine längste Wurzel, deine Lichtungen des Tages (gespielt, Ziel erreicht, Serie und beste Punkte) und die letzten Jahre. Sie werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, wobei die Jahre aller Geräte zusammengezählt werden, und sie zählen im [Game Center](help:a/gamecenter). Das laufende Jahr und der Ton bleiben auf diesem Gerät, und ein nicht beendetes Jahr geht dort weiter, wo du aufgehört hast. Ein Jahr, das du für ein neues verlässt, zählt als nicht geschafft. `Bestwerte zurücksetzen` löscht sie auf allen Geräten.
 
 ## Tastatur
 - Pfeiltasten bewegen den Cursor; [[Enter]] wächst auf dem Feld oder beschreibt es.
