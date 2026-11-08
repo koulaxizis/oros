@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.68.03
+- **Assistant: web search with Tavily no longer stops at "The search did not work".** After a search, the Assistant could not open the pages the search had found when the AI wrote their address a little differently, and every such step said only "The search did not work". The pages a search finds now open however their address is written. When a page can't be opened, the line says which page and why, and that writing the site's address in your message lets the Assistant read the whole site. Every other step that fails also says what went wrong.
+
 ## Version 5.68.02
 - **Music: the note on the top bar opens a control panel.** While music plays, tapping the music note on the top bar used to pause or play at once. It now opens a small panel with the song and its position, Previous, play/pause, Next, Stop, Open Music, the volume and Mute, also with the Music window closed. Tap outside it or press Esc to close it.
 
