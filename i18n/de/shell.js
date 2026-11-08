@@ -110,6 +110,7 @@ orosPack("de", "shell", {
  "app.radio": "Radio",
  "app.realm": "Ländereien",
  "app.reversi": "Reversi",
+ "app.roots": "Wurzeln",
  "app.ringtones": "Klingelton-Komponist",
  "app.rps": "Schere, Stein, Papier",
  "app.scanpdf": "Scanner & PDF",

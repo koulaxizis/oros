@@ -830,6 +830,12 @@
    ]
   },
   {
+   "app": "roots",
+   "files": [
+    "roots/roots.js"
+   ]
+  },
+  {
    "app": "rps",
    "files": [
     "rps/rps.js"

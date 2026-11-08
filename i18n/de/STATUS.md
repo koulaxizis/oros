@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 41569 of 41842 (99%)
-- Help pages: 158 of 158 (100%)
+- Strings: 41714 of 41987 (99%)
+- Help pages: 159 of 159 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -58,7 +58,7 @@ text is still written in the code. They switch over wave by wave
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 157 / 157 |
+| gamecenter | 100% | 158 / 158 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -121,13 +121,14 @@ text is still written in the code. They switch over wave by wave
 | remote-play | 100% | 35 / 35 |
 | reversi | 100% | 61 / 61 |
 | ringtones | 100% | 107 / 107 |
+| roots | 100% | 143 / 143 |
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
 | settings | 98% | 981 / 992 |
 | share | 100% | 217 / 217 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1111 / 1115 |
+| shell | 99% | 1112 / 1116 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 383 / 383 |
