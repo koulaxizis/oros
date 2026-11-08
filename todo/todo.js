@@ -105,6 +105,7 @@
       "toast.deleted": "Deleted",
       "toast.undone":  "Restored",
       "toast.ticked":  "Done: {t}",
+      "toast.later":   "Moved to tomorrow: {t}",
       "toast.already": "That task is already done",
       "toast.gone":    "That task is no longer on your lists",
       "toast.cleared": "Completed items cleared",
@@ -282,6 +283,7 @@
       "toast.deleted": "Διαγράφηκε",
       "toast.undone":  "Επαναφέρθηκε",
       "toast.ticked":  "Έγινε: {t}",
+      "toast.later":   "Μεταφέρθηκε για αύριο: {t}",
       "toast.already": "Η εργασία έχει ήδη γίνει",
       "toast.gone":    "Η εργασία δεν υπάρχει πια στις λίστες σου",
       "toast.cleared": "Καθαρίστηκαν οι ολοκληρωμένες εργασίες",
@@ -5220,6 +5222,7 @@
       return;
     }
     if (t && t.done) { doneFromToday(t.done); return; }
+    if (t && t.later) { laterFromToday(t.later); return; }
     if (t && typeof t.list === "string" && isShared(t.list) && !listById(t.list)) { hhWant = t; hhRefresh(); return; }
     if (!t || typeof t.list !== "string" || !listById(t.list)) return;
     // A dialog in progress (maybe with unsaved edits) wins: no jump.
@@ -5243,6 +5246,36 @@
     if (item.done) { showToast(t("toast.already"), false); return; }
     setDone(item, true);
     showToast(t("toast.ticked").replace("{t}", item.text || ""), false);
+  }
+  // "Tomorrow" from the Today summary (BR-TODAY-15): { later: { list,
+  // item } } gives an open task tomorrow's date with the task's own
+  // field stamp (TD-3: only "due"), Undo puts the old date back.
+  // Gone or already done → a note, nothing written.
+  function laterFromToday(d) {
+    if (!d || typeof d.list !== "string" || typeof d.item !== "string") return;
+    if (document.querySelector("dialog[open]")) return;
+    var list = listById(d.list), item = list ? itemById(list, d.item) : null;
+    if (!item) { showToast(t("toast.gone"), false); return; }
+    setActiveList(list.id);
+    renderAll();
+    if (item.done) { showToast(t("toast.already"), false); return; }
+    var tm = isoToDate(todayISO()); tm.setDate(tm.getDate() + 1);
+    var old = item.due || null, next = dateToISO(tm);
+    if (old === next) { showToast(t("toast.later").replace("{t}", item.text || ""), false); return; }
+    item.due = next;
+    touchField(item, "due");
+    save(); scheduleRender();
+    undoSnapshot = null;
+    undoFn = function () {
+      var back = itemById(listById(d.list), d.item);
+      if (!back || back.due !== next) return;
+      if (old) back.due = old; else delete back.due;
+      touchField(back, "due");
+      save(); renderAll();
+      showToast(t("toast.undone"), false);
+    };
+    undoViewList = view.activeList;
+    showToast(t("toast.later").replace("{t}", item.text || ""), true);
   }
   window.__orosOpenAt = openSearchTarget;
   try {
