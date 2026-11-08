@@ -2118,7 +2118,7 @@
     description: "Link CRM customers or partners to their records in other apps, as CRM's \"Linked in other apps\" does: a Stock supplier, " +
       "a Stock consignment shop, a Timesheet client, an Invoices client, or a person on Publishing titles (e.g. \"supplier X in Stock is customer X\"), and also a Kanban card, a Notes page, a Layout document or an Atelier design about that partner. " +
       "CRM then shows that record's stock, hours, invoices or titles, or opens the card, page or document, on the partner's card. The other apps don't change. " +
-      "A Stock, Timesheet, Invoices or Publishing record belongs to one partner: linking it to another moves it (the card says so); a card, page or document can be on several partners. unlink: true removes a link. " +
+      "A Stock, Timesheet, Invoices or Publishing record belongs to one partner: linking it to another moves it (the card says so); Kanban cards, Notes pages and documents can be on several partners. unlink: true removes a link. " +
       "The customer and an item are refs from search_data (or create_items) in this conversation; a consignment shop or a Publishing person is given by name. " +
       "The user sees the links on one card and must press Link.",
     params: {
