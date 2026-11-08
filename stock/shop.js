@@ -31,6 +31,7 @@
       connect: "Open Connected services", acct: "Shop",
       noKeys: "This device doesn't have the shop's keys yet. Enter them in Settings › Connected services.",
       get: "Get products from the shop", getting: "Reading the shop… {n} products",
+      onlyPub: "Only published products ({n} of {all}; drafts and private ones stay out)", brand: "Brand", allBrands: "All brands",
       plan: "{n} products in the shop: {a} new, {u} changed, {s} the same here.",
       setQty: "Also set the quantities here to the shop's ({n} products)",
       import: "Import into Stock", imported: "{a} added, {u} updated",
@@ -64,6 +65,7 @@
       connect: "Άνοιγμα: Συνδεδεμένες υπηρεσίες", acct: "Κατάστημα",
       noKeys: "Αυτή η συσκευή δεν έχει ακόμα τα κλειδιά του καταστήματος. Πέρασέ τα στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       get: "Φέρε τα προϊόντα του καταστήματος", getting: "Διαβάζω το κατάστημα… {n} προϊόντα",
+      onlyPub: "Μόνο τα δημοσιευμένα προϊόντα ({n} από {all}· τα πρόχειρα και τα ιδιωτικά μένουν έξω)", brand: "Μάρκα", allBrands: "Όλες οι μάρκες",
       plan: "{n} προϊόντα στο κατάστημα: {a} νέα, {u} με αλλαγές, {s} ίδια με εδώ.",
       setQty: "Να γίνουν και οι ποσότητες εδώ ίδιες με του καταστήματος ({n} προϊόντα)",
       import: "Εισαγωγή στο Απόθεμα", imported: "{a} νέα, {u} ενημερώθηκαν",
@@ -100,7 +102,7 @@
   function available() { return !!(links() && W && L); }
 
   // per session: what the last read of each shop gave
-  var cache = { acct: "", products: null, plan: null, orders: null, ost: "open" };
+  var cache = { acct: "", products: null, plan: null, orders: null, ost: "open", filt: { pub: true, brand: 0 } };
 
   function open(api) {
     // orosI18n (../i18n.js): the full language code, a pack language included.
@@ -134,7 +136,7 @@
       return;
     }
     if (!accts.some(function (a) { return a.id === cache.acct; })) {
-      cache = { acct: accts[0].id, products: null, plan: null, orders: null, ost: "open" };
+      cache = { acct: accts[0].id, products: null, plan: null, orders: null, ost: "open", filt: { pub: true, brand: 0 } };
     }
     var tab = "products";
 
@@ -171,7 +173,7 @@
       if (accts.length > 1) {
         var sel = api.selectInput(accts.map(function (a) { return [a.id, a.name]; }), cache.acct);
         sel.addEventListener("change", function () {
-          cache = { acct: sel.value, products: null, plan: null, orders: null, ost: "open" };
+          cache = { acct: sel.value, products: null, plan: null, orders: null, ost: "open", filt: { pub: true, brand: 0 } };
           draw();
         });
         body.appendChild(api.field(t("acct"), sel, "st-shop-acct"));
@@ -237,8 +239,10 @@
         return batch();
       }).then(function () { return { products: products, vars: vars }; });
     }
+    // ST-SHOPF: only published products (default) and, when picked, one brand
+    function picked() { return W.shopFilter(cache.products.products, cache.filt); }
     function makePlan(setQty) {
-      return W.productPlan(api.core, api.data(), cache.products.products, cache.products.vars,
+      return W.productPlan(api.core, api.data(), picked(), cache.products.vars,
         { acct: cache.acct, now: Date.now(), today: api.todayYmd(), setQty: setQty, vat: api.data().settings.vat });
     }
     function drawProducts(pane) {
@@ -258,6 +262,17 @@
       pane.appendChild(el("div", "dlg-actions tight").appendChild(getBtn).parentNode);
       pane.appendChild(status);
       if (!cache.products) return;
+
+      var all = cache.products.products;
+      var pubRow = api.checkRow(t("onlyPub", { n: W.shopFilter(all, { pub: true }).length, all: all.length }), cache.filt.pub);
+      pubRow.querySelector("input").addEventListener("change", function (e) { cache.filt.pub = e.target.checked; draw(); });
+      pane.appendChild(pubRow);
+      var brands = W.shopBrands(all);
+      if (brands.length) {
+        var bsel = api.selectInput([["0", t("allBrands")]].concat(brands.map(function (b) { return [String(b.id), b.name + " (" + b.n + ")"]; })), String(cache.filt.brand || 0));
+        bsel.addEventListener("change", function () { cache.filt.brand = parseInt(bsel.value, 10) || 0; draw(); });
+        pane.appendChild(api.field(t("brand"), bsel, "st-shop-brand"));
+      }
 
       var plan = makePlan(false), probe = makePlan(true);
       var s = plan.stats;

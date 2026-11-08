@@ -10703,3 +10703,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Not fields:** print run, print cost, rights. Cost & result stores nothing: it reads Production Ledger and Revenue Splitter from the connected shop each time, matched by an edition's product link or its ISBN = the product's SKU (digits only, so hyphens match).
 - **Where:** assistant/edits4.js (Publishing section, written through `OrosPublishCore.put`, undo checks the title is unchanged since), assistant/edits.js (`LAZY.publish`, `PUB_ARGS`, Publishing statuses; Media Shelf refuses a Publishing status), assistant/core.js (change_item text and parameters), assistant/assistant.js (`changePrep` hands the shops), tests/publish-change.test.js (new).
 - **Tests:** full `node --test tests/*.test.js`.
+
+### 2026-11-08 — 5.99.01 — Stock › Shop: take only published products, or one brand (ST-SHOPF)
+
+- **What:** Chris connected glarolykoi.net to Stock (08/11). «Get products from the shop» read every product with no filter: 1,828 of them, about 300 drafts (176 Book Feed titles held back) and most of the rest other publishers' titles. He chose (card) «Μόνο δικά μας».
+- **How:** after the read, Products shows «Only published products» (on by default; drafts and private ones stay out) and a Brand list (WooCommerce brands found in the products, most products first; All brands by default). The import plan, the quantities to set and the differences use only the products picked. Pure helpers in links/woo.js: `shopFilter(products, { pub, brand })`, `shopBrands(products)`. Nothing is written to the shop; the choice lasts while Stock is open.
+- **Files:** links/woo.js, stock/shop.js (also: switching shops kept no filter), tests/links.test.js (+1).
+- **Tests:** full `node --test tests/*.test.js`; Playwright smoke with a stubbed shop: 3 products, published 2, brand Γλαρόλυκοι 1, no page errors.

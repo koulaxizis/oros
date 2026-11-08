@@ -6,6 +6,8 @@
 //   - productPlan(S, stockData, products, variations, opts): products
 //     as a Stock import plan (same shape as OrosStockCore.importPlan),
 //     plus links (which Stock item is which shop product)
+//   - shopFilter(products, f) / shopBrands(products): only published,
+//     only one brand (ST-SHOPF)
 //   - compare(S, stockData, links): quantities that differ
 //   - stockReq(link, q): the PUT that sets a quantity in the shop
 //   - normOrder(o): one order, every field checked and cut to size
@@ -317,10 +319,37 @@
     };
   }
 
+  // ST-SHOPF (Chris 2026-11-08): which of the shop's products to take.
+  // A shop that also sells other publishers' titles, or keeps drafts,
+  // would fill Stock with rows it holds no stock of. f = { pub: only
+  // published (status publish), brand: a WooCommerce brand id or 0 }.
+  function shopFilter(products, f) {
+    f = f || {};
+    var brand = typeof f.brand === "number" && f.brand > 0 ? f.brand : 0;
+    return (Array.isArray(products) ? products : []).filter(function (p) {
+      if (!p || typeof p !== "object") return false;
+      if (f.pub && p.status !== "publish") return false;
+      if (brand && !(Array.isArray(p.brands) && p.brands.some(function (b) { return b && b.id === brand; }))) return false;
+      return true;
+    });
+  }
+  // The brands the products carry, most products first → [{ id, name, n }]
+  function shopBrands(products) {
+    var by = {};
+    (Array.isArray(products) ? products : []).forEach(function (p) {
+      (p && Array.isArray(p.brands) ? p.brands : []).forEach(function (b) {
+        if (!b || typeof b.id !== "number" || !(b.id > 0)) return;
+        if (!by[b.id]) by[b.id] = { id: b.id, name: plain(String(b.name || "")).slice(0, 80) || String(b.id), n: 0 };
+        by[b.id].n++;
+      });
+    });
+    return Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.n - a.n || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0); });
+  }
+
   var api = {
     plain: plain, cents: cents, sellables: sellables, productPlan: productPlan, compare: compare,
     stockReq: stockReq, normOrder: normOrder, outRequest: outRequest, invoicePrefill: invoicePrefill,
-    budgetPrefill: budgetPrefill, crmLog: crmLog, vatOf: vatOf
+    budgetPrefill: budgetPrefill, crmLog: crmLog, vatOf: vatOf, shopFilter: shopFilter, shopBrands: shopBrands
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosLinksWoo = api;
