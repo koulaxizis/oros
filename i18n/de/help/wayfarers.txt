@@ -85,8 +85,15 @@ Feinde, die die vordere Reihe treffen, treffen zuerst den Ritter und den Schurke
 `Neue Reise (N)` fragt nach der Schwierigkeit und der Gruppe:
 - `Sanft`: 20 % mehr Leben, Gefallene stehen nach jedem gewonnenen Kampf wieder auf, und eine Phönixfeder zum Start.
 - `Zäh`: Gefallene stehen nur an einem Lager wieder auf.
+- `Endlos`: Regeln von Zäh, aber nach dem Frosttor geht der Weg weiter: Die drei Länder kommen wieder (Der Grüne Weg II, dann III …), und jedes Mal haben die Feinde mehr Leben, Kraft und Abwehr. Die Reise endet erst, wenn die Gruppe fällt; die `Bilanz` behält die meisten geschafften Gebiete.
 
-In beiden endet die Reise, wenn alle drei Helden fallen. Jede Reise hat einen Code, der im Ergebnisfenster und in der `Bilanz` steht. Gib in `Neue Reise` einen Code ein, um dasselbe Land noch einmal zu durchwandern; lass das Feld leer für ein neues.
+In jeder Schwierigkeit endet die Reise, wenn alle drei Helden fallen. Jede Reise hat einen Code, der im Ergebnisfenster und in der `Bilanz` steht. Gib in `Neue Reise` einen Code ein, um dasselbe Land noch einmal zu durchwandern; lass das Feld leer für ein neues.
+
+## Buch der Sagen
+Jeder Feind, dem du begegnest, bekommt eine Seite im Buch der Sagen: seine Werte, seine Gewohnheit und eine kurze Zeile über ihn. Du öffnest es aus der `Bilanz`. Feinde, denen du noch nicht begegnet bist, stehen dort als ???. Das Buch wird zwischen deinen Geräten abgeglichen, und `Bilanz zurücksetzen` lässt es in Ruhe.
+
+## Gruppencodes
+Am Ende einer Reise macht `Gruppencode` aus deiner Gruppe einen Code: die Schwierigkeit, die drei Klassen, die Stufe, wie weit du gekommen bist, Ausrüstung und Verbesserungen jedes Helden und den Reisecode. `Teilen` kopiert ihn mit einer kurzen Nachricht. Ein Freund gibt ihn bei `Neue Reise` im Code-Feld ein: Das Fenster zeigt deine Gruppe, und `Aufbrechen` startet dasselbe Land mit denselben drei Klassen, ab Stufe 1. Die Meldungszeile sagt, wie weit deine Gruppe kam, damit er weiß, was er schlagen muss.
 
 ## Prüfung des Tages
 Der Kalender-Knopf öffnet die heutige Prüfung: den Grünen Weg auf Zäh, mit einer Gruppe aus drei Helden, die für den Tag gewählt ist. Alle bekommen an diesem Tag dasselbe Land, dieselbe Gruppe und dieselbe Beute. Besiege den Wächter, dann hast du bestanden. Es gibt einen Versuch, und wer die Prüfung verlässt, gilt als dort gefallen, wo er war. Ein Punkt auf dem Knopf zeigt, dass die heutige Prüfung noch offen ist.

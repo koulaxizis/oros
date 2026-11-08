@@ -11,7 +11,9 @@
 // "Wayfarers").
 //
 // State (plain JSON, kept as is in the device-local session):
-//   { v: 1, seed, diff "g" Gentle | "h" Hardy, region 1…, end (optional: last region, 5.71.00),
+//   { v: 1, seed, diff "g" Gentle | "h" Hardy | "e" Endless (5.72.00: Hardy rules, the road
+//     goes on after the Frost Gate), region 1… (Endless: up to MAX_REGION),
+//     end (optional: last region, 5.71.00),
 //     party: [{ c class, hp, up: [upgrade ids], w weapon | "", ch charm | "", tr trained }] × 3,
 //     lvl 1-10, xp, gold, inv: { p, t, f }, bag: [gear ids],
 //     map: [{ c column 0-7, r row, k kind, e: [next node indexes] }],
@@ -22,7 +24,8 @@
 //     fight: null | { kind f|h|g|e, re: event gold, foes: [foe], hs: [{ fo, st }] × 3,
 //                     q: [unit refs left this round], cur: unit ref, round, nid, rz: 1 Raise used },
 //     rng (uint32), acts, stops, kills, over: -1 playing | 0 fallen | 1 won }
-//   foe = { id, k, hp, mh, st, t move count, ph phase, n: { m move, tg hero index | -1 } }
+//   foe = { id, k, hp, mh, st, t move count, ph phase, n: { m move, tg hero index | -1 },
+//           lv (optional, 5.72.00: the Endless loop, 1… = stronger) }
 //   unit refs: "h0"-"h2" heroes, "f<id>" foes.
 //   st (statuses, whole numbers): bu Burn turns, bd Burn damage, ch Chill
 //   turns, sn Stun turns, mk Mark turns, gu Guarding, hi Hidden, hb Hide
@@ -47,7 +50,8 @@
   var CLASSES = D.CLASSES, CLASS_IDS = D.CLASS_IDS, SKILLS = D.SKILLS, UPS = D.UPS, STAT_UPS = D.STAT_UPS;
   var GEAR = D.GEAR, ITEMS = D.ITEMS, MOVES = D.MOVES, FOES = D.FOES, REGIONS = D.REGIONS, EVENTS = D.EVENTS;
 
-  var DIFFS = ["g", "h"];
+  var DIFFS = ["g", "h", "e"];
+  var MAX_REGION = 999;               // Endless: the road never ends, the state stops here
   var COLS = 8;                       // 0 start, 1-6 the road, 7 the guardian
   var LEVELS = [0, 10, 25, 45, 70, 100, 135, 175, 220, 270];
   var MAX_LVL = LEVELS.length;
@@ -192,11 +196,17 @@
       sf: START_FO + (w.sf || 0) + (ch.sf || 0)
     };
   }
+  // Endless loops: +25 % Power and +1 Guard a loop (Health in newFoe).
   function foeStats(f) {
-    var F = FOES[f.k];
-    return { pw: F.pw + (f.ph >= 2 && F.ph[1].pw ? F.ph[1].pw : 0) + (f.st.rv > 0 ? f.st.rp : 0), gd: F.gd, sp: F.sp };
+    var F = FOES[f.k], lv = f.lv || 0;
+    return { pw: Math.round(F.pw * (1 + 0.25 * lv)) + (f.ph >= 2 && F.ph[1].pw ? F.ph[1].pw : 0) + (f.st.rv > 0 ? f.st.rp : 0), gd: F.gd + lv, sp: F.sp };
   }
   function standing(st, i) { return st.party[i].hp > 0; }
+  // Endless: region n walks the land of region ((n − 1) mod 3) + 1, one
+  // loop stronger every three regions.
+  function regionOf(n) { return REGIONS[(n - 1) % REGIONS.length]; }
+  function loopOf(n) { return Math.floor((n - 1) / REGIONS.length); }
+  function lastRegion(st) { return st.diff === "e" ? MAX_REGION : (st.end || REGIONS.length); }
 
   // end (optional, 5.71.00): the last region of a short journey (the
   // Daily trial walks only the Greenway: end 1).
@@ -211,7 +221,7 @@
       rng: hashStr(seed + ":play") || 1, acts: 0, stops: 0, kills: 0, over: -1
     };
     if (diff === "g") st.inv.f = 1;
-    if (isInt(end) && end >= 1 && end < REGIONS.length) st.end = end;
+    if (diff !== "e" && isInt(end) && end >= 1 && end < REGIONS.length) st.end = end;
     for (var i = 0; i < 3; i++) st.party[i].hp = heroStats(st, i).mh;
     return st;
   }
@@ -272,9 +282,12 @@
     return { now: now, next: order(st) };
   }
 
-  function newFoe(fi, k) {
-    var F = FOES[k];
-    return { id: fi.nid++, k: k, hp: F.hp, mh: F.hp, st: {}, t: 0, ph: 0, n: null };
+  // lv: the Endless loop (0 = none): +60 % Health a loop.
+  function newFoe(fi, k, lv) {
+    var F = FOES[k], hp = lv ? Math.round(F.hp * (1 + 0.6 * lv)) : F.hp;
+    var f = { id: fi.nid++, k: k, hp: hp, mh: hp, st: {}, t: 0, ph: 0, n: null };
+    if (lv) f.lv = lv;
+    return f;
   }
   function cycOf(f) {
     var F = FOES[f.k];
@@ -323,7 +336,7 @@
   function startFight(st, kind, group, re) {
     var fi = { kind: kind, re: re || 0, foes: [], hs: [], q: [], cur: "", round: 0, nid: 1, rz: 0 };
     st.fight = fi;
-    group.forEach(function (k) { fi.foes.push(newFoe(fi, k)); });
+    group.forEach(function (k) { fi.foes.push(newFoe(fi, k, loopOf(st.region))); });
     for (var i = 0; i < 3; i++) fi.hs.push({ fo: Math.min(heroStats(st, i).sf, heroStats(st, i).fo), st: {} });
     fi.foes.forEach(function (f) { chooseIntent(st, f); });
     var ev = [{ e: "fight", kind: kind }];
@@ -331,7 +344,7 @@
     return ev;
   }
   function groupFor(st, kind, col) {
-    var G = REGIONS[st.region - 1].groups;
+    var G = regionOf(st.region).groups;
     var list = kind === "g" ? G.g : kind === "h" ? G.h : (kind === "f" && col <= 2) ? G.t1 : G.t2;
     return withRng(st, function (o) { return pick(o, list).slice(); });
   }
@@ -390,7 +403,7 @@
         sum.forEach(function (k) {
           var livingFoes = st.fight.foes.filter(function (x) { return x.hp > 0; }).length;
           if (livingFoes >= MAX_FOES) return;
-          var nf = newFoe(st.fight, k);
+          var nf = newFoe(st.fight, k, f.lv || 0);
           st.fight.foes.push(nf);
           chooseIntent(st, nf);
           ev.push({ e: "summon", d: ref("f", nf.id) });
@@ -508,7 +521,7 @@
   function winFight(st, ev) {
     var fi = st.fight, kind = fi.kind, col = st.map[st.at].c;
     var tier = kind === "g" ? "g" : kind === "h" ? "h" : (kind === "f" && col <= 2) ? "t1" : "t2";
-    var rk = 1 + 0.5 * (st.region - 1);   // later regions pay more
+    var rk = 1 + 0.5 * Math.min(st.region - 1, 8);   // later regions pay more
     var gold = Math.round(withRng(st, function (o) {
       return tier === "g" ? 40 : tier === "h" ? 20 + rint(o, 9) : tier === "t1" ? 8 + rint(o, 5) : 12 + rint(o, 5);
     }) * rk) + fi.re;
@@ -521,7 +534,7 @@
       }
     }
     st.fight = null;
-    if (kind === "g" && st.region >= (st.end || REGIONS.length)) {
+    if (kind === "g" && st.region >= lastRegion(st)) {
       gainXp(st, xp, ev);
       st.pend = [];
       st.over = 1;
@@ -530,7 +543,7 @@
     }
     if (kind === "h" || kind === "g") {
       // spoils: hard fights tier 2 (3 and 4 in later regions), guardians tier 3 (then 4)
-      var tierG = Math.min(4, (kind === "g" ? 3 : 2) + st.region - 1);
+      var tierG = Math.min(4, (kind === "g" ? 3 : 2) + Math.min(st.region, 3) - 1);
       var o2 = withRng(st, function (o) {
         var pool = shuffle(o, GEAR_IDS.filter(function (g) { return GEAR[g].t === tierG || GEAR[g].t === tierG - 1; }));
         var a = pool[0], b = pool.filter(function (g) { return GEAR[g].s !== GEAR[a].s; })[0] || pool[1];
@@ -599,7 +612,8 @@
       st.pend.push({ k: "mk", s: stock(st, node.c) });
     } else if (node.k === "e") {
       var id = withRng(st, function (o) {
-        var here = EVENTS.filter(function (x) { return !x.r || x.r === st.region; }).map(function (x) { return x.id; });
+        var ri = (st.region - 1) % REGIONS.length + 1;
+        var here = EVENTS.filter(function (x) { return !x.r || x.r === ri; }).map(function (x) { return x.id; });
         var left = here.filter(function (x) { return st.seen.indexOf(x) < 0; });
         return pick(o, left.length ? left : here);
       });
@@ -905,8 +919,8 @@
   }
   function valid(st) {
     if (!st || typeof st !== "object" || st.v !== 1 || typeof st.seed !== "string" || DIFFS.indexOf(st.diff) < 0) return false;
-    if (!isInt(st.region) || st.region < 1 || st.region > REGIONS.length) return false;
-    if (st.end !== undefined && (!isInt(st.end) || st.end < 1 || st.end >= REGIONS.length || st.region > st.end)) return false;
+    if (!isInt(st.region) || st.region < 1 || st.region > (st.diff === "e" ? MAX_REGION : REGIONS.length)) return false;
+    if (st.end !== undefined && (st.diff === "e" || !isInt(st.end) || st.end < 1 || st.end >= REGIONS.length || st.region > st.end)) return false;
     if (!Array.isArray(st.party) || !partyOk(st.party.map(function (h) { return h && h.c; }))) return false;
     if (!isInt(st.lvl) || st.lvl < 1 || st.lvl > MAX_LVL || !isInt(st.xp) || st.xp < 0 || !isInt(st.gold) || st.gold < 0) return false;
     for (var i = 0; i < 3; i++) {
@@ -935,7 +949,7 @@
       if (p.k === "camp") return true;
       if (p.k === "mk") return Array.isArray(p.s) && p.s.every(function (s) { return s && (GEAR[s.g] || ITEMS[s.g]) && isInt(s.p) && s.p > 0 && isInt(s.n) && s.n >= 0; });
       if (p.k === "ev") return !!eventOf(p.id);
-      if (p.k === "tale") return isInt(p.n) && p.n >= 2 && p.n <= REGIONS.length && p.n === st.region;
+      if (p.k === "tale") return isInt(p.n) && p.n >= 2 && p.n === st.region;
       return false;
     })) return false;
     var fi = st.fight;
@@ -944,6 +958,7 @@
       if (!Array.isArray(fi.foes) || !fi.foes.every(function (f) {
         return f && FOES[f.k] && isInt(f.id) && f.id < fi.nid && isInt(f.hp) && isInt(f.mh) && f.hp >= 0 && f.hp <= f.mh && okSt(f.st) &&
           isInt(f.t) && f.t >= 0 && isInt(f.ph) && f.ph >= 0 && f.ph <= (FOES[f.k].ph ? FOES[f.k].ph.length : 0) &&
+          (f.lv === undefined || (isInt(f.lv) && f.lv >= 1 && f.lv <= loopOf(MAX_REGION))) &&
           (f.n === null || (f.n && MOVES[f.n.m] && isInt(f.n.tg) && f.n.tg >= -1 && f.n.tg < 3));
       })) return false;
       if (!Array.isArray(fi.hs) || fi.hs.length !== 3 || !fi.hs.every(function (x, k) { return x && isInt(x.fo) && x.fo >= 0 && x.fo <= heroStats(st, k).fo && okSt(x.st); })) return false;
@@ -955,10 +970,10 @@
   }
 
   var api = {
-    DIFFS: DIFFS, COLS: COLS, LEVELS: LEVELS, MAX_LVL: MAX_LVL, BAG_MAX: BAG_MAX,
+    DIFFS: DIFFS, MAX_REGION: MAX_REGION, COLS: COLS, LEVELS: LEVELS, MAX_LVL: MAX_LVL, BAG_MAX: BAG_MAX,
     CLASSES: CLASSES, CLASS_IDS: CLASS_IDS, SKILLS: SKILLS, UPS: UPS, GEAR: GEAR, ITEMS: ITEMS,
     MOVES: MOVES, FOES: FOES, REGIONS: REGIONS, EVENTS: EVENTS,
-    hashStr: hashStr, makeMap: makeMap, newJourney: newJourney, dailyParty: dailyParty, partyOk: partyOk, heroStats: heroStats, foeStats: foeStats,
+    hashStr: hashStr, regionOf: regionOf, loopOf: loopOf, makeMap: makeMap, newJourney: newJourney, dailyParty: dailyParty, partyOk: partyOk, heroStats: heroStats, foeStats: foeStats,
     queueView: queueView, reach: reach, targets: targets, usable: usable, eventOf: eventOf, choiceOk: choiceOk,
     speedOf: speedOf, act: act, valid: valid, clone: clone
   };

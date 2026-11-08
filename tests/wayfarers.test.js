@@ -14,8 +14,8 @@ const D = require("../wayfarers/data.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "wayfarers/wayfarers.js"), "utf8");
 const R = (() => {
-  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = ['g','h']; var CLASS_IDS = " + JSON.stringify(E.CLASS_IDS) + "; var REGIONS_N = " + E.REGIONS.length + "; var BIG = 1e9; var MAX_DAY = 100000; var MAX_ACTS = 99999; var LAST_N = 10;"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeWayfarers"].forEach((name) => {
+  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var CLASS_IDS = " + JSON.stringify(E.CLASS_IDS) + "; var REGIONS_N = " + E.REGIONS.length + "; var BIG = 1e9; var MAX_DAY = 100000; var MAX_ACTS = 99999; var LAST_N = 10; var MAX_REGION = E.MAX_REGION;"];
+  ["cmpStr", "isInt", "capOf", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeWayfarers"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const one = SRC.indexOf("\n", i);
@@ -23,6 +23,18 @@ const R = (() => {
     parts.push(/\}\s*$/.test(line) ? line : SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
   return new Function(parts.join("\n") + "\nreturn { mergeWayfarers };").call(E);
+})();
+
+// Party codes (5.72.00), taken from the UI file the same way.
+const PC = (() => {
+  const parts = ["var E = this; var CLASS_IDS = E.CLASS_IDS; var REGIONS_N = E.REGIONS.length; var MAX_REGION = E.MAX_REGION; var GEAR_IDS = Object.keys(E.GEAR);"];
+  ["classUps", "b36", "checkOf", "partyCode", "readPartyCode"].forEach((name) => {
+    const i = SRC.indexOf("  function " + name + "(");
+    if (i < 0) throw new Error("missing function " + name);
+    const line = SRC.slice(i, SRC.indexOf("\n", i));
+    parts.push(/\}\s*$/.test(line) ? line : SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
+  });
+  return new Function(parts.join("\n") + "\nreturn { partyCode, readPartyCode };").call(E);
 })();
 
 const J = JSON.stringify;
@@ -627,7 +639,7 @@ test("wayfarers: Daily trial days and Last journeys merge as a join (better resu
   const bad = { ver: 1, br: 0, rows: {}, days: { x: { b: 0, w: 1, c: 7, t: 9 }, 5: { b: 0, w: 2, c: 7, t: 9 }, 6: { b: 0, w: 1, c: 8, t: 9 } },
     last: [{ a: 5, d: "q", p: P, r: 1, w: 0, s: "a" }, { a: 5, d: "g", p: ["mage", "mage", "bard"], r: 1, w: 0, s: "a" }, { a: 5, d: "g", p: P, r: 4, w: 0, s: "a" }] };
   assert.deepEqual([m(bad, bad).days, m(bad, bad).last], [{}, []], "bad entries drop");
-  assert.equal(J(m({ ver: 1, br: 0, rows: {} }, { ver: 1, br: 0, rows: {} })), J({ ver: 1, br: 0, rows: {}, days: {}, last: [] }), "older data has no days");
+  assert.equal(J(m({ ver: 1, br: 0, rows: {} }, { ver: 1, br: 0, rows: {} })), J({ ver: 1, br: 0, rows: {}, days: {}, last: [], lore: [] }), "older data has no days");
 });
 
 test("wayfarers: the Daily trial — a party of the day from the code, the Greenway only, then the journey ends", () => {
@@ -656,4 +668,91 @@ test("wayfarers: the Daily trial — a party of the day from the code, the Green
   assert.ok(!E.valid(bad), "a trial never walks past its last region");
   bad.region = 1; bad.end = 3;
   assert.ok(!E.valid(bad));
+});
+
+test("wayfarers: Endless — the lands come round again with stronger foes until the party falls", () => {
+  const P = ["knight", "mage", "cleric"];
+  const st = E.newJourney("loop", "e", P, 1);
+  assert.equal(st.end, undefined, "Endless has no end");
+  assert.ok(E.valid(st));
+  assert.equal(E.regionOf(4).id, "green");
+  assert.equal(E.loopOf(4), 1);
+  assert.equal(E.regionOf(9).id, "frost");
+  assert.equal(E.loopOf(9), 2);
+  // region 4: the Greenway's foes, one loop stronger
+  st.region = 4;
+  st.map = E.makeMap("loop", 4);
+  for (let i = 0; i < 3; i++) st.party[i].hp = E.heroStats(st, i).mh;
+  assert.ok(E.valid(st), "Endless takes regions past 3");
+  const n = st.map[0].e[0];
+  st.map[n].k = "f";
+  E.act(st, { t: "go", n });
+  assert.ok(st.fight);
+  st.fight.foes.forEach((f) => {
+    assert.ok(E.REGIONS[0].groups.t1.some((g) => g.includes(f.k)), "a Greenway foe");
+    assert.equal(f.lv, 1);
+    assert.equal(f.mh, Math.round(E.FOES[f.k].hp * 1.6));
+    assert.equal(E.foeStats(f).gd, E.FOES[f.k].gd + 1);
+  });
+  assert.ok(E.valid(st));
+  const h = E.newJourney("loop", "h", P);
+  h.region = 4;
+  assert.ok(!E.valid(h), "Hardy stops at region 3");
+  const bad = E.newJourney("loop", "e", P);
+  bad.end = 1;
+  assert.ok(!E.valid(bad), "Endless never has an end");
+  let far = 0;
+  for (let k = 0; k < 12; k++) {
+    const g = journey("endless" + k, "e", PARTIES[(k * 7) % PARTIES.length], true);
+    assert.equal(g.over, 0, "an Endless journey ends only with a fall");
+    assert.ok(E.valid(g));
+    if (g.region > 3) far++;
+  }
+  assert.ok(far >= 2, "a combo bot gets past the Frost Gate now and then: " + far + "/12");
+});
+
+test("wayfarers: Endless records, the lore book and Endless last journeys merge as a join", () => {
+  const m = R.mergeWayfarers;
+  const P = ["knight", "mage", "cleric"];
+  const A = { ver: 1, br: 0, rows: { aaaaaa1: { b: 0, s: { e: [3, 0, 7] } } }, lore: ["wolf", "king"], last: [{ a: 5, d: "e", p: P, r: 12, w: 0, s: "abc" }] };
+  const B = { ver: 1, br: 0, rows: { aaaaaa1: { b: 0, s: { e: [4, 0, 5], g: [1, 1, 3] } } }, lore: ["sprout", "wolf", "nope"] };
+  assert.equal(J(m(A, B)), J(m(B, A)));
+  assert.equal(J(m(m(A, B), B)), J(m(A, B)));
+  const AB = m(A, B);
+  assert.deepEqual(AB.rows.aaaaaa1.s.e, [4, 0, 7]);
+  assert.deepEqual(AB.lore, ["king", "sprout", "wolf"], "a sorted union; unknown foes drop");
+  assert.equal(AB.last[0].r, 12);
+  assert.deepEqual(m({ ver: 1, br: 99, rows: {} }, AB).lore, AB.lore, "Reset records leaves the lore book");
+  const bad = { ver: 1, br: 0, rows: { cccccc3: { b: 0, s: { e: [1, 1, 2] } }, dddddd4: { b: 0, s: { h: [1, 0, 5] } } },
+    last: [{ a: 5, d: "h", p: P, r: 4, w: 0, s: "a" }] };
+  assert.deepEqual([m(bad, bad).rows, m(bad, bad).last], [{}, []], "no Endless win, Hardy at most 3 regions");
+});
+
+test("wayfarers: party codes — a whole party round trips, a wrong letter is refused", () => {
+  const P = ["knight", "ranger", "bard"];
+  const st = E.newJourney("frnd42", "h", P);
+  st.lvl = 8; st.region = 3; st.over = 0;
+  st.party[0].w = "sword"; st.party[0].ch = "";
+  st.party[0].up = ["hp", "bashUp", "tauntUp"];
+  st.party[2].up = ["pw"];
+  const g = { g: st, opts: { diff: "h", seed: "frnd42", party: P } };
+  Object.keys(E.GEAR).forEach((k) => { if (E.GEAR[k].s === "c" && !st.party[1].ch) st.party[1].ch = k; });
+  if (!E.GEAR.sword) st.party[0].w = Object.keys(E.GEAR).find((k) => E.GEAR[k].s === "w");
+  const code = PC.partyCode(g);
+  assert.match(code, /^w1h[0-5]{3}/);
+  const pc = PC.readPartyCode(code.toUpperCase().replace(/(.{5})/g, "$1-"));
+  assert.ok(pc, "case and dashes do not matter");
+  assert.deepEqual([pc.d, pc.p, pc.lvl, pc.r, pc.w, pc.s], ["h", P, 8, 3, 0, "frnd42"]);
+  assert.equal(pc.h[0].w, st.party[0].w);
+  assert.deepEqual(pc.h[0].up, ["bashUp", "tauntUp"], "skill upgrades only, in table order");
+  assert.equal(pc.h[1].ch, st.party[1].ch);
+  assert.deepEqual(pc.h[2].up, []);
+  for (let k = 0; k < code.length; k++) {
+    const c = code.charAt(k), other = c === "a" ? "b" : "a";
+    const x = PC.readPartyCode(code.slice(0, k) + other + code.slice(k + 1));
+    assert.ok(x === null || J(x) !== J(pc), "a changed letter never reads as the same party (" + k + ")");
+  }
+  assert.equal(PC.readPartyCode("frnd42"), null, "a journey code is not a party code");
+  st.diff = "e"; g.opts.diff = "e"; st.region = 14;
+  assert.equal(PC.readPartyCode(PC.partyCode(g)).r, 14, "Endless regions past 3");
 });

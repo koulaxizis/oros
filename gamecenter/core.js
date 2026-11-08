@@ -361,8 +361,9 @@
       });
       dailyPart(d, S, X, today, "crypt");
     },
-    // Wayfarers: "<diff>" (g Gentle, h Hardy) → [journeys, won, regions
-    // cleared]; a Hardy win counts as a win on the hardest level;
+    // Wayfarers: "<diff>" (g Gentle, h Hardy, e Endless since 5.72) →
+    // [journeys, won, regions cleared]; a Hardy win counts as a win on
+    // the hardest level;
     // days{day: {w, c, t}} the Daily trial (solved = its guardian beaten;
     // not in journeys and wins)
     wayfarers: function (d, S, X, today) {
