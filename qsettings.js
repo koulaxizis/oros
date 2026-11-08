@@ -251,7 +251,7 @@
       if (!G || typeof G.state !== "function" || typeof G.apps !== "function") return null;
       var st = G.state();
       if (!st.on || !G.apps().some(function (a) { return a.write; })) return null;
-      return { win: st.win || 0 };
+      return { hold: st.hold || 0 };
     }) || null;
   }
   function dnd() { return call(function () { return root.orosNotifs && root.orosNotifs.dnd ? root.orosNotifs.dnd() : null; }); }
@@ -424,12 +424,13 @@
       if (O.isOpen()) O.hide(); else { close(); O.show(); }
       if (panel) paint();
     });
-    // orOS Gate (GATE-ACT): Claude's write window, one press for 1 hour
-    // or closed; the arrow gives 15 minutes / 1 hour / 4 hours.
+    // orOS Gate: Claude's changes (one rule, 5.78.00): one press pauses
+    // them for 1 hour or resumes; the arrow gives 1 hour / 4 hours /
+    // until resumed.
     parts.gate = pill(IC.gate, function () {
       var g = gate();
       if (!g) return;
-      call(function () { root.orosGate.setWindow(g.win ? 0 : 60); });
+      call(function () { root.orosGate.setPause(g.hold ? 0 : 60); });
       paint();
     }, function () { setSub(sub === "gate" ? "" : "gate"); }, t("qs.gate.more"));
     [parts.net, parts.sync, parts.dark, parts.dnd, parts.gate, parts.big, parts.contrast, parts.osk].forEach(function (p) { grid.appendChild(p.box); });
@@ -450,10 +451,10 @@
     parts.gateMenu = el("div", "qs-menu");
     parts.gateMenu.setAttribute("role", "group");
     parts.gateMenu.appendChild(el("h3")).textContent = t("qs.gate");
-    [[15, "qs.gate.15"], [60, "qs.gate.60"], [240, "qs.gate.240"]].forEach(function (c) {
-      parts.gateMenu.appendChild(menuItem("", t(c[1]), function () { call(function () { root.orosGate.setWindow(c[0]); }); setSub(""); }));
+    [[60, "qs.gate.60"], [240, "qs.gate.240"], [Infinity, "qs.gate.inf"]].forEach(function (c) {
+      parts.gateMenu.appendChild(menuItem("", t(c[1]), function () { call(function () { root.orosGate.setPause(c[0]); }); setSub(""); }));
     });
-    parts.gateOff = menuItem("", t("qs.gate.close"), function () { call(function () { root.orosGate.setWindow(0); }); setSub(""); });
+    parts.gateOff = menuItem("", t("qs.gate.resume"), function () { call(function () { root.orosGate.setPause(0); }); setSub(""); });
     parts.gateMenu.appendChild(parts.gateOff);
     parts.gateMenu.appendChild(menuItem("", t("qs.gate.settings"), then(function () { host.settings("services"); })));
     panel.appendChild(parts.gateMenu);
@@ -544,10 +545,10 @@
     parts.dndOff.hidden = !(d && d.on);
     var g = gate();
     parts.gate.box.hidden = !g;
-    if (g) setPill(parts.gate, t("qs.gate"), g.win ? t("qs.gate.until").replace("{t}", fmtTime(new Date(g.win))) : t("qs.gate.closed"), !!g.win, true);
+    if (g) setPill(parts.gate, t("qs.gate"), !g.hold ? t("qs.gate.on") : g.hold >= 8e15 ? t("qs.gate.paused") : t("qs.gate.until").replace("{t}", fmtTime(new Date(g.hold))), !g.hold, true);
     parts.gateMenu.hidden = sub !== "gate" || !g;
     if (parts.gate.more) parts.gate.more.setAttribute("aria-expanded", sub === "gate" ? "true" : "false");
-    parts.gateOff.hidden = !(g && g.win);
+    parts.gateOff.hidden = !(g && g.hold);
 
     var a = host.a11y.get();
     setPill(parts.big, t("qs.big"), "", bigOn(a.size), true);

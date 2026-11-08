@@ -604,6 +604,8 @@
     together: function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('together', { rel: String(id || '') }); },
     // Household — "household:<box>": a join request or a change in that household.
     household: function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('household', { box: String(id || '') }); },
+    // orOS Gate (5.78.00) — "gate:changes": Claude changed something; land on Settings › Claude (orOS Gate), where the changes and Undo are.
+    gate: function () { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('settings', { section: 'services', item: 'gate' }); },
     // "system:open:<appId>": plain open of an app (SY-D3 notice —
     // opening the app is what merges its waiting changes).
     // "system:open:settings/<section>": Settings at that section (A72

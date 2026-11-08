@@ -27,9 +27,10 @@
 
   // The games with a Daily challenge (Wave 49; Realm's Daily island
   // since 5.50, Crypt's Daily crypt since 5.55, Banner's Daily battle
-  // since 5.64, Wayfarers' Daily trial since 5.71), in the order the Today
+  // since 5.64, Wayfarers' Daily trial since 5.71, Fieldwarden's Daily
+  // season since 5.81), in the order the Today
   // section shows them.
-  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm", "banner", "crypt", "wayfarers"];
+  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm", "banner", "crypt", "wayfarers", "fieldwarden"];
   // The "Clean sweep" achievement stays the six daily puzzles, so a
   // sweep reached before Realm had a Daily is never taken back.
   var SWEEP = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper"];
@@ -38,7 +39,7 @@
     "wordsearch", "solitaire", "mahjong", "jigsaw", "spot", "hexagon", "slider", "lightsout",
     "memory", "hangman", "mastermind", "g2048", "tetris", "snake", "breakout", "bubble",
     "simon", "whack", "pong", "chess", "checkers", "reversi", "gomoku", "connect4", "dots",
-    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt", "wayfarers"];
+    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt", "wayfarers", "fieldwarden"];
   // The "All games" section (Chris 2026-10-22): every game once, by
   // kind, in the order each group shows them.
   var GROUPS = [
@@ -49,7 +50,7 @@
     { id: "board", games: ["chess", "checkers", "backgammon", "reversi", "gomoku", "connect4",
       "dots", "tictactoe", "mancala", "battleship", "rps"] },
     { id: "arcade", games: ["tetris", "snake", "breakout", "bubble", "pong", "simon", "whack"] },
-    { id: "strategy", games: ["realm", "banner"] },
+    { id: "strategy", games: ["realm", "banner", "fieldwarden"] },
     { id: "rpg", games: ["crypt", "wayfarers"] }
   ];
   var WORDLE_LOST = 7;
@@ -147,7 +148,7 @@
   // Daily results of Sudoku / Nonogram / Flow Free (hints h),
   // Minesweeper and Realm (won w): fills S.dn, the streaks and today.
   function dailyPart(d, S, X, today, game) {
-    var won = game === "minesweeper" || game === "realm" || game === "banner" || game === "crypt" || game === "wayfarers";
+    var won = game === "minesweeper" || game === "realm" || game === "banner" || game === "crypt" || game === "wayfarers" || game === "fieldwarden";
     var on = {}, tried = {};
     S.dn = 0;
     eachDay(d, function (day, v) {
@@ -374,6 +375,20 @@
         if (k === "h" && nat(v[1])) X.hard = true;
       });
       dailyPart(d, S, X, today, "wayfarers");
+    },
+    // Fieldwarden: "<diff>" (m Mild, h Harsh) → [years, finished, most
+    // seasons won]; a Harsh year finished counts as a win on the
+    // hardest level;
+    // days{day: {w, h, t, f}} the Daily season (solved = quota met; not
+    // in years and wins)
+    fieldwarden: function (d, S, X, today) {
+      S.w = 0;
+      eachCell(d, function (k, v) {
+        if (!Array.isArray(v) || v.length < 3) return;
+        S.p += nat(v[0]); S.w += nat(v[1]);
+        if (k === "h" && nat(v[1])) X.hard = true;
+      });
+      dailyPart(d, S, X, today, "fieldwarden");
     },
     xeri: function (d, S, X) {
       S.w = 0;

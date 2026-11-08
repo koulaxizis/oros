@@ -64,7 +64,7 @@
   // (gate/gate.js) loads to run the Assistant's own tools for Claude:
   // no UI, no AI provider, no sync slice; refs live in this frame.
   // Reads are answered at once; a change is applied only for an app the
-  // owner set to "write" in the gate while its write window is open
+  // owner set to "write" in the gate, unless the owner paused changes
   // (asked again in the shell: orosGate.writeOk), more than 5
   // deletions are asked on the device (orosGate.askDelete). See the
   // section "GATE" before boot().
@@ -8536,7 +8536,7 @@
     if (!id) ["crm", "travel"].forEach(function (x) { w.forEach(function (a) { if (a.id === x && a.name === appName) id = x; }); });
     return id;
   }
-  // A change is allowed only now, for this app, inside the write window.
+  // A change is allowed only now, for this app, unless the owner paused changes.
   function gateAsk(appName, nDel) {
     var g = gateShell(), id = gateIdOf(appName);
     var why = g && typeof g.writeOk === "function" ? g.writeOk(id) : "orOS Gate is not running.";
@@ -8550,16 +8550,16 @@
     return Promise.resolve(true);
   }
   function gateUndo(list, apps) {
-    var g = gateShell(), n = 0, fail = 0, refused = [];
+    var g = gateShell(), n = 0, fail = 0, refused = [], done = [];
     return list.reduce(function (p, e) {
       return p.then(function () {
         var why = g && typeof g.writeOk === "function" ? g.writeOk(e.app) : "orOS Gate is not running.";
         if (why) { refused.push(why); fail++; return; }
-        return undoById(e.id).then(function (ok) { if (ok) n++; else fail++; });
+        return undoById(e.id).then(function (ok) { if (ok) { n++; done.push(e.id); } else fail++; });
       });
     }, Promise.resolve()).then(function () {
       if (!n && refused.length) return { content: "Error: " + refused[0], err: 1 };
-      return { content: JSON.stringify({ undone: n, failed: fail,
+      return { ud: done, content: JSON.stringify({ undone: n, failed: fail,
                                          note: fail ? "Some could not be undone: changed since, the app refused, or changes to that app are closed." : undefined }) };
     });
   }
@@ -8597,7 +8597,7 @@
     var apps = GATE_WRITE[name] ? ga.write.filter(function (a) { return a.id !== "budget"; }) : ga.read;
     if (!apps.length) {
       return Promise.resolve({ ok: false, c: GATE_WRITE[name]
-        ? "The owner lets Claude change no app yet (orOS › Settings › Connected services › orOS Gate: a change switch per app, then a write window)."
+        ? "The owner lets Claude change no app yet (orOS › Settings › Connected services › orOS Gate: «Claude may also change …» per app)."
         : "The owner has not allowed any app yet." });
     }
     var call = { id: "g", name: name, args: args && typeof args === "object" && !Array.isArray(args) ? args : {} };
@@ -8610,7 +8610,9 @@
       var used = [], app = call.args.app ? String(call.args.app) : "";
       if (app) used.push(app);
       else if (r.ui && r.ui.apps) used = [];
-      return { ok: true, c: text, u: r.ui && r.ui.u ? r.ui.u : "", a: used, k: r.ui && typeof r.ui.n === "number" ? r.ui.n : 0 };
+      var u = r.ui && r.ui.u ? r.ui.u : "";
+      // x: the change's undo data, kept by the gate (synced) so Undo works on any device
+      return { ok: true, c: text, u: u, x: gateMem(u), ud: Array.isArray(r.ud) ? r.ud : undefined, a: used, k: r.ui && typeof r.ui.n === "number" ? r.ui.n : 0 };
     }, function () { return { ok: false, c: "The call failed on the device." }; });
   }
   // The results speak of "the user" pressing; through the gate nobody did.
@@ -8680,10 +8682,10 @@
       remember(uid, { edit: { app: p.app, tok: rep.tok } }, { app: p.app, name: name, kind: "change", act: "edit",
         items: per.map(function (x) { return x.name || t("ed.untitled"); }), n: per.length });
     }
-    return { ok: true, u: uid, a: [p.app], k: out.changed, c: name + " applied the commands on the owner's screen. " + JSON.stringify(out) };
+    return { ok: true, u: uid, x: gateMem(uid), a: [p.app], k: out.changed, c: name + " applied the commands on the owner's screen. " + JSON.stringify(out) };
   }
-  // do_action: done at once in the app on the owner's screen, while the
-  // write window is open; an app is opened only when Claude may read it.
+  // do_action: done at once in the app on the owner's screen, unless the
+  // owner paused changes; an app is opened only when Claude may read it.
   function gateDo(args, apps) {
     var ref = typeof args.ref === "string" ? args.ref.replace(/^oros:/, "").trim() : "";
     var r = ref ? gateConv.refs[ref] : null;
@@ -8704,13 +8706,27 @@
     if (a.kind === "alarm") out.note = "Time's alarm form is filled on the owner's screen; the alarm is kept once the owner confirms it there.";
     return { ok: true, a: [a.app], k: 1, c: JSON.stringify(out) };
   }
+  // The undo data of a change in the history (JSON), or null.
+  function gateMem(id) {
+    var e = id ? hist[id] : null;
+    try { return e && e.undo ? JSON.parse(JSON.stringify(e.undo)) : null; } catch (x) { return null; }
+  }
+  // Undo from the gate's record: this device's history, else (a change
+  // made on another device) the record's own undo data.
+  function gateUndoRec(id, mem) {
+    return histLoad().then(function () {
+      if (hist[id] || undoMem[id]) return undoById(id);
+      if (!mem || typeof mem !== "object") return false;
+      return runUndo(mem).then(function (res) { return !!(res && res.ok); }, function () { return false; });
+    });
+  }
   function gateBoot() {
     load();
     loadPrefs();
     var have = installed(), lazy = Object.keys(EDIT_LAZY).filter(function (id) { return have[id]; });
     Promise.all([histLoad(), editLoadMods(lazy)]).then(function () {
       window.__asGate = { v: 1, run: gateRun, tools: gateToolList,
-                          undo: function (id) { return histLoad().then(function () { return undoById(String(id)); }); } };
+                          undo: function (id, mem) { return gateUndoRec(String(id), mem); } };
       try { var g = gateShell(); if (g && typeof g.frameReady === "function") g.frameReady(); } catch (e) {}
     });
   }

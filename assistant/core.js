@@ -3073,8 +3073,8 @@
   // GATE-ACT (orOS Gate, 2026-11-08): the same tools for Claude through
   // the gate (gate/gate.js runs them in a hidden Assistant frame,
   // assistant.js GATE). No card is shown there: reads go straight to
-  // Claude, changes are applied at once while the owner's write window
-  // is open, more than 5 deletions are asked on the device. Only these
+  // Claude, changes are applied at once unless the owner paused them
+  // (one rule, 5.78.00), more than 5 deletions are asked on the device. Only these
   // tools are offered, and every sentence about cards, presses or the
   // user's consent is replaced (tests/gate-act.test.js keeps it so).
   // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): edit_in_app and
@@ -3086,23 +3086,23 @@
     [" The user sees the summary first and may hold it back.", ""],
     ["Propose a change to an existing item", "Change an existing item"],
     [" The user sees exactly what would change (before → after) and must press Apply; they may refuse. The result says whether it was applied.",
-     " It is applied at once while the owner's write window is open; the result says what changed."],
+     " It is applied at once (unless the owner paused Claude's changes; the owner is notified); the result says what changed."],
     ["the user sees one card for all of them", "one change for all of them"],
     ["pass changes instead: one card, the user can untick rows", "pass changes instead"],
     ["One card and one Undo for all.", "One Undo for all."],
     [" The user sees one card with every item and a tick on each, and must press Add; nothing is saved before that. An item that looks like one already there starts unticked; the result names it with its ref, so change it with change_item instead.",
-     " They are saved at once while the owner's write window is open. An item that looks like one already there is left out; the result names it with its ref, so change it with change_item instead."],
-    [" The user sees the links on one card and must press Link.", " Applied at once while the owner's write window is open."],
+     " They are saved at once (unless the owner paused Claude's changes; the owner is notified). An item that looks like one already there is left out; the result names it with its ref, so change it with change_item instead."],
+    [" The user sees the links on one card and must press Link.", " Applied at once (unless the owner paused Claude's changes; the owner is notified)."],
     ["What you (the assistant) added", "What the Assistant or Claude through orOS Gate added"],
     [" The user sees the list as a card with Undo next to each change that can still be undone.", ""],
     ["Take back changes you (the assistant) made, when the user asks", "Take back changes made through orOS Gate or by the Assistant, when the owner asks"],
     [" The user sees them on one card and presses Undo once; never say it is undone before the result says so, and never tell the user you cannot undo.",
-     " They are undone at once while the owner's write window is open; never say it is undone before the result says so."],
+     " They are undone at once (unless the owner paused Claude's changes; the owner is notified); never say it is undone before the result says so."],
     [" The user sees the commands in plain words and how many things each design will get changed on a card, and presses Apply; nothing changes before that, and the card's Undo takes everything back.",
-     " The app opens on the owner's screen and applies them at once while the owner's write window is open; undo_change takes everything back. Removing more than 5 things is asked on the device first."],
+     " The app opens on the owner's screen and applies them at once (unless the owner paused Claude's changes; the owner is notified); undo_change takes everything back. Removing more than 5 things is asked on the device first."],
     ["Do one thing for the user in an orOS app when they press the card's button: ", "Do one thing for the owner in an orOS app, on their screen: "],
     ["fills Time's alarm form; the user presses Add", "fills Time's alarm form on the owner's screen; the alarm is kept once the owner confirms it there"],
-    ["Nothing happens before the press, so say it is ready, never that it is done.", "It happens at once while the owner's write window is open; it cannot be undone, but the owner can stop it in the app."]
+    ["Nothing happens before the press, so say it is ready, never that it is done.", "It happens at once unless the owner paused Claude's changes; it cannot be undone, but the owner can stop it in the app."]
   ];
   // edit_in_app's per-app command guides are long; through the gate
   // they come with read_in_app's result for that app instead.

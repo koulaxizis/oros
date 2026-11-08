@@ -260,10 +260,11 @@ test("tools/call: closed device, then a call answered by the device", async () =
   const t = await tokens(w);
   const closed = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 5, method: "tools/call", params: { name: "list_apps", arguments: {} } })).json();
   assert.equal(closed.result.isError, true);
-  assert.match(closed.result.content[0].text, /not open/);
+  assert.match(closed.result.content[0].text, /orOS is closed and there is no copy/);
   const b = w.boxes.get(ID);
   const sock = { sent: [], closed: null, send(m) { this.sent.push(m); setTimeout(() => {
     const q = JSON.parse(m);
+    if (q.n === "_key") { b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: false, c: "" })); return; }
     assert.equal(q.n, "budget_lines");
     assert.deepEqual(q.a, { from: "2026-12-01", to: "2026-12-31" });
     b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: '{"lines":[]}' }));
@@ -397,4 +398,192 @@ test("tools/list asks the device for its tools, keeps them, and passes their cal
   assert.ok(later.result.tools.some((x) => x.name === "change_item"));
   const unk = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "drop_all" } })).json();
   assert.equal(unk.error.code, -32602);
+});
+
+test("app switches are shared: a device's change is kept and passed to the others (5.77.00)", async () => {
+  const w = world();
+  await newGate(w);
+  const inv = await (await dev(w, { act: "invite", tok: TOK })).json();
+  assert.equal(inv.data.devices, 1, "invite says how many devices there are");
+  await join(w, inv.data.code, TOK2);
+  const b = w.boxes.get(ID);
+  const s1 = { sent: [], __g: { th: hex(TOK), v: 1, at: 1 }, send(m) { this.sent.push(m); }, close() {} };
+  const s2 = { sent: [], __g: { th: hex(TOK2), v: 1, at: 2 }, send(m) { this.sent.push(m); }, close() {} };
+  const stranger = { sent: [], __g: { th: hex("Z".repeat(43)), v: 1, at: 3 }, send(m) { this.sent.push(m); }, close() {} };
+  b.socks.push(s1, s2, stranger);
+  await b.box.webSocketMessage(s1, JSON.stringify({ lv: { budget: "write", kanban: "read", "Bad Key": "read", x: "maybe" } }));
+  assert.equal(s1.sent.length, 0, "not echoed to the sender");
+  assert.equal(s2.sent.length, 1);
+  assert.deepEqual(JSON.parse(s2.sent[0]).lv, { budget: "write", kanban: "read" });
+  const m = await b.st.storage.get("meta");
+  assert.deepEqual(m.lv, { budget: "write", kanban: "read" });
+  // a socket that is not a device of this gate cannot set them
+  await b.box.webSocketMessage(stranger, JSON.stringify({ lv: { invoices: "read" } }));
+  assert.deepEqual((await b.st.storage.get("meta")).lv, { budget: "write", kanban: "read" });
+  // not an object: ignored
+  await b.box.webSocketMessage(s1, JSON.stringify({ lv: ["budget"] }));
+  assert.deepEqual((await b.st.storage.get("meta")).lv, { budget: "write", kanban: "read" });
+});
+
+test("a synced device sits in the gate with its seat secret, no code (5.77.00)", async () => {
+  const w = world();
+  await newGate(w);
+  const SS = "S".repeat(43);
+  assert.equal((await dev(w, { act: "seat", tok: TOK, sh: "nothex" })).status, 400);
+  assert.equal((await dev(w, { act: "seat", tok: TOK, sh: hex(SS) })).status, 200);
+  const b = w.boxes.get(ID);
+  const m = await b.st.storage.get("meta");
+  m.lv = { budget: "read" }; await b.st.storage.put("meta", m);
+  const sit = (ss, tok) => call(w, "POST", "/gate/dev", { origin: ORIGIN, json: { act: "sit", id: ID, ss, th: hex(tok) } });
+  assert.equal((await sit("T".repeat(43), TOK2)).status, 404, "wrong secret");
+  const ok = await sit(SS, TOK2);
+  assert.equal(ok.status, 200);
+  const d = (await ok.json()).data;
+  assert.deepEqual(d.lv, { budget: "read" });
+  assert.equal(d.devices, 2);
+  assert.equal((await dev(w, { act: "info", tok: TOK2 })).status, 200, "the seated device is a device of the gate");
+  assert.equal((await (await sit(SS, TOK2)).json()).data.devices, 2, "sitting again adds no device");
+  // wrong secrets are limited like pairing codes
+  for (let i = 0; i < 5; i++) await sit("U".repeat(43), TOK3);
+  assert.equal((await sit(SS, TOK3)).status, 429);
+});
+
+test("after a change the owner's devices are woken: one generic push per 15 minutes (5.78.00)", async () => {
+  const w = world();
+  const wakes = [];
+  w.env.PUSH = { idFromName: (n) => n, get: (pid) => ({ fetch: async (url, o) => {
+    const j = JSON.parse(o.body); wakes.push([pid, j]);
+    return new Response(JSON.stringify(pid === "GoneGoneGoneGoneGone12" ? { ok: false, code: "gone" } : { ok: true }));
+  } }) };
+  await newGate(w);
+  const PID = "PushBoxPushBoxPushBox1", WT = "W".repeat(43), CT = "C".repeat(40);
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: PID, wt: WT, ct: "short" })).status, 400, "a packet the push box would refuse");
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: "x", wt: WT, ct: CT })).status, 400);
+  assert.equal((await dev(w, { act: "ping", tok: "X".repeat(43), pid: PID, wt: WT, ct: CT })).status, 404, "only a device of the gate");
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: PID, wt: WT, ct: CT })).status, 200);
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: PID, wt: WT, ct: CT })).status, 200, "one row per device");
+  const b = w.boxes.get(ID);
+  const m = await b.st.storage.get("meta");
+  m.pg.push({ th: "f".repeat(64), pid: "GoneGoneGoneGoneGone12", wt: WT, ct: CT });
+  await b.st.storage.put("meta", m);
+  const t = await tokens(w);
+  const sock = { sent: [], closed: null, send(x) { this.sent.push(x); setTimeout(() => {
+    const q = JSON.parse(x);
+    b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: "{}" }));
+  }, 1); }, close(c) { this.closed = c; } };
+  b.socks.push(sock);
+  const callTool = (name, now) => rpc(w, t.access_token, { jsonrpc: "2.0", id: 9, method: "tools/call", params: { name, arguments: {} } }, now);
+  await callTool("budget_lines", 1e12);
+  assert.equal(wakes.length, 0, "reading wakes nobody");
+  await callTool("budget_add", 1e12);
+  assert.deepEqual(wakes.map((x) => x[0]).sort(), [PID, "GoneGoneGoneGoneGone12"].sort());
+  assert.deepEqual(wakes.find((x) => x[0] === PID)[1], { act: "wake", wt: WT, ct: CT, now: 1e12 });
+  assert.equal((await b.st.storage.get("meta")).pg.length, 1, "a push box that is gone is dropped");
+  await callTool("kanban_move_cards", 1e12 + 60000);
+  assert.equal(wakes.length, 2, "not again within 15 minutes");
+  await callTool("kanban_move_cards", 1e12 + 16 * 60000);
+  assert.equal(wakes.length, 3);
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: "" })).status, 200, "taken back");
+  assert.equal((await b.st.storage.get("meta")).pg.length, 0);
+});
+
+test("orOS closed: the copy answers reads, changes wait encrypted, deletions wait, the key lives only in token wraps (5.80.00)", async () => {
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const sock = { sent: [], closed: false, __g: { th: hex(TOK), v: 1, at: 1 }, send(x) { this.sent.push(x); const q = JSON.parse(x); if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1); }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const access = t.access_token.split(".")[1];
+  const kw = await b.st.storage.get("kw:" + hex(access));
+  assert.ok(kw && kw.w, "the key is wrapped for the new access token");
+  assert.doesNotMatch(JSON.stringify([...b.st.kv.entries()]), new RegExp(KS), "the key itself is never stored");
+  const copy = { at: 1e12, lv: { budget: "write" }, hold: 0, ans: {
+    "list_apps {}": '{"apps":["budget"]}', "budget_lines {}": '{"lines":[1]}', 'app_summary {"app":"budget","month":"2026-11"}': '{"m":"nov"}' } };
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, JSON.stringify(copy)) }));
+  assert.match(sock.sent[sock.sent.length - 1], /snapok/);
+  assert.equal((await b.st.storage.get("meta")).cp, 1);
+  sock.closed = true;                                       // orOS closes
+  const tc = async (name, args) => (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } })).json()).result;
+  let r = await tc("list_apps");
+  assert.equal(r.isError, false);
+  assert.match(r.content[0].text, /^\[orOS is closed: this is the copy of .*\]\n\{"apps":\["budget"\]\}$/);
+  assert.match((await tc("app_summary", { month: "2026-11", app: "budget" })).content[0].text, /\{"m":"nov"\}$/, "the arguments match in any order");
+  r = await tc("budget_lines", { from: "2026-01-01" });
+  assert.match(r.content[0].text, /with its own filters[\s\S]*\{"lines":\[1\]\}/);
+  assert.equal((await tc("search_data", { query: "x" })).isError, true);
+  r = await tc("budget_add", { entries: [{ date: "2026-11-08", kind: "out", amount: 5 }] });
+  assert.equal(r.isError, false);
+  assert.match(r.content[0].text, /"queued":true/);
+  const q = await b.st.storage.list({ prefix: "q:" });
+  assert.equal(q.size, 1);
+  const item = [...q.values()][0];
+  assert.doesNotMatch(item.c, /2026-11-08/, "the waiting change is encrypted");
+  assert.equal(JSON.parse(await G.openText(K, item.c)).n, "budget_add");
+  assert.match((await tc("budget_delete", { ids: ["a"] })).content[0].text, /Deleting waits/);
+  assert.match((await tc("kanban_add_cards", { board: "x", cards: [] })).content[0].text, /may not change kanban/);
+  // a refresh carries the key to the new tokens, with orOS still closed
+  const rf = await (await call(w, "POST", "/gate/token", { form: { grant_type: "refresh_token", refresh_token: t.refresh_token } })).json();
+  assert.ok(await b.st.storage.get("kw:" + hex(rf.access_token.split(".")[1])));
+  assert.equal(await b.st.storage.get("kw:" + hex(t.refresh_token.split(".")[1])), undefined, "the old wrap goes with the old token");
+  assert.match((await (await rpc(w, rf.access_token, { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "list_apps", arguments: {} } })).json()).result.content[0].text, /copy of/);
+  // the device applied it and says so
+  await b.box.webSocketMessage(sock, JSON.stringify({ cqa: [[...q.keys()][0].slice(2)] }));
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 0);
+  // 7 days without an open device: the copy goes
+  const m = await b.st.storage.get("meta");
+  m.seen = Date.now() - 8 * 86400000; m.last = Date.now(); await b.st.storage.put("meta", m);
+  await b.box.alarm();
+  assert.equal(await b.st.storage.get("copy"), undefined);
+  assert.equal((await b.st.storage.list({ prefix: "kw:" })).size, 0);
+  assert.equal((await b.st.storage.get("meta")).cp, undefined);
+});
+
+test("revoking the links drops the key wraps and the copy (5.80.00)", async () => {
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32);
+  const sock = { sent: [], __g: { th: hex(TOK), v: 1, at: 1 }, send(x) { const q = JSON.parse(x); if (q.q) setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: b64u(K) })), 1); }, close() {} };
+  b.socks.push(sock);
+  await tokens(w);
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, '{"at":1,"ans":{}}') }));
+  assert.ok((await b.st.storage.list({ prefix: "kw:" })).size >= 2);
+  assert.equal((await dev(w, { act: "revoke", tok: TOK })).status, 200);
+  assert.equal((await b.st.storage.list({ prefix: "kw:" })).size, 0);
+  assert.equal(await b.st.storage.get("copy"), undefined);
+  assert.equal(G.stableArgs({ b: 1, a: "", c: null, d: [2] }), '{"b":1,"d":[2]}');
+});
+
+test("orOS closed, the device's own tools (GATE-ACT): reads from the copy, create_items waits, the rest needs orOS open", async () => {
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const sock = { sent: [], closed: false, __g: { th: hex(TOK), v: 1, at: 1 }, send(x) { this.sent.push(x); const q = JSON.parse(x); if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1); }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const obj = { type: "object", properties: {} };
+  await b.st.storage.put("devtools", [
+    { name: "read_item", description: "r", inputSchema: obj, annotations: { readOnlyHint: true, destructiveHint: false } },
+    { name: "create_items", description: "c", inputSchema: obj, annotations: { readOnlyHint: false, destructiveHint: false } },
+    { name: "change_item", description: "c", inputSchema: obj, annotations: { readOnlyHint: false, destructiveHint: true } },
+    { name: "edit_in_app", description: "e", inputSchema: obj, annotations: { readOnlyHint: false, destructiveHint: true } }
+  ]);
+  const copy = { at: 1e12, lv: { todo: "write", crm: "write", notes: "read" }, hold: 0, ans: { 'read_item {"ref":"r1"}': '{"t":1}', 'app_summary {"app":"todo"}': '{"todo":1}' } };
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, JSON.stringify(copy)) }));
+  sock.closed = true;
+  const tc = async (name, args) => (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } })).json()).result;
+  assert.match((await tc("read_item", { ref: "r1" })).content[0].text, /copy of[\s\S]*\{"t":1\}$/);
+  assert.match((await tc("read_item", { ref: "r9" })).content[0].text, /needs orOS open/);
+  assert.match((await tc("app_summary", { app: "todo" })).content[0].text, /\{"todo":1\}$/, "an everyday app's summary from the copy");
+  let r = await tc("create_items", { app: "todo", items: [{ text: "x" }] });
+  assert.equal(r.isError, false);
+  assert.match(r.content[0].text, /"queued":true/);
+  assert.match((await tc("create_items", { app: "crm_activity", items: [{ text: "x" }] })).content[0].text, /"queued":true/, "crm_* is CRM");
+  assert.match((await tc("create_items", { app: "notes", items: [{ text: "x" }] })).content[0].text, /may not change notes/);
+  assert.match((await tc("change_item", { ref: "r1" })).content[0].text, /needs orOS open/);
+  assert.match((await tc("edit_in_app", { app: "writer", steps: [] })).content[0].text, /needs orOS open/);
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
 });

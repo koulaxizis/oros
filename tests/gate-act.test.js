@@ -28,11 +28,11 @@ test("ACT = the Assistant's create / change apps, less NEVER, Budget, Kanban and
   assert.ok(G.NEVER.indexOf("fitness") >= 0, "Fitness is never offered (Chris 2026-11-08)");
   G.ACT.forEach((id) => assert.equal(G.writable(id), true, id));
   ["passwords", "mail", "diary", "health", "mood", "cycle", "baby", "assistant", "fitness"].forEach((id) => {
-    assert.equal(G.canWrite({ [id]: "write" }, 2000, id, 1000), false, id);
+    assert.equal(G.canWrite({ [id]: "write" }, 0, id, 1000), false, id);
   });
-  assert.equal(G.canWrite({ todo: "write" }, 2000, "todo", 1000), true);
-  assert.equal(G.canWrite({ todo: "write" }, 900, "todo", 1000), false, "window closed");
-  assert.equal(G.canWrite({ todo: "read" }, 2000, "todo", 1000), false, "read only");
+  assert.equal(G.canWrite({ todo: "write" }, 0, "todo", 1000), true);
+  assert.equal(G.canWrite({ todo: "write" }, 2000, "todo", 1000), false, "paused");
+  assert.equal(G.canWrite({ todo: "read" }, 0, "todo", 1000), false, "read only");
 });
 
 test("gate tools: only the gate's set, no card or press in any text", () => {
@@ -51,15 +51,15 @@ test("gate tools: only the gate's set, no card or press in any text", () => {
     assert.equal(t.inputSchema.type, "object", t.name);
     assert.equal(t.annotations.readOnlyHint, ["search_data", "read_item", "app_summary", "read_in_app", "change_history"].indexOf(t.name) >= 0, t.name);
   });
-  assert.match(g.find((t) => t.name === "change_item").description, /write window/);
-  assert.match(g.find((t) => t.name === "create_items").description, /write window/);
+  assert.match(g.find((t) => t.name === "change_item").description, /paused/);
+  assert.match(g.find((t) => t.name === "create_items").description, /paused/);
   G.ACT_WRITE.forEach((n) => assert.ok(G.ACT_TOOLS.indexOf(n) >= 0, n));
 });
 
 test("W5: documents and actions through the gate", () => {
   assert.deepEqual(G.DOCS.slice().sort(), Object.keys(C.EDIT_APP).sort(), "DOCS = the apps edit_in_app changes");
   G.DOCS.forEach((id) => { assert.equal(G.writable(id), true, id); assert.equal(G.NEVER.indexOf(id), -1, id); assert.ok(G.toolsOf(id).indexOf("read_in_app") >= 0, id); });
-  assert.equal(G.canWrite({ writer: "write" }, 2000, "writer", 1000), true);
+  assert.equal(G.canWrite({ writer: "write" }, 0, "writer", 1000), true);
   const guide = "WRITER COMMANDS: press the card";
   const g = C.gateTools(C.toolsFor({ data: true, history: true, changes: true, actions: ["timer", "alarm", "open", "play", "directions"],
                                      edits: { writer: { CATALOG: { text: { args: { find: { t: "str" } } } }, GUIDE: guide } } }));
@@ -71,7 +71,7 @@ test("W5: documents and actions through the gate", () => {
   assert.equal(ed.annotations.destructiveHint, true);
   assert.equal(act.annotations.readOnlyHint, false);
   assert.equal(act.annotations.destructiveHint, false);
-  assert.match(act.description, /write window/);
+  assert.match(act.description, /paused/);
   [ed, act].forEach((t) => assert.equal(C.GATE_BAD.test(t.description), false, t.name));
   assert.ok(G.ACT_WRITE.indexOf("edit_in_app") >= 0);
   assert.equal(G.ACT_WRITE.indexOf("do_action"), -1, "an action needs the window, not a change switch per app");
