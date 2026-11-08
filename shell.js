@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.89.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.89.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -10291,7 +10291,7 @@
       var on = parseInt(btns[i].getAttribute("data-mx-timer"), 10) === st.timer;
       btns[i].setAttribute("aria-pressed", on ? "true" : "false");
       btns[i].style.background = on ? "var(--accent)" : "transparent";
-      btns[i].style.color = on ? "var(--accent-text, #fff)" : "var(--text)";
+      btns[i].style.color = on ? "var(--accent-ink, #fff)" : "var(--text)";
     }
     var left = document.getElementById("mx-pop-left");
     if (left) {
