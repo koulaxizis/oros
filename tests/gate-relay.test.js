@@ -410,3 +410,42 @@ test("a synced device sits in the gate with its seat secret, no code (5.77.00)",
   for (let i = 0; i < 5; i++) await sit("U".repeat(43), TOK3);
   assert.equal((await sit(SS, TOK3)).status, 429);
 });
+
+test("after a change the owner's devices are woken: one generic push per 15 minutes (5.78.00)", async () => {
+  const w = world();
+  const wakes = [];
+  w.env.PUSH = { idFromName: (n) => n, get: (pid) => ({ fetch: async (url, o) => {
+    const j = JSON.parse(o.body); wakes.push([pid, j]);
+    return new Response(JSON.stringify(pid === "GoneGoneGoneGoneGone12" ? { ok: false, code: "gone" } : { ok: true }));
+  } }) };
+  await newGate(w);
+  const PID = "PushBoxPushBoxPushBox1", WT = "W".repeat(43), CT = "C".repeat(40);
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: PID, wt: WT, ct: "short" })).status, 400, "a packet the push box would refuse");
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: "x", wt: WT, ct: CT })).status, 400);
+  assert.equal((await dev(w, { act: "ping", tok: "X".repeat(43), pid: PID, wt: WT, ct: CT })).status, 404, "only a device of the gate");
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: PID, wt: WT, ct: CT })).status, 200);
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: PID, wt: WT, ct: CT })).status, 200, "one row per device");
+  const b = w.boxes.get(ID);
+  const m = await b.st.storage.get("meta");
+  m.pg.push({ th: "f".repeat(64), pid: "GoneGoneGoneGoneGone12", wt: WT, ct: CT });
+  await b.st.storage.put("meta", m);
+  const t = await tokens(w);
+  const sock = { sent: [], closed: null, send(x) { this.sent.push(x); setTimeout(() => {
+    const q = JSON.parse(x);
+    b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: "{}" }));
+  }, 1); }, close(c) { this.closed = c; } };
+  b.socks.push(sock);
+  const callTool = (name, now) => rpc(w, t.access_token, { jsonrpc: "2.0", id: 9, method: "tools/call", params: { name, arguments: {} } }, now);
+  await callTool("budget_lines", 1e12);
+  assert.equal(wakes.length, 0, "reading wakes nobody");
+  await callTool("budget_add", 1e12);
+  assert.deepEqual(wakes.map((x) => x[0]).sort(), [PID, "GoneGoneGoneGoneGone12"].sort());
+  assert.deepEqual(wakes.find((x) => x[0] === PID)[1], { act: "wake", wt: WT, ct: CT, now: 1e12 });
+  assert.equal((await b.st.storage.get("meta")).pg.length, 1, "a push box that is gone is dropped");
+  await callTool("kanban_move_cards", 1e12 + 60000);
+  assert.equal(wakes.length, 2, "not again within 15 minutes");
+  await callTool("kanban_move_cards", 1e12 + 16 * 60000);
+  assert.equal(wakes.length, 3);
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: "" })).status, 200, "taken back");
+  assert.equal((await b.st.storage.get("meta")).pg.length, 0);
+});

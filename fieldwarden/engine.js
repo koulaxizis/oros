@@ -28,7 +28,7 @@
 //     wx: [T + 1 weather c calm | r rain | d drought | n e s w wind, index = turn], sched: [T + 1 lists of invader ids],
 //     rw rewinds left (Mild), r rng, done 0|1, h harvest,
 //     fire: [36 burning 0|1], hb: 0|1 extra Health for every invader
-//     (Harsh from farm 2) }  (fire and hb since 5.78.00: absent = none)
+//     (Harsh from farm 2) }  (fire and hb since 5.79.00: absent = none)
 //   unit = { id, k folk or invader id, f 1 folk | 0 invader, fi folk index | -1, at tile,
 //            hp, mh, mo moved, ac acted, it: null | { d 0-3, r distance, a act }, sn stunned }
 //   tiles: d dirt (mud while it rains), f field, h hedge (Health in x), H hedge
@@ -48,7 +48,7 @@
 //     into a hedge, haystack or the barn 1 damage; into another piece 1
 //     damage to both, and invaders lose their act; into the pond a
 //     ground invader is washed away; a piece pushed onto mud stops.
-//   - Fire (5.78.00): a burning tile burns at the end of the turn (a
+//   - Fire (5.79.00): a burning tile burns at the end of the turn (a
 //     field loses a stage, a haystack or hedge burns away, a piece on
 //     it takes 1), then spreads a tile with the wind; in a drought
 //     every haystack with no farmhand next to it catches fire. Rain
@@ -752,7 +752,7 @@
     st.s = makeSeason(st);
     return st;
   }
-  // The Daily season (5.78.00): one season on Harsh, the farm, season
+  // The Daily season (5.79.00): one season on Harsh, the farm, season
   // and three folk all from the code (the same for everyone that day).
   function dailyOf(seed) {
     var r = { s: hashStr(seed + ":daily") };

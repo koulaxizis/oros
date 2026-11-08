@@ -28,7 +28,7 @@
   // The games with a Daily challenge (Wave 49; Realm's Daily island
   // since 5.50, Crypt's Daily crypt since 5.55, Banner's Daily battle
   // since 5.64, Wayfarers' Daily trial since 5.71, Fieldwarden's Daily
-  // season since 5.78), in the order the Today
+  // season since 5.79), in the order the Today
   // section shows them.
   var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm", "banner", "crypt", "wayfarers", "fieldwarden"];
   // The "Clean sweep" achievement stays the six daily puzzles, so a
