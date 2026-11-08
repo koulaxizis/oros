@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.99.01
+## Version 5.99.02
 - **Clear all closes the notifications panel.** Pressing `Clear all` marks every notification read, as before, and now also closes the panel instead of leaving it empty on screen.
+
+## Version 5.99.01
+- **Stock takes only the shop products you want.** After «Get products from the shop», choose to take only published products (on by default, so drafts stay out) and only one brand, for example your own titles and not the other publishers' books you also sell.
 
 ## Version 5.99.00
 - **Claude and the Assistant fill in your Publishing titles.** They can now change a title that is already in Publishing: release date, status, subtitle, series, language, keywords, back-cover text, author bio, the people on it, each edition (ISBN, price, pages, size, spine, weight, binding, paper, the shop product) and the royalty terms. Nothing is removed, and an ISBN that belongs to another title is refused.
