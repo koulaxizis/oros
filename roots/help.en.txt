@@ -38,6 +38,7 @@ A year moves through four glades, and each glade has 3 seasons: spring, summer a
 The sky's colour shows the glade you are in.
 - **Mild:** a lower quota, and once a season `Rewind` takes back the whole last turn.
 - **Hardy:** more pests and a higher quota.
+- **Endless:** the tree lives on. Each year is one glade's three seasons, round the four glades and then new glades of the same kinds, with Hardy's pests and quota in the first year and more every year after (one more of each pest every second year, and a quota that climbs). It goes on until a quota is missed; `Records` keeps your runs and the most years the tree lived.
 
 Every year has a code. The same code is the same glade and the same pests, so you can play a year again or give the code to a friend.
 

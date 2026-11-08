@@ -19,6 +19,8 @@
 //   - a year over four glades (meadow, riverbank, rocky hill, old
 //     forest), three seasons each (5.92.00)
 //   - 20 root puzzles: one turn with a fixed amount of sap (W3b)
+//   - Endless (W3c): one glade a year round the four, every year harder,
+//     until a quota is missed; the records keep the most years
 // Data:
 //   - synced slice "roots" (oros-roots-data): years, years finished and
 //     the best year score per difficulty, and the longest root, as
@@ -55,7 +57,7 @@
   var DEVICE_KEY  = "oros-roots-device";
   var SFX_KEY     = "oros-roots-sfx";
   var DATA_VER    = 1;
-  var DIFFS = E.DIFFS;                 // m Mild, h Hardy
+  var DIFFS = E.DIFFS;                 // m Mild, h Hardy, e Endless
   var BW = E.W, BH = E.H, SIZE = E.SIZE;
   var BIG = 1e9;
   var MAX_SCORE = 999;
@@ -82,7 +84,12 @@
       "btn.sfxOn": "Sound on", "btn.sfxOff": "Sound off", "btn.fastOn": "Quick pests: on", "btn.fastOff": "Quick pests: off",
       "btn.threatOn": "Show every threat", "btn.threatOff": "Show the pests' moves",
       "view.label": "The glade: the surface on top, the soil below",
-      "diff.m": "Mild", "diff.h": "Hardy",
+      "diff.m": "Mild", "diff.h": "Hardy", "diff.e": "Endless",
+      "diff.e.note": "One glade a year, round and round, with Hardy's pests and more every year, until a quota is missed. The records keep the most years.",
+      "msg.year": "Year {y}.", "st.year": "Year {n}",
+      "res.lived": "The tree lived {n} years", "res.lived1": "The tree lived 1 year", "res.lived0": "The first year ended",
+      "res.years": "Years lived", "res.best": "Most years", "stats.endless": "Endless: runs · – · most years",
+      "last.yearsE": "{n} years",
       "diff.m.note": "A lower quota, and once a season Rewind takes back the whole last turn.",
       "diff.h.note": "More pests and a higher quota. No rewinds.",
       "sea.1": "Spring", "sea.2": "Summer", "sea.3": "Autumn",
@@ -175,7 +182,12 @@
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός", "btn.fastOn": "Γρήγορα ζωύφια: ναι", "btn.fastOff": "Γρήγορα ζωύφια: όχι",
       "btn.threatOn": "Δείξε κάθε κίνδυνο", "btn.threatOff": "Δείξε τις κινήσεις των ζωυφίων",
       "view.label": "Το ξέφωτο: η επιφάνεια πάνω, το χώμα από κάτω",
-      "diff.m": "Ήπια", "diff.h": "Σκληρή",
+      "diff.m": "Ήπια", "diff.h": "Σκληρή", "diff.e": "Ατελείωτη",
+      "diff.e.note": "Ένα ξέφωτο τον χρόνο, γύρω γύρω, με τα ζωύφια της Σκληρής και περισσότερα κάθε χρόνο, ώσπου να χαθεί ένας στόχος. Το αρχείο κρατά τις περισσότερες χρονιές.",
+      "msg.year": "Χρονιά {y}.", "st.year": "Χρονιά {n}",
+      "res.lived": "Το δέντρο έζησε {n} χρονιές", "res.lived1": "Το δέντρο έζησε 1 χρονιά", "res.lived0": "Η πρώτη χρονιά τελείωσε",
+      "res.years": "Χρονιές", "res.best": "Οι περισσότερες χρονιές", "stats.endless": "Ατελείωτη: παιχνίδια · – · περισσότερες χρονιές",
+      "last.yearsE": "{n} χρονιές",
       "diff.m.note": "Χαμηλότερος στόχος, και μία φορά σε κάθε εποχή το Γύρνα πίσω παίρνει πίσω όλο τον τελευταίο γύρο.",
       "diff.h.note": "Περισσότερα ζωύφια και ψηλότερος στόχος. Χωρίς γυρίσματα.",
       "sea.1": "Άνοιξη", "sea.2": "Καλοκαίρι", "sea.3": "Φθινόπωρο",
@@ -337,8 +349,8 @@
     return cmpStr(JSON.stringify(x), JSON.stringify(y)) > 0;
   }
   function normLast(v) {
-    if (!v || typeof v !== "object" || !isInt(v.a) || v.a < 0 || ["m", "h", "d"].indexOf(v.d) < 0 ||
-        !isInt(v.n) || v.n < 0 || v.n > (v.d === "d" ? 1 : E.SEASONS * E.GLADES.length) || (v.w !== 0 && v.w !== 1) ||
+    if (!v || typeof v !== "object" || !isInt(v.a) || v.a < 0 || ["m", "h", "e", "d"].indexOf(v.d) < 0 ||
+        !isInt(v.n) || v.n < 0 || v.n > (v.d === "d" ? 1 : v.d === "e" ? E.MAX_YEARS : E.SEASONS * E.GLADES.length) || (v.w !== 0 && v.w !== 1) || (v.d === "e" && v.w !== 0) ||
         !isInt(v.h) || v.h < 0 || v.h > MAX_SCORE || typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s)) return null;
     return { a: v.a, d: v.d, n: v.n, w: v.w, h: v.h, s: v.s };
   }
@@ -347,7 +359,7 @@
     var s = {}, any = false;
     DIFFS.forEach(function (k) {
       var v = row.s && row.s[k];
-      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0 && x < BIG; }) && v[1] <= v[0] && v[2] <= MAX_SCORE) {
+      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0 && x < BIG; }) && v[1] <= v[0] && v[2] <= MAX_SCORE && (k !== "e" || v[1] === 0)) {
         s[k] = [v[0], v[1], v[2]];
         any = true;
       }
@@ -506,9 +518,9 @@
   // A year (or a Daily glade) ended: into Last years.
   function logYear(won) {
     var daily = game.opts.day !== undefined;
-    // every season in bloom[] met its quota but a missed last one
-    var met = st.bloom.length - (st.over === 0 ? 1 : 0);
-    var v = normLast({ a: Date.now(), d: daily ? "d" : game.opts.diff, n: clamp(met, 0, daily ? 1 : E.SEASONS * E.GLADES.length),
+    // every season in bloom[] met its quota but a missed last one; Endless: the years lived
+    var met = game.opts.diff === "e" ? lived() : st.bloom.length - (st.over === 0 ? 1 : 0);
+    var v = normLast({ a: Date.now(), d: daily ? "d" : game.opts.diff, n: clamp(met, 0, daily ? 1 : game.opts.diff === "e" ? E.MAX_YEARS : E.SEASONS * E.GLADES.length),
       w: won ? 1 : 0, h: clamp(E.score(st), 0, MAX_SCORE), s: game.opts.seed });
     if (!v) return;
     data.last = [v].concat(data.last || []);
@@ -609,7 +621,8 @@
       return;
     }
     if (game.opts.day !== undefined) countDaily(game.opts.day, won, E.score(st), Math.max(1, st.acts), st.res ? st.res.b : 0, st.s.q);
-    else count(game.opts.diff, won, E.score(st), Math.max(st.best, E.longest(st)));
+    // Endless keeps the most years where the others keep the best score
+    else count(game.opts.diff, won, game.opts.diff === "e" ? lived() : E.score(st), Math.max(st.best, E.longest(st)));
     logYear(won);
   }
   function startGame(opts) {
@@ -628,14 +641,16 @@
   }
   function setMsg(text) { $("msg").textContent = text || ""; }
   function gladeName(g) { return t("glade." + (g || E.gladeOf(st)).id); }
-  function nextGlade() { return E.GLADES[st.gl || 1]; }
+  function nextGlade() { return E.GLADES[(st.gl || 1) % E.GLADES.length]; }
   // "the riverbank" inside a sentence (the names start upper case)
   function gladeLower(g) { var n = gladeName(g); return n.charAt(0).toLowerCase() + n.slice(1); }
-  function gladeEnds() { return st.sea >= E.SEASONS && (st.gl || 1) < (st.end || 1); }
+  function gladeEnds() { return st.sea >= E.SEASONS && (st.diff === "e" || (st.gl || 1) < (st.end || 1)); }
+  // Endless: the years the tree lived through to the end
+  function lived() { return Math.max(0, (st.yr || 1) - 1); }
   function seasonMsg() {
     if (st.pz) { setMsg(pzRules()); return; }
     if (st.phase === "rest") { setMsg(gladeEnds() ? t("res.metGlade", { g: gladeLower(nextGlade()) }) : t("res.met")); return; }
-    var m = st.one ? t("msg.daily", { g: gladeName(), s: t("sea." + st.sea), q: st.s.q }) : t("msg.season", { g: gladeName(), s: t("sea." + st.sea), n: st.sea, q: st.s.q });
+    var m = (st.yr ? t("msg.year", { y: st.yr }) + " " : "") + (st.one ? t("msg.daily", { g: gladeName(), s: t("sea." + st.sea), q: st.s.q }) : t("msg.season", { g: gladeName(), s: t("sea." + st.sea), n: st.sea, q: st.s.q }));
     if (E.frost(st, st.s)) m += " " + t("msg.frost");
     setMsg(m);
   }
@@ -1309,7 +1324,7 @@
   function renderStatus() {
     if (!st) return;
     var s = st.s, inc = E.income(st), b = s.done && st.res ? st.res.b : E.bloomOf(st);
-    stat("s-sea", t("sea." + st.sea), gladeName() + " · " + t("st.glade", { n: st.gl || 1, m: st.end || 1 }) + " · " + t("sea." + st.sea) + " · " + st.sea + "/" + E.SEASONS);
+    stat("s-sea", t("sea." + st.sea), gladeName() + " · " + (st.yr ? t("st.year", { n: st.yr }) : t("st.glade", { n: st.gl || 1, m: st.end || 1 })) + " · " + t("sea." + st.sea) + " · " + st.sea + "/" + E.SEASONS);
     stat("s-turn", s.turn + "/" + E.T, t("st.turn", { n: s.turn, m: E.T }));
     stat("s-sap", st.sap + " +" + inc, t("st.sap", { n: st.sap, g: inc }));
     if (st.pz) {
@@ -1519,10 +1534,17 @@
     if (game.opts.day !== undefined) { dailyDialog(game.opts.day); return; }
     var dlg = makeDialog("rt-result"), won = st.over === 1;
     dlg.appendChild(el("div", "dlg-title", t("app.name") + " · " + t("diff." + game.opts.diff)));
-    dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : t("res.lost")));
-    dlg.appendChild(row(t("res.glades"), (st.gl || 1) + "/" + (st.end || 1)));
+    if (st.diff === "e") {
+      var n = lived();
+      dlg.appendChild(el("div", "dlg-hero" + (n ? "" : " lost"), n > 1 ? t("res.lived", { n: n }) : t(n ? "res.lived1" : "res.lived0")));
+      dlg.appendChild(row(t("res.years"), String(n)));
+      dlg.appendChild(row(t("res.best"), String(totals("e")[2])));
+    } else {
+      dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : t("res.lost")));
+      dlg.appendChild(row(t("res.glades"), (st.gl || 1) + "/" + (st.end || 1)));
+    }
     // the bloom of each season, a row per glade ("3 · 4 · 5")
-    for (var gk = 0; gk * E.SEASONS < st.bloom.length; gk++) {
+    for (var gk = 0; st.diff !== "e" && gk * E.SEASONS < st.bloom.length; gk++) {
       dlg.appendChild(row(t("glade." + E.GLADES[gk].id), st.bloom.slice(gk * E.SEASONS, (gk + 1) * E.SEASONS).join(" · ")));
     }
     dlg.appendChild(row(t("res.springs"), String(E.springs(st))));
@@ -1545,7 +1567,8 @@
     DIFFS.forEach(function (m) {
       var v = totals(m);
       if (v[0]) empty = false;
-      dlg.appendChild(row(t("diff." + m), v[0] + " · " + v[1] + " · " + v[2]));
+      if (m === "e") dlg.appendChild(el("div", "dlg-sub", t("stats.endless")));
+      dlg.appendChild(row(t("diff." + m), v[0] + " · " + (m === "e" ? "–" : v[1]) + " · " + v[2]));
     });
     dlg.appendChild(row(t("stats.long"), String(longestEver())));
     if (DK) {
@@ -1587,7 +1610,7 @@
     var box = el("div", "lr-list");
     list.forEach(function (v) {
       var r = el("div", "lr-row");
-      var what = v.d === "d" ? t(v.w ? "last.met" : "last.missed") : (v.w ? t("last.won") : t("last.seasons", { n: v.n, m: E.SEASONS * E.GLADES.length }));
+      var what = v.d === "d" ? t(v.w ? "last.met" : "last.missed") : v.d === "e" ? t("last.yearsE", { n: v.n }) : (v.w ? t("last.won") : t("last.seasons", { n: v.n, m: E.SEASONS * E.GLADES.length }));
       var tx = el("div", "lr-tx");
       tx.appendChild(el("div", "nm", (v.d === "d" ? t("daily.label") : t("diff." + v.d)) + " · " + what));
       tx.appendChild(el("div", "fx", t("last.score", { n: v.h }) + " · " +

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Roots — rules engine (v1.3.0)
+// orOS Roots — rules engine (v1.4.0)
 // NOT the UI: no DOM, no storage. Loaded by roots/index.html
 // (window.RootsEngine) and by tests/roots.test.js (module.exports).
 //
@@ -22,6 +22,8 @@
 //     gl glade 1-4, end the glades in the year, pts the points of the glades
 //     left behind (springs + longest root), 5.92.00; absent = a one-glade
 //     year on the meadow (a session from before),
+//     yr: the year of an Endless run (diff "e", W3c: the glades go round,
+//     one glade a year, every year harder, until a quota is missed),
 //     pz: puzzle number (W3b, with one: a single turn; res.b is then the
 //     sap the tree earns the turn after) }
 //   season = { turn 1-T, q quota, u: [pest], nid, next: [{ k, at }], sched: [T + 1 lists], rw rewinds left, r rng, done 0|1 }
@@ -33,8 +35,9 @@
   "use strict";
 
   var W = 7, H = 9, SIZE = W * H, T = 6, SEASONS = 3, TRUNK = 3, BASE = 10;
-  var DIFFS = ["m", "h"];
-  var QUOTA = { m: 0.6, h: 0.8 };
+  var DIFFS = ["m", "h", "e"];
+  var QUOTA = { m: 0.6, h: 0.8, e: 0.8 };
+  var MAX_YEARS = 999;
   var COST = { root: 1, clay: 2, thick: 2, thorn: 3, bud: 2 };
   var MAX_SAP = 20, START_SAP = 5, CUT_TURNS = 2, BUD_TURNS = 2, MAX_PESTS = 24, BIG = 1e9;
   var PESTS = {
@@ -200,6 +203,8 @@
     }
     return seen;
   }
+  // Endless after the first round: every year a new glade of its kind
+  function yearKey(st) { return st.yr > GLADES.length ? ":y" + st.yr : ""; }
   function gladeOf(st) { return GLADES[(st.gl || 1) - 1]; }
   function layout(seed, gl) {
     var G = GLADES[(gl || 1) - 1];
@@ -516,10 +521,19 @@
         // on to the next glade: a bare tree again; the glade left behind
         // keeps its springs and longest root in the score
         st.pts = (st.pts || 0) + springs(st) + longest(st);
+        if (st.diff === "e") {
+          // Endless: the next glade round the four, a new year; the year's
+          // bloom goes into pts so a long run stays small
+          st.pts += st.bloom.reduce(function (a, b) { return a + b; }, 0);
+          st.bloom = [];
+          st.yr++;
+          st.gl = st.gl % GLADES.length;
+        }
+        st.pts = Math.min(MAX_YEARS, st.pts);
         st.gl++;
         st.sea = 1;
         st.sap = START_SAP;
-        st.t = layout(st.seed, st.gl);
+        st.t = layout(st.seed + yearKey(st), st.gl);
         for (var j = 0; j < SIZE; j++) { st.r[j] = 0; st.th[j] = 0; st.cut[j] = 0; st.bk[j] = 0; st.ba[j] = 0; }
         st.r[BASE] = 2;
         st.s = makeSeason(st);
@@ -541,7 +555,7 @@
     st.best = Math.max(st.best, longest(st));
     note(ev, { k: "bloom", n: b, q: q });
     if (b < q) { st.over = 0; return; }
-    if (st.one === 1 || (st.sea >= SEASONS && (st.gl || 1) >= (st.end || 1))) { st.over = 1; return; }
+    if (st.one === 1 || (st.diff !== "e" && st.sea >= SEASONS && (st.gl || 1) >= (st.end || 1))) { st.over = 1; return; }
     st.phase = "rest";
   }
   // The year's score at winter: bloom of every season + springs reached +
@@ -552,11 +566,12 @@
 
   // ---------- Seasons ----------
   function schedule(st, salt) {
-    var gk = (st.gl || 1) > 1 ? ":g" + st.gl : "";
+    var gk = ((st.gl || 1) > 1 ? ":g" + st.gl : "") + yearKey(st);
     var r = { s: hashStr(st.seed + gk + ":" + st.sea + ":" + salt) }, sched = [], k;
     for (k = 0; k <= T; k++) sched.push([]);
     gladeOf(st).wv[st.sea - 1].forEach(function (w) {
-      var n = st.diff === "h" ? w[2] : w[1];
+      // Endless: Hardy's pests, and every second year one more of each kind (at most 3 more)
+      var n = st.diff === "m" ? w[1] : w[2] + (st.diff === "e" ? Math.min(3, Math.floor(((st.yr || 1) - 1) / 2)) : 0);
       for (var j = 0; j < n; j++) {
         // spread over the turns from the first, never on the last (it would not act)
         var turn = w[3] + rint(r, T - 1 - w[3] + 1);
@@ -572,7 +587,10 @@
     withRng(s, function () { pickNext(st, s, s.sched[1]); });
     reveal(st, s);
     var got = solve(st);
-    s.q = Math.max(1, Math.floor(got * QUOTA[st.diff]));
+    // Endless asks more of the solver's bloom every year: 0.8 of it in
+    // year 1, all of it from year 8, then 1 more every second year
+    var yr = st.yr || 1, f = st.diff === "e" ? Math.min(1, QUOTA.e + 0.03 * (yr - 1)) : QUOTA[st.diff];
+    s.q = Math.max(1, Math.floor(got * f) + (st.diff === "e" ? Math.max(0, Math.floor((yr - 7) / 2)) : 0));
     return s;
   }
   // A bare tree on the glade of the code, before its first season.
@@ -586,10 +604,12 @@
     st.pts = 0;
     return st;
   }
-  // A year: the four glades in turn, three seasons each (5.92.00).
+  // A year: the four glades in turn, three seasons each (5.92.00);
+  // Endless: one glade a year, round and round (yr).
   function newYear(seed, diff) {
     var st = bare(seed, diff, 1, 1);
     st.end = GLADES.length;
+    if (diff === "e") st.yr = 1;
     st.s = makeSeason(st);
     return st;
   }
@@ -716,11 +736,12 @@
     if (!arr(st.cut, function (v, i) { return isInt(v) && v >= 0 && v <= CUT_TURNS && (!v || st.r[i]); })) return false;
     if (!arr(st.bk, function (v, i) { return isInt(v) && v >= 0 && v <= 4 && (!v || surface(i)); })) return false;
     if (!arr(st.ba, function (v, i) { return st.bk[i] === 1 || st.bk[i] === 2 ? isInt(v) && v >= 1 && v <= BUD_TURNS : v === 0; })) return false;
+    if (st.diff === "e" ? !isInt(st.yr) || st.yr < 1 || st.yr > MAX_YEARS || st.gl === undefined || st.one !== undefined : st.yr !== undefined) return false;
     if (st.pz !== undefined && (!isInt(st.pz) || st.pz < 1 || st.pz > PUZZLES.length || st.one !== 1)) return false;
     if (st.gl === undefined ? st.end !== undefined || st.pts !== undefined
         : !isInt(st.gl) || st.gl < 1 || st.gl > GLADES.length || !isInt(st.end) || st.end < st.gl || st.end > GLADES.length ||
           !isInt(st.pts) || st.pts < 0 || st.pts > 999 || (st.one === 1 && st.end !== st.gl)) return false;
-    if (!Array.isArray(st.bloom) || st.bloom.length > SEASONS * (st.end || 1) || !st.bloom.every(function (v) { return isInt(v) && v >= 0 && v <= 99; })) return false;
+    if (!Array.isArray(st.bloom) || st.bloom.length > SEASONS * (st.diff === "e" ? 1 : st.end || 1) || !st.bloom.every(function (v) { return isInt(v) && v >= 0 && v <= 99; })) return false;
     if (!isInt(st.best) || st.best < 0 || st.best > SIZE || !isInt(st.acts) || st.acts < 0 || st.acts > BIG) return false;
     if (st.phase !== "play" && st.phase !== "rest") return false;
     if (st.one !== undefined && (st.one !== 1 || st.diff !== "h" || st.phase === "rest" || st.bloom.length > 1)) return false;
@@ -729,8 +750,8 @@
     var s = st.s;
     if (!s || !isInt(s.turn) || s.turn < 1 || s.turn > T || !isInt(s.q) || s.q < 1 || !isInt(s.nid) || s.nid < 1 || s.nid > 9999) return false;
     if (!isInt(s.rw) || s.rw < 0 || s.rw > 1 || !isInt(s.r) || (s.done !== 0 && s.done !== 1)) return false;
-    if (!Array.isArray(s.sched) || s.sched.length !== T + 1 || !s.sched.every(function (l) { return Array.isArray(l) && l.length <= 9 && l.every(function (k) { return PESTS.hasOwnProperty(k); }); })) return false;
-    if (!Array.isArray(s.next) || s.next.length > 9 || !s.next.every(function (e) { return e && PESTS.hasOwnProperty(e.k) && isInt(e.at) && e.at >= 0 && e.at < SIZE; })) return false;
+    if (!Array.isArray(s.sched) || s.sched.length !== T + 1 || !s.sched.every(function (l) { return Array.isArray(l) && l.length <= MAX_PESTS && l.every(function (k) { return PESTS.hasOwnProperty(k); }); })) return false;
+    if (!Array.isArray(s.next) || s.next.length > MAX_PESTS || !s.next.every(function (e) { return e && PESTS.hasOwnProperty(e.k) && isInt(e.at) && e.at >= 0 && e.at < SIZE; })) return false;
     var seen = {};
     if (!Array.isArray(s.u) || s.u.length > MAX_PESTS || !s.u.every(function (u) {
       if (!u || !PESTS.hasOwnProperty(u.k) || !isInt(u.id) || u.id < 1 || u.id >= s.nid || !isInt(u.at) || u.at < 0 || u.at >= SIZE || seen[u.at]) return false;
@@ -744,7 +765,7 @@
   }
 
   var api = {
-    W: W, H: H, SIZE: SIZE, T: T, SEASONS: SEASONS, TRUNK: TRUNK, BASE: BASE, DIFFS: DIFFS, COST: COST, MAX_SAP: MAX_SAP,
+    W: W, H: H, SIZE: SIZE, T: T, SEASONS: SEASONS, TRUNK: TRUNK, BASE: BASE, DIFFS: DIFFS, COST: COST, MAX_SAP: MAX_SAP, MAX_YEARS: MAX_YEARS,
     CUT_TURNS: CUT_TURNS, BUD_TURNS: BUD_TURNS, PESTS: PESTS, PEST_IDS: PEST_IDS, WAVES: WAVES,
     GLADES: GLADES, GLADE_IDS: GLADE_IDS, gladeOf: gladeOf, layout: layout,
     hashStr: hashStr, step: step, soil: soil, surface: surface, pestAt: pestAt, pestById: pestById,

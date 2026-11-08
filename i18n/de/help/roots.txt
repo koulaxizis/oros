@@ -38,6 +38,7 @@ Ein Jahr führt durch vier Lichtungen, und jede Lichtung hat 3 Jahreszeiten: Fr�
 Die Farbe des Himmels zeigt, auf welcher Lichtung du bist.
 - **Mild:** ein niedrigeres Ziel, und einmal pro Jahreszeit nimmt `Zurückspulen` den ganzen letzten Zug zurück.
 - **Rau:** mehr Schädlinge und ein höheres Ziel.
+- **Endlos:** der Baum lebt weiter. Jedes Jahr sind die drei Jahreszeiten einer Lichtung, reihum durch die vier Lichtungen und danach neue Lichtungen derselben Art, im ersten Jahr mit den Schädlingen und dem Ziel von Rau und danach jedes Jahr mehr (jedes zweite Jahr ein Schädling mehr von jeder Art, und ein steigendes Ziel). Es geht weiter, bis ein Ziel verfehlt wird; `Bestwerte` behält deine Läufe und die meisten Jahre, die der Baum gelebt hat.
 
 Jedes Jahr hat einen Code. Derselbe Code ergibt dieselbe Lichtung und dieselben Schädlinge, also kannst du ein Jahr noch einmal spielen oder den Code einem Freund geben.
 

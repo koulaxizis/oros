@@ -482,3 +482,39 @@ test("roots: solved puzzles merge as a sorted union", () => {
   assert.deepEqual(m(A, B).pz, [1, 2, 3], "out-of-range numbers drop; Reset records keeps them");
   assert.equal(J(m(A, B)), J(m(B, A)));
 });
+
+test("roots: Endless goes round the glades, one a year, harder every year, until a quota is missed", () => {
+  assert.ok(E.DIFFS.includes("e"));
+  const st = E.newYear("endless1", "e");
+  assert.deepEqual([st.yr, st.gl, st.s.rw], [1, 1, 0], "year 1 on the meadow, no rewinds");
+  assert.ok(E.valid(st));
+  let guard = 0;
+  const seen = [];
+  while (st.over < 0 && guard++ < 900) {
+    const was = st.yr;
+    E.botTurn(st);
+    assert.ok(E.valid(st), "valid in year " + st.yr);
+    if (st.yr !== was) seen.push(st.gl);
+    assert.ok(st.bloom.length <= E.SEASONS, "a year's bloom only");
+  }
+  assert.equal(st.over, 0, "an Endless run only ends with a missed quota");
+  assert.deepEqual(seen.slice(0, 4), [2, 3, 4, 1].slice(0, Math.min(4, seen.length)), "the glades go round");
+  // year 1 has Hardy's pests and quota; later years ask more
+  assert.equal(J(E.newYear("endless2", "e").s.sched), J(E.newYear("endless2", "h").s.sched), "year 1 has Hardy's pests");
+  assert.equal(E.newYear("endless2", "e").s.q, E.newYear("endless2", "h").s.q, "and Hardy's quota");
+  const bad = E.newYear("endless3", "e");
+  bad.yr = 0;
+  assert.ok(!E.valid(bad), "a year 0 is refused");
+  const noYr = E.newYear("endless3", "h");
+  noYr.yr = 2;
+  assert.ok(!E.valid(noYr), "only Endless has years");
+});
+
+test("roots: Endless records keep the most years and never a finish", () => {
+  const m = R.mergeRoots;
+  const x = m({ rows: { aaaaaa: { b: 0, s: { e: [4, 0, 7] }, lr: 3 } } }, { rows: { aaaaaa: { b: 0, s: { e: [5, 0, 6] }, lr: 2 } } });
+  assert.deepEqual(x.rows.aaaaaa.s.e, [5, 0, 7]);
+  assert.ok(!m({ rows: { bbbbbb: { b: 0, s: { e: [2, 1, 3] } } } }, {}).rows.bbbbbb, "an Endless finish drops");
+  assert.equal(m({ last: [{ a: 5, d: "e", n: 14, w: 0, h: 120, s: "abc" }] }, {}).last.length, 1, "14 years in Last years");
+  assert.equal(m({ last: [{ a: 5, d: "e", n: 3, w: 1, h: 20, s: "abc" }] }, {}).last.length, 0, "never finished");
+});
