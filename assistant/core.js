@@ -2547,6 +2547,69 @@
   // an app that imports it (Writer: its Open, with every format it
   // keeps). The card's button hands the file over; nothing is retyped.
   var OPEN_FILE_APPS = { writer: [".pdf", ".docx", ".odt", ".rtf", ".html", ".htm", ".md", ".markdown", ".txt"] };
+  // GATE-PAR (2026-11-08, Chris: "what Claude can do through the Gate,
+  // the Assistant can do, and the other way round"): the gate's list
+  // tools and Kanban columns, under the same names and arguments as
+  // relay/gate.js TOOLS (tests/gate-parity.test.js keeps them equal).
+  // They run gate/gate.js's own pure cores (window.orosGateCore).
+  var OFFSET = { type: "integer", minimum: 0, description: "Skip this many (from next_offset)." };
+  var SPAN = {
+    from: { type: "string", description: "First day, YYYY-MM-DD." },
+    to: { type: "string", description: "Last day, YYYY-MM-DD (at most 400 days after from)." }
+  };
+  var TOOL_LINE = {
+    budget: {
+      name: "budget_lines",
+      description: "Budget entries (income and expenses, bank lines included) between two days, oldest first, 500 per page. " +
+        "Amounts are decimal strings in the Budget's main currency. Better than app_summary for single entries. " +
+        "The user sees how many entries first and may hold them back.",
+      params: { type: "object", properties: { from: SPAN.from, to: SPAN.to,
+        account: { type: "string", description: "Only this Budget account (its name or id)." },
+        bank: { type: "boolean", description: "true: only lines read from a bank, PayPal or a statement file." },
+        offset: OFFSET }, required: ["from", "to"] }
+    },
+    invoices: {
+      name: "invoice_list",
+      description: "Invoices: issued documents (invoices, receipts, credit notes, proformas, ones issued elsewhere; drafts left out) " +
+        "between two days with client, totals, paid, balance, status and lines; or, with received: true, invoices received from suppliers. " +
+        "Oldest first, 500 per page, amounts as decimal strings. The user sees how many first and may hold them back.",
+      params: { type: "object", properties: { from: SPAN.from, to: SPAN.to,
+        received: { type: "boolean", description: "true: invoices received from suppliers instead of issued ones." },
+        offset: OFFSET }, required: ["from", "to"] }
+    },
+    stock: {
+      name: "stock_items",
+      description: "Stock: products with the quantity on hand (worked out from every movement), minimum, cost, price, value, " +
+        "category and supplier. By name, 500 per page. The user sees how many first and may hold them back.",
+      params: { type: "object", properties: {
+        query: { type: "string", description: "Only products whose name, SKU, barcode, category or supplier contains this." },
+        low: { type: "boolean", description: "true: only products at or below their minimum, or out of stock." },
+        archived: { type: "boolean", description: "true: include archived products." },
+        offset: OFFSET } }
+    },
+    publish: {
+      name: "publish_titles",
+      description: "Publishing: the publisher's titles with status, release date, people (authors, translators…), formats with ISBN, " +
+        "price and pages, and the blurb. By title, 500 per page. The user sees how many first and may hold them back.",
+      params: { type: "object", properties: {
+        query: { type: "string", description: "Only titles whose title, series, people or ISBN contains this." },
+        status: { type: "string", "enum": ["idea", "in production", "published", "out of print"] },
+        offset: OFFSET } }
+    }
+  };
+  var TOOL_KB_COLS = {
+    name: "kanban_add_columns",
+    description: "Add columns to a Kanban board (at most 20 per call), at the end or after a given column. " +
+      "The user sees the columns on one card and must press Add; nothing is saved before that. The card has Undo.",
+    params: { type: "object", properties: {
+      board: { type: "string", description: "The board name or id (app_summary with app kanban)." },
+      columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
+        name: { type: "string", description: "At most 60 characters." },
+        after: { type: "string", description: "Put it right after this column (name or id); at the end when left out." } },
+        required: ["name"] } } },
+      required: ["board", "columns"] }
+  };
+
   var TOOL_OPEN_FILE = {
     name: "open_file",
     description: "Open a file the user attached in this conversation in an orOS app, as it is: Writer opens a document " +
@@ -3077,6 +3140,8 @@
     if (opts.data && opts.partnerLinks) out.push(TOOL_LINK_ITEMS);
     if (opts.actions && opts.actions.length) out.push(doTool(opts.actions));
     if (opts.history) out.push(TOOL_HISTORY, TOOL_UNDO);
+    if (opts.data && opts.lines) opts.lines.forEach(function (id) { if (TOOL_LINE[id]) out.push(TOOL_LINE[id]); });
+    if (opts.kbCols) out.push(TOOL_KB_COLS);
     if (opts.data && opts.edits && Object.keys(opts.edits).length) out.push(readAppTool(Object.keys(opts.edits)), editTool(opts.edits));
     if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
     if (opts.newsletter) out.push(TOOL_NEWSLETTER, TOOL_NL_CHECK);
@@ -3096,7 +3161,22 @@
   // user's consent is replaced (tests/gate-act.test.js keeps it so).
   // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): edit_in_app and
   // do_action too; the app opens on the owner's screen and does it there.
-  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
+  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
+                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
+                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+  // GATE-PAR P3 (2026-11-08): the Assistant's tools that hand work to an
+  // app's own window. Through the gate the app opens on the owner's
+  // screen with it at once (Layout does its work and reports; a form is
+  // filled for the owner to save; an automation rule comes in off,
+  // Chris's card 13:39). Their sentences about cards and presses are
+  // left out and GATE_OPEN_SAY is said instead.
+  var GATE_OPEN = ["propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+  var GATE_OPEN_HEAD = { newsletter_check: "When the owner says a newsletter issue is ready (or asks to send it), open Newsletter's pre-send check of the draft (missing pictures or links, sending account, the list); the owner sends it there." };
+  var GATE_OPEN_SAY = " Through orOS Gate it opens at once on the owner's screen in that app (unless the owner paused Claude's changes): " +
+    "Layout's own work (rebuild, house style, book) runs there and its report comes back; a new entry, document, recipe, cover or newsletter content " +
+    "is filled into the app's own form or editor for the owner to check and save; an automation rule comes in turned off. " +
+    "Files come only as paths on the orOS disk (/internal/…): there are no attachments through the gate. Nothing is sent from here.";
   var GATE_SAY = [
     [" The user sees every result first and may share only some of them, or none.", ""],
     [" The user may be asked first.", ""],
@@ -3125,6 +3205,12 @@
   // they come with read_in_app's result for that app instead.
   var GATE_EDIT_GUIDE = " Call read_in_app for the document first: its result lists that app's commands (commands), the only ones edit_in_app takes.";
   var GATE_BAD = /\bpress(es)?\b|user sees|may be asked|hold it back|untick|must press|a card\b|one card\b|on a card\b/i;
+  // A GATE_OPEN tool's text without its sentences about cards, presses
+  // and what the user does there.
+  var OPEN_BAD = /\bNothing (is|was) (saved|run|made|added|sent)\b|never say|themselves|dismiss|\bopens? it in\b|\bthe user (gets|sees|presses|opens|picks|sends)\b|\bcard\b(?! *[:(])/i;
+  function openSay(text) {
+    return String(text || "").split(/(?<=[.;!?])\s+(?=[A-Z])/).filter(function (z) { return !(GATE_BAD.test(z) || (OPEN_BAD.test(z) && !/^Kinds and their fields/.test(z))); }).join(" ");
+  }
   // tools (toolsFor output) → MCP tool list { name, description, inputSchema, annotations }
   function gateTools(tools) {
     return (Array.isArray(tools) ? tools : []).filter(function (t) { return t && GATE_TOOLS.indexOf(t.name) >= 0; }).map(function (t) {
@@ -3136,10 +3222,11 @@
       }
       function walk(o) {
         if (!o || typeof o !== "object") return;
-        if (typeof o.description === "string") o.description = say(o.description);
+        if (typeof o.description === "string") o.description = GATE_OPEN.indexOf(x.name) >= 0 ? openSay(say(o.description)) : say(o.description);
         Object.keys(o).forEach(function (k) { if (o[k] && typeof o[k] === "object") walk(o[k]); });
       }
       x.description = say(x.description);
+      if (GATE_OPEN.indexOf(x.name) >= 0) x.description = (GATE_OPEN_HEAD[x.name] || openSay(x.description)) + GATE_OPEN_SAY;
       if (x.name === "edit_in_app") x.description = x.description.split("\n")[0] + GATE_EDIT_GUIDE;
       walk(x.params);
       var ro = /^(search_data|read_item|app_summary|read_in_app|change_history)$/.test(x.name);
@@ -4521,7 +4608,7 @@
     labelHit: labelHit, filterLabel: filterLabel, isNoLabel: isNoLabel, WIDE: WIDE, LABEL_WIDE: LABEL_WIDE,
     parseMd: parseMd, parseInline: parseInline, linkKind: linkKind,
     systemPrompt: systemPrompt, chatTitle: chatTitle, monthKey: monthKey,
-    toolsFor: toolsFor, gateTools: gateTools, GATE_TOOLS: GATE_TOOLS, GATE_BAD: GATE_BAD, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
+    toolsFor: toolsFor, GATE_OPEN: GATE_OPEN, TOOL_LINE: TOOL_LINE, TOOL_KB_COLS: TOOL_KB_COLS, gateTools: gateTools, GATE_TOOLS: GATE_TOOLS, GATE_BAD: GATE_BAD, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
     DO_KINDS: DO_KINDS, normAction: normAction, HIST_DAYS: HIST_DAYS, HIST_MAX: HIST_MAX, histEntry: histEntry, histPrune: histPrune, histQuery: histQuery, histForModel: histForModel, undoPick: undoPick, UNDO_MAX: UNDO_MAX, canUndo: canUndo,
     CHAT_DIR: CHAT_DIR, chatPath: chatPath, chatFile: chatFile, parseChatFile: parseChatFile,
     normChat: normChat, mergeChat: mergeChat, msgSig: msgSig,

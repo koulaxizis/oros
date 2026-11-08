@@ -118,7 +118,7 @@ test("assistant.js: the log is device-local, every write is remembered, Undo thr
   assert.match(src, /\["keys", "creds", "chats", "log"\]/);
   // every undoMem write goes through remember()
   assert.equal((src.match(/undoMem\[uid\] = /g) || []).length, 1);
-  assert.equal((src.match(/remember\(uid, \{/g) || []).length, 9);   // + AS-FILES (disk files), + orOS Gate edit_in_app (gateTake)
+  assert.equal((src.match(/remember\(uid, \{/g) || []).length, 10);   // + AS-FILES (disk files), + orOS Gate edit_in_app (gateTake), + kanban_add_columns (GATE-PAR)
   // the log never goes into the synced slice or the conversation files
   const sync = src.slice(src.indexOf("// ---------- 7b."), src.indexOf("// ---------- 8."));
   assert.doesNotMatch(sync, /"log"|histList/);

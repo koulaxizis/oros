@@ -772,7 +772,13 @@
   // closedCall): its own change tools less budget_delete, and
   // create_items. applyQueue runs nothing else (defence in depth).
   var QUEUED = ["budget_add", "budget_change", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items"];
-  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
+  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
+                   "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+  // GATE-PAR P3: tools that open an app on the owner's screen with the
+  // work (= core.js GATE_OPEN); like do_action they need an app Claude
+  // may change, no pause, and the frame checks the target app.
+  var ACT_OPEN = ACT_TOOLS.slice(12);
   var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"];
   var DOC_WRITE = ["edit_in_app", "undo_change"];
   function writable(id) { return !!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0; }
@@ -880,7 +886,7 @@
                relayOf: relayOf, RELAY: RELAY, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
-               WRITES: WRITES, ACT: ACT, DOCS: DOCS, QUEUED: QUEUED, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
+               WRITES: WRITES, ACT: ACT, DOCS: DOCS, QUEUED: QUEUED, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_OPEN: ACT_OPEN, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
   if (!root || !root.document) return;
@@ -1428,7 +1434,7 @@
     }
     var budgetish = name === "app_summary" && (args.app === "budget" || args.app === "stock" || args.app === "kanban");
     if (ACT_TOOLS.indexOf(name) >= 0 && !budgetish) {
-      if ((ACT_WRITE.indexOf(name) >= 0 || name === "do_action") && !ok.some(function (a) { return p.lv[a.id] === "write" && actable(a.id); })) {
+      if ((ACT_WRITE.indexOf(name) >= 0 || name === "do_action" || ACT_OPEN.indexOf(name) >= 0) && !ok.some(function (a) { return p.lv[a.id] === "write" && actable(a.id); })) {
         return Promise.resolve({ ok: false, c: "The owner lets Claude change none of these apps (orOS › Settings › Connected services › orOS Gate: «Claude may also change …» per app)." });
       }
       return actFrame().then(function (F) {
