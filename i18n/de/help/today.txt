@@ -28,6 +28,24 @@ Viele Zeilen haben einen (i)-Button, `Details und Vorschläge`. Er öffnet unter
 - Neben der Wasserzeile steht `+1 Glas`, solange das heutige Ziel nicht erreicht ist; [Wasser](app:water) trägt es ein, mit `Rückgängig`.
 Heute selbst ändert nie etwas: jede App erledigt die Arbeit mit ihrem eigenen Code. Die Tipps entstehen auf diesem Gerät aus deinen eigenen Daten, ohne Netz und ohne KI. Wenn du den Assistenten zu einer Zeile fragst, gehen die Details mit der Frage mit.
 
+## Tipps des Tages
+Unter den oberen Zeilen gibt `Tipps des Tages` bis zu fünf kurze Tipps aus den Zeilen deiner Apps zusammen, zum Beispiel:
+- es wird wahrscheinlich regnen und du hast später heute einen Termin mit Ort: nimm einen Schirm mit (mit `Route`);
+- ein heißer Tag: trink mehr Wasser (`+1 Glas`), oder gieß deine Pflanzen früher, wenn Pflanzenpflege heute etwas fällig hat;
+- eine kalte Nacht: zieh dich warm an und hol frostempfindliche Pflanzen herein;
+- drei oder mehr Aufgaben sind überfällig: gib ihnen neue Daten oder streiche, was nicht mehr zählt (öffnet Aufgaben);
+- ein voller Tag mit vier oder mehr Dingen mit Uhrzeit: wann er beginnt und endet;
+- bis zum Nachmittag hast du weniger als die Hälfte deines Wasserziels getrunken;
+- ein ruhiger Tag ohne Fälliges.
+`Nicht heute` blendet einen Tipp bis morgen aus. `Diese Art nicht zeigen` schaltet diese Art Tipp auf diesem Gerät aus; `Einstellungen` › `Ausgeblendete Tipps wieder zeigen` holt alle zurück. Die Karte erscheint nur, wenn es einen Tipp gibt. Die Tipps nutzen nur, was schon auf diesem Gerät ist (die Zeilen der Übersicht und das zuletzt von Wetter geladene Wetter): ohne Netz und ohne KI.
+
+## Dein Tag, morgen und die Woche
+`Dein Tag` (über `Widget hinzufügen`) zeigt die heutigen Zeiten der Reihe nach, von Anfang bis Ende (ein Termin ohne Ende zählt als eine Stunde, eine Aufgabe als eine halbe), und die freien Zeiten ab 30 Minuten zwischen jetzt und 22:00. Ist eine freie Zeit eine Stunde oder länger und hast du Aufgaben ohne Uhrzeit, sagt es, dass sie dort Platz hätten. Es schlägt nur vor: nichts wird verschoben.
+
+Ab dem Abend zeigt Heute oben `Morgen`: was morgen ansteht und wann es beginnt, damit du dich heute Abend vorbereiten kannst. Es beginnt um 19:00; ändere die Stunde oder schalte es aus unter `Einstellungen` › `Morgen schon am Abend`.
+
+Unter `Demnächst` zählt eine Zeile, was jede App in den nächsten 7 Tagen hat, zum Beispiel `Nächste 7 Tage: Kalender 4 · Aufgaben 2`.
+
 ## Widgets
 Mach Heute zu deinem eigenen Bildschirm, wie die Widgets auf dem Startbildschirm eines Handys. Drück oben auf `Anpassen` (die vier Quadrate):
 - Zieh ein Widget an seinem Griff (den sechs Punkten), um es zu verschieben, mit der Maus oder dem Finger. Die Pfeile nach oben und unten verschieben es ebenfalls um einen Platz, praktisch auf einem Touchscreen oder mit der Tastatur.
@@ -75,6 +93,8 @@ Einmal pro Woche, ab Montag 10:00, schlägt dir orOS eine App oder ein Spiel vor
 Ist der [Assistent](app:assistant) eingerichtet, haben die Zeilen einen Sprechblasen-Button, `Den Assistenten dazu fragen`. Er öffnet den Assistenten mit einer schon getippten Frage zu dieser Zeile. Nichts wird gesendet, bevor du dort auf `Senden` drückst. Der Button folgt der Erlaubnis des Assistenten für jede App, er erscheint also nie für eine App, die der Assistent nicht lesen darf.
 
 Der Funkel-Button oben, `Tagesbriefing vom Assistenten`, bittet den Assistenten in einer Antwort um ein kurzes Briefing deines Tages. Er erscheint nur, wenn der Assistent mit einem Dienst eingerichtet ist, der deine Daten lesen darf. Apps mit der Einstellung `Erst fragen` erscheinen auf einer Karte, bevor etwas gesendet wird; die Details stehen in der Hilfe des Assistenten.
+
+Wenn der Assistent eine App liest (und Claude über orOS Gate), bekommt er dieselben Details, den Tipp und die Endzeit, die du hier siehst, und welche Aktionen Heute bei jeder Zeile anbietet. Die Aktionen drückst immer du.
 
 ## Einstellungen
 Öffne sie mit dem Zahnrad:

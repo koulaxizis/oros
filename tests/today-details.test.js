@@ -183,3 +183,28 @@ test("Today draws details with textContent and acts only through host.act", () =
   assert.match(act, /A\.cleanAct\(/);
   assert.doesNotMatch(act, /localStorage|setItem/);
 });
+
+// ---------- T4 (BR-TODAY-18): the Assistant and orOS Gate say the same ----------
+test("summary agenda: end, details, tip and the suggested kinds reach the Assistant and Gate, never a target of an act", () => {
+  const S = req("assistant/summary.js");
+  const today = "2026-11-08";
+  const rows = [
+    { app: "calendar", kind: "event", due: today, time: "18:00", end: "19:00", title: "Dentist", text: "Center",
+      more: ["Note: bring the card", "", 5], tip: "Leave by 17:30.",
+      acts: [{ k: "route", app: "maps", target: { routeTo: { query: "Center" } }, via: "at" }, { k: "BAD!" }] },
+    { app: "calendar", kind: "event", due: today, time: "20:00", end: "19:00", title: "Call" },
+    { app: "todo", kind: "task", due: today, title: "Pay rent" }
+  ];
+  const g = S.agenda("calendar", rows, today, 1);
+  const by = (t) => g.items.find((x) => x.title === t);
+  const a = by("Dentist"), b = by("Call"), c = by("Pay rent");
+  assert.equal(a.end, "19:00");
+  assert.deepEqual(a.details, ["Note: bring the card"]);
+  assert.equal(a.tip, "Leave by 17:30.");
+  assert.deepEqual(a.suggest, ["route"]);
+  assert.ok(!("end" in b), "an end before the start is left out");
+  assert.deepEqual(Object.keys(c).sort(), ["date", "title"], "a plain row stays the same shape");
+  assert.doesNotMatch(JSON.stringify(g), /routeTo/);
+  assert.match(read("gate/gate.js"), /assistant\/summary\.js/, "Gate reads through the same file");
+  assert.match(read("assistant/core.js"), /an item may carry end, details, a tip and suggest/);
+});

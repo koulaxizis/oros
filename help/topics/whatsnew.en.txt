@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.98.00
+- **Today: tips of the day, your day in order, and tomorrow in the evening.** A new `Tips of the day` card gives up to five short tips from your apps together: an umbrella when rain meets an appointment with a place, water and shade on a hot day, a cold night, a pile of late tasks, a busy day, water in the afternoon. `Not today` hides one, `Don't show this kind` mutes it on this device. `Your day` (Add a widget) lists today's times in order with the free stretches between them, and says where tasks without a time could go. From 19:00 Today shows `Tomorrow` on top (change the hour or turn it off in Settings), and a line under Coming up counts the next 7 days. The Assistant and Claude through orOS Gate now see the same details, tips and end times. Everything is made on your device, with no network and no AI.
+
 ## Version 5.97.00
 - **Roots: the Daily glade, Last years, four glades, puzzles and Endless.** A new calendar button in Roots opens today's glade: one season on Hardy from a bare tree, the same for everyone, with one try. Meet the bloom quota to keep your streak, share a spoiler-free result, and find it in the Game Center's Today. `Records` now also lists your last 10 years with `Replay`. And a year now walks four glades, the meadow, the riverbank, the rocky hill and the old forest, each with its own soil and pests, the new puzzle button holds 20 one-turn root puzzles, and Endless lets the tree live on, year after year, until a quota is missed.
 
