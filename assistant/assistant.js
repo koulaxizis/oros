@@ -8522,7 +8522,8 @@
     var tools = C.toolsFor({ data: ga.read.length > 0, summary: summaryIds(ga.read).length > 0,
                              changes: chg.length > 0, creates: crIds,
                              links: crIds.indexOf("crm") >= 0 && crIds.indexOf("contacts") >= 0,
-                             partnerLinks: partnerLinksOn(crIds, ga.write), history: ga.write.length > 0 });
+                             partnerLinks: partnerLinksOn(crIds, ga.write), history: ga.write.length > 0,
+                             edits: editCats(ga.read) });   // W5: read_in_app (documents, read only)
     return C.gateTools(tools);
   }
   var GATE_WRITE = { change_item: 1, create_items: 1, link_contact: 1, link_items: 1, undo_change: 1 };
@@ -8557,7 +8558,8 @@
   function gateBoot() {
     load();
     loadPrefs();
-    histLoad().then(function () {
+    var have = installed(), lazy = Object.keys(EDIT_LAZY).filter(function (id) { return have[id]; });
+    Promise.all([histLoad(), editLoadMods(lazy)]).then(function () {
       window.__asGate = { v: 1, run: gateRun, tools: gateToolList,
                           undo: function (id) { return histLoad().then(function () { return undoById(String(id)); }); } };
       try { var g = gateShell(); if (g && typeof g.frameReady === "function") g.frameReady(); } catch (e) {}

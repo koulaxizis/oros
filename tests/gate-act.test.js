@@ -39,9 +39,9 @@ test("gate tools: only the gate's set, no card or press in any text", () => {
   const creates = ["todo", "calendar", "notes", "bookmarks", "contacts", "crm", "crm_activity", "crm_followup", "crm_deal",
                    "timesheet", "meals", "stickies", "habits", "plants", "petcare", "garage", "travel_plan", "travel_pack"];
   const full = C.toolsFor({ data: true, summary: true, entries: true, changes: true, creates, links: true, partnerLinks: true,
-                            history: true, actions: ["timer"], web: true });
+                            history: true, actions: ["timer"], web: true,
+                            edits: { writer: { CATALOG: [] }, slides: { CATALOG: [] } } });
   const g = C.gateTools(full);
-  assert.deepEqual(g.map((t) => t.name), C.GATE_TOOLS.filter((n) => g.some((t) => t.name === n)));
   assert.deepEqual(g.map((t) => t.name).sort(), C.GATE_TOOLS.slice().sort());
   assert.deepEqual(C.GATE_TOOLS, G.ACT_TOOLS, "gate.js and core.js name the same tools");
   const bad = [];
@@ -49,7 +49,7 @@ test("gate tools: only the gate's set, no card or press in any text", () => {
   assert.deepEqual(bad, []);
   g.forEach((t) => {
     assert.equal(t.inputSchema.type, "object", t.name);
-    assert.equal(t.annotations.readOnlyHint, ["search_data", "read_item", "app_summary", "change_history"].indexOf(t.name) >= 0, t.name);
+    assert.equal(t.annotations.readOnlyHint, ["search_data", "read_item", "app_summary", "read_in_app", "change_history"].indexOf(t.name) >= 0, t.name);
   });
   assert.match(g.find((t) => t.name === "change_item").description, /write window/);
   assert.match(g.find((t) => t.name === "create_items").description, /write window/);

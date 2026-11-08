@@ -711,7 +711,7 @@
   var ACT = ["bookmarks", "calendar", "chores", "contacts", "crm", "feeds", "flashcards", "garage", "habits", "invoices",
              "library", "meals", "music", "notes", "petcare", "plants", "podcasts", "shelf", "split", "stickies", "stock",
              "timesheet", "todo", "travel", "wiki"];
-  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
+  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
   var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change"];
   function writable(id) { return !!WRITES[id] || ACT.indexOf(id) >= 0; }
   function canWrite(lv, win, id, now) {

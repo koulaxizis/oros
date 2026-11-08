@@ -3057,7 +3057,7 @@
   // is open, more than 5 deletions are asked on the device. Only these
   // tools are offered, and every sentence about cards, presses or the
   // user's consent is replaced (tests/gate-act.test.js keeps it so).
-  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
+  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
   var GATE_SAY = [
     [" The user sees every result first and may share only some of them, or none.", ""],
     [" The user may be asked first.", ""],
@@ -3094,7 +3094,7 @@
       }
       x.description = say(x.description);
       walk(x.params);
-      var ro = /^(search_data|read_item|app_summary|change_history)$/.test(x.name);
+      var ro = /^(search_data|read_item|app_summary|read_in_app|change_history)$/.test(x.name);
       return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
                annotations: { readOnlyHint: ro, destructiveHint: x.name === "change_item" || x.name === "undo_change" } };
     });
