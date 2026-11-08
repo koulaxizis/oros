@@ -261,6 +261,8 @@ export const PLATFORMS = {
       ["GET", /^\/rs\/report$/, { date_start: DAY, date_end: DAY }, null],
       // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
       ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
+      // Publishing «Cost & result» (P15): Production Ledger 1.1+'s report per product, read only
+      ["GET", /^\/pl\/report$/, { from: DAY, to: DAY }, null],
       // Newsletter N1: coupons, looked up by code and created (never changed or deleted)
       ["GET", /^\/coupons$/, { code: CPN_CODE }, null],
       ["POST", /^\/coupons\/batch$/, null, { create: "cpns" }]

@@ -778,7 +778,7 @@ counter. No orOS data, no request or answer, nothing logged.
   `invoice_list`, `stock_items`, `publish_titles`; change tools:
   `budget_add`, `budget_change`, `budget_delete` (destructive),
   `kanban_add_cards`, `kanban_move_cards`, `kanban_change_card`,
-  `kanban_add_columns` (5.69.00). The
+  `kanban_add_columns` (5.72.00). The
   relay only describes them; the device checks every call again (the
   app's level, the write window, the lock) and asks the person itself
   before more than 5 deletions.
@@ -804,7 +804,7 @@ counter. No orOS data, no request or answer, nothing logged.
   /gate/ws/<id>` with the subprotocols `gt1` and `t.<token>`. One socket
   per gate: a newer one closes the older (4001); `del` wipes the box and
   closes it (4004).
-- **Several devices (5.70.00):** up to 5 per gate. `invite` (an existing
+- **Several devices (5.73.00):** up to 5 per gate. `invite` (an existing
   device) makes a join code, `XXXX-XXXX`, 10 minutes, one use, held by a
   join box `join:<code>`. `join { jc, th }` (no id) adds the new device's
   token hash and answers the gate id and the app levels. One socket per

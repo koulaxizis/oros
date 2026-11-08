@@ -504,6 +504,10 @@
       "bytes": 320511,
       "ms": 64
     },
+    "wayfarers": {
+      "bytes": 404486,
+      "ms": 76
+    },
     "weather": {
       "bytes": 375807,
       "ms": 64

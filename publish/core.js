@@ -23,11 +23,13 @@
 //                manuscripts sent to the publisher (wave P7): st new |
 //                read | short | yes | no; ans = day last answered; ti =
 //                the title made from it
-//     set:    { m, cur, imp, tpl?, subDays? }, imp = the publisher's
+//     set:    { m, cur, imp, tpl?, subDays?, mast?, own? }, imp = the publisher's
 //                name (covers, press texts); tpl (wave P7) = the
 //                person's own texts { ack, no, yes, con } ("" = the
 //                built-in one), subDays = days before an unanswered
-//                submission is flagged (90); unknown fields ride along
+//                submission is flagged (90); own (wave P15) = other
+//                names the publisher goes by, comma separated; unknown
+//                fields ride along
 //     tombs:  { id: ms } }
 //   Later waves add lists of { id, m, … } rows; until a device knows a
 //   list it keeps and merges it as it came (LWW by m per id), so an
@@ -506,6 +508,10 @@
     // wave P12: the person's Mastodon server, for "post" links
     var ma = line(s.mast, 100).toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
     if (MAST_RE.test(ma)) out.mast = ma;
+    // wave P15: other names the publisher goes by (Revenue Splitter's
+    // splits), comma separated; set.imp counts already
+    var own = line(s.own, 300);
+    if (own) out.own = own;
     // Settings of a later version ride along unchanged (bounded).
     var extra = {}, any = false;
     Object.keys(s).forEach(function (k) {
@@ -516,7 +522,7 @@
     if (any && JSON.stringify(extra).length <= MAX_EXTRA) Object.keys(extra).forEach(function (k) { out[k] = extra[k]; });
     return out;
   }
-  var SET_KEYS = ["m", "cur", "imp", "tpl", "subDays", "mast"];
+  var SET_KEYS = ["m", "cur", "imp", "tpl", "subDays", "mast", "own"];
   var TPL_KEYS = ["ack", "no", "yes", "con"];
 
   function newer(a, b) {

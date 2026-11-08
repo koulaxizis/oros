@@ -27,9 +27,9 @@
 
   // The games with a Daily challenge (Wave 49; Realm's Daily island
   // since 5.50, Crypt's Daily crypt since 5.55, Banner's Daily battle
-  // since 5.64), in the order the Today
+  // since 5.64, Wayfarers' Daily trial since 5.71), in the order the Today
   // section shows them.
-  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm", "banner", "crypt"];
+  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm", "banner", "crypt", "wayfarers"];
   // The "Clean sweep" achievement stays the six daily puzzles, so a
   // sweep reached before Realm had a Daily is never taken back.
   var SWEEP = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper"];
@@ -38,7 +38,7 @@
     "wordsearch", "solitaire", "mahjong", "jigsaw", "spot", "hexagon", "slider", "lightsout",
     "memory", "hangman", "mastermind", "g2048", "tetris", "snake", "breakout", "bubble",
     "simon", "whack", "pong", "chess", "checkers", "reversi", "gomoku", "connect4", "dots",
-    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt"];
+    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt", "wayfarers"];
   // The "All games" section (Chris 2026-10-22): every game once, by
   // kind, in the order each group shows them.
   var GROUPS = [
@@ -50,7 +50,7 @@
       "dots", "tictactoe", "mancala", "battleship", "rps"] },
     { id: "arcade", games: ["tetris", "snake", "breakout", "bubble", "pong", "simon", "whack"] },
     { id: "strategy", games: ["realm", "banner"] },
-    { id: "rpg", games: ["crypt"] }
+    { id: "rpg", games: ["crypt", "wayfarers"] }
   ];
   var WORDLE_LOST = 7;
   var SOL_VARIANTS = { k: ["k1c", "k1n", "k3c", "k3n"], f: ["f"], s: ["s1", "s2", "s4"], p: ["p"] };
@@ -147,7 +147,7 @@
   // Daily results of Sudoku / Nonogram / Flow Free (hints h),
   // Minesweeper and Realm (won w): fills S.dn, the streaks and today.
   function dailyPart(d, S, X, today, game) {
-    var won = game === "minesweeper" || game === "realm" || game === "banner" || game === "crypt";
+    var won = game === "minesweeper" || game === "realm" || game === "banner" || game === "crypt" || game === "wayfarers";
     var on = {}, tried = {};
     S.dn = 0;
     eachDay(d, function (day, v) {
@@ -360,6 +360,20 @@
         if (k === "r" && nat(v[1])) X.hard = true;
       });
       dailyPart(d, S, X, today, "crypt");
+    },
+    // Wayfarers: "<diff>" (g Gentle, h Hardy, e Endless since 5.74) →
+    // [journeys, won, regions cleared]; a Hardy win counts as a win on
+    // the hardest level;
+    // days{day: {w, c, t}} the Daily trial (solved = its guardian beaten;
+    // not in journeys and wins)
+    wayfarers: function (d, S, X, today) {
+      S.w = 0;
+      eachCell(d, function (k, v) {
+        if (!Array.isArray(v) || v.length < 3) return;
+        S.p += nat(v[0]); S.w += nat(v[1]);
+        if (k === "h" && nat(v[1])) X.hard = true;
+      });
+      dailyPart(d, S, X, today, "wayfarers");
     },
     xeri: function (d, S, X) {
       S.w = 0;

@@ -55,3 +55,16 @@ test("host: an early-loaded next song that fails is never moved on to", () => {
   assert.doesNotMatch(src, /catch\(function \(err\) \{ flags\.error = /);
   assert.match(src, /Promise\.resolve\(p\)\.catch\(function \(err\) \{ playFailed\(err\); \}\)/);
 });
+
+test("host: the notice of a skipped song names it, and is not sent when the queue stops", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "music/host.js"), "utf8");
+  assert.match(src, /var on = skipBroken\(\);\n    host\.notify\("error", on \? \{ skip: String\(item\.t \|\| ""\) \} : null\);/);
+  assert.match(src, /note\(T\("host\.broken"\)\); return false; \}/);
+  const app = fs.readFileSync(path.join(__dirname, "..", "music/music.js"), "utf8");
+  assert.match(app, /function onHost\(ev, arg\)/);
+  assert.match(app, /arg && arg\.skip \? t\("toast\.skipped", \{ t: arg\.skip \}\) : t\("toast\.cant"\)/);
+  // EN, EL and the German pack carry the song's title.
+  assert.equal((app.match(/"toast\.skipped": "[^"]*\{t\}[^"]*"/g) || []).length, 2);
+  const de = fs.readFileSync(path.join(__dirname, "..", "i18n/de/music.js"), "utf8");
+  assert.match(de, /"toast\.skipped": "[^"]*\{t\}[^"]*"/);
+});
