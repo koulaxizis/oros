@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.99.03
+- **Like a song from the music panel.** The small panel that opens from the music note on the top bar now has a heart next to the song: tap it to save the song to your Liked songs in Music, tap again to remove it. The music keeps playing.
+
 ## Version 5.99.02
 - **Clear all closes the notifications panel.** Pressing `Clear all` marks every notification read, as before, and now also closes the panel instead of leaving it empty on screen.
 
