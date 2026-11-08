@@ -1049,8 +1049,21 @@
       line(s, r.ms > 0 ? t("ov.workLine", { h: t("ov.h", { n: (Math.round(r.ms / 360000) / 10).toLocaleString(LOCALE) }), v: curMoney(r.amount, r.cur) }) : t("ov.workNone"));
     });
     if (x.pub.titles.length || Object.keys(x.pub.due).length || Object.keys(x.pub.adv).length) {
-      var sp = sec(t("ov.pub"), "publish", { view: "roy" });
-      if (x.pub.titles.length) line(sp, t("ov.titles", { n: x.pub.titles.length }), x.pub.titles.slice(0, 8).map(function (r) { return r.t; }).join(" · "));
+      // Open goes to the one title, to Royalties when something is due,
+      // else to the title list; each title opens itself (CRM-PUB-OPEN)
+      var hasRoy = Object.keys(x.pub.due).length || Object.keys(x.pub.adv).length;
+      var sp = sec(t("ov.pub"), "publish", x.pub.titles.length === 1 && !hasRoy ? { title: x.pub.titles[0].id } : (hasRoy ? { view: "roy" } : {}));
+      if (x.pub.titles.length) {
+        line(sp, t("ov.titles", { n: x.pub.titles.length }));
+        var tl = el("div", "chips");
+        x.pub.titles.slice(0, 8).forEach(function (r) {
+          var b = el("button", "txt-btn", r.t);
+          b.type = "button";
+          b.addEventListener("click", function () { openIn("publish", { title: r.id }); });
+          tl.appendChild(b);
+        });
+        sp.appendChild(tl);
+      }
       if (Object.keys(x.pub.due).length) line(sp, t("ov.royDue", { v: curList(x.pub.due, function (cur, v) { return curMoney(v, cur); }) }));
       if (Object.keys(x.pub.adv).length) line(sp, t("ov.adv", { v: curList(x.pub.adv, function (cur, v) { return curMoney(v, cur); }) }));
     }

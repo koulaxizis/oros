@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.92.01
+- **CRM opens the titles.** On a partner's card in CRM, under `Publishing`, each title is now a button that opens that title in Publishing. `Open` goes straight to the title when there is only one, to Royalties when something is due, and otherwise to the list of titles.
+
 ## Version 5.92.00
 - **Tidier Claude switches.** In `Settings › Connected services › orOS Gate`, every app now has its own box with its switch, and the apps Claude can change have `May change` right under it, so the columns stay straight. A search field finds an app or service, and `Turn all on`, `Turn all off`, `Allow all changes` and `Revoke all changes` act on the apps shown (the two that give Claude more ask for a second press). Personal apps stay in their own group: the buttons never turn one on, each still needs its own warning.
 
