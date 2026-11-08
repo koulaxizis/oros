@@ -18,7 +18,7 @@
 //     at node index, path: [node indexes walked], seen: [event ids],
 //     pend: [{ k: "up", h, o: [2 upgrade ids] } | { k: "loot", o: [gear ids] } |
 //            { k: "camp" } | { k: "mk", s: [{ g gear or item id, p price, n sold }] } |
-//            { k: "ev", id }],
+//            { k: "ev", id } | { k: "tale", n region just reached (2…) }],
 //     fight: null | { kind f|h|g|e, re: event gold, foes: [foe], hs: [{ fo, st }] × 3,
 //                     q: [unit refs left this round], cur: unit ref, round, nid, rz: 1 Raise used },
 //     rng (uint32), acts, stops, kills, over: -1 playing | 0 fallen | 1 won }
@@ -335,6 +335,7 @@
         if (k !== ub.h && standing(st, k) && fi.hs[k].st.cv === ub.h + 1) { b = ref("h", k); ub = { h: k }; ev.push({ e: "cover", d: b }); break; }
       }
     }
+    opt.to = ub.h !== undefined ? ub.h : -1;   // the hero it landed on (after Cover)
     var sb = stOf(st, b);
     var pw = ua.f ? foeStats(ua.f).pw : heroStats(st, ua.h).pw + (sa.pb > 0 ? sa.pv : 0);
     var gd = ub.f ? foeStats(ub.f).gd : heroStats(st, ub.h).gd;
@@ -454,16 +455,17 @@
       var taunt = fi.hs.some(function (x, k) { return x.st.ta && standing(st, k); });
       if (taunt || tg < 0 || !standing(st, tg) || fi.hs[tg].st.hi) tg = pickTarget(st, M.tg);
       if (tg < 0) { ev.push({ e: "wait", s: r }); return; }
-      damage(st, r, ref("h", tg), M.f, {}, ev);
-      if (M.burn && standing(st, tg)) {
-        var hs = fi.hs[tg].st;
-        hs.bu = M.burn; hs.bd = Math.max(1, Math.ceil(foeStats(f).pw / 2));
-        ev.push({ e: "status", d: ref("h", tg), s: "bu" });
-      }
+      var o1 = { pierce: M.pierce };
+      damage(st, r, ref("h", tg), M.f, o1, ev);
+      foeStatus(st, f, M, o1.to, ev);
     } else if (M.k === "all") {
       ev.push({ e: "sweep", s: r });
       for (var i = 0; i < 3; i++) {
-        if (standing(st, i) && !fi.hs[i].st.hi) damage(st, r, ref("h", i), M.f, { all: 1 }, ev);
+        if (standing(st, i) && !fi.hs[i].st.hi) {
+          var o2 = { all: 1, pierce: M.pierce };
+          damage(st, r, ref("h", i), M.f, o2, ev);
+          foeStatus(st, f, M, o2.to, ev);
+        }
         if (!heroesLeft(st)) return;
       }
     } else if (M.k === "heal") {
@@ -485,14 +487,23 @@
     }
   }
 
+  // Burn and Chill from a foe's move on the hero it hit (hit = hero index or -1).
+  function foeStatus(st, f, M, hit, ev) {
+    if (hit < 0 || !standing(st, hit)) return;
+    var hs = st.fight.hs[hit].st, d = ref("h", hit);
+    if (M.burn) { hs.bu = M.burn; hs.bd = Math.max(1, Math.ceil(foeStats(f).pw / 2)); ev.push({ e: "status", d: d, s: "bu" }); }
+    if (M.chill) { hs.ch = Math.max(hs.ch || 0, M.chill); ev.push({ e: "status", d: d, s: "ch" }); }
+  }
   function winFight(st, ev) {
     var fi = st.fight, kind = fi.kind, col = st.map[st.at].c;
     var tier = kind === "g" ? "g" : kind === "h" ? "h" : (kind === "f" && col <= 2) ? "t1" : "t2";
-    var gold = withRng(st, function (o) {
+    var rk = 1 + 0.5 * (st.region - 1);   // later regions pay more
+    var gold = Math.round(withRng(st, function (o) {
       return tier === "g" ? 40 : tier === "h" ? 20 + rint(o, 9) : tier === "t1" ? 8 + rint(o, 5) : 12 + rint(o, 5);
-    }) + fi.re;
+    }) * rk) + fi.re;
+    var xp = Math.round(XP[tier] * rk);
     st.gold += gold;
-    ev.push({ e: "win", gold: gold, xp: XP[tier] });
+    ev.push({ e: "win", gold: gold, xp: xp });
     if (st.diff === "g") {
       for (var i = 0; i < 3; i++) {
         if (!standing(st, i)) { st.party[i].hp = Math.max(1, Math.round(heroStats(st, i).mh / 4)); ev.push({ e: "stand", d: ref("h", i) }); }
@@ -500,14 +511,15 @@
     }
     st.fight = null;
     if (kind === "g" && st.region >= REGIONS.length) {
-      gainXp(st, XP.g, ev);
+      gainXp(st, xp, ev);
       st.pend = [];
       st.over = 1;
       ev.push({ e: "won" });
       return;
     }
     if (kind === "h" || kind === "g") {
-      var tierG = kind === "g" ? 3 : 2;
+      // spoils: hard fights tier 2 (3 and 4 in later regions), guardians tier 3 (then 4)
+      var tierG = Math.min(4, (kind === "g" ? 3 : 2) + st.region - 1);
       var o2 = withRng(st, function (o) {
         var pool = shuffle(o, GEAR_IDS.filter(function (g) { return GEAR[g].t === tierG || GEAR[g].t === tierG - 1; }));
         var a = pool[0], b = pool.filter(function (g) { return GEAR[g].s !== GEAR[a].s; })[0] || pool[1];
@@ -515,7 +527,21 @@
       });
       st.pend.push({ k: "loot", o: o2 });
     }
-    gainXp(st, XP[tier], ev);
+    gainXp(st, xp, ev);
+    if (kind === "g") nextRegion(st, ev);
+  }
+  // A guardian fell and the road goes on: a new map, and a rest on the way.
+  function nextRegion(st, ev) {
+    st.region++;
+    st.map = makeMap(st.seed, st.region);
+    st.at = 0;
+    st.path = [0];
+    for (var i = 0; i < 3; i++) {
+      var mh = heroStats(st, i).mh;
+      st.party[i].hp = standing(st, i) ? Math.min(mh, st.party[i].hp + Math.round(mh / 2)) : Math.max(1, Math.round(mh / 4));
+    }
+    ev.push({ e: "region", n: st.region });
+    st.pend.push({ k: "tale", n: st.region });
   }
   function gainXp(st, n, ev) {
     st.xp += n;
@@ -562,8 +588,9 @@
       st.pend.push({ k: "mk", s: stock(st, node.c) });
     } else if (node.k === "e") {
       var id = withRng(st, function (o) {
-        var left = EVENT_IDS.filter(function (x) { return st.seen.indexOf(x) < 0; });
-        return pick(o, left.length ? left : EVENT_IDS);
+        var here = EVENTS.filter(function (x) { return !x.r || x.r === st.region; }).map(function (x) { return x.id; });
+        var left = here.filter(function (x) { return st.seen.indexOf(x) < 0; });
+        return pick(o, left.length ? left : here);
       });
       if (st.seen.indexOf(id) < 0) st.seen.push(id);
       st.pend.push({ k: "ev", id: id });
@@ -571,7 +598,7 @@
   }
   function stock(st, col) {
     return withRng(st, function (o) {
-      var maxT = col >= 4 ? 3 : 2;
+      var maxT = col >= 4 || st.region > 1 ? 3 : 2;   // tier 4 is never sold
       var g = shuffle(o, GEAR_IDS.filter(function (x) { return GEAR[x].t <= maxT; })).slice(0, 3);
       var s = g.map(function (x) { return { g: x, p: GEAR[x].price, n: 0 }; });
       ["p", "t", "f"].forEach(function (x) { s.push({ g: x, p: ITEMS[x].price, n: 0 }); });
@@ -605,7 +632,7 @@
   //    fight { t: "atk", x foe id } | { t: "sk", s skill, x foe id or hero index }
   //          | { t: "guard" } | { t: "item", i: p|t|f, x hero index }
   //    stops { t: "up", o: 0|1 } | { t: "loot", o: 0|1|-1 } | { t: "rest" } | { t: "train", h }
-  //          | { t: "buy", i } | { t: "leave" } | { t: "ev", o }
+  //          | { t: "buy", i } | { t: "leave" } | { t: "ev", o } | { t: "on" } (a tale read)
   //    any time out of a fight: { t: "equip", h, b bag index } | { t: "unequip", h, s: w|c }
   //          | { t: "use", i: p|f, h }
   // Returns the events, or null when the action is not allowed (nothing changes).
@@ -670,6 +697,7 @@
       return true;
     }
     if (p.k === "mk" && a.t === "leave") { st.pend.shift(); return true; }
+    if (p.k === "tale" && a.t === "on") { st.pend.shift(); return true; }
     if (p.k === "ev" && a.t === "ev") {
       var E = eventOf(p.id), o = E && E.o[a.o];
       if (!o || !choiceOk(st, o)) return false;
@@ -895,6 +923,7 @@
       if (p.k === "camp") return true;
       if (p.k === "mk") return Array.isArray(p.s) && p.s.every(function (s) { return s && (GEAR[s.g] || ITEMS[s.g]) && isInt(s.p) && s.p > 0 && isInt(s.n) && s.n >= 0; });
       if (p.k === "ev") return !!eventOf(p.id);
+      if (p.k === "tale") return isInt(p.n) && p.n >= 2 && p.n <= REGIONS.length && p.n === st.region;
       return false;
     })) return false;
     var fi = st.fight;
