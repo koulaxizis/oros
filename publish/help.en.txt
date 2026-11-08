@@ -56,6 +56,23 @@ The `Royalties` tab lists everyone with terms. `New statement…` takes a period
 
 The advance is recouped first: what earlier statements earned on the same terms is taken off it, and only the rest is payable. An issued statement is a record that doesn't change when terms or sales do. From it: `Print or PDF`, `E-mail` (Mail opens with the text), `Add to Budget` (an expense you confirm there), `Mark paid`, or `Void` (it stays in the list, crossed out, and no longer counts towards the advance).
 
+## Cost & result
+What each book cost and what it brought in, read from your WooCommerce shop: Production Ledger (a Noxpress plugin) keeps the sales and the costs, Revenue Splitter who gets a share. Connect the shop once in [Settings](app:settings) › Connected services (a read key is enough); nothing is written to the shop and nothing of these figures is kept in orOS: each reading shows the shop as it is now. All amounts are without VAT.
+
+A title counts once one of its formats is in the shop: sent from `Send to other apps` › `Draft in my shop`, or a shop product with the same ISBN as its SKU (hyphens or not).
+
+On a title, the `Cost & result` section shows:
+- income: shop sales and bookshop (trade) sales with their copies, sales outside the shop (a fair, a presentation) and the shipping customers paid;
+- costs: each category (printing, editing, design…) with its invoices (date, supplier, invoice number, note), then the book's share of each month's courier invoices, consumables and payment fees (by the orders it was in), and the creators' shares;
+- the result, the result since the ledger began and, while it is negative, how many more copies cover it;
+- VAT on sales and on costs and the difference owed to the tax office: VAT is neither income nor cost, so the result is without it.
+
+Creators' shares are what Revenue Splitter pays; shares to the publisher are yours, not a cost (the publisher name in Settings, and `Other names you go by` for other spellings). When Revenue Splitter pays no one for a book and the ledger has no «Creators» cost for it, the royalties are worked out from the title's own terms (`Royalties` section) and the copies sold, the advance counting in full until it is earned.
+
+The `Cost & result` tab lists every title with its copies, income, costs and result, worst first, then the shop's other products and the general expenses no book carries: the last line is the shop's whole result, the same as the ledger's report. Choose the period (since the ledger began, this year, last year); `Read again` reads the shop anew.
+
+The full picture needs Production Ledger 1.1 or later on the shop; with 1.0 only the book's own costs and sales show.
+
 ## Submissions
 Manuscripts people send you. `+ Submission` adds one by hand; in [Mail](app:mail), open the message and choose `Other apps` › `Manuscript submission in Publishing` to file it with the sender, the subject and the text filled in.
 
