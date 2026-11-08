@@ -37,6 +37,11 @@ const PLAY = {
     for (const k of "ETAOINSR") { await tap(p, '#kb .key[data-k="' + k + '"]'); if (await inProg()) return; }
   },
   simon: async (p) => { await tap(p, "#hub"); await p.waitForTimeout(800); },
+  // Space rolls; a tied opening roll (1 in 6) asks for another, so roll
+  // until someone starts (the generic taps could pick a new game instead)
+  backgammon: async (p, inProg) => {
+    for (let i = 0; i < 12 && !(await inProg()); i++) { await p.keyboard.press("Space"); await p.waitForTimeout(1200); }
+  },
   // a card from the stock is a move
   solitaire: async (p) => { await tap(p, '[aria-label^="Stock"]'); await p.waitForTimeout(500); },
   // e2-e4 (0x88 squares), or after the computer's move as black e7-e5
