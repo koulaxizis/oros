@@ -61,8 +61,12 @@ export const SHR_SQL = {
   shl: "CREATE TABLE IF NOT EXISTS shl_link (id TEXT PRIMARY KEY, k TEXT NOT NULL, d TEXT NOT NULL, size INTEGER NOT NULL, at INTEGER NOT NULL, last INTEGER NOT NULL)",
   shlLast: "CREATE INDEX IF NOT EXISTS shl_link_last ON shl_link (last)",
   shlDay: "CREATE TABLE IF NOT EXISTS shl_day (day INTEGER PRIMARY KEY, n INTEGER NOT NULL)",
+  // one row (id 1): how many short links and their bytes, kept in step by
+  // every insert and purge, so no statement ever reads the whole table
+  shlTot: "CREATE TABLE IF NOT EXISTS shl_tot (id INTEGER PRIMARY KEY CHECK (id = 1), c INTEGER NOT NULL, s INTEGER NOT NULL)",
+  shlTot1: "INSERT OR IGNORE INTO shl_tot (id, c, s) VALUES (1, 0, 0)",
   getObj: "SELECT exp, size, n, delh, tokh, at, fin FROM shr_obj WHERE id = ?1",
-  used: "SELECT (SELECT COALESCE(SUM(size), 0) FROM shr_obj) + (SELECT COALESCE(SUM(size), 0) FROM shl_link) AS s",
+  used: "SELECT (SELECT COALESCE(SUM(size), 0) FROM shr_obj) + COALESCE((SELECT s FROM shl_tot WHERE id = 1), 0) AS s",
   addObj: "INSERT OR IGNORE INTO shr_obj (id, exp, size, n, delh, tokh, at, fin) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 0)",
   got: "SELECT COUNT(*) AS c, COALESCE(SUM(len), 0) AS s FROM shr_chunk WHERE id = ?1",
   addChunk: "INSERT OR IGNORE INTO shr_chunk (id, i, len, data) VALUES (?1, ?2, ?3, ?4)",
@@ -83,7 +87,8 @@ function db(env) {
   if (schemaFor !== d || !schemaP) {
     schemaFor = d;
     schemaP = d.batch([d.prepare(SHR_SQL.obj), d.prepare(SHR_SQL.chunk), d.prepare(SHR_SQL.indexExp), d.prepare(SHR_SQL.indexOpen),
-                       d.prepare(SHR_SQL.shl), d.prepare(SHR_SQL.shlLast), d.prepare(SHR_SQL.shlDay)])
+                       d.prepare(SHR_SQL.shl), d.prepare(SHR_SQL.shlLast), d.prepare(SHR_SQL.shlDay),
+                       d.prepare(SHR_SQL.shlTot), d.prepare(SHR_SQL.shlTot1)])
       .catch((e) => { schemaP = null; throw e; });
   }
   return schemaP.then(() => d);

@@ -28,8 +28,9 @@ const T0 = Date.UTC(2026, 10, 8, 12, 0, 0);
 function d1() {
   const db = new DatabaseSync(":memory:");
   let fail = false;
+  const log = [];
   function stmt(sql, args) {
-    const go = (fn) => { if (fail) throw new Error("D1_ERROR: secret detail"); return fn(db.prepare(sql)); };
+    const go = (fn) => { if (fail) throw new Error("D1_ERROR: secret detail"); log.push(sql); return fn(db.prepare(sql)); };
     return {
       bind: (...a) => stmt(sql, a),
       first: async () => go((p) => { const r = p.get(...(args || [])); return r ? Object.assign({}, r) : null; }),
@@ -38,7 +39,7 @@ function d1() {
       _run: () => go((p) => { const r = p.run(...(args || [])); return { meta: { changes: Number(r.changes) } }; })
     };
   }
-  return { db, prepare: (sql) => stmt(sql), batch: async (ss) => ss.map((s) => s._run()), breakIt: (v) => { fail = v; } };
+  return { db, log, prepare: (sql) => stmt(sql), batch: async (ss) => ss.map((s) => s._run()), breakIt: (v) => { fail = v; } };
 }
 
 const code = (env) => "1." + zlib.deflateRawSync(Buffer.from(JSON.stringify(env))).toString("base64url");
@@ -199,12 +200,12 @@ test("global daily insert cap kept in the database", async () => {
 test("caps: rows, bytes and the share store total answer 507 full, nothing evicted", async () => {
   const env = fresh();
   await mk(env, song({ t: "kept" }));
-  const ins = env.SHR_DB.db.prepare("INSERT INTO shl_link (id, k, d, size, at, last) VALUES (?1, 'track', '{}', ?2, ?3, ?3)");
-  ins.run("s.FILLER0000", S.SHL_LIMITS.bytes, T0);
+  const tot = env.SHR_DB.db.prepare("SELECT s FROM shl_tot").get().s;
+  env.SHR_DB.db.prepare("UPDATE shl_tot SET s = ?1").run(S.SHL_LIMITS.bytes);
   let r = await mk(env, song({ t: "new" }));
   assert.equal(r.status, 507);
   assert.equal(r.body.error.code, "full");
-  env.SHR_DB.db.prepare("DELETE FROM shl_link WHERE id = 's.FILLER0000'").run();
+  env.SHR_DB.db.prepare("UPDATE shl_tot SET s = ?1").run(tot);
   // the share store's total counts links with an expiry too
   env.SHR_DB.db.prepare("INSERT INTO shr_obj (id, exp, size, n, delh, tokh, at, fin) VALUES ('x', ?1, ?2, 1, 'a', 'b', ?3, 1)").run(T0 + DAY, SR.SHR_LIMITS.store, T0);
   r = await mk(env, song({ t: "new" }));
@@ -300,4 +301,23 @@ test("send window: the short link is a choice under the preview, EN/EL/DE, long 
   });
   assert.match(s, /stops working if nobody opens it for a year/);
   assert.match(s, /cannot be taken back/);
+});
+
+test("totals live in one row: no statement counts or sums the whole short-link table", async () => {
+  const env = fresh();
+  const D = env.SHR_DB;
+  const ids = [];
+  for (let n = 0; n < 5; n++) ids.push((await mk(env, song({ t: "t" + n }))).body.data.id);
+  await mk(env, song({ t: "t0" }));                       // dedupe: no second count
+  const real = () => D.db.prepare("SELECT COUNT(*) AS c, COALESCE(SUM(size), 0) AS s FROM shl_link").get();
+  const tot = () => D.db.prepare("SELECT c, s FROM shl_tot WHERE id = 1").get();
+  assert.deepEqual({ ...tot() }, { ...real() });
+  // a share upload's room check reads the counter, not the table
+  await D.prepare(SR.SHR_SQL.used).first();
+  D.db.prepare("UPDATE shl_link SET last = ?1 WHERE id IN (?2, ?3)").run(T0 - 400 * DAY, ids[0], ids[1]);
+  assert.equal(await S.purgeShort(env, T0), 2);
+  assert.deepEqual({ ...tot() }, { ...real() });
+  assert.equal(tot().c, 3);
+  const agg = D.log.filter((q) => /\b(COUNT|SUM)\s*\(/i.test(q) && /\bshl_link\b/.test(q));
+  assert.deepEqual(agg, [], "full-table aggregate over shl_link");
 });

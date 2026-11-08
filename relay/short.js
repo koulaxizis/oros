@@ -21,7 +21,9 @@
 //  - an id already held by other content is a "conflict", never
 //    overwritten; the same content answers the same id;
 //  - rows nobody opened for SHL_LIMITS.idleDays go in the hourly cron
-//    (purgeShort); at the row cap, the byte cap or the share store's
+//    (purgeShort); the totals live in one row (shl_tot), moved in the
+//    same batch as each insert and removal, so no statement counts or
+//    sums the whole table (D1 bills rows read); at the row cap, the byte cap or the share store's
 //    total (shared with links with an expiry, SHR_LIMITS.store) the
 //    answer is 507 "full", nothing is evicted early;
 //  - per-IP limits on their own counters (per isolate, best effort) and
@@ -54,8 +56,12 @@ const CODE_RE = /^1\.[A-Za-z0-9_-]{4,4090}$/;      // = preview.js
 
 export const SHL_SQL = {
   get: "SELECT k, d, last FROM shl_link WHERE id = ?1",
-  stats: "SELECT COUNT(*) AS c, COALESCE(SUM(size), 0) AS s FROM shl_link",
+  stats: "SELECT c, s FROM shl_tot WHERE id = 1",
   add: "INSERT OR IGNORE INTO shl_link (id, k, d, size, at, last) VALUES (?1, ?2, ?3, ?4, ?5, ?5)",
+  // in the same batch as add: counts only when add made a row
+  totAdd: "UPDATE shl_tot SET c = c + 1, s = s + ?1 WHERE id = 1 AND changes() > 0",
+  // in the same batch as drop, before it: only a row that is there
+  totDrop: "UPDATE shl_tot SET c = c - 1, s = s - (SELECT size FROM shl_link WHERE id = ?1) WHERE id = 1 AND EXISTS (SELECT 1 FROM shl_link WHERE id = ?1)",
   touch: "UPDATE shl_link SET last = ?2 WHERE id = ?1 AND last < ?3",
   dayGet: "SELECT n FROM shl_day WHERE day = ?1",
   dayBump: "INSERT INTO shl_day (day, n) VALUES (?1, 1) ON CONFLICT(day) DO UPDATE SET n = n + 1",
@@ -145,7 +151,7 @@ export async function runShl(b, env, now, ip) {
   const day = Math.floor(now / DAY);
   const dn = await q(d, SHL_SQL.dayGet, day).first();
   if (dn && dn.n >= SHL_LIMITS.dayAll) throw new ShlError("rate", 429, "too many short links today");
-  const r = await q(d, SHL_SQL.add, id, item.k, json, size, now).run();
+  const [r] = await d.batch([q(d, SHL_SQL.add, id, item.k, json, size, now), q(d, SHL_SQL.totAdd, size)]);
   if (!(r && r.meta && r.meta.changes)) {
     // made at the same moment elsewhere: the same content is fine
     const again = await q(d, SHL_SQL.get, id).first();
@@ -183,7 +189,9 @@ export async function purgeShort(env, now, rounds) {
       const res = await q(d, SHL_SQL.stale, now - SHL_LIMITS.idleDays * DAY, SHL_LIMITS.purgeBatch).all();
       const ids = ((res && res.results) || []).map((x) => x.id);
       if (!ids.length) break;
-      await d.batch(ids.map((id) => q(d, SHL_SQL.drop, id)));
+      const st = [];
+      for (const id of ids) st.push(q(d, SHL_SQL.totDrop, id), q(d, SHL_SQL.drop, id));
+      await d.batch(st);
       gone += ids.length;
       if (ids.length < SHL_LIMITS.purgeBatch) break;
     }
