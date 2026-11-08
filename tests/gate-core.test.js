@@ -245,11 +245,13 @@ test("budget_undo: puts back adds, changes and deletes, leaves what changed sinc
   assert.equal(u4.kept, 1);
 });
 
-test("write rules: only write level, only inside the window", () => {
-  assert.equal(G.canWrite({ budget: "write" }, 2000, "budget", 1000), true);
-  assert.equal(G.canWrite({ budget: "write" }, 900, "budget", 1000), false, "window closed");
-  assert.equal(G.canWrite({ budget: "read" }, 2000, "budget", 1000), false);
-  assert.equal(G.canWrite({ notes: "write" }, 2000, "notes", 1000), false, "only apps with write tools");
+test("write rules: only write level, unless the owner paused changes (one rule, 5.78.00)", () => {
+  assert.equal(G.canWrite({ budget: "write" }, 0, "budget", 1000), true, "no window needed");
+  assert.equal(G.canWrite({ budget: "write" }, undefined, "budget", 1000), true);
+  assert.equal(G.canWrite({ budget: "write" }, 900, "budget", 1000), true, "a pause that ended");
+  assert.equal(G.canWrite({ budget: "write" }, 2000, "budget", 1000), false, "paused");
+  assert.equal(G.canWrite({ budget: "read" }, 0, "budget", 1000), false);
+  assert.equal(G.canWrite({ notes: "write" }, 0, "notes", 1000), false, "only apps with write tools");
   assert.deepEqual(G.allowed([{ id: "budget" }], { budget: "write" }).map((a) => a.id), ["budget"], "write also reads");
 });
 

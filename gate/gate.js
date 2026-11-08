@@ -8,12 +8,13 @@
 // of it. Read-only: nothing here writes app data.
 //
 // Per device, never synced:
-//   localStorage "oros-gate"      { on, id, tok, r (relay it lives on), lv{appId: "read" | "write"}, w (write window ends, ms), at }
+//   localStorage "oros-gate"      { on, id, tok, r (relay it lives on), lv{appId: "read" | "write"}, hold (Claude's changes paused until, ms; 5.78.00), at, out?, lvd?, sf? }
 //   localStorage "oros-gate-log"  [{ t, n, a[app ids], k (items), ok, u? (undo id) }] ≤ 300
 //   localStorage "oros-gate-undo" [{ id, t, app, n, x (budgetWrite or kanbanWrite undo) }] ≤ 20
-// Changes (wave 3) only to apps set to "write", only while the write
-// window the owner opened on this device is open; more than 5
-// deletions in one call are asked on the device.
+// Changes only to apps set to "write" (one rule since 5.78.00: no write
+// window; the owner can pause them, every change is notified and can be
+// undone from any device); more than 5 deletions in one call are asked
+// on the device.
 // Pure core (Node-tested, tests/gate-core.test.js): window.orosGateCore.
 // ============================================================
 (function (root) {
@@ -21,6 +22,8 @@
 
   var SEAT_KEY = "oros-gate-seat";   // synced slice "gate": { id, ss, r, m } (5.77.00)
   var PREF_KEY = "oros-gate", LOG_KEY = "oros-gate-log", LOG_MAX = 300, UNDO_KEY = "oros-gate-undo", UNDO_MAX = 20;
+  // Claude's changes, synced (slice "gatechanges", 5.78.00): seen and undone from any device.
+  var CHG_KEY = "oros-gate-changes", CHG_MAX = 100;
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js; the gate box lives there
   // Never offered, whatever a setting says (BR-GATE).
   var NEVER = ["assistant", "baby", "cycle", "diary", "health", "mail", "mood", "passwords"];
@@ -297,7 +300,37 @@
     return l.length > LOG_MAX ? l.slice(l.length - LOG_MAX) : l;
   }
 
-  /* ---------- wave 3: changes to Budget (write window only) ---------- */
+  // The synced list of Claude's changes: [{ id, t, app, n, k, dv, x?, done? }]
+  // x = the undo record (kept for the newest UNDO_MAX), done = undone at.
+  // merge: union by id, undone wins (the later done), newest CHG_MAX kept.
+  function chgClean(e) {
+    if (!isObj(e) || typeof e.id !== "string" || !/^[a-z0-9]{4,32}$/.test(e.id) || typeof e.t !== "number" || !(e.t > 0)) return null;
+    var o = { id: e.id, t: Math.floor(e.t), app: String(e.app || "").slice(0, 40), n: String(e.n || "").slice(0, 40),
+              k: typeof e.k === "number" && e.k >= 0 ? Math.floor(e.k) : 0, dv: String(e.dv || "").slice(0, 40) };
+    if (isObj(e.x)) o.x = e.x;
+    if (typeof e.done === "number" && e.done > 0) o.done = Math.floor(e.done);
+    return o;
+  }
+  function chgMerge(a, b) {
+    var by = {};
+    [].concat(Array.isArray(a) ? a : [], Array.isArray(b) ? b : []).forEach(function (raw) {
+      var e = chgClean(raw);
+      if (!e) return;
+      var o = by[e.id];
+      if (!o) { by[e.id] = e; return; }
+      var m = JSON.stringify(o) >= JSON.stringify(e) ? clone(o) : clone(e);
+      if (o.done || e.done) m.done = Math.max(o.done || 0, e.done || 0);
+      if (!m.x && (o.x || e.x)) m.x = clone(o.x || e.x);
+      by[e.id] = m;
+    });
+    var list = Object.keys(by).map(function (k) { return by[k]; })
+      .sort(function (x, y) { return x.t - y.t || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0); });
+    if (list.length > CHG_MAX) list = list.slice(list.length - CHG_MAX);
+    list.forEach(function (e, i) { if (i < list.length - UNDO_MAX || e.done) delete e.x; });
+    return list;
+  }
+
+  /* ---------- wave 3: changes to Budget (apps set to "write", 5.78.00 one rule) ---------- */
   var NOTE_LEN = 140, MAX_CENTS = 100000000000, ADD_MAX = 50, DEL_MAX = 100, ASK_OVER = 5;
   var TX_ID = /^[a-z0-9-]{1,64}$/;
   function stampAfter(now, old) { return Math.max(Math.floor(now), (Number(old) || 0) + 1); }
@@ -481,7 +514,7 @@
     sortTx(d);
     return { ok: true, data: d, n: n, kept: kept };
   }
-  /* ---------- changes to Kanban (write window only, 5.68.00) ---------- */
+  /* ---------- changes to Kanban (5.68.00; one rule since 5.78.00) ---------- */
   // Pure: kanbanWrite(M, op, raw, args, now, newId) with M = OrosKanbanModel
   // (kanban/model.js). Every edit follows Kanban's own sync rules: a new
   // card gets fresh field stamps, a move stamps the placement group "p",
@@ -717,8 +750,11 @@
   // Apps whose items Claude may change, and the tools for them.
   var WRITES = { budget: ["budget_add", "budget_change", "budget_delete"],
                  kanban: ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"] };
-  function canWrite(lv, win, id, now) {
-    return !!(isObj(lv) && lv[id] === "write" && WRITES[id] && typeof win === "number" && win > now);
+  // One rule, orOS open or closed (Chris 08/11, 5.78.00): Claude may
+  // change an app set to "write", unless the owner paused changes
+  // (hold = paused until, ms). Every change is notified and undoable.
+  function canWrite(lv, hold, id, now) {
+    return !!(isObj(lv) && lv[id] === "write" && WRITES[id] && !(typeof hold === "number" && hold > now));
   }
 
   // The relay orOS uses (Mail › relay, a self-hosted one), else orOS's own.
@@ -729,7 +765,7 @@
 
   var core = { NEVER: NEVER, budgetLines: budgetLines, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
-               kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, seatMerge: seatMerge, seatClean: seatClean,
+               kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                WRITES: WRITES, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
@@ -811,6 +847,7 @@
       setWs("on");
       sendVis(sock);
       if (pref().lvd) sendLv(sock);
+      pushReg();
       clearInterval(pingTimer);
       pingTimer = setInterval(function () { try { sock.send("ping"); } catch (e) {} }, 45000);
     };
@@ -828,6 +865,60 @@
       schedule();
     };
     sock.onerror = function () {};
+  }
+  function chgList() {
+    var l = readJSON(CHG_KEY);
+    if (!Array.isArray(l)) {                          // before 5.78.00: this device's own undo list
+      var old = readJSON(UNDO_KEY);
+      l = chgMerge([], (Array.isArray(old) ? old : []).map(function (e) { return isObj(e) ? Object.assign({ k: 0, dv: "" }, e) : null; }));
+      if (l.length && writeJSON(CHG_KEY, l)) { try { localStorage.removeItem(UNDO_KEY); } catch (e) {} }
+    }
+    return chgMerge(l, []);
+  }
+  function chgSlice(n) {
+    var S = root.orosSync;
+    if (S && typeof S.registerSlice === "function") {
+      S.registerSlice("gatechanges", function () { var raw = null; try { raw = localStorage.getItem(CHG_KEY); } catch (e) {} return raw ? chgList() : null; },
+        function (data) { if (!Array.isArray(data)) return; writeJSON(CHG_KEY, chgMerge(data, [])); changed(); }, CHG_KEY, chgMerge);
+      return;
+    }
+    if (n < 40) setTimeout(function () { chgSlice(n + 1); }, 500);
+  }
+  // "Claude changed something" on the owner's devices (5.78.00): with
+  // notifications on (webpush.js), this device gives the gate's box its
+  // push box id, a wake token that can only wake it and one generic
+  // packet encrypted here; the relay wakes it after a change, at most
+  // once per 15 minutes. The details and Undo stay in Claude's changes.
+  var PUSH_TXT = { en: "Claude changed something in orOS", el: "Ο Claude έκανε αλλαγές στο orOS", de: "Claude hat etwas in orOS geändert" };
+  var pushBusy = false;
+  function pushReg() {
+    var P = root.orosPush, p = pref();
+    if (pushBusy || !p.on || !p.id || !p.tok || !P || typeof P.wakeToken !== "function") return;
+    var want = P.enabled && P.enabled() ? P.deviceId() : "";
+    var pp = isObj(p.pp) ? p.pp : null;
+    if (want ? pp && pp.pid === want && pp.g === p.id : !pp) return;
+    var lang = "en";
+    try { lang = String(root.orosI18n && root.orosI18n.lang ? root.orosI18n.lang() : "en").slice(0, 2); } catch (e) {}
+    pushBusy = true;
+    var done = function (np) {
+      pushBusy = false;
+      var q = pref();
+      if (!q.on || q.id !== p.id) return;
+      if (np) q.pp = np; else delete q.pp;
+      writeJSON(PREF_KEY, q);
+    };
+    if (!want) {
+      devCall({ act: "ping", id: p.id, tok: p.tok, pid: "" }).then(function () {
+        if (pp.wt && typeof P.dropWake === "function") P.dropWake(pp.wt).catch(function () {});
+        done(null);
+      }, function () { pushBusy = false; });
+      return;
+    }
+    Promise.resolve(pp && pp.pid === want && pp.wt ? pp.wt : P.wakeToken()).then(function (wt) {
+      return P.wakePacket("gate:changes", "orOS Gate", PUSH_TXT[lang] || PUSH_TXT.en, "gate:changes", "gate").then(function (ct) {
+        return devCall({ act: "ping", id: p.id, tok: p.tok, pid: want, wt: wt, ct: ct }).then(function () { done({ pid: want, wt: wt, g: p.id }); });
+      });
+    }).catch(function () { pushBusy = false; });
   }
   function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
   function dirty() { try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {} }
@@ -973,7 +1064,7 @@
           var o = { id: a.id, name: a.name, tools: toolsOf(a.id) };
           if (p.lv[a.id] === "write" && WRITES[a.id]) {
             o.change_tools = WRITES[a.id].slice();
-            o.write_window = canWrite(p.lv, p.w, a.id, Date.now()) ? "open until " + new Date(p.w).toISOString() : "closed";
+            o.changes = canWrite(p.lv, p.hold, a.id, Date.now()) ? "allowed (the owner is notified of each change)" : "paused by the owner until " + new Date(p.hold).toISOString();
           }
           return o;
         }),
@@ -1033,6 +1124,12 @@
     return Promise.resolve({ ok: false, c: "Unknown tool." });
   }
 
+  function closedMsg(p, id, name) {
+    if (p.lv[id] === "write" && typeof p.hold === "number" && p.hold > Date.now()) {
+      return "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was changed.";
+    }
+    return "Claude may not change " + name + ". Ask the owner to set " + name + " to «may change» in orOS › Settings › Connected services › orOS Gate.";
+  }
   function newTxId() {
     var r = new Uint32Array(1);
     crypto.getRandomValues(r);
@@ -1040,8 +1137,8 @@
   }
   function change(op, args, p, names) {
     var now = Date.now();
-    if (!canWrite(p.lv, p.w, "budget", now)) {
-      return Promise.resolve({ ok: false, c: "Changes to " + (names.budget || "Budget") + " are closed. Ask the owner to allow changes to Budget and open a write window in orOS › Settings › Connected services › orOS Gate." });
+    if (!canWrite(p.lv, p.hold, "budget", now)) {
+      return Promise.resolve({ ok: false, c: closedMsg(p, "budget", names.budget || "Budget") });
     }
     var n = op === "delete" && Array.isArray(args.ids) ? args.ids.length : 0;
     var asked = n > ASK_OVER && n <= 100 ? askDelete(n) : Promise.resolve(true);
@@ -1051,7 +1148,7 @@
       if (!r.ok) return { ok: false, c: r.err };
       if (!writeJSON("oros-budget-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
-      var uid = remember("budget", "budget_" + op, r.undo, now);
+      var uid = remember("budget", "budget_" + op, r.undo, now, r.ids.length);
       return { ok: true, a: ["budget"], k: r.ids.length, u: uid, c: JSON.stringify({ done: r.text, ids: r.ids }) };
     });
   }
@@ -1072,24 +1169,29 @@
     return modelP;
   }
   function kbId() { return Date.now().toString(36) + randomB64u(6).replace(/[^a-z0-9]/gi, "").toLowerCase().slice(0, 5); }   // = kanban.js uid
-  function remember(app, n, x, now) {
+  function devName() {
+    var n = "";
+    try { var P = root.orosPush, me = P && P.devices ? P.devices().filter(function (d) { return d.self; })[0] : null; n = me && me.name || ""; } catch (e) {}
+    if (!n) { try { n = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || ""; } catch (e) {} }
+    return String(n).slice(0, 40);
+  }
+  function remember(app, n, x, now, k) {
     var uid = now.toString(36) + randomB64u(3).replace(/[^a-z0-9]/gi, "").toLowerCase();
-    var ul = readJSON(UNDO_KEY);
-    ul = (Array.isArray(ul) ? ul : []).concat([{ id: uid, t: now, app: app, n: n, x: x }]);
-    writeJSON(UNDO_KEY, ul.length > UNDO_MAX ? ul.slice(ul.length - UNDO_MAX) : ul);
+    var cl = chgMerge(readJSON(CHG_KEY), [{ id: uid, t: now, app: app, n: n, k: k || 0, dv: devName(), x: x }]);
+    if (writeJSON(CHG_KEY, cl)) dirty();
     return uid;
   }
   function kanbanChange(op, args, p, names) {
     var now = Date.now();
-    if (!canWrite(p.lv, p.w, "kanban", now)) {
-      return Promise.resolve({ ok: false, c: "Changes to " + (names.kanban || "Kanban") + " are closed. Ask the owner to allow changes to Kanban and open a write window in orOS › Settings › Connected services › orOS Gate." });
+    if (!canWrite(p.lv, p.hold, "kanban", now)) {
+      return Promise.resolve({ ok: false, c: closedMsg(p, "kanban", names.kanban || "Kanban") });
     }
     return kanbanModel().then(function (M) {
       var r = kanbanWrite(M, op, readStore("oros-kanban-data"), args, Date.now(), kbId);
       if (!r.ok) return { ok: false, c: r.err };
       if (!writeJSON("oros-kanban-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
-      var uid = remember("kanban", "kanban_" + op, r.undo, now);
+      var uid = remember("kanban", "kanban_" + op, r.undo, now, r.ids.length);
       return { ok: true, a: ["kanban"], k: r.ids.length, u: uid, c: JSON.stringify({ done: r.text, ids: r.ids }) };
     }, function () { return { ok: false, c: "Kanban is not loaded on the device yet; try again in a moment." }; });
   }
@@ -1140,8 +1242,8 @@
       var p = pref();
       // moved: Mail's relay changed after the gate was made; the gate
       // stays on the old one until it is turned off and on again.
-      var w = typeof p.w === "number" && p.w > Date.now() ? p.w : 0;
-      return { on: !!p.on, conn: wsState, at: p.at || 0, moved: !!(p.on && p.r && p.r !== relayNow()), win: w,
+      var h = typeof p.hold === "number" && p.hold > Date.now() ? p.hold : 0;
+      return { on: !!p.on, conn: wsState, at: p.at || 0, moved: !!(p.on && p.r && p.r !== relayNow()), hold: h,
                lv: isObj(p.lv) ? JSON.parse(JSON.stringify(p.lv)) : {} };
     },
     apps: function () {
@@ -1166,32 +1268,34 @@
       changed();
       return okW;
     },
-    // The write window: Claude may change the apps set to "write" until
-    // it ends. minutes ≤ 0 closes it.
-    setWindow: function (minutes) {
+    // Pause Claude's changes on this device for minutes (Infinity: until
+    // resumed); minutes ≤ 0 resumes. Reads go on.
+    setPause: function (minutes) {
       var p = pref();
       if (!p.on) return false;
-      if (minutes > 0) p.w = Date.now() + Math.min(minutes, 24 * 60) * 60000; else delete p.w;
+      delete p.w;                                     // the old write window (before 5.78.00)
+      if (minutes > 0) p.hold = minutes === Infinity ? 8.64e15 : Date.now() + Math.min(minutes, 7 * 24 * 60) * 60000; else delete p.hold;
       var okW = writeJSON(PREF_KEY, p);
       clearTimeout(winTimer);
-      if (p.w) winTimer = setTimeout(changed, p.w - Date.now() + 500);
+      if (p.hold && p.hold < 8.64e15) winTimer = setTimeout(changed, Math.min(p.hold - Date.now() + 500, 2147483000));
       changed();
       return okW;
     },
-    canUndo: function (uid) { var l = readJSON(UNDO_KEY); return Array.isArray(l) && l.some(function (e) { return e && e.id === uid; }); },
+    canUndo: function (uid) { return chgList().some(function (e) { return e.id === uid && e.x && !e.done; }); },
+    // Claude's changes from every device, newest first.
+    changes: function () { return chgList().slice().reverse().map(function (e) { return { id: e.id, t: e.t, app: e.app, n: e.n, k: e.k, dv: e.dv, done: e.done || 0, undo: !!(e.x && !e.done) }; }); },
     // → { ok, n, kept } | { ok:false }
     undo: function (uid) {
-      var l = readJSON(UNDO_KEY);
-      l = Array.isArray(l) ? l : [];
-      var e = l.filter(function (x) { return x && x.id === uid; })[0];
+      var l = chgList();
+      var e = l.filter(function (x) { return x.id === uid && x.x && !x.done; })[0];
       if (!e) return { ok: false };
       var kb = e.app === "kanban", M = root.OrosKanbanModel;
-      if (kb && !M) { kanbanModel().then(changed, function () {}); return { ok: false }; }
+      if (kb && !M) { kanbanModel().then(changed, function () {}); return { ok: false, later: true }; }
       var key = kb ? "oros-kanban-data" : "oros-budget-data";
       var r = kb ? kanbanUndo(M, readStore(key), e.x, Date.now()) : budgetUndo(readStore(key), e.x, Date.now());
       if (!r.ok || !writeJSON(key, r.data)) return { ok: false };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e2) {}
-      writeJSON(UNDO_KEY, l.filter(function (x) { return x && x.id !== uid; }));
+      if (writeJSON(CHG_KEY, chgMerge(l, [Object.assign({}, e, { done: Date.now() })]))) dirty();
       changed();
       return { ok: true, n: r.n, kept: r.kept };
     },
@@ -1385,6 +1489,12 @@
     }
     connect();
     seatSlice(0);
+    chgSlice(0);
+    (function pushWatch(n) {                          // webpush.js may load after this file
+      var P = root.orosPush;
+      if (P && typeof P.onChange === "function") { P.onChange(function () { setTimeout(pushReg, 500); }); return; }
+      if (n < 40) setTimeout(function () { pushWatch(n + 1); }, 500);
+    })(0);
     setTimeout(function () { if (pref().on) makeSeat(); else whenUnlocked(function () { sit(false); }); }, 3000);
     document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") api.reconnect(); });
     root.addEventListener("online", function () { api.reconnect(); });

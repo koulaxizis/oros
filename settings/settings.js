@@ -945,12 +945,35 @@
       c.appendChild(list);
       var writers = G.apps().filter(function (a) { return a.write; }).map(function (a) { return a.name; });
       if (writers.length) {
-        c.appendChild(el("div", "hint", t("gt.win") + ": " + (st.win ? t("gt.win.open", { when: gateWhen(st.win), apps: writers.join(", ") }) : t("gt.win.closed")) + " " + t("gt.win.hint")));
-        var setWin = function (min) { if (!G.setWindow(min)) gateNote = "gt.fail"; render(); };
-        c.appendChild(st.win ? actions(button(t("gt.win.close"), "gt.win.close", function () { setWin(0); }))
-          : actions(button(t("gt.win.15"), "gt.win.15", function () { setWin(15); }),
-                    button(t("gt.win.60"), "gt.win.60", function () { setWin(60); }),
-                    button(t("gt.win.240"), "gt.win.240", function () { setWin(240); })));
+        // One rule (5.78.00): no write window; changes can be paused.
+        c.appendChild(el("div", "hint", (st.hold ? (st.hold >= 8e15 ? t("gt.hold.on.long") : t("gt.hold.on", { when: gateWhen(st.hold) }))
+          : t("gt.hold.off", { apps: writers.join(", ") })) + " " + t("gt.hold.hint")));
+        var setHold = function (min) { if (!G.setPause(min)) gateNote = "gt.fail"; render(); };
+        c.appendChild(st.hold ? actions(button(t("gt.hold.end"), "gt.hold.end", function () { setHold(0); }))
+          : actions(button(t("gt.hold.60"), "gt.hold.60", function () { setHold(60); }),
+                    button(t("gt.hold.240"), "gt.hold.240", function () { setHold(240); }),
+                    button(t("gt.hold.inf"), "gt.hold.inf", function () { setHold(Infinity); })));
+        var PP = window.orosPush;
+        c.appendChild(el("div", "hint", PP && PP.enabled && PP.enabled() ? t("gt.push.on") : t("gt.push.off")));
+      }
+      // Claude's changes from every device (synced), with Undo.
+      var chg = typeof G.changes === "function" ? G.changes().slice(0, 30) : [];
+      if (chg.length) {
+        c.appendChild(el("div", "hint", t("gt.chg")));
+        chg.forEach(function (e) {
+          c.appendChild(el("div", "hint", gateWhen(e.t) + " · " + e.n + " · " + t("gt.log.items", { n: e.k || 0 }) +
+            (e.dv ? " · " + e.dv : "") + (e.done ? " · " + t("gt.chg.undone") : "")));
+          if (e.undo) {
+            c.appendChild(actions(button(t("gt.undo"), "gt.undo:" + e.id, function () {
+              var r = G.undo(e.id);
+              gateNote = "";
+              if (!r.ok) gateUndoMsg = r.later ? t("gt.undo.later") : t("gt.undo.fail");
+              else gateUndoMsg = r.kept ? t("gt.undo.kept", { n: r.n, k: r.kept }) : t("gt.undo.done", { n: r.n });
+              render();
+            })));
+          }
+        });
+        if (gateUndoMsg) c.appendChild(el("div", "hint", gateUndoMsg));
       }
       c.appendChild(el("div", "hint", t("gt.never")));
       if (!gateInfo) {
@@ -976,17 +999,7 @@
           var ln = el("div", "hint", gateWhen(e.t) + " · " + e.n + (e.a && e.a.length ? " · " + e.a.join(", ") : "") +
             " · " + (e.ok ? t("gt.log.items", { n: e.k || 0 }) : t("gt.log.refused")));
           c.appendChild(ln);
-          if (e.u && G.canUndo(e.u)) {
-            c.appendChild(actions(button(t("gt.undo"), "gt.undo:" + e.u, function () {
-              var r = G.undo(e.u);
-              gateNote = "";
-              if (!r.ok) gateNote = "gt.fail";
-              else gateUndoMsg = r.kept ? t("gt.undo.kept", { n: r.n, k: r.kept }) : t("gt.undo.done", { n: r.n });
-              render();
-            })));
-          }
         });
-        if (gateUndoMsg) c.appendChild(el("div", "hint", gateUndoMsg));
         if (log.length) c.appendChild(actions(button(t("gt.log.clear"), "gt.log.clear", function () { G.clearLog(); })));
       }
     }
