@@ -3302,7 +3302,7 @@
   // opts.wide (one app, or a label filter): up to WIDE items per app
   // and in all, instead of PER_APP / MAX_ITEMS; opts.label: LABEL_WIDE.
   function packHits(groups, nameOf, opts) {
-    var items = [], wide = !!(opts && opts.wide), cap = opts && opts.label ? LABEL_WIDE : WIDE;
+    var items = [], wide = !!(opts && opts.wide), cap = opts && opts.max > 0 ? Math.min(opts.max, 5000) : opts && opts.label ? LABEL_WIDE : WIDE;   // max: the gate's closed-orOS index
     (Array.isArray(groups) ? groups : []).forEach(function (g) {
       if (!g || !Array.isArray(g.hits)) return;
       g.hits.slice(0, wide ? cap : PER_APP).forEach(function (h) {

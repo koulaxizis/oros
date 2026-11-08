@@ -780,7 +780,9 @@
   // The changes the relay may queue while orOS is closed (relay/gate.js
   // closedCall): its own change tools less budget_delete, and
   // create_items. applyQueue runs nothing else (defence in depth).
-  var QUEUED = ["budget_add", "budget_change", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items"];
+  var QUEUED = ["budget_add", "budget_change", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
+                // 5.94.00: by refs from the copy's index (kept on the device); never action delete
+                "change_item", "link_items", "link_contact"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
@@ -904,8 +906,13 @@
   /* ---------- device ---------- */
   function readJSON(k) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
   function writeJSON(k, v) {
-    try { localStorage.setItem(k, JSON.stringify(v)); return true; }
+    try { localStorage.setItem(k, JSON.stringify(v)); }
     catch (e) { toast(tr("gate.saveFail")); return false; }   // R30: never silent
+    // SY-AD (5.94.00): Budget or Kanban changed here may never have been
+    // opened on this device; their data must still sync.
+    var am = /^oros-([a-z]+)-data$/.exec(k);
+    if (am && WRITES[am[1]]) { try { if (root.orosSync && typeof root.orosSync.adoptKey === "function") root.orosSync.adoptKey(k); } catch (e) {} }
+    return true;
   }
   function pref() { var p = readJSON(PREF_KEY); return isObj(p) ? p : { on: false }; }
   function tr(k) { return typeof root.t === "function" ? root.t(k) : k; }
@@ -1201,7 +1208,23 @@
       return crypto.subtle.decrypt({ name: "AES-GCM", iv: keyBytes(parts[0]) }, key, keyBytes(parts[1] || ""));
     }).then(function (pt) { return new TextDecoder().decode(pt); });
   }
-  var COPY_MAX = 600000, copyTimer = null, copyBusy = false, copyLast = "", copyAt = 0;
+  // Bytes (UTF-8) of the copy before sealing: the sealed text (base64url)
+  // must stay under the relay's 900 KB (GATE_LIMITS.copyChars).
+  function utf8Len(str) { try { return new TextEncoder().encode(str).length; } catch (e) { return str.length * 2; } }
+  var COPY_MAX = 640000, copyTimer = null, copyBusy = false, copyLast = "", copyAt = 0;
+  function adoptWritten() {
+    var p = pref(), S = root.orosSync;
+    if (!p.on || !isObj(p.lv) || !S || typeof S.adoptKey !== "function") return;
+    Object.keys(p.lv).forEach(function (id) {
+      if (p.lv[id] !== "write" || !writable(id)) return;
+      var key = id === "montage" ? "oros-montage" : "oros-" + id + "-data";
+      // only real data: an empty copy here must not count as work to push
+      try {
+        var o = JSON.parse(localStorage.getItem(key) || "null");
+        if (isObj(o) && Object.keys(o).some(function (f) { return Array.isArray(o[f]) && o[f].length > 0; })) S.adoptKey(key, true);
+      } catch (e) {}
+    });
+  }
   function copySoon(ms) { clearTimeout(copyTimer); copyTimer = setTimeout(sendCopy, typeof ms === "number" ? ms : 5000); }
   function sendCopy() {
     var p = pref(), k = gateKey();
@@ -1216,6 +1239,14 @@
       if (SUMMARY[id]) {
         calls.push(["app_summary", { app: id }]);
         if (id !== "kanban") { calls.push(["app_summary", { app: id, month: month }]); calls.push(["app_summary", { app: id, month: prev }]); }
+        // each board by its name too (5.94.00: «δουλεύεις και σε κλειστό orOS»)
+        else {
+          var kb = readStore("oros-kanban-data"), seen = {};
+          (isObj(kb) ? kbBoards(kb) : []).slice(0, 30).forEach(function (b) {
+            var nm = String(b.name || "").trim();
+            if (nm && !seen[fold(nm)]) { seen[fold(nm)] = 1; calls.push(["app_summary", { app: "kanban", board: nm }]); }
+          });
+        }
       }
       // GATE-ACT: the everyday apps' summaries (the frame answers them)
       else if (ACT.indexOf(id) >= 0) calls.push(["app_summary", { app: id }]);
@@ -1223,18 +1254,40 @@
       // kept as the tool's default answer.
       if (LINES[id]) calls.push([LINES[id], id === "budget" ? { from: prev + "-01", to: localDay(), _def: 1 } : {}]);
     });
-    var ans = {}, size = 0;
+    var ans = {}, size = 0, skipped = 0;
     calls.reduce(function (chain, c) {
       return chain.then(function () {
         var a = Object.assign({}, c[1]), def = !!a._def;
         delete a._def;
         return run(c[0], a).then(function (r) {
-          if (!r || !r.ok || typeof r.c !== "string" || size + r.c.length > COPY_MAX) return;
-          ans[c[0] + " " + stableArgs(a)] = r.c; size += r.c.length;
+          if (!r || !r.ok || typeof r.c !== "string") return;
+          var b = utf8Len(r.c) * (def ? 2 : 1);
+          if (size + b > COPY_MAX) { skipped++; return; }
+          ans[c[0] + " " + stableArgs(a)] = r.c; size += b;
           if (def) ans[c[0] + " {}"] = r.c;
         }, function () {});
       });
     }, Promise.resolve()).then(function () {
+      // The search index (5.94.00): every item of the allowed apps with
+      // its ref, so search_data and the queued changes work with orOS
+      // closed. The refs stay on this device (assistant.js gateIndex).
+      if (!ok.length) return;
+      return actFrame().then(function (F) {
+        if (!F || typeof F.index !== "function") { ans.__ixerr = "no index on this device"; return; }
+        return F.index(ok).then(function (r) {
+          if (!r || !r.ok) { ans.__ixerr = r && r.c ? String(r.c) : "no index"; return; }
+          var list = [], n = 0;
+          for (var i = 0; i < r.items.length; i++) {
+            var one = JSON.stringify(r.items[i]), b = utf8Len(one) + 1;
+            if (size + b > COPY_MAX) break;
+            list.push(r.items[i]); size += b; n++;
+          }
+          ans.__index = JSON.stringify(list);
+          if (n < r.items.length) ans.__ixpart = String(r.items.length);
+        });
+      }).then(null, function () { ans.__ixerr = "index failed"; });
+    }).then(function () {
+      if (skipped) ans.__skipped = String(skipped);
       var body = JSON.stringify({ lv: p.lv || {}, hold: typeof p.hold === "number" ? p.hold : 0, ans: ans });
       if (body === copyLast && Date.now() - copyAt < 6 * 3600000) return;      // nothing new
       return seal(k, JSON.stringify({ at: Date.now(), lv: p.lv || {}, hold: typeof p.hold === "number" ? p.hold : 0, ans: ans })).then(function (sealed) {
@@ -1259,6 +1312,7 @@
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
             if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
+            if (x.n === "change_item" && isObj(x.a) && (x.a.action === "delete" || (Array.isArray(x.a.changes) && x.a.changes.some(function (ch) { return isObj(ch) && ch.action === "delete"; })))) return { ok: false, c: "refused" };
             return run(x.n, x.a).then(function (res) {
               var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
               if (res.u) entry.u = res.u;
@@ -2045,6 +2099,9 @@
     chgSlice(0);
     digSlice(0);
     setInterval(function () { copySoon(0); }, 30 * 60000);
+    // SY-AD (5.94.00): data Claude wrote before this version for an app
+    // never opened on this device (Publishing, CRM…) reaches sync now.
+    setTimeout(adoptWritten, 8000);
     setTimeout(digCheck, 60000);
     clearInterval(digTimer);
     digTimer = setInterval(digCheck, 10 * 60000);

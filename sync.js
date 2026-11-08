@@ -2003,6 +2003,36 @@
   var mergeBroken = {};         // SY-D6: name -> true while that slice's merge function throws
   function deferredNames() { return Object.keys(readJson(DEFER_KEY) || {}); }
 
+  // SY-AD (5.94.00): another part of orOS (the Assistant, orOS Gate)
+  // wrote an app's data while that app was never opened on this
+  // device, so its slice was never registered here and the change
+  // stayed on this device (Chris 08/11: «Οι τίτλοι του εκδοτικού δεν
+  // συγχρόνισαν;»). adoptKey registers the closed-app proxy for that
+  // key, as the app's first opening would, and marks sync pending. A
+  // new proxy has no baseline, so it counts as diverged: the cloud's
+  // copy is parked, not applied over this work, and the app merges both
+  // when it opens (v0.8.1).
+  var ADOPT_NAMES = { "oros-montage": "montage" };
+  function sliceNameOfKey(storageKey) {
+    var k = String(storageKey || "");
+    if (ADOPT_NAMES[k]) return ADOPT_NAMES[k];
+    var m = /^oros-([a-z]{2,30})-data$/.exec(k);
+    return m ? m[1] : "";
+  }
+  // onlyNew: do nothing for a slice already known here (boot check).
+  function adoptKey(storageKey, onlyNew) {
+    var name = sliceNameOfKey(storageKey);
+    if (!name || RETIRED_SLICES[name]) return false;
+    if (slices[name] && onlyNew) return false;
+    if (!slices[name]) {
+      var reg = readJson(SLICES_KEY) || {};
+      if (reg[name] !== undefined && reg[name] !== storageKey) return false;   // another key: not ours to guess
+      persistSliceEntry(name, storageKey);
+      slices[name] = makeProxySlice(storageKey);
+    }
+    markDirty();
+    return true;
+  }
   function persistSliceEntry(name, storageKey) {
     var reg = readJson(SLICES_KEY) || {};
     reg[name] = storageKey;
@@ -3983,6 +4013,7 @@
     // App integration
     registerSlice:     registerSlice,    // (name, get, set, storageKey?, merge?)
     markDirty:         markDirty,        // apps call this on data change
+    adoptKey:          adoptKey,         // SY-AD: (storageKey) data written for an app not opened here
     getIntervalMinutes: getIntervalMinutes,
     // SY-D3: names of closed apps whose local changes wait for a
     // merge (the shell turns each into one notice that opens the app).
