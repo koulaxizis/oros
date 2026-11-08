@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.87.00
+- **Roots, a new strategy game.** You are an old tree in a glade: grow roots through the soil to reach springs and minerals, and buds on the surface that open into leaves and flowers. Beetles, moles, aphids and blight show what they will do before they act, and anything cut off from the trunk withers in 2 turns unless you join it again. Meet the bloom quota of spring, summer and autumn to finish the year. In Games and the Game Center (Strategy).
+
 ## Version 5.84.00
 - **Fieldwarden: build your own farm.** `New year` › `Build a farm` turns the board into a farm editor: place fields, hedges, ponds, haystacks, the barn, your three folk and the invaders, set the weather and who comes in on which turn, then `Play` it as one season on Harsh. Every farm has a code: share it, and anyone who types it in `New year` plays the same farm.
 

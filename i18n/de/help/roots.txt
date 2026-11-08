@@ -1,0 +1,53 @@
+# Wurzeln
+Wurzeln ist ein rundenbasiertes Wachstumsspiel für eine Person. Du bist ein alter Baum auf einer Lichtung. Unter der Erde lässt du vom Stamm aus ein Netz aus Wurzeln wachsen, bis zu Quellen und Mineralen, und auf der Oberfläche treibst du Knospen, die sich zu Blättern und Blüten öffnen. Das ganze Jahr über kommen Schädlinge an den Rändern herein, und jeder zeigt, was er tun wird, bevor er handelt. Es gibt keine Würfel: Du antwortest auf das, was du kommen siehst.
+
+## So wird gespielt
+Die Lichtung hat 7 mal 9 Felder: oben die Oberfläche, darunter die Erde. Eine Jahreszeit dauert 6 Züge. In jedem Zug:
+1. **Du bekommst Saft.** 2 vom Stamm, 2 für jede Quelle und 1 für jedes Mineral, das eine verbundene Wurzel erreicht, und 1 für jedes offene Blatt über einer verbundenen Wurzel. Die Statuszeile zeigt deinen Saft und was der nächste Zug bringt (höchstens 20).
+2. **Du wächst.** Wähle unten in der Leiste ein Wachstum und tippe dann auf ein helles Feld:
+   - **Wurzel** (1 Saft, 2 auf Lehm): eine dünne Wurzel auf einem Feld neben deinem Netz. Stein hält Wurzeln auf.
+   - **Verdicken** (2): eine dicke Wurzel hält einen Biss aus und bleibt; eine dünne bricht.
+   - **Dorn** (3): am Ende des Zuges trifft er jeden Schädling auf ihm oder daneben, mit 2, wenn ein Mineral darunter oder daneben liegt.
+   - **Blattknospe** und **Blütenknospe** (2): auf der Oberfläche über einer verbundenen Wurzel. Eine Knospe öffnet sich nach 2 Zügen. Ein Blatt gibt 1 Saft pro Zug; eine Blüte zählt 1 Blüte.
+3. **Zug beenden.** Dornen treffen, die Schädlinge handeln in der gezeigten Reihenfolge, abgeschnittene Wurzeln zählen herunter, Knospen wachsen und neue Schädlinge kommen herein.
+
+`Rückgängig` nimmt das letzte Wachstum zurück, und `Zug neu beginnen` geht zum Anfang des Zuges. Beides kostet nichts, also probiere aus.
+
+## Die wichtigste Regel
+Alles zählt nur, solange es durch eine ununterbrochene Linie aus Wurzeln mit dem Stamm verbunden ist. Eine abgeschnittene Wurzel gibt keinen Saft, die Knospe darüber wächst nicht, und nach 2 Zügen welkt sie (eine rote Zahl zeigt die übrigen Züge). Verbindest du sie rechtzeitig wieder, geht nichts verloren. Die Frage ist also nie nur, wo du wächst: sondern auch, welche Linie du verdickst, wo du einen zweiten Weg wachsen lässt und welchen fernen Zweig du aufgibst.
+
+## Die Blüte
+Am Ende jeder Jahreszeit braucht der Baum sein **Blütenziel**: offene Blüten auf der Oberfläche plus die Quellen, die eine verbundene Wurzel erreicht. Verfehlst du es, endet das Jahr. Blüten fallen zwischen den Jahreszeiten ab; Wurzeln, Blätter und Quellen bleiben. Das Ziel kommt von einem eingebauten Gärtner, der die Jahreszeit zuerst spielt, also ist jede Jahreszeit zu schaffen.
+
+## Die Schädlinge
+- **Käfer:** läuft bis zu 2 Felder durch die Erde zur nächsten Wurzel und nagt sie an. Eine dünne Wurzel bricht, eine dicke wird dünn. Geht nach 3 Zügen.
+- **Maulwurf:** gräbt eine gerade Linie von bis zu 3 Feldern und schadet jeder Wurzel darin. Geht nach 2 Zügen.
+- **Blattlaus:** läuft über die Oberfläche zur nächsten Knospe und frisst sie. Offene Blätter und Blüten sind sicher. Geht nach 3 Zügen.
+- **Fäule** (Herbst): breitet sich jeden Zug auf eine dünne Wurzel daneben aus und bleibt. Dicke Wurzeln und Dornen halten sie auf; ein Dorn tötet sie.
+- **Frost:** in den letzten 2 Zügen des Herbstes erfrieren Knospen ohne offenes Blatt daneben.
+
+Ein Pfeil zeigt von jedem Schädling, wohin er geht, mit einem Zeichen auf dem Feld, dem er schaden wird, und einer Zahl für die Reihenfolge. Gefährdete Felder sind rot, und gestrichelte Kreise an den Rändern zeigen die Schädlinge, die am Ende des Zuges hereinkommen. Die Stammwurzel unter dem Stamm bricht nie.
+
+## Das Jahr und die Schwierigkeit
+Ein Jahr hat 3 Jahreszeiten: Frühling, Sommer und Herbst. Der Winter bewertet es: die Blüte jeder Jahreszeit, plus die erreichten Quellen, plus die längste Wurzel (die meisten Schritte vom Stamm entlang deiner Wurzeln).
+- **Mild:** ein niedrigeres Ziel, und einmal pro Jahreszeit nimmt `Zurückspulen` den ganzen letzten Zug zurück.
+- **Rau:** mehr Schädlinge und ein höheres Ziel.
+
+Jedes Jahr hat einen Code. Derselbe Code ergibt dieselbe Lichtung und dieselben Schädlinge, also kannst du ein Jahr noch einmal spielen oder den Code einem Freund geben.
+
+## Bestwerte und Synchronisierung
+`Bestwerte` zeigt deine Jahre, die geschafften Jahre und die besten Jahrespunkte für jede Schwierigkeit sowie deine längste Wurzel. Sie werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, wobei die Jahre aller Geräte zusammengezählt werden, und sie zählen im [Game Center](help:a/gamecenter). Das laufende Jahr und der Ton bleiben auf diesem Gerät, und ein nicht beendetes Jahr geht dort weiter, wo du aufgehört hast. Ein Jahr, das du für ein neues verlässt, zählt als nicht geschafft. `Bestwerte zurücksetzen` löscht sie auf allen Geräten.
+
+## Tastatur
+- Pfeiltasten bewegen den Cursor; [[Enter]] wächst auf dem Feld oder beschreibt es.
+- [[1]] bis [[5]]: Wurzel, Verdicken, Dorn, Blattknospe, Blütenknospe.
+- [[Z]]: rückgängig. [[R]]: Zug neu beginnen. [[E]]: Zug beenden (oder die nächste Jahreszeit). [[T]]: nur Gefahren. [[N]]: neues Jahr.
+- Langes Drücken auf ein Feld zeigt seinen Text.
+- Das Warnzeichen in der Werkzeugleiste zeigt nur die gefährdeten Felder; der Doppelpfeil spielt das Ende eines Zuges schneller ab.
+
+## Tipps
+- Erreiche früh eine Quelle: 2 Saft pro Zug und eine Blüte in jeder Jahreszeit.
+- Ein zweiter Weg kostet wenig und rettet einen ganzen Zweig, wenn ein Käfer beißt.
+- Verdicke die Wurzel direkt vor einer Gabelung: ein Biss dort würde alles dahinter abschneiden.
+- Setze Dornen neben Minerale, wo sie doppelt treffen.
+- Lass im Herbst Blätter zwischen deinen Blütenknospen wachsen: sie halten den Frost fern.

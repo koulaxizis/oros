@@ -1,0 +1,53 @@
+# Roots
+Roots is a turn-based growing game for one person. You are an old tree in a glade. Under the ground you grow a network of roots from the trunk to reach springs and minerals, and on the surface you grow buds that open into leaves and flowers. Pests come in at the edges through the year, and every one of them shows what it will do before it acts. There are no dice: you answer what you see coming.
+
+## How to play
+The glade has 7 by 9 tiles: the surface on top and the soil below. A season lasts 6 turns. In each turn:
+1. **You get sap.** 2 from the trunk, 2 for each spring and 1 for each mineral that a joined root reaches, and 1 for each open leaf above a joined root. The status row shows your sap and what the next turn brings (at most 20).
+2. **You grow.** Choose a growth in the bar at the bottom, then tap a lit tile:
+   - **Root** (1 sap, 2 on clay): a thin root on a tile next to your network. Stone stops roots.
+   - **Thicken** (2): a thick root takes a bite and stays; a thin one breaks.
+   - **Thorn** (3): at the end of the turn it hurts every pest on it or next to it, 2 when a mineral is under it or beside it.
+   - **Leaf bud** and **Flower bud** (2): on the surface above a joined root. A bud opens after 2 turns. A leaf gives 1 sap a turn; a flower counts 1 bloom.
+3. **End turn.** Thorns strike, the pests act in the order shown, cut roots count down, buds grow, and new pests come in.
+
+`Undo` takes back the last growth, and `Reset turn` goes back to the start of the turn. Both are free, so try things out.
+
+## The key rule
+Everything counts only while it is joined to the trunk by an unbroken line of roots. A root that is cut off gives no sap, a bud above it does not grow, and after 2 turns it withers (a red number shows the turns left). Join it again in time and nothing is lost. So the question is never only where to grow: it is also which line to make thicker, where to grow a second way round, and which far branch to let go.
+
+## The bloom
+At the end of each season the tree needs its **bloom quota**: open flowers on the surface plus the springs a joined root reaches. Miss it and the year ends. Flowers fall between seasons; roots, leaves and springs stay. The quota comes from a built-in gardener that plays the season first, so every season can be met.
+
+## The pests
+- **Beetle:** walks up to 2 tiles through the soil to the nearest root and chews it. A thin root breaks, a thick one turns thin. Leaves after 3 turns.
+- **Mole:** digs a straight line of up to 3 tiles and harms every root in it. Leaves after 2 turns.
+- **Aphid:** walks along the surface to the nearest bud and eats it. Open leaves and flowers are safe. Leaves after 3 turns.
+- **Blight** (autumn): spreads to a thin root next to it every turn and stays. Thick roots and thorns stop it; a thorn kills it.
+- **Frost:** in the last 2 turns of autumn, buds with no open leaf beside them freeze.
+
+An arrow points from each pest to where it goes, with an icon on the tile it will harm and a number for the order. Tiles in danger are red, and dashed circles at the edges show the pests that come in at the end of the turn. The base root under the trunk never breaks.
+
+## The year and difficulty
+A year has 3 seasons: spring, summer and autumn. Winter scores it: the bloom of every season, plus the springs reached, plus the longest root (the most steps from the trunk along your roots).
+- **Mild:** a lower quota, and once a season `Rewind` takes back the whole last turn.
+- **Hardy:** more pests and a higher quota.
+
+Every year has a code. The same code is the same glade and the same pests, so you can play a year again or give the code to a friend.
+
+## Records and sync
+`Records` shows your years, the years you finished and the best year score for each difficulty, and your longest root. They sync between your devices through [orOS sync](help:t/sync), adding up the years from every device, and they count in the [Game Center](help:a/gamecenter). The year in progress and the sound setting stay on this device, and an unfinished year continues where you left it. A year left for a new one counts as not finished. `Reset records` clears the records on every device.
+
+## Keyboard
+- Arrow keys move the cursor; [[Enter]] grows on the tile or describes it.
+- [[1]] to [[5]]: root, thicken, thorn, leaf bud, flower bud.
+- [[Z]]: undo. [[R]]: reset turn. [[E]]: end turn (or the next season). [[T]]: threats only. [[N]]: new year.
+- A long press on any tile shows its text.
+- The warning sign in the toolbar shows only the tiles in danger; the double arrow makes the end of a turn play faster.
+
+## Tips
+- Reach a spring early: 2 sap a turn and a bloom every season.
+- A second way round costs little and saves a whole branch when a beetle bites.
+- Thicken the root just behind a fork: one bite there would cut everything beyond it.
+- Put thorns next to minerals, where they hit twice as hard.
+- In autumn, grow leaves between your flower buds: they keep the frost away.
