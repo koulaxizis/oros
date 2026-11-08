@@ -218,6 +218,18 @@
     if (typeof root.__orosOpenAt === "function") root.__orosOpenAt(appId, { done: payload });
   }
 
+  // A suggested action (BR-TODAY-15): an action Today cleaned
+  // (OrosTodayAgg.cleanAct). "open" goes through the app's Today
+  // provider like a row's title; "at" straight to the app's own
+  // __orosOpenAt receiver. The app does the work with its own code
+  // (a dialog, or a change with Undo); Today never writes.
+  function act(a) {
+    var c = A.cleanAct(a, a && a.app);
+    if (!c) return;
+    if (c.via === "open") { open(c.app, c.target); return; }
+    if (typeof root.__orosOpenAt === "function") root.__orosOpenAt(c.app, c.target);
+  }
+
   // ---------- The daily notice ----------
   function isSettled(now) {
     var s = S(), connected = false, unlocked = false;
@@ -316,6 +328,7 @@
     agendaApps: agendaApps,
     open: open,
     done: done,
+    act: act,
     tick: tick,
     absorbs: absorbs,
     syncSettled: syncSettled,

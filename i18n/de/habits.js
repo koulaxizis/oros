@@ -1,4 +1,9 @@
 orosPack("de", "habits", {
+ "hb.streak.d": "Serie: {n} Tage",
+ "hb.streak.w": "Serie: {n} Wochen",
+ "hb.streak.m": "Serie: {n} Monate",
+ "hb.tipKeep": "{n} in Folge: noch einmal heute, und die Serie geht weiter.",
+ "hb.tipBest": "Deine beste Serie war {n}: heute ist ein guter Tag für eine neue.",
  "add": "Gewohnheit hinzufügen",
  "app.name": "Gewohnheiten",
  "cancel": "Abbrechen",

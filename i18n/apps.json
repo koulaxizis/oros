@@ -384,7 +384,8 @@
     "habits/habits.js",
     "habits/package.js",
     "habits/search.js",
-    "habits/steps.js"
+    "habits/steps.js",
+    "habits/today.js"
    ]
   },
   {
@@ -1066,6 +1067,7 @@
     "todo/package.js",
     "todo/platforms.js",
     "todo/search.js",
+    "todo/today.js",
     "todo/todo.js"
    ]
   },

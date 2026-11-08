@@ -16,16 +16,43 @@
 // Opens: the pet's birthday → the screen pet (__orosOpenPet); an event → that event in the Calendar; a contact → Contacts
 // (__orosOpenContact); else the Calendar on that day
 // (__orosOpenCalendar).
+// BR-TODAY-15: an event's details (start–end, the days of a span, the
+// note's first line), "Directions" through Maps' { routeTo } when it
+// has a place, a tip before a timed event with a place today or an
+// early start tomorrow; a contact's name day: open the card, or put
+// "wishes" in To-Do (its Add dialog, nothing saved until Add).
 // ============================================================
 (function (root) {
   "use strict";
   var W = {
     en: { names: "Name day: {n}", more: " and {n} more", contact: "{name}: name day", untitled: "(untitled)",
-          pet: "{name}'s birthday", age1: "1 year old", ageN: "{n} years old" },
+          pet: "{name}'s birthday", age1: "1 year old", ageN: "{n} years old",
+          "tdy.span": "{s}–{e}", "tdy.days": "From {s} to {e}",
+          "tdy.tipLeave": "Starts at {t} at {p}: check the way there in time.",
+          "tdy.tipEarly": "Tomorrow starts early ({t}): get what you need ready tonight.",
+          "tdy.tipWish": "A short message or a call on the day means a lot.",
+          "tdy.wish": "Name day wishes: {name}", "tdy.from": "Today" },
     el: { names: "Γιορτάζουν: {n}", more: " και {n} ακόμα", contact: "Γιορτάζει: {name}", untitled: "(χωρίς τίτλο)",
-          pet: "Γενέθλια του/της {name}", age1: "1 έτους", ageN: "{n} ετών" }
+          pet: "Γενέθλια του/της {name}", age1: "1 έτους", ageN: "{n} ετών",
+          "tdy.span": "{s}–{e}", "tdy.days": "Από {s} έως {e}",
+          "tdy.tipLeave": "Ξεκινά στις {t} στο «{p}»: δες τη διαδρομή εγκαίρως.",
+          "tdy.tipEarly": "Αύριο ξεκινάς νωρίς ({t}): ετοίμασε από απόψε ό,τι χρειάζεσαι.",
+          "tdy.tipWish": "Ένα σύντομο μήνυμα ή ένα τηλεφώνημα τη μέρα της γιορτής λέει πολλά.",
+          "tdy.wish": "Ευχές για τη γιορτή: {name}", "tdy.from": "Σήμερα" }
   };
   var MAX_NAMES = 6;
+  function hmNow(now) {
+    var d = new Date(typeof now === "number" ? now : Date.now());
+    return (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes();
+  }
+  // "12 Nov" in the summary's language (details of a span, BR-TODAY-15)
+  function shortDay(ymd, lang) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || ""));
+    if (!m) return "";
+    var loc = root.orosI18n ? root.orosI18n.locale(lang) : (lang === "el" ? "el-GR" : "en-GB");
+    try { return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(loc, { day: "numeric", month: "short" }); }
+    catch (e) { return ymd; }
+  }
 
   var PROVIDER = {
     id: "calendar",
@@ -53,11 +80,25 @@
             var span = typeof last === "string" && last > first;
             if (span && on !== first && on !== ctx.today) return;     // a running span: once
             var occ = inst && OCC.validRecur(ev.recur) ? inst.occ : on;
+            var title = typeof ev.title === "string" && ev.title ? ev.title : w.untitled;
+            var place = typeof ev.location === "string" ? ev.location.trim() : "";
+            var start = inst ? inst.start : (typeof ev.start === "string" ? ev.start : null);
+            var end = inst ? inst.end : (typeof ev.end === "string" ? ev.end : null);
+            // Details and suggestions (BR-TODAY-15)
+            var more = [], acts = [], tip = "";
+            if (start && end) more.push(w["tdy.span"].replace("{s}", start).replace("{e}", end));
+            if (span) more.push(w["tdy.days"].replace("{s}", shortDay(first, ctx.lang)).replace("{e}", shortDay(last, ctx.lang)));
+            var note = typeof ev.note === "string" ? ev.note.split(/\r?\n/).filter(function (x) { return x.trim(); })[0] : "";
+            if (note) more.push(note);
+            if (place) acts.push({ k: "route", app: "maps", target: { routeTo: { query: place.slice(0, 200), name: title.slice(0, 120) } } });
+            if (on === ctx.today && start && place && start > hmNow(ctx.now)) tip = w["tdy.tipLeave"].replace("{t}", start).replace("{p}", place);
+            else if (on === ctx.addDays(ctx.today, 1) && start && start < "09:00") tip = w["tdy.tipEarly"].replace("{t}", start);
             out.push({ id: "ev:" + ev.id + ":" + on, due: on, kind: "event",
-                       time: inst ? inst.start : (typeof ev.start === "string" ? ev.start : null),
-                       title: typeof ev.title === "string" && ev.title ? ev.title : w.untitled,
-                       text: typeof ev.location === "string" ? ev.location : "",
-                       target: { ev: ev.id, date: occ } });
+                       time: start,
+                       title: title,
+                       text: place,
+                       target: { ev: ev.id, date: occ },
+                       more: more, tip: tip, acts: acts });
           });
         }
       }
@@ -86,7 +127,11 @@
       if (ct && Array.isArray(ct.contacts) && typeof ND.contactsCelebrating === "function") {
         ND.contactsCelebrating(ct.contacts, ctx.today).forEach(function (x) {
           out.push({ id: "nd:" + x.id, due: ctx.today, kind: "event", title: w.contact.replace("{name}", x.name),
-                     target: { contact: x.id } });
+                     target: { contact: x.id },
+                     tip: w["tdy.tipWish"],
+                     acts: [{ k: "contact", target: { contact: x.id } },
+                            { k: "todo", app: "todo", target: { addItems: { from: w["tdy.from"],
+                              items: [{ text: w["tdy.wish"].replace("{name}", String(x.name || "").slice(0, 120)) }] } } }] });
         });
       }
       var pd = ctx.readJSON("oros-pet-data"), pet = pd && typeof pd.pet === "object" ? pd.pet : null;

@@ -306,6 +306,39 @@ button:focus-visible, select:focus-visible, input:focus-visible {
 .row.folded .open { padding-left: 24px; }
 .more { padding: 8px 12px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-dim); }
 
+/* Details and suggested actions (BR-TODAY-15) */
+.row { flex-wrap: wrap; }
+.row .det-btn[aria-expanded="true"] { color: var(--accent); background: var(--accent-soft); }
+.det {
+  flex: 0 0 100%;
+  min-width: 0;
+  padding: 2px 12px 10px 40px;
+  font-size: 0.88rem;
+}
+.det[hidden] { display: none; }
+.det-more { list-style: none; color: var(--text-dim); }
+.det-more li { padding: 1px 0; overflow-wrap: anywhere; }
+.det-tip { display: flex; gap: 6px; align-items: flex-start; margin-top: 4px; overflow-wrap: anywhere; }
+.det-tip .ico { color: var(--accent); width: 16px; height: 16px; margin-top: 1px; }
+.det-tip .ico svg { width: 16px; height: 16px; }
+.det-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.det-act, .top-act, .tile-act {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 36px; padding: 4px 12px;
+  border: 1px solid var(--border); border-radius: 99px;
+  background: var(--panel-bg); color: inherit; font: inherit; font-size: 0.85rem;
+  cursor: pointer;
+}
+.det-act:hover, .det-act:focus-visible, .top-act:hover, .top-act:focus-visible,
+.tile-act:hover, .tile-act:focus-visible { background: var(--accent-soft); border-color: var(--accent); }
+.det-act .ico { margin-top: 0; width: 16px; height: 16px; color: var(--accent); }
+.det-act .ico svg { width: 16px; height: 16px; }
+.top li { display: flex; align-items: center; gap: 6px; }
+.top li .top-open { flex: 1; min-width: 0; }
+.top-act { flex: none; min-height: 32px; padding: 2px 10px; }
+.tile-act { margin-top: 6px; align-self: flex-start; }
+@media (max-width: 420px) { .det { padding-left: 12px; } }
+
 /* ---------- 4. Settings dialog — centered (R32) ---------- */
 dialog {
   border: 1px solid var(--border);
