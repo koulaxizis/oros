@@ -58,7 +58,7 @@ test("link_items: refs and names become CRM's own link keys", () => {
 });
 test("link_items: refusals (no names for customers, the wrong kind of ref, gone, Invoices' own link, two at once)", () => {
   assert.match(err([{ customer: "Alpha", item: "r4" }]), /CRM customer's ref/);
-  assert.match(err([{ customer: "r1", item: "r7" }]), /Stock supplier, a Timesheet client or an Invoices client/);
+  assert.match(err([{ customer: "r1", item: "r7" }]), /Stock supplier, a Timesheet client, an Invoices client, a Kanban card/);
   assert.match(err([{ customer: "r1", item: "r6" }]), /linked to CRM in Invoices itself/);
   assert.match(err([{ customer: "r1", item: "r4", person: "Ann Writer" }]), /exactly one/);
   assert.match(err([{ customer: "r1", person: "Nobody" }]), /no person on Publishing titles is named "Nobody"\. There are: Ann Writer/);
@@ -99,4 +99,43 @@ test("link_items is offered with CRM, and the prompt tells calendar meetings go 
   const sp = core.systemPrompt({ lang: "en", now: NOW, apps: ["CRM (crm)", "Stock (stock)"], creates: ["crm", "crm_followup"], partnerLinks: true });
   assert.match(sp, /link_items/);
   assert.match(sp, /Calendar events have no link to a customer/);
+});
+
+// CRM 1.9: Kanban cards, Notes pages, Layout and Atelier documents on a
+// partner's card (ix rows). An item may sit on several partners.
+test("link_items: cards, pages and documents go to the ix row, canonical, several partners, unlink, Undo", () => {
+  const refs = Object.assign({}, REFS, {
+    k1: { app: "kanban", target: { board: "b1", col: "todo", card: "card1" }, title: "Cover proofs" },
+    n1: { app: "notes", target: { page: "pg1", nb: "nb1" }, title: "Contract notes" },
+    l1: { app: "layout", target: { doc: "doc1" }, title: "Night Sea (pages)" },
+    a1: { app: "atelier", target: { doc: "des1" }, title: "Night Sea cover" }
+  });
+  const refOf = (r) => refs[r] || null;
+  const d0 = crmData();
+  const rs = L.resolve([{ customer: "r1", item: "k1" }, { customer: "r1", item: "n1" }, { customer: "r1", item: "l1" }, { customer: "r2", item: "k1" }, { customer: "r1", item: "a1" }], refOf, CANDS, C, d0);
+  assert.equal(rs.err, undefined, rs.err);
+  assert.deepEqual(L.plan(C, d0, rs.links).rows.map((r) => [r.k, r.same]), [["kb", false], ["nt", false], ["ly", false], ["kb", false], ["at", false]]);
+  const r = L.apply(C, d0, rs.links, NOW, {});
+  assert.deepEqual(r.done, [0, 1, 2, 3, 4]);
+  assert.equal(J(C.norm(clone(r.data))), J(r.data), "stored = CRM's norm()");
+  assert.deepEqual(C.itemsOf(r.data, { id: "c1aaaaaaaa" }).map((x) => x.k + ":" + x.r), ["at:des1", "kb:b1/todo/card1", "ly:doc1", "nt:pg1"]);
+  assert.equal(C.itemsOf(r.data, { id: "c2bbbbbbbb" }).length, 1, "the same card on a second partner");
+  assert.deepEqual(C.itemTarget(C.itemsOf(r.data, { id: "c1aaaaaaaa" })[1]), { app: "kanban", target: { board: "b1", col: "todo", card: "card1" } });
+  assert.deepEqual(r.data.pt, d0.pt, "pt rows untouched");
+  // the card in another column is the same item
+  const moved = Object.assign({}, refs, { k2: { app: "kanban", target: { board: "b1", col: "done", card: "card1" }, title: "Cover proofs" } });
+  const again = L.resolve([{ customer: "r1", item: "k2" }], (x) => moved[x] || null, CANDS, C, r.data);
+  assert.equal(L.plan(C, r.data, again.links).rows[0].same, true);
+  // unlink keeps the emptied row; a missing link is refused
+  const un = L.resolve([{ customer: "r2", item: "k1", unlink: true }], refOf, CANDS, C, r.data);
+  const r2 = L.apply(C, r.data, un.links, NOW + 10, {});
+  assert.deepEqual(r2.data.ix.find((x) => x.id === "c2bbbbbbbb"), { id: "c2bbbbbbbb", m: NOW + 10 });
+  assert.match(L.resolve([{ customer: "r2", item: "n1", unlink: true }], refOf, CANDS, C, r.data).err, /not linked to that Notes page/);
+  // Undo, only while unchanged
+  const u = L.undo(C, r.data, r.undo, NOW + 20);
+  assert.equal(u.ok, true, u.err);
+  assert.equal(C.itemsOf(u.data, { id: "c1aaaaaaaa" }).length, 0);
+  assert.match(L.undo(C, r2.data, r.undo, NOW + 30).err, /changed since/);
+  // other refs still refused
+  assert.match(L.resolve([{ customer: "r1", item: "r2" }], refOf, CANDS, C, d0).err, /item must be the ref/);
 });

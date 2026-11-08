@@ -57,10 +57,12 @@
     // Wave A2: CRM's history, follow-ups and deals (a customer's ref each)
     crm_activity: { key: "oros-crm-data", name: "CRM" },
     crm_followup: { key: "oros-crm-data", name: "CRM" },
-    crm_deal:     { key: "oros-crm-data", name: "CRM" }
+    crm_deal:     { key: "oros-crm-data", name: "CRM" },
+    // CRM-CTR (2026-11-08): a partner's contracts (crm/core.js normCtr)
+    crm_contract: { key: "oros-crm-data", name: "CRM" }
   };
-  var APP_IDS = ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_activity", "crm_followup", "crm_deal"];
-  var CRM_IDS = ["crm_activity", "crm_followup", "crm_deal"];
+  var APP_IDS = ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_activity", "crm_followup", "crm_deal", "crm_contract"];
+  var CRM_IDS = ["crm_activity", "crm_followup", "crm_deal", "crm_contract"];
   var MAX_ITEMS = 100;
   // The apps' own limits.
   var LIM = {
@@ -70,12 +72,13 @@
     ntTitle: 200, ntText: 100000,
     bmTitle: 256, bmNote: 1024, bmTags: 12, bmTag: 32,                   // bookmarks.js sanitizeItem
     kbText: 500, kbNote: 20000, kbSubs: 50, kbSub: 200,                  // kanban/tools.js MAX
-    actText: 2000, actWho: 80, fupText: 300, dealTitle: 120, dealNote: 2000, dealWhy: 200   // crm/core.js normAct / normFup / normDeal
+    actText: 2000, actWho: 80, fupText: 300, dealTitle: 120, dealNote: 2000, dealWhy: 200,  // crm/core.js normAct / normFup / normDeal
+    ctrTitle: 120, ctrNote: 2000                                         // crm/core.js normCtr
   };
   var ACT_KINDS = ["call", "mail", "meet", "msg", "note"];              // crm/core.js ACT_KINDS
   var DEAL_STAGES = ["new", "contact", "proposal", "nego", "won", "lost"];
   var CRM_VAL_MAX = 99999999999;
-  var CRM_LIMITS = { deals: 5000, acts: 20000, fups: 10000 };
+  var CRM_LIMITS = { deals: 5000, acts: 20000, fups: 10000, ctr: 5000 };
   var REMIND = [5, 15, 30, 60, 1440, 4320, 7200];                       // calendar.js REMIND_PRESETS
   var MAX_CENTS = 100000000000;                                         // budget.js MAX_CENTS
   var BUDGET_CATS = {
@@ -427,8 +430,41 @@
     o.why = r.v;
     return { o: o, key: o.customer + "|" + fold(o.title) };
   }
+  // CRM-CTR: title, date = start (signed), end_date = end, remind_days
+  // before the end (crm/core.js normCtr: 0-365, default 30), amount, note.
+  function normContract(x, w) {
+    var o = {}, e = crmRefs(x, w, o, false);
+    if (e) return { err: e };
+    var r = text1(x, "title", LIM.ctrTitle, w, "a contract's title");
+    if (r.err) return r;
+    if (!r.v) return { err: w + "title (what the contract is for) is required." };
+    o.title = r.v;
+    r = dateOf(x, "date", w);
+    if (r.err) return r;
+    o.from = r.v;
+    r = dateOf(x, "end_date", w);
+    if (r.err) return r;
+    o.to = r.v;
+    if (o.from && o.to && o.to < o.from) return { err: w + "end_date is before date." };
+    o.rem = 30;
+    if (has(x, "remind_days") && x.remind_days !== null && x.remind_days !== undefined && x.remind_days !== "") {
+      var rd = +x.remind_days;
+      if (!(rd >= 0 && rd <= 365) || Math.round(rd) !== rd) return { err: w + "remind_days must be a whole number 0-365." };
+      o.rem = rd;
+    }
+    o.val = 0;
+    if (has(x, "amount") && x.amount !== null && x.amount !== undefined && x.amount !== "") {
+      var a = typeof x.amount === "number" ? x.amount : (typeof x.amount === "string" && /^\s*\d+(\.\d+)?\s*$/.test(x.amount) ? parseFloat(x.amount) : NaN);
+      if (!(a >= 0) || !isFinite(a) || Math.round(a * 100) > CRM_VAL_MAX) return { err: w + "amount must be a number, e.g. 1500." };
+      o.val = Math.round(a * 100);
+    }
+    r = textN(x, "note", LIM.ctrNote, w, "a contract's note");
+    if (r.err) return r;
+    o.note = r.v;
+    return { o: o, key: o.customer + "|" + fold(o.title) + "|" + o.from };
+  }
   var NORM = { todo: normTodo, calendar: normCal, budget: normBudget, notes: normNotes, bookmarks: normBookmark, kanban: normKanban,
-               crm_activity: normAct, crm_followup: normFup, crm_deal: normDeal };
+               crm_activity: normAct, crm_followup: normFup, crm_deal: normDeal, crm_contract: normContract };
 
   // args = the model's create_items input → { ok, app, items } | { ok: false, err }
   function normItems(args, ctx) {
@@ -1088,7 +1124,7 @@
   // crm/core.js rows: whole-record LWW on m, tombs[id], lists sorted by
   // id; the result goes through CRM's own norm() (ctx.crm), as CRM's
   // commit does. A deal's value is in CRM's currency (prefs.cur).
-  var CRM_LIST = { crm_activity: "acts", crm_followup: "fups", crm_deal: "deals" };
+  var CRM_LIST = { crm_activity: "acts", crm_followup: "fups", crm_deal: "deals", crm_contract: "ctr" };
   function crmAlive(d, list, id) {
     var tombs = isObj(d.tombs) ? d.tombs : {};
     var hit = null;
@@ -1150,6 +1186,10 @@
         d.fups.forEach(function (f) {
           if (!x.dup && isObj(f) && f.cust === cu.id && !f.done && f.d === o.d && fold(f.text) === fold(o.text)) x.dup = { id: f.id, title: f.text, target: { fup: f.id } };
         });
+      } else if (appId === "crm_contract") {
+        (Array.isArray(d.ctr) ? d.ctr : []).forEach(function (c) {
+          if (!x.dup && isObj(c) && c.cust === cu.id && fold(c.t) === fold(o.title) && (c.from || "") === o.from && crmAlive(d, "ctr", c.id)) x.dup = { id: c.id, title: c.t, target: { ctr: c.id } };
+        });
       } else {
         var stage = "new", show = "new";
         if (o.stage) {
@@ -1199,6 +1239,14 @@
           if (x.deal) f.push(["deal", x.deal.title]);
           return { title: o.text, fields: f, dup: x.dup };
         }
+        if (appId === "crm_contract") {
+          if (o.from) f.push(["start", o.from]);
+          if (o.to) f.push(["end", o.to]);
+          if (o.to) f.push(["reminder", o.rem + "d"]);
+          if (o.val) f.push(["amount", money(o.val) + " " + cur]);
+          if (o.note) f.push(["note", preview(o.note, 200)]);
+          return { title: o.title, fields: f, dup: x.dup };
+        }
         f.push(["stage", x.stageShow]);
         if (o.val) f.push(["amount", money(o.val) + " " + cur]);
         if (o.close) f.push(["close", o.close]);
@@ -1223,7 +1271,8 @@
       var r = crmResolve(appId, d, items, ctx);
       if (r.err) return bad(r.err);
       var list = CRM_LIST[appId], taken = {}, made = [], undo = { app: appId, t: "new", items: [] };
-      ["cust", "deals", "acts", "fups"].forEach(function (k) { (Array.isArray(d[k]) ? d[k] : []).forEach(function (x) { if (isObj(x)) taken[x.id] = 1; }); });
+      if (!Array.isArray(d[list])) d[list] = [];
+      ["cust", "deals", "acts", "fups", "ctr"].forEach(function (k) { (Array.isArray(d[k]) ? d[k] : []).forEach(function (x) { if (isObj(x)) taken[x.id] = 1; }); });
       Object.keys(d.tombs).forEach(function (id) { taken[id] = 1; });
       items.forEach(function (o, i) {
         if (skip && skip[i]) return;
@@ -1238,6 +1287,14 @@
           if (o.t) row.t = o.t;
           if (x.deal) row.deal = x.deal.id;
           made.push({ i: i, id: id, title: o.text, target: { fup: id } });
+        } else if (appId === "crm_contract") {
+          row = { id: id, m: m, cust: x.cust.id, t: o.title };
+          if (o.from) row.from = o.from;
+          if (o.to) row.to = o.to;
+          row.rem = o.rem;
+          if (o.val) row.val = o.val;
+          if (o.note) row.note = o.note;
+          made.push({ i: i, id: id, title: o.title, target: { ctr: id } });
         } else {
           row = { id: id, m: m, cust: x.cust.id, title: o.title, val: o.val, stage: x.stage };
           if (o.prob !== null) row.prob = o.prob;

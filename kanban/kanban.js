@@ -5566,7 +5566,14 @@
 
     // colById/cardById κοιτούν πια στο currentBoard (= payload.board).
     // Αν δεν βρεθούν → openCardDialog επιστρέφει σιωπηλά.
-    openCardDialog(payload.col, payload.card);
+    // A link kept elsewhere (a CRM partner's card) may name the column
+    // the card was in then: find the column that holds it now.
+    var colId = payload.col;
+    if (!cardById(colById(colId), payload.card)) {
+      var cb = currentBoard();
+      (cb ? cb.columns : []).forEach(function (cl) { if (cardById(cl, payload.card)) colId = cl.id; });
+    }
+    openCardDialog(colId, payload.card);
   };
 
   // ---------- 10c. Shell deep link (__orosOpenAt / __orosTakeTarget) ----------
