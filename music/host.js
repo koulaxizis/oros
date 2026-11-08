@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Music — host.js (player + data owner, v1.2.0)
+// orOS Music — host.js (player + data owner, v1.3.0)
 // Runs in the SHELL window (loaded by index.html after core.js and
 // store.js, or injected by the app on first open), so the music,
 // the queue and sync keep going while the Music window is closed.
@@ -20,7 +20,9 @@
 //     the yearly listening stats "oros-music-stats" (recap, mixes);
 //   - Media Session (lock screen, headphones, media keys: play,
 //     pause, previous, next, seek);
-//   - the tray chip (play/pause) on the shell bar;
+//   - the tray chip on the shell bar and its control panel (MU-PANEL:
+//     the song, position, previous / play-pause / next, stop, open
+//     Music, volume and mute);
 //   - audio focus: Radio or Podcasts starting pauses the music, and
 //     music starting pauses them;
 //   - ListenBrainz listens with the person's own token (lb.js, loaded
@@ -44,13 +46,21 @@
       "host.full": "Storage is full: Music changes were not saved.",
       "host.sleep": "Sleep timer: the music stopped.",
       "host.broken": "These songs cannot play on this device.",
-      "host.pause": "Pause: {s}", "host.play": "Play: {s}"
+      "host.now": "Now playing: {s}", "host.paused": "Paused: {s}",
+      "host.panel": "Music controls", "host.prev": "Previous", "host.next": "Next",
+      "host.playBtn": "Play", "host.pauseBtn": "Pause", "host.stop": "Stop",
+      "host.open": "Open Music", "host.seek": "Position", "host.volume": "Volume",
+      "host.mute": "Mute", "host.unmute": "Unmute"
     },
     el: {
       "host.full": "Ο χώρος αποθήκευσης γέμισε: οι αλλαγές στη Μουσική δεν αποθηκεύτηκαν.",
       "host.sleep": "Χρονοδιακόπτης ύπνου: η μουσική σταμάτησε.",
       "host.broken": "Αυτά τα τραγούδια δεν παίζουν σε αυτή τη συσκευή.",
-      "host.pause": "Παύση: {s}", "host.play": "Αναπαραγωγή: {s}"
+      "host.now": "Παίζει τώρα: {s}", "host.paused": "Σε παύση: {s}",
+      "host.panel": "Χειρισμός μουσικής", "host.prev": "Προηγούμενο", "host.next": "Επόμενο",
+      "host.playBtn": "Αναπαραγωγή", "host.pauseBtn": "Παύση", "host.stop": "Διακοπή",
+      "host.open": "Άνοιγμα Μουσικής", "host.seek": "Θέση", "host.volume": "Ένταση",
+      "host.mute": "Σίγαση", "host.unmute": "Κατάργηση σίγασης"
     }
   };
   // orosI18n (../i18n.js, loaded by the shell): the full language
@@ -551,11 +561,13 @@
   }
   // A song that cannot play is skipped, like other players do; after
   // five in a row (or the whole list) it stops and says so.
+  // → true when it moves on (the notice then names the skipped song).
   function skipBroken() {
     fails++;
     var n = C.normQueue(local.q).ctx.length;
-    if (fails >= 5 || fails > n) { fails = 0; note(T("host.broken")); return; }
+    if (fails >= 5 || fails > n) { fails = 0; note(T("host.broken")); return false; }
     w.setTimeout(function () { advance(true, true); }, 600);
+    return true;
   }
   function play() {
     if (!cur) return Promise.resolve(false);
@@ -605,8 +617,9 @@
       });
       return;
     }
-    flags.error = kind; chip(); host.notify("error");
-    skipBroken();
+    flags.error = kind; chip();
+    var on = skipBroken();
+    host.notify("error", on ? { skip: String(item.t || "") } : null);
   }
   // Same public client id as open.js (Chris's, registered 2026-10-16).
   var JM_CLIENT = "e04c6e83";
@@ -835,13 +848,28 @@
     // Shown while a song plays, or pauses after it played here. The
     // song last session left comes back paused but shows no chip until
     // it plays again, so an idle bar carries no music icon.
-    if (!cur || !live || !bar) { if (el) el.remove(); return; }
+    if (!cur || !live || !bar) { if (el) el.remove(); popClose(); return; }
     if (!doc.getElementById("mu-host-css")) {
       var st = doc.createElement("style");
       st.id = "mu-host-css";
       st.textContent = "#mu-tray-chip{display:inline-flex;align-items:center;min-height:44px;background:transparent;" +
         "border:none;color:var(--text-dim);padding:0 10px;cursor:pointer}#mu-tray-chip[data-state=on]{color:var(--accent)}" +
-        "#mu-tray-chip[data-state=err]{color:var(--danger)}";
+        "#mu-tray-chip[data-state=err]{color:var(--danger)}" +
+        "#mu-tray-pop{position:fixed;top:calc(48px + env(safe-area-inset-top,0px));right:8px;z-index:1460;" +
+        "width:300px;max-width:calc(100vw - 16px);box-sizing:border-box;background:var(--panel-bg);color:var(--text);" +
+        "border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px var(--shadow);padding:12px;" +
+        "display:flex;flex-direction:column;gap:10px}" +
+        "#mu-tray-pop .mu-p-t{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
+        "#mu-tray-pop .mu-p-a{font-size:12px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}" +
+        "#mu-tray-pop .mu-p-row{display:flex;align-items:center;gap:6px}" +
+        "#mu-tray-pop .mu-p-row.c{justify-content:space-between}" +
+        "#mu-tray-pop .mu-p-tm{font-size:11px;color:var(--text-dim);min-width:36px;font-variant-numeric:tabular-nums}" +
+        "#mu-tray-pop .mu-p-tm.r{text-align:right}" +
+        "#mu-tray-pop input[type=range]{flex:1;min-width:0;accent-color:var(--accent);cursor:pointer;margin:0;height:32px}" +
+        "#mu-tray-pop button{min-width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;" +
+        "border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--text);cursor:pointer;padding:0}" +
+        "#mu-tray-pop button.pp{background:var(--accent);color:var(--accent-ink,#fff);border-color:var(--accent)}" +
+        "#mu-tray-pop button:disabled{opacity:.4;cursor:default}";
       doc.head.appendChild(st);
     }
     if (!el) {
@@ -849,14 +877,181 @@
       el.id = "mu-tray-chip";
       el.type = "button";
       el.innerHTML = ICON;                    // constant markup, no data in it
-      el.addEventListener("click", function (e) { e.stopPropagation(); if (audio.paused) play(); else pause(); });
+      el.setAttribute("aria-haspopup", "true");
+      el.setAttribute("aria-expanded", "false");
+      // MU-PANEL: a tap opens the control panel (play/pause is inside).
+      el.addEventListener("click", function (e) { e.stopPropagation(); popToggle(); });
       bar.insertBefore(el, doc.getElementById("pc-tray-chip") || doc.getElementById("rx-tray-chip") || doc.getElementById("btn-lang"));
     }
     var on = !audio.paused, err = !!flags.error;
-    var title = T(on ? "host.pause" : "host.play", { s: (cur.t || "") + (cur.a ? " · " + cur.a : "") });
+    var title = T(on ? "host.now" : "host.paused", { s: (cur.t || "") + (cur.a ? " · " + cur.a : "") });
     el.setAttribute("data-state", err ? "err" : on ? "on" : "off");
     el.title = title;                         // property: plain text, safe
     el.setAttribute("aria-label", title);
+    popPaint();
+  }
+
+  // ---------- Tray panel (MU-PANEL) ----------
+  // The chip opens a small panel under the bar: the song, its position,
+  // previous / play-pause / next, stop, open Music, volume and mute.
+  // Every control calls the same functions as the app and the lock
+  // screen, so nothing new is stored: the volume is local.vol, a mute
+  // keeps the volume it had in memory to come back to. While the panel
+  // is open it repaints twice a second (decks swap on crossfades, so it
+  // reads the state rather than listening to one audio element).
+  var POP_ID = "mu-tray-pop";
+  var popTimer = 0, popWired = false, muteFrom = 0;
+  var SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  var IC = {
+    prev: SVG + '<polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>',
+    next: SVG + '<polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>',
+    play: SVG + '<polygon points="6 4 20 12 6 20 6 4"/></svg>',
+    pause: SVG + '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+    stop: SVG + '<rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+    open: SVG + '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/>' +
+      '<line x1="10" y1="14" x2="21" y2="3"/></svg>',
+    vol: SVG + '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>' +
+      '<path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
+    mute: SVG + '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/>' +
+      '<line x1="17" y1="9" x2="23" y2="15"/></svg>'
+  };
+  function popEl() { return doc.getElementById(POP_ID); }
+  function popClose() {
+    var p = popEl();
+    if (p) p.remove();
+    if (popTimer) { w.clearInterval(popTimer); popTimer = 0; }
+    var c = doc.getElementById("mu-tray-chip");
+    if (c) c.setAttribute("aria-expanded", "false");
+  }
+  function popWire() {
+    if (popWired) return;
+    popWired = true;
+    doc.addEventListener("click", function (e) {
+      var p = popEl();
+      if (!p || p.contains(e.target)) return;
+      var c = doc.getElementById("mu-tray-chip");
+      if (c && c.contains(e.target)) return;
+      popClose();
+    });
+    doc.addEventListener("keydown", function (e) { if (e.key === "Escape" && popEl()) popClose(); });
+    // A tap inside an app frame never reaches this document: the shell
+    // window losing focus to it closes the panel instead.
+    w.addEventListener("blur", function () {
+      w.setTimeout(function () { var a = doc.activeElement; if (a && a.tagName === "IFRAME") popClose(); }, 0);
+    });
+  }
+  function popBtn(cls, fn) {
+    var b = doc.createElement("button");
+    b.type = "button";
+    b.className = cls;
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function popToggle() {
+    if (popEl()) { popClose(); return; }
+    if (!cur) return;
+    popWire();
+    var p = doc.createElement("div");
+    p.id = POP_ID;
+    p.setAttribute("role", "dialog");
+    p.setAttribute("aria-label", T("host.panel"));
+    // Clicks inside stay inside (the buttons repaint their own icons).
+    p.addEventListener("click", function (e) { e.stopPropagation(); });
+
+    var head = doc.createElement("div");
+    var t = doc.createElement("div"); t.className = "mu-p-t";
+    var a = doc.createElement("div"); a.className = "mu-p-a";
+    head.appendChild(t); head.appendChild(a);
+    p.appendChild(head);
+
+    var sr = doc.createElement("div"); sr.className = "mu-p-row";
+    var at = doc.createElement("span"); at.className = "mu-p-tm";
+    var sk = doc.createElement("input");
+    sk.type = "range"; sk.min = "0"; sk.step = "1"; sk.className = "mu-p-seek";
+    sk.setAttribute("aria-label", T("host.seek"));
+    var dt = doc.createElement("span"); dt.className = "mu-p-tm r";
+    sk.addEventListener("input", function () { at.textContent = C.fmtTime(+sk.value); });
+    sk.addEventListener("change", function () { seekTo(+sk.value); popPaint(); });
+    sr.appendChild(at); sr.appendChild(sk); sr.appendChild(dt);
+    p.appendChild(sr);
+
+    var cr = doc.createElement("div"); cr.className = "mu-p-row c";
+    cr.appendChild(popBtn("prv", function () { prev(); popPaint(); }));
+    cr.appendChild(popBtn("pp", function () { if (!cur) return; if (audio.paused) play(); else pause(); popPaint(); }));
+    cr.appendChild(popBtn("nxt", function () { if (cur || C.normQueue(local.q).ctx.length) advance(true); popPaint(); }));
+    cr.appendChild(popBtn("stp", function () { popClose(); stop(); }));
+    cr.appendChild(popBtn("opn", function () {
+      popClose();
+      if (typeof w.__orosOpenApp === "function") { try { w.__orosOpenApp("music"); } catch (e) {} }
+    }));
+    p.appendChild(cr);
+
+    var vr = doc.createElement("div"); vr.className = "mu-p-row";
+    vr.appendChild(popBtn("mut", function () {
+      if (local.vol > 0) { muteFrom = local.vol; host.api.setVolume(0); }
+      else host.api.setVolume(muteFrom > 0 ? muteFrom : 1);
+      popPaint();
+    }));
+    var vo = doc.createElement("input");
+    vo.type = "range"; vo.min = "0"; vo.max = "100"; vo.step = "1"; vo.className = "mu-p-vol";
+    vo.setAttribute("aria-label", T("host.volume"));
+    var pc = doc.createElement("span"); pc.className = "mu-p-tm r";
+    vo.addEventListener("input", function () {
+      var v = Math.max(0, Math.min(100, parseInt(vo.value, 10) || 0));
+      host.api.setVolume(v / 100);
+      pc.textContent = v + "%";
+      popPaint();
+    });
+    vr.appendChild(vo); vr.appendChild(pc);
+    p.appendChild(vr);
+
+    doc.body.appendChild(p);
+    var c = doc.getElementById("mu-tray-chip");
+    if (c) c.setAttribute("aria-expanded", "true");
+    popPaint();
+    popTimer = w.setInterval(popPaint, 500);
+  }
+  // Labels go in through textContent / title / aria-label only.
+  function setTip(b, ic, tip) {
+    if (b.getAttribute("data-ic") !== ic) {
+      b.innerHTML = IC[ic];                   // constant icon markup
+      b.setAttribute("data-ic", ic);
+    }
+    if (b.title !== tip) { b.title = tip; b.setAttribute("aria-label", tip); }
+  }
+  function popPaint() {
+    var p = popEl();
+    if (!p) return;
+    if (!cur) { popClose(); return; }
+    var q = C.normQueue(local.q);
+    var t = p.querySelector(".mu-p-t"), a = p.querySelector(".mu-p-a");
+    var tt = cur.t || "", aa = [cur.a, cur.al].filter(Boolean).join(" · ");
+    if (t.textContent !== tt) t.textContent = tt;
+    if (a.textContent !== aa) a.textContent = aa;
+    var pos = audio.currentTime || 0;
+    var dur = isFinite(audio.duration) && audio.duration ? audio.duration : (cur.d || 0);
+    var sk = p.querySelector(".mu-p-seek"), tms = p.querySelectorAll(".mu-p-tm");
+    sk.disabled = !dur;
+    sk.max = String(Math.max(1, Math.floor(dur)));
+    if (doc.activeElement !== sk) {
+      sk.value = String(Math.floor(Math.min(pos, dur || pos)));
+      tms[0].textContent = C.fmtTime(pos);
+    }
+    tms[1].textContent = dur ? C.fmtTime(dur) : "";
+    var paused = audio.paused;
+    setTip(p.querySelector(".prv"), "prev", T("host.prev"));
+    setTip(p.querySelector(".pp"), paused ? "play" : "pause", T(paused ? "host.playBtn" : "host.pauseBtn"));
+    var nx = p.querySelector(".nxt");
+    setTip(nx, "next", T("host.next"));
+    nx.disabled = !(q.up.length || q.at + 1 < q.ctx.length || q.rep !== "off");
+    setTip(p.querySelector(".stp"), "stop", T("host.stop"));
+    setTip(p.querySelector(".opn"), "open", T("host.open"));
+    var muted = !(local.vol > 0);
+    setTip(p.querySelector(".mut"), muted ? "mute" : "vol", T(muted ? "host.unmute" : "host.mute"));
+    var vo = p.querySelector(".mu-p-vol"), v = Math.round((local.vol || 0) * 100);
+    if (doc.activeElement !== vo && +vo.value !== v) vo.value = String(v);
+    tms[2].textContent = v + "%";
   }
 
   // ---------- Notices ----------

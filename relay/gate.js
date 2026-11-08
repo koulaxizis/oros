@@ -24,7 +24,7 @@
 //   POST /mcp             JSON-RPC 2.0, Bearer access token
 // From orOS only (allowed origins, CORS):
 //   POST /gate/dev        { act:"new"|"code"|"pair"|"invite"|"revoke"|"info"|"del", id, tok, … }
-//                         | { act:"join", jc, th }  (another device of the same person, 5.70.00)
+//                         | { act:"join", jc, th }  (another device of the same person, 5.71.00)
 //   (also from LOCAL_ORIGINS: the installed orOS, orOS Portable / USB)
 //   GET  /gate/ws/<id>    WebSocket, subprotocols ["gt1", "t.<tok>"]
 // Tokens: "<id>.<43 base64url>"; the box keeps only their SHA-256.
@@ -43,7 +43,7 @@ export const GATE_LIMITS = {
   perIpMin: 120,                 // public routes per client IP per minute (per isolate)
   pairMs: 10 * 60000,            // a pairing code waits this long
   pairTries: 5,                  // wrong pairing codes per gate per 10 minutes
-  devices: 5                     // devices that answer for one gate (5.70.00)
+  devices: 5                     // devices that answer for one gate (5.71.00)
 };
 
 // orOS that runs on the person's own computer (orOS Portable, the
@@ -568,7 +568,7 @@ function pairHtml(pc, k, web, base) {
 function stub(env, id) { return env.GATE.get(env.GATE.idFromName(id)); }
 function randPairBox() { return randPair(); }
 
-// The devices of a gate: [{ th, at }] (a gate made before 5.70.00 keeps
+// The devices of a gate: [{ th, at }] (a gate made before 5.71.00 keeps
 // its one device as meta.th).
 export function devList(m) {
   if (!m) return [];

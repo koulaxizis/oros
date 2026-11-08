@@ -38,7 +38,7 @@
     "wordsearch", "solitaire", "mahjong", "jigsaw", "spot", "hexagon", "slider", "lightsout",
     "memory", "hangman", "mastermind", "g2048", "tetris", "snake", "breakout", "bubble",
     "simon", "whack", "pong", "chess", "checkers", "reversi", "gomoku", "connect4", "dots",
-    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt"];
+    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt", "wayfarers"];
   // The "All games" section (Chris 2026-10-22): every game once, by
   // kind, in the order each group shows them.
   var GROUPS = [
@@ -50,7 +50,7 @@
       "dots", "tictactoe", "mancala", "battleship", "rps"] },
     { id: "arcade", games: ["tetris", "snake", "breakout", "bubble", "pong", "simon", "whack"] },
     { id: "strategy", games: ["realm", "banner"] },
-    { id: "rpg", games: ["crypt"] }
+    { id: "rpg", games: ["crypt", "wayfarers"] }
   ];
   var WORDLE_LOST = 7;
   var SOL_VARIANTS = { k: ["k1c", "k1n", "k3c", "k3n"], f: ["f"], s: ["s1", "s2", "s4"], p: ["p"] };
@@ -360,6 +360,16 @@
         if (k === "r" && nat(v[1])) X.hard = true;
       });
       dailyPart(d, S, X, today, "crypt");
+    },
+    // Wayfarers: "<diff>" (g Gentle, h Hardy) → [journeys, won, regions
+    // cleared]; a Hardy win counts as a win on the hardest level
+    wayfarers: function (d, S, X) {
+      S.w = 0;
+      eachCell(d, function (k, v) {
+        if (!Array.isArray(v) || v.length < 3) return;
+        S.p += nat(v[0]); S.w += nat(v[1]);
+        if (k === "h" && nat(v[1])) X.hard = true;
+      });
     },
     xeri: function (d, S, X) {
       S.w = 0;

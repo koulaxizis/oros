@@ -86,6 +86,7 @@
       "toast.saved": "{n} songs added.", "toast.saved1": "1 song added.", "toast.skip": "{n} files were not music and were left out.",
       "toast.deleted": "Deleted.", "toast.err": "Something went wrong ({c}).", "toast.noFs": "The orOS disk is not available here.",
       "toast.cant": "This song cannot play here.",
+      "toast.skipped": "“{t}” cannot play here, so the next song is playing.",
       "scan.busy": "Reading your music… {d} of {n}", "scan.done": "Library up to date.",
       "s.title": "Music settings", "s.rescan": "Read the music folder again", "s.rescanHint": "Use it after you add or change files in Files › Music.",
       "s.legacy": "Old tags (ID3v1, Latin-1)", "s.legacyAuto": "Recognise Greek automatically", "s.legacyEl": "Always Greek (Windows-1253)",
@@ -253,6 +254,7 @@
       "toast.saved": "Προστέθηκαν {n} τραγούδια.", "toast.saved1": "Προστέθηκε 1 τραγούδι.", "toast.skip": "{n} αρχεία δεν ήταν μουσική και αφέθηκαν έξω.",
       "toast.deleted": "Διαγράφηκε.", "toast.err": "Κάτι πήγε στραβά ({c}).", "toast.noFs": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.",
       "toast.cant": "Αυτό το τραγούδι δεν παίζει εδώ.",
+      "toast.skipped": "Το «{t}» δεν παίζει εδώ, γι’ αυτό παίζει το επόμενο τραγούδι.",
       "scan.busy": "Διαβάζω τη μουσική σου… {d} από {n}", "scan.done": "Η βιβλιοθήκη είναι ενημερωμένη.",
       "s.title": "Ρυθμίσεις Μουσικής", "s.rescan": "Ξαναδιάβασε τον φάκελο μουσικής", "s.rescanHint": "Χρησιμοποίησέ το αφού προσθέσεις ή αλλάξεις αρχεία στα Αρχεία › Music.",
       "s.legacy": "Παλιές ετικέτες (ID3v1, Latin-1)", "s.legacyAuto": "Αυτόματη αναγνώριση ελληνικών", "s.legacyEl": "Πάντα ελληνικά (Windows-1253)",
@@ -3772,7 +3774,7 @@
     wireDrop();
   }
   var paintTimer = null;
-  function onHost(ev) {
+  function onHost(ev, arg) {
     if ((ev === "play" || ev === "load") && castCtl) castFollow();
     if (ev === "time") {
       if (paintTimer) return;
@@ -3781,7 +3783,7 @@
     }
     if (ev === "data") { renderKeepScroll(); return; }
     if (ev === "index") { loadIndex().then(renderKeepScroll); return; }
-    if (ev === "error") { var st = H.getState(); if (st.error && st.error !== "NotAllowedError") showToast(t("toast.cant")); }
+    if (ev === "error") { var st = H.getState(); if (st.error && st.error !== "NotAllowedError") showToast(arg && arg.skip ? t("toast.skipped", { t: arg.skip }) : t("toast.cant")); }
     paintPlayer();
     paintPlaying();
     var full = $("mu-full");
