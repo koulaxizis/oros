@@ -1189,6 +1189,14 @@
       "type": "internal"
     },
     {
+      "id": "fieldwarden",
+      "name": "Fieldwarden",
+      "category": "Games",
+      "icon": "fieldwarden",
+      "url": "fieldwarden/",
+      "type": "internal"
+    },
+    {
       "id": "wayfarers",
       "name": "Wayfarers",
       "category": "Games",

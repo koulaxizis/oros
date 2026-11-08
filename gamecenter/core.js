@@ -38,7 +38,7 @@
     "wordsearch", "solitaire", "mahjong", "jigsaw", "spot", "hexagon", "slider", "lightsout",
     "memory", "hangman", "mastermind", "g2048", "tetris", "snake", "breakout", "bubble",
     "simon", "whack", "pong", "chess", "checkers", "reversi", "gomoku", "connect4", "dots",
-    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt", "wayfarers"];
+    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt", "wayfarers", "fieldwarden"];
   // The "All games" section (Chris 2026-10-22): every game once, by
   // kind, in the order each group shows them.
   var GROUPS = [
@@ -49,7 +49,7 @@
     { id: "board", games: ["chess", "checkers", "backgammon", "reversi", "gomoku", "connect4",
       "dots", "tictactoe", "mancala", "battleship", "rps"] },
     { id: "arcade", games: ["tetris", "snake", "breakout", "bubble", "pong", "simon", "whack"] },
-    { id: "strategy", games: ["realm", "banner"] },
+    { id: "strategy", games: ["realm", "banner", "fieldwarden"] },
     { id: "rpg", games: ["crypt", "wayfarers"] }
   ];
   var WORDLE_LOST = 7;
@@ -374,6 +374,17 @@
         if (k === "h" && nat(v[1])) X.hard = true;
       });
       dailyPart(d, S, X, today, "wayfarers");
+    },
+    // Fieldwarden: "<diff>" (m Mild, h Harsh) → [years, finished, most
+    // seasons won]; a Harsh year finished counts as a win on the
+    // hardest level
+    fieldwarden: function (d, S, X) {
+      S.w = 0;
+      eachCell(d, function (k, v) {
+        if (!Array.isArray(v) || v.length < 3) return;
+        S.p += nat(v[0]); S.w += nat(v[1]);
+        if (k === "h" && nat(v[1])) X.hard = true;
+      });
     },
     xeri: function (d, S, X) {
       S.w = 0;
