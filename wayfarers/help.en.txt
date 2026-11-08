@@ -1,0 +1,80 @@
+# Wayfarers
+Wayfarers is a turn-based party RPG. Pick three heroes from six classes and lead them across the land: choose your road at every fork, fight what you meet, rest at camps, trade at markets, and break the guardian at the end of the road. The heart of the game is how the three heroes work together.
+
+## How to play
+The journey starts on the left of the path map and ends with the region's guardian on the right. Tap a lit stop (or use the arrow keys and [[Enter]]) to go there. Roads only lead on, never back, so each fork is a choice:
+- **Fight** and **Hard fight**: a fight. A hard fight is tougher and leaves spoils: a choice of two pieces of gear.
+- **Camp**: fallen heroes get up again. Then rest (every hero heals 50 %) or train one hero (+1 Power for good).
+- **Market**: buy gear, potions, tonics and phoenix feathers with gold.
+- **Event**: a short scene with two or three choices.
+- **Guardian**: the end of the region. The Briar King guards the Greenway.
+
+The heroes share their experience. Every level lets each hero choose one of two upgrades: more Health, Power, Guard, Speed or Focus, or a stronger skill.
+
+## Fights
+Everyone acts in Speed order, fastest first; a new round reads the Speeds again. The row of portraits at the top shows who acts now and in the next round.
+
+Each foe shows its next move above it: the kind of move, how hard it will hit, and the hero it will hit (that hero's sign). Answer what you see coming: guard, heal, stun it first, or take the hit.
+
+On a hero's turn choose an action at the bottom, then tap a lit target:
+- `Attack`: hit one foe for Power × 1.
+- The hero's skills cost Focus. A hero has 2 Focus at the start of a fight and gets 1 more at the start of each of its turns.
+- `Guard`: half damage until the hero's next turn, and 1 more Focus.
+- `Item`: a potion (heals 40 %), a tonic (3 Focus) or a phoenix feather (a fallen hero stands with half Health). It takes the turn.
+
+A skill with no target (a song, Taunt, Hide, Volley) needs a second tap to use. Tap the chosen action again, or press [[Esc]], to choose another. A long press on a foe or a hero shows its numbers, statuses and next move; a tap does the same when no action is chosen.
+
+Damage is Power × the skill's factor, minus the target's Guard, and at least 1. Guarding halves it. There are no dice and no misses: chance decides only the map, the foes and the spoils, and it all comes from the journey code.
+
+## The classes
+- **Knight** (front row): `Shield bash` hits and stuns (the foe loses its next turn and its shown move); `Cover` makes hits on an ally land on the Knight; `Taunt` turns every single hit on the Knight.
+- **Ranger** (back row): `Mark` makes a foe take 1.5 × from the party for 2 turns; `Pierce` goes through Guard; `Volley` hits every foe.
+- **Mage** (back row): `Fire` burns for 3 turns; `Frost` chills for 2 turns (3 less Speed); `Storm` hits a Wet or Chilled foe twice as hard.
+- **Cleric** (back row): `Heal`; `Cleanse` ends Burn, Stun and Chill; `Raise` gets a fallen hero up with 30 % Health, once a fight.
+- **Rogue** (front row): `Twin strike` hits twice; `Hide` keeps every foe off the Rogue until its next turn and makes its next hit 1.5 ×. Always: double damage to a Marked or Stunned foe.
+- **Bard** (back row): `Anthem` gives the party 2 more Power and `Tempo` 3 more Speed, for 2 turns; `Gift` gives an ally 3 Focus.
+
+Foes that hit the front row hit the Knight and the Rogue first; archers aim at the back row.
+
+## Combos
+- Mark (Ranger) or Stun (Knight), then the Rogue: double damage.
+- Frost (Mage), then Storm: twice as hard. River foes are always Wet, so Storm hits them hard straight away.
+- Stun a foe that shows a big hit, and the hit never comes.
+- Taunt or Cover with the Knight while the Cleric heals.
+- Anthem before the heavy hitters act; Tempo to act before the foes.
+
+## Foes of the Greenway
+- **Thornling:** hits the weakest hero.
+- **Grey wolf:** fast; bites the weakest, then howls (every foe +1 Power for 2 turns).
+- **Boar:** slow; every second turn it charges the front row for 1.8 ×.
+- **River sprite:** always Wet; mends a hurt foe, else hits.
+- **Bandit archer:** shoots the back row.
+- **Mossback:** always Wet; its shell halves the damage until its next turn.
+- **Thorn witch:** Briar is a hit that burns; then it mends a foe.
+- **Bandit captain:** hits, rallies the band (+2 Power), then sweeps every hero.
+- **Briar King:** the guardian. At two thirds of its Health it calls two thornlings, and at one third it rages (+2 Power) and charges.
+
+## Gear and the party
+`Party` (or [[P]]) shows every hero: Health, Power, Guard, Speed, Focus, skills, upgrades and gear. Each hero has a weapon and a charm. Between fights, give a piece from the bag to a hero or take one off, and use potions and phoenix feathers. The bag holds 8 pieces.
+
+## Difficulty and journeys
+`New journey (N)` asks for the difficulty and the party:
+- `Gentle`: 20 % more Health, fallen heroes stand up after every fight won, and a phoenix feather to start.
+- `Hardy`: fallen heroes stand up only at a camp.
+
+In both, if all three heroes fall, the journey ends. Every journey has a code, shown in the result window and in `Records`. Type a code in `New journey` to walk the same land again; leave it empty for a new one.
+
+## Records and sync
+`Records` shows your journeys, wins and regions cleared for each difficulty, and the wins of each class. They sync between your devices through [orOS sync](help:t/sync), adding up the journeys from every device, and they count in the [Game Center](help:a/gamecenter). The journey in progress, your last party and the sound setting stay on this device, and an unfinished journey continues where you left it. A journey left for a new one counts as lost. `Reset records` clears the records on every device.
+
+## Keyboard
+- Map: arrow keys choose a stop, [[Enter]] goes there.
+- Fight: [[1]] to [[6]] choose an action, the arrow keys choose a target, [[Enter]] acts, [[Esc]] goes back.
+- [[P]]: party. [[N]]: new journey.
+- The double arrow in the toolbar turns quick moves on: the foes' moves play faster.
+
+## Tips
+- Read the foes' moves before you act: the number is the damage it will do now.
+- A Cleric and a Knight keep a party standing; a Ranger and a Rogue end fights fast.
+- Rest when the party is hurt; train when it is not.
+- Hard fights pay in gear: take one when the party is strong.

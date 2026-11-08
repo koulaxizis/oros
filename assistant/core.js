@@ -928,7 +928,7 @@
   // Jina Reader (r.jina.ai, free, returns the page as text).
   var WIKI_PAGE = /^https:\/\/([a-z]{2,3})(?:\.m)?\.wikipedia\.org\/wiki\/([^?#]+)/i;
   function pageReq(url) {
-    var u = webUrl(url);
+    var u = pageUrl(url);
     if (!u) return { err: "not a web address." };
     var w = WIKI_PAGE.exec(u);
     if (w) {
@@ -988,18 +988,38 @@
   // The addresses read_page may open: what searches returned (orOS's
   // own or Claude's), what the user wrote, and every page of a site the
   // user wrote (same site, with or without www.).
+  // A page address as the model wrote it → an http(s) address, or "".
+  // A bare "glarolykoi.net/shop" gets https:// (models often leave it
+  // out); anything else that isn't a web address stays "" (TV-PAGE).
+  function pageUrl(url) {
+    var s = line(url, 2048);
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(s) && /^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}([\/?#]|$)/i.test(s)) s = "https://" + s;
+    return webUrl(s);
+  }
+  // The same page however it is written: http or https, with or without
+  // www., a trailing slash, a #part, %-escapes in any case or decoded.
+  function pageKey(u) {
+    try {
+      var x = new URL(u), path = x.pathname, q = x.search;
+      try { path = decodeURIComponent(path); } catch (e) {}
+      try { q = decodeURIComponent(q); } catch (e) {}
+      if (path.length > 1) path = path.replace(/\/+$/, "");
+      return x.hostname.toLowerCase().replace(/^www\./, "") + (path === "/" ? "" : path) + q;
+    } catch (e) { return ""; }
+  }
   function pageAllowed(msgs, url) {
-    var u = webUrl(url);
+    var u = pageUrl(url);
     if (!u) return false;
-    var ok = false, site = siteOf(u);
+    var ok = false, site = siteOf(u), key = pageKey(u);
+    function same(v) { var w = webUrl(v); return !!w && (w === u || pageKey(w) === key); }
     (Array.isArray(msgs) ? msgs : []).forEach(function (m) {
       if (ok || !isObj(m)) return;
       if (m.r === "user" && typeof m.text === "string" && (m.text.indexOf(u) >= 0 || userNamesSite(m.text, site))) ok = true;
-      if (m.r === "asst" && m.raw) webSources(m.raw).sources.forEach(function (x) { if (x.url === u) ok = true; });
+      if (m.r === "asst" && m.raw) webSources(m.raw).sources.forEach(function (x) { if (same(x.url)) ok = true; });
       if (m.r === "tool" && Array.isArray(m.results)) {
         m.results.forEach(function (r) {
           if (r && isObj(r.ui) && r.ui.k === "web" && Array.isArray(r.ui.sources)) {
-            r.ui.sources.forEach(function (x) { if (x && x.url === u) ok = true; });
+            r.ui.sources.forEach(function (x) { if (x && same(x.url)) ok = true; });
           }
         });
       }
@@ -4432,7 +4452,7 @@
     ATT_TEXT: ATT_TEXT, ATT_TEXT_DOC: ATT_TEXT_DOC, attLimit: attLimit, attCaps: attCaps, attKind: attKind, normAtt: normAtt, checkAtt: checkAtt,
     WEB_USES: WEB_USES, webCan: webCan, webTool: webTool, webSources: webSources,
     KEY_IDS: KEY_IDS, SEARCH_IDS: SEARCH_IDS, SEARCH_N: SEARCH_N, PAGE_MAX: PAGE_MAX, webAny: webAny, webSrc: webSrc,
-    searchReq: searchReq, searchParse: searchParse, pageReq: pageReq, pageParse: pageParse, pagePart: pagePart, PAGE_PARTS: PAGE_PARTS, siteOf: siteOf, pageAllowed: pageAllowed, webResult: webResult,
+    searchReq: searchReq, searchParse: searchParse, pageReq: pageReq, pageParse: pageParse, pagePart: pagePart, PAGE_PARTS: PAGE_PARTS, siteOf: siteOf, pageAllowed: pageAllowed, pageUrl: pageUrl, pageKey: pageKey, webResult: webResult,
     BRIEF_MAX: BRIEF_MAX, briefPlan: briefPlan, briefKeep: briefKeep, briefText: briefText,
 normEdit: normEdit, normReadApp: normReadApp, editTool: editTool, readAppTool: readAppTool, EDIT_APP: EDIT_APP,
         normAutomation: normAutomation, normRule: normRule, TOOL_RULE: TOOL_RULE, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,

@@ -14,7 +14,7 @@ The tabs:
 ## Listen
 Tap a song to play it, with the rest of its album or list after it. The big play button plays a whole album, artist, playlist or genre, and `Shuffle` plays it in random order.
 
-The player bar at the bottom shows the song, a heart and play/pause and next. Tap the song's name for the full player: position, `Previous`, `Next`, `Shuffle`, `Repeat` (all, then one), volume and `Queue`. Your device's media controls (lock screen, headset, media keys) work too. Radio and Podcasts pause when music starts, and the other way round.
+The player bar at the bottom shows the song, a heart and play/pause and next. Tap the song's name for the full player: position, `Previous`, `Next`, `Shuffle`, `Repeat` (all, then one), volume and `Queue`. Your device's media controls (lock screen, headset, media keys) work too. While a song plays, a music note shows on the orOS top bar, also with the Music window closed: tap it for a small control panel with the song, its position, `Previous`, play/pause, `Next`, `Stop`, `Open Music`, volume and `Mute`. Tap outside it or press Esc to close it. Radio and Podcasts pause when music starts, and the other way round.
 
 ## Queue
 `Queue` in the full player shows `Now playing`, `Next up` (songs you added by hand) and what follows from the list you started. Tap a song there to jump to it, or press × to take it out of `Next up`. The ⋯ button on any song offers `Play next` and `Add to queue`.
@@ -29,7 +29,7 @@ A song's ⋯ menu has `Details` (file, format, size, length) and `Delete from th
 
 ## Free music
 Besides your own songs, Music plays free and legal music from four open catalogues, with no account:
-- **Jamendo**: independent artists who share their music under Creative Commons. Popular this week, new albums, all-time favourites, moods and Jamendo's own radios. Jamendo songs always stream (Jamendo does not allow offline copies), and each one links back to its page on Jamendo. If a stream stops (the connection dropped, or the song's address went stale), Music asks for it again and goes on from where it stopped; without a network it waits and goes on when the network is back. Only a song that still cannot play is skipped, with the notice "This song cannot play here." Tap an artist's name (also in the full player) for the artist's page: on Jamendo it has every album, newest first, and every song, most played first.
+- **Jamendo**: independent artists who share their music under Creative Commons. Popular this week, new albums, all-time favourites, moods and Jamendo's own radios. Jamendo songs always stream (Jamendo does not allow offline copies), and each one links back to its page on Jamendo. If a stream stops (the connection dropped, or the song's address went stale), Music asks for it again and goes on from where it stopped; without a network it waits and goes on when the network is back. Only a song that still cannot play is skipped: the next song starts at once, and a notice names the song that was skipped. Tap an artist's name (also in the full player) for the artist's page: on Jamendo it has every album, newest first, and every song, most played first.
 - **Internet Archive**: netlabel albums, classical recordings and the Live Music Archive (concert tapes of bands that allow free, non-commercial sharing). Only items with a Creative Commons or public-domain licence are shown.
 - **Openverse**: songs with Creative Commons or public-domain licences from Wikimedia Commons, Freesound, Jamendo and more.
 - **ccMixter**: Creative Commons remixes, instrumentals and a cappellas.

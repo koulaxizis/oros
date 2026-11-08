@@ -158,3 +158,47 @@ test("websearch: the result the model reads, and the system prompt", () => {
   assert.ok(!/costs the user money/.test(p));
   assert.match(C.systemPrompt(Object.assign({ web: "native" }, base)), /costs the user money/);
 });
+
+// TV-PAGE (Chris 2026-11-07, "Tavily search keeps returning errors"): a
+// page a Tavily search returned was refused when the model wrote its
+// address slightly differently, and the chat said only "The search did
+// not work". The same page now matches however it is written; other
+// pages, queries and sites stay closed.
+test("websearch TV-PAGE: a found page matches however the model writes it", () => {
+  const sources = [
+    { url: "https://glarolykoi.net/product/%CF%84%CE%BF-%CE%BA%CE%BF%CF%81%CE%AF%CF%84%CF%83%CE%B9/", title: "Το Κορίτσι" },
+    { url: "https://glarolykoi.net/shop/", title: "Shop" },
+    { url: "https://www.threads.net/@glarolykoi", title: "Threads" }
+  ];
+  const msgs = [{ r: "user", text: "Καταχώρησε στο Publishing τα βιβλία ενηλίκων" }, { r: "tool", results: [{ ui: { k: "web", src: "tavily", sources } }] }];
+  ["https://glarolykoi.net/product/το-κορίτσι/",
+   "https://glarolykoi.net/product/%cf%84%ce%bf-%ce%ba%ce%bf%cf%81%ce%af%cf%84%cf%83%ce%b9/",
+   "https://glarolykoi.net/shop", "https://www.glarolykoi.net/shop/", "http://glarolykoi.net/shop/",
+   "glarolykoi.net/shop/", "https://glarolykoi.net/shop/#top", "https://threads.net/@glarolykoi"]
+    .forEach((u) => assert.equal(C.pageAllowed(msgs, u), true, u));
+  ["https://glarolykoi.net/", "https://glarolykoi.net/shop/?d=secret", "https://glarolykoi.net/shop/x",
+   "https://evil.example/shop/", "https://shop.glarolykoi.net/shop/", "javascript:alert(1)", "glarolykoi"]
+    .forEach((u) => assert.equal(C.pageAllowed(msgs, u), false, u));
+  assert.equal(C.pageUrl("glarolykoi.net/shop"), "https://glarolykoi.net/shop");
+  assert.equal(C.pageUrl("www.glarolykoi.net"), "https://www.glarolykoi.net/");
+  assert.equal(C.pageUrl("mailto:a@b.example"), "");
+  assert.equal(C.pageUrl("notes"), "");
+  assert.equal(C.pageReq("glarolykoi.net/shop/").url, "https://r.jina.ai/https://glarolykoi.net/shop/");
+});
+
+test("websearch TV-PAGE: every failed step says what failed, in EN, EL and DE", () => {
+  const fs = require("fs");
+  const src = fs.readFileSync(path.join(__dirname, "..", "assistant/assistant.js"), "utf8");
+  const de = fs.readFileSync(path.join(__dirname, "..", "i18n/de/assistant.js"), "utf8");
+  // No web or search step without a line of its own (they all fell back to "The search did not work").
+  const body = (name) => src.slice(src.indexOf("function " + name + "("), src.indexOf("\n  }\n", src.indexOf("function " + name + "(")));
+  ["webSearch", "readPage", "runTool"].forEach((fn) => assert.doesNotMatch(body(fn), /content: "Error: [^"]*", err: 1 \}\)/, fn));
+  assert.match(src, /why: "notAllowed"/);
+  assert.match(src, /WEB_FETCH_NAMES\.test\(call\.name\)/);
+  ["tool.err.args", "tool.err.unknown", "tool.err.empty", "tool.err.off", "web.pg.it", "web.pg.notAllowed", "web.pg.addr",
+   "web.pg.key", "web.pg.limit", "web.pg.net", "web.pg.time", "web.pg.empty", "web.pg.fail"].forEach((k) => {
+    assert.equal(src.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
+    assert.ok(de.includes('"' + k + '":'), k + " in DE");
+  });
+  assert.doesNotMatch(src, /"tool\.err": "The search did not work"/);
+});

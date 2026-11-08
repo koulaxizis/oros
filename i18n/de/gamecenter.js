@@ -120,6 +120,7 @@ orosPack("de", "gamecenter", {
  "realm": "Ländereien",
  "banner": "Banner",
  "crypt": "Gruft",
+ "wayfarers": "Wanderer",
  "chal.back": "Wieder aufnehmen",
  "chal.backed": "{g} kann ab morgen wieder Herausforderungen bekommen.",
  "chal.done": "Geschafft",
