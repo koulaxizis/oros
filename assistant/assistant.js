@@ -525,7 +525,7 @@
       "st.idea": "Idea", "st.production": "In production", "st.released": "Released", "st.out_of_print": "Out of print",
       "ft.a.run": "Running", "ft.a.walk": "Walking", "ft.a.bike": "Cycling", "ft.a.swim": "Swimming", "ft.a.row": "Rowing",
       "f.deck": "Deck", "f.front": "Front", "f.back": "Back", "f.songs": "Songs", "chg.disk": "The change could not be written to the orOS disk.", "f.read": "Read", "f.played": "Played", "f.queue": "In the queue", "f.price": "Price", "v.read": "read", "v.unread": "not read", "v.played": "played", "v.unplayed": "not played",
-      "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN", "f.networks": "Where", "f.book": "About",
+      "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN", "f.line": "Line", "f.num": "Number", "f.wiki": "Wiki", "f.paid_by": "Paid by", "f.shared_by": "Split between", "f.networks": "Where", "f.book": "About",
       "f.coords": "Coordinates", "f.query": "Search", "f.group": "Group", "f.paidBy": "Paid by",
       "v.service": "Service done", "v.reminder": "Renewal reminder", "v.vaccine": "Vaccine", "v.deworm": "Deworming",
       "v.visit": "Vet visit", "v.medication": "Medication", "v.weight": "Weight", "v.book": "Book", "v.film": "Film",
@@ -706,16 +706,16 @@
       "cr.linkRow": "{cust} ↔ {name}",
       "cr.done": "Added to {app} ({n})", "cr.linked": "Linked in {app} ({n})", "cr.declined": "Not added: you said no",
       "cr.declinedLink": "Not linked: you said no", "cr.failed": "Not saved: {msg}",
-      "cr.v.person": "Person", "cr.v.company": "Company", "cr.v.lead": "Lead", "cr.v.active": "Active", "cr.v.past": "Past",
+      "cr.v.person": "Person", "cr.v.company": "Company", "cr.v.rev": "Both ways (a reversed card too)", "cr.v.lead": "Lead", "cr.v.active": "Active", "cr.v.past": "Past",
       "f.people": "People",
       "cr.sameAdd": "Already there: {name}. The same address can't be added twice.", "cr.newList": "A new list, {name}, is made for it.",
       "cr.v.expense": "Expense", "cr.v.income": "Income",
       "f.text": "Text", "f.paid": "Paid", "f.owed": "Still owed", "f.servings": "Servings", "f.author": "Author", "f.next": "Next date", "inv.paid": "Paid", "inv.partial": "Partly paid", "inv.unpaid": "Not paid", "inv.overdue": "Overdue",
       "cr.textLinkItems": "{name} asks to link these CRM partners with their records in other apps. Nothing changes until you press Link; the other apps stay as they are.",
-      "f.lk": "Record", "f.moves": "Moves from", "f.unlink": "Link", "lk.unlinkYes": "Removed", "lkk.sup": "Stock supplier", "lkk.wh": "Consignment shop (Stock)", "lkk.tsc": "Timesheet client", "lkk.inv": "Invoices client", "lkk.pub": "Person on Publishing titles",
+      "f.lk": "Record", "f.moves": "Moves from", "f.unlink": "Link", "lk.unlinkYes": "Removed", "lkk.sup": "Stock supplier", "lkk.wh": "Consignment shop (Stock)", "lkk.tsc": "Timesheet client", "lkk.inv": "Invoices client", "lkk.pub": "Person on Publishing titles", "lkk.kb": "Kanban card", "lkk.nt": "Notes page", "lkk.ly": "Layout document", "lkk.at": "Atelier design",
       "entry.flashcards": "Study cards · {app}", "entry.wiki_article": "New article · {app}", "entry.document": "New document · {app}", "entry.mind_map": "New mind map · {app}", "entry.text_file": "New file · {app}", "f.cards": "Cards", "f.project": "Project", "f.task": "Task", "f.trip": "Trip", "f.ingredients": "Ingredients", "f.steps": "Steps", "f.color": "Colour", "f.qty": "How many", "tv.k.flight": "Flight", "tv.k.train": "Train", "tv.k.bus": "Bus", "tv.k.ferry": "Ferry", "tv.k.car": "Car", "tv.k.rental": "Car rental", "tv.k.stay": "Stay", "tv.k.ticket": "Ticket", "tv.k.activity": "Activity", "tv.k.food": "Food", "tv.k.other": "Other", "tv.g.clothes": "Clothes", "tv.g.toilet": "Toiletries", "tv.g.health": "Health", "tv.g.tech": "Electronics", "tv.g.docs": "Documents", "tv.g.baby": "Baby", "tv.g.gear": "Gear", "tv.g.food": "Food", "tv.g.misc": "Other", "tv.g.before": "Before I leave", "sn.c.yellow": "Yellow", "sn.c.pink": "Pink", "sn.c.green": "Green", "sn.c.blue": "Blue", "sn.c.orange": "Orange", "sn.c.lilac": "Lilac",
       "cr.v.stg.new": "New", "cr.v.stg.contact": "Contacted", "cr.v.stg.proposal": "Proposal", "cr.v.stg.nego": "Negotiation", "cr.v.stg.won": "Won", "cr.v.stg.lost": "Lost",
-      "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
+      "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "f.rs": "Revenue Splitter", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
       "cr.rem.m": "{n} min before", "cr.rem.h": "{n} h before", "cr.rem.d": "{n} days before",
       "f.notebook": "Notebook", "f.folder": "Folder", "f.inlist": "List", "cr.rem.d1": "1 day before",
       "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
@@ -1169,7 +1169,7 @@
       "st.idea": "Ιδέα", "st.production": "Σε παραγωγή", "st.released": "Κυκλοφορεί", "st.out_of_print": "Εξαντλημένο",
       "ft.a.run": "Τρέξιμο", "ft.a.walk": "Περπάτημα", "ft.a.bike": "Ποδήλατο", "ft.a.swim": "Κολύμπι", "ft.a.row": "Κωπηλασία",
       "f.deck": "Τράπουλα", "f.front": "Μπροστά", "f.back": "Πίσω", "f.songs": "Τραγούδια", "chg.disk": "Η αλλαγή δεν γράφτηκε στον δίσκο του orOS.", "f.read": "Διαβασμένο", "f.played": "Ακούστηκε", "f.queue": "Στην ουρά", "f.price": "Τιμή", "v.read": "διαβασμένο", "v.unread": "αδιάβαστο", "v.played": "ακούστηκε", "v.unplayed": "δεν ακούστηκε",
-      "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN", "f.networks": "Πού", "f.book": "Για",
+      "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN", "f.line": "Γραμμή", "f.num": "Αριθμός", "f.wiki": "Wiki", "f.paid_by": "Πλήρωσε", "f.shared_by": "Μοιράζεται σε", "f.networks": "Πού", "f.book": "Για",
       "f.coords": "Συντεταγμένες", "f.query": "Αναζήτηση", "f.group": "Ομάδα", "f.paidBy": "Πλήρωσε",
       "v.service": "Σέρβις που έγινε", "v.reminder": "Υπενθύμιση ανανέωσης", "v.vaccine": "Εμβόλιο", "v.deworm": "Αποπαρασίτωση",
       "v.visit": "Επίσκεψη σε κτηνίατρο", "v.medication": "Φάρμακο", "v.weight": "Βάρος", "v.book": "Βιβλίο", "v.film": "Ταινία",
@@ -1350,16 +1350,16 @@
       "cr.linkRow": "{cust} ↔ {name}",
       "cr.done": "Προστέθηκαν ({app}): {n}", "cr.linked": "Συνδέθηκαν ({app}): {n}", "cr.declined": "Δεν προστέθηκαν: είπες όχι",
       "cr.declinedLink": "Δεν συνδέθηκαν: είπες όχι", "cr.failed": "Δεν αποθηκεύτηκε: {msg}",
-      "cr.v.person": "Πρόσωπο", "cr.v.company": "Εταιρεία", "cr.v.lead": "Υποψήφιος", "cr.v.active": "Ενεργός", "cr.v.past": "Παλιός",
+      "cr.v.person": "Πρόσωπο", "cr.v.company": "Εταιρεία", "cr.v.rev": "Και αντίστροφα (και αντίστροφη κάρτα)", "cr.v.lead": "Υποψήφιος", "cr.v.active": "Ενεργός", "cr.v.past": "Παλιός",
       "f.people": "Άνθρωποι",
       "cr.sameAdd": "Υπάρχει ήδη: {name}. Η ίδια διεύθυνση δεν μπαίνει δύο φορές.", "cr.newList": "Φτιάχνεται νέα λίστα για αυτό: {name}.",
       "cr.v.expense": "Έξοδο", "cr.v.income": "Έσοδο",
       "f.text": "Κείμενο", "f.paid": "Πληρώθηκαν", "f.owed": "Υπόλοιπο", "f.servings": "Μερίδες", "f.author": "Συγγραφέας", "f.next": "Επόμενη ημερομηνία", "inv.paid": "Εξοφλημένο", "inv.partial": "Μερικώς πληρωμένο", "inv.unpaid": "Απλήρωτο", "inv.overdue": "Ληξιπρόθεσμο",
       "cr.textLinkItems": "Το {name} ζητά να συνδεθούν αυτοί οι συνεργάτες του CRM με τις εγγραφές τους σε άλλες εφαρμογές. Τίποτα δεν αλλάζει πριν πατήσεις Σύνδεση· οι άλλες εφαρμογές μένουν όπως είναι.",
-      "f.lk": "Εγγραφή", "f.moves": "Μεταφέρεται από", "f.unlink": "Σύνδεση", "lk.unlinkYes": "Αφαιρείται", "lkk.sup": "Προμηθευτής (Απόθεμα)", "lkk.wh": "Κατάστημα παρακαταθήκης (Απόθεμα)", "lkk.tsc": "Πελάτης (Ώρες εργασίας)", "lkk.inv": "Πελάτης (Τιμολόγια)", "lkk.pub": "Πρόσωπο σε τίτλους (Εκδόσεις)",
+      "f.lk": "Εγγραφή", "f.moves": "Μεταφέρεται από", "f.unlink": "Σύνδεση", "lk.unlinkYes": "Αφαιρείται", "lkk.sup": "Προμηθευτής (Απόθεμα)", "lkk.wh": "Κατάστημα παρακαταθήκης (Απόθεμα)", "lkk.tsc": "Πελάτης (Ώρες εργασίας)", "lkk.inv": "Πελάτης (Τιμολόγια)", "lkk.pub": "Πρόσωπο σε τίτλους (Εκδόσεις)", "lkk.kb": "Κάρτα Kanban", "lkk.nt": "Σελίδα στις Σημειώσεις", "lkk.ly": "Έγγραφο Σελιδοποίησης", "lkk.at": "Σχέδιο στο Atelier",
       "entry.flashcards": "Κάρτες μελέτης · {app}", "entry.wiki_article": "Νέο άρθρο · {app}", "entry.document": "Νέο έγγραφο · {app}", "entry.mind_map": "Νέος νοητικός χάρτης · {app}", "entry.text_file": "Νέο αρχείο · {app}", "f.cards": "Κάρτες", "f.project": "Έργο", "f.task": "Εργασία", "f.trip": "Ταξίδι", "f.ingredients": "Υλικά", "f.steps": "Βήματα", "f.color": "Χρώμα", "f.qty": "Πόσα", "tv.k.flight": "Πτήση", "tv.k.train": "Τρένο", "tv.k.bus": "Λεωφορείο", "tv.k.ferry": "Πλοίο", "tv.k.car": "Αυτοκίνητο", "tv.k.rental": "Ενοικίαση αυτοκινήτου", "tv.k.stay": "Διαμονή", "tv.k.ticket": "Εισιτήριο", "tv.k.activity": "Δραστηριότητα", "tv.k.food": "Φαγητό", "tv.k.other": "Άλλο", "tv.g.clothes": "Ρούχα", "tv.g.toilet": "Είδη υγιεινής", "tv.g.health": "Υγεία", "tv.g.tech": "Ηλεκτρονικά", "tv.g.docs": "Έγγραφα", "tv.g.baby": "Μωρό", "tv.g.gear": "Εξοπλισμός", "tv.g.food": "Τρόφιμα", "tv.g.misc": "Διάφορα", "tv.g.before": "Πριν φύγω", "sn.c.yellow": "Κίτρινο", "sn.c.pink": "Ροζ", "sn.c.green": "Πράσινο", "sn.c.blue": "Μπλε", "sn.c.orange": "Πορτοκαλί", "sn.c.lilac": "Λιλά",
       "cr.v.stg.new": "Νέα", "cr.v.stg.contact": "Επικοινωνία", "cr.v.stg.proposal": "Πρόταση", "cr.v.stg.nego": "Διαπραγμάτευση", "cr.v.stg.won": "Κερδήθηκε", "cr.v.stg.lost": "Χάθηκε",
-      "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
+      "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "f.rs": "Revenue Splitter", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
       "cr.rem.m": "{n} λεπτά πριν", "cr.rem.h": "{n} ώρες πριν", "cr.rem.d": "{n} ημέρες πριν",
       "f.notebook": "Σημειωματάριο", "f.folder": "Φάκελος", "f.inlist": "Λίστα", "cr.rem.d1": "1 ημέρα πριν",
       "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
@@ -3306,9 +3306,7 @@
         ch.always.forEach(function (id) { setPerm(id, "always"); });
         var shared = free.concat(ch.chosen);
         shared.forEach(function (it) {
-          c.refN = (c.refN || 0) + 1;
-          it.ref = "r" + c.refN;
-          c.refs[it.ref] = { app: it.app, target: it.target, title: it.title, q: q, id: it.id };
+          it.ref = refFor(c, { app: it.app, target: it.target, title: it.title, q: q, id: it.id });
         });
         var held = ask.length - ch.chosen.length;
         um.found = { q: q, text: C.searchResult(q, shared, { declined: held }) };
@@ -3421,11 +3419,9 @@
         ch.always.forEach(function (id) { setPerm(id, "always"); });
         var shared = free.concat(ch.chosen);
         shared.forEach(function (it) {
-          c.refN = (c.refN || 0) + 1;
-          it.ref = "r" + c.refN;
           // read_item finds the item again with the same search (q),
           // or by its label when there were no words.
-          c.refs[it.ref] = { app: it.app, target: it.target, title: it.title, q: q || it.title, id: it.id };
+          it.ref = refFor(c, { app: it.app, target: it.target, title: it.title, q: q || it.title, id: it.id });
         });
         var held = ask.length - ch.chosen.length;
         var names = [];
@@ -4299,7 +4295,15 @@
   }
   function writeStore(key, value) {
     if (key === "disk:flashcards") return fcStore(value);
-    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; }
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { return false; }
+    adoptStore(key);
+    return true;
+  }
+  // SY-AD (5.96.00): the app may never have been opened on this device;
+  // its data must still reach the owner's other devices.
+  function adoptStore(key) {
+    var api = syncApi();
+    try { if (api && typeof api.adoptKey === "function") api.adoptKey(key); } catch (e) {}
   }
   function markAppDirty() {
     var api = syncApi();
@@ -4431,6 +4435,8 @@
   }
   function changePrep(r0) {
     if (r0 && r0.app === "flashcards") return fcPrep();
+    // PB-CHG: an edition's shop product link needs the shops of Connected services
+    if (r0 && r0.app === "publish") { if (window.OrosAssistEdits4) window.OrosAssistEdits4.setCache("woo", createCtx().woo); return Promise.resolve(); }
     var Ex = r0 && (r0.app === "music" ? window.OrosAssistEdits4 : window.OrosAssistEdits3), p = r0 && PREP_DB[r0.app];
     if (!p || !Ex) return Promise.resolve();
     return idbAll(p[0], p[1]).then(function (list) {
@@ -4945,7 +4951,7 @@
   var ADD_IDS = ["todo", "calendar", "budget", "notes", "bookmarks", "kanban"];
   // Wave A2 (AS-ADD3): a CRM customer's history, follow-ups and deals,
   // allowed whenever CRM is; refs from search_data or create_items.
-  var CRM_ADD = ["crm_activity", "crm_followup", "crm_deal"];
+  var CRM_ADD = ["crm_activity", "crm_followup", "crm_deal", "crm_contract"];
   // Wave A4 (AS-ADD5): time worked, recipes, sticky notes, and a trip's
   // itinerary and packing list (virtual apps of Travel, a trip's ref
   // each), in assistant/additems2.js with the app's own core.
@@ -4958,10 +4964,14 @@
   // titles, in assistant/additems3.js with the app's own core.
   // AS-ADD7: titles the user publishes (Publishing), same file, with
   // Publishing's own core.
-  var ADD3_IDS = ["habits", "fitness", "garage", "plants", "petcare", "shelf", "publish"];
+  // AS-ADD8 (GATE-PAR P4): invoice drafts and new quotes, same file, with
+  // Invoices' and Quote's own cores.
+  var ADD3_IDS = ["habits", "fitness", "garage", "plants", "petcare", "shelf", "publish", "invoices", "quote", "wiki", "flashcards", "split"];
   var ADD3_CORES = { habits: ["OrosHabitsModel", "../habits/model.js"], plants: ["OrosPlantsCore", "../plants/core.js"],
                      petcare: ["OrosPetcareCore", "../petcare/core.js"], garage: ["OrosGarageCore", "../garage/core.js"],
-                     publish: ["OrosPublishCore", "../publish/core.js"] };
+                     publish: ["OrosPublishCore", "../publish/core.js"], invoices: ["OrosInvoicesCore", "../invoices/core.js"],
+                     quote: ["OrosQuoteCore", "../quote/core.js"], wiki: ["WikiCore", "../wiki/core.js"],
+                     flashcards: ["FlashcardsCore", "../flashcards/core.js"] };
   ADD_IDS = ADD_IDS.concat(ADD2_IDS, TRAVEL_ADD, ADD3_IDS);
   var addScripts = {};
   function loadOnce(src) {
@@ -5040,9 +5050,21 @@
     try { return window.OrosCrmCore && typeof window.OrosCrmCore.norm === "function" ? window.OrosCrmCore.norm(d) : d; } catch (e) { return d; }
   }
   function addRef(c, appId, id, title, target) {
+    return refFor(c, { app: appId, target: target || N.targetOf(appId, id), title: title, id: id });
+  }
+  // A new ref for an item (r1, r2…). Through the gate (5.96.00) the same
+  // item keeps its ref and the refs are kept on the device
+  // (oros-gate-refs), so a ref from the closed-orOS copy still names its
+  // item when the queued change runs later, after a reload.
+  function refFor(c, rec) {
+    if (c === gateConv) {
+      var k = gateKey(rec), old = gateKeys[k];
+      if (old && c.refs[old]) { c.refs[old] = rec; return old; }
+    }
     c.refN = (c.refN || 0) + 1;
     var ref = "r" + c.refN;
-    c.refs[ref] = { app: appId, target: target || N.targetOf(appId, id), title: title, id: id };
+    c.refs[ref] = rec;
+    if (c === gateConv) gateKeys[gateKey(rec)] = ref;
     return ref;
   }
   function noCreate(apps, id) {
@@ -5112,7 +5134,7 @@
       }
     }
     var key = M.storageKey(app.id);
-    return (isCrm(app.id) ? crmCores() : Promise.resolve()).then(function () {
+    return (isCrm(app.id) ? crmCores() : key === "disk:flashcards" ? fcPrep() : Promise.resolve()).then(function () {
       if (app.id === "stickies" && !stickiesHost()) return { content: "Error: Sticky Notes is not running in this orOS window.", err: 1 };
       var pl = M.plan(app.id, addRead(app.id, key), items, ctx);
       if (!pl.ok) return { content: "Error: " + pl.err, err: 1, ui: { k: "chgErr", app: app.name } };
@@ -5135,6 +5157,9 @@
           return { content: "Error: the records could not be saved on the device (storage full?). Nothing was saved.", err: 1, ui: base };
         }
         markAppDirty();
+        // AS-ADD9: files the new records also write to the orOS disk
+        // (Wiki's first revision), after the data, best effort
+        (Array.isArray(res.disk) ? res.disk : []).forEach(changeDisk);
         var added = res.made.map(function (m) { return { ref: addRef(c, app.of || app.id, m.sid || m.id, m.title, m.target), name: m.title }; });
         var left = [];
         pl.rows.forEach(function (row, i) {
@@ -5224,7 +5249,7 @@
   // Timesheet client, an Invoices client or a person on Publishing
   // titles: CRM's own pt rows, the other apps only read (and only the
   // ones the user lets the assistant read).
-  var LINK_APPS = ["stock", "timesheet", "invoices", "publish"];
+  var LINK_APPS = ["stock", "timesheet", "invoices", "publish", "kanban", "notes", "layout", "atelier"];
   function partnerLinksOn(crIds, apps) {
     return crIds.indexOf("crm") >= 0 && apps.some(function (a) { return LINK_APPS.indexOf(a.id) >= 0; });
   }
@@ -5241,7 +5266,7 @@
   }
   function linkItems(c, args, apps) {
     var crm = createApps(apps).filter(function (a) { return a.id === "crm"; })[0];
-    if (!crm || !partnerLinksOn(["crm"], apps)) return Promise.resolve({ content: "Error: linking needs CRM and one of Stock, Timesheet, Invoices or Publishing, all allowed for the assistant.", err: 1 });
+    if (!crm || !partnerLinksOn(["crm"], apps)) return Promise.resolve({ content: "Error: linking needs CRM and one of Stock, Timesheet, Invoices, Publishing, Kanban, Notes, Layout or Atelier, all allowed for the assistant.", err: 1 });
     return crmCores().then(function () { return window.OrosAssistLinks ? true : loadOnce("links.js"); }).then(function () {
       var L = window.OrosAssistLinks, C = window.OrosCrmCore;
       if (!L || !C || !window.OrosCrmLinks) return { content: "Error: links are not available right now.", err: 1 };
@@ -5518,6 +5543,9 @@
     if (!mem.cr || !N) return Promise.resolve(undoFail(t("hist.noMod")));
     return (isCrm(mem.app) ? crmCores() : Promise.resolve()).then(function () {
       return mem.mod || (mem.via === "add" ? createMod(mem.app) : N);
+    }).then(function (M) {
+      // AS-ADD9: Flashcards' notes are read fresh from the disk first
+      return M && mem.key === "disk:flashcards" ? fcPrep().then(function () { return M; }) : M;
     }).then(function (M) {
       if (!M) return undoFail(t("hist.noMod"));
       if (mem.app === "stickies" && !stickiesHost()) return undoFail(t("hist.noStickies"));
@@ -8637,6 +8665,52 @@
   // ---------- GATE: Claude's tools through orOS Gate (GATE-ACT) ----------
   var gateConv = { id: "gate", refs: {}, refN: 0, msgs: [] };
   var gateNote = "", gateCtx = null;
+  // Gate refs on the device (5.96.00): { n, refs }, device-local, never
+  // synced; the newest GATE_REFS_MAX stay. gateKeys: app|target → ref.
+  var GATE_REFS_KEY = "oros-gate-refs", GATE_REFS_MAX = 6000, gateKeys = {};
+  function gateKey(rec) { var t0 = ""; try { t0 = JSON.stringify(rec.target == null ? rec.id : rec.target); } catch (e) {} return String(rec.app) + "|" + t0; }
+  function gateRefsLoad() {
+    var o = null;
+    try { o = JSON.parse(localStorage.getItem(GATE_REFS_KEY) || "null"); } catch (e) { o = null; }
+    if (!o || typeof o !== "object" || !o.refs || typeof o.refs !== "object") return;
+    gateConv.refN = typeof o.n === "number" && o.n > 0 ? o.n : 0;
+    Object.keys(o.refs).forEach(function (r) {
+      var x = o.refs[r];
+      if (/^r\d{1,6}$/.test(r) && x && typeof x === "object" && typeof x.app === "string") { gateConv.refs[r] = x; gateKeys[gateKey(x)] = r; }
+    });
+  }
+  // → false when the device could not keep them (R30: the index then
+  // says so and the copy goes without it).
+  function gateRefsSave() {
+    var keys = Object.keys(gateConv.refs);
+    if (keys.length > GATE_REFS_MAX) {
+      keys.sort(function (a, b) { return +a.slice(1) - +b.slice(1); }).slice(0, keys.length - GATE_REFS_MAX).forEach(function (r) {
+        delete gateKeys[gateKey(gateConv.refs[r])]; delete gateConv.refs[r];
+      });
+    }
+    try { localStorage.setItem(GATE_REFS_KEY, JSON.stringify({ n: gateConv.refN, refs: gateConv.refs })); return true; } catch (e) { return false; }
+  }
+  // The closed-orOS copy's search (5.96.00): every item of these apps
+  // (the gate passes the allowed apps, never the personal ones) with its
+  // ref, title, a short text and date. → Promise<{ ok, items, c? }>.
+  function gateIndex(ids) {
+    var ga = gateApps(), byId = {}, p = shell();
+    ga.read.forEach(function (a) { byId[a.id] = a; });
+    var want = (Array.isArray(ids) ? ids : []).filter(function (id) { return byId[id]; });
+    if (!want.length || !p || typeof p.orosAssistSearch !== "function") return Promise.resolve({ ok: true, items: [] });
+    return Promise.resolve(p.orosAssistSearch("", want, { all: true })).then(function (groups) {
+      var items = C.packHits(groups, function (id) { return byId[id] ? byId[id].name : id; }, { wide: true, max: 3000 });
+      var out = items.map(function (it) {
+        var o = { r: refFor(gateConv, { app: it.app, target: it.target, title: it.title, q: it.title, id: it.id }), a: it.app, t: it.title };
+        if (it.text) o.x = it.text.slice(0, 160);
+        if (it.date) o.d = it.date;
+        if (it.labels && it.labels.length) o.l = it.labels.slice(0, 8);
+        return o;
+      });
+      if (!gateRefsSave()) return { ok: false, c: "This device could not keep the refs (storage full)." };
+      return { ok: true, items: out };
+    });
+  }
   function gateShell() { try { var p = shell(); return p && p.orosGate ? p.orosGate : null; } catch (e) { return null; } }
   // { read: [app], write: [app] } as the gate allows them now.
   function gateApps() {
@@ -8910,7 +8984,10 @@
     loadPrefs();
     var have = installed(), lazy = Object.keys(EDIT_LAZY).filter(function (id) { return have[id]; });
     Promise.all([histLoad(), editLoadMods(lazy)]).then(function () {
-      window.__asGate = { v: 1, run: gateRun, tools: gateToolList,
+      gateRefsLoad();
+      window.__asGate = { v: 1, run: function (n, a) {
+                            return gateRun(n, a).then(function (r) { if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; });
+                          }, tools: gateToolList, index: gateIndex,
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };
       try { var g = gateShell(); if (g && typeof g.frameReady === "function") g.frameReady(); } catch (e) {}
     });

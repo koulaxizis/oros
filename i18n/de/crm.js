@@ -497,7 +497,7 @@ orosPack("de", "crm", {
  "saved": "Gespeichert",
  "sec.ctdiff": "Abweichungen in Kontakte",
  "sec.info": "Details",
- "sec.links": "In anderen Apps",
+ "sec.links": "In anderen Apps", "sec.items": "Karten, Notizen und Dateien", "it.kb": "Kanban-Karte", "it.nt": "Notizseite", "it.ly": "Layout-Dokument", "it.at": "Atelier-Entwurf",
  "sec.notes": "Notizen",
  "sec.people": "Personen",
  "send": "Senden",

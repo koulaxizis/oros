@@ -18,6 +18,7 @@
 //     row = { id, due, time, title, text, kind, target }
 //       due    "YYYY-MM-DD" | null (null = today, no date of its own)
 //       time   "HH:MM" | null (24-hour)
+//       end    "HH:MM" | null, after time (T3: the shape of the day)
 //       title / text: PLAIN text (drawn with textContent only)
 //       kind   "task" (can be late) | "event" (happens on its day)
 //              | "info" (the line at the top: weather, name days…)
@@ -36,6 +37,10 @@
 //   • READ-ONLY: a provider never writes storage, never talks to sync,
 //     never fetches. The date logic stays in the app's own core; the
 //     provider only turns its answer into rows.
+//   • facts(ctx) (optional, T2, BR-TODAY-16): a small JSON object of
+//     numbers the tips of the day may combine with other apps' rows
+//     (Weather: today's max / min / rain chance; Water: today's total
+//     and goal). Same read-only rules as collect; > 500 chars dropped.
 //   • ctx = { today, horizon, now, lang, readJSON(key), readRaw(key),
 //     addDays, diff }.
 //   • A provider that throws or answers later than TIMEOUT_MS is left
@@ -134,6 +139,7 @@
       id: id,
       due: isYmd(r.due) ? r.due : null,
       time: typeof r.time === "string" && HM_RE.test(r.time) ? r.time : null,
+      end: typeof r.time === "string" && HM_RE.test(r.time) && typeof r.end === "string" && HM_RE.test(r.end) && r.end > r.time ? r.end : null,
       title: title,
       text: str(r.text, TEXT_LEN),
       kind: kind,
@@ -143,6 +149,18 @@
       tip: str(r.tip, TIP_LEN),
       acts: cleanActs(r.acts, app)
     };
+  }
+  // Provider facts (BR-TODAY-16): app id → small plain object.
+  function collectFacts(providers, ctx, enabled) {
+    var out = {};
+    (Array.isArray(providers) ? providers : []).forEach(function (p) {
+      if (!p || typeof p.id !== "string" || !ID_RE.test(p.id) || typeof p.facts !== "function") return;
+      if (typeof enabled === "function" && !enabled(p.id)) return;
+      var f = null;
+      try { f = cleanTarget(p.facts(ctx)); } catch (e) { f = null; }
+      if (isObj(f)) out[p.id] = f;
+    });
+    return out;
   }
   function cleanMore(list) {
     if (!Array.isArray(list)) return [];
@@ -342,6 +360,10 @@
     return { v: def, m: 0 };
   }
   function isBool(v) { return v === true || v === false; }
+  // Evening view (T3, BR-TODAY-17): from this hour the summary shows
+  // tomorrow on top; 0 = off.
+  var DEFAULT_EVE = 19, MIN_EVE = 15, MAX_EVE = 23;
+  function isEve(v) { return v === 0 || (typeof v === "number" && v % 1 === 0 && v >= MIN_EVE && v <= MAX_EVE); }
   function isHour(v) { return typeof v === "number" && v % 1 === 0 && v >= MIN_HOUR && v <= MAX_HOUR; }
   function normData(raw) {
     raw = isObj(raw) ? raw : {};
@@ -355,13 +377,18 @@
     ids.sort(cmpStr).slice(0, MAX_APPS).forEach(function (id) {
       apps[id] = { v: raw.apps[id].v, m: okStamp(raw.apps[id].m) };
     });
-    return {
+    var out = {
       ver: DATA_VER,
       on: normField(raw.on, isBool, true),
       hour: normField(raw.hour, isHour, DEFAULT_HOUR),
       absorb: normField(raw.absorb, isBool, true),
       apps: apps
     };
+    // `eve` (T3) is kept only once it was set, so a slice written
+    // before T3 keeps its exact bytes (no upload for a new default).
+    var eve = normField(raw.eve, isEve, DEFAULT_EVE);
+    if (eve.m > 0) out = { ver: out.ver, on: out.on, hour: out.hour, absorb: out.absorb, eve: eve, apps: apps };
+    return out;
   }
   function better(a, b) {
     if (a.m !== b.m) return a.m > b.m ? a : b;
@@ -377,7 +404,9 @@
       apps[id] = { v: w.v, m: w.m };
     });
     function pick(n) { var w = better(a[n], b[n]); return { v: w.v, m: w.m }; }
-    return { ver: DATA_VER, on: pick("on"), hour: pick("hour"), absorb: pick("absorb"), apps: apps };
+    var none = { v: DEFAULT_EVE, m: 0 };
+    return normData({ ver: DATA_VER, on: pick("on"), hour: pick("hour"), absorb: pick("absorb"),
+                      eve: better(a.eve || none, b.eve || none), apps: apps });
   }
   // One real change, stamped at the change (R27). Same value → same data.
   function setField(data, name, value, now, appId) {
@@ -390,11 +419,16 @@
       d.apps[appId] = { v: value, m: cur ? Math.max(m, cur.m + 1) : m };
       return normData(d);
     }
-    var check = name === "hour" ? isHour : isBool;
-    if (!has(d, name) || name === "ver" || name === "apps" || !check(value)) return d;
-    if (d[name].v === value) return d;
+    var check = name === "hour" ? isHour : name === "eve" ? isEve : isBool;
+    if (name === "eve" && !has(d, "eve")) d.eve = { v: DEFAULT_EVE, m: 0 };
+    if (!has(d, name) || name === "ver" || name === "apps" || !check(value)) return normData(d);
+    if (d[name].v === value) return normData(d);
     d[name] = { v: value, m: Math.max(m, d[name].m + 1) };
-    return d;
+    return normData(d);
+  }
+  function eveOf(data) {
+    var d = normData(data);
+    return d.eve ? d.eve.v : DEFAULT_EVE;
   }
   function appOnDefault(id) { return !has(DEFAULT_OFF, id); }
   function appOn(data, id) {
@@ -451,11 +485,11 @@
   var api = {
     HORIZON: HORIZON, PER_APP_MAX: PER_APP_MAX, TIMEOUT_MS: TIMEOUT_MS, DEFAULT_HOUR: DEFAULT_HOUR,
     MIN_HOUR: MIN_HOUR, MAX_HOUR: MAX_HOUR, EMPTY_RETRY_MS: EMPTY_RETRY_MS, FAIL_GRACE_MS: FAIL_GRACE_MS,
-    SYNC_WAIT_MS: SYNC_WAIT_MS, DEFAULT_OFF: DEFAULT_OFF, DATA_VER: DATA_VER, ID_RE: ID_RE,
+    SYNC_WAIT_MS: SYNC_WAIT_MS, DEFAULT_OFF: DEFAULT_OFF, DEFAULT_EVE: DEFAULT_EVE, MIN_EVE: MIN_EVE, MAX_EVE: MAX_EVE, DATA_VER: DATA_VER, ID_RE: ID_RE,
     ymdOf: ymdOf, isYmd: isYmd, addDays: addDays, diff: diff,
-    ACTS: ACTS, cleanRow: cleanRow, cleanAct: cleanAct, group: group, trim: trim, counts: counts, worthNotice: worthNotice,
+    ACTS: ACTS, cleanRow: cleanRow, cleanAct: cleanAct, collectFacts: collectFacts, group: group, trim: trim, counts: counts, worthNotice: worthNotice,
     noticeText: noticeText, run: run,
-    normData: normData, merge: merge, setField: setField, appOn: appOn, appOnDefault: appOnDefault,
+    normData: normData, merge: merge, setField: setField, eveOf: eveOf, appOn: appOn, appOnDefault: appOnDefault,
     decide: decide, settled: settled, askText: askText, todayFiles: todayFiles
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

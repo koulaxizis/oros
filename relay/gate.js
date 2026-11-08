@@ -374,6 +374,58 @@ export function neverIn(args) {
   const ids = [].concat(typeof a.app === "string" ? [a.app] : [], Array.isArray(a.apps) ? a.apps : []);
   return ids.some((x) => NEVER_APPS.indexOf(String(x).toLowerCase()) >= 0);
 }
+// ---- orOS closed: search, loose answers and changes by ref (5.96.00) ----
+// The device tools whose changes wait in the queue by item refs.
+export const REF_QUEUED = ["change_item", "link_items", "link_contact"];
+export function foldTxt(x) {
+  return String(x == null ? "" : x).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+export function indexOf(cp) {
+  if (!cp || !cp.ans || typeof cp.ans.__index !== "string") return null;
+  try { const l = JSON.parse(cp.ans.__index); return Array.isArray(l) ? l.filter((x) => x && typeof x.r === "string" && typeof x.a === "string") : null; } catch (e) { return null; }
+}
+// The same question with other case or accents (a board's name…).
+export function looseAns(ans, key) {
+  const f = foldTxt(key);
+  for (const k of Object.keys(ans)) if (k.indexOf("__") !== 0 && foldTxt(k) === f && typeof ans[k] === "string") return ans[k];
+  return "";
+}
+export function refsIn(a) {
+  const o = a && typeof a === "object" ? a : {}, out = [];
+  const add = (v) => { if (typeof v === "string" && v.trim()) out.push(v.replace(/^oros:/, "").trim()); };
+  ["ref", "customer", "contact", "item", "deal", "trip"].forEach((k) => add(o[k]));
+  ["refs", "items"].forEach((k) => { if (Array.isArray(o[k])) o[k].forEach((v) => (typeof v === "string" ? add(v) : v && typeof v === "object" && ["ref", "item", "customer", "contact"].forEach((kk) => add(v[kk])))); });
+  ["changes", "links"].forEach((k) => { if (Array.isArray(o[k])) o[k].forEach((v) => { if (v && typeof v === "object") ["ref", "customer", "contact", "item"].forEach((kk) => add(v[kk])); }); });
+  return out.filter((r) => /^r\d{1,6}$/.test(r)).filter((r, i, l) => l.indexOf(r) === i);
+}
+export function hasDelete(a) {
+  const o = a && typeof a === "object" ? a : {};
+  return o.action === "delete" || o.unlink === true || (Array.isArray(o.changes) && o.changes.some((c) => c && (c.action === "delete")));
+}
+// search_data while closed: every word must match the title, text or
+// labels; apps / label as live; at most 200 results.
+export function closedSearch(cp, args, when) {
+  const ix = indexOf(cp);
+  if (!ix) return { ok: false, c: "Search needs orOS open: the copy of " + when + " has no search index" + (cp.ans && cp.ans.__ixerr ? " (" + String(cp.ans.__ixerr).slice(0, 120) + ")" : "") + ". Use list_apps, app_summary or the list tools." };
+  const a = args && typeof args === "object" ? args : {};
+  const words = foldTxt(a.query).split(" ").filter(Boolean);
+  const apps = Array.isArray(a.apps) && a.apps.length ? a.apps.map((x) => String(x).toLowerCase()) : null;
+  const lab = typeof a.label === "string" && a.label.trim() ? foldTxt(a.label) : "";
+  if (!words.length && !lab) return { ok: false, c: "Give query (words to look for) or label." };
+  const none = /^(none|no label|-)$/.test(lab);
+  const hits = ix.filter((it) => {
+    if (apps && apps.indexOf(it.a) < 0) return false;
+    if (lab) { const l = Array.isArray(it.l) ? it.l.map(foldTxt) : []; if (none ? l.length : l.indexOf(lab) < 0) return false; }
+    const hay = foldTxt([it.t, it.x, (it.l || []).join(" ")].join(" "));
+    return words.every((w) => hay.indexOf(w) >= 0);
+  });
+  const results = hits.slice(0, 200).map((it) => { const r = { ref: it.r, app: it.a, title: it.t }; if (it.x) r.text = it.x; if (it.d) r.date = it.d; if (it.l) r.labels = it.l; return r; });
+  const out = { query: String(a.query || ""), results: results };
+  if (hits.length > results.length) out.more = hits.length - results.length;
+  if (!results.length) out.note = "Nothing found.";
+  if (cp.ans.__ixpart) out.note = (out.note ? out.note + " " : "") + "The copy holds part of the items (" + cp.ans.__ixpart + " in all); open orOS for the rest.";
+  return { ok: true, c: "[orOS is closed: this is the copy of " + when + "; refs work for change_item, link_items and link_contact, which wait until orOS opens]\n" + JSON.stringify(out) };
+}
 export function cleanDevTools(list) {
   if (!Array.isArray(list)) return [];
   const out = [], seen = {};
@@ -1200,10 +1252,13 @@ export class GateBox {
       return { ok: false, c: "orOS is closed and there is no copy Claude may read (it is wiped after 7 days without an open device). Ask the owner to open orOS." };
     }
     const when = new Date(cp.at).toISOString();
+    // 5.96.00: search over the copy's index (every allowed item with its ref)
+    if (name === "search_data") return closedSearch(cp, args, when);
     if (READ_ONLY[name]) {
-      if (name === "search_data") return { ok: false, c: "Search needs orOS open. orOS is closed now: use list_apps, app_summary or the list tools, which answer from the copy of " + when + "." };
       const key = name + " " + stableArgs(args);
       if (typeof cp.ans[key] === "string") return { ok: true, c: "[orOS is closed: this is the copy of " + when + "]\n" + cp.ans[key] };
+      const loose = looseAns(cp.ans, key);
+      if (loose) return { ok: true, c: "[orOS is closed: this is the copy of " + when + "]\n" + loose };
       const def = cp.ans[name + " {}"];
       if (typeof def === "string") return { ok: true, c: "[orOS is closed: this is the copy of " + when + " with its own filters (see the answer), not your arguments; ask again with orOS open for others]\n" + def };
       return { ok: false, c: "orOS is closed and the copy of " + when + " does not have this. Ask the owner to open orOS." };
@@ -1220,10 +1275,26 @@ export class GateBox {
       if (d && d.annotations && d.annotations.readOnlyHint === true) {
         const key = name + " " + stableArgs(args);
         if (typeof cp.ans[key] === "string") return { ok: true, c: "[orOS is closed: this is the copy of " + when + "]\n" + cp.ans[key] };
+        const loose = looseAns(cp.ans, key);
+        if (loose) return { ok: true, c: "[orOS is closed: this is the copy of " + when + "]\n" + loose };
         return { ok: false, c: "This needs orOS open; it is closed now (the copy of " + when + " does not have it). Ask the owner to open orOS." };
       }
-      if (name !== "create_items") return { ok: false, c: name + " needs orOS open on one of the owner's devices (it works on items found while orOS is open, or on the owner's screen). Nothing was changed." };
-      app = args && typeof args.app === "string" ? args.app.replace(/^(crm|travel)_.*$/, "$1") : "";
+      if (REF_QUEUED.indexOf(name) >= 0) {
+        // 5.96.00: changes by refs from the copy's index wait too; every
+        // ref's app must be one Claude may change. Deletions wait for an open device.
+        if (hasDelete(args)) return { ok: false, c: "Deleting waits for orOS to be open on one of the owner's devices. Nothing was deleted." };
+        const ix = indexOf(cp), refs = refsIn(args);
+        if (!ix) return { ok: false, c: name + " needs orOS open: the copy of " + when + " has no item refs yet. Ask the owner to open orOS once." };
+        if (!refs.length) return { ok: false, c: name + " needs the refs of items (from search_data). Nothing was changed." };
+        const byRef = {};
+        ix.forEach((it) => { byRef[it.r] = it.a; });
+        const miss = refs.filter((r) => !byRef[r]);
+        if (miss.length) return { ok: false, c: "Unknown ref " + miss.slice(0, 5).join(", ") + " in the copy of " + when + ". Use refs from search_data while orOS is closed. Nothing was changed." };
+        const no = refs.map((r) => byRef[r]).filter((a, i, l) => l.indexOf(a) === i && !(cp.lv && cp.lv[a] === "write"));
+        if (no.length) return { ok: false, c: "Claude may not change " + no.join(", ") + " (the owner's switch, as of " + when + "). Nothing was changed." };
+        app = byRef[refs[0]];
+      } else if (name !== "create_items") return { ok: false, c: name + " needs orOS open on one of the owner's devices (it works on items found while orOS is open, or on the owner's screen). Nothing was changed." };
+      else app = args && typeof args.app === "string" ? args.app.replace(/^(crm|travel)_.*$/, "$1") : "";
     }
     if (!cp.lv || cp.lv[app] !== "write") return { ok: false, c: "Claude may not change " + app + " (the owner's switch, as of " + when + ")." };
     if (typeof cp.hold === "number" && cp.hold > now) return { ok: false, c: "The owner paused Claude's changes until " + new Date(cp.hold).toISOString() + ". Nothing was changed." };

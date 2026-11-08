@@ -94,7 +94,7 @@
             if (on === ctx.today && start && place && start > hmNow(ctx.now)) tip = w["tdy.tipLeave"].replace("{t}", start).replace("{p}", place);
             else if (on === ctx.addDays(ctx.today, 1) && start && start < "09:00") tip = w["tdy.tipEarly"].replace("{t}", start);
             out.push({ id: "ev:" + ev.id + ":" + on, due: on, kind: "event",
-                       time: start,
+                       time: start, end: end,
                        title: title,
                        text: place,
                        target: { ev: ev.id, date: occ },
