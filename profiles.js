@@ -100,7 +100,7 @@
     "#oros-profiles .pf-chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 10px;margin:0;border:none}",
     "#oros-profiles .pf-chip{min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--border);",
     "background:transparent;color:var(--text);font:inherit;font-size:14px;cursor:pointer}",
-    "#oros-profiles .pf-chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-text,#fff)}",
+    "#oros-profiles .pf-chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink, #fff)}",
     "#oros-profiles .pf-count{margin:0;padding:6px 18px 8px;font-size:13px;color:var(--text-dim);border-top:1px solid var(--border)}",
     "#oros-profiles .pf-list{flex:1 1 auto;min-height:120px;overflow-y:auto;padding:0 18px 8px}",
     "#oros-profiles .pf-cat{margin:10px 0 4px;font-size:13px;font-weight:600;color:var(--text-dim)}",
@@ -112,7 +112,7 @@
     "padding:10px 18px 14px;border-top:1px solid var(--border)}",
     "#oros-profiles .pf-foot button{min-height:40px;padding:0 16px;border-radius:8px;border:1px solid var(--border);",
     "background:transparent;color:var(--text);font:inherit;font-size:14px;cursor:pointer}",
-    "#oros-profiles .pf-foot .pf-go{background:var(--accent);border-color:var(--accent);color:var(--accent-text,#fff);font-weight:600}",
+    "#oros-profiles .pf-foot .pf-go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink, #fff);font-weight:600}",
     "#oros-profiles .pf-foot .pf-already{margin-right:auto;border:none;padding:0 4px;color:var(--accent);text-decoration:underline;text-align:left}",
     "@media (max-width:480px){#oros-profiles{padding:0}#oros-profiles .pf-card{width:100%;height:100%;max-height:none;border-radius:0;border:none}",
     "#oros-profiles .pf-apps{grid-template-columns:1fr 1fr}#oros-profiles .pf-foot .pf-already{flex:1 1 100%;margin:0}}"

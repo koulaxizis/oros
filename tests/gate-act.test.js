@@ -18,14 +18,14 @@ const E = require("../assistant/edits.js");
 let R;
 test.before(async () => { R = await import("../relay/gate.js"); });
 
-test("ACT = the Assistant's create / change apps, less NEVER, Budget, Kanban and Files", () => {
+test("ACT = the Assistant's create / change apps, less NEVER, SENSITIVE, Budget, Kanban and Files", () => {
   const all = new Set();
   const add = (id) => all.add(/^crm_/.test(id) ? "crm" : /^travel_/.test(id) ? "travel" : id);
   N.APP_IDS.forEach(add); Object.keys(N2.CORES).forEach(add); Object.keys(N3.CORES).forEach(add);
   CR.APP_IDS.forEach(add); E.APP_IDS.forEach(add);
-  const want = [...all].filter((id) => G.NEVER.indexOf(id) < 0 && ["budget", "kanban", "files"].indexOf(id) < 0).sort();
+  const want = [...all].filter((id) => G.NEVER.indexOf(id) < 0 && G.SENSITIVE.indexOf(id) < 0 && ["budget", "kanban", "files"].indexOf(id) < 0).sort();
   assert.deepEqual(G.ACT.slice().sort(), want);
-  assert.ok(G.NEVER.indexOf("fitness") >= 0, "Fitness is never offered (Chris 2026-11-08)");
+  assert.ok(G.SENSITIVE.indexOf("fitness") >= 0, "Fitness is a personal app (Chris 2026-11-08), read only");
   G.ACT.forEach((id) => assert.equal(G.writable(id), true, id));
   ["passwords", "mail", "diary", "health", "mood", "cycle", "baby", "assistant", "fitness"].forEach((id) => {
     assert.equal(G.canWrite({ [id]: "write" }, 0, id, 1000), false, id);
@@ -39,7 +39,7 @@ test("gate tools: only the gate's set, no card or press in any text", () => {
   const creates = ["todo", "calendar", "notes", "bookmarks", "contacts", "crm", "crm_activity", "crm_followup", "crm_deal",
                    "timesheet", "meals", "stickies", "habits", "plants", "petcare", "garage", "travel_plan", "travel_pack"];
   const full = C.toolsFor({ data: true, summary: true, entries: true, changes: true, creates, links: true, partnerLinks: true,
-                            history: true, actions: ["timer"], web: true,
+                            history: true, actions: ["timer"], web: true, rebuild: true, house: true, recipes: ["layout"], newsletter: true, cover: true, rules: true,
                             edits: { writer: { CATALOG: [] }, slides: { CATALOG: [] } } });
   const g = C.gateTools(full);
   assert.deepEqual(g.map((t) => t.name).sort(), C.GATE_TOOLS.slice().sort());
@@ -107,7 +107,8 @@ test("relay: the device's tools are cleaned and merged", () => {
   assert.deepEqual(names.slice(0, R.TOOLS.length), R.TOOLS.map((t) => t.name), "ours first, unchanged");
   assert.ok(names.indexOf("change_item") === names.length - 1);
   assert.equal(R.neverIn({ app: "Passwords" }), true);
-  assert.equal(R.neverIn({ apps: ["todo", "fitness"] }), true);
+  assert.equal(R.neverIn({ apps: ["todo", "assistant"] }), true);
+  assert.equal(R.neverIn({ apps: ["todo", "fitness"] }), false, "personal apps: the owner's choice on the device (5.90.00)");
   assert.equal(R.neverIn({ app: "todo" }), false);
   const G2 = require("../gate/gate.js");
   assert.deepEqual(R.NEVER_APPS.slice().sort(), G2.NEVER.slice().sort(), "relay and device never-lists match");

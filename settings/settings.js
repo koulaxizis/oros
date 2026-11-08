@@ -798,7 +798,7 @@
 
   // orOS Gate (gate.js, BR-GATE): Claude reads the apps set to Read,
   // through this device while orOS is open. Off by default, per device.
-  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "", gateNoSync = false;
+  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "", gateNoSync = false, gateSens = "";
   // The join code as a QR (qr/qr-encode.js): an <svg> of dark squares on white.
   function gateQr(text) {
     var Q = window.orosQR;
@@ -905,6 +905,7 @@
       url.readOnly = true;
       url.value = G.relayUrl();
       c.appendChild(row(t("gt.url"), url, { hint: t("gt.url.hint"), forId: "f-gt-url", stack: true }));
+      if (st.gid) c.appendChild(el("div", "hint", t("gt.gid", { id: st.gid })));
       if (st.moved) c.appendChild(el("div", "hint", t("gt.moved")));
       c.appendChild(actions(button(t("gt.copy"), "gt.copy", function () {
         var done = function () { gateNote = "gt.copied"; render(); };
@@ -954,14 +955,37 @@
       }
       c.appendChild(el("div", "hint", t("gt.apps.hint")));
       var list = el("div", "checks");
-      G.apps().forEach(function (a) {
+      var allApps = G.apps(), sensHead = false;
+      // The personal apps last, under their own warning (5.90.00).
+      allApps.filter(function (a) { return !a.sensitive; }).concat(allApps.filter(function (a) { return a.sensitive; })).forEach(function (a) {
+        if (a.sensitive && !sensHead) {
+          sensHead = true;
+          list.appendChild(el("div", "hint gt-sens-head", t("gt.sens.head")));
+        }
         var line = el("div", "pair");
-        line.appendChild(el("span", "pair-label", a.name));
+        line.appendChild(el("span", "pair-label", a.sensitive ? a.name + " · " + t("gt.sens.tag") : a.name));
         line.appendChild(switchBtn(a.read, "gt.app:" + a.id, function (v) {
+          // A personal app: the switch first shows the warning; only
+          // «Allow anyway» turns it on.
+          if (v && a.sensitive) { gateSens = a.id; render(); return; }
+          if (gateSens === a.id) gateSens = "";
           if (!G.setApp(a.id, v ? "read" : false)) gateNote = "gt.fail";
           render();
         }, t("gt.read", { app: a.name })));
         list.appendChild(line);
+        if (a.sensitive && gateSens === a.id && !a.read) {
+          var wb = el("div", "gt-sens-warn");
+          wb.setAttribute("role", "alert");
+          wb.appendChild(el("div", "hint", t("gt.sens.warn", { app: a.name })));
+          wb.appendChild(actions(
+            button(t("gt.sens.yes"), "gt.sens.yes:" + a.id, function () {
+              gateSens = "";
+              if (!G.setApp(a.id, "read")) gateNote = "gt.fail";
+              render();
+            }, "danger"),
+            button(t("gt.sens.no"), "gt.sens.no:" + a.id, function () { gateSens = ""; render(); })));
+          list.appendChild(wb);
+        }
         if (a.canWrite && a.read) {
           var wl = el("div", "pair");
           wl.appendChild(el("span", "pair-label", t("gt.write", { app: a.name })));

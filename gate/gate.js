@@ -31,7 +31,14 @@
   var DIG_KEY = "oros-gate-digest", DIG_HOUR = 20, DIG_TRIES = 3;
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js; the gate box lives there
   // Never offered, whatever a setting says (BR-GATE).
-  var NEVER = ["assistant", "baby", "cycle", "diary", "fitness", "health", "mail", "mood", "passwords"];   // fitness: Chris 2026-11-08
+  // Never offered: Passwords (secrets) and the Assistant itself.
+  var NEVER = ["assistant", "passwords"];
+  // Sensitive (5.90.00, Chris 08/11: «ως επιλογή με σαφές warning»):
+  // offered only after a clear warning on the device, read only (never
+  // changed by Claude), and never in the closed-orOS copy, so they leave
+  // the device only while orOS is open and Claude asks.
+  var SENSITIVE = ["baby", "cycle", "diary", "fitness", "health", "mail", "mood"];
+  function sensitive(id) { return SENSITIVE.indexOf(id) >= 0; }
   var SUMMARY = { budget: 1, stock: 1, kanban: 1 };
   // App-specific line tools (wave 2: Invoices, Stock, Publishing).
   var LINES = { budget: "budget_lines", invoices: "invoice_list", stock: "stock_items", publish: "publish_titles" };
@@ -772,10 +779,16 @@
   // closedCall): its own change tools less budget_delete, and
   // create_items. applyQueue runs nothing else (defence in depth).
   var QUEUED = ["budget_add", "budget_change", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items"];
-  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
+  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
+                   "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+  // GATE-PAR P3: tools that open an app on the owner's screen with the
+  // work (= core.js GATE_OPEN); like do_action they need an app Claude
+  // may change, no pause, and the frame checks the target app.
+  var ACT_OPEN = ACT_TOOLS.slice(12);
   var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"];
   var DOC_WRITE = ["edit_in_app", "undo_change"];
-  function writable(id) { return !!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0; }
+  function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0); }
   function actable(id) { return ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0; }
   // One rule, orOS open or closed (Chris 08/11, 5.78.00): Claude may
   // change an app set to "write", unless the owner paused changes
@@ -876,11 +889,11 @@
     return /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(u) ? u : RELAY;
   }
 
-  var core = { NEVER: NEVER, budgetLines: budgetLines, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
+  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, budgetLines: budgetLines, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
-               WRITES: WRITES, ACT: ACT, DOCS: DOCS, QUEUED: QUEUED, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
+               WRITES: WRITES, ACT: ACT, DOCS: DOCS, QUEUED: QUEUED, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_OPEN: ACT_OPEN, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
   if (!root || !root.document) return;
@@ -1193,7 +1206,7 @@
     if (copyBusy || !p.on || !k || !ws || ws.readyState !== 1) return;
     if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) return;
     copyBusy = true;
-    var ok = allowed(offered(), p.lv).map(function (a) { return a.id; });
+    var ok = allowed(offered(), p.lv).map(function (a) { return a.id; }).filter(function (id) { return !sensitive(id); });
     var d = new Date(), month = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
     var pd = new Date(d.getFullYear(), d.getMonth() - 1, 1), prev = pd.getFullYear() + "-" + ("0" + (pd.getMonth() + 1)).slice(-2);
     var calls = [["list_apps", {}]];
@@ -1410,6 +1423,7 @@
       return Promise.resolve({ ok: true, a: [], k: ok.length, c: JSON.stringify({
         apps: ok.map(function (a) {
           var o = { id: a.id, name: a.name, tools: toolsOf(a.id) };
+          if (sensitive(a.id)) o.sensitive = "Personal app the owner allowed after a warning: read only, only while orOS is open (never in the closed copy). Read only what the owner's request needs.";
           if (p.lv[a.id] === "write" && writable(a.id)) {
             o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : DOCS.indexOf(a.id) >= 0 ? DOC_WRITE.slice() : ACT_WRITE.filter(function (n) { return n !== "edit_in_app"; });
             o.changes = canWrite(p.lv, p.hold, a.id, Date.now()) ? "allowed (the owner is notified of each change)" : "paused by the owner until " + new Date(p.hold).toISOString();
@@ -1428,7 +1442,7 @@
     }
     var budgetish = name === "app_summary" && (args.app === "budget" || args.app === "stock" || args.app === "kanban");
     if (ACT_TOOLS.indexOf(name) >= 0 && !budgetish) {
-      if ((ACT_WRITE.indexOf(name) >= 0 || name === "do_action") && !ok.some(function (a) { return p.lv[a.id] === "write" && actable(a.id); })) {
+      if ((ACT_WRITE.indexOf(name) >= 0 || name === "do_action" || ACT_OPEN.indexOf(name) >= 0) && !ok.some(function (a) { return p.lv[a.id] === "write" && actable(a.id); })) {
         return Promise.resolve({ ok: false, c: "The owner lets Claude change none of these apps (orOS › Settings › Connected services › orOS Gate: «Claude may also change …» per app)." });
       }
       return actFrame().then(function (F) {
@@ -1723,19 +1737,20 @@
     // A code that came in a scanned QR, once (Settings fills it in).
     takeJoin: function () { var c = pendingJoin; pendingJoin = ""; return c; },
     never: NEVER.slice(),
+    sensitive: SENSITIVE.slice(),
     state: function () {
       var p = pref();
       // moved: Mail's relay changed after the gate was made; the gate
       // stays on the old one until it is turned off and on again.
       var h = typeof p.hold === "number" && p.hold > Date.now() ? p.hold : 0;
-      return { on: !!p.on, conn: wsState, at: p.at || 0, moved: !!(p.on && p.r && p.r !== relayNow()), hold: h,
+      return { on: !!p.on, conn: wsState, at: p.at || 0, gid: p.on && typeof p.id === "string" ? p.id.slice(0, 6) : "", moved: !!(p.on && p.r && p.r !== relayNow()), hold: h,
                lv: isObj(p.lv) ? JSON.parse(JSON.stringify(p.lv)) : {} };
     },
     apps: function () {
       var lv = pref().lv || {};
       return offered().filter(function (a) { return NEVER.indexOf(a.id) < 0; }).map(function (a) {
         return { id: a.id, name: a.name, read: lv[a.id] === "read" || lv[a.id] === "write", write: lv[a.id] === "write",
-                 canWrite: writable(a.id), tools: toolsOf(a.id) };
+                 canWrite: writable(a.id), sensitive: sensitive(a.id), tools: toolsOf(a.id) };
       });
     },
     // level: "read" | "write" | false (off)

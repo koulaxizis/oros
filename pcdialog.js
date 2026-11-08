@@ -164,7 +164,7 @@
     "#oros-pcd .pcd-row{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:6px 12px;background:none;border:0;" +
     "border-bottom:1px solid rgba(255,255,255,.04);color:inherit;font:inherit;text-align:left;cursor:pointer;box-sizing:border-box}" +
     "#oros-pcd .pcd-row:hover,#oros-pcd .pcd-row:focus-visible{background:var(--accent-soft)}" +
-    "#oros-pcd .pcd-row[aria-selected=true]{background:var(--accent);color:var(--accent-text,#fff)}" +
+    "#oros-pcd .pcd-row[aria-selected=true]{background:var(--accent);color:var(--accent-ink, #fff)}" +
     "#oros-pcd .pcd-row .pcd-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
     "#oros-pcd .pcd-row .pcd-s{font-size:12px;opacity:.7}" +
     "#oros-pcd .pcd-row.dim{opacity:.45;cursor:default}" +
@@ -175,7 +175,7 @@
     "#oros-pcd .pcd-btns{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}" +
     "#oros-pcd .pcd-btns .pcd-sp{flex:1}" +
     "#oros-pcd .pcd-btns button{min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font:inherit;cursor:pointer}" +
-    "#oros-pcd .pcd-btns button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text,#fff)}" +
+    "#oros-pcd .pcd-btns button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink, #fff)}" +
     "#oros-pcd .pcd-btns button:disabled{opacity:.5;cursor:default}";
   function ensureCss() {
     if (doc.getElementById("oros-pcd-css")) return;

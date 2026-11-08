@@ -23,9 +23,10 @@ const data = {
 
 test("allowed: only apps set to read, never the closed list", () => {
   const offered = [{ id: "budget", name: "Budget" }, { id: "diary", name: "Diary" }, { id: "notes", name: "Notes" }, { id: "stock", name: "Stock" }];
-  const ok = G.allowed(offered, { budget: "read", diary: "read", notes: "off" });
-  assert.deepEqual(ok.map((a) => a.id), ["budget"]);
-  assert.ok(G.NEVER.indexOf("passwords") >= 0 && G.NEVER.indexOf("mail") >= 0);
+  const ok = G.allowed(offered.concat([{ id: "passwords", name: "Passwords" }]), { budget: "read", diary: "read", notes: "off", passwords: "read" });
+  assert.deepEqual(ok.map((a) => a.id), ["budget", "diary"], "a personal app the owner turned on is read; Passwords never");
+  assert.deepEqual(G.NEVER.slice().sort(), ["assistant", "passwords"]);
+  assert.deepEqual(G.SENSITIVE.slice().sort(), ["baby", "cycle", "diary", "fitness", "health", "mail", "mood"]);
   assert.deepEqual(G.toolsOf("budget"), ["search_data", "read_item", "app_summary", "budget_lines"]);
   assert.deepEqual(G.toolsOf("notes"), ["search_data", "read_item", "app_summary"]);   // GATE-ACT
   assert.deepEqual(G.toolsOf("weather"), ["search_data", "read_item"]);
@@ -256,13 +257,15 @@ test("write rules: only write level, unless the owner paused changes (one rule, 
   assert.equal(G.canWrite({ notes: "write" }, 0, "notes", 1000), true, "GATE-ACT: the Assistant's apps");
   assert.equal(G.canWrite({ writer: "write" }, 0, "writer", 1000), true, "GATE-ACT W5: documents");
   assert.equal(G.canWrite({ notes: "write" }, 2000, "notes", 1000), false, "paused");
-  assert.equal(G.canWrite({ fitness: "write" }, 0, "fitness", 1000), false, "fitness is never offered");
+  assert.equal(G.canWrite({ fitness: "write" }, 0, "fitness", 1000), false, "personal apps are read only");
+  G.SENSITIVE.forEach((id) => { assert.equal(G.writable(id), false, id); assert.equal(G.lvFrom({ [id]: "write" })[id], "read", id); });
+  assert.deepEqual(G.lvFrom({ passwords: "read", assistant: "read", mail: "read" }), { mail: "read" });
   assert.deepEqual(G.allowed([{ id: "budget" }], { budget: "write" }).map((a) => a.id), ["budget"], "write also reads");
 });
 
 test("switches from another device: never-apps off, write only where allowed (5.77.00)", () => {
   assert.deepEqual(G.lvFrom({ budget: "write", diary: "read", passwords: "write", invoices: "write", kanban: "write", stock: "read", weather: "write", writer: "write", x: "maybe" }),
-    { budget: "write", invoices: "write", kanban: "write", stock: "read", weather: "read", writer: "write" }, "GATE-ACT: the everyday apps and documents keep write");
+    { budget: "write", diary: "read", invoices: "write", kanban: "write", stock: "read", weather: "read", writer: "write" }, "GATE-ACT: the everyday apps and documents keep write; a personal app the owner allowed stays read (5.90.00)");
   assert.deepEqual(G.lvFrom(null), {});
   assert.deepEqual(G.lvFrom(["budget"]), {});
 });
