@@ -1820,7 +1820,7 @@
       "old_phone / old_email / old_website replace that one / address (address_replace: true replaces the address " +
       "of that type) / date = birthday / labels / note = replace the note / note_add = add a line to the note, delete) · " +
       "crm (a customer, update: title = name / nickname = alias / job_title / tax_id = VAT or tax number / tax_office / " +
-      "phone, email, website, address = fill when empty, replace with old_phone… / address_replace / note / note_add / roles; bank " +
+      "phone, email, website, address = fill when empty, replace with old_phone… / address_replace / note / note_add / roles / rs_beneficiary; bank " +
       "details or a bio go in note_add; a deal, update: title / amount / date = expected close / stage / probability / reason / note, " +
       "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start) · " +
       "kanban (reschedule: date = due, update: title / date / note / labels, move: column and/or board (to another board: board, column optional, default its first), delete) · " +
@@ -1883,6 +1883,8 @@
         amount: { type: "number", description: "budget, crm deal, split: new amount in currency units, e.g. 12.5; stock: the product's selling price; invoices: the part that was paid (leave out when all of it was)." },
         roles: { type: "array", items: { type: "string", "enum": ["customer", "supplier", "shop", "author", "associate"] },
                  description: "crm customer: the whole new list of the partner's roles (replaces; shop = consignment shop, author = author / contributor)." },
+        rs_beneficiary: { type: "array", items: { type: "string" },
+                          description: "crm customer: the partner's beneficiary name(s) in the shop's Revenue Splitter, exactly as written there (replaces; [] unlinks). Not together with roles." },
         stage: { type: "string", description: "crm deal: the pipeline stage's name, e.g. Proposal, Won, Lost." },
         probability: { type: "integer", description: "crm deal: chance to win, 0-100." },
         reason: { type: "string", description: "crm deal at stage Lost: why it was lost." },
@@ -1933,6 +1935,7 @@
     crm_activity: "crm_activity = an entry in a CRM customer's history (a call, e-mail, meeting, message or note that happened)",
     crm_followup: "crm_followup = a CRM follow-up (something to do for a customer on a day)",
     crm_deal: "crm_deal = a CRM deal (a sale or job in the pipeline)",
+    crm_contract: "crm_contract = a contract with a CRM partner (title, start, end, reminder before it ends)",
     // AS-ADD5 (wave A4, assistant/additems2.js)
     timesheet: "timesheet = time worked, in Timesheet",
     meals: "meals = a recipe in Meal Planner",
@@ -1959,7 +1962,7 @@
   // [field, apps it is for, schema]
   var CR_FIELDS = [
     ["name", ["contacts", "crm"], { type: "string", description: "Full name (a person), or the company's name (a CRM company)." }],
-    ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_followup", "crm_deal", "timesheet", "meals", "travel_plan", "travel_pack",
+    ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_followup", "crm_deal", "crm_contract", "timesheet", "meals", "travel_plan", "travel_pack",
                "habits", "fitness", "garage", "plants", "petcare", "shelf", "publish", "wiki", "split"], { type: "string", description: "The task, event, note, bookmark, card, follow-up, deal, recipe, itinerary entry, packing item, habit, workout, plant, shelf title or published book's title (budget: use note; timesheet: what was done; garage: what was done, e.g. Oil change, or what expires, e.g. Insurance; petcare: the vaccine, medicine or visit reason, none for a weight; split: what was paid for)." }],
     ["days", ["habits"], { type: "array", items: { type: "integer" }, description: "habits: weekdays, 0 = Monday … 6 = Sunday (leave out for any day)." }],
     ["per_week", ["habits"], { type: "integer", description: "habits: times a week, instead of days." }],
@@ -2017,7 +2020,7 @@
     ["qty", ["travel_pack"], { type: "integer", description: "travel_pack: how many (default 1)." }],
     ["group", ["travel_pack"], { type: "string", "enum": ["clothes", "toilet", "health", "tech", "docs", "baby", "gear", "food", "misc", "before"], description: "travel_pack: the list's group (before = to do before leaving; default misc)." }],
     ["color", ["stickies"], { type: "string", "enum": ["yellow", "pink", "green", "blue", "orange", "lilac"], description: "stickies: the note's colour (default the user's)." }],
-    ["customer", ["crm_activity", "crm_followup", "crm_deal"], { type: "string", description: "crm_*: the CRM customer's ref (from search_data or create_items), required." }],
+    ["customer", ["crm_activity", "crm_followup", "crm_deal", "crm_contract"], { type: "string", description: "crm_*: the CRM customer's ref (from search_data or create_items), required." }],
     ["deal", ["crm_activity", "crm_followup"], { type: "string", description: "crm_activity, crm_followup: the ref of that customer's deal it is about, if any." }],
     ["channel", ["crm_activity"], { type: "string", "enum": ["call", "mail", "meet", "msg", "note"], description: "crm_activity: how it happened (default note)." }],
     ["who", ["crm_activity", "travel_pack"], { type: "string", description: "crm_activity: the person spoken with. travel_pack: whose it is." }],
@@ -2038,8 +2041,9 @@
                              region: { type: "string" }, country: { type: "string" },
                              type: { type: "string", "enum": ["home", "work", "other"] } } }],
     ["birthday", ["contacts"], { type: "string", description: "contacts: YYYY-MM-DD, or MM-DD without a year." }],
-    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal", "timesheet", "travel_plan", "stickies", "fitness", "garage", "petcare", "publish", "invoices", "quote", "split"], { type: "string", description: "YYYY-MM-DD. publish: the release date; invoices, quote: the draft's date (default today); todo, kanban: the due date; calendar, crm_followup, timesheet: the day (required); budget, crm_activity, fitness, petcare, garage service: the day (default today, never later); crm_deal: the expected close; travel_plan: the day; stickies: the reminder's day (leave out for none); garage renewal: the day it expires (required)." }],
-    ["end_date", ["calendar", "travel_plan"], { type: "string", description: "calendar: last day of an event over several days. travel_plan: the arrival or check-out day." }],
+    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal", "crm_contract", "timesheet", "travel_plan", "stickies", "fitness", "garage", "petcare", "publish", "invoices", "quote", "split"], { type: "string", description: "YYYY-MM-DD. publish: the release date; invoices, quote: the draft's date (default today); todo, kanban: the due date; calendar, crm_followup, timesheet: the day (required); budget, crm_activity, fitness, petcare, garage service: the day (default today, never later); crm_deal: the expected close; crm_contract: the day it was signed or starts; travel_plan: the day; stickies: the reminder's day (leave out for none); garage renewal: the day it expires (required)." }],
+    ["end_date", ["calendar", "travel_plan", "crm_contract"], { type: "string", description: "calendar: last day of an event over several days. travel_plan: the arrival or check-out day. crm_contract: the day it ends (leave out for open-ended)." }],
+    ["remind_days", ["crm_contract"], { type: "integer", description: "crm_contract: remind this many days before it ends, 0-365 (default 30)." }],
     ["start", ["calendar", "crm_activity", "crm_followup", "timesheet", "travel_plan", "stickies", "fitness"], { type: "string", description: "HH:MM (24h). calendar: start time, leave out for all day; crm_*: the time, if said; timesheet, fitness: when it started (required); travel_plan: departure or start; stickies: the reminder's time." }],
     ["end", ["calendar", "timesheet", "travel_plan"], { type: "string", description: "End time HH:MM (timesheet: on the same day; else give minutes)." }],
     ["location", ["calendar", "travel_plan", "plants"], { type: "string", description: "calendar, travel_plan: where. plants: the room." }],
@@ -2048,7 +2052,7 @@
     ["priority", ["todo"], { type: "integer", "enum": [1, 2, 3, 4], description: "todo: 1 = P1, most urgent." }],
     ["subtasks", ["todo", "kanban"], { type: "array", items: { type: "string" }, description: "todo, kanban: steps of the task or card." }],
     ["entry", ["budget"], { type: "string", "enum": ["expense", "income"], description: "budget: expense (default) or income." }],
-    ["amount", ["budget", "crm_deal", "garage", "petcare", "split"], { type: "number", description: "budget, crm_deal, garage, petcare visit: the amount (cost) in the app's currency, e.g. 12.5. split: the whole amount paid, in the group's currency." }],
+    ["amount", ["budget", "crm_deal", "crm_contract", "garage", "petcare", "split"], { type: "number", description: "budget, crm_deal, crm_contract, garage, petcare visit: the amount (cost) in the app's currency, e.g. 12.5. split: the whole amount paid, in the group's currency." }],
     ["category", ["budget", "split"], { type: "string", description: "budget: groceries, eating-out, bills, home, transport, health, fun, clothes, gift, salary, freelance, other, or the name of one of the user's own categories. split: food, groceries, stay, transport, bills, fun or other." }],
     ["text", ["notes", "stickies", "wiki"], { type: "string", description: "notes: the page's text (Markdown). stickies: the note (up to 1000 characters, line breaks kept). wiki: the article in Wiki's Markdown, [[Other article]] links allowed (200000 characters)." }],
     ["wiki", ["wiki"], { type: "string", description: "wiki: the wiki's name (may be left out when the user has one)." }],
@@ -2067,7 +2071,7 @@
     ["column", ["kanban"], { type: "string", description: "kanban: an existing column's name (default the first)." }],
     ["label", ["calendar"], { type: "string", description: "calendar: the name of one of the user's labels." }],
     ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals", "shelf", "flashcards"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals, shelf, flashcards: tags, any)." }],
-    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare", "publish", "invoices", "quote", "split"], { type: "string", description: "A note (Publishing 4000, only for the user, Invoices and Quote 2000, printed on the document, Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],
+    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "crm_contract", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare", "publish", "invoices", "quote", "split"], { type: "string", description: "A note (Publishing 4000, only for the user, Invoices and Quote 2000, printed on the document, Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],
     ["kind", ["crm"], { type: "string", "enum": ["person", "company"], description: "crm: a person or a company (default company)." }],
     ["status", ["crm", "shelf", "publish"], { type: "string", "enum": ["lead", "active", "past", "want", "now", "done", "dropped", "idea", "production", "released", "out_of_print"], description: "crm: lead (default), active customer, or past. shelf: want (default), now (reading / watching), done or dropped. publish: idea (default), production, released or out_of_print." }],
     ["tax_id", ["crm", "invoices", "quote"], { type: "string", description: "crm: VAT / tax number (e.g. Greek ΑΦΜ). invoices: the client's tax number, to find the Invoices client; quote: kept on a new client." }],
@@ -3576,7 +3580,7 @@
     if (!opts.builtin && !opts.chatOnly && opts.creates && opts.creates.length) {
       var CR_WHAT = { contacts: "contacts", crm: "CRM customers or partners", todo: "To-Do tasks", calendar: "Calendar events",
                       budget: "Budget expenses or income", notes: "notes", bookmarks: "bookmarks", kanban: "Kanban cards",
-                      crm_activity: "CRM history entries (a call, meeting or note that happened)", crm_followup: "CRM follow-ups", crm_deal: "CRM deals",
+                      crm_activity: "CRM history entries (a call, meeting or note that happened)", crm_followup: "CRM follow-ups", crm_deal: "CRM deals", crm_contract: "CRM contracts",
                       timesheet: "time worked (Timesheet)", meals: "recipes (Meal Planner)", travel_plan: "a trip's itinerary entries", travel_pack: "a trip's packing items",
                       stickies: "sticky notes", habits: "habits", fitness: "finished workouts", garage: "Garage services and renewals",
                       plants: "plants (Plant Care)", petcare: "pet health records", shelf: "Media Shelf titles (books, films, games…)",
@@ -3588,7 +3592,7 @@
                       split: "Split expenses (shared costs in a group, split equally; uneven splits are made in Split)" };
       lines.push("To add new " + opts.creates.map(function (a) { return CR_WHAT[a] || a; }).join(", ") +
         ", call create_items (all of one app in one call, even a single one) instead of propose_entry: the user ticks and adds them on one card. Say they were added only when the result says so, and which ones the user left out or were already there. When the user hasn't said where (which list, board, notebook…), leave it out and the app's default is used." +
-        (opts.creates.indexOf("crm_deal") >= 0 ? " CRM history, follow-ups and deals belong to a customer: give its ref as customer (search_data first; add the customer first when it is missing), never a name. Something done or said for a customer is crm_activity; something still to do on a day is crm_followup." : "") +
+        (opts.creates.indexOf("crm_deal") >= 0 ? " CRM history, follow-ups and deals belong to a customer: give its ref as customer (search_data first; add the customer first when it is missing), never a name. Something done or said for a customer is crm_activity; something still to do on a day is crm_followup; a signed agreement with its dates is crm_contract." : "") +
         (opts.creates.indexOf("travel_plan") >= 0 ? " Itinerary entries and packing items belong to a trip: give its ref as trip (search_data in travel first); a new trip itself is made in Travel." : "") +
         (opts.partnerLinks ? " When a CRM customer is the same partner as a Stock supplier or consignment shop, a Timesheet client, an Invoices client or a person on Publishing titles, link them with link_items (find both with search_data first) so CRM's card shows it all; never say they are linked because the names match. Calendar events have no link to a customer: a meeting or call to come with a customer is a CRM follow-up (create_items crm_followup), which Calendar shows." : "") +
         (opts.links ? " To link a CRM customer with a contact (the same person, or the company's contact person), call link_contact with both refs, or give contact when you create the customer; find both with search_data first, and create the contact first when it is missing. Never say they are linked by the same name or e-mail: only a link links them." : ""));

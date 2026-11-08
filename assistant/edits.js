@@ -88,7 +88,7 @@
                  nickname: 1, job_title: 1, address: 1, address_replace: 1, website: 1,
                  old_phone: 1, old_email: 1, old_website: 1, note_add: 1 },
     crm:       { title: 1, nickname: 1, job_title: 1, tax_id: 1, tax_office: 1, phone: 1, old_phone: 1, email: 1, old_email: 1,
-                 website: 1, old_website: 1, address: 1, address_replace: 1, note: 1, note_add: 1, roles: 1 },
+                 website: 1, old_website: 1, address: 1, address_replace: 1, note: 1, note_add: 1, roles: 1, rs_beneficiary: 1 },
     crm_deal:  { title: 1, amount: 1, date: 1, note: 1, stage: 1, probability: 1, reason: 1 },
     crm_fup:   { title: 1, date: 1, start: 1 },
     kanban:    { title: 1, date: 1, note: 1, label: 1, labels: 1 },
@@ -97,7 +97,7 @@
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "deck", "kind", "roles", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "songs", "front", "back", "note", "text"];
+  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "deck", "kind", "roles", "rs", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "songs", "front", "back", "note", "text"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -349,6 +349,20 @@
       }
       if (!rl.length) return bad("roles must name at least one role (customer for a plain customer).");
       set.roles = rl;
+    }
+    // A customer's Revenue Splitter beneficiary: the exact name(s) in
+    // the shop's Revenue Splitter (crm/core.js rsl); "" or [] unlinks.
+    if (has(args, "rs_beneficiary") && args.rs_beneficiary !== null && args.rs_beneficiary !== undefined) {
+      var rsIn = Array.isArray(args.rs_beneficiary) ? args.rs_beneficiary : [args.rs_beneficiary];
+      var rsl = [];
+      for (var bi = 0; bi < rsIn.length; bi++) {
+        if (typeof rsIn[bi] !== "string") return bad("rs_beneficiary must be a name or a list of names.");
+        var bn = line(rsIn[bi], 200);
+        if (bn.length > 120) return bad("A Revenue Splitter beneficiary's name is at most 120 characters.");
+        if (bn && rsl.indexOf(bn) < 0) rsl.push(bn);
+      }
+      if (rsl.length > 5) return bad("A customer links at most 5 Revenue Splitter beneficiaries.");
+      set.rs_beneficiary = rsl.sort(cmpStr);
     }
     if (has(args, "stage") && args.stage !== null && args.stage !== undefined && args.stage !== "") {
       var sg = line(String(args.stage), 30);
@@ -2128,6 +2142,12 @@
     if (!h) return bad(isObj(target) && target.cust ? "That customer is no longer in CRM." : "A CRM customer, deal or follow-up can be changed here, not a history entry.");
     if (ch.action !== "update") return bad("A CRM customer can only be updated here; delete it in CRM.");
     var c = clone(h.c), before = crmView(h.c), s = ch.set;
+    if (has(s, "rs_beneficiary")) {
+      if (has(s, "roles")) return bad("Change roles and rs_beneficiary in two separate changes.");
+      var rest = {};
+      Object.keys(s).forEach(function (k) { if (k !== "rs_beneficiary") rest[k] = s[k]; });
+      return crmRsChange(d, h, s.rs_beneficiary, Object.keys(rest).length ? { ok: true, ref: ch.ref, action: ch.action, set: rest } : null, now);
+    }
     if (has(s, "roles")) {
       var only = {};
       Object.keys(s).forEach(function (k) { if (k !== "roles") only[k] = s[k]; });
@@ -2316,6 +2336,45 @@
              undo: { t: "set", app: "crm", target: { cust: id }, prev: {}, next: {}, pt: { t: "set", list: "pt", prev: prev, next: clone(row) },
                      cust: r1 ? r1.undo : null } };
   }
+  // rs_beneficiary → the customer's rsl row (crm/core.js rsRow; the
+  // CRM app's saveRsl): the shop account stays, a row without names
+  // is an unlink and is kept, like the app does.
+  function crmRsChange(d, h, names, rest, now) {
+    var c0 = h.c, id = c0.id;
+    var rh = crmRow(d, "rsl", id);
+    var cur = rh && Array.isArray(rh.x.n) ? rh.x.n.slice().sort(cmpStr) : [];
+    var acct = rh && typeof rh.x.a === "string" ? rh.x.a : "";
+    var taken = [];
+    (Array.isArray(d.rsl) ? d.rsl : []).forEach(function (r) {
+      if (!isObj(r) || r.id === id || !Array.isArray(r.n) || !crmRow(d, "rsl", r.id) || !crmFind(d, { cust: r.id })) return;
+      if (acct && r.a && r.a !== acct) return;
+      r.n.forEach(function (n) { if (names.indexOf(n) >= 0) taken.push(n); });
+    });
+    if (taken.length) return bad("Another CRM customer is already linked to " + taken.join(", ") + " in Revenue Splitter.");
+    var r1 = null;
+    if (rest) {
+      r1 = crmChange(d, { cust: id }, rest, now);
+      if (!r1.ok && !/^Nothing would change/.test(r1.err)) return r1;
+      if (!r1.ok) r1 = null;
+    }
+    var before = r1 ? r1.before : crmView(c0), after = r1 ? r1.after : crmView(c0);
+    before.rs = cur.join(", ");
+    after.rs = names.join(", ");
+    if (before.rs === after.rs) {
+      if (r1) { r1.before = before; r1.after = after; return r1; }
+      return bad("Nothing would change: the customer is already linked that way.");
+    }
+    var prev = rh ? clone(rh.x) : null;
+    var row = { id: id, m: crmStamp(d, id, rh ? rh.x.m : 0, now) };
+    if (names.length) {
+      if (acct) row.a = acct;
+      row.n = names.slice();
+    }
+    crmPut(d, "rsl", row);
+    return { ok: true, title: before.title, before: before, after: after, del: false,
+             undo: { t: "set", app: "crm", target: { cust: id }, prev: {}, next: {}, pt: { t: "set", list: "rsl", prev: prev, next: clone(row) },
+                     cust: r1 ? r1.undo : null } };
+  }
   var STAGE_IDS = ["new", "contact", "proposal", "nego"];
   // crm/crm.js / i18n "stage.*": a built-in stage by any of its names
   // i18n-inline-ok: CRM's stage names in EN, EL and DE for matching what the user says (data, no UI text)
@@ -2488,7 +2547,7 @@
     contacts: { title: ["title"], nickname: ["nickname"], org: ["org"], job: ["job_title"],
                 phone: ["phone", "old_phone"], email: ["email", "old_email"], address: ["address", "address_replace"],
                 website: ["website", "old_website"], birthday: ["date"], labels: ["label", "labels"], note: ["note", "note_add"] },
-    crm: { title: ["title"], nickname: ["nickname"], job: ["job_title"], vat: ["tax_id"], taxoffice: ["tax_office"], roles: ["roles"],
+    crm: { title: ["title"], nickname: ["nickname"], job: ["job_title"], vat: ["tax_id"], taxoffice: ["tax_office"], roles: ["roles"], rs: ["rs_beneficiary"],
            phone: ["phone", "old_phone"], email: ["email", "old_email"], address: ["address", "address_replace"],
            website: ["website", "old_website"], note: ["note", "note_add"] }
   };

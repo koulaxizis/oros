@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.94.00
+- **CRM partners from Claude and the Assistant.** They can now add a contract to a CRM partner (start, end, a reminder before it ends, amount, note) and link a partner to their beneficiary in your shop's Revenue Splitter, so the partner card shows what they are owed. Same card, ticks and `Undo` as for other CRM records.
+
 ## Version 5.93.00
 - **Invoice drafts and quotes straight from the Assistant or Claude.** Ask the Assistant, or Claude through orOS Gate, for an invoice or a quote: it is saved at once as a draft in Invoices or Quote, with the client, lines, VAT, currency and notes, and `Undo` takes it back while you haven't changed it. An invoice is never issued for you: you check it and press `Issue` in Invoices, which gives the number. A quote gets its next number and a new client is added to Quote by name.
 - **Wiki articles, study cards and shared expenses too.** The same way, the Assistant and Claude can write a new Wiki article, add Flashcards cards (front and back, both ways, or a gap text) to a deck you have, and add a shared expense to a Split group, split equally. Each comes with `Undo`.

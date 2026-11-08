@@ -162,7 +162,7 @@ test("crm: tool and prompt list history, follow-ups and deals only when CRM is a
 
 test("crm: assistant.js offers the CRM records with CRM and turns refs into ids", () => {
   const src = require("fs").readFileSync(require("path").join(__dirname, "..", "assistant", "assistant.js"), "utf8");
-  assert.match(src, /var CRM_ADD = \["crm_activity", "crm_followup", "crm_deal"\]/);
+  assert.match(src, /var CRM_ADD = \["crm_activity", "crm_followup", "crm_deal", "crm_contract"\]/);
   assert.match(src, /if \(crm\) CRM_ADD\.forEach/);
   assert.match(src, /o\.cust = rc\.target\.cust/);
   assert.match(src, /o\.dealId = rd\.target\.deal/);
@@ -257,4 +257,61 @@ test("change crm follow-up: complete, reopen, reschedule, update; canonical", ()
   // a customer still only takes update; an activity can't be changed
   assert.match(change(d0, { cust: "c1aaaaaaaa" }, { action: "complete" }, NOW).err, /can only be updated/);
   assert.match(change(d0, { act: "x" }, { action: "update", title: "x" }, NOW).err, /not a history entry/);
+});
+
+test("crm_contract: contracts in normCtr's shape, end not before start, look-alikes unticked, Undo", () => {
+  const d = crmData();
+  assert.match(A.normItems({ app: "crm_contract", items: [{ customer: "r1" }] }, CTX).err, /title .* is required/);
+  assert.match(A.normItems({ app: "crm_contract", items: [{ customer: "r1", title: "x", date: "2026-05-01", end_date: "2026-04-01" }] }, CTX).err, /end_date is before date/);
+  assert.match(A.normItems({ app: "crm_contract", items: [{ customer: "r1", title: "x", remind_days: 400 }] }, CTX).err, /remind_days/);
+  const its = items("crm_contract", [
+    { customer: "r1", title: "Publishing contract", date: "2024-05-01", end_date: "2029-04-30", amount: 1500, note: "Paperback" },
+    { customer: "r2", title: "Translation", remind_days: 60 }
+  ]);
+  const p = A.plan("crm_contract", d, its, CTX);
+  assert.equal(p.ok, true, p.err);
+  assert.deepEqual(p.rows[0].fields, [["customer", "Acme"], ["start", "2024-05-01"], ["end", "2029-04-30"], ["reminder", "30d"], ["amount", "1500.00 EUR"], ["note", "Paperback"]]);
+  const r = A.apply("crm_contract", d, its, NOW, {}, CTX);
+  assert.equal(r.ok, true, r.err);
+  assert.deepEqual(C.norm(clone(r.data)), r.data, "already CRM's norm");
+  const c0 = r.data.ctr.find((x) => x.cust === "c1aaaaaaaa");
+  assert.deepEqual(c0, { id: c0.id, m: NOW, cust: "c1aaaaaaaa", t: "Publishing contract", from: "2024-05-01", to: "2029-04-30", rem: 30, val: 150000, note: "Paperback" });
+  assert.equal(r.data.ctr.find((x) => x.cust === "c2bbbbbbbb").rem, 60);
+  // the same contract again is a look-alike
+  const p2 = A.plan("crm_contract", r.data, items("crm_contract", [{ customer: "r1", title: "publishing contract", date: "2024-05-01" }]), CTX);
+  assert.ok(p2.rows[0].dup, "look-alike");
+  const u = A.undo("crm_contract", r.data, r.undo, NOW + 2);
+  assert.equal(u.ok, true, u.err);
+  assert.equal(C.contractsOf(u.data, "c1aaaaaaaa", "2026-10-26").length, 0);
+});
+
+test("change crm rs_beneficiary: the rsl row as rsRow writes it, names taken elsewhere refused, unlink kept, Undo", () => {
+  const d0 = crmData();
+  assert.match(E.normArgs({ ref: "r1", action: "update", rs_beneficiary: [1] }).err, /a name or a list/);
+  assert.match(E.normArgs({ ref: "r1", action: "update", rs_beneficiary: ["a", "b", "c", "d", "e", "f"] }).err, /at most 5/);
+  const r = change(d0, { cust: "c1aaaaaaaa" }, { action: "update", rs_beneficiary: "Στέφανος Ξεφτέρης" }, NOW);
+  assert.deepEqual(r.plan.rows, [{ f: "rs", b: "", a: "Στέφανος Ξεφτέρης" }]);
+  assert.deepEqual(r.data.rsl, [{ id: "c1aaaaaaaa", m: NOW, n: ["Στέφανος Ξεφτέρης"] }]);
+  assert.deepEqual(JSON.stringify(C.norm(clone(r.data))), JSON.stringify(r.data), "same bytes as CRM's norm");
+  assert.deepEqual(C.rsOf(r.data, { id: "c1aaaaaaaa" }), { a: "", n: ["Στέφανος Ξεφτέρης"] });
+  // another partner can't take the same name; roles go in their own change
+  assert.match(change(r.data, { cust: "c2bbbbbbbb" }, { action: "update", rs_beneficiary: ["Στέφανος Ξεφτέρης"] }, NOW).err, /already linked/);
+  assert.match(change(r.data, { cust: "c2bbbbbbbb" }, { action: "update", rs_beneficiary: ["X"], roles: ["author"] }, NOW).err, /two separate changes/);
+  assert.match(change(r.data, { cust: "c1aaaaaaaa" }, { action: "update", rs_beneficiary: ["Στέφανος Ξεφτέρης"] }, NOW).err, /already linked that way/);
+  // the shop account stays; [] unlinks and the row stays
+  const withA = clone(r.data);
+  withA.rsl[0].a = "acct1";
+  const r2 = change(withA, { cust: "c1aaaaaaaa" }, { action: "update", rs_beneficiary: ["B", "A"] }, NOW + 10);
+  assert.deepEqual(r2.data.rsl, [{ id: "c1aaaaaaaa", m: NOW + 10, a: "acct1", n: ["A", "B"] }]);
+  const r3 = change(r2.data, { cust: "c1aaaaaaaa" }, { action: "update", rs_beneficiary: [] }, NOW + 20);
+  assert.deepEqual(r3.data.rsl, [{ id: "c1aaaaaaaa", m: NOW + 20 }]);
+  assert.deepEqual(C.norm(clone(r3.data)), r3.data);
+  // with a detail in one update, Undo takes both back
+  const r4 = change(d0, { cust: "c2bbbbbbbb" }, { action: "update", rs_beneficiary: ["Beta Books"], job_title: "Author" }, NOW);
+  assert.deepEqual(r4.plan.rows.map((x) => x.f), ["rs", "job"]);
+  const u = E.undo("crm", r4.data, r4.undo, NOW + 30);
+  assert.equal(u.ok, true, u.err);
+  assert.equal(u.data.cust.find((c) => c.id === "c2bbbbbbbb").job, undefined);
+  assert.equal(C.rsOf(u.data, { id: "c2bbbbbbbb" }), null);
+  assert.deepEqual(C.norm(clone(u.data)), u.data);
 });
