@@ -14,7 +14,7 @@ Die Tabs:
 ## Hören
 Tippe auf einen Song, um ihn abzuspielen, danach folgt der Rest seines Albums oder seiner Liste. Der große Abspielknopf spielt ein ganzes Album, einen Künstler, eine Playlist oder ein Genre, und `Zufällig` spielt es in zufälliger Reihenfolge.
 
-Die Leiste unten zeigt den Song, ein Herz sowie Abspielen/Pause und Weiter. Tippe auf den Namen des Songs für den großen Player: Position, `Zurück`, `Weiter`, `Zufällig`, `Wiederholen` (alle, dann einen), Lautstärke und `Warteschlange`. Die Mediensteuerung deines Geräts (Sperrbildschirm, Headset, Medientasten) funktioniert auch. Radio und Podcasts pausieren, wenn Musik startet, und umgekehrt.
+Die Leiste unten zeigt den Song, ein Herz sowie Abspielen/Pause und Weiter. Tippe auf den Namen des Songs für den großen Player: Position, `Zurück`, `Weiter`, `Zufällig`, `Wiederholen` (alle, dann einen), Lautstärke und `Warteschlange`. Die Mediensteuerung deines Geräts (Sperrbildschirm, Headset, Medientasten) funktioniert auch. Solange ein Song läuft, zeigt die obere Leiste von orOS eine Note, auch bei geschlossenem Musik-Fenster: Tippe darauf für eine kleine Steuerung mit dem Song, seiner Position, `Zurück`, Abspielen/Pause, `Weiter`, `Stopp`, `Musik öffnen`, Lautstärke und `Stummschalten`. Tippe daneben oder drücke Esc, um sie zu schließen. Radio und Podcasts pausieren, wenn Musik startet, und umgekehrt.
 
 ## Warteschlange
 `Warteschlange` im großen Player zeigt `Läuft gerade`, `Als Nächstes` (Songs, die du von Hand hinzugefügt hast) und was aus der gestarteten Liste folgt. Tippe dort auf einen Song, um zu ihm zu springen, oder drücke ×, um ihn aus `Als Nächstes` zu nehmen. Die Schaltfläche ⋯ bei jedem Song bietet `Als Nächstes spielen` und `Zur Warteschlange`.

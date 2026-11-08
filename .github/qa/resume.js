@@ -81,6 +81,21 @@ const PLAY = {
     await p.keyboard.press("Escape"); await p.waitForTimeout(300);
     for (let i = 0; i < 4 && !(await inProg()); i++) await tap(p, "#wait-btn");
   },
+  // Fieldwarden: close the first-run tour, then end the first turn
+  fieldwarden: async (p, inProg) => {
+    await p.waitForTimeout(700);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    await tap(p, "#end-btn"); await p.waitForTimeout(600);
+    for (let i = 0; i < 10 && !(await inProg()); i++) await p.waitForTimeout(300);
+  },
+  // Wayfarers: close the first-run tour, then go to the first stop
+  wayfarers: async (p, inProg) => {
+    await p.waitForTimeout(700);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    await p.focus("#view").catch(() => {});
+    await p.keyboard.press("Enter"); await p.waitForTimeout(400);
+    for (let i = 0; i < 20 && !(await inProg()); i++) await p.waitForTimeout(300);
+  },
   // a word search counts as under way after 15 s of play
   wordsearch: async (p) => { await p.waitForTimeout(16000); }
 };

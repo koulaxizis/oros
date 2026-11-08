@@ -1,0 +1,116 @@
+# Wayfarers
+Wayfarers is a turn-based party RPG. Pick three heroes from six classes and lead them across the land: choose your road at every fork, fight what you meet, rest at camps, trade at markets, and break the guardian at the end of the road. The heart of the game is how the three heroes work together. The three wayfarers carry a lantern to the Frost Gate before the long night falls.
+
+## How to play
+The journey starts on the left of the path map and ends with the region's guardian on the right. Tap a lit stop (or use the arrow keys and [[Enter]]) to go there. Roads only lead on, never back, so each fork is a choice:
+- **Fight** and **Hard fight**: a fight. A hard fight is tougher and leaves spoils: a choice of two pieces of gear.
+- **Camp**: fallen heroes get up again. Then rest (every hero heals 50 %) or train one hero (+1 Power for good).
+- **Market**: buy gear, potions, tonics and phoenix feathers with gold.
+- **Event**: a short scene with two or three choices.
+- **Guardian**: the end of a region. The road crosses three: the Greenway (the Briar King guards it), the Ash Hills (the Ember Colossus) and the Frost Gate (the Keeper of the Gate). When a guardian falls, the party rests on the way (every hero heals 50 %, the fallen stand with a quarter of their Health) and walks on into the next region. Later regions pay more gold and experience, and their spoils are better: the guardians of the Ash Hills and the Frost Gate leave gear of the fourth tier, which no market sells.
+
+The heroes share their experience. Every level lets each hero choose one of two upgrades: more Health, Power, Guard, Speed or Focus, or a stronger skill.
+
+## Fights
+Everyone acts in Speed order, fastest first; a new round reads the Speeds again. The row of portraits at the top shows who acts now and in the next round.
+
+Each foe shows its next move above it: the kind of move, how hard it will hit, and the hero it will hit (that hero's sign). Answer what you see coming: guard, heal, stun it first, or take the hit.
+
+On a hero's turn choose an action at the bottom, then tap a lit target:
+- `Attack`: hit one foe for Power × 1.
+- The hero's skills cost Focus. A hero has 2 Focus at the start of a fight and gets 1 more at the start of each of its turns.
+- `Guard`: half damage until the hero's next turn, and 1 more Focus.
+- `Item`: a potion (heals 40 %), a tonic (3 Focus) or a phoenix feather (a fallen hero stands with half Health). It takes the turn.
+
+A skill with no target (a song, Taunt, Hide, Volley) needs a second tap to use. Tap the chosen action again, or press [[Esc]], to choose another. A long press on a foe or a hero shows its numbers, statuses and next move; a tap does the same when no action is chosen.
+
+Some foes Burn or Chill a hero (Chill: 3 less Speed); the Cleric's `Cleanse` ends both. A few foe moves go through Guard; the number they show already counts that.
+
+Damage is Power × the skill's factor, minus the target's Guard, and at least 1. Guarding halves it. There are no dice and no misses: chance decides only the map, the foes and the spoils, and it all comes from the journey code.
+
+## The classes
+- **Knight** (front row): `Shield bash` hits and stuns (the foe loses its next turn and its shown move); `Cover` makes hits on an ally land on the Knight; `Taunt` turns every single hit on the Knight.
+- **Ranger** (back row): `Mark` makes a foe take 1.5 × from the party for 2 turns; `Pierce` goes through Guard; `Volley` hits every foe.
+- **Mage** (back row): `Fire` burns for 3 turns; `Frost` chills for 2 turns (3 less Speed); `Storm` hits a Wet or Chilled foe twice as hard.
+- **Cleric** (back row): `Heal`; `Cleanse` ends Burn, Stun and Chill; `Raise` gets a fallen hero up with 30 % Health, once a fight.
+- **Rogue** (front row): `Twin strike` hits twice; `Hide` keeps every foe off the Rogue until its next turn and makes its next hit 1.5 ×. Always: double damage to a Marked or Stunned foe.
+- **Bard** (back row): `Anthem` gives the party 2 more Power and `Tempo` 3 more Speed, for 2 turns; `Gift` gives an ally 3 Focus.
+
+Foes that hit the front row hit the Knight and the Rogue first; archers aim at the back row.
+
+## Combos
+- Mark (Ranger) or Stun (Knight), then the Rogue: double damage.
+- Frost (Mage), then Storm: twice as hard. River sprites, mossbacks, storm callers and snow spirits are always Wet, so Storm hits them hard straight away.
+- Stun a foe that shows a big hit, and the hit never comes.
+- Taunt or Cover with the Knight while the Cleric heals.
+- Anthem before the heavy hitters act; Tempo to act before the foes.
+
+## Foes of the Greenway
+- **Thornling:** hits the weakest hero.
+- **Grey wolf:** fast; bites the weakest, then howls (every foe +1 Power for 2 turns).
+- **Boar:** slow; every second turn it charges the front row for 1.8 ×.
+- **River sprite:** always Wet; mends a hurt foe, else hits.
+- **Bandit archer:** shoots the back row.
+- **Mossback:** always Wet; its shell halves the damage until its next turn.
+- **Thorn witch:** Briar is a hit that burns; then it mends a foe.
+- **Bandit captain:** hits, rallies the band (+2 Power), then sweeps every hero.
+- **Briar King:** the guardian. At two thirds of its Health it calls two thornlings, and at one third it rages (+2 Power) and charges.
+
+## Foes of the Ash Hills
+- **Ember imp:** a hit that Burns, then a plain hit.
+- **Ash lizard:** bites the weakest; every second turn it hides in its shell.
+- **Cinder bat:** fast; dives at the back row.
+- **Stone golem:** very slow and hard; shell, then a slam on the front row for 1.5 ×.
+- **Ash shaman:** mends a hurt foe, rallies the band (+2 Power), then hits.
+- **Hill brute:** slow; a hit, then a quake on every hero.
+- **Salamander:** two hits that Burn, then a sweep of every hero.
+- **Hill raider:** hits twice, then rallies the band.
+- **Ember Colossus:** the guardian. At two thirds of its Health it calls two imps and blazes (every hero Burns); at one third it rages (+2 Power).
+
+## Foes of the Frost Gate
+- **Frost wisp:** fast; Rime is a hit that Chills.
+- **Ice wolf:** very fast; bites the weakest, then howls (every foe +1 Power).
+- **Gate sentinel:** very hard; shell, then a slam on the front row.
+- **Storm caller:** always Wet; Bolt hits the back row through Guard, then it mends a foe.
+- **Yeti:** slow and strong; two hits, then a charge on the front row.
+- **Ice drake:** Rime on the weakest, then frost breath on every hero, through Guard, with a Chill.
+- **Snow spirit:** always Wet; mends a hurt foe, then Rime.
+- **Frost reaver:** hits, rallies the band, then sweeps every hero.
+- **Keeper of the Gate:** the guardian. Its breath goes through Guard. At two thirds of its Health it calls two wisps; at one third it rages (+2 Power) and charges.
+
+## Gear and the party
+`Party` (or [[P]]) shows every hero: Health, Power, Guard, Speed, Focus, skills, upgrades and gear. Each hero has a weapon and a charm. Between fights, give a piece from the bag to a hero or take one off, and use potions and phoenix feathers. The bag holds 8 pieces.
+
+## Difficulty and journeys
+`New journey (N)` asks for the difficulty and the party:
+- `Gentle`: 20 % more Health, fallen heroes stand up after every fight won, and a phoenix feather to start.
+- `Hardy`: fallen heroes stand up only at a camp.
+- `Endless`: Hardy rules, but after the Frost Gate the road goes on: the three lands come round again (The Greenway II, then III…), and each time round the foes have more Health, Power and Guard. The journey ends only when the party falls; `Records` keeps the most regions cleared.
+
+In every difficulty, if all three heroes fall, the journey ends. Every journey has a code, shown in the result window and in `Records`. Type a code in `New journey` to walk the same land again; leave it empty for a new one.
+
+## Lore book
+Every foe you meet gets a page in the lore book: its numbers, its habit and a short line about it. Open it from `Records`. Foes you have not met yet show as ???. The book syncs between your devices and `Reset records` leaves it alone.
+
+## Party codes
+At the end of a journey, `Party code` turns your party into a code: the difficulty, the three classes, the level, how far you got, each hero's gear and skill upgrades, and the journey code. `Share` copies it with a short message. A friend types it in `New journey`, in the code field: the window shows your party, and `Set out` starts the same land with the same three classes, from level 1. The message line says how far your party got, so they know what to beat.
+
+## Daily trial
+The calendar button opens today's trial: the Greenway on Hardy, with a party of three chosen for the day. Everyone gets the same land, the same party and the same spoils that day. Beat the guardian and you are through. There is one try, and leaving the trial counts as a fall where you were. A dot on the button means today's trial is still open.
+
+After the trial, a window shows how far you got, your moves and your streak of days passed. `Share` copies a short result with no spoilers: one square for each stop on the road, then your moves. Today's trial also has a card in the [Game Center](help:a/gamecenter).
+
+## Records and sync
+`Records` shows your journeys, wins and regions cleared for each difficulty, and the wins of each class. They sync between your devices through [orOS sync](help:t/sync), adding up the journeys from every device, and they count in the [Game Center](help:a/gamecenter). The journey in progress, your last party and the sound setting stay on this device, and an unfinished journey continues where you left it. A journey left for a new one counts as lost. `Last journeys` lists your ten latest journeys from all your devices, how each one ended and its code; `Replay` walks the same journey again (a Daily trial as a whole journey on Hardy, with the same party). Daily trials count only in their own line, not in the journeys. `Reset records` clears the records on every device.
+
+## Keyboard
+- Map: arrow keys choose a stop, [[Enter]] goes there.
+- Fight: [[1]] to [[6]] choose an action, the arrow keys choose a target, [[Enter]] acts, [[Esc]] goes back.
+- [[P]]: party. [[N]]: new journey.
+- The double arrow in the toolbar turns quick moves on: the foes' moves play faster.
+
+## Tips
+- Read the foes' moves before you act: the number is the damage it will do now.
+- A Cleric and a Knight keep a party standing; a Ranger and a Rogue end fights fast.
+- Rest when the party is hurt; train when it is not.
+- Hard fights pay in gear: take one when the party is strong.

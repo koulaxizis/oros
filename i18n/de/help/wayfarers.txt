@@ -1,0 +1,116 @@
+# Wanderer
+Wanderer ist ein rundenbasiertes Gruppen-Rollenspiel. Wähle drei Helden aus sechs Klassen und führe sie durchs Land: Wähle an jeder Gabelung deinen Weg, kämpfe gegen das, was dir begegnet, raste im Lager, handle auf Märkten und brich am Ende des Weges den Wächter. Das Herz des Spiels ist, wie die drei Helden zusammenarbeiten. Die drei Wanderer tragen eine Laterne zum Frosttor, bevor die lange Nacht fällt.
+
+## So spielst du
+Die Reise beginnt links auf der Wegkarte und endet rechts beim Wächter des Gebiets. Tippe auf einen leuchtenden Halt (oder nutze die Pfeiltasten und [[Enter]]), um dorthin zu gehen. Wege führen nur weiter, nie zurück, also ist jede Gabelung eine Wahl:
+- **Kampf** und **Schwerer Kampf**: ein Kampf. Ein schwerer Kampf ist härter und lässt Beute zurück: zwei Ausrüstungsstücke zur Wahl.
+- **Lager**: Gefallene stehen wieder auf. Dann rastest du (jeder Held heilt 50 %) oder übst mit einem Helden (+1 Kraft für immer).
+- **Markt**: Kaufe Ausrüstung, Tränke, Stärkungen und Phönixfedern mit Gold.
+- **Ereignis**: eine kurze Szene mit zwei oder drei Möglichkeiten.
+- **Wächter**: das Ende eines Gebiets. Der Weg führt durch drei: den Grünen Weg (der Dornenkönig bewacht ihn), die Aschenhügel (der Glutkoloss) und das Frosttor (der Hüter des Tores). Fällt ein Wächter, ruht die Gruppe unterwegs (jeder Held heilt 50 %, Gefallene stehen mit einem Viertel ihres Lebens auf) und zieht weiter ins nächste Gebiet. Spätere Gebiete bringen mehr Gold und Erfahrung und bessere Beute: Die Wächter der Aschenhügel und des Frosttors lassen Ausrüstung der vierten Stufe zurück, die kein Markt verkauft.
+
+Die Helden teilen ihre Erfahrung. Mit jeder Stufe wählt jeder Held eine von zwei Verbesserungen: mehr Leben, Kraft, Abwehr, Tempo oder Fokus, oder eine stärkere Fertigkeit.
+
+## Kämpfe
+Alle handeln nach Tempo, der Schnellste zuerst; eine neue Runde liest das Tempo neu. Die Reihe der Bilder oben zeigt, wer jetzt und in der nächsten Runde handelt.
+
+Jeder Feind zeigt über sich seinen nächsten Zug: die Art des Zuges, wie hart er trifft, und den Helden, den er trifft (das Zeichen dieses Helden). Antworte auf das, was kommt: schützen, heilen, ihn zuerst betäuben oder den Treffer nehmen.
+
+Wähle im Zug eines Helden unten eine Aktion und tippe dann auf ein leuchtendes Ziel:
+- `Angriff`: trifft einen Feind mit Kraft × 1.
+- Die Fertigkeiten des Helden kosten Fokus. Ein Held hat zu Kampfbeginn 2 Fokus und bekommt zu Beginn jedes seiner Züge 1 dazu.
+- `Schützen`: halber Schaden bis zum nächsten Zug des Helden und 1 Fokus mehr.
+- `Gegenstand`: ein Trank (heilt 40 %), eine Stärkung (3 Fokus) oder eine Phönixfeder (ein Gefallener steht mit halbem Leben auf). Das kostet den Zug.
+
+Eine Fertigkeit ohne Ziel (ein Lied, Herausfordern, Verstecken, Pfeilhagel) braucht einen zweiten Tipp. Tippe noch einmal auf die gewählte Aktion oder drücke [[Esc]], um eine andere zu wählen. Langes Drücken auf einen Feind oder Helden zeigt seine Werte, Zustände und seinen nächsten Zug; ein Tipp tut dasselbe, wenn keine Aktion gewählt ist.
+
+Manche Feinde lassen einen Helden brennen oder erstarren (Erstarrung: 3 weniger Tempo); `Reinigen` des Priesters beendet beides. Ein paar Züge der Feinde gehen durch die Abwehr; die Zahl, die sie zeigen, rechnet das schon ein.
+
+Schaden ist Kraft × der Faktor der Fertigkeit, minus die Abwehr des Ziels, und mindestens 1. Schützen halbiert ihn. Es gibt keine Würfel und keine Fehlschläge: Der Zufall bestimmt nur die Karte, die Feinde und die Beute, und alles kommt aus dem Reisecode.
+
+## Die Klassen
+- **Ritter** (vordere Reihe): `Schildstoß` trifft und betäubt (der Feind verliert seinen nächsten Zug und den gezeigten Zug); `Deckung` lässt Treffer auf einen Verbündeten den Ritter treffen; `Herausfordern` lenkt jeden Einzeltreffer auf den Ritter.
+- **Waldläufer** (hintere Reihe): `Markieren` lässt einen Feind 2 Züge lang 1,5 × von der Gruppe einstecken; `Durchschuss` geht durch die Abwehr; `Pfeilhagel` trifft jeden Feind.
+- **Magier** (hintere Reihe): `Feuer` brennt 3 Züge; `Frost` lässt 2 Züge erstarren (3 weniger Tempo); `Sturm` trifft einen nassen oder erstarrten Feind doppelt so hart.
+- **Priester** (hintere Reihe): `Heilen`; `Reinigen` beendet Brand, Betäubung und Erstarrung; `Aufrichten` stellt einen Gefallenen mit 30 % Leben auf, einmal pro Kampf.
+- **Schurke** (vordere Reihe): `Doppelschlag` trifft zweimal; `Verstecken` hält jeden Feind bis zu seinem nächsten Zug vom Schurken fern und macht seinen nächsten Treffer 1,5 ×. Immer: doppelter Schaden an einem markierten oder betäubten Feind.
+- **Barde** (hintere Reihe): `Hymne` gibt der Gruppe 2 Kraft und `Takt` 3 Tempo mehr, für 2 Züge; `Gabe` gibt einem Verbündeten 3 Fokus.
+
+Feinde, die die vordere Reihe treffen, treffen zuerst den Ritter und den Schurken; Schützen zielen auf die hintere Reihe.
+
+## Kombos
+- Markieren (Waldläufer) oder Betäuben (Ritter), dann der Schurke: doppelter Schaden.
+- Frost (Magier), dann Sturm: doppelt so hart. Flussgeister, Moosrücken, Sturmrufer und Schneegeister sind immer nass, also trifft Sturm sie sofort hart.
+- Betäube einen Feind, der einen großen Treffer zeigt, und der Treffer kommt nie.
+- Herausfordern oder Deckung mit dem Ritter, während der Priester heilt.
+- Hymne, bevor die starken Schläger handeln; Takt, um vor den Feinden zu handeln.
+
+## Feinde des Grünen Wegs
+- **Dornling:** trifft den schwächsten Helden.
+- **Grauwolf:** schnell; beißt den Schwächsten, dann heult er (jeder Feind +1 Kraft für 2 Züge).
+- **Keiler:** langsam; jeden zweiten Zug stürmt er mit 1,8 × auf die vordere Reihe.
+- **Flussgeist:** immer nass; flickt einen verletzten Feind, sonst schlägt er zu.
+- **Räuberschütze:** schießt auf die hintere Reihe.
+- **Moosrücken:** immer nass; sein Panzer halbiert den Schaden bis zu seinem nächsten Zug.
+- **Dornenhexe:** Dornranke ist ein Treffer, der brennt; dann flickt sie einen Feind.
+- **Räuberhauptmann:** schlägt zu, sammelt die Bande (+2 Kraft), dann fegt er über jeden Helden.
+- **Dornenkönig:** der Wächter. Bei zwei Dritteln seines Lebens ruft er zwei Dornlinge, und bei einem Drittel tobt er (+2 Kraft) und stürmt.
+
+## Feinde der Aschenhügel
+- **Glutteufel:** ein Treffer, der brennt, dann ein einfacher Treffer.
+- **Aschenechse:** beißt den Schwächsten; jeden zweiten Zug zieht sie sich in ihren Panzer zurück.
+- **Glutfledermaus:** schnell; stürzt sich auf die hintere Reihe.
+- **Steingolem:** sehr langsam und hart; Panzer, dann ein Schmettern auf die vordere Reihe mit 1,5 ×.
+- **Aschenschamane:** flickt einen verletzten Feind, sammelt die Bande (+2 Kraft), dann schlägt er zu.
+- **Hügelungetüm:** langsam; ein Treffer, dann ein Beben gegen jeden Helden.
+- **Salamander:** zwei Treffer, die brennen, dann fegt er über jeden Helden.
+- **Hügelräuber:** schlägt zweimal zu, dann sammelt er die Bande.
+- **Glutkoloss:** der Wächter. Bei zwei Dritteln seines Lebens ruft er zwei Glutteufel und lodert (jeder Held brennt); bei einem Drittel tobt er (+2 Kraft).
+
+## Feinde des Frosttors
+- **Frostlicht:** schnell; Raureif ist ein Treffer, der erstarren lässt.
+- **Eiswolf:** sehr schnell; beißt den Schwächsten, dann heult er (jeder Feind +1 Kraft).
+- **Torwächter:** sehr hart; Panzer, dann ein Schmettern auf die vordere Reihe.
+- **Sturmrufer:** immer nass; Blitz trifft die hintere Reihe durch die Abwehr, dann flickt er einen Feind.
+- **Yeti:** langsam und stark; zwei Treffer, dann ein Ansturm auf die vordere Reihe.
+- **Eisdrache:** Raureif auf den Schwächsten, dann Frostatem gegen jeden Helden, durch die Abwehr und mit Erstarrung.
+- **Schneegeist:** immer nass; flickt einen verletzten Feind, dann Raureif.
+- **Frostplünderer:** schlägt zu, sammelt die Bande, dann fegt er über jeden Helden.
+- **Hüter des Tores:** der Wächter. Sein Atem geht durch die Abwehr. Bei zwei Dritteln seines Lebens ruft er zwei Frostlichter; bei einem Drittel tobt er (+2 Kraft) und stürmt.
+
+## Ausrüstung und Gruppe
+`Gruppe` (oder [[P]]) zeigt jeden Helden: Leben, Kraft, Abwehr, Tempo, Fokus, Fertigkeiten, Verbesserungen und Ausrüstung. Jeder Held hat eine Waffe und ein Amulett. Zwischen den Kämpfen gibst du einem Helden ein Stück aus dem Beutel oder nimmst eines ab, und du nutzt Tränke und Phönixfedern. Der Beutel fasst 8 Stücke.
+
+## Schwierigkeit und Reisen
+`Neue Reise (N)` fragt nach der Schwierigkeit und der Gruppe:
+- `Sanft`: 20 % mehr Leben, Gefallene stehen nach jedem gewonnenen Kampf wieder auf, und eine Phönixfeder zum Start.
+- `Zäh`: Gefallene stehen nur an einem Lager wieder auf.
+- `Endlos`: Regeln von Zäh, aber nach dem Frosttor geht der Weg weiter: Die drei Länder kommen wieder (Der Grüne Weg II, dann III …), und jedes Mal haben die Feinde mehr Leben, Kraft und Abwehr. Die Reise endet erst, wenn die Gruppe fällt; die `Bilanz` behält die meisten geschafften Gebiete.
+
+In jeder Schwierigkeit endet die Reise, wenn alle drei Helden fallen. Jede Reise hat einen Code, der im Ergebnisfenster und in der `Bilanz` steht. Gib in `Neue Reise` einen Code ein, um dasselbe Land noch einmal zu durchwandern; lass das Feld leer für ein neues.
+
+## Buch der Sagen
+Jeder Feind, dem du begegnest, bekommt eine Seite im Buch der Sagen: seine Werte, seine Gewohnheit und eine kurze Zeile über ihn. Du öffnest es aus der `Bilanz`. Feinde, denen du noch nicht begegnet bist, stehen dort als ???. Das Buch wird zwischen deinen Geräten abgeglichen, und `Bilanz zurücksetzen` lässt es in Ruhe.
+
+## Gruppencodes
+Am Ende einer Reise macht `Gruppencode` aus deiner Gruppe einen Code: die Schwierigkeit, die drei Klassen, die Stufe, wie weit du gekommen bist, Ausrüstung und Verbesserungen jedes Helden und den Reisecode. `Teilen` kopiert ihn mit einer kurzen Nachricht. Ein Freund gibt ihn bei `Neue Reise` im Code-Feld ein: Das Fenster zeigt deine Gruppe, und `Aufbrechen` startet dasselbe Land mit denselben drei Klassen, ab Stufe 1. Die Meldungszeile sagt, wie weit deine Gruppe kam, damit er weiß, was er schlagen muss.
+
+## Prüfung des Tages
+Der Kalender-Knopf öffnet die heutige Prüfung: den Grünen Weg auf Zäh, mit einer Gruppe aus drei Helden, die für den Tag gewählt ist. Alle bekommen an diesem Tag dasselbe Land, dieselbe Gruppe und dieselbe Beute. Besiege den Wächter, dann hast du bestanden. Es gibt einen Versuch, und wer die Prüfung verlässt, gilt als dort gefallen, wo er war. Ein Punkt auf dem Knopf zeigt, dass die heutige Prüfung noch offen ist.
+
+Nach der Prüfung zeigt ein Fenster, wie weit du gekommen bist, deine Züge und deine Serie bestandener Tage. `Teilen` kopiert ein kurzes Ergebnis ohne Spoiler: ein Quadrat für jeden Halt auf dem Weg, dann deine Züge. Die heutige Prüfung hat auch eine Karte im [Game Center](help:a/gamecenter).
+
+## Bilanz und Synchronisierung
+`Bilanz` zeigt deine Reisen, Siege und geschafften Gebiete für jede Schwierigkeit und die Siege jeder Klasse. Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, die Reisen aller Geräte zählen zusammen, und sie zählt im [Game Center](help:a/gamecenter). Die laufende Reise, deine letzte Gruppe und die Toneinstellung bleiben auf diesem Gerät, und eine unfertige Reise geht dort weiter, wo du sie verlassen hast. Eine Reise, die du für eine neue verlässt, zählt als verloren. `Letzte Reisen` listet deine zehn letzten Reisen von allen Geräten, wie jede endete und ihren Code; `Nochmal` geht dieselbe Reise noch einmal (eine Prüfung des Tages als ganze Reise auf Zäh, mit derselben Gruppe). Die Prüfungen des Tages zählen nur in ihrer eigenen Zeile, nicht bei den Reisen. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
+
+## Tastatur
+- Karte: Die Pfeiltasten wählen einen Halt, [[Enter]] geht dorthin.
+- Kampf: [[1]] bis [[6]] wählen eine Aktion, die Pfeiltasten wählen ein Ziel, [[Enter]] handelt, [[Esc]] geht zurück.
+- [[P]]: Gruppe. [[N]]: neue Reise.
+- Der Doppelpfeil in der Werkzeugleiste schaltet schnelle Züge ein: Die Züge der Feinde laufen schneller ab.
+
+## Tipps
+- Lies die Züge der Feinde, bevor du handelst: Die Zahl ist der Schaden, den er jetzt macht.
+- Ein Priester und ein Ritter halten eine Gruppe auf den Beinen; ein Waldläufer und ein Schurke beenden Kämpfe schnell.
+- Raste, wenn die Gruppe verletzt ist; übe, wenn sie es nicht ist.
+- Schwere Kämpfe zahlen in Ausrüstung: Nimm einen, wenn die Gruppe stark ist.

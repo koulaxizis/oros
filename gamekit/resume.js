@@ -133,6 +133,18 @@
       var g = obj(s.g);
       return !!g && !s.done && num(g.turn) > 0 && (num(g.over) < 0 || !!obj(s.cp));
     },
+    // Fieldwarden: {g: engine state, opts, ts, pt, counted}; under way
+    // after the first action, until the year is over.
+    fieldwarden: function (s) {
+      var g = obj(s.g);
+      return !!g && !s.counted && num(g.over) < 0 && num(g.acts) > 0;
+    },
+    // Wayfarers: {g: engine state, opts, counted}; under way after the
+    // first action, until the journey is over.
+    wayfarers: function (s) {
+      var g = obj(s.g);
+      return !!g && !s.counted && num(g.over) < 0 && num(g.acts) > 0;
+    },
     xeri: function (s) {
       if (s.phase === "over") return false;
       var hs = num(s.hs) || 6, won = arr(s.won), hands = arr(s.hands);

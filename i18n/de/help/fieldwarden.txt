@@ -1,0 +1,98 @@
+# Feldhüter
+Feldhüter ist ein rundenbasiertes Taktikspiel auf einem kleinen Hof. Drei Leute aus dem Dorf bewachen die Felder eine ganze Jahreszeit lang, bis die Ernte eingebracht ist. Wölfe, Wildschweine, Krähen, Füchse und Räuber kommen an den Rändern des Hofes aus dem Wald, und jeder von ihnen zeigt, was er tun wird, bevor er handelt. Du rätst nie: Du antwortest auf das, was du kommen siehst.
+
+## So wird gespielt
+Der Hof hat 6 mal 6 Felder. Eine Jahreszeit dauert 5 Züge. In jedem Zug:
+1. **Die Eindringlinge zeigen ihre Aktionen.** Ein Pfeil zeigt von jedem Eindringling auf das Feld, das er treffen wird, mit einem Zeichen für das, was er tun wird (beißen, fressen, graben, trampeln, Keule, Ansturm, Überfall, stehlen, anzünden), und einer Zahl für die Reihenfolge. Gefährdete Felder sind rot. Gestrichelte Kreise an den Rändern zeigen die Eindringlinge, die am Ende des Zuges hereinkommen.
+2. **Deine Leute handeln.** Tippe auf eine Hilfskraft (auf dem Hof oder ihre Karte unten). Grüne Felder zeigen, wohin sie gehen kann, orange, was ihr Werkzeug erreicht. Jede Hilfskraft darf sich einmal bewegen und dann einmal ihr Werkzeug benutzen, in beliebiger Reihenfolge. Tippe einmal auf ein oranges Feld, um zu sehen, was passiert (blasse Pfeile zeigen, wohin jede Figur geht), und noch einmal, um es auszuführen.
+3. **Zug beenden.** Die Eindringlinge handeln in der gezeigten Reihenfolge, der Wind weht, die Felder wachsen und neue Eindringlinge kommen herein.
+
+`Rückgängig` nimmt die letzte Bewegung oder das Werkzeug zurück, und `Zug neu beginnen` geht zum Anfang des Zuges. Beides kostet nichts, also probiere aus.
+
+## Die Ernte
+Jedes Feld wächst jeden Zug eine Stufe: gesät, Keimling, grün, reif. Am Ende der Jahreszeit bringst du für jede Stufe eine Garbe ein (ein reifes Feld gibt 3), und die Ernte muss das **Soll** der Jahreszeit erreichen. Die Statuszeile zeigt die Ernte, die du bekommst, wenn nichts mehr verloren geht, neben dem Soll.
+
+Ein getroffenes Feld verliert eine Stufe (ein Maulwurf gräbt zwei weg) und wächst bis zum Ende der Jahreszeit nicht mehr: Ein Kreuz markiert es. Ein früher Treffer auf ein junges Feld kostet also am meisten. Manchmal ist die beste Antwort, ein Feld aufzugeben, um ein anderes zu retten.
+
+Jede Jahreszeit hat auch einen **Wunsch des Dorfes**: Das Feld mit dem Stern bleibt unversehrt, die Scheune bleibt heil, oder du vertreibst 3 Eindringlinge. Ein erfüllter Wunsch bringt 2 Münzen.
+
+## Die wichtigste Regel
+Eine Aktion trifft, was gerade auf ihrem Zielfeld steht, wenn sie kommt. Also:
+- Stoße einen Eindringling weg, und seine Aktion wandert mit, in dieselbe Richtung. Stoße einen Wolf ein Feld zur Seite, und sein Biss trifft ein leeres Feld oder einen anderen Eindringling.
+- Stell dich auf ein Feld, und eine Krähe pickt dich statt das Feld zu fressen.
+- Stoße einen Eindringling gegen eine andere Figur: Beide nehmen 1 Schaden, und ein so angestoßener Eindringling verliert in diesem Zug seine Aktion.
+- Stoße einen Eindringling über den Rand des Hofes, und er läuft davon. Stoße einen Eindringling vom Boden in den Teich, und das Wasser trägt ihn fort.
+- Eine Figur, die gegen eine Hecke, einen Heuhaufen oder die Scheune gestoßen wird, nimmt 1 Schaden.
+
+Es gibt keine Würfel und keine Fehlschläge. Der Zufall entscheidet nur über den Hof, die Eindringlinge und das Wetter, und alles kommt aus dem Jahrescode.
+
+## Die Leute
+Wähle zu Beginn eines Jahres drei von sechs. Jede Hilfskraft hat Gesundheit, Bewegung, ein Werkzeug und eine Gabe:
+- **Schäferin:** Der `Hirtenstab` zieht eine Figur bis zu 3 Felder entfernt ein Feld näher zu ihr. Gabe: Tiere neben ihr werden ruhig und ziehen zuletzt.
+- **Schmied:** Der `Hammer` macht 2 Schaden an einer Figur neben ihm und stößt sie ein Feld weg. Gabe: Steht er am Ende des Zuges neben der Scheune, repariert er sie.
+- **Heckenpflanzerin:** pflanzt eine Hecke auf nackte Erde neben sich oder schubst eine Figur neben sich ein Feld weg. Gabe: Ihre Hecken brechen nie.
+- **Imkerin:** Der `Schwarm` lässt eine Figur bis zu 3 Felder entfernt, über alles hinweg, 2 Felder von ihr wegfliehen. Gabe: Einmal pro Jahreszeit wächst jedes Feld neben ihr in einem Zug zwei Stufen.
+- **Fährmann:** Die `Stange` schiebt eine Figur neben ihm und die dahinter ein Feld weit. Gabe: Er kann im Teich stehen.
+- **Vogelscheuchenbauerin:** Die `Rübe` macht 1 Schaden und stößt eine Figur bis zu 4 Felder entfernt. Gabe: Krähen gehen nicht auf ein Feld neben ihr.
+
+Eine Hilfskraft mit 0 Gesundheit geht für den Rest der Jahreszeit nach Hause und kommt zur nächsten mit voller Gesundheit zurück. Auf dem Hof stirbt niemand: Eindringlinge laufen davon.
+
+## Die Eindringlinge
+- **Wolf:** geht auf die Hilfskraft mit der wenigsten Gesundheit los und beißt mit 1. Ist niemand in Reichweite, zertrampelt er ein Feld.
+- **Wildschwein:** stürmt geradeaus, bis etwas es aufhält, und zertrampelt jedes Feld auf dem Weg. Was es aufhält, nimmt 2 (eine Hecke verliert eine ihrer zwei Stufen, die Scheune nimmt 1).
+- **Krähe:** fliegt über alles hinweg zum reifsten Feld und frisst eine Stufe. Der Wind trägt sie ein Feld weiter.
+- **Maulwurf:** geht zum nächsten Feld und gräbt zwei Stufen weg.
+- **Räuberhauptmann:** kommt in der letzten Jahreszeit jedes Hofes. Er schlägt eine Hilfskraft mit der Keule für 2 und stößt sie, oder die Scheune. Hat er die Hälfte seiner Gesundheit verloren, pfeift er jeden Zug einen Wolf herbei.
+
+Ab dem zweiten Hof:
+- **Fuchs:** schnell. Er läuft zur Scheune und beißt sie für 1, oder zum nächsten Feld, wenn die Scheune hin ist.
+- **Dieb:** geht zum reifsten Feld und nimmt die ganze Ernte: drei Stufen weg.
+- **Fackelträger:** zündet das reifste Feld oder einen Heuhaufen an (siehe Feuer).
+- **Schreihals:** bleibt weit weg von deinen Leuten und ruft einen Dieb, der am Ende des Zugs hereinkommt. Ein Megafon über ihm ist das Zeichen. Stoße ihn gegen einen anderen, vom Hof oder in den Teich, und niemand kommt.
+
+Räuber (Dieb, Fackelträger, Schreihals) werden vom Teich fortgetragen wie die Tiere.
+
+## Wetter
+Die Statuszeile zeigt das Wetter jetzt und im nächsten Zug:
+- **Windstill:** Es passiert nichts.
+- **Wind:** Am Ende des Zuges trägt der Wind jede Krähe ein Feld weiter; eine Krähe, die vom Hof geweht wird, ist fort.
+- **Regen:** Nackte Erde wird zu Schlamm. Eine Figur, die auf Schlamm gestoßen wird, bleibt dort stehen, und ein stürmendes Wildschwein bleibt im Schlamm stecken. Der Regen löscht auch jedes Feuer.
+- **Dürre:** Am Ende des Zugs fängt jeder Heuhaufen Feuer, neben dem keine Hilfskraft steht. Stell dich neben das Heu, um es zu schützen.
+
+## Feuer
+Ein brennendes Feld hat eine Flamme in der Ecke. Am Ende des Zugs, nach den Eindringlingen und dem Wind:
+1. Das Feuer brennt: Ein Feld verliert eine Stufe und wächst nicht mehr, ein Heuhaufen oder eine Hecke verbrennt, und eine Figur darauf nimmt 1. Die Hecken der Heckenpflanzerin brennen nicht.
+2. Dann breitet es sich bei Wind ein Feld in Windrichtung aus, auf ein Feld, einen Heuhaufen oder eine Hecke.
+3. Ein Feuer, das nichts mehr zu verbrennen hat, geht aus.
+
+Eine Hilfskraft, die auf ein brennendes Feld tritt, tritt das Feuer sofort aus.
+
+## Das Jahr
+Ein Jahr führt über drei Höfe mit je vier Jahreszeiten, zwölf Jahreszeiten in allem: die Niederung, den Obstgartenhügel (Füchse und Diebe, trockene Sommer) und die Flussbiegung (mehr Teiche, Fackelträger und Schreihälse). Die letzte Jahreszeit jedes Hofes bringt den Räuberhauptmann. Nach jeder Ernte bekommst du für jede Garbe über dem Soll eine Münze, dazu den Wunsch des Dorfes. Gib sie auf dem **Markt** aus: +1 Gesundheit, +1 Bewegung, die zwei Werkzeugverbesserungen jeder Hilfskraft oder ein Feld, das die nächste Jahreszeit eine Stufe voraus beginnt. Verfehlt eine Ernte ihr Soll, endet das Jahr.
+
+## Schwierigkeit und Jahre
+`Neues Jahr (N)` fragt nach der Schwierigkeit und deinen drei Leuten:
+- `Mild`: ein niedrigeres Soll, und einmal pro Jahreszeit nimmt `Zurückspulen` den ganzen letzten Zug zurück, nachdem du ihn gesehen hast.
+- `Hart`: ein höheres Soll, ein Eindringling mehr zu Beginn jeder Jahreszeit und noch einer während der Jahreszeit, und ab dem zweiten Hof hat jeder Eindringling 1 Gesundheit mehr.
+
+Jedes Soll ist erreichbar: Wer die Jahreszeit baut, spielt sie vor dir mit deinen Leuten und verlangt nie mehr, als er eingebracht hat. Jedes Jahr hat einen Code, der im Ergebnisfenster und in den `Bestwerten` steht. Gib einen Code bei `Neues Jahr` ein, um dasselbe Jahr mit denselben Leuten noch einmal zu spielen; lass das Feld leer für ein neues.
+
+## Jahreszeit des Tages
+Der Kalenderknopf in der Werkzeugleiste (mit einem Punkt, solange die heutige Jahreszeit offen ist) startet die Jahreszeit des Tages: eine Jahreszeit auf Hart, mit dem Hof, der Jahreszeit und drei Leuten des Tages, für alle gleich. Ein Versuch: Wer sie verlässt, hat das Soll verfehlt. Deine Punkte sind die eingebrachten Garben plus 2 für den Wunsch des Dorfes. Das Ergebnisfenster zeigt deine Punkte und deine Serie von Tagen mit erreichtem Soll; `Teilen` kopiert eine Zeile mit einem Quadrat je Feld (gelb reif, grün, braun der Rest), ohne etwas zu verraten. Die Jahreszeit des Tages hat auch eine Karte unter Heute im [Spielezentrum](help:a/gamecenter), und ihr `Spielen` öffnet sie sofort.
+
+## Bestwerte und Synchronisierung
+Die `Bestwerte` zeigen für jede Schwierigkeit deine Jahre, die geschafften Jahre und die meisten gewonnenen Jahreszeiten, dazu die meisten Garben in einer Jahreszeit, die geschafften Jahre jeder Hilfskraft, deine Jahreszeiten des Tages (gespielt, Soll erreicht, Serie, beste Punkte) und deine **Letzten Jahre**: die zehn neuesten von allen Geräten, jedes mit `Nochmal` (eine Jahreszeit des Tages wird als ganzes Jahr auf Hart mit ihren Leuten gespielt). Sie werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, wobei die Jahre aller Geräte zusammengezählt werden, und sie zählen im [Spielezentrum](help:a/gamecenter). Das laufende Jahr, deine letzten Leute und die Toneinstellung bleiben auf diesem Gerät, und ein unfertiges Jahr geht dort weiter, wo du aufgehört hast. Ein Jahr, das du für ein neues verlässt, zählt als verloren. `Bestwerte zurücksetzen` löscht die Bestwerte auf allen Geräten.
+
+## Tastatur
+- Die Pfeiltasten bewegen den Cursor; [[Enter]] wählt eine Hilfskraft oder ein Feld; [[Tab]] geht zur nächsten Hilfskraft; [[Esc]] bricht ab.
+- [[Z]]: rückgängig. [[R]]: Zug neu beginnen. [[E]]: Zug beenden. [[T]]: nur Gefahren. [[N]]: neues Jahr.
+- Langes Drücken auf ein Feld oder eine Figur zeigt ihren Text.
+- Das Warnzeichen in der Werkzeugleiste zeigt nur die gefährdeten Felder; der Doppelpfeil lässt das Ende eines Zuges schneller ablaufen.
+
+## Tipps
+- Lies die Zahlen: Der Eindringling, der zuerst handelt, kann mit einem Stoß die Pläne der anderen verderben.
+- Ein Eindringling, der gegen einen anderen gestoßen wird, stoppt beide Aktionen auf einmal.
+- Der Teich und die Ränder sind deine Freunde: Ein Eindringling, der den Hof verlässt, ist für die ganze Jahreszeit fort.
+- Stell vor einer Dürre eine Hilfskraft zwischen zwei Heuhaufen: Eine Hilfskraft schützt beide.
+- Kümmere dich früh um den Schreihals: Jeder Dieb, den er ruft, ist einer mehr, den du aufhalten musst.
+- Früh in der Jahreszeit sind junge Felder mehr wert als reife; am Ende zählen die reifen am meisten.

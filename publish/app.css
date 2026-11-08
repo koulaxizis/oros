@@ -347,3 +347,23 @@ label.check input { width: 20px; height: 20px; flex: 0 0 auto; }
 .post-img img { display: block; max-width: 100%; max-height: 220px; border-radius: 8px; margin: 6px 0; }
 .post-go { border-top: 1px solid var(--border); padding-top: 8px; }
 .post-go .btn { white-space: normal; max-width: 100%; text-align: left; }
+
+/* Cost & result (wave P15) */
+.cost-st.bad { color: var(--danger); font-size: 12px; }
+.cost-sum { display: grid; gap: 4px; max-width: 420px; margin: 8px 0; }
+.cost-line, .cost-row, .cost-cat summary { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.cost-line.tot { border-top: 1px solid var(--border); padding-top: 4px; font-weight: 600; }
+.cost-amt, .cost-tbl .num { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.neg, .cost-line.neg .cost-amt { color: var(--danger); }
+.cost h4 { margin: 14px 0 6px; font-size: 14px; }
+.cost-list { list-style: none; display: grid; gap: 4px; font-size: 14px; }
+.cost-row.sub { padding-left: 14px; color: var(--text-dim); }
+.cost-cat { margin: 4px 0; }
+.cost-cat summary { cursor: pointer; font-size: 14px; padding: 4px 0; }
+.cost-cat .cost-list { padding: 2px 0 6px 14px; color: var(--text-dim); }
+.cost-wrap { overflow-x: auto; margin: 8px 0; }
+.cost-tbl { border-collapse: collapse; width: 100%; font-size: 14px; }
+.cost-tbl th, .cost-tbl td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+.cost-tbl th.num, .cost-tbl td.num { text-align: right; }
+.cost-tbl tfoot th, .cost-tbl tfoot td { font-weight: 600; border-bottom: 0; }
+.cost-tbl tr.tot th, .cost-tbl tr.tot td { border-top: 1px solid var(--border); }

@@ -297,6 +297,12 @@
    ]
   },
   {
+   "app": "fieldwarden",
+   "files": [
+    "fieldwarden/fieldwarden.js"
+   ]
+  },
+  {
    "app": "fileopen",
    "files": [
     "fileopen.js"
@@ -1112,6 +1118,12 @@
    "files": [
     "water/core.js",
     "water/water.js"
+   ]
+  },
+  {
+   "app": "wayfarers",
+   "files": [
+    "wayfarers/wayfarers.js"
    ]
   },
   {

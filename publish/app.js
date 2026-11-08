@@ -194,6 +194,48 @@
       "pr.head": "PRESS RELEASE", "pr.lead": "«{t}» by {a} is out.", "pr.leadNoA": "«{t}» is out.",
       "pr.leadImp": "{imp} presents «{t}» by {a}.", "pr.leadImpNoA": "{imp} presents «{t}».", "pr.rel": "Release date: {d}.",
       "pr.about": "About the author", "pr.details": "Details", "pr.pages": "{n} pages", "pr.contact": "Contact", "pr.docTitle": "Press release: {t}",
+      "cost.tab": "Cost & result", "cost.sec": "Cost & result",
+      "cost.intro": "What each book cost and what it brought in, read from your shop: Production Ledger (a Noxpress plugin) keeps the sales and the costs, Revenue Splitter the creators' shares. Amounts are net of VAT; shipping, consumables and payment fees are shared out over the books as the ledger does. Nothing is kept here: each reading shows the shop as it is now.",
+      "cost.left": "Costs spread over a month's orders (shipping, consumables, payment fees) and general expenses are not any one book's, so they are not counted here.",
+      "cost.none": "Connect your WooCommerce shop in Settings › Connected services first.", "cost.open": "Open Connected services",
+      "cost.noShell": "Open Publishing from the orOS desktop to read the shop.",
+      "cost.read": "Read from the shop", "cost.again": "Read again", "cost.reading": "Reading the shop…", "cost.readAt": "Read {when} from {shop}.",
+      "cost.acct": "Shop", "cost.noFmt": "No format of this book is in the shop yet. Send a format to the shop (Send to other apps › Draft in my shop), or give the shop's product the same ISBN as SKU.",
+      "cost.nothing": "The shop has no sales or costs for this book yet.",
+      "cost.inc": "Income", "cost.costs": "Costs", "cost.shares": "Creators' shares", "cost.net": "Result",
+      "cost.sales": "Shop sales · {n} copies", "cost.trade": "Bookshops (trade) · {n} copies", "cost.offsite": "Sold outside the shop",
+      "cost.sharesHint": "As Revenue Splitter counts them, sales since {d}. Shares to the publisher (you) are shown but not taken off.",
+      "cost.own": "you", "cost.span": "Records from {from} to {to}.",
+      "cost.rsErr": "Revenue Splitter didn't answer, so creators' shares are not counted.",
+      "cost.skuErr": "Some of the shop's products could not be looked up by ISBN; formats sent to the shop still count.",
+      "cost.listNone": "No title has sales or costs in the shop yet. A title counts once one of its formats is in the shop (Draft in my shop, or the same ISBN as SKU).",
+      "cost.col.t": "Title", "cost.col.n": "Copies", "cost.total": "Result",
+      "cost.cat.printing": "Printing", "cost.cat.editing": "Editing and proofreading", "cost.cat.design": "Design and illustration",
+      "cost.cat.sound": "Sound and mastering", "cost.cat.isbn": "ISBN and licences", "cost.cat.shipping": "Shipping",
+      "cost.cat.consumables": "Consumables", "cost.cat.promotion": "Promotion", "cost.cat.events": "Events",
+      "cost.cat.payment_fees": "Payment fees", "cost.cat.creators": "Creators", "cost.cat.general": "Other",
+      "cost.inv": "invoice {n}",
+      "cost.per": "Period", "cost.per.all": "Since the ledger's start", "cost.per.year": "This year", "cost.per.last": "Last year",
+      "cost.how": "As Production Ledger counts it on the site, net of VAT: the book's own costs, plus its share of each month's shipping, consumables and payment fees (by the orders it was in), the creators' payouts from Revenue Splitter, and the shipping customers paid for it. General expenses are not any one book's: the tab adds them once, under all titles.",
+      "cost.noRep": "This shop's Production Ledger is older than 1.1, so only the book's own costs and sales show. Update it on the site for the whole picture (shared costs, VAT, break-even).",
+      "cost.repCur": "The shop's report is in another currency than Publishing's: only the book's own costs show.",
+      "cost.since": "Since the ledger's start: {v}.", "cost.be": "{n} more copies to break even.",
+      "cost.shipIn": "Shipping customers paid", "cost.shipOut": "Shipping (share of the courier's invoices)",
+      "cost.cons": "Consumables (share)", "cost.fees": "Payment fees (share)", "cost.creators": "Creators' shares (Revenue Splitter)",
+      "cost.roy": "Royalties to {n} ({pct}%, from this title's terms)", "cost.adv": "the advance, not yet earned",
+      "cost.royHint": "Royalties from the title's terms: Revenue Splitter pays no one for this book and there is no «Creators» cost, so they are worked out here from the terms (Royalties section) and the copies sold.",
+      "cost.noCosts": "No costs recorded for this book yet.", "cost.who": "Who gets a share",
+      "cost.vat": "VAT", "cost.vatOut": "VAT on sales", "cost.vatIn": "VAT on costs", "cost.vatDue": "Difference (owed to the tax office)",
+      "cost.vatHint": "VAT is not income or cost: it passes through to the tax office. The result above is without it.",
+      "cost.other": "Other products in the shop ({n})", "cost.general": "General expenses",
+      "cost.err.nopl": "This shop doesn't answer as Production Ledger. Install it (1.0 or later) and turn on its orOS module.",
+      "cost.err.cur": "The shop counts in {c}, Publishing in {cur}: nothing read. Change the currency in Publishing's settings.",
+      "cost.err.big": "More than {n} records: reading stopped.",
+      "cost.err.auth": "The shop refused the key. Check it in Settings › Connected services (a read key is enough).",
+      "cost.err.keys": "This device doesn't have the shop's key yet. Enter it in Settings › Connected services.",
+      "cost.err.offline": "You're offline.", "cost.err.busy": "The shop asks to slow down. Try again in a minute.",
+      "cost.err.other": "Couldn't reach the shop. Try again later.",
+      "set.own": "Other names you go by", "set.ownHint": "Comma separated. Revenue Splitter's shares to these names, and to the publisher name, are yours: they are not counted as a cost.",
       "set.title": "Settings", "set.cur": "Currency for prices", "set.imp": "Publisher name",
       "set.impHint": "Goes on covers and press texts.", "set.done": "Saved",
       "toast.copied": "Copied", "toast.saved": "Saved", "toast.exported": "Saved",
@@ -348,6 +390,48 @@
       "pr.head": "ΔΕΛΤΙΟ ΤΥΠΟΥ", "pr.lead": "Κυκλοφορεί το «{t}» του/της {a}.", "pr.leadNoA": "Κυκλοφορεί το «{t}».",
       "pr.leadImp": "Οι εκδόσεις {imp} παρουσιάζουν το «{t}» του/της {a}.", "pr.leadImpNoA": "Οι εκδόσεις {imp} παρουσιάζουν το «{t}».", "pr.rel": "Ημερομηνία κυκλοφορίας: {d}.",
       "pr.about": "Για τον συγγραφέα", "pr.details": "Στοιχεία", "pr.pages": "{n} σελίδες", "pr.contact": "Επικοινωνία", "pr.docTitle": "Δελτίο τύπου: {t}",
+      "cost.tab": "Κόστος & αποτέλεσμα", "cost.sec": "Κόστος & αποτέλεσμα",
+      "cost.intro": "Τι κόστισε κάθε βιβλίο και τι απέφερε, όπως τα διαβάζει από το κατάστημά σου: το Production Ledger (πρόσθετο Noxpress) κρατά τις πωλήσεις και τα κόστη, το Revenue Splitter τα μερίδια των δημιουργών. Τα ποσά είναι χωρίς ΦΠΑ· μεταφορικά, αναλώσιμα και προμήθειες μοιράζονται στα βιβλία όπως τα μοιράζει το ledger. Εδώ δεν κρατιέται τίποτα: κάθε ανάγνωση δείχνει το κατάστημα όπως είναι τώρα.",
+      "cost.left": "Τα κόστη που μοιράζονται στις παραγγελίες του μήνα (μεταφορικά, αναλώσιμα, προμήθειες πληρωμών) και τα γενικά έξοδα δεν ανήκουν σε ένα βιβλίο, γι' αυτό δεν μετρούν εδώ.",
+      "cost.none": "Σύνδεσε πρώτα το κατάστημα WooCommerce στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.", "cost.open": "Άνοιγμα Συνδεδεμένων υπηρεσιών",
+      "cost.noShell": "Άνοιξε τις Εκδόσεις από την επιφάνεια εργασίας του orOS για να διαβαστεί το κατάστημα.",
+      "cost.read": "Ανάγνωση από το κατάστημα", "cost.again": "Νέα ανάγνωση", "cost.reading": "Ανάγνωση του καταστήματος…", "cost.readAt": "Διαβάστηκε {when} από {shop}.",
+      "cost.acct": "Κατάστημα", "cost.noFmt": "Καμία μορφή αυτού του βιβλίου δεν είναι ακόμα στο κατάστημα. Στείλε μια μορφή στο κατάστημα (Στείλε σε άλλες εφαρμογές › Πρόχειρο στο κατάστημά μου) ή δώσε στο προϊόν του καταστήματος το ίδιο ISBN ως SKU.",
+      "cost.nothing": "Το κατάστημα δεν έχει ακόμα πωλήσεις ή κόστη για αυτό το βιβλίο.",
+      "cost.inc": "Έσοδα", "cost.costs": "Κόστη", "cost.shares": "Μερίδια δημιουργών", "cost.net": "Αποτέλεσμα",
+      "cost.sales": "Πωλήσεις καταστήματος · {n} αντίτυπα", "cost.trade": "Βιβλιοπωλεία (χονδρική) · {n} αντίτυπα", "cost.offsite": "Πωλήσεις εκτός καταστήματος",
+      "cost.sharesHint": "Όπως τα μετρά το Revenue Splitter, πωλήσεις από {d}. Τα μερίδια του εκδότη (εσύ) φαίνονται αλλά δεν αφαιρούνται.",
+      "cost.own": "εσύ", "cost.span": "Εγγραφές από {from} έως {to}.",
+      "cost.rsErr": "Το Revenue Splitter δεν απάντησε, οπότε τα μερίδια των δημιουργών δεν μετρούν.",
+      "cost.skuErr": "Κάποια προϊόντα του καταστήματος δεν βρέθηκαν με το ISBN τους· οι μορφές που στάλθηκαν στο κατάστημα μετρούν κανονικά.",
+      "cost.listNone": "Κανένας τίτλος δεν έχει ακόμα πωλήσεις ή κόστη στο κατάστημα. Ένας τίτλος μετρά μόλις μια μορφή του είναι στο κατάστημα (Πρόχειρο στο κατάστημά μου ή το ίδιο ISBN ως SKU).",
+      "cost.col.t": "Τίτλος", "cost.col.n": "Αντίτυπα", "cost.total": "Αποτέλεσμα",
+      "cost.cat.printing": "Εκτύπωση", "cost.cat.editing": "Επιμέλεια και διόρθωση", "cost.cat.design": "Σχέδιο και εικονογράφηση",
+      "cost.cat.sound": "Ήχος και mastering", "cost.cat.isbn": "ISBN και άδειες", "cost.cat.shipping": "Μεταφορικά",
+      "cost.cat.consumables": "Αναλώσιμα", "cost.cat.promotion": "Προώθηση", "cost.cat.events": "Εκδηλώσεις",
+      "cost.cat.payment_fees": "Προμήθειες πληρωμών", "cost.cat.creators": "Δημιουργοί", "cost.cat.general": "Άλλο",
+      "cost.inv": "παραστατικό {n}",
+      "cost.per": "Περίοδος", "cost.per.all": "Από την αρχή του ledger", "cost.per.year": "Φέτος", "cost.per.last": "Πέρσι",
+      "cost.how": "Όπως τα μετρά το Production Ledger στο site, χωρίς ΦΠΑ: τα κόστη του βιβλίου, το μερίδιό του στα μεταφορικά, αναλώσιμα και προμήθειες πληρωμών κάθε μήνα (ανάλογα με τις παραγγελίες όπου ήταν), τα μερίδια δημιουργών από το Revenue Splitter και τα μεταφορικά που πλήρωσαν οι πελάτες γι' αυτό. Τα γενικά έξοδα δεν ανήκουν σε ένα βιβλίο: η καρτέλα τα προσθέτει μία φορά, κάτω από όλους τους τίτλους.",
+      "cost.noRep": "Το Production Ledger αυτού του καταστήματος είναι παλαιότερο από το 1.1, οπότε φαίνονται μόνο τα άμεσα κόστη και οι πωλήσεις του βιβλίου. Ενημέρωσέ το στο site για την πλήρη εικόνα (μοιρασμένα κόστη, ΦΠΑ, νεκρό σημείο).",
+      "cost.repCur": "Η αναφορά του καταστήματος είναι σε άλλο νόμισμα από των Εκδόσεων: φαίνονται μόνο τα άμεσα κόστη.",
+      "cost.since": "Από την αρχή του ledger: {v}.", "cost.be": "Χρειάζονται ακόμα {n} αντίτυπα για να καλυφθεί το κόστος.",
+      "cost.shipIn": "Μεταφορικά που πλήρωσαν οι πελάτες", "cost.shipOut": "Μεταφορικά (μερίδιο στα τιμολόγια courier)",
+      "cost.cons": "Αναλώσιμα (μερίδιο)", "cost.fees": "Προμήθειες πληρωμών (μερίδιο)", "cost.creators": "Μερίδια δημιουργών (Revenue Splitter)",
+      "cost.roy": "Δικαιώματα σε {n} ({pct}%, από τους όρους του τίτλου)", "cost.adv": "η προκαταβολή, δεν έχει καλυφθεί ακόμα",
+      "cost.royHint": "Δικαιώματα από τους όρους του τίτλου: το Revenue Splitter δεν πληρώνει κανέναν για αυτό το βιβλίο και δεν υπάρχει κόστος «Δημιουργοί», οπότε υπολογίζονται εδώ από τους όρους (ενότητα Δικαιώματα) και τα αντίτυπα που πουλήθηκαν.",
+      "cost.noCosts": "Δεν έχουν καταγραφεί ακόμα κόστη για αυτό το βιβλίο.", "cost.who": "Ποιος παίρνει μερίδιο",
+      "cost.vat": "ΦΠΑ", "cost.vatOut": "ΦΠΑ πωλήσεων", "cost.vatIn": "ΦΠΑ εξόδων", "cost.vatDue": "Διαφορά (οφείλεται στην εφορία)",
+      "cost.vatHint": "Ο ΦΠΑ δεν είναι έσοδο ούτε κόστος: περνά στην εφορία. Το αποτέλεσμα πιο πάνω είναι χωρίς αυτόν.",
+      "cost.other": "Άλλα προϊόντα του καταστήματος ({n})", "cost.general": "Γενικά έξοδα",
+      "cost.err.nopl": "Αυτό το κατάστημα δεν απαντά ως Production Ledger. Εγκατάστησέ το (1.0 ή νεότερο) και άνοιξε τη λειτουργία orOS.",
+      "cost.err.cur": "Το κατάστημα μετρά σε {c}, οι Εκδόσεις σε {cur}: δεν διαβάστηκε τίποτα. Άλλαξε το νόμισμα στις ρυθμίσεις των Εκδόσεων.",
+      "cost.err.big": "Πάνω από {n} εγγραφές: η ανάγνωση σταμάτησε.",
+      "cost.err.auth": "Το κατάστημα απέρριψε το κλειδί. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες (αρκεί κλειδί ανάγνωσης).",
+      "cost.err.keys": "Αυτή η συσκευή δεν έχει ακόμα το κλειδί του καταστήματος. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "cost.err.offline": "Είσαι εκτός σύνδεσης.", "cost.err.busy": "Το κατάστημα ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
+      "cost.err.other": "Δεν ήταν δυνατή η σύνδεση με το κατάστημα. Δοκίμασε αργότερα.",
+      "set.own": "Άλλα ονόματα με τα οποία εμφανίζεσαι", "set.ownHint": "Χωρισμένα με κόμμα. Τα μερίδια του Revenue Splitter σε αυτά τα ονόματα, και στο όνομα εκδότη, είναι δικά σου: δεν μετρούν ως κόστος.",
       "set.title": "Ρυθμίσεις", "set.cur": "Νόμισμα για τις τιμές", "set.imp": "Όνομα εκδότη",
       "set.impHint": "Μπαίνει σε εξώφυλλα και δελτία τύπου.", "set.done": "Αποθηκεύτηκε",
       "toast.copied": "Αντιγράφηκε", "toast.saved": "Αποθηκεύτηκε", "toast.exported": "Αποθηκεύτηκε",
@@ -436,8 +520,8 @@
   // ---------- 2. Storage, prefs, sync slice ----------
   var data = C.empty();
   var prefs = { tab: "titles", sort: "rel", st: "" };
-  var view = { name: "list", id: "" };    // list | title | isbn | roy | subs | posts
-  var TABS = ["titles", "isbn", "roy", "subs", "posts"];
+  var view = { name: "list", id: "" };    // list | title | isbn | roy | subs | posts | cost
+  var TABS = ["titles", "isbn", "roy", "subs", "posts", "cost"];
 
   function load() {
     try { data = C.normalize(JSON.parse(localStorage.getItem(STORAGE_KEY) || "null")); }
@@ -796,6 +880,12 @@
     sr.id = "ed-roy";
     sec.appendChild(sr);
     renderTerms();
+
+    // Cost & result (wave P15)
+    var sk = el("section", "sec cost");
+    sk.id = "ed-cost";
+    sec.appendChild(sk);
+    renderCostSec();
 
     // Review copies (wave P8)
     var sc = el("section", "sec rc");
@@ -1453,6 +1543,363 @@
         });
       }).catch(fail);
     }
+  }
+
+  // ---------- 6d. Cost & result (wave P15) ----------
+  // Read from the shop when the tab or a title's section is first shown
+  // in this opening of Publishing, and on "Read again" (all read only,
+  // costs.js): Production Ledger's report per product (1.1+: the real
+  // result, shared costs and VAT included), its records (each cost's
+  // supplier and invoice), Revenue Splitter's splits (who gets a share).
+  // Kept in memory only: the shop is where these figures live, so
+  // nothing of them is synced or stored here.
+  var CO = window.OrosPublishCosts;
+  var COST_PERS = ["all", "year", "last"];
+  var costPer = "all";
+  function costEmpty(acct) {
+    return { acct: acct || "", at: 0, recs: null, start: "", rs: null, rep: null, repErr: "", sku: {}, busy: false,
+             err: "", errP: null, rsErr: false, skuErr: false };
+  }
+  var costS = costEmpty("");
+  function costAccts() {
+    var Lk = links();
+    try { return Lk ? Lk.list("woo") : []; } catch (e) { return []; }
+  }
+  // The shop chosen here, else the one most formats were sent to, else the first.
+  function costAcct() {
+    var list = costAccts();
+    if (!list.length) return null;
+    var want = costS.acct;
+    if (!want) {
+      var n = {};
+      data.titles.forEach(function (tt) { tt.fmts.forEach(function (f) { if (f.wp) n[f.wp.a] = (n[f.wp.a] || 0) + 1; }); });
+      want = Object.keys(n).sort(function (a, b) { return n[b] - n[a]; })[0] || "";
+    }
+    return list.filter(function (a) { return a.id === want; })[0] || list[0];
+  }
+  function costRefresh() {
+    if (view.name === "cost") renderCost();
+    else if (view.name === "title") renderCostSec();
+  }
+  function costAsk(a) {
+    var Lk = links();
+    return function (req) {
+      return Lk.call(a.id, [req]).then(function (res) {
+        var code = Lk.statusCode(res && res[0]);
+        if (code) { var e = new Error(code); e.code = code === "notfound" ? "nopl" : code; throw e; }
+        return res[0].data;
+      });
+    };
+  }
+  function costSpan() {
+    var y = todayYmd().slice(0, 4);
+    if (costPer === "year") return [y + "-01-01", todayYmd()];
+    if (costPer === "last") return [(+y - 1) + "-01-01", (+y - 1) + "-12-31"];
+    return ["", todayYmd()];
+  }
+  // The ledger's report for the chosen period (Production Ledger 1.1+).
+  function costReport(a) {
+    var sp = costSpan();
+    return costAsk(a)(CO.repReq(sp[0], sp[1])).then(function (j) {
+      if (!CO.okRep(j)) throw { code: "norep" };
+      if (j.currency && j.currency !== data.set.cur) throw { code: "cur" };
+      return j;
+    });
+  }
+  function costRead(a) {
+    var Lk = links();
+    if (!Lk || !a || costS.busy) return;
+    costS = costEmpty(a.id);
+    costS.busy = true;
+    costRefresh();
+    var ask = costAsk(a), today = todayYmd(), got = null, st = costS;
+    CO.read(ask, today, data.set.cur).then(function (g) {
+      got = g;
+      // the splits are optional: a shop without Revenue Splitter still shows
+      var rsP = ask(CO.rsReq(g.start, today)).then(function (j) {
+        if (j && Array.isArray(j.products)) return j;
+        st.rsErr = true; return null;
+      }, function () { st.rsErr = true; return null; });
+      var repP = costReport(a).then(null, function (e) { st.repErr = e && e.code === "cur" ? "cur" : "norep"; return null; });
+      // products no format points at: their SKU, ten at a time
+      var ids = CO.unknownPids(g.recs, data, a.id), sku = {};
+      var chain = Promise.resolve();
+      for (var i = 0; i < ids.length; i += 10) {
+        (function (part) {
+          chain = chain.then(function () {
+            return Lk.call(a.id, part.map(function (p) { return { m: "GET", path: "/products/" + p }; })).then(function (res) {
+              var datas = (res || []).map(function (r) { return Lk.statusCode(r) ? null : r.data; });
+              if (datas.some(function (d) { return !d; })) st.skuErr = true;
+              Object.assign(sku, CO.skuMap(part, datas));
+            });
+          });
+        })(ids.slice(i, i + 10));
+      }
+      var skuP = chain.then(function () { return sku; }, function () { st.skuErr = true; return sku; });
+      return Promise.all([rsP, repP, skuP]);
+    }).then(function (x) {
+      if (costS !== st) return;
+      st.recs = got.recs; st.start = got.start; st.rs = x[0]; st.rep = x[1]; st.sku = x[2];
+      st.at = Date.now(); st.busy = false;
+      costRefresh();
+    }).catch(function (e) {
+      if (costS !== st) return;
+      st.busy = false; st.recs = null;
+      st.err = (e && e.code) || "other"; st.errP = (e && e.params) || null;
+      costRefresh();
+    });
+  }
+  // Another period: only the report is read again.
+  function costPeriod(a, per) {
+    costPer = per;
+    if (!costS.at || costS.repErr) { costRefresh(); return; }
+    var st = costS;
+    st.busy = true;
+    costRefresh();
+    costReport(a).then(function (j) { st.rep = j; st.repErr = ""; }, function (e) { st.rep = null; st.repErr = e && e.code === "cur" ? "cur" : "norep"; })
+      .then(function () { st.busy = false; if (costS === st) costRefresh(); });
+  }
+  function cents(c) { return money(Math.round(c) / 100); }
+  // The head both views share: the shop, the period, when read, a button;
+  // null = can't read at all.
+  function costHead(box) {
+    if (!links()) { box.appendChild(el("p", "muted", t("cost.noShell"))); return null; }
+    var list = costAccts();
+    if (!list.length) {
+      box.appendChild(el("p", "muted", t("cost.none")));
+      box.appendChild(button(t("cost.open"), "btn small", function () { openAt("settings", "services"); }));
+      return null;
+    }
+    var a = costAcct();
+    var row = el("div", "send-row cost-head");
+    if (list.length > 1) {
+      var pick = select(list.map(function (x) { return [x.id, x.name || x.site || x.id]; }), a.id);
+      pick.setAttribute("aria-label", t("cost.acct"));
+      pick.disabled = costS.busy;
+      pick.addEventListener("change", function () {
+        var nx = list.filter(function (x) { return x.id === pick.value; })[0];
+        if (nx) costRead(nx);
+      });
+      row.appendChild(pick);
+    }
+    var per = select(COST_PERS.map(function (p) { return [p, t("cost.per." + p)]; }), costPer);
+    per.setAttribute("aria-label", t("cost.per"));
+    per.disabled = costS.busy || !!costS.repErr;
+    per.addEventListener("change", function () { costPeriod(a, per.value); });
+    row.appendChild(per);
+    var go = button(costS.at ? t("cost.again") : t("cost.read"), "btn small", function () { costRead(a); });
+    go.disabled = costS.busy;
+    row.appendChild(go);
+    box.appendChild(row);
+    var st = el("p", "muted small cost-st");
+    st.setAttribute("role", "status");
+    if (costS.busy) st.textContent = t("cost.reading");
+    else if (costS.err) {
+      var k = "cost.err." + costS.err;
+      st.textContent = t(k) === k ? t("cost.err.other") : t(k, costS.errP || {});
+      st.className = "cost-st bad";
+    } else if (costS.at) {
+      var when = new Intl.DateTimeFormat(LOCALE, { hour: "2-digit", minute: "2-digit" }).format(new Date(costS.at));
+      st.textContent = t("cost.readAt", { when: when, shop: a.name || a.site || a.id });
+    }
+    box.appendChild(st);
+    // first showing in this opening: read by itself (a read, nothing written)
+    if (!costS.busy && !costS.at && !costS.err && costS.acct !== a.id) setTimeout(function () { costRead(a); }, 0);
+    return a;
+  }
+  function costNotes(box, full) {
+    if (costS.repErr) box.appendChild(el("p", "cost-st bad", t(costS.repErr === "cur" ? "cost.repCur" : "cost.noRep")));
+    if (costS.rsErr && !full) box.appendChild(el("p", "muted small", t("cost.rsErr")));
+    if (costS.skuErr) box.appendChild(el("p", "muted small", t("cost.skuErr")));
+    box.appendChild(el("p", "muted small", t(full ? "cost.how" : "cost.left")));
+  }
+  function sumLine(dl, label, c, cls) {
+    var r = el("div", "cost-line" + (cls ? " " + cls : ""));
+    r.appendChild(el("span", "", label));
+    r.appendChild(el("span", "cost-amt", cents(c)));
+    dl.appendChild(r);
+    return r;
+  }
+  function costDetail(r) {
+    var bits = [r.d ? fmtDate(r.d) : "", r.sup, r.inv ? t("cost.inv", { n: r.inv }) : "", r.note].filter(Boolean);
+    var li = el("li", "cost-row");
+    li.appendChild(el("span", "", bits.join(" · ")));
+    li.appendChild(el("span", "cost-amt", cents(r.a)));
+    return li;
+  }
+  function costCat(box, label, a, rows) {
+    if (!rows || !rows.length) { var ul0 = el("ul", "cost-list"); ul0.appendChild(costDetail({ sup: label, a: a })); box.appendChild(ul0); return; }
+    var d = el("details", "cost-cat");
+    var s = el("summary");
+    s.appendChild(el("span", "", label));
+    s.appendChild(el("span", "cost-amt", cents(a)));
+    d.appendChild(s);
+    var ul = el("ul", "cost-list");
+    rows.forEach(function (r) { ul.appendChild(costDetail(r)); });
+    d.appendChild(ul);
+    box.appendChild(d);
+  }
+
+  // A title's section (its editor)
+  function renderCostSec() {
+    var box = $("ed-cost"), tt = currentTitle();
+    if (!box || !tt) return;
+    box.textContent = "";
+    box.appendChild(el("h3", "", t("cost.sec")));
+    var a = costHead(box);
+    if (!a || !costS.recs || costS.acct !== a.id) return;
+    var pids = CO.pidsOf(tt, a.id, costS.sku);
+    if (!Object.keys(pids).length) { box.appendChild(el("p", "muted", t("cost.noFmt"))); return; }
+    if (costS.rep) costFull(box, CO.titleReport(costS.rep, costS.recs, costS.rs, tt, pids, data.set));
+    else costDirect(box, CO.forTitle(costS.recs, pids, costS.rs, data.set));
+  }
+  // With the ledger's report: the whole picture
+  function costFull(box, f) {
+    if (!f.any) { box.appendChild(el("p", "muted", t("cost.nothing"))); costNotes(box, true); return; }
+    var sum = el("div", "cost-sum");
+    sumLine(sum, t("cost.inc"), f.incA);
+    sumLine(sum, t("cost.costs"), -f.costA);
+    sumLine(sum, t("cost.net"), f.net, f.net < 0 ? "neg tot" : "tot");
+    box.appendChild(sum);
+    var bits = [t("cost.span", { from: fmtDate(f.from), to: fmtDate(f.to) })];
+    if (costPer !== "all" || f.since !== f.net) bits.push(t("cost.since", { v: cents(f.since) }));
+    if (f.be) bits.push(t("cost.be", { n: f.be }));
+    box.appendChild(el("p", "muted small", bits.join(" ")));
+
+    box.appendChild(el("h4", "", t("cost.inc")));
+    var ui = el("ul", "cost-list");
+    if (f.inc.sales.a || f.inc.sales.q) ui.appendChild(costDetail({ sup: t("cost.sales", { n: f.inc.sales.q }), a: f.inc.sales.a }));
+    if (f.inc.trade.a || f.inc.trade.q) ui.appendChild(costDetail({ sup: t("cost.trade", { n: f.inc.trade.q }), a: f.inc.trade.a }));
+    box.appendChild(ui);
+    if (f.inc.offsite.a) costCat(box, t("cost.offsite"), f.inc.offsite.a, f.inc.offsite.rows);
+    if (f.inc.ship) { var us = el("ul", "cost-list"); us.appendChild(costDetail({ sup: t("cost.shipIn"), a: f.inc.ship })); box.appendChild(us); }
+
+    box.appendChild(el("h4", "", t("cost.costs")));
+    f.costs.forEach(function (c) { costCat(box, t("cost.cat." + c.cat), c.a, c.rows); });
+    var uo = el("ul", "cost-list");
+    if (f.shared.ship) uo.appendChild(costDetail({ sup: t("cost.shipOut"), a: f.shared.ship }));
+    if (f.shared.cons) uo.appendChild(costDetail({ sup: t("cost.cons"), a: f.shared.cons }));
+    if (f.shared.fees) uo.appendChild(costDetail({ sup: t("cost.fees"), a: f.shared.fees }));
+    if (f.creators) uo.appendChild(costDetail({ sup: t("cost.creators"), a: f.creators }));
+    if (f.roy) f.roy.lines.forEach(function (r) {
+      uo.appendChild(costDetail({ sup: t("cost.roy", { n: r.n, pct: String(r.pct).replace(".", LANG === "en" ? "." : ",") }) + (r.adv > r.earned ? " · " + t("cost.adv") : ""), a: r.a }));
+    });
+    box.appendChild(uo);
+    if (!f.costs.length && !uo.children.length) box.appendChild(el("p", "muted small", t("cost.noCosts")));
+    if (f.roy) box.appendChild(el("p", "muted small", t("cost.royHint")));
+
+    if (f.shares.length) {
+      var d = el("details", "cost-cat");
+      d.appendChild(el("summary", "", t("cost.who")));
+      var ul = el("ul", "cost-list");
+      f.shares.forEach(function (x) { ul.appendChild(costDetail({ sup: x.n + (x.own ? " (" + t("cost.own") + ")" : ""), a: x.a })); });
+      d.appendChild(ul);
+      if (f.rsSince) d.appendChild(el("p", "muted small", t("cost.sharesHint", { d: fmtDate(f.rsSince) })));
+      box.appendChild(d);
+    }
+
+    box.appendChild(el("h4", "", t("cost.vat")));
+    var uv = el("ul", "cost-list");
+    uv.appendChild(costDetail({ sup: t("cost.vatOut"), a: f.vat.out }));
+    uv.appendChild(costDetail({ sup: t("cost.vatIn"), a: f.vat["in"] }));
+    uv.appendChild(costDetail({ sup: t("cost.vatDue"), a: f.vat.due }));
+    box.appendChild(uv);
+    box.appendChild(el("p", "muted small", t("cost.vatHint")));
+    costNotes(box, true);
+  }
+  // Without it (Production Ledger 1.0): direct costs and sales only
+  function costDirect(box, f) {
+    if (!f.any) { box.appendChild(el("p", "muted", t("cost.nothing"))); costNotes(box, false); return; }
+    var sum = el("div", "cost-sum");
+    sumLine(sum, t("cost.inc"), f.incA);
+    sumLine(sum, t("cost.costs"), -f.costA);
+    if (f.shares.length) sumLine(sum, t("cost.shares"), -f.shareA);
+    sumLine(sum, t("cost.net"), f.net, f.net < 0 ? "neg tot" : "tot");
+    box.appendChild(sum);
+    if (f.first) box.appendChild(el("p", "muted small", t("cost.span", { from: fmtDate(f.first), to: fmtDate(f.last) })));
+    box.appendChild(el("h4", "", t("cost.inc")));
+    var ui = el("ul", "cost-list");
+    if (f.inc.sales.a || f.inc.sales.q) ui.appendChild(costDetail({ sup: t("cost.sales", { n: f.inc.sales.q }), a: f.inc.sales.a }));
+    if (f.inc.trade.a || f.inc.trade.q) ui.appendChild(costDetail({ sup: t("cost.trade", { n: f.inc.trade.q }), a: f.inc.trade.a }));
+    box.appendChild(ui);
+    if (f.inc.offsite.a) costCat(box, t("cost.offsite"), f.inc.offsite.a, f.inc.offsite.rows);
+    if (f.costs.length) {
+      box.appendChild(el("h4", "", t("cost.costs")));
+      f.costs.forEach(function (c) { costCat(box, t("cost.cat." + c.cat), c.a, c.rows); });
+    }
+    if (f.shares.length) {
+      box.appendChild(el("h4", "", t("cost.shares")));
+      var us = el("ul", "cost-list");
+      f.shares.forEach(function (x) { us.appendChild(costDetail({ sup: x.n + (x.own ? " (" + t("cost.own") + ")" : ""), a: x.a })); });
+      box.appendChild(us);
+      if (f.rsSince) box.appendChild(el("p", "muted small", t("cost.sharesHint", { d: fmtDate(f.rsSince) })));
+    }
+    costNotes(box, false);
+  }
+
+  // The tab: every title with figures in the shop
+  function renderCost() {
+    var sec = $("view-cost");
+    sec.textContent = "";
+    var box = el("section", "sec cost");
+    box.appendChild(el("p", "muted", t("cost.intro")));
+    sec.appendChild(box);
+    var a = costHead(box);
+    if (!a || !costS.recs || costS.acct !== a.id) return;
+    var head = [["cost.col.t", ""], ["cost.col.n", "num"], ["cost.inc", "num"], ["cost.costs", "num"], ["cost.net", "num"]];
+    var rows, foot = [];
+    if (costS.rep) {
+      var o = CO.overviewRep(data, a.id, costS.rep, costS.sku);
+      rows = o.rows;
+      if (o.other.k) foot.push([t("cost.other", { n: o.other.k }), o.other.n, o.other.inc, o.other.cost, o.other.net]);
+      if (o.general) foot.push([t("cost.general"), "", "", o.general, -o.general]);
+      foot.push([t("cost.total"), "", "", "", o.total, "tot"]);
+    } else {
+      rows = CO.overview(data, a.id, costS.recs, costS.rs, costS.sku).map(function (r) {
+        return { id: r.id, t: r.t, n: r.n, inc: r.inc, cost: r.cost + r.share, net: r.net };
+      });
+      var tot = rows.reduce(function (s, r) { return s + r.net; }, 0);
+      foot.push([t("cost.total"), "", "", "", tot, "tot"]);
+    }
+    if (!rows.length) { box.appendChild(el("p", "muted", t("cost.listNone"))); costNotes(box, !!costS.rep); return; }
+    var wrap = el("div", "cost-wrap");
+    var tb = el("table", "cost-tbl");
+    var th = el("tr");
+    head.forEach(function (c) { var h = el("th", c[1], t(c[0])); h.scope = "col"; th.appendChild(h); });
+    var thead = el("thead");
+    thead.appendChild(th);
+    tb.appendChild(thead);
+    var body = el("tbody");
+    rows.forEach(function (r) {
+      var tr = el("tr");
+      var td = el("td");
+      td.appendChild(button(r.t, "linkish", function () { openTitle(r.id); }));
+      if (r.est) td.appendChild(el("span", "muted small", " *"));
+      tr.appendChild(td);
+      tr.appendChild(el("td", "num", String(r.n)));
+      tr.appendChild(el("td", "num", cents(r.inc)));
+      tr.appendChild(el("td", "num", cents(r.cost)));
+      tr.appendChild(el("td", "num" + (r.net < 0 ? " neg" : ""), cents(r.net)));
+      body.appendChild(tr);
+    });
+    tb.appendChild(body);
+    var tf = el("tfoot");
+    foot.forEach(function (f) {
+      var fr = el("tr", f[5] || "");
+      var fh = el("th", "", f[0]);
+      fh.scope = "row";
+      fr.appendChild(fh);
+      fr.appendChild(el("td", "num", f[1] === "" ? "" : String(f[1])));
+      [f[2], f[3], f[4]].forEach(function (v, i) {
+        fr.appendChild(el("td", "num" + (i === 2 && v < 0 ? " neg" : ""), v === "" ? "" : cents(v)));
+      });
+      tf.appendChild(fr);
+    });
+    tb.appendChild(tf);
+    wrap.appendChild(tb);
+    box.appendChild(wrap);
+    if (rows.some(function (r) { return r.est; })) box.appendChild(el("p", "muted small", "* " + t("cost.royHint")));
+    costNotes(box, !!costS.rep);
   }
 
   // ---------- 6c. Royalties (wave P6) ----------
@@ -2526,6 +2973,8 @@
     dlg.appendChild(field(t("set.cur"), cur));
     var imp = input("text", data.set.imp, { maxlength: "120", autocomplete: "organization" });
     dlg.appendChild(field(t("set.imp"), imp, el("span", "hint", t("set.impHint"))));
+    var own = input("text", data.set.own || "", { maxlength: "300", autocomplete: "off" });
+    dlg.appendChild(field(t("set.own"), own, el("span", "hint", t("set.ownHint"))));
     var mast = input("text", data.set.mast || "", { maxlength: "100", autocomplete: "off", inputmode: "url", placeholder: "mastodon.social" });
     dlg.appendChild(field(t("post.mast"), mast));
     var more = el("div", "send-row");
@@ -2539,6 +2988,7 @@
       if (cur.value !== data.set.cur) patch.cur = cur.value;
       if (imp.value.trim() !== data.set.imp) patch.imp = imp.value.trim();
       if (mast.value.trim() !== (data.set.mast || "")) patch.mast = mast.value.trim();
+      if (own.value.trim() !== (data.set.own || "")) patch.own = own.value.trim();
       if (Object.keys(patch).length) { commit(C.setSet(data, patch, Date.now())); toast(t("set.done")); }
     }));
     dlg.appendChild(acts);
@@ -2580,11 +3030,13 @@
     $("view-roy").hidden = view.name !== "roy";
     $("view-subs").hidden = view.name !== "subs";
     $("view-posts").hidden = view.name !== "posts";
+    $("view-cost").hidden = view.name !== "cost";
     if (view.name === "list") renderList();
     else if (view.name === "title") renderEditor();
     else if (view.name === "roy") renderRoy();
     else if (view.name === "subs") renderSubs();
     else if (view.name === "posts") renderPosts();
+    else if (view.name === "cost") renderCost();
     else renderIsbn();
   }
 
@@ -2617,7 +3069,7 @@
     }
   });
 
-  // target = { title: id } | { view: "isbn" | "roy" | "subs" | "posts" } | { post: id } |
+  // target = { title: id } | { view: "isbn" | "roy" | "subs" | "posts" | "cost" } | { post: id } |
   // { asNew: { post: 1, tx, d, at?, nets?, book? } } (the Assistant's post card) |
   // { submit: { n?, email?, t?, d?, note? } } (Mail, BR-PUB-SUB) | { isbn: "…" } (opens the
   // title that has it, else the register) | { new: { t|title, author?,

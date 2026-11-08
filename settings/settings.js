@@ -798,7 +798,43 @@
 
   // orOS Gate (gate.js, BR-GATE): Claude reads the apps set to Read,
   // through this device while orOS is open. Off by default, per device.
-  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "";
+  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "";
+  // The join code as a QR (qr/qr-encode.js): an <svg> of dark squares on white.
+  function gateQr(text) {
+    var Q = window.orosQR;
+    if (!Q || typeof Q.encode !== "function") return null;
+    var mods;
+    try { mods = Q.encode(text, { ecl: "M" }).modules; } catch (e) { return null; }
+    var n = mods.length, q = 4, size = n + q * 2, d = "";
+    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) if (mods[y][x]) d += "M" + (x + q) + " " + (y + q) + "h1v1h-1z";
+    var ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+    svg.setAttribute("class", "gt-qr");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", t("gt.invite.qr"));
+    var bg = document.createElementNS(ns, "rect");
+    bg.setAttribute("width", size); bg.setAttribute("height", size); bg.setAttribute("fill", "#ffffff");
+    var path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d); path.setAttribute("fill", "#000000");
+    svg.appendChild(bg); svg.appendChild(path);
+    return svg;
+  }
+  // While a join code is shown, ask the relay every 3 s whether a new
+  // device came in, and say so here (the joining device says it too).
+  function gateWatchJoin(G) {
+    clearTimeout(gateWatch);
+    if (!gateJoin || gateJoin.exp <= Date.now() || typeof gateJoin.devices !== "number") return;
+    gateWatch = setTimeout(function () {
+      G.info().then(function (d) {
+        if (!gateJoin) return;
+        if (d && typeof d.devices === "number" && d.devices > gateJoin.devices) {
+          gateJoin = null; gateNote = "gt.invite.done"; gateInfo = d; render();
+          return;
+        }
+        gateWatchJoin(G);
+      }, function () { gateWatchJoin(G); });
+    }, 3000);
+  }
   function gateApi() {
     var p = parentWin();
     try { return p && p.orosGate && typeof p.orosGate.enable === "function" ? p.orosGate : null; } catch (e) { return null; }
@@ -817,6 +853,27 @@
       (v ? G.enable() : G.disable()).then(function () { render(); }, function () { gateNote = "gt.fail"; render(); });
     }, t("gt.switch")), { hint: t("gt.hint") }));
     if (gateNote) c.appendChild(el("div", "hint", t(gateNote)));
+    if (!st.on && typeof G.join === "function") {
+      // Another device of the owner already has the gate: join it.
+      var jn = el("input", "dav-input");
+      jn.id = "f-gt-join";
+      jn.type = "text";
+      jn.maxLength = 12;
+      jn.autocomplete = "off";
+      jn.spellcheck = false;
+      jn.placeholder = "XXXX-XXXX";
+      if (!gatePre && typeof G.takeJoin === "function") gatePre = G.takeJoin() || "";
+      if (gatePre) jn.value = gatePre.slice(0, 4) + "-" + gatePre.slice(4);
+      c.appendChild(row(t("gt.join"), jn, { hint: t("gt.join.hint"), forId: "f-gt-join", stack: true }));
+      if (gatePre) c.appendChild(el("div", "hint", t("gt.join.scanned")));
+      var sendJoin = function () {
+        gateNote = "";
+        G.join(jn.value).then(function () { gatePre = ""; gateNote = "gt.join.ok"; gateInfo = null; render(); },
+          function (e) { gateNote = e && e.code === "nojoin" ? "gt.join.bad" : e && e.code === "full" ? "gt.join.full" : "gt.fail"; render(); });
+      };
+      jn.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); sendJoin(); } });
+      c.appendChild(actions(button(t("gt.join.go"), "gt.join.go", sendJoin)));
+    }
     if (st.on) {
       c.appendChild(el("div", "hint", t("gt.conn." + (["on", "connecting", "other", "gone"].indexOf(st.conn) >= 0 ? st.conn : "connecting"))));
       var url = el("input", "dav-input");
@@ -830,6 +887,25 @@
         var done = function () { gateNote = "gt.copied"; render(); };
         try { navigator.clipboard.writeText(G.relayUrl()).then(done, function () { url.select(); }); } catch (e) { url.select(); }
       })));
+      if (typeof G.invite === "function") {
+        if (gateJoin && gateJoin.exp > Date.now()) {
+          c.appendChild(el("div", "hint", t("gt.invite.code", { code: gateJoin.code.slice(0, 4) + "-" + gateJoin.code.slice(4) })));
+          var qr = typeof G.joinLink === "function" ? gateQr(G.joinLink(gateJoin.code)) : null;
+          if (qr) {
+            var qb = el("div", "gt-qr-box");
+            qb.appendChild(qr);
+            c.appendChild(qb);
+            c.appendChild(el("div", "hint", t("gt.invite.qr.hint")));
+          }
+          c.appendChild(el("div", "hint", t("gt.invite.wait")));
+        }
+        c.appendChild(el("div", "hint", t("gt.seat")));
+        c.appendChild(actions(button(t("gt.invite"), "gt.invite", function () {
+          gateNote = "";
+          G.invite().then(function (d) { gateJoin = d; render(); gateWatchJoin(G); },
+            function (e) { gateNote = e && e.code === "full" ? "gt.join.full" : "gt.fail"; render(); });
+        })));
+      }
       if (typeof G.pair === "function") {
         var pc = el("input", "dav-input");
         pc.id = "f-gt-pair";
@@ -869,12 +945,50 @@
       c.appendChild(list);
       var writers = G.apps().filter(function (a) { return a.write; }).map(function (a) { return a.name; });
       if (writers.length) {
-        c.appendChild(el("div", "hint", t("gt.win") + ": " + (st.win ? t("gt.win.open", { when: gateWhen(st.win), apps: writers.join(", ") }) : t("gt.win.closed")) + " " + t("gt.win.hint")));
-        var setWin = function (min) { if (!G.setWindow(min)) gateNote = "gt.fail"; render(); };
-        c.appendChild(st.win ? actions(button(t("gt.win.close"), "gt.win.close", function () { setWin(0); }))
-          : actions(button(t("gt.win.15"), "gt.win.15", function () { setWin(15); }),
-                    button(t("gt.win.60"), "gt.win.60", function () { setWin(60); }),
-                    button(t("gt.win.240"), "gt.win.240", function () { setWin(240); })));
+        // One rule (5.78.00): no write window; changes can be paused.
+        c.appendChild(el("div", "hint", (st.hold ? (st.hold >= 8e15 ? t("gt.hold.on.long") : t("gt.hold.on", { when: gateWhen(st.hold) }))
+          : t("gt.hold.off", { apps: writers.join(", ") })) + " " + t("gt.hold.hint")));
+        var setHold = function (min) { if (!G.setPause(min)) gateNote = "gt.fail"; render(); };
+        c.appendChild(st.hold ? actions(button(t("gt.hold.end"), "gt.hold.end", function () { setHold(0); }))
+          : actions(button(t("gt.hold.60"), "gt.hold.60", function () { setHold(60); }),
+                    button(t("gt.hold.240"), "gt.hold.240", function () { setHold(240); }),
+                    button(t("gt.hold.inf"), "gt.hold.inf", function () { setHold(Infinity); })));
+        var PP = window.orosPush;
+        c.appendChild(el("div", "hint", PP && PP.enabled && PP.enabled() ? t("gt.push.on") : t("gt.push.off")));
+        // The daily email (5.79.00): from the owner's Mail account to itself.
+        if (typeof G.digest === "function") {
+          var dg = G.digest();
+          var dl = el("div", "pair");
+          dl.appendChild(el("span", "pair-label", t("gt.dig")));
+          dl.appendChild(switchBtn(dg.on, "gt.dig", function (v) { if (!G.setDigest({ on: v })) gateNote = "gt.fail"; render(); }, t("gt.dig")));
+          c.appendChild(dl);
+          if (dg.on && dg.accounts.length > 1) {
+            c.appendChild(row(t("gt.dig.acct"), select(dg.accounts.map(function (a) { return { value: a.id, label: a.email }; }),
+              dg.acct || dg.accounts[0].id, "gt-dig-acct", function (v) { if (!G.setDigest({ acct: v })) gateNote = "gt.fail"; render(); }), { forId: "f-gt-dig-acct" }));
+          }
+          c.appendChild(el("div", "hint", !dg.on ? t("gt.dig.off") : !dg.accounts.length ? t("gt.dig.nomail") :
+            t("gt.dig.hint", { addr: (dg.accounts.filter(function (a) { return a.id === dg.acct; })[0] || dg.accounts[0]).email }) +
+            (dg.at ? " " + t("gt.dig.last", { when: gateWhen(dg.at) }) : "") + (dg.fails ? " " + t("gt.dig.fail", { n: dg.fails }) : "")));
+        }
+      }
+      // Claude's changes from every device (synced), with Undo.
+      var chg = typeof G.changes === "function" ? G.changes().slice(0, 30) : [];
+      if (chg.length) {
+        c.appendChild(el("div", "hint", t("gt.chg")));
+        chg.forEach(function (e) {
+          c.appendChild(el("div", "hint", gateWhen(e.t) + " · " + e.n + " · " + t("gt.log.items", { n: e.k || 0 }) +
+            (e.dv ? " · " + e.dv : "") + (e.done ? " · " + t("gt.chg.undone") : "")));
+          if (e.undo) {
+            c.appendChild(actions(button(t("gt.undo"), "gt.undo:" + e.id, function () {
+              var r = G.undo(e.id);
+              gateNote = "";
+              if (!r.ok) gateUndoMsg = r.later ? t("gt.undo.later") : t("gt.undo.fail");
+              else gateUndoMsg = r.kept ? t("gt.undo.kept", { n: r.n, k: r.kept }) : t("gt.undo.done", { n: r.n });
+              render();
+            })));
+          }
+        });
+        if (gateUndoMsg) c.appendChild(el("div", "hint", gateUndoMsg));
       }
       c.appendChild(el("div", "hint", t("gt.never")));
       if (!gateInfo) {
@@ -883,8 +997,11 @@
       }
       if (gateInfo.links !== null) {
         c.appendChild(el("div", "hint", gateInfo.links < 0 ? t("gt.info.fail") :
-          t("gt.links", { n: gateInfo.links }) + (gateInfo.last ? " · " + t("gt.last", { when: gateWhen(gateInfo.last) }) : "")));
+          t("gt.links", { n: gateInfo.links }) + (gateInfo.last ? " · " + t("gt.last", { when: gateWhen(gateInfo.last) }) : "") +
+          (typeof gateInfo.devices === "number" ? " · " + t("gt.devs", { n: gateInfo.devices }) : "")));
       }
+      c.appendChild(el("div", "hint", t("gt.shared")));
+      c.appendChild(el("div", "hint", t("gt.closed")));
       c.appendChild(actions(
         confirmBtn(t("gt.revoke"), t("gt.revoke.sure"), "gt.revoke", function () {
           G.revoke().then(function () { gateInfo = null; gateNote = "gt.revoked"; render(); }, function () { gateNote = "gt.fail"; render(); });
@@ -898,17 +1015,7 @@
           var ln = el("div", "hint", gateWhen(e.t) + " · " + e.n + (e.a && e.a.length ? " · " + e.a.join(", ") : "") +
             " · " + (e.ok ? t("gt.log.items", { n: e.k || 0 }) : t("gt.log.refused")));
           c.appendChild(ln);
-          if (e.u && G.canUndo(e.u)) {
-            c.appendChild(actions(button(t("gt.undo"), "gt.undo:" + e.u, function () {
-              var r = G.undo(e.u);
-              gateNote = "";
-              if (!r.ok) gateNote = "gt.fail";
-              else gateUndoMsg = r.kept ? t("gt.undo.kept", { n: r.n, k: r.kept }) : t("gt.undo.done", { n: r.n });
-              render();
-            })));
-          }
         });
-        if (gateUndoMsg) c.appendChild(el("div", "hint", gateUndoMsg));
         if (log.length) c.appendChild(actions(button(t("gt.log.clear"), "gt.log.clear", function () { G.clearLog(); })));
       }
     }

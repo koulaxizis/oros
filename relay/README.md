@@ -742,8 +742,8 @@ the op answers 503 `nohook` and `/wh/` answers 503. Tests:
 
 ## orOS Gate (`/mcp`, `/gate/`)
 
-Claude reads a person's orOS through their own open orOS and, inside a
-write window the person opens there, changes Budget. The person adds `https://<this worker>/mcp` as a custom
+Claude reads a person's orOS through their own open orOS and changes
+Budget and Kanban where the person's switches allow it, unless they paused changes (5.78.00). The person adds `https://<this worker>/mcp` as a custom
 connector in claude.ai; nothing else is configured here. Contract:
 OROS_BIBLE.md, BR-GATE.
 
@@ -751,7 +751,7 @@ One Durable Object (`GateBox`, binding `GATE`, SQLite, key-value API)
 per gate, addressed by a 22-character id the device made. It keeps only
 SHA-256 hashes: of the device token, of each authorization code, access
 and refresh token (`t:<hash>`), plus the last-use time and a minute
-counter. No orOS data, no request or answer, nothing logged.
+counter. No orOS data in the clear, no request or answer, nothing logged.
 
 - **Public routes** (Claude's servers call them, no Origin check, 120
   per IP a minute per isolate): `/.well-known/oauth-protected-resource`
@@ -776,10 +776,24 @@ counter. No orOS data, no request or answer, nothing logged.
   `tools/call`, notifications get 202. Read tools (`readOnlyHint`):
   `list_apps`, `search_data`, `app_summary`, `budget_lines`,
   `invoice_list`, `stock_items`, `publish_titles`; change tools:
-  `budget_add`, `budget_change`, `budget_delete` (destructive). The
+  `budget_add`, `budget_change`, `budget_delete` (destructive),
+  `kanban_add_cards`, `kanban_move_cards`, `kanban_change_card`,
+  `kanban_add_columns` (5.72.00). The
   relay only describes them; the device checks every call again (the
-  app's level, the write window, the lock) and asks the person itself
+  app's level, a pause, the lock) and asks the person itself
   before more than 5 deletions.
+- **orOS closed (5.80.00):** an open device sends, after each change
+  and every 30 minutes, an encrypted copy of the answers it would give
+  (`copy` + chunks `s:<i>`, ≤ 900 KB, AES-GCM with the gate key K that
+  the owner's devices share through orOS sync). The box never keeps K: it
+  keeps K wrapped under each live token of Claude's (`kw:<sha256 of the
+  token>`, key = SHA-256("orOS-gate-kw|" + token)); a new token gets K
+  from the old refresh token's wrap or from an open device (`_key` over
+  its socket). With no device open, read tools answer from the copy
+  (dated), change tools wait encrypted in `q:<id>` (≤ 50; deletions are
+  refused) and go to the first device that connects, which applies them
+  and acks (`cqa`). 7 days without an open device, or `revoke`, wipe the
+  copy, the queue and the wraps; the device makes a new K on revoke.
 - **Whose relay:** everyone on useoros.online uses this one, each with
   their own box. A person whose Mail is set up with their own relay
   gets their gate there (deploy this Worker, `ALLOWED_ORIGINS` with the
@@ -792,6 +806,23 @@ counter. No orOS data, no request or answer, nothing logged.
   /gate/ws/<id>` with the subprotocols `gt1` and `t.<token>`. One socket
   per gate: a newer one closes the older (4001); `del` wipes the box and
   closes it (4004).
+- **Several devices (5.73.00):** up to 5 per gate. `invite` (an existing
+  device) makes a join code, `XXXX-XXXX`, 10 minutes, one use, held by a
+  join box `join:<code>`. `join { jc, th }` (no id) adds the new device's
+  token hash and answers the gate id and the app levels. One socket per
+  device; a call goes to a device with orOS on screen (`v1` / `v0`
+  messages) first, else the newest socket. `del` removes one device; the
+  last one wipes the box.
+- **Shared app switches (5.77.00):** a device sends `{"lv": {...}}` on
+  its socket when the owner changes an app switch; the box keeps the
+  newest set (`meta.lv`, cleaned; only from a socket of one of its
+  devices), sends it to the other sockets and to every device as it
+  connects. Each device checks it again. `invite` also answers
+  `devices`, so the inviting device can say when the new one joined.
+- **Seat (5.77.00):** `seat { tok, sh }` keeps the hash of a secret the
+  devices share through orOS's encrypted sync; `sit { id, ss, th }` (no
+  token) adds a device that knows the secret (wrong ones count against
+  `pairTries`) and answers the shared switches.
 - **Limits (`GATE_LIMITS`):** request 64 KB, an answer from the device
   900 KB, 25 s for the device to answer, 60 tool calls a minute per
   gate, codes 5 minutes, access tokens 1 hour, refresh tokens 30 days
