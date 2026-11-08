@@ -12,7 +12,7 @@ const E = require("../roots/engine.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "roots/roots.js"), "utf8");
 const R = (() => {
-  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SCORE = 999; var MAX_DAY = 99999; var LAST_N = 10;"];
+  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SCORE = 999; var MAX_DAY = 99999; var LAST_N = 10; var PZ_N = E.PUZZLES.length;"];
   ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeRoots"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
@@ -442,4 +442,43 @@ test("roots: a year saved before the glades is a one-glade year", () => {
   const b2 = E.newYear("old3", "m");
   b2.gl = 5;
   assert.ok(!E.valid(b2), "no fifth glade");
+});
+
+test("roots: 20 root puzzles, each one turn: doing nothing and the planner fall short of the goal, the best set of growths meets it", () => {
+  assert.equal(E.PUZZLES.length, 20);
+  const result = (st) => { const c = E.clone(st); E.act(c, { t: "end" }); return c; };
+  // the best set of growths, by a search over every reachable position
+  const best = (st0) => {
+    const seen = new Set(); let top = -1;
+    const go = (st) => {
+      const k = st.r.join("") + st.th.join("") + st.bk.join("") + st.sap;
+      if (seen.has(k)) return;
+      seen.add(k);
+      top = Math.max(top, result(st).res.b);
+      for (const a of E.options(st)) { const c = E.clone(st); if (E.act(c, a)) go(c); }
+    };
+    go(st0);
+    return top;
+  };
+  for (let n = 1; n <= 20; n++) {
+    const st = E.newPuzzle(n), P = E.PUZZLES[n - 1];
+    assert.ok(E.valid(st), "valid " + n);
+    assert.deepEqual([st.pz, st.one, st.sap, st.s.q, st.gl], [n, 1, P.sap, P.q, P.g]);
+    const none = result(st);
+    assert.equal(none.over, 0, "doing nothing fails " + n);
+    assert.ok(none.s.done && E.valid(none), "one turn " + n);
+    const pl = E.clone(st); E.planTurn(pl);
+    assert.equal(result(pl).over, 0, "the planner fails " + n);
+    if (n <= 12) assert.equal(best(st), P.q, "the goal is the best " + n);
+  }
+  const bad = E.newPuzzle(3);
+  bad.pz = 21;
+  assert.ok(!E.valid(bad));
+});
+
+test("roots: solved puzzles merge as a sorted union", () => {
+  const m = R.mergeRoots;
+  const A = { pz: [3, 1, 99, 0] }, B = { pz: [2, 3], br: 9 };
+  assert.deepEqual(m(A, B).pz, [1, 2, 3], "out-of-range numbers drop; Reset records keeps them");
+  assert.equal(J(m(A, B)), J(m(B, A)));
 });

@@ -432,3 +432,18 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .lr-tx .fx { font-size: 12px; opacity: 0.75; overflow-wrap: anywhere; }
 .lr-row button { flex: none; min-height: 40px; }
 .lr-list { max-height: 40vh; overflow: auto; padding-right: 4px; }
+/* Root puzzles (W3b) */
+.pz-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 4px 0 8px; }
+.pz-btn {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pz-btn.done { border-color: var(--accent); color: var(--accent); }
+.pz-btn.done::after { content: " ✓"; }
+.pz-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

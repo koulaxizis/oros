@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Roots — rules engine (v1.2.0)
+// orOS Roots — rules engine (v1.3.0)
 // NOT the UI: no DOM, no storage. Loaded by roots/index.html
 // (window.RootsEngine) and by tests/roots.test.js (module.exports).
 //
@@ -21,7 +21,9 @@
 //     one: 1 (a Daily glade, 5.91.00: this season only, always Hardy; absent in a year),
 //     gl glade 1-4, end the glades in the year, pts the points of the glades
 //     left behind (springs + longest root), 5.92.00; absent = a one-glade
-//     year on the meadow (a session from before) }
+//     year on the meadow (a session from before),
+//     pz: puzzle number (W3b, with one: a single turn; res.b is then the
+//     sap the tree earns the turn after) }
 //   season = { turn 1-T, q quota, u: [pest], nid, next: [{ k, at }], sched: [T + 1 lists], rw rewinds left, r rng, done 0|1 }
 //   pest = { id, k, at, hp, lt turns left (blight 99), it: intent | null }
 //   tiles: T trunk, a surface, . soil, # stone, w spring, m mineral, c clay.
@@ -68,6 +70,36 @@
       [["beetle", 3, 4, 1], ["mole", 2, 2, 2], ["aphid", 2, 3, 2], ["blight", 2, 2, 1]]] }
   ];
   var GLADE_IDS = GLADES.map(function (g) { return g.id; });
+  // 20 root puzzles (W3b): one turn with a fixed amount of sap; the goal
+  // is the sap the tree earns the next turn (joined springs, minerals and
+  // open leaves), after the pests have acted. g glade, sea season, t the
+  // 56 soil tiles (rows 1-8), r roots (0-2) of the soil, cut a cut root's
+  // turns left (0-2) of the soil, th thorn tiles, bk / ba the surface
+  // (7 each), u pests [kind, tile, Health, turns left], sap, q the best
+  // possible. Made with a search over every set of growths (doing
+  // nothing and the planner fall short). Never reorder: solved numbers sync.
+  var PUZZLES = [
+    {"g":3,"sea":3,"t":".......####..m.#....#c.#mm..w.#.#.....cm.c#mw...##...m.m","r":"01121000000000000010000011000000000000000000000000000000","cut":"00000000000000000010000011000000000000000000000000000000","th":[],"bk":"0000400","ba":"0000000","u":[["beetle",45,2,1],["beetle",57,2,1],["blight",41,1,99],["blight",62,1,99],["blight",34,1,99],["blight",61,1,99],["mole",58,3,2],["aphid",6,1,3],["beetle",26,2,3]],"sap":3,"q":4},   // 1
+    {"g":2,"sea":1,"t":"........#.......mc..c.#.....m...c##c.c.....wwc...cwwcw..","r":"01120000010000000000000100000010000000000000000000000000","cut":"00000000000000000000000100000010000000000000000000000000","th":[],"bk":"0040000","ba":"0000000","u":[["aphid",0,1,3],["aphid",6,1,3]],"sap":3,"q":4},   // 2
+    {"g":4,"sea":3,"t":"........m...m..m..#....#mwc.#...#..wc.......c#w..#.....c","r":"00120000001000000000000011000001000001110000001000000000","cut":"00000000000000000000000011000001000001110000001000000000","th":[],"bk":"0000000","ba":"0000000","u":[["beetle",44,2,1],["beetle",8,2,1],["mole",51,3,1],["mole",46,3,1],["aphid",4,1,2],["aphid",2,1,2],["blight",61,1,99],["blight",27,1,99],["blight",18,1,99],["blight",54,1,99]],"sap":4,"q":7},   // 3
+    {"g":1,"sea":2,"t":".........m......c..#..m#..c..m.w.m...cc......w...#c#w###","r":"00121110010000000100000010000001000000100000010000001000","cut":"00000000000000000100000010000001000000100000010000001000","th":[9],"bk":"0000000","ba":"0000000","u":[["beetle",38,2,1],["aphid",4,1,1],["beetle",15,2,2],["mole",7,3,1],["mole",44,3,1],["aphid",2,1,2],["beetle",35,2,3],["aphid",6,1,3],["aphid",5,1,3],["beetle",25,2,3],["mole",20,3,2]],"sap":4,"q":4},   // 4
+    {"g":1,"sea":2,"t":"............#m.....m....#.m...c.c#.##w.wmcc#....wc..#...","r":"01121000000000001000000000000000000000000000000000000000","cut":"00000000000000001000000000000000000000000000000000000000","th":[],"bk":"0440000","ba":"0000000","u":[["beetle",49,2,1],["mole",7,3,1],["beetle",35,2,3],["beetle",58,2,3],["mole",55,3,2],["aphid",0,1,3],["beetle",17,2,3],["beetle",15,2,3],["beetle",16,2,3]],"sap":6,"q":5},   // 5
+    {"g":2,"sea":2,"t":"...........m....m.......w..cc..wc..c..w.wc#...wc#..c#c.#","r":"01121110000100001100000010000001000000111000001000000000","cut":"00000000000000001100000010000001000000111000001000000000","th":[],"bk":"0240220","ba":"0100110","u":[["mole",17,3,1],["mole",18,3,1],["aphid",6,1,3],["aphid",0,1,3],["beetle",41,2,3],["beetle",60,2,3],["beetle",16,2,3]],"sap":4,"q":12},   // 6
+    {"g":2,"sea":3,"t":"........m......#.ccc#.w.cc.c..#.....#ccw...w...w...w..m.","r":"00021100110000001000001100000000000000000000000000000000","cut":"00000000110000001000001100000000000000000000000000000000","th":[],"bk":"0040000","ba":"0000000","u":[["aphid",4,1,2],["blight",18,1,99],["blight",28,1,99],["beetle",14,2,3]],"sap":5,"q":5},   // 7
+    {"g":3,"sea":1,"t":".......##.m#....c#..m###........m...cw###m....mw#.mm.#c.","r":"00021000000010000011000000000000000000000000000000000000","cut":"00000000000010000011000000000000000000000000000000000000","th":[],"bk":"0000440","ba":"0000000","u":[["beetle",59,2,3],["beetle",34,2,3],["beetle",57,2,3],["aphid",6,1,3],["beetle",33,2,3],["beetle",32,2,3]],"sap":6,"q":4},   // 8
+    {"g":3,"sea":3,"t":"........m#..#.#m..#..m....#m.#......#.#.mmcmc.#..#.wcw##","r":"00020000101000011100000100000000000000000000000000000000","cut":"00000000000000000000000000000000000000000000000000000000","th":[],"bk":"0000000","ba":"0000000","u":[["beetle",51,2,2],["beetle",44,2,2],["blight",59,1,99],["blight",52,1,99],["beetle",31,2,3],["mole",14,3,2],["aphid",4,1,3]],"sap":5,"q":5},   // 9
+    {"g":3,"sea":1,"t":".......m#....#.m.#.##m#.#...#....m.c.##mc....w.#cw.#..mm","r":"00021000000000000010000001000000100000010000011000000000","cut":"00000000000000000010000001000000100000010000011000000000","th":[],"bk":"0000400","ba":"0000000","u":[["beetle",7,2,1],["beetle",33,2,2],["aphid",2,1,2],["beetle",57,2,3],["aphid",6,1,3],["beetle",18,2,3]],"sap":6,"q":5},   // 10
+    {"g":2,"sea":2,"t":".......#...#..cm..cw.m........#.c#.cccwc..w....w.....cw.","r":"00021000001010000101000010000000000000000000000000000000","cut":"00000000000010000001000000000000000000000000000000000000","th":[],"bk":"0000420","ba":"0000010","u":[["mole",34,3,1],["mole",58,3,2],["aphid",0,1,3],["beetle",42,2,3],["beetle",41,2,3],["aphid",1,1,3],["beetle",16,2,3],["mole",38,3,2]],"sap":5,"q":5},   // 11
+    {"g":4,"sea":2,"t":".........#....#...c.##..mm...w..mc.w.#.....cw..#..c.m...","r":"01020000100000010000001000000000000000000000000000000000","cut":"01000000100000010000001000000000000000000000000000000000","th":[],"bk":"0440000","ba":"0000000","u":[["beetle",33,2,2],["beetle",56,2,3],["aphid",0,1,3],["aphid",6,1,3],["blight",60,1,99],["blight",14,1,99],["mole",36,3,2]],"sap":6,"q":4},   // 12
+    {"g":1,"sea":3,"t":".................m.m..m.#c.....#...#w.m..c..#.w#c.##cc.w","r":"00121000010000010000000000000000000000000000000000000000","cut":"00000000000000010000000000000000000000000000000000000000","th":[],"bk":"0440000","ba":"0000000","u":[["blight",59,1,99],["blight",52,1,99],["beetle",8,2,1],["blight",62,1,99],["blight",60,1,99],["blight",45,1,99],["blight",55,1,99],["blight",53,1,99],["blight",61,1,99],["blight",44,1,99],["blight",48,1,99],["beetle",27,2,3],["beetle",49,2,3],["aphid",6,1,3],["aphid",0,1,3],["mole",18,3,2],["blight",15,1,99],["aphid",4,1,3]],"sap":6,"q":4},   // 13
+    {"g":4,"sea":1,"t":"...........#......m..c#.cmcm.#w.....w.#...m#w#c.........","r":"00021110010000001000000100000010000011000000100000000000","cut":"00000000010000001000000100000010000011000000100000000000","th":[],"bk":"0040200","ba":"0000100","u":[["beetle",9,2,1],["aphid",2,1,2],["beetle",61,2,3],["blight",20,1,99],["mole",58,3,2]],"sap":6,"q":6},   // 14
+    {"g":1,"sea":1,"t":"........#.m...cc..c.........m.w#....mc...w#.#c#.w#m#....","r":"01020000011000001000000100000010000011110000000000000000","cut":"01000000000000000000000000000000000000000000000000000000","th":[],"bk":"0000000","ba":"0000000","u":[["beetle",46,2,1],["beetle",45,2,2],["aphid",4,1,2],["beetle",27,2,3],["aphid",0,1,3],["beetle",36,2,3],["beetle",31,2,3],["beetle",18,2,3]],"sap":5,"q":7},   // 15
+    {"g":3,"sea":1,"t":".......#..#m#.m..m..#m#.....mmc#..#c##....m.w..cw#.##...","r":"00121000000100000110000000100000010000000000000000000000","cut":"00000000000000000000000000100000010000000000000000000000","th":[],"bk":"0000400","ba":"0000000","u":[["beetle",47,2,1],["beetle",22,2,1],["beetle",20,2,3],["aphid",0,1,3],["beetle",34,2,3],["beetle",16,2,3]],"sap":6,"q":5},   // 16
+    {"g":4,"sea":2,"t":"...............m...#........mc.#m.c..#.wm...w.#c##....wc","r":"00021000000000000010000001000000100000000000000000000000","cut":"00000000000000000010000001000000100000000000000000000000","th":[],"bk":"0000400","ba":"0000000","u":[["beetle",52,2,2],["aphid",6,1,3],["blight",31,1,99]],"sap":6,"q":6},   // 17
+    {"g":4,"sea":2,"t":"..........#........m..c.#.m#.....m.w#.w..#.#w.ccc...m...","r":"00120000010000001000000000000010000000000000000000000000","cut":"00000000000000000000000000000010000000000000000000000000","th":[],"bk":"0040000","ba":"0000000","u":[["beetle",55,2,3],["aphid",1,1,3],["blight",44,1,99]],"sap":6,"q":5},   // 18
+    {"g":2,"sea":3,"t":"...............c.#.c..#.......wm....c.mw.c.#c.wccw..w#.c","r":"00120000010000001000000100000010000000110000001000000000","cut":"00000000000000000000000000000000000000110000001000000000","th":[],"bk":"0040000","ba":"0000000","u":[["aphid",4,1,1],["mole",45,3,1],["mole",57,3,1],["aphid",2,1,2],["blight",55,1,99],["aphid",6,1,3]],"sap":6,"q":10},   // 19
+    {"g":1,"sea":3,"t":"........#....m......#c.........cmc#m#cw....#cw#.w....m#.","r":"11120000001000000100000011000000100000111100010010000000","cut":"00000000000000000000000000000000000000000000000000000000","th":[],"bk":"0020000","ba":"0010000","u":[["aphid",4,1,1],["beetle",37,2,2],["mole",38,3,1],["beetle",49,2,3],["aphid",6,1,3],["blight",57,1,99],["beetle",14,2,3]],"sap":6,"q":11}    // 20
+  ];
   var DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
 
   // ---------- Random numbers (no Math.random, no clock) ----------
@@ -464,6 +496,15 @@
       if (st.phase !== "play" || s.done) return null;
       endTurnS(st, s, ev);
       st.acts++;
+      if (st.pz) {
+        // a puzzle is one turn: what the tree earns now is the result
+        var got = income(st);
+        s.done = 1;
+        st.res = { b: got, q: s.q };
+        st.over = got >= s.q ? 1 : 0;
+        note(ev, { k: "earn", n: got, q: s.q });
+        return ev;
+      }
       if (s.done) finishSeason(st, ev);
       return ev;
     }
@@ -566,6 +607,27 @@
     return st;
   }
 
+  // A puzzle: the position of PUZZLES[n - 1], one turn.
+  function newPuzzle(n) {
+    var P = PUZZLES[n - 1], i;
+    var st = { v: 1, seed: "pz" + n, diff: "h", sea: P.sea, sap: P.sap, t: [], r: [], th: [], cut: [], bk: [], ba: [],
+      bloom: [], best: 0, phase: "play", res: null, s: null, acts: 0, over: -1, gl: P.g, end: P.g, pts: 0, one: 1, pz: n };
+    for (i = 0; i < SIZE; i++) {
+      var soilI = i >= W ? i - W : -1;
+      st.t.push(i < W ? (i === TRUNK ? "T" : "a") : P.t.charAt(soilI));
+      st.r.push(i < W ? 0 : +P.r.charAt(soilI));
+      st.cut.push(i < W ? 0 : +P.cut.charAt(soilI));
+      st.th.push(P.th.indexOf(i) >= 0 ? 1 : 0);
+      st.bk.push(i < W ? +P.bk.charAt(i) : 0);
+      st.ba.push(i < W ? +P.ba.charAt(i) : 0);
+    }
+    var s = { turn: 3, q: P.q, u: [], nid: 1, next: [], sched: [[], [], [], [], [], [], []], rw: 0, r: hashStr("pz:" + n), done: 0 };
+    P.u.forEach(function (x) { s.u.push({ id: s.nid++, k: x[0], at: x[1], hp: x[2], lt: x[3], it: null }); });
+    st.s = s;
+    reveal(st, s);
+    return st;
+  }
+
   // ---------- The solver (the season maker, and the tests' bot) ----------
   function clone(st) { return JSON.parse(JSON.stringify(st)); }
   // How good a position looks: open and coming flowers, springs, sap,
@@ -654,6 +716,7 @@
     if (!arr(st.cut, function (v, i) { return isInt(v) && v >= 0 && v <= CUT_TURNS && (!v || st.r[i]); })) return false;
     if (!arr(st.bk, function (v, i) { return isInt(v) && v >= 0 && v <= 4 && (!v || surface(i)); })) return false;
     if (!arr(st.ba, function (v, i) { return st.bk[i] === 1 || st.bk[i] === 2 ? isInt(v) && v >= 1 && v <= BUD_TURNS : v === 0; })) return false;
+    if (st.pz !== undefined && (!isInt(st.pz) || st.pz < 1 || st.pz > PUZZLES.length || st.one !== 1)) return false;
     if (st.gl === undefined ? st.end !== undefined || st.pts !== undefined
         : !isInt(st.gl) || st.gl < 1 || st.gl > GLADES.length || !isInt(st.end) || st.end < st.gl || st.end > GLADES.length ||
           !isInt(st.pts) || st.pts < 0 || st.pts > 999 || (st.one === 1 && st.end !== st.gl)) return false;
@@ -686,7 +749,7 @@
     GLADES: GLADES, GLADE_IDS: GLADE_IDS, gladeOf: gladeOf, layout: layout,
     hashStr: hashStr, step: step, soil: soil, surface: surface, pestAt: pestAt, pestById: pestById,
     joined: joined, longest: longest, springs: springs, income: income, flowers: flowers, bloomOf: bloomOf, frost: frost,
-    newYear: newYear, dailyOf: dailyOf, newDaily: newDaily, options: options, legal: legal, act: act, score: score, rootCost: rootCost,
+    newYear: newYear, dailyOf: dailyOf, newDaily: newDaily, newPuzzle: newPuzzle, PUZZLES: PUZZLES, options: options, legal: legal, act: act, score: score, rootCost: rootCost,
     valid: valid, clone: clone, solve: solve, botTurn: botTurn, planTurn: planTurn
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
