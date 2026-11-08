@@ -45,6 +45,16 @@ test("panel item click closes the panel when the notice opened something", () =>
   assert.match(body, /if \(opened\) closeNotificationPanel\(\);/);
 });
 
+test("Clear all marks every notice read and closes the panel", () => {
+  const start = src.indexOf("#notif-clear-all').addEventListener('click'");
+  assert.ok(start > 0, "Clear all handler found");
+  const body = src.slice(start, src.indexOf("\n    });", start));
+  assert.match(body, /item\.readAt = Date\.now\(\)/);
+  assert.match(body, /noteChange\(\);/);
+  assert.match(body, /closeNotificationPanel\(\);/);
+  assert.doesNotMatch(body, /renderPanelItems/);
+});
+
 test("an OS notification click follows the deep link like the in-tab toast", () => {
   const start = src.indexOf("wn.onclick = function () {");
   assert.ok(start > 0);

@@ -848,13 +848,14 @@
     itemsContainer.style.cssText = 'max-height: 400px; overflow-y: auto;';
     panel.appendChild(itemsContainer);
     
-    // Clear all handler
+    // Clear all handler: marks every notice read and closes the panel
+    // (Chris 2026-11-08: nothing is left to look at once all is clear).
     header.querySelector('#notif-clear-all').addEventListener('click', () => {
       state.slice.items.forEach(item => { if (!item.readAt) item.readAt = Date.now(); });
       noteChange();        // read state must travel
       saveSliceThrottled(200);
-      renderPanelItems(itemsContainer);
-      updateBadge();
+      document.removeEventListener('click', closeOutside);
+      closeNotificationPanel();   // also refreshes the badge
     });
     
     // Render items
