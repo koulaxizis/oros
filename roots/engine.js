@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Roots — rules engine (v1.1.0)
+// orOS Roots — rules engine (v1.2.0)
 // NOT the UI: no DOM, no storage. Loaded by roots/index.html
 // (window.RootsEngine) and by tests/roots.test.js (module.exports).
 //
@@ -18,7 +18,10 @@
 //     bk: [63 surface 0 | 1 leaf bud | 2 flower bud | 3 leaf | 4 flower], ba: [63 bud turns left],
 //     bloom: [bloom of each season played], best (longest root), phase "play" | "rest",
 //     res: null | { b bloom, q quota }, s: season, acts, over: -1 | 0 a quota missed | 1 the year done,
-//     one: 1 (a Daily glade, 5.91.00: this season only, always Hardy; absent in a year) }
+//     one: 1 (a Daily glade, 5.91.00: this season only, always Hardy; absent in a year),
+//     gl glade 1-4, end the glades in the year, pts the points of the glades
+//     left behind (springs + longest root), 5.92.00; absent = a one-glade
+//     year on the meadow (a session from before) }
 //   season = { turn 1-T, q quota, u: [pest], nid, next: [{ k, at }], sched: [T + 1 lists], rw rewinds left, r rng, done 0|1 }
 //   pest = { id, k, at, hp, lt turns left (blight 99), it: intent | null }
 //   tiles: T trunk, a surface, . soil, # stone, w spring, m mineral, c clay.
@@ -45,6 +48,26 @@
     [["beetle", 3, 4, 1], ["mole", 2, 3, 2], ["aphid", 2, 3, 2]],
     [["beetle", 3, 4, 1], ["mole", 2, 2, 2], ["aphid", 2, 3, 2], ["blight", 1, 2, 1]]
   ];
+  // The four glades of a year (5.92.00): the soil (stones, the rows the
+  // springs may lie in, minerals, clay) and the arrivals of each season.
+  // The meadow is the glade of 5.88.00, so a code still plays the same
+  // first glade.
+  var GLADES = [
+    { id: "meadow", st: 7, sp: [4, 5, 6], mi: 4, cl: 5, wv: WAVES },
+    { id: "river", st: 4, sp: [3, 4, 5, 6, 7], mi: 2, cl: 8, wv: [
+      [["beetle", 2, 3, 1], ["aphid", 3, 4, 2], ["mole", 1, 2, 2]],
+      [["mole", 3, 4, 1], ["aphid", 3, 3, 2], ["beetle", 1, 2, 2]],
+      [["mole", 3, 3, 1], ["aphid", 2, 3, 2], ["blight", 1, 1, 2]]] },
+    { id: "hill", st: 12, sp: [5, 7], mi: 7, cl: 3, wv: [
+      [["beetle", 4, 5, 1], ["aphid", 1, 2, 3]],
+      [["beetle", 4, 5, 1], ["mole", 1, 1, 3], ["aphid", 2, 2, 2]],
+      [["beetle", 4, 5, 1], ["mole", 1, 2, 2], ["blight", 1, 2, 1]]] },
+    { id: "forest", st: 6, sp: [4, 5, 6], mi: 4, cl: 4, wv: [
+      [["beetle", 3, 4, 1], ["blight", 1, 1, 2], ["aphid", 2, 2, 2]],
+      [["beetle", 3, 3, 1], ["mole", 2, 3, 2], ["aphid", 2, 3, 2], ["blight", 1, 1, 1]],
+      [["beetle", 3, 4, 1], ["mole", 2, 2, 2], ["aphid", 2, 3, 2], ["blight", 2, 2, 1]]] }
+  ];
+  var GLADE_IDS = GLADES.map(function (g) { return g.id; });
   var DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
 
   // ---------- Random numbers (no Math.random, no clock) ----------
@@ -145,9 +168,11 @@
     }
     return seen;
   }
-  function layout(seed) {
+  function gladeOf(st) { return GLADES[(st.gl || 1) - 1]; }
+  function layout(seed, gl) {
+    var G = GLADES[(gl || 1) - 1];
     for (var salt = 0; ; salt++) {
-      var r = { s: hashStr(seed + ":glade:" + salt) }, t = [], i, k, free = [];
+      var r = { s: hashStr(seed + ((gl || 1) > 1 ? ":glade" + gl + ":" : ":glade:") + salt) }, t = [], i, k, free = [];
       for (i = 0; i < SIZE; i++) t.push(i < W ? (i === TRUNK ? "T" : "a") : ".");
       for (i = 2 * W; i < SIZE; i++) if (i !== BASE) free.push(i);
       var take = function (pred) {
@@ -158,10 +183,10 @@
         return at;
       };
       var row = function (i2) { return Math.floor(i2 / W); };
-      for (k = 0; k < 7; k++) t[take(function (x) { return row(x) >= 2; })] = "#";
-      for (k = 0; k < 3; k++) t[take(function (x) { return row(x) >= 4 + k; })] = "w";
-      for (k = 0; k < 4; k++) t[take(function (x) { return row(x) >= 2; })] = "m";
-      for (k = 0; k < 5; k++) t[take(function (x) { return row(x) >= 3; })] = "c";
+      for (k = 0; k < G.st; k++) t[take(function (x) { return row(x) >= 2; })] = "#";
+      G.sp.forEach(function (lo) { t[take(function (x) { return row(x) >= lo; })] = "w"; });
+      for (k = 0; k < G.mi; k++) t[take(function (x) { return row(x) >= 2; })] = "m";
+      for (k = 0; k < G.cl; k++) t[take(function (x) { return row(x) >= 3; })] = "c";
       var seen = reachable(t), ok = true;
       for (i = W; i < SIZE; i++) if (t[i] !== "#" && !seen[i]) ok = false;
       if (ok || salt > 50) return t;
@@ -444,9 +469,23 @@
     }
     if (a.t === "next") {
       if (st.phase !== "rest" || st.over >= 0) return null;
-      st.sea++;
       st.phase = "play";
       st.res = null;
+      if (st.sea >= SEASONS) {
+        // on to the next glade: a bare tree again; the glade left behind
+        // keeps its springs and longest root in the score
+        st.pts = (st.pts || 0) + springs(st) + longest(st);
+        st.gl++;
+        st.sea = 1;
+        st.sap = START_SAP;
+        st.t = layout(st.seed, st.gl);
+        for (var j = 0; j < SIZE; j++) { st.r[j] = 0; st.th[j] = 0; st.cut[j] = 0; st.bk[j] = 0; st.ba[j] = 0; }
+        st.r[BASE] = 2;
+        st.s = makeSeason(st);
+        note(ev, { k: "glade" });
+        return ev;
+      }
+      st.sea++;
       for (var i = 0; i < W; i++) if (st.bk[i] === 4) { st.bk[i] = 0; st.ba[i] = 0; }
       st.s = makeSeason(st);
       note(ev, { k: "season" });
@@ -461,19 +500,21 @@
     st.best = Math.max(st.best, longest(st));
     note(ev, { k: "bloom", n: b, q: q });
     if (b < q) { st.over = 0; return; }
-    if (st.sea >= SEASONS || st.one === 1) { st.over = 1; return; }
+    if (st.one === 1 || (st.sea >= SEASONS && (st.gl || 1) >= (st.end || 1))) { st.over = 1; return; }
     st.phase = "rest";
   }
-  // The year's score at winter: bloom of every season + springs reached + the longest root.
+  // The year's score at winter: bloom of every season + springs reached +
+  // the longest root, of this glade and of every glade left behind (pts).
   function score(st) {
-    return st.bloom.reduce(function (a, b) { return a + b; }, 0) + springs(st) + longest(st);
+    return st.bloom.reduce(function (a, b) { return a + b; }, 0) + springs(st) + longest(st) + (st.pts || 0);
   }
 
   // ---------- Seasons ----------
   function schedule(st, salt) {
-    var r = { s: hashStr(st.seed + ":" + st.sea + ":" + salt) }, sched = [], k;
+    var gk = (st.gl || 1) > 1 ? ":g" + st.gl : "";
+    var r = { s: hashStr(st.seed + gk + ":" + st.sea + ":" + salt) }, sched = [], k;
     for (k = 0; k <= T; k++) sched.push([]);
-    WAVES[st.sea - 1].forEach(function (w) {
+    gladeOf(st).wv[st.sea - 1].forEach(function (w) {
       var n = st.diff === "h" ? w[2] : w[1];
       for (var j = 0; j < n; j++) {
         // spread over the turns from the first, never on the last (it would not act)
@@ -494,15 +535,20 @@
     return s;
   }
   // A bare tree on the glade of the code, before its first season.
-  function bare(seed, diff, sea) {
-    var st = { v: 1, seed: String(seed), diff: diff, sea: sea, sap: START_SAP, t: layout(String(seed)),
+  function bare(seed, diff, sea, gl) {
+    var st = { v: 1, seed: String(seed), diff: diff, sea: sea, sap: START_SAP, t: layout(String(seed), gl),
       r: [], th: [], cut: [], bk: [], ba: [], bloom: [], best: 0, phase: "play", res: null, s: null, acts: 0, over: -1 };
     for (var i = 0; i < SIZE; i++) { st.r.push(0); st.th.push(0); st.cut.push(0); st.bk.push(0); st.ba.push(0); }
     st.r[BASE] = 2;
+    st.gl = gl;
+    st.end = gl;
+    st.pts = 0;
     return st;
   }
+  // A year: the four glades in turn, three seasons each (5.92.00).
   function newYear(seed, diff) {
-    var st = bare(seed, diff, 1);
+    var st = bare(seed, diff, 1, 1);
+    st.end = GLADES.length;
     st.s = makeSeason(st);
     return st;
   }
@@ -510,10 +556,11 @@
   // glade and the season come from the code (the same for everyone that day).
   function dailyOf(seed) {
     var r = { s: hashStr(String(seed) + ":daily") };
-    return { sea: 1 + rint(r, SEASONS) };
+    var sea = 1 + rint(r, SEASONS);
+    return { sea: sea, gl: 1 + rint(r, GLADES.length) };
   }
   function newDaily(seed) {
-    var st = bare(seed, "h", dailyOf(seed).sea);
+    var d = dailyOf(seed), st = bare(seed, "h", d.sea, d.gl);
     st.one = 1;
     st.s = makeSeason(st);
     return st;
@@ -607,7 +654,10 @@
     if (!arr(st.cut, function (v, i) { return isInt(v) && v >= 0 && v <= CUT_TURNS && (!v || st.r[i]); })) return false;
     if (!arr(st.bk, function (v, i) { return isInt(v) && v >= 0 && v <= 4 && (!v || surface(i)); })) return false;
     if (!arr(st.ba, function (v, i) { return st.bk[i] === 1 || st.bk[i] === 2 ? isInt(v) && v >= 1 && v <= BUD_TURNS : v === 0; })) return false;
-    if (!Array.isArray(st.bloom) || st.bloom.length > SEASONS || !st.bloom.every(function (v) { return isInt(v) && v >= 0 && v <= 99; })) return false;
+    if (st.gl === undefined ? st.end !== undefined || st.pts !== undefined
+        : !isInt(st.gl) || st.gl < 1 || st.gl > GLADES.length || !isInt(st.end) || st.end < st.gl || st.end > GLADES.length ||
+          !isInt(st.pts) || st.pts < 0 || st.pts > 999 || (st.one === 1 && st.end !== st.gl)) return false;
+    if (!Array.isArray(st.bloom) || st.bloom.length > SEASONS * (st.end || 1) || !st.bloom.every(function (v) { return isInt(v) && v >= 0 && v <= 99; })) return false;
     if (!isInt(st.best) || st.best < 0 || st.best > SIZE || !isInt(st.acts) || st.acts < 0 || st.acts > BIG) return false;
     if (st.phase !== "play" && st.phase !== "rest") return false;
     if (st.one !== undefined && (st.one !== 1 || st.diff !== "h" || st.phase === "rest" || st.bloom.length > 1)) return false;
@@ -633,6 +683,7 @@
   var api = {
     W: W, H: H, SIZE: SIZE, T: T, SEASONS: SEASONS, TRUNK: TRUNK, BASE: BASE, DIFFS: DIFFS, COST: COST, MAX_SAP: MAX_SAP,
     CUT_TURNS: CUT_TURNS, BUD_TURNS: BUD_TURNS, PESTS: PESTS, PEST_IDS: PEST_IDS, WAVES: WAVES,
+    GLADES: GLADES, GLADE_IDS: GLADE_IDS, gladeOf: gladeOf, layout: layout,
     hashStr: hashStr, step: step, soil: soil, surface: surface, pestAt: pestAt, pestById: pestById,
     joined: joined, longest: longest, springs: springs, income: income, flowers: flowers, bloomOf: bloomOf, frost: frost,
     newYear: newYear, dailyOf: dailyOf, newDaily: newDaily, options: options, legal: legal, act: act, score: score, rootCost: rootCost,

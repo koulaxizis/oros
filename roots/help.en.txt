@@ -23,13 +23,19 @@ At the end of each season the tree needs its **bloom quota**: open flowers on th
 - **Beetle:** walks up to 2 tiles through the soil to the nearest root and chews it. A thin root breaks, a thick one turns thin. Leaves after 3 turns.
 - **Mole:** digs a straight line of up to 3 tiles and harms every root in it. Leaves after 2 turns.
 - **Aphid:** walks along the surface to the nearest bud and eats it. Open leaves and flowers are safe. Leaves after 3 turns.
-- **Blight** (autumn): spreads to a thin root next to it every turn and stays. Thick roots and thorns stop it; a thorn kills it.
+- **Blight** (autumn; in the old forest every season): spreads to a thin root next to it every turn and stays. Thick roots and thorns stop it; a thorn kills it.
 - **Frost:** in the last 2 turns of autumn, buds with no open leaf beside them freeze.
 
 An arrow points from each pest to where it goes, with an icon on the tile it will harm and a number for the order. Tiles in danger are red, and dashed circles at the edges show the pests that come in at the end of the turn. The base root under the trunk never breaks.
 
 ## The year and difficulty
-A year has 3 seasons: spring, summer and autumn. Winter scores it: the bloom of every season, plus the springs reached, plus the longest root (the most steps from the trunk along your roots).
+A year moves through four glades, and each glade has 3 seasons: spring, summer and autumn. When the third season of a glade meets its quota, the tree seeds the next glade and starts again there as a bare tree with 5 sap. Winter scores the year: the bloom of every season, plus the springs reached and the longest root (the most steps from the trunk along your roots) of every glade.
+1. **The meadow:** soft soil and three springs; beetles and aphids, moles from summer, blight in autumn.
+2. **The riverbank:** five springs, little stone and a lot of clay; moles and aphids all year.
+3. **The rocky hill:** stone everywhere, two deep springs and many minerals; beetles in numbers.
+4. **The old forest:** blight in every season, and every pest at once.
+
+The sky's colour shows the glade you are in.
 - **Mild:** a lower quota, and once a season `Rewind` takes back the whole last turn.
 - **Hardy:** more pests and a higher quota.
 

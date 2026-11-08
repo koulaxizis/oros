@@ -283,7 +283,7 @@ test("roots: bot years end with no illegal state; the balance holds", () => {
   const run = (seed, diff, smart) => {
     const st = E.newYear(seed, diff);
     let guard = 0;
-    while (st.over < 0 && guard++ < 100) {
+    while (st.over < 0 && guard++ < 200) {
       assert.ok(E.valid(st), seed);
       if (smart) E.botTurn(st); else simple(st);
     }
@@ -330,7 +330,8 @@ test("roots: the Daily glade is one Hardy season from a bare tree, the same for 
     assert.equal(st.one, 1);
     assert.equal(st.diff, "h");
     assert.equal(st.sea, E.dailyOf(seed).sea);
-    assert.equal(J(st.t), J(E.newYear(seed, "h").t), "the glade of the code");
+    assert.equal(J(st.t), J(E.layout(seed, st.gl)), "the glade of the code");
+    assert.equal(st.end, st.gl, "one glade");
     assert.equal(st.r.filter((v) => v).length, 1, "only the base root");
     seeds[st.sea] = 1;
   }
@@ -385,4 +386,60 @@ test("roots: Daily results and Last years merge as a join", () => {
   assert.equal(y.last.length, 10, "the last 10");
   assert.equal(y.last[0].s, "s14");
   assert.deepEqual(m({ rows: {} }, {}).days, {}, "older data: no days");
+});
+
+test("roots: a year moves through four glades, each with its own soil and pests", () => {
+  assert.deepEqual(E.GLADE_IDS, ["meadow", "river", "hill", "forest"]);
+  // the meadow is the glade of 5.88.00: a code plays the same first glade
+  assert.equal(J(E.layout("abc123")), J(E.layout("abc123", 1)));
+  assert.equal(J(E.newYear("abc123", "m").t), J(E.layout("abc123", 1)));
+  const count = (t, c) => t.filter((x) => x === c).length;
+  E.GLADES.forEach((G, k) => {
+    for (let n = 0; n < 20; n++) {
+      const t = E.layout("g" + n, k + 1);
+      assert.equal(count(t, "#"), G.st, G.id + " stones");
+      assert.equal(count(t, "w"), G.sp.length, G.id + " springs");
+      assert.equal(count(t, "m"), G.mi, G.id + " minerals");
+      assert.equal(count(t, "c"), G.cl, G.id + " clay");
+    }
+    assert.notEqual(J(E.layout("g1", k + 1)), J(E.layout("g1", ((k + 1) % 4) + 1)), "glades differ");
+  });
+  // the forest has blight from spring; the meadow only in autumn
+  assert.ok(E.GLADES[3].wv[0].some((w) => w[0] === "blight"));
+  assert.ok(!E.GLADES[0].wv[0].some((w) => w[0] === "blight"));
+  const st = E.newYear("four", "m");
+  assert.deepEqual([st.gl, st.end, st.pts], [1, 4, 0]);
+  // play to the end of the meadow's autumn, then on to the riverbank
+  let guard = 0;
+  while (!(st.sea === 3 && st.phase === "rest") && st.over < 0 && guard++ < 40) E.botTurn(st);
+  assert.equal(st.phase, "rest", "the meadow done");
+  const carry = E.springs(st) + E.longest(st), before = E.score(st);
+  assert.ok(E.act(st, { t: "next" }).some((e) => e.k === "glade"));
+  assert.deepEqual([st.gl, st.sea, st.sap, st.pts], [2, 1, 5, carry]);
+  assert.equal(J(st.t), J(E.layout("four", 2)), "the riverbank of the code");
+  assert.equal(st.r.filter((v) => v).length, 1, "a bare tree again");
+  assert.equal(E.score(st), before, "the score keeps the meadow");
+  assert.ok(E.valid(st));
+  assert.equal(st.bloom.length, 3);
+  // the same code gives the same riverbank seasons
+  const again = E.newYear("four", "m");
+  guard = 0;
+  while (!(again.sea === 3 && again.phase === "rest") && guard++ < 40) E.botTurn(again);
+  E.act(again, { t: "next" });
+  assert.equal(J(again.s.sched), J(st.s.sched));
+});
+
+test("roots: a year saved before the glades is a one-glade year", () => {
+  const st = E.newYear("old1", "m");
+  delete st.gl; delete st.end; delete st.pts;
+  assert.ok(E.valid(st), "a session from 5.91.00 still loads");
+  st.s.turn = E.T; st.sea = 3; st.bk[1] = 4; st.s.q = 1;
+  E.act(st, { t: "end" });
+  assert.equal(st.over, 1, "its third season ends the year");
+  const bad = E.newYear("old2", "m");
+  delete bad.gl;
+  assert.ok(!E.valid(bad), "end without gl is refused");
+  const b2 = E.newYear("old3", "m");
+  b2.gl = 5;
+  assert.ok(!E.valid(b2), "no fifth glade");
 });

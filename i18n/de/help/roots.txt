@@ -23,13 +23,19 @@ Am Ende jeder Jahreszeit braucht der Baum sein **Blütenziel**: offene Blüten a
 - **Käfer:** läuft bis zu 2 Felder durch die Erde zur nächsten Wurzel und nagt sie an. Eine dünne Wurzel bricht, eine dicke wird dünn. Geht nach 3 Zügen.
 - **Maulwurf:** gräbt eine gerade Linie von bis zu 3 Feldern und schadet jeder Wurzel darin. Geht nach 2 Zügen.
 - **Blattlaus:** läuft über die Oberfläche zur nächsten Knospe und frisst sie. Offene Blätter und Blüten sind sicher. Geht nach 3 Zügen.
-- **Fäule** (Herbst): breitet sich jeden Zug auf eine dünne Wurzel daneben aus und bleibt. Dicke Wurzeln und Dornen halten sie auf; ein Dorn tötet sie.
+- **Fäule** (Herbst; im alten Wald in jeder Jahreszeit): breitet sich jeden Zug auf eine dünne Wurzel daneben aus und bleibt. Dicke Wurzeln und Dornen halten sie auf; ein Dorn tötet sie.
 - **Frost:** in den letzten 2 Zügen des Herbstes erfrieren Knospen ohne offenes Blatt daneben.
 
 Ein Pfeil zeigt von jedem Schädling, wohin er geht, mit einem Zeichen auf dem Feld, dem er schaden wird, und einer Zahl für die Reihenfolge. Gefährdete Felder sind rot, und gestrichelte Kreise an den Rändern zeigen die Schädlinge, die am Ende des Zuges hereinkommen. Die Stammwurzel unter dem Stamm bricht nie.
 
 ## Das Jahr und die Schwierigkeit
-Ein Jahr hat 3 Jahreszeiten: Frühling, Sommer und Herbst. Der Winter bewertet es: die Blüte jeder Jahreszeit, plus die erreichten Quellen, plus die längste Wurzel (die meisten Schritte vom Stamm entlang deiner Wurzeln).
+Ein Jahr führt durch vier Lichtungen, und jede Lichtung hat 3 Jahreszeiten: Frühling, Sommer und Herbst. Erreicht die dritte Jahreszeit einer Lichtung ihr Ziel, sät der Baum die nächste Lichtung aus und beginnt dort neu als kahler Baum mit 5 Saft. Der Winter bewertet das Jahr: die Blüte jeder Jahreszeit, plus die erreichten Quellen und die längste Wurzel (die meisten Schritte vom Stamm entlang deiner Wurzeln) jeder Lichtung.
+1. **Die Wiese:** weiche Erde und drei Quellen; Käfer und Blattläuse, Maulwürfe ab dem Sommer, Fäule im Herbst.
+2. **Das Flussufer:** fünf Quellen, wenig Stein und viel Lehm; Maulwürfe und Blattläuse das ganze Jahr.
+3. **Der steinige Hügel:** überall Stein, zwei tiefe Quellen und viele Minerale; Käfer in Mengen.
+4. **Der alte Wald:** Fäule in jeder Jahreszeit und alle Schädlinge zugleich.
+
+Die Farbe des Himmels zeigt, auf welcher Lichtung du bist.
 - **Mild:** ein niedrigeres Ziel, und einmal pro Jahreszeit nimmt `Zurückspulen` den ganzen letzten Zug zurück.
 - **Rau:** mehr Schädlinge und ein höheres Ziel.
 

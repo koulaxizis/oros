@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Roots — App logic (v1.1.0)
+// orOS Roots — App logic (v1.2.0)
 // A turn-based growing game: an old tree grows roots under a 7 × 9 glade
 // to reach springs and minerals, and buds on the surface that open into
 // leaves and flowers. Pests show what they will do before they act;
@@ -16,6 +16,8 @@
 //   - the Daily glade (5.91.00): one season on Hardy, the same for
 //     everyone that day, one try; in the Game Center's Today
 //   - Last years with Replay (5.91.00)
+//   - a year over four glades (meadow, riverbank, rocky hill, old
+//     forest), three seasons each (5.92.00)
 // Data:
 //   - synced slice "roots" (oros-roots-data): years, years finished and
 //     the best year score per difficulty, and the longest root, as
@@ -102,13 +104,20 @@
       "pest.beetle.note": "Walks up to 2 tiles through the soil to the nearest root and chews it: a thin root breaks, a thick one turns thin. Leaves after 3 turns.",
       "pest.mole.note": "Digs a straight line of up to 3 tiles, harming every root in it. Leaves after 2 turns.",
       "pest.aphid.note": "Walks along the surface to the nearest bud and eats it. Open leaves and flowers are safe. Leaves after 3 turns.",
-      "pest.blight.note": "Autumn. Spreads to a thin root next to it every turn and stays; thick roots and thorns stop it, a thorn kills it.",
+      "pest.blight.note": "Autumn (in the old forest, all year). Spreads to a thin root next to it every turn and stays; thick roots and thorns stop it, a thorn kills it.",
       "it.chew": "will chew this root", "it.walk": "walks on", "it.dig": "digs {d}", "it.eat": "will eat this bud", "it.spread": "spreads here", "it.idle": "waits",
       "it.hp": "Health {n}", "it.left": "leaves in {n}",
       "dir.0": "up", "dir.1": "right", "dir.2": "down", "dir.3": "left",
       "info.comes": "{k} comes in here at the end of the turn",
       "info.close": "Close",
-      "msg.season": "{s} · season {n} of 3. Bloom quota: {q}.", "msg.daily": "{s} · Daily glade. Bloom quota: {q}.", "msg.turn": "Turn {n}.", "msg.pick": "{g}: tap a lit tile.",
+      "msg.season": "{g} · {s}, season {n} of 3. Bloom quota: {q}.", "msg.daily": "{g}, {s} · Daily glade. Bloom quota: {q}.",
+      "glade.meadow": "The meadow", "glade.river": "The riverbank", "glade.hill": "The rocky hill", "glade.forest": "The old forest",
+      "glade.meadow.note": "Soft soil, three springs: beetles and aphids, moles from summer.",
+      "glade.river.note": "Five springs and wet clay: moles and aphids all year.",
+      "glade.hill.note": "Stone everywhere, two deep springs and many minerals: beetles in numbers.",
+      "glade.forest.note": "Blight in every season, and every pest at once.",
+      "st.glade": "Glade {n} of {m}",
+      "res.nextGlade": "Next glade", "res.metGlade": "Quota met: the tree seeds {g}.", "res.glades": "Glades", "msg.turn": "Turn {n}.", "msg.pick": "{g}: tap a lit tile.",
       "msg.frost": "Frost tonight: buds with no leaf beside them freeze.",
       "msg.none": "Nothing to grow there.", "msg.sap": "Not enough sap.",
       "live.end": "Turn {n}. Sap {s}. Bloom {b} of {q}.",
@@ -117,7 +126,7 @@
       "res.bloom": "Bloom", "res.flowers": "Flowers", "res.springs": "Springs reached", "res.quota": "Quota",
       "res.met": "Quota met: on to the next season.", "res.miss": "The quota was missed: the year ends.",
       "res.next": "Next season", "res.won": "The year is done!", "res.lost": "A dry year",
-      "res.score": "Year score", "res.scoreNote": "Bloom of every season, springs reached and the longest root.",
+      "res.score": "Year score", "res.scoreNote": "Bloom of every season, and the springs reached and the longest root of every glade.",
       "res.longest": "Longest root", "res.code": "Year code: {seed}", "res.same": "The same year", "res.new": "New year",
       "new.title": "New year", "new.diff": "Difficulty", "new.seed": "Year code",
       "new.seedHint": "Empty for a new year", "new.start": "Start", "new.cancel": "Cancel",
@@ -180,13 +189,20 @@
       "pest.beetle.note": "Περπατά ως 2 τετράγωνα μέσα στο χώμα ως την πιο κοντινή ρίζα και τη ροκανίζει: η λεπτή σπάει, η χοντρή γίνεται λεπτή. Φεύγει σε 3 γύρους.",
       "pest.mole.note": "Σκάβει μια ευθεία ως 3 τετράγωνα και χτυπά κάθε ρίζα πάνω της. Φεύγει σε 2 γύρους.",
       "pest.aphid.note": "Περπατά στην επιφάνεια ως το πιο κοντινό μπουμπούκι και το τρώει. Τα ανοιχτά φύλλα και λουλούδια είναι ασφαλή. Φεύγει σε 3 γύρους.",
-      "pest.blight.note": "Φθινόπωρο. Κάθε γύρο απλώνεται σε μια λεπτή ρίζα δίπλα της και μένει· οι χοντρές ρίζες και τα αγκάθια τη σταματούν, ένα αγκάθι τη σκοτώνει.",
+      "pest.blight.note": "Φθινόπωρο (στο παλιό δάσος, όλο τον χρόνο). Κάθε γύρο απλώνεται σε μια λεπτή ρίζα δίπλα της και μένει· οι χοντρές ρίζες και τα αγκάθια τη σταματούν, ένα αγκάθι τη σκοτώνει.",
       "it.chew": "θα ροκανίσει αυτή τη ρίζα", "it.walk": "προχωρά", "it.dig": "σκάβει προς τα {d}", "it.eat": "θα φάει αυτό το μπουμπούκι", "it.spread": "απλώνεται εδώ", "it.idle": "περιμένει",
       "it.hp": "Ζωή {n}", "it.left": "φεύγει σε {n}",
       "dir.0": "πάνω", "dir.1": "δεξιά", "dir.2": "κάτω", "dir.3": "αριστερά",
       "info.comes": "{k}: μπαίνει εδώ στο τέλος του γύρου",
       "info.close": "Κλείσιμο",
-      "msg.season": "{s} · εποχή {n} από 3. Στόχος άνθισης: {q}.", "msg.daily": "{s} · Ξέφωτο της ημέρας. Στόχος άνθισης: {q}.", "msg.turn": "Γύρος {n}.", "msg.pick": "{g}: πάτα ένα φωτισμένο τετράγωνο.",
+      "msg.season": "{g} · {s}, εποχή {n} από 3. Στόχος άνθισης: {q}.", "msg.daily": "{g}, {s} · Ξέφωτο της ημέρας. Στόχος άνθισης: {q}.",
+      "glade.meadow": "Το λιβάδι", "glade.river": "Η όχθη", "glade.hill": "Ο πετρόλοφος", "glade.forest": "Το παλιό δάσος",
+      "glade.meadow.note": "Μαλακό χώμα, τρεις πηγές: σκαθάρια και αφίδες, τυφλοπόντικες από το καλοκαίρι.",
+      "glade.river.note": "Πέντε πηγές και υγρός πηλός: τυφλοπόντικες και αφίδες όλο τον χρόνο.",
+      "glade.hill.note": "Πέτρα παντού, δύο βαθιές πηγές και πολλά μεταλλεύματα: σκαθάρια σε πλήθος.",
+      "glade.forest.note": "Σήψη σε κάθε εποχή, και όλα τα ζωύφια μαζί.",
+      "st.glade": "Ξέφωτο {n} από {m}",
+      "res.nextGlade": "Επόμενο ξέφωτο", "res.metGlade": "Ο στόχος πιάστηκε: το δέντρο πάει στο επόμενο ξέφωτο, {g}.", "res.glades": "Ξέφωτα", "msg.turn": "Γύρος {n}.", "msg.pick": "{g}: πάτα ένα φωτισμένο τετράγωνο.",
       "msg.frost": "Παγωνιά απόψε: τα μπουμπούκια χωρίς φύλλο δίπλα τους παγώνουν.",
       "msg.none": "Δεν φυτρώνει τίποτα εκεί.", "msg.sap": "Δεν φτάνει ο χυμός.",
       "live.end": "Γύρος {n}. Χυμός {s}. Άνθιση {b} από {q}.",
@@ -195,7 +211,7 @@
       "res.bloom": "Άνθιση", "res.flowers": "Λουλούδια", "res.springs": "Πηγές που έφτασες", "res.quota": "Στόχος",
       "res.met": "Ο στόχος πιάστηκε: πάμε στην επόμενη εποχή.", "res.miss": "Ο στόχος δεν πιάστηκε: η χρονιά τελειώνει.",
       "res.next": "Επόμενη εποχή", "res.won": "Η χρονιά ολοκληρώθηκε!", "res.lost": "Μια ξερή χρονιά",
-      "res.score": "Πόντοι της χρονιάς", "res.scoreNote": "Η άνθιση κάθε εποχής, οι πηγές που έφτασες και η πιο μακριά ρίζα.",
+      "res.score": "Πόντοι της χρονιάς", "res.scoreNote": "Η άνθιση κάθε εποχής, και οι πηγές που έφτασες και η πιο μακριά ρίζα κάθε ξέφωτου.",
       "res.longest": "Η πιο μακριά ρίζα", "res.code": "Κωδικός χρονιάς: {seed}", "res.same": "Η ίδια χρονιά", "res.new": "Νέα χρονιά",
       "new.title": "Νέα χρονιά", "new.diff": "Δυσκολία", "new.seed": "Κωδικός χρονιάς",
       "new.seedHint": "Κενό για νέα χρονιά", "new.start": "Ξεκίνα", "new.cancel": "Άκυρο",
@@ -302,7 +318,7 @@
   }
   function normLast(v) {
     if (!v || typeof v !== "object" || !isInt(v.a) || v.a < 0 || ["m", "h", "d"].indexOf(v.d) < 0 ||
-        !isInt(v.n) || v.n < 0 || v.n > (v.d === "d" ? 1 : E.SEASONS) || (v.w !== 0 && v.w !== 1) ||
+        !isInt(v.n) || v.n < 0 || v.n > (v.d === "d" ? 1 : E.SEASONS * E.GLADES.length) || (v.w !== 0 && v.w !== 1) ||
         !isInt(v.h) || v.h < 0 || v.h > MAX_SCORE || typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s)) return null;
     return { a: v.a, d: v.d, n: v.n, w: v.w, h: v.h, s: v.s };
   }
@@ -466,7 +482,7 @@
     var daily = game.opts.day !== undefined;
     // every season in bloom[] met its quota but a missed last one
     var met = st.bloom.length - (st.over === 0 ? 1 : 0);
-    var v = normLast({ a: Date.now(), d: daily ? "d" : game.opts.diff, n: clamp(met, 0, daily ? 1 : E.SEASONS),
+    var v = normLast({ a: Date.now(), d: daily ? "d" : game.opts.diff, n: clamp(met, 0, daily ? 1 : E.SEASONS * E.GLADES.length),
       w: won ? 1 : 0, h: clamp(E.score(st), 0, MAX_SCORE), s: game.opts.seed });
     if (!v) return;
     data.last = [v].concat(data.last || []);
@@ -570,9 +586,14 @@
     maybeTour();
   }
   function setMsg(text) { $("msg").textContent = text || ""; }
+  function gladeName(g) { return t("glade." + (g || E.gladeOf(st)).id); }
+  function nextGlade() { return E.GLADES[st.gl || 1]; }
+  // "the riverbank" inside a sentence (the names start upper case)
+  function gladeLower(g) { var n = gladeName(g); return n.charAt(0).toLowerCase() + n.slice(1); }
+  function gladeEnds() { return st.sea >= E.SEASONS && (st.gl || 1) < (st.end || 1); }
   function seasonMsg() {
-    if (st.phase === "rest") { setMsg(t("res.met")); return; }
-    var m = st.one ? t("msg.daily", { s: t("sea." + st.sea), q: st.s.q }) : t("msg.season", { s: t("sea." + st.sea), n: st.sea, q: st.s.q });
+    if (st.phase === "rest") { setMsg(gladeEnds() ? t("res.metGlade", { g: gladeLower(nextGlade()) }) : t("res.met")); return; }
+    var m = st.one ? t("msg.daily", { g: gladeName(), s: t("sea." + st.sea), q: st.s.q }) : t("msg.season", { g: gladeName(), s: t("sea." + st.sea), n: st.sea, q: st.s.q });
     if (E.frost(st, st.s)) m += " " + t("msg.frost");
     setMsg(m);
   }
@@ -657,7 +678,7 @@
     if (st.over >= 0 && !game.counted) endYear(st.over === 1);
     saveSession();
     if (st.s.done) {
-      setMsg(st.one ? t(st.over === 1 ? "daily.won" : "daily.lost", { n: E.score(st) }) : st.over === 0 ? t("res.miss") : st.over === 1 ? t("res.won") : t("res.met"));
+      setMsg(st.one ? t(st.over === 1 ? "daily.won" : "daily.lost", { n: E.score(st) }) : st.over === 0 ? t("res.miss") : st.over === 1 ? t("res.won") : gladeEnds() ? t("res.metGlade", { g: gladeLower(nextGlade()) }) : t("res.met"));
       setTimeout(bloomDialog, Math.max(300, busyUntil - Date.now() + 200));
     }
     else {
@@ -706,6 +727,7 @@
     BY = Math.floor((CH - TS * BH) / 2);
     draw();
   }
+  var GLADE_TINT = { river: "rt-spring", hill: "rt-stone", forest: "rt-bark" };
   function readColors() {
     var cs = getComputedStyle(document.documentElement);
     ["--bg", "--text", "--text-dim", "--accent", "--panel-bg", "--border", "--danger",
@@ -838,6 +860,14 @@
     if (i < BW) {
       ctx.fillStyle = colors["rt-sky"];
       ctx.fillRect(p.x, p.y, TS, TS);
+      // each glade tints its sky (the meadow keeps it clear)
+      var gt = GLADE_TINT[E.gladeOf(st).id];
+      if (gt) {
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = colors[gt];
+        ctx.fillRect(p.x, p.y, TS, TS);
+        ctx.globalAlpha = 1;
+      }
       ctx.fillStyle = colors["rt-grass"];
       ctx.fillRect(p.x, p.y + TS * 0.84, TS, TS * 0.16);
       if (E.frost(st, st.s) && !st.s.done) {
@@ -1233,7 +1263,7 @@
   function renderStatus() {
     if (!st) return;
     var s = st.s, inc = E.income(st), b = s.done && st.res ? st.res.b : E.bloomOf(st);
-    stat("s-sea", t("sea." + st.sea), t("sea." + st.sea) + " · " + st.sea + "/" + E.SEASONS);
+    stat("s-sea", t("sea." + st.sea), gladeName() + " · " + t("st.glade", { n: st.gl || 1, m: st.end || 1 }) + " · " + t("sea." + st.sea) + " · " + st.sea + "/" + E.SEASONS);
     stat("s-turn", s.turn + "/" + E.T, t("st.turn", { n: s.turn, m: E.T }));
     stat("s-sap", st.sap + " +" + inc, t("st.sap", { n: st.sap, g: inc }));
     stat("s-bloom", b + "/" + s.q, t("st.bloom", { n: b, q: s.q }), b >= s.q ? "ok" : "low");
@@ -1264,8 +1294,8 @@
     if (st.phase === "rest" && st.over < 0) {
       var nx = el("button", "act wide");
       nx.type = "button";
-      nx.appendChild(el("span", "nm", t("res.next")));
-      nx.appendChild(el("span", "cost", t("sea." + (st.sea + 1))));
+      nx.appendChild(el("span", "nm", t(gladeEnds() ? "res.nextGlade" : "res.next")));
+      nx.appendChild(el("span", "cost", gladeEnds() ? gladeName(nextGlade()) : t("sea." + (st.sea + 1))));
       nx.addEventListener("click", nextSeason);
       bar.appendChild(nx);
       return;
@@ -1411,14 +1441,15 @@
     var r = st.res, met = r.b >= r.q, on = E.joined(st);
     var dlg = makeDialog("rt-bloom");
     dlg.setAttribute("data-modal", "1");
-    dlg.appendChild(el("div", "dlg-title", t("res.bloom") + " · " + t("sea." + st.sea)));
+    dlg.appendChild(el("div", "dlg-title", t("res.bloom") + " · " + gladeName() + " · " + t("sea." + st.sea)));
     dlg.appendChild(el("div", "dlg-hero" + (met ? "" : " lost"), t("res.bloom") + " " + r.b));
     dlg.appendChild(row(t("res.flowers"), String(E.flowers(st))));
     dlg.appendChild(row(t("res.springs"), String(E.springs(st, on))));
     dlg.appendChild(row(t("res.quota"), String(r.q)));
-    dlg.appendChild(el("div", "dlg-msg", st.one ? t(met ? "daily.won" : "daily.lost", { n: E.score(st) }) : met ? (st.over === 1 ? t("res.won") : t("res.met")) : t("res.miss")));
+    dlg.appendChild(el("div", "dlg-msg", st.one ? t(met ? "daily.won" : "daily.lost", { n: E.score(st) }) : met ? (st.over === 1 ? t("res.won") : gladeEnds() ? t("res.metGlade", { g: gladeLower(nextGlade()) }) : t("res.met")) : t("res.miss")));
+    if (met && gladeEnds()) dlg.appendChild(el("div", "dlg-note", t("glade." + nextGlade().id + ".note")));
     var acts = el("div", "dlg-actions");
-    var go = button(st.over >= 0 ? t("info.close") : t("res.next"), "primary", function () {
+    var go = button(st.over >= 0 ? t("info.close") : t(gladeEnds() ? "res.nextGlade" : "res.next"), "primary", function () {
       dlg.close();
       if (st.over >= 0) setTimeout(resultDialog, 0);
       else nextSeason();
@@ -1435,7 +1466,11 @@
     var dlg = makeDialog("rt-result"), won = st.over === 1;
     dlg.appendChild(el("div", "dlg-title", t("app.name") + " · " + t("diff." + game.opts.diff)));
     dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : t("res.lost")));
-    st.bloom.forEach(function (b, k) { dlg.appendChild(row(t("sea." + (k + 1)), String(b))); });
+    dlg.appendChild(row(t("res.glades"), (st.gl || 1) + "/" + (st.end || 1)));
+    // the bloom of each season, a row per glade ("3 · 4 · 5")
+    for (var gk = 0; gk * E.SEASONS < st.bloom.length; gk++) {
+      dlg.appendChild(row(t("glade." + E.GLADES[gk].id), st.bloom.slice(gk * E.SEASONS, (gk + 1) * E.SEASONS).join(" · ")));
+    }
     dlg.appendChild(row(t("res.springs"), String(E.springs(st))));
     dlg.appendChild(row(t("res.longest"), String(E.longest(st))));
     dlg.appendChild(row(t("res.score"), String(E.score(st))));
@@ -1497,7 +1532,7 @@
     var box = el("div", "lr-list");
     list.forEach(function (v) {
       var r = el("div", "lr-row");
-      var what = v.d === "d" ? t(v.w ? "last.met" : "last.missed") : (v.w ? t("last.won") : t("last.seasons", { n: v.n, m: E.SEASONS }));
+      var what = v.d === "d" ? t(v.w ? "last.met" : "last.missed") : (v.w ? t("last.won") : t("last.seasons", { n: v.n, m: E.SEASONS * E.GLADES.length }));
       var tx = el("div", "lr-tx");
       tx.appendChild(el("div", "nm", (v.d === "d" ? t("daily.label") : t("diff." + v.d)) + " · " + what));
       tx.appendChild(el("div", "fx", t("last.score", { n: v.h }) + " · " +
@@ -1553,7 +1588,7 @@
     dlg.appendChild(el("div", "dlg-title", t("daily.title", { n: day + 1 }) + " · " + DK.dateLabel(day, LANG)));
     dlg.appendChild(el("div", "dlg-hero" + (r.w ? "" : " lost"), t(r.w ? "daily.won" : "daily.lost", { n: r.h })));
     dlg.appendChild(el("div", "dlg-note", t("daily.scoreNote")));
-    dlg.appendChild(row(t("daily.season"), t("sea." + info.sea)));
+    dlg.appendChild(row(t("daily.season"), t("glade." + E.GLADES[info.gl - 1].id) + " · " + t("sea." + info.sea)));
     dlg.appendChild(row(t("daily.bloom"), r.n + " · " + r.q));
     dlg.appendChild(row(t("daily.streak"), String(s2.cur)));
     dlg.appendChild(row(t("daily.best"), String(s2.best)));
