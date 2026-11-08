@@ -358,7 +358,7 @@ TOOLS.forEach((t) => { if (t.annotations && t.annotations.readOnlyHint) READ_ONL
 // conversation still sees the tools. Names that clash with ours, odd
 // names and oversized lists are dropped; the device checks every call.
 export const DEV_TOOL_RE = /^[a-z][a-z_]{2,39}$/;
-export const DEV_TOOLS_MAX = 20, DEV_TOOLS_BYTES = 120000;
+export const DEV_TOOLS_MAX = 30, DEV_TOOLS_BYTES = 120000;
 // Ours come first and are never replaced: a device tool with one of
 // our names is dropped (a stale device list can't hide them).
 export function withDevTools(dev) {

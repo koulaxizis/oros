@@ -630,6 +630,8 @@
       "tool.sum": "Summary of {app}", "tool.sumNo": "You kept the summary of {app} back",
       "sum.title": "Share this summary of {app} with {name}?",
       "sum.text": "Worked out on this device. Only these lines are sent, not the entries themselves.",
+      "ln.title": "Share {n} rows of {app} with {name}?",
+      "ln.text": "Worked out on this device. These rows are sent as they are: dates, amounts, names and notes.",
       "btn.copy": "Copy", "toast.copied": "Copied", "toast.copyFail": "Could not copy",
       "prov.browser": "Built-in browser model", "prov.local": "Local / OpenAI-compatible", "who.device": "Stays on this device",
       "set.bi.ok": "Ready on this device. It works offline. It is smaller than the online assistants: orOS searches your data for it before each message (you choose what to share), and it can't prepare entries.",
@@ -655,6 +657,7 @@
       "hist.clearText": "The list goes, and with it the way to undo these changes. Your data stays as it is.",
       "hist.more": "and {n} more",
       "hist.noMod": "that app's part of the Assistant could not be loaded",
+      "hist.kbKept": "the columns were changed since, so they were kept",
       "hist.noStickies": "Sticky Notes is not running in this orOS window",
       "hist.k.add": "Added in {app}",
       "hist.k.change": "Changed in {app}",
@@ -1271,6 +1274,8 @@
       "tool.sum": "Σύνοψη: {app}", "tool.sumNo": "Κράτησες τη σύνοψη ({app})",
       "sum.title": "Να δει το {name} αυτή τη σύνοψη ({app});",
       "sum.text": "Υπολογίστηκε σε αυτή τη συσκευή. Στέλνονται μόνο αυτές οι γραμμές, όχι οι ίδιες οι καταχωρήσεις.",
+      "ln.title": "Να δει το {name} {n} γραμμές από {app};",
+      "ln.text": "Υπολογίστηκε σε αυτή τη συσκευή. Οι γραμμές στέλνονται όπως είναι: ημερομηνίες, ποσά, ονόματα και σημειώσεις.",
       "btn.copy": "Αντιγραφή", "toast.copied": "Αντιγράφηκε", "toast.copyFail": "Δεν αντιγράφηκε",
       "prov.browser": "Ενσωματωμένο μοντέλο του browser", "prov.local": "Local / OpenAI-compatible", "who.device": "Μένει σε αυτή τη συσκευή",
       "set.bi.ok": "Έτοιμο σε αυτή τη συσκευή. Δουλεύει και χωρίς σύνδεση. Είναι μικρότερο από τους online βοηθούς: το orOS ψάχνει γι' αυτό στα δεδομένα σου πριν από κάθε μήνυμα (εσύ διαλέγεις τι μοιράζεσαι) και δεν ετοιμάζει καταχωρήσεις.",
@@ -1296,6 +1301,7 @@
       "hist.clearText": "Η λίστα σβήνεται, και μαζί της η δυνατότητα αναίρεσης αυτών των αλλαγών. Τα δεδομένα σου μένουν όπως είναι.",
       "hist.more": "και {n} ακόμη",
       "hist.noMod": "δεν φορτώθηκε το κομμάτι του Βοηθού για αυτή την εφαρμογή",
+      "hist.kbKept": "οι στήλες άλλαξαν στο μεταξύ, οπότε έμειναν όπως είναι",
       "hist.noStickies": "οι Σημειώσεις δεν τρέχουν σε αυτό το παράθυρο του orOS",
       "hist.k.add": "Προσθήκη: {app}",
       "hist.k.change": "Αλλαγή: {app}",
@@ -3150,7 +3156,8 @@
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
-                                            recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn });
+                                            recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn,
+                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps) });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -3351,6 +3358,8 @@
       });
     }
     if (call.name === "app_summary") return appSummary(c, call.args, apps);
+    if (LINE_APPS[call.name]) return lineTool(c, call.name, call.args, apps);
+    if (call.name === "kanban_add_columns") return kanbanColumns(c, call.args, apps);
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
     if (call.name === "open_file") return Promise.resolve(proposeOpenFile(c, call.args));
     if (call.name === "rebuild_in_layout") return Promise.resolve(proposeRebuild(c, call.args));
@@ -5457,6 +5466,18 @@
     var now = Date.now();
     if (mem.edit) return editUndo(mem.edit);
     if (mem.files) return filesUndo(mem.files);
+    if (mem.kb) {
+      var G = gateCore();
+      if (!G) return Promise.resolve(undoFail(t("hist.noMod")));
+      return coreOf("OrosKanbanModel", "../kanban/model.js").then(function (M) {
+        var res = G.kanbanUndo(M, readStore(mem.key), mem.kb, now);
+        if (!res.ok) return undoFail(res.err);
+        if (!res.n) return undoFail(t("hist.kbKept"));
+        if (!writeStore(mem.key, res.data)) return undoFail(t("chg.storage"));
+        markAppDirty();
+        return { ok: true };
+      });
+    }
     if (mem.undo || mem.undos) {
       if (!E) return Promise.resolve(undoFail(t("hist.noMod")));
       var need = typeof E.needs === "function" ? E.needs(mem.app) : [];
@@ -5925,6 +5946,83 @@
     }, function () {
       return { content: "Error: the summary could not be worked out.", err: 1, ui: { k: "err" } };
     });
+  }
+  // GATE-PAR (2026-11-08): the gate's list tools and Kanban columns,
+  // run with gate/gate.js's own pure cores from the shell
+  // (window.orosGateCore), so both give the same answer.
+  var LINE_APPS = { budget_lines: "budget", invoice_list: "invoices", stock_items: "stock", publish_titles: "publish" };
+  var LINE_SRC = { invoices: ["OrosInvoicesCore", "../invoices/core.js"], stock: ["OrosStockCore", "../stock/core.js"] };
+  function gateCore() { var p = shell(); return p && p.orosGateCore && typeof p.orosGateCore.budgetLines === "function" ? p.orosGateCore : null; }
+  function lineIds(apps) {
+    if (!gateCore()) return [];
+    return apps.filter(function (a) { return Object.keys(LINE_APPS).some(function (n) { return LINE_APPS[n] === a.id; }); })
+               .map(function (a) { return a.id; });
+  }
+  function coreOf(name, src) {
+    var p = shell() || {};
+    if (p[name]) return Promise.resolve(p[name]);
+    if (window[name]) return Promise.resolve(window[name]);
+    return loadOnce(src).then(function () { return window[name] || null; });
+  }
+  function lineTool(c, name, args, apps) {
+    var id = LINE_APPS[name], G = gateCore(), app = null;
+    apps.forEach(function (x) { if (x.id === id) app = x; });
+    if (!app) return Promise.resolve({ content: "Error: the user does not let you read this app. They can allow it in the assistant's settings.", err: 1 });
+    if (!G) return Promise.resolve({ content: "Error: this list is not available in this orOS window.", err: 1 });
+    args = args && typeof args === "object" ? args : {};
+    var got = LINE_SRC[id] ? coreOf(LINE_SRC[id][0], LINE_SRC[id][1]) : Promise.resolve(null);
+    return got.then(function (X) {
+      var r = id === "budget" ? G.budgetLines(readStore("oros-budget-data"), args)
+            : id === "invoices" ? (X ? G.invoiceList(X, readStore("oros-invoices-data"), args, ymdNow()) : null)
+            : id === "stock" ? (X ? G.stockItems(X, readStore("oros-stock-data"), args) : null)
+            : G.publishTitles(readStore("oros-publish-data"), args);
+      if (!r) return { content: "Error: " + app.name + " could not be loaded; try again in a moment.", err: 1 };
+      if (!r.ok) return { content: "Error: " + r.err, err: 1 };
+      var dd = r.data, rows = dd.lines || dd.documents || dd.items || dd.titles || [];
+      var prev = rows.slice(0, 40).map(function (x) {
+        return [x.date || x.d || "", x.title || x.name || x.client || x.supplier || x.category || "", x.amount || x.total || x.on_hand || x.status || ""]
+          .filter(function (v) { return v !== "" && v != null; }).join(" · ").slice(0, 140);
+      });
+      var okP = app.perm === "always" || !rows.length ? Promise.resolve(true)
+              : askCard(t("ln.title", { n: fmtNum(rows.length), app: app.name, name: provName(curProv()) }), t("ln.text"),
+                        prev.join("\n") + (rows.length > 40 ? "\n…" : ""));
+      return okP.then(function (ok) {
+        if (!ok) return { content: JSON.stringify({ app: id, note: "The user chose not to share these rows." }), ui: { k: "sumNo", app: app.name } };
+        return { content: JSON.stringify(dd), ui: { k: "sum", app: app.name } };
+      });
+    }, function () { return { content: "Error: " + app.name + " could not be loaded; try again in a moment.", err: 1 }; });
+  }
+  function kbColsOn(chgApps) {
+    return !!gateCore() && chgApps.some(function (a) { return a.id === "kanban"; });
+  }
+  function kbId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }   // = kanban.js uid
+  function kanbanColumns(c, args, apps) {
+    var G = gateCore(), app = null;
+    changeApps(apps).forEach(function (x) { if (x.id === "kanban") app = x; });
+    if (!app || !G) return Promise.resolve({ content: "Error: the user does not let the assistant change Kanban.", err: 1 });
+    args = args && typeof args === "object" ? args : {};
+    var cols = Array.isArray(args.columns) ? args.columns : [];
+    return coreOf("OrosKanbanModel", "../kanban/model.js").then(function (M) {
+      var key = "oros-kanban-data";
+      var test = G.kanbanWrite(M, "add_columns", readStore(key), args, Date.now(), kbId);
+      if (!test.ok) return { content: "Error: " + test.err + " Nothing was saved.", err: 1, ui: { k: "chgErr", app: app.name } };
+      var rows = cols.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: x && x.after ? "→ " + String(x.after).slice(0, 60) : "" }; });
+      var base = { k: "create", app: app.name, rows: rows };
+      return askCreate(app.name, rows, false).then(function (ok) {
+        if (!ok) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base }; }
+        var pick = { board: args.board, columns: cols.filter(function (x, i) { return !ok.skip[i]; }) };
+        var res = G.kanbanWrite(M, "add_columns", readStore(key), pick, Date.now(), kbId);
+        if (!res.ok) { base.st = "failed"; base.msg = res.err; return { content: "Error: " + res.err + " Nothing was saved.", err: 1, ui: base }; }
+        if (!writeStore(key, res.data)) { base.st = "failed"; base.msg = t("chg.storage"); return { content: "Error: the columns could not be saved on the device (storage full?). Nothing was saved.", err: 1, ui: base }; }
+        markAppDirty();
+        var uid = newId();
+        remember(uid, { app: "kanban", key: key, kb: res.undo }, { kind: "add", app: "kanban", name: app.name, items: pick.columns.map(function (x) { return String(x.name); }) });
+        base.st = "done";
+        base.u = uid;
+        base.added = rows.map(function (r, i) { return i; }).filter(function (i) { return !ok.skip[i]; });
+        return { content: JSON.stringify({ app: "kanban", done: res.text, ids: res.ids, note: "The user added the columns. They can undo it." }), ui: base };
+      });
+    }, function () { return { content: "Error: Kanban could not be loaded; try again in a moment.", err: 1 }; });
   }
   function askSummary(appName, lines) {
     return askCard(t("sum.title", { app: appName, name: provName(curProv()) }), t("sum.text"),
@@ -8591,12 +8689,18 @@
     var ga = gateApps();
     var crIds = createApps(ga.write).map(function (a) { return a.id; }).filter(function (id) { return id !== "budget"; });
     var chg = changeApps(ga.write).filter(function (a) { return a.id !== "budget" && a.id !== "files"; });
+    var on = ga.write.length > 0, rd = {}, have = installed();
+    ga.read.forEach(function (a) { if (have[a.id]) rd[a.id] = 1; });
     var tools = C.toolsFor({ data: ga.read.length > 0, summary: summaryIds(ga.read).length > 0,
                              changes: chg.length > 0, creates: crIds,
                              links: crIds.indexOf("crm") >= 0 && crIds.indexOf("contacts") >= 0,
                              partnerLinks: partnerLinksOn(crIds, ga.write), history: ga.write.length > 0,
                              edits: editCats(ga.read),   // W5: read_in_app (the documents Claude may read)
-                             actions: gateKinds(ga) });
+                             actions: gateKinds(ga),
+                             // GATE-PAR P3: work handed to an app's window (gatePress), once some app is at write
+                             entries: on && entryKinds().length > 0, recipes: on ? recipeApps().filter(function (a) { return rd[a.id]; }).map(function (a) { return a.id; }) : [],
+                             rules: on && rd.automations && !!window.OrosAutoCore, newsletter: on && rd.newsletter, cover: on && rd.layout,
+                             rebuild: on && rd.layout, house: on && rd.layout });
     // edit_in_app only for the documents Claude may change
     var wc = editCats(ga.write), ed = Object.keys(wc).length ? C.toolsFor({ data: true, edits: wc }).filter(function (x) { return x.name === "edit_in_app"; }) : [];
     tools = tools.filter(function (x) { return x.name !== "edit_in_app"; }).concat(ed);
@@ -8626,6 +8730,12 @@
     var call = { id: "g", name: name, args: args && typeof args === "object" && !Array.isArray(args) ? args : {} };
     if (name === "edit_in_app") return gateEdit(call.args, apps, Date.now() + 21000);
     if (name === "do_action") return Promise.resolve(gateDo(call.args, apps));
+    if (C.GATE_OPEN.indexOf(name) >= 0) {
+      return runTool(gateConv, call, apps).then(function (r) {
+        if (r.err) return { ok: false, c: gateSay(String(r.content || "")).replace(/^Error: /, "") };
+        return gatePress(r.ui, apps);
+      }, function () { return { ok: false, c: "The call failed on the device." }; });
+    }
     return runTool(gateConv, call, apps).then(function (r) {
       var text = gateSay(typeof r.content === "string" ? r.content : "");
       if (gateNote) return { ok: false, c: gateNote };
@@ -8728,6 +8838,55 @@
     if (a.view && a.view.title) out.title = String(a.view.title).slice(0, 200);
     if (a.kind === "alarm") out.note = "Time's alarm form is filled on the owner's screen; the alarm is kept once the owner confirms it there.";
     return { ok: true, a: [a.app], k: 1, c: JSON.stringify(out) };
+  }
+  // GATE-PAR P3: what a card's button does, done at once on the
+  // owner's screen (an automation rule comes in off, Chris 13:39).
+  function gatePress(ui, apps) {
+    var have = installed(), app = "", call = null, run = null, note = "";
+    if (!ui) return { ok: false, c: "The call failed on the device." };
+    if (ui.k === "entry") {
+      var e = C.normEntry(ui.args, { from: t("app"), has: function (id) { return !!have[id]; } });
+      if (!e.ok) return { ok: false, c: e.err };
+      app = e.app; run = function () { return runEntry(e); };
+      note = "It is filled in " + (have[app] || app) + "'s own form on the owner's screen, for the owner to check and save.";
+    } else if (ui.k === "recipe") {
+      var a = C.normAutomation(ui.args, function (id) { return !!have[id]; });
+      if (!a.ok) return { ok: false, c: a.err };
+      app = a.app; call = [a.app, { newRecipe: { app: a.app, nm: a.nm, steps: a.steps } }];
+      note = "The steps are in " + (have[app] || app) + "'s automation editor on the owner's screen, for the owner to save and run.";
+    } else if (ui.k === "rule") {
+      var ru = C.normRule(ui.args, function (id) { return !!have[id]; });
+      if (!ru.ok) return { ok: false, c: ru.err };
+      var rule = JSON.parse(JSON.stringify(ru.rule));
+      rule.on = false;
+      app = "automations"; call = ["automations", { newRule: rule }];
+      note = "The rule is in the Automations editor on the owner's screen, turned off; the owner saves it and turns it on there.";
+    } else if (ui.k === "nl") {
+      var n = C.normNewsletter(ui.args);
+      if (!n.ok) return { ok: false, c: n.err };
+      app = "newsletter"; call = ["newsletter", { asAdd: { blocks: n.blocks, subj: n.subj, issue: typeof ui.args.issue === "string" ? ui.args.issue : "" } }];
+      note = "Newsletter is open on the owner's screen with the blocks; the owner picks the draft they go into. Nothing is sent.";
+    } else if (ui.k === "nlCheck") {
+      app = "newsletter"; call = ["newsletter", { check: { issue: typeof ui.issue === "string" ? ui.issue : "" } }];
+      note = "Newsletter's pre-send check is open on the owner's screen; the owner sends it there.";
+    } else if (ui.k === "cover") {
+      var cv = C.normCover(ui.args);
+      if (!cv.ok) return { ok: false, c: cv.err };
+      app = "layout"; call = ["layout", { cover: JSON.parse(JSON.stringify(cv.cover)) }];
+      note = "Layout's Book cover window is open on the owner's screen with these details, for the owner to create it there.";
+    } else if (ui.k === "rebuild" || ui.k === "house") {
+      app = "layout";
+      run = function () { return ui.k === "rebuild" ? runRebuild(ui, gateConv) : runHouse(ui, gateConv, false); };
+      note = "Layout is doing it on the owner's screen now; its report shows there (read_in_app with app layout reads the result afterwards).";
+    } else return { ok: false, c: "The call failed on the device." };
+    var rd = {};
+    apps.forEach(function (x) { rd[x.id] = 1; });
+    if (!rd[app]) return { ok: false, c: "The owner does not let Claude use " + (have[app] || app) + "." };
+    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk(app) : "orOS Gate is not running.";
+    if (why) return { ok: false, c: why };
+    var done = run ? run() : runEntry({ call: { fn: "openAt", args: call } });
+    if (!done) return { ok: false, c: "The app could not do it on the device." };
+    return { ok: true, a: [app], k: 1, c: JSON.stringify({ done: "opened", app: app, note: note }) };
   }
   // The undo data of a change in the history (JSON), or null.
   function gateMem(id) {

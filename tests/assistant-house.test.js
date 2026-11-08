@@ -82,7 +82,7 @@ test("the wiring: the card hands the request to Layout, which runs it and report
   assert.match(as, /p\.__orosOpenAt\("layout", \{ house: rq \}\)/);
   assert.match(as, /r\.ui\.k === "house" && takeHouse\(r, chat\)/);
   assert.match(as, /if \(ui\.k === "house"\) \{ drawHouse\(host, r, c\); return; \}/);
-  assert.match(as, /rebuild: rbOn, house: rbOn \}\)/);
+  assert.match(as, /rebuild: rbOn, house: rbOn[,\s}]/);
   const ly = read("layout/layout.js");
   assert.match(ly, /if \(tg && tg\.house && typeof tg\.house === "object" && \/\^\(learn\|book\|rule\)\$\/\.test\(tg\.house\.op\)\)/);
   assert.match(ly, /LY\.house\.run\(rq, f, back, photos, missed\)/);
