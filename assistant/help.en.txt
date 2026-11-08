@@ -127,7 +127,7 @@ The assistant can also add a whole list at once, on one card with a tick on each
 - [Plant Care](app:plants): plants with their room; a ready species (Monstera, Pothos…) brings its care values, as picking it in the form does.
 - [Pet Health Book](app:petcare): a vaccine, deworming, vet visit, medication or weight for one of your pets, by name.
 - [Media Shelf](app:shelf): books, films, series, albums, podcasts and games, with their status, creator and year ("add these ten books to my wishlist").
-- [Publishing](app:publish): the books you publish, a whole list or catalogue at once ("add these twelve titles to Publishing"), each with its authors, translator, series, status, release date (a book still to come gets its release plan), language, back-cover text and editions with ISBN, price and pages. An ISBN that is not valid, or is already on another title, is refused, never guessed.
+- [Publishing](app:publish): the books you publish, a whole list or catalogue at once ("add these twelve titles to Publishing"), each with its authors, translator, series, status, release date (a book still to come gets its release plan), language, back-cover text and editions with ISBN, price, pages and, when you give it, the id of its product in your WooCommerce shop (linked the same way as a draft Publishing makes in the shop). An ISBN that is not valid, or is already on another title, is refused, never guessed.
 Only your own garage, garden and pet book get these; a household's shared one is changed in the app. Something that looks like one already there starts unticked, and `Undo` doesn't take back a habit you ticked, a plant you watered or a title you logged progress on since.
 
 ## Wiki articles, Reader, Podcasts and Stock

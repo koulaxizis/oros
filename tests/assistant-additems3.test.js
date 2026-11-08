@@ -358,3 +358,31 @@ test("create_items offers publish with its fields, and says a list goes in one c
   const sp = core.systemPrompt({ data: true, creates: ["publish"] });
   assert.match(sp, /titles the user publishes \(Publishing; a list or catalogue of titles: all of them in one create_items call/);
 });
+
+test("publish: an edition carries its shop product link (wc_id → fmt.wp), checked against the user's shops", () => {
+  const one = Object.assign({}, CTX, { woo: [{ id: "w1", name: "My shop", site: "https://shop.example" }] });
+  const two = Object.assign({}, CTX, { woo: [{ id: "w1", name: "My shop", site: "https://shop.example" }, { id: "w2", name: "Second", site: "https://two.example" }] });
+  const n = A.normItems({ app: "publish", items: [{ title: "A", formats: [{ isbn: "9781402894626", wc_id: 412 }, { format: "ebook", wc_id: 413 }] }] }, one);
+  assert.equal(n.ok, true, n.err);
+  const p = A.plan("publish", null, n.items, one);
+  assert.deepEqual(p.rows[0].fields.filter((f) => f[0] === "product"), [["product", "#412 · My shop"], ["product", "#413 · My shop"]]);
+  p.rows[0].fields.forEach((f) => assert.ok(LABELS.has(f[0]), f[0]));
+  const a = A.apply("publish", null, n.items, NOW, {}, one);
+  assert.deepEqual(a.data.titles[0].fmts.map((f) => f.wp), [{ a: "w1", id: 412 }, { a: "w1", id: 413 }]);
+  assert.equal(J(a.data), PB.serialize(a.data));
+  // several shops: by name or address; unknown, missing or none → refused
+  const ok = A.normItems({ app: "publish", items: [{ title: "B", shop: "two.example", formats: [{ wc_id: 9 }] }] }, two);
+  assert.equal(ok.ok, true, ok.err);
+  assert.deepEqual(ok.items[0].fmts[0].wp, { a: "w2", id: 9 });
+  assert.match(A.normItems({ app: "publish", items: [{ title: "B", formats: [{ wc_id: 9 }] }] }, two).err, /several shops/);
+  assert.match(A.normItems({ app: "publish", items: [{ title: "B", shop: "Nope", formats: [{ wc_id: 9 }] }] }, two).err, /not one of the user's shops/);
+  assert.match(err("publish", [{ title: "B", formats: [{ wc_id: 9 }] }]), /Connected services/);
+  assert.match(A.normItems({ app: "publish", items: [{ title: "B", formats: [{ wc_id: 9 }, { format: "ebook", wc_id: 9 }] }] }, one).err, /given twice/);
+  assert.match(A.normItems({ app: "publish", items: [{ title: "B", formats: [{ wc_id: -3 }] }] }, one).err, /whole number/);
+  // already linked to another title → refused; to the same title → a look-alike
+  const it = A.normItems({ app: "publish", items: [{ title: "C", formats: [{ wc_id: 412 }] }] }, one).items;
+  assert.match(A.plan("publish", a.data, it, one).err, /already linked to .A/);
+  const t = core.toolsFor({ creates: ["publish"] }).find((x) => x.name === "create_items");
+  assert.ok(t.params.properties.items.items.properties.formats.items.properties.wc_id);
+  assert.ok(t.params.properties.items.items.properties.shop);
+});

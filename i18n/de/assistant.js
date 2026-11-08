@@ -1781,6 +1781,7 @@ orosPack("de", "assistant", {
  "f.lang": "Sprache",
  "f.format": "Ausgabe",
  "f.pages": "Seiten",
+ "f.product": "Produkt im Shop",
  "f.blurb": "Klappentext",
  "pf.paperback": "Taschenbuch",
  "pf.hardback": "Hardcover",

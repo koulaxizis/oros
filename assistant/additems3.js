@@ -830,7 +830,23 @@
     }
     return { v: out };
   }
-  function normPub(x, w) {
+  // The Woo shop of a product link (fmt.wp = { a, id }, as Publishing's
+  // "Send to the shop" writes it): ctx.woo = the Connected services
+  // WooCommerce accounts [{ id, name, site }]; shop = its name or
+  // address, needed only when there are several.
+  function wooAcct(x, w, ctx) {
+    var list = ctx && Array.isArray(ctx.woo) ? ctx.woo.filter(function (a) { return isObj(a) && typeof a.id === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(a.id); }) : [];
+    if (!list.length) return { err: w + "wc_id needs a WooCommerce shop in Settings › Connected services, and there is none on this device. Leave wc_id out, or ask the user to connect the shop first." };
+    var names = list.map(function (a) { return a.name || a.site || a.id; });
+    if (empty(x, "shop")) return list.length === 1 ? { v: list[0].id } : { err: w + "wc_id: the user has several shops (" + names.join(", ") + "); give shop." };
+    var q = fold(String(x.shop)).replace(/^https?:\/\//, "").replace(/\/+$/, "").trim();
+    var hit = list.filter(function (a) {
+      var site = fold(String(a.site || "")).replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      return fold(String(a.name || "")) === q || (site && (site === q || site.replace(/^www\./, "") === q.replace(/^www\./, "")));
+    });
+    return hit.length === 1 ? { v: hit[0].id } : { err: w + "shop " + String(x.shop).slice(0, 80) + " is not one of the user's shops: " + names.join(", ") + "." };
+  }
+  function normPub(x, w, ctx) {
     var C = pubCore();
     if (!C) return { err: "Publishing is not available right now." };
     var r = text1(x, "title", PB.title, w, "a book's title");
@@ -876,7 +892,7 @@
     if (!Array.isArray(fl)) return { err: w + "formats must be a list." };
     if (fl.length > PB.fmts) return { err: w + "a title keeps " + PB.fmts + " formats in Publishing; give fewer." };
     o.fmts = [];
-    var isbns = {};
+    var isbns = {}, wcs = {};
     for (i = 0; i < fl.length; i++) {
       var f = fl[i], fw = w + "formats[" + i + "].";
       if (!isObj(f)) return { err: w + "formats[" + i + "] must be an object." };
@@ -896,6 +912,16 @@
       var pg = intArg(f, "pages", 1, 100000, fw);
       if (pg.err) return pg;
       fo.pages = pg.v || 0;
+      // the shop product it already is (Publishing's "Send to the shop" link)
+      var wc = intArg(f, "wc_id", 1, 1e12, fw);
+      if (wc.err) return wc;
+      if (wc.v) {
+        var ac = wooAcct(x, w, ctx);
+        if (ac.err) return ac;
+        if (wcs[ac.v + "|" + wc.v]) return { err: fw + "wc_id " + wc.v + " is given twice." };
+        wcs[ac.v + "|" + wc.v] = 1;
+        fo.wp = { a: ac.v, id: wc.v };
+      }
       o.fmts.push(fo);
     }
     var by = ppl.filter(function (q) { return q.r === "a"; }).map(function (q) { return fold(q.n); }).join(",");
@@ -905,13 +931,28 @@
     var C = pubCore();
     return d == null ? C.empty() : isObj(d) && (d.titles == null || Array.isArray(d.titles)) ? C.normalize(d) : null;
   }
-  function pbPlan(d, items) {
+  function pbPlan(d, items, ctx) {
     var C = pubCore();
     if (!C) return bad("Publishing is not available right now.");
     d = pbBase(d);
     if (!d) return notOpened("Publishing");
     var e = room(d.titles.length, items.length, PB.max, "titles", "Publishing");
     if (e) return e;
+    var woo = ctx && Array.isArray(ctx.woo) ? ctx.woo : [];
+    function shopName(id) { var a = woo.filter(function (x) { return isObj(x) && x.id === id; })[0]; return a ? String(a.name || a.site || "") : ""; }
+    // a shop product already linked to a format of another title, or twice here
+    var linked = {}, seenWp = {};
+    d.titles.forEach(function (t) { t.fmts.forEach(function (f) { if (f.wp) linked[f.wp.a + "|" + f.wp.id] = t; }); });
+    for (var q = 0; q < items.length; q++) {
+      for (var r = 0; r < items[q].fmts.length; r++) {
+        var wp = items[q].fmts[r].wp;
+        if (!wp) continue;
+        var kk = wp.a + "|" + wp.id;
+        if (seenWp[kk] !== undefined && seenWp[kk] !== q) return bad("items[" + seenWp[kk] + "] and items[" + q + "] have the same shop product " + wp.id + "; each edition has its own.");
+        seenWp[kk] = q;
+        if (linked[kk] && fold(linked[kk].t) !== fold(items[q].t)) return bad("items[" + q + "]: shop product " + wp.id + " is already linked to \u201c" + linked[kk].t + "\u201d in Publishing. Check the number; nothing was added.");
+      }
+    }
     var used = C.used(d), seen = {};
     for (var i = 0; i < items.length; i++) {
       for (var j = 0; j < items[i].fmts.length; j++) {
@@ -948,6 +989,7 @@
         f.push(["format", keyOf(PB_FMT, x.k) + (x.price ? "|" + x.price.toFixed(2) + " " + d.set.cur : "")]);
         if (x.isbn) f.push(["isbn", C.hyphen(x.isbn, d.blocks)]);
         if (x.pages) f.push(["pages", String(x.pages)]);
+        if (x.wp) f.push(["product", "#" + x.wp.id + (shopName(x.wp.a) ? " \u00b7 " + shopName(x.wp.a) : "")]);
       });
       if (o.blurb) f.push(["blurb", preview(o.blurb, 120)]);
       if (o.notes) f.push(["note", preview(o.notes, 120)]);
@@ -962,7 +1004,11 @@
       if (skip && skip[i]) return;
       var id = newIdIn(now, taken);
       var row = { id: id, t: o.t, sub: o.sub, ser: o.ser, sn: o.sn, st: o.st, rel: o.rel, lang: o.lang, ppl: o.ppl,
-                  fmts: o.fmts.map(function (f) { return { id: newIdIn(now, taken), k: f.k, isbn: f.isbn, price: f.price, pages: f.pages }; }),
+                  fmts: o.fmts.map(function (f) {
+                    var r = { id: newIdIn(now, taken), k: f.k, isbn: f.isbn, price: f.price, pages: f.pages };
+                    if (f.wp) r.wp = { a: f.wp.a, id: f.wp.id };
+                    return r;
+                  }),
                   blurb: o.blurb, notes: o.notes };
       if (o.plan) row.plan = C.makePlan(o.rel, [], function () { return newIdIn(now, taken); });
       d = C.put(d, "titles", row, s);
