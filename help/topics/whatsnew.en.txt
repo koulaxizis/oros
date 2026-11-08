@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.97.00
+- **Claude and the Assistant fill in your Publishing titles.** They can now change a title that is already in Publishing: release date, status, subtitle, series, language, keywords, back-cover text, author bio, the people on it, each edition (ISBN, price, pages, size, spine, weight, binding, paper, the shop product) and the royalty terms. Nothing is removed, and an ISBN that belongs to another title is refused.
+
 ## Version 5.96.00
 - **Claude also works with orOS closed.** Through orOS Gate, Claude now searches your allowed apps, reads each Kanban board and links or changes items while no device has orOS open, from the encrypted copy; changes wait and are applied when orOS opens, and deletions still wait for you. What Claude or the Assistant adds to an app you have never opened on this device (Publishing, CRM…) now reaches your other devices too.
 
