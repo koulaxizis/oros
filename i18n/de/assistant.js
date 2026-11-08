@@ -465,7 +465,7 @@ orosPack("de", "assistant", {
  "lbls": "Labels",
  "lk.unlinkYes": "Wird entfernt",
  "lkk.inv": "Kunde (Rechnungen)",
- "lkk.pub": "Person in Titeln (Verlag)",
+ "lkk.pub": "Person in Titeln (Verlag)", "lkk.kb": "Kanban-Karte", "lkk.nt": "Notizseite", "lkk.ly": "Layout-Dokument", "lkk.at": "Atelier-Entwurf",
  "lkk.sup": "Lieferant (Bestand)",
  "lkk.tsc": "Kunde (Zeiterfassung)",
  "lkk.wh": "Kommissionsgeschäft (Bestand)",
