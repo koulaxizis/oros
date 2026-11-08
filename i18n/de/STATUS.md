@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 41794 of 42067 (99%)
+- Strings: 41913 of 42186 (99%)
 - Help pages: 159 of 159 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 1790 / 1790 |
+| assistant | 100% | 1804 / 1804 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
@@ -38,7 +38,7 @@ text is still written in the code. They switch over wave by wave
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 339 / 339 |
 | converter | 100% | 68 / 68 |
-| crm | 100% | 637 / 637 |
+| crm | 100% | 642 / 642 |
 | crossword | 100% | 171 / 171 |
 | crypt | 100% | 291 / 291 |
 | cycle | 100% | 203 / 203 |
@@ -121,11 +121,11 @@ text is still written in the code. They switch over wave by wave
 | remote-play | 100% | 35 / 35 |
 | reversi | 100% | 61 / 61 |
 | ringtones | 100% | 107 / 107 |
-| roots | 100% | 143 / 143 |
+| roots | 100% | 226 / 226 |
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 996 / 1007 |
+| settings | 98% | 1013 / 1024 |
 | share | 100% | 217 / 217 |
 | shelf | 100% | 291 / 291 |
 | shell | 99% | 1122 / 1126 |

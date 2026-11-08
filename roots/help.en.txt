@@ -23,20 +23,36 @@ At the end of each season the tree needs its **bloom quota**: open flowers on th
 - **Beetle:** walks up to 2 tiles through the soil to the nearest root and chews it. A thin root breaks, a thick one turns thin. Leaves after 3 turns.
 - **Mole:** digs a straight line of up to 3 tiles and harms every root in it. Leaves after 2 turns.
 - **Aphid:** walks along the surface to the nearest bud and eats it. Open leaves and flowers are safe. Leaves after 3 turns.
-- **Blight** (autumn): spreads to a thin root next to it every turn and stays. Thick roots and thorns stop it; a thorn kills it.
+- **Blight** (autumn; in the old forest every season): spreads to a thin root next to it every turn and stays. Thick roots and thorns stop it; a thorn kills it.
 - **Frost:** in the last 2 turns of autumn, buds with no open leaf beside them freeze.
 
 An arrow points from each pest to where it goes, with an icon on the tile it will harm and a number for the order. Tiles in danger are red, and dashed circles at the edges show the pests that come in at the end of the turn. The base root under the trunk never breaks.
 
 ## The year and difficulty
-A year has 3 seasons: spring, summer and autumn. Winter scores it: the bloom of every season, plus the springs reached, plus the longest root (the most steps from the trunk along your roots).
+A year moves through four glades, and each glade has 3 seasons: spring, summer and autumn. When the third season of a glade meets its quota, the tree seeds the next glade and starts again there as a bare tree with 5 sap. Winter scores the year: the bloom of every season, plus the springs reached and the longest root (the most steps from the trunk along your roots) of every glade.
+1. **The meadow:** soft soil and three springs; beetles and aphids, moles from summer, blight in autumn.
+2. **The riverbank:** five springs, little stone and a lot of clay; moles and aphids all year.
+3. **The rocky hill:** stone everywhere, two deep springs and many minerals; beetles in numbers.
+4. **The old forest:** blight in every season, and every pest at once.
+
+The sky's colour shows the glade you are in.
 - **Mild:** a lower quota, and once a season `Rewind` takes back the whole last turn.
 - **Hardy:** more pests and a higher quota.
+- **Endless:** the tree lives on. Each year is one glade's three seasons, round the four glades and then new glades of the same kinds, with Hardy's pests and quota in the first year and more every year after (one more of each pest every second year, and a quota that climbs). It goes on until a quota is missed; `Records` keeps your runs and the most years the tree lived.
 
 Every year has a code. The same code is the same glade and the same pests, so you can play a year again or give the code to a friend.
 
+## The Daily glade
+The calendar button in the toolbar opens the **Daily glade**: one season on Hardy from a bare tree, the same glade, season and pests for everyone that day. There is one try. Meet the bloom quota and the day counts in your streak; the score is the season's bloom, plus the springs reached, plus the longest root. A dot on the button means today's glade is still open. When it is done, the button shows your result, with `Share` (a spoiler-free line of flowers, the score and whether the quota was met) and `All games` for the [Game Center](help:a/gamecenter), where it shows under Today. Leaving today's glade before its end counts as a missed quota, and a year under way left for it counts as not finished.
+
+## Root puzzles
+The puzzle button in the toolbar opens 20 **root puzzles** in four tiers (seedlings, saplings, old trees, ancient roots). Each is one turn on a glade already grown, with a fixed amount of sap, while the pests show what they will do: join a cut branch again before it withers, stop the blight, thicken or thorn what the beetles will bite. The goal is the sap the tree earns the next turn, after the pests act (2 from the trunk plus every joined spring, mineral and open leaf); it is the most that turn allows, so every puzzle has an answer. The bloom number in the status row shows what the tree earns now against the goal. Undo and Reset turn are free, and a puzzle left half done loses nothing. Solved puzzles get a tick and sync between your devices; they are not years and do not count in the records.
+
+## Last years
+`Records` lists your last 10 years and Daily glades from every device, newest first: the difficulty, how far you got, the score, the day and the code. `Replay` starts that year again with its code; a Daily glade replays as a whole Hardy year on its glade.
+
 ## Records and sync
-`Records` shows your years, the years you finished and the best year score for each difficulty, and your longest root. They sync between your devices through [orOS sync](help:t/sync), adding up the years from every device, and they count in the [Game Center](help:a/gamecenter). The year in progress and the sound setting stay on this device, and an unfinished year continues where you left it. A year left for a new one counts as not finished. `Reset records` clears the records on every device.
+`Records` shows your years, the years you finished and the best year score for each difficulty, your longest root, your Daily glades (played, quota met, streak and best score), the puzzles solved and Last years. They sync between your devices through [orOS sync](help:t/sync), adding up the years from every device, and they count in the [Game Center](help:a/gamecenter). The year in progress and the sound setting stay on this device, and an unfinished year continues where you left it. A year left for a new one counts as not finished. `Reset records` clears the records on every device.
 
 ## Keyboard
 - Arrow keys move the cursor; [[Enter]] grows on the tile or describes it.
