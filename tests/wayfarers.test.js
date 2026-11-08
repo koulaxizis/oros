@@ -83,6 +83,7 @@ function pend(st) {
     }
     return E.act(st, { t: "leave" });
   }
+  if (p.k === "tale") return E.act(st, { t: "on" });
   const ev = E.eventOf(p.id);
   for (let o = 0; o < ev.o.length; o++) if (E.choiceOk(st, ev.o[o]) && E.act(st, { t: "ev", o })) return true;
   return null;
@@ -137,7 +138,7 @@ function fightMove(st, smart) {
 function journey(seed, diff, classes, smart) {
   const st = E.newJourney(seed, diff, classes);
   let guard = 0;
-  while (st.over < 0 && guard++ < 5000) {
+  while (st.over < 0 && guard++ < 20000) {
     assert.ok(E.valid(st), "valid state " + seed + " at " + st.acts);
     const before = st.acts;
     if (st.fight) fightMove(st, smart);
@@ -461,6 +462,85 @@ test("wayfarers: camps, markets, events and gear", () => {
   assert.ok(st.fight && st.fight.kind === "e" && st.fight.re === 30);
 });
 
+test("wayfarers: three regions — a guardian down leads to the next map with a rest and a tale; the last one ends the journey", () => {
+  assert.deepEqual(E.REGIONS.map((r) => r.id), ["green", "ash", "frost"]);
+  const st = fight(["knight", "ranger", "mage"], ["king"]);
+  st.fight.kind = "g";
+  st.party[1].hp = 0;
+  st.party[0].hp = 5;
+  foe(st, 1).hp = 1;
+  turnOf(st, 2);
+  const ev = E.act(st, { t: "atk", x: 1 });
+  assert.ok(ev.some((e) => e.e === "region" && e.n === 2));
+  assert.equal(st.region, 2);
+  assert.equal(J(st.map), J(E.makeMap("t", 2)), "the map of region 2 comes from the code");
+  assert.equal(st.at, 0);
+  assert.deepEqual(st.path, [0]);
+  assert.equal(st.party[1].hp, Math.max(1, Math.round(E.heroStats(st, 1).mh / 4)), "the fallen stand at a quarter");
+  assert.ok(st.party[0].hp > 5, "the standing rest on the way");
+  assert.deepEqual(st.pend.map((p) => p.k).filter((k) => k !== "up"), ["loot", "tale"]);
+  assert.ok(st.pend.find((p) => p.k === "loot").o.every((g) => E.GEAR[g].t >= 2), "the Briar King leaves tier 2 or 3");
+  assert.ok(E.valid(st));
+  while (st.pend[0].k !== "tale") E.act(st, st.pend[0].k === "up" ? { t: "up", o: 0 } : { t: "loot", o: -1 });
+  assert.equal(E.act(st, { t: "rest" }), null);
+  assert.ok(E.act(st, { t: "on" }));
+  assert.ok(E.reach(st).length > 0, "walk on in the Ash Hills");
+  const bad = E.clone(st); bad.pend = [{ k: "tale", n: 3 }];
+  assert.equal(E.valid(bad), false, "a tale is only of the region reached");
+  // the last guardian ends it, with no tale
+  const end = fight(["knight", "ranger", "mage"], ["keeper"]);
+  end.region = 3;
+  end.fight.kind = "g";
+  foe(end, 1).hp = 1;
+  turnOf(end, 2);
+  const xp = end.xp;
+  const ev2 = E.act(end, { t: "atk", x: 1 });
+  assert.equal(end.over, 1);
+  assert.ok(ev2.some((e) => e.e === "won"));
+  assert.equal(ev2.find((e) => e.e === "win").xp, 80, "later regions pay double at the Frost Gate");
+  assert.equal(end.xp, xp + 80);
+  assert.equal(end.pend.length, 0);
+});
+
+test("wayfarers: the Ash Hills and the Frost Gate — Burn on every hero, Chill on a hero, hits through Guard; events of the region", () => {
+  // Rime Chills the hero it hits: 3 less Speed
+  const a = fight(["knight", "ranger", "mage"], ["wisp"]);
+  const sp = E.speedOf(a, "h1");
+  foe(a, 1).n = { m: "rimed", tg: 1 };
+  turnOf(a, 0);
+  a.fight.q = ["f1"];
+  E.act(a, { t: "guard" });
+  assert.ok(a.fight.hs[1].st.ch > 0);
+  assert.equal(E.speedOf(a, "h1"), sp - 3);
+  // Bolt goes through Guard: Power × 1.2 on a guarding Mage, halved only
+  const b = fight(["knight", "ranger", "mage"], ["caller"]);
+  foe(b, 1).n = { m: "bolt", tg: 2 };
+  b.party[2].w = "";
+  turnOf(b, 2);
+  b.fight.q = ["f1"];
+  const hp = b.party[2].hp;
+  E.act(b, { t: "guard" });
+  assert.equal(hp - b.party[2].hp, Math.floor(Math.round(D.FOES.caller.pw * 1.2) / 2));
+  // Blaze: every hero Burns
+  const c = fight(["knight", "ranger", "mage"], ["colossus"]);
+  foe(c, 1).n = { m: "blaze", tg: -1 };
+  turnOf(c, 0);
+  c.fight.q = ["f1"];
+  E.act(c, { t: "guard" });
+  assert.ok([0, 1, 2].every((i) => c.fight.hs[i].st.bu > 0));
+  // events: only those of the region (or of any region)
+  for (let k = 0; k < 30; k++) {
+    const st = E.newJourney("ev" + k, "g", ["knight", "ranger", "mage"]);
+    st.region = 2;
+    const n = st.map[0].e[0];
+    st.map[n].k = "e";
+    E.act(st, { t: "go", n });
+    const r = E.eventOf(st.pend[0].id).r;
+    assert.ok(r === undefined || r === 2, st.pend[0].id);
+  }
+  assert.ok(D.EVENTS.length >= 30);
+});
+
 test("wayfarers: valid() refuses broken saves", () => {
   const st = E.newJourney("v", "g", ["knight", "mage", "cleric"]);
   assert.ok(E.valid(st));
@@ -498,14 +578,15 @@ test("wayfarers: 300 bot journeys keep a valid state; the balance targets hold",
   for (let k = 0; k < 150; k++) {
     const p = PARTIES[k % PARTIES.length];
     const a = journey("bal" + k, "g", p, false);
-    if (a.over === 1) simple++;
+    if (a.over === 1 || a.region > 1) simple++;
     const b = journey("bal" + k, "h", p, true);
     if (b.over === 1) { smart++; p.forEach((c) => { wins[c] = (wins[c] || 0) + 1; }); }
     p.forEach((c) => { play[c] = (play[c] || 0) + 1; });
     n++;
   }
   assert.ok(simple / n > 0.7, "a simple bot clears the Greenway on Gentle most of the time: " + simple + "/" + n);
-  assert.ok(smart / n > 0.8, "a combo bot clears it on Hardy: " + smart + "/" + n);
+  console.log("wayfarers balance: simple Gentle past the Greenway " + simple + "/" + n + ", combo bot whole journey on Hardy " + smart + "/" + n);
+  assert.ok(smart / n > 0.4 && smart / n < 0.97, "a combo bot walks the whole road on Hardy often, not always: " + smart + "/" + n);
   E.CLASS_IDS.forEach((c) => assert.ok(wins[c] > 0, c + " is in a winning party"));
 });
 
