@@ -10612,6 +10612,12 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** assistant/core.js (`CR_FIELDS`, `crUnknown`), assistant/additems3.js (roles), assistant/assistant.js (`createWith2`), tests/create-unknown.test.js (new), tests/assistant-additems3.test.js.
 - **Tests:** full `node --test tests/*.test.js`; the new test and +1 in assistant-additems3.
 
+### 2026-11-08 — 5.90.02 — publish_titles reads the list price in units, and shows a title's notes (BR-GATE)
+
+- **What:** a title added at 18 € read back through orOS Gate (and the Assistant) as "0.18": `publishTitles` treated Publishing's price as cents, but publish/core.js keeps it in units with 2 decimals (Send to the shop sends `f.price.toFixed(2)`). It now gives the price as it is ("18.00"). A title's notes (only for the owner) are listed too, so a check after create_items sees them.
+- **Files:** gate/gate.js (`publishTitles`), tests/gate-core.test.js.
+- **Tests:** full `node --test tests/*.test.js`.
+
 ### 2026-11-08 — 5.91.00 — Today T1: row details, a tip and suggested actions (BR-TODAY-15, #904)
 
 - **What:** Chris (14:04) asked Today for more information, suggestions, tips and suggested actions on its rows; plan `/mnt/project-files/today/today-insights-plan.md` approved 14:12 (Part IX "TODAY-T"). T1: rows carry `more`, `tip`, `acts` (fixed kinds in `OrosTodayAgg.ACTS`); an (i) button shows them; actions open the app that does the work through `orosToday.act` (BR-TODAY-15).
