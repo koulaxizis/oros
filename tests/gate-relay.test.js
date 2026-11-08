@@ -260,10 +260,11 @@ test("tools/call: closed device, then a call answered by the device", async () =
   const t = await tokens(w);
   const closed = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 5, method: "tools/call", params: { name: "list_apps", arguments: {} } })).json();
   assert.equal(closed.result.isError, true);
-  assert.match(closed.result.content[0].text, /not open/);
+  assert.match(closed.result.content[0].text, /orOS is closed and there is no copy/);
   const b = w.boxes.get(ID);
   const sock = { sent: [], closed: null, send(m) { this.sent.push(m); setTimeout(() => {
     const q = JSON.parse(m);
+    if (q.n === "_key") { b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: false, c: "" })); return; }
     assert.equal(q.n, "budget_lines");
     assert.deepEqual(q.a, { from: "2026-12-01", to: "2026-12-31" });
     b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: '{"lines":[]}' }));
@@ -448,4 +449,73 @@ test("after a change the owner's devices are woken: one generic push per 15 minu
   assert.equal(wakes.length, 3);
   assert.equal((await dev(w, { act: "ping", tok: TOK, pid: "" })).status, 200, "taken back");
   assert.equal((await b.st.storage.get("meta")).pg.length, 0);
+});
+
+test("orOS closed: the copy answers reads, changes wait encrypted, deletions wait, the key lives only in token wraps (5.80.00)", async () => {
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const sock = { sent: [], closed: false, __g: { th: hex(TOK), v: 1, at: 1 }, send(x) { this.sent.push(x); const q = JSON.parse(x); if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1); }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const access = t.access_token.split(".")[1];
+  const kw = await b.st.storage.get("kw:" + hex(access));
+  assert.ok(kw && kw.w, "the key is wrapped for the new access token");
+  assert.doesNotMatch(JSON.stringify([...b.st.kv.entries()]), new RegExp(KS), "the key itself is never stored");
+  const copy = { at: 1e12, lv: { budget: "write" }, hold: 0, ans: {
+    "list_apps {}": '{"apps":["budget"]}', "budget_lines {}": '{"lines":[1]}', 'app_summary {"app":"budget","month":"2026-11"}': '{"m":"nov"}' } };
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, JSON.stringify(copy)) }));
+  assert.match(sock.sent[sock.sent.length - 1], /snapok/);
+  assert.equal((await b.st.storage.get("meta")).cp, 1);
+  sock.closed = true;                                       // orOS closes
+  const tc = async (name, args) => (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } })).json()).result;
+  let r = await tc("list_apps");
+  assert.equal(r.isError, false);
+  assert.match(r.content[0].text, /^\[orOS is closed: this is the copy of .*\]\n\{"apps":\["budget"\]\}$/);
+  assert.match((await tc("app_summary", { month: "2026-11", app: "budget" })).content[0].text, /\{"m":"nov"\}$/, "the arguments match in any order");
+  r = await tc("budget_lines", { from: "2026-01-01" });
+  assert.match(r.content[0].text, /with its own filters[\s\S]*\{"lines":\[1\]\}/);
+  assert.equal((await tc("search_data", { query: "x" })).isError, true);
+  r = await tc("budget_add", { entries: [{ date: "2026-11-08", kind: "out", amount: 5 }] });
+  assert.equal(r.isError, false);
+  assert.match(r.content[0].text, /"queued":true/);
+  const q = await b.st.storage.list({ prefix: "q:" });
+  assert.equal(q.size, 1);
+  const item = [...q.values()][0];
+  assert.doesNotMatch(item.c, /2026-11-08/, "the waiting change is encrypted");
+  assert.equal(JSON.parse(await G.openText(K, item.c)).n, "budget_add");
+  assert.match((await tc("budget_delete", { ids: ["a"] })).content[0].text, /Deleting waits/);
+  assert.match((await tc("kanban_add_cards", { board: "x", cards: [] })).content[0].text, /may not change kanban/);
+  // a refresh carries the key to the new tokens, with orOS still closed
+  const rf = await (await call(w, "POST", "/gate/token", { form: { grant_type: "refresh_token", refresh_token: t.refresh_token } })).json();
+  assert.ok(await b.st.storage.get("kw:" + hex(rf.access_token.split(".")[1])));
+  assert.equal(await b.st.storage.get("kw:" + hex(t.refresh_token.split(".")[1])), undefined, "the old wrap goes with the old token");
+  assert.match((await (await rpc(w, rf.access_token, { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "list_apps", arguments: {} } })).json()).result.content[0].text, /copy of/);
+  // the device applied it and says so
+  await b.box.webSocketMessage(sock, JSON.stringify({ cqa: [[...q.keys()][0].slice(2)] }));
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 0);
+  // 7 days without an open device: the copy goes
+  const m = await b.st.storage.get("meta");
+  m.seen = Date.now() - 8 * 86400000; m.last = Date.now(); await b.st.storage.put("meta", m);
+  await b.box.alarm();
+  assert.equal(await b.st.storage.get("copy"), undefined);
+  assert.equal((await b.st.storage.list({ prefix: "kw:" })).size, 0);
+  assert.equal((await b.st.storage.get("meta")).cp, undefined);
+});
+
+test("revoking the links drops the key wraps and the copy (5.80.00)", async () => {
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32);
+  const sock = { sent: [], __g: { th: hex(TOK), v: 1, at: 1 }, send(x) { const q = JSON.parse(x); if (q.q) setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: b64u(K) })), 1); }, close() {} };
+  b.socks.push(sock);
+  await tokens(w);
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, '{"at":1,"ans":{}}') }));
+  assert.ok((await b.st.storage.list({ prefix: "kw:" })).size >= 2);
+  assert.equal((await dev(w, { act: "revoke", tok: TOK })).status, 200);
+  assert.equal((await b.st.storage.list({ prefix: "kw:" })).size, 0);
+  assert.equal(await b.st.storage.get("copy"), undefined);
+  assert.equal(G.stableArgs({ b: 1, a: "", c: null, d: [2] }), '{"b":1,"d":[2]}');
 });

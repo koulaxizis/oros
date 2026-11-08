@@ -24,6 +24,11 @@
   var PREF_KEY = "oros-gate", LOG_KEY = "oros-gate-log", LOG_MAX = 300, UNDO_KEY = "oros-gate-undo", UNDO_MAX = 20;
   // Claude's changes, synced (slice "gatechanges", 5.78.00): seen and undone from any device.
   var CHG_KEY = "oros-gate-changes", CHG_MAX = 100;
+  // The daily email of Claude's changes (5.79.00), synced: { on, acct (a
+  // Mail account id, "" = the first that can send), m (settings changed),
+  // d (the day sent or being sent, YYYY-MM-DD), dv (the device sending
+  // it), fd/fn (failures that day), at (sent at) }.
+  var DIG_KEY = "oros-gate-digest", DIG_HOUR = 20, DIG_TRIES = 3;
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js; the gate box lives there
   // Never offered, whatever a setting says (BR-GATE).
   var NEVER = ["assistant", "baby", "cycle", "diary", "health", "mail", "mood", "passwords"];
@@ -757,6 +762,86 @@
     return !!(isObj(lv) && lv[id] === "write" && WRITES[id] && !(typeof hold === "number" && hold > now));
   }
 
+  // The copy's key for a call (= relay/gate.js stableArgs).
+  function stableArgs(a) {
+    var o = isObj(a) ? a : {}, out = {};
+    Object.keys(o).sort().forEach(function (k) { if (o[k] !== undefined && o[k] !== null && o[k] !== "") out[k] = o[k]; });
+    return JSON.stringify(out);
+  }
+  // ---- the daily email (5.79.00) ----
+  function ymd(t) {
+    var d = new Date(t);
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
+  var DAY_RE = /^\d{4}-\d{2}-\d{2}$/, ACCT_RE = /^[a-z0-9]{6,40}$/;
+  function digClean(o) {
+    o = isObj(o) ? o : {};
+    var r = { on: o.on !== false, acct: typeof o.acct === "string" && ACCT_RE.test(o.acct) ? o.acct : "",
+              m: typeof o.m === "number" && o.m > 0 ? Math.floor(o.m) : 0,
+              d: typeof o.d === "string" && DAY_RE.test(o.d) ? o.d : "",
+              dv: typeof o.dv === "string" ? o.dv.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 24) : "" };
+    if (typeof o.fd === "string" && DAY_RE.test(o.fd) && typeof o.fn === "number" && o.fn > 0) { r.fd = o.fd; r.fn = Math.min(99, Math.floor(o.fn)); }
+    if (typeof o.at === "number" && o.at > 0) r.at = Math.floor(o.at);
+    return r;
+  }
+  // Settings: the newer m wins. The day: the later one wins; on the
+  // same day the lower device tag wins, so two devices that both claimed
+  // it agree on one sender once sync meets.
+  function digMerge(a, b) {
+    a = digClean(a); b = digClean(b);
+    var s = b.m > a.m ? b : a, d = a.d > b.d ? a : b.d > a.d ? b : (a.dv <= b.dv ? a : b);
+    var f = (a.fd || "") > (b.fd || "") ? a : (b.fd || "") > (a.fd || "") ? b : ((a.fn || 0) >= (b.fn || 0) ? a : b);
+    var r = { on: s.on, acct: s.acct, m: s.m, d: d.d, dv: d.dv };
+    if (f.fd) { r.fd = f.fd; r.fn = f.fn; }
+    var at = Math.max(a.at || 0, b.at || 0);
+    if (at) r.at = at;
+    return r;
+  }
+  // Today's changes (local day of now), oldest first.
+  function digToday(list, now) {
+    var day = ymd(now);
+    return (Array.isArray(list) ? list : []).filter(function (e) { return isObj(e) && typeof e.t === "number" && ymd(e.t) === day; })
+      .sort(function (x, y) { return x.t - y.t; });
+  }
+  // Is the email due now? on, at or after 20:00, not sent today, not
+  // failed 3 times today, and Claude changed something today.
+  function digDue(dg, list, now) {
+    dg = digClean(dg);
+    var day = ymd(now);
+    if (!dg.on || new Date(now).getHours() < DIG_HOUR || dg.d === day) return false;
+    if (dg.fd === day && dg.fn >= DIG_TRIES) return false;
+    return digToday(list, now).length > 0;
+  }
+  var DIG_TXT = {
+    en: { subject: "orOS: Claude's changes on {day}", intro: "Claude changed these in your orOS today ({n}):",
+          undone: "undone", undo: "To undo one: orOS › Settings › Claude (orOS Gate) › Claude's changes.", items: "{n} items",
+          tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries",
+                   kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
+                   kanban_add_columns: "added Kanban columns" } },
+    el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
+          undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
+          tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget",
+                   kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
+                   kanban_add_columns: "πρόσθεσε στήλες στο Kanban" } },
+    de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
+          undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
+          tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht",
+                   kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
+                   kanban_add_columns: "Kanban-Spalten hinzugefügt" } }
+  };
+  function fill(s, o) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return o[k] !== undefined ? o[k] : m; }); }
+  // → { subject, text } in the owner's language (en, el, de).
+  function digText(list, now, lang) {
+    var T = DIG_TXT[lang] || DIG_TXT.en, today = digToday(list, now), d = new Date(now);
+    var day = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
+    var lines = today.map(function (e) {
+      var t = new Date(e.t);
+      return "- " + ("0" + t.getHours()).slice(-2) + ":" + ("0" + t.getMinutes()).slice(-2) + " · " + (T.tools[e.n] || e.n) +
+        " (" + fill(T.items, { n: e.k || 0 }) + ")" + (e.dv ? " · " + e.dv : "") + (e.done ? " · " + T.undone : "");
+    });
+    return { subject: fill(T.subject, { day: day }), text: [fill(T.intro, { n: today.length }), ""].concat(lines, ["", T.undo]).join("\n") };
+  }
+
   // The relay orOS uses (Mail › relay, a self-hosted one), else orOS's own.
   function relayOf(mail) {
     var u = isObj(mail) && isObj(mail.relay) && typeof mail.relay.url === "string" ? mail.relay.url.trim().replace(/\/+$/, "") : "";
@@ -766,6 +851,7 @@
   var core = { NEVER: NEVER, budgetLines: budgetLines, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
+               stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
                WRITES: WRITES, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
@@ -803,7 +889,15 @@
       typeof x.ss === "string" && /^[A-Za-z0-9_-]{43}$/.test(x.ss) &&
       typeof x.r === "string" && /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(x.r) && typeof x.m === "number" && x.m > 0;
   }
-  function seatClean(x) { return seatOk(x) ? { id: x.id, ss: x.ss, r: x.r, m: Math.floor(x.m) } : null; }
+  // k (5.80.00): the gate key, 32 bytes base64url, for the copy and the
+  // waiting changes while orOS is closed (relay/gate.js keeps it only
+  // wrapped under Claude's live tokens).
+  function seatClean(x) {
+    if (!seatOk(x)) return null;
+    var o = { id: x.id, ss: x.ss, r: x.r, m: Math.floor(x.m) };
+    if (typeof x.k === "string" && /^[A-Za-z0-9_-]{43}$/.test(x.k)) o.k = x.k;
+    return o;
+  }
   function seatMerge(a, b) {
     var A = seatClean(a), B = seatClean(b);
     if (!A || !B) return A || B;
@@ -828,7 +922,10 @@
   }
 
   var listeners = [], pendingJoin = "";
-  function changed() { listeners.slice().forEach(function (fn) { try { fn(); } catch (e) {} }); }
+  function changed() {
+    listeners.slice().forEach(function (fn) { try { fn(); } catch (e) {} });
+    if (typeof copySoon === "function") copySoon();
+  }
 
   var ws = null, wsState = "off", retry = 0, retryTimer = null, pingTimer = null, winTimer = null;
   function setWs(s) { if (wsState !== s) { wsState = s; changed(); } }
@@ -848,12 +945,15 @@
       sendVis(sock);
       if (pref().lvd) sendLv(sock);
       pushReg();
+      copySoon(4000);
       clearInterval(pingTimer);
       pingTimer = setInterval(function () { try { sock.send("ping"); } catch (e) {} }, 45000);
     };
     sock.onmessage = function (ev) {
       if (typeof ev.data !== "string" || ev.data === "pong") return;
       if (ev.data.indexOf('{"lv"') === 0) { onLv(ev.data); return; }
+      if (ev.data.indexOf('{"cq"') === 0) { applyQueue(sock, ev.data); return; }
+      if (ev.data.indexOf('{"snapok"') === 0) return;
       onCall(sock, ev.data);
     };
     sock.onclose = function (ev) {
@@ -920,19 +1020,222 @@
       });
     }).catch(function () { pushBusy = false; });
   }
+  // ---- the daily email (5.79.00): from the owner's own Mail account to
+  // itself, sent by the first device that is open after 20:00 on a day
+  // Claude changed something. It claims the day in the synced slice
+  // "gatedigest", waits for sync to carry the claim, and sends only if it
+  // still holds it. No key or address reaches the relay's gate.
+  var digTimer = null, digBusy = false;
+  function digRead() { return digClean(readJSON(DIG_KEY)); }
+  function digWrite(v) { if (writeJSON(DIG_KEY, digClean(v))) { dirty(); changed(); return true; } return false; }
+  function digTag() {
+    var p = pref();
+    if (typeof p.dt === "string" && /^[A-Za-z0-9_-]{8,24}$/.test(p.dt)) return p.dt;
+    p.dt = randomB64u(9).slice(0, 12);
+    writeJSON(PREF_KEY, p);
+    return p.dt;
+  }
+  function mailData() { var d = readJSON("oros-mail-data"); return isObj(d) && Array.isArray(d.accounts) ? d : null; }
+  // Mail accounts that can send (as Certificates and Newsletter read them).
+  function sendAccounts() {
+    var d = mailData();
+    if (!d) return [];
+    var tombs = isObj(d.tombs) ? d.tombs : {};
+    return d.accounts.filter(function (a) {
+      return isObj(a) && typeof a.id === "string" && ACCT_RE.test(a.id) && a.imap && a.imap.host && a.smtp && a.smtp.host && a.email && !(tombs[a.id] >= a.m);
+    }).map(function (a) { return { id: a.id, email: String(a.email), name: String(a.name || "").trim(), a: a }; });
+  }
+  function mailPass(acctId) {
+    return new Promise(function (resolve) {
+      var rq;
+      try { rq = indexedDB.open("oros-mail"); } catch (e) { resolve(null); return; }
+      rq.onupgradeneeded = function () { try { rq.transaction.abort(); } catch (e) {} };
+      rq.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); resolve(null); };
+      rq.onblocked = function () { resolve(null); };
+      rq.onsuccess = function () {
+        var d = rq.result;
+        if (!d.objectStoreNames.contains("keys") || !d.objectStoreNames.contains("creds")) { d.close(); resolve(null); return; }
+        var tx = d.transaction(["keys", "creds"], "readonly");
+        var get = function (st, k) { return new Promise(function (ok, no) { var r = tx.objectStore(st).get(k); r.onsuccess = function () { ok(r.result); }; r.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); no(r.error); }; }); };
+        Promise.all([get("keys", "device"), get("creds", acctId)]).then(function (r) {
+          d.close();
+          var key = r[0], rec = r[1];
+          if (!key || !rec || !rec.iv || !rec.data) return null;
+          return crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(rec.iv) }, key, rec.data).then(function (plain) { return new TextDecoder().decode(plain); });
+        }).then(resolve, function () { try { d.close(); } catch (e) {} resolve(null); });
+      };
+    });
+  }
+  function mailSend(acc, subject, text) {
+    var MC = root.orosMailCompose;
+    if (!MC || typeof MC.build !== "function") return Promise.reject({ code: "nocompose" });
+    return mailPass(acc.id).then(function (pw) {
+      if (!pw) throw { code: "nopass" };
+      var a = acc.a, user = a.imap.user || a.email;
+      var me = { name: acc.name || "orOS", addr: acc.email };
+      return Promise.resolve(MC.build({ from: me, to: [me], subject: subject, text: text })).then(function (m) {
+        return fetch(relayNow() + "/v1", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer",
+          body: JSON.stringify({ op: "send", acct: { host: a.imap.host, port: a.imap.port, sec: a.imap.sec, user: user, pass: pw },
+                                 smtp: { host: a.smtp.host, port: a.smtp.port, sec: a.smtp.sec, user: a.smtp.user || user, pass: pw },
+                                 from: acc.email, rcpt: [acc.email], raw: MC.b64(m && m.bin !== undefined ? m.bin : m) }) });
+      }).then(function (r) { return r.json().catch(function () { return null; }); }).then(function (j) {
+        if (!j || !j.ok) throw { code: (j && j.error && j.error.code) || "relay" };
+      });
+    });
+  }
+  function digLang() {
+    var l = "en";
+    try { l = String(root.orosI18n && root.orosI18n.lang ? root.orosI18n.lang() : "en").slice(0, 2); } catch (e) {}
+    return l === "el" || l === "de" ? l : "en";
+  }
+  function digCheck() {
+    var now = Date.now(), dg = digRead();
+    if (digBusy || !digDue(dg, chgList(), now)) return;
+    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    var accs = sendAccounts(), acc = accs.filter(function (a) { return a.id === dg.acct; })[0] || accs[0];
+    if (!acc) return;                                 // Settings says a Mail account is needed
+    var day = ymd(now), tag = digTag();
+    dg.d = day; dg.dv = tag;
+    if (!digWrite(dg)) return;
+    digBusy = true;
+    setTimeout(function () {                          // let sync carry the claim; another device may hold it
+      var cur = digRead();
+      if (cur.d !== day || cur.dv !== tag) { digBusy = false; return; }
+      var m = digText(chgList(), now, digLang());
+      mailSend(acc, m.subject, m.text).then(function () {
+        var c = digRead(); c.at = Date.now(); digWrite(c); digBusy = false;
+      }, function (e) {
+        var c = digRead();
+        if (c.d === day && c.dv === tag) c.d = "";     // give the day back: next check, at most 3 times today
+        c.fn = c.fd === day ? (c.fn || 0) + 1 : 1; c.fd = day;
+        digWrite(c);
+        digBusy = false;
+      });
+    }, 90000);
+  }
+  function digSlice(n) {
+    var S = root.orosSync;
+    if (S && typeof S.registerSlice === "function") {
+      S.registerSlice("gatedigest", function () { var raw = null; try { raw = localStorage.getItem(DIG_KEY); } catch (e) {} return raw ? digRead() : null; },
+        function (data) { if (!isObj(data)) return; writeJSON(DIG_KEY, digMerge(digRead(), data)); changed(); }, DIG_KEY, digMerge);
+      return;
+    }
+    if (n < 40) setTimeout(function () { digSlice(n + 1); }, 500);
+  }
+  // ---- orOS closed (5.80.00) ----
+  // The copy: the answers this device would give Claude now (list_apps,
+  // the summaries, the lists with their default filters), for the allowed
+  // apps only, encrypted with the gate key, sent to the gate's box after
+  // a change and every 30 minutes. While no device is open Claude reads
+  // it; changes wait (encrypted) and the first device that opens applies
+  // them. The relay wipes it all after 7 days without an open device.
+  function gateKey() { var p = pref(), st = seatRead(); return st && st.id === p.id && st.k ? st.k : ""; }
+  function keyBytes(k) {
+    var t = k.replace(/-/g, "+").replace(/_/g, "/"), bin = atob(t + "===".slice((t.length + 3) % 4)), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function bytesB64u(b) { var s = ""; for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+  function seal(k, text) {
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    return crypto.subtle.importKey("raw", keyBytes(k), { name: "AES-GCM" }, false, ["encrypt"]).then(function (key) {
+      return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, new TextEncoder().encode(text));
+    }).then(function (ct) { return bytesB64u(iv) + "." + bytesB64u(new Uint8Array(ct)); });
+  }
+  function unseal(k, sealed) {
+    var parts = String(sealed || "").split(".");
+    return crypto.subtle.importKey("raw", keyBytes(k), { name: "AES-GCM" }, false, ["decrypt"]).then(function (key) {
+      return crypto.subtle.decrypt({ name: "AES-GCM", iv: keyBytes(parts[0]) }, key, keyBytes(parts[1] || ""));
+    }).then(function (pt) { return new TextDecoder().decode(pt); });
+  }
+  var COPY_MAX = 600000, copyTimer = null, copyBusy = false, copyLast = "", copyAt = 0;
+  function copySoon(ms) { clearTimeout(copyTimer); copyTimer = setTimeout(sendCopy, typeof ms === "number" ? ms : 5000); }
+  function sendCopy() {
+    var p = pref(), k = gateKey();
+    if (copyBusy || !p.on || !k || !ws || ws.readyState !== 1) return;
+    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) return;
+    copyBusy = true;
+    var ok = allowed(offered(), p.lv).map(function (a) { return a.id; });
+    var d = new Date(), month = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
+    var pd = new Date(d.getFullYear(), d.getMonth() - 1, 1), prev = pd.getFullYear() + "-" + ("0" + (pd.getMonth() + 1)).slice(-2);
+    var calls = [["list_apps", {}]];
+    ok.forEach(function (id) {
+      if (SUMMARY[id]) {
+        calls.push(["app_summary", { app: id }]);
+        if (id !== "kanban") { calls.push(["app_summary", { app: id, month: month }]); calls.push(["app_summary", { app: id, month: prev }]); }
+      }
+      // budget_lines needs a range: the copy has this and last month, also
+      // kept as the tool's default answer.
+      if (LINES[id]) calls.push([LINES[id], id === "budget" ? { from: prev + "-01", to: localDay(), _def: 1 } : {}]);
+    });
+    var ans = {}, size = 0;
+    calls.reduce(function (chain, c) {
+      return chain.then(function () {
+        var a = Object.assign({}, c[1]), def = !!a._def;
+        delete a._def;
+        return run(c[0], a).then(function (r) {
+          if (!r || !r.ok || typeof r.c !== "string" || size + r.c.length > COPY_MAX) return;
+          ans[c[0] + " " + stableArgs(a)] = r.c; size += r.c.length;
+          if (def) ans[c[0] + " {}"] = r.c;
+        }, function () {});
+      });
+    }, Promise.resolve()).then(function () {
+      var body = JSON.stringify({ lv: p.lv || {}, hold: typeof p.hold === "number" ? p.hold : 0, ans: ans });
+      if (body === copyLast && Date.now() - copyAt < 6 * 3600000) return;      // nothing new
+      return seal(k, JSON.stringify({ at: Date.now(), lv: p.lv || {}, hold: typeof p.hold === "number" ? p.hold : 0, ans: ans })).then(function (sealed) {
+        if (!ws || ws.readyState !== 1) return;
+        ws.send(JSON.stringify({ snap: sealed }));
+        copyLast = body; copyAt = Date.now();
+      });
+    }).then(function () { copyBusy = false; }, function () { copyBusy = false; });
+  }
+  // Changes Claude left while orOS was closed: applied here, in order,
+  // with the same rules as a live call (the switches and a pause as they
+  // are now), then the box is told which ones are done.
+  function applyQueue(sock, text) {
+    var o, k = gateKey();
+    try { o = JSON.parse(text); } catch (e) { return; }
+    if (!isObj(o) || !Array.isArray(o.cq) || !k || !pref().on) return;
+    whenUnlocked(function () {
+      var done = [];
+      o.cq.slice(0, 50).reduce(function (chain, it) {
+        return chain.then(function () {
+          if (!isObj(it) || typeof it.id !== "string") return;
+          return unseal(k, it.c).then(function (plain) {
+            var x = JSON.parse(plain);
+            if (!isObj(x) || typeof x.n !== "string" || x.n === "budget_delete" || x.n === "_key") return { ok: false, c: "refused" };
+            return run(x.n, x.a).then(function (res) {
+              var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
+              if (res.u) entry.u = res.u;
+              writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
+              return res;
+            });
+          }).then(function () { done.push(it.id); }, function () { done.push(it.id); });   // never in a loop
+        });
+      }, Promise.resolve()).then(function () {
+        try { if (sock.readyState === 1) sock.send(JSON.stringify({ cqa: done })); } catch (e) {}
+        changed();
+        copySoon(2000);
+      });
+    });
+  }
   function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
   function dirty() { try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {} }
   // This device has the gate: give the owner's other devices its seat.
   function makeSeat() {
     var p = pref(), cur = seatRead();
     if (!p.on || !p.id || !p.tok) return;
-    if (cur && cur.id === p.id) return;
+    if (cur && cur.id === p.id) {
+      if (!cur.k) { cur.k = randomB64u(32); cur.m = Date.now(); if (writeJSON(SEAT_KEY, cur)) dirty(); }   // a seat from before 5.80.00
+      return;
+    }
     if (cur && cur.m > (p.at || 0)) return;            // a newer gate of the owner: leave it
     var ss = randomB64u(32);
     sha256hex(ss).then(function (sh) { return devCall({ act: "seat", id: p.id, tok: p.tok, sh: sh }); }).then(function () {
       var q = pref();
       if (!q.on || q.id !== p.id) return;
-      if (writeJSON(SEAT_KEY, { id: p.id, ss: ss, r: relay(), m: Date.now() })) dirty();
+      if (writeJSON(SEAT_KEY, { id: p.id, ss: ss, r: relay(), m: Date.now(), k: randomB64u(32) })) dirty();
     }, function () {});
   }
   // Join the gate from its seat (no code). force: the owner turned the
@@ -1222,6 +1525,12 @@
       writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
       changed();
     };
+    if (q.n === "_key") {                              // the relay wraps it for a token of Claude's; not logged
+      var k = gateKey();
+      var locked = root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked();
+      try { sock.send(JSON.stringify({ r: q.q, ok: !!(p.on && k && !locked), c: p.on && k && !locked ? k : "" })); } catch (e) {}
+      return;
+    }
     if (!p.on) { done({ ok: false, c: "The gate is off." }); return; }
     run(q.n, q.a).then(done, function () { done({ ok: false, c: "The call failed on the device." }); });
   }
@@ -1283,6 +1592,19 @@
     },
     canUndo: function (uid) { return chgList().some(function (e) { return e.id === uid && e.x && !e.done; }); },
     // Claude's changes from every device, newest first.
+    // The daily email: { on, acct, at (last sent), fails today, accounts [{id, email}] }.
+    digest: function () {
+      var dg = digRead(), day = ymd(Date.now());
+      return { on: dg.on, acct: dg.acct, at: dg.at || 0, fails: dg.fd === day ? dg.fn || 0 : 0,
+               accounts: sendAccounts().map(function (a) { return { id: a.id, email: a.email }; }) };
+    },
+    setDigest: function (o) {
+      var dg = digRead();
+      if (isObj(o) && typeof o.on === "boolean") dg.on = o.on;
+      if (isObj(o) && typeof o.acct === "string" && (o.acct === "" || ACCT_RE.test(o.acct))) dg.acct = o.acct;
+      dg.m = Date.now();
+      return digWrite(dg);
+    },
     changes: function () { return chgList().slice().reverse().map(function (e) { return { id: e.id, t: e.t, app: e.app, n: e.n, k: e.k, dv: e.dv, done: e.done || 0, undo: !!(e.x && !e.done) }; }); },
     // → { ok, n, kept } | { ok:false }
     undo: function (uid) {
@@ -1353,7 +1675,13 @@
     revoke: function () {
       var p = pref();
       if (!p.on) return Promise.resolve();
-      return devCall({ act: "revoke", id: p.id, tok: p.tok }).then(function () { changed(); });
+      return devCall({ act: "revoke", id: p.id, tok: p.tok }).then(function () {
+        // A new gate key too (5.80.00): a copy made with the old one is useless.
+        var st = seatRead();
+        if (st && st.id === p.id) { st.k = randomB64u(32); st.m = Date.now(); if (writeJSON(SEAT_KEY, st)) dirty(); }
+        copyLast = "";
+        changed();
+      });
     },
     info: function () {
       var p = pref();
@@ -1490,13 +1818,18 @@
     connect();
     seatSlice(0);
     chgSlice(0);
+    digSlice(0);
+    setInterval(function () { copySoon(0); }, 30 * 60000);
+    setTimeout(digCheck, 60000);
+    clearInterval(digTimer);
+    digTimer = setInterval(digCheck, 10 * 60000);
     (function pushWatch(n) {                          // webpush.js may load after this file
       var P = root.orosPush;
       if (P && typeof P.onChange === "function") { P.onChange(function () { setTimeout(pushReg, 500); }); return; }
       if (n < 40) setTimeout(function () { pushWatch(n + 1); }, 500);
     })(0);
     setTimeout(function () { if (pref().on) makeSeat(); else whenUnlocked(function () { sit(false); }); }, 3000);
-    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") api.reconnect(); });
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") api.reconnect(); else copySoon(0); });
     root.addEventListener("online", function () { api.reconnect(); });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);

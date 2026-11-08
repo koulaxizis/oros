@@ -751,7 +751,7 @@ One Durable Object (`GateBox`, binding `GATE`, SQLite, key-value API)
 per gate, addressed by a 22-character id the device made. It keeps only
 SHA-256 hashes: of the device token, of each authorization code, access
 and refresh token (`t:<hash>`), plus the last-use time and a minute
-counter. No orOS data, no request or answer, nothing logged.
+counter. No orOS data in the clear, no request or answer, nothing logged.
 
 - **Public routes** (Claude's servers call them, no Origin check, 120
   per IP a minute per isolate): `/.well-known/oauth-protected-resource`
@@ -782,6 +782,18 @@ counter. No orOS data, no request or answer, nothing logged.
   relay only describes them; the device checks every call again (the
   app's level, a pause, the lock) and asks the person itself
   before more than 5 deletions.
+- **orOS closed (5.80.00):** an open device sends, after each change
+  and every 30 minutes, an encrypted copy of the answers it would give
+  (`copy` + chunks `s:<i>`, ≤ 900 KB, AES-GCM with the gate key K that
+  the owner's devices share through orOS sync). The box never keeps K: it
+  keeps K wrapped under each live token of Claude's (`kw:<sha256 of the
+  token>`, key = SHA-256("orOS-gate-kw|" + token)); a new token gets K
+  from the old refresh token's wrap or from an open device (`_key` over
+  its socket). With no device open, read tools answer from the copy
+  (dated), change tools wait encrypted in `q:<id>` (≤ 50; deletions are
+  refused) and go to the first device that connects, which applies them
+  and acks (`cqa`). 7 days without an open device, or `revoke`, wipe the
+  copy, the queue and the wraps; the device makes a new K on revoke.
 - **Whose relay:** everyone on useoros.online uses this one, each with
   their own box. A person whose Mail is set up with their own relay
   gets their gate there (deploy this Worker, `ALLOWED_ORIGINS` with the
