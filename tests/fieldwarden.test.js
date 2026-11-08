@@ -14,8 +14,8 @@ const D = require("../fieldwarden/data.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "fieldwarden/fieldwarden.js"), "utf8");
 const R = (() => {
-  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var FOLK_IDS = E.FOLK_IDS; var BIG = 1e9; var MAX_SEASONS = E.FARMS.length * E.SEASONS; var MAX_SHEAVES = E.SIZE * E.MAX_STAGE;"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "mergeFieldwarden"].forEach((name) => {
+  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var FOLK_IDS = E.FOLK_IDS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SEASONS = E.FARMS.length * E.SEASONS; var MAX_SHEAVES = E.SIZE * E.MAX_STAGE; var LAST_N = 10; var MAX_DAY = 100000; var MAX_SCORE = MAX_SHEAVES + E.WISH_BONUS;"];
+  ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeFieldwarden"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const line = SRC.slice(i, SRC.indexOf("\n", i));
@@ -301,9 +301,9 @@ test("fieldwarden: a saved state is checked on load", () => {
 
 test("fieldwarden: 60 bot years end with no illegal state; the balance holds", () => {
   const run = (seed, diff, trio, smart) => {
-    const st = E.newYear(seed, diff, trio, 1);
+    const st = E.newYear(seed, diff, trio, E.FARMS.length);
     let guard = 0;
-    while (st.over < 0 && guard++ < 100) {
+    while (st.over < 0 && guard++ < 300) {
       assert.ok(E.valid(st), seed);
       if (st.phase === "shop") E.botShop(st);
       else E.botTurn(st, smart);
@@ -323,7 +323,7 @@ test("fieldwarden: 60 bot years end with no illegal state; the balance holds", (
     if (s.over === 1) simpleH++;
     if (s.over === 0) simpleSeasonsLost++;
   }
-  assert.ok(smartM >= 18, "the smart bot finishes Mild years: " + smartM);
+  assert.ok(smartM >= 16, "the smart bot finishes Mild years: " + smartM);
   assert.ok(smartH >= 10, "the smart bot finishes Harsh years: " + smartH);
   assert.ok(simpleSeasonsLost >= 5, "a simple bot misses Harsh quotas: " + simpleSeasonsLost);
   assert.ok(simpleH < smartH);
@@ -342,4 +342,172 @@ test("fieldwarden: records merge as a join", () => {
   assert.ok(!x.rows.oldold, "rows from before the reset drop");
   assert.ok(!m({ rows: { zzzzzz: { b: 0, s: { m: [1, 2, 0] } }, "BAD!": { b: 0, s: { m: [1, 0, 0] } } } }, {}).rows.zzzzzz, "won > played drops");
   assert.equal(m({ rows: { cccccc: { b: 0, s: { m: [1, 0, 99] } } } }, {}).rows.cccccc, undefined, "more seasons than a year has drops");
+});
+
+test("fieldwarden: three farms, each with its own invaders and weather; Harsh adds Health from farm 2", () => {
+  assert.deepEqual(E.FARMS.map((f) => f.id), ["low", "orchard", "river"]);
+  E.FARMS.forEach((f) => {
+    assert.equal(f.pool.length, 4);
+    f.pool.forEach((l) => l.forEach((k) => assert.ok(E.INVADERS[k], f.id + " " + k)));
+    assert.ok(f.wx[0] <= f.wx[1] && f.wx[1] <= f.wx[2] && f.wx[2] <= 20);
+  });
+  assert.ok(E.FARMS[0].wx[2] === 20, "no drought on the first farm");
+  // farm 2 on Harsh: every invader has one more Health
+  const s2 = E.newYear("hb", "h", ["shepherd", "smith", "hedger"], 3);
+  assert.equal(s2.s.hb, 0);
+  // play farm 1 out with the smart bot to reach farm 2
+  let g = 0;
+  while (s2.farm === 1 && s2.over < 0 && g++ < 200) { if (s2.phase === "shop") E.botShop(s2); else E.botTurn(s2, true); }
+  assert.equal(s2.farm, 2, "the smart bot reaches farm 2");
+  assert.equal(s2.s.hb, 1);
+  s2.s.u.filter((u) => !u.f).forEach((u) => assert.equal(u.mh, E.INVADERS[u.k].hp + 1, u.k));
+  assert.ok(E.valid(s2));
+  // the old W1 save (no fire, no hb) still loads
+  const old = E.newYear("w1", "m", ["shepherd", "smith", "hedger"], 1);
+  delete old.s.fire; delete old.s.hb;
+  assert.ok(E.valid(old));
+  E.act(old, { t: "end" });
+  assert.ok(E.valid(old));
+});
+
+test("fieldwarden: fire burns, spreads with the wind, catches hay in a drought; rain and a farmhand put it out", () => {
+  let st = blank();
+  folk(st, 1, at(0, 5));
+  field(st, at(1, 1), 3); field(st, at(2, 1), 3);
+  st.s.fire = Array(36).fill(0); st.s.fire[at(1, 1)] = 1;
+  st.s.wx[1] = "e";
+  E.act(st, { t: "end" });
+  assert.equal(st.s.g[at(1, 1)], 2, "the burning field loses a stage");
+  assert.equal(st.s.x[at(1, 1)], 1, "and stops growing");
+  assert.equal(st.s.fire[at(2, 1)], 1, "the wind carries it east");
+  assert.equal(st.s.g[at(2, 1)], 3, "the new fire burns from the next turn");
+  // hay and hedges burn away; a piece on a fire takes 1
+  st = blank();
+  st.s.t[at(2, 2)] = "s"; st.s.t[at(3, 3)] = "h"; st.s.x[at(3, 3)] = 2;
+  field(st, at(4, 4), 2);
+  const w = inv(st, "boar", at(4, 4));
+  st.s.fire = Array(36).fill(0); st.s.fire[at(2, 2)] = 1; st.s.fire[at(3, 3)] = 1; st.s.fire[at(4, 4)] = 1;
+  E.act(st, { t: "end" });
+  assert.deepEqual([st.s.t[at(2, 2)], st.s.t[at(3, 3)], st.s.fire[at(2, 2)], st.s.fire[at(3, 3)]], ["d", "d", 0, 0]);
+  assert.ok(w.hp <= 2, "the boar on the fire took 1");
+  // drought: hay with no farmhand next to it catches fire
+  st = blank();
+  st.s.t[at(1, 1)] = "s"; st.s.t[at(4, 1)] = "s";
+  folk(st, 0, at(4, 2));
+  st.s.wx[1] = "d";
+  E.act(st, { t: "end" });
+  assert.deepEqual([st.s.fire[at(1, 1)], st.s.fire[at(4, 1)]], [1, 0], "a farmhand next to the hay keeps it safe");
+  // rain puts every fire out
+  st = blank(); field(st, at(1, 1), 2);
+  st.s.fire = Array(36).fill(0); st.s.fire[at(1, 1)] = 1; st.s.wx[1] = "r";
+  E.act(st, { t: "end" });
+  assert.deepEqual([st.s.fire[at(1, 1)], st.s.g[at(1, 1)]], [0, 3], "out before it burns; the field grows");
+  // a farmhand stamps it out by stepping on it
+  st = blank(); field(st, at(2, 2), 2);
+  st.s.fire = Array(36).fill(0); st.s.fire[at(2, 2)] = 1;
+  const hf = folk(st, 0, at(2, 3));
+  const ev = E.act(st, { t: "mv", u: hf.id, to: at(2, 2) });
+  assert.ok(ev.some((e) => e.k === "douse"));
+  assert.equal(st.s.fire[at(2, 2)], 0);
+  assert.ok(E.valid(st));
+});
+
+test("fieldwarden: the farm 2 and 3 invaders: fox, thief, torch-bearer, loudmouth", () => {
+  // the fox goes for the barn
+  let st = blank();
+  const fx = inv(st, "fox", at(0, 5));
+  E.act(st, { t: "end" });
+  assert.ok(st.s.barn < 2 || (fx.it && fx.it.a === "raid"), "the fox raids the barn");
+  st = blank(); inv(st, "fox", at(5, 4), { d: 2, r: 1, a: "raid" });
+  E.act(st, { t: "end" });
+  assert.equal(st.s.barn, 1, "a raid takes 1 from the barn");
+  // the thief takes the whole crop
+  st = blank(); field(st, at(2, 2), 3);
+  inv(st, "thief", at(1, 2), { d: 1, r: 1, a: "steal" });
+  E.act(st, { t: "end" });
+  assert.deepEqual([st.s.g[at(2, 2)], st.s.x[at(2, 2)]], [0, 1]);
+  // a thief picks the ripest field
+  st = blank(); field(st, at(1, 1), 1); field(st, at(3, 3), 3);
+  const th = inv(st, "thief", at(3, 5));
+  E.act(st, { t: "end" });
+  assert.equal(E.intentTile(st.s, th), at(3, 3));
+  // the torch-bearer sets fire; it burns the same turn
+  st = blank(); field(st, at(2, 2), 3);
+  inv(st, "torch", at(1, 2), { d: 1, r: 1, a: "burn" });
+  const ev = E.act(st, { t: "end" });
+  assert.ok(ev.some((e) => e.k === "fire" && e.at === at(2, 2)));
+  assert.equal(st.s.g[at(2, 2)], 2, "burnt a stage at the end of the turn");
+  // the loudmouth shouts for a thief, who comes in at the end of the turn; bumped, he loses the shout
+  st = blank();
+  const lm = inv(st, "loud", at(0, 0), { d: 0, r: 0, a: "shout" });
+  assert.equal(E.intentTile(st.s, lm), -1);
+  E.act(st, { t: "end" });
+  assert.ok(st.s.u.some((u) => u.k === "thief"), "a thief came in");
+  st = blank();
+  const lm2 = inv(st, "loud", at(0, 0), { d: 0, r: 0, a: "shout" });
+  lm2.sn = 1;
+  E.act(st, { t: "end" });
+  assert.ok(!st.s.u.some((u) => u.k === "thief"), "stopped: no shout");
+  // a raider pushed into the pond is out of the season
+  st = blank(); st.s.t[at(3, 2)] = "p";
+  const tb = inv(st, "thief", at(2, 2));
+  const smi = folk(st, 1, at(1, 2));
+  E.act(st, { t: "tool", u: smi.id, at: at(2, 2) });
+  assert.ok(!E.unitById(st.s, tb.id));
+});
+
+test("fieldwarden: the Daily season is one season on Harsh, the same for everyone", () => {
+  const a = E.newDaily("fw20261108"), b = E.newDaily("fw20261108"), c = E.newDaily("fw20261109");
+  assert.equal(J(a), J(b));
+  assert.notEqual(J(a), J(c));
+  assert.ok(E.valid(a));
+  const d = E.dailyOf("fw20261108");
+  assert.deepEqual(a.folk.map((f) => f.c), d.trio);
+  assert.ok(E.trioOk(d.trio));
+  assert.deepEqual([a.farm, a.sea, a.end, a.one, a.diff], [d.farm, d.sea, d.farm, 1, "h"]);
+  let farms = new Set();
+  for (let k = 0; k < 40; k++) farms.add(E.dailyOf("fw" + k).farm);
+  assert.equal(farms.size, 3, "every farm comes up");
+  // played out: it ends after the one season, never goes to the market
+  let met = 0;
+  for (let k = 0; k < 12; k++) {
+    const st = E.newDaily("fwd" + k);
+    let g = 0;
+    while (st.over < 0 && g++ < 20) E.botTurn(st, true);
+    assert.ok(st.over >= 0 && st.phase === "play");
+    assert.ok(E.valid(st));
+    assert.equal(E.act(st, { t: "next" }), null);
+    if (st.over === 1) met++;
+    assert.equal(E.dailyScore(st), st.res.h + (st.res.w ? E.WISH_BONUS : 0));
+  }
+  assert.ok(met >= 8, "the smart bot meets most Daily quotas: " + met);
+  const bad = E.clone(a); bad.diff = "m";
+  assert.equal(E.valid(bad), false, "a Daily season is on Harsh");
+  const bad2 = E.clone(a); bad2.end = a.farm + 1 > 3 ? 1 : a.farm + 1;
+  assert.equal(E.valid(bad2), false);
+});
+
+test("fieldwarden: Daily seasons and Last years merge as a join", () => {
+  const m = R.mergeFieldwarden;
+  const A = { ver: 1, br: 0, rows: {}, days: { 300: { b: 0, w: 1, h: 20, t: 40, f: [1, 1, 2, 5] }, 301: { b: 0, w: 0, h: 9, t: 30, f: [3, 3, 2, 1] } },
+    last: [{ a: 1000, d: "m", p: ["shepherd", "smith", "hedger"], n: 12, w: 1, s: "abc" }] };
+  const B = { ver: 1, br: 0, rows: {}, days: { 300: { b: 0, w: 1, h: 24, t: 50, f: [0, 1, 2, 6] }, 302: { b: 0, w: 1, h: 30, t: 33, f: [0, 0, 0, 10] } },
+    last: [{ a: 2000, d: "d", p: ["smith", "hedger", "ferryman"], n: 1, w: 0, s: "fw20261108" }] };
+  assert.equal(J(m(A, B)), J(m(B, A)));
+  assert.equal(J(m(m(A, B), B)), J(m(A, B)));
+  const x = m(A, B);
+  assert.equal(x.days[300].h, 24, "the higher score wins");
+  assert.deepEqual(Object.keys(x.days), ["300", "301", "302"]);
+  assert.deepEqual(x.last.map((v) => v.a), [2000, 1000], "newest first");
+  // bad entries drop; a reset drops older ones; old data gets empty lists
+  const y = m({ rows: {}, days: { 5: { b: 0, w: 2, h: 1, t: 1, f: [0, 0, 0, 0] }, 6: { b: 0, w: 1, h: 999, t: 1, f: [0, 0, 0, 1] }, x: {} },
+    last: [{ a: 1, d: "z", p: [], n: 0, w: 0, s: "a" }] }, {});
+  assert.deepEqual([y.days, y.last], [{}, []]);
+  const z = m({ br: 1500, rows: {}, days: { 300: { b: 0, w: 1, h: 20, t: 40, f: [1, 1, 2, 5] } }, last: A.last.concat(B.last) }, {});
+  assert.deepEqual([Object.keys(z.days).length, z.last.length], [0, 1]);
+  assert.deepEqual(m({ rows: {} }, {}).last, []);
+  // at most 10
+  const many = { rows: {}, last: [] };
+  for (let k = 0; k < 14; k++) many.last.push({ a: k + 1, d: "h", p: ["shepherd", "smith", "hedger"], n: k % 12, w: 0, s: "s" + k });
+  assert.equal(m(many, {}).last.length, 10);
 });

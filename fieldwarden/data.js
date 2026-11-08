@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Fieldwarden — tables (data only, v1.0.0)
+// orOS Fieldwarden — tables (data only, v1.1.0)
 // Loaded before fieldwarden/engine.js (window.FieldwardenData) and by
 // Node (module.exports). Original names, numbers and rules (plan:
 // /mnt/project-files/games/strategy/fieldwarden-plan.md, Bible Part IX
@@ -19,8 +19,8 @@
 // INVADERS  id → { hp, mv Move, fly, animal, act: what it does }
 // ACTS      id → { unit: damage to a piece, field: stages a field loses,
 //                  barn: damage to the barn, push: tiles the piece is
-//                  pushed }  (charge has its own rule)
-// FARMS     [{ id, pool: [invader ids per season 1-4], boss }]
+//                  pushed }  (charge, burn and shout have their own rules)
+// FARMS     [{ id, pool: [invader ids per season 1-4], boss, wx, np, nh, ns }]
 // ============================================================
 (function (root) {
   "use strict";
@@ -64,7 +64,12 @@
     boar:    { hp: 3, mv: 2, fly: 0, animal: 1, act: "charge" },
     crow:    { hp: 1, mv: 4, fly: 1, animal: 1, act: "eat" },
     mole:    { hp: 2, mv: 2, fly: 0, animal: 1, act: "dig" },
-    captain: { hp: 6, mv: 2, fly: 0, animal: 0, act: "club", boss: 1 }
+    captain: { hp: 6, mv: 2, fly: 0, animal: 0, act: "club", boss: 1 },
+    // farm 2 and 3 (W2, 5.77.00)
+    fox:     { hp: 1, mv: 4, fly: 0, animal: 1, act: "raid" },
+    thief:   { hp: 2, mv: 3, fly: 0, animal: 0, act: "steal" },
+    torch:   { hp: 2, mv: 2, fly: 0, animal: 0, act: "burn" },
+    loud:    { hp: 2, mv: 2, fly: 0, animal: 0, act: "shout" }
   };
 
   var ACTS = {
@@ -73,13 +78,26 @@
     dig:    { unit: 1, field: 2, barn: 0, push: 0 },
     tram:   { unit: 1, field: 1, barn: 0, push: 0 },
     club:   { unit: 2, field: 1, barn: 1, push: 1 },
-    charge: { unit: 2, field: 1, barn: 1, push: 0 }
+    charge: { unit: 2, field: 1, barn: 1, push: 0 },
+    raid:   { unit: 1, field: 1, barn: 1, push: 0 },
+    steal:  { unit: 1, field: 3, barn: 0, push: 0 },
+    burn:   { unit: 1, field: 0, barn: 0, push: 0 },
+    shout:  { unit: 0, field: 0, barn: 0, push: 0 }
   };
 
-  // Farm 1 in W1; farms 2 and 3 (and drought, fire and the raiders)
-  // follow in W2.
+  // A farm: the invaders per season (1-4; the last season also brings
+  // the boss), the weather (wx: a draw 0-19 is calm below wx[0], wind
+  // below wx[1], rain below wx[2], else drought) and the tiles of a
+  // layout (base + a draw of 0 or 1 each: ponds np, hedges nh,
+  // haystacks ns). Farm 1 keeps its W1 numbers, so a code plays the
+  // same first farm as before.
   var FARMS = [
-    { id: "low", pool: [["wolf", "crow"], ["wolf", "crow", "boar"], ["wolf", "crow", "boar", "mole"], ["wolf", "crow", "boar", "mole"]], boss: "captain" }
+    { id: "low", pool: [["wolf", "crow"], ["wolf", "crow", "boar"], ["wolf", "crow", "boar", "mole"], ["wolf", "crow", "boar", "mole"]],
+      boss: "captain", wx: [9, 14, 20], np: 1, nh: 2, ns: 1 },
+    { id: "orchard", pool: [["wolf", "crow", "fox"], ["wolf", "crow", "fox", "thief"], ["boar", "crow", "fox", "thief", "mole"], ["boar", "crow", "fox", "thief", "torch"]],
+      boss: "captain", wx: [7, 12, 15], np: 1, nh: 3, ns: 2 },
+    { id: "river", pool: [["wolf", "crow", "mole", "torch"], ["boar", "crow", "thief", "torch", "loud"], ["wolf", "boar", "crow", "thief", "torch", "loud"], ["wolf", "boar", "fox", "mole", "thief", "torch", "loud"]],
+      boss: "captain", wx: [7, 13, 18], np: 2, nh: 2, ns: 1 }
   ];
 
   var api = { FOLK: FOLK, FOLK_IDS: FOLK_IDS, TOOLS: TOOLS, UPS: UPS, INVADERS: INVADERS, ACTS: ACTS, FARMS: FARMS };

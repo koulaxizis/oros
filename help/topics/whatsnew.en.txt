@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.77.00
+- **Fieldwarden: a whole year, fire and the Daily season.** A year now runs over three farms, the Lowland, Orchard Hill and River Bend. Foxes go for the barn, thieves take a ripe field in one go, torch-bearers set fires that spread with the wind (step on a fire to put it out) and loudmouths hide and call more thieves; drought dries the haystacks. On Harsh the invaders get tougher from the second farm. New `Daily season`: one season on Harsh, the same farm and folk for everyone that day, one try, with a score and a streak, and it shows in the Game Center's Today's dailies. `Records` lists your last ten years, with `Replay` to play one again.
+
 ## Version 5.76.00
 - **New game: Fieldwarden.** Guard the harvest on a small farm for a year. Pick three of six country folk, each with a tool: the Shepherd pulls with her crook, the Smith hammers, the Hedger plants hedges, the Beekeeper sends a swarm, the Ferryman shoves with his pole, the Scarecrow-maker throws turnips. Wolves, boars, crows and moles show what they will do; push them into each other, into hedges, into the pond or off the farm before they trample the fields. Bring in enough sheaves each season, spend the extra at the market, and face the bandit captain in the autumn. Mild or Harsh, undo of every move, nobody dies. In Games and in the Game Center under Strategy.
 

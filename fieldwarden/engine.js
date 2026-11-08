@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Fieldwarden — rules engine (v1.0.0)
+// orOS Fieldwarden — rules engine (v1.1.0)
 // NOT the UI: no DOM, no storage. Loaded by fieldwarden/index.html
 // (window.FieldwardenEngine, after fieldwarden/data.js) and by
 // tests/fieldwarden.test.js (module.exports).
@@ -14,7 +14,8 @@
 //
 // State (plain JSON, kept as is in the device-local session):
 //   { v: 1, seed, diff "m" Mild | "h" Harsh, end (farms in the year),
-//     farm 1…, sea season of the farm 1-4,
+//     farm 1…, sea season of the farm 1-4, one: 1 (a Daily season: this
+//     season only; absent in a year),
 //     folk: [{ c folk id, mh most Health, mv Move, u: [0|1, 0|1] upgrades }] × 3,
 //     coins, won seasons won, total sheaves, best (most in a season),
 //     ready (fields bought a stage ahead for the next season),
@@ -24,8 +25,10 @@
 //     t: [36 tiles], g: [36 field stages 0-3], x: [36 field bruised 0|1 | hedge Health],
 //     p: [36 pollinated 0|1], barn Health, bi barn tile,
 //     u: [unit], nid, next: [{ k, at }] (the invaders that come at the end of the turn),
-//     wx: [T + 1 weather, index = turn], sched: [T + 1 lists of invader ids],
-//     rw rewinds left (Mild), r rng, done 0|1, h harvest }
+//     wx: [T + 1 weather c calm | r rain | d drought | n e s w wind, index = turn], sched: [T + 1 lists of invader ids],
+//     rw rewinds left (Mild), r rng, done 0|1, h harvest,
+//     fire: [36 burning 0|1], hb: 0|1 extra Health for every invader
+//     (Harsh from farm 2) }  (fire and hb since 5.77.00: absent = none)
 //   unit = { id, k folk or invader id, f 1 folk | 0 invader, fi folk index | -1, at tile,
 //            hp, mh, mo moved, ac acted, it: null | { d 0-3, r distance, a act }, sn stunned }
 //   tiles: d dirt (mud while it rains), f field, h hedge (Health in x), H hedge
@@ -45,6 +48,12 @@
 //     into a hedge, haystack or the barn 1 damage; into another piece 1
 //     damage to both, and invaders lose their act; into the pond a
 //     ground invader is washed away; a piece pushed onto mud stops.
+//   - Fire (5.77.00): a burning tile burns at the end of the turn (a
+//     field loses a stage, a haystack or hedge burns away, a piece on
+//     it takes 1), then spreads a tile with the wind; in a drought
+//     every haystack with no farmhand next to it catches fire. Rain
+//     puts every fire out, and a farmhand who steps on one stamps it
+//     out.
 //   - No dice and no misses: chance comes only from the year code.
 // ============================================================
 (function (root) {
@@ -123,6 +132,13 @@
   function invaders(s) { return s.u.filter(function (u) { return u.f === 0; }); }
   function folks(s) { return s.u.filter(function (u) { return u.f === 1; }); }
   function mud(s, i) { return s.t[i] === "d" && s.wx[s.turn] === "r"; }
+  function fireAt(s, i) { return s.fire ? s.fire[i] : 0; }
+  function setFire(s, i, v) {
+    if (!s.fire) { if (!v) return; s.fire = []; for (var k = 0; k < SIZE; k++) s.fire.push(0); }
+    s.fire[i] = v;
+  }
+  // What can burn: a growing field, a haystack, a hedge (not the hedger's).
+  function burnable(s, i) { var c = s.t[i]; return (c === "f" && s.g[i] > 0) || c === "s" || c === "h"; }
   function flies(u) { return u.f === 0 && INVADERS[u.k].fly === 1; }
   function swims(u) { return u.f === 1 && u.k === "ferryman"; }
   // Can u stand on tile i (units aside)?
@@ -264,6 +280,12 @@
       if (mud(s, nx)) return;
     }
   }
+  // A farmhand steps onto a tile; a fire there is stamped out.
+  function moveFolk(s, u, to, ev) {
+    u.at = to;
+    u.mo = 1;
+    if (fireAt(s, to)) { setFire(s, to, 0); note(ev, { k: "douse", at: to }); }
+  }
   function applyTool(st, s, u, at, ev) {
     var tl = toolOf(st, u.fi), d = dirTo(u.at, at), v = unitAt(s, at);
     u.ac = 1;
@@ -297,7 +319,7 @@
   // ---------- The invaders ----------
   // Where an act lands now (-1: off the board / no act).
   function intentTile(s, u) {
-    if (!u.it || u.it.a === "charge") return -1;
+    if (!u.it || u.it.a === "charge" || u.it.a === "shout") return -1;
     var i = u.at;
     for (var k = 0; k < u.it.r; k++) { i = step(i, u.it.d); if (i < 0) return -1; }
     return i;
@@ -393,9 +415,31 @@
       fallbackTram(s, u);
       return;
     }
-    // crows: the ripest field, unhurt first; moles: the nearest field
+    if (I.act === "shout") {
+      // stays as far from the folk as it can, and shouts for a thief
+      var bestAt = u.at, bestD = -1;
+      for (var j = 0; j < SIZE; j++) {
+        if (dm[j] < 0) continue;
+        var dd = fo.length ? Math.min.apply(null, fo.map(function (h) { return dist(h.at, j); })) : 0;
+        if (dd > bestD || (dd === bestD && j < bestAt)) { bestD = dd; bestAt = j; }
+      }
+      u.at = bestAt;
+      u.it = { d: 0, r: 0, a: "shout" };
+      return;
+    }
+    // crows: the ripest field, unhurt first; moles: the nearest field;
+    // thieves and torch-bearers: the ripest field (torches also hay);
+    // foxes: the barn, else the nearest field
     var list;
-    if (u.k === "crow") {
+    if (u.k === "thief" || u.k === "torch") {
+      list = fieldsBy(s, function (a, b) { return s.g[b] - s.g[a] || s.x[a] - s.x[b] || dist(a, u.at) - dist(b, u.at) || a - b; })
+        .filter(function (i) { return s.g[i] > 0 && !fireAt(s, i); });
+      if (u.k === "torch") {
+        for (var hi = 0; hi < SIZE; hi++) if (s.t[hi] === "s" && !fireAt(s, hi)) list.push(hi);
+      }
+    } else if (u.k === "fox") {
+      list = (s.barn > 0 ? [s.bi] : []).concat(fieldsBy(s, function (a, b) { return dist(a, u.at) - dist(b, u.at) || s.g[b] - s.g[a] || a - b; }));
+    } else if (u.k === "crow") {
       list = fieldsBy(s, function (a, b) { return s.g[b] - s.g[a] || s.x[a] - s.x[b] || dist(a, u.at) - dist(b, u.at) || a - b; })
         .filter(function (i) { return crowSafe(s, i); });
     } else {
@@ -412,12 +456,16 @@
       if (a >= 0 && s.t[a] === "f" && !unitAt(s, a)) { u.it = { d: dir, r: 1, a: "tram" }; return; }
     }
   }
-  // The captain, hurt, whistles for a wolf (one a turn).
-  function whistle(s) {
+  // The captain, hurt, whistles for a wolf; a loudmouth shouts for a
+  // thief (one call a turn, it comes in at the end of the turn).
+  function whistle(s) { call(s, "wolf", null); }
+  function call(s, k, ev) {
     if (s.turn >= T || s.next.some(function (e) { return e.w; })) return;
-    var at = entryTiles(s, "wolf", s.next.map(function (e) { return e.at; }));
+    var at = entryTiles(s, k, s.next.map(function (e) { return e.at; }));
     if (!at.length) return;
-    s.next.push({ k: "wolf", at: at[rint(s.r, at.length)], w: 1 });
+    var e = { k: k, at: at[rint(s.r, at.length)], w: 1 };
+    s.next.push(e);
+    note(ev, { k: "call", at: e.at, u: k });
   }
   function reveal(st, s) {
     invaders(s).sort(function (a, b) { return a.id - b.id; }).forEach(function (u) { think(st, s, u); });
@@ -441,9 +489,15 @@
       } else if (s.t[cp.stop] === "b") hitBarn(s, A.barn, ev);
       return;
     }
+    if (u.it.a === "shout") { call(s, "thief", ev); return; }
     var tg = intentTile(s, u);
     if (tg < 0) return;
     var v = unitAt(s, tg);
+    if (u.it.a === "burn") {
+      if (v) damage(s, v, A.unit, ev);
+      if (burnable(s, tg) && !fireAt(s, tg)) { setFire(s, tg, 1); note(ev, { k: "fire", at: tg }); }
+      return;
+    }
     if (v) {
       damage(s, v, A.unit, ev);
       if (A.push && unitById(s, v.id) === v) push(s, v, u.it.d, A.push, ev);
@@ -472,7 +526,48 @@
         u.at = nx;
       });
     }
+    fireStep(s, ev);
     s.u.forEach(function (u) { u.sn = 0; });
+  }
+  // Fire, after the invaders and the wind (see the header).
+  function fireStep(s, ev) {
+    var w = s.wx[s.turn], i;
+    if (w === "r") {
+      if (s.fire && s.fire.some(function (v) { return v; })) note(ev, { k: "rainout" });
+      if (s.fire) for (i = 0; i < SIZE; i++) s.fire[i] = 0;
+      return;
+    }
+    var was = [];
+    for (i = 0; i < SIZE; i++) if (fireAt(s, i)) was.push(i);
+    was.forEach(function (j) {
+      var o = unitAt(s, j);
+      if (o) damage(s, o, 1, ev);
+      if (s.t[j] === "f") {
+        if (s.g[j] > 0) { s.g[j]--; note(ev, { k: "field", at: j, n: 1 }); }
+        s.x[j] = 1;
+      } else if (s.t[j] === "s" || s.t[j] === "h") {
+        s.t[j] = "d";
+        s.x[j] = 0;
+        note(ev, { k: "burnt", at: j });
+      }
+    });
+    var lit = [];
+    if (WIND[w] !== undefined) {
+      was.forEach(function (j) {
+        var nx = step(j, WIND[w]);
+        if (nx >= 0 && burnable(s, nx) && !fireAt(s, nx) && lit.indexOf(nx) < 0) lit.push(nx);
+      });
+    }
+    if (w === "d") {
+      for (i = 0; i < SIZE; i++) {
+        if (s.t[i] !== "s" || fireAt(s, i) || lit.indexOf(i) >= 0) continue;
+        var kept = s.u.some(function (h) { return h.f === 1 && dist(h.at, i) === 1; });
+        if (!kept) lit.push(i);
+      }
+    }
+    // a fire with nothing left to burn goes out
+    was.forEach(function (j) { if (!burnable(s, j)) setFire(s, j, 0); });
+    lit.forEach(function (j) { setFire(s, j, 1); note(ev, { k: "fire", at: j }); });
   }
   function grow(s, ev) {
     var bees = folks(s).filter(function (h) { return h.k === "beekeeper"; });
@@ -499,8 +594,8 @@
     });
   }
   function newInvader(s, k, at) {
-    var I = INVADERS[k];
-    var u = { id: s.nid++, k: k, f: 0, fi: -1, at: at, hp: I.hp, mh: I.hp, mo: 0, ac: 0, it: null, sn: 0 };
+    var I = INVADERS[k], hp = I.hp + (s.hb || 0);
+    var u = { id: s.nid++, k: k, f: 0, fi: -1, at: at, hp: hp, mh: hp, mo: 0, ac: 0, it: null, sn: 0 };
     s.u.push(u);
     return u;
   }
@@ -560,7 +655,7 @@
       fields = shuffle(r, interior.filter(function (j) { return j !== bi; })).slice(0, 9 + rint(r, 3));
       fields.forEach(function (j) { t[j] = "f"; g[j] = [0, 0, 1, 1, 2][rint(r, 5)]; });
       var rest = shuffle(r, Array.apply(null, { length: SIZE }).map(function (_, j) { return j; }).filter(function (j) { return t[j] === "d"; }));
-      var np = 1 + rint(r, 2), nh = 2 + rint(r, 2), ns = 1 + rint(r, 2);
+      var np = farm.np + rint(r, 2), nh = farm.nh + rint(r, 2), ns = farm.ns + rint(r, 2);
       for (k = 0; k < np + nh + ns; k++) {
         var j = rest[k];
         if (k < np) t[j] = "p";
@@ -581,7 +676,7 @@
     var wx = ["c", "c"];
     for (k = 2; k <= T; k++) {
       var w = rint(r, 20);
-      wx.push(w < 9 ? "c" : w < 14 ? "nesw".charAt(rint(r, 4)) : "r");
+      wx.push(w < farm.wx[0] ? "c" : w < farm.wx[1] ? "nesw".charAt(rint(r, 4)) : w < farm.wx[2] ? "r" : "d");
     }
     var pool = farm.pool[st.sea - 1], pick = function () { return pool[rint(r, pool.length)]; };
     var first = [];
@@ -596,7 +691,8 @@
     }
     var s = { turn: 1, q: 0, max: fields.length * MAX_STAGE, wish: wish, drove: 0, t: t, g: g, x: x, p: p,
       barn: BARN_HP, bi: bi, u: [], nid: 1, next: [], wx: wx, sched: sched, rw: st.diff === "m" ? 1 : 0,
-      r: { s: hashStr("in:" + st.seed + ":" + st.farm + ":" + st.sea + ":" + salt) }.s, done: 0, h: 0 };
+      r: { s: hashStr("in:" + st.seed + ":" + st.farm + ":" + st.sea + ":" + salt) }.s, done: 0, h: 0,
+      fire: p.slice(), hb: st.diff === "h" && st.farm >= 2 ? 1 : 0 };
     // the folk start next to the barn
     var spots = [];
     for (i = 0; i < SIZE; i++) if (t[i] !== "p" && !BLOCK[t[i]]) spots.push(i);
@@ -656,7 +752,24 @@
     st.s = makeSeason(st);
     return st;
   }
-  function lastSeason(st) { return st.farm >= st.end && st.sea >= SEASONS; }
+  // The Daily season (5.77.00): one season on Harsh, the farm, season
+  // and three folk all from the code (the same for everyone that day).
+  function dailyOf(seed) {
+    var r = { s: hashStr(seed + ":daily") };
+    var trio = shuffle(r, FOLK_IDS.slice()).slice(0, 3).sort(function (a, b) { return FOLK_IDS.indexOf(a) - FOLK_IDS.indexOf(b); });
+    return { trio: trio, farm: 1 + rint(r, FARMS.length), sea: 1 + rint(r, SEASONS) };
+  }
+  function newDaily(seed) {
+    var d = dailyOf(String(seed));
+    var st = { v: 1, seed: String(seed), diff: "h", end: d.farm, farm: d.farm, sea: d.sea, one: 1,
+      folk: d.trio.map(function (c) { return { c: c, mh: FOLK[c].hp, mv: FOLK[c].mv, u: [0, 0] }; }),
+      coins: 0, won: 0, total: 0, best: 0, ready: 0, phase: "play", res: null, s: null, acts: 0, over: -1 };
+    st.s = makeSeason(st);
+    return st;
+  }
+  // A Daily season's score: the sheaves plus the wish bonus.
+  function dailyScore(st) { return st.res ? st.res.h + (st.res.w ? WISH_BONUS : 0) : 0; }
+  function lastSeason(st) { return st.one === 1 || (st.farm >= st.end && st.sea >= SEASONS); }
   function finishSeason(st, ev) {
     var s = st.s, h = harvestOf(s), w = wishOk(s);
     s.done = 1;
@@ -705,8 +818,7 @@
       if (a.t === "mv") {
         if (movesS(st, s, u).indexOf(a.to) < 0) return null;
         note(ev, { k: "move", from: u.at, at: a.to });
-        u.at = a.to;
-        u.mo = 1;
+        moveFolk(s, u, a.to, ev);
       } else {
         if (targetsS(st, s, u).indexOf(a.at) < 0) return null;
         withRng(s, function () { applyTool(st, s, u, a.at, ev); });
@@ -736,7 +848,7 @@
       return ev;
     }
     if (a.t === "next") {
-      if (st.phase !== "shop") return null;
+      if (st.phase !== "shop" || st.one) return null;
       if (st.sea >= SEASONS) { st.farm++; st.sea = 1; } else st.sea++;
       st.phase = "play";
       st.res = null;
@@ -756,13 +868,16 @@
           it: u.it ? { d: u.it.d, r: u.it.r, a: u.it.a } : null, sn: u.sn };
       }),
       nid: s.nid, next: s.next.map(function (e) { return e.w ? { k: e.k, at: e.at, w: 1 } : { k: e.k, at: e.at }; }),
-      wx: s.wx, sched: s.sched, rw: s.rw, r: s.r, done: s.done, h: s.h };
+      wx: s.wx, sched: s.sched, rw: s.rw, r: s.r, done: s.done, h: s.h, fire: s.fire ? s.fire.slice() : null, hb: s.hb || 0 };
   }
   function clone(st) { return JSON.parse(JSON.stringify(st)); }
   // How good a season looks after the invaders have acted.
   function scoreS(s) {
     var left = T - s.turn + 1, sc = 0;
-    for (var i = 0; i < SIZE; i++) if (s.t[i] === "f") sc += 10 * (s.x[i] ? s.g[i] : Math.min(MAX_STAGE, s.g[i] + left));
+    for (var i = 0; i < SIZE; i++) {
+      if (s.t[i] === "f") sc += 10 * (s.x[i] ? s.g[i] : Math.min(MAX_STAGE, s.g[i] + left)) - (fireAt(s, i) ? 25 : 0);
+      else if (fireAt(s, i)) sc -= 8;
+    }
     s.u.forEach(function (u) {
       if (u.f === 1) sc += 8 + 3 * u.hp;
       else sc -= 4 + 2 * u.hp;
@@ -785,8 +900,7 @@
     var spots = [u.at].concat(movesS(st, s, u)), best = null;
     spots.forEach(function (at) {
       var c = cloneS(s), cu = folkUnit(c, fi);
-      cu.at = at;
-      if (at !== u.at) cu.mo = 1;
+      if (at !== u.at) moveFolk(c, cu, at, null);
       var tgs = [-1].concat(targetsS(st, c, cu));
       tgs.forEach(function (tg) {
         var d = cloneS(c), du = folkUnit(d, fi);
@@ -805,7 +919,7 @@
         var b = bestFor(st, c, fi);
         if (!b) return;
         var u = folkUnit(c, fi);
-        if (b.at !== u.at) { plan.push({ t: "mv", u: u.id, to: b.at }); u.at = b.at; u.mo = 1; }
+        if (b.at !== u.at) { plan.push({ t: "mv", u: u.id, to: b.at }); moveFolk(c, u, b.at, null); }
         if (b.tg >= 0) { plan.push({ t: "tool", u: u.id, at: b.tg }); withRng(c, function () { applyTool(st, c, u, b.tg, null); }); }
       });
       var sc = simAfter(st, c);
@@ -820,7 +934,7 @@
       planTurn(tmp, c, false).forEach(function (a) {
         var u = unitById(c, a.u);
         if (!u) return;
-        if (a.t === "mv") { u.at = a.to; u.mo = 1; }
+        if (a.t === "mv") moveFolk(c, u, a.to, null);
         else withRng(c, function () { applyTool(tmp, c, u, a.at, null); });
       });
       var last = c.turn >= T;
@@ -891,7 +1005,9 @@
     if ((s.done !== 0 && s.done !== 1) || !isInt(s.h) || s.h < 0) return false;
     var w = s.wish;
     if (!w || ["star", "barn", "drive"].indexOf(w.k) < 0 || (w.k === "star" && !(isInt(w.i) && w.i >= 0 && w.i < SIZE))) return false;
-    if (!Array.isArray(s.wx) || s.wx.length !== T + 1 || !s.wx.every(function (c) { return ["c", "r", "n", "e", "s", "w"].indexOf(c) >= 0; })) return false;
+    if (!Array.isArray(s.wx) || s.wx.length !== T + 1 || !s.wx.every(function (c) { return ["c", "r", "d", "n", "e", "s", "w"].indexOf(c) >= 0; })) return false;
+    if (s.fire !== undefined && s.fire !== null && !arr(s.fire, function (v) { return v === 0 || v === 1; })) return false;
+    if (s.hb !== undefined && s.hb !== 0 && s.hb !== 1) return false;
     if (!Array.isArray(s.sched) || s.sched.length !== T + 1 || !s.sched.every(function (l) {
       return Array.isArray(l) && l.length <= 9 && l.every(function (k) { return INVADERS.hasOwnProperty(k); });
     })) return false;
@@ -916,6 +1032,7 @@
     if (!st || typeof st !== "object" || st.v !== 1 || typeof st.seed !== "string" || !/^[a-z0-9]{1,16}$/.test(st.seed)) return false;
     if (DIFFS.indexOf(st.diff) < 0 || !isInt(st.end) || st.end < 1 || st.end > FARMS.length) return false;
     if (!isInt(st.farm) || st.farm < 1 || st.farm > st.end || !isInt(st.sea) || st.sea < 1 || st.sea > SEASONS) return false;
+    if (st.one !== undefined && (st.one !== 1 || st.farm !== st.end || st.diff !== "h" || st.phase !== "play")) return false;
     if (!Array.isArray(st.folk) || st.folk.length !== 3 || !trioOk(st.folk.map(function (f) { return f && f.c; }))) return false;
     if (!st.folk.every(function (f) {
       return isInt(f.mh) && f.mh >= FOLK[f.c].hp && f.mh <= MAX_HP && isInt(f.mv) && f.mv >= FOLK[f.c].mv && f.mv <= MAX_MV &&
@@ -939,6 +1056,7 @@
     hashStr: hashStr, step: step, dist: dist, dirTo: dirTo, unitAt: unitAt, unitById: unitById, folkUnit: folkUnit,
     trioOk: trioOk, newYear: newYear, toolOf: toolOf, actOrder: actOrder, intentTile: intentTile, chargePath: chargePath,
     harvestOf: harvestOf, wishOk: wishOk, shopOk: shopOk, lastSeason: lastSeason,
+    newDaily: newDaily, dailyOf: dailyOf, dailyScore: dailyScore, fireAt: fireAt,
     moves: function (st, id) { return movesS(st, st.s, unitById(st.s, id)); },
     targets: function (st, id) { return targetsS(st, st.s, unitById(st.s, id)); },
     projected: function (s) {
