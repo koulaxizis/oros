@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.90.01
+- **Adding titles is stricter.** When Claude or the Assistant adds items with details an app has no place for, nothing is added and it hears which details those were, instead of losing them. Publishing titles also take the cover designer, the narrator and other people (for example typesetting).
+
 ## Version 5.90.00
 - **orOS Gate: personal apps by choice, and the gate id.** Mail, Diary, Mood, Cycle, Health, Fitness and Baby can now be offered to Claude, each after a clear warning: Claude only reads them, only while orOS is open, and they are never in the copy Claude reads while orOS is closed. Passwords and the Assistant are still never offered. Settings › orOS Gate also shows a short `Gate id`; when orOS is closed Claude says which gate its link points to, so a connector that needs connecting again shows at once.
 
