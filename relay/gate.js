@@ -814,7 +814,7 @@ export class GateBox {
         method: "POST", headers: { "X-Now": String(now) }, body: JSON.stringify({ id: b.id, lv: b.lv })
       }));
       if (!res.ok) return devErr(503, "nostore");
-      return jsonRes(200, { ok: true, data: { code: jc, exp: now + GATE_LIMITS.pairMs } });
+      return jsonRes(200, { ok: true, data: { code: jc, exp: now + GATE_LIMITS.pairMs, devices: devList(m).length } });
     }
     if (b.act === "revoke") {
       const all = await this.tokens();
@@ -916,6 +916,8 @@ export class GateBox {
     const client = pair[0], server = pair[1];
     this.state.acceptWebSocket(server);
     setAtt(server, { th: th, v: 1, at: now });
+    // The app switches the devices share (5.76.00): the newest set goes to a device as it connects.
+    if (m.lv) { try { server.send(JSON.stringify({ lv: m.lv, lvt: m.lvt || 0 })); } catch (e) {} }
     return new Response(null, { status: 101, webSocket: client, headers: { "Sec-WebSocket-Protocol": "gt1" } });
   }
 
@@ -931,12 +933,26 @@ export class GateBox {
     }
     let o;
     try { o = JSON.parse(msg); } catch (e) { return; }
+    if (o && o.lv !== undefined && o.r === undefined) { await this.shareLv(ws, o.lv); return; }
     if (!o || typeof o.r !== "string") return;
     const w = this.wait.get(o.r);
     if (!w) return;
     this.wait.delete(o.r);
     clearTimeout(w.timer);
     w.done(o);
+  }
+  // A device changed its app switches: keep them (the newest wins) and
+  // pass them to the gate's other devices. Each device checks them again
+  // against its own NEVER list and the apps that may be changed.
+  async shareLv(ws, raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return;
+    const lv = cleanLv(raw);
+    const m = await this.meta();
+    if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    m.lv = lv; m.lvt = Date.now();
+    await this.st.put("meta", m);
+    const msg = JSON.stringify({ lv: lv, lvt: m.lvt });
+    for (const s of this.sockets()) { if (s !== ws) { try { s.send(msg); } catch (e) {} } }
   }
   async webSocketClose(ws) { try { ws.close(1000, "bye"); } catch (e) {} }
   async webSocketError(ws) { await this.webSocketClose(ws); }

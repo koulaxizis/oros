@@ -252,3 +252,18 @@ test("write rules: only write level, only inside the window", () => {
   assert.equal(G.canWrite({ notes: "write" }, 2000, "notes", 1000), false, "only apps with write tools");
   assert.deepEqual(G.allowed([{ id: "budget" }], { budget: "write" }).map((a) => a.id), ["budget"], "write also reads");
 });
+
+test("switches from another device: never-apps off, write only where allowed (5.76.00)", () => {
+  assert.deepEqual(G.lvFrom({ budget: "write", diary: "read", passwords: "write", invoices: "write", kanban: "write", stock: "read", x: "maybe" }),
+    { budget: "write", invoices: "read", kanban: "write", stock: "read" });
+  assert.deepEqual(G.lvFrom(null), {});
+  assert.deepEqual(G.lvFrom(["budget"]), {});
+});
+
+test("join QR link: #gate-join=CODE, only the code alphabet (5.76.00)", () => {
+  assert.equal(G.joinHash("#gate-join=ABCD2345"), "ABCD2345");
+  assert.equal(G.joinHash("#gate-join=abcd2345"), "");
+  assert.equal(G.joinHash("#gate-join=ABCD1345"), "", "no 1 in the code alphabet");
+  assert.equal(G.joinHash("#gate-join=ABCD2345&x"), "");
+  assert.equal(G.joinHash(""), "");
+});

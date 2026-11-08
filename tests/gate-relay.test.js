@@ -362,3 +362,28 @@ test("a gate made before 5.70.00 (meta.th) still works and can take a second dev
   assert.deepEqual(m.devs.map((d) => d.th), [hex(TOK), hex(TOK2)]);
   assert.equal(m.th, undefined);
 });
+
+test("app switches are shared: a device's change is kept and passed to the others (5.76.00)", async () => {
+  const w = world();
+  await newGate(w);
+  const inv = await (await dev(w, { act: "invite", tok: TOK })).json();
+  assert.equal(inv.data.devices, 1, "invite says how many devices there are");
+  await join(w, inv.data.code, TOK2);
+  const b = w.boxes.get(ID);
+  const s1 = { sent: [], __g: { th: hex(TOK), v: 1, at: 1 }, send(m) { this.sent.push(m); }, close() {} };
+  const s2 = { sent: [], __g: { th: hex(TOK2), v: 1, at: 2 }, send(m) { this.sent.push(m); }, close() {} };
+  const stranger = { sent: [], __g: { th: hex("Z".repeat(43)), v: 1, at: 3 }, send(m) { this.sent.push(m); }, close() {} };
+  b.socks.push(s1, s2, stranger);
+  await b.box.webSocketMessage(s1, JSON.stringify({ lv: { budget: "write", kanban: "read", "Bad Key": "read", x: "maybe" } }));
+  assert.equal(s1.sent.length, 0, "not echoed to the sender");
+  assert.equal(s2.sent.length, 1);
+  assert.deepEqual(JSON.parse(s2.sent[0]).lv, { budget: "write", kanban: "read" });
+  const m = await b.st.storage.get("meta");
+  assert.deepEqual(m.lv, { budget: "write", kanban: "read" });
+  // a socket that is not a device of this gate cannot set them
+  await b.box.webSocketMessage(stranger, JSON.stringify({ lv: { invoices: "read" } }));
+  assert.deepEqual((await b.st.storage.get("meta")).lv, { budget: "write", kanban: "read" });
+  // not an object: ignored
+  await b.box.webSocketMessage(s1, JSON.stringify({ lv: ["budget"] }));
+  assert.deepEqual((await b.st.storage.get("meta")).lv, { budget: "write", kanban: "read" });
+});

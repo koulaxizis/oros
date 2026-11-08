@@ -700,6 +700,19 @@
     oms.forEach(function (c) { c.om = now; });
     return { ok: true, data: M.canonState(d, now), n: n, kept: kept };
   }
+  // App switches from another device of the gate (via the relay):
+  // only "read", and "write" for apps that may be changed; never-apps
+  // stay off whatever arrives (5.76.00).
+  function lvFrom(raw) {
+    var out = {};
+    if (!isObj(raw)) return out;
+    Object.keys(raw).slice(0, 80).forEach(function (k) {
+      if (NEVER.indexOf(k) >= 0) return;
+      if (raw[k] === "write") out[k] = WRITES[k] ? "write" : "read";
+      else if (raw[k] === "read") out[k] = "read";
+    });
+    return out;
+  }
   // Apps whose items Claude may change, and the tools for them.
   var WRITES = { budget: ["budget_add", "budget_change", "budget_delete"],
                  kanban: ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"] };
@@ -715,7 +728,7 @@
 
   var core = { NEVER: NEVER, budgetLines: budgetLines, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
-               kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo,
+               kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash,
                WRITES: WRITES, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
@@ -744,6 +757,11 @@
       return Array.prototype.map.call(new Uint8Array(buf), function (x) { return (x < 16 ? "0" : "") + x.toString(16); }).join("");
     });
   }
+  // A device joins by scanning the code's QR: "#gate-join=XXXXXXXX".
+  function joinHash(h) {
+    var m = /^#gate-join=([ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8})$/.exec(String(h || ""));
+    return m ? m[1] : "";
+  }
   // The relay of this gate: the one it was made on while it is on, else
   // the one orOS uses now.
   function relayNow() { return relayOf(readJSON("oros-mail-data")); }
@@ -756,7 +774,7 @@
       }); });
   }
 
-  var listeners = [];
+  var listeners = [], pendingJoin = "";
   function changed() { listeners.slice().forEach(function (fn) { try { fn(); } catch (e) {} }); }
 
   var ws = null, wsState = "off", retry = 0, retryTimer = null, pingTimer = null, winTimer = null;
@@ -775,10 +793,15 @@
       retry = 0;
       setWs("on");
       sendVis(sock);
+      if (pref().lvd) sendLv(sock);
       clearInterval(pingTimer);
       pingTimer = setInterval(function () { try { sock.send("ping"); } catch (e) {} }, 45000);
     };
-    sock.onmessage = function (ev) { if (typeof ev.data === "string" && ev.data !== "pong") onCall(sock, ev.data); };
+    sock.onmessage = function (ev) {
+      if (typeof ev.data !== "string" || ev.data === "pong") return;
+      if (ev.data.indexOf('{"lv"') === 0) { onLv(ev.data); return; }
+      onCall(sock, ev.data);
+    };
     sock.onclose = function (ev) {
       if (ws === sock) ws = null;
       clearInterval(pingTimer);
@@ -788,6 +811,30 @@
       schedule();
     };
     sock.onerror = function () {};
+  }
+  // The app switches are shared by the gate's devices (5.76.00): a
+  // change here goes to the relay, which passes it to the others; one
+  // made while offline (lvd) goes on the next connection and wins.
+  function sendLv(sock) {
+    var p = pref();
+    try {
+      if (!sock || sock.readyState !== 1) return;
+      sock.send(JSON.stringify({ lv: isObj(p.lv) ? p.lv : {} }));
+      delete p.lvd;
+      writeJSON(PREF_KEY, p);
+    } catch (e) {}
+  }
+  function onLv(text) {
+    var o;
+    try { o = JSON.parse(text); } catch (e) { return; }
+    var p = pref();
+    if (!isObj(o) || !p.on || p.lvd) return;
+    var lv = lvFrom(o.lv);
+    if (JSON.stringify(lv) === JSON.stringify(isObj(p.lv) ? p.lv : {})) return;
+    p.lv = lv;
+    if (!writeJSON(PREF_KEY, p)) return;
+    if (lv.kanban === "write") kanbanModel().then(null, function () {});
+    changed();
   }
   // The relay asks a device whose orOS is on screen first (5.73.00):
   // a phone in the background loses its socket, a computer keeps it.
@@ -1008,6 +1055,14 @@
   /* ---------- API for Settings ---------- */
   var api = {
     relayUrl: function () { return relay() + "/mcp"; },
+    // The address a phone opens by scanning the join QR (useoros.online or this orOS).
+    joinLink: function (code) {
+      var base = "";
+      try { base = root.location.origin + root.location.pathname; } catch (e) {}
+      return (/^https?:/.test(base) ? base : "https://useoros.online/") + "#gate-join=" + String(code || "");
+    },
+    // A code that came in a scanned QR, once (Settings fills it in).
+    takeJoin: function () { var c = pendingJoin; pendingJoin = ""; return c; },
     never: NEVER.slice(),
     state: function () {
       var p = pref();
@@ -1033,7 +1088,9 @@
       p.lv = isObj(p.lv) ? p.lv : {};
       if (level === "read" || level === "write") p.lv[id] = level; else delete p.lv[id];
       if (id === "kanban" && level === "write") kanbanModel().then(null, function () {});
+      if (p.on) p.lvd = 1;
       var okW = writeJSON(PREF_KEY, p);
+      if (okW && p.on && ws) sendLv(ws);
       changed();
       return okW;
     },
@@ -1236,6 +1293,17 @@
       try { history.replaceState(null, "", location.pathname + location.search.replace(/([?&])gate=[^&]*&?/, "$1").replace(/[?&]$/, "") + location.hash); } catch (e) {}
     }
     if (ask) whenUnlocked(function () { consent(ask); });
+    // A scanned join QR: Settings › orOS Gate opens with the code filled in.
+    var jc = joinHash(location.hash);
+    if (jc) {
+      pendingJoin = jc;
+      try { history.replaceState(history.state, "", location.pathname + location.search); } catch (e) {}
+      var openJ = function (n) {
+        if (typeof root.__orosOpenAt === "function") root.__orosOpenAt("settings", { section: "services", item: "gate" });
+        else if (n < 20) setTimeout(function () { openJ(n + 1); }, 500);
+      };
+      whenUnlocked(function () { setTimeout(function () { openJ(0); }, 600); });
+    }
     connect();
     document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") api.reconnect(); });
     root.addEventListener("online", function () { api.reconnect(); });
