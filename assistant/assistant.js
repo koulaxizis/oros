@@ -519,6 +519,10 @@
       "f.waterDays": "Water every (days)", "f.record": "Record", "f.pet": "Pet", "f.nextDue": "Next due", "f.vet": "Vet",
       "f.perweek": "Times a week", "f.permonth": "Times a month", "f.water": "Water every (days)", "f.nextdue": "Next due",
       "f.until": "Last day", "f.platform": "Platform",
+      "f.sub": "Subtitle", "f.translator": "Translator", "f.illustrator": "Illustrator", "f.editor": "Editor", "f.series": "Series",
+      "f.release": "Release date", "f.lang": "Language", "f.format": "Edition", "f.pages": "Pages", "f.product": "Shop product", "f.blurb": "Back-cover text",
+      "pf.paperback": "Paperback", "pf.hardback": "Hardback", "pf.ebook": "E-book", "pf.audiobook": "Audiobook", "pf.other": "Other",
+      "st.idea": "Idea", "st.production": "In production", "st.released": "Released", "st.out_of_print": "Out of print",
       "ft.a.run": "Running", "ft.a.walk": "Walking", "ft.a.bike": "Cycling", "ft.a.swim": "Swimming", "ft.a.row": "Rowing",
       "f.deck": "Deck", "f.front": "Front", "f.back": "Back", "f.songs": "Songs", "chg.disk": "The change could not be written to the orOS disk.", "f.read": "Read", "f.played": "Played", "f.queue": "In the queue", "f.price": "Price", "v.read": "read", "v.unread": "not read", "v.played": "played", "v.unplayed": "not played",
       "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN", "f.networks": "Where", "f.book": "About",
@@ -1156,6 +1160,10 @@
       "f.waterDays": "Πότισμα κάθε (μέρες)", "f.record": "Εγγραφή", "f.pet": "Κατοικίδιο", "f.nextDue": "Επόμενη φορά", "f.vet": "Κτηνίατρος",
       "f.perweek": "Φορές την εβδομάδα", "f.permonth": "Φορές τον μήνα", "f.water": "Πότισμα κάθε (μέρες)", "f.nextdue": "Επόμενη φορά",
       "f.until": "Τελευταία μέρα", "f.platform": "Πλατφόρμα",
+      "f.sub": "Υπότιτλος", "f.translator": "Μετάφραση", "f.illustrator": "Εικονογράφηση", "f.editor": "Επιμέλεια", "f.series": "Σειρά",
+      "f.release": "Ημερομηνία κυκλοφορίας", "f.lang": "Γλώσσα", "f.format": "Έκδοση", "f.pages": "Σελίδες", "f.product": "Προϊόν στο κατάστημα", "f.blurb": "Κείμενο οπισθόφυλλου",
+      "pf.paperback": "Χαρτόδετο", "pf.hardback": "Σκληρόδετο", "pf.ebook": "E-book", "pf.audiobook": "Ηχητικό βιβλίο", "pf.other": "Άλλο",
+      "st.idea": "Ιδέα", "st.production": "Σε παραγωγή", "st.released": "Κυκλοφορεί", "st.out_of_print": "Εξαντλημένο",
       "ft.a.run": "Τρέξιμο", "ft.a.walk": "Περπάτημα", "ft.a.bike": "Ποδήλατο", "ft.a.swim": "Κολύμπι", "ft.a.row": "Κωπηλασία",
       "f.deck": "Τράπουλα", "f.front": "Μπροστά", "f.back": "Πίσω", "f.songs": "Τραγούδια", "chg.disk": "Η αλλαγή δεν γράφτηκε στον δίσκο του orOS.", "f.read": "Διαβασμένο", "f.played": "Ακούστηκε", "f.queue": "Στην ουρά", "f.price": "Τιμή", "v.read": "διαβασμένο", "v.unread": "αδιάβαστο", "v.played": "ακούστηκε", "v.unplayed": "δεν ακούστηκε",
       "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN", "f.networks": "Πού", "f.book": "Για",
@@ -4939,9 +4947,12 @@
   // Wave 4 (AS-ADD6): habits, finished workouts, a vehicle's services
   // and renewals, plants, a pet's health records and Media Shelf
   // titles, in assistant/additems3.js with the app's own core.
-  var ADD3_IDS = ["habits", "fitness", "garage", "plants", "petcare", "shelf"];
+  // AS-ADD7: titles the user publishes (Publishing), same file, with
+  // Publishing's own core.
+  var ADD3_IDS = ["habits", "fitness", "garage", "plants", "petcare", "shelf", "publish"];
   var ADD3_CORES = { habits: ["OrosHabitsModel", "../habits/model.js"], plants: ["OrosPlantsCore", "../plants/core.js"],
-                     petcare: ["OrosPetcareCore", "../petcare/core.js"], garage: ["OrosGarageCore", "../garage/core.js"] };
+                     petcare: ["OrosPetcareCore", "../petcare/core.js"], garage: ["OrosGarageCore", "../garage/core.js"],
+                     publish: ["OrosPublishCore", "../publish/core.js"] };
   ADD_IDS = ADD_IDS.concat(ADD2_IDS, TRAVEL_ADD, ADD3_IDS);
   var addScripts = {};
   function loadOnce(src) {
@@ -4978,7 +4989,14 @@
   function createCtx() {
     var sn = stickiesHost(), color = "";
     try { color = sn && typeof sn.prefs === "function" ? sn.prefs().color : ""; } catch (e) { color = ""; }
-    return { today: ymdNow(), lang: LANG, bm: window.OrosBookmarksCore || null, crm: window.OrosCrmCore || null, stickyColor: color };
+    // AS-ADD7: the WooCommerce shops of Connected services (id, name,
+    // address only), for a Publishing edition's product link
+    var woo = [];
+    try {
+      var lk = shell() && shell().orosLinks;
+      woo = lk && typeof lk.list === "function" ? lk.list("woo").map(function (a) { return { id: a.id, name: a.name || "", site: a.site || "" }; }) : [];
+    } catch (e) { woo = []; }
+    return { today: ymdNow(), lang: LANG, bm: window.OrosBookmarksCore || null, crm: window.OrosCrmCore || null, stickyColor: color, woo: woo };
   }
   // Sticky Notes are written only by the shell's host (stickies/host.js):
   // read through it (its unsaved typing included), added with
@@ -5291,6 +5309,11 @@
     if ((f === "record" || f === "media") && STRINGS.en["v." + (v === "renewal" ? "reminder" : v)] !== undefined) return t("v." + (v === "renewal" ? "reminder" : v));
     if (f === "status" && STRINGS.en["st." + v] !== undefined) return t("st." + v);
     if (f === "activity" && STRINGS.en["ft.a." + v] !== undefined) return t("ft.a." + v);
+    // AS-ADD7: a Publishing format, "paperback|14.50 EUR"
+    if (f === "format" && typeof v === "string") {
+      var fp = v.split("|");
+      return (STRINGS.en["pf." + fp[0]] !== undefined ? t("pf." + fp[0]) : fp[0]) + (fp[1] ? " \u00b7 " + fp.slice(1).join("|") : "");
+    }
     if (f === "reminder" && typeof v === "number") {
       return v === 1440 ? t("cr.rem.d1") : v % 1440 === 0 ? t("cr.rem.d", { n: v / 1440 }) : v % 60 === 0 ? t("cr.rem.h", { n: v / 60 }) : t("cr.rem.m", { n: v });
     }
