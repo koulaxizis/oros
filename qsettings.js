@@ -199,6 +199,7 @@
   // Static icons (never data).
   var SV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
   var IC = {
+    gate: SV + '<path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/></svg>',
     net: SV + '<path d="M2 8.5a15 15 0 0 1 20 0"/><path d="M5 12a10.5 10.5 0 0 1 14 0"/><path d="M8.5 15.5a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg>',
     netOff: SV + '<path d="M2 8.5a15 15 0 0 1 20 0" opacity=".35"/><path d="M5 12a10.5 10.5 0 0 1 14 0" opacity=".35"/><path d="M8.5 15.5a5.5 5.5 0 0 1 7 0" opacity=".35"/><path d="M3 3l18 18"/></svg>',
     power: SV + '<path d="M12 3v9"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg>',
@@ -243,6 +244,16 @@
     return batteryAttr(doc.documentElement.getAttribute("data-oros-sys-battery")) || battery;
   }
 
+  // { win } when the gate is on and Claude may change at least one app.
+  function gate() {
+    return call(function () {
+      var G = root.orosGate;
+      if (!G || typeof G.state !== "function" || typeof G.apps !== "function") return null;
+      var st = G.state();
+      if (!st.on || !G.apps().some(function (a) { return a.write; })) return null;
+      return { hold: st.hold || 0 };
+    }) || null;
+  }
   function dnd() { return call(function () { return root.orosNotifs && root.orosNotifs.dnd ? root.orosNotifs.dnd() : null; }); }
 
   function paintBtn() {
@@ -413,7 +424,16 @@
       if (O.isOpen()) O.hide(); else { close(); O.show(); }
       if (panel) paint();
     });
-    [parts.net, parts.sync, parts.dark, parts.dnd, parts.big, parts.contrast, parts.osk].forEach(function (p) { grid.appendChild(p.box); });
+    // orOS Gate: Claude's changes (one rule, 5.78.00): one press pauses
+    // them for 1 hour or resumes; the arrow gives 1 hour / 4 hours /
+    // until resumed.
+    parts.gate = pill(IC.gate, function () {
+      var g = gate();
+      if (!g) return;
+      call(function () { root.orosGate.setPause(g.hold ? 0 : 60); });
+      paint();
+    }, function () { setSub(sub === "gate" ? "" : "gate"); }, t("qs.gate.more"));
+    [parts.net, parts.sync, parts.dark, parts.dnd, parts.gate, parts.big, parts.contrast, parts.osk].forEach(function (p) { grid.appendChild(p.box); });
     panel.appendChild(grid);
 
     parts.dndMenu = el("div", "qs-menu");
@@ -427,6 +447,17 @@
     parts.dndOff = menuItem("", t("qs.dnd.turnoff"), function () { setDnd(false); setSub(""); });
     parts.dndMenu.appendChild(parts.dndOff);
     panel.appendChild(parts.dndMenu);
+
+    parts.gateMenu = el("div", "qs-menu");
+    parts.gateMenu.setAttribute("role", "group");
+    parts.gateMenu.appendChild(el("h3")).textContent = t("qs.gate");
+    [[60, "qs.gate.60"], [240, "qs.gate.240"], [Infinity, "qs.gate.inf"]].forEach(function (c) {
+      parts.gateMenu.appendChild(menuItem("", t(c[1]), function () { call(function () { root.orosGate.setPause(c[0]); }); setSub(""); }));
+    });
+    parts.gateOff = menuItem("", t("qs.gate.resume"), function () { call(function () { root.orosGate.setPause(0); }); setSub(""); });
+    parts.gateMenu.appendChild(parts.gateOff);
+    parts.gateMenu.appendChild(menuItem("", t("qs.gate.settings"), then(function () { host.settings("services"); })));
+    panel.appendChild(parts.gateMenu);
 
     parts.media = el("div", "qs-media");
     parts.media.setAttribute("role", "group");
@@ -512,6 +543,12 @@
     parts.dndMenu.hidden = sub !== "dnd" || !d;
     if (parts.dnd.more) parts.dnd.more.setAttribute("aria-expanded", sub === "dnd" ? "true" : "false");
     parts.dndOff.hidden = !(d && d.on);
+    var g = gate();
+    parts.gate.box.hidden = !g;
+    if (g) setPill(parts.gate, t("qs.gate"), !g.hold ? t("qs.gate.on") : g.hold >= 8e15 ? t("qs.gate.paused") : t("qs.gate.until").replace("{t}", fmtTime(new Date(g.hold))), !g.hold, true);
+    parts.gateMenu.hidden = sub !== "gate" || !g;
+    if (parts.gate.more) parts.gate.more.setAttribute("aria-expanded", sub === "gate" ? "true" : "false");
+    parts.gateOff.hidden = !(g && g.hold);
 
     var a = host.a11y.get();
     setPill(parts.big, t("qs.big"), "", bigOn(a.size), true);

@@ -364,6 +364,42 @@ test("a gate made before 5.70.00 (meta.th) still works and can take a second dev
   assert.equal(m.th, undefined);
 });
 
+// GATE-ACT (2026-11-08): the open device adds its own tools; they are
+// kept for when the device is closed, and calls to them go through.
+test("tools/list asks the device for its tools, keeps them, and passes their calls", async () => {
+  const w = world();
+  await newGate(w);
+  const t = await tokens(w);
+  const b = w.boxes.get(ID);
+  const devList = [
+    { name: "change_item", description: "Change an item by ref.", inputSchema: { type: "object", properties: { ref: { type: "string" } } }, annotations: { destructiveHint: true } },
+    { name: "search_data", description: "Search, with refs.", inputSchema: { type: "object", properties: { query: { type: "string" } } } },
+    { name: "budget_add", description: "clash", inputSchema: { type: "object" } }
+  ];
+  const sock = { sent: [], closed: null, send(m) { this.sent.push(m); setTimeout(() => {
+    const q = JSON.parse(m);
+    const c = q.n === "__tools" ? JSON.stringify(devList) : JSON.stringify({ did: q.n, ref: q.a.ref });
+    b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c }));
+  }, 1); }, close(c) { this.closed = c; } };
+  b.socks.push(sock);
+  const list = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/list" })).json();
+  const names = list.result.tools.map((x) => x.name);
+  assert.equal(names[names.length - 1], "change_item");
+  assert.equal(names.filter((n) => n === "budget_add").length, 1);
+  assert.notEqual(list.result.tools.find((x) => x.name === "search_data").description, "Search, with refs.", "ours stays");
+  const nv = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 9, method: "tools/call", params: { name: "change_item", arguments: { app: "passwords" } } })).json();
+  assert.equal(nv.result.isError, true, "a never-app is refused on the relay too");
+  const res = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "change_item", arguments: { ref: "r1" } } })).json();
+  assert.equal(res.result.isError, false);
+  assert.deepEqual(JSON.parse(res.result.content[0].text), { did: "change_item", ref: "r1" });
+  // The device goes away: the kept list is still listed.
+  sock.closed = 1000;
+  const later = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 3, method: "tools/list" })).json();
+  assert.ok(later.result.tools.some((x) => x.name === "change_item"));
+  const unk = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "drop_all" } })).json();
+  assert.equal(unk.error.code, -32602);
+});
+
 test("app switches are shared: a device's change is kept and passed to the others (5.77.00)", async () => {
   const w = world();
   await newGate(w);
@@ -518,6 +554,38 @@ test("revoking the links drops the key wraps and the copy (5.80.00)", async () =
   assert.equal((await b.st.storage.list({ prefix: "kw:" })).size, 0);
   assert.equal(await b.st.storage.get("copy"), undefined);
   assert.equal(G.stableArgs({ b: 1, a: "", c: null, d: [2] }), '{"b":1,"d":[2]}');
+});
+
+test("orOS closed, the device's own tools (GATE-ACT): reads from the copy, create_items waits, the rest needs orOS open", async () => {
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const sock = { sent: [], closed: false, __g: { th: hex(TOK), v: 1, at: 1 }, send(x) { this.sent.push(x); const q = JSON.parse(x); if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1); }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const obj = { type: "object", properties: {} };
+  await b.st.storage.put("devtools", [
+    { name: "read_item", description: "r", inputSchema: obj, annotations: { readOnlyHint: true, destructiveHint: false } },
+    { name: "create_items", description: "c", inputSchema: obj, annotations: { readOnlyHint: false, destructiveHint: false } },
+    { name: "change_item", description: "c", inputSchema: obj, annotations: { readOnlyHint: false, destructiveHint: true } },
+    { name: "edit_in_app", description: "e", inputSchema: obj, annotations: { readOnlyHint: false, destructiveHint: true } }
+  ]);
+  const copy = { at: 1e12, lv: { todo: "write", crm: "write", notes: "read" }, hold: 0, ans: { 'read_item {"ref":"r1"}': '{"t":1}', 'app_summary {"app":"todo"}': '{"todo":1}' } };
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, JSON.stringify(copy)) }));
+  sock.closed = true;
+  const tc = async (name, args) => (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } })).json()).result;
+  assert.match((await tc("read_item", { ref: "r1" })).content[0].text, /copy of[\s\S]*\{"t":1\}$/);
+  assert.match((await tc("read_item", { ref: "r9" })).content[0].text, /needs orOS open/);
+  assert.match((await tc("app_summary", { app: "todo" })).content[0].text, /\{"todo":1\}$/, "an everyday app's summary from the copy");
+  let r = await tc("create_items", { app: "todo", items: [{ text: "x" }] });
+  assert.equal(r.isError, false);
+  assert.match(r.content[0].text, /"queued":true/);
+  assert.match((await tc("create_items", { app: "crm_activity", items: [{ text: "x" }] })).content[0].text, /"queued":true/, "crm_* is CRM");
+  assert.match((await tc("create_items", { app: "notes", items: [{ text: "x" }] })).content[0].text, /may not change notes/);
+  assert.match((await tc("change_item", { ref: "r1" })).content[0].text, /needs orOS open/);
+  assert.match((await tc("edit_in_app", { app: "writer", steps: [] })).content[0].text, /needs orOS open/);
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
 });
 
 test("switches set before 5.77.00 reach the box once: a device's base is kept only while the box has none (5.82.00)", async () => {

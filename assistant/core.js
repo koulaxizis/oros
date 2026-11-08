@@ -3087,6 +3087,67 @@
     return out;
   }
 
+  // GATE-ACT (orOS Gate, 2026-11-08): the same tools for Claude through
+  // the gate (gate/gate.js runs them in a hidden Assistant frame,
+  // assistant.js GATE). No card is shown there: reads go straight to
+  // Claude, changes are applied at once unless the owner paused them
+  // (one rule, 5.78.00), more than 5 deletions are asked on the device. Only these
+  // tools are offered, and every sentence about cards, presses or the
+  // user's consent is replaced (tests/gate-act.test.js keeps it so).
+  // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): edit_in_app and
+  // do_action too; the app opens on the owner's screen and does it there.
+  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
+  var GATE_SAY = [
+    [" The user sees every result first and may share only some of them, or none.", ""],
+    [" The user may be asked first.", ""],
+    [" The user sees the summary first and may hold it back.", ""],
+    ["Propose a change to an existing item", "Change an existing item"],
+    [" The user sees exactly what would change (before → after) and must press Apply; they may refuse. The result says whether it was applied.",
+     " It is applied at once (unless the owner paused Claude's changes; the owner is notified); the result says what changed."],
+    ["the user sees one card for all of them", "one change for all of them"],
+    ["pass changes instead: one card, the user can untick rows", "pass changes instead"],
+    ["One card and one Undo for all.", "One Undo for all."],
+    [" The user sees one card with every item and a tick on each, and must press Add; nothing is saved before that. An item that looks like one already there starts unticked; the result names it with its ref, so change it with change_item instead.",
+     " They are saved at once (unless the owner paused Claude's changes; the owner is notified). An item that looks like one already there is left out; the result names it with its ref, so change it with change_item instead."],
+    [" The user sees the links on one card and must press Link.", " Applied at once (unless the owner paused Claude's changes; the owner is notified)."],
+    ["What you (the assistant) added", "What the Assistant or Claude through orOS Gate added"],
+    [" The user sees the list as a card with Undo next to each change that can still be undone.", ""],
+    ["Take back changes you (the assistant) made, when the user asks", "Take back changes made through orOS Gate or by the Assistant, when the owner asks"],
+    [" The user sees them on one card and presses Undo once; never say it is undone before the result says so, and never tell the user you cannot undo.",
+     " They are undone at once (unless the owner paused Claude's changes; the owner is notified); never say it is undone before the result says so."],
+    [" The user sees the commands in plain words and how many things each design will get changed on a card, and presses Apply; nothing changes before that, and the card's Undo takes everything back.",
+     " The app opens on the owner's screen and applies them at once (unless the owner paused Claude's changes; the owner is notified); undo_change takes everything back. Removing more than 5 things is asked on the device first."],
+    ["Do one thing for the user in an orOS app when they press the card's button: ", "Do one thing for the owner in an orOS app, on their screen: "],
+    ["fills Time's alarm form; the user presses Add", "fills Time's alarm form on the owner's screen; the alarm is kept once the owner confirms it there"],
+    ["Nothing happens before the press, so say it is ready, never that it is done.", "It happens at once unless the owner paused Claude's changes; it cannot be undone, but the owner can stop it in the app."]
+  ];
+  // edit_in_app's per-app command guides are long; through the gate
+  // they come with read_in_app's result for that app instead.
+  var GATE_EDIT_GUIDE = " Call read_in_app for the document first: its result lists that app's commands (commands), the only ones edit_in_app takes.";
+  var GATE_BAD = /\bpress(es)?\b|user sees|may be asked|hold it back|untick|must press|a card\b|one card\b|on a card\b/i;
+  // tools (toolsFor output) → MCP tool list { name, description, inputSchema, annotations }
+  function gateTools(tools) {
+    return (Array.isArray(tools) ? tools : []).filter(function (t) { return t && GATE_TOOLS.indexOf(t.name) >= 0; }).map(function (t) {
+      var x = JSON.parse(JSON.stringify(t));
+      function say(s) {
+        var out = String(s || "");
+        GATE_SAY.forEach(function (r) { out = out.split(r[0]).join(r[1]); });
+        return out;
+      }
+      function walk(o) {
+        if (!o || typeof o !== "object") return;
+        if (typeof o.description === "string") o.description = say(o.description);
+        Object.keys(o).forEach(function (k) { if (o[k] && typeof o[k] === "object") walk(o[k]); });
+      }
+      x.description = say(x.description);
+      if (x.name === "edit_in_app") x.description = x.description.split("\n")[0] + GATE_EDIT_GUIDE;
+      walk(x.params);
+      var ro = /^(search_data|read_item|app_summary|read_in_app|change_history)$/.test(x.name);
+      return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
+               annotations: { readOnlyHint: ro, destructiveHint: /^(change_item|undo_change|edit_in_app)$/.test(x.name) } };
+    });
+  }
+
   var RESULT_TEXT = 400;   // characters of an item's text sent to the model
   var PER_APP     = 8;     // items per app
   var MAX_ITEMS   = 30;    // items per search
@@ -4460,7 +4521,7 @@
     labelHit: labelHit, filterLabel: filterLabel, isNoLabel: isNoLabel, WIDE: WIDE, LABEL_WIDE: LABEL_WIDE,
     parseMd: parseMd, parseInline: parseInline, linkKind: linkKind,
     systemPrompt: systemPrompt, chatTitle: chatTitle, monthKey: monthKey,
-    toolsFor: toolsFor, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
+    toolsFor: toolsFor, gateTools: gateTools, GATE_TOOLS: GATE_TOOLS, GATE_BAD: GATE_BAD, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
     DO_KINDS: DO_KINDS, normAction: normAction, HIST_DAYS: HIST_DAYS, HIST_MAX: HIST_MAX, histEntry: histEntry, histPrune: histPrune, histQuery: histQuery, histForModel: histForModel, undoPick: undoPick, UNDO_MAX: UNDO_MAX, canUndo: canUndo,
     CHAT_DIR: CHAT_DIR, chatPath: chatPath, chatFile: chatFile, parseChatFile: parseChatFile,
     normChat: normChat, mergeChat: mergeChat, msgSig: msgSig,

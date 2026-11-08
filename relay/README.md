@@ -782,6 +782,19 @@ counter. No orOS data in the clear, no request or answer, nothing logged.
   relay only describes them; the device checks every call again (the
   app's level, a pause, the lock) and asks the person itself
   before more than 5 deletions.
+- **The device's tools (GATE-ACT):** on `tools/list` the box also asks
+  the open device for its own tools (`{ n: "__tools" }`, 6 s): the
+  Assistant's `read_item`, `create_items`, `change_item`,
+  `link_contact`, `link_items`, `change_history`, `undo_change` for the
+  everyday apps. The cleaned list is kept as `devtools` (≤ 20 tools,
+  lower-case names, an object schema, ≤ 120 kB) for when the device is
+  closed. The relay's own tools come first and a device tool with one
+  of their names is dropped. `tools/call` takes those names too, and
+  refuses an `app` / `apps` argument that names a never-offered app
+  (`NEVER_APPS`, the same list as orOS's `NEVER`).
+  With orOS closed, a device tool marked read-only answers from the
+  copy when it holds that call, `create_items` waits in the queue (its
+  app is `args.app`), and the other device tools need orOS open.
 - **orOS closed (5.80.00):** an open device sends, after each change
   and every 30 minutes, an encrypted copy of the answers it would give
   (`copy` + chunks `s:<i>`, ≤ 900 KB, AES-GCM with the gate key K that
