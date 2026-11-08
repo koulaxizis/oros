@@ -351,6 +351,31 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
   gap: 2px 12px;
 }
+/* orOS Gate app switches: one box per app, the same in every column */
+.gt-apps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.gt-app {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px 10px;
+  min-width: 0;
+}
+.gt-app.on { border-color: var(--accent); }
+.gt-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 42px;
+}
+.gt-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 700; }
+.gt-app.warn { grid-column: 1 / -1; }
+.gt-sub { border-top: 1px solid var(--border); }
+.gt-sub .gt-name { color: var(--text-dim); font-size: 13px; font-weight: 600; }
 .check {
   display: flex;
   align-items: center;
