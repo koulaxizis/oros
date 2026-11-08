@@ -150,8 +150,8 @@ test("Water: +1 glass only while the goal is not met", async () => {
 
 test("Invoices: a tip only once the due day has passed", () => {
   const src = read("invoices/today.js");
-  assert.match(src, /tip: r\.due && r\.due < ctx\.today \? w\["tdy\.tipOwed"\] : ""/);
-  assert.match(src, /tip: b\.due < ctx\.today \? w\["tdy\.tipBill"\] : ""/);
+  assert.match(src, /\}, r\.due && r\.due < ctx\.today, w\["tdy\.tipOwed"\]\)\);/);
+  assert.match(src, /\}, b\.due < ctx\.today, w\["tdy\.tipBill"\]\)\);/);
 });
 
 // ---------- the receivers do the work ----------

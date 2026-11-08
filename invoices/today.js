@@ -40,14 +40,15 @@
       var I = i18n();
       if (I && ctx.lang && !W[ctx.lang]) I.table(W, "invoices", ctx.lang);
       var w = W[ctx.lang] || W.en, out = [];
+      // a tip only on a document past its due day (BR-TODAY-15)
+      function tipped(row, late, tip) { if (late) row.tip = tip; return row; }
       C.dueRows(data, ctx.today, ctx.addDays(ctx.today, ctx.horizon)).forEach(function (r) {
-        out.push({
+        out.push(tipped({
           id: r.id, due: r.due, kind: "task",
           title: (r.num || r.id) + (r.who ? " · " + r.who : ""),
           text: w.owes.replace("{a}", money(r.bal, r.cur, ctx.lang)),
-          target: { invoice: r.id },
-          tip: r.due && r.due < ctx.today ? w["tdy.tipOwed"] : ""
-        });
+          target: { invoice: r.id }
+        }, r.due && r.due < ctx.today, w["tdy.tipOwed"]));
       });
       // received invoices (wave 7) still to pay whose due day passed or
       // comes within the summary's days
@@ -56,9 +57,9 @@
         if (!b.due || b.due > last) return;
         var bal = C.billBalance(data, b);
         if (bal <= 0) return;
-        out.push({ id: "bill-" + b.id, due: b.due, kind: "task",
+        out.push(tipped({ id: "bill-" + b.id, due: b.due, kind: "task",
                    title: (b.num || "—") + " · " + b.sup.name, text: w.billPay.replace("{a}", money(bal, b.cur, ctx.lang)),
-                   target: { bill: b.id }, tip: b.due < ctx.today ? w["tdy.tipBill"] : "" });
+                   target: { bill: b.id } }, b.due < ctx.today, w["tdy.tipBill"]));
       });
       var seen = {};
       C.recurringDue(data, ctx.today).forEach(function (x) {
