@@ -329,7 +329,7 @@ orosPack("de", "assistant", {
  "f.record": "Eintrag",
  "f.rel": "Erscheinungstermin (mit dem Erscheinungsplan)",
  "f.reminder": "Erinnerung",
- "f.roles": "Rollen",
+ "f.roles": "Rollen", "f.rs": "Revenue Splitter",
  "f.room": "Raum",
  "f.servings": "Portionen",
  "f.shop": "Geschäft",

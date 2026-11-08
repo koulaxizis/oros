@@ -36,7 +36,7 @@ test("ACT = the Assistant's create / change apps, less NEVER, SENSITIVE, Budget,
 });
 
 test("gate tools: only the gate's set, no card or press in any text", () => {
-  const creates = ["todo", "calendar", "notes", "bookmarks", "contacts", "crm", "crm_activity", "crm_followup", "crm_deal",
+  const creates = ["todo", "calendar", "notes", "bookmarks", "contacts", "crm", "crm_activity", "crm_followup", "crm_deal", "crm_contract",
                    "timesheet", "meals", "stickies", "habits", "plants", "petcare", "garage", "travel_plan", "travel_pack"];
   const full = C.toolsFor({ data: true, summary: true, entries: true, changes: true, creates, links: true, partnerLinks: true,
                             history: true, actions: ["timer"], web: true, rebuild: true, house: true, recipes: ["layout"], newsletter: true, cover: true, rules: true,
