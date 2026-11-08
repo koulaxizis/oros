@@ -1189,6 +1189,14 @@
       "type": "internal"
     },
     {
+      "id": "wayfarers",
+      "name": "Wayfarers",
+      "category": "Games",
+      "icon": "wayfarers",
+      "url": "wayfarers/",
+      "type": "internal"
+    },
+    {
       "id": "gamecenter",
       "name": "Game Center",
       "category": "Games",
