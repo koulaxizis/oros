@@ -1848,7 +1848,11 @@
       "flashcards (a deck, update: title = rename; a note, update: front / back (a cloze note: front = its text with {{c1::gaps}}, back = the extra) / labels = tags, move: deck = another deck) · " +
       "files (a file or folder of the orOS disk from search_data: update: title = rename (a file keeps its extension) or new_folder = make a folder inside that folder; " +
       "move: folder = the folder it goes to, e.g. Pictures/2024, made when it is not there; delete = to Files' Trash, restorable there for 30 days; refs: up to 50 at once for move and delete; " +
-      "nothing is overwritten; folders where apps keep their data, orOS Drive and the Trash are refused). Never guess a ref.",
+      "nothing is overwritten; folders where apps keep their data, orOS Drive and the Trash are refused) · " +
+      "publish (a title the user publishes, update: title / subtitle / series / series_no / language / keywords / blurb / bio = the author's bio / note / " +
+      "status / date = the release date / by, translator, illustrator, editor, cover_designer, narrator, other = that role's whole new list of names " +
+      "(comma separated; \"\" clears it) / formats = the editions to change or add, each found by its isbn, else by its format (an edition not there is added; none is removed) / " +
+      "royalties = the title's whole new list of royalty terms (replaces)). Never guess a ref.",
     params: {
       type: "object",
       properties: {
@@ -1910,7 +1914,41 @@
         list: { type: "string", description: "todo move: the name of the list the task goes to (it lands on top)." },
         notebook: { type: "string", description: "notes move: the name of the notebook the page goes to, with the pages under it. Labels go by name." },
         folder: { type: "string", description: "bookmarks move: the folder's name or whole path (\"Work › Tools\"); \"Unsorted\" for none. files move: the disk folder's path, e.g. Pictures/2024." },
-        status: { type: "string", "enum": ["want", "now", "done", "dropped"], description: "shelf: want to watch/read, watching/reading now, finished, dropped." },
+        status: { type: "string", "enum": ["want", "now", "done", "dropped", "idea", "production", "released", "out_of_print"], description: "shelf: want to watch/read, watching/reading now, finished, dropped. publish: idea, production, released or out_of_print." },
+        subtitle: { type: "string", description: "publish: the subtitle." },
+        series: { type: "string", description: "publish: the series (collection)." },
+        series_no: { type: "string", description: "publish: its number in the series." },
+        language: { type: "string", description: "publish: the book's language, e.g. Greek." },
+        keywords: { type: "string", description: "publish: keywords, comma separated (up to 400 characters)." },
+        blurb: { type: "string", description: "publish: the back-cover text (up to 4000 characters; replaces)." },
+        bio: { type: "string", description: "publish: the author's bio (up to 3000 characters; replaces)." },
+        by: { type: "string", description: "publish: the authors (comma separated; replaces the authors)." },
+        translator: { type: "string", description: "publish: the translators (comma separated; replaces)." },
+        illustrator: { type: "string", description: "publish: the illustrators (comma separated; replaces)." },
+        editor: { type: "string", description: "publish: the editors (comma separated; replaces)." },
+        cover_designer: { type: "string", description: "publish: the cover designers (comma separated; replaces)." },
+        narrator: { type: "string", description: "publish: the audiobook's narrators (comma separated; replaces)." },
+        other: { type: "string", description: "publish: anyone else on the title, e.g. typesetting (comma separated; replaces)." },
+        formats: { type: "array", maxItems: 8, description: "publish: the editions to change or add; only the fields given change, only numbers the user gave, never a made-up ISBN.",
+                   items: { type: "object", properties: {
+                     format: { type: "string", "enum": ["paperback", "hardback", "ebook", "audiobook", "other"] },
+                     isbn: { type: "string", description: "Finds the edition; on an edition found by format that has none, sets it." },
+                     price: { type: "number", description: "The list price in currency units, e.g. 15.9." },
+                     pages: { type: "integer" },
+                     width: { type: "number", description: "Width in mm." }, height: { type: "number", description: "Height in mm." },
+                     spine: { type: "number", description: "Spine in mm." }, weight: { type: "integer", description: "Weight in grams." },
+                     binding: { type: "string", description: "e.g. Paperback, sewn." }, paper: { type: "string" },
+                     duration: { type: "integer", description: "audiobook: length in minutes." }, note: { type: "string" },
+                     wc_id: { type: "integer", description: "The shop product it is (needs a WooCommerce shop in Settings › Connected services)." },
+                     shop: { type: "string", description: "With wc_id, when the user has several shops: the shop's name or address." } } } },
+        royalties: { type: "array", maxItems: 8, description: "publish: the title's whole list of royalty terms (replaces; [] clears it).",
+                     items: { type: "object", properties: {
+                       name: { type: "string", description: "The person paid." },
+                       percent: { type: "number", description: "0-100." },
+                       base: { type: "string", "enum": ["list", "net"], description: "Of the list price (default) or of what the publisher receives." },
+                       format: { type: "string", "enum": ["all", "paperback", "hardback", "ebook", "audiobook", "other"], description: "Which editions (default all)." },
+                       advance: { type: "number", description: "The advance paid, in currency units." } },
+                       required: ["name", "percent"] } },
         category: { type: "string", "enum": ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"] }
       },
       required: ["action"]

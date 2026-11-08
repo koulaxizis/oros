@@ -54,7 +54,8 @@
 
   var ACTIONS = ["complete", "reopen", "reschedule", "update", "move", "delete"];
   // Media Shelf statuses by the names the model knows.
-  var STATUS_NAMES = ["want", "now", "done", "dropped"];
+  // Media Shelf's, then Publishing's (PB-CHG: a title's status)
+  var STATUS_NAMES = ["want", "now", "done", "dropped", "idea", "production", "released", "out_of_print"];
   var APPS = {
     todo:      { key: "oros-todo-data",      actions: ["complete", "reopen", "reschedule", "update", "move", "delete"] },
     calendar:  { key: "oros-calendar-data",  actions: ["reschedule", "update", "move", "delete"] },
@@ -97,7 +98,7 @@
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "deck", "kind", "roles", "rs", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "songs", "front", "back", "note", "text"];
+  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "deck", "kind", "roles", "rs", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "sub", "translator", "illustrator", "editor", "credits", "series", "release", "lang", "format", "royalty", "kw", "servings", "km", "next", "paid", "owed", "songs", "front", "back", "blurb", "bio", "note", "text"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -113,6 +114,10 @@
                      contributor: "auth", associate: "assoc", assoc: "assoc", partner: "assoc" };
   var CRM_ROLES = ["cust", "sup", "shop", "auth", "assoc"];
 
+  // PB-CHG: change_item's Publishing arguments (edits4.js checks them).
+  var PUB_ARGS = [["subtitle", "s"], ["series", "s"], ["series_no", "s"], ["language", "s"], ["blurb", "s"], ["bio", "s"],
+                  ["keywords", "s"], ["by", "s"], ["translator", "s"], ["illustrator", "s"], ["editor", "s"], ["cover_designer", "s"],
+                  ["narrator", "s"], ["other", "s"], ["formats", "list"], ["royalties", "list"]];
   var CTRL = /[\u0000-\u0008\u000b-\u001f\u007f\u2028\u2029]/g;
   var ID_RE = /^[A-Za-z0-9_.:-]{1,80}$/;
   function has(o, k) { return !!o && Object.prototype.hasOwnProperty.call(o, k); }
@@ -377,6 +382,16 @@
     if (has(args, "reason") && typeof args.reason === "string") {
       if (args.reason.trim().length > 200) return bad("reason is " + args.reason.trim().length + " characters; CRM keeps 200.");
       set.reason = line(args.reason, 200);
+    }
+    // PB-CHG: a Publishing title's fields, checked by edits4.js against
+    // Publishing's own limits (text, names, editions, royalty terms).
+    for (var pk = 0; pk < PUB_ARGS.length; pk++) {
+      var pn = PUB_ARGS[pk][0], pt = PUB_ARGS[pk][1];
+      if (!has(args, pn) || args[pn] === null || args[pn] === undefined) continue;
+      if (pt === "list" ? !Array.isArray(args[pn]) : typeof args[pn] !== "string" && typeof args[pn] !== "number") {
+        return bad(pn + (pt === "list" ? " must be a list." : " must be text."));
+      }
+      set[pn] = pt === "list" ? clone(args[pn]) : String(args[pn]);
     }
     var keys = Object.keys(set);
     if (action === "move") {
@@ -1788,6 +1803,7 @@
     var s = ch.set;
     var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.shelf[k]; });
     if (notOk.length) return bad("A Media Shelf title has no " + notOk.join(", ") + ".");
+    if (has(s, "status") && !has(SH_ST, s.status)) return bad("A Media Shelf title's status is want, now, done or dropped.");
     var prev = { title: it.title, st: it.st, rev: typeof it.rev === "string" ? it.rev : "" }, changed = false, added = [];
     if (has(s, "title")) {
       var ti = line(s.title, 200);
@@ -2594,7 +2610,9 @@
     // AS-EDIT5 (wave 5b): assistant/edits4.js. Flashcards' data is its
     // slice plus the notes on the orOS disk (assistant.js "disk:" store).
     music:     { key: "oros-music-data",     actions: ["update"], src: ["../music/core.js"], g: "OrosMusicCore", file: "edits4.js" },
-    flashcards: { key: "disk:flashcards",    actions: ["update", "move"], src: ["../flashcards/core.js"], g: "FlashcardsCore", file: "edits4.js" }
+    flashcards: { key: "disk:flashcards",    actions: ["update", "move"], src: ["../flashcards/core.js"], g: "FlashcardsCore", file: "edits4.js" },
+    // PB-CHG (Chris 2026-11-08): a Publishing title's fields, editions and royalty terms.
+    publish:   { key: "oros-publish-data",   actions: ["update"], src: ["../publish/core.js"], g: "OrosPublishCore", file: "edits4.js" }
   };
   Object.keys(LAZY).forEach(function (id) {
     APPS[id] = { key: LAZY[id].key, actions: LAZY[id].actions };

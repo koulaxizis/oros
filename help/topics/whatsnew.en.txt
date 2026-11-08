@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.99.00
+- **Claude and the Assistant fill in your Publishing titles.** They can now change a title that is already in Publishing: release date, status, subtitle, series, language, keywords, back-cover text, author bio, the people on it, each edition (ISBN, price, pages, size, spine, weight, binding, paper, the shop product) and the royalty terms. Nothing is removed, and an ISBN that belongs to another title is refused.
+
 ## Version 5.98.00
 - **Today: tips of the day, your day in order, and tomorrow in the evening.** A new `Tips of the day` card gives up to five short tips from your apps together: an umbrella when rain meets an appointment with a place, water and shade on a hot day, a cold night, a pile of late tasks, a busy day, water in the afternoon. `Not today` hides one, `Don't show this kind` mutes it on this device. `Your day` (Add a widget) lists today's times in order with the free stretches between them, and says where tasks without a time could go. From 19:00 Today shows `Tomorrow` on top (change the hour or turn it off in Settings), and a line under Coming up counts the next 7 days. The Assistant and Claude through orOS Gate now see the same details, tips and end times. Everything is made on your device, with no network and no AI.
 
