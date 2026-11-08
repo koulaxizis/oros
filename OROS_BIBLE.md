@@ -10710,3 +10710,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **How:** after the read, Products shows «Only published products» (on by default; drafts and private ones stay out) and a Brand list (WooCommerce brands found in the products, most products first; All brands by default). The import plan, the quantities to set and the differences use only the products picked. Pure helpers in links/woo.js: `shopFilter(products, { pub, brand })`, `shopBrands(products)`. Nothing is written to the shop; the choice lasts while Stock is open.
 - **Files:** links/woo.js, stock/shop.js (also: switching shops kept no filter), tests/links.test.js (+1).
 - **Tests:** full `node --test tests/*.test.js`; Playwright smoke with a stubbed shop: 3 products, published 2, brand Γλαρόλυκοι 1, no page errors.
+
+### 2026-11-08 — 5.99.02 — Notifications: Clear all also closes the panel (NT-7, #912)
+
+- **What:** Chris (08/11): "Clear all" in the notifications panel should close the panel. It marked every notice read and re-rendered an empty panel that stayed on screen. Now it marks all read (`noteChange()`, synced as before), unhooks the outside-click listener and closes through `closeNotificationPanel()`, which also refreshes the badge.
+- **Files:** notifications.js, tests/notif-panel-close.test.js, help/topics/whatsnew.{en,el}.txt, shell.js, manifest.webmanifest.
+- **Tests:** `tests/notif-panel-close.test.js` +1 (the Clear all handler marks read, notes the change and closes the panel). Full `node --test tests/*.test.js` (6931 pass before the merge of main). Playwright Chromium in the real shell at 360 px: panel opened, Clear all → panel gone (on main it stayed); no page errors. Not tested: a real phone, Safari.
