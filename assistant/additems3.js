@@ -885,7 +885,7 @@
     // out-of-print title gets none unless asked
     o.plan = !!o.rel && (x.release_plan === true || (x.release_plan !== false && (o.st === "idea" || o.st === "prod")));
     var ppl = [];
-    var who = [["by", "a"], ["translator", "t"], ["illustrator", "i"], ["editor", "e"]];
+    var who = [["by", "a"], ["translator", "t"], ["illustrator", "i"], ["editor", "e"], ["cover_designer", "c"], ["narrator", "n"], ["other", "o"]];
     for (i = 0; i < who.length; i++) {
       var pr = people(x, who[i][0], w);
       if (pr.err) return pr;

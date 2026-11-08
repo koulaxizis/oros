@@ -10605,6 +10605,12 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** gate/gate.js (`NEVER`, `SENSITIVE`, `sensitive`, `writable`, `sendCopy`, `list_apps`, `apps()`, `state().gid`), relay/gate.js (`NEVER_APPS`, `X-Gid`, the closed answers), settings/settings.js and settings.css (personal apps with the warning, gate id), strings `gt.never`, `gt.gid`, `gt.sens.*` EN/EL/DE, settings help EN/EL, whatsnew EN/EL.
 - **Tests:** full `node --test tests/*.test.js`; gate-core (NEVER, SENSITIVE, read only, lvFrom), gate-act (ACT less SENSITIVE, neverIn), gate-relay (the closed answer names the gate). Browser: Settings › orOS Gate, Mail's switch shows the warning, «Keep it off» leaves it off, «Allow anyway» turns it on; gate id shown.
 
+### 2026-11-08 — 5.90.01 — create_items: unknown fields are an error; Publishing's other roles (AS-ADD7)
+
+- **What:** the «Καταχώρηση έντυπων τίτλων» thread added a Publishing title through orOS Gate with `people` and `editions` (not create_items fields; they are `by`, `translator`, `illustrator`, `editor` and `formats`): the title was added and the rest dropped without a word. Now any item field the app does not take (also inside `formats`) refuses the call, names the fields and lists the app's own (`crUnknown` in assistant/core.js, checked in `createWith2` before `normItems`). Publishing also takes `cover_designer`, `narrator` and `other` (roles c, n, o; typesetting and the like go in `other`).
+- **Files:** assistant/core.js (`CR_FIELDS`, `crUnknown`), assistant/additems3.js (roles), assistant/assistant.js (`createWith2`), tests/create-unknown.test.js (new), tests/assistant-additems3.test.js.
+- **Tests:** full `node --test tests/*.test.js`; the new test and +1 in assistant-additems3.
+
 ### 2026-11-08 — UNSTAMPED — The Assistant and the Gate save invoice drafts and quotes straight away (AS-ADD8, GATE-PAR P4 wave 1)
 
 - **What:** Chris 13:47: the publishing work is done in Claude, so each app needs full abilities behind its switch, and the Assistant the same. `create_items` takes `app: invoices` (rule AS-ADD8, Part II): new invoice drafts saved at once with Undo, one card with a tick per draft; through the Gate (write window on) the same tool saves them on the device. Drafts only: issuing (number, series) stays the owner's step. `app: quote` does the same for Quote Builder (new quotes as drafts with their OFF number, a new client made by name); Quote's canonical form and merge moved into `quote/core.js` 1.3 so the write equals the app's; `quote` joins the gate's ACT.
