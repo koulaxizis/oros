@@ -59,7 +59,8 @@ export const GATE_LIMITS = {
   // no sign of life (its 45 s ping, any message) for this long is asleep:
   // calls skip it, and a change that finds no awake device waits like
   // one made with orOS closed.
-  aliveMs: 150000
+  aliveMs: 150000,
+  lateMs: 120000                  // a timed-out change waits this long before another device gets it
 };
 
 // orOS that runs on the person's own computer (orOS Portable, the
@@ -769,6 +770,13 @@ function setAtt(ws, a) {
   try { if (typeof ws.serializeAttachment === "function") ws.serializeAttachment(a); } catch (e) {}
   ws.__g = a;
 }
+// The waiting changes a device gets as it connects, oldest first. 6.01.02:
+// one queued after a timeout waits until nb (its late answer may end it).
+export function queueFor(q, now) {
+  const items = [];
+  q.forEach((v, k) => { if (v && !(typeof v.nb === "number" && v.nb > now)) items.push({ id: k.slice(2), c: v.c, t: v.t }); });
+  return items.sort((x, y) => x.t - y.t);
+}
 // Which device answers: one whose orOS is on screen, else the one that
 // connected last (a phone in the background often has no socket at all).
 export function pickOrder(socks) {
@@ -1174,12 +1182,8 @@ export class GateBox {
     m.seen = now;
     await this.st.put("meta", m);
     const q = await this.st.list({ prefix: "q:" });
-    if (q.size) {
-      const items = [];
-      q.forEach((v, k) => { items.push({ id: k.slice(2), c: v.c, t: v.t }); });
-      items.sort((x, y) => x.t - y.t);
-      try { server.send(JSON.stringify({ cq: items })); } catch (e) {}
-    }
+    const items = queueFor(q, now);
+    if (items.length) { try { server.send(JSON.stringify({ cq: items })); } catch (e) {} }
     return new Response(null, { status: 101, webSocket: client, headers: { "Sec-WebSocket-Protocol": "gt1" } });
   }
 
@@ -1201,8 +1205,9 @@ export class GateBox {
     if (!o || typeof o.r !== "string") return;
     const w = this.wait.get(o.r);
     // 6.01.02: a late answer. The box gave up on it and queued the change
-    // under the same id; the device did it after all, so it waits no more.
-    if (!w) { if (o.ok === true && /^[A-Za-z0-9_-]{16}$/.test(o.r)) await this.st.delete("q:" + o.r); return; }
+    // under the same id; the device decided it after all (done, or refused:
+    // app off, paused), so it waits no more. Only "late" (never started) keeps it.
+    if (!w) { if (!(o.ok === false && o.c === "late") && /^[A-Za-z0-9_-]{16}$/.test(o.r)) await this.st.delete("q:" + o.r); return; }
     this.wait.delete(o.r);
     clearTimeout(w.timer);
     w.done(o);
@@ -1354,7 +1359,11 @@ export class GateBox {
     const q = await this.st.list({ prefix: "q:" });
     if (q.size >= GATE_LIMITS.queue) return { ok: false, c: "Too many changes are waiting for orOS to open (" + GATE_LIMITS.queue + "). Ask the owner to open orOS." };
     const qid = typeof qidWant === "string" && /^[A-Za-z0-9_-]{16}$/.test(qidWant) ? qidWant : rand43().slice(0, 16);
-    await this.st.put("q:" + qid, { c: await sealText(kRaw, JSON.stringify({ n: name, a: args, t: now })), t: now });
+    const row = { c: await sealText(kRaw, JSON.stringify({ n: name, a: args, t: now })), t: now };
+    // 6.01.02: a call that timed out may still finish on the device that
+    // got it; no other device gets it for lateMs (its late answer ends it).
+    if (qid === qidWant) row.nb = now + GATE_LIMITS.lateMs;
+    await this.st.put("q:" + qid, row);
     return { ok: true, c: JSON.stringify({ queued: true, note: "orOS is closed: this change waits, encrypted, and is applied the next time orOS opens on one of the owner's devices; the owner is notified and can undo it there. New ids are not known until then." }) };
   }
 

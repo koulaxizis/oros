@@ -821,8 +821,9 @@ counter. No orOS data in the clear, no request or answer, nothing logged.
   (no ping answered by the platform, no message) counts as closed, so a
   phone that froze orOS in the background never makes Claude wait. A
   call that gets no answer in 25 s goes the closed way too: reads from
-  the copy, a change waits in `q:<call id>`; a late success from the
-  device removes it. Each call carries `dl` (the box's deadline) and the
+  the copy, a change waits in `q:<call id>` and goes to no other device
+  for 120 s (`nb`); any late answer of the device except `late` (never
+  started) removes it. Each call carries `dl` (the box's deadline) and the
   box sends `{hi: now}` on connect, so the device never starts a call it
   reads too late.
 - **Whose relay:** everyone on useoros.online uses this one, each with

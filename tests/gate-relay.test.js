@@ -686,10 +686,21 @@ test("a device asleep in the background (6.01.02): skipped at once, a change tha
     // the device answers the change late, done: it waits no more
     await b.box.webSocketMessage(sock, JSON.stringify({ r: calls[0].q, ok: true, c: "{}" }));
     assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 0);
-    // a late refusal keeps it waiting
+    // "late" (never started) keeps it waiting; held back from other devices for lateMs
+    const t0 = Date.now();
     await tc("create_items", { app: "todo", items: [{ title: "y" }] });
     await b.box.webSocketMessage(sock, JSON.stringify({ r: calls[2].q, ok: false, c: "late" }));
-    assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 1);
+    let held = await b.st.storage.list({ prefix: "q:" });
+    assert.equal(held.size, 1);
+    const nb = [...held.values()][0].nb;
+    assert.ok(nb >= t0 + G.GATE_LIMITS.lateMs && nb <= Date.now() + G.GATE_LIMITS.lateMs, "nb = when it timed out + lateMs");
+    assert.deepEqual(G.queueFor(held, nb - 1), [], "another device connecting before nb does not get it");
+    assert.deepEqual(G.queueFor(held, nb).map((x) => x.id), [calls[2].q], "after nb it does");
+    // a late refusal (the app off, paused) ends it: it never runs later
+    await tc("create_items", { app: "todo", items: [{ title: "w" }] });
+    await b.box.webSocketMessage(sock, JSON.stringify({ r: calls[3].q, ok: false, c: "Claude may not change To-Do." }));
+    held = await b.st.storage.list({ prefix: "q:" });
+    assert.deepEqual([...held.keys()], ["q:" + calls[2].q]);
     // no ping answered for 150 s: the socket is asleep and gets nothing; the change waits at once
     sock.pongAt = Date.now() - 200000;
     const n = sock.sent.length;
@@ -697,7 +708,9 @@ test("a device asleep in the background (6.01.02): skipped at once, a change tha
     assert.match(r.content[0].text, /"queued":true/);
     assert.match(r.content[0].text, /orOS is asleep in the background/);
     assert.equal(sock.sent.length, n, "nothing sent to the sleeping socket");
-    assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
+    const all = await b.st.storage.list({ prefix: "q:" });
+    assert.equal(all.size, 2);
+    assert.equal([...all.values()].filter((v) => v.nb).length, 1, "a change queued with orOS asleep (not a timeout) goes to the next device at once");
     // any message wakes it again
     await b.box.webSocketMessage(sock, "v1");
     assert.equal(b.box.awake(Date.now()).length, 1);
