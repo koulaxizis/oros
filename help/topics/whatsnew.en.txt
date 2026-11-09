@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.00.00
+- **Short links for shared songs.** When you send a song, an album or a playlist with `Show the cover in chats`, the new `Short link` option (on by default) makes a link of about 60 characters instead of several hundred. Chats still show the cover and the title. For this the song's public details (never who sent it) stay on the orOS server; anyone with the link can open it, it cannot be taken back, and it stops working if nobody opens it for a year. Untick it for the long link, which stores nothing. Long links sent before keep working.
+
 ## Version 5.99.03
 - **Like a song from the music panel.** The small panel that opens from the music note on the top bar now has a heart next to the song: tap it to save the song to your Liked songs in Music, tap again to remove it. The music keeps playing.
 
