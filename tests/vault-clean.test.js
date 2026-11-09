@@ -236,3 +236,97 @@ test("a restart with uploads still to look at syncs (the key is loaded first)", 
   const r = await again.sync();
   assert.equal(r.ok, true);
 });
+
+// Chris's phone, 2026-11-09: 608 removals one after the other; the
+// cloud asked to slow down (or the connection dropped) half way and
+// the whole clean-up ended in "Sync failed". A passing failure is
+// now waited out and tried again; the removal is safe to repeat.
+function fastWaits(dev) {
+  const waits = [], keep = dev.ctx.setTimeout;
+  dev.ctx.setTimeout = (fn, ms) => { waits.push(ms); Promise.resolve().then(fn); return 0; };
+  return { waits, restore: () => { dev.ctx.setTimeout = keep; } };
+}
+
+test("a 429 or a dropped connection during the clean-up is waited out and tried again", async () => {
+  const { db, A } = await leftovers();
+  db.age(31 * DAY);
+  const st = A.ctx.orosSync.storage, del = st.deleteObject, rev = st.getRevision;
+  let d = 0, g = 0;
+  st.deleteObject = async (key) => {
+    if (++d === 1) throw new Error("delete failed: 429");
+    if (d === 3) throw new Error("network error: Failed to fetch");
+    return del.call(st, key);
+  };
+  st.getRevision = async (key) => {
+    if (++g === 3) throw new Error("metadata failed: 503");
+    return rev.call(st, key);
+  };
+  const t = fastWaits(A);
+  const seen = [];
+  const r = await A.vault.cleanUp({ progress: (done, total) => seen.push([done, total]) });
+  t.restore();
+  st.deleteObject = del; st.getRevision = rev;
+  assert.deepEqual([r.removed, r.stopped, Array.from(r.lost)], [2, false, []]);
+  assert.equal(t.waits.length, 3, "three passing failures, three waits");
+  assert.deepEqual(seen, [[1, 2], [2, 2]]);
+  assert.equal(objects(db).length, 2);
+});
+
+test("a clean-up that cannot go on reports what it removed and a clear reason", async () => {
+  const { db, A } = await leftovers();
+  db.age(31 * DAY);
+  const st = A.ctx.orosSync.storage, del = st.deleteObject;
+  let d = 0;
+  st.deleteObject = async (key) => {
+    if (++d === 1) return del.call(st, key);
+    throw new Error("delete failed: 429");
+  };
+  const t = fastWaits(A);
+  const err = await A.vault.cleanUp().then(() => null, (e) => e);
+  t.restore();
+  st.deleteObject = del;
+  assert.ok(err);
+  assert.equal(err.message, "clean-slow");
+  assert.equal(err.cleaned.removed, 1);
+  assert.ok(err.cleaned.bytes > 0);
+  assert.equal(objects(db).length, 3);
+  // Going on later removes the rest; every file still opens.
+  const r = await A.vault.cleanUp();
+  assert.equal(r.removed, 1);
+  assert.equal(objects(db).length, 2);
+  const B = await vaultDevice(db, "B");
+  assert.equal((await B.sync()).stats.failed, 0);
+  assert.equal(await B.read("/internal/a.txt"), "second a");
+});
+
+test("a dropped connection that does not come back says so", async () => {
+  const { db, A } = await leftovers();
+  db.age(31 * DAY);
+  const st = A.ctx.orosSync.storage, rev = st.getRevision;
+  let g = 0;
+  st.getRevision = async (key) => {
+    if (++g > 2) throw new Error("network error: Load failed");   // after gcScan's two reads
+    return rev.call(st, key);
+  };
+  const t = fastWaits(A);
+  const err = await A.vault.cleanUp().then(() => null, (e) => e);
+  t.restore();
+  st.getRevision = rev;
+  assert.equal(err && err.message, "clean-offline");
+  assert.equal(err.cleaned, undefined, "nothing was removed");
+  assert.equal(objects(db).length, 4);
+});
+
+test("other storage errors are not retried", async () => {
+  const { db, A } = await leftovers();
+  db.age(31 * DAY);
+  const st = A.ctx.orosSync.storage, del = st.deleteObject;
+  st.deleteObject = async () => { throw new Error("delete failed: 400"); };
+  const t = fastWaits(A);
+  const err = await A.vault.cleanUp().then(() => null, (e) => e);
+  t.restore();
+  st.deleteObject = del;
+  assert.equal(err && err.message, "delete failed: 400");
+  assert.equal(t.waits.length, 0);
+  assert.equal(objects(db).length, 4);
+});

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.01.01
+- **Cleaning up unused cloud files finishes.** In Settings › Sync › Unused files in the cloud, `Clean up` no longer ends in "Sync failed" when your cloud asks orOS to slow down or the connection drops for a moment: it waits and tries again. The card counts how many copies are gone, and if it has to stop it says why and how many it removed; `Clean up` again goes on with the rest.
+
 ## Version 6.01.00
 - **Areas with invoice series and shared costs.** In Budget › More › Areas, each area takes the Invoices series that belong to it, and new invoice payments go into the right area by themselves. Tick one area as `Shared costs` and give the others their share in %: the `Areas` card then shows the year so far, each area's net after its share of the shared costs. No entry is split.
 
