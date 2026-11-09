@@ -187,6 +187,8 @@
       "ar.name": "Name", "ar.words": "Words in the bank's text", "ar.words.ph": "viva, stripe, box now", "ar.add": "New area", "ar.del": "Delete area",
       "ar.saved": "Areas saved", "ar.full": "Up to 12 areas", "ar.keep": "Entries of a deleted area stay, without an area.",
       "ar.iv": "Invoices series whose payments come here", "ar.kind.inv": "invoices", "ar.kind.rcpt": "receipts",
+      "ar.ps": "Personal (not part of the business result)",
+      "av.all": "All areas", "av.label": "Area to show", "lim.areaTotal": "All expenses of {a}",
       "ar.sh": "Shared costs (costs of all your work together)", "ar.pc": "Share of the shared costs (%)",
       "ar.pcBad": "A share is a whole number from 0 to 100", "ar.pcSum": "The shares add up to {n}%: at most 100%",
       "ar.shHint": "Shared costs stay in their own area; the shares only split them in the year's result per area (Overview › Areas). No entry is split.",
@@ -210,7 +212,7 @@
       "rc.textHint": "Paste the receipt's text (for example with your phone's “copy text from photo”). Budget looks for the line with the total.",
       "rc.textGo": "Use this amount", "rc.textNone": "No amount found in this text", "rc.textFound": "Total found: {a}",
       "rec.remind": "Remind me", "rec.rOff": "No reminder", "rec.r0": "On the day of the charge", "rec.r1": "1 day before", "rec.rN": "{n} days before",
-      "acc.cur": "Currency of the account", "acc.netw": "Net worth", "xf.ta": "Arrived ({c})",
+      "acc.cur": "Currency of the account", "acc.area": "Area of the account", "acc.netw": "Net worth", "xf.ta": "Arrived ({c})",
       "notif.sub": "Upcoming charge", "notif.subBody": "{n}: {a} {w}", "notif.w0": "today", "notif.w1": "tomorrow", "notif.wN": "on {d}",
       // month and weekday names (section 6: monthLabel, dayLabel)
       "month.1": "January", "month.2": "February", "month.3": "March", "month.4": "April", "month.5": "May", "month.6": "June",
@@ -345,6 +347,8 @@
       "ar.name": "Όνομα", "ar.words": "Λέξεις στο κείμενο της τράπεζας", "ar.words.ph": "viva, stripe, box now, τυπογραφείο", "ar.add": "Νέος τομέας", "ar.del": "Διαγραφή τομέα",
       "ar.saved": "Οι τομείς αποθηκεύτηκαν", "ar.full": "Έως 12 τομείς", "ar.keep": "Οι κινήσεις ενός τομέα που διαγράφεται μένουν, χωρίς τομέα.",
       "ar.iv": "Σειρές του Invoices που οι πληρωμές τους έρχονται εδώ", "ar.kind.inv": "τιμολόγια", "ar.kind.rcpt": "αποδείξεις",
+      "ar.ps": "Προσωπικός τομέας (έξω από το αποτέλεσμα της επιχείρησης)",
+      "av.all": "Όλοι οι τομείς", "av.label": "Τομέας που βλέπεις", "lim.areaTotal": "Όλα τα έξοδα: {a}",
       "ar.sh": "Κοινά έξοδα (έξοδα για όλες τις δουλειές σου μαζί)", "ar.pc": "Μερίδιο από τα κοινά έξοδα (%)",
       "ar.pcBad": "Το μερίδιο είναι ακέραιος από 0 έως 100", "ar.pcSum": "Τα μερίδια βγαίνουν {n}%: έως 100%",
       "ar.shHint": "Τα κοινά έξοδα μένουν στον δικό τους τομέα· τα μερίδια τα μοιράζουν μόνο στο αποτέλεσμα της χρονιάς ανά τομέα (Επισκόπηση › Τομείς). Καμία κίνηση δεν σπάει.",
@@ -368,7 +372,7 @@
       "rc.textHint": "Επικόλλησε το κείμενο της απόδειξης (για παράδειγμα με την «αντιγραφή κειμένου από φωτογραφία» του κινητού σου). Η εφαρμογή ψάχνει τη γραμμή με το σύνολο.",
       "rc.textGo": "Χρήση αυτού του ποσού", "rc.textNone": "Δεν βρέθηκε ποσό σε αυτό το κείμενο", "rc.textFound": "Βρέθηκε σύνολο: {a}",
       "rec.remind": "Υπενθύμιση", "rec.rOff": "Χωρίς υπενθύμιση", "rec.r0": "Την ημέρα της χρέωσης", "rec.r1": "1 ημέρα πριν", "rec.rN": "{n} ημέρες πριν",
-      "acc.cur": "Νόμισμα λογαριασμού", "acc.netw": "Καθαρή περιουσία", "xf.ta": "Έφτασαν ({c})",
+      "acc.cur": "Νόμισμα λογαριασμού", "acc.area": "Τομέας του λογαριασμού", "acc.netw": "Καθαρή περιουσία", "xf.ta": "Έφτασαν ({c})",
       "notif.sub": "Επερχόμενη χρέωση", "notif.subBody": "{n}: {a} {w}", "notif.w0": "σήμερα", "notif.w1": "αύριο", "notif.wN": "στις {d}",
       "month.1": "\u0399\u03b1\u03bd\u03bf\u03c5\u03ac\u03c1\u03b9\u03bf\u03c2", "month.2": "\u03a6\u03b5\u03b2\u03c1\u03bf\u03c5\u03ac\u03c1\u03b9\u03bf\u03c2", "month.3": "\u039c\u03ac\u03c1\u03c4\u03b9\u03bf\u03c2", "month.4": "\u0391\u03c0\u03c1\u03af\u03bb\u03b9\u03bf\u03c2", "month.5": "\u039c\u03ac\u03b9\u03bf\u03c2", "month.6": "\u0399\u03bf\u03cd\u03bd\u03b9\u03bf\u03c2",
       "month.7": "\u0399\u03bf\u03cd\u03bb\u03b9\u03bf\u03c2", "month.8": "\u0391\u03cd\u03b3\u03bf\u03c5\u03c3\u03c4\u03bf\u03c2", "month.9": "\u03a3\u03b5\u03c0\u03c4\u03ad\u03bc\u03b2\u03c1\u03b9\u03bf\u03c2", "month.10": "\u039f\u03ba\u03c4\u03ce\u03b2\u03c1\u03b9\u03bf\u03c2", "month.11": "\u039d\u03bf\u03ad\u03bc\u03b2\u03c1\u03b9\u03bf\u03c2", "month.12": "\u0394\u03b5\u03ba\u03ad\u03bc\u03b2\u03c1\u03b9\u03bf\u03c2",
@@ -799,6 +803,9 @@
     // chk (the day the balance was last checked or matched)
     if (y.am !== true) delete y.am;
     if (!(typeof y.chk === "string" && parseYmd(y.chk))) delete y.chk;
+    // AR-VIEW (6.03.00, Chris 2026-11-09 card «Τομέας ανά λογαριασμό»):
+    // dm = the area the account belongs to (an `area` id), only when set
+    if (!(typeof y.dm === "string" && ID_RE.test(y.dm))) delete y.dm;
     return withExtras({ id: x.id, m: x.m, n: n, o: o, col: col }, y);
   }
   // transfer between two accounts = { id, m, d, a (cents > 0), f (from), t (to), n }.
@@ -830,7 +837,7 @@
   // the lowest id wins); pc = this area's share of the shared costs in
   // whole % (0–100), for the yearly result after shared costs only:
   // no entry is ever split or rewritten. All three only when set.
-  var AREA_Q = 300, AREA_IV = 20, SER_RE = /^[A-Za-z0-9_-]{1,64}$/, AREA_OWN = { iv: 1, pc: 1, sh: 1 };
+  var AREA_Q = 300, AREA_IV = 20, SER_RE = /^[A-Za-z0-9_-]{1,64}$/, AREA_OWN = { iv: 1, pc: 1, ps: 1, sh: 1 };
   function normIv(v) {
     if (typeof v !== "string") return "";
     var seen = {}, out = [];
@@ -847,6 +854,9 @@
     if (iv) out.iv = iv;
     out.n = n;
     if (isInt(x.pc) && x.pc > 0 && x.pc <= 100) out.pc = x.pc;
+    // AR-VIEW (6.03.00): ps 1 = a personal area (not part of the business
+    // result in the whole picture); never the area of shared costs.
+    if (x.ps === 1 && x.sh !== 1) out.ps = 1;
     out.q = normText(x.q, AREA_Q);
     if (x.sh === 1) out.sh = 1;
     return withExtras(out, x, AREA_OWN);
@@ -1343,7 +1353,16 @@
     return m ? m.name + " › " + c.name : c.name;
   }
   function pmNow() { return parentMap(cats()); }
-  function rolledTx(list) { return rollTx(list || data.tx, pmNow()); }
+  function rolledTx(list) { return rollTx(list || viewTx(), pmNow()); }
+  // AR-VIEW (6.03.00): the area the Overview, Charts and Limits look at
+  // ("" = all; session only, R10). Entries, Plan, envelopes and every
+  // write read all of data.tx.
+  var viewArea = "";
+  function viewAreaOn() { return viewArea && findIn(data.area, viewArea) ? viewArea : ""; }
+  function viewTx() {
+    var v = viewAreaOn();
+    return v ? data.tx.filter(function (x) { return areaOf(x) === v; }) : data.tx;
+  }
   // The category's icon as SVG ("" = none; budget/caticons.js).
   var ICONS = window.OrosBudgetIcons || null;
   function catIcon(id) { var c = id ? catById(id) : null; return c && c.ic && ICONS ? ICONS.svg(c.ic) : ""; }
@@ -1505,6 +1524,7 @@
 
   function renderAll() {
     renderToolbar();
+    renderAreaBar();
     renderTabs();
     renderSummary();
     renderFilter();
@@ -1521,6 +1541,20 @@
   }
   function renderOverview() { refreshPrices(); autoMatch(); if (OVUI) OVUI.render($("overview")); }
 
+  // AR-VIEW: the area switch above the summary (only with areas; hidden
+  // on Entries, which has its own area filter, and Recurring)
+  function renderAreaBar() {
+    var bar = $("area-bar"), sel = $("area-view");
+    if (!bar || !sel) return;
+    var list = areas();
+    if (viewArea && !viewAreaOn()) viewArea = "";
+    bar.hidden = !list.length || prefs.tab === "list" || prefs.tab === "rec";
+    sel.innerHTML = "";
+    var o0 = el("option", "", t("av.all")); o0.value = ""; sel.appendChild(o0);
+    list.forEach(function (a) { var o = el("option", "", a.n); o.value = a.id; sel.appendChild(o); });
+    sel.value = viewArea;
+    sel.setAttribute("aria-label", t("av.label"));
+  }
   function renderToolbar() {
     $("month").textContent = monthLabel(viewMk);
     $("today-btn").hidden = viewMk === mkOf(today);
@@ -1538,7 +1572,7 @@
   }
 
   function renderSummary() {
-    var tt = totals(data.tx, viewMk), bal = tt.inc - tt.out;
+    var tt = totals(viewTx(), viewMk), bal = tt.inc - tt.out;
     $("sum-in").textContent = money(tt.inc);
     $("sum-out").textContent = money(tt.out);
     var b = $("sum-bal");
@@ -1869,9 +1903,11 @@
     if (BGUI) BGUI.render($("bgts"));
     var box = $("limits");
     box.innerHTML = "";
-    var tt = totals(data.tx, viewMk);
+    var tt = totals(viewTx(), viewMk), va = viewAreaOn();
     tt.byCat = withKids(tt.byCat, pmNow());
-    box.appendChild(limitRow({ id: "all", name: t("lim.total"), col: null }, tt.out, budOf("all")));
+    // AR-VIEW: with an area, its own total limit (id "all-<area id>")
+    if (va) box.appendChild(limitRow({ id: "all-" + va, name: t("lim.areaTotal", { a: findIn(data.area, va).n }), col: null }, tt.out, budOf("all-" + va)));
+    else box.appendChild(limitRow({ id: "all", name: t("lim.total"), col: null }, tt.out, budOf("all")));
     var withL = [], without = [];
     cats().filter(function (c) { return c.k === "o"; }).forEach(function (c) {
       (budOf(c.id) ? withL : without).push(c);
@@ -2083,7 +2119,7 @@
   function renderDonut() {
     var box = $("ch-donut");
     box.innerHTML = "";
-    var tt = totals(data.tx, viewMk);
+    var tt = totals(viewTx(), viewMk);
     tt.byCat = rollUp(tt.byCat, pmNow());
     var parts = [];
     Object.keys(tt.byCat).forEach(function (k) {
@@ -2178,7 +2214,7 @@
   function renderBars() {
     var box = $("ch-bars");
     box.innerHTML = "";
-    var rows = monthSeries(data.tx, last12());
+    var rows = monthSeries(viewTx(), last12());
     var legend = el("div", "legend");
     [["c0", t("sum.in")], ["c1", t("sum.out")]].forEach(function (x) {
       var s = el("span", "lg");
@@ -2230,7 +2266,7 @@
   function renderLine() {
     var box = $("ch-line");
     box.innerHTML = "";
-    var rows = monthSeries(data.tx, last12());
+    var rows = monthSeries(viewTx(), last12());
     var W = chartWidth(box), H = 180, L = 46, Rm = 10, T = 12, B = 24;
     var lo = 0, hi = 0;
     rows.forEach(function (r) { lo = Math.min(lo, r.bal); hi = Math.max(hi, r.bal); });
@@ -2445,7 +2481,7 @@
         data.tx.push(nx);
         commit();
         close();
-        if (nx.k === "o") checkLimits(today, nx.c);
+        if (nx.k === "o") checkLimits(today, nx.c, nx.dm);
         if (mkOf(today) !== viewMk) setMonth(mkOf(today)); else renderAll();
         undoToast(t("f.againDone"), function () {
           if (!findIn(data.tx, nx.id)) return;
@@ -2689,7 +2725,7 @@
       if (accSel) lastAcc = ac;
       if (areaSel) lastArea = dm;
       dlg.close();
-      if (k === "o") checkLimits(date.value, c);
+      if (k === "o") checkLimits(date.value, c, dm);
       live(t("live.saved"));
       if (!x && mkOf(date.value) !== viewMk && !query) setMonth(mkOf(date.value));
       else renderAll();
@@ -3739,7 +3775,7 @@
       chartWidth: chartWidth, niceStep: niceStep, sv: sv, svText: svText, hit: hit, tableTwin: tableTwin,
       fx: fx, fxNote: fxNote,
       // envelopes and the year count subcategories in their main category
-      rolledData: function () { return Object.assign({}, data, { tx: rolledTx() }); }
+      rolledData: function () { return Object.assign({}, data, { tx: rolledTx(data.tx) }); }
     });
   }
 
@@ -3760,8 +3796,9 @@
       commit: commit, renderAll: renderAll, showToast: showToast, tt: t,
       money: money, moneyShort: moneyShort, monthLabel: monthLabel, dayLabel: dayLabel,
       viewMk: function () { return viewMk; }, today: function () { return today; }, setTab: setTab, cur: cur,
-      totals: function (mk) { var tt = totals(data.tx, mk); tt.byCat = withKids(tt.byCat, pmNow()); return tt; },
-      limitOf: budOf, limitState: limitState, rolledTx: rolledTx, catBadge: catBadge,
+      totals: function (mk) { var tt = totals(viewTx(), mk); tt.byCat = withKids(tt.byCat, pmNow()); return tt; },
+      limitOf: function (id) { var v = viewAreaOn(); return budOf(id === "all" && v ? "all-" + v : id); },
+      limitState: limitState, rolledTx: rolledTx, viewTx: viewTx, catBadge: catBadge,
       budgets: function () { return BGUI ? BGUI.current() : []; },
       loansCard: LNUI ? function (card) { LNUI.overviewCard(card); } : null,
       icon: function (k) { return UI[k] || ""; }, accDialog: accDialog,
@@ -3810,7 +3847,7 @@
       money: money, dateShort: dateShort, weekday: function (ymd) { return t("wd." + weekday(ymd)); }, cur: cur,
       centsToInput: function (c) { return centsToInput(c, LANG); }, parseAmount: parseAmount,
       newId: newId, stamp: stamp, tombstone: tombstone, untomb: untomb, commit: commit, renderAll: renderAll,
-      showToast: showToast, undoToast: undoToast, tt: t, rolledTx: rolledTx
+      showToast: showToast, undoToast: undoToast, tt: t, rolledTx: rolledTx, viewTx: viewTx
     });
   }
 
@@ -3883,13 +3920,16 @@
 
   // One notification per category (and overall) per month, when the
   // month on the calendar passes its limit.
-  function checkLimits(ymd, catId) {
+  function checkLimits(ymd, catId, dm) {
     var mk = mkOf(ymd);
     if (mk !== mkOf(today)) return;
     var tt = totals(data.tx, mk), pm = pmNow();
     var by = withKids(tt.byCat, pm);
     var list = [[catId, by["o:" + catId] || 0, catName(catId)], ["all", tt.out, t("lim.total")]];
     if (pm[catId]) list.splice(1, 0, [pm[catId], by["o:" + pm[catId]] || 0, catName(pm[catId])]);
+    // AR-VIEW: the area's own total limit
+    var ar = dm ? findIn(data.area, dm) : null;
+    if (ar) list.push(["all-" + ar.id, totals(data.tx.filter(function (x) { return areaOf(x) === ar.id; }), mk).out, t("lim.areaTotal", { a: ar.n })]);
     list.forEach(function (z) {
       var lim = z[0] ? budOf(z[0]) : 0;
       if (!lim || z[1] <= lim) return;
@@ -4204,6 +4244,9 @@
         if (row.sh.checked) rows.forEach(function (r) { if (r !== row) r.sh.checked = false; });
         sync();
       });
+      // AR-VIEW: a personal area (outside the business result)
+      row.ps = chk(box, "bd-ar-ps" + i, t("ar.ps"), a && a.ps === 1);
+      row.ps.addEventListener("change", sync);
       var pc = el("input"); pc.type = "number"; pc.min = "0"; pc.max = "100"; pc.step = "1"; pc.inputMode = "numeric";
       pc.value = a && a.pc ? String(a.pc) : "";
       pc.placeholder = "0";
@@ -4218,7 +4261,13 @@
       return row;
     }
     // the shared area has no share of itself
-    function sync() { rows.forEach(function (r) { if (r.pcBox) r.pcBox.hidden = r.sh.checked; }); }
+    // (AR-VIEW: nor has a personal one; the shared one is never personal)
+    function sync() {
+      rows.forEach(function (r) {
+        if (r.ps) { r.ps.parentNode.hidden = r.sh.checked; if (r.sh.checked) r.ps.checked = false; }
+        if (r.pcBox) r.pcBox.hidden = r.sh.checked || (r.ps && r.ps.checked);
+      });
+    }
     function liveRows() { return rows.filter(function (r) { return !r.gone; }); }
     var addBtn = button(t("ar.add"), "", function () {
       if (liveRows().length >= MAX_AREAS) { showErr(err, t("ar.full")); return; }
@@ -4240,11 +4289,11 @@
         if (bad) return;
         if (!normText(r.n.value, 40) && (r.a || normText(r.q.value, AREA_Q))) { bad = r.n; badMsg = t("err.name"); return; }
         var v = r.pc.value.trim();
-        if (!r.sh.checked && v && !/^(100|[1-9]?[0-9])$/.test(v)) { bad = r.pc; badMsg = t("ar.pcBad"); }
+        if (!r.sh.checked && !r.ps.checked && v && !/^(100|[1-9]?[0-9])$/.test(v)) { bad = r.pc; badMsg = t("ar.pcBad"); }
       });
       if (bad) { showErr(err, badMsg, bad); return; }
       var sum = 0;
-      liveRows().forEach(function (r) { if (!r.sh.checked && r.pc.value.trim()) sum += parseInt(r.pc.value, 10); });
+      liveRows().forEach(function (r) { if (!r.sh.checked && !r.ps.checked && r.pc.value.trim()) sum += parseInt(r.pc.value, 10); });
       if (sum > 100) { showErr(err, t("ar.pcSum", { n: sum })); return; }
       var changed = 0, used = {};
       data.area.forEach(function (a) { used[a.col] = 1; });
@@ -4255,16 +4304,17 @@
           return;
         }
         var iv = normIv(r.iv.filter(function (x) { return x.cb.checked; }).map(function (x) { return x.id; }).concat(r.keepIv).join(" "));
-        var sh = r.sh.checked ? 1 : 0;
-        var pc = sh || !r.pc.value.trim() ? 0 : parseInt(r.pc.value, 10);
+        var sh = r.sh.checked ? 1 : 0, ps = !sh && r.ps.checked ? 1 : 0;
+        var pc = sh || ps || !r.pc.value.trim() ? 0 : parseInt(r.pc.value, 10);
         function put(o) {
           if (iv) o.iv = iv; else delete o.iv;
           if (pc) o.pc = pc; else delete o.pc;
+          if (ps) o.ps = 1; else delete o.ps;
           if (sh) o.sh = 1; else delete o.sh;
         }
         if (r.a) {
           var cur0 = findIn(data.area, r.a.id);
-          if (!cur0 || (cur0.n === n && cur0.q === q && (cur0.iv || "") === iv && (cur0.pc || 0) === pc && (cur0.sh || 0) === sh)) return;
+          if (!cur0 || (cur0.n === n && cur0.q === q && (cur0.iv || "") === iv && (cur0.pc || 0) === pc && (cur0.sh || 0) === sh && (cur0.ps || 0) === ps)) return;
           cur0.n = n; cur0.q = q; put(cur0); cur0.m = stamp(cur0.m);
           changed++;
           return;
@@ -4367,6 +4417,15 @@
     curSel.addEventListener("change", function () { openF.querySelector("label").textContent = t("acc.open") + " (" + curSel.value + ")"; });
     form.appendChild(field(t("acc.name"), name, "bd-acc-n"));
     form.appendChild(field(t("acc.cur"), curSel, "bd-acc-cur"));
+    // AR-VIEW: the area the account belongs to (business or personal money)
+    var arSel = null;
+    if (data.area.length) {
+      arSel = el("select");
+      var ar0 = el("option", "", t("ar.none")); ar0.value = ""; arSel.appendChild(ar0);
+      areas().forEach(function (x) { var o1 = el("option", "", x.n); o1.value = x.id; arSel.appendChild(o1); });
+      arSel.value = a && a.dm && findIn(data.area, a.dm) ? a.dm : "";
+      form.appendChild(field(t("acc.area"), arSel, "bd-acc-area"));
+    }
     form.appendChild(openF);
     form.appendChild(el("p", "hint", t("acc.open.hint")));
     // CC-1: a credit card's cycle (optional)
@@ -4555,10 +4614,13 @@
       var cyKey = function (o2) { return [o2.cys || 0, o2.cyd || 0, o2.cyr || 0].join(","); };
       var cur0 = a ? findIn(data.acc, a.id) : null;
       var ccy = curSel.value !== cur() ? curSel.value : "";
+      // without areas the field is absent and the account keeps its area
+      var adm = arSel ? arSel.value : (cur0 ? cur0.dm || "" : "");
       if (cur0) {
-        if (cur0.n !== n || cur0.o !== o || (cur0.cur || "") !== ccy || cyKey(cur0) !== cyKey(cy || {}) || ivKey(cur0) !== ivKey(iv || {})) {
+        if (cur0.n !== n || cur0.o !== o || (cur0.cur || "") !== ccy || cyKey(cur0) !== cyKey(cy || {}) || ivKey(cur0) !== ivKey(iv || {}) || (cur0.dm || "") !== adm) {
           cur0.n = n; cur0.o = o;
           if (ccy) cur0.cur = ccy; else delete cur0.cur;
+          if (adm) cur0.dm = adm; else delete cur0.dm;
           setCy(cur0);
           setIv(cur0);
           cur0.m = stamp(cur0.m);
@@ -4573,6 +4635,7 @@
         if (a) untomb("acc", nid);
         var na = { id: nid, m: stamp(a ? a.m : 0), n: n, o: o, col: col % 8 };
         if (ccy) na.cur = ccy;
+        if (adm) na.dm = adm;
         setCy(na);
         setIv(na);
         data.acc.push(na);
@@ -5754,6 +5817,8 @@
   }
 
   function wire() {
+    var avSel = $("area-view");                     // AR-VIEW
+    if (avSel) avSel.addEventListener("change", function () { viewArea = avSel.value; renderAll(); });
     $("prev-btn").addEventListener("click", function () { setMonth(mkAdd(viewMk, -1)); });
     $("next-btn").addEventListener("click", function () { setMonth(mkAdd(viewMk, 1)); });
     $("today-btn").addEventListener("click", function () { setMonth(mkOf(today)); });

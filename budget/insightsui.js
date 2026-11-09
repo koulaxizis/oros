@@ -69,6 +69,7 @@
   }
   function el(tag, cls, text) { return A.el(tag, cls, text); }
   function D() { return A.data(); }
+  function TXV() { return A.viewTx ? A.viewTx() : D().tx; }   // AR-VIEW: the area switch
   // A subcategory's own name, without its main category's.
   function shortName(id) {
     var c = (A.cats ? A.cats() : []).filter(function (y) { return y.id === id; })[0];
@@ -95,7 +96,7 @@
   function render(box) {
     box.innerHTML = "";
     var P = current();
-    var cur = I.sum(D().tx, P.from, P.to), prev = I.sum(D().tx, P.pFrom, P.pTo);
+    var cur = I.sum(TXV(), P.from, P.to), prev = I.sum(TXV(), P.pFrom, P.pTo);
     // subcategories folded into their main category (drill-down opens them)
     var pm = A.pm ? A.pm() : {};
     var rc = Object.assign({}, cur, { byCat: A.rollUp ? A.rollUp(cur.byCat, pm) : cur.byCat });
@@ -287,7 +288,7 @@
   function cardCalendar(card) {
     var mk = A.viewMk();
     var m = I.period("m", mk);
-    var cal = I.calendar(I.sum(D().tx, m.from, m.to).byDay, mk);
+    var cal = I.calendar(I.sum(TXV(), m.from, m.to).byDay, mk);
     card.appendChild(el("h2", "", t("in.cal", { m: A.monthLabel(mk) })));
     var grid = el("div", "in-cal");
     grid.setAttribute("role", "grid");
@@ -321,7 +322,7 @@
     card.appendChild(grid);
     card.appendChild(el("p", "hint", t("in.calHint") + (cal.max ? " " + t("in.max", { a: A.money(cal.max) }) : "")));
     if (openDay && openDay.slice(0, 7) === mk) {
-      var list = D().tx.filter(function (x) { return x.d === openDay && x.k === "o"; })
+      var list = TXV().filter(function (x) { return x.d === openDay && x.k === "o"; })
         .sort(function (a, b) { return b.a - a.a; });
       var box = el("div", "in-dayl");
       box.appendChild(el("h3", "", A.dayLabel(openDay)));
@@ -388,7 +389,7 @@
   function cardPayees(P) {
     var card = el("div", "card");
     card.appendChild(el("h2", "", t("in.pay")));
-    var list = I.payees(D().tx, P.from, P.to, 6);
+    var list = I.payees(TXV(), P.from, P.to, 6);
     if (!list.length) { card.appendChild(el("p", "hint", t("in.payNone"))); return card; }
     var ul = el("ul", "ov-rows");
     list.forEach(function (p) {

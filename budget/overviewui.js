@@ -63,6 +63,9 @@
       "ov.area": "Areas", "ov.areaNone": "Without an area", "ov.areaYear": "Year so far, after shared costs ({m})",
       "ov.areaShared": "Shared costs ({n}): {a}", "ov.ayNet": "{a}", "ov.ayShare": "{a} shared",
       "ov.ayAria": "{n}: {a}, minus {s} of the shared costs, = {r}", "ov.ayLeft": "{a} of the shared costs go to no area (the shares add up to less than 100%).",
+      "ov.whole": "All together, {m}", "ov.wBus": "Business (after the shared costs)", "ov.wPer": "Personal", "ov.wNone": "Without an area",
+      "ov.wTot": "Total", "ov.wFlow": "In {i} · out {o}", "ov.wDraw": "Taken out for personal use: {a}", "ov.wBack": "Put back into the business: {a}",
+      "ov.wHint": "Transfers between your accounts only move money; they count in no total.",
       "ov.top": "Where the money went", "ov.topNone": "No expenses this month.", "ov.new": "new",
       "ov.up%": "{p}% more than last month", "ov.down%": "{p}% less than last month", "ov.new.aria": "Nothing in this category last month",
       "ov.edit": "Edit the overview", "ov.editHint": "Pick the cards to show and their order. It applies on all your devices.",
@@ -116,7 +119,10 @@
       "ov.goalNew": "Νέος στόχος", "ov.accEdit": "Όνομα και ρυθμίσεις: {a}", "ov.accNew": "Νέος λογαριασμός", "ov.bkNow": "Ενημέρωση από τράπεζες", "ov.bkBusy": "Ενημέρωση…", "ov.bkLast": "Τελευταία ενημέρωση {d}", "ov.bkNever": "Δεν έχει γίνει ακόμα ενημέρωση σε αυτή τη συσκευή", "ov.bkWeb": "Οι τράπεζες ενημερώνονται μόνο στο useoros.online", "ov.loan": "Δάνεια και χρέη",
       "ov.area": "Τομείς", "ov.areaNone": "Χωρίς τομέα", "ov.areaYear": "Η χρονιά ως τώρα, μετά τα κοινά ({m})",
       "ov.areaShared": "Κοινά έξοδα ({n}): {a}", "ov.ayNet": "{a}", "ov.ayShare": "{a} κοινά",
-      "ov.ayAria": "{n}: {a}, μείον {s} από τα κοινά, = {r}", "ov.ayLeft": "{a} από τα κοινά δεν πάνε σε κανέναν τομέα (τα μερίδια βγαίνουν κάτω από 100%).",
+      "ov.ayAria": "{n}: {a}, μείον {s} από τα κοινά, = {r}", "ov.whole": "Όλα μαζί, {m}", "ov.wBus": "Επιχείρηση (μετά τα κοινά)", "ov.wPer": "Προσωπικά", "ov.wNone": "Χωρίς τομέα",
+      "ov.wTot": "Σύνολο", "ov.wFlow": "Μπήκαν {i} · βγήκαν {o}", "ov.wDraw": "Αναλήψεις για προσωπικά: {a}", "ov.wBack": "Βάλατε πίσω στην επιχείρηση: {a}",
+      "ov.wHint": "Οι μεταφορές ανάμεσα στους λογαριασμούς σου μόνο μετακινούν χρήματα και δεν μετράνε σε κανένα σύνολο.",
+      "ov.ayLeft": "{a} από τα κοινά δεν πάνε σε κανέναν τομέα (τα μερίδια βγαίνουν κάτω από 100%).",
       "ov.top": "Πού πήγαν τα χρήματα", "ov.topNone": "Κανένα έξοδο αυτόν τον μήνα.", "ov.new": "νέα",
       "ov.up%": "{p}% περισσότερα από τον προηγούμενο μήνα", "ov.down%": "{p}% λιγότερα από τον προηγούμενο μήνα", "ov.new.aria": "Τίποτα σε αυτή την κατηγορία τον προηγούμενο μήνα",
       "ov.edit": "Προσαρμογή σύνοψης", "ov.editHint": "Διάλεξε ποιες κάρτες φαίνονται και με ποια σειρά. Ισχύει σε όλες τις συσκευές σου.",
@@ -142,6 +148,7 @@
   }
   function el(tag, cls, text) { return A.el(tag, cls, text); }
   function D() { return A.data(); }
+  function TXV() { return A.viewTx ? A.viewTx() : D().tx; }   // AR-VIEW: the area switch
   function lastDayOf(mk) { return mk + "-" + (O.daysIn(mk) < 10 ? "0" : "") + O.daysIn(mk); }
 
   var TITLE = { safe: "ov.safe", pace: "ov.pace", acc: "ov.acc", lim: "ov.lim", up: "ov.up", goal: "ov.goal", loan: "ov.loan", top: "ov.top", area: "ov.area" };
@@ -224,7 +231,7 @@
   // ---------- spending pace ----------
   function cardPace(card) {
     head(card, "pace", t("ov.pace"));
-    var mk = A.viewMk(), pc = O.pace(D().tx, mk, A.today()), limit = A.limitOf("all");
+    var mk = A.viewMk(), pc = O.pace(TXV(), mk, A.today()), limit = A.limitOf("all");
     if (!pc.upto) { card.appendChild(el("p", "hint", t("ov.ahead.pace"))); return; }
     var lastCur = pc.cur[pc.cur.length - 1] || 0;
     if (!lastCur && !pc.prev[pc.days - 1]) { card.appendChild(el("p", "hint", t("ov.paceNone"))); return; }
@@ -544,7 +551,7 @@
     });
     cycleLines(det, a);
     investLines(det, a, iv, bal[a.id]);
-    var mk = A.viewMk(), f = O.perAccount(D().tx, mk, [a.id]).by[a.id] || { inc: 0, out: 0 };
+    var mk = A.viewMk(), f = O.perAccount(TXV(), mk, [a.id]).by[a.id] || { inc: 0, out: 0 };
     if (f.inc || f.out) {
       var fl = el("div", "ov-bkline");
       fl.appendChild(el("span", "", t("ov.stFlow", { m: A.monthLabel(mk), i: A.money(f.inc), o: A.money(f.out) })));
@@ -593,7 +600,7 @@
     head(card, "acc", t("ov.acc"), list.length ? t("ov.open") : null, A.accountsDialog);
     if (!list.length) { hint(card, t("ov.accNone"), t("ov.accAdd"), A.accountsDialog); return; }
     var mk = A.viewMk(), tt = A.totals(mk);
-    var flows = O.perAccount(D().tx, mk, list.map(function (a) { return a.id; }));
+    var flows = O.perAccount(TXV(), mk, list.map(function (a) { return a.id; }));
     var nw = P.netWorth(D(), A.today(), A.cur(), A.fx, A.investValue);
     var top = el("div", "ov-nw");
     top.appendChild(el("span", "ov-k", t("ov.nw")));
@@ -851,14 +858,46 @@
     if (f.none.inc || f.none.out) row(t("ov.areaNone"), null, f.none, "r:");
     card.appendChild(ul);
     yearAfterShared(card, list, mk);
+    wholePicture(card, list, mk);
+  }
+  // AR-VIEW: business, personal and the total for the year so far (only
+  // when an area is marked personal).
+  function wholePicture(card, list, mk) {
+    if (!list.some(function (a) { return a.ps === 1; })) return;
+    var W = O.wholeYear(D().tx, D().xfer, D().acc, mk, list);
+    var sm = (A.monthLabel(W.from) || "").split(" ")[0], em = A.monthLabel(W.to) || "";
+    card.appendChild(el("p", "ov-k ov-mk", t("ov.whole", { m: sm + "–" + em })));
+    function signed(v) { return (v < 0 ? "−" : "+") + A.money(Math.abs(v)); }
+    var ul = el("ul", "ov-rows ov-ay ov-whole");
+    function row(name, f, res, cls) {
+      var li = el("li", "ov-ay-row" + (cls ? " " + cls : ""));
+      var mid = el("span", "ov-acc-m");
+      mid.appendChild(el("span", "ov-acc-n", name));
+      var line = el("span", "ov-flow");
+      if (f) line.appendChild(el("span", "", t("ov.wFlow", { i: A.money(f.inc), o: A.money(f.out) })));
+      line.appendChild(el("span", res < 0 ? "neg" : "pos", "= " + signed(res)));
+      mid.appendChild(line);
+      li.appendChild(mid);
+      li.setAttribute("aria-label", name + ": " + signed(res));
+      ul.appendChild(li);
+    }
+    row(t("ov.wBus"), W.business, W.business.after);
+    row(t("ov.wPer"), W.personal, W.personal.net);
+    if (W.none.inc || W.none.out) row(t("ov.wNone"), W.none, W.none.net);
+    row(t("ov.wTot"), null, W.total, "ov-w-tot");
+    card.appendChild(ul);
+    if (W.draws) card.appendChild(el("p", "hint", t("ov.wDraw", { a: A.money(W.draws) })));
+    if (W.back) card.appendChild(el("p", "hint", t("ov.wBack", { a: A.money(W.back) })));
+    if (W.draws || W.back) card.appendChild(el("p", "hint", t("ov.wHint")));
   }
   // AR-INV: the year so far per area, after its share of the shared
   // costs (only when an area holds them and some area has a share).
   function yearAfterShared(card, list, mk) {
     var Y = O.areaYear(D().tx, mk, list);
     if (!Y.shared || !Y.rows.some(function (r) { return r.share; })) return;
-    var name = {};
-    list.forEach(function (a) { name[a.id] = a.n; });
+    var name = {}, per = {};
+    list.forEach(function (a) { name[a.id] = a.n; if (a.ps === 1) per[a.id] = 1; });
+    Y.rows = Y.rows.filter(function (r) { return !per[r.id]; });   // AR-VIEW: personal areas are in the whole picture
     var sm = (A.monthLabel(Y.from) || "").split(" ")[0], em = A.monthLabel(Y.to) || "";
     card.appendChild(el("p", "ov-k ov-mk", t("ov.areaYear", { m: sm + "–" + em })));
     card.appendChild(el("p", "hint ov-ay-cost", t("ov.areaShared", { n: name[Y.shared.id] || "", a: (Y.shared.cost < 0 ? "−" : "") + A.money(Math.abs(Y.shared.cost)) })));

@@ -171,6 +171,41 @@
              left: cost - taken, none: none };
   }
 
+  // AR-VIEW (6.03.00, Chris 2026-11-09 «Ενιαία οικονομικά στο Budget»):
+  // the whole picture for the year up to a month. Business = every area
+  // that is neither personal (ps 1) nor the shared one, less all of the
+  // shared costs; personal = the personal areas; none = entries without
+  // an area. total = all income − all expenses (= business.after +
+  // personal.net + none.net). draws = transfers from an account of a
+  // business area (or the shared one) to an account of a personal area,
+  // back = the other way (accs = [{ id, dm? }]); they move money only,
+  // so they are in no total. Cents; nothing is written.
+  function wholeYear(txs, xfers, accs, mk, areas) {
+    var Y = areaYear(txs, mk, areas), list = (areas || []).filter(function (a) { return a && typeof a.id === "string"; });
+    var kind = {};
+    list.forEach(function (a) { kind[a.id] = Y.shared && a.id === Y.shared.id ? "b" : a.ps === 1 ? "p" : "b"; });
+    var bus = { inc: 0, out: 0, net: 0, shared: Y.shared ? Y.shared.cost : 0, after: 0 }, per = { inc: 0, out: 0, net: 0 };
+    Y.rows.forEach(function (r) {
+      var to = kind[r.id] === "p" ? per : bus;
+      to.inc += r.inc; to.out += r.out; to.net += r.net;
+    });
+    if (Y.shared) { bus.inc += Y.shared.inc; bus.out += Y.shared.out; }
+    bus.after = bus.net - bus.shared;
+    var none = { inc: Y.none.inc, out: Y.none.out, net: Y.none.inc - Y.none.out };
+    var accArea = {};
+    (accs || []).forEach(function (a) { if (a && a.dm && kind[a.dm]) accArea[a.id] = kind[a.dm]; });
+    var draws = 0, back = 0;
+    (xfers || []).forEach(function (x) {
+      var m = typeof x.d === "string" ? x.d.slice(0, 7) : "";
+      if (m < Y.from || m > Y.to) return;
+      var f = accArea[x.f], t = accArea[x.t];
+      if (f === "b" && t === "p") draws += x.a;
+      else if (f === "p" && t === "b") back += x.ta || x.a;
+    });
+    return { from: Y.from, to: Y.to, business: bus, personal: per, none: none,
+             total: bus.after + per.net + none.net, draws: draws, back: back };
+  }
+
   // Overview cards and their order. set.ov (synced) is a list such as
   // "pace,safe,-acc,lim": every known card once, "-" = hidden. Unknown
   // names are kept at their place (a newer Budget's cards), missing
@@ -223,7 +258,7 @@
 
   var api = {
     CARDS: CARDS, daysIn: daysIn, cumulative: cumulative, pace: pace, upcoming: upcoming, safe: safe,
-    topCats: topCats, perAccount: perAccount, perArea: perArea, areaYear: areaYear, cardList: cardList, cardString: cardString, normOv: normOv,
+    topCats: topCats, perAccount: perAccount, perArea: perArea, areaYear: areaYear, wholeYear: wholeYear, cardList: cardList, cardString: cardString, normOv: normOv,
     GROUPS: GROUPS, accGroup: accGroup, haveOwe: haveOwe
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

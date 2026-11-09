@@ -248,7 +248,7 @@ export const TOOLS = [
   },
   {
     name: "budget_areas",
-    description: "Makes, changes or removes Budget's areas (parts of the owner's life or work that entries belong to, at most 12), by name, all or none. words: the words in a bank line's text that put it in the area on import (comma-separated, the longest found wins). invoice_series: the Invoices series (prefixes or ids) whose payments come into the area. shared_costs: true makes it the one area of shared costs; share: another area's whole % of those costs (all shares at most 100), used only for the year's result after shared costs. Removing an area leaves its entries without one. Same rule as budget_add; the owner is notified and can undo it.",
+    description: "Makes, changes or removes Budget's areas (parts of the owner's life or work that entries belong to, at most 12), by name, all or none. words: the words in a bank line's text that put it in the area on import (comma-separated, the longest found wins). invoice_series: the Invoices series (prefixes or ids) whose payments come into the area. shared_costs: true makes it the one area of shared costs; share: another area's whole % of those costs (all shares at most 100), used only for the year's result after shared costs. personal: true marks a personal area (Budget's whole picture shows business, personal and the total). Removing an area leaves its entries without one. Same rule as budget_add; the owner is notified and can undo it.",
     inputSchema: {
       type: "object",
       properties: {
@@ -260,6 +260,7 @@ export const TOOLS = [
             words: { type: "string", description: "Comma-separated, at most 300 characters; \"\" clears them." },
             invoice_series: { type: "array", maxItems: 20, items: { type: "string" }, description: "Invoices series prefixes or ids; [] clears them." },
             shared_costs: { type: "boolean" },
+            personal: { type: "boolean", description: "true: a personal area (outside the business result in Budget's whole picture; no share of the shared costs)." },
             share: { type: "integer", minimum: 0, maximum: 100, description: "% of the shared costs; 0 clears it." },
             remove: { type: "boolean", description: "true removes the area." }
           },
