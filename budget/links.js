@@ -22,10 +22,12 @@
 // new entry gets (default i-free / o-other), dm its area (PL-2).
 //
 // Pure (Node tests, window.OrosBudgetLinks):
-//   invoiceRows(inv, cur) → rows of Invoices payments marked `ab` (made
-//     while "Payments go to Budget by themselves" was on), not sent by
-//     hand (`bud`), in Budget's currency, on an invoice / receipt /
-//     record that is not deleted or void
+//   invoiceRows(inv, cur, serArea?) → rows of Invoices payments marked
+//     `ab` (made while "Payments go to Budget by themselves" was on), not
+//     sent by hand (`bud`), in Budget's currency, on an invoice / receipt
+//     / record that is not deleted or void; serArea = { <series id>:
+//     <area id> } (AR-INV, 6.01.00) gives a row the area of its document's
+//     series
 //   shopTag(site) → "s" + 7 letters from the shop's host: the same
 //     shop gives the same ids whichever connection reads it
 //   shopReq(from, to, page) → the request for one page of records
@@ -56,7 +58,8 @@
 
   // ---------- Source: Invoices payments ----------
   var OWES = { inv: 1, rcpt: 1, ext: 1 };
-  function invoiceRows(inv, cur) {
+  var AREA_RE = /^[a-z0-9-]{1,64}$/;
+  function invoiceRows(inv, cur, serArea) {
     if (!inv || typeof inv !== "object" || !Array.isArray(inv.pays) || !Array.isArray(inv.docs)) return [];
     var docs = {};
     inv.docs.forEach(function (d) { if (d && typeof d.id === "string") docs[d.id] = d; });
@@ -78,6 +81,9 @@
       var row = { key: p.id, m: p.m, a: p.amt, d: p.date, n: text((d.num || "") + (who ? " · " + who : ""), 140) };
       var crm = typeof d.crm === "string" && /^[A-Za-z0-9_-]{1,60}$/.test(d.crm) ? d.crm : "";
       if (crm) row.crm = crm;
+      // AR-INV: the area of the document's series (a new entry only, plan())
+      var dm = serArea && typeof d.ser === "string" && Object.prototype.hasOwnProperty.call(serArea, d.ser) ? serArea[d.ser] : "";
+      if (typeof dm === "string" && AREA_RE.test(dm)) row.dm = dm;
       out.push(row);
     });
     return out;

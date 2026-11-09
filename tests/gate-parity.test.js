@@ -25,6 +25,7 @@ const GATE_ONLY = {
   budget_add: { twin: ["create_items"] },          // create_items app budget
   budget_change: { twin: ["change_item"] },
   budget_delete: { twin: ["change_item"] },        // change_item action delete
+  budget_areas: { why: "Areas are Budget's own settings (words, invoice series, shares of shared costs) that Claude keeps in order from outside; inside orOS the owner sets them in Budget › Areas." },
   kanban_add_cards: { twin: ["create_items"] },    // create_items app kanban
   kanban_move_cards: { twin: ["change_item"] },    // change_item action move
   kanban_change_card: { twin: ["change_item"] }

@@ -140,6 +140,37 @@
     return { by: by, none: none };
   }
 
+  // AR-INV (6.01.00): the year up to a month per area, with the shared
+  // costs split by the areas' shares. areas = [{ id, pc?, sh? }] (the
+  // shared one: sh 1, lowest id). → { from, to, rows: [{ id, inc, out,
+  // net, share, after }], shared: { id, inc, out, cost } | null, left
+  // (shared cost no share takes), none: { inc, out } }. Cents; a share
+  // is the shared net cost × pc / 100, rounded half away from zero; a
+  // shared area with more income than costs gives a negative cost
+  // (the areas then get money back). Nothing is written.
+  function areaYear(txs, mk, areas) {
+    var y = String(mk).slice(0, 4), from = y + "-01", to = String(mk).slice(0, 7);
+    var list = (areas || []).filter(function (a) { return a && typeof a.id === "string"; });
+    var sh = list.filter(function (a) { return a.sh === 1; }).sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; })[0] || null;
+    var by = {}, none = { inc: 0, out: 0 };
+    list.forEach(function (a) { by[a.id] = { inc: 0, out: 0 }; });
+    (txs || []).forEach(function (x) {
+      var m = x.d.slice(0, 7);
+      if (m < from || m > to) return;
+      var r = x.dm && by[x.dm] ? by[x.dm] : none;
+      if (x.k === "i") r.inc += x.a; else r.out += x.a;
+    });
+    var cost = sh ? by[sh.id].out - by[sh.id].inc : 0, taken = 0;
+    var rows = list.filter(function (a) { return !sh || a.id !== sh.id; }).map(function (a) {
+      var f = by[a.id], pc = typeof a.pc === "number" && a.pc > 0 && a.pc <= 100 ? a.pc : 0;
+      var share = pc && cost ? (cost < 0 ? -1 : 1) * Math.round(Math.abs(cost) * pc / 100) : 0;
+      taken += share;
+      return { id: a.id, inc: f.inc, out: f.out, net: f.inc - f.out, share: share, after: f.inc - f.out - share };
+    });
+    return { from: from, to: to, rows: rows, shared: sh ? { id: sh.id, inc: by[sh.id].inc, out: by[sh.id].out, cost: cost } : null,
+             left: cost - taken, none: none };
+  }
+
   // Overview cards and their order. set.ov (synced) is a list such as
   // "pace,safe,-acc,lim": every known card once, "-" = hidden. Unknown
   // names are kept at their place (a newer Budget's cards), missing
@@ -192,7 +223,7 @@
 
   var api = {
     CARDS: CARDS, daysIn: daysIn, cumulative: cumulative, pace: pace, upcoming: upcoming, safe: safe,
-    topCats: topCats, perAccount: perAccount, perArea: perArea, cardList: cardList, cardString: cardString, normOv: normOv,
+    topCats: topCats, perAccount: perAccount, perArea: perArea, areaYear: areaYear, cardList: cardList, cardString: cardString, normOv: normOv,
     GROUPS: GROUPS, accGroup: accGroup, haveOwe: haveOwe
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
