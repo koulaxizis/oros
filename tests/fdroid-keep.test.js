@@ -61,3 +61,25 @@ test("fdroid.yml: the manifests' version line alone is no Android shell change",
   assert.match(y, /git diff --quiet -I '\^\[\[:space:\]\]\*"version"\[\[:space:\]\]\*:' "\$last" HEAD -- manifest\.webmanifest/);
   assert.match(y, /node tools\/fdroid-keep\.js "\$prev" "\$site"/);
 });
+
+test("fdroid.yml: a push that rebuilds the APKs leaves the publish to the run after the Android build", () => {
+  const y = fs.readFileSync(path.join(ROOT, ".github", "workflows", "fdroid.yml"), "utf8");
+  const a = fs.readFileSync(path.join(ROOT, ".github", "workflows", "android.yml"), "utf8");
+  const m = y.match(/git diff --name-only "\$BEFORE" HEAD \| grep -qE '([^']+)'/);
+  assert.ok(m, "the push guard is there");
+  assert.match(y, /fetch-depth: \$\{\{ github\.event_name == 'push' && 0 \|\| 1 \}\}/);
+  const re = new RegExp(m[1]);
+  // Every push path of android.yml, as a file it would match, is caught
+  const push = a.match(/push:\n\s+branches: \[main\]\n\s+paths: \[([^\]]+)\]/);
+  assert.ok(push, "android.yml push paths");
+  const paths = push[1].split(",").map((s) => s.trim().replace(/^'|'$/g, ""));
+  assert.ok(paths.length >= 8);
+  for (const p of paths) {
+    const file = p.replace("/**", "/x/y.png").replace(/^\*\//, "notes/");
+    assert.ok(re.test(file), p + " → " + file);
+  }
+  // Store texts and pictures alone still publish from the push run
+  for (const f of ["tools/fdroid/podcasts/en-1.jpg", "tools/fdroid-metadata.js", ".github/workflows/fdroid.yml", "notes/notes.js"]) {
+    assert.ok(!re.test(f), f);
+  }
+});
