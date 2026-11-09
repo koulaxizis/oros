@@ -53,7 +53,14 @@ export const GATE_LIMITS = {
   copyChars: 900 * 1024,         // the encrypted copy (base64url)
   chunkChars: 120000,            // one storage value of it
   queue: 50,                     // changes waiting for a device
-  keyMs: 4000                    // asking an open device for the gate key
+  keyMs: 4000,                   // asking an open device for the gate key
+  // A device asleep (6.01.02): a phone puts orOS in the background and
+  // freezes it, but its socket can stay open for minutes. A socket with
+  // no sign of life (its 45 s ping, any message) for this long is asleep:
+  // calls skip it, and a change that finds no awake device waits like
+  // one made with orOS closed.
+  aliveMs: 150000,
+  lateMs: 120000                  // a timed-out change waits this long before another device gets it
 };
 
 // orOS that runs on the person's own computer (orOS Portable, the
@@ -763,6 +770,13 @@ function setAtt(ws, a) {
   try { if (typeof ws.serializeAttachment === "function") ws.serializeAttachment(a); } catch (e) {}
   ws.__g = a;
 }
+// The waiting changes a device gets as it connects, oldest first. 6.01.02:
+// one queued after a timeout waits until nb (its late answer may end it).
+export function queueFor(q, now) {
+  const items = [];
+  q.forEach((v, k) => { if (v && !(typeof v.nb === "number" && v.nb > now)) items.push({ id: k.slice(2), c: v.c, t: v.t }); });
+  return items.sort((x, y) => x.t - y.t);
+}
 // Which device answers: one whose orOS is on screen, else the one that
 // connected last (a phone in the background often has no socket at all).
 export function pickOrder(socks) {
@@ -889,6 +903,20 @@ export class GateBox {
     }
   }
   sockets() { return typeof this.state.getWebSockets === "function" ? this.state.getWebSockets() : []; }
+  // 6.01.02: the sockets that showed a sign of life lately (see aliveMs).
+  // The ping is answered by the platform without waking the box; its
+  // time comes from getWebSocketAutoResponseTimestamp.
+  awake(now) {
+    return this.sockets().filter((ws) => {
+      const a = attOf(ws);
+      let t = Math.max(a.at || 0, a.lt || 0);
+      try {
+        const d = typeof this.state.getWebSocketAutoResponseTimestamp === "function" ? this.state.getWebSocketAutoResponseTimestamp(ws) : null;
+        if (d) t = Math.max(t, +d);
+      } catch (e) {}
+      return (now || Date.now()) - t < GATE_LIMITS.aliveMs;
+    });
+  }
 
   async fetch(request) {
     try {
@@ -1144,6 +1172,9 @@ export class GateBox {
     const client = pair[0], server = pair[1];
     this.state.acceptWebSocket(server);
     setAtt(server, { th: th, v: 1, at: now });
+    // 6.01.02: the box's clock, so the device can tell a call it reads
+    // late (after a sleep) from a fresh one (each call carries dl).
+    try { server.send(JSON.stringify({ hi: now })); } catch (e) {}
     // The app switches the devices share (5.77.00): the newest set goes to a device as it connects.
     if (m.lv) { try { server.send(JSON.stringify({ lv: m.lv, lvt: m.lvt || 0 })); } catch (e) {} }
     // orOS closed (5.80.00): a device is open again; the changes Claude
@@ -1151,19 +1182,15 @@ export class GateBox {
     m.seen = now;
     await this.st.put("meta", m);
     const q = await this.st.list({ prefix: "q:" });
-    if (q.size) {
-      const items = [];
-      q.forEach((v, k) => { items.push({ id: k.slice(2), c: v.c, t: v.t }); });
-      items.sort((x, y) => x.t - y.t);
-      try { server.send(JSON.stringify({ cq: items })); } catch (e) {}
-    }
+    const items = queueFor(q, now);
+    if (items.length) { try { server.send(JSON.stringify({ cq: items })); } catch (e) {} }
     return new Response(null, { status: 101, webSocket: client, headers: { "Sec-WebSocket-Protocol": "gt1" } });
   }
 
   async webSocketMessage(ws, msg) {
-    if (msg === "ping") { try { ws.send("pong"); } catch (e) {} return; }
+    if (msg === "ping") { const a = attOf(ws); a.lt = Date.now(); setAtt(ws, a); try { ws.send("pong"); } catch (e) {} return; }
     if (msg === "v0" || msg === "v1") {             // the device's screen: shown or hidden
-      const a = attOf(ws); a.v = msg === "v1" ? 1 : 0; a.vt = Date.now(); setAtt(ws, a);
+      const a = attOf(ws); a.v = msg === "v1" ? 1 : 0; a.vt = a.lt = Date.now(); setAtt(ws, a);
       return;
     }
     if (typeof msg !== "string" || msg.length > GATE_LIMITS.replyBytes) {
@@ -1177,7 +1204,10 @@ export class GateBox {
     if (o && Array.isArray(o.cqa) && o.r === undefined) { await this.queueDone(ws, o.cqa); return; }
     if (!o || typeof o.r !== "string") return;
     const w = this.wait.get(o.r);
-    if (!w) return;
+    // 6.01.02: a late answer. The box gave up on it and queued the change
+    // under the same id; the device decided it after all (done, or refused:
+    // app off, paused), so it waits no more. Only "late" (never started) keeps it.
+    if (!w) { if (!(o.ok === false && o.c === "late") && /^[A-Za-z0-9_-]{16}$/.test(o.r)) await this.st.delete("q:" + o.r); return; }
     this.wait.delete(o.r);
     clearTimeout(w.timer);
     w.done(o);
@@ -1231,7 +1261,7 @@ export class GateBox {
   }
   // An open device gives the gate key once, over its own socket.
   async keyFromDevice() {
-    if (!this.sockets().length) return null;
+    if (!this.awake().length) return null;
     const ans = await this.ask("_key", {}, GATE_LIMITS.keyMs);
     return ans && ans.ok && K_RE.test(ans.c || "") ? unb64u(ans.c) : null;
   }
@@ -1273,7 +1303,7 @@ export class GateBox {
   }
   // A call while no device is open: reads from the copy, changes wait
   // in the queue (deletions wait for an open device).
-  async closedCall(name, args, kRaw, now) {
+  async closedCall(name, args, kRaw, now, qidWant) {
     if (!kRaw) return { ok: false, c: "orOS is closed and there is no copy Claude may read yet. Ask the owner to open orOS once on a device with the gate on." };
     const cp = await this.readCopy(kRaw);
     if (!cp || typeof cp.at !== "number" || !cp.ans || typeof cp.ans !== "object") {
@@ -1328,14 +1358,18 @@ export class GateBox {
     if (typeof cp.hold === "number" && cp.hold > now) return { ok: false, c: "The owner paused Claude's changes until " + new Date(cp.hold).toISOString() + ". Nothing was changed." };
     const q = await this.st.list({ prefix: "q:" });
     if (q.size >= GATE_LIMITS.queue) return { ok: false, c: "Too many changes are waiting for orOS to open (" + GATE_LIMITS.queue + "). Ask the owner to open orOS." };
-    const qid = rand43().slice(0, 16);
-    await this.st.put("q:" + qid, { c: await sealText(kRaw, JSON.stringify({ n: name, a: args, t: now })), t: now });
+    const qid = typeof qidWant === "string" && /^[A-Za-z0-9_-]{16}$/.test(qidWant) ? qidWant : rand43().slice(0, 16);
+    const row = { c: await sealText(kRaw, JSON.stringify({ n: name, a: args, t: now })), t: now };
+    // 6.01.02: a call that timed out may still finish on the device that
+    // got it; no other device gets it for lateMs (its late answer ends it).
+    if (qid === qidWant) row.nb = now + GATE_LIMITS.lateMs;
+    await this.st.put("q:" + qid, row);
     return { ok: true, c: JSON.stringify({ queued: true, note: "orOS is closed: this change waits, encrypted, and is applied the next time orOS opens on one of the owner's devices; the owner is notified and can undo it there. New ids are not known until then." }) };
   }
 
   // The device's own tools (GATE-ACT). fresh: ask the open device first.
   async devTools(fresh) {
-    if (fresh && this.sockets().length) {
+    if (fresh && this.awake().length) {
       const ans = await this.ask("__tools", {}, GATE_LIMITS.toolsMs);
       if (ans.ok && typeof ans.c === "string") {
         let list = null;
@@ -1351,16 +1385,20 @@ export class GateBox {
     return Array.isArray(kept) ? kept : [];
   }
 
-  // Passes one tool call to the device and waits for its answer.
+  // Passes one tool call to an awake device and waits for its answer.
+  // e: "closed" (no awake device) or "timeout" (rid: the call's id).
+  // dl (6.01.02): the box's time after which the device must not start it.
   ask(name, args, ms) {
-    const live = pickOrder(this.sockets());
+    const now = Date.now();
+    const live = pickOrder(this.awake(now));
     if (!live.length) return Promise.resolve({ ok: false, e: "closed" });
     const ws = live[0];
     const rid = rand43().slice(0, 16);
+    const wait = ms || GATE_LIMITS.callMs;
     return new Promise((done) => {
-      const timer = setTimeout(() => { this.wait.delete(rid); done({ ok: false, e: "timeout" }); }, ms || GATE_LIMITS.callMs);
+      const timer = setTimeout(() => { this.wait.delete(rid); done({ ok: false, e: "timeout", rid: rid }); }, wait);
       this.wait.set(rid, { done, timer });
-      try { ws.send(JSON.stringify({ q: rid, n: name, a: args })); }
+      try { ws.send(JSON.stringify({ q: rid, n: name, a: args, dl: now + wait })); }
       catch (e) { clearTimeout(timer); this.wait.delete(rid); done({ ok: false, e: "closed" }); }
     });
   }
@@ -1409,13 +1447,28 @@ export class GateBox {
     // id orOS › Settings › orOS Gate shows, so a link to an old gate shows.
     const gid = String(request.headers.get("X-Gid") || "").slice(0, 6);
     const tag = gid ? " (Claude's link is to the gate " + gid + "; orOS › Settings › Connected services › orOS Gate shows each device's gate. If it differs, the owner reconnects the connector.)" : "";
-    if (ans.e === "closed") { ans = await this.closedCall(p.name, args, await this.unwrapK(tok), now); if (!ans.ok && typeof ans.c === "string") ans.c += tag; }
+    if (ans.e === "closed") {
+      const asleep = this.sockets().length > 0;       // 6.01.02: open, but no sign of life for aliveMs
+      ans = await this.closedCall(p.name, args, await this.unwrapK(tok), now);
+      if (asleep && typeof ans.c === "string") ans.c = ans.c.split("orOS is closed").join("orOS is asleep in the background on the owner's device (as if closed)");
+      if (!ans.ok && typeof ans.c === "string") ans.c += tag;
+    }
+    else if (ans.e === "timeout") {
+      // 6.01.02: the device did not answer in time (asleep in the
+      // background, or busy). Do what orOS closed does: a read answers
+      // from the copy, a change waits encrypted under the call's own id
+      // (a late answer of the device takes it back out), so Claude's
+      // request is not lost.
+      const late = await this.closedCall(p.name, args, await this.unwrapK(tok), Date.now(), ans.rid);
+      ans = { ok: late.ok, e: late.ok ? undefined : "timeout", c: typeof late.c === "string" ? late.c.split("orOS is closed").join("orOS did not answer in time (asleep in the background or busy)") : late.c };
+    }
     else if (ans.ok && !(await this.st.get("kw:" + await sha256hex(tok)))) {
       const kRaw = await this.keyFromDevice();          // a link made before 5.80.00: wrap the key for it now
       if (kRaw) await this.wrapK(tok, kRaw, now);
     }
     if (!ans.ok) {
       const why = ans.e === "closed" ? "orOS is not open on the owner's gate device, or the gate is off. Ask the owner to open orOS." + tag :
+                  ans.e === "timeout" && typeof ans.c === "string" ? ans.c.slice(0, 2000) :
                   ans.e === "timeout" ? "orOS did not answer in time. It may be asleep or busy; ask the owner." :
                   typeof ans.c === "string" ? ans.c.slice(0, 2000) : "orOS refused the call.";
       return jsonRes(200, rpcOk(id, toolText(why, true)));
