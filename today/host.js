@@ -146,25 +146,28 @@
   }
 
   // ---------- Building ----------
-  // → Promise<{ today, lang, groups, counts, apps: [{ id, name, sensitive, on }], at }>
+  // → Promise<{ today, lang, groups, facts, counts, apps: [{ id, name, sensitive, on }], at }>
   function build() {
     var e = env(), version = "";
     try { version = e ? e.version : ""; } catch (x) {}
     var data = read(), apps = todayApps(), now = Date.now(), today = A.ymdOf(new Date(now)), l = lang();
-    var on = {};
+    var on = {}, facts = {};
     apps.forEach(function (a) { on[a.id] = A.appOn(data, a.id); });
     return Promise.all(apps.filter(function (a) { return on[a.id]; }).map(function (a) {
       return loadApp(a, version);
     })).then(function () {
       var ctx = { today: today, horizon: A.HORIZON, now: now, lang: l, readJSON: readJSON, readRaw: readRaw,
                   addDays: A.addDays, diff: A.diff };
-      return A.run(root.orosTodayProviders, ctx, { enabled: function (id) { return !!on[id]; } });
+      var en = function (id) { return !!on[id]; };
+      facts = A.collectFacts(root.orosTodayProviders, ctx, en);   // BR-TODAY-16
+      return A.run(root.orosTodayProviders, ctx, { enabled: en });
     }).then(function (res) {
       var order = apps.map(function (a) { return a.id; });
       var g = A.trim(A.group(res.rows, today, A.HORIZON, order));
       return {
         today: today, lang: l, at: now,
         groups: g,
+        facts: facts,
         counts: A.counts(g),
         apps: apps.map(function (a) {
           return { id: a.id, name: a.name, sensitive: a.searchOff === true, on: !!on[a.id] };
@@ -193,6 +196,29 @@
       var ctx = { today: today, horizon: days, now: now, lang: lang(), readJSON: readJSON, readRaw: readRaw,
                   addDays: A.addDays, diff: A.diff };
       return A.run([p], ctx, {}).then(function (res) { return res.rows; });
+    });
+  }
+  // The week ahead at a glance (T3, BR-TODAY-17): how many rows each
+  // switched-on app has from tomorrow to `days` days on (1–14), top
+  // lines left out. Same providers and switches as the summary.
+  // → Promise<[{ id, name, n }]>, the apps in the summary's order.
+  function week(days) {
+    days = Math.max(1, Math.min(14, Math.floor(Number(days)) || 7));
+    var e = env(), version = "";
+    try { version = e ? e.version : ""; } catch (x) {}
+    var data = read(), apps = todayApps(), now = Date.now(), today = A.ymdOf(new Date(now)), on = {};
+    apps.forEach(function (a) { on[a.id] = A.appOn(data, a.id); });
+    return Promise.all(apps.filter(function (a) { return on[a.id]; }).map(function (a) { return loadApp(a, version); })).then(function () {
+      var ctx = { today: today, horizon: days, now: now, lang: lang(), readJSON: readJSON, readRaw: readRaw,
+                  addDays: A.addDays, diff: A.diff };
+      return A.run(root.orosTodayProviders, ctx, { enabled: function (id) { return !!on[id]; } });
+    }).then(function (res) {
+      var n = {}, last = A.addDays(today, days);
+      res.rows.forEach(function (r) {
+        if (r.kind === "info" || !r.due || r.due <= today || r.due > last) return;
+        n[r.app] = (n[r.app] || 0) + 1;
+      });
+      return apps.filter(function (a) { return n[a.id]; }).map(function (a) { return { id: a.id, name: a.name, n: n[a.id] }; });
     });
   }
   function agendaApps() {
@@ -326,6 +352,7 @@
     build: build,
     agenda: agenda,
     agendaApps: agendaApps,
+    week: week,
     open: open,
     done: done,
     act: act,

@@ -14,6 +14,7 @@
 //           POST /v1  { op: "ext", p, host, base, ck, cs, reqs:[...] }  (Connected services: a person's own shop, see ext.js)
 //           POST /v1  { op: "crmf", act, k, sec, ... }  (CRM web form, see crmform.js)
 //           POST /v1  { op: "shr", act, id, ... }  (share links with an expiry, see share.js)
+//           POST /v1  { op: "shl", code }  (a shared song's short link, see short.js)
 //           /s/<id>/<i> PUT / GET one encrypted piece of a shared item (share.js)
 //           POST /v1  { op: "push", act, id, tok, ... }  (notifications with orOS closed, see push.js)
 //           POST /v1  { op: "hook", act, id, tok, ... }  (Automations: incoming webhooks, see hook.js)
@@ -43,6 +44,7 @@ import { handleHouse } from "./house.js";
 import { validOasa, runOasa, OasaError } from "./oasa.js";
 import { validHookIn, runHookIn, handleHookIn, HookError } from "./hook.js";
 import { handlePreview } from "./preview.js";
+import { validShl, runShl, ShlError } from "./short.js";
 import { handleGate, isGatePath } from "./gate.js";
 
 export const LIMITS = {
@@ -55,7 +57,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, nlhook: 1, papi: 1, ext: 1, crmf: 1, shr: 1, push: 1, oasa: 1, hook: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, nlhook: 1, papi: 1, ext: 1, crmf: 1, shr: 1, shl: 1, push: 1, oasa: 1, hook: 1 };
 const SIEVE_PORT = 4190;
 
 // ---------- validation ----------
@@ -106,6 +108,7 @@ export function validRequest(b, env, now) {
   if (b.op === "nlhook") return validHook(b, checkUrl);   // Newsletter: signed "issue sent" notice (N3)
   if (b.op === "crmf") return validCrmf(b);   // CRM: web form messages waiting in D1
   if (b.op === "shr") return validShr(b, now);   // Send to someone: encrypted items with an expiry
+  if (b.op === "shl") return validShl(b);        // Send to someone: a song's short link
   if (b.op === "papi") return validPapi(b);   // Newsletter: provider HTTP APIs
   if (b.op === "ext") return validExt(b);     // Connected services: a person's own shop
   if (b.op === "push") return validPush(b);   // Notifications with orOS closed
@@ -240,9 +243,10 @@ export async function handle(request, env, connectFn, now, fetchFn) {
 
   // Send to someone: a song's link preview (relay/preview.js, BR-SHARE-
   // PREVIEW): any chat app's crawler or browser, GET/HEAD only, own rate
-  // limit, nothing stored; it forwards to the share page.
+  // limit; it forwards to the share page. A short link (/p/s.<id>,
+  // relay/short.js) reads the song's public details from D1.
   if (url.pathname.startsWith("/p/")) {
-    return handlePreview(request, url, request.headers.get("CF-Connecting-IP") || "", now || Date.now());
+    return handlePreview(request, url, request.headers.get("CF-Connecting-IP") || "", now || Date.now(), env);
   }
 
   // Send to someone: the encrypted pieces of a shared item (relay/share.js),
@@ -375,6 +379,16 @@ export async function handle(request, env, connectFn, now, fetchFn) {
       return json(200, { ok: true, data }, okOrigin);
     } catch (e) {
       if (e instanceof ShrError) return fail(e.status, e.code, e.message, okOrigin);
+      return fail(503, "nostore", "storage failed", okOrigin);           // a D1 failure; never its text
+    }
+  }
+
+  if (b.op === "shl") {
+    try {
+      const data = await runShl(b, env, now || Date.now(), request.headers.get("CF-Connecting-IP") || "");
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      if (e instanceof ShlError || e instanceof ShrError) return fail(e.status, e.code, e.message, okOrigin);
       return fail(503, "nostore", "storage failed", okOrigin);           // a D1 failure; never its text
     }
   }

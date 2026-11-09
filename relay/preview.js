@@ -24,7 +24,13 @@
 // rebuilt from the checked code. Anything else gets a plain 302 to
 // /share/ that echoes nothing of the code. Fixed text on errors; nothing
 // throws out of handlePreview().
+//
+// GET /p/s.<id> (BR-SHARE-SHORT, relay/short.js) is the short form: the
+// song's normalized details come from D1, go through the normalizers
+// again, and the page and its forward code are made the same way.
 // ============================================================
+
+import { shortItem, SHORT_RE } from "./short.js";
 
 export const PV_LIMITS = {
   path: 4096,          // characters of the whole path
@@ -225,7 +231,7 @@ function limited(ip, now) {
 }
 export function resetPreviewLimits() { hits.clear(); }
 
-export async function handlePreview(request, url, ip, now) {
+export async function handlePreview(request, url, ip, now, env) {
   try {
     if (request.method !== "GET" && request.method !== "HEAD") {
       return new Response("method not allowed\n", { status: 405, headers: headers({ "Content-Type": "text/plain; charset=utf-8", "Allow": "GET, HEAD", "Cache-Control": "no-store" }) });
@@ -235,9 +241,17 @@ export async function handlePreview(request, url, ip, now) {
     }
     const path = url.pathname;
     if (path.length > PV_LIMITS.path || url.search) return away();
-    const code = path.slice(3);                 // after "/p/"
-    if (!CODE_RE.test(code)) return away();
-    const item = await songOf(code);
+    let code = path.slice(3);                   // after "/p/"
+    let item;
+    if (SHORT_RE.test(code)) {
+      const got = await shortItem(code, env, now);
+      if (!got) return away();
+      item = got.item;
+      code = got.code;
+    } else {
+      if (!CODE_RE.test(code)) return away();
+      item = await songOf(code);
+    }
     if (!item) return away();
     const body = pageFor(item, code);
     return new Response(request.method === "HEAD" ? null : body, { status: 200, headers: headers({ "Cache-Control": "public, max-age=86400" }) });

@@ -14,7 +14,7 @@ The tabs:
 ## Listen
 Tap a song to play it, with the rest of its album or list after it. The big play button plays a whole album, artist, playlist or genre, and `Shuffle` plays it in random order.
 
-The player bar at the bottom shows the song, a heart and play/pause and next. Tap the song's name for the full player: position, `Previous`, `Next`, `Shuffle`, `Repeat` (all, then one), volume and `Queue`. Your device's media controls (lock screen, headset, media keys) work too. While a song plays, a music note shows on the orOS top bar, also with the Music window closed: tap it for a small control panel with the song, its position, `Previous`, play/pause, `Next`, `Stop`, `Open Music`, volume and `Mute`. Tap outside it or press Esc to close it. Radio and Podcasts pause when music starts, and the other way round.
+The player bar at the bottom shows the song, a heart and play/pause and next. Tap the song's name for the full player: position, `Previous`, `Next`, `Shuffle`, `Repeat` (all, then one), volume and `Queue`. Your device's media controls (lock screen, headset, media keys) work too. While a song plays, a music note shows on the orOS top bar, also with the Music window closed: tap it for a small control panel with the song, a heart to save it to your Liked songs (or remove it), its position, `Previous`, play/pause, `Next`, `Stop`, `Open Music`, volume and `Mute`. Tap outside it or press Esc to close it. Radio and Podcasts pause when music starts, and the other way round.
 
 ## Queue
 `Queue` in the full player shows `Now playing`, `Next up` (songs you added by hand) and what follows from the list you started. Tap a song there to jump to it, or press × to take it out of `Next up`. The ⋯ button on any song offers `Play next` and `Add to queue`.
@@ -82,7 +82,7 @@ The device gets the song's own https address, so free music and songs from your 
 - A song from your own server goes with its name only: the server's address and your login never leave your device.
 - A song on this device asks each time: send its name as a link, or the file itself through the share menu (where the device can send files, up to 100 MB). Send a file only if it is yours to give.
 - `Share…` in an album's ⋯ menu (yours or from free music) or a playlist's ⋯ menu sends the whole list the same way: songs from free music play one after another on the page, songs of your own go with their names. `Add to my orOS` there offers `Play all` or `Save as my playlist`.
-- `Show the cover in chats` puts the cover and title in the chat's preview (see [Send to someone](help:t/share)).
+- `Show the cover in chats` puts the cover and title in the chat's preview, and `Short link` makes that link short (see [Send to someone](help:t/share)).
 
 ## Sleep timer
 `Sleep timer` in the full player stops the music after 5 to 90 minutes, or at the end of the playing song. The last ten seconds fade out. The button shows how long is left; choose `Turn off the timer` to cancel it.

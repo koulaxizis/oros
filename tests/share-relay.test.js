@@ -22,7 +22,7 @@ function fakeD1() {
     const Q = S.SHR_SQL;
     log.push(sql);
     switch (sql) {
-      case Q.obj: case Q.chunk: case Q.indexExp: case Q.indexOpen: return { meta: {} };
+      case Q.obj: case Q.chunk: case Q.indexExp: case Q.indexOpen: case Q.shl: case Q.shlLast: case Q.shlDay: case Q.shlTot: case Q.shlTot1: return { meta: {} };
       case Q.getObj: { const o = objs.get(a[0]); return { first: o ? { ...o } : null }; }
       case Q.used: return { first: { s: [...objs.values()].reduce((x, o) => x + o.size, 0) } };
       case Q.addObj:

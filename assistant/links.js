@@ -4,7 +4,9 @@
 // ------------------------------------------------------------
 // link_items: a CRM customer linked to (or unlinked from) a Stock
 // supplier, a Stock consignment shop, a Timesheet client, an Invoices
-// client or a person on Publishing titles: the links CRM's own
+// client or a person on Publishing titles (pt rows), or a Kanban card,
+// a Notes page, a Layout document or an Atelier design (ix rows, CRM
+// 1.9; an item may sit on several partners' cards): the links CRM's own
 // "Linked in other apps" makes (crm/core.js pt rows, linkMove; the
 // candidates of crm/links.js). CRM writes only its own data; the other
 // apps are read, never changed. One card, a tick per link, nothing
@@ -18,7 +20,10 @@
   "use strict";
   var MAX = 50;
   // what each kind of record is, for the model and the card
-  var KIND_WHAT = { sup: "Stock supplier", wh: "Stock consignment shop", tsc: "Timesheet client", inv: "Invoices client", pub: "person on Publishing titles" };
+  var KIND_WHAT = { sup: "Stock supplier", wh: "Stock consignment shop", tsc: "Timesheet client", inv: "Invoices client", pub: "person on Publishing titles",
+                    kb: "Kanban card", nt: "Notes page", ly: "Layout document", at: "Atelier design" };
+  // Linked items (CRM 1.9, ix rows): which apps' refs make them
+  var ITEM_APPS = ["kanban", "notes", "layout", "atelier"];
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function bad(msg) { return { ok: false, err: msg }; }
@@ -40,6 +45,22 @@
     return "";
   }
 
+  // A Kanban card, Notes page, Layout document or Atelier design ref →
+  // the item CRM keeps on the partner's card ({ k, r, t }) | null
+  var SEG = /^[A-Za-z0-9_.:-]{1,80}$/;
+  function itemOfRef(r) {
+    if (!r || !isObj(r.target)) return null;
+    var t = r.target, title = typeof r.title === "string" ? r.title.replace(/\s+/g, " ").trim().slice(0, 200) : "";
+    if (r.app === "kanban" && SEG.test(t.board) && SEG.test(t.col) && SEG.test(t.card)) return { k: "kb", r: t.board + "/" + t.col + "/" + t.card, t: title };
+    if (r.app === "notes" && SEG.test(t.page)) return { k: "nt", r: t.page, t: title };
+    if ((r.app === "layout" || r.app === "atelier") && SEG.test(t.doc)) return { k: r.app === "layout" ? "ly" : "at", r: t.doc, t: title };
+    return null;
+  }
+  function hasItem(C, crm, custId, it) {
+    var key = C.itemKey(it);
+    return C.itemsOf(crm, byId(crm.cust, custId)).some(function (x) { return C.itemKey(x) === key; });
+  }
+
   // args.links (the model's) → [{ custId, key, name, k, unlink }] | { err }
   //   refOf(ref) → { app, target, title } | null (this conversation's refs)
   //   cands = crm/links.js candidates() of this device's data
@@ -58,7 +79,17 @@
       var cand = null;
       if (given[0] === "item") {
         var ri = refOf(clean(x.item)), key = keyOfRef(ri);
-        if (!key) return { err: w + "item must be the ref of a Stock supplier, a Timesheet client or an Invoices client (search_data in that app)." };
+        var item = key ? null : itemOfRef(ri);
+        if (item) {
+          var cid = rc.target.cust, ik = "it:" + cid + ":" + C.itemKey(item);
+          if (seen[ik]) return { err: "links[" + seen[ik] + "] and " + w.slice(0, -2) + " are about the same record; give each once." };
+          seen[ik] = String(i);
+          var un = x.unlink === true;
+          if (un && !hasItem(C, crm, cid, item)) return { err: w + "that customer is not linked to that " + KIND_WHAT[item.k] + "." };
+          out.push({ custId: cid, cust: byId(crm.cust, cid).name, item: item, k: item.k, name: item.t || KIND_WHAT[item.k], unlink: un });
+          continue;
+        }
+        if (!key) return { err: w + "item must be the ref of a Stock supplier, a Timesheet client, an Invoices client, a Kanban card, a Notes page, a Layout document or an Atelier design (search_data in that app)." };
         cands.forEach(function (c) { if (!cand && c.key === key) cand = c; });
         if (!cand) {
           if (key.slice(0, 4) === "inv:") return { err: w + "that Invoices client is linked to CRM in Invoices itself (or is gone)." };
@@ -86,6 +117,7 @@
   // → { ok, rows: [{ title, k, name, cust, from?, same, unlink }] }
   function plan(C, crm, links) {
     return { ok: true, rows: links.map(function (l) {
+      if (l.item) return { cust: l.cust, k: l.k, name: l.name, unlink: l.unlink, same: !l.unlink && hasItem(C, crm, l.custId, l.item) };
       var owner = C.linkOwner(crm, l.key);
       var row = { cust: l.cust, k: l.k, name: l.name, unlink: l.unlink, same: !l.unlink && !!owner && owner.id === l.custId };
       if (!l.unlink && owner && owner.id !== l.custId) row.from = owner.name;
@@ -95,10 +127,26 @@
   // The pt rows, stamped as CRM's savePt: after the row, after a
   // customer's tombstone. skip[i] = the user unticked link i.
   function apply(C, crm, links, now, skip) {
-    var d = clone(crm), done = [], touched = {};
+    var d = clone(crm), done = [], touched = {}, touchedIx = {};
     if (!Array.isArray(d.pt)) d.pt = [];
     links.forEach(function (l, i) {
       if (skip && skip[i]) return;
+      if (l.item) {
+        if (!Array.isArray(d.ix)) d.ix = [];
+        var key = C.itemKey(l.item), prevIx = byId(d.ix, l.custId);
+        var cur = C.itemsOf(d, { id: l.custId }).filter(function (x) { return C.itemKey(x) !== key; });
+        if (!l.unlink) cur.push(l.item);
+        var nx = C.itemsRow(d, l.custId, cur);
+        if (!(l.custId in touchedIx)) touchedIx[l.custId] = prevIx ? clone(prevIx) : null;
+        var origIx = touchedIx[l.custId];
+        nx.m = Math.max(Math.floor(now), (origIx && origIx.m ? origIx.m : 0) + 1);
+        var tb = d.tombs && d.tombs[nx.id];
+        if (tb && tb >= nx.m) nx.m = tb + 1;
+        if (same(prevIx ? prevIx.it || [] : [], nx.it || [])) return;
+        if (prevIx) d.ix[d.ix.indexOf(prevIx)] = nx; else d.ix.push(nx);
+        done.push(i);
+        return;
+      }
       var rows = C.linkMove(d, l.unlink ? "" : l.custId, l.key);
       if (!rows.length) return;
       rows.forEach(function (r) {
@@ -113,7 +161,8 @@
       done.push(i);
     });
     d = C.norm(d);
-    var undo = { t: "link", rows: Object.keys(touched).map(function (id) { return { id: id, prev: touched[id], next: clone(byId(d.pt, id)) }; }) };
+    var undo = { t: "link", rows: Object.keys(touched).map(function (id) { return { id: id, prev: touched[id], next: clone(byId(d.pt, id)) }; })
+      .concat(Object.keys(touchedIx).map(function (id) { return { list: "ix", id: id, prev: touchedIx[id], next: clone(byId(d.ix, id)) }; })) };
     return { ok: true, data: d, done: done, undo: undo };
   }
   // Each row back as it was (an emptied row stays, so the undo syncs),
@@ -121,18 +170,20 @@
   function undo(C, crm, u, now) {
     var d = clone(crm);
     if (!Array.isArray(d.pt)) d.pt = [];
+    if (!Array.isArray(d.ix)) d.ix = [];
+    function listOf(r) { return r.list === "ix" ? d.ix : d.pt; }
     for (var i = 0; i < u.rows.length; i++) {
-      if (!same(byId(d.pt, u.rows[i].id), u.rows[i].next)) return bad("A link was changed since; nothing was undone.");
+      if (!same(byId(listOf(u.rows[i]), u.rows[i].id), u.rows[i].next)) return bad("A link was changed since; nothing was undone.");
     }
     u.rows.forEach(function (r) {
-      var cur = byId(d.pt, r.id), back = r.prev ? clone(r.prev) : { id: r.id };
+      var list = listOf(r), cur = byId(list, r.id), back = r.prev ? clone(r.prev) : { id: r.id };
       back.m = Math.max(Math.floor(now), (cur && cur.m ? cur.m : 0) + 1);
-      if (cur) d.pt[d.pt.indexOf(cur)] = back; else d.pt.push(back);
+      if (cur) list[list.indexOf(cur)] = back; else list.push(back);
     });
     return { ok: true, data: C.norm(d) };
   }
 
-  var api = { MAX: MAX, KIND_WHAT: KIND_WHAT, keyOfRef: keyOfRef, resolve: resolve, plan: plan, apply: apply, undo: undo };
+  var api = { MAX: MAX, KIND_WHAT: KIND_WHAT, ITEM_APPS: ITEM_APPS, keyOfRef: keyOfRef, itemOfRef: itemOfRef, resolve: resolve, plan: plan, apply: apply, undo: undo };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosAssistLinks = api;
 })(typeof window !== "undefined" ? window : this);

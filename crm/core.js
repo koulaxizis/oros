@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — core.js (shared logic, v1.8.0)
+// orOS CRM — core.js (shared logic, v1.9.0)
 // One file holds the model, the merge and every derived number,
 // so the app, the universal search provider, the shell reminder,
 // the Calendar feed, the Today provider, Contacts and (later)
@@ -70,6 +70,16 @@
 //     would drop an unknown "rs:" key from pt.ln). A row without n is
 //     kept: an unlink must not come back from another device's copy
 //     (the same holds for an emptied pt row since 1.7).
+//   Linked items (1.9, partner card "Files and notes"): ITEM_KINDS,
+//     normIx, itemsOf(data, c) → [{ k, r, t }], itemTarget(it) →
+//     { app, target } for __orosOpenAt, itemsRow(data, custId, items)
+//     → the ix row to save; ix?: [{ id = customer id, m, it?: [{ k:
+//     "kb" (a Kanban card, r = "board/col/card") | "nt" (a Notes page,
+//     r = page id) | "ly" (a Layout document) | "at" (an Atelier
+//     design), r = doc id, t: the title when it was linked }] }]. Its
+//     own list like rsl; an emptied row stays (an unlink must not come
+//     back from another device's copy). The other apps are never
+//     changed.
 // Data (synced slice "crm", key oros-crm-data):
 //   { ver: 1, cust, deals, acts, fups, tags, stg: [row…] each
 //     sorted by id, pt?: partners (1.5), ctr?: contracts (1.6), rsl?: Revenue Splitter links (1.7), prefs: { pm, cur, forget }, wf?: web form,
@@ -88,7 +98,7 @@
   var DAY_MS = 86400000;
   var TOMB_DAYS = 365;
   var VAL_MAX = 99999999999;          // cents: just under a billion
-  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000, ctr: 5000, rsl: 2000, rsNames: 5, cs: 2000, csOld: 5 };
+  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000, ctr: 5000, rsl: 2000, rsNames: 5, cs: 2000, csOld: 5, ix: 2000, items: 50 };
   var STAGES = ["new", "contact", "proposal", "nego", "won", "lost"];
   var OPEN_STAGES = ["new", "contact", "proposal", "nego"];      // the built-in open stages
   var STAGE_PROB = { "new": 10, contact: 25, proposal: 50, nego: 75, won: 100, lost: 0 };
@@ -96,7 +106,7 @@
   var ACT_KINDS = ["call", "mail", "meet", "msg", "note"];
   var CUST_ST = ["lead", "active", "past"];
   var CURRENCIES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "CAD", "AUD", "JPY"];
-  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "rsl", "cs"];
+  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "rsl", "cs", "ix"];
 
   // ---------- Small helpers ----------
   function isInt(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n; }
@@ -324,6 +334,58 @@
       if (typeof a === "string" && ACCT_RE.test(a)) o.a = a;
       o.n = n;
     }
+    return o;
+  }
+  // Linked items (1.9): Kanban cards, Notes pages, Layout documents
+  // and Atelier designs on a partner's card
+  var ITEM_KINDS = ["kb", "nt", "ly", "at"];
+  var ITEM_APP = { kb: "kanban", nt: "notes", ly: "layout", at: "atelier" };
+  function itemRef(k, r) {
+    if (typeof r !== "string") return "";
+    var parts = r.split("/");
+    if (parts.length !== (k === "kb" ? 3 : 1)) return "";
+    for (var i = 0; i < parts.length; i++) if (!CREF_RE.test(parts[i])) return "";
+    return r;
+  }
+  function normItems(v) {
+    var out = [], seen = {};
+    if (Array.isArray(v)) v.forEach(function (x) {
+      if (!x || typeof x !== "object" || ITEM_KINDS.indexOf(x.k) < 0) return;
+      var r = itemRef(x.k, x.r);
+      if (!r) return;
+      var key = x.k + ":" + (x.k === "kb" ? r.split("/")[0] + "/" + r.split("/")[2] : r);
+      if (seen[key] || out.length >= LIMITS.items) return;
+      seen[key] = 1;
+      var o = { k: x.k, r: r };
+      put(o, "t", cleanText(x.t, 200));
+      out.push(o);
+    });
+    return out.sort(function (a, b) { return cmpStr(a.k + ":" + a.r, b.k + ":" + b.r); });
+  }
+  function normIx(x) {
+    if (!x || typeof x !== "object" || !ID_RE.test(x.id) || !stamp(x)) return null;
+    var o = { id: x.id, m: x.m };
+    var it = normItems(x.it);
+    if (it.length) o.it = it;
+    return o;
+  }
+  function itemsOf(data, c) {
+    var r = c && data ? byId(data.ix, c.id) : null;
+    return r && r.it ? r.it.map(function (x) { return { k: x.k, r: x.r, t: x.t || "" }; }) : [];
+  }
+  // the same item whatever column a Kanban card is in now
+  function itemKey(it) { return it.k + ":" + (it.k === "kb" ? it.r.split("/")[0] + "/" + it.r.split("/")[2] : it.r); }
+  function itemTarget(it) {
+    if (!it || !ITEM_APP[it.k] || !itemRef(it.k, it.r)) return null;
+    if (it.k === "kb") { var p = it.r.split("/"); return { app: "kanban", target: { board: p[0], col: p[1], card: p[2] } }; }
+    if (it.k === "nt") return { app: "notes", target: { page: it.r } };
+    return { app: ITEM_APP[it.k], target: { doc: it.r } };
+  }
+  function itemsRow(data, custId, items) {
+    var prev = data ? byId(data.ix, custId) : null;
+    var o = { id: custId, m: prev ? prev.m : 0 };
+    var it = normItems(items);
+    if (it.length) o.it = it;
     return o;
   }
   function ptOf(data, custId) { return (data && byId(data.pt, custId)) || null; }
@@ -577,7 +639,7 @@
     return o;
   }
 
-  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr, rsl: normRsl, cs: normCs };
+  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr, rsl: normRsl, cs: normCs, ix: normIx };
 
   // The web form (crm/webform.js, relay /crm/f/<k>): one record, last
   // writer wins by m. { m, k, sec, priv (RSA-OAEP-256 private JWK),
@@ -666,13 +728,13 @@
       Object.keys(best[k]).sort(cmpStr).forEach(function (id) {
         var x = best[k][id];
         if (id in tombs && tombs[id] >= x.m) return;
-        // an emptied pt or rsl row stays: dropping it would let another
+        // an emptied pt, rsl or ix row stays: dropping it would let another
         // device's older copy bring the link back
-        if (k === "pt" || k === "rsl" || k === "cs" ? !aliveCust[x.id] : (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust])) return;
+        if (k === "pt" || k === "rsl" || k === "cs" || k === "ix" ? !aliveCust[x.id] : (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust])) return;
         if (list.length >= LIMITS[k]) return;
         list.push(x);
       });
-      if ((k !== "pt" && k !== "ctr" && k !== "rsl" && k !== "cs") || list.length) out[k] = list;
+      if ((k !== "pt" && k !== "ctr" && k !== "rsl" && k !== "cs" && k !== "ix") || list.length) out[k] = list;
       if (k === "cust") list.forEach(function (c) { aliveCust[c.id] = true; });
     });
     out.prefs = pb.pm > pa.pm || (pb.pm === pa.pm && canon(pb) > canon(pa)) ? pb : pa;
@@ -1186,6 +1248,7 @@
     backup: backup, restore: restore,
     reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact,
     ROLES: ROLES, LINK_KINDS: LINK_KINDS, normRoles: normRoles, normLinks: normLinks, pubKey: pubKey,
+    ITEM_KINDS: ITEM_KINDS, ITEM_APP: ITEM_APP, normIx: normIx, normItems: normItems, itemsOf: itemsOf, itemKey: itemKey, itemTarget: itemTarget, itemsRow: itemsRow,
     normRsl: normRsl, CS_FIELDS: CS_FIELDS, normCs: normCs, csJoin: csJoin, rsOf: rsOf, rsRow: rsRow, normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove
