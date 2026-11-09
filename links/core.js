@@ -22,7 +22,9 @@
 //   merge here (an older device keeps living without it; the device
 //   that added it keeps it, the union restores it on the next pull).
 //     ks    1 = "use these keys on all my devices": the keys travel in
-//           s, sealed with the sync passphrase (orosSync.vaultCrypto)
+//           s, sealed with the sync passphrase (orosSync.vaultCrypto).
+//           On by default for a new account and, once, for every
+//           account older than KS-ON (links/host.js), bank keys too
 //     s     that sealed copy ("" when ks is off or not sealed yet)
 //     sm    when the sealed keys were last changed (ms)
 //     d     1 = removed: only id, m, p and d stay (LWW keeps the
@@ -154,7 +156,8 @@
     // (free, reads only the accounts they linked themselves). The keys
     // are the application id and its private key (PEM); a call carries
     // only a JWT signed from them on this device (links/host.js), so the
-    // private key never leaves the device (the relay gets the JWT).
+    // private key is never sent to anyone (the relay gets the JWT); it
+    // travels only sealed in key sync like every other key (KS-ON).
     // Read-only account information, never payments. Added from
     // Budget › Banks (ownUi: not in the Settings add form).
     ebank: {

@@ -485,6 +485,8 @@ orosPack("de", "settings", {
  "v.keys.hint.trello": "In Trello: trello.com/power-ups/admin › New (ein Power-Up für dich selbst) › API key. Kopiere den API-Schlüssel hierher, öffne dann den Token-Link daneben, erlaube ihn und kopiere auch das Token.",
  "v.keysHere": "Schlüssel auf diesem Gerät",
  "v.keysMissing": "Die Schlüssel sind noch nicht auf diesem Gerät",
+ "v.keysMissing.ks": "Sie kommen mit der Synchronisierung, sobald das Gerät, auf dem du sie eingegeben hast, orOS mit Synchronisierung öffnet, oder gib sie hier ein.",
+ "v.keysMissing.off": "Schalte auf dem Gerät, das sie hat, „Diese Schlüssel auf allen meinen Geräten nutzen“ ein, oder gib sie hier ein.",
  "v.ks": "Diese Schlüssel auf allen meinen Geräten nutzen",
  "v.ks.hint": "Die Schlüssel reisen in deiner verschlüsselten Synchronisierung mit, versiegelt mit deiner Sync-Passphrase. Wer diese Passphrase kennt, kann sie nutzen.",
  "v.ks.needSync": "Verbinde und entsperre zuerst die Synchronisierung.",

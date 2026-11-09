@@ -9,8 +9,9 @@
 //     exported; in the shell's factory-reset list): a non-extractable
 //     AES-GCM key (store "keys") and each account's keys sealed with it
 //     (store "creds": id → { iv, data, m })
-//   - opt-in per account ("Use on all my devices", ks = 1): the keys
-//     also travel in the slice, sealed with the sync passphrase
+//   - per account ("Use on all my devices", ks = 1, on by default since
+//     KS-ON): the keys also travel
+//     in the slice, sealed with the sync passphrase
 //     (orosSync.vaultCrypto), only while sync is connected and
 //     unlocked; a device without them takes them from there
 //   - device-local "oros-links-prefs" { mode: { id: "direct" | "query"
@@ -68,6 +69,7 @@
     if (JSON.stringify(next) === before) return;
     write(next);
     changed();
+    setTimeout(ksDefault, 0);                     // a real change: not inside the pull (R6)
     setTimeout(keySync, 0);
   }
   function registerSlice() {
@@ -158,7 +160,20 @@
     return tx("creds", "readwrite", function (st) { return st.delete(id); }).catch(function () {});
   }
 
-  // ---------- Key sync (opt-in per account) ----------
+  // ---------- Key sync (per account) ----------
+  // KS-ON (Chris 2026-11-09, "connections must sync between devices"):
+  // key sync is on by default. Every account last changed before this
+  // moment is switched on once (the switch stamps m = now, so it never
+  // runs again for that row, and a later "off" stays off). Bank keys
+  // too (Chris 2026-11-09 on the card: «Ναι, και οι τράπεζες»).
+  var KS_ON_BEFORE = Date.UTC(2026, 10, 9, 21, 0, 0);
+  function ksDefault() {
+    if (Date.now() <= KS_ON_BEFORE) return;      // a clock behind: the stamp would not stop it
+    L.live(read()).forEach(function (a) {
+      var pl = L.PLATFORMS[a.p];
+      if (a.ks !== 1 && a.m < KS_ON_BEFORE && pl) setKeySync(a.id, true);
+    });
+  }
   function sealer() {
     var s = S();
     if (!s || !s.vaultCrypto || typeof s.hasPassphrase !== "function") return null;
@@ -248,8 +263,9 @@
       if (pl.env) row.env = o.env;
       if (pl.vat) row.vat = vat;
       if (pl.db) row.db = db;
-      row.ks = 0; row.s = ""; row.sm = 0; row.d = 0;
+      row.ks = 1; row.s = ""; row.sm = 0; row.d = 0;   // KS-ON
       if (!putAcct(row)) { dropLocal(id); throw err("save"); }
+      if (row.ks) keySync();
       return id;
     });
   }
@@ -541,10 +557,16 @@
     list: list, get: get, add: add, edit: edit, setKeys: setKeys, hasKeys: hasKeys,
     setKeySync: setKeySync, canKeySync: canKeySync, remove: remove,
     call: call, test: test, statusCode: statusCode, mode: mode, onChange: onChange,
-    platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice(), site: !!L.PLATFORMS[p].site, db: !!L.PLATFORMS[p].db, ownUi: L.PLATFORMS[p].ownUi || "" }; }); }
+    platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice(), site: !!L.PLATFORMS[p].site, db: !!L.PLATFORMS[p].db, ownUi: L.PLATFORMS[p].ownUi || ""}; }); }
   };
 
   registerSlice();
-  // keys sealed elsewhere arrive with a pull; also try once after boot
-  setTimeout(keySync, 5000);
+  // keys sealed elsewhere arrive with a pull; also try after boot and
+  // after every sync round (sync may connect or unlock only later)
+  setTimeout(function () { ksDefault(); keySync(); }, 5000);
+  (function hook() {
+    var s = S();
+    if (!s || typeof s.onAutoSync !== "function") { setTimeout(hook, 1000); return; }
+    s.onAutoSync(function (kind) { if (kind === "done") keySync(); });
+  })();
 })(typeof window !== "undefined" ? window : this);
