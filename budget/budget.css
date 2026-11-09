@@ -981,6 +981,9 @@ div.ov-accrow:hover { background: none; }
 .cat-list li.sub .cat-parent { margin-left: 88px; }
 /* PI-1: passive income toggle beside the main-category select */
 .cat-list .cat-pv { flex: 0 0 auto; }
+/* AR-CAT: a category's area, on its own line under the main-category pick */
+.cat-list .cat-area { flex: 1 1 100%; margin-left: 88px; max-width: calc(100% - 88px); font-size: 13px; }
+.cat-add .cat-area { flex: 0 1 40%; min-width: 0; }
 .cat-list li:has(.cat-pv) .cat-parent { flex: 1 1 0; min-width: 0; }
 .cat-list .cat-pv.on { background: var(--accent); color: var(--accent-ink, #14120d); border-color: var(--accent); }
 .ic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; margin: 4px 0 8px; }

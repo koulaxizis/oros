@@ -47,6 +47,8 @@ Accounts are optional. In the `More` menu, `Accounts` lets you add cash, a card 
 
 `Transfer` moves money between two accounts, `From` one `To` the other. A transfer shows as "Bank → Cash" and counts as neither income nor expense. The filter `Transfers only` lists them.
 
+An entry that is really money moved between your own accounts (one that came from the bank as income, say) becomes a transfer with `It's a transfer` in its window. Pick the other account; when the same money is there already as an entry (the opposite kind, the same amount, at most 5 days apart), `The same money on the other account` offers it, and both entries become one transfer. `Undo` brings them back. Entries from another app or a shop, with receipts or in another currency do not become transfers.
+
 A credit card can carry its monthly cycle. In the card's account window, open `Credit card: statement and due date` and type the statement day, the payment due day and, if you like, the yearly interest. Under the card in `Overview` › `Accounts`, Budget then shows the last statement (the card's debt on that day), what came in since (income booked to the card and transfers to it), what is left to pay by the due date and how many days remain, and turns it to a warning once the date has passed. With an interest rate it also shows roughly what the interest costs if the statement is not paid in full (what is left × the rate × the cycle's days / 365); your bank's figure can differ, since banks count from each purchase's date. `Add interest` opens a new expense on the card in the category `Interest & fees` (made the first time), filled with that estimate: type the amount on your statement.
 
 Don't know the days or the rate? `Guess from my entries` in the same place fills the empty fields from the card's last 200 days: the due day is when your payments to the card usually came in, the statement day about three weeks before it, and the rate comes from the latest interest entry on the card (a note such as "interest" or "τόκοι", or the category `Interest & fees`) over the debt the day before. Check them against a statement.
@@ -174,6 +176,7 @@ In the preview:
 If one bank account carries several parts of your life (a business, a second job, personal money), `More` › `Areas` keeps them apart. Give each area a name and the words that put a bank line in it, separated by commas (for example `viva, stripe, box now, printer`). When you import a statement, each line goes to the area whose word it contains; when several fit, the longest word wins. A line that no word fits gets no area.
 
 - `Entries` › the filter › `Without an area` lists what is left for you to sort: open an entry and pick its `Area`. What you pick stays; a later import never changes it.
+- In `More` › `Categories`, a main category can belong to an area (its subcategories follow it). In an entry with an area, that area's categories come first, then the ones for `Any area`; other areas' categories are left out. Picking a category with an area in an entry without one fills in the area.
 - Every entry form has an `Area` field once you have areas. The Overview's `Areas` card shows each area's income, expenses and difference for the month; a tap shows its entries.
 - With `Shop records` (below), pick the shop's area in that dialog: its orders and costs get it, and a bank line whose words put it in another area is never taken for the shop's money.
 - Deleting an area keeps its entries; they show as without an area.
@@ -218,4 +221,4 @@ If your WooCommerce shop runs Production Ledger (a Noxpress plugin, with its orO
 - Recurring entries are added only while Budget is open, and back-filled for up to two years.
 - Exports of other apps: up to 20,000 rows and 20 MB per file.
 - Bank files are read on this device only; orOS never connects to your bank. Up to 5,000 rows and 8 MB per file; the preview shows the first 300 rows.
-- Amounts in another currency than Budget's are left out, not converted. A bank transfer between two of your accounts comes in as an expense in one and income in the other: change them into a `Transfer` by hand if you want.
+- Amounts in another currency than Budget's are left out, not converted. A bank transfer between two of your accounts comes in as an expense in one and income in the other: turn them into one transfer with `It's a transfer` in the entry's window.

@@ -673,7 +673,7 @@
       li.appendChild(top);
       if (r.st === "skip" || r.st === "same") return li;
       var bot = el("div", "bk-bot");
-      var cs = A.catSelect(r.k, r.c);
+      var cs = A.catSelect(r.k, r.c, r.dm || "");   // AR-CAT: the row's area's categories first
       cs.value = r.c;
       if (cs.value !== r.c) cs.value = "";
       cs.setAttribute("aria-label", t("cat") + ": " + (r.text || ""));
