@@ -4,6 +4,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 6.02.00
 - **Categories per area, and entries that are transfers.** In Budget › More › Categories, each main category can belong to an area, and in an entry of that area its own categories come first. An entry that is really money moved between your accounts becomes a transfer with `It's a transfer`, together with its other side if there is one, and no longer counts as income or an expense.
 
+## Version 6.01.03
+- **Connected services work on all your devices.** The keys of a shop or another service you connected in Settings › Connected services now reach your other devices by themselves, inside your encrypted sync (sealed with your sync passphrase, never in clear). This is on for every account, also the ones you connected before (if you had turned `Use these keys on all my devices` off, it is on again once; turn it off and it stays off). Your other devices get the keys once the device where you entered them opens orOS with sync on. This includes bank keys (Budget › Banks).
+
 ## Version 6.01.02
 - **Claude's changes are no longer lost when orOS sleeps on your phone.** When orOS waits in the background, the phone freezes it, and Claude used to hear "orOS did not answer in time" and give up (a To-Do asked by voice was lost). Now orOS asleep counts as closed: a new item waits, encrypted, and is added the moment you come back to orOS, which connects again by itself. Nothing is done twice.
 

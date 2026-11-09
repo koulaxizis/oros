@@ -2741,7 +2741,8 @@
     }
     c.appendChild(info);
     var has = svc.has[a.id];
-    if (has === false) c.appendChild(el("p", "msg msg-dim", t("v.keysMissing")));
+    // KS-ON: say where the keys come from (sync) or what brings them
+    if (has === false) c.appendChild(el("p", "msg msg-dim", t("v.keysMissing") + ". " + t(a.ks === 1 ? "v.keysMissing.ks" : "v.keysMissing.off")));
     if (svc.msg[a.id]) c.appendChild(el("p", "msg " + svc.msg[a.id].cls, svc.msg[a.id].text));
 
     if (svc.rename === a.id) {
