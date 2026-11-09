@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.00.01
+- **The gold logo on Android and Windows.** The orOS Android apps in the orOS F-Droid repository now show the gold logo on the start screen (they had stayed on an older build), and so does the orOS Drive app for Android (0.6.1). The download page links orOS Drive 0.3.4 for Windows and Linux. On Windows, orOS 0.8.4 and orOS Drive 0.3.4 also refresh the icons of the Start menu and desktop when they install.
+
 ## Version 6.00.00
 - **Short links for shared songs.** When you send a song, an album or a playlist with `Show the cover in chats`, the new `Short link` option (on by default) makes a link of about 60 characters instead of several hundred. Chats still show the cover and the title. For this the song's public details (never who sent it) stay on the orOS server; anyone with the link can open it, it cannot be taken back, and it stops working if nobody opens it for a year. Untick it for the long link, which stores nothing. Long links sent before keep working.
 
