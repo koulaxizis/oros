@@ -330,3 +330,12 @@ test("orOS closed: the seat carries the gate key; the copy's call keys match the
   }
   assert.equal(G.stableArgs({ month: "2026-11", app: "budget" }), '{"app":"budget","month":"2026-11"}');
 });
+
+test("isLate: a call read after the box's deadline (its clock) is not started (6.01.02)", () => {
+  // our clock is 5 s ahead of the box's
+  assert.equal(G.isLate(100000, 5000, 100000), false);
+  assert.equal(G.isLate(100000, 5000, 102999), false);
+  assert.equal(G.isLate(100000, 5000, 103001), true, "2 s margin before the deadline");
+  assert.equal(G.isLate(undefined, 5000, 9e12), false, "an older relay sends no deadline");
+  assert.equal(G.isLate(100000, null, 9e12), false, "no clock from the box yet");
+});

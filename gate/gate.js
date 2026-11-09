@@ -24,6 +24,9 @@
   var PREF_KEY = "oros-gate", LOG_KEY = "oros-gate-log", LOG_MAX = 300, UNDO_KEY = "oros-gate-undo", UNDO_MAX = 20;
   // Claude's changes, synced (slice "gatechanges", 5.78.00): seen and undone from any device.
   var CHG_KEY = "oros-gate-changes", CHG_MAX = 100;
+  // 6.01.02: ids of the calls this device ran (device-local, 7 days, ≤ 100),
+  // so a change the box also queued after a late answer is not done twice.
+  var RAN_KEY = "oros-gate-ran", RAN_MAX = 100, RAN_MS = 7 * 86400000;
   // The daily email of Claude's changes (5.79.00), synced: { on, acct (a
   // Mail account id, "" = the first that can send), m (settings changed),
   // d (the day sent or being sent, YYYY-MM-DD), dv (the device sending
@@ -1082,6 +1085,13 @@
     return { subject: fill(T.subject, { day: day }), text: [fill(T.intro, { n: today.length }), ""].concat(lines, ["", T.undo]).join("\n") };
   }
 
+  // 6.01.02: a call read after the box's deadline dl (its clock; off =
+  // our clock minus the box's, from its "hi"), with a 2 s margin, is late:
+  // the box already answered Claude. No dl or no clock (an older relay): never late.
+  function isLate(dl, off, now) {
+    return typeof dl === "number" && isFinite(dl) && typeof off === "number" && isFinite(off) && now - off > dl - 2000;
+  }
+
   // The relay orOS uses (Mail › relay, a self-hosted one), else orOS's own.
   function relayOf(mail) {
     var u = isObj(mail) && isObj(mail.relay) && typeof mail.relay.url === "string" ? mail.relay.url.trim().replace(/\/+$/, "") : "";
@@ -1089,7 +1099,7 @@
   }
 
   var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, budgetLines: budgetLines, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
-               relayOf: relayOf, RELAY: RELAY, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
+               relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
                WRITES: WRITES, ACT: ACT, DOCS: DOCS, QUEUED: QUEUED, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_OPEN: ACT_OPEN, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
@@ -1181,6 +1191,9 @@
   }
 
   var ws = null, wsState = "off", retry = 0, retryTimer = null, pingTimer = null, winTimer = null;
+  // 6.01.02: the box's clock minus ours (from its "hi"), the last ping
+  // tick and when the page was hidden: after a sleep the socket is renewed.
+  var hiOff = null, pingAt = 0, hidAt = 0, PING_MS = 45000, SLEPT_MS = 60000;
   function setWs(s) { if (wsState !== s) { wsState = s; changed(); } }
   function connect() {
     var p = pref();
@@ -1192,6 +1205,7 @@
     try { sock = new WebSocket(relay().replace(/^https:/, "wss:") + "/gate/ws/" + p.id, ["gt1", "t." + p.tok]); }
     catch (e) { schedule(); return; }
     ws = sock;
+    hiOff = null;
     sock.onopen = function () {
       retry = 0;
       setWs("on");
@@ -1201,17 +1215,25 @@
       pushReg();
       copySoon(4000);
       clearInterval(pingTimer);
-      pingTimer = setInterval(function () { try { sock.send("ping"); } catch (e) {} }, 45000);
+      pingAt = Date.now();
+      pingTimer = setInterval(function () {
+        var gap = Date.now() - pingAt;
+        pingAt = Date.now();
+        if (gap > PING_MS * 2.5) { renew(); return; }   // the page was frozen: the box counts this socket asleep
+        try { sock.send("ping"); } catch (e) {}
+      }, PING_MS);
     };
     sock.onmessage = function (ev) {
       if (typeof ev.data !== "string" || ev.data === "pong") return;
+      if (ev.data.indexOf('{"hi"') === 0) { onHi(ev.data); return; }
       if (ev.data.indexOf('{"lv"') === 0) { onLv(ev.data); return; }
       if (ev.data.indexOf('{"cq"') === 0) { applyQueue(sock, ev.data); return; }
       if (ev.data.indexOf('{"snapok"') === 0) return;
       onCall(sock, ev.data);
     };
     sock.onclose = function (ev) {
-      if (ws === sock) ws = null;
+      if (ws !== sock) return;                        // an old socket this device renewed
+      ws = null;
       clearInterval(pingTimer);
       // 4001: a newer connection of this gate took over; 4004: the gate is gone.
       if (ev && ev.code === 4004) { setWs("gone"); return; }
@@ -1220,6 +1242,25 @@
     };
     sock.onerror = function () {};
   }
+  function onHi(text) {
+    var o;
+    try { o = JSON.parse(text); } catch (e) { return; }
+    if (isObj(o) && typeof o.hi === "number" && isFinite(o.hi)) hiOff = Date.now() - o.hi;
+  }
+  // A fresh socket after a sleep: the box sends the changes that waited
+  // meanwhile, and it counts this device awake again.
+  function renew() {
+    if (!pref().on || wsState === "gone" || wsState === "other") return;
+    if (ws) { var old = ws; ws = null; clearInterval(pingTimer); try { old.close(1000, "renew"); } catch (e) {} }
+    retry = 0; clearTimeout(retryTimer);
+    connect();
+  }
+  function ranList() {
+    var l = readJSON(RAN_KEY), now = Date.now();
+    return (Array.isArray(l) ? l : []).filter(function (e) { return isObj(e) && typeof e.id === "string" && typeof e.t === "number" && now - e.t < RAN_MS; });
+  }
+  function ranAdd(id) { var l = ranList(); l.push({ id: id, t: Date.now() }); writeJSON(RAN_KEY, l.slice(-RAN_MAX)); }
+  function ranHas(id) { return ranList().some(function (e) { return e.id === id; }); }
   function chgList() {
     var l = readJSON(CHG_KEY);
     if (!Array.isArray(l)) {                          // before 5.78.00: this device's own undo list
@@ -1504,6 +1545,8 @@
       o.cq.slice(0, 50).reduce(function (chain, it) {
         return chain.then(function () {
           if (!isObj(it) || typeof it.id !== "string") return;
+          if (ranHas(it.id)) { done.push(it.id); return; }   // done live already (answered late), or sent twice (6.01.02)
+          ranAdd(it.id);
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
             if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
@@ -1618,9 +1661,15 @@
   }
   try {
     document.addEventListener("visibilitychange", function () {
+      var hidden = document.visibilityState === "hidden";
+      if (hidden) hidAt = Date.now();
+      else if (hidAt && Date.now() - hidAt > SLEPT_MS && pref().on) { hidAt = 0; renew(); return; }   // 6.01.02
+      else hidAt = 0;
       if (ws) { sendVis(ws); return; }
-      if (document.visibilityState === "visible" && pref().on && wsState !== "gone") { retry = 0; clearTimeout(retryTimer); connect(); }
+      if (!hidden && pref().on && wsState !== "gone") { retry = 0; clearTimeout(retryTimer); connect(); }
     });
+    // Page Lifecycle: a frozen page that runs again (Chrome, Android).
+    document.addEventListener("resume", function () { if (pref().on) renew(); });
   } catch (e) {}
   function schedule() {
     if (!pref().on) { setWs("off"); return; }
@@ -1935,7 +1984,13 @@
       return;
     }
     if (!p.on) { done({ ok: false, c: "The gate is off." }); return; }
-    run(q.n, q.a).then(done, function () { done({ ok: false, c: "The call failed on the device." }); });
+    // 6.01.02: read after the box gave up (a sleep): not started, the box
+    // already answered Claude (a change waits in its queue).
+    if (isLate(q.dl, hiOff, Date.now())) {
+      try { sock.send(JSON.stringify({ r: q.q, ok: false, c: "late" })); } catch (e) {}
+      return;
+    }
+    run(q.n, q.a).then(function (res) { if (res && res.ok && q.n !== "__tools") ranAdd(q.q); done(res); }, function () { done({ ok: false, c: "The call failed on the device." }); });
   }
 
   /* ---------- API for Settings ---------- */
