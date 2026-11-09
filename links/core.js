@@ -22,7 +22,10 @@
 //   merge here (an older device keeps living without it; the device
 //   that added it keeps it, the union restores it on the next pull).
 //     ks    1 = "use these keys on all my devices": the keys travel in
-//           s, sealed with the sync passphrase (orosSync.vaultCrypto)
+//           s, sealed with the sync passphrase (orosSync.vaultCrypto).
+//           On by default for a new account and, once, for every
+//           account older than KS-ON (links/host.js), except platforms
+//           with keysHere (bank keys)
 //     s     that sealed copy ("" when ks is off or not sealed yet)
 //     sm    when the sealed keys were last changed (ms)
 //     d     1 = removed: only id, m, p and d stay (LWW keeps the
@@ -169,7 +172,11 @@
       apps: ["budget"],
       probe: "/application",
       once: true,                   // a consent request / session: never sent twice by a fallback
-      ownUi: "budget"
+      ownUi: "budget",
+      // the bank key stays on its device unless the person turns on
+      // "Use on all my devices" (Chris 2026-11-01); every other
+      // platform's keys travel by default (KS-ON, links/host.js)
+      keysHere: true
     },
     // PayPal Business (Budget BK-3): the person's OWN REST app on
     // developer.paypal.com (Client ID + Secret, live), with only the
