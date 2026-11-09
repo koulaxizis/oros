@@ -181,6 +181,10 @@
       "ar.title": "Areas", "ar.hint": "An area is a part of your life or work that entries belong to: publishing, a second job, personal. Its words put a bank line in it when you import a statement (for example: viva, stripe, box now; the longest word found wins). A line that no word fits waits under Without an area in Entries for you to pick one; what you pick stays.",
       "ar.name": "Name", "ar.words": "Words in the bank's text", "ar.words.ph": "viva, stripe, box now", "ar.add": "New area", "ar.del": "Delete area",
       "ar.saved": "Areas saved", "ar.full": "Up to 12 areas", "ar.keep": "Entries of a deleted area stay, without an area.",
+      "ar.iv": "Invoices series whose payments come here", "ar.kind.inv": "invoices", "ar.kind.rcpt": "receipts",
+      "ar.sh": "Shared costs (costs of all your work together)", "ar.pc": "Share of the shared costs (%)",
+      "ar.pcBad": "A share is a whole number from 0 to 100", "ar.pcSum": "The shares add up to {n}%: at most 100%",
+      "ar.shHint": "Shared costs stay in their own area; the shares only split them in the year's result per area (Overview › Areas). No entry is split.",
       "f.area": "Area", "ar.none": "No area", "flt.areas": "Areas", "flt.noArea": "Without an area ({n})",
       "flt.inbox": "Imported, no category ({n})", "inbox.bar": "{n} imported entries without a category",
       "inbox.hint": "Pick a category for each one. Next time a rule can do it for you.",
@@ -330,6 +334,10 @@
       "ar.title": "Τομείς", "ar.hint": "Τομέας είναι ένα κομμάτι της ζωής ή της δουλειάς σου στο οποίο ανήκουν κινήσεις: εκδόσεις, μια δεύτερη δουλειά, προσωπικά. Οι λέξεις του βάζουν μια γραμμή της τράπεζας σε αυτόν όταν φέρνεις κίνηση (για παράδειγμα: viva, stripe, box now· κερδίζει η μεγαλύτερη λέξη που βρέθηκε). Μια γραμμή που δεν ταιριάζει σε καμία λέξη περιμένει στο «Χωρίς τομέα» στις Κινήσεις να διαλέξεις εσύ· ό,τι διαλέξεις μένει.",
       "ar.name": "Όνομα", "ar.words": "Λέξεις στο κείμενο της τράπεζας", "ar.words.ph": "viva, stripe, box now, τυπογραφείο", "ar.add": "Νέος τομέας", "ar.del": "Διαγραφή τομέα",
       "ar.saved": "Οι τομείς αποθηκεύτηκαν", "ar.full": "Έως 12 τομείς", "ar.keep": "Οι κινήσεις ενός τομέα που διαγράφεται μένουν, χωρίς τομέα.",
+      "ar.iv": "Σειρές του Invoices που οι πληρωμές τους έρχονται εδώ", "ar.kind.inv": "τιμολόγια", "ar.kind.rcpt": "αποδείξεις",
+      "ar.sh": "Κοινά έξοδα (έξοδα για όλες τις δουλειές σου μαζί)", "ar.pc": "Μερίδιο από τα κοινά έξοδα (%)",
+      "ar.pcBad": "Το μερίδιο είναι ακέραιος από 0 έως 100", "ar.pcSum": "Τα μερίδια βγαίνουν {n}%: έως 100%",
+      "ar.shHint": "Τα κοινά έξοδα μένουν στον δικό τους τομέα· τα μερίδια τα μοιράζουν μόνο στο αποτέλεσμα της χρονιάς ανά τομέα (Επισκόπηση › Τομείς). Καμία κίνηση δεν σπάει.",
       "f.area": "Τομέας", "ar.none": "Χωρίς τομέα", "flt.areas": "Τομείς", "flt.noArea": "Χωρίς τομέα ({n})",
       "flt.inbox": "Εισαγόμενες χωρίς κατηγορία ({n})", "inbox.bar": "{n} εισαγόμενες κινήσεις χωρίς κατηγορία",
       "inbox.hint": "Διάλεξε κατηγορία για την καθεμία. Την επόμενη φορά μπορεί να το κάνει ένας κανόνας.",
@@ -803,13 +811,32 @@
   // line in it, comma-separated, ≤ 300) }. Entries carry it as `dm`.
   // Keys in name order after id, m (what an older version's carry-
   // forward of an unknown collection writes).
-  var AREA_Q = 300;
+  // AR-INV (6.01.00, Chris 2026-11-09 «Σειρά ανά τομέα», «Ετήσια
+  // κατανομή %»): iv = the Invoices series (ids, space-separated) whose
+  // payments come in this area; sh 1 = the area of shared costs (one:
+  // the lowest id wins); pc = this area's share of the shared costs in
+  // whole % (0–100), for the yearly result after shared costs only:
+  // no entry is ever split or rewritten. All three only when set.
+  var AREA_Q = 300, AREA_IV = 20, SER_RE = /^[A-Za-z0-9_-]{1,64}$/, AREA_OWN = { iv: 1, pc: 1, sh: 1 };
+  function normIv(v) {
+    if (typeof v !== "string") return "";
+    var seen = {}, out = [];
+    v.split(" ").forEach(function (x) { if (SER_RE.test(x) && !seen[x] && out.length < AREA_IV) { seen[x] = 1; out.push(x); } });
+    return out.sort(cmpStr).join(" ");
+  }
   function normArea(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m)) return null;
     var n = normText(x.n, 40);
     if (!n) return null;
     var col = isInt(x.col) && x.col >= 0 && x.col < COLOR_SLOTS ? x.col : 8;
-    return withExtras({ id: x.id, m: x.m, col: col, n: n, q: normText(x.q, AREA_Q) }, x);
+    var out = { id: x.id, m: x.m, col: col };
+    var iv = normIv(x.iv);
+    if (iv) out.iv = iv;
+    out.n = n;
+    if (isInt(x.pc) && x.pc > 0 && x.pc <= 100) out.pc = x.pc;
+    out.q = normText(x.q, AREA_Q);
+    if (x.sh === 1) out.sh = 1;
+    return withExtras(out, x, AREA_OWN);
   }
   function normAdj(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m) ||
@@ -1549,6 +1576,33 @@
   // PL-2: areas by name; an entry's area that is gone counts as none.
   function areas() { return data.area.slice().sort(function (a, b) { return cmpStr(a.n.toLowerCase(), b.n.toLowerCase()) || cmpStr(a.id, b.id); }); }
   function areaOf(x) { return x.dm && findIn(data.area, x.dm) ? x.dm : ""; }
+  // AR-INV: { <Invoices series id>: <area id> } (a series in two areas:
+  // the area with the lowest id).
+  function serAreas() {
+    var map = {};
+    areas().slice().sort(function (a, b) { return cmpStr(a.id, b.id); }).forEach(function (a) {
+      (a.iv ? a.iv.split(" ") : []).forEach(function (sid) { if (!Object.prototype.hasOwnProperty.call(map, sid)) map[sid] = a.id; });
+    });
+    return map;
+  }
+  // AR-INV: the area of shared costs (sh), lowest id first; null = none.
+  function sharedArea() {
+    var l = data.area.filter(function (a) { return a.sh === 1; }).sort(function (a, b) { return cmpStr(a.id, b.id); });
+    return l.length ? l[0] : null;
+  }
+  // Invoices' series (read only, through the shell's OrosInvoicesCore,
+  // R8): [{ id, label }] or [] when Invoices is not there.
+  function invSeries() {
+    try {
+      var I = window.parent && window.parent !== window ? window.parent.OrosInvoicesCore : null;
+      if (!I || typeof I.seriesList !== "function") return [];
+      var d = typeof I.parse === "function" ? I.parse(localStorage.getItem("oros-invoices-data")) : null;
+      // the kinds whose payments come to Budget (links.js OWES; ext has no series)
+      return I.seriesList(d).filter(function (x) { return x && SER_RE.test(x.id) && (x.kind === "inv" || x.kind === "rcpt"); }).map(function (x) {
+        return { id: x.id, label: (x.prefix || "—") + " · " + t("ar.kind." + x.kind) };
+      });
+    } catch (e) { return []; }
+  }
   function noAreaCount() { var n = 0; data.tx.forEach(function (x) { if (!areaOf(x)) n++; }); return n; }
   function matches(x) {
     if (filter === "inbox" && !inInbox(x)) return false;
@@ -3965,7 +4019,7 @@
   // Read-only on the source's data; fixed ids and the source's m, so
   // every device writes the same.
   var SOURCES = [
-    { src: "invoices", key: "oros-invoices-data", rows: function (o) { return window.OrosBudgetLinks.invoiceRows(o, cur()); } }
+    { src: "invoices", key: "oros-invoices-data", rows: function (o) { return window.OrosBudgetLinks.invoiceRows(o, cur(), serAreas()); } }
   ];
   // One source's rows → put / drop here; returns how many changed
   // (no commit: the caller writes once).
@@ -4044,7 +4098,17 @@
     dlg.appendChild(el("p", "hint", t("ar.hint")));
     var list = el("div", "ar-list");
     dlg.appendChild(list);
-    var rows = [];
+    var rows = [], sers = invSeries(), shared = sharedArea();
+    // AR-INV: one area of shared costs at a time (ticking one unticks the others)
+    function chk(parent, id, label, on) {
+      var w = el("label", "ar-chk");
+      var cb = el("input");
+      cb.type = "checkbox"; cb.id = id; cb.checked = !!on;
+      w.appendChild(cb);
+      w.appendChild(el("span", "", label));
+      parent.appendChild(w);
+      return cb;
+    }
     function addRow(a) {
       var box = el("div", "ar-row");
       var n = el("input"); n.maxLength = 40; n.autocomplete = "off"; n.value = a ? a.n : "";
@@ -4052,31 +4116,63 @@
       var i = rows.length;
       box.appendChild(field(t("ar.name"), n, "bd-ar-n" + i));
       box.appendChild(field(t("ar.words"), q, "bd-ar-q" + i));
-      var row = { a: a, n: n, q: q, gone: false, box: box };
+      var row = { a: a, n: n, q: q, gone: false, box: box, iv: [], sh: null, pc: null };
+      var have = a && a.iv ? a.iv.split(" ") : [];
+      if (sers.length) {
+        var fs = el("fieldset", "ar-iv");
+        fs.appendChild(el("legend", "dlg-lbl", t("ar.iv")));
+        sers.forEach(function (sr, j) { row.iv.push({ id: sr.id, cb: chk(fs, "bd-ar-iv" + i + "-" + j, sr.label, have.indexOf(sr.id) >= 0) }); });
+        box.appendChild(fs);
+      }
+      // a series this device's Invoices does not list stays as it is
+      row.keepIv = have.filter(function (id) { return !sers.some(function (sr) { return sr.id === id; }); });
+      row.sh = chk(box, "bd-ar-sh" + i, t("ar.sh"), shared && a && shared.id === a.id);
+      row.sh.addEventListener("change", function () {
+        if (row.sh.checked) rows.forEach(function (r) { if (r !== row) r.sh.checked = false; });
+        sync();
+      });
+      var pc = el("input"); pc.type = "number"; pc.min = "0"; pc.max = "100"; pc.step = "1"; pc.inputMode = "numeric";
+      pc.value = a && a.pc ? String(a.pc) : "";
+      pc.placeholder = "0";
+      row.pc = pc;
+      row.pcBox = field(t("ar.pc"), pc, "bd-ar-pc" + i);
+      box.appendChild(row.pcBox);
       var del = button(t("ar.del"), "danger mini", function () { row.gone = true; box.hidden = true; addBtn.disabled = liveRows().length >= MAX_AREAS; });
       box.appendChild(del);
       rows.push(row);
       list.appendChild(box);
+      sync();
       return row;
     }
+    // the shared area has no share of itself
+    function sync() { rows.forEach(function (r) { if (r.pcBox) r.pcBox.hidden = r.sh.checked; }); }
     function liveRows() { return rows.filter(function (r) { return !r.gone; }); }
-    areas().forEach(addRow);
     var addBtn = button(t("ar.add"), "", function () {
       if (liveRows().length >= MAX_AREAS) { showErr(err, t("ar.full")); return; }
       addRow(null).n.focus();
       addBtn.disabled = liveRows().length >= MAX_AREAS;
     });
+    areas().forEach(addRow);
     addBtn.disabled = liveRows().length >= MAX_AREAS;
     dlg.appendChild(addBtn);
     dlg.appendChild(el("p", "hint", t("ar.keep")));
+    dlg.appendChild(el("p", "hint", t("ar.shHint")));
     var err = errLine();
     dlg.appendChild(err);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
     acts.appendChild(button(t("dlg.save"), "primary", function () {
-      var bad = null;
-      liveRows().forEach(function (r) { if (!bad && !normText(r.n.value, 40) && (r.a || normText(r.q.value, AREA_Q))) bad = r.n; });
-      if (bad) { showErr(err, t("err.name"), bad); return; }
+      var bad = null, badMsg = "";
+      liveRows().forEach(function (r) {
+        if (bad) return;
+        if (!normText(r.n.value, 40) && (r.a || normText(r.q.value, AREA_Q))) { bad = r.n; badMsg = t("err.name"); return; }
+        var v = r.pc.value.trim();
+        if (!r.sh.checked && v && !/^(100|[1-9]?[0-9])$/.test(v)) { bad = r.pc; badMsg = t("ar.pcBad"); }
+      });
+      if (bad) { showErr(err, badMsg, bad); return; }
+      var sum = 0;
+      liveRows().forEach(function (r) { if (!r.sh.checked && r.pc.value.trim()) sum += parseInt(r.pc.value, 10); });
+      if (sum > 100) { showErr(err, t("ar.pcSum", { n: sum })); return; }
       var changed = 0, used = {};
       data.area.forEach(function (a) { used[a.col] = 1; });
       rows.forEach(function (r) {
@@ -4085,10 +4181,18 @@
           if (r.a) { data.area = data.area.filter(function (y) { return y.id !== r.a.id; }); tombstone("area", r.a.id); changed++; }
           return;
         }
+        var iv = normIv(r.iv.filter(function (x) { return x.cb.checked; }).map(function (x) { return x.id; }).concat(r.keepIv).join(" "));
+        var sh = r.sh.checked ? 1 : 0;
+        var pc = sh || !r.pc.value.trim() ? 0 : parseInt(r.pc.value, 10);
+        function put(o) {
+          if (iv) o.iv = iv; else delete o.iv;
+          if (pc) o.pc = pc; else delete o.pc;
+          if (sh) o.sh = 1; else delete o.sh;
+        }
         if (r.a) {
           var cur0 = findIn(data.area, r.a.id);
-          if (!cur0 || (cur0.n === n && cur0.q === q)) return;
-          cur0.n = n; cur0.q = q; cur0.m = stamp(cur0.m);
+          if (!cur0 || (cur0.n === n && cur0.q === q && (cur0.iv || "") === iv && (cur0.pc || 0) === pc && (cur0.sh || 0) === sh)) return;
+          cur0.n = n; cur0.q = q; put(cur0); cur0.m = stamp(cur0.m);
           changed++;
           return;
         }
@@ -4096,7 +4200,9 @@
         while (col < 8 && used[col]) col++;
         used[col] = 1;
         var id = newId();
-        data.area.push({ id: id, m: stamp(data.tombs["area:" + id] || 0), col: col, n: n, q: q });
+        var o = { id: id, m: stamp(data.tombs["area:" + id] || 0), col: col, n: n, q: q };
+        put(o);
+        data.area.push(o);
         changed++;
       });
       dlg.close();

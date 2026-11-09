@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.01.00
+- **Areas with invoice series and shared costs.** In Budget › More › Areas, each area takes the Invoices series that belong to it, and new invoice payments go into the right area by themselves. Tick one area as `Shared costs` and give the others their share in %: the `Areas` card then shows the year so far, each area's net after its share of the shared costs. No entry is split.
+
 ## Version 6.00.01
 - **The gold logo on Android and Windows.** The orOS Android apps in the orOS F-Droid repository now show the gold logo on the start screen (they had stayed on an older build), and so does the orOS Drive app for Android (0.6.1). The download page links orOS Drive 0.3.4 for Windows and Linux. On Windows, orOS 0.8.4 and orOS Drive 0.3.4 also refresh the icons of the Start menu and desktop when they install.
 

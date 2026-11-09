@@ -134,7 +134,7 @@ export const TOOLS = [
   },
   {
     name: "budget_lines",
-    description: "Budget entries (income and expenses, bank lines included) between two days, oldest first, 500 per page. Amounts are decimal strings in the Budget's main currency.",
+    description: "Budget entries (income and expenses, bank lines included) between two days, oldest first, 500 per page. Amounts are decimal strings in the Budget's main currency. Each line names its area; the answer lists Budget's areas (words, invoice series, shared costs and shares).",
     inputSchema: {
       type: "object",
       properties: {
@@ -208,6 +208,7 @@ export const TOOLS = [
             amount: { type: "string", description: "In the Budget's main currency, e.g. \"12.50\"." },
             category: { type: "string", description: "A category name or id from budget_lines." },
             account: { type: "string", description: "A Budget account name or id." },
+            area: { type: "string", description: "An area name from budget_lines (areas)." },
             note: { type: "string", description: "At most 140 characters." }
           },
           required: ["date", "kind", "amount"],
@@ -221,7 +222,7 @@ export const TOOLS = [
   },
   {
     name: "budget_change",
-    description: "Changes one Budget entry by its id from budget_lines: date, amount, category, account or note (an empty category or account clears it). Same rule as budget_add. Entries that come from a shop or another app are refused.",
+    description: "Changes one Budget entry by its id from budget_lines: date, amount, category, account, area or note (an empty category, account or area clears it). Same rule as budget_add. An entry that comes from a shop or another app (id l-…) takes only an area here.",
     inputSchema: {
       type: "object",
       properties: {
@@ -230,9 +231,36 @@ export const TOOLS = [
         amount: { type: "string", description: "e.g. \"12.50\"." },
         category: { type: "string" },
         account: { type: "string" },
+        area: { type: "string", description: "An area name from budget_lines (areas)." },
         note: { type: "string", description: "At most 140 characters." }
       },
       required: ["id"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  {
+    name: "budget_areas",
+    description: "Makes, changes or removes Budget's areas (parts of the owner's life or work that entries belong to, at most 12), by name, all or none. words: the words in a bank line's text that put it in the area on import (comma-separated, the longest found wins). invoice_series: the Invoices series (prefixes or ids) whose payments come into the area. shared_costs: true makes it the one area of shared costs; share: another area's whole % of those costs (all shares at most 100), used only for the year's result after shared costs. Removing an area leaves its entries without one. Same rule as budget_add; the owner is notified and can undo it.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        areas: { type: "array", minItems: 1, maxItems: 12, items: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "The area's name (an existing one changes it, a new one makes it), at most 40 characters." },
+            rename: { type: "string", description: "A new name." },
+            words: { type: "string", description: "Comma-separated, at most 300 characters; \"\" clears them." },
+            invoice_series: { type: "array", maxItems: 20, items: { type: "string" }, description: "Invoices series prefixes or ids; [] clears them." },
+            shared_costs: { type: "boolean" },
+            share: { type: "integer", minimum: 0, maximum: 100, description: "% of the shared costs; 0 clears it." },
+            remove: { type: "boolean", description: "true removes the area." }
+          },
+          required: ["name"],
+          additionalProperties: false
+        } }
+      },
+      required: ["areas"],
       additionalProperties: false
     },
     annotations: { readOnlyHint: false, destructiveHint: false }

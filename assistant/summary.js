@@ -230,6 +230,27 @@
       return { kind: g.kind, name: g.name, total: money(g.total), entries: g.entries };
     });
     if (list.length > MAX_CATS) out.more_categories = list.length - MAX_CATS;
+    // AR-INV (6.01.00): the month per area (Budget › Areas), when there are any
+    var ars = {}, arList = [];
+    arr(d.area).forEach(function (a) {
+      if (a && typeof a.id === "string" && str(a.n) && !dead("area", a)) { ars[a.id] = { name: str(a.n, 40), inc: 0, exp: 0, entries: 0, sh: a.sh === 1 }; arList.push(a.id); }
+    });
+    if (arList.length) {
+      var noA = { inc: 0, exp: 0, entries: 0 };
+      arr(d.tx).forEach(function (x) {
+        if (!x || typeof x.id !== "string" || dead("tx", x) || typeof x.d !== "string" || x.d.slice(0, 7) !== month) return;
+        if (typeof x.a !== "number" || !isFinite(x.a)) return;
+        var g = typeof x.dm === "string" && ars[x.dm] ? ars[x.dm] : noA, a = Math.abs(Math.round(x.a));
+        if (x.k === "i") g.inc += a; else g.exp += a;
+        g.entries++;
+      });
+      out.areas = arList.map(function (id) { return ars[id]; }).sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; }).map(function (g) {
+        var o = { name: g.name, income: money(g.inc), expenses: money(g.exp), net: money(g.inc - g.exp), entries: g.entries };
+        if (g.sh) o.shared_costs = true;
+        return o;
+      });
+      if (noA.entries) out.without_area = { income: money(noA.inc), expenses: money(noA.exp), entries: noA.entries };
+    }
     return out;
   }
 

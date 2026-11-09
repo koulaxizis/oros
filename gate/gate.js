@@ -63,7 +63,25 @@
   }
   // Fields an entry may carry that are not Budget's own (forward
   // compatibility, Part IV): passed on as they are, flat values only.
-  var OWN_TX = { id: 1, m: 1, d: 1, a: 1, k: 1, c: 1, n: 1, ac: 1, ot: 1, fit: 1, src: 1, pp: 1, oc: 1, oa: 1, rc: 1 };
+  var OWN_TX = { id: 1, m: 1, d: 1, a: 1, k: 1, c: 1, n: 1, ac: 1, ot: 1, fit: 1, src: 1, pp: 1, oc: 1, oa: 1, rc: 1, dm: 1 };
+
+  // AR-INV (6.01.00): Budget's areas (budget.js normArea), live ones by
+  // name: { id, m, col, n, q, iv?, pc?, sh? }.
+  function liveAreas(d) {
+    var tombs = isObj(d.tombs) ? d.tombs : {};
+    return (Array.isArray(d.area) ? d.area : []).filter(function (a) {
+      return isObj(a) && typeof a.id === "string" && typeof a.n === "string" && a.n && !deadIn(tombs, "area", a);
+    }).sort(function (a, b) { var x = fold(a.n), y = fold(b.n); return x < y ? -1 : x > y ? 1 : (a.id < b.id ? -1 : 1); });
+  }
+  // How Claude sees an area; series = the Invoices series ids (a list
+  // with their prefixes when the device has Invoices: budget_areas).
+  function areaOut(a) {
+    var o = { name: a.n, words: String(a.q || "") };
+    if (a.iv) o.invoice_series = String(a.iv).split(" ");
+    if (a.sh === 1) o.shared_costs = true;
+    else if (typeof a.pc === "number" && a.pc > 0) o.share = a.pc;
+    return o;
+  }
 
   // budget_lines: raw = the parsed oros-budget-data, args from Claude.
   // → { ok:true, data } | { ok:false, err }
@@ -78,9 +96,11 @@
     var d = isObj(raw) ? raw : {};
     var tombs = isObj(d.tombs) ? d.tombs : {};
     var cur = isObj(d.set) && typeof d.set.cur === "string" && /^[A-Z]{3}$/.test(d.set.cur) ? d.set.cur : "EUR";
-    var accs = {}, cats = {};
+    var accs = {}, cats = {}, ars = {};
     (Array.isArray(d.acc) ? d.acc : []).forEach(function (a) { if (isObj(a) && typeof a.id === "string" && !deadIn(tombs, "acc", a)) accs[a.id] = String(a.n || a.id); });
     (Array.isArray(d.cats) ? d.cats : []).forEach(function (c) { if (isObj(c) && typeof c.id === "string" && !deadIn(tombs, "cat", c)) cats[c.id] = String(c.name || c.id); });
+    var areaList = liveAreas(d);
+    areaList.forEach(function (a) { ars[a.id] = a.n; });
     var acc = null;
     if (args.account !== undefined && args.account !== null && args.account !== "") {
       var want = fold(args.account);
@@ -97,6 +117,7 @@
     var page = rows.slice(offset, offset + PAGE).map(function (x) {
       var o = { id: x.id, date: x.d, kind: x.k === "i" ? "income" : "expense", amount: cents(x.a) };
       if (x.c) o.category = cats[x.c] || String(x.c);
+      if (x.dm && ars[x.dm]) o.area = ars[x.dm];      // AR-INV: an area that is gone reads as none
       if (x.ac) o.account = accs[x.ac] || "(deleted account)";
       if (x.n) o.note = String(x.n);
       if (x.ot) o.bank_text = String(x.ot);
@@ -113,6 +134,7 @@
       return o;
     });
     var data = { currency: cur, from: from, to: to, total: rows.length, lines: page };
+    if (areaList.length) data.areas = areaList.map(areaOut);
     if (offset + PAGE < rows.length) data.next_offset = offset + PAGE;
     if (acc) data.account = accs[acc];
     return { ok: true, data: data };
@@ -360,7 +382,7 @@
     var tombs = isObj(d.tombs) ? d.tombs : {}, accs = [], cats = [];
     (Array.isArray(d.acc) ? d.acc : []).forEach(function (a) { if (isObj(a) && typeof a.id === "string" && !deadIn(tombs, "acc", a)) accs.push({ id: a.id, n: String(a.n || a.id) }); });
     (Array.isArray(d.cats) ? d.cats : []).forEach(function (c) { if (isObj(c) && typeof c.id === "string" && !deadIn(tombs, "cat", c)) cats.push({ id: c.id, n: String(c.name || c.id), k: c.k === "i" ? "i" : "o" }); });
-    return { accs: accs, cats: cats };
+    return { accs: accs, cats: cats, areas: liveAreas(d).map(function (a) { return { id: a.id, n: a.n }; }) };
   }
   function findIn(list, v) {
     var f = fold(v), hit = null;
@@ -418,6 +440,14 @@
         x.ac = ac.id;
       }
     }
+    if (e.area !== undefined) {
+      if (e.area === "" || e.area === null) delete x.dm;
+      else {
+        var ar = findIn(ix.areas, e.area);
+        if (!ar) return w + (ix.areas.length ? "no area \"" + String(e.area).slice(0, 60) + "\". Areas: " + ix.areas.map(function (a) { return a.n; }).join(", ") : "Budget has no areas yet (budget_areas makes them).");
+        x.dm = ar.id;
+      }
+    }
     if (e.note !== undefined) {
       var n = String(e.note == null ? "" : e.note).replace(/\s+/g, " ").trim();
       if (n.length > NOTE_LEN) return w + "note is longer than " + NOTE_LEN + " characters.";
@@ -425,17 +455,151 @@
     }
     return "";
   }
-  function emptyBudget() { return { ver: 1, tx: [], cats: [], acc: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
+  function emptyBudget() { return { ver: 1, tx: [], cats: [], acc: [], area: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
+
+  // AR-INV (6.01.00): budget_areas — Budget's areas by name (budget.js
+  // normArea). series = [{ id, prefix, kind }] from Invoices on this
+  // device, or null when Invoices is not loaded. → { err } | { done }
+  // and d.area / d.tombs changed in place, undo.r / undo.ra filled.
+  var AREAS_MAX = 12, AREA_NAME = 40, AREA_WORDS = 300, AREA_SER = 20, SER_ID = /^[A-Za-z0-9_-]{1,64}$/;
+  function areaKeys(o) {                       // budget.js key order: id, m, col, iv, n, pc, q, sh, then extras
+    var out = { id: o.id, m: o.m, col: o.col };
+    if (o.iv) out.iv = o.iv;
+    out.n = o.n;
+    if (o.pc) out.pc = o.pc;
+    out.q = o.q || "";
+    if (o.sh === 1) out.sh = 1;
+    Object.keys(o).sort().forEach(function (k) { if (!(k in out) && ["iv", "pc", "sh"].indexOf(k) < 0) out[k] = o[k]; });
+    return out;
+  }
+  function areasWrite(d, args, now, newId, series, undo) {
+    var list = args.areas;
+    if (!Array.isArray(list) || !list.length || list.length > AREAS_MAX) return { err: "areas must be a list of 1 to " + AREAS_MAX + " areas." };
+    if (!Array.isArray(d.area)) d.area = [];
+    var live = liveAreas(d), touched = {}, i;
+    function before(a) { if (!Object.prototype.hasOwnProperty.call(undo.r, a.id)) undo.r[a.id] = clone(a); }
+    function find(name) {
+      var f = fold(name), hit = null;
+      live.forEach(function (a) { if (!hit && (a.id === String(name) || fold(a.n) === f)) hit = a; });
+      return hit;
+    }
+    function serOf(v, w) {
+      if (!series) return { err: w + "Invoices is not loaded on the device, so its series can't be checked; try again in a moment." };
+      var s0 = String(v == null ? "" : v).trim(), f = fold(s0);
+      var hit = series.filter(function (x) { return x.id === s0; });
+      if (!hit.length) hit = series.filter(function (x) { return fold(x.prefix) === f; });
+      if (hit.length === 1) return { id: hit[0].id };
+      return { err: w + (hit.length ? "more than one Invoices series has the prefix \"" + s0.slice(0, 20) + "\"; use its id. " : "no Invoices series \"" + s0.slice(0, 20) + "\". ") +
+        "Series: " + series.map(function (x) { return (x.prefix || "—") + " (" + x.id + ", " + x.kind + ")"; }).join(", ") };
+    }
+    for (i = 0; i < list.length; i++) {
+      var e = list[i], w = "areas[" + i + "]: ";
+      if (!isObj(e)) return { err: w + "must be an object." };
+      var name = String(e.name == null ? "" : e.name).replace(/\s+/g, " ").trim();
+      if (!name || name.length > AREA_NAME) return { err: w + "name is 1 to " + AREA_NAME + " characters." };
+      var a = find(name);
+      if (touched[a ? a.id : "new:" + fold(name)]) return { err: w + "the area \"" + name + "\" is in the list twice." };
+      if (e.remove === true) {
+        if (!a) return { err: w + "there is no area \"" + name + "\" to remove." };
+        before(a);
+        d.area = d.area.filter(function (y) { return !(isObj(y) && y.id === a.id); });
+        d.tombs["area:" + a.id] = stampAfter(now, Math.max(d.tombs["area:" + a.id] || 0, a.m || 0));
+        undo.ra[a.id] = null;
+        touched[a.id] = 1;
+        live = liveAreas(d);
+        continue;
+      }
+      var y = a ? clone(a) : null;
+      if (!y) {
+        if (live.length >= AREAS_MAX) return { err: "Budget has " + AREAS_MAX + " areas already; remove one first." };
+        var used = {}, col = 0, id;
+        live.forEach(function (x) { used[x.col] = 1; });
+        while (col < 8 && used[col]) col++;
+        do { id = String(newId()); } while (!TX_ID.test(id) || d.area.some(function (x) { return isObj(x) && x.id === id; }) || d.tombs["area:" + id] !== undefined);
+        y = { id: id, m: 0, col: col, n: name, q: "" };
+        undo.r[id] = null;
+      } else before(a);
+      if (e.rename !== undefined) {
+        var nn = String(e.rename == null ? "" : e.rename).replace(/\s+/g, " ").trim();
+        if (!nn || nn.length > AREA_NAME) return { err: w + "rename is 1 to " + AREA_NAME + " characters." };
+        var other = find(nn);
+        if (other && other.id !== y.id) return { err: w + "an area \"" + nn + "\" exists already." };
+        y.n = nn;
+      }
+      if (e.words !== undefined) {
+        var q = String(e.words == null ? "" : e.words).replace(/\s+/g, " ").trim();
+        if (q.length > AREA_WORDS) return { err: w + "words are at most " + AREA_WORDS + " characters." };
+        y.q = q;
+      }
+      if (e.invoice_series !== undefined) {
+        if (!Array.isArray(e.invoice_series) || e.invoice_series.length > AREA_SER) return { err: w + "invoice_series is a list of at most " + AREA_SER + " series (prefixes or ids)." };
+        var ids = [];
+        for (var j = 0; j < e.invoice_series.length; j++) {
+          var r = serOf(e.invoice_series[j], w);
+          if (r.err) return { err: r.err };
+          if (ids.indexOf(r.id) < 0) ids.push(r.id);
+        }
+        ids.sort();
+        if (ids.length) y.iv = ids.join(" "); else delete y.iv;
+      }
+      if (e.share !== undefined) {
+        if (!(typeof e.share === "number" && Math.floor(e.share) === e.share && e.share >= 0 && e.share <= 100)) return { err: w + "share is a whole number from 0 to 100 (% of the shared costs)." };
+        if (e.share) y.pc = e.share; else delete y.pc;
+      }
+      if (e.shared_costs !== undefined) {
+        if (typeof e.shared_costs !== "boolean") return { err: w + "shared_costs is true or false." };
+        if (e.shared_costs) {
+          y.sh = 1; delete y.pc;
+          live.forEach(function (x) {                // one area of shared costs
+            if (x.id === y.id || x.sh !== 1) return;
+            before(x);
+            var z = clone(x); delete z.sh; z.m = stampAfter(now, x.m);
+            d.area = d.area.map(function (q2) { return isObj(q2) && q2.id === x.id ? areaKeys(z) : q2; });
+            undo.ra[x.id] = z.m;
+          });
+        } else delete y.sh;
+      }
+      if (y.sh === 1 && e.share) return { err: w + "the area of shared costs has no share of itself." };
+      touched[a ? a.id : "new:" + fold(name)] = 1;
+      if (a && JSON.stringify(areaKeys(Object.assign({}, y, { m: a.m }))) === JSON.stringify(areaKeys(a))) {
+        if (!Object.prototype.hasOwnProperty.call(undo.ra, a.id)) delete undo.r[a.id];   // nothing changed in it
+        continue;
+      }
+      y.m = stampAfter(now, a ? a.m : (d.tombs["area:" + y.id] || 0));
+      y = areaKeys(y);
+      if (a) d.area = d.area.map(function (q3) { return isObj(q3) && q3.id === a.id ? y : q3; });
+      else d.area.push(y);
+      undo.ra[y.id] = y.m;
+      touched[y.id] = 1;
+      live = liveAreas(d);
+    }
+    var sum = 0;
+    live.forEach(function (x) { if (x.sh !== 1 && typeof x.pc === "number") sum += x.pc; });
+    if (sum > 100) return { err: "The shares would add up to " + sum + "%; at most 100%. Nothing was changed." };
+    d.area.sort(function (p1, p2) { return p1.id < p2.id ? -1 : p1.id > p2.id ? 1 : 0; });
+    var n = Object.keys(undo.ra).length;
+    return { done: "Areas now: " + live.map(function (x) { return x.n; }).join(", ") + " (" + n + " changed).", n: n };
+  }
 
   // op = "add" | "change" | "delete"; raw = oros-budget-data; now = ms;
   // newId() → a fresh id. → { ok, data, undo, ids, text } | { ok:false, err }
   // undo = { b: { id: entry before | null }, a: { id: m after | null } }
-  function budgetWrite(op, raw, args, now, newId) {
+  function budgetWrite(op, raw, args, now, newId, series) {
     if (!isObj(args)) return { ok: false, err: "The arguments must be an object." };
     var d = isObj(raw) ? clone(raw) : emptyBudget();
     if (!Array.isArray(d.tx)) d.tx = [];
     if (!isObj(d.tombs)) d.tombs = {};
     var ix = bgIndex(d), undo = { b: {}, a: {} }, ids = [], i, err;
+    if (op === "areas") {
+      undo.r = {}; undo.ra = {};
+      var ar = areasWrite(d, args, now, newId, series === undefined ? null : series, undo);
+      if (ar.err) return { ok: false, err: ar.err };
+      if (!ar.n) return { ok: false, err: "Nothing would change: the areas already look like that." };
+      var t2 = {};
+      Object.keys(d.tombs).sort().forEach(function (k) { t2[k] = d.tombs[k]; });
+      d.tombs = t2;
+      return { ok: true, data: d, undo: undo, ids: Object.keys(undo.ra).sort(), text: ar.done };
+    }
     if (op === "add") {
       var list = args.entries;
       if (!Array.isArray(list) || !list.length) return { ok: false, err: "entries must be a list of 1 to " + ADD_MAX + " entries." };
@@ -463,10 +627,12 @@
       var cid = String(args.id || "");
       var at = liveTx(d, cid);
       if (at < 0) return { ok: false, err: "No Budget entry with id " + cid.slice(0, 64) + "." };
-      if (cid.indexOf("l-") === 0) return { ok: false, err: "That entry comes from another app or a shop; change it there." };
+      var keys = ["date", "amount", "category", "account", "area", "note"].filter(function (k) { return args[k] !== undefined; });
+      // AR-INV: an entry from another app or a shop takes only an area here
+      // (as in Budget's own form, where yours wins over the source)
+      if (cid.indexOf("l-") === 0 && !(keys.length === 1 && keys[0] === "area")) return { ok: false, err: "That entry comes from another app or a shop; change it there (only its area can change here)." };
       var cx = d.tx[at], before = clone(cx), y = clone(cx);
-      var keys = ["date", "amount", "category", "account", "note"].filter(function (k) { return args[k] !== undefined; });
-      if (!keys.length) return { ok: false, err: "Say what to change: date, amount, category, account or note." };
+      if (!keys.length) return { ok: false, err: "Say what to change: date, amount, category, account, area or note." };
       err = setFields(y, args, ix, "");
       if (err) return { ok: false, err: err };
       if (JSON.stringify(y) === JSON.stringify(cx)) return { ok: false, err: "Nothing would change: the entry already looks like that." };
@@ -505,6 +671,35 @@
     if (!Array.isArray(d.tx)) d.tx = [];
     if (!isObj(d.tombs)) d.tombs = {};
     var n = 0, kept = 0;
+    // AR-INV: an areas change (u.r = area before | null, u.ra = m after | null)
+    if (isObj(u.r) && isObj(u.ra)) {
+      if (!Array.isArray(d.area)) d.area = [];
+      Object.keys(u.r).forEach(function (id) {
+        var cur = d.area.filter(function (x) { return isObj(x) && x.id === id && !deadIn(d.tombs, "area", x); })[0] || null;
+        var was = u.r[id], after = u.ra[id];
+        if (after === null) {                       // the change removed it
+          if (cur || !isObj(was)) { kept++; return; }
+          var x = clone(was);
+          x.m = stampAfter(now, Math.max(x.m || 0, d.tombs["area:" + id] || 0));
+          delete d.tombs["area:" + id];
+          d.area = d.area.filter(function (y) { return !(isObj(y) && y.id === id); }).concat([x]);
+          n++;
+          return;
+        }
+        if (!cur || cur.m !== after) { kept++; return; }
+        if (was === null) {                         // the change made it
+          d.tombs["area:" + id] = stampAfter(now, Math.max(d.tombs["area:" + id] || 0, cur.m || 0));
+          d.area = d.area.filter(function (y) { return !(isObj(y) && y.id === id); });
+          n++;
+          return;
+        }
+        var back = clone(was);
+        back.m = stampAfter(now, cur.m);
+        d.area = d.area.map(function (y) { return isObj(y) && y.id === id ? back : y; });
+        n++;
+      });
+      d.area.sort(function (p1, p2) { return p1.id < p2.id ? -1 : p1.id > p2.id ? 1 : 0; });
+    }
     Object.keys(u.b).forEach(function (id) {
       var at = liveTx(d, id), before = u.b[id], after = u.a[id];
       if (after === null) {                         // the change deleted it
@@ -763,7 +958,7 @@
     return out;
   }
   // Apps whose items Claude may change, and the tools for them.
-  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete"],
+  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete", "budget_areas"],
                  kanban: ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"] };
   // GATE-ACT (2026-11-08): the apps Claude may change with the
   // Assistant's own tools, run in a hidden Assistant frame
@@ -780,7 +975,7 @@
   // The changes the relay may queue while orOS is closed (relay/gate.js
   // closedCall): its own change tools less budget_delete, and
   // create_items. applyQueue runs nothing else (defence in depth).
-  var QUEUED = ["budget_add", "budget_change", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
+  var QUEUED = ["budget_add", "budget_change", "budget_areas", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
                 "change_item", "link_items", "link_contact"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
@@ -854,21 +1049,21 @@
   var DIG_TXT = {
     en: { subject: "orOS: Claude's changes on {day}", intro: "Claude changed these in your orOS today ({n}):",
           undone: "undone", undo: "To undo one: orOS › Settings › Claude (orOS Gate) › Claude's changes.", items: "{n} items",
-          tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries",
+          tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries", budget_areas: "changed Budget's areas",
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
                    kanban_add_columns: "added Kanban columns",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
                    link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
-          tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget",
+          tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
                    kanban_add_columns: "πρόσθεσε στήλες στο Kanban",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
                    link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
-          tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht",
+          tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
                    kanban_add_columns: "Kanban-Spalten hinzugefügt",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
@@ -1569,7 +1764,7 @@
       var dd = r.data, k = (dd.lines || dd.documents || dd.items || dd.titles || []).length;
       return Promise.resolve({ ok: true, a: [line], k: k, c: JSON.stringify(dd) });
     }
-    var op = { budget_add: "add", budget_change: "change", budget_delete: "delete" }[name];
+    var op = { budget_add: "add", budget_change: "change", budget_delete: "delete", budget_areas: "areas" }[name];
     if (op) return change(op, args, p, names);
     var kop = { kanban_add_cards: "add_cards", kanban_move_cards: "move_cards", kanban_change_card: "change_card", kanban_add_columns: "add_columns" }[name];
     if (kop) return kanbanChange(kop, args, p, names);
@@ -1632,6 +1827,19 @@
     crypto.getRandomValues(r);
     return Date.now().toString(36) + (r[0] % 46656).toString(36);   // = budget.js newId
   }
+  // AR-INV: Invoices' series whose payments come to Budget, or null
+  // when Invoices' core is not loaded here.
+  function invSeries() {
+    var I = root.OrosInvoicesCore;
+    if (!I || typeof I.seriesList !== "function") return null;
+    try {
+      var raw = null;
+      try { raw = localStorage.getItem("oros-invoices-data"); } catch (e0) { raw = null; }
+      var d = typeof I.parse === "function" ? I.parse(raw) : null;
+      return I.seriesList(d).filter(function (x) { return x && SER_ID.test(x.id) && (x.kind === "inv" || x.kind === "rcpt"); })
+        .map(function (x) { return { id: x.id, prefix: String(x.prefix || ""), kind: x.kind }; });
+    } catch (e) { return null; }
+  }
   function change(op, args, p, names) {
     var now = Date.now();
     if (!canWrite(p.lv, p.hold, "budget", now)) {
@@ -1641,7 +1849,7 @@
     var asked = n > ASK_OVER && n <= 100 ? askDelete(n) : Promise.resolve(true);
     return asked.then(function (yes) {
       if (!yes) return { ok: false, c: "The owner did not confirm deleting " + n + " entries on the device; nothing was deleted." };
-      var r = budgetWrite(op, readStore("oros-budget-data"), args, Date.now(), newTxId);
+      var r = budgetWrite(op, readStore("oros-budget-data"), args, Date.now(), newTxId, op === "areas" ? invSeries() : undefined);
       if (!r.ok) return { ok: false, c: r.err };
       if (!writeJSON("oros-budget-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
