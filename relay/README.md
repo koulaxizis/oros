@@ -817,6 +817,14 @@ counter. No orOS data in the clear, no request or answer, nothing logged.
   refused) and go to the first device that connects, which applies them
   and acks (`cqa`). 7 days without an open device, or `revoke`, wipe the
   copy, the queue and the wraps; the device makes a new K on revoke.
+- **orOS asleep (6.01.02):** a socket with no sign of life for 150 s
+  (no ping answered by the platform, no message) counts as closed, so a
+  phone that froze orOS in the background never makes Claude wait. A
+  call that gets no answer in 25 s goes the closed way too: reads from
+  the copy, a change waits in `q:<call id>`; a late success from the
+  device removes it. Each call carries `dl` (the box's deadline) and the
+  box sends `{hi: now}` on connect, so the device never starts a call it
+  reads too late.
 - **Whose relay:** everyone on useoros.online uses this one, each with
   their own box. A person whose Mail is set up with their own relay
   gets their gate there (deploy this Worker, `ALLOWED_ORIGINS` with the

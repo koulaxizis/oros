@@ -45,7 +45,9 @@ function world() {
     get(id) {
       if (!boxes.has(id)) {
         const st = fakeStorage(), socks = [];
-        const state = { storage: st.storage, getWebSockets: () => socks.filter((s) => !s.closed) };
+        // The platform's ping answer time (6.01.02): a socket without pongAt has just answered one.
+        const state = { storage: st.storage, getWebSockets: () => socks.filter((s) => !s.closed),
+                        getWebSocketAutoResponseTimestamp: (s) => (s.pongAt === undefined ? new Date(8.64e15) : s.pongAt === null ? null : new Date(s.pongAt)) };
         boxes.set(id, { st, socks, box: new G.GateBox(state, env) });
       }
       const b = boxes.get(id);
@@ -643,4 +645,61 @@ test("switches set before 5.77.00 reach the box once: a device's base is kept on
   assert.deepEqual((await b.st.storage.get("meta")).lv, { budget: "write", kanban: "read" }, "a later base does not win");
   await b.box.webSocketMessage(s2, JSON.stringify({ lv: { invoices: "read" } }));
   assert.deepEqual((await b.st.storage.get("meta")).lv, { invoices: "read" }, "a real change does");
+});
+
+test("a device asleep in the background (6.01.02): skipped at once, a change that times out waits under its call id, a late answer takes it back", async () => {
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const calls = [];
+  const sock = { sent: [], closed: false, __g: { th: hex(TOK), v: 1, at: 1 }, send(x) {
+    this.sent.push(x);
+    const q = JSON.parse(x);
+    if (q.q && q.n === "_key") { setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1); return; }
+    if (q.q) calls.push(q);                                  // busy: never answers in time
+  }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const obj = { type: "object", properties: {} };
+  await b.st.storage.put("devtools", [{ name: "create_items", description: "c", inputSchema: obj, annotations: { readOnlyHint: false, destructiveHint: false } }]);
+  const copy = { at: 1e12, lv: { todo: "write", budget: "read" }, hold: 0, ans: { "list_apps {}": '{"apps":["todo"]}' } };
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, JSON.stringify(copy)) }));
+  const tc = async (name, args) => (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } })).json()).result;
+  const was = G.GATE_LIMITS.callMs;
+  G.GATE_LIMITS.callMs = 30;
+  try {
+    // awake but busy: the call goes to it with a deadline, then waits in the queue under its own id
+    let r = await tc("create_items", { app: "todo", items: [{ title: "x", date: "2026-11-10" }] });
+    assert.equal(r.isError, false);
+    assert.match(r.content[0].text, /"queued":true/);
+    assert.match(r.content[0].text, /did not answer in time \(asleep in the background or busy\)/);
+    assert.equal(calls.length, 1);
+    assert.equal(typeof calls[0].dl, "number", "each call carries the box's deadline");
+    const q = await b.st.storage.list({ prefix: "q:" });
+    assert.deepEqual([...q.keys()], ["q:" + calls[0].q]);
+    assert.equal(JSON.parse(await G.openText(K, [...q.values()][0].c)).n, "create_items");
+    // a read that times out answers from the copy
+    r = await tc("list_apps");
+    assert.equal(r.isError, false);
+    assert.match(r.content[0].text, /^\[orOS did not answer in time \(asleep in the background or busy\): this is the copy of/);
+    // the device answers the change late, done: it waits no more
+    await b.box.webSocketMessage(sock, JSON.stringify({ r: calls[0].q, ok: true, c: "{}" }));
+    assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 0);
+    // a late refusal keeps it waiting
+    await tc("create_items", { app: "todo", items: [{ title: "y" }] });
+    await b.box.webSocketMessage(sock, JSON.stringify({ r: calls[2].q, ok: false, c: "late" }));
+    assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 1);
+    // no ping answered for 150 s: the socket is asleep and gets nothing; the change waits at once
+    sock.pongAt = Date.now() - 200000;
+    const n = sock.sent.length;
+    r = await tc("create_items", { app: "todo", items: [{ title: "z" }] });
+    assert.match(r.content[0].text, /"queued":true/);
+    assert.match(r.content[0].text, /orOS is asleep in the background/);
+    assert.equal(sock.sent.length, n, "nothing sent to the sleeping socket");
+    assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
+    // any message wakes it again
+    await b.box.webSocketMessage(sock, "v1");
+    assert.equal(b.box.awake(Date.now()).length, 1);
+  } finally { G.GATE_LIMITS.callMs = was; }
 });
