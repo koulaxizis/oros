@@ -1,6 +1,6 @@
 // Connected services key sync on by default (KS-ON, links/host.js):
 // new accounts travel sealed, old accounts are switched on once, a
-// later "off" stays off, bank keys (keysHere) stay on their device, a
+// later "off" stays off, bank keys travel too, a
 // second device opens the sealed keys, and keys are never in clear in
 // the synced slice.
 "use strict";
@@ -138,26 +138,26 @@ test("KS-ON: accounts from before are switched on once; a later off stays off", 
   assert.equal(JSON.parse(B.ls.get("oros-links-data")).accts[0].s, "");
 });
 
-test("KS-ON: bank keys (keysHere) stay on their device by default", async () => {
+test("KS-ON: bank keys travel too (Chris 2026-11-09), never in clear", async () => {
   const L = require("../links/core.js");
-  assert.equal(L.PLATFORMS.ebank.keysHere, true);
-  Object.keys(L.PLATFORMS).filter((p) => p !== "ebank").forEach((p) => assert.ok(!L.PLATFORMS[p].keysHere, p));
+  Object.keys(L.PLATFORMS).forEach((p) => assert.ok(!L.PLATFORMS[p].keysHere, p));
   const A = device();
   await tick();
   const { privateKey } = nodeCrypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
   const pem = privateKey.export({ type: "pkcs8", format: "pem" });
   const id = await A.Lk.add({ p: "ebank", name: "Bank", keys: { app: "0b1c2d3e-0000-4000-8000-000000000001", pem } });
   await settle(A);
-  const row = JSON.parse(A.ls.get("oros-links-data")).accts.find((a) => a.id === id);
-  assert.equal(row.ks, 0);
-  assert.equal(row.s, "");
-  // an old bank row is not switched on either
+  const raw = A.ls.get("oros-links-data");
+  const row = JSON.parse(raw).accts.find((a) => a.id === id);
+  assert.equal(row.ks, 1);
+  assert.ok(row.s.startsWith("v1."));
+  assert.ok(!raw.includes("PRIVATE KEY") && !raw.includes(pem.split("\n")[1]), "the .pem is never in clear");
+  // an old bank row is switched on once, like the others
   const B = device();
   await tick();
-  B.sync.slice.set({ ver: 1, accts: [Object.assign({}, row, { m: Date.UTC(2026, 9, 20) })] });
+  B.sync.slice.set({ ver: 1, accts: [Object.assign({}, row, { m: Date.UTC(2026, 9, 20), ks: 0, s: "", sm: 0 })] });
   await settle(B);
-  assert.equal(JSON.parse(B.ls.get("oros-links-data")).accts[0].ks, 0);
-  assert.equal(A.Lk.platforms().find((p) => p.id === "ebank").keysHere, true);
+  assert.equal(JSON.parse(B.ls.get("oros-links-data")).accts[0].ks, 1);
 });
 
 test("KS-ON: sync unlocked later seals the keys after the next sync round", async () => {

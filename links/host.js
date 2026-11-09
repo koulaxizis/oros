@@ -10,7 +10,7 @@
 //     AES-GCM key (store "keys") and each account's keys sealed with it
 //     (store "creds": id → { iv, data, m })
 //   - per account ("Use on all my devices", ks = 1, on by default since
-//     KS-ON except for platforms with keysHere): the keys also travel
+//     KS-ON): the keys also travel
 //     in the slice, sealed with the sync passphrase
 //     (orosSync.vaultCrypto), only while sync is connected and
 //     unlocked; a device without them takes them from there
@@ -164,14 +164,14 @@
   // KS-ON (Chris 2026-11-09, "connections must sync between devices"):
   // key sync is on by default. Every account last changed before this
   // moment is switched on once (the switch stamps m = now, so it never
-  // runs again for that row, and a later "off" stays off). Platforms
-  // with keysHere (bank keys) keep their own default (off).
+  // runs again for that row, and a later "off" stays off). Bank keys
+  // too (Chris 2026-11-09 on the card: «Ναι, και οι τράπεζες»).
   var KS_ON_BEFORE = Date.UTC(2026, 10, 9, 21, 0, 0);
   function ksDefault() {
     if (Date.now() <= KS_ON_BEFORE) return;      // a clock behind: the stamp would not stop it
     L.live(read()).forEach(function (a) {
       var pl = L.PLATFORMS[a.p];
-      if (a.ks !== 1 && a.m < KS_ON_BEFORE && pl && !pl.keysHere) setKeySync(a.id, true);
+      if (a.ks !== 1 && a.m < KS_ON_BEFORE && pl) setKeySync(a.id, true);
     });
   }
   function sealer() {
@@ -263,7 +263,7 @@
       if (pl.env) row.env = o.env;
       if (pl.vat) row.vat = vat;
       if (pl.db) row.db = db;
-      row.ks = pl.keysHere ? 0 : 1; row.s = ""; row.sm = 0; row.d = 0;   // KS-ON
+      row.ks = 1; row.s = ""; row.sm = 0; row.d = 0;   // KS-ON
       if (!putAcct(row)) { dropLocal(id); throw err("save"); }
       if (row.ks) keySync();
       return id;
@@ -557,7 +557,7 @@
     list: list, get: get, add: add, edit: edit, setKeys: setKeys, hasKeys: hasKeys,
     setKeySync: setKeySync, canKeySync: canKeySync, remove: remove,
     call: call, test: test, statusCode: statusCode, mode: mode, onChange: onChange,
-    platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice(), site: !!L.PLATFORMS[p].site, db: !!L.PLATFORMS[p].db, ownUi: L.PLATFORMS[p].ownUi || "", keysHere: !!L.PLATFORMS[p].keysHere }; }); }
+    platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice(), site: !!L.PLATFORMS[p].site, db: !!L.PLATFORMS[p].db, ownUi: L.PLATFORMS[p].ownUi || ""}; }); }
   };
 
   registerSlice();
