@@ -92,5 +92,7 @@ Files you delete or replace in [Files](app:files) leave their old encrypted copi
 
 To keep your files safe it removes nothing when the cloud has no list of files, when copies of files you have are missing, or without your vault key, and it stops when another device changes your files meanwhile (check again to go on). orOS never cleans up on its own. The orOS Drive app follows the same rules.
 
+A big clean-up takes a few minutes, one copy after the other, and the card counts how many are gone. Keep orOS open on that page until it finishes. When your cloud asks orOS to slow down, or the connection drops for a moment, orOS waits and tries again by itself. If it still cannot go on, the card says why and how many copies it removed; those stay removed, and `Clean up` again goes on with the rest.
+
 ## Add a second device
 Open orOS on the other device, open `Settings`, tap `Connect to Dropbox`, sign in to the **same** Dropbox account and type the **same** passphrase. Your data comes down and merges with anything already there. Something went wrong? See [Troubleshooting](help:t/troubleshooting).

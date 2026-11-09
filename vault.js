@@ -1387,25 +1387,60 @@
     }).then(function () { return out; });
   }
 
+  // A step of the clean-up that failed for a passing reason: the
+  // cloud asked to slow down (429), had a moment (5xx), or the
+  // connection dropped. Both steps retried here (reading the manifest
+  // revision, removing one object) are safe to repeat: a removal of
+  // what is already gone counts as done.
+  var GC_RETRY_MS = [2000, 5000, 15000, 30000, 60000];
+  function gcPassing(err) {
+    var msg = (err && err.message) || "";
+    if (/failed: (429|5\d\d)\b/.test(msg)) return "slow";
+    // What fetch rejects with when the request never lands (Chromium,
+    // Firefox, Safari), and a dropped mobile connection.
+    if (/failed to fetch|networkerror|network error|load failed|network connection was lost/i.test(msg)) return "offline";
+    return "";
+  }
+  function gcRetry(step) {
+    function attempt(i) {
+      return step().catch(function (err) {
+        var why = gcPassing(err);
+        if (!why) throw err;
+        if (i >= GC_RETRY_MS.length) throw new Error("clean-" + why);
+        return new Promise(function (r) { setTimeout(r, GC_RETRY_MS[i]); })
+          .then(function () { return attempt(i + 1); });
+      });
+    }
+    return attempt(0);
+  }
+
   // Remove what gcScan finds removable (looks again first).
+  // opts.progress(done, total) after every removal (the card counts).
   // → { removed, bytes, stopped (the vault moved: run it again),
   //     healed, lost: [path] }. Rejects "clean-no-manifest",
-  //     "clean-mismatch", "clean-moved" or a storage error.
-  function gcCleanUp() {
+  //     "clean-mismatch", "clean-moved", "clean-slow" (the cloud kept
+  //     asking to slow down), "clean-offline" (the connection kept
+  //     dropping) or a storage error. A rejection after removals
+  //     carries them as err.cleaned (the same shape), already checked
+  //     by gcAfter, so a later run simply goes on from there.
+  function gcCleanUp(opts) {
+    var progress = opts && typeof opts.progress === "function" ? opts.progress : null;
     return betweenSyncs(function () {
       return gcScan(Date.now()).then(function (s) {
         if (s.u.hold === "no-manifest") throw new Error("clean-no-manifest");
         if (s.u.hold) throw new Error("clean-mismatch");
         var out = { removed: 0, bytes: 0, stopped: false, healed: 0, lost: [] }, gone = {};
+        var total = s.free.length;
         var chain = s.free.reduce(function (c, o) {
           return c.then(function () {
             if (out.stopped) return null;
-            return ST().getRevision(MANIFEST_KEY).then(function (rev) {
+            return gcRetry(function () { return ST().getRevision(MANIFEST_KEY); }).then(function (rev) {
               if (rev !== s.rev) { out.stopped = true; return null; }
-              return ST().deleteObject(o.key).then(function () {
+              return gcRetry(function () { return ST().deleteObject(o.key); }).then(function () {
                 gone[o.key] = true;
                 out.removed++;
                 out.bytes += o.size;
+                if (progress) { try { progress(out.removed, total); } catch (e) {} }
               });
             });
           });
@@ -1413,7 +1448,10 @@
         return chain.then(function () {
           return gcAfter(gone, out);
         }, function (err) {
-          return gcAfter(gone, out).catch(function () {}).then(function () { throw err; });
+          return gcAfter(gone, out).catch(function () {}).then(function () {
+            if (out.removed) err.cleaned = out;
+            throw err;
+          });
         });
       });
     });

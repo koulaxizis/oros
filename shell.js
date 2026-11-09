@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.01.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.01.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -6735,7 +6735,11 @@
   }
   // VD-GC: Settings › Sync › Unused files in the cloud. Look first
   // (usage: changes nothing), then clean up only on the person's tap.
-  var CLEAN_CODES = /^clean-(no-manifest|mismatch|moved|unsupported)$/;
+  var CLEAN_CODES = /^clean-(no-manifest|mismatch|moved|unsupported|slow|offline)$/;
+  function vaultCleanResult(r) {
+    return { removed: +r.removed || 0, bytes: +r.bytes || 0, stopped: !!r.stopped,
+      healed: +r.healed || 0, lost: Array.prototype.slice.call(r.lost || []).map(String) };
+  }
   function vaultCleanFail(err) {
     var S = window.orosSync, msg = (err && err.message) || "";
     var prev = state.vaultClean || {};
@@ -6743,27 +6747,44 @@
       code: CLEAN_CODES.test(msg) ? msg : "",
       err: CLEAN_CODES.test(msg) ? null : window.t(S ? S.errorKey(err) : "sync.err.generic") };
   }
-  function vaultCleanCheck() {
+  function vaultCleanCheck(keep) {
     var V = window.orosVault;
     if (!V || typeof V.usage !== "function" || (state.vaultClean && state.vaultClean.busy)) return;
-    state.vaultClean = { busy: "check", usage: null, result: (state.vaultClean && state.vaultClean.result) || null };
+    var prev = state.vaultClean || {};
+    state.vaultClean = { busy: "check", usage: null, result: prev.result || null,
+      code: keep ? prev.code || "" : "", err: keep ? prev.err || null : null };
     settingsNotify();
     V.usage().then(function (u) {
-      state.vaultClean = { busy: "", usage: JSON.parse(JSON.stringify(u)), result: state.vaultClean.result };
+      var c = state.vaultClean || {};
+      state.vaultClean = { busy: "", usage: JSON.parse(JSON.stringify(u)), result: c.result || null,
+        code: c.code || "", err: c.err || null };
     }, vaultCleanFail).then(settingsNotify);
   }
+  // A clean-up that stops half way (the cloud kept asking to slow
+  // down, the connection dropped) says what it did remove and what
+  // went wrong, then looks again so the button can go on from there.
   function vaultCleanRun() {
     var V = window.orosVault;
     var c = state.vaultClean;
     if (!V || typeof V.cleanUp !== "function" || !c || c.busy || !c.usage || !(c.usage.free > 0)) return;
-    state.vaultClean = { busy: "clean", usage: c.usage, result: null };
+    state.vaultClean = { busy: "clean", usage: c.usage, result: null, progress: { done: 0, total: c.usage.free } };
     settingsNotify();
-    V.cleanUp().then(function (r) {
-      state.vaultClean = { busy: "", usage: null, result: {
-        removed: +r.removed || 0, bytes: +r.bytes || 0, stopped: !!r.stopped,
-        healed: +r.healed || 0, lost: Array.prototype.slice.call(r.lost || []).map(String) } };
+    var shown = 0;
+    V.cleanUp({ progress: function (done, total) {
+      var k = state.vaultClean;
+      if (!k || k.busy !== "clean") return;
+      k.progress = { done: +done || 0, total: +total || 0 };
+      var now = Date.now();
+      if (now - shown > 700 || done === total) { shown = now; settingsNotify(); }
+    } }).then(function (r) {
+      state.vaultClean = { busy: "", usage: null, result: vaultCleanResult(r) };
       vaultCleanCheck();                                // fresh numbers
-    }, function (err) { vaultCleanFail(err); settingsNotify(); });
+    }, function (err) {
+      vaultCleanFail(err);
+      if (err && err.cleaned) state.vaultClean.result = vaultCleanResult(err.cleaned);
+      settingsNotify();
+      vaultCleanCheck(true);                            // fresh numbers, error kept
+    });
   }
   // A43: the cloud backups for Settings › Sync, and Restore.
   function syncBackupsLoad() {
