@@ -141,7 +141,7 @@ export const TOOLS = [
   },
   {
     name: "budget_lines",
-    description: "Budget entries (income and expenses, bank lines included) between two days, oldest first, 500 per page. Amounts are decimal strings in the Budget's main currency. Each line names its area; the answer lists Budget's areas (words, invoice series, shared costs and shares).",
+    description: "Budget entries (income and expenses, bank lines included) between two days, oldest first, 500 per page. Amounts are decimal strings in the Budget's main currency. Each line names its area; the answer lists Budget's areas (words, invoice series, shared costs and shares) and its stored categories (kind, main category, area).",
     inputSchema: {
       type: "object",
       properties: {
@@ -271,6 +271,46 @@ export const TOOLS = [
       additionalProperties: false
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  {
+    name: "budget_categories",
+    description: "Makes, changes or removes Budget's own categories, by kind and name, all or none (at most 30 per call). area: the area a main category belongs to (its subcategories follow it; Budget lists it first for that area's entries), \"\" = any area. main: the main category it sits under (one level), \"\" = a main one. A category that entries use, or one with subcategories, is not removed. Built-in categories that were never changed show as ids (o-…, i-…) and are changed in Budget. Same rule as budget_add; the owner is notified and can undo it.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        categories: { type: "array", minItems: 1, maxItems: 30, items: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "The category's name (an existing one of that kind changes it, a new one makes it), at most 30 characters." },
+            kind: { type: "string", enum: ["expense", "income"] },
+            rename: { type: "string", description: "A new name." },
+            main: { type: "string", description: "A main category of the same kind; \"\" makes it a main one." },
+            area: { type: "string", description: "An area name from budget_lines (areas); \"\" = any area." },
+            remove: { type: "boolean", description: "true removes the category." }
+          },
+          required: ["name", "kind"],
+          additionalProperties: false
+        } }
+      },
+      required: ["categories"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  {
+    name: "budget_transfer",
+    description: "Turns one Budget entry (an id from budget_lines) that is really money moved between the owner's own accounts into a transfer, which counts as neither income nor an expense. The entry needs an account; other_account is the other side (an expense goes from the entry's account to it, an income comes from it). other_id: the same money already in Budget as an entry on other_account (opposite kind, same amount, at most 5 days apart); it is replaced by the same transfer. The entries are deleted, so this waits for orOS to be open. Entries from another app or a shop, with receipts or in another currency are refused. The owner is notified and can undo it.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        other_account: { type: "string", description: "A Budget account name or id." },
+        other_id: { type: "string", description: "The entry on other_account that is the other side, if there is one." }
+      },
+      required: ["id", "other_account"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: true }
   },
   {
     name: "budget_delete",
@@ -1322,6 +1362,7 @@ export class GateBox {
       return { ok: false, c: "orOS is closed and the copy of " + when + " does not have this. Ask the owner to open orOS." };
     }
     if (name === "budget_delete") return { ok: false, c: "Deleting waits for orOS to be open on one of the owner's devices. Nothing was deleted." };
+    if (name === "budget_transfer") return { ok: false, c: "A transfer deletes the entries it replaces, so it waits for orOS to be open on one of the owner's devices. Nothing was changed." };
     // GATE-ACT, the device's own tools: their reads answer from the copy
     // when it has them; create_items (the app in args.app) waits in the
     // queue like the relay's own change tools; the others work on items

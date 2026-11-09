@@ -86,6 +86,25 @@
     return o;
   }
 
+  // AR-CAT (6.02.00): the stored categories as Claude sees them, by
+  // kind then name: { name, kind, main?, area? } (built-in ones that were
+  // never changed are not stored and show on lines as their ids, o-… / i-…).
+  // A subcategory takes its main category's area (budget.js categoryList).
+  function catsOut(d, ars) {
+    var tombs = isObj(d.tombs) ? d.tombs : {}, live = {}, list = [];
+    (Array.isArray(d.cats) ? d.cats : []).forEach(function (c) {
+      if (isObj(c) && typeof c.id === "string" && (c.k === "o" || c.k === "i") && !deadIn(tombs, "cat", c)) { live[c.id] = c; list.push(c); }
+    });
+    return list.map(function (c) {
+      var o = { name: String(c.name || c.id), kind: c.k === "i" ? "income" : "expense" };
+      var m = typeof c.p === "string" && live[c.p] && live[c.p].k === c.k && !live[c.p].p ? live[c.p] : null;
+      if (m) o.main = String(m.name || m.id);
+      var dm = m ? m.dm : c.dm;
+      if (typeof dm === "string" && ars[dm]) o.area = ars[dm];
+      return o;
+    }).sort(function (x, y) { return x.kind < y.kind ? -1 : x.kind > y.kind ? 1 : (fold(x.name) < fold(y.name) ? -1 : fold(x.name) > fold(y.name) ? 1 : 0); });
+  }
+
   // budget_lines: raw = the parsed oros-budget-data, args from Claude.
   // → { ok:true, data } | { ok:false, err }
   function budgetLines(raw, args) {
@@ -138,6 +157,8 @@
     });
     var data = { currency: cur, from: from, to: to, total: rows.length, lines: page };
     if (areaList.length) data.areas = areaList.map(areaOut);
+    var catOut = catsOut(d, ars);
+    if (catOut.length) data.categories = catOut;
     if (offset + PAGE < rows.length) data.next_offset = offset + PAGE;
     if (acc) data.account = accs[acc];
     return { ok: true, data: data };
@@ -383,8 +404,8 @@
   }
   function bgIndex(d) {
     var tombs = isObj(d.tombs) ? d.tombs : {}, accs = [], cats = [];
-    (Array.isArray(d.acc) ? d.acc : []).forEach(function (a) { if (isObj(a) && typeof a.id === "string" && !deadIn(tombs, "acc", a)) accs.push({ id: a.id, n: String(a.n || a.id) }); });
-    (Array.isArray(d.cats) ? d.cats : []).forEach(function (c) { if (isObj(c) && typeof c.id === "string" && !deadIn(tombs, "cat", c)) cats.push({ id: c.id, n: String(c.name || c.id), k: c.k === "i" ? "i" : "o" }); });
+    (Array.isArray(d.acc) ? d.acc : []).forEach(function (a) { if (isObj(a) && typeof a.id === "string" && !deadIn(tombs, "acc", a)) accs.push({ id: a.id, n: String(a.n || a.id), cur: typeof a.cur === "string" ? a.cur : "" }); });
+    (Array.isArray(d.cats) ? d.cats : []).forEach(function (c) { if (isObj(c) && typeof c.id === "string" && !deadIn(tombs, "cat", c)) cats.push({ id: c.id, n: String(c.name || c.id), k: c.k === "i" ? "i" : "o", p: typeof c.p === "string" ? c.p : "", dm: typeof c.dm === "string" ? c.dm : "" }); });
     return { accs: accs, cats: cats, areas: liveAreas(d).map(function (a) { return { id: a.id, n: a.n }; }) };
   }
   function findIn(list, v) {
@@ -584,6 +605,143 @@
     return { done: "Areas now: " + live.map(function (x) { return x.n; }).join(", ") + " (" + n + " changed).", n: n };
   }
 
+  // AR-CAT (6.02.00): budget_categories — Budget's own categories by
+  // kind and name (budget.js normCat: keys id, m, k, name, col, then the
+  // extras in name order: dm (area), ic, p (main category), pv). All or
+  // none. → { err } | { done, n }; d.cats / d.tombs changed in place,
+  // undo.c (category before | null) and undo.ca (m after | null) filled.
+  var CAT_NAME = 30, CATS_MAX = 60, CATS_CALL = 30, CAT_ID = /^[a-z0-9-]{1,64}$/;
+  function catKeys(o) {
+    var out = { id: o.id, m: o.m, k: o.k, name: o.name, col: o.col };
+    Object.keys(o).sort().forEach(function (k) { if (!(k in out)) out[k] = o[k]; });
+    return out;
+  }
+  function catsWrite(d, args, now, newId, undo) {
+    var list = args.categories;
+    if (!Array.isArray(list) || !list.length || list.length > CATS_CALL) return { err: "categories must be a list of 1 to " + CATS_CALL + " categories." };
+    if (!Array.isArray(d.cats)) d.cats = [];
+    var areas = liveAreas(d), n = 0, i;
+    function live() { return d.cats.filter(function (c) { return isObj(c) && typeof c.id === "string" && (c.k === "o" || c.k === "i") && !deadIn(d.tombs, "cat", c); }); }
+    function find(k, v) {
+      var f = fold(v), hit = null;
+      live().forEach(function (c) { if (!hit && c.k === k && (c.id === String(v) || fold(c.name || c.id) === f)) hit = c; });
+      return hit;
+    }
+    function before(c) { if (!Object.prototype.hasOwnProperty.call(undo.c, c.id)) undo.c[c.id] = clone(c); }
+    function put(y) {
+      d.cats = d.cats.filter(function (q) { return !(isObj(q) && q.id === y.id); }).concat([catKeys(y)]);
+      undo.ca[y.id] = y.m; n++;
+    }
+    for (i = 0; i < list.length; i++) {
+      var e = list[i], w = "categories[" + i + "]: ";
+      if (!isObj(e)) return { err: w + "must be an object." };
+      if (e.kind !== "expense" && e.kind !== "income") return { err: w + "kind must be expense or income." };
+      var k = e.kind === "income" ? "i" : "o";
+      var name = String(e.name == null ? "" : e.name).replace(/\s+/g, " ").trim();
+      if (!name || name.length > CAT_NAME) return { err: w + "name is 1 to " + CAT_NAME + " characters." };
+      var c = find(k, name);
+      if (e.remove === true) {
+        if (!c) return { err: w + "there is no " + e.kind + " category \"" + name + "\" to remove." };
+        var used = (Array.isArray(d.tx) ? d.tx : []).filter(function (x) { return isObj(x) && x.c === c.id && !deadIn(d.tombs, "tx", x); }).length;
+        if (used) return { err: w + used + " entr" + (used === 1 ? "y uses" : "ies use") + " \"" + name + "\"; give them another category first. Nothing was changed." };
+        if (live().some(function (y) { return y.p === c.id; })) return { err: w + "\"" + name + "\" has subcategories; move or remove them first. Nothing was changed." };
+        before(c);
+        d.cats = d.cats.filter(function (q) { return !(isObj(q) && q.id === c.id); });
+        d.tombs["cat:" + c.id] = stampAfter(now, Math.max(d.tombs["cat:" + c.id] || 0, c.m || 0));
+        undo.ca[c.id] = null; n++;
+        continue;
+      }
+      var y = c ? clone(c) : null;
+      if (!y) {
+        if (live().length >= CATS_MAX) return { err: "Budget has " + CATS_MAX + " stored categories already; remove one first." };
+        var cols = {}, col = 0, id;
+        live().forEach(function (x) { if (x.k === k) cols[x.col] = 1; });
+        while (col < 8 && cols[col]) col++;
+        do { id = "u" + String(newId()); } while (!CAT_ID.test(id) || d.cats.some(function (x) { return isObj(x) && x.id === id; }) || d.tombs["cat:" + id] !== undefined);
+        y = { id: id, m: 0, k: k, name: name, col: col % 8 };
+        undo.c[id] = null;
+      } else before(c);
+      if (e.rename !== undefined) {
+        var nn = String(e.rename == null ? "" : e.rename).replace(/\s+/g, " ").trim();
+        if (!nn || nn.length > CAT_NAME) return { err: w + "rename is 1 to " + CAT_NAME + " characters." };
+        var other = find(k, nn);
+        if (other && other.id !== y.id) return { err: w + "an " + e.kind + " category \"" + nn + "\" exists already." };
+        y.name = nn;
+      }
+      if (e.main !== undefined) {
+        if (e.main === "" || e.main === null) delete y.p;
+        else {
+          var m = find(k, e.main);
+          if (!m || m.id === y.id) return { err: w + "no other " + e.kind + " category \"" + String(e.main).slice(0, 40) + "\" to put it under." };
+          if (m.p) return { err: w + "\"" + (m.name || m.id) + "\" is a subcategory itself; one level only." };
+          if (live().some(function (x) { return x.p === y.id; })) return { err: w + "\"" + name + "\" has subcategories, so it stays a main category." };
+          y.p = m.id;
+        }
+      }
+      if (e.area !== undefined) {
+        if (e.area === "" || e.area === null) delete y.dm;
+        else {
+          var ar = findIn(areas, e.area);
+          if (!ar) return { err: w + (areas.length ? "no area \"" + String(e.area).slice(0, 60) + "\". Areas: " + areas.map(function (a) { return a.n; }).join(", ") : "Budget has no areas yet (budget_areas makes them).") };
+          y.dm = ar.id;
+        }
+      }
+      if (y.p && y.dm) return { err: w + "a subcategory takes its main category's area; set the area on the main one." };
+      if (c && JSON.stringify(catKeys(Object.assign({}, y, { m: c.m }))) === JSON.stringify(catKeys(c))) {
+        if (!Object.prototype.hasOwnProperty.call(undo.ca, c.id)) delete undo.c[c.id];
+        continue;
+      }
+      y.m = stampAfter(now, c ? c.m : (d.tombs["cat:" + y.id] || 0));
+      put(y);
+    }
+    d.cats.sort(function (p1, p2) { return p1.id < p2.id ? -1 : p1.id > p2.id ? 1 : 0; });
+    var changed = Object.keys(undo.ca).length;
+    return { done: changed + " categor" + (changed === 1 ? "y" : "ies") + " changed.", n: changed };
+  }
+  // AR-XF (6.02.00): budget_transfer — an entry that is money moved
+  // between the owner's own accounts becomes a transfer (budget.js
+  // normXfer: { id, m, d, a, f, t, n }), with its other side on the other
+  // account when given (budget.js canXfer / xferTwins). The entries are
+  // deleted (tombed); undo.b / undo.a hold them, undo.x / undo.xa the transfer.
+  function canXferTx(x) { return isObj(x) && typeof x.id === "string" && x.id.indexOf("l-") !== 0 && !x.rc && typeof x.oc !== "string" && typeof x.a === "number" && x.a > 0; }
+  function xferWrite(d, args, now, newId, ix, undo) {
+    var id = String(args.id || ""), at = liveTx(d, id);
+    if (at < 0) return { err: "No Budget entry with id " + id.slice(0, 64) + "." };
+    var x = d.tx[at];
+    if (!canXferTx(x)) return { err: id.indexOf("l-") === 0 ? "That entry comes from another app or a shop; it can't become a transfer." : "That entry has receipts or another currency; turn it into a transfer in Budget." };
+    var mine = x.ac ? findIn(ix.accs, x.ac) : null;
+    if (!mine || mine.id !== x.ac) return { err: "That entry has no Budget account; give it one first (budget_change account)." };
+    var oth = findIn(ix.accs, args.other_account);
+    if (!oth) return { err: "no Budget account \"" + String(args.other_account == null ? "" : args.other_account).slice(0, 60) + "\". Accounts: " + ix.accs.map(function (a) { return a.n; }).join(", ") };
+    if (oth.id === mine.id) return { err: "other_account is the entry's own account." };
+    if ((mine.cur || "") !== (oth.cur || "")) return { err: "The two accounts have different currencies; make this transfer in Budget." };
+    var twin = null;
+    if (args.other_id !== undefined && args.other_id !== null && args.other_id !== "") {
+      var tid = String(args.other_id), tk = liveTx(d, tid);
+      if (tk < 0) return { err: "No Budget entry with id " + tid.slice(0, 64) + "." };
+      twin = d.tx[tk];
+      var gap = Math.abs(dayDiff(x.d, twin.d));
+      if (!canXferTx(twin) || twin.id === x.id || twin.ac !== oth.id || twin.k === x.k || twin.a !== x.a || !(gap <= 5)) {
+        return { err: tid + " is not the other side of " + id + " (it must be on " + oth.n + ", the opposite kind, the same amount, at most 5 days apart, without receipts)." };
+      }
+    }
+    var xid;
+    do { xid = String(newId()); } while (!TX_ID.test(xid) || (Array.isArray(d.xfer) && d.xfer.some(function (q) { return isObj(q) && q.id === xid; })) || d.tombs["xfer:" + xid] !== undefined);
+    var note = String(x.n || x.ot || "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, NOTE_LEN);
+    var nx = { id: xid, m: stampAfter(now, 0), d: x.d, a: x.a, f: x.k === "o" ? mine.id : oth.id, t: x.k === "o" ? oth.id : mine.id, n: note };
+    if (!Array.isArray(d.xfer)) d.xfer = [];
+    d.xfer.push(nx);
+    d.xfer.sort(function (p1, p2) { return p1.id < p2.id ? -1 : p1.id > p2.id ? 1 : 0; });
+    undo.x[xid] = null; undo.xa[xid] = nx.m;
+    var ids = [x.id].concat(twin ? [twin.id] : []);
+    ids.forEach(function (tid2) {
+      var k = liveTx(d, tid2), gone = d.tx.splice(k, 1)[0];
+      undo.b[tid2] = clone(gone); undo.a[tid2] = null;
+      d.tombs["tx:" + tid2] = stampAfter(now, Math.max(d.tombs["tx:" + tid2] || 0, gone.m || 0));
+    });
+    return { done: "Transfer " + xid + " from " + (x.k === "o" ? mine.n : oth.n) + " to " + (x.k === "o" ? oth.n : mine.n) + " made; deleted " + ids.join(", ") + ".", ids: [xid].concat(ids) };
+  }
+
   // op = "add" | "change" | "delete"; raw = oros-budget-data; now = ms;
   // newId() → a fresh id. → { ok, data, undo, ids, text } | { ok:false, err }
   // undo = { b: { id: entry before | null }, a: { id: m after | null } }
@@ -602,6 +760,21 @@
       Object.keys(d.tombs).sort().forEach(function (k) { t2[k] = d.tombs[k]; });
       d.tombs = t2;
       return { ok: true, data: d, undo: undo, ids: Object.keys(undo.ra).sort(), text: ar.done };
+    }
+    if (op === "cats") {
+      undo.c = {}; undo.ca = {};
+      var cr = catsWrite(d, args, now, newId, undo);
+      if (cr.err) return { ok: false, err: cr.err };
+      if (!cr.n) return { ok: false, err: "Nothing would change: the categories already look like that." };
+      sortTx(d);
+      return { ok: true, data: d, undo: undo, ids: Object.keys(undo.ca).sort(), text: cr.done };
+    }
+    if (op === "xfer") {
+      undo.x = {}; undo.xa = {};
+      var xr = xferWrite(d, args, now, newId, ix, undo);
+      if (xr.err) return { ok: false, err: xr.err };
+      sortTx(d);
+      return { ok: true, data: d, undo: undo, ids: xr.ids, text: xr.done };
     }
     if (op === "add") {
       var list = args.entries;
@@ -674,35 +847,41 @@
     if (!Array.isArray(d.tx)) d.tx = [];
     if (!isObj(d.tombs)) d.tombs = {};
     var n = 0, kept = 0;
-    // AR-INV: an areas change (u.r = area before | null, u.ra = m after | null)
-    if (isObj(u.r) && isObj(u.ra)) {
-      if (!Array.isArray(d.area)) d.area = [];
-      Object.keys(u.r).forEach(function (id) {
-        var cur = d.area.filter(function (x) { return isObj(x) && x.id === id && !deadIn(d.tombs, "area", x); })[0] || null;
-        var was = u.r[id], after = u.ra[id];
+    // AR-INV: an areas change (u.r = area before | null, u.ra = m after
+    // | null); AR-CAT: categories (u.c / u.ca); AR-XF: the transfer made
+    // (u.x / u.xa). Each item only while it still looks as the change left it.
+    function coll(key, tomb, r, ra) {
+      if (!isObj(r) || !isObj(ra)) return;
+      if (!Array.isArray(d[key])) d[key] = [];
+      Object.keys(r).forEach(function (id) {
+        var cur = d[key].filter(function (x) { return isObj(x) && x.id === id && !deadIn(d.tombs, tomb, x); })[0] || null;
+        var was = r[id], after = ra[id];
         if (after === null) {                       // the change removed it
           if (cur || !isObj(was)) { kept++; return; }
           var x = clone(was);
-          x.m = stampAfter(now, Math.max(x.m || 0, d.tombs["area:" + id] || 0));
-          delete d.tombs["area:" + id];
-          d.area = d.area.filter(function (y) { return !(isObj(y) && y.id === id); }).concat([x]);
+          x.m = stampAfter(now, Math.max(x.m || 0, d.tombs[tomb + ":" + id] || 0));
+          delete d.tombs[tomb + ":" + id];
+          d[key] = d[key].filter(function (y) { return !(isObj(y) && y.id === id); }).concat([x]);
           n++;
           return;
         }
         if (!cur || cur.m !== after) { kept++; return; }
         if (was === null) {                         // the change made it
-          d.tombs["area:" + id] = stampAfter(now, Math.max(d.tombs["area:" + id] || 0, cur.m || 0));
-          d.area = d.area.filter(function (y) { return !(isObj(y) && y.id === id); });
+          d.tombs[tomb + ":" + id] = stampAfter(now, Math.max(d.tombs[tomb + ":" + id] || 0, cur.m || 0));
+          d[key] = d[key].filter(function (y) { return !(isObj(y) && y.id === id); });
           n++;
           return;
         }
         var back = clone(was);
         back.m = stampAfter(now, cur.m);
-        d.area = d.area.map(function (y) { return isObj(y) && y.id === id ? back : y; });
+        d[key] = d[key].map(function (y) { return isObj(y) && y.id === id ? back : y; });
         n++;
       });
-      d.area.sort(function (p1, p2) { return p1.id < p2.id ? -1 : p1.id > p2.id ? 1 : 0; });
+      d[key].sort(function (p1, p2) { return p1.id < p2.id ? -1 : p1.id > p2.id ? 1 : 0; });
     }
+    coll("area", "area", u.r, u.ra);
+    coll("cats", "cat", u.c, u.ca);
+    coll("xfer", "xfer", u.x, u.xa);
     Object.keys(u.b).forEach(function (id) {
       var at = liveTx(d, id), before = u.b[id], after = u.a[id];
       if (after === null) {                         // the change deleted it
@@ -961,7 +1140,7 @@
     return out;
   }
   // Apps whose items Claude may change, and the tools for them.
-  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete", "budget_areas"],
+  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete", "budget_areas", "budget_categories", "budget_transfer"],
                  kanban: ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"] };
   // GATE-ACT (2026-11-08): the apps Claude may change with the
   // Assistant's own tools, run in a hidden Assistant frame
@@ -976,9 +1155,10 @@
   // opens on the owner's screen and applies the commands there.
   var DOCS = ["atelier", "layout", "mindmap", "montage", "photolab", "slides", "spreadsheet", "studio", "whiteboard", "writer"];
   // The changes the relay may queue while orOS is closed (relay/gate.js
-  // closedCall): its own change tools less budget_delete, and
+  // closedCall): its own change tools less budget_delete and
+  // budget_transfer (it deletes entries too), and
   // create_items. applyQueue runs nothing else (defence in depth).
-  var QUEUED = ["budget_add", "budget_change", "budget_areas", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
+  var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
                 "change_item", "link_items", "link_contact"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
@@ -1052,21 +1232,21 @@
   var DIG_TXT = {
     en: { subject: "orOS: Claude's changes on {day}", intro: "Claude changed these in your orOS today ({n}):",
           undone: "undone", undo: "To undo one: orOS › Settings › Claude (orOS Gate) › Claude's changes.", items: "{n} items",
-          tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries", budget_areas: "changed Budget's areas",
+          tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries", budget_areas: "changed Budget's areas", budget_categories: "changed Budget's categories", budget_transfer: "turned a Budget entry into a transfer",
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
                    kanban_add_columns: "added Kanban columns",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
                    link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
-          tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget",
+          tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
                    kanban_add_columns: "πρόσθεσε στήλες στο Kanban",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
                    link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
-          tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert",
+          tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
                    kanban_add_columns: "Kanban-Spalten hinzugefügt",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
@@ -1813,7 +1993,7 @@
       var dd = r.data, k = (dd.lines || dd.documents || dd.items || dd.titles || []).length;
       return Promise.resolve({ ok: true, a: [line], k: k, c: JSON.stringify(dd) });
     }
-    var op = { budget_add: "add", budget_change: "change", budget_delete: "delete", budget_areas: "areas" }[name];
+    var op = { budget_add: "add", budget_change: "change", budget_delete: "delete", budget_areas: "areas", budget_categories: "cats", budget_transfer: "xfer" }[name];
     if (op) return change(op, args, p, names);
     var kop = { kanban_add_cards: "add_cards", kanban_move_cards: "move_cards", kanban_change_card: "change_card", kanban_add_columns: "add_columns" }[name];
     if (kop) return kanbanChange(kop, args, p, names);
@@ -1902,7 +2082,7 @@
       if (!r.ok) return { ok: false, c: r.err };
       if (!writeJSON("oros-budget-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
-      var uid = remember("budget", "budget_" + op, r.undo, now, r.ids.length);
+      var uid = remember("budget", { cats: "budget_categories", xfer: "budget_transfer" }[op] || "budget_" + op, r.undo, now, r.ids.length);
       return { ok: true, a: ["budget"], k: r.ids.length, u: uid, c: JSON.stringify({ done: r.text, ids: r.ids }) };
     });
   }

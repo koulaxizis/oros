@@ -117,7 +117,8 @@
       "cats.needName": "Give the category a name", "cats.hint": "Entries of a deleted category show as “Uncategorized”.",
       "cats.icon": "Icon of {c}", "cats.iconTitle": "Pick an icon", "cats.noIcon": "No icon",
       "cats.parent": "Main category of {c}", "cats.top": "Main category", "cats.under": "Under {c}",
-      "cats.subHint": "A category can sit under a main one (Eating out › Coffee). Totals, limits and envelopes of the main category count its subcategories too.",
+      "cats.area": "Area of {c}", "cat.anyArea": "Any area",
+      "cats.subHint": "A category can sit under a main one (Eating out › Coffee). Totals, limits and envelopes of the main category count its subcategories too. A category with an area comes first in that area's entries; one of any area fits all.",
       "ch.donut": "Expenses by category", "ch.bars": "Income and expenses, 12 months",
       "ch.line": "Balance at the end of each month", "ch.table": "Show as a table",
       "ch.none": "No expenses this month.", "ch.total": "total",
@@ -173,6 +174,10 @@
       "f.acc": "Account", "f.crm": "Partner in CRM", "err.name": "Write a name", "err.open": "Type a balance, for example -120,50",
       "xf.btn": "Transfer", "xf.new": "Transfer between accounts", "xf.edit": "Edit transfer",
       "xf.from": "From", "xf.to": "To", "xf.need": "Make two accounts first", "xf.deleted": "Transfer deleted",
+      "xf.isXfer": "It's a transfer", "xf.conv": "Turn into a transfer",
+      "xf.convHint": "The entry {e} becomes a transfer between your accounts: it no longer counts as income or an expense.",
+      "xf.twin": "The same money on the other account", "xf.noTwin": "None (not in Budget)",
+      "xf.convDone": "The entry is now a transfer", "xf.convDone2": "The two entries are now one transfer",
       "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts", "flt.noAcc": "Without an account",
       "na.gone": "{n} duplicates removed", "na.moved": "{n} entries moved to an account",
       "xf.aria": "Transfer {a} from {f} to {t}, {d}", "col.acc": "Account",
@@ -270,7 +275,8 @@
       "cats.needName": "Δώσε ένα όνομα στην κατηγορία", "cats.hint": "Οι κινήσεις μιας κατηγορίας που σβήνεται εμφανίζονται «Χωρίς κατηγορία».",
       "cats.icon": "Εικονίδιο: {c}", "cats.iconTitle": "Διάλεξε εικονίδιο", "cats.noIcon": "Χωρίς εικονίδιο",
       "cats.parent": "Κύρια κατηγορία: {c}", "cats.top": "Κύρια κατηγορία", "cats.under": "Κάτω από: {c}",
-      "cats.subHint": "Μια κατηγορία μπορεί να μπει κάτω από μια κύρια (Φαγητό έξω › Καφές). Τα σύνολα, τα όρια και οι φάκελοι της κύριας μετρούν και τις υποκατηγορίες της.",
+      "cats.area": "Τομέας της κατηγορίας {c}", "cat.anyArea": "Όλοι οι τομείς",
+      "cats.subHint": "Μια κατηγορία μπορεί να μπει κάτω από μια κύρια (Φαγητό έξω › Καφές). Τα σύνολα, τα όρια και οι φάκελοι της κύριας μετρούν και τις υποκατηγορίες της. Μια κατηγορία με τομέα εμφανίζεται πρώτη στις εγγραφές του τομέα της, ενώ μια κατηγορία για όλους τους τομείς ταιριάζει παντού.",
       "ch.donut": "Έξοδα ανά κατηγορία", "ch.bars": "Έσοδα και έξοδα, 12 μήνες",
       "ch.line": "Υπόλοιπο στο τέλος κάθε μήνα", "ch.table": "Προβολή ως πίνακας",
       "ch.none": "Κανένα έξοδο αυτόν τον μήνα.", "ch.total": "σύνολο",
@@ -326,6 +332,10 @@
       "f.acc": "Λογαριασμός", "f.crm": "Συνεργάτης στο CRM", "err.name": "Γράψε ένα όνομα", "err.open": "Γράψε ένα ποσό, για παράδειγμα -120,50",
       "xf.btn": "Μεταφορά", "xf.new": "Μεταφορά μεταξύ λογαριασμών", "xf.edit": "Επεξεργασία μεταφοράς",
       "xf.from": "Από", "xf.to": "Προς", "xf.need": "Φτιάξε πρώτα δύο λογαριασμούς", "xf.deleted": "Η μεταφορά διαγράφηκε",
+      "xf.isXfer": "Είναι μεταφορά", "xf.conv": "Μετατροπή σε μεταφορά",
+      "xf.convHint": "Η εγγραφή {e} γίνεται μεταφορά μεταξύ των λογαριασμών σου και δεν μετράει πια ως έσοδο ή έξοδο.",
+      "xf.twin": "Τα ίδια χρήματα στον άλλο λογαριασμό", "xf.noTwin": "Καμία (δεν είναι στο Budget)",
+      "xf.convDone": "Η εγγραφή έγινε μεταφορά", "xf.convDone2": "Οι δύο εγγραφές έγιναν μία μεταφορά",
       "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί", "flt.noAcc": "Χωρίς λογαριασμό",
       "na.gone": "Σβήστηκαν {n} διπλές", "na.moved": "{n} κινήσεις μπήκαν σε λογαριασμό",
       "xf.aria": "Μεταφορά {a} από {f} προς {t}, {d}", "col.acc": "Λογαριασμός",
@@ -716,6 +726,9 @@
     // PI-1: pv = passive income (dividends, interest, rent, royalties),
     // income categories only, written only when true
     if (!(y.pv === true && x.k === "i")) delete y.pv;
+    // AR-CAT (6.02.00): dm = the area this category belongs to (an `area`
+    // id), written only when set; a subcategory takes its main one's.
+    if (!(typeof y.dm === "string" && ID_RE.test(y.dm))) delete y.dm;
     return withExtras({ id: x.id, m: x.m, k: x.k, name: name, col: col }, y);
   }
   // limit = { id (category id | "all"), m, a (cents; 0 = no limit) }
@@ -1022,6 +1035,26 @@
   }
 
   // ---------- 4. Derived ----------
+  // AR-XF (6.02.00, Chris 2026-11-09 «Ενιαία οικονομικά»): an entry that
+  // is really money moved between your own accounts can become a
+  // transfer. canXfer(x) = it may (not from another app or a shop, no
+  // receipts, typed in the main currency, a real amount). xferTwins(tx,
+  // x, ac) = the entries on account `ac` that are the other side of it:
+  // the opposite kind, the same amount, at most 5 days apart, that may
+  // become a transfer too; nearest day first, then by id.
+  function canXfer(x) {
+    return !!x && typeof x.id === "string" && x.id.indexOf("l-") !== 0 && !x.rc && !x.oc && okCents(x.a) && !!parseYmd(x.d);
+  }
+  function ymdDays(s) { var p = parseYmd(s); return p ? Math.round(Date.UTC(p.y, p.m - 1, p.d) / 86400000) : 0; }
+  function xferTwins(tx, x, ac) {
+    if (!canXfer(x) || !ac) return [];
+    var d0 = ymdDays(x.d);
+    return tx.filter(function (y) {
+      return y.id !== x.id && canXfer(y) && y.ac === ac && y.k !== x.k && y.a === x.a && Math.abs(ymdDays(y.d) - d0) <= 5;
+    }).sort(function (p1, p2) {
+      return Math.abs(ymdDays(p1.d) - d0) - Math.abs(ymdDays(p2.d) - d0) || cmpStr(p1.id, p2.id);
+    });
+  }
   // Every live category: the ready ones (unless deleted), changed by
   // what is stored, then your own, by name; each main category is
   // followed by its subcategories (by name). A subcategory (p, C4)
@@ -1058,6 +1091,10 @@
         .forEach(function (k) { out.push(k); });
     });
     out.forEach(function (c) { delete c.sp; if (stored[c.id] && stored[c.id].pv === true && c.k === "i") c.pv = true; });
+    // AR-CAT: a category's area (dm); a subcategory has its main one's
+    var dmOf = {};
+    out.forEach(function (c) { var s0 = stored[c.id]; if (!c.p && s0 && typeof s0.dm === "string" && s0.dm) dmOf[c.id] = s0.dm; });
+    out.forEach(function (c) { var v = dmOf[c.p || c.id]; if (v) c.dm = v; });
     return out;
   }
   // { category id: its main category's id } for subcategories only.
@@ -2283,15 +2320,36 @@
     w.get = function () { return cur; };
     return w;
   }
-  function catSelect(k, selected) {
+  function catSelect(k, selected, area) {
     var sel = el("select");
-    fillCatSelect(sel, k, selected);
+    fillCatSelect(sel, k, selected, area);
     return sel;
   }
-  function fillCatSelect(sel, k, selected) {
+  // AR-CAT: with an area (an `area` id) the area's own categories come
+  // first, then those of no area; other areas' ones are left out (but the
+  // one already chosen stays). Without an area: all of them, as before.
+  function catAreaOf(c) { return c && c.dm && findIn(data.area, c.dm) ? c.dm : ""; }
+  function fillCatSelect(sel, k, selected, area) {
     sel.innerHTML = "";
     var list = cats().filter(function (c) { return c.k === k; });
-    list.forEach(function (c) { var o = el("option", "", c.p ? catName(c.id) : c.name); o.value = c.id; sel.appendChild(o); });
+    var ar = area && findIn(data.area, area) ? area : "";
+    function opt(parent, c) { var o = el("option", "", c.p ? catName(c.id) : c.name); o.value = c.id; parent.appendChild(o); }
+    var mine = ar ? list.filter(function (c) { return catAreaOf(c) === ar; }) : [];
+    if (mine.length) {
+      var rest = list.filter(function (c) { return !catAreaOf(c) || c.id === selected; }).filter(function (c) { return catAreaOf(c) !== ar; });
+      var g1 = el("optgroup"); g1.label = findIn(data.area, ar).n;
+      mine.forEach(function (c) { opt(g1, c); });
+      sel.appendChild(g1);
+      if (rest.length) {
+        var g2 = el("optgroup"); g2.label = t("cat.anyArea");
+        rest.forEach(function (c) { opt(g2, c); });
+        sel.appendChild(g2);
+      }
+      list = mine.concat(rest);
+    } else {
+      if (ar) list = list.filter(function (c) { var a0 = catAreaOf(c); return !a0 || a0 === ar || c.id === selected; });
+      list.forEach(function (c) { opt(sel, c); });
+    }
     var none = el("option", "", t("cat.none")); none.value = ""; sel.appendChild(none);
     sel.value = selected;
     if (sel.value !== selected) sel.value = list.length ? list[0].id : "";
@@ -2430,7 +2488,8 @@
     note.autocomplete = "off";
     note.placeholder = t("f.note.ph");
     note.value = x ? x.n : pre && pre.n ? pre.n : "";
-    var sw = kindSwitch(k0, function (v) { fillCatSelect(sel, v, lastCat[v]); });
+    var areaSel = null;                           // PL-2 (made below; AR-CAT: the categories follow it)
+    var sw = kindSwitch(k0, function (v) { fillCatSelect(sel, v, lastCat[v], areaSel ? areaSel.value : ""); });
     var err = errLine();
     if (pre && pre.src) dlg.appendChild(el("div", "dlg-sub", t("f.from").replace("{app}", appName(pre.src))));
     if (!x && !pre) {
@@ -2519,7 +2578,6 @@
     if (accSel) form.appendChild(field(t("f.acc"), accSel, "bd-acc"));
     var crmSel = crmSelect(x ? x.crm || "" : (pre && pre.crm) || "");
     if (crmSel) form.appendChild(field(t("f.crm"), crmSel, "bd-crm"));
-    var areaSel = null;                           // PL-2
     if (data.area.length) {
       areaSel = el("select");
       var oa0 = el("option", "", t("ar.none")); oa0.value = ""; areaSel.appendChild(oa0);
@@ -2527,6 +2585,19 @@
       areaSel.value = x ? areaOf(x) : (filter.indexOf("r:") === 0 && findIn(data.area, filter.slice(2)) ? filter.slice(2) : lastArea);
       if (areaSel.selectedIndex < 0) areaSel.value = "";
       form.appendChild(field(t("f.area"), areaSel, "bd-area"));
+      // AR-CAT: the area's categories first; a category of another area
+      // gives way when the area changes; a category with an area fills an
+      // empty Area.
+      var refillCats = function (keep) {
+        var a0 = catAreaOf(catById(sel.value));
+        fillCatSelect(sel, sw.get(), keep || !a0 || a0 === areaSel.value ? sel.value : "-", areaSel.value);
+      };
+      if (areaSel.value) refillCats(true);
+      areaSel.addEventListener("change", function () { refillCats(false); });
+      sel.addEventListener("change", function () {
+        var a1 = catAreaOf(catById(sel.value));
+        if (a1 && !areaSel.value) { areaSel.value = a1; refillCats(true); }
+      });
     }
     form.appendChild(field(t("f.note"), note, "bd-note"));
     // Earlier notes as suggestions; picking one on a new entry fills
@@ -2540,7 +2611,7 @@
     if (!x) note.addEventListener("change", function () {
       var y = seen.last[note.value.trim()];
       if (!y || y.k !== sw.get()) return;
-      if (catById(y.c)) sel.value = y.c;
+      if (catById(y.c)) fillCatSelect(sel, sw.get(), y.c, areaSel ? areaSel.value : "");
       if (!amt.value.trim()) { amt.value = centsToInput(y.a, LANG); showSum(); syncCur(); }
     });
     // Receipt photo / PDF on the orOS disk, and its total from text.
@@ -2554,6 +2625,8 @@
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
     if (x) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteTx(x.id); }));
+    // AR-XF: money moved between your own accounts becomes a transfer
+    if (x && canXfer(x) && accs().length >= 2) acts.appendChild(button(t("xf.isXfer"), "", function () { dlg.close(); xferDialog(null, "", x.id); }));
     if (x) acts.appendChild(button(t("dlg.dup"), "", function () {
       dlg.close();
       lastAcc = x.ac || "";
@@ -4533,13 +4606,20 @@
       renderAll();
     });
   }
-  function xferDialog(id, fromId) {
+  // convId (AR-XF): the entry that becomes this new transfer (and, if
+  // picked, its other side on the other account); both are deleted on
+  // Save, with one Undo for all of it.
+  function xferDialog(id, fromId, convId) {
     var x = id ? findIn(data.xfer, id) : null;
     if (id && !x) return;
+    var conv = !x && convId ? findIn(data.tx, convId) : null;
+    if (convId && !canXfer(conv)) return;
     var list = accs();
     if (!x && list.length < 2) { showToast(t("xf.need")); return; }
-    var dlg = makeDialog("bd-xf", t(x ? "xf.edit" : "xf.new"));
+    var dlg = makeDialog("bd-xf", t(x ? "xf.edit" : conv ? "xf.conv" : "xf.new"));
     var form = el("form");
+    var convAc = conv && conv.ac && findIn(data.acc, conv.ac) ? conv.ac : "";
+    if (convAc && conv.k === "o") fromId = convAc;
     var from = accSelect(x ? x.f : (fromId && findIn(data.acc, fromId) ? fromId : (lastAcc || list[0].id)));
     var to = accSelect(x ? x.t : "");
     // "No account" makes no sense for a transfer, except to keep one whose account was deleted.
@@ -4548,21 +4628,26 @@
       if (!keep || findIn(data.acc, keep)) s.removeChild(s.options[0]);
     });
     if (!x) { to.value = (list[0].id === from.value ? list[1] : list[0]).id; }
+    if (convAc && conv.k === "i") {
+      to.value = convAc;
+      if (from.value === convAc) from.value = (list[0].id === convAc ? list[1] : list[0]).id;
+    }
     var amt = el("input");
     amt.inputMode = "decimal";
     amt.autocomplete = "off";
     amt.className = "amt-in";
     amt.placeholder = zeroAmt(LANG);
-    amt.value = x ? centsToInput(x.a, LANG) : "";
+    amt.value = x ? centsToInput(x.a, LANG) : conv ? centsToInput(conv.a, LANG) : "";
     var date = el("input");
     date.type = "date";
-    date.value = x ? x.d : (mkOf(today) === viewMk ? today : viewMk + "-01");
+    date.value = x ? x.d : conv ? conv.d : (mkOf(today) === viewMk ? today : viewMk + "-01");
     var note = el("input");
     note.maxLength = NOTE_LEN;
     note.autocomplete = "off";
     note.placeholder = t("f.note.ph");
-    note.value = x ? x.n : "";
+    note.value = x ? x.n : conv ? normText(conv.n || conv.ot || "", NOTE_LEN) : "";
     var err = errLine();
+    if (conv) dlg.appendChild(el("p", "hint", t("xf.convHint", { e: (conv.k === "i" ? "+" : "−") + money(conv.a) + " · " + dateShort(conv.d) + (conv.n ? " · " + conv.n : "") })));
     var row = el("div", "fld-row");
     row.appendChild(field(t("xf.from"), from, "bd-xf-from"));
     row.appendChild(field(t("xf.to"), to, "bd-xf-to"));
@@ -4598,6 +4683,27 @@
     if (!taF.hidden) refreshFx(false, syncTa);
     form.appendChild(field(t("f.date"), date, "bd-xf-date"));
     form.appendChild(field(t("f.note"), note, "bd-xf-note"));
+    // AR-XF: the same money as an entry on the other account (its other side)
+    var twinSel = null;
+    if (conv) {
+      twinSel = el("select");
+      var twinF = field(t("xf.twin"), twinSel, "bd-xf-twin");
+      var fillTwins = function () {
+        var other = conv.k === "o" ? to.value : from.value, keep = twinSel.value;
+        twinSel.innerHTML = "";
+        var none = el("option", "", t("xf.noTwin")); none.value = ""; twinSel.appendChild(none);
+        var tw = xferTwins(data.tx, conv, other);
+        tw.forEach(function (y) {
+          var o = el("option", "", (y.k === "i" ? "+" : "−") + money(y.a) + " · " + dateShort(y.d) + (y.n ? " · " + y.n : ""));
+          o.value = y.id; twinSel.appendChild(o);
+        });
+        twinSel.value = keep && tw.some(function (y) { return y.id === keep; }) ? keep : tw.length ? tw[0].id : "";
+        twinF.hidden = !tw.length;
+      };
+      [from, to].forEach(function (s0) { s0.addEventListener("change", fillTwins); });
+      fillTwins();
+      form.appendChild(twinF);
+    }
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
     if (x) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteXfer(x.id); }));
@@ -4632,6 +4738,12 @@
         var nx = { id: nid, m: stamp(x ? x.m : 0), d: date.value, a: cents, f: from.value, t: to.value, n: n };
         if (tac) nx.ta = tac;
         data.xfer.push(nx);
+        if (conv) {
+          lastAcc = from.value;
+          dlg.close();
+          convertToXfer(nx, [conv.id].concat(twinSel && twinSel.value ? [twinSel.value] : []));
+          return;
+        }
         commit();
       }
       lastAcc = from.value;
@@ -4644,6 +4756,31 @@
     document.body.appendChild(dlg);
     dlg.showModal();
     if (!x) amt.focus();
+  }
+  // AR-XF: the new transfer nx is in data.xfer; its entries go (tombed),
+  // one Undo takes the transfer away and brings them back.
+  function convertToXfer(nx, ids) {
+    var gone = [];
+    ids.forEach(function (tid) {
+      var y = findIn(data.tx, tid);
+      if (!y) return;
+      gone.push(JSON.parse(JSON.stringify(y)));
+      data.tx = data.tx.filter(function (z) { return z.id !== tid; });
+      tombstone("tx", tid);
+    });
+    commit();
+    if (mkOf(nx.d) !== viewMk && !query) setMonth(mkOf(nx.d)); else renderAll();
+    undoToast(t(gone.length > 1 ? "xf.convDone2" : "xf.convDone"), function () {
+      data.xfer = data.xfer.filter(function (z) { return z.id !== nx.id; });
+      tombstone("xfer", nx.id);
+      gone.forEach(function (y) {
+        untomb("tx", y.id);
+        y.m = stamp(Math.max(y.m, data.tombs["tx:" + y.id] || 0));
+        if (!findIn(data.tx, y.id)) data.tx.push(y);
+      });
+      commit();
+      renderAll();
+    });
   }
   function deleteXfer(id) {
     var x = findIn(data.xfer, id);
@@ -4662,6 +4799,7 @@
     });
   }
 
+  var lastCatArea = "";   // session only: the area a new category got last (AR-CAT)
   function catsDialog() {
     var dlg = makeDialog("bd-cats", t("cats.title"));
     dlg.classList.add("wide");
@@ -4689,7 +4827,19 @@
         b.type = "submit";
         b.innerHTML = UI.plus;
         b.setAttribute("aria-label", t("cats.add"));
-        add.appendChild(inp); add.appendChild(b);
+        // AR-CAT: a new category can start in an area
+        var addArea = null;
+        if (data.area.length) {
+          addArea = el("select", "cat-area");
+          addArea.setAttribute("aria-label", t("f.area") + " (" + t("cats.add") + ")");
+          var any0 = el("option", "", t("cat.anyArea")); any0.value = ""; addArea.appendChild(any0);
+          areas().forEach(function (a) { var o = el("option", "", a.n); o.value = a.id; addArea.appendChild(o); });
+          addArea.value = lastCatArea;
+          if (addArea.selectedIndex < 0) addArea.value = "";
+        }
+        add.appendChild(inp);
+        if (addArea) add.appendChild(addArea);
+        add.appendChild(b);
         add.addEventListener("submit", function (e) {
           e.preventDefault();
           var name = normText(inp.value, NAME_LEN);
@@ -4699,7 +4849,10 @@
           cats().forEach(function (c) { if (c.k === k) used[c.col] = 1; });
           var col = 0;
           while (col < 8 && used[col]) col++;
-          data.cats.push({ id: "u" + newId(), m: stamp(0), k: k, name: name, col: col % 8 });
+          var nc = { id: "u" + newId(), m: stamp(0), k: k, name: name, col: col % 8 };
+          if (addArea && addArea.value) nc.dm = addArea.value;
+          lastCatArea = addArea ? addArea.value : "";
+          data.cats.push(nc);
           commit();
           draw();
           renderAll();
@@ -4880,6 +5033,27 @@
       if (again) again.focus();
     });
     li.appendChild(ps);
+    // AR-CAT: the area a main category belongs to (its subcategories follow it)
+    if (data.area.length) {
+      var as = el("select", "cat-area");
+      as.setAttribute("aria-label", t("cats.area", { c: c.name }));
+      var any = el("option", "", t("cat.anyArea")); any.value = ""; as.appendChild(any);
+      areas().forEach(function (a) { var o = el("option", "", a.n); o.value = a.id; as.appendChild(o); });
+      as.value = catAreaOf(c);
+      if (as.selectedIndex < 0) as.value = "";
+      as.disabled = !!c.p;
+      as.addEventListener("change", function () {
+        var s = storedCat(c);
+        if (as.value) s.dm = as.value; else delete s.dm;
+        s.m = stamp(s.m);
+        commit();
+        redraw();
+        renderAll();
+        var again = document.querySelector('#bd-cats [data-cat="' + c.id + '"] .cat-area');
+        if (again) again.focus();
+      });
+      li.appendChild(as);
+    }
     if (pvB) li.appendChild(pvB);
     return li;
   }
