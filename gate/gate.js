@@ -83,6 +83,7 @@
     if (a.iv) o.invoice_series = String(a.iv).split(" ");
     if (a.sh === 1) o.shared_costs = true;
     else if (typeof a.pc === "number" && a.pc > 0) o.share = a.pc;
+    if (a.ps === 1 && a.sh !== 1) o.personal = true;     // AR-VIEW
     return o;
   }
 
@@ -486,14 +487,15 @@
   // device, or null when Invoices is not loaded. → { err } | { done }
   // and d.area / d.tombs changed in place, undo.r / undo.ra filled.
   var AREAS_MAX = 12, AREA_NAME = 40, AREA_WORDS = 300, AREA_SER = 20, SER_ID = /^[A-Za-z0-9_-]{1,64}$/;
-  function areaKeys(o) {                       // budget.js key order: id, m, col, iv, n, pc, q, sh, then extras
+  function areaKeys(o) {                       // budget.js key order: id, m, col, iv, n, pc, ps, q, sh, then extras
     var out = { id: o.id, m: o.m, col: o.col };
     if (o.iv) out.iv = o.iv;
     out.n = o.n;
     if (o.pc) out.pc = o.pc;
+    if (o.ps === 1 && o.sh !== 1) out.ps = 1;
     out.q = o.q || "";
     if (o.sh === 1) out.sh = 1;
-    Object.keys(o).sort().forEach(function (k) { if (!(k in out) && ["iv", "pc", "sh"].indexOf(k) < 0) out[k] = o[k]; });
+    Object.keys(o).sort().forEach(function (k) { if (!(k in out) && ["iv", "pc", "ps", "sh"].indexOf(k) < 0) out[k] = o[k]; });
     return out;
   }
   function areasWrite(d, args, now, newId, series, undo) {
@@ -573,7 +575,7 @@
       if (e.shared_costs !== undefined) {
         if (typeof e.shared_costs !== "boolean") return { err: w + "shared_costs is true or false." };
         if (e.shared_costs) {
-          y.sh = 1; delete y.pc;
+          y.sh = 1; delete y.pc; delete y.ps;
           live.forEach(function (x) {                // one area of shared costs
             if (x.id === y.id || x.sh !== 1) return;
             before(x);
@@ -583,6 +585,12 @@
           });
         } else delete y.sh;
       }
+      if (e.personal !== undefined) {               // AR-VIEW: a personal area
+        if (typeof e.personal !== "boolean") return { err: w + "personal is true or false." };
+        if (e.personal) { y.ps = 1; delete y.pc; } else delete y.ps;
+      }
+      if (y.ps === 1 && y.sh === 1) return { err: w + "the area of shared costs can't be personal." };
+      if (y.ps === 1 && e.share) return { err: w + "a personal area has no share of the shared costs." };
       if (y.sh === 1 && e.share) return { err: w + "the area of shared costs has no share of itself." };
       touched[a ? a.id : "new:" + fold(name)] = 1;
       if (a && JSON.stringify(areaKeys(Object.assign({}, y, { m: a.m }))) === JSON.stringify(areaKeys(a))) {

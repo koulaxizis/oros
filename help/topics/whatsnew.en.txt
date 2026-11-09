@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.03.00
+- **All your money, business and personal, in one picture.** In Budget › More › Areas, tick one area as `Personal` and give each account its area. The `Areas` card then shows `All together` for the year (business after the shared costs, personal, total) and what you took out for personal use. The new switch above the summary shows Overview, Charts and Limits for one area, with its own total limit.
+
 ## Version 6.02.00
 - **Categories per area, and entries that are transfers.** In Budget › More › Categories, each main category can belong to an area, and in an entry of that area its own categories come first. An entry that is really money moved between your accounts becomes a transfer with `It's a transfer`, together with its other side if there is one, and no longer counts as income or an expense.
 
