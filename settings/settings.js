@@ -1665,6 +1665,11 @@
     c.appendChild(el("p", "hint", t("y.clean.settle")));
     var btns = [];
     if (k.busy === "clean") {
+      var pg = k.progress;
+      if (pg && pg.total > 0) {
+        c.appendChild(el("div", "hint", t("y.clean.progress", { done: Math.min(+pg.done || 0, pg.total), total: pg.total })));
+      }
+      c.appendChild(el("div", "hint", t("y.clean.keepopen")));
       var w = button(t("y.clean.running"), "y.clean.run", function () {});
       w.disabled = true;
       btns.push(w);
