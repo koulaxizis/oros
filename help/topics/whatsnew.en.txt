@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.06.00
+- **Living land, a wallpaper that grows around your desktop.** Choose `Living land` in Settings › Appearance › Wallpaper: your shortcuts, widgets and sticky notes stand on small islands, and the gaps between them become water. Add a shortcut or move a note and the land re-forms. The colours follow your skin and your light or dark theme, and `New shape` draws other islands. It stays still, so it costs no battery.
+
 ## Version 6.05.04
 - **Selected rows stay readable in Tux.** In Notes, Files and Lyric Sync the icons of the selected row (the note or folder icon, the arrow, the count, the word time) were white on the light Tux selection, so they almost vanished. They now take the same dark or light colour as the row's text, in every theme. In Mahjong the selected tile is easier to see and its symbols stay clear, and in 2048 the numbers on the darker tiles read better.
 
