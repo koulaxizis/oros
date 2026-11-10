@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.08.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.09.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -47,6 +47,7 @@
     wallpaper:       null,   // wallpaper id (see WALLPAPERS)
     wpart:           null,   // "Mine" wallpaper recipe (Wallpaper Generator) or null
     wpland:          null,   // "Living land" { style, seed, motion } or null (= defaults)
+    icons:           "classic", // icon pack (ICONPACK-1, iconpacks.css)
     apps:            [],
     running:         null,
     deferredPrompt:  null,   // PWA install event
@@ -359,6 +360,7 @@
     localStorage.setItem("oros-wallpaper", state.wallpaper);
     state.wpart = wpArtRead();
     state.wpland = wpLandRead();
+    state.icons = iconsCanon(localStorage.getItem(ICONS_KEY)) || "classic";
 
     state.theme = localStorage.getItem("oros-theme") === "light" ? "light" : "dark";
 
@@ -443,6 +445,27 @@
   }
 
   // ---------- 4. Theme ----------
+  // ---------- 4b. Icon packs (ICONPACK-1) ----------
+  // A pack restyles the app icons (desktop, Dock, menu, search) through
+  // iconpacks.css; the glyphs stay ICONS. Synced shell field `icons`.
+  var ICONS_KEY = "oros-icons";
+  var ICON_PACKS = ["classic", "colourful", "glass", "thin", "paper", "round"];
+  function iconsCanon(v) { return ICON_PACKS.indexOf(v) >= 0 ? v : undefined; }
+  function applyIcons() {
+    var root = document.documentElement;
+    if (state.icons && state.icons !== "classic") root.setAttribute("data-oros-icons", state.icons);
+    else root.removeAttribute("data-oros-icons");
+  }
+  function setIconsUser(id) {
+    if (!iconsCanon(id) || state.icons === id) return;
+    state.icons = id;
+    try { localStorage.setItem(ICONS_KEY, id); } catch (e) {}
+    applyIcons();
+    noteLocalChange();          // user action → sync engine
+  }
+  // The menu category of an app as a data-cat value (iconpacks.css).
+  function iconCat(app) { return String((app && app.category) || "other").toLowerCase().replace(/[^a-z]/g, ""); }
+
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", state.theme);
     if (state.wallpaper === "land" && document.getElementById("oros-desktop")) applyWallpaper();   // land colours follow the theme
@@ -5175,6 +5198,7 @@
         if (app && ICONS[app.icon]) {
           var ico = document.createElement("span");
           ico.className = "app-ico";
+          ico.setAttribute("data-cat", iconCat(app));
           ico.innerHTML = ICONS[app.icon];        // static shell icon, not data
           h.appendChild(ico);
         }
@@ -5381,7 +5405,7 @@
           var label = appLabelOf(app);
           if (ICONS[app.icon]) {
             btn.innerHTML =
-              '<span class="app-ico">' + ICONS[app.icon] + '</span>' +
+              '<span class="app-ico" data-cat="' + iconCat(app) + '">' + ICONS[app.icon] + '</span>' +
               '<span>' + escapeHtml(label) + '</span>';
           } else {
             btn.textContent = label;
@@ -5567,7 +5591,7 @@
   //     sorted by id), so a converged state produces no phantom push.
   var SHELL_STAMPS_KEY = "oros-shell-stamps";   // { <field>: { t: ms, v: json } } — travels as `sm`
   var ALARM_TOMBS_KEY  = "oros-alarm-tombs";    // { <alarmId>: { t: ms, x: ms|0 } } — travels as `alarmTombs`
-  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland"];
+  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "icons"];
   var TOMB_GRACE_MS = 24 * 60 * 60 * 1000;      // a once-alarm tombstone outlives its alarm by a day (clock skew)
 
   function shellDefault(name) {
@@ -5580,6 +5604,7 @@
       case "autoexport":   return "off";
       case "wpart":        return null;
       case "wpland":       return null;
+      case "icons":        return "classic";
       default:             return { on: false, auto: false, lat: null, lon: null, label: "" };   // weather
     }
   }
@@ -5602,6 +5627,7 @@
         if (v === null) return null;
         var wl = wplandCanon(v);
         return wl ? wl : undefined;
+      case "icons":        return iconsCanon(v);
       default:
         if (!v || typeof v !== "object") return undefined;
         return {
@@ -5624,7 +5650,7 @@
       lang: state.lang, theme: state.theme, skin: state.skin,
       wallpaper: state.wallpaper, syncInterval: syncInterval,
       autoexport: state.autoexport, weather: wxRead(),
-      wpart: state.wpart, wpland: state.wpland
+      wpart: state.wpart, wpland: state.wpland, icons: state.icons
     };
     var out = {};
     for (var i = 0; i < SHELL_FIELDS.length; i++) {
@@ -5820,6 +5846,7 @@
       weather:      vals.weather,
       wpart:        vals.wpart,   // "Mine" wallpaper recipe (Wallpaper Generator)
       wpland:       vals.wpland,  // "Living land" { style, seed, motion } (wallpaper/land.js)
+      icons:        vals.icons,   // icon pack (ICONPACK-1)
       ver:          2,
       sm:           sm,
       alarmTombs:   tombs
@@ -5880,6 +5907,10 @@
     if (data.wpland !== undefined && shellCanon("wpland", data.wpland) !== undefined) {
       state.wpland = shellCanon("wpland", data.wpland);
       wpLandWrite(state.wpland);
+    }
+    if (iconsCanon(data.icons)) {     // pulled: apply only (no push from a pull)
+      state.icons = data.icons;
+      try { localStorage.setItem(ICONS_KEY, state.icons); } catch (eIc) {}
     }
     if (typeof data.syncInterval === "number" &&
         data.syncInterval >= 0 && data.syncInterval <= 60 &&
@@ -5991,6 +6022,7 @@
     applySkin();
     applyWallpaper();
     applyTheme();
+    applyIcons();
     // A pack language that came from another device loads its shell
     // pack first (i18n.js); English and Greek repaint at once.
     if (window.orosI18n && state.lang !== "en" && state.lang !== "el") window.orosI18n.ensure(state.lang, "shell", function () {
@@ -10729,6 +10761,7 @@
       skins: SKINS.map(function (k) {
         return { id: k.id, color: k.color, name: skinTitle(k.id) };
       }),
+      icons: { pack: state.icons, packs: ICON_PACKS.slice() },   // ICONPACK-1
       wallpaper: pic ? "custom" : state.wallpaper,
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
       land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, styles: WP_LAND_STYLES.slice() } : null,
@@ -10827,6 +10860,7 @@
         return;
       case "theme":      setThemeUser(value); return;
       case "skin":       setSkinUser(value); return;
+      case "icons":      setIconsUser(value); settingsNotify(); return;
       case "wallpaper":
         if (value === "custom" && !wpPic() && !(state.wpart && wpArt())) { openAppById("wallpaper"); return; }
         setWallpaperUser(value);
@@ -11871,7 +11905,7 @@
       var go = document.createElement("button");
       go.type = "button";
       go.className = "mt-sw-go";
-      go.innerHTML = '<span class="app-ico">' + (ICONS[it.app.icon] || "") + '</span>' +
+      go.innerHTML = '<span class="app-ico" data-cat="' + iconCat(it.app) + '">' + (ICONS[it.app.icon] || "") + '</span>' +
         '<span class="mt-sw-name"></span><span class="mt-sw-when"></span>';
       go.querySelector(".mt-sw-name").textContent = mtLabel(it.app);
       go.querySelector(".mt-sw-when").textContent = it.front ? window.t("mt.sw.now") : it.side ? window.t("mt.sw.beside") : mtAgo(it.at);
@@ -13344,6 +13378,7 @@
   applySkin();
   applyWallpaper();
   applyTheme();
+  applyIcons();
   a11yApply();
   a11yWatch();
   applyLang();

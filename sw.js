@@ -219,6 +219,7 @@ var PRECACHE_URLS = [
   "./pcdialog.js",
   "./notifications.js",
   "./pet.css",
+  "./iconpacks.css",
   "./pet.js",
   "./launcher.js",
   "./quickmenu.js",

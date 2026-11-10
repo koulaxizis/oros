@@ -897,6 +897,7 @@
   function tileFor(app) {
     var tile = doc.createElement("span");
     tile.className = "ld-tile";
+    tile.setAttribute("data-cat", String(app.category || "other").toLowerCase().replace(/[^a-z]/g, ""));   // icon packs
     tile.innerHTML = iconOf(app);            // static shell icon, not data
     return tile;
   }

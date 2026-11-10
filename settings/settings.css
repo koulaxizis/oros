@@ -421,6 +421,37 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
   border: 2px solid var(--border);
 }
 .swatch.on { border-color: var(--text); box-shadow: 0 0 0 3px var(--panel-bg), 0 0 0 5px var(--accent); }
+/* Icon packs (ICONPACK-1): the pack look is in ../iconpacks.css */
+.ip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 10px;
+}
+.ip-prev {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 6px 8px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+.ip-prev.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.ip-prev:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ip-tiles { display: flex; gap: 6px; }
+.ip-prev .ld-tile {
+  width: 30px; height: 30px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--panel-bg); color: var(--accent);
+  border: 1px solid var(--border); box-shadow: 0 1px 4px var(--shadow);
+}
+.ip-prev .ld-tile svg { width: 17px; height: 17px; }
+.ip-name { font-size: 12px; font-weight: 700; }
+
 .walls {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));

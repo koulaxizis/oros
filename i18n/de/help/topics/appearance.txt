@@ -54,6 +54,9 @@ Die erste Kachel, `Eigenes`, ist ein Hintergrundbild, das du selbst machst.
 
 Jedes Gerät zeichnet dein Hintergrundbild passend für seinen eigenen Bildschirm, also bleibt es auf dem Handy wie auf einem großen Monitor scharf.
 
+### Symbolpakete
+Unter Einstellungen › Darstellung › `Symbole` änderst du, wie App-Symbole auf dem Desktop, im Dock, im Menü und in der Suche aussehen. `Klassisch` ist das orOS-Aussehen. `Bunt` gibt jeder Menükategorie ihre eigene Farbe, `Glas` macht durchscheinende, matte Kacheln, `Fein` lässt die Kacheln weg und zeigt eine feine Linie, `Papier` setzt ein dunkles Symbol auf eine cremefarbene Karte, und `Rund` nutzt Kreise in deiner Systemfarbe. Das gewählte Paket ist auf all deinen Geräten gleich. Hoher Kontrast zeigt immer `Klassisch`.
+
 ### Lebendige Landschaft
 `Lebendige Landschaft` (die zweite Kachel) zeichnet eine kleine Landschaft um das, was auf deinem Desktop liegt: Verknüpfungen, Widgets und Haftnotizen stehen auf Inseln, die Lücken dazwischen werden Wasser. Fügst du eine Verknüpfung hinzu oder entfernst sie, verschiebst eine Haftnotiz oder änderst deine Widgets, formt sich das Land neu und blendet sanft ein. Die Farben folgen deinem Skin und deinem hellen oder dunklen Design.
 - Unter den Hintergrundbildern wählst du bei `Stil` zwischen `Inseln` (vor allem Wasser), `Hügel` (Wiesen, die zu Terrassen ansteigen, mit einem Fluss) und `Garten` (Rasen mit Blumen, Hecken und Teichen); `Neue Form` zeichnet eine andere Landschaft. Deine Wahl und ihre Form folgen dir auf deine anderen Geräte; jedes Gerät zeichnet das Land für seinen eigenen Bildschirm.
