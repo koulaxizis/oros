@@ -44,14 +44,14 @@ test("the field is a pure function of its inputs", () => {
   assert.notDeepEqual(Array.from(a.v), Array.from(c.v), "another seed, another land");
 });
 
-test("every obstacle stands on land, never in water", () => {
+test("every obstacle stands on land, never in water, in every style", () => {
   const SAND = 3;                                   // layerOf: 0 deep, 1 shallow, 2 foam, 3 sand …
-  for (const seed of [1, 7, 99, 123456, 999999]) {
-    const rs = desk(), f = L.field(rs, 1440, 860, seed);
+  for (const style of L.STYLES) for (const seed of [1, 7, 99, 123456, 999999]) {
+    const rs = desk(), f = L.field(rs, 1440, 860, seed, 0, style);
     for (const r of rs) {
       for (let y = r.y; y <= r.y + r.h; y += 4) {
         for (let x = r.x; x <= r.x + r.w; x += 4) {
-          assert.ok(L.layerOf(L.sample(f, x, y)) >= SAND, "seed " + seed + " at " + x + "," + y);
+          assert.ok(L.layerOf(L.sample(f, x, y)) >= SAND, style + " seed " + seed + " at " + x + "," + y);
         }
       }
     }
@@ -65,6 +65,52 @@ test("open desktop is mostly water", () => {
   assert.ok(water / n > 0.5, "water share " + (water / n));
 });
 
+test("hills and garden are land first, islands water first", () => {
+  const share = (style) => {
+    const f = L.field([{ x: 20, y: 20, w: 92, h: 90, k: "tile" }], 1440, 860, 5, 0, style);
+    let water = 0;
+    for (let i = 0; i < f.v.length; i++) if (L.layerOf(f.v[i]) <= 1) water++;
+    return water / f.v.length;
+  };
+  const isl = share("islands"), hil = share("hills"), gar = share("garden");
+  assert.ok(isl > 0.5, "islands " + isl);
+  assert.ok(hil < 0.25 && hil > 0, "hills have a river, not a sea: " + hil);
+  assert.ok(gar < 0.35, "garden ponds " + gar);
+  assert.deepEqual(Array.from(L.field(desk(), 400, 300, 9, 0, "lava").v), Array.from(L.field(desk(), 400, 300, 9, 0, "islands").v), "unknown style = islands");
+});
+
+test("each style has its own palette, garden has flowers", () => {
+  const a = L.palette("islands", "#d4af37", "dark"), b = L.palette("hills", "#d4af37", "dark"), c = L.palette("garden", "#d4af37", "dark");
+  assert.notDeepEqual(a.top, b.top);
+  assert.notDeepEqual(b.grass, c.grass);
+  assert.equal(c.style, "garden");
+  const w = 200, h = 140, img = { width: w, height: h, data: new Uint8ClampedArray(w * h * 4) };
+  const f = L.field([], w, h, 4, 0, "garden");
+  L.paint(img, f, c, 1, 4);
+  const seen = new Set();
+  for (let i = 0; i < img.data.length; i += 4) seen.add(img.data[i] + "," + img.data[i + 1] + "," + img.data[i + 2]);
+  assert.ok(["244,170,196", "250,246,236", "246,214,112", "196,176,240", c.accentRgb.join(",")].some((k) => seen.has(k)), "a flower is drawn");
+  assert.match(L.baseCss("#d4af37", "dark", "hills"), /^linear-gradient\(/);
+});
+
+test("gentle motion: off by default, still on the seasonal rules", () => {
+  assert.equal(L.stillReason({}), "off");
+  assert.equal(L.stillReason({ motion: 0 }), "off");
+  assert.equal(L.stillReason({ motion: 1 }), "");
+  assert.equal(L.stillReason({ motion: 1, reduced: true }), "reduced");
+  assert.equal(L.stillReason({ motion: 1, battery: { level: 0.15, charging: false } }), "battery");
+  assert.equal(L.stillReason({ motion: 1, battery: { level: 0.15, charging: true } }), "");
+  assert.equal(L.stillReason({ motion: 1, battery: { level: 0.5, charging: false } }), "");
+  assert.equal(L.stillReason({ motion: 1, slow: true }), "slow");
+  let lit = 0;
+  for (let t = 0; t < 10; t += 0.033) if (L.glint(1.2, t) > 0.02) lit++;
+  assert.ok(lit > 0 && lit < 300 * 0.35, "glints flash, mostly dark: " + lit);
+  const src = read("wallpaper/land.js");
+  assert.match(src, /ts - lastT < 33/, "≤ 30 fps");
+  assert.match(src, /sum \/ frames\.length > 55/, "slow device turns it off");
+  assert.match(src, /if \(\(o\.paused && o\.paused\(\)\) \|\| document\.hidden\) \{ motionStop\(\); return; \}/, "never under an app");
+});
+
 test("palette follows the theme and leans toward the skin", () => {
   const dark = L.palette("islands", "#d4af37", "dark"), light = L.palette("islands", "#d4af37", "light");
   const lum = (c) => c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11;
@@ -74,7 +120,8 @@ test("palette follows the theme and leans toward the skin", () => {
   }
   assert.notDeepEqual(L.palette("islands", "#3584e4", "dark").top, dark.top, "accent tints the plateau");
   // a grey accent tints nothing: same as another grey
-  assert.deepEqual(L.palette("islands", "#e0e0e0", "dark"), L.palette("islands", "#808080", "dark"));
+  const layers = (p) => ["deep", "shallow", "foam", "sand", "grass", "high", "top"].map((k) => p[k]);
+  assert.deepEqual(layers(L.palette("islands", "#e0e0e0", "dark")), layers(L.palette("islands", "#808080", "dark")));
   assert.match(L.baseCss("#d4af37", "dark"), /^linear-gradient\(/);
 });
 
@@ -124,6 +171,8 @@ test("shell: land is a wallpaper, travels in the shell slice, pauses under apps"
   assert.match(cut(SHELL, "wpLandApply"), /paused: function \(\) \{ return !!state\.running \|\| document\.hidden; \}/);
   assert.match(cut(SHELL, "returnToDesktop"), /wpLandRefresh\(\)/);
   assert.match(cut(SHELL, "settingsSet"), /case "wpland:new":/);
+  assert.match(cut(SHELL, "settingsSet"), /case "wpland:style":/);
+  assert.match(cut(SHELL, "settingsSet"), /case "wpland:motion":/);
 });
 
 test("land.js ships in the late bundle and is precached", () => {
@@ -144,6 +193,10 @@ test("strings in EN, EL and DE; help in all three", () => {
   const sde = read("i18n/de/settings.js");
   assert.match(sde, /"a\.wallpaper\.land\.new":/);
   assert.match(sde, /"a\.wallpaper\.land\.hint":/);
+  for (const k of ["style", "islands", "hills", "garden", "motion", "motion.hint"]) {
+    assert.equal((sc.match(new RegExp('"a\\.wallpaper\\.land\\.' + k.replace(".", "\\.") + '":', "g")) || []).length, 2, k);
+    assert.match(sde, new RegExp('"a\\.wallpaper\\.land\\.' + k.replace(".", "\\.") + '":'), k + " DE");
+  }
   assert.match(read("help/topics/appearance.en.txt"), /### Living land/);
   assert.match(read("help/topics/appearance.el.txt"), /### Ζωντανό τοπίο/);
   assert.match(read("i18n/de/help/topics/appearance.txt"), /### Lebendige Landschaft/);

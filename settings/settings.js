@@ -322,7 +322,12 @@
       grid.appendChild(b);
     });
     c3.appendChild(grid);
-    if (s.land) {                                      // Living land: another shape
+    if (s.land) {                                      // Living land: style, motion, another shape
+      var lst = (s.land.styles || ["islands"]).map(function (v) { return { value: v, label: t("a.wallpaper.land." + v) }; });
+      c3.appendChild(row(t("a.wallpaper.land.style"), segmented(lst, s.land.style, "wpland:style",
+        function (v) { set("wpland:style", v); }, t("a.wallpaper.land.style")), { stack: true }));
+      c3.appendChild(row(t("a.wallpaper.land.motion"), switchBtn(!!s.land.motion, "wpland:motion",
+        function (v) { set("wpland:motion", v); }, t("a.wallpaper.land.motion")), { hint: t("a.wallpaper.land.motion.hint") }));
       c3.appendChild(actions(button(t("a.wallpaper.land.new"), "wpland:new", function () { set("wpland:new", 1); })));
       c3.appendChild(el("p", "hint", t("a.wallpaper.land.hint")));
     }

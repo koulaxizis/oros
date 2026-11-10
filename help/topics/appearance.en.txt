@@ -56,8 +56,9 @@ Each device draws your wallpaper to fit its own screen, so it stays sharp on a p
 
 ### Living land
 `Living land` (the second tile) draws a small landscape around what is on your desktop: your shortcuts, widgets and sticky notes stand on islands, and the gaps between them become water. Add or remove a shortcut, move a sticky note or change your widgets, and the land re-forms and fades in. Its colours follow your skin and your light or dark theme.
-- Under the wallpapers, `New shape` draws other islands. Your choice and its shape follow you to your other devices; every device draws the land for its own screen.
+- Under the wallpapers, `Style` picks `Islands` (mostly water), `Hills` (meadows rising to terraces, with a winding river) or `Garden` (a lawn with flowers, hedges and ponds), and `New shape` draws another land. Your choice and its shape follow you to your other devices; every device draws the land for its own screen.
 - The land is still: it only changes when your desktop does, so it costs no battery while you work. With reduced motion it changes without fading.
+- `Gentle motion` (off at first) adds glints on the water and a drifting cloud shadow. It stops while an app is open, with reduced motion, on a low battery (under 20 % and not charging) and on a device too slow for it.
 - High contrast shows the plain desktop instead.
 
 ## Seasonal decorations

@@ -777,7 +777,7 @@
       lateWhen(function () { if (state.wallpaper === "land" && window.OrosLand) applyWallpaper(); });
       return;
     }
-    desktop.style.background = L.baseCss(wpAccent(), state.theme);
+    desktop.style.background = L.baseCss(wpAccent(), state.theme, wpLandNow().style);
     if (!wpLandCtl) {
       wpLandCtl = L.mount(desktop, {
         get: function () { return { land: wpLandNow(), accent: wpAccent(), theme: state.theme }; },
@@ -791,11 +791,14 @@
   function wpLandRefresh() {
     if (wpLandCtl) { try { wpLandCtl.refresh(); } catch (e) {} }
   }
-  // "New shape": another seed. User action: syncs.
-  function wpLandNewShape() {
+  // "New shape": another seed; style / motion from Settings. User
+  // actions: sync.
+  function wpLandNewShape(change) {
     var cur = wpLandNow(), seed = cur.seed;
-    while (seed === cur.seed) seed = Math.floor(Math.random() * 1000000);
-    state.wpland = wplandCanon({ style: cur.style, seed: seed, motion: cur.motion });
+    if (!change) while (seed === cur.seed) seed = Math.floor(Math.random() * 1000000);
+    var next = { style: cur.style, seed: seed, motion: cur.motion };
+    if (change) for (var ck in change) next[ck] = change[ck];
+    state.wpland = wplandCanon(next);
     wpLandWrite(state.wpland);
     if (state.wallpaper !== "land") {
       state.wallpaper = "land";
@@ -10716,11 +10719,11 @@
       }),
       wallpaper: pic ? "custom" : state.wallpaper,
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
-      land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style } : null,
+      land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, styles: WP_LAND_STYLES.slice() } : null,
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;
         if (w.id === "land") {
-          var LT = window.OrosLand, lu = (LT && typeof LT.thumb === "function") ? LT.thumb(wpAccent(), state.theme) : "";
+          var LT = window.OrosLand, lu = (LT && typeof LT.thumb === "function") ? LT.thumb(wpAccent(), state.theme, wpLandNow().style) : "";
           css = lu ? 'url("' + lu + '") center / cover no-repeat, #17393f' : "linear-gradient(160deg, #17393f 0%, #0f2a33 70%)";
         }
         if (w.id === "custom") {
@@ -10836,6 +10839,10 @@
       case "focusRing":    a11ySetUser(name, value); return;
       case "me:name":      meSetName(value); return;
       case "wpland:new":   wpLandNewShape(); settingsNotify(); return;
+      case "wpland:style":
+        if (WP_LAND_STYLES.indexOf(value) >= 0) { wpLandNewShape({ style: value }); settingsNotify(); }
+        return;
+      case "wpland:motion": wpLandNewShape({ motion: value ? 1 : 0 }); settingsNotify(); return;
     }
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
