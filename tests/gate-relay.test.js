@@ -524,7 +524,9 @@ test("orOS closed: the copy answers reads, changes wait encrypted, deletions wai
   const item = [...q.values()][0];
   assert.doesNotMatch(item.c, /2026-11-08/, "the waiting change is encrypted");
   assert.equal(JSON.parse(await G.openText(K, item.c)).n, "budget_add");
-  assert.match((await tc("budget_delete", { ids: ["a"] })).content[0].text, /Deleting waits/);
+  // 6.05.00: a deletion waits too (over 5, the owner confirms when orOS opens)
+  assert.match((await tc("budget_delete", { ids: ["a"] })).content[0].text, /"queued":true/);
+  assert.equal(JSON.parse(await G.openText(K, [...(await b.st.storage.list({ prefix: "q:" })).values()].find((x) => x !== item).c)).n, "budget_delete");
   assert.match((await tc("kanban_add_cards", { board: "x", cards: [] })).content[0].text, /may not change kanban/);
   // a refresh carries the key to the new tokens, with orOS still closed
   const rf = await (await call(w, "POST", "/gate/token", { form: { grant_type: "refresh_token", refresh_token: t.refresh_token } })).json();
@@ -532,7 +534,7 @@ test("orOS closed: the copy answers reads, changes wait encrypted, deletions wai
   assert.equal(await b.st.storage.get("kw:" + hex(t.refresh_token.split(".")[1])), undefined, "the old wrap goes with the old token");
   assert.match((await (await rpc(w, rf.access_token, { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "list_apps", arguments: {} } })).json()).result.content[0].text, /copy of/);
   // the device applied it and says so
-  await b.box.webSocketMessage(sock, JSON.stringify({ cqa: [[...q.keys()][0].slice(2)] }));
+  await b.box.webSocketMessage(sock, JSON.stringify({ cqa: [...(await b.st.storage.list({ prefix: "q:" })).keys()].map((k) => k.slice(2)) }));
   assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 0);
   // 7 days without an open device: the copy goes
   const m = await b.st.storage.get("meta");

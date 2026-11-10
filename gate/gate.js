@@ -851,6 +851,39 @@
     });
     return out.sort(function (p, q) { return p.dates[0] < q.dates[0] ? -1 : p.dates[0] > q.dates[0] ? 1 : 0; });
   }
+  // 6.05.00 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με
+  // κλειστό το orOS»): Budget's lines for the closed-orOS copy = every
+  // line of the 400 days up to `today` as budget_lines gives them, with
+  // its accounts, areas, categories and possible duplicates; the oldest
+  // days go first when it is over max bytes. → JSON text | "" (relay/gate.js
+  // closedLines answers budget_lines from it)
+  function bglCopy(raw, today, L, max) {
+    if (!isObj(raw) || !YMD.test(today)) return "";
+    var t0 = new Date(Date.parse(today + "T00:00:00Z") - SPAN_DAYS * 86400000).toISOString().slice(0, 10);
+    var lines = [], head = null, off = 0, r;
+    do {
+      r = budgetLines(raw, { from: t0, to: today, offset: off }, L);
+      if (!r.ok) return "";
+      if (!head) head = r.data;
+      lines = lines.concat(r.data.lines);
+      off = r.data.next_offset || 0;
+    } while (off);
+    var out = { from: t0, to: today, currency: head.currency, lines: lines };
+    ["areas", "categories", "accounts", "possible_duplicates"].forEach(function (k) { if (head[k]) out[k] = head[k]; });
+    var txt = JSON.stringify(out);
+    while (utf8Len(txt) > max && out.lines.length) {
+      var day = out.lines[0].date, cut = Math.max(1, Math.ceil(out.lines.length / 10));
+      while (cut < out.lines.length && out.lines[cut].date === out.lines[cut - 1].date) cut++;
+      out.lines = out.lines.slice(cut);
+      out.from = out.lines.length ? out.lines[0].date : today;
+      if (out.from === day) break;
+      var keep = {};
+      out.lines.forEach(function (x) { keep[x.id] = 1; });
+      if (out.possible_duplicates) out.possible_duplicates = out.possible_duplicates.filter(function (p) { return keep[p.ids[0]] && keep[p.ids[1]]; });
+      txt = JSON.stringify(out);
+    }
+    return utf8Len(txt) > max ? "" : txt;
+  }
   // AC-GATE: budget_balances — the owner's real balance of an account on
   // a day; Budget is brought to it as Budget's own "Update balance" does
   // (budget.js correctBal, AC-2): an account with nothing but a starting
@@ -1352,7 +1385,7 @@
   // closedCall): its own change tools less budget_delete and
   // budget_transfer (it deletes entries too), and
   // create_items. applyQueue runs nothing else (defence in depth).
-  var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
+  var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "budget_delete", "budget_transfer", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
                 "change_item", "link_items", "link_contact"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
@@ -1472,7 +1505,7 @@
     return /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(u) ? u : RELAY;
   }
 
-  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
+  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
@@ -1821,6 +1854,8 @@
   // Bytes (UTF-8) of the copy before sealing: the sealed text (base64url)
   // must stay under the relay's 900 KB (GATE_LIMITS.copyChars).
   function utf8Len(str) { try { return new TextEncoder().encode(str).length; } catch (e) { return str.length * 2; } }
+  // 6.05.00: Budget's lines in the copy (bglCopy): at most this many bytes
+  var BGL_MAX = 300000;
   var COPY_MAX = 640000, copyTimer = null, copyBusy = false, copyLast = "", copyAt = 0;
   function adoptWritten() {
     var p = pref(), S = root.orosSync;
@@ -1860,10 +1895,12 @@
       }
       // GATE-ACT: the everyday apps' summaries (the frame answers them)
       else if (ACT.indexOf(id) >= 0) calls.push(["app_summary", { app: id }]);
-      // budget_lines needs a range: the copy has this and last month, also
-      // kept as the tool's default answer.
-      if (LINES[id]) calls.push([LINES[id], id === "budget" ? { from: prev + "-01", to: localDay(), _def: 1 } : {}]);
+      // budget_lines needs a range: since 6.05.00 the copy keeps its lines
+      // of about 400 days (ans.__bgl, bglCopy) and the relay answers any range
+      if (LINES[id] && id !== "budget") calls.push([LINES[id], {}]);
     });
+    // 6.05.00: what Claude changed (the last 30 days), as the default answer
+    calls.push(["change_history", { _def: 1 }]);
     var ans = {}, size = 0, skipped = 0;
     calls.reduce(function (chain, c) {
       return chain.then(function () {
@@ -1878,6 +1915,10 @@
         }, function () {});
       });
     }, Promise.resolve()).then(function () {
+      if (ok.indexOf("budget") >= 0) {
+        var bg = bglCopy(readStore("oros-budget-data"), localDay(), root.OrosBudgetLoans || null, BGL_MAX);
+        if (bg) { ans.__bgl = bg; size += utf8Len(bg); }
+      }
       // The search index (5.96.00): every item of the allowed apps with
       // its ref, so search_data and the queued changes work with orOS
       // closed. The refs stay on this device (assistant.js gateIndex).

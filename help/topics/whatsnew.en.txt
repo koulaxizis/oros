@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.05.00
+- **Claude works with Budget while orOS is closed.** It sees about the last 13 months of entries for whatever days it asks, with your account balances (as they were when orOS closed) and the possible duplicate purchases. Deletions and transfers it makes wait and run as soon as you open orOS; more than 5 deletions ask you then. It also sees what it changed itself in the last 30 days.
+
 ## Version 6.04.00
 - **Claude keeps your account balances equal to the bank's.** When you let Claude change Budget, it sees each account's balance next to the bank's and, when you tell it the real one, corrects it as `Update balance` does: with a balance correction, which is neither income nor an expense. It also finds purchases written twice (from the card and days later from the account) and asks you before deleting anything. Every change can be undone.
 

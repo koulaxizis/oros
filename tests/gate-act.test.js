@@ -116,11 +116,11 @@ test("relay: the device's tools are cleaned and merged", () => {
 });
 
 test("closed orOS: the device runs only the changes the relay may queue", () => {
-  const relayWrites = R.TOOLS.filter((t) => !(t.annotations && t.annotations.readOnlyHint === true)).map((t) => t.name)
-    .filter((n) => n !== "budget_delete" && n !== "budget_transfer");   // both delete entries (6.02.00)
+  // 6.05.00 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με κλειστό το orOS»):
+  // every relay change waits, budget_delete and budget_transfer too
+  const relayWrites = R.TOOLS.filter((t) => !(t.annotations && t.annotations.readOnlyHint === true)).map((t) => t.name);
   assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED).sort(), "5.96.00: changes and links by ref too");
-  assert.ok(G.QUEUED.indexOf("budget_delete") < 0, "deletions wait for an open device");
-  assert.ok(G.QUEUED.indexOf("budget_transfer") < 0, "a transfer deletes its entries: it waits for an open device");
+  assert.ok(G.QUEUED.indexOf("budget_delete") >= 0 && G.QUEUED.indexOf("budget_transfer") >= 0);
   const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
   assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) return \{ ok: false/, "applyQueue checks the list");
 });
