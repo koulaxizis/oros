@@ -184,7 +184,7 @@ textarea { min-height: 260px; resize: vertical; line-height: 1.6; }
 .wchip .wt { font-size: 11px; font-variant-numeric: tabular-nums; }
 .wchip.done { border-color: var(--accent); }
 .wchip.next { background: var(--accent); color: var(--accent-ink, #111); border-color: var(--accent); }
-.wchip.next .wt { color: #111; }
+.wchip.next .wt { color: var(--accent-ink, #111); }
 .tw, .tv { font-size: 11px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); }
 .tw.part { border-style: dashed; color: var(--text-dim); border-color: var(--text-dim); }
 .tv { border-color: var(--text-dim); color: var(--text-dim); }

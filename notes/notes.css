@@ -119,7 +119,10 @@ body {
 .node-row.active { background: var(--accent); color: var(--accent-ink, #fff); }
 .node-row.active .node-caret,
 .node-row.active .node-count,
-.node-row.active .node-ico { color: rgba(255, 255, 255, 0.75); }
+.node-row.active .node-ico {
+  color: var(--accent-ink, #fff);
+  color: color-mix(in srgb, var(--accent-ink, #fff) 75%, transparent);
+}
 
 .node-caret {
   flex: 0 0 24px;

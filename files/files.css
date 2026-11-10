@@ -136,7 +136,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 .tnode .caret.empty { visibility: hidden; }
 
 .tnode .glyph { display: inline-flex; color: var(--accent, #6d4aff); }
-.tnode.selected .glyph { color: #fff; }
+.tnode.selected .glyph { color: var(--accent-ink, #fff); }
 
 .tnode .tname {
   white-space: nowrap;
@@ -869,7 +869,7 @@ a.pv-btn.drv-get { text-decoration: none; }
   flex-shrink: 0;
 }
 .tnode .fav-x:hover { background: var(--accent-soft, #2a2832); }
-.tnode.selected .fav-x { color: #fff; }
+.tnode.selected .fav-x { color: var(--accent-ink, #fff); }
 .tnode.missing { opacity: 0.5; }
 .tnode.special[data-view="trash"] { margin-top: 4px; }
 
@@ -1133,7 +1133,7 @@ body.dbx-mode #status { display: none; }
 }
 .dbx-tree { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border, #2c2b31); }
 .dbx-tree .tnode .glyph { color: #0061fe; }
-.dbx-tree .tnode.selected .glyph { color: #fff; }
+.dbx-tree .tnode.selected .glyph { color: var(--accent-ink, #fff); }
 
 .dbx-list {
   list-style: none;
@@ -1371,7 +1371,7 @@ body.drv-mode #list-wrap,
 body.drv-mode #status { display: none; }
 .drv-tree { border-top: 0; margin-top: 2px; padding-top: 0; }
 .drv-tree .tnode .glyph { color: var(--accent, #6d4aff); }
-.drv-tree .tnode.selected .glyph { color: #fff; }
+.drv-tree .tnode.selected .glyph { color: var(--accent-ink, #fff); }
 .drv-list .entry { grid-template-columns: 8px 22px 1fr 90px 84px 32px; }
 #drv-head { grid-template-columns: 8px 22px 1fr 90px 84px 32px; }
 #drv-head .col-th[data-field="name"] { grid-column: 3; justify-self: start; }
@@ -1413,7 +1413,7 @@ body.cmp-mode #list-wrap,
 body.cmp-mode #status { display: none; }
 .cmp-tree { border-top: 0; margin-top: 2px; padding-top: 0; }
 .cmp-tree .tnode .glyph { color: var(--accent, #6d4aff); }
-.cmp-tree .tnode.selected .glyph { color: #fff; }
+.cmp-tree .tnode.selected .glyph { color: var(--accent-ink, #fff); }
 .cmp-bar .tool.on { color: var(--accent, #6d4aff); }
 .dbx-list.cmp-list .entry,
 #cmp-head { grid-template-columns: 22px 1fr 90px 84px 32px; }
