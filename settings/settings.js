@@ -73,6 +73,9 @@
   }
 
   var ICON = {
+    ip_notes: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>',
+    ip_music: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+    ip_chess: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.6"/><path d="M10 9.5h4l1.6 8.5H8.4z"/><path d="M6.5 21h11"/></svg>',
     appearance: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.4-4-7.8-9-7.8z"/><circle cx="7.5" cy="11.5" r="1" fill="currentColor"/><circle cx="10.5" cy="7.5" r="1" fill="currentColor"/><circle cx="15.5" cy="7.5" r="1" fill="currentColor"/></svg>',
     accessibility: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="1.5"/><path d="M5 8l7 1.5L19 8M12 9.5V14M9 21l3-7 3 7"/></svg>',
     notifications: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',
@@ -269,6 +272,39 @@
     host.appendChild(c);
   }
 
+  // Icon packs (ICONPACK-1): six previews, the same three sample apps
+  // in each; the look comes from ../iconpacks.css (.ip-prev[data-pack]).
+  function secIcons(host, ic) {
+    var c = card(t("a.icons"), "icons");
+    var grid = el("div", "ip-grid");
+    grid.setAttribute("role", "radiogroup");
+    grid.setAttribute("aria-label", t("a.icons"));
+    ic.packs.forEach(function (id) {
+      var on = id === ic.pack;
+      var b = el("button", "ip-prev" + (on ? " on" : ""));
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.setAttribute("data-pack", id);
+      b.setAttribute("data-k", "icons:" + id);
+      var row3 = el("span", "ip-tiles");
+      row3.setAttribute("aria-hidden", "true");
+      [["ip_notes", "office"], ["ip_music", "sound"], ["ip_chess", "games"]].forEach(function (x) {
+        var id = x[0], tl = el("span", "ld-tile");
+        tl.setAttribute("data-cat", x[1]);
+        tl.innerHTML = ICON[id];                     // static icon
+        row3.appendChild(tl);
+      });
+      b.appendChild(row3);
+      b.appendChild(el("span", "ip-name", t("a.icons." + id)));
+      b.addEventListener("click", function () { set("icons", id); });
+      grid.appendChild(b);
+    });
+    c.appendChild(grid);
+    c.appendChild(el("p", "hint", t("a.icons.hint")));
+    host.appendChild(c);
+  }
+
   // ---------- 4. Section: Appearance ----------
   function secAppearance(host, s) {
     var c1 = card(t("a.theme"), "theme");
@@ -295,6 +331,8 @@
     });
     c2.appendChild(sw);
     host.appendChild(c2);
+
+    if (s.icons) secIcons(host, s.icons);
 
     var c3 = card(t("a.wallpaper"), "wallpaper");
     var grid = el("div", "walls");

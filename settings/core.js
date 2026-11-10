@@ -18,7 +18,7 @@
   // (its key cannot travel) stay on the device.
   // The menu's app list rides in the launcher's "menu" slice.
   var SCOPE = {
-    theme: "all", skin: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all",
+    theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
     multitask: "device", pcfiles: "device", a11y: "device", lock: "device", osk: "device", widgets: "device", backupenc: "device", caldav: "device", gate: "device"
@@ -37,6 +37,7 @@
   var FIND = [
     ["theme", "appearance", "a.theme"],
     ["skin", "appearance", "a.skin"],
+    ["icons", "appearance", "a.icons"],
     ["wallpaper", "appearance", "a.wallpaper"],
     ["me", "appearance", "a.me"],
     ["seasonal", "appearance", "z.on", "z.title", null, "seasonal"],
@@ -160,6 +161,14 @@
 
       "a.theme": "Theme", "a.dark": "Dark", "a.light": "Light",
       "a.skin": "System colour", "a.wallpaper": "Wallpaper",
+      "a.icons": "Icons",
+      "a.icons.classic": "Classic",
+      "a.icons.colourful": "Colourful",
+      "a.icons.glass": "Glass",
+      "a.icons.thin": "Thin",
+      "a.icons.paper": "Paper",
+      "a.icons.round": "Round",
+      "a.icons.hint": "Changes how app icons look on the desktop, in the Dock, the menu and search, on all your devices. High contrast always shows Classic.",
       "a.wallpaper.make": "Make your own in Wallpaper Generator",
       "a.wallpaper.sugg": "Suggested for this colour",
       "a.wallpaper.land.new": "New shape",
@@ -870,6 +879,7 @@
       "find.results": "Search results",
       "w.theme": "dark light mode night day",
       "w.skin": "colour color accent palette skin",
+      "w.icons": "icons icon pack tiles look",
       "w.wallpaper": "background desktop picture image",
       "w.me": "name greeting nickname call me personal",
       "w.seasonal": "christmas snow holiday festive decorations halloween easter",
@@ -986,6 +996,14 @@
 
       "a.theme": "Θέμα", "a.dark": "Σκοτεινό", "a.light": "Φωτεινό",
       "a.skin": "Χρώμα συστήματος", "a.wallpaper": "Ταπετσαρία",
+      "a.icons": "Εικονίδια",
+      "a.icons.classic": "Κλασικό",
+      "a.icons.colourful": "Πολύχρωμο",
+      "a.icons.glass": "Γυάλινο",
+      "a.icons.thin": "Λεπτό",
+      "a.icons.paper": "Χάρτινο",
+      "a.icons.round": "Στρογγυλό",
+      "a.icons.hint": "Αλλάζει την όψη των εικονιδίων των εφαρμογών στην επιφάνεια εργασίας, στο Dock, στο μενού και στην αναζήτηση, σε όλες τις συσκευές σου. Η υψηλή αντίθεση δείχνει πάντα το Κλασικό.",
       "a.wallpaper.make": "Φτιάξε τη δική σου στη Γεννήτρια ταπετσαρίας",
       "a.wallpaper.sugg": "Προτείνεται για αυτό το χρώμα",
       "a.wallpaper.land.new": "Νέο σχήμα",
@@ -1695,6 +1713,7 @@
       "find.results": "Αποτελέσματα αναζήτησης",
       "w.theme": "σκοτεινό φωτεινό λειτουργία νύχτα μέρα σκούρο ανοιχτό",
       "w.skin": "χρώμα χρώματα παλέτα απόχρωση",
+      "w.icons": "εικονίδια πακέτο εικονιδίων όψη",
       "w.wallpaper": "φόντο επιφάνεια εργασίας εικόνα",
       "w.me": "όνομα χαιρετισμός παρατσούκλι προσωπικό",
       "w.seasonal": "χριστούγεννα χιόνι γιορτές στολισμός διακόσμηση πάσχα απόκριες",

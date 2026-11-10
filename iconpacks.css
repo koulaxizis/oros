@@ -1,0 +1,92 @@
+/* ============================================================
+   orOS icon packs (ICONPACK-1): style treatments over the shell's
+   own app icons. No icon files; the glyphs stay the ICONS SVGs
+   (stroke = currentColor).
+   Active pack: <html data-oros-icons="<pack>"> (shell field `icons`,
+   synced). Classic (default) has no rules here. High contrast keeps
+   Classic. Settings previews use .ip-prev[data-pack="<pack>"].
+   Surfaces:
+     .ld-tile            desktop shortcuts and the Dock (launcher.js)
+     .app-ico            menu rows, menu search, task switcher (chip)
+   data-cat = the app's menu category, lower case (apps.json).
+   Category colours: one fill per category with a glyph of white or
+   #141414, whichever reads (≥ 4.5:1, tests/iconpacks.test.js).
+   ============================================================ */
+
+/* ---------- 1. Category colours (fill / glyph) ---------- */
+[data-cat] { --ic-cat: #52708e; --ic-ink: #ffffff; }
+[data-cat="accessories"] { --ic-cat: #52708e; --ic-ink: #ffffff; }
+[data-cat="business"]    { --ic-cat: #2f6f8f; --ic-ink: #ffffff; }
+[data-cat="creativity"]  { --ic-cat: #b0408a; --ic-ink: #ffffff; }
+[data-cat="fun"]         { --ic-cat: #e0a020; --ic-ink: #141414; }
+[data-cat="games"]       { --ic-cat: #6a4fc2; --ic-ink: #ffffff; }
+[data-cat="image"]       { --ic-cat: #bf4a2e; --ic-ink: #ffffff; }
+[data-cat="internet"]    { --ic-cat: #2368b8; --ic-ink: #ffffff; }
+[data-cat="learning"]    { --ic-cat: #3d9a6a; --ic-ink: #141414; }
+[data-cat="lifestyle"]   { --ic-cat: #e07a8f; --ic-ink: #141414; }
+[data-cat="office"]      { --ic-cat: #3a6ea8; --ic-ink: #ffffff; }
+[data-cat="personal"]    { --ic-cat: #c8873a; --ic-ink: #141414; }
+[data-cat="security"]    { --ic-cat: #4a5560; --ic-ink: #ffffff; }
+[data-cat="sound"]       { --ic-cat: #8e44ad; --ic-ink: #ffffff; }
+[data-cat="system"]      { --ic-cat: #6b7280; --ic-ink: #ffffff; }
+[data-cat="video"]       { --ic-cat: #c0392b; --ic-ink: #ffffff; }
+
+/* ---------- 2. Colourful ---------- */
+:is(html[data-oros-icons="colourful"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="colourful"]) .ld-tile {
+  background: var(--ic-cat); color: var(--ic-ink); border-color: transparent;
+}
+:is(html[data-oros-icons="colourful"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="colourful"]) .app-ico[data-cat] {
+  background: var(--ic-cat); color: var(--ic-ink); border-radius: 6px; padding: 3px;
+}
+
+/* ---------- 3. Glass ---------- */
+:is(html[data-oros-icons="glass"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="glass"]) .ld-tile {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.30), rgba(255, 255, 255, 0.06));
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 4px 14px rgba(0, 0, 0, 0.28);
+  -webkit-backdrop-filter: blur(12px) saturate(170%);
+  backdrop-filter: blur(12px) saturate(170%);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :is(html[data-oros-icons="glass"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="glass"]) .ld-tile {
+    background: color-mix(in srgb, var(--panel-bg) 70%, rgba(255, 255, 255, 0.25));
+  }
+}
+
+/* ---------- 4. Thin ---------- */
+:is(html[data-oros-icons="thin"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="thin"]) .ld-tile {
+  background: transparent; border-color: transparent; box-shadow: none;
+  color: var(--text);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+:is(html[data-oros-icons="thin"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="thin"]) .ld-tile svg {
+  width: 72%; height: 72%;
+}
+:is(html[data-oros-icons="thin"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="thin"]) :is(.ld-tile, .app-ico) svg * {
+  stroke-width: 1.4;
+}
+
+/* ---------- 5. Paper ---------- */
+:is(html[data-oros-icons="paper"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="paper"]) .ld-tile {
+  background: #f4efe3; color: #2b2418;
+  border: 1px solid #e2d9c4;
+  border-radius: 22%;
+  box-shadow: inset 0 1px 0 #ffffff, 0 3px 6px rgba(60, 40, 10, 0.28);
+}
+:is(html[data-oros-icons="paper"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="paper"]) .app-ico[data-cat] {
+  background: #f4efe3; color: #2b2418; border-radius: 5px; padding: 3px;
+}
+:is(html[data-oros-icons="paper"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="paper"]) :is(.ld-tile, .app-ico) svg * {
+  stroke-width: 2.4;
+}
+
+/* ---------- 6. Round ---------- */
+:is(html[data-oros-icons="round"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="round"]) .ld-tile {
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 18%, var(--panel-bg));
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+:is(html[data-oros-icons="round"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="round"]) .app-ico[data-cat] {
+  border-radius: 50%; padding: 3px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
