@@ -798,7 +798,7 @@
 
   // orOS Gate (gate.js, BR-GATE): Claude reads the apps set to Read,
   // through this device while orOS is open. Off by default, per device.
-  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "", gateNoSync = false, gateSens = "", gateFind = "";
+  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateChgOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "", gateNoSync = false, gateSens = "", gateFind = "";
   // The join code as a QR (qr/qr-encode.js): an <svg> of dark squares on white.
   function gateQr(text) {
     var Q = window.orosQR;
@@ -839,6 +839,7 @@
     var p = parentWin();
     try { return p && p.orosGate && typeof p.orosGate.enable === "function" ? p.orosGate : null; } catch (e) { return null; }
   }
+  function gateItems(n) { return n === 1 ? t("gt.log.item1") : t("gt.log.items", { n: n }); }
   function gateWhen(ms) {
     return new Date(ms).toLocaleString(document.documentElement.lang || undefined, { dateStyle: "short", timeStyle: "short" });
   }
@@ -1078,27 +1079,41 @@
             (dg.at ? " " + t("gt.dig.last", { when: gateWhen(dg.at) }) : "") + (dg.fails ? " " + t("gt.dig.fail", { n: dg.fails }) : "")));
         }
       }
-      // Claude's changes from every device (synced), with Undo.
+      // Claude's changes from every device (synced), with Undo: a
+      // section that starts closed (6.05.01) and keeps its state across
+      // repaints; one compact line per change, Undo small at its end.
       var chg = typeof G.changes === "function" ? G.changes().slice(0, 30) : [];
       if (chg.length) {
-        c.appendChild(el("div", "hint", t("gt.chg")));
+        var all = G.changes().length;
+        var box = el("details", "gt-chg");
+        box.open = gateChgOpen;
+        box.addEventListener("toggle", function () { gateChgOpen = box.open; });
+        var sum = el("summary", null, t("gt.chg.sum", { n: all }));
+        sum.setAttribute("data-k", "gt.chg");
+        box.appendChild(sum);
+        var list = el("div", "gt-chg-list");
         chg.forEach(function (e) {
-          c.appendChild(el("div", "hint", gateWhen(e.t) + " · " + e.n + " · " + t("gt.log.items", { n: e.k || 0 }) +
+          var ln = el("div", "gt-chg-row");
+          ln.appendChild(el("span", "hint", gateWhen(e.t) + " · " + e.n + " · " + gateItems(e.k || 0) +
             (e.dv ? " · " + e.dv : "") + (e.done ? " · " + t("gt.chg.undone") : "")));
           if (e.undo) {
-            c.appendChild(actions(button(t("gt.undo"), "gt.undo:" + e.id, function () {
+            ln.appendChild(button(t("gt.undo"), "gt.undo:" + e.id, function () {
               // a change made with the Assistant's tools answers later (a Promise)
               Promise.resolve(G.undo(e.id)).then(function (r) {
                 r = r || { ok: false };
                 gateNote = "";
+                gateChgOpen = true;
                 if (!r.ok) gateUndoMsg = r.later ? t("gt.undo.later") : t("gt.undo.fail");
                 else gateUndoMsg = r.kept ? t("gt.undo.kept", { n: r.n, k: r.kept }) : t("gt.undo.done", { n: r.n });
                 render();
               });
-            })));
+            }, "btn-sm"));
           }
+          list.appendChild(ln);
         });
-        if (gateUndoMsg) c.appendChild(el("div", "hint", gateUndoMsg));
+        box.appendChild(list);
+        if (gateUndoMsg) box.appendChild(el("div", "hint", gateUndoMsg));
+        c.appendChild(box);
       }
       c.appendChild(el("div", "hint", t("gt.never")));
       if (!gateInfo) {
@@ -1123,7 +1138,7 @@
         if (!log.length) c.appendChild(el("p", "msg msg-dim", t("gt.log.none")));
         log.forEach(function (e) {
           var ln = el("div", "hint", gateWhen(e.t) + " · " + e.n + (e.a && e.a.length ? " · " + e.a.join(", ") : "") +
-            " · " + (e.ok ? t("gt.log.items", { n: e.k || 0 }) : t("gt.log.refused")));
+            " · " + (e.ok ? gateItems(e.k || 0) : t("gt.log.refused")));
           c.appendChild(ln);
         });
         if (log.length) c.appendChild(actions(button(t("gt.log.clear"), "gt.log.clear", function () { G.clearLog(); })));
