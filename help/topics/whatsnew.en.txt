@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.08.00
+- **Try Living land in Wallpaper Generator.** A new `Living land` tab sits next to `Patterns`. Pick `Islands`, `Hills` or `Garden`, type a shape number or roll the dice, and the preview shows the land on a sample desktop. Keep the ones you like with the star (they sync to your other devices), and `Set as wallpaper` puts one on your desktop.
+
 ## Version 6.07.00
 - **Living land has hills and a garden now, and can move gently.** In Settings › Appearance › Wallpaper, with `Living land` chosen, pick a `Style`: `Islands`, `Hills` (green terraces with a river winding through the widest gap) or `Garden` (a lawn with hedge rows, small ponds and flowers in the empty corners). Turn on `Gentle motion` for glints on the water and a cloud shadow drifting across. It is off unless you turn it on, and it stops by itself under an open app, with reduced motion, on a low battery and on a slow device.
 

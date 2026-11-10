@@ -15,9 +15,15 @@
 //   - favourites: synced, LWW + tombstones, delete with Undo
 //   - the Tree style draws a Tree Sketcher tree; "Shape the tree"
 //     opens it there (__orosOpenAt("trees", { wall: recipe }))
+//   - Living land tab (LAND-1 W3): try the three land styles and
+//     shapes on a sample desktop (land.js demo), keep favourite lands,
+//     "Set as wallpaper" = shell orosWallpaper.setLand({style, seed})
 // Data:
 //   - synced slice "wallpaper" (oros-wallpaper-data): favourites
 //     (R5, R17, R26)
+//   - synced slice "wallpaper-lands" (oros-wallpaper-lands): favourite
+//     lands, same merge; a slice of its own so an older bundle, which
+//     knows neither, carries it untouched (no ping-pong)
 //   - device-local (R10): oros-wallpaper-prefs (recipe being edited,
 //     size)
 // Sections:
@@ -39,7 +45,11 @@
   "use strict";
 
   var ART = window.OrosWallArt;
+  var LAND = window.OrosLand || null;
   var STORAGE_KEY = "oros-wallpaper-data";
+  var LANDS_KEY   = "oros-wallpaper-lands";
+  var LAND_STYLES = ["islands", "hills", "garden"];
+  var LAND_MAX_SEED = 999999;
   var PREFS_KEY   = "oros-wallpaper-prefs";
   var DATA_VER    = 1;
   var MAX_FAVS    = 60;
@@ -95,7 +105,17 @@
       "toast.undo": "Undo", "toast.maxFavs": "Up to {n} favourites",
       "toast.set": "Set as your orOS wallpaper",
       "toast.rolled": "New seed: {seed}",
-      "live.preview": "Preview: {style}, {pal}"
+      "live.preview": "Preview: {style}, {pal}",
+      "mode.label": "What to make", "mode.art": "Patterns", "mode.land": "Living land",
+      "land.shape": "Shape", "land.shapeAria": "Shape number, 0 to 999999",
+      "lst.islands": "Islands", "lst.hills": "Hills", "lst.garden": "Garden",
+      "land.hint": "Living land grows around your shortcuts, widgets and sticky notes. The preview shows a sample desktop; on yours the land follows what is there.",
+      "land.favs.empty": "Tap the star to keep a land here.",
+      "land.dims": "Sample desktop · {w} × {h}",
+      "live.land": "Preview: Living land, {style}, shape {seed}",
+      "btn.rollLand": "Random shape (R)",
+      "toast.landSet": "Living land is your wallpaper",
+      "toast.rolledLand": "New shape: {seed}"
     },
     el: {
       "seed": "Λέξη",
@@ -134,7 +154,17 @@
       "toast.undo": "Αναίρεση", "toast.maxFavs": "Έως {n} αγαπημένα",
       "toast.set": "Έγινε ταπετσαρία του orOS",
       "toast.rolled": "Νέα λέξη: {seed}",
-      "live.preview": "Προεπισκόπηση: {style}, {pal}"
+      "live.preview": "Προεπισκόπηση: {style}, {pal}",
+      "mode.label": "Τι φτιάχνεις", "mode.art": "Μοτίβα", "mode.land": "Ζωντανό τοπίο",
+      "land.shape": "Σχήμα", "land.shapeAria": "Αριθμός σχήματος, 0 έως 999999",
+      "lst.islands": "Νησιά", "lst.hills": "Λόφοι", "lst.garden": "Κήπος",
+      "land.hint": "Το Ζωντανό τοπίο μεγαλώνει γύρω από τις συντομεύσεις, τα widgets και τα αυτοκόλλητα σημειώματα. Η προεπισκόπηση δείχνει ένα δείγμα επιφάνειας· στη δική σου το τοπίο ακολουθεί ό,τι υπάρχει εκεί.",
+      "land.favs.empty": "Πάτα το αστέρι για να κρατήσεις ένα τοπίο εδώ.",
+      "land.dims": "Δείγμα επιφάνειας · {w} × {h}",
+      "live.land": "Προεπισκόπηση: Ζωντανό τοπίο, {style}, σχήμα {seed}",
+      "btn.rollLand": "Τυχαίο σχήμα (R)",
+      "toast.landSet": "Το Ζωντανό τοπίο έγινε ταπετσαρία σου",
+      "toast.rolledLand": "Νέο σχήμα: {seed}"
     }
   };
 
@@ -190,10 +220,27 @@
     return { id: f.id, m: f.m, r: r };
   }
 
+  // A land = { style, seed } (shell wplandCanon without motion), or null.
+  function landCanon(l) {
+    if (!l || typeof l !== "object" || Array.isArray(l)) return null;
+    if (!isInt(l.seed) || l.seed < 0 || l.seed > LAND_MAX_SEED) return null;
+    return { style: LAND_STYLES.indexOf(l.style) >= 0 ? l.style : "islands", seed: l.seed };
+  }
+
+  // land fav = { id, m, l: land }
+  function normLand(f) {
+    if (!f || typeof f !== "object" || typeof f.id !== "string" || !ID_RE.test(f.id) ||
+        !isInt(f.m) || f.m < 0) return null;
+    var l = landCanon(f.l);
+    if (!l) return null;
+    return { id: f.id, m: f.m, l: l };
+  }
+
   // LWW per favourite (newer m wins; equal m: the larger canonical
   // JSON), tombstones max-merged, delete wins ties, a newer edit
-  // resurrects (R17). Symmetric and canonical (R5, R26).
-  function mergeWall(A, B) {
+  // resurrects (R17). Symmetric and canonical (R5, R26). `norm` is
+  // normFav (patterns) or normLand (lands).
+  function mergeFavs(A, B, norm) {
     var a = A || {}, b = B || {};
     var tombs = {};
     [a.tombs, b.tombs].forEach(function (tm) {
@@ -207,7 +254,7 @@
     [a.favs, b.favs].forEach(function (list) {
       if (!Array.isArray(list)) return;
       list.forEach(function (raw) {
-        var f = normFav(raw);
+        var f = norm(raw);
         if (!f) return;
         var cur = best[f.id];
         if (!cur || f.m > cur.m ||
@@ -223,6 +270,8 @@
     Object.keys(tombs).sort(cmpStr).forEach(function (id) { sortedTombs[id] = tombs[id]; });
     return { ver: DATA_VER, favs: favs, tombs: sortedTombs };
   }
+  function mergeWall(A, B) { return mergeFavs(A, B, normFav); }
+  function mergeLands(A, B) { return mergeFavs(A, B, normLand); }
 
   // ---------- 3. Storage + prefs ----------
   var data = null;
@@ -243,6 +292,29 @@
       try { console.error("[orOS] wallpaper: unreadable data copied to " + STORAGE_KEY + "-broken"); } catch (e) {}
     }
     data = { ver: DATA_VER, favs: [], tombs: {} };
+  }
+
+  var lands = null;
+  function loadLands() {
+    var raw = null;
+    try { raw = localStorage.getItem(LANDS_KEY); } catch (e) {}
+    lands = { ver: DATA_VER, favs: [], tombs: {} };
+    if (!raw) return;
+    try {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && Array.isArray(parsed.favs)) { lands = mergeLands(parsed, parsed); return; }
+    } catch (e) {}
+    try { localStorage.setItem(LANDS_KEY + "-broken", raw); } catch (e) {}
+    try { console.error("[orOS] wallpaper: unreadable lands copied to " + LANDS_KEY + "-broken"); } catch (e) {}
+  }
+  function saveLandsNow() {
+    try {
+      localStorage.setItem(LANDS_KEY, JSON.stringify(lands));
+      saveFailShown = false;
+    } catch (e) {
+      if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
+    }
+    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
   var saveFailShown = false;
@@ -277,7 +349,13 @@
     if (!p.r) {
       try { mine = wallApi() && wallApi().get().recipe; } catch (e) { mine = null; }
     }
+    var deskLand = null;
+    if (!p.land) {
+      try { deskLand = wallApi() && wallApi().get().land; } catch (e) { deskLand = null; }
+    }
     prefs = {
+      mode: p.mode === "land" && LAND ? "land" : "art",
+      land: landCanon(p.land) || landCanon(deskLand) || { style: "islands", seed: 1 },
       r: ART.normRecipe(p.r) || ART.normRecipe(mine) || ART.defaultRecipe(),
       size: SIZE_IDS.indexOf(p.size) >= 0 ? p.size : "screen",
       cw: clampSide(p.cw, 1920),
@@ -296,6 +374,28 @@
   }
 
   function recipe() { return prefs.r; }
+  function isLand() { return prefs.mode === "land" && !!LAND; }
+
+  function setLand(patch) {
+    var l = { style: prefs.land.style, seed: prefs.land.seed }, k;
+    for (k in patch) l[k] = patch[k];
+    var n = landCanon(l);
+    if (!n) return;
+    prefs.land = n;
+    savePrefs();
+    renderControls();
+    schedulePreview();
+  }
+
+  function setMode(m) {
+    if (m === "land" && !LAND) return;
+    if (prefs.mode === m) return;
+    prefs.mode = m;
+    savePrefs();
+    renderMode();
+    renderControls();
+    schedulePreview();
+  }
 
   function setRecipe(patch) {
     var r = {}, k;
@@ -317,7 +417,16 @@
     return [clampSide(Math.round(w * dpr), 1920), clampSide(Math.round(h * dpr), 1080)];
   }
 
+  // Living land: the desktop in CSS pixels (the land is drawn per screen)
+  function landDesk() {
+    var w = 0, h = 0;
+    try { w = window.parent.innerWidth; h = window.parent.innerHeight; } catch (e) {}
+    if (!w || !h) { w = (window.screen && screen.width) || 1440; h = (window.screen && screen.height) || 860; }
+    return [Math.max(320, Math.min(3840, Math.round(w))), Math.max(320, Math.min(2160, Math.round(h)))];
+  }
+
   function currentSize() {
+    if (isLand()) return landDesk();
     if (prefs.size === "screen") return screenSize();
     if (prefs.size === "custom") return [prefs.cw, prefs.ch];
     return SIZES[prefs.size].slice();
@@ -354,6 +463,44 @@
     return { w: Math.max(40, Math.floor(wh[0] * s)), h: Math.max(40, Math.floor(wh[1] * s)), full: wh };
   }
 
+  function theme() {
+    return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  }
+
+  // The land on a sample desktop, with faint tiles where the
+  // shortcuts, the widget and the note would stand.
+  function drawLand(ctx, pw, ph, vw, vh, l, ghosts) {
+    var rects = LAND.demo(vw, vh);
+    var fld = LAND.field(rects, vw, vh, l.seed, 0, l.style);
+    var img = ctx.createImageData(pw, ph);
+    LAND.paint(img, fld, LAND.palette(l.style, accent(), theme()), pw / vw, l.seed);
+    ctx.putImageData(img, 0, 0);
+    if (!ghosts) return;
+    var s = pw / vw;
+    rects.forEach(function (r) {
+      var x = r.x * s, y = r.y * s, w = r.w * s, h = r.h * s, rad = Math.min(14 * s, w / 4);
+      if (r.k === "tile") { x += w * 0.2; w *= 0.6; h *= 0.6; y += h * 0.1; }
+      ctx.fillStyle = r.k === "tile" ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.20)";
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x, y, w, h, rad); else ctx.rect(x, y, w, h);
+      ctx.fill();
+    });
+  }
+
+  function renderLandPreview(box, cv, pw, ph) {
+    var l = prefs.land;
+    $("dims").textContent = t("land.dims", { w: box.full[0], h: box.full[1] });
+    try {
+      var ctx = cv.getContext("2d");
+      cv.width = pw; cv.height = ph;
+      drawLand(ctx, pw, ph, box.full[0], box.full[1], l, true);
+    } catch (e) { console.error("[orOS] wallpaper land preview", e); return; }
+    cv.classList.remove("fresh");
+    void cv.offsetWidth;
+    cv.classList.add("fresh");
+    cv.setAttribute("aria-label", t("live.land", { style: t("lst." + l.style), seed: l.seed }));
+  }
+
   function renderPreview() {
     var box = fitBox();
     var cv = $("cv"), frame = $("frame");
@@ -361,6 +508,7 @@
     frame.style.height = box.h + "px";
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var pw = Math.round(box.w * dpr), ph = Math.round(box.h * dpr);
+    if (isLand()) { ++previewToken; renderLandPreview(box, cv, pw, ph); return; }
     var buf = document.createElement("canvas");
     buf.width = pw; buf.height = ph;
     var token = ++previewToken;
@@ -402,9 +550,30 @@
     thumbTimer = null;
     var job = thumbQueue.shift();
     if (!job) return;
-    if (job.node.isConnected) job.node.style.backgroundImage = 'url("' + thumbUrl(job.r, job.w, job.h) + '")';
+    if (job.node.isConnected) {
+      var u = job.land ? landThumbUrl(job.land, job.w, job.h) : thumbUrl(job.r, job.w, job.h);
+      job.node.style.backgroundImage = 'url("' + u + '")';
+    }
     if (thumbQueue.length) thumbTimer = setTimeout(drainThumbs, 0);
   }
+  var landThumbs = {};
+  function landThumbUrl(l, w, h) {
+    var k = l.style + "|" + l.seed + "|" + accent() + "|" + theme() + "|" + w + "x" + h;
+    if (landThumbs[k]) return landThumbs[k];
+    var c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    drawLand(c.getContext("2d"), w, h, 1440, 900, l, false);
+    var url = c.toDataURL("image/png");
+    var keys = Object.keys(landThumbs);
+    if (keys.length > 120) delete landThumbs[keys[0]];
+    landThumbs[k] = url;
+    return url;
+  }
+  function queueLandThumb(node, l, w, h) {
+    thumbQueue.push({ node: node, land: l, w: w, h: h });
+    if (!thumbTimer) thumbTimer = setTimeout(drainThumbs, 0);
+  }
+
   var thumbsTimer = null;
   function scheduleThumbs() {
     clearTimeout(thumbsTimer);
@@ -415,6 +584,9 @@
         for (k in prefs.r) r[k] = prefs.r[k];
         r.style = b.getAttribute("data-v");
         queueThumb(b.querySelector(".pick-sw"), ART.normRecipe(r), 96, 60);
+      });
+      if (LAND) [].forEach.call(document.querySelectorAll("#land-styles .pick-btn"), function (b) {
+        queueLandThumb(b.querySelector(".pick-sw"), { style: b.getAttribute("data-v"), seed: prefs.land.seed }, 96, 60);
       });
     }, 250);
   }
@@ -457,6 +629,70 @@
     });
   }
 
+  function buildLandPicker() {
+    var host = $("land-styles");
+    host.setAttribute("aria-label", t("sec.style"));
+    LAND_STYLES.forEach(function (id) {
+      var b = el("button", "pick-btn");
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("data-v", id);
+      b.appendChild(el("span", "pick-sw"));
+      b.appendChild(el("span", "pick-lbl", t("lst." + id)));
+      b.addEventListener("click", function () { setLand({ style: id }); });
+      host.appendChild(b);
+    });
+    host.addEventListener("keydown", function (e) {
+      var keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+      if (!keys[e.key]) return;
+      e.preventDefault();
+      var i = LAND_STYLES.indexOf(prefs.land.style);
+      var n = LAND_STYLES[(i + keys[e.key] + LAND_STYLES.length) % LAND_STYLES.length];
+      setLand({ style: n });
+      var b = host.querySelector('[data-v="' + n + '"]');
+      if (b) b.focus();
+    });
+  }
+
+  // Tabs: Patterns | Living land (ARIA tabs, arrow keys move)
+  function wireModes() {
+    var bar = $("modes");
+    if (!LAND) { bar.hidden = true; return; }
+    bar.setAttribute("aria-label", t("mode.label"));
+    ["art", "land"].forEach(function (m) {
+      $("mode-" + m).addEventListener("click", function () { setMode(m); });
+    });
+    bar.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+      e.preventDefault();
+      var m = (e.key === "Home") ? "art" : (e.key === "End") ? "land" : (prefs.mode === "land" ? "art" : "land");
+      setMode(m);
+      $("mode-" + m).focus();
+    });
+  }
+
+  function renderMode() {
+    var land = isLand();
+    ["art", "land"].forEach(function (m) {
+      var b = $("mode-" + m), on = (m === "land") === land;
+      b.setAttribute("aria-selected", on ? "true" : "false");
+      b.tabIndex = on ? 0 : -1;
+      b.classList.toggle("on", on);
+    });
+    $("art-panel").hidden = land;
+    $("land-panel").hidden = !land;
+    $("export-btn").hidden = land;
+    var seedIn = $("seed");
+    seedIn.setAttribute("inputmode", land ? "numeric" : "text");
+    seedIn.maxLength = land ? 6 : 40;
+    seedIn.placeholder = land ? "1" : "orOS";
+    seedIn.setAttribute("aria-label", t(land ? "land.shapeAria" : "seed"));
+    $("seed-lbl").textContent = t(land ? "land.shape" : "seed");
+    var rl = t(land ? "btn.rollLand" : "btn.roll");
+    $("roll-btn").setAttribute("aria-label", rl);
+    $("roll-btn").title = rl;
+  }
+
   function paintPalSw(sw, id) {
     sw.innerHTML = "";
     var C = ART.colors({ seed: "x", style: "waves", pal: id, light: 0 }, accent());
@@ -488,7 +724,16 @@
     sel.setAttribute("aria-label", t("sec.size"));
   }
 
+  function renderLandControls() {
+    var seedIn = $("seed");
+    if (document.activeElement !== seedIn) seedIn.value = String(prefs.land.seed);
+    renderPicker($("land-styles"), prefs.land.style);
+    renderFavButton();
+    renderSetButton();
+  }
+
   function renderControls() {
+    if (isLand()) { renderLandControls(); return; }
     var r = recipe();
     var seedIn = $("seed");
     if (document.activeElement !== seedIn) seedIn.value = r.seed;
@@ -526,8 +771,77 @@
 
   function favName(f) { return f.r.seed + " · " + t("st." + f.r.style); }
 
+  function landFavOf(l) {
+    for (var i = 0; i < lands.favs.length; i++) {
+      var f = lands.favs[i];
+      if (f.l.style === l.style && f.l.seed === l.seed) return f;
+    }
+    return null;
+  }
+  function landName(f) { return t("lst." + f.l.style) + " · " + f.l.seed; }
+
+  function toggleLandFav() {
+    var f = landFavOf(prefs.land);
+    if (f) { deleteLandFav(f.id); return; }
+    if (lands.favs.length >= MAX_FAVS) { showToast(t("toast.maxFavs", { n: MAX_FAVS })); return; }
+    lands.favs.push({ id: newId(), m: Date.now(), l: { style: prefs.land.style, seed: prefs.land.seed } });
+    lands = mergeLands(lands, lands);
+    saveLandsNow();
+    renderLandFavs();
+    renderFavButton();
+    showToast(t("toast.faved"));
+  }
+
+  function deleteLandFav(id) {
+    var f = null;
+    for (var i = 0; i < lands.favs.length; i++) if (lands.favs[i].id === id) f = lands.favs[i];
+    if (!f) return;
+    var snapshot = JSON.parse(JSON.stringify(f));
+    lands.tombs[id] = Math.max(Date.now(), f.m);
+    lands = mergeLands(lands, lands);
+    saveLandsNow();
+    renderLandFavs();
+    renderFavButton();
+    undoToast(t("toast.unfaved"), function () {
+      snapshot.m = Math.max(Date.now(), (lands.tombs[snapshot.id] || 0) + 1);   // R17
+      lands.favs.push(snapshot);
+      lands = mergeLands(lands, lands);
+      saveLandsNow();
+      renderLandFavs();
+      renderFavButton();
+    });
+  }
+
+  function renderLandFavs() {
+    var host = $("land-favs");
+    if (!host || !LAND) return;
+    host.innerHTML = "";
+    $("land-favs-empty").hidden = lands.favs.length > 0;
+    lands.favs.slice().sort(function (a, b) { return b.m - a.m || cmpStr(a.id, b.id); }).forEach(function (f) {
+      var item = el("div", "fav");
+      var open = el("button", "fav-open");
+      open.type = "button";
+      open.setAttribute("aria-label", t("fav.open", { name: landName(f) }));
+      open.title = landName(f);
+      var sw = el("span", "fav-sw");
+      open.appendChild(sw);
+      open.appendChild(el("span", "fav-lbl", landName(f)));
+      open.addEventListener("click", function () { setLand({ style: f.l.style, seed: f.l.seed }); });
+      var del = el("button", "fav-del");
+      del.type = "button";
+      del.innerHTML = UI_ICONS.x;
+      del.setAttribute("aria-label", t("fav.del", { name: landName(f) }));
+      del.title = t("fav.del", { name: landName(f) });
+      del.addEventListener("click", function () { deleteLandFav(f.id); });
+      item.appendChild(open);
+      item.appendChild(del);
+      host.appendChild(item);
+      queueLandThumb(sw, f.l, 160, 100);
+    });
+  }
+
   function renderFavButton() {
-    var on = !!favOf(recipe());
+    var on = isLand() ? !!landFavOf(prefs.land) : !!favOf(recipe());
     var b = $("fav-btn");
     b.setAttribute("aria-pressed", on ? "true" : "false");
     b.classList.toggle("on", on);
@@ -537,6 +851,7 @@
   }
 
   function toggleFav() {
+    if (isLand()) { toggleLandFav(); return; }
     var f = favOf(recipe());
     if (f) { deleteFav(f.id); return; }
     if (data.favs.length >= MAX_FAVS) { showToast(t("toast.maxFavs", { n: MAX_FAVS })); return; }
@@ -719,8 +1034,11 @@
     if (!api) return;
     var cur = null;
     try { cur = api.get(); } catch (e) {}
-    var isSet = !!(cur && cur.active && !cur.picture && cur.recipe &&
-                   JSON.stringify(cur.recipe) === JSON.stringify(recipe()));
+    if (isLand() && typeof api.setLand !== "function") { b.hidden = true; return; }
+    var isSet = isLand()
+      ? !!(cur && cur.land && cur.land.style === prefs.land.style && cur.land.seed === prefs.land.seed)
+      : !!(cur && cur.active && !cur.picture && cur.recipe &&
+           JSON.stringify(cur.recipe) === JSON.stringify(recipe()));
     b.classList.toggle("on", isSet);
     b.innerHTML = UI_ICONS.wall + "<span>" + t(isSet ? "btn.isSet" : "btn.set") + "</span>";
     b.setAttribute("aria-pressed", isSet ? "true" : "false");
@@ -753,6 +1071,13 @@
     var api = wallApi();
     if (!api) return;
     var ok = false;
+    if (isLand()) {
+      try { ok = typeof api.setLand === "function" && api.setLand({ style: prefs.land.style, seed: prefs.land.seed }); }
+      catch (e) { ok = false; }
+      if (ok) showToast(t("toast.landSet"));
+      renderSetButton();
+      return;
+    }
     try { ok = api.setCustom(recipe()); } catch (e) { ok = false; }
     if (ok) showToast(t("toast.set"));
     renderSetButton();
@@ -845,6 +1170,14 @@
 
   // ---------- 11. Keyboard ----------
   function rollSeed() {
+    if (isLand()) {
+      var n = prefs.land.seed;
+      while (n === prefs.land.seed) n = Math.floor(Math.random() * (LAND_MAX_SEED + 1));
+      setLand({ seed: n });
+      $("seed").value = String(n);
+      live(t("toast.rolledLand", { seed: n }));
+      return;
+    }
     var s = ART.randomSeed();
     setRecipe({ seed: s });
     $("seed").value = s;
@@ -896,6 +1229,7 @@
       if (sw) paintPalSw(sw, "oros");
       schedulePreview();
       renderFavs();
+      renderLandFavs();
       renderSetButton();
     }
   }
@@ -926,6 +1260,28 @@
     };
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("wallpaper", sliceGet, sliceSet, STORAGE_KEY, mergeWall);
+    api.registerSlice("wallpaper-lands", landSliceGet, landSliceSet, LANDS_KEY, mergeLands);
+  }
+
+  function landSliceGet() {
+    return mergeLands(lands, lands);   // canonical copy (R26)
+  }
+
+  function landSliceSet(incoming) {
+    if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.favs)) return;
+    var before = JSON.stringify(lands.favs);
+    window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
+    try {
+      lands = mergeLands(incoming, incoming);
+      localStorage.setItem(LANDS_KEY, JSON.stringify(lands));
+    } catch (e) {
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+    if (JSON.stringify(lands.favs) !== before) {
+      renderLandFavs();
+      renderFavButton();
+    }
   }
 
   function sliceGet() {
@@ -957,6 +1313,7 @@
     $("cw").setAttribute("aria-label", t("sz.w"));
     $("ch").setAttribute("aria-label", t("sz.h"));
     $("favs").setAttribute("aria-label", t("sec.favs"));
+    $("land-favs").setAttribute("aria-label", t("sec.favs"));
     [["roll-btn", "dice", "btn.roll"], ["export-btn", "exp", "btn.export"], ["fav-btn", "star", "btn.fav"]]
       .forEach(function (x) {
         var b = $(x[0]);
@@ -970,10 +1327,16 @@
     var seedIn = $("seed");
     seedIn.placeholder = "orOS";
     seedIn.addEventListener("input", function () {
+      if (isLand()) {
+        var d = seedIn.value.replace(/[^0-9]/g, "").slice(0, 6);
+        if (d !== seedIn.value) seedIn.value = d;
+        if (d) setLand({ seed: parseInt(d, 10) });
+        return;
+      }
       var s = seedIn.value.replace(/\s+/g, " ").trim();
       setRecipe({ seed: s || "orOS" });
     });
-    seedIn.addEventListener("blur", function () { seedIn.value = recipe().seed; });
+    seedIn.addEventListener("blur", function () { seedIn.value = isLand() ? String(prefs.land.seed) : recipe().seed; });
     seedIn.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); seedIn.blur(); } });
     $("roll-btn").addEventListener("click", rollSeed);
     $("fav-btn").addEventListener("click", toggleFav);
@@ -1033,13 +1396,17 @@
 
   function boot() {
     load();
+    loadLands();
     loadPrefs();
     applyI18n();
     buildPicker($("styles"), ART.STYLES, "st.", "style", null);
+    if (LAND) buildLandPicker();
+    wireModes();
     buildPicker($("pals"), ART.PALETTES, "pal.", "pal", paintPalSw);
     buildSizeSelect();
     wire();
     registerSync();
+    renderMode();
     renderControls();
     inheritPalette();     // also draws the preview + favourites
     watchPalette();
