@@ -54,6 +54,12 @@ The first tile, `Mine`, is a wallpaper you make yourself.
 
 Each device draws your wallpaper to fit its own screen, so it stays sharp on a phone and on a big monitor.
 
+### Living land
+`Living land` (the second tile) draws a small landscape around what is on your desktop: your shortcuts, widgets and sticky notes stand on islands, and the gaps between them become water. Add or remove a shortcut, move a sticky note or change your widgets, and the land re-forms and fades in. Its colours follow your skin and your light or dark theme.
+- Under the wallpapers, `New shape` draws other islands. Your choice and its shape follow you to your other devices; every device draws the land for its own screen.
+- The land is still: it only changes when your desktop does, so it costs no battery while you work. With reduced motion it changes without fading.
+- High contrast shows the plain desktop instead.
+
 ## Seasonal decorations
 At some times of the year your desktop dresses up on its own: snow, a string of lights and a tree at Christmas, gold sparkles and a pomegranate at New Year (with fireworks from 23:55 to 00:10 on New Year's Eve), pumpkins, bats and a spider's web at Halloween.
 

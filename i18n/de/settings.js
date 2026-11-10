@@ -12,6 +12,8 @@ orosPack("de", "settings", {
  "a.me.hint": "Nur für die Begrüßung, in Heute und auf der Startseite. Er bleibt auf deinen Geräten (verschlüsselt synchronisiert) und geht nie an den Assistenten oder sonstwohin. Leer lassen für keinen.",
  "a.wallpaper.make": "Eigenes im Hintergrundbild-Generator erstellen",
  "a.wallpaper.sugg": "Passend zu dieser Farbe",
+ "a.wallpaper.land.hint": "Lebendige Landschaft wächst um deine Verknüpfungen, Widgets und Haftnotizen und ändert sich mit ihnen. Neue Form zeichnet andere Inseln.",
+ "a.wallpaper.land.new": "Neue Form",
  "ac.contrast": "Hoher Kontrast",
  "ac.contrast.auto": "Automatisch",
  "ac.contrast.hint": "Schwarz und Weiß mit einer kräftigen Farbe, klaren Rahmen und unterstrichenen Links, in orOS und jeder App. „Automatisch“ schaltet ihn ein, solange dein Gerät mehr Kontrast verlangt, zum Beispiel mit dem hohen Kontrast von Windows.",

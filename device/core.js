@@ -33,7 +33,7 @@
 
   // Shell-owned keys that carry an app name but belong to orOS.
   var SHELL_KEYS = {
-    "oros-wallpaper": 1, "oros-wallpaper-art": 1
+    "oros-wallpaper": 1, "oros-wallpaper-art": 1, "oros-wallpaper-land": 1
   };
 
   // The owner of one localStorage key: an app id from `appIds`,

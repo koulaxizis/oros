@@ -221,7 +221,7 @@ test("wiring: app, palette, sync, wallpaper picture, help", () => {
   assert.ok(sh.includes("if (wpPic()) wpPicClear();"), "a recipe made here replaces the picture");
   const setImage = sh.slice(sh.indexOf("setImage: function"), sh.indexOf("get: function", sh.indexOf("setImage: function")));
   assert.ok(!setImage.includes("noteLocalChange") && !setImage.includes("state.wallpaper ="), "nothing of it syncs");
-  assert.ok(sh.includes('if (w.id === "custom" || wpPic()) wpCustomApply(desktop);'));
+  assert.ok(sh.includes('if (w.id === "custom" || wpPic()) { wpLandStop(); wpCustomApply(desktop); }'), "the picture wins over every wallpaper, Living land too");
   assert.ok(sh.includes("wallpaper: pic ? \"custom\" : state.wallpaper"), "Settings shows it as Mine");
   // apps that check "is this my wallpaper" know about the picture
   assert.ok(read("wallpaper/wallpaper.js").includes("!cur.picture"));

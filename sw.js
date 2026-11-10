@@ -1342,6 +1342,7 @@ var PRECACHE_URLS = [
   "wallpaper/",
   "wallpaper/index.html",
   "wallpaper/art.js",
+  "wallpaper/land.js",
   "wallpaper/wallpaper.css",
   "wallpaper/wallpaper.js",
   "trees/",
