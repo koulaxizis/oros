@@ -234,13 +234,13 @@ button, select {
 .tile.lv3  { background-color: color-mix(in srgb, var(--accent) 24%, var(--panel-bg)); }
 .tile.lv4  { background-color: color-mix(in srgb, var(--accent) 34%, var(--panel-bg)); }
 .tile.lv5  { background-color: color-mix(in srgb, var(--accent) 44%, var(--panel-bg)); }
-.tile.lv6  { background-color: color-mix(in srgb, var(--accent) 55%, var(--panel-bg)); color: var(--bg); }
-.tile.lv7  { background-color: color-mix(in srgb, var(--accent) 66%, var(--panel-bg)); color: var(--bg); }
-.tile.lv8  { background-color: color-mix(in srgb, var(--accent) 76%, var(--panel-bg)); color: var(--bg); }
-.tile.lv9  { background-color: color-mix(in srgb, var(--accent) 86%, var(--panel-bg)); color: var(--bg); }
-.tile.lv10 { background-color: color-mix(in srgb, var(--accent) 94%, var(--panel-bg)); color: var(--bg); }
-.tile.lv11 { background-color: var(--accent); color: var(--bg); box-shadow: 0 0 18px var(--accent-soft), inset 0 -3px 0 rgba(0, 0, 0, 0.22); }
-.tile.lv12 { background-color: var(--accent-hover); color: var(--bg); box-shadow: 0 0 22px var(--accent-soft), inset 0 -3px 0 rgba(0, 0, 0, 0.22); }
+.tile.lv6  { background-color: color-mix(in srgb, var(--accent) 55%, var(--panel-bg)); color: var(--text); }
+.tile.lv7  { background-color: color-mix(in srgb, var(--accent) 66%, var(--panel-bg)); color: var(--accent-ink, var(--bg)); }
+.tile.lv8  { background-color: color-mix(in srgb, var(--accent) 76%, var(--panel-bg)); color: var(--accent-ink, var(--bg)); }
+.tile.lv9  { background-color: color-mix(in srgb, var(--accent) 86%, var(--panel-bg)); color: var(--accent-ink, var(--bg)); }
+.tile.lv10 { background-color: color-mix(in srgb, var(--accent) 94%, var(--panel-bg)); color: var(--accent-ink, var(--bg)); }
+.tile.lv11 { background-color: var(--accent); color: var(--accent-ink, var(--bg)); box-shadow: 0 0 18px var(--accent-soft), inset 0 -3px 0 rgba(0, 0, 0, 0.22); }
+.tile.lv12 { background-color: var(--accent-hover); color: var(--accent-ink, var(--bg)); box-shadow: 0 0 22px var(--accent-soft), inset 0 -3px 0 rgba(0, 0, 0, 0.22); }
 .tile.pop { animation: pop 0.16s ease-out; }
 .tile.new { animation: grow 0.16s ease-out; }
 @keyframes pop  { 0% { scale: 1; } 50% { scale: 1.12; } 100% { scale: 1; } }

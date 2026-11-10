@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.05.04
+- **Selected rows stay readable in Tux.** In Notes, Files and Lyric Sync the icons of the selected row (the note or folder icon, the arrow, the count, the word time) were white on the light Tux selection, so they almost vanished. They now take the same dark or light colour as the row's text, in every theme. In Mahjong the selected tile is easier to see and its symbols stay clear, and in 2048 the numbers on the darker tiles read better.
+
 ## Version 6.05.03
 - **Claude finds orOS open with two windows too.** If you opened orOS in a second window or tab and then closed it, the window left open no longer answered Claude, which read the copy as if orOS were closed. Now that window takes over by itself within about two minutes. In Charts › Expenses by category, `Other` opens with a tap and shows every category. Claude no longer writes categories Budget does not have (they showed as «Uncategorized»).
 

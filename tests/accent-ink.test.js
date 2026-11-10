@@ -119,3 +119,43 @@ test("no file uses the undefined --accent-text token", () => {
   }
   assert.deepEqual(bad, []);
 });
+
+// ACCENT-INK-3 (Tux follow-up 3): a selected row painted with the accent
+// took --accent-ink for its text, but a separate rule gave its icons a
+// fixed white (Notes tree `.node-row.active .node-ico`, Files tree
+// `.tnode.selected .glyph`), so the icons vanished on the near-white
+// Tux dark accent. Any rule that styles a descendant of an accent-filled
+// selector must not set a fixed colour either.
+function cssRules(src) {
+  const out = [];
+  const clean = src.replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "));
+  const re = /([^{}]+)\{([^{}]*)\}/g;
+  for (let m; (m = re.exec(clean)); ) {
+    const line = clean.slice(0, m.index + m[1].length).split("\n").length;
+    out.push({ sels: m[1].split(",").map((s) => s.trim().replace(/\s+/g, " ")).filter(Boolean), body: m[2], line });
+  }
+  return out;
+}
+
+test("no rule puts a fixed colour on content inside an accent fill", () => {
+  const ACC = /(?<![-\w])background(?:-color)?\s*:[^;]*var\(--accent(?:-hover)?\s*(?:,[^)]*)?\)/;
+  const FIXED = /(?<![-\w])(?:color|fill|stroke)\s*:\s*(?:#[0-9a-fA-F]{3,8}\b|white\b|black\b|rgba?\(\s*(?:255\s*,\s*255\s*,\s*255|0\s*,\s*0\s*,\s*0)\b)/i;
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const bad = [];
+  for (const f of ALL) {
+    if (!/\.(css|html)$/.test(f)) continue;
+    const rules = cssRules(fs.readFileSync(f, "utf8"));
+    const filled = [];
+    for (const r of rules) {
+      if (!ACC.test(r.body)) continue;
+      for (const s of r.sels) if (/[.:\[]/.test(s) && !/[>+~]/.test(s.split(" ").pop())) filled.push(s.split(" ").pop());
+    }
+    if (!filled.length) continue;
+    const parents = filled.map((s) => new RegExp("(?:^|\\s)" + esc(s) + " \\S"));
+    for (const r of rules) {
+      if (!FIXED.test(r.body) || ACC.test(r.body)) continue;
+      if (r.sels.some((s) => parents.some((p) => p.test(s)))) bad.push(path.relative(ROOT, f) + ":" + r.line);
+    }
+  }
+  assert.deepEqual(bad, []);
+});
