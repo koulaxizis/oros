@@ -54,6 +54,12 @@ Die erste Kachel, `Eigenes`, ist ein Hintergrundbild, das du selbst machst.
 
 Jedes Gerät zeichnet dein Hintergrundbild passend für seinen eigenen Bildschirm, also bleibt es auf dem Handy wie auf einem großen Monitor scharf.
 
+### Lebendige Landschaft
+`Lebendige Landschaft` (die zweite Kachel) zeichnet eine kleine Landschaft um das, was auf deinem Desktop liegt: Verknüpfungen, Widgets und Haftnotizen stehen auf Inseln, die Lücken dazwischen werden Wasser. Fügst du eine Verknüpfung hinzu oder entfernst sie, verschiebst eine Haftnotiz oder änderst deine Widgets, formt sich das Land neu und blendet sanft ein. Die Farben folgen deinem Skin und deinem hellen oder dunklen Design.
+- Unter den Hintergrundbildern zeichnet `Neue Form` andere Inseln. Deine Wahl und ihre Form folgen dir auf deine anderen Geräte; jedes Gerät zeichnet das Land für seinen eigenen Bildschirm.
+- Das Land steht still: Es ändert sich nur, wenn sich dein Desktop ändert, und kostet beim Arbeiten keinen Akku. Mit reduzierter Bewegung ändert es sich ohne Überblenden.
+- Hoher Kontrast zeigt den schlichten Desktop.
+
 ## Saisonale Deko
 Zu manchen Zeiten im Jahr schmückt sich dein Desktop von selbst: Schnee, eine Lichterkette und ein Baum zu Weihnachten, goldene Funken und ein Granatapfel zu Neujahr (mit Feuerwerk von 23:55 bis 00:10 an Silvester), Kürbisse, Fledermäuse und ein Spinnennetz zu Halloween.
 

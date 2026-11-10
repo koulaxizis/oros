@@ -37,6 +37,7 @@ test("keyOwner: aliases, shell keys and foreign keys", () => {
   // The desktop wallpaper travels in the shell slice, the app's own keys do not.
   assert.equal(C.keyOwner("oros-wallpaper", IDS), "_shell");
   assert.equal(C.keyOwner("oros-wallpaper-art", IDS), "_shell");
+  assert.equal(C.keyOwner("oros-wallpaper-land", IDS), "_shell");
   assert.equal(C.keyOwner("oros-wallpaper-prefs", IDS), "wallpaper");
   assert.equal(C.keyOwner("something-else", IDS), "_other");
   assert.equal(C.keyOwner("", IDS), "_other");

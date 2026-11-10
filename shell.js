@@ -46,6 +46,7 @@
     skin:            null,   // palette id (see SKINS)
     wallpaper:       null,   // wallpaper id (see WALLPAPERS)
     wpart:           null,   // "Mine" wallpaper recipe (Wallpaper Generator) or null
+    wpland:          null,   // "Living land" { style, seed, motion } or null (= defaults)
     apps:            [],
     running:         null,
     deferredPrompt:  null,   // PWA install event
@@ -92,6 +93,7 @@
   // WYSIWYG guaranteed, no CSS-specificity battles.
   var WALLPAPERS = [
     { id: "custom",   css: "" },  // "Mine": drawn from state.wpart (5b)
+    { id: "land",     css: "" },  // "Living land": wallpaper/land.js around the desktop items (5b'')
     { id: "dusk",     css: "linear-gradient(160deg, #1b2735 0%, #10151f 45%, #0b0f17 100%)" },
     { id: "midnight", css: "linear-gradient(165deg, #0d1117 0%, #06080c 60%, #000000 100%)" },
     { id: "plum",     css: "radial-gradient(ellipse at 30% 20%, #4a2545 0%, #2c1626 55%, #190d17 100%)" },
@@ -356,6 +358,7 @@
     state.wallpaper = findWallpaper(storedWp) ? storedWp : DEFAULT_WALLPAPER;
     localStorage.setItem("oros-wallpaper", state.wallpaper);
     state.wpart = wpArtRead();
+    state.wpland = wpLandRead();
 
     state.theme = localStorage.getItem("oros-theme") === "light" ? "light" : "dark";
 
@@ -442,6 +445,7 @@
   // ---------- 4. Theme ----------
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", state.theme);
+    if (state.wallpaper === "land" && document.getElementById("oros-desktop")) applyWallpaper();   // land colours follow the theme
   }
 
   // ---------- 5. Skin ----------
@@ -458,7 +462,7 @@
       }
     }
     // the "orOS" palette of the "Mine" wallpaper follows the skin
-    if (state.wallpaper === "custom" && document.getElementById("oros-desktop")) applyWallpaper();
+    if ((state.wallpaper === "custom" || state.wallpaper === "land") && document.getElementById("oros-desktop")) applyWallpaper();
   }
 
   // ---------- 5b. Wallpaper ----------
@@ -470,8 +474,9 @@
     // Inline style: wins over any #oros-desktop background rule
     // (specificity-proof — the v0.4.0 class-based approach lost to
     // the existing ID rule).
-    if (w.id === "custom" || wpPic()) wpCustomApply(desktop);
-    else { wpCustomStop(); desktop.style.background = w.css; }
+    if (w.id === "custom" || wpPic()) { wpLandStop(); wpCustomApply(desktop); }
+    else if (w.id === "land") { wpCustomStop(); wpLandApply(desktop); }
+    else { wpCustomStop(); wpLandStop(); desktop.style.background = w.css; }
 
     // Keep the class for potential future hooks, cleaned of stale ids
     var classes = desktop.className.split(/\s+/);
@@ -731,6 +736,74 @@
     }).catch(function (e) {
       console.warn("[orOS] custom wallpaper:", e);
     });
+  }
+
+  // ---------- 5b''. "Living land" (wallpaper/land.js, late bundle) ----------
+  // A landscape drawn around the desktop's shortcuts, widgets, sticky
+  // notes and Dock. Only { style, seed, motion } travel (shell field
+  // wpland, null = the defaults); every device draws its own picture.
+  // land.js comes with the late bundle: until it is there the desktop
+  // shows the land's water colour, then the land fades in.
+  var WP_LAND_KEY = "oros-wallpaper-land";
+  var WP_LAND_STYLES = ["islands", "hills", "garden"];
+  var wpLandCtl = null;
+
+  // Canonical { style, seed, motion } (fixed key order), or null when v
+  // is not an object. Unknown styles read as islands; seed 0…999999.
+  function wplandCanon(v) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+    var seed = Math.floor(Number(v.seed));
+    return {
+      style:  WP_LAND_STYLES.indexOf(v.style) >= 0 ? v.style : "islands",
+      seed:   (isFinite(seed) && seed >= 0 && seed <= 999999) ? seed : 1,
+      motion: v.motion === 1 || v.motion === true ? 1 : 0
+    };
+  }
+  function wpLandRead() {
+    try { return wplandCanon(JSON.parse(localStorage.getItem(WP_LAND_KEY))); }
+    catch (e) { return null; }
+  }
+  function wpLandWrite(r) {
+    try {
+      if (r) localStorage.setItem(WP_LAND_KEY, JSON.stringify(r));
+      else localStorage.removeItem(WP_LAND_KEY);
+    } catch (e) {}
+  }
+  function wpLandNow() { return state.wpland || wplandCanon({}); }
+  function wpLandApply(desktop) {
+    var L = window.OrosLand;
+    if (!L || typeof L.mount !== "function") {
+      desktop.style.background = "linear-gradient(160deg, #17393f 0%, #0f2a33 70%)";
+      lateWhen(function () { if (state.wallpaper === "land" && window.OrosLand) applyWallpaper(); });
+      return;
+    }
+    desktop.style.background = L.baseCss(wpAccent(), state.theme);
+    if (!wpLandCtl) {
+      wpLandCtl = L.mount(desktop, {
+        get: function () { return { land: wpLandNow(), accent: wpAccent(), theme: state.theme }; },
+        paused: function () { return !!state.running || document.hidden; }
+      });
+    } else wpLandCtl.set();
+  }
+  function wpLandStop() {
+    if (wpLandCtl) { try { wpLandCtl.stop(); } catch (e) {} wpLandCtl = null; }
+  }
+  function wpLandRefresh() {
+    if (wpLandCtl) { try { wpLandCtl.refresh(); } catch (e) {} }
+  }
+  // "New shape": another seed. User action: syncs.
+  function wpLandNewShape() {
+    var cur = wpLandNow(), seed = cur.seed;
+    while (seed === cur.seed) seed = Math.floor(Math.random() * 1000000);
+    state.wpland = wplandCanon({ style: cur.style, seed: seed, motion: cur.motion });
+    wpLandWrite(state.wpland);
+    if (state.wallpaper !== "land") {
+      state.wallpaper = "land";
+      localStorage.setItem("oros-wallpaper", state.wallpaper);
+    }
+    applyWallpaper();
+    noteLocalChange();
+    renderMenu();
   }
 
   // Public API for the Wallpaper Generator app (same origin iframe).
@@ -5448,7 +5521,7 @@
   }
 
   // Names: translations.js "wp.name.<id>"; any other id shows as it is.
-  var WALLPAPER_NAMED = { dusk: 1, midnight: 1, plum: 1, forest: 1, ember: 1, nordic: 1, aurora: 1, sand: 1, mono: 1, nebula: 1, borealis: 1, hex: 1, obsidian: 1, terrazzo: 1, custom: 1, clear: 1 };
+  var WALLPAPER_NAMED = { dusk: 1, midnight: 1, plum: 1, forest: 1, ember: 1, nordic: 1, aurora: 1, sand: 1, mono: 1, nebula: 1, borealis: 1, hex: 1, obsidian: 1, terrazzo: 1, custom: 1, land: 1, clear: 1 };
   function wallpaperTitle(id) {
     return WALLPAPER_NAMED[id] ? window.t("wp.name." + id) : id;
   }
@@ -5479,7 +5552,7 @@
   //     sorted by id), so a converged state produces no phantom push.
   var SHELL_STAMPS_KEY = "oros-shell-stamps";   // { <field>: { t: ms, v: json } } — travels as `sm`
   var ALARM_TOMBS_KEY  = "oros-alarm-tombs";    // { <alarmId>: { t: ms, x: ms|0 } } — travels as `alarmTombs`
-  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart"];
+  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland"];
   var TOMB_GRACE_MS = 24 * 60 * 60 * 1000;      // a once-alarm tombstone outlives its alarm by a day (clock skew)
 
   function shellDefault(name) {
@@ -5491,6 +5564,7 @@
       case "syncInterval": return 3;
       case "autoexport":   return "off";
       case "wpart":        return null;
+      case "wpland":       return null;
       default:             return { on: false, auto: false, lat: null, lon: null, label: "" };   // weather
     }
   }
@@ -5509,6 +5583,10 @@
         if (v === null) return null;
         var wa = wpArt() ? wpArt().normRecipe(v) : null;
         return wa ? wa : undefined;
+      case "wpland":
+        if (v === null) return null;
+        var wl = wplandCanon(v);
+        return wl ? wl : undefined;
       default:
         if (!v || typeof v !== "object") return undefined;
         return {
@@ -5531,7 +5609,7 @@
       lang: state.lang, theme: state.theme, skin: state.skin,
       wallpaper: state.wallpaper, syncInterval: syncInterval,
       autoexport: state.autoexport, weather: wxRead(),
-      wpart: state.wpart
+      wpart: state.wpart, wpland: state.wpland
     };
     var out = {};
     for (var i = 0; i < SHELL_FIELDS.length; i++) {
@@ -5726,6 +5804,7 @@
       alarms:       alarms,       // user data — travels in every backup funnel
       weather:      vals.weather,
       wpart:        vals.wpart,   // "Mine" wallpaper recipe (Wallpaper Generator)
+      wpland:       vals.wpland,  // "Living land" { style, seed, motion } (wallpaper/land.js)
       ver:          2,
       sm:           sm,
       alarmTombs:   tombs
@@ -5782,6 +5861,10 @@
     if (data.wpart !== undefined && shellCanon("wpart", data.wpart) !== undefined) {
       state.wpart = shellCanon("wpart", data.wpart);
       wpArtWrite(state.wpart);
+    }
+    if (data.wpland !== undefined && shellCanon("wpland", data.wpland) !== undefined) {
+      state.wpland = shellCanon("wpland", data.wpland);
+      wpLandWrite(state.wpland);
     }
     if (typeof data.syncInterval === "number" &&
         data.syncInterval >= 0 && data.syncInterval <= 60 &&
@@ -10633,8 +10716,13 @@
       }),
       wallpaper: pic ? "custom" : state.wallpaper,
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
+      land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style } : null,
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;
+        if (w.id === "land") {
+          var LT = window.OrosLand, lu = (LT && typeof LT.thumb === "function") ? LT.thumb(wpAccent(), state.theme) : "";
+          css = lu ? 'url("' + lu + '") center / cover no-repeat, #17393f' : "linear-gradient(160deg, #17393f 0%, #0f2a33 70%)";
+        }
         if (w.id === "custom") {
           if (!hasArt) css = null;   // nothing made yet → "make one"
           else {
@@ -10747,6 +10835,7 @@
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
       case "me:name":      meSetName(value); return;
+      case "wpland:new":   wpLandNewShape(); settingsNotify(); return;
     }
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
@@ -11520,6 +11609,7 @@
     document.title = ((tv === nk) ? app.name : tv) + " · orOS";   // #4: title follows the running app (translated)
     if (SOLO) { soloMenuClose(); soloPaint(); }
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations pause under an app
+    wpLandRefresh();
   }
 
   function returnToDesktop() {
@@ -11540,6 +11630,7 @@
     mb.setAttribute("title", window.t("bar.menu"));   // paint NOW — don't wait for applyLang()
     document.title = "orOS";                 // v0.18.2: back to the bare OS title
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations move again
+    wpLandRefresh();   // the desktop may have changed while hidden
     tourMaybe();   // a first-run tour put off by a launch-param app
   }
 

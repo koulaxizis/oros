@@ -1007,6 +1007,7 @@ orosPack("de", "shell", {
  "wp.name.borealis": "Nordlicht",
  "wp.name.clear": "Keins",
  "wp.name.custom": "Mein Bild",
+ "wp.name.land": "Lebendige Landschaft",
  "wp.name.dusk": "Adwaita-Dämmerung",
  "wp.name.ember": "Glut",
  "wp.name.forest": "Waldnacht",

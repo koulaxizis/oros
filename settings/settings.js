@@ -322,6 +322,10 @@
       grid.appendChild(b);
     });
     c3.appendChild(grid);
+    if (s.land) {                                      // Living land: another shape
+      c3.appendChild(actions(button(t("a.wallpaper.land.new"), "wpland:new", function () { set("wpland:new", 1); })));
+      c3.appendChild(el("p", "hint", t("a.wallpaper.land.hint")));
+    }
     if (s.suggested) c3.appendChild(el("p", "hint", t("a.wallpaper.hint")));
     host.appendChild(c3);
 
