@@ -777,7 +777,7 @@ body.tr-open { overflow: hidden; }
 .gt-sens-head { margin-top: 12px; font-weight: 600; }
 .gt-sens-warn { margin: 4px 0 10px; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--border)); border-radius: 8px; }
 .gt-sens-warn .hint { color: var(--text); }
-/* orOS Gate: Claude's changes, a closed section with one compact line each (6.04.02) */
+/* orOS Gate: Claude's changes, a closed section with one compact line each (6.05.01) */
 .gt-chg { margin: 10px 0 6px; border: 1px solid var(--border); border-radius: 10px; }
 .gt-chg > summary { min-height: 44px; padding: 0 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; list-style: none; }
 .gt-chg > summary::-webkit-details-marker { display: none; }

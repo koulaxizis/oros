@@ -1080,7 +1080,7 @@
         }
       }
       // Claude's changes from every device (synced), with Undo: a
-      // section that starts closed (6.04.02) and keeps its state across
+      // section that starts closed (6.05.01) and keeps its state across
       // repaints; one compact line per change, Undo small at its end.
       var chg = typeof G.changes === "function" ? G.changes().slice(0, 30) : [];
       if (chg.length) {

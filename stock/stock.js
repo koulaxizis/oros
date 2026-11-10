@@ -4329,6 +4329,22 @@
     watchPalette();
     render();
     takeStaged();
+    autoShop();
+  }
+  // ST-AUTO: the shop's new paid orders become sales here (stock/shop.js auto)
+  function autoShop() {
+    if (!shopReady() || typeof window.OrosStockShop.auto !== "function") return;
+    window.OrosStockShop.auto({
+      lang: LANG, core: C, toast: showToast, todayYmd: todayYmd,
+      data: function () { return data; },
+      byItem: function (id) { return byId("items", id); },
+      addMoves: function (list) {
+        var now = Date.now();
+        list.forEach(function (mv) { mv.m = now; data.moves.push(mv); });
+        save();
+        render();
+      }
+    });
   }
 
   boot();
