@@ -4,6 +4,7 @@ import java.net.IDN;
 import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -25,6 +26,10 @@ import javax.crypto.spec.SecretKeySpec;
  *    HTML autocomplete token, the input type, then the field's name,
  *    id and hint text (lower-case, accents removed; EN / EL / DE).
  *  - totp(): RFC 6238, as orOS computes it (pmcore.js).
+ *  - nameWords() / names(): the "matches by name" guess (5.99.00): an
+ *    entry whose title or saved sites name the app or the page's
+ *    domain (a 2FA code imported as "PayPal" in the PayPal app). Only
+ *    a guess: the person confirms it before anything is filled.
  */
 final class AfMatch {
     private AfMatch() {
@@ -181,20 +186,20 @@ final class AfMatch {
 
     // Same words as extension/pmfill.js RX, matched on text without accents.
     private static final Object[][] RX = {
-            {OTP, p("one.?time|\\botp\\b|totp|2fa|mfa|two.?factor|verification|auth.?code|κωδικ.*(επαληθευσης|μιας)|bestatigungs|einmal")},
+            {OTP, p("one.?time|\\botp\\b|totp|2fa|mfa|two.?factor|verification|verify|auth.?code|sms.?code|passcode|κωδικ.*(επαληθευσης|μιας)|bestatigungs|einmal")},
             {CVV, p("cvv|cvc|csc|security.?code|κωδικ.*ασφαλειας|pruf")},
             {CC_NAME, p("card.?holder|name.?on.?card|cc.?name|κατοχ|karteninhaber")},
             {CC_NUM, p("card.?num|cc.?num|credit.?card|αριθμ.*καρτας|kartennummer")},
             {CC_EXP, p("expir|valid.?thru|ληξη|ablauf|gultig")},
-            {EMAIL, p("e-?mail")},
+            {EMAIL, p("e.?mail")},
             {USER, p("user|login|account|χρηστη|benutzer|anmelde")},
             {FULL, p("full.?name|ονοματεπωνυμο|vollstandiger")},
             {LAST, p("last.?name|surname|family|lname|(?<!ονοματ)επωνυμο|nachname")},
             {FIRST, p("first.?name|given|fname|ονομα(?![α-ω])|vorname")},
             {PHONE, p("phone|mobile|τηλεφωνο|κινητο|telefon")},
             {COMPANY, p("company|organi[sz]ation|εταιρ|firma")},
-            {LINE2, p("address.?(line)?.?2|addr2|apartment|suite|floor|οροφ|adresszusatz")},
-            {STREET, p("address.?(line)?.?1|street|addr1|οδος|διευθυνση|strasse|straße")},
+            {LINE2, p("address.?(line)?.?2|addr.?2|apartment|suite|floor|οροφ|adresszusatz")},
+            {STREET, p("address.?(line)?.?1|street|addr.?1|οδος|διευθυνση|strasse|straße")},
             {CITY, p("city|town|locality|πολη|stadt")},
             {ZIP, p("zip|postal|post.?code|ταχυδρομικος|plz|postleitzahl")},
             {REGION, p("state|region|province|county|νομος|περιφερεια|bundesland")},
@@ -206,12 +211,85 @@ final class AfMatch {
         return Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}+", "").toLowerCase(Locale.ROOT);
     }
 
-    /** Field words (name, id, hint, label) → a kind, or NONE. */
+    /** Field words (name, id, hint, label) → a kind, or NONE. Ids are
+     *  split into words first: "otpCode", "et_otp", "otp1" → "otp". */
     static int fromText(String text) {
-        String t = fold(text);
+        String t = fold(text == null ? "" : text.replaceAll("(\\p{Ll})(\\p{Lu})", "$1 $2")
+                .replaceAll("(\\p{L})(\\d)", "$1 $2").replace('_', ' '));
         if (t.isEmpty()) return NONE;
         for (Object[] r : RX) if (((Pattern) r[1]).matcher(t).find()) return (Integer) r[0];
         return NONE;
+    }
+
+    // ---- matches by name (a guess the person confirms) ----
+    private static final Set<String> GENERIC = new HashSet<>(Arrays.asList(
+            "com", "org", "net", "gov", "edu", "co", "ac", "www", "app", "apps", "android", "mobile", "client",
+            "login", "signin", "auth", "account", "accounts", "secure", "online", "web", "my", "the", "inc", "ltd",
+            "beta", "debug", "release", "prod", "main", "official", "free", "lite", "pro", "plus"));
+
+    private static void addWord(Set<String> out, String w) {
+        w = fold(w).replaceAll("[^\\p{L}\\p{N}]+", "");
+        if (w.length() >= 3 && !GENERIC.contains(w) && !w.matches("\\d+")) out.add(w);
+    }
+
+    /** The name of a web page's domain: only the label before the public
+     *  suffix ("paypal" of www.paypal.com or paypal.co.uk), never a
+     *  sub-domain ("paypal.evil.example" is "evil"). */
+    static String domainWord(String host) {
+        if (host == null || host.isEmpty()) return "";
+        String h = host(host);
+        if (h.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+$") || h.contains(":")) return "";
+        String[] p = h.split("\\.");
+        if (p.length < 2) return "";
+        int i = p.length - 2;
+        if (i >= 1 && p[p.length - 1].length() == 2 && GENERIC.contains(p[i])) i--;
+        return p[i];
+    }
+
+    /** The words that name an app (package parts and its label) or a
+     *  page (its domain word). */
+    static Set<String> nameWords(String pkg, String label, String host) {
+        Set<String> out = new LinkedHashSet<>();
+        if (host != null && !host.isEmpty()) addWord(out, domainWord(host));
+        if (pkg != null) for (String s : pkg.split("\\.")) addWord(out, s);
+        if (label != null) {
+            for (String s : fold(label).split("[^\\p{L}\\p{N}]+")) addWord(out, s);
+            addWord(out, label);   // "Pay Pal" → "paypal"
+        }
+        return out;
+    }
+
+    /** Whether a text (an entry's title, its sites' domain words) names
+     *  one of the words: as a whole word, or for 5+ letters written
+     *  inside it ("PayPal Business", "MyPayPal"). */
+    static boolean names(String text, Set<String> words) {
+        if (words == null || words.isEmpty()) return false;
+        String t = fold(text);
+        if (t.isEmpty()) return false;
+        Set<String> toks = new HashSet<>(Arrays.asList(t.split("[^\\p{L}\\p{N}]+")));
+        String compact = t.replaceAll("[^\\p{L}\\p{N}]+", "");
+        for (String w : words) {
+            if (toks.contains(w)) return true;
+            if (w.length() >= 5 && compact.contains(w)) return true;
+        }
+        return false;
+    }
+
+    /** What a search box finds: every word typed is in the text. */
+    static boolean finds(String text, String query) {
+        String q = fold(query).trim();
+        if (q.isEmpty()) return true;
+        String t = fold(text);
+        for (String w : q.split("\\s+")) if (!t.contains(w)) return false;
+        return true;
+    }
+
+    /** Several boxes for one code (one digit each): the code split over
+     *  them, else the whole code in each. */
+    static String part(String code, int i, int boxes) {
+        if (code == null) return null;
+        if (boxes > 1 && boxes == code.length()) return code.substring(i, i + 1);
+        return code;
     }
 
     // ---- saving (PW-AF3), as extension/pmfill.js readLogin ----

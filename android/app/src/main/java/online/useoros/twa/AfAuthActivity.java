@@ -15,10 +15,18 @@ import android.os.CancellationSignal;
 import android.security.keystore.KeyPermanentlyInvalidatedException;
 import android.security.keystore.UserNotAuthenticatedException;
 import android.service.autofill.Dataset;
+import android.text.Editable;
+import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Base64;
+import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -33,13 +41,16 @@ import java.util.List;
  * A tap on an orOS suggestion (PW-AF2). Asks for the fingerprint,
  * face or screen lock, opens the sealed values (AfVault "index", in
  * memory only), and hands Android exactly one entry's values for the
- * fields of this form. In an app no login names yet, the person first
- * picks a login and confirms that it belongs to this app; the link is
+ * fields of this form. "Search" lists every login (on a 2FA screen
+ * only the 2FA codes) with a search box, the matches by name first;
+ * a login picked there, or a match by name, is filled only after the
+ * person confirms that it belongs to this app or page, and the link is
  * kept on this phone. Shows nothing else and keeps nothing.
  */
 public class AfAuthActivity extends Activity {
     static final String X_ID = "af-id", X_PICK = "af-pick", X_PKG = "af-pkg", X_BROWSER = "af-browser",
-            X_KINDS = "af-kinds", X_IDS = "af-ids";
+            X_KINDS = "af-kinds", X_IDS = "af-ids", X_CONFIRM = "af-confirm", X_OTP = "af-otp", X_HOST = "af-host",
+            X_LINK = "af-link", X_GUESS = "af-guess";
     private static final int REQ_CREDENTIAL = 1;
     private boolean asked;
 
@@ -72,6 +83,7 @@ public class AfAuthActivity extends Activity {
         }
         if (index == null) { done(null); return; }
         if (getIntent().getBooleanExtra(X_PICK, false)) pick(index);
+        else if (getIntent().getBooleanExtra(X_CONFIRM, false)) confirm(find(index, getIntent().getStringExtra(X_ID)));
         else fill(find(index, getIntent().getStringExtra(X_ID)));
     }
 
@@ -127,42 +139,104 @@ public class AfAuthActivity extends Activity {
         return null;
     }
 
-    /** An app no login names: choose one, then confirm the link. */
+    /** "Search": every login (2FA codes only on a code screen), the
+     *  matches by name first, a search box on top; then confirm. */
     private void pick(JSONArray index) {
-        final List<JSONObject> logins = new ArrayList<>();
+        final boolean otp = getIntent().getBooleanExtra(X_OTP, false);
+        ArrayList<String> guess = getIntent().getStringArrayListExtra(X_GUESS);
+        final List<JSONObject> all = new ArrayList<>();
         for (int i = 0; i < index.length(); i++) {
             JSONObject e = index.optJSONObject(i);
-            if (e != null && ("login".equals(e.optString("k")) || "otp".equals(e.optString("k")))) logins.add(e);
+            if (e == null || !("login".equals(e.optString("k")) || "otp".equals(e.optString("k")))) continue;
+            if (otp && e.optJSONObject("o") == null) continue;
+            all.add(e);
         }
-        logins.sort((a, b) -> a.optString("t").compareToIgnoreCase(b.optString("t")));
-        if (logins.isEmpty()) {
-            Toast.makeText(this, R.string.af_none, Toast.LENGTH_LONG).show();
+        final List<String> first = guess != null ? guess : new ArrayList<>();
+        all.sort((a, b) -> {
+            boolean ga = first.contains(a.optString("i")), gb = first.contains(b.optString("i"));
+            if (ga != gb) return ga ? -1 : 1;
+            return a.optString("t").compareToIgnoreCase(b.optString("t"));
+        });
+        if (all.isEmpty()) {
+            Toast.makeText(this, otp ? R.string.af_none_otp : R.string.af_none, Toast.LENGTH_LONG).show();
             done(null);
             return;
         }
-        String[] labels = new String[logins.size()];
-        for (int i = 0; i < labels.length; i++) {
-            JSONObject e = logins.get(i);
-            String u = e.optString("u");
-            labels[i] = e.optString("t") + (u.isEmpty() ? "" : " · " + u);
-        }
+        final List<JSONObject> shown = new ArrayList<>(all);
+        final ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>());
+        final Runnable refresh = () -> {
+            adapter.clear();
+            for (JSONObject e : shown) {
+                String u = e.optString("u");
+                adapter.add(e.optString("t") + (u.isEmpty() ? "" : " · " + u));
+            }
+            adapter.notifyDataSetChanged();
+        };
+        refresh.run();
+        float dp = getResources().getDisplayMetrics().density;
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding((int) (20 * dp), (int) (8 * dp), (int) (20 * dp), 0);
+        EditText q = new EditText(this);
+        q.setSingleLine(true);
+        q.setHint(R.string.af_search_hint);
+        q.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        q.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
+        ListView list = new ListView(this);
+        list.setAdapter(adapter);
+        box.addView(q, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        box.addView(list, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (int) (320 * dp)));
+        q.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence c, int a, int b, int d) { }
+            @Override public void onTextChanged(CharSequence c, int a, int b, int d) { }
+            @Override public void afterTextChanged(Editable ed) {
+                shown.clear();
+                for (JSONObject e : all) if (AfMatch.finds(e.optString("t") + " " + e.optString("u"), ed.toString())) shown.add(e);
+                refresh.run();
+            }
+        });
+        String place = place();
+        final AlertDialog dlg = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle(getString(otp ? R.string.af_pick_title_otp : R.string.af_pick_title, place))
+                .setView(box)
+                .setNegativeButton(R.string.af_no, (d, w) -> done(null))
+                .setOnCancelListener(d -> done(null))
+                .create();
+        list.setOnItemClickListener((parent, view, which, id) -> {
+            if (which < 0 || which >= shown.size()) return;
+            JSONObject e = shown.get(which);
+            dlg.setOnCancelListener(null);
+            dlg.dismiss();
+            confirm(e);
+        });
+        dlg.show();
+    }
+
+    /** The app's name, or the page's host in a browser. */
+    private String place() {
+        String host = getIntent().getStringExtra(X_HOST);
+        if (getIntent().getBooleanExtra(X_BROWSER, false) && host != null && !host.isEmpty()) return host;
+        return appLabel(getIntent().getStringExtra(X_PKG));
+    }
+
+    /** "Use … in <app> (<package>)?" or "… on <host>?": a yes links the
+     *  entry to this app or page on this phone, then fills it. */
+    private void confirm(JSONObject e) {
+        if (e == null) { done(null); return; }
+        final String key = getIntent().getStringExtra(X_LINK);
         final String pkg = getIntent().getStringExtra(X_PKG);
-        final String appName = appLabel(pkg);
+        String host = getIntent().getStringExtra(X_HOST);
+        boolean web = getIntent().getBooleanExtra(X_BROWSER, false);
+        String msg = web ? getString(R.string.af_link_web_q, e.optString("t"), host)
+                : getString(R.string.af_link_q, e.optString("t"), appLabel(pkg), pkg);
         new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(getString(R.string.af_pick_title, appName))
-                .setItems(labels, (dlg, which) -> {
-                    JSONObject e = logins.get(which);
-                    new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                            .setMessage(getString(R.string.af_link_q, e.optString("t"), appName, pkg))
-                            .setPositiveButton(R.string.af_yes, (d2, w2) -> {
-                                if (pkg != null && !pkg.isEmpty()) AfVault.link(this, pkg, e.optString("i"));
-                                fill(e);
-                            })
-                            .setNegativeButton(R.string.af_no, (d2, w2) -> done(null))
-                            .setOnCancelListener(d2 -> done(null))
-                            .show();
+                .setMessage(msg)
+                .setPositiveButton(R.string.af_yes, (d2, w2) -> {
+                    if (key != null && !key.isEmpty()) AfVault.link(this, key, e.optString("i"));
+                    fill(e);
                 })
-                .setOnCancelListener(dlg -> done(null))
+                .setNegativeButton(R.string.af_no, (d2, w2) -> done(null))
+                .setOnCancelListener(d2 -> done(null))
                 .show();
     }
 
@@ -184,13 +258,14 @@ public class AfAuthActivity extends Activity {
         RemoteViews p = new RemoteViews(getPackageName(), R.layout.af_item);
         p.setTextViewText(R.id.af_title, e.optString("t"));
         Dataset.Builder b = new Dataset.Builder(p);
-        int set = 0;
+        int set = 0, boxes = 0, box = 0;
+        for (int k : kinds) if (k == AfMatch.OTP) boxes++;
         String code = null;
         for (int i = 0; i < ids.size(); i++) {
             String v;
             if (kinds[i] == AfMatch.OTP) {
                 if (code == null) code = code(e.optJSONObject("o"));
-                v = code;
+                v = AfMatch.part(code, box++, boxes);   // one digit per box when the code is split
             } else v = value(e, kinds[i]);
             if (v == null || v.isEmpty()) continue;
             b.setValue(ids.get(i), AutofillValue.forText(v));
