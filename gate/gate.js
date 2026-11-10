@@ -422,13 +422,33 @@
   }
   // A category: a stored one of that kind by name or id, or a built-in
   // id as budget_lines shows it (o-…, i-…).
+  // Budget's built-in categories (budget.js SEEDS / SEED_NAMES), stored
+  // only once changed. 6.05.03 (Chris 2026-11-10: «Uncategorized» in
+  // Charts): an id like o-transport that is none of them was taken as a
+  // built-in and Budget showed it as no category; now only these (by id
+  // or their English or Greek name) are.
+  var SEED_CATS = {
+    "o-groc": ["Groceries", "Σούπερ μάρκετ"], "o-eat": ["Eating out", "Φαγητό έξω"], "o-bills": ["Bills", "Λογαριασμοί"],
+    "o-home": ["Rent & home", "Ενοίκιο & σπίτι"], "o-trans": ["Transport", "Μεταφορές"], "o-health": ["Health", "Υγεία"],
+    "o-fun": ["Entertainment", "Ψυχαγωγία"], "o-cloth": ["Clothing", "Ρούχα"], "o-gift": ["Gifts", "Δώρα"], "o-other": ["Other", "Άλλα"],
+    "i-salary": ["Salary", "Μισθός"], "i-free": ["Freelance", "Ελεύθερο επάγγελμα"], "i-gift": ["Gifts", "Δώρα"], "i-other": ["Other", "Άλλα"]
+  };
   function catOf(ix, v, k) {
-    var hit = findIn(ix.cats.filter(function (c) { return c.k === k; }), v);
+    var mine = ix.cats.filter(function (c) { return c.k === k; });
+    var hit = findIn(mine, v);
     if (hit) return hit.id;
-    var s = String(v);
-    return TX_ID.test(s) && s.charAt(0) === k && s.charAt(1) === "-" ? s : "";
+    var s = String(v), f = fold(v), id = "";
+    Object.keys(SEED_CATS).forEach(function (sid) {
+      if (id || sid.charAt(0) !== k || mine.some(function (c) { return c.id === sid; })) return;
+      if (sid === s || SEED_CATS[sid].some(function (n) { return fold(n) === f; })) id = sid;
+    });
+    return id;
   }
-  function catList(ix, k) { return ix.cats.filter(function (c) { return c.k === k; }).map(function (c) { return c.n; }).join(", "); }
+  function catList(ix, k) {
+    var mine = ix.cats.filter(function (c) { return c.k === k; });
+    var seeds = Object.keys(SEED_CATS).filter(function (sid) { return sid.charAt(0) === k && !mine.some(function (c) { return c.id === sid; }); });
+    return mine.map(function (c) { return c.n; }).concat(seeds.map(function (sid) { return sid + " (" + SEED_CATS[sid][0] + ")"; })).join(", ");
+  }
   function liveTx(d, id) {
     var tombs = isObj(d.tombs) ? d.tombs : {};
     for (var i = 0; i < d.tx.length; i++) {
@@ -1601,6 +1621,25 @@
   // 6.01.02: the box's clock minus ours (from its "hi"), the last ping
   // tick and when the page was hidden: after a sleep the socket is renewed.
   var hiOff = null, pingAt = 0, hidAt = 0, PING_MS = 45000, SLEPT_MS = 60000;
+  // 6.05.03 (Chris 2026-11-10 19:25: orOS open, yet Claude got the
+  // closed-orOS copy): a window whose socket another window of this
+  // browser replaced (4001, "other") waited for good, and renew() skipped
+  // it, so when that window closed or slept nobody answered. The window
+  // with the socket stamps LIVE_KEY on each ping; one in "other" checks
+  // every OTHER_MS and takes over once the stamp is older than 2.5 pings.
+  var LIVE_KEY = "oros-gate-live", OTHER_MS = 60000, otherTimer = null, TAB = Math.random().toString(36).slice(2, 10);
+  function liveStamp() { try { localStorage.setItem(LIVE_KEY, JSON.stringify({ t: Date.now(), tab: TAB })); } catch (e) {} }
+  function liveStale(now) {
+    var o = readJSON(LIVE_KEY);
+    return !isObj(o) || typeof o.t !== "number" || o.tab === TAB || (now || Date.now()) - o.t > PING_MS * 2.5;
+  }
+  function watchOther() {
+    clearTimeout(otherTimer);
+    otherTimer = setTimeout(function () {
+      if (wsState !== "other" || ws || !pref().on) return;
+      if (liveStale()) { retry = 0; clearTimeout(retryTimer); connect(); } else watchOther();
+    }, OTHER_MS);
+  }
   function setWs(s) { if (wsState !== s) { wsState = s; changed(); } }
   function connect() {
     var p = pref();
@@ -1616,6 +1655,7 @@
     sock.onopen = function () {
       retry = 0;
       setWs("on");
+      liveStamp();
       sendVis(sock);
       if (pref().lvd) sendLv(sock);
       else sendBase(sock);
@@ -1628,6 +1668,7 @@
         pingAt = Date.now();
         if (gap > PING_MS * 2.5) { renew(); return; }   // the page was frozen: the box counts this socket asleep
         try { sock.send("ping"); } catch (e) {}
+        liveStamp();
       }, PING_MS);
     };
     sock.onmessage = function (ev) {
@@ -1644,7 +1685,7 @@
       clearInterval(pingTimer);
       // 4001: a newer connection of this gate took over; 4004: the gate is gone.
       if (ev && ev.code === 4004) { setWs("gone"); return; }
-      if (ev && ev.code === 4001) { setWs("other"); return; }
+      if (ev && ev.code === 4001) { setWs("other"); watchOther(); return; }
       schedule();
     };
     sock.onerror = function () {};
@@ -1657,7 +1698,9 @@
   // A fresh socket after a sleep: the box sends the changes that waited
   // meanwhile, and it counts this device awake again.
   function renew() {
-    if (!pref().on || wsState === "gone" || wsState === "other") return;
+    if (!pref().on || wsState === "gone") return;
+    // another window of this browser has the socket: take over only once it went quiet
+    if (wsState === "other" && !ws && !liveStale()) { watchOther(); return; }
     if (ws) { var old = ws; ws = null; clearInterval(pingTimer); try { old.close(1000, "renew"); } catch (e) {} }
     retry = 0; clearTimeout(retryTimer);
     connect();

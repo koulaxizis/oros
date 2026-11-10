@@ -19,6 +19,9 @@
   var A = null;
   var kindView = "o";          // donut: expenses | income (session only)
   var drill = "";              // donut: the main category opened into its subcategories
+  // 6.05.03 (Chris 2026-11-10 «Τα other τι είναι;»): a tap on Other shows
+  // every category of that view (month, kind, drill-down); session only
+  var allOn = "";
   var custom = { from: "", to: "" };
   var openDay = "";            // calendar: the day whose entries are open
 
@@ -221,7 +224,8 @@
     }
     parts.sort(function (a, b) { return b.a - a.a || (a.name < b.name ? -1 : 1); });
     if (!parts.length) { card.appendChild(el("p", "hint", t("in.none"))); return; }
-    if (parts.length > 8) {
+    var allKey = A.viewMk() + "|" + k + "|" + drill;
+    if (parts.length > 8 && allOn !== allKey) {
       var rest = parts.slice(7), sa = 0, sp = 0;
       rest.forEach(function (p) { sa += p.a; sp += p.p; });
       parts = parts.slice(0, 7).concat([{ id: null, name: t("in.other"), col: 8, a: sa, p: sp }]);
@@ -256,17 +260,20 @@
     var ul = el("ul", "rank");
     parts.forEach(function (p) {
       var li = el("li");
-      var b = el(p.id !== null ? "button" : "div", "rank-row");
+      var b = el("button", "rank-row");
+      b.type = "button";
       if (p.id !== null) {
-        b.type = "button";
         b.addEventListener("click", function () { open(p); });
         if (kids[p.id]) b.setAttribute("aria-haspopup", "true");
+      } else {
+        b.setAttribute("aria-expanded", "false");
+        b.addEventListener("click", function () { allOn = allKey; A.renderCharts(); });
       }
       var pc = I.pct(p.a, p.p);
       b.setAttribute("aria-label", p.name + ", " + A.money(p.a) + ", " + (pc === null ? t("in.chNew") : pc >= 0 ? t("in.chUp", { p: pc }) : t("in.chDown", { p: -pc })));
       var top = el("span", "rank-top");
       top.appendChild(p.id !== null && A.catBadge && !(keep && !pm[p.id]) ? A.catBadge(p.id) : A.swatch(p.col));
-      top.appendChild(el("span", "rank-name", p.name + (kids[p.id] ? " ›" : "")));
+      top.appendChild(el("span", "rank-name", p.name + (kids[p.id] || p.id === null ? " ›" : "")));
       top.appendChild(chip(pc, k === "o"));
       top.appendChild(el("span", "rank-amt", A.money(p.a)));
       top.appendChild(el("span", "rank-pct", Math.round(p.a * 100 / total) + "%"));

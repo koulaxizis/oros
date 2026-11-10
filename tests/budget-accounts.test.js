@@ -139,3 +139,17 @@ test("gate budget_balances: a correction on that day or a new start, chk, all or
 test("budget_balances is a Budget change the relay may queue", () => {
   assert.ok(G.QUEUED.indexOf("budget_balances") >= 0);
 });
+
+test("gate categories (6.05.03): only real built-ins, by id or name; a made-up o-… id is refused", () => {
+  let n = 0;
+  const newId = () => "n" + (++n);
+  const d = sample();
+  const add = (category) => G.budgetWrite("add", d, { entries: [{ date: "2026-11-05", kind: "expense", amount: "9.60", category }] }, 1000, newId);
+  assert.equal(add("o-trans").data.tx.find((x) => x.d === "2026-11-05").c, "o-trans");
+  assert.equal(add("Μεταφορές").data.tx.find((x) => x.d === "2026-11-05").c, "o-trans");
+  assert.equal(add("eating out").data.tx.find((x) => x.d === "2026-11-05").c, "o-eat");
+  const bad = add("o-transport");
+  assert.equal(bad.ok, false);
+  assert.match(bad.err, /no expense category "o-transport"\. Categories: .*o-trans \(Transport\)/);
+  assert.equal(add("i-salary").ok, false, "an income built-in is not an expense one");
+});
