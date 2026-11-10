@@ -42,8 +42,14 @@
 
     <!-- Passwords autofill (PW-AF2) -->
     <string name="af_service">orOS Passwörter</string>
-    <string name="af_pick">Login aus orOS wählen</string>
+    <string name="af_pick">In orOS Passwords suchen</string>
     <string name="af_pick_title">Login für %1$s</string>
+    <string name="af_pick_otp">2FA-Codes in orOS suchen</string>
+    <string name="af_pick_title_otp">2FA-Code für %1$s</string>
+    <string name="af_search_hint">Suchen</string>
+    <string name="af_guess">Name passt</string>
+    <string name="af_link_web_q">„%1$s“ ab jetzt auf %2$s verwenden? orOS merkt sich das auf diesem Handy.</string>
+    <string name="af_none_otp">Noch keine 2FA-Codes in orOS Passwords.</string>
     <string name="af_link_q">„%1$s“ ab jetzt in %2$s (%3$s) verwenden? orOS merkt sich das auf diesem Handy.</string>
     <string name="af_yes">Verwenden</string>
     <string name="af_no">Abbrechen</string>

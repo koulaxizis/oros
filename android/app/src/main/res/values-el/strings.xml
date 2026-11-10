@@ -42,8 +42,14 @@
 
     <!-- Passwords autofill (PW-AF2) -->
     <string name="af_service">Κωδικοί orOS</string>
-    <string name="af_pick">Διάλεξε λογαριασμό από το orOS</string>
+    <string name="af_pick">Αναζήτηση στο orOS Passwords</string>
     <string name="af_pick_title">Λογαριασμός για %1$s</string>
+    <string name="af_pick_otp">Αναζήτηση κωδικών 2FA στο orOS</string>
+    <string name="af_pick_title_otp">Κωδικός 2FA για %1$s</string>
+    <string name="af_search_hint">Αναζήτηση</string>
+    <string name="af_guess">Ταιριάζει το όνομα</string>
+    <string name="af_link_web_q">Να χρησιμοποιείται το «%1$s» στο %2$s από εδώ και πέρα; Το orOS το θυμάται σε αυτό το κινητό.</string>
+    <string name="af_none_otp">Δεν υπάρχουν ακόμη κωδικοί 2FA στο orOS Passwords.</string>
     <string name="af_link_q">Να χρησιμοποιείται το «%1$s» στο %2$s (%3$s) από εδώ και πέρα; Το orOS το θυμάται σε αυτό το κινητό.</string>
     <string name="af_yes">Χρήση</string>
     <string name="af_no">Άκυρο</string>
