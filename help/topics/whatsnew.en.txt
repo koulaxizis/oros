@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.08.01
+- **Turning off seasonal decorations turns off everything under it.** In `Settings` › `Appearance` › `Seasonal decorations`, when `Decorate the desktop in season` is off, the options and the list of events below it are hidden and a decoration you are trying or kept stops. Your choices stay and come back when you turn it on again.
+
 ## Version 6.08.00
 - **Try Living land in Wallpaper Generator.** A new `Living land` tab sits next to `Patterns`. Pick `Islands`, `Hills` or `Garden`, type a shape number or roll the dice, and the preview shows the land on a sample desktop. Keep the ones you like with the star (they sync to your other devices), and `Set as wallpaper` puts one on your desktop.
 
