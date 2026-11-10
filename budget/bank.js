@@ -895,6 +895,13 @@
       if (dm) row.dm = dm;
       if (byId[row.id]) { row.st = "same"; row.on = false; used[row.id] = 1; return row; }
       if (("tx:" + row.id) in tombs) { row.st = "gone"; row.on = false; return row; }
+      // BK-GONE (6.04.01, Chris's check 2026-11-10: two deleted Telekom
+      // lines came back): the same line read earlier WITHOUT an account
+      // (another id) and deleted here stays deleted when read for one
+      if (ac) {
+        var key0 = it.fit ? "f||" + it.fit : "t||" + it.d + "|" + it.amt + "|" + fold(it.text);
+        if (("tx:" + bankId(key0 + "|" + seen[key])) in tombs) { row.st = "gone"; row.on = false; return row; }
+      }
       var twin = it.fit && byFit[it.fit] && !used[byFit[it.fit].id] ? byFit[it.fit] : null;
       var keyTwin = function (k) {
         var hit = null;

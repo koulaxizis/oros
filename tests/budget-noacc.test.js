@@ -93,3 +93,15 @@ test("banklive, bankui and the Overview use it; every string in EN, EL and DE", 
   }
   for (const k of ["dup_noacc", "flt.noAcc", "na.gone", "na.moved"]) assert.ok(de.includes('"' + k + '":'), k + " DE");
 });
+
+test("plan (BK-GONE, 6.04.01): a line read without an account and deleted stays deleted when read for one", () => {
+  const first = B.entries(B.plan(items, { tx: [], ac: "" }), "");
+  const tombs = {};
+  first.forEach((x) => { tombs["tx:" + x.id] = 5; });
+  const rows = B.plan(items, { tx: [], tombs, ac: "acc1" });
+  assert.deepEqual(rows.map((r) => r.st), ["gone", "gone"], "by FITID and by date + amount + text");
+  assert.equal(B.entries(rows, "acc1").length, 0);
+  // one of them deleted: only that one stays out
+  const one = B.plan(items, { tx: [], tombs: { ["tx:" + first[0].id]: 5 }, ac: "acc1" });
+  assert.deepEqual(one.map((r) => r.st), ["gone", "new"]);
+});
