@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.05.02
+- **Claude works with Budget while orOS is closed.** It sees about the last 13 months of entries for whatever days it asks, with your account balances (as they were when orOS closed) and the possible duplicate purchases. Deletions and transfers it makes wait and run as soon as you open orOS; more than 5 deletions ask you then. It also sees what it changed itself in the last 30 days.
+
 ## Version 6.05.01
 - **Claude's changes take less room.** In Settings › Connected services, the list of Claude's changes is now one closed line with the count; open it to see each change on one short line with a small `Undo` beside it. "1 item" is written right too.
 
