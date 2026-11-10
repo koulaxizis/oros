@@ -141,7 +141,7 @@ export const TOOLS = [
   },
   {
     name: "budget_lines",
-    description: "Budget entries (income and expenses, bank lines included) between two days, oldest first, 500 per page. Amounts are decimal strings in the Budget's main currency. Each line names its area; the answer lists Budget's areas (words, invoice series, shared costs and shares) and its stored categories (kind, main category, area).",
+    description: "Budget entries (income and expenses, bank lines included) between two days, oldest first, 500 per page. Amounts are decimal strings in the Budget's main currency. Each line names its area; the answer lists Budget's areas (words, invoice series, shared costs and shares), its stored categories (kind, main category, area), its accounts (balance at the end of `to` in the account's currency, area, last checked day, and the bank's last balance with Budget's on that day and the difference) and possible_duplicates: pairs of expenses among all the days asked that look like one purchase read twice (same amount, 0–4 days apart, different accounts or one without, a shared word in the text) for the owner to confirm before budget_delete.",
     inputSchema: {
       type: "object",
       properties: {
@@ -312,6 +312,28 @@ export const TOOLS = [
       additionalProperties: false
     },
     annotations: { readOnlyHint: false, destructiveHint: true }
+  },
+  {
+    name: "budget_balances",
+    description: "Brings Budget's accounts to the owner's real balances (at most 20 per call, all or none): for each account, its balance at the end of date, in the account's own currency (a credit card's or a loan's debt is negative). Budget does it as its own Update balance: an account with nothing but a starting balance has that changed; any other gets a balance correction on that day, which is neither income nor an expense and counts in no total. The answer says each account's balance before and after; an account that already agrees is left as it is. Same rule as budget_add; the owner is notified and can undo it.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        accounts: { type: "array", minItems: 1, maxItems: 20, items: {
+          type: "object",
+          properties: {
+            account: { type: "string", description: "A Budget account name or id (budget_lines accounts)." },
+            balance: { type: "string", description: "The real balance, e.g. \"2770.56\" or \"-1447.37\"." },
+            date: { type: "string", description: "The day of that balance, YYYY-MM-DD (the balance at its end)." }
+          },
+          required: ["account", "balance", "date"],
+          additionalProperties: false
+        } }
+      },
+      required: ["accounts"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
   },
   {
     name: "budget_delete",

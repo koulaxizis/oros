@@ -108,7 +108,7 @@
 
   // budget_lines: raw = the parsed oros-budget-data, args from Claude.
   // → { ok:true, data } | { ok:false, err }
-  function budgetLines(raw, args) {
+  function budgetLines(raw, args, L) {
     if (!isObj(args)) return { ok: false, err: "The arguments must be an object." };
     var from = String(args.from || ""), to = String(args.to || "");
     if (!YMD.test(from) || !YMD.test(to) || isNaN(Date.parse(from)) || isNaN(Date.parse(to))) return { ok: false, err: "from and to must be days as YYYY-MM-DD." };
@@ -162,6 +162,12 @@
     if (catOut.length) data.categories = catOut;
     if (offset + PAGE < rows.length) data.next_offset = offset + PAGE;
     if (acc) data.account = accs[acc];
+    // AC-GATE (6.04.00): the accounts with their balances at the end of
+    // `to`, and purchases that look read twice among the days asked
+    var accOut = accountsOut(d, L || null, to);
+    if (accOut.length) data.accounts = accOut;
+    var dups = dupPairs(rows, 100);
+    if (dups.length) data.possible_duplicates = dups;
     return { ok: true, data: data };
   }
 
@@ -750,10 +756,181 @@
     return { done: "Transfer " + xid + " from " + (x.k === "o" ? mine.n : oth.n) + " to " + (x.k === "o" ? oth.n : mine.n) + " made; deleted " + ids.join(", ") + ".", ids: [xid].concat(ids) };
   }
 
+  // AC-GATE (6.04.00, Chris 2026-11-10 «zero difference every day»):
+  // accounts' balances as Budget counts them (= budget.js accBalances,
+  // tests/budget-accounts.test.js keeps the two equal), L = budget/loans.js
+  // when loaded. → { accountId: cents }, live accounts only.
+  function accBals(d, L, upto) {
+    var tombs = isObj(d.tombs) ? d.tombs : {}, bal = {};
+    function live(key, tomb) { return (Array.isArray(d[key]) ? d[key] : []).filter(function (x) { return isObj(x) && typeof x.id === "string" && !deadIn(tombs, tomb, x); }); }
+    live("acc", "acc").forEach(function (a) { bal[a.id] = typeof a.o === "number" ? a.o : 0; });
+    live("tx", "tx").forEach(function (x) { if (x.ac && bal[x.ac] !== undefined && x.d <= upto) bal[x.ac] += x.k === "i" ? x.a : -x.a; });
+    live("xfer", "xfer").forEach(function (x) {
+      if (x.d > upto) return;
+      if (bal[x.f] !== undefined) bal[x.f] -= x.a;
+      if (bal[x.t] !== undefined) bal[x.t] += x.a;
+    });
+    live("adj", "adj").forEach(function (x) { if (x.d <= upto && bal[x.ac] !== undefined) bal[x.ac] += x.a; });
+    if (L && typeof L.balanceMoves === "function") {
+      var mv = L.balanceMoves(live("loan", "loan"), live("lpay", "lpay"), upto);
+      Object.keys(mv).forEach(function (id) { if (bal[id] !== undefined) bal[id] += mv[id]; });
+    }
+    return bal;
+  }
+  // The bank's last balance for an account (BK-5: bnk rows, PayPal's left out).
+  function bankBal(d, a, cu) {
+    var r = null;
+    (Array.isArray(d.bnk) ? d.bnk : []).forEach(function (x) {
+      if (isObj(x) && x.src !== "pp" && x.ac === a.id && x.bc === cu && typeof x.bb === "number" && typeof x.bd === "string" && YMD.test(x.bd) && (!r || x.bd > r.bd)) r = x;
+    });
+    return r;
+  }
+  // budget_lines `accounts`: each live account with its balance at the
+  // end of `upto`, and the bank's last balance next to Budget's on that day.
+  function accountsOut(d, L, upto) {
+    var tombs = isObj(d.tombs) ? d.tombs : {}, ars = {};
+    var main = isObj(d.set) && typeof d.set.cur === "string" && /^[A-Z]{3}$/.test(d.set.cur) ? d.set.cur : "EUR";
+    liveAreas(d).forEach(function (a) { ars[a.id] = a.n; });
+    var bal = accBals(d, L, upto), memo = {};
+    return (Array.isArray(d.acc) ? d.acc : []).filter(function (a) { return isObj(a) && typeof a.id === "string" && !deadIn(tombs, "acc", a); }).map(function (a) {
+      var cu = typeof a.cur === "string" && /^[A-Z]{3}$/.test(a.cur) ? a.cur : main;
+      var o = { name: String(a.n || a.id), id: a.id, currency: cu, balance: cents(bal[a.id]) };
+      if (typeof a.dm === "string" && ars[a.dm]) o.area = ars[a.dm];
+      if (typeof a.cys === "number") o.credit_card = true;
+      if (typeof a.chk === "string") o.checked = a.chk;
+      if (a.am === true) o.auto_match = true;
+      var r = bankBal(d, a, cu);
+      if (r) {
+        if (!memo[r.bd]) memo[r.bd] = accBals(d, L, r.bd);
+        var mine = memo[r.bd][a.id] || 0;
+        o.bank = { day: r.bd, balance: cents(r.bb), budget_that_day: cents(mine), difference: cents(r.bb - mine) };
+      }
+      return o;
+    }).sort(function (x, y) { return fold(x.name) < fold(y.name) ? -1 : fold(x.name) > fold(y.name) ? 1 : 0; });
+  }
+  // budget_lines `possible_duplicates`: the same purchase read twice,
+  // e.g. from the card's feed and days later from the account it is
+  // charged to (Chris's check of 10/11: 26 pairs in Aug–Sep). Two
+  // expenses of the same amount, 0–4 days apart, not the same bank
+  // line, on different accounts (or one without), whose texts share a
+  // word once Greek look-alike letters are read as Latin ones.
+  var GR_LOOK = { "α": "a", "β": "b", "ε": "e", "ζ": "z", "η": "h", "ι": "i", "κ": "k", "μ": "m", "ν": "n", "ο": "o", "ρ": "p", "τ": "t", "υ": "y", "χ": "x" };
+  var GR_LAT = { "α": "a", "β": "v", "γ": "g", "δ": "d", "ε": "e", "ζ": "z", "η": "i", "θ": "th", "ι": "i", "κ": "k", "λ": "l", "μ": "m", "ν": "n", "ξ": "x", "ο": "o", "π": "p", "ρ": "r", "σ": "s", "τ": "t", "υ": "y", "φ": "f", "χ": "ch", "ψ": "ps", "ω": "o" };
+  var DUP_SKIP = { agora: 1, aghora: 1, purchase: 1, pos: 1, card: 1, karta: 1, pliromi: 1, plir: 1, apo: 1, pros: 1, the: 1, com: 1, www: 1, ltd: 1, ike: 1 };
+  function dupWords(s) {
+    var out = {};
+    fold(s).split(/[^a-zα-ω]+/).forEach(function (w) {
+      if (!w) return;
+      var mixed = /[a-z]/.test(w) && /[α-ω]/.test(w), map = mixed ? GR_LOOK : GR_LAT;
+      var v = w.replace(/[α-ω]/g, function (c) { return map[c] || ""; });
+      if (v.length >= 3 && !DUP_SKIP[v]) out[v.slice(0, 6)] = 1;
+    });
+    return out;
+  }
+  function dupPairs(rows, max) {
+    var ex = rows.filter(function (x) { return x.k === "o" && typeof x.a === "number" && x.a > 0; });
+    var words = {}, used = {}, out = [];
+    ex.forEach(function (x) { words[x.id] = dupWords((x.n || "") + " " + (x.ot || "")); });
+    var cand = [];
+    ex.forEach(function (x, i) {
+      for (var j = i + 1; j < ex.length; j++) {
+        var y = ex[j], gap = Math.abs(dayDiff(x.d, y.d));
+        if (y.a !== x.a || gap > 4) continue;
+        if (x.ac && y.ac && x.ac === y.ac) continue;
+        if (typeof x.fit === "string" && x.fit === y.fit) continue;
+        var share = Object.keys(words[x.id]).some(function (w) { return words[y.id][w]; });
+        if (share) cand.push({ x: x, y: y, gap: gap });
+      }
+    });
+    cand.sort(function (p, q) { return p.gap - q.gap || (p.x.d < q.x.d ? -1 : p.x.d > q.x.d ? 1 : 0); });
+    cand.forEach(function (c) {
+      if (out.length >= max || used[c.x.id] || used[c.y.id]) return;
+      used[c.x.id] = used[c.y.id] = 1;
+      var a = c.x.d <= c.y.d ? c.x : c.y, b = a === c.x ? c.y : c.x;
+      out.push({ ids: [a.id, b.id], amount: cents(a.a), dates: [a.d, b.d], texts: [String(a.n || a.ot || ""), String(b.n || b.ot || "")] });
+    });
+    return out.sort(function (p, q) { return p.dates[0] < q.dates[0] ? -1 : p.dates[0] > q.dates[0] ? 1 : 0; });
+  }
+  // AC-GATE: budget_balances — the owner's real balance of an account on
+  // a day; Budget is brought to it as Budget's own "Update balance" does
+  // (budget.js correctBal, AC-2): an account with nothing but a starting
+  // balance has that changed, any other gets a balance correction (adj)
+  // on that day, never income or an expense. chk = the day. All or none.
+  var BAL_MAX = 20;
+  function toSigned(v) {
+    var s = typeof v === "number" ? String(v) : String(v == null ? "" : v).trim().replace(/\s/g, "").replace(/^−/, "-").replace(",", ".");
+    if (!/^-?\d{1,12}(\.\d{1,2})?$/.test(s)) return null;
+    var c = Math.round(parseFloat(s) * 100);
+    return Math.abs(c) <= MAX_CENTS ? c : null;
+  }
+  function accKeys(o) {                        // budget.js normAcc key order: id, m, n, o, col, then extras by name
+    var y = { id: o.id, m: o.m, n: o.n, o: o.o, col: o.col };
+    Object.keys(o).filter(function (k) { return !(k in y); }).sort().forEach(function (k) { y[k] = o[k]; });
+    Object.keys(y).forEach(function (k) { if (y[k] === undefined) delete y[k]; });
+    return y;
+  }
+  function balWrite(d, args, now, newId, ix, L, undo) {
+    var list = args.accounts;
+    if (!Array.isArray(list) || !list.length) return { err: "accounts must be a list of 1 to " + BAL_MAX + " accounts." };
+    if (list.length > BAL_MAX) return { err: "At most " + BAL_MAX + " accounts per call." };
+    if (!Array.isArray(d.acc)) d.acc = [];
+    if (!Array.isArray(d.adj)) d.adj = [];
+    var seen = {}, plan = [], i;
+    for (i = 0; i < list.length; i++) {
+      var e = list[i], w = "accounts[" + i + "]: ";
+      if (!isObj(e)) return { err: w + "must be an object." };
+      var a = findIn(ix.accs, e.account);
+      if (!a) return { err: w + "no Budget account \"" + String(e.account == null ? "" : e.account).slice(0, 60) + "\". Accounts: " + ix.accs.map(function (q) { return q.n; }).join(", ") };
+      if (seen[a.id]) return { err: w + a.n + " is in the list twice." };
+      seen[a.id] = 1;
+      var day = String(e.date || "");
+      if (!YMD.test(day) || isNaN(Date.parse(day))) return { err: w + "date must be the day of that balance, YYYY-MM-DD." };
+      var want = toSigned(e.balance);
+      if (want === null) return { err: w + "balance must be an amount with at most 2 decimals, e.g. \"2770.56\" or \"-1447.37\" (a card's or a loan's debt is negative)." };
+      plan.push({ a: a, day: day, want: want });
+    }
+    var done = [], ids = [];
+    plan.forEach(function (p) {
+      var mine = accBals(d, L, p.day)[p.a.id] || 0, diff = p.want - mine;
+      var acc = d.acc.filter(function (x) { return isObj(x) && x.id === p.a.id && !deadIn(d.tombs, "acc", x); })[0];
+      if (!acc) return;
+      if (!diff) { done.push(p.a.n + " already " + cents(p.want)); return; }
+      function before() { if (!Object.prototype.hasOwnProperty.call(undo.ac, acc.id)) undo.ac[acc.id] = clone(acc); }
+      var used = (d.tx || []).some(function (x) { return isObj(x) && x.ac === acc.id && !deadIn(d.tombs, "tx", x); }) ||
+        (d.xfer || []).some(function (x) { return isObj(x) && (x.f === acc.id || x.t === acc.id) && !deadIn(d.tombs, "xfer", x); }) ||
+        d.adj.some(function (x) { return isObj(x) && x.ac === acc.id && !deadIn(d.tombs, "adj", x); }) ||
+        (d.loan || []).some(function (x) { return isObj(x) && x.ac === acc.id; }) ||
+        (d.lpay || []).some(function (x) { return isObj(x) && x.ac === acc.id; });
+      before();
+      var y = clone(acc);
+      if (!used) {
+        var o = (typeof y.o === "number" ? y.o : 0) + diff;
+        if (Math.abs(o) > MAX_CENTS) return;
+        y.o = o;
+      } else {
+        var jid;
+        do { jid = String(newId()); } while (!TX_ID.test(jid) || d.adj.some(function (q) { return isObj(q) && q.id === jid; }) || d.tombs["adj:" + jid] !== undefined);
+        var j = { id: jid, m: stampAfter(now, 0), a: diff, ac: acc.id, d: p.day, n: "" };
+        d.adj.push(j);
+        undo.j[jid] = null; undo.ja[jid] = j.m;
+        ids.push(jid);
+      }
+      y.chk = p.day > (typeof acc.chk === "string" ? acc.chk : "") ? p.day : acc.chk;
+      y.m = stampAfter(now, acc.m);
+      y = accKeys(y);
+      d.acc = d.acc.map(function (q) { return q === acc ? y : q; });
+      undo.aca[acc.id] = y.m;
+      ids.push(acc.id);
+      done.push(p.a.n + " " + cents(mine) + " → " + cents(p.want) + " (" + (diff > 0 ? "+" : "") + cents(diff) + (used ? ", balance correction on " + p.day : ", starting balance") + ")");
+    });
+    d.adj.sort(function (p1, p2) { return p1.id < p2.id ? -1 : p1.id > p2.id ? 1 : 0; });
+    return { done: done.join("; ") + ".", ids: ids, n: Object.keys(undo.aca).length };
+  }
+
   // op = "add" | "change" | "delete"; raw = oros-budget-data; now = ms;
   // newId() → a fresh id. → { ok, data, undo, ids, text } | { ok:false, err }
   // undo = { b: { id: entry before | null }, a: { id: m after | null } }
-  function budgetWrite(op, raw, args, now, newId, series) {
+  function budgetWrite(op, raw, args, now, newId, series, L) {
     if (!isObj(args)) return { ok: false, err: "The arguments must be an object." };
     var d = isObj(raw) ? clone(raw) : emptyBudget();
     if (!Array.isArray(d.tx)) d.tx = [];
@@ -776,6 +953,13 @@
       if (!cr.n) return { ok: false, err: "Nothing would change: the categories already look like that." };
       sortTx(d);
       return { ok: true, data: d, undo: undo, ids: Object.keys(undo.ca).sort(), text: cr.done };
+    }
+    if (op === "bal") {
+      undo.ac = {}; undo.aca = {}; undo.j = {}; undo.ja = {};
+      var br = balWrite(d, args, now, newId, ix, L || null, undo);
+      if (br.err) return { ok: false, err: br.err };
+      if (!br.n) return { ok: false, err: "Nothing would change: " + br.done };
+      return { ok: true, data: d, undo: undo, ids: br.ids, text: br.done };
     }
     if (op === "xfer") {
       undo.x = {}; undo.xa = {};
@@ -890,6 +1074,8 @@
     coll("area", "area", u.r, u.ra);
     coll("cats", "cat", u.c, u.ca);
     coll("xfer", "xfer", u.x, u.xa);
+    coll("adj", "adj", u.j, u.ja);
+    coll("acc", "acc", u.ac, u.aca);
     Object.keys(u.b).forEach(function (id) {
       var at = liveTx(d, id), before = u.b[id], after = u.a[id];
       if (after === null) {                         // the change deleted it
@@ -1148,7 +1334,7 @@
     return out;
   }
   // Apps whose items Claude may change, and the tools for them.
-  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete", "budget_areas", "budget_categories", "budget_transfer"],
+  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete", "budget_areas", "budget_categories", "budget_transfer", "budget_balances"],
                  kanban: ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"] };
   // GATE-ACT (2026-11-08): the apps Claude may change with the
   // Assistant's own tools, run in a hidden Assistant frame
@@ -1166,7 +1352,7 @@
   // closedCall): its own change tools less budget_delete and
   // budget_transfer (it deletes entries too), and
   // create_items. applyQueue runs nothing else (defence in depth).
-  var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
+  var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
                 "change_item", "link_items", "link_contact"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
@@ -1240,21 +1426,21 @@
   var DIG_TXT = {
     en: { subject: "orOS: Claude's changes on {day}", intro: "Claude changed these in your orOS today ({n}):",
           undone: "undone", undo: "To undo one: orOS › Settings › Claude (orOS Gate) › Claude's changes.", items: "{n} items",
-          tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries", budget_areas: "changed Budget's areas", budget_categories: "changed Budget's categories", budget_transfer: "turned a Budget entry into a transfer",
+          tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries", budget_areas: "changed Budget's areas", budget_categories: "changed Budget's categories", budget_transfer: "turned a Budget entry into a transfer", budget_balances: "matched Budget's account balances",
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
                    kanban_add_columns: "added Kanban columns",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
                    link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
-          tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά",
+          tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά", budget_balances: "συμφώνησε τα υπόλοιπα λογαριασμών του Budget",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
                    kanban_add_columns: "πρόσθεσε στήλες στο Kanban",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
                    link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
-          tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt",
+          tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt", budget_balances: "die Kontostände im Budget abgeglichen",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
                    kanban_add_columns: "Kanban-Spalten hinzugefügt",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
@@ -1286,7 +1472,7 @@
     return /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(u) ? u : RELAY;
   }
 
-  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, budgetLines: budgetLines, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
+  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
@@ -1992,7 +2178,7 @@
     if (line) {
       if (okIds.indexOf(line) < 0) return Promise.resolve({ ok: false, c: "The owner does not let Claude read " + (names[line] || line) + "." });
       var r;
-      if (line === "budget") r = budgetLines(readStore("oros-budget-data"), args);
+      if (line === "budget") r = budgetLines(readStore("oros-budget-data"), args, root.OrosBudgetLoans || null);
       else if (line === "invoices") r = root.OrosInvoicesCore ? invoiceList(root.OrosInvoicesCore, readStore("oros-invoices-data"), args, localDay()) : null;
       else if (line === "stock") r = root.OrosStockCore ? stockItems(root.OrosStockCore, readStore("oros-stock-data"), args) : null;
       else r = publishTitles(readStore("oros-publish-data"), args);
@@ -2001,7 +2187,7 @@
       var dd = r.data, k = (dd.lines || dd.documents || dd.items || dd.titles || []).length;
       return Promise.resolve({ ok: true, a: [line], k: k, c: JSON.stringify(dd) });
     }
-    var op = { budget_add: "add", budget_change: "change", budget_delete: "delete", budget_areas: "areas", budget_categories: "cats", budget_transfer: "xfer" }[name];
+    var op = { budget_add: "add", budget_change: "change", budget_delete: "delete", budget_areas: "areas", budget_categories: "cats", budget_transfer: "xfer", budget_balances: "bal" }[name];
     if (op) return change(op, args, p, names);
     var kop = { kanban_add_cards: "add_cards", kanban_move_cards: "move_cards", kanban_change_card: "change_card", kanban_add_columns: "add_columns" }[name];
     if (kop) return kanbanChange(kop, args, p, names);
@@ -2086,11 +2272,11 @@
     var asked = n > ASK_OVER && n <= 100 ? askDelete(n) : Promise.resolve(true);
     return asked.then(function (yes) {
       if (!yes) return { ok: false, c: "The owner did not confirm deleting " + n + " entries on the device; nothing was deleted." };
-      var r = budgetWrite(op, readStore("oros-budget-data"), args, Date.now(), newTxId, op === "areas" ? invSeries() : undefined);
+      var r = budgetWrite(op, readStore("oros-budget-data"), args, Date.now(), newTxId, op === "areas" ? invSeries() : undefined, root.OrosBudgetLoans || null);
       if (!r.ok) return { ok: false, c: r.err };
       if (!writeJSON("oros-budget-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
-      var uid = remember("budget", { cats: "budget_categories", xfer: "budget_transfer" }[op] || "budget_" + op, r.undo, now, r.ids.length);
+      var uid = remember("budget", { cats: "budget_categories", xfer: "budget_transfer", bal: "budget_balances" }[op] || "budget_" + op, r.undo, now, r.ids.length);
       return { ok: true, a: ["budget"], k: r.ids.length, u: uid, c: JSON.stringify({ done: r.text, ids: r.ids }) };
     });
   }
