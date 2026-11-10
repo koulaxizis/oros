@@ -27,6 +27,7 @@ const GATE_ONLY = {
   budget_delete: { twin: ["change_item"] },        // change_item action delete
   budget_areas: { why: "Areas are Budget's own settings (words, invoice series, shares of shared costs) that Claude keeps in order from outside; inside orOS the owner sets them in Budget › Areas." },
   budget_categories: { why: "Categories with their areas are Budget's own settings that Claude keeps in order from outside (like budget_areas); inside orOS the owner sets them in Budget › Categories." },
+  budget_balances: { why: "Matching several accounts to the bank's real balances on a day is a daily check Claude runs from outside; inside orOS the owner does it per account with Update balance or Match." },
   budget_transfer: { why: "Turning entries into a transfer replaces them with an item of another collection in one undoable step; inside orOS the owner does it from the entry (It's a transfer)." },
   kanban_add_cards: { twin: ["create_items"] },    // create_items app kanban
   kanban_move_cards: { twin: ["change_item"] },    // change_item action move
