@@ -437,9 +437,14 @@
   }
   function secSeasonal(host, z) {
     var c = card(t("z.title"), "seasonal");
-    c.appendChild(row(t("z.on"), switchBtn(z.on, "seasonal:on", function (v) { set("seasonal:on", v); }, t("z.on")),
-      { hint: t("z.hint") }));
-    if (z.showing && z.showing.mode !== "auto") {
+    // Off turns everything under it off too: a kept or previewed
+    // decoration stops, and the rows below hide until it is on again
+    // (their values stay, so turning it back on brings them back).
+    c.appendChild(row(t("z.on"), switchBtn(z.on, "seasonal:on", function (v) {
+      set("seasonal:on", v);
+      if (!v && z.showing && z.showing.mode !== "auto") act("seasonal.stop");
+    }, t("z.on")), { hint: t("z.hint") }));
+    if (z.on && z.showing && z.showing.mode !== "auto") {
       var msg = z.showing.mode === "kept" ? t("z.kept", { name: z.showing.name, until: z.showing.until })
                                           : t("z.previewing", { name: z.showing.name });
       var pr = row(msg, actions(
@@ -478,6 +483,7 @@
       r.appendChild(actions(button(t("z.try"), "seasonal.preview:" + ev.id, function () { act("seasonal.preview", ev.id); })));
       c.appendChild(r);
     }
+    if (!z.on) { host.appendChild(c); return; }
     c.appendChild(el("h4", "sub", t("z.events")));
     z.events.filter(function (ev) { return !ev.season; }).forEach(evRow);
     var seasons = z.events.filter(function (ev) { return ev.season; });
