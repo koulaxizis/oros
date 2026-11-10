@@ -1,11 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 6.03.01
-- **Phone autofill finds your 2FA codes.** On a 2FA code screen (for example PayPal's) orOS now offers only your 2FA codes, and an entry whose name fits the app or site ("PayPal") comes first as `Matches by name`; you confirm it once. The last suggestion is always `Search orOS Passwords` (or `Search 2FA codes in orOS`), a list with a search box. Code fields are recognised more often, and a code split over several boxes is filled digit by digit. Needs the updated orOS or orOS Passwords app for Android.
-
 ## Version 6.04.01
 - **A bank line you deleted stays deleted.** A line that came in before its bank had a Budget account and that you deleted no longer comes back with `Update now` once the bank has an account.
+
+## Version 6.03.01
+- **Phone autofill finds your 2FA codes.** On a 2FA code screen (for example PayPal's) orOS now offers only your 2FA codes, and an entry whose name fits the app or site ("PayPal") comes first as `Matches by name`; you confirm it once. The last suggestion is always `Search orOS Passwords` (or `Search 2FA codes in orOS`), a list with a search box. Code fields are recognised more often, and a code split over several boxes is filled digit by digit. Needs the updated orOS or orOS Passwords app for Android.
 
 ## Version 6.03.00
 - **All your money, business and personal, in one picture.** In Budget › More › Areas, tick one area as `Personal` and give each account its area. The `Areas` card then shows `All together` for the year (business after the shared costs, personal, total) and what you took out for personal use. The new switch above the summary shows Overview, Charts and Limits for one area, with its own total limit.
