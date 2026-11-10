@@ -87,7 +87,7 @@ These are off until you choose them:
 The decorations sit behind your desktop icons, never take a click and stop moving while an app is open.
 
 They are on from the start. In `Settings`, under `Appearance` › `Seasonal decorations`:
-- `Decorate the desktop in season` turns them all off or on again.
+- `Decorate the desktop in season` turns them all off or on again. While it is off, the options below it and the list of events are hidden and a decoration you are trying or kept stops; your choices stay and come back when you turn it on again.
 - `Motion`: `Moving`, or `Still only` for the decorations without snow or anything that moves.
 - `Amount`: `A little`, `Normal` or `Lots` of snowflakes and sparkles.
 - `At Christmas`: a `Tree` or the Greek Christmas `Boat`.

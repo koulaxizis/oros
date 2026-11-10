@@ -87,7 +87,7 @@ Diese sind aus, bis du sie wählst:
 Die Deko liegt hinter deinen Desktop-Symbolen, fängt nie einen Klick ab und hält still, solange eine App offen ist.
 
 Sie ist von Anfang an an. In den `Einstellungen` unter `Darstellung` › `Saisonale Deko`:
-- `Desktop passend zur Jahreszeit schmücken` schaltet alles aus oder wieder an.
+- `Desktop passend zur Jahreszeit schmücken` schaltet alles aus oder wieder an. Solange es aus ist, sind die Optionen darunter und die Liste der Anlässe ausgeblendet, und eine Dekoration, die du ausprobierst oder behalten hast, endet; deine Einstellungen bleiben und kommen zurück, wenn du es wieder einschaltest.
 - `Bewegung`: `Bewegt` oder `Nur unbewegt` für die Deko ohne Schnee und ohne alles, was sich bewegt.
 - `Menge`: `Wenig`, `Normal` oder `Viel` Schneeflocken und Funken.
 - `Zu Weihnachten`: ein `Baum` oder das griechische Weihnachts-`Boot`.
