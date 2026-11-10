@@ -14,6 +14,9 @@ Unter `Einstellungen`:
 - `Filmkorn` fügt eine feine, körnige Struktur hinzu.
 - `Heller Hintergrund` zeichnet auf hellem statt dunklem Grund. `Nebel` ist immer dunkel (`Ein Nebel wird immer bei Nacht gezeichnet.`).
 
+## Lebendige Landschaft
+Der Reiter `Lebendige Landschaft` oben probiert das Hintergrundbild Lebendige Landschaft aus. Wähle einen Stil (`Inseln`, `Hügel` oder `Garten`) und eine Form: Gib unter `Form` eine Zahl von 0 bis 999999 ein oder tippe auf den Würfel (R) für eine zufällige. Die Vorschau zeigt einen Beispiel-Desktop mit blassen Verknüpfungen und einem Widget; auf deinem eigenen Desktop wächst die Landschaft um das, was wirklich dort ist. Der Stern behält die Landschaft in deinen Favoriten, und `Als Hintergrundbild` macht sie zu deinem Desktop. Die sanfte Bewegung bleibt, wie du sie unter Einstellungen › Darstellung › Hintergrundbild eingestellt hast. Deine Lieblingslandschaften werden mit deinen anderen Geräten synchronisiert, wie deine Lieblingsmuster.
+
 ## Größe
 Wähle `Dieser Bildschirm`, `Handy`, `iPhone`, `Desktop`, `QHD`, `Ultrawide`, `4K`, `Quadrat` oder `Eigene`. Mit `Eigene` gibst du Breite und Höhe ein, jeweils von 64 bis 8192 Pixel. Dasselbe Design in zwei Größen mit gleichem Seitenverhältnis ergibt dasselbe Bild.
 

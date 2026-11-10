@@ -32,13 +32,15 @@
 //   paint(img, fld, pal, scale, seed) fills img {width, height, data}
 //   sig(rects)                    obstacle signature (rounded)
 //   thumb(accent, theme, style)   small picture as a data URL (Settings), or ""
+//   demo(w, h)                    a sample desktop (shortcut grid, widget, note)
+//                                 for previews (Wallpaper Generator)
 //   mount(desktop, o)             → { set(), refresh(), stop() }
 //     o = { get() → { land, accent, theme }, paused() → bool }
 // ============================================================
 (function (root) {
   "use strict";
 
-  var V = "1.1.0";
+  var V = "1.2.0";
   var STYLES = ["islands", "hills", "garden"];
 
   // ---------- 1. Random numbers + noise ----------
@@ -340,6 +342,26 @@
     return fld;
   }
 
+  // A sample desktop in CSS pixels: a shortcut grid at the top left,
+  // on a wide screen a widget column on the right and a sticky note.
+  // Previews only (Wallpaper Generator); the desktop uses its own.
+  function demo(w, h) {
+    var r = [], phone = w < 600, cols = phone ? 4 : (w < 1000 ? 4 : 5);
+    var tw = phone ? Math.min(80, Math.floor((w - 20) / cols) - 6) : 92, th = phone ? 88 : 90;
+    var gx = phone ? Math.floor((w - cols * (tw + 6)) / 2) : 20;
+    var n = phone ? 12 : 10;
+    for (var i = 0; i < n; i++) {
+      r.push({ x: gx + (i % cols) * (tw + 6), y: 20 + Math.floor(i / cols) * (th + 10), w: tw, h: th, k: "tile" });
+    }
+    if (!phone) {
+      r.push({ x: w - 320, y: 16, w: 300, h: Math.min(220, Math.round(h * 0.28)), k: "card" });
+      if (h > 500) r.push({ x: Math.round(w * 0.45), y: Math.round(h * 0.52), w: 210, h: 190, k: "note" });
+    } else if (h > 500) {
+      r.push({ x: 10, y: h - 210, w: w - 20, h: 150, k: "card" });
+    }
+    return r;
+  }
+
   var thumbCache = {};
   function thumb(accent, theme, style) {
     if (!hasDom()) return "";
@@ -589,7 +611,7 @@
   var API = {
     v: V, STYLES: STYLES.slice(), LEVELS: LV.slice(), REACH: REACH,
     palette: palette, baseCss: baseCss, field: field, sample: at, layerOf: layerOf,
-    paint: paint, sig: sig, thumb: thumb, mount: mount, stillReason: stillReason, glint: glint
+    paint: paint, sig: sig, thumb: thumb, demo: demo, mount: mount, stillReason: stillReason, glint: glint
   };
   root.OrosLand = API;
   if (typeof module !== "undefined" && module.exports) module.exports = API;

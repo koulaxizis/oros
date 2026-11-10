@@ -14,6 +14,9 @@ Under `Settings`:
 - `Film grain` adds a fine grainy texture.
 - `Light background` draws on a light base instead of a dark one. `Nebula` is always dark (`A nebula is always drawn at night.`).
 
+## Living land
+The `Living land` tab at the top tries the Living land wallpaper. Pick a style (`Islands`, `Hills` or `Garden`) and a shape: type a number from 0 to 999999 in `Shape`, or tap the dice (R) for a random one. The preview shows a sample desktop with faint shortcuts and a widget; on your own desktop the land grows around what is really there. The star keeps the land in your favourites, and `Set as wallpaper` makes it your desktop. Gentle motion stays as you set it in Settings › Appearance › Wallpaper. Your favourite lands sync to your other devices, like your favourite patterns.
+
 ## Size
 Choose `This screen`, `Phone`, `iPhone`, `Desktop`, `QHD`, `Ultrawide`, `4K`, `Square` or `Custom`. With `Custom` you type the width and height, each from 64 to 8192 pixels. The same design at two sizes of the same shape gives the same picture.
 

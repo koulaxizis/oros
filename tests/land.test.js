@@ -201,3 +201,14 @@ test("strings in EN, EL and DE; help in all three", () => {
   assert.match(read("help/topics/appearance.el.txt"), /### Ζωντανό τοπίο/);
   assert.match(read("i18n/de/help/topics/appearance.txt"), /### Lebendige Landschaft/);
 });
+
+test("demo desktop: tiles inside the screen, a card on wide screens, land under all of it", () => {
+  for (const [w, h] of [[360, 740], [768, 1024], [1440, 860], [2560, 1440]]) {
+    const rs = L.demo(w, h);
+    assert.ok(rs.filter((r) => r.k === "tile").length >= 10, w + ": tiles");
+    for (const r of rs) assert.ok(r.x >= 0 && r.y >= 0 && r.x + r.w <= w && r.y + r.h <= h, w + "x" + h + " " + JSON.stringify(r));
+    if (w >= 600) assert.ok(rs.some((r) => r.k === "card"), w + ": card");
+    const f = L.field(rs, w, h, 7, 0, "hills");
+    for (const r of rs) assert.ok(L.layerOf(L.sample(f, r.x + r.w / 2, r.y + r.h / 2)) >= 3);
+  }
+});

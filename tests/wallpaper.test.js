@@ -44,8 +44,9 @@ function cutFunction(name) {
 
 const WP = new Function("ART",
   "var DATA_VER = 1; var ID_RE = /^[a-z0-9]{6,40}$/;\n" +
-  ["cmpStr", "isInt", "normFav", "mergeWall"].map(cutFunction).join("\n") +
-  "\nreturn { normFav, mergeWall };")(ART);
+  "var LAND_STYLES = [\"islands\", \"hills\", \"garden\"]; var LAND_MAX_SEED = 999999;\n" +
+  ["cmpStr", "isInt", "normFav", "landCanon", "normLand", "mergeFavs", "mergeWall", "mergeLands"].map(cutFunction).join("\n") +
+  "\nreturn { normFav, mergeWall, landCanon, normLand, mergeLands };")(ART);
 
 // A canvas stand-in that records every call and property write
 // (numbers rounded), so a drawing can be compared as a hash.
@@ -304,4 +305,51 @@ test("shell: daily redraw, live canvas, options API", () => {
   assert.match(css, /#wp-live \{[^}]*pointer-events: none;/);
   const app = fs.readFileSync(path.join(__dirname, "..", "wallpaper", "wallpaper.js"), "utf8");
   assert.ok(app.includes("api.setOptions(o)"));
+});
+
+// ---------- Living land tab (LAND-1 W3) ----------
+const lf = (id, m, style, seed) => ({ id, m, l: { style, seed } });
+
+test("lands: canonical land, bad entries dropped", () => {
+  assert.deepEqual(WP.landCanon({ style: "hills", seed: 42, motion: 1 }), { style: "hills", seed: 42 });
+  assert.deepEqual(WP.landCanon({ style: "lava", seed: 7 }), { style: "islands", seed: 7 });
+  assert.equal(WP.landCanon({ style: "hills", seed: -1 }), null);
+  assert.equal(WP.landCanon({ style: "hills", seed: 1000000 }), null);
+  assert.equal(WP.landCanon({ style: "hills", seed: 1.5 }), null);
+  assert.equal(WP.landCanon([1]), null);
+  assert.equal(WP.normLand({ id: "BAD!", m: 1, l: { style: "hills", seed: 1 } }), null);
+  assert.deepEqual(WP.normLand({ id: "abc123", m: 3, l: { style: "garden", seed: 9 }, x: 1 }),
+                   { id: "abc123", m: 3, l: { style: "garden", seed: 9 } });
+});
+
+test("lands merge: symmetric, associative, idempotent, tombstones as patterns", () => {
+  const a = { favs: [lf("aaa111", 5, "hills", 1), lf("bbb222", 9, "islands", 2)], tombs: { ccc333: 4 } };
+  const b = { favs: [lf("bbb222", 9, "garden", 2), lf("ccc333", 3, "hills", 3)], tombs: {} };
+  const c = { favs: [lf("ddd444", 1, "garden", 4)], tombs: { aaa111: 2 } };
+  assert.equal(J(WP.mergeLands(a, b)), J(WP.mergeLands(b, a)));
+  assert.equal(J(WP.mergeLands(WP.mergeLands(a, b), c)), J(WP.mergeLands(a, WP.mergeLands(b, c))));
+  const m = WP.mergeLands(a, b);
+  assert.equal(J(WP.mergeLands(m, m)), J(m));
+  assert.deepEqual(m.favs.map((f) => f.id), ["aaa111", "bbb222"]);
+  assert.equal(m.favs[1].l.style, "islands", "equal mtime: the larger canonical JSON");
+  assert.equal(WP.mergeLands({ favs: [lf("aaa111", 10, "hills", 1)] }, { tombs: { aaa111: 10 } }).favs.length, 0);
+  // a pattern favourite is not a land and the other way round
+  assert.equal(WP.mergeLands({ favs: [fav("aaa111", 5)] }, null).favs.length, 0);
+  assert.equal(WP.mergeWall({ favs: [lf("aaa111", 5, "hills", 1)] }, null).favs.length, 0);
+});
+
+test("generator: land tab wiring, its own synced slice, shell setLand", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "wallpaper", "index.html"), "utf8");
+  assert.match(html, /<script src="land\.js\?v=[^"]+"><\/script>\s*<script src="wallpaper\.js/);
+  assert.match(html, /role="tablist"[\s\S]*id="mode-art"[\s\S]*id="mode-land"/);
+  assert.match(html, /id="land-panel" role="tabpanel"[^>]*hidden/);
+  assert.match(APP_SRC, /registerSlice\("wallpaper-lands", landSliceGet, landSliceSet, LANDS_KEY, mergeLands\)/);
+  assert.match(APP_SRC, /var LANDS_KEY\s+= "oros-wallpaper-lands";/);
+  assert.match(APP_SRC, /api\.setLand\(\{ style: prefs\.land\.style, seed: prefs\.land\.seed \}\)/);
+  const sh = fs.readFileSync(path.join(__dirname, "..", "shell.js"), "utf8");
+  assert.match(sh, /setLand: function \(l\) \{/);
+  assert.match(sh, /land: !pic && state\.wallpaper === "land" \? wpLandNow\(\) : null/);
+  const de = fs.readFileSync(path.join(__dirname, "..", "i18n", "de", "wallpaper.js"), "utf8");
+  ["mode.art", "mode.land", "land.shape", "lst.islands", "lst.hills", "lst.garden", "land.hint", "toast.landSet"]
+    .forEach((k) => assert.ok(de.includes('"' + k + '":'), "de " + k));
 });
