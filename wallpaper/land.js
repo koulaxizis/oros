@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — land.js (Living land desktop wallpaper, v1.0.0)
+// orOS — land.js (Living land desktop wallpaper, v1.1.0)
 // A landscape that grows around what is on the desktop: the
 // shortcuts (launcher.js .ld-ic), the widgets (widgets.js .wg-card),
 // the sticky notes (stickies .sn-note / .sn-card) and the Dock.
@@ -12,6 +12,11 @@
 // each layer casting a soft shadow down-right, ripple lines in the
 // water, a little grain. Colours come from the skin's accent (a
 // tint) and the theme (light / dark). No files, no network.
+// Styles (1.1.0): islands (mostly water), hills (meadows rising to
+// terraces, one winding river), garden (lawn with flowers, hedge rows,
+// ponds). Gentle motion (1.1.0, off by default): glints on the water
+// and one drifting cloud shadow, ≤ 30 fps, never under an app, with
+// reduced motion, on a low battery or on a slow device.
 //
 // The picture is a pure function of (land, accent, theme, size,
 // obstacles): the same desktop draws the same land on every device.
@@ -19,20 +24,21 @@
 // the shell owns their canonical form (shell.js wplandCanon).
 //
 // API (window.OrosLand; Node: require("wallpaper/land.js")):
-//   v, STYLES                     version, style ids (W1 draws islands)
+//   v, STYLES                     version, style ids: islands, hills, garden
 //   palette(style, accent, theme) { deep, shallow, foam, sand, grass, high, top } as [r,g,b]
-//   baseCss(accent, theme)        the desktop background under the canvas
-//   field(rects, w, h, seed, cell) → { gw, gh, cell, v: Float32Array }
+//   baseCss(accent, theme, style) the desktop background under the canvas
+//   stillReason(o), glint(p, t)   gentle motion rules (pure)
+//   field(rects, w, h, seed, cell, style) → { gw, gh, cell, v: Float32Array }
 //   paint(img, fld, pal, scale, seed) fills img {width, height, data}
 //   sig(rects)                    obstacle signature (rounded)
-//   thumb(accent, theme)          small picture as a data URL (Settings), or ""
+//   thumb(accent, theme, style)   small picture as a data URL (Settings), or ""
 //   mount(desktop, o)             → { set(), refresh(), stop() }
 //     o = { get() → { land, accent, theme }, paused() → bool }
 // ============================================================
 (function (root) {
   "use strict";
 
-  var V = "1.0.0";
+  var V = "1.1.0";
   var STYLES = ["islands", "hills", "garden"];
 
   // ---------- 1. Random numbers + noise ----------
@@ -100,30 +106,58 @@
   function css(rgb) { return "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")"; }
 
   // Layers from the lowest up: [hue, sat, light dark theme, light light theme].
+  // The layer names are the islands' names; hills and garden reuse the
+  // seven slots: river, bank, reeds, low meadow, meadow, hill, hilltop /
+  // pond, pond edge, stones, gravel, lawn, hedge, upper lawn.
   var LAYERS = {
-    deep:    [206, 48, 14, 32],
-    shallow: [193, 45, 23, 46],
-    foam:    [186, 36, 36, 66],
-    sand:    [40, 42, 42, 72],
-    grass:   [112, 30, 27, 48],
-    high:    [102, 28, 33, 56],
-    top:     [90, 26, 40, 64]
+    islands: {
+      deep:    [206, 48, 14, 32],
+      shallow: [193, 45, 23, 46],
+      foam:    [186, 36, 36, 66],
+      sand:    [40, 42, 42, 72],
+      grass:   [112, 30, 27, 48],
+      high:    [102, 28, 33, 56],
+      top:     [90, 26, 40, 64]
+    },
+    hills: {
+      deep:    [205, 42, 20, 40],
+      shallow: [192, 34, 29, 54],
+      foam:    [92, 24, 27, 50],
+      sand:    [78, 30, 26, 56],
+      grass:   [98, 30, 31, 52],
+      high:    [108, 28, 37, 60],
+      top:     [52, 38, 45, 72]
+    },
+    garden: {
+      deep:    [200, 44, 21, 42],
+      shallow: [186, 40, 31, 57],
+      foam:    [36, 12, 44, 74],
+      sand:    [38, 22, 50, 78],
+      grass:   [118, 36, 25, 45],
+      high:    [132, 38, 19, 36],
+      top:     [100, 32, 35, 58]
+    }
   };
   var ORDER = ["deep", "shallow", "foam", "sand", "grass", "high", "top"];
+  function styleOf(st) { return STYLES.indexOf(st) >= 0 ? st : "islands"; }
 
   function palette(style, accent, theme) {
     var ah = hueOf(hexRgb(accent)), light = theme === "light", out = {};
+    var T = LAYERS[styleOf(style)];
     ORDER.forEach(function (k) {
-      var L = LAYERS[k];
+      var L = T[k];
       var f = k === "top" ? 0.35 : 0.15;              // the plateau leans most toward the skin
       out[k] = hsl(tint(L[0], ah, f), L[1], light ? L[3] : L[2]);
     });
+    out.style = styleOf(style);
+    out.accentRgb = hexRgb(accent);
     return out;
   }
 
-  function baseCss(accent, theme) {
-    var p = palette("islands", accent, theme);
-    return "linear-gradient(160deg, " + css(p.shallow) + " 0%, " + css(p.deep) + " 70%)";
+  function baseCss(accent, theme, style) {
+    var p = palette(style, accent, theme), st = styleOf(style);
+    var a = st === "islands" ? p.shallow : p.grass, b = st === "islands" ? p.deep : p.high;
+    return "linear-gradient(160deg, " + css(a) + " 0%, " + css(b) + " 70%)";
   }
 
   // ---------- 3. The field ----------
@@ -134,11 +168,13 @@
   // rects: [{ x, y, w, h, k }] in CSS px of the canvas. Returns a
   // coarse grid of heights: ≥ 1 on every obstacle, falling to 0 (the
   // shore) at its reach, noise around it, a few islets of its own.
-  function field(rects, w, h, seed, cell) {
+  function field(rects, w, h, seed, cell, style) {
+    var st = styleOf(style);
     cell = cell || Math.max(6, Math.ceil(Math.max(w, h) / 260));
     var gw = Math.ceil(w / cell) + 2, gh = Math.ceil(h / cell) + 2;
     var v = new Float32Array(gw * gh);
     var n1 = makeNoise(seed >>> 0), n2 = makeNoise((seed ^ 0x9e3779b9) >>> 0);
+    var n3 = st !== "islands" ? makeNoise((seed ^ 0x51ed270b) >>> 0) : null;
     var list = (rects || []).filter(function (r) {
       return r && r.w > 0 && r.h > 0 && isFinite(r.x) && isFinite(r.y);
     });
@@ -167,6 +203,23 @@
         var val = near + nz * amp;
         var islet = (n2(x / 170 + 31.7, y / 170 - 12.3) - 0.66) * 2.4 + nz * 0.12;
         if (islet > val) val = islet;
+        if (st !== "islands") {
+          // hills and garden are land first: their own ground, which
+          // rises smoothly to a terrace (0.88) under every obstacle
+          var k01 = Math.max(0, Math.min(1, near)), gnd, n3v = n3(x / 330, y / 330);
+          if (st === "hills") {
+            gnd = 0.1 + (n1(x / 230, y / 230) * 0.65 + n2(x / 90, y / 90) * 0.35) * 0.95;
+            var rv = (n3v - 0.5) / 0.03;             // one winding river
+            gnd -= 1.25 * Math.exp(-rv * rv);
+          } else {
+            gnd = 0.28 + (n1(x / 60, y / 60) - 0.5) * 0.12;
+            var hg = (n3v - 0.5) / 0.012;            // hedge rows
+            gnd += 0.4 * Math.exp(-hg * hg);
+            var pd = (0.33 - n2(x / 130 - 7.1, y / 130 + 3.3)) / 0.06;   // round ponds
+            if (pd > 0) gnd -= Math.min(1, pd) * 0.85;
+          }
+          val = gnd + (0.88 - gnd) * k01 * k01 * (3 - 2 * k01);
+        }
         if (val < -1) val = -1;
         if (inside && val < 0.62) val = 0.62;   // every obstacle stands on land
         v[j * gw + i] = val;
@@ -198,8 +251,21 @@
     return k;                                        // 0 = deep … 6 = top
   }
 
+  // Flowers on a garden lawn: one in about 14 cells of 10 px, a dot.
+  var FLOWERS = [[244, 170, 196], [250, 246, 236], [246, 214, 112], [196, 176, 240]];
+  function flowerAt(x, y, seed) {
+    var cx = Math.floor(x / 10), cy = Math.floor(y / 10);
+    var hh = Math.imul(cx * 374761393 + cy * 668265263, 1274126177) ^ seed;
+    hh = Math.imul(hh ^ (hh >>> 13), 1274126177) >>> 0;
+    if (hh % 14) return -1;
+    var fx = cx * 10 + 2 + (hh >>> 8) % 6, fy = cy * 10 + 2 + (hh >>> 12) % 6;
+    var d = (x - fx) * (x - fx) + (y - fy) * (y - fy);
+    return d <= 2.6 ? (hh >>> 16) % FLOWERS.length : -1;
+  }
+
   function paint(img, fld, pal, scale, seed) {
     var W = img.width, H = img.height, data = img.data;
+    var garden = pal.style === "garden", accentRgb = pal.accentRgb;
     var cols = ORDER.map(function (k) { return pal[k]; });
     var vals = new Float32Array(W * H), lay = new Uint8Array(W * H);
     var py, px, i = 0;
@@ -224,6 +290,10 @@
             var lo = cols[L - 1], e = t * t * (3 - 2 * t);
             r = lo[0] + (r - lo[0]) * e; g = lo[1] + (g - lo[1]) * e; b = lo[2] + (b - lo[2]) * e;
           }
+        }
+        if (garden && L === 4) {                     // lawn flowers (the accent is one of them)
+          var fl = flowerAt((px + 0.5) / scale, (py + 0.5) / scale, seed >>> 0);
+          if (fl >= 0) { var fc = fl === 0 && accentRgb ? accentRgb : FLOWERS[fl]; r = fc[0]; g = fc[1]; b = fc[2]; }
         }
         if (L <= 1) {                                // ripple lines in the water
           var rip = Math.sin(val * 70);
@@ -263,18 +333,19 @@
     var ctx = cv.getContext("2d");
     if (!ctx) return false;
     var seed = (land && land.seed) >>> 0;
-    var fld = field(rects, w, h, seed);
+    var fld = field(rects, w, h, seed, 0, land && land.style);
     var img = ctx.createImageData(W, H);
     paint(img, fld, palette(land && land.style, accent, theme), W / w, seed);
     ctx.putImageData(img, 0, 0);
-    return true;
+    return fld;
   }
 
-  var thumbCache = { key: "", url: "" };
-  function thumb(accent, theme) {
+  var thumbCache = {};
+  function thumb(accent, theme, style) {
     if (!hasDom()) return "";
-    var key = accent + "|" + theme;
-    if (thumbCache.key === key) return thumbCache.url;
+    style = styleOf(style);
+    var key = accent + "|" + theme + "|" + style;
+    if (thumbCache[key]) return thumbCache[key];
     try {
       var cv = document.createElement("canvas");
       var w = 160, h = 100, rects = [], i;
@@ -284,18 +355,36 @@
       if (!ctx) return "";
       cv.width = w; cv.height = h;
       var img = ctx.createImageData(w, h);
-      var fld = field(rects.map(function (r) { return { x: r.x, y: r.y, w: r.w, h: r.h, k: r.k === "tile" ? "note" : r.k }; }), w, h, 7, 4);
-      paint(img, fld, palette("islands", accent, theme), 1, 7);
+      var fld = field(rects.map(function (r) { return { x: r.x, y: r.y, w: r.w, h: r.h, k: r.k === "tile" ? "note" : r.k }; }), w, h, 7, 4, style);
+      paint(img, fld, palette(style, accent, theme), 1, 7);
       ctx.putImageData(img, 0, 0);
-      thumbCache = { key: key, url: cv.toDataURL("image/png") };
+      thumbCache[key] = cv.toDataURL("image/png");
       cv.width = cv.height = 0;
-      return thumbCache.url;
+      return thumbCache[key];
     } catch (e) { return ""; }
   }
 
   var OBST = [
     [".ld-ic", "tile"], [".wg-card", "card"], [".sn-note", "note"], [".sn-card", "note"]
   ];
+
+  // Gentle motion (wave 2, off by default): why the land stays still
+  // now, or "" when it may move. The same rules as seasonal.js: reduced
+  // motion, a low battery (< 20 %, not charging), a slow device (frames
+  // above 55 ms) leave it still.
+  function stillReason(o) {
+    o = o || {};
+    if (!o.motion) return "off";
+    if (o.reduced) return "reduced";
+    if (o.battery && typeof o.battery.level === "number" && o.battery.level < 0.2 && !o.battery.charging) return "battery";
+    if (o.slow) return "slow";
+    return "";
+  }
+  // Brightness of one glint at time t (s): short flashes, mostly dark.
+  function glint(phase, t) {
+    var v = Math.sin(phase + t * 1.3);
+    return v > 0 ? Math.pow(v, 10) : 0;
+  }
 
   function reduced() {
     try { return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); }
@@ -312,6 +401,88 @@
       desk.insertBefore(wrap, desk.firstChild);
     }
     var last = "", timer = 0, stopped = false, ro = null, mo = null, tick = 0;
+    var cur = null;                                  // { fld, w, h, style } of the land on screen
+    var fx = null, raf = 0, slow = false, battery = null, frames = [], glints = [], lastT = 0;
+    try {
+      if (navigator.getBattery) navigator.getBattery().then(function (b) {
+        battery = b;
+        var up = function () { motionSync(); };
+        b.addEventListener("levelchange", up); b.addEventListener("chargingchange", up);
+      }).catch(function () {});
+    } catch (e) {}
+
+    function motionStop() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      if (fx && fx.parentNode) fx.parentNode.removeChild(fx);
+      fx = null;
+    }
+    function motionSync() {
+      if (stopped) return;
+      var st = (o.get && o.get()) || {};
+      var why = stillReason({ motion: st.land && st.land.motion, reduced: reduced(), battery: battery, slow: slow });
+      if (why || !cur || (o.paused && o.paused()) || document.hidden) { motionStop(); return; }
+      if (!fx) {
+        fx = document.createElement("canvas");
+        fx.className = "wp-land-fx";
+        wrap.appendChild(fx);
+        glints = [];
+      }
+      if (!raf) { frames = []; lastT = 0; raf = requestAnimationFrame(frame); }
+    }
+    function water(x, y) { return cur && layerOf(at(cur.fld, x, y)) <= 1; }
+    function spawn(g) {
+      for (var n = 0; n < 6; n++) {
+        g.x = Math.random() * cur.w; g.y = Math.random() * cur.h;
+        if (water(g.x, g.y)) break;
+      }
+      g.p = Math.random() * 6.283; g.l = 4 + Math.random() * 7;
+      return g;
+    }
+    function frame(ts) {
+      raf = 0;
+      if (stopped || !fx || !cur) return;
+      if ((o.paused && o.paused()) || document.hidden) { motionStop(); return; }
+      if (lastT && ts - lastT < 33) { raf = requestAnimationFrame(frame); return; }   // ≤ 30 fps
+      var t0 = (typeof performance !== "undefined") ? performance.now() : Date.now();
+      var dt = lastT ? (ts - lastT) / 1000 : 0;
+      lastT = ts;
+      var w = cur.w, h = cur.h, dpr = Math.min((window.devicePixelRatio || 1), 1.25);
+      if (fx.width !== Math.round(w * dpr)) { fx.width = Math.round(w * dpr); fx.height = Math.round(h * dpr); }
+      var ctx = fx.getContext("2d");
+      if (!ctx) return;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      var t = ts / 1000;
+      // one soft cloud shadow drifting across
+      var R = Math.max(w, h) * 0.38, cx = ((t * 9) % (w + 2 * R)) - R, cy = h * 0.45 + Math.sin(t / 23) * h * 0.2;
+      var gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+      gr.addColorStop(0, "rgba(0,0,0,0.09)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = gr; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+      // glints on the water
+      var mem = (navigator.deviceMemory && navigator.deviceMemory <= 2) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2);
+      var want = Math.round(Math.max(8, Math.min(60, w * h / 25000)) * (mem ? 0.5 : 1));
+      while (glints.length < want) glints.push(spawn({}));
+      ctx.strokeStyle = "#ffffff"; ctx.lineCap = "round"; ctx.lineWidth = 1.6;
+      for (var i = 0; i < glints.length; i++) {
+        var g = glints[i];
+        g.x += 6 * dt;
+        if (g.x > w || !water(g.x, g.y)) { spawn(g); continue; }
+        var a = glint(g.p, t);
+        if (a < 0.02) continue;
+        ctx.globalAlpha = a * 0.55;
+        ctx.beginPath(); ctx.moveTo(g.x - g.l / 2, g.y); ctx.lineTo(g.x + g.l / 2, g.y); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      var t1 = (typeof performance !== "undefined") ? performance.now() : Date.now();
+      frames.push(t1 - t0);
+      if (frames.length > 40) frames.shift();
+      if (frames.length >= 40) {
+        var sum = 0; for (var k = 0; k < frames.length; k++) sum += frames[k];
+        if (sum / frames.length > 55) { slow = true; motionStop(); return; }   // slow device: still from now on
+      }
+      raf = requestAnimationFrame(frame);
+    }
 
     function rects() {
       var box = wrap.getBoundingClientRect(), out = [];
@@ -343,15 +514,18 @@
       var rs = rects();
       var key = Math.round(box.width) + "x" + Math.round(box.height) + "|" + JSON.stringify(st.land || null) +
                 "|" + st.accent + "|" + st.theme + "|" + sig(rs);
-      if (!force && key === last) return;
+      if (!force && key === last) { motionSync(); return; }
       last = key;
       var cv = document.createElement("canvas");
       cv.className = "wp-land-c";
-      if (!render(cv, rs, box.width, box.height, st.land, st.accent, st.theme)) return;
-      var old = wrap.querySelectorAll("canvas");
+      var fld = render(cv, rs, box.width, box.height, st.land, st.accent, st.theme);
+      if (!fld) return;
+      cur = { fld: fld, w: box.width, h: box.height };
+      var old = wrap.querySelectorAll("canvas.wp-land-c");
       var fade = old.length > 0 && !reduced();
       if (fade) cv.style.opacity = "0";
-      wrap.appendChild(cv);
+      wrap.insertBefore(cv, fx);                     // under the motion layer (fx null = last)
+      motionSync();
       var done = function () {
         Array.prototype.forEach.call(old, function (c) {
           if (c.parentNode) c.parentNode.removeChild(c);
@@ -380,6 +554,10 @@
       ro = new ResizeObserver(function () { soon(250); });
       ro.observe(desk);
     } catch (e) {}
+    var onVis = function () { if (document.hidden) motionStop(); else soon(0); };
+    document.addEventListener("visibilitychange", onVis);
+    var mq = null;
+    try { mq = window.matchMedia("(prefers-reduced-motion: reduce)"); if (mq.addEventListener) mq.addEventListener("change", motionSync); } catch (e) { mq = null; }
     var onResize = function () { soon(300); };
     var onScroll = function () { soon(150); };
     window.addEventListener("resize", onResize);
@@ -389,11 +567,14 @@
 
     soon(0);
     return {
-      set: function () { soon(0); },
+      set: function () { slow = false; soon(0); },
       refresh: function () { soon(0); },
       redraw: function () { last = ""; soon(0); },
       stop: function () {
         stopped = true;
+        motionStop();
+        document.removeEventListener("visibilitychange", onVis);
+        try { if (mq && mq.removeEventListener) mq.removeEventListener("change", motionSync); } catch (e) {}
         if (timer) clearTimeout(timer);
         clearInterval(tick);
         try { if (mo) mo.disconnect(); } catch (e) {}
@@ -408,7 +589,7 @@
   var API = {
     v: V, STYLES: STYLES.slice(), LEVELS: LV.slice(), REACH: REACH,
     palette: palette, baseCss: baseCss, field: field, sample: at, layerOf: layerOf,
-    paint: paint, sig: sig, thumb: thumb, mount: mount
+    paint: paint, sig: sig, thumb: thumb, mount: mount, stillReason: stillReason, glint: glint
   };
   root.OrosLand = API;
   if (typeof module !== "undefined" && module.exports) module.exports = API;

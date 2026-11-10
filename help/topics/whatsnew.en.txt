@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.07.00
+- **Living land has hills and a garden now, and can move gently.** In Settings › Appearance › Wallpaper, with `Living land` chosen, pick a `Style`: `Islands`, `Hills` (green terraces with a river winding through the widest gap) or `Garden` (a lawn with hedge rows, small ponds and flowers in the empty corners). Turn on `Gentle motion` for glints on the water and a cloud shadow drifting across. It is off unless you turn it on, and it stops by itself under an open app, with reduced motion, on a low battery and on a slow device.
+
 ## Version 6.06.00
 - **Living land, a wallpaper that grows around your desktop.** Choose `Living land` in Settings › Appearance › Wallpaper: your shortcuts, widgets and sticky notes stand on small islands, and the gaps between them become water. Add a shortcut or move a note and the land re-forms. The colours follow your skin and your light or dark theme, and `New shape` draws other islands. It stays still, so it costs no battery.
 

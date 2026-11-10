@@ -56,8 +56,9 @@ Jedes Gerät zeichnet dein Hintergrundbild passend für seinen eigenen Bildschir
 
 ### Lebendige Landschaft
 `Lebendige Landschaft` (die zweite Kachel) zeichnet eine kleine Landschaft um das, was auf deinem Desktop liegt: Verknüpfungen, Widgets und Haftnotizen stehen auf Inseln, die Lücken dazwischen werden Wasser. Fügst du eine Verknüpfung hinzu oder entfernst sie, verschiebst eine Haftnotiz oder änderst deine Widgets, formt sich das Land neu und blendet sanft ein. Die Farben folgen deinem Skin und deinem hellen oder dunklen Design.
-- Unter den Hintergrundbildern zeichnet `Neue Form` andere Inseln. Deine Wahl und ihre Form folgen dir auf deine anderen Geräte; jedes Gerät zeichnet das Land für seinen eigenen Bildschirm.
+- Unter den Hintergrundbildern wählst du bei `Stil` zwischen `Inseln` (vor allem Wasser), `Hügel` (Wiesen, die zu Terrassen ansteigen, mit einem Fluss) und `Garten` (Rasen mit Blumen, Hecken und Teichen); `Neue Form` zeichnet eine andere Landschaft. Deine Wahl und ihre Form folgen dir auf deine anderen Geräte; jedes Gerät zeichnet das Land für seinen eigenen Bildschirm.
 - Das Land steht still: Es ändert sich nur, wenn sich dein Desktop ändert, und kostet beim Arbeiten keinen Akku. Mit reduzierter Bewegung ändert es sich ohne Überblenden.
+- `Sanfte Bewegung` (anfangs aus) fügt Glitzern auf dem Wasser und einen ziehenden Wolkenschatten hinzu. Sie hält an, solange eine App offen ist, bei reduzierter Bewegung, bei schwachem Akku (unter 20 % und nicht am Laden) und auf zu langsamen Geräten.
 - Hoher Kontrast zeigt den schlichten Desktop.
 
 ## Saisonale Deko
