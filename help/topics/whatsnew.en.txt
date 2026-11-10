@@ -4,6 +4,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 6.05.00
 - **The shop's sales reach Stock by themselves.** When Stock opens, the shop's new paid orders (processing or completed) are recorded as sales, once each, for the products you have in Stock. Nothing is written to the shop, and orders from before this started stay for you to record.
 
+## Version 6.04.01
+- **A bank line you deleted stays deleted.** A line that came in before its bank had a Budget account and that you deleted no longer comes back with `Update now` once the bank has an account.
+
 ## Version 6.04.00
 - **Claude keeps your account balances equal to the bank's.** When you let Claude change Budget, it sees each account's balance next to the bank's and, when you tell it the real one, corrects it as `Update balance` does: with a balance correction, which is neither income nor an expense. It also finds purchases written twice (from the card and days later from the account) and asks you before deleting anything. Every change can be undone.
 
