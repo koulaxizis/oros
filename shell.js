@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.07.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.08.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -867,13 +867,25 @@
         return true;
       });
     },
-    // recipe = the picture part (no daily / live); daily, live = the options
+    // { style, seed } → the Living land wallpaper, selected; gentle
+    // motion stays as set in Settings. User action: syncs (LAND-1 W3).
+    setLand: function (l) {
+      if (!l || typeof l !== "object" || Array.isArray(l)) return false;
+      var c = wplandCanon({ style: l.style, seed: l.seed, motion: wpLandNow().motion });
+      if (!c || c.style !== l.style || c.seed !== l.seed) return false;
+      if (wpPic()) wpPicClear();  // a land picked here replaces the device picture
+      wpLandNewShape({ style: c.style, seed: c.seed });
+      return true;
+    },
+    // recipe = the picture part (no daily / live); daily, live = the options;
+    // land = { style, seed, motion } while Living land is the desktop
     get: function () {
       var pic = wpPic(), A = wpArt(), r = state.wpart;
       return { active: !!pic || state.wallpaper === "custom",
                recipe: r && A && A.picture ? A.picture(r) : r,
                picture: pic ? pic.at : null,
-               daily: !!(r && r.daily), live: !!(r && r.live) };
+               daily: !!(r && r.daily), live: !!(r && r.live),
+               land: !pic && state.wallpaper === "land" ? wpLandNow() : null };
     }
   };
 

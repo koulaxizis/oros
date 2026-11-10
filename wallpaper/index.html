@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Wallpaper Generator · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=6.07.00">
-  <link rel="stylesheet" href="wallpaper.css?v=6.07.00">
+  <link rel="stylesheet" href="../fonts.css?v=6.08.00">
+  <link rel="stylesheet" href="wallpaper.css?v=6.08.00">
 
 </head>
 <body>
@@ -18,7 +18,7 @@
   <header id="toolbar">
     <div class="tb-row" id="tb-a">
       <div class="seed-wrap">
-        <label for="seed" class="seed-lbl" data-i18n="seed">Seed</label>
+        <label for="seed" class="seed-lbl" id="seed-lbl" data-i18n="seed">Seed</label>
         <input id="seed" maxlength="40" spellcheck="false" autocomplete="off">
       </div>
       <button type="button" class="icon-btn" id="roll-btn"></button>
@@ -34,6 +34,23 @@
   <main id="main">
     <!-- Controls -->
     <form id="panel" autocomplete="off" novalidate>
+      <div id="modes" class="modes" role="tablist">
+        <button type="button" role="tab" id="mode-art" aria-controls="art-panel" data-i18n="mode.art">Patterns</button>
+        <button type="button" role="tab" id="mode-land" aria-controls="land-panel" data-i18n="mode.land">Living land</button>
+      </div>
+      <div id="land-panel" role="tabpanel" aria-labelledby="mode-land" hidden>
+        <section class="sec">
+          <h2 data-i18n="sec.style">Style</h2>
+          <div id="land-styles" class="pick-grid" role="radiogroup"></div>
+          <p class="hint" data-i18n="land.hint"></p>
+        </section>
+        <section class="sec">
+          <h2 data-i18n="sec.favs">Favourites</h2>
+          <div id="land-favs"></div>
+          <p class="hint" id="land-favs-empty" data-i18n="land.favs.empty">Tap the star to keep a land here.</p>
+        </section>
+      </div>
+      <div id="art-panel" role="tabpanel" aria-labelledby="mode-art">
       <section class="sec">
         <h2 data-i18n="sec.style">Style</h2>
         <div id="styles" class="pick-grid" role="radiogroup"></div>
@@ -88,6 +105,7 @@
         <div id="favs"></div>
         <p class="hint" id="favs-empty" data-i18n="favs.empty">Tap the star to keep a design here.</p>
       </section>
+      </div>
     </form>
 
     <!-- Live preview -->
@@ -100,10 +118,11 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=6.07.00" data-app="wallpaper"></script>
-  <script src="../trees/core.js?v=6.07.00"></script>
-  <script src="art.js?v=6.07.00"></script>
-  <script src="wallpaper.js?v=6.07.00"></script>
+  <script src="../i18n.js?v=6.08.00" data-app="wallpaper"></script>
+  <script src="../trees/core.js?v=6.08.00"></script>
+  <script src="art.js?v=6.08.00"></script>
+  <script src="land.js?v=6.08.00"></script>
+  <script src="wallpaper.js?v=6.08.00"></script>
 
 </body>
 </html>
