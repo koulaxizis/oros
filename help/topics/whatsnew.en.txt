@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.05.00
+- **The shop's sales reach Stock by themselves.** When Stock opens, the shop's new paid orders (processing or completed) are recorded as sales, once each, for the products you have in Stock. Nothing is written to the shop, and orders from before this started stay for you to record.
+
 ## Version 6.04.01
 - **A bank line you deleted stays deleted.** A line that came in before its bank had a Budget account and that you deleted no longer comes back with `Update now` once the bank has an account.
 
