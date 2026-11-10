@@ -39,7 +39,10 @@ import java.util.List;
  * suggestion is locked: a tap opens AfAuthActivity (fingerprint, face
  * or screen lock), which opens the values and fills just that entry.
  * Suggests nothing when autofill is off in orOS and nothing in orOS
- * itself.
+ * itself. A login or 2FA screen always ends with a locked "Search"
+ * (2FA codes only on a code screen); with nothing saved for the app
+ * or page, entries whose title or sites name it are offered as
+ * "Matches by name" and filled only after the person confirms.
  * Saving (PW-AF3): with autofill on, a form with a password field also
  * carries a SaveInfo, so Android asks "Save to orOS Passwords?" after
  * the person signs in or signs up. A yes seals the login (AfVault
@@ -201,6 +204,11 @@ public class OrosAutofillService extends AutofillService {
                 if (before != null) before.kind = AfMatch.USER;
             }
         }
+        // "Security code" with no card fields around it is a 2FA code
+        // (PayPal, banks), not a card's CVV
+        boolean card = false;
+        for (Field x : f.fields) if (AfMatch.isCard(x.kind) && x.kind != AfMatch.CVV) card = true;
+        if (!card) for (Field x : f.fields) if (x.kind == AfMatch.CVV) x.kind = AfMatch.OTP;
         f.all.addAll(f.fields);
         List<Field> keep = new ArrayList<>();
         for (Field x : f.fields) if (x.kind != AfMatch.NONE && x.kind != AfMatch.NEW_PASS) keep.add(x);
@@ -287,8 +295,14 @@ public class OrosAutofillService extends AutofillService {
         String webPort = form.port;
         boolean wantLogin = form.any(1), wantCard = form.any(2), wantPerson = form.any(3);
         boolean otpOnly = wantLogin && form.has(AfMatch.OTP) && !form.has(AfMatch.USER) && !form.has(AfMatch.PASS);
-        JSONArray links = form.browser ? new JSONArray() : AfVault.links(this, form.pkg);
-        List<JSONObject> exact = new ArrayList<>(), sub = new ArrayList<>(), cards = new ArrayList<>(), people = new ArrayList<>();
+        if (form.browser && (form.host == null || form.host.isEmpty())) wantLogin = false;   // a page we cannot name
+        String linkKey = linkKey(form);
+        JSONArray links = linkKey == null ? new JSONArray() : AfVault.links(this, linkKey);
+        // the words that name this app or page, for "matches by name"
+        java.util.Set<String> words = form.browser ? AfMatch.nameWords(null, null, form.host)
+                : AfMatch.nameWords(form.pkg, appLabel(form.pkg), null);
+        List<JSONObject> exact = new ArrayList<>(), sub = new ArrayList<>(), guess = new ArrayList<>(),
+                cards = new ArrayList<>(), people = new ArrayList<>();
         for (int i = 0; i < names.length(); i++) {
             JSONObject e = names.optJSONObject(i);
             if (e == null) continue;
@@ -298,28 +312,64 @@ public class OrosAutofillService extends AutofillService {
                 int score = score(e, form, webPort, links);
                 if (score == 2) exact.add(e);
                 else if (score == 1) sub.add(e);
+                else if (AfMatch.names(nameText(e), words)) guess.add(e);
             } else if (k.equals("card") && wantCard) cards.add(e);
             else if ((k.equals("identity") || k.equals("address")) && wantPerson) people.add(e);
         }
-        List<JSONObject> pick = new ArrayList<>(exact);
-        pick.addAll(sub);
-        pick.addAll(cards);
-        pick.addAll(people);
         FillResponse.Builder r = new FillResponse.Builder();
-        int n = 0;
-        for (JSONObject e : pick) {
-            if (n >= MAX_SUGGEST) break;
-            Dataset d = dataset(form, e.optString("i"), e.optString("t"), e.optString("s"), e.optString("k"), false, n);
+        int n = 0, room = wantLogin ? MAX_SUGGEST - 1 : MAX_SUGGEST;   // the last place is "Search"
+        List<JSONObject> sure = new ArrayList<>(exact);
+        sure.addAll(sub);
+        for (JSONObject e : sure) {
+            if (n >= room) break;
+            Dataset d = dataset(form, e.optString("i"), e.optString("t"), e.optString("s"), e.optString("k"), FILL, n, null, otpOnly);
             if (d != null) { r.addDataset(d); n++; }
         }
-        // An app no login names yet: one locked "choose a login" entry
-        // (the person confirms the link, AfAuthActivity).
-        if (wantLogin && !form.browser && exact.isEmpty() && sub.isEmpty() && n < MAX_SUGGEST) {
-            Dataset d = dataset(form, "", getString(R.string.af_pick), "", "login", true, n);
+        // matches by name only when nothing is saved for this place;
+        // the person confirms the match before anything is filled
+        ArrayList<String> guessIds = new ArrayList<>();
+        for (JSONObject e : guess) guessIds.add(e.optString("i"));
+        if (sure.isEmpty()) for (JSONObject e : guess) {
+            if (n >= room) break;
+            String s = e.optString("s");
+            String line = getString(R.string.af_guess) + (s.isEmpty() ? "" : " · " + s);
+            Dataset d = dataset(form, e.optString("i"), e.optString("t"), line, e.optString("k"), CONFIRM, n, null, otpOnly);
+            if (d != null) { r.addDataset(d); n++; }
+        }
+        List<JSONObject> other = new ArrayList<>(cards);
+        other.addAll(people);
+        for (JSONObject e : other) {
+            if (n >= room) break;
+            Dataset d = dataset(form, e.optString("i"), e.optString("t"), e.optString("s"), e.optString("k"), FILL, n, null, otpOnly);
+            if (d != null) { r.addDataset(d); n++; }
+        }
+        // Always last on a login or 2FA screen: one locked "Search",
+        // a list of every login (2FA codes only on a code screen) with a
+        // search box, the name matches first.
+        if (wantLogin) {
+            Dataset d = dataset(form, "", getString(otpOnly ? R.string.af_pick_otp : R.string.af_pick), "", "login", PICK, n, guessIds, otpOnly);
             if (d != null) { r.addDataset(d); n++; }
         }
         boolean save = addSave(r, form);
         return n > 0 || save ? r.build() : null;
+    }
+
+    /** Where a link made on this phone is kept: the app's package, or
+     *  "web:" and the page's exact host in a known browser. */
+    static String linkKey(Form form) {
+        if (form.browser) return form.host == null || form.host.isEmpty() ? null : "web:" + form.host;
+        return form.pkg.isEmpty() ? null : form.pkg;
+    }
+
+    /** An entry's title and the domain words of its sites. */
+    private static String nameText(JSONObject e) {
+        StringBuilder b = new StringBuilder(e.optString("t"));
+        JSONArray w = e.optJSONArray("w");
+        if (w != null) for (int i = 0; i < w.length(); i++) {
+            String[] a = AfMatch.site(w.optString(i));
+            if (a != null) b.append(' ').append(AfMatch.domainWord(a[1]));
+        }
+        return b.toString();
     }
 
     /** PW-AF3: Android offers "Save to orOS Passwords?" after a form
@@ -341,10 +391,11 @@ public class OrosAutofillService extends AutofillService {
         return true;
     }
 
-    /** 2: the exact host or a linked app, 1: a sub-domain, 0: no. */
+    /** 2: the exact host, a linked app or page, 1: a sub-domain, 0: no. */
     private static int score(JSONObject e, Form form, String port, JSONArray links) {
         if (form.browser) {
             if (form.host == null) return 0;
+            for (int i = 0; i < links.length(); i++) if (e.optString("i").equals(links.optString(i))) return 2;
             JSONArray w = e.optJSONArray("w");
             int best = 0;
             if (w != null) for (int i = 0; i < w.length(); i++) {
@@ -361,7 +412,12 @@ public class OrosAutofillService extends AutofillService {
         return 0;
     }
 
-    private Dataset dataset(Form form, String id, String title, String sub, String kind, boolean pick, int n) {
+    static final int FILL = 0, CONFIRM = 1, PICK = 2;
+
+    /** mode FILL: this entry; CONFIRM: this entry after "Use it?" (a
+     *  match by name); PICK: the search list. */
+    private Dataset dataset(Form form, String id, String title, String sub, String kind, int mode, int n,
+                            ArrayList<String> guess, boolean otpOnly) {
         ArrayList<AutofillId> ids = new ArrayList<>();
         int[] kinds = new int[form.fields.size()];
         int c = 0;
@@ -380,8 +436,13 @@ public class OrosAutofillService extends AutofillService {
         p.setViewVisibility(R.id.af_sub, sub.isEmpty() ? View.GONE : View.VISIBLE);
         Intent i = new Intent(this, AfAuthActivity.class)
                 .putExtra(AfAuthActivity.X_ID, id)
-                .putExtra(AfAuthActivity.X_PICK, pick)
+                .putExtra(AfAuthActivity.X_PICK, mode == PICK)
+                .putExtra(AfAuthActivity.X_CONFIRM, mode == CONFIRM)
+                .putExtra(AfAuthActivity.X_OTP, otpOnly)
                 .putExtra(AfAuthActivity.X_PKG, form.pkg)
+                .putExtra(AfAuthActivity.X_HOST, form.browser && form.host != null ? form.host : "")
+                .putExtra(AfAuthActivity.X_LINK, linkKey(form))
+                .putStringArrayListExtra(AfAuthActivity.X_GUESS, guess != null ? guess : new ArrayList<>())
                 .putExtra(AfAuthActivity.X_BROWSER, form.browser)
                 .putExtra(AfAuthActivity.X_KINDS, java.util.Arrays.copyOf(kinds, c))
                 .putParcelableArrayListExtra(AfAuthActivity.X_IDS, ids);

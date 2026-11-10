@@ -203,3 +203,24 @@ test("PW-AF3 readLogin rule matches Android's pickPassword", () => {
   assert.match(f, /else if \(pws\.length === 2 && pws\[0\]\.value === pws\[1\]\.value\) pick = pws\[0\];/);
   assert.equal(typeof F.readLogin, "function");
 });
+
+test("PW-AF4: 2FA screens list only codes, matches by name need a confirm, Search ends every login screen", () => {
+  const tw = (f) => fs.readFileSync(path.join(ROOT, "android/app/src/main/java/online/useoros/twa", f), "utf8");
+  const svc = tw("OrosAutofillService.java"), auth = tw("AfAuthActivity.java"), m = tw("AfMatch.java");
+  assert.match(svc, /otpOnly && e\.optInt\("o"\) != 1/, "a code screen offers only entries with a 2FA code");
+  assert.match(svc, /else if \(AfMatch\.names\(nameText\(e\), words\)\) guess\.add\(e\)/);
+  assert.match(svc, /CONFIRM, n, null, otpOnly\)/, "a match by name is filled only after the confirm");
+  assert.match(svc, /if \(wantLogin\) \{\s*Dataset d = dataset\(form, "", getString\(otpOnly \? R\.string\.af_pick_otp : R\.string\.af_pick\)/, "Search in apps and browsers");
+  assert.match(svc, /if \(!card\) for \(Field x : f\.fields\) if \(x\.kind == AfMatch\.CVV\) x\.kind = AfMatch\.OTP;/);
+  assert.match(svc, /"web:" \+ form\.host/);
+  assert.match(auth, /if \(otp && e\.optJSONObject\("o"\) == null\) continue;/);
+  assert.match(auth, /dlg\.dismiss\(\);\s*confirm\(e\);/, "a pick also needs the confirm");
+  assert.match(auth, /AfMatch\.part\(code, box\+\+, boxes\)/);
+  // a browser names the page only by the label before the public suffix
+  assert.match(m, /static String domainWord\(String host\)/);
+  assert.match(m, /int i = p\.length - 2;/);
+  const res = (d) => fs.readFileSync(path.join(ROOT, "android/app/src/main/res", d, "strings.xml"), "utf8");
+  for (const d of ["values", "values-el", "values-de"]) {
+    for (const k of ["af_pick_otp", "af_pick_title_otp", "af_search_hint", "af_guess", "af_link_web_q", "af_none_otp"]) assert.ok(res(d).includes('name="' + k + '"'), d + " " + k);
+  }
+});
