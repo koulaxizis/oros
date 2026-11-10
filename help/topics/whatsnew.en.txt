@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.09.00
+- **Icon packs: give your app icons a new look.** In Settings › Appearance › `Icons` pick `Classic`, `Colourful` (a colour for every kind of app), `Glass` (frosted see-through tiles), `Thin` (just a fine line), `Paper` (dark ink on a cream card) or `Round` (circles in your system colour). The icons change on the desktop, in the Dock, the menu and search, and the choice follows you to your other devices. High contrast always keeps `Classic`.
+
 ## Version 6.08.01
 - **Turning off seasonal decorations turns off everything under it.** In `Settings` › `Appearance` › `Seasonal decorations`, when `Decorate the desktop in season` is off, the options and the list of events below it are hidden and a decoration you are trying or kept stops. Your choices stay and come back when you turn it on again.
 
