@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.05.02
+- **Selected rows stay readable in Tux.** In Notes, Files and Lyric Sync the icons of the selected row (the note or folder icon, the arrow, the count, the word time) were white on the light Tux selection, so they almost vanished. They now take the same dark or light colour as the row's text, in every theme.
+
 ## Version 6.05.01
 - **Claude's changes take less room.** In Settings › Connected services, the list of Claude's changes is now one closed line with the count; open it to see each change on one short line with a small `Undo` beside it. "1 item" is written right too.
 
