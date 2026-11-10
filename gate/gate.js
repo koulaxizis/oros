@@ -851,7 +851,7 @@
     });
     return out.sort(function (p, q) { return p.dates[0] < q.dates[0] ? -1 : p.dates[0] > q.dates[0] ? 1 : 0; });
   }
-  // 6.05.00 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με
+  // 6.05.02 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με
   // κλειστό το orOS»): Budget's lines for the closed-orOS copy = every
   // line of the 400 days up to `today` as budget_lines gives them, with
   // its accounts, areas, categories and possible duplicates; the oldest
@@ -1854,7 +1854,7 @@
   // Bytes (UTF-8) of the copy before sealing: the sealed text (base64url)
   // must stay under the relay's 900 KB (GATE_LIMITS.copyChars).
   function utf8Len(str) { try { return new TextEncoder().encode(str).length; } catch (e) { return str.length * 2; } }
-  // 6.05.00: Budget's lines in the copy (bglCopy): at most this many bytes
+  // 6.05.02: Budget's lines in the copy (bglCopy): at most this many bytes
   var BGL_MAX = 300000;
   var COPY_MAX = 640000, copyTimer = null, copyBusy = false, copyLast = "", copyAt = 0;
   function adoptWritten() {
@@ -1895,11 +1895,11 @@
       }
       // GATE-ACT: the everyday apps' summaries (the frame answers them)
       else if (ACT.indexOf(id) >= 0) calls.push(["app_summary", { app: id }]);
-      // budget_lines needs a range: since 6.05.00 the copy keeps its lines
+      // budget_lines needs a range: since 6.05.02 the copy keeps its lines
       // of about 400 days (ans.__bgl, bglCopy) and the relay answers any range
       if (LINES[id] && id !== "budget") calls.push([LINES[id], {}]);
     });
-    // 6.05.00: what Claude changed (the last 30 days), as the default answer
+    // 6.05.02: what Claude changed (the last 30 days), as the default answer
     calls.push(["change_history", { _def: 1 }]);
     var ans = {}, size = 0, skipped = 0;
     calls.reduce(function (chain, c) {

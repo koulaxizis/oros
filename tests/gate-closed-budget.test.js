@@ -1,4 +1,4 @@
-// 6.05.00 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με
+// 6.05.02 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με
 // κλειστό το orOS»): the closed-orOS copy keeps Budget's lines of about
 // 400 days (gate.js bglCopy) and the relay answers budget_lines from it
 // for any range (relay/gate.js closedLines), with the accounts and the

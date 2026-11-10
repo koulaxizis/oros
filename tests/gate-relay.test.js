@@ -524,7 +524,7 @@ test("orOS closed: the copy answers reads, changes wait encrypted, deletions wai
   const item = [...q.values()][0];
   assert.doesNotMatch(item.c, /2026-11-08/, "the waiting change is encrypted");
   assert.equal(JSON.parse(await G.openText(K, item.c)).n, "budget_add");
-  // 6.05.00: a deletion waits too (over 5, the owner confirms when orOS opens)
+  // 6.05.02: a deletion waits too (over 5, the owner confirms when orOS opens)
   assert.match((await tc("budget_delete", { ids: ["a"] })).content[0].text, /"queued":true/);
   assert.equal(JSON.parse(await G.openText(K, [...(await b.st.storage.list({ prefix: "q:" })).values()].find((x) => x !== item).c)).n, "budget_delete");
   assert.match((await tc("kanban_add_cards", { board: "x", cards: [] })).content[0].text, /may not change kanban/);

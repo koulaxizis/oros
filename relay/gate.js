@@ -503,7 +503,7 @@ export function hasDelete(a) {
 // search_data while closed: every word must match the title, text or
 // labels; apps / label as live; at most 200 results.
 
-// 6.05.00: budget_lines while orOS is closed. The copy keeps every
+// 6.05.02: budget_lines while orOS is closed. The copy keeps every
 // Budget line of about the last 400 days (gate.js bglCopy, newest kept
 // when it is too big) with the accounts, areas, categories and the
 // possible duplicates of that span; this answers like the device does
@@ -1414,7 +1414,7 @@ export class GateBox {
     if (keys.length) await this.st.delete(keys);
   }
   // A call while no device is open: reads from the copy, changes wait
-  // in the queue (since 6.05.00 Budget deletions and transfers too;
+  // in the queue (since 6.05.02 Budget deletions and transfers too;
   // deleting other apps' items by ref still waits for an open device).
   async closedCall(name, args, kRaw, now, qidWant) {
     if (!kRaw) return { ok: false, c: "orOS is closed and there is no copy Claude may read yet. Ask the owner to open orOS once on a device with the gate on." };
@@ -1425,7 +1425,7 @@ export class GateBox {
     const when = new Date(cp.at).toISOString();
     // 5.96.00: search over the copy's index (every allowed item with its ref)
     if (name === "search_data") return closedSearch(cp, args, when);
-    // 6.05.00 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με
+    // 6.05.02 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με
     // κλειστό το orOS»): budget_lines from the copy's lines, by its days
     if (name === "budget_lines" && typeof cp.ans.__bgl === "string") return closedLines(cp, args, when);
     if (READ_ONLY[name]) {
@@ -1450,7 +1450,7 @@ export class GateBox {
         if (typeof cp.ans[key] === "string") return { ok: true, c: "[orOS is closed: this is the copy of " + when + "]\n" + cp.ans[key] };
         const loose = looseAns(cp.ans, key);
         if (loose) return { ok: true, c: "[orOS is closed: this is the copy of " + when + "]\n" + loose };
-        const def = cp.ans[name + " {}"];       // 6.05.00: e.g. change_history, its last 30 days
+        const def = cp.ans[name + " {}"];       // 6.05.02: e.g. change_history, its last 30 days
         if (typeof def === "string") return { ok: true, c: "[orOS is closed: this is the copy of " + when + " with its own filters (see the answer), not your arguments; ask again with orOS open for others]\n" + def };
         return { ok: false, c: "This needs orOS open; it is closed now (the copy of " + when + " does not have it). Ask the owner to open orOS." };
       }

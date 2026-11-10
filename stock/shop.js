@@ -31,6 +31,7 @@
       connect: "Open Connected services", acct: "Shop",
       noKeys: "This device doesn't have the shop's keys yet. Enter them in Settings › Connected services.",
       get: "Get products from the shop", getting: "Reading the shop… {n} products",
+      autoDone: "{n} paid shop orders recorded as sales", autoNoSave: "Stock could not keep when it last read the shop on this device.",
       onlyPub: "Only published products ({n} of {all}; drafts and private ones stay out)", brand: "Brand", allBrands: "All brands",
       plan: "{n} products in the shop: {a} new, {u} changed, {s} the same here.",
       setQty: "Also set the quantities here to the shop's ({n} products)",
@@ -65,6 +66,7 @@
       connect: "Άνοιγμα: Συνδεδεμένες υπηρεσίες", acct: "Κατάστημα",
       noKeys: "Αυτή η συσκευή δεν έχει ακόμα τα κλειδιά του καταστήματος. Πέρασέ τα στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       get: "Φέρε τα προϊόντα του καταστήματος", getting: "Διαβάζω το κατάστημα… {n} προϊόντα",
+      autoDone: "{n} πληρωμένες παραγγελίες του καταστήματος καταγράφηκαν ως πωλήσεις", autoNoSave: "Το Απόθεμα δεν μπόρεσε να κρατήσει πότε διάβασε τελευταία το κατάστημα σε αυτή τη συσκευή.",
       onlyPub: "Μόνο τα δημοσιευμένα προϊόντα ({n} από {all}· τα πρόχειρα και τα ιδιωτικά μένουν έξω)", brand: "Μάρκα", allBrands: "Όλες οι μάρκες",
       plan: "{n} προϊόντα στο κατάστημα: {a} νέα, {u} με αλλαγές, {s} ίδια με εδώ.",
       setQty: "Να γίνουν και οι ποσότητες εδώ ίδιες με του καταστήματος ({n} προϊόντα)",
@@ -439,5 +441,99 @@
     draw();
   }
 
-  window.OrosStockShop = { available: available, open: open };
+  // ---------- ST-AUTO (Chris 2026-11-10, card «Ναι, αυτόματα») ----------
+  // When Stock opens (at most once an hour per device and shop), the
+  // shop's PAID orders (processing, completed) since auto-recording
+  // began on this device become sales here, one movement per order,
+  // only for the lines whose product is in Stock (by its shop link,
+  // then SKU or barcode). Nothing is written to the shop. An order is
+  // recorded once: its movement has src "woo:<account>-<order>" (as
+  // «Record the sale») and an id made from it, so two devices that
+  // record the same order write the same row and sync keeps one.
+  // Orders from before auto-recording began are left to the person
+  // (the quantities here may already count them). A voided movement
+  // stays voided: the order is not recorded again.
+  var AUTO_KEY = "oros-stock-shop-auto";       // device: { <account>: { from: ISO, t: ms } }
+  var AUTO_EVERY = 3600000, AUTO_PAID = "processing,completed";
+  function autoState() {
+    try { var v = JSON.parse(localStorage.getItem(AUTO_KEY) || "{}"); return v && typeof v === "object" ? v : {}; }
+    catch (e) { return {}; }
+  }
+  function autoSave(v) {
+    try { localStorage.setItem(AUTO_KEY, JSON.stringify(v)); return true; }
+    catch (e) { return false; }
+  }
+  function fnv(str) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return h.toString(36);
+  }
+  // the movement's id for an order: lowercase letters and digits (Stock's ids)
+  function autoId(acct, orderId) { return ("wo" + fnv(String(acct)) + "x" + Number(orderId).toString(36)).slice(0, 40); }
+  // pure: the movements for these orders → { moves, skipped }
+  function autoMoves(S, data, acct, orders, today, code) {
+    var moves = [], skipped = 0;
+    (orders || []).forEach(function (o) {
+      if (!o || !(o.id > 0) || (o.st !== "processing" && o.st !== "completed")) return;
+      var src = "woo:" + acct + "-" + o.id;
+      if (S.srcUses(data, src) > 0) return;
+      var id = autoId(acct, o.id);
+      if ((data.tombs && data.tombs[id]) || (data.moves || []).some(function (x) { return x.id === id; })) return;
+      var out = W.outRequest(o, acct, code);
+      var r = S.outRequest(data, out.req, today);
+      if (!r || !r.lines.length) { skipped++; return; }
+      var mv = S.normMove({ id: id, m: 1, d: r.d, t: "out", ref: r.ref, src: r.src,
+        lines: r.lines.map(function (l) { var x = { i: l.i, q: -Math.abs(l.q) }; if (l.p !== undefined) x.p = l.p; return x; }) });
+      if (mv) moves.push(mv); else skipped++;
+    });
+    return { moves: moves, skipped: skipped };
+  }
+  // api: what stock.js gives (data, addMoves, toast, todayYmd, byItem, lang)
+  function auto(api) {
+    var Lk = links();
+    if (!Lk || !W || !L || typeof api.addMoves !== "function") return Promise.resolve(null);
+    var accts = Lk.list("woo");
+    if (!accts.length) return Promise.resolve(null);
+    var st = autoState(), now = Date.now(), chain = Promise.resolve(), total = 0;
+    var LANG = api.lang === "el" ? "el" : "en";
+    function tt(k, n) { return (STR[LANG] || STR.en)[k].split("{n}").join(String(n)); }
+    accts.forEach(function (a) {
+      var s = st[a.id] && typeof st[a.id] === "object" ? st[a.id] : null;
+      if (!s || typeof s.from !== "string") {
+        // the first time: start from now; earlier orders stay the person's call
+        st[a.id] = { from: new Date(now).toISOString().slice(0, 19), t: now };
+        if (!autoSave(st)) api.toast(tt("autoNoSave", 0));
+        return;
+      }
+      if (now - (+s.t || 0) < AUTO_EVERY) return;
+      chain = chain.then(function () {
+        return Lk.hasKeys(a.id).then(function (ok) {
+          if (!ok) return;
+          var q = { status: AUTO_PAID, after: s.from, per_page: 100, orderby: "date", order: "asc" };
+          return Lk.call(a.id, [{ m: "GET", path: "/orders" + L.query(q) }]).then(function (res) {
+            var x = res && res[0];
+            if (!x || Lk.statusCode(x)) return;
+            var raw = Array.isArray(x.data) ? x.data : [];
+            var orders = raw.map(W.normOrder).filter(Boolean);
+            var code = function (l) {
+              var it = api.byItem(L.extId("woo", a.id, "p", l.pid + ":" + (l.vid || 0)));
+              return it && (it.sku || it.bc) ? it.sku || it.bc : l.sku;
+            };
+            var r = autoMoves(api.core, api.data(), a.id, orders, api.todayYmd(), code);
+            if (r.moves.length) { api.addMoves(r.moves); total += r.moves.length; }
+            st[a.id].t = now;
+            // a full page: the next read starts at its last order (the ones read again are skipped)
+            if (raw.length === 100 && raw[99] && typeof raw[99].date_created === "string") st[a.id].from = raw[99].date_created.slice(0, 19);
+            if (!autoSave(st)) api.toast(tt("autoNoSave", 0));
+          });
+        }).catch(function () { /* offline or the shop refused: try again next time */ });
+      });
+    });
+    return chain.then(function () {
+      if (total) api.toast(tt("autoDone", total));
+      return total;
+    });
+  }
+
+  window.OrosStockShop = { available: available, open: open, auto: auto, autoMoves: autoMoves, autoId: autoId };
 })();

@@ -777,4 +777,17 @@ body.tr-open { overflow: hidden; }
 .gt-sens-head { margin-top: 12px; font-weight: 600; }
 .gt-sens-warn { margin: 4px 0 10px; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--border)); border-radius: 8px; }
 .gt-sens-warn .hint { color: var(--text); }
+/* orOS Gate: Claude's changes, a closed section with one compact line each (6.05.01) */
+.gt-chg { margin: 10px 0 6px; border: 1px solid var(--border); border-radius: 10px; }
+.gt-chg > summary { min-height: 44px; padding: 0 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; list-style: none; }
+.gt-chg > summary::-webkit-details-marker { display: none; }
+.gt-chg > summary::before { content: ""; width: 7px; height: 7px; flex: none; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(-45deg); transition: transform .15s; }
+.gt-chg[open] > summary::before { transform: rotate(45deg); }
+.gt-chg > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 10px; }
+.gt-chg-list { padding: 0 12px; }
+.gt-chg-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--border); }
+.gt-chg-row > .hint { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.gt-chg > .hint { padding: 6px 12px 10px; }
+.btn.btn-sm, .gt-chg-row > .btn { flex: none; min-height: 36px; padding: 0 12px; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .gt-chg > summary::before { transition: none; } }
 .gt-qr { display: block; width: 180px; height: 180px; max-width: 60vw; max-height: 60vw; border-radius: 8px; }
