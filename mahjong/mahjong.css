@@ -229,8 +229,9 @@ button, select {
 .tile.free { background: var(--mj-face); }
 .tile svg { display: block; width: 100%; height: 100%; pointer-events: none; }
 .tile.sel {
-  background: color-mix(in srgb, var(--accent) 38%, var(--mj-face));
+  background: color-mix(in srgb, var(--accent) 25%, var(--mj-face));
   box-shadow: inset 0 0 0 2px var(--accent),
+              inset 0 0 0 3px var(--accent-ink, #fff),
               var(--d) var(--d) 0 var(--mj-side),
               calc(var(--d) + 2px) calc(var(--d) + 3px) 4px var(--mj-drop),
               0 0 12px var(--accent);
