@@ -11,6 +11,7 @@
    data-cat = the app's menu category, lower case (apps.json).
    Category colours: one fill per category with a glyph of white or
    #141414, whichever reads (≥ 4.5:1, tests/iconpacks.test.js).
+   App colours (Mix, Rainbow): data-hue 0-11, see 2b.
    ============================================================ */
 
 /* ---------- 1. Category colours (fill / glyph) ---------- */
@@ -39,17 +40,75 @@
   background: var(--ic-cat); color: var(--ic-ink); border-radius: 6px; padding: 3px;
 }
 
+/* ---------- 2b. App colours (Mix, Rainbow; ICONPACK-2) ----------
+   data-hue = 0-11, a hash of the app id (shell.js iconHue, launcher.js
+   hueOf): an app has the same colour everywhere. --ic-hue / --ic-hue-ink
+   is a fill with the better of white / #141414 (>= 4.5:1); --ic-glow is
+   a light tint that reads on the Rainbow tile #1d1d26 (>= 4.5:1).
+   On the desktop and the Dock data-hue is the tile's place mod 12
+   (neighbours differ, the spectrum runs in order). */
+[data-hue] { --ic-hue: #52708e; --ic-hue-ink: #ffffff; --ic-glow: #c8d6e5; }
+[data-hue="0"]  { --ic-hue: #d93a3a; --ic-hue-ink: #ffffff; --ic-glow: #ff8a80; }
+[data-hue="1"]  { --ic-hue: #e8702a; --ic-hue-ink: #141414; --ic-glow: #ffab6e; }
+[data-hue="2"]  { --ic-hue: #f0b323; --ic-hue-ink: #141414; --ic-glow: #ffd54f; }
+[data-hue="3"]  { --ic-hue: #9bbf2a; --ic-hue-ink: #141414; --ic-glow: #cbe86b; }
+[data-hue="4"]  { --ic-hue: #3fa34d; --ic-hue-ink: #141414; --ic-glow: #7ddc8a; }
+[data-hue="5"]  { --ic-hue: #1f9e8a; --ic-hue-ink: #141414; --ic-glow: #5fe0c8; }
+[data-hue="6"]  { --ic-hue: #1e8fc2; --ic-hue-ink: #141414; --ic-glow: #6cc8f5; }
+[data-hue="7"]  { --ic-hue: #2f62c9; --ic-hue-ink: #ffffff; --ic-glow: #8fb0ff; }
+[data-hue="8"]  { --ic-hue: #5a4fcf; --ic-hue-ink: #ffffff; --ic-glow: #ab9fff; }
+[data-hue="9"]  { --ic-hue: #8a43c4; --ic-hue-ink: #ffffff; --ic-glow: #d29bff; }
+[data-hue="10"] { --ic-hue: #c0399b; --ic-hue-ink: #ffffff; --ic-glow: #f08fd6; }
+[data-hue="11"] { --ic-hue: #e0577a; --ic-hue-ink: #141414; --ic-glow: #ff9eb5; }
+
+/* ---------- 2c. Colour mix: every app its own colour ---------- */
+:is(html[data-oros-icons="mix"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="mix"]) .ld-tile {
+  background: var(--ic-hue); color: var(--ic-hue-ink); border-color: transparent;
+}
+:is(html[data-oros-icons="mix"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="mix"]) .app-ico[data-hue] {
+  background: var(--ic-hue); color: var(--ic-hue-ink); border-radius: 6px; padding: 3px;
+}
+
+/* ---------- 2d. Rainbow: a dark tile, a rainbow rim, the glyph in the app's light colour ---------- */
+:is(html[data-oros-icons="rainbow"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="rainbow"]) .ld-tile {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(#1d1d26, #1d1d26) padding-box,
+    linear-gradient(135deg, #e53935, #fb8c00, #fdd835, #43a047, #1e88e5, #5e35b1, #8e24aa) border-box;
+  color: var(--ic-glow);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.30);
+}
+:is(html[data-oros-icons="rainbow"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="rainbow"]) .app-ico[data-hue] {
+  border: 1.5px solid transparent; border-radius: 6px; padding: 2px;
+  background:
+    linear-gradient(#1d1d26, #1d1d26) padding-box,
+    linear-gradient(135deg, #e53935, #fb8c00, #fdd835, #43a047, #1e88e5, #5e35b1, #8e24aa) border-box;
+  color: var(--ic-glow);
+}
+
 /* ---------- 3. Glass ---------- */
+/* The tile carries its own tint under the frost (dark in a dark theme,
+   light in a light one) and the glyph the matching ink, so the icon reads
+   on any wallpaper: without it a light glyph washed out over a light land
+   (Chris 2026-11-11, Tux dark on a phone). */
 :is(html[data-oros-icons="glass"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="glass"]) .ld-tile {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.30), rgba(255, 255, 255, 0.06));
+  --gl-tint: rgba(16, 16, 20, 0.42); --gl-ink: #ffffff; --gl-halo: rgba(0, 0, 0, 0.55);
+  color: var(--gl-ink);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.04)), var(--gl-tint);
   border: 1px solid rgba(255, 255, 255, 0.45);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 4px 14px rgba(0, 0, 0, 0.28);
   -webkit-backdrop-filter: blur(12px) saturate(170%);
   backdrop-filter: blur(12px) saturate(170%);
 }
+:is(html[data-theme="light"][data-oros-icons="glass"]:not([data-oros-contrast="high"]), html[data-theme="light"] .ip-prev[data-pack="glass"]) .ld-tile {
+  --gl-tint: rgba(255, 255, 255, 0.55); --gl-ink: #1a1a1a; --gl-halo: rgba(255, 255, 255, 0.7);
+}
+:is(html[data-oros-icons="glass"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="glass"]) .ld-tile svg {
+  filter: drop-shadow(0 0 1.5px var(--gl-halo));
+}
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :is(html[data-oros-icons="glass"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="glass"]) .ld-tile {
-    background: color-mix(in srgb, var(--panel-bg) 70%, rgba(255, 255, 255, 0.25));
+    background: color-mix(in srgb, var(--panel-bg) 88%, rgba(255, 255, 255, 0.25));
   }
 }
 

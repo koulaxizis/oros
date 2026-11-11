@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.16.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.17.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -449,7 +449,7 @@
   // A pack restyles the app icons (desktop, Dock, menu, search) through
   // iconpacks.css; the glyphs stay ICONS. Synced shell field `icons`.
   var ICONS_KEY = "oros-icons";
-  var ICON_PACKS = ["classic", "colourful", "glass", "thin", "paper", "round"];
+  var ICON_PACKS = ["classic", "colourful", "mix", "rainbow", "glass", "thin", "paper", "round"];
   function iconsCanon(v) { return ICON_PACKS.indexOf(v) >= 0 ? v : undefined; }
   function applyIcons() {
     var root = document.documentElement;
@@ -465,6 +465,13 @@
   }
   // The menu category of an app as a data-cat value (iconpacks.css).
   function iconCat(app) { return String((app && app.category) || "other").toLowerCase().replace(/[^a-z]/g, ""); }
+  // The app's own colour, 0-11, for the Mix and Rainbow packs: a hash of
+  // its id, so an app keeps its colour everywhere (same as launcher.js).
+  function iconHue(app) {
+    var s = String((app && app.id) || ""), h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return String(Math.abs(h) % 12);
+  }
 
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", state.theme);
@@ -5201,6 +5208,7 @@
           var ico = document.createElement("span");
           ico.className = "app-ico";
           ico.setAttribute("data-cat", iconCat(app));
+          ico.setAttribute("data-hue", iconHue(app));
           ico.innerHTML = ICONS[app.icon];        // static shell icon, not data
           h.appendChild(ico);
         }
@@ -5407,7 +5415,7 @@
           var label = appLabelOf(app);
           if (ICONS[app.icon]) {
             btn.innerHTML =
-              '<span class="app-ico" data-cat="' + iconCat(app) + '">' + ICONS[app.icon] + '</span>' +
+              '<span class="app-ico" data-cat="' + iconCat(app) + '" data-hue="' + iconHue(app) + '">' + ICONS[app.icon] + '</span>' +
               '<span>' + escapeHtml(label) + '</span>';
           } else {
             btn.textContent = label;
@@ -11919,7 +11927,7 @@
       var go = document.createElement("button");
       go.type = "button";
       go.className = "mt-sw-go";
-      go.innerHTML = '<span class="app-ico" data-cat="' + iconCat(it.app) + '">' + (ICONS[it.app.icon] || "") + '</span>' +
+      go.innerHTML = '<span class="app-ico" data-cat="' + iconCat(it.app) + '" data-hue="' + iconHue(it.app) + '">' + (ICONS[it.app.icon] || "") + '</span>' +
         '<span class="mt-sw-name"></span><span class="mt-sw-when"></span>';
       go.querySelector(".mt-sw-name").textContent = mtLabel(it.app);
       go.querySelector(".mt-sw-when").textContent = it.front ? window.t("mt.sw.now") : it.side ? window.t("mt.sw.beside") : mtAgo(it.at);
