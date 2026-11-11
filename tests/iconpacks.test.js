@@ -150,3 +150,13 @@ test("mix and rainbow: twelve app colours that read, one hash in shell and launc
   assert.equal((SHELL.match(/data-hue/g) || []).length >= 3, true, "menu, search and task switcher");
   assert.match(read("settings/settings.js"), /tl\.setAttribute\("data-hue", x\[2\]\);/);
 });
+
+test("glass carries its own tint and ink, so the glyph reads on a light wallpaper", () => {
+  const i = CSS.indexOf('.ip-prev[data-pack="glass"]) .ld-tile {');
+  const block = CSS.slice(i, CSS.indexOf("}", i));
+  assert.match(block, /--gl-tint: rgba\(16, 16, 20, 0\.42\); --gl-ink: #ffffff;/);
+  assert.match(block, /color: var\(--gl-ink\);/);
+  assert.match(block, /rgba\(255, 255, 255, 0\.04\)\), var\(--gl-tint\);/);
+  assert.match(CSS, /html\[data-theme="light"\]\[data-oros-icons="glass"\]:not\(\[data-oros-contrast="high"\]\), html\[data-theme="light"\] \.ip-prev\[data-pack="glass"\]\) \.ld-tile \{\n  --gl-tint: rgba\(255, 255, 255, 0\.55\); --gl-ink: #1a1a1a;/);
+  assert.match(CSS, /\.ip-prev\[data-pack="glass"\]\) \.ld-tile svg \{\n  filter: drop-shadow\(0 0 1\.5px var\(--gl-halo\)\);/);
+});
