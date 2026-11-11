@@ -735,18 +735,33 @@
   // end, under the partner's Revenue Splitter name (its first linked
   // one, else the partner's name). No note, value or file ever leaves.
   var PORTAL_STATE = { on: "on", soon: "soon", ended: "ended", term: "ended_by_agreement" };
-  function portalPayload(data, today) {
-    var list = [];
+  // RS-CTR (Revenue Splitter 1.14 hand-off): only contracts of partners
+  // linked to a beneficiary (ben = that exact name, never the CRM name,
+  // which the shop would skip as unknown_beneficiary), with a start day
+  // (the shop refuses "" as bad_date), open-ended ones too (to = "",
+  // the site shows «Αορίστου»). With shopId: only the partners linked
+  // to that shop (a link without a shop counts for firstShopId).
+  // → { body: { v, sent, contracts }, left: [{ id, t, cust, why:
+  // "nolink" | "nofrom" }] }; portalPayload(data, today) = all shops' body.
+  function portalPlan(data, today, shopId, firstShopId) {
+    var list = [], left = [];
     ctrAll(data, today).forEach(function (r) {
-      if (!r.ctr.to || !r.cust || list.length >= 2000) return;
+      if (!r.cust) return;
       var rs = rsOf(data, r.cust);
-      var o = { id: r.ctr.id, ben: rs ? rs.n[0] : r.cust.name, title: r.book || r.ctr.t,
-                fmt: r.fmt === "p" ? "print" : (r.fmt === "e" ? "ebook" : ""), from: r.ctr.from || "", to: r.ctr.to,
-                state: PORTAL_STATE[r.st], renewed: r.hist.filter(function (e) { return e.k === "renew" && e.p; }).map(function (e) { return e.p; }) };
-      list.push(o);
+      if (!rs || !rs.n.length) { left.push({ id: r.ctr.id, t: r.ctr.t, cust: r.cust.id, why: "nolink" }); return; }
+      if (shopId && (rs.a || firstShopId || "") !== shopId) return;
+      if (!r.ctr.from) { left.push({ id: r.ctr.id, t: r.ctr.t, cust: r.cust.id, why: "nofrom" }); return; }
+      if (list.length >= 2000) return;
+      var title = cleanText(String(r.book || r.ctr.t).replace(/[<>]+/g, " "), 200) || cleanText(String(r.ctr.t).replace(/[<>]+/g, " "), 200) || r.ctr.id;
+      list.push({ id: r.ctr.id, ben: rs.n[0], title: title,
+                fmt: r.fmt === "p" ? "print" : (r.fmt === "e" ? "ebook" : ""), from: r.ctr.from, to: r.ctr.to || "",
+                state: PORTAL_STATE[r.st], renewed: r.hist.filter(function (e) { return e.k === "renew" && e.p; }).map(function (e) { return e.p; }).slice(-50) });
     });
-    return { v: 1, sent: today, contracts: list };
+    list.sort(function (a, b) { return cmpStr(a.id, b.id); });
+    left.sort(function (a, b) { return cmpStr(a.id, b.id); });
+    return { body: { v: 1, sent: today, contracts: list }, left: left };
   }
+  function portalPayload(data, today) { return portalPlan(data, today).body; }
   // Contract settings (1.10): cset { m, lbl?, kb? }: lbl = the Calendar
   // label the end days show under (absent = CRM's own feed chip), kb =
   // the Kanban board a contract card goes to (absent = the open one).
@@ -1461,7 +1476,7 @@
     normRsl: normRsl, CS_FIELDS: CS_FIELDS, normCs: normCs, csJoin: csJoin, rsOf: rsOf, rsRow: rsRow, normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
     SOON_DAYS: SOON_DAYS, CX_KINDS: CX_KINDS, normCx: normCx, normCset: normCset, cxOf: cxOf, cxRow: cxRow, ctrFmt: ctrFmt, ctrBook: ctrBook, addYears: addYears,
     ctrFupId: ctrFupId, ctrSnooze: ctrSnooze, ctrFupDay: ctrFupDay, ctrInfo: ctrInfo, ctrAll: ctrAll, ctrTitle: ctrTitle, ctrForTitle: ctrForTitle,
-    ctrHeal: ctrHeal, ctrEndsOn: ctrEndsOn, portalPayload: portalPayload,
+    ctrHeal: ctrHeal, ctrEndsOn: ctrEndsOn, portalPayload: portalPayload, portalPlan: portalPlan,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove
   };

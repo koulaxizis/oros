@@ -249,7 +249,7 @@
 
   // Your name (ME v1, shell.js): saved when the field is left or Enter
   // is pressed, so a repaint never takes the field away while typing.
-  function secMe(host, me, greet) {
+  function secMe(host, me, greet, tips) {
     var c = card(t("a.me"), "me");
     var box = el("div", "dav-field");
     var inp = el("input");
@@ -273,6 +273,11 @@
     if (greet) {
       c.appendChild(row(t("a.greet"), switchBtn(!!greet.on, "greet", function (v) { set("greet", v); }, t("a.greet")),
         { scope: "greet", hint: t("a.greet.hint") }));
+    }
+    // TIP-1: a tip the first time an app opens (this device)
+    if (tips) {
+      c.appendChild(row(t("a.tips"), switchBtn(!!tips.on, "tips", function (v) { set("tips", v); }, t("a.tips")),
+        { scope: "tips", hint: t("a.tips.hint") }));
     }
     host.appendChild(c);
   }
@@ -377,7 +382,7 @@
     if (s.suggested) c3.appendChild(el("p", "hint", t("a.wallpaper.hint")));
     host.appendChild(c3);
 
-    if (s.me) secMe(host, s.me, s.greet);
+    if (s.me) secMe(host, s.me, s.greet, s.tips);
 
     if (s.seasonal) secSeasonal(host, s.seasonal);
 
@@ -2502,7 +2507,8 @@
   }
   // page state (session only): the add form, per-account messages and
   // whether this device holds each account's keys
-  var svc = { add: null, keysFor: null, keyForm: { ck: "", cs: "", key: "" }, msg: {}, has: {}, busy: {}, rename: null, off: null };
+  var svc = { add: null, keysFor: null, keyForm: { ck: "", cs: "", key: "" }, msg: {}, has: {}, busy: {}, rename: null, off: null,
+              wk: {}, wkFor: null, wkForm: { ck: "", cs: "" } };
   // the platform's own wording first ("v.err.auth.tol"), else the shop's
   function svcErr(code, p) {
     var k = "v.err." + (code === "keys" ? "keys" : code);
@@ -2554,6 +2560,53 @@
       svc.has[id] = h;
       render();
     }, function () {});
+    // RS-CTR: whether a shop has its second, Read/Write key here
+    var a = Lk.get(id);
+    if (a && a.p === "woo" && typeof Lk.hasWriteKeys === "function") {
+      Lk.hasWriteKeys(id).then(function (h) {
+        if (svc.wk[id] === h) return;
+        svc.wk[id] = h;
+        render();
+      }, function () {});
+    }
+  }
+  // RS-CTR: a WooCommerce shop's write key for Revenue Splitter's
+  // contracts (CRM sends the list and marks renewal requests with it)
+  function writeKeyBox(Lk, a, c) {
+    if (a.p !== "woo" || typeof Lk.setWriteKeys !== "function") return;
+    var on = svc.wk[a.id] === true;
+    c.appendChild(row(t("v.wk"), el("span", "hint", t(on ? "v.wk.on" : "v.wk.off")), { hint: t("v.wk.hint") }));
+    if (svc.wkFor === a.id) {
+      var f = el("form", "pass");
+      f.setAttribute("autocomplete", "off");
+      f.appendChild(labelled(t("v.ck"), "v-wck", textInput("v-wck", svc.wkForm.ck, "ck_…", function (v) { svc.wkForm.ck = v; }, "password")));
+      f.appendChild(labelled(t("v.cs"), "v-wcs", textInput("v-wcs", svc.wkForm.cs, "cs_…", function (v) { svc.wkForm.cs = v; }, "password")));
+      var ok = el("button", "btn primary", t("v.saveKeys"));
+      ok.type = "submit";
+      ok.setAttribute("data-k", "v.wk.ok");
+      f.appendChild(actions(button(t("v.cancel"), "v.wk.cancel", function () { svc.wkFor = null; svc.wkForm = { ck: "", cs: "" }; render(); }), ok));
+      f.addEventListener("submit", function (e) {
+        e.preventDefault();
+        Lk.setWriteKeys(a.id, { ck: svc.wkForm.ck.trim(), cs: svc.wkForm.cs.trim() }).then(function () {
+          svc.wkFor = null;
+          svc.wkForm = { ck: "", cs: "" };
+          svc.wk[a.id] = true;
+          svc.msg[a.id] = { cls: "msg-ok", text: t("v.wk.saved") };
+          render();
+        }, function (er) {
+          svc.msg[a.id] = { cls: "msg-err", text: er && er.code === "keys" && er.extra && er.extra.length ? badKeys("woo") : t("v.wk.noFirst") };
+          render();
+        });
+      });
+      c.appendChild(f);
+      return;
+    }
+    c.appendChild(actions(
+      button(t(on ? "v.wk.change" : "v.wk.add"), "v.wk:" + a.id, function () { svc.wkFor = a.id; svc.wkForm = { ck: "", cs: "" }; render(); var x = $("f-v-wck"); if (x) x.focus(); }),
+      on ? confirmBtn(t("v.wk.remove"), t("v.wk.remove.confirm"), "v.wk.rm:" + a.id, function () {
+        Lk.setWriteKeys(a.id, null).then(function () { svc.wk[a.id] = false; render(); }, function () {});
+      }) : null
+    ));
   }
   function runTest(id) {
     var Lk = links();
@@ -2859,6 +2912,8 @@
       });
       c.appendChild(kf);
     }
+
+    writeKeyBox(Lk, a, c);
 
     var can = Lk.canKeySync();
     var ksRow = row(t("v.ks"), switchBtn(a.ks === 1, "v.ks:" + a.id, function (on) {

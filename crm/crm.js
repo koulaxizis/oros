@@ -184,6 +184,36 @@
       "cx.toast.renew": "Renewed until {d}", "cx.toast.post": "Decision put off to {d}", "cx.toast.end": "Ended by agreement", "cx.toast.reopen": "The contract runs again", "cx.toast.note": "Note kept",
       "cx.portal": "Send to the shop…", "cx.portalT": "Send the end days to the shop", "cx.portalHint": "The shop's Revenue Splitter (1.14 or later) shows each creator their own contracts in the Author Portal. Only names, titles, formats, days and states are sent: never a note, a value or a file. The shop's list is replaced by this one.",
       "cx.portalShop": "Shop", "cx.portalSend": "Send {n}", "cx.portalOk": "Sent to the shop: {n} contracts", "cx.portalSkip": "Sent: {n}, not taken: {s}", "cx.portalNone": "Add your shop in Settings › Connected services first.", "cx.portalOld": "{shop}: its Revenue Splitter does not take contracts yet (1.14 or later is needed).",
+      "rc.none": "No contract to send to this shop: link a partner to a Revenue Splitter beneficiary on their card (Overview › Revenue Splitter), and give the contract a start day.",
+      "rc.n": "Contracts for this shop: {n}",
+      "rc.left.nolink": "Not sent, the partner is not linked to Revenue Splitter: {t}",
+      "rc.left.nofrom": "Not sent, it has no start day: {t}",
+      "rc.wkOn": "{shop} has a write key: every change is sent on its own.",
+      "rc.wkOff": "{shop} has no write key: tap Send after changes. Sending needs a key with Read/Write permission (Settings › Connected services).",
+      "rc.sending": "Sending…",
+      "rc.done": "Sent at {time}: the shop saved {n}.",
+      "rc.skipped": "The shop did not take these (check the beneficiary's name on the partner's card):",
+      "rc.why.bad_id": "bad id",
+      "rc.why.duplicate_id": "id twice",
+      "rc.why.unknown_beneficiary": "no such beneficiary in Revenue Splitter",
+      "rc.why.bad_title": "bad title",
+      "rc.why.bad_fmt": "bad format",
+      "rc.why.bad_date": "bad day",
+      "rc.why.bad_state": "bad state",
+      "rc.why.bad_renewed": "bad renewal days",
+      "rc.why.bad_item": "not readable",
+      "rc.err.auth": "{shop} refused to save the contracts. Sending needs a key with Read/Write permission: add a write key in Settings › Connected services.",
+      "rc.err.offline": "You are offline. Try again when you are connected.",
+      "rc.err.keys": "The keys of {shop} are not on this device (Settings › Connected services).",
+      "rc.err.other": "Could not reach {shop}. Try again later.",
+      "rc.autoFail": "The contracts were not sent to {shop}. See Contracts › Send to the shop.",
+      "rc.autoSkip": "{shop} did not take {n} contracts. See Contracts › Send to the shop.",
+      "rc.rqLeft": "Renewal requests for a beneficiary no partner here is linked to:",
+      "rq.fup": "Renewal request: {t}",
+      "rq.act": "Asked in the Author Portal to talk about a renewal of «{t}».",
+      "rq.untitled": "a contract",
+      "rq.toast": "Renewal requests from the Author Portal: {n} (in Agenda)",
+      "rq.noWrite": "{shop} refused to mark the renewal requests as read: it needs a key with Read/Write permission (Settings › Connected services).",
       "cx.set": "Contracts", "cx.lbl": "Calendar label for the end days", "cx.lbl.own": "CRM (its own chip)", "cx.kb": "Kanban board for contract cards", "cx.kbPh": "Empty = the board that is open",
       "toast.ctrDel": "Contract deleted", "toast.noDisk": "The orOS disk is not available here.", "toast.fileSaved": "Saved in Files: {p}", "toast.fileBig": "Up to 20 MB per file.",
       "act.inv": "Invoice", "act.quote": "Quote",
@@ -401,6 +431,36 @@
       "cx.toast.renew": "Ανανεώθηκε έως {d}", "cx.toast.post": "Η απόφαση μετατέθηκε στις {d}", "cx.toast.end": "Το συμφωνητικό λύθηκε", "cx.toast.reopen": "Το συμφωνητικό ισχύει ξανά", "cx.toast.note": "Η σημείωση κρατήθηκε",
       "cx.portal": "Αποστολή στο site…", "cx.portalT": "Αποστολή των λήξεων στο site", "cx.portalHint": "Το Revenue Splitter του site (1.14 ή νεότερο) δείχνει σε κάθε δημιουργό τα δικά του συμφωνητικά στο Author Portal. Στέλνονται μόνο ονόματα, τίτλοι, μορφές, ημερομηνίες και καταστάσεις, ποτέ σημειώσεις, αξίες ή αρχεία. Η λίστα του site αντικαθίσταται από αυτή.",
       "cx.portalShop": "Κατάστημα", "cx.portalSend": "Αποστολή {n}", "cx.portalOk": "Στάλθηκαν στο site: {n} συμφωνητικά", "cx.portalSkip": "Στάλθηκαν: {n}, δεν έγιναν δεκτά: {s}", "cx.portalNone": "Πρόσθεσε πρώτα το κατάστημά σου στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.", "cx.portalOld": "{shop}: το Revenue Splitter του δεν δέχεται ακόμη συμφωνητικά (χρειάζεται 1.14 ή νεότερο).",
+      "rc.none": "Κανένα συμφωνητικό για αυτό το site: σύνδεσε έναν συνεργάτη με δικαιούχο του Revenue Splitter στην καρτέλα του (Σύνοψη › Revenue Splitter) και δώσε στο συμφωνητικό ημέρα έναρξης.",
+      "rc.n": "Συμφωνητικά για αυτό το site: {n}",
+      "rc.left.nolink": "Δεν στέλνεται, ο συνεργάτης δεν είναι συνδεδεμένος με το Revenue Splitter: {t}",
+      "rc.left.nofrom": "Δεν στέλνεται, δεν έχει ημέρα έναρξης: {t}",
+      "rc.wkOn": "Το {shop} έχει κλειδί εγγραφής: κάθε αλλαγή στέλνεται μόνη της.",
+      "rc.wkOff": "Το {shop} δεν έχει κλειδί εγγραφής: πάτα Αποστολή μετά από αλλαγές. Η αποστολή θέλει κλειδί με δικαιώματα Ανάγνωση/Εγγραφή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
+      "rc.sending": "Αποστολή…",
+      "rc.done": "Στάλθηκαν στις {time}: το site αποθήκευσε {n}.",
+      "rc.skipped": "Το site δεν δέχτηκε αυτά (έλεγξε το όνομα του δικαιούχου στην καρτέλα του συνεργάτη):",
+      "rc.why.bad_id": "λάθος κωδικός",
+      "rc.why.duplicate_id": "διπλός κωδικός",
+      "rc.why.unknown_beneficiary": "δεν υπάρχει τέτοιος δικαιούχος στο Revenue Splitter",
+      "rc.why.bad_title": "λάθος τίτλος",
+      "rc.why.bad_fmt": "λάθος μορφή",
+      "rc.why.bad_date": "λάθος ημέρα",
+      "rc.why.bad_state": "λάθος κατάσταση",
+      "rc.why.bad_renewed": "λάθος ημέρες ανανέωσης",
+      "rc.why.bad_item": "δεν διαβάζεται",
+      "rc.err.auth": "Το {shop} αρνήθηκε να αποθηκεύσει τα συμφωνητικά. Η αποστολή θέλει κλειδί με δικαιώματα Ανάγνωση/Εγγραφή: πρόσθεσε κλειδί εγγραφής στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "rc.err.offline": "Είσαι εκτός σύνδεσης. Δοκίμασε ξανά όταν συνδεθείς.",
+      "rc.err.keys": "Τα κλειδιά του {shop} δεν είναι σε αυτή τη συσκευή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
+      "rc.err.other": "Δεν βρέθηκε το {shop}. Δοκίμασε ξανά αργότερα.",
+      "rc.autoFail": "Τα συμφωνητικά δεν στάλθηκαν στο {shop}. Δες Λήξεις › Αποστολή στο site.",
+      "rc.autoSkip": "Το {shop} δεν δέχτηκε {n} συμφωνητικά. Δες Λήξεις › Αποστολή στο site.",
+      "rc.rqLeft": "Αιτήματα ανανέωσης για δικαιούχο που δεν είναι συνδεδεμένος με κανέναν συνεργάτη εδώ:",
+      "rq.fup": "Αίτημα ανανέωσης: {t}",
+      "rq.act": "Ζήτησε από το Author Portal να συζητήσουμε ανανέωση για «{t}».",
+      "rq.untitled": "ένα συμφωνητικό",
+      "rq.toast": "Αιτήματα ανανέωσης από το Author Portal: {n} (στην Ατζέντα)",
+      "rq.noWrite": "Το {shop} αρνήθηκε να σημειώσει τα αιτήματα ανανέωσης ως διαβασμένα: χρειάζεται κλειδί με δικαιώματα Ανάγνωση/Εγγραφή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
       "cx.set": "Συμφωνητικά", "cx.lbl": "Ετικέτα Ημερολογίου για τις λήξεις", "cx.lbl.own": "CRM (δική του ετικέτα)", "cx.kb": "Πίνακας Kanban για κάρτες συμφωνητικών", "cx.kbPh": "Κενό = ο πίνακας που είναι ανοιχτός",
       "toast.ctrDel": "Το συμφωνητικό διαγράφηκε", "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "toast.fileSaved": "Αποθηκεύτηκε στα Αρχεία: {p}", "toast.fileBig": "Έως 20 MB ανά αρχείο.",
       "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
@@ -689,6 +749,7 @@
     saved = json;
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
     render();
+    ctrChanged();                // RS-CTR: a shop with a write key gets the new list
     return true;
   }
 
@@ -1872,41 +1933,201 @@
     commit();
   }
 
-  // Revenue Splitter 1.14+ (noxpress): the end days for its Author
-  // Portal (core portalPayload), the shop's list replaced by this one
+  // ----- Contracts in the shop's Revenue Splitter (1.14+, Author Portal) -----
+  // CTR-ALL sends the list by hand; RS-CTR adds (Revenue Splitter 1.14
+  // hand-off, 2026-11-11): one list per shop (only that shop's linked
+  // partners, crm/core.js portalPlan), the rows the shop did not take
+  // with their reason, the contracts left out (no link, no start day),
+  // and, when the shop has a write key in Settings › Connected services
+  // (adding it is the yes), the list goes again on its own after a
+  // change. Renewal requests are pulled while CRM is open (every 10
+  // minutes): each becomes a follow-up for today and a note on the
+  // partner's card, committed BEFORE the shop is told ("oros"), so an
+  // interruption loses nothing; a done or deleted follow-up closes it.
+  var RC_WAIT = 4000, RQ_EVERY = 600000;
+  var rcTimer = null, rcLast = {}, rcErr = {}, rcSent = {}, rqAt = 0, rqBusy = false, rqLeft = {}, rqNoWrite = {};
+  function firstShop() { var l = shops(); return l[0] ? l[0].id : ""; }
+  // the shops at least one partner is linked to (no shop = the first)
+  function rsShops() {
+    var list = shops(), first = list[0] ? list[0].id : "", ids = {};
+    (data.rsl || []).forEach(function (r) { if (r.n && C.byId(data.cust, r.id)) ids[r.a || first] = 1; });
+    return list.filter(function (a) { return ids[a.id]; });
+  }
+  function hasWriteKey(shop) {
+    var L = shopLinks();
+    if (!L || typeof L.hasWriteKeys !== "function") return Promise.resolve(false);
+    return Promise.resolve(L.hasWriteKeys(shop.id)).catch(function () { return false; });
+  }
+  function shopPlan(shop) { return C.portalPlan(data, todayYmd(), shop.id, firstShop()); }
+  function pushCtr(shop) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    if (!RS || !L) return Promise.reject(rsErr("other"));
+    var x = shopPlan(shop), sent = JSON.stringify(x.body.contracts);
+    return Promise.resolve(L.call(shop.id, [RS.reqPushCtr(x.body)])).then(function (res) {
+      var r = res && res[0], code = L.statusCode(r);
+      if (code) throw rsErr(code === "notfound" ? "old" : code);
+      var got = RS.parseSaved(r.data);
+      if (!got) throw rsErr("old");
+      var out = { saved: got.saved, skipped: got.skipped, n: x.body.contracts.length, at: Date.now() };
+      rcLast[shop.id] = out;
+      rcSent[shop.id] = sent;
+      delete rcErr[shop.id];
+      return out;
+    }).catch(function (e) {
+      rcErr[shop.id] = (e && e.code) || "other";
+      throw e;
+    });
+  }
+  function rcErrText(code, shop) {
+    var name = shop.name || shop.site;
+    if (code === "old") return t("cx.portalOld", { shop: name });
+    if (code === "auth" || code === "offline" || code === "keys") return t("rc.err." + code, { shop: name });
+    return t("rc.err.other", { shop: name });
+  }
+  // after every commit: a shop with a write key gets its list again
+  // when it differs from what this page last sent there
+  function ctrChanged() {
+    if (!window.OrosCrmRs || !shopLinks()) return;
+    clearTimeout(rcTimer);
+    rcTimer = setTimeout(function () {
+      rsShops().reduce(function (p, shop) {
+        return p.then(function () {
+          if (rcSent[shop.id] === JSON.stringify(shopPlan(shop).body.contracts)) return false;
+          return hasWriteKey(shop);
+        }).then(function (wk) {
+          if (!wk) return;
+          return pushCtr(shop).then(function (r) {
+            if (r.skipped.length) showToast(t("rc.autoSkip", { shop: shop.name || shop.site, n: r.skipped.length }));
+          }, function (e) {
+            if (!(e && e.code === "offline")) showToast(t("rc.autoFail", { shop: shop.name || shop.site }));
+          });
+        });
+      }, Promise.resolve()).catch(function () {});
+    }, RC_WAIT);
+  }
+  function ctrLabel(id) {
+    var k = C.byId(data.ctr || [], id), cu = k ? C.byId(data.cust, k.cust) : null;
+    return k ? k.t + (cu ? " · " + C.custName(cu) : "") : id;
+  }
   function portalDialog() {
-    var list = shops(), L = shopLinks();
-    if (!list.length || !L) { showToast(t("cx.portalNone")); return; }
-    var body = C.portalPayload(data, todayYmd());
-    var dlg = makeDialog("crm-portal");
+    var RS = window.OrosCrmRs, list = shops(), L = shopLinks();
+    if (!list.length || !L || !RS) { showToast(t("cx.portalNone")); return; }
+    var dlg = makeDialog("crm-portal", true);
     dlg.appendChild(el("h2", "dlg-title", t("cx.portalT")));
     dlg.appendChild(el("p", "hint", t("cx.portalHint")));
-    var rs = (data.rsl || []).filter(function (x) { return x.a; })[0];
-    var shop = field(dlg, t("cx.portalShop"), selectEl(list.map(function (a) { return [a.id, a.name || a.site]; }), rs ? rs.a : list[0].id));
-    if (!shop.value) shop.value = list[0].id;
-    var err = errorHint(dlg);
-    dlg.appendChild(err);
+    var shop = rsShops()[0] || list[0], shopSel = null;
+    if (list.length > 1) {
+      shopSel = selectEl(list.map(function (a) { return [a.id, a.name || a.site]; }), shop.id);
+      field(dlg, t("cx.portalShop"), shopSel);
+    }
+    var body = el("div", "");
+    dlg.appendChild(body);
+    var busy = false, send = null;
+    function line(text, cls) { body.appendChild(el("p", "hint" + (cls ? " " + cls : ""), text)); }
+    function draw() {
+      body.innerHTML = "";
+      var x = shopPlan(shop);
+      line(x.body.contracts.length ? t("rc.n", { n: x.body.contracts.length }) : t("rc.none"));
+      x.left.forEach(function (l) { line(t("rc.left." + l.why, { t: ctrLabel(l.id) }), "late"); });
+      var wkLine = el("p", "hint", "");
+      body.appendChild(wkLine);
+      hasWriteKey(shop).then(function (wk) {
+        if (wkLine.isConnected) wkLine.textContent = t(wk ? "rc.wkOn" : "rc.wkOff", { shop: shop.name || shop.site });
+      });
+      var last = rcLast[shop.id];
+      if (rcErr[shop.id]) line(rcErrText(rcErr[shop.id], shop), "late");
+      else if (last) {
+        line(t("rc.done", { n: last.saved, time: new Date(last.at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" }) }));
+        if (last.skipped.length) {
+          line(t("rc.skipped"), "late");
+          last.skipped.forEach(function (k) { line(ctrLabel(k.id) + " · " + t("rc.why." + k.why), "late"); });
+        }
+      }
+      var left = rqLeft[shop.id] || [];
+      if (left.length) {
+        line(t("rc.rqLeft"), "late");
+        left.slice(0, 20).forEach(function (q) { line([q.ben, q.title].filter(Boolean).join(" · ")); });
+      }
+      if (rqNoWrite[shop.id]) line(t("rq.noWrite", { shop: shop.name || shop.site }), "late");
+      if (send) send.textContent = t("cx.portalSend", { n: x.body.contracts.length });
+    }
+    if (shopSel) shopSel.addEventListener("change", function () { shop = rsShop({ a: shopSel.value }, list); draw(); });
     var acts = el("div", "dlg-actions");
-    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
-    var go = button(t("cx.portalSend", { n: body.contracts.length }), "primary", function () {
-      var a = list.filter(function (x) { return x.id === shop.value; })[0] || list[0], name = a.name || a.site;
-      go.disabled = true;
-      Promise.resolve(L.call(a.id, [{ m: "POST", path: "/rs/contracts", body: body }])).then(function (res) {
-        var x = res && res[0], code = L.statusCode(x);
-        if (code) throw rsErr(code);
-        var d = x && x.data && typeof x.data === "object" ? x.data : {};
-        var skipped = Array.isArray(d.skipped) ? d.skipped.length : 0, saved = typeof d.saved === "number" ? d.saved : body.contracts.length - skipped;
-        dlg.close();
-        showToast(skipped ? t("cx.portalSkip", { n: saved, s: skipped }) : t("cx.portalOk", { n: saved }));
-      }).catch(function (e) {
-        go.disabled = false;
-        err.textContent = e && e.code === "notfound" ? t("cx.portalOld", { shop: name }) : rsErrText(e, name);
-        err.hidden = false;
+    acts.appendChild(button(t("ed.close"), "", function () { dlg.close(); }));
+    send = button(t("cx.portalSend", { n: 0 }), "primary", function () {
+      if (busy) return;
+      busy = true;
+      send.disabled = true;
+      send.textContent = t("rc.sending");
+      pushCtr(shop).catch(function () {}).then(function () {
+        busy = false;
+        send.disabled = false;
+        if (dlg.isConnected) draw();
       });
     });
-    acts.appendChild(go);
+    acts.appendChild(send);
     dlg.appendChild(acts);
     showDialog(dlg);
+    draw();
+  }
+  // Renewal requests (Author Portal): pulled, imported, then marked
+  function pullRequests(force) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    if (!RS || !L || rqBusy) return;
+    if (!force && Date.now() - rqAt < RQ_EVERY) return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    var list = rsShops();
+    if (!list.length) return;
+    rqBusy = true;
+    rqAt = Date.now();
+    list.reduce(function (p, shop) {
+      return p.then(function () { return pullShop(shop); }).catch(function () {});
+    }, Promise.resolve()).then(function () { rqBusy = false; });
+  }
+  function pullShop(shop) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    return Promise.resolve(L.call(shop.id, [RS.REQ_RQ_NEW, RS.REQ_RQ_OROS])).then(function (res) {
+      var fresh = res && res[0] && !L.statusCode(res[0]) ? RS.parseRequests(res[0].data) : null;
+      var taken = res && res[1] && !L.statusCode(res[1]) ? RS.parseRequests(res[1].data) : null;
+      if (!fresh && !taken) return;              // an older Revenue Splitter: nothing to pull
+      var marks = [];
+      if (fresh) {
+        var x = RS.importPlan(data, shop.id, firstShop(), fresh), added = 0, today = todayYmd();
+        x.plan.forEach(function (it) {
+          if (it.have) return;
+          var title = it.req.title || (it.ctr && it.ctr.t) || t("rq.untitled");
+          putRow("fups", { id: it.ids.fup, cust: it.cust.id, d: today, text: C.cleanText(t("rq.fup", { t: title }), 300) });
+          putRow("acts", { id: it.ids.act, cust: it.cust.id, k: "note", at: it.req.at || Date.now(), who: it.req.ben,
+                           text: C.cleanText(t("rq.act", { t: title }) + (it.req.note ? "\n" + it.req.note : ""), 2000, true) });
+          added++;
+        });
+        if (added && !commit()) return;          // nothing is marked: the next pull tries again
+        if (added) showToast(t("rq.toast", { n: added }));
+        x.plan.forEach(function (it) { marks.push([it.req.id, "oros"]); });
+        rqLeft[shop.id] = x.left;
+      }
+      if (taken) RS.closeList(data, shop.id, taken).forEach(function (id) { marks.push([id, "closed"]); });
+      return markRequests(shop, marks);
+    });
+  }
+  function markRequests(shop, marks) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    if (!marks.length || rqNoWrite[shop.id]) return Promise.resolve();
+    var chunks = [];
+    for (var i = 0; i < marks.length; i += 10) chunks.push(marks.slice(i, i + 10));
+    return chunks.reduce(function (p, ch) {
+      return p.then(function (go) {
+        if (!go) return false;
+        return Promise.resolve(L.call(shop.id, ch.map(function (m) { return RS.reqMark(m[0], m[1]); }))).then(function (res) {
+          if ((res || []).some(function (r) { return L.statusCode(r) === "auth"; })) {
+            rqNoWrite[shop.id] = true;
+            showToast(t("rq.noWrite", { shop: shop.name || shop.site }));
+            return false;
+          }
+          return true;
+        });
+      });
+    }, Promise.resolve(true));
   }
   // Calendar's own labels, read only (oros-calendar-data), for Settings
   function calLabels() {
@@ -4480,6 +4701,7 @@
       else {
         if (renderedDay !== todayYmd() && !document.querySelector("dialog[open]")) render();
         if (WF) WF.auto();
+        pullRequests(false);
       }
     });
     // Contacts edited in another frame/tab: people lines are live
@@ -4491,6 +4713,7 @@
     setInterval(function () {
       if (document.visibilityState === "hidden") return;
       if (renderedDay !== todayYmd() && !document.querySelector("dialog[open]")) render();
+      pullRequests(false);
     }, 60000);
     window.addEventListener("pagehide", savePrefsNow);
     wireKeyboard();
@@ -4511,6 +4734,7 @@
     healCtrs();
     takeTarget();
     if (WF) WF.auto();
+    setTimeout(function () { pullRequests(true); }, 3000);
     console.log("[orOS CRM] v1.4.0 boot OK");
   }
 

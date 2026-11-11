@@ -63,9 +63,15 @@
       site: true,
       keys: [
         { k: "ck", re: /^ck_[a-f0-9]{40}$/ },
-        { k: "cs", re: /^cs_[a-f0-9]{40}$/ }
+        { k: "cs", re: /^cs_[a-f0-9]{40}$/ },
+        // RS-CTR (Revenue Splitter 1.14+): an optional second key with
+        // Read/Write permission, used only for the routes in WRITE_KEY
+        // (the contracts list and the renewal requests' state). Both or
+        // neither; absent, those routes go with the key above.
+        { k: "wck", re: /^ck_[a-f0-9]{40}$/, opt: 1 },
+        { k: "wcs", re: /^cs_[a-f0-9]{40}$/, opt: 1 }
       ],
-      apps: ["stock", "newsletter", "publish", "budget"],
+      apps: ["stock", "newsletter", "publish", "budget", "crm"],
       probe: "/products?per_page=1"
     },
     // timologisi.online (Novus Conceptus): a Greek e-invoicing provider.
@@ -439,12 +445,37 @@
   function checkKeys(p, input) {
     var pl = PLATFORMS[p], out = {}, bad = [];
     if (!pl) return { ok: false, keys: null, bad: ["p"] };
+    var opt = [];
     pl.keys.forEach(function (f) {
       var v = input && typeof input[f.k] === "string" ? input[f.k].trim() : "";
+      if (f.opt && !v) { opt.push(f.k); return; }
       if (!f.re.test(v)) bad.push(f.k);
       else out[f.k] = v;
     });
+    // optional keys come as a whole set or not at all (WooCommerce's
+    // write key: both its parts)
+    var given = pl.keys.filter(function (f) { return f.opt && has(out, f.k); }).length;
+    if (given && opt.length) bad = bad.concat(opt);
     return { ok: !bad.length, keys: bad.length ? null : out, bad: bad };
+  }
+  // RS-CTR: the keys a call goes with. A WooCommerce call that carries
+  // a write of Revenue Splitter's contracts (WRITE_KEY) uses the
+  // shop's second, Read/Write key when it has one; every other call,
+  // and every call of a shop without one, the first key. → { ck, cs }
+  var WRITE_KEY = {
+    woo: [["POST", /^\/rs\/contracts$/], ["POST", /^\/rs\/contract-requests\/[A-Za-z0-9_-]{1,64}$/]]
+  };
+  function usesWriteKey(p, reqs) {
+    var rules = WRITE_KEY[p] || [];
+    return (Array.isArray(reqs) ? reqs : [reqs]).some(function (r) {
+      return !!r && rules.some(function (w) { return r.m === w[0] && typeof r.path === "string" && w[1].test(r.path.split("?")[0]); });
+    });
+  }
+  function keysFor(p, keys, reqs) {
+    if (!keys || typeof keys !== "object") return keys;
+    if (p !== "woo") return keys;
+    if (usesWriteKey(p, reqs) && keys.wck && keys.wcs) return { ck: keys.wck, cs: keys.wcs };
+    return { ck: keys.ck, cs: keys.cs };
   }
 
   // ---------- Ids for imported records (R16) ----------
@@ -612,22 +643,43 @@
     if (x.email_restrictions !== undefined && !listOf(x.email_restrictions, 1, 1, okEmail)) return false;
     return x.description === undefined || (typeof x.description === "string" && x.description.length <= 200 && !/[\u0000-\u001f\u007f]/.test(x.description));
   }
-  // Revenue Splitter contracts (CTR-ALL): ids, names, titles, days and
-  // states only; never a note, a value or a file.
-  var RS_CTR_KEYS = ["id", "ben", "title", "fmt", "from", "to", "state", "renewed"];
-  var RS_CTR_ST = ["on", "soon", "ended", "ended_by_agreement"];
-  function rsLine(v, max) { return typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f<>]/.test(v); }
-  function rsDay(v) { return typeof v === "string" && DAY.test(v); }
+  // RS-CTR: Revenue Splitter's contracts list (POST /rs/contracts)
+  var RS_ID = /^[A-Za-z0-9_-]{1,64}$/, RS_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/,
+      RS_FMT = ["print", "ebook", ""], RS_ST = ["on", "soon", "ended", "ended_by_agreement"],
+      RS_CTR_KEYS = ["id", "ben", "title", "fmt", "from", "to", "state", "renewed"],
+      RS_RQ_Q = /^(new|oros|closed|all)$/, RS_MAX = 2000, RS_BYTES = 1000000;
+  function rsText(v, max) { return typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f<>]/.test(v); }
   function okRsCtr(x) {
     if (!onlyKeys(x, RS_CTR_KEYS)) return false;
-    if (typeof x.id !== "string" || !/^[a-z0-9]{6,40}$/.test(x.id)) return false;
-    if (!rsLine(x.ben, 120) || !rsLine(x.title, 120)) return false;
-    if (["print", "ebook", ""].indexOf(x.fmt) < 0 || RS_CTR_ST.indexOf(x.state) < 0) return false;
-    if (!(x.from === "" || rsDay(x.from)) || !rsDay(x.to)) return false;
-    return listOf(x.renewed, 0, 50, rsDay);
+    for (var i = 0; i < RS_CTR_KEYS.length; i++) if (!has(x, RS_CTR_KEYS[i])) return false;
+    if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
+    if (RS_FMT.indexOf(x.fmt) < 0 || RS_ST.indexOf(x.state) < 0) return false;
+    if (typeof x.from !== "string" || !RS_DAY.test(x.from)) return false;
+    if (x.to !== "" && !(typeof x.to === "string" && RS_DAY.test(x.to))) return false;
+    return listOf(x.renewed, 0, 50, function (d) { return typeof d === "string" && RS_DAY.test(d); });
+  }
+  // UTF-8 bytes of a text (the shop counts bytes)
+  function utf8Len(t) {
+    var n = 0;
+    for (var i = 0; i < t.length; i++) {
+      var c = t.charCodeAt(i);
+      n += c < 0x80 ? 1 : c < 0x800 ? 2 : (c >= 0xd800 && c < 0xdc00 ? (i++, 4) : 3);
+    }
+    return n;
   }
   // Rules across a whole body (after the per-key checks).
   var WHOLE = {
+    // Revenue Splitter's contracts: all three parts, unique ids, ≤ 1 MB
+    rsc: function (b) {
+      if (!has(b, "v") || !has(b, "sent") || !has(b, "contracts")) return false;
+      var seen = {};
+      for (var i = 0; i < b.contracts.length; i++) {
+        if (has(seen, b.contracts[i].id)) return false;
+        seen[b.contracts[i].id] = 1;
+      }
+      return utf8Len(JSON.stringify(b)) <= RS_BYTES;
+    },
+    rsrq: function (b) { return Object.keys(b).length === 1; },
     // adding someone as "subscribed" must never overwrite a person who
     // already left: only new addresses are added that way
     mcbatch: function (b) {
@@ -715,10 +767,13 @@
       // partner card W6: Revenue Splitter 1.11+ (noxpress), read only
       ["GET", /^\/rs\/balances$/, null, null],
       ["GET", /^\/rs\/report$/, { date_start: DAY, date_end: DAY }, null],
-      // CRM «Contracts» (CTR-ALL): Revenue Splitter 1.14+ keeps the
-      // contracts' end days for its Author Portal (the whole list, replaced)
+      // RS-CTR: Revenue Splitter 1.14+ contracts (the whole list, sent
+      // again on every change) and the Author Portal's renewal requests
+      // (read, then marked "oros" / "closed"). Names never go into a URL.
       ["GET", /^\/rs\/contracts$/, null, null],
-      ["POST", /^\/rs\/contracts$/, null, { v: "rsv", sent: "rsday", contracts: "rsctrs" }],
+      ["POST", /^\/rs\/contracts$/, null, { v: "rsv", sent: "rsday", contracts: "rsctrs" }, "rsc"],
+      ["GET", /^\/rs\/contract-requests$/, { state: RS_RQ_Q }, null],
+      ["POST", /^\/rs\/contract-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rsrqst" }, "rsrq"],
       // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
       ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
       // Publishing «Cost & result» (P15): Production Ledger 1.1+'s report per product, read only
@@ -859,8 +914,9 @@
     if (kind === "tolinv") return okInvoice(v);
     if (kind === "cpns") return listOf(v, 1, 100, okCoupon);
     if (kind === "rsv") return v === 1;
-    if (kind === "rsday") return rsDay(v);
-    if (kind === "rsctrs") return listOf(v, 0, 2000, okRsCtr);
+    if (kind === "rsday") return typeof v === "string" && RS_DAY.test(v);
+    if (kind === "rsctrs") return listOf(v, 0, RS_MAX, okRsCtr);
+    if (kind === "rsrqst") return v === "oros" || v === "closed";
     if (kind === "mlbatch") return listOf(v, 1, 50, okMlItem);
     if (kind === "mcmembers") return listOf(v, 1, 250, okMcMember);
     if (kind === "bvrows") return listOf(v, 1, 250, okBvRow);
@@ -994,7 +1050,7 @@
     ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, DB_RE: DB_RE, TOL_TYPES: TOL_TYPES, ODOO: ODOO,
     validHost: validHost, normSite: normSite, siteParts: siteParts,
     normAcct: normAcct, merge: merge, live: live, find: find, checkKeys: checkKeys,
-    extId: extId, checkReq: checkReq, SHOPIFY_Q: SHOPIFY_Q, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
+    extId: extId, checkReq: checkReq, keysFor: keysFor, usesWriteKey: usesWriteKey, utf8Len: utf8Len, RS_MAX: RS_MAX, RS_BYTES: RS_BYTES, SHOPIFY_Q: SHOPIFY_Q, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
     okEmail: okEmail
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

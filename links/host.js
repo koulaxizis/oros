@@ -285,14 +285,38 @@
   }
   // New keys on this device (they become the newest copy everywhere
   // when key sync is on).
+  // A WooCommerce shop's write key (RS-CTR) stays when only the
+  // first key is replaced.
   function setKeys(id, keys) {
     var a = L.find(read(), id);
     if (!a || a.d === 1) return Promise.reject(err("gone"));
     var chk = L.checkKeys(a.p, keys);
     if (!chk.ok) return Promise.reject(err("keys", chk.bad));
     setMode(id, "");
-    return sealLocal(id, chk.keys, Date.now()).then(function () { changed(); keySync(); return true; });
+    return openLocal(id).then(function (local) {
+      var next = chk.keys;
+      if (a.p === "woo" && !next.wck && local && local.keys && local.keys.wck && local.keys.wcs) {
+        next = { ck: next.ck, cs: next.cs, wck: local.keys.wck, wcs: local.keys.wcs };
+      }
+      return sealLocal(id, next, Date.now());
+    }).then(function () { changed(); keySync(); return true; });
   }
+  // RS-CTR: a WooCommerce shop's second key, with Read/Write permission,
+  // for Revenue Splitter's contracts only. pair = { ck, cs } or null
+  // (removed). Rejects "gone" | "keys" (no first key here, or a bad pair).
+  function setWriteKeys(id, pair) {
+    var a = L.find(read(), id);
+    if (!a || a.d === 1 || a.p !== "woo") return Promise.reject(err("gone"));
+    return openLocal(id).then(function (local) {
+      if (!local || !local.keys) throw err("keys");
+      var next = { ck: local.keys.ck, cs: local.keys.cs };
+      if (pair) { next.wck = pair.ck; next.wcs = pair.cs; }
+      var chk = L.checkKeys("woo", next);
+      if (!chk.ok) throw err("keys", chk.bad.filter(function (k) { return k === "wck" || k === "wcs"; }));
+      return sealLocal(id, chk.keys, Date.now());
+    }).then(function () { changed(); keySync(); return true; });
+  }
+  function hasWriteKeys(id) { return openLocal(id).then(function (l) { return !!(l && l.keys && l.keys.wck && l.keys.wcs); }); }
   function hasKeys(id) { return openLocal(id).then(function (l) { return !!l; }); }
   function setKeySync(id, on) {
     var a = L.find(read(), id);
@@ -495,7 +519,8 @@
     }
     return openLocal(id).then(function (local) {
       if (!local) throw err("keys");
-      return callWith(a, id, pl, reqs, local.keys, once);
+      // RS-CTR: a shop's second, Read/Write key only for its routes
+      return callWith(a, id, pl, reqs, L.keysFor(a.p, local.keys, reqs), once);
     });
   }
   function callWith(a, id, pl, reqs, keys, once) {
@@ -555,6 +580,7 @@
 
   root.orosLinks = {
     list: list, get: get, add: add, edit: edit, setKeys: setKeys, hasKeys: hasKeys,
+    setWriteKeys: setWriteKeys, hasWriteKeys: hasWriteKeys,
     setKeySync: setKeySync, canKeySync: canKeySync, remove: remove,
     call: call, test: test, statusCode: statusCode, mode: mode, onChange: onChange,
     platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice(), site: !!L.PLATFORMS[p].site, db: !!L.PLATFORMS[p].db, ownUi: L.PLATFORMS[p].ownUi || ""}; }); }

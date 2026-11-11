@@ -35,7 +35,7 @@ import { runSieve, SIEVE_LIMITS } from "./sieve.js";
 import { validNl, runNl, handleNl, page as nlPage, NlError, validHook, runHook } from "./newsletter.js";
 import { validCrmf, runCrmf, handleCrmForm, crmPage, CrmfError } from "./crmform.js";
 import { validPapi, runPapi, PAPI_LIMITS } from "./papi.js";
-import { validExt, runExt, EXT_LIMITS } from "./ext.js";
+import { validExt, runExt, EXT_LIMITS, extCap } from "./ext.js";
 import { handleRemote, ROOM_RE } from "./remote.js";
 import { validShr, runShr, handlePiece, ShrError } from "./share.js";
 import { validPush, runPush, PushError } from "./push.js";
@@ -293,7 +293,7 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   try { b = JSON.parse(text); } catch (e) { return fail(400, "bad-request", "invalid JSON", okOrigin); }
   if (text.length > LIMITS.bodyBytes && !(b && (b.op === "send" || b.op === "draft"))) {
     // provider API calls carry message bodies too, up to their own cap
-    const cap = b && b.op === "papi" ? PAPI_LIMITS.totalBytes : (b && b.op === "ext" ? EXT_LIMITS.reqs * EXT_LIMITS.reqBytes * 2 : 0);
+    const cap = b && b.op === "papi" ? PAPI_LIMITS.totalBytes : (b && b.op === "ext" ? extCap(b.p) : 0);
     if (!(text.length <= cap + LIMITS.bodyBytes)) return fail(413, "bad-request", "request too large", okOrigin);
   }
   const bad = validRequest(b, env, now || Date.now());
