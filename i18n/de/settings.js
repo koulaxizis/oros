@@ -3,6 +3,8 @@ orosPack("de", "settings", {
  "a.icons": "Symbole",
  "a.icons.classic": "Klassisch",
  "a.icons.colourful": "Bunt",
+ "a.icons.mix": "Farbmix",
+ "a.icons.rainbow": "Regenbogen",
  "a.icons.glass": "Glas",
  "a.icons.hint": "Ändert, wie App-Symbole auf dem Desktop, im Dock, im Menü und in der Suche aussehen, auf all deinen Geräten. Hoher Kontrast zeigt immer Klassisch.",
  "a.icons.paper": "Papier",

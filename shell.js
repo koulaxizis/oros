@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.16.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.18.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -449,7 +449,7 @@
   // A pack restyles the app icons (desktop, Dock, menu, search) through
   // iconpacks.css; the glyphs stay ICONS. Synced shell field `icons`.
   var ICONS_KEY = "oros-icons";
-  var ICON_PACKS = ["classic", "colourful", "glass", "thin", "paper", "round"];
+  var ICON_PACKS = ["classic", "colourful", "mix", "rainbow", "glass", "thin", "paper", "round"];
   function iconsCanon(v) { return ICON_PACKS.indexOf(v) >= 0 ? v : undefined; }
   function applyIcons() {
     var root = document.documentElement;
@@ -465,6 +465,13 @@
   }
   // The menu category of an app as a data-cat value (iconpacks.css).
   function iconCat(app) { return String((app && app.category) || "other").toLowerCase().replace(/[^a-z]/g, ""); }
+  // The app's own colour, 0-11, for the Mix and Rainbow packs: a hash of
+  // its id, so an app keeps its colour everywhere (same as launcher.js).
+  function iconHue(app) {
+    var s = String((app && app.id) || ""), h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return String(Math.abs(h) % 12);
+  }
 
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", state.theme);
@@ -5201,6 +5208,7 @@
           var ico = document.createElement("span");
           ico.className = "app-ico";
           ico.setAttribute("data-cat", iconCat(app));
+          ico.setAttribute("data-hue", iconHue(app));
           ico.innerHTML = ICONS[app.icon];        // static shell icon, not data
           h.appendChild(ico);
         }
@@ -5407,7 +5415,7 @@
           var label = appLabelOf(app);
           if (ICONS[app.icon]) {
             btn.innerHTML =
-              '<span class="app-ico" data-cat="' + iconCat(app) + '">' + ICONS[app.icon] + '</span>' +
+              '<span class="app-ico" data-cat="' + iconCat(app) + '" data-hue="' + iconHue(app) + '">' + ICONS[app.icon] + '</span>' +
               '<span>' + escapeHtml(label) + '</span>';
           } else {
             btn.textContent = label;
@@ -11919,7 +11927,7 @@
       var go = document.createElement("button");
       go.type = "button";
       go.className = "mt-sw-go";
-      go.innerHTML = '<span class="app-ico" data-cat="' + iconCat(it.app) + '">' + (ICONS[it.app.icon] || "") + '</span>' +
+      go.innerHTML = '<span class="app-ico" data-cat="' + iconCat(it.app) + '" data-hue="' + iconHue(it.app) + '">' + (ICONS[it.app.icon] || "") + '</span>' +
         '<span class="mt-sw-name"></span><span class="mt-sw-when"></span>';
       go.querySelector(".mt-sw-name").textContent = mtLabel(it.app);
       go.querySelector(".mt-sw-when").textContent = it.front ? window.t("mt.sw.now") : it.side ? window.t("mt.sw.beside") : mtAgo(it.at);
@@ -13833,7 +13841,8 @@
       wall: !!(wpPic() || (state.wallpaper && state.wallpaper !== DEFAULT_WALLPAPER)),
       icons: !!(state.icons && state.icons !== "classic"),
       sync: !!(S && typeof S.isConnected === "function" && S.isConnected()),
-      install: installed ? true : (state.deferredPrompt ? false : "no")
+      install: installed ? true : (state.deferredPrompt ? false : "no"),
+      phone: wgIsPhone() ? "no" : !!(window.orosWidgets && window.orosWidgets.wants && window.orosWidgets.wants("phone"))
     };
   }
   function startGo(id) {
@@ -13848,6 +13857,7 @@
         openHelp("t/data/" + window.t("wg.start.import.sec"));
         return;
       case "assistant": openAppById("assistant"); return;
+      case "phone":     if (window.orosWidgets && window.orosWidgets.set) window.orosWidgets.set("phone", true); return;
       case "install":
         if (!state.deferredPrompt) return;
         state.deferredPrompt.prompt();
@@ -13858,6 +13868,34 @@
     }
   }
 
+  // Desktop widgets (widgets.js): a phone, not a computer.
+  function wgIsPhone() {
+    try {
+      return !window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
+        Math.min(screen.width || 0, screen.height || 0) < 600;
+    } catch (e) { return false; }
+  }
+  // PHONE-1: the phone card's QR. The encoder (qr/qr-encode.js, the QR
+  // app's own, precached) loads the first time a card asks; the card is
+  // painted again once it is in. Only the address is encoded.
+  var wgQrLoad = 0, wgQrMemo = null;
+  function wgQr(url) {
+    if (wgQrMemo && wgQrMemo.url === url) return wgQrMemo.mods;
+    var Q = window.orosQR;
+    if (Q && typeof Q.encode === "function") {
+      try { wgQrMemo = { url: url, mods: Q.encode(url, { ecl: "M" }).modules }; } catch (e) { wgQrMemo = { url: url, mods: null }; }
+      return wgQrMemo.mods;
+    }
+    if (!wgQrLoad) {
+      wgQrLoad = 1;
+      var s = document.createElement("script");
+      s.src = "qr/qr-encode.js?v=" + APP_VERSION;
+      s.onload = function () { if (window.orosWidgets && window.orosWidgets.refresh) window.orosWidgets.refresh(); };
+      s.onerror = function () { wgQrLoad = 0; };
+      document.head.appendChild(s);
+    }
+    return null;
+  }
   // Desktop widgets (widgets.js): the weather card reads the tray's
   // cache, so the shell keeps fetching while that card is shown.
   function wgWantsWeather() {
@@ -13913,12 +13951,9 @@
     window.orosWidgets.attach({
       desktop: document.getElementById("oros-desktop"),
       lang: function () { return state.lang; },
-      phone: function () {
-        try {
-          return !window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
-            Math.min(screen.width || 0, screen.height || 0) < 600;
-        } catch (e) { return false; }
-      },
+      phone: wgIsPhone,
+      phoneUrl: function () { return window.orosWidgets.model.phoneUrlOf(location); },
+      qr: wgQr,
       running: function () { return !!state.running; },
       open: function (id) { openAppById(id); },
       openDay: function (ymd) { window.__orosOpenCalendar("-", ymd); },
