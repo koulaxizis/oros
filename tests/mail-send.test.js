@@ -312,6 +312,7 @@ test("compose: text + HTML as multipart/alternative, pictures inline (multipart/
   const p = Mm.parseMessage(m.bin);
   assert.equal(p.text, "Καλημέρα\n\n-- \nΧρήστος");
   assert.ok(p.html.includes("<b>Καλημέρα</b>"));
+  assert.match(p.html, /<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><\/head>/, "phones get the screen width");
   assert.equal(Object.keys(p.cids).join(), "logo1");
   assert.equal(p.cids.logo1.data, png);
   assert.equal(p.attachments.length, 1, "the bad cid was left out");

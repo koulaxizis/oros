@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.18.02
+- **Newsletters and mail fit the phone.** Formatted mail and newsletter issues sent from orOS now tell phone mail apps to use the screen width, so they no longer open zoomed out in a narrow column.
+
 ## Version 6.18.01
 - **Passwords add-on 2.1.** The orOS add-on window is wide enough again (Brave and other Chromium browsers squeezed it). Under the master password there is `Remember on this device`: tick it on your own computer and the add-on opens without asking until you press `Lock`. The copy of your vault now keeps itself fresh: from open orOS tabs every few minutes, and when it is over an hour old the add-on opens orOS in a background tab for one sync and closes it; `Update` does it at once. When a newer add-on is out, its button shows `↑` and its window a `Download` link; unzip the new zip over the old folder (an add-on installed by hand cannot replace itself).
 
