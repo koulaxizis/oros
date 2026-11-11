@@ -36,8 +36,8 @@ function contrast(a, b) {
   return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
 }
 
-test("six packs, Classic first and the default", () => {
-  assert.deepEqual(PACKS, ["classic", "colourful", "glass", "thin", "paper", "round"]);
+test("eight packs, Classic first and the default", () => {
+  assert.deepEqual(PACKS, ["classic", "colourful", "mix", "rainbow", "glass", "thin", "paper", "round"]);
   assert.match(cut(SHELL, "shellDefault"), /case "icons":\s+return "classic";/);
   const canon = new Function("var ICON_PACKS = " + JSON.stringify(PACKS) + ";\n" + cut(SHELL, "iconsCanon") + "\nreturn iconsCanon;")();
   assert.equal(canon("paper"), "paper");
@@ -90,7 +90,7 @@ test("shell: the synced field icons, applied, set from Settings, pulled without 
 
 test("surfaces carry their category; the stylesheet loads in the shell and Settings", () => {
   assert.match(cut(read("launcher.js"), "tileFor"), /setAttribute\("data-cat", /);
-  assert.match(SHELL, /'<span class="app-ico" data-cat="' \+ iconCat\(app\) \+ '">'/);
+  assert.match(SHELL, /'<span class="app-ico" data-cat="' \+ iconCat\(app\) \+ '" data-hue="' \+ iconHue\(app\) \+ '">'/);
   assert.match(SHELL, /ico\.setAttribute\("data-cat", iconCat\(app\)\);/);
   assert.match(read("index.html"), /<link rel="stylesheet" href="style\.css\?v=[^"]+">\s*<link rel="stylesheet" href="iconpacks\.css\?v=[^"]+">/);
   assert.match(read("settings/index.html"), /<link rel="stylesheet" href="\.\.\/iconpacks\.css\?v=[^"]+">/);
@@ -111,4 +111,42 @@ test("Settings card, search and strings in EN, EL and DE", () => {
   assert.match(read("help/topics/appearance.en.txt"), /### Icon packs/);
   assert.match(read("help/topics/appearance.el.txt"), /### Πακέτα εικονιδίων/);
   assert.match(read("i18n/de/help/topics/appearance.txt"), /### Symbolpakete/);
+});
+
+// ICONPACK-2 (Chris 2026-11-11 16:34): Colour mix (every app its own
+// colour) and Rainbow (dark tile, rainbow rim, glyph in the app's light colour).
+test("mix and rainbow: twelve app colours that read, one hash in shell and launcher", () => {
+  const rules = {};
+  for (const m of CSS.matchAll(/\[data-hue="(\d+)"\]\s*\{\s*--ic-hue:\s*(#[0-9a-f]{6});\s*--ic-hue-ink:\s*(#[0-9a-f]{6});\s*--ic-glow:\s*(#[0-9a-f]{6});\s*\}/g)) rules[m[1]] = [m[2], m[3], m[4]];
+  assert.deepEqual(Object.keys(rules).map(Number).sort((a, b) => a - b), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  for (const [k, [fill, ink, glow]] of Object.entries(rules)) {
+    assert.ok(["#ffffff", "#141414"].includes(ink), k);
+    const other = ink === "#ffffff" ? "#141414" : "#ffffff";
+    assert.ok(contrast(fill, ink) >= 4.5 && contrast(fill, ink) >= contrast(fill, other), "mix " + k);
+    assert.ok(contrast(glow, "#1d1d26") >= 4.5, "rainbow " + k);
+  }
+  assert.equal(new Set(Object.values(rules).map((r) => r[0])).size, 12, "twelve different fills");
+  for (const p of ["mix", "rainbow"]) {
+    assert.ok(CSS.includes('.ip-prev[data-pack="' + p + '"]) .app-ico[data-hue] {'), p + " menu chip");
+  }
+  assert.match(CSS, /linear-gradient\(135deg, #e53935, #fb8c00, #fdd835, #43a047, #1e88e5, #5e35b1, #8e24aa\) border-box/);
+  const hue = new Function(cut(SHELL, "iconHue") + "\nreturn iconHue;")();
+  const LAUNCH = read("launcher.js");
+  const hue2 = new Function(cut(LAUNCH, "hueOf") + "\nreturn hueOf;")();
+  const apps = JSON.parse(read("apps.json")).apps;
+  const seen = new Set();
+  for (const a of apps) {
+    const h = hue(a);
+    assert.equal(h, hue2(a), a.id);
+    assert.match(h, /^(\d|1[01])$/);
+    seen.add(h);
+  }
+  assert.equal(seen.size, 12, "every colour is used");
+  assert.match(LAUNCH, /tile\.setAttribute\("data-hue", hueOf\(app, pos\)\);/);
+  assert.equal((LAUNCH.match(/b\.appendChild\(tileFor\(app, pos\)\);/g) || []).length, 2, "desktop and Dock pass the place");
+  for (let i = 0; i < 30; i++) assert.equal(hue2({ id: "notes" }, i), String(i % 12), "place " + i);
+  const row = Array.from({ length: 12 }, (_, i) => hue2({ id: "todo" }, i));
+  assert.equal(new Set(row).size, 12, "12 tiles in a row, 12 colours");
+  assert.equal((SHELL.match(/data-hue/g) || []).length >= 3, true, "menu, search and task switcher");
+  assert.match(read("settings/settings.js"), /tl\.setAttribute\("data-hue", x\[2\]\);/);
 });

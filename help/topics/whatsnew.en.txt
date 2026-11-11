@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.17.00
+- **Two new icon packs.** Settings › Appearance › Icons now has `Colour mix`, where the icons have different colours from each other (on the desktop and in the Dock, neighbours never share one), and `Rainbow`, a dark tile with a rainbow rim and icons that run through the colours of the spectrum.
+
 ## Version 6.16.00
 - **Start from a template.** An empty To-Do or Kanban now offers a few ready starts under `Or start from a template:`: in To-Do a `Packing list` or `Moving house` list with its tasks, in Kanban a `Trip`, `Moving house` or `Personal` board. They are your own items from the first tap, and `Undo` takes them back.
 
