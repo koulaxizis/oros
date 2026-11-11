@@ -261,6 +261,7 @@
       "d.open": "Open pipeline", "d.openSub": "Deals: {n} · weighted {w}", "d.wonM": "Won this month", "d.wonY": "Won this year",
       "d.rate": "Win rate", "d.rateSub": "this year", "d.rateNone": "–", "d.late": "Late follow-ups", "d.today": "Due today",
       "d.forgot": "Not contacted", "d.forgotSub": "{n}+ days", "d.leads": "New leads", "d.leadsSub": "this month",
+      "d.ctrOn": "Contracts in force", "d.ctrOnSub": "of {n}", "d.ctrNeeds": "Need a decision", "d.ctrNeedsSub": "{e} ended · {s} ending soon", "d.ctrNext": "Next end day", "d.ctrNone": "none ahead", "d.ctrList": "Contracts that need a decision", "d.ctrAll": "All contracts",
       "d.byStage": "Open deals by stage", "d.byStatus": "Customers", "d.forgotList": "Time to get in touch",
       "d.none": "Add customers and deals to see numbers here.",
       "d.unpaid": "Unpaid invoices", "d.unpaidSub": "overdue {v}", "d.unpaidNone": "nothing overdue",
@@ -509,6 +510,7 @@
       "d.open": "Ανοιχτό pipeline", "d.openSub": "Ευκαιρίες: {n} · σταθμισμένη {w}", "d.wonM": "Κερδισμένα του μήνα", "d.wonY": "Κερδισμένα του έτους",
       "d.rate": "Ποσοστό επιτυχίας", "d.rateSub": "φέτος", "d.rateNone": "–", "d.late": "Follow-ups σε καθυστέρηση", "d.today": "Για σήμερα",
       "d.forgot": "Χωρίς επαφή", "d.forgotSub": "{n}+ μέρες", "d.leads": "Νέοι υποψήφιοι", "d.leadsSub": "αυτόν τον μήνα",
+      "d.ctrOn": "Συμφωνητικά σε ισχύ", "d.ctrOnSub": "από {n}", "d.ctrNeeds": "Θέλουν απόφαση", "d.ctrNeedsSub": "{e} έληξαν · {s} λήγουν σύντομα", "d.ctrNext": "Επόμενη λήξη", "d.ctrNone": "καμία μπροστά", "d.ctrList": "Συμφωνητικά που θέλουν απόφαση", "d.ctrAll": "Όλα τα συμφωνητικά",
       "d.byStage": "Ανοιχτές ευκαιρίες ανά στάδιο", "d.byStatus": "Πελάτες", "d.forgotList": "Ώρα να τους μιλήσεις",
       "d.none": "Πρόσθεσε πελάτες και ευκαιρίες για να δεις αριθμούς εδώ.",
       "d.unpaid": "Ανεξόφλητα τιμολόγια", "d.unpaidSub": "ληξιπρόθεσμα {v}", "d.unpaidNone": "τίποτα ληξιπρόθεσμο",
@@ -3156,17 +3158,50 @@
     if (sub) b.appendChild(el("span", "", sub));
     return b;
   }
+  // Contracts on the Dashboard (CTR-DASH): three tiles and the first
+  // five that need a decision, each opening its quick actions.
+  function ctrDashSec(cs, today) {
+    var sec = el("section", "sec");
+    var tiles = el("div", "tiles");
+    function go(f) { return function () { prefs.cf = f; savePrefs(); setTab("ctr"); }; }
+    tiles.appendChild(tile(t("d.ctrOn"), String(cs.on), t("d.ctrOnSub", { n: cs.n }), go("all")));
+    tiles.appendChild(tile(t("d.ctrNeeds"), String(cs.needs), t("d.ctrNeedsSub", { e: cs.needEnded, s: cs.needSoon }), go("needs")));
+    var nx = cs.next;
+    tiles.appendChild(tile(t("d.ctrNext"), nx ? fmtDate(nx.ctr.to) : t("d.ctrNone"), nx ? nx.ctr.t : "", nx ? function () { ctrActions(nx.ctr.id); } : null));
+    sec.appendChild(tiles);
+    var need = C.ctrAll(data, today, "needs");
+    if (need.length) {
+      sec.appendChild(secHead(t("d.ctrList")));
+      var rows = el("div", "rows");
+      need.slice(0, 5).forEach(function (r) { rows.appendChild(ctrRowEl(r, true)); });
+      sec.appendChild(rows);
+      if (need.length > 5) {
+        var more = el("button", "link-btn", t("d.ctrAll"));
+        more.type = "button";
+        more.addEventListener("click", go("needs"));
+        sec.appendChild(more);
+      }
+    }
+    return sec;
+  }
   function renderDash() {
     var box = $("view-dash");
     box.innerHTML = "";
     if (!data.cust.length) { box.appendChild(el("div", "empty", t("d.none"))); return; }
     var now = Date.now(), today = todayYmd();
     var s = C.dashboard(data, now, today);
+    // Sales tiles and the stage bars only once there is a deal: someone
+    // who never uses the Pipeline sees no row of zeros.
+    var sales = data.deals.length > 0;
+    var cs = (data.ctr || []).length ? C.ctrDash(data, today) : null;
+    if (cs) box.appendChild(ctrDashSec(cs, today));
     var tiles = el("div", "tiles");
-    tiles.appendChild(tile(t("d.open"), money(s.openVal), t("d.openSub", { n: s.openN, w: money(s.openW) }), function () { setTab("pipe"); }));
-    tiles.appendChild(tile(t("d.wonM"), money(s.wonMonth), ""));
-    tiles.appendChild(tile(t("d.wonY"), money(s.wonYear), ""));
-    tiles.appendChild(tile(t("d.rate"), s.winRate === null ? t("d.rateNone") : s.winRate + "%", t("d.rateSub")));
+    if (sales) {
+      tiles.appendChild(tile(t("d.open"), money(s.openVal), t("d.openSub", { n: s.openN, w: money(s.openW) }), function () { setTab("pipe"); }));
+      tiles.appendChild(tile(t("d.wonM"), money(s.wonMonth), ""));
+      tiles.appendChild(tile(t("d.wonY"), money(s.wonYear), ""));
+      tiles.appendChild(tile(t("d.rate"), s.winRate === null ? t("d.rateNone") : s.winRate + "%", t("d.rateSub")));
+    }
     tiles.appendChild(tile(t("d.late"), String(s.late), "", function () { setTab("agenda"); }));
     tiles.appendChild(tile(t("d.today"), String(s.today), "", function () { setTab("agenda"); }));
     tiles.appendChild(tile(t("d.forgot"), String(s.forgotten), t("d.forgotSub", { n: data.prefs.forget }), function () {
@@ -3185,6 +3220,10 @@
     }
     box.appendChild(tiles);
 
+    if (sales) dashStages(box);
+    dashRest(box, s, now);
+  }
+  function dashStages(box) {
     var p = C.pipeline(data), max = 0;
     var openIds = C.stages(data).filter(function (x) { return x.open; }).map(function (x) { return x.id; });
     openIds.forEach(function (st) { if (p[st].val > max) max = p[st].val; });
@@ -3204,7 +3243,8 @@
     });
     sec.appendChild(bars);
     box.appendChild(sec);
-
+  }
+  function dashRest(box, s, now) {
     var sec2 = el("section", "sec");
     sec2.appendChild(secHead(t("d.byStatus")));
     var chips = el("div", "chips");

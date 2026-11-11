@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.14.01
+- **Contracts on the CRM Dashboard.** The Dashboard now starts with your contracts: how many are in force, how many need a decision and the next end day, then the first five that need a decision with their quick actions. The sales tiles and the stage bars show only once you have a deal in `Pipeline`, so you no longer see a row of zeros.
+
 ## Version 6.14.00
 - **Contract end days everywhere, with quick actions.** CRM has a new `Contracts` tab with every contract by end day and the filters `Need a decision`, `Ending soon` (90 days), `Ended`, `Ended by agreement` and `All`. Next to each one: `Renew` (+3 years, +5 years or a day you pick, the old end is kept in its history), `Put off` (7 or 30 days or a day), `End by agreement`, `Email` (a draft that is never sent by itself), `Call`, `Kanban card`, `Note` and the contract file. Every action can be undone.
 - **The same contracts in your other apps.** Each Publishing title shows its contracts per format (print, ebook) with a coloured badge in the list and a warning when a format still sells after its contract ended. Calendar shows each end day under the label you choose in CRM Settings › Contracts, Today lists what needs a decision, Kanban cards of the book carry a chip, and the Assistant answers questions like "which contracts end this year?".
