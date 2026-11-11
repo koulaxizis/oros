@@ -7,6 +7,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 - **Send the list to your shop.** `Send to the shop…` in the Contracts tab sends names, titles and dates (nothing else) to the Revenue Splitter plugin of a connected WooCommerce shop, so authors can see their own contracts in its Author Portal (needs Revenue Splitter 1.14).
 - **Renewal requests and a write key.** A shop can now have a second, Read/Write WooCommerce key (Settings › Connected services › `Write key for contracts`); with it every contract change reaches the shop by itself, and what the shop did not take is listed. Renewal requests authors send from the Author Portal arrive in CRM as a follow-up and a note on the partner.
 
+## Version 6.13.00
+- **A reminder to keep a copy.** orOS keeps your data only in this browser. If you have used it on 7 different days with neither sync nor an automatic backup on, a card on the desktop says so once, with `Turn on sync` and `Automatic backup`. It never comes back after that.
+
 ## Version 6.12.00
 - **Show me an example.** The friendly empty screens of To-Do, Kanban, Bookmarks, Invoices, Contacts, Budget, Notes and Meal Planner now have `Show me an example`: a few made-up items, so you can see the app in use before you start. Nothing is saved and nothing syncs. `Start my own` closes it and starts your first item.
 
