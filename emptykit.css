@@ -72,3 +72,55 @@
 html[data-oros-contrast="high"] .ek > .ek-art { background: none; box-shadow: none; border: 2px solid currentColor; }
 @media (prefers-reduced-motion: reduce) { .ek > .ek-art { animation: none; } }
 @keyframes ek-in { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+
+/* "Show me an example" (EXAMPLE-1): a second, quieter button and a
+   read-only preview of made-up rows inside the empty screen. */
+.ek .ek-act.ek-alt {
+  background: transparent;
+  color: var(--text);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.ek .ek-act.ek-alt:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.ek.ek-ex-on > .ek-acts { display: none; }
+.ek > .ek-ex {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  border: 1px dashed var(--accent);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  text-align: start;
+  animation: ek-in .3s ease-out both;
+}
+.ek .ek-ex-note {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+.ek .ek-ex-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ek .ek-ex-g {
+  margin: 6px 2px 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.ek .ek-ex-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--panel-bg, rgba(127, 127, 127, 0.1));
+  overflow-wrap: anywhere;
+}
+.ek .ek-ex-t { font-size: 14px; font-weight: 600; color: var(--text); }
+.ek .ek-ex-m { font-size: 13px; color: var(--text-dim); }
+.ek > .ek-ex > .ek-acts { margin-top: 12px; }
+html[data-oros-contrast="high"] .ek > .ek-ex { background: none; border: 2px solid currentColor; }
+html[data-oros-contrast="high"] .ek .ek-ex-row { background: none; border: 1px solid currentColor; }
+@media (prefers-reduced-motion: reduce) { .ek > .ek-ex { animation: none; } }
