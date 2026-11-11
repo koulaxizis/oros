@@ -63,6 +63,12 @@
       "gap.author": "author", "gap.fmt": "a format", "gap.isbn": "ISBN", "gap.price": "price", "gap.pages": "pages",
       "gap.blurb": "back-cover text", "gap.rel": "release date", "gap.cov": "cover",
       "gaps.n": "{n} missing",
+      "ctr.sec": "Contracts", "ctr.none": "No contract in CRM for this title. Add it on the creator's card in CRM, with its end day.", "ctr.noCrm": "CRM keeps the contracts: open it once on this device.",
+      "ctr.until": "until {d}", "ctr.soon": "ends {d} · in {n} days", "ctr.today": "ends today", "ctr.ended": "ended {d} · no decision yet", "ctr.term": "ended by agreement {d}", "ctr.noEnd": "no end day", "ctr.snz": "decision on {d}",
+      "ctr.fmt.p": "Print", "ctr.fmt.e": "Digital", "ctr.fmt.x": "Contract",
+      "ctr.renew": "Renew", "ctr.post": "Put off", "ctr.mail": "Email", "ctr.end": "End", "ctr.more": "More…", "ctr.all": "All contracts in CRM",
+      "ctr.sale": "{f}: the contract has ended, but this format is still linked to a shop product. Check whether it should still be sold.",
+      "ctr.badge.soon": "Contract ends {d}", "ctr.badge.ended": "Contract ended", "ctr.badge.on": "Contract until {d}", "ctr.badge.term": "Contract ended by agreement",
       "new.title": "New title", "new.name": "Title", "new.author": "Author (optional)", "new.go": "Create", "new.plan": "Make the release plan from the release date",
       "sec.main": "The book", "sec.ppl": "People", "sec.fmts": "Formats", "sec.texts": "Texts", "sec.cover": "Cover",
       "f.t": "Title", "f.sub": "Subtitle", "f.ser": "Series", "f.sn": "No. in series", "f.st": "Status",
@@ -259,6 +265,12 @@
       "gap.author": "συγγραφέας", "gap.fmt": "μορφή", "gap.isbn": "ISBN", "gap.price": "τιμή", "gap.pages": "σελίδες",
       "gap.blurb": "κείμενο οπισθόφυλλου", "gap.rel": "ημερομηνία κυκλοφορίας", "gap.cov": "εξώφυλλο",
       "gaps.n": "λείπουν {n}",
+      "ctr.sec": "Συμφωνητικά", "ctr.none": "Κανένα συμφωνητικό στο CRM για αυτόν τον τίτλο. Πρόσθεσέ το στην καρτέλα του δημιουργού στο CRM, με τη λήξη του.", "ctr.noCrm": "Τα συμφωνητικά τα κρατά το CRM: άνοιξέ το μία φορά σε αυτή τη συσκευή.",
+      "ctr.until": "έως {d}", "ctr.soon": "λήγει {d} · σε {n} ημέρες", "ctr.today": "λήγει σήμερα", "ctr.ended": "έληξε {d} · χωρίς απόφαση", "ctr.term": "λύθηκε {d}", "ctr.noEnd": "χωρίς λήξη", "ctr.snz": "απόφαση στις {d}",
+      "ctr.fmt.p": "Έντυπο", "ctr.fmt.e": "Ψηφιακό", "ctr.fmt.x": "Συμφωνητικό",
+      "ctr.renew": "Ανανέωση", "ctr.post": "Αναβολή", "ctr.mail": "Email", "ctr.end": "Λύση", "ctr.more": "Περισσότερα…", "ctr.all": "Όλα τα συμφωνητικά στο CRM",
+      "ctr.sale": "{f}: το συμφωνητικό έχει λήξει, αλλά αυτή η μορφή είναι ακόμη συνδεδεμένη με προϊόν του καταστήματος. Έλεγξε αν πρέπει να συνεχίσει να πωλείται.",
+      "ctr.badge.soon": "Λήξη συμφωνητικού {d}", "ctr.badge.ended": "Έληξε συμφωνητικό", "ctr.badge.on": "Συμφωνητικό έως {d}", "ctr.badge.term": "Συμφωνητικό λύθηκε",
       "new.title": "Νέος τίτλος", "new.name": "Τίτλος", "new.author": "Συγγραφέας (προαιρετικό)", "new.go": "Δημιουργία", "new.plan": "Φτιάξε την πορεία έκδοσης από την ημερομηνία κυκλοφορίας",
       "sec.main": "Το βιβλίο", "sec.ppl": "Πρόσωπα", "sec.fmts": "Μορφές", "sec.texts": "Κείμενα", "sec.cover": "Εξώφυλλο",
       "f.t": "Τίτλος", "f.sub": "Υπότιτλος", "f.ser": "Σειρά", "f.sn": "Αρ. στη σειρά", "f.st": "Κατάσταση",
@@ -731,6 +743,8 @@
       if (tt.rel) side.appendChild(el("span", "muted", fmtDate(tt.rel)));
       var g = C.gaps(tt);
       if (g.length && tt.st !== "oop") side.appendChild(el("span", "badge gap", t("gaps.n", { n: g.length })));
+      var cb = ctrBadge(tt);
+      if (cb) side.appendChild(cb);
       b.appendChild(th);
       b.appendChild(main);
       b.appendChild(side);
@@ -880,6 +894,12 @@
     sr.id = "ed-roy";
     sec.appendChild(sr);
     renderTerms();
+
+    // Contracts (CRM 1.10, CTR-ALL): their end days, read from CRM
+    var sx = el("section", "sec ctr");
+    sx.id = "ed-ctr";
+    sec.appendChild(sx);
+    renderCtrSec();
 
     // Cost & result (wave P15)
     var sk = el("section", "sec cost");
@@ -1970,6 +1990,88 @@
     });
     acts.appendChild(add);
     box.appendChild(acts);
+  }
+
+  // ---------- 6e. Contracts (CRM 1.10, CTR-ALL) ----------
+  // CRM keeps the contracts (crm/core.js, loaded by index.html): read
+  // only here, parsed once per stored string. Every action opens CRM
+  // (__orosOpenAt("crm", { ctr, do })), which asks and writes there.
+  var CRM_KEY = "oros-crm-data", crmCache = { raw: undefined, data: null };
+  function crmData() {
+    var K = window.OrosCrmCore, raw = null;
+    if (!K) return null;
+    try { raw = localStorage.getItem(CRM_KEY); } catch (e) { raw = null; }
+    if (raw !== crmCache.raw) {
+      crmCache.raw = raw;
+      try { var d = raw ? JSON.parse(raw) : null; crmCache.data = d && Array.isArray(d.cust) ? K.norm(d) : null; } catch (e) { crmCache.data = null; }
+    }
+    return crmCache.data;
+  }
+  function ctrsOf(tt) {
+    var K = window.OrosCrmCore, d = crmData();
+    return K && d && d.ctr ? K.ctrForTitle(d, tt, data.titles, todayYmd()) : [];
+  }
+  function ctrState(r) {
+    var k = r.ctr;
+    if (r.st === "term") return t("ctr.term", { d: fmtDate(r.x.end) });
+    if (r.st === "ended") return t("ctr.ended", { d: fmtDate(k.to) });
+    if (r.st === "soon") return r.days === 0 ? t("ctr.today") : t("ctr.soon", { d: fmtDate(k.to), n: r.days });
+    return k.to ? t("ctr.until", { d: fmtDate(k.to) }) : t("ctr.noEnd");
+  }
+  // The list's badge: the contract that most needs a look
+  var CTR_RANK = { ended: 0, soon: 1, on: 2, term: 3 };
+  function ctrBadge(tt) {
+    var list = ctrsOf(tt);
+    if (!list.length) return null;
+    var r = list.slice().sort(function (a, b) {
+      return (a.needs ? -1 : CTR_RANK[a.st]) - (b.needs ? -1 : CTR_RANK[b.st]) || (a.ctr.to || "9999").localeCompare(b.ctr.to || "9999");
+    })[0];
+    var cls = r.needs ? (r.st === "ended" ? "late" : "gap") : (r.st === "term" ? "ctr-term" : "st-out");
+    var txt = r.st === "ended" ? t("ctr.badge.ended") : (r.st === "term" ? t("ctr.badge.term") : (r.ctr.to ? t(r.st === "soon" ? "ctr.badge.soon" : "ctr.badge.on", { d: fmtDate(r.ctr.to) }) : ""));
+    return txt ? el("span", "badge " + cls, txt) : null;
+  }
+  // Formats whose contract has ended while a shop product is linked
+  var CTR_KINDS = { p: ["pb", "hb"], e: ["eb", "ab"] };
+  function ctrSaleWarn(tt, list) {
+    var out = [];
+    list.forEach(function (r) {
+      if ((r.st !== "ended" && r.st !== "term") || !r.fmt) return;
+      var live = (tt.fmts || []).some(function (f) { return CTR_KINDS[r.fmt].indexOf(f.k) >= 0 && f.wp; });
+      if (live && out.indexOf(r.fmt) < 0) out.push(r.fmt);
+    });
+    return out;
+  }
+  function renderCtrSec() {
+    var box = $("ed-ctr"), tt = currentTitle();
+    if (!box || !tt) return;
+    box.textContent = "";
+    box.appendChild(el("h3", "", t("ctr.sec")));
+    if (!crmData()) { box.appendChild(el("p", "muted", t("ctr.noCrm"))); return; }
+    var list = ctrsOf(tt);
+    if (!list.length) { box.appendChild(el("p", "muted", t("ctr.none"))); return; }
+    ctrSaleWarn(tt, list).forEach(function (f) { box.appendChild(el("p", "warnbox", t("ctr.sale", { f: t("ctr.fmt." + f) }))); });
+    list.forEach(function (r) {
+      var row = el("div", "fmt ctr-line" + (r.needs ? " needs" : "") + (r.st === "ended" ? " over" : ""));
+      var head = el("p", "ctr-head");
+      head.appendChild(el("strong", "", t("ctr.fmt." + (r.fmt || "x"))));
+      head.appendChild(document.createTextNode(" · " + ctrState(r) + (r.snooze ? " · " + t("ctr.snz", { d: fmtDate(r.snooze) }) : "")));
+      row.appendChild(head);
+      row.appendChild(el("p", "muted", [r.who, r.ctr.t].filter(Boolean).join(" · ")));
+      var ra = el("div", "send-row");
+      function act(label, what) { ra.appendChild(button(label, "btn small", function () { openAt("crm", { ctr: r.ctr.id, "do": what }); })); }
+      if (r.st !== "term") {
+        act(t("ctr.renew"), "renew");
+        if (r.needs || r.snooze) act(t("ctr.post"), "post");
+        if (r.cust && r.cust.email) act(t("ctr.mail"), "mail");
+        act(t("ctr.end"), "end");
+      }
+      act(t("ctr.more"), "");
+      row.appendChild(ra);
+      box.appendChild(row);
+    });
+    var all = el("div", "send-row");
+    all.appendChild(button(t("ctr.all"), "btn small", function () { openAt("crm", { ctrs: "all" }); }));
+    box.appendChild(all);
   }
 
   function stmtLabel(st) { return t("roy.stFor", { n: st.n, from: fmtDate(st.from), to: fmtDate(st.to) }); }

@@ -1403,6 +1403,9 @@ dialog menu button.danger:hover {
   white-space: nowrap;
 }
 .att-ind { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--text-dim); }
+/* CRM 1.10: a contract that ends soon or has ended (read from CRM) */
+.ctr-chip { font-size: 11px; font-weight: 600; color: var(--warn, #c98a00); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; cursor: pointer; }
+.ctr-chip.ended { color: var(--danger); }
 
 /* Swimlanes: sticky column heads, one row per lane */
 #columns.lanes {

@@ -46,6 +46,9 @@ Under `Send to other apps` pick a format (when the title has more than one), the
 
 Nothing is saved in the other app until you save it there.
 
+## Contracts
+On a title, `Contracts` shows each contract that [CRM](app:crm) keeps for it, one line per format: until when it runs, how many days are left, or that it has ended with no decision yet. The list of titles shows the one that most needs a look as a badge. When a format's contract has ended but that format is still linked to a shop product, a note asks you to check whether it should still be sold (nothing is changed in the shop). `Renew`, `Put off`, `Email`, `End` and `More…` open that contract's actions in CRM, which asks before it changes anything. Link a contract to its title in CRM (the contract's `Publishing title`); a title with the same name is found by itself.
+
 ## Royalties
 On a title, the `Royalties` section says who is paid for it: the name, the percentage, `On` the list price or on what came in (net), which formats (or all) and the advance paid on signing. Several terms per title are fine (the paperback at 10 % of the list price, the e-book at 25 % of net, the translator's 2 %).
 

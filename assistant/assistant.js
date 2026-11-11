@@ -5885,6 +5885,21 @@
         { lang: LANG, appName: function (id) { return have[id] || id; } }));
     }
     if (a.app === "crm" && a.partner) return crmPartnerSummary(a.partner, today);
+    // CRM 1.10 (CTR-ALL): every contract, then what Today lists for CRM
+    if (a.app === "crm" && !a.brief) {
+      return crmCores().then(function (ok) {
+        var C = window.OrosCrmCore, raw = readStore("oros-crm-data");
+        var own2 = ok && raw && Array.isArray(raw.cust) ? S.crmContracts(C, C.norm(raw), today) : null;
+        if (!ag) return own2;
+        return agendaRows(a.app, a.days).then(function (rows) {
+          var g = S.agenda(a.app, rows, today, a.days);
+          if (!own2) return g;
+          own2.from = g.from; own2.to = g.to; own2.items = g.items;
+          if (g.more_items) own2.more_items = g.more_items;
+          return own2;
+        });
+      });
+    }
     if (a.app === "timesheet") {
       return timesheetCore().then(function (core) {
         if (!core) throw new Error("no core");

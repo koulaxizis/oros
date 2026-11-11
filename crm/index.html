@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>CRM · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=6.12.00">
-  <link rel="stylesheet" href="crm.css?v=6.12.00">
+  <link rel="stylesheet" href="../fonts.css?v=6.14.00">
+  <link rel="stylesheet" href="crm.css?v=6.14.00">
 
 </head>
 <body>
@@ -26,6 +26,7 @@
     <button type="button" class="tab" id="tab-cust" role="tab" data-view="cust"></button>
     <button type="button" class="tab" id="tab-pipe" role="tab" data-view="pipe"></button>
     <button type="button" class="tab" id="tab-agenda" role="tab" data-view="agenda"></button>
+    <button type="button" class="tab" id="tab-ctr" role="tab" data-view="ctr"></button>
     <button type="button" class="tab" id="tab-dash" role="tab" data-view="dash"></button>
   </nav>
 
@@ -49,6 +50,9 @@
     <!-- Agenda: open follow-ups -->
     <section id="view-agenda" class="view" role="tabpanel" aria-labelledby="tab-agenda" hidden></section>
 
+    <!-- Contracts: every contract by end day, with its quick actions -->
+    <section id="view-ctr" class="view" role="tabpanel" aria-labelledby="tab-ctr" hidden></section>
+
     <!-- Dashboard -->
     <section id="view-dash" class="view" role="tabpanel" aria-labelledby="tab-dash" hidden></section>
   </main>
@@ -56,23 +60,23 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=6.12.00" data-app="crm,recordpkg,enrichui,links"></script>
-  <script src="../invoices/core.js?v=6.12.00"></script>
-  <script src="../quote/core.js?v=6.12.00"></script>
-  <script src="core.js?v=6.12.00"></script>
-  <script src="contactsync.js?v=6.12.00"></script>
-  <script src="links.js?v=6.12.00"></script>
-  <script src="overview.js?v=6.12.00"></script>
-  <script src="timeline.js?v=6.12.00"></script>
-  <script src="rs.js?v=6.12.00"></script>
-  <script src="../bundle.js?v=6.12.00"></script>
-  <script src="../recordpkg.js?v=6.12.00"></script>
-  <script src="package.js?v=6.12.00"></script>
-  <script src="../links/core.js?v=6.12.00"></script>
-  <script src="../links/crm.js?v=6.12.00"></script>
-  <script src="platforms.js?v=6.12.00"></script>
-  <script src="webform.js?v=6.12.00"></script>
-  <script src="crm.js?v=6.12.00"></script>
+  <script src="../i18n.js?v=6.14.00" data-app="crm,recordpkg,enrichui,links"></script>
+  <script src="../invoices/core.js?v=6.14.00"></script>
+  <script src="../quote/core.js?v=6.14.00"></script>
+  <script src="core.js?v=6.14.00"></script>
+  <script src="contactsync.js?v=6.14.00"></script>
+  <script src="links.js?v=6.14.00"></script>
+  <script src="overview.js?v=6.14.00"></script>
+  <script src="timeline.js?v=6.14.00"></script>
+  <script src="rs.js?v=6.14.00"></script>
+  <script src="../bundle.js?v=6.14.00"></script>
+  <script src="../recordpkg.js?v=6.14.00"></script>
+  <script src="package.js?v=6.14.00"></script>
+  <script src="../links/core.js?v=6.14.00"></script>
+  <script src="../links/crm.js?v=6.14.00"></script>
+  <script src="platforms.js?v=6.14.00"></script>
+  <script src="webform.js?v=6.14.00"></script>
+  <script src="crm.js?v=6.14.00"></script>
 
 </body>
 </html>
