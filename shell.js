@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.09.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.10.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -3525,6 +3525,7 @@
         searchFromLaunchParam();
         deliverShare();
         gameResumeStart();
+        greetStart();
         if (SOLO) soloStart();
         // Files from the system's "Open with" (fileopen.js) wait for the app list.
         if (window.orosFileOpen) window.orosFileOpen.ready();
@@ -10832,6 +10833,7 @@
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
       me: { name: meName(), max: ME_MAX },
+      greet: SOLO ? null : { on: greetOn() },
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
       menu: settingsMenuApps(),
@@ -10884,6 +10886,7 @@
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
       case "me:name":      meSetName(value); return;
+      case "greet":        greetSetUser(!!value); return;
       case "wpland:new":   wpLandNewShape(); settingsNotify(); return;
       case "wpland:style":
         if (WP_LAND_STYLES.indexOf(value) >= 0) { wpLandNewShape({ style: value }); settingsNotify(); }
@@ -11637,6 +11640,10 @@
     closeMenu();
     menuReset();
     if (tourEnd) tourEnd();   // a notification or shortcut opened an app mid-tour
+    if (greetEnd) greetEnd();   // GREET-1: an app opens: the greeting goes
+    if (app && app.id === "assistant" && window.orosWidgets && window.orosWidgets.did) {
+      try { window.orosWidgets.did("assistant"); } catch (e) {}   // START-1
+    }
     if (app.type === "external") {
       window.open(app.url, "_blank", "noopener");
       return;
@@ -12335,7 +12342,129 @@
       localStorage.setItem(TOUR_KEY, "1");
       if (profilesWanted()) localStorage.setItem(PROFILE_KEY, "1");
     } catch (e) { return; }
+    greetMark();          // GREET-1: the tour is today's welcome
+    if (window.orosWidgets && window.orosWidgets.firstRun) {
+      try { window.orosWidgets.firstRun(); } catch (e) {}   // START-1: First steps on the desktop
+    }
     tourMaybe();
+  }
+
+  // ---------- GREET-1: a greeting at the first start of the day ----------
+  // The first time orOS starts on a day (device-local "oros-greet":
+  // { day: "YYYY-MM-DD", off: 1 when turned off in Settings ›
+  // Appearance › Your name), a short card over the desktop: "Good
+  // morning, <name>" (the Start page's hours, the ME v1 name or none),
+  // the date and, when Today has something, one line of it (a button
+  // that opens Today). It goes after GREET_MS, on any tap or key, or
+  // when an app opens. Never on a new user's first day (the tour is
+  // the welcome), over an app, a launch link, a share, a reopened game,
+  // the tour, the profiles screen or the lock (it waits for the
+  // unlock), nor in a single-app window. Reduced motion: no fade.
+  var GREET_KEY = "oros-greet", GREET_MS = 4500;
+  var greetBox = null, greetEnd = null, greetTries = 0;
+  function greetRead() {
+    try {
+      var v = JSON.parse(localStorage.getItem(GREET_KEY) || "null");
+      return (v && typeof v === "object" && !Array.isArray(v)) ? v : {};
+    } catch (e) { return {}; }
+  }
+  function greetWrite(v) { try { localStorage.setItem(GREET_KEY, JSON.stringify(v)); } catch (e) {} }
+  function greetDay(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  // Hours 5-11 morning, 12-17 afternoon, otherwise evening (startpage).
+  function greetPart(h) { return h >= 5 && h < 12 ? "morning" : (h >= 12 && h < 18 ? "afternoon" : "evening"); }
+  function greetMark() { var g = greetRead(); g.day = greetDay(new Date()); greetWrite(g); }
+  function greetOn() { return !greetRead().off; }
+  function greetSetUser(on) {
+    var g = greetRead();
+    if (on) delete g.off; else g.off = 1;
+    greetWrite(g);
+    settingsNotify();
+  }
+  // One line from Today: "3 for today · 1 late", or "" when it has nothing.
+  function greetTodayLine(res) {
+    var g = res && res.groups;
+    if (!g) return "";
+    var nt = Array.isArray(g.today) ? g.today.length : 0, nl = Array.isArray(g.overdue) ? g.overdue.length : 0;
+    var out = [];
+    if (nt) out.push(nt === 1 ? window.t("greet.today1") : window.t("greet.todayN").replace("{n}", nt));
+    if (nl) out.push(nl === 1 ? window.t("greet.late1") : window.t("greet.lateN").replace("{n}", nl));
+    return out.join(" · ");
+  }
+  function greetStart() {
+    if (SOLO) return;
+    lateWhen(function () { setTimeout(greetMaybe, 700); });
+  }
+  function greetMaybe() {
+    if (SOLO || greetBox) return;
+    var g = greetRead();
+    if (g.off || g.day === greetDay(new Date())) return;
+    var tour = false, first = false;
+    try { tour = localStorage.getItem(TOUR_KEY) === "1"; first = localStorage.getItem(VERSION_KEY) === null; } catch (e) { return; }
+    if (tour || first || tourBox || profilesBusy) return;
+    // Something else is on screen or on its way (an app, a link, a share).
+    if (state.running || late.open) return;
+    var L = window.orosLock;
+    if (L && L.isLocked && L.isLocked()) {
+      if (L.onChange) {
+        var off = L.onChange(function () { if (!L.isLocked()) { off(); setTimeout(greetMaybe, 500); } });
+      }
+      return;
+    }
+    if (document.getElementById("oro-splash") || document.hidden || document.readyState !== "complete") {
+      if (++greetTries < 20) setTimeout(greetMaybe, 500);
+      return;
+    }
+    greetMark();
+    greetShow();
+  }
+  function greetShow() {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var now = new Date(), name = meName();
+    var box = document.createElement("div");
+    box.id = "oros-greet";
+    box.setAttribute("role", "status");
+    if (reduce) box.className = "no-motion";
+    var hi = document.createElement("div");
+    hi.className = "greet-hi";
+    hi.textContent = window.t("greet." + greetPart(now.getHours())) + (name ? ", " + name : "");
+    box.appendChild(hi);
+    var date = document.createElement("div");
+    date.className = "greet-date";
+    try { date.textContent = now.toLocaleDateString(shLoc(), { weekday: "long", day: "numeric", month: "long" }); } catch (e) {}
+    box.appendChild(date);
+    document.body.appendChild(box);
+    greetBox = box;
+    var timer = 0;
+    var end = function () {
+      if (greetBox !== box) return;
+      greetBox = null; greetEnd = null;
+      clearTimeout(timer);
+      document.removeEventListener("pointerdown", onDown, true);
+      document.removeEventListener("keydown", end, true);
+      box.classList.add("out");
+      setTimeout(function () { box.remove(); }, reduce ? 0 : 400);
+    };
+    var onDown = function (e) { if (!(e.target && e.target.closest && e.target.closest("#oros-greet .greet-today"))) end(); };
+    greetEnd = end;
+    timer = setTimeout(end, GREET_MS);
+    document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", end, true);
+    var T = window.orosToday;
+    if (T && typeof T.build === "function") {
+      T.build().then(function (res) {
+        var line = greetTodayLine(res);
+        if (!line || greetBox !== box) return;
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "greet-today";
+        b.textContent = line;
+        b.setAttribute("aria-label", line + " · " + window.t("greet.open"));
+        b.addEventListener("click", function () { end(); openAppById("today"); });
+        box.appendChild(b);
+      }, function () {});
+    }
   }
 
   // First-run profiles (profiles.js, strategy §9): before the tour, a
@@ -13445,6 +13574,45 @@
     return out;
   }
 
+  // START-1: what First steps (widgets.js) ticks, read from the real
+  // state: a Notes page, a To-Do task, a wallpaper or icon pack other
+  // than the default, sync connected, installed (or "no" where the
+  // browser cannot install). Read-only; the Assistant step is noted by
+  // openApp (orosWidgets.did), the rest by the widget itself.
+  function startFacts() {
+    var rj = function (k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
+    var notes = rj("oros-notes-data"), todo = rj("oros-todo-data");
+    var tombs = (notes && notes.tombs && typeof notes.tombs === "object") ? notes.tombs : {};
+    var installed = false;
+    try { installed = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (e) {}
+    var S = window.orosSync;
+    return {
+      note: !!(notes && Array.isArray(notes.pages) && notes.pages.some(function (p) { return p && typeof p.id === "string" && !tombs[p.id]; })),
+      task: !!(todo && Array.isArray(todo.lists) && todo.lists.some(function (l) { return l && Array.isArray(l.items) && l.items.length > 0; })),
+      wall: !!(wpPic() || (state.wallpaper && state.wallpaper !== DEFAULT_WALLPAPER)),
+      icons: !!(state.icons && state.icons !== "classic"),
+      sync: !!(S && typeof S.isConnected === "function" && S.isConnected()),
+      install: installed ? true : (state.deferredPrompt ? false : "no")
+    };
+  }
+  function startGo(id) {
+    switch (id) {
+      case "note":      openAppById("notes"); return;
+      case "task":      openAppById("todo"); return;
+      case "wall":
+      case "icons":     if (window.orosSettings) window.orosSettings.open("appearance"); return;
+      case "sync":      if (window.orosSettings) window.orosSettings.open("sync"); return;
+      case "assistant": openAppById("assistant"); return;
+      case "install":
+        if (!state.deferredPrompt) return;
+        state.deferredPrompt.prompt();
+        state.deferredPrompt.userChoice.then(function (choice) {
+          if (choice.outcome === "accepted") { state.deferredPrompt = null; renderMenu(); }
+        });
+        return;
+    }
+  }
+
   // Desktop widgets (widgets.js): the weather card reads the tray's
   // cache, so the shell keeps fetching while that card is shown.
   function wgWantsWeather() {
@@ -13521,7 +13689,8 @@
         now: function () { syncNowFromDot(); }
       },
       toast: function (msg) { scToast("err", msg); },
-      changed: function () { settingsNotify(); wxFetch(false); }
+      changed: function () { settingsNotify(); wxFetch(false); },
+      start: { facts: startFacts, go: startGo }
     });
   }
   loadApps();
