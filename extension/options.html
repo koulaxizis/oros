@@ -20,6 +20,10 @@
   <h2 data-i18n="optPmTitle">Passwords</h2>
   <label for="lockMin" data-i18n="optLock">Lock the passwords after</label>
   <select id="lockMin"></select>
+  <div class="row" id="remRow" hidden>
+    <span data-i18n="optRemembered">The master password is remembered on this device.</span>
+    <button type="button" id="forgetRem" data-i18n="optForgetRemembered">Forget it</button>
+  </div>
   <div class="row">
     <button type="button" id="forget" data-i18n="optForget">Remove the vault copy from this browser</button>
     <span id="pmStatus" role="status"></span>
