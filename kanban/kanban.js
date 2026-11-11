@@ -6233,7 +6233,10 @@
     load();
     wire();
     // EMPTY-1: the friendly empty screen (../emptykit.js)
-    if (window.orosEmpty) window.orosEmpty.dress($("empty"), { app: "kanban", action: { label: t("col.add"), run: createColumn } });
+    // TPL-1: the built-in boards as starters (a new board, the app's own Undo).
+    if (window.orosEmpty) window.orosEmpty.dress($("empty"), { app: "kanban", action: { label: t("col.add"), run: createColumn },
+      starters: T.builtinList(LANG).filter(function (x) { return ["trip", "move", "personal"].indexOf(x.key) !== -1; })
+        .map(function (x) { return { label: x.name, run: function () { boardFrom(T.builtinBoard(x.key, LANG), x.name); } }; }) });
     registerSync();       // ΠΡΕΠΕΙ μετά το load(): το sliceGet διαβάζει state
     inheritPalette();
     watchPalette();
