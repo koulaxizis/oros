@@ -92,3 +92,14 @@ test("locales: en and el have the same keys, every key used exists", () => {
   used.forEach((k) => assert.ok(en[k], "missing key " + k));
   assert.ok(en.extDesc.message.length <= 132 && el.extDesc.message.length <= 132);
 });
+
+test("newerVersion: numeric parts, junk is never newer (add-on update notice, PW-AF5)", () => {
+  const E = require(path.join(__dirname, "..", "extension", "core.js"));
+  assert.equal(E.newerVersion("2.1.0", "2.0.1"), true);
+  assert.equal(E.newerVersion("2.10.0", "2.9.3"), true);
+  assert.equal(E.newerVersion("3", "2.9.9"), true);
+  assert.equal(E.newerVersion("2.1", "2.1.0"), false);
+  assert.equal(E.newerVersion("2.0.1", "2.1.0"), false);
+  for (const bad of ["", "x", "2.1.0-beta", "<b>9</b>", "9.9.9.9.9", null, undefined]) assert.equal(E.newerVersion(bad, "1.0.0"), false, String(bad));
+  assert.match(E.DOWNLOAD_URL, /^https:\/\/useoros\.online\/download\/#addon$/);
+});

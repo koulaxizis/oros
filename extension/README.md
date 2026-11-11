@@ -15,7 +15,8 @@ from your orOS vault (Bible PW-AF1).
 - **Address bar:** `oros` + space + words → orOS menu search with those words.
 - **Options:** the orOS address (default `https://useoros.online/`;
   `https://` anywhere, `http://` only for localhost), the Passwords
-  lock time (1, 5, 15, 30 or 60 minutes) and "Forget the vault copy".
+  lock time (1, 5, 15, 30 or 60 minutes), "Forget it" for a remembered
+  master password and "Forget the vault copy".
 
 How it talks to orOS: `/?share-url=…&share-title=…` (Bookmarks add
 dialog, see `shareFromHref` in `shell.js`), `/?search=…`
@@ -30,7 +31,16 @@ Android's Share → orOS.
   `oros-passwords-vault` slice from it (the same ciphertext orOS
   syncs) and keeps it in `storage.local`, merged, never replaced
   (`pmvault.js`). It needs the host permission for the orOS address
-  (asked once, "Allow access to orOS").
+  (asked once, "Allow access to orOS"). It is read again on every
+  finished load of an orOS tab, on switching to one, every 10 minutes
+  (alarm `pm-refresh`) from the orOS tabs that are open, and when the
+  popup opens. When the popup finds the copy over an hour old (or no
+  copy) and no orOS tab is open, or on "Update", `background.js`
+  `updateViaTab` opens orOS in a background tab, waits for its sync
+  round (the shell's sync dot: `synced` / `err`; `off` or `locked`
+  ends it after 4 s; at most 60 s), reads the slice and closes the
+  tab. The add-on still holds no cloud token and runs no sync of its
+  own.
 - **Unlock.** The master password opens the vault key with the same
   code as orOS (`pm/` is a byte-for-byte copy of `passwords/pmcrypto.js`,
   `pmcore.js`, `pmkinds.js` and hash-wasm's Argon2id; run
@@ -38,6 +48,17 @@ Android's Share → orOS.
   it). Only the 32-byte key is kept, in `storage.session` (memory,
   gone when the browser closes), with a lock time that every use moves
   forward. The master password is never stored.
+- **Remember on this device (opt-in, 2.1.0).** A box under the master
+  password, off by default, with a warning. When it is ticked the vault
+  key is also kept in `storage.local` (`pmRemember`), encrypted with
+  AES-256-GCM (the kid as associated data) under a device key that
+  WebCrypto made non-extractable and that lives in the add-on's own
+  IndexedDB (`oros-addon` / `keys`). With no key in session memory the
+  popup opens from it (the lock time still applies to the session key).
+  Lock, unlocking without the box, "Forget it" in the options and
+  "Forget the vault copy" remove both; a record that no longer opens is
+  dropped. It protects against a copy of the add-on's storage, not
+  against someone who uses this browser profile.
 - **Fill.** Only on a click in the add-on window, in the top frame of
   the tab (the toolbar click grants `activeTab` for it), only if the page is still on the origin it was opened
   for, and only entries whose site fits (`pmfill.js` `fits`: the same
@@ -61,10 +82,17 @@ Android's Share → orOS.
 - **Not yet:** logins inside a frame, passkeys.
 
 Permissions: `activeTab` and `scripting` (fill the tab you clicked
-on, only then), `storage`, `alarms` (the lock time), `contextMenus`,
+on, only then), `storage`, `alarms` (the lock time, the 10-minute
+re-read), `contextMenus`,
 host access to `https://useoros.online/*` (read the vault copy);
 optional, asked when needed: other https sites, `localhost`.
-No content scripts, no network requests of its own.
+No content scripts. One network request of its own: once a day
+(alarm `addon-check`) `background.js` reads `extension/manifest.json`
+from the orOS address (`fetch`, no cookies); a newer version
+(`OrosExt.newerVersion`) is kept as `addonNew` in `storage.local`,
+shows "↑" on the toolbar button and "Version … is out. Download" in the
+popup (link to useoros.online/download/#addon). A zip install cannot
+replace itself.
 
 ## Install
 
