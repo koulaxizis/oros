@@ -12,11 +12,17 @@ makes no network requests of its own and has no analytics.
   address, a part browsers never send to any server. orOS puts it in
   its Assistant's message box; nothing is sent until you press Send.
 - Passwords: it keeps in your browser a copy of your orOS Passwords
-  vault, read from an orOS tab you have open. The copy is encrypted
-  exactly as orOS keeps it; without your master password nobody can
-  read it. When you unlock, only the key that opens the vault is kept,
-  in the browser's memory, until the lock time ends or the browser
-  closes. Your master password is never stored.
+  vault, read from an orOS tab you have open. When the copy is over an
+  hour old and no orOS tab is open, it opens orOS in a background tab
+  for one sync (orOS talks to your own cloud as on any visit) and
+  closes it. The copy is encrypted exactly as orOS keeps it; without
+  your master password nobody can read it. When you unlock, only the
+  key that opens the vault is kept, in the browser's memory, until the
+  lock time ends or the browser closes. Only if you tick "Remember on
+  this device" is that key also kept on this device, encrypted with a
+  key that cannot be copied out of this browser, until you press Lock;
+  then anyone who uses this browser can fill your passwords. Your
+  master password is never stored.
 - It fills a page only when you choose an entry in its window, and
   only with that entry. When a card number sits in a payment frame of
   another site, it names that site and asks the browser for access to
@@ -25,7 +31,7 @@ makes no network requests of its own and has no analytics.
   you typed on that page, asks you, and hands them to Passwords in your
   orOS tab, where they are saved only when you press Save.
 - It stores its settings in your browser: the orOS address, the
-  Passwords lock time. "Forget the vault copy" in its options removes
+  Passwords lock time and, if you chose it, the remembered key. "Forget the vault copy" in its options removes
   the copy.
 
 orOS itself keeps your data on your device; its optional sync is

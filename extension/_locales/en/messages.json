@@ -60,7 +60,7 @@
     "message": "Select text, right-click it: Ask the orOS Assistant. orOS opens its Assistant with the text in the message box; nothing is sent until you press Send."
   },
   "optPrivacy": {
-    "message": "This add-on collects nothing and talks to no server. Saving opens orOS with the page's address and title, or with the text you selected for the Assistant (in the part of the address that never leaves your browser). For passwords it keeps an encrypted copy of your vault, read from your orOS tab; your master password is never stored, and the opened vault key is kept in memory only until the lock time or until the browser closes."
+    "message": "This add-on collects nothing and talks to no server. Saving opens orOS with the page's address and title, or with the text you selected for the Assistant (in the part of the address that never leaves your browser). For passwords it keeps an encrypted copy of your vault, read from your orOS tab (when the copy is over an hour old it opens orOS in a background tab for one sync and closes it). Your master password is never stored; the opened vault key is kept in memory until the lock time or until the browser closes, or, only if you choose \"Remember on this device\", also on this device, encrypted with a key that cannot be copied out of this browser, until you press Lock."
   },
   "popTitle": {
     "message": "orOS: save this page, fill a password"
@@ -117,7 +117,7 @@
     "message": "Lock"
   },
   "pmLocked": {
-    "message": "Locked."
+    "message": "Locked. The master password will be asked next time."
   },
   "pmFill": {
     "message": "Fill"
@@ -196,5 +196,26 @@
   },
   "pmSaveFail": {
     "message": "orOS could not be reached. Open orOS and try again."
+  },
+  "pmRemember": {
+    "message": "Remember on this device"
+  },
+  "pmRememberHint": {
+    "message": "The add-on will open without asking for the master password until you press Lock. Anyone who uses this computer's browser can then fill and see your passwords. Use it only on your own computer, with a login of its own."
+  },
+  "pmUpdate": {
+    "message": "Update"
+  },
+  "pmUpdating": {
+    "message": "Updating the copy from orOS…"
+  },
+  "pmUpdateFail": {
+    "message": "Could not update the copy. Open orOS in a tab, wait for its sync, then try again."
+  },
+  "optRemembered": {
+    "message": "The master password is remembered on this device."
+  },
+  "optForgetRemembered": {
+    "message": "Forget it"
   }
 }

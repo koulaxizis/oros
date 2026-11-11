@@ -5,7 +5,9 @@
    you send. The toolbar button opens popup.html (save the page, and
    Passwords). Passwords here (PW-AF1): keep the add-on's copy of the
    encrypted vault fresh when an orOS tab finishes loading, and lock
-   (forget the vault key) when the lock time is reached, and (PW-AF3)
+   (forget the vault key) when the lock time is reached, re-read open
+   orOS tabs every few minutes and, when the popup asks, open orOS in
+   a background tab so its sync brings the newest vault, and (PW-AF3)
    hand a login the person chose to save to the orOS tab. */
 "use strict";
 
@@ -79,8 +81,71 @@ api.tabs.onUpdated.addListener(async (tabId, info, tab) => {
   const ok = await api.permissions.contains({ origins: [origin] }).catch(() => false);
   if (ok) OrosVault.refreshFromTab(tabId);
 });
+/* orOS stays open for days without loading again: switching to an orOS
+   tab and a 10-minute alarm also re-read every open orOS tab. */
+async function orosOrigin() {
+  try { return new URL(await getBase()).origin + "/*"; } catch (e) { return null; }
+}
+async function refreshOpen() {
+  const origin = await orosOrigin();
+  if (!origin || !(await api.permissions.contains({ origins: [origin] }).catch(() => false))) return false;
+  return OrosVault.refreshAll(await getBase());
+}
+api.tabs.onActivated.addListener(async (info) => {
+  const tab = await api.tabs.get(info.tabId).catch(() => null);
+  if (tab && OrosVault.isOrosTab(tab, await getBase())) refreshOpen();
+});
 if (api.alarms) {
-  api.alarms.onAlarm.addListener((a) => { if (a.name === "pm-lock") OrosVault.keyState(); });
+  api.alarms.onAlarm.addListener((a) => {
+    if (a.name === "pm-lock") OrosVault.keyState();
+    else if (a.name === "pm-refresh") refreshOpen();
+  });
+  Promise.resolve(api.alarms.get("pm-refresh")).then((a) => {
+    if (!a) api.alarms.create("pm-refresh", { delayInMinutes: 1, periodInMinutes: 10 });
+  }, () => {});
+}
+
+/* The popup found the copy old and no orOS tab open: orOS opens in a
+   background tab (from its offline copy, like any visit), its sync
+   pulls the newest vault from the cloud, the add-on reads the slice and
+   closes the tab. The sync dot tells when the round is over: "synced"
+   or "err" after a round; "off" (no sync) or "locked" (sync passphrase
+   not remembered) ends it after a few seconds; at most 60 s. */
+function syncStateInPage(k) {
+  const d = document.getElementById("sync-dot");
+  let raw = null;
+  try { raw = localStorage.getItem(k); } catch (e) { raw = null; }
+  return { s: d ? String(d.getAttribute("data-state") || "") : "", raw: raw };
+}
+let updating = null;
+async function updateViaTab() {
+  const base = await getBase();
+  const origin = await orosOrigin();
+  if (!origin || !(await api.permissions.contains({ origins: [origin] }).catch(() => false))) return { ok: false };
+  const open = await api.tabs.query({ url: origin }).catch(() => []);
+  if (open && open.length) return { ok: await OrosVault.refreshAll(base) };
+  const t = await api.tabs.create({ url: base, active: false }).catch(() => null);
+  if (!t) return { ok: false };
+  let raw = null, idle = 0;
+  const end = Date.now() + 60000;
+  try {
+    while (Date.now() < end) {
+      await wait(1000);
+      let st = null;
+      try {
+        const r = await api.scripting.executeScript({ target: { tabId: t.id }, func: syncStateInPage, args: [OrosVault.SLICE_KEY] });
+        st = r && r[0] ? r[0].result : null;
+      } catch (e) { st = null; /* still loading */ }
+      if (!st) continue;
+      raw = st.raw;
+      if (st.s === "synced" || st.s === "err") break;
+      if (st.s === "syncing") { idle = 0; continue; }
+      if (++idle >= (st.s === "off" || st.s === "locked" ? 4 : 15)) break;
+    }
+  } finally {
+    await api.tabs.remove(t.id).catch(() => {});
+  }
+  return { ok: raw ? await OrosVault.absorbText(raw) : false };
 }
 
 /* Passwords PW-AF3: a login from the popup's "Save the login from
@@ -133,6 +198,11 @@ async function deliverSave(item) {
   return false;
 }
 api.runtime.onMessage.addListener((m, sender, reply) => {
+  if (m && m.t === "pm-update" && sender.id === api.runtime.id && !sender.tab) {
+    if (!updating) updating = updateViaTab().catch(() => ({ ok: false })).finally(() => { updating = null; });
+    updating.then(reply);
+    return true;
+  }
   // only the add-on's own popup (no tab) may hand a login over
   if (!m || m.t !== "pm-save" || sender.id !== api.runtime.id || sender.tab) return false;
   const it = m.item;

@@ -34,11 +34,37 @@ $("openOros").addEventListener("click", () => { api.tabs.create({ url: base }).t
 $("grant").addEventListener("click", () => {
   api.permissions.request({ origins: [originPattern()] }).then((ok) => { if (ok) start(); });
 });
-$("lock").addEventListener("click", () => { data = null; V.lock().then(() => { say(msg("pmLocked")); showUnlock(); }); });
+$("lock").addEventListener("click", () => { data = null; V.lockAll().then(() => { say(msg("pmLocked")); showUnlock(); }); });
+$("update").addEventListener("click", () => update(true));
+$("remember").addEventListener("change", () => { $("rememberHint").hidden = !$("remember").checked; });
+
+/* The copy is older than STALE and no orOS tab is open: the add-on
+   opens orOS in a background tab for one sync round (background.js
+   updateViaTab) and shows the new copy. The Update button does the
+   same at any time. */
+const STALE = 60 * 60000;
+let updatingNow = false;
+async function update(asked) {
+  if (updatingNow) return;
+  updatingNow = true;
+  $("update").disabled = true;
+  say(msg("pmUpdating"));
+  let r = null;
+  try { r = await api.runtime.sendMessage({ t: "pm-update" }); } catch (e) { r = null; }
+  updatingNow = false;
+  $("update").disabled = false;
+  if (data) {
+    const d = await V.open();
+    if (d) { data = d; render(); }
+  }
+  if (r && r.ok) say(""); else say(asked ? msg("pmUpdateFail") : "", !!asked);
+}
 $("q").addEventListener("input", render);
 
 function showUnlock() {
   show("unlock");
+  $("remember").checked = false;
+  $("rememberHint").hidden = true;
   setTimeout(() => $("pw").focus(), 0);
 }
 
@@ -48,7 +74,7 @@ $("unlock").addEventListener("submit", (ev) => {
   if (!pw) { $("pw").focus(); return; }
   $("go").disabled = true;
   say(msg("pmBusy"));
-  V.unlock(pw, "pm/argon2.umd.min.js").then(() => {
+  V.unlock(pw, "pm/argon2.umd.min.js", { remember: $("remember").checked }).then(() => {
     $("pw").value = "";
     return V.open();
   }).then((d) => {
@@ -192,6 +218,7 @@ $("saveLogin").addEventListener("click", async () => {
   $("saveYes").focus();
 });
 
+let triedFirst = false;
 async function start() {
   say("");
   base = await getBase();
@@ -204,12 +231,21 @@ async function start() {
     $("grant").hidden = perm;
     say(msg(perm ? "pmNoCopy" : "pmNeedPerm", [new URL(base).host]));
     show("need");
+    if (perm && !triedFirst) {
+      triedFirst = true;
+      say(msg("pmUpdating"));
+      const r = await api.runtime.sendMessage({ t: "pm-update" }).catch(() => null);
+      if (r && r.ok) { start(); return; }
+      say(msg("pmNoCopy", [new URL(base).host]));
+    }
     return;
   }
   if (copy.future) { say(msg("pmFuture"), true); show("need"); $("grant").hidden = true; return; }
   data = await V.open();
-  if (!data) { showUnlock(); return; }
+  const stale = perm && !(copy.at > Date.now() - STALE) && !(await api.tabs.query({ url: originPattern() }).catch(() => [])).length;
+  if (!data) { showUnlock(); if (stale) update(false); return; }
   show("open");
   render();
+  if (stale) update(false);
 }
 start();
