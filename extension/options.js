@@ -33,7 +33,7 @@ document.getElementById("reset").addEventListener("click", () => {
   api.storage.sync.set({ base: OrosExt.DEFAULT_BASE }).then(() => say(msg("optSaved")));
 });
 
-/* Passwords (PW-AF1): lock time and removing the vault copy. */
+/* Passwords (PW-AF1): lock time, a remembered master password, removing the vault copy. */
 const sel = document.getElementById("lockMin");
 OrosVault.LOCK_CHOICES.forEach((m) => {
   const o = document.createElement("option");
@@ -44,6 +44,11 @@ OrosVault.lockMinutes().then((m) => { sel.value = String(m); });
 sel.addEventListener("change", () => {
   api.storage.sync.set({ pmLockMin: parseInt(sel.value, 10) }).then(() => say(msg("optSaved")));
 });
+const remRow = document.getElementById("remRow");
+OrosVault.isRemembered().then((yes) => { remRow.hidden = !yes; });
+document.getElementById("forgetRem").addEventListener("click", () => {
+  OrosVault.lockAll().then(() => { remRow.hidden = true; document.getElementById("pmStatus").textContent = msg("optForgot"); });
+});
 document.getElementById("forget").addEventListener("click", () => {
-  OrosVault.forget().then(() => { document.getElementById("pmStatus").textContent = msg("optForgot"); });
+  OrosVault.forget().then(() => { remRow.hidden = true; document.getElementById("pmStatus").textContent = msg("optForgot"); });
 });

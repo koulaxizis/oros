@@ -69,8 +69,20 @@
     return b + "#quick-ask" + (t ? "=" + encodeURIComponent(t) : "");
   }
 
+  /* "2.10.0" > "2.9.3": numeric parts, missing = 0; anything else
+     (not 1-4 dot-separated numbers) is never newer. */
+  function newerVersion(a, b) {
+    var re = /^\d{1,5}(\.\d{1,5}){0,3}$/;
+    if (!re.test(String(a)) || !re.test(String(b))) return false;
+    var x = String(a).split(".").map(Number), y = String(b).split(".").map(Number);
+    for (var i = 0; i < 4; i++) { var d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0; }
+    return false;
+  }
+
   return {
     DEFAULT_BASE: DEFAULT_BASE,
+    DOWNLOAD_URL: "https://useoros.online/download/#addon",
+    newerVersion: newerVersion,
     askUrl: askUrl,
     normBase: normBase,
     isSavable: isSavable,

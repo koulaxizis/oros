@@ -12,6 +12,13 @@
      storage.session (memory only, gone when the browser closes, not
      readable by pages or content scripts), with a lock time that every
      use moves forward. The master password is never stored.
+   - "Remember on this device" (opt-in, off by default): the vault key
+     is also kept in storage.local, encrypted (AES-256-GCM, the kid as
+     associated data) with a device key that WebCrypto made
+     non-extractable and that lives in the add-on's own IndexedDB, so
+     the popup opens without asking. Lock forgets both. This guards
+     against a copy of the add-on's settings or a sync of them, not
+     against someone who uses this computer's browser profile.
    - Entries are decrypted only for one popup or one fill, in memory. */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory;
@@ -21,7 +28,7 @@
 
   var api = typeof browser !== "undefined" ? browser : chrome;
   var PV = root.PmVault, PC = root.PmCore;
-  var COPY = "pmCopy", KEY = "pmKey";
+  var COPY = "pmCopy", KEY = "pmKey", REMEMBER = "pmRemember";
   var SLICE_KEY = "oros-passwords-vault";
   var LOCK_CHOICES = [1, 5, 15, 30, 60];
 
@@ -83,7 +90,7 @@
       return p;
     }, function () { return false; });
   }
-  function forget() { return api.storage.local.remove(COPY).then(lock); }
+  function forget() { return api.storage.local.remove(COPY).then(lockAll); }
 
   /* ---------- the key ---------- */
   function lock() { return api.storage.session.remove(KEY).then(function () {}, function () {}); }
@@ -103,9 +110,81 @@
       return api.storage.session.set({ pmKey: next }).then(function () { return next; });
     });
   }
-  /* → resolves on success; rejects "no-copy", "future", "no-vault",
+  /* ---------- remember on this device (opt-in) ---------- */
+  /* The device key: a non-extractable AES-GCM key in the add-on's
+     IndexedDB (tests hand in root.OrosKeyStore instead). */
+  var DB = "oros-addon", STORE = "keys", WRAP = "pm-wrap";
+  function idbStore() {
+    function req(mode, fn) {
+      return new Promise(function (resolve, reject) {
+        if (typeof indexedDB === "undefined") { reject(new Error("no-idb")); return; }
+        var o = indexedDB.open(DB, 1);
+        o.onupgradeneeded = function () { o.result.createObjectStore(STORE); };
+        o.onerror = function () { reject(o.error); };
+        o.onsuccess = function () {
+          var db = o.result, tx = db.transaction(STORE, mode), r = fn(tx.objectStore(STORE));
+          tx.oncomplete = function () { db.close(); resolve(r && "result" in r ? r.result : undefined); };
+          tx.onerror = tx.onabort = function () { db.close(); reject(tx.error); };
+        };
+      });
+    }
+    return {
+      get: function (id) { return req("readonly", function (st) { return st.get(id); }); },
+      put: function (id, v) { return req("readwrite", function (st) { st.put(v, id); }); },
+      del: function (id) { return req("readwrite", function (st) { st.delete(id); }); }
+    };
+  }
+  var keyStore = root.OrosKeyStore || idbStore();
+  var subtle = (typeof crypto !== "undefined" && crypto.subtle) || null;
+  function deviceKey(create) {
+    return keyStore.get(WRAP).then(function (k) {
+      if (k || !create) return k || null;
+      return subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]).then(function (nk) {
+        return keyStore.put(WRAP, nk).then(function () { return nk; });
+      });
+    });
+  }
+  function remember(k) {
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    return deviceKey(true).then(function (dk) {
+      var vk = new Uint8Array(PV.unb64(k.vk));
+      return subtle.encrypt({ name: "AES-GCM", iv: iv, additionalData: new TextEncoder().encode(k.kid) }, dk, vk).then(function (ct) {
+        PV.wipe(vk);
+        var rec = {}; rec[REMEMBER] = { v: 1, kid: k.kid, iv: PV.b64(iv), ct: PV.b64(new Uint8Array(ct)) };
+        return api.storage.local.set(rec);
+      });
+    });
+  }
+  function forgetRemembered() {
+    return api.storage.local.remove(REMEMBER).then(function () { return keyStore.del(WRAP); }).then(function () {}, function () {});
+  }
+  function isRemembered() {
+    return api.storage.local.get(REMEMBER).then(function (g) { return !!(g && g[REMEMBER]); }, function () { return false; });
+  }
+  /* The remembered key back into session memory (with the lock time
+     as usual), or null. A record that no longer opens is forgotten. */
+  function fromRemembered() {
+    return api.storage.local.get(REMEMBER).then(function (g) {
+      var r = g && g[REMEMBER];
+      if (!r || r.v !== 1 || typeof r.kid !== "string" || typeof r.iv !== "string" || typeof r.ct !== "string") return null;
+      return deviceKey(false).then(function (dk) {
+        if (!dk) return forgetRemembered().then(function () { return null; });
+        return subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(PV.unb64(r.iv)), additionalData: new TextEncoder().encode(r.kid) },
+          dk, new Uint8Array(PV.unb64(r.ct))).then(function (vk) {
+          var u = new Uint8Array(vk), k = { kid: r.kid, vk: PV.b64(u) };
+          PV.wipe(u);
+          return touch(k);
+        });
+      }).catch(function () { return forgetRemembered().then(function () { return null; }); });
+    }, function () { return null; });
+  }
+  function lockAll() { return lock().then(forgetRemembered); }
+
+  /* opts.remember: keep the key on this device too (else any
+     remembered key is forgotten).
+     → resolves on success; rejects "no-copy", "future", "no-vault",
      "wrong-password", "no-argon2", "no-wasm". */
-  function unlock(password, argonSrc) {
+  function unlock(password, argonSrc, opts) {
     return getCopy().then(function (c) {
       if (!c) throw new Error("no-copy");
       if (c.future) throw new Error("future");
@@ -116,7 +195,9 @@
       return pre.then(function () { return PV.openVK(vault, kid, { password: password }); }).then(function (vk) {
         var k = { kid: kid, vk: PV.b64(vk) };
         PV.wipe(vk);
-        return touch(k);
+        return touch(k).then(function (t) {
+          return (opts && opts.remember ? remember(k) : forgetRemembered()).then(function () { return t; });
+        });
       });
     });
   }
@@ -124,11 +205,11 @@
   /* ---------- entries ---------- */
   /* → { entries, at } of the unlocked vault, or null when locked. */
   function open() {
-    return keyState().then(function (k) {
+    return keyState().then(function (k) { return k || fromRemembered(); }).then(function (k) {
       if (!k) return null;
       return Promise.all([getCopy(), touch(k)]).then(function (x) {
         var c = x[0];
-        if (!c || c.future || !c.slice.vaults[k.kid]) return lock().then(function () { return null; });
+        if (!c || c.future || !c.slice.vaults[k.kid]) return lockAll().then(function () { return null; });
         var vk = PV.unb64(k.vk);
         return PV.sessionFromVK(new Uint8Array(vk), k.kid).then(function (s) {
           var V = c.slice.vaults[k.kid], snap = PC.emptySnap();
@@ -147,6 +228,6 @@
   return {
     SLICE_KEY: SLICE_KEY, LOCK_CHOICES: LOCK_CHOICES,
     getCopy: getCopy, absorbText: absorbText, refreshFromTab: refreshFromTab, refreshAll: refreshAll, isOrosTab: isOrosTab,
-    forget: forget, lock: lock, keyState: keyState, unlock: unlock, open: open, lockMinutes: lockMinutes
+    forget: forget, lock: lock, lockAll: lockAll, isRemembered: isRemembered, keyState: keyState, unlock: unlock, open: open, lockMinutes: lockMinutes
   };
 });
