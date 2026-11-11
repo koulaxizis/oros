@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.19.00
+- **Light of the day on Living land.** The Living land wallpaper now follows the time on your device: a deep blue at night, rose at dawn, clear by day and golden in the evening. Turn it off in Settings › Wallpaper with `Light of the day`.
+
 ## Version 6.18.00
 - **Use it on your phone.** On a computer, `First steps` has a new line, `Use orOS on your phone too`. It adds an `On your phone` card with a QR code of the orOS address: scan it with the phone's camera, then turn on sync on both with the same passphrase.
 

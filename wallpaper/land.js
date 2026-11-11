@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — land.js (Living land desktop wallpaper, v1.1.0)
+// orOS — land.js (Living land desktop wallpaper, v1.3.0)
 // A landscape that grows around what is on the desktop: the
 // shortcuts (launcher.js .ld-ic), the widgets (widgets.js .wg-card),
 // the sticky notes (stickies .sn-note / .sn-card) and the Dock.
@@ -17,10 +17,14 @@
 // ponds). Gentle motion (1.1.0, off by default): glints on the water
 // and one drifting cloud shadow, ≤ 30 fps, never under an app, with
 // reduced motion, on a low battery or on a slow device.
+// Light of the day (1.3.0, LIGHT-1, on by default): a tint over the
+// land that follows the local clock (night blue, dawn rose, clear day,
+// golden evening), eased between key hours so it never jumps; checked
+// with the 4 s tick, nothing runs under an app. lightAt(hours) is pure.
 //
 // The picture is a pure function of (land, accent, theme, size,
 // obstacles): the same desktop draws the same land on every device.
-// Only { style, seed, motion } travel (shell slice field wpland);
+// Only { style, seed, motion, light } travel (shell slice field wpland);
 // the shell owns their canonical form (shell.js wplandCanon).
 //
 // API (window.OrosLand; Node: require("wallpaper/land.js")):
@@ -28,6 +32,7 @@
 //   palette(style, accent, theme) { deep, shallow, foam, sand, grass, high, top } as [r,g,b]
 //   baseCss(accent, theme, style) the desktop background under the canvas
 //   stillReason(o), glint(p, t)   gentle motion rules (pure)
+//   lightAt(hours)                { phase, top, bottom, css } the tint for a local time (pure)
 //   field(rects, w, h, seed, cell, style) → { gw, gh, cell, v: Float32Array }
 //   paint(img, fld, pal, scale, seed) fills img {width, height, data}
 //   sig(rects)                    obstacle signature (rounded)
@@ -40,7 +45,7 @@
 (function (root) {
   "use strict";
 
-  var V = "1.2.0";
+  var V = "1.3.0";
   var STYLES = ["islands", "hills", "garden"];
 
   // ---------- 1. Random numbers + noise ----------
@@ -413,6 +418,40 @@
     catch (e) { return false; }
   }
 
+  // ---------- Light of the day (LIGHT-1) ----------
+  // Key hours (local time, 0-24) with a tint at the top and the bottom
+  // of the screen, [r, g, b, a], drawn with mix-blend-mode: multiply.
+  // Between two keys the tint is eased (smoothstep), so it never jumps.
+  var LIGHT_KEYS = [
+    { h: 0,    p: "night", t: [38, 52, 110, 0.46], b: [22, 30, 70, 0.52] },
+    { h: 5,    p: "night", t: [38, 52, 110, 0.46], b: [22, 30, 70, 0.52] },
+    { h: 6.5,  p: "dawn",  t: [255, 176, 160, 0.30], b: [190, 170, 220, 0.22] },
+    { h: 8.5,  p: "day",   t: [255, 255, 255, 0], b: [255, 255, 255, 0] },
+    { h: 16.5, p: "day",   t: [255, 255, 255, 0], b: [255, 255, 255, 0] },
+    { h: 18.5, p: "dusk",  t: [255, 150, 70, 0.34], b: [210, 110, 120, 0.26] },
+    { h: 20.5, p: "night", t: [38, 52, 110, 0.46], b: [22, 30, 70, 0.52] },
+    { h: 24,   p: "night", t: [38, 52, 110, 0.46], b: [22, 30, 70, 0.52] }
+  ];
+  function lightAt(hours) {
+    var x = Number(hours);
+    if (!isFinite(x)) x = 12;
+    x = ((x % 24) + 24) % 24;
+    var i = 0;
+    while (i < LIGHT_KEYS.length - 2 && x >= LIGHT_KEYS[i + 1].h) i++;
+    var a = LIGHT_KEYS[i], b = LIGHT_KEYS[i + 1];
+    var f = (x - a.h) / (b.h - a.h);
+    f = f * f * (3 - 2 * f);
+    function mix(u, v) {
+      return [0, 1, 2].map(function (k) { return Math.round(u[k] + (v[k] - u[k]) * f); })
+        .concat([Math.round((u[3] + (v[3] - u[3]) * f) * 1000) / 1000]);
+    }
+    var top = mix(a.t, b.t), bot = mix(a.b, b.b);
+    var phase = f < 0.5 ? a.p : b.p;
+    var rgba = function (c) { return "rgba(" + c[0] + ", " + c[1] + ", " + c[2] + ", " + c[3] + ")"; };
+    var css = (top[3] === 0 && bot[3] === 0) ? "" : "linear-gradient(180deg, " + rgba(top) + ", " + rgba(bot) + ")";
+    return { phase: phase, top: top, bottom: bot, css: css };
+  }
+
   function mount(desk, o) {
     o = o || {};
     var wrap = document.getElementById("wp-land");
@@ -424,6 +463,7 @@
     }
     var last = "", timer = 0, stopped = false, ro = null, mo = null, tick = 0;
     var cur = null;                                  // { fld, w, h, style } of the land on screen
+    var lightEl = null, lightCss = null;             // Light of the day layer and what it shows
     var fx = null, raf = 0, slow = false, battery = null, frames = [], glints = [], lastT = 0;
     try {
       if (navigator.getBattery) navigator.getBattery().then(function (b) {
@@ -526,6 +566,26 @@
       return out;
     }
 
+    // The tint for the local time, when the land's `light` is on (absent
+    // = on). Under an app or a hidden tab nothing changes.
+    function lightSync() {
+      if (stopped) return;
+      if ((o.paused && o.paused()) || document.hidden) return;
+      var st = (o.get && o.get()) || {};
+      var on = !(st.land && (st.land.light === 0 || st.land.light === false));
+      var now = new Date();
+      var css = on ? lightAt(now.getHours() + now.getMinutes() / 60).css : "";
+      if (css === lightCss) return;
+      lightCss = css;
+      if (!css) { if (lightEl && lightEl.parentNode) lightEl.parentNode.removeChild(lightEl); lightEl = null; return; }
+      if (!lightEl) {
+        lightEl = document.createElement("div");
+        lightEl.className = "wp-land-light";
+        wrap.appendChild(lightEl);
+      }
+      lightEl.style.background = css;
+    }
+
     function draw(force) {
       timer = 0;
       if (stopped) return;
@@ -536,6 +596,7 @@
       var rs = rects();
       var key = Math.round(box.width) + "x" + Math.round(box.height) + "|" + JSON.stringify(st.land || null) +
                 "|" + st.accent + "|" + st.theme + "|" + sig(rs);
+      lightSync();
       if (!force && key === last) { motionSync(); return; }
       last = key;
       var cv = document.createElement("canvas");
@@ -585,11 +646,11 @@
     window.addEventListener("resize", onResize);
     desk.addEventListener("scroll", onScroll, { passive: true });
     // Dock auto-hide and the like change no desktop node: a slow check.
-    tick = setInterval(function () { if (!document.hidden) soon(0); }, 4000);
+    tick = setInterval(function () { if (!document.hidden) soon(0); }, 4000);   // also moves the light (draw → lightSync)
 
     soon(0);
     return {
-      set: function () { slow = false; soon(0); },
+      set: function () { slow = false; lightCss = null; soon(0); },
       refresh: function () { soon(0); },
       redraw: function () { last = ""; soon(0); },
       stop: function () {
@@ -611,7 +672,8 @@
   var API = {
     v: V, STYLES: STYLES.slice(), LEVELS: LV.slice(), REACH: REACH,
     palette: palette, baseCss: baseCss, field: field, sample: at, layerOf: layerOf,
-    paint: paint, sig: sig, thumb: thumb, demo: demo, mount: mount, stillReason: stillReason, glint: glint
+    paint: paint, sig: sig, thumb: thumb, demo: demo, mount: mount, stillReason: stillReason, glint: glint,
+    lightAt: lightAt, LIGHT_KEYS: LIGHT_KEYS
   };
   root.OrosLand = API;
   if (typeof module !== "undefined" && module.exports) module.exports = API;
