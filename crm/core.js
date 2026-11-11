@@ -98,7 +98,7 @@
   var DAY_MS = 86400000;
   var TOMB_DAYS = 365;
   var VAL_MAX = 99999999999;          // cents: just under a billion
-  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000, ctr: 5000, rsl: 2000, rsNames: 5, cs: 2000, csOld: 5, ix: 2000, items: 50 };
+  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000, ctr: 5000, cx: 5000, rsl: 2000, rsNames: 5, cs: 2000, csOld: 5, ix: 2000, items: 50 };
   var STAGES = ["new", "contact", "proposal", "nego", "won", "lost"];
   var OPEN_STAGES = ["new", "contact", "proposal", "nego"];      // the built-in open stages
   var STAGE_PROB = { "new": 10, contact: 25, proposal: 50, nego: 75, won: 100, lost: 0 };
@@ -106,7 +106,7 @@
   var ACT_KINDS = ["call", "mail", "meet", "msg", "note"];
   var CUST_ST = ["lead", "active", "past"];
   var CURRENCIES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "CAD", "AUD", "JPY"];
-  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "rsl", "cs", "ix"];
+  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "cx", "rsl", "cs", "ix"];
 
   // ---------- Small helpers ----------
   function isInt(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n; }
@@ -548,11 +548,230 @@
       return cmpStr(a.to || "", b.to || "") || cmpStr(a.t, b.t) || cmpStr(a.id, b.id);
     });
   }
-  // A contract's state: "ended" | "soon" (the reminder day has come) | "on"
-  function ctrState(c, today) {
+  // A contract's state (1.10): "term" (ended by agreement, x = its cx
+  // row) | "ended" (the end day has passed) | "soon" (within SOON_DAYS
+  // of the end) | "on". The reminder day (rem) is only for the follow-up.
+  var SOON_DAYS = 90;
+  function ctrState(c, today, x) {
+    if (x && x.end) return "term";
     if (c.to && c.to < today) return "ended";
-    if (c.to && ctrRemindDay(c) <= today) return "soon";
+    if (c.to && dayDiff(today, c.to) <= SOON_DAYS) return "soon";
     return "on";
+  }
+
+  // ---------- Contract follow-through (1.10, CTR-ALL) ----------
+  // cx?: [{ id = contract id, m, ti?: the Publishing title id, fmt?:
+  //   "p" (print) | "e" (digital), end?: the day it was ended by
+  //   agreement, h?: [{ d, k, v?, p?, n? }] what was done: k "renew"
+  //   (v = the new end, p = the old one) | "post" (decision put off to
+  //   v) | "end" | "reopen" | "note" | "mail" | "call" | "task" }].
+  // Its own list like rsl, so a device before 1.10 can't strip it from
+  // the ctr rows (normCtr drops fields it does not know); a row whose
+  // contract is gone leaves with it.
+  var CX_KINDS = ["renew", "post", "end", "reopen", "note", "mail", "call", "task"];
+  var TI_RE = /^[A-Za-z0-9_-]{1,40}$/;
+  var CX_HIST = 50;
+  function normHist(v) {
+    var out = [];
+    if (Array.isArray(v)) v.forEach(function (e) {
+      if (!e || typeof e !== "object" || !isYmd(e.d) || CX_KINDS.indexOf(e.k) < 0) return;
+      var o = { d: e.d, k: e.k };
+      if (isYmd(e.v)) o.v = e.v;
+      if (isYmd(e.p)) o.p = e.p;
+      put(o, "n", cleanText(e.n, 300));
+      out.push(o);
+    });
+    out.sort(function (a, b) { return cmpStr(a.d, b.d) || cmpStr(canon(a), canon(b)); });
+    return out.slice(-CX_HIST);
+  }
+  function normCx(x) {
+    if (!x || typeof x !== "object" || !ID_RE.test(x.id) || !stamp(x)) return null;
+    var o = { id: x.id, m: x.m };
+    if (typeof x.ti === "string" && TI_RE.test(x.ti)) o.ti = x.ti;
+    if (x.fmt === "p" || x.fmt === "e") o.fmt = x.fmt;
+    if (isYmd(x.end)) o.end = x.end;
+    var h = normHist(x.h);
+    if (h.length) o.h = h;
+    return o;
+  }
+  function cxOf(data, ctrId) { return (data && byId(data.cx, ctrId)) || null; }
+  // The cx row to save: the stored one (or a new one) with the patch
+  // (a key set to "" or null leaves) and, when given, one more history
+  // entry. m is set by the caller's write.
+  function cxRow(data, ctrId, patch, entry) {
+    var o = own(cxOf(data, ctrId) || { id: ctrId, m: 0 });
+    Object.keys(patch || {}).forEach(function (k) {
+      if (k === "id" || k === "m" || k === "h") return;
+      if (patch[k] === "" || patch[k] === null || patch[k] === undefined) delete o[k]; else o[k] = patch[k];
+    });
+    if (entry) { o.h = normHist((o.h || []).concat([entry])); if (!o.h.length) delete o.h; }
+    return normCx(Object.assign({}, o, { m: o.m || 1 })) ? o : null;
+  }
+  // "«Title» (Print)" → the format and the book's own name
+  var FMT_WORDS = { p: ["εντυπο", "εντυπη", "print", "printed", "paperback", "hardback"], e: ["ψηφιακο", "ψηφιακη", "ebook", "e-book", "digital", "audiobook"] };
+  function ctrFmt(data, c) {
+    var x = cxOf(data, c.id);
+    if (x && x.fmt) return x.fmt;
+    var m = /\(([^()]*)\)\s*$/.exec(fold(c.t));
+    if (!m) return "";
+    var w = m[1].trim();
+    if (FMT_WORDS.p.indexOf(w) >= 0) return "p";
+    if (FMT_WORDS.e.indexOf(w) >= 0) return "e";
+    return "";
+  }
+  function ctrBook(c) {
+    return cleanText(String(c.t || "").replace(/\s*\([^()]*\)\s*$/, "").replace(/[«»"“”„]/g, ""), 120);
+  }
+  // Add whole years to a day (29 Feb → 28 Feb when the year has none)
+  function addYears(ymd, n) {
+    if (!isYmd(ymd) || !isInt(n)) return "";
+    var y = +ymd.slice(0, 4) + n, md = ymd.slice(4);
+    var out = y + md;
+    return isYmd(out) ? out : y + "-02-28";
+  }
+  // The open follow-up a contract's end is remembered by: a fixed id
+  // per contract, so two devices that add it at once add the same row.
+  function ctrFupId(ctrId) { return ("r" + ctrId).slice(0, 40); }
+  // The last "put off" day still to come ("" when none)
+  function ctrSnooze(x, today) {
+    var d = "";
+    ((x && x.h) || []).forEach(function (e) { if (e.k === "post" && e.v && e.v > today && e.v > d) d = e.v; });
+    return d;
+  }
+  // The day the follow-up is due: the reminder day, or a later "put
+  // off" day; never in the past while the contract runs. "" = none.
+  function ctrFupDay(c, x, today) {
+    if (x && x.end) return "";
+    var snz = ctrSnooze(x, today);
+    if (snz) return snz;
+    if (!c.to || c.to < today) return "";
+    var d = ctrRemindDay(c);
+    return d < today ? today : d;
+  }
+  // Everything the other apps show about one contract
+  function ctrInfo(data, c, today) {
+    var x = cxOf(data, c.id), st = ctrState(c, today, x), snz = ctrSnooze(x, today);
+    var cu = byId(data.cust, c.cust);
+    return {
+      ctr: c, x: x, st: st, fmt: ctrFmt(data, c), book: ctrBook(c), cust: cu, who: cu ? custName(cu) : "",
+      days: c.to ? dayDiff(today, c.to) : null, snooze: snz,
+      needs: (st === "soon" || st === "ended") && !snz,
+      hist: x && x.h ? x.h.slice() : []
+    };
+  }
+  // Every contract, those that need a decision first (by end day),
+  // then the running ones, then the ended by agreement.
+  var ST_ORDER = { ended: 0, soon: 0, on: 1, term: 2 };
+  function ctrAll(data, today, filter) {
+    var custs = {};
+    data.cust.forEach(function (c) { custs[c.id] = 1; });
+    return (data.ctr || []).filter(function (c) { return custs[c.cust]; }).map(function (c) { return ctrInfo(data, c, today); })
+      .filter(function (r) {
+        if (filter === "needs") return r.needs;
+        if (filter === "soon") return r.st === "soon";
+        if (filter === "ended") return r.st === "ended";
+        if (filter === "term") return r.st === "term";
+        return true;
+      })
+      .sort(function (a, b) {
+        var oa = a.needs ? -1 : ST_ORDER[a.st], ob = b.needs ? -1 : ST_ORDER[b.st];
+        return oa - ob || cmpStr(a.ctr.to || "9999", b.ctr.to || "9999") || cmpStr(fold(a.ctr.t), fold(b.ctr.t)) || cmpStr(a.ctr.id, b.ctr.id);
+      });
+  }
+  // Publishing titles ({ id, t, ppl: [{ n }] }) → the title a contract
+  // is about: its own link, else the one title with the same name
+  // (folded; by the partner's Publishing name when several have it).
+  function ctrTitle(data, c, titles) {
+    var x = cxOf(data, c.id), list = Array.isArray(titles) ? titles : [];
+    if (x && x.ti) { for (var i = 0; i < list.length; i++) if (list[i] && list[i].id === x.ti) return list[i]; return null; }
+    var b = fold(ctrBook(c)).replace(/\s+/g, " ").trim();
+    if (!b) return null;
+    var hits = list.filter(function (tt) { return tt && fold(tt.t).replace(/[«»"“”„]/g, "").replace(/\s+/g, " ").trim() === b; });
+    if (hits.length === 1) return hits[0];
+    var cu = byId(data.cust, c.cust), names = cu ? linksOf(data, cu, "pub").map(function (l) { return l.v; }) : [];
+    if (cu) names.push(pubKey(cu.name));
+    hits = hits.filter(function (tt) { return (tt.ppl || []).some(function (p) { return names.indexOf(pubKey(p.n)) >= 0; }); });
+    return hits.length === 1 ? hits[0] : null;
+  }
+  // One title's contracts (Publishing, Kanban): [ctrInfo], print first
+  function fmtRank(f) { return f === "p" ? 0 : (f === "e" ? 1 : 2); }
+  function ctrForTitle(data, title, titles, today) {
+    if (!title) return [];
+    return (data.ctr || []).filter(function (c) {
+      var hit = ctrTitle(data, c, titles);
+      return hit && hit.id === title.id && byId(data.cust, c.cust);
+    }).map(function (c) { return ctrInfo(data, c, today); }).sort(function (a, b) {
+      return fmtRank(a.fmt) - fmtRank(b.fmt) || cmpStr(a.ctr.to || "9999", b.ctr.to || "9999") || cmpStr(a.ctr.id, b.ctr.id);
+    });
+  }
+  // Contracts whose follow-up is missing (made by the Assistant or
+  // orOS Gate before 1.10, or done/removed while the contract still
+  // runs): [{ ctr, fup: id, d }] for the app to write.
+  function ctrHeal(data, today) {
+    var out = [];
+    (data.ctr || []).forEach(function (c) {
+      if (!byId(data.cust, c.cust)) return;
+      var x = cxOf(data, c.id), d = ctrFupDay(c, x, today);
+      if (!d) return;
+      var f = c.fup ? byId(data.fups, c.fup) : null;
+      if (f && !f.done) return;
+      if (f && f.done && !ctrSnooze(x, today)) return;   // done for this end: a new end makes a new one
+      var id = ctrFupId(c.id);
+      if (f && f.id === id) id = ctrFupId(c.id + "b");
+      var own2 = byId(data.fups, id);
+      if (own2 && !own2.done) return;
+      out.push({ ctr: c, fup: id, d: d });
+    });
+    return out;
+  }
+  // Calendar: the contracts that end on ymd (not the ended by agreement)
+  function ctrEndsOn(data, ymd) {
+    return (data.ctr || []).filter(function (c) {
+      var x = cxOf(data, c.id);
+      return c.to === ymd && !(x && x.end) && byId(data.cust, c.cust);
+    }).sort(function (a, b) { return cmpStr(fold(a.t), fold(b.t)) || cmpStr(a.id, b.id); });
+  }
+  // Revenue Splitter 1.14 (POST /rs/contracts): every contract with an
+  // end, under the partner's Revenue Splitter name (its first linked
+  // one, else the partner's name). No note, value or file ever leaves.
+  var PORTAL_STATE = { on: "on", soon: "soon", ended: "ended", term: "ended_by_agreement" };
+  // RS-CTR (Revenue Splitter 1.14 hand-off): only contracts of partners
+  // linked to a beneficiary (ben = that exact name, never the CRM name,
+  // which the shop would skip as unknown_beneficiary), with a start day
+  // (the shop refuses "" as bad_date), open-ended ones too (to = "",
+  // the site shows «Αορίστου»). With shopId: only the partners linked
+  // to that shop (a link without a shop counts for firstShopId).
+  // → { body: { v, sent, contracts }, left: [{ id, t, cust, why:
+  // "nolink" | "nofrom" }] }; portalPayload(data, today) = all shops' body.
+  function portalPlan(data, today, shopId, firstShopId) {
+    var list = [], left = [];
+    ctrAll(data, today).forEach(function (r) {
+      if (!r.cust) return;
+      var rs = rsOf(data, r.cust);
+      if (!rs || !rs.n.length) { left.push({ id: r.ctr.id, t: r.ctr.t, cust: r.cust.id, why: "nolink" }); return; }
+      if (shopId && (rs.a || firstShopId || "") !== shopId) return;
+      if (!r.ctr.from) { left.push({ id: r.ctr.id, t: r.ctr.t, cust: r.cust.id, why: "nofrom" }); return; }
+      if (list.length >= 2000) return;
+      var title = cleanText(String(r.book || r.ctr.t).replace(/[<>]+/g, " "), 200) || cleanText(String(r.ctr.t).replace(/[<>]+/g, " "), 200) || r.ctr.id;
+      list.push({ id: r.ctr.id, ben: rs.n[0], title: title,
+                fmt: r.fmt === "p" ? "print" : (r.fmt === "e" ? "ebook" : ""), from: r.ctr.from, to: r.ctr.to || "",
+                state: PORTAL_STATE[r.st], renewed: r.hist.filter(function (e) { return e.k === "renew" && e.p; }).map(function (e) { return e.p; }).slice(-50) });
+    });
+    list.sort(function (a, b) { return cmpStr(a.id, b.id); });
+    left.sort(function (a, b) { return cmpStr(a.id, b.id); });
+    return { body: { v: 1, sent: today, contracts: list }, left: left };
+  }
+  function portalPayload(data, today) { return portalPlan(data, today).body; }
+  // Contract settings (1.10): cset { m, lbl?, kb? }: lbl = the Calendar
+  // label the end days show under (absent = CRM's own feed chip), kb =
+  // the Kanban board a contract card goes to (absent = the open one).
+  // One record, last writer wins.
+  function normCset(x) {
+    if (!x || typeof x !== "object" || !stamp(x)) return null;
+    var o = { m: x.m };
+    if (typeof x.lbl === "string" && /^[A-Za-z0-9_-]{1,60}$/.test(x.lbl)) o.lbl = x.lbl;
+    put(o, "kb", cleanText(x.kb, 60));
+    return o;
   }
 
   // What a partner owes you and what you owe them in Invoices (partner
@@ -639,7 +858,7 @@
     return o;
   }
 
-  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr, rsl: normRsl, cs: normCs, ix: normIx };
+  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr, cx: normCx, rsl: normRsl, cs: normCs, ix: normIx };
 
   // The web form (crm/webform.js, relay /crm/f/<k>): one record, last
   // writer wins by m. { m, k, sec, priv (RSA-OAEP-256 private JWK),
@@ -720,9 +939,12 @@
     var wa = normWf(a.wf), wb = normWf(b.wf);
     var wf = !wa ? wb : (!wb ? wa : (wb.m > wa.m || (wb.m === wa.m && canon(wb) > canon(wa)) ? wb : wa));
     if (wf && wf.m > newest) newest = wf.m;
+    var sa = normCset(a.cset), sb = normCset(b.cset);
+    var cset = !sa ? sb : (!sb ? sa : (sb.m > sa.m || (sb.m === sa.m && canon(sb) > canon(sa)) ? sb : sa));
+    if (cset && cset.m > newest) newest = cset.m;
 
     var out = { ver: DATA_VER };
-    var aliveCust = {};
+    var aliveCust = {}, aliveCtr = {};
     LIST_KEYS.forEach(function (k) {
       var list = [];
       Object.keys(best[k]).sort(cmpStr).forEach(function (id) {
@@ -730,15 +952,17 @@
         if (id in tombs && tombs[id] >= x.m) return;
         // an emptied pt, rsl or ix row stays: dropping it would let another
         // device's older copy bring the link back
-        if (k === "pt" || k === "rsl" || k === "cs" || k === "ix" ? !aliveCust[x.id] : (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust])) return;
+        if (k === "cx" ? !aliveCtr[x.id] : (k === "pt" || k === "rsl" || k === "cs" || k === "ix" ? !aliveCust[x.id] : (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust]))) return;
         if (list.length >= LIMITS[k]) return;
         list.push(x);
       });
-      if ((k !== "pt" && k !== "ctr" && k !== "rsl" && k !== "cs" && k !== "ix") || list.length) out[k] = list;
+      if ((k !== "pt" && k !== "ctr" && k !== "cx" && k !== "rsl" && k !== "cs" && k !== "ix") || list.length) out[k] = list;
       if (k === "cust") list.forEach(function (c) { aliveCust[c.id] = true; });
+      if (k === "ctr") list.forEach(function (c) { aliveCtr[c.id] = true; });
     });
     out.prefs = pb.pm > pa.pm || (pb.pm === pa.pm && canon(pb) > canon(pa)) ? pb : pa;
     if (wf) out.wf = wf;
+    if (cset) out.cset = cset;
     var sorted = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (id) {
       if (newest - tombs[id] > TOMB_DAYS * DAY_MS) return;
@@ -1250,6 +1474,9 @@
     ROLES: ROLES, LINK_KINDS: LINK_KINDS, normRoles: normRoles, normLinks: normLinks, pubKey: pubKey,
     ITEM_KINDS: ITEM_KINDS, ITEM_APP: ITEM_APP, normIx: normIx, normItems: normItems, itemsOf: itemsOf, itemKey: itemKey, itemTarget: itemTarget, itemsRow: itemsRow,
     normRsl: normRsl, CS_FIELDS: CS_FIELDS, normCs: normCs, csJoin: csJoin, rsOf: rsOf, rsRow: rsRow, normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
+    SOON_DAYS: SOON_DAYS, CX_KINDS: CX_KINDS, normCx: normCx, normCset: normCset, cxOf: cxOf, cxRow: cxRow, ctrFmt: ctrFmt, ctrBook: ctrBook, addYears: addYears,
+    ctrFupId: ctrFupId, ctrSnooze: ctrSnooze, ctrFupDay: ctrFupDay, ctrInfo: ctrInfo, ctrAll: ctrAll, ctrTitle: ctrTitle, ctrForTitle: ctrForTitle,
+    ctrHeal: ctrHeal, ctrEndsOn: ctrEndsOn, portalPayload: portalPayload, portalPlan: portalPlan,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove
   };

@@ -82,6 +82,9 @@
     later:   "at",     // To-Do: { later: { list, item, days } } (Undo in To-Do)
     tick:    "at",     // Habits: { tick: { id, name } }
     sip:     "at",     // Water: { sip: "glass" } (Undo in Water)
+    renew:   "at",     // CRM 1.10: { ctr, do: "renew" } (a dialog in CRM, nothing changed before OK)
+    putoff:  "at",     // CRM 1.10: { ctr, do: "post" } (the same)
+    email:   "at",     // CRM 1.10: { ctr, do: "mail" } (a draft in Mail, never sent)
     open:    "open"    // any app: its own item, like the row's title
   };
   var MORE_MAX = 3, MORE_LEN = 120, TIP_LEN = 200, ACTS_MAX = 3;

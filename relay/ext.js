@@ -81,6 +81,23 @@ const LIMITS_BY = {
   brevo: { reqBytes: 64 * 1024 }
 };
 function lim(p, k) { return LIMITS_BY[p] && LIMITS_BY[p][k] !== undefined ? LIMITS_BY[p][k] : EXT_LIMITS[k]; }
+// RS-CTR: Revenue Splitter's contracts list (POST /rs/contracts) is the
+// one WooCommerce body allowed to be larger, and only alone in its call.
+// Workers Free gives ~10 ms CPU: parsing and re-stringifying ~770 KB takes
+// ~11 ms, so the relay takes at most 256 KB (~600 rows); a larger list goes
+// straight to the shop only (links/host.js, links/core.js relayTooBig).
+export const RS_RELAY_BYTES = 256 * 1024;
+function rsPush(p, reqs) {
+  return p === "woo" && Array.isArray(reqs) && reqs.length === 1 && !!reqs[0] &&
+    reqs[0].m === "POST" && reqs[0].path === "/rs/contracts";
+}
+function bodyCap(p, reqs) { return rsPush(p, reqs) ? RS_RELAY_BYTES : lim(p, "reqBytes"); }
+// The largest "ext" request JSON a call can need (relay/core.js): its
+// request bodies, escaped once more inside the outer JSON.
+export function extCap(b) {
+  const p = b && b.p;
+  return Math.max(EXT_LIMITS.reqs * EXT_LIMITS.reqBytes, bodyCap(p, b && b.reqs)) * 2;
+}
 
 const NUM = /^[0-9]{1,9}$/, PER = /^([1-9]|[1-9][0-9]|100)$/,
       DT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$/,
@@ -153,6 +170,20 @@ function onlyKeys(o, ks) {
   return !!o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).every((k) => ks.indexOf(k) >= 0);
 }
 const listOf = (v, min, max, fn) => Array.isArray(v) && v.length >= min && v.length <= max && v.every(fn);
+// RS-CTR: Revenue Splitter's contracts list (same as links/core.js okRsCtr)
+const RS_ID = /^[A-Za-z0-9_-]{1,64}$/, RS_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/,
+      RS_FMT = ["print", "ebook", ""], RS_ST = ["on", "soon", "ended", "ended_by_agreement"],
+      RS_CTR_KEYS = ["id", "ben", "title", "fmt", "from", "to", "state", "renewed"],
+      RS_RQ_Q = /^(new|oros|closed|all)$/, RS_MAX = 2000, RS_BYTES = 1000000;
+const rsText = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f<>]/.test(v);
+function okRsCtr(x) {
+  if (!onlyKeys(x, RS_CTR_KEYS) || !RS_CTR_KEYS.every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
+  if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
+  if (RS_FMT.indexOf(x.fmt) < 0 || RS_ST.indexOf(x.state) < 0) return false;
+  if (typeof x.from !== "string" || !RS_DAY.test(x.from)) return false;
+  if (x.to !== "" && !(typeof x.to === "string" && RS_DAY.test(x.to))) return false;
+  return listOf(x.renewed, 0, 50, (d) => typeof d === "string" && RS_DAY.test(d));
+}
 function okMlItem(x) {
   if (!onlyKeys(x, ["method", "path", "body"]) || x.method !== "POST" || x.path !== "api/subscribers") return false;
   const b = x.body;
@@ -217,6 +248,11 @@ function okCoupon(x) {
   return x.description === undefined || (typeof x.description === "string" && x.description.length <= 200 && !/[\u0000-\u001f\u007f]/.test(x.description));
 }
 const WHOLE = {
+  // Revenue Splitter's contracts: all three parts, unique ids, ≤ 1 MB (UTF-8)
+  rsc: (b) => "v" in b && "sent" in b && "contracts" in b &&
+    new Set(b.contracts.map((x) => x.id)).size === b.contracts.length &&
+    new TextEncoder().encode(JSON.stringify(b)).length <= RS_BYTES,
+  rsrq: (b) => Object.keys(b).length === 1,
   // "subscribed" only for new addresses: never over someone who left
   mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false),
   // Odoo: the fixed filter and fields must be there (without them
@@ -259,6 +295,11 @@ export const PLATFORMS = {
       // partner card W6: Revenue Splitter 1.11+ (noxpress), read only
       ["GET", /^\/rs\/balances$/, null, null],
       ["GET", /^\/rs\/report$/, { date_start: DAY, date_end: DAY }, null],
+      // RS-CTR: Revenue Splitter 1.14+ contracts and renewal requests
+      ["GET", /^\/rs\/contracts$/, null, null],
+      ["POST", /^\/rs\/contracts$/, null, { v: "rsv", sent: "rsday", contracts: "rsctrs" }, "rsc"],
+      ["GET", /^\/rs\/contract-requests$/, { state: RS_RQ_Q }, null],
+      ["POST", /^\/rs\/contract-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rsrqst" }, "rsrq"],
       // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
       ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
       // Publishing «Cost & result» (P15): Production Ledger 1.1+'s report per product, read only
@@ -558,6 +599,10 @@ function okVal(kind, v) {
   if (kind === "dec") return typeof v === "string" && /^[0-9]{1,6}(\.[0-9]{1,3})?$/.test(v);
   if (kind === "desc") return typeof v === "string" && v.length <= 8000;
   if (kind === "cpns") return listOf(v, 1, 100, okCoupon);
+  if (kind === "rsv") return v === 1;
+  if (kind === "rsday") return typeof v === "string" && RS_DAY.test(v);
+  if (kind === "rsctrs") return listOf(v, 0, RS_MAX, okRsCtr);
+  if (kind === "rsrqst") return v === "oros" || v === "closed";
   if (kind === "dims") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
     Object.keys(v).every((k) => (k === "length" || k === "width" || k === "height") && okVal("dec", v[k]));
   if (kind === "tolinv") return okInvoice(v);
@@ -650,7 +695,7 @@ export function validExt(b) {
   if (b.reqs.length > 1 && b.reqs.some(r => r && r.img !== undefined)) return "reqs";
   for (const r of b.reqs) {
     if (r && r.body !== undefined) {
-      if (typeof r.body !== "string" || r.body.length > lim(b.p, "reqBytes")) return "body";
+      if (typeof r.body !== "string" || r.body.length > bodyCap(b.p, b.reqs)) return "body";
       let o;
       try { o = JSON.parse(r.body); } catch (e) { return "body"; }
       const bad = checkExtReq(b.p, { m: r.m, path: r.path, body: o });

@@ -39,6 +39,10 @@
 //                                 CRM: one partner's card (partner card
 //                                 W5): what is open both ways, stock,
 //                                 hours, royalties, contracts, contact
+//   crmContracts(C, data, today)  CRM 1.10 (CTR-ALL): every contract
+//                                 with its partner, format, end day,
+//                                 state (on | soon | ended | ended by
+//                                 agreement) and a put-off decision day
 //   automationsRules(AC, data, log, opts)
 //                                 Automations (wave A6, "why did this
 //                                 run?"): every rule in words and the
@@ -119,6 +123,25 @@
     return out;
   }
 
+  // ---------- CRM: every contract (1.10, CTR-ALL) ----------
+  // Those that need a decision first (ended, or ending within
+  // C.SOON_DAYS), at most 200; never a note, a value or a file.
+  var CTR_STATE = { on: "on", soon: "ending soon", ended: "ended, no decision yet", term: "ended by agreement" };
+  function crmContracts(C, data, today) {
+    var all = C && typeof C.ctrAll === "function" && data ? C.ctrAll(data, today) : [];
+    var out = { app: "crm", soon_window_days: C && C.SOON_DAYS || 90, contracts_total: all.length,
+                need_decision: all.filter(function (r) { return r.needs; }).length, contracts: [] };
+    all.slice(0, 200).forEach(function (r) {
+      var o = { title: r.ctr.t, partner: r.who, from: r.ctr.from || "", to: r.ctr.to || "", state: CTR_STATE[r.st] };
+      if (r.fmt) o.format = r.fmt === "p" ? "print" : "digital";
+      if (r.snooze) o.decision_on = r.snooze;
+      if (r.st === "term" && r.x && r.x.end) o.ended_on = r.x.end;
+      out.contracts.push(o);
+    });
+    if (all.length > 200) out.more_contracts = all.length - 200;
+    return out;
+  }
+
   // ---------- CRM: one partner (partner card W5) ----------
   // C = OrosCrmCore, data = CRM data (C.norm), q = the partner's name as
   // the user said it, build(c) = the partner card's Overview
@@ -152,7 +175,7 @@
       return o;
     }
     out.contracts = C.contractsOf ? C.contractsOf(data, c.id, today).slice(0, 10).map(function (k) {
-      return { title: k.t, from: k.from || "", to: k.to || "", state: C.ctrState(k, today) };
+      return { title: k.t, from: k.from || "", to: k.to || "", state: C.ctrState(k, today, C.cxOf ? C.cxOf(data, k.id) : null) };
     }) : [];
     if (!x) return out;
     out.owes_you = units(x.money["in"], function (v) { return v.open; });
@@ -945,7 +968,7 @@
           run: "Running now", more: "+{n} more", uncat: "Uncategorized", toInv: "To invoice",
           lbls: "Labels", lbl: "Label", nolbl: "No label", stMain: "Own stock", stSold: "sold",
           pick: "Which one", over: "overdue", nopart: "No partner called “{q}”", owes: "Owes you", owe: "You owe", settle: "settlement due",
-          orders: "open orders", roy: "Royalties to pay", ctr: "Contract", next: "Next follow-up",
+          orders: "open orders", roy: "Royalties to pay", ctr: "Contract", next: "Next follow-up", ctrs: "Contracts", ctrNeed: "need a decision",
           kbCard: "card", kbCards: "cards", kbArch: "Archived",
           stLists: "Lists", stNbs: "Notebooks", stPages: "pages", stFolders: "Folders", stUnsorted: "Unsorted", stTags: "Tags",
           stBm: "bookmarks", stCt: "contacts", stFav: "favourites", stItems: "items", stBooks: "books",
@@ -958,7 +981,7 @@
           run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία", toInv: "Προς τιμολόγηση",
           lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα", stMain: "Δικό σου απόθεμα", stSold: "πουλήθηκαν",
           pick: "Ποιος από αυτούς", over: "ληξιπρόθεσμα", nopart: "Κανένας συνεργάτης με όνομα «{q}»", owes: "Σου χρωστά", owe: "Του χρωστάς", settle: "οφείλεται εκκαθάριση",
-          orders: "ανοιχτές παραγγελίες", roy: "Δικαιώματα προς πληρωμή", ctr: "Σύμβαση", next: "Επόμενο follow-up",
+          orders: "ανοιχτές παραγγελίες", roy: "Δικαιώματα προς πληρωμή", ctr: "Συμφωνητικό", next: "Επόμενο follow-up", ctrs: "Συμφωνητικά", ctrNeed: "θέλουν απόφαση",
           kbCard: "κάρτα", kbCards: "κάρτες", kbArch: "Στο αρχείο",
           stLists: "Λίστες", stNbs: "Τετράδια", stPages: "σελίδες", stFolders: "Φάκελοι", stUnsorted: "Χωρίς φάκελο", stTags: "Ετικέτες",
           stBm: "σελιδοδείκτες", stCt: "επαφές", stFav: "αγαπημένες", stItems: "στοιχεία", stBooks: "βιβλία",
@@ -1065,6 +1088,10 @@
       if (s.tags.length) out.push(w.stTags + ": " + s.tags.map(function (x) { return x.name + " (" + x.n + ")"; }).join(", "));
     } else if (s.app === "automations" && Array.isArray(s.runs)) {
       out.push(s.rules_total + " " + w.auRules + " · " + s.rules_on + " " + w.auOn);
+    } else if (s.app === "crm" && Array.isArray(s.contracts)) {
+      out.push(w.ctrs + ": " + s.contracts_total + " · " + w.ctrNeed + ": " + s.need_decision);
+      s.contracts.slice(0, 8).forEach(function (k) { out.push(k.title + (k.partner ? " · " + k.partner : "") + (k.to ? " → " + k.to : "")); });
+      more((s.contracts.length > 8 ? s.contracts.length - 8 : 0) + (s.more_contracts || 0));
     } else if (s.app === "calendar" && Array.isArray(s.labels)) {
       out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.events + ")"; })
         .concat([w.nolbl + " (" + s.no_label + ")"]).join(", "));
@@ -1095,7 +1122,7 @@
     VERSION: "1.2.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
     normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth, stockMonth: stockMonth,
     todoLists: todoLists, todoList: todoList, kanbanBoards: kanbanBoards, notesBooks: notesBooks,
-    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, calendarEvents: calendarEvents, crmPartner: crmPartner, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
+    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, calendarEvents: calendarEvents, crmPartner: crmPartner, crmContracts: crmContracts, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root && root.document) root.OrosAssistSummary = API;

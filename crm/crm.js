@@ -166,6 +166,56 @@
       "ct.until": "Until {d}", "ct.noEnd": "No end day", "ct.soon": "Ends {d}", "ct.ended": "Ended {d}", "ct.fromD": "from {d}",
       "ct.fup": "Contract ends: {t} ({d})", "ct.fupHint": "With an end day, a follow-up reminds you in Agenda, Today, Calendar and notifications.",
       "ct.toBad": "The end is before the start.",
+      "tab.ctr": "Contracts",
+      "cx.f.needs": "Need a decision", "cx.f.soon": "Ending soon", "cx.f.ended": "Ended", "cx.f.term": "Ended by agreement", "cx.f.all": "All",
+      "cx.empty": "No contracts here.", "cx.emptyAll": "No contracts yet. Add one on a partner's card: its end day then shows in Publishing, Calendar, Today and here.",
+      "cx.st.soon": "Ends {d} · in {n} days", "cx.st.today": "Ends today", "cx.st.ended": "Ended {d} · no decision yet", "cx.st.term": "Ended by agreement {d}", "cx.st.snz": "decision on {d}",
+      "cx.fmt": "Format", "cx.fmt.p": "Print", "cx.fmt.e": "Digital", "cx.fmt.auto": "From the title: {f}", "cx.fmt.none": "Not set",
+      "cx.ti": "Publishing title", "cx.ti.auto": "Found by name: {t}", "cx.ti.none": "No title", "cx.ti.noApp": "Open Publishing once on this device to pick a title.",
+      "cx.renew3": "Renew +3 years", "cx.renew5": "Renew +5 years", "cx.renewD": "Renew until…", "cx.post7": "Put off the decision 7 days", "cx.post30": "Put off the decision 30 days", "cx.postD": "Put off the decision until…",
+      "cx.end": "End by agreement…", "cx.reopen": "It runs again", "cx.mail": "Email {name}", "cx.call": "Call {name}", "cx.file": "Open the contract file", "cx.task": "Kanban card", "cx.note": "Note…",
+      "cx.edit": "Edit the contract", "cx.partner": "Partner card", "cx.hist": "History",
+      "cx.h.renew": "Renewed until {v} (was {p})", "cx.h.post": "Decision put off to {v}", "cx.h.end": "Ended by agreement {v}", "cx.h.reopen": "Runs again", "cx.h.note": "Note", "cx.h.mail": "Email drafted", "cx.h.call": "Called", "cx.h.task": "Kanban card made",
+      "cx.endT": "End «{t}» by agreement", "cx.endD": "Ended on", "cx.endN": "Note (optional)", "cx.endOk": "End it",
+      "cx.renewT": "Renew «{t}» until", "cx.postT": "Put off the decision on «{t}» until", "cx.dayBad": "Pick a day after today.", "cx.renewBad": "The new end must come after {d}.", "cx.ok": "OK",
+      "cx.noteT": "Note on «{t}»",
+      "cx.mailS": "Our contract for «{b}»", "cx.mailB": "Hello {name},\n\nour contract for «{b}»{f} ends on {d}. Shall we renew it?\n\n", "cx.mailBEnded": "Hello {name},\n\nour contract for «{b}»{f} ended on {d}. Shall we renew it?\n\n",
+      "cx.taskT": "Contract «{b}»{f}: decision by {d}",
+      "cx.toast.renew": "Renewed until {d}", "cx.toast.post": "Decision put off to {d}", "cx.toast.end": "Ended by agreement", "cx.toast.reopen": "The contract runs again", "cx.toast.note": "Note kept",
+      "cx.portal": "Send to the shop…", "cx.portalT": "Send the end days to the shop", "cx.portalHint": "The shop's Revenue Splitter (1.14 or later) shows each creator their own contracts in the Author Portal. Only names, titles, formats, days and states are sent: never a note, a value or a file. The shop's list is replaced by this one.",
+      "cx.portalShop": "Shop", "cx.portalSend": "Send {n}", "cx.portalOk": "Sent to the shop: {n} contracts", "cx.portalSkip": "Sent: {n}, not taken: {s}", "cx.portalNone": "Add your shop in Settings › Connected services first.", "cx.portalOld": "{shop}: its Revenue Splitter does not take contracts yet (1.14 or later is needed).",
+      "rc.none": "No contract to send to this shop: link a partner to a Revenue Splitter beneficiary on their card (Overview › Revenue Splitter), and give the contract a start day.",
+      "rc.n": "Contracts for this shop: {n}",
+      "rc.left.nolink": "Not sent, the partner is not linked to Revenue Splitter: {t}",
+      "rc.left.nofrom": "Not sent, it has no start day: {t}",
+      "rc.wkOn": "{shop} has a write key: every change is sent on its own.",
+      "rc.wkOff": "{shop} has no write key: tap Send after changes. Sending needs a key with Read/Write permission (Settings › Connected services).",
+      "rc.sending": "Sending…",
+      "rc.done": "Sent at {time}: the shop saved {n}.",
+      "rc.skipped": "The shop did not take these (check the beneficiary's name on the partner's card):",
+      "rc.why.bad_id": "bad id",
+      "rc.why.duplicate_id": "id twice",
+      "rc.why.unknown_beneficiary": "no such beneficiary in Revenue Splitter",
+      "rc.why.bad_title": "bad title",
+      "rc.why.bad_fmt": "bad format",
+      "rc.why.bad_date": "bad day",
+      "rc.why.bad_state": "bad state",
+      "rc.why.bad_renewed": "bad renewal days",
+      "rc.why.bad_item": "not readable",
+      "rc.err.auth": "{shop} refused to save the contracts. Sending needs a key with Read/Write permission: add a write key in Settings › Connected services.",
+      "rc.err.offline": "You are offline. Try again when you are connected.",
+      "rc.err.keys": "The keys of {shop} are not on this device (Settings › Connected services).",
+      "rc.err.other": "Could not reach {shop}. Try again later.",
+      "rc.err.big": "The list is too long for the orOS relay (about 256 KB), and {shop} did not answer orOS directly. Lists this long need the shop to accept orOS straight from the browser (CORS for useoros.online on the site).",
+      "rc.autoFail": "The contracts were not sent to {shop}. See Contracts › Send to the shop.",
+      "rc.autoSkip": "{shop} did not take {n} contracts. See Contracts › Send to the shop.",
+      "rc.rqLeft": "Renewal requests for a beneficiary no partner here is linked to:",
+      "rq.fup": "Renewal request: {t}",
+      "rq.act": "Asked in the Author Portal to talk about a renewal of «{t}».",
+      "rq.untitled": "a contract",
+      "rq.toast": "Renewal requests from the Author Portal: {n} (in Agenda)",
+      "rq.noWrite": "{shop} refused to mark the renewal requests as read: it needs a key with Read/Write permission (Settings › Connected services).",
+      "cx.set": "Contracts", "cx.lbl": "Calendar label for the end days", "cx.lbl.own": "CRM (its own chip)", "cx.kb": "Kanban board for contract cards", "cx.kbPh": "Empty = the board that is open",
       "toast.ctrDel": "Contract deleted", "toast.noDisk": "The orOS disk is not available here.", "toast.fileSaved": "Saved in Files: {p}", "toast.fileBig": "Up to 20 MB per file.",
       "act.inv": "Invoice", "act.quote": "Quote",
       "docs.inv": "Invoices", "docs.quote": "Quotes", "docs.allInv": "All in Invoices",
@@ -357,14 +407,64 @@
       "rs.undone": "Αποσυνδέθηκε: {name}",
       "rs.max": "Έως 5 ονόματα ανά συνεργάτη.",
       "ac.bill": "+ Λαμβανόμενο τιμολόγιο", "ac.order": "+ Παραγγελία", "ac.settle": "Εκκαθάριση", "ac.hours": "Ώρες", "ac.roy": "Δικαιώματα", "ac.folder": "Φάκελος",
-      "ct.sec": "Συμβάσεις", "ct.add": "+ Σύμβαση", "ct.none": "Καμία σύμβαση. Πρόσθεσε μία για να κρατάς τη λήξη της και να σου θυμίζει εγκαίρως.",
-      "ct.new": "Νέα σύμβαση", "ct.edit": "Σύμβαση", "ct.t": "Τίτλος", "ct.tPh": "Σύμβαση παρακαταθήκης", "ct.from": "Έναρξη", "ct.to": "Λήξη",
+      "ct.sec": "Συμφωνητικά", "ct.add": "+ Συμφωνητικό", "ct.none": "Κανένα συμφωνητικό. Πρόσθεσε ένα για να κρατάς τη λήξη του και να σου θυμίζει εγκαίρως.",
+      "ct.new": "Νέο συμφωνητικό", "ct.edit": "Συμφωνητικό", "ct.t": "Τίτλος", "ct.tPh": "Συμφωνητικό παρακαταθήκης", "ct.from": "Έναρξη", "ct.to": "Λήξη",
       "ct.rem": "Υπενθύμιση", "ct.remN": "{n} ημέρες πριν τη λήξη", "ct.rem0": "Την τελευταία ημέρα", "ct.val": "Αξία ({c})", "ct.note": "Σημείωση",
       "ct.file": "Αρχείο", "ct.attach": "Επισύναψη αρχείου…", "ct.openFile": "Άνοιγμα αρχείου", "ct.detach": "Αποσύνδεση (το αρχείο μένει στα Αρχεία)", "ct.pending": "Αποθηκεύεται στα Αρχεία με την Αποθήκευση: {n}", "ct.unpick": "Χωρίς αρχείο",
       "ct.until": "Έως {d}", "ct.noEnd": "Χωρίς λήξη", "ct.soon": "Λήγει {d}", "ct.ended": "Έληξε {d}", "ct.fromD": "από {d}",
-      "ct.fup": "Λήξη σύμβασης: {t} ({d})", "ct.fupHint": "Με ημέρα λήξης, ένα follow-up σου το θυμίζει στην Ατζέντα, στο Σήμερα, στο Ημερολόγιο και στις ειδοποιήσεις.",
+      "ct.fup": "Λήξη συμφωνητικού: {t} ({d})", "ct.fupHint": "Με ημέρα λήξης, ένα follow-up σου το θυμίζει στην Ατζέντα, στο Σήμερα, στο Ημερολόγιο και στις ειδοποιήσεις.",
       "ct.toBad": "Η λήξη είναι πριν την έναρξη.",
-      "toast.ctrDel": "Η σύμβαση διαγράφηκε", "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "toast.fileSaved": "Αποθηκεύτηκε στα Αρχεία: {p}", "toast.fileBig": "Έως 20 MB ανά αρχείο.",
+      "tab.ctr": "Λήξεις",
+      "cx.f.needs": "Θέλουν απόφαση", "cx.f.soon": "Λήγουν σύντομα", "cx.f.ended": "Έληξαν", "cx.f.term": "Λύθηκαν", "cx.f.all": "Όλα",
+      "cx.empty": "Κανένα συμφωνητικό εδώ.", "cx.emptyAll": "Δεν υπάρχουν ακόμη συμφωνητικά. Πρόσθεσε ένα στην καρτέλα ενός συνεργάτη: η λήξη του θα φαίνεται στο Publishing, στο Ημερολόγιο, στο Σήμερα και εδώ.",
+      "cx.st.soon": "Λήγει {d} · σε {n} ημέρες", "cx.st.today": "Λήγει σήμερα", "cx.st.ended": "Έληξε {d} · χωρίς απόφαση", "cx.st.term": "Λύθηκε {d}", "cx.st.snz": "απόφαση στις {d}",
+      "cx.fmt": "Μορφή", "cx.fmt.p": "Έντυπο", "cx.fmt.e": "Ψηφιακό", "cx.fmt.auto": "Από τον τίτλο: {f}", "cx.fmt.none": "Χωρίς μορφή",
+      "cx.ti": "Τίτλος στο Publishing", "cx.ti.auto": "Βρέθηκε από το όνομα: {t}", "cx.ti.none": "Χωρίς τίτλο", "cx.ti.noApp": "Άνοιξε μία φορά το Publishing σε αυτή τη συσκευή για να διαλέξεις τίτλο.",
+      "cx.renew3": "Ανανέωση +3 έτη", "cx.renew5": "Ανανέωση +5 έτη", "cx.renewD": "Ανανέωση έως…", "cx.post7": "Αναβολή απόφασης 7 ημέρες", "cx.post30": "Αναβολή απόφασης 30 ημέρες", "cx.postD": "Αναβολή απόφασης έως…",
+      "cx.end": "Λύση ή ακύρωση…", "cx.reopen": "Ισχύει ξανά", "cx.mail": "Email σε {name}", "cx.call": "Κλήση σε {name}", "cx.file": "Άνοιγμα αρχείου συμφωνητικού", "cx.task": "Κάρτα στο Kanban", "cx.note": "Σημείωση…",
+      "cx.edit": "Επεξεργασία συμφωνητικού", "cx.partner": "Καρτέλα συνεργάτη", "cx.hist": "Ιστορικό",
+      "cx.h.renew": "Ανανεώθηκε έως {v} (ήταν {p})", "cx.h.post": "Η απόφαση μετατέθηκε στις {v}", "cx.h.end": "Λύθηκε στις {v}", "cx.h.reopen": "Ισχύει ξανά", "cx.h.note": "Σημείωση", "cx.h.mail": "Πρόχειρο email", "cx.h.call": "Κλήση", "cx.h.task": "Κάρτα στο Kanban",
+      "cx.endT": "Λύση «{t}»", "cx.endD": "Ημερομηνία λύσης", "cx.endN": "Σημείωση (προαιρετικά)", "cx.endOk": "Λύση",
+      "cx.renewT": "Ανανέωση «{t}» έως", "cx.postT": "Αναβολή απόφασης για «{t}» έως", "cx.dayBad": "Διάλεξε ημερομηνία μετά τη σημερινή.", "cx.renewBad": "Η νέα λήξη πρέπει να είναι μετά τις {d}.", "cx.ok": "OK",
+      "cx.noteT": "Σημείωση για «{t}»",
+      "cx.mailS": "Το συμφωνητικό μας για «{b}»", "cx.mailB": "Γεια σου {name},\n\nτο συμφωνητικό μας για «{b}»{f} λήγει στις {d}. Θέλεις να το ανανεώσουμε;\n\n", "cx.mailBEnded": "Γεια σου {name},\n\nτο συμφωνητικό μας για «{b}»{f} έληξε στις {d}. Θέλεις να το ανανεώσουμε;\n\n",
+      "cx.taskT": "Συμφωνητικό «{b}»{f}: απόφαση έως {d}",
+      "cx.toast.renew": "Ανανεώθηκε έως {d}", "cx.toast.post": "Η απόφαση μετατέθηκε στις {d}", "cx.toast.end": "Το συμφωνητικό λύθηκε", "cx.toast.reopen": "Το συμφωνητικό ισχύει ξανά", "cx.toast.note": "Η σημείωση κρατήθηκε",
+      "cx.portal": "Αποστολή στο site…", "cx.portalT": "Αποστολή των λήξεων στο site", "cx.portalHint": "Το Revenue Splitter του site (1.14 ή νεότερο) δείχνει σε κάθε δημιουργό τα δικά του συμφωνητικά στο Author Portal. Στέλνονται μόνο ονόματα, τίτλοι, μορφές, ημερομηνίες και καταστάσεις, ποτέ σημειώσεις, αξίες ή αρχεία. Η λίστα του site αντικαθίσταται από αυτή.",
+      "cx.portalShop": "Κατάστημα", "cx.portalSend": "Αποστολή {n}", "cx.portalOk": "Στάλθηκαν στο site: {n} συμφωνητικά", "cx.portalSkip": "Στάλθηκαν: {n}, δεν έγιναν δεκτά: {s}", "cx.portalNone": "Πρόσθεσε πρώτα το κατάστημά σου στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.", "cx.portalOld": "{shop}: το Revenue Splitter του δεν δέχεται ακόμη συμφωνητικά (χρειάζεται 1.14 ή νεότερο).",
+      "rc.none": "Κανένα συμφωνητικό για αυτό το site: σύνδεσε έναν συνεργάτη με δικαιούχο του Revenue Splitter στην καρτέλα του (Σύνοψη › Revenue Splitter) και δώσε στο συμφωνητικό ημέρα έναρξης.",
+      "rc.n": "Συμφωνητικά για αυτό το site: {n}",
+      "rc.left.nolink": "Δεν στέλνεται, ο συνεργάτης δεν είναι συνδεδεμένος με το Revenue Splitter: {t}",
+      "rc.left.nofrom": "Δεν στέλνεται, δεν έχει ημέρα έναρξης: {t}",
+      "rc.wkOn": "Το {shop} έχει κλειδί εγγραφής: κάθε αλλαγή στέλνεται μόνη της.",
+      "rc.wkOff": "Το {shop} δεν έχει κλειδί εγγραφής: πάτα Αποστολή μετά από αλλαγές. Η αποστολή θέλει κλειδί με δικαιώματα Ανάγνωση/Εγγραφή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
+      "rc.sending": "Αποστολή…",
+      "rc.done": "Στάλθηκαν στις {time}: το site αποθήκευσε {n}.",
+      "rc.skipped": "Το site δεν δέχτηκε αυτά (έλεγξε το όνομα του δικαιούχου στην καρτέλα του συνεργάτη):",
+      "rc.why.bad_id": "λάθος κωδικός",
+      "rc.why.duplicate_id": "διπλός κωδικός",
+      "rc.why.unknown_beneficiary": "δεν υπάρχει τέτοιος δικαιούχος στο Revenue Splitter",
+      "rc.why.bad_title": "λάθος τίτλος",
+      "rc.why.bad_fmt": "λάθος μορφή",
+      "rc.why.bad_date": "λάθος ημέρα",
+      "rc.why.bad_state": "λάθος κατάσταση",
+      "rc.why.bad_renewed": "λάθος ημέρες ανανέωσης",
+      "rc.why.bad_item": "δεν διαβάζεται",
+      "rc.err.auth": "Το {shop} αρνήθηκε να αποθηκεύσει τα συμφωνητικά. Η αποστολή θέλει κλειδί με δικαιώματα Ανάγνωση/Εγγραφή: πρόσθεσε κλειδί εγγραφής στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "rc.err.offline": "Είσαι εκτός σύνδεσης. Δοκίμασε ξανά όταν συνδεθείς.",
+      "rc.err.keys": "Τα κλειδιά του {shop} δεν είναι σε αυτή τη συσκευή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
+      "rc.err.other": "Δεν βρέθηκε το {shop}. Δοκίμασε ξανά αργότερα.",
+      "rc.err.big": "Η λίστα είναι πολύ μεγάλη για τον αναμεταδότη του orOS (περίπου 256 KB) και το {shop} δεν απάντησε απευθείας στο orOS. Για τόσο μεγάλες λίστες το site πρέπει να δέχεται το orOS απευθείας από τον browser (CORS για το useoros.online).",
+      "rc.autoFail": "Τα συμφωνητικά δεν στάλθηκαν στο {shop}. Δες Λήξεις › Αποστολή στο site.",
+      "rc.autoSkip": "Το {shop} δεν δέχτηκε {n} συμφωνητικά. Δες Λήξεις › Αποστολή στο site.",
+      "rc.rqLeft": "Αιτήματα ανανέωσης για δικαιούχο που δεν είναι συνδεδεμένος με κανέναν συνεργάτη εδώ:",
+      "rq.fup": "Αίτημα ανανέωσης: {t}",
+      "rq.act": "Ζήτησε από το Author Portal να συζητήσουμε ανανέωση για «{t}».",
+      "rq.untitled": "ένα συμφωνητικό",
+      "rq.toast": "Αιτήματα ανανέωσης από το Author Portal: {n} (στην Ατζέντα)",
+      "rq.noWrite": "Το {shop} αρνήθηκε να σημειώσει τα αιτήματα ανανέωσης ως διαβασμένα: χρειάζεται κλειδί με δικαιώματα Ανάγνωση/Εγγραφή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
+      "cx.set": "Συμφωνητικά", "cx.lbl": "Ετικέτα Ημερολογίου για τις λήξεις", "cx.lbl.own": "CRM (δική του ετικέτα)", "cx.kb": "Πίνακας Kanban για κάρτες συμφωνητικών", "cx.kbPh": "Κενό = ο πίνακας που είναι ανοιχτός",
+      "toast.ctrDel": "Το συμφωνητικό διαγράφηκε", "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "toast.fileSaved": "Αποθηκεύτηκε στα Αρχεία: {p}", "toast.fileBig": "Έως 20 MB ανά αρχείο.",
       "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
       "docs.inv": "Τιμολόγια", "docs.quote": "Προσφορές", "docs.allInv": "Όλα στα Τιμολόγια",
       "docs.invNone": "Δεν υπάρχουν τιμολόγια ακόμη. Όσα εκδίδεις με το κουμπί Τιμολόγιο εμφανίζονται εδώ.",
@@ -503,7 +603,7 @@
     contact: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
   };
   var KIND_ICON = { call: "call", mail: "mail", meet: "meet", msg: "msg", note: "note" };
-  var TAB_ICON = { cust: "users", pipe: "pipe", agenda: "agenda", dash: "dash" };
+  var TAB_ICON = { cust: "users", pipe: "pipe", agenda: "agenda", ctr: "doc", dash: "dash" };
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -590,7 +690,7 @@
 
   // ---------- 2. Storage + prefs ----------
   var data = C.empty();
-  var prefs = { tab: "cust", sel: "", filter: "all", tag: "", role: "", sort: "name", sub: "ov", stage: "new" };
+  var prefs = { tab: "cust", sel: "", filter: "all", tag: "", role: "", sort: "name", sub: "ov", stage: "new", cf: "needs" };
 
   // `saved` = the JSON of the data as last stored or adopted (a copy:
   // the mutations change `data` in place): commit() compares against
@@ -612,7 +712,8 @@
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (p && typeof p === "object") {
-        if (["cust", "pipe", "agenda", "dash"].indexOf(p.tab) >= 0) prefs.tab = p.tab;
+        if (TABS.indexOf(p.tab) >= 0) prefs.tab = p.tab;
+        if (CTR_FILTERS.indexOf(p.cf) >= 0) prefs.cf = p.cf;
         if (typeof p.sel === "string") prefs.sel = p.sel;
         if (["all", "lead", "active", "past", "star", "forgot"].indexOf(p.filter) >= 0) prefs.filter = p.filter;
         if (typeof p.tag === "string") prefs.tag = p.tag;
@@ -650,6 +751,7 @@
     saved = json;
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
     render();
+    ctrChanged();                // RS-CTR: a shop with a write key gets the new list
     return true;
   }
 
@@ -1365,14 +1467,6 @@
     var n = String(f && f.name || "file").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, "-").replace(/^[\s.]+/, "").slice(-100);
     return n || "file";
   }
-  function ctrLine(k, today) {
-    var st = C.ctrState(k, today), bits = [];
-    if (k.from) bits.push(t("ct.fromD", { d: fmtDate(k.from) }));
-    if (k.val) bits.push(money(k.val));
-    if (k.file) bits.push(k.file.split("/").pop());
-    return { st: st, title: st === "ended" ? t("ct.ended", { d: fmtDate(k.to) }) : (st === "soon" ? t("ct.soon", { d: fmtDate(k.to) }) : (k.to ? t("ct.until", { d: fmtDate(k.to) }) : t("ct.noEnd"))),
-             sub: bits.join(" · ") };
-  }
   function renderContracts(pane, c) {
     var s = el("div", "sec"), h = secHead(t("ct.sec")), today = todayYmd();
     h.appendChild(el("span", "spacer"));
@@ -1384,15 +1478,7 @@
     var list = C.contractsOf(data, c.id, today);
     if (!list.length) s.appendChild(el("p", "hint", t("ct.none")));
     list.forEach(function (k) {
-      var l = ctrLine(k, today);
-      var row = el("button", "person ctr-row" + (l.st === "ended" ? " ended" : ""));
-      row.type = "button";
-      row.addEventListener("click", function () { ctrEditor(k, c); });
-      var m = el("span", "row-main");
-      m.appendChild(el("span", "row-title", k.t));
-      m.appendChild(el("span", "row-sub" + (l.st === "soon" ? " late" : ""), [l.title, l.sub].filter(Boolean).join(" · ")));
-      row.appendChild(m);
-      s.appendChild(row);
+      s.appendChild(ctrRowEl(C.ctrInfo(data, k, today), false));
     });
     pane.appendChild(s);
   }
@@ -1409,34 +1495,43 @@
   // The follow-up is an ordinary one (Agenda, Today, Calendar, reminders):
   // moved with the end day while open, a new one when the end changes
   // after it was done, removed when the end day is taken away.
+  // 1.10: the day comes from core ctrFupDay (a later "put off" day
+  // wins; none once ended by agreement); force = a new follow-up even
+  // when the last one was done for the same end (a decision put off).
   function saveCtr(r, prev) {
-    var today = todayYmd(), cur = r.fup ? C.byId(data.fups, r.fup) : null;
+    placeCtr(r, prev, false);
+    return commit();
+  }
+  function placeCtr(r, prev, force) {
+    var today = todayYmd(), cur = r.fup ? C.byId(data.fups, r.fup) : null, x = C.cxOf(data, r.id);
     if (r.fup && !cur) delete r.fup;
-    if (r.to && r.to >= today) {
-      var day = C.ctrRemindDay(r);
-      if (day < today) day = today;
-      var text = C.cleanText(t("ct.fup", { t: r.t, d: fmtDate(r.to) }), 300);
+    var day = C.ctrFupDay(r, x, today);
+    if (day) {
+      var text = ctrFupText(r);
       if (cur && !cur.done) {
         if (cur.d !== day || cur.text !== text || cur.cust !== r.cust) putRow("fups", Object.assign({}, cur, { d: day, text: text, cust: r.cust }));
-      } else if (!cur || !prev || prev.to !== r.to || prev.rem !== r.rem) {
-        var f = putRow("fups", { id: C.newId(Date.now()), cust: r.cust, d: day, text: text });
+      } else if (force || !cur || !prev || prev.to !== r.to || prev.rem !== r.rem) {
+        var id = C.ctrFupId(r.id);
+        if (C.byId(data.fups, id) || data.tombs[id]) id = C.newId(Date.now());
+        var f = putRow("fups", { id: id, cust: r.cust, d: day, text: text });
         r.fup = f.id;
       }
-    } else if (!r.to && cur && !cur.done) {
+    } else if ((!r.to || (x && x.end)) && cur && !cur.done) {
       tomb(cur.id);
       delete r.fup;
     }
     putRow("ctr", r);
-    return commit();
   }
+  function ctrFupText(r) { return C.cleanText(t("ct.fup", { t: r.t, d: fmtDate(r.to) }), 300); }
   function removeCtr(k) {
-    var f = k.fup ? C.byId(data.fups, k.fup) : null;
-    tomb(k.id);
+    var f = k.fup ? C.byId(data.fups, k.fup) : null, x = C.cxOf(data, k.id);
+    tomb(k.id);                 // the cx row shares the id: it goes too
     if (f && !f.done) tomb(f.id); else f = null;
     if (!commit()) return;
     undoToast(t("toast.ctrDel"), function () {
       delete data.tombs[k.id];
       putRow("ctr", k);
+      if (x) putRow("cx", x);
       if (f) { delete data.tombs[f.id]; putRow("fups", f); }
       commit();
     });
@@ -1445,7 +1540,9 @@
     if (!diskApi()) { showToast(t("toast.noDisk")); return; }
     openIn("files", { path: path });
   }
-  function ctrEditor(k, c) {
+  // Publishing's core loads first (the title list), when it has data here
+  function ctrEditor(k, c) { loadCores(function () { ctrEditorNow(k, c); }); }
+  function ctrEditorNow(k, c) {
     var dlg = makeDialog("crm-ctr", true);
     var x = k ? Object.assign({}, k) : { cust: c.id, t: "", rem: 30 };
     dlg.appendChild(el("h2", "dlg-title", t(k ? "ct.edit" : "ct.new") + " · " + c.name));
@@ -1467,6 +1564,20 @@
     val.inputMode = "decimal";
     dlg.appendChild(el("p", "hint", t("ct.fupHint")));
     var note = field(dlg, t("ct.note"), area(x.note || "", 2000));
+    // 1.10: the format and the Publishing title (core cx)
+    var cx0 = (k && C.cxOf(data, k.id)) || {};
+    var guess = k ? C.ctrFmt({ cx: [] }, k) : "";
+    var row3 = el("div", "fld-row");
+    dlg.appendChild(row3);
+    var fmtSel = field(row3, t("cx.fmt"), selectEl([["", guess ? t("cx.fmt.auto", { f: t("cx.fmt." + guess) }) : t("cx.fmt.none")], ["p", t("cx.fmt.p")], ["e", t("cx.fmt.e")]], cx0.fmt || ""));
+    var pd = pubData(), titles = pd && Array.isArray(pd.titles) ? pd.titles.slice().sort(function (a, b) { return a.t.localeCompare(b.t, LOCALE); }) : null;
+    var tiSel = null;
+    if (titles && titles.length) {
+      var auto = k && !cx0.ti ? C.ctrTitle(data, k, titles) : null;
+      var tOpts = [["", auto ? t("cx.ti.auto", { t: auto.t }) : t("cx.ti.none")]].concat(titles.map(function (tt) { return [tt.id, tt.t.slice(0, 80)]; }));
+      if (cx0.ti && !titles.some(function (tt) { return tt.id === cx0.ti; })) tOpts.push([cx0.ti, cx0.ti]);
+      tiSel = field(row3, t("cx.ti"), selectEl(tOpts, cx0.ti || ""));
+    } else if (!titles) dlg.appendChild(el("p", "hint", t("cx.ti.noApp")));
     // the file: picked here, written to the partner's folder only on Save
     var pending = null, fileBox = el("div", "ctr-file");
     function linkBtn(label, fn) {
@@ -1512,10 +1623,16 @@
       });
       ["from", "to", "val", "note"].forEach(function (f) { if (!r[f]) delete r[f]; });
       if (x.file) r.file = x.file; else delete r.file;
+      var cxp = { fmt: fmtSel.value, ti: tiSel ? tiSel.value : (cx0.ti || "") };
+      var cxChanged = cxp.fmt !== (cx0.fmt || "") || cxp.ti !== (cx0.ti || "");
+      function store(rr) {
+        if (cxChanged) cxPut(rr.id, cxp);
+        return saveCtr(rr, k);
+      }
       dlg.close();
-      if (!pending) { saveCtr(r, k); return; }
+      if (!pending) { store(r); return; }
       var fs = diskApi(), dir = folderOf(c);
-      if (!fs) { showToast(t("toast.noDisk")); saveCtr(r, k); return; }
+      if (!fs) { showToast(t("toast.noDisk")); store(r); return; }
       freePath(fs, dir, fileName(pending)).then(function (p) {
         return fs.write(p, pending).then(function () { return p; });
       }).then(function (p) {
@@ -1523,12 +1640,522 @@
         // the dialog was closed: re-read what is stored now before the write
         var now = C.byId(data.ctr || [], r.id);
         if (now && k && now.m !== k.m) r = Object.assign({}, now, { file: p });
-        if (saveCtr(r, k)) showToast(t("toast.fileSaved", { p: p.replace(/^\/internal\//, "") }));
-      }, function () { showToast(t("toast.noDisk")); saveCtr(r, k); });
+        if (store(r)) showToast(t("toast.fileSaved", { p: p.replace(/^\/internal\//, "") }));
+      }, function () { showToast(t("toast.noDisk")); store(r); });
     }
     actions(dlg, save, k ? function () { dlg.close(); removeCtr(k); } : null);
     showDialog(dlg);
     title.focus();
+  }
+
+  // ----- Contracts everywhere (1.10, CTR-ALL) -----
+  // One contract's line (the partner card, the Contracts tab): its
+  // state in words, then the format, the start, the value, the file.
+  var CTR_FILTERS = ["needs", "soon", "ended", "term", "all"];
+  function ctrStText(r) {
+    var k = r.ctr;
+    if (r.st === "term") return t("cx.st.term", { d: fmtDate(r.x.end) });
+    if (r.st === "ended") return t("cx.st.ended", { d: fmtDate(k.to) });
+    if (r.st === "soon") return r.days === 0 ? t("cx.st.today") : t("cx.st.soon", { d: fmtDate(k.to), n: r.days });
+    return k.to ? t("ct.until", { d: fmtDate(k.to) }) : t("ct.noEnd");
+  }
+  function ctrRowEl(r, showWho) {
+    var k = r.ctr, bits = [];
+    if (showWho && r.who) bits.push(r.who);
+    if (r.fmt) bits.push(t("cx.fmt." + r.fmt));
+    if (!showWho && k.from) bits.push(t("ct.fromD", { d: fmtDate(k.from) }));
+    if (!showWho && k.val) bits.push(money(k.val));
+    if (r.snooze) bits.push(t("cx.st.snz", { d: fmtDate(r.snooze) }));
+    var row = el("button", "person ctr-row" + (r.st === "ended" || r.st === "term" ? " ended" : ""));
+    row.type = "button";
+    row.addEventListener("click", function () { ctrActions(k.id); });
+    var m = el("span", "row-main");
+    m.appendChild(el("span", "row-title", k.t));
+    var sub = el("span", "row-sub");
+    sub.appendChild(el("span", r.needs ? "late" : "", ctrStText(r)));
+    if (bits.length) sub.appendChild(document.createTextNode(" · " + bits.join(" · ")));
+    m.appendChild(sub);
+    row.appendChild(m);
+    return row;
+  }
+  // The Contracts tab: every contract, those that need a decision first
+  function renderCtrs() {
+    var box = $("view-ctr");
+    box.innerHTML = "";
+    var today = todayYmd(), all = C.ctrAll(data, today);
+    if (!all.length) {
+      var e = el("div", "empty");
+      e.appendChild(el("p", "", t("cx.emptyAll")));
+      box.appendChild(e);
+      return;
+    }
+    var chips = el("div", "chips");
+    CTR_FILTERS.forEach(function (f) {
+      var n = f === "all" ? all.length : C.ctrAll(data, today, f).length;
+      if (!n && f !== "needs" && f !== "all") return;
+      var b = el("button", "chip" + (prefs.cf === f ? " on" : ""), t("cx.f." + f) + " · " + n);
+      b.type = "button";
+      b.setAttribute("aria-pressed", prefs.cf === f ? "true" : "false");
+      b.addEventListener("click", function () { prefs.cf = f; savePrefs(); renderCtrs(); });
+      chips.appendChild(b);
+    });
+    if (shops().length) {
+      var send = el("button", "link-btn", t("cx.portal"));
+      send.type = "button";
+      send.addEventListener("click", portalDialog);
+      chips.appendChild(send);
+    }
+    box.appendChild(chips);
+    var list = prefs.cf === "all" ? all : C.ctrAll(data, today, prefs.cf);
+    var rows = el("div", "rows");
+    if (!list.length) rows.appendChild(el("p", "hint", t("cx.empty")));
+    list.forEach(function (r) { rows.appendChild(ctrRowEl(r, true)); });
+    box.appendChild(rows);
+  }
+
+  // A quick action: the ctr, cx and follow-up rows it changes in one
+  // commit, with Undo putting the earlier copies back (fresh stamps).
+  // The cx row shares the contract's id, so it is never tombed here.
+  function ctrDo(k, change, toastText) {
+    var x0 = C.cxOf(data, k.id), f0 = k.fup ? C.byId(data.fups, k.fup) : null;
+    var before = { k: Object.assign({}, k), x: x0 ? JSON.parse(JSON.stringify(x0)) : null, f: f0 ? Object.assign({}, f0) : null };
+    var r = Object.assign({}, k);
+    var force = change(r);
+    placeCtr(r, k, !!force);
+    var made = r.fup && r.fup !== k.fup ? r.fup : "";
+    if (!commit()) return false;
+    undoToast(toastText, function () {
+      putRow("ctr", before.k);
+      putRow("cx", before.x || { id: k.id });
+      if (made && made !== (before.f && before.f.id)) tomb(made);
+      if (before.f) { delete data.tombs[before.f.id]; putRow("fups", before.f); }
+      commit();
+    });
+    return true;
+  }
+  function cxPut(ctrId, patch, entry) {
+    var r = C.cxRow(data, ctrId, patch, entry);
+    if (r) putRow("cx", r);
+  }
+  // Only a record of what was done (an email drafted, a call, a card)
+  function ctrLog(k, kind) {
+    cxPut(k.id, null, { d: todayYmd(), k: kind });
+    commit();
+  }
+  function renewCtr(k, to) {
+    return ctrDo(k, function (r) {
+      cxPut(k.id, null, { d: todayYmd(), k: "renew", v: to, p: k.to });
+      r.to = to;
+    }, t("cx.toast.renew", { d: fmtDate(to) }));
+  }
+  function postCtr(k, day) {
+    return ctrDo(k, function () {
+      cxPut(k.id, null, { d: todayYmd(), k: "post", v: day });
+      return true;
+    }, t("cx.toast.post", { d: fmtDate(day) }));
+  }
+  function endCtr(k, day, note) {
+    return ctrDo(k, function () {
+      cxPut(k.id, { end: day }, { d: todayYmd(), k: "end", v: day, n: note });
+    }, t("cx.toast.end"));
+  }
+  function reopenCtr(k) {
+    return ctrDo(k, function () {
+      cxPut(k.id, { end: "" }, { d: todayYmd(), k: "reopen" });
+      return true;
+    }, t("cx.toast.reopen"));
+  }
+  // A day picker: cb(day) with a day after min (YYYY-MM-DD)
+  function dayDialog(title, value, min, badText, cb) {
+    var dlg = makeDialog("crm-ctrday");
+    dlg.appendChild(el("h2", "dlg-title", title));
+    var d = field(dlg, "", inp("date", value, 10));
+    d.min = C.addDays(min, 1);
+    var err = errorHint(dlg);
+    dlg.appendChild(err);
+    function ok() {
+      if (!C.isYmd(d.value) || d.value <= min) { err.textContent = badText; err.hidden = false; d.focus(); return; }
+      dlg.close();
+      cb(d.value);
+    }
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("cx.ok"), "primary", ok));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    d.focus();
+  }
+  function endDialog(k) {
+    var dlg = makeDialog("crm-ctrend");
+    dlg.appendChild(el("h2", "dlg-title", t("cx.endT", { t: k.t })));
+    var d = field(dlg, t("cx.endD"), inp("date", todayYmd(), 10));
+    var n = field(dlg, t("cx.endN"), area("", 300));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("cx.endOk"), "danger-fill", function () {
+      if (!C.isYmd(d.value)) { d.focus(); return; }
+      dlg.close();
+      endCtr(k, d.value, C.cleanText(n.value, 300));
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    n.focus();
+  }
+  function noteDialog(k) {
+    var dlg = makeDialog("crm-ctrnote");
+    dlg.appendChild(el("h2", "dlg-title", t("cx.noteT", { t: k.t })));
+    var n = field(dlg, "", area("", 300));
+    actions(dlg, function () {
+      var v = C.cleanText(n.value, 300);
+      if (!v) { n.focus(); return; }
+      dlg.close();
+      cxPut(k.id, null, { d: todayYmd(), k: "note", n: v });
+      if (commit()) showToast(t("cx.toast.note"));
+    }, null);
+    showDialog(dlg);
+    n.focus();
+  }
+  function ctrFmtWord(r) { return r.fmt ? " (" + t("cx.fmt." + r.fmt) + ")" : ""; }
+  // An email to the partner, as a draft in Mail (never sent from here)
+  function ctrMail(r) {
+    var c = r.cust, k = r.ctr;
+    var vars = { name: (c.name || "").split(" ")[0], b: r.book || k.t, f: ctrFmtWord(r), d: fmtDate(k.to) };
+    var subject = t("cx.mailS", vars), body = t(r.st === "ended" ? "cx.mailBEnded" : "cx.mailB", vars);
+    var s = mailShell();
+    if (s) {
+      var addr = c.name ? "\"" + c.name.replace(/[\\"]/g, "\\$&") + "\" <" + c.email + ">" : c.email;
+      s.__orosOpenAt("mail", { compose: { to: addr, subject: subject, body: body } });
+    } else {
+      window.open("mailto:" + encodeURIComponent(c.email) + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body), "_blank", "noopener,noreferrer");
+    }
+    ctrLog(k, "mail");
+  }
+  // A Kanban card due on the end day (or today once it has passed):
+  // Kanban's own quick-add, filled; nothing is written there from here.
+  function ctrTask(r) {
+    var k = r.ctr, today = todayYmd(), due = k.to && k.to >= today ? k.to : today;
+    openIn("kanban", { asNew: { board: (data.cset && data.cset.kb) || "", title: t("cx.taskT", { b: r.book || k.t, f: ctrFmtWord(r), d: fmtDate(due) }),
+                                note: [r.who, ctrStText(r)].filter(Boolean).join(" · "), due: due } });
+    ctrLog(k, "task");
+  }
+  function histText(e) {
+    var w = t("cx.h." + e.k, { v: e.v ? fmtDate(e.v) : "", p: e.p ? fmtDate(e.p) : "" });
+    return fmtDate(e.d) + " · " + w + (e.n ? ": " + e.n : "");
+  }
+  function renewAsk(k) {
+    var today = todayYmd(), base = k.to || k.from || today, min = k.to && k.to > today ? k.to : today;
+    dayDialog(t("cx.renewT", { t: k.t }), C.addYears(base, 3), min, k.to && k.to > today ? t("cx.renewBad", { d: fmtDate(k.to) }) : t("cx.dayBad"), function (d) { renewCtr(k, d); });
+  }
+  function postAsk(k, days) {
+    var today = todayYmd();
+    dayDialog(t("cx.postT", { t: k.t }), C.addDays(today, days), today, t("cx.dayBad"), function (d) { postCtr(k, d); });
+  }
+  // From another app's button (Publishing, Today, Calendar): the one
+  // action, always through its own dialog here (nothing is changed by
+  // the link itself); "" or an action that does not fit = all of them.
+  function ctrQuick(k, what) {
+    var c = C.byId(data.cust, k.cust), r = C.ctrInfo(data, k, todayYmd());
+    var open = r.st !== "term";
+    if (what === "renew" && open) renewAsk(k);
+    else if (what === "post" && open) postAsk(k, 7);
+    else if (what === "end" && open) endDialog(k);
+    else if (what === "mail" && c && c.email) ctrMail(r);
+    else if (what === "task") ctrTask(r);
+    else if (what === "note") noteDialog(k);
+    else ctrActions(k.id);
+  }
+  // The quick actions of one contract (opened from every app)
+  function ctrActions(id) {
+    var k = C.byId(data.ctr || [], id), c = k ? C.byId(data.cust, k.cust) : null;
+    if (!k || !c) { showToast(t("toast.gone")); return; }
+    var today = todayYmd(), r = C.ctrInfo(data, k, today);
+    var dlg = makeDialog("crm-ctract", true);
+    dlg.appendChild(el("h2", "dlg-title", k.t));
+    dlg.appendChild(el("p", "dlg-sub" + (r.needs ? " late" : ""), [c.name, ctrStText(r), r.snooze ? t("cx.st.snz", { d: fmtDate(r.snooze) }) : ""].filter(Boolean).join(" · ")));
+    var list = el("div", "sheet-list");
+    function item(icon, label, fn) {
+      var b = button("", "sheet-btn", function () { dlg.close(); fn(); });
+      b.innerHTML = UI[icon] || "";
+      b.appendChild(el("span", "", label));
+      list.appendChild(b);
+    }
+    if (r.st !== "term") {
+      var base = k.to || k.from || today;
+      if (k.to || k.from) {
+        item("clock", t("cx.renew3"), function () { renewCtr(k, C.addYears(base, 3)); });
+        item("clock", t("cx.renew5"), function () { renewCtr(k, C.addYears(base, 5)); });
+      }
+      item("clock", t("cx.renewD"), function () { renewAsk(k); });
+      if (r.st === "soon" || r.st === "ended" || r.snooze) {
+        item("clock", t("cx.post7"), function () { postCtr(k, C.addDays(today, 7)); });
+        item("clock", t("cx.post30"), function () { postCtr(k, C.addDays(today, 30)); });
+        item("clock", t("cx.postD"), function () { postAsk(k, 14); });
+      }
+      item("x", t("cx.end"), function () { endDialog(k); });
+    } else item("back", t("cx.reopen"), function () { reopenCtr(k); });
+    if (c.email) item("mail", t("cx.mail", { name: c.name }), function () { ctrMail(r); });
+    if (c.phone) {
+      var call = el("a", "dlg-btn sheet-btn tel-btn");
+      call.href = telHref(c.phone);
+      call.innerHTML = UI.call;
+      call.appendChild(el("span", "", t("cx.call", { name: c.name })));
+      call.addEventListener("click", function () { dlg.close(); ctrLog(k, "call"); });
+      list.appendChild(call);
+    }
+    if (k.file) item("doc", t("cx.file"), function () { openCtrFile(k.file); });
+    item("todo", t("cx.task"), function () { ctrTask(r); });
+    item("note", t("cx.note"), function () { noteDialog(k); });
+    item("edit", t("cx.edit"), function () { ctrEditor(k, c); });
+    item("users", t("cx.partner"), function () { prefs.sub = "ov"; selectCust(c.id); });
+    dlg.appendChild(list);
+    if (r.hist.length) {
+      dlg.appendChild(el("span", "dlg-lbl", t("cx.hist")));
+      var h = el("ul", "ctr-hist");
+      r.hist.slice().reverse().forEach(function (e) { h.appendChild(el("li", "", histText(e))); });
+      dlg.appendChild(h);
+    }
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+
+  // Contracts made by the Assistant or orOS Gate (and those before 1.10)
+  // get the follow-up that reminds of their end (core ctrHeal): a fixed
+  // id per contract, so two devices doing it at once write the same row.
+  function healCtrs() {
+    var plan = C.ctrHeal(data, todayYmd());
+    if (!plan.length) return;
+    plan.forEach(function (p) {
+      var r = Object.assign({}, p.ctr);
+      var f = putRow("fups", { id: p.fup, cust: r.cust, d: p.d, text: ctrFupText(r) });
+      r.fup = f.id;
+      putRow("ctr", r);
+    });
+    commit();
+  }
+
+  // ----- Contracts in the shop's Revenue Splitter (1.14+, Author Portal) -----
+  // CTR-ALL sends the list by hand; RS-CTR adds (Revenue Splitter 1.14
+  // hand-off, 2026-11-11): one list per shop (only that shop's linked
+  // partners, crm/core.js portalPlan), the rows the shop did not take
+  // with their reason, the contracts left out (no link, no start day),
+  // and, when the shop has a write key in Settings › Connected services
+  // (adding it is the yes), the list goes again on its own after a
+  // change. Renewal requests are pulled while CRM is open (every 10
+  // minutes): each becomes a follow-up for today and a note on the
+  // partner's card, committed BEFORE the shop is told ("oros"), so an
+  // interruption loses nothing; a done or deleted follow-up closes it.
+  var RC_WAIT = 4000, RQ_EVERY = 600000;
+  var rcTimer = null, rcLast = {}, rcErr = {}, rcSent = {}, rqAt = 0, rqBusy = false, rqLeft = {}, rqNoWrite = {};
+  function firstShop() { var l = shops(); return l[0] ? l[0].id : ""; }
+  // the shops at least one partner is linked to (no shop = the first)
+  function rsShops() {
+    var list = shops(), first = list[0] ? list[0].id : "", ids = {};
+    (data.rsl || []).forEach(function (r) { if (r.n && C.byId(data.cust, r.id)) ids[r.a || first] = 1; });
+    return list.filter(function (a) { return ids[a.id]; });
+  }
+  function hasWriteKey(shop) {
+    var L = shopLinks();
+    if (!L || typeof L.hasWriteKeys !== "function") return Promise.resolve(false);
+    return Promise.resolve(L.hasWriteKeys(shop.id)).catch(function () { return false; });
+  }
+  function shopPlan(shop) { return C.portalPlan(data, todayYmd(), shop.id, firstShop()); }
+  function pushCtr(shop) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    if (!RS || !L) return Promise.reject(rsErr("other"));
+    var x = shopPlan(shop), sent = JSON.stringify(x.body.contracts);
+    return Promise.resolve(L.call(shop.id, [RS.reqPushCtr(x.body)])).then(function (res) {
+      var r = res && res[0], code = L.statusCode(r);
+      if (code) throw rsErr(code === "notfound" ? "old" : code);
+      var got = RS.parseSaved(r.data);
+      if (!got) throw rsErr("old");
+      var out = { saved: got.saved, skipped: got.skipped, n: x.body.contracts.length, at: Date.now() };
+      rcLast[shop.id] = out;
+      rcSent[shop.id] = sent;
+      delete rcErr[shop.id];
+      return out;
+    }).catch(function (e) {
+      rcErr[shop.id] = (e && e.code) || "other";
+      throw e;
+    });
+  }
+  function rcErrText(code, shop) {
+    var name = shop.name || shop.site;
+    if (code === "old") return t("cx.portalOld", { shop: name });
+    if (code === "auth" || code === "offline" || code === "keys" || code === "big") return t("rc.err." + code, { shop: name });
+    return t("rc.err.other", { shop: name });
+  }
+  // after every commit: a shop with a write key gets its list again
+  // when it differs from what this page last sent there
+  function ctrChanged() {
+    if (!window.OrosCrmRs || !shopLinks()) return;
+    clearTimeout(rcTimer);
+    rcTimer = setTimeout(function () {
+      rsShops().reduce(function (p, shop) {
+        return p.then(function () {
+          if (rcSent[shop.id] === JSON.stringify(shopPlan(shop).body.contracts)) return false;
+          return hasWriteKey(shop);
+        }).then(function (wk) {
+          if (!wk) return;
+          return pushCtr(shop).then(function (r) {
+            if (r.skipped.length) showToast(t("rc.autoSkip", { shop: shop.name || shop.site, n: r.skipped.length }));
+          }, function (e) {
+            if (!(e && e.code === "offline")) showToast(t("rc.autoFail", { shop: shop.name || shop.site }));
+          });
+        });
+      }, Promise.resolve()).catch(function () {});
+    }, RC_WAIT);
+  }
+  function ctrLabel(id) {
+    var k = C.byId(data.ctr || [], id), cu = k ? C.byId(data.cust, k.cust) : null;
+    return k ? k.t + (cu ? " · " + C.custName(cu) : "") : id;
+  }
+  function portalDialog() {
+    var RS = window.OrosCrmRs, list = shops(), L = shopLinks();
+    if (!list.length || !L || !RS) { showToast(t("cx.portalNone")); return; }
+    var dlg = makeDialog("crm-portal", true);
+    dlg.appendChild(el("h2", "dlg-title", t("cx.portalT")));
+    dlg.appendChild(el("p", "hint", t("cx.portalHint")));
+    var shop = rsShops()[0] || list[0], shopSel = null;
+    if (list.length > 1) {
+      shopSel = selectEl(list.map(function (a) { return [a.id, a.name || a.site]; }), shop.id);
+      field(dlg, t("cx.portalShop"), shopSel);
+    }
+    var body = el("div", "");
+    dlg.appendChild(body);
+    var busy = false, send = null;
+    function line(text, cls) { body.appendChild(el("p", "hint" + (cls ? " " + cls : ""), text)); }
+    function draw() {
+      body.innerHTML = "";
+      var x = shopPlan(shop);
+      line(x.body.contracts.length ? t("rc.n", { n: x.body.contracts.length }) : t("rc.none"));
+      x.left.forEach(function (l) { line(t("rc.left." + l.why, { t: ctrLabel(l.id) }), "late"); });
+      var wkLine = el("p", "hint", "");
+      body.appendChild(wkLine);
+      hasWriteKey(shop).then(function (wk) {
+        if (wkLine.isConnected) wkLine.textContent = t(wk ? "rc.wkOn" : "rc.wkOff", { shop: shop.name || shop.site });
+      });
+      var last = rcLast[shop.id];
+      if (rcErr[shop.id]) line(rcErrText(rcErr[shop.id], shop), "late");
+      else if (last) {
+        line(t("rc.done", { n: last.saved, time: new Date(last.at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", hour12: false }) }));
+        if (last.skipped.length) {
+          line(t("rc.skipped"), "late");
+          last.skipped.forEach(function (k) { line(ctrLabel(k.id) + " · " + t("rc.why." + k.why), "late"); });
+        }
+      }
+      var left = rqLeft[shop.id] || [];
+      if (left.length) {
+        line(t("rc.rqLeft"), "late");
+        left.slice(0, 20).forEach(function (q) { line([q.ben, q.title].filter(Boolean).join(" · ")); });
+      }
+      if (rqNoWrite[shop.id]) line(t("rq.noWrite", { shop: shop.name || shop.site }), "late");
+      if (send) send.textContent = t("cx.portalSend", { n: x.body.contracts.length });
+    }
+    if (shopSel) shopSel.addEventListener("change", function () { shop = rsShop({ a: shopSel.value }, list); draw(); });
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.close"), "", function () { dlg.close(); }));
+    send = button(t("cx.portalSend", { n: 0 }), "primary", function () {
+      if (busy) return;
+      busy = true;
+      send.disabled = true;
+      send.textContent = t("rc.sending");
+      pushCtr(shop).catch(function () {}).then(function () {
+        busy = false;
+        send.disabled = false;
+        if (dlg.isConnected) draw();
+      });
+    });
+    acts.appendChild(send);
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    draw();
+  }
+  // Renewal requests (Author Portal): pulled, imported, then marked
+  function pullRequests(force) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    if (!RS || !L || rqBusy) return;
+    if (!force && Date.now() - rqAt < RQ_EVERY) return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    var list = rsShops();
+    if (!list.length) return;
+    rqBusy = true;
+    rqAt = Date.now();
+    list.reduce(function (p, shop) {
+      return p.then(function () { return pullShop(shop); }).catch(function () {});
+    }, Promise.resolve()).then(function () { rqBusy = false; });
+  }
+  function pullShop(shop) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    return Promise.resolve(L.call(shop.id, [RS.REQ_RQ_NEW, RS.REQ_RQ_OROS])).then(function (res) {
+      var fresh = res && res[0] && !L.statusCode(res[0]) ? RS.parseRequests(res[0].data) : null;
+      var taken = res && res[1] && !L.statusCode(res[1]) ? RS.parseRequests(res[1].data) : null;
+      if (!fresh && !taken) return;              // an older Revenue Splitter: nothing to pull
+      var marks = [];
+      if (fresh) {
+        var x = RS.importPlan(data, shop.id, firstShop(), fresh), added = 0, today = todayYmd();
+        x.plan.forEach(function (it) {
+          if (it.have) return;
+          var title = it.req.title || (it.ctr && it.ctr.t) || t("rq.untitled");
+          putRow("fups", { id: it.ids.fup, cust: it.cust.id, d: today, text: C.cleanText(t("rq.fup", { t: title }), 300) });
+          putRow("acts", { id: it.ids.act, cust: it.cust.id, k: "note", at: it.req.at || Date.now(), who: it.req.ben,
+                           text: C.cleanText(t("rq.act", { t: title }) + (it.req.note ? "\n" + it.req.note : ""), 2000, true) });
+          added++;
+        });
+        if (added && !commit()) return;          // nothing is marked: the next pull tries again
+        if (added) showToast(t("rq.toast", { n: added }));
+        x.plan.forEach(function (it) { marks.push([it.req.id, "oros"]); });
+        rqLeft[shop.id] = x.left;
+      }
+      if (taken) RS.closeList(data, shop.id, taken).forEach(function (id) { marks.push([id, "closed"]); });
+      return markRequests(shop, marks);
+    });
+  }
+  function markRequests(shop, marks) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    if (!marks.length || rqNoWrite[shop.id]) return Promise.resolve();
+    var chunks = [];
+    for (var i = 0; i < marks.length; i += 10) chunks.push(marks.slice(i, i + 10));
+    return chunks.reduce(function (p, ch) {
+      return p.then(function (go) {
+        if (!go) return false;
+        return Promise.resolve(L.call(shop.id, ch.map(function (m) { return RS.reqMark(m[0], m[1]); }))).then(function (res) {
+          if ((res || []).some(function (r) { return L.statusCode(r) === "auth"; })) {
+            rqNoWrite[shop.id] = true;
+            showToast(t("rq.noWrite", { shop: shop.name || shop.site }));
+            return false;
+          }
+          return true;
+        });
+      });
+    }, Promise.resolve(true));
+  }
+  // Calendar's own labels, read only (oros-calendar-data), for Settings
+  function calLabels() {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-calendar-data") || "null");
+      return d && Array.isArray(d.labels) ? d.labels.filter(function (l) { return l && typeof l.id === "string" && /^[A-Za-z0-9_-]{1,60}$/.test(l.id) && typeof l.name === "string" && l.name.trim(); }) : [];
+    } catch (e) { return []; }
+  }
+  function ctrSettings(dlg) {
+    dlg.appendChild(el("h3", "dlg-lbl", t("cx.set")));
+    var cs = data.cset || {};
+    var labels = calLabels();
+    var opts = [["", t("cx.lbl.own")]].concat(labels.map(function (l) { return [l.id, l.name.slice(0, 40)]; }));
+    if (cs.lbl && !labels.some(function (l) { return l.id === cs.lbl; })) opts.push([cs.lbl, cs.lbl]);
+    var lbl = field(dlg, t("cx.lbl"), selectEl(opts, cs.lbl || ""));
+    var kb = field(dlg, t("cx.kb"), inp("text", cs.kb || "", 60, t("cx.kbPh")));
+    function save() {
+      var next = C.normCset({ m: 1, lbl: lbl.value, kb: kb.value });
+      if ((next.lbl || "") === (cs.lbl || "") && (next.kb || "") === (cs.kb || "")) return;
+      next.m = stamp(data.cset || null);
+      data.cset = next;
+      cs = next;
+      commit();
+    }
+    lbl.addEventListener("change", save);
+    kb.addEventListener("change", save);
   }
 
   function whyText(w) { return w ? t("lk.why." + w) : ""; }
@@ -3205,6 +3832,7 @@
     cur.addEventListener("change", savePrefsData);
     forget.addEventListener("change", savePrefsData);
 
+    ctrSettings(dlg);
     var list = el("div", "sheet-list");
     list.style.marginTop = "16px";
     list.appendChild(button(t("set.stages"), "sheet-btn", stagesEditor));
@@ -3850,6 +4478,21 @@
     if (x.asNew) return asNewCust(x.asNew);
     // Single app icon shortcut: an empty New customer form.
     if (x.newCust) { setTab("cust"); custEditor(null, {}); return true; }
+    // 1.10: { ctr } a contract's quick actions (Publishing, Calendar,
+    // Today, Kanban, search), { ctrs: filter } the Contracts tab
+    if (x.ctrs !== undefined) {
+      if (CTR_FILTERS.indexOf(x.ctrs) >= 0) prefs.cf = x.ctrs;
+      savePrefs();
+      setTab("ctr");
+      return true;
+    }
+    if (x.ctr !== undefined) {
+      var kc = id(x.ctr) ? C.byId(data.ctr || [], x.ctr) : null;
+      if (!kc || !C.byId(data.cust, kc.cust)) { showToast(t("toast.gone")); return false; }
+      setTab("ctr");
+      ctrQuick(kc, typeof x["do"] === "string" ? x["do"] : "");
+      return true;
+    }
     var c = id(x.cust) ? C.byId(data.cust, x.cust) : null;
     var d = id(x.deal) ? C.byId(data.deals, x.deal) : null;
     var f = id(x.fup) ? C.byId(data.fups, x.fup) : null;
@@ -3947,7 +4590,7 @@
   };
 
   // ---------- 15. Wiring & boot ----------
-  var TABS = ["cust", "pipe", "agenda", "dash"];
+  var TABS = ["cust", "pipe", "agenda", "ctr", "dash"];
   function setTab(tab) {
     prefs.tab = TABS.indexOf(tab) >= 0 ? tab : "cust";
     savePrefs();
@@ -3955,8 +4598,11 @@
   }
   function renderBadge() {
     var ag = C.agenda(data, todayYmd(), 0);
-    var n = ag.late.length + ag.today.length;
-    var tb = $("tab-agenda");
+    tabBadge("tab-agenda", ag.late.length + ag.today.length);
+    tabBadge("tab-ctr", C.ctrAll(data, todayYmd(), "needs").length);
+  }
+  function tabBadge(id, n) {
+    var tb = $(id);
     var b = tb.querySelector(".badge");
     if (!n) { if (b) b.remove(); return; }
     if (!b) { b = el("span", "badge"); tb.appendChild(b); }
@@ -3978,6 +4624,7 @@
     if (prefs.tab === "cust") renderCustomers();
     else if (prefs.tab === "pipe") renderPipeline();
     else if (prefs.tab === "agenda") renderAgenda();
+    else if (prefs.tab === "ctr") renderCtrs();
     else renderDash();
   }
 
@@ -4056,6 +4703,7 @@
       else {
         if (renderedDay !== todayYmd() && !document.querySelector("dialog[open]")) render();
         if (WF) WF.auto();
+        pullRequests(false);
       }
     });
     // Contacts edited in another frame/tab: people lines are live
@@ -4067,6 +4715,7 @@
     setInterval(function () {
       if (document.visibilityState === "hidden") return;
       if (renderedDay !== todayYmd() && !document.querySelector("dialog[open]")) render();
+      pullRequests(false);
     }, 60000);
     window.addEventListener("pagehide", savePrefsNow);
     wireKeyboard();
@@ -4084,8 +4733,10 @@
     inheritPalette();
     watchPalette();
     render();
+    healCtrs();
     takeTarget();
     if (WF) WF.auto();
+    setTimeout(function () { pullRequests(true); }, 3000);
     console.log("[orOS CRM] v1.4.0 boot OK");
   }
 

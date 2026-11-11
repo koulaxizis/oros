@@ -110,7 +110,7 @@
       "none.together": "Nothing from Together yet. Open it to start counting.",
       det: "Details and suggestions", detOf: "Details and suggestions: {t}", tip: "Tip",
       "act.route": "Directions", "act.contact": "Open the card", "act.gift": "Gift idea to To-Do", "act.todo": "Add to To-Do",
-      "act.later": "Tomorrow", "act.tick": "Tick it", "act.sip": "+1 glass", "act.open": "Open",
+      "act.later": "Tomorrow", "act.tick": "Tick it", "act.sip": "+1 glass", "act.open": "Open", "act.renew": "Renew", "act.putoff": "Put off", "act.email": "Email",
       "w.tips": "Tips of the day", "d.tips": "Short advice from your apps' rows together: rain and an appointment, heat, late tasks, a busy day",
       "tp.hide": "Not today", "tp.mute": "Don't show this kind", "tp.hidden": "Hidden until tomorrow",
       "tp.muted": "This kind of tip is off. Turn it back on in Settings.",
@@ -176,7 +176,7 @@
       "none.together": "Τίποτα από το Μαζί ακόμη. Άνοιξέ το για να αρχίσει η μέτρηση.",
       det: "Λεπτομέρειες και προτάσεις", detOf: "Λεπτομέρειες και προτάσεις: {t}", tip: "Συμβουλή",
       "act.route": "Οδηγίες", "act.contact": "Άνοιγμα καρτέλας", "act.gift": "Ιδέα για δώρο στο To-Do", "act.todo": "Στο To-Do",
-      "act.later": "Αύριο", "act.tick": "Τικ", "act.sip": "+1 ποτήρι", "act.open": "Άνοιγμα",
+      "act.later": "Αύριο", "act.tick": "Τικ", "act.sip": "+1 ποτήρι", "act.open": "Άνοιγμα", "act.renew": "Ανανέωση", "act.putoff": "Αναβολή", "act.email": "Email",
       "w.tips": "Συμβουλές της ημέρας", "d.tips": "Σύντομες συμβουλές από τις γραμμές των εφαρμογών σου μαζί: βροχή και ραντεβού, ζέστη, καθυστερήσεις, γεμάτη μέρα",
       "tp.hide": "Όχι σήμερα", "tp.mute": "Να μη φαίνεται αυτό το είδος", "tp.hidden": "Κρύφτηκε ως αύριο",
       "tp.muted": "Αυτό το είδος συμβουλής είναι κλειστό. Το ξανανοίγεις από τις Ρυθμίσεις.",
@@ -225,9 +225,11 @@
     gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13"/><path d="M12 8c-2-4-6-4-6-1.5S9 8 12 8zM12 8c2-4 6-4 6-1.5S15 8 12 8z"/></svg>',
     later: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h13M13 7l5 5-5 5"/><path d="M21 5v14"/></svg>',
     sip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l-1.6 17a1 1 0 0 1-1 .9H8.6a1 1 0 0 1-1-.9z"/><path d="M6.6 9h10.8"/></svg>',
+    renew: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>',
+    mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
     go: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>'
   };
-  var ACT_ICON = { route: "route", contact: "contact", gift: "gift", todo: "plus", later: "later", tick: "check", sip: "sip", open: "go" };
+  var ACT_ICON = { route: "route", contact: "contact", gift: "gift", todo: "plus", later: "later", tick: "check", sip: "sip", renew: "renew", putoff: "later", email: "mail", open: "go" };
 
   function host() { var p = parentWin(); try { return p && p.orosToday ? p.orosToday : null; } catch (e) { return null; } }
   // Weekly app suggestion (CH-2, discover/host.js in the shell).
