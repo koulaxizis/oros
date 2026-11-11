@@ -29,5 +29,17 @@ Before you clear browser data, reset your browser or switch devices, [export a b
 ## Private windows
 In a private or incognito window, the browser deletes everything when you close the window. orOS works there, but your data won't be there next time. Use a normal window for anything you want to keep, or export before closing.
 
+## Bring your data from other apps
+You don't have to start from nothing. Many orOS apps read the export of the app you used before. Open the app and look for `Import`; it shows what it found before anything is saved, and `Undo` takes it back.
+- [Contacts](app:contacts): contact files (.vcf) from your phone, Google, Outlook or any address book.
+- [Calendar](app:calendar): calendar files (.ics) from Google, Outlook, Apple or any calendar.
+- [Notes](app:notes): Google Keep, Evernote, Simplenote, Joplin, Obsidian and folders of Markdown or text files.
+- [To-Do](app:todo) and [Kanban](app:kanban): exports of other task lists and boards, such as Trello.
+- [Bookmarks](app:bookmarks): your browser's bookmarks and read-later lists.
+- [Passwords](app:passwords): Bitwarden, 1Password, KeePass, LastPass, Proton Pass, your browser's saved passwords, and two-factor apps such as Aegis.
+- [Budget](app:budget): bank statements and exports of other money apps (CSV or sheets).
+- [Meal Planner](app:meals): recipes from a web page or another recipe app.
+- Many more read their own kind of file: One-Sentence Diary (Day One and others), Mood (Daylio), Habits, Workouts, Maps (tracks and saved places), Timesheet (Toggl, Clockify, Harvest) and others. Each app's guide says which files it reads.
+
 ## Taking your data with you
 Your data is always yours. `Export backup file` in [Settings](app:settings) saves everything in one file you can keep or import into orOS on another device. To erase everything instead, see [Factory reset](help:t/reset).

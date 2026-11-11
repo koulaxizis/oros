@@ -123,6 +123,11 @@
       "drag.reorder":   "Reorder",
       "tab.add":        "Add list",
       "add.task":       "Add task",
+      "st.pack":        "Packing list",
+      "st.pack.items":  "Passport or ID card\nTickets\nPhone charger\nToothbrush and toothpaste\nMedicines\nClothes for each day\nSunglasses\nHouse keys",
+      "st.move":        "Moving house",
+      "st.move.items":  "Tell the bank the new address\nMove the electricity and water bills\nMove the internet\nBook a van or movers\nGet boxes and tape\nPack room by room\nRead the meters on moving day\nHand back the old keys",
+      "st.done":        "Made the list \u201c{list}\u201d",
       "interval.aria":  "Interval",
       "filtered.title": "All tasks are completed",
       "filtered.hint":  "Turn off “Hide completed” to see them.",
@@ -301,6 +306,11 @@
       "drag.reorder":   "Αναδιάταξη",
       "tab.add":        "Προσθήκη λίστας",
       "add.task":       "Προσθήκη εργασίας",
+      "st.pack":        "Λίστα για τη βαλίτσα",
+      "st.pack.items":  "Διαβατήριο ή ταυτότητα\nΕισιτήρια\nΦορτιστής κινητού\nΟδοντόβουρτσα και οδοντόκρεμα\nΦάρμακα\nΡούχα για κάθε μέρα\nΓυαλιά ηλίου\nΚλειδιά σπιτιού",
+      "st.move":        "Μετακόμιση",
+      "st.move.items":  "Νέα διεύθυνση στην τράπεζα\nΜεταφορά λογαριασμών ρεύματος και νερού\nΜεταφορά ίντερνετ\nΚλείσιμο φορτηγού ή μεταφορικής\nΚούτες και ταινία\nΠακετάρισμα δωμάτιο προς δωμάτιο\nΜέτρηση ρολογιών τη μέρα της μετακόμισης\nΠαράδοση των παλιών κλειδιών",
+      "st.done":        "Έγινε η λίστα «{list}»",
       "interval.aria":  "Διάστημα",
       "filtered.title": "Όλες οι εργασίες έχουν ολοκληρωθεί",
       "filtered.hint":  "Απενεργοποίησε την «Απόκρυψη ολοκληρωμένων» για να τις δεις.",
@@ -4232,6 +4242,27 @@
     }
     return null;
   }
+  // TPL-1: a starter list from the empty screen. Real tasks, written
+  // only on that tap, in a new list of their own; Undo takes the list
+  // and its tasks away again (the import's own way back).
+  var STARTERS = ["pack", "move"];
+  function starterList(key) {
+    if (STARTERS.indexOf(key) === -1) return;
+    var items = t("st." + key + ".items").split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
+    var list = freshList(t("st." + key));
+    list.pos = state.lists.length;
+    items.forEach(function (txt) { list.items.push(freshItem(txt, null)); });
+    list.items.forEach(function (it, i) { it.pos = i; });
+    state.lists.push(list);
+    setActiveList(list.id);
+    state.om = Date.now();
+    save(); scheduleRender();
+    var back = { items: list.items.map(function (it) { return it.id; }), upd: [], names: [], lists: [list.id], labels: [] };
+    undoSnapshot = null;
+    undoFn = function () { importUndo(back); };
+    undoViewList = view.activeList;
+    showToast(t("st.done").replace("{list}", list.name), true);
+  }
   function importUndo(back) {
     var now = Date.now(), gone = {};
     back.items.forEach(function (id) { gone[id] = 1; tombstone(id); });
@@ -4955,7 +4986,8 @@
   paintStaticAria();
   populateWeekdaySelects();
   // EMPTY-1: the friendly empty screen (../emptykit.js)
-  if (window.orosEmpty) window.orosEmpty.dress($("empty"), { app: "todo", action: { label: t("add.task"), run: function () { $("quick-add").focus(); } } });
+  if (window.orosEmpty) window.orosEmpty.dress($("empty"), { app: "todo", action: { label: t("add.task"), run: function () { $("quick-add").focus(); } },
+    starters: STARTERS.map(function (k) { return { label: t("st." + k), run: function () { starterList(k); } }; }) });
   // ---------- 13. "Send to To-Do" receiver (other apps → a list) ----------
   // Contract (OROS_BIBLE.md, BR-TD-ADD): any app calls
   //   window.parent.__orosOpenAt("todo", { addItems: {

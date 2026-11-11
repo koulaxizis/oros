@@ -42,13 +42,13 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.3.0";
   var KEY = "oros-widgets";
   var START_KEY = "oros-start";
   // First steps, in order. "install" only where the browser offers it
   // or orOS already runs installed.
-  var STEPS = ["note", "task", "wall", "icons", "sync", "assistant", "install"];
-  var KINDS = ["start", "clock", "calendar", "today", "weather", "media", "sync"];
+  var STEPS = ["note", "task", "wall", "icons", "import", "sync", "phone", "assistant", "install"];
+  var KINDS = ["start", "clock", "calendar", "today", "weather", "media", "sync", "phone"];
   var DEFAULT = ["clock", "calendar", "today", "weather"];
   var WIDE = 760;
 
@@ -116,13 +116,16 @@
     if (typeof v.all === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v.all)) out.all = v.all;
     return out;
   }
-  // facts: { note, task, wall, icons, sync, assistant: true|false,
-  // install: true (installed) | false (can install) | "no" (cannot) }.
+  // facts: { note, task, wall, icons, import, sync, assistant: true|false,
+  // install: true (installed) | false (can install) | "no" (cannot),
+  // phone: true (the phone card is shown) | false | "no" (on a phone) }.
   // A step is done when its fact is true now or it was done before.
   function startRows(facts, rec) {
     facts = facts || {};
     var done = (rec && rec.done) || [];
-    return STEPS.filter(function (k) { return k !== "install" || facts.install === true || facts.install === false; })
+    // "install" and "phone" only where they can be: true (done) or false
+    // (to do); "no" or nothing leaves the step out.
+    return STEPS.filter(function (k) { return (k !== "install" && k !== "phone") || facts[k] === true || facts[k] === false; })
       .map(function (k) { return { id: k, done: facts[k] === true || done.indexOf(k) !== -1 }; });
   }
   // What to keep after a paint: the newly done steps join the record;
@@ -135,6 +138,16 @@
   }
   // "All done" stays for the rest of that day; the card goes after.
   function startGone(rec, ymd) { return !!(rec && rec.all && rec.all < ymd); }
+  // PHONE-1: the address the phone card shows. This orOS when it is a
+  // real https site; otherwise (a file, localhost, the Portable or the
+  // Live USB) the public one. Never anything but the address.
+  function phoneUrlOf(loc) {
+    var pub = "https://useoros.online/";
+    if (!loc || loc.protocol !== "https:") return pub;
+    var h = String(loc.hostname || "");
+    if (!h || /^(localhost|127\.|0\.0\.0\.0|\[?::1\]?$|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h) || /\.(local|lan|internal)$/.test(h)) return pub;
+    return "https://" + h + (loc.port ? ":" + loc.port : "") + String(loc.pathname || "/").replace(/[^/]*$/, "");
+  }
   // A new user's first list: First steps, then this screen's default.
   function firstList(stored, wide, phone) {
     if (stored) return null;               // a list is set already: leave it
@@ -143,7 +156,8 @@
 
   var model = { VER: VER, KINDS: KINDS, DEFAULT: DEFAULT, STEPS: STEPS, norm: norm, parse: parse, listOf: listOf,
                 toggle: toggle, move: move, monthGrid: monthGrid, ymdOf: ymdOf,
-                startNorm: startNorm, startRows: startRows, startNext: startNext, startGone: startGone, firstList: firstList };
+                startNorm: startNorm, startRows: startRows, startNext: startNext, startGone: startGone, firstList: firstList,
+                phoneUrlOf: phoneUrlOf };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -231,6 +245,14 @@
     ".wg-sync { display: flex; align-items: center; gap: 10px; }",
     ".wg-sync .wg-what { flex: 1; font-size: 14px; }",
     ".wg-sync .wg-btn.wg-act { padding: 8px 12px; min-height: 40px; border: 1px solid var(--border); }",
+    ".wg-phone { display: flex; align-items: center; gap: 12px; }",
+    ".wg-qr { flex: none; width: 112px; height: 112px; border-radius: 8px; background: #fff; }",
+    ".wg-qr-wait { flex: none; width: 112px; height: 112px; border-radius: 8px; background: var(--accent-soft, rgba(127,127,127,.2)); }",
+    ".wg-phone-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }",
+    ".wg-phone-txt .wg-what { font-size: 14px; font-weight: 700; }",
+    ".wg-phone-url { font-size: 13px; color: var(--accent); overflow-wrap: anywhere; }",
+    ".wg-phone-hint { font-size: 12px; color: var(--text-dim); line-height: 1.4; }",
+    ".wg-phone .wg-btn.wg-act { padding: 6px 12px; min-height: 40px; border: 1px solid var(--border); }",
     ".wg-bar { height: 6px; border-radius: 3px; background: var(--accent-soft, rgba(127,127,127,.25)); overflow: hidden; margin: 0 6px 6px; }",
     ".wg-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }",
     ".wg-step { align-items: center; }",
@@ -268,8 +290,8 @@
   var IC_TICK = SV.replace('stroke-width="2"', 'stroke-width="3"') + '<path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   // First steps: the label of each step.
   var STEP_TEXT = {
-    note: "wg.start.note", task: "wg.start.task", wall: "wg.start.wall", icons: "wg.start.icons",
-    sync: "wg.start.sync", assistant: "wg.start.assistant", install: "wg.start.install"
+    note: "wg.start.note", task: "wg.start.task", wall: "wg.start.wall", icons: "wg.start.icons", import: "wg.start.import",
+    sync: "wg.start.sync", phone: "wg.start.phone", assistant: "wg.start.assistant", install: "wg.start.install"
   };
 
   function el(tag, cls, text) {
@@ -695,6 +717,24 @@
         });
       });
     },
+    // PHONE-1: the address of this orOS as a QR code (no secret in it)
+    // and one line on sync. The shell gives the address and, once its
+    // QR encoder (qr/qr-encode.js) is loaded, the dark modules.
+    phone: function (c) {
+      var url = String(call(function () { return host.phoneUrl(); }) || "");
+      var q = call(function () { return host.qr(url); });
+      fill(c, (q ? "q" : "-") + host.lang() + url, function (b) {
+        var r = el("div", "wg-phone");
+        r.appendChild(q ? qrSvg(q) : el("div", "wg-qr-wait"));
+        var txt = el("div", "wg-phone-txt");
+        txt.appendChild(el("span", "wg-what", t("wg.phone.scan")));
+        txt.appendChild(el("span", "wg-phone-url", url.replace(/^https?:\/\//, "").replace(/\/$/, "")));
+        txt.appendChild(el("span", "wg-phone-hint", t("wg.phone.sync")));
+        txt.appendChild(btn("wg-act", t("qs.settings"), function () { host.settings("sync"); }));
+        r.appendChild(txt);
+        b.appendChild(r);
+      });
+    },
     sync: function (c) {
       var s = call(function () { return host.sync.state(); }) || "off";
       var Q = root.orosQS && root.orosQS.model;
@@ -710,6 +750,37 @@
       });
     }
   };
+  // The QR as SVG: one path, a run of dark modules per "h" (no markup
+  // from outside; the numbers come from the encoder). 4 modules of quiet
+  // zone; dark on white in every theme, so any camera reads it.
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function qrPath(mods) {
+    var d = "";
+    for (var y = 0; y < mods.length; y++) {
+      var row = mods[y], x = 0;
+      while (x < row.length) {
+        if (!row[x]) { x++; continue; }
+        var s = x;
+        while (x < row.length && row[x]) x++;
+        d += "M" + (s + 4) + " " + (y + 4) + "h" + (x - s) + "v1h-" + (x - s) + "z";
+      }
+    }
+    return d;
+  }
+  function qrSvg(mods) {
+    var n = mods.length + 8;
+    var s = doc.createElementNS(SVGNS, "svg");
+    s.setAttribute("class", "wg-qr");
+    s.setAttribute("viewBox", "0 0 " + n + " " + n);
+    s.setAttribute("role", "img");
+    s.setAttribute("aria-label", t("wg.phone.qr"));
+    s.setAttribute("shape-rendering", "crispEdges");
+    var p = doc.createElementNS(SVGNS, "path");
+    p.setAttribute("d", qrPath(mods));
+    p.setAttribute("fill", "#000");
+    s.appendChild(p);
+    return s;
+  }
   function shiftMonth(c, n) {
     var d = new Date(calAt.y, calAt.m + n, 1);
     calAt = { y: d.getFullYear(), m: d.getMonth() };

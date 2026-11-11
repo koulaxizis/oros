@@ -105,6 +105,18 @@ Only partners linked to a Revenue Splitter beneficiary (`Link beneficiary` on th
 
 Sending needs a WooCommerce key with Read/Write rights. Add it as the shop's second key in Settings › Connected services › `Write key for contracts`; the first key can stay Read only. With a write key every change to a contract is sent by itself a few seconds later. A very long list (over about 256 KB) cannot go through the orOS relay: it is sent only straight to the shop, so the shop must accept orOS from the browser (CORS), and CRM says so when it does not.
 
+### The write key, step by step
+1. In WordPress, sign in as an administrator (or a Shop manager who can manage WooCommerce): the key can do what that user can.
+2. Open WooCommerce › Settings › Advanced › REST API › `Add key`.
+3. Description: for example "orOS contracts". User: you. Permissions: `Read/Write`. Press `Generate API key`.
+4. Copy the `Consumer key` (it starts with ck_) and the `Consumer secret` (cs_) now: WooCommerce shows the secret only once. If you lose it, revoke that key and make a new one.
+5. In orOS open Settings › Connected services, open your shop, and under `Write key for contracts` press `Add a write key`. Paste both, then `Save keys`.
+6. Your first key can stay Read only: orOS uses the write key only to send the contracts list and to mark renewal requests. If your first key is already Read/Write you can skip all this; CRM then uses it.
+7. Other devices: with `Use these keys on all my devices` on (the default) the write key goes with the other keys, encrypted, through sync. Otherwise enter it on each device.
+8. Check it: CRM › `Contracts` › `Send to the shop…` says that the shop has a write key. Press `Send` (it shows how many contracts go).
+
+If CRM says the shop refused to save the contracts, the key is Read only or its user cannot manage WooCommerce: make a new key with `Read/Write`. To stop it, `Revoke` the key in WooCommerce › REST API and press `Remove the write key` in orOS. Never send the keys to anyone; orOS keeps them encrypted on your devices.
+
 When an author asks for a renewal in the Author Portal, CRM brings the request in while it is open (at the start and every ten minutes): a follow-up `Renewal request` for today on the partner, and a note with the author's message. The shop then marks the request as taken, so it never comes twice. A request whose name or contract CRM cannot match is listed in the `Send to the shop…` window.
 
 ## Update from online sources

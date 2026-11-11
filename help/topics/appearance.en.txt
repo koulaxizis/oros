@@ -24,6 +24,8 @@ Cards on the desktop that show your day at a glance: `Clock`, `Calendar` (a mont
 ### First steps
 When you start orOS for the first time, a `First steps` card waits on the desktop: write your first note, add a task, choose a wallpaper or a Living land, pick an icon pack, turn on sync, meet the Assistant and, where your browser offers it, install orOS as an app. Tap a line to go there. Each line ticks itself once you have really done it, so there is nothing to tick by hand. `Hide` takes the card away; when everything is done it says so and leaves the next day. You can bring it back with `Widgets…`.
 
+On a computer, First steps also has `Use orOS on your phone too`. It adds an `On your phone` card with a QR code: scan it with the phone's camera to open orOS there. The code holds only the address of orOS (this site, or useoros.online when orOS runs from a local copy), never your data. To see the same things on both, turn on sync on each device with the same passphrase. The card can be removed like any widget.
+
 ## Greeting at the start
 The first time you start orOS each day, a short greeting appears over the desktop: good morning, afternoon or evening (with your name, if you set one under `Your name`), the date and, when [Today](app:today) has something, how many things are due and late. Tap that line to open Today. The greeting goes by itself after a few seconds, or when you tap anywhere, press a key or open an app. It never shows over an app or on your very first day. Turn it off in `Settings`, under `Appearance`, with `Greet me when orOS starts`; this stays on this device.
 
@@ -32,6 +34,8 @@ If you are new to orOS, the first time you open each app a short tip from its gu
 
 ### An example in an empty app
 When To-Do, Kanban, Bookmarks, Invoices, Contacts, Budget, Notes or Meal Planner has nothing in it yet, its empty screen also has `Show me an example`. It shows a few made-up items, so you can see what the app looks like in use. The example is only a picture: nothing is saved, nothing syncs and your data is not touched. `Start my own` closes it and starts your first item; `Close` just closes it.
+
+To-Do and Kanban also offer a few ready lists under `Or start from a template:`. In To-Do, `Packing list` or `Moving house` makes a new list with its tasks already in it; in Kanban, `Trip`, `Moving house` or `Personal` makes a board with its columns and a few cards. These are real items you can change or delete, and `Undo` takes them back.
 
 ## Language
 orOS speaks English and Greek. The `EL` / `EN` button in the top bar switches to the other language, and so does [[Ctrl+Alt+Shift+L]].
@@ -67,7 +71,7 @@ The first tile, `Mine`, is a wallpaper you make yourself.
 Each device draws your wallpaper to fit its own screen, so it stays sharp on a phone and on a big monitor.
 
 ### Icon packs
-Settings › Appearance › `Icons` changes how app icons look on the desktop, in the Dock, the menu and search. `Classic` is the orOS look. `Colourful` gives every menu category its own colour, `Glass` makes see-through frosted tiles, `Thin` drops the tiles for a fine line, `Paper` puts a dark ink icon on a cream card, and `Round` uses circles in your system colour. The pack you pick is the same on all your devices. High contrast always shows `Classic`.
+Settings › Appearance › `Icons` changes how app icons look on the desktop, in the Dock, the menu and search. `Classic` is the orOS look. `Colourful` gives every menu category its own colour, `Colour mix` gives the icons different colours from each other (on the desktop and in the Dock they follow their place, so neighbours always differ), `Rainbow` puts each icon on a dark tile with a rainbow rim and a glyph in a bright colour that runs through the spectrum, `Glass` makes see-through frosted tiles, `Thin` drops the tiles for a fine line, `Paper` puts a dark ink icon on a cream card, and `Round` uses circles in your system colour. The pack you pick is the same on all your devices. High contrast always shows `Classic`.
 
 ### Living land
 `Living land` (the second tile) draws a small landscape around what is on your desktop: your shortcuts, widgets and sticky notes stand on islands, and the gaps between them become water. Add or remove a shortcut, move a sticky note or change your widgets, and the land re-forms and fades in. Its colours follow your skin and your light or dark theme.

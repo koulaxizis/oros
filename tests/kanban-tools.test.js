@@ -195,7 +195,7 @@ test("templates: save a board as one, new board from it; built-ins in EN and EL"
   assert.equal(nb.columns[0].cards.length, 2);
   ["en", "el"].forEach((lang) => {
     const list = T.builtinList(lang);
-    assert.deepEqual(list.map((x) => x.key), ["personal", "sprint", "content"]);
+    assert.deepEqual(list.map((x) => x.key), ["personal", "sprint", "content", "trip", "move"]);
     list.forEach((x) => {
       const src = T.builtinBoard(x.key, lang);
       const made = T.boardFromTemplate(src, uid, NOW, src.name);

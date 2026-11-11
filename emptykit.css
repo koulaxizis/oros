@@ -124,3 +124,30 @@ html[data-oros-contrast="high"] .ek > .ek-art { background: none; box-shadow: no
 html[data-oros-contrast="high"] .ek > .ek-ex { background: none; border: 2px solid currentColor; }
 html[data-oros-contrast="high"] .ek .ek-ex-row { background: none; border: 1px solid currentColor; }
 @media (prefers-reduced-motion: reduce) { .ek > .ek-ex { animation: none; } }
+
+/* Templates (TPL-1): small buttons under the main ones. */
+.ek > .ek-tpl {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 14px;
+  width: 100%;
+}
+.ek .ek-tpl-lab { width: 100%; font-size: 13px; color: var(--text-dim); }
+.ek .ek-chip {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border, rgba(127, 127, 127, 0.4));
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.ek .ek-chip:hover { border-color: var(--accent); }
+.ek .ek-chip:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.ek.ek-ex-on > .ek-tpl { display: none; }
+html[data-oros-contrast="high"] .ek .ek-chip { border: 2px solid currentColor; }

@@ -282,7 +282,7 @@
     host.appendChild(c);
   }
 
-  // Icon packs (ICONPACK-1): six previews, the same three sample apps
+  // Icon packs (ICONPACK-1, ICONPACK-2): eight previews, the same three sample apps
   // in each; the look comes from ../iconpacks.css (.ip-prev[data-pack]).
   function secIcons(host, ic) {
     var c = card(t("a.icons"), "icons");
@@ -299,9 +299,10 @@
       b.setAttribute("data-k", "icons:" + id);
       var row3 = el("span", "ip-tiles");
       row3.setAttribute("aria-hidden", "true");
-      [["ip_notes", "office"], ["ip_music", "sound"], ["ip_chess", "games"]].forEach(function (x) {
+      [["ip_notes", "office", "2"], ["ip_music", "sound", "7"], ["ip_chess", "games", "10"]].forEach(function (x) {
         var id = x[0], tl = el("span", "ld-tile");
         tl.setAttribute("data-cat", x[1]);
+        tl.setAttribute("data-hue", x[2]);
         tl.innerHTML = ICON[id];                     // static icon
         row3.appendChild(tl);
       });

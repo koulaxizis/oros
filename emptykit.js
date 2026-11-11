@@ -16,6 +16,9 @@
 //   • a main button (.ek-act) when `action` is given (label is text;
 //     run is called on click). Calling dress() again updates the
 //     label and the handler, never adds a second button.
+//   • `starters: [{ label, run }]` (TPL-1): a row "Or start from a
+//     template:" of small buttons; the app writes real data only when
+//     one is tapped, through its own save and Undo.
 //   • in the apps of EX_APPS, a second button "Show me an example"
 //     (.ek-act.ek-alt, EXAMPLE-1, wave 3): it loads emptykit-ex.js
 //     the first time and paints its made-up rows as a read-only
@@ -30,15 +33,15 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
 
   // Apps with a made-up example in emptykit-ex.js (same list there).
   var EX_APPS = ["todo", "kanban", "bookmarks", "invoices", "contacts", "budget", "notes", "meals"];
 
   var STR = {
-    en: { show: "Show me an example", note: "This is an example. Nothing is saved.", mine: "Start my own", close: "Close", label: "Example" },
-    el: { show: "Δείξε μου ένα παράδειγμα", note: "Αυτό είναι παράδειγμα. Δεν αποθηκεύεται τίποτα.", mine: "Ξεκινώ το δικό μου", close: "Κλείσιμο", label: "Παράδειγμα" },
-    de: { show: "Zeig mir ein Beispiel", note: "Das ist ein Beispiel. Nichts wird gespeichert.", mine: "Mit eigenem beginnen", close: "Schließen", label: "Beispiel" }
+    en: { show: "Show me an example", note: "This is an example. Nothing is saved.", mine: "Start my own", close: "Close", label: "Example", tpl: "Or start from a template:" },
+    el: { show: "Δείξε μου ένα παράδειγμα", note: "Αυτό είναι παράδειγμα. Δεν αποθηκεύεται τίποτα.", mine: "Ξεκινώ το δικό μου", close: "Κλείσιμο", label: "Παράδειγμα", tpl: "Ή ξεκίνα από ένα πρότυπο:" },
+    de: { show: "Zeig mir ein Beispiel", note: "Das ist ein Beispiel. Nichts wird gespeichert.", mine: "Mit eigenem beginnen", close: "Schließen", label: "Beispiel", tpl: "Oder beginne mit einer Vorlage:" }
   };
 
   // emptykit-ex.js next to this file, with the same ?v=.
@@ -98,7 +101,7 @@
     }
     var kids = Array.prototype.slice.call(el.children);
     var r = roles(kids.map(function (c) {
-      return { kit: /(^|\s)ek-(art|act|acts)(\s|$)/.test(c.className || "") || c.tagName === "svg" || c.tagName === "SVG" };
+      return { kit: /(^|\s)ek-(art|act|acts|tpl|ex)(\s|$)/.test(c.className || "") || c.tagName === "svg" || c.tagName === "SVG" };
     }));
     if (r.title !== -1) kids[r.title].classList.add("ek-title");
     if (r.text !== -1) kids[r.text].classList.add("ek-text");
@@ -133,7 +136,37 @@
         x.__ekApp = opts.app;
       }
     }
+    if (Array.isArray(opts.starters)) starters(el, opts.starters);
     return el;
+  }
+
+  // Templates (TPL-1): a row of small buttons under the main ones. Each
+  // starter is { label, run }: the app's own code writes the real data
+  // (through its own save and its own Undo) only when one is tapped.
+  // A second dress() replaces the row (labels follow the language).
+  function starters(el, list) {
+    var doc = el.ownerDocument;
+    var old = el.querySelector(":scope > .ek-tpl");
+    if (old) old.remove();
+    var ok = list.filter(function (x) { return x && x.label && typeof x.run === "function"; }).slice(0, 4);
+    if (!ok.length) return;
+    var box = doc.createElement("div");
+    box.className = "ek-tpl";
+    var lab = doc.createElement("span");
+    lab.className = "ek-tpl-lab";
+    lab.textContent = STR[lang()].tpl;
+    box.appendChild(lab);
+    ok.forEach(function (x) {
+      var b = doc.createElement("button");
+      b.type = "button";
+      b.className = "ek-chip";
+      b.textContent = String(x.label);
+      b.addEventListener("click", function (e) { e.stopPropagation(); x.run(); });
+      box.appendChild(b);
+    });
+    var acts = el.querySelector(":scope > .ek-acts");
+    if (acts && acts.nextSibling) el.insertBefore(box, acts.nextSibling);
+    else el.appendChild(box);
   }
 
   function exampleLoad(doc, done) {

@@ -156,7 +156,8 @@ test("Openverse answer -> songs; Jamendo ones stream only; closed ones dropped",
 
 test("ccMixter answer -> songs over https, user from the page", () => {
   const u = O.ccUrl({ tags: "remix", page: 2 });
-  assert.equal(u, "https://ccmixter.org/api/query?f=json&limit=20&offset=20&sort=rank&ord=desc&tags=remix");
+  assert.equal(u, "https://ccmixter.org/api/query?f=json&limit=10&offset=10&sort=rank&ord=desc&tags=remix");
+  assert.equal(O.ccUrl({ q: "x", page: 3, limit: 5, skip: 5 }), "https://ccmixter.org/api/query?f=json&limit=5&offset=25&sort=rank&ord=desc&search=x&search_type=all");
   assert.match(O.ccUrl({ q: "piano", user: "spinmeister<x>" }), /&search=piano&search_type=all&user=spinmeisterx$/);
   const j = [
     { upload_id: 61234, upload_name: "Morning Remix", user_name: "spinmeister", user_real_name: "Spin Meister",
@@ -318,4 +319,30 @@ test("MU-MOOD2: a mood has fallback Jamendo queries, and an empty answer is not 
     assert.equal((await O.jmTracks(o)).tracks.length, 1);
     assert.equal(n, 2, "a full answer is cached");
   } finally { globalThis.fetch = saved; }
+});
+
+test("ccMixter page that does not come is asked again as two halves (MU-CC1)", async () => {
+  const song = (id) => ({ upload_id: id, upload_name: "S" + id, user_name: "u", license_url: "http://creativecommons.org/licenses/by/3.0/",
+    file_page_url: "http://ccmixter.org/files/u/" + id, files: [{ file_name: "a.mp3", download_url: "http://ccmixter.org/content/u/" + id + ".mp3", file_format_info: { mime_type: "audio/mpeg" } }] });
+  const asked = [];
+  const prev = globalThis.orosFeedsFetch;
+  globalThis.orosFeedsFetch = { fetchOne(url) {
+    asked.push(url);
+    const lim = +/limit=(\d+)/.exec(url)[1], off = +/offset=(\d+)/.exec(url)[1];
+    if (lim === 10) return Promise.reject({ code: "network" });          // the whole page is cut short
+    if (off === 5) return Promise.reject({ code: "network" });           // and so is the second half
+    return Promise.resolve({ status: 200, text: JSON.stringify([1, 2, 3, 4, 5].map((i) => song(off + i))) });
+  } };
+  try {
+    const r = await O.ccSearch({ q: "MU-CC1 halves" });
+    assert.equal(asked.length, 3);
+    assert.match(asked[1], /limit=5&offset=0&/); assert.match(asked[2], /limit=5&offset=5&/);
+    assert.equal(r.tracks.length, 5); assert.equal(r.more, false);
+    asked.length = 0;
+    globalThis.orosFeedsFetch = { fetchOne() { asked.push(1); return Promise.reject({ code: "busy" }); } };
+    await assert.rejects(O.ccSearch({ q: "MU-CC1 busy" }), (e) => e.code === "busy");
+    assert.equal(asked.length, 1);
+    globalThis.orosFeedsFetch = { fetchOne() { return Promise.reject({ code: "network" }); } };
+    await assert.rejects(O.ccSearch({ q: "MU-CC1 none" }), (e) => e.code === "network");
+  } finally { globalThis.orosFeedsFetch = prev; }
 });
