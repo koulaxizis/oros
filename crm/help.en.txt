@@ -4,7 +4,7 @@ CRM is a small customer book for a freelancer or a small business: your customer
 ## Getting started
 Tap or click `Add your first customer`. Pick `Company` or `Person`, write the name and choose a `Status`: `Lead` (not a customer yet), `Active` or `Past`. Under `Billing details` you can keep the `VAT ID (ΑΦΜ)`, `Tax office (ΔΟΥ)`, `Profession`, `Address` and `Country`. For a Greek VAT ID the app checks the check digit and warns when another customer already has it.
 
-The tabs are `Customers`, `Pipeline`, `Agenda` and `Dashboard`. On a phone they sit at the bottom of the screen.
+The tabs are `Customers`, `Pipeline`, `Agenda`, `Contracts` and `Dashboard`. On a phone they sit at the bottom of the screen.
 
 ## Customers and people
 The list has a search field, a sort menu and filters: `Leads`, `Active`, `Past`, `Starred`, `Not contacted` and your tags. Tap a customer to open the page with `Call`, `Email`, `Map`, `Log contact`, `Follow-up`, `Deal`, `Invoice` and `Quote`.
@@ -33,7 +33,7 @@ Under `Settings` › `Pipeline stages` you can rename a stage, change its defaul
 The `Documents` tab of a customer lists their invoices with what was invoiced, paid and is still unpaid, and the quotes made for a client with the same name or VAT ID. Tap one to open it. CRM only reads them; you change them in their own app.
 
 ## Dashboard
-Open pipeline, won this month and this year, win rate, late follow-ups, customers you have not contacted for a while, new leads and, once you invoice from CRM, what your customers still owe. Tap a tile to see the list behind it.
+With contracts, the top shows how many are in force, how many need a decision (ended or ending soon) and the next end day, then the first five that need a decision with their quick actions. The sales tiles (open pipeline, won this month and this year, win rate) and the stage bars show only once you have a deal in `Pipeline`, a possible job you follow until it is won or lost. Then come late follow-ups, customers you have not contacted for a while, new leads and, once you invoice from CRM, what your customers still owe. Tap a tile to see the list behind it.
 
 ## Sync and backup
 Customers, people, history, follow-ups, deals, tags and the currency sync between your devices through [orOS sync](help:t/sync). The open tab, filters and sort stay on each device.

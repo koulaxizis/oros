@@ -678,6 +678,20 @@
         return oa - ob || cmpStr(a.ctr.to || "9999", b.ctr.to || "9999") || cmpStr(fold(a.ctr.t), fold(b.ctr.t)) || cmpStr(a.ctr.id, b.ctr.id);
       });
   }
+  // Counts for the Dashboard: running (on + soon), need a decision (and
+  // of those, ended / ending soon), ended, ended by agreement, and the next end day still
+  // ahead (today included) of a contract that is not ended by agreement.
+  function ctrDash(data, today) {
+    var all = ctrAll(data, today), s = { n: all.length, on: 0, needs: 0, needEnded: 0, needSoon: 0, ended: 0, term: 0, next: null };
+    all.forEach(function (r) {
+      if (r.st === "on" || r.st === "soon") s.on++;
+      if (r.st === "ended") s.ended++;
+      if (r.st === "term") s.term++;
+      if (r.needs) { s.needs++; if (r.st === "ended") s.needEnded++; else s.needSoon++; }
+      if (r.st !== "term" && r.ctr.to && r.ctr.to >= today && (!s.next || r.ctr.to < s.next.ctr.to)) s.next = r;
+    });
+    return s;
+  }
   // Publishing titles ({ id, t, ppl: [{ n }] }) → the title a contract
   // is about: its own link, else the one title with the same name
   // (folded; by the partner's Publishing name when several have it).
@@ -1475,7 +1489,7 @@
     ITEM_KINDS: ITEM_KINDS, ITEM_APP: ITEM_APP, normIx: normIx, normItems: normItems, itemsOf: itemsOf, itemKey: itemKey, itemTarget: itemTarget, itemsRow: itemsRow,
     normRsl: normRsl, CS_FIELDS: CS_FIELDS, normCs: normCs, csJoin: csJoin, rsOf: rsOf, rsRow: rsRow, normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
     SOON_DAYS: SOON_DAYS, CX_KINDS: CX_KINDS, normCx: normCx, normCset: normCset, cxOf: cxOf, cxRow: cxRow, ctrFmt: ctrFmt, ctrBook: ctrBook, addYears: addYears,
-    ctrFupId: ctrFupId, ctrSnooze: ctrSnooze, ctrFupDay: ctrFupDay, ctrInfo: ctrInfo, ctrAll: ctrAll, ctrTitle: ctrTitle, ctrForTitle: ctrForTitle,
+    ctrFupId: ctrFupId, ctrSnooze: ctrSnooze, ctrFupDay: ctrFupDay, ctrInfo: ctrInfo, ctrAll: ctrAll, ctrDash: ctrDash, ctrTitle: ctrTitle, ctrForTitle: ctrForTitle,
     ctrHeal: ctrHeal, ctrEndsOn: ctrEndsOn, portalPayload: portalPayload, portalPlan: portalPlan,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove
