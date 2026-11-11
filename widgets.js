@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — widgets.js (desktop widgets, v1.0.0)
+// orOS — widgets.js (desktop widgets, v1.1.0)
 // ------------------------------------------------------------
 // A shell component, like launcher.js and qsettings.js: it runs IN the
 // shell document and keeps its own device-local storage. shell.js calls
@@ -12,6 +12,14 @@
 //     Today summary; a row → its app), Weather (the top bar's weather;
 //     → Weather), Playing (Play / Pause for the shell's sounds) and Sync
 //     (its state, Sync now).
+//   • First steps (START-1, 1.1.0): a few first things to do, each
+//     ticked by itself from what the person has really done (a note, a
+//     task, a wallpaper, an icon pack, sync, the Assistant, installing);
+//     a row opens the place. Put on the desktop once for a new user
+//     (firstRun, from the shell's first-run tour); "Hide" or the last
+//     tick takes it away (on the day after "All done"). Device-local
+//     oros-start: { v:1, done:[ids], all:"YYYY-MM-DD" }: a step once
+//     done stays done; nothing else is kept and nothing is synced.
 //   • Wide screens (≥ 760 px): a column at the right of the desktop;
 //     the icon grid keeps clear of it (body.wg-col). Narrow screens and
 //     phones: a row of cards at the top of the desktop that scrolls
@@ -34,9 +42,13 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var KEY = "oros-widgets";
-  var KINDS = ["clock", "calendar", "today", "weather", "media", "sync"];
+  var START_KEY = "oros-start";
+  // First steps, in order. "install" only where the browser offers it
+  // or orOS already runs installed.
+  var STEPS = ["note", "task", "wall", "icons", "sync", "assistant", "install"];
+  var KINDS = ["start", "clock", "calendar", "today", "weather", "media", "sync"];
   var DEFAULT = ["clock", "calendar", "today", "weather"];
   var WIDE = 760;
 
@@ -96,8 +108,42 @@
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   }
 
-  var model = { VER: VER, KINDS: KINDS, DEFAULT: DEFAULT, norm: norm, parse: parse, listOf: listOf,
-                toggle: toggle, move: move, monthGrid: monthGrid, ymdOf: ymdOf };
+  // First steps (pure). The stored record: the steps once done.
+  function startNorm(v) {
+    var out = { v: 1, done: [], all: "" };
+    if (!v || typeof v !== "object") return out;
+    if (Array.isArray(v.done)) v.done.forEach(function (k) { if (STEPS.indexOf(k) !== -1 && out.done.indexOf(k) === -1) out.done.push(k); });
+    if (typeof v.all === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v.all)) out.all = v.all;
+    return out;
+  }
+  // facts: { note, task, wall, icons, sync, assistant: true|false,
+  // install: true (installed) | false (can install) | "no" (cannot) }.
+  // A step is done when its fact is true now or it was done before.
+  function startRows(facts, rec) {
+    facts = facts || {};
+    var done = (rec && rec.done) || [];
+    return STEPS.filter(function (k) { return k !== "install" || facts.install === true || facts.install === false; })
+      .map(function (k) { return { id: k, done: facts[k] === true || done.indexOf(k) !== -1 }; });
+  }
+  // What to keep after a paint: the newly done steps join the record;
+  // the day everything is done is noted once.
+  function startNext(rec, rows, ymd) {
+    var out = startNorm(rec);
+    rows.forEach(function (r) { if (r.done && out.done.indexOf(r.id) === -1) out.done.push(r.id); });
+    if (rows.length && rows.every(function (r) { return r.done; }) && !out.all) out.all = ymd;
+    return out;
+  }
+  // "All done" stays for the rest of that day; the card goes after.
+  function startGone(rec, ymd) { return !!(rec && rec.all && rec.all < ymd); }
+  // A new user's first list: First steps, then this screen's default.
+  function firstList(stored, wide, phone) {
+    if (stored) return null;               // a list is set already: leave it
+    return ["start"].concat(listOf(null, wide, phone));
+  }
+
+  var model = { VER: VER, KINDS: KINDS, DEFAULT: DEFAULT, STEPS: STEPS, norm: norm, parse: parse, listOf: listOf,
+                toggle: toggle, move: move, monthGrid: monthGrid, ymdOf: ymdOf,
+                startNorm: startNorm, startRows: startRows, startNext: startNext, startGone: startGone, firstList: firstList };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -111,6 +157,17 @@
 
   function stored() {
     try { return parse(localStorage.getItem(KEY)); } catch (e) { return null; }
+  }
+  function startRead() {
+    try { return startNorm(JSON.parse(localStorage.getItem(START_KEY) || "null")); } catch (e) { return startNorm(null); }
+  }
+  function startWrite(rec) {
+    try { localStorage.setItem(START_KEY, JSON.stringify(rec)); } catch (e) {}
+  }
+  // Shown again by hand: a past "All done" no longer takes it away.
+  function startReopen() {
+    var rec = startRead();
+    if (rec.all) { rec.all = ""; startWrite(rec); }
   }
   function phone() { return call(function () { return host.phone(); }) === true; }
   function wide() { return (root.innerWidth || 0) >= WIDE; }
@@ -174,6 +231,18 @@
     ".wg-sync { display: flex; align-items: center; gap: 10px; }",
     ".wg-sync .wg-what { flex: 1; font-size: 14px; }",
     ".wg-sync .wg-btn.wg-act { padding: 8px 12px; min-height: 40px; border: 1px solid var(--border); }",
+    ".wg-bar { height: 6px; border-radius: 3px; background: var(--accent-soft, rgba(127,127,127,.25)); overflow: hidden; margin: 0 6px 6px; }",
+    ".wg-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }",
+    ".wg-step { align-items: center; }",
+    ".wg-step .wg-chk { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); box-sizing: border-box;",
+    "  display: inline-flex; align-items: center; justify-content: center; }",
+    ".wg-step .wg-chk svg { width: 14px; height: 14px; }",
+    ".wg-step.wg-ok .wg-chk { background: var(--accent); border-color: var(--accent); color: var(--wg-on, #fff); }",
+    ".wg-step.wg-ok .wg-what { color: var(--text-dim); }",
+    ".wg-start-foot { display: flex; align-items: center; gap: 8px; padding: 6px 6px 0; }",
+    ".wg-start-foot span { flex: 1; font-size: 12px; color: var(--text-dim); }",
+    ".wg-start-foot .wg-btn { padding: 6px 10px; min-height: 36px; font-size: 13px; color: var(--text-dim); }",
+    ".wg-alldone { font-size: 15px; font-weight: 700; color: var(--text); padding: 8px 6px; }",
     ".wg-menu { position: fixed; z-index: 1300; min-width: 180px; padding: 6px; border-radius: 12px; background: var(--panel-bg, var(--bg));",
     "  border: 1px solid var(--border); box-shadow: 0 8px 26px var(--shadow, rgba(0,0,0,.4)); }",
     ".wg-menu button { display: block; width: 100%; text-align: left; min-height: 40px; padding: 0 12px; }",
@@ -196,6 +265,12 @@
   var IC_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
   var IC_UP = SV + '<path d="M18 15l-6-6-6 6"/></svg>';
   var IC_DOWN = SV + '<path d="M6 9l6 6 6-6"/></svg>';
+  var IC_TICK = SV.replace('stroke-width="2"', 'stroke-width="3"') + '<path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  // First steps: the label of each step.
+  var STEP_TEXT = {
+    note: "wg.start.note", task: "wg.start.task", wall: "wg.start.wall", icons: "wg.start.icons",
+    sync: "wg.start.sync", assistant: "wg.start.assistant", install: "wg.start.install"
+  };
 
   function el(tag, cls, text) {
     var n = doc.createElement(tag);
@@ -392,7 +467,10 @@
       cb.type = "checkbox";
       cb.checked = on;
       cb.setAttribute("data-k", "wg:" + kind);
-      cb.addEventListener("change", function () { save(toggle(list(), kind, cb.checked)); paintPicker(d); focusK(d, "wg:" + kind); });
+      cb.addEventListener("change", function () {
+        if (kind === "start" && cb.checked) startReopen();
+        save(toggle(list(), kind, cb.checked)); paintPicker(d); focusK(d, "wg:" + kind);
+      });
       lab.appendChild(cb);
       lab.appendChild(el("span", null, nameOf(kind)));
       row.appendChild(lab);
@@ -443,7 +521,58 @@
     build(c.body);
   }
 
+  var startFacts = null, startAt = 0;
   var PAINT = {
+    // First steps (START-1). The facts are read again every 5 s at most
+    // (Notes and To-Do are parsed for them), or at once when forced.
+    start: function (c, force) {
+      var S = host.start;
+      var now = Date.now();
+      if (!startFacts || force || now - startAt > 5000) {
+        startFacts = (S && call(function () { return S.facts(); })) || {};
+        startAt = now;
+      }
+      var ymd = ymdOf(new Date()), rec = startRead();
+      if (startGone(rec, ymd)) {                       // "All done" was yesterday: the card goes
+        setTimeout(function () { if (list().indexOf("start") !== -1) save(toggle(list(), "start", false)); }, 0);
+        return;
+      }
+      var rows = startRows(startFacts, rec);
+      var next = startNext(rec, rows, ymd);
+      if (JSON.stringify(next) !== JSON.stringify(rec)) startWrite(next);
+      var n = rows.filter(function (r) { return r.done; }).length;
+      fill(c, JSON.stringify(rows) + host.lang(), function (b) {
+        var hide = btn("", t("wg.start.hide"), function () { save(toggle(list(), "start", false)); });
+        var foot = el("div", "wg-start-foot");
+        if (n === rows.length) {
+          b.appendChild(el("div", "wg-alldone", t("wg.start.all")));
+        } else {
+          var bar = el("div", "wg-bar");
+          bar.setAttribute("aria-hidden", "true");
+          var fillBar = el("span");
+          fillBar.style.width = Math.round(100 * n / Math.max(1, rows.length)) + "%";
+          bar.appendChild(fillBar);
+          b.appendChild(bar);
+          var listEl = el("div", "wg-list");
+          rows.forEach(function (r) {
+            var label = t(STEP_TEXT[r.id]);
+            var row = btn("wg-row wg-step" + (r.done ? " wg-ok" : ""), null, function () {
+              call(function () { S.go(r.id); });
+              setTimeout(function () { startAt = 0; c.key = ""; if (cards.start) PAINT.start(cards.start, true); }, 400);
+            }, label + (r.done ? " · " + t("wg.start.done") : ""));
+            var chk = el("span", "wg-chk");
+            if (r.done) chk.innerHTML = IC_TICK;      // static icon
+            row.appendChild(chk);
+            row.appendChild(el("span", "wg-what", label));
+            listEl.appendChild(row);
+          });
+          b.appendChild(listEl);
+          foot.appendChild(el("span", null, t("wg.start.count").replace("{n}", n).replace("{m}", rows.length)));
+        }
+        foot.appendChild(hide);
+        b.appendChild(foot);
+      });
+    },
     clock: function (c) {
       var now = new Date(), l = loc();
       var time = now.toLocaleTimeString(l, { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -629,7 +758,28 @@
     },
     // Does a shown widget need this data (the shell fetches the weather for it)?
     wants: function (kind) { return !!host && list().indexOf(kind) !== -1; },
-    set: function (kind, on) { if (host && KINDS.indexOf(kind) !== -1) save(toggle(list(), kind, !!on)); },
+    set: function (kind, on) {
+      if (!host || KINDS.indexOf(kind) === -1) return;
+      if (kind === "start" && on) startReopen();
+      save(toggle(list(), kind, !!on));
+    },
+    // START-1: a new user (the shell's first-run tour) gets First steps
+    // on the desktop, before this screen's default cards. A device that
+    // already has a widget list keeps it.
+    firstRun: function () {
+      if (!host) return;
+      var l = firstList(stored(), wide(), phone());
+      if (l) save(l);
+    },
+    // A step done somewhere the facts cannot see (the Assistant opened).
+    did: function (step) {
+      if (STEPS.indexOf(step) === -1) return;
+      var rec = startRead();
+      if (rec.done.indexOf(step) !== -1) return;
+      rec.done.push(step);
+      startWrite(rec);
+      if (cards.start) { cards.start.key = ""; startAt = 0; }
+    },
     refresh: function () { if (!host) return; Object.keys(cards).forEach(function (k) { cards[k].key = ""; }); render(); }
   };
 })(typeof window !== "undefined" ? window : globalThis);

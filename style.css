@@ -1376,6 +1376,50 @@ body {
 
 /* Help phase 3 — first-run tour of the top bar (shell.js startTour).
    The ring's huge shadow dims everything but the button it frames. */
+/* GREET-1: the greeting at the first start of the day (shell.js) */
+#oros-greet {
+  position: fixed;
+  left: 50%;
+  top: 18vh;
+  transform: translateX(-50%);
+  z-index: 8990;                 /* under the tour (9000), splash and toasts */
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  padding: 18px 26px 16px;
+  border-radius: 22px;
+  text-align: center;
+  color: var(--text);
+  background: color-mix(in srgb, var(--panel-bg, var(--bg)) 80%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 36px var(--shadow, rgba(0, 0, 0, 0.35));
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  animation: greet-in .45s ease-out both;
+}
+#oros-greet.out { animation: greet-out .4s ease-in both; }
+#oros-greet.no-motion, #oros-greet.no-motion.out { animation: none; }
+#oros-greet.no-motion.out { display: none; }
+html[data-oros-contrast="high"] #oros-greet { background: var(--panel-bg, var(--bg)); -webkit-backdrop-filter: none; backdrop-filter: none; }
+#oros-greet .greet-hi { font-size: clamp(24px, 6vw, 36px); font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+#oros-greet .greet-date { margin-top: 4px; font-size: 15px; color: var(--text-dim); }
+#oros-greet .greet-date::first-letter { text-transform: uppercase; }
+#oros-greet .greet-today {
+  margin-top: 10px;
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--accent-soft, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+#oros-greet .greet-today:hover, #oros-greet .greet-today:focus-visible { border-color: var(--accent); outline: none; }
+@keyframes greet-in { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes greet-out { from { opacity: 1; } to { opacity: 0; } }
+
 #oros-tour {
   position: fixed;
   inset: 0;

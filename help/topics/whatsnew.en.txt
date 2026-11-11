@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.10.00
+- **A greeting when you start orOS.** The first time you open orOS each day, it says good morning, good afternoon or good evening (with your name, if you set one), shows the date and tells you how many things are due today and how many are late. Tap that line to open Today. It goes away by itself after a few seconds. You can turn it off in Settings › Appearance, under `Your name`.
+- **First steps for new users.** A new `First steps` card on the desktop suggests a few things to try: your first note, a task, a wallpaper, an icon pack, sync, the Assistant and installing orOS. Each line ticks itself once you have really done it. Already using orOS? Add it from `Widgets…` if you like.
+
 ## Version 6.09.00
 - **Icon packs: give your app icons a new look.** In Settings › Appearance › `Icons` pick `Classic`, `Colourful` (a colour for every kind of app), `Glass` (frosted see-through tiles), `Thin` (just a fine line), `Paper` (dark ink on a cream card) or `Round` (circles in your system colour). The icons change on the desktop, in the Dock, the menu and search, and the choice follows you to your other devices. High contrast always keeps `Classic`.
 
