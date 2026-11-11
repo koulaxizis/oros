@@ -5,6 +5,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 - **Two new icon packs.** Settings › Appearance › Icons now has `Colour mix`, where the icons have different colours from each other (on the desktop and in the Dock, neighbours never share one), and `Rainbow`, a dark tile with a rainbow rim and icons that run through the colours of the spectrum.
 - **Glass icons read on any wallpaper.** The `Glass` pack now puts a light tint under each tile in a light theme and a dark one in a dark theme, so the icons no longer fade into a light wallpaper (they looked empty in the Dock with Tux).
 
+## Version 6.16.01
+- **ccMixter search works again.** Searching free music in Music no longer ends with `No answer from ccMixter`: ccMixter songs now come 10 at a time, and a page that is slow to come is asked again in two halves.
+
 ## Version 6.16.00
 - **Start from a template.** An empty To-Do or Kanban now offers a few ready starts under `Or start from a template:`: in To-Do a `Packing list` or `Moving house` list with its tasks, in Kanban a `Trip`, `Moving house` or `Personal` board. They are your own items from the first tap, and `Undo` takes them back.
 
