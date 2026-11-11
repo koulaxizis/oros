@@ -1145,6 +1145,8 @@ orosPack("de", "shell", {
  "wg.start.icons": "Wähle ein Symbolpaket",
  "wg.start.sync": "Schalte die Synchronisierung für deine Geräte ein",
  "wg.start.assistant": "Lerne den Assistenten kennen",
+ "wg.start.import": "Bring deine Daten aus einer anderen App mit",
+ "wg.start.import.sec": "bring-deine-daten-aus-anderen-apps-mit",
  "wg.start.install": "Installiere orOS als App",
  "wg.start.count": "{n} von {m} erledigt",
  "wg.start.hide": "Ausblenden",

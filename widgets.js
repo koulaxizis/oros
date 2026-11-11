@@ -42,12 +42,12 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var KEY = "oros-widgets";
   var START_KEY = "oros-start";
   // First steps, in order. "install" only where the browser offers it
   // or orOS already runs installed.
-  var STEPS = ["note", "task", "wall", "icons", "sync", "assistant", "install"];
+  var STEPS = ["note", "task", "wall", "icons", "import", "sync", "assistant", "install"];
   var KINDS = ["start", "clock", "calendar", "today", "weather", "media", "sync"];
   var DEFAULT = ["clock", "calendar", "today", "weather"];
   var WIDE = 760;
@@ -116,7 +116,7 @@
     if (typeof v.all === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v.all)) out.all = v.all;
     return out;
   }
-  // facts: { note, task, wall, icons, sync, assistant: true|false,
+  // facts: { note, task, wall, icons, import, sync, assistant: true|false,
   // install: true (installed) | false (can install) | "no" (cannot) }.
   // A step is done when its fact is true now or it was done before.
   function startRows(facts, rec) {
@@ -268,7 +268,7 @@
   var IC_TICK = SV.replace('stroke-width="2"', 'stroke-width="3"') + '<path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   // First steps: the label of each step.
   var STEP_TEXT = {
-    note: "wg.start.note", task: "wg.start.task", wall: "wg.start.wall", icons: "wg.start.icons",
+    note: "wg.start.note", task: "wg.start.task", wall: "wg.start.wall", icons: "wg.start.icons", import: "wg.start.import",
     sync: "wg.start.sync", assistant: "wg.start.assistant", install: "wg.start.install"
   };
 

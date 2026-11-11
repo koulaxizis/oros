@@ -29,7 +29,7 @@ test("First steps: a kind of its own, first; the default cards are unchanged", (
   assert.equal(W.KINDS[0], "start");
   assert.deepEqual(W.DEFAULT, ["clock", "calendar", "today", "weather"]);
   assert.deepEqual(W.listOf(null, true, false), ["clock", "calendar", "today", "weather"], "no stored list: no First steps for anyone");
-  assert.deepEqual(W.STEPS, ["note", "task", "wall", "icons", "sync", "assistant", "install"]);
+  assert.deepEqual(W.STEPS, ["note", "task", "wall", "icons", "import", "sync", "assistant", "install"]);
 });
 
 test("First steps: a new user gets it before this screen's default; a set list stays", () => {
@@ -42,7 +42,7 @@ test("First steps: a new user gets it before this screen's default; a set list s
 test("First steps: steps tick from the facts or the record; install only where it can be", () => {
   const facts = { note: true, task: false, wall: false, icons: true, sync: false, install: "no" };
   const rows = W.startRows(facts, W.startNorm({ done: ["assistant", "nope"] }));
-  assert.deepEqual(rows.map((r) => r.id), ["note", "task", "wall", "icons", "sync", "assistant"]);
+  assert.deepEqual(rows.map((r) => r.id), ["note", "task", "wall", "icons", "import", "sync", "assistant"]);
   assert.deepEqual(rows.filter((r) => r.done).map((r) => r.id), ["note", "icons", "assistant"]);
   assert.equal(W.startRows({ install: false }, null).some((r) => r.id === "install" && !r.done), true);
   assert.equal(W.startRows({ install: true }, null).some((r) => r.id === "install" && r.done), true);
@@ -56,7 +56,7 @@ test("First steps: a step once done stays done; all done is noted once; the card
   assert.deepEqual(r1.done, ["note"]);
   // The note is deleted later: the step stays ticked.
   assert.equal(W.startRows({ note: false }, r1)[0].done, true);
-  const all = { note: true, task: true, wall: true, icons: true, sync: true, assistant: true, install: "no" };
+  const all = { note: true, task: true, wall: true, icons: true, import: true, sync: true, assistant: true, install: "no" };
   const r2 = W.startNext(r1, W.startRows(all, r1), "2026-11-11");
   assert.equal(r2.all, "2026-11-11");
   assert.equal(W.startNext(r2, W.startRows(all, r2), "2026-11-12").all, "2026-11-11", "noted once");
@@ -85,7 +85,7 @@ test("shell: First steps facts are read-only and go to the right places", () => 
   assert.match(facts, /"oros-todo-data"/);
   assert.match(facts, /install: installed \? true : \(state\.deferredPrompt \? false : "no"\)/);
   const go = cut(SHELL, "startGo");
-  for (const [k, v] of [["note", 'openAppById\\("notes"\\)'], ["task", 'openAppById\\("todo"\\)'], ["assistant", 'openAppById\\("assistant"\\)']]) {
+  for (const [k, v] of [["note", 'openAppById\\("notes"\\)'], ["task", 'openAppById\\("todo"\\)'], ["import", 'if \\(window\\.orosWidgets && window\\.orosWidgets\\.did\\) window\\.orosWidgets\\.did\\("import"\\);\\s+openHelp\\("t\\/data\\/" \\+ window\\.t\\("wg\\.start\\.import\\.sec"\\)\\)'], ["assistant", 'openAppById\\("assistant"\\)']]) {
     assert.match(go, new RegExp('case "' + k + '":\\s+' + v), k);
   }
   assert.match(SHELL, /start: \{ facts: startFacts, go: startGo \}/);
