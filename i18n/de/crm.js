@@ -451,6 +451,7 @@ orosPack("de", "crm", {
  "rc.autoSkip": "{shop} hat {n} Verträge nicht angenommen. Siehe Verträge › An den Shop senden.",
  "rc.done": "Gesendet um {time}: Der Shop hat {n} gespeichert.",
  "rc.err.auth": "{shop} hat das Speichern der Verträge abgelehnt. Senden braucht einen Schlüssel mit Lesen/Schreiben: Füge in Einstellungen › Verbundene Dienste einen Schreibschlüssel hinzu.",
+ "rc.err.big": "Die Liste ist für das orOS-Relay zu lang (etwa 256 KB) und {shop} hat orOS nicht direkt geantwortet. So lange Listen brauchen einen Shop, der orOS direkt aus dem Browser annimmt (CORS für useoros.online).",
  "rc.err.keys": "Die Schlüssel von {shop} sind nicht auf diesem Gerät (Einstellungen › Verbundene Dienste).",
  "rc.err.offline": "Du bist offline. Versuche es erneut, wenn du verbunden bist.",
  "rc.err.other": "{shop} ist nicht erreichbar. Versuche es später erneut.",

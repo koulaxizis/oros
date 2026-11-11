@@ -103,7 +103,7 @@ A contract added by the [Assistant](app:assistant) or orOS Gate gets its reminde
 
 Only partners linked to a Revenue Splitter beneficiary (`Link beneficiary` on the partner's card) and contracts with a start day are sent, under the beneficiary's name; the window says which ones stay behind and why. The shop replaces its whole list with this one, and lists what it did not take (for example a beneficiary name it does not know) right there, so you can fix the name and send again.
 
-Sending needs a WooCommerce key with Read/Write rights. Add it as the shop's second key in Settings › Connected services › `Write key for contracts`; the first key can stay Read only. With a write key every change to a contract is sent by itself a few seconds later.
+Sending needs a WooCommerce key with Read/Write rights. Add it as the shop's second key in Settings › Connected services › `Write key for contracts`; the first key can stay Read only. With a write key every change to a contract is sent by itself a few seconds later. A very long list (over about 256 KB) cannot go through the orOS relay: it is sent only straight to the shop, so the shop must accept orOS from the browser (CORS), and CRM says so when it does not.
 
 When an author asks for a renewal in the Author Portal, CRM brings the request in while it is open (at the start and every ten minutes): a follow-up `Renewal request` for today on the partner, and a note with the author's message. The shop then marks the request as taken, so it never comes twice. A request whose name or contract CRM cannot match is listed in the `Send to the shop…` window.
 

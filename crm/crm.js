@@ -206,6 +206,7 @@
       "rc.err.offline": "You are offline. Try again when you are connected.",
       "rc.err.keys": "The keys of {shop} are not on this device (Settings › Connected services).",
       "rc.err.other": "Could not reach {shop}. Try again later.",
+      "rc.err.big": "The list is too long for the orOS relay (about 256 KB), and {shop} did not answer orOS directly. Lists this long need the shop to accept orOS straight from the browser (CORS for useoros.online on the site).",
       "rc.autoFail": "The contracts were not sent to {shop}. See Contracts › Send to the shop.",
       "rc.autoSkip": "{shop} did not take {n} contracts. See Contracts › Send to the shop.",
       "rc.rqLeft": "Renewal requests for a beneficiary no partner here is linked to:",
@@ -453,6 +454,7 @@
       "rc.err.offline": "Είσαι εκτός σύνδεσης. Δοκίμασε ξανά όταν συνδεθείς.",
       "rc.err.keys": "Τα κλειδιά του {shop} δεν είναι σε αυτή τη συσκευή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
       "rc.err.other": "Δεν βρέθηκε το {shop}. Δοκίμασε ξανά αργότερα.",
+      "rc.err.big": "Η λίστα είναι πολύ μεγάλη για τον αναμεταδότη του orOS (περίπου 256 KB) και το {shop} δεν απάντησε απευθείας στο orOS. Για τόσο μεγάλες λίστες το site πρέπει να δέχεται το orOS απευθείας από τον browser (CORS για το useoros.online).",
       "rc.autoFail": "Τα συμφωνητικά δεν στάλθηκαν στο {shop}. Δες Λήξεις › Αποστολή στο site.",
       "rc.autoSkip": "Το {shop} δεν δέχτηκε {n} συμφωνητικά. Δες Λήξεις › Αποστολή στο site.",
       "rc.rqLeft": "Αιτήματα ανανέωσης για δικαιούχο που δεν είναι συνδεδεμένος με κανέναν συνεργάτη εδώ:",
@@ -1981,7 +1983,7 @@
   function rcErrText(code, shop) {
     var name = shop.name || shop.site;
     if (code === "old") return t("cx.portalOld", { shop: name });
-    if (code === "auth" || code === "offline" || code === "keys") return t("rc.err." + code, { shop: name });
+    if (code === "auth" || code === "offline" || code === "keys" || code === "big") return t("rc.err." + code, { shop: name });
     return t("rc.err.other", { shop: name });
   }
   // after every commit: a shop with a write key gets its list again

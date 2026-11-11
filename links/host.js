@@ -22,10 +22,12 @@
 // firewall), through the orOS relay's "ext" operation (relay/ext.js),
 // which checks the same list and keeps nothing.
 // Errors are codes ("offline", "auth", "notfound", "keys", "relay",
-// "network", "denied", "server", "bad", "unknown"), never text from
+// "network", "denied", "server", "bad", "unknown", "big"), never text from
 // the other side. "unknown" = a write that must not run twice (an
 // invoicing provider's SendInvoices) may or may not have arrived: it is
 // never retried another way; the app looks it up before trying again.
+// "big" = a body too large for the relay (a long contracts list) that the
+// shop did not take straight from the browser.
 // Platforms with fixed hosts (timologisi.online, MailerLite, Mailchimp,
 // Brevo) take a key instead of a site; the relay gets the same env or
 // key, never a host. Mailchimp doesn't answer browsers: always relay.
@@ -525,6 +527,9 @@
   }
   function callWith(a, id, pl, reqs, keys, once) {
     var mode = pl.relayOnly ? "relay" : pl.direct ? "direct" : (prefs().mode[id] || "direct");
+    // RS-CTR: a list too large for the relay only goes straight to the shop
+    var big = !!(L.relayTooBig && L.relayTooBig(a.p, reqs));
+    if (big && mode === "relay") mode = "direct";
     function all(how) {
       return reqs.reduce(function (p, r) {
         return p.then(function (out) { return direct(a, keys, r, how).then(function (x) { out.push(x); return out; }); });
@@ -549,6 +554,7 @@
       return res;
     }, function (e) {
       if (once) throw err("unknown");            // it may have arrived: the app checks before trying again
+      if (big) throw err("big");                 // the relay would refuse it (size, CPU)
       if (e && e.name === "AbortError") throw err("network");
       if (pl.direct) throw err("network");       // a platform the relay doesn't know (Shopify)
       return relay();                            // the browser could not reach it: CORS or firewall

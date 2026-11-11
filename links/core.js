@@ -471,6 +471,14 @@
       return !!r && rules.some(function (w) { return r.m === w[0] && typeof r.path === "string" && w[1].test(r.path.split("?")[0]); });
     });
   }
+  // RS-CTR: a contracts list the relay would refuse (relay/ext.js
+  // RS_RELAY_BYTES, its CPU budget) is sent only straight to the shop
+  function relayTooBig(p, reqs) {
+    return p === "woo" && Array.isArray(reqs) && reqs.some(function (r) {
+      return r && r.m === "POST" && r.path === "/rs/contracts" && r.body !== undefined &&
+        JSON.stringify(r.body).length > RS_RELAY_BYTES;
+    });
+  }
   function keysFor(p, keys, reqs) {
     if (!keys || typeof keys !== "object") return keys;
     if (p !== "woo") return keys;
@@ -647,7 +655,8 @@
   var RS_ID = /^[A-Za-z0-9_-]{1,64}$/, RS_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/,
       RS_FMT = ["print", "ebook", ""], RS_ST = ["on", "soon", "ended", "ended_by_agreement"],
       RS_CTR_KEYS = ["id", "ben", "title", "fmt", "from", "to", "state", "renewed"],
-      RS_RQ_Q = /^(new|oros|closed|all)$/, RS_MAX = 2000, RS_BYTES = 1000000;
+      RS_RQ_Q = /^(new|oros|closed|all)$/, RS_MAX = 2000, RS_BYTES = 1000000,
+      RS_RELAY_BYTES = 256 * 1024;   // = relay/ext.js: larger lists go only straight to the shop
   function rsText(v, max) { return typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f<>]/.test(v); }
   function okRsCtr(x) {
     if (!onlyKeys(x, RS_CTR_KEYS)) return false;
@@ -1050,7 +1059,7 @@
     ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, DB_RE: DB_RE, TOL_TYPES: TOL_TYPES, ODOO: ODOO,
     validHost: validHost, normSite: normSite, siteParts: siteParts,
     normAcct: normAcct, merge: merge, live: live, find: find, checkKeys: checkKeys,
-    extId: extId, checkReq: checkReq, keysFor: keysFor, usesWriteKey: usesWriteKey, utf8Len: utf8Len, RS_MAX: RS_MAX, RS_BYTES: RS_BYTES, SHOPIFY_Q: SHOPIFY_Q, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
+    extId: extId, checkReq: checkReq, keysFor: keysFor, usesWriteKey: usesWriteKey, utf8Len: utf8Len, relayTooBig: relayTooBig, RS_MAX: RS_MAX, RS_BYTES: RS_BYTES, RS_RELAY_BYTES: RS_RELAY_BYTES, SHOPIFY_Q: SHOPIFY_Q, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
     okEmail: okEmail
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

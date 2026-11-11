@@ -81,19 +81,36 @@ test("allowlist: the list may weigh at most 1 MB in UTF-8", () => {
   assert.equal(L.utf8Len("aΩ€😀"), 1 + 2 + 3 + 4);
 });
 
-test("relay: a whole contracts list fits in one ext call", () => {
-  const body = push(Array.from({ length: 1500 }, (_, i) => item({ id: "c" + i, title: "Τίτλος βιβλίου " + i }))).body;
-  const b = { op: "ext", p: "woo", host: "shop.example.gr", base: "", ck: CK, cs: CS, reqs: [{ m: "POST", path: "/rs/contracts", body: JSON.stringify(body) }] };
-  assert.ok(b.reqs[0].body.length > 16 * 1024);
-  assert.equal(X.validExt(b), "");
-  assert.ok(X.extCap("woo") >= 2 * 1024 * 1024);
-  assert.equal(X.extCap("mlite"), X.extCap("brevo"));
+test("relay: a contracts list up to 256 KB goes alone through the relay; anything else keeps the 16 KB cap", () => {
+  const ext = (reqs) => ({ op: "ext", p: "woo", host: "shop.example.gr", base: "", ck: CK, cs: CS, reqs });
+  // a realistic long list: 2000 rows with long titles (~385 bytes each, ~770 KB)
+  const rows = (n, t) => push(Array.from({ length: n }, (_, i) => item({ id: "c" + i, title: (t || "Τίτλος βιβλίου ") + i }))).body;
+  const long = "Η μεγάλη ιστορία ενός μικρού νησιού στο Αιγαίο, τόμος πρώτος: ".repeat(3).slice(0, 190);
+  const mid = { m: "POST", path: "/rs/contracts", body: JSON.stringify(rows(500)) };
+  assert.ok(mid.body.length > 16 * 1024 && mid.body.length <= X.RS_RELAY_BYTES);
+  assert.equal(X.validExt(ext([mid])), "");
+  assert.ok(X.extCap(ext([mid])) >= 2 * X.RS_RELAY_BYTES);
+  // over 256 KB: refused by the relay (Workers CPU), sent only straight to the shop
+  const big = { m: "POST", path: "/rs/contracts", body: JSON.stringify(rows(2000, long)) };
+  assert.ok(big.body.length > X.RS_RELAY_BYTES);
+  assert.equal(X.validExt(ext([big])), "body");
+  assert.equal(L.RS_RELAY_BYTES, X.RS_RELAY_BYTES);
+  assert.equal(L.relayTooBig("woo", [{ m: "POST", path: "/rs/contracts", body: rows(2000, long) }]), true);
+  assert.equal(L.relayTooBig("woo", [{ m: "POST", path: "/rs/contracts", body: rows(500) }]), false);
+  assert.equal(L.relayTooBig("woo", [{ m: "GET", path: "/rs/contracts" }]), false);
+  // the larger cap only alone in its call
+  assert.equal(X.validExt(ext([mid, { m: "GET", path: "/rs/contracts" }])), "body");
+  // every other WooCommerce body keeps the default 16 KB
+  const note = { m: "POST", path: "/orders/5/notes", body: JSON.stringify({ note: "x".repeat(20 * 1024) }) };
+  assert.equal(X.validExt(ext([note])), "body");
+  assert.equal(X.extCap(ext([note])), X.EXT_LIMITS.reqs * X.EXT_LIMITS.reqBytes * 2);
+  assert.equal(X.extCap(ext([{ m: "GET", path: "/rs/contracts" }])), X.EXT_LIMITS.reqs * X.EXT_LIMITS.reqBytes * 2);
 });
 
 test("relay: the contracts push reaches the shop through the whole relay", async () => {
-  const body = push(Array.from({ length: 1200 }, (_, i) => item({ id: "c" + i, title: "Τίτλος βιβλίου " + i }))).body;
+  const body = push(Array.from({ length: 500 }, (_, i) => item({ id: "c" + i, title: "Τίτλος βιβλίου " + i }))).body;
   const calls = [];
-  const f = async (url, init) => { calls.push({ url, init }); return new Response("{\"saved\":1200,\"skipped\":[]}", { status: 200 }); };
+  const f = async (url, init) => { calls.push({ url, init }); return new Response("{\"saved\":500,\"skipped\":[]}", { status: 200 }); };
   const req = new Request("https://relay.example/v1", { method: "POST",
     headers: { Origin: "https://useoros.online", "Content-Type": "application/json", "CF-Connecting-IP": "10.9.0.1" },
     body: JSON.stringify({ op: "ext", p: "woo", host: "shop.example.gr", base: "", ck: WK, cs: WS, reqs: [{ m: "POST", path: "/rs/contracts", body: JSON.stringify(body) }] }) });
@@ -104,7 +121,7 @@ test("relay: the contracts push reaches the shop through the whole relay", async
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, "https://shop.example.gr/wp-json/wc/v3/rs/contracts");
   assert.equal(calls[0].init.method, "POST");
-  assert.equal(JSON.parse(j.data.res[0].body).saved, 1200);
+  assert.equal(JSON.parse(j.data.res[0].body).saved, 500);
 });
 
 test("keys: the write key is optional, both parts or none", () => {

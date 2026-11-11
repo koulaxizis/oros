@@ -78,16 +78,25 @@ const LIMITS_BY = {
   // a batch of subscribers (≤ 250 or 50 per request)
   mlite: { reqBytes: 64 * 1024 },
   mchimp: { reqBytes: 64 * 1024 },
-  brevo: { reqBytes: 64 * 1024 },
-  // RS-CTR: Revenue Splitter's whole contracts list (≤ 2000 rows, ≤ 1 MB
-  // in UTF-8) in one body; every other WooCommerce body is far smaller
-  woo: { reqBytes: 1024 * 1024 }
+  brevo: { reqBytes: 64 * 1024 }
 };
 function lim(p, k) { return LIMITS_BY[p] && LIMITS_BY[p][k] !== undefined ? LIMITS_BY[p][k] : EXT_LIMITS[k]; }
-// The largest "ext" request JSON a platform can need (relay/core.js):
-// its request bodies, escaped once more inside the outer JSON.
-export function extCap(p) {
-  return Math.max(EXT_LIMITS.reqs * EXT_LIMITS.reqBytes, lim(p, "reqBytes")) * 2;
+// RS-CTR: Revenue Splitter's contracts list (POST /rs/contracts) is the
+// one WooCommerce body allowed to be larger, and only alone in its call.
+// Workers Free gives ~10 ms CPU: parsing and re-stringifying ~770 KB takes
+// ~11 ms, so the relay takes at most 256 KB (~600 rows); a larger list goes
+// straight to the shop only (links/host.js, links/core.js relayTooBig).
+export const RS_RELAY_BYTES = 256 * 1024;
+function rsPush(p, reqs) {
+  return p === "woo" && Array.isArray(reqs) && reqs.length === 1 && !!reqs[0] &&
+    reqs[0].m === "POST" && reqs[0].path === "/rs/contracts";
+}
+function bodyCap(p, reqs) { return rsPush(p, reqs) ? RS_RELAY_BYTES : lim(p, "reqBytes"); }
+// The largest "ext" request JSON a call can need (relay/core.js): its
+// request bodies, escaped once more inside the outer JSON.
+export function extCap(b) {
+  const p = b && b.p;
+  return Math.max(EXT_LIMITS.reqs * EXT_LIMITS.reqBytes, bodyCap(p, b && b.reqs)) * 2;
 }
 
 const NUM = /^[0-9]{1,9}$/, PER = /^([1-9]|[1-9][0-9]|100)$/,
@@ -686,7 +695,7 @@ export function validExt(b) {
   if (b.reqs.length > 1 && b.reqs.some(r => r && r.img !== undefined)) return "reqs";
   for (const r of b.reqs) {
     if (r && r.body !== undefined) {
-      if (typeof r.body !== "string" || r.body.length > lim(b.p, "reqBytes")) return "body";
+      if (typeof r.body !== "string" || r.body.length > bodyCap(b.p, b.reqs)) return "body";
       let o;
       try { o = JSON.parse(r.body); } catch (e) { return "body"; }
       const bad = checkExtReq(b.p, { m: r.m, path: r.path, body: o });

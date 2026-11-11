@@ -293,7 +293,7 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   try { b = JSON.parse(text); } catch (e) { return fail(400, "bad-request", "invalid JSON", okOrigin); }
   if (text.length > LIMITS.bodyBytes && !(b && (b.op === "send" || b.op === "draft"))) {
     // provider API calls carry message bodies too, up to their own cap
-    const cap = b && b.op === "papi" ? PAPI_LIMITS.totalBytes : (b && b.op === "ext" ? extCap(b.p) : 0);
+    const cap = b && b.op === "papi" ? PAPI_LIMITS.totalBytes : (b && b.op === "ext" ? extCap(b) : 0);
     if (!(text.length <= cap + LIMITS.bodyBytes)) return fail(413, "bad-request", "request too large", okOrigin);
   }
   const bad = validRequest(b, env, now || Date.now());
