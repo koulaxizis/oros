@@ -30,6 +30,9 @@ The first time you start orOS each day, a short greeting appears over the deskto
 ### A tip when you open an app
 If you are new to orOS, the first time you open each app a short tip from its guide appears: at the bottom of the screen on a computer, under the top bar on a phone. `More in Help` opens that app's full guide, `×` closes it, and it also goes once you start using the app. Each app shows its tip once. `Show a tip the first time I open an app`, in `Settings` under `Appearance`, turns the tips on or off; turning them on again shows every app's tip again. This stays on this device. Games have their own first-game tours instead.
 
+### An example in an empty app
+When To-Do, Kanban, Bookmarks, Invoices, Contacts, Budget, Notes or Meal Planner has nothing in it yet, its empty screen also has `Show me an example`. It shows a few made-up items, so you can see what the app looks like in use. The example is only a picture: nothing is saved, nothing syncs and your data is not touched. `Start my own` closes it and starts your first item; `Close` just closes it.
+
 ## Language
 orOS speaks English and Greek. The `EL` / `EN` button in the top bar switches to the other language, and so does [[Ctrl+Alt+Shift+L]].
 

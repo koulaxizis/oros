@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.12.00
+- **Show me an example.** The friendly empty screens of To-Do, Kanban, Bookmarks, Invoices, Contacts, Budget, Notes and Meal Planner now have `Show me an example`: a few made-up items, so you can see the app in use before you start. Nothing is saved and nothing syncs. `Start my own` closes it and starts your first item.
+
 ## Version 6.11.00
 - **Friendlier empty screens.** When an app has nothing in it yet, you now see its icon, a line about what goes there and one button to start: in To-Do, Kanban, Bookmarks, Invoices, Habits, Contacts, Budget, Notes and Meals.
 - **A tip the first time you open an app.** New to orOS? Each app shows one short tip from its guide the first time you open it, with `More in Help` for the whole guide. Turn tips on or off in Settings › Appearance; turning them on again shows every tip again.
