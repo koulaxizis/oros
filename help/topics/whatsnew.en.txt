@@ -1,9 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 6.18.01
+## Version 6.18.02
 - **Contracts on the CRM Dashboard.** The Dashboard now starts with your contracts: how many are in force, how many need a decision and the next end day, then the first five that need a decision with their quick actions. The sales tiles and the stage bars show only once you have a deal in `Pipeline`, so you no longer see a row of zeros.
 - **Pick the Kanban board for contract cards from a list.** In CRM Settings › Contracts, `Kanban board for contract cards` now lists your boards instead of asking you to type a name.
+
+## Version 6.18.01
+- **Passwords add-on 2.1.** The orOS add-on window is wide enough again (Brave and other Chromium browsers squeezed it). Under the master password there is `Remember on this device`: tick it on your own computer and the add-on opens without asking until you press `Lock`. The copy of your vault now keeps itself fresh: from open orOS tabs every few minutes, and when it is over an hour old the add-on opens orOS in a background tab for one sync and closes it; `Update` does it at once. When a newer add-on is out, its button shows `↑` and its window a `Download` link; unzip the new zip over the old folder (an add-on installed by hand cannot replace itself).
 
 ## Version 6.18.00
 - **Use it on your phone.** On a computer, `First steps` has a new line, `Use orOS on your phone too`. It adds an `On your phone` card with a QR code of the orOS address: scan it with the phone's camera, then turn on sync on both with the same passphrase.
