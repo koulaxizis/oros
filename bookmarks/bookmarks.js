@@ -112,6 +112,7 @@ const STR = {
     "aria.folders": "Folders",
     "app.name": "Bookmarks",
     "tab.add": "New folder",
+    "ek.go": "Paste a link",
     "quick.add": "Paste a link — or link | title",
     "search.ph": "Search…",
     "search.clear": "Clear search",
@@ -319,6 +320,7 @@ const STR = {
     "aria.folders": "Φάκελοι",
     "app.name": "Συντομεύσεις",
     "tab.add": "Νέος φάκελος",
+    "ek.go": "Επικόλλησε έναν σύνδεσμο",
     "quick.add": "Κόλλησε σύνδεσμο — ή σύνδεσμος | τίτλος",
     "search.ph": "Αναζήτηση…",
     "search.clear": "Καθαρισμός",
@@ -4048,6 +4050,8 @@ function boot() {
   load();
   applyI18n();
   wire();
+  // EMPTY-1: the friendly empty screen (../emptykit.js)
+  if (window.orosEmpty) window.orosEmpty.dress($("#empty"), { app: "bookmarks", action: { label: t("ek.go"), run: function () { $("#quick-add").focus(); } } });
   mountFavStrip();
   registerSync(0);
   scheduleSweep(6000);

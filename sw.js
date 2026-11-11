@@ -1443,6 +1443,8 @@ var PRECACHE_URLS = [
   "vendor/three/three.module.min.js",
   "vendor/three/three.core.min.js",
   "importkit.js",
+  "emptykit.js",
+  "emptykit.css",
   "bundle.js",
   "recordpkg.js",
   "habits/package.js",

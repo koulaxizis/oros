@@ -119,6 +119,8 @@ orosPack("de", "contacts", {
  "ct.lbl.filter": "Labels",
  "ct.maps": "Auf Karte zeigen",
  "ct.none": "Noch keine Kontakte",
+ "ek.go": "Kontakt hinzufügen",
+ "ek.hint": "Kontakte, die du hier hinzufügst, kannst du anrufen, anschreiben und aus deinen anderen Apps verknüpfen. Füge einen hinzu oder hol sie vom Handy oder aus einer anderen App.",
  "ct.ph.family": "Papadopoulou",
  "ct.ph.given": "Maria",
  "ct.ph.jobtitle": "Designerin…",

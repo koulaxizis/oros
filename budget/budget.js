@@ -75,6 +75,8 @@
       "menu.osave": "orOS file (.orosbudget)", "menu.oopen": "Open orOS file…", "menu.ofolder": "Unzipped orOS folder…",
       "q.ph": "Search all entries…", "flt.all": "All entries", "flt.out": "Expenses only", "flt.in": "Income only",
       "list.empty": "No entries this month. Tap “New” to add one.", "list.none": "Nothing matches.",
+      "ek.go": "New entry",
+      "ek.hint": "Write down what comes in and goes out, and Budget shows where your money goes, by category and by month.",
       "list.found": "{n} found", "day.total": "Day total",
       "k.out": "Expense", "k.in": "Income",
       "cat.none": "Uncategorized", "cat.other": "Other",
@@ -235,6 +237,8 @@
       "menu.osave": "Αρχείο orOS (.orosbudget)", "menu.oopen": "Άνοιγμα αρχείου orOS…", "menu.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "q.ph": "Αναζήτηση σε όλες τις κινήσεις…", "flt.all": "Όλες οι κινήσεις", "flt.out": "Μόνο έξοδα", "flt.in": "Μόνο έσοδα",
       "list.empty": "Καμία κίνηση αυτόν τον μήνα. Πάτα «Νέα» για να προσθέσεις.", "list.none": "Δεν βρέθηκε τίποτα.",
+      "ek.go": "Νέα κίνηση",
+      "ek.hint": "Γράψε τι μπαίνει και τι βγαίνει, και ο Προϋπολογισμός σου δείχνει πού πάνε τα χρήματά σου, ανά κατηγορία και ανά μήνα.",
       "list.found": "Βρέθηκαν {n}", "day.total": "Σύνολο ημέρας",
       "k.out": "Έξοδο", "k.in": "Έσοδο",
       "cat.none": "Χωρίς κατηγορία", "cat.other": "Υπόλοιπες",
@@ -1746,7 +1750,16 @@
     found.hidden = !query;
     if (query) found.textContent = t("list.found", { n: rows.length });
     empty.hidden = rows.length > 0;
-    empty.textContent = inbox && !query ? t("inbox.empty") : (query || filter !== "all") ? t("list.none") : t("list.empty");
+    empty.textContent = "";
+    empty.classList.remove("ek");
+    if (!inbox && !query && filter === "all" && window.orosEmpty) {
+      // EMPTY-1: nothing this month: the friendly empty screen (../emptykit.js)
+      empty.appendChild(el("span", null, t("list.empty")));
+      empty.appendChild(el("span", null, t("ek.hint")));
+      window.orosEmpty.dress(empty, { app: "budget", action: { label: t("ek.go"), run: function () { $("add-btn").click(); } } });
+    } else {
+      empty.textContent = inbox && !query ? t("inbox.empty") : (query || filter !== "all") ? t("list.none") : t("list.empty");
+    }
     var day = null, group = null, dayIn = 0, dayOut = 0, totEl = null;
     var flushDay = function () {
       if (totEl) totEl.textContent = (dayIn ? "+" + money(dayIn) + "  " : "") + (dayOut ? "−" + money(dayOut) : "");

@@ -60,6 +60,7 @@
   var STRINGS = {
     en: {
       "app": "Invoices", "settings": "Settings", "back": "Back", "new": "New",
+      "ek.go": "New invoice",
       "tab.docs": "Invoices", "tab.clients": "Clients", "tab.dash": "Dashboard", "tab.bills": "Received",
       "bl.search": "Search received invoices", "bl.new": "Received invoice", "bl.title": "Received invoice",
       "bl.empty": "No received invoices yet. Record the invoices your suppliers send you: you see what you owe, to whom and by when.",
@@ -219,6 +220,7 @@
     },
     el: {
       "app": "Τιμολόγια", "settings": "Ρυθμίσεις", "back": "Πίσω", "new": "Νέο",
+      "ek.go": "Νέο τιμολόγιο",
       "tab.docs": "Παραστατικά", "tab.clients": "Πελάτες", "tab.dash": "Επισκόπηση", "tab.bills": "Λαμβανόμενα",
       "bl.search": "Αναζήτηση λαμβανόμενων", "bl.new": "Λαμβανόμενο", "bl.title": "Λαμβανόμενο τιμολόγιο",
       "bl.empty": "Κανένα λαμβανόμενο τιμολόγιο ακόμη. Κατάγραψε τα τιμολόγια που σου στέλνουν οι προμηθευτές: βλέπεις τι χρωστάς, σε ποιον και ως πότε.",
@@ -4346,6 +4348,8 @@
     tab = prefs.tab;
     applyI18n();
     wire();
+    // EMPTY-1: the friendly empty screen (../emptykit.js)
+    if (window.orosEmpty) window.orosEmpty.dress($("docs-empty"), { app: "invoices", action: { label: t("ek.go"), run: function () { $("new-btn").click(); } } });
     registerSync();
     inheritPalette();
     watchPalette();

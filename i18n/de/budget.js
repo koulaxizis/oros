@@ -471,6 +471,8 @@ orosPack("de", "budget", {
  "lim.warn": "Nah am Limit",
  "limit": "Limit {a}",
  "list.empty": "Keine Einträge in diesem Monat. Tippe auf „Neu“, um einen hinzuzufügen.",
+ "ek.go": "Neuer Eintrag",
+ "ek.hint": "Schreib auf, was rein- und rausgeht, und Budget zeigt dir, wohin dein Geld geht, nach Kategorie und Monat.",
  "list.found": "{n} gefunden",
  "list.none": "Nichts gefunden.",
  "live.month": "{m}",
