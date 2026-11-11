@@ -1402,11 +1402,11 @@
   // opens on the owner's screen and applies the commands there.
   var DOCS = ["atelier", "layout", "mindmap", "montage", "photolab", "slides", "spreadsheet", "studio", "whiteboard", "writer"];
   // The changes the relay may queue while orOS is closed (relay/gate.js
-  // closedCall): its own change tools less budget_delete and
-  // budget_transfer (it deletes entries too), and
-  // create_items. applyQueue runs nothing else (defence in depth).
+  // closedCall): its own change tools and create_items; every deletion
+  // among them is asked on the device first (6.16.00). applyQueue runs nothing else (defence in depth).
   var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "budget_delete", "budget_transfer", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
-                // 5.96.00: by refs from the copy's index (kept on the device); never action delete
+                // 5.96.00: by refs from the copy's index (kept on the device);
+                // 6.16.00: action delete too, asked on the device first (askQueued)
                 "change_item", "link_items", "link_contact"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
@@ -1525,7 +1525,39 @@
     return /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(u) ? u : RELAY;
   }
 
-  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
+  // 6.16.00: how many items a queued call deletes (0: none). change_item
+  // delete by ref (1), by refs (each), or changes with action delete;
+  // budget_delete its ids. An unlink deletes no item.
+  function delCount(name, a) {
+    if (!isObj(a)) return 0;
+    if (name === "budget_delete") return Array.isArray(a.ids) ? Math.max(1, a.ids.length) : 1;
+    if (name !== "change_item") return 0;
+    if (Array.isArray(a.changes)) return a.changes.filter(function (c) { return isObj(c) && c.action === "delete"; }).length;
+    if (a.action !== "delete") return 0;
+    return Array.isArray(a.refs) ? Math.max(1, refsOf(a).length) : 1;
+  }
+  function refsOf(a) {
+    var out = [];
+    function add(v) { v = String(v == null ? "" : v).replace(/^oros:/, "").trim(); if (/^r\d{1,9}$/.test(v) && out.indexOf(v) < 0) out.push(v); }
+    if (!isObj(a)) return out;
+    if (Array.isArray(a.refs)) a.refs.forEach(add); else add(a.ref);
+    if (Array.isArray(a.changes)) a.changes.forEach(function (c) { if (isObj(c) && c.action === "delete") add(c.ref); });
+    return out;
+  }
+  // The dialog's "what": [{ a: app name, t: title }] from the Assistant
+  // frame (peek), at most 5 titles and how many more.
+  function delWhat(name, items, n) {
+    if (name === "budget_delete") return "Budget";
+    var l = Array.isArray(items) ? items.filter(function (x) { return isObj(x) && typeof x.t === "string"; }) : [];
+    if (!l.length) return String(n);
+    var apps = [];
+    l.forEach(function (x) { var a = String(x.a || ""); if (a && apps.indexOf(a) < 0) apps.push(a); });
+    var shown = l.slice(0, 5), t = shown.map(function (x) { return "«" + x.t.slice(0, 80) + "»"; }).join(", ");
+    if (n > shown.length) t += " … (+" + (n - shown.length) + ")";
+    return (apps.length ? apps.join(", ") + ": " : "") + t;
+  }
+
+  var core = { delCount: delCount, refsOf: refsOf, delWhat: delWhat, NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
@@ -2004,18 +2036,33 @@
         return chain.then(function () {
           if (!isObj(it) || typeof it.id !== "string") return;
           if (ranHas(it.id)) { done.push(it.id); return; }   // done live already (answered late), or sent twice (6.01.02)
-          ranAdd(it.id);
+          if (asking[it.id]) return;                        // its question is on screen already (a second cq)
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
-            if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
-            if (x.n === "change_item" && isObj(x.a) && (x.a.action === "delete" || (Array.isArray(x.a.changes) && x.a.changes.some(function (ch) { return isObj(ch) && ch.action === "delete"; })))) return { ok: false, c: "refused" };
-            return run(x.n, x.a).then(function (res) {
-              var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
-              if (res.u) entry.u = res.u;
-              writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
-              return res;
+            if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) { ranAdd(it.id); done.push(it.id); return; }
+            var n = core.delCount(x.n, x.a);
+            // 6.16.00: a deletion Claude asked for while orOS was closed is
+            // asked here first, always, whatever its size (the owner was not
+            // there). No answer: it stays in the queue for the next open.
+            var asked = n ? askQueued(it.id, x, n) : Promise.resolve("yes");
+            return asked.then(function (yes) {
+              if (yes === "later") return;
+              ranAdd(it.id);
+              if (yes === "no") {
+                writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), { t: Date.now(), n: String(x.n).slice(0, 20), a: [], k: 0, ok: 0, q: 1 }));
+                done.push(it.id);
+                return;
+              }
+              preYes = n;                                   // the owner just confirmed these n: no second question
+              return run(x.n, x.a).then(function (res) {
+                preYes = 0;
+                var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
+                if (res.u) entry.u = res.u;
+                writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
+                done.push(it.id);
+              }, function () { preYes = 0; done.push(it.id); });
             });
-          }).then(function () { done.push(it.id); }, function () { done.push(it.id); });   // never in a loop
+          }).then(null, function () { ranAdd(it.id); done.push(it.id); });   // never in a loop
         });
       }, Promise.resolve()).then(function () {
         try { if (sock.readyState === 1) sock.send(JSON.stringify({ cqa: done })); } catch (e) {}
@@ -2410,6 +2457,7 @@
   // More than ASK_OVER deletions: the owner says yes on the device
   // within 20 s (the relay waits 25 s for the answer).
   function askDelete(n) {
+    if (preYes && n <= preYes) { preYes = 0; return Promise.resolve(true); }   // 6.16.00: a queued deletion the owner confirmed a moment ago
     return new Promise(function (ok) {
       var settled = false, wrap = null;
       function end(v) { if (settled) return; settled = true; if (wrap) wrap.remove(); ok(v); }
@@ -2417,6 +2465,35 @@
       wrap = dialog(tr("gate.del.title"), tr("gate.del.body").replace("{n}", String(n)), "", tr("gate.del.no"), tr("gate.del.yes"),
         function () { end(false); }, function () { end(true); });
       setTimeout(function () { end(false); }, 20000);
+    });
+  }
+
+  // 6.16.00: a queued deletion (applyQueue). Waits until orOS is on
+  // screen and unlocked, then asks with what would go (app, titles).
+  // → Promise<"yes" | "no" | "later"> (later: no answer in QDEL_MS, or
+  // the owner left; it stays in the queue and is asked again next open).
+  var asking = {}, preYes = 0, QDEL_MS = 10 * 60000;
+  function askQueued(id, x, n) {
+    asking[id] = 1;
+    var until = Date.now() + QDEL_MS;
+    var what = Promise.resolve([]);
+    if (x.n === "change_item") what = actFrame().then(function (F) { return F && typeof F.peek === "function" ? F.peek(core.refsOf(x.a)) : []; }, function () { return []; });
+    return what.then(function (items) {
+      return new Promise(function (ok) {
+        var settled = false, wrap = null;
+        function end(v) { if (settled) return; settled = true; delete asking[id]; if (wrap) wrap.remove(); ok(v); }
+        function show() {
+          if (settled) return;
+          if (Date.now() > until) { end("later"); return; }
+          var locked = root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked();
+          if (document.visibilityState !== "visible" || locked) { setTimeout(show, 1000); return; }
+          var body = tr("gate.qdel.body").replace("{n}", String(n)).replace("{what}", core.delWhat(x.n, items, n));
+          wrap = dialog(tr("gate.qdel.title"), body, "", tr("gate.del.no"), tr("gate.del.yes"),
+            function () { end("no"); }, function () { end("yes"); });
+          setTimeout(function () { end("later"); }, Math.max(1000, until - Date.now()));
+        }
+        show();
+      });
     });
   }
 

@@ -621,11 +621,17 @@ test("orOS closed, full work (5.96.00): search over the copy's index, a board by
   assert.equal(r.isError, false);
   assert.match(r.content[0].text, /"queued":true/);
   assert.match((await tc("change_item", { ref: "r3", action: "update", text_add: "x" })).content[0].text, /"queued":true/);
-  assert.match((await tc("change_item", { ref: "r3", action: "delete" })).content[0].text, /Deleting waits/);
-  assert.match((await tc("link_items", { links: [{ customer: "r1", item: "r2" }], unlink: true })).content[0].text, /Deleting waits/);
+  // 6.16.00: deletions wait too, and say the owner confirms them on the device
+  const del = (await tc("change_item", { ref: "r3", action: "delete" })).content[0].text;
+  assert.match(del, /"queued":true/);
+  assert.match(del, /nothing is deleted without their tap/);
+  assert.match((await tc("link_items", { links: [{ customer: "r1", item: "r2" }], unlink: true })).content[0].text, /"queued":true/);
   assert.match((await tc("link_contact", { links: [{ customer: "r1", contact: "r4" }] })).content[0].text, /may not change contacts/);
   assert.match((await tc("change_item", { ref: "r99", action: "update" })).content[0].text, /Unknown ref r99/);
-  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 4);
+  assert.deepEqual(G.refsIn({ refs: ["r116155", "r110954"] }), ["r116155", "r110954"], "6.16.00: refs of 6 digits and more");
+  assert.equal(G.isDeletion("change_item", { refs: ["r1"], action: "delete" }), true);
+  assert.equal(G.isDeletion("link_items", { unlink: true }), false);
   assert.deepEqual(G.refsIn({ ref: "oros:r1", refs: ["r2", "x"], changes: [{ ref: "r3" }], links: [{ customer: "r4", item: "r5" }] }), ["r1", "r2", "r3", "r4", "r5"]);
 });
 

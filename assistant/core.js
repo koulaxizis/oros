@@ -3503,7 +3503,7 @@
 
   function linkKind(href) {
     href = String(href || "").trim();
-    if (/^oros:r\d{1,5}$/.test(href)) return "oros";
+    if (/^oros:r\d{1,9}$/.test(href)) return "oros";
     if (/^https?:\/\/[^\s<>"']+$/i.test(href)) return "web";
     return "";
   }
