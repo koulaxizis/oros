@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.21.00
+- **Weather on the desktop.** Turn on Settings › Wallpaper › `Weather on the desktop` to see gentle rain, snow, clouds, fog, sun or stars over your wallpaper, from your Weather city. It stops while an app is open and on a low battery.
+
 ## Version 6.20.00
 - **Light of the day on Living land.** The Living land wallpaper now follows the time on your device: a deep blue at night, rose at dawn, clear by day and golden in the evening. Turn it off in Settings › Wallpaper with `Light of the day`.
 

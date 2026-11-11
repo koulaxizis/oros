@@ -81,6 +81,9 @@ Settings › Appearance › `Icons` changes how app icons look on the desktop, i
 - `Light of the day` (on at first) colours the land with the time on this device: a deep blue at night, rose at dawn, clear by day and golden in the evening, changing slowly through the day. It is drawn once over the land and costs no battery.
 - High contrast shows the plain desktop instead.
 
+### Weather on the desktop
+Settings › Wallpaper › `Weather on the desktop` (off at first, on this device only) shows the weather over any wallpaper: sun or stars when it is clear, a few clouds, overcast, fog, gentle rain, snow, or a storm with heavier rain under darker clouds (never a flash). It follows the weather of your [Weather](app:weather) city, the same as the top bar. With no weather yet, or weather older than three hours, nothing shows. It stops while an app is open, and stays still with reduced motion, on a low battery (under 20 % and not charging) and on a device too slow for it. High contrast hides it.
+
 ## Seasonal decorations
 At some times of the year your desktop dresses up on its own: snow, a string of lights and a tree at Christmas, gold sparkles and a pomegranate at New Year (with fireworks from 23:55 to 00:10 on New Year's Eve), pumpkins, bats and a spider's web at Halloween.
 

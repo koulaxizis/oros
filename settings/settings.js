@@ -382,6 +382,11 @@
       c3.appendChild(actions(button(t("a.wallpaper.land.new"), "wpland:new", function () { set("wpland:new", 1); })));
       c3.appendChild(el("p", "hint", t("a.wallpaper.land.hint")));
     }
+    if (s.wxdesk) {                                    // WX-DESK-1: weather on the desktop (this device)
+      c3.appendChild(row(t("a.wallpaper.wx"), switchBtn(!!s.wxdesk.on, "wxdesk:on",
+        function (v) { set("wxdesk:on", v); }, t("a.wallpaper.wx")), { hint: t("a.wallpaper.wx.hint") }));
+      if (s.wxdesk.on && s.wxdesk.none) c3.appendChild(el("p", "hint", t("a.wallpaper.wx.none")));
+    }
     if (s.suggested) c3.appendChild(el("p", "hint", t("a.wallpaper.hint")));
     host.appendChild(c3);
 
