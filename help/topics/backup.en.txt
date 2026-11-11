@@ -40,6 +40,9 @@ Good to know:
 
 If you see `Turn on Auto backup first` or `Choose a backup folder first`, set the missing option and try again.
 
+## A reminder to keep a copy
+orOS keeps your data only in this browser. If you have used orOS on 7 different days and neither sync nor an automatic backup is on, a card on the desktop says so once, with `Turn on sync` and `Automatic backup`. `×` closes it, and it does not come back. It is counted on this device only.
+
 ## Restore from a file
 1. Open `Settings`, go to `Backups` and tap `Import backup file`.
 2. Pick an orOS backup file.

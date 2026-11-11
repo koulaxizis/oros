@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.12.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.13.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -3526,6 +3526,7 @@
         deliverShare();
         gameResumeStart();
         greetStart();
+        safeStart();
         if (SOLO) soloStart();
         // Files from the system's "Open with" (fileopen.js) wait for the app list.
         if (window.orosFileOpen) window.orosFileOpen.ready();
@@ -11654,6 +11655,7 @@
     state.running = app;
     gameLastNote(app, false);   // GR-1
     if (window.orosDiscover) { try { window.orosDiscover.seen(app.id); } catch (e) {} }   // CH-2: first open
+    safeEnd();       // SAFE-1: the card goes when an app opens
     tipEnd();
     tipMaybe(app);   // TIP-1: a tip the first time this app opens here
     if (appAway()) backArm();
@@ -12477,6 +12479,115 @@
     clearTimeout(tipTimer);
     if (tipOff) { tipOff(); tipOff = null; }
     if (tipBox) { tipBox.remove(); tipBox = null; }
+  }
+
+  // ---------- SAFE-1: keep your data safe ----------
+  // orOS keeps everything in this browser only. After orOS has started
+  // on SAFE_DAYS different days with neither sync connected nor an
+  // automatic backup on, one card over the desktop says so, with "Turn
+  // on sync" (Settings › Sync) and "Automatic backup" (Settings ›
+  // Backups). It shows once: "done" is written before it shows, and
+  // after that it never comes back, even when sync is turned off later.
+  // Device-local "oros-safe" = { v:1, n: days counted, last: "YYYY-MM-DD",
+  // done?: 1 }, never synced. Not in a single-app window, during the
+  // tour or the profiles screen, over an app, the greeting or the lock.
+  var SAFE_KEY = "oros-safe", SAFE_DAYS = 7;
+  var safeBox = null, safeTries = 0;
+  function safeNorm(v) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return { v: 1, n: 0, last: "" };
+    var n = typeof v.n === "number" && isFinite(v.n) && v.n > 0 ? Math.min(Math.floor(v.n), 9999) : 0;
+    var last = typeof v.last === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v.last) ? v.last : "";
+    var out = { v: 1, n: n, last: last };
+    if (v.done) out.done = 1;
+    return out;
+  }
+  // One more day of use when the day changed (pure).
+  function safeCount(rec, ymd) {
+    var r = safeNorm(rec);
+    if (r.done || r.last === ymd) return r;
+    r.n += 1;
+    r.last = ymd;
+    return r;
+  }
+  // Due: enough days, never shown, and no copy of the data anywhere (pure).
+  function safeDue(rec, facts) {
+    var r = safeNorm(rec);
+    return !r.done && r.n >= SAFE_DAYS && !facts.sync && (!facts.backup || facts.backup === "off");
+  }
+  function safeRead() { try { return safeNorm(JSON.parse(localStorage.getItem(SAFE_KEY) || "null")); } catch (e) { return safeNorm(null); } }
+  function safeWrite(v) { try { localStorage.setItem(SAFE_KEY, JSON.stringify(v)); } catch (e) {} }
+  function safeFacts() {
+    var sync = false;
+    try { sync = !!(window.orosSync && window.orosSync.isConnected()); } catch (e) { sync = false; }
+    return { sync: sync, backup: state.autoexport || "off" };
+  }
+  function safeStart() {
+    if (SOLO) return;
+    var rec = safeCount(safeRead(), greetDay(new Date()));
+    safeWrite(rec);
+    if (rec.done || rec.n < SAFE_DAYS) return;
+    lateWhen(function () { setTimeout(safeMaybe, 6000); });
+  }
+  function safeMaybe() {
+    if (SOLO || safeBox) return;
+    var rec = safeRead();
+    if (!safeDue(rec, safeFacts())) return;
+    var tour = false;
+    try { tour = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { return; }
+    if (tour || tourBox || profilesBusy) return;
+    if (state.running || late.open) return;          // an app: the next start
+    var L = window.orosLock;
+    if (L && L.isLocked && L.isLocked()) return;     // locked: the next start
+    if (greetBox || document.getElementById("oro-splash") || document.hidden || document.readyState !== "complete") {
+      if (++safeTries < 20) setTimeout(safeMaybe, 1500);
+      return;
+    }
+    rec.done = 1;
+    safeWrite(rec);                                   // once, even if painting fails
+    safeShow();
+  }
+  function safeShow() {
+    var box = document.createElement("div");
+    box.id = "oros-safe";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-labelledby", "oros-safe-title");
+    var h = document.createElement("strong");
+    h.id = "oros-safe-title";
+    h.className = "safe-title";
+    h.textContent = window.t("safe.title");
+    var p = document.createElement("p");
+    p.className = "safe-text";
+    p.textContent = window.t("safe.text");
+    var acts = document.createElement("div");
+    acts.className = "safe-acts";
+    var go = function (section) {
+      return function () { safeEnd(); if (window.orosSettings) window.orosSettings.open(section); };
+    };
+    [["safe.sync", "sync", "safe-main"], ["safe.backup", "backup", ""]].forEach(function (b) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      if (b[2]) btn.className = b[2];
+      btn.textContent = window.t(b[0]);
+      btn.addEventListener("click", go(b[1]));
+      acts.appendChild(btn);
+    });
+    var x = document.createElement("button");
+    x.type = "button";
+    x.className = "safe-x";
+    x.textContent = "×";
+    x.setAttribute("aria-label", window.t("safe.close"));
+    x.title = window.t("safe.close");
+    x.addEventListener("click", safeEnd);
+    box.appendChild(x);
+    box.appendChild(h);
+    box.appendChild(p);
+    box.appendChild(acts);
+    box.addEventListener("keydown", function (e) { if (e.key === "Escape") safeEnd(); });
+    document.body.appendChild(box);
+    safeBox = box;
+  }
+  function safeEnd() {
+    if (safeBox) { safeBox.remove(); safeBox = null; }
   }
 
   // ---------- GREET-1: a greeting at the first start of the day ----------

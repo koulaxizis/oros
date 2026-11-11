@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.13.00
+- **A reminder to keep a copy.** orOS keeps your data only in this browser. If you have used it on 7 different days with neither sync nor an automatic backup on, a card on the desktop says so once, with `Turn on sync` and `Automatic backup`. It never comes back after that.
+
 ## Version 6.12.00
 - **Show me an example.** The friendly empty screens of To-Do, Kanban, Bookmarks, Invoices, Contacts, Budget, Notes and Meal Planner now have `Show me an example`: a few made-up items, so you can see the app in use before you start. Nothing is saved and nothing syncs. `Start my own` closes it and starts your first item.
 

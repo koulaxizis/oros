@@ -2014,3 +2014,33 @@ html[data-oros-zoom] #app-menu > * { zoom: var(--oros-zoom, 1); }
    Bible Part VII — applied to the shell itself, not just app
    stylesheets. KEEP THIS THE LAST RULE OF THE FILE. */
 [hidden] { display: none !important; }
+
+/* SAFE-1: keep your data safe, once, over the desktop (shell.js) */
+#oros-safe {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 8980;
+  width: min(400px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 16px 16px 14px;
+  border-radius: 18px;
+  color: var(--text);
+  background: var(--panel-bg, var(--bg));
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  box-shadow: 0 10px 32px var(--shadow, rgba(0, 0, 0, 0.35));
+  font-size: 14px;
+  line-height: 1.5;
+  animation: greet-out .3s ease-out reverse both;
+}
+@media (prefers-reduced-motion: reduce) { #oros-safe { animation: none; } }
+#oros-safe .safe-title { display: block; margin: 0 40px 6px 0; font-size: 16px; font-weight: 700; }
+#oros-safe .safe-text { margin: 0 0 12px; color: var(--text-dim); }
+#oros-safe .safe-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+#oros-safe button { min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+#oros-safe .safe-main { border-color: var(--accent); background: var(--accent); color: var(--accent-ink, var(--bg)); }
+#oros-safe .safe-x { position: absolute; top: 6px; right: 6px; width: 40px; min-height: 40px; padding: 0; border: none; font-size: 20px; color: var(--text-dim); }
+#oros-safe button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+html[data-oros-contrast="high"] #oros-safe { border: 2px solid currentColor; box-shadow: none; }
+@media (max-width: 480px) { #oros-safe { left: 16px; right: 16px; width: auto; } }
