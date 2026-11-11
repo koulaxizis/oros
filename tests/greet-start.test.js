@@ -29,7 +29,7 @@ test("First steps: a kind of its own, first; the default cards are unchanged", (
   assert.equal(W.KINDS[0], "start");
   assert.deepEqual(W.DEFAULT, ["clock", "calendar", "today", "weather"]);
   assert.deepEqual(W.listOf(null, true, false), ["clock", "calendar", "today", "weather"], "no stored list: no First steps for anyone");
-  assert.deepEqual(W.STEPS, ["note", "task", "wall", "icons", "import", "sync", "assistant", "install"]);
+  assert.deepEqual(W.STEPS, ["note", "task", "wall", "icons", "import", "sync", "phone", "assistant", "install"]);
 });
 
 test("First steps: a new user gets it before this screen's default; a set list stays", () => {
