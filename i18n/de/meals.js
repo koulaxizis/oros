@@ -268,6 +268,7 @@ orosPack("de", "meals", {
  "rc.none": "Noch keine Rezepte. Füg eins hinzu oder füge eins von irgendwo ein.",
  "rc.paste": "Importieren",
  "rc.search": "Rezepte suchen, oder Zutaten mit Kommas…",
+ "ek.title": "Hier wohnen deine Rezepte",
  "rc.serv": "{n} Port.",
  "rc.untitled": "Rezept ohne Titel",
  "s.backup": "Sicherung",

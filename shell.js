@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.11.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.12.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -10834,6 +10834,7 @@
       seasonal: settingsSeasonal(),
       me: { name: meName(), max: ME_MAX },
       greet: SOLO ? null : { on: greetOn() },
+      tips: SOLO ? null : { on: !!tipsRead().on },
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
       menu: settingsMenuApps(),
@@ -10887,6 +10888,7 @@
       case "focusRing":    a11ySetUser(name, value); return;
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;
+      case "tips":         tipsSetUser(!!value); return;
       case "wpland:new":   wpLandNewShape(); settingsNotify(); return;
       case "wpland:style":
         if (WP_LAND_STYLES.indexOf(value) >= 0) { wpLandNewShape({ style: value }); settingsNotify(); }
@@ -11652,6 +11654,8 @@
     state.running = app;
     gameLastNote(app, false);   // GR-1
     if (window.orosDiscover) { try { window.orosDiscover.seen(app.id); } catch (e) {} }   // CH-2: first open
+    tipEnd();
+    tipMaybe(app);   // TIP-1: a tip the first time this app opens here
     if (appAway()) backArm();
     document.body.classList.add("app-running");   // narrow bar: "?" takes the language button's place
     if (mtActive()) mtSwitch(prev, app, at);
@@ -11692,6 +11696,7 @@
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations move again
     wpLandRefresh();   // the desktop may have changed while hidden
     tourMaybe();   // a first-run tour put off by a launch-param app
+    tipEnd();
   }
 
   // ---------- 10e. CalDAV / CardDAV background pass (CalDAV wave 6) ----------
@@ -12343,10 +12348,135 @@
       if (profilesWanted()) localStorage.setItem(PROFILE_KEY, "1");
     } catch (e) { return; }
     greetMark();          // GREET-1: the tour is today's welcome
+    tipsStart();          // TIP-1: tips on for a new user
     if (window.orosWidgets && window.orosWidgets.firstRun) {
       try { window.orosWidgets.firstRun(); } catch (e) {}   // START-1: First steps on the desktop
     }
     tourMaybe();
+  }
+
+  // ---------- TIP-1: one tip the first time an app opens ----------
+  // Device-local "oros-tips" = { on: 1|0, seen: [app ids] }. A new user
+  // gets it on (tourFirstRun); an absent key = off, so people who know
+  // orOS see nothing new. Settings › Appearance › Your name card,
+  // "Show a tip the first time I open an app": on again = every app
+  // gets its tip again. The tip is the first paragraph of the app's
+  // own guide under its first "##" heading ("Getting started"), from
+  // <app>/help.<en|el>.txt or i18n/de/help/<app>.txt, as plain text
+  // (tipFrom, ≤ 240 characters), in a bar at the bottom with "More in
+  // Help" and ×. Not for games (they have their own first-game tours),
+  // Help itself, external apps, a single-app window or during the tour.
+  // It goes when the app closes or another opens, after TIP_MS, or
+  // on the first tap or key in the app (after TIP_GRACE: the person is
+  // using the app now). On a phone it sits under the top bar, so the
+  // app's own bottom tabs stay free.
+  var TIPS_KEY = "oros-tips", TIP_MS = 20000, TIP_GRACE = 1500, TIP_MAX = 240;
+  var tipBox = null, tipTimer = 0, tipSeq = 0, tipOff = null;
+  function tipsRead() {
+    try {
+      var v = JSON.parse(localStorage.getItem(TIPS_KEY) || "null");
+      if (!v || typeof v !== "object") return { on: 0, seen: [] };
+      return { on: v.on ? 1 : 0, seen: Array.isArray(v.seen) ? v.seen.filter(function (x) { return typeof x === "string"; }).slice(0, 400) : [] };
+    } catch (e) { return { on: 0, seen: [] }; }
+  }
+  function tipsWrite(v) { try { localStorage.setItem(TIPS_KEY, JSON.stringify(v)); } catch (e) {} }
+  function tipsStart() { try { if (localStorage.getItem(TIPS_KEY) === null) tipsWrite({ on: 1, seen: [] }); } catch (e) {} }
+  function tipsSetUser(on) { tipsWrite({ on: on ? 1 : 0, seen: [] }); settingsNotify(); }
+  // The tip in a guide's text: the first paragraph (or first bullet)
+  // after the first "## " heading, else the paragraph after the title;
+  // Markdown marks taken out; cut at a sentence end within TIP_MAX.
+  function tipFrom(text) {
+    var lines = String(text || "").replace(/\r/g, "").split("\n");
+    var start = -1, i;
+    for (i = 0; i < lines.length; i++) if (/^## /.test(lines[i])) { start = i + 1; break; }
+    if (start === -1) for (i = 0; i < lines.length; i++) if (/^# /.test(lines[i])) { start = i + 1; break; }
+    if (start === -1) return "";
+    var para = [];
+    for (i = start; i < lines.length; i++) {
+      var l = lines[i].trim();
+      if (!l) { if (para.length) break; continue; }
+      if (/^#/.test(l)) break;
+      if (/^[-*] /.test(l)) { if (para.length) break; para.push(l.slice(2)); break; }
+      para.push(l);
+    }
+    var out = para.join(" ")
+      .replace(/\[\[([^\]]+)\]\]/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\*([^*]+)\*/g, "$1")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+    if (out.length <= TIP_MAX) return out;
+    var cut = out.slice(0, TIP_MAX), end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "));
+    return end > 80 ? cut.slice(0, end + 1) : cut.replace(/\s+\S*$/, "") + "…";
+  }
+  function tipUrl(id) {
+    if (state.lang === "de") return "i18n/de/help/" + id + ".txt";
+    return id + "/help." + (state.lang === "el" ? "el" : "en") + ".txt";
+  }
+  function tipMaybe(app) {
+    if (SOLO || !app || app.type !== "internal" || app.id === "help" || app.category === "Games" || tourBox) return;
+    if (!/^[a-z0-9-]+$/.test(app.id)) return;
+    var tp = tipsRead();
+    if (!tp.on || tp.seen.indexOf(app.id) !== -1) return;
+    tp.seen.push(app.id);
+    tipsWrite(tp);                     // once, even if the guide cannot be read
+    var seq = ++tipSeq;
+    fetch(tipUrl(app.id) + "?v=" + APP_VERSION).then(function (r) { return r.ok ? r.text() : ""; }).then(function (txt) {
+      var tip = tipFrom(txt);
+      if (!tip || seq !== tipSeq || !state.running || state.running.id !== app.id) return;
+      tipShow(app.id, tip);
+    }, function () {});
+  }
+  function tipShow(id, tip) {
+    tipEnd();
+    var box = document.createElement("div");
+    box.id = "oros-tip";
+    box.setAttribute("role", "status");
+    var lab = document.createElement("strong");
+    lab.textContent = window.t("tip.label");
+    var txt = document.createElement("span");
+    txt.className = "tip-text";
+    txt.textContent = tip;
+    var more = document.createElement("button");
+    more.type = "button";
+    more.className = "tip-more";
+    more.textContent = window.t("tip.more");
+    more.addEventListener("click", function () { tipEnd(); openHelp("a/" + id); });
+    var x = document.createElement("button");
+    x.type = "button";
+    x.className = "tip-x";
+    x.textContent = "×";
+    x.setAttribute("aria-label", window.t("tip.close"));
+    x.title = window.t("tip.close");
+    x.addEventListener("click", tipEnd);
+    var body = document.createElement("div");
+    body.className = "tip-body";
+    body.appendChild(lab);
+    body.appendChild(txt);
+    box.appendChild(body);
+    var acts = document.createElement("div");
+    acts.className = "tip-acts";
+    if (helpApp()) acts.appendChild(more);
+    acts.appendChild(x);
+    box.appendChild(acts);
+    document.body.appendChild(box);
+    tipBox = box;
+    tipTimer = setTimeout(tipEnd, TIP_MS);
+    var shown = Date.now(), doc = null;
+    try { var tf = appFrameOf(id); doc = tf && tf.contentDocument; } catch (e) { doc = null; }
+    if (doc) {
+      var use = function () { if (Date.now() - shown > TIP_GRACE) tipEnd(); };
+      doc.addEventListener("pointerdown", use, true);
+      doc.addEventListener("keydown", use, true);
+      tipOff = function () {
+        try { doc.removeEventListener("pointerdown", use, true); doc.removeEventListener("keydown", use, true); } catch (e) {}
+      };
+    }
+  }
+  function tipEnd() {
+    clearTimeout(tipTimer);
+    if (tipOff) { tipOff(); tipOff = null; }
+    if (tipBox) { tipBox.remove(); tipBox = null; }
   }
 
   // ---------- GREET-1: a greeting at the first start of the day ----------

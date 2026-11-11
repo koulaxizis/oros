@@ -91,7 +91,7 @@ input:focus, textarea:focus, select:focus {
 #list-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 /* Empty states */
-#empty, #no-match, #folder-empty {
+#no-match, #folder-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -100,11 +100,11 @@ input:focus, textarea:focus, select:focus {
   color: var(--text-dim);
   text-align: center;
 }
-#empty span, #no-match span, #folder-empty span {
+#no-match span, #folder-empty span {
   font-size: 15px;
   font-weight: 600;
 }
-#empty small, #no-match small, #folder-empty small {
+#no-match small, #folder-empty small {
   font-size: 13px;
 }
 

@@ -5,6 +5,7 @@ orosPack("de", "invoices", {
  "afm": "USt-IdNr.",
  "amount": "Betrag",
  "app": "Rechnungen",
+ "ek.go": "Neue Rechnung",
  "asOf": "Stand {d}",
  "auth": "Der Schlüssel wurde abgelehnt. Prüfe ihn unter Einstellungen › Verbundene Dienste.",
  "auth2": "Authentifizierungscode",

@@ -125,6 +125,8 @@
       "ct.err.name": "Give a name (or a company) first",
       "ct.err.store": "Not saved: this browser's storage is full. Free some space (Settings › Device info) and save again.",
       "ct.none": "No contacts yet",
+      "ek.go": "Add a contact",
+      "ek.hint": "People you add here can be called, written to and linked from your other apps. Add one, or bring them in from your phone or another app.",
       "ct.search.none": "No contacts found",
       "ct.export.done": "Contacts exported (.vcf)",
       "ct.export.bad": "Export failed — please retry",
@@ -444,6 +446,8 @@
       "ct.err.name": "Δώσε πρώτα ένα όνομα (ή εταιρεία)",
       "ct.err.store": "Δεν αποθηκεύτηκε: ο χώρος του browser είναι γεμάτος. Ελευθέρωσε χώρο (Ρυθμίσεις › Πληροφορίες συσκευής) και αποθήκευσε ξανά.",
       "ct.none": "Καμία επαφή ακόμα",
+      "ek.go": "Πρόσθεσε μια επαφή",
+      "ek.hint": "Οι επαφές που προσθέτεις εδώ γίνονται κλήση, μήνυμα και σύνδεση από τις άλλες εφαρμογές σου. Πρόσθεσε μία ή φέρ' τες από το κινητό σου ή άλλη εφαρμογή.",
       "ct.search.none": "Καμία επαφή δεν βρέθηκε",
       "ct.export.done": "Οι επαφές εξήχθησαν (.vcf)",
       "ct.export.bad": "Η εξαγωγή απέτυχε — δοκίμασε ξανά",
@@ -1636,7 +1640,17 @@
     if (!hits.length) {
       var emp = document.createElement("li");
       emp.className = "empty";
-      emp.textContent = t(q ? "ct.search.none" : (reach ? "kt.reach.none" : "ct.none"));
+      if (!q && !reach && !state.contacts.length && window.orosEmpty) {
+        // EMPTY-1: no contacts at all: the friendly empty screen (../emptykit.js)
+        var et = document.createElement("span"), eh = document.createElement("span");
+        et.textContent = t("ct.none");
+        eh.textContent = t("ek.hint");
+        emp.appendChild(et);
+        emp.appendChild(eh);
+        window.orosEmpty.dress(emp, { app: "contacts", action: { label: t("ek.go"), run: function () { openDlg(null); } } });
+      } else {
+        emp.textContent = t(q ? "ct.search.none" : (reach ? "kt.reach.none" : "ct.none"));
+      }
       ul.appendChild(emp);
       return;
     }

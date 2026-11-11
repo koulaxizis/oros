@@ -969,11 +969,18 @@
       '<button type="button" class="qbtn" data-act="inc" data-h="' + esc(h.id) + '" title="' + esc(t("inc")) + '" aria-label="' + esc(t("inc")) + '">' + ICO_PLUS + "</button>" +
       "</span>";
   }
+  // EMPTY-1: the friendly empty screen (../emptykit.css); the art is
+  // the app's own shell icon when orOS gives it, else the tick.
+  function emptyArt() {
+    var svg = "";
+    try { var E = window.parent !== window && window.parent.orosTodayEnv; svg = E && E.icon ? E.icon("habits") : ""; } catch (e) {}
+    return /^<svg[\s>]/.test(String(svg).trim()) ? svg : ICONS.check;   // static icon markup
+  }
   function emptyHtml() {
-    return '<div class="empty">' + ICONS.check +
-      '<h2>' + esc(t("empty.title")) + "</h2>" +
-      "<p>" + esc(t("empty.desc")) + "</p>" +
-      '<button class="btn prim" data-act="new">' + esc(t("empty.cta")) + "</button>" +
+    return '<div class="empty ek"><span class="ek-art" aria-hidden="true">' + emptyArt() + "</span>" +
+      '<h2 class="ek-title">' + esc(t("empty.title")) + "</h2>" +
+      '<p class="ek-text">' + esc(t("empty.desc")) + "</p>" +
+      '<div class="ek-acts"><button type="button" class="ek-act" data-act="new">' + esc(t("empty.cta")) + "</button></div>" +
       "</div>";
   }
 

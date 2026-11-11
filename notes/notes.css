@@ -991,3 +991,6 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
+
+/* EMPTY-1: the friendly empty screen over the editor */
+#page-body.ek-on > #page-text, #page-body.ek-on > #page-preview { display: none; }

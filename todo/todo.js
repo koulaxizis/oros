@@ -4954,6 +4954,8 @@
   applyI18n();
   paintStaticAria();
   populateWeekdaySelects();
+  // EMPTY-1: the friendly empty screen (../emptykit.js)
+  if (window.orosEmpty) window.orosEmpty.dress($("empty"), { app: "todo", action: { label: t("add.task"), run: function () { $("quick-add").focus(); } } });
   // ---------- 13. "Send to To-Do" receiver (other apps → a list) ----------
   // Contract (OROS_BIBLE.md, BR-TD-ADD): any app calls
   //   window.parent.__orosOpenAt("todo", { addItems: {

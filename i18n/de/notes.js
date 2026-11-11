@@ -179,6 +179,7 @@ orosPack("de", "notes", {
  "tpl.parent": "Vorlagen",
  "tpl.pick": "Vorlage wählen",
  "tree.empty": "Noch keine Seiten",
+ "ek.hint": "Schreib, was du willst: Ideen, Listen, das Tagebuch eines Projekts. Seiten können Seiten enthalten, und [[Links]] verbinden sie.",
  "undo": "Rückgängig",
  "undone": "Import rückgängig gemacht",
  "untitled": "Ohne Titel",
