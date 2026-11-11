@@ -45,7 +45,12 @@ jobs:
       - name: Install Playwright (CI only)
         run: |
           npm install --prefix .github/qa --no-audit --no-fund
-          .github/qa/node_modules/.bin/playwright install --with-deps chromium
+          # The runner image already has Chrome's libraries; when the apt
+          # mirror is down (2026-11-11), install the browser without them.
+          .github/qa/node_modules/.bin/playwright install --with-deps chromium || {
+            echo "::warning::apt mirror unreachable, installing Chromium without system packages"
+            .github/qa/node_modules/.bin/playwright install chromium
+          }
       - name: Open every app
         run: node .github/qa/smoke.js --shard ${{ matrix.shard }}/4 --out qa-report-${{ matrix.shard }}.json
       - name: Sync convergence of every merge function
