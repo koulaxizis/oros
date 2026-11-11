@@ -2037,7 +2037,7 @@
       var last = rcLast[shop.id];
       if (rcErr[shop.id]) line(rcErrText(rcErr[shop.id], shop), "late");
       else if (last) {
-        line(t("rc.done", { n: last.saved, time: new Date(last.at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" }) }));
+        line(t("rc.done", { n: last.saved, time: new Date(last.at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", hour12: false }) }));
         if (last.skipped.length) {
           line(t("rc.skipped"), "late");
           last.skipped.forEach(function (k) { line(ctrLabel(k.id) + " · " + t("rc.why." + k.why), "late"); });
