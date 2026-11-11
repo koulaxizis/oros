@@ -249,7 +249,7 @@
 
   // Your name (ME v1, shell.js): saved when the field is left or Enter
   // is pressed, so a repaint never takes the field away while typing.
-  function secMe(host, me, greet) {
+  function secMe(host, me, greet, tips) {
     var c = card(t("a.me"), "me");
     var box = el("div", "dav-field");
     var inp = el("input");
@@ -273,6 +273,11 @@
     if (greet) {
       c.appendChild(row(t("a.greet"), switchBtn(!!greet.on, "greet", function (v) { set("greet", v); }, t("a.greet")),
         { scope: "greet", hint: t("a.greet.hint") }));
+    }
+    // TIP-1: a tip the first time an app opens (this device)
+    if (tips) {
+      c.appendChild(row(t("a.tips"), switchBtn(!!tips.on, "tips", function (v) { set("tips", v); }, t("a.tips")),
+        { scope: "tips", hint: t("a.tips.hint") }));
     }
     host.appendChild(c);
   }
@@ -377,7 +382,7 @@
     if (s.suggested) c3.appendChild(el("p", "hint", t("a.wallpaper.hint")));
     host.appendChild(c3);
 
-    if (s.me) secMe(host, s.me, s.greet);
+    if (s.me) secMe(host, s.me, s.greet, s.tips);
 
     if (s.seasonal) secSeasonal(host, s.seasonal);
 

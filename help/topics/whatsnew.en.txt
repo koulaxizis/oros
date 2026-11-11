@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.11.00
+- **Friendlier empty screens.** When an app has nothing in it yet, you now see its icon, a line about what goes there and one button to start: in To-Do, Kanban, Bookmarks, Invoices, Habits, Contacts, Budget, Notes and Meals.
+- **A tip the first time you open an app.** New to orOS? Each app shows one short tip from its guide the first time you open it, with `More in Help` for the whole guide. Turn tips on or off in Settings › Appearance; turning them on again shows every tip again.
+
 ## Version 6.10.00
 - **A greeting when you start orOS.** The first time you open orOS each day, it says good morning, good afternoon or good evening (with your name, if you set one), shows the date and tells you how many things are due today and how many are late. Tap that line to open Today. It goes away by itself after a few seconds. You can turn it off in Settings › Appearance, under `Your name`.
 - **First steps for new users.** A new `First steps` card on the desktop suggests a few things to try: your first note, a task, a wallpaper, an icon pack, sync, the Assistant and installing orOS. Each line ticks itself once you have really done it. Already using orOS? Add it from `Widgets…` if you like.

@@ -6164,6 +6164,8 @@
     applyI18n();
     load();
     wire();
+    // EMPTY-1: the friendly empty screen (../emptykit.js)
+    if (window.orosEmpty) window.orosEmpty.dress($("empty"), { app: "kanban", action: { label: t("col.add"), run: createColumn } });
     registerSync();       // ΠΡΕΠΕΙ μετά το load(): το sliceGet διαβάζει state
     inheritPalette();
     watchPalette();

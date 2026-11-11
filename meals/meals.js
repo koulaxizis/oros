@@ -74,6 +74,7 @@
     en: {
       "app.name": "Meal Planner", "tab.rc": "Recipes", "tab.wk": "Week", "tab.sh": "Shopping", "btn.settings": "Settings",
       "rc.search": "Search recipes, or ingredients with commas…", "rc.new": "New recipe", "rc.paste": "Import",
+      "ek.title": "Your recipes live here",
       "rc.empty": "No recipes match.", "rc.none": "No recipes yet. Add one, or paste one from anywhere.",
       "rc.ingmode": "Recipes with: {list}", "f.fav": "★ Favourites", "f.fits": "Fits our diet",
       "rc.min": "{n} min", "rc.serv": "{n} serv.", "fav.add": "Add to favourites", "fav.del": "Remove from favourites",
@@ -218,6 +219,7 @@
     el: {
       "app.name": "Συνταγές & Μενού", "tab.rc": "Συνταγές", "tab.wk": "Εβδομάδα", "tab.sh": "Ψώνια", "btn.settings": "Ρυθμίσεις",
       "rc.search": "Αναζήτηση συνταγών, ή υλικά με κόμμα…", "rc.new": "Νέα συνταγή", "rc.paste": "Εισαγωγή",
+      "ek.title": "Εδώ μένουν οι συνταγές σου",
       "rc.empty": "Καμία συνταγή δεν ταιριάζει.", "rc.none": "Καμία συνταγή ακόμα. Πρόσθεσε μία, ή επικόλλησε από οπουδήποτε.",
       "rc.ingmode": "Συνταγές με: {list}", "f.fav": "★ Αγαπημένες", "f.fits": "Για τη διατροφή μας",
       "rc.min": "{n}′", "rc.serv": "{n} μερ.", "fav.add": "Στις αγαπημένες", "fav.del": "Αφαίρεση από τις αγαπημένες",
@@ -968,9 +970,18 @@
       card.appendChild(st);
       box.appendChild(card);
     });
-    var none = !recipes().length;
-    $("rc-empty").hidden = list.length > 0;
-    $("rc-empty").textContent = none ? t("rc.none") : t("rc.empty");
+    var none = !recipes().length, emp = $("rc-empty");
+    emp.hidden = list.length > 0;
+    emp.textContent = "";
+    emp.classList.remove("ek");
+    if (none && window.orosEmpty) {
+      // EMPTY-1: no recipes at all: the friendly empty screen (../emptykit.js)
+      emp.appendChild(el("span", null, t("ek.title")));
+      emp.appendChild(el("span", null, t("rc.none")));
+      window.orosEmpty.dress(emp, { app: "meals", action: { label: t("rc.new"), run: function () { openEditor(null); } } });
+    } else {
+      emp.textContent = none ? t("rc.none") : t("rc.empty");
+    }
   }
 
   // Week ---------------------------------------------------------

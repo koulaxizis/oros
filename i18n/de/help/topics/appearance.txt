@@ -27,6 +27,9 @@ Wenn du orOS zum ersten Mal startest, wartet auf dem Desktop die Karte `Erste Sc
 ## Begrüßung beim Start
 Wenn du orOS an einem Tag zum ersten Mal startest, erscheint kurz eine Begrüßung über dem Desktop: Guten Morgen, Guten Tag oder Guten Abend (mit deinem Namen, wenn du ihn unter `Dein Name` festgelegt hast), das Datum und, wenn [Heute](app:today) etwas hat, wie viel heute fällig und wie viel überfällig ist. Tippe auf diese Zeile, um Heute zu öffnen. Die Begrüßung geht nach ein paar Sekunden von selbst, oder wenn du irgendwo tippst, eine Taste drückst oder eine App öffnest. Sie erscheint nie über einer App und nie an deinem allerersten Tag. Du schaltest sie in den `Einstellungen` unter `Darstellung` mit `Begrüßung beim Start` aus; das bleibt auf diesem Gerät.
 
+### Ein Tipp beim Öffnen einer App
+Wenn du neu bei orOS bist, erscheint beim ersten Öffnen jeder App ein kurzer Tipp aus ihrer Anleitung: auf einem Computer unten am Bildschirm, auf einem Handy unter der oberen Leiste. `Mehr in der Hilfe` öffnet die ganze Anleitung der App, `×` schließt ihn, und er geht auch, sobald du die App benutzt. Jede App zeigt ihren Tipp einmal. `Beim ersten Öffnen einer App einen Tipp zeigen` in den `Einstellungen` unter `Darstellung` schaltet die Tipps ein oder aus; schaltest du sie wieder ein, erscheint der Tipp jeder App noch einmal. Das bleibt auf diesem Gerät. Spiele haben stattdessen ihre eigene Einführung beim ersten Spiel.
+
 ## Sprache
 orOS spricht Englisch und Griechisch. Der Knopf `EL` / `EN` in der oberen Leiste wechselt zur anderen Sprache, ebenso [[Ctrl+Alt+Shift+L]].
 

@@ -303,6 +303,7 @@
   var STRINGS = {
     en: {
       "tree.empty":         "No pages yet",
+      "ek.hint": "Write anything: ideas, lists, a diary of a project. Pages can hold pages, and [[links]] join them.",
       "page.untitled":      "Untitled",
       "page.new":           "New page",
       "page.newchild":      "New sub-page",
@@ -368,6 +369,7 @@
     },
     el: {
       "tree.empty":         "Καμία σελίδα ακόμη",
+      "ek.hint": "Γράψε ό,τι θέλεις: ιδέες, λίστες, το ημερολόγιο ενός έργου. Οι σελίδες χωρούν σελίδες, και οι [[σύνδεσμοι]] τις ενώνουν.",
       "page.untitled":      "Χωρίς τίτλο",
       "page.new":           "Νέα σελίδα",
       "page.newchild":      "Νέα υποσελίδα",
@@ -1128,6 +1130,34 @@
     var tb = document.getElementById("md-toolbar");
     if (tb) tb.classList.toggle("off", !page);
     renderPreview();
+    renderEmptyKit(page);
+  }
+
+  // EMPTY-1: no page in this notebook yet: the friendly empty screen
+  // over the editor (../emptykit.js); "New page" makes the first one.
+  function renderEmptyKit(page) {
+    var body = document.getElementById("page-body");
+    if (!body) return;
+    var on = !page && !!window.orosEmpty && !state.pages.some(function (p) { return p.nb === currentNbId(); });
+    var box = document.getElementById("ek-notes");
+    body.classList.toggle("ek-on", on);
+    if (!on) { if (box) box.hidden = true; return; }
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "ek-notes";
+      body.appendChild(box);
+    }
+    box.textContent = "";
+    var h = document.createElement("span"), p = document.createElement("span");
+    h.textContent = t("tree.empty");
+    p.textContent = t("ek.hint");
+    box.appendChild(h);
+    box.appendChild(p);
+    box.hidden = false;
+    window.orosEmpty.dress(box, { app: "notes", action: { label: t("page.new"), run: function () {
+      var nb = document.getElementById("btn-new-page");
+      if (nb) nb.click();
+    } } });
   }
   
     // v0.14.1: visible label chips in the editor header — tags were

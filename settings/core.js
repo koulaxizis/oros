@@ -18,7 +18,7 @@
   // (its key cannot travel) stay on the device.
   // The menu's app list rides in the launcher's "menu" slice.
   var SCOPE = {
-    theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device",
+    theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
     multitask: "device", pcfiles: "device", a11y: "device", lock: "device", osk: "device", widgets: "device", backupenc: "device", caldav: "device", gate: "device"
@@ -41,6 +41,7 @@
     ["wallpaper", "appearance", "a.wallpaper"],
     ["me", "appearance", "a.me"],
     ["greet", "appearance", "a.greet"],
+    ["tips", "appearance", "a.tips"],
     ["seasonal", "appearance", "z.on", "z.title", null, "seasonal"],
     ["seasonal-motion", "appearance", "z.motion", "z.title", "z.on", "seasonal"],
     ["seasonal-amount", "appearance", "z.amount", "z.title", "z.on", "seasonal"],
@@ -182,6 +183,7 @@
       "a.wallpaper.land.hint": "Living land grows around your shortcuts, widgets and sticky notes, and changes with them. New shape draws another land.",
       "a.wallpaper.hint": "★ marks the wallpaper suggested for your system colour. A new colour brings its own wallpaper, until you pick a wallpaper yourself.",
       "a.me": "Your name", "a.me.ph": "What should orOS call you?",
+      "a.tips": "Show a tip the first time I open an app", "a.tips.hint": "One short line from the app's guide, once per app. Turning it on again shows every app's tip again. Only on this device.",
       "a.greet": "Greet me when orOS starts", "a.greet.hint": "Once a day, at the first start: good morning, the date and what Today holds. Only on this device.",
       "a.me.hint": "Only for greetings: at the start, in Today and on the Start page. It stays on your devices (synced encrypted) and never goes to the Assistant or anywhere else. Leave it empty for none.",
       "a.pet": "Screen pet",
@@ -883,6 +885,7 @@
       "w.skin": "colour color accent palette skin",
       "w.icons": "icons icon pack tiles look",
       "w.greet": "greeting good morning welcome start hello",
+      "w.tips": "tips tip hints first open guide help",
       "w.wallpaper": "background desktop picture image",
       "w.me": "name greeting nickname call me personal",
       "w.seasonal": "christmas snow holiday festive decorations halloween easter",
@@ -1019,6 +1022,7 @@
       "a.wallpaper.land.hint": "Το Ζωντανό τοπίο μεγαλώνει γύρω από τις συντομεύσεις, τα widgets και τα αυτοκόλλητα σημειώματα και αλλάζει μαζί τους. Το Νέο σχήμα φτιάχνει άλλο τοπίο.",
       "a.wallpaper.hint": "Το ★ δείχνει την ταπετσαρία που προτείνεται για το χρώμα συστήματος. Ένα νέο χρώμα φέρνει τη δική του ταπετσαρία, μέχρι να διαλέξεις εσύ ταπετσαρία.",
       "a.me": "Πώς να σε λέω", "a.me.ph": "Πώς να σε φωνάζει το orOS;",
+      "a.tips": "Συμβουλή την πρώτη φορά που ανοίγω μια εφαρμογή", "a.tips.hint": "Μία σύντομη γραμμή από τον οδηγό της εφαρμογής, μία φορά για κάθε εφαρμογή. Αν το ξανανοίξεις, ξαναβγαίνουν όλες. Μόνο σε αυτή τη συσκευή.",
       "a.greet": "Χαιρετισμός στην εκκίνηση", "a.greet.hint": "Μία φορά τη μέρα, στο πρώτο άνοιγμα: καλημέρα, η ημερομηνία και ό,τι έχει το Σήμερα. Μόνο σε αυτή τη συσκευή.",
       "a.me.hint": "Μόνο για τον χαιρετισμό: στην εκκίνηση, στο Σήμερα και στην Αρχική σελίδα. Μένει στις συσκευές σου (συγχρονίζεται κρυπτογραφημένο) και δεν πηγαίνει ποτέ στον Βοηθό ή αλλού. Άφησέ το κενό αν δεν θέλεις.",
       "a.pet": "Συντροφάκι",
@@ -1719,6 +1723,7 @@
       "w.skin": "χρώμα χρώματα παλέτα απόχρωση",
       "w.icons": "εικονίδια πακέτο εικονιδίων όψη",
       "w.greet": "χαιρετισμός καλημέρα καλωσόρισμα εκκίνηση γεια",
+      "w.tips": "συμβουλές συμβουλή υποδείξεις πρώτο άνοιγμα οδηγός βοήθεια",
       "w.wallpaper": "φόντο επιφάνεια εργασίας εικόνα",
       "w.me": "όνομα χαιρετισμός παρατσούκλι προσωπικό",
       "w.seasonal": "χριστούγεννα χιόνι γιορτές στολισμός διακόσμηση πάσχα απόκριες",

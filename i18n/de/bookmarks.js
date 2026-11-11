@@ -207,6 +207,7 @@ orosPack("de", "bookmarks", {
  "sort.title": "Titel A–Z",
  "sort.visited": "Meistbesucht",
  "tab.add": "Neuer Ordner",
+ "ek.go": "Link einfügen",
  "tab.into": "Verschieben in…",
  "tab.movel": "Nach links",
  "tab.mover": "Nach rechts",

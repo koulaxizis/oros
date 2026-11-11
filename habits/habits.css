@@ -245,7 +245,7 @@ body { overflow: hidden; display: flex; flex-direction: column; }
   text-align: center;
   color: var(--text-dim);
 }
-.empty svg { width: 40px; height: 40px; opacity: 0.5; }
+.empty:not(.ek) svg { width: 40px; height: 40px; opacity: 0.5; }
 
 /* ---------- Dialog (modal) ---------- */
 dialog {

@@ -1376,6 +1376,42 @@ body {
 
 /* Help phase 3 — first-run tour of the top bar (shell.js startTour).
    The ring's huge shadow dims everything but the button it frames. */
+/* TIP-1: one tip the first time an app opens (shell.js) */
+#oros-tip {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 8980;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(640px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 10px 10px 10px 16px;
+  border-radius: 16px;
+  color: var(--text);
+  background: var(--panel-bg, var(--bg));
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  box-shadow: 0 8px 28px var(--shadow, rgba(0, 0, 0, 0.35));
+  font-size: 14px;
+  line-height: 1.45;
+  animation: greet-out .3s ease-out reverse both;
+}
+@media (prefers-reduced-motion: reduce) { #oros-tip { animation: none; } }
+#oros-tip .tip-body { flex: 1; min-width: 0; }
+#oros-tip .tip-body strong { margin-right: 6px; color: var(--accent); }
+#oros-tip .tip-acts { display: flex; align-items: center; gap: 4px; flex: none; }
+#oros-tip button { min-height: 40px; border: none; border-radius: 10px; background: transparent; color: var(--text); font: inherit; cursor: pointer; }
+#oros-tip .tip-more { padding: 0 10px; font-size: 13px; font-weight: 700; color: var(--accent); }
+#oros-tip .tip-x { width: 40px; font-size: 20px; color: var(--text-dim); }
+#oros-tip button:hover, #oros-tip button:focus-visible { background: var(--accent-soft); outline: none; }
+@media (max-width: 480px) {
+  #oros-tip { top: calc(48px + env(safe-area-inset-top, 0px)); bottom: auto; flex-direction: column; align-items: stretch; gap: 4px; padding: 12px 12px 6px 14px; }
+  #oros-tip .tip-acts { justify-content: flex-end; }
+}
+
 /* GREET-1: the greeting at the first start of the day (shell.js) */
 #oros-greet {
   position: fixed;
