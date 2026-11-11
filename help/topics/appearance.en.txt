@@ -24,6 +24,8 @@ Cards on the desktop that show your day at a glance: `Clock`, `Calendar` (a mont
 ### First steps
 When you start orOS for the first time, a `First steps` card waits on the desktop: write your first note, add a task, choose a wallpaper or a Living land, pick an icon pack, turn on sync, meet the Assistant and, where your browser offers it, install orOS as an app. Tap a line to go there. Each line ticks itself once you have really done it, so there is nothing to tick by hand. `Hide` takes the card away; when everything is done it says so and leaves the next day. You can bring it back with `Widgets…`.
 
+On a computer, First steps also has `Use orOS on your phone too`. It adds an `On your phone` card with a QR code: scan it with the phone's camera to open orOS there. The code holds only the address of orOS (this site, or useoros.online when orOS runs from a local copy), never your data. To see the same things on both, turn on sync on each device with the same passphrase. The card can be removed like any widget.
+
 ## Greeting at the start
 The first time you start orOS each day, a short greeting appears over the desktop: good morning, afternoon or evening (with your name, if you set one under `Your name`), the date and, when [Today](app:today) has something, how many things are due and late. Tap that line to open Today. The greeting goes by itself after a few seconds, or when you tap anywhere, press a key or open an app. It never shows over an app or on your very first day. Turn it off in `Settings`, under `Appearance`, with `Greet me when orOS starts`; this stays on this device.
 

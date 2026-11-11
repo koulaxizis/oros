@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.17.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.18.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -13841,7 +13841,8 @@
       wall: !!(wpPic() || (state.wallpaper && state.wallpaper !== DEFAULT_WALLPAPER)),
       icons: !!(state.icons && state.icons !== "classic"),
       sync: !!(S && typeof S.isConnected === "function" && S.isConnected()),
-      install: installed ? true : (state.deferredPrompt ? false : "no")
+      install: installed ? true : (state.deferredPrompt ? false : "no"),
+      phone: wgIsPhone() ? "no" : !!(window.orosWidgets && window.orosWidgets.wants && window.orosWidgets.wants("phone"))
     };
   }
   function startGo(id) {
@@ -13856,6 +13857,7 @@
         openHelp("t/data/" + window.t("wg.start.import.sec"));
         return;
       case "assistant": openAppById("assistant"); return;
+      case "phone":     if (window.orosWidgets && window.orosWidgets.set) window.orosWidgets.set("phone", true); return;
       case "install":
         if (!state.deferredPrompt) return;
         state.deferredPrompt.prompt();
@@ -13866,6 +13868,34 @@
     }
   }
 
+  // Desktop widgets (widgets.js): a phone, not a computer.
+  function wgIsPhone() {
+    try {
+      return !window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
+        Math.min(screen.width || 0, screen.height || 0) < 600;
+    } catch (e) { return false; }
+  }
+  // PHONE-1: the phone card's QR. The encoder (qr/qr-encode.js, the QR
+  // app's own, precached) loads the first time a card asks; the card is
+  // painted again once it is in. Only the address is encoded.
+  var wgQrLoad = 0, wgQrMemo = null;
+  function wgQr(url) {
+    if (wgQrMemo && wgQrMemo.url === url) return wgQrMemo.mods;
+    var Q = window.orosQR;
+    if (Q && typeof Q.encode === "function") {
+      try { wgQrMemo = { url: url, mods: Q.encode(url, { ecl: "M" }).modules }; } catch (e) { wgQrMemo = { url: url, mods: null }; }
+      return wgQrMemo.mods;
+    }
+    if (!wgQrLoad) {
+      wgQrLoad = 1;
+      var s = document.createElement("script");
+      s.src = "qr/qr-encode.js?v=" + APP_VERSION;
+      s.onload = function () { if (window.orosWidgets && window.orosWidgets.refresh) window.orosWidgets.refresh(); };
+      s.onerror = function () { wgQrLoad = 0; };
+      document.head.appendChild(s);
+    }
+    return null;
+  }
   // Desktop widgets (widgets.js): the weather card reads the tray's
   // cache, so the shell keeps fetching while that card is shown.
   function wgWantsWeather() {
@@ -13921,12 +13951,9 @@
     window.orosWidgets.attach({
       desktop: document.getElementById("oros-desktop"),
       lang: function () { return state.lang; },
-      phone: function () {
-        try {
-          return !window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
-            Math.min(screen.width || 0, screen.height || 0) < 600;
-        } catch (e) { return false; }
-      },
+      phone: wgIsPhone,
+      phoneUrl: function () { return window.orosWidgets.model.phoneUrlOf(location); },
+      qr: wgQr,
       running: function () { return !!state.running; },
       open: function (id) { openAppById(id); },
       openDay: function (ymd) { window.__orosOpenCalendar("-", ymd); },
