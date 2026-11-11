@@ -40,6 +40,9 @@ Gut zu wissen:
 
 Siehst du `Schalte zuerst die automatische Sicherung ein` oder `Wähle zuerst einen Sicherungsordner`, stelle die fehlende Option ein und versuche es noch mal.
 
+## Eine Erinnerung an eine Kopie
+orOS speichert deine Daten nur in diesem Browser. Wenn du orOS an 7 verschiedenen Tagen benutzt hast und weder die Synchronisierung noch eine automatische Sicherung eingeschaltet ist, sagt dir das eine Karte auf dem Desktop einmal, mit `Synchronisierung einschalten` und `Automatische Sicherung`. `×` schließt sie, und sie kommt nicht wieder. Gezählt wird nur auf diesem Gerät.
+
 ## Aus einer Datei wiederherstellen
 1. Öffne die `Einstellungen`, geh zu `Sicherungen` und tippe auf `Sicherungsdatei importieren`.
 2. Wähle eine orOS-Sicherungsdatei.
