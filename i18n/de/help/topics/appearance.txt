@@ -33,6 +33,8 @@ Wenn du neu bei orOS bist, erscheint beim ersten Öffnen jeder App ein kurzer Ti
 ### Ein Beispiel in einer leeren App
 Wenn Aufgaben, Kanban, Lesezeichen, Rechnungen, Kontakte, Budget, Notizen oder der Essensplaner noch leer sind, hat ihr leerer Bildschirm auch `Zeig mir ein Beispiel`. Es zeigt ein paar erfundene Einträge, damit du siehst, wie die App im Einsatz aussieht. Das Beispiel ist nur zum Ansehen: Nichts wird gespeichert, nichts wird synchronisiert, und deine Daten bleiben unberührt. `Mit eigenem beginnen` schließt es und beginnt deinen ersten Eintrag; `Schließen` schließt es nur.
 
+Aufgaben und Kanban bieten außerdem ein paar fertige Listen unter `Oder beginne mit einer Vorlage:`. In Aufgaben macht `Packliste` oder `Umzug` eine neue Liste, in der die Aufgaben schon stehen; in Kanban macht `Reise`, `Umzug` oder `Persönlich` ein Board mit seinen Spalten und ein paar Karten. Das sind echte Einträge, die du ändern oder löschen kannst, und `Rückgängig` nimmt sie zurück.
+
 ## Sprache
 orOS spricht Englisch und Griechisch. Der Knopf `EL` / `EN` in der oberen Leiste wechselt zur anderen Sprache, ebenso [[Ctrl+Alt+Shift+L]].
 

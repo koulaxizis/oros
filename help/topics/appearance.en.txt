@@ -33,6 +33,8 @@ If you are new to orOS, the first time you open each app a short tip from its gu
 ### An example in an empty app
 When To-Do, Kanban, Bookmarks, Invoices, Contacts, Budget, Notes or Meal Planner has nothing in it yet, its empty screen also has `Show me an example`. It shows a few made-up items, so you can see what the app looks like in use. The example is only a picture: nothing is saved, nothing syncs and your data is not touched. `Start my own` closes it and starts your first item; `Close` just closes it.
 
+To-Do and Kanban also offer a few ready lists under `Or start from a template:`. In To-Do, `Packing list` or `Moving house` makes a new list with its tasks already in it; in Kanban, `Trip`, `Moving house` or `Personal` makes a board with its columns and a few cards. These are real items you can change or delete, and `Undo` takes them back.
+
 ## Language
 orOS speaks English and Greek. The `EL` / `EN` button in the top bar switches to the other language, and so does [[Ctrl+Alt+Shift+L]].
 
