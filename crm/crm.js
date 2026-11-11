@@ -215,7 +215,7 @@
       "rq.untitled": "a contract",
       "rq.toast": "Renewal requests from the Author Portal: {n} (in Agenda)",
       "rq.noWrite": "{shop} refused to mark the renewal requests as read: it needs a key with Read/Write permission (Settings › Connected services).",
-      "cx.set": "Contracts", "cx.lbl": "Calendar label for the end days", "cx.lbl.own": "CRM (its own chip)", "cx.kb": "Kanban board for contract cards", "cx.kbPh": "Empty = the board that is open",
+      "cx.set": "Contracts", "cx.lbl": "Calendar label for the end days", "cx.lbl.own": "CRM (its own chip)", "cx.kb": "Kanban board for contract cards", "cx.kbPh": "The board that is open",
       "toast.ctrDel": "Contract deleted", "toast.noDisk": "The orOS disk is not available here.", "toast.fileSaved": "Saved in Files: {p}", "toast.fileBig": "Up to 20 MB per file.",
       "act.inv": "Invoice", "act.quote": "Quote",
       "docs.inv": "Invoices", "docs.quote": "Quotes", "docs.allInv": "All in Invoices",
@@ -464,7 +464,7 @@
       "rq.untitled": "ένα συμφωνητικό",
       "rq.toast": "Αιτήματα ανανέωσης από το Author Portal: {n} (στην Ατζέντα)",
       "rq.noWrite": "Το {shop} αρνήθηκε να σημειώσει τα αιτήματα ανανέωσης ως διαβασμένα: χρειάζεται κλειδί με δικαιώματα Ανάγνωση/Εγγραφή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
-      "cx.set": "Συμφωνητικά", "cx.lbl": "Ετικέτα Ημερολογίου για τις λήξεις", "cx.lbl.own": "CRM (δική του ετικέτα)", "cx.kb": "Πίνακας Kanban για κάρτες συμφωνητικών", "cx.kbPh": "Κενό = ο πίνακας που είναι ανοιχτός",
+      "cx.set": "Συμφωνητικά", "cx.lbl": "Ετικέτα Ημερολογίου για τις λήξεις", "cx.lbl.own": "CRM (δική του ετικέτα)", "cx.kb": "Πίνακας Kanban για κάρτες συμφωνητικών", "cx.kbPh": "Ο πίνακας που είναι ανοιχτός",
       "toast.ctrDel": "Το συμφωνητικό διαγράφηκε", "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "toast.fileSaved": "Αποθηκεύτηκε στα Αρχεία: {p}", "toast.fileBig": "Έως 20 MB ανά αρχείο.",
       "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
       "docs.inv": "Τιμολόγια", "docs.quote": "Προσφορές", "docs.allInv": "Όλα στα Τιμολόγια",
@@ -2140,6 +2140,20 @@
       return d && Array.isArray(d.labels) ? d.labels.filter(function (l) { return l && typeof l.id === "string" && /^[A-Za-z0-9_-]{1,60}$/.test(l.id) && typeof l.name === "string" && l.name.trim(); }) : [];
     } catch (e) { return []; }
   }
+  // Kanban's boards on this device (names, not archived, not templates),
+  // read only, for the contract-card board picker. Kanban finds the
+  // board by name (asNew), so the name is what is kept.
+  function kbBoards() {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-kanban-data") || "null"), seen = {}, out = [];
+      (d && Array.isArray(d.boards) ? d.boards : []).forEach(function (b) {
+        if (!b || b.archived || typeof b.id !== "string" || b.id.indexOf("tpl-") === 0 || typeof b.name !== "string") return;
+        var n = b.name.trim().slice(0, 60);
+        if (n && !seen[n]) { seen[n] = 1; out.push(n); }
+      });
+      return out;
+    } catch (e) { return []; }
+  }
   function ctrSettings(dlg) {
     dlg.appendChild(el("h3", "dlg-lbl", t("cx.set")));
     var cs = data.cset || {};
@@ -2147,7 +2161,10 @@
     var opts = [["", t("cx.lbl.own")]].concat(labels.map(function (l) { return [l.id, l.name.slice(0, 40)]; }));
     if (cs.lbl && !labels.some(function (l) { return l.id === cs.lbl; })) opts.push([cs.lbl, cs.lbl]);
     var lbl = field(dlg, t("cx.lbl"), selectEl(opts, cs.lbl || ""));
-    var kb = field(dlg, t("cx.kb"), inp("text", cs.kb || "", 60, t("cx.kbPh")));
+    var boards = kbBoards();
+    var kbOpts = [["", t("cx.kbPh")]].concat(boards.map(function (n) { return [n, n]; }));
+    if (cs.kb && boards.indexOf(cs.kb) < 0) kbOpts.push([cs.kb, cs.kb]);   // a board this device has not seen yet
+    var kb = field(dlg, t("cx.kb"), selectEl(kbOpts, cs.kb || ""));
     function save() {
       var next = C.normCset({ m: 1, lbl: lbl.value, kb: kb.value });
       if ((next.lbl || "") === (cs.lbl || "") && (next.kb || "") === (cs.kb || "")) return;
