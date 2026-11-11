@@ -105,6 +105,41 @@ if (api.alarms) {
   }, () => {});
 }
 
+/* A new add-on version (PW-AF5): once a day the add-on reads
+   extension/manifest.json from the orOS address (the host it already
+   has access to; nothing is sent but the request itself). A newer
+   version puts "↑" on the toolbar button, and the popup shows
+   "Version … is out" with a link to the download page. An add-on
+   installed by hand cannot replace itself. */
+async function checkAddonVersion() {
+  let base;
+  try { base = new URL(await getBase()); } catch (e) { return; }
+  let v = "";
+  try {
+    const r = await fetch(new URL("extension/manifest.json", base).href, { cache: "no-store", credentials: "omit" });
+    if (r.ok) v = String((await r.json()).version || "");
+  } catch (e) { return; }   // offline: ask again tomorrow
+  const mine = api.runtime.getManifest().version;
+  const isNew = OrosExt.newerVersion(v, mine);
+  await api.storage.local.set({ addonNew: isNew ? v : "" }).catch(() => {});
+  showAddonBadge(isNew);
+}
+function showAddonBadge(on) {
+  try {
+    if (on) { api.action.setBadgeBackgroundColor({ color: "#d4af37" }); api.action.setBadgeText({ text: "↑" }); }
+    else api.action.setBadgeText({ text: "" });
+  } catch (e) { /* no badge on this browser */ }
+}
+api.storage.local.get("addonNew").then((g) => {
+  showAddonBadge(!!(g && g.addonNew && OrosExt.newerVersion(g.addonNew, api.runtime.getManifest().version)));
+}, () => {});
+if (api.alarms) {
+  Promise.resolve(api.alarms.get("addon-check")).then((a) => {
+    if (!a) api.alarms.create("addon-check", { delayInMinutes: 2, periodInMinutes: 24 * 60 });
+  }, () => {});
+  api.alarms.onAlarm.addListener((a) => { if (a.name === "addon-check") checkAddonVersion(); });
+}
+
 /* The popup found the copy old and no orOS tab open: orOS opens in a
    background tab (from its offline copy, like any visit), its sync
    pulls the newest vault from the cloud, the add-on reads the slice and

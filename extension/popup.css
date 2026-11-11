@@ -31,3 +31,5 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .foot .hint { margin: 0; }
 [hidden] { display: none !important; }
+.newver { margin: 0; padding: 8px 12px; font-size: 13px; background: #d4af3733; border-bottom: 1px solid var(--line); }
+.newver a { color: inherit; font-weight: 700; }

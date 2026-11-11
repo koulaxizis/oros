@@ -86,7 +86,13 @@ on, only then), `storage`, `alarms` (the lock time, the 10-minute
 re-read), `contextMenus`,
 host access to `https://useoros.online/*` (read the vault copy);
 optional, asked when needed: other https sites, `localhost`.
-No content scripts, no network requests of its own.
+No content scripts. One network request of its own: once a day
+(alarm `addon-check`) `background.js` reads `extension/manifest.json`
+from the orOS address (`fetch`, no cookies); a newer version
+(`OrosExt.newerVersion`) is kept as `addonNew` in `storage.local`,
+shows "↑" on the toolbar button and "Version … is out. Download" in the
+popup (link to useoros.online/download/#addon). A zip install cannot
+replace itself.
 
 ## Install
 

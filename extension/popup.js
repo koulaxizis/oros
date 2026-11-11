@@ -218,6 +218,18 @@ $("saveLogin").addEventListener("click", async () => {
   $("saveYes").focus();
 });
 
+/* A newer add-on (background.js checkAddonVersion): say so, link to the download page. */
+api.storage.local.get("addonNew").then((g) => {
+  const v = g && g.addonNew;
+  if (!v || !OrosExt.newerVersion(v, api.runtime.getManifest().version)) return;
+  $("addonNewTxt").textContent = msg("addonNew", [v]);
+  $("addonNew").hidden = false;
+}, () => {});
+$("addonGet").addEventListener("click", (ev) => {
+  ev.preventDefault();
+  api.tabs.create({ url: OrosExt.DOWNLOAD_URL }).then(() => window.close());
+});
+
 let triedFirst = false;
 async function start() {
   say("");

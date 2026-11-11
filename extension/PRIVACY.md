@@ -1,7 +1,11 @@
 # orOS add-on: privacy
 
-The orOS add-on does not collect, sell or send any personal data. It
-makes no network requests of its own and has no analytics.
+The orOS add-on does not collect, sell or send any personal data and
+has no analytics. Its only network request of its own: once a day it
+reads `extension/manifest.json` from your orOS address (by default
+useoros.online) to see whether a newer add-on is out, and then shows
+"↑" on its button and a download link in its window. Nothing about you
+is sent with it.
 
 - When you press "Save this page to orOS", use its shortcut or its
   right-click menu, it reads the address and title of that one page (or
