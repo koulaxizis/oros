@@ -16,8 +16,12 @@
   "use strict";
   var KEY = "oros-crm-data";
   var W = {
-    en: { "td.roy": "Royalties to pay: {v}", "td.hours": "Hours not billed: {h} · {v}", "ov.h": "{n} h" },
-    el: { "td.roy": "Δικαιώματα προς πληρωμή: {v}", "td.hours": "Ώρες χωρίς χρέωση: {h} · {v}", "ov.h": "{n} ώρ." }
+    en: { "td.roy": "Royalties to pay: {v}", "td.hours": "Hours not billed: {h} · {v}", "ov.h": "{n} h",
+          "td.ctr": "Contracts that need a decision: {n}", "td.ctrEnded": "{n} ended", "td.ctrSoon": "{n} end within {d} days",
+          "td.ctrEnd": "ends {d}", "td.ctrGone": "ended {d}" },
+    el: { "td.roy": "Δικαιώματα προς πληρωμή: {v}", "td.hours": "Ώρες χωρίς χρέωση: {h} · {v}", "ov.h": "{n} ώρ.",
+          "td.ctr": "Συμφωνητικά που θέλουν απόφαση: {n}", "td.ctrEnded": "{n} έληξαν", "td.ctrSoon": "{n} λήγουν μέσα σε {d} ημέρες",
+          "td.ctrEnd": "λήγει {d}", "td.ctrGone": "έληξε {d}" }
   };
   function tr(lang, k, p) {
     if (lang && !W[lang] && root.orosI18n) root.orosI18n.table(W, "crm", lang);
@@ -63,6 +67,33 @@
     return out;
   }
 
+  // CRM 1.10 (CTR-ALL): one line at the top for the contracts that need
+  // a decision (ended, or within SOON_DAYS of the end, not put off);
+  // the follow-up of a contract gets its quick actions (CRM asks first).
+  function dmy(ymd, lang) { return lang === "en" ? ymd : ymd.slice(8) + "/" + ymd.slice(5, 7) + "/" + ymd.slice(0, 4); }
+  function ctrRows(ctx, C, data) {
+    if (typeof C.ctrAll !== "function" || !data.ctr) return [];
+    var needs = C.ctrAll(data, ctx.today, "needs");
+    if (!needs.length) return [];
+    var ended = needs.filter(function (r) { return r.st === "ended"; }).length, soon = needs.length - ended, lang = ctx.lang;
+    var more = [];
+    if (ended) more.push(tr(lang, "td.ctrEnded", { n: ended }));
+    if (soon) more.push(tr(lang, "td.ctrSoon", { n: soon, d: C.SOON_DAYS }));
+    needs.slice(0, 3 - more.length).forEach(function (r) {
+      more.push(r.ctr.t + " · " + tr(lang, r.st === "ended" ? "td.ctrGone" : "td.ctrEnd", { d: dmy(r.ctr.to, lang) }));
+    });
+    return [{ id: "ctrs", due: null, title: tr(lang, "td.ctr", { n: needs.length }), text: "", kind: "info", target: { ctrs: "needs" }, more: more }];
+  }
+  function ctrActs(data, f) {
+    var k = null;
+    (data.ctr || []).forEach(function (c) { if (c.fup === f.id) k = c; });
+    if (!k) return null;
+    var c = data.cust ? (function () { for (var i = 0; i < data.cust.length; i++) if (data.cust[i].id === k.cust) return data.cust[i]; return null; })() : null;
+    var acts = [{ k: "renew", target: { ctr: k.id, "do": "renew" } }, { k: "putoff", target: { ctr: k.id, "do": "post" } }];
+    if (c && c.email) acts.push({ k: "email", target: { ctr: k.id, "do": "mail" } });
+    return acts;
+  }
+
   var PROVIDER = {
     id: "crm",
     keys: [KEY],
@@ -73,7 +104,7 @@
       var ag = C.agenda(data, ctx.today, ctx.horizon);
       return ag.late.concat(ag.today, ag.soon).map(function (f) {
         var c = C.byId(data.cust, f.cust);
-        return {
+        var row = {
           id: f.id,
           due: f.d,
           time: f.t || null,
@@ -83,7 +114,10 @@
           target: { fup: f.id },
           done: { fup: f.id }
         };
-      }).concat(partnerRows(ctx, C, data));
+        var acts = ctrActs(data, f);
+        if (acts) row.acts = acts;
+        return row;
+      }).concat(ctrRows(ctx, C, data), partnerRows(ctx, C, data));
     }
   };
 

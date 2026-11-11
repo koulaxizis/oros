@@ -246,6 +246,9 @@
       "auto.edit":        "Edit",
       "auto.ran":         "Automation ran in “{col}”",
       "auto.badge":       "This column has automations",
+      "ctr.chip":         "Contract ends {d}",
+      "ctr.chipEnded":    "Contract ended",
+      "ctr.chipHint":     "Open the contract in CRM",
       "export.oros":      "orOS file (.orosboard)",
       "export.json":      "Export board (JSON)",
       "export.csv":       "Export cards (CSV)",
@@ -479,6 +482,9 @@
       "auto.edit":        "Αλλαγή",
       "auto.ran":         "Εκτελέστηκε αυτοματισμός στη στήλη «{col}»",
       "auto.badge":       "Η στήλη έχει αυτοματισμούς",
+      "ctr.chip":         "Λήξη συμφωνητικού {d}",
+      "ctr.chipEnded":    "Έληξε συμφωνητικό",
+      "ctr.chipHint":     "Άνοιγμα του συμφωνητικού στο CRM",
       "export.oros":      "Αρχείο orOS (.orosboard)",
       "export.json":      "Εξαγωγή πίνακα (JSON)",
       "export.csv":       "Εξαγωγή καρτών (CSV)",
@@ -2229,6 +2235,66 @@
     return { label: label, css: colorClass };
   }
 
+  // CRM 1.10 (CTR-ALL), read only: a card whose title names the book of
+  // a contract that ends within CRM's SOON_DAYS or has ended (not ended
+  // by agreement) shows it. Only cards linked to that partner in CRM, or
+  // on the board CRM's settings name for contract cards. Click → CRM.
+  var ctrCache = { raw: undefined, list: [] };
+  function ctrNeeds() {
+    var K = window.OrosCrmCore, raw = null;
+    if (!K || typeof K.ctrAll !== "function") return null;
+    try { raw = localStorage.getItem("oros-crm-data"); } catch (e) { raw = null; }
+    if (raw !== ctrCache.raw) {
+      ctrCache.raw = raw;
+      ctrCache.list = [];
+      ctrCache.data = null;
+      try {
+        var d = raw ? JSON.parse(raw) : null;
+        if (d && Array.isArray(d.cust) && Array.isArray(d.ctr)) {
+          ctrCache.data = K.norm(d);
+          ctrCache.list = K.ctrAll(ctrCache.data, localDateStr(new Date())).filter(function (r) {
+            return r.st === "soon" || r.st === "ended";
+          }).map(function (r) {
+            var links = {};
+            (ctrCache.data.ix || []).forEach(function (row) {
+              if (row.id !== r.ctr.cust) return;
+              (row.it || []).forEach(function (it) { if (it.k === "kb") { var p = it.r.split("/"); links[p[0] + "/" + p[2]] = 1; } });
+            });
+            return { r: r, b: foldName(r.book), links: links };
+          }).filter(function (x) { return x.b.length >= 3; });
+        }
+      } catch (e) { ctrCache.list = []; }
+    }
+    return ctrCache;
+  }
+  function ctrChip(card) {
+    var cc = ctrNeeds();
+    if (!cc || !cc.list.length) return null;
+    var board = currentBoard(), name = foldName(card.text), kb = cc.data && cc.data.cset && cc.data.cset.kb ? foldName(cc.data.cset.kb) : "";
+    var onBoard = kb && board && foldName(board.name) === kb;
+    var hit = null;
+    cc.list.forEach(function (x) {
+      if (hit || name.indexOf(x.b) < 0) return;
+      if (onBoard || (board && x.links[board.id + "/" + card.id])) hit = x.r;
+    });
+    if (!hit) return null;
+    var sp = document.createElement("span");
+    sp.className = "ctr-chip" + (hit.st === "ended" ? " ended" : "");
+    sp.textContent = hit.st === "ended" ? t("ctr.chipEnded") : t("ctr.chip", { d: fmtDay(hit.ctr.to) });
+    sp.title = t("ctr.chipHint");
+    sp.addEventListener("click", function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      try { window.parent.__orosOpenAt("crm", { ctr: hit.ctr.id }); } catch (err) {}
+    });
+    return sp;
+  }
+  function fmtDay(ymd) {
+    if (LANG === "en") return ymd;
+    var sep = LANG === "de" ? "." : "/";
+    return ymd.slice(8) + sep + ymd.slice(5, 7) + sep + ymd.slice(0, 4);
+  }
+
   function makeCardEl(col, card) {
     var el = document.createElement("button");
     el.type = "button";
@@ -2337,6 +2403,8 @@
       ac.appendChild(document.createTextNode(String(card.att.length)));
       meta.appendChild(ac);
     }
+    var cc = ctrChip(card);
+    if (cc) meta.appendChild(cc);
     if (meta.childNodes.length) el.appendChild(meta);
 
     // Extra info preview: μία dim, περικομμένη γραμμή "label: value · …"

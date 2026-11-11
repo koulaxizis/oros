@@ -216,6 +216,20 @@ function okCoupon(x) {
   if (x.email_restrictions !== undefined && !listOf(x.email_restrictions, 1, 1, okEmail)) return false;
   return x.description === undefined || (typeof x.description === "string" && x.description.length <= 200 && !/[\u0000-\u001f\u007f]/.test(x.description));
 }
+// Revenue Splitter contracts (CTR-ALL): ids, names, titles, days and
+// states only; never a note, a value or a file.
+const RS_CTR_KEYS = ["id", "ben", "title", "fmt", "from", "to", "state", "renewed"];
+const RS_CTR_ST = ["on", "soon", "ended", "ended_by_agreement"];
+function rsLine(v, max) { return typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f<>]/.test(v); }
+function rsDay(v) { return typeof v === "string" && DAY.test(v); }
+function okRsCtr(x) {
+  if (!onlyKeys(x, RS_CTR_KEYS)) return false;
+  if (typeof x.id !== "string" || !/^[a-z0-9]{6,40}$/.test(x.id)) return false;
+  if (!rsLine(x.ben, 120) || !rsLine(x.title, 120)) return false;
+  if (["print", "ebook", ""].indexOf(x.fmt) < 0 || RS_CTR_ST.indexOf(x.state) < 0) return false;
+  if (!(x.from === "" || rsDay(x.from)) || !rsDay(x.to)) return false;
+  return listOf(x.renewed, 0, 50, rsDay);
+}
 const WHOLE = {
   // "subscribed" only for new addresses: never over someone who left
   mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false),
@@ -259,6 +273,10 @@ export const PLATFORMS = {
       // partner card W6: Revenue Splitter 1.11+ (noxpress), read only
       ["GET", /^\/rs\/balances$/, null, null],
       ["GET", /^\/rs\/report$/, { date_start: DAY, date_end: DAY }, null],
+      // CRM «Contracts» (CTR-ALL): Revenue Splitter 1.14+ keeps the
+      // contracts' end days for its Author Portal (the whole list, replaced)
+      ["GET", /^\/rs\/contracts$/, null, null],
+      ["POST", /^\/rs\/contracts$/, null, { v: "rsv", sent: "rsday", contracts: "rsctrs" }],
       // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
       ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
       // Publishing «Cost & result» (P15): Production Ledger 1.1+'s report per product, read only
@@ -558,6 +576,9 @@ function okVal(kind, v) {
   if (kind === "dec") return typeof v === "string" && /^[0-9]{1,6}(\.[0-9]{1,3})?$/.test(v);
   if (kind === "desc") return typeof v === "string" && v.length <= 8000;
   if (kind === "cpns") return listOf(v, 1, 100, okCoupon);
+  if (kind === "rsv") return v === 1;
+  if (kind === "rsday") return rsDay(v);
+  if (kind === "rsctrs") return listOf(v, 0, 2000, okRsCtr);
   if (kind === "dims") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
     Object.keys(v).every((k) => (k === "length" || k === "width" || k === "height") && okVal("dec", v[k]));
   if (kind === "tolinv") return okInvoice(v);

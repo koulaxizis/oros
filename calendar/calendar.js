@@ -228,7 +228,7 @@
       "feed.ap.vx": "{name}: vaccine dose due",
       "feed.md.start": "{name}: first day", "feed.md.end": "{name}: last day", "feed.md.out": "{name}: runs out",
       "feed.crm.late": "Late",
-      "feed.crm.close": "Expected close",
+      "feed.crm.close": "Expected close", "feed.crm.ctr": "Contract ends", "feed.crm.ctrEnded": "Contract ended",
       "feed.famtree.one": "{name} · 1 year since death",
       "feed.famtree.n": "{name} · {n} years since death",
       "feed.time.noproj": "No project",
@@ -482,7 +482,7 @@
       "feed.ap.vx": "{name}: δόση εμβολίου",
       "feed.md.start": "{name}: πρώτη μέρα", "feed.md.end": "{name}: τελευταία μέρα", "feed.md.out": "{name}: τελειώνει",
       "feed.crm.late": "Καθυστερεί",
-      "feed.crm.close": "Αναμένεται κλείσιμο",
+      "feed.crm.close": "Αναμένεται κλείσιμο", "feed.crm.ctr": "Λήξη συμφωνητικού", "feed.crm.ctrEnded": "Έληξε συμφωνητικό",
       "feed.famtree.one": "{name} · 1 χρόνος από τον θάνατο",
       "feed.famtree.n": "{name} · {n} χρόνια από τον θάνατο",
       "feed.time.noproj": "Χωρίς έργο",
@@ -2205,13 +2205,35 @@ function transientNote(title, body) {
     }
     return crmCache.data;
   }
+  // CRM 1.10 (CTR-ALL): a contract on its end day, all day, under the
+  // Calendar label CRM's settings name (cset.lbl, when that label is
+  // here), else CRM's own chip. Click → its quick actions in CRM.
+  function crmCtrOn(data, dateStr, today) {
+    var C = window.OrosCrmCore;
+    if (typeof C.ctrEndsOn !== "function") return [];
+    var lbl = data.cset && data.cset.lbl && labelById(data.cset.lbl) ? data.cset.lbl : "lbl-feed-crm";
+    if (!labelVisible(lbl)) return [];
+    return C.ctrEndsOn(data, dateStr).map(function (k) {
+      var c = C.byId(data.cust, k.cust);
+      return {
+        id: "crm-ctr-" + k.id + "-" + dateStr,   // per-render key, never stored
+        title: t(dateStr < today ? "feed.crm.ctrEnded" : "feed.crm.ctr") + ": " + k.t + (c ? " · " + C.custName(c) : ""),
+        labelId: lbl,
+        start: null,
+        end: null,
+        _feed: true,
+        _openAt: { app: "crm", target: { ctr: k.id } }
+      };
+    });
+  }
   function crmFeedOn(dateStr) {
-    if (!labelVisible("lbl-feed-crm")) return [];
     var data = crmData();
     if (!data || !data.cust.length) return [];
     var C = window.OrosCrmCore;
     var today = C.ymdOf(Date.now());
-    return C.calendarOn(data, dateStr, today).map(function (r) {
+    var ctr = crmCtrOn(data, dateStr, today);
+    if (!labelVisible("lbl-feed-crm")) return ctr;
+    return ctr.concat(C.calendarOn(data, dateStr, today).map(function (r) {
       var x = r.fup || r.deal;
       var c = C.byId(data.cust, x.cust);
       var who = c ? C.custName(c) : "";
@@ -2227,7 +2249,7 @@ function transientNote(title, body) {
         _feed: true,
         _openAt: { app: "crm", target: r.fup ? { fup: x.id } : { deal: x.id } }
       };
-    });
+    }));
   }
 
   // Health medicines read-only feed (health/core.js, loaded by

@@ -367,3 +367,9 @@ label.check input { width: 20px; height: 20px; flex: 0 0 auto; }
 .cost-tbl th.num, .cost-tbl td.num { text-align: right; }
 .cost-tbl tfoot th, .cost-tbl tfoot td { font-weight: 600; border-bottom: 0; }
 .cost-tbl tr.tot th, .cost-tbl tr.tot td { border-top: 1px solid var(--border); }
+
+/* Contracts (CRM 1.10, CTR-ALL): read from CRM, acted on there */
+.badge.ctr-term { color: var(--text-dim); }
+.ctr-line .ctr-head { margin: 0 0 2px; }
+.ctr-line.needs { border-color: var(--warn); }
+.ctr-line.over .ctr-head strong { color: var(--danger); }
