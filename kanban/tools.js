@@ -485,7 +485,46 @@
       "tplb.content.label.2": "Social",
       "tplb.content.label.3": "Newsletter",
       "tplb.content.label.4": "Overdue",
-      "tplb.content.card.0": "Topic list for next month"
+      "tplb.content.card.0": "Topic list for next month",
+      "tplb.trip.name": "Trip",
+      "tplb.trip.desc": "Book, pack and go, with a list for the documents and the money.",
+      "tplb.trip.col.0": "Ideas",
+      "tplb.trip.col.1": "To book",
+      "tplb.trip.col.2": "To pack",
+      "tplb.trip.col.3": "Ready",
+      "tplb.trip.label.0": "Documents",
+      "tplb.trip.label.1": "Bookings",
+      "tplb.trip.label.2": "Money",
+      "tplb.trip.label.3": "Overdue",
+      "tplb.trip.card.0": "Book the tickets",
+      "tplb.trip.card.0.sub.0": "Compare the prices",
+      "tplb.trip.card.0.sub.1": "Check the dates",
+      "tplb.trip.card.1": "Pack the bags",
+      "tplb.trip.card.1.sub.0": "Clothes",
+      "tplb.trip.card.1.sub.1": "Chargers",
+      "tplb.trip.card.1.sub.2": "Passport or ID card",
+      "tplb.trip.card.2": "Where and when?",
+      "tplb.move.name": "Moving house",
+      "tplb.move.desc": "Before, during and after the move: papers, packing and the bills.",
+      "tplb.move.col.0": "Before the move",
+      "tplb.move.col.1": "Moving week",
+      "tplb.move.col.2": "After the move",
+      "tplb.move.col.3": "Done",
+      "tplb.move.label.0": "Papers",
+      "tplb.move.label.1": "Packing",
+      "tplb.move.label.2": "Bills",
+      "tplb.move.label.3": "Overdue",
+      "tplb.move.card.0": "Tell everyone the new address",
+      "tplb.move.card.0.sub.0": "Bank",
+      "tplb.move.card.0.sub.1": "Work",
+      "tplb.move.card.0.sub.2": "Post office",
+      "tplb.move.card.1": "Move the bills",
+      "tplb.move.card.1.sub.0": "Electricity",
+      "tplb.move.card.1.sub.1": "Water",
+      "tplb.move.card.1.sub.2": "Internet",
+      "tplb.move.card.2": "Pack room by room",
+      "tplb.move.card.2.sub.0": "Kitchen",
+      "tplb.move.card.2.sub.1": "Bedroom"
     },
     el: {
       "tplb.personal.name": "Προσωπικά",
@@ -531,7 +570,46 @@
       "tplb.content.label.2": "Κοινωνικά δίκτυα",
       "tplb.content.label.3": "Ενημερωτικό",
       "tplb.content.label.4": "Καθυστέρηση",
-      "tplb.content.card.0": "Θέματα για τον επόμενο μήνα"
+      "tplb.content.card.0": "Θέματα για τον επόμενο μήνα",
+      "tplb.trip.name": "Ταξίδι",
+      "tplb.trip.desc": "Κράτηση, βαλίτσες και φύγαμε, με μια λίστα για τα χαρτιά και τα χρήματα.",
+      "tplb.trip.col.0": "Ιδέες",
+      "tplb.trip.col.1": "Για κράτηση",
+      "tplb.trip.col.2": "Για τη βαλίτσα",
+      "tplb.trip.col.3": "Έτοιμα",
+      "tplb.trip.label.0": "Χαρτιά",
+      "tplb.trip.label.1": "Κρατήσεις",
+      "tplb.trip.label.2": "Χρήματα",
+      "tplb.trip.label.3": "Καθυστέρηση",
+      "tplb.trip.card.0": "Κράτηση εισιτηρίων",
+      "tplb.trip.card.0.sub.0": "Σύγκριση τιμών",
+      "tplb.trip.card.0.sub.1": "Έλεγχος ημερομηνιών",
+      "tplb.trip.card.1": "Βαλίτσες",
+      "tplb.trip.card.1.sub.0": "Ρούχα",
+      "tplb.trip.card.1.sub.1": "Φορτιστές",
+      "tplb.trip.card.1.sub.2": "Διαβατήριο ή ταυτότητα",
+      "tplb.trip.card.2": "Πού και πότε;",
+      "tplb.move.name": "Μετακόμιση",
+      "tplb.move.desc": "Πριν, κατά και μετά τη μετακόμιση: χαρτιά, πακετάρισμα και λογαριασμοί.",
+      "tplb.move.col.0": "Πριν τη μετακόμιση",
+      "tplb.move.col.1": "Εβδομάδα μετακόμισης",
+      "tplb.move.col.2": "Μετά τη μετακόμιση",
+      "tplb.move.col.3": "Έγιναν",
+      "tplb.move.label.0": "Χαρτιά",
+      "tplb.move.label.1": "Πακετάρισμα",
+      "tplb.move.label.2": "Λογαριασμοί",
+      "tplb.move.label.3": "Καθυστέρηση",
+      "tplb.move.card.0": "Ενημέρωση για τη νέα διεύθυνση",
+      "tplb.move.card.0.sub.0": "Τράπεζα",
+      "tplb.move.card.0.sub.1": "Δουλειά",
+      "tplb.move.card.0.sub.2": "Ταχυδρομείο",
+      "tplb.move.card.1": "Μεταφορά λογαριασμών",
+      "tplb.move.card.1.sub.0": "Ρεύμα",
+      "tplb.move.card.1.sub.1": "Νερό",
+      "tplb.move.card.1.sub.2": "Ίντερνετ",
+      "tplb.move.card.2": "Πακετάρισμα δωμάτιο προς δωμάτιο",
+      "tplb.move.card.2.sub.0": "Κουζίνα",
+      "tplb.move.card.2.sub.1": "Υπνοδωμάτιο"
     }
   };
   var BUILTIN = {
@@ -549,6 +627,16 @@
       cols: 5, labels: [[C.violet], [C.red], [C.cyan], [C.yellow], [C.red, "overdue"]],
       cards: [[0, [0], 0]],   // [column, labels, subtasks]
       rules: { 4: { today: true, done: true } }, wip: { 1: 3 }
+    },
+    trip: {
+      cols: 4, labels: [[C.cyan], [C.violet], [C.green], [C.red, "overdue"]],
+      cards: [[1, [1], 2], [2, [0], 3], [0, [], 0]],   // [column, labels, subtasks]
+      rules: { 3: { done: true } }, wip: {}
+    },
+    move: {
+      cols: 4, labels: [[C.cyan], [C.orange], [C.yellow], [C.red, "overdue"]],
+      cards: [[0, [0], 3], [0, [2], 3], [1, [1], 2]],   // [column, labels, subtasks]
+      rules: { 3: { done: true } }, wip: {}
     }
   };
   // The template words in a language: TPL[lang], built from the pack the
