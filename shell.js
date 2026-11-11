@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.13.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.14.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -13843,6 +13843,10 @@
       case "wall":
       case "icons":     if (window.orosSettings) window.orosSettings.open("appearance"); return;
       case "sync":      if (window.orosSettings) window.orosSettings.open("sync"); return;
+      case "import":
+        if (window.orosWidgets && window.orosWidgets.did) window.orosWidgets.did("import");
+        openHelp("t/data/" + window.t("wg.start.import.sec"));
+        return;
       case "assistant": openAppById("assistant"); return;
       case "install":
         if (!state.deferredPrompt) return;

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.14.00
+- **Bring your data.** Coming from another app? Help › Your data and files now has `Bring your data from other apps`: which orOS apps read the export of the app you used before (contacts, calendars, notes, tasks, bookmarks, passwords, money, recipes and more). The `First steps` card has a new line that opens it.
+
 ## Version 6.13.00
 - **A reminder to keep a copy.** orOS keeps your data only in this browser. If you have used it on 7 different days with neither sync nor an automatic backup on, a card on the desktop says so once, with `Turn on sync` and `Automatic backup`. It never comes back after that.
 

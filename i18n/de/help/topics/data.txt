@@ -29,5 +29,17 @@ Bevor du Browserdaten löschst, deinen Browser zurücksetzt oder das Gerät wech
 ## Private Fenster
 In einem privaten oder Inkognito-Fenster löscht der Browser alles, wenn du das Fenster schließt. orOS funktioniert dort, aber deine Daten sind beim nächsten Mal nicht mehr da. Nutze ein normales Fenster für alles, was du behalten willst, oder exportiere vor dem Schließen.
 
+## Bring deine Daten aus anderen Apps mit
+Du musst nicht bei null anfangen. Viele orOS-Apps lesen den Export der App, die du vorher benutzt hast. Öffne die App und suche nach `Importieren`; sie zeigt, was sie gefunden hat, bevor etwas gespeichert wird, und `Rückgängig` nimmt es zurück.
+- [Kontakte](app:contacts): Kontaktdateien (.vcf) vom Handy, von Google, Outlook oder jedem Adressbuch.
+- [Kalender](app:calendar): Kalenderdateien (.ics) von Google, Outlook, Apple oder jedem Kalender.
+- [Notizen](app:notes): Google Keep, Evernote, Simplenote, Joplin, Obsidian und Ordner mit Markdown- oder Textdateien.
+- [Aufgaben](app:todo) und [Kanban](app:kanban): Exporte anderer Aufgabenlisten und Boards, etwa von Trello.
+- [Lesezeichen](app:bookmarks): die Lesezeichen deines Browsers und Später-lesen-Listen.
+- [Passwörter](app:passwords): Bitwarden, 1Password, KeePass, LastPass, Proton Pass, die gespeicherten Passwörter deines Browsers und Zwei-Faktor-Apps wie Aegis.
+- [Budget](app:budget): Kontoauszüge und Exporte anderer Finanz-Apps (CSV oder Tabellen).
+- [Essensplaner](app:meals): Rezepte von einer Webseite oder aus einer anderen Rezept-App.
+- Viele weitere lesen ihre eigene Art von Datei: Ein-Satz-Tagebuch (Day One und andere), Stimmung (Daylio), Gewohnheiten, Training, Karten (Strecken und gespeicherte Orte), Zeiterfassung (Toggl, Clockify, Harvest) und andere. Die Anleitung jeder App sagt, welche Dateien sie liest.
+
 ## Deine Daten mitnehmen
 Deine Daten gehören immer dir. `Sicherungsdatei exportieren` in den [Einstellungen](app:settings) speichert alles in einer Datei, die du aufbewahren oder auf einem anderen Gerät in orOS importieren kannst. Um stattdessen alles zu löschen, siehe [Auf Werkseinstellungen zurücksetzen](help:t/reset).
