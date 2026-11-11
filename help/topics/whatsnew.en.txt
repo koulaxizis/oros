@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.16.01
+- **ccMixter search works again.** Searching free music in Music no longer ends with `No answer from ccMixter`: ccMixter songs now come 10 at a time, and a page that is slow to come is asked again in two halves.
+
 ## Version 6.16.00
 - **Start from a template.** An empty To-Do or Kanban now offers a few ready starts under `Or start from a template:`: in To-Do a `Packing list` or `Moving house` list with its tasks, in Kanban a `Trip`, `Moving house` or `Personal` board. They are your own items from the first tap, and `Undo` takes them back.
 
