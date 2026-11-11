@@ -149,3 +149,37 @@
   border-radius: 50%; padding: 3px;
   background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
+
+/* ---------- 7. Mix your own (ICONPACK-3) ----------
+   icons = "own.<shape>.<fill>.<line>" (shell.js iconsOwn): <html data-oros-icons="own"
+   data-ic-shape data-ic-fill data-ic-line>; a Settings preview carries the same
+   attributes on .ip-prev[data-pack="own"]. Fills reuse the colours above. */
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="own"]) .ld-tile {
+  border-color: transparent;
+}
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"]), .ip-prev[data-pack="own"]) .app-ico[data-cat] {
+  padding: 3px;
+}
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-shape="square"], .ip-prev[data-pack="own"][data-ic-shape="square"]) .ld-tile { border-radius: 12%; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-shape="square"], .ip-prev[data-pack="own"][data-ic-shape="square"]) .app-ico[data-cat] { border-radius: 3px; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-shape="round"], .ip-prev[data-pack="own"][data-ic-shape="round"]) .ld-tile { border-radius: 27%; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-shape="round"], .ip-prev[data-pack="own"][data-ic-shape="round"]) .app-ico[data-cat] { border-radius: 6px; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-shape="circle"], .ip-prev[data-pack="own"][data-ic-shape="circle"]) .ld-tile { border-radius: 50%; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-shape="circle"], .ip-prev[data-pack="own"][data-ic-shape="circle"]) .app-ico[data-cat] { border-radius: 50%; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="accent"], .ip-prev[data-pack="own"][data-ic-fill="accent"]) .ld-tile { background: var(--accent); color: var(--accent-ink, #ffffff); }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="accent"], .ip-prev[data-pack="own"][data-ic-fill="accent"]) .app-ico[data-cat] { background: var(--accent); color: var(--accent-ink, #ffffff); }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="hue"], .ip-prev[data-pack="own"][data-ic-fill="hue"]) .ld-tile { background: var(--ic-hue); color: var(--ic-hue-ink); }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="hue"], .ip-prev[data-pack="own"][data-ic-fill="hue"]) .app-ico[data-cat] { background: var(--ic-hue); color: var(--ic-hue-ink); }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="cat"], .ip-prev[data-pack="own"][data-ic-fill="cat"]) .ld-tile { background: var(--ic-cat); color: var(--ic-ink); }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="cat"], .ip-prev[data-pack="own"][data-ic-fill="cat"]) .app-ico[data-cat] { background: var(--ic-cat); color: var(--ic-ink); }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="dark"], .ip-prev[data-pack="own"][data-ic-fill="dark"]) .ld-tile { background: #1d1d26; color: var(--ic-glow); }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="dark"], .ip-prev[data-pack="own"][data-ic-fill="dark"]) .app-ico[data-cat] { background: #1d1d26; color: var(--ic-glow); }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="light"], .ip-prev[data-pack="own"][data-ic-fill="light"]) .ld-tile { background: #f4efe3; color: #2b2418; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="light"], .ip-prev[data-pack="own"][data-ic-fill="light"]) .app-ico[data-cat] { background: #f4efe3; color: #2b2418; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="frame"], .ip-prev[data-pack="own"][data-ic-fill="frame"]) .ld-tile { background: transparent; color: var(--accent); box-shadow: none; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="frame"], .ip-prev[data-pack="own"][data-ic-fill="frame"]) .app-ico[data-cat] { background: transparent; color: var(--accent); box-shadow: none; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="light"], .ip-prev[data-pack="own"][data-ic-fill="light"]) .ld-tile { border: 1px solid #e2d9c4; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="frame"], .ip-prev[data-pack="own"][data-ic-fill="frame"]) .ld-tile { border: 2px solid currentColor; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-fill="frame"], .ip-prev[data-pack="own"][data-ic-fill="frame"]) .app-ico[data-cat] { border: 1.5px solid currentColor; padding: 2px; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-line="thin"], .ip-prev[data-pack="own"][data-ic-line="thin"]) :is(.ld-tile, .app-ico) svg * { stroke-width: 1.4; }
+:is(html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-line="bold"], .ip-prev[data-pack="own"][data-ic-line="bold"]) :is(.ld-tile, .app-ico) svg * { stroke-width: 2.6; }

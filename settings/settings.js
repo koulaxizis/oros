@@ -284,6 +284,7 @@
 
   // Icon packs (ICONPACK-1, ICONPACK-2): eight previews, the same three sample apps
   // in each; the look comes from ../iconpacks.css (.ip-prev[data-pack]).
+  function ownId(o) { return "own." + o.shape + "." + o.fill + "." + o.line; }
   function secIcons(host, ic) {
     var c = card(t("a.icons"), "icons");
     var grid = el("div", "ip-grid");
@@ -297,6 +298,8 @@
       b.setAttribute("aria-checked", on ? "true" : "false");
       b.setAttribute("data-pack", id);
       b.setAttribute("data-k", "icons:" + id);
+      var own = id === "own" && ic.own;                // ICONPACK-3: the preview shows the current choices
+      if (own) ["shape", "fill", "line"].forEach(function (k) { b.setAttribute("data-ic-" + k, own[k]); });
       var row3 = el("span", "ip-tiles");
       row3.setAttribute("aria-hidden", "true");
       [["ip_notes", "office", "2"], ["ip_music", "sound", "7"], ["ip_chess", "games", "10"]].forEach(function (x) {
@@ -308,10 +311,20 @@
       });
       b.appendChild(row3);
       b.appendChild(el("span", "ip-name", t("a.icons." + id)));
-      b.addEventListener("click", function () { set("icons", id); });
+      b.addEventListener("click", function () { set("icons", own ? ownId(own) : id); });
       grid.appendChild(b);
     });
     c.appendChild(grid);
+    if (ic.pack === "own" && ic.own && ic.choices) {   // ICONPACK-3: shape, fill, lines
+      ["shape", "fill", "line"].forEach(function (k) {
+        var opts = ic.choices[k].map(function (v) { return { value: v, label: t("a.icons.own." + k + "." + v) }; });
+        c.appendChild(row(t("a.icons.own." + k), segmented(opts, ic.own[k], "icons:own:" + k, function (v) {
+          var next = { shape: ic.own.shape, fill: ic.own.fill, line: ic.own.line };
+          next[k] = v;
+          set("icons", ownId(next));
+        }, t("a.icons.own." + k)), { stack: true }));
+      });
+    }
     c.appendChild(el("p", "hint", t("a.icons.hint")));
     host.appendChild(c);
   }
