@@ -122,5 +122,27 @@ test("closed orOS: the device runs only the changes the relay may queue", () => 
   assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED).sort(), "5.96.00: changes and links by ref too");
   assert.ok(G.QUEUED.indexOf("budget_delete") >= 0 && G.QUEUED.indexOf("budget_transfer") >= 0);
   const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
-  assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) return \{ ok: false/, "applyQueue checks the list");
+  assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) \{ ranAdd\(it\.id\); done\.push\(it\.id\); return; \}/, "applyQueue checks the list");
+});
+
+test("closed orOS: a queued deletion is asked on the device first, whatever its size (6.16.00)", () => {
+  // Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με το orOS κλειστό»
+  assert.equal(G.delCount("change_item", { ref: "r116155", action: "delete" }), 1);
+  assert.equal(G.delCount("change_item", { refs: ["r116155", "oros:r110954", "r116155"], action: "delete" }), 2, "refs counted once each");
+  assert.equal(G.delCount("change_item", { changes: [{ ref: "r1", action: "delete" }, { ref: "r2", action: "update" }] }), 1);
+  assert.equal(G.delCount("change_item", { ref: "r1", action: "update" }), 0);
+  assert.equal(G.delCount("budget_delete", { ids: ["a", "b", "c"] }), 3, "Budget deletions too, even 3 (live asks over 5)");
+  assert.equal(G.delCount("link_items", { links: [{ customer: "r1", item: "r2" }], unlink: true }), 0, "an unlink deletes no item");
+  assert.deepEqual(G.refsOf({ refs: ["r1", "x", "oros:r2"] }), ["r1", "r2"]);
+  assert.equal(G.delWhat("change_item", [{ a: "Calendar", t: "Λήξη: Α" }, { a: "Calendar", t: "Λήξη: Β" }], 65), "Calendar: «Λήξη: Α», «Λήξη: Β» … (+63)");
+  assert.equal(G.delWhat("budget_delete", [], 2), "Budget");
+  const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
+  const aq = src.slice(src.indexOf("function applyQueue("), src.indexOf("function seatRead("));
+  assert.match(aq, /var asked = n \? askQueued\(it\.id, x, n\)/, "every queued deletion is asked");
+  assert.match(aq, /if \(yes === "later"\) return;/, "no answer: it stays in the queue (not done, not ran)");
+  assert.match(aq, /if \(yes === "later"\) return;\s*ranAdd\(it\.id\);/, "marked ran only after the owner answered");
+  assert.doesNotMatch(aq, /action === "delete"[^\n]*refused/, "deletions are no longer refused");
+  const ak = src.slice(src.indexOf("function askQueued("), src.indexOf("function onCall("));
+  assert.match(ak, /visibilityState !== "visible" \|\| locked\) \{ setTimeout\(show/, "waits for the screen, never over the lock screen");
+  assert.doesNotMatch(ak, /end\("yes"\)[^\n]*setTimeout|setTimeout\(function \(\) \{ end\("yes"/, "a timeout never says yes");
 });

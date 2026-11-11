@@ -4251,7 +4251,7 @@
   var READ_MAX = 12000;
   function readItem(c, args, apps) {
     var ref = String(args && args.ref || "").replace(/^oros:/, "").trim();
-    var r = c.refs && /^r\d{1,5}$/.test(ref) ? c.refs[ref] : null;
+    var r = c.refs && /^r\d{1,9}$/.test(ref) ? c.refs[ref] : null;
     if (!r) return Promise.resolve({ content: "Error: unknown ref. Use a ref that search_data returned.", err: 1 });
     var app = null;
     apps.forEach(function (a) { if (a.id === r.app) app = a; });
@@ -8691,7 +8691,7 @@
     gateConv.refN = typeof o.n === "number" && o.n > 0 ? o.n : 0;
     Object.keys(o.refs).forEach(function (r) {
       var x = o.refs[r];
-      if (/^r\d{1,6}$/.test(r) && x && typeof x === "object" && typeof x.app === "string") { gateConv.refs[r] = x; gateKeys[gateKey(x)] = r; }
+      if (/^r\d{1,9}$/.test(r) && x && typeof x === "object" && typeof x.app === "string") { gateConv.refs[r] = x; gateKeys[gateKey(x)] = r; }
     });
   }
   // → false when the device could not keep them (R30: the index then
@@ -8725,6 +8725,17 @@
       if (!gateRefsSave()) return { ok: false, c: "This device could not keep the refs (storage full)." };
       return { ok: true, items: out };
     });
+  }
+  // 6.16.00: what these refs are ([{ a: app name, t: title }]), for the
+  // owner's question before a queued deletion (gate.js askQueued).
+  function gatePeek(refs) {
+    var names = {}, out = [];
+    gateApps().read.forEach(function (a) { names[a.id] = a.name; });
+    (Array.isArray(refs) ? refs : []).slice(0, 200).forEach(function (r) {
+      var x = gateConv.refs[String(r)];
+      if (x && typeof x.app === "string") out.push({ a: names[x.app] || x.app, t: String(x.title || x.q || "") });
+    });
+    return out;
   }
   function gateShell() { try { var p = shell(); return p && p.orosGate ? p.orosGate : null; } catch (e) { return null; } }
   // { read: [app], write: [app] } as the gate allows them now.
@@ -9002,7 +9013,7 @@
       gateRefsLoad();
       window.__asGate = { v: 1, run: function (n, a) {
                             return gateRun(n, a).then(function (r) { if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; });
-                          }, tools: gateToolList, index: gateIndex,
+                          }, tools: gateToolList, index: gateIndex, peek: gatePeek,
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };
       try { var g = gateShell(); if (g && typeof g.frameReady === "function") g.frameReady(); } catch (e) {}
     });

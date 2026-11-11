@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.16.00
+- **Claude can delete with orOS closed, and you still decide.** When Claude asks through orOS Gate to delete something while orOS is closed (or asleep in the background), the request now waits, encrypted, instead of failing. The next time you open orOS you see what would go (the app and the titles) and nothing is deleted unless you press `Delete`. If you don't answer, it asks again next time. Every deletion can still be undone in Settings › Connected services › orOS Gate › Activity.
+- **Fixed:** changing or deleting several items at once through orOS Gate failed with "ref must be a ref…" once you had many items.
+
 ## Version 6.15.00
 - **Bring your data.** Coming from another app? Help › Your data and files now has `Bring your data from other apps`: which orOS apps read the export of the app you used before (contacts, calendars, notes, tasks, bookmarks, passwords, money, recipes and more). The `First steps` card has a new line that opens it.
 
