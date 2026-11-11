@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.15.01
+- **Write key, step by step.** CRM Help now walks you through making the Read/Write WooCommerce key for contracts and adding it in Settings › Connected services.
+
 ## Version 6.15.00
 - **Bring your data.** Coming from another app? Help › Your data and files now has `Bring your data from other apps`: which orOS apps read the export of the app you used before (contacts, calendars, notes, tasks, bookmarks, passwords, money, recipes and more). The `First steps` card has a new line that opens it.
 

@@ -3878,6 +3878,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 
 ### Open decisions (Christos)
 
+- ⊗ **RS-CTR both renewal dates:** Chris 2026-11-11 «Και τα δύο»: send the day each renewal was made and the old end day. Waiting on Revenue Splitter 1.14.1 to take an optional `renewals: [{ on, prev_to, to }]` (cx `h` renew entries: `d`, `p`, `v`); hand-off `/mnt/project-files/handoffs/rs-renewed-both-2026-11-11.md`. Then: `portalPlan`, `okRsCtr` in `links/core.js` and `relay/ext.js` (Mail thread review), tests.
 - ⊗ **orOS Gate (BR-GATE) open:** (1) not yet tried with the real claude.ai connector: the callback list (`REDIRECTS`, claude.ai and claude.com `/api/mcp/auth_callback`) and the OAuth flow are from the MCP spec and must be checked on the first connect; (2) changes to apps other than Budget, when Christos needs them; (3) the encrypted nightly snapshot, revisit after 2027-01-01.
 - ~~#21 (To-Do) priority keywords~~ → already done: quick add reads `p1`…`p4` (To-Do help, "Quick dates and priority while typing"); closed 2026-10-31.
 - ~~#35 (Kanban) clean up unused keys + stale comment~~ → done 2026-10-31 (Chris: yes): `lanes.hint` and `import.oros` removed (EN/EL/DE), the Greek v0.6.0 header comment rewritten in English without a version.
@@ -10971,4 +10972,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **What:** Help › Your data and files › `Bring your data from other apps` (EN/EL/DE) lists the apps that read another app's export, with links; First steps gets the line `Bring your data from another app`, which opens it and ticks itself.
 - **Files:** help/topics/data.{en,el}.txt, i18n/de/help/topics/data.txt, widgets.js (1.2.0, step `import`), shell.js (`startGo` case, APP_VERSION), translations.js + i18n/de/shell.js (`wg.start.import`), help/topics/whatsnew.{en,el}.txt, tests/bring-data.test.js (new), tests/greet-start.test.js, OROS_BIBLE.md.
 - **Tests:** full `node --test tests/*.test.js`; tests/bring-data.test.js (4). Playwright Chromium (real shell, 1280 px EN and 390 px EL, First steps on the desktop): the new line shows fifth, a tap opens Help at the section (`t/data/<slug>`, `wg.start.import.sec` per language) and ticks the step; no page errors. Not tested: DE in a browser, a real phone.
+
+### 2026-11-11 — 6.15.01 — CRM help: the write key step by step (RS-CTR docs)
+
+- **What:** Chris (14:44) asked for detailed instructions for the keys. CRM Help EN/EL gets "The write key, step by step" (WooCommerce › REST API › Add key with Read/Write, copy both keys once, Settings › Connected services › `Write key for contracts`, other devices through key sync, the check in `Send to the shop…`, what a refusal means, revoking). Settings EL `v.wk.saved` grammar fixed. Chris also answered «Και τα δύο» for `renewed`: the Revenue Splitter side is asked for an optional `renewals: [{ on, prev_to, to }]` (hand-off `/mnt/project-files/handoffs/rs-renewed-both-2026-11-11.md`); orOS sends it once the plugin takes it (Part X open item).
+- **Files:** crm/help.{en,el}.txt, settings/core.js, help/topics/whatsnew.{en,el}.txt.
+- **Tests:** full `node --test tests/*.test.js`. Read only otherwise (text change).
 
