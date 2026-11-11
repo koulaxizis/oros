@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.15.02
+- **Newsletters and mail fit the phone.** Formatted mail and newsletter issues sent from orOS now tell phone mail apps to use the screen width, so they no longer open zoomed out in a narrow column.
+
 ## Version 6.15.01
 - **Write key, step by step.** CRM Help now walks you through making the Read/Write WooCommerce key for contracts and adding it in Settings › Connected services.
 

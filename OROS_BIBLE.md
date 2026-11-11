@@ -6674,7 +6674,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-11 — Mail: search, formatted writing and HTML signatures (#165) — 0.71.00
 - Search: magnifier or `/`; typing filters loaded messages (sender, recipients, subject, accents ignored); Enter or "Search the whole folder on the server" uses the relay `search` op (newest 100 hits; "Everywhere" also searches the text). Results act like normal rows.
-- Formatted writing: bar for bold, italic, underline, lists, link, colour, Clear (Ctrl+B/I/U/K); formatted mail goes as multipart/alternative, plain stays text only; replies quote as blockquote; paste/drop insert text only.
+- Formatted writing: bar for bold, italic, underline, lists, link, colour, Clear (Ctrl+B/I/U/K); formatted mail goes as multipart/alternative (the HTML side is wrapped by compose.js `content()` with `<meta charset>` and `<meta name="viewport" content="width=device-width, initial-scale=1">`; Newsletter issues go through the same wrapper), plain stays text only; replies quote as blockquote; paste/drop insert text only.
 - HTML signatures (`accounts[].sigHtml`, ≤ 60 KB, synced next to text `sig`) with a small picture (≤ 300×150) sent inline (cid, multipart/related).
 - New `mail/rich.js`: editor + allowlist `clean()` (inert DOMParser, escapes all text/attributes, builds the text copy). Precached. Tests 1347; Playwright E2E at 360px. Not tested: real Papaki/Gmail rendering of the sent HTML.
 
@@ -10979,3 +10979,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** crm/help.{en,el}.txt, settings/core.js, help/topics/whatsnew.{en,el}.txt.
 - **Tests:** full `node --test tests/*.test.js`. Read only otherwise (text change).
 
+
+### 2026-11-11 — 6.15.02 — Mail and Newsletter: HTML fits the phone (MAIL-VP1)
+
+- **What:** Chris got a Γλαρόλυκοι newsletter on Android shown as a narrow, zoomed-out column. That mail went through MailerLite (its own 680 px footer, fixed outside orOS), but the check found the same risk in orOS: `mail/compose.js` `content()` wrapped the HTML part with only `<meta charset>`, and Newsletter's cleaner drops the issue's own `<head>`, so no viewport reached the reader. Phone clients that render with a WebView then lay the mail out at ~980 px and zoom out. The wrapper now adds `<meta name="viewport" content="width=device-width, initial-scale=1">`. It is harmless for desktop and webmail clients, which ignore it, and it covers Mail, Newsletter and Certificates sends alike.
+- **Files:** mail/compose.js, shell.js (APP_VERSION), tests/mail-send.test.js, help/topics/whatsnew.{en,el}.txt, OROS_BIBLE.md (Mail section, this entry).
+- **Tests:** full `node --test tests/*.test.js`; tests/mail-send.test.js checks the viewport in the parsed HTML. Playwright Chromium, Pixel 7 emulation, a Newsletter-cleaned issue: without the viewport the layout is 981 px wide and zoomed out, with it 412 px, filling the screen. Not tested: a real Android mail app.
