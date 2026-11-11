@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.17.01
+- **Contracts key.** For Revenue Splitter 1.14.2 the contracts go to the shop with their own contracts key: make it in WP admin › Noxpress › RS Συμφωνητικά and add it in Settings › Connected services › `Contracts key`. Your WooCommerce key can go back to Read only. Each contract now also tells the shop the day of each renewal and the old end day. CRM Help has the steps.
+
 ## Version 6.16.00
 - **Start from a template.** An empty To-Do or Kanban now offers a few ready starts under `Or start from a template:`: in To-Do a `Packing list` or `Moving house` list with its tasks, in Kanban a `Trip`, `Moving house` or `Personal` board. They are your own items from the first tap, and `Undo` takes them back.
 

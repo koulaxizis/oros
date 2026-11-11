@@ -53,6 +53,7 @@
   var NAME_LEN = 60, SITE_LEN = 200, SEAL_LEN = 9000;
   var MAX_ACCTS = 50;
   var VAT_RE = /^[0-9]{9}$/;
+  var RS_KEY = /^rsc_[A-Za-z0-9_-]{16,128}$/;   // = relay/ext.js
   var DB_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,62}$/;
 
   // Platforms. fields: what the Add dialog asks for (keys = secrets).
@@ -64,12 +65,10 @@
       keys: [
         { k: "ck", re: /^ck_[a-f0-9]{40}$/ },
         { k: "cs", re: /^cs_[a-f0-9]{40}$/ },
-        // RS-CTR (Revenue Splitter 1.14+): an optional second key with
-        // Read/Write permission, used only for the routes in WRITE_KEY
-        // (the contracts list and the renewal requests' state). Both or
-        // neither; absent, those routes go with the key above.
-        { k: "wck", re: /^ck_[a-f0-9]{40}$/, opt: 1 },
-        { k: "wcs", re: /^cs_[a-f0-9]{40}$/, opt: 1 }
+        // RS-CTR (Revenue Splitter 1.14.2+): the optional, narrow
+        // contracts key (WP admin › Noxpress › RS Συμφωνητικά), the only
+        // key the contracts routes take (RS_ROUTE); the key above stays Read
+        { k: "rsk", re: RS_KEY, opt: 1 }
       ],
       apps: ["stock", "newsletter", "publish", "budget", "crm"],
       probe: "/products?per_page=1"
@@ -452,24 +451,23 @@
       if (!f.re.test(v)) bad.push(f.k);
       else out[f.k] = v;
     });
-    // optional keys come as a whole set or not at all (WooCommerce's
-    // write key: both its parts)
+    // optional keys come as a whole set or not at all
     var given = pl.keys.filter(function (f) { return f.opt && has(out, f.k); }).length;
     if (given && opt.length) bad = bad.concat(opt);
     return { ok: !bad.length, keys: bad.length ? null : out, bad: bad };
   }
-  // RS-CTR: the keys a call goes with. A WooCommerce call that carries
-  // a write of Revenue Splitter's contracts (WRITE_KEY) uses the
-  // shop's second, Read/Write key when it has one; every other call,
-  // and every call of a shop without one, the first key. → { ck, cs }
-  var WRITE_KEY = {
-    woo: [["POST", /^\/rs\/contracts$/], ["POST", /^\/rs\/contract-requests\/[A-Za-z0-9_-]{1,64}$/]]
-  };
-  function usesWriteKey(p, reqs) {
-    var rules = WRITE_KEY[p] || [];
-    return (Array.isArray(reqs) ? reqs : [reqs]).some(function (r) {
-      return !!r && rules.some(function (w) { return r.m === w[0] && typeof r.path === "string" && w[1].test(r.path.split("?")[0]); });
-    });
+  // RS-CTR: Revenue Splitter 1.14.2's contracts routes. Apps name them
+  // "/rs/contracts…" like the other WooCommerce paths; they live at
+  // <site>/wp-json/rs/v1/contracts… and take only the contracts key
+  // (header X-RS-Key), never the WooCommerce key. A call is all of them
+  // or none of them.
+  var RS_ROUTE = /^\/rs\/contract(s|-requests)(\/|\?|$)/;
+  function rsRoute(p, path) { return p === "woo" && typeof path === "string" && RS_ROUTE.test(path); }
+  // → "all" | "none" | "mixed"
+  function rsCall(p, reqs) {
+    var list = Array.isArray(reqs) ? reqs : [reqs], n = 0;
+    list.forEach(function (r) { if (r && rsRoute(p, r.path)) n++; });
+    return !n ? "none" : (n === list.length ? "all" : "mixed");
   }
   // RS-CTR: a contracts list the relay would refuse (relay/ext.js
   // RS_RELAY_BYTES, its CPU budget) is sent only straight to the shop
@@ -479,10 +477,12 @@
         JSON.stringify(r.body).length > RS_RELAY_BYTES;
     });
   }
+  // The keys a call goes with: a contracts call only the contracts key
+  // ({ rsk }, which may be missing), every other WooCommerce call { ck, cs }.
   function keysFor(p, keys, reqs) {
     if (!keys || typeof keys !== "object") return keys;
     if (p !== "woo") return keys;
-    if (usesWriteKey(p, reqs) && keys.wck && keys.wcs) return { ck: keys.wck, cs: keys.wcs };
+    if (rsCall(p, reqs) === "all") return keys.rsk ? { rsk: keys.rsk } : {};
     return { ck: keys.ck, cs: keys.cs };
   }
 
@@ -655,17 +655,22 @@
   var RS_ID = /^[A-Za-z0-9_-]{1,64}$/, RS_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/,
       RS_FMT = ["print", "ebook", ""], RS_ST = ["on", "soon", "ended", "ended_by_agreement"],
       RS_CTR_KEYS = ["id", "ben", "title", "fmt", "from", "to", "state", "renewed"],
+      RS_RENEWAL = ["on", "prev_to", "to"],
       RS_RQ_Q = /^(new|oros|closed|all)$/, RS_MAX = 2000, RS_BYTES = 1000000,
       RS_RELAY_BYTES = 256 * 1024;   // = relay/ext.js: larger lists go only straight to the shop
   function rsText(v, max) { return typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f<>]/.test(v); }
   function okRsCtr(x) {
-    if (!onlyKeys(x, RS_CTR_KEYS)) return false;
+    if (!onlyKeys(x, RS_CTR_KEYS.concat("renewals"))) return false;
     for (var i = 0; i < RS_CTR_KEYS.length; i++) if (!has(x, RS_CTR_KEYS[i])) return false;
     if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
     if (RS_FMT.indexOf(x.fmt) < 0 || RS_ST.indexOf(x.state) < 0) return false;
     if (typeof x.from !== "string" || !RS_DAY.test(x.from)) return false;
     if (x.to !== "" && !(typeof x.to === "string" && RS_DAY.test(x.to))) return false;
-    return listOf(x.renewed, 0, 50, function (d) { return typeof d === "string" && RS_DAY.test(d); });
+    if (!listOf(x.renewed, 0, 50, function (d) { return typeof d === "string" && RS_DAY.test(d); })) return false;
+    // 1.14.2: each renewal's day, the end before it and the new end
+    return x.renewals === undefined || listOf(x.renewals, 0, 50, function (e) {
+      return onlyKeys(e, RS_RENEWAL) && RS_RENEWAL.every(function (k) { return typeof e[k] === "string" && RS_DAY.test(e[k]); });
+    });
   }
   // UTF-8 bytes of a text (the shop counts bytes)
   function utf8Len(t) {
@@ -1003,7 +1008,7 @@
   // acct = the account row (or, for WooCommerce, its site string).
   // keys: needed only where the host comes from the key (Mailchimp).
   function apiUrl(p, acct, path, keys) {
-    if (p === "woo") return (typeof acct === "string" ? acct : acct.site) + "/wp-json/wc/v3" + path;
+    if (p === "woo") return (typeof acct === "string" ? acct : acct.site) + (rsRoute(p, path) ? "/wp-json/rs/v1" + path.slice(3) : "/wp-json/wc/v3" + path);
     var pl = PLATFORMS[p];
     if (!pl) return null;
     if (pl.site) { var s = typeof acct === "string" ? acct : acct && acct.site; return s ? s + pl.root + path : null; }
@@ -1014,7 +1019,7 @@
   }
   // The auth header of a direct call → [name, value].
   function authHeader(p, keys) {
-    if (p === "woo") return ["Authorization", "Basic " + btoa(keys.ck + ":" + keys.cs)];
+    if (p === "woo") return keys.rsk ? ["X-RS-Key", keys.rsk] : ["Authorization", "Basic " + btoa(keys.ck + ":" + keys.cs)];
     if (p === "tol") return ["API-KEY", keys.key];
     if (p === "mlite") return ["Authorization", "Bearer " + keys.key];
     if (p === "mchimp") return ["Authorization", "Basic " + btoa("oros:" + keys.key)];
@@ -1059,7 +1064,7 @@
     ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, DB_RE: DB_RE, TOL_TYPES: TOL_TYPES, ODOO: ODOO,
     validHost: validHost, normSite: normSite, siteParts: siteParts,
     normAcct: normAcct, merge: merge, live: live, find: find, checkKeys: checkKeys,
-    extId: extId, checkReq: checkReq, keysFor: keysFor, usesWriteKey: usesWriteKey, utf8Len: utf8Len, relayTooBig: relayTooBig, RS_MAX: RS_MAX, RS_BYTES: RS_BYTES, RS_RELAY_BYTES: RS_RELAY_BYTES, SHOPIFY_Q: SHOPIFY_Q, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
+    extId: extId, checkReq: checkReq, keysFor: keysFor, rsRoute: rsRoute, rsCall: rsCall, utf8Len: utf8Len, relayTooBig: relayTooBig, RS_MAX: RS_MAX, RS_BYTES: RS_BYTES, RS_RELAY_BYTES: RS_RELAY_BYTES, SHOPIFY_Q: SHOPIFY_Q, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
     okEmail: okEmail
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
