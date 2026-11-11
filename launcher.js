@@ -894,10 +894,22 @@
     });
   }
 
-  function tileFor(app) {
+  // The colour 0-11 of the Mix and Rainbow icon packs. On the desktop and
+  // the Dock it follows the tile's place (`pos`), so 12 tiles in a row
+  // never share a colour and run through the spectrum in order; elsewhere
+  // (no pos) a hash of the app id, the same as shell.js iconHue.
+  function hueOf(app, pos) {
+    if (typeof pos === "number" && pos >= 0) return String(pos % 12);
+    var s = String((app && app.id) || ""), h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return String(Math.abs(h) % 12);
+  }
+
+  function tileFor(app, pos) {
     var tile = doc.createElement("span");
     tile.className = "ld-tile";
     tile.setAttribute("data-cat", String(app.category || "other").toLowerCase().replace(/[^a-z]/g, ""));   // icon packs
+    tile.setAttribute("data-hue", hueOf(app, pos));                                                           // Mix, Rainbow
     tile.innerHTML = iconOf(app);            // static shell icon, not data
     return tile;
   }
@@ -920,7 +932,7 @@
     grid.setAttribute("aria-label", tr("deskLabel"));
     grid.lang = root.orosI18n ? root.orosI18n.lang() : ((host.lang && host.lang() === "el") ? "el" : "en");     // hyphenation of long names
     grid.textContent = "";
-    ids.forEach(function (id) {
+    ids.forEach(function (id, pos) {
       var app = appById(id);
       var b = doc.createElement("button");
       b.type = "button";
@@ -928,7 +940,7 @@
       b.setAttribute("role", "listitem");
       b.setAttribute("data-app", id);
       b.title = labelOf(app);
-      b.appendChild(tileFor(app));
+      b.appendChild(tileFor(app, pos));
       var nm = doc.createElement("span");
       nm.className = "ld-name";
       nm.textContent = labelOf(app);
@@ -1013,7 +1025,7 @@
     var bar2 = dock.firstChild;
     bar2.textContent = "";
     var run = runningId();
-    ids.forEach(function (id) {
+    ids.forEach(function (id, pos) {
       var app = appById(id);
       var b = doc.createElement("button");
       b.type = "button";
@@ -1021,7 +1033,7 @@
       b.setAttribute("data-app", id);
       b.setAttribute("aria-label", labelOf(app));
       if (run === id) b.setAttribute("aria-current", "true");
-      b.appendChild(tileFor(app));
+      b.appendChild(tileFor(app, pos));
       var dot = doc.createElement("span");
       dot.className = "ld-dot";
       b.appendChild(dot);

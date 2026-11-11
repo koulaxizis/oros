@@ -31,7 +31,10 @@
   "use strict";
 
   var C = root.OrosMusicCore || (typeof require === "function" ? require("./core.js").OrosMusicCore : null);
-  var PAGE = { ia: 24, ov: 20, cc: 20, jm: 20 };
+  // ccMixter pages hold 10: its server drops the connection when one
+  // answer passes about 128 KB, and 20 search hits with many files each
+  // (stems, zips, flac) went past that (MU-CC1, 2026-11-11).
+  var PAGE = { ia: 24, ov: 20, cc: 10, jm: 20 };
   // Registered by Chris at devportal.jamendo.com (2026-10-16); public,
   // one for every orOS user, non-commercial use.
   var JM_CLIENT = "e04c6e83";
@@ -254,7 +257,10 @@
   // ---------- 5. ccMixter ----------
   function ccUrl(o) {
     o = o || {};
-    var p = { f: "json", limit: PAGE.cc, offset: (Math.max(1, o.page || 1) - 1) * PAGE.cc, sort: o.sort || "rank", ord: "desc" };
+    // o.limit / o.skip pick a slice inside the page (the half-page retry).
+    var n = o.limit >= 1 && o.limit <= PAGE.cc ? Math.floor(o.limit) : PAGE.cc;
+    var at = (Math.max(1, o.page || 1) - 1) * PAGE.cc + (o.skip > 0 ? Math.floor(o.skip) : 0);
+    var p = { f: "json", limit: n, offset: at, sort: o.sort || "rank", ord: "desc" };
     if (o.q) { p.search = String(o.q).slice(0, 120); p.search_type = "all"; }
     if (o.tags) p.tags = String(o.tags).replace(/[^a-z0-9_,]/gi, "").slice(0, 120);
     if (o.user) p.user = String(o.user).replace(/[^A-Za-z0-9_.-]/g, "").slice(0, 60);
@@ -537,7 +543,28 @@
     return getJSON(iaMetaUrl(id)).then(function (j) { var r = iaParseMeta(j, id); if (!r) throw new OpenError("closed"); return r; });
   }
   function ovSearch(o) { o = o || {}; return getJSON(ovUrl(o)).then(function (j) { return ovParse(j, o.page); }); }
-  function ccSearch(o) { o = o || {}; return getJSON(ccUrl(o), { timeout: 25000 }).then(ccParse); }
+  // A page that does not come (ccMixter cut a large answer short) is
+  // asked again as two halves; the half that comes is shown, so one
+  // heavy upload hides at most five songs instead of the whole source.
+  function ccSearch(o) {
+    o = o || {};
+    return getJSON(ccUrl(o), { timeout: 25000 }).then(ccParse, function (e) {
+      if (e && /^(busy|offline)$/.test(e.code)) throw e;
+      var half = Math.ceil(PAGE.cc / 2);
+      function part(skip) {
+        return getJSON(ccUrl(Object.assign({}, o, { limit: half, skip: skip })), { timeout: 25000 })
+          .then(function (j) { return Array.isArray(j) ? j : []; }, function () { return null; });
+      }
+      return Promise.all([part(0), part(half)]).then(function (two) {
+        if (!two[0] && !two[1]) throw e;
+        var list = (two[0] || []).concat(two[1] || []);
+        var r = ccParse(list);
+        // More pages only when both halves came back full.
+        r.more = !!(two[0] && two[1] && two[0].length >= half && two[1].length >= half);
+        return r;
+      });
+    });
+  }
   function jmTracks(o) { return getJSON(jmTracksUrl(o)).then(function (j) { return jmParseTracks(j, jmLimit(o)); }); }
   function jmAlbums(o) { return getJSON(jmAlbumsUrl(o)).then(function (j) { return jmParseAlbums(j, jmLimit(o)); }); }
   function jmArtist(id) {
