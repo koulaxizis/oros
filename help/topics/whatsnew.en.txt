@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.24.00
+- **Mix your own icons.** Settings › Appearance › Icons has a new pack, `Mix your own`: choose the shape of the tiles, their fill and how bold the lines are.
+
 ## Version 6.23.00
 - **Weather on the desktop.** Turn on Settings › Wallpaper › `Weather on the desktop` to see gentle rain, snow, clouds, fog, sun or stars over your wallpaper, from your Weather city. It stops while an app is open and on a low battery.
 

@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.23.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.24.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -452,15 +452,35 @@
   // A pack restyles the app icons (desktop, Dock, menu, search) through
   // iconpacks.css; the glyphs stay ICONS. Synced shell field `icons`.
   var ICONS_KEY = "oros-icons";
-  var ICON_PACKS = ["classic", "colourful", "mix", "rainbow", "glass", "thin", "paper", "round"];
-  function iconsCanon(v) { return ICON_PACKS.indexOf(v) >= 0 ? v : undefined; }
+  var ICON_PACKS = ["classic", "colourful", "mix", "rainbow", "glass", "thin", "paper", "round", "own"];
+  // ICONPACK-3 "Mix your own": the value is "own.<shape>.<fill>.<line>";
+  // a bare "own" reads as the first choices. An older bundle does not
+  // know it and keeps its own pack without pushing (like "mix" in 6.17.00).
+  var ICON_OWN = { shape: ["square", "round", "circle"], fill: ["accent", "hue", "cat", "dark", "light", "frame"], line: ["thin", "normal", "bold"] };
+  var ICON_OWN_DEFAULT = "own.circle.hue.normal";
+  function iconsOwn(v) {
+    var m = /^own\.([a-z]+)\.([a-z]+)\.([a-z]+)$/.exec(String(v || ""));
+    if (!m || ICON_OWN.shape.indexOf(m[1]) < 0 || ICON_OWN.fill.indexOf(m[2]) < 0 || ICON_OWN.line.indexOf(m[3]) < 0) return null;
+    return { shape: m[1], fill: m[2], line: m[3] };
+  }
+  function iconsCanon(v) {
+    if (v === "own") return ICON_OWN_DEFAULT;
+    if (iconsOwn(v)) return v;
+    return ICON_PACKS.indexOf(v) >= 0 ? v : undefined;
+  }
+  function iconsPack(v) { return iconsOwn(v) ? "own" : v; }
   function applyIcons() {
-    var root = document.documentElement;
-    if (state.icons && state.icons !== "classic") root.setAttribute("data-oros-icons", state.icons);
+    var root = document.documentElement, own = iconsOwn(state.icons);
+    if (state.icons && state.icons !== "classic") root.setAttribute("data-oros-icons", iconsPack(state.icons));
     else root.removeAttribute("data-oros-icons");
+    ["shape", "fill", "line"].forEach(function (k) {
+      if (own) root.setAttribute("data-ic-" + k, own[k]);
+      else root.removeAttribute("data-ic-" + k);
+    });
   }
   function setIconsUser(id) {
-    if (!iconsCanon(id) || state.icons === id) return;
+    id = iconsCanon(id);
+    if (!id || state.icons === id) return;
     state.icons = id;
     try { localStorage.setItem(ICONS_KEY, id); } catch (e) {}
     applyIcons();
@@ -5924,7 +5944,7 @@
       wpLandWrite(state.wpland);
     }
     if (iconsCanon(data.icons)) {     // pulled: apply only (no push from a pull)
-      state.icons = data.icons;
+      state.icons = iconsCanon(data.icons);
       try { localStorage.setItem(ICONS_KEY, state.icons); } catch (eIc) {}
     }
     if (typeof data.syncInterval === "number" &&
@@ -10924,7 +10944,8 @@
       skins: SKINS.map(function (k) {
         return { id: k.id, color: k.color, name: skinTitle(k.id) };
       }),
-      icons: { pack: state.icons, packs: ICON_PACKS.slice() },   // ICONPACK-1
+      icons: { pack: iconsPack(state.icons), packs: ICON_PACKS.slice(),   // ICONPACK-1
+               own: iconsOwn(state.icons) || iconsOwn(ICON_OWN_DEFAULT), choices: ICON_OWN },   // ICONPACK-3
       wallpaper: pic ? "custom" : state.wallpaper,
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
       land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, light: wpLandNow().light !== 0, styles: WP_LAND_STYLES.slice() } : null,
