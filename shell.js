@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.22.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.23.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -53,6 +53,9 @@
     deferredPrompt:  null,   // PWA install event
     // sync UI state
     syncUserEmail:   null,
+    pair:            null,     // PAIR-1: Add a browser in progress (pairForSettings)
+    pairPrefill:     "",       // PAIR-1: a code that came in with #pair=
+    pairQr:          null,
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
     syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
     vaultClean:      null,   // VD-GC: { busy: "check"|"clean"|"", usage, result, code, err } once Settings asked
@@ -6983,10 +6986,154 @@
   }
 
   function syncDisconnectKey(r) {
+    if (r.paired) return r.provider === "webdav" ? "sync.disc.paired.dav" : "sync.disc.paired";
     if (r.revoked) return "sync.disc.revoked";
     if (r.offline) return r.provider === "webdav" ? "sync.disc.offline.dav" : "sync.disc.offline";
     if (r.provider === "webdav") return "sync.disc.local.dav";
     return "sync.disc.norevoke";
+  }
+
+  // PAIR-1: Add a browser. pair.js (loaded on first use) runs the
+  // exchange through a relay room; sync.js makes and adopts the bundle.
+  // state.pair = { role: "new"|"old", phase, code (new), check, dev,
+  // err, session (new: only for this session) }. Settings › Sync shows
+  // it (settingsState().sync.pair) and acts through settingsAct.
+  var pairSession = null, pairLoading = null;
+  function pairNeed(withQr) {
+    function one(src, have) {
+      if (have()) return Promise.resolve();
+      return new Promise(function (res, rej) {
+        var s = document.createElement("script");
+        s.src = src + "?v=" + APP_VERSION;
+        s.onload = function () { have() ? res() : rej(new Error("pair-load")); };
+        s.onerror = function () { rej(new Error("pair-load")); };
+        document.head.appendChild(s);
+      });
+    }
+    if (!pairLoading) {
+      pairLoading = one("pair.js", function () { return !!window.OrosPair; })
+        .catch(function (e) { pairLoading = null; throw e; });
+    }
+    if (!withQr) return pairLoading;
+    return pairLoading.then(function () {
+      return one("qr/qr-encode.js", function () { return !!(window.orosQR && window.orosQR.encode); }).catch(function () {});
+    });
+  }
+  function pairUa() {
+    return window.OrosPair ? window.OrosPair.browserLabel(navigator.userAgent) : "";
+  }
+  function pairSet(fields) {
+    if (!state.pair) return;
+    for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) state.pair[k] = fields[k];
+    settingsNotify();
+  }
+  function pairStop() {
+    if (pairSession) { try { pairSession.cancel(); } catch (e) {} }
+    pairSession = null;
+  }
+  function pairCancel() {
+    pairStop();
+    state.pair = null;
+    settingsNotify();
+  }
+  function pairOnState(sess) {
+    return function (phase, info) {
+      if (sess !== pairSession) return;
+      if (phase === "error") pairSet({ phase: "error", err: info.e || "net" });
+      else pairSet({ phase: phase, check: info.check || (state.pair && state.pair.check) || "",
+        dev: info.dev || (state.pair && state.pair.dev) || "" });
+      if (phase === "done" || phase === "error") pairSession = null;
+    };
+  }
+  // The new browser: make a code and wait for the signed-in device.
+  function pairNew(session) {
+    var S = window.orosSync;
+    if (!S || typeof S.pairAdopt !== "function" || S.isConnected()) return;
+    pairStop();
+    state.pair = { role: "new", phase: "opening", code: "", check: "", dev: "", err: "", session: !!session };
+    settingsNotify();
+    pairNeed(true).then(function () {
+      if (!state.pair || state.pair.role !== "new") return;
+      var P = window.OrosPair, code = P.newCode();
+      var sess = new P.Session({
+        role: "new", code: code, dev: pairUa(),
+        onBundle: function (b) {
+          var only = !!(state.pair && state.pair.session);
+          return S.pairAdopt(b, { session: only }).then(function (r) {
+            state.syncUserEmail = (b && b.acc && typeof b.acc.email === "string") ? b.acc.email : null;
+            syncUnlock(r.pw, !only);
+          });
+        },
+        onState: function (p, i) { onState(p, i); }
+      });
+      var onState = pairOnState(sess);
+      pairSession = sess;
+      state.pair.code = code;
+      sess.start();
+    }, function () { pairSet({ phase: "error", err: "net" }); });
+  }
+  // The signed-in device: join the new browser's room with its code.
+  function pairJoin(text) {
+    var S = window.orosSync;
+    if (!S || typeof S.pairBundle !== "function" || !S.isConnected() || !S.hasPassphrase()) return;
+    pairStop();
+    state.pairPrefill = "";
+    state.pair = { role: "old", phase: "connecting", code: "", check: "", dev: "", err: "", session: false };
+    settingsNotify();
+    pairNeed(false).then(function () {
+      if (!state.pair || state.pair.role !== "old") return;
+      var P = window.OrosPair, code = P.codeFromText(text);
+      if (!code) { pairSet({ phase: "error", err: "bad" }); return; }
+      var sess = new P.Session({
+        role: "old", code: code, dev: pairUa(),
+        bundle: function () { return S.pairBundle(); },
+        onState: function (p, i) { onState(p, i); }
+      });
+      var onState = pairOnState(sess);
+      pairSession = sess;
+      sess.start();
+    }, function () { pairSet({ phase: "error", err: "net" }); });
+  }
+  function pairApprove() {
+    if (pairSession && state.pair && state.pair.role === "old" && state.pair.phase === "approve") pairSession.approve();
+  }
+  function pairQrRows() {
+    var p = state.pair, P = window.OrosPair, Q = window.orosQR;
+    if (!p || p.role !== "new" || !p.code || !P || !Q || typeof Q.encode !== "function") return null;
+    if (state.pairQr && state.pairQr.code === p.code) return state.pairQr.rows;
+    var rows = null;
+    try {
+      rows = Q.encode(P.qrText(p.code, location.origin), { ecl: "M" }).modules.map(function (r) {
+        return r.map(function (d) { return d ? "1" : "0"; }).join("");
+      });
+    } catch (e) { rows = null; }
+    state.pairQr = { code: p.code, rows: rows };
+    return rows;
+  }
+  function pairForSettings() {
+    var p = state.pair;
+    if (!p) return null;
+    return { role: p.role, phase: p.phase, check: p.check || "", dev: p.dev || "", err: p.err || "",
+      session: !!p.session, code: (p.code && window.OrosPair) ? window.OrosPair.fmtCode(p.code) : "",
+      qr: pairQrRows() };
+  }
+  // A phone's camera opened orOS with #pair=<code> (pair.js qrText):
+  // Settings › Sync, with the code ready to connect.
+  function pairFromHash() {
+    var m = /^#pair=([0-9A-Za-z-]{12,20})$/.exec(location.hash || "");
+    if (!m) return;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    state.pairPrefill = m[1].toUpperCase();
+    settingsNotify();
+    var tries = 0;
+    (function open() {
+      if (document.getElementById("oro-splash") || !state.apps.length || !window.orosSettings) {
+        if (++tries > 120) return;
+        setTimeout(open, 250);
+        return;
+      }
+      window.orosSettings.open("sync");
+    })();
   }
 
   // User picked an automatic folder-backup cadence (shell slice).
@@ -9142,6 +9289,10 @@
     registerTelevisionProxySlice();
     registerMailProxySlice();
 
+    // PAIR-1: a code from a scanned QR (#pair=…), at boot and later.
+    pairFromHash();
+    window.addEventListener("hashchange", pairFromHash);
+
     // OAuth return → flip the menu to connected state once tokens land
     if (window.orosSync && window.orosSync.redirectHandled) {
       window.orosSync.redirectHandled.then(function (handled) {
@@ -10807,6 +10958,10 @@
         ncAvailable: !!(S && typeof S.connectNextcloud === "function"),
         ncWaiting: !!state.ncWaiting,
         moveAvailable: !!(S && typeof S.moveToWebdav === "function"),
+        pairAvailable: !!(S && typeof S.pairAdopt === "function" && typeof WebSocket === "function"),
+        paired: !!(connected && typeof S.isPaired === "function" && S.isPaired()),
+        pair: pairForSettings(),
+        pairPrefill: state.pairPrefill || "",
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
@@ -10957,6 +11112,12 @@
         if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncMoveDav(arg);
         return;
       case "sync.moveDb":     syncMoveDropbox(); return;
+      case "sync.pair.new":     pairNew(!!(arg && arg.session)); return;
+      case "sync.pair.session": if (state.pair && state.pair.role === "new" && state.pair.phase !== "done") pairSet({ session: !!(arg && arg.on) }); return;
+      case "sync.pair.join":    if (arg && typeof arg.code === "string") pairJoin(arg.code.slice(0, 200)); return;
+      case "sync.pair.approve": pairApprove(); return;
+      case "sync.pair.cancel":  pairCancel(); return;
+      case "sync.pair.clear":   state.pairPrefill = ""; settingsNotify(); return;
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
