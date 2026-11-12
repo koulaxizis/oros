@@ -15,6 +15,15 @@
 //     blob, never applied), and the lock turns off. Last resort:
 //     reset THIS device (shell hook: unsynced changes are sent first
 //     when sync can, then the local wipe; the cloud stays).
+//   - Fingerprint or face (LK-BIO, 2026-11-12): on Android (the orOS
+//     app and the single app "orOS Passwords") the lock also opens
+//     with strong biometrics, through the same native path as
+//     Passwords (BR-PHONE pw-bio, phone.js orosPhone.bio, use "lock").
+//     The app keeps a 32-byte secret D sealed by a per-use Keystore
+//     key; this page keeps, in device-local "oros-lock-bio", a random
+//     token wrapped with D (AES-256-GCM, AAD oros-lock/1/bio/<kid>).
+//     Only D from the app opens it. The PIN / passphrase stays the
+//     root: it is asked every 14 days, and a new fingerprint ends it.
 //   - Honest limit: it keeps people away from the screen. Anyone who
 //     can read the disk, or open the browser's developer tools, gets
 //     past it; the data on the device is not encrypted by it.
@@ -45,6 +54,11 @@
   var WAIT_BASE = 30 * 1000, WAIT_MAX = 15 * 60 * 1000;
   var PIN_RE = /^[0-9]{4,12}$/;
   var PASS_MIN = 6, SECRET_MAX = 256;
+  var BIO_KEY = "oros-lock-bio";     // localStorage, device-local, never synced
+  var BIO_DAYS = 14;
+  var DAY = 86400000;
+  var BIO_KID = /^[0-9a-f]{24}$/;
+  var B64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
   function norm(s) {
     s = String(s == null ? "" : s);
@@ -114,7 +128,30 @@
     return d === 0;
   }
 
+  // The fingerprint record → a clean one, or null. iv: 12 bytes,
+  // ct: a 32-byte token + the 16-byte tag (base64 64 characters).
+  function parseBio(raw) {
+    var r;
+    try { r = typeof raw === "string" ? JSON.parse(raw) : raw; } catch (e) { return null; }
+    if (!r || typeof r !== "object" || r.v !== 1) return null;
+    if (typeof r.kid !== "string" || !BIO_KID.test(r.kid)) return null;
+    if (typeof r.iv !== "string" || r.iv.length !== 16 || !B64_RE.test(r.iv)) return null;
+    if (typeof r.ct !== "string" || r.ct.length !== 64 || !B64_RE.test(r.ct)) return null;
+    if (typeof r.at !== "number" || !isFinite(r.at) || r.at <= 0) return null;
+    return { v: 1, kid: r.kid, iv: r.iv, ct: r.ct, at: r.at };
+  }
+
+  // May the fingerprint open it now? "none" (no record), "days" (the
+  // PIN / passphrase was last typed more than 14 days ago, or the clock
+  // says it was typed in the future), "ok".
+  function bioDue(rec, now) {
+    if (!rec) return "none";
+    if (rec.at > now + DAY || now - rec.at > BIO_DAYS * DAY) return "days";
+    return "ok";
+  }
+
   var Core = {
+    BIO_KEY: BIO_KEY, BIO_DAYS: BIO_DAYS, parseBio: parseBio, bioDue: bioDue,
     KEY: KEY, TRIES_KEY: TRIES_KEY, SEEN_KEY: SEEN_KEY, ITER: ITER, IDLES: IDLES,
     DEFAULT_IDLE: DEFAULT_IDLE, FREE_TRIES: FREE_TRIES, WAIT_MAX: WAIT_MAX, GRACE_MAX: GRACE_MAX,
     norm: norm, secretProblem: secretProblem, parseCfg: parseCfg, parseTries: parseTries,
@@ -160,6 +197,37 @@
   }
   Core.makeCfg = makeCfg;
   Core.matches = matches;
+
+  function bioAad(kid) { return new root.TextEncoder().encode("oros-lock/1/bio/" + kid); }
+  function bioKey(d, use) {
+    return subtle().importKey("raw", d, { name: "AES-GCM" }, false, [use]);
+  }
+  // A new record: a random token wrapped with the app's secret D.
+  function bioWrap(kid, d, now) {
+    if (!subtle() || !BIO_KID.test(String(kid)) || !d || d.length !== 32) return Promise.reject(new Error("bio-failed"));
+    var iv = new Uint8Array(12), tok = new Uint8Array(32);
+    root.crypto.getRandomValues(iv);
+    root.crypto.getRandomValues(tok);
+    return bioKey(d, "encrypt").then(function (k) {
+      return subtle().encrypt({ name: "AES-GCM", iv: iv, additionalData: bioAad(kid) }, k, tok);
+    }).then(function (ct) {
+      tok.fill(0);
+      return { v: 1, kid: kid, iv: b64(iv), ct: b64(ct), at: now };
+    });
+  }
+  // Does D open this record? (AES-GCM's tag: a wrong D, kid or a
+  // changed record answers false.)
+  function bioOpens(rec, d) {
+    if (!subtle() || !rec || !d || d.length !== 32) return Promise.resolve(false);
+    var iv, ct;
+    try { iv = unb64(rec.iv); ct = unb64(rec.ct); } catch (e) { return Promise.resolve(false); }
+    return bioKey(d, "decrypt").then(function (k) {
+      return subtle().decrypt({ name: "AES-GCM", iv: iv, additionalData: bioAad(rec.kid) }, k, ct);
+    }).then(function (tok) { new Uint8Array(tok).fill(0); return true; }, function () { return false; });
+  }
+  Core.bioWrap = bioWrap;
+  Core.bioOpens = bioOpens;
+  Core.unb64 = function (s) { return unb64(s); };
 
   if (typeof module !== "undefined" && module.exports) module.exports = Core;
   if (!root || !root.document || root.orosLock) return;
@@ -238,6 +306,171 @@
       } catch (e) { /* another origin */ }
     }
   }
+
+  // ----- Fingerprint or face (LK-BIO) -----
+  // The computer (wave 2): orOS Portable, the desktop apps and orOS USB.
+  // Their System extension marks the page with data-oros-sys-bio and
+  // passes the DOM event "oros-bio" {n, op, kid, text} to the native host
+  // (Windows Hello or fprintd); "oros-bio-done" {n, ok, …} answers. Same
+  // shape as orosPhone.bio, so the rest of this file uses either.
+  var desk = (function () {
+    var info = null, waits = {}, subs = [];
+    function fire() { subs.slice().forEach(function (fn) { try { fn(); } catch (e) {} }); }
+    function on() {
+      try { return doc.documentElement.getAttribute("data-oros-sys-bio") === "1"; } catch (e) { return false; }
+    }
+    function nonce() {
+      var b = new Uint8Array(16), s = "";
+      root.crypto.getRandomValues(b);
+      for (var i = 0; i < b.length; i++) s += (b[i] < 16 ? "0" : "") + b[i].toString(16);
+      return s;
+    }
+    doc.addEventListener("oros-bio-done", function (ev) {
+      var r = null;
+      try { r = JSON.parse(String(ev.detail)); } catch (e) { return; }
+      var w = r && typeof r.n === "string" ? waits[r.n] : null;
+      if (!w) return;
+      delete waits[r.n];
+      clearTimeout(w.timer);
+      w.done(r);
+    });
+    function ask(op, kid, text) {
+      return new Promise(function (done) {
+        if (!on()) { done({ ok: false, error: "unavailable" }); return; }
+        var n = nonce();
+        waits[n] = { done: done, timer: setTimeout(function () {
+          if (waits[n]) { delete waits[n]; done({ ok: false, error: "timeout" }); }
+        }, op === "seal" || op === "open" ? 150000 : 15000) };
+        try {
+          doc.dispatchEvent(new root.CustomEvent("oros-bio", { detail: JSON.stringify({ n: n, op: op, kid: kid || "", text: text || "" }) }));
+        } catch (e) { delete waits[n]; done({ ok: false, error: "unavailable" }); }
+      });
+    }
+    function refresh() {
+      if (!on()) return false;
+      ask("state").then(function (r) {
+        if (!r.ok) return;
+        info = { can: /^(ok|none|no-hw)$/.test(r.can) ? r.can : "no-hw",
+                 kind: r.kind === "hello" ? "hello" : "finger",
+                 kids: (Array.isArray(r.kids) ? r.kids : []).filter(function (k) { return BIO_KID.test(String(k)); }).slice(0, 16) };
+        fire();
+      });
+      return true;
+    }
+    function secret(op, kid) {
+      return ask(op, kid, t("lock.bio.prompt")).then(function (r) {
+        refresh();
+        if (r.ok && typeof r.d === "string" && /^[A-Za-z0-9+/]{43}=$/.test(r.d)) return r.d;
+        var c = /^[a-z-]{1,20}$/.test(String(r.error)) ? r.error : "failed";
+        throw new Error("bio-" + (c === "no-hw" ? "unavailable" : c));
+      });
+    }
+    // The extension sets its mark after the page loads.
+    try {
+      new root.MutationObserver(function () { if (on() && !info) refresh(); fire(); })
+        .observe(doc.documentElement, { attributes: true, attributeFilter: ["data-oros-sys-bio"] });
+    } catch (e) {}
+    return {
+      available: on,
+      info: function () { return info; },
+      refresh: refresh,
+      seal: function (kid) { return secret("seal", kid); },
+      open: function (kid) { return secret("open", kid); },
+      clear: function (kid) { if (!BIO_KID.test(String(kid))) return false; ask("clear", kid).then(refresh); return true; },
+      onChange: function (fn) {
+        subs.push(fn);
+        return function () { var i = subs.indexOf(fn); if (i !== -1) subs.splice(i, 1); };
+      }
+    };
+  })();
+  var deskSource = { bio: desk, onChange: desk.onChange, desk: true };
+
+  // The phone: phone.js (orosPhone.bio), in this window; it loads after
+  // this file, so it is looked up when needed. A computer with the System
+  // extension uses desk.
+  function phone() {
+    var p = root.orosPhone;
+    try {
+      if (p && p.bio && typeof p.bio.available === "function" && typeof p.bio.open === "function" && p.bio.available()) return p;
+    } catch (e) {}
+    if (desk.available()) return deskSource;
+    try { return (p && p.bio && typeof p.bio.available === "function" && typeof p.bio.open === "function") ? p : null; }
+    catch (e) { return null; }
+  }
+  // "phone", "hello" (Windows Hello) or "finger" (fprintd).
+  function bioKind() {
+    var p = phone();
+    if (!p || !p.desk) return "phone";
+    var i = desk.info();
+    return i ? i.kind : "finger";
+  }
+  function bioLinked() { var p = phone(); try { return !!(p && p.bio.available()); } catch (e) { return false; } }
+  function bioInfo() { var p = phone(); try { return p ? p.bio.info() : null; } catch (e) { return null; } }
+  function bioRec() {
+    try { return parseBio(root.localStorage.getItem(BIO_KEY)); } catch (e) { return null; }
+  }
+  function bioStore(r) {
+    try {
+      if (r) root.localStorage.setItem(BIO_KEY, JSON.stringify(r));
+      else root.localStorage.removeItem(BIO_KEY);
+      return true;
+    } catch (e) { return false; }
+  }
+  // Ends fingerprint unlock here: the record and the app's secret.
+  function bioForget() {
+    var r = bioRec(), p = phone();
+    bioStore(null);
+    if (r && p) { try { p.bio.clear(r.kid); } catch (e) {} }
+  }
+  // The PIN / passphrase was typed: the 14 days count from now.
+  function bioTyped() {
+    var r = bioRec();
+    if (r) { r.at = Date.now(); bioStore(r); }
+  }
+  // The app holds the secret, and the 14 days have not run out.
+  function bioReady() {
+    var r = bioRec(), info = bioInfo();
+    return !!(cfg && r && bioLinked() && info && info.can === "ok" &&
+              info.kids.indexOf(r.kid) >= 0 && bioDue(r, Date.now()) === "ok");
+  }
+  function bioKid() {
+    var b = new Uint8Array(12), s = "";
+    root.crypto.getRandomValues(b);
+    for (var i = 0; i < b.length; i++) s += (b[i] < 16 ? "0" : "") + b[i].toString(16);
+    return s;
+  }
+  // "invalidated" (a new fingerprint), "none" (the app lost its
+  // secret), "wrong" (the secret does not open the record) end it.
+  function bioCode(e) {
+    var c = String((e && e.message) || "").replace(/^bio-/, "");
+    return /^(cancel|lockout|invalidated|none|wrong|timeout|unavailable)$/.test(c) ? c : "failed";
+  }
+  // The phone's answers repaint the lock screen and Settings; only a
+  // change of what it says about fingerprints counts.
+  var bioSeen = "", bioOff = null, bioTries = 0;
+  function bioChanged() {
+    var now = JSON.stringify([bioLinked(), bioInfo()]);
+    if (now === bioSeen) return;
+    bioSeen = now;
+    if (ui && !ui.bioBusy) fillBio();
+    emit();
+  }
+  desk.onChange(bioChanged);
+  function bioWatch() {
+    if (bioOff) return;
+    var p = root.orosPhone;
+    if (!p || typeof p.onChange !== "function") return;
+    bioOff = p.onChange(bioChanged);
+    bioSeen = JSON.stringify([bioLinked(), bioInfo()]);
+    // The port may have come before this watch: the lock screen asks now.
+    if (ui && !ui.bioBusy) fillBio();
+  }
+  // phone.js loads after this file and the app's port comes later:
+  // look for it for a while after boot.
+  var bioTimer = setInterval(function () {
+    bioWatch();
+    if (bioOff || ++bioTries > 60) { clearInterval(bioTimer); bioTimer = null; }
+  }, 500);
 
   function idleDue() {
     return !!(cfg && cfg.idle && Date.now() - lastActive >= cfg.idle * 60000);
@@ -340,7 +573,7 @@
 
   function focusField() {
     if (!ui) return;
-    var f = view === "forgot" ? (ui.recInput || ui.rbtn) : ui.input;
+    var f = view === "forgot" ? (ui.recInput || ui.rbtn) : (ui.bioBtn && !ui.bioBtn.disabled ? ui.bioBtn : ui.input);
     if (f && !f.disabled) { try { f.focus(); } catch (e) {} }
   }
 
@@ -405,6 +638,8 @@
     var main = node("form", "lk-view");
     main.setAttribute("autocomplete", "off");
     var kind = cfg ? cfg.kind : "pin";
+    var bioBox = node("div", "lk-bio");
+    main.appendChild(bioBox);
     var lab = node("label", "lk-label", t(kind === "pin" ? "lock.enterPin" : "lock.enterPass"));
     lab.htmlFor = "oros-lock-input";
     main.appendChild(lab);
@@ -441,7 +676,8 @@
       if (locked && ui && !ui.restacking) { try { dlg.showModal(); } catch (e) {} focusField(); }
     });
     return { dlg: dlg, time: time, date: date, main: main, input: input, msg: msg, fv: fv,
-             kind: kind, recInput: null, recMsg: null, rbtn: null, modal: false, restacking: false };
+             kind: kind, recInput: null, recMsg: null, rbtn: null, modal: false, restacking: false,
+             bioBox: bioBox, bioBtn: null, bioBusy: false, bioAsked: false };
   }
 
   // The sync passphrase (when this device is connected), else only
@@ -543,6 +779,8 @@
     guardStart();
     paintClock();
     clockTimer = setInterval(paintClock, 15000);
+    bioWatch();
+    fillBio();
     show("main");
     if (reason === "now" && bc) { try { bc.postMessage("lock"); } catch (e) {} }
     emit();
@@ -574,6 +812,72 @@
     if (!on) focusField();
   }
 
+  // The fingerprint button above the PIN, or why the PIN is asked.
+  function fillBio() {
+    if (!ui) return;
+    var box = ui.bioBox, had = !!ui.bioBtn;
+    box.textContent = "";
+    ui.bioBtn = null;
+    var r = bioRec();
+    if (!r || !bioLinked()) return;
+    if (bioDue(r, Date.now()) === "days") {
+      box.appendChild(node("p", "lk-hint", t(ui.kind === "pass" ? "lock.bio.daysPass" : "lock.bio.days")));
+      return;
+    }
+    if (!bioInfo() && !ui.bioAsked) {
+      ui.bioAsked = true;
+      try { phone().bio.refresh(); } catch (e) {}
+    }
+    if (!bioReady()) return;
+    var k = bioKind();
+    var b = node("button", "lk-btn lk-primary lk-bio-btn", t(k === "hello" ? "lock.bio.unlockHello" : k === "finger" ? "lock.bio.unlockFinger" : "lock.bio.unlock"));
+    b.type = "button";
+    b.addEventListener("click", tryBio);
+    box.appendChild(b);
+    ui.bioBtn = b;
+    if (!had && view === "main" && !busy) focusField();
+  }
+
+  // Must run inside the tap: the app's prompt opens from an intent
+  // link, which Chrome follows only on a user gesture.
+  function tryBio() {
+    if (busy || !ui || ui.bioBusy || !bioReady()) return;
+    var r = bioRec(), p = phone(), b = ui.bioBtn;
+    ui.bioBusy = true;
+    if (b) b.disabled = true;
+    say(ui.msg, bioKind() === "finger" ? "lock.bio.touch" : null, "dim");
+    var asked;
+    try { asked = p.bio.open(r.kid, "lock"); } catch (e) { asked = Promise.reject(e); }
+    asked.then(function (d64) {
+      var d;
+      try { d = unb64(d64); } catch (e) { throw new Error("bio-wrong"); }
+      return bioOpens(r, d).then(function (ok) {
+        d.fill(0);
+        if (!ok) throw new Error("bio-wrong");
+      });
+    }).then(function () {
+      if (!ui) return;
+      ui.bioBusy = false;
+      clearTries();
+      unlock();
+    }, function (e) {
+      if (!ui) return;
+      ui.bioBusy = false;
+      var c = bioCode(e);
+      if (c === "invalidated" || c === "none" || c === "wrong") {
+        bioForget();
+        say(ui.msg, c === "invalidated" ? "lock.bio.err.invalidated" : bioKind() === "phone" ? "lock.bio.err.none" : "lock.bio.err.nonePc", "err");
+      } else if (c === "cancel") {
+        say(ui.msg, null);
+      } else {
+        say(ui.msg, c === "lockout" ? "lock.bio.err.lockout" : c === "timeout" ? "lock.bio.err.timeout" : "lock.bio.err.failed", "err");
+      }
+      fillBio();
+      if (ui.bioBtn) ui.bioBtn.disabled = false;
+      if (c !== "cancel") { try { ui.input.focus(); } catch (x) {} }
+    });
+  }
+
   function tryUnlock(secret) {
     if (busy || !ui) return;
     if (waitMs()) { sayWait(ui.msg); return; }
@@ -583,7 +887,7 @@
     say(ui.msg, "lock.msg.checking", "dim");
     matches(cfg, secret).then(function (ok) {
       setBusy(false);
-      if (ok) { clearTries(); unlock(); return; }
+      if (ok) { clearTries(); bioTyped(); unlock(); return; }
       failOnce();
       if (!ui) return;
       if (waitMs()) sayWait(ui.msg);
@@ -607,6 +911,7 @@
       if (r === true) {
         clearTries();
         save(null);
+        bioForget();
         unlock();
         if (hooks.recovered) { try { hooks.recovered(); } catch (e) {} }
         return;
@@ -702,6 +1007,7 @@
       if (load()) return Promise.resolve({ ok: false, code: "on" });
       return run(makeCfg(kind, secret, null).then(function (c) {
         if (!save(c)) return { ok: false, code: "storage" };
+        if (bioRec()) bioForget();         // a leftover from a lock turned off elsewhere
         lastActive = Date.now();
         markSeen();
         return { ok: true };
@@ -713,6 +1019,7 @@
       if (g !== "ok") return Promise.resolve({ ok: false, code: g });
       return run(checkCurrent(current).then(function (r) {
         if (!r.ok) return r;
+        bioTyped();
         var prev = cfg;
         return makeCfg(kind, secret, prev).then(function (c) {
           return save(c) ? { ok: true } : { ok: false, code: "storage" };
@@ -724,7 +1031,9 @@
       if (busy) return Promise.resolve({ ok: false, code: "busy" });
       return run(checkCurrent(current).then(function (r) {
         if (!r.ok) return r;
-        return save(null) ? { ok: true } : { ok: false, code: "storage" };
+        if (!save(null)) return { ok: false, code: "storage" };
+        bioForget();
+        return { ok: true };
       }));
     },
     // "idle" (minutes, one of IDLES) or "hidden" (bool). No PIN asked:
@@ -741,6 +1050,59 @@
       return ok;
     },
     lock: function () { return lock("now"); },
+    // Fingerprint or face on this phone (LK-BIO): Settings › Screen lock.
+    bio: {
+      // linked: the orOS app's bridge answers; can: what the phone says
+      // (ok | none | no-hw | no-lock | old, null = not yet); on: this
+      // page's record and the app's secret are both here; due: "ok" or
+      // "days" (the PIN is asked first); at: the PIN last typed.
+      state: function () {
+        var r = bioRec(), info = bioInfo();
+        return { linked: bioLinked(), can: info ? info.can : null,
+                 on: !!(r && info && info.kids.indexOf(r.kid) >= 0), rec: !!r,
+                 due: r ? bioDue(r, Date.now()) : "none", at: r ? r.at : 0, days: BIO_DAYS, kind: bioKind() };
+      },
+      refresh: function () { var p = phone(); try { return !!(p && p.bio.refresh()); } catch (e) { return false; } },
+      // Turn on with the current PIN / passphrase. Must run inside the
+      // tap: the phone's prompt opens first (it needs the gesture), then
+      // the PIN is checked; a wrong one throws the new secret away.
+      // { ok, code }: off | busy | wait | wrong | unavailable | cancel |
+      // lockout | invalidated | timeout | failed | storage.
+      enable: function (current) {
+        if (!load()) return Promise.resolve({ ok: false, code: "off" });
+        if (busy) return Promise.resolve({ ok: false, code: "busy" });
+        if (waitMs()) return Promise.resolve({ ok: false, code: "wait", wait: waitMs() });
+        if (!current) return Promise.resolve({ ok: false, code: "wrong" });
+        var p = phone(), info = bioInfo();
+        if (!p || !bioLinked() || !info || info.can !== "ok") return Promise.resolve({ ok: false, code: "unavailable" });
+        var kid = bioKid(), asked;
+        try { asked = p.bio.seal(kid, "lock"); } catch (e) { asked = Promise.reject(e); }
+        busy = true;
+        emit();
+        return asked.then(function (d64) {
+          var d = unb64(d64);
+          return checkCurrent(current).then(function (r) {
+            if (!r.ok) { d.fill(0); try { p.bio.clear(kid); } catch (e) {} return r; }
+            return bioWrap(kid, d, Date.now()).then(function (rec) {
+              d.fill(0);
+              var old = bioRec();
+              if (!bioStore(rec)) { try { p.bio.clear(kid); } catch (e) {} return { ok: false, code: "storage" }; }
+              if (old && old.kid !== kid) { try { p.bio.clear(old.kid); } catch (e) {} }
+              return { ok: true };
+            });
+          });
+        }).then(null, function (e) {
+          return { ok: false, code: bioCode(e) === "wrong" ? "failed" : bioCode(e) };
+        }).then(function (r) {
+          busy = false;
+          try { p.bio.refresh(); } catch (e) {}
+          emit();
+          return r;
+        });
+      },
+      // Turn off: no PIN asked (it only takes a way in away).
+      disable: function () { bioForget(); var p = phone(); try { if (p) p.bio.refresh(); } catch (e) {} emit(); return true; }
+    },
     onChange: function (fn) {
       if (typeof fn !== "function") return function () {};
       listeners.push(fn);
@@ -767,7 +1129,7 @@
     }
   } catch (e) { bc = null; }
   root.addEventListener("storage", function (e) {
-    if (e.key !== KEY && e.key !== null) return;
+    if (e.key !== KEY && e.key !== BIO_KEY && e.key !== null) return;
     load();
     if (!cfg && locked) unlock();
     emit();

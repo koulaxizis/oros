@@ -17,7 +17,9 @@ import org.json.JSONObject;
 import javax.crypto.Cipher;
 
 /**
- * Passwords: unlock with fingerprint or face (PW-BIO, BR-PHONE v9).
+ * Passwords: unlock with fingerprint or face (PW-BIO, BR-PHONE v9), and
+ * since v11 the orOS screen lock too (LK-BIO, want.use "lock": its own
+ * kid, its own title and "Use PIN" button).
  * Opened by the page from a tap ("intent://open?n=…#Intent;scheme=oros-bio;…",
  * or "seal" to turn it on). Takes the request the page announced over
  * the port with the same one-time n (BioVault.take), shows Android's
@@ -76,9 +78,11 @@ public class BioActivity extends Activity {
 
     private void prompt(BioVault.Want w, Cipher c) {
         BiometricPrompt.Builder b = new BiometricPrompt.Builder(this)
-                .setTitle(getString("seal".equals(w.act) ? R.string.bio_title_on : R.string.bio_title))
+                .setTitle(getString("seal".equals(w.act)
+                        ? (w.lock ? R.string.bio_title_on_lock : R.string.bio_title_on)
+                        : (w.lock ? R.string.bio_title_lock : R.string.bio_title)))
                 .setSubtitle(getString(R.string.bio_sub))
-                .setNegativeButton(getString(R.string.bio_use_pw), getMainExecutor(), (dlg, which) -> fail("cancel"));
+                .setNegativeButton(getString(w.lock ? R.string.bio_use_lock : R.string.bio_use_pw), getMainExecutor(), (dlg, which) -> fail("cancel"));
         if (Build.VERSION.SDK_INT >= 29) b.setConfirmationRequired(false);
         if (Build.VERSION.SDK_INT >= 30) b.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG);
         // Leaving for another app cancels the prompt (Android answers

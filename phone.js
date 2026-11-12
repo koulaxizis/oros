@@ -52,9 +52,11 @@
 //                 to save handed to Passwords)
 //               {t:"pw-bio", op:"state"}       (v9, PW-BIO: can this phone
 //                 unlock Passwords with a fingerprint or face?)
-//               {t:"pw-bio", op:"want", act:"seal"|"open", kid, n}  (v9:
+//               {t:"pw-bio", op:"want", act:"seal"|"open", kid, n, use}  (v9:
 //                 announces the intent://<act>?n=<n> (scheme oros-bio)
-//                 the page opens next, inside a tap)
+//                 the page opens next, inside a tap; v11: use "lock" =
+//                 the screen lock asks (lock.js), so the prompt says
+//                 "Unlock orOS" and "Use PIN"; none = Passwords)
 //               {t:"pw-bio", op:"clear", kid}  (v9: the secret for kid
 //                 removed; the key too when none is left)
 //               {t:"af-state"}                 (v10: autofill state only;
@@ -1090,12 +1092,14 @@
   // opens the app's prompt screen for an intent: link only on a user
   // gesture. The app takes the request only when the "want" with the
   // same one-time n came first over the port.
-  function bioAsk(act, kid) {
+  function bioAsk(act, kid, use) {
     if (!bioInfo || !bioInfo.pkg || bioInfo.can !== "ok" || !BIO_KID.test(String(kid))) return Promise.reject(new Error("bio-unavailable"));
     if (bioWait) { clearTimeout(bioWait.timer); bioWait.no(new Error("bio-cancel")); bioWait = null; }
     var n = bioNonce(), url = "intent://" + act + "?n=" + n + "#Intent;scheme=oros-bio;package=" + bioInfo.pkg + ";end";
     return new Promise(function (ok, no) {
-      if (!bioSend({ t: "pw-bio", op: "want", act: act, kid: kid, n: n })) { no(new Error("bio-unavailable")); return; }
+      var want = { t: "pw-bio", op: "want", act: act, kid: kid, n: n };
+      if (use === "lock") want.use = "lock";
+      if (!bioSend(want)) { no(new Error("bio-unavailable")); return; }
       bioWait = { n: n, ok: ok, no: no, timer: setTimeout(function () {
         if (bioWait && bioWait.n === n) { bioWait = null; no(new Error("bio-timeout")); }
       }, BIO_MS) };
@@ -1637,13 +1641,14 @@
       if (h) h.go("intent://autofill#Intent;scheme=oros-permission;package=" + (afPkg || "online.useoros.passwords") + ";end");
     },
     // Passwords: unlock with fingerprint or face (PW-BIO, v9). Works in
-    // the orOS app and in the single app "orOS Passwords".
+    // the orOS app and in the single app "orOS Passwords". The screen
+    // lock (lock.js, LK-BIO) uses it too with its own kid and use "lock".
     bio: {
       available: function () { var h = bioHost(); return !!port || !!(h && h.available()); },
       info: function () { return bioInfo; },
       refresh: function () { return bioSend({ t: "pw-bio", op: "state" }); },
-      seal: function (kid) { return bioAsk("seal", kid); },
-      open: function (kid) { return bioAsk("open", kid); },
+      seal: function (kid, use) { return bioAsk("seal", kid, use); },
+      open: function (kid, use) { return bioAsk("open", kid, use); },
       clear: function (kid) { return BIO_KID.test(String(kid)) && bioSend({ t: "pw-bio", op: "clear", kid: kid }); }
     },
     // Returns an "off" function: an app frame calls it when it closes.
