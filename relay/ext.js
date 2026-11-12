@@ -12,6 +12,8 @@
 // keys are used for this call only: never stored, logged or echoed.
 //
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
+//           POST /v1 { op: "ext", p: "woo", host, base, rsk, reqs: [...] }   (Revenue Splitter
+//             1.14.2 contracts routes only, RS_ROUTE: the contracts key, never ck/cs)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop" | "notion" | "ebank", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "trello" | "paypal", key, token, reqs: [...] }
@@ -50,7 +52,8 @@
 //   (Newsletter, when the shop doesn't let a browser read its pictures);
 //   ≤ 512 KB, alone in its call (base64 costs relay CPU);
 //   answer { status, type, b64 } or { status, err: "type" | "too-big" }
-//   WooCommerce: https://<host><base>/wp-json/wc/v3<path>
+//   WooCommerce: https://<host><base>/wp-json/wc/v3<path>; the contracts routes
+//   "/rs/contract…" go to https://<host><base>/wp-json/rs/v1/contract… with X-RS-Key
 //   timologisi.online (Greek e-invoicing provider, fixed hosts):
 //     https://provider-dev.timologisi.online/api/v1/Provider<path> (test)
 //     https://provider.timologisi.online/api/v1/Provider<path>     (live)
@@ -176,13 +179,20 @@ const RS_ID = /^[A-Za-z0-9_-]{1,64}$/, RS_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/,
       RS_CTR_KEYS = ["id", "ben", "title", "fmt", "from", "to", "state", "renewed"],
       RS_RQ_Q = /^(new|oros|closed|all)$/, RS_MAX = 2000, RS_BYTES = 1000000;
 const rsText = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f<>]/.test(v);
+const RS_RENEWAL = ["on", "prev_to", "to"];
+// RS-CTR: Revenue Splitter 1.14.2's contracts routes and key (= links/core.js)
+const RS_ROUTE = /^\/rs\/contract(s|-requests)(\/|\?|$)/, RS_KEY = /^rsc_[A-Za-z0-9_-]{16,128}$/;
+function rsRoute(p, path) { return p === "woo" && typeof path === "string" && RS_ROUTE.test(path); }
 function okRsCtr(x) {
-  if (!onlyKeys(x, RS_CTR_KEYS) || !RS_CTR_KEYS.every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
+  if (!onlyKeys(x, RS_CTR_KEYS.concat("renewals")) || !RS_CTR_KEYS.every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
   if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
   if (RS_FMT.indexOf(x.fmt) < 0 || RS_ST.indexOf(x.state) < 0) return false;
   if (typeof x.from !== "string" || !RS_DAY.test(x.from)) return false;
   if (x.to !== "" && !(typeof x.to === "string" && RS_DAY.test(x.to))) return false;
-  return listOf(x.renewed, 0, 50, (d) => typeof d === "string" && RS_DAY.test(d));
+  if (!listOf(x.renewed, 0, 50, (d) => typeof d === "string" && RS_DAY.test(d))) return false;
+  // 1.14.2: each renewal's day, the end before it and the new end
+  return x.renewals === undefined || listOf(x.renewals, 0, 50, (e) =>
+    onlyKeys(e, RS_RENEWAL) && RS_RENEWAL.every((k) => typeof e[k] === "string" && RS_DAY.test(e[k])));
 }
 function okMlItem(x) {
   if (!onlyKeys(x, ["method", "path", "body"]) || x.method !== "POST" || x.path !== "api/subscribers") return false;
@@ -275,7 +285,7 @@ export const PLATFORMS = {
   woo: {
     root: "/wp-json/wc/v3",
     keys: { ck: /^ck_[a-f0-9]{40}$/, cs: /^cs_[a-f0-9]{40}$/ },
-    auth: (b) => ["Authorization", "Basic " + btoa(b.ck + ":" + b.cs)],
+    auth: (b) => (b.rsk ? ["X-RS-Key", b.rsk] : ["Authorization", "Basic " + btoa(b.ck + ":" + b.cs)]),
     allow: [
       ["GET", /^\/system_status$/, null, null],
       ["GET", /^\/products$/, q({ status: WORDS, type: WORDS, modified_after: DT, sku: SKU }), null],
@@ -687,8 +697,16 @@ export function validExt(b) {
   }
   // a database name only where the platform has one (Odoo)
   if (b.db !== undefined && !(pl.db && typeof b.db === "string" && DB_RE.test(b.db))) return "db";
-  for (const k of Object.keys(pl.keys)) if (typeof b[k] !== "string" || !pl.keys[k].test(b[k])) return "key";
   if (!Array.isArray(b.reqs) || !b.reqs.length || b.reqs.length > EXT_LIMITS.reqs) return "reqs";
+  // RS-CTR: a call of the contracts routes is only those, with only the contracts key
+  const rsN = b.reqs.filter(r => r && rsRoute(b.p, r.path)).length;
+  if (rsN && rsN !== b.reqs.length) return "reqs";
+  if (rsN) {
+    if (typeof b.rsk !== "string" || !RS_KEY.test(b.rsk) || b.ck !== undefined || b.cs !== undefined) return "key";
+  } else {
+    if (b.rsk !== undefined) return "key";
+    for (const k of Object.keys(pl.keys)) if (typeof b[k] !== "string" || !pl.keys[k].test(b[k])) return "key";
+  }
   // a write that must happen once (an invoice) travels alone in its call
   if (pl.once && b.reqs.length > 1 && b.reqs.some(r => r && r.m !== "GET")) return "reqs";
   // a product picture travels alone in its call (CPU: base64 runs on the relay)
@@ -715,7 +733,9 @@ function target(b, path, img) {
   const fixed = !!(pl.env || pl.host || pl.hostOf);
   const host = pl.env ? pl.env[b.env] : pl.host ? pl.host : pl.hostOf ? pl.hostOf(b) : b.host.toLowerCase();
   if (!host) return null;
-  const baseHref = "https://" + host + (fixed ? "" : b.base) + (img ? "" : pl.root);
+  const rs = rsRoute(b.p, path);
+  if (rs) path = path.slice(3);                  // "/rs/contracts" → rs/v1 "/contracts"
+  const baseHref = "https://" + host + (fixed ? "" : b.base) + (img ? "" : rs ? "/wp-json/rs/v1" : pl.root);
   const u = new URL(baseHref + path);
   if (u.protocol !== "https:" || u.port !== "" || u.username || u.password) return null;
   if (u.hostname !== host || u.href !== baseHref + path) return null;

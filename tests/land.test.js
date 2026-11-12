@@ -151,10 +151,13 @@ test("a phone screen draws within budget", () => {
 
 test("shell: canonical wpland", () => {
   const canon = new Function("var WP_LAND_STYLES = " + JSON.stringify(L.STYLES) + ";\n" + cut(SHELL, "wplandCanon") + "\nreturn wplandCanon;")();
-  assert.deepEqual(canon({}), { style: "islands", seed: 1, motion: 0 });
-  assert.deepEqual(canon({ motion: true, seed: 5.7, style: "hills" }), { style: "hills", seed: 5, motion: 1 });
-  assert.deepEqual(canon({ style: "lava", seed: -3 }), { style: "islands", seed: 1, motion: 0 });
-  assert.deepEqual(Object.keys(canon({ seed: 9 })), ["style", "seed", "motion"], "fixed key order");
+  assert.deepEqual(canon({}), { style: "islands", seed: 1, motion: 0, light: 1 });
+  assert.deepEqual(canon({ motion: true, seed: 5.7, style: "hills" }), { style: "hills", seed: 5, motion: 1, light: 1 });
+  assert.deepEqual(canon({ light: 0 }).light, 0);
+  assert.deepEqual(canon({ light: false }).light, 0);
+  assert.deepEqual(canon({ light: "x" }).light, 1, "anything but off reads as on");
+  assert.deepEqual(canon({ style: "lava", seed: -3 }), { style: "islands", seed: 1, motion: 0, light: 1 });
+  assert.deepEqual(Object.keys(canon({ seed: 9 })), ["style", "seed", "motion", "light"], "fixed key order");
   assert.equal(canon(null), null);
   assert.equal(canon([1]), null);
   assert.equal(canon("x"), null);
@@ -210,5 +213,42 @@ test("demo desktop: tiles inside the screen, a card on wide screens, land under 
     if (w >= 600) assert.ok(rs.some((r) => r.k === "card"), w + ": card");
     const f = L.field(rs, w, h, 7, 0, "hills");
     for (const r of rs) assert.ok(L.layerOf(L.sample(f, r.x + r.w / 2, r.y + r.h / 2)) >= 3);
+  }
+});
+
+// LIGHT-1 (Chris 2026-11-11 20:04): the land's tint follows the local time.
+test("light of the day: night, dawn, clear day, golden evening, eased between", () => {
+  assert.equal(L.lightAt(2).phase, "night");
+  assert.equal(L.lightAt(23.9).phase, "night");
+  assert.equal(L.lightAt(12).phase, "day");
+  assert.equal(L.lightAt(12).css, "", "no tint by day");
+  assert.equal(L.lightAt(6.5).phase, "dawn");
+  assert.equal(L.lightAt(18.5).phase, "dusk");
+  assert.match(L.lightAt(2).css, /^linear-gradient\(180deg, rgba\(38, 52, 110, 0\.46\), rgba\(22, 30, 70, 0\.52\)\)$/);
+  assert.deepEqual(L.lightAt(26), L.lightAt(2), "wraps around midnight");
+  assert.deepEqual(L.lightAt(NaN), L.lightAt(12));
+  // never jumps: one minute changes no channel by more than a little
+  for (let m = 0; m < 24 * 60; m++) {
+    const a = L.lightAt(m / 60), b = L.lightAt((m + 1) / 60);
+    for (let k = 0; k < 3; k++) assert.ok(Math.abs(a.top[k] - b.top[k]) <= 6 && Math.abs(a.bottom[k] - b.bottom[k]) <= 6, "colour step at " + m);
+    assert.ok(Math.abs(a.top[3] - b.top[3]) <= 0.02 && Math.abs(a.bottom[3] - b.bottom[3]) <= 0.02, "alpha step at " + m);
+  }
+  for (let h = 0; h < 24; h += 0.25) assert.ok(L.lightAt(h).top[3] <= 0.46 && L.lightAt(h).bottom[3] <= 0.52, "never darker than night");
+});
+
+test("light of the day: wiring in the mount, the shell and Settings", () => {
+  const SRC = read("wallpaper/land.js");
+  assert.match(SRC, /var on = !\(st\.land && \(st\.land\.light === 0 \|\| st\.land\.light === false\)\);/);
+  assert.match(SRC, /if \(\(o\.paused && o\.paused\(\)\) \|\| document\.hidden\) return;\n      var st = /, "nothing under an app");
+  assert.match(SRC, /lightEl\.className = "wp-land-light";/);
+  assert.match(cut(SHELL, "settingsSet"), /case "wpland:light":  wpLandNewShape\(\{ light: value \? 1 : 0 \}\);/);
+  assert.match(cut(SHELL, "wpLandNewShape"), /light: cur\.light/);
+  assert.match(read("settings/settings.js"), /switchBtn\(s\.land\.light !== false, "wpland:light"/);
+  const css = read("style.css");
+  assert.match(css, /#wp-land \.wp-land-light \{\n  position: absolute; inset: 0; z-index: 1;\n  mix-blend-mode: multiply;/);
+  const core = read("settings/core.js"), de = read("i18n/de/settings.js");
+  for (const k of ["a.wallpaper.land.light", "a.wallpaper.land.light.hint"]) {
+    assert.equal((core.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k);
+    assert.ok(de.includes('"' + k + '":'), k + " DE");
   }
 });
