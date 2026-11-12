@@ -1160,7 +1160,7 @@
   // an edit stamps only the groups it changes, and the column (or board)
   // whose order changed gets om = now, so the next merge keeps this order.
   // All or none per call. → { ok, data (canonical), undo, ids, text } | { ok:false, err }
-  var KB_TEXT = 500, KB_NOTES = 5000, KB_ADD = 50, KB_MOVE = 100, KB_COLS = 20;
+  var KB_TEXT = 500, KB_NOTES = 5000, KB_ADD = 50, KB_MOVE = 100, KB_COLS = 20; var KB_SUBS = 30, KB_SUBS_MAX = 100;
   function kbBoards(d) {
     var gone = isObj(d.boardDeleted) ? d.boardDeleted : {};
     return (Array.isArray(d.boards) ? d.boards : []).filter(function (b) {
@@ -1319,10 +1319,56 @@
         var old = Array.isArray(c0.labels) ? c0.labels : [];
         if (JSON.stringify(v.ids) !== JSON.stringify(old)) { c0.labels = v.ids; groups.push("l"); }
       }
+      // Subtasks (KB-SUB): add new ones at the end, tick, untick or reword them by id
+      // or exact text. Never removed here; undo takes back only these.
+      var sa = [], sc = {};
+      if (args.add_subtasks !== undefined || args.change_subtasks !== undefined) {
+        if (!Array.isArray(c0.subtasks)) c0.subtasks = [];
+        var subs = c0.subtasks, addS = args.add_subtasks, chk = args.change_subtasks;
+        if (addS !== undefined) {
+          if (!Array.isArray(addS) || !addS.length || addS.length > KB_SUBS) return { ok: false, err: "add_subtasks must hold 1 to " + KB_SUBS + " texts." };
+          if (subs.length + addS.length > KB_SUBS_MAX) return { ok: false, err: "A card holds at most " + KB_SUBS_MAX + " subtasks; it has " + subs.length + "." };
+          for (i = 0; i < addS.length; i++) {
+            v = kbText(addS[i], KB_TEXT, "text");
+            if (v.err) return { ok: false, err: "Subtask " + (i + 1) + ": " + v.err };
+          }
+        }
+        if (chk !== undefined) {
+          if (!Array.isArray(chk) || !chk.length || chk.length > KB_SUBS_MAX) return { ok: false, err: "change_subtasks must hold 1 to " + KB_SUBS_MAX + " entries." };
+          for (i = 0; i < chk.length; i++) {
+            var ce = isObj(chk[i]) ? chk[i] : {}, key = String(ce.subtask == null ? "" : ce.subtask).trim(), ct = "change_subtasks " + (i + 1) + ": ";
+            if (!key) return { ok: false, err: ct + "subtask (its id or exact text) is missing." };
+            if (ce.done !== undefined && typeof ce.done !== "boolean") return { ok: false, err: ct + "done must be true or false." };
+            var nt2 = ce.text === undefined ? null : kbText(ce.text, KB_TEXT, "text");
+            if (nt2 && nt2.err) return { ok: false, err: ct + nt2.err };
+            if (ce.done === undefined && !nt2) return { ok: false, err: ct + "give done, text or both." };
+            var byId = subs.filter(function (x) { return isObj(x) && x.id === key; });
+            var byTx = byId.length ? byId : subs.filter(function (x) { return isObj(x) && String(x.text || "").trim() === key; });
+            if (!byTx.length) return { ok: false, err: ct + "no subtask " + JSON.stringify(key) + " on this card." };
+            if (byTx.length > 1) return { ok: false, err: ct + "more than one subtask reads " + JSON.stringify(key) + "; use its id." };
+            var st0 = byTx[0];
+            if (sc[st0.id] !== undefined) return { ok: false, err: ct + "the subtask is named twice in one call." };
+            var was0 = { c: !!st0.completed, t: String(st0.text || "") }, moved = false;
+            if (ce.done !== undefined && !!st0.completed !== ce.done) { st0.completed = ce.done; moved = true; }
+            if (nt2 && nt2.s !== was0.t) { st0.text = nt2.s; moved = true; }
+            if (moved) { sc[st0.id] = was0; st0.m = now; }
+          }
+        }
+        if (addS !== undefined) addS.forEach(function (t) {
+          var ns = { id: newId(), text: kbText(t, KB_TEXT, "text").s, completed: false, m: now };
+          subs.push(ns); sa.push(ns.id);
+        });
+        if (sa.length || Object.keys(sc).length) groups.push("s");
+      }
       if (!groups.length) return { ok: false, err: "Nothing to change: the card already looks like this." };
       M.stampCard(c0, groups, now);
+      if (groups.indexOf("s") >= 0) c0.subtasks.forEach(function (x) { if (isObj(x) && (sa.indexOf(x.id) >= 0 || sc[x.id] !== undefined)) x.m = c0.mtime; });
       undo.cards[c0.id] = { b: snap, a: c0.mtime, g: groups };
-      return { ok: true, data: M.canonState(d, now), undo: undo, ids: [c0.id], text: "Changed the card." };
+      if (sa.length) undo.cards[c0.id].sa = sa;
+      if (Object.keys(sc).length) undo.cards[c0.id].sc = sc;
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: [c0.id].concat(sa),
+               text: "Changed the card." + (sa.length ? " Added " + sa.length + " subtask" + (sa.length === 1 ? "" : "s") + "." : "") +
+                     (Object.keys(sc).length ? " Changed " + Object.keys(sc).length + " subtask" + (Object.keys(sc).length === 1 ? "" : "s") + "." : "") };
     }
     return { ok: false, err: "unknown change" };
   }
@@ -1351,6 +1397,15 @@
         if (e.g.indexOf("n") >= 0) { card.notes = s.n; groups.push("n"); }
         if (e.g.indexOf("d") >= 0) { card.due = s.d; groups.push("d"); }
         if (e.g.indexOf("l") >= 0) { card.labels = s.l.slice(); groups.push("l"); }
+        if (e.g.indexOf("s") >= 0 && Array.isArray(card.subtasks)) {
+          var gone = Array.isArray(e.sa) ? e.sa : [], was = isObj(e.sc) ? e.sc : {};
+          card.subtasks = card.subtasks.filter(function (x) {
+            if (isObj(x) && gone.indexOf(x.id) >= 0) { b.deleted[M.itemTomb(card.id, x.id)] = Math.max(now, (card.mtime || 0) + 1); return false; }
+            return true;
+          });
+          card.subtasks.forEach(function (x) { if (isObj(x) && isObj(was[x.id])) { x.completed = was[x.id].c; x.text = was[x.id].t; x.touch = 1; } });
+          groups.push("s");
+        }
       } else {                                              // a move: back to its column and place
         var home = kbCols(b).filter(function (c) { return c.id === s.col; })[0];
         if (!home) { kept++; return; }
@@ -1361,6 +1416,7 @@
         oms.push(at.col, home);
       }
       M.stampCard(card, groups, now);
+      if (Array.isArray(card.subtasks)) card.subtasks.forEach(function (x) { if (isObj(x) && x.touch) { delete x.touch; x.m = card.mtime; } });
       n++;
     });
     Object.keys(u.cols).forEach(function (id) {

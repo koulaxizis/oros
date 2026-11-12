@@ -161,7 +161,7 @@
   function normArgs(args) {
     if (!isObj(args)) return bad("The arguments must be an object.");
     var ref = String(args.ref == null ? "" : args.ref).replace(/^oros:/, "").trim();
-    if (!/^r\d{1,5}$/.test(ref)) return bad("ref must be a ref that search_data or app_summary returned, e.g. r3.");
+    if (!/^r\d{1,9}$/.test(ref)) return bad("ref must be a ref that search_data or app_summary returned, e.g. r3.");
     var action = String(args.action || "");
     if (ACTIONS.indexOf(action) < 0) return bad("action must be one of: " + ACTIONS.join(", ") + ".");
     var set = {};

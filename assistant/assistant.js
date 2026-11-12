@@ -4251,7 +4251,7 @@
   var READ_MAX = 12000;
   function readItem(c, args, apps) {
     var ref = String(args && args.ref || "").replace(/^oros:/, "").trim();
-    var r = c.refs && /^r\d{1,5}$/.test(ref) ? c.refs[ref] : null;
+    var r = c.refs && /^r\d{1,9}$/.test(ref) ? c.refs[ref] : null;
     if (!r) return Promise.resolve({ content: "Error: unknown ref. Use a ref that search_data returned.", err: 1 });
     var app = null;
     apps.forEach(function (a) { if (a.id === r.app) app = a; });
@@ -8691,7 +8691,7 @@
     gateConv.refN = typeof o.n === "number" && o.n > 0 ? o.n : 0;
     Object.keys(o.refs).forEach(function (r) {
       var x = o.refs[r];
-      if (/^r\d{1,6}$/.test(r) && x && typeof x === "object" && typeof x.app === "string") { gateConv.refs[r] = x; gateKeys[gateKey(x)] = r; }
+      if (/^r\d{1,9}$/.test(r) && x && typeof x === "object" && typeof x.app === "string") { gateConv.refs[r] = x; gateKeys[gateKey(x)] = r; }
     });
   }
   // → false when the device could not keep them (R30: the index then
