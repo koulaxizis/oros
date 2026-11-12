@@ -765,6 +765,7 @@
   var MK_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
   var OV_SET_RE = /^-?[a-z]{2,8}(,-?[a-z]{2,8}){0,15}$/;
   var PL_SET_RE = /^[a-z0-9]{8,24}( [a-z0-9]{8,24}){0,4}$/;
+  var BAT_RE = /^([01]\d|2[0-3]):[0-5]\d( ([01]\d|2[0-3]):[0-5]\d){0,3}$/;
   function normSet(x) {
     if (!x || typeof x !== "object" || !okStamp(x.m)) return null;
     var y = Object.assign({}, x);
@@ -779,6 +780,10 @@
     if (!(typeof y.plco === "string" && ID_RE.test(y.plco))) delete y.plco;
     // PL-2: pld = the area new shop entries get
     if (!(typeof y.pld === "string" && ID_RE.test(y.pld))) delete y.pld;
+    // BK-AT: bat = the times banks update by themselves ("08:00 20:00",
+    // 1 to 4, sorted; none = every 6 hours on open), bam = when they were saved
+    if (!(typeof y.bat === "string" && BAT_RE.test(y.bat))) delete y.bat;
+    if (!(isInt(y.bam) && y.bam > 0 && y.bam < 1e14)) delete y.bam;
     return withExtras({ m: x.m, cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "EUR" }, y);
   }
 
@@ -3747,6 +3752,15 @@
       });
     } finally { autoBusy = false; }
   }
+  // BK-AT: the times banks update by themselves ("" = every 6 hours on
+  // open); synced in set, like the currency.
+  function saveBankTimes(bat) {
+    if ((data.set.bat || "") === bat) return;
+    data.set.m = stamp(data.set.m);   // in place: keeps a newer version's fields
+    if (bat) data.set.bat = bat; else delete data.set.bat;
+    data.set.bam = Date.now();
+    commit();
+  }
   function initBankLive() {
     if (!BANKLIVE) return;
     BANKLIVE.init({
@@ -3754,7 +3768,7 @@
       showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
       accSelect: accSelect, data: function () { return data; }, cur: cur, dateShort: dateShort,
       pickFile: pickFile, showToast: showToast, addEntries: addEntries, renderAll: renderAll,
-      newId: newId, saveBnk: saveBnk, patchBnk: patchBnk, dropBnk: dropBnk,
+      newId: newId, saveBnk: saveBnk, patchBnk: patchBnk, dropBnk: dropBnk, saveTimes: saveBankTimes,
       accBalAt: accBalAt, accCur: accCurOf, correct: correctBal, money: money,
       parseAmount: parseAmount, centsToInput: function (c) { return centsToInput(c, LANG); }
     });
