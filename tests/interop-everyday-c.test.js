@@ -98,7 +98,8 @@ test("Travel shows each day's forecast from the helper, with EN/EL labels and he
 
 const SENDERS = {
   calculator: { js: "calculator/calculator.js", en: "Send to…", el: "Αποστολή σε…", title: 't("calc.title")' },
-  units: { js: "units/units.js", en: "Send to…", el: "Αποστολή σε…", title: 't("app.name")' }
+  // merge 5: the Unit Converter is the Calculator's Convert mode (units/view.js)
+  units: { js: "units/view.js", en: "Send to…", el: "Αποστολή σε…", title: 't("app.name")', help: "calculator" }
 };
 
 test("Calculator and Unit Converter send their result as text, only with the bridge", () => {
@@ -111,11 +112,11 @@ test("Calculator and Unit Converter send their result as text, only with the bri
     assert.match(s, /hidden = !sendApi\(\)/, app + " hides the button without the bridge");
     const at = s.indexOf("function sendApi");
     assert.doesNotMatch(s.slice(at, s.indexOf("api.open(", at)), /innerHTML\s*=\s*[^"'I]/, app + " builds no HTML from data");
-    assert.match(src(app + "/help.en.txt"), /Send to…/, app + " help EN");
-    assert.match(src(app + "/help.el.txt"), /Αποστολή σε…/, app + " help EL");
+    assert.match(src((c.help || app) + "/help.en.txt"), /Send to…/, app + " help EN");
+    assert.match(src((c.help || app) + "/help.el.txt"), /Αποστολή σε…/, app + " help EL");
   }
   assert.match(src("calculator/index.html"), /id="calc-send"[^>]*hidden/);
-  assert.match(src("units/index.html"), /id="copy"[^\n]*\n\s*<button type="button" id="send" class="icon-btn" hidden>/);
+  assert.match(src("units/view.js"), /id=\\"uc-copy\\"[^\n]*\n\s*"\s*<button type=\\"button\\" id=\\"uc-send\\" class=\\"icon-btn\\" hidden>/);
 });
 
 test("Calendar shows the cached forecast on its days", () => {

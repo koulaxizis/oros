@@ -1,8 +1,8 @@
 # Calculator
-An everyday calculator with five modes: `Standard` with memory keys, `Scientific` with brackets and functions, `Graphing` for up to four functions, `Programmer` for hex and binary, and `Finance` for VAT, percentages, loans and savings. It keeps a history of your results and, for fun, has a `Troll mode` that teases you about every answer. The answers themselves are always correct.
+An everyday calculator with six modes: `Standard` with memory keys, `Scientific` with brackets and functions, `Graphing` for up to four functions, `Programmer` for hex and binary, `Finance` for VAT, percentages, loans and savings, and `Convert` for units and currencies. It keeps a history of your results and, for fun, has a `Troll mode` that teases you about every answer. The answers themselves are always correct.
 
 ## Getting started
-Pick a mode on the bar under the title. On a narrow screen the names are shortened (`Basic`, `Sci`, `Graph`, `Prog`, `Money`). The app remembers the mode you used last on this device.
+Pick a mode on the bar under the title. On a phone the bar is a menu: tap it and pick the mode. The app remembers the mode you used last on this device.
 
 In `Standard`, tap or click the keys, or type on your keyboard. Enter a number, an operator (`÷`, `×`, `−`, `+`), another number, then `=`. Standard works like a pocket calculator, in the order you type: `2 + 3 ×` first gives 5, then multiplies. For brackets and operator precedence, use `Scientific`.
 
@@ -38,8 +38,8 @@ On a touch screen the keys type into the line without opening the phone's keyboa
 In `Scientific`, write a conversion with `to`, `in`, `σε` or `→` between two units:
 
 - `3 ft to cm`, `100 km/h in m/s`, `2*3 ft σε in`, `ft to m` (one foot).
-- `20 EUR to USD` converts money with the exchange rates of [Unit Converter](help:a/units). If this device has no rates yet, the calculator gets them when you are online.
-- The units and their names in English and Greek are those of Unit Converter. Converting cups to grams needs an ingredient, so use Unit Converter for that.
+- `20 EUR to USD` converts money with the exchange rates of the `Convert` mode. If this device has no rates yet, the calculator gets them when you are online.
+- The units and their names in English and Greek are those of `Convert`. Converting cups to grams needs an ingredient, so use `Convert` for that.
 
 ## Graphing mode
 Type up to four functions of `x`, such as `sin(x)` or `x^2 - 2`; each has its own colour. The graph updates as you type, and a function with an error is marked in red with the reason.
@@ -68,6 +68,16 @@ The numbers you type in Finance stay on this device until you change them.
 
 >! The finance tools give estimates for planning. A bank's figures can differ slightly because of fees, rounding and the exact dates.
 
+## Convert mode
+`Convert` was the Unit Converter app; old links and shortcuts to it open this mode. Pick a category at the top (`Length`, `Weight`, `Volume`, `Temperature`, `Area`, `Speed`, `Cooking`, `Time`, `Data`, `Fuel economy`, `Pressure`, `Energy`, `Power`, `Angle` or `Currency`; swipe the row sideways on a phone). Type a number in `From` and the result appears in `To` as you type; it also works the other way.
+- Tap or click a unit to change it. The list has a search field: type a name or a symbol in English or Greek (`ft`, `πόδι`, `στρέμμα`, `mpg`). [[Enter]] picks the first match. ⇄ swaps the two units.
+- The line under the fields shows the rule used, for example `1 mi = 1.609344 km`. The copy button copies the result, `Send to…` sends the conversion to another app, and [[Esc]] clears the field you are in.
+- Numbers take a comma or a point for decimals, simple sums (`2,5*3`, `(3+4)/2`) and `1,5e3`. Results have 6 significant digits; change them with the settings button (`Converter settings`).
+- `Cooking` turns cups and spoons into grams with an `Ingredient` (approximate kitchen weights). `Data` has kB, MB, GB and KiB, MiB, GiB. The traditional Greek stremma, oka, drachm and builder's cubit are there too.
+- `Currency` uses the euro reference rates of the European Central Bank through the free Frankfurter service, fetched when you open `Currency` (at most every 6 hours) or tap `Update rates`, and kept on this device for offline use. They are for information: banks and card payments use their own rates.
+- `All units` shows the value in every unit of the category (tap a row to copy it). ☆ adds the pair to `Favourites`, the chips above the converter. `Recent` keeps your last 20 conversions; `Clear` empties it, with `Undo`.
+- In the orOS menu search, type a conversion such as `10 km to mi` or `5 stremma`: the answer appears under `In your data`, and a tap opens it here. Favourite pairs are found there too.
+
 ## History
 Each result from `Standard` and `Scientific` is added to `History`, newest first (up to 50 entries). Tap or click an entry to reuse its result. `CSV` saves the history as a spreadsheet file, oldest first. `Clear` empties the history straight away, without asking.
 
@@ -83,10 +93,12 @@ Older versions of Troll mode sometimes changed an answer by a few percent. Those
 ## Sync and backup
 Your history, the memory value, the `fx` row and the Troll mode settings sync between your devices through [orOS sync](help:t/sync). The mode, the angle units, the graph's functions, the Programmer settings, the Finance numbers and the width of the history panel stay on each device. `Ans` and the calculation on screen are not saved.
 
+The `Convert` favourites, recent conversions and digits sync too; its category, units, ingredient and exchange rates stay on each device.
+
 Besides the CSV export, the orOS [backup](help:t/backup) keeps a copy of everything.
 
 ## Keyboard shortcuts
-- [[Alt+1]] to [[Alt+5]] switch mode (Standard, Scientific, Graphing, Programmer, Finance), if your browser doesn't use them itself. On the mode bar, [[←]] and [[→]] also switch.
+- [[Alt+1]] to [[Alt+6]] switch mode (Standard, Scientific, Graphing, Programmer, Finance, Convert), if your browser doesn't use them itself. On the mode bar, [[←]] and [[→]] also switch.
 - Digits and the numpad, [[.]] or [[,]] for the decimal point, [[+]] [[-]] [[*]] [[/]] for the operators.
 - [[Enter]] or [[=]] works out the result.
 - [[Backspace]] deletes the last digit; [[Esc]] or [[Delete]] clears.
