@@ -451,7 +451,7 @@
           var ln = arr(k.labels).map(function (id) { return lbl[id] || ""; }).filter(Boolean);
           if (ln.length) it.labels = ln.slice(0, 10);
           var st = arr(k.subtasks).filter(isObj);
-          if (st.length) it.subtasks = st.filter(function (x) { return x.done; }).length + "/" + st.length;
+          if (st.length) it.subtasks = st.filter(function (x) { return x.done || x.completed; }).length + "/" + st.length;
           it.target = { board: b.id, col: c.id, card: k.id };   // → a ref (assistant.js)
           items.push(it);
         });

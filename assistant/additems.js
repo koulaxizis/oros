@@ -352,12 +352,12 @@
   // into o.cust before plan()), deal = a deal's ref (→ o.deal).
   function crmRefs(x, w, o, dealOk) {
     var cu = one(typeof x.customer === "string" ? x.customer : "").replace(/^oros:/, "");
-    if (!/^r\d{1,5}$/.test(cu)) return w + "customer must be the ref of a CRM customer (e.g. r4) from search_data or create_items.";
+    if (!/^r\d{1,9}$/.test(cu)) return w + "customer must be the ref of a CRM customer (e.g. r4) from search_data or create_items.";
     o.customer = cu;
     o.deal = "";
     if (dealOk && has(x, "deal") && x.deal) {
       var dl = one(String(x.deal)).replace(/^oros:/, "");
-      if (!/^r\d{1,5}$/.test(dl)) return w + "deal must be the ref of a CRM deal from search_data or create_items.";
+      if (!/^r\d{1,9}$/.test(dl)) return w + "deal must be the ref of a CRM deal from search_data or create_items.";
       o.deal = dl;
     }
     return "";

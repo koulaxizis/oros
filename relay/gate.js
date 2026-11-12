@@ -399,7 +399,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_change_card",
-    description: "Changes one card's text, notes, due date (\"\" clears it) or labels (the full new list of label names; [] clears them). Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices.",
+    description: "Changes one card's text, notes, due date (\"\" clears it) or labels (the full new list of label names; [] clears them), adds subtasks at the end (add_subtasks) and ticks, unticks or rewords subtasks by id or exact text (change_subtasks); subtasks are never removed here. Read the whole card (notes, subtasks with ids and [x] when done) with read_item on its ref from search_data. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices.",
     inputSchema: {
       type: "object",
       properties: {
@@ -408,7 +408,18 @@ export const TOOLS = [
         text: { type: "string" },
         notes: { type: "string" },
         due: { type: "string", description: "YYYY-MM-DD, or \"\" to clear." },
-        labels: { type: "array", items: { type: "string" } }
+        labels: { type: "array", items: { type: "string" } },
+        add_subtasks: { type: "array", minItems: 1, maxItems: 30, items: { type: "string" }, description: "New subtasks, added unticked at the end (at most 500 characters each; a card holds at most 100)." },
+        change_subtasks: { type: "array", minItems: 1, maxItems: 100, items: {
+          type: "object",
+          properties: {
+            subtask: { type: "string", description: "The subtask's id, or its exact text." },
+            done: { type: "boolean", description: "true ticks it, false unticks it." },
+            text: { type: "string", description: "New text for it." }
+          },
+          required: ["subtask"],
+          additionalProperties: false
+        } }
       },
       required: ["board", "card"],
       additionalProperties: false
@@ -494,7 +505,7 @@ export function refsIn(a) {
   ["ref", "customer", "contact", "item", "deal", "trip"].forEach((k) => add(o[k]));
   ["refs", "items"].forEach((k) => { if (Array.isArray(o[k])) o[k].forEach((v) => (typeof v === "string" ? add(v) : v && typeof v === "object" && ["ref", "item", "customer", "contact"].forEach((kk) => add(v[kk])))); });
   ["changes", "links"].forEach((k) => { if (Array.isArray(o[k])) o[k].forEach((v) => { if (v && typeof v === "object") ["ref", "customer", "contact", "item"].forEach((kk) => add(v[kk])); }); });
-  return out.filter((r) => /^r\d{1,6}$/.test(r)).filter((r, i, l) => l.indexOf(r) === i);
+  return out.filter((r) => /^r\d{1,9}$/.test(r)).filter((r, i, l) => l.indexOf(r) === i);
 }
 export function hasDelete(a) {
   const o = a && typeof a === "object" ? a : {};

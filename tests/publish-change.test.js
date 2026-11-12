@@ -117,3 +117,8 @@ test("nothing to change is refused", () => {
   assert.equal(p.ok, false);
   assert.match(p.err, /Nothing would change/);
 });
+
+test("refs past r99999 are accepted (KB-SUB 2026-11-12)", () => {
+  assert.equal(E.normArgs({ ref: "r133506", action: "update", status: "released" }).ok, true);
+  assert.equal(E.normArgs({ ref: "r1335060000", action: "update", status: "released" }).ok, false);
+});
