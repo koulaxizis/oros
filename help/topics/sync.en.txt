@@ -50,14 +50,14 @@ The old cloud is left as it was, with its backups, until you delete it yourself.
 - **ownCloud**: the address is `https://your.cloud/remote.php/dav/files/USERNAME`. Make an app passcode under Settings › Security, and turn on `Through the orOS relay`.
 
 ## Your passphrase
-The passphrase encrypts your data on this device. It never leaves the device, and neither Dropbox nor anyone else can read your data without it.
+The passphrase encrypts your data on this device. It leaves a device only when you use `Add a browser` (below), and then end-to-end encrypted to your own new browser. Neither Dropbox nor anyone else can read your data without it.
 
 >! Write your passphrase down somewhere safe. It cannot be recovered or reset. If you forget it, the data in the cloud can't be decrypted by anyone, including you. The data already on each device stays there, so export a backup from a device that still has it (see [Backup and restore](help:t/backup)).
 
 - `Change passphrase` re-encrypts your cloud data with a new one. After that, every device needs the new passphrase.
 - If the passphrase was changed on another device, you'll see `Passphrase changed on another device?`. Type the new one there.
 - `Forget passphrase here` (or `Forget this device` when it was remembered) removes it from this device. Your data stays.
-- `Disconnect` signs this device out of Dropbox or the WebDAV server; tap it twice to confirm. Your data stays on the device.
+- `Disconnect` signs this device out of Dropbox or the WebDAV server; tap it twice to confirm. Your data stays on the device. After `Add a browser`, the two devices share one sign-in, and `Disconnect` on either signs out only that one.
 
 ## The sync dot
 The small dot in the top bar shows how sync is doing. On a computer, point at it to see its label:
@@ -96,3 +96,16 @@ A big clean-up takes a few minutes, one copy after the other, and the card count
 
 ## Add a second device
 Open orOS on the other device, open `Settings`, tap `Connect to Dropbox`, sign in to the **same** Dropbox account and type the **same** passphrase. Your data comes down and merges with anything already there. Something went wrong? See [Troubleshooting](help:t/troubleshooting).
+
+### Sign in a new browser in one step
+When orOS is already signed in on your phone or another computer, a new browser needs neither the Dropbox sign-in nor the passphrase:
+1. On the new browser, open `Settings` › `Sync` and tap `I have orOS on another device`. A QR code and a 12-character code appear.
+2. On the signed-in device, open `Settings` › `Sync` › `Add a browser`. Tap `Scan the code` (or scan the QR with the phone's camera app), or type the code and tap `Connect`.
+3. Both screens show the same four-digit confirmation number. If they match, tap `Approve` on the signed-in device.
+4. The new browser signs in, remembers the passphrase and syncs.
+
+The code works for 2 minutes and only once. The sign-in and passphrase travel end-to-end encrypted with a key made from the code; the orOS relay only passes scrambled data on and keeps nothing. On a shared computer, tick `Only for this session` on the new browser: when you come back to orOS after closing that tab, it is signed out and the passphrase is forgotten.
+
+>! Approve only a browser that is in front of you and shows the same number. Never approve a code someone sent you: whoever has that browser gets your data.
+
+The new browser shares the signed-in device's Dropbox (or server) sign-in. So from then on `Disconnect` on either of them signs out only that device and leaves the other signed in. To cancel the shared sign-in on every device at once, remove orOS sync under Dropbox › Settings › Connected apps (on Nextcloud: Settings › Security › Devices & sessions).

@@ -848,6 +848,8 @@ orosPack("de", "shell", {
  "sync.disc.offline": "Auf diesem Gerät offline getrennt. Um den Zugriff auch bei Dropbox zu widerrufen, entferne orOS unter Dropbox › Einstellungen › Verbundene Apps",
  "sync.disc.offline.dav": "Auf diesem Gerät offline getrennt. Falls du ein App-Passwort für orOS erstellt hast, lösche es in den Sicherheitseinstellungen deines Servers",
  "sync.disc.revoked": "Getrennt. Der Zugriff dieses Geräts wurde auch beim Cloud-Dienst widerrufen",
+ "sync.disc.paired": "In diesem Browser abgemeldet. Deine anderen Geräte bleiben bei Dropbox angemeldet",
+ "sync.disc.paired.dav": "In diesem Browser abgemeldet. Deine anderen Geräte bleiben bei deinem Server angemeldet",
  "sync.disc.working": "Wird getrennt…",
  "sync.disconnect": "Trennen",
  "sync.disconnected": "Nicht verbunden",

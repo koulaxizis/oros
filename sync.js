@@ -3525,6 +3525,7 @@
       }
       davConf = conf;
       davPass = pass;
+      clearPaired();
       useProvider("webdav");
       cloudRev = undefined;
       if (noteCloud(davCloudId(conf))) markDirty();
@@ -3677,6 +3678,96 @@
   // are refused as busy, so nothing new lands on the old cloud half-
   // way. The target must hold no orOS data ("move-target-used").
   var MOVE_KEY = "oros-sync-move";          // "dropbox" while signing in to move there
+
+  // ---------- Add a browser (PAIR-1) ----------
+  // A browser that came in through pairing (pair.js) shares the sign-in
+  // of the device that let it in: the same Dropbox refresh token or the
+  // same WebDAV app password. Revoking it would sign out every device
+  // that shares it, so on both of them Disconnect (and a move to the
+  // other cloud) only forgets it here. A sign-in of its own clears the
+  // mark. Cancelling a shared sign-in everywhere is done at the cloud
+  // (Dropbox › Connected apps, Nextcloud › Devices & sessions). PAIR_SESSION_KEY: "only for this session" — a later visit
+  // without this tab's sessionStorage mark forgets the sign-in.
+  var PAIRED_KEY = "oros-sync-paired";
+  var PAIR_SESSION_KEY = "oros-sync-session";
+  function isPaired() {
+    try { return localStorage.getItem(PAIRED_KEY) === "1"; } catch (e) { return false; }
+  }
+  function clearPaired() {
+    try { localStorage.removeItem(PAIRED_KEY); localStorage.removeItem(PAIR_SESSION_KEY); } catch (e) {}
+  }
+  // Revoke the sign-in this device holds, unless it shares it.
+  function ownRevoke(fn) {
+    return isPaired() ? Promise.resolve(false) : fn(3000);
+  }
+
+  // What a signed-in, unlocked device hands to a new browser. From
+  // then on this device's sign-in is shared too: it is marked, so its
+  // own Disconnect no longer signs the new browser out.
+  function pairBundle() {
+    if (!isConnected() || passphrase === null) return Promise.reject(new Error("pair-locked"));
+    try { localStorage.setItem(PAIRED_KEY, "1"); } catch (e) {}
+    if (provider === webdavProvider) {
+      return Promise.resolve({ v: 1, p: "webdav", c: { url: davConf.url, user: davConf.user, dir: davConf.dir, relay: davConf.relay === true },
+        s: davPass, pw: passphrase });
+    }
+    if (!refreshToken) return Promise.reject(new Error("pair-locked"));
+    return Promise.resolve({ v: 1, p: "dropbox", r: refreshToken, a: accessToken || "", e: tokenExpiry || 0,
+      acc: cachedAccount ? { email: String(cachedAccount.email || "").slice(0, 200), name: String(cachedAccount.name || "").slice(0, 200) } : null,
+      pw: passphrase });
+  }
+
+  // A new browser takes a bundle. Checks its shape, saves the sign-in
+  // and marks it shared; the passphrase is returned for the shell's
+  // unlock (set, pull, then remember), never kept here by this call.
+  // Rejects pair-connected (already signed in) or pair-bad.
+  function pairAdopt(b, opts) {
+    if (suspended) return Promise.reject(new Error("engine-suspended"));
+    if (isConnected()) return Promise.reject(new Error("pair-connected"));
+    if (!b || typeof b !== "object" || b.v !== 1) return Promise.reject(new Error("pair-bad"));
+    var pw = b.pw;
+    if (typeof pw !== "string" || !pw || pw.length > 1024) return Promise.reject(new Error("pair-bad"));
+    var id;
+    try {
+      if (b.p === "dropbox") {
+        if (typeof b.r !== "string" || !/^[\x21-\x7e]{8,2000}$/.test(b.r)) throw new Error("pair-bad");
+        var a = (typeof b.a === "string" && /^[\x21-\x7e]{1,4000}$/.test(b.a)) ? b.a : "";
+        var e = (a && typeof b.e === "number" && isFinite(b.e)) ? Math.min(b.e, Date.now() + 4 * 3600 * 1000) : 0;
+        if (provider !== dropboxProvider) davDisconnect();
+        localStorage.setItem("oros-db-access", a);
+        localStorage.setItem("oros-db-refresh", b.r);
+        localStorage.setItem("oros-db-expiry", String(e));
+        if (b.acc && typeof b.acc.email === "string") {
+          localStorage.setItem("oros-db-account", JSON.stringify({ email: b.acc.email.slice(0, 200), name: String(b.acc.name || "").slice(0, 200) }));
+        } else localStorage.removeItem("oros-db-account");
+        restoreTokens();
+        id = "dropbox";
+      } else if (b.p === "webdav") {
+        var conf = davNormConf(b.c || {});
+        if (!conf.user || typeof b.s !== "string" || !b.s || b.s.length > 1024) throw new Error("pair-bad");
+        localStorage.setItem(DAV_CONF_KEY, JSON.stringify(conf));
+        localStorage.setItem(DAV_PASS_KEY, b.s);
+        davConf = conf;
+        davPass = b.s;
+        id = "webdav";
+      } else throw new Error("pair-bad");
+      localStorage.setItem(PAIRED_KEY, "1");
+      if (opts && opts.session) {
+        localStorage.setItem(PAIR_SESSION_KEY, "1");
+        try { sessionStorage.setItem(PAIR_SESSION_KEY, "1"); } catch (e2) {}
+      } else localStorage.removeItem(PAIR_SESSION_KEY);
+    } catch (err) {
+      dropboxDisconnect();
+      davDisconnect();
+      try { localStorage.removeItem(PAIRED_KEY); localStorage.removeItem(PAIR_SESSION_KEY); } catch (e3) {}
+      var m = (err && err.message) || "";
+      return Promise.reject(new Error(/^pair-|^dav-/.test(m) ? (m.indexOf("dav-") === 0 ? "pair-bad" : m) : "storage-full"));
+    }
+    useProvider(id);
+    cloudRev = undefined;
+    if (noteCloud(id === "webdav" ? davCloudId(davConf) : "dropbox")) markDirty();
+    return Promise.resolve({ provider: id, pw: pw });
+  }
   var moving = false;
   var moveListeners = [];
   function moveEmit(done, total) {
@@ -3768,9 +3859,10 @@
         } catch (e) {
           throw new Error("storage-full");
         }
-        return dropboxRevoke(3000);
+        return ownRevoke(dropboxRevoke);
       }).then(function () {
         dropboxDisconnect();
+        clearPaired();
         useProvider("webdav");
         cloudRev = undefined;
         if (noteCloud(davCloudId(conf))) markDirty();
@@ -3804,8 +3896,9 @@
     return holdEngine(function () {
       return copyCloud(webdavProvider, dropboxProvider);
     }).then(function () {
-      return davRevoke(3000).then(function () {
+      return ownRevoke(davRevoke).then(function () {
         davDisconnect();
+        clearPaired();
         useProvider("dropbox");
         cloudRev = undefined;
         if (noteCloud("dropbox")) markDirty();
@@ -3821,6 +3914,7 @@
 
   function disconnect() {
     provider.disconnect();
+    clearPaired();
     useProvider("dropbox");     // the default again
     passphrase   = null;
     cloudRev     = undefined;   // SY-D1: another account = another cloud
@@ -3836,12 +3930,13 @@
     var id = provider.id;
     if (!isConnected()) return Promise.resolve({ provider: id, revoked: false, offline: false });
     var offline = (typeof navigator !== "undefined" && navigator.onLine === false);
-    var ask = offline ? Promise.resolve(false)
+    var paired = isPaired();
+    var ask = (offline || paired) ? Promise.resolve(false)
                       : Promise.resolve().then(function () { return provider.revoke(timeoutMs || 5000); })
                           .catch(function () { return false; });
     return ask.then(function (revoked) {
       disconnect();
-      return { provider: id, revoked: !!revoked, offline: offline };
+      return { provider: id, revoked: !!revoked, offline: offline, paired: paired };
     });
   }
 
@@ -3908,6 +4003,17 @@
   webdavProvider.restore();
   provider = pickProvider();
 
+  // PAIR-1: "only for this session" ended with its tab.
+  (function () {
+    var only = false, alive = false;
+    try { only = localStorage.getItem(PAIR_SESSION_KEY) === "1"; } catch (e) {}
+    try { alive = sessionStorage.getItem(PAIR_SESSION_KEY) === "1"; } catch (e) {}
+    if (only && !alive) {
+      disconnect();
+      clearVault();
+    }
+  })();
+
   // Hydrate persisted slice proxies BEFORE any pull/push can fire —
   // this is what makes app slices travel while apps are closed. And
   // since v0.8 their applies run through the divergence guard: a
@@ -3924,6 +4030,7 @@
     if (ok && moveTo === "dropbox" && provider === webdavProvider) return ok;   // W4: finishMoveToDropbox()
     if (ok) {
       if (provider !== dropboxProvider) davDisconnect();
+      clearPaired();
       useProvider("dropbox");
       if (noteCloud("dropbox")) markDirty();
     }
@@ -3956,7 +4063,10 @@
     onMove:             function (fn) { if (typeof fn === "function") moveListeners.push(fn); },
     getProvider:        function () { return provider.id; },
     disconnect:         disconnect,
-    disconnectRevoke:   disconnectRevoke, // SEC-2: revoke at the provider, then forget locally
+    disconnectRevoke:   disconnectRevoke, // SEC-2: revoke at the provider, then forget locally (PAIR-1: a shared sign-in only locally)
+    pairBundle:         pairBundle,       // PAIR-1: the sign-in + passphrase for a new browser
+    pairAdopt:          pairAdopt,        // PAIR-1: (bundle, { session }) → { provider, pw }
+    isPaired:           isPaired,
     isConnected:         isConnected,
     getUserInfo:        function () { return provider.account(); },
     redirectHandled:    redirectHandled,
