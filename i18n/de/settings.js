@@ -29,6 +29,8 @@ orosPack("de", "settings", {
  "a.wallpaper.land.hint": "Lebendige Landschaft wächst um deine Verknüpfungen, Widgets und Haftnotizen und ändert sich mit ihnen. Neue Form zeichnet eine andere Landschaft.",
  "a.wallpaper.land.islands": "Inseln",
  "a.wallpaper.land.motion": "Sanfte Bewegung",
+ "a.wallpaper.land.light": "Licht des Tages",
+ "a.wallpaper.land.light.hint": "Die Landschaft folgt der Uhrzeit dieses Geräts: blau in der Nacht, rosa im Morgengrauen, klar am Tag, golden am Abend.",
  "a.wallpaper.land.motion.hint": "Glitzern auf dem Wasser und ein ziehender Wolkenschatten. Hält unter einer offenen App, bei reduzierter Bewegung, schwachem Akku und auf langsamen Geräten an.",
  "a.wallpaper.land.new": "Neue Form",
  "a.wallpaper.land.style": "Stil",

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.20.00
+- **Light of the day on Living land.** The Living land wallpaper now follows the time on your device: a deep blue at night, rose at dawn, clear by day and golden in the evening. Turn it off in Settings › Wallpaper with `Light of the day`.
+
 ## Version 6.19.01
 - **Contracts key.** For Revenue Splitter 1.14.2 the contracts go to the shop with their own contracts key: make it in WP admin › Noxpress › RS Συμφωνητικά and add it in Settings › Connected services › `Contracts key`. Your WooCommerce key can go back to Read only. Each contract now also tells the shop the day of each renewal and the old end day. CRM Help has the steps.
 

@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.19.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.20.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -778,7 +778,7 @@
   var WP_LAND_STYLES = ["islands", "hills", "garden"];
   var wpLandCtl = null;
 
-  // Canonical { style, seed, motion } (fixed key order), or null when v
+  // Canonical { style, seed, motion, light } (fixed key order), or null when v
   // is not an object. Unknown styles read as islands; seed 0…999999.
   function wplandCanon(v) {
     if (!v || typeof v !== "object" || Array.isArray(v)) return null;
@@ -786,7 +786,8 @@
     return {
       style:  WP_LAND_STYLES.indexOf(v.style) >= 0 ? v.style : "islands",
       seed:   (isFinite(seed) && seed >= 0 && seed <= 999999) ? seed : 1,
-      motion: v.motion === 1 || v.motion === true ? 1 : 0
+      motion: v.motion === 1 || v.motion === true ? 1 : 0,
+      light:  v.light === 0 || v.light === false ? 0 : 1      // LIGHT-1: on unless turned off
     };
   }
   function wpLandRead() {
@@ -826,7 +827,7 @@
   function wpLandNewShape(change) {
     var cur = wpLandNow(), seed = cur.seed;
     if (!change) while (seed === cur.seed) seed = Math.floor(Math.random() * 1000000);
-    var next = { style: cur.style, seed: seed, motion: cur.motion };
+    var next = { style: cur.style, seed: seed, motion: cur.motion, light: cur.light };
     if (change) for (var ck in change) next[ck] = change[ck];
     state.wpland = wplandCanon(next);
     wpLandWrite(state.wpland);
@@ -901,7 +902,7 @@
     // motion stays as set in Settings. User action: syncs (LAND-1 W3).
     setLand: function (l) {
       if (!l || typeof l !== "object" || Array.isArray(l)) return false;
-      var c = wplandCanon({ style: l.style, seed: l.seed, motion: wpLandNow().motion });
+      var c = wplandCanon({ style: l.style, seed: l.seed, motion: wpLandNow().motion, light: wpLandNow().light });
       if (!c || c.style !== l.style || c.seed !== l.seed) return false;
       if (wpPic()) wpPicClear();  // a land picked here replaces the device picture
       wpLandNewShape({ style: c.style, seed: c.seed });
@@ -10775,7 +10776,7 @@
       icons: { pack: state.icons, packs: ICON_PACKS.slice() },   // ICONPACK-1
       wallpaper: pic ? "custom" : state.wallpaper,
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
-      land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, styles: WP_LAND_STYLES.slice() } : null,
+      land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, light: wpLandNow().light !== 0, styles: WP_LAND_STYLES.slice() } : null,
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;
         if (w.id === "land") {
@@ -10904,6 +10905,7 @@
         if (WP_LAND_STYLES.indexOf(value) >= 0) { wpLandNewShape({ style: value }); settingsNotify(); }
         return;
       case "wpland:motion": wpLandNewShape({ motion: value ? 1 : 0 }); settingsNotify(); return;
+      case "wpland:light":  wpLandNewShape({ light: value ? 1 : 0 }); settingsNotify(); return;
     }
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
