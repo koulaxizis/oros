@@ -740,6 +740,14 @@
       "today": "today.js"
     },
     {
+      "id": "transfer",
+      "name": "Transfer",
+      "category": "Internet",
+      "icon": "transfer",
+      "url": "transfer/",
+      "type": "internal"
+    },
+    {
       "id": "dice",
       "name": "Dice & Coin",
       "category": "Fun",
