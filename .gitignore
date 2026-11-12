@@ -1,0 +1,4 @@
+# Local dev state that must never be committed (security hardening S0, 2026-11-12)
+relay/.wrangler/
+.dev.vars
+.dev.vars.*

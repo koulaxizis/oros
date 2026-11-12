@@ -11094,3 +11094,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Rule:** gate refs are a per-conversation counter that keeps growing; never cap their digits below 9.
 - **Files:** gate/gate.js (`KB_SUBS`, `KB_SUBS_MAX`, change_card, kanbanUndo), relay/gate.js (kanban_change_card schema and description, ref check), assistant/assistant.js, assistant/core.js, assistant/edits.js, assistant/additems.js, assistant/create.js (ref patterns), assistant/summary.js, kanban/search.js, shell.js (APP_VERSION), help/topics/whatsnew.{en,el}.txt, tests/gate-kanban.test.js (+2), tests/publish-change.test.js (+1), tests/assistant-kanban-all.test.js, OROS_BIBLE.md.
 - **Tests:** full `node --test tests/*.test.js`. Not tested: a real device through the relay (the thread that asked checks it with a test card).
+
+### 2026-11-12 — repo — Security hardening S0: local wrangler state out of the repo
+
+- **What:** (Chris 2026-11-12, security hardening thread) `relay/.wrangler/` (local wrangler/miniflare state: empty Durable Object and D1 stores, cache, traces of a local Gate test) had been committed in #872. It held no credentials or user data, so nothing was rotated and history was not rewritten. The folder is removed and a root `.gitignore` now ignores `relay/.wrangler/`, `.dev.vars` and `.dev.vars.*`.
+- **Rule:** local relay state and dev secrets (`.wrangler/`, `.dev.vars`) never go into the repo; relay secrets live only as Cloudflare Secrets (Instructions rule 10).
+- **Files:** relay/.wrangler/ (removed, 37 files), .gitignore (new), OROS_BIBLE.md. No APP_VERSION change (nothing users load changed).
+- **Tests:** full `node --test tests/*.test.js`.
