@@ -1222,14 +1222,6 @@
       "type": "internal"
     },
     {
-      "id": "device",
-      "name": "Device Info",
-      "category": "System",
-      "icon": "device",
-      "url": "device/",
-      "type": "internal"
-    },
-    {
       "id": "assistant",
       "name": "Assistant",
       "category": "System",
@@ -1285,6 +1277,12 @@
       "name": "Tree Sketcher",
       "to": "wallpaper",
       "target": { "style": "tree" }
+    },
+    {
+      "id": "device",
+      "name": "Device Info",
+      "to": "settings",
+      "target": { "section": "device" }
     }
   ]
 }
