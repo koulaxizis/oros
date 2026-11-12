@@ -632,6 +632,13 @@ body {
   transition: opacity 0.6s ease;
 }
 @media (prefers-reduced-motion: reduce) { #wp-land canvas { transition: none; } }
+/* Light of the day (LIGHT-1): the tint over the land, under the gentle motion layer */
+#wp-land .wp-land-light {
+  position: absolute; inset: 0; z-index: 1;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+#wp-land canvas.wp-land-fx { z-index: 2; }
 
 /* ---------- 5. Applications menu ---------- */
 #app-menu {
@@ -1925,6 +1932,8 @@ dialog#oros-lock::backdrop { background: var(--bg-desktop, var(--bg)); }
 #oros-lock .lk-title { margin: 0; font-size: 20px; font-weight: 600; }
 #oros-lock .lk-sub { margin: 0; font-size: 17px; font-weight: 600; }
 #oros-lock .lk-view, #oros-lock .lk-rec, #oros-lock .lk-reset { display: flex; flex-direction: column; gap: 10px; }
+#oros-lock .lk-bio { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+#oros-lock .lk-bio:empty { display: none; }
 #oros-lock .lk-reset { margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
 #oros-lock .lk-label { font-size: 14px; color: var(--text-dim); }
 #oros-lock .lk-input {

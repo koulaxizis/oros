@@ -68,4 +68,7 @@
     <string name="bio_title_on">Ενεργοποίηση ξεκλειδώματος με δακτυλικό</string>
     <string name="bio_sub">Με το δακτυλικό ή το πρόσωπό σου</string>
     <string name="bio_use_pw">Κύριος κωδικός</string>
+    <string name="bio_title_lock">Ξεκλείδωμα orOS</string>
+    <string name="bio_title_on_lock">Ενεργοποίηση ξεκλειδώματος orOS με δακτυλικό</string>
+    <string name="bio_use_lock">PIN ή φράση</string>
 </resources>

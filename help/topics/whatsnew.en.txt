@@ -1,6 +1,21 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.22.00
+- **Sign in a new browser in one step.** When orOS is already signed in on your phone or another computer, a new browser needs neither the Dropbox sign-in nor your passphrase. On the new browser open Settings › Sync › `I have orOS on another device`; on the signed-in device open Settings › Sync › `Add a browser` and scan the QR code or type the code. Check that both show the same number and tap `Approve`. Everything travels end-to-end encrypted. On a shared computer tick `Only for this session`.
+
+## Version 6.21.00
+- **Unlock with your fingerprint, face or Windows Hello.** The screen lock now opens with a fingerprint or face in the orOS app on Android, and with Windows Hello or a fingerprint reader in orOS Portable, the desktop apps and orOS USB. Turn it on in Settings › Screen lock. Your PIN or passphrase is still asked every 14 days. In a plain browser the lock keeps the PIN or passphrase.
+
+## Version 6.20.00
+- **Light of the day on Living land.** The Living land wallpaper now follows the time on your device: a deep blue at night, rose at dawn, clear by day and golden in the evening. Turn it off in Settings › Wallpaper with `Light of the day`.
+
+## Version 6.19.01
+- **Contracts key.** For Revenue Splitter 1.14.2 the contracts go to the shop with their own contracts key: make it in WP admin › Noxpress › RS Συμφωνητικά and add it in Settings › Connected services › `Contracts key`. Your WooCommerce key can go back to Read only. Each contract now also tells the shop the day of each renewal and the old end day. CRM Help has the steps.
+
+## Version 6.19.00
+- **Budget: banks update at times you set.** In Budget › `Banks` › `Automatic updates`, pick `At times I set` and choose up to 4 times a day, such as 08:00 and 20:00. While orOS is open, in any app, your banks then update by themselves at those times, even with Budget closed; one of your devices is enough. A time missed while orOS was closed runs the next time you open it. You get a notification only when an update fails.
+
 ## Version 6.18.01
 - **Passwords add-on 2.1.** The orOS add-on window is wide enough again (Brave and other Chromium browsers squeezed it). Under the master password there is `Remember on this device`: tick it on your own computer and the add-on opens without asking until you press `Lock`. The copy of your vault now keeps itself fresh: from open orOS tabs every few minutes, and when it is over an hour old the add-on opens orOS in a background tab for one sync and closes it; `Update` does it at once. When a newer add-on is out, its button shows `↑` and its window a `Download` link; unzip the new zip over the old folder (an add-on installed by hand cannot replace itself).
 

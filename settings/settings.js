@@ -377,6 +377,8 @@
         function (v) { set("wpland:style", v); }, t("a.wallpaper.land.style")), { stack: true }));
       c3.appendChild(row(t("a.wallpaper.land.motion"), switchBtn(!!s.land.motion, "wpland:motion",
         function (v) { set("wpland:motion", v); }, t("a.wallpaper.land.motion")), { hint: t("a.wallpaper.land.motion.hint") }));
+      c3.appendChild(row(t("a.wallpaper.land.light"), switchBtn(s.land.light !== false, "wpland:light",
+        function (v) { set("wpland:light", v); }, t("a.wallpaper.land.light")), { hint: t("a.wallpaper.land.light.hint") }));
       c3.appendChild(actions(button(t("a.wallpaper.land.new"), "wpland:new", function () { set("wpland:new", 1); })));
       c3.appendChild(el("p", "hint", t("a.wallpaper.land.hint")));
     }
@@ -2053,14 +2055,14 @@
   // The lock lives in the shell (lock.js, window.parent.orosLock): it
   // keeps only a slow hash on this device. The typed PIN / passphrase
   // stays in `lk` until it is handed over, then it is cleared.
-  var lk = { mode: null, kind: "pin", a: "", b: "", cur: "", msg: null };
+  var lk = { mode: null, kind: "pin", a: "", b: "", cur: "", bio: "", msg: null, bioMsg: null, bioSlow: false, bioT: null };
 
   function lockApi() {
     var p = parentWin();
     try { var L = p && p.orosLock; return (L && L.v >= 1 && typeof L.snapshot === "function") ? L : null; }
     catch (e) { return null; }
   }
-  function lockClear() { lk.a = ""; lk.b = ""; lk.cur = ""; }
+  function lockClear() { lk.a = ""; lk.b = ""; lk.cur = ""; lk.bio = ""; }
   function lockMsg(kind, key, vars) { lk.msg = { kind: kind, key: key, vars: vars || null }; }
   function lockResult(r, okKey) {
     if (r && r.ok) {
@@ -2195,10 +2197,82 @@
       host.appendChild(c2);
     }
 
+    if (k.on && L.bio && typeof L.bio.state === "function" && L.bio.state().linked) secLockBio(host, L, k);
+
     var c3 = card(null);
     c3.appendChild(el("p", "hint", t("l.honest")));
     c3.appendChild(el("p", "hint", t("l.forgot")));
     host.appendChild(c3);
+  }
+
+  // Fingerprint or face on this phone (LK-BIO): only in the orOS app and
+  // in orOS Passwords on Android, where the app keeps the secret.
+  function lockBioDate(at) {
+    try { return new Date(at).toLocaleDateString(LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB", { day: "numeric", month: "long", year: "numeric" }); }
+    catch (e) { return new Date(at).toDateString(); }
+  }
+  function lockBioResult(r, pc) {
+    if (r && r.ok) { lk.bio = ""; lk.bioMsg = { kind: "ok", key: pc ? "l.bio.doneOnPc" : "l.bio.doneOn" }; render(); return; }
+    var c = (r && r.code) || "failed";
+    lk.bio = "";
+    if (c === "cancel") lk.bioMsg = null;
+    else if (c === "wait") lk.bioMsg = { kind: "err", key: "l.msg.wait", vars: { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) } };
+    else if (c === "wrong") lk.bioMsg = { kind: "err", key: "l.msg.wrong" };
+    else lk.bioMsg = { kind: "err", key: "l.bio.err." + (/^(lockout|invalidated|timeout|unavailable|storage|busy)$/.test(c) ? c : "failed") };
+    render();
+  }
+  // kind: "phone" (the orOS app on Android), "hello" (Windows Hello) or
+  // "finger" (fprintd on Linux), through the System extension.
+  function secLockBio(host, L, k) {
+    var st = L.bio.state(), kind = st.kind || "phone", pc = kind !== "phone";
+    var c = card(t(kind === "hello" ? "l.bio.hello" : kind === "finger" ? "l.bio.finger" : "l.bio"));
+    c.appendChild(el("p", "hint", t(pc ? "l.bio.text." + kind : "l.bio.text")));
+    if (st.can === null) {
+      // An app from before this feature never answers: say so after a moment.
+      if (!lk.bioT) {
+        L.bio.refresh();
+        lk.bioT = setTimeout(function () { lk.bioSlow = true; render(); }, 4000);
+      }
+      c.appendChild(el("p", "msg msg-dim", t(pc ? (lk.bioSlow ? "l.bio.updatePc" : "l.bio.waitPc") : (lk.bioSlow ? "l.bio.update" : "l.bio.wait"))));
+    } else if (st.can !== "ok") {
+      c.appendChild(el("p", "msg msg-dim", t(pc && (st.can === "none" || st.can === "no-hw") ? "l.bio.can." + st.can + "." + kind : "l.bio.can." + st.can)));
+    } else if (st.on) {
+      var sr = row(t("l.status"), null, { scope: "lock-bio" });
+      sr.appendChild(el("div", "version", t(pc ? "l.bio.isOnPc" : "l.bio.isOn", { d: lockBioDate(st.at) })));
+      c.appendChild(sr);
+      if (st.due === "days") c.appendChild(el("p", "hint", t(k.kind === "pass" ? "l.bio.daysPass" : "l.bio.days")));
+      c.appendChild(actions(button(t("l.bio.off"), "lk-bio-off", function () {
+        L.bio.disable();
+        lk.bioMsg = { kind: "ok", key: pc ? "l.bio.doneOffPc" : "l.bio.doneOff" };
+        render();
+      }, "danger")));
+    } else {
+      var form = el("form", "pass dav-form");
+      form.setAttribute("autocomplete", "off");
+      form.appendChild(lockField("bio", t("l.current." + (k.kind || "pin")), k.kind || "pin"));
+      form.appendChild(el("p", "hint", t(pc ? "l.bio.pinHint." + kind : "l.bio.pinHint")));
+      var go = el("button", "btn primary", t(pc ? "l.bio.onPc" : "l.bio.on"));
+      go.type = "submit";
+      go.setAttribute("data-k", "lk-bio-on");
+      if (k.busy) go.disabled = true;
+      form.appendChild(actions(go));
+      // One tap: the prompt opens at once (a phone needs the tap), then
+      // the PIN is checked.
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (lockApi() !== L || L.snapshot().busy) return;
+        var cur = lk.bio;
+        if (!cur) { var f = $("f-lk-bio"); if (f) f.focus(); return; }
+        lk.bio = "";
+        lk.bioMsg = { kind: "dim", key: pc ? "l.bio.workingPc" : "l.bio.working" };
+        var p = L.bio.enable(cur);
+        render();
+        p.then(function (r) { lockBioResult(r, pc); }, function () { lockBioResult(null, pc); });
+      });
+      c.appendChild(form);
+    }
+    if (lk.bioMsg) c.appendChild(el("p", "msg msg-" + lk.bioMsg.kind, t(lk.bioMsg.key, lk.bioMsg.vars)));
+    host.appendChild(c);
   }
 
   // ---------- 6c. Section: Users ----------
@@ -2719,7 +2793,7 @@
   // page state (session only): the add form, per-account messages and
   // whether this device holds each account's keys
   var svc = { add: null, keysFor: null, keyForm: { ck: "", cs: "", key: "" }, msg: {}, has: {}, busy: {}, rename: null, off: null,
-              wk: {}, wkFor: null, wkForm: { ck: "", cs: "" } };
+              wk: {}, wkFor: null, wkForm: "" };
   // the platform's own wording first ("v.err.auth.tol"), else the shop's
   function svcErr(code, p) {
     var k = "v.err." + (code === "keys" ? "keys" : code);
@@ -2771,41 +2845,41 @@
       svc.has[id] = h;
       render();
     }, function () {});
-    // RS-CTR: whether a shop has its second, Read/Write key here
+    // RS-CTR: whether a shop has its contracts key here
     var a = Lk.get(id);
-    if (a && a.p === "woo" && typeof Lk.hasWriteKeys === "function") {
-      Lk.hasWriteKeys(id).then(function (h) {
+    if (a && a.p === "woo" && typeof Lk.hasRsKey === "function") {
+      Lk.hasRsKey(id).then(function (h) {
         if (svc.wk[id] === h) return;
         svc.wk[id] = h;
         render();
       }, function () {});
     }
   }
-  // RS-CTR: a WooCommerce shop's write key for Revenue Splitter's
-  // contracts (CRM sends the list and marks renewal requests with it)
+  // RS-CTR: a WooCommerce shop's contracts key for Revenue Splitter
+  // 1.14.2+ (CRM sends the list and reads and marks renewal requests with
+  // it; the WooCommerce key stays Read)
   function writeKeyBox(Lk, a, c) {
-    if (a.p !== "woo" || typeof Lk.setWriteKeys !== "function") return;
+    if (a.p !== "woo" || typeof Lk.setRsKey !== "function") return;
     var on = svc.wk[a.id] === true;
     c.appendChild(row(t("v.wk"), el("span", "hint", t(on ? "v.wk.on" : "v.wk.off")), { hint: t("v.wk.hint") }));
     if (svc.wkFor === a.id) {
       var f = el("form", "pass");
       f.setAttribute("autocomplete", "off");
-      f.appendChild(labelled(t("v.ck"), "v-wck", textInput("v-wck", svc.wkForm.ck, "ck_…", function (v) { svc.wkForm.ck = v; }, "password")));
-      f.appendChild(labelled(t("v.cs"), "v-wcs", textInput("v-wcs", svc.wkForm.cs, "cs_…", function (v) { svc.wkForm.cs = v; }, "password")));
+      f.appendChild(labelled(t("v.wk.key"), "v-rsk", textInput("v-rsk", svc.wkForm, "rsc_…", function (v) { svc.wkForm = v; }, "password")));
       var ok = el("button", "btn primary", t("v.saveKeys"));
       ok.type = "submit";
       ok.setAttribute("data-k", "v.wk.ok");
-      f.appendChild(actions(button(t("v.cancel"), "v.wk.cancel", function () { svc.wkFor = null; svc.wkForm = { ck: "", cs: "" }; render(); }), ok));
+      f.appendChild(actions(button(t("v.cancel"), "v.wk.cancel", function () { svc.wkFor = null; svc.wkForm = ""; render(); }), ok));
       f.addEventListener("submit", function (e) {
         e.preventDefault();
-        Lk.setWriteKeys(a.id, { ck: svc.wkForm.ck.trim(), cs: svc.wkForm.cs.trim() }).then(function () {
+        Lk.setRsKey(a.id, svc.wkForm.trim()).then(function () {
           svc.wkFor = null;
-          svc.wkForm = { ck: "", cs: "" };
+          svc.wkForm = "";
           svc.wk[a.id] = true;
           svc.msg[a.id] = { cls: "msg-ok", text: t("v.wk.saved") };
           render();
         }, function (er) {
-          svc.msg[a.id] = { cls: "msg-err", text: er && er.code === "keys" && er.extra && er.extra.length ? badKeys("woo") : t("v.wk.noFirst") };
+          svc.msg[a.id] = { cls: "msg-err", text: t(er && er.code === "keys" && er.extra && er.extra.length ? "v.wk.bad" : "v.wk.noFirst") };
           render();
         });
       });
@@ -2813,9 +2887,9 @@
       return;
     }
     c.appendChild(actions(
-      button(t(on ? "v.wk.change" : "v.wk.add"), "v.wk:" + a.id, function () { svc.wkFor = a.id; svc.wkForm = { ck: "", cs: "" }; render(); var x = $("f-v-wck"); if (x) x.focus(); }),
+      button(t(on ? "v.wk.change" : "v.wk.add"), "v.wk:" + a.id, function () { svc.wkFor = a.id; svc.wkForm = ""; render(); var x = $("f-v-rsk"); if (x) x.focus(); }),
       on ? confirmBtn(t("v.wk.remove"), t("v.wk.remove.confirm"), "v.wk.rm:" + a.id, function () {
-        Lk.setWriteKeys(a.id, null).then(function () { svc.wk[a.id] = false; render(); }, function () {});
+        Lk.setRsKey(a.id, null).then(function () { svc.wk[a.id] = false; render(); }, function () {});
       }) : null
     ));
   }
