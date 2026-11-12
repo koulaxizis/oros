@@ -186,3 +186,49 @@ test("pmvault: copy merged (never replaced), unlock keeps only the key with a lo
   assert.equal(await V.getCopy(), null);
   delete global.chrome;
 });
+
+test("pmvault: 'Remember on this device' keeps the vault key only wrapped by a non-extractable device key; Lock forgets it", async () => {
+  const fb = fakeBrowser();
+  global.chrome = fb.api;
+  const keys = new Map();
+  const store = { get: async (id) => keys.get(id), put: async (id, v) => { keys.set(id, v); }, del: async (id) => { keys.delete(id); } };
+  const factory = require(path.join(DIR, "pmvault.js"));
+  const V = factory({ PmVault: PV, PmCore: PC, OrosKeyStore: store });
+  const e1 = entry({ title: "Mail", user: "m", pw: "pw-2", urls: ["https://mail.example"] });
+  await V.absorbText(JSON.stringify(await makeVault("master pass 2", [e1])));
+  // off by default: nothing kept beyond session memory
+  await V.unlock("master pass 2");
+  assert.equal(fb.areas.local.pmRemember, undefined);
+  assert.equal(await V.isRemembered(), false);
+  // on: a record of ciphertext only, the device key cannot be exported
+  await V.unlock("master pass 2", undefined, { remember: true });
+  const rec = fb.areas.local.pmRemember;
+  assert.deepEqual(Object.keys(rec).sort(), ["ct", "iv", "kid", "v"]);
+  assert.notEqual(rec.ct, fb.areas.session.pmKey.vk, "the remembered key is encrypted");
+  assert.ok(!JSON.stringify(fb.areas).includes("master pass 2"), "the master password is never stored");
+  const dk = keys.get("pm-wrap");
+  assert.equal(dk.extractable, false);
+  await assert.rejects(crypto.subtle.exportKey("raw", dk));
+  // the browser closed (session memory gone): it opens without the password
+  delete fb.areas.session.pmKey;
+  assert.equal(fb.areas.session.pmKey, undefined);
+  const d = await V.open();
+  assert.deepEqual(d.entries.map((e) => [e.title, e.pw]), [["Mail", "pw-2"]]);
+  assert.ok(fb.areas.session.pmKey, "back in session memory with the lock time");
+  // a record the device key does not open (tampered, other browser) is forgotten
+  fb.areas.local.pmRemember = Object.assign({}, rec, { kid: rec.kid + "x" });
+  delete fb.areas.session.pmKey;
+  assert.equal(await V.open(), null);
+  assert.equal(fb.areas.local.pmRemember, undefined);
+  // unlocking again without the box forgets; Lock forgets both
+  await V.unlock("master pass 2", undefined, { remember: true });
+  await V.unlock("master pass 2");
+  assert.equal(await V.isRemembered(), false);
+  await V.unlock("master pass 2", undefined, { remember: true });
+  await V.lockAll();
+  assert.equal(fb.areas.local.pmRemember, undefined);
+  assert.equal(fb.areas.session.pmKey, undefined);
+  assert.equal(keys.size, 0);
+  assert.equal(await V.open(), null);
+  delete global.chrome;
+});

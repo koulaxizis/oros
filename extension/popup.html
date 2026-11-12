@@ -13,6 +13,7 @@
     <span class="grow"></span>
     <button type="button" id="send" data-i18n="popSend">Save this page to orOS</button>
   </header>
+  <p id="addonNew" class="newver" role="status" hidden><span id="addonNewTxt"></span> <a id="addonGet" href="#" data-i18n="addonGet">Download</a></p>
   <main id="pm">
     <h1 data-i18n="pmTitle">Passwords</h1>
     <p id="msg" class="hint" role="status"></p>
@@ -23,6 +24,8 @@
     <form id="unlock" hidden autocomplete="off">
       <label for="pw" data-i18n="pmMaster">Master password</label>
       <input id="pw" type="password" autocomplete="current-password" spellcheck="false">
+      <label class="check"><input id="remember" type="checkbox"> <span data-i18n="pmRemember">Remember on this device</span></label>
+      <p id="rememberHint" class="hint" data-i18n="pmRememberHint" hidden></p>
       <div class="row">
         <button type="submit" class="primary" id="go" data-i18n="pmUnlock">Unlock</button>
       </div>
@@ -44,6 +47,7 @@
       <div class="foot">
         <span id="at" class="hint"></span>
         <span class="grow"></span>
+        <button type="button" id="update" data-i18n="pmUpdate">Update</button>
         <button type="button" id="lock" data-i18n="pmLock">Lock</button>
       </div>
     </div>
