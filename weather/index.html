@@ -26,8 +26,14 @@
     </button>
   </header>
 
+  <!-- APP-ALIAS (merge 4): the Moon & Sky app is the "Sky tonight" tab -->
+  <nav id="wx-tabs" role="tablist">
+    <button type="button" role="tab" id="wxt-wx" aria-controls="wxmain" aria-selected="true" data-i18n="tab.wx">Weather</button>
+    <button type="button" role="tab" id="wxt-sky" aria-controls="sky-host" aria-selected="false" tabindex="-1" data-i18n="tab.sky">Sky tonight</button>
+  </nav>
+
   <!-- Main scroll: offline badge → current → hourly → daily -->
-  <main id="wxmain">
+  <main id="wxmain" role="tabpanel" aria-labelledby="wxt-wx">
 
     <div id="offline-badge" hidden>
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 0 0 9 20h9a5 5 0 0 0 0-10z" opacity="0.6"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
@@ -143,6 +149,9 @@
     </p>
 
   </main>
+
+  <!-- Sky tonight: sky/view.js mounts here on the first open -->
+  <section id="sky-host" role="tabpanel" aria-labelledby="wxt-sky" hidden></section>
 
   <!-- City management dialog: saved list (switch/delete) + geocoded add -->
   <dialog id="dlg-city">
