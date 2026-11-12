@@ -81,6 +81,9 @@ Unter Einstellungen › Darstellung › `Symbole` änderst du, wie App-Symbole a
 - `Licht des Tages` (anfangs an) färbt die Landschaft nach der Uhrzeit dieses Geräts: tiefes Blau in der Nacht, Rosa im Morgengrauen, klar am Tag und golden am Abend, langsam über den Tag. Es wird einmal über die Landschaft gelegt und kostet keinen Akku.
 - Hoher Kontrast zeigt den schlichten Desktop.
 
+### Wetter auf dem Desktop
+Einstellungen › Hintergrund › `Wetter auf dem Desktop` (anfangs aus, nur auf diesem Gerät) zeigt das Wetter über jedem Hintergrund: Sonne oder Sterne bei klarem Himmel, ein paar Wolken, bedeckt, Nebel, sanften Regen, Schnee oder ein Gewitter mit stärkerem Regen unter dunkleren Wolken (nie ein Blitz). Es folgt dem Wetter deiner Stadt in [Wetter](app:weather), wie die obere Leiste. Ohne Wetter oder mit Wetter, das älter als drei Stunden ist, zeigt es nichts. Es hält an, solange eine App offen ist, und steht still bei reduzierter Bewegung, schwachem Akku (unter 20 % und nicht am Laden) und auf zu langsamen Geräten. Hoher Kontrast blendet es aus.
+
 ## Saisonale Deko
 Zu manchen Zeiten im Jahr schmückt sich dein Desktop von selbst: Schnee, eine Lichterkette und ein Baum zu Weihnachten, goldene Funken und ein Granatapfel zu Neujahr (mit Feuerwerk von 23:55 bis 00:10 an Silvester), Kürbisse, Fledermäuse und ein Spinnennetz zu Halloween.
 

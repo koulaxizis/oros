@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.22.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.23.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -10998,6 +10998,7 @@
       install: !!state.deferredPrompt,
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
+      wxdesk: (!SOLO && window.orosWxDesk) ? window.orosWxDesk.snapshot() : null,   // WX-DESK-1
       me: { name: meName(), max: ME_MAX },
       greet: SOLO ? null : { on: greetOn() },
       tips: SOLO ? null : { on: !!tipsRead().on },
@@ -11061,6 +11062,7 @@
         return;
       case "wpland:motion": wpLandNewShape({ motion: value ? 1 : 0 }); settingsNotify(); return;
       case "wpland:light":  wpLandNewShape({ light: value ? 1 : 0 }); settingsNotify(); return;
+      case "wxdesk:on":     if (window.orosWxDesk) { window.orosWxDesk.set(!!value); settingsNotify(); } return;
     }
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
@@ -11848,6 +11850,7 @@
     document.title = ((tv === nk) ? app.name : tv) + " · orOS";   // #4: title follows the running app (translated)
     if (SOLO) { soloMenuClose(); soloPaint(); }
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations pause under an app
+    if (window.orosWxDesk) window.orosWxDesk.refresh();       // WX-DESK-1: weather pauses too
     wpLandRefresh();
   }
 
@@ -11869,6 +11872,7 @@
     mb.setAttribute("title", window.t("bar.menu"));   // paint NOW — don't wait for applyLang()
     document.title = "orOS";                 // v0.18.2: back to the bare OS title
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations move again
+    if (window.orosWxDesk) window.orosWxDesk.refresh();       // WX-DESK-1: weather moves again
     wpLandRefresh();   // the desktop may have changed while hidden
     tourMaybe();   // a first-run tour put off by a launch-param app
     tipEnd();
@@ -14024,6 +14028,17 @@
       changed: function () { settingsNotify(); }
     });
   }
+  // Weather on the desktop (wallpaper/wxdesk.js, late bundle, WX-DESK-1): rain,
+  // snow, clouds or sun from the tray weather (the Weather app's city).
+  // Off by default, device-local; a single app has no desktop.
+  if (!SOLO) lateWhen(function () {
+    if (!window.orosWxDesk) return;
+    window.orosWxDesk.attach({
+      desktop: document.getElementById("oros-desktop"),
+      running: function () { return !!state.running; },
+      weather: function () { return wxCacheFor(wxLoc()); }
+    });
+  });
   // On-screen keyboard (osk.js, a shell component like seasonal.js):
   // touch screens without a keyboard, never on phones. A single app
   // has text fields too, so it gets one.
