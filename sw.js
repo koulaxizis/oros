@@ -233,6 +233,7 @@ var PRECACHE_URLS = [
   "./webpush.js",
   "./vault.js",
   "./remote-link.js",
+  "./pair.js",
   "./i18n.js",
   "./diag.js",
   "./i18n-tables.js",

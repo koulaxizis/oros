@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.22.00
+- **Sign in a new browser in one step.** When orOS is already signed in on your phone or another computer, a new browser needs neither the Dropbox sign-in nor your passphrase. On the new browser open Settings › Sync › `I have orOS on another device`; on the signed-in device open Settings › Sync › `Add a browser` and scan the QR code or type the code. Check that both show the same number and tap `Approve`. Everything travels end-to-end encrypted. On a shared computer tick `Only for this session`.
+
 ## Version 6.21.00
 - **Unlock with your fingerprint, face or Windows Hello.** The screen lock now opens with a fingerprint or face in the orOS app on Android, and with Windows Hello or a fingerprint reader in orOS Portable, the desktop apps and orOS USB. Turn it on in Settings › Screen lock. Your PIN or passphrase is still asked every 14 days. In a plain browser the lock keeps the PIN or passphrase.
 

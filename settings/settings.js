@@ -1321,6 +1321,207 @@
     return form;
   }
 
+  // PAIR-1: Add a browser. The shell runs the exchange (pair.js); this
+  // page shows its state (y.pair) and asks through act("sync.pair.*").
+  // pairUi.code is what the person types on the signed-in device.
+  var pairUi = { open: false, code: "", scan: null, camErr: false };
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function pairQrSvg(rows) {
+    var n = rows.length, m = 2, sz = n + 2 * m, d = "";
+    for (var y = 0; y < n; y++) {
+      for (var x = 0; x < n; x++) if (rows[y].charAt(x) === "1") d += "M" + (x + m) + " " + (y + m) + "h1v1h-1z";
+    }
+    var svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", "0 0 " + sz + " " + sz);
+    svg.setAttribute("class", "pair-qr");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", t("y.pair.qr"));
+    svg.setAttribute("shape-rendering", "crispEdges");
+    var bg = document.createElementNS(SVGNS, "rect");
+    bg.setAttribute("width", String(sz)); bg.setAttribute("height", String(sz)); bg.setAttribute("fill", "#fff");
+    svg.appendChild(bg);
+    var path = document.createElementNS(SVGNS, "path");
+    path.setAttribute("d", d); path.setAttribute("fill", "#000");
+    svg.appendChild(path);
+    return svg;
+  }
+  function pairErr(e) {
+    var k = "y.pair.err." + e;
+    var v = t(k);
+    return v === k ? t("y.pair.err.net") : v;
+  }
+  function pairMsg(kind, text) {
+    var m = el("div", "msg msg-" + kind, text);
+    m.setAttribute("role", "status");
+    return m;
+  }
+  function pairCheckLine(p, key) {
+    var w = el("div", "pair-check");
+    w.appendChild(el("div", "hint", t(key, { dev: p.dev || "?" })));
+    var n = el("div", "pair-num", p.check);
+    n.setAttribute("data-k", "pair-num");
+    w.appendChild(n);
+    return w;
+  }
+  // The new browser: QR + code while waiting, then the number.
+  function pairNewCard(y) {
+    var p = y.pair, c = card(t("y.pair.new"));
+    c.setAttribute("data-k", "pair-new");
+    if (p.phase === "opening") c.appendChild(pairMsg("dim", t("y.pair.opening")));
+    if (p.phase === "wait") {
+      c.appendChild(el("p", "hint", t("y.pair.new.hint")));
+      var box = el("div", "pair-show");
+      if (p.qr && p.qr.length) box.appendChild(pairQrSvg(p.qr));
+      var code = el("div", "pair-code", p.code);
+      code.setAttribute("data-k", "pair-code");
+      box.appendChild(code);
+      c.appendChild(box);
+      c.appendChild(pairMsg("dim", t("y.pair.wait")));
+    }
+    if (p.phase === "peer") c.appendChild(pairCheckLine(p, "y.pair.peer"));
+    if (p.phase === "adopting") c.appendChild(pairMsg("dim", t("y.pair.adopting")));
+    if (p.phase === "done") c.appendChild(pairMsg("ok", t("y.pair.done.new")));
+    if (p.phase === "error") c.appendChild(pairMsg("err", pairErr(p.err)));
+    if (p.phase !== "done") {
+      var rl = el("label", "check");
+      var rc = el("input");
+      rc.type = "checkbox";
+      rc.setAttribute("data-k", "pair-session");
+      rc.checked = !!p.session;
+      rc.disabled = p.phase === "adopting";
+      rc.addEventListener("change", function () { act("sync.pair.session", { on: rc.checked }); });
+      rl.appendChild(rc);
+      rl.appendChild(el("span", null, t("y.pair.session")));
+      c.appendChild(rl);
+      c.appendChild(el("div", "hint", t("y.pair.session.hint")));
+    }
+    c.appendChild(actions(
+      p.phase === "error" ? button(t("y.pair.again"), "y.pair.again", function () { act("sync.pair.new", { session: p.session }); }, "primary") : null,
+      button(t(p.phase === "done" ? "y.pair.close" : "y.pair.cancel"), "y.pair.cancel", function () { act("sync.pair.cancel"); })));
+    return c;
+  }
+  function pairScanStop() {
+    var sc = pairUi.scan;
+    pairUi.scan = null;
+    if (!sc) return;
+    sc.stop = true;
+    try { sc.stream.getTracks().forEach(function (tr) { tr.stop(); }); } catch (e) {}
+  }
+  function pairCanScan() {
+    return typeof window.BarcodeDetector === "function" && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  }
+  // Camera scan of the new browser's QR (BarcodeDetector, Chrome on
+  // Android); the code goes straight to "Connect".
+  function pairScanStart() {
+    if (pairUi.scan || !pairCanScan()) return;
+    pairUi.camErr = false;
+    var sc = { stop: false, stream: null, video: null };
+    pairUi.scan = sc;
+    var det;
+    try { det = new window.BarcodeDetector({ formats: ["qr_code"] }); } catch (e) { pairUi.scan = null; pairUi.camErr = true; render(); return; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }).then(function (stream) {
+      if (sc.stop) { stream.getTracks().forEach(function (tr) { tr.stop(); }); return; }
+      sc.stream = stream;
+      render();
+      (function tick() {
+        if (sc.stop) return;
+        var v = sc.video;
+        if (!v || v.readyState < 2) { setTimeout(tick, 200); return; }
+        det.detect(v).then(function (codes) {
+          if (sc.stop) return;
+          var hit = (codes || []).map(function (x) { return String(x.rawValue || ""); })
+            .filter(function (x) { return /[#&]pair=/.test(x); })[0];
+          if (hit) {
+            pairScanStop();
+            pairUi.code = "";
+            act("sync.pair.join", { code: hit });
+            return;
+          }
+          setTimeout(tick, 250);
+        }, function () { setTimeout(tick, 400); });
+      })();
+    }, function () {
+      pairUi.scan = null;
+      pairUi.camErr = true;
+      render();
+    });
+    render();
+  }
+  // The signed-in device: type or scan the code, then approve.
+  function pairOldCard(y) {
+    var p = y.pair && y.pair.role === "old" ? y.pair : null;
+    if (!p && y.pairPrefill && !pairUi.open) { pairUi.open = true; pairUi.code = y.pairPrefill; act("sync.pair.clear"); }
+    var c = card(t("y.pair.add"));
+    c.setAttribute("data-k", "pair-add");
+    if (!p && !pairUi.open) {
+      c.appendChild(el("p", "hint", t("y.pair.add.hint")));
+      c.appendChild(actions(button(t("y.pair.add"), "y.pair.add", function () { pairUi.open = true; render(); var f = $("f-pair-code"); if (f) f.focus(); })));
+      return c;
+    }
+    if (!p) {
+      var form = el("form", "pass");
+      form.setAttribute("autocomplete", "off");
+      var lab = el("label", "row-label", t("y.pair.enter"));
+      lab.htmlFor = "f-pair-code";
+      form.appendChild(lab);
+      var inp = el("input", "pair-in");
+      inp.id = "f-pair-code";
+      inp.type = "text";
+      inp.autocomplete = "off";
+      inp.spellcheck = false;
+      inp.setAttribute("autocapitalize", "characters");
+      inp.setAttribute("data-k", "pair-in");
+      inp.placeholder = "XXXX-XXXX-XXXX";
+      inp.maxLength = 20;
+      inp.value = pairUi.code;
+      inp.addEventListener("input", function () { pairUi.code = inp.value; });
+      form.appendChild(inp);
+      if (pairUi.scan && pairUi.scan.stream) {
+        var v = el("video", "pair-cam");
+        v.muted = true;
+        v.setAttribute("playsinline", "");
+        v.autoplay = true;
+        v.srcObject = pairUi.scan.stream;
+        pairUi.scan.video = v;
+        form.appendChild(v);
+      }
+      if (pairUi.camErr) form.appendChild(pairMsg("err", t("y.pair.err.cam")));
+      var go = el("button", "btn primary", t("y.pair.connect"));
+      go.type = "submit";
+      go.setAttribute("data-k", "y.pair.connect");
+      form.appendChild(actions(go,
+        pairCanScan() ? button(t(pairUi.scan ? "y.pair.scan.stop" : "y.pair.scan"), "y.pair.scan", function () {
+          if (pairUi.scan) { pairScanStop(); render(); } else pairScanStart();
+        }) : null,
+        button(t("y.pair.cancel"), "y.pair.cancel", function () { pairScanStop(); pairUi.open = false; pairUi.code = ""; render(); })));
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        pairScanStop();
+        var code = pairUi.code;
+        pairUi.code = "";
+        act("sync.pair.join", { code: code });
+      });
+      c.appendChild(form);
+      return c;
+    }
+    pairScanStop();
+    if (p.phase === "connecting") c.appendChild(pairMsg("dim", t("y.pair.connecting")));
+    if (p.phase === "approve") {
+      c.appendChild(pairCheckLine(p, "y.pair.approve.q"));
+      c.appendChild(el("div", "hint warn", t("y.pair.approve.warn")));
+    }
+    if (p.phase === "sending") c.appendChild(pairMsg("dim", t("y.pair.sending")));
+    if (p.phase === "done") c.appendChild(pairMsg("ok", t("y.pair.done.old")));
+    if (p.phase === "error") c.appendChild(pairMsg("err", pairErr(p.err)));
+    c.appendChild(actions(
+      p.phase === "approve" ? button(t("y.pair.approve"), "y.pair.approve", function () { act("sync.pair.approve"); }, "primary") : null,
+      button(t(p.phase === "done" || p.phase === "error" ? "y.pair.close" : "y.pair.cancel"), "y.pair.cancel", function () {
+        pairUi.open = false;
+        act("sync.pair.cancel");
+      })));
+    return c;
+  }
+
   function secSync(host, s) {
     var y = s.sync;
     var st = C.syncState(y);
@@ -1346,7 +1547,9 @@
     if (st === "off") {
       if (y.available) {
         c1.appendChild(el("p", "hint", t("y.connect.hint")));
-        if (dav.open && y.davAvailable) {
+        if (y.pair && y.pair.role === "new") {
+          // PAIR-1: the pairing card below replaces the buttons.
+        } else if (dav.open && y.davAvailable) {
           c1.appendChild(davForm(y));
         } else {
           c1.appendChild(actions(
@@ -1357,6 +1560,10 @@
               var f = $("f-dav-url");
               if (f) f.focus();
             }) : null));
+          if (y.pairAvailable) {
+            c1.appendChild(actions(button(t("y.pair.new"), "y.pair.new", function () { act("sync.pair.new", { session: false }); })));
+            c1.appendChild(el("div", "hint", t("y.pair.new.what")));
+          }
         }
       }
     } else if (st === "locked") {
@@ -1439,8 +1646,10 @@
       c1.appendChild(m);
     }
     host.appendChild(c1);
+    if (y.pair && y.pair.role === "new" && (st === "off" || y.pair.phase === "done" || y.pair.phase === "adopting")) host.appendChild(pairNewCard(y));
 
     if (st === "on" || st === "dirty") {
+      if (y.pairAvailable) host.appendChild(pairOldCard(y));
       var c2 = card(null);
       c2.appendChild(row(t("y.interval"), select(y.intervals.map(function (n) {
         return { value: n, label: C.intervalLabel(LANG, n) };
@@ -1458,6 +1667,7 @@
         confirmBtn(t("y.disconnect"), t("y.disconnect.confirm"), "y.disconnect", function () {
           act("sync.disconnect");
         }, "danger")));
+      if (y.paired) c3.appendChild(el("div", "hint", t("y.paired")));
       host.appendChild(c3);
     }
     host.appendChild(caldavCard());
