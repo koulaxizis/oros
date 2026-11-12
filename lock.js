@@ -308,12 +308,101 @@
   }
 
   // ----- Fingerprint or face (LK-BIO) -----
+  // The computer (wave 2): orOS Portable, the desktop apps and orOS USB.
+  // Their System extension marks the page with data-oros-sys-bio and
+  // passes the DOM event "oros-bio" {n, op, kid, text} to the native host
+  // (Windows Hello or fprintd); "oros-bio-done" {n, ok, …} answers. Same
+  // shape as orosPhone.bio, so the rest of this file uses either.
+  var desk = (function () {
+    var info = null, waits = {}, subs = [];
+    function fire() { subs.slice().forEach(function (fn) { try { fn(); } catch (e) {} }); }
+    function on() {
+      try { return doc.documentElement.getAttribute("data-oros-sys-bio") === "1"; } catch (e) { return false; }
+    }
+    function nonce() {
+      var b = new Uint8Array(16), s = "";
+      root.crypto.getRandomValues(b);
+      for (var i = 0; i < b.length; i++) s += (b[i] < 16 ? "0" : "") + b[i].toString(16);
+      return s;
+    }
+    doc.addEventListener("oros-bio-done", function (ev) {
+      var r = null;
+      try { r = JSON.parse(String(ev.detail)); } catch (e) { return; }
+      var w = r && typeof r.n === "string" ? waits[r.n] : null;
+      if (!w) return;
+      delete waits[r.n];
+      clearTimeout(w.timer);
+      w.done(r);
+    });
+    function ask(op, kid, text) {
+      return new Promise(function (done) {
+        if (!on()) { done({ ok: false, error: "unavailable" }); return; }
+        var n = nonce();
+        waits[n] = { done: done, timer: setTimeout(function () {
+          if (waits[n]) { delete waits[n]; done({ ok: false, error: "timeout" }); }
+        }, op === "seal" || op === "open" ? 150000 : 15000) };
+        try {
+          doc.dispatchEvent(new root.CustomEvent("oros-bio", { detail: JSON.stringify({ n: n, op: op, kid: kid || "", text: text || "" }) }));
+        } catch (e) { delete waits[n]; done({ ok: false, error: "unavailable" }); }
+      });
+    }
+    function refresh() {
+      if (!on()) return false;
+      ask("state").then(function (r) {
+        if (!r.ok) return;
+        info = { can: /^(ok|none|no-hw)$/.test(r.can) ? r.can : "no-hw",
+                 kind: r.kind === "hello" ? "hello" : "finger",
+                 kids: (Array.isArray(r.kids) ? r.kids : []).filter(function (k) { return BIO_KID.test(String(k)); }).slice(0, 16) };
+        fire();
+      });
+      return true;
+    }
+    function secret(op, kid) {
+      return ask(op, kid, t("lock.bio.prompt")).then(function (r) {
+        refresh();
+        if (r.ok && typeof r.d === "string" && /^[A-Za-z0-9+/]{43}=$/.test(r.d)) return r.d;
+        var c = /^[a-z-]{1,20}$/.test(String(r.error)) ? r.error : "failed";
+        throw new Error("bio-" + (c === "no-hw" ? "unavailable" : c));
+      });
+    }
+    // The extension sets its mark after the page loads.
+    try {
+      new root.MutationObserver(function () { if (on() && !info) refresh(); fire(); })
+        .observe(doc.documentElement, { attributes: true, attributeFilter: ["data-oros-sys-bio"] });
+    } catch (e) {}
+    return {
+      available: on,
+      info: function () { return info; },
+      refresh: refresh,
+      seal: function (kid) { return secret("seal", kid); },
+      open: function (kid) { return secret("open", kid); },
+      clear: function (kid) { if (!BIO_KID.test(String(kid))) return false; ask("clear", kid).then(refresh); return true; },
+      onChange: function (fn) {
+        subs.push(fn);
+        return function () { var i = subs.indexOf(fn); if (i !== -1) subs.splice(i, 1); };
+      }
+    };
+  })();
+  var deskSource = { bio: desk, onChange: desk.onChange, desk: true };
+
   // The phone: phone.js (orosPhone.bio), in this window; it loads after
-  // this file, so it is looked up when needed.
+  // this file, so it is looked up when needed. A computer with the System
+  // extension uses desk.
   function phone() {
     var p = root.orosPhone;
+    try {
+      if (p && p.bio && typeof p.bio.available === "function" && typeof p.bio.open === "function" && p.bio.available()) return p;
+    } catch (e) {}
+    if (desk.available()) return deskSource;
     try { return (p && p.bio && typeof p.bio.available === "function" && typeof p.bio.open === "function") ? p : null; }
     catch (e) { return null; }
+  }
+  // "phone", "hello" (Windows Hello) or "finger" (fprintd).
+  function bioKind() {
+    var p = phone();
+    if (!p || !p.desk) return "phone";
+    var i = desk.info();
+    return i ? i.kind : "finger";
   }
   function bioLinked() { var p = phone(); try { return !!(p && p.bio.available()); } catch (e) { return false; } }
   function bioInfo() { var p = phone(); try { return p ? p.bio.info() : null; } catch (e) { return null; } }
@@ -359,17 +448,19 @@
   // The phone's answers repaint the lock screen and Settings; only a
   // change of what it says about fingerprints counts.
   var bioSeen = "", bioOff = null, bioTries = 0;
+  function bioChanged() {
+    var now = JSON.stringify([bioLinked(), bioInfo()]);
+    if (now === bioSeen) return;
+    bioSeen = now;
+    if (ui && !ui.bioBusy) fillBio();
+    emit();
+  }
+  desk.onChange(bioChanged);
   function bioWatch() {
     if (bioOff) return;
-    var p = phone();
+    var p = root.orosPhone;
     if (!p || typeof p.onChange !== "function") return;
-    bioOff = p.onChange(function () {
-      var now = JSON.stringify([bioLinked(), bioInfo()]);
-      if (now === bioSeen) return;
-      bioSeen = now;
-      if (ui && !ui.bioBusy) fillBio();
-      emit();
-    });
+    bioOff = p.onChange(bioChanged);
     bioSeen = JSON.stringify([bioLinked(), bioInfo()]);
     // The port may have come before this watch: the lock screen asks now.
     if (ui && !ui.bioBusy) fillBio();
@@ -738,7 +829,8 @@
       try { phone().bio.refresh(); } catch (e) {}
     }
     if (!bioReady()) return;
-    var b = node("button", "lk-btn lk-primary lk-bio-btn", t("lock.bio.unlock"));
+    var k = bioKind();
+    var b = node("button", "lk-btn lk-primary lk-bio-btn", t(k === "hello" ? "lock.bio.unlockHello" : k === "finger" ? "lock.bio.unlockFinger" : "lock.bio.unlock"));
     b.type = "button";
     b.addEventListener("click", tryBio);
     box.appendChild(b);
@@ -753,7 +845,7 @@
     var r = bioRec(), p = phone(), b = ui.bioBtn;
     ui.bioBusy = true;
     if (b) b.disabled = true;
-    say(ui.msg, null);
+    say(ui.msg, bioKind() === "finger" ? "lock.bio.touch" : null, "dim");
     var asked;
     try { asked = p.bio.open(r.kid, "lock"); } catch (e) { asked = Promise.reject(e); }
     asked.then(function (d64) {
@@ -774,8 +866,10 @@
       var c = bioCode(e);
       if (c === "invalidated" || c === "none" || c === "wrong") {
         bioForget();
-        say(ui.msg, c === "invalidated" ? "lock.bio.err.invalidated" : "lock.bio.err.none", "err");
-      } else if (c !== "cancel") {
+        say(ui.msg, c === "invalidated" ? "lock.bio.err.invalidated" : bioKind() === "phone" ? "lock.bio.err.none" : "lock.bio.err.nonePc", "err");
+      } else if (c === "cancel") {
+        say(ui.msg, null);
+      } else {
         say(ui.msg, c === "lockout" ? "lock.bio.err.lockout" : c === "timeout" ? "lock.bio.err.timeout" : "lock.bio.err.failed", "err");
       }
       fillBio();
@@ -966,7 +1060,7 @@
         var r = bioRec(), info = bioInfo();
         return { linked: bioLinked(), can: info ? info.can : null,
                  on: !!(r && info && info.kids.indexOf(r.kid) >= 0), rec: !!r,
-                 due: r ? bioDue(r, Date.now()) : "none", at: r ? r.at : 0, days: BIO_DAYS };
+                 due: r ? bioDue(r, Date.now()) : "none", at: r ? r.at : 0, days: BIO_DAYS, kind: bioKind() };
       },
       refresh: function () { var p = phone(); try { return !!(p && p.bio.refresh()); } catch (e) { return false; } },
       // Turn on with the current PIN / passphrase. Must run inside the

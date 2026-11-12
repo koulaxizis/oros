@@ -101,7 +101,7 @@ test("LK-BIO Android: the prompt names orOS and the PIN for the lock; strings EN
 test("LK-BIO strings: lock screen and Settings in EN, EL and DE", () => {
   const tr = read("translations.js"), de = read("i18n/de/shell.js");
   const core = read("settings/core.js"), deS = read("i18n/de/settings.js");
-  const shellKeys = ["lock.bio.unlock", "lock.bio.days", "lock.bio.daysPass", "lock.bio.err.invalidated", "lock.bio.err.none",
+  const shellKeys = ["lock.bio.unlockHello", "lock.bio.unlockFinger", "lock.bio.touch", "lock.bio.prompt", "lock.bio.err.nonePc", "lock.bio.unlock", "lock.bio.days", "lock.bio.daysPass", "lock.bio.err.invalidated", "lock.bio.err.none",
                      "lock.bio.err.lockout", "lock.bio.err.timeout", "lock.bio.err.failed"];
   for (const k of shellKeys) {
     assert.equal(tr.split('"' + k + '":').length - 1, 2, "EN + EL " + k);
@@ -111,10 +111,21 @@ test("LK-BIO strings: lock screen and Settings in EN, EL and DE", () => {
   const lib = read("settings/settings.js").match(/"l\.bio\.err\." \+ \(\/\^\(([a-z|]+)\)\$\//)[1].split("|").concat(["failed"]);
   lib.forEach((c) => used.add("l.bio.err." + c));
   ["none", "no-hw", "no-lock", "old"].forEach((c) => used.add("l.bio.can." + c));
-  used.delete("l.bio.err.");
-  used.delete("l.bio.can.");
+  ["hello", "finger"].forEach((k) => ["l.bio.text.", "l.bio.pinHint.", "l.bio.can.none.", "l.bio.can.no-hw."].forEach((p) => used.add(p + k)));
+  for (const k of [...used]) if (k.endsWith(".")) used.delete(k);
   for (const k of used) {
     assert.equal(core.split('"' + k + '":').length - 1, 2, "settings EN + EL " + k);
     assert.ok(deS.includes('"' + k + '":'), "settings DE " + k);
   }
+});
+
+test("LK-BIO computer: lock.js talks to the System extension only through oros-bio events, bound by a one-time n", () => {
+  const src = read("lock.js");
+  assert.match(src, /getAttribute\("data-oros-sys-bio"\) === "1"/);
+  assert.match(src, /new root\.CustomEvent\("oros-bio", \{ detail: JSON\.stringify\(\{ n: n, op: op, kid: kid \|\| "", text: text \|\| "" \}\) \}\)/);
+  assert.match(src, /doc\.addEventListener\("oros-bio-done"/);
+  assert.match(src, /var w = r && typeof r\.n === "string" \? waits\[r\.n\] : null;/, "an answer without the request's n is dropped");
+  assert.match(src, /\/\^\[A-Za-z0-9\+\/\]\{43\}=\$\/\.test\(r\.d\)/, "only a 32-byte secret is taken");
+  // the phone wins when both are there; a computer uses desk
+  assert.match(src, /p\.bio\.available\(\)\) return p;\n\s+\} catch \(e\) \{\}\n\s+if \(desk\.available\(\)\) return deskSource;/);
 });

@@ -1183,6 +1183,11 @@ window.OROS_TRANSLATIONS = {
     "lock.bio.err.lockout":      "Too many tries. Use your PIN or passphrase, or try again later.",
     "lock.bio.err.timeout":      "The phone did not answer. Try again.",
     "lock.bio.err.failed":       "Fingerprint unlock did not work. Use your PIN or passphrase.",
+    "lock.bio.unlockHello":      "Unlock with Windows Hello",
+    "lock.bio.unlockFinger":     "Unlock with fingerprint",
+    "lock.bio.touch":            "Touch the fingerprint reader…",
+    "lock.bio.prompt":           "Unlock orOS",
+    "lock.bio.err.nonePc":       "This computer no longer has its key, so this way of unlocking was turned off. Turn it on again in Settings › Screen lock.",
   },
 
   el: {
@@ -2356,6 +2361,11 @@ window.OROS_TRANSLATIONS = {
     "lock.bio.err.lockout":      "Πάρα πολλές προσπάθειες. Χρησιμοποίησε το PIN ή τη φράση σου, ή δοκίμασε αργότερα.",
     "lock.bio.err.timeout":      "Το κινητό δεν απάντησε. Δοκίμασε ξανά.",
     "lock.bio.err.failed":       "Το ξεκλείδωμα με δακτυλικό δεν δούλεψε. Χρησιμοποίησε το PIN ή τη φράση σου.",
+    "lock.bio.unlockHello":      "Ξεκλείδωμα με Windows Hello",
+    "lock.bio.unlockFinger":     "Ξεκλείδωμα με δακτυλικό",
+    "lock.bio.touch":            "Άγγιξε τον αισθητήρα δακτυλικού…",
+    "lock.bio.prompt":           "Ξεκλείδωμα orOS",
+    "lock.bio.err.nonePc":       "Ο υπολογιστής δεν έχει πια το κλειδί του, οπότε αυτός ο τρόπος ξεκλειδώματος απενεργοποιήθηκε. Ενεργοποίησέ τον ξανά στις Ρυθμίσεις › Κλείδωμα οθόνης.",
   }
 };
 

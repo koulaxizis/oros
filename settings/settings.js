@@ -1999,61 +1999,63 @@
     try { return new Date(at).toLocaleDateString(LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB", { day: "numeric", month: "long", year: "numeric" }); }
     catch (e) { return new Date(at).toDateString(); }
   }
-  function lockBioResult(r) {
-    if (r && r.ok) { lk.bio = ""; lk.bioMsg = { kind: "ok", key: "l.bio.doneOn" }; render(); return; }
+  function lockBioResult(r, pc) {
+    if (r && r.ok) { lk.bio = ""; lk.bioMsg = { kind: "ok", key: pc ? "l.bio.doneOnPc" : "l.bio.doneOn" }; render(); return; }
     var c = (r && r.code) || "failed";
     lk.bio = "";
     if (c === "cancel") lk.bioMsg = null;
     else if (c === "wait") lk.bioMsg = { kind: "err", key: "l.msg.wait", vars: { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) } };
     else if (c === "wrong") lk.bioMsg = { kind: "err", key: "l.msg.wrong" };
-    else lk.bioMsg = { kind: "err", key: "l.bio.err." + (/^(lockout|invalidated|timeout|unavailable|storage)$/.test(c) ? c : "failed") };
+    else lk.bioMsg = { kind: "err", key: "l.bio.err." + (/^(lockout|invalidated|timeout|unavailable|storage|busy)$/.test(c) ? c : "failed") };
     render();
   }
+  // kind: "phone" (the orOS app on Android), "hello" (Windows Hello) or
+  // "finger" (fprintd on Linux), through the System extension.
   function secLockBio(host, L, k) {
-    var st = L.bio.state();
-    var c = card(t("l.bio"));
-    c.appendChild(el("p", "hint", t("l.bio.text")));
+    var st = L.bio.state(), kind = st.kind || "phone", pc = kind !== "phone";
+    var c = card(t(kind === "hello" ? "l.bio.hello" : kind === "finger" ? "l.bio.finger" : "l.bio"));
+    c.appendChild(el("p", "hint", t(pc ? "l.bio.text." + kind : "l.bio.text")));
     if (st.can === null) {
-      // An app from before 5.41.00 never answers: say so after a moment.
+      // An app from before this feature never answers: say so after a moment.
       if (!lk.bioT) {
         L.bio.refresh();
         lk.bioT = setTimeout(function () { lk.bioSlow = true; render(); }, 4000);
       }
-      c.appendChild(el("p", "msg msg-dim", t(lk.bioSlow ? "l.bio.update" : "l.bio.wait")));
+      c.appendChild(el("p", "msg msg-dim", t(pc ? (lk.bioSlow ? "l.bio.updatePc" : "l.bio.waitPc") : (lk.bioSlow ? "l.bio.update" : "l.bio.wait"))));
     } else if (st.can !== "ok") {
-      c.appendChild(el("p", "msg msg-dim", t("l.bio.can." + st.can)));
+      c.appendChild(el("p", "msg msg-dim", t(pc && (st.can === "none" || st.can === "no-hw") ? "l.bio.can." + st.can + "." + kind : "l.bio.can." + st.can)));
     } else if (st.on) {
       var sr = row(t("l.status"), null, { scope: "lock-bio" });
-      sr.appendChild(el("div", "version", t("l.bio.isOn", { d: lockBioDate(st.at) })));
+      sr.appendChild(el("div", "version", t(pc ? "l.bio.isOnPc" : "l.bio.isOn", { d: lockBioDate(st.at) })));
       c.appendChild(sr);
       if (st.due === "days") c.appendChild(el("p", "hint", t(k.kind === "pass" ? "l.bio.daysPass" : "l.bio.days")));
       c.appendChild(actions(button(t("l.bio.off"), "lk-bio-off", function () {
         L.bio.disable();
-        lk.bioMsg = { kind: "ok", key: "l.bio.doneOff" };
+        lk.bioMsg = { kind: "ok", key: pc ? "l.bio.doneOffPc" : "l.bio.doneOff" };
         render();
       }, "danger")));
     } else {
       var form = el("form", "pass dav-form");
       form.setAttribute("autocomplete", "off");
       form.appendChild(lockField("bio", t("l.current." + (k.kind || "pin")), k.kind || "pin"));
-      form.appendChild(el("p", "hint", t("l.bio.pinHint")));
-      var go = el("button", "btn primary", t("l.bio.on"));
+      form.appendChild(el("p", "hint", t(pc ? "l.bio.pinHint." + kind : "l.bio.pinHint")));
+      var go = el("button", "btn primary", t(pc ? "l.bio.onPc" : "l.bio.on"));
       go.type = "submit";
       go.setAttribute("data-k", "lk-bio-on");
       if (k.busy) go.disabled = true;
       form.appendChild(actions(go));
-      // One tap: the phone's prompt opens at once (it needs the tap),
-      // then the PIN is checked.
+      // One tap: the prompt opens at once (a phone needs the tap), then
+      // the PIN is checked.
       form.addEventListener("submit", function (e) {
         e.preventDefault();
         if (lockApi() !== L || L.snapshot().busy) return;
         var cur = lk.bio;
         if (!cur) { var f = $("f-lk-bio"); if (f) f.focus(); return; }
         lk.bio = "";
-        lk.bioMsg = { kind: "dim", key: "l.bio.working" };
+        lk.bioMsg = { kind: "dim", key: pc ? "l.bio.workingPc" : "l.bio.working" };
         var p = L.bio.enable(cur);
         render();
-        p.then(lockBioResult, function () { lockBioResult(null); });
+        p.then(function (r) { lockBioResult(r, pc); }, function () { lockBioResult(null, pc); });
       });
       c.appendChild(form);
     }
