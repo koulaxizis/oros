@@ -74,14 +74,6 @@
       "type": "internal"
     },
     {
-      "id": "textcase",
-      "name": "Case Converter",
-      "category": "Accessories",
-      "icon": "textcase",
-      "url": "textcase/",
-      "type": "internal"
-    },
-    {
       "id": "pad",
       "name": "Pad",
       "category": "Accessories",
@@ -1279,6 +1271,14 @@
       "url": "settings/",
       "type": "internal",
       "search": "search.js"
+    }
+  ],
+  "aliases": [
+    {
+      "id": "textcase",
+      "name": "Case Converter",
+      "to": "texttools",
+      "target": { "group": "case" }
     }
   ]
 }

@@ -270,8 +270,9 @@
   //   notes {add:{title,text}} (BR-SHARE), writer {newDoc:{title,text}}
   //   (Typewriter), todo {addItems} (BR-TD-ADD), mail {compose} (BR-SHARE
   //   Email), assistant {ask} (Assistant deep link), bookmarks {add}
-  //   (Send to orOS), wiki {addArticle:{t,x}} (Wiki wave 3), texttools /
-  //   textcase {text} (Text Tools deep link), labels {text} (Label Maker
+  //   (Send to orOS), wiki {addArticle:{t,x}} (Wiki wave 3), texttools
+  //   {text} (Text Tools deep link; the Case Converter lives there
+  //   since 6.26.00), labels {text} (Label Maker
   //   bridge), spreadsheet {newSheet} (BR-S1); wave 3: slides {outline,
   //   title} (Mind map's contract), mindmap {pasteText:{text}} (single
   //   app share), kanban {addCards} and prompter {newPrompt} (new here),
@@ -336,10 +337,6 @@
     texttools: {
       kinds: ["text", "items", "table"],
       build: function (k, d) { return { text: asText(k, d).text }; }
-    },
-    textcase: {
-      kinds: ["text"],
-      build: function (k, d) { return { text: d.text }; }
     },
     slides: {
       kinds: ["text", "items"],
@@ -476,7 +473,7 @@
   };
   // The sheet's order: the everyday places first.
   var ORDER = ["notes", "todo", "writer", "mail", "kanban", "slides", "bookmarks", "spreadsheet", "invoices", "wiki", "diary", "mindmap", "prompter",
-    "flashcards", "typing", "layout", "assistant", "texttools", "textcase", "labels"];
+    "flashcards", "typing", "layout", "assistant", "texttools", "labels"];
   // Shown before ORDER: they take an item only when it holds what they
   // need, so when they show they are the likely pick.
   var SMART = ["calendar", "budget", "contacts", "maps"];

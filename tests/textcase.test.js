@@ -186,22 +186,21 @@ test("prefs: defaults and validation", () => {
   for (const m of C.MODES) assert.equal(typeof C.convert(m, "Αβγ abc").text, "string", m);
 });
 
-test("wiring: app, palette, sync, deep link, help", () => {
-  const js = read("textcase/textcase.js"), html = read("textcase/index.html");
-  assert.ok(js.includes("inheritPalette") && js.includes("watchPalette"));            // guard G3
-  assert.ok(js.includes('api.registerSlice("textcase", sliceGet, sliceSet, C.DATA_KEY, C.mergeWords)'));
-  const core = read("textcase/core.js");
-  assert.ok(core.includes('"oros-textcase-data"') && core.includes('"oros-textcase-prefs"') && core.includes('"oros-textcase-draft"'));
-  assert.equal((js.match(/window\.__orosOpenAt = /g) || []).length, 1);
-  assert.ok(js.includes('__orosTakeTarget("textcase")'));
-  assert.ok(html.indexOf("core.js") < html.indexOf("textcase.js"));
-  assert.ok(!/innerHTML\s*=(?!\s*ICON\.)/.test(js), "no innerHTML except the icons");
-  assert.ok(!/\b(alert|confirm|prompt)\(/.test(js), "R14");
-  for (const f of ["help.en.txt", "help.el.txt"]) assert.ok(fs.existsSync(path.join(__dirname, "..", "textcase", f)));
-  for (const f of ["textcase/core.js", "textcase/textcase.js"]) assert.ok(!/[\u2028\u2029\ufeff]/.test(read(f)), f);
-  // every key the app uses exists in both languages
-  const en = js.slice(js.indexOf("en: {"), js.indexOf("el: {")), el = js.slice(js.indexOf("el: {"), js.indexOf("function t("));
-  const keys = [...en.matchAll(/"([a-z]+\.[A-Za-z0-9.]+)":/g)].map((m) => m[1]);
-  for (const k of keys) assert.ok(el.includes('"' + k + '":'), "el " + k);
-  for (const m of C.MODES) if (!C.TABS.code.includes(m)) assert.ok(keys.includes("m." + m), "label " + m);
+test("wiring (6.26.00): the Case Converter lives in Text Tools, its id is an alias", () => {
+  const apps = JSON.parse(read("apps.json"));
+  assert.ok(!apps.apps.some((a) => a.id === "textcase"), "no longer an app of its own");
+  const al = apps.aliases.find((a) => a.id === "textcase");
+  assert.deepEqual(al, { id: "textcase", name: "Case Converter", to: "texttools", target: { group: "case" } });
+  // Text Tools loads the engine before its own core, in the page and in the worker
+  const html = read("texttools/index.html"), worker = read("texttools/worker.js"), js = read("texttools/texttools.js");
+  assert.ok(html.indexOf("../textcase/core.js") > 0 && html.indexOf("../textcase/core.js") < html.indexOf('src="core.js'));
+  assert.ok(/ENGINES = \["\.\.\/textcase\/core\.js", "core\.js"\]/.test(worker));
+  // My words: same slice name, key and merge as the old app (no data moves)
+  assert.ok(js.includes('api.registerSlice("textcase", wordsGet, wordsSet, TC.DATA_KEY, TC.mergeWords)'));
+  assert.equal(C.DATA_KEY, "oros-textcase-data");
+  // the old page only forwards
+  const old = read("textcase/index.html");
+  assert.ok(old.includes('"../?open=textcase"') && !old.includes("textcase.js"));
+  for (const f of ["textcase.js", "textcase.css", "help.en.txt", "help.el.txt"]) assert.ok(!fs.existsSync(path.join(__dirname, "..", "textcase", f)), f);
+  assert.ok(!/[\u2028\u2029\ufeff]/.test(read("textcase/core.js")));
 });

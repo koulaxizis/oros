@@ -50,7 +50,7 @@ test("items and table: caps, junk dropped, nothing usable → null", () => {
 test("the sheet offers installed apps only, never the sender, in ORDER", () => {
   const text = { title: "T", text: "hello\nworld" };
   assert.deepEqual(C.appsFor("text", text, ALL, "notes"),
-    ["todo", "writer", "mail", "kanban", "slides", "wiki", "diary", "mindmap", "prompter", "flashcards", "typing", "assistant", "texttools", "textcase"]);
+    ["todo", "writer", "mail", "kanban", "slides", "wiki", "diary", "mindmap", "prompter", "flashcards", "typing", "assistant", "texttools"]);
   assert.deepEqual(C.appsFor("text", text, ["writer", "mail", "calculator"], ""), ["writer", "mail"]);
   assert.deepEqual(C.appsFor("link", { url: "https://a.b" }, ALL, "bookmarks"), ["notes", "todo", "writer", "mail", "kanban", "diary", "assistant"]);
   assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "kanban", "slides", "spreadsheet", "wiki", "diary", "mindmap", "flashcards", "texttools"]);
@@ -76,7 +76,6 @@ test("targets are each app's own deep-link shapes", () => {
   assert.deepEqual(C.target("assistant", "text", text), { ask: text.text });
   assert.deepEqual(C.target("wiki", "text", text), { addArticle: { t: "Plan", x: text.text } });
   assert.deepEqual(C.target("texttools", "text", text), { text: text.text });
-  assert.deepEqual(C.target("textcase", "text", text), { text: text.text });
   assert.equal(C.target("bookmarks", "text", text), null);
   assert.equal(C.target("spreadsheet", "text", text), null);
 
@@ -124,7 +123,6 @@ test("every receiver's app code takes the target it is sent", () => {
     wiki: ["wiki/wiki.js", ["target.addArticle", "o.t", "o.x"]],
     spreadsheet: ["spreadsheet/spreadsheet.js", ["tg.newSheet", "p.rows", "p.sum"]],
     texttools: ["texttools/texttools.js", ["tg.text"]],
-    textcase: ["textcase/textcase.js", ["target.text"]],
     labels: ["labels/labels.js", ["target.text"]],
     slides: ["slides/app.js", ["tg.outline", "tg.title"]],
     mindmap: ["mindmap/mindmap.js", ["t.pasteText", "t.pasteText.text"]],

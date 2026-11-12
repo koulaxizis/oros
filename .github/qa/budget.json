@@ -460,13 +460,9 @@
       "bytes": 184319,
       "ms": 54
     },
-    "textcase": {
-      "bytes": 239615,
-      "ms": 47
-    },
     "texttools": {
-      "bytes": 357375,
-      "ms": 50
+      "bytes": 439565,
+      "ms": 84
     },
     "tictactoe": {
       "bytes": 207871,

@@ -1,11 +1,16 @@
 // i18n-inline-ok: Greek letter maps for case folding, accents and slugs (text-processing data, no UI text)
 // ============================================================
 // orOS Text Tools — core (v1.1.0)
-// Pure logic, no DOM: the tools (lines, spaces, numbering, columns,
-// find and replace, extract, encode / decode, compare), the pipeline
+// Pure logic, no DOM: the tools (lines, letters & accents, spaces,
+// numbering, columns, find and replace, extract, encode / decode,
+// compare), the pipeline
 // that runs a chain of steps, the text statistics and the saved-recipe
 // merge. Loaded by texttools.js
 // (window.TextToolsCore), by worker.js (importScripts) and the tests.
+// The "case" group (letters & accents, 6.26: the Case Converter app
+// folded in) runs on the Case Converter's engine, textcase/core.js
+// (window.TextCaseCore, loaded before this file; require() in node).
+// Its My words reach the runners as ctx.words (the page passes them).
 //
 // Data (sync slice "texttools", oros-texttools-data):
 //   { ver: 1,
@@ -57,7 +62,7 @@
   }
 
   // Greek accents and diaeresis, folded for comparison only (never
-  // written back: changing letters is the Case Converter's job).
+  // written back: changing letters is the "case" group's job).
   function foldAccents(s) {
     return String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").normalize("NFC");
   }
@@ -516,6 +521,10 @@
   // f: "sel" (choices), "chk", "txt", "num" ([min, max]). `when` hides
   // a field unless another option has one of the given values.
   var DELIM_CHOICES = ["comma", "semi", "tab", "pipe", "custom"];
+  var CASE_LANGS = ["auto", "en", "el", "tr", "de"];
+  var CASE_AS = ["camel", "pascal", "snake", "kebab", "constant", "dot", "path", "train"];
+  var CASE_FONTS = ["bold", "italic", "bolditalic", "sansbold", "mono", "double", "smallcaps", "wide", "circled", "strike", "under", "plain"];
+  function caseTool() { return { g: "case", o: { lang: "auto" }, f: { lang: ["sel", CASE_LANGS] } }; }
   var TOOLS = {
     // Lines
     sort: { g: "lines", o: { by: "az", icase: true, iaccent: true, emptyLast: true },
@@ -532,6 +541,14 @@
               f: { mode: ["sel", ["keep", "drop"]], where: ["sel", ["contains", "starts", "ends", "regex"]], find: ["txt"], icase: ["chk"] } },
     join: { g: "lines", o: { sep: ", ", skipEmpty: true }, f: { sep: ["txt"], skipEmpty: ["chk"] } },
     split: { g: "lines", o: { sep: ",", trim: true, skipEmpty: true }, f: { sep: ["txt"], trim: ["chk"], skipEmpty: ["chk"] } },
+    // Letters & accents (the Case Converter's conversions, textcase/core.js)
+    upper: caseTool(), lower: caseTool(), sentence: caseTool(), title: caseTool(), capital: caseTool(),
+    toggle: caseTool(), alt: caseTool(),
+    noaccents: { g: "case", o: {}, f: {} },
+    latin: { g: "case", o: { how: "elot" }, f: { how: ["sel", ["elot", "casual"]] } },
+    mixed: caseTool(),
+    codecase: { g: "case", o: { as: "camel", keepGreek: false }, f: { as: ["sel", CASE_AS], keepGreek: ["chk"] } },
+    fancy: { g: "case", o: { font: "bold" }, f: { font: ["sel", CASE_FONTS] } },
     // Spaces and clean-up
     trim: { g: "space", o: { side: "both" }, f: { side: ["sel", ["both", "start", "end"]] } },
     spaces: { g: "space", o: { indent: true }, f: { indent: ["chk"] } },
@@ -578,7 +595,9 @@
     diff: { g: "cmp", o: { show: "all", trim: false, icase: false, iaccent: false },
             f: { show: ["sel", ["all", "changes", "added", "removed", "same"]], trim: ["chk"], icase: ["chk"], iaccent: ["chk"] } }
   };
-  var GROUPS = ["lines", "space", "num", "cols", "find", "code", "cmp"];
+  var GROUPS = ["lines", "case", "space", "num", "cols", "find", "code", "cmp"];
+  // Tools that use My words (ctx.words).
+  var WORD_TOOLS = { sentence: 1, title: 1, capital: 1 };
   var TOOL_IDS = Object.keys(TOOLS);
   function toolsOf(g) { return TOOL_IDS.filter(function (id) { return TOOLS[id].g === g; }); }
 
@@ -599,9 +618,30 @@
     return o;
   }
 
+  // The Case Converter engine: the page and worker load it first.
+  function caseCore() {
+    if (root && root.TextCaseCore) return root.TextCaseCore;
+    if (typeof require === "function") { try { return require("../textcase/core.js"); } catch (e) {} }
+    return null;
+  }
+  function caseRun(mode, text, o, ctx) {
+    var TC = caseCore();
+    if (!TC) return { text: text, err: "nocase" };
+    var r = TC.convert(mode, text, { lang: o.lang || "auto", words: WORD_TOOLS[mode] && ctx && Array.isArray(ctx.words) ? ctx.words : [],
+                                     keepGreek: !!o.keepGreek });
+    return mode === "mixed" ? { text: r.text, n: r.n } : { text: r.text };
+  }
+  function caseRunner(mode) { return function (text, o, ctx) { return caseRun(mode, text, o, ctx); }; }
+
   // Each runner: (text, o, ctx) → { text, n?, err? }. n = how many
   // things changed / were found, shown under the result.
   var RUN = {
+    upper: caseRunner("upper"), lower: caseRunner("lower"), sentence: caseRunner("sentence"),
+    title: caseRunner("title"), capital: caseRunner("capital"), toggle: caseRunner("toggle"), alt: caseRunner("alt"),
+    noaccents: caseRunner("noaccents"), mixed: caseRunner("mixed"),
+    latin: function (text, o, ctx) { return caseRun(o.how === "casual" ? "greeklish" : "elot", text, o, ctx); },
+    codecase: function (text, o, ctx) { return caseRun(o.as, text, o, ctx); },
+    fancy: function (text, o, ctx) { return caseRun(o.font, text, o, ctx); },
     sort: function (text, o, ctx) {
       var L = splitLines(text), ls = L.ls.slice();
       var empties = o.emptyLast ? ls.filter(isBlank) : [];
@@ -974,7 +1014,11 @@
   // Chains with a Compare step read the second text.
   function usesOther(steps) { return (steps || []).some(function (s) { return s && s.tool === "diff"; }); }
 
-  // Run a chain. ctx = { rand?, other? } (other: the "Compare with" text). Returns { text, notes: [{ tool, n, err }] }.
+  // Chains with a step that keeps My words.
+  function usesWords(steps) { return (steps || []).some(function (s) { return s && WORD_TOOLS[s.tool] === 1; }); }
+
+  // Run a chain. ctx = { rand?, other?, words? } (other: the "Compare
+  // with" text; words: My words, strings, for the "case" group). Returns { text, notes: [{ tool, n, err }] }.
   function run(text, steps, ctx) {
     var s = String(text == null ? "" : text);
     if (s.length > MAX_TEXT) s = s.slice(0, MAX_TEXT);
@@ -1154,7 +1198,7 @@
     normName: normName, normStep: normStep, normSteps: normSteps, normRecipe: normRecipe,
     emptyData: emptyData, mergeRecipes: mergeRecipes, parseRecipesFile: parseRecipesFile, recipesFile: recipesFile,
     sheetRows: sheetRows, todoItems: todoItems, outKind: outKind,
-    usesOther: usesOther, slugOf: slugOf, b64enc: b64enc, b64dec: b64dec, diffLines: diffLines
+    usesOther: usesOther, usesWords: usesWords, slugOf: slugOf, b64enc: b64enc, b64dec: b64dec, diffLines: diffLines
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.TextToolsCore = api;
