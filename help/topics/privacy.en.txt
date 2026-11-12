@@ -17,6 +17,8 @@ In the orOS Android app, [Contacts](app:contacts) and [Calendar](app:calendar) c
 ### Screen lock
 On a computer other people use, turn on `Screen lock` in [Settings](app:settings): orOS then asks for a PIN or a passphrase when it starts and after the idle time you choose. It keeps people away from the screen; it does not encrypt your data on the device, so someone who can read the disk or open the browser's developer tools can still get to it.
 
+On an Android phone (the orOS app or orOS Passwords) the lock can also open with your fingerprint or face; your PIN still works and is asked every 14 days.
+
 ## Encrypted sync
 Sync is optional and uses your own Dropbox account. orOS only works in its own app folder there.
 

@@ -1843,14 +1843,14 @@
   // The lock lives in the shell (lock.js, window.parent.orosLock): it
   // keeps only a slow hash on this device. The typed PIN / passphrase
   // stays in `lk` until it is handed over, then it is cleared.
-  var lk = { mode: null, kind: "pin", a: "", b: "", cur: "", msg: null };
+  var lk = { mode: null, kind: "pin", a: "", b: "", cur: "", bio: "", msg: null, bioMsg: null, bioSlow: false, bioT: null };
 
   function lockApi() {
     var p = parentWin();
     try { var L = p && p.orosLock; return (L && L.v >= 1 && typeof L.snapshot === "function") ? L : null; }
     catch (e) { return null; }
   }
-  function lockClear() { lk.a = ""; lk.b = ""; lk.cur = ""; }
+  function lockClear() { lk.a = ""; lk.b = ""; lk.cur = ""; lk.bio = ""; }
   function lockMsg(kind, key, vars) { lk.msg = { kind: kind, key: key, vars: vars || null }; }
   function lockResult(r, okKey) {
     if (r && r.ok) {
@@ -1985,10 +1985,80 @@
       host.appendChild(c2);
     }
 
+    if (k.on && L.bio && typeof L.bio.state === "function" && L.bio.state().linked) secLockBio(host, L, k);
+
     var c3 = card(null);
     c3.appendChild(el("p", "hint", t("l.honest")));
     c3.appendChild(el("p", "hint", t("l.forgot")));
     host.appendChild(c3);
+  }
+
+  // Fingerprint or face on this phone (LK-BIO): only in the orOS app and
+  // in orOS Passwords on Android, where the app keeps the secret.
+  function lockBioDate(at) {
+    try { return new Date(at).toLocaleDateString(LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB", { day: "numeric", month: "long", year: "numeric" }); }
+    catch (e) { return new Date(at).toDateString(); }
+  }
+  function lockBioResult(r) {
+    if (r && r.ok) { lk.bio = ""; lk.bioMsg = { kind: "ok", key: "l.bio.doneOn" }; render(); return; }
+    var c = (r && r.code) || "failed";
+    lk.bio = "";
+    if (c === "cancel") lk.bioMsg = null;
+    else if (c === "wait") lk.bioMsg = { kind: "err", key: "l.msg.wait", vars: { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) } };
+    else if (c === "wrong") lk.bioMsg = { kind: "err", key: "l.msg.wrong" };
+    else lk.bioMsg = { kind: "err", key: "l.bio.err." + (/^(lockout|invalidated|timeout|unavailable|storage)$/.test(c) ? c : "failed") };
+    render();
+  }
+  function secLockBio(host, L, k) {
+    var st = L.bio.state();
+    var c = card(t("l.bio"));
+    c.appendChild(el("p", "hint", t("l.bio.text")));
+    if (st.can === null) {
+      // An app from before 5.41.00 never answers: say so after a moment.
+      if (!lk.bioT) {
+        L.bio.refresh();
+        lk.bioT = setTimeout(function () { lk.bioSlow = true; render(); }, 4000);
+      }
+      c.appendChild(el("p", "msg msg-dim", t(lk.bioSlow ? "l.bio.update" : "l.bio.wait")));
+    } else if (st.can !== "ok") {
+      c.appendChild(el("p", "msg msg-dim", t("l.bio.can." + st.can)));
+    } else if (st.on) {
+      var sr = row(t("l.status"), null, { scope: "lock-bio" });
+      sr.appendChild(el("div", "version", t("l.bio.isOn", { d: lockBioDate(st.at) })));
+      c.appendChild(sr);
+      if (st.due === "days") c.appendChild(el("p", "hint", t(k.kind === "pass" ? "l.bio.daysPass" : "l.bio.days")));
+      c.appendChild(actions(button(t("l.bio.off"), "lk-bio-off", function () {
+        L.bio.disable();
+        lk.bioMsg = { kind: "ok", key: "l.bio.doneOff" };
+        render();
+      }, "danger")));
+    } else {
+      var form = el("form", "pass dav-form");
+      form.setAttribute("autocomplete", "off");
+      form.appendChild(lockField("bio", t("l.current." + (k.kind || "pin")), k.kind || "pin"));
+      form.appendChild(el("p", "hint", t("l.bio.pinHint")));
+      var go = el("button", "btn primary", t("l.bio.on"));
+      go.type = "submit";
+      go.setAttribute("data-k", "lk-bio-on");
+      if (k.busy) go.disabled = true;
+      form.appendChild(actions(go));
+      // One tap: the phone's prompt opens at once (it needs the tap),
+      // then the PIN is checked.
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (lockApi() !== L || L.snapshot().busy) return;
+        var cur = lk.bio;
+        if (!cur) { var f = $("f-lk-bio"); if (f) f.focus(); return; }
+        lk.bio = "";
+        lk.bioMsg = { kind: "dim", key: "l.bio.working" };
+        var p = L.bio.enable(cur);
+        render();
+        p.then(lockBioResult, function () { lockBioResult(null); });
+      });
+      c.appendChild(form);
+    }
+    if (lk.bioMsg) c.appendChild(el("p", "msg msg-" + lk.bioMsg.kind, t(lk.bioMsg.key, lk.bioMsg.vars)));
+    host.appendChild(c);
   }
 
   // ---------- 6c. Section: Users ----------

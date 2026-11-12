@@ -1175,6 +1175,14 @@ window.OROS_TRANSLATIONS = {
     "lock.msg.error":            "This browser could not check it. Try again.",
     "lock.msg.cantCheck":        "It cannot be checked right now. Connect to the internet and try again.",
     "lock.recovered":            "The lock is off. Set a new PIN or passphrase here.",
+    "lock.bio.unlock":           "Unlock with fingerprint or face",
+    "lock.bio.days":             "Type your PIN: orOS asks for it every 14 days, so you keep remembering it. Then your fingerprint works again.",
+    "lock.bio.daysPass":         "Type your passphrase: orOS asks for it every 14 days, so you keep remembering it. Then your fingerprint works again.",
+    "lock.bio.err.invalidated":  "A new fingerprint or face was added to this phone, so fingerprint unlock was turned off. Turn it on again in Settings › Screen lock.",
+    "lock.bio.err.none":         "This phone no longer has its key, so fingerprint unlock was turned off. Turn it on again in Settings › Screen lock.",
+    "lock.bio.err.lockout":      "Too many tries. Use your PIN or passphrase, or try again later.",
+    "lock.bio.err.timeout":      "The phone did not answer. Try again.",
+    "lock.bio.err.failed":       "Fingerprint unlock did not work. Use your PIN or passphrase.",
   },
 
   el: {
@@ -2340,6 +2348,14 @@ window.OROS_TRANSLATIONS = {
     "lock.msg.error":            "Ο browser δεν μπόρεσε να το ελέγξει. Δοκίμασε ξανά.",
     "lock.msg.cantCheck":        "Δεν μπορεί να ελεγχθεί τώρα. Σύνδεσε το internet και δοκίμασε ξανά.",
     "lock.recovered":            "Το κλείδωμα έσβησε. Βάλε εδώ καινούργιο PIN ή φράση.",
+    "lock.bio.unlock":           "Ξεκλείδωμα με δακτυλικό ή πρόσωπο",
+    "lock.bio.days":             "Γράψε το PIN σου: το orOS το ζητά κάθε 14 μέρες, για να μην το ξεχάσεις. Μετά το δακτυλικό δουλεύει ξανά.",
+    "lock.bio.daysPass":         "Γράψε τη φράση σου: το orOS τη ζητά κάθε 14 μέρες, για να μην την ξεχάσεις. Μετά το δακτυλικό δουλεύει ξανά.",
+    "lock.bio.err.invalidated":  "Προστέθηκε νέο δακτυλικό ή πρόσωπο σε αυτό το κινητό, οπότε το ξεκλείδωμα με δακτυλικό απενεργοποιήθηκε. Ενεργοποίησέ το ξανά στις Ρυθμίσεις › Κλείδωμα οθόνης.",
+    "lock.bio.err.none":         "Το κινητό δεν έχει πια το κλειδί του, οπότε το ξεκλείδωμα με δακτυλικό απενεργοποιήθηκε. Ενεργοποίησέ το ξανά στις Ρυθμίσεις › Κλείδωμα οθόνης.",
+    "lock.bio.err.lockout":      "Πάρα πολλές προσπάθειες. Χρησιμοποίησε το PIN ή τη φράση σου, ή δοκίμασε αργότερα.",
+    "lock.bio.err.timeout":      "Το κινητό δεν απάντησε. Δοκίμασε ξανά.",
+    "lock.bio.err.failed":       "Το ξεκλείδωμα με δακτυλικό δεν δούλεψε. Χρησιμοποίησε το PIN ή τη φράση σου.",
   }
 };
 

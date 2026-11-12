@@ -17,6 +17,8 @@ In der Android-App von orOS können [Kontakte](app:contacts) und [Kalender](app:
 ### Bildschirmsperre
 Auf einem Computer, den auch andere nutzen, schalte in den [Einstellungen](app:settings) die `Bildschirmsperre` ein: orOS fragt dann beim Start und nach der gewählten Leerlaufzeit nach einer PIN oder einem Kennwort. Sie hält andere vom Bildschirm fern; deine Daten auf dem Gerät verschlüsselt sie nicht, wer also den Datenträger lesen oder die Entwicklertools des Browsers öffnen kann, kommt trotzdem an sie heran.
 
+Auf einem Android-Handy (orOS-App oder orOS Passwords) öffnet sich die Sperre auch mit Fingerabdruck oder Gesicht; deine PIN funktioniert weiter und wird alle 14 Tage abgefragt.
+
 ## Verschlüsselte Synchronisierung
 Die Synchronisierung ist freiwillig und nutzt dein eigenes Dropbox-Konto. orOS arbeitet dort nur in seinem eigenen App-Ordner.
 
