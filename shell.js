@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.18.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.19.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -1648,6 +1648,7 @@
       tickSafe("moodCheckInTick", moodCheckInTickThrottled); // Wave 1B: Mood check-in reminder (60s throttle)
       tickSafe("cycleCheckTick", cycleCheckTickThrottled);   // Wave 4: Cycle prediction reminder (60s throttle)
       tickSafe("davBgTick", davBgTickThrottled);         // CalDAV W6: background pass for closed apps (15 min)
+      tickSafe("bankBgTick", bankBgTickThrottled);       // BK-AT: Budget's banks at the set times (60s throttle)
       tickSafe("notifTick", notifTickThrottled);         // Wave 1A: notification sweep (60s throttle)
       tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
@@ -11255,6 +11256,7 @@
       try { if (r.el.contentDocument) out.push(r.el.contentDocument); } catch (e) {}
     });
     try { if (davBg && davBg.el.contentDocument) out.push(davBg.el.contentDocument); } catch (e) {}   // 10e
+    try { if (bankBg && bankBg.el.contentDocument) out.push(bankBg.el.contentDocument); } catch (e) {}   // 10f
     return out;
   };
 
@@ -11640,7 +11642,7 @@
       if (first) lateWhen(function () { var o = late.open; late.open = null; if (o) openApp(o[0], o[1]); });
       return;
     }
-    if (app && app.type === "internal") davBgStop(app.id);   // 10e: the background frame of this app goes first
+    if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
     var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;
     if (mtActive() && app.type === "internal" && (mtSideIs(app.id) || pick) && mtSideOpen(app, at)) {
@@ -11769,20 +11771,26 @@
     for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id && state.apps[i].type === "internal") return state.apps[i];
     return null;
   }
-  function davBgNext(todo) {
-    var id = todo.shift(), app = id && davBgApp(id);
-    if (!id) return;
-    if (!app || appLive(id) || !davBgWanted()) { davBgNext(todo); return; }
+  // A hidden app frame (10e, 10f): out of sight, out of the tab order.
+  function bgFrame(tag) {
     var f = document.createElement("iframe");
-    f.name = "oros-davbg-" + Date.now().toString(36);
+    f.name = "oros-" + tag + "-" + Date.now().toString(36);
     f.setAttribute("aria-hidden", "true");
     f.setAttribute("tabindex", "-1");
     f.className = "oros-davbg";
     f.style.cssText = "position:fixed;width:1px;height:1px;left:-10px;top:-10px;border:0;opacity:0;pointer-events:none;";
+    return f;
+  }
+  function bgUrl(app, q) { return app.url + (app.url.indexOf("?") === -1 ? "?" : "&") + q; }
+  function davBgNext(todo) {
+    var id = todo.shift(), app = id && davBgApp(id);
+    if (!id) return;
+    if (!app || appLive(id) || !davBgWanted()) { davBgNext(todo); return; }
+    var f = bgFrame("davbg");
     davBg = { id: id, el: f, todo: todo };
     davBg.timer = setTimeout(function () { davBgEnd(id, { err: "timeout" }); }, DAVBG_LIMIT);
     document.body.appendChild(f);
-    frameGo(f, app.url + (app.url.indexOf("?") === -1 ? "?" : "&") + "davbg=1");
+    frameGo(f, bgUrl(app, "davbg=1"));
   }
   // Ends the running frame (done, timed out, or the app opened). r null:
   // stopped without a result (nothing is recorded).
@@ -11825,6 +11833,87 @@
     try { off = localStorage.getItem("oros-davbg-off") === "1"; } catch (e) {}
     return { off: off, at: last.at || 0, apps: last.apps || {}, running: davBg ? davBg.id : "" };
   };
+
+  // ---------- 10f. Budget's banks at the set times (BK-AT) ----------
+  // Chris 2026-11-12: banks update by themselves at 1 to 4 times set in
+  // Budget › Banks › Automatic updates (set.bat, synced). With Budget
+  // closed, at each time the shell opens Budget in a hidden frame with
+  // ?bankbg=1; Budget runs its own update (budget/banklive.js, the same
+  // code, keys and rules as Update now), posts {oros:"bank-bg-done"} and
+  // the frame is dropped. An open Budget updates itself; opening it
+  // stops the hidden one. Only while orOS is open: the bank key stays
+  // on the device, so nothing runs with orOS closed (a time missed then
+  // runs when Budget or orOS opens next). Notifications only on errors
+  // (Chris), one per error a day. The schedule maths is budget/bankapi.js
+  // (loaded by index.html, the same file Budget runs).
+  //   oros-budget-bank-bg  { at: the last time slot tried here } (device-local)
+  var BANKBG_LIMIT = 120000;
+  var bankBg = null;                 // { el, timer } while the frame runs
+  var bankBgLastTick = 0;
+  function bankBgTickThrottled() {
+    var now = Date.now();
+    if (now - bankBgLastTick < 60000) return;
+    bankBgLastTick = now;
+    bankBgTick();
+  }
+  function bankBgJson(k) {
+    try { var v = JSON.parse(localStorage.getItem(k) || "null"); return v && typeof v === "object" ? v : null; }
+    catch (e) { return null; }
+  }
+  function bankBgTick() {
+    var K = window.OrosBudgetBankApi;
+    if (!K || typeof K.slotDue !== "function" || bankBg || SOLO || navigator.onLine === false) return;
+    if (appLive("budget")) return;
+    var app = davBgApp("budget");
+    if (!app) return;
+    var d = bankBgJson(BUDGET_DATA_KEY);
+    if (!d || !Array.isArray(d.bnk) || !d.bnk.length || !d.set) return;
+    var ts = K.times(d.set.bat);
+    if (!ts.length) return;
+    // a bank connection waiting for the bank's answer: not now
+    if (bankBgJson("oros-budget-bank-pend")) return;
+    var now = Date.now(), dev = bankBgJson("oros-budget-bank-dev") || {}, mine = bankBgJson("oros-budget-bank-bg") || {};
+    var last = Math.max(K.lastRead(d.bnk, dev.t, d.set.bam, now), typeof mine.at === "number" ? mine.at : 0);
+    var slot = K.slotDue(ts, last, now);
+    if (!slot) return;
+    try { localStorage.setItem("oros-budget-bank-bg", JSON.stringify({ at: slot })); } catch (e) { return; }
+    var f = bgFrame("bankbg");
+    bankBg = { el: f };
+    bankBg.timer = setTimeout(function () { bankBgEnd(null); }, BANKBG_LIMIT);
+    document.body.appendChild(f);
+    frameGo(f, bgUrl(app, "bankbg=1"));
+  }
+  function bankBgEnd(r) {
+    if (!bankBg) return;
+    var b = bankBg;
+    bankBg = null;
+    clearTimeout(b.timer);
+    if (r && r.text) {
+      var N = window.orosNotifs;
+      var title = window.t("app.budget");
+      if (title === "app.budget") title = "Budget";
+      if (N && typeof N.emit === "function") N.emit({
+        ns: "budget",
+        key: "bankbg:" + sysYmd() + ":" + r.err,
+        type: "reminder",
+        title: title,
+        body: r.text,
+        deepLink: "system:open:budget"
+      });
+    }
+    // Two seconds for Budget's last save to reach sync.js.
+    setTimeout(function () { mtDrop(b.el); }, r ? 2000 : 0);
+  }
+  window.addEventListener("message", function (ev) {
+    var d = ev.data;
+    if (!bankBg || !d || d.oros !== "bank-bg-done" || ev.origin !== location.origin) return;
+    if (ev.source !== bankBg.el.contentWindow || d.app !== "budget") return;
+    var err = typeof d.err === "string" && /^[a-z_]{1,24}$/.test(d.err) ? d.err : "";
+    bankBgEnd({ err: err, text: err && typeof d.text === "string" ? d.text.slice(0, 300) : "" });
+  });
+  function bankBgStop(id) {
+    if (id === "budget" && bankBg) bankBgEnd(null);
+  }
 
   // ---------- 10d. Back key (BK-1) ----------
   // The phone's Back key (and the browser's Back) does what the bar's
