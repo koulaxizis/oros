@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 42254 of 42747 (98%)
-- Help pages: 158 of 159 (99%)
+- Strings: 42222 of 42715 (98%)
+- Help pages: 157 of 158 (99%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -157,11 +157,10 @@ text is still written in the code. They switch over wave by wave
 | together | 100% | 303 / 303 |
 | transfer | English for now | 0 / 69 |
 | travel | 100% | 555 / 555 |
-| trees | 100% | 76 / 76 |
 | typewriter | 100% | 46 / 46 |
 | typing | 94% | 170 / 180 |
 | units | 100% | 214 / 214 |
-| wallpaper | 100% | 86 / 86 |
+| wallpaper | 100% | 130 / 130 |
 | water | 100% | 94 / 94 |
 | wayfarers | 100% | 549 / 549 |
 | weather | 100% | 186 / 186 |

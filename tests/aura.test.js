@@ -225,5 +225,4 @@ test("wiring: app, palette, sync, wallpaper picture, help", () => {
   assert.ok(sh.includes("wallpaper: pic ? \"custom\" : state.wallpaper"), "Settings shows it as Mine");
   // apps that check "is this my wallpaper" know about the picture
   assert.ok(read("wallpaper/wallpaper.js").includes("!cur.picture"));
-  assert.ok(read("trees/trees.js").includes("!curW.picture"));
 });
