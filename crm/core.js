@@ -755,7 +755,10 @@
       var title = cleanText(String(r.book || r.ctr.t).replace(/[<>]+/g, " "), 200) || cleanText(String(r.ctr.t).replace(/[<>]+/g, " "), 200) || r.ctr.id;
       list.push({ id: r.ctr.id, ben: rs.n[0], title: title,
                 fmt: r.fmt === "p" ? "print" : (r.fmt === "e" ? "ebook" : ""), from: r.ctr.from, to: r.ctr.to || "",
-                state: PORTAL_STATE[r.st], renewed: r.hist.filter(function (e) { return e.k === "renew" && e.p; }).map(function (e) { return e.p; }).slice(-50) });
+                state: PORTAL_STATE[r.st], renewed: r.hist.filter(function (e) { return e.k === "renew" && e.p; }).map(function (e) { return e.p; }).slice(-50),
+                // Revenue Splitter 1.14.2: the day of each renewal, the end before it, the new end
+                renewals: r.hist.filter(function (e) { return e.k === "renew" && YMD_RE.test(e.d || "") && YMD_RE.test(e.p || "") && YMD_RE.test(e.v || ""); })
+                  .map(function (e) { return { on: e.d, prev_to: e.p, to: e.v }; }).slice(-50) });
     });
     list.sort(function (a, b) { return cmpStr(a.id, b.id); });
     left.sort(function (a, b) { return cmpStr(a.id, b.id); });

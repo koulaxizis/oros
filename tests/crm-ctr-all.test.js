@@ -128,7 +128,7 @@ test("Revenue Splitter payload: names, titles, days, states; passes both allowli
   const p = C.portalPayload(d, today);
   // RS-CTR: only partners linked to a beneficiary, only with a start day
   assert.deepEqual(p, { v: 1, sent: today, contracts: [
-    { id: "ctr0001", ben: "Έλενα Ζελίν", title: "Book", fmt: "print", from: "2021-12-02", to: "2026-12-02", state: "soon", renewed: [] }
+    { id: "ctr0001", ben: "Έλενα Ζελίν", title: "Book", fmt: "print", from: "2021-12-02", to: "2026-12-02", state: "soon", renewed: [], renewals: [] }
   ] });
   assert.deepEqual(C.portalPlan(d, today).left.map((l) => [l.id, l.why]), [["ctr0002", "nolink"], ["ctr0003", "nofrom"]]);
   assert.equal(JSON.stringify(p).indexOf("private"), -1, "no note leaves");
