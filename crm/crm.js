@@ -182,14 +182,14 @@
       "cx.mailS": "Our contract for «{b}»", "cx.mailB": "Hello {name},\n\nour contract for «{b}»{f} ends on {d}. Shall we renew it?\n\n", "cx.mailBEnded": "Hello {name},\n\nour contract for «{b}»{f} ended on {d}. Shall we renew it?\n\n",
       "cx.taskT": "Contract «{b}»{f}: decision by {d}",
       "cx.toast.renew": "Renewed until {d}", "cx.toast.post": "Decision put off to {d}", "cx.toast.end": "Ended by agreement", "cx.toast.reopen": "The contract runs again", "cx.toast.note": "Note kept",
-      "cx.portal": "Send to the shop…", "cx.portalT": "Send the end days to the shop", "cx.portalHint": "The shop's Revenue Splitter (1.14 or later) shows each creator their own contracts in the Author Portal. Only names, titles, formats, days and states are sent: never a note, a value or a file. The shop's list is replaced by this one.",
-      "cx.portalShop": "Shop", "cx.portalSend": "Send {n}", "cx.portalOk": "Sent to the shop: {n} contracts", "cx.portalSkip": "Sent: {n}, not taken: {s}", "cx.portalNone": "Add your shop in Settings › Connected services first.", "cx.portalOld": "{shop}: its Revenue Splitter does not take contracts yet (1.14 or later is needed).",
+      "cx.portal": "Send to the shop…", "cx.portalT": "Send the end days to the shop", "cx.portalHint": "The shop's Revenue Splitter (1.14.2 or later) shows each creator their own contracts in the Author Portal. Only names, titles, formats, days and states are sent: never a note, a value or a file. The shop's list is replaced by this one.",
+      "cx.portalShop": "Shop", "cx.portalSend": "Send {n}", "cx.portalOk": "Sent to the shop: {n} contracts", "cx.portalSkip": "Sent: {n}, not taken: {s}", "cx.portalNone": "Add your shop in Settings › Connected services first.", "cx.portalOld": "{shop}: its Revenue Splitter does not take contracts yet (1.14.2 or later is needed).",
       "rc.none": "No contract to send to this shop: link a partner to a Revenue Splitter beneficiary on their card (Overview › Revenue Splitter), and give the contract a start day.",
       "rc.n": "Contracts for this shop: {n}",
       "rc.left.nolink": "Not sent, the partner is not linked to Revenue Splitter: {t}",
       "rc.left.nofrom": "Not sent, it has no start day: {t}",
-      "rc.wkOn": "{shop} has a write key: every change is sent on its own.",
-      "rc.wkOff": "{shop} has no write key: tap Send after changes. Sending needs a key with Read/Write permission (Settings › Connected services).",
+      "rc.wkOn": "{shop} has a contracts key: every change is sent on its own.",
+      "rc.wkOff": "{shop} has no contracts key on this device yet. Make one in WordPress (Noxpress › RS Συμφωνητικά) and add it in Settings › Connected services › Contracts key.",
       "rc.sending": "Sending…",
       "rc.done": "Sent at {time}: the shop saved {n}.",
       "rc.skipped": "The shop did not take these (check the beneficiary's name on the partner's card):",
@@ -202,7 +202,9 @@
       "rc.why.bad_state": "bad state",
       "rc.why.bad_renewed": "bad renewal days",
       "rc.why.bad_item": "not readable",
-      "rc.err.auth": "{shop} refused to save the contracts. Sending needs a key with Read/Write permission: add a write key in Settings › Connected services.",
+      "rc.err.auth": "{shop} refused the contracts key. Make a new one in WordPress (Noxpress › RS Συμφωνητικά) and replace it in Settings › Connected services.",
+      "rc.err.rskey": "{shop} has no contracts key on this device. Make one in WordPress (Noxpress › RS Συμφωνητικά) and add it in Settings › Connected services › Contracts key.",
+      "rc.err.busy": "{shop} asked to wait a little (too many tries). Try again in a few minutes.",
       "rc.err.offline": "You are offline. Try again when you are connected.",
       "rc.err.keys": "The keys of {shop} are not on this device (Settings › Connected services).",
       "rc.err.other": "Could not reach {shop}. Try again later.",
@@ -214,7 +216,7 @@
       "rq.act": "Asked in the Author Portal to talk about a renewal of «{t}».",
       "rq.untitled": "a contract",
       "rq.toast": "Renewal requests from the Author Portal: {n} (in Agenda)",
-      "rq.noWrite": "{shop} refused to mark the renewal requests as read: it needs a key with Read/Write permission (Settings › Connected services).",
+      "rq.noWrite": "{shop} refused the contracts key, so the renewal requests could not be marked as read. Replace the key in Settings › Connected services.",
       "cx.set": "Contracts", "cx.lbl": "Calendar label for the end days", "cx.lbl.own": "CRM (its own chip)", "cx.kb": "Kanban board for contract cards", "cx.kbPh": "Empty = the board that is open",
       "toast.ctrDel": "Contract deleted", "toast.noDisk": "The orOS disk is not available here.", "toast.fileSaved": "Saved in Files: {p}", "toast.fileBig": "Up to 20 MB per file.",
       "act.inv": "Invoice", "act.quote": "Quote",
@@ -430,14 +432,14 @@
       "cx.mailS": "Το συμφωνητικό μας για «{b}»", "cx.mailB": "Γεια σου {name},\n\nτο συμφωνητικό μας για «{b}»{f} λήγει στις {d}. Θέλεις να το ανανεώσουμε;\n\n", "cx.mailBEnded": "Γεια σου {name},\n\nτο συμφωνητικό μας για «{b}»{f} έληξε στις {d}. Θέλεις να το ανανεώσουμε;\n\n",
       "cx.taskT": "Συμφωνητικό «{b}»{f}: απόφαση έως {d}",
       "cx.toast.renew": "Ανανεώθηκε έως {d}", "cx.toast.post": "Η απόφαση μετατέθηκε στις {d}", "cx.toast.end": "Το συμφωνητικό λύθηκε", "cx.toast.reopen": "Το συμφωνητικό ισχύει ξανά", "cx.toast.note": "Η σημείωση κρατήθηκε",
-      "cx.portal": "Αποστολή στο site…", "cx.portalT": "Αποστολή των λήξεων στο site", "cx.portalHint": "Το Revenue Splitter του site (1.14 ή νεότερο) δείχνει σε κάθε δημιουργό τα δικά του συμφωνητικά στο Author Portal. Στέλνονται μόνο ονόματα, τίτλοι, μορφές, ημερομηνίες και καταστάσεις, ποτέ σημειώσεις, αξίες ή αρχεία. Η λίστα του site αντικαθίσταται από αυτή.",
-      "cx.portalShop": "Κατάστημα", "cx.portalSend": "Αποστολή {n}", "cx.portalOk": "Στάλθηκαν στο site: {n} συμφωνητικά", "cx.portalSkip": "Στάλθηκαν: {n}, δεν έγιναν δεκτά: {s}", "cx.portalNone": "Πρόσθεσε πρώτα το κατάστημά σου στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.", "cx.portalOld": "{shop}: το Revenue Splitter του δεν δέχεται ακόμη συμφωνητικά (χρειάζεται 1.14 ή νεότερο).",
+      "cx.portal": "Αποστολή στο site…", "cx.portalT": "Αποστολή των λήξεων στο site", "cx.portalHint": "Το Revenue Splitter του site (1.14.2 ή νεότερο) δείχνει σε κάθε δημιουργό τα δικά του συμφωνητικά στο Author Portal. Στέλνονται μόνο ονόματα, τίτλοι, μορφές, ημερομηνίες και καταστάσεις, ποτέ σημειώσεις, αξίες ή αρχεία. Η λίστα του site αντικαθίσταται από αυτή.",
+      "cx.portalShop": "Κατάστημα", "cx.portalSend": "Αποστολή {n}", "cx.portalOk": "Στάλθηκαν στο site: {n} συμφωνητικά", "cx.portalSkip": "Στάλθηκαν: {n}, δεν έγιναν δεκτά: {s}", "cx.portalNone": "Πρόσθεσε πρώτα το κατάστημά σου στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.", "cx.portalOld": "{shop}: το Revenue Splitter του δεν δέχεται ακόμη συμφωνητικά (χρειάζεται 1.14.2 ή νεότερο).",
       "rc.none": "Κανένα συμφωνητικό για αυτό το site: σύνδεσε έναν συνεργάτη με δικαιούχο του Revenue Splitter στην καρτέλα του (Σύνοψη › Revenue Splitter) και δώσε στο συμφωνητικό ημέρα έναρξης.",
       "rc.n": "Συμφωνητικά για αυτό το site: {n}",
       "rc.left.nolink": "Δεν στέλνεται, ο συνεργάτης δεν είναι συνδεδεμένος με το Revenue Splitter: {t}",
       "rc.left.nofrom": "Δεν στέλνεται, δεν έχει ημέρα έναρξης: {t}",
-      "rc.wkOn": "Το {shop} έχει κλειδί εγγραφής: κάθε αλλαγή στέλνεται μόνη της.",
-      "rc.wkOff": "Το {shop} δεν έχει κλειδί εγγραφής: πάτα Αποστολή μετά από αλλαγές. Η αποστολή θέλει κλειδί με δικαιώματα Ανάγνωση/Εγγραφή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
+      "rc.wkOn": "Το {shop} έχει κλειδί συμφωνητικών: κάθε αλλαγή στέλνεται μόνη της.",
+      "rc.wkOff": "Το {shop} δεν έχει ακόμη κλειδί συμφωνητικών σε αυτή τη συσκευή. Φτιάξ' το στο WordPress (Noxpress › RS Συμφωνητικά) και πρόσθεσέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες › Κλειδί συμφωνητικών.",
       "rc.sending": "Αποστολή…",
       "rc.done": "Στάλθηκαν στις {time}: το site αποθήκευσε {n}.",
       "rc.skipped": "Το site δεν δέχτηκε αυτά (έλεγξε το όνομα του δικαιούχου στην καρτέλα του συνεργάτη):",
@@ -450,7 +452,9 @@
       "rc.why.bad_state": "λάθος κατάσταση",
       "rc.why.bad_renewed": "λάθος ημέρες ανανέωσης",
       "rc.why.bad_item": "δεν διαβάζεται",
-      "rc.err.auth": "Το {shop} αρνήθηκε να αποθηκεύσει τα συμφωνητικά. Η αποστολή θέλει κλειδί με δικαιώματα Ανάγνωση/Εγγραφή: πρόσθεσε κλειδί εγγραφής στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "rc.err.auth": "Το {shop} δεν δέχτηκε το κλειδί συμφωνητικών. Φτιάξε νέο στο WordPress (Noxpress › RS Συμφωνητικά) και άλλαξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "rc.err.rskey": "Το {shop} δεν έχει κλειδί συμφωνητικών σε αυτή τη συσκευή. Φτιάξ' το στο WordPress (Noxpress › RS Συμφωνητικά) και πρόσθεσέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες › Κλειδί συμφωνητικών.",
+      "rc.err.busy": "Το {shop} ζήτησε να περιμένουμε λίγο (πολλές προσπάθειες). Δοκίμασε ξανά σε λίγα λεπτά.",
       "rc.err.offline": "Είσαι εκτός σύνδεσης. Δοκίμασε ξανά όταν συνδεθείς.",
       "rc.err.keys": "Τα κλειδιά του {shop} δεν είναι σε αυτή τη συσκευή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
       "rc.err.other": "Δεν βρέθηκε το {shop}. Δοκίμασε ξανά αργότερα.",
@@ -462,7 +466,7 @@
       "rq.act": "Ζήτησε από το Author Portal να συζητήσουμε ανανέωση για «{t}».",
       "rq.untitled": "ένα συμφωνητικό",
       "rq.toast": "Αιτήματα ανανέωσης από το Author Portal: {n} (στην Ατζέντα)",
-      "rq.noWrite": "Το {shop} αρνήθηκε να σημειώσει τα αιτήματα ανανέωσης ως διαβασμένα: χρειάζεται κλειδί με δικαιώματα Ανάγνωση/Εγγραφή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
+      "rq.noWrite": "Το {shop} δεν δέχτηκε το κλειδί συμφωνητικών, οπότε τα αιτήματα ανανέωσης δεν σημειώθηκαν ως διαβασμένα. Άλλαξε το κλειδί στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       "cx.set": "Συμφωνητικά", "cx.lbl": "Ετικέτα Ημερολογίου για τις λήξεις", "cx.lbl.own": "CRM (δική του ετικέτα)", "cx.kb": "Πίνακας Kanban για κάρτες συμφωνητικών", "cx.kbPh": "Κενό = ο πίνακας που είναι ανοιχτός",
       "toast.ctrDel": "Το συμφωνητικό διαγράφηκε", "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "toast.fileSaved": "Αποθηκεύτηκε στα Αρχεία: {p}", "toast.fileBig": "Έως 20 MB ανά αρχείο.",
       "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
@@ -1955,10 +1959,11 @@
     (data.rsl || []).forEach(function (r) { if (r.n && C.byId(data.cust, r.id)) ids[r.a || first] = 1; });
     return list.filter(function (a) { return ids[a.id]; });
   }
-  function hasWriteKey(shop) {
+  // RS-CTR: the contracts routes take only the shop's contracts key
+  function hasRsKey(shop) {
     var L = shopLinks();
-    if (!L || typeof L.hasWriteKeys !== "function") return Promise.resolve(false);
-    return Promise.resolve(L.hasWriteKeys(shop.id)).catch(function () { return false; });
+    if (!L || typeof L.hasRsKey !== "function") return Promise.resolve(false);
+    return Promise.resolve(L.hasRsKey(shop.id)).catch(function () { return false; });
   }
   function shopPlan(shop) { return C.portalPlan(data, todayYmd(), shop.id, firstShop()); }
   function pushCtr(shop) {
@@ -1983,10 +1988,10 @@
   function rcErrText(code, shop) {
     var name = shop.name || shop.site;
     if (code === "old") return t("cx.portalOld", { shop: name });
-    if (code === "auth" || code === "offline" || code === "keys" || code === "big") return t("rc.err." + code, { shop: name });
+    if (code === "auth" || code === "offline" || code === "keys" || code === "big" || code === "rskey" || code === "busy") return t("rc.err." + code, { shop: name });
     return t("rc.err.other", { shop: name });
   }
-  // after every commit: a shop with a write key gets its list again
+  // after every commit: a shop with a contracts key gets its list again
   // when it differs from what this page last sent there
   function ctrChanged() {
     if (!window.OrosCrmRs || !shopLinks()) return;
@@ -1995,7 +2000,7 @@
       rsShops().reduce(function (p, shop) {
         return p.then(function () {
           if (rcSent[shop.id] === JSON.stringify(shopPlan(shop).body.contracts)) return false;
-          return hasWriteKey(shop);
+          return hasRsKey(shop);
         }).then(function (wk) {
           if (!wk) return;
           return pushCtr(shop).then(function (r) {
@@ -2033,7 +2038,7 @@
       x.left.forEach(function (l) { line(t("rc.left." + l.why, { t: ctrLabel(l.id) }), "late"); });
       var wkLine = el("p", "hint", "");
       body.appendChild(wkLine);
-      hasWriteKey(shop).then(function (wk) {
+      hasRsKey(shop).then(function (wk) {
         if (wkLine.isConnected) wkLine.textContent = t(wk ? "rc.wkOn" : "rc.wkOff", { shop: shop.name || shop.site });
       });
       var last = rcLast[shop.id];
@@ -2088,7 +2093,10 @@
   }
   function pullShop(shop) {
     var RS = window.OrosCrmRs, L = shopLinks();
-    return Promise.resolve(L.call(shop.id, [RS.REQ_RQ_NEW, RS.REQ_RQ_OROS])).then(function (res) {
+    return hasRsKey(shop).then(function (k) {
+      return k ? L.call(shop.id, [RS.REQ_RQ_NEW, RS.REQ_RQ_OROS]) : null;   // no contracts key: nothing to pull
+    }).then(function (res) {
+      if (!res) return;
       var fresh = res && res[0] && !L.statusCode(res[0]) ? RS.parseRequests(res[0].data) : null;
       var taken = res && res[1] && !L.statusCode(res[1]) ? RS.parseRequests(res[1].data) : null;
       if (!fresh && !taken) return;              // an older Revenue Splitter: nothing to pull

@@ -1,6 +1,6 @@
-// RS-CTR: CRM contracts in the shop's Revenue Splitter (1.14+).
-// The allowlist (app and relay copies agree), the second Read/Write key
-// of a WooCommerce shop, the contracts body CRM sends, the renewal
+// RS-CTR: CRM contracts in the shop's Revenue Splitter (1.14.2+).
+// The allowlist (app and relay copies agree), the rs/v1 routes and the
+// shop's contracts key (rsc_…), the contracts body CRM sends, the renewal
 // requests it pulls (import plan, ids, closing) and the 1.10 contract
 // fields of crm/core.js.
 // Run: node --test tests/
@@ -17,7 +17,7 @@ test.before(async () => {
 });
 
 const CK = "ck_" + "a".repeat(40), CS = "cs_" + "b".repeat(40);
-const WK = "ck_" + "c".repeat(40), WS = "cs_" + "d".repeat(40);
+const RK = "rsc_" + "k".repeat(32);
 
 const item = (o) => Object.assign({ id: "ctr123456", ben: "Άννα Π.", title: "Το νησί", fmt: "print", from: "2025-01-01",
   to: "2027-01-01", state: "on", renewed: [] }, o);
@@ -82,7 +82,7 @@ test("allowlist: the list may weigh at most 1 MB in UTF-8", () => {
 });
 
 test("relay: a contracts list up to 256 KB goes alone through the relay; anything else keeps the 16 KB cap", () => {
-  const ext = (reqs) => ({ op: "ext", p: "woo", host: "shop.example.gr", base: "", ck: CK, cs: CS, reqs });
+  const ext = (reqs) => ({ op: "ext", p: "woo", host: "shop.example.gr", base: "", ...(reqs.every((r) => /^\/rs\/contract/.test(r.path)) ? { rsk: RK } : { ck: CK, cs: CS }), reqs });
   // a realistic long list: 2000 rows with long titles (~385 bytes each, ~770 KB)
   const rows = (n, t) => push(Array.from({ length: n }, (_, i) => item({ id: "c" + i, title: (t || "Τίτλος βιβλίου ") + i }))).body;
   const long = "Η μεγάλη ιστορία ενός μικρού νησιού στο Αιγαίο, τόμος πρώτος: ".repeat(3).slice(0, 190);
@@ -100,6 +100,12 @@ test("relay: a contracts list up to 256 KB goes alone through the relay; anythin
   assert.equal(L.relayTooBig("woo", [{ m: "GET", path: "/rs/contracts" }]), false);
   // the larger cap only alone in its call
   assert.equal(X.validExt(ext([mid, { m: "GET", path: "/rs/contracts" }])), "body");
+  // the contracts routes never travel with other WooCommerce calls
+  assert.equal(X.validExt({ op: "ext", p: "woo", host: "shop.example.gr", base: "", rsk: RK, ck: CK, cs: CS, reqs: [{ m: "GET", path: "/rs/contracts" }] }), "key");
+  assert.equal(X.validExt({ op: "ext", p: "woo", host: "shop.example.gr", base: "", ck: CK, cs: CS, reqs: [{ m: "GET", path: "/rs/contracts" }] }), "key");
+  assert.equal(X.validExt({ op: "ext", p: "woo", host: "shop.example.gr", base: "", rsk: RK, reqs: [{ m: "GET", path: "/rs/contracts" }, { m: "GET", path: "/products" }] }), "reqs");
+  assert.equal(X.validExt({ op: "ext", p: "woo", host: "shop.example.gr", base: "", rsk: RK, ck: CK, cs: CS, reqs: [{ m: "GET", path: "/products" }] }), "key");
+  assert.equal(X.validExt({ op: "ext", p: "woo", host: "shop.example.gr", base: "", rsk: "rsc_short", reqs: [{ m: "GET", path: "/rs/contracts" }] }), "key");
   // every other WooCommerce body keeps the default 16 KB
   const note = { m: "POST", path: "/orders/5/notes", body: JSON.stringify({ note: "x".repeat(20 * 1024) }) };
   assert.equal(X.validExt(ext([note])), "body");
@@ -113,39 +119,68 @@ test("relay: the contracts push reaches the shop through the whole relay", async
   const f = async (url, init) => { calls.push({ url, init }); return new Response("{\"saved\":500,\"skipped\":[]}", { status: 200 }); };
   const req = new Request("https://relay.example/v1", { method: "POST",
     headers: { Origin: "https://useoros.online", "Content-Type": "application/json", "CF-Connecting-IP": "10.9.0.1" },
-    body: JSON.stringify({ op: "ext", p: "woo", host: "shop.example.gr", base: "", ck: WK, cs: WS, reqs: [{ m: "POST", path: "/rs/contracts", body: JSON.stringify(body) }] }) });
+    body: JSON.stringify({ op: "ext", p: "woo", host: "shop.example.gr", base: "", rsk: RK, reqs: [{ m: "POST", path: "/rs/contracts", body: JSON.stringify(body) }] }) });
   const res = await handle(req, { ALLOWED_ORIGINS: "https://useoros.online" }, null, Date.now(), f);
   const j = await res.json();
   assert.equal(res.status, 200, JSON.stringify(j));
   assert.equal(j.ok, true);
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].url, "https://shop.example.gr/wp-json/wc/v3/rs/contracts");
+  assert.equal(calls[0].url, "https://shop.example.gr/wp-json/rs/v1/contracts");
   assert.equal(calls[0].init.method, "POST");
+  assert.equal(calls[0].init.headers["X-RS-Key"], RK);
+  assert.equal(calls[0].init.headers.Authorization, undefined);
   assert.equal(JSON.parse(j.data.res[0].body).saved, 500);
 });
 
-test("keys: the write key is optional, both parts or none", () => {
+test("keys: the contracts key is optional and has its own shape", () => {
   assert.deepEqual(L.checkKeys("woo", { ck: CK, cs: CS }), { ok: true, keys: { ck: CK, cs: CS }, bad: [] });
-  assert.deepEqual(L.checkKeys("woo", { ck: CK, cs: CS, wck: WK, wcs: WS }).keys, { ck: CK, cs: CS, wck: WK, wcs: WS });
-  assert.deepEqual(L.checkKeys("woo", { ck: CK, cs: CS, wck: WK }).bad, ["wcs"]);
-  assert.deepEqual(L.checkKeys("woo", { ck: CK, cs: CS, wck: "ck_1", wcs: WS }).bad, ["wck"]);
-  assert.deepEqual(L.checkKeys("woo", { wck: WK, wcs: WS }).bad, ["ck", "cs"]);
+  assert.deepEqual(L.checkKeys("woo", { ck: CK, cs: CS, rsk: RK }).keys, { ck: CK, cs: CS, rsk: RK });
+  assert.deepEqual(L.checkKeys("woo", { ck: CK, cs: CS, rsk: "ck_" + "a".repeat(40) }).bad, ["rsk"]);
+  assert.deepEqual(L.checkKeys("woo", { rsk: RK }).bad, ["ck", "cs"]);
   // other platforms keep every key required
   assert.equal(L.checkKeys("brevo", {}).ok, false);
 });
 
-test("keys: only the contracts writes go with the write key", () => {
-  const both = { ck: CK, cs: CS, wck: WK, wcs: WS }, one = { ck: CK, cs: CS };
-  const W = { ck: WK, cs: WS }, R = { ck: CK, cs: CS };
-  assert.deepEqual(L.keysFor("woo", both, [push([item()])]), W);
-  assert.deepEqual(L.keysFor("woo", both, [{ m: "POST", path: "/rs/contract-requests/17", body: { state: "oros" } }]), W);
-  assert.deepEqual(L.keysFor("woo", both, [{ m: "GET", path: "/rs/contracts" }]), R);
-  assert.deepEqual(L.keysFor("woo", both, [{ m: "GET", path: "/rs/contract-requests?state=new" }]), R);
+test("keys and routes: the contracts routes go to rs/v1 with only the contracts key", () => {
+  const both = { ck: CK, cs: CS, rsk: RK }, one = { ck: CK, cs: CS };
+  const R = { ck: CK, cs: CS };
+  for (const r of [push([item()]), { m: "POST", path: "/rs/contract-requests/17", body: { state: "oros" } },
+                   { m: "GET", path: "/rs/contracts" }, { m: "GET", path: "/rs/contract-requests?state=new" }]) {
+    assert.deepEqual(L.keysFor("woo", both, [r]), { rsk: RK });
+    assert.deepEqual(L.keysFor("woo", one, [r]), {});
+    assert.equal(L.rsCall("woo", [r]), "all");
+  }
   assert.deepEqual(L.keysFor("woo", both, [{ m: "PUT", path: "/products/5", body: { stock_quantity: 1 } }]), R);
-  assert.deepEqual(L.keysFor("woo", both, [{ m: "POST", path: "/orders/5/notes", body: { note: "x" } }]), R);
-  assert.deepEqual(L.keysFor("woo", one, [push([item()])]), R);
+  assert.deepEqual(L.keysFor("woo", both, [{ m: "GET", path: "/rs/balances" }]), R);
+  assert.equal(L.rsCall("woo", [{ m: "GET", path: "/rs/contracts" }, { m: "GET", path: "/rs/balances" }]), "mixed");
+  assert.equal(L.rsCall("woo", [{ m: "GET", path: "/rs/report" }]), "none");
+  assert.equal(L.apiUrl("woo", "https://shop.example.gr", "/rs/contracts"), "https://shop.example.gr/wp-json/rs/v1/contracts");
+  assert.equal(L.apiUrl("woo", "https://shop.example.gr", "/rs/contract-requests/17"), "https://shop.example.gr/wp-json/rs/v1/contract-requests/17");
+  assert.equal(L.apiUrl("woo", "https://shop.example.gr", "/rs/balances"), "https://shop.example.gr/wp-json/wc/v3/rs/balances");
+  assert.deepEqual(L.authHeader("woo", { rsk: RK }), ["X-RS-Key", RK]);
+  assert.equal(L.authHeader("woo", R)[0], "Authorization");
   const k = { key: "x" };
   assert.equal(L.keysFor("brevo", k, [{ m: "GET", path: "/account" }]), k);
+});
+
+test("renewals (1.14.2): each renewal's day, the end before it and the new end", () => {
+  const ok = item({ renewals: [{ on: "2026-11-11", prev_to: "2026-12-31", to: "2029-12-31" }] });
+  assert.equal(L.checkReq("woo", push([ok])), "");
+  assert.equal(X.checkExtReq("woo", push([ok])), "");
+  for (const bad of [[{ on: "2026-11-11", prev_to: "2026-12-31" }], [{ on: "2026-11-11", prev_to: "2026-12-31", to: "x" }],
+                     [{ on: "2026-11-11", prev_to: "2026-12-31", to: "2029-12-31", who: "me" }], "2026-11-11",
+                     Array.from({ length: 51 }, () => ({ on: "2026-11-11", prev_to: "2026-12-31", to: "2029-12-31" }))]) {
+    assert.equal(L.checkReq("woo", push([item({ renewals: bad })])), "body");
+    assert.equal(X.checkExtReq("woo", push([item({ renewals: bad })])), "body");
+  }
+  // CRM sends them from the renew entries of the contract's history
+  const d = C.norm({ ver: 1, cust: [{ id: "custanna1", m: 1, name: "Άννα" }], rsl: [{ id: "custanna1", m: 1, n: ["Άννα Π."] }],
+    ctr: [{ id: "ctra00001", m: 2, cust: "custanna1", t: "Το νησί", from: "2020-01-01", to: "2029-12-31" }],
+    cx: [{ id: "ctra00001", m: 2, h: [{ d: "2026-11-11", k: "renew", v: "2029-12-31", p: "2026-12-31" }, { d: "2026-11-11", k: "note", v: "x" }] }] });
+  const row = C.portalPlan(d, "2026-11-11").body.contracts[0];
+  assert.deepEqual(row.renewals, [{ on: "2026-11-11", prev_to: "2026-12-31", to: "2029-12-31" }]);
+  assert.deepEqual(row.renewed, ["2026-12-31"]);
+  assert.equal(L.checkReq("woo", push([row])), "");
 });
 
 // ---------- crm/rs.js: what CRM sends and pulls ----------

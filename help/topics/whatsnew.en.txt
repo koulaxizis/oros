@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.19.01
+- **Contracts key.** For Revenue Splitter 1.14.2 the contracts go to the shop with their own contracts key: make it in WP admin › Noxpress › RS Συμφωνητικά and add it in Settings › Connected services › `Contracts key`. Your WooCommerce key can go back to Read only. Each contract now also tells the shop the day of each renewal and the old end day. CRM Help has the steps.
+
 ## Version 6.19.00
 - **Budget: banks update at times you set.** In Budget › `Banks` › `Automatic updates`, pick `At times I set` and choose up to 4 times a day, such as 08:00 and 20:00. While orOS is open, in any app, your banks then update by themselves at those times, even with Budget closed; one of your devices is enough. A time missed while orOS was closed runs the next time you open it. You get a notification only when an update fails.
 
