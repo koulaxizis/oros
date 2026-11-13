@@ -508,6 +508,21 @@ button { font: inherit; color: inherit; }
 .dv-match { min-height: 1.3em; margin: 0 0 6px; font-size: 14px; font-weight: 600; }
 .dv-match.ok { color: var(--tk-ins, var(--accent)); }
 .dv-match.no { color: var(--danger); }
+/* Wave D2: JWT blocks and the regex tester. */
+.dv-block { position: relative; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.dv-block .dv-btns { position: absolute; top: 4px; right: 4px; }
+.dv-pre { margin: 0; padding: 8px 10px; max-height: 40vh; overflow: auto; font: 13px/1.45 var(--mono); white-space: pre-wrap;
+  overflow-wrap: anywhere; word-break: break-all; user-select: text; background: var(--panel-bg); }
+.dv-block .dv-pre { padding-right: 96px; }
+.dv-flags { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 2px 0 8px; }
+.dv-flag { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font-size: 14px; cursor: pointer; }
+.dv-flag input { width: 18px; height: 18px; margin: 0; }
+.dv-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.dv-list { display: flex; flex-direction: column; gap: 4px; }
+.dv-hit { display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-height: 40px; padding: 6px 8px; text-align: left;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; cursor: pointer; }
+.dv-hit:hover, .dv-hit:focus-visible { border-color: var(--accent); background: var(--accent-soft); }
+.dv-g { font: 12px/1.4 var(--mono); color: var(--text-dim); overflow-wrap: anywhere; word-break: break-all; }
 /* A see-through colour shows over a checkerboard. */
 .dv-swatch { height: 64px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden;
   background: repeating-conic-gradient(rgba(128,128,128,.35) 0% 25%, transparent 0% 50%) 0 0 / 16px 16px; }
