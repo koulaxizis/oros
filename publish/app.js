@@ -287,6 +287,7 @@
       "trk.up": "Move up",
       "trk.down": "Move down",
       "trk.del": "Remove track",
+      "trk.lyr": "Lyrics",
       "trk.removed": "Track removed",
       "isrc.len": "An ISRC has 12 characters: CC-XXX-YY-NNNNN.",
       "isrc.shape": "Not an ISRC: 2 letters, then 3 letters or digits, then 7 digits.",
@@ -632,6 +633,7 @@
       "trk.up": "Πάνω",
       "trk.down": "Κάτω",
       "trk.del": "Αφαίρεση κομματιού",
+      "trk.lyr": "Στίχοι",
       "trk.removed": "Το κομμάτι αφαιρέθηκε",
       "isrc.len": "Το ISRC έχει 12 χαρακτήρες: CC-XXX-YY-NNNNN.",
       "isrc.shape": "Δεν είναι ISRC: 2 γράμματα, μετά 3 γράμματα ή ψηφία, μετά 7 ψηφία.",
@@ -1607,6 +1609,12 @@
     dn.disabled = idx === count - 1;
     head.appendChild(up);
     head.appendChild(dn);
+    // Wave M3: the track's lyrics in Lyric Sync (its song by ISRC, else made with it)
+    head.appendChild(button("🎤 " + t("trk.lyr"), "btn small", function () {
+      flushEdits();
+      var c = cur(), rt = currentTitle();
+      openAt("lyricsync", { track: { title: c.t, artist: c.art || C.authors(rt).join(", "), isrc: c.isrc, lang: c.lang || rt.lang || "" } });
+    }));
     head.appendChild(button(t("trk.del"), "btn small danger", function () {
       var keep = JSON.parse(JSON.stringify(cur()));
       commit(C.remove(data, "trk", r.id, Date.now()));

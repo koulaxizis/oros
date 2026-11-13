@@ -102,7 +102,7 @@ Inside each track:
 - `Songwriting shares`: who wrote the song (music and lyrics) and their percent, with their collecting society (free text; the list only suggests names) and IPI number when they have one.
 - `Master ownership`: who owns the recording and their percent.
 
-Each list shows what its shares add up to, in red when it is not 100%. A name that matches a CRM partner is linked to them. `Split sheet in Writer` writes a split sheet for the track (release, ISRC, shares, credits and a line to sign for each person) as a new Writer document, to print or send for signing. `Same credits and splits on every track` copies the open track's three lists to the others (Undo puts theirs back).
+Each list shows what its shares add up to, in red when it is not 100%. A name that matches a CRM partner is linked to them. `Split sheet in Writer` writes a split sheet for the track (release, ISRC, shares, credits and a line to sign for each person) as a new Writer document, to print or send for signing. `Lyrics` opens the track's song in Lyric Sync (found by its ISRC, else by title and artist; made when there is none, with the ISRC), and Lyric Sync's MP3 copy then carries the ISRC too. `Same credits and splits on every track` copies the open track's three lists to the others (Undo puts theirs back).
 
 The ISRC and UPC/EAN fields check the code as you type and warn when another track or edition already has it. If your distributor gives you the codes, type them in. If you have your own prefixes (Codes tab), `Next free` fills in the next unused one. `Still missing` lists what a release still needs: artist, tracks, ISRCs, lengths, shares that make 100%, an edition, UPC/EAN, release date and cover.
 

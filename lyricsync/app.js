@@ -111,7 +111,7 @@
       "x.mp3Bad": "This song file's tags cannot be rewritten safely, so no copy was made.", "x.mp3Not": "Only MP3 songs can carry the lyrics inside.",
       "x.videoNeed": "The song must be on the orOS disk (open it from Music or Files) to go to Montage.",
       "audio.disk": "{name} (orOS disk)", "audio.diskMissing": "“{name}” is not on the orOS disk of this device yet. It comes with Vault Drive, or choose it again.",
-      "from.music": "From Music: {name}", "list.music": "song on the orOS disk", "open.bad": "Lyric Sync cannot open this file.",
+      "from.music": "From Music: {name}", "from.track": "From Publishing: {name}", "list.music": "song on the orOS disk", "open.bad": "Lyric Sync cannot open this file.",
       "btn.auto": "Rough sync",
       "btn.full": "Full screen",
       "au.title": "Rough sync from the song",
@@ -217,7 +217,7 @@
       "x.mp3Bad": "Οι ετικέτες αυτού του αρχείου δεν ξαναγράφονται με ασφάλεια, οπότε δεν φτιάχτηκε αντίγραφο.", "x.mp3Not": "Μόνο τα τραγούδια MP3 κρατούν τους στίχους μέσα τους.",
       "x.videoNeed": "Το τραγούδι πρέπει να είναι στον δίσκο του orOS (άνοιξέ το από τη Μουσική ή τα Αρχεία) για να πάει στο Montage.",
       "audio.disk": "{name} (δίσκος orOS)", "audio.diskMissing": "Το «{name}» δεν είναι ακόμα στον δίσκο του orOS σε αυτή τη συσκευή. Έρχεται με το Vault Drive, ή διάλεξέ το ξανά.",
-      "from.music": "Από τη Μουσική: {name}", "list.music": "τραγούδι στον δίσκο του orOS", "open.bad": "Ο Συγχρονισμός στίχων δεν μπορεί να ανοίξει αυτό το αρχείο.",
+      "from.music": "Από τη Μουσική: {name}", "from.track": "Από τις Εκδόσεις: {name}", "list.music": "τραγούδι στον δίσκο του orOS", "open.bad": "Ο Συγχρονισμός στίχων δεν μπορεί να ανοίξει αυτό το αρχείο.",
       "btn.auto": "Πρόχειρος συγχρονισμός",
       "btn.full": "Πλήρης οθόνη",
       "au.title": "Πρόχειρος συγχρονισμός από το τραγούδι",
@@ -1610,6 +1610,7 @@
     var blob = audioBlob;
     if (!blob || !ID3) return;
     var lyrics = { text: C.toText(cur.ln), lg: cur.lg, lines: C.timed(cur.ln, cur.dur).filter(function (x) { return x.t; }).map(function (x) { return { s: x.s, t: x.t }; }) };
+    if (cur.isrc) lyrics.isrc = cur.isrc;          // Publishing M3: TSRC
     blob.slice(0, 10).arrayBuffer().then(function (ab) {
       var h10 = new Uint8Array(ab);
       if (!ID3.isMp3(h10, blob.name || (cur.au && cur.au.n) || "song.mp3", blob.type)) throw new Error("not");
@@ -1898,6 +1899,8 @@
   // { song: id } (search hits); { musicPath, title?, artist?, album?,
   // lyrics? } (Music's and Studio's "Sync lyrics": a song on the orOS
   // disk, opened in the song made from it before, else a new one);
+  // { track: { title, artist?, isrc?, lang? } } (Publishing's "Lyrics"
+  // on a release's track: its song, else a new one with the ISRC);
   // { openFile: { token } } (a lyrics or song file from Files or the
   // system's "Open with"). Anything else is ignored.
   window.__orosOpenAt = function (target) {
@@ -1910,6 +1913,7 @@
       return;
     }
     if (typeof target.musicPath === "string") { fromMusic(target); return; }
+    if (target.track && typeof target.track === "object") { fromTrack(target.track); return; }
     var f = target.openFile;
     if (f && typeof f === "object" && typeof f.token === "string") {
       var file = null;
@@ -1920,6 +1924,29 @@
       openAnyFile(new File([file], String(file.name || ""), { type: file.type || "" }));
     }
   };
+  // Publishing M3: { track: { title, artist?, isrc?, lang? } } from a
+  // release's track: its song (by ISRC, else title and artist), else a
+  // new one with those fields; an ISRC the song lacks is added.
+  function fromTrack(tr) {
+    var str = function (v, n) { return typeof v === "string" ? v.slice(0, n) : ""; };
+    var isrc = /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/.test(str(tr.isrc, 12)) ? tr.isrc : "";
+    var q = { title: str(tr.title, 200).trim(), artist: str(tr.artist, 200).trim(), isrc: isrc };
+    if (!q.title) return;
+    flushLyrics();
+    var old = C.byTrack(data, q);
+    if (old) {
+      if (isrc && !old.isrc) putProject(Object.assign({}, old, { isrc: isrc }));
+      if (!cur || cur.id !== old.id) openSong(old.id);
+      return;
+    }
+    var p = newSong(q.title);
+    if (!p) return;
+    var next = Object.assign({}, p, { ar: q.artist, lg: str(tr.lang, 20) });
+    if (isrc) next.isrc = isrc;
+    if (!putProject(next)) return;
+    openSong(p.id, "lyrics");
+    toast(t("from.track", { name: q.title }));
+  }
   function fromMusic(tg) {
     var src = C.diskPath(tg.musicPath);
     if (!src) return;

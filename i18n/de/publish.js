@@ -548,6 +548,7 @@ orosPack("de", "publish", {
  "trk.up": "Nach oben",
  "trk.down": "Nach unten",
  "trk.del": "Titel entfernen",
+ "trk.lyr": "Songtext",
  "trk.removed": "Titel entfernt",
  "isrc.len": "Eine ISRC hat 12 Zeichen: CC-XXX-YY-NNNNN.",
  "isrc.shape": "Keine ISRC: 2 Buchstaben, dann 3 Buchstaben oder Ziffern, dann 7 Ziffern.",

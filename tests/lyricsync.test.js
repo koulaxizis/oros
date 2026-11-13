@@ -381,3 +381,19 @@ test("Publishing M3: the MP3 copy carries the track's ISRC as TSRC (replacing an
     assert.ok(bad.includes("USXXX9900001") && !bad.includes("GR-A1B"));
   }
 });
+
+test("Publishing M3: a song keeps a valid ISRC and is found by a release's track", () => {
+  assert.equal(C.cleanProject({ id: "s1", ln: [], isrc: "GRA1B2600001" }).isrc, "GRA1B2600001");
+  assert.equal(C.cleanProject({ id: "s1", ln: [], isrc: "GR-A1B-26-00001" }).isrc, undefined);
+  let d = C.put(C.empty(), { id: "s1", name: "Νύχτα", ar: "Άννα", ln: [], isrc: "GRA1B2600001" }, 10);
+  d = C.put(d, { id: "s2", name: "Dawn", ar: "Ann", ln: [] }, 20);
+  assert.equal(C.byTrack(d, { title: "Other", isrc: "GRA1B2600001" }).id, "s1");
+  assert.equal(C.byTrack(d, { title: "dawn", artist: "ANN" }).id, "s2");
+  assert.equal(C.byTrack(d, { title: "νυχτα", artist: "αννα" }).id, "s1");
+  assert.equal(C.byTrack(d, { title: "Dawn", artist: "Bob" }), null);
+  // a song with another ISRC is not the track's
+  assert.equal(C.byTrack(d, { title: "Νύχτα", isrc: "GRA1B2600002" }), null);
+  assert.equal(C.byTrack(d, { title: "Dawn", isrc: "GRA1B2600002" }).id, "s2");
+  assert.equal(C.byTrack(d, { title: "" }), null);
+  assert.equal(C.serialize(C.merge(d, d)), C.serialize(d));
+});

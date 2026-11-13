@@ -131,6 +131,7 @@ orosPack("de", "lyricsync", {
  "f.speed": "Tempo",
  "f.start": "Startzeit der gewählten Zeile",
  "from.music": "Aus Musik: {name}",
+ "from.track": "Aus dem Verlag: {name}",
  "full": "Auf diesem Gerät ist kein Speicherplatz mehr frei. Die Änderung wurde nicht gespeichert.",
  "imp.ask": "Liedtext und Zeiten dieses Lieds durch die Datei ersetzen?",
  "imp.bad": "Diese Datei enthält keinen Liedtext, den Liedtext-Sync lesen kann.",
