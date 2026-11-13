@@ -1,9 +1,9 @@
 # Textwerkzeuge
-Textwerkzeuge räumt reinen Text und einfache Tabellen auf und ordnet sie neu: Zeilen sortieren, Duplikate entfernen, Leerzeichen trimmen, Zeilen nummerieren, das Trennzeichen einer CSV ändern, suchen und ersetzen, E-Mails oder Links herausziehen, Text kodieren und zwei Texte vergleichen. Füge deinen Text ein, wähle ein Werkzeug, und das Ergebnis erscheint sofort.
+Textwerkzeuge räumt reinen Text und einfache Tabellen auf und ordnet sie neu: Zeilen sortieren, Duplikate entfernen, Leerzeichen trimmen, Zeilen nummerieren, das Trennzeichen einer CSV ändern, suchen und ersetzen, E-Mails oder Links herausziehen, Text kodieren, zwei Texte vergleichen und auf deinem eigenen Gerät zwischen Griechisch und Englisch übersetzen. Füge deinen Text ein, wähle ein Werkzeug, und das Ergebnis erscheint sofort.
 
 ## Erste Schritte
 1. Füge deinen Text in das Feld `Text` ein oder tippe ihn, oder tippe bzw. klicke auf die Ordner-Schaltfläche, um eine Datei zu öffnen (.txt, .csv, .tsv, .md und ähnliche, bis 5 MB). Die Zwischenablage-Schaltfläche fügt ein, was du kopiert hast.
-2. Wähle oben eine Gruppe (`Zeilen`, `Aufräumen`, `Nummern`, `Spalten`, `Suchen`, `Kodieren`, `Vergleichen`) und dann ein Werkzeug.
+2. Wähle oben eine Gruppe (`Zeilen`, `Aufräumen`, `Nummern`, `Spalten`, `Suchen`, `Kodieren`, `Vergleichen`, `Übersetzen`) und dann ein Werkzeug.
 3. Stelle seine Optionen ein. Das Feld `Ergebnis` folgt, während du tippst.
 4. `Kopieren` kopiert das Ergebnis, `Speichern` speichert es als Datei, und `Als Text verwenden` schiebt es nach oben in das Feld `Text`, damit du weiter daran arbeiten kannst.
 
@@ -24,6 +24,16 @@ Unter dem Text siehst du, wie viele Zeichen, Wörter und Zeilen er hat. Tippe od
 
 In Feldern für Trennzeichen, Präfix und Suffix bedeutet `\t` einen Tabulator und `\n` eine neue Zeile.
 
+## Übersetzen
+`Übersetzen` überträgt den ganzen Text vom Griechischen ins Englische oder vom Englischen ins Griechische, direkt auf diesem Gerät, mit den Firefox-Translations-Modellen von Mozilla (denselben, die der Firefox-Browser nutzt). Dein Text verlässt das Gerät nie, und du brauchst kein Konto.
+1. Wähle `Von` (`Erkennen` findet Griechisch oder Englisch von selbst) und `Nach`. Die Pfeile dazwischen tauschen die Sprachen und schieben die Übersetzung nach oben in das Feld `Text`, damit du sie in die andere Richtung prüfen kannst.
+2. Beim ersten Mal für eine Richtung sagt die Schaltfläche, wie viel sie herunterlädt (etwa 15 MB, dazu einmal etwa 5 MB für den Übersetzer selbst). Tippe darauf: Die Dateien kommen aus der eigenen Kopie von orOS, werden geprüft und bleiben auf dem Gerät, danach geht es auch offline.
+3. Ist die Sprache auf dem Gerät, wird ein kurzer Text beim Tippen übersetzt, ein langer, wenn du auf `Übersetzen` tippst. `Stopp` hält eine lange Übersetzung oder einen Download an.
+
+Zeilenumbrüche, leere Zeilen und Leerzeichen am Zeilenanfang bleiben, wo sie waren. `Sprachen auf diesem Gerät` zeigt, was heruntergeladen ist und wie viel Platz es braucht; `Entfernen` (zweimal tippen) löscht es. Übersetzen ist kein Schritt und kommt deshalb nicht in Rezepte.
+
+>i Die Modelle sind klein und schnell, gemacht, um einen Text zu verstehen und für einen ersten Entwurf. Lies die Übersetzung, bevor du sie verschickst: Namen und seltene Wörter können falsch herauskommen. Für ein Buch wird [Writer](app:writer) dieselbe Maschine Satz für Satz anbieten.
+
 ## Schritte und Rezepte
 Jedes Werkzeug ist ein Schritt. Tippe auf `+ Schritt`, um einen weiteren hinzuzufügen: Der Text durchläuft die Schritte der Reihe nach, zum Beispiel `Leerzeichen trimmen`, dann `Duplikate entfernen`, dann `Sortieren`. Tippe oder klicke auf einen Schritt, um ihn zu ändern; der Pfeil schiebt ihn nach oben, × entfernt ihn (`Rückgängig` holt ihn zurück).
 
@@ -42,7 +52,7 @@ Deine Rezepte werden über die [orOS-Synchronisierung](help:t/sync) zwischen dei
 >! Dein Text wird nie auf dem Gerät gespeichert und nie synchronisiert. Er bleibt nur, solange orOS offen ist, also speichere oder sende das Ergebnis, bevor du den Browser schließt.
 
 ## Tastenkürzel
-- [[Ctrl+Enter]]: die Schritte jetzt ausführen.
+- [[Ctrl+Enter]]: die Schritte jetzt ausführen (in `Übersetzen`: jetzt übersetzen).
 
 ## Tipps
 - Du räumst eine Liste aus einem Onlineshop oder einer E-Mail auf? Probiere `Versteckte Zeichen`, dann `Leerzeichen trimmen`, dann `Duplikate entfernen`.
@@ -53,4 +63,5 @@ Deine Rezepte werden über die [orOS-Synchronisierung](help:t/sync) zwischen dei
 - Ein Muster, das länger als zwei Sekunden läuft, wird gestoppt.
 - Der Text bei `Vergleichen mit` wird nicht in Rezepten gespeichert; wie dein Text bleibt er nur, solange orOS offen ist. Wenn zwei lange Texte fast überall verschieden sind, markiert der Vergleich eventuell ein paar Zeilen mehr als nötig als geändert.
 - Bis zu 100 Rezepte mit je bis zu 30 Schritten.
+- `Übersetzen` kennt vorerst Griechisch und Englisch; weitere Sprachen kommen.
 - Notizen erhält bis zu 20.000 Zeichen, Tabelle bis zu 500 Zeilen und 64 Spalten, Aufgaben bis zu 200 Aufgaben.

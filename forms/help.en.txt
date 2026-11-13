@@ -1,0 +1,34 @@
+# Forms
+Forms makes surveys, sign-up sheets and order forms: questions of many kinds, pages, questions that show only for some answers, and jumps between pages. This first version of Forms builds and previews forms; sharing them with a link and collecting the answers comes in the next update.
+
+## Make a form
+- Press `New form`. Pick `Blank form`, or a template: contact form, event sign-up, feedback, order form, satisfaction survey or course sign-up. A template is only a start: change anything in it.
+- Give the form a title and, if you like, a description. They show at the top of the form.
+- Every change is saved as you type, and syncs to your other devices like the rest of orOS.
+
+## Questions
+- `Add question` opens the list of kinds. The new one goes after the question that is open, or at the end.
+- Kinds: `Short answer`, `Paragraph`, `E-mail`, `Phone`, `Number`, `Date`, `Time`, `One choice`, `Checkboxes`, `Drop-down`, `Linear scale` (for example 1 to 5, or 0 to 10 with a label at each end), `Rating` (stars), `Yes / No` and `Grid` (rows and columns, one or more answers per row).
+- `Text block` adds a title and text between questions. `Page break` starts a new page.
+- Tap a question to open it: write the question and an optional help text, change its kind, tick `Required`, and set its limits (characters, smallest and largest number, earliest and latest date, how many checkboxes). For choices, write each answer; Enter adds the next one. `Add “Other” with a text box` lets people write their own answer.
+- The buttons under an open question move it up or down, duplicate it or delete it. A deleted question can come back with `Undo` for a few seconds. `Done` closes it; so does Esc.
+
+## Show only for some answers
+- `Show only if…` shows a question, a text block or a page's questions only when an earlier answer matches: for example "Delivery address" only when "How do you want it?" is "Delivery".
+- What you can ask for depends on the earlier question: is or is not one of its answers, includes (checkboxes), is more or less than (numbers, scales, stars, dates), is answered or is not answered.
+- A question that is hidden never counts as answered, so questions that depend on it stay hidden too. A required question is only required while it shows.
+
+## Pages and jumps
+- With page breaks, people go through the form one page at a time, with `Back` and `Next`. Each page is checked before they can go on.
+- On a page break, `After this page, go to…` sends everyone to another page, or straight to `Submit the form`.
+- On `One choice`, `Drop-down` and `Yes / No`, `Go to a page by answer` sends people to a page by what they chose: for example "No" on "Will you come?" goes straight to the end. When a page has more than one such question, the last answered one decides.
+- Jumps only go forward, so every way through a form has an end.
+
+## Preview
+- `Preview` shows the form exactly as people will see it, with pages, jumps, hidden questions and every check. Fill it in to try it: nothing you answer there is kept, and `Fill in again` starts over.
+
+## Settings
+- `Message after submitting` is what people read when they are done. Empty means "Thank you. Your answers have been recorded."
+- `Note at the top` shows in a box under the description, for example to say what the answers are for.
+- `Show a progress bar on forms with pages` shows how far along people are.
+- `Duplicate form` makes a copy to change. `Delete form` removes it on all your devices; `Undo` brings it back for a few seconds.
