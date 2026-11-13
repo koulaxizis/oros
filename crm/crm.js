@@ -250,6 +250,36 @@
       "pf.closed.done": "Closed as done",
       "pf.closed.declined": "Closed as declined",
       "pf.bioFile": "Page text request {d}.txt",
+      "pd.open": "Production stage…",
+      "pd.title": "Production stage in the Author Portal",
+      "pd.hint": "Revenue Splitter (1.18.0 or later) shows each creator the stage of their work. Only the cards you tick go, with their phase, the release day from Publishing and the text after a line «For the creator:» in the card's notes. Nothing else from the card.",
+      "pd.board": "Kanban board",
+      "pd.off": "Off",
+      "pd.offHint": "Pick the board whose columns are the production stages.",
+      "pd.noBoard": "That board is not on this device (renamed or archived?).",
+      "pd.n": "{n} rows go to the shop ({c} cards ticked).",
+      "pd.phase": "Phase {n}",
+      "pd.noPhase": "no phase yet",
+      "pd.inherit": "Like the column before",
+      "pd.map": "Columns and phases",
+      "pd.ph1": "Evaluation and agreement",
+      "pd.ph2": "Editing",
+      "pd.ph3": "Illustration and cover",
+      "pd.ph4": "Typesetting",
+      "pd.ph5": "Proofs and final check",
+      "pd.ph6": "Production and printing",
+      "pd.ph7": "Release",
+      "pd.left": "Ticked cards that do not go:",
+      "pd.why.noben": "no creator linked (link the card in the partner's «Cards, notes and files», or the title's author in Publishing, and the partner to Revenue Splitter)",
+      "pd.why.badid": "the card's id cannot be sent",
+      "pd.why.notitle": "the card has no title",
+      "pd.why.old": "released more than 30 days ago",
+      "pd.why.max": "over 500 rows",
+      "pd.send": "Send now ({n})",
+      "pd.done": "The shop saved {n} rows at {time}.",
+      "pd.old": "{shop} does not take the production stage yet: Revenue Splitter 1.18.0 or later is needed.",
+      "pd.autoSkip": "{shop} skipped {n} production rows (CRM › Contracts › Production stage…).",
+      "pd.autoFail": "The production stage could not be sent to {shop}.",
       "cx.set": "Contracts", "cx.lbl": "Calendar label for the end days", "cx.lbl.own": "CRM (its own chip)", "cx.kb": "Kanban board for contract cards", "cx.kbPh": "Empty = the board that is open",
       "toast.ctrDel": "Contract deleted", "toast.noDisk": "The orOS disk is not available here.", "toast.fileSaved": "Saved in Files: {p}", "toast.fileBig": "Up to 20 MB per file.",
       "act.inv": "Invoice", "act.quote": "Quote",
@@ -533,6 +563,36 @@
       "pf.closed.done": "Έκλεισε ως «έγινε»",
       "pf.closed.declined": "Έκλεισε ως «απορρίφθηκε»",
       "pf.bioFile": "Αίτημα κειμένου σελίδας {d}.txt",
+      "pd.open": "Στάδιο παραγωγής…",
+      "pd.title": "Στάδιο παραγωγής στο Author Portal",
+      "pd.hint": "Το Revenue Splitter (1.18.0 ή νεότερο) δείχνει σε κάθε δημιουργό σε ποιο στάδιο είναι το έργο του. Στέλνονται μόνο οι κάρτες που τσεκάρεις, με τη φάση τους, την ημερομηνία κυκλοφορίας από το Publishing και το κείμενο μετά τη γραμμή «Για τον δημιουργό:» στην περιγραφή της κάρτας. Τίποτε άλλο από την κάρτα.",
+      "pd.board": "Πίνακας Kanban",
+      "pd.off": "Ανενεργό",
+      "pd.offHint": "Διάλεξε τον πίνακα του οποίου οι στήλες είναι τα στάδια παραγωγής.",
+      "pd.noBoard": "Αυτός ο πίνακας δεν υπάρχει σε αυτή τη συσκευή (μετονομάστηκε ή αρχειοθετήθηκε;).",
+      "pd.n": "{n} γραμμές πηγαίνουν στο site ({c} κάρτες τσεκαρισμένες).",
+      "pd.phase": "Φάση {n}",
+      "pd.noPhase": "χωρίς φάση ακόμα",
+      "pd.inherit": "Όπως η προηγούμενη στήλη",
+      "pd.map": "Στήλες και φάσεις",
+      "pd.ph1": "Αξιολόγηση και συμφωνία",
+      "pd.ph2": "Επιμέλεια",
+      "pd.ph3": "Εικονογράφηση και εξώφυλλο",
+      "pd.ph4": "Σελιδοποίηση",
+      "pd.ph5": "Διορθώσεις και τελικός έλεγχος",
+      "pd.ph6": "Παραγωγή και τύπωμα",
+      "pd.ph7": "Κυκλοφορία",
+      "pd.left": "Τσεκαρισμένες κάρτες που δεν στέλνονται:",
+      "pd.why.noben": "δεν έχει συνδεδεμένο δημιουργό (σύνδεσε την κάρτα στα «Κάρτες, σημειώσεις και αρχεία» του συνεργάτη ή τον συγγραφέα του τίτλου στο Publishing, και τον συνεργάτη με το Revenue Splitter)",
+      "pd.why.badid": "το id της κάρτας δεν μπορεί να σταλεί",
+      "pd.why.notitle": "η κάρτα δεν έχει τίτλο",
+      "pd.why.old": "κυκλοφόρησε πριν από πάνω από 30 ημέρες",
+      "pd.why.max": "πάνω από 500 γραμμές",
+      "pd.send": "Αποστολή τώρα ({n})",
+      "pd.done": "Το site αποθήκευσε {n} γραμμές στις {time}.",
+      "pd.old": "Το {shop} δεν δέχεται ακόμα το στάδιο παραγωγής: χρειάζεται Revenue Splitter 1.18.0 ή νεότερο.",
+      "pd.autoSkip": "Το {shop} παρέλειψε {n} γραμμές παραγωγής (CRM › Λήξεις › Στάδιο παραγωγής…).",
+      "pd.autoFail": "Το στάδιο παραγωγής δεν στάλθηκε στο {shop}.",
       "cx.set": "Συμφωνητικά", "cx.lbl": "Ετικέτα Ημερολογίου για τις λήξεις", "cx.lbl.own": "CRM (δική του ετικέτα)", "cx.kb": "Πίνακας Kanban για κάρτες συμφωνητικών", "cx.kbPh": "Κενό = ο πίνακας που είναι ανοιχτός",
       "toast.ctrDel": "Το συμφωνητικό διαγράφηκε", "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "toast.fileSaved": "Αποθηκεύτηκε στα Αρχεία: {p}", "toast.fileBig": "Έως 20 MB ανά αρχείο.",
       "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
@@ -1750,6 +1810,12 @@
     row.appendChild(m);
     return row;
   }
+  function prodBtn() {
+    var pr = el("button", "link-btn", t("pd.open"));
+    pr.type = "button";
+    pr.addEventListener("click", prodDialog);
+    return pr;
+  }
   // The Contracts tab: every contract, those that need a decision first
   function renderCtrs() {
     var box = $("view-ctr");
@@ -1759,6 +1825,12 @@
       var e = el("div", "empty");
       e.appendChild(el("p", "", t("cx.emptyAll")));
       box.appendChild(e);
+      // The production stage needs no contract: keep its button reachable
+      if (shops().length && window.OrosCrmProd) {
+        var ec = el("div", "chips");
+        ec.appendChild(prodBtn());
+        box.appendChild(ec);
+      }
       return;
     }
     var chips = el("div", "chips");
@@ -1776,6 +1848,7 @@
       send.type = "button";
       send.addEventListener("click", portalDialog);
       chips.appendChild(send);
+      if (window.OrosCrmProd) chips.appendChild(prodBtn());
     }
     box.appendChild(chips);
     var list = prefs.cf === "all" ? all : C.ctrAll(data, today, prefs.cf);
@@ -2163,7 +2236,7 @@
     rqAt = Date.now();
     list.reduce(function (p, shop) {
       return p.then(function () { return pullShop(shop); }).catch(function () {});
-    }, Promise.resolve()).then(function () { rqBusy = false; });
+    }, Promise.resolve()).then(function () { rqBusy = false; prodChanged(true); });
   }
   function pullShop(shop) {
     var RS = window.OrosCrmRs, L = shopLinks();
@@ -2299,6 +2372,184 @@
         });
       });
     }, Promise.resolve(true));
+  }
+  // ----- Production stage in the Author Portal (RS-PROD, Revenue Splitter 1.18.0) -----
+  // The chosen cards of a Kanban board (Settings: cset.pb board name,
+  // cset.pm column → phase over the built-in map, cset.pc the cards), with
+  // their phase, the release day from Publishing and the note for the
+  // creator (crm/prod.js). The whole list goes to every shop with a
+  // contracts key and linked partners when it differs from the one this
+  // device sent last (on boot, every ten minutes, a few seconds after the
+  // board, Publishing or the choice changes), and by "Send now".
+  var KANBAN_KEY = "oros-kanban-data", PD_SENT_KEY = "oros-crm-prod-sent", PD_WAIT = 4000;
+  var pdTimer = null, pdLast = {}, pdErr = {};
+  function kanbanData() { return readForeign(KANBAN_KEY, function (raw) { return JSON.parse(raw); }); }
+  function pdSent() { try { var j = JSON.parse(localStorage.getItem(PD_SENT_KEY) || "{}"); return j && typeof j === "object" ? j : {}; } catch (e) { return {}; } }
+  function pdSaveSent(shopId, json) {
+    var all = pdSent();
+    all[shopId] = json;
+    try { localStorage.setItem(PD_SENT_KEY, JSON.stringify(all)); } catch (e) {}
+  }
+  function pdPlan(shop) {
+    var P = window.OrosCrmProd, cs = data.cset || {};
+    var pub = null;
+    try { pub = JSON.parse(localStorage.getItem(PUB_KEY) || "null"); } catch (e) { pub = null; }
+    return P.plan({ kanban: kanbanData(), crm: data, publish: pub, board: cs.pb || "", map: cs.pm || null, chosen: cs.pc || [],
+                    shopId: shop ? shop.id : "", firstShopId: firstShop(), today: todayYmd() });
+  }
+  function pushProd(shop) {
+    var P = window.OrosCrmProd, L = shopLinks();
+    if (!P || !L) return Promise.reject(rsErr("other"));
+    var x = pdPlan(shop), sent = JSON.stringify(x.body.works);
+    return Promise.resolve(L.call(shop.id, [P.req(x.body)])).then(function (res) {
+      var r = res && res[0], code = L.statusCode(r);
+      if (code) throw rsErr(code === "notfound" ? "old" : code);
+      var got = P.parseSaved(r.data);
+      if (!got) throw rsErr("old");
+      var out = { saved: got.saved, skipped: got.skipped, n: x.body.works.length, at: Date.now() };
+      pdLast[shop.id] = out;
+      delete pdErr[shop.id];
+      pdSaveSent(shop.id, sent);
+      return out;
+    }).catch(function (e) {
+      pdErr[shop.id] = (e && e.code) || "other";
+      throw e;
+    });
+  }
+  // on its own: only with a board set, a contracts key, and a list that
+  // differs from the last one this device sent there
+  function prodChanged(now) {
+    if (!window.OrosCrmProd || !shopLinks() || !(data.cset && data.cset.pb)) return;
+    clearTimeout(pdTimer);
+    pdTimer = setTimeout(function () {
+      var sent = pdSent();
+      rsShops().reduce(function (p, shop) {
+        return p.then(function () {
+          if (sent[shop.id] === JSON.stringify(pdPlan(shop).body.works)) return false;
+          return hasRsKey(shop);
+        }).then(function (k) {
+          if (!k) return;
+          return pushProd(shop).then(function (r) {
+            if (r.skipped.length) showToast(t("pd.autoSkip", { shop: shop.name || shop.site, n: r.skipped.length }));
+          }, function (e) {
+            if (!(e && (e.code === "offline" || e.code === "old"))) showToast(t("pd.autoFail", { shop: shop.name || shop.site }));
+          });
+        });
+      }, Promise.resolve()).catch(function () {});
+    }, now ? 0 : PD_WAIT);
+  }
+  function pdSaveSet(patch) {
+    var cur = data.cset || {}, next = C.normCset(Object.assign({}, cur, patch, { m: 1 }));
+    var was = C.normCset(Object.assign({}, cur, { m: 1 }));
+    if (was && JSON.stringify(next) === JSON.stringify(was)) return;
+    next.m = stamp(data.cset || null);
+    data.cset = next;
+    commit();
+    prodChanged();
+  }
+  function prodDialog() {
+    var P = window.OrosCrmProd;
+    if (!P) return;
+    var dlg = makeDialog("crm-prod", true);
+    dlg.appendChild(el("h2", "dlg-title", t("pd.title")));
+    dlg.appendChild(el("p", "hint", t("pd.hint")));
+    var kb = kanbanData(), boards = (kb && Array.isArray(kb.boards) ? kb.boards : []).filter(function (b) { return b && !b.archived && !/^tpl-/.test(b.id || ""); });
+    var cs = data.cset || {};
+    var opts = [["", t("pd.off")]].concat(boards.map(function (b) { return [String(b.name || ""), String(b.name || "").slice(0, 60)]; }));
+    if (cs.pb && !boards.some(function (b) { return b.name === cs.pb; })) opts.push([cs.pb, cs.pb]);
+    var boardSel = field(dlg, t("pd.board"), selectEl(opts, cs.pb || ""));
+    var body = el("div", "");
+    dlg.appendChild(body);
+    var send = null;
+    function shopOf() { return rsShops()[0] || shops()[0] || null; }
+    function draw() {
+      body.innerHTML = "";
+      cs = data.cset || {};
+      var board = P.boardByName(kanbanData(), cs.pb || "");
+      if (!board) { body.appendChild(el("p", "hint", t(cs.pb ? "pd.noBoard" : "pd.offHint"))); if (send) send.disabled = true; return; }
+      var phases = P.columnPhases(board, cs.pm || null), chosen = {};
+      (cs.pc || []).forEach(function (id) { chosen[id] = 1; });
+      var shop = shopOf(), x = shop ? pdPlan(shop) : null;
+      body.appendChild(el("p", "hint", t("pd.n", { n: x ? x.body.works.length : 0, c: (cs.pc || []).length })));
+      // the cards, column by column, with a tick each
+      var list = el("div", "pd-list");
+      (board.columns || []).forEach(function (col, ci) {
+        var cards = Array.isArray(col && col.cards) ? col.cards : [];
+        if (!cards.length) return;
+        var ph = phases[ci] ? phases[ci].phase : 0;
+        list.appendChild(el("h3", "dlg-lbl", String(col.name || "") + " · " + (ph ? t("pd.phase", { n: ph }) : t("pd.noPhase"))));
+        cards.forEach(function (card) {
+          if (!card || typeof card.id !== "string") return;
+          var row = el("label", "check-row");
+          var cb = el("input");
+          cb.type = "checkbox";
+          cb.checked = !!chosen[card.id];
+          cb.disabled = !ph;
+          cb.addEventListener("change", function () {
+            var pc = (data.cset && data.cset.pc ? data.cset.pc : []).filter(function (id) { return id !== card.id; });
+            if (cb.checked) pc.push(card.id);
+            pdSaveSet({ pc: pc });
+            draw();
+          });
+          row.appendChild(cb);
+          row.appendChild(el("span", "", String(card.text || "").slice(0, 120)));
+          list.appendChild(row);
+        });
+      });
+      body.appendChild(list);
+      if (x && x.left.length) {
+        body.appendChild(el("p", "hint late", t("pd.left")));
+        x.left.slice(0, 30).forEach(function (l) { body.appendChild(el("p", "hint late", (l.t || l.card) + " · " + t("pd.why." + l.why))); });
+      }
+      // the column → phase table
+      var det = el("details", "");
+      det.appendChild(el("summary", "", t("pd.map")));
+      var seen = {};
+      phases.forEach(function (c) {
+        var k = P.fold(c.name);
+        if (!k || seen[k]) return;
+        seen[k] = 1;
+        var sel = selectEl([["-1", t("pd.inherit")]].concat([1, 2, 3, 4, 5, 6, 7].map(function (n) { return [String(n), t("pd.phase", { n: n }) + " · " + t("pd.ph" + n)]; })),
+                           String(c.own >= 1 ? c.own : -1));
+        sel.addEventListener("change", function () {
+          var pm = Object.assign({}, (data.cset && data.cset.pm) || {});
+          var v = +sel.value, def = P.DEFAULT_MAP[k];
+          if ((v === -1 && def === undefined) || v === def) delete pm[k];
+          else pm[k] = v === -1 ? 0 : v;
+          pdSaveSet({ pm: pm });
+          draw();
+        });
+        field(det, c.name, sel);
+      });
+      body.appendChild(det);
+      if (shop) {
+        var last = pdLast[shop.id];
+        if (pdErr[shop.id]) body.appendChild(el("p", "hint late", pdErr[shop.id] === "old" ? t("pd.old", { shop: shop.name || shop.site }) : rcErrText(pdErr[shop.id], shop)));
+        else if (last) {
+          body.appendChild(el("p", "hint", t("pd.done", { n: last.saved, time: new Date(last.at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", hour12: false }) })));
+          last.skipped.forEach(function (k) { body.appendChild(el("p", "hint late", k.id + " · " + k.why)); });
+        }
+      }
+      if (send) { send.disabled = !shop || !x; send.textContent = t("pd.send", { n: x ? x.body.works.length : 0 }); }
+    }
+    boardSel.addEventListener("change", function () { pdSaveSet({ pb: boardSel.value }); draw(); });
+    var acts = el("div", "dlg-actions"), busy = false;
+    acts.appendChild(button(t("ed.close"), "", function () { dlg.close(); }));
+    send = button(t("pd.send", { n: 0 }), "primary", function () {
+      var shop = shopOf();
+      if (busy || !shop) return;
+      busy = true;
+      send.disabled = true;
+      send.textContent = t("rc.sending");
+      hasRsKey(shop).then(function (k) {
+        if (!k) { pdErr[shop.id] = "rskey"; return; }
+        return pushProd(shop).catch(function () {});
+      }).then(function () { busy = false; if (dlg.isConnected) draw(); });
+    });
+    acts.appendChild(send);
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    draw();
   }
   // RS-PF: the answer the creator reads in the Author Portal. Kept as a
   // CRM note (ids from the follow-up's id), sent on the next pull.
@@ -4984,6 +5235,7 @@
     });
     // Contacts edited in another frame/tab: people lines are live
     window.addEventListener("storage", function (e) {
+      if (e.key === KANBAN_KEY || e.key === PUB_KEY) prodChanged();   // RS-PROD: the board or a release day changed
       if (document.querySelector("dialog[open]")) return;
       if ([CONTACTS_KEY, INV_KEY, QUOTE_KEY, STOCK_KEY, TS_KEY, PUB_KEY].indexOf(e.key) >= 0 && prefs.tab === "cust") renderDetail();
       else if (e.key === INV_KEY && prefs.tab === "dash") renderDash();

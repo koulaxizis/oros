@@ -386,3 +386,234 @@
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosCrmRs = API;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : this));
+
+// ============================================================
+// orOS CRM — rs.js, part 2: the production stage for the Author Portal (RS-PROD, v1.0.0)
+// Pure functions, no DOM, no storage, no clock (today comes in).
+// Revenue Splitter 1.18.0 shows each creator the production stage of
+// their current work: seven public phases. The source is a Kanban board
+// (CRM Settings › Author Portal: the board's name); its columns map to
+// the phases by name (Chris 2026-11-13: exactly the table, so a work may
+// go back a phase; a column the table does not name keeps the phase of
+// the nearest named column before it; every part of the board counts,
+// so columns that repeat a name get the same phase). The whole list goes
+// each time (POST /rs/production, links/core.js allowlist):
+//   { v: 1, sent, works: [{ id, ben, title, phase, since, release, note }] }
+//   id      the card's id; "<card>-1", "<card>-2"… when it has several creators
+//   ben     the creator's name in the shop's Revenue Splitter (CRM rsl, n[0])
+//   since   the day the card last changed column (Kanban fm.p), else sent
+//   release the release day of the Publishing title with the same name, or ""
+//   note    only the text after a line «Για τον δημιουργό:» / "For the
+//           creator:" in the card's notes, up to the next empty line;
+//           never the rest of the notes, subtasks, labels or comments
+// Which cards: only those chosen in CRM (Chris 2026-11-13; none at
+// first), in a column with a phase; phase 7 only while the release day
+// (or since, without one) is at most 30 days ago.
+// Creators of a card: the CRM partners linked to the card (ix "kb"), else
+// the authors of the Publishing title with the same name that have a CRM
+// partner; each with a Revenue Splitter name for that shop.
+//
+// API (window.OrosCrmProd; under Node require("crm/rs.js").prod):
+//   DEFAULT_MAP { folded column name: phase }, fold(s)
+//   boardByName(kanban, name) → board | null (not archived, not a template)
+//   columnPhases(board, map) → [{ id, name, phase (0 = none yet), own (1-7 | 0 | -1 not named) }]
+//   noteOf(notes) → the text for the creator ("" when none)
+//   plan({ kanban, crm, publish, board, map, chosen: [card id], shopId, firstShopId, today, dayOf })
+//     → { body: { v, sent, works }, left: [{ card, t, why noben|badid|notitle|old|max }], board }
+//   req(body) → the request; parseSaved(json) → { saved, skipped: [{ id, why }] } | null
+// ============================================================
+(function (root) {
+  "use strict";
+
+  var MAX_WORKS = 500, DONE_DAYS = 30, NOTE_MAX = 1000, TITLE_MAX = 200;
+  var RS_ID = /^[A-Za-z0-9_-]{1,64}$/, YMD = /^\d{4}-\d{2}-\d{2}$/;
+
+  function fold(s) {
+    return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .replace(/ς/g, "σ").replace(/\s+/g, " ").trim();   // i18n-inline-ok: Greek final sigma folds to σ
+  }
+  // Chris's table (2026-11-13), by column name
+  var TABLE = [
+    [1, ["Αναμονή", "Επικοινωνία", "Συμβόλαιο/Φόρμα", "Ενημέρωση επαφής"]],   // i18n-inline-ok: the board's own column names
+    [2, ["Επιμέλεια"]],                                                       // i18n-inline-ok: column name
+    [3, ["Εικονογράφηση", "Teaser εξωφύλλου", "Αποκάλυψη εξωφύλλου"]],        // i18n-inline-ok: column names
+    [4, ["Σελιδοποίηση", "Θέση Υπό έκδοση"]],                                 // i18n-inline-ok: column names
+    [5, ["Δειγματισμός", "Διορθώσεις"]],                                      // i18n-inline-ok: column names
+    [6, ["Παραγωγή", "Εθνική βιβλιοθήκη"]],                                   // i18n-inline-ok: column names
+    [7, ["Κυκλοφορία/eShop"]]                                                 // i18n-inline-ok: column name
+  ];
+  var DEFAULT_MAP = {};
+  TABLE.forEach(function (r) { r[1].forEach(function (n) { DEFAULT_MAP[fold(n)] = r[0]; }); });
+
+  function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
+  function clean(v, max) {
+    return typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f<>]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max).trim() : "";
+  }
+  function byId(list, id) {
+    for (var i = 0; i < (list || []).length; i++) if (list[i] && list[i].id === id) return list[i];
+    return null;
+  }
+  function dayNum(ymd) {
+    var m = YMD.exec(ymd || "") ? ymd.split("-") : null;
+    return m ? Date.UTC(+m[0], +m[1] - 1, +m[2]) / 86400000 : NaN;
+  }
+
+  function boardByName(kanban, name) {
+    var want = fold(name);
+    if (!want || !isObj(kanban) || !Array.isArray(kanban.boards)) return null;
+    for (var i = 0; i < kanban.boards.length; i++) {
+      var b = kanban.boards[i];
+      if (isObj(b) && !b.archived && !/^tpl-/.test(b.id || "") && fold(b.name) === want) return b;
+    }
+    return null;
+  }
+
+  // the phase of each column: its own from the map (the person's map
+  // over the default), else the last phase before it
+  function columnPhases(board, map) {
+    var cur = 0, out = [];
+    (board && Array.isArray(board.columns) ? board.columns : []).forEach(function (col) {
+      if (!isObj(col)) return;
+      var k = fold(col.name), own = -1;
+      if (isObj(map) && Object.prototype.hasOwnProperty.call(map, k)) own = map[k];
+      else if (Object.prototype.hasOwnProperty.call(DEFAULT_MAP, k)) own = DEFAULT_MAP[k];
+      if (!(own >= 0 && own <= 7 && Math.floor(own) === own)) own = -1;
+      if (own >= 1) cur = own;
+      out.push({ id: col.id, name: String(col.name || ""), phase: cur, own: own });
+    });
+    return out;
+  }
+
+  var NOTE_HEAD = /^\s*(για τον δημιουργο|για τη δημιουργο|για την δημιουργο|for the creator|fur den autor|für den autor)\s*:\s*(.*)$/;   // i18n-inline-ok: markers in the card's own text
+  function noteOf(notes) {
+    if (typeof notes !== "string" || !notes) return "";
+    var lines = notes.replace(/\r\n?/g, "\n").split("\n"), out = null;
+    for (var i = 0; i < lines.length; i++) {
+      if (out === null) {
+        var m = NOTE_HEAD.exec(fold(lines[i]));
+        if (!m) continue;
+        var raw = lines[i], c = raw.indexOf(":");
+        out = [raw.slice(c + 1).trim()];
+        continue;
+      }
+      if (!lines[i].trim()) break;
+      out.push(lines[i].trim());
+    }
+    if (!out) return "";
+    var tx = out.filter(Boolean).join("\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f<>]+/g, " ").replace(/[ \t]{2,}/g, " ").replace(/ +\n/g, "\n").trim();
+    return tx.length > NOTE_MAX ? tx.slice(0, NOTE_MAX - 1).replace(/\s+\S*$/, "") + "…" : tx;
+  }
+
+  function sinceOf(card, dayOf) {
+    var fm = card.fm;
+    if (isObj(fm) && typeof fm.m === "number" && fm.m === (card.mtime || 0) && typeof fm.p === "number" && fm.p > 0) {
+      var d = dayOf(fm.p);
+      if (YMD.test(d)) return d;
+    }
+    return "";
+  }
+
+  // the Publishing title with this name (the one with a release day first)
+  function titleOf(publish, name) {
+    var f = fold(name), hit = null;
+    (isObj(publish) && Array.isArray(publish.titles) ? publish.titles : []).forEach(function (t) {
+      if (!isObj(t) || fold(t.t) !== f) return;
+      if (!hit || (!hit.rel && t.rel) || (!!hit.rel === !!t.rel && String(t.id) < String(hit.id))) hit = t;
+    });
+    return hit;
+  }
+
+  // the Revenue Splitter names of the card's creators, sorted
+  function creators(crm, publish, board, card, shopId, firstShopId) {
+    var custs = {}, tombs = (crm && crm.tombs) || {};
+    (crm && Array.isArray(crm.ix) ? crm.ix : []).forEach(function (row) {
+      (row && Array.isArray(row.it) ? row.it : []).forEach(function (it) {
+        if (!it || it.k !== "kb" || typeof it.r !== "string") return;
+        var p = it.r.split("/");
+        if (p[0] === board.id && p[2] === card.id) custs[row.id] = 1;
+      });
+    });
+    if (!Object.keys(custs).length) {
+      var t = titleOf(publish, card.text);
+      (t && Array.isArray(t.ppl) ? t.ppl : []).forEach(function (p) {
+        if (p && p.r === "a" && typeof p.crm === "string" && p.crm) custs[p.crm] = 1;
+      });
+    }
+    var names = {};
+    Object.keys(custs).forEach(function (id) {
+      if (tombs[id] || !byId(crm && crm.cust, id)) return;
+      var r = byId(crm.rsl, id);
+      if (!r || !Array.isArray(r.n) || !r.n.length || (r.a || firstShopId || "") !== shopId) return;
+      var n = clean(r.n[0], 200);
+      if (n) names[n] = 1;
+    });
+    return Object.keys(names).sort();
+  }
+
+  function localDay(ms) {
+    var d = new Date(ms);
+    if (!isFinite(d.getTime())) return "";
+    var mm = d.getMonth() + 1, dd = d.getDate();
+    return d.getFullYear() + "-" + (mm < 10 ? "0" : "") + mm + "-" + (dd < 10 ? "0" : "") + dd;
+  }
+
+  function plan(o) {
+    o = o || {};
+    var today = YMD.test(o.today || "") ? o.today : "", dayOf = typeof o.dayOf === "function" ? o.dayOf : localDay;
+    var out = { body: { v: 1, sent: today, works: [] }, left: [], board: null };
+    var board = boardByName(o.kanban, o.board);
+    if (!board || !today) return out;
+    out.board = board;
+    var phases = columnPhases(board, o.map), tdy = dayNum(today), works = [], pick = {};
+    (Array.isArray(o.chosen) ? o.chosen : []).forEach(function (id) { if (typeof id === "string") pick[id] = 1; });
+    (board.columns || []).forEach(function (col, ci) {
+      var ph = phases[ci] ? phases[ci].phase : 0;
+      if (!isObj(col) || !ph) return;
+      (Array.isArray(col.cards) ? col.cards : []).forEach(function (card) {
+        if (!isObj(card) || !pick[card.id]) return;     // only the cards chosen in CRM
+        var title = clean(card.text, TITLE_MAX);
+        var since = sinceOf(card, dayOf) || today;
+        var t = titleOf(o.publish, card.text), release = t && YMD.test(t.rel || "") ? t.rel : "";
+        if (ph === 7) {
+          var ref = dayNum(release || since);
+          if (!(tdy - ref <= DONE_DAYS)) { out.left.push({ card: card.id, t: title, why: "old" }); return; }   // released over 30 days ago
+        }
+        if (!title) { out.left.push({ card: card.id, t: "", why: "notitle" }); return; }
+        if (typeof card.id !== "string" || !RS_ID.test(card.id) || card.id.length > 60) { out.left.push({ card: card.id, t: title, why: "badid" }); return; }
+        var names = creators(o.crm, o.publish, board, card, o.shopId, o.firstShopId);
+        if (!names.length) { out.left.push({ card: card.id, t: title, why: "noben" }); return; }
+        var note = noteOf(card.notes);
+        names.forEach(function (n, i) {
+          works.push({ id: names.length > 1 ? card.id + "-" + (i + 1) : card.id, ben: n, title: title, phase: ph,
+                       since: since, release: release, note: note });
+        });
+      });
+    });
+    works.sort(function (a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); });
+    if (works.length > MAX_WORKS) {
+      works.slice(MAX_WORKS).forEach(function (w) { out.left.push({ card: w.id, t: w.title, why: "max" }); });
+      works = works.slice(0, MAX_WORKS);
+    }
+    out.body.works = works;
+    return out;
+  }
+
+  // the shop's answer { saved, skipped: [{ id, why }] } | null
+  var WHY = ["bad_id", "unknown_ben", "bad_title", "bad_phase", "bad_since", "bad_release", "duplicate_id", "not_an_object"];
+  function parseSaved(j) {
+    if (!isObj(j) || typeof j.saved !== "number" || Math.floor(j.saved) !== j.saved || j.saved < 0) return null;
+    var skipped = [];
+    (Array.isArray(j.skipped) ? j.skipped : []).slice(0, 500).forEach(function (x) {
+      if (!isObj(x)) return;
+      skipped.push({ id: clean(typeof x.id === "string" ? x.id : "", 64), why: WHY.indexOf(x.why) >= 0 ? x.why : "not_an_object" });
+    });
+    return { saved: j.saved, skipped: skipped };
+  }
+  function req(body) { return { m: "POST", path: "/rs/production", body: body }; }
+
+  var API = { DEFAULT_MAP: DEFAULT_MAP, parseSaved: parseSaved, req: req, WHY: WHY, fold: fold, boardByName: boardByName, columnPhases: columnPhases,
+              noteOf: noteOf, plan: plan, MAX_WORKS: MAX_WORKS, DONE_DAYS: DONE_DAYS };
+  // lives in rs.js (one precached file): under Node it is require("crm/rs.js").prod
+  if (typeof module !== "undefined" && module.exports) module.exports.prod = API;
+  if (root) root.OrosCrmProd = API;
+})(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : this));
