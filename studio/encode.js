@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Studio — audio file encoders (v1.0.0)
+// orOS Studio — audio file encoders (v1.1.0)
 // Pure code, no DOM: what Export writes besides WAV.
 //   - MP3: an MPEG-1 Layer III encoder written for orOS (CBR 128, 192
 //     or 320 kbit/s, 44.1 or 48 kHz, mono or stereo). Long blocks only,
@@ -9,7 +9,8 @@
 //   - Ogg Opus: the Ogg pages (RFC 3533) around Opus packets (RFC 7845).
 //     The packets come from the browser's own encoder (WebCodecs
 //     AudioEncoder, see encodeOpus); no live recorder API is used.
-//   - ID3v2.4 title tag for MP3, Opus comment header for Ogg.
+//   - ID3v2.4 tags for MP3 (id3v24: text, cover, chapters), Opus comment
+//     header for Ogg.
 // Loaded by studio.js (window.StudioEncode) and by the tests.
 // ============================================================
 (function (root) {
@@ -363,7 +364,7 @@
     }
     this.an = [new Analysis(), new Analysis()];
     this.done = 0;
-    var tag = id3Tag(opts.title || "", "orOS Studio");
+    var tag = opts.tags ? id3v24(Object.assign({ title: opts.title || "", tool: "orOS Studio" }, opts.tags)) : id3Tag(opts.title || "", "orOS Studio");
     var audio = 0;
     for (var f = 0; f < this.frames; f++) audio += mp3FrameBytes(rate, kbps, f);
     var info = infoFrame(rate, kbps, this.ch, this.frames, audio, ENC_DELAY, this.frames * 1152 - ENC_DELAY - n, this.lowpass);
@@ -462,19 +463,129 @@
     return c;
   }
 
-  // ID3v2.4 tag with the title (TIT2) and the encoder (TSSE), UTF-8.
-  function id3Tag(title, tool) {
-    var frames = [];
-    function frame(id, text) {
-      if (!text) return;
-      var body = [3].concat(utf8(text));
-      var hd = [id.charCodeAt(0), id.charCodeAt(1), id.charCodeAt(2), id.charCodeAt(3)].concat(syncsafe(body.length), [0, 0]);
-      frames = frames.concat(hd, body);
+  // ---------- ID3v2.4 (one writer for every MP3 orOS makes) ----------
+  // id3v24(tags) → Uint8Array (empty when there is nothing to write).
+  // Text frames are UTF-8; a list (artist: ["A", "B"]) is one frame with
+  // the values split by a zero byte, as v2.4 allows. Frames, in this order:
+  //   title TIT2, subtitle TIT3, artist TPE1, albumArtist TPE2, album TALB,
+  //   composer TCOM (the narrator of an audiobook), track TRCK ("3" or
+  //   "3/12"), disc TPOS, date TDRC ("2026", "2026-11" or "2026-11-13"),
+  //   genre TCON, publisher TPUB, copyright TCOP, isrc TSRC, lang TLAN
+  //   (ISO 639-2, "ell"), length TLEN (milliseconds), comment COMM
+  //   ({ lang, desc, text } or a string), txxx TXXX ([{ desc, value }]),
+  //   url WOAS (http/https only), cover APIC ({ mime, bytes, type (3 =
+  //   front cover), desc }), chapters CHAP + one CTOC ([{ id?, start, end,
+  //   title?, url? }] in milliseconds; the table of contents lists them in
+  //   order, tocTitle names it), tool TSSE.
+  // Values that do not fit are left out, never written half. padding adds
+  // zero bytes after the frames (a tag editor can grow the tag in place).
+  var ID3_TEXT = [["title", "TIT2", 400], ["subtitle", "TIT3", 400], ["artist", "TPE1", 400], ["albumArtist", "TPE2", 400],
+                  ["album", "TALB", 400], ["composer", "TCOM", 400], ["track", "TRCK", 9], ["disc", "TPOS", 9],
+                  ["date", "TDRC", 10], ["genre", "TCON", 120], ["publisher", "TPUB", 200], ["copyright", "TCOP", 400],
+                  ["isrc", "TSRC", 12], ["lang", "TLAN", 40], ["length", "TLEN", 12]];
+  var ID3_OK = {
+    track: /^[1-9]\d{0,3}(\/[1-9]\d{0,3})?$/, disc: /^[1-9]\d{0,3}(\/[1-9]\d{0,3})?$/,
+    date: /^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/, isrc: /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/,
+    lang: /^[a-z]{3}(\u0000[a-z]{3}){0,9}$/, length: /^\d{1,10}$/
+  };
+  var ID3_MIME = /^image\/(jpeg|png)$/;
+  var ID3_MAX_CHAPS = 255;                     // a CTOC counts its entries in one byte
+  function id3Clean(v, max) {
+    if (Array.isArray(v)) return v.slice(0, 10).map(function (x) { return id3Clean(x, max); }).filter(Boolean).join("\u0000");
+    if (typeof v === "number" && isFinite(v)) v = String(Math.round(v));
+    if (typeof v !== "string") return "";
+    return v.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "").trim().slice(0, max);
+  }
+  function id3Latin(s) {
+    var out = [];
+    for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); if (c > 126 || c < 32) return null; out.push(c); }
+    return out;
+  }
+  function id3Url(u) {
+    u = id3Clean(u, 2000);
+    return /^https?:\/\/[\x21-\x7e]+$/.test(u) ? id3Latin(u) : null;
+  }
+  function be32(n) { return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255]; }
+  function id3Frame(id, body) {
+    return [id.charCodeAt(0), id.charCodeAt(1), id.charCodeAt(2), id.charCodeAt(3)].concat(syncsafe(body.length), [0, 0], body);
+  }
+  function id3TextFrame(id, text) { return id3Frame(id, [3].concat(utf8(text))); }
+  function id3Push(out, bytes) { for (var i = 0; i < bytes.length; i++) out.push(bytes[i]); }
+  function id3v24(tags) {
+    tags = tags && typeof tags === "object" ? tags : {};
+    var out = [];
+    ID3_TEXT.forEach(function (f) {
+      var v = id3Clean(tags[f[0]], f[2]);
+      if (!v || (ID3_OK[f[0]] && !ID3_OK[f[0]].test(v))) return;
+      id3Push(out, id3TextFrame(f[1], v));
+    });
+    var cm = tags.comment;
+    if (typeof cm === "string") cm = { text: cm };
+    if (cm && typeof cm === "object") {
+      var ct = id3Clean(cm.text, 4000), cl = /^[a-z]{3}$/.test(cm.lang) ? cm.lang : "und";
+      if (ct) id3Push(out, id3Frame("COMM", [3].concat(id3Latin(cl), utf8(id3Clean(cm.desc, 64)), [0], utf8(ct))));
     }
-    frame("TIT2", String(title).slice(0, 200));
-    frame("TSSE", tool);
-    if (!frames.length) return new Uint8Array(0);
-    return new Uint8Array([0x49, 0x44, 0x33, 4, 0, 0].concat(syncsafe(frames.length), frames));
+    (Array.isArray(tags.txxx) ? tags.txxx.slice(0, 32) : []).forEach(function (x) {
+      var d = x && id3Clean(x.desc, 64), v = x && id3Clean(x.value, 4000);
+      if (d && v) id3Push(out, id3Frame("TXXX", [3].concat(utf8(d), [0], utf8(v))));
+    });
+    var url = tags.url ? id3Url(tags.url) : null;
+    if (url) id3Push(out, id3Frame("WOAS", url));
+    var cv = tags.cover;
+    if (cv && typeof cv === "object" && ID3_MIME.test(cv.mime) && cv.bytes && cv.bytes.length > 0 && cv.bytes.length < 16 * 1024 * 1024) {
+      var pt = cv.type >= 0 && cv.type <= 20 ? cv.type | 0 : 3;
+      var pic = [3].concat(id3Latin(cv.mime), [0, pt], utf8(id3Clean(cv.desc, 64)), [0]);
+      var fr = id3Frame("APIC", new Array(pic.length + cv.bytes.length));
+      var hd = fr.length - pic.length - cv.bytes.length;
+      for (var i = 0; i < pic.length; i++) fr[hd + i] = pic[i];
+      for (var j = 0; j < cv.bytes.length; j++) fr[hd + pic.length + j] = cv.bytes[j] & 255;
+      id3Push(out, fr);
+    }
+    var chaps = id3Chapters(tags.chapters);
+    if (chaps.length) {
+      var ids = [];
+      chaps.forEach(function (c) {
+        var body = id3Latin(c.id).concat([0], be32(c.start), be32(c.end), be32(0xffffffff), be32(0xffffffff));
+        if (c.title) body = body.concat(id3TextFrame("TIT2", c.title));
+        if (c.url) body = body.concat(id3Frame("WXXX", [3, 0].concat(c.url)));
+        id3Push(out, id3Frame("CHAP", body));
+        ids = ids.concat(id3Latin(c.id), [0]);
+      });
+      var toc = [116, 111, 99, 0, 3, chaps.length].concat(ids);   // "toc", top level + ordered
+      var tt = id3Clean(tags.tocTitle, 400);
+      if (tt) toc = toc.concat(id3TextFrame("TIT2", tt));
+      id3Push(out, id3Frame("CTOC", toc));
+    }
+    var tool = id3Clean(tags.tool, 200);
+    if (tool) id3Push(out, id3TextFrame("TSSE", tool));
+    if (!out.length) return new Uint8Array(0);
+    var pad = Math.max(0, Math.min(65536, tags.padding | 0));
+    var tag = new Uint8Array(10 + out.length + pad);
+    tag.set([0x49, 0x44, 0x33, 4, 0, 0].concat(syncsafe(out.length + pad)), 0);
+    tag.set(out, 10);
+    return tag;
+  }
+  // chapters → sorted, non-overlapping, at most 255, with safe ids ("ch1"…)
+  function id3Chapters(list) {
+    if (!Array.isArray(list)) return [];
+    var seen = {}, out = [];
+    list.forEach(function (c, i) {
+      if (!c || typeof c !== "object") return;
+      var a = Math.round(c.start), b = Math.round(c.end);
+      if (!(a >= 0) || !(b > a) || b > 0xfffffffe) return;
+      var id = typeof c.id === "string" && /^[A-Za-z0-9_-]{1,32}$/.test(c.id) && c.id !== "toc" ? c.id : "ch" + (i + 1);
+      if (seen[id]) return;
+      seen[id] = true;
+      out.push({ id: id, start: a, end: b, title: id3Clean(c.title, 400), url: c.url ? id3Url(c.url) : null });
+    });
+    out.sort(function (x, y) { return x.start - y.start; });
+    var keep = [];
+    out.forEach(function (c) { if (!keep.length || c.start >= keep[keep.length - 1].end) keep.push(c); });
+    return keep.slice(0, ID3_MAX_CHAPS);
+  }
+  // The title tag every Studio MP3 had before id3v24: TIT2 (200 characters) + TSSE.
+  function id3Tag(title, tool) {
+    return id3v24({ title: String(title == null ? "" : title).slice(0, 200), tool: tool });
   }
   function syncsafe(n) { return [(n >> 21) & 127, (n >> 14) & 127, (n >> 7) & 127, n & 127]; }
   function utf8(s) {
@@ -663,7 +774,7 @@
 
   var api = {
     Mp3Encoder: Mp3Encoder, mp3FrameBytes: mp3FrameBytes, mp3Header: mp3Header, MP3_KBPS: MP3_KBPS,
-    id3Tag: id3Tag, utf8: utf8, crc16: crc16, ENC_DELAY: ENC_DELAY, infoFrame: infoFrame,
+    id3Tag: id3Tag, id3v24: id3v24, utf8: utf8, crc16: crc16, ENC_DELAY: ENC_DELAY, infoFrame: infoFrame,
     oggCrc: oggCrc, OggWriter: OggWriter, opusHead: opusHead, opusTags: opusTags, oggOpus: oggOpus,
     opusSupported: opusSupported, encodeOpus: encodeOpus,
     _test: { HUFF: HUFF, TABLES: TABLES, SFB_L: SFB_L, granuleLayout: granuleLayout, quantise: quantise, Analysis: Analysis, CWIN: CWIN }
