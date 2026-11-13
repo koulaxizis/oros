@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.36.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.37.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -7869,6 +7869,9 @@
         { name: "CodeMirror 6", url: "https://codemirror.net/",
           by: "Marijn Haverbeke & contributors", lic: "MIT",
           k: "cr.codemirror" },
+        { name: "yaml 2.9.1", url: "https://eemeli.org/yaml/",
+          by: "Eemeli Aro", lic: "ISC",
+          k: "cr.yaml" },
         { name: "three.js r180", url: "https://threejs.org/",
           by: "three.js authors", lic: "MIT",
           k: "cr.three-js" },
