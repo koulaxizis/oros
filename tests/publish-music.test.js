@@ -217,3 +217,10 @@ test("music plan on a device before M3: an unknown step kind with its name stays
   const t = JSON.parse(JSON.stringify(Old.put(Old.empty(), "titles", { id: "t1", t: "S", plan: [step] }, T).titles[0]));
   assert.deepEqual(t.plan, [{ id: "s00001", k: "x", d: "2026-11-20", done: 0, n: "Upload" }]);
 });
+
+test("Stock: a release's CD goes in with its UPC/EAN as SKU and barcode, else the catalogue number", () => {
+  const t = { t: "Night", ppl: [{ r: "a", n: "Ann" }] };
+  assert.deepEqual(C.stockPrefillMed(t, { upc: "5201234000001", price: 12.5, cat: "OL-1" }, "CD"),
+    { name: "Night (CD)", note: "Ann", sku: "5201234000001", bc: "5201234000001", price: 1250 });
+  assert.deepEqual(C.stockPrefillMed(t, { upc: "", cat: "OL-2", price: 0 }, "Vinyl"), { name: "Night (Vinyl)", note: "Ann", sku: "OL-2" });
+});

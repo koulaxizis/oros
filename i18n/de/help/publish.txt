@@ -86,6 +86,8 @@ Jede Liste zeigt, was ihre Anteile ergeben, rot, wenn es nicht 100 % sind. Ein N
 
 Die Felder für ISRC und UPC/EAN prüfen den Code beim Tippen und warnen, wenn ein anderer Titel oder eine andere Ausgabe ihn schon hat. Gibt dir dein Vertrieb die Codes, trage sie ein. Hast du eigene Präfixe (Tab Codes), setzt `Nächster freier` den nächsten unbenutzten ein. `Es fehlt noch` nennt, was eine Veröffentlichung noch braucht: Künstler, Titel, ISRCs, Längen, Anteile, die 100 % ergeben, eine Ausgabe, UPC/EAN, Erscheinungstag und Cover.
 
+`In Musik` sucht den Titel in Musik. Bei einer CD-, Vinyl- oder Kassetten-Ausgabe legt `Produkt in Stock` sie als Produkt mit UPC/EAN als SKU und Barcode in Stock an. `Release-Paket in Atelier` (unter `Angaben zur Veröffentlichung`) macht aus dem Cover vier bearbeitbare Designs: das Shop-Cover 3000 × 3000, einen Instagram-Post, eine Story und ein Website-Banner.
+
 Eine Veröffentlichung hat ihren eigenen `Erscheinungsplan`, vom Erscheinungstag zurückdatiert: Master fertig (6 Wochen vorher), Artwork 3000 × 3000 px, Metadaten und Codes, Upload zum Vertrieb (4 Wochen vorher; die meisten Shops wollen 3 bis 4 Wochen), Editorial Pitch (3 Wochen vorher; Spotify for Artists braucht mindestens 7 Tage), Pre-Save-Link und Posts (2 Wochen vorher) und Posts der ersten Woche. Schritte verschieben, umbenennen, hinzufügen oder entfernen wie beim Plan eines Buchs; sie erscheinen auch in Kalender, Heute und To-Do.
 
 ## Codes

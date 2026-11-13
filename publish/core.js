@@ -1360,6 +1360,16 @@
     if (f.price > 0) p.price = Math.round(f.price * 100);
     return p;
   }
+  // Wave M3: a release's CD, vinyl or cassette edition as a Stock
+  // product: the UPC/EAN is the SKU and the barcode (else the
+  // catalogue number is the SKU).
+  function stockPrefillMed(t, e, label) {
+    var p = { name: line(t.t + (label ? " (" + label + ")" : ""), 120), note: authors(t).join(", ") };
+    if (e.upc) { p.sku = e.upc; p.bc = e.upc; }
+    else if (e.cat) p.sku = line(e.cat, 40);
+    if (e.price > 0) p.price = Math.round(e.price * 100);
+    return p;
+  }
   // Newsletter blocks (asAdd deep link): heading, text, and a button
   // to the shop page when the person has one.
   function newsBlocks(t, o) {
@@ -1414,7 +1424,7 @@
     used: used, clashes: clashes, nextFree: nextFree, blockUsage: blockUsage,
     fold: fold, authors: authors, list: list, gaps: gaps, okYmd: okYmd, num: num,
     coverPath: coverPath, coversInUse: coversInUse, fromPrefill: fromPrefill,
-    shopDraft: shopDraft, stockPrefill: stockPrefill, newsBlocks: newsBlocks, pressRelease: pressRelease,
+    shopDraft: shopDraft, stockPrefill: stockPrefill, stockPrefillMed: stockPrefillMed, newsBlocks: newsBlocks, pressRelease: pressRelease,
     STAGES: STAGES, STAGE_DAYS: STAGE_DAYS, BOOK_STAGES: BOOK_STAGES, MUSIC_STAGES: MUSIC_STAGES, MUSIC_STAGE_EN: MUSIC_STAGE_EN, MAX_PLAN: MAX_PLAN, addDays: addDays, makePlan: makePlan, sortPlan: sortPlan,
     planState: planState, byDay: byDay,
     ROY_BASES: ROY_BASES, MAX_ROY: MAX_ROY, cleanRoy: cleanRoy, cleanStmt: cleanStmt,
