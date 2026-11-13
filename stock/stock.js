@@ -1672,6 +1672,13 @@
   function shellWin() {
     try { return window.parent && window.parent !== window ? window.parent : null; } catch (e) { return null; }
   }
+  // TILL-1: the shell's screen lock knows whether this device is a
+  // till-only device (lock.js orosLock.till) and checks the owner's PIN.
+  function lockApi() {
+    var p = shellWin();
+    try { return p && p.orosLock && p.orosLock.till ? p.orosLock : null; } catch (e) { return null; }
+  }
+  function tillActive() { var L = lockApi(); try { return !!(L && L.till.active()); } catch (e) { return false; } }
   function openAtFn() {
     var p = shellWin();
     try { return p && typeof p.__orosOpenAt === "function" ? p : null; } catch (e) { return null; }
@@ -3836,6 +3843,19 @@
       money: money, esc: esc, printHtml: printHtml, todayYmd: todayYmd, newId: newId,
       vatRates: C.VAT_RATES, defVat: function () { return data.settings.vat; }, saveBlob: saveBlob,
       posPrefs: posPrefs,
+      // F3 helper device (TILL-1): till = the till is all this device
+      // shows; owner(secret) checks the owner's screen-lock PIN.
+      till: tillActive,
+      reopen: openPos,
+      lockKind: function () { var L = lockApi(); try { return L && L.isOn() ? L.snapshot().kind : ""; } catch (e) { return ""; } },
+      tillSet: function () { var L = lockApi(); try { return !!(L && L.till.set()); } catch (e) { return false; } },
+      tillTurn: function (on) { var L = lockApi(); try { return !!(L && L.till.turn(!!on)); } catch (e) { return false; } },
+      ownerCheck: function (secret) {
+        var L = lockApi();
+        if (!L) return Promise.resolve({ ok: false, code: "off" });
+        return L.till.check(secret).then(null, function () { return { ok: false, code: "wrong" }; });
+      },
+      openLockSettings: openAtFn() ? function () { openAtFn().__orosOpenAt("settings", { section: "lock" }); } : null,
       setPosPref: function (k, v) { posPrefs()[k] = v; prefs.pos = readPos(prefs.pos); savePrefs(); },
       addSale: posAddSale, voidSale: posVoidSale,
       putPl: function (row) {
@@ -4399,7 +4419,9 @@
     inheritPalette();
     watchPalette();
     render();
-    takeStaged();
+    // TILL-1: a till-only device shows the till and nothing else
+    if (tillActive()) { document.body.classList.add("till-only"); openPos(); }
+    else takeStaged();
     autoShop();
   }
   // ST-AUTO: the shop's new paid orders become sales here (stock/shop.js auto)

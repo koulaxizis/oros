@@ -639,3 +639,9 @@ dialog.pc-dlg.pos-dlg { width: min(1180px, calc(100vw - 24px)); height: calc(100
 .pl-shop { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border); }
 .pl-msg { font-size: 14px; overflow-wrap: anywhere; }
 @media (max-width: 420px) { .pl-row { flex-wrap: wrap; } .pl-txt { flex-basis: calc(100% - 40px); } .pl-val { margin-left: 30px; } }
+
+/* F3 helper device (TILL-1): the till is all a till-only device shows */
+body.till-only > :not(dialog):not(#toast) { visibility: hidden; }
+.pos-tillset { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 10px; }
+.pos-tillset .pos-tillis { font-weight: 600; }
+#st-pos-own-in { width: 100%; font-size: 1.2em; letter-spacing: .2em; }

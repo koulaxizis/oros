@@ -67,6 +67,14 @@ Jeder Verkauf ist auch eine normale Bewegung `Verkauf`, also funktionieren Besta
 
 Geräte mit einem älteren orOS verkaufen ohne Veranstaltungen; aktualisiere jedes Handy, das du zum Stand mitnimmst.
 
+#### Das Handy einer Hilfe (nur Kasse)
+Eine Hilfe kann auf dem eigenen Handy verkaufen, ohne den Rest von orOS zu sehen. Melde dich auf diesem Handy bei deiner Synchronisierung an, schalte [Einstellungen › Bildschirmsperre](app:settings) mit einer PIN ein, die nur du kennst, und wähle dann in der Kasse unter `Beleg-Einstellungen` `Dieses Gerät zur Kasse machen`. Stelle dort auch den `Höchster Rabatt auf diesem Gerät (%)` ein.
+- Ab dann öffnet orOS auf diesem Handy direkt die Kasse, ohne PIN. Schreibtisch, alle anderen Apps, Hilfe, Benachrichtigungen und Schnelleinstellungen sind ausgeblendet.
+- Ein Storno, `Beleg-Einstellungen`, `Veranstaltungen`, `Preislisten` und ein Rabatt über der Grenze fragen nach deiner PIN. `Zu Budget hinzufügen` gibt es in der Kasse nicht.
+- `Inhaber: orOS öffnen` oben in der Leiste zeigt den Sperrbildschirm: Deine PIN öffnet das ganze orOS; `Zurück zur Kasse` kehrt zurück. Sperren, ein unbenutztes Handy oder ein neuer Start von orOS führen zurück zur Kasse. Entsperren per Fingerabdruck gibt es an der Kasse nicht, denn die Fingerabdrücke auf dem Handy sind die der Hilfe.
+- Beenden: orOS mit deiner PIN öffnen, dann `Beleg-Einstellungen` › `Nur-Kasse-Modus beenden`. Auch das Ausschalten der Bildschirmsperre beendet ihn.
+- Das Handy hält weiter deine synchronisierten Daten, vor dem Bildschirm verborgen, nicht vor jemandem, der seinen Speicher lesen kann. Gib es nur jemandem, dem du vertraust.
+
 ### Inventur
 In einer `Inventur` gibst du ein, was du `Gezählt` hast. Bestand speichert die Differenz zu dem, was es erwartet hat, sodass ein Verkauf auf einem anderen Gerät im selben Moment trotzdem zählt.
 

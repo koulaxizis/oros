@@ -64,6 +64,11 @@
   var DAY = 86400000;
   var BIO_KID = /^[0-9a-f]{24}$/;
   var B64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
+  // Till-only device (TILL-1, Stock fair till F3): device-local
+  // "oros-till" = {v:1, on:1}; sessionStorage "oros-till-owner" = "1"
+  // while the owner has typed the PIN in this tab.
+  var TILL_KEY = "oros-till";
+  var OWNER_KEY = "oros-till-owner";
 
   function norm(s) {
     s = String(s == null ? "" : s);
@@ -93,6 +98,12 @@
              hidden: c.hidden === true };
   }
 
+  function parseTill(raw) {
+    try {
+      var o = typeof raw === "string" ? JSON.parse(raw) : raw;
+      return !!(o && typeof o === "object" && o.v === 1 && o.on === 1);
+    } catch (e) { return false; }
+  }
   function parseTries(raw) {
     var v;
     try { v = JSON.parse(raw || "null"); } catch (e) { v = null; }
@@ -202,9 +213,9 @@
 
   var Core = {
     BIO_KEY: BIO_KEY, BIO_DAYS: BIO_DAYS, parseBio: parseBio, bioDue: bioDue,
-    KEY: KEY, TRIES_KEY: TRIES_KEY, SEEN_KEY: SEEN_KEY, ITER: ITER, IDLES: IDLES,
+    KEY: KEY, TILL_KEY: TILL_KEY, TRIES_KEY: TRIES_KEY, SEEN_KEY: SEEN_KEY, ITER: ITER, IDLES: IDLES,
     DEFAULT_IDLE: DEFAULT_IDLE, FREE_TRIES: FREE_TRIES, WAIT_MAX: WAIT_MAX, GRACE_MAX: GRACE_MAX,
-    norm: norm, secretProblem: secretProblem, parseCfg: parseCfg, parseTries: parseTries,
+    norm: norm, secretProblem: secretProblem, parseCfg: parseCfg, parseTries: parseTries, parseTill: parseTill,
     afterFail: afterFail, waitLeft: waitLeft, stillOpen: stillOpen, sameText: sameText,
     STRICT_KEY: STRICT_KEY, parseStrict: parseStrict, strictCaps: strictCaps, clampCfg: clampCfg, loosens: loosens
   };
@@ -335,6 +346,26 @@
   function clearSeen() {
     try { root.sessionStorage.removeItem(SEEN_KEY); } catch (e) {}
   }
+
+  // Till-only device. Never inside a single app (?solo=): there the
+  // lock asks the PIN as always. The till needs the lock: without a
+  // PIN there is no owner to tell apart from the helper.
+  var IN_SOLO = (function () { try { return /[?&]solo=/.test(root.location.search); } catch (e) { return false; } })();
+  function tillSet() {
+    try { return !IN_SOLO && parseTill(root.localStorage.getItem(TILL_KEY)); } catch (e) { return false; }
+  }
+  function tillOn() { return !!(cfg && tillSet()); }
+  function isOwner() {
+    try { return root.sessionStorage.getItem(OWNER_KEY) === "1"; } catch (e) { return false; }
+  }
+  function setOwner(on) {
+    try {
+      if (on) root.sessionStorage.setItem(OWNER_KEY, "1");
+      else root.sessionStorage.removeItem(OWNER_KEY);
+    } catch (e) {}
+  }
+  // The till is in front: only Stock's till shows, nothing locks.
+  function tillActive() { return tillOn() && !isOwner(); }
 
   function emit() {
     listeners.slice().forEach(function (fn) {
@@ -494,7 +525,7 @@
   function bioReady() {
     if (strictLevel() === "hard") return false;     // Hardcore: the PIN / passphrase only
     var r = bioRec(), info = bioInfo();
-    return !!(cfg && r && bioLinked() && info && info.can === "ok" &&
+    return !!(cfg && r && !tillActive() && bioLinked() && info && info.can === "ok" &&
               info.kids.indexOf(r.kid) >= 0 && bioDue(r, Date.now()) === "ok");
   }
   function bioKid() {
@@ -719,6 +750,14 @@
     var forgot = node("button", "lk-link", t(kind === "pin" ? "lock.forgotPin" : "lock.forgotPass"));
     forgot.type = "button";
     main.appendChild(forgot);
+    if (tillActive()) {
+      // TILL-1: the helper's way back; only the owner's PIN goes on.
+      main.insertBefore(node("p", "lk-hint", t("lock.till.hint")), lab);
+      var back = node("button", "lk-btn lk-till-back", t("lock.till.back"));
+      back.type = "button";
+      back.addEventListener("click", function () { if (!busy) unlock(); });
+      main.appendChild(back);
+    }
     box.appendChild(main);
 
     // Forgot view: filled when it opens (sync.js loads after this file).
@@ -824,6 +863,12 @@
 
   function lock(reason) {
     if (locked || !cfg) return false;
+    if (tillOn()) {
+      // The owner leaves (idle, hidden, Lock now): back to the till.
+      if (!tillActive()) { setOwner(false); emit(); return false; }
+      // The till itself never locks; only the owner's own ask does.
+      if (reason !== "owner") return false;
+    }
     if (!doc.body) {
       doc.addEventListener("DOMContentLoaded", function () { lock(reason); });
       return false;
@@ -883,7 +928,7 @@
     box.textContent = "";
     ui.bioBtn = null;
     var r = bioRec();
-    if (!r || !bioLinked()) return;
+    if (!r || !bioLinked() || tillActive()) return;   // TILL-1: the helper's finger is not the owner's
     if (bioDue(r, Date.now()) === "days") {
       box.appendChild(node("p", "lk-hint", t(ui.kind === "pass" ? "lock.bio.daysPass" : "lock.bio.days")));
       return;
@@ -951,7 +996,7 @@
     say(ui.msg, "lock.msg.checking", "dim");
     matches(cfg, secret).then(function (ok) {
       setBusy(false);
-      if (ok) { clearTries(); bioTyped(); unlock(); return; }
+      if (ok) { clearTries(); bioTyped(); if (tillActive()) setOwner(true); unlock(); return; }
       failOnce();
       if (!ui) return;
       if (waitMs()) sayWait(ui.msg);
@@ -1172,6 +1217,36 @@
       // Turn off: no PIN asked (it only takes a way in away).
       disable: function () { bioForget(); var p = phone(); try { if (p) p.bio.refresh(); } catch (e) {} emit(); return true; }
     },
+    // Till-only device (TILL-1). Stock's till asks the owner's PIN for
+    // a void, the settings or a discount over the device's limit.
+    till: {
+      on: function () { return tillOn(); },
+      set: function () { return tillSet(); },
+      active: function () { return tillActive(); },
+      owner: function () { return isOwner(); },
+      // on = true: this device becomes a till (the lock must be on);
+      // the tab goes to the till at once. false: it stops.
+      turn: function (on) {
+        if (IN_SOLO) return false;
+        if (on && !load()) return false;
+        try {
+          if (on) root.localStorage.setItem(TILL_KEY, JSON.stringify({ v: 1, on: 1 }));
+          else root.localStorage.removeItem(TILL_KEY);
+        } catch (e) { return false; }
+        setOwner(false);
+        emit();
+        return true;
+      },
+      // The owner's PIN / passphrase: { ok, code: wrong | wait, wait }.
+      // Counts as a try, like the lock screen.
+      check: function (secret) {
+        if (!load()) return Promise.resolve({ ok: false, code: "off" });
+        if (busy) return Promise.resolve({ ok: false, code: "busy" });
+        return checkCurrent(String(secret || ""));
+      },
+      // The till's "Owner" button: the lock screen, with a way back.
+      ask: function () { return lock("owner"); }
+    },
     onChange: function (fn) {
       if (typeof fn !== "function") return function () {};
       listeners.push(fn);
@@ -1320,7 +1395,7 @@
     }
   } catch (e) { bc = null; }
   root.addEventListener("storage", function (e) {
-    if (e.key !== KEY && e.key !== BIO_KEY && e.key !== STRICT_KEY && e.key !== null) return;
+    if (e.key !== KEY && e.key !== BIO_KEY && e.key !== STRICT_KEY && e.key !== TILL_KEY && e.key !== null) return;
     load();
     if (!cfg && locked) unlock();
     emit();
@@ -1346,6 +1421,7 @@
     try { seen = Number(root.sessionStorage.getItem(SEEN_KEY)) || 0; } catch (e) {}
     // Hardcore: every start asks, even a reload a moment later.
     if (strictLevel() !== "hard" && stillOpen(cfg, seen, Date.now())) lastActive = seen;
+    else if (tillOn() && strictLevel() !== "hard") setOwner(false);   // TILL-1: a fresh start opens on the till, no PIN; Hardcore still asks
     else lock("start");
   }
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));
