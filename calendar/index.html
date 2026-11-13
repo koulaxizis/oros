@@ -436,6 +436,7 @@
       <div id="gu-tell-row" class="dlg-row"></div>
     </div>
     <div class="dlg-row gu-tools">
+      <button id="gu-door-btn" type="button" class="btn prim" data-i18n="gu.door"></button>
       <button id="gu-from-ct" type="button" class="btn" data-i18n="gu.add.contacts"></button>
       <button id="gu-add" type="button" class="btn" data-i18n="gu.add.one"></button>
     </div>
@@ -467,6 +468,7 @@
       <div class="dlg-row">
         <button id="gu-save" type="submit" class="btn prim" data-i18n="gu.save"></button>
         <button id="gu-form-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+        <button id="gu-tix-btn" type="button" class="btn" data-i18n="gu.tix" hidden></button>
         <button id="gu-del" type="button" class="btn danger" data-i18n="gu.del" hidden></button>
       </div>
     </form>
@@ -480,9 +482,42 @@
       <button id="gu-todo" type="button" class="btn" data-i18n="gu.todo" hidden></button>
       <button id="gu-csv" type="button" class="btn" data-i18n="gu.csv"></button>
       <button id="gu-print" type="button" class="btn" data-i18n="gu.print"></button>
+      <button id="gu-tixall" type="button" class="btn" data-i18n="gu.tixall"></button>
     </div>
     <div class="dlg-row">
       <button id="gu-done" type="button" class="btn prim" data-i18n="lbl.done"></button>
+    </div>
+  </dialog>
+
+  <!-- A guest's ticket (wave E3) -->
+  <dialog id="gu-tix" aria-labelledby="gu-tix-title">
+    <h3 id="gu-tix-title" data-i18n="gu.tix.title"></h3>
+    <div class="gu-ticket">
+      <canvas id="gu-tix-qr" width="264" height="264" role="img" data-i18n-aria="gu.tix.qr"></canvas>
+      <p id="gu-tix-name" class="gu-tix-name"></p>
+      <p id="gu-tix-ev" class="gu-tix-ev"></p>
+      <p class="gu-hint" data-i18n="gu.tix.hint"></p>
+    </div>
+    <div class="dlg-row gu-tools">
+      <button id="gu-tix-share" type="button" class="btn" data-i18n="gu.tix.share" hidden></button>
+      <button id="gu-tix-save" type="button" class="btn" data-i18n="gu.tix.save"></button>
+      <button id="gu-tix-done" type="button" class="btn prim" data-i18n="lbl.done"></button>
+    </div>
+  </dialog>
+
+  <!-- Check-in at the door with the camera (wave E3) -->
+  <dialog id="gu-door" aria-labelledby="gu-door-title">
+    <h3 id="gu-door-title" data-i18n="gu.door"></h3>
+    <p id="gu-door-count" class="gu-sum" aria-live="polite"></p>
+    <div class="gu-cam"><video id="gu-door-video" playsinline muted></video></div>
+    <div id="gu-door-res" class="gu-door-res" role="status" aria-live="assertive"></div>
+    <div id="gu-door-ask" class="dlg-row" hidden>
+      <button id="gu-door-let" type="button" class="btn prim" data-i18n="gu.door.let"></button>
+      <button id="gu-door-skip" type="button" class="btn" data-i18n="gu.door.skip"></button>
+    </div>
+    <div class="dlg-row">
+      <button id="gu-door-cam" type="button" class="btn"></button>
+      <button id="gu-door-done" type="button" class="btn prim" data-i18n="lbl.done"></button>
     </div>
   </dialog>
 

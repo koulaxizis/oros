@@ -30,6 +30,8 @@
   var STATUSES = ["i", "y", "m", "n", "w"];
   var ID_RE = /^[A-Za-z0-9_.:-]{1,64}$/;
   // event ids come from many places (imports, CalDAV): any one-line text without "/"
+  // ticket key of a list (E3): 32 random bytes, base64url
+  var SK_RE = /^[A-Za-z0-9_-]{43}$/;
   var EV_RE = /^[^\/\u0000-\u001f\u007f]{1,200}$/;
 
   function num(v) { return typeof v === "number" && isFinite(v); }
@@ -70,7 +72,9 @@
     if (strict && !num(l.mtime)) return null;
     var cap = num(l.cap) ? Math.max(0, Math.min(LIM.cap, Math.floor(l.cap))) : 0;
     var g = (Array.isArray(l.g) ? l.g : []).map(function (x) { return normGuest(x, strict); }).filter(Boolean);
-    return { id: l.id, cap: cap, mtime: num(l.mtime) ? l.mtime : 0, g: g };
+    var out = { id: l.id, cap: cap, mtime: num(l.mtime) ? l.mtime : 0, g: g };
+    if (typeof l.sk === "string" && SK_RE.test(l.sk)) out.sk = l.sk;
+    return out;
   }
 
   function newer(a, b) {   // a beats b?
@@ -81,7 +85,7 @@
   function byId(a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); }
 
   function merge(local, remote) {
-    var tomb = {}, lists = {}, guests = {};
+    var tomb = {}, lists = {}, guests = {}, keys = {};
     [local, remote].forEach(function (side) {
       if (!side || typeof side !== "object") return;
       (Array.isArray(side.deleted) ? side.deleted : []).map(normTomb).filter(Boolean).forEach(function (d) {
@@ -92,6 +96,9 @@
         if (!l) return;
         var head = { id: l.id, cap: l.cap, mtime: l.mtime };
         if (newer(head, lists[l.id])) lists[l.id] = head;
+        // the ticket key never changes once made: the smallest one wins
+        // (two devices making one before they synced is the only clash)
+        if (l.sk && (!keys[l.id] || l.sk < keys[l.id])) keys[l.id] = l.sk;
         var gs = guests[l.id] || (guests[l.id] = {});
         l.g.forEach(function (g) { if (newer(g, gs[g.id])) gs[g.id] = g; });
       });
@@ -110,7 +117,9 @@
       if (!keep.length && !headAlive) return;
       if (lt && (headAlive || keep.length)) delete tomb[lid];
       keep.sort(byId);
-      outLists.push({ id: lid, cap: headAlive ? head.cap : 0, mtime: headAlive ? head.mtime : lt.mtime, g: keep });
+      var row = { id: lid, cap: headAlive ? head.cap : 0, mtime: headAlive ? head.mtime : lt.mtime, g: keep };
+      if (keys[lid]) row.sk = keys[lid];
+      outLists.push(row);
     });
     // guest tombstones under a list tombstone that covers them say nothing more
     Object.keys(tomb).forEach(function (id) {
@@ -287,10 +296,81 @@
     });
   }
 
+  // ---------- tickets (wave E3) ----------
+  // A ticket is "OT1.<guest id>.<sig>", sig = the first 16 bytes of
+  // HMAC-SHA-256(list key, "orOS ticket|<event id>|<guest id>"),
+  // base64url. No name or email in the code: the door looks the guest
+  // up in the list, offline. `subtle` = crypto.subtle (passed in).
+  function b64u(bytes) {
+    var bin = "";
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    var b = typeof btoa === "function" ? btoa(bin) : Buffer.from(bin, "binary").toString("base64");
+    return b.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function unb64u(s) {
+    var b = s.replace(/-/g, "+").replace(/_/g, "/");
+    while (b.length % 4) b += "=";
+    var bin = typeof atob === "function" ? atob(b) : Buffer.from(b, "base64").toString("binary");
+    var out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  // a new key from 32 random bytes the caller passes (crypto.getRandomValues)
+  function newKey(rand32) { return b64u(rand32); }
+  // Give the list a ticket key if it has none (returns a new state).
+  function withKey(data, evId, rand32, now) {
+    var st = clone(data || empty()), l = ensureList(st, evId, now);
+    if (!l || l.sk) return st;
+    l.sk = newKey(rand32);
+    l.mtime = now;
+    return merge(st, null);
+  }
+  var TIX_RE = /^OT1\.([A-Za-z0-9_.:-]{1,64})\.([A-Za-z0-9_-]{22})$/;
+  function sign(subtle, sk, evId, gid) {
+    var enc = new TextEncoder();
+    return subtle.importKey("raw", unb64u(sk), { name: "HMAC", hash: "SHA-256" }, false, ["sign"])
+      .then(function (k) { return subtle.sign("HMAC", k, enc.encode("orOS ticket|" + evId + "|" + gid)); })
+      .then(function (buf) { return b64u(new Uint8Array(buf).slice(0, 16)); });
+  }
+  function ticket(subtle, list, gid) {
+    if (!list || !list.sk) return Promise.reject(new Error("nokey"));
+    return sign(subtle, list.sk, list.id, gid).then(function (sig) { return "OT1." + gid + "." + sig; });
+  }
+  function parseTicket(text) {
+    var m = TIX_RE.exec(String(text || "").trim());
+    return m ? { gid: m[1], sig: m[2] } : null;
+  }
+  function sameStr(a, b) {             // constant time for equal lengths
+    if (a.length !== b.length) return false;
+    var d = 0;
+    for (var i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    return d === 0;
+  }
+  // What the door says about a scanned code:
+  //   { r: "bad" }        not an orOS ticket, or not for this event
+  //   { r: "removed" }    signed for this event, but the guest was removed
+  //   { r: "in", g }      already checked in (g.in = when)
+  //   { r: "ok", g }      coming: let in
+  //   { r: "ask", g }     on the list but not "coming" (maybe, no answer,
+  //                       waiting, not coming): the person at the door decides
+  function check(subtle, list, text) {
+    var p = parseTicket(text);
+    if (!p || !list || !list.sk) return Promise.resolve({ r: "bad" });
+    return sign(subtle, list.sk, list.id, p.gid).then(function (sig) {
+      if (!sameStr(sig, p.sig)) return { r: "bad" };
+      var g = null;
+      list.g.forEach(function (x) { if (x.id === p.gid) g = x; });
+      if (!g) return { r: "removed" };
+      if (g["in"]) return { r: "in", g: g };
+      return { r: g.s === "y" ? "ok" : "ask", g: g };
+    }, function () { return { r: "bad" }; });
+  }
+
   var api = { LIM: LIM, STATUSES: STATUSES, normGuest: normGuest, merge: merge, empty: empty,
     listOf: listOf, counts: counts, fits: fits, waiting: waiting, nextUp: nextUp, settle: settle,
     putGuest: putGuest, removeGuest: removeGuest, setCap: setCap, checkIn: checkIn, dropList: dropList,
-    fromContact: fromContact, csv: csv, view: view, seatsOf: seatsOf };
+    fromContact: fromContact, csv: csv, view: view, seatsOf: seatsOf,
+    withKey: withKey, ticket: ticket, parseTicket: parseTicket, check: check };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.OrosCalGuests = api;
 })(typeof window !== "undefined" ? window : null);

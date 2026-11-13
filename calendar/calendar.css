@@ -1757,7 +1757,7 @@ dialog#hh-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 
 
 /* ---------- Events with guests (wave E1) ---------- */
-dialog#gu-dlg, dialog#gu-pick {
+dialog#gu-dlg, dialog#gu-pick, dialog#gu-tix, dialog#gu-door {
   background: var(--panel-bg);
   color: var(--text);
   border: 1px solid var(--border);
@@ -1768,8 +1768,8 @@ dialog#gu-dlg, dialog#gu-pick {
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
 }
-dialog#gu-dlg::backdrop, dialog#gu-pick::backdrop { background: rgba(0, 0, 0, 0.5); }
-#gu-dlg h3, #gu-pick h3 { font-size: 14px; color: var(--accent); margin-bottom: 6px; overflow-wrap: anywhere; }
+dialog#gu-dlg::backdrop, dialog#gu-pick::backdrop, dialog#gu-tix::backdrop, dialog#gu-door::backdrop { background: rgba(0, 0, 0, 0.5); }
+#gu-dlg h3, #gu-pick h3, #gu-tix h3, #gu-door h3 { font-size: 14px; color: var(--accent); margin-bottom: 6px; overflow-wrap: anywhere; }
 #gu-when { margin-bottom: 8px; overflow-wrap: anywhere; }
 .gu-sum { display: grid; gap: 2px; font-size: 13px; margin-bottom: 10px; }
 .gu-parts { font-size: 12px; color: var(--text-dim); }
@@ -1840,8 +1840,30 @@ dialog#gu-dlg::backdrop, dialog#gu-pick::backdrop { background: rgba(0, 0, 0, 0.
 .gu-pick-row { border-bottom: 1px solid var(--border); padding: 4px 2px; }
 .gu-pick-row .chk { display: flex; align-items: center; gap: 8px; }
 .gu-pick-txt { display: grid; min-width: 0; }
+.gu-ticket { display: grid; justify-items: center; gap: 4px; text-align: center; margin-bottom: 8px; }
+#gu-tix-qr { width: min(264px, 70vw); height: auto; aspect-ratio: 1; image-rendering: pixelated; border-radius: 6px; background: #fff; }
+.gu-tix-name { font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.gu-tix-ev { font-size: 12.5px; color: var(--text-dim); overflow-wrap: anywhere; }
+.gu-cam { border-radius: 10px; overflow: hidden; background: #000; margin-bottom: 8px; }
+.gu-cam video { display: block; width: 100%; max-height: 46dvh; object-fit: cover; }
+.gu-door-res {
+  min-height: 64px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.gu-door-res.ok { background: rgba(158, 206, 106, 0.22); border-color: #9ece6a; }
+.gu-door-res.warn, .gu-door-res.ask { background: rgba(224, 175, 104, 0.22); border-color: #e0af68; }
+.gu-door-res.bad { background: rgba(224, 108, 117, 0.22); border-color: var(--danger, #e06c75); }
 @media (max-width: 420px) {
-  dialog#gu-dlg, dialog#gu-pick { padding: 12px; width: calc(100vw - 16px); }
+  dialog#gu-dlg, dialog#gu-pick, dialog#gu-tix, dialog#gu-door { padding: 12px; width: calc(100vw - 16px); }
   .gu-ctl { width: 100%; }
   .gu-st { flex: 1 1 auto; }
 }
@@ -1849,4 +1871,7 @@ dialog#gu-dlg::backdrop, dialog#gu-pick::backdrop { background: rgba(0, 0, 0, 0.
   .pr-guests { width: 100%; border-collapse: collapse; margin-top: 8px; }
   .pr-guests th, .pr-guests td { border: 1px solid #999; padding: 3px 5px; text-align: left; font-size: 10pt; }
   .pr-guests .pr-box { width: 1.5em; text-align: center; }
+  .pr-tix { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; }
+  .pr-tix-card { display: grid; justify-items: center; gap: 1mm; border: 1px dashed #999; padding: 4mm; break-inside: avoid; text-align: center; font-size: 10pt; }
+  .pr-tix-card img { width: 45mm; height: 45mm; image-rendering: pixelated; }
 }

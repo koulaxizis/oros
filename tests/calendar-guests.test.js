@@ -156,3 +156,48 @@ test("guests: guests.js stays pure (no DOM, no storage, no clock)", () => {
   const src = fs.readFileSync(path.join(ROOT, "calendar/guests.js"), "utf8").replace(/\/\/.*$/gm, "");
   assert.ok(!/document\.|localStorage|Date\.now|innerHTML/.test(src));
 });
+
+// ---------- wave E3: tickets ----------
+const subtle = require("crypto").webcrypto.subtle;
+const R1 = new Uint8Array(32).fill(7), R2 = new Uint8Array(32).fill(200);
+
+test("tickets: the key is made once and the smallest wins a clash", () => {
+  let st = put(G.empty(), { id: "g1", n: "A", s: "y" }, 1).state;
+  const a = G.withKey(st, EV, R1, 2), b = G.withKey(st, EV, R2, 3);
+  const ka = G.listOf(a, EV).sk, kb = G.listOf(b, EV).sk;
+  assert.match(ka, /^[A-Za-z0-9_-]{43}$/);
+  assert.equal(G.listOf(G.withKey(a, EV, R2, 9), EV).sk, ka, "an existing key is kept");
+  const m1 = G.merge(a, b), m2 = G.merge(b, a);
+  assert.equal(JSON.stringify(m1), JSON.stringify(m2));
+  assert.equal(G.listOf(m1, EV).sk, ka < kb ? ka : kb);
+  assert.equal(G.listOf(G.setCap(m1, EV, 5, 99), EV).sk, G.listOf(m1, EV).sk, "a later head edit keeps the key");
+});
+
+test("tickets: signed per event and guest, checked offline", async () => {
+  let st = put(G.empty(), { id: "g1", n: "A", s: "y" }, 1).state;
+  st = put(st, { id: "g2", n: "B", s: "m" }, 2).state;
+  st = G.withKey(st, EV, R1, 3);
+  const l = G.listOf(st, EV);
+  const t1 = await G.ticket(subtle, l, "g1");
+  assert.match(t1, /^OT1\.g1\.[A-Za-z0-9_-]{22}$/);
+  assert.equal((await G.check(subtle, l, t1)).r, "ok");
+  assert.equal((await G.check(subtle, l, await G.ticket(subtle, l, "g2"))).r, "ask");
+  assert.equal((await G.check(subtle, l, t1.replace("OT1.g1", "OT1.g2"))).r, "bad", "a signature for another guest");
+  assert.equal((await G.check(subtle, l, "https://example.org")).r, "bad");
+  // the same guest id under another event's key
+  const other = G.listOf(G.withKey(put(G.empty(), { id: "g1", n: "A" }, 1).state, "evother", R1, 2), "evother");
+  assert.equal((await G.check(subtle, other, t1)).r, "bad", "a ticket of another event");
+  let st2 = G.checkIn(st, EV, "g1", true, 50);
+  const again = await G.check(subtle, G.listOf(st2, EV), t1);
+  assert.equal(again.r, "in");
+  assert.equal(again.g.in, 50);
+  st2 = G.removeGuest(st2, EV, "g1", 60);
+  assert.equal((await G.check(subtle, G.listOf(st2, EV), t1)).r, "removed");
+});
+
+test("guests: both Calendar guest scripts parse in strict mode", () => {
+  const vm = require("vm");
+  for (const f of ["calendar/guests.js", "calendar/guestsui.js"]) {
+    assert.doesNotThrow(() => new vm.Script("\"use strict\";" + fs.readFileSync(path.join(ROOT, f), "utf8"), { filename: f }), f);
+  }
+});

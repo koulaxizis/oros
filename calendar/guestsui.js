@@ -211,6 +211,7 @@
       $("gu-k").value = g && g.k ? String(g.k) : "0";
       $("gu-x").value = g && g.x ? g.x : "";
       $("gu-del").hidden = !g;
+      $("gu-tix-btn").hidden = !g || !subtle;
       $("gu-del").textContent = t("gu.del");
       $("gu-form").hidden = false;
       setTimeout(function () { $("gu-n").focus(); }, 30);
@@ -458,6 +459,284 @@
       $("gu-dlg").close();
       p.__orosOpenAt("todo", { addItems: { newList: fmt("gu.todo.list", { t: title }).slice(0, 60), from: "Calendar", items: items } });
     });
+
+    // ---------- tickets + the door (wave E3) ----------
+    // The QR encoder (../qr/qr-encode.js) and, where the browser has no
+    // BarcodeDetector, jsQR (../vendor/jsqr, Apache-2.0) load only on
+    // first use; both are in the orOS precache, so the door works offline.
+    var subtle = (window.crypto && window.crypto.subtle) || null;
+    var scripts = {};
+    function loadScript(src, ready) {
+      if (ready()) return Promise.resolve();
+      if (scripts[src]) return scripts[src];
+      scripts[src] = new Promise(function (resolve, reject) {
+        var sc = document.createElement("script");
+        sc.src = src;
+        sc.onload = function () { if (ready()) resolve(); else { scripts[src] = null; reject(new Error("load")); } };
+        sc.onerror = function () { scripts[src] = null; reject(new Error("load")); };
+        document.head.appendChild(sc);
+      });
+      return scripts[src];
+    }
+    function qrLib() { return loadScript("../qr/qr-encode.js", function () { return !!window.orosQR; }); }
+    function keyed() {   // the list with its ticket key (made on first use)
+      var l = list();
+      if (l && l.sk) return l;
+      var r = new Uint8Array(32);
+      window.crypto.getRandomValues(r);
+      save(G.withKey(data, openId, r, Date.now()));
+      return list();
+    }
+    function drawQr(cv, text, px) {
+      var q = window.orosQR.encode(text, { ecl: "M" }), m = 4, n = q.size + m * 2;
+      var scale = Math.max(1, Math.floor(px / n));
+      cv.width = cv.height = n * scale;
+      var g = cv.getContext("2d");
+      g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height);
+      g.fillStyle = "#000";
+      for (var y = 0; y < q.size; y++) for (var x = 0; x < q.size; x++) {
+        if (q.modules[y][x]) g.fillRect((x + m) * scale, (y + m) * scale, scale, scale);
+      }
+      return cv;
+    }
+    function guestById(id) {
+      var l = list();
+      return l ? l.g.filter(function (x) { return x.id === id; })[0] || null : null;
+    }
+    function nameLine(g) { return g.n + (g.k ? " " + fmt("gu.plus", { k: g.k }) : ""); }
+    // The ticket as a picture: code, name, event (for Save and Share).
+    function ticketPicture(code, g) {
+      var e = ev(), qr = drawQr(document.createElement("canvas"), code, 480);
+      var cv = document.createElement("canvas"), w = qr.width + 80, h = qr.height + 190;
+      cv.width = w; cv.height = h;
+      var c = cv.getContext("2d");
+      c.fillStyle = "#fff"; c.fillRect(0, 0, w, h);
+      c.drawImage(qr, 40, 30);
+      c.fillStyle = "#000"; c.textAlign = "center";
+      c.font = "bold 30px system-ui, sans-serif";
+      c.fillText(nameLine(g).slice(0, 40), w / 2, qr.height + 80);
+      c.font = "22px system-ui, sans-serif";
+      c.fillText(String((e && e.title) || "").slice(0, 50), w / 2, qr.height + 120);
+      c.fillText(e ? ctx.whenText(e).slice(0, 60) : "", w / 2, qr.height + 152);
+      return cv;
+    }
+    var tixGuest = null, tixCode = "";
+    function openTicket(g) {
+      if (!subtle) return;
+      var l = keyed();
+      if (!l) return;
+      Promise.all([qrLib(), G.ticket(subtle, l, g.id)]).then(function (r) {
+        tixGuest = g; tixCode = r[1];
+        drawQr($("gu-tix-qr"), tixCode, 264);
+        $("gu-tix-name").textContent = nameLine(g);
+        var e = ev();
+        $("gu-tix-ev").textContent = e ? (e.title || t("ev.untitled")) + " · " + ctx.whenText(e) : "";
+        var canShare = !!(navigator.canShare && navigator.share);
+        $("gu-tix-share").hidden = !canShare;
+        $("gu-tix").showModal();
+      }, function () { ctx.note(t("gu.tix.fail")); });
+    }
+    function ticketBlob() {
+      return new Promise(function (resolve, reject) {
+        ticketPicture(tixCode, tixGuest).toBlob(function (b) { if (b) resolve(b); else reject(new Error("blob")); }, "image/png");
+      });
+    }
+    function ticketName() {
+      return (t("gu.tix.file") + " " + String(tixGuest ? tixGuest.n : "")).replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) + ".png";
+    }
+    $("gu-tix-btn").addEventListener("click", function () {
+      var g = editId ? guestById(editId) : null;
+      if (g) openTicket(g);
+    });
+    $("gu-tix-done").addEventListener("click", function () { $("gu-tix").close(); });
+    $("gu-tix-save").addEventListener("click", function () {
+      ticketBlob().then(function (blob) {
+        var name = ticketName(), dh = ctx.dialogHost(), done = function () { ctx.note(t("gu.tix.saved")); };
+        if (dh && typeof dh.saveFile === "function") {
+          return dh.saveFile({ blob: blob, filename: name, mime: "image/png", types: [{ description: "PNG", accept: { "image/png": [".png"] } }] })
+            .then(function (r) { if (r && r.ok) done(); });
+        }
+        var url = URL.createObjectURL(blob), a = document.createElement("a");
+        a.href = url; a.download = name;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+        done();
+      }).catch(function () { ctx.note(t("gu.tix.fail")); });
+    });
+    $("gu-tix-share").addEventListener("click", function () {
+      ticketBlob().then(function (blob) {
+        var f = new File([blob], ticketName(), { type: "image/png" }), e = ev();
+        var d = { files: [f], title: t("gu.tix.title"), text: (e ? (e.title || "") + " · " + ctx.whenText(e) : "") };
+        if (!navigator.canShare(d)) { delete d.files; }
+        return navigator.share(d);
+      }).catch(function () {});
+    });
+    // Print every coming guest's ticket (paper tickets), 2 per row.
+    $("gu-tixall").addEventListener("click", function () {
+      if (!subtle) return;
+      var l = keyed(), e = ev();
+      if (!l || !e) return;
+      var coming = l.g.filter(function (g) { return g.s === "y"; }).sort(function (a, b) { return a.n.localeCompare(b.n); });
+      if (!coming.length) { ctx.note(t("gu.tixall.none")); return; }
+      qrLib().then(function () {
+        return Promise.all(coming.map(function (g) { return G.ticket(subtle, l, g.id); }));
+      }).then(function (codes) {
+        var box = $("print-area");
+        if (!box) { box = el("div"); box.id = "print-area"; document.body.appendChild(box); }
+        box.textContent = "";
+        var grid = el("div", "pr-tix");
+        coming.forEach(function (g, i) {
+          var card = el("div", "pr-tix-card"), img = el("img");
+          img.alt = "";
+          img.src = drawQr(document.createElement("canvas"), codes[i], 360).toDataURL("image/png");
+          card.appendChild(img);
+          card.appendChild(el("b", "", nameLine(g)));
+          card.appendChild(el("span", "", e.title || t("ev.untitled")));
+          card.appendChild(el("span", "", ctx.whenText(e)));
+          grid.appendChild(card);
+        });
+        box.appendChild(grid);
+        setTimeout(function () { try { window.focus(); window.print(); } catch (err) {} }, 50);
+      }, function () { ctx.note(t("gu.tix.fail")); });
+    });
+
+    // The door: camera → code → check offline → big answer.
+    var door = { stream: null, live: false, timer: 0, busy: false, hold: 0, pending: null, det: null };
+    function nativeDetector() {
+      if (door.det) return door.det;
+      door.det = Promise.resolve(null);
+      if (typeof window.BarcodeDetector !== "function") return door.det;
+      var BD = window.BarcodeDetector;
+      door.det = (typeof BD.getSupportedFormats === "function" ? BD.getSupportedFormats() : Promise.resolve(["qr_code"]))
+        .then(function (f) { return f && f.indexOf("qr_code") >= 0 ? new BD({ formats: ["qr_code"] }) : null; })
+        .catch(function () { return null; });
+      return door.det;
+    }
+    var grab = null;
+    function readFrame(v) {
+      return nativeDetector().then(function (det) {
+        if (det) return det.detect(v).then(function (r) { var h = (r || [])[0]; return h && h.rawValue ? h.rawValue : ""; }, function () { return ""; });
+        return loadScript("../vendor/jsqr/jsQR.js", function () { return typeof window.jsQR === "function"; }).then(function () {
+          var w = v.videoWidth, h = v.videoHeight, k = Math.min(1, 640 / Math.max(w, h, 1));
+          if (!grab) grab = document.createElement("canvas");
+          grab.width = Math.max(1, Math.round(w * k)); grab.height = Math.max(1, Math.round(h * k));
+          var g = grab.getContext("2d", { willReadFrequently: true });
+          g.drawImage(v, 0, 0, grab.width, grab.height);
+          var px = g.getImageData(0, 0, grab.width, grab.height);
+          var r = window.jsQR(px.data, px.width, px.height, { inversionAttempts: "dontInvert" });
+          return r && r.data ? r.data : "";
+        });
+      });
+    }
+    function doorCount() {
+      var c = G.counts(list());
+      $("gu-door-count").textContent = fmt("gu.door.count", { n: c.inN, y: c.yes, s: c.inSeats });
+    }
+    function doorSay(kind, text) {
+      var box = $("gu-door-res");
+      box.className = "gu-door-res" + (kind ? " " + kind : "");
+      box.textContent = text || "";
+    }
+    function doorStop() {
+      door.live = false;
+      clearTimeout(door.timer); clearTimeout(door.hold);
+      if (door.stream) door.stream.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+      door.stream = null;
+      try { $("gu-door-video").srcObject = null; } catch (e) {}
+      $("gu-door-video").parentNode.hidden = true;
+      $("gu-door-cam").textContent = t("gu.door.cam.on");
+    }
+    function doorLoop() {
+      var v = $("gu-door-video");
+      if (!door.live) return;
+      if (door.pending || door.busy || v.readyState < 2) { door.timer = setTimeout(doorLoop, 200); return; }
+      door.busy = true;
+      readFrame(v).then(function (text) {
+        door.busy = false;
+        if (!door.live) return;
+        if (text && text !== door.last) { door.last = text; doorRead(text); }
+        door.timer = setTimeout(doorLoop, 150);
+      }, function () { door.busy = false; if (door.live) door.timer = setTimeout(doorLoop, 400); });
+    }
+    function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+    function doorRead(text) {
+      var l = list();
+      if (!subtle || !l) return;
+      G.check(subtle, l, text).then(function (r) {
+        clearTimeout(door.hold);
+        $("gu-door-ask").hidden = true;
+        door.pending = null;
+        if (r.r === "ok") {
+          save(G.checkIn(data, openId, r.g.id, true, Date.now()));
+          doorSay("ok", fmt("gu.door.ok", { name: r.g.n }) + (r.g.k ? " · " + fmt("gu.door.plus", { k: r.g.k }) : ""));
+          buzz(60);
+        } else if (r.r === "in") {
+          doorSay("warn", fmt("gu.door.in", { name: r.g.n, time: timeOf(r.g["in"]) }));
+          buzz([80, 60, 80]);
+        } else if (r.r === "ask") {
+          door.pending = r.g;
+          doorSay("ask", fmt("gu.door.ask", { name: nameLine(r.g), s: t("gu.s." + r.g.s) }));
+          $("gu-door-ask").hidden = false;
+          buzz([40, 40, 40]);
+        } else {
+          doorSay("bad", t(r.r === "removed" ? "gu.door.removed" : "gu.door.bad"));
+          buzz([200]);
+        }
+        doorCount();
+        render();
+        // the same code is read again only after a pause
+        if (!door.pending) door.hold = setTimeout(function () { door.last = ""; }, 3000);
+      });
+    }
+    function doorStart() {
+      if (door.live) { doorStop(); doorSay("", ""); return; }
+      if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) { doorSay("bad", t("gu.door.nocam")); return; }
+      door.live = true;
+      $("gu-door-cam").textContent = t("gu.door.cam.off");
+      doorSay("", t("gu.door.wait"));
+      nativeDetector().then(function (d) {
+        if (!d) return loadScript("../vendor/jsqr/jsQR.js", function () { return typeof window.jsQR === "function"; });
+      }).catch(function () {});
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }).then(function (st) {
+        if (!door.live) { st.getTracks().forEach(function (tr) { tr.stop(); }); return; }
+        door.stream = st;
+        var v = $("gu-door-video");
+        v.srcObject = st;
+        v.parentNode.hidden = false;
+        return v.play().then(function () { doorSay("", t("gu.door.aim")); doorLoop(); });
+      }).catch(function () { doorStop(); doorSay("bad", t("gu.door.denied")); });
+    }
+    function doorAnswer(admit) {
+      var g = door.pending;
+      door.pending = null;
+      $("gu-door-ask").hidden = true;
+      if (g && admit) {
+        save(G.checkIn(data, openId, g.id, true, Date.now()));
+        doorSay("ok", fmt("gu.door.ok", { name: g.n }));
+        buzz(60);
+      } else doorSay("", door.live ? t("gu.door.aim") : "");
+      doorCount(); render();
+      door.hold = setTimeout(function () { door.last = ""; }, 3000);
+    }
+    $("gu-door-let").addEventListener("click", function () { doorAnswer(true); });
+    $("gu-door-skip").addEventListener("click", function () { doorAnswer(false); });
+    $("gu-door-cam").addEventListener("click", doorStart);
+    $("gu-door-done").addEventListener("click", function () { $("gu-door").close(); });
+    $("gu-door").addEventListener("close", function () { doorStop(); door.pending = null; door.last = ""; render(); });
+    $("gu-door-btn").addEventListener("click", function () {
+      if (!subtle) return;
+      if (!keyed()) return;
+      door.last = ""; door.pending = null;
+      $("gu-door-ask").hidden = true;
+      doorSay("", "");
+      doorCount();
+      $("gu-door-video").parentNode.hidden = true;
+      $("gu-door-cam").textContent = t("gu.door.cam.on");
+      $("gu-door").showModal();
+      doorStart();
+    });
+    // test hook: what a scan of `text` would do (no camera needed)
+    if (/[?&]standalone\b/.test(location.search)) window.__guDoorRead = doorRead;
 
     $("gu-done").addEventListener("click", function () { $("gu-dlg").close(); });
     $("gu-dlg").addEventListener("close", function () { closeForm(); hideTell(); openId = null; if (ctx.onChange) ctx.onChange(); });
