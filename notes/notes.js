@@ -435,6 +435,118 @@
     }
   };
 
+  // Voice notes (NOTES-VOICE, notes/voice.js)
+  (function (add) {
+    ["en", "el"].forEach(function (lg) {
+      Object.keys(add[lg]).forEach(function (k) { STRINGS[lg][k] = add[lg][k]; });
+    });
+  })({
+    en: {
+      "vc.record": "Record a voice note",
+      "vc.showBar": "Recording…",
+      "vc.bar": "Voice recording",
+      "vc.recording": "Recording",
+      "vc.paused": "Paused",
+      "vc.saving": "Saving…",
+      "vc.pause": "Pause",
+      "vc.resume": "Go on recording",
+      "vc.stop": "Stop and save",
+      "vc.cancel": "Discard",
+      "vc.cancelT": "Discard this recording?",
+      "vc.cancelB": "What was recorded so far is not kept.",
+      "vc.discard": "Discard",
+      "vc.size": "about {mb} MB",
+      "vc.into": "into “{title}”",
+      "vc.saved": "Voice note saved",
+      "vc.savedNoPage": "Saved in Files › Notes › Voice (the page is gone)",
+      "vc.saveFail": "Couldn't save the recording. It is kept on this device and offered again when Notes opens.",
+      "vc.saveFailLost": "Couldn't save the recording",
+      "vc.empty": "Nothing was recorded",
+      "vc.maxed": "A recording stops at 2 hours: saved",
+      "vc.noDisk": "Voice notes need the orOS disk: open Notes inside orOS",
+      "vc.noRec": "This browser can't record sound",
+      "vc.noMic": "No microphone was found",
+      "vc.denied": "The microphone is blocked: allow it in the browser's site settings",
+      "vc.strip": "Recordings",
+      "vc.play": "Play",
+      "vc.pausePlay": "Pause",
+      "vc.seek": "Position",
+      "vc.rate": "Speed",
+      "vc.more": "More",
+      "vc.missing": "Not on this device yet",
+      "vc.download": "Download",
+      "vc.delete": "Delete",
+      "vc.delT": "Delete this recording?",
+      "vc.delB": "The line leaves the page and the file goes to the Trash in Files, where it stays for 30 days.",
+      "vc.delMissing": "The file is not on this device yet, so only the line leaves the page.",
+      "vc.delFail": "Couldn't move the recording to the Trash",
+      "vc.trashed": "Moved to the Trash",
+      "vc.unused": "Unused recordings…",
+      "vc.unusedT": "Unused recordings",
+      "vc.unusedB": "No page on this device names these files. Recordings from the last 24 hours are never listed. Ticked files go to the Trash in Files.",
+      "vc.noUnused": "No unused recordings",
+      "vc.toTrash": "Move to the Trash",
+      "vc.trashedN": "{n} moved to the Trash",
+      "vc.mb": "{mb} MB",
+      "vc.recoverT": "Unsaved recording",
+      "vc.recoverB": "A recording of {dur} was cut off before it was saved. Save it into “{title}”?",
+      "vc.recoverB2": "A recording of {dur} was cut off before it was saved. Save it into the open page?",
+      "vc.recover": "Save it"
+    },
+    el: {
+      "vc.record": "Ηχογράφηση φωνητικής σημείωσης",
+      "vc.showBar": "Ηχογράφηση…",
+      "vc.bar": "Ηχογράφηση φωνής",
+      "vc.recording": "Ηχογράφηση",
+      "vc.paused": "Σε παύση",
+      "vc.saving": "Αποθήκευση…",
+      "vc.pause": "Παύση",
+      "vc.resume": "Συνέχεια ηχογράφησης",
+      "vc.stop": "Τέλος και αποθήκευση",
+      "vc.cancel": "Απόρριψη",
+      "vc.cancelT": "Απόρριψη της ηχογράφησης;",
+      "vc.cancelB": "Ό,τι γράφτηκε ως τώρα δεν κρατιέται.",
+      "vc.discard": "Απόρριψη",
+      "vc.size": "περίπου {mb} MB",
+      "vc.into": "στη «{title}»",
+      "vc.saved": "Η φωνητική σημείωση αποθηκεύτηκε",
+      "vc.savedNoPage": "Αποθηκεύτηκε στο Files › Notes › Voice (η σελίδα δεν υπάρχει πια)",
+      "vc.saveFail": "Η ηχογράφηση δεν αποθηκεύτηκε. Κρατιέται σε αυτή τη συσκευή και θα προταθεί ξανά όταν ανοίξει το Notes.",
+      "vc.saveFailLost": "Η ηχογράφηση δεν αποθηκεύτηκε",
+      "vc.empty": "Δεν γράφτηκε τίποτα",
+      "vc.maxed": "Η ηχογράφηση σταματά στις 2 ώρες: αποθηκεύτηκε",
+      "vc.noDisk": "Οι φωνητικές σημειώσεις θέλουν τον δίσκο του orOS: άνοιξε το Notes μέσα στο orOS",
+      "vc.noRec": "Αυτός ο browser δεν ηχογραφεί",
+      "vc.noMic": "Δεν βρέθηκε μικρόφωνο",
+      "vc.denied": "Το μικρόφωνο είναι μπλοκαρισμένο: επίτρεψέ το στις ρυθμίσεις ιστότοπου του browser",
+      "vc.strip": "Ηχογραφήσεις",
+      "vc.play": "Αναπαραγωγή",
+      "vc.pausePlay": "Παύση",
+      "vc.seek": "Θέση",
+      "vc.rate": "Ταχύτητα",
+      "vc.more": "Περισσότερα",
+      "vc.missing": "Δεν είναι ακόμα σε αυτή τη συσκευή",
+      "vc.download": "Λήψη",
+      "vc.delete": "Διαγραφή",
+      "vc.delT": "Διαγραφή της ηχογράφησης;",
+      "vc.delB": "Η γραμμή φεύγει από τη σελίδα και το αρχείο πάει στον Κάδο του Files, όπου μένει 30 ημέρες.",
+      "vc.delMissing": "Το αρχείο δεν είναι ακόμα σε αυτή τη συσκευή, οπότε φεύγει μόνο η γραμμή από τη σελίδα.",
+      "vc.delFail": "Η ηχογράφηση δεν μπήκε στον Κάδο",
+      "vc.trashed": "Μπήκε στον Κάδο",
+      "vc.unused": "Αχρησιμοποίητες ηχογραφήσεις…",
+      "vc.unusedT": "Αχρησιμοποίητες ηχογραφήσεις",
+      "vc.unusedB": "Καμία σελίδα σε αυτή τη συσκευή δεν αναφέρει αυτά τα αρχεία. Ηχογραφήσεις των τελευταίων 24 ωρών δεν εμφανίζονται ποτέ. Τα επιλεγμένα πάνε στον Κάδο του Files.",
+      "vc.noUnused": "Καμία αχρησιμοποίητη ηχογράφηση",
+      "vc.toTrash": "Στον Κάδο",
+      "vc.trashedN": "{n} μπήκαν στον Κάδο",
+      "vc.mb": "{mb} MB",
+      "vc.recoverT": "Ηχογράφηση χωρίς αποθήκευση",
+      "vc.recoverB": "Μια ηχογράφηση {dur} κόπηκε πριν αποθηκευτεί. Να μπει στη «{title}»;",
+      "vc.recoverB2": "Μια ηχογράφηση {dur} κόπηκε πριν αποθηκευτεί. Να μπει στην ανοιχτή σελίδα;",
+      "vc.recover": "Αποθήκευση"
+    }
+  });
+
   // Markdown wave (view, toolbar, daily note, templates, exports,
   // search in every notebook).
   (function (add) {
@@ -516,6 +628,47 @@
     }
   });
   var MD = window.OrosNotesMd;
+  // NOTES-VOICE: voice notes (voice-core.js pure, voice.js the UI).
+  // VUI is set up once the editor is built (voiceInit).
+  var VCORE = window.OrosNotesVoice || null;
+  var VUI = null;
+  var voiceCaretPage = null;   // the page whose caret the person has placed
+  function voiceInit() {
+    if (VUI || !VCORE || !window.OrosNotesVoiceUI) return;
+    VUI = window.OrosNotesVoiceUI.init({
+      t: t, tf: tf, toast: notifyTransient,
+      locale: window.orosI18n && window.orosI18n.locale ? window.orosI18n.locale() : (LANG === "el" ? "el-GR" : "en-GB"),
+      page: function (id) { return id ? pageById(id) : null; },
+      current: function () { return pageById(prefs.current); },
+      pages: function () { return state.pages; },
+      // Where a new voice line goes: the caret, when the person put
+      // it in this page; else the end of the text.
+      caret: function (id) {
+        var ta = document.getElementById("page-text");
+        return ta && id === prefs.current && voiceCaretPage === id ? ta.selectionEnd : -1;
+      },
+      setText: function (id, text, caret) {
+        var p = pageById(id);
+        if (!p || p.text === text) return;
+        p.text = text;
+        touchContent(p);
+        queueSave(p.id);
+        if (p.id === prefs.current) {
+          var ta = document.getElementById("page-text");
+          if (ta) {
+            syncField(ta, text);
+            if (caret != null && document.activeElement === ta) { try { ta.setSelectionRange(caret, caret); } catch (e) {} }
+          }
+          renderLinksStrip(p);
+          VUI.renderStrip(p);
+          renderPreview();
+        }
+      },
+      confirm: askConfirm,
+      ask: function (title, body, buttons) { uiDlg(title, body, buttons, null); },
+      download: function (blob, name, mime) { downloadBlob(blob, name, mime); }
+    });
+  }
   // Device-local names the daily note and templates are found by
   // (English, Greek and this device's language: a notebook may be
   // shared by devices in several languages). key: "daily.parent" or
@@ -1112,6 +1265,7 @@
       syncField(text, page.text || "");
       renderChips(page);
       renderLinksStrip(page);
+      if (VUI) VUI.renderStrip(page);
       renderPreview();
       return;
     }
@@ -1127,6 +1281,8 @@
     text.value  = page ? page.text : "";
     renderChips(page);
     renderLinksStrip(page);   // v0.17.0: outgoing [[links]] + backlinks
+    voiceCaretPage = null;
+    if (VUI) VUI.renderStrip(page);   // NOTES-VOICE: the page's recordings
     var tb = document.getElementById("md-toolbar");
     if (tb) tb.classList.toggle("off", !page);
     renderPreview();
@@ -2822,6 +2978,7 @@
     linksTimer = setTimeout(function () {
       linksTimer = null;
       renderLinksStrip(pageById(prefs.current));
+      if (VUI) VUI.renderStrip(pageById(prefs.current));
     }, 300);
   }
 
@@ -2880,8 +3037,10 @@
       wiki: function (target) {
         var r = resolveLink(target, page.nb, idx);
         return r.page ? "ok" : (r.ambiguous ? "amb" : "new");
-      }
+      },
+      voice: VCORE ? VCORE.voiceLine : null
     });
+    if (VUI) VUI.hydrate(pv, page);    // NOTES-VOICE: players in the voice blocks
   }
   var previewTimer = null;
   function queuePreview() {
@@ -4050,6 +4209,7 @@
           }]
         ];
         if (IMP) actions.push([t("imp.btn"), openImport]);
+        if (VUI) actions.push([t("vc.unused"), VUI.openUnused]);
         if (hhOn()) actions.push([t(hhOf(nb.id) ? "hh.stop.t" : "hh.share.t"), function () { hhAsk(nb.id); }, "nt-hh"]);
         
         actions.forEach(function (pair) {
@@ -4282,6 +4442,9 @@
 
     var text = document.getElementById("page-text");
     if (text) {
+      ["focus", "click", "keyup", "select"].forEach(function (ev) {
+        text.addEventListener(ev, function () { voiceCaretPage = prefs.current; });
+      });
       text.addEventListener("input", function () {
         var p = pageById(prefs.current);
         if (!p) return;
@@ -4313,6 +4476,8 @@
       var shareRef = document.getElementById("btn-share-page");
       header.insertBefore(todayBtn, shareRef || null);
     }
+    voiceInit();
+    if (VUI && header) VUI.mountButton(header, document.getElementById("btn-today"));
     // Page actions (⋮) in the editor header: the tree menu (rename, move,
     // delete…) is otherwise reachable only by right-click or long-press in
     // the drawer, which phones hide and draggable rows can swallow.
