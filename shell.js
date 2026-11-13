@@ -8691,6 +8691,8 @@
       return first.then(function () { return G.disable(); });
     });
     if (H && typeof H.off === "function") job(function () { return H.off(); });
+    // A sign-in link this device made (PAIR-1 magic link) stops working now.
+    if (window.orosPairLink && typeof window.orosPairLink.cancelAll === "function") job(function () { return window.orosPairLink.cancelAll(); });
     if (all) {
       job(sosRevokeShares);
       if (HH && typeof HH.list === "function" && typeof HH.leave === "function") job(function () {
