@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS — Add a browser (PAIR-1), v1.0.0
+   orOS — Add a browser (PAIR-1, LINK-1), v1.1.0
    A new browser gets the cloud sign-in and the sync passphrase from a
    device that is already signed in, in one step, end-to-end encrypted.
 
@@ -31,11 +31,31 @@
    Phases, new: wait → peer {check, dev} → adopting → done | error {e}
            old: connecting → approve {check, dev} → sending → done | error {e}
    Errors: expired, nocode, left, refused, net, bad, busy.
+
+   Sign-in link (LINK-1, 1.1.0): the same bundle, for a browser that
+   signs in later, without the other device at hand. The signed-in
+   device seals { t:"oros-signin", v:1, b: bundle, dev, del } as a
+   password link of "Send to someone" (share/relay.js, kind q1): the
+   pieces wait on the relay for 15 minutes, the link's #fragment holds
+   the address and the link key, and the password is an 8-character
+   code (Crockford base32, 40 bits) that the sending device shows and
+   that never goes into the link. The key that opens the pieces is
+   HKDF(link key ‖ PBKDF2-SHA-256(code, salt, 600,000)): the link alone
+   or the code alone opens nothing, and the relay sees neither. The
+   browser that opens it deletes the pieces at once with the revoke
+   secret it found inside (one use); the sender can cancel it too.
+     newLinkCode(), normLinkCode(text), fmtLinkCode(code), LINK_MS,
+     linkUrl(share, origin), linkFromText(text),
+     sendLink(bundle, { R, dev?, origin?, now?, fetch?, relay? })
+       → Promise<{ url, code, id, del, exp }>  (throws Error from R.create)
+     openLink(share, code, { R, now?, fetch?, relay? })
+       → Promise<{ b, dev, id, del, x } | { error }>  gone | pass | bad | net
+     linkAlive(id, { fetch?, relay? }) → Promise<true | false | null>
    ============================================================ */
 (function (root) {
   "use strict";
 
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
   var NS = "oros-pair/v1";
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // orOS's own relay on BOTH sides
   var ALPHA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";                 // Crockford base32
@@ -83,11 +103,7 @@
   // the pairing screen. A local copy (Portable, USB, localhost) cannot
   // be opened from a phone: the address is then useoros.online.
   function qrText(code, origin) {
-    var o = String(origin || "");
-    var local = !/^https:\/\//.test(o) ||
-      /^https:\/\/(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[)/.test(o) ||
-      /\.(local|lan|internal)(:\d+)?$/.test(o);
-    return (local ? "https://useoros.online" : o.replace(/\/+$/, "")) + "/#pair=" + fmtCode(code);
+    return baseUrl(origin) + "/#pair=" + fmtCode(code);
   }
   // A scanned or pasted text → the code, or "".
   function codeFromText(text) {
@@ -276,10 +292,87 @@
     };
   }
 
+  // ---------- 4. Sign-in link (LINK-1) ----------
+  var LINK_LEN = 8;
+  var LINK_CODE_RE = /^[0-9A-HJKMNP-TV-Z]{8}$/;
+  var LINK_MS = 15 * 60000;
+  var LINK_RE = /^q1\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\.[1-9]\d{0,2}\.[A-Za-z0-9_-]{22}$/;
+  var DEL_RE = /^[A-Za-z0-9_-]{43}$/;
+  var LINK_T = "oros-signin";
+
+  function newLinkCode() {
+    var b = C.getRandomValues(new Uint8Array(LINK_LEN)), s = "";
+    for (var i = 0; i < LINK_LEN; i++) s += ALPHA[b[i] & 31];
+    return s;
+  }
+  function normLinkCode(input) {
+    var s = String(input == null ? "" : input).toUpperCase().replace(/[\s\-_.·]/g, "")
+      .replace(/[IL]/g, "1").replace(/O/g, "0");
+    return LINK_CODE_RE.test(s) ? s : "";
+  }
+  function fmtLinkCode(code) { return code.slice(0, 4) + "-" + code.slice(4, 8); }
+  function baseUrl(origin) {
+    var o = String(origin || "");
+    var local = !/^https:\/\//.test(o) ||
+      /^https:\/\/(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[)/.test(o) ||
+      /\.(local|lan|internal)(:\d+)?$/.test(o);
+    return local ? "https://useoros.online" : o.replace(/\/+$/, "");
+  }
+  function linkUrl(share, origin) { return baseUrl(origin) + "/#signin=" + share; }
+  // A pasted link or the bare part after #signin= → the share code, or "".
+  function linkFromText(text) {
+    var s = String(text || "").trim();
+    var m = /[#&]signin=([A-Za-z0-9_.\-]{1,200})/.exec(s);
+    var c = m ? m[1] : s;
+    return LINK_RE.test(c) ? c : "";
+  }
+  function b64u(u8) { return b64(u8).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+
+  function sendLink(bundle, o) {
+    o = o || {};
+    var R = o.R || root.OrosShareRelay;
+    if (!R || typeof R.create !== "function") return Promise.reject(new Error("net"));
+    if (!bundle || typeof bundle !== "object") return Promise.reject(new Error("bad"));
+    var code = newLinkCode(), del = b64u(C.getRandomValues(new Uint8Array(32)));
+    var env = { t: LINK_T, v: 1, b: bundle, dev: cleanDev(o.dev), del: del };
+    return R.create(env, { ms: LINK_MS, del: del, password: code, now: o.now, fetch: o.fetch, relay: o.relay })
+      .then(function (r) {
+        return { url: linkUrl(r.code, o.origin), share: r.code, code: code, id: r.id, del: r.del, exp: r.exp };
+      });
+  }
+  function openLink(share, code, o) {
+    o = o || {};
+    var R = o.R || root.OrosShareRelay;
+    var c = linkFromText(share), k = normLinkCode(code);
+    if (!c) return Promise.resolve({ error: "bad" });
+    if (!k) return Promise.resolve({ error: "pass" });
+    if (!R || typeof R.open !== "function") return Promise.resolve({ error: "net" });
+    return R.open(c, { password: k, now: o.now, fetch: o.fetch, relay: o.relay }).then(function (r) {
+      if (!r || r.error) return { error: (r && r.error) || "bad" };
+      var e = r.e;
+      if (!e || e.t !== LINK_T || e.v !== 1 || !e.b || typeof e.b !== "object" || !DEL_RE.test(e.del || "")) return { error: "bad" };
+      return { b: e.b, dev: cleanDev(e.dev), id: R.parse(c).id, del: e.del, x: r.x };
+    }, function () { return { error: "net" }; });
+  }
+  // Is the link still waiting on the relay? true, false (used, cancelled
+  // or expired), or null (could not ask).
+  function linkAlive(id, o) {
+    o = o || {};
+    var f = o.fetch || (typeof fetch === "function" ? function (u, i) { return fetch(u, i); } : null);
+    if (!f || !/^[A-Za-z0-9_-]{22}$/.test(id || "")) return Promise.resolve(null);
+    var relay = String(o.relay || RELAY).replace(/\/+$/, "");
+    return f(relay + "/s/" + id + "/0", { credentials: "omit", cache: "no-store" }).then(function (r) {
+      return r.status === 404 ? false : r.ok ? true : null;
+    }, function () { return null; });
+  }
+
   var api = {
     VERSION: VERSION, newCode: newCode, normCode: normCode, fmtCode: fmtCode, CODE_RE: CODE_RE,
     derive: derive, seal: seal, unseal: unseal, checkNumber: checkNumber, codeFromText: codeFromText,
-    qrText: qrText, browserLabel: browserLabel, wsUrl: wsUrl, RELAY: RELAY, Session: Session
+    qrText: qrText, browserLabel: browserLabel, wsUrl: wsUrl, RELAY: RELAY, Session: Session,
+    LINK_MS: LINK_MS, LINK_CODE_RE: LINK_CODE_RE, newLinkCode: newLinkCode, normLinkCode: normLinkCode,
+    fmtLinkCode: fmtLinkCode, linkUrl: linkUrl, linkFromText: linkFromText, sendLink: sendLink,
+    openLink: openLink, linkAlive: linkAlive
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.OrosPair = api;

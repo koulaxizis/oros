@@ -1466,15 +1466,140 @@
     });
     render();
   }
+  // LINK-1: a sign-in link. The shell makes it (pair.js sendLink) and
+  // this page shows the link and the code (y.link), or, on the new
+  // browser, asks for the code (y.linkIn). linkUi holds what is typed.
+  var linkUi = { code: "", note: "" };
+  function linkTime(ms) {
+    try { return new Date(ms).toLocaleTimeString(LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB", { hour: "2-digit", minute: "2-digit" }); }
+    catch (e) { return ""; }
+  }
+  function linkSendPart(c, y) {
+    var p = y.link;
+    if (p.phase === "making") c.appendChild(pairMsg("dim", t("y.link.making")));
+    if (p.phase === "ready") {
+      c.appendChild(el("p", "hint", t("y.link.ready", { time: linkTime(p.exp) })));
+      var url = el("input", "dav-input");
+      url.id = "f-link-url";
+      url.type = "text";
+      url.readOnly = true;
+      url.value = p.url;
+      url.setAttribute("data-k", "link-url");
+      url.setAttribute("aria-label", t("y.link.url"));
+      c.appendChild(url);
+      var box = el("div", "pair-show");
+      box.appendChild(el("div", "hint", t("y.link.code")));
+      var code = el("div", "pair-code", p.code);
+      code.setAttribute("data-k", "link-code");
+      box.appendChild(code);
+      c.appendChild(box);
+      c.appendChild(el("div", "hint warn", t("y.link.warn")));
+      var mail = el("a", "btn", t("y.link.mail"));
+      mail.setAttribute("data-k", "y.link.mail");
+      mail.href = "mailto:?subject=" + encodeURIComponent(t("y.link.mail.subject")) +
+        "&body=" + encodeURIComponent(t("y.link.mail.body", { time: linkTime(p.exp) }) + "\n\n" + p.url);
+      mail.target = "_blank";
+      mail.rel = "noopener";
+      c.appendChild(actions(
+        button(t("y.link.copy"), "y.link.copy", function () {
+          var done = function () { linkUi.note = "y.link.copied"; render(); };
+          try { navigator.clipboard.writeText(p.url).then(done, function () { url.select(); }); } catch (e) { url.select(); }
+        }, "primary"),
+        typeof navigator.share === "function" ? button(t("y.link.share"), "y.link.share", function () {
+          try { navigator.share({ title: t("y.link.mail.subject"), url: p.url }).catch(function () {}); } catch (e) {}
+        }) : null,
+        mail));
+      if (linkUi.note) c.appendChild(pairMsg("ok", t(linkUi.note)));
+    }
+    if (p.phase === "used") c.appendChild(pairMsg("ok", t("y.link.used")));
+    if (p.phase === "gone") c.appendChild(pairMsg("dim", t("y.link.gone")));
+    if (p.phase === "error") c.appendChild(pairMsg("err", t("y.link.err." + (p.err === "pair-locked" || p.err === "rate" ? p.err : "net"))));
+    c.appendChild(actions(
+      p.phase === "gone" || p.phase === "error" ? button(t("y.link.again"), "y.link.again", function () { linkUi.note = ""; act("sync.link.make"); }, "primary") : null,
+      button(t(p.phase === "ready" || p.phase === "making" ? "y.link.cancel" : "y.pair.close"), "y.link.cancel", function () {
+        linkUi.note = "";
+        act("sync.link.cancel");
+      })));
+    return c;
+  }
+  // The new browser opened a sign-in link: type the code, then in.
+  function linkInCard(y, st) {
+    var L = y.linkIn, c = card(t("y.link.in"));
+    c.setAttribute("data-k", "link-in");
+    if (L.phase === "code" && st !== "off") {
+      // Already signed in here: the link is not used (and stays for the
+      // browser it was meant for until it expires).
+      c.appendChild(pairMsg("err", t("y.link.err.pair-connected")));
+      c.appendChild(actions(button(t("y.pair.close"), "y.link.close", function () { act("sync.link.close"); })));
+      return c;
+    }
+    if (L.phase === "code") {
+      var form = el("form", "pass");
+      form.setAttribute("autocomplete", "off");
+      form.appendChild(el("p", "hint", t("y.link.in.hint")));
+      var lab = el("label", "row-label", t("y.link.in.code"));
+      lab.htmlFor = "f-link-code";
+      form.appendChild(lab);
+      var inp = el("input", "pair-in");
+      inp.id = "f-link-code";
+      inp.type = "text";
+      inp.autocomplete = "off";
+      inp.spellcheck = false;
+      inp.setAttribute("autocapitalize", "characters");
+      inp.setAttribute("data-k", "link-code-in");
+      inp.placeholder = "XXXX-XXXX";
+      inp.maxLength = 12;
+      inp.value = linkUi.code;
+      inp.addEventListener("input", function () { linkUi.code = inp.value; });
+      form.appendChild(inp);
+      if (L.err === "pass") form.appendChild(pairMsg("err", t("y.link.err.pass")));
+      var rl = el("label", "check");
+      var rc = el("input");
+      rc.type = "checkbox";
+      rc.setAttribute("data-k", "link-session");
+      rc.checked = !!L.session;
+      rc.addEventListener("change", function () { act("sync.link.session", { on: rc.checked }); });
+      rl.appendChild(rc);
+      rl.appendChild(el("span", null, t("y.pair.session")));
+      form.appendChild(rl);
+      form.appendChild(el("div", "hint", t("y.pair.session.hint")));
+      var go = el("button", "btn primary", t("y.link.in.go"));
+      go.type = "submit";
+      go.setAttribute("data-k", "y.link.in.go");
+      form.appendChild(actions(go, button(t("y.pair.cancel"), "y.link.close", function () { linkUi.code = ""; act("sync.link.close"); })));
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var code = linkUi.code;
+        linkUi.code = "";
+        act("sync.link.open", { code: code });
+      });
+      c.appendChild(form);
+      return c;
+    }
+    if (L.phase === "opening") c.appendChild(pairMsg("dim", t("y.link.opening")));
+    if (L.phase === "adopting") c.appendChild(pairMsg("dim", t("y.pair.adopting")));
+    if (L.phase === "done") c.appendChild(pairMsg("ok", t("y.pair.done.new")));
+    if (L.phase === "error") {
+      var k = "y.link.err." + L.err, v = t(k);
+      c.appendChild(pairMsg("err", v === k ? t("y.link.err.net") : v));
+    }
+    if (L.phase === "done" || L.phase === "error") {
+      c.appendChild(actions(button(t("y.pair.close"), "y.link.close", function () { act("sync.link.close"); })));
+    }
+    return c;
+  }
   // The signed-in device: type or scan the code, then approve.
   function pairOldCard(y) {
     var p = y.pair && y.pair.role === "old" ? y.pair : null;
     if (!p && y.pairPrefill && !pairUi.open) { pairUi.open = true; pairUi.code = y.pairPrefill; act("sync.pair.clear"); }
     var c = card(t("y.pair.add"));
     c.setAttribute("data-k", "pair-add");
+    if (!p && !pairUi.open && y.link) return linkSendPart(c, y);
     if (!p && !pairUi.open) {
       c.appendChild(el("p", "hint", t("y.pair.add.hint")));
-      c.appendChild(actions(button(t("y.pair.add"), "y.pair.add", function () { pairUi.open = true; render(); var f = $("f-pair-code"); if (f) f.focus(); })));
+      c.appendChild(actions(button(t("y.pair.add"), "y.pair.add", function () { pairUi.open = true; render(); var f = $("f-pair-code"); if (f) f.focus(); }),
+        button(t("y.link.make"), "y.link.make", function () { linkUi.note = ""; act("sync.link.make"); })));
+      c.appendChild(el("div", "hint", t("y.link.what")));
       return c;
     }
     if (!p) {
@@ -1566,8 +1691,8 @@
     if (st === "off") {
       if (y.available) {
         c1.appendChild(el("p", "hint", t("y.connect.hint")));
-        if (y.pair && y.pair.role === "new") {
-          // PAIR-1: the pairing card below replaces the buttons.
+        if ((y.pair && y.pair.role === "new") || y.linkIn) {
+          // PAIR-1 / LINK-1: the pairing or link card below replaces the buttons.
         } else if (dav.open && y.davAvailable) {
           c1.appendChild(davForm(y));
         } else {
@@ -1666,6 +1791,7 @@
     }
     host.appendChild(c1);
     if (y.pair && y.pair.role === "new" && (st === "off" || y.pair.phase === "done" || y.pair.phase === "adopting")) host.appendChild(pairNewCard(y));
+    if (y.linkIn && !(y.pair && y.pair.role === "new")) host.appendChild(linkInCard(y, st));
 
     if (st === "on" || st === "dirty") {
       if (y.pairAvailable) host.appendChild(pairOldCard(y));

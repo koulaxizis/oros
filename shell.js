@@ -57,6 +57,8 @@
     pair:            null,     // PAIR-1: Add a browser in progress (pairForSettings)
     pairPrefill:     "",       // PAIR-1: a code that came in with #pair=
     pairQr:          null,
+    plink:           null,     // LINK-1: a sign-in link this device sent (linkForSettings)
+    linkIn:          null,     // LINK-1: a sign-in link that opened this browser
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
     syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
     vaultClean:      null,   // VD-GC: { busy: "check"|"clean"|"", usage, result, code, err } once Settings asked
@@ -7240,6 +7242,151 @@
     })();
   }
 
+  // LINK-1: a sign-in link. pair.js seals the same bundle as a
+  // password link of "Send to someone" (share/relay.js) that lives 15
+  // minutes; the 8-character code is shown here and never goes into
+  // the link. state.plink (signed-in device) = { phase: "making" |
+  // "ready" | "used" | "gone" | "error", url, code, exp, id, del, err };
+  // state.linkIn (new browser) = { phase: "code" | "opening" | "adopting"
+  // | "done" | "error", share, err, session, dev }. Neither is stored.
+  var linkTimer = null;
+  function linkNeed() {
+    return pairNeed(false).then(function () {
+      if (window.OrosShareRelay) return;
+      return new Promise(function (res, rej) {
+        var s = document.createElement("script");
+        s.src = "share/relay.js?v=" + APP_VERSION;
+        s.onload = function () { window.OrosShareRelay ? res() : rej(new Error("pair-load")); };
+        s.onerror = function () { rej(new Error("pair-load")); };
+        document.head.appendChild(s);
+      });
+    });
+  }
+  function linkSet(fields) {
+    if (!state.plink) return;
+    for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) state.plink[k] = fields[k];
+    settingsNotify();
+  }
+  function linkStopWatch() { if (linkTimer) { clearTimeout(linkTimer); linkTimer = null; } }
+  // While the link waits: every 15 s ask the relay whether it is still
+  // there; gone before its time means the new browser used it.
+  function linkWatch() {
+    linkStopWatch();
+    var p = state.plink;
+    if (!p || p.phase !== "ready") return;
+    linkTimer = setTimeout(function () {
+      linkTimer = null;
+      var q = state.plink;
+      if (!q || q.phase !== "ready" || q.id !== p.id) return;
+      if (Date.now() >= q.exp) { linkSet({ phase: "gone" }); return; }
+      window.OrosPair.linkAlive(q.id).then(function (alive) {
+        var r = state.plink;
+        if (!r || r.phase !== "ready" || r.id !== q.id) return;
+        if (alive === false) linkSet({ phase: Date.now() < r.exp - 5000 ? "used" : "gone" });
+        else linkWatch();
+      });
+    }, 15000);
+  }
+  function linkMake() {
+    var S = window.orosSync;
+    if (!S || typeof S.pairBundle !== "function" || !S.isConnected() || !S.hasPassphrase()) return;
+    if (state.plink && state.plink.phase === "making") return;
+    linkStopWatch();
+    state.plink = { phase: "making", url: "", code: "", exp: 0, id: "", del: "", err: "" };
+    settingsNotify();
+    linkNeed().then(function () {
+      return S.pairBundle();
+    }).then(function (b) {
+      if (!state.plink || state.plink.phase !== "making") return;
+      return window.OrosPair.sendLink(b, { dev: pairUa(), origin: location.origin }).then(function (r) {
+        if (!state.plink || state.plink.phase !== "making") {
+          window.OrosShareRelay.revoke(r.id, r.del).catch(function () {});
+          return;
+        }
+        linkSet({ phase: "ready", url: r.url, code: window.OrosPair.fmtLinkCode(r.code), exp: r.exp, id: r.id, del: r.del });
+        linkWatch();
+      });
+    }).catch(function (e) {
+      var m = String((e && e.message) || "net");
+      linkSet({ phase: "error", err: m === "pair-locked" ? "pair-locked" : m === "rate" || m === "full" || m === "nostore" ? "rate" : "net" });
+    });
+  }
+  // Cancel: the pieces are deleted on the relay (best effort; they
+  // expire anyway), and the card closes.
+  function linkCancel() {
+    var p = state.plink;
+    linkStopWatch();
+    state.plink = null;
+    settingsNotify();
+    if (p && p.id && p.del && p.phase === "ready" && window.OrosShareRelay) {
+      window.OrosShareRelay.revoke(p.id, p.del).catch(function () {});
+    }
+  }
+  function linkInSet(fields) {
+    if (!state.linkIn) return;
+    for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) state.linkIn[k] = fields[k];
+    settingsNotify();
+  }
+  // The new browser: the code typed, the link opened, the bundle adopted
+  // (sync.js pairAdopt, as PAIR-1), the pieces deleted, unlocked.
+  function linkOpen(code) {
+    var S = window.orosSync, L = state.linkIn;
+    if (!L || !S || typeof S.pairAdopt !== "function") return;
+    if (L.phase === "opening" || L.phase === "adopting" || L.phase === "done") return;
+    if (S.isConnected()) { linkInSet({ phase: "error", err: "pair-connected" }); return; }
+    linkInSet({ phase: "opening", err: "" });
+    linkNeed().then(function () {
+      return window.OrosPair.openLink(L.share, code);
+    }).then(function (r) {
+      if (state.linkIn !== L) return;
+      if (r.error) {
+        // A wrong code can be typed again; anything else ends the link.
+        linkInSet({ phase: r.error === "pass" ? "code" : "error", err: r.error });
+        return;
+      }
+      linkInSet({ phase: "adopting", dev: r.dev || "" });
+      var only = !!L.session;
+      return S.pairAdopt(r.b, { session: only }).then(function (res) {
+        window.OrosShareRelay.revoke(r.id, r.del).catch(function () {});
+        state.syncUserEmail = (r.b && r.b.acc && typeof r.b.acc.email === "string") ? r.b.acc.email : null;
+        linkInSet({ phase: "done" });
+        syncUnlock(res.pw, !only);
+      });
+    }).catch(function (e) {
+      if (state.linkIn !== L) return;
+      var m = String((e && e.message) || "net");
+      linkInSet({ phase: "error", err: m === "pair-connected" ? "pair-connected" : m === "pair-bad" ? "refused" : "net" });
+    });
+  }
+  function linkForSettings() {
+    var p = state.plink;
+    return p ? { phase: p.phase, url: p.url || "", code: p.code || "", exp: p.exp || 0, err: p.err || "" } : null;
+  }
+  function linkInForSettings() {
+    var L = state.linkIn;
+    return L ? { phase: L.phase, err: L.err || "", session: !!L.session, dev: L.dev || "" } : null;
+  }
+  // A sign-in link opened orOS (#signin=…): the secret part leaves the
+  // address bar at once, and Settings › Sync asks for the code.
+  function linkFromHash() {
+    var m = /^#signin=([A-Za-z0-9_.\-]{1,200})$/.exec(location.hash || "");
+    if (!m) return;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    var share = m[1];
+    if (!/^q1\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\.[1-9]\d{0,2}\.[A-Za-z0-9_-]{22}$/.test(share)) return;
+    state.linkIn = { phase: "code", share: share, err: "", session: false, dev: "" };
+    settingsNotify();
+    var tries = 0;
+    (function open() {
+      if (document.getElementById("oro-splash") || !state.apps.length || !window.orosSettings) {
+        if (++tries > 120) return;
+        setTimeout(open, 250);
+        return;
+      }
+      window.orosSettings.open("sync");
+    })();
+  }
+
   // User picked an automatic folder-backup cadence (shell slice).
   function setAutoexportUser(v) {
     if (v !== "off" && v !== "daily" && v !== "weekly" && v !== "monthly") return;
@@ -9405,6 +9552,9 @@
     // PAIR-1: a code from a scanned QR (#pair=…), at boot and later.
     pairFromHash();
     window.addEventListener("hashchange", pairFromHash);
+    // LINK-1: a sign-in link (#signin=…), at boot and later.
+    linkFromHash();
+    window.addEventListener("hashchange", linkFromHash);
 
     // OAuth return → flip the menu to connected state once tokens land
     if (window.orosSync && window.orosSync.redirectHandled) {
@@ -11076,6 +11226,8 @@
         paired: !!(connected && typeof S.isPaired === "function" && S.isPaired()),
         pair: pairForSettings(),
         pairPrefill: state.pairPrefill || "",
+        link: linkForSettings(),
+        linkIn: linkInForSettings(),
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
@@ -11232,6 +11384,11 @@
       case "sync.pair.approve": pairApprove(); return;
       case "sync.pair.cancel":  pairCancel(); return;
       case "sync.pair.clear":   state.pairPrefill = ""; settingsNotify(); return;
+      case "sync.link.make":    linkMake(); return;
+      case "sync.link.cancel":  linkCancel(); return;
+      case "sync.link.open":    if (arg && typeof arg.code === "string") linkOpen(arg.code.slice(0, 40)); return;
+      case "sync.link.session": if (state.linkIn && state.linkIn.phase !== "done") linkInSet({ session: !!(arg && arg.on) }); return;
+      case "sync.link.close":   state.linkIn = null; settingsNotify(); return;
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -12726,6 +12883,9 @@
   function tourFirstRun() {
     try {
       if (localStorage.getItem(TOUR_DONE) === "1") return;
+      // LINK-1: a sign-in link is opening this browser: the person is not
+      // new (apps, menu and tips settings come with sync), so no tour.
+      if (state.linkIn || /^#signin=/.test(location.hash || "")) { localStorage.setItem(TOUR_DONE, "1"); return; }
       localStorage.setItem(TOUR_KEY, "1");
       if (profilesWanted()) localStorage.setItem(PROFILE_KEY, "1");
     } catch (e) { return; }
@@ -13160,12 +13320,22 @@
     var pending;
     try { pending = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { pending = false; }
     if (!pending || tourBox || profilesBusy) return;
+    // LINK-1: a sign-in link opened this browser: not a new user (the
+    // apps and menu come with sync), and the link card must stay in view.
+    if (state.linkIn) {
+      try { localStorage.removeItem(TOUR_KEY); localStorage.removeItem(PROFILE_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
+      return;
+    }
     var tries = 0;
     (function wait() {
       // Splash still up, apps.json not in yet, or an app on screen.
       if (document.getElementById("oro-splash") || !state.apps.length || state.running) {
         if (state.running || ++tries > 60) return;   // returnToDesktop retries
         setTimeout(wait, 250);
+        return;
+      }
+      if (state.linkIn) {
+        try { localStorage.removeItem(TOUR_KEY); localStorage.removeItem(PROFILE_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
         return;
       }
       var prof = false;
