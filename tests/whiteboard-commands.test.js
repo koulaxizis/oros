@@ -76,7 +76,7 @@ test("check: unknown commands, fields and values go back to the model; removals 
   assert.match(CMD.check([{ op: "zap" }]).err, /unknown command "zap"/);
   assert.match(CMD.check([{ op: "style", shape: "blob" }]).err, /shape "blob" is not allowed/);
   assert.match(CMD.check([{ op: "style", track: 2 }]).err, /track is not a field of style/);
-  assert.match(CMD.check([{ op: "style" }]).err, /give c, shape, fill, size, ends, dash or sw/);
+  assert.match(CMD.check([{ op: "style" }]).err, /give c, shape, fill, size, ends, dash, route, starthead, endhead or sw/);
   assert.match(CMD.check([{ op: "move" }]).err, /give dx, dy, x, y, w, h or order/);
   assert.match(CMD.check([{ op: "remove" }]).err, /pick the objects/);
   assert.match(CMD.check([{ op: "add", what: "note" }]).err, /a note needs text/);

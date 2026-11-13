@@ -14,8 +14,15 @@
 //                                    symbol of the diagram library (DG1),
 //                                    shp then the nearest basic shape
 //   arrow  ax ay bx by ao bo hd ds tx   ends are points, or stuck to
-//                                    objects (ao / bo = their ids);
-//                                    hd = end | both | none, ds = dashed
+//          rt? ap? bp? ha? hb?       objects (ao / bo = their ids);
+//                                    hd = end | both | none, ds = dashed;
+//                                    DG2 (each written only when set):
+//                                    rt = elbow | curve (else straight),
+//                                    ap / bp = the side t r b l where an
+//                                    elbow or curve leaves its object,
+//                                    ha / hb = the head at the start / end
+//                                    (arrow open tri dia odia dot none; hd
+//                                    is kept to match for older devices)
 //   pen    x y w h pts sw            pts = [x0, y0, x1, y1, …] from x, y
 //   image  x y w h src               a small JPEG / PNG / WebP data URI
 //   frame  x y w h tx                a named area, drawn under the rest
@@ -41,6 +48,10 @@
   var SHAPES = ["rect", "round", "ellipse", "diamond", "tri"];
   var FILLS = ["none", "soft", "solid"];
   var HEADS = ["end", "both", "none"];
+  // Diagram connectors (wave DG2).
+  var ROUTES = ["line", "elbow", "curve"];
+  var SIDES = ["t", "r", "b", "l"];
+  var HEAD_STYLES = ["arrow", "open", "tri", "dia", "odia", "dot", "none"];
   // Diagram symbols (wave DG1): id: [group, nearest basic shape, w, h].
   // The drawing of each one is in GEO further down.
   var SYM_GROUPS = ["flow", "org", "uml", "basic", "net"];
@@ -97,7 +108,7 @@
   // a string up to 500 characters, a finite number, true / false or
   // a list of up to 64 numbers; at most 16 of them, sorted by name.
   var KNOWN = {};
-  "id b k z m c x y w h tx fs shp f sym ax ay bx by ao bo hd ds pts sw src".split(" ").forEach(function (k) { KNOWN[k] = 1; });
+  "id b k z m c x y w h tx fs shp f sym ax ay bx by ao bo hd ds rt ap bp ha hb pts sw src".split(" ").forEach(function (k) { KNOWN[k] = 1; });
   var EXTRA_RE = /^[a-z][a-zA-Z0-9]{0,15}$/, MAX_EXTRA = 16;
   function okNum(v) { return typeof v === "number" && isFinite(v) && Math.abs(v) <= 1e9; }
   function extraOk(v) {
@@ -133,6 +144,11 @@
       o.hd = pick(raw.hd, HEADS, "end");
       o.ds = raw.ds === true;
       o.tx = str(raw.tx, MAX_NAME);
+      if (raw.rt === "elbow" || raw.rt === "curve") o.rt = raw.rt;          // DG2, written only when set
+      if (SIDES.indexOf(raw.ap) >= 0) o.ap = raw.ap;
+      if (SIDES.indexOf(raw.bp) >= 0) o.bp = raw.bp;
+      if (HEAD_STYLES.indexOf(raw.ha) >= 0) o.ha = raw.ha;
+      if (HEAD_STYLES.indexOf(raw.hb) >= 0) o.hb = raw.hb;
       return extras(raw, o);
     }
     var x = num(raw.x), y = num(raw.y), w = size(raw.w), h = size(raw.h);
@@ -358,11 +374,217 @@
 
   // The two ends of an arrow, after sticking to live objects.
   function ends(a, byIdMap) {
-    var A = a.ao && byIdMap[a.ao] && byIdMap[a.ao].k !== "arrow" ? byIdMap[a.ao] : null;
-    var B = a.bo && byIdMap[a.bo] && byIdMap[a.bo].k !== "arrow" ? byIdMap[a.bo] : null;
-    var pa = A ? center(A) : { x: a.ax, y: a.ay }, pb = B ? center(B) : { x: a.bx, y: a.by };
-    return { a: A ? edge(A, pb) : pa, b: B ? edge(B, pa) : pb };
+    var r = route(a, byIdMap);
+    return { a: r.pts[0], b: r.pts[r.pts.length - 1] };
   }
+
+  // ---------- connectors (wave DG2) ----------
+  // route(a, m) → { pts: [{x, y}, …], c?: [c1, c2] }: a straight line
+  // (two points, aimed at the centres as before), an elbow line (right
+  // angles only, around the objects in between) or a curve (one cubic
+  // from pts[0] to pts[1] through c1, c2). Pure and deterministic: the
+  // way is worked out when drawn, never stored.
+  var NORM = { t: { x: 0, y: -1 }, r: { x: 1, y: 0 }, b: { x: 0, y: 1 }, l: { x: -1, y: 0 } };
+  var STUB = 18, PAD = 12, BEND = 30, MAX_OBST = 40;
+  function stuck(id, m) { var o = id && m[id]; return o && o.k !== "arrow" ? o : null; }
+  function portPt(o, side, gap) {
+    var c = center(o), nn = NORM[side], g = gap === undefined ? 6 : gap;
+    var hx = side === "l" || side === "r" ? o.w / 2 : 0, hy = side === "t" || side === "b" ? o.h / 2 : 0;
+    return { x: r2(c.x + nn.x * (hx + g)), y: r2(c.y + nn.y * (hy + g)) };
+  }
+  // The side of o that faces p (auto ports).
+  function facing(o, p) {
+    var c = center(o), dx = p.x - c.x, dy = p.y - c.y;
+    if (Math.abs(dx) / Math.max(1, o.w) >= Math.abs(dy) / Math.max(1, o.h)) return dx >= 0 ? "r" : "l";
+    return dy >= 0 ? "b" : "t";
+  }
+  // The side of o nearest to p when p lies in its outer quarter, else
+  // "" (the app sets ap / bp from where an end is dropped).
+  function portAt(o, p) {
+    var d = { t: p.y - o.y, b: o.y + o.h - p.y, l: p.x - o.x, r: o.x + o.w - p.x }, best = "", bd = Infinity;
+    SIDES.forEach(function (k) { if (d[k] < bd) { bd = d[k]; best = k; } });
+    return bd >= -4 && bd <= Math.min(o.w, o.h) * 0.25 ? best : "";
+  }
+  function dirOf(dx, dy) { return Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? "r" : "l") : (dy >= 0 ? "b" : "t"); }
+
+  // The objects lines go around: notes, texts, shapes and pictures
+  // (not frames, arrows or pen lines), once per index.
+  var OBST = typeof WeakMap === "function" ? new WeakMap() : null;
+  function obstacles(m) {
+    var hit = OBST && OBST.get(m);
+    if (hit) return hit;
+    var out = [];
+    Object.keys(m).forEach(function (id) {
+      var o = m[id];
+      if (o && (o.k === "note" || o.k === "text" || o.k === "shape" || o.k === "image") && !(o.k === "shape" && o.w <= 24 && o.h <= 24 && !o.tx)) {
+        out.push({ id: id, x: o.x, y: o.y, w: o.w, h: o.k === "text" ? Math.max(o.h, o.fs * LH) : o.h });
+      }
+    });
+    if (OBST) OBST.set(m, out);
+    return out;
+  }
+
+  var MEMO = {}, MEMO_N = 0;
+  function route(a, m) {
+    m = m || {};
+    var A = stuck(a.ao, m), B = stuck(a.bo, m), rt = a.rt === "elbow" || a.rt === "curve" ? a.rt : "line";
+    var pa = A ? center(A) : { x: a.ax, y: a.ay }, pb = B ? center(B) : { x: a.bx, y: a.by };
+    if (rt === "line") return { pts: [A ? edge(A, pb) : pa, B ? edge(B, pa) : pb] };
+    var sa = A ? (a.ap || facing(A, pb)) : "", sb = B ? (a.bp || facing(B, pa)) : "";
+    var s = A ? portPt(A, sa) : pa, e = B ? portPt(B, sb) : pb;
+    if (!sa) sa = dirOf(e.x - s.x, e.y - s.y);
+    if (!sb) sb = dirOf(s.x - e.x, s.y - e.y);
+    if (rt === "curve") {
+      var L = Math.sqrt((e.x - s.x) * (e.x - s.x) + (e.y - s.y) * (e.y - s.y)), k = Math.max(30, Math.min(220, L * 0.4));
+      return { pts: [s, e], c: [{ x: r2(s.x + NORM[sa].x * k), y: r2(s.y + NORM[sa].y * k) }, { x: r2(e.x + NORM[sb].x * k), y: r2(e.y + NORM[sb].y * k) }] };
+    }
+    // elbow: the objects near the way, the two ends' own objects too
+    var x0 = Math.min(s.x, e.x) - 240, x1 = Math.max(s.x, e.x) + 240, y0 = Math.min(s.y, e.y) - 240, y1 = Math.max(s.y, e.y) + 240;
+    var obs = obstacles(m).filter(function (b) { return b.x < x1 && b.x + b.w > x0 && b.y < y1 && b.y + b.h > y0; });
+    if (obs.length > MAX_OBST) {
+      var mx = (s.x + e.x) / 2, my = (s.y + e.y) / 2;
+      obs = obs.map(function (b) { return { b: b, d: Math.abs(b.x + b.w / 2 - mx) + Math.abs(b.y + b.h / 2 - my) }; })
+        .sort(function (p, q) { return p.d - q.d || (p.b.id < q.b.id ? -1 : 1); }).slice(0, MAX_OBST).map(function (p) { return p.b; });
+      [A, B].forEach(function (o) { if (o && !obs.some(function (b) { return b.id === o.id; })) obs.push({ id: o.id, x: o.x, y: o.y, w: o.w, h: o.h }); });
+    }
+    var key = [s.x, s.y, sa, e.x, e.y, sb].join(",") + "|" + obs.map(function (b) { return b.x + "," + b.y + "," + b.w + "," + b.h; }).join(";");
+    if (MEMO[key]) return MEMO[key];
+    var out = { pts: elbow(s, sa, e, sb, obs) };
+    if (MEMO_N > 2000) { MEMO = {}; MEMO_N = 0; }
+    MEMO[key] = out; MEMO_N++;
+    return out;
+  }
+
+  // Right-angle way from s (leaving toward side sa) to e (arriving from
+  // side sb), on a grid made of the obstacles' padded edges: the fewest
+  // bends first, then the shortest (Dijkstra; a bend costs BEND px).
+  function elbow(s, sa, e, sb, obs) {
+    var s1 = { x: s.x + NORM[sa].x * STUB, y: s.y + NORM[sa].y * STUB }, e1 = { x: e.x + NORM[sb].x * STUB, y: e.y + NORM[sb].y * STUB };
+    var boxes = obs.map(function (b) { return { x0: b.x - PAD, y0: b.y - PAD, x1: b.x + b.w + PAD, y1: b.y + b.h + PAD }; });
+    var xs = [s1.x, e1.x, (s1.x + e1.x) / 2], ys = [s1.y, e1.y, (s1.y + e1.y) / 2];
+    boxes.forEach(function (b) { xs.push(b.x0, b.x1); ys.push(b.y0, b.y1); });
+    function uniq(v) { v = v.map(r2).sort(function (p, q) { return p - q; }); return v.filter(function (x, i) { return !i || x !== v[i - 1]; }); }
+    xs = uniq(xs); ys = uniq(ys);
+    function inside(x, y) {
+      for (var i = 0; i < boxes.length; i++) { var b = boxes[i]; if (x > b.x0 + 0.5 && x < b.x1 - 0.5 && y > b.y0 + 0.5 && y < b.y1 - 0.5) return true; }
+      return false;
+    }
+    function clearH(y, xa, xb) {
+      for (var i = 0; i < boxes.length; i++) { var b = boxes[i]; if (y > b.y0 + 0.5 && y < b.y1 - 0.5 && Math.max(xa, xb) > b.x0 + 0.5 && Math.min(xa, xb) < b.x1 - 0.5) return false; }
+      return true;
+    }
+    function clearV(x, ya, yb) {
+      for (var i = 0; i < boxes.length; i++) { var b = boxes[i]; if (x > b.x0 + 0.5 && x < b.x1 - 0.5 && Math.max(ya, yb) > b.y0 + 0.5 && Math.min(ya, yb) < b.y1 - 0.5) return false; }
+      return true;
+    }
+    var NX = xs.length, NY = ys.length, si = xs.indexOf(r2(s1.x)), sj = ys.indexOf(r2(s1.y)), ei = xs.indexOf(r2(e1.x)), ej = ys.indexOf(r2(e1.y));
+    var DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]], dS = { r: 0, l: 1, b: 2, t: 3 }[sa], dE = { r: 1, l: 0, b: 3, t: 2 }[sb];
+    var dist = {}, prev = {}, heap = [];
+    function push(c, st) {
+      heap.push([c, st]);
+      for (var i = heap.length - 1; i > 0;) { var p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; var tmp = heap[p]; heap[p] = heap[i]; heap[i] = tmp; i = p; }
+    }
+    function pop() {
+      var top = heap[0], last = heap.pop();
+      if (heap.length) {
+        heap[0] = last;
+        for (var i = 0; ;) {
+          var l = 2 * i + 1, r = l + 1, k = i;
+          if (l < heap.length && heap[l][0] < heap[k][0]) k = l;
+          if (r < heap.length && heap[r][0] < heap[k][0]) k = r;
+          if (k === i) break;
+          var tmp = heap[k]; heap[k] = heap[i]; heap[i] = tmp; i = k;
+        }
+      }
+      return top;
+    }
+    var found = null;
+    if (si >= 0 && sj >= 0 && ei >= 0 && ej >= 0) {
+      var st0 = (si * NY + sj) * 4 + dS;
+      dist[st0] = 0; push(0, st0);
+      var steps = 0;
+      while (heap.length && steps++ < 60000) {
+        var cur = pop(), c = cur[0], st = cur[1];
+        if (c > dist[st]) continue;
+        var d = st % 4, node = (st - d) / 4, i = Math.floor(node / NY), j = node % NY;
+        if (i === ei && j === ej) { var fc = c + (d === dE ? 0 : BEND); if (!found || fc < found[0]) found = [fc, st]; continue; }
+        if (found && c >= found[0]) break;
+        for (var nd = 0; nd < 4; nd++) {
+          if ((d ^ 1) === nd && d >> 1 === nd >> 1) continue;          // no turning back
+          var ni = i + DIRS[nd][0], nj = j + DIRS[nd][1];
+          if (ni < 0 || nj < 0 || ni >= NX || nj >= NY) continue;
+          if (inside(xs[ni], ys[nj]) && !(ni === ei && nj === ej)) continue;
+          var ok = DIRS[nd][1] === 0 ? clearH(ys[j], xs[i], xs[ni]) : clearV(xs[i], ys[j], ys[nj]);
+          if (!ok) continue;
+          var nc = c + Math.abs(xs[ni] - xs[i]) + Math.abs(ys[nj] - ys[j]) + (nd === d ? 0 : BEND);
+          var ns = (ni * NY + nj) * 4 + nd;
+          if (dist[ns] === undefined || nc < dist[ns]) { dist[ns] = nc; prev[ns] = st; push(nc, ns); }
+        }
+      }
+    }
+    var pts = [s];
+    if (found) {
+      var chain = [], k2 = found[1];
+      while (k2 !== undefined) { var nn = (k2 - k2 % 4) / 4; chain.push({ x: xs[Math.floor(nn / NY)], y: ys[nn % NY] }); k2 = prev[k2]; }
+      pts = pts.concat(chain.reverse());
+    } else {
+      // no way around: a plain three-part elbow
+      pts.push(s1);
+      if (sa === "l" || sa === "r") { var mxx = r2((s1.x + e1.x) / 2); pts.push({ x: mxx, y: s1.y }, { x: mxx, y: e1.y }); }
+      else { var myy = r2((s1.y + e1.y) / 2); pts.push({ x: s1.x, y: myy }, { x: e1.x, y: myy }); }
+      pts.push(e1);
+    }
+    pts.push(e);
+    // drop repeated and in-line points
+    var outp = [];
+    pts.forEach(function (p) {
+      p = { x: r2(p.x), y: r2(p.y) };
+      var q = outp[outp.length - 1];
+      if (q && q.x === p.x && q.y === p.y) return;
+      var r0 = outp[outp.length - 2];
+      if (q && r0 && ((r0.x === q.x && q.x === p.x) || (r0.y === q.y && q.y === p.y))) outp[outp.length - 1] = p;
+      else outp.push(p);
+    });
+    return outp;
+  }
+
+  // SVG path of a route; and the point halfway along it (the label).
+  function routeD(r) {
+    var p = r.pts, d = "M" + r2(p[0].x) + " " + r2(p[0].y);
+    if (r.c) return d + "C" + r2(r.c[0].x) + " " + r2(r.c[0].y) + " " + r2(r.c[1].x) + " " + r2(r.c[1].y) + " " + r2(p[1].x) + " " + r2(p[1].y);
+    for (var i = 1; i < p.length; i++) d += "L" + r2(p[i].x) + " " + r2(p[i].y);
+    return d;
+  }
+  function bez(r, t) {
+    var a = r.pts[0], b = r.c[0], c = r.c[1], e = r.pts[1], u = 1 - t;
+    return { x: u * u * u * a.x + 3 * u * u * t * b.x + 3 * u * t * t * c.x + t * t * t * e.x, y: u * u * u * a.y + 3 * u * u * t * b.y + 3 * u * t * t * c.y + t * t * t * e.y };
+  }
+  function midOf(r) {
+    if (r.c) return bez(r, 0.5);
+    var p = r.pts, L = 0, i;
+    for (i = 1; i < p.length; i++) L += Math.abs(p[i].x - p[i - 1].x) + Math.abs(p[i].y - p[i - 1].y) || 0;
+    if (p.length === 2) return { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 };
+    var half = L / 2;
+    for (i = 1; i < p.length; i++) {
+      var sl = Math.abs(p[i].x - p[i - 1].x) + Math.abs(p[i].y - p[i - 1].y);
+      if (half <= sl && sl) { var f = half / sl; return { x: p[i - 1].x + (p[i].x - p[i - 1].x) * f, y: p[i - 1].y + (p[i].y - p[i - 1].y) * f }; }
+      half -= sl;
+    }
+    return p[p.length - 1];
+  }
+  function labelAt(a, m) { return midOf(route(a, m)); }
+  // Where each end's head points from (the last bit of the way).
+  function tails(r) {
+    var p = r.pts, n = p.length;
+    if (r.c) return { a: r.c[0], b: r.c[1] };
+    return { a: p[1], b: p[n - 2] };
+  }
+  // The head at each end, from ha / hb, else from hd (older rows).
+  function headsOf(a) {
+    return { a: a.ha || (a.hd === "both" ? "arrow" : "none"), b: a.hb || (a.hd === "none" ? "none" : "arrow") };
+  }
+  // hd that matches ha / hb, for older devices.
+  function hdFor(ha, hb) { return ha !== "none" ? "both" : hb !== "none" ? "end" : "none"; }
 
   function index(list) {
     var m = {};
@@ -373,9 +595,10 @@
   // Box of one object (text height measured when measure is given).
   function box(o, byIdMap, measure) {
     if (o.k === "arrow") {
-      var e = ends(o, byIdMap || {});
-      var x = Math.min(e.a.x, e.b.x), y = Math.min(e.a.y, e.b.y);
-      return { x: x, y: y, w: Math.max(1, Math.abs(e.a.x - e.b.x)), h: Math.max(1, Math.abs(e.a.y - e.b.y)) };
+      var r = route(o, byIdMap || {}), ps = r.c ? r.pts.concat([bez(r, 0.25), bez(r, 0.5), bez(r, 0.75)]) : r.pts;
+      var x = Infinity, y = Infinity, X = -Infinity, Y = -Infinity;
+      ps.forEach(function (p) { x = Math.min(x, p.x); y = Math.min(y, p.y); X = Math.max(X, p.x); Y = Math.max(Y, p.y); });
+      return { x: x, y: y, w: Math.max(1, X - x), h: Math.max(1, Y - y) };
     }
     if (o.k === "text" && measure) return { x: o.x, y: o.y, w: o.w, h: textHeight(o, measure) };
     if (o.k === "frame") return { x: o.x, y: o.y - 24, w: o.w, h: o.h + 24 };
@@ -683,6 +906,20 @@
       "L" + r2(bx + uy * s * 0.55) + " " + r2(by - ux * s * 0.55) + "Z";
   }
 
+  // One arrow head of a style (DG2). Hollow ones are paper-filled, so
+  // they hide the line under them.
+  function headNode(style, tip, from, strong) {
+    var dx = tip.x - from.x, dy = tip.y - from.y, L = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / L, uy = dy / L;
+    function pt(along, side) { return r2(tip.x - ux * along - uy * side) + " " + r2(tip.y - uy * along + ux * side); }
+    if (style === "arrow") return n("path", { d: head(tip, from, 2.5), fill: strong });
+    if (style === "open") return n("path", { d: "M" + pt(13, 7.5) + "L" + r2(tip.x) + " " + r2(tip.y) + "L" + pt(13, -7.5), fill: "none", stroke: strong, "stroke-width": 2.5, "stroke-linecap": "round", "stroke-linejoin": "round" });
+    if (style === "tri") return n("path", { d: "M" + r2(tip.x) + " " + r2(tip.y) + "L" + pt(15, 8.5) + "L" + pt(15, -8.5) + "Z", fill: PAPER, stroke: strong, "stroke-width": 2, "stroke-linejoin": "round" });
+    if (style === "dia" || style === "odia") return n("path", { d: "M" + r2(tip.x) + " " + r2(tip.y) + "L" + pt(9, 6) + "L" + pt(18, 0) + "L" + pt(9, -6) + "Z",
+      fill: style === "dia" ? strong : PAPER, stroke: strong, "stroke-width": 2, "stroke-linejoin": "round" });
+    if (style === "dot") return n("circle", { cx: r2(tip.x - ux * 4.5), cy: r2(tip.y - uy * 4.5), r: 4.5, fill: strong });
+    return null;
+  }
+
   function draw(o, m, opt) {
     var g = { "data-id": o.id }, kids = [], measure = opt.measure, live = opt.live;
     var strong = col(o, 0), soft = col(o, 1);
@@ -712,15 +949,17 @@
           o.f === "solid" ? "#ffffff" : INK));
       }
     } else if (o.k === "arrow") {
-      var e = ends(o, m), d = "M" + r2(e.a.x) + " " + r2(e.a.y) + "L" + r2(e.b.x) + " " + r2(e.b.y);
+      var rr = route(o, m), d = routeD(rr), tl = tails(rr), hz = headsOf(o), pp = rr.pts;
       if (live) kids.push(n("path", { d: d, stroke: "transparent", "stroke-width": 18, fill: "none" }));
       var line = { d: d, stroke: strong, "stroke-width": 2.5, fill: "none", "stroke-linecap": "round" };
+      if (rr.pts.length > 2) line["stroke-linejoin"] = "round";
       if (o.ds) line["stroke-dasharray"] = "8 6";
       kids.push(n("path", line));
-      if (o.hd !== "none") kids.push(n("path", { d: head(e.b, e.a, 2.5), fill: strong }));
-      if (o.hd === "both") kids.push(n("path", { d: head(e.a, e.b, 2.5), fill: strong }));
+      var hB = headNode(hz.b, pp[pp.length - 1], tl.b, strong), hA = headNode(hz.a, pp[0], tl.a, strong);
+      if (hB) kids.push(hB);
+      if (hA) kids.push(hA);
       if (o.tx) {
-        var mx = (e.a.x + e.b.x) / 2, my = (e.a.y + e.b.y) / 2, lw = (measure || approx)(o.tx, 14) + 12;
+        var mid = midOf(rr), mx = mid.x, my = mid.y, lw = (measure || approx)(o.tx, 14) + 12;
         kids.push(n("rect", { x: r2(mx - lw / 2), y: r2(my - 12), width: r2(lw), height: 24, rx: 6, fill: PAPER }));
         kids.push(textLines([o.tx], r2(mx), r2(my - 9), 14, "middle", strong));
       }
@@ -795,7 +1034,8 @@
     empty: empty, normalize: normalize, merge: merge, serialize: serialize, cleanObj: cleanObj,
     uid: uid, apply: apply, putBoard: putBoard, removeBoard: removeBoard, boards: boards, board: board,
     objsOf: objsOf, zTop: zTop, zBottom: zBottom, copies: copies,
-    wrap: wrap, fit: fit, textHeight: textHeight, edge: edge, ends: ends, index: index, box: box, bounds: bounds,
+    wrap: wrap, fit: fit, textHeight: textHeight, edge: edge, ends: ends, route: route, routeD: routeD, labelAt: labelAt, portAt: portAt, headsOf: headsOf, hdFor: hdFor,
+    ROUTES: ROUTES, SIDES: SIDES, HEAD_STYLES: HEAD_STYLES, index: index, box: box, bounds: bounds,
     inRect: inRect, inFrame: inFrame, simplify: simplify, penFrom: penFrom, moved: moved, resized: resized,
     scene: scene, toSvg: toSvg, words: words
   };

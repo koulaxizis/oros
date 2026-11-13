@@ -63,9 +63,9 @@ test("a symbol's text is escaped in the SVG file, and a UML class gets compartme
 });
 
 test("fields of a later version ride along through merges and edits, bounded", () => {
-  const raw = shape("s1", { rt: "elbow", wp: [10, 20, 30, 40], hs: true, zz: 3, Bad: 1, _x: 1, big: "x".repeat(501), obj: { a: 1 }, arr: [1, "a"] });
+  const raw = shape("s1", { zq: "elbow", wp: [10, 20, 30, 40], hs: true, zz: 3, Bad: 1, _x: 1, big: "x".repeat(501), obj: { a: 1 }, arr: [1, "a"] });
   const o = C.cleanObj(raw);
-  assert.equal(o.rt, "elbow");
+  assert.equal(o.zq, "elbow");
   assert.deepEqual(o.wp, [10, 20, 30, 40]);
   assert.equal(o.hs, true);
   assert.equal(o.zz, 3);
@@ -78,12 +78,12 @@ test("fields of a later version ride along through merges and edits, bounded", (
   let d = board({ s1: raw });
   const moved = C.moved(d.objs[0], 10, 0);
   d = C.apply(d, { s1: moved }, 300);
-  assert.equal(d.objs[0].rt, "elbow");
+  assert.equal(d.objs[0].zq, "elbow");
   assert.equal(d.objs[0].x, 10);
 });
 
 test("an older device that drops the symbol never takes it from a newer device (equal stamps)", () => {
-  const mine = board({ s1: shape("s1", { sym: "database", rt: "elbow" }) });
+  const mine = board({ s1: shape("s1", { sym: "database", zq: "elbow" }) });
   // the older device merges what it pulled and pushes it back, stripped, same stamp
   const theirs = OLD.merge(OLD.empty(), JSON.parse(C.serialize(mine)));
   assert.equal("sym" in theirs.objs[0], false, "the 6.29 core drops it");
@@ -91,7 +91,7 @@ test("an older device that drops the symbol never takes it from a newer device (
   const a = C.merge(mine, theirs), b = C.merge(theirs, mine);
   assert.equal(C.serialize(a), C.serialize(b), "symmetric");
   assert.equal(a.objs[0].sym, "database");
-  assert.equal(a.objs[0].rt, "elbow");
+  assert.equal(a.objs[0].zq, "elbow");
   // the old device still shows a plain shape with the same text
   assert.equal(theirs.objs[0].shp, "rect");
   assert.equal(theirs.objs[0].tx, "Pay");
@@ -105,13 +105,13 @@ test("an older device that drops the symbol never takes it from a newer device (
 test("the fuller-row rule is one total order: merges of three copies agree in any order", () => {
   const base = shape("s1", { m: 500 });
   const rows = [C.cleanObj(base), C.cleanObj(Object.assign({}, base, { sym: "data" })),
-    C.cleanObj(Object.assign({}, base, { tx: "Payx" })), C.cleanObj(Object.assign({}, base, { sym: "data", rt: "elbow" }))];
+    C.cleanObj(Object.assign({}, base, { tx: "Payx" })), C.cleanObj(Object.assign({}, base, { sym: "data", zq: "elbow" }))];
   rows.forEach((r) => { r.m = 500; });
   const docs = rows.map((r) => ({ ver: 1, boards: [{ id: "b1", name: "F", m: 100 }], objs: [r], tombs: {} }));
   const perms = [[0, 1, 2, 3], [3, 2, 1, 0], [2, 0, 3, 1], [1, 3, 0, 2]];
   const out = perms.map((p) => C.serialize(p.reduce((acc, i) => C.merge(acc, docs[i]), C.empty())));
   out.forEach((s) => assert.equal(s, out[0]));
-  assert.equal(JSON.parse(out[0]).objs[0].rt, "elbow", "the row with the most fields");
+  assert.equal(JSON.parse(out[0]).objs[0].zq, "elbow", "the row with the most fields");
 });
 
 test("Assistant: add and style take a symbol, the outline names it", () => {
