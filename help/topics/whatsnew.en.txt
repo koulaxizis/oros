@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.29.00
+- **Tree Sketcher is now part of the Wallpaper Generator.** Pick the `Tree` style to get all its settings and your saved trees, and export the tree as an SVG drawing. Old links and shortcuts to Tree Sketcher open it there.
+
 ## Version 6.28.00
 - **Transfer keeps going.** If the direct link drops in the middle, Transfer reconnects and goes on from where it stopped. When two devices cannot connect directly at all, transfers up to 50 MB go through the orOS relay, still end-to-end encrypted. In Files, `Send with Transfer…` sends the selected files and folders, and Transfer has a `History` of finished transfers that syncs with your devices.
 

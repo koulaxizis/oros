@@ -6,13 +6,24 @@ The big preview on the right (at the top on a phone) shows your wallpaper at the
 
 ## Style and palette
 - `Style`: `Waves`, `Flow field`, `Orbits`, `Grid`, `Nebula` or `Tree`.
-- `Tree` draws a tree from [Tree Sketcher](app:trees) in the colours of the palette. `Density` sets the leaves and `Chaos` the randomness. `Shape the tree in Tree Sketcher` opens it there, where you choose the kind of tree, the season and the branches; that app's `As wallpaper` button brings it back here.
+- `Tree` grows a tree drawn as if by hand, in the colours of the palette. Its own settings appear below (see "Tree"). Tree Sketcher, which used to be a separate app, lives here now.
 - `Palette`: `Ember`, `Ocean`, `Forest`, `Dusk`, `Pastel`, `Mono` and `orOS skin`, which takes its colours from your orOS skin and changes with it.
 
 Under `Settings`:
 - `Density` and `Chaos` sliders change how much is drawn and how wild it gets.
 - `Film grain` adds a fine grainy texture.
 - `Light background` draws on a light base instead of a dark one. `Nebula` is always dark (`A nebula is always drawn at night.`).
+
+## Tree
+With the `Tree` style a `Tree` section and `My trees` appear under `Settings`. The same seed and settings always grow the same tree, so try your name.
+- `Kind of tree`: `Oak`, `Willow`, `Cypress`, `Olive`, `Bonsai` or `Wild`. Choosing one also sets the sliders to suit it.
+- `Season`: blossom in `Spring`, full leaves in `Summer`, orange leaves in `Autumn`, bare branches with snow in `Winter`. The cypress, the olive and the bonsai keep their leaves all year.
+- `Drawn with`: `Pencil`, `Ink`, `Chalk` or `Colour`.
+- `Ground`: `None`, `Grass` or `Hill`.
+- `Branches` sets how many times the branches split, from 4 to 11; `Angle` how wide they open; `Wind` bends the tree to the left or to the right.
+- With the Tree style the `Density` slider is called `Leaves` (at 0 the tree is bare) and `Chaos` is called `Randomness`, from tidy to wild.
+- `My trees`: type a name and tap `Save tree`; with no name it takes the seed. Tap a saved tree to open it on the current palette, or the × to delete it; `Undo` brings it back. Only the settings are kept, not a picture. Your saved trees follow you to all your devices, also the ones you saved in Tree Sketcher.
+- `Export` also offers `SVG · the tree as a drawing`: clean lines you can print at any size or open in a drawing program, drawn in the tree's own style rather than the palette.
 
 ## Living land
 The `Living land` tab at the top tries the Living land wallpaper. Pick a style (`Islands`, `Hills` or `Garden`) and a shape: type a number from 0 to 999999 in `Shape`, or tap the dice (R) for a random one. The preview shows a sample desktop with faint shortcuts and a widget; on your own desktop the land grows around what is really there. The star keeps the land in your favourites, and `Set as wallpaper` makes it your desktop. Gentle motion stays as you set it in Settings › Appearance › Wallpaper. Your favourite lands sync to your other devices, like your favourite patterns.
@@ -46,4 +57,5 @@ Use the orOS [backup](help:t/backup) to keep a copy.
 
 ## Limits
 - Very large exports need a lot of memory. On a phone they may fail with `Export failed: not enough memory for this size`.
-- You can keep up to 60 favourites.
+- You can keep up to 60 favourites and 200 trees.
+- When the same saved tree is changed on two devices before they sync, the most recent change wins.
