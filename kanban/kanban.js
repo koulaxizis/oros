@@ -3960,11 +3960,22 @@
   // was reverted everywhere, and a board created and already synced
   // came back at the next pull. Anything the user did not touch keeps
   // its stamp; a thing changed again since the action is left alone.
+  // Compared by content, keys sorted: the live state keeps keys in the
+  // order they were added, the snapshot is canonical (KB-GANTT: a card
+  // that gained `start` or `deps` would otherwise never match and its
+  // Undo did nothing).
+  function sortedKeys(v) {
+    if (Array.isArray(v)) return v.map(sortedKeys);
+    if (!v || typeof v !== "object") return v;
+    var o = {};
+    Object.keys(v).sort().forEach(function (k) { o[k] = sortedKeys(v[k]); });
+    return o;
+  }
   function plain(x, drop) {
     var o = JSON.parse(JSON.stringify(x || {}));
     delete o.pos;
     (drop || []).forEach(function (k) { delete o[k]; });
-    return JSON.stringify(o);
+    return JSON.stringify(sortedKeys(o));
   }
   function indexById(arr) {
     var m = {};
