@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.35.00
+- **Music releases in Publishing.** A new title can now be a single, EP, album or compilation, with its tracks (ISRC, length, version) and editions (digital, CD, vinyl, cassette with UPC/EAN and barcode). The ISBN tab is now Codes and also keeps your ISRC and UPC/EAN prefixes, offering the next free code.
+
 ## Version 6.34.00
 - **Voice notes in Notes.** The microphone button next to a page's title records into the page. The recording is kept on the orOS disk and syncs like your other files; a player appears under the page and in Preview, with speeds up to 2×. If the tab closes mid-recording, Notes offers to save what was recorded. Deleting a recording moves it to the Trash in Files.
 
