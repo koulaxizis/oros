@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 42254 of 42677 (99%)
-- Help pages: 158 of 158 (100%)
+- Strings: 42254 of 42747 (98%)
+- Help pages: 158 of 159 (99%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -128,7 +128,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 98% | 1155 / 1170 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1173 / 1177 |
+| shell | 99% | 1173 / 1178 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 383 / 383 |
@@ -155,6 +155,7 @@ text is still written in the code. They switch over wave by wave
 | today | 100% | 155 / 155 |
 | todo | 100% | 271 / 271 |
 | together | 100% | 303 / 303 |
+| transfer | English for now | 0 / 69 |
 | travel | 100% | 555 / 555 |
 | trees | 100% | 76 / 76 |
 | typewriter | 100% | 46 / 46 |
@@ -188,3 +189,7 @@ These show English until fixed (usually the English text changed).
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
 - de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt
+
+## Help pages not translated yet
+
+- help/transfer.txt

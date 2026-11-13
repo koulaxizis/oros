@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.27.00
+- **Case Converter is now part of Text Tools.** Its conversions are the new group `Letters & accents` in Text Tools, next to the other tools you can chain. Your words are kept, and old links and shortcuts to Case Converter open that group.
+
 ## Version 6.26.00
 - **New app: Transfer.** Send big files and whole folders from the orOS disk straight to another browser. Pick them in Transfer, create a link and send it, or show the QR code. The other person needs no orOS: they open the link, see the files and accept. Everything goes directly between the two devices, end-to-end encrypted, and each file is checked when it arrives.
 

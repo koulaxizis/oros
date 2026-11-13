@@ -186,7 +186,7 @@ test("prefs: defaults and validation", () => {
   for (const m of C.MODES) assert.equal(typeof C.convert(m, "Αβγ abc").text, "string", m);
 });
 
-test("wiring (6.26.00): the Case Converter lives in Text Tools, its id is an alias", () => {
+test("wiring (6.27.00): the Case Converter lives in Text Tools, its id is an alias", () => {
   const apps = JSON.parse(read("apps.json"));
   assert.ok(!apps.apps.some((a) => a.id === "textcase"), "no longer an app of its own");
   const al = apps.aliases.find((a) => a.id === "textcase");

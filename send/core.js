@@ -272,7 +272,7 @@
   //   Email), assistant {ask} (Assistant deep link), bookmarks {add}
   //   (Send to orOS), wiki {addArticle:{t,x}} (Wiki wave 3), texttools
   //   {text} (Text Tools deep link; the Case Converter lives there
-  //   since 6.26.00), labels {text} (Label Maker
+  //   since 6.27.00), labels {text} (Label Maker
   //   bridge), spreadsheet {newSheet} (BR-S1); wave 3: slides {outline,
   //   title} (Mind map's contract), mindmap {pasteText:{text}} (single
   //   app share), kanban {addCards} and prompter {newPrompt} (new here),
