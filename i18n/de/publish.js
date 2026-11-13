@@ -1,4 +1,10 @@
 orosPack("de", "publish", {
+ "abdur.change": "Die Länge der Hörbuchausgabe von „{t}“ von {old} auf {n} Min. ändern?",
+ "abdur.done": "Das Hörbuch dauert {n} Min.",
+ "abdur.same": "Die Hörbuchausgabe nennt schon {n} Min.",
+ "abdur.set": "Die Länge der Hörbuchausgabe von „{t}“ auf {n} Min. setzen?",
+ "abdur.title": "Hörbuchlänge aus Studio",
+ "abdur.yes": "Länge eintragen",
  "app.name": "Verlag",
  "bc.hint": "EAN-13 für die Rückseite. Das SVG druckt in Standardgröße (etwa 37 × 29 mm); lass einen weißen Rand darum.",
  "bc.png": "PNG herunterladen",
