@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 42618 of 43151 (98%)
+- Strings: 42845 of 43378 (98%)
 - Help pages: 156 of 157 (99%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1816 / 1818 |
+| assistant | 99% | 1861 / 1863 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
@@ -70,7 +70,7 @@ text is still written in the code. They switch over wave by wave
 | household | 99% | 142 / 143 |
 | invoices | 97% | 659 / 673 |
 | jigsaw | 100% | 90 / 90 |
-| kanban | 99% | 315 / 318 |
+| kanban | 99% | 331 / 334 |
 | labels | 100% | 88 / 88 |
 | layout | 99% | 997 / 1005 |
 | library | 100% | 323 / 323 |
@@ -128,7 +128,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 98% | 1173 / 1188 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1175 / 1180 |
+| shell | 99% | 1177 / 1182 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 383 / 383 |
@@ -148,7 +148,7 @@ text is still written in the code. They switch over wave by wave
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 60 / 60 |
-| texttools | 95% | 372 / 389 |
+| texttools | 95% | 405 / 422 |
 | tictactoe | 100% | 54 / 54 |
 | time | 100% | 410 / 410 |
 | timesheet | 99% | 379 / 382 |
@@ -166,11 +166,11 @@ text is still written in the code. They switch over wave by wave
 | weather | 100% | 186 / 186 |
 | whack | 100% | 51 / 51 |
 | wheel | 100% | 107 / 107 |
-| whiteboard | 100% | 195 / 195 |
+| whiteboard | 100% | 259 / 259 |
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
-| writer | 100% | 387 / 387 |
+| writer | 100% | 454 / 454 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
 
@@ -186,6 +186,7 @@ These show English until fixed (usually the English text changed).
 - de/help/publish.txt: links or key caps differ from publish/help.en.txt
 - de/help/settings.txt: links or key caps differ from settings/help.en.txt
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
+- de/help/whiteboard.txt: links or key caps differ from whiteboard/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
 - de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt
 
