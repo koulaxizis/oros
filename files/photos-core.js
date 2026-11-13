@@ -21,6 +21,7 @@
 //   dHash(gray) · hamming(a, b) → near-duplicate fingerprints
 //   validGps(lat, lon)
 //   cluster(pts, cell) · geoBounds(recs) → the map's groups (P3)
+//   duplicates(items, opts) · grayOf(rgba) → same-file and look-alike groups (P4)
 //
 // "Wall clock" = the time a camera shows, kept as the UTC fields of a
 // Date (Date.UTC(y, m, d, h, mi, s)): EXIF has no time zone, so photos
@@ -429,6 +430,64 @@
     return d;
   }
 
+  // ---------- duplicates (P4) ----------
+  // RGBA pixels of a 9 × 8 drawing → the 72 gray values dHash takes.
+  function grayOf(rgba) {
+    if (!rgba || rgba.length < 288) return null;
+    var g = new Array(72);
+    for (var i = 0; i < 72; i++) g[i] = Math.round(rgba[i * 4] * 0.299 + rgba[i * 4 + 1] * 0.587 + rgba[i * 4 + 2] * 0.114);
+    return g;
+  }
+  // Which copy a group keeps: the most pixels, then the biggest file,
+  // then the shortest path, then the first path.
+  function keepOrder(a, b) {
+    var pa = (a.w || 0) * (a.ht || 0), pb = (b.w || 0) * (b.ht || 0);
+    if (pa !== pb) return pb - pa;
+    if ((a.s || 0) !== (b.s || 0)) return (b.s || 0) - (a.s || 0);
+    if (a.k.length !== b.k.length) return a.k.length - b.k.length;
+    return a.k < b.k ? -1 : a.k > b.k ? 1 : 0;
+  }
+  // items: [{ k, t, s, w?, ht?, sha?, dh?, kind }]. Exact groups share
+  // a SHA-256; near groups are photos (not already exact copies of each
+  // other) with dHash distance ≤ dist taken within win ms of each other
+  // (single link). Each group: { kind: "same" | "alike", items } with
+  // the copy to keep first; groups newest first, then by first path.
+  function duplicates(items, opts) {
+    opts = opts || {};
+    var dist = opts.dist >= 0 ? opts.dist : 6, win = opts.win > 0 ? opts.win : 10 * 60000;
+    var list = (items || []).filter(function (x) { return x && typeof x.k === "string"; });
+    var bySha = {}, groups = [], inExact = {};
+    list.forEach(function (x) { if (typeof x.sha === "string" && x.sha.length === 64) (bySha[x.sha] = bySha[x.sha] || []).push(x); });
+    Object.keys(bySha).forEach(function (h) {
+      var g = bySha[h];
+      if (g.length < 2) return;
+      g.sort(keepOrder);
+      g.forEach(function (x, i) { if (i) inExact[x.k] = true; });
+      groups.push({ kind: "same", items: g });
+    });
+    // Near: one representative per exact group (its keeper).
+    var cand = list.filter(function (x) { return x.kind === "image" && !inExact[x.k] && typeof x.dh === "string" && x.dh.length === 16; })
+      .sort(function (a, b) { return (a.t || 0) - (b.t || 0) || (a.k < b.k ? -1 : 1); });
+    var parent = {};
+    function find(k) { while (parent[k] !== k) { parent[k] = parent[parent[k]]; k = parent[k]; } return k; }
+    function join(a, b) { var x = find(a), y = find(b); if (x !== y) { if (x < y) parent[y] = x; else parent[x] = y; } }
+    cand.forEach(function (x) { parent[x.k] = x.k; });
+    for (var i = 0; i < cand.length; i++) {
+      for (var j = i + 1; j < cand.length && (cand[j].t || 0) - (cand[i].t || 0) <= win; j++) {
+        if (hamming(cand[i].dh, cand[j].dh) <= dist) join(cand[i].k, cand[j].k);
+      }
+    }
+    var near = {};
+    cand.forEach(function (x) { var r = find(x.k); (near[r] = near[r] || []).push(x); });
+    Object.keys(near).forEach(function (r) {
+      if (near[r].length < 2) return;
+      groups.push({ kind: "alike", items: near[r].sort(keepOrder) });
+    });
+    function newestT(g) { var m = 0; g.items.forEach(function (x) { if ((x.t || 0) > m) m = x.t || 0; }); return m; }
+    groups.sort(function (a, b) { return newestT(b) - newestT(a) || (a.items[0].k < b.items[0].k ? -1 : 1); });
+    return groups;
+  }
+
   // ---------- map (P3) ----------
   // pts: [{ x, y, t, k }] in screen pixels (Leaflet project at the
   // map's zoom). Groups the points of each cell × cell square; a group
@@ -466,7 +525,7 @@
   }
 
   var api = {
-    cluster: cluster, geoBounds: geoBounds,
+    cluster: cluster, geoBounds: geoBounds, duplicates: duplicates, grayOf: grayOf, keepOrder: keepOrder,
     HEAD_BYTES: HEAD_BYTES, SKIP: SKIP.slice(), DAY: DAY,
     kindOf: kindOf, readExif: readExif, exifDate: exifDate, mp4Scan: mp4Scan,
     iso6709: iso6709, dateFromName: dateFromName, wallFromEpoch: wallFromEpoch,

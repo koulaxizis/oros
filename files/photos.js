@@ -57,6 +57,15 @@
       "ph.tab.all":     "All",
       "ph.tab.albums":  "Albums",
       "ph.tab.map":     "Map",
+      "ph.dup.find":    "Find duplicates…",
+      "ph.dup.title":   "Duplicates",
+      "ph.dup.back":    "Back to all photos",
+      "ph.dup.working": "Comparing photos… {i} of {n}",
+      "ph.dup.none":    "No duplicates found. Photos that are only in the cloud are compared when their small picture has been made.",
+      "ph.dup.foundOne": "1 group. The best copy (most pixels) is left unticked; the ticked ones can go to the Trash.",
+      "ph.dup.found":   "{g} groups. In each one the best copy (most pixels) is left unticked; the ticked ones can go to the Trash.",
+      "ph.dup.same":    "Same file",
+      "ph.dup.alike":   "Look alike, taken within minutes",
       "ph.map.here":    "{n} here",
       "ph.map.hereOne": "1 here",
       "ph.map.back":    "Back to the map",
@@ -152,6 +161,15 @@
       "ph.tab.all":     "Όλες",
       "ph.tab.albums":  "Άλμπουμ",
       "ph.tab.map":     "Χάρτης",
+      "ph.dup.find":    "Εύρεση διπλότυπων…",
+      "ph.dup.title":   "Διπλότυπα",
+      "ph.dup.back":    "Πίσω σε όλες τις φωτογραφίες",
+      "ph.dup.working": "Συγκρίνω φωτογραφίες… {i} από {n}",
+      "ph.dup.none":    "Δεν βρέθηκαν διπλότυπα. Οι φωτογραφίες που είναι μόνο στο cloud συγκρίνονται όταν έχει φτιαχτεί η μικρή τους εικόνα.",
+      "ph.dup.foundOne": "1 ομάδα. Το καλύτερο αντίγραφο (τα περισσότερα pixel) μένει χωρίς σημάδι· τα σημαδεμένα μπορούν να πάνε στον Κάδο.",
+      "ph.dup.found":   "{g} ομάδες. Σε καθεμία το καλύτερο αντίγραφο (τα περισσότερα pixel) μένει χωρίς σημάδι· τα σημαδεμένα μπορούν να πάνε στον Κάδο.",
+      "ph.dup.same":    "Ίδιο αρχείο",
+      "ph.dup.alike":   "Μοιάζουν, τραβήχτηκαν με λίγα λεπτά διαφορά",
       "ph.map.here":    "{n} εδώ",
       "ph.map.hereOne": "1 εδώ",
       "ph.map.back":    "Πίσω στον χάρτη",
@@ -291,6 +309,7 @@
   var albums = AL ? AL.norm(null) : null;      // ALB v1 (synced)
   var tab = "all", albumId = "", albumMissing = 0;
   var here = null;                             // map: the records of a tapped spot
+  var dupes = null;                            // P4: { busy, i, n, groups }
   var map = null, mapView = null, leafletP = null;
 
   function $(id) { return document.getElementById(id); }
@@ -603,6 +622,20 @@
     var list = [], all = [];
     Object.keys(recs).forEach(function (k) { var r = recs[k]; if (!isDoc(r)) all.push(r); });
     albumMissing = 0;
+    if (dupes) {
+      var alive = {};
+      all.forEach(function (r) { alive[r.k] = r; });
+      if (dupes.groups) {
+        dupes.groups = dupes.groups.map(function (g) {
+          return { kind: g.kind, items: g.items.filter(function (x) { return alive[x.k]; }) };
+        }).filter(function (g) { return g.items.length > 1; });
+      }
+      order = [];
+      (dupes.groups || []).forEach(function (g) { g.items.forEach(function (x) { order.push(alive[x.k]); }); });
+      months = []; flat = [];
+      if (active) paint();
+      return;
+    }
     if (here) {
       var keep = {};
       here.forEach(function (r) { keep[r.k] = true; });
@@ -1008,11 +1041,11 @@
   }
 
   function paintHead() {
-    var inAlbum = !!albumId || !!here, ttl = $("ph-title"), back = $("ph-back"), tabs = $("ph-tabs");
-    if (ttl) ttl.textContent = here ? (here.length === 1 ? t("ph.map.hereOne") : t("ph.map.here", { n: here.length })) : albumId ? albumName(albumId) : t("ph.tree");
+    var inAlbum = !!albumId || !!here || !!dupes, ttl = $("ph-title"), back = $("ph-back"), tabs = $("ph-tabs");
+    if (ttl) ttl.textContent = dupes ? t("ph.dup.title") : here ? (here.length === 1 ? t("ph.map.hereOne") : t("ph.map.here", { n: here.length })) : albumId ? albumName(albumId) : t("ph.tree");
     if (back) {
       back.hidden = !inAlbum;
-      var bl = here ? t("ph.map.back") : t("ph.al.back");
+      var bl = dupes ? t("ph.dup.back") : here ? t("ph.map.back") : t("ph.al.back");
       back.title = bl; back.setAttribute("aria-label", bl);
     }
     if (tabs) tabs.hidden = inAlbum;
@@ -1022,7 +1055,7 @@
       var b = $("ph-tab-" + x);
       if (b) b.setAttribute("aria-selected", tab === x ? "true" : "false");
     });
-    var board = tab !== "all" && !inAlbum;     // the album cards or the map
+    var board = (tab !== "all" && !inAlbum) || (!!dupes && !dupes.groups);   // album cards, the map, a running comparison
     var sel = $("ph-select");
     if (sel) sel.hidden = board;
     var z = document.querySelectorAll("#ph-bar .ph-zoom");
@@ -1044,6 +1077,12 @@
       return;
     }
     if (nA > 0) { m.hidden = true; return; }
+    if (dupes) {
+      if (cnt) cnt.textContent = "";
+      if (!dupes.groups) { m.textContent = t("ph.dup.working", { i: dupes.i || 0, n: dupes.n || 0 }); return; }
+      m.textContent = dupes.groups.length === 1 ? t("ph.dup.foundOne") : dupes.groups.length ? t("ph.dup.found", { g: dupes.groups.length }) : t("ph.dup.none");
+      return;
+    }
     if (tab === "map" && !here) {
       if (cnt) cnt.textContent = "";
       var placed = placedRecs().length;
@@ -1110,8 +1149,9 @@
     tileObs = typeof IntersectionObserver === "function" ? new IntersectionObserver(function (list) {
       list.forEach(function (en) { if (en.isIntersecting) wantThumb(en.target); });
     }, { root: sc, rootMargin: "600px 0px" }) : null;
-    sc.classList.toggle("map-on", tab === "map" && !here);
-    if (tab !== "map" || here) dropMap();
+    sc.classList.toggle("map-on", tab === "map" && !here && !dupes);
+    if (tab !== "map" || here || dupes) dropMap();
+    if (dupes) { paintDupes(sc); return; }
     if (tab === "albums" && !albumId) { paintAlbums(sc); return; }
     if (tab === "map" && !here) { paintMap(sc); return; }
     var sentinel = el("div", "ph-more-sentinel");
@@ -1235,12 +1275,13 @@
   function setTab(x) {
     if (x === tab && !albumId) return;
     if (selecting) setSelecting(false);
-    tab = x; albumId = ""; here = null;
+    tab = x; albumId = ""; here = null; dupes = null;
     rebuild();
     var sc = $("ph-scroll");
     if (sc) sc.scrollTop = 0;
   }
   function goBack() {
+    if (dupes) { dupes = null; setSelecting(false); rebuild(); return; }
     if (here) { if (selecting) setSelecting(false); here = null; rebuild(); return; }
     openAlbum("");
   }
@@ -1542,6 +1583,107 @@
     if (list.length === 1) openViewer(0);
   }
 
+  // ---------- duplicates (P4) ----------
+  // Same file: the vault's SHA-256, else one worked out here for files
+  // whose size another file shares (≤ 64 MB, on the disk). Look alike:
+  // a 64-bit dHash of the small picture, within 10 minutes. Nothing is
+  // removed without the person: the extra copies are only ticked, and
+  // Move to Trash asks first (Files' Trash, 30 days).
+  var SHA_MAX = 64 * 1048576;
+  function hex(buf) {
+    var a = new Uint8Array(buf), out = "";
+    for (var i = 0; i < a.length; i++) out += (a[i] < 16 ? "0" : "") + a[i].toString(16);
+    return out;
+  }
+  function dhashOf(blob) {
+    if (typeof createImageBitmap !== "function") return Promise.resolve("");
+    return createImageBitmap(blob).then(function (bmp) {
+      var c = document.createElement("canvas");
+      c.width = 9; c.height = 8;
+      var g = c.getContext("2d", { willReadFrequently: true });
+      g.drawImage(bmp, 0, 0, 9, 8);
+      try { bmp.close(); } catch (e) {}
+      return CORE.dHash(CORE.grayOf(g.getImageData(0, 0, 9, 8).data)) || "";
+    }).catch(function () { return ""; });
+  }
+  function findDupes() {
+    if (selecting) setSelecting(false);
+    var gen = ++renderGen, fs = disk();
+    dupes = { i: 0, n: 0, groups: null };
+    var list = [];
+    Object.keys(recs).forEach(function (k) { if (!isDoc(recs[k])) list.push(recs[k]); });
+    var bySize = {};
+    list.forEach(function (r) { if (!r.h && !r.cloud && r.s && r.s <= SHA_MAX) (bySize[r.s] = bySize[r.s] || []).push(r); });
+    var shaTodo = [];
+    Object.keys(bySize).forEach(function (sz) { if (bySize[sz].length > 1) bySize[sz].forEach(function (r) { if (!r.sha) shaTodo.push(r); }); });
+    var dhTodo = list.filter(function (r) { return r.kind === "image" && !r.dh; });
+    dupes.n = shaTodo.length + dhTodo.length;
+    rebuild();
+    function live() { return dupes && gen === dupes.gen; }
+    dupes.gen = gen;
+    function tick() {
+      dupes.i++;
+      if (dupes.i % 10 === 0) paintMsg();
+    }
+    function nextSha() {
+      if (!live()) return Promise.resolve();
+      var r = shaTodo.shift();
+      if (!r) return Promise.resolve();
+      return fs.read(r.k).then(function (b) { return b.arrayBuffer(); }).then(function (buf) {
+        return crypto.subtle.digest("SHA-256", buf);
+      }).then(function (d) { r.sha = hex(d); saveRec(r); }, function () {}).then(function () { tick(); return nextSha(); });
+    }
+    function nextDh() {
+      if (!live()) return Promise.resolve();
+      var r = dhTodo.shift();
+      if (!r) return Promise.resolve();
+      var key = thumbKey(r);
+      return getThumb(key).then(function (tb) {
+        if (tb) return tb;
+        if (r.cloud || !fs) return null;
+        return fs.read(r.k).then(function (blob) { return makeThumb(r, blob); }).then(function (b) {
+          return putThumb(key, b).then(function () { return b; });
+        });
+      }).then(function (tb) { return tb ? dhashOf(tb) : ""; }, function () { return ""; }).then(function (dh) {
+        if (dh) { r.dh = dh; saveRec(r); }
+        tick();
+        return nextDh();
+      });
+    }
+    var shaP = window.crypto && crypto.subtle && fs ? nextSha() : Promise.resolve();
+    shaP.then(function () { return Promise.all([nextDh(), nextDh()]); }).then(function () {
+      if (!live()) return;
+      flushSaves();
+      var items = list.filter(function (r) { return recs[r.k]; }).map(function (r) {
+        return { k: r.k, t: r.t, s: r.s, w: r.w, ht: r.ht, sha: r.h || r.sha, dh: r.dh, kind: r.kind };
+      });
+      dupes.groups = CORE.duplicates(items);
+      rebuild();
+      var pick = {};
+      dupes.groups.forEach(function (g) { g.items.forEach(function (x, i) { if (i) pick[x.k] = true; }); });
+      if (Object.keys(pick).length) {
+        setSelecting(true);
+        picked = pick;
+        var tiles = document.querySelectorAll(".ph-tile");
+        for (var i = 0; i < tiles.length; i++) tiles[i].classList.toggle("picked", !!picked[tiles[i]._rec.k]);
+        paintSelBar();
+      }
+    });
+  }
+  function paintDupes(sc) {
+    var years = $("ph-years");
+    if (years) years.hidden = true;
+    paintSelBar();
+    if (!dupes.groups) return;
+    var idx = 0;
+    dupes.groups.forEach(function (g) {
+      sc.appendChild(el("h3", "ph-day", t(g.kind === "same" ? "ph.dup.same" : "ph.dup.alike")));
+      var grid = el("div", "ph-grid");
+      g.items.forEach(function (x) { grid.appendChild(tileFor(order[idx], idx)); idx++; });
+      sc.appendChild(grid);
+    });
+  }
+
   // ---------- selecting ----------
   function setSelecting(on) {
     selecting = on;
@@ -1656,6 +1798,7 @@
     } else if (tab === "albums") {
       item(t("ph.al.new"), function () { nameDialog(t("ph.al.new"), "", t("ph.al.create")).then(function (n) { if (n) newAlbum(n); }); });
     }
+    if (!albumId && !here && !dupes && tab === "all") item(t("ph.dup.find"), findDupes);
     item(t("ph.rescan"), scan);
     item(t("ph.folders"), foldersDialog);
     document.body.appendChild(m);
@@ -1986,6 +2129,7 @@
     if (moreObs) { moreObs.disconnect(); moreObs = null; }
     dropMap();
     here = null;
+    dupes = null;
     thumbJobs = []; cloudJobs = [];
     var sc = $("ph-scroll");
     if (sc) { sc.innerHTML = ""; sc._lastDay = null; sc._grid = null; }

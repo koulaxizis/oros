@@ -221,3 +221,29 @@ test("map: points group per cell, newest first, stable; bounds of the placed rec
   assert.deepEqual(C.geoBounds([{ lat: 35.3, lon: 25.1 }, { lat: 37.9, lon: 23.7 }, { lat: 0, lon: 0 }, { lat: 99, lon: 1 }, {}]), [[35.3, 23.7], [37.9, 25.1]]);
   assert.equal(C.geoBounds([{}]), null);
 });
+
+test("duplicates: same SHA-256 and look-alike photos within 10 minutes, the best copy first", () => {
+  const S1 = "1".repeat(64), S2 = "2".repeat(64);
+  const items = [
+    { k: "/internal/a/IMG_1.jpg", t: 1000, s: 500, w: 100, ht: 100, sha: S1, kind: "image", dh: "ffff0000ffff0000" },
+    { k: "/internal/b/IMG_1 (2).jpg", t: 1000, s: 500, w: 100, ht: 100, sha: S1, kind: "image", dh: "ffff0000ffff0000" },
+    { k: "/internal/c/burst1.jpg", t: 5000, s: 900, w: 4000, ht: 3000, sha: S2, kind: "image", dh: "0f0f0f0f0f0f0f0f" },
+    { k: "/internal/c/burst2.jpg", t: 6000, s: 800, w: 4000, ht: 3000, kind: "image", dh: "0f0f0f0f0f0f0f0e" },
+    { k: "/internal/c/burst3.jpg", t: 9e5, s: 800, w: 4000, ht: 3000, kind: "image", dh: "0f0f0f0f0f0f0f0f" },
+    { k: "/internal/c/other.jpg", t: 7000, s: 800, w: 10, ht: 10, kind: "image", dh: "f0f0f0f0f0f0f0f0" },
+    { k: "/internal/v1.mp4", t: 1, s: 9, sha: "3".repeat(64), kind: "video" },
+    { k: "/internal/v2.mp4", t: 2, s: 9, sha: "3".repeat(64), kind: "video" }
+  ];
+  const g = C.duplicates(items);
+  const show = g.map((x) => x.kind + ":" + x.items.map((i) => i.k.split("/").pop()).join(","));
+  assert.deepEqual(show, ["alike:burst1.jpg,burst2.jpg", "same:IMG_1.jpg,IMG_1 (2).jpg", "same:v1.mp4,v2.mp4"]);
+  assert.deepEqual(C.duplicates(items.slice().reverse()).map((x) => x.items.map((i) => i.k)), g.map((x) => x.items.map((i) => i.k)));
+  // burst3 looks the same but was taken 15 minutes later
+  assert.ok(!g.some((x) => x.items.some((i) => i.k.endsWith("burst3.jpg"))));
+  assert.deepEqual(C.duplicates([]), []);
+  assert.deepEqual(C.duplicates([null, {}, { k: "/internal/x.jpg", kind: "image", dh: "zz" }]), []);
+  const px = new Uint8Array(288).fill(255);
+  assert.equal(C.grayOf(px).length, 72);
+  assert.equal(C.grayOf(px)[0], 255);
+  assert.equal(C.grayOf(new Uint8Array(10)), null);
+});
