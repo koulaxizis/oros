@@ -248,6 +248,7 @@
       "ld.ref": "Reference track", "ld.refHint": "Compare with a song you like: its numbers stand next to yours, and it plays at your song's loudness so you hear only the difference in sound.",
       "ld.refPick": "Choose a reference…", "ld.refPlay": "Play it at the song's loudness", "ld.refStop": "Stop the reference", "ld.refDrop": "Remove",
       "ld.refNoMatch": "Measure the song first, so the reference can play at its loudness.", "ld.refGain": "The reference plays {n} dB {dir}.", "ld.louder": "louder", "ld.quieter": "quieter",
+      "bk.view": "Show", "bk.songs": "Songs", "bk.books": "Books", "bk.new": "New book", "bk.all": "All books", "bk.empty": "No books yet. A book is a row of chapters, each one a project of its own, with opening and closing credits.", "bk.nameAsk": "Name of the book", "bk.rename": "Rename", "bk.desc": "{n} chapters · {t} · {spec}", "bk.pub": "Title in Publishing", "bk.pubNone": "None (fill in below)", "bk.pubInfo": "Author: {a} · Narrator: {n} · Audiobook ISBN: {isbn}", "bk.pubMissing": "That title is no longer in Publishing.", "bk.author": "Author", "bk.narrator": "Narrator", "bk.spec": "Requirements", "bk.spec.acx": "ACX (Audible)", "bk.spec.storytel": "Storytel", "bk.parts": "Chapters", "bk.open": "Opening credits", "bk.close": "Closing credits", "bk.chapterN": "Chapter {n}", "bk.addCh": "New chapter", "bk.partDesc": "{k} · {t}", "bk.k.open": "Opening", "bk.k.close": "Closing", "bk.k.chapter": "Chapter {n}", "bk.up": "Move up", "bk.down": "Move down", "bk.delCh": "Delete", "bk.openPart": "Open", "bk.rt": "Room tone", "bk.rtHint": "Record about 30 seconds of the quiet room with the same microphone and settings, select that clip and press the button below. Gaps between takes are then filled with it, because ACX rejects digital silence.", "bk.rtUse": "Use the selected clip as room tone", "bk.rtNone": "No room tone yet.", "bk.rtOk": "Room tone {d} s, noise floor {f} dBFS: the room is quiet enough.", "bk.rtBad": "Room tone {d} s, noise floor {f} dBFS: above -60 dBFS, so the recordings will be too noisy. Quieten the room, or try NULL Noise Reduction or Gate.", "bk.rtShort": "Select an audio clip of at least 5 seconds first.", "bk.rtSaved": "Room tone saved", "bk.fill": "Fill the gaps in “{name}”", "bk.fillNone": "Fill the gaps of a chapter", "bk.filled": "{n} gaps filled with room tone", "bk.noGaps": "There are no gaps to fill", "bk.notChapter": "Open a chapter of this book first.", "bk.needRt": "Choose the room tone first.", "bk.rtTrack": "Room tone", "bk.voice": "Voice", "bk.del": "Delete book", "bk.deleted": "Book deleted", "bk.maxBooks": "You have {n} books, more do not fit", "bk.maxCh": "Books hold up to {n} chapters together", "bk.flac": "Saving the take (FLAC)… {n}%", "bk.sub": "{book} · {part}", "bk.fail": "That did not work",
       "btn.toMusic": "Add to Music", "btn.toLyrics": "Sync lyrics", "toast.toMusic": "Added to Music", "toast.toMusicFail": "Could not add it to Music",
       "btn.ringtone": "Make a ringtone", "toast.ringNoNotes": "Ringtone Composer needs notes: add an instrument track.",
       "au.btn": "A", "au.show": "Automation", "au.title": "Automation: {name}", "au.param": "Parameter",
@@ -484,6 +485,7 @@
       "ld.ref": "Κομμάτι αναφοράς", "ld.refHint": "Σύγκρινε με ένα τραγούδι που σου αρέσει: οι τιμές του μπαίνουν δίπλα στις δικές σου και παίζει στην ένταση του τραγουδιού σου, ώστε να ακούς μόνο τη διαφορά στον ήχο.",
       "ld.refPick": "Επιλογή αναφοράς…", "ld.refPlay": "Παίξε το στην ένταση του τραγουδιού", "ld.refStop": "Σταμάτα την αναφορά", "ld.refDrop": "Αφαίρεση",
       "ld.refNoMatch": "Μέτρησε πρώτα το τραγούδι, για να παίξει η αναφορά στην ένταση του.", "ld.refGain": "Η αναφορά παίζει {n} dB {dir}.", "ld.louder": "πιο δυνατά", "ld.quieter": "πιο σιγά",
+      "bk.view": "Εμφάνιση", "bk.songs": "Τραγούδια", "bk.books": "Βιβλία", "bk.new": "Νέο βιβλίο", "bk.all": "Όλα τα βιβλία", "bk.empty": "Δεν υπάρχουν ακόμη βιβλία. Ένα βιβλίο είναι μια σειρά κεφαλαίων, το καθένα δικό του έργο, με εισαγωγή και κλείσιμο.", "bk.nameAsk": "Όνομα του βιβλίου", "bk.rename": "Μετονομασία", "bk.desc": "{n} κεφάλαια · {t} · {spec}", "bk.pub": "Τίτλος στο Publishing", "bk.pubNone": "Κανένας (συμπλήρωσε παρακάτω)", "bk.pubInfo": "Συγγραφέας: {a} · Αφηγητής: {n} · ISBN ηχητικού βιβλίου: {isbn}", "bk.pubMissing": "Αυτός ο τίτλος δεν υπάρχει πια στο Publishing.", "bk.author": "Συγγραφέας", "bk.narrator": "Αφηγητής", "bk.spec": "Προδιαγραφές", "bk.spec.acx": "ACX (Audible)", "bk.spec.storytel": "Storytel", "bk.parts": "Κεφάλαια", "bk.open": "Εισαγωγή", "bk.close": "Κλείσιμο", "bk.chapterN": "Κεφάλαιο {n}", "bk.addCh": "Νέο κεφάλαιο", "bk.partDesc": "{k} · {t}", "bk.k.open": "Εισαγωγή", "bk.k.close": "Κλείσιμο", "bk.k.chapter": "Κεφάλαιο {n}", "bk.up": "Πάνω", "bk.down": "Κάτω", "bk.delCh": "Διαγραφή", "bk.openPart": "Άνοιγμα", "bk.rt": "Room tone", "bk.rtHint": "Ηχογράφησε περίπου 30 δευτερόλεπτα το ήσυχο δωμάτιο με το ίδιο μικρόφωνο και τις ίδιες ρυθμίσεις, επίλεξε εκείνο το clip και πάτα το κουμπί από κάτω. Τα κενά ανάμεσα στις λήψεις γεμίζουν μετά με αυτό, γιατί η ACX απορρίπτει την ψηφιακή σιωπή.", "bk.rtUse": "Το επιλεγμένο clip ως room tone", "bk.rtNone": "Δεν υπάρχει ακόμη room tone.", "bk.rtOk": "Room tone {d} s, θόρυβος βάθους {f} dBFS: το δωμάτιο είναι αρκετά ήσυχο.", "bk.rtBad": "Room tone {d} s, θόρυβος βάθους {f} dBFS: πάνω από -60 dBFS, άρα οι ηχογραφήσεις θα έχουν πολύ θόρυβο. Κάνε πιο ήσυχο το δωμάτιο ή δοκίμασε το NULL Noise Reduction ή το Gate.", "bk.rtShort": "Επίλεξε πρώτα ένα clip ήχου τουλάχιστον 5 δευτερολέπτων.", "bk.rtSaved": "Το room tone αποθηκεύτηκε", "bk.fill": "Γέμισμα κενών στο «{name}»", "bk.fillNone": "Γέμισμα κενών ενός κεφαλαίου", "bk.filled": "{n} κενά γέμισαν με room tone", "bk.noGaps": "Δεν υπάρχουν κενά για γέμισμα", "bk.notChapter": "Άνοιξε πρώτα ένα κεφάλαιο αυτού του βιβλίου.", "bk.needRt": "Διάλεξε πρώτα το room tone.", "bk.rtTrack": "Room tone", "bk.voice": "Φωνή", "bk.del": "Διαγραφή βιβλίου", "bk.deleted": "Το βιβλίο διαγράφηκε", "bk.maxBooks": "Έχεις {n} βιβλία, δεν χωράνε άλλα", "bk.maxCh": "Τα βιβλία χωράνε έως {n} κεφάλαια συνολικά", "bk.flac": "Αποθήκευση λήψης (FLAC)… {n}%", "bk.sub": "{book} · {part}", "bk.fail": "Αυτό δεν έγινε",
       "btn.toMusic": "Στη Μουσική", "btn.toLyrics": "Συγχρονισμός στίχων", "toast.toMusic": "Μπήκε στη Μουσική", "toast.toMusicFail": "Δεν μπόρεσε να μπει στη Μουσική",
       "btn.ringtone": "Κάνε το ήχο κλήσης", "toast.ringNoNotes": "Ο Ήχος κλήσης χρειάζεται νότες: πρόσθεσε ένα κανάλι οργάνου.",
       "au.btn": "A", "au.show": "Αυτοματισμός", "au.title": "Αυτοματισμός: {name}", "au.param": "Παράμετρος",
@@ -601,6 +603,8 @@
     piano: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16M12 4v16M16 4v16"/><path d="M6.5 4h3v8h-3zM14.5 4h3v8h-3z" fill="currentColor"/></svg>',
     minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg>',
+    up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
     pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/></svg>',
     cursor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l14 8-6 2-3 6z"/></svg>',
     copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>',
@@ -834,7 +838,7 @@
   // A project is made on the first real action (R16, R28).
   function ensureProject() {
     if (proj) return true;
-    if (data.projects.length >= C.MAX_PROJECTS) { showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return false; }
+    if (C.songCount(data) >= C.MAX_PROJECTS) { showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return false; }
     var p = C.normProject({ id: C.newId("p", Math.random), m: 0, name: t("proj.default", { n: data.projects.length + 1 }), bpm: C.DEFAULT.bpm, sig: C.DEFAULT.sig });
     put("projects", p);
     openProject(C.find(data, "projects", p.id));
@@ -1137,6 +1141,8 @@
     $("title-view").textContent = proj ? (proj.name || t("proj.untitled")) : t("app.name");
     var n = tracks().length, tt = C.fmtTime(songLen()).replace(/\.\d+$/, "");
     $("title-sub").textContent = !n ? t("sub.none") : n === 1 ? t("sub.tracks1", { t: tt }) : t("sub.tracks", { n: n, t: tt });
+    var bk = proj && proj.bk ? findBook(proj.bk) : null;
+    if (bk) $("title-sub").textContent = t("bk.sub", { book: bk.name || t("bk.new"), part: $("title-sub").textContent });
     $("undo-btn").disabled = !undoStack.length || recording;
     $("redo-btn").disabled = !redoStack.length || recording;
   }
@@ -2299,10 +2305,9 @@
     if (!tr || !proj || tr.p !== proj.id) { showToast(t("toast.recFail")); return; }
     if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
     busy(t("busy.saveTake"));
-    var blob = new Blob([C.wavBytes(chans, rate, 24)], { type: "audio/wav" });
     var name = (tr.name || "take") + " " + new Date().toTimeString().slice(0, 5).replace(":", ".");
     var before = snapshot();
-    addSource(name, "wav", blob, buf).then(function (src) {
+    takeBlob(chans, rate).then(function (tk) { return addSource(name, tk.ext, tk.blob, buf); }).then(function (src) {
       put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: tr.id, s: src.id, at: at, off: 0, len: buf.duration }));
       undoStack.push(before); redoStack = [];
       playhead = from;
@@ -2717,7 +2722,7 @@
       var buf = a.createBuffer(g.length, g[0].length, r.sr);
       g.forEach(function (d, k) { buf.copyToChannel(d, k); });
       var name = (dest.name || "take") + " " + stamp;
-      return addSource(name, "wav", new Blob([C.wavBytes(g, r.sr, 24)], { type: "audio/wav" }), buf).then(function (src) {
+      return takeBlob(g, r.sr).then(function (tk) { return addSource(name, tk.ext, tk.blob, buf); }).then(function (src) {
         put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: dest.id, s: src.id, at: at, off: 0, len: buf.duration }));
         saved++;
         // recorded dry through a live plugin: the track keeps that plugin and its sound, ready to freeze
@@ -4195,9 +4200,10 @@
   function addOros(r, name) {
     var SP = window.StudioPackage, parsed;
     try {
-      parsed = SP.parse(r.content, { newId: function (k) { return C.newId(k, Math.random); }, now: Date.now(), title: r.meta && r.meta.title });
+      parsed = SP.parse(r.content, { newId: function (k) { return C.newId(k, Math.random); }, now: Date.now(), title: r.meta && r.meta.title,
+                                     hasBook: function (id) { return !!findBook(id); } });
     } catch (e) { orosFail(name)(e); return; }
-    if (data.projects.length >= C.MAX_PROJECTS) { busy(null); showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return; }
+    if (C.songCount(data) >= C.MAX_PROJECTS) { busy(null); showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return; }
     var fs = fsApi(), files = parsed.files.filter(function (x) { return r.media[x.key]; }), written = [];
     if (files.length && !fs) { busy(null); showToast(t("toast.noDisk")); return; }
     if (!parsed.project.name) parsed.project.name = t("proj.default", { n: data.projects.length + 1 });
@@ -4541,6 +4547,327 @@
   }
   function closeLoudness() { ldRefStop(); hideDlg("loud-dlg"); }
 
+  // ---------- 9c. Books (Studio wave A2) ----------
+  // A book is chapters, each an ordinary project (bk + kind), with opening
+  // and closing credits. Its takes are stored as 24-bit FLAC (flac.js),
+  // half the size of the WAV, bit for bit the same sound. Room tone: a
+  // take of the quiet room chosen once per book; "fill the gaps" puts it
+  // on a track of its own wherever the voice stops, so no digital silence
+  // is left (ACX rejects it). Publishing is only read (its titles, people
+  // and ISBN); the book keeps the link, never a copy.
+  var FL = window.StudioFlac;
+  var RT_NAME = "roomtone";        // the name of a chapter's room tone source (and its file)
+  var bookOpen = "", projTab = "songs", rtBufs = {};
+  function findBook(id) { return C.books(data).filter(function (b) { return b.id === id; })[0] || null; }
+  function putBook(b) { var x = C.normBook(Object.assign({}, b)); if (x) { put("books", x); save(); } }
+  // a take as FLAC for a book, else WAV as always
+  function takeBlob(chans, rate) {
+    if (!proj || !proj.bk || !FL) return Promise.resolve({ blob: new Blob([C.wavBytes(chans, rate, 24)], { type: "audio/wav" }), ext: "wav" });
+    return flacBlob(chans, rate, function (x) { busy(t("bk.flac", { n: Math.floor(x * 100) })); }).then(function (blob) { return { blob: blob, ext: "flac" }; });
+  }
+  function flacBlob(chans, rate, pct) {
+    return new Promise(function (res, rej) {
+      var enc;
+      try { enc = new FL.Encoder(chans, rate, 24); } catch (e) { rej(e); return; }
+      var step = function () {
+        try { if (enc.step(24)) { res(new Blob([enc.bytes()], { type: "audio/flac" })); return; } } catch (e) { rej(e); return; }
+        if (pct) pct(enc.progress());
+        setTimeout(step, 0);
+      };
+      step();
+    });
+  }
+  // the effects a new chapter's voice track starts with (all NULL JSFX):
+  // high-pass at 80 Hz, de-esser, a gentle compressor; the gate waits off
+  // until the room needs it (Chris: noise handling only on a click)
+  function voiceChain() {
+    var u = function () { return C.newId("f", Math.random); };
+    return [
+      { u: u(), id: "filter", on: true, s: { "1": 80, "2": 0.7, "4": 1, "5": 1 } },
+      { u: u(), id: "deesser", on: true, s: {} },
+      { u: u(), id: "gate", on: false, s: { "1": -55, "5": -12 } },
+      { u: u(), id: "dynamics", on: true, s: { "2": -24, "3": 2.5, "5": 15, "6": 120 } }
+    ];
+  }
+  function makePart(bk, kind, name) {
+    var p = C.normProject({ id: C.newId("p", Math.random), m: 0, name: name, bpm: C.DEFAULT.bpm, sig: C.DEFAULT.sig, bk: bk, kind: kind });
+    put("projects", p);
+    put("tracks", C.normTrack({ id: C.newId("t", Math.random), m: 0, p: p.id, name: t("bk.voice"), ord: 0, fx: voiceChain() }));
+    return p.id;
+  }
+  function partLen(pid) { return C.fmtTime(C.projectEnd(C.ofProject(data, "clips", pid))).replace(/\.\d+$/, ""); }
+  function newBook() {
+    if (C.books(data).length >= C.MAX_BOOKS) { showToast(t("bk.maxBooks", { n: C.MAX_BOOKS })); return; }
+    if (C.chapterCount(data) + 3 > C.MAX_CHAPTERS) { showToast(t("bk.maxCh", { n: C.MAX_CHAPTERS })); return; }
+    askName(t("bk.nameAsk"), "", function (v) {
+      var id = C.newId("b", Math.random), name = String(v || "").trim() || t("bk.new");
+      var open = makePart(id, "open", t("bk.open")), ch1 = makePart(id, "chapter", t("bk.chapterN", { n: 1 })), close = makePart(id, "close", t("bk.close"));
+      putBook({ id: id, m: 0, name: name, ch: [ch1], open: open, close: close, spec: "acx" });
+      hideDlg("proj-dlg");
+      openProject(C.find(data, "projects", ch1));
+      openBook(id);
+    });
+  }
+  function addChapter() {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    if (C.chapterCount(data) >= C.MAX_CHAPTERS) { showToast(t("bk.maxCh", { n: C.MAX_CHAPTERS })); return; }
+    var n = C.bookParts(data, b).filter(function (x) { return x.kind === "chapter"; }).length + 1;
+    var pid = makePart(b.id, "chapter", t("bk.chapterN", { n: n }));
+    putBook(Object.assign({}, b, { ch: b.ch.concat([pid]) }));
+    renderBook();
+  }
+  function moveChapter(pid, d) {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    var ids = C.bookParts(data, b).filter(function (x) { return x.kind === "chapter"; }).map(function (x) { return x.p.id; });
+    var i = ids.indexOf(pid), j = i + d;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    ids[i] = ids[j]; ids[j] = pid;
+    putBook(Object.assign({}, b, { ch: ids }));
+    renderBook();
+    var btn = document.querySelector('#book-parts [data-pid="' + pid + '"][data-d="' + d + '"]');
+    if (btn && !btn.disabled) btn.focus();
+  }
+  // ---- Publishing (read only) ----
+  function pubData() {
+    var d = null;
+    try { d = JSON.parse(localStorage.getItem("oros-publish-data") || "null"); } catch (e) { d = null; }
+    if (!d || typeof d !== "object" || !Array.isArray(d.titles)) return [];
+    var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
+    return d.titles.filter(function (x) {
+      return x && typeof x.id === "string" && typeof x.t === "string" && !(typeof tombs[x.id] === "number" && tombs[x.id] >= (Number(x.m) || 0));
+    }).sort(function (a, b) { return a.t.localeCompare(b.t); }).slice(0, 500);
+  }
+  function abEdition(ti, eid) {
+    var f = (Array.isArray(ti.fmts) ? ti.fmts : []).filter(function (x) { return x && x.k === "ab"; });
+    return f.filter(function (x) { return x.id === eid; })[0] || f[0] || null;
+  }
+  function people(ti, r) {
+    return (Array.isArray(ti.ppl) ? ti.ppl : []).filter(function (p) { return p && p.r === r && typeof p.n === "string"; }).map(function (p) { return p.n; }).join(", ");
+  }
+  // ---- the dialogs ----
+  function setProjTab(tab) {
+    projTab = tab === "books" ? "books" : "songs";
+    $("proj-tab-songs").setAttribute("aria-pressed", String(projTab === "songs"));
+    $("proj-tab-books").setAttribute("aria-pressed", String(projTab === "books"));
+    $("songs-pane").hidden = projTab !== "songs";
+    $("books-pane").hidden = projTab !== "books";
+  }
+  function renderBooks() {
+    var host = $("book-list"), list = C.books(data).slice().sort(function (a, b) { return b.m - a.m; });
+    host.textContent = "";
+    $("book-empty").hidden = list.length > 0;
+    list.forEach(function (b) {
+      var li = el("li", "row-item" + (proj && proj.bk === b.id ? " on" : "")), open = el("button", "row-open");
+      open.type = "button";
+      var parts = C.bookParts(data, b), sec = 0;
+      parts.forEach(function (x) { sec += C.projectEnd(C.ofProject(data, "clips", x.p.id)); });
+      open.appendChild(el("span", "row-title", b.name || t("bk.new")));
+      open.appendChild(el("span", "row-desc", t("bk.desc", { n: parts.filter(function (x) { return x.kind === "chapter"; }).length,
+        t: C.fmtTime(sec).replace(/\.\d+$/, ""), spec: t("bk.spec." + b.spec) })));
+      open.addEventListener("click", function () { hideDlg("proj-dlg"); openBook(b.id); });
+      li.appendChild(open);
+      host.appendChild(li);
+    });
+  }
+  function openBook(id) {
+    if (!findBook(id)) return;
+    bookOpen = id;
+    renderBook();
+    showDlg("book-dlg");
+  }
+  function iconBtn(icon, label, fn) {
+    var b = el("button", "icon-btn small");
+    b.type = "button"; b.innerHTML = ICON[icon]; setLabel(b, label);
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function renderBook() {
+    var b = findBook(bookOpen);
+    if (!b) { if ($("book-dlg").open) hideDlg("book-dlg"); return; }
+    $("book-title").textContent = b.name || t("bk.new");
+    // Publishing
+    var titles = pubData(), sel = $("book-pub"), ti = b.pub ? titles.filter(function (x) { return x.id === b.pub.t; })[0] : null;
+    sel.textContent = "";
+    var none = el("option", "", t("bk.pubNone")); none.value = ""; sel.appendChild(none);
+    titles.forEach(function (x) { var o = el("option", "", C.clipLine(x.t, 80)); o.value = x.id; sel.appendChild(o); });
+    if (b.pub && !ti) { var miss = el("option", "", "?"); miss.value = b.pub.t; sel.appendChild(miss); }
+    sel.value = b.pub ? b.pub.t : "";
+    var ed = ti ? abEdition(ti, b.pub.e) : null;
+    $("book-pub-info").textContent = b.pub && !ti ? t("bk.pubMissing")
+      : ti ? t("bk.pubInfo", { a: people(ti, "a") || "–", n: people(ti, "n") || "–", isbn: (ed && ed.isbn) || "–" }) : "";
+    $("book-own").hidden = !!ti;
+    var mt = b.meta || {};
+    if (document.activeElement !== $("book-author")) $("book-author").value = mt.author || "";
+    if (document.activeElement !== $("book-narrator")) $("book-narrator").value = mt.narrator || "";
+    var spec = $("book-spec");
+    if (!spec.options.length) C.BOOK_SPECS.forEach(function (k) { var o = el("option", "", t("bk.spec." + k)); o.value = k; spec.appendChild(o); });
+    spec.value = b.spec;
+    // the parts
+    var host = $("book-parts"), parts = C.bookParts(data, b), chs = parts.filter(function (x) { return x.kind === "chapter"; });
+    host.textContent = "";
+    var n = 0;
+    parts.forEach(function (x) {
+      var p = x.p, li = el("li", "row-item" + (proj && proj.id === p.id ? " on" : "")), open = el("button", "row-open");
+      open.type = "button";
+      var k = x.kind === "chapter" ? t("bk.k.chapter", { n: ++n }) : t("bk.k." + x.kind);
+      open.appendChild(el("span", "row-title", p.name || k));
+      open.appendChild(el("span", "row-desc", t("bk.partDesc", { k: k, t: partLen(p.id) })));
+      if (proj && proj.id === p.id) open.setAttribute("aria-current", "true");
+      setLabel(open, t("bk.openPart") + ": " + (p.name || k));
+      open.addEventListener("click", function () { hideDlg("book-dlg"); openProject(C.find(data, "projects", p.id)); });
+      li.appendChild(open);
+      if (x.kind === "chapter") {
+        var i = chs.indexOf(x);
+        var up = iconBtn("up", t("bk.up") + ": " + (p.name || k), function () { moveChapter(p.id, -1); });
+        var dn = iconBtn("down", t("bk.down") + ": " + (p.name || k), function () { moveChapter(p.id, 1); });
+        up.disabled = i === 0; dn.disabled = i === chs.length - 1;
+        up.setAttribute("data-pid", p.id); up.setAttribute("data-d", "-1");
+        dn.setAttribute("data-pid", p.id); dn.setAttribute("data-d", "1");
+        li.appendChild(up); li.appendChild(dn);
+        if (chs.length > 1) {
+          var del = iconBtn("close", t("bk.delCh") + ": " + (p.name || k), function () { deleteProject(p.id); renderBook(); });
+          del.classList.add("del-btn");
+          li.appendChild(del);
+        }
+      }
+      host.appendChild(li);
+    });
+    // room tone
+    $("book-rt-state").textContent = !b.rt ? t("bk.rtNone")
+      : t(b.rt.floor != null && b.rt.floor > -60 ? "bk.rtBad" : "bk.rtOk", { d: numTxt(b.rt.dur, 1), f: b.rt.floor != null ? numTxt(b.rt.floor, 1) : "–" });
+    var here = proj && proj.bk === b.id, fill = $("book-fill");
+    fill.textContent = here ? t("bk.fill", { name: proj.name || t("proj.untitled") }) : t("bk.fillNone");
+    fill.disabled = !here || !b.rt;
+  }
+  function bookField(fn) {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    var x = JSON.parse(JSON.stringify(b));
+    fn(x);
+    putBook(x);
+    renderBook();
+  }
+  // ---- room tone ----
+  function useRoomTone() {
+    var b = findBook(bookOpen), fs = fsApi();
+    if (!b) return;
+    if (!fs) { showToast(t("toast.noDisk")); return; }
+    var c = selClip ? C.find(data, "clips", selClip) : null, buf = c && !C.isMidi(c) ? buffers[c.s] : null;
+    if (!buf || c.len < 5) { showToast(t("bk.rtShort")); return; }
+    var sr = buf.sampleRate, a0 = Math.max(0, Math.round(c.off * sr)), n = Math.min(Math.round(c.len * sr), buf.length - a0);
+    if (n < sr * 5) { showToast(t("bk.rtShort")); return; }
+    var mono = new Float32Array(n), chs = buf.numberOfChannels;
+    for (var ch = 0; ch < chs; ch++) { var d = buf.getChannelData(ch); for (var i = 0; i < n; i++) mono[i] += d[a0 + i] / chs; }
+    var rep = SM ? SM.analyse([mono], sr) : null, floor = rep && isFinite(rep.rms) ? rep.rms : null;
+    var path = C.sourcePath(C.newId("r", Math.random), RT_NAME + " " + (b.name || ""), "flac"), old = b.rt && b.rt.path;
+    busy(t("bk.flac", { n: 0 }));
+    flacBlob([mono], sr, function (x) { busy(t("bk.flac", { n: Math.floor(x * 100) })); }).then(function (blob) {
+      return Promise.resolve(fs.writeBlob(path, blob));
+    }).then(function () {
+      busy(null);
+      var a = audio();
+      if (a) { var rb = a.createBuffer(1, n, sr); rb.copyToChannel(mono, 0); rtBufs[path] = rb; }
+      bookField(function (x) { x.rt = { path: path, dur: n / sr }; if (floor != null) x.rt.floor = Math.max(-200, floor); });
+      // the chapters keep copies of their own, so the old file can go
+      if (old && old !== path && typeof fs.rm === "function") { try { Promise.resolve(fs.rm(old)).catch(function () {}); } catch (e) {} }
+      showToast(t("bk.rtSaved"));
+    }, function () { busy(null); showToast(t("bk.fail")); });
+  }
+  function rtBuffer(b) {
+    if (rtBufs[b.rt.path]) return Promise.resolve(rtBufs[b.rt.path]);
+    var fs = fsApi();
+    if (!fs) return Promise.reject(new Error("nodisk"));
+    return Promise.resolve(fs.readBlob(b.rt.path)).then(function (blob) { return blob.arrayBuffer(); }).then(decode).then(function (buf) { rtBufs[b.rt.path] = buf; return buf; });
+  }
+  // the spans of the chapter where no voice clip plays, from 0 to the end,
+  // plus a 2 s tail: [[a, b]] (seconds)
+  function voiceGaps(clips, end) {
+    var iv = clips.map(function (c) { return [c.at, C.clipEnd(c)]; }).sort(function (x, y) { return x[0] - y[0]; }), out = [], pos = 0;
+    iv.forEach(function (v) { if (v[0] - pos >= 0.02) out.push([pos, v[0]]); pos = Math.max(pos, v[1]); });
+    if (iv.length) out.push([pos, Math.min(C.MAX_SEC, pos + 2)]);
+    else if (end > 0) out.push([0, end]);
+    return out.filter(function (g) { return g[1] - g[0] >= 0.02; });
+  }
+  function fillGaps() {
+    var b = findBook(bookOpen);
+    if (!b || !proj || proj.bk !== b.id) { showToast(t("bk.notChapter")); return; }
+    if (!b.rt) { showToast(t("bk.needRt")); return; }
+    var fs = fsApi();
+    if (!fs) { showToast(t("toast.noDisk")); return; }
+    var pid = proj.id, src = C.ofProject(data, "sources", pid).filter(function (s) { return s.name === RT_NAME; })[0];
+    busy(t("busy.saveTake"));
+    rtBuffer(b).then(function (rbuf) {
+      if (src) return { src: src, buf: rbuf };
+      return Promise.resolve(fs.readBlob(b.rt.path)).then(function (blob) { return addSource(RT_NAME, "flac", blob, rbuf); }).then(function (s) { return { src: s, buf: rbuf }; });
+    }).then(function (r) {
+      busy(null);
+      if (!proj || proj.id !== pid) return;
+      var srcIds = {};
+      C.ofProject(data, "sources", pid).forEach(function (s) { if (s.name === RT_NAME) srcIds[s.id] = 1; });
+      var all = projClips(), rtTr = tracks().filter(function (tr) { var cs = clipsOf(tr.id); return cs.length && cs.every(function (c) { return srcIds[c.s]; }); })[0];
+      var voice = all.filter(function (c) { return !C.isMidi(c) && !srcIds[c.s]; });
+      var gaps = voiceGaps(voice, songLen()), dur = r.buf.duration, count = 0;
+      if (!gaps.length) { showToast(t("bk.noGaps")); return; }
+      var old = rtTr ? clipsOf(rtTr.id).length : 0, need = 0;
+      gaps.forEach(function (g) { need += Math.ceil((g[1] - g[0]) / Math.max(0.5, dur - 0.5)); });
+      if (all.length - old + need > C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
+      edit(function () {
+        if (!rtTr) rtTr = addTrack(t("bk.rtTrack"));
+        if (!rtTr) return;
+        clipsOf(rtTr.id).forEach(function (c) { remove("clips", c.id); });
+        var k = 0;
+        gaps.forEach(function (g) {
+          var pos = g[0];
+          while (g[1] - pos >= 0.005) {
+            var off = dur > 2 ? ((k * 7.31) % (dur - 1)) : 0, len = Math.min(g[1] - pos, dur - off), f = Math.min(0.01, len / 4);
+            put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: pid, t: rtTr.id, s: r.src.id, at: pos, off: off, len: len, fi: f, fo: f }));
+            pos += len; k++;
+          }
+          count++;
+        });
+      });
+      showToast(t("bk.filled", { n: count }));
+      renderBook();
+    }, function (e) { busy(null); showToast(e && e.message === "nodisk" ? t("toast.noDisk") : t("bk.fail")); });
+  }
+  // ---- deleting a whole book (with undo, like a project) ----
+  function deleteBook() {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    var pids = C.bookParts(data, b).map(function (x) { return x.p.id; }), keep = { books: [Object.assign({}, b)] };
+    C.LISTS.forEach(function (key) {
+      keep[key] = key === "projects" ? pids.map(function (id) { return Object.assign({}, C.find(data, "projects", id)); })
+        : data[key].filter(function (x) { return pids.indexOf(x.p) >= 0; }).map(function (x) { return Object.assign({}, x); });
+    });
+    var paths = keep.sources.map(function (s) { return s.path; }).concat(b.rt ? [b.rt.path] : []);
+    if (proj && proj.bk === b.id) openProject(null);
+    hideDlg("book-dlg");
+    var part = C.emptyData(), now = Date.now();
+    Object.keys(keep).forEach(function (key) { keep[key].forEach(function (x) { part.tombs[x.id] = Math.max(now, x.m); }); });
+    data = C.mergeStudio(data, part);
+    save();
+    renderAll();
+    var timer = setTimeout(function () {
+      if (findBook(b.id)) return;
+      var fs = fsApi();
+      if (fs && typeof fs.rm === "function") paths.forEach(function (p) { try { Promise.resolve(fs.rm(p)).catch(function () {}); } catch (e) {} });
+    }, 9000);
+    undoToast(t("bk.deleted"), function () {
+      clearTimeout(timer);
+      var back = C.emptyData();
+      back.books = [];
+      Object.keys(keep).forEach(function (key) {
+        keep[key].forEach(function (x) { x.m = Math.max(Date.now(), (data.tombs[x.id] || 0) + 1); back[key].push(x); });
+      });
+      data = C.mergeStudio(data, back);
+      save();
+      renderAll();
+      openBook(b.id);
+    });
+  }
+
   // ---------- 10. Dialogs ----------
   function showDlg(id) {
     var d = $(id);
@@ -4573,9 +4900,10 @@
   }
 
   // Projects
-  function openProjects() { renderProjects(); showDlg("proj-dlg"); }
+  function openProjects() { setProjTab(proj && proj.bk ? "books" : projTab); renderProjects(); showDlg("proj-dlg"); }
   function renderProjects() {
-    var host = $("proj-list"), list = C.newestFirst(data.projects);
+    var host = $("proj-list"), list = C.newestFirst(data.projects.filter(function (p) { return !p.bk; }));
+    renderBooks();
     if ($("oros-save")) $("oros-save").disabled = !proj;
     host.innerHTML = "";
     $("proj-empty").hidden = list.length > 0;
@@ -4600,7 +4928,7 @@
     });
   }
   function newProject() {
-    if (data.projects.length >= C.MAX_PROJECTS) { showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return; }
+    if (C.songCount(data) >= C.MAX_PROJECTS) { showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return; }
     hideDlg("proj-dlg");
     proj = null;
     ensureProject();
@@ -4936,7 +5264,7 @@
                  ["home-btn", "home", "btn.home"], ["stop-btn", "stop", "btn.stop"], ["rec-btn", "rec", "btn.rec"],
                  ["loop-btn", "loop", "btn.loop"], ["zoom-in", "zin", "btn.zoomIn"], ["zoom-out", "zout", "btn.zoomOut"],
                  ["clip-close", "close", "btn.close"], ["proj-close", "close", "btn.close"], ["track-close", "close", "btn.close"],
-                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"], ["fx-close", "close", "btn.close"], ["loud-close", "close", "btn.close"],
+                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"], ["fx-close", "close", "btn.close"], ["loud-close", "close", "btn.close"], ["book-close", "close", "btn.close"],
                  ["add-close", "close", "btn.close"], ["pr-play", "play", "pr.play"]];
     icons.forEach(function (x) { $(x[0]).innerHTML = ICON[x[1]]; setLabel($(x[0]), t(x[2])); });
     var sig = $("sig-in");
@@ -5096,6 +5424,35 @@
     $("track-auto").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); prefs.auto[id] = true; savePrefs(); renderRows(); });
     $("export-close").addEventListener("click", function () { hideDlg("export-dlg"); });
     $("master-loud").addEventListener("click", openLoudness);
+    $("proj-tab-songs").addEventListener("click", function () { setProjTab("songs"); });
+    $("proj-tab-books").addEventListener("click", function () { setProjTab("books"); });
+    $("book-new").addEventListener("click", newBook);
+    $("book-close").addEventListener("click", function () { hideDlg("book-dlg"); });
+    $("book-back").addEventListener("click", function () { hideDlg("book-dlg"); setProjTab("books"); openProjects(); });
+    $("book-rename").addEventListener("click", function () {
+      var b = findBook(bookOpen);
+      if (b) askName(t("bk.nameAsk"), b.name, function (v) { if (v) bookField(function (x) { x.name = v; }); renderHead(); });
+    });
+    $("book-pub").addEventListener("change", function () {
+      var v = this.value, ti = pubData().filter(function (x) { return x.id === v; })[0];
+      bookField(function (x) {
+        if (!ti) { delete x.pub; return; }
+        var ed = abEdition(ti);
+        x.pub = { t: ti.id };
+        if (ed && typeof ed.id === "string") x.pub.e = ed.id;
+      });
+    });
+    ["author", "narrator"].forEach(function (k) {
+      $("book-" + k).addEventListener("change", function () {
+        var v = this.value.trim();
+        bookField(function (x) { x.meta = x.meta || {}; if (v) x.meta[k] = v; else delete x.meta[k]; });
+      });
+    });
+    $("book-spec").addEventListener("change", function () { var v = this.value; bookField(function (x) { x.spec = v; }); });
+    $("book-addch").addEventListener("click", addChapter);
+    $("book-rt-use").addEventListener("click", useRoomTone);
+    $("book-fill").addEventListener("click", fillGaps);
+    $("book-del").addEventListener("click", deleteBook);
     $("export-loud").addEventListener("click", function () { hideDlg("export-dlg"); openLoudness(); });
     $("loud-close").addEventListener("click", closeLoudness);
     $("loud-dlg").addEventListener("close", function () { ldRefStop(); ld.job++; ldBusy(false); });

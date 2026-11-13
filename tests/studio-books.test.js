@@ -65,6 +65,8 @@ test("bookParts: credits around the chapters in order; a chapter that is gone dr
   }), data());
   const parts = C.bookParts(d, d.books[0]);
   assert.deepEqual(parts.map((x) => [x.p.id, x.kind]), [["popen0001", "open"], ["pchap0002", "chapter"], ["pchap0001", "chapter"], ["pclose001", "close"]]);
+  const d2 = C.mergeStudio(d, data({ projects: [P("pchap0003", 1, { bk: "bbook0001", kind: "chapter" })] }));
+  assert.deepEqual(C.bookParts(d2, d2.books[0]).map((x) => x.p.id), ["popen0001", "pchap0002", "pchap0001", "pchap0003", "pclose001"], "an unlisted chapter shows before the closing credits");
   assert.equal(C.songCount(d), 0);
   assert.equal(C.chapterCount(d), 5);
 });

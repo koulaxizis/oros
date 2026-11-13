@@ -408,6 +408,13 @@
     var out = [], have = function (id) { var p = find(dat, "projects", id); return p && p.bk === bk.id ? p : null; };
     if (bk.open && have(bk.open)) out.push({ p: have(bk.open), kind: "open" });
     bk.ch.forEach(function (id) { var p = have(id); if (p) out.push({ p: p, kind: "chapter" }); });
+    // a chapter of this book that ch does not list (its delete was undone, or
+    // two devices added chapters at once) still shows, after the others
+    var listed = {};
+    out.forEach(function (x) { listed[x.p.id] = 1; });
+    dat.projects.filter(function (p) { return p.bk === bk.id && p.kind === "chapter" && !listed[p.id]; })
+      .sort(function (x, y) { return cmpStr(x.id, y.id); })
+      .forEach(function (p) { out.push({ p: p, kind: "chapter" }); });
     if (bk.close && have(bk.close)) out.push({ p: have(bk.close), kind: "close" });
     return out;
   }

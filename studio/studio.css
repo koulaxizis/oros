@@ -899,3 +899,10 @@ dialog input[type="email"], dialog input[type="number"], dialog input[type="date
   .mk-row { grid-template-columns: auto 1fr; }
   .pod-two { grid-template-columns: 1fr; gap: 0; }
 }
+
+/* Books (wave A2) */
+.proj-tabs { display: flex; gap: 8px; margin: 0 0 10px; }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+#book-parts .row-item { gap: 2px; }
+#book-parts .icon-btn:disabled { opacity: 0.35; }
+#book-own input, #book-dlg select { width: 100%; }

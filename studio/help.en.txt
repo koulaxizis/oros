@@ -170,6 +170,16 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - Then add the feed address once to Apple Podcasts, Spotify and the Podcast Index; podcast apps follow it from there. `Follow in Podcasts` adds your show to [Podcasts](app:podcasts) like any other.
 - Each show and episode keeps one id forever (podcast:guid), so subscribers never see an episode twice, even if the show moves to another address. Nothing goes through orOS: the files go from your device to your host.
 
+## Audiobooks
+A book is a row of chapters, and every chapter is an ordinary Studio project: tracks, effects, automation and recording through orOS Bridge all work as in a song. Open `Projects` and choose `Books`.
+- `New book` makes the opening credits, Chapter 1 and the closing credits, each with a `Voice` track that starts with NULL effects for speech: a high-pass filter at 80 Hz, the de-esser and a gentle compressor (the gate is there but off until your room needs it).
+- In the book's window you rename it, add chapters, put them in order with the arrows, and open any part. Up to 200 chapters fit in all books together, besides the 50 songs.
+- `Title in Publishing` links the book to its title in Publishing: the author, narrator and audiobook ISBN are read from there whenever they are needed, so a fix in Publishing reaches the book. Without Publishing, fill in author and narrator here.
+- `Requirements`: ACX (Audible) or Storytel. The Loudness window checks a chapter against them.
+- Takes in a chapter are saved as 24-bit FLAC: lossless, about half the size of a WAV, and they sync with Vault Drive. Songs keep WAV.
+- Room tone: record about 30 seconds of the quiet room with the same microphone and settings, select that clip, open the book and press `Use the selected clip as room tone`. Studio measures its noise floor (ACX wants -60 dBFS or lower).
+- `Fill the gaps` puts the room tone on a track of its own wherever the voice stops in the open chapter, plus 2 seconds at the end, so no digital silence is left. Press it again after editing: it starts afresh.
+
 ## Sync and backup
 - Projects, tracks and clips, the notes of MIDI clips too, follow you to your other devices through orOS sync.
 - The audio itself is kept as files on the orOS disk, in the `Studio` folder of the [Files](app:files) app. With sync on and [Vault Drive](help:t/sync) turned on, the files travel to your other devices too. Until a file arrives, its clips show that the audio is not on this device yet.
