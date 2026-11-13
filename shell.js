@@ -7322,6 +7322,23 @@
       window.OrosShareRelay.revoke(p.id, p.del).catch(function () {});
     }
   }
+  // SOS (SOS-1) cancels every sign-in link this device still holds:
+  // the one in memory (a link is never stored, so links from a closed
+  // tab cannot be cancelled and expire by themselves within 15 minutes),
+  // and forgets a link that opened this browser. Resolves when the
+  // relay has answered or failed; never rejects.
+  function linkCancelAll() {
+    var p = state.plink;
+    linkStopWatch();
+    state.plink = null;
+    state.linkIn = null;
+    settingsNotify();
+    if (p && p.id && p.del && window.OrosShareRelay) {
+      return window.OrosShareRelay.revoke(p.id, p.del).then(function () { return 1; }, function () { return 0; });
+    }
+    return Promise.resolve(0);
+  }
+  window.orosPairLink = { cancelAll: linkCancelAll };
   function linkInSet(fields) {
     if (!state.linkIn) return;
     for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) state.linkIn[k] = fields[k];
