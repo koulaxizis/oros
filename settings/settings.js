@@ -1562,6 +1562,8 @@
     }
     status.appendChild(txt);
     c1.appendChild(status);
+    var sgc = st !== "off" ? signalCard(y) : null;
+    if (sgc) host.appendChild(sgc);
 
     if (st === "off") {
       if (y.available) {
@@ -3348,6 +3350,8 @@
 
     host.appendChild(reportCard());
 
+    host.appendChild(sosCard(s));
+
     var c4 = card(t("x.reset"));
     c4.classList.add("danger-card");
     c4.appendChild(el("p", "hint", t("x.reset.hint")));
@@ -3362,6 +3366,79 @@
     host.appendChild(c4);
   }
   var resetting = false;
+
+  // SOS-1: erase everywhere. "SOS" typed and (with sync on) the sync
+  // passphrase typed again; the shell checks it before anything is
+  // touched and then gives 10 s to cancel.
+  var sos = { word: "", pass: "" };
+  function sosCard(s) {
+    var y = s.sync || {};
+    var c = card(t("x.sos"));
+    c.classList.add("danger-card");
+    c.appendChild(el("p", "hint", t("x.sos.hint")));
+    var ul = el("ul", "hint");
+    ["x.sos.l1", "x.sos.l2", "x.sos.l3", "x.sos.l4"].forEach(function (k) { ul.appendChild(el("li", null, t(k))); });
+    c.appendChild(ul);
+    c.appendChild(el("p", "msg msg-err", t("x.sos.warn")));
+    if (resetting) {
+      c.appendChild(el("p", "msg msg-dim", t("x.reset.working")));
+      return c;
+    }
+    if (y.connected && !y.unlocked) {
+      c.appendChild(el("p", "msg msg-dim", t("x.sos.locked")));
+      return c;
+    }
+    if (!y.connected) c.appendChild(el("p", "msg msg-dim", t("x.sos.off")));
+    c.appendChild(labelled(t("x.sos.type"), "sos-word", textInput("sos-word", sos.word, "SOS", function (v) {
+      sos.word = v;
+      var b = $("f-sos-go");
+      if (b) b.disabled = !sosReady(y);
+    })));
+    if (y.connected) {
+      c.appendChild(labelled(t("x.sos.pass"), "sos-pass", textInput("sos-pass", sos.pass, "", function (v) {
+        sos.pass = v;
+        var b = $("f-sos-go");
+        if (b) b.disabled = !sosReady(y);
+      }, "password")));
+    }
+    var go = button(t("x.sos.go"), "x.sos.go", function () {
+      if (!sosReady(y)) return;
+      var pw = y.connected ? sos.pass : "";
+      sos.word = ""; sos.pass = "";
+      act("sos", pw);
+    }, "danger");
+    go.id = "f-sos-go";
+    go.disabled = !sosReady(y);
+    c.appendChild(actions(go));
+    c.appendChild(el("p", "hint", t("x.sos.next")));
+    return c;
+  }
+  function sosReady(y) {
+    return sos.word.trim().toUpperCase() === "SOS" && (!y.connected || sos.pass.length > 0);
+  }
+
+  // SOS-1: a reset signal (or a signal this passphrase cannot open)
+  // stopped sync on this device; an SOS that this passphrase opens
+  // erases the device at once and never shows here.
+  function signalCard(y) {
+    var sg = y.signal;
+    if (!sg || (sg.kind === "sos" && sg.verified)) return null;
+    var d = sigDate(sg.n);
+    var c = card(t(sg.verified ? "y.sig.reset.title" : "y.sig.closed.title"));
+    c.classList.add("danger-card");
+    c.appendChild(el("p", "hint", t(sg.verified ? "y.sig.reset.body" : "y.sig.closed.body", { d: d })));
+    var keep = sg.kind === "reset" ? button(t("y.sig.keep"), "y.sig.keep", function () { act("sync.signal.keep"); }, "primary") : null;
+    c.appendChild(actions(keep,
+      confirmBtn(t("y.sig.erase"), t("y.sig.erase.confirm"), "y.sig.erase", function () { act("sync.signal.erase"); }, "danger")));
+    if (keep) c.appendChild(el("p", "hint", t("y.sig.keep.hint")));
+    return c;
+  }
+  function sigDate(n) {
+    try {
+      return new Date(n).toLocaleString(LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB",
+        { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    } catch (e) { return new Date(n).toISOString(); }
+  }
 
   // "Report a problem": settings/report.js builds one text file (no user
   // data); the person reads it here before it is saved. Under the orOS
