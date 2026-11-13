@@ -11323,3 +11323,11 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** scanpdf/core.js 1.6.0, pdfops.js (`stamp`, `pageGeoms`), sign-core.js (new), sign.html, sign.js, sign.css (new, precached), scanpdf.js, scanpdf.css, search.js, index.html, help EN/EL, i18n/de (scanpdf.js, help/scanpdf.txt), i18n/apps.json, tests/scanpdf-sign.test.js (new), tests/scanpdf.test.js, tests/scanpdf-ocr.test.js.
 - **Tests:** new `tests/scanpdf-sign.test.js` (fields, request and reply checks, stamp determinism and the attachment, store laws, links, a round trip through the real relay code); full suite; Playwright Chromium 360 px end to end (fields → request → signing page → drawn signature → signed PDF → answer → Signed), both PDFs identical.
 - **Next:** wave 4a (answers back on their own through relay reply boxes, Remind; reviewed by the Mail thread), wave 4b several signers.
+
+
+### 2026-11-13 — 6.45.00 — Calendar: events with guests, QR tickets and a door check-in (CAL-EV waves E1 + E3, #986)
+- **Changes:** `Guests…` on own, saved, one-off events: guests from Contacts or typed, answers (coming, maybe, no answer, not coming, waiting), places with plus-ones and a waiting list (a freed place goes only on a tap, Chris Q4), check-in with undo, CSV, door list print, `Tasks to To-Do` (BR-TD-ADD, unchanged); E3: a signed QR ticket per guest (Share, Save image, Print tickets) and `Door`, an offline camera check (BarcodeDetector or jsQR) with welcome / already in / let in? / not for this event.
+- **Schema:** new slice `calguests` (`oros-calendar-guests`), per-guest newer-wins merge with tombstones, list key `sk` (smallest wins); ticket `OT1.<guest id>.<HMAC-SHA-256 first 16 bytes, base64url>`.
+- **Files:** calendar/guests.js, calendar/guestsui.js (new, precached), calendar.js, index.html, calendar.css, help EN/EL, i18n/de (calendar.js, help/calendar.txt), tests/calendar-guests.test.js (new, 15).
+- **Tests:** tests/calendar-guests.test.js; full suite; Playwright Chromium 360 px EL and 1280 px EN (ticket QR decoded with jsQR, door read through a fake camera), two-device sync in the audit harness (both check-ins kept).
+- **Next:** E2 RSVP links over Forms W2 (`relay/forms.js` with places and the waiting list, `calendar/rsvp.html`).
