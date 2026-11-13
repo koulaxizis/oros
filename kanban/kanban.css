@@ -1658,6 +1658,37 @@ dialog menu button.danger:hover {
 .tl-zw .tl-day, .tl-zm .tl-day { align-items: flex-start; padding-left: 3px; border-left-color: var(--border); }
 .tl-zm .tl-month { top: auto; bottom: 6px; }
 
+/* Gantt (wave G2): dependencies, critical path */
+.tl-arrows { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 2; overflow: visible; }
+.tl-arrow { fill: none; stroke: var(--text-dim); stroke-width: 1.5; opacity: 0.8; }
+.tl-arrow.crit { stroke: var(--accent); stroke-width: 2.2; opacity: 1; }
+.tl-arrow.bad { stroke: var(--danger); stroke-width: 2; opacity: 1; }
+.tl-ah.ok { fill: var(--text-dim); }
+.tl-ah.crit { fill: var(--accent); }
+.tl-ah.bad { fill: var(--danger); }
+.tl-bar.crit, .tl-ms.crit { box-shadow: 0 0 0 2px var(--panel-bg), 0 0 0 4px var(--accent); }
+.tl-link {
+  position: absolute;
+  top: 14px;
+  width: 10px;
+  height: 10px;
+  margin-left: -1px;
+  border-radius: 50%;
+  border: 2px solid var(--text-dim);
+  background: var(--panel-bg);
+  cursor: crosshair;
+  touch-action: none;
+  opacity: 0;
+  z-index: 3;
+}
+.tl-row:hover .tl-link, .tl-link:focus { opacity: 1; }
+body.tl-linking, body.tl-linking * { cursor: crosshair !important; }
+.tl-linkline { position: absolute; height: 2px; background: var(--accent); transform-origin: 0 50%; pointer-events: none; z-index: 6; }
+.link-target { outline: 3px solid var(--accent) !important; outline-offset: 2px; }
+#c-deps-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+#c-deps-chips:empty { display: none; }
+.dep-chip { background: var(--panel-bg) !important; color: var(--text); border: 1px solid var(--border); }
+
 /* Card dialog: column select, attachments, cover */
 dialog select {
   width: 100%;
@@ -1797,6 +1828,7 @@ dialog label.chk.sel select { flex: 1; min-width: 0; width: auto; }
   .tl-h { width: 16px; }
   .tl-ms { top: 8px; width: 20px; height: 20px; margin-left: -10px; }
   .tl-lab { top: 12px; }
+  .tl-link { opacity: 0.55; top: 13px; width: 18px; height: 18px; margin-left: -4px; }
 }
 
 /* Assistant prefill (asNew): the card's extras under the quick-add field */

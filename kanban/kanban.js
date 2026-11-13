@@ -278,6 +278,16 @@
       "tl.empty":         "No cards with dates. Give a card a start or due date to see it here.",
       "tl.nodue":         "Cards without dates: {n}",
       "tl.today":         "Today",
+      "card.deps":        "Depends on",
+      "deps.add":         "Add a card it waits for…",
+      "deps.remove":      "Remove: this card no longer waits for it",
+      "deps.hint":        "Drag the dot after a bar onto another bar: that card then waits for it.",
+      "deps.drag":        "Drag onto the card that waits for this one",
+      "deps.loop":        "Not added: the cards would wait for each other",
+      "deps.added":       "Dependency added",
+      "deps.shift":       "Move the next ones too",
+      "deps.shifted":     "The next cards were moved",
+      "tl.cp":            "Critical path",
       "card.start":       "Start",
       "card.ms":          "Milestone",
       "card.ms.long":     "Milestone (a diamond on the due date)",
@@ -530,6 +540,16 @@
       "tl.empty":         "Καμία κάρτα με ημερομηνίες. Δώσε σε μια κάρτα έναρξη ή προθεσμία για να τη δεις εδώ.",
       "tl.nodue":         "Κάρτες χωρίς ημερομηνίες: {n}",
       "tl.today":         "Σήμερα",
+      "card.deps":        "Εξαρτάται από",
+      "deps.add":         "Πρόσθεσε κάρτα που περιμένει…",
+      "deps.remove":      "Αφαίρεση: η κάρτα δεν την περιμένει πια",
+      "deps.hint":        "Σύρε την τελεία μετά από μια μπάρα πάνω σε άλλη: εκείνη η κάρτα θα την περιμένει.",
+      "deps.drag":        "Σύρε πάνω στην κάρτα που περιμένει αυτήν",
+      "deps.loop":        "Δεν προστέθηκε: οι κάρτες θα περίμεναν η μία την άλλη",
+      "deps.added":       "Η εξάρτηση προστέθηκε",
+      "deps.shift":       "Μετακίνησε και τις επόμενες",
+      "deps.shifted":     "Οι επόμενες κάρτες μετακινήθηκαν",
+      "tl.cp":            "Κρίσιμη διαδρομή",
       "card.start":       "Έναρξη",
       "card.ms":          "Ορόσημο",
       "card.ms.long":     "Ορόσημο (ρόμβος στην προθεσμία)",
@@ -986,7 +1006,8 @@
   // K1: device-local view of each board (never synced):
   //   { <boardId>: { v: "board"|"table"|"timeline", lanes: ""|"label"|"lane",
   //                  sort: "status"|"text"|"due"|"labels"|"sub"|"lane", dir: "asc"|"desc",
-  //                  z: "d"|"w"|"m" (timeline zoom), grp: ""|"col"|"lane" (timeline groups) } }
+  //                  z: "d"|"w"|"m" (timeline zoom), grp: ""|"col"|"lane" (timeline groups),
+  //                  cp: true (timeline: show the critical path) } }
   var viewPrefs = (function () {
     var v = readPrefs().views;
     return v && typeof v === "object" && !Array.isArray(v) ? v : {};
@@ -999,7 +1020,8 @@
       sort: typeof v.sort === "string" ? v.sort : "status",
       dir: v.dir === "desc" ? "desc" : "asc",
       z: v.z === "w" || v.z === "m" ? v.z : "d",
-      grp: v.grp === "col" || v.grp === "lane" ? v.grp : ""
+      grp: v.grp === "col" || v.grp === "lane" ? v.grp : "",
+      cp: v.cp === true
     };
   }
   function setView(boardId, patch) {
@@ -2592,6 +2614,7 @@
     setInputKeep($("c-due"), card.due || "");
     setInputKeep($("c-start"), card.start || "");
     $("c-ms").checked = !!card.ms;
+    if (document.activeElement !== $("c-deps-add")) renderCardDeps(card);
     setInputKeep($("c-lane"), card.lane || "");
     renderCardCols();
 
@@ -2639,6 +2662,7 @@
     $("c-due").value = card.due || "";   // "" = cleared (native date input)
     $("c-start").value = card.start || "";
     $("c-ms").checked = !!card.ms;
+    renderCardDeps(card);
     $("c-lane").value = card.lane || "";
     renderLaneList();
     renderCardCols();
@@ -3038,6 +3062,66 @@
     });
     sel.value = editingColId;
   }
+  // Gantt (G2): the cards this one waits for, as chips, and a list to
+  // add one. Cards that would close a loop are left out of the list.
+  function renderCardDeps(card) {
+    var host = $("c-deps-chips"), sel = $("c-deps-add"), board = currentBoard();
+    if (!host || !sel || !board || !card) return;
+    host.innerHTML = "";
+    var idx = {};
+    board.columns.forEach(function (col) { col.cards.forEach(function (c) { idx[c.id] = c; }); });
+    (card.deps || []).forEach(function (id) {
+      var pc = idx[id];
+      if (!pc) return;
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "lbl-chip dep-chip";
+      chip.title = t("deps.remove");
+      var nm = document.createElement("span");
+      nm.textContent = pc.text;
+      chip.appendChild(nm);
+      chip.addEventListener("click", function () { setDep(id, false); });
+      host.appendChild(chip);
+    });
+    sel.innerHTML = "";
+    var o0 = document.createElement("option");
+    o0.value = "";
+    o0.textContent = t("deps.add");
+    sel.appendChild(o0);
+    board.columns.forEach(function (col) {
+      col.cards.forEach(function (c) {
+        if (c.id === card.id || (card.deps || []).indexOf(c.id) !== -1 || T.wouldCycle(board, card.id, c.id)) return;
+        var o = document.createElement("option");
+        o.value = c.id;
+        o.textContent = c.text + " · " + col.name;
+        sel.appendChild(o);
+      });
+    });
+    sel.value = "";
+    sel.disabled = sel.options.length < 2 || (card.deps || []).length >= 20;
+  }
+  // Add or remove "the editing card waits for predId".
+  function setDep(predId, on, succId) {
+    var board = currentBoard();
+    var f = board && T.findCard(board, succId || editingCardId);
+    if (!f) return false;
+    var c = f.card;
+    var list = (c.deps || []).slice();
+    var at = list.indexOf(predId);
+    if (on) {
+      if (at !== -1 || list.length >= 20 || T.wouldCycle(board, c.id, predId)) return false;
+      list.push(predId);
+    } else {
+      if (at === -1) return false;
+      list.splice(at, 1);
+    }
+    if (list.length) c.deps = list; else delete c.deps;
+    stamp(c, ["g"]);
+    save(); scheduleRender();
+    if (c.id === editingCardId) renderCardDeps(c);
+    return true;
+  }
+
   function renderLaneList() {
     var dl = $("c-lane-list"), board = currentBoard();
     if (!dl || !board) return;
@@ -4109,7 +4193,7 @@
     notifyTransient(t("toast.undone"));
   }
 
-  function showToast(text, withUndo) {
+  function showToast(text, withUndo, action) {
     var el = $("toast");
     if (!el) return;
     el.innerHTML = "";
@@ -4126,13 +4210,20 @@
       b.addEventListener("click", doUndo);
       el.appendChild(b);
     }
+    if (action) {                        // { label, fn }: one more button
+      var ab = document.createElement("button");
+      ab.type = "button";
+      ab.textContent = action.label;
+      ab.addEventListener("click", function () { el.classList.remove("show"); action.fn(); });
+      el.appendChild(ab);
+    }
 
     void el.offsetWidth;                 // επανεκκίνηση transition
     el.classList.add("show");
 
     clearTimeout(toastTimer);
     // Undo toasts stay at least 8 s (Part VII).
-    toastTimer = setTimeout(function () { el.classList.remove("show"); }, withUndo ? 8000 : 5000);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, action ? 12000 : withUndo ? 8000 : 5000);
   }
 
   
@@ -4917,6 +5008,7 @@
           vw.grp, function (v) { setView(board.id, { grp: v }); renderAll(); });
       var wdOn = T.boardWorkdays(board);
       item((wdOn ? "\u2713 " : "") + t("tl.wd"), "mp.wd", function () { setWorkdays(board.id, !wdOn); });
+      item((vw.cp ? "\u2713 " : "") + t("tl.cp"), "mp.cp", function () { setView(board.id, { cp: !vw.cp }); renderAll(); });
     }
     var sep = document.createElement("hr");
     sep.className = "dropdown-sep";
@@ -5114,6 +5206,8 @@
     grid.appendChild(tlHeader(rg, px, vw.z || "d", today));
     var todayIdx = T.daysBetween(rg.from, today);
     var lastIdx = board.columns.length - 1;
+    var crit = vw.cp ? T.criticalPath(board, wd).ids : {};
+    var hasDeps = dated.some(function (r) { return (r.card.deps || []).length; });
     var groups = tlGroups(dated, vw.grp, board);
     groups.forEach(function (g) {
       if (g.name !== null) {
@@ -5128,15 +5222,16 @@
         gr.appendChild(gt);
         grid.appendChild(gr);
       }
-      g.rows.forEach(function (r) { grid.appendChild(tlRow(r, rg, px, todayIdx, lastIdx, wd)); });
+      g.rows.forEach(function (r) { grid.appendChild(tlRow(r, rg, px, todayIdx, lastIdx, wd, crit[r.card.id])); });
     });
     wrap.appendChild(grid);
     host.appendChild(wrap);
     var foot = document.createElement("div");
     foot.className = "alt-foot";
-    foot.textContent = t("tl.hint") + (wd ? "  ·  " + t("tl.wd") : "") + (undated ? "  ·  " + t("tl.nodue", { n: undated }) : "");
+    foot.textContent = t("tl.hint") + "  " + t("deps.hint") + (wd ? "  ·  " + t("tl.wd") : "") + (vw.cp ? "  ·  " + t("tl.cp") : "") + (undated ? "  ·  " + t("tl.nodue", { n: undated }) : "");
     host.appendChild(foot);
     requestAnimationFrame(function () {
+      if (hasDeps) tlArrows(grid, board, wd, crit);
       if (keepScroll && keepScroll.kind === "tl-wrap") { wrap.scrollLeft = keepScroll.l; wrap.scrollTop = keepScroll.t; }
       else wrap.scrollLeft = Math.max(0, (todayIdx - 3) * px);
       if (keepTlFocus) {
@@ -5198,7 +5293,7 @@
     hd.appendChild(track);
     return hd;
   }
-  function tlRow(r, rg, px, todayIdx, lastIdx, wd) {
+  function tlRow(r, rg, px, todayIdx, lastIdx, wd, isCrit) {
     var c = r.card, sp = r.span;
     var row = document.createElement("div");
     row.className = "tl-row";
@@ -5238,7 +5333,7 @@
     var late = fmt && fmt.css === "due-overdue" && !done;
     var lab = null;
     if (sp.ms) {
-      bar.className = "tl-ms" + (late ? " due-overdue" : "") + (done ? " done" : "");
+      bar.className = "tl-ms" + (late ? " due-overdue" : "") + (done ? " done" : "") + (isCrit ? " crit" : "");
       bar.style.left = (idx * px + px / 2) + "px";
       bar.style.setProperty("--ms-c", tlColor(c));
       lab = document.createElement("span");
@@ -5246,7 +5341,7 @@
       lab.style.left = (idx * px + px / 2 + 14) + "px";
     } else {
       var w = Math.max(len * px - 4, 8);
-      bar.className = "tl-pill tl-bar " + (late ? "due-overdue" : "") + (done ? " done" : "");
+      bar.className = "tl-pill tl-bar " + (late ? "due-overdue" : "") + (done ? " done" : "") + (isCrit ? " crit" : "");
       bar.style.left = (idx * px + 2) + "px";
       bar.style.width = w + "px";
       bar.style.background = tlColor(c);
@@ -5276,6 +5371,14 @@
         });
       }
     }
+    // G2: the dot after the bar: drag it onto another bar = "that one waits for this one"
+    var dot = document.createElement("span");
+    dot.className = "tl-link";
+    dot.setAttribute("aria-hidden", "true");
+    dot.title = t("deps.drag");
+    dot.style.left = (sp.ms ? idx * px + px / 2 + 10 : idx * px + 2 + Math.max(len * px - 4, 8) + 2) + "px";
+    attachLinkDrag(dot, c.id);
+    tr2.appendChild(dot);
     if (lab) { lab.textContent = c.text; tr2.appendChild(lab); }
     bar.setAttribute("data-card", c.id);
     attachBarDrag(bar, r.col.id, c.id, px, wd);
@@ -5288,6 +5391,150 @@
     var lb = (c.labels || []).map(labelById).filter(Boolean)[0];
     return lb ? (lb.color || FALLBACK_COLOR) : "var(--accent)";
   }
+  // G2: dependency arrows, from the end of the first bar to the start of
+  // the next, red when the next one starts too early. Drawn after
+  // layout from the bars' real places, under the sticky name column.
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function tlArrows(grid, board, wd, crit) {
+    var old = grid.querySelector(".tl-arrows");
+    if (old) old.remove();
+    var g0 = grid.getBoundingClientRect();
+    var at = {};
+    Array.prototype.forEach.call(grid.querySelectorAll("[data-card]"), function (el) {
+      var r = el.getBoundingClientRect();
+      at[el.getAttribute("data-card")] = { l: r.left - g0.left, r: r.right - g0.left, y: r.top - g0.top + r.height / 2, ms: el.classList.contains("tl-ms") };
+    });
+    var broken = {};
+    T.brokenDeps(board, wd).forEach(function (d) { broken[d.from + ">" + d.to] = true; });
+    var svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("class", "tl-arrows");
+    svg.setAttribute("width", String(grid.scrollWidth));
+    svg.setAttribute("height", String(grid.scrollHeight));
+    svg.setAttribute("aria-hidden", "true");
+    var defs = document.createElementNS(SVGNS, "defs");
+    ["ok", "bad", "crit"].forEach(function (k) {
+      var m = document.createElementNS(SVGNS, "marker");
+      m.setAttribute("id", "tl-ah-" + k);
+      m.setAttribute("viewBox", "0 0 8 8");
+      m.setAttribute("refX", "7"); m.setAttribute("refY", "4");
+      m.setAttribute("markerWidth", "7"); m.setAttribute("markerHeight", "7");
+      m.setAttribute("orient", "auto-start-reverse");
+      var pth = document.createElementNS(SVGNS, "path");
+      pth.setAttribute("d", "M0,0 L8,4 L0,8 z");
+      pth.setAttribute("class", "tl-ah " + k);
+      m.appendChild(pth);
+      defs.appendChild(m);
+    });
+    svg.appendChild(defs);
+    board.columns.forEach(function (col) {
+      col.cards.forEach(function (c) {
+        (c.deps || []).forEach(function (pid) {
+          var a = at[pid], b = at[c.id];
+          if (!a || !b) return;
+          var k = broken[pid + ">" + c.id] ? "bad" : (crit[pid] && crit[c.id] ? "crit" : "ok");
+          var x1 = a.ms ? a.r - 4 : a.r, y1 = a.y, x2 = b.ms ? b.l + 2 : b.l, y2 = b.y;
+          var d;
+          if (x2 - x1 >= 16) {
+            var mx = x1 + Math.min(10, (x2 - x1) / 2);
+            d = "M" + x1 + "," + y1 + " H" + mx + " V" + y2 + " H" + (x2 - 1);
+          } else {                           // the next bar starts before: go round
+            var ym = y2 > y1 ? y2 - 18 : y2 + 18;
+            d = "M" + x1 + "," + y1 + " h8 V" + ym + " H" + (x2 - 10) + " V" + y2 + " H" + (x2 - 1);
+          }
+          var p = document.createElementNS(SVGNS, "path");
+          p.setAttribute("d", d);
+          p.setAttribute("class", "tl-arrow " + k);
+          p.setAttribute("marker-end", "url(#tl-ah-" + k + ")");
+          svg.appendChild(p);
+        });
+      });
+    });
+    grid.insertBefore(svg, grid.children[1] || null);
+  }
+  // Drag the dot after a bar onto another bar: the target waits for it.
+  function attachLinkDrag(dot, fromId) {
+    dot.addEventListener("pointerdown", function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var grid = dot.closest(".tl-grid");
+      var line = null, g0 = grid.getBoundingClientRect();
+      var sx = e.clientX - g0.left, sy = e.clientY - g0.top, hover = null;
+      try { dot.setPointerCapture(e.pointerId); } catch (er) {}
+      document.body.classList.add("tl-linking");
+      function target(ev) {
+        var el = document.elementFromPoint(ev.clientX, ev.clientY);
+        el = el && el.closest ? el.closest("[data-card]") : null;
+        return el && el.getAttribute("data-card") !== fromId ? el : null;
+      }
+      function move(ev) {
+        ev.preventDefault();
+        if (!line) {
+          line = document.createElement("div");
+          line.className = "tl-linkline";
+          grid.appendChild(line);
+        }
+        var x = ev.clientX - g0.left, y = ev.clientY - g0.top;
+        var len = Math.sqrt((x - sx) * (x - sx) + (y - sy) * (y - sy));
+        line.style.left = sx + "px"; line.style.top = sy + "px";
+        line.style.width = len + "px";
+        line.style.transform = "rotate(" + Math.atan2(y - sy, x - sx) + "rad)";
+        var tg = target(ev);
+        if (hover && hover !== tg) hover.classList.remove("link-target");
+        hover = tg;
+        if (hover) hover.classList.add("link-target");
+      }
+      function done(ev, ok) {
+        dot.removeEventListener("pointermove", move);
+        dot.removeEventListener("pointerup", up);
+        dot.removeEventListener("pointercancel", cancel);
+        document.body.classList.remove("tl-linking");
+        if (line) line.remove();
+        if (hover) hover.classList.remove("link-target");
+        if (!ok) return;
+        var tg = target(ev);
+        if (!tg) return;
+        var toId = tg.getAttribute("data-card");
+        var board = currentBoard();
+        if (T.wouldCycle(board, toId, fromId)) { notifyTransient(t("deps.loop")); return; }
+        var f = T.findCard(board, toId);
+        if (f && (f.card.deps || []).indexOf(fromId) !== -1) return;
+        pushUndo("deps.added");
+        if (setDep(fromId, true, toId)) offerShift(fromId, "deps.added");
+      }
+      function up(ev) { done(ev, true); }
+      function cancel(ev) { done(ev, false); }
+      dot.addEventListener("pointermove", move);
+      dot.addEventListener("pointerup", up);
+      dot.addEventListener("pointercancel", cancel);
+    });
+  }
+  // After a change to a card's dates (or a new dependency): when cards
+  // after it would now start too early, the toast offers to move them
+  // ("Move the next ones too", Chris 2026-11-13); otherwise the arrow
+  // just turns red. The move is its own Undo step.
+  function offerShift(cardId, key, noUndo) {
+    var board = currentBoard();
+    if (!board) return;
+    var wd = T.boardWorkdays(board);
+    if (!T.shiftAfter(board, cardId, wd).length) return;
+    showToast(t(key), !noUndo, { label: t("deps.shift"), fn: function () { shiftNext(cardId); } });
+  }
+  function shiftNext(cardId) {
+    var board = currentBoard();
+    if (!board) return;
+    var moves = T.shiftAfter(board, cardId, T.boardWorkdays(board));
+    if (!moves.length) return;
+    pushUndo("deps.shifted");
+    moves.forEach(function (mv) {
+      var f = T.findCard(board, mv.id);
+      if (!f) return;
+      var groups = applySpan(f.card, mv.from, mv.to, "move");
+      if (groups.length) stamp(f.card, groups);
+    });
+    save(); scheduleRender();
+  }
+
   // Write a new span back to the card. mode: "move" (both ends), "l"
   // (start), "r" (due). A card keeps only the dates it uses: a due-only
   // card that is moved stays due-only, a stretched one gains a start.
@@ -5340,6 +5587,7 @@
       var groups = applySpan(f.card, from, to, sp.ms ? "move" : mode);
       if (groups.length) stamp(f.card, groups);
       save(); scheduleRender();
+      offerShift(cardId, "toast.tlmoved");
     }
     bar.addEventListener("pointerdown", function (e) {
       if (e.button !== undefined && e.button !== 0) return;
@@ -6284,6 +6532,12 @@
       cStartInput.addEventListener("input", onStart);
       cStartInput.addEventListener("change", onStart);
     }
+    var cDeps = $("c-deps-add");
+    if (cDeps) cDeps.addEventListener("change", function () {
+      var v = cDeps.value;
+      cDeps.value = "";
+      if (v && setDep(v, true)) offerShift(v, "deps.added", true);
+    });
     var cMs = $("c-ms");
     if (cMs) cMs.addEventListener("change", function () {
       var card = editingCard();
