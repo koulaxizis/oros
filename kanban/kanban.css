@@ -1406,6 +1406,8 @@ dialog menu button.danger:hover {
 /* CRM 1.10: a contract that ends soon or has ended (read from CRM) */
 .ctr-chip { font-size: 11px; font-weight: 600; color: var(--warn, #c98a00); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; cursor: pointer; }
 .ctr-chip.ended { color: var(--danger); }
+.pd-chip { font-size: 11px; font-weight: 600; color: var(--accent); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; cursor: pointer; }
+.pd-chip.off { color: var(--text-dim); }
 
 /* Swimlanes: sticky column heads, one row per lane */
 #columns.lanes {

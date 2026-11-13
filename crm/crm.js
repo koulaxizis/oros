@@ -5007,6 +5007,8 @@
     if (x.newCust) { setTab("cust"); custEditor(null, {}); return true; }
     // 1.10: { ctr } a contract's quick actions (Publishing, Calendar,
     // Today, Kanban, search), { ctrs: filter } the Contracts tab
+    // RS-PROD: { prod: 1 } the Production stage window (Kanban's chip)
+    if (x.prod) { setTab("ctr"); prodDialog(); return true; }
     if (x.ctrs !== undefined) {
       if (CTR_FILTERS.indexOf(x.ctrs) >= 0) prefs.cf = x.ctrs;
       savePrefs();
