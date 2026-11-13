@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Netizen ID — App logic (v1.0.0)
+// orOS Netizen ID — App logic (v1.1.0)
 // A voluntary "identity card" for the netizen: username (the only
 // required field), identity, contact, sites & socials, bio, motto,
 // tags and a 12×12 pixel avatar, shown live as an ID-1 sized card
@@ -9,11 +9,17 @@
 //   - export: PNG / SVG (side shown), PDF (both sides, card size),
 //     avatar PNG / SVG, vCard; copy image; view-only share link that
 //     carries the card in the URL fragment (#c=…, never sent to a server)
+//   - link-in-bio page per card (NETIZEN-PAGE v1): the card's profile and
+//     links plus page-only links and headings, eight styles; exported as one
+//     HTML file with no script, shown through a #p=… link, QR code
 // Data:
 //   - synced slice "netizen" (oros-netizen-data): cards LWW by mtime
 //     + tombstones (R5, R17, R26)
+//   - synced slice "netizenPage" (oros-netizen-page-data): pages LWW by
+//     mtime + tombstones, one page per card id (never inside the card: an
+//     older normCard would drop the fields)
 //   - device-local (R10): oros-netizen-prefs (current card, phone tab,
-//     side shown)
+//     side shown, card | page mode)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Card model: normalize, merge (R5, R17, R26)
@@ -22,6 +28,7 @@
 //   5. Card rendering (SVG: front, back, avatar)
 //   6. Exports (PNG, SVG, PDF, vCard, copy image)
 //   7. Share link (encode / decode, viewer)
+//  7b. Link-in-bio page (model helpers, HTML, editor, export, link, QR)
 //   8. Editor (form, avatar painter, links, tags, styles)
 //   9. Cards (select, new, duplicate, delete + Undo)
 //  10. Dialogs + toasts
@@ -46,6 +53,14 @@
   var HIDEABLE = ["avatar", "bio", "disp", "email", "langs", "links", "loc",
                   "motto", "phone", "pron", "since", "tags", "web"];
   var STYLES = ["oros", "terminal", "paper", "mint", "rose"];
+
+  var PAGE_KEY = "oros-netizen-page-data";
+  var PAGE_THEMES = ["oros", "terminal", "paper", "mint", "rose", "dark", "gradient", "minimal"];
+  var PAGE_HIDE = ["avatar", "bio", "disp", "email", "links", "loc", "motto", "phone", "pron", "tags", "web"];
+  var PAGE_DEFAULT_HIDE = ["email", "phone"];
+  var PAGE_BT = ["round", "square", "outline"];
+  var MAX_PAGE_LINKS = 16, MAX_PAGE_HEADS = 8;   // + the card's 8 links = 24
+  var PG_LABEL = 40, PG_URL = 200, PG_EMOJI = 8, PG_TITLE = 60;
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -116,7 +131,34 @@
       "toast.tagDup": "That tag is already there", "toast.badLink": "This share link is damaged",
       "toast.exportFail": "Export failed", "toast.dup": "Card duplicated", "toast.new": "New card",
       "toast.avatar": "Avatar from Pixel Avatar", "toast.named": "New card with this name",
-      "toast.namedHere": "Name added to this card"
+      "toast.namedHere": "Name added to this card",
+      "btn.page": "Link-in-bio page", "btn.pageShort": "Page", "tab.preview": "Preview",
+      "pg.need": "Add a username on the card first. The page is made from the card.",
+      "pg.sec.show": "On the page", "pg.f.links": "Card links", "pg.cardHidden": "{field} (hidden on the card)",
+      "pg.showHint": "The page shows what the card shows. Fields hidden on the card stay off the page too. Email and phone start hidden here, because the page is public.",
+      "pg.sec.links": "Page links", "pg.linksHint": "Up to {n} more links and {h} headings, after the card's links.",
+      "pg.addLink": "Add link", "pg.addHead": "Add heading", "pg.emoji": "Icon (emoji or letter)",
+      "pg.ph.emoji": "🔗", "pg.ph.label": "Label", "pg.ph.url": "https://…", "pg.ph.head": "Heading",
+      "pg.feat": "Make it stand out", "pg.delHead": "Remove heading",
+      "pg.sec.look": "Look", "pg.themes": "Page style",
+      "style.dark": "Dark", "style.gradient": "Gradient", "style.minimal": "Minimal",
+      "pg.accent": "Button colour", "pg.accentReset": "Style colour",
+      "pg.shape": "Buttons", "pg.bt.round": "Rounded", "pg.bt.square": "Square", "pg.bt.outline": "Outline",
+      "pg.sec.more": "Publishing", "pg.title": "Page title", "pg.url": "Page address",
+      "pg.ph.url2": "https://you.neocities.org",
+      "pg.urlHint": "Where you put the HTML file. The QR code and search engines use it.",
+      "pg.vc": "Save contact button", "pg.vcHint": "Visitors save you as a contact, with only what the page shows.",
+      "pg.hostHint": "Export the page as HTML and upload it to a free host such as Neocities, GitHub Pages or Codeberg Pages, or to your own site. Help shows the steps.",
+      "pg.frame": "Page preview",
+      "pg.c.web": "Website", "pg.c.email": "Email", "pg.c.phone": "Call", "pg.c.save": "Save contact",
+      "pg.exp.title": "Export page", "pg.exp.html": "Page · HTML (index.html)",
+      "pg.exp.qrpng": "QR code · PNG", "pg.exp.qrsvg": "QR code · SVG",
+      "pg.qrUrl": "The QR code opens the page address.",
+      "pg.qrLink": "The QR code opens the page link. Add the page address under Publishing to use that instead.",
+      "pg.share.title": "Page link",
+      "pg.share.warn": "The link carries everything the page shows. Anyone who has it can see it. Nothing is sent to a server. The link changes when you change the page, so send the new one after edits.",
+      "toast.qrLong": "Too long for a QR code. Add the page address under Publishing.",
+      "toast.maxPageLinks": "Up to {n} page links", "toast.maxHeads": "Up to {n} headings"
     },
     el: {
       "tab.edit": "Επεξεργασία", "tab.card": "Κάρτα",
@@ -175,7 +217,34 @@
       "toast.tagDup": "Η ετικέτα υπάρχει ήδη", "toast.badLink": "Ο σύνδεσμος κοινοποίησης είναι χαλασμένος",
       "toast.exportFail": "Η εξαγωγή απέτυχε", "toast.dup": "Δημιουργήθηκε αντίγραφο", "toast.new": "Νέα κάρτα",
       "toast.avatar": "Avatar από το Pixel Avatar", "toast.named": "Νέα κάρτα με αυτό το όνομα",
-      "toast.namedHere": "Το όνομα μπήκε σε αυτή την κάρτα"
+      "toast.namedHere": "Το όνομα μπήκε σε αυτή την κάρτα",
+      "btn.page": "Σελίδα link-in-bio", "btn.pageShort": "Σελίδα", "tab.preview": "Προεπισκόπηση",
+      "pg.need": "Βάλε πρώτα όνομα χρήστη στην κάρτα. Η σελίδα φτιάχνεται από την κάρτα.",
+      "pg.sec.show": "Στη σελίδα", "pg.f.links": "Σύνδεσμοι της κάρτας", "pg.cardHidden": "{field} (κρυφό στην κάρτα)",
+      "pg.showHint": "Η σελίδα δείχνει ό,τι δείχνει η κάρτα. Όσα είναι κρυφά στην κάρτα μένουν έξω και από τη σελίδα. Το email και το τηλέφωνο ξεκινούν κρυφά εδώ, γιατί η σελίδα είναι δημόσια.",
+      "pg.sec.links": "Σύνδεσμοι της σελίδας", "pg.linksHint": "Έως {n} ακόμα σύνδεσμοι και {h} επικεφαλίδες, μετά τους συνδέσμους της κάρτας.",
+      "pg.addLink": "Προσθήκη συνδέσμου", "pg.addHead": "Προσθήκη επικεφαλίδας", "pg.emoji": "Εικονίδιο (emoji ή γράμμα)",
+      "pg.ph.emoji": "🔗", "pg.ph.label": "Ετικέτα", "pg.ph.url": "https://…", "pg.ph.head": "Επικεφαλίδα",
+      "pg.feat": "Να ξεχωρίζει", "pg.delHead": "Αφαίρεση επικεφαλίδας",
+      "pg.sec.look": "Εμφάνιση", "pg.themes": "Στυλ σελίδας",
+      "style.dark": "Σκοτεινό", "style.gradient": "Διαβάθμιση", "style.minimal": "Μίνιμαλ",
+      "pg.accent": "Χρώμα κουμπιών", "pg.accentReset": "Χρώμα του στυλ",
+      "pg.shape": "Κουμπιά", "pg.bt.round": "Στρογγυλά", "pg.bt.square": "Τετράγωνα", "pg.bt.outline": "Περίγραμμα",
+      "pg.sec.more": "Δημοσίευση", "pg.title": "Τίτλος σελίδας", "pg.url": "Διεύθυνση της σελίδας",
+      "pg.ph.url2": "https://you.neocities.org",
+      "pg.urlHint": "Εκεί όπου ανέβασες το αρχείο HTML. Τη χρησιμοποιούν ο κωδικός QR και οι μηχανές αναζήτησης.",
+      "pg.vc": "Κουμπί «Αποθήκευση επαφής»", "pg.vcHint": "Οι επισκέπτες σε αποθηκεύουν ως επαφή, μόνο με όσα δείχνει η σελίδα.",
+      "pg.hostHint": "Κάνε εξαγωγή της σελίδας σε HTML και ανέβασέ τη σε έναν δωρεάν χώρο, όπως Neocities, GitHub Pages ή Codeberg Pages, ή στο δικό σου site. Η Βοήθεια δείχνει τα βήματα.",
+      "pg.frame": "Προεπισκόπηση σελίδας",
+      "pg.c.web": "Ιστοσελίδα", "pg.c.email": "Email", "pg.c.phone": "Κλήση", "pg.c.save": "Αποθήκευση επαφής",
+      "pg.exp.title": "Εξαγωγή σελίδας", "pg.exp.html": "Σελίδα · HTML (index.html)",
+      "pg.exp.qrpng": "Κωδικός QR · PNG", "pg.exp.qrsvg": "Κωδικός QR · SVG",
+      "pg.qrUrl": "Ο κωδικός QR ανοίγει τη διεύθυνση της σελίδας.",
+      "pg.qrLink": "Ο κωδικός QR ανοίγει τον σύνδεσμο της σελίδας. Βάλε τη διεύθυνση της σελίδας στη Δημοσίευση για να ανοίγει εκείνη.",
+      "pg.share.title": "Σύνδεσμος σελίδας",
+      "pg.share.warn": "Ο σύνδεσμος περιέχει ό,τι δείχνει η σελίδα. Όποιος τον έχει, το βλέπει. Τίποτα δεν στέλνεται σε server. Ο σύνδεσμος αλλάζει όταν αλλάζεις τη σελίδα, οπότε στείλε τον νέο μετά από αλλαγές.",
+      "toast.qrLong": "Πολύ μεγάλο για κωδικό QR. Βάλε τη διεύθυνση της σελίδας στη Δημοσίευση.",
+      "toast.maxPageLinks": "Έως {n} σύνδεσμοι σελίδας", "toast.maxHeads": "Έως {n} επικεφαλίδες"
     }
   };
 
@@ -342,6 +411,96 @@
 
   function shown(card, k) { return card.hide.indexOf(k) < 0; }
 
+  // ---------- 2b. Page model (NETIZEN-PAGE v1) ----------
+  // page = {
+  //   id (= the card's id), m (mtime, ms),
+  //   hide: [field…]      // sorted, PAGE_HIDE only; kept off the page on top
+  //                       // of what the card hides
+  //   th: style id (PAGE_THEMES), ac: "" | "#rrggbb" (button colour),
+  //   bt: "round" | "square" | "outline",
+  //   x: [{ k: "l", e: icon, l: label, u: url, f: 0 | 1 (stands out) }
+  //       | { k: "h", l: heading }]   // ≤ MAX_PAGE_LINKS links, ≤ MAX_PAGE_HEADS headings
+  //   vc: 0 | 1 (save contact button), ti: title, url: where it is published
+  // }
+  // pages = { ver: 1, pages: [page…] sorted by id, tombs: { id: deletedAt } }
+  function normPage(p) {
+    if (!p || typeof p !== "object" || typeof p.id !== "string" ||
+        !/^[a-z0-9]{6,40}$/.test(p.id) || !isInt(p.m) || p.m < 0) return null;
+    var out = { id: p.id, m: p.m };
+    var hide = [];
+    if (Array.isArray(p.hide)) {
+      p.hide.forEach(function (k) { if (PAGE_HIDE.indexOf(k) >= 0 && hide.indexOf(k) < 0) hide.push(k); });
+    }
+    out.hide = hide.sort(cmpStr);
+    out.th = PAGE_THEMES.indexOf(p.th) >= 0 ? p.th : "oros";
+    out.ac = (typeof p.ac === "string" && /^#[0-9a-fA-F]{6}$/.test(p.ac)) ? p.ac.toLowerCase() : "";
+    out.bt = PAGE_BT.indexOf(p.bt) >= 0 ? p.bt : "round";
+    out.x = [];
+    var nl = 0, nh = 0;
+    if (Array.isArray(p.x)) {
+      p.x.forEach(function (it) {
+        if (!it || typeof it !== "object") return;
+        if (it.k === "h" && nh < MAX_PAGE_HEADS) {
+          nh++;
+          out.x.push({ k: "h", l: str(it.l, PG_LABEL) });
+        } else if (it.k === "l" && nl < MAX_PAGE_LINKS) {
+          nl++;
+          out.x.push({ k: "l", e: str(it.e, PG_EMOJI), l: str(it.l, PG_LABEL), u: str(it.u, PG_URL), f: it.f === 1 ? 1 : 0 });
+        }
+      });
+    }
+    out.vc = p.vc === 1 ? 1 : 0;
+    out.ti = str(p.ti, PG_TITLE);
+    out.url = str(p.url, PG_URL);
+    return out;
+  }
+
+  // Same rules as mergeNetizen: LWW per page, tombs max-merged, delete
+  // wins ties, a newer edit resurrects (R5, R17, R26).
+  function mergePages(A, B) {
+    var a = A || {}, b = B || {};
+    var tombs = {};
+    [a.tombs, b.tombs].forEach(function (tm) {
+      if (!tm || typeof tm !== "object") return;
+      Object.keys(tm).forEach(function (id) {
+        if (!/^[a-z0-9]{6,40}$/.test(id) || !isInt(tm[id]) || tm[id] < 0) return;
+        if (!(id in tombs) || tm[id] > tombs[id]) tombs[id] = tm[id];
+      });
+    });
+    var best = {};
+    [a.pages, b.pages].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (raw) {
+        var p = normPage(raw);
+        if (!p) return;
+        var cur = best[p.id];
+        if (!cur || p.m > cur.m ||
+            (p.m === cur.m && JSON.stringify(p) > JSON.stringify(cur))) best[p.id] = p;
+      });
+    });
+    var pages = [];
+    Object.keys(best).sort(cmpStr).forEach(function (id) {
+      if (id in tombs && tombs[id] >= best[id].m) return;
+      pages.push(best[id]);
+    });
+    var sortedTombs = {};
+    Object.keys(tombs).sort(cmpStr).forEach(function (id) { sortedTombs[id] = tombs[id]; });
+    return { ver: DATA_VER, pages: pages, tombs: sortedTombs };
+  }
+
+  // A card's page before its first edit: the card's style, email and phone off.
+  function defaultPage(card) {
+    return normPage({ id: card.id, m: 0, hide: PAGE_DEFAULT_HIDE, th: card.st });
+  }
+
+  // The card as the page shows it: the page's hidden fields added to the card's.
+  function pageCard(card, page) {
+    var c = JSON.parse(JSON.stringify(card));
+    page.hide.forEach(function (k) { if (c.hide.indexOf(k) < 0) c.hide.push(k); });
+    c.hide.sort(cmpStr);
+    return c;
+  }
+
   // ---------- 3. Pixel avatar ----------
   // 7 colours: 0 background, 1 skin, 2 hair, 3 eyes, 4 mouth, 5 clothes, 6 accent.
   var AV_BG    = ["#f4d35e", "#9bd1e5", "#c3b1e1", "#a8e6a3", "#f7a6a6", "#ffd6a5", "#b8c0ff", "#d9d9d9"];
@@ -415,7 +574,8 @@
 
   // ---------- 4. Storage + prefs ----------
   var data = null;
-  var prefs = { cur: "", tab: "edit", side: "front" };
+  var pages = null;           // NETIZEN-PAGE v1
+  var prefs = { cur: "", tab: "edit", side: "front", mode: "card" };
   var draft = null;           // a new card, stored on its first edit
 
   function load() {
@@ -435,6 +595,23 @@
     data = { ver: DATA_VER, cards: [], tombs: {} };
   }
 
+  function loadPages() {
+    var raw = null;
+    try { raw = localStorage.getItem(PAGE_KEY); } catch (e) {}
+    if (raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object" && Array.isArray(parsed.pages)) {
+          pages = mergePages(parsed, parsed);
+          return;
+        }
+      } catch (e) {}
+      try { localStorage.setItem(PAGE_KEY + "-broken", raw); } catch (e) {}
+      try { console.error("[orOS] netizen: unreadable page data copied to " + PAGE_KEY + "-broken"); } catch (e) {}
+    }
+    pages = { ver: DATA_VER, pages: [], tombs: {} };
+  }
+
   var saveFailShown = false, saveTimer = null;
   function saveNow() {
     clearTimeout(saveTimer); saveTimer = null;
@@ -450,7 +627,25 @@
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveNow, 350);
   }
-  function flush() { if (saveTimer) saveNow(); }
+  var pageTimer = null;
+  function savePagesNow() {
+    clearTimeout(pageTimer); pageTimer = null;
+    try {
+      localStorage.setItem(PAGE_KEY, JSON.stringify(pages));
+      saveFailShown = false;
+    } catch (e) {
+      if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
+    }
+    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+  }
+  function savePagesSoon() {
+    clearTimeout(pageTimer);
+    pageTimer = setTimeout(savePagesNow, 350);
+  }
+  function flush() {
+    if (saveTimer) saveNow();
+    if (pageTimer) savePagesNow();
+  }
 
   function loadPrefs() {
     try {
@@ -459,6 +654,7 @@
         if (typeof p.cur === "string") prefs.cur = p.cur;
         if (p.tab === "edit" || p.tab === "card") prefs.tab = p.tab;
         if (p.side === "front" || p.side === "back") prefs.side = p.side;
+        if (p.mode === "card" || p.mode === "page") prefs.mode = p.mode;
       }
     } catch (e) {}
   }
@@ -1073,8 +1269,9 @@
     return new Response(s).arrayBuffer().then(function (ab) { return new Uint8Array(ab); });
   }
 
-  function encodeShare(card) {
-    var bytes = new TextEncoder().encode(JSON.stringify(sharePayload(card)));
+  // Any payload → "<v>.<base64url>" (shared by the card's #c= and the page's #p=).
+  function encodeJson(obj) {
+    var bytes = new TextEncoder().encode(JSON.stringify(obj));
     if (typeof CompressionStream === "function") {
       return streamBytes(bytes, CompressionStream)
         .then(function (z) { return "2." + b64urlFromBytes(z); },
@@ -1082,7 +1279,9 @@
     }
     return Promise.resolve("1." + b64urlFromBytes(bytes));
   }
-  function decodeShare(code) {
+  function encodeShare(card) { return encodeJson(sharePayload(card)); }
+  // "<v>.<base64url>" → the parsed JSON, or null.
+  function decodeJson(code) {
     return new Promise(function (resolve) {
       var m = /^([12])\.([A-Za-z0-9_-]+)$/.exec(code || "");
       if (!m) { resolve(null); return; }
@@ -1091,45 +1290,49 @@
       var raw = m[1] === "1" ? Promise.resolve(bytes)
         : (typeof DecompressionStream === "function" ? streamBytes(bytes, DecompressionStream) : Promise.reject());
       raw.then(function (b) {
-        try { resolve(cardFromPayload(JSON.parse(new TextDecoder().decode(b)))); }
+        try { resolve(JSON.parse(new TextDecoder().decode(b))); }
         catch (e) { resolve(null); }
       }, function () { resolve(null); });
     });
   }
+  function decodeShare(code) { return decodeJson(code).then(cardFromPayload); }
 
-  function shareUrl(code) {
+  function shareUrl(code, key) {
     var base = location.href.split("#")[0].split("?")[0];
-    return base + "#c=" + code;
+    return base + "#" + (key || "c") + "=" + code;
   }
 
   function shareDialog() {
     var c = cur();
     if (needUser(c)) return;
     encodeShare(c).then(function (code) {
-      var url = shareUrl(code);
-      var dlg = makeDialog("nz-share");
-      dlg.appendChild(el("div", "dlg-title", t("share.title")));
-      dlg.appendChild(el("div", "dlg-msg", t("share.warn")));
-      var box = el("textarea", "share-url");
-      box.readOnly = true;
-      box.rows = 3;
-      box.value = url;
-      box.setAttribute("aria-label", t("share.title"));
-      dlg.appendChild(box);
-      var acts = el("div", "dlg-actions");
-      acts.appendChild(button(t("share.close"), "", function () { dlg.close(); }));
-      var copy = button(t("share.copy"), "primary", function () {
-        copyText(url).then(function (ok) {
-          if (ok) { dlg.close(); showToast(t("toast.linkCopied")); }
-          else { box.focus(); box.select(); showToast(t("toast.copyFail")); }
-        });
-      });
-      acts.appendChild(copy);
-      dlg.appendChild(acts);
-      document.body.appendChild(dlg);
-      dlg.showModal();
-      copy.focus();
+      linkDialog(t("share.title"), t("share.warn"), shareUrl(code));
     });
+  }
+  // The link window of the card and of the page: the link, Copy, Close.
+  function linkDialog(title, warn, url) {
+    var dlg = makeDialog("nz-share");
+    dlg.appendChild(el("div", "dlg-title", title));
+    dlg.appendChild(el("div", "dlg-msg", warn));
+    var box = el("textarea", "share-url");
+    box.readOnly = true;
+    box.rows = 3;
+    box.value = url;
+    box.setAttribute("aria-label", title);
+    dlg.appendChild(box);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("share.close"), "", function () { dlg.close(); }));
+    var copy = button(t("share.copy"), "primary", function () {
+      copyText(url).then(function (ok) {
+        if (ok) { dlg.close(); showToast(t("toast.linkCopied")); }
+        else { box.focus(); box.select(); showToast(t("toast.copyFail")); }
+      });
+    });
+    acts.appendChild(copy);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    copy.focus();
   }
 
   function copyText(s) {
@@ -1139,11 +1342,13 @@
     return Promise.resolve(false);
   }
 
-  var viewCard = null, viewBack = false;
+  var viewCard = null, viewBack = false, viewPage = null;
   function openViewer(card) {
-    viewCard = card;
+    viewCard = card; viewPage = null;
     document.body.classList.add("viewing");
     $("viewer").hidden = false;
+    $("viewer").classList.remove("page");
+    $("v-page").removeAttribute("srcdoc");
     $("v-front").innerHTML = cardSvg(card, "front", false);
     $("v-back").innerHTML = cardSvg(card, "back", false);
     $("v-front").querySelector("svg").setAttribute("aria-label", t("side.front"));
@@ -1157,10 +1362,605 @@
     $("v-back").setAttribute("aria-hidden", viewBack ? "false" : "true");
   }
   function closeViewer() {
-    viewCard = null;
+    viewCard = null; viewPage = null;
     document.body.classList.remove("viewing");
     $("viewer").hidden = true;
+    $("viewer").classList.remove("page");
+    $("v-page").removeAttribute("srcdoc");
     try { history.replaceState(null, "", location.href.split("#")[0]); } catch (e) { location.hash = ""; }
+  }
+
+  // ---------- 7b. Link-in-bio page ----------
+  // One page per card, made from what the card shows plus the page's own
+  // links and headings. buildPageHtml() is the only renderer: the preview,
+  // the #p= viewer and the exported file are the same HTML. That HTML has
+  // no script at all, a CSP that loads nothing from outside, and every
+  // text and address escaped; links are http(s), mailto and tel only.
+
+  // A link a visitor may open, or "" (javascript:, data: and other schemes never).
+  function safeHref(u) {
+    var s = String(u || "").trim();
+    if (!s || /\s/.test(s)) return "";
+    if (/^(https?:\/\/[^\/\s]|mailto:|tel:)/i.test(s)) return s;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return "";
+    if (/^[^\/?#@:]+\.[^\/?#@:.]{2,}([\/?#].*)?$/.test(s)) return "https://" + s;
+    return "";
+  }
+  function prettyUrl(u) {
+    return String(u).trim().replace(/^https?:\/\//i, "").replace(/^mailto:|^tel:/i, "").replace(/\/$/, "");
+  }
+
+  // Colours: "#rgb", "#rrggbb(aa)" or "rgb(a)(…)" → [r, g, b], else null.
+  function rgbOf(v) {
+    var s = String(v || "").trim(), m;
+    if ((m = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(s))) {
+      return [parseInt(m[1] + m[1], 16), parseInt(m[2] + m[2], 16), parseInt(m[3] + m[3], 16)];
+    }
+    if ((m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})?$/i.exec(s))) {
+      return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+    }
+    if ((m = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i.exec(s))) return [+m[1], +m[2], +m[3]];
+    return null;
+  }
+  function lum(rgb) {
+    var c = rgb.map(function (v) {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  function contrast(a, b) {
+    var x = lum(a), y = lum(b);
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  }
+  // Black or white, whichever reads better on the colour.
+  function inkFor(bg) {
+    var rgb = rgbOf(bg);
+    if (!rgb) return "#ffffff";
+    return contrast(rgb, [0, 0, 0]) >= contrast(rgb, [255, 255, 255]) ? "#000000" : "#ffffff";
+  }
+  // A colour that is safe inside the page's CSS, else the fallback.
+  function cssColor(v, fb) {
+    return (typeof v === "string" && /^[#a-zA-Z0-9(),.%\s-]{1,64}$/.test(v)) ? v.trim() : fb;
+  }
+
+  function pageTheme(st) {
+    if (st === "dark") return { bg: "#0f1115", fg: "#e8eaf0", dim: "#9aa3b2", accent: "#7aa2ff", font: SANS };
+    if (st === "gradient") return { bg: "#5b2bd9", bg2: "#d9466f", fg: "#ffffff", dim: "#f1e8ff", accent: "#ffffff", font: SANS };
+    if (st === "minimal") return { bg: "#ffffff", fg: "#111111", dim: "#5c5c5c", accent: "#111111", font: SANS };
+    return theme(st);
+  }
+
+  // The page's resolved colours: text on the background, buttons that read.
+  function pageColors(page) {
+    var th = pageTheme(page.th);
+    var bg = cssColor(th.bg, "#14120d"), fg = cssColor(th.fg, "#f0ead9");
+    var dim = cssColor(th.dim, fg), accent = page.ac || cssColor(th.accent, "#d4af37");
+    var bgRgb = rgbOf(bg), acRgb = rgbOf(accent);
+    // the accent as text: only where it stands out from the background
+    var accText = (bgRgb && acRgb && contrast(bgRgb, acRgb) >= 3) ? accent : fg;
+    var filled = { bg: accent, fg: inkFor(accent), border: accent };
+    return {
+      bg: bg, bg2: th.bg2 ? cssColor(th.bg2, "") : "", fg: fg, dim: dim, accText: accText, font: th.font,
+      btn: page.bt === "outline" ? { bg: "transparent", fg: accText, border: accText } : filled,
+      ft: filled,
+      radius: page.bt === "square" ? "10px" : "999px"
+    };
+  }
+
+  // The whole page as one HTML document. card = pageCard(card, page).
+  // opts.blank: links open a new tab (preview and viewer, inside a sandbox).
+  function buildPageHtml(card, page, opts) {
+    var o = opts || {};
+    var C = pageColors(page);
+    var user = card.user.trim() || t("c.noname");
+    var disp = shown(card, "disp") ? card.disp.trim() : "";
+    var linkAttr = o.blank ? ' target="_blank" rel="me noopener noreferrer"' : ' rel="me noopener"';
+    var plainAttr = o.blank ? ' target="_blank" rel="noopener noreferrer"' : "";
+    function btn(href, label, icon, ft, attr) {
+      return '<a class="b' + (ft ? " ft" : "") + '" href="' + esc(href) + '"' + attr + ">" +
+        (icon ? '<span class="e" aria-hidden="true">' + esc(icon) + "</span>" : "") +
+        "<span>" + esc(label) + "</span></a>";
+    }
+
+    var body = [];
+    if (shown(card, "avatar")) {
+      body.push('<svg class="av" viewBox="0 0 120 120" shape-rendering="crispEdges" role="img" aria-label="' +
+        esc("@" + user) + '">' + avatarRects(card, 0, 0, 120, true) + "</svg>");
+    }
+    body.push("<h1>" + esc(disp || "@" + user) + "</h1>");
+    var sub = [];
+    if (disp) sub.push("@" + user);
+    if (shown(card, "pron") && card.pron.trim()) sub.push(card.pron.trim());
+    if (shown(card, "loc") && card.loc.trim()) sub.push(card.loc.trim());
+    if (sub.length) body.push('<p class="sub">' + esc(sub.join(" · ")) + "</p>");
+    if (shown(card, "motto") && card.motto.trim()) body.push('<p class="motto">“' + esc(card.motto.trim()) + "”</p>");
+    if (shown(card, "bio") && card.bio.trim()) body.push('<p class="bio">' + esc(card.bio.trim()) + "</p>");
+    if (shown(card, "tags") && card.tags.length) {
+      body.push('<ul class="tags">' + card.tags.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>");
+    }
+
+    var nav = [];
+    if (shown(card, "links")) {
+      card.links.forEach(function (l) {
+        var href = safeHref(l.u);
+        if (href) nav.push(btn(href, l.l.trim() || prettyUrl(l.u), "", false, linkAttr));
+      });
+    }
+    page.x.forEach(function (it) {
+      if (it.k === "h") {
+        if (it.l.trim()) nav.push("<h2>" + esc(it.l.trim()) + "</h2>");
+        return;
+      }
+      var href = safeHref(it.u);
+      if (href) nav.push(btn(href, it.l.trim() || prettyUrl(it.u), it.e.trim(), it.f === 1, linkAttr));
+    });
+    if (nav.length) body.push("<nav>" + nav.join("") + "</nav>");
+
+    var ct = [];
+    var web = shown(card, "web") ? safeHref(card.web) : "";
+    if (web && /^https?:/i.test(web)) ct.push(btn(web, t("pg.c.web"), "", false, linkAttr));
+    var email = shown(card, "email") ? card.email.trim() : "";
+    if (/^[^\s@<>"'\/:]+@[^\s@<>"'\/:]+\.[^\s@<>"'\/:]+$/.test(email)) {
+      ct.push(btn("mailto:" + email, t("pg.c.email"), "", false, plainAttr));
+    }
+    var tel = shown(card, "phone") ? card.phone.replace(/[^\d+]/g, "").replace(/(?!^)\+/g, "") : "";
+    if (tel.replace(/\D/g, "").length >= 3) ct.push(btn("tel:" + tel, t("pg.c.phone"), "", false, plainAttr));
+    if (page.vc) {
+      ct.push('<a class="b" href="data:text/vcard;charset=utf-8,' + esc(encodeURIComponent(buildVCard(card, ""))) +
+        '" download="' + esc(fileBase(card) + ".vcf") + '"><span>' + esc(t("pg.c.save")) + "</span></a>");
+    }
+    if (ct.length) body.push('<div class="ct">' + ct.join("") + "</div>");
+
+    var title = page.ti.trim() || (disp ? disp + " (@" + user + ")" : "@" + user);
+    var desc = (shown(card, "bio") && card.bio.trim()) || (shown(card, "motto") && card.motto.trim()) || "";
+    desc = desc.replace(/\s+/g, " ").slice(0, 160);
+    var url = safeHref(page.url);
+    if (!/^https?:/i.test(url)) url = "";
+
+    var bgCss = C.bg2 ? "linear-gradient(160deg," + C.bg + "," + C.bg2 + ")" : C.bg;
+    var css = [
+      "*{box-sizing:border-box;margin:0;padding:0}",
+      "html{background:" + C.bg + ";background:" + bgCss + ";min-height:100%}",
+      "body{font-family:" + C.font + ";color:" + C.fg + ";line-height:1.45;padding:40px 16px 48px}",
+      "main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}",
+      ".av{width:112px;height:112px;border-radius:24px;display:block}",
+      "h1{font-size:24px;font-weight:800;overflow-wrap:anywhere}",
+      ".sub{color:" + C.dim + ";font-size:15px;overflow-wrap:anywhere}",
+      ".motto{font-style:italic;font-weight:600;color:" + C.accText + ";overflow-wrap:anywhere}",
+      ".bio{white-space:pre-line;max-width:44ch;overflow-wrap:anywhere}",
+      ".tags{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:6px}",
+      ".tags li{font-size:13px;font-weight:700;padding:3px 10px;border:1.5px solid " + C.accText + ";color:" + C.accText + ";border-radius:999px}",
+      "nav{width:100%;display:flex;flex-direction:column;gap:12px;margin-top:14px}",
+      "nav h2{font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:" + C.dim + ";margin-top:12px}",
+      ".b{display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:12px 18px;" +
+        "border-radius:" + C.radius + ";background:" + C.btn.bg + ";color:" + C.btn.fg + ";border:2px solid " + C.btn.border +
+        ";font-weight:700;font-size:16px;text-decoration:none;overflow-wrap:anywhere}",
+      ".b.ft{min-height:64px;font-size:18px;background:" + C.ft.bg + ";color:" + C.ft.fg + ";border-color:" + C.ft.border +
+        ";box-shadow:0 6px 18px rgba(0,0,0,.25)}",
+      ".b:hover{filter:brightness(1.08)}",
+      ".b:focus-visible{outline:3px solid " + C.fg + ";outline-offset:2px}",
+      ".e{font-size:20px;line-height:1}",
+      ".ct{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}",
+      ".ct .b{min-height:44px;font-size:14px;padding:8px 16px}"
+    ].join("\n");
+
+    var head = [
+      '<meta charset="utf-8">',
+      '<meta name="viewport" content="width=device-width, initial-scale=1">',
+      '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:; base-uri \'none\'; form-action \'none\'">',
+      '<meta name="referrer" content="no-referrer">',
+      '<meta name="generator" content="orOS Netizen ID">',
+      "<title>" + esc(title) + "</title>"
+    ];
+    if (desc) head.push('<meta name="description" content="' + esc(desc) + '">');
+    head.push('<meta property="og:title" content="' + esc(title) + '">');
+    if (desc) head.push('<meta property="og:description" content="' + esc(desc) + '">');
+    head.push('<meta property="og:type" content="profile">');
+    if (url) {
+      head.push('<link rel="canonical" href="' + esc(url) + '">');
+      head.push('<meta property="og:url" content="' + esc(url) + '">');
+    }
+    if (rgbOf(C.bg)) head.push('<meta name="theme-color" content="' + esc(C.bg) + '">');
+    head.push("<style>\n" + css + "\n</style>");
+
+    return "<!DOCTYPE html>\n<html lang=\"" + esc(LANG) + "\">\n<head>\n" + head.join("\n") +
+      "\n</head>\n<body>\n<main>\n" + body.join("\n") + "\n</main>\n</body>\n</html>\n";
+  }
+
+  // #p= payload: the card as the page shows it + the page's look and links.
+  function pagePayload(card, page) {
+    var p = { th: page.th, bt: page.bt };
+    if (page.ac) p.ac = page.ac;
+    var x = page.x.filter(function (it) { return it.k === "h" ? it.l.trim() : (it.u.trim() || it.l.trim()); });
+    if (x.length) p.x = x;
+    if (page.vc) p.vc = 1;
+    if (page.ti.trim()) p.ti = page.ti.trim();
+    if (page.url.trim()) p.url = page.url.trim();
+    return { c: sharePayload(pageCard(card, page)), p: p };
+  }
+  function pageFromPayload(o) {
+    if (!o || typeof o !== "object" || !o.p || typeof o.p !== "object") return null;
+    var card = cardFromPayload(o.c);
+    if (!card) return null;
+    var p = {};
+    Object.keys(o.p).forEach(function (k) { p[k] = o.p[k]; });
+    p.id = "shared"; p.m = 0; p.hide = [];
+    var page = normPage(p);
+    return page ? { card: card, page: page } : null;
+  }
+
+  // ----- page storage -----
+  function pageById(id) {
+    for (var i = 0; i < pages.pages.length; i++) if (pages.pages[i].id === id) return pages.pages[i];
+    return null;
+  }
+  function pageOf(card) { return pageById(card.id) || defaultPage(card); }
+  function pageEditable(c) { return !isDraft(c) && !!c.user.trim(); }
+
+  // Every page edit: stamps mtime here (R27); the page is stored on its first edit (R16).
+  function mutatePage(fn) {
+    var c = cur();
+    if (!pageEditable(c)) { showToast(t("toast.needUser")); return; }
+    var p = pageById(c.id), fresh = !p;
+    if (fresh) p = defaultPage(c);
+    fn(p);
+    p.m = Math.max(Date.now(), p.m + 1, (pages.tombs[p.id] || 0) + 1);
+    if (fresh) {
+      pages.pages.push(p);
+      pages = mergePages(pages, pages);
+    } else {
+      var n = normPage(p);
+      Object.keys(n).forEach(function (k) { p[k] = n[k]; });
+    }
+    savePagesSoon();
+    renderPagePreview();
+  }
+
+  // Card lifecycle: a deleted card takes its page along (and Undo brings both back).
+  function tombPage(id) {
+    var p = pageById(id);
+    if (!p) return null;
+    var snap = JSON.parse(JSON.stringify(p));
+    pages.tombs[id] = Math.max(Date.now(), p.m);
+    pages = mergePages(pages, pages);
+    savePagesNow();
+    return snap;
+  }
+  function restorePage(snap) {
+    if (!snap) return;
+    snap.m = Math.max(Date.now(), (pages.tombs[snap.id] || 0) + 1);
+    pages.pages.push(snap);
+    pages = mergePages(pages, pages);
+    savePagesNow();
+  }
+  function copyPage(fromId, toId) {
+    var p = pageById(fromId);
+    if (!p) return;
+    var copy = JSON.parse(JSON.stringify(p));
+    copy.id = toId;
+    copy.m = Date.now();
+    pages.pages.push(copy);
+    pages = mergePages(pages, pages);
+    savePagesNow();
+  }
+
+  // ----- page mode, preview -----
+  function setMode(mode) {
+    prefs.mode = mode; savePrefs();
+    renderMode();
+    if (mode === "page") { renderPageForm(); renderPagePreview(); }
+    else renderPreview();
+  }
+  function renderMode() {
+    var page = prefs.mode === "page";
+    document.body.setAttribute("data-mode", page ? "page" : "card");
+    var b = $("page-btn");
+    b.setAttribute("aria-pressed", page ? "true" : "false");
+    b.classList.toggle("on", page);
+    $("flip-btn").hidden = page;
+    $("copy-btn").hidden = page;
+    var tab = document.querySelector('#tab-seg .seg-btn[data-tab="card"]');
+    if (tab) tab.textContent = t(page ? "tab.preview" : "tab.card");
+  }
+
+  var pagePreviewTimer = null;
+  function renderPagePreview() {
+    if (prefs.mode !== "page") return;
+    clearTimeout(pagePreviewTimer);
+    pagePreviewTimer = setTimeout(function () {
+      var c = cur(), p = pageOf(c);
+      var html = buildPageHtml(pageCard(c, p), p, { blank: true });
+      var f = $("pg-frame");
+      if (f.getAttribute("data-html") !== html) {     // srcdoc reloads: only on a real change
+        f.setAttribute("data-html", html);
+        f.srcdoc = html;
+      }
+    }, 150);
+  }
+
+  // ----- page editor -----
+  var PAGE_SHOW_ORDER = ["avatar", "disp", "pron", "loc", "motto", "bio", "tags", "links", "web", "email", "phone"];
+  function pageFieldName(k) {
+    if (k === "avatar") return t("sec.avatar");
+    if (k === "links") return t("pg.f.links");
+    if (k === "tags") return t("sec.tags");
+    return t("f." + k);
+  }
+
+  function renderPageForm() {
+    var c = cur(), ok = pageEditable(c);
+    $("pg-need").hidden = ok;
+    $("pg-body").hidden = !ok;
+    if (!ok) return;
+    var p = pageOf(c);
+    renderPageShow(c, p);
+    renderPageLinks();
+    renderPageLook(p);
+    if ($("pg-ti").value !== p.ti) $("pg-ti").value = p.ti;
+    if ($("pg-url").value !== p.url) $("pg-url").value = p.url;
+    $("pg-ti").placeholder = "@" + c.user.trim();
+    $("pg-vc").checked = !!p.vc;
+  }
+
+  function renderPageShow(c, p) {
+    var box = $("pg-show");
+    var focusK = document.activeElement && box.contains(document.activeElement)
+      ? document.activeElement.getAttribute("data-k") : null;
+    box.innerHTML = "";
+    PAGE_SHOW_ORDER.forEach(function (k) {
+      var offCard = !shown(c, k);
+      var lab = el("label", "chk");
+      var box2 = el("input");
+      box2.type = "checkbox";
+      box2.setAttribute("data-k", k);
+      box2.checked = !offCard && p.hide.indexOf(k) < 0;
+      box2.disabled = offCard;
+      box2.addEventListener("change", function () {
+        var on = box2.checked;
+        mutatePage(function (pp) {
+          var i = pp.hide.indexOf(k);
+          if (on && i >= 0) pp.hide.splice(i, 1);
+          if (!on && i < 0) pp.hide.push(k);
+        });
+      });
+      lab.appendChild(box2);
+      lab.appendChild(el("span", "", offCard ? t("pg.cardHidden", { field: pageFieldName(k) }) : pageFieldName(k)));
+      box.appendChild(lab);
+    });
+    if (focusK) {
+      var n = box.querySelector('[data-k="' + focusK + '"]');
+      if (n) n.focus();
+    }
+  }
+
+  function renderPageLinks() {
+    var c = cur(), p = pageOf(c), box = $("pg-links");
+    var focused = document.activeElement && box.contains(document.activeElement)
+      ? [document.activeElement.getAttribute("data-li"), document.activeElement.getAttribute("data-k")] : null;
+    box.innerHTML = "";
+    $("pg-links-hint").textContent = t("pg.linksHint", { n: MAX_PAGE_LINKS, h: MAX_PAGE_HEADS });
+    p.x.forEach(function (it, i) {
+      var r = el("div", "pg-item" + (it.k === "h" ? " head" : ""));
+      function input(cls, k, max, ph, label) {
+        var inp = el("input", cls);
+        inp.value = it[k]; inp.maxLength = max; inp.placeholder = ph;
+        inp.setAttribute("aria-label", label + " " + (i + 1));
+        inp.setAttribute("data-li", String(i)); inp.setAttribute("data-k", k);
+        inp.addEventListener("input", function () {
+          var v = inp.value;
+          mutatePage(function (pp) { if (pp.x[i]) pp.x[i][k] = v; });
+        });
+        return inp;
+      }
+      if (it.k === "h") {
+        r.appendChild(input("pg-h", "l", PG_LABEL, t("pg.ph.head"), t("pg.ph.head")));
+      } else {
+        r.appendChild(input("pg-e", "e", PG_EMOJI, t("pg.ph.emoji"), t("pg.emoji")));
+        r.appendChild(input("pg-l", "l", PG_LABEL, t("pg.ph.label"), t("pg.ph.label")));
+        var u = input("pg-u", "u", PG_URL, t("pg.ph.url"), t("ph.linkU"));
+        u.type = "url"; u.spellcheck = false; u.setAttribute("autocapitalize", "off");
+        r.appendChild(u);
+      }
+      var bar = el("div", "pg-btns");
+      if (it.k === "l") {
+        var star = iconBtn("mini star", "star", t("pg.feat"), function () {
+          mutatePage(function (pp) { if (pp.x[i]) pp.x[i].f = pp.x[i].f ? 0 : 1; });
+          renderPageLinks();
+          focusPageBtn(i, ".star");
+        });
+        star.setAttribute("aria-pressed", it.f ? "true" : "false");
+        bar.appendChild(star);
+      }
+      var up = iconBtn("mini up", "up", t("link.up"), function () { movePageItem(i, -1); });
+      up.disabled = i === 0;
+      var dn = iconBtn("mini down", "down", t("link.down"), function () { movePageItem(i, 1); });
+      dn.disabled = i === p.x.length - 1;
+      bar.appendChild(up); bar.appendChild(dn);
+      bar.appendChild(iconBtn("mini danger", "x", t(it.k === "h" ? "pg.delHead" : "link.del"), function () {
+        mutatePage(function (pp) { pp.x.splice(i, 1); });
+        renderPageLinks();
+        $("pg-add-link").focus();
+      }));
+      r.appendChild(bar);
+      box.appendChild(r);
+    });
+    if (focused) {
+      var n = box.querySelector('[data-li="' + focused[0] + '"][data-k="' + focused[1] + '"]');
+      if (n) n.focus();
+    }
+  }
+  function focusPageBtn(i, sel) {
+    var row = $("pg-links").children[i];
+    var b = row && row.querySelector(sel);
+    if (b && !b.disabled) b.focus();
+    else if (row) row.querySelector("input").focus();
+  }
+  function movePageItem(i, d) {
+    var j = i + d;
+    mutatePage(function (p) {
+      if (j < 0 || j >= p.x.length) return;
+      var x = p.x[i]; p.x[i] = p.x[j]; p.x[j] = x;
+    });
+    renderPageLinks();
+    focusPageBtn(j, d < 0 ? ".up" : ".down");
+  }
+  function addPageItem(kind) {
+    var c = cur();
+    if (!pageEditable(c)) { showToast(t("toast.needUser")); return; }
+    var p = pageOf(c);
+    var n = p.x.filter(function (it) { return it.k === kind; }).length;
+    if (kind === "l" && n >= MAX_PAGE_LINKS) { showToast(t("toast.maxPageLinks", { n: MAX_PAGE_LINKS })); return; }
+    if (kind === "h" && n >= MAX_PAGE_HEADS) { showToast(t("toast.maxHeads", { n: MAX_PAGE_HEADS })); return; }
+    mutatePage(function (pp) {
+      pp.x.push(kind === "h" ? { k: "h", l: "" } : { k: "l", e: "", l: "", u: "", f: 0 });
+    });
+    renderPageLinks();
+    var rows = $("pg-links").children;
+    if (rows.length) rows[rows.length - 1].querySelector(kind === "h" ? "input" : ".pg-l").focus();
+  }
+
+  function buildPageLook() {
+    PAGE_THEMES.forEach(function (st) {
+      var b = el("button", "style-btn");
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("data-th", st);
+      var sw = el("span", "style-sw");
+      sw.setAttribute("data-st", st);
+      sw.textContent = "Aa";
+      b.appendChild(sw);
+      b.appendChild(el("span", "", t("style." + st)));
+      b.addEventListener("click", function () {
+        mutatePage(function (p) { p.th = st; });
+        renderPageLook(pageOf(cur()));
+      });
+      $("pg-themes").appendChild(b);
+    });
+    paintPageSwatches();
+    PAGE_BT.forEach(function (bt) {
+      var b = el("button", "seg-btn", t("pg.bt." + bt));
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("data-bt", bt);
+      b.addEventListener("click", function () {
+        mutatePage(function (p) { p.bt = bt; });
+        renderPageLook(pageOf(cur()));
+      });
+      $("pg-bt").appendChild(b);
+    });
+  }
+  // Swatches in each style's own colours ("orOS" follows the skin).
+  function paintPageSwatches() {
+    [].forEach.call($("pg-themes").querySelectorAll(".style-sw"), function (sw) {
+      var st = sw.getAttribute("data-st");
+      if (st === "oros") return;
+      var th = pageTheme(st);
+      sw.style.background = th.bg2 ? "linear-gradient(160deg," + th.bg + "," + th.bg2 + ")" : th.bg;
+      sw.style.borderColor = th.border || th.dim;
+      sw.style.color = th.accent;
+    });
+  }
+  function renderPageLook(p) {
+    [].forEach.call($("pg-themes").children, function (b) {
+      var on = b.getAttribute("data-th") === p.th;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    [].forEach.call($("pg-bt").children, function (b) {
+      var on = b.getAttribute("data-bt") === p.bt;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    var ac = p.ac || pageTheme(p.th).accent;
+    var rgb = rgbOf(ac);
+    var hex = rgb ? "#" + rgb.map(function (v) { return (v < 16 ? "0" : "") + v.toString(16); }).join("") : "#888888";
+    if ($("pg-ac").value !== hex) $("pg-ac").value = hex;
+    $("pg-ac-reset").disabled = !p.ac;
+  }
+
+  // ----- page export, link, QR -----
+  function needPage() {
+    var c = cur();
+    if (pageEditable(c)) return false;
+    showToast(t("toast.needUser"));                    // R28
+    return true;
+  }
+
+  function exportPageHtml() {
+    var c = cur(), p = pageOf(c);
+    var b = new Blob([buildPageHtml(pageCard(c, p), p, {})], { type: "text/html;charset=utf-8" });
+    downloadBlob(b, "index.html", "text/html", [{ description: "HTML", accept: { "text/html": [".html", ".htm"] } }]);
+  }
+
+  // What the QR code opens: the page address when it is set, else the #p= link.
+  function pageQrText() {
+    var c = cur(), p = pageOf(c), url = safeHref(p.url);
+    if (/^https?:/i.test(url)) return Promise.resolve(url);
+    return encodeJson(pagePayload(c, p)).then(function (code) { return shareUrl(code, "p"); });
+  }
+  function pageQrSvg(text) {
+    var Q = window.orosQR;
+    if (!Q || typeof Q.encode !== "function") return null;
+    var mods = null;
+    try { mods = Q.encode(text, { ecl: text.length > 400 ? "L" : "M" }).modules; } catch (e) { mods = null; }
+    if (!mods) return null;
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">' +
+      qrRects(mods, 0, 0, 640) + "</svg>";
+  }
+  function exportPageQr(png) {
+    var c = cur();
+    pageQrText().then(function (text) {
+      var svg = pageQrSvg(text);
+      if (!svg) { showToast(t("toast.qrLong")); return; }
+      var name = fileBase(c) + "-page-qr";
+      if (!png) {
+        downloadBlob(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }), name + ".svg", "image/svg+xml", SVG_TYPES);
+        return;
+      }
+      rasterize(svg, 1280, 1280).then(function (b) {
+        downloadBlob(b, name + ".png", "image/png", PNG_TYPES);
+      }, function () { showToast(t("toast.exportFail")); });
+    }, function () { showToast(t("toast.exportFail")); });
+  }
+
+  function pageExportDialog() {
+    if (needPage()) return;
+    flush();
+    var p = pageOf(cur()), url = safeHref(p.url);
+    var dlg = makeDialog("nz-export");
+    dlg.appendChild(el("div", "dlg-title", t("pg.exp.title")));
+    dlg.appendChild(el("div", "dlg-sub", t(/^https?:/i.test(url) ? "pg.qrUrl" : "pg.qrLink")));
+    var list = el("div", "exp-list");
+    [["pg.exp.html", exportPageHtml], ["pg.exp.qrpng", function () { exportPageQr(true); }],
+     ["pg.exp.qrsvg", function () { exportPageQr(false); }]].forEach(function (x) {
+      list.appendChild(button(t(x[0]), "exp-btn", function () { dlg.close(); x[1](); }));
+    });
+    dlg.appendChild(list);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("exp.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    list.firstChild.focus();
+  }
+
+  function pageShareDialog() {
+    if (needPage()) return;
+    flush();
+    var c = cur();
+    encodeJson(pagePayload(c, pageOf(c))).then(function (code) {
+      linkDialog(t("pg.share.title"), t("pg.share.warn"), shareUrl(code, "p"));
+    });
+  }
+
+  function openPageViewer(card, page) {
+    viewCard = card; viewPage = page;
+    document.body.classList.add("viewing");
+    $("viewer").hidden = false;
+    $("viewer").classList.add("page");
+    $("v-page").srcdoc = buildPageHtml(card, page, { blank: true });
+    $("v-open").focus();
   }
 
   // ---------- 8. Editor ----------
@@ -1179,6 +1979,8 @@
     dice:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>',
     up:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
     down:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+    star:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>',
+    page:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><circle cx="12" cy="6.5" r="1.6"/><path d="M9 11h6M9 14.5h6M9 18h6"/></svg>',
     x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>'
   };
 
@@ -1546,6 +2348,7 @@
     copy.m = Date.now();
     data.cards.push(copy);
     data = mergeNetizen(data, data);
+    copyPage(c.id, copy.id);
     prefs.cur = copy.id; savePrefs();
     saveNow();
     renderAll();
@@ -1560,6 +2363,7 @@
     var ts = Math.max(Date.now(), c.m);
     data.tombs[c.id] = ts;
     data = mergeNetizen(data, data);
+    var pageSnap = tombPage(c.id);
     prefs.cur = data.cards.length ? data.cards[0].id : "";
     savePrefs();
     saveNow();
@@ -1569,6 +2373,7 @@
       snapshot.m = Math.max(Date.now(), (data.tombs[snapshot.id] || 0) + 1);
       data.cards.push(snapshot);
       data = mergeNetizen(data, data);
+      restorePage(pageSnap);
       prefs.cur = snapshot.id; savePrefs();
       if (draft) draft = null;
       saveNow();
@@ -1598,6 +2403,9 @@
     renderForm();
     renderPreview();
     setTab(prefs.tab);
+    renderMode();
+    renderPageForm();
+    renderPagePreview();
   }
 
   // ---------- 10. Dialogs + toasts ----------
@@ -1733,7 +2541,10 @@
     // the "orOS" card style follows the skin
     if (data) {
       renderPreview();
-      if (viewCard) openViewer(viewCard);
+      paintPageSwatches();
+      if (pages) renderPagePreview();
+      if (viewPage) openPageViewer(viewCard, viewPage);
+      else if (viewCard) openViewer(viewCard);
     }
   }
 
@@ -1763,6 +2574,29 @@
     };
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("netizen", sliceGet, sliceSet, STORAGE_KEY, mergeNetizen);
+    api.registerSlice("netizenPage", pageSliceGet, pageSliceSet, PAGE_KEY, mergePages);
+  }
+
+  function pageSliceGet() {
+    flush();
+    return mergePages(pages, pages);   // canonical copy (R26)
+  }
+
+  function pageSliceSet(incoming) {
+    if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.pages)) return;
+    var before = JSON.stringify(pageOf(cur()));
+    window.__orosSyncApi._suppress = true;   // R6
+    try {
+      pages = mergePages(incoming, incoming);
+      localStorage.setItem(PAGE_KEY, JSON.stringify(pages));
+    } catch (e) {
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+    if (JSON.stringify(pageOf(cur())) !== before) {
+      renderPageForm();
+      renderPagePreview();
+    }
   }
 
   function sliceGet() {
@@ -1785,6 +2619,8 @@
     if (JSON.stringify(cur()) !== before) {    // no toast on merge (sync feedback = taskbar dot)
       renderForm();
       renderPreview();
+      renderPageForm();
+      renderPagePreview();
     }
   }
 
@@ -1805,6 +2641,12 @@
     $("tab-seg").setAttribute("aria-label", t("tab.card"));
     $("v-flip-btn").textContent = t("view.flip");
     $("v-open").textContent = t("view.open");
+    $("pg-add-link").innerHTML = UI_ICONS.plus + "<span>" + esc(t("pg.addLink")) + "</span>";
+    $("pg-add-head").innerHTML = UI_ICONS.plus + "<span>" + esc(t("pg.addHead")) + "</span>";
+    $("pg-themes").setAttribute("aria-label", t("pg.themes"));
+    $("pg-url").placeholder = t("pg.ph.url2");
+    $("pg-frame").title = t("pg.frame");
+    $("v-page").title = t("pg.frame");
   }
 
   function paintStatic() {
@@ -1816,6 +2658,10 @@
       b.setAttribute("aria-label", t(x[2]));
       b.title = t(x[2]);
     });
+    var pb = $("page-btn");
+    pb.innerHTML = UI_ICONS.page + '<span class="lbl">' + esc(t("btn.pageShort")) + "</span>";
+    pb.setAttribute("aria-label", t("btn.page"));
+    pb.title = t("btn.page");
   }
 
   function wire() {
@@ -1848,8 +2694,35 @@
     $("del-btn").addEventListener("click", deleteCard);
     $("flip-btn").addEventListener("click", flipCard);
     $("copy-btn").addEventListener("click", copyImage);
-    $("share-btn").addEventListener("click", shareDialog);
-    $("export-btn").addEventListener("click", exportDialog);
+    $("share-btn").addEventListener("click", function () {
+      if (prefs.mode === "page") pageShareDialog(); else shareDialog();
+    });
+    $("export-btn").addEventListener("click", function () {
+      if (prefs.mode === "page") pageExportDialog(); else exportDialog();
+    });
+    $("page-btn").addEventListener("click", function () { setMode(prefs.mode === "page" ? "card" : "page"); });
+    $("page-form").addEventListener("submit", function (e) { e.preventDefault(); });
+    $("pg-add-link").addEventListener("click", function () { addPageItem("l"); });
+    $("pg-add-head").addEventListener("click", function () { addPageItem("h"); });
+    $("pg-ac").addEventListener("input", function () {
+      var v = $("pg-ac").value;
+      mutatePage(function (p) { p.ac = v; });
+      $("pg-ac-reset").disabled = false;
+    });
+    $("pg-ac-reset").addEventListener("click", function () {
+      mutatePage(function (p) { p.ac = ""; });
+      renderPageLook(pageOf(cur()));
+    });
+    [["pg-ti", "ti"], ["pg-url", "url"]].forEach(function (x) {
+      $(x[0]).addEventListener("input", function () {
+        var v = $(x[0]).value;
+        mutatePage(function (p) { p[x[1]] = v; });
+      });
+    });
+    $("pg-vc").addEventListener("change", function () {
+      var v = $("pg-vc").checked ? 1 : 0;
+      mutatePage(function (p) { p.vc = v; });
+    });
     $("stage").addEventListener("click", function (e) {
       if (e.target.closest && e.target.closest("#flip")) flipCard();
     });
@@ -1870,6 +2743,15 @@
   }
 
   function checkHash() {
+    var pm = /^#p=(.+)$/.exec(location.hash || "");
+    if (pm) {
+      decodeJson(pm[1]).then(function (o) {
+        var v = pageFromPayload(o);
+        if (v) openPageViewer(v.card, v.page);
+        else { closeViewer(); showToast(t("toast.badLink")); }
+      });
+      return;
+    }
     var m = /^#c=(.+)$/.exec(location.hash || "");
     if (!m) { if (viewCard) closeViewer(); return; }
     decodeShare(m[1]).then(function (card) {
@@ -1943,6 +2825,7 @@
     if (isDraft(c)) return;
     data.tombs[c.id] = Math.max(Date.now(), c.m);
     data = mergeNetizen(data, data);
+    tombPage(c.id);
     prefs.cur = data.cards.length ? data.cards[0].id : "";
     savePrefs();
     saveNow();
@@ -1959,12 +2842,14 @@
 
   function boot() {
     load();
+    loadPages();
     loadPrefs();
     applyI18n();
     paintStatic();
     buildEyes();
     buildAvatarEditor();
     buildStyles();
+    buildPageLook();
     wire();
     registerSync();
     inheritPalette();
