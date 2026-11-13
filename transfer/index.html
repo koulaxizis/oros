@@ -40,26 +40,28 @@
         <p id="chosen-empty" class="hint" data-i18n="send.none">Nothing chosen yet. Tick files or folders above.</p>
         <div class="bar end">
           <span id="chosen-sum" class="dim"></span>
+          <button type="button" id="make-cloud" class="chip" disabled hidden data-i18n="btn.makeCloud">Send through my Dropbox</button>
           <button type="button" id="make-link" class="chip pri" disabled data-i18n="btn.makeLink">Create link</button>
         </div>
       </div>
 
       <div id="share" hidden>
         <div class="card center">
-          <p class="dim" data-i18n="share.code">Code</p>
+          <p id="share-code-lab" class="dim" data-i18n="share.code">Code</p>
           <p id="share-code" class="code"></p>
           <div id="share-qr" class="qr"></div>
           <div class="link-row">
             <input id="share-link" type="text" readonly aria-label="Link">
             <button type="button" id="copy-link" class="chip" data-i18n="btn.copy">Copy</button>
           </div>
-          <p class="hint" data-i18n="share.keep">Keep this page open until the transfer is done. The link works once, for one person.</p>
+          <p id="share-keep" class="hint" data-i18n="share.keep">Keep this page open until the transfer is done. The link works once, for one person.</p>
         </div>
         <div id="send-status" class="status" role="status"></div>
         <div class="progress" id="send-prog" hidden><div class="fill"></div></div>
         <p id="send-detail" class="dim"></p>
         <div class="bar end">
           <button type="button" id="send-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
+          <button type="button" id="cloud-del" class="chip" hidden data-i18n="btn.cloudDel">Delete now</button>
           <button type="button" id="send-again" class="chip pri" hidden data-i18n="btn.sendMore">Send something else</button>
         </div>
       </div>
@@ -119,6 +121,7 @@
 
   <script src="../qr/qr-encode.js?v=6.35.00"></script>
   <script src="core.js?v=6.35.00"></script>
+  <script src="cloud.js?v=6.35.00"></script>
   <script src="engine.js?v=6.35.00"></script>
   <script src="store.js?v=6.35.00"></script>
   <script src="app.js?v=6.35.00"></script>
