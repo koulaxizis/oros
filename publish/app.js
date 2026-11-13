@@ -48,7 +48,7 @@
   var STR = {
     en: {
       "app.name": "Publishing",
-      "tab.titles": "Titles", "tab.isbn": "ISBN",
+      "tab.titles": "Titles", "tab.isbn": "Codes",
       "btn.new": "New title", "btn.settings": "Settings", "btn.back": "Titles", "btn.close": "Close",
       "btn.cancel": "Cancel", "btn.save": "Save", "btn.add": "Add", "btn.del": "Delete", "btn.undo": "Undo",
       "btn.copy": "Copy", "btn.remove": "Remove",
@@ -112,7 +112,7 @@
       "x.add": "Mark a number as used", "x.isbn": "ISBN", "x.note": "What it was used for",
       "x.none": "None.", "x.done": "Marked as used", "x.removed": "No longer marked",
       "clash.title": "Numbers used twice", "clash.one": "{isbn}: {list}",
-      "chk.title": "Check an ISBN", "chk.ph": "Paste or type any ISBN",
+      "chk.title": "Check a code", "chk.ph": "Paste or type any ISBN, ISRC, UPC or EAN",
       "chk.ok": "Valid. ISBN-13 {thirteen}{ten}", "chk.ten": " · ISBN-10 {ten}",
       "chk.uses": "In use: {list}", "chk.free": "Not used by any of your titles.",
       "plan.title": "Release plan", "plan.none": "Set the release date, then make the plan: orOS dates every step back from it (manuscript, editing, proofs, cover, ISBN, printer, presentation).",
@@ -246,11 +246,110 @@
       "set.impHint": "Goes on covers and press texts.", "set.done": "Saved",
       "toast.copied": "Copied", "toast.saved": "Saved", "toast.exported": "Saved",
       "full": "This device is out of storage space. The change was not saved.",
+      // wave M1: music releases
+      "kind.book": "Books",
+      "kind.mus": "Music",
+      "new.type": "Type",
+      "new.book": "Book",
+      "new.mus": "Music: {k}",
+      "new.artist": "Artist (optional)",
+      "mt.single": "Single",
+      "mt.ep": "EP",
+      "mt.album": "Album",
+      "mt.comp": "Compilation",
+      "sec.mainMus": "The release",
+      "sec.rel": "Release details",
+      "f.mtk": "Type",
+      "f.lbl": "Label",
+      "f.gen": "Genre",
+      "f.pl": "℗ line (who owns the recording)",
+      "f.cl": "© line (who owns the artwork and texts)",
+      "role.mus.a": "Artist",
+      "sec.trk": "Tracks",
+      "trk.none": "No tracks yet. Add one, or paste the whole track list at once.",
+      "trk.add": "+ Tracks",
+      "trk.addTitle": "Add tracks",
+      "trk.lines": "Track titles",
+      "trk.linesHint": "One track per line. A length at the end (3:45) is read too.",
+      "trk.ph": "1. First song 3:45\n2. Second song 4:02",
+      "trk.total": "{n} tracks · {time}",
+      "trk.n": "{n} tracks",
+      "trk.noIsrc": "no ISRC",
+      "trk.t": "Title",
+      "trk.ver": "Version (e.g. Radio edit)",
+      "trk.art": "Artist, if not the release's",
+      "trk.isrc": "ISRC",
+      "trk.dur": "Length (m:ss)",
+      "trk.durBad": "Write the length as m:ss, for example 3:45.",
+      "trk.lang": "Language of the lyrics",
+      "trk.ex": "Explicit lyrics",
+      "trk.up": "Move up",
+      "trk.down": "Move down",
+      "trk.del": "Remove track",
+      "trk.removed": "Track removed",
+      "isrc.len": "An ISRC has 12 characters: CC-XXX-YY-NNNNN.",
+      "isrc.shape": "Not an ISRC: 2 letters, then 3 letters or digits, then 7 digits.",
+      "isrc.ok": "Valid ISRC.",
+      "isrc.noPrefix": "Add your ISRC prefix in the Codes tab, or type the code your distributor gave you.",
+      "isrc.full": "No free ISRC left this year in your prefixes.",
+      "code.next": "Next free",
+      "code.pick": "Which prefix?",
+      "code.clash": "Already used: {list}",
+      "sec.med": "Editions",
+      "med.none": "No editions yet.",
+      "med.add": "+ Edition",
+      "med.kind": "Edition",
+      "med.dig": "Digital",
+      "med.cd": "CD",
+      "med.vin": "Vinyl",
+      "med.cas": "Cassette",
+      "med.ot": "Other",
+      "med.upc": "UPC / EAN",
+      "med.cat": "Catalogue number",
+      "med.dist": "Distributor",
+      "med.del": "Remove edition",
+      "med.removed": "Edition removed",
+      "upc.len": "A UPC has 12 digits, an EAN 13.",
+      "upc.check": "The check digit does not match: a typo?",
+      "upc.isbn": "That is an ISBN (978 or 979), not a release code.",
+      "upc.ok": "Valid {kind}.",
+      "upc.noPrefix": "Add your GS1 prefix in the Codes tab, or type the code your distributor gave you.",
+      "upc.full": "Your GS1 prefixes are full.",
+      "gap.artist": "artist",
+      "gap.trk": "tracks",
+      "gap.isrc": "ISRC",
+      "gap.dur": "track lengths",
+      "gap.ed": "edition",
+      "gap.upc": "UPC/EAN",
+      "isrcp.title": "ISRC prefixes",
+      "isrcp.add": "+ ISRC prefix",
+      "isrcp.none": "If you have your own ISRC registrant code, add it here and each track gets the next free code. If your distributor gives the codes, you need nothing here.",
+      "isrcp.prefix": "Prefix (country and registrant code)",
+      "isrcp.bad": "Write 2 letters for the country and 3 letters or digits, for example GR-A1B.",
+      "isrcp.used": "{n} codes in use",
+      "isrcp.next": "Next free for {y}:",
+      "upcp.title": "UPC / EAN prefixes (GS1)",
+      "upcp.add": "+ GS1 prefix",
+      "upcp.none": "If you have a GS1 company prefix, add it here and each edition gets the next free code with its check digit.",
+      "upcp.prefix": "GS1 company prefix",
+      "upcp.f": "Code type",
+      "upcp.ean": "EAN-13 (13 digits)",
+      "upcp.upc": "UPC-A (12 digits)",
+      "upcp.bad": "A GS1 prefix has 6 to 11 digits (and is not 978 or 979).",
+      "prefix.del": "Remove prefix",
+      "prefix.delAsk": "Remove the prefix {p}? The codes of your tracks and editions stay as they are.",
+      "codex.title": "Release codes used elsewhere",
+      "codex.hint": "ISRCs, UPCs or EANs you used outside this app, or spoiled ones: they are never offered as free.",
+      "codex.add": "+ Code",
+      "codex.code": "ISRC or UPC / EAN",
+      "codex.bad": "Not a valid ISRC, UPC or EAN.",
+      "mclash.title": "Release codes used more than once",
+      "chk.code": "Valid {kind} {c}",
       "untitled": "Untitled", "by": "by {list}"
     },
     el: {
       "app.name": "Εκδόσεις",
-      "tab.titles": "Τίτλοι", "tab.isbn": "ISBN",
+      "tab.titles": "Τίτλοι", "tab.isbn": "Κωδικοί",
       "btn.new": "Νέος τίτλος", "btn.settings": "Ρυθμίσεις", "btn.back": "Τίτλοι", "btn.close": "Κλείσιμο",
       "btn.cancel": "Άκυρο", "btn.save": "Αποθήκευση", "btn.add": "Προσθήκη", "btn.del": "Διαγραφή", "btn.undo": "Αναίρεση",
       "btn.copy": "Αντιγραφή", "btn.remove": "Αφαίρεση",
@@ -314,7 +413,7 @@
       "x.add": "Σημείωσε αριθμό ως χρησιμοποιημένο", "x.isbn": "ISBN", "x.note": "Πού χρησιμοποιήθηκε",
       "x.none": "Κανένας.", "x.done": "Σημειώθηκε ως χρησιμοποιημένο", "x.removed": "Δεν είναι πια σημειωμένο",
       "clash.title": "Αριθμοί που μπήκαν δύο φορές", "clash.one": "{isbn}: {list}",
-      "chk.title": "Έλεγχος ISBN", "chk.ph": "Επικόλλησε ή γράψε οποιοδήποτε ISBN",
+      "chk.title": "Έλεγχος κωδικού", "chk.ph": "Επικόλλησε ή γράψε οποιοδήποτε ISBN, ISRC, UPC ή EAN",
       "chk.ok": "Σωστό. ISBN-13 {thirteen}{ten}", "chk.ten": " · ISBN-10 {ten}",
       "chk.uses": "Σε χρήση: {list}", "chk.free": "Δεν το έχει κανένας από τους τίτλους σου.",
       "plan.title": "Πορεία έκδοσης", "plan.none": "Βάλε ημερομηνία κυκλοφορίας και φτιάξε την πορεία: το orOS βάζει ημερομηνίες σε κάθε βήμα μετρώντας ανάποδα (χειρόγραφο, επιμέλεια, διορθώσεις, εξώφυλλο, ISBN, τυπογραφείο, παρουσίαση).",
@@ -448,6 +547,105 @@
       "set.impHint": "Μπαίνει σε εξώφυλλα και δελτία τύπου.", "set.done": "Αποθηκεύτηκε",
       "toast.copied": "Αντιγράφηκε", "toast.saved": "Αποθηκεύτηκε", "toast.exported": "Αποθηκεύτηκε",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε.",
+      // wave M1: music releases
+      "kind.book": "Βιβλία",
+      "kind.mus": "Μουσική",
+      "new.type": "Είδος",
+      "new.book": "Βιβλίο",
+      "new.mus": "Μουσική: {k}",
+      "new.artist": "Καλλιτέχνης (προαιρετικό)",
+      "mt.single": "Single",
+      "mt.ep": "EP",
+      "mt.album": "Άλμπουμ",
+      "mt.comp": "Συλλογή",
+      "sec.mainMus": "Η κυκλοφορία",
+      "sec.rel": "Στοιχεία κυκλοφορίας",
+      "f.mtk": "Είδος",
+      "f.lbl": "Δισκογραφική (label)",
+      "f.gen": "Είδος μουσικής",
+      "f.pl": "Γραμμή ℗ (σε ποιον ανήκει η ηχογράφηση)",
+      "f.cl": "Γραμμή © (σε ποιον ανήκουν το artwork και τα κείμενα)",
+      "role.mus.a": "Καλλιτέχνης",
+      "sec.trk": "Κομμάτια",
+      "trk.none": "Δεν υπάρχουν ακόμα κομμάτια. Πρόσθεσε ένα, ή επικόλλησε όλη τη λίστα μαζί.",
+      "trk.add": "+ Κομμάτια",
+      "trk.addTitle": "Προσθήκη κομματιών",
+      "trk.lines": "Τίτλοι κομματιών",
+      "trk.linesHint": "Ένα κομμάτι ανά γραμμή. Αν στο τέλος υπάρχει διάρκεια (3:45), διαβάζεται κι αυτή.",
+      "trk.ph": "1. Πρώτο τραγούδι 3:45\n2. Δεύτερο τραγούδι 4:02",
+      "trk.total": "{n} κομμάτια · {time}",
+      "trk.n": "{n} κομμάτια",
+      "trk.noIsrc": "χωρίς ISRC",
+      "trk.t": "Τίτλος",
+      "trk.ver": "Εκδοχή (π.χ. Radio edit)",
+      "trk.art": "Καλλιτέχνης, αν δεν είναι της κυκλοφορίας",
+      "trk.isrc": "ISRC",
+      "trk.dur": "Διάρκεια (λ:δδ)",
+      "trk.durBad": "Γράψε τη διάρκεια ως λ:δδ, για παράδειγμα 3:45.",
+      "trk.lang": "Γλώσσα στίχων",
+      "trk.ex": "Ακατάλληλοι στίχοι (explicit)",
+      "trk.up": "Πάνω",
+      "trk.down": "Κάτω",
+      "trk.del": "Αφαίρεση κομματιού",
+      "trk.removed": "Το κομμάτι αφαιρέθηκε",
+      "isrc.len": "Το ISRC έχει 12 χαρακτήρες: CC-XXX-YY-NNNNN.",
+      "isrc.shape": "Δεν είναι ISRC: 2 γράμματα, μετά 3 γράμματα ή ψηφία, μετά 7 ψηφία.",
+      "isrc.ok": "Έγκυρο ISRC.",
+      "isrc.noPrefix": "Πρόσθεσε το πρόθεμα ISRC σου στην καρτέλα Κωδικοί, ή γράψε τον κωδικό που σου έδωσε ο διανομέας.",
+      "isrc.full": "Δεν έμεινε ελεύθερο ISRC για φέτος στα προθέματά σου.",
+      "code.next": "Επόμενος ελεύθερος",
+      "code.pick": "Ποιο πρόθεμα;",
+      "code.clash": "Χρησιμοποιείται ήδη: {list}",
+      "sec.med": "Εκδόσεις",
+      "med.none": "Δεν υπάρχουν ακόμα εκδόσεις.",
+      "med.add": "+ Έκδοση",
+      "med.kind": "Έκδοση",
+      "med.dig": "Ψηφιακή",
+      "med.cd": "CD",
+      "med.vin": "Βινύλιο",
+      "med.cas": "Κασέτα",
+      "med.ot": "Άλλη",
+      "med.upc": "UPC / EAN",
+      "med.cat": "Αριθμός καταλόγου",
+      "med.dist": "Διανομέας",
+      "med.del": "Αφαίρεση έκδοσης",
+      "med.removed": "Η έκδοση αφαιρέθηκε",
+      "upc.len": "Το UPC έχει 12 ψηφία, το EAN 13.",
+      "upc.check": "Το ψηφίο ελέγχου δεν ταιριάζει: μήπως τυπογραφικό λάθος;",
+      "upc.isbn": "Αυτό είναι ISBN (978 ή 979), όχι κωδικός κυκλοφορίας.",
+      "upc.ok": "Έγκυρο {kind}.",
+      "upc.noPrefix": "Πρόσθεσε το πρόθεμα GS1 σου στην καρτέλα Κωδικοί, ή γράψε τον κωδικό που σου έδωσε ο διανομέας.",
+      "upc.full": "Τα προθέματα GS1 σου γέμισαν.",
+      "gap.artist": "καλλιτέχνης",
+      "gap.trk": "κομμάτια",
+      "gap.isrc": "ISRC",
+      "gap.dur": "διάρκειες κομματιών",
+      "gap.ed": "έκδοση",
+      "gap.upc": "UPC/EAN",
+      "isrcp.title": "Προθέματα ISRC",
+      "isrcp.add": "+ Πρόθεμα ISRC",
+      "isrcp.none": "Αν έχεις δικό σου κωδικό καταχωρητή ISRC, πρόσθεσέ τον εδώ και κάθε κομμάτι παίρνει τον επόμενο ελεύθερο κωδικό. Αν τους κωδικούς τούς δίνει ο διανομέας, δεν χρειάζεται τίποτα εδώ.",
+      "isrcp.prefix": "Πρόθεμα (χώρα και κωδικός καταχωρητή)",
+      "isrcp.bad": "Γράψε 2 γράμματα για τη χώρα και 3 γράμματα ή ψηφία, για παράδειγμα GR-A1B.",
+      "isrcp.used": "{n} κωδικοί σε χρήση",
+      "isrcp.next": "Επόμενος ελεύθερος για το {y}:",
+      "upcp.title": "Προθέματα UPC / EAN (GS1)",
+      "upcp.add": "+ Πρόθεμα GS1",
+      "upcp.none": "Αν έχεις πρόθεμα εταιρείας GS1, πρόσθεσέ το εδώ και κάθε έκδοση παίρνει τον επόμενο ελεύθερο κωδικό με το ψηφίο ελέγχου του.",
+      "upcp.prefix": "Πρόθεμα εταιρείας GS1",
+      "upcp.f": "Είδος κωδικού",
+      "upcp.ean": "EAN-13 (13 ψηφία)",
+      "upcp.upc": "UPC-A (12 ψηφία)",
+      "upcp.bad": "Το πρόθεμα GS1 έχει 6 έως 11 ψηφία (και δεν είναι 978 ή 979).",
+      "prefix.del": "Αφαίρεση προθέματος",
+      "prefix.delAsk": "Να αφαιρεθεί το πρόθεμα {p}; Οι κωδικοί των κομματιών και των εκδόσεών σου μένουν όπως είναι.",
+      "codex.title": "Κωδικοί κυκλοφορίας που χρησιμοποιήθηκαν αλλού",
+      "codex.hint": "ISRC, UPC ή EAN που χρησιμοποίησες έξω από την εφαρμογή, ή χαλασμένοι: δεν προτείνονται ποτέ ως ελεύθεροι.",
+      "codex.add": "+ Κωδικός",
+      "codex.code": "ISRC ή UPC / EAN",
+      "codex.bad": "Δεν είναι έγκυρο ISRC, UPC ή EAN.",
+      "mclash.title": "Κωδικοί κυκλοφορίας σε περισσότερες από μία χρήσεις",
+      "chk.code": "Έγκυρο {kind} {c}",
       "untitled": "Χωρίς τίτλο", "by": "του/της {list}"
     }
   };
@@ -531,7 +729,7 @@
 
   // ---------- 2. Storage, prefs, sync slice ----------
   var data = C.empty();
-  var prefs = { tab: "titles", sort: "rel", st: "" };
+  var prefs = { tab: "titles", sort: "rel", st: "", kind: "" };
   var view = { name: "list", id: "" };    // list | title | isbn | roy | subs | posts | cost
   var TABS = ["titles", "isbn", "roy", "subs", "posts", "cost"];
 
@@ -543,6 +741,7 @@
       if (TABS.indexOf(p.tab) >= 0) prefs.tab = p.tab;
       if (["rel", "t", "m"].indexOf(p.sort) >= 0) prefs.sort = p.sort;
       if (C.STATUS.indexOf(p.st) >= 0) prefs.st = p.st;
+      if (p.kind === "book" || p.kind === "mus") prefs.kind = p.kind;
     } catch (e) { /* defaults */ }
     view.name = prefs.tab === "titles" ? "list" : prefs.tab;
   }
@@ -710,6 +909,17 @@
       chips.appendChild(c);
     });
     sec.appendChild(chips);
+    // wave M1: books / music, once there is a music release
+    var nMus = data.titles.filter(C.isMusic).length;
+    if (nMus) {
+      var kc = el("div", "chips");
+      [["", t("f.all"), data.titles.length], ["book", t("kind.book"), data.titles.length - nMus], ["mus", t("kind.mus"), nMus]].forEach(function (x) {
+        var c = button(x[1] + " · " + x[2], "chip", function () { prefs.kind = x[0]; savePrefs(); renderList(); });
+        c.setAttribute("aria-pressed", prefs.kind === x[0] ? "true" : "false");
+        kc.appendChild(c);
+      });
+      sec.appendChild(kc);
+    } else if (prefs.kind) prefs.kind = "";
     var ul = el("ul", "rows");
     ul.id = "rows";
     sec.appendChild(ul);
@@ -721,7 +931,7 @@
     if (!ul) return;
     dropThumbs();
     ul.textContent = "";
-    var rows = C.list(data, { q: listQ, st: prefs.st }, prefs.sort, LOCALE);
+    var rows = C.list(data, { q: listQ, st: prefs.st, kind: prefs.kind }, prefs.sort, LOCALE);
     if (!rows.length) { ul.appendChild(el("li", "empty", t("empty.list"))); return; }
     rows.forEach(function (tt) {
       var li = el("li");
@@ -738,10 +948,15 @@
       if (bits.length) main.appendChild(el("span", "tsub", bits.join(" · ")));
       var isbns = tt.fmts.filter(function (f) { return f.isbn; }).map(function (f) { return t("fmt." + f.k) + " " + C.hyphen(f.isbn, data.blocks); });
       if (isbns.length) main.appendChild(el("span", "tsub isbn", isbns.join(" · ")));
+      if (C.isMusic(tt)) {
+        var mbits = [t("mt." + tt.mt.k), t("trk.n", { n: C.tracksOf(data, tt.id).length })];
+        C.editionsOf(data, tt.id).forEach(function (e) { if (e.upc) mbits.push(t("med." + e.k) + " " + e.upc); });
+        main.appendChild(el("span", "tsub isbn", mbits.join(" · ")));
+      }
       var side = el("span", "tside");
       side.appendChild(el("span", "badge st-" + tt.st, t("st." + tt.st)));
       if (tt.rel) side.appendChild(el("span", "muted", fmtDate(tt.rel)));
-      var g = C.gaps(tt);
+      var g = C.gaps(tt, data);
       if (g.length && tt.st !== "oop") side.appendChild(el("span", "badge gap", t("gaps.n", { n: g.length })));
       var cb = ctrBadge(tt);
       if (cb) side.appendChild(cb);
@@ -757,10 +972,15 @@
     var pf = prefill && typeof prefill === "object" ? prefill : {};
     var dlg = el("dialog");
     dlg.appendChild(el("h3", "", t("new.title")));
+    // wave M1: a book or a music release (single, EP, album, compilation)
+    var kind = select([["book", t("new.book")]].concat(C.MT_KINDS.map(function (x) { return [x, t("new.mus", { k: t("mt." + x) })]; })),
+      C.MT_KINDS.indexOf(pf.mt) >= 0 ? pf.mt : "book");
+    dlg.appendChild(field(t("new.type"), kind));
     var name = input("text", pf.t || "", { maxlength: "200", required: "" });
     var au = input("text", pf.author || "", { maxlength: "120" });
     dlg.appendChild(field(t("new.name"), name));
-    dlg.appendChild(field(t("new.author"), au));
+    var auF = field(t("new.author"), au);
+    dlg.appendChild(auF);
     var rel = input("date", pf.rel || "");
     dlg.appendChild(field(t("f.rel"), rel));
     var pl = input("checkbox", "");
@@ -769,6 +989,13 @@
     pll.appendChild(pl);
     pll.appendChild(el("span", "", t("new.plan")));
     dlg.appendChild(pll);
+    function onKind() {
+      var mus = kind.value !== "book";
+      auF.firstChild.textContent = t(mus ? "new.artist" : "new.author");
+      pll.hidden = mus;          // the music release plan comes with wave M3
+    }
+    kind.addEventListener("change", onKind);
+    onKind();
     var acts = el("div", "acts");
     acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
     var go = button(t("new.go"), "btn pri", function () {
@@ -776,13 +1003,17 @@
       if (!nm) { name.focus(); return; }
       var id = C.uid(), now = Date.now();
       var row = { id: id, t: nm, st: "idea", ppl: au.value.trim() ? [{ r: "a", n: au.value.trim() }] : [], fmts: [] };
-      if (pf.isbn) row.fmts = [{ id: C.uid(), k: "pb", isbn: pf.isbn }];
+      var mus = kind.value !== "book";
+      if (mus) row.mt = { k: kind.value };
+      else if (pf.isbn) row.fmts = [{ id: C.uid(), k: "pb", isbn: pf.isbn }];
       if (C.okYmd(rel.value)) {
         row.rel = rel.value;
-        if (pl.checked) row.plan = C.makePlan(rel.value, [], C.uid);
+        if (pl.checked && !mus) row.plan = C.makePlan(rel.value, [], C.uid);
       }
       dlg.close();
-      commit(C.put(data, "titles", row, now));
+      var next = C.put(data, "titles", row, now);
+      if (mus) next = C.put(next, "med", { id: C.uid(), ti: id, k: "dig" }, now);
+      commit(next);
       openTitle(id);
     });
     acts.appendChild(go);
@@ -849,9 +1080,10 @@
     gp.id = "ed-gaps";
     sec.appendChild(gp);
 
-    // The book
+    var music = C.isMusic(tt);
+    // The book (or the release's main fields)
     var s1 = el("section", "sec");
-    s1.appendChild(el("h3", "", t("sec.main")));
+    s1.appendChild(el("h3", "", t(music ? "sec.mainMus" : "sec.main")));
     var g1 = el("div", "grid");
     function textField(key, label, max, wide) {
       var i = input("text", tt[key], { maxlength: String(max) });
@@ -883,11 +1115,19 @@
     s1.appendChild(g1);
     sec.appendChild(s1);
 
-    // Release plan (wave P4)
+    // Music release (wave M1): type, label, ℗ and ©, tracks, editions
+    if (music) {
+      sec.appendChild(releaseSection(tt));
+      sec.appendChild(tracksSection(tt));
+      sec.appendChild(editionsSection(tt));
+    }
+
+    // Release plan (wave P4); the music plan comes with wave M3
     var sp = el("section", "sec plan");
     sp.id = "ed-plan";
     sec.appendChild(sp);
-    renderPlan();
+    if (!music) renderPlan();
+    else sp.hidden = true;
 
     // Royalty terms (wave P6)
     var sr = el("section", "sec roy");
@@ -926,7 +1166,7 @@
     tt.ppl.forEach(function (p, i) {
       var row = el("div", "person");
       if (p.crm) row.dataset.crm = p.crm;
-      var r = select(C.ROLES.map(function (x) { return [x, t("role." + x)]; }), p.r);
+      var r = select(C.ROLES.map(function (x) { return [x, roleName(x, music)]; }), p.r);
       r.setAttribute("aria-label", t("ppl.role"));
       var n = input("text", p.n, { maxlength: "120", "aria-label": t("ppl.name") });
       var del = button("✕", "icon-btn", function () {
@@ -945,8 +1185,9 @@
     if (tt.ppl.length < C.MAX_PPL) s2.appendChild(button(t("ppl.add"), "btn small", function () { addPersonDialog(); }));
     sec.appendChild(s2);
 
-    // Formats
+    // Formats (books only: a release has editions)
     var s3 = el("section", "sec");
+    if (music) s3.hidden = true;
     s3.appendChild(el("h3", "", t("sec.fmts")));
     if (!tt.fmts.length) s3.appendChild(el("p", "muted", t("fmt.none")));
     tt.fmts.forEach(function (f) { s3.appendChild(formatBox(tt, f)); });
@@ -975,14 +1216,14 @@
     s5.appendChild(coverBox(tt));
     sec.appendChild(s5);
 
-    // To other apps (wave P2)
-    sec.appendChild(sendBox(tt));
+    // To other apps (wave P2); for a release with wave M3
+    if (!music) sec.appendChild(sendBox(tt));
     refreshGaps();
   }
   function refreshGaps() {
     var gp = $("ed-gaps"), tt = currentTitle();
     if (!gp || !tt) return;
-    var g = C.gaps(tt);
+    var g = C.gaps(tt, data);
     gp.className = "gaps" + (g.length ? "" : " none");
     gp.textContent = g.length ? t("gaps", { list: g.map(function (k) { return t("gap." + k); }).join(", ") }) : t("gaps.none");
   }
@@ -991,7 +1232,7 @@
     if (!tt) return;
     var dlg = el("dialog");
     dlg.appendChild(el("h3", "", t("ppl.add").replace(/^\+\s*/, "")));
-    var r = select(C.ROLES.map(function (x) { return [x, t("role." + x)]; }), tt.ppl.some(function (p) { return p.r === "a"; }) ? "t" : "a");
+    var r = select(C.ROLES.map(function (x) { return [x, roleName(x, C.isMusic(tt))]; }), tt.ppl.some(function (p) { return p.r === "a"; }) ? "t" : "a");
     var n = input("text", "", { maxlength: "120" });
     dlg.appendChild(field(t("ppl.role"), r));
     dlg.appendChild(field(t("ppl.name"), n));
@@ -1115,6 +1356,529 @@
     return box;
   }
 
+  // ---------- 5b. Music release (wave M1) ----------
+  // A title with mt: the release fields, its tracks (rows of the trk
+  // list) and editions (med), each written on its own (LWW per row).
+  var DISTS = ["DistroKid", "CD Baby", "TuneCore", "Amuse", "RouteNote", "Ditto Music", "LANDR", "UnitedMasters", "Believe", "AWAL", "Symphonic", "Bandcamp"];
+  var trkOpen = {};
+  function roleName(x, music) { return music && x === "a" ? t("role.mus.a") : t("role." + x); }
+  function parseDur(s) {
+    var v = String(s || "").trim();
+    if (!v) return 0;
+    var m = /^(?:(\d{1,2}):)?(\d{1,3}):(\d{2})$/.exec(v);
+    if (m) return +m[3] < 60 ? (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]) : -1;
+    return /^\d{1,5}$/.test(v) ? +v : -1;
+  }
+  function fmtDur(sec) {
+    if (!(sec > 0)) return "";
+    var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+    return (h ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s;
+  }
+  function pickDialog(title, items, done) {
+    var dlg = el("dialog");
+    dlg.appendChild(el("h3", "", title));
+    items.forEach(function (x) {
+      var b = button(x.label, "btn pick", function () { dlg.close(); done(x.v); });
+      dlg.appendChild(b);
+    });
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+  function codeUseLabel(u) {
+    if (u.x) return t("isbn.elsewhere");
+    var tt = C.find(data, "titles", u.title);
+    var name = tt ? tt.t : "?";
+    if (u.trk) { var r = C.find(data, "trk", u.trk); return name + (r ? " · " + r.no + ". " + r.t : ""); }
+    var e = C.find(data, "med", u.med);
+    return name + (e ? " (" + t("med." + e.k) + ")" : "");
+  }
+  function isrcHint(hint, raw, trkId) {
+    hint.className = "hint";
+    hint.textContent = "";
+    var v = raw.trim();
+    if (!v) return;
+    var p = C.parseIsrc(v);
+    if (!p.ok) { hint.className = "hint bad"; hint.textContent = t("isrc." + p.why); return; }
+    var uses = (C.usedCodes(data)[p.isrc] || []).filter(function (u) { return u.trk !== trkId; });
+    if (uses.length) { hint.className = "hint bad"; hint.textContent = t("code.clash", { list: uses.map(codeUseLabel).join(", ") }); return; }
+    hint.className = "hint good";
+    hint.textContent = t("isrc.ok");
+  }
+  function upcHint(hint, raw, medId) {
+    hint.className = "hint";
+    hint.textContent = "";
+    var v = raw.trim();
+    if (!v) return;
+    var p = C.parseUpc(v);
+    if (!p.ok) { hint.className = "hint bad"; hint.textContent = t("upc." + p.why); return; }
+    var uses = (C.usedCodes(data)[C.upcKey(p.upc)] || []).filter(function (u) { return u.med !== medId; });
+    if (uses.length) { hint.className = "hint bad"; hint.textContent = t("code.clash", { list: uses.map(codeUseLabel).join(", ") }); return; }
+    hint.className = "hint good";
+    hint.textContent = t("upc.ok", { kind: p.upc.length === 12 ? "UPC-A" : "EAN-13" });
+  }
+  function thisYear() { return +todayYmd().slice(0, 4); }
+  function giveNextIsrc(done) {
+    if (!data.isrcb.length) { toast(t("isrc.noPrefix")); return; }
+    var y = thisYear();
+    var open = data.isrcb.map(function (b) { return { b: b, n: C.nextIsrc(data, b.id, y) }; }).filter(function (x) { return x.n; });
+    if (!open.length) { toast(t("isrc.full")); return; }
+    if (open.length === 1) { done(open[0].n); return; }
+    pickDialog(t("code.pick"), open.map(function (x) { return { v: x.n, label: x.b.p + (x.b.note ? " · " + x.b.note : "") + " → " + C.fmtIsrc(x.n) }; }), done);
+  }
+  function giveNextUpc(done) {
+    if (!data.upcb.length) { toast(t("upc.noPrefix")); return; }
+    var open = data.upcb.map(function (b) { return { b: b, n: C.nextUpc(data, b.id) }; }).filter(function (x) { return x.n; });
+    if (!open.length) { toast(t("upc.full")); return; }
+    if (open.length === 1) { done(open[0].n); return; }
+    pickDialog(t("code.pick"), open.map(function (x) { return { v: x.n, label: x.b.p + (x.b.note ? " · " + x.b.note : "") + " → " + x.n }; }), done);
+  }
+  function writeRow(list, id, patch) {
+    var r = C.find(data, list, id);
+    if (!r) return;
+    commit(C.put(data, list, Object.assign({}, r, patch), Date.now()), true);
+    refreshGaps();
+  }
+
+  function releaseSection(tt) {
+    var s = el("section", "sec");
+    s.appendChild(el("h3", "", t("sec.rel")));
+    var g = el("div", "grid");
+    function mtWith(patch) { return Object.assign({}, currentTitle().mt, patch); }
+    var k = select(C.MT_KINDS.map(function (x) { return [x, t("mt." + x)]; }), tt.mt.k);
+    k.addEventListener("change", function () { writeTitle({ mt: mtWith({ k: k.value }) }); });
+    g.appendChild(field(t("f.mtk"), k));
+    [["lbl", 120], ["gen", 60], ["pl", 200], ["cl", 200]].forEach(function (d) {
+      var i = input("text", tt.mt[d[0]] || "", { maxlength: String(d[1]) });
+      i.addEventListener("input", function () { later(function () { var p = {}; p[d[0]] = i.value; writeTitle({ mt: mtWith(p) }); }, i); });
+      var f = field(t("f." + d[0]), i);
+      if (d[0] === "pl" || d[0] === "cl") f.classList.add("wide");
+      g.appendChild(f);
+    });
+    s.appendChild(g);
+    return s;
+  }
+
+  function tracksSection(tt) {
+    var s = el("section", "sec trks");
+    s.id = "ed-trk";
+    var list = C.tracksOf(data, tt.id);
+    var hd = el("h3", "", t("sec.trk"));
+    s.appendChild(hd);
+    var total = C.runTime(data, tt.id);
+    if (list.length) s.appendChild(el("p", "muted small", t("trk.total", { n: list.length, time: fmtDur(total) || "—" })));
+    else s.appendChild(el("p", "muted", t("trk.none")));
+    var ids = list.map(function (r) { return r.id; });
+    function move(id, by) {
+      var i = ids.indexOf(id), j = i + by;
+      if (i < 0 || j < 0 || j >= ids.length) return;
+      var next = ids.slice();
+      next[i] = ids[j];
+      next[j] = id;
+      commit(C.orderTracks(data, tt.id, next, Date.now()));
+    }
+    list.forEach(function (r, idx) { s.appendChild(trackBox(tt, r, idx, list.length, move)); });
+    if (list.length < C.MAX_TRK_PER) s.appendChild(button(t("trk.add"), "btn small", function () { addTracksDialog(tt); }));
+    return s;
+  }
+  function trackSummary(r) {
+    var bits = [(r.disc > 1 ? r.disc + "-" : "") + r.no + ". " + r.t + (r.ver ? " (" + r.ver + ")" : "")];
+    if (r.dur) bits.push(fmtDur(r.dur));
+    bits.push(r.isrc ? C.fmtIsrc(r.isrc) : t("trk.noIsrc"));
+    return bits.join(" · ");
+  }
+  function trackBox(tt, r, idx, count, move) {
+    var box = el("details", "fmt trk");
+    box.open = !!trkOpen[r.id];
+    box.addEventListener("toggle", function () { if (box.open) trkOpen[r.id] = 1; else delete trkOpen[r.id]; });
+    var sum = el("summary", "", trackSummary(r));
+    box.appendChild(sum);
+    function cur() { return C.find(data, "trk", r.id) || r; }
+    function wr(patch) { writeRow("trk", r.id, patch); sum.textContent = trackSummary(cur()); }
+    var head = el("div", "fmt-head");
+    var up = button("↑", "btn small", function () { move(r.id, -1); });
+    up.setAttribute("aria-label", t("trk.up"));
+    up.disabled = idx === 0;
+    var dn = button("↓", "btn small", function () { move(r.id, 1); });
+    dn.setAttribute("aria-label", t("trk.down"));
+    dn.disabled = idx === count - 1;
+    head.appendChild(up);
+    head.appendChild(dn);
+    head.appendChild(button(t("trk.del"), "btn small danger", function () {
+      var keep = JSON.parse(JSON.stringify(cur()));
+      commit(C.remove(data, "trk", r.id, Date.now()));
+      toast(t("trk.removed"), t("btn.undo"), function () { commit(C.put(data, "trk", keep, Date.now())); });
+    }));
+    box.appendChild(head);
+    var g = el("div", "grid");
+    function txt(key, label, max, wide) {
+      var i = input("text", r[key], { maxlength: String(max) });
+      i.addEventListener("input", function () {
+        later(function () { if (key === "t" && !i.value.trim()) return; var p = {}; p[key] = i.value; wr(p); }, i);
+      });
+      var f = field(label, i);
+      if (wide) f.classList.add("wide");
+      g.appendChild(f);
+    }
+    txt("t", t("trk.t"), 200, true);
+    txt("ver", t("trk.ver"), 120);
+    txt("art", t("trk.art"), 200);
+    var isrcIn = input("text", r.isrc ? C.fmtIsrc(r.isrc) : "", { maxlength: "20", autocomplete: "off", spellcheck: "false", autocapitalize: "characters" });
+    var hint = el("span", "hint");
+    var row = el("span", "inrow");
+    row.appendChild(isrcIn);
+    row.appendChild(button(t("code.next"), "btn small", function () {
+      giveNextIsrc(function (c) { isrcIn.value = C.fmtIsrc(c); isrcHint(hint, isrcIn.value, r.id); wr({ isrc: c }); });
+    }));
+    function onIsrc() {
+      isrcHint(hint, isrcIn.value, r.id);
+      var p = C.parseIsrc(isrcIn.value);
+      var v = isrcIn.value.trim() ? (p.ok ? p.isrc : null) : "";
+      if (v !== null) wr({ isrc: v });
+    }
+    isrcIn.addEventListener("input", function () { later(onIsrc, isrcIn); });
+    isrcIn.addEventListener("blur", function () { var p = C.parseIsrc(isrcIn.value); if (p.ok) isrcIn.value = C.fmtIsrc(p.isrc); });
+    var fi = field(t("trk.isrc"), row, hint);
+    fi.classList.add("wide");
+    g.appendChild(fi);
+    isrcHint(hint, isrcIn.value, r.id);
+    var durIn = input("text", fmtDur(r.dur), { maxlength: "8", inputmode: "numeric", placeholder: "3:45", autocomplete: "off" });
+    var dh = el("span", "hint");
+    durIn.addEventListener("input", function () {
+      later(function () {
+        var v = parseDur(durIn.value);
+        dh.className = v < 0 ? "hint bad" : "hint";
+        dh.textContent = v < 0 ? t("trk.durBad") : "";
+        if (v >= 0) wr({ dur: v });
+      }, durIn);
+    });
+    g.appendChild(field(t("trk.dur"), durIn, dh));
+    txt("lang", t("trk.lang"), 40);
+    var ex = input("checkbox", "");
+    ex.checked = r.ex === 1;
+    ex.addEventListener("change", function () { wr({ ex: ex.checked ? 1 : 0 }); });
+    var exl = el("label", "check");
+    exl.appendChild(ex);
+    exl.appendChild(el("span", "", t("trk.ex")));
+    g.appendChild(exl);
+    box.appendChild(g);
+    return box;
+  }
+  // One track per line; "1. Title", "Title - 3:45" and "Title 3:45"
+  // are all read (the number is dropped, the length kept).
+  function parseTrackLines(text) {
+    return String(text || "").split(/\r?\n/).map(function (l) {
+      var s = l.trim().replace(/^\d{1,3}\s*[.)\-–]\s*/, "");
+      var m = /^(.*?)[\s\-–—|·]*\(?((?:\d{1,2}:)?\d{1,3}:\d{2})\)?$/.exec(s), dur = 0;
+      if (m && m[1].trim()) { dur = parseDur(m[2]); s = m[1].trim(); }
+      return { t: s, dur: dur > 0 ? dur : 0 };
+    }).filter(function (x) { return x.t; });
+  }
+  function addTracksDialog(tt) {
+    var dlg = el("dialog");
+    dlg.appendChild(el("h3", "", t("trk.addTitle")));
+    var ta = input("textarea", "", { rows: "6", maxlength: "20000", placeholder: t("trk.ph") });
+    dlg.appendChild(field(t("trk.lines"), ta, el("span", "hint", t("trk.linesHint"))));
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    acts.appendChild(button(t("btn.add"), "btn pri", function () {
+      var rows = parseTrackLines(ta.value);
+      if (!rows.length) { ta.focus(); return; }
+      var have = C.tracksOf(data, tt.id), now = Date.now(), d = data;
+      var no = have.filter(function (r) { return r.disc === 1; }).length;
+      rows.slice(0, C.MAX_TRK_PER - have.length).forEach(function (x) {
+        var id = C.uid();
+        if (rows.length === 1) trkOpen[id] = 1;
+        d = C.put(d, "trk", { id: id, ti: tt.id, no: ++no, disc: 1, t: x.t, dur: x.dur, lang: currentTitle().lang }, now);
+      });
+      dlg.close();
+      commit(d);
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    ta.focus();
+  }
+
+  function editionsSection(tt) {
+    var s = el("section", "sec");
+    s.id = "ed-med";
+    s.appendChild(el("h3", "", t("sec.med")));
+    var list = C.editionsOf(data, tt.id);
+    if (!list.length) s.appendChild(el("p", "muted", t("med.none")));
+    list.forEach(function (e) { s.appendChild(editionBox(e)); });
+    if (list.length < C.MAX_FMTS) s.appendChild(button(t("med.add"), "btn small", function () {
+      var kinds = list.map(function (x) { return x.k; });
+      var k = C.MED_KINDS.filter(function (x) { return kinds.indexOf(x) < 0; })[0] || "ot";
+      commit(C.put(data, "med", { id: C.uid(), ti: tt.id, k: k }, Date.now()));
+    }));
+    if (!$("pub-dists")) {
+      var dl = el("datalist");
+      dl.id = "pub-dists";
+      DISTS.forEach(function (n) { var o = el("option"); o.value = n; dl.appendChild(o); });
+      document.body.appendChild(dl);
+    }
+    return s;
+  }
+  function editionBox(e) {
+    var box = el("div", "fmt");
+    function cur() { return C.find(data, "med", e.id) || e; }
+    var head = el("div", "fmt-head");
+    var k = select(C.MED_KINDS.map(function (x) { return [x, t("med." + x)]; }), e.k);
+    k.setAttribute("aria-label", t("med.kind"));
+    k.addEventListener("change", function () { writeRow("med", e.id, { k: k.value }); });
+    head.appendChild(k);
+    var bc = button(t("fmt.barcode"), "btn small", function () { upcBarcodeDialog(e.id); });
+    bc.disabled = !e.upc;
+    head.appendChild(bc);
+    head.appendChild(button(t("med.del"), "btn small danger", function () {
+      var keep = JSON.parse(JSON.stringify(cur()));
+      commit(C.remove(data, "med", e.id, Date.now()));
+      toast(t("med.removed"), t("btn.undo"), function () { commit(C.put(data, "med", keep, Date.now())); });
+    }));
+    box.appendChild(head);
+    var g = el("div", "grid");
+    var ui = input("text", e.upc, { inputmode: "numeric", maxlength: "20", autocomplete: "off", spellcheck: "false" });
+    var hint = el("span", "hint");
+    var row = el("span", "inrow");
+    row.appendChild(ui);
+    row.appendChild(button(t("code.next"), "btn small", function () {
+      giveNextUpc(function (c) { ui.value = c; upcHint(hint, c, e.id); writeRow("med", e.id, { upc: c }); bc.disabled = false; });
+    }));
+    ui.addEventListener("input", function () {
+      later(function () {
+        upcHint(hint, ui.value, e.id);
+        var p = C.parseUpc(ui.value);
+        var v = ui.value.trim() ? (p.ok ? p.upc : null) : "";
+        bc.disabled = !v;
+        if (v !== null) writeRow("med", e.id, { upc: v });
+      }, ui);
+    });
+    var fu = field(t("med.upc"), row, hint);
+    fu.classList.add("wide");
+    g.appendChild(fu);
+    upcHint(hint, ui.value, e.id);
+    function txt(key, label, max, attrs) {
+      var i = input("text", e[key], Object.assign({ maxlength: String(max) }, attrs || {}));
+      i.addEventListener("input", function () { later(function () { var p = {}; p[key] = i.value; writeRow("med", e.id, p); }, i); });
+      g.appendChild(field(label, i));
+    }
+    txt("cat", t("med.cat"), 40);
+    var pr = input("number", e.price || "", { min: "0", max: "1000000", step: "0.01", inputmode: "decimal" });
+    pr.addEventListener("input", function () { later(function () { writeRow("med", e.id, { price: pr.value === "" ? 0 : C.num(pr.value, 0, 1e6, 2) }); }, pr); });
+    g.appendChild(field(t("fmt.price", { cur: data.set.cur }), pr));
+    txt("dist", t("med.dist"), 80, { list: "pub-dists", autocomplete: "off" });
+    txt("note", t("fmt.note"), 200);
+    box.appendChild(g);
+    return box;
+  }
+  function upcBarcodeDialog(medId) {
+    flushEdits();
+    var e = C.find(data, "med", medId);
+    if (!e || !e.upc) return;
+    var label = e.upc.length === 12 ? "UPC" : "EAN";
+    var svg = C.barcodeSvg(C.upcKey(e.upc), data.blocks, { label: label, code: e.upc });
+    if (!svg) return;
+    var dlg = el("dialog");
+    dlg.appendChild(el("h3", "", t("bc.title", { fmt: t("med." + e.k) })));
+    var prev = el("div", "bc-prev");
+    var url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+    var im = el("img");
+    im.alt = label + " " + e.upc;
+    im.src = url;
+    prev.appendChild(im);
+    dlg.appendChild(prev);
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.copy") + " " + label, "btn", function () { copyText(e.upc); }));
+    acts.appendChild(button(t("bc.svg"), "btn", function () { saveBlob(new Blob([svg], { type: "image/svg+xml" }), label + "-" + e.upc + ".svg", "image/svg+xml", ".svg"); }));
+    acts.appendChild(button(t("btn.close"), "btn pri", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    dlg.addEventListener("close", function () { setTimeout(function () { URL.revokeObjectURL(url); }, 2000); });
+    showDialog(dlg);
+  }
+
+  // Codes tab: ISRC and GS1 prefixes, release codes used elsewhere.
+  function renderMusicCodes(sec) {
+    var cl = C.codeClashes(data);
+    if (cl.length) {
+      var wb = el("div", "warnbox");
+      wb.appendChild(el("strong", "", t("mclash.title")));
+      var ul = el("ul");
+      ul.style.margin = "6px 0 0 18px";
+      cl.forEach(function (c) {
+        ul.appendChild(el("li", "", t("clash.one", { isbn: /^\d+$/.test(c.code) ? c.code : C.fmtIsrc(c.code), list: c.uses.map(codeUseLabel).join(", ") })));
+      });
+      wb.appendChild(ul);
+      sec.appendChild(wb);
+    }
+    function codeList(box, rows, show) {
+      if (!rows.length) return;
+      var det = el("details");
+      det.style.marginTop = "10px";
+      det.appendChild(el("summary", "", t("blk.show", { n: rows.length })));
+      var nums = el("ul", "nums");
+      nums.style.marginTop = "6px";
+      rows.forEach(function (r) {
+        var li = el("li");
+        li.appendChild(el("code", "isbn", show(r.code)));
+        r.uses.forEach(function (us) {
+          if (us.x) { li.appendChild(el("span", "muted", t("isbn.elsewhere"))); return; }
+          li.appendChild(button(codeUseLabel(us), "linkish", function () { openTitle(us.title); }));
+        });
+        nums.appendChild(li);
+      });
+      det.appendChild(nums);
+      box.appendChild(det);
+    }
+    function nextLine(box, code, shown) {
+      var nl = el("div", "next");
+      if (code) {
+        nl.appendChild(el("span", "", shown.label));
+        nl.appendChild(el("code", "isbn", shown.code));
+        nl.appendChild(button(t("btn.copy"), "btn small", function () { copyText(shown.code); }));
+      } else nl.appendChild(el("span", "muted", t("blk.full")));
+      box.appendChild(nl);
+    }
+    // ISRC
+    var hd = el("div", "ed-head");
+    hd.appendChild(el("h2", "", t("isrcp.title")));
+    hd.appendChild(button(t("isrcp.add"), "btn pri", function () { prefixDialog("isrcb"); }));
+    sec.appendChild(hd);
+    if (!data.isrcb.length) sec.appendChild(el("p", "muted", t("isrcp.none")));
+    var y = thisYear();
+    data.isrcb.forEach(function (b) {
+      var u = C.isrcUsage(data, b.id);
+      if (!u) return;
+      var box = el("div", "block");
+      var bh = el("div", "block-head");
+      bh.appendChild(el("strong", "", b.p));
+      if (b.note) bh.appendChild(el("span", "muted", b.note));
+      bh.appendChild(el("span", "spacer"));
+      bh.appendChild(button(t("prefix.del"), "btn small danger", function () { removePrefix("isrcb", b); }));
+      box.appendChild(bh);
+      box.appendChild(el("div", "muted", t("isrcp.used", { n: u.used })));
+      var nx = C.nextIsrc(data, b.id, y);
+      nextLine(box, nx, { label: t("isrcp.next", { y: y }), code: C.fmtIsrc(nx) });
+      codeList(box, u.rows, C.fmtIsrc);
+      sec.appendChild(box);
+    });
+    // GS1
+    var hu = el("div", "ed-head");
+    hu.appendChild(el("h2", "", t("upcp.title")));
+    hu.appendChild(button(t("upcp.add"), "btn pri", function () { prefixDialog("upcb"); }));
+    sec.appendChild(hu);
+    if (!data.upcb.length) sec.appendChild(el("p", "muted", t("upcp.none")));
+    data.upcb.forEach(function (b) {
+      var u = C.upcUsage(data, b.id);
+      if (!u) return;
+      var box = el("div", "block");
+      var bh = el("div", "block-head");
+      bh.appendChild(el("strong", "", b.p + " · " + (b.f === "upc" ? "UPC-A" : "EAN-13")));
+      if (b.note) bh.appendChild(el("span", "muted", b.note));
+      bh.appendChild(el("span", "spacer"));
+      bh.appendChild(button(t("prefix.del"), "btn small danger", function () { removePrefix("upcb", b); }));
+      box.appendChild(bh);
+      box.appendChild(el("div", "muted", t("blk.used", { used: u.used, size: u.size, free: u.free })));
+      var meter = el("div", "meter"), bar = el("i");
+      bar.style.width = Math.min(100, Math.round(100 * u.used / u.size)) + "%";
+      meter.appendChild(bar);
+      box.appendChild(meter);
+      var nx = C.nextUpc(data, b.id);
+      nextLine(box, nx, { label: t("blk.next"), code: nx });
+      codeList(box, u.rows, function (c) { return b.f === "upc" ? c.slice(1) : c; });
+      sec.appendChild(box);
+    });
+    // Used elsewhere
+    var xs = el("section", "sec");
+    xs.appendChild(el("h3", "", t("codex.title")));
+    xs.appendChild(el("p", "muted", t("codex.hint")));
+    var xl = el("ul", "nums");
+    xl.style.margin = "8px 0";
+    if (!data.codex.length) xl.appendChild(el("li", "muted", t("x.none")));
+    data.codex.forEach(function (x) {
+      var li = el("li");
+      li.appendChild(el("code", "isbn", /^\d+$/.test(x.id) ? x.id : C.fmtIsrc(x.id)));
+      if (x.note) li.appendChild(el("span", "", x.note));
+      li.appendChild(button(t("btn.remove"), "btn small", function () {
+        var keep = JSON.parse(JSON.stringify(x));
+        commit(C.remove(data, "codex", x.id, Date.now()));
+        toast(t("x.removed"), t("btn.undo"), function () { commit(C.put(data, "codex", keep, Date.now())); });
+      }));
+      xl.appendChild(li);
+    });
+    xs.appendChild(xl);
+    xs.appendChild(button(t("codex.add"), "btn small", codexDialog));
+    sec.appendChild(xs);
+  }
+  function prefixDialog(list) {
+    var isrc = list === "isrcb";
+    var dlg = el("dialog");
+    dlg.appendChild(el("h3", "", t(isrc ? "isrcp.add" : "upcp.add").replace(/^\+\s*/, "")));
+    var p = input("text", "", { placeholder: isrc ? "GR-A1B" : "5201234", maxlength: "20", autocomplete: "off", spellcheck: "false" });
+    if (!isrc) p.setAttribute("inputmode", "numeric");
+    var hint = el("span", "hint");
+    dlg.appendChild(field(t(isrc ? "isrcp.prefix" : "upcp.prefix"), p, hint));
+    var f = select([["ean", t("upcp.ean")], ["upc", t("upcp.upc")]], "ean");
+    if (!isrc) dlg.appendChild(field(t("upcp.f"), f));
+    var n = input("text", "", { maxlength: "200" });
+    dlg.appendChild(field(t("blk.note"), n));
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    var go = button(t("btn.add"), "btn pri", function () {
+      var pb = isrc ? C.parseIsrcPrefix(p.value) : C.parseUpcPrefix(p.value, f.value);
+      if (!pb) { hint.className = "hint bad"; hint.textContent = t(isrc ? "isrcp.bad" : "upcp.bad"); p.focus(); return; }
+      if (data[list].some(function (b) { return b.p === pb.p && (isrc || b.f === pb.f); })) { hint.className = "hint bad"; hint.textContent = t("blk.dup"); return; }
+      dlg.close();
+      var row = { id: C.uid(), p: pb.p, note: n.value };
+      if (!isrc) row.f = pb.f;
+      commit(C.put(data, list, row, Date.now()));
+    });
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    dlg.addEventListener("keydown", function (e) { if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); go.click(); } });
+    showDialog(dlg);
+    p.focus();
+  }
+  function removePrefix(list, b) {
+    var dlg = el("dialog");
+    dlg.appendChild(el("h3", "", t("prefix.del")));
+    dlg.appendChild(el("p", "", t("prefix.delAsk", { p: b.p })));
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    acts.appendChild(button(t("btn.remove"), "btn pri", function () {
+      dlg.close();
+      var keep = JSON.parse(JSON.stringify(b));
+      commit(C.remove(data, list, b.id, Date.now()));
+      toast(t("blk.removed"), t("btn.undo"), function () { commit(C.put(data, list, keep, Date.now())); });
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+  function codexDialog() {
+    var dlg = el("dialog");
+    dlg.appendChild(el("h3", "", t("codex.add").replace(/^\+\s*/, "")));
+    var i = input("text", "", { maxlength: "20", autocomplete: "off", spellcheck: "false" });
+    var hint = el("span", "hint");
+    var n = input("text", "", { maxlength: "200" });
+    dlg.appendChild(field(t("codex.code"), i, hint));
+    dlg.appendChild(field(t("x.note"), n));
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    var go = button(t("btn.add"), "btn pri", function () {
+      var pi = C.parseIsrc(i.value), pu = C.parseUpc(i.value);
+      var id = pi.ok ? pi.isrc : pu.ok ? pu.upc : "";
+      if (!id) { hint.className = "hint bad"; hint.textContent = t("codex.bad"); i.focus(); return; }
+      dlg.close();
+      commit(C.put(data, "codex", { id: id, note: n.value }, Date.now()));
+      toast(t("x.done"));
+    });
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    dlg.addEventListener("keydown", function (e) { if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); go.click(); } });
+    showDialog(dlg);
+    i.focus();
+  }
+
   // The next free number from the house's blocks (asks which block when
   // there are several with room).
   function giveNextFree(done) {
@@ -1147,11 +1911,16 @@
     acts.appendChild(button(t("btn.del"), "btn pri", function () {
       dlg.close();
       var keep = JSON.parse(JSON.stringify(tt));
+      var keepTrk = JSON.parse(JSON.stringify(C.tracksOf(data, tt.id)));
+      var keepMed = JSON.parse(JSON.stringify(C.editionsOf(data, tt.id)));
       setView({ name: "list", id: "" });
-      commit(C.remove(data, "titles", tt.id, Date.now()));
+      commit(C.removeRelease(data, tt.id, Date.now()));
       if (tt.cov) dropCoverLater(tt.cov);
       toast(t("del.done", { t: tt.t }), t("btn.undo"), function () {
-        commit(C.put(data, "titles", keep, Date.now()));
+        var now = Date.now(), d = C.put(data, "titles", keep, now);
+        keepTrk.forEach(function (r) { d = C.put(d, "trk", r, now); });
+        keepMed.forEach(function (r) { d = C.put(d, "med", r, now); });
+        commit(d);
         openTitle(keep.id);
       });
     }));
@@ -2980,6 +3749,9 @@
     xs.appendChild(button(t("x.add"), "btn small", addXDialog));
     sec.appendChild(xs);
 
+    // Release codes (wave M1)
+    renderMusicCodes(sec);
+
     // Checker
     var ck = el("section", "sec");
     ck.appendChild(el("h3", "", t("chk.title")));
@@ -2992,6 +3764,14 @@
       out.textContent = "";
       if (!v) return;
       var p = C.parseIsbn(v);
+      var pi = C.parseIsrc(v), pu = C.parseUpc(v);
+      if (!p.ok && (pi.ok || pu.ok)) {
+        var code = pi.ok ? pi.isrc : pu.upc, cu = C.usedCodes(data)[pi.ok ? code : C.upcKey(code)] || [];
+        out.className = "hint good";
+        out.textContent = t("chk.code", { kind: pi.ok ? "ISRC" : code.length === 12 ? "UPC-A" : "EAN-13", c: pi.ok ? C.fmtIsrc(code) : code }) + " · " +
+          (cu.length ? t("chk.uses", { list: cu.map(codeUseLabel).join(", ") }) : t("chk.free"));
+        return;
+      }
       if (!p.ok) { out.className = "hint bad"; out.textContent = t("isbn." + p.why); return; }
       var ten = C.isbn10(p.isbn), uses = C.used(data)[p.isbn] || [];
       out.className = "hint good";

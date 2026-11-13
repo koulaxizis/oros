@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.30.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.40.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -5443,7 +5443,11 @@
         Object.keys(cats).forEach(function (c) {
           var cl = catTextOf(c);
           cats[c] = cats[c].filter(function (app) {
-            return [appLabelOf(app), app.name, app.id, cl].some(function (f) {
+            // Search words (apps.json "words" + app.<id>.words): an app is
+            // also found by what people call what it does (Lyric Sync =
+            // songbook, chords, setlist).
+            var wk = "app." + app.id + ".words", tw = window.t(wk);
+            return [appLabelOf(app), app.name, app.id, cl, app.words || "", tw === wk ? "" : tw].some(function (f) {
               return menuFold(f).indexOf(q) !== -1;
             });
           });
@@ -7865,6 +7869,9 @@
         { name: "CodeMirror 6", url: "https://codemirror.net/",
           by: "Marijn Haverbeke & contributors", lic: "MIT",
           k: "cr.codemirror" },
+        { name: "yaml 2.9.1", url: "https://eemeli.org/yaml/",
+          by: "Eemeli Aro", lic: "ISC",
+          k: "cr.yaml" },
         { name: "three.js r180", url: "https://threejs.org/",
           by: "three.js authors", lic: "MIT",
           k: "cr.three-js" },
@@ -7910,6 +7917,12 @@
         { name: "Whisper tiny (ONNX export by Xenova)", url: "https://huggingface.co/Xenova/whisper-tiny",
           by: "OpenAI; ONNX export by Joshua Lochner", lic: "MIT; Apache-2.0 (export)",
           k: "cr.whisper-tiny" },
+        { name: "Bergamot translator 0.4.9", url: "https://github.com/browsermt/bergamot-translator",
+          by: "The Bergamot project (Edinburgh, Prague, Sheffield, Tartu, Mozilla); Marian NMT", lic: "MPL-2.0",
+          k: "cr.bergamot" },
+        { name: "Firefox Translations models", url: "https://github.com/mozilla/translations",
+          by: "Mozilla", lic: "MPL-2.0",
+          k: "cr.firefox-translations" },
         { name: "NULL JSFX", url: "https://nulljsfx.tech",
           by: "Christos Koulaxizis", lic: "MIT",
           k: "cr.null-jsfx" },

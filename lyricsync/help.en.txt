@@ -62,6 +62,17 @@ Changing the words in the `Lyrics` tab keeps the times of the lines that did not
 - `Lyric video in Montage` (for songs on the orOS disk) opens a new [Montage](app:montage) project with the song and every line as a text clip.
 - `.lrc`, `.srt`, `.vtt`, `.ttml` and `.ass` files open here from [Files](app:files), or from your computer's "Open with" when orOS is installed.
 
+## Songbook: chords
+Lyric Sync is also a songbook: a song can have chords over its words, a key, a capo, a tempo and a time signature, with or without a song file and with or without times.
+- In the `Lyrics` tab, tick `Chords`. The box then takes words and chords: put a chord in brackets just before its syllable, as in `[Am]Σε θυ[F]μάμαι`, or paste a sheet with the chords written over the words (the way most chord sites show them); it is turned into the same thing. Greek names such as `Λα-` or `Ρε7` are read too.
+- `[Verse]`, `[Chorus]` and `[Bridge]` (or `[Κουπλέ]`, `[Ρεφρέν]`, `[Γέφυρα]`) start a section; `[Intro]`, `[Solo]` and other labels, and `{c: text}`, are notes for the player. A line of chords only (an intro, a solo) is played, not sung.
+- Under the box the song shows with the chords over the words. Tap a word to put a chord on it or change it; the `+` at the end of a line puts one after the last word. The picker offers the song's own chords first, then the chords of its key.
+- `Transpose` moves every chord by semitones, or keeps your chord shapes and moves the capo instead. `Undo` takes it back.
+- `Chord names` shows `C D E` or `Ντο Ρε Μι` on this device. The song keeps `C D E`, so files open everywhere.
+- Chords never reach the timing files (LRC, SRT, TTML and the rest): distributors get only the sung words. `Export` adds `ChordPro` (.cho, for OnSong, SongbookPro and other songbook apps) and `Chords over the words` (plain text, to print or send).
+- ChordPro files (.cho, .chopro, .chordpro, .crd) and chord sheets in .txt open here, from `Open file`, from [Files](app:files) or from your computer's "Open with". Only the first song of a file with several is read.
+- Lyric Sync downloads no chords from any site: you write them or open your own files.
+
 ## Your data
 - The lyrics and their times are saved as you go. With orOS sync switched on in [Settings](app:settings), they follow you to your other devices, encrypted.
 - The song file stays only on the device where you chose it. On another device the song shows "song file not on this device" until you choose it there too. A song opened from Music is read from your Music folder, so it is there on every device that has the file (Vault Drive).

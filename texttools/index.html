@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Text Tools · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=6.30.00">
-  <link rel="stylesheet" href="texttools.css?v=6.30.00">
+  <link rel="stylesheet" href="../fonts.css?v=6.40.00">
+  <link rel="stylesheet" href="texttools.css?v=6.40.00">
 
 </head>
 <body>
@@ -43,6 +43,9 @@
         <p class="hint" id="tool-hint"></p>
         <div id="opts"></div>
       </section>
+
+      <!-- Translate (translate/engine.js): filled by texttools.js -->
+      <section class="sec" id="tr-sec" hidden></section>
     </aside>
 
     <!-- Text in, result out -->
@@ -79,10 +82,11 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=6.30.00" data-app="texttools"></script>
-  <script src="../textcase/core.js?v=6.30.00"></script>
-  <script src="core.js?v=6.30.00"></script>
-  <script src="texttools.js?v=6.30.00"></script>
+  <script src="../i18n.js?v=6.40.00" data-app="texttools"></script>
+  <script src="../textcase/core.js?v=6.40.00"></script>
+  <script src="../translate/engine.js?v=6.40.00"></script>
+  <script src="core.js?v=6.40.00"></script>
+  <script src="texttools.js?v=6.40.00"></script>
 
 </body>
 </html>
