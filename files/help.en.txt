@@ -102,11 +102,15 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 - Select one or more files, open the menu (right-click or `⋯`) and choose `Add to Documents`. Or open `Documents` and press `+` to add new files from your device: they go to the folder `Documents` › (this year).
 - Tap a document to fill in its title, type, tags, who it is from, the document date, an amount, when it expires and how long to keep it. `Save` keeps the changes; `Open` shows the file and `Show in folder` takes you to it.
 - Choosing a type suggests a `Keep until` date, for example five years for invoices and tax papers or until it expires for a warranty. It is only a suggestion, not legal advice: change it as you need, or tick `Keep for ever`.
-- The chips at the top show `All`, `Expires soon` (within 30 days), `Can be thrown away` (past its keep-until date) and `No type`; the lists next to them filter by type, tag, sender and year. The search field finds words in titles, notes, types, tags and senders.
+- The chips at the top show `All`, `Expires soon` (within 30 days), `Can be thrown away` (past its keep-until date) and `No type`; the lists next to them filter by type, tag, sender and year. The search field finds words in titles, notes, types, tags and senders, and in the text of each document once it is read.
+- `Text` in a document: `Read text` reads the words of a PDF, a picture or a text file. Scans and photos need the text recognition engine (English and Greek, about 7 MB): it is downloaded once, after you agree, and runs on this device, so the file never leaves it. `Show text` shows what was read, to copy it.
+- `From the text:` suggests a type, the document date, an amount, an expiry date and a sender you already have. `Fill in` fills only the fields that are empty (and a date that was only the file's own time).
+- `⋯` › `Read the text of all documents` reads the ones not read yet, one after another; the same item stops it. `Read the text of new documents` (on or off for this device) reads each new document by itself.
+- In Scanner & PDF, saving `In Files` with `Also add it to Documents` ticked makes the PDF a document the next time Files runs.
 - `⋯` › `Types, tags and senders` renames or deletes them and adds your own types with their own suggestion. A type can be private: its documents are never shown to the Assistant or to Claude. Medical and ID documents are private from the start.
 - `Remove from Documents` forgets the details only; the file stays. Moving or renaming a file in Files keeps its document. If another app or device moved it, `⋯` › `Find moved files` finds it again by its content.
 - `⋯` › `Export documents (.zip)` saves the documents shown, with their files, a `documents.json` and a `documents.csv` for a spreadsheet. `Import an archive (.zip)` brings such an archive back, on any device: the files go to `Documents` › `Imported` (date).
-> Nothing in Documents deletes a file. The details sync encrypted with orOS sync, the files through the disk as always.
+> Nothing in Documents deletes a file. The details sync encrypted with orOS sync, the files through the disk as always. The text read from each document is kept as a small hidden file on the disk, so your other devices can search it without reading it again.
 
 ## orOS Drive
 - `orOS Drive` in the folder list shows the folders you mirror from your computers and phones with the orOS Drive app.

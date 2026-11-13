@@ -185,7 +185,7 @@ test("filters: type, tag, year, expiring soon, keep passed, text with accents", 
   assert.deepEqual(D.filter(s, { flag: "untyped" }, today, "el").map((d) => d.id), ["d-3"]);
   assert.deepEqual(D.filter(s, { text: "ασφαλεια INTERAMERICAN" }, today, "el").map((d) => d.id), ["d-1"]);
   assert.deepEqual(D.filter(s, { text: "τιμολογιο" }, today, "el").map((d) => d.id), ["d-2"], "the type's name is searched too");
-  assert.deepEqual(D.filter(s, { text: "ρεύμα" }, today, "el", (d) => d.id === "d-3" ? "Λογαριασμός ρεύματος" : "").map((d) => d.id), ["d-3"]);
+  assert.deepEqual(D.filter(s, { text: "ρεύμα" }, today, "el", (d) => d.id === "d-3" ? D.fold("Λογαριασμός ρεύματος") : "").map((d) => d.id), ["d-3"]);
   assert.deepEqual(D.years(s), ["2026", "2019"]);
   assert.deepEqual(D.counts(s, today), { all: 3, soon: 1, keep: 1, untyped: 1 });
 });
@@ -233,7 +233,7 @@ test("wiring: Files loads the archive, registers the place, carries moves", () =
   const html = read("files/index.html");
   assert.ok(!/<script[^>]+docs(-core)?\.js/.test(html), "Documents is not in the first open (budget)");
   const js = read("files/files.js");
-  assert.match(js, /DOCS_SCRIPTS = \["docs-core\.js", "docs\.js"\]/, "core before the view, on demand");
+  assert.match(js, /DOCS_SCRIPTS = \["docs-core\.js", "docs-text\.js", "docs\.js"\]/, "core before the view, on demand");
   assert.match(js, /function loadDocs\(/);
   assert.match(js, /"docs\.css\?v="/, "its styles load with it");
   assert.ok(!/#doc-bar|\.doc-row/.test(read("files/files.css")), "Documents styles stay out of files.css");

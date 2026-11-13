@@ -117,6 +117,7 @@ Das Bild wird in die Mitte gesetzt, so groß wie es passt. Die App merkt sich di
 `PDF speichern` fragt nach einem Dateinamen und wohin:
 - `Auf diesem Gerät`: das übliche Speicherfenster deines Browsers oder ein Download.
 - `In Dateien › PDF`: Das PDF kommt in Dateien. Ist der Name schon vergeben, bekommt es eine Nummer, etwa „Report (2).pdf“.
+- `Auch zu Dokumenten hinzufügen` (nur mit `In Dateien`): Das PDF wird auch ein Dokument in Dateien › Dokumente, wo du ihm Art und Daten gibst.
 
 ## Ein PDF verkleinern
 `Verkleinern` im Speicherfenster macht ein PDF kleiner für E-Mails oder Upload-Formulare:

@@ -239,6 +239,7 @@
       "ocr.none": "No text was found on these pages.",
       "txt.title": "Text of the pages", "txt.page": "Page {n}", "txt.empty": "No text was found on this page.",
       "txt.copy": "Copy the text", "txt.send": "Send to an app", "txt.copied": "Text copied", "txt.noCopy": "The text could not be copied here.",
+      "save.docs": "Also add it to Documents", "toast.savedDocs": "Saved in Files › {dir}. It will be in Files › Documents.",
       "save.read": "Make it searchable", "save.readHint": "The text of scanned pages and pictures is read first and put under each page, so the PDF can be searched and copied.",
       "idx.title": "Search", "idx.hint": "PDFs you save into Files can be found in orOS search by their name and text. This list stays on this device: {n} documents.",
       "idx.hint.one": "PDFs you save into Files can be found in orOS search by their name and text. This list stays on this device: 1 document.",
@@ -453,6 +454,7 @@
       "ocr.none": "Δεν βρέθηκε κείμενο σε αυτές τις σελίδες.",
       "txt.title": "Το κείμενο των σελίδων", "txt.page": "Σελίδα {n}", "txt.empty": "Δεν βρέθηκε κείμενο σε αυτή τη σελίδα.",
       "txt.copy": "Αντιγραφή του κειμένου", "txt.send": "Αποστολή σε εφαρμογή", "txt.copied": "Το κείμενο αντιγράφηκε", "txt.noCopy": "Το κείμενο δεν αντιγράφηκε εδώ.",
+      "save.docs": "Προσθήκη και στα Έγγραφα", "toast.savedDocs": "Αποθηκεύτηκε στα Αρχεία › {dir}. Θα το βρεις στα Αρχεία › Έγγραφα.",
       "save.read": "Να γίνει αναζητήσιμο", "save.readHint": "Το κείμενο των σαρωμένων σελίδων και των εικόνων διαβάζεται πρώτα και μπαίνει κάτω από κάθε σελίδα, ώστε στο PDF να γίνεται αναζήτηση και αντιγραφή.",
       "idx.title": "Αναζήτηση", "idx.hint": "Τα PDF που αποθηκεύεις στα Αρχεία βρίσκονται στην αναζήτηση του orOS με το όνομα και το κείμενό τους. Η λίστα μένει σε αυτή τη συσκευή: {n} έγγραφα.",
       "idx.hint.one": "Τα PDF που αποθηκεύεις στα Αρχεία βρίσκονται στην αναζήτηση του orOS με το όνομα και το κείμενό τους. Η λίστα μένει σε αυτή τη συσκευή: 1 έγγραφο.",
@@ -1355,6 +1357,7 @@
         return writeToFiles(blob, C.diskDir(), name).then(function (path) {
           indexDoc(path, name, list);
           var dir = shortDir(C.diskDir());
+          if (prefs.docs === "on" && toDocsInbox(path)) { showToast(t("toast.savedDocs", { dir: dir })); return; }
           showToast(sizes && sizes.a ? t("toast.smallerFiles", { dir: dir, a: sizes.a, b: sizes.b })
                     : sizes ? t("toast.notSmaller") : t("toast.savedFiles", { dir: dir }));
         });
@@ -1472,6 +1475,13 @@
     body.appendChild(field(t("save.name"), name));
     body.appendChild(el("p", "hint small", tn("save.pages", list.length)));
     body.appendChild(whereChoice("dest", prefs.dest, "save.device", "save.files"));
+    // In Files: also give it to Files › Documents (files/docs.js reads
+    // the inbox the next time Files runs; nothing else is shared).
+    var toDocs = check(t("save.docs"), prefs.docs === "on");
+    body.appendChild(toDocs.row);
+    function syncDocs() { toDocs.row.hidden = (radioVal(body, "dest") || "device") !== "files"; }
+    body.addEventListener("change", syncDocs);
+    syncDocs();
     var cmp = select([["off", t("cmp.off")], ["light", t("cmp.light")], ["medium", t("cmp.medium")], ["strong", t("cmp.strong")]], prefs.cmp);
     body.appendChild(field(t("cmp.label"), cmp));
     var cHint = el("p", "hint small", t("cmp.hint"));
@@ -1493,6 +1503,7 @@
       var dest = radioVal(body, "dest") || "device";
       var P = C.readPrefs({ cmp: cmp.value, ocr: lang.value });
       prefs.dest = dest; prefs.cmp = P.cmp; prefs.ocr = P.ocr;
+      prefs.docs = toDocs.box.checked ? "on" : "off";
       // remember a choice that differs from what "auto" would pick
       if (read.box.checked !== wantsRead(list) || prefs.read !== "auto") prefs.read = read.box.checked ? "on" : "off";
       savePrefs();
@@ -3646,6 +3657,19 @@
   }
 
   // Universal search: PDFs saved into Files, by name and text (search.js).
+  // Files › Documents inbox (device-local, R10): paths files/docs.js
+  // adds as documents the next time Files runs (DOCS-1 wave 2).
+  var DOCS_INBOX = "oros-files-docs-inbox";
+  function toDocsInbox(path) {
+    try {
+      var cur = JSON.parse(localStorage.getItem(DOCS_INBOX) || "[]");
+      if (!Array.isArray(cur)) cur = [];
+      cur = cur.filter(function (x) { return x && x.p !== path; }).slice(-199);
+      cur.push({ p: path, at: Date.now(), from: "scanpdf" });
+      localStorage.setItem(DOCS_INBOX, JSON.stringify(cur));
+      return true;
+    } catch (e) { return false; }
+  }
   function indexDoc(path, name, list) {
     var text = pagesText(list).filter(function (s) { return s.trim(); }).join(" ");
     var cur = null;

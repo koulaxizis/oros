@@ -278,7 +278,7 @@
       "sel.count":     "{n} selected",
       "sel.one":       "1 selected",
       "sel.none":      "Tap items to select them",
-      "err.reserved":  "This name is reserved for the Trash.",
+      "err.reserved":  "This name is reserved for orOS (the Trash and Documents).",
       "name.newFolder": "New folder",
       "name.newFile":   "New file.txt",
 	  "act.import": "Import files",
@@ -513,7 +513,7 @@
       "sel.count":     "{n} επιλεγμένα",
       "sel.one":       "1 επιλεγμένο",
       "sel.none":      "Πάτα στοιχεία για να τα επιλέξεις",
-      "err.reserved":  "Αυτό το όνομα είναι δεσμευμένο για τον Κάδο.",
+      "err.reserved":  "Αυτό το όνομα είναι δεσμευμένο για το orOS (Κάδος και Έγγραφα).",
       "name.newFolder": "Νέος φάκελος",
       "name.newFile":   "Νέο αρχείο.txt",
 	  "act.import": "Εισαγωγή αρχείων",
@@ -960,8 +960,10 @@
     return !!(fs && typeof fs.ls === "function");
   }
 
-  // raw === true keeps the hidden Trash folder (/internal/.trash);
-  // every view, chooser and search of this app leaves it out.
+  // raw === true keeps the hidden folders at the root: the Trash
+  // (/internal/.trash) and the text Documents reads (/internal/.docs);
+  // every view, chooser and search of this app leaves them out.
+  var HIDDEN_ROOT = [".trash", ".docs"];
   function fsList(path, raw) {
     // Opened on its own (?standalone) there is no orOS file system: a
     // rejected promise, never a TypeError, so callers show their fallback.
@@ -969,7 +971,7 @@
     return FS().ls(path).then(function (list) {
       var dirs = [], files = [];
       (list || []).forEach(function (e) {
-        if (!raw && path === ROOT && e.name === ".trash") return;
+        if (!raw && path === ROOT && HIDDEN_ROOT.indexOf(e.name) !== -1) return;
         (e.dir ? dirs : files).push(e);
       });
       var byName = function (a, b) { return a.name < b.name ? -1 : 1; };
@@ -1154,12 +1156,13 @@
   // Documents loads on demand (first-open budget, .github/qa/budget.json):
   // at boot only where it was open last time or holds documents, else
   // when its node or "Add to Documents" is first used.
-  var DOCS_SCRIPTS = ["docs-core.js", "docs.js"];
+  var DOCS_SCRIPTS = ["docs-core.js", "docs-text.js", "docs.js"];   // docs.js loads docs-read.js itself
   var docsWaiters = null;
   function docsStored() {
     try {
       var v = localStorage.getItem("oros-files-docs-view");
       if (v && JSON.parse(v).on) return true;
+      if (localStorage.getItem("oros-files-docs-inbox")) return true;      // Scanner & PDF left some
       var raw = localStorage.getItem("oros-files-docs");
       return !!(raw && JSON.parse(raw).docs && JSON.parse(raw).docs.length);
     } catch (e) { return false; }
@@ -1306,7 +1309,9 @@
       zip: { crc32: CORE.crc32, build: CORE.zipBuild },
       zipSafePath: CORE.zipSafePath,
       onChange: renderTree,
-      onDiskChanged: function () { forceStorageRecalc(); markDirty(); }
+      onDiskChanged: function () { forceStorageRecalc(); markDirty(); },
+      pdfOpen: pdfOpen,
+      ver: SCRIPT_V
     });
   }
 
@@ -1848,7 +1853,7 @@
     var name = raw.trim();
     if (!name) return { ok: false, err: t("err.required") };
     if (BAD_CHARS.test(name)) return { ok: false, err: t("err.chars") };
-    if (dialogDir === ROOT && name === ".trash") return { ok: false, err: t("err.reserved") };
+    if (dialogDir === ROOT && HIDDEN_ROOT.indexOf(name) !== -1) return { ok: false, err: t("err.reserved") };
     if (name === "." || name === "..") return { ok: false, err: t("err.required") };
     for (var i = 0; i < existingNames.length; i++) {
       if (existingNames[i] === name) return { ok: false, err: t("err.exists") };
@@ -2465,7 +2470,7 @@
 
   function sanitizeFileName(name) {
     var n = name.replace(/[\/\\:*?"<>|]/g, "_");
-    return n === ".trash" ? "_trash" : n;
+    return HIDDEN_ROOT.indexOf(n) !== -1 ? "_" + n.slice(1) : n;
   }
 
   // #22 FIX: no dead base64 computation — Blob flows straight into
@@ -4478,7 +4483,7 @@
         }).then(function (list) {
           var names = list.map(function (e) { return e.name; });
           var name = uniqueName(item.name, names);
-          if (parent === ROOT && name === ".trash") name = uniqueName("_trash", names);
+          if (parent === ROOT && HIDDEN_ROOT.indexOf(name) !== -1) name = uniqueName("_" + name.slice(1), names);
           var op = item.made ? FS().mkdir(join(parent, name)) : FS().mv(p, join(parent, name));
           return op.then(function () {
             done++;
@@ -5365,6 +5370,10 @@
     initDrive();
     initComputer();
     if (docsStored()) loadDocs();
+    // Scanner & PDF › Save › "Also add it to Documents" while Files is open.
+    window.addEventListener("storage", function (e) {
+      if (e.key === "oros-files-docs-inbox" && e.newValue && !docs()) loadDocs();
+    });
 
     // Multitasking (MT-S2): Files left open in the background lists the
     // folder again when it comes back; another app may have saved there.
