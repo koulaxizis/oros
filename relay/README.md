@@ -25,6 +25,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja, Todoist, Trello, GitHub, Raindrop.io, Notion, Enable Banking and PayPal, all read-only; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `crmform.js` | CRM's public contact form (`/crm/f/<k>`) and op `crmf`, kept in the same D1 until the user's CRM picks the messages up (see below) |
+| `forms.js` | Forms' public forms (`/fm/<k>`) and op `frm`: encrypted form definitions and sealed answers in the same D1 until the owner's device picks them up (see below) |
 | `share.js` | "Send to someone" links with an expiry: op `shr` and `/s/<id>/<i>`, encrypted pieces kept in their own D1 until they expire or are revoked (see below) |
 | `oasa.js` | Maps' `oasa` operation: live bus arrivals at Athens stops from OASA Telematics, which sends no CORS headers; fixed host, exact `act` allowlist, digit-only stop codes, 64 KB / 8 s, JSON only, 15 s shared cache (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
@@ -487,6 +488,49 @@ App operation `POST /v1 { op: "crmf", act, k (16 a-z0-9), sec (32 A-Za-z0-9) }`:
 
 Errors: `nostore` (503: no binding or a D1 failure), `auth` (403),
 `gone` (404), `full`, `bad-request`. Tests: `tests/crm-form-relay.test.js`.
+
+## Forms: published forms (`/fm/`, op `frm`)
+
+The Forms app publishes a form here; people fill it in on
+`https://useoros.online/forms/f/#<k>.<key>`. Same D1 binding `NL_DB`,
+own tables `frm_form` (k, SHA-256 of sec, def, open, close, cap,
+taken, day counters, waiting count and bytes, report counters, push
+target), `frm_q` (id, k, v, n, w, at), `frm_rep` (k, hashed reporter,
+at) and `frm_tot` (one row: forms and bytes stored). The relay never
+sees anything in clear: `def` is AES-256-GCM with a key that lives only
+in the link's `#` part (AAD `orOS-forms|<k>`), and every answer `v` is
+sealed in the person's browser to the form's RSA-OAEP-256 public key
+(the Newsletter seal). Caps are kept in counter rows; public paths never
+COUNT. Without the binding the public routes answer 503 `off` and the
+op 503 `nostore`; a D1 failure is a 503 too, never its text.
+
+| Route | What it does |
+|---|---|
+| `GET /fm/<k>` | `{ def, open, cap?, taken? }` (60 a minute per IP) |
+| `POST /fm/<k>` | `text/plain` JSON ≤20 KB: `{ v, hp?, yes?, seats? }`. `{ ok }`, `{ ok, wait }` (a "yes" over `cap` goes on the waiting list), `{ e: "closed" }`, `{ e: "busy" }`. Honeypot `hp`: the usual answer, nothing kept. 5 a minute and 20 a day per IP and form; 500 a day, 1,000 or 5 MB waiting per form; 150 MB in all (507 `full`) |
+| `POST /fm/<k>/report` | `{ ok }`. One report per IP, form and UTC day (stored as a hash only); the third in a day closes the form (`rep`) until the owner opens it again |
+
+CORS only for `https://useoros.online` (`FORMS_ORIGINS` overrides it);
+any other Origin gets 403. A missing form and a wrong secret look the
+same (`gone`). When an answer or a report arrives and the owner turned
+on push, the relay wakes the owner's device through the `push` Durable
+Object (`{act:"wake", wt, ct}`) at most every 15 minutes; a `gone` from
+it clears the target.
+
+App operation `POST /v1 { op: "frm", act, k, sec }`:
+
+| act | Extra fields | Returns |
+|---|---|---|
+| `put` | `def` (≤64 KB), `open?`, `close?` (ms), `cap?` | `{ ok }`: a new `k` takes this `sec` (at most 5,000 forms); an existing one needs the same `sec` and replaces `def` |
+| `upd` | `open?`, `close?`, `cap?`, `taken?`, `push?` ({pid, wt, ct} or null) | `{ ok }`; opening clears the report count |
+| `peek` | | `{ n, open, rep }` |
+| `pull` | `after` (row id) | `{ rows[{ id, v, at, w? }], more, open, rep, taken }` (≤100) |
+| `ack` | `upto` (row id) | `{ n }`: deletes the rows up to that id |
+| `drop` | | `{ ok }`: deletes the form and its rows |
+
+The cron (and every `put`) removes answers older than 30 days, forms
+closed for 30 days and forms no device pulled for 90 days. Payloads are
+never logged. Tests: `tests/forms-relay.test.js`.
 
 ## Send to someone: links with an expiry (`/s/`, op `shr`)
 

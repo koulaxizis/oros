@@ -1,5 +1,5 @@
 # Forms
-Forms makes surveys, sign-up sheets and order forms: questions of many kinds, pages, questions that show only for some answers, and jumps between pages. This first version of Forms builds and previews forms; sharing them with a link and collecting the answers comes in the next update.
+Forms makes surveys, sign-up sheets and order forms: questions of many kinds, pages, questions that show only for some answers, and jumps between pages. Share a form with a link, a QR code or on your website; people fill it in without an account, and the answers come to this device encrypted. Charts and export of the answers come in the next update.
 
 ## Make a form
 - Press `New form`. Pick `Blank form`, or a template: contact form, event sign-up, feedback, order form, satisfaction survey or course sign-up. A template is only a start: change anything in it.
@@ -31,4 +31,20 @@ Forms makes surveys, sign-up sheets and order forms: questions of many kinds, pa
 - `Message after submitting` is what people read when they are done. Empty means "Thank you. Your answers have been recorded."
 - `Note at the top` shows in a box under the description, for example to say what the answers are for.
 - `Show a progress bar on forms with pages` shows how far along people are.
+- `Page to link to after sending` puts a button on the thank-you message, for example back to your shop. It must be an https address. Nobody is sent there on their own.
+- `One answer per browser`: the page remembers in that browser that the form was answered and doesn't take a second answer from it. It stops mistakes, not someone who wants to cheat (another browser can still answer).
 - `Duplicate form` makes a copy to change. `Delete form` removes it on all your devices; `Undo` brings it back for a few seconds.
+
+## Share
+- `Share` › `Publish` gives the form a link (useoros.online/forms/f/…), a QR code and code to put the form on your website. People fill it in in any browser, without an account.
+- The questions are encrypted with a key that is only in the link (after the #, which browsers never send), and every answer is encrypted in the person's browser for this form. The orOS relay keeps them in between and can read neither.
+- After you change the form, `Publish changes` puts the new version online. Until then people see the published one.
+- `Close the form` stops new answers; `Open the form` takes them again. `Close automatically on` closes it at a date and time. A closed form is removed from the relay 30 days after it closes, and one that no device has checked for 90 days too.
+- Every page shows a warning: the form was made by someone who uses orOS, not by orOS, and nobody should enter passwords or card numbers. Anyone can report a form; when several people report it on the same day, it closes until you open it again.
+- `Stop sharing` turns the link off for good and deletes answers still waiting at the relay. The answers already on your devices stay.
+
+## Answers
+- One device picks up the answers: the one that published the form, or the one where you press `Pick up on this device`. It checks when you open Forms and every few minutes while Forms is open; `Check for answers` checks now. With Forms closed, orOS checks every 10 minutes while it is open and shows a notice when answers wait; Today shows them too.
+- `Tell me on this device even when orOS is closed` sends a notification that only says "New answer in a form", at most every 15 minutes. It needs `Notifications with orOS closed` on in Settings › Notifications.
+- Answers wait at the relay for at most 30 days. Once picked up they are deleted there and kept here, and they sync to your other devices.
+- `Answers` lists every answer, newest first, with the question labels. A dot on the tab means new ones you haven't looked at.
