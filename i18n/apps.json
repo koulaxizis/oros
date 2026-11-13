@@ -246,12 +246,6 @@
    ]
   },
   {
-   "app": "device",
-   "files": [
-    "device/device.js"
-   ]
-  },
-  {
    "app": "diary",
    "files": [
     "diary/core.js",
@@ -679,7 +673,8 @@
   {
    "app": "pad",
    "files": [
-    "pad/app.js"
+    "pad/app.js",
+    "pad/devui.js"
    ]
   },
   {

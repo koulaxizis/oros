@@ -8,7 +8,7 @@
   "use strict";
 
   // The groups, in the order shown. A deep link names one of these.
-  var SECTIONS = ["appearance", "accessibility", "menu", "notifications", "sync", "lock", "users", "backup", "language", "files", "solo", "services", "system"];
+  var SECTIONS = ["appearance", "accessibility", "menu", "notifications", "sync", "lock", "users", "backup", "language", "files", "solo", "services", "system", "device"];
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
@@ -112,7 +112,7 @@
     ["version", "system", "x.version"],
     ["updates", "system", "x.updates"],
     ["install", "system", "x.install", null, null, "install"],
-    ["device", "system", "x.device", "x.more", null, "app:device"],
+    ["device", "system", "x.device", "x.more"],
     ["about", "system", "x.about", "x.more"],
     ["sharelinks", "system", "x.sharelinks", "x.more"],
     ["report", "system", "x.report"],
@@ -121,7 +121,14 @@
     ["shortcuts", "system", "x.shortcuts"],
     ["multitask", "system", "mt.on", "mt.title", null, "multitask"],
     ["pcfiles", "system", "pc.on", "pc.title", null, "pcfiles"],
-    ["reset", "system", "x.reset"]
+    ["reset", "system", "x.reset"],
+    ["dv-storage", "device", "dv.storage"],
+    ["dv-apps", "device", "dv.apps"],
+    ["dv-battery", "device", "dv.battery"],
+    ["dv-network", "device", "dv.network"],
+    ["dv-screen", "device", "dv.screen"],
+    ["dv-features", "device", "dv.features"],
+    ["dv-report", "device", "dv.report"]
   ];
 
   var POSITIONS = ["top-left", "top", "top-right", "right",
@@ -149,6 +156,10 @@
       "d.backup": "Backup files and the backup folder",
       "d.language": "Language, on-screen keyboard and what the menu search looks in",
       "d.system": "Version, shortcuts, about, factory reset",
+      "s.device": "Device", "d.device": "Space, battery, network, screen, browser features",
+      "dv.loading": "Reading this device…", "dv.loadFail": "Could not load this section. Check the connection and open it again.",
+      "dv.storage": "Storage", "dv.apps": "Space per app", "dv.battery": "Battery", "dv.network": "Network",
+      "dv.screen": "Screen", "dv.features": "Browser features", "dv.report": "Copy report",
       "s.accessibility": "Accessibility",
       "d.accessibility": "Text size, high contrast, focus ring",
 
@@ -1074,7 +1085,14 @@
       "w.shortcuts": "keys keyboard hotkeys ctrl",
       "w.multitask": "windows keep open background switch apps",
       "w.pcfiles": "this computer files disks drives home folder windows linux",
-      "w.reset": "erase delete everything factory wipe"
+      "w.reset": "erase delete everything factory wipe",
+      "w.dv-storage": "device info space disk full quota local storage persist",
+      "w.dv-apps": "device info space size apps biggest",
+      "w.dv-battery": "device info battery charge level",
+      "w.dv-network": "device info network connection online offline speed",
+      "w.dv-screen": "device info screen resolution window pixel ratio touch",
+      "w.dv-features": "device info browser features permissions notifications location missing",
+      "w.dv-report": "device info report problem copy support"
     },
     el: {
       "app": "Ρυθμίσεις", "back": "Πίσω", "sections": "Ενότητες ρυθμίσεων",
@@ -1094,6 +1112,10 @@
       "d.backup": "Αρχεία αντιγράφων και φάκελος αντιγράφων",
       "d.language": "Γλώσσα, πληκτρολόγιο οθόνης και πού ψάχνει η αναζήτηση του μενού",
       "d.system": "Έκδοση, συντομεύσεις, σχετικά, επαναφορά",
+      "s.device": "Συσκευή", "d.device": "Χώρος, μπαταρία, δίκτυο, οθόνη, δυνατότητες browser",
+      "dv.loading": "Διαβάζω αυτή τη συσκευή…", "dv.loadFail": "Η ενότητα δεν φόρτωσε. Έλεγξε τη σύνδεση και άνοιξέ την ξανά.",
+      "dv.storage": "Χώρος", "dv.apps": "Χώρος ανά εφαρμογή", "dv.battery": "Μπαταρία", "dv.network": "Δίκτυο",
+      "dv.screen": "Οθόνη", "dv.features": "Δυνατότητες browser", "dv.report": "Αντιγραφή αναφοράς",
       "s.accessibility": "Προσβασιμότητα",
       "d.accessibility": "Μέγεθος κειμένου, υψηλή αντίθεση, περίγραμμα εστίασης",
 
@@ -2018,7 +2040,14 @@
       "w.shortcuts": "πλήκτρα συντομεύσεις πληκτρολόγιο ctrl",
       "w.multitask": "πολυεργασία παράθυρα ανοιχτές παρασκήνιο",
       "w.pcfiles": "αυτός ο υπολογιστής αρχεία δίσκοι προσωπικός φάκελος windows linux",
-      "w.reset": "διαγραφή σβήσιμο όλα εργοστασιακή"
+      "w.reset": "διαγραφή σβήσιμο όλα εργοστασιακή",
+      "w.dv-storage": "πληροφορίες συσκευής χώρος δίσκος γεμάτο αποθήκευση προστασία",
+      "w.dv-apps": "πληροφορίες συσκευής χώρος μέγεθος εφαρμογές",
+      "w.dv-battery": "πληροφορίες συσκευής μπαταρία φόρτιση",
+      "w.dv-network": "πληροφορίες συσκευής δίκτυο σύνδεση ίντερνετ ταχύτητα",
+      "w.dv-screen": "πληροφορίες συσκευής οθόνη ανάλυση παράθυρο αφή",
+      "w.dv-features": "πληροφορίες συσκευής δυνατότητες browser άδειες ειδοποιήσεις τοποθεσία",
+      "w.dv-report": "πληροφορίες συσκευής αναφορά πρόβλημα αντιγραφή"
     }
   };
 
