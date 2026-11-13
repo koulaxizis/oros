@@ -62,6 +62,17 @@ Die `Vorschau` zeigt die Zeilen so, wie sie in einem Player erscheinen, mit der 
 - `Lyric-Video in Montage` (für Lieder im orOS-Speicher) öffnet ein neues [Montage](app:montage)-Projekt mit dem Lied und jeder Zeile als Textclip.
 - `.lrc`-, `.srt`-, `.vtt`-, `.ttml`- und `.ass`-Dateien öffnen sich hier aus [Dateien](app:files) oder über „Öffnen mit“ deines Computers, wenn orOS installiert ist.
 
+## Songbook: Akkorde
+Liedtext-Sync ist auch ein Songbook: Ein Lied kann Akkorde über dem Text haben, eine Tonart, einen Kapodaster, ein Tempo und eine Taktart, mit oder ohne Lieddatei und mit oder ohne Zeiten.
+- Setz im Tab `Liedtext` den Haken bei `Akkorde`. Das Feld nimmt dann Text und Akkorde: Schreib den Akkord in eckigen Klammern direkt vor seine Silbe, etwa `[Am]Hal[F]lo`, oder füge ein Blatt ein, auf dem die Akkorde über dem Text stehen (so zeigen es die meisten Akkord-Seiten); daraus wird dasselbe. Griechische Namen wie `Λα-` oder `Ρε7` werden auch gelesen.
+- `[Verse]`, `[Chorus]` und `[Bridge]` beginnen einen Abschnitt; `[Intro]`, `[Solo]` und andere Etiketten sowie `{c: Text}` sind Hinweise für die Spielenden. Eine Zeile nur mit Akkorden (Intro, Solo) wird gespielt, nicht gesungen.
+- Unter dem Feld steht das Lied mit den Akkorden über dem Text. Tipp auf ein Wort, um einen Akkord daraufzusetzen oder ihn zu ändern; das `+` am Zeilenende setzt einen nach dem letzten Wort. Die Auswahl zeigt zuerst die Akkorde des Liedes, dann die seiner Tonart.
+- `Transponieren` verschiebt jeden Akkord um Halbtöne oder behält die Griffe und verschiebt stattdessen den Kapodaster. `Rückgängig` nimmt es zurück.
+- `Akkordnamen` zeigt auf diesem Gerät `C D E` oder `Ντο Ρε Μι`. Das Lied speichert `C D E`, damit die Dateien überall aufgehen.
+- Akkorde kommen nie in die Zeitdateien (LRC, SRT, TTML und die anderen): Vertriebe bekommen nur die gesungenen Worte. `Exportieren` bietet zusätzlich `ChordPro` (.cho, für OnSong, SongbookPro und andere Songbook-Apps) und `Akkorde über dem Text` (reiner Text, zum Drucken oder Senden).
+- ChordPro-Dateien (.cho, .chopro, .chordpro, .crd) und Akkordblätter als .txt öffnen sich hier, über `Datei öffnen`, aus [Dateien](app:files) oder über „Öffnen mit“ deines Computers. Aus einer Datei mit mehreren Liedern wird nur das erste gelesen.
+- Liedtext-Sync lädt keine Akkorde von irgendeiner Seite: Du schreibst sie selbst oder öffnest deine eigenen Dateien.
+
 ## Deine Daten
 - Der Liedtext und seine Zeiten werden laufend gespeichert. Mit eingeschaltetem orOS-Sync in den [Einstellungen](app:settings) folgen sie dir verschlüsselt auf deine anderen Geräte.
 - Die Lieddatei bleibt nur auf dem Gerät, auf dem du sie gewählt hast. Auf einem anderen Gerät zeigt das Lied „Lieddatei nicht auf diesem Gerät“, bis du sie auch dort wählst. Ein Lied aus Musik wird aus deinem Musik-Ordner gelesen und ist damit auf jedem Gerät da, das die Datei hat (Vault Drive).
