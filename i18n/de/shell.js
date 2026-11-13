@@ -48,6 +48,7 @@ orosPack("de", "shell", {
  "app.dots": "Käsekästchen",
  "app.familytree": "Stammbaum",
  "app.lyricsync": "Liedtext-Sync",
+ "app.lyricsync.words": "Liederbuch Akkorde Setlist Lieder songbook",
  "app.publish": "Verlag",
  "app.together": "Zusammen",
  "app.household": "Haushalt",
@@ -127,6 +128,7 @@ orosPack("de", "shell", {
  "app.split": "Kosten teilen",
  "app.spot": "Finde den Unterschied",
  "app.spreadsheet": "Tabelle",
+ "app.forms": "Formulare",
  "app.stickies": "Haftnotizen",
  "app.stock": "Bestand",
  "app.storage": "Inventar",
@@ -377,6 +379,7 @@ orosPack("de", "shell", {
  "cr.thanks": "Danke an alle, die das bauen und teilen, oft ohne zu wissen, dass es orOS gibt. Radio- und TV-Streams gehören ihren Sendern. Alle Details: CREDITS.md im Quellcode.",
  "cr.three-js": "3D-Buchmockups (Mockups)",
  "cr.codemirror": "Der Text- und Code-Editor (Pad)",
+ "cr.yaml": "YAML lesen und formatieren (Pad)",
  "cr.timologisi-online": "Verbundene Dienste: Rechnungen an myDATA senden (Rechnungen)",
  "cr.title": "Danksagungen & Lizenzen",
  "cr.tmdb": "Filme und Serien, optional (Medienregal)",
@@ -1171,5 +1174,7 @@ orosPack("de", "shell", {
  "wg.start.count": "{n} von {m} erledigt",
  "wg.start.hide": "Ausblenden",
  "wg.start.done": "erledigt",
- "wg.start.all": "Alles erledigt. orOS gehört dir!"
+ "wg.start.all": "Alles erledigt. orOS gehört dir!",
+ "cr.bergamot": "Übersetzung auf dem Gerät, wird bei Bedarf heruntergeladen (Textwerkzeuge)",
+ "cr.firefox-translations": "Übersetzungsmodelle Griechisch ↔ Englisch, werden bei Bedarf heruntergeladen (Textwerkzeuge)"
 });
