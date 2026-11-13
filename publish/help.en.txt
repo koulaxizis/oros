@@ -32,6 +32,7 @@ With a release date set, `Make the plan` dates every step back from it: manuscri
 - The release date and every open step show in [Calendar](app:calendar) under the `Publishing` chip.
 - `Send to To-Do` adds the open steps to a new list named after the book, each with its date.
 - When you make a new title with a release date, tick `Make the release plan from the release date` and the plan is there from the start. The Assistant can set it up too: "new book Night Sea by Ann Writer, out on 15 March".
+- A book translation in Writer linked to the title (Writer › the translation's `⋯` › `Publishing title…`) shows above the plan: languages, how far it is, its deadline, and `Open` to go to it. It shows what this device last saw. Linking with the translator's name opens the title's `+ Person` filled in as Translator; nothing is added before you press Add.
 
 ### Review copies and reviews
 In a title, `Review copies and reviews` keeps who got the book: name, outlet, e-mail and the day it went out (names you used before are offered again, with their outlet and address). Three weeks later with no review the copy is marked `follow up`; `Follow up by e-mail` opens Mail with a short, kind note and keeps the day. When a review comes, set the status to `Reviewed` and add its link and a quote: the two newest quotes go into the Newsletter blocks of the title, and `Copy the quotes` puts them all on the clipboard for the shop page or a post.
