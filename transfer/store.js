@@ -22,7 +22,7 @@
    MEM_MAX.
 
    window.OrosTransferStore = { canScratch, sink(opts) → Sink, sweep(),
-     freeBytes() → Promise<number|null>, diskTarget(fs, date) }
+     freeBytes() → Promise<number|null>, diskTarget(fs, date), temp() }
    Sink: { open, write, close } (engine.js contract) + finish() →
      Promise<{ kind: "disk", folder, saved: [paths] } | { kind: "file", file, name }>,
      drop() → Promise
@@ -192,5 +192,26 @@
     return api;
   }
 
-  root.OrosTransferStore = { canScratch: canScratch, sink: sink, sweep: sweep, freeBytes: freeBytes, diskTarget: diskTarget, SCRATCH: SCRATCH };
+  // One scratch file for a sealed pack on its way to Dropbox (cloud.js):
+  // { write, close, file, remove } — remove() drops its scratch folder.
+  function temp() {
+    var id = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    var dirP = canScratch() ? scratchRoot().then(function (r) { return r.getDirectoryHandle(id, { create: true }); }) : Promise.resolve(null);
+    return dirP.then(function (dir) {
+      var f = dir ? new ScratchFile(dir, "pack") : new MemFile("pack");
+      return f.open().then(function () {
+        return {
+          write: f.write, close: f.close, file: f.file,
+          remove: function () {
+            return Promise.resolve(f.abort()).then(function () {
+              if (!dir) return f.remove();
+              return scratchRoot().then(function (r) { return r.removeEntry(id, { recursive: true }); });
+            }).catch(function () {});
+          }
+        };
+      });
+    });
+  }
+
+  root.OrosTransferStore = { canScratch: canScratch, sink: sink, sweep: sweep, freeBytes: freeBytes, diskTarget: diskTarget, temp: temp, SCRATCH: SCRATCH };
 })(window);

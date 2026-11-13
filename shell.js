@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.34.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.44.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -202,6 +202,7 @@
     maps: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
     feeds: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>',
     museum: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 18h16M12 3l9 5H3z"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/></svg>',
+    forms: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1"/><line x1="11.5" y1="8.5" x2="16" y2="8.5"/><circle cx="8.5" cy="12.5" r="1"/><line x1="11.5" y1="12.5" x2="16" y2="12.5"/><polyline points="7.5 16.5 8.5 17.5 10 15.8"/><line x1="11.5" y1="16.5" x2="16" y2="16.5"/></svg>',
     spreadsheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     layout: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/><path d="M12.5 13h5M12.5 17h5"/></svg>',
@@ -7869,6 +7870,9 @@
         { name: "CodeMirror 6", url: "https://codemirror.net/",
           by: "Marijn Haverbeke & contributors", lic: "MIT",
           k: "cr.codemirror" },
+        { name: "yaml 2.9.1", url: "https://eemeli.org/yaml/",
+          by: "Eemeli Aro", lic: "ISC",
+          k: "cr.yaml" },
         { name: "three.js r180", url: "https://threejs.org/",
           by: "three.js authors", lic: "MIT",
           k: "cr.three-js" },
@@ -7914,6 +7918,12 @@
         { name: "Whisper tiny (ONNX export by Xenova)", url: "https://huggingface.co/Xenova/whisper-tiny",
           by: "OpenAI; ONNX export by Joshua Lochner", lic: "MIT; Apache-2.0 (export)",
           k: "cr.whisper-tiny" },
+        { name: "Bergamot translator 0.4.9", url: "https://github.com/browsermt/bergamot-translator",
+          by: "The Bergamot project (Edinburgh, Prague, Sheffield, Tartu, Mozilla); Marian NMT", lic: "MPL-2.0",
+          k: "cr.bergamot" },
+        { name: "Firefox Translations models", url: "https://github.com/mozilla/translations",
+          by: "Mozilla", lic: "MPL-2.0",
+          k: "cr.firefox-translations" },
         { name: "NULL JSFX", url: "https://nulljsfx.tech",
           by: "Christos Koulaxizis", lic: "MIT",
           k: "cr.null-jsfx" },

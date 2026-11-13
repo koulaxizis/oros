@@ -337,6 +337,13 @@
    ]
   },
   {
+   "app": "forms",
+   "files": [
+    "forms/app.js",
+    "forms/render.js"
+   ]
+  },
+  {
    "app": "g2048",
    "files": [
     "g2048/g2048.js"
@@ -673,7 +680,8 @@
   {
    "app": "pad",
    "files": [
-    "pad/app.js"
+    "pad/app.js",
+    "pad/devui.js"
    ]
   },
   {
@@ -839,7 +847,9 @@
   {
    "app": "scanpdf",
    "files": [
-    "scanpdf/scanpdf.js"
+    "scanpdf/scanpdf.js",
+    "scanpdf/search.js",
+    "scanpdf/sign.js"
    ]
   },
   {

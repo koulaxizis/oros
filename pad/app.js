@@ -66,6 +66,7 @@
       "tools.az": "Sort lines A → Z", "tools.za": "Sort lines Z → A", "tools.uniq": "Remove duplicate lines",
       "tools.trim": "Remove spaces at line ends", "tool.same": "Nothing to change.",
       "json.bad": "This is not valid JSON: line {line}, column {col}.",
+      "aria.dev": "Tool result",
       "cmp.pick": "Compare {name} with", "cmp.none": "Open a second tab to compare with.",
       "cmp.big": "These files are too long to compare (at most 200,000 lines each).", "cmp.fail": "The comparison could not load.",
       "cmp.title": "{a} ↔ {b}", "cmp.sum": "{del} lines only on the left, {add} only on the right", "cmp.same": "The two texts are the same.",
@@ -145,6 +146,7 @@
       "tools.az": "Ταξινόμηση γραμμών Α → Ω", "tools.za": "Ταξινόμηση γραμμών Ω → Α", "tools.uniq": "Αφαίρεση διπλών γραμμών",
       "tools.trim": "Αφαίρεση κενών στο τέλος των γραμμών", "tool.same": "Δεν υπάρχει κάτι να αλλάξει.",
       "json.bad": "Αυτό δεν είναι έγκυρο JSON: γραμμή {line}, στήλη {col}.",
+      "aria.dev": "Αποτέλεσμα εργαλείου",
       "cmp.pick": "Σύγκριση του {name} με", "cmp.none": "Άνοιξε μια δεύτερη καρτέλα για να συγκρίνεις.",
       "cmp.big": "Αυτά τα αρχεία είναι πολύ μεγάλα για σύγκριση (έως 200.000 γραμμές το καθένα).", "cmp.fail": "Η σύγκριση δεν φόρτωσε.",
       "cmp.title": "{a} ↔ {b}", "cmp.sum": "{del} γραμμές μόνο αριστερά, {add} μόνο δεξιά", "cmp.same": "Τα δύο κείμενα είναι ίδια.",
@@ -353,14 +355,25 @@
     });
   }
   // A list of choices (two-line rows). Resolves the chosen value or null.
-  function choose(title, rows, note) {
+  // opts.filter: a search box above the rows (label, sub and r.kw); a
+  // string is its placeholder.
+  function choose(title, rows, note, opts) {
     return modal(title, function (d, close) {
       if (note) d.appendChild(el("p", "pd-text", note));
-      var list = el("div", "pd-list");
+      var list = el("div", "pd-list"), q = null;
+      if (opts && opts.filter) {
+        var ph = typeof opts.filter === "string" ? opts.filter : t("btn.find");
+        q = el("input", "pd-filter");
+        q.type = "search"; q.autocomplete = "off"; q.spellcheck = false;
+        q.setAttribute("aria-label", ph);
+        q.setAttribute("placeholder", ph);
+        d.appendChild(q);
+      }
       rows.forEach(function (r) {
         if (r.head) { list.appendChild(el("p", "pd-head", r.head)); return; }
         var b = el("button", "pd-row" + (r.on ? " on" : ""));
         b.type = "button";
+        b.setAttribute("data-find", (r.label + " " + (r.sub || "") + " " + (r.kw || "")).toLowerCase());
         if (r.ico) { var i = el("span", "ico"); i.innerHTML = ICO[r.ico]; b.appendChild(i); }
         var txt = el("span", "pd-row-txt");
         txt.appendChild(el("span", "pd-row-main", r.label));
@@ -374,6 +387,25 @@
       var row = el("div", "pd-btns");
       row.appendChild(button(t("btn.cancel"), "chip", function () { close(null); }));
       d.appendChild(row);
+      if (q) {
+        var shown = function () { return [].filter.call(list.querySelectorAll(".pd-row"), function (b) { return !b.hidden; }); };
+        q.addEventListener("input", function () {
+          var words = q.value.toLowerCase().split(/\s+/).filter(Boolean), head = null, any = false;
+          [].forEach.call(list.children, function (n) {
+            if (n.classList.contains("pd-head")) { if (head) head.hidden = !any; head = n; any = false; return; }
+            n.hidden = !words.every(function (w) { return n.getAttribute("data-find").indexOf(w) >= 0; });
+            if (!n.hidden) any = true;
+          });
+          if (head) head.hidden = !any;
+        });
+        q.addEventListener("keydown", function (e) {
+          var vis = shown();
+          if (e.key === "Enter") { e.preventDefault(); if (vis[0]) vis[0].click(); }
+          else if (e.key === "ArrowDown") { e.preventDefault(); if (vis[0]) vis[0].focus(); }
+        });
+        setTimeout(function () { q.focus(); }, 0);
+        return;
+      }
       var on = list.querySelector(".on") || list.querySelector(".pd-row");
       if (on) setTimeout(function () { on.focus(); }, 0);
     });
@@ -798,6 +830,7 @@
     paintTabs();
     paintStatus();
     closeCompare();
+    closeDev();
     ensureLang(tab);
     schedulePersist(null);
     view.focus();
@@ -1725,8 +1758,40 @@
     });
     if (pretty && active.lang === "text") { active.lang = "json"; ensureLang(active); paintStatus(); }
   }
+  // ---------- 15b2. Developer tools (wave D1) ----------
+  // The Tools list and the developer tools live in pad/devui.js, which
+  // loads (with pad/devtools.js) the first time Tools… opens, so Pad's
+  // first open stays as light as before. Both files are precached.
+  var devUI = null, devUIP = null;
+  function loadDevUI() {
+    if (devUI) return Promise.resolve(devUI);
+    if (!devUIP) devUIP = new Promise(function (resolve) {
+      var sc = document.createElement("script");
+      sc.src = "devui.js" + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
+      sc.onload = function () {
+        var make = window.PadDevUI;
+        devUI = typeof make === "function" ? make({
+          v: SCRIPT_V, lang: LANG, C: C, t: t, toast: toast, el: el, button: button, choose: choose, locale: locale, fmtSize: fmtSize,
+          view: function () { return view; }, active: function () { return active; },
+          toolRange: toolRange, applyTool: applyTool, jsonTool: jsonTool, fileBytes: fileBytes,
+          addTab: addTab, activate: activate, closeCompare: closeCompare,
+          previewOff: function () { if (preview) { preview = false; paintPreviewBtn(); } }
+        }) : null;
+        devUIP = null;
+        resolve(devUI);
+      };
+      sc.onerror = function () { devUIP = null; resolve(null); };
+      document.head.appendChild(sc);
+    });
+    return devUIP;
+  }
   function toolsMenu() {
     if (!view) return;
+    loadDevUI().then(function (u) { if (u) u.toolsMenu(); else basicTools(); });
+  }
+  function closeDev() { if (devUI) devUI.closeDev(); }
+  // Without pad/devui.js (it did not load): the wave 3 list.
+  function basicTools() {
     choose(t("tools.title"), [
       { value: "json", label: t("tools.json"), sub: t("tools.jsonSub") },
       { value: "jsonMin", label: t("tools.jsonMin"), sub: t("tools.jsonMinSub") },
@@ -1788,6 +1853,7 @@
   function togglePreview() {
     if (!canPreview(active)) return;
     preview = !preview;
+    if (preview) closeDev();
     paintPreviewBtn();
     if (!preview && view) view.focus();
   }
@@ -2019,6 +2085,10 @@
       if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeCompare(); }
       else if (e.key === "F7") { e.preventDefault(); stepCompare(e.shiftKey ? -1 : 1); }
     });
+    $("dev-close").addEventListener("click", closeDev);
+    $("dev").addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeDev(); }
+    });
     paintKeys();
     $("btn-menu").addEventListener("click", function (e) { e.stopPropagation(); openMenu(); });
     $("st-lang").addEventListener("click", pickLang);
@@ -2052,6 +2122,7 @@
       if (mod && !e.altKey && !e.shiftKey && e.code === "KeyO") { e.preventDefault(); onOpen(); return; }
       if (mod && !e.altKey && !e.shiftKey && e.code === "KeyG") { e.preventDefault(); gotoLine(); return; }
       if (e.altKey && !mod && !e.shiftKey && e.code === "KeyN") { e.preventDefault(); newTab(); return; }
+      if (e.altKey && !mod && !e.shiftKey && e.code === "KeyT") { e.preventDefault(); toolsMenu(); return; }
       if (e.altKey && !mod && !e.shiftKey && e.code === "KeyW") { e.preventDefault(); if (active) closeTab(active); return; }
       if (e.altKey && !mod && (e.code === "PageDown" || e.code === "PageUp")) {
         e.preventDefault();

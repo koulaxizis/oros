@@ -11,7 +11,9 @@ A new board comes with three columns: To Do, Doing and Done.
 ## Cards
 The `Card` dialog saves as you type. It has:
 - `Text` and `Notes`.
+- `Start`: the day work on the card begins (optional). With a start and a due date the card is a bar in the Timeline. A start after the due date moves the due date along.
 - `Due`: a date. The card shows `Today`, `Tomorrow` or `Overdue` when it's close or late.
+- `Milestone`: the card is a diamond on its due date in the Timeline instead of a bar, for a deadline or an event.
 - `Labels`: tap `Add / manage labels` to pick labels or create a new one with a colour. The pencil next to a label opens `Edit label`: change its name or colour, or delete it. Every card that carries it changes with it.
 - `Subtasks`: a checklist. The card shows how many are done, for example 2/5.
 - `Extra info`: your own fields, each with a `Field` name and a `Value`.
@@ -35,7 +37,8 @@ The `Card` dialog saves as you type. It has:
 The view button next to `Filter by label` opens `View and board options`. The view you pick is kept per board on this device.
 - `Board`: the columns.
 - `Table`: every card in one sortable list. Tap a column heading to sort by it; the `Column` list in each row moves the card.
-- `Timeline`: cards with a due date on a line of days, with today highlighted. Drag a card along the days to change its due date. Cards without a due date are counted below.
+- `Timeline`: a Gantt chart. Every card with a start or due date is a bar from its start to its due date (a milestone is a diamond), with today highlighted. Drag a bar to move it, or drag its left or right end to change the start or the due date; `Undo` brings the dates back. With the keyboard, the arrow keys move the selected bar by a day and Shift with an arrow changes only its due date. The darker part of a bar shows how many of its subtasks are done; cards in the last column look finished. In the view menu: `Zoom` (Day, Week, Month), `Groups` (none, by column or by lane) and `Only workdays`. Cards without dates are counted below.
+- `Only workdays` is kept for the board on every device. Weekends get a darker shade, a moved bar keeps its number of workdays and does not start or end on a Saturday or Sunday, and the length of a bar is counted in workdays. Off, every day counts.
 - `Swimlanes` splits the board into rows across the columns: `By label` (one row per label, plus `No label`) or `By lane` (one row per lane name, plus `No lane`). Drag a card to another row to change its label or lane.
 
 ## Attachments and cover
@@ -52,7 +55,7 @@ The view button next to `Filter by label` opens `View and board options`. The vi
 ## Export, import and templates
 - `orOS file (.orosboard)` saves the board as one open file named after it: columns, cards, labels, rules and the attachments themselves. It is a ZIP: unzip it and you find `content.json` (the board), `media` (the attachments) and `preview/board.md` and `preview/board.csv`, which any text editor or spreadsheet opens. `Import from other apps` opens it again as a new board, and so does opening the file with orOS from your system (`Open with`). `Unzipped orOS folder…` in the same dialog brings back a .orosboard that was unzipped, even after you changed a file in it.
 - `Export board (JSON)` saves one file with the whole board: columns, cards, labels, rules and the attachments themselves (up to 25 MB in total). `Import from other apps` reads that file back as a new board, so it also works for moving a board to someone else.
-- `Export cards (CSV)` saves the cards as a table for a spreadsheet, one row per card with its column, labels, due date, lane and subtasks.
+- `Export cards (CSV)` saves the cards as a table for a spreadsheet, one row per card with its column, labels, due date, lane, subtasks, start date and milestone.
 - `Save as template…` keeps the board's columns, labels, WIP limits, rules and cards (without due dates, attachments and ticks).
 - `New board from template…` starts a board from one of your templates or from a built-in one: Personal, Software sprint or Content calendar. You can delete your own templates there.
 
