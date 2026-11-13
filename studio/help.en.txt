@@ -184,7 +184,7 @@ A book is a row of chapters, and every chapter is an ordinary Studio project: tr
 - `Check all` mixes every part as the export would and checks it against the requirements: RMS, true peak, noise floor, room tone at the start and the end, digital silence, length and clipping. Each part shows whether it passes, and its Loudness window says what to fix, with `Go there` on a peak or a clip.
 - `Normalise all` brings every part to RMS -20 dBFS with a gain and the NULL Limiter (true peak, -3.5 dB) at the end of its master chain. The recordings never change, and `Remove normalising` takes both out again. A noise floor above -60 dBFS is not hidden: try NULL Noise Reduction or the gate on the Voice track.
 - `Use this chapter's loop as the retail sample` takes a loop of 1 to 5 minutes as the sample that the stores play.
-- `Export the book` writes one MP3 per part (CBR, mono, 44.1 kHz, at the bit rate under `MP3 for the book`) with the title, author, narrator, ISBN, track number and cover, plus `retail-sample.mp3`, a 2400 × 2400 `cover.jpg` and `report.txt` with the measurements of every file, into `Studio/Books/<book>` in [Files](app:files). Each MP3 is measured again after encoding.
+- `Export the book` writes one MP3 per part (CBR, mono, 44.1 kHz, at the bit rate under `MP3 for the book`) with the title, author, narrator, ISBN, track number and cover, plus `retail-sample.mp3`, a 2400 × 2400 `cover.jpg` and `report.txt` with the measurements of every file, into `Studio/Books`, in a folder named after the book, in [Files](app:files). Each MP3 is measured again after encoding.
 - A chapter is mixed in one piece in memory, so very long chapters (over an hour) need a device with plenty of memory.
 
 ## Sync and backup
