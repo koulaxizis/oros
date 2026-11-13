@@ -11137,6 +11137,7 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Rule:** local relay state and dev secrets (`.wrangler/`, `.dev.vars`) never go into the repo; relay secrets live only as Cloudflare Secrets (Instructions rule 10).
 - **Files:** relay/.wrangler/ (removed, 37 files), .gitignore (new), OROS_BIBLE.md. No APP_VERSION change (nothing users load changed).
 - **Tests:** full `node --test tests/*.test.js`.
+
 ### 2026-11-12 — 6.26.00 — New app: orOS Transfer, wave 1 (TRANSFER-1)
 
 - **What:** a new app, Transfer (Internet): tick files and folders on the orOS disk (or add files from the device), create a link, QR and code; the other person opens it in any browser (orOS or not), sees the list and accepts. The files go straight between the two browsers over a WebRTC data channel, end-to-end encrypted, each file checked with SHA-256; folders keep their tree. The receiver saves to the orOS disk (Files › Transfers, every file ≤ 200 MB) or to the device (one file, or a ZIP with ZIP64).
