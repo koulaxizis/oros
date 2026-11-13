@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 45491 of 45971 (98%)
-- Help pages: 157 of 157 (100%)
+- Strings: 45496 of 45976 (98%)
+- Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -46,7 +46,7 @@ text is still written in the code. They switch over wave by wave
 | designkit | 100% | 203 / 203 |
 | device | 100% | 122 / 122 |
 | diary | 100% | 236 / 236 |
-| dice | 100% | 52 / 52 |
+| dice | 100% | 57 / 57 |
 | discover | English for now | 3 / 3 |
 | dots | 100% | 55 / 55 |
 | enrichui | 100% | 28 / 28 |

@@ -6,13 +6,22 @@
   <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
   <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=dice" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Dice &amp; Coin · orOS</title>
+  <title>Chance · orOS</title>
 
   <link rel="stylesheet" href="../fonts.css?v=6.96.00">
   <link rel="stylesheet" href="dice.css?v=6.96.00">
 
 </head>
 <body>
+
+  <!-- APP-ALIAS (merge 8): Chance = Dice & Coin + the Wheel of Fate
+       (old id "wheel"); the Wheel tab mounts wheel/view.js on first open -->
+  <nav id="ch-tabs" role="tablist">
+    <button type="button" role="tab" id="cht-dice" aria-controls="dice-pane" aria-selected="true" data-i18n="tab.dice">Dice &amp; coin</button>
+    <button type="button" role="tab" id="cht-wheel" aria-controls="wheel-host" aria-selected="false" tabindex="-1" data-i18n="tab.wheel">Wheel</button>
+  </nav>
+
+  <div id="dice-pane" role="tabpanel" aria-labelledby="cht-dice">
 
   <!-- Dice builder: count/type/modifier -->
   <header id="builder">
@@ -115,10 +124,15 @@
       <span data-i18n="history.empty">No rolls yet</span>
     </div>
   </section>
+  </div>
+
+  <!-- Wheel: wheel/view.js mounts here on the first open -->
+  <section id="wheel-host" role="tabpanel" aria-labelledby="cht-wheel" hidden></section>
 
   <div id="toast" role="status"></div>
 
   <script src="../i18n.js?v=6.96.00" data-app="dice"></script>
+  <script src="../wheel/core.js?v=6.96.00"></script>
   <script src="dice.js?v=6.96.00"></script>
 
 </body>

@@ -1174,7 +1174,7 @@
   {
    "app": "wheel",
    "files": [
-    "wheel/wheel.js"
+    "wheel/view.js"
    ]
   },
   {
