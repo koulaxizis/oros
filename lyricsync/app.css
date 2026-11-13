@@ -126,7 +126,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 /* ---------- Lyrics ---------- */
 .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px; }
 .fields label { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--text-dim); min-width: 0; }
-input[type="text"], textarea, select {
+input[type="text"], input[type="number"], textarea, select {
   min-height: 40px;
   width: 100%;
   min-width: 0;
@@ -350,6 +350,39 @@ dialog h2 { font-size: 18px; margin-bottom: 4px; }
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;
 }
+
+/* Songbook S1: chords */
+.chord-bar { margin: 4px 0 8px; }
+.ch-tools { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.ch-tools .mini { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--text-dim); }
+.ch-tools select, .ch-tools input { min-width: 64px; }
+.ch-tools input[type="number"] { width: 76px; }
+#sheet-box { margin-top: 10px; }
+#sheet-info:empty { display: none; }
+.sheet {
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel-bg); line-height: 1.25; overflow-wrap: anywhere;
+}
+.sh-line { display: flex; flex-wrap: wrap; align-items: flex-end; margin: 2px 0; }
+.sh-cell {
+  display: inline-flex; flex-direction: column; align-items: flex-start;
+  margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit;
+  text-align: left; cursor: default; min-height: 0;
+}
+button.sh-cell { cursor: pointer; border-radius: 4px; }
+button.sh-cell:hover .sh-tx, button.sh-cell:focus-visible .sh-tx { background: var(--accent-soft); }
+.sh-ch { color: var(--accent); font-weight: 700; font-size: .9em; white-space: pre; min-height: 1.2em; padding-right: .35em; }
+.sh-tx { white-space: pre; }
+.sh-end .sh-ch { color: var(--text-dim); font-weight: 400; opacity: .6; }
+.sh-gap { height: .9em; }
+.sh-sec { font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; font-size: .8em; margin-top: 4px; }
+.sh-note { font-style: italic; color: var(--text-dim); }
+.sh-crow { color: var(--accent); font-weight: 700; white-space: pre-wrap; }
+.sh-tab { margin: 0; font-family: ui-monospace, "Noto Sans Mono", monospace; font-size: .85em; overflow-x: auto; white-space: pre; }
+.sugg { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; max-height: 40vh; overflow-y: auto; }
+.tr-row { justify-content: center; }
+.tr-now { min-width: 9em; text-align: center; font-size: 1.1em; }
+#cd-in { width: 100%; }
 
 @media (max-width: 420px) {
   #toolbar .chip { padding: 6px 8px; }

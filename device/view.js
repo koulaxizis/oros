@@ -1,8 +1,13 @@
 // ============================================================
-// orOS Device Info — App logic (v1.0.0)
+// orOS Settings › Device (device/view.js) — was the Device Info
+// app (APP-ALIAS since the 2026-11-12 merge 3, old id "device").
 // A read-only look at this device: storage used by each app,
 // battery, network, sync state, screen, browser and the browser
 // features the orOS apps rely on, plus a plain-text report to copy.
+// Loaded by settings/settings.js only when the Device section first
+// opens (with core.js, the engine, view.css and the "device" language
+// pack; this folder keeps the pack name "device"); SettingsDevice.mount(host) builds the cards once and keeps
+// them live, Settings re-attaches the same node on every repaint.
 //   - reads only: never changes another app's data, never syncs,
 //     never sends anything over the network
 //   - asks for no permission; shows the current state where the
@@ -15,7 +20,7 @@
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Prefs
-//   3. Apps list (apps.json + shell names)
+//   3. Apps list (apps.json + aliases + shell names)
 //   4. Storage + per-app sizes
 //   5. Battery
 //   6. Network
@@ -23,9 +28,8 @@
 //   8. Screen
 //   9. orOS & browser
 //  10. Features
-//  11. Report + toast
-//  12. Keyboard (Contract Β) + palette
-//  13. Wiring & boot
+//  11. Report + notice
+//  12. Mount
 // ============================================================
 (function () {
   "use strict";
@@ -34,7 +38,6 @@
   (function () {
     var m = (document.currentScript && document.currentScript.src || "").match(/[?&]v=([^&#]+)/);
     SCRIPT_V = m ? m[1] : "";
-    console.log("device.js v" + (SCRIPT_V || "?") + " boot");
   })();
 
   var PREFS_KEY = "oros-device-prefs";
@@ -60,11 +63,11 @@
 
   var STRINGS = {
     en: {
-      "app": "Device Info", "btn.refresh": "Refresh", "btn.copy": "Copy report", "btn.copyShort": "Report",
+      "btn.refresh": "Refresh", "btn.copy": "Copy report",
       "c.storage": "Storage", "c.apps": "Space per app", "c.battery": "Battery",
       "c.network": "Network", "c.sync": "Sync", "c.screen": "Screen",
       "c.system": "orOS & browser", "c.features": "Browser features",
-      "about": "Read only: this app changes nothing and sends nothing. Everything describes this device.",
+      "about": "Read only: this section changes nothing and sends nothing. Everything describes this device.",
       "na": "Not available", "yes": "Yes", "no": "No", "unknown": "Unknown",
       "s.used": "{used} of {quota}", "s.other": "Files, databases, offline copies",
       "s.noEstimate": "This browser does not say how much space orOS files and databases use.",
@@ -121,11 +124,11 @@
       "r.header": "orOS device report · {date}"
     },
     el: {
-      "app": "Πληροφορίες συσκευής", "btn.refresh": "Ανανέωση", "btn.copy": "Αντιγραφή αναφοράς", "btn.copyShort": "Αναφορά",
+      "btn.refresh": "Ανανέωση", "btn.copy": "Αντιγραφή αναφοράς",
       "c.storage": "Χώρος", "c.apps": "Χώρος ανά εφαρμογή", "c.battery": "Μπαταρία",
       "c.network": "Δίκτυο", "c.sync": "Συγχρονισμός", "c.screen": "Οθόνη",
       "c.system": "orOS και browser", "c.features": "Δυνατότητες browser",
-      "about": "Μόνο ανάγνωση: η εφαρμογή δεν αλλάζει και δεν στέλνει τίποτα. Όλα αφορούν αυτή τη συσκευή.",
+      "about": "Μόνο ανάγνωση: η ενότητα δεν αλλάζει και δεν στέλνει τίποτα. Όλα αφορούν αυτή τη συσκευή.",
       "na": "Μη διαθέσιμο", "yes": "Ναι", "no": "Όχι", "unknown": "Άγνωστο",
       "s.used": "{used} από {quota}", "s.other": "Αρχεία, βάσεις, offline αντίγραφα",
       "s.noEstimate": "Ο browser δεν λέει πόσο χώρο πιάνουν τα αρχεία και οι βάσεις του orOS.",
@@ -195,7 +198,8 @@
     return s;
   }
 
-  function $(id) { return document.getElementById(id); }
+  var root = null;           // the mounted section (ids are "dv-…")
+  function $(id) { return root ? root.querySelector("#dv-" + id) : null; }
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -252,6 +256,7 @@
   }
   function fill(id, nodes) {
     var host = $(id);
+    if (!host) return;
     host.textContent = "";
     nodes.forEach(function (n) { if (n) host.appendChild(n); });
   }
@@ -275,17 +280,23 @@
 
   // ---------- 3. Apps list ----------
   var apps = [];          // [{ id, name }] from apps.json
+  var aliases = [];       // [{ id, name }]: apps folded into another one (APP-ALIAS)
   function loadApps() {
     return fetch("../apps.json").then(function (r) {
       if (!r.ok) throw new Error("apps.json " + r.status);
       return r.json();
     }).then(function (j) {
-      apps = (j && Array.isArray(j.apps) ? j.apps : []).filter(function (a) {
-        return a && typeof a.id === "string";
-      }).map(function (a) { return { id: a.id, name: String(a.name || a.id) }; });
-    }).catch(function () { apps = []; });
+      var pick = function (list) {
+        return (Array.isArray(list) ? list : []).filter(function (a) {
+          return a && typeof a.id === "string";
+        }).map(function (a) { return { id: a.id, name: String(a.name || a.id) }; });
+      };
+      apps = pick(j && j.apps);
+      aliases = pick(j && j.aliases);
+    }).catch(function () { apps = []; aliases = []; });
   }
-  function appIds() { return apps.map(function (a) { return a.id; }); }
+  // An old app's data (its keys and slice stay) still counts as its own.
+  function appIds() { return apps.concat(aliases).map(function (a) { return a.id; }); }
   function ownerName(id) {
     if (id.charAt(0) === "_") return t("a." + id);
     var p = parentWin();
@@ -295,13 +306,14 @@
         if (s && s !== "app." + id) return s;
       }
     } catch (e) { /* standalone */ }
-    for (var i = 0; i < apps.length; i++) if (apps[i].id === id) return apps[i].name;
+    var all = apps.concat(aliases);
+    for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i].name;
     return id;
   }
   function canOpen(id) {
     var p = parentWin();
     return !!(p && id.charAt(0) !== "_" && typeof p.__orosOpenApp === "function" &&
-              appIds().indexOf(id) >= 0 && id !== "device");
+              appIds().indexOf(id) >= 0 && id !== "settings");
   }
   function openApp(id) {
     var p = parentWin();
@@ -393,7 +405,7 @@
       if (persisted === false) {
         nodes.push(el("p", "note", t("s.persistHint")));
         if (typeof st.persist === "function") {
-          var b = el("button", "act small", t("s.persistAsk"));
+          var b = el("button", "btn dv-small", t("s.persistAsk"));
           b.type = "button";
           b.addEventListener("click", function () {
             b.disabled = true;
@@ -431,7 +443,7 @@
     });
     var nodes = [el("p", "hint", t("a.hint")), list];
     if (lsRows.length > APPS_SHOWN) {
-      var more = el("button", "act small more",
+      var more = el("button", "btn dv-small more",
         appsExpanded ? t("a.showLess") : t("a.showAll", { n: lsRows.length }));
       more.type = "button";
       more.addEventListener("click", function () {
@@ -541,7 +553,7 @@
     // Sync is set up in Settings → Sync (the shell opens it there).
     var p = parentWin();
     if (p && p.orosSettings && typeof p.orosSettings.open === "function") {
-      var go = el("button", "act small", t("y.where"));
+      var go = el("button", "btn dv-small", t("y.where"));
       go.type = "button";
       go.addEventListener("click", function () { p.orosSettings.open("sync"); });
       nodes.push(go);
@@ -702,11 +714,11 @@
       ta.value = text;
       ta.setAttribute("readonly", "");
       ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;";
-      document.body.appendChild(ta);
+      (root || document.body).appendChild(ta);
       ta.select();
       var ok = false;
       try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
-      document.body.removeChild(ta);
+      ta.parentNode.removeChild(ta);
       if (ok) resolve(); else reject(new Error("copy"));
     });
   }
@@ -715,65 +727,37 @@
                                 function () { showToast(t("toast.copyFail")); });
   }
 
-  var toastTimer = null;
+  // A short notice: the shell's transient toast, else the live line.
   function showToast(text) {
-    var box = $("toast");
-    if (!box) return;
-    box.textContent = text;
-    box.classList.remove("show");
-    void box.offsetWidth;
-    box.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { box.classList.remove("show"); }, 3000);
+    try {
+      var n = parentWin() && parentWin().orosNotifs;
+      if (n && typeof n.transient === "function" && n.transient({ ns: "settings", title: String(text) })) return;
+    } catch (e) { /* standalone */ }
+    var box = $("live");
+    if (box) { box.textContent = ""; setTimeout(function () { box.textContent = text; }, 30); }
   }
 
-  // ---------- 12. Keyboard (Contract Β) + palette ----------
-  function wireKeyboard() {
-    document.addEventListener("keydown", function (e) {
-      if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
-      var p = null;
-      try { p = window.parent; } catch (err) { return; }
-      if (!(p && p !== window && p.orosShortcuts &&
-            typeof p.orosShortcuts.handle === "function")) return;
-      if (p.orosShortcuts.handle(e)) e.stopPropagation();
-    }, true);
-    document.addEventListener("keydown", function (e) {
-      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
-      var tg = e.target, tag = tg && tg.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON" || tag === "SUMMARY") return;
-      if (e.key === "r" || e.key === "R") { e.preventDefault(); refresh(); }
+  // ---------- 12. Mount ----------
+  var CARDS = ["storage", "apps", "battery", "network", "sync", "screen", "system", "features"];
+  // The refresh icon, built as SVG nodes (no HTML strings in this file).
+  function refreshIcon() {
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg");
+    [["width", "18"], ["height", "18"], ["viewBox", "0 0 24 24"], ["fill", "none"], ["stroke", "currentColor"],
+     ["stroke-width", "2.2"], ["stroke-linecap", "round"], ["stroke-linejoin", "round"], ["aria-hidden", "true"]]
+      .forEach(function (a) { svg.setAttribute(a[0], a[1]); });
+    ["M20 11a8 8 0 1 0-2.3 5.7", "M20 4v7h-7"].forEach(function (d) {
+      var p = document.createElementNS(NS, "path");
+      p.setAttribute("d", d);
+      svg.appendChild(p);
     });
+    return svg;
   }
 
-  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                  "--accent", "--accent-hover", "--accent-soft", "--accent-ink",
-                  "--panel-bg", "--border", "--shadow", "--danger"];
-  function inheritPalette() {
-    try {
-      var pRoot = window.parent.document.documentElement;
-      document.documentElement.setAttribute("data-theme",
-        pRoot.getAttribute("data-theme") || "dark");
-      var cs = window.parent.getComputedStyle(pRoot);
-      PAL_VARS.forEach(function (v) {
-        var val = cs.getPropertyValue(v).trim();
-        if (val) document.documentElement.style.setProperty(v, val);
-      });
-    } catch (e) { /* standalone */ }
-  }
-  function watchPalette() {
-    try {
-      new MutationObserver(function () { inheritPalette(); renderSystem(lastCacheNames); }).observe(
-        window.parent.document.documentElement,
-        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
-      );
-    } catch (e) { /* standalone */ }
-  }
-
-  // ---------- 13. Wiring & boot ----------
   var lastCacheNames = [];
   var refreshing = false;
   function refresh() {
-    if (refreshing) return Promise.resolve();
+    if (!root || refreshing) return Promise.resolve();
     refreshing = true;
     renderNetwork();
     renderSync();
@@ -787,33 +771,54 @@
     })]).catch(function (e) { console.error("device refresh", e); })
       .then(function () { refreshing = false; });
   }
+  function shown() { return !!(root && root.isConnected); }
 
-  function applyI18n() {
-    document.documentElement.lang = LANG;
-    document.title = t("app") + " · orOS";
-    $("title").textContent = t("app");
-    $("refresh-btn").setAttribute("aria-label", t("btn.refresh"));
-    $("refresh-btn").setAttribute("title", t("btn.refresh") + " (R)");
-    $("copy-btn").querySelector(".long").textContent = t("btn.copy");
-    $("copy-btn").querySelector(".short").textContent = t("btn.copyShort");
-    $("copy-btn").setAttribute("aria-label", t("btn.copy"));
-    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
-      n.textContent = t(n.getAttribute("data-i18n"));
+  function build() {
+    var box = el("div", "dv");
+    var bar = el("div", "dv-bar-top");
+    var rb = el("button", "btn dv-icon");
+    rb.type = "button";
+    rb.id = "dv-refresh";
+    rb.appendChild(refreshIcon());
+    rb.setAttribute("aria-label", t("btn.refresh"));
+    rb.title = t("btn.refresh") + " (R)";
+    rb.addEventListener("click", refresh);
+    var cb = el("button", "btn primary", t("btn.copy"));
+    cb.type = "button";
+    cb.id = "dv-copy";
+    cb.addEventListener("click", copyReport);
+    bar.appendChild(rb);
+    bar.appendChild(cb);
+    box.appendChild(bar);
+    var grid = el("div", "dv-grid");
+    CARDS.forEach(function (k) {
+      var d = el("details", "dv-card");
+      d.id = "dv-c-" + k;
+      d.open = prefs.closed.indexOf("c-" + k) < 0;
+      var s = el("summary");
+      s.appendChild(el("h3", "", t("c." + k)));
+      d.appendChild(s);
+      var b = el("div", "dv-body");
+      b.id = "dv-b-" + k;
+      d.appendChild(b);
+      d.addEventListener("toggle", function () {
+        var i = prefs.closed.indexOf("c-" + k);
+        if (d.open && i >= 0) prefs.closed.splice(i, 1);
+        else if (!d.open && i < 0) prefs.closed.push("c-" + k);
+        savePrefs();
+      });
+      grid.appendChild(d);
     });
+    box.appendChild(grid);
+    box.appendChild(el("p", "hint dv-about", t("about")));
+    var live = el("div", "sr-only");
+    live.id = "dv-live";
+    live.setAttribute("aria-live", "polite");
+    box.appendChild(live);
+    return box;
   }
 
   function wire() {
-    $("refresh-btn").addEventListener("click", refresh);
-    $("copy-btn").addEventListener("click", copyReport);
-    Array.prototype.forEach.call(document.querySelectorAll("details.card"), function (d) {
-      if (prefs.closed.indexOf(d.id) >= 0) d.open = false;
-      d.addEventListener("toggle", function () {
-        var i = prefs.closed.indexOf(d.id);
-        if (d.open && i >= 0) prefs.closed.splice(i, 1);
-        else if (!d.open && i < 0) prefs.closed.push(d.id);
-        savePrefs();
-      });
-    });
     window.addEventListener("online", renderNetwork);
     window.addEventListener("offline", renderNetwork);
     if (navigator.connection && typeof navigator.connection.addEventListener === "function") {
@@ -822,7 +827,7 @@
     var resizeTimer = null;
     function onResize() {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(renderScreen, 150);
+      resizeTimer = setTimeout(function () { if (shown()) renderScreen(); }, 150);
     }
     window.addEventListener("resize", onResize);
     try { if (parentWin()) parentWin().addEventListener("resize", onResize); } catch (e) { /* ignore */ }
@@ -830,24 +835,42 @@
       try { if (parentWin()) parentWin().removeEventListener("resize", onResize); } catch (e) { /* ignore */ }
     });
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "visible") refresh();
+      if (document.visibilityState === "visible" && shown()) refresh();
     });
-    wireKeyboard();
+    // R: refresh, while the section is on screen (not while typing)
+    document.addEventListener("keydown", function (e) {
+      if (!shown() || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      var tg = e.target, tag = tg && tg.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON" || tag === "SUMMARY") return;
+      if (e.key === "r" || e.key === "R") { e.preventDefault(); refresh(); }
+    });
+    try {
+      new MutationObserver(function () { if (shown()) renderSystem(lastCacheNames); }).observe(
+        window.parent.document.documentElement,
+        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
+      );
+    } catch (e) { /* standalone */ }
   }
 
-  function boot() {
-    loadPrefs();
-    applyI18n();
-    inheritPalette();
-    watchPalette();
-    wire();
-    renderNetwork();
-    renderSync();
-    renderScreen();
-    loadApps().then(function () {
-      return Promise.all([initBattery(), refresh()]);
-    });
+  // The section node, built once; Settings appends it on every repaint.
+  function mount(host) {
+    if (!root) {
+      loadPrefs();
+      root = build();
+      host.appendChild(root);
+      wire();
+      renderNetwork();
+      renderSync();
+      renderScreen();
+      loadApps().then(function () {
+        return Promise.all([initBattery(), refresh()]);
+      });
+      return root;
+    }
+    if (root.parentNode !== host) host.appendChild(root);
+    renderSync();       // the sync state may have changed while away
+    return root;
   }
 
-  boot();
+  window.SettingsDevice = { mount: mount, refresh: refresh, reportText: reportText };
 })();
