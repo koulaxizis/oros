@@ -175,7 +175,7 @@
       "lbl.feed.cycle": "Cycle",
       "lbl.feed.mood": "Mood",
       "lbl.feed.habits": "Habits",
-      "lbl.feed.kanban": "Kanban",
+      "lbl.feed.kanban": "Kanban", "feed.kb.start": "Starts: {t}",
       "lbl.feed.todo": "To-Do",
       "lbl.feed.fitness": "Workouts",
       "feed.cycle.period": "Period",
@@ -429,7 +429,7 @@
       "lbl.feed.cycle": "Κύκλος",
       "lbl.feed.mood": "Διάθεση",
       "lbl.feed.habits": "Συνήθειες",
-      "lbl.feed.kanban": "Kanban",
+      "lbl.feed.kanban": "Kanban", "feed.kb.start": "Ξεκινά: {t}",
       "lbl.feed.todo": "Εργασίες",
       "lbl.feed.fitness": "Προπόνηση",
       "feed.cycle.period": "Περίοδος",
@@ -2264,12 +2264,17 @@ function transientNote(title, body) {
     if (!KC) return [];
     // kanban/core.js: archived boards skipped (#6); every column,
     // the last one included, shows on the Calendar.
-    return KC.dueCards(data, dateStr, dateStr).map(function (x) {
-      var bd = x.board, col = x.col, card = x.card;
+    // Gantt G3: a planned start (card.start) shows a "starts" mark on
+    // its day; the span in between stays on the Kanban Timeline.
+    var starts = typeof KC.startCards === "function" ? KC.startCards(data, dateStr, dateStr) : [];
+    var due = KC.dueCards(data, dateStr, dateStr);
+    return due.concat(starts).map(function (x, i) {
+      var bd = x.board, col = x.col, card = x.card, st = i >= due.length;
+      var text = (card.text || "").slice(0, 60);
       return {
-        id: "kb-" + card.id + "-" + dateStr,   // per-render key, never stored
+        id: "kb-" + card.id + "-" + dateStr + (st ? "-s" : ""),   // per-render key, never stored
         title: (col.name || "").slice(0, 24) + " · " +
-               (card.text || "").slice(0, 60),
+               (st ? t("feed.kb.start").replace("{t}", text) : text),
         labelId: "lbl-feed-kanban",
         start: null,                           // all-day event
         note: (card.notes || "").slice(0, 500),

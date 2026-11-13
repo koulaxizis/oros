@@ -1843,7 +1843,7 @@
       "phone, email, website, address = fill when empty, replace with old_phone… / address_replace / note / note_add / roles / rs_beneficiary; bank " +
       "details or a bio go in note_add; a deal, update: title / amount / date = expected close / stage / probability / reason / note, " +
       "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start) · " +
-      "kanban (reschedule: date = due, update: title / date / note / labels, move: column and/or board (to another board: board, column optional, default its first), delete) · " +
+      "kanban (reschedule: date = due, update: title / date / note / labels / plan_start / milestone / depends_on, move: column and/or board (to another board: board, column optional, default its first), delete) · " +
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
       "plants (complete = watered today, update: title / note) · " +
@@ -1902,6 +1902,9 @@
         author: { type: "string", description: "library: the book's author." },
         how: { type: "string", "enum": ["bank", "cash", "card", "iris", "paypal", "other"], description: "invoices: how it was paid." },
         end_date: { type: "string", description: "travel: the trip's last day YYYY-MM-DD." },
+        plan_start: { type: "string", description: "kanban: the card's planned first day on the Timeline (Gantt) YYYY-MM-DD, at most its due date; \"\" clears it." },
+        milestone: { type: "boolean", description: "kanban: true makes the card a milestone (one day, its due date), false a normal card." },
+        depends_on: { type: "array", items: { type: "string" }, description: "kanban: the whole new list of cards on the same board that must finish before this one starts, by exact title (at most 20; [] clears it)." },
         next: { type: "string", description: "petcare: next dose or recheck YYYY-MM-DD." },
         servings: { type: "integer", description: "meals: how many servings the recipe makes." },
         km: { type: "integer", description: "garage: what the odometer shows now (km)." },
@@ -2146,6 +2149,8 @@
     ["folder", ["bookmarks"], { type: "string", description: "bookmarks: an existing folder's name (default Unsorted)." }],
     ["board", ["kanban"], { type: "string", description: "kanban: an existing board's name; required when there are several boards. To move existing cards use change_item move, never add them again." }],
     ["column", ["kanban"], { type: "string", description: "kanban: an existing column's name (default the first)." }],
+    ["plan_start", ["kanban"], { type: "string", description: "kanban: the card's planned first day on the Timeline (Gantt) YYYY-MM-DD, at most its due date (date)." }],
+    ["milestone", ["kanban"], { type: "boolean", description: "kanban: true makes the card a milestone (one day, its due date)." }],
     ["label", ["calendar"], { type: "string", description: "calendar: the name of one of the user's labels." }],
     ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals", "shelf", "flashcards"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals, shelf, flashcards: tags, any)." }],
     ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "crm_contract", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare", "publish", "invoices", "quote", "split"], { type: "string", description: "A note (Publishing 4000, only for the user, Invoices and Quote 2000, printed on the document, Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],

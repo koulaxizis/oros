@@ -214,6 +214,7 @@ orosPack("de", "calendar", {
  "lbl.feed.hol": "Feiertage",
  "lbl.feed.inv": "Rechnungen",
  "lbl.feed.kanban": "Kanban",
+ "feed.kb.start": "Beginnt: {t}",
  "lbl.feed.meals": "Mahlzeiten",
  "lbl.feed.meds": "Medikamente",
  "lbl.feed.mood": "Stimmung",
