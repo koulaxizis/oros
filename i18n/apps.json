@@ -853,6 +853,7 @@
    "app": "settings",
    "files": [
     "settings/core.js",
+    "settings/fonts.js",
     "settings/search.js"
    ]
   },

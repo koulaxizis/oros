@@ -1172,5 +1172,6 @@ orosPack("de", "shell", {
  "wg.start.count": "{n} von {m} erledigt",
  "wg.start.hide": "Ausblenden",
  "wg.start.done": "erledigt",
- "wg.start.all": "Alles erledigt. orOS gehört dir!"
+ "wg.start.all": "Alles erledigt. orOS gehört dir!",
+ "cr.brotli-js": ".woff2-Schriftdateien entpacken (Einstellungen › Schriften, Layout, Atelier)"
 });

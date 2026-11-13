@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 42238 of 42755 (98%)
+- Strings: 42482 of 43002 (98%)
 - Help pages: 156 of 157 (99%)
 - Shown in the language list: yes
 
@@ -72,11 +72,11 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | 100% | 90 / 90 |
 | kanban | 99% | 315 / 318 |
 | labels | 100% | 88 / 88 |
-| layout | 99% | 953 / 961 |
+| layout | 99% | 997 / 1005 |
 | library | 100% | 323 / 323 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
-| lyricsync | 100% | 182 / 182 |
+| lyricsync | 100% | 224 / 224 |
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 496 / 496 |
 | mancala | 100% | 61 / 61 |
@@ -94,7 +94,7 @@ text is still written in the code. They switch over wave by wave
 | museum | 100% | 46 / 46 |
 | music | 99% | 538 / 539 |
 | names | 100% | 40 / 40 |
-| netizen | 100% | 121 / 121 |
+| netizen | 98% | 172 / 175 |
 | newsletter | 99% | 1003 / 1008 |
 | nonogram | 100% | 70 / 70 |
 | notes | 99% | 190 / 191 |
@@ -125,10 +125,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1173 / 1188 |
+| settings | 98% | 1278 / 1293 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1173 / 1178 |
+| shell | 99% | 1175 / 1180 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 383 / 383 |
