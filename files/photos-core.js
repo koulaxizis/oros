@@ -17,6 +17,7 @@
 //   pickDate(info)              → { t, src: exif|video|name|file }
 //   timeline(items)             → months › days, newest first
 //   indexable(path, opts)       → whether the view lists this path
+//   dirWanted(dir, opts)        → whether a walk enters this folder
 //   dHash(gray) · hamming(a, b) → near-duplicate fingerprints
 //   validGps(lat, lon)
 //
@@ -147,6 +148,27 @@
     }
     var skip = opts.skip || SKIP;
     return segs.length < 2 || skip.indexOf(segs[0]) === -1;
+  }
+
+  // Whether a walk of the disk goes into this folder (indexable()'s
+  // rules for folders): a skipped folder is still entered when one of
+  // the person's extra folders lies inside it.
+  function dirWanted(dir, opts) {
+    var d = String(dir || "").replace(/\/+$/, "");
+    if (d === "/internal") return true;
+    if (d.indexOf("/internal/") !== 0) return false;
+    var segs = d.slice(10).split("/");
+    for (var i = 0; i < segs.length; i++) {
+      if (!segs[i] || segs[i].charAt(0) === ".") return false;
+    }
+    if (segs[0] === "Documents") return false;
+    opts = opts || {};
+    var extra = opts.extra || [];
+    for (var k = 0; k < extra.length; k++) {
+      var x = String(extra[k]).replace(/\/+$/, "");
+      if (x && (d === x || d.indexOf(x + "/") === 0 || x.indexOf(d + "/") === 0)) return true;
+    }
+    return (opts.skip || SKIP).indexOf(segs[0]) === -1;
   }
 
   // ---------- EXIF ----------
@@ -411,7 +433,7 @@
     kindOf: kindOf, readExif: readExif, exifDate: exifDate, mp4Scan: mp4Scan,
     iso6709: iso6709, dateFromName: dateFromName, wallFromEpoch: wallFromEpoch,
     pickDate: pickDate, dayKey: dayKey, monthKey: monthKey, timeline: timeline,
-    indexable: indexable, dHash: dHash, hamming: hamming, validGps: validGps
+    indexable: indexable, dirWanted: dirWanted, dHash: dHash, hamming: hamming, validGps: validGps
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosPhotosCore = api;

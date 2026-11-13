@@ -1089,6 +1089,8 @@
     host.innerHTML = "";
     host.appendChild(makeQuickSection());
     host.appendChild(makeTreeNode(ROOT, t("tree.root"), 0, token));
+    var ph = photos();
+    if (ph) host.appendChild(ph.treeNode());
     var dc = docs();
     if (dc) host.appendChild(dc.treeNode());
     var dv = drv();
@@ -1125,10 +1127,16 @@
     var d = window.OrosFilesDocs;
     return (d && typeof d.treeNode === "function") ? d : null;
   }
+  // The Photos timeline (files/photos.js, photos-core.js): every photo
+  // and video of the disk by the day it was taken; device-local only.
+  function photos() {
+    var p = window.OrosFilesPhotos;
+    return (p && typeof p.treeNode === "function") ? p : null;
+  }
   // Places shown instead of the disk. Each module has treeNode(),
   // isActive() and leave(); a new place (Photos, …) adds its global
   // name here and calls ctx.onEnter (= leavePlaces(itself)) on enter.
-  var PLACE_GLOBALS = ["OrosFilesDropbox", "OrosFilesDrive", "OrosFilesComputer", "OrosFilesDocs"];
+  var PLACE_GLOBALS = ["OrosFilesDropbox", "OrosFilesDrive", "OrosFilesComputer", "OrosFilesDocs", "OrosFilesPhotos"];
   function places() {
     var out = [];
     PLACE_GLOBALS.forEach(function (g) {
@@ -1254,6 +1262,30 @@
       zipSafePath: CORE.zipSafePath,
       onChange: renderTree,
       onDiskChanged: function () { forceStorageRecalc(); markDirty(); }
+    });
+  }
+
+  function initPhotos() {
+    var ph = photos();
+    if (!ph) return;
+    ph.init({
+      toast: transientNote,
+      closeDrawer: closeTreeDrawer,
+      onEnter: function () {
+        leavePlaces(photos());
+        view = "files"; setSelectMode(false); clearSelection();
+      },
+      afterEnter: renderTree,
+      fs: FS,
+      vault: vaultApi,
+      docs: docs,
+      share: shareApi,
+      openFile: openFileAt,
+      pickFolder: pickFolderDialog,
+      trash: function (p) {
+        return moveToTrash(p).then(function () { favDropPath(p); markDirty(); });
+      },
+      onDiskChanged: forceStorageRecalc
     });
   }
 
@@ -5311,6 +5343,7 @@
     initDrive();
     initComputer();
     initDocs();
+    initPhotos();
 
     // Multitasking (MT-S2): Files left open in the background lists the
     // folder again when it comes back; another app may have saved there.

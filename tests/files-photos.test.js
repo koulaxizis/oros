@@ -177,6 +177,19 @@ test("which paths the view lists", () => {
   assert.equal(C.indexable("/internal/Documents/a.jpg", { skip: [], extra: ["/internal/Documents"] }), false);
 });
 
+test("which folders a walk enters", () => {
+  assert.equal(C.dirWanted("/internal"), true);
+  assert.equal(C.dirWanted("/internal/Pictures/2026"), true);
+  assert.equal(C.dirWanted("/internal/.trash"), false);
+  assert.equal(C.dirWanted("/internal/Pictures/.thumbs"), false);
+  assert.equal(C.dirWanted("/internal/Documents"), false);
+  assert.equal(C.dirWanted("/internal/Invoices"), false);
+  assert.equal(C.dirWanted("/internal/Atelier", { extra: ["/internal/Atelier/Trip"] }), true);
+  assert.equal(C.dirWanted("/internal/Atelier/Other", { extra: ["/internal/Atelier/Trip"] }), false);
+  assert.equal(C.dirWanted("/internal/Atelier/Trip/day1", { extra: ["/internal/Atelier/Trip"] }), true);
+  assert.equal(C.dirWanted("/computer/home"), false);
+});
+
 test("near-duplicate hashes", () => {
   const g = [];
   for (let i = 0; i < 72; i++) g.push((i * 37) % 255);
