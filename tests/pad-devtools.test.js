@@ -209,7 +209,7 @@ test("Pad loads the tools lazily, precaches them, and shows results as text only
   assert.match(app, /sc\.src = "devui\.js"/);
   assert.match(ui, /loadScript\("devtools\.js"/);
   assert.match(ui, /"\.\.\/vendor\/yaml\/yaml\.min\.js"/);
-  // STAMP: precache lines (sw.js) are added when this PR is first in the merge queue.
+  const sw = read("sw.js"); assert.match(sw, /"pad\/devui\.js"/); assert.match(sw, /"pad\/devtools\.js"/); assert.match(sw, /"vendor\/yaml\/yaml\.min\.js"/);
   assert.ok(!/innerHTML/.test(ui), "results never go through innerHTML");
   assert.ok(!/fetch\(|XMLHttpRequest|localStorage|indexedDB/.test(ui + read("pad/devtools.js")), "nothing is sent or kept");
   assert.match(app, /e\.code === "KeyT"/, "Alt+T opens the tools");
