@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.26.00
+- **New app: Transfer.** Send big files and whole folders from the orOS disk straight to another browser. Pick them in Transfer, create a link and send it, or show the QR code. The other person needs no orOS: they open the link, see the files and accept. Everything goes directly between the two devices, end-to-end encrypted, and each file is checked when it arrives.
+
 ## Version 6.25.00
 - **Claude can tick Kanban subtasks.** Through orOS Gate, Claude can add subtasks to a card, tick, untick or reword them, and read a whole card with its ticks. It never removes a subtask, and you can undo each change in `Claude's changes`.
 
