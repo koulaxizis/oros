@@ -928,7 +928,12 @@ Tests: `tests/dav-relay.test.js`.
 
 ## Rules it enforces
 
-- Only pages listed in `ALLOWED_ORIGINS` get an answer (CORS). This
+- Only pages listed in `ALLOWED_ORIGINS` get an answer (CORS). The
+  orOS on the person's own computer (`LOCAL_ORIGINS` =
+  `http://localhost:47800`: installed orOS, Portable, USB) gets one on
+  `/v1` only for the ops in `LOCAL_OPS` (`relay/core.js`): `ext` with
+  `p` `ebank` or `paypal`, Budget's bank reads; anything else from it
+  is refused with `origin`, and it also has the gate routes. This
   stops other websites from using it through a visitor's browser; it
   does not stop a script that fakes the header, which is why the
   rest matters.
