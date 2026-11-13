@@ -119,6 +119,7 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 - `Albums` at the top lists your albums. An album lists photos without moving or copying them, so one photo can be in several albums. Select photos in `All` and press `Add to album…` (or use the album button in the viewer), or make one with `New album…`.
 - In an album, `Select` › `Remove from album` takes photos out of it, and the star in the viewer makes a photo the album's cover. `⋯` has `Send the album…`, `Rename album…` and `Delete album`. The photos always stay on the disk.
 - Albums sync to your other devices. A photo that sync carries is found again there even after it is moved or renamed; an album shows how many of its photos are not on this device yet.
+- `Map` shows the photos that carry the place they were taken, as small pictures on the map; a number means several were taken close together. Tap one to see those photos, and `‹` goes back to the map. The map pictures come from OpenStreetMap, as in Maps; the places of your photos are never sent anywhere.
 > The small pictures and the dates are made on this device and stay on it. Only the albums sync (their names and which photos they hold); the place a photo was taken never leaves your device.
 
 ## orOS Drive

@@ -20,6 +20,7 @@
 //   dirWanted(dir, opts)        → whether a walk enters this folder
 //   dHash(gray) · hamming(a, b) → near-duplicate fingerprints
 //   validGps(lat, lon)
+//   cluster(pts, cell) · geoBounds(recs) → the map's groups (P3)
 //
 // "Wall clock" = the time a camera shows, kept as the UTC fields of a
 // Date (Date.UTC(y, m, d, h, mi, s)): EXIF has no time zone, so photos
@@ -428,7 +429,44 @@
     return d;
   }
 
+  // ---------- map (P3) ----------
+  // pts: [{ x, y, t, k }] in screen pixels (Leaflet project at the
+  // map's zoom). Groups the points of each cell × cell square; a group
+  // is drawn at its newest point and lists its points newest first
+  // (ties by k). Same input, same groups, in a stable order.
+  function cluster(pts, cell) {
+    cell = cell > 0 ? cell : 64;
+    var cells = {}, keys = [];
+    (pts || []).forEach(function (p) {
+      if (!p || !isFinite(p.x) || !isFinite(p.y)) return;
+      var key = Math.floor(p.x / cell) + ":" + Math.floor(p.y / cell);
+      if (!cells[key]) { cells[key] = []; keys.push(key); }
+      cells[key].push(p);
+    });
+    function newest(a, b) { return (b.t || 0) - (a.t || 0) || (a.k < b.k ? -1 : a.k > b.k ? 1 : 0); }
+    var out = keys.map(function (key) {
+      var items = cells[key].sort(newest);
+      return { key: key, x: items[0].x, y: items[0].y, items: items };
+    });
+    out.sort(function (a, b) { return newest(a.items[0], b.items[0]); });
+    return out;
+  }
+  // [[south, west], [north, east]] around the records with a place, or null.
+  function geoBounds(recs) {
+    var s = 90, w = 180, n = -90, e = -180, any = false;
+    (recs || []).forEach(function (r) {
+      if (!r || !validGps(r.lat, r.lon)) return;
+      any = true;
+      if (r.lat < s) s = r.lat;
+      if (r.lat > n) n = r.lat;
+      if (r.lon < w) w = r.lon;
+      if (r.lon > e) e = r.lon;
+    });
+    return any ? [[s, w], [n, e]] : null;
+  }
+
   var api = {
+    cluster: cluster, geoBounds: geoBounds,
     HEAD_BYTES: HEAD_BYTES, SKIP: SKIP.slice(), DAY: DAY,
     kindOf: kindOf, readExif: readExif, exifDate: exifDate, mp4Scan: mp4Scan,
     iso6709: iso6709, dateFromName: dateFromName, wallFromEpoch: wallFromEpoch,

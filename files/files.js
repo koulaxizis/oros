@@ -1407,6 +1407,7 @@
       share: shareApi,
       openFile: openFileAt,
       pickFolder: pickFolderDialog,
+      ver: SCRIPT_V,
       trash: function (p) {
         return moveToTrash(p).then(function () { favDropPath(p); markDirty(); });
       },

@@ -119,6 +119,7 @@ Die orOS-Disk ist der verschlüsselte Ort: Mit eingeschalteter orOS-Synchronisie
 - `Alben` oben zeigt deine Alben. Ein Album zeigt Fotos, ohne sie zu verschieben oder zu kopieren, ein Foto kann also in mehreren Alben sein. Wähle unter `Alle` Fotos aus und tippe auf `Zum Album…` (oder auf die Album-Taste in der Ansicht), oder lege eins mit `Neues Album…` an.
 - In einem Album nimmt `Auswählen` › `Aus dem Album entfernen` Fotos heraus, und der Stern in der Ansicht macht ein Foto zum Albumcover. Unter `⋯` gibt es `Album senden…`, `Album umbenennen…` und `Album löschen`. Die Fotos bleiben immer auf dem Laufwerk.
 - Alben werden mit deinen anderen Geräten synchronisiert. Ein Foto, das die Synchronisierung überträgt, wird dort auch nach Verschieben oder Umbenennen wiedergefunden; ein Album zeigt, wie viele seiner Fotos noch nicht auf diesem Gerät sind.
+- `Karte` zeigt die Fotos, die ihren Aufnahmeort enthalten, als kleine Bilder auf der Karte; eine Zahl heißt, dass mehrere nah beieinander aufgenommen wurden. Tippe eins an, um diese Fotos zu sehen, und `‹` führt zurück zur Karte. Die Kartenbilder kommen wie in Karten von OpenStreetMap; die Orte deiner Fotos werden nirgendwohin gesendet.
 > Die kleinen Bilder und die Daten entstehen auf diesem Gerät und bleiben dort. Nur die Alben werden synchronisiert (ihre Namen und welche Fotos sie enthalten); der Aufnahmeort verlässt dein Gerät nie.
 
 ## orOS Drive

@@ -56,6 +56,15 @@
       "ph.tree":        "Photos",
       "ph.tab.all":     "All",
       "ph.tab.albums":  "Albums",
+      "ph.tab.map":     "Map",
+      "ph.map.here":    "{n} here",
+      "ph.map.hereOne": "1 here",
+      "ph.map.back":    "Back to the map",
+      "ph.map.none.title": "No photos with a place yet",
+      "ph.map.none.body":  "Phone cameras usually save where a photo was taken when location is on in the camera app. Those photos show up here. The place stays on this device; the map pictures come from OpenStreetMap, as in Maps.",
+      "ph.map.reading": "Reading places… {i} of {n}",
+      "ph.map.fail":    "The map could not be opened.",
+      "ph.map.label":   "Map of your photos",
       "ph.al.new":      "New album…",
       "ph.al.name":     "Album name",
       "ph.al.create":   "Create",
@@ -142,6 +151,15 @@
       "ph.tree":        "Φωτογραφίες",
       "ph.tab.all":     "Όλες",
       "ph.tab.albums":  "Άλμπουμ",
+      "ph.tab.map":     "Χάρτης",
+      "ph.map.here":    "{n} εδώ",
+      "ph.map.hereOne": "1 εδώ",
+      "ph.map.back":    "Πίσω στον χάρτη",
+      "ph.map.none.title": "Δεν υπάρχουν ακόμα φωτογραφίες με τοποθεσία",
+      "ph.map.none.body":  "Οι κάμερες των κινητών συνήθως κρατούν πού τραβήχτηκε μια φωτογραφία όταν η τοποθεσία είναι ανοιχτή στην εφαρμογή κάμερας. Αυτές οι φωτογραφίες φαίνονται εδώ. Η τοποθεσία μένει σε αυτή τη συσκευή· οι εικόνες του χάρτη έρχονται από το OpenStreetMap, όπως στους Χάρτες.",
+      "ph.map.reading": "Διαβάζω τοποθεσίες… {i} από {n}",
+      "ph.map.fail":    "Ο χάρτης δεν άνοιξε.",
+      "ph.map.label":   "Χάρτης των φωτογραφιών σου",
       "ph.al.new":      "Νέο άλμπουμ…",
       "ph.al.name":     "Όνομα άλμπουμ",
       "ph.al.create":   "Δημιουργία",
@@ -272,6 +290,8 @@
   var viewer = null;
   var albums = AL ? AL.norm(null) : null;      // ALB v1 (synced)
   var tab = "all", albumId = "", albumMissing = 0;
+  var here = null;                             // map: the records of a tapped spot
+  var map = null, mapView = null, leafletP = null;
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -583,7 +603,11 @@
     var list = [], all = [];
     Object.keys(recs).forEach(function (k) { var r = recs[k]; if (!isDoc(r)) all.push(r); });
     albumMissing = 0;
-    if (albumId && AL) {
+    if (here) {
+      var keep = {};
+      here.forEach(function (r) { keep[r.k] = true; });
+      all = all.filter(function (r) { return keep[r.k]; });
+    } else if (albumId && AL) {
       var res = AL.resolve(AL.find(albums, albumId), all);
       albumMissing = res.missing;
       all = res.recs;
@@ -885,18 +909,18 @@
     if ($("ph-panel")) return;
     var bar = el("div", "dbx-bar ph-bar");
     bar.id = "ph-bar";
-    var back = iconBtn("tool ph-back", ICON.back, t("ph.al.back"), function () { openAlbum(""); });
+    var back = iconBtn("tool ph-back", ICON.back, t("ph.al.back"), function () { goBack(); });
     back.id = "ph-back";
     back.hidden = true;
     bar.appendChild(back);
     var ttl = el("strong", "ph-title", t("ph.tree"));
     ttl.id = "ph-title";
     bar.appendChild(ttl);
-    if (AL) {
+    if (AL || window.OrosPhotosCore.cluster) {
       var tabs = el("span", "ph-tabs");
       tabs.id = "ph-tabs";
       tabs.setAttribute("role", "tablist");
-      [["all", "ph.tab.all"], ["albums", "ph.tab.albums"]].forEach(function (x) {
+      [["all", "ph.tab.all"], ["albums", "ph.tab.albums"], ["map", "ph.tab.map"]].forEach(function (x) {
         var b = el("button", "ph-tab", t(x[1]));
         b.type = "button";
         b.id = "ph-tab-" + x[0];
@@ -984,20 +1008,25 @@
   }
 
   function paintHead() {
-    var inAlbum = !!albumId, ttl = $("ph-title"), back = $("ph-back"), tabs = $("ph-tabs");
-    if (ttl) ttl.textContent = inAlbum ? albumName(albumId) : t("ph.tree");
-    if (back) back.hidden = !inAlbum;
+    var inAlbum = !!albumId || !!here, ttl = $("ph-title"), back = $("ph-back"), tabs = $("ph-tabs");
+    if (ttl) ttl.textContent = here ? (here.length === 1 ? t("ph.map.hereOne") : t("ph.map.here", { n: here.length })) : albumId ? albumName(albumId) : t("ph.tree");
+    if (back) {
+      back.hidden = !inAlbum;
+      var bl = here ? t("ph.map.back") : t("ph.al.back");
+      back.title = bl; back.setAttribute("aria-label", bl);
+    }
     if (tabs) tabs.hidden = inAlbum;
     var bar = $("ph-bar");
     if (bar) bar.classList.toggle("in-album", inAlbum);
-    ["all", "albums"].forEach(function (x) {
+    ["all", "albums", "map"].forEach(function (x) {
       var b = $("ph-tab-" + x);
       if (b) b.setAttribute("aria-selected", tab === x ? "true" : "false");
     });
+    var board = tab !== "all" && !inAlbum;     // the album cards or the map
     var sel = $("ph-select");
-    if (sel) sel.hidden = tab === "albums" && !inAlbum;
+    if (sel) sel.hidden = board;
     var z = document.querySelectorAll("#ph-bar .ph-zoom");
-    for (var i = 0; i < z.length; i++) z[i].hidden = tab === "albums" && !inAlbum;
+    for (var i = 0; i < z.length; i++) z[i].hidden = board;
   }
   function paintMsg() {
     var m = $("ph-msg"), cnt = $("ph-count");
@@ -1015,6 +1044,20 @@
       return;
     }
     if (nA > 0) { m.hidden = true; return; }
+    if (tab === "map" && !here) {
+      if (cnt) cnt.textContent = "";
+      var placed = placedRecs().length;
+      if (metaLeft > 0) { m.textContent = t("ph.map.reading", { i: metaTotal - metaLeft, n: metaTotal }); return; }
+      if (!placed && !scanning) {
+        var nb = el("div", "ph-empty");
+        nb.appendChild(el("strong", "", t("ph.map.none.title")));
+        nb.appendChild(el("p", "", t("ph.map.none.body")));
+        m.appendChild(nb);
+        return;
+      }
+      m.hidden = true;
+      return;
+    }
     if (albumId) {
       if (!order.length && !albumMissing && !scanning) { m.textContent = t("ph.al.emptyOne"); return; }
       if (albumMissing && !scanning) { m.textContent = t("ph.al.missing", { n: albumMissing }); return; }
@@ -1067,7 +1110,10 @@
     tileObs = typeof IntersectionObserver === "function" ? new IntersectionObserver(function (list) {
       list.forEach(function (en) { if (en.isIntersecting) wantThumb(en.target); });
     }, { root: sc, rootMargin: "600px 0px" }) : null;
+    sc.classList.toggle("map-on", tab === "map" && !here);
+    if (tab !== "map" || here) dropMap();
     if (tab === "albums" && !albumId) { paintAlbums(sc); return; }
+    if (tab === "map" && !here) { paintMap(sc); return; }
     var sentinel = el("div", "ph-more-sentinel");
     sentinel.id = "ph-sentinel";
     sc.appendChild(sentinel);
@@ -1189,10 +1235,14 @@
   function setTab(x) {
     if (x === tab && !albumId) return;
     if (selecting) setSelecting(false);
-    tab = x; albumId = "";
+    tab = x; albumId = ""; here = null;
     rebuild();
     var sc = $("ph-scroll");
     if (sc) sc.scrollTop = 0;
+  }
+  function goBack() {
+    if (here) { if (selecting) setSelecting(false); here = null; rebuild(); return; }
+    openAlbum("");
   }
   function openAlbum(id) {
     if (selecting) setSelecting(false);
@@ -1381,6 +1431,115 @@
     a.it.forEach(function (it) { if (!it.x && (it.k === AL.keyOf(r) || it.p === r.k)) key = it.k; });
     if (!key) return;
     if (commitAlbums(AL.setCover(albums, albumId, key, Date.now()))) toast(t("ph.al.covered"));
+  }
+
+  // ---------- map (P3) ----------
+  // Leaflet (vendor/leaflet.js, precached) loads the first time the
+  // map opens. Tiles are OpenStreetMap's, cached by the service worker
+  // in "oros-map-tiles" like Maps. Places never leave the device: only
+  // tile requests for the area on screen go out.
+  function placedRecs() {
+    var out = [];
+    Object.keys(recs).forEach(function (k) { var r = recs[k]; if (!isDoc(r) && CORE.validGps(r.lat, r.lon)) out.push(r); });
+    return out;
+  }
+  function loadLeaflet() {
+    if (window.L && window.L.map) return Promise.resolve(window.L);
+    if (leafletP) return leafletP;
+    var v = ctx && ctx.ver ? "?v=" + encodeURIComponent(ctx.ver) : "";
+    leafletP = new Promise(function (res, rej) {
+      if (!document.getElementById("leaflet-css")) {
+        var l = el("link");
+        l.id = "leaflet-css"; l.rel = "stylesheet"; l.href = "../vendor/leaflet.css" + v;
+        document.head.appendChild(l);
+      }
+      var sc = document.createElement("script");
+      sc.src = "../vendor/leaflet.js" + v;
+      sc.onload = function () { if (window.L && window.L.map) res(window.L); else rej(new Error("leaflet")); };
+      sc.onerror = function () { sc.remove(); rej(new Error("leaflet")); };
+      document.head.appendChild(sc);
+    });
+    leafletP.then(null, function () { leafletP = null; });
+    return leafletP;
+  }
+  function dropMap() {
+    if (!map) return;
+    try { mapView = { c: map.getCenter(), z: map.getZoom() }; map.remove(); } catch (e) {}
+    map = null;
+  }
+  function paintMap(sc) {
+    dropMap();
+    var years = $("ph-years");
+    if (years) years.hidden = true;
+    paintSelBar();
+    var pts = placedRecs();
+    if (!pts.length) return;
+    var box = el("div", "ph-map");
+    box.id = "ph-map";
+    box.setAttribute("role", "region");
+    box.setAttribute("aria-label", t("ph.map.label"));
+    sc.appendChild(box);
+    var gen = renderGen;
+    loadLeaflet().then(function (L) {
+      if (gen !== renderGen || !box.isConnected) return;
+      map = L.map(box, { zoomControl: true, attributionControl: true, worldCopyJump: true, minZoom: 2, maxZoom: 18 });
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+      }).addTo(map);
+      var layer = L.layerGroup().addTo(map);
+      if (mapView) map.setView(mapView.c, mapView.z);
+      else {
+        var b = CORE.geoBounds(pts);
+        map.fitBounds(b, { padding: [40, 40], maxZoom: 13 });
+      }
+      function draw() {
+        layer.clearLayers();
+        var z = map.getZoom(), list = [];
+        pts.forEach(function (r) {
+          var p = map.project([r.lat, r.lon], z);
+          list.push({ x: p.x, y: p.y, t: r.t, k: r.k, rec: r });
+        });
+        CORE.cluster(list, 72).forEach(function (g) {
+          var top = g.items[0].rec;
+          var icon = L.divIcon({ className: "ph-pin", html: "", iconSize: [52, 52], iconAnchor: [26, 52] });
+          var mk = L.marker(map.unproject([g.x, g.y], z), { icon: icon, keyboard: true, title: g.items.length === 1 ? baseName(top.k) : t("ph.map.here", { n: g.items.length }) });
+          mk.on("add", function () {
+            var node = mk.getElement();
+            if (!node) return;
+            node.innerHTML = "";
+            node.setAttribute("aria-label", mk.options.title);
+            var face = el("span", "ph-pinface");
+            face._rec = top;
+            face.innerHTML = top.kind === "video" ? ICON.video : ICON.photo;
+            node.appendChild(face);
+            if (g.items.length > 1) node.appendChild(el("span", "ph-pinn", String(g.items.length)));
+            var key = thumbKey(top);
+            if (urls[key]) showThumb(face, key, null); else wantThumb(face);
+          });
+          mk.on("click", function () { openHere(g.items.map(function (x) { return x.rec; })); });
+          layer.addLayer(mk);
+        });
+      }
+      map.on("zoomend", draw);
+      draw();
+      setTimeout(function () { if (map) map.invalidateSize(); }, 50);
+    }, function () {
+      if (gen !== renderGen) return;
+      box.remove();
+      var m = $("ph-msg");
+      if (m) { m.hidden = false; m.textContent = t("ph.map.fail"); }
+    });
+  }
+  function openHere(list) {
+    if (!list.length) return;
+    if (selecting) setSelecting(false);
+    if (map) mapView = { c: map.getCenter(), z: map.getZoom() };
+    here = list.slice();
+    rebuild();
+    var sc = $("ph-scroll");
+    if (sc) sc.scrollTop = 0;
+    if (list.length === 1) openViewer(0);
   }
 
   // ---------- selecting ----------
@@ -1825,6 +1984,8 @@
     if (m) m.remove();
     if (tileObs) { tileObs.disconnect(); tileObs = null; }
     if (moreObs) { moreObs.disconnect(); moreObs = null; }
+    dropMap();
+    here = null;
     thumbJobs = []; cloudJobs = [];
     var sc = $("ph-scroll");
     if (sc) { sc.innerHTML = ""; sc._lastDay = null; sc._grid = null; }

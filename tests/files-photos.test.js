@@ -202,3 +202,22 @@ test("near-duplicate hashes", () => {
   assert.equal(C.hamming("bad", h), 64);
   assert.equal(C.dHash([1, 2]), "");
 });
+
+test("map: points group per cell, newest first, stable; bounds of the placed records", () => {
+  const pts = [
+    { x: 10, y: 10, t: 5, k: "/internal/a.jpg" },
+    { x: 20, y: 30, t: 9, k: "/internal/b.jpg" },
+    { x: 70, y: 10, t: 1, k: "/internal/c.jpg" },
+    { x: 20, y: 30, t: 9, k: "/internal/a2.jpg" },
+    { x: NaN, y: 1, t: 1, k: "/internal/bad.jpg" }
+  ];
+  const g = C.cluster(pts, 64);
+  assert.equal(g.length, 2);
+  assert.deepEqual(g[0].items.map((p) => p.k), ["/internal/a2.jpg", "/internal/b.jpg", "/internal/a.jpg"]);
+  assert.equal(g[0].x, 20);
+  assert.deepEqual(g[1].items.map((p) => p.k), ["/internal/c.jpg"]);
+  assert.deepEqual(C.cluster(pts.slice().reverse(), 64).map((x) => x.items.map((p) => p.k)), g.map((x) => x.items.map((p) => p.k)));
+  assert.deepEqual(C.cluster([], 64), []);
+  assert.deepEqual(C.geoBounds([{ lat: 35.3, lon: 25.1 }, { lat: 37.9, lon: 23.7 }, { lat: 0, lon: 0 }, { lat: 99, lon: 1 }, {}]), [[35.3, 23.7], [37.9, 25.1]]);
+  assert.equal(C.geoBounds([{}]), null);
+});
