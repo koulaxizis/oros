@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 42238 of 42755 (98%)
-- Help pages: 156 of 157 (99%)
+- Strings: 42650 of 43170 (98%)
+- Help pages: 157 of 158 (99%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -19,6 +19,7 @@ text is still written in the code. They switch over wave by wave
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
+| base | 100% | 273 / 273 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
@@ -72,11 +73,11 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | 100% | 90 / 90 |
 | kanban | 99% | 315 / 318 |
 | labels | 100% | 88 / 88 |
-| layout | 99% | 953 / 961 |
+| layout | 99% | 997 / 1005 |
 | library | 100% | 323 / 323 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
-| lyricsync | 100% | 182 / 182 |
+| lyricsync | 100% | 224 / 224 |
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 496 / 496 |
 | mancala | 100% | 61 / 61 |
@@ -94,7 +95,7 @@ text is still written in the code. They switch over wave by wave
 | museum | 100% | 46 / 46 |
 | music | 99% | 538 / 539 |
 | names | 100% | 40 / 40 |
-| netizen | 100% | 121 / 121 |
+| netizen | 98% | 172 / 175 |
 | newsletter | 99% | 1003 / 1008 |
 | nonogram | 100% | 70 / 70 |
 | notes | 99% | 190 / 191 |
@@ -128,7 +129,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 98% | 1173 / 1188 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1173 / 1178 |
+| shell | 99% | 1175 / 1180 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 383 / 383 |

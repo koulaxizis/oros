@@ -64,6 +64,12 @@
    ]
   },
   {
+   "app": "base",
+   "files": [
+    "base/app.js"
+   ]
+  },
+  {
    "app": "battleship",
    "files": [
     "battleship/battleship.js"
