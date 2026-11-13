@@ -819,67 +819,6 @@
   var PB_MT = { single: "single", ep: "ep", album: "album", compilation: "comp" };
   var PB_MED = { digital: "dig", cd: "cd", vinyl: "vin", cassette: "cas", other: "ot" };
   var PB_TRK = 200;
-  // wave M2: credits and shares on a track
-  var PB_CR = { artist: "art", featured: "feat", composer: "comp", lyricist: "lyr", arranger: "arr", producer: "prod", mixing: "mix",
-                mastering: "mast", engineer: "eng", musician: "mus", other: "o" };
-  function sharesArg(x, k, w, writer, C) {
-    if (empty(x, k)) return { v: [] };
-    if (!Array.isArray(x[k])) return { err: w + k + " must be a list of { name, share" + (writer ? ", society, ipi" : "") + " }." };
-    if (x[k].length > C.MAX_SH) return { err: w + k + ": a track keeps " + C.MAX_SH + " people here." };
-    var out = [];
-    for (var i = 0; i < x[k].length; i++) {
-      var y = x[k][i], yw = w + k + "[" + i + "].";
-      if (!isObj(y)) return { err: yw + " must be an object." };
-      var n = text1(y, "name", 120, yw, "a name");
-      if (n.err) return n;
-      if (!n.v) return { err: yw + "name is required." };
-      var s = numArg(y, "share", 0, 100, yw);
-      if (s.err) return s;
-      if (s.v === null) return { err: yw + "share is required (percent, 0-100)." };
-      var o = { n: n.v, pct: Math.round(s.v * 100) / 100 };
-      if (writer) {
-        var so = text1(y, "society", 60, yw, "a society's name");
-        if (so.err) return so;
-        if (so.v) o.soc = so.v;
-        if (!empty(y, "ipi")) {
-          var ipi = String(y.ipi).replace(/\D/g, "");
-          if (!/^\d{9,11}$/.test(ipi)) return { err: yw + "ipi must be the 9 to 11 digit IPI number; leave it out when unsure." };
-          o.ipi = ipi;
-        }
-      }
-      out.push(o);
-    }
-    if (out.length && C.shareSum(out) !== 100) return { err: w + k + " add up to " + C.shareSum(out) + "%; the shares must make 100%. Ask the user rather than guess." };
-    return { v: out };
-  }
-  function creditsArg(x, w, C) {
-    if (empty(x, "credits")) return { v: [] };
-    if (!Array.isArray(x.credits)) return { err: w + "credits must be a list of { role, name, instrument }." };
-    if (x.credits.length > C.MAX_CR) return { err: w + "credits: a track keeps " + C.MAX_CR + " credits." };
-    var out = [];
-    for (var i = 0; i < x.credits.length; i++) {
-      var y = x.credits[i], yw = w + "credits[" + i + "].";
-      if (!isObj(y)) return { err: yw + " must be an object." };
-      var r = empty(y, "role") ? "other" : String(y.role);
-      if (!has(PB_CR, r)) return { err: yw + "role must be one of " + Object.keys(PB_CR).join(", ") + "." };
-      var n = text1(y, "name", 120, yw, "a name");
-      if (n.err) return n;
-      if (!n.v) return { err: yw + "name is required." };
-      var ins = text1(y, "instrument", 60, yw, "an instrument");
-      if (ins.err) return ins;
-      var o = { r: PB_CR[r], n: n.v };
-      if (ins.v) o.ins = ins.v;
-      out.push(o);
-    }
-    return { v: out };
-  }
-  function durArg(x, k, w) {
-    if (empty(x, k)) return { v: 0 };
-    if (typeof x[k] === "number" && x[k] >= 0 && x[k] <= 36000 && Math.floor(x[k]) === x[k]) return { v: x[k] };
-    var m = /^\s*(?:(\d{1,2}):)?(\d{1,3}):(\d{2})\s*$/.exec(String(x[k]));
-    if (m && +m[3] < 60) return { v: (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]) };
-    return { err: w + k + " must be the length as m:ss (e.g. 3:45) or whole seconds." };
-  }
   function normMusic(x, o, w, C) {
     var rt = String(x.release_type);
     if (!has(PB_MT, rt)) return { err: w + "release_type must be single, ep, album or compilation." };
@@ -900,38 +839,15 @@
     if (tl.length > PB_TRK) return { err: w + "a release keeps " + PB_TRK + " tracks in Publishing; give fewer." };
     o.trk = [];
     for (i = 0; i < tl.length; i++) {
-      var tr = typeof tl[i] === "string" ? { title: tl[i] } : tl[i], tw = w + "tracks[" + i + "].";
-      if (!isObj(tr)) return { err: w + "tracks[" + i + "] must be an object (or a title)." };
-      var r = text1(tr, "title", 200, tw, "a track's title");
-      if (r.err) return r;
-      if (!r.v) return { err: tw + "title is required." };
-      var to = { t: r.v, ver: "", art: "", isrc: "", dur: 0, lang: o.lang, ex: tr.explicit === true ? 1 : 0 };
-      var tx = [["version", "ver", 120, "a version"], ["artist", "art", 200, "an artist"], ["language", "lang", 40, "a language"]];
-      for (var j = 0; j < tx.length; j++) {
-        var z = text1(tr, tx[j][0], tx[j][2], tw, tx[j][3]);
-        if (z.err) return z;
-        if (z.v) to[tx[j][1]] = z.v;
+      var ta = C.trackArgs(tl[i], w + "tracks[" + i + "]."), tw = w + "tracks[" + i + "].";
+      if (ta.err) return ta;
+      var to = Object.assign({ ver: "", art: "", isrc: "", dur: 0, lang: o.lang, ex: 0 }, ta.v);
+      if (!to.t) return { err: tw + "title is required." };
+      if (to.isrc) {
+        if (seen[to.isrc]) return { err: tw + "isrc " + C.fmtIsrc(to.isrc) + " is given twice." };
+        seen[to.isrc] = 1;
       }
-      if (!empty(tr, "explicit") && typeof tr.explicit !== "boolean") return { err: tw + "explicit must be true or false." };
-      if (!empty(tr, "isrc")) {
-        var pi = C.parseIsrc(String(tr.isrc));
-        if (!pi.ok) return { err: tw + "isrc " + String(tr.isrc).slice(0, 30) + " is not a valid ISRC (CC-XXX-YY-NNNNN). Leave it out when unsure; never make one up." };
-        if (seen[pi.isrc]) return { err: tw + "isrc " + C.fmtIsrc(pi.isrc) + " is given twice." };
-        seen[pi.isrc] = 1;
-        to.isrc = pi.isrc;
-      }
-      var du = durArg(tr, "length", tw);
-      if (du.err) return du;
-      to.dur = du.v;
-      var cr = creditsArg(tr, tw, C);
-      if (cr.err) return cr;
-      if (cr.v.length) to.cr = cr.v;
-      var sw = sharesArg(tr, "writers", tw, true, C);
-      if (sw.err) return sw;
-      if (sw.v.length) to.sw = sw.v;
-      var sm = sharesArg(tr, "masters", tw, false, C);
-      if (sm.err) return sm;
-      if (sm.v.length) to.sm = sm.v;
+      ["cr", "sw", "sm"].forEach(function (k) { if (to[k] && !to[k].length) delete to[k]; });
       o.trk.push(to);
     }
     var el = empty(x, "editions") ? [] : x.editions;
@@ -939,27 +855,13 @@
     if (el.length > PB.fmts) return { err: w + "a release keeps " + PB.fmts + " editions in Publishing; give fewer." };
     o.med = [];
     for (i = 0; i < el.length; i++) {
-      var e = el[i], ew = w + "editions[" + i + "].";
-      if (!isObj(e)) return { err: w + "editions[" + i + "] must be an object." };
-      var k = empty(e, "edition") ? "digital" : String(e.edition);
-      if (!has(PB_MED, k)) return { err: ew + "edition must be digital, cd, vinyl, cassette or other." };
-      var eo = { k: PB_MED[k], upc: "", cat: "", price: 0, dist: "" };
-      if (!empty(e, "upc")) {
-        var pu = C.parseUpc(String(e.upc));
-        if (!pu.ok) return { err: ew + "upc " + String(e.upc).slice(0, 30) + " is not a valid UPC (12 digits) or EAN (13 digits)" + (pu.why === "check" ? " (its check digit is wrong)" : pu.why === "isbn" ? " (it is an ISBN)" : "") + ". Leave it out when unsure; never make one up." };
-        if (seen[C.upcKey(pu.upc)]) return { err: ew + "upc " + pu.upc + " is given twice." };
-        seen[C.upcKey(pu.upc)] = 1;
-        eo.upc = pu.upc;
+      var ea = C.editionArgs(el[i], w + "editions[" + i + "]."), ew = w + "editions[" + i + "].";
+      if (ea.err) return ea;
+      var eo = Object.assign({ k: "dig", upc: "", cat: "", price: 0, dist: "" }, ea.v);
+      if (eo.upc) {
+        if (seen[C.upcKey(eo.upc)]) return { err: ew + "upc " + eo.upc + " is given twice." };
+        seen[C.upcKey(eo.upc)] = 1;
       }
-      var cz = text1(e, "catalogue_no", 40, ew, "a catalogue number");
-      if (cz.err) return cz;
-      eo.cat = cz.v;
-      var dz = text1(e, "distributor", 80, ew, "a distributor's name");
-      if (dz.err) return dz;
-      eo.dist = dz.v;
-      var p = numArg(e, "price", 0, 1e6, ew);
-      if (p.err) return p;
-      eo.price = p.v ? Math.round(p.v * 100) / 100 : 0;
       o.med.push(eo);
     }
     return null;

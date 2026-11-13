@@ -1102,6 +1102,121 @@
     return out;
   }
 
+  // ---------- Arguments from the Assistant and the Gate (waves M1-M2) ----------
+  // create_items and change_item describe a track or an edition in
+  // words (assistant/additems3.js, assistant/edits4.js). These read one
+  // and return only the fields given, cleaned, or an error that says
+  // what is wrong; a code is never guessed or dropped.
+  var ARG_CR = { artist: "art", featured: "feat", composer: "comp", lyricist: "lyr", arranger: "arr", producer: "prod", mixing: "mix",
+                 mastering: "mast", engineer: "eng", musician: "mus", other: "o" };
+  var ARG_MED = { digital: "dig", cd: "cd", vinyl: "vin", cassette: "cas", other: "ot" };
+  var TRK_ARGS = ["title", "version", "artist", "isrc", "length", "language", "explicit", "credits", "writers", "masters"];
+  var MED_ARGS = ["edition", "upc", "catalogue_no", "price", "distributor", "note"];
+  function given(x, k) { return x && Object.prototype.hasOwnProperty.call(x, k) && x[k] !== null && x[k] !== undefined && x[k] !== ""; }
+  function argText(x, k, max, w, out, key) {
+    if (!given(x, k)) return "";
+    if (typeof x[k] !== "string" && typeof x[k] !== "number") return w + k + " must be text.";
+    var v = line(String(x[k]), max * 4);
+    if (v.length > max) return w + k + " has " + v.length + " characters; Publishing keeps " + max + ".";
+    out[key] = v;
+    return "";
+  }
+  function argShares(list, k, w, writer) {
+    if (!Array.isArray(list)) return { err: w + k + " must be a list of { name, share" + (writer ? ", society, ipi" : "") + " }." };
+    if (list.length > MAX_SH) return { err: w + k + ": a track keeps " + MAX_SH + " people here." };
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      var y = list[i], yw = w + k + "[" + i + "].", o = {}, e;
+      if (!y || typeof y !== "object" || Array.isArray(y)) return { err: yw + " must be an object." };
+      if ((e = argText(y, "name", 120, yw, o, "n"))) return { err: e };
+      if (!o.n) return { err: yw + "name is required." };
+      var s = typeof y.share === "number" ? y.share : given(y, "share") && /^\s*\d+(?:[.,]\d+)?\s*%?\s*$/.test(String(y.share)) ? Number(String(y.share).replace(",", ".").replace("%", "")) : NaN;
+      if (!(s >= 0 && s <= 100)) return { err: yw + "share is required: a percent from 0 to 100." };
+      o.pct = Math.round(s * 100) / 100;
+      if (writer) {
+        if ((e = argText(y, "society", 60, yw, o, "soc"))) return { err: e };
+        if (given(y, "ipi")) {
+          var ipi = String(y.ipi).replace(/\D/g, "");
+          if (!/^\d{9,11}$/.test(ipi)) return { err: yw + "ipi must be the 9 to 11 digit IPI number; leave it out when unsure." };
+          o.ipi = ipi;
+        }
+      }
+      out.push(o);
+    }
+    if (out.length && shareSum(out) !== 100) return { err: w + k + " add up to " + shareSum(out) + "%; the shares must make 100%. Ask the user rather than guess." };
+    return { v: out };
+  }
+  function trackArgs(x, w) {
+    if (typeof x === "string") x = { title: x };
+    if (!x || typeof x !== "object" || Array.isArray(x)) return { err: w + " must be an object (or a title)." };
+    var no = Object.keys(x).filter(function (k) { return TRK_ARGS.indexOf(k) < 0; });
+    if (no.length) return { err: w + " has no " + no.join(", ") + " (a track takes " + TRK_ARGS.join(", ") + ")." };
+    var o = {}, e;
+    if ((e = argText(x, "title", 200, w, o, "t") || argText(x, "version", 120, w, o, "ver") || argText(x, "artist", 200, w, o, "art") ||
+         argText(x, "language", 40, w, o, "lang"))) return { err: e };
+    if (given(x, "isrc")) {
+      var pi = parseIsrc(String(x.isrc));
+      if (!pi.ok) return { err: w + "isrc " + String(x.isrc).slice(0, 30) + " is not a valid ISRC (CC-XXX-YY-NNNNN). Leave it out when unsure; never make one up." };
+      o.isrc = pi.isrc;
+    }
+    if (given(x, "length")) {
+      var v = x.length, m = typeof v === "string" ? /^\s*(?:(\d{1,2}):)?(\d{1,3}):(\d{2})\s*$/.exec(v) : null;
+      if (typeof v === "number" && v >= 0 && v <= 36000 && Math.floor(v) === v) o.dur = v;
+      else if (m && +m[3] < 60) o.dur = (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]);
+      else return { err: w + "length must be the length as m:ss (e.g. 3:45) or whole seconds." };
+    }
+    if (given(x, "explicit")) {
+      if (typeof x.explicit !== "boolean") return { err: w + "explicit must be true or false." };
+      o.ex = x.explicit ? 1 : 0;
+    }
+    if (given(x, "credits") || Array.isArray(x.credits)) {
+      if (!Array.isArray(x.credits)) return { err: w + "credits must be a list of { role, name, instrument }." };
+      if (x.credits.length > MAX_CR) return { err: w + "credits: a track keeps " + MAX_CR + " credits." };
+      o.cr = [];
+      for (var i = 0; i < x.credits.length; i++) {
+        var y = x.credits[i], yw = w + "credits[" + i + "].", co = {};
+        if (!y || typeof y !== "object" || Array.isArray(y)) return { err: yw + " must be an object." };
+        var r = given(y, "role") ? String(y.role) : "other";
+        if (!Object.prototype.hasOwnProperty.call(ARG_CR, r)) return { err: yw + "role must be one of " + Object.keys(ARG_CR).join(", ") + "." };
+        if ((e = argText(y, "name", 120, yw, co, "n") || argText(y, "instrument", 60, yw, co, "ins"))) return { err: e };
+        if (!co.n) return { err: yw + "name is required." };
+        co.r = ARG_CR[r];
+        o.cr.push(co);
+      }
+    }
+    var sh = [["writers", "sw", true], ["masters", "sm", false]];
+    for (var j = 0; j < sh.length; j++) {
+      if (!(given(x, sh[j][0]) || Array.isArray(x[sh[j][0]]))) continue;
+      var rs = argShares(x[sh[j][0]], sh[j][0], w, sh[j][2]);
+      if (rs.err) return rs;
+      o[sh[j][1]] = rs.v;
+    }
+    return { v: o };
+  }
+  function editionArgs(x, w) {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return { err: w + " must be an object." };
+    var no = Object.keys(x).filter(function (k) { return MED_ARGS.indexOf(k) < 0; });
+    if (no.length) return { err: w + " has no " + no.join(", ") + " (an edition takes " + MED_ARGS.join(", ") + ")." };
+    var o = {}, e;
+    if (given(x, "edition")) {
+      if (!Object.prototype.hasOwnProperty.call(ARG_MED, String(x.edition))) return { err: w + "edition must be digital, cd, vinyl, cassette or other." };
+      o.k = ARG_MED[String(x.edition)];
+    }
+    if (given(x, "upc")) {
+      var pu = parseUpc(String(x.upc));
+      if (!pu.ok) return { err: w + "upc " + String(x.upc).slice(0, 30) + " is not a valid UPC (12 digits) or EAN (13 digits)" + (pu.why === "check" ? " (its check digit is wrong)" : pu.why === "isbn" ? " (it is an ISBN)" : "") + ". Leave it out when unsure; never make one up." };
+      o.upc = pu.upc;
+    }
+    if ((e = argText(x, "catalogue_no", 40, w, o, "cat") || argText(x, "distributor", 80, w, o, "dist") || argText(x, "note", 200, w, o, "note"))) return { err: e };
+    if (given(x, "price")) {
+      var p = typeof x.price === "number" ? x.price : /^\s*\d+(?:[.,]\d+)?\s*$/.test(String(x.price)) ? Number(String(x.price).replace(",", ".")) : NaN;
+      if (!(p >= 0 && p <= 1e6)) return { err: w + "price must be a number from 0." };
+      o.price = Math.round(p * 100) / 100;
+    }
+    return { v: o };
+  }
+  function argName(map, v) { var k = ""; Object.keys(map).forEach(function (x) { if (map[x] === v) k = x; }); return k; }
+
   // ---------- Split sheet (wave M2) ----------
   // A plain-text split sheet for one track, for Writer (newDoc): the
   // release, the track and its codes, the writers' shares with society
@@ -1276,6 +1391,7 @@
     removeRelease: removeRelease, orderTracks: orderTracks,
     CR_ROLES: CR_ROLES, MAX_CR: MAX_CR, MAX_SH: MAX_SH, cleanCredit: cleanCredit, cleanShare: cleanShare,
     shareSum: shareSum, shareState: shareState, splitSheet: splitSheet,
+    ARG_CR: ARG_CR, ARG_MED: ARG_MED, TRK_ARGS: TRK_ARGS, MED_ARGS: MED_ARGS, trackArgs: trackArgs, editionArgs: editionArgs, argName: argName,
     POST_NETS: POST_NETS, POST_MAX: POST_MAX, POST_HOME: POST_HOME, cleanPost: cleanPost, postsDue: postsDue, postUrl: postUrl, postLen: postLen
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
