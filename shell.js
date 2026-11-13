@@ -8721,6 +8721,16 @@
   // Settings › System › SOS: the typed passphrase is checked first
   // (nothing is touched on a wrong one), then 10 s to cancel.
   var sosTimer = null;
+  // Public entry for other parts of orOS (Sensitive work mode, strict.js):
+  // opens Settings › System on the SOS card. It never starts anything;
+  // SOS + passphrase are still typed there and the countdown still runs.
+  window.orosSOS = {
+    open: function () {
+      if (osResetting || sosTimer) return false;
+      window.__orosOpenAt("settings", { section: "system", item: "sos" });
+      return true;
+    }
+  };
   function sosStart(pass) {
     var S = window.orosSync;
     if (osResetting || sosTimer) return;
