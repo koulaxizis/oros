@@ -10,6 +10,8 @@ const path = require("path");
 
 const DIR = path.join(__dirname, "..", "device");
 const C = require(path.join(DIR, "core.js"));
+// The view: Settings › Device since the 2026-11-12 merge (APP-ALIAS).
+const VIEW = path.join(DIR, "view.js");
 const APPS = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "apps.json"), "utf8"))
   .apps.map((a) => a.id);
 const IDS = ["weather", "time", "calendar", "petworld", "wallpaper", "todo", "notes",
@@ -154,8 +156,8 @@ test("buildReport: headers, rows, one trailing newline", () => {
   assert.equal(r, "Report\n\n## A\n- x: 1\n- y: 2\n\n## B\n");
 });
 
-test("the app never writes another app's key and never reads values into the DOM", () => {
-  const src = fs.readFileSync(path.join(DIR, "device.js"), "utf8").replace(/\/\/.*$/gm, "");
+test("the Device section never writes another app's key and never reads values into the DOM", () => {
+  const src = fs.readFileSync(VIEW, "utf8").replace(/\/\/.*$/gm, "");
   const writes = src.match(/localStorage\.(setItem|removeItem|clear)\([^)]*\)/g) || [];
   writes.forEach((w) => assert.match(w, /^localStorage\.setItem\(PREFS_KEY,/, w));
   assert.ok(!/innerHTML|insertAdjacentHTML|document\.write/.test(src), "no HTML injection");
@@ -164,7 +166,7 @@ test("the app never writes another app's key and never reads values into the DOM
 });
 
 test("every string exists in both languages", () => {
-  const src = fs.readFileSync(path.join(DIR, "device.js"), "utf8");
+  const src = fs.readFileSync(VIEW, "utf8");
   const block = (lang) => {
     const m = src.match(new RegExp("\\n    " + lang + ": \\{([\\s\\S]*?)\\n    \\}"));
     return new Set([...m[1].matchAll(/"([a-zA-Z._]+)":/g)].map((x) => x[1]));
@@ -184,4 +186,30 @@ test("batteryState: never trust a made-up full battery", () => {
   assert.equal(C.batteryState(real), "ok");
   assert.equal(C.batteryState(real, { brave: true }), "hidden");
   assert.equal(C.batteryState({ level: 1, charging: false, chargingTime: Infinity, dischargingTime: 36000 }), "ok");
+});
+
+test("merge: Device Info lives in Settings › Device (APP-ALIAS)", () => {
+  const read = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+  const apps = JSON.parse(read("apps.json"));
+  assert.ok(!APPS.includes("device"), "no menu entry of its own");
+  assert.deepEqual(apps.aliases.find((a) => a.id === "device"),
+    { id: "device", name: "Device Info", to: "settings", target: { section: "device" } });
+  for (const f of ["device.js", "device.css", "help.en.txt", "help.el.txt"]) {
+    assert.ok(!fs.existsSync(path.join(DIR, f)), f);
+  }
+  assert.ok(read("device/index.html").includes('"../?open=device"'));
+  const S = require(path.join(__dirname, "..", "settings", "core.js"));
+  // agreed with the Fonts thread: "device" right after "system"
+  assert.equal(S.SECTIONS[S.SECTIONS.indexOf("system") + 1], "device");
+  const js = read("settings/settings.js"), html = read("settings/index.html");
+  // loaded only when the section opens (Settings size budget)
+  assert.ok(!/device\//.test(html), "Settings' page loads nothing of it up front");
+  assert.ok(js.includes('loadScript("../device/core.js")') && js.includes('loadScript("../device/view.js")'));
+  assert.ok(js.includes('window.orosI18n.ensure(LANG, "device", resolve)'), "the device language pack comes along");
+  assert.ok(/device: secDevice/.test(js));
+  // the menu row and every old way in land on the section
+  assert.ok(read("shell.js").includes('window.orosSettings.open("device");'));
+  assert.ok(!read("shell.js").includes('openAppById("device")'));
+  // the view counts an old app's keys as its own (aliases join the app ids)
+  assert.ok(read("device/view.js").includes("return apps.concat(aliases).map("));
 });
