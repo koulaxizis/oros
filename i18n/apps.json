@@ -338,6 +338,13 @@
    ]
   },
   {
+   "app": "forms",
+   "files": [
+    "forms/app.js",
+    "forms/render.js"
+   ]
+  },
+  {
    "app": "g2048",
    "files": [
     "g2048/g2048.js"
@@ -841,7 +848,9 @@
   {
    "app": "scanpdf",
    "files": [
-    "scanpdf/scanpdf.js"
+    "scanpdf/scanpdf.js",
+    "scanpdf/search.js",
+    "scanpdf/sign.js"
    ]
   },
   {
@@ -894,14 +903,6 @@
    "app": "simon",
    "files": [
     "simon/simon.js"
-   ]
-  },
-  {
-   "app": "sky",
-   "files": [
-    "sky/core.js",
-    "sky/sky.js",
-    "sky/stars.js"
    ]
   },
   {

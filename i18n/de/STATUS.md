@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 42843 of 43376 (98%)
+- Strings: 43477 of 44010 (98%)
 - Help pages: 156 of 157 (99%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1816 / 1818 |
+| assistant | 99% | 1861 / 1863 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
@@ -25,7 +25,7 @@ text is still written in the code. They switch over wave by wave
 | bubble | 100% | 54 / 54 |
 | budget | 90% | 1065 / 1180 |
 | calculator | 100% | 166 / 166 |
-| calendar | 97% | 440 / 450 |
+| calendar | 98% | 551 / 561 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
@@ -57,6 +57,7 @@ text is still written in the code. They switch over wave by wave
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
+| forms | 100% | 226 / 226 |
 | g2048 | 100% | 55 / 55 |
 | gamecenter | 100% | 158 / 158 |
 | garage | 100% | 437 / 437 |
@@ -70,7 +71,7 @@ text is still written in the code. They switch over wave by wave
 | household | 99% | 142 / 143 |
 | invoices | 97% | 659 / 673 |
 | jigsaw | 100% | 90 / 90 |
-| kanban | 99% | 315 / 318 |
+| kanban | 99% | 331 / 334 |
 | labels | 100% | 88 / 88 |
 | layout | 99% | 997 / 1005 |
 | library | 100% | 323 / 323 |
@@ -123,15 +124,15 @@ text is still written in the code. They switch over wave by wave
 | ringtones | 100% | 107 / 107 |
 | roots | 100% | 226 / 226 |
 | rps | 100% | 60 / 60 |
-| scanpdf | 100% | 342 / 342 |
+| scanpdf | 100% | 517 / 517 |
 | scores | 100% | 147 / 147 |
 | settings | 98% | 1173 / 1188 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1177 / 1182 |
+| shell | 99% | 1178 / 1183 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
-| sky | 100% | 383 / 383 |
+| sky | English for now | 375 / 375 |
 | slider | 100% | 38 / 38 |
 | slides | 100% | 427 / 427 |
 | snake | 100% | 53 / 53 |
@@ -163,10 +164,10 @@ text is still written in the code. They switch over wave by wave
 | wallpaper | 100% | 130 / 130 |
 | water | 100% | 94 / 94 |
 | wayfarers | 100% | 549 / 549 |
-| weather | 100% | 186 / 186 |
+| weather | 100% | 190 / 190 |
 | whack | 100% | 51 / 51 |
 | wheel | 100% | 107 / 107 |
-| whiteboard | 100% | 195 / 195 |
+| whiteboard | 100% | 259 / 259 |
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
@@ -186,6 +187,7 @@ These show English until fixed (usually the English text changed).
 - de/help/publish.txt: links or key caps differ from publish/help.en.txt
 - de/help/settings.txt: links or key caps differ from settings/help.en.txt
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
+- de/help/whiteboard.txt: links or key caps differ from whiteboard/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
 - de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt
 

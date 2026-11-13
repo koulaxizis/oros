@@ -64,6 +64,29 @@ Die obere Leiste zeigt ein Wettersymbol und die Temperatur einer deiner Städte.
 - Offline zeigt die obere Leiste eine durchgestrichene Wolke und keine Temperatur.
 - Morgens (8:00–12:00) kann orOS eine [Benachrichtigung](help:t/notifications) senden, wenn der Tag Aufmerksamkeit braucht, etwa bei Gewitter, Nebel, Regen, hohem UV, Hitze oder Kälte. Ein angenehmer Tag bleibt still.
 
+## Der Himmel heute Nacht
+
+Der Tab `Der Himmel heute Nacht` oben zeigt, was der Himmel heute Nacht über der angezeigten Stadt bietet: den Mond, wie er aussieht, wann er auf- und untergeht, wann es dunkel wird und welche Planeten und Sterne du sehen kannst. Alles wird auf deinem Gerät berechnet und funktioniert daher auch offline. Das war die App Mond & Himmel; alte Links und Verknüpfungen öffnen diesen Tab.
+- Mit dem Datumsfeld reist du zu einem anderen Tag, zum Beispiel einem Geburtstag. `Heute` bringt dich zurück.
+- Die Mond-Taste schaltet die rote Nachtansicht ein: Der ganze Tab wird gedämpft rot, so bleiben deine Augen draußen an die Dunkelheit gewöhnt.
+
+### Heute Nacht
+- Der Mond, wie du ihn siehst, so geneigt, wie er von deinem Ort aus aussieht, mit dem beleuchteten Anteil, seinem Alter, seiner Entfernung und dem nächsten Voll- und Neumond.
+- `Mond`: Mondaufgang und Monduntergang und wo er gerade steht. `Sonne`: Sonnenaufgang, Sonnenuntergang, ihr höchster Stand und die Tageslänge.
+- `Wann es dunkel wird`: wann die Dämmerung endet, wann der Horizont verblasst und wann der Himmel bis zum Morgen ganz dunkel ist. `Licht für Fotos`: die goldenen und blauen Stunden.
+- `Planeten heute Nacht`: Merkur bis Saturn, wann du schauen solltest, in welche Richtung, wie hoch und wie hell. Planeten funkeln nicht wie Sterne.
+- `Demnächst`: die nächsten Voll- und Neumonde, Meteorströme und Finsternisse. Tippe oder klicke auf einen Eintrag, um diesen Tag zu sehen.
+
+### Himmelskarte
+Die Kuppel über dir: Norden oben, Osten links, als ob du auf dem Rücken liegst, mit dem Kopf nach Norden. Sie zeigt den Mond, die Planeten, etwa 290 helle Sterne und 34 Sternbilder. Tippe oder klicke auf ein Objekt, um Name, Höhe und Richtung zu sehen. Der Schieberegler dreht den Himmel durch die Nacht, `Jetzt` bringt ihn zurück, `Sternbilder` zeigt oder verbirgt die Linien, und `Was am Himmel steht (Liste)` nennt die hellen Objekte über dem Horizont als Text.
+
+### Monat
+Jeder Tag zeigt den Mond, wie er an diesem Abend aussieht; Punkte markieren Hauptphasen, Tagundnachtgleichen und Sonnenwenden, Höhepunkte von Meteorströmen und Finsternisse. `Diesen Monat` listet sie auf, mit der Angabe, ob eine Finsternis von deinem Ort aus zu sehen ist und ob ein heller Mond einen Meteorstrom stört. Tippe oder klicke auf einen Tag, um ihn in `Heute Nacht` zu öffnen.
+
+### Kalender, Zeit und Heute
+- Im [Kalender](app:calendar) kannst du den Feed `Mond & Himmel` einschalten (anfangs aus); eine Zeile öffnet diesen Tag hier. Die Karte „Sonne & Mond“ in [Zeit](app:time) hat eine Taste `Mehr im Wetter`, und die Momente des Himmels erscheinen auch in [Heute](app:today).
+- Zeiten folgen der Zeitzone deines Geräts und stimmen auf etwa eine Minute; Hügel und Gebäude an deinem Horizont werden nicht berücksichtigt. Finsternisse sind von 2026 bis 2035 aufgeführt.
+
 ## Aktualisierung und offline
 
 Die Vorhersage wird aktualisiert, wenn du die App öffnest oder zu ihr zurückkehrst, höchstens alle 30 Minuten. Die Aktualisieren-Taste oben rechts holt sie sofort. Ohne Verbindung siehst du `Offline – letzter bekannter Stand` und die letzten Daten, die die App bekommen hat. Sie erfindet nie Zahlen.
