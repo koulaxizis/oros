@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.41.00
+- **The Kanban Timeline is a Gantt chart.** A card can have a `Start` date and be a `Milestone`. In the Timeline every card is a bar from its start to its due date: drag it to move it, drag its ends to change the dates, and `Undo` brings them back. Bars show how many subtasks are done. The view menu has `Zoom` (Day, Week, Month), `Groups` (by column or lane) and `Only workdays`, kept for the board on every device. See [Kanban](app:kanban).
+
 ## Version 6.40.00
 - **Studio is ready for audiobooks.** Studio now keeps everything a newer Studio writes, so books, chapters and podcast shows made on one device stay whole on a device that has not updated yet.
 
