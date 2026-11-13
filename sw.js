@@ -2091,6 +2091,7 @@ var PRECACHE_URLS = [
   "budget/loansui.js",
   "budget/keypad.js",
   "calculator/core.js",
+  "calculator/search.js",
   "calendar/free.js",
   "calendar/guests.js",
   "calendar/guestsui.js",

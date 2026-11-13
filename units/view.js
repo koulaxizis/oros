@@ -1,9 +1,10 @@
 // ============================================================
-// orOS Unit Converter — App logic (v1.0.0)
-// Everyday conversions, fifteen categories (units/core.js):
-// length, weight, volume, temperature, area, speed, cooking (with
-// an ingredient for cups ⇄ grams), time, data, fuel economy,
-// pressure, energy, power, angle and currency.
+// orOS Calculator › Convert (units/view.js) — was the Unit
+// Converter app (APP-ALIAS since the 2026-11-12 merge 5, old id
+// "units"). Everyday conversions, fifteen categories
+// (units/core.js): length, weight, volume, temperature, area,
+// speed, cooking (with an ingredient for cups ⇄ grams), time,
+// data, fuel economy, pressure, energy, power, angle and currency.
 //   - Two fields: type in either one, the other follows live; ⇄
 //     swaps the units; the formula line says what was done
 //   - Unit picker with search (both languages, symbols, plurals)
@@ -11,17 +12,22 @@
 //     row to copy it
 //   - Favourites (☆ on a pair) and Recent (the last 20)
 //   - Numbers: comma or point, simple sums (2,5*3), no eval;
-//     precision 2-12 significant digits (Settings)
+//     precision 2-12 significant digits (settings button)
 //   - Currency: ECB reference rates through Frankfurter, fetched
 //     only for Currency (at most every 6 h, or Update rates),
 //     kept on the device for offline use
+// Loaded by calculator/calculator.js the first time the Convert
+// mode opens (with units/view.css and the "units" language pack;
+// this folder keeps the pack name "units"). UnitsView.mount(host)
+// builds it once. The Calculator registers the slice "units" at
+// its boot and hands it to sliceGet/sliceSet here once mounted.
 // Data:
 //   - synced slice "units" (oros-units-data): favourites, recent,
 //     precision (R5, R17, R26)
 //   - device-local (R10): oros-units-prefs (category, pair per
 //     category, ingredient, All units open), oros-units-rates
-// Deep link: __orosOpenAt("units", { cat, from, to, value })
-// (universal search, other apps).
+// Deep link: __orosOpenAt("units", { cat, from, to, value }) goes
+// to the Calculator ({ mode: "conv" }) and on to openAt here.
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Storage + prefs
@@ -31,9 +37,9 @@
 //   6. Favourites + recent
 //   7. Currency rates
 //   8. Settings, toasts, copy
-//   9. Keyboard (Contract Β)
-//  10. Sync slice + palette + deep link
-//  11. Wiring & boot
+//   9. Keyboard
+//  10. Sync slice + deep link
+//  11. Mount
 // ============================================================
 (function () {
   "use strict";
@@ -142,7 +148,10 @@
     return s;
   }
 
-  function $(id) { return document.getElementById(id); }
+  // Every id of this view is "uc-<name>" inside its own root.
+  var root = null;
+  function $(id) { return root ? root.querySelector("#uc-" + id) : null; }
+  function shown() { return !!root && root.isConnected && root.offsetParent !== null; }
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -150,14 +159,6 @@
     return n;
   }
   function setLabel(b, label) { b.setAttribute("aria-label", label); b.title = label; }
-
-  // BOOT MARKER
-  (function () {
-    var m = ((document.currentScript && document.currentScript.src) || "")
-      .match(/[?&]v=([^&#]+)/);
-    document.documentElement.lang = LANG;
-    console.log("units.js v" + (m ? m[1] : "?") + " boot");
-  })();
 
   // ---------- 2. Storage + prefs ----------
   var data = C.emptyData();
@@ -186,7 +187,7 @@
     } catch (e) {
       if (!saveFailShown) { saveFailShown = true; showToast(t("toast.saveFail")); }   // R30
     }
-    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    markDirty();
   }
 
   function loadPrefs() {
@@ -293,11 +294,6 @@
   }
 
   // ---------- 4. Rendering: categories, card, lists ----------
-  function renderHead() {
-    $("title-view").textContent = t("app.name");
-    $("title-sub").textContent = C.catName(C.cat(catId), LANG);
-  }
-
   function renderCats() {
     var host = $("cats");
     host.innerHTML = "";
@@ -305,7 +301,7 @@
       var on = c.id === catId;
       var b = el("button", "chip", C.catName(c, LANG));
       b.type = "button";
-      b.id = "cat-" + c.id;
+      b.id = "uc-cat-" + c.id;
       b.setAttribute("role", "tab");
       b.setAttribute("aria-selected", on ? "true" : "false");
       b.tabIndex = on ? 0 : -1;
@@ -313,8 +309,7 @@
       host.appendChild(b);
     });
     var cur = $("cat-" + catId);
-    if (cur && cur.scrollIntoView) { try { cur.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {} }
-    renderHead();
+    if (cur && cur.scrollIntoView && shown()) { try { cur.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {} }
   }
 
   function fillUnitBtn(b, id, which) {
@@ -690,16 +685,9 @@
 
   // ---------- 9. Keyboard ----------
   function wireKeyboard() {
-    // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
+    // (the Calculator forwards the shell's Ctrl+Alt+Shift shortcuts)
     document.addEventListener("keydown", function (e) {
-      if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
-      var p = null;
-      try { p = window.parent; } catch (err) { return; }
-      if (!(p && p !== window && p.orosShortcuts &&
-            typeof p.orosShortcuts.handle === "function")) return;
-      if (p.orosShortcuts.handle(e)) e.stopPropagation();
-    }, true);
-    document.addEventListener("keydown", function (e) {
+      if (!root || !root.isConnected) return;
       if (e.key === "Escape" && (!$("picker").hidden || !$("more").hidden)) { e.preventDefault(); closeDialogs(); return; }
       if (e.key === "Escape" && (e.target === $("va") || e.target === $("vb")) && e.target.value) {
         e.preventDefault();
@@ -740,50 +728,18 @@
     });
   }
 
-  // ---------- 10. Sync slice + palette + deep link ----------
-  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                  "--accent", "--accent-hover", "--accent-soft", "--accent-ink",
-                  "--panel-bg", "--border", "--shadow", "--danger"];
-
-  function inheritPalette() {
-    try {
-      var pRoot = window.parent.document.documentElement;
-      document.documentElement.setAttribute("data-theme",
-        pRoot.getAttribute("data-theme") || "dark");
-      var cs = window.parent.getComputedStyle(pRoot);
-      PAL_VARS.forEach(function (v) {
-        var val = cs.getPropertyValue(v).trim();
-        if (val) document.documentElement.style.setProperty(v, val);
-      });
-    } catch (e) { /* standalone */ }
-  }
-
-  function watchPalette() {
-    try {
-      new MutationObserver(inheritPalette).observe(
-        window.parent.document.documentElement,
-        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
-      );
-    } catch (e) { /* standalone */ }
-  }
-
+  // ---------- 10. Sync slice + deep link ----------
+  // The Calculator registers the slice "units" at its boot (so it
+  // syncs before this view loads) and calls these once it is here.
+  var suppress = false;
   function syncApi() {
     try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
     catch (e) { return window.orosSync || null; }
   }
-
-  function registerSync() {
-    // LOCAL FIRST: load() has already run (boot order).
+  function markDirty() {
+    if (suppress) return;
     var api = syncApi();
-    window.__orosSyncApi = {
-      _suppress: false,
-      dirty: function () {
-        if (this._suppress) return;
-        if (api && typeof api.markDirty === "function") api.markDirty();
-      }
-    };
-    if (!api || typeof api.registerSlice !== "function") return;
-    api.registerSlice("units", sliceGet, sliceSet, STORAGE_KEY, C.mergeData);
+    if (api && typeof api.markDirty === "function") api.markDirty();
   }
 
   function sliceGet() { flushRecent(); return C.mergeData(data, data); }   // canonical copy (R26)
@@ -791,15 +747,15 @@
   function sliceSet(incoming) {
     if (!incoming || typeof incoming !== "object") return;
     var before = JSON.stringify(data);
-    window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
+    suppress = true;                         // R6: a pull never marks dirty
     try {
       data = C.mergeData(incoming, incoming);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
     } finally {
-      window.__orosSyncApi._suppress = false;
+      suppress = false;
     }
-    if (JSON.stringify(data) === before) return;
+    if (JSON.stringify(data) === before || !root) return;
     renderCard();                            // the fields keep what is being typed
     recompute();
   }
@@ -815,11 +771,10 @@
     var to = typeof target.to === "string" && target.to !== f ? target.to : (f === pair.t ? pair.f : pair.t);
     var money = !!C.cat(target.cat).money;
     if ((curUnit(f) || (money && /^[A-Z]{3}$/.test(f))) && (curUnit(to) || (money && /^[A-Z]{3}$/.test(to)))) setPair(f, to);
-    $("va").focus();
+    if (shown()) $("va").focus();
   }
-  window.__orosOpenAt = function (target) { openTarget(target); };
 
-  // ---------- 11. Wiring & boot ----------
+  // ---------- 11. Mount ----------
   var ICON = {
     swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16"/><path d="M3 8l4-4 4 4"/><path d="M17 20V4"/><path d="M21 16l-4 4-4-4"/></svg>',
     star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
@@ -829,11 +784,12 @@
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
   };
 
+  // data-uc, not data-i18n: the Calculator repaints its own
+  // [data-i18n] nodes when its string packs arrive.
   function applyI18n() {
-    [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
-      n.textContent = t(n.getAttribute("data-i18n"));
+    [].forEach.call(root.querySelectorAll("[data-uc]"), function (n) {
+      n.textContent = t(n.getAttribute("data-uc"));
     });
-    document.title = t("app.name") + " · orOS";
     $("swap").innerHTML = ICON.swap; setLabel($("swap"), t("btn.swap"));
     $("star").innerHTML = ICON.star;
     $("copy").innerHTML = ICON.copy; setLabel($("copy"), t("btn.copy"));
@@ -874,37 +830,146 @@
     $("scrim").addEventListener("click", closeDialogs);
     $("prec").addEventListener("change", onPrec);
     window.addEventListener("pagehide", flushRecent);
-    window.addEventListener("online", function () { if (catId === "currency") { renderFx(); maybeFetchRates(false); } });
+    window.addEventListener("online", function () { if (catId === "currency" && shown()) { renderFx(); maybeFetchRates(false); } });
     window.addEventListener("offline", function () { if (catId === "currency") renderFx(); });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") flushRecent();
-      else if (catId === "currency") { renderFx(); maybeFetchRates(false); }
+      else if (catId === "currency" && shown()) { renderFx(); maybeFetchRates(false); }
     });
     wireKeyboard();
   }
 
-  function boot() {
-    load();
-    loadPrefs();
-    applyI18n();
-    inheritPalette();
-    wire();
-    registerSync();
-    watchPalette();
-    setCat(prefs.cat, "1");
-    var opened = false;
-    try {
-      if (window.parent && window.parent !== window &&
-          typeof window.parent.__orosTakeTarget === "function") {
-        var pending = window.parent.__orosTakeTarget("units");
-        if (pending) { openTarget(pending); opened = true; }
-      }
-    } catch (e) {}
-    if (!opened && window.matchMedia && window.matchMedia("(pointer: fine)").matches) {
+  var TEMPLATE = [
+    "<div class=\"uc-bar\">",
+    "  <nav id=\"uc-cats\" role=\"tablist\"></nav>",
+    "  <button type=\"button\" id=\"uc-more-btn\" class=\"icon-btn\" aria-haspopup=\"dialog\"></button>",
+    "</div>",
+    "",
+    "  <div id=\"uc-main\">",
+    "    <div class=\"wrap\">",
+    "      <div class=\"col\">",
+    "        <section id=\"uc-favs-sec\" hidden>",
+    "          <h2 data-uc=\"sec.favs\">Favourites</h2>",
+    "          <div id=\"uc-favs\" class=\"chips\"></div>",
+    "        </section>",
+    "",
+    "        <section id=\"uc-conv\" class=\"card\">",
+    "          <div class=\"field\">",
+    "            <label for=\"uc-va\" id=\"uc-la\" data-uc=\"f.from\">From</label>",
+    "            <div class=\"field-row\">",
+    "              <input type=\"text\" id=\"uc-va\" inputmode=\"decimal\" autocomplete=\"off\" spellcheck=\"false\">",
+    "              <button type=\"button\" id=\"uc-ua\" class=\"unit-btn\" aria-haspopup=\"dialog\"></button>",
+    "            </div>",
+    "          </div>",
+    "          <div class=\"mid\">",
+    "            <button type=\"button\" id=\"uc-swap\" class=\"icon-btn\"></button>",
+    "            <span class=\"spacer\"></span>",
+    "            <button type=\"button\" id=\"uc-star\" class=\"icon-btn toggle\" aria-pressed=\"false\"></button>",
+    "            <button type=\"button\" id=\"uc-copy\" class=\"icon-btn\"></button>",
+    "            <button type=\"button\" id=\"uc-send\" class=\"icon-btn\" hidden></button>",
+    "          </div>",
+    "          <div class=\"field\">",
+    "            <label for=\"uc-vb\" id=\"uc-lb\" data-uc=\"f.to\">To</label>",
+    "            <div class=\"field-row\">",
+    "              <input type=\"text\" id=\"uc-vb\" inputmode=\"decimal\" autocomplete=\"off\" spellcheck=\"false\">",
+    "              <button type=\"button\" id=\"uc-ub\" class=\"unit-btn\" aria-haspopup=\"dialog\"></button>",
+    "            </div>",
+    "          </div>",
+    "          <p id=\"uc-err\" class=\"err\" role=\"alert\" hidden></p>",
+    "          <p id=\"uc-formula\" class=\"formula\"></p>",
+    "",
+    "          <div id=\"uc-ing-row\" class=\"extra\" hidden>",
+    "            <label for=\"uc-ing\" data-uc=\"f.ing\">Ingredient</label>",
+    "            <select id=\"uc-ing\"></select>",
+    "            <p class=\"hint small\" data-uc=\"ing.hint\">Kitchen weights per cup or spoon are approximate.</p>",
+    "          </div>",
+    "",
+    "          <div id=\"uc-fx-row\" class=\"extra\" hidden>",
+    "            <p id=\"uc-fx-info\" class=\"hint small\" aria-live=\"polite\"></p>",
+    "            <button type=\"button\" id=\"uc-fx-btn\" class=\"chip\" data-uc=\"fx.refresh\">Update rates</button>",
+    "          </div>",
+    "        </section>",
+    "",
+    "        <section id=\"uc-recent-sec\" hidden>",
+    "          <div class=\"sec-head\">",
+    "            <h2 data-uc=\"sec.recent\">Recent</h2>",
+    "            <span class=\"spacer\"></span>",
+    "            <button type=\"button\" id=\"uc-recent-clear\" class=\"link-btn\" data-uc=\"btn.clear\">Clear</button>",
+    "          </div>",
+    "          <ul id=\"uc-recent\" class=\"rows\"></ul>",
+    "        </section>",
+    "      </div>",
+    "",
+    "      <section id=\"uc-all-sec\" class=\"col\">",
+    "        <div class=\"sec-head\">",
+    "          <h2 id=\"uc-all-title\" data-uc=\"sec.all\">All units</h2>",
+    "          <span class=\"spacer\"></span>",
+    "          <button type=\"button\" id=\"uc-all-toggle\" class=\"link-btn\" aria-controls=\"uc-all\"></button>",
+    "        </div>",
+    "        <ul id=\"uc-all\" class=\"rows\"></ul>",
+    "      </section>",
+    "    </div>",
+    "  </div>",
+    "",
+    "  <div id=\"uc-scrim\" hidden></div>",
+    "",
+    "  <!-- Unit picker -->",
+    "  <div id=\"uc-picker\" class=\"dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"uc-picker-title\" hidden>",
+    "    <div class=\"dlg-head\">",
+    "      <h2 id=\"uc-picker-title\"></h2>",
+    "      <span class=\"spacer\"></span>",
+    "      <button type=\"button\" id=\"uc-picker-close\" class=\"icon-btn\"></button>",
+    "    </div>",
+    "    <label for=\"uc-pq\" class=\"sr-only\" data-uc=\"f.find\">Find a unit</label>",
+    "    <input type=\"search\" id=\"uc-pq\" autocomplete=\"off\" spellcheck=\"false\">",
+    "    <ul id=\"uc-plist\" class=\"plist\"></ul>",
+    "    <p id=\"uc-pempty\" class=\"hint\" data-uc=\"pick.none\" hidden>No unit by that name.</p>",
+    "  </div>",
+    "",
+    "  <!-- Settings -->",
+    "  <div id=\"uc-more\" class=\"dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"uc-more-title\" hidden>",
+    "    <div class=\"dlg-head\">",
+    "      <h2 id=\"uc-more-title\" data-uc=\"more.title\">Converter settings</h2>",
+    "      <span class=\"spacer\"></span>",
+    "      <button type=\"button\" id=\"uc-more-close\" class=\"icon-btn\"></button>",
+    "    </div>",
+    "    <h3 data-uc=\"sec.prec\">Precision</h3>",
+    "    <label for=\"uc-prec\" data-uc=\"prec.label\">Significant digits in results</label>",
+    "    <select id=\"uc-prec\"></select>",
+    "    <p class=\"hint small\" data-uc=\"prec.hint\"></p>",
+    "    <h3 data-uc=\"sec.fx\">Exchange rates</h3>",
+    "    <p class=\"hint small\" data-uc=\"fx.about\"></p>",
+    "  </div>",
+    "",
+    "  <div id=\"uc-toast\" role=\"status\"></div>"
+  ].join("\n");
+
+  // Build the view once in host (the Calculator's Convert pane).
+  function mount(host, focus) {
+    if (!root) {
+      root = document.createElement("div");
+      root.className = "uc";
+      root.innerHTML = TEMPLATE;                         // static markup
+      host.appendChild(root);
+      load();
+      loadPrefs();
+      applyI18n();
+      wire();
+      setCat(prefs.cat, "1");
+    } else if (root.parentNode !== host) host.appendChild(root);
+    else if (catId === "currency") { renderFx(); maybeFetchRates(false); }
+    if (focus && window.matchMedia && window.matchMedia("(pointer: fine)").matches) {
       $("va").focus();
       $("va").select();
     }
   }
-
-  boot();
+  // A synced change while the view is not built yet: nothing to
+  // repaint (sliceGet reads the stored copy through the Calculator).
+  window.UnitsView = {
+    mount: mount,
+    openAt: function (t) { if (root) openTarget(t); },
+    sliceGet: function () { return root ? sliceGet() : null; },
+    sliceSet: function (d) { if (root) sliceSet(d); },
+    flush: function () { if (root) flushRecent(); }
+  };
 })();

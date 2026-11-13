@@ -1,7 +1,8 @@
 // ============================================================
 // orOS Unit Converter — universal search provider (v1.0.0)
-// Loaded by the shell on the first menu search (apps.json
-// "search"). Read-only: reads oros-units-data and the device-local
+// Loaded on the first menu search by calculator/search.js (the
+// Calculator's provider, apps.json "search"; the Unit Converter is
+// its Convert mode since the merge 5 APP-ALIAS). Read-only: reads oros-units-data and the device-local
 // rates, never writes.
 //   - A conversion typed in the search ("10 km σε mi", "72 f to c",
 //     "5 στρέμματα", "100 usd σε eur") comes back as a ready answer:

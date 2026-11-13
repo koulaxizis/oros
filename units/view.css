@@ -1,0 +1,330 @@
+/* ============================================================
+   orOS Calculator › Convert (units/view.css) — was the Unit
+   Converter's stylesheet (APP-ALIAS since the 2026-11-12 merge 5,
+   old id "units"). Loaded by calculator/calculator.js with
+   units/view.js the first time the Convert mode opens. Every rule
+   sits under .uc (ids "uc-…"), so nothing reaches the rest of the
+   Calculator; colours are the Calculator's palette tokens.
+   Sections:
+     1. Root, reset, toolbar
+     2. Categories + layout
+     3. Converter card
+     4. Lists: favourites, recent, all units
+     5. Dialogs: unit picker, settings
+     6. Toast + screen-reader helper
+     7. Mobile + touch adaptations
+     8. Reduced motion
+   ============================================================ */
+
+/* ---------- 1. Root, reset, toolbar ---------- */
+.uc {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+}
+.uc *, .uc *::before, .uc *::after { box-sizing: border-box; }
+.uc button { font-family: inherit; color: inherit; cursor: pointer; }
+.uc ul { list-style: none; margin: 0; padding: 0; }
+.uc .spacer { flex: 1 1 0; min-width: 0; }
+
+.uc .uc-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.uc .icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-dim);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.uc .icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.uc .icon-btn:disabled { opacity: 0.35; cursor: default; }
+.uc .icon-btn:disabled:hover { color: var(--text-dim); border-color: transparent; background: transparent; }
+.uc .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.uc .icon-btn svg { width: 18px; height: 18px; }
+.uc .icon-btn.toggle[aria-pressed="true"] { color: var(--accent); }
+.uc .icon-btn.toggle[aria-pressed="true"] svg { fill: currentColor; }
+
+/* ---------- 2. Categories + layout ---------- */
+.uc #uc-cats {
+  display: flex;
+  gap: 6px;
+  padding: 2px 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+}
+.uc #uc-cats .chip { flex-shrink: 0; }
+
+.uc .wrap {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 16px 16px 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.uc .col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+@media (min-width: 900px) {
+  .uc .wrap { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+}
+
+.uc h2, .uc h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+.uc .sec-head { display: flex; align-items: center; gap: 8px; min-height: 32px; }
+.uc section > h2 { margin-bottom: 8px; }
+.uc p { margin: 0; }
+.uc .hint { color: var(--text-dim); font-size: 13px; line-height: 1.45; }
+.uc .small { font-size: 12px; }
+
+.uc .card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.uc .link-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 32px;
+  padding: 0 4px;
+}
+.uc .link-btn:hover { text-decoration: underline; }
+.uc .link-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 4px; }
+.uc .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.uc .chip {
+  min-height: 36px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.uc .chip:hover { border-color: var(--accent); color: var(--accent); }
+.uc .chip.on, .uc .chip[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.uc .chip:disabled { opacity: 0.45; cursor: default; }
+.uc .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.uc select {
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  max-width: 100%;
+}
+.uc select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ---------- 3. Converter card ---------- */
+.uc .field { display: flex; flex-direction: column; gap: 6px; }
+.uc .field label { font-size: 12px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+.uc .field-row { display: flex; gap: 8px; align-items: stretch; }
+.uc .field input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.uc .field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.uc .field input.bad { border-color: var(--danger, #e06c75); }
+.uc .unit-btn {
+  flex: 0 1 46%;
+  min-width: 0;
+  min-height: 52px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+}
+.uc .unit-btn:hover { border-color: var(--accent); }
+.uc .unit-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.uc .unit-btn .u-sym { font-size: 16px; font-weight: 800; color: var(--accent); }
+.uc .unit-btn .u-name { font-size: 12px; color: var(--text-dim); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.uc .mid { display: flex; align-items: center; gap: 4px; }
+.uc .err { color: var(--danger, #e06c75); font-size: 13px; font-weight: 700; }
+.uc .formula { color: var(--text-dim); font-size: 13px; min-height: 18px; overflow-wrap: anywhere; }
+.uc .extra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.uc .extra label { font-size: 13px; font-weight: 700; }
+.uc .extra .hint { flex: 1 1 100%; }
+.uc #uc-fx-info { flex: 1 1 200px; }
+
+/* ---------- 4. Lists ---------- */
+.uc .rows { display: flex; flex-direction: column; gap: 2px; }
+.uc .row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  text-align: left;
+  font-size: 14px;
+}
+.uc .row:hover { background: var(--accent-soft); }
+.uc .row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.uc .row.cur { border-color: var(--border); background: var(--panel-bg); }
+.uc .row-name { flex: 1 1 auto; min-width: 0; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uc .row-val { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; max-width: 62%; }
+.uc .row-val small { font-weight: 700; color: var(--text-dim); margin-left: 4px; }
+.uc .row-main { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.uc .row-cat { font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
+
+/* ---------- 5. Dialogs ---------- */
+.uc #uc-scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 20; }
+.uc .dialog {
+  position: fixed;
+  z-index: 21;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(440px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px var(--shadow);
+  padding: 14px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.uc .dlg-head { display: flex; align-items: center; gap: 8px; }
+.uc .dlg-head h2 { font-size: 15px; color: var(--text); text-transform: none; letter-spacing: 0; }
+.uc .dialog h3 { margin-top: 10px; }
+.uc .dialog label { font-size: 14px; font-weight: 700; }
+.uc #uc-picker { height: min(560px, calc(100dvh - 24px)); }
+.uc #uc-pq {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+}
+.uc #uc-pq:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.uc .plist { flex: 1 1 auto; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 2px; }
+.uc .plist .grp { margin: 8px 4px 2px; }
+.uc .plist .row.on { color: var(--accent); border-color: var(--accent); }
+.uc .plist .row-sym { font-weight: 800; flex-shrink: 0; }
+
+/* ---------- 6. Toast + screen reader ---------- */
+.uc #uc-toast {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  transform: translateY(-8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+.uc #uc-toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.uc #uc-toast button {
+  min-height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 2px 6px;
+  pointer-events: auto;
+}
+.uc .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- 7. Mobile + touch ---------- */
+@media (max-width: 560px) {
+  .uc .uc-bar { padding-right: 4px; gap: 4px; }
+  .uc #uc-cats { padding-left: 8px; padding-right: 4px; }
+  .uc .wrap { padding: 12px 10px calc(36px + env(safe-area-inset-bottom, 0px)); gap: 12px; }
+  .uc .card { padding: 12px; }
+  .uc .field input { font-size: 20px; padding: 8px 10px; }
+  .uc .unit-btn { flex-basis: 48%; padding: 6px 10px; }
+}
+@media (pointer: coarse) {
+  .uc .icon-btn { width: 44px; height: 44px; }
+  .uc .chip, .uc .link-btn, .uc select, .uc #uc-pq, .uc .row { min-height: 44px; }
+  .uc #uc-toast button { min-height: 44px; }
+}
+
+/* ---------- 8. Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .uc .icon-btn, .uc #uc-toast { transition: none !important; }
+}
