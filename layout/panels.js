@@ -429,6 +429,30 @@
       s.appendChild(el("p", "hint" + (ppi < 150 ? " warn" : ""), ppi < 150 ? t("props.ppiLow", { n: ppi }) : t("props.ppi", { n: ppi })));
       if (LY.A.isMissing(it.a)) s.appendChild(el("p", "hint warn", t("props.missing")));
     }
+    // what the picture shows, for screen readers and e-books (LY-OUT)
+    var alt = el("textarea", "inp");
+    alt.rows = 2; alt.maxLength = 1000;
+    alt.value = (it.ext && typeof it.ext.alt === "string") ? it.ext.alt : "";
+    alt.placeholder = t("props.altEg");
+    alt.disabled = !!(it.ext && it.ext.deco);
+    alt.addEventListener("change", function () {
+      var v = alt.value.replace(/\s+/g, " ").trim().slice(0, 1000);
+      editSel(function (x) {
+        if (x.t !== "img" || ((x.ext && x.ext.alt) || "") === v) return false;
+        x.ext = Object.assign({}, x.ext || {});
+        if (v) x.ext.alt = v; else delete x.ext.alt;
+        if (!Object.keys(x.ext).length) delete x.ext;
+      });
+    });
+    s.appendChild(field(t("props.alt"), alt));
+    s.appendChild(check(t("props.deco"), it.ext && it.ext.deco, function (v) {
+      editSel(function (x) {
+        if (x.t !== "img" || !!(x.ext && x.ext.deco) === !!v) return false;
+        x.ext = Object.assign({}, x.ext || {});
+        if (v) x.ext.deco = 1; else delete x.ext.deco;
+        if (!Object.keys(x.ext).length) delete x.ext;
+      });
+    }));
     // data merge: the CSV column with this frame's picture
     var mf = el("input", "inp");
     mf.type = "text"; mf.maxLength = 60; mf.autocomplete = "off"; mf.spellcheck = false;
@@ -796,6 +820,12 @@
         g3.appendChild(field(t("sty.brk"), select([["", t("sty.inherit")], ["any", t("sty.brkAny")], ["col", t("sty.brkCol")], ["page", t("sty.brkPage")], ["odd", t("sty.brkOdd")], ["even", t("sty.brkEven")]],
           st.ext.brk || "", function (v) { if (v) st.ext.brk = v; else delete st.ext.brk; })));
         g3.appendChild(field(t("sty.sink") + " (pt)", optNum(st.ext, "sink", 0, 600)));
+        // heading level for the e-book's contents and bookmarks (LY-OUT)
+        if (window.LY_OUT) {
+          var guess = window.LY_OUT.guessLevel(LY.doc, st.id);
+          g3.appendChild(field(t("sty.lvl"), select([["", t("sty.lvlAuto", { n: guess ? t("sty.lvlN", { n: guess }) : t("sty.lvl0") })], ["0", t("sty.lvl0")], ["1", t("sty.lvlN", { n: 1 })], ["2", t("sty.lvlN", { n: 2 })], ["3", t("sty.lvlN", { n: 3 })]],
+            st.ext.lvl === undefined ? "" : String(st.ext.lvl), function (v) { if (v === "") delete st.ext.lvl; else st.ext.lvl = +v; })));
+        }
         body.appendChild(g3);
       }
       body.appendChild(el("span", "fld-lbl", t("sty.color")));
@@ -1089,6 +1119,36 @@
     });
     g4.appendChild(field(t("new.pnStart"), pn0));
     body.appendChild(g4);
+    // the book's language and its Publishing title (LY-OUT, in ext)
+    var O = window.LY_OUT;
+    if (!O) return;
+    function setX(k, v) {
+      s.ext = s.ext || {};
+      if (v) s.ext[k] = v; else delete s.ext[k];
+      if (!Object.keys(s.ext).length) delete s.ext;
+    }
+    var g5 = el("div", "grid2");
+    var curLang = O.okLang(s.ext && s.ext.lang);
+    var langs = O.LANGS.slice();
+    if (curLang && langs.indexOf(curLang) < 0) langs.unshift(curLang);
+    g5.appendChild(field(t("new.lang"), select([["", t("new.langAuto")]].concat(langs.map(function (c) { return [c, langName(c)]; })), curLang, function (v) { setX("lang", v); })));
+    var data = LY.publishData && LY.publishData(), tombs = (data && data.tombs) || {};
+    var titles = ((data && data.titles) || []).filter(function (x) { return x && x.id && x.t && !(tombs[x.id] >= x.m); });
+    var curPub = s.ext && typeof s.ext.pub === "string" ? s.ext.pub : "";
+    if (titles.length || curPub) {
+      var opts = [["", t("new.pubNone")]].concat(titles.map(function (x) { return [x.id, String(x.t).slice(0, 80)]; }));
+      if (curPub && !titles.some(function (x) { return x.id === curPub; })) opts.push([curPub, t("new.pubGone")]);
+      g5.appendChild(field(t("new.pub"), select(opts, curPub, function (v) { setX("pub", v); })));
+    }
+    body.appendChild(g5);
+  }
+  // A language code's own name where the browser knows it ("el" → "Ελληνικά").
+  function langName(c) {
+    try {
+      var n = new Intl.DisplayNames([LY.BASE || "en"], { type: "language" }).of(c);
+      if (n && n !== c) return n.charAt(0).toLocaleUpperCase() + n.slice(1) + " (" + c + ")";
+    } catch (e) { void e; }
+    return c;
   }
 
   // The New document defaults: one A4 page, 15 mm margins, 3 mm bleed
@@ -1179,6 +1239,7 @@
   function exportDlg() {
     var doc = LY.doc;
     LY.openDialog(t("exp.title"), function (body, close) {
+      profilesSection(body, doc, close);
       body.appendChild(el("h3", "pn-h", t("exp.pdf")));
       var rangeWrap = el("div");
       var custom = el("input", "inp"); custom.type = "text"; custom.placeholder = t("exp.rangeHint"); custom.value = expPrefs.custom;
@@ -1233,6 +1294,148 @@
       body.appendChild(btn(t("more.pkg"), function () { close(); LY.io.exportPackage(doc); }, "block"));
     });
   }
+  // ---------- Output profiles (LY-OUT) ----------
+  // One document, every edition: each profile exports with one button
+  // (its pages, its format's ISBN from Publishing, e-book extras).
+  function profName(p) { return p.n || t("out.k." + p.k); }
+  function profNote(doc, p, pub) {
+    var O = window.LY_OUT, f = O.formatOf(p, pub), bits = [];
+    bits.push(t("out.pages", { n: O.pagesFor(doc, p).length }));
+    if (f && f.isbn) bits.push("ISBN " + f.isbn);
+    else if (pub) bits.push(t("out.noIsbn"));
+    if (p.k !== "print" && p.cover) bits.push(t("out.withCover"));
+    return bits.join(" · ");
+  }
+  function profilesSection(body, doc, close) {
+    var O = window.LY_OUT;
+    if (!O) return;
+    body.appendChild(el("h3", "pn-h", t("out.title")));
+    var pub = O.pubOf(doc, LY.publishData());
+    body.appendChild(el("p", "hint", pub ? t("out.pubOf", { t: pub.t }) : t("out.noPub")));
+    O.list(doc).filter(function (p) { return p.k !== "epub"; }).forEach(function (p) {
+      var row = el("div", "out-row");
+      var txt = el("div", "out-txt");
+      txt.appendChild(el("span", "out-name", profName(p)));
+      txt.appendChild(el("span", "hint", profNote(doc, p, pub)));
+      row.appendChild(txt);
+      row.appendChild(btn(t("out.go"), function () { close(); LY.io.exportProfile(p); }, "small primary"));
+      body.appendChild(row);
+    });
+    body.appendChild(btn(t("out.edit"), function () { close(); profilesDlg(); }, "block"));
+  }
+  // "1-3, 5" of the document's pages → page ids ([] when empty, null when invalid)
+  function rangeIds(doc, txt) {
+    var order = M.pagesInOrder(doc), out = [], ok = true;
+    String(txt || "").split(/[,;]/).forEach(function (part) {
+      part = part.trim();
+      if (!part) return;
+      var m = /^(\d+)\s*(?:-\s*(\d+))?$/.exec(part);
+      if (!m) { ok = false; return; }
+      var a = +m[1], b = m[2] ? +m[2] : a;
+      if (a < 1 || b > order.length || a > b) { ok = false; return; }
+      for (var i = a; i <= b; i++) if (out.indexOf(order[i - 1].id) < 0) out.push(order[i - 1].id);
+    });
+    return ok ? out : null;
+  }
+  function idsRange(doc, ids) {
+    var order = M.pagesInOrder(doc), want = {}, nums = [], parts = [];
+    (ids || []).forEach(function (id) { want[id] = 1; });
+    order.forEach(function (p, i) { if (want[p.id]) nums.push(i + 1); });
+    for (var i = 0; i < nums.length; i++) {
+      var a = nums[i], b = a;
+      while (i + 1 < nums.length && nums[i + 1] === b + 1) b = nums[++i];
+      parts.push(a === b ? String(a) : a + "-" + b);
+    }
+    return parts.join(", ");
+  }
+  function profilesDlg() {
+    var doc = LY.doc, O = window.LY_OUT;
+    var list = JSON.parse(JSON.stringify(O.list(doc)));
+    var pub = O.pubOf(doc, LY.publishData());
+    var covers = LY.data().docs.filter(function (d) { return d.setup && d.setup.ext && d.setup.ext.cover && !M.needsNewer(d); });
+    LY.openDialog(t("out.editTitle"), function (body, close) {
+      var wrap = el("div");
+      var bad = false;
+      function draw() {
+        wrap.innerHTML = "";
+        list.forEach(function (p, idx) {
+          var box = el("div", "out-box");
+          var nm = el("input", "inp"); nm.type = "text"; nm.maxLength = 60; nm.value = p.n; nm.placeholder = t("out.k." + p.k);
+          nm.addEventListener("input", function () { p.n = nm.value; });
+          var g = el("div", "grid2");
+          g.appendChild(field(t("out.name"), nm));
+          g.appendChild(field(t("out.kind"), select([["print", t("out.k.print")], ["ebook", t("out.k.ebook")]], p.k, function (v) {
+            p.k = v;
+            if (v === "print") { p.bleed = 1; p.marks = 0; p.spreads = 0; delete p.cover; p.q = "print"; }
+            else { delete p.bleed; delete p.marks; delete p.spreads; p.q = "screen"; }
+            draw();
+          })));
+          box.appendChild(g);
+          if (pub) {
+            var fm = (pub.fmts || []).filter(Boolean);
+            box.appendChild(field(t("out.fmt"), select([["", t("out.fmtAuto")]].concat(fm.map(function (f) {
+              return [f.id, t("out.fmtK." + f.k) + (f.isbn ? " · " + f.isbn : "")];
+            })), p.fmt || "", function (v) { p.fmt = v; })));
+          }
+          var r = el("div", "pn-row wrap");
+          r.appendChild(check(t("out.blank"), p.blank, function (v) { p.blank = v; }));
+          r.appendChild(check(t("out.toc"), p.toc, function (v) { p.toc = v; }));
+          if (p.k === "print") {
+            r.appendChild(check(t("exp.bleed"), p.bleed, function (v) { p.bleed = v; }));
+            r.appendChild(check(t("exp.marks"), p.marks, function (v) { p.marks = v; }));
+            if (doc.setup.facing) r.appendChild(check(t("exp.spreads"), p.spreads, function (v) { p.spreads = v; }));
+          }
+          box.appendChild(r);
+          var drop = el("input", "inp"); drop.type = "text"; drop.placeholder = t("exp.rangeHint"); drop.value = idsRange(doc, p.drop);
+          drop.addEventListener("input", function () {
+            var ids = rangeIds(doc, drop.value);
+            drop.classList.toggle("bad", !ids);
+            bad = !ids;
+            if (ids) { if (ids.length) p.drop = ids; else delete p.drop; }
+          });
+          box.appendChild(field(t("out.drop"), drop));
+          if (p.k !== "print") {
+            box.appendChild(field(t("out.cover"), select([["", t("out.coverNone")]].concat(covers.map(function (d) { return [d.id, LY.docTitle(d)]; })), p.cover || "", function (v) {
+              if (v) p.cover = v; else delete p.cover;
+            })));
+            if (!covers.length) box.appendChild(el("p", "hint", t("out.coverHint")));
+          }
+          var qWrap = el("div");
+          qWrap.appendChild(seg([["print", t("exp.print")], ["screen", t("exp.screen")]], p.q, function (v) { p.q = v; draw(); }));
+          box.appendChild(field(t("exp.quality"), qWrap));
+          if (list.length > 1) box.appendChild(btn(t("out.remove"), function () { list.splice(idx, 1); draw(); }, "small danger"));
+          wrap.appendChild(box);
+        });
+        if (list.length < O.MAX) wrap.appendChild(btn(t("out.add"), function () {
+          list.push({ id: O.newId(list), n: "", k: "ebook", fmt: "", blank: 1, toc: 0, q: "screen" });
+          draw();
+        }, "block"));
+      }
+      draw();
+      body.appendChild(wrap);
+      var act = el("div", "dlg-actions");
+      act.appendChild(btn(t("out.reset"), function () { list = O.defaults(); draw(); }));
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(btn(t("btn.cancel"), close));
+      act.appendChild(btn(t("btn.save"), function () {
+        if (bad) { LY.toast(t("exp.badRange")); return; }
+        close();
+        // the defaults unchanged are not stored (R27)
+        var same = JSON.stringify(O.norm({ v: 1, list: list })) === JSON.stringify(O.norm({ v: 1, list: O.defaults() }));
+        LY.op(function (d2, now) {
+          var before = JSON.stringify(d2.setup);
+          var st = JSON.parse(before);
+          O.save(st, same ? [] : list);
+          if (JSON.stringify(st) === before) return false;
+          d2.setup = M.normSetup(st);
+          d2.m = Math.max(now, d2.m + 1);
+        });
+        setTimeout(exportDlg, 0);
+      }, "primary"));
+      body.appendChild(act);
+    }, true);
+  }
+
   // "1-3, 5" → page ids (null when invalid)
   function pickPages(doc) {
     var order = M.pagesInOrder(doc);
