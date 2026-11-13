@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.39.00
+- **Translate a book in Writer.** `Review` › `Translate this document…` puts the book side by side, one sentence a row: the source on the left, your translation on the right, with its bold, italics and footnotes kept as small marks. Each sentence is new, a draft, confirmed or reviewed; the bar shows how much is done. `Build document` makes the translated book as a normal Writer document. The project stays on the orOS disk and syncs, and two devices can work on it. See [Writer](app:writer).
+
 ## Version 6.38.00
 - **Translation on the device in Text Tools.** The new `Translate` group turns the whole text from Greek into English or from English into Greek with Mozilla's Firefox Translations models. Your text never leaves the device. The first time, the button says how much it downloads (about 15 MB per direction, plus 5 MB once); after that it works offline, and a short text translates as you type. See [Text Tools](app:texttools).
 
