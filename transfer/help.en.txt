@@ -7,6 +7,7 @@ Transfer sends big files and whole folders from the orOS disk, or from this devi
 - Press `Create link`. You get a code like 7K2M-9QXH-4RTB, a QR code and a link. Send the link, let the other person scan the QR with their phone's camera, or read them the code.
 - Keep the page open. You see when they connect, when they look at the list, and how much has arrived. `Cancel` stops it on both sides.
 - One link is for one person and one transfer. `Send something else` starts a new one with a new code.
+- With orOS sync on Dropbox, `Send through my Dropbox` works without keeping the page open. See "Through your Dropbox" below.
 - In Files, select files or folders and choose `Send with Transfer…`: Transfer opens with them on the `To send` list.
 
 ## Receive
@@ -19,6 +20,14 @@ Transfer sends big files and whole folders from the orOS disk, or from this devi
 ## If the connection drops
 - If the direct link drops in the middle (Wi-Fi changes, a phone moves between networks), both sides say `Reconnecting` and the transfer goes on from where it stopped, as long as both pages stay open. After about 40 seconds without a link it stops.
 - When the two devices cannot connect directly at all (company Wi-Fi, a VPN, some mobile networks), a transfer of up to 50 MB in total goes through the orOS relay instead. It is slower, and still end-to-end encrypted: the relay passes sealed pieces on and stores nothing. Over 50 MB Transfer says it could not connect; try both on the same Wi-Fi, or send less at a time.
+
+## Through your Dropbox
+- When orOS syncs with Dropbox, `Send through my Dropbox` appears next to `Create link`. orOS encrypts the files on this device and uploads them to your Dropbox (the orOS app folder, under Transfer). Then you get a link and a QR code. You can close the page: the other person has about 4 hours to open the link.
+- Dropbox only stores encrypted bytes. The key is in the link after the # sign, which is never sent to a server. The other person needs no Dropbox account and no orOS.
+- Anyone who has the link can download the files until it expires, so send it only to the person they are for. There is no code to type: use the link or the QR code.
+- After 4 hours the link stops working, and the next time you open Transfer the files are deleted from your Dropbox. `Delete now` deletes them at once.
+- The first time on a device, Transfer checks with a small test file that this browser can download from a Dropbox link. If it cannot, it says so and uploads nothing.
+- The files take space in your Dropbox until they are deleted. Transfer checks the free space first.
 
 ## History
 - `History` lists the finished transfers, newest first: when, to or from which device, how many files and how big, and where they went. `Open` shows a folder that arrived on the orOS disk.
