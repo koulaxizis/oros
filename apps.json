@@ -839,6 +839,7 @@
       "category": "Sound",
       "icon": "lyricsync",
       "url": "lyricsync/",
+      "words": "songbook chords setlist",
       "search": "search.js",
       "type": "internal"
     },
