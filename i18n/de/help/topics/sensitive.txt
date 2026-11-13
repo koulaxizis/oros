@@ -1,0 +1,63 @@
+# Sensible Arbeit und Quellen
+Diese Seite ist für Menschen, deren Arbeit sie selbst oder andere in Gefahr bringen kann: Journalistinnen und Journalisten, Forschende, Aktivistinnen und Aktivisten, Anwältinnen und Anwälte und alle, die mit ihnen sprechen. Sie sagt klar, was orOS schützt, was nicht, und wann ein anderes Werkzeug das richtige ist.
+
+>! orOS hatte noch keine unabhängige Sicherheitsprüfung. Nutze es als privaten Arbeitsplatz, nicht als das Einzige, was einen Menschen schützt.
+
+## Wofür orOS gut ist
+orOS ist ein guter privater Arbeitsplatz: Recherchenotizen, Entwürfe, Dokumente, Dateien, Zeitleisten und Kontakte, fern von Firmen, die lesen oder auswerten, was du schreibst.
+- **Verschlüsselt, bevor es das Gerät verlässt.** Mit eingeschalteter [Synchronisierung](help:t/sync) wird alles auf deinem Gerät mit deiner `Passphrase zur Verschlüsselung` verschlüsselt, bevor es zu Dropbox oder deiner eigenen Nextcloud geht. Die Cloud speichert nur unlesbare Daten.
+- **Auch Dateinamen bleiben verborgen.** In [Dateien](app:files) stehen Ordner- und Dateinamen nur im verschlüsselten Verzeichnis. Die Cloud kann nicht einmal prüfen, ob du ein bestimmtes bekanntes Dokument hast.
+- **Keine Konten, kein Tracking.** Es gibt kein orOS-Konto, keine Cookies, keine Analyse. Siehe [Datenschutz und Offline-Nutzung](help:t/privacy).
+- **Funktioniert offline.** Einmal geöffnet, arbeitet orOS auch ohne Verbindung.
+
+## Nutze orOS nicht für den Kontakt zu Quellen
+Um mit einer Quelle zu sprechen oder Dokumente von ihr zu bekommen, nutze Werkzeuge, die dafür gemacht sind:
+- **Signal** mit verschwindenden Nachrichten für Gespräche.
+- **SecureDrop** (viele Redaktionen betreiben eines) oder **OnionShare**, um Dokumente anonym zu empfangen.
+- **Tails**, ein System, das von einem USB-Stick startet und keine Spuren hinterlässt, für die heikelste Arbeit.
+
+E-Mail und [Transfer](app:transfer) sind nicht für Quellen. Eine E-Mail zeigt immer, wer wem wann geschrieben hat, auch wenn der Inhalt verschlüsselt ist, und beide laufen über fremde Dienste. Eine Quelle sollte orOS nie öffnen müssen.
+
+## Was orOS nicht schützt
+### Dein Gerät, wenn es jemand mitnimmt
+Die Daten auf diesem Gerät sind **nicht verschlüsselt**. Die `Bildschirmsperre` verdeckt den Bildschirm, aber wer die Dateien des Browsers kopiert oder seine Entwicklertools öffnet, kann alles lesen. Hast du `Auf diesem Gerät merken` angehakt, kann er im selben Browser auch deine synchronisierten Daten öffnen.
+
+Mit orOS USB und verschlüsseltem Speicher sind die Daten gesperrt, solange der Computer aus ist.
+
+### Wenn man dich zum Entsperren zwingt
+orOS hat keine falsche PIN und keine „Notfall-PIN“. Wenn man dich zwingen kann, es zu entsperren, geh davon aus, dass alles darauf gelesen werden kann.
+
+### Was die Cloud trotzdem sieht
+Dropbox kann deine Daten nicht lesen, kennt aber dein Konto, die Adressen (IP), von denen du dich verbindest, wann du synchronisierst und wie viele Dateien du hast und wie groß sie sind. Muster können für sich etwas verraten, zum Beispiel viele große Dateien in der Nacht vor einer Veröffentlichung. Dropbox hebt außerdem eine Zeit lang ältere Versionen von Dateien auf.
+
+Ein eigener Nextcloud- oder WebDAV-Server, zu Hause oder bei einem Anbieter deines Vertrauens, nimmt diese Firma aus dem Spiel.
+
+### Das Relay
+Manche Funktionen laufen über das orOS-Relay: E-Mail, die Synchronisierung von Kalender und Kontakten mit deinem eigenen Server, wenn du das Relay einschaltest, Linkvorschauen, Kurzlinks, [Transfer](app:transfer) und Benachrichtigungen. Das Relay führt keine Protokolle, läuft aber bei Cloudflare, das die Verbindungsadressen sieht. Inhalte von E-Mail und Kalender laufen dort unverschlüsselt durch (verschlüsselt ist nur die Verbindung).
+
+### Benachrichtigungen
+Benachrichtigungen sind standardmäßig aus. Schaltest du sie in Chrome ein, werden sie über den Dienst von Google zugestellt, der sieht, dass und wann eine Benachrichtigung kam, nicht was darin steht.
+
+### Der Code selbst
+orOS lädt von useoros.online und aktualisiert sich selbst. Würden die Konten des Projekts je übernommen, könnte eine schädliche Version alle erreichen. orOS Portable und orOS USB haben ihre Kopie auf deinem Stick, das hilft, aber auch sie aktualisieren sich.
+
+### Spyware, Erweiterungen und dein Netzwerk
+- Spyware auf deinem Handy oder Computer sieht alles, was du siehst. Keine App schützt davor, auch Signal nicht. Halte dein System aktuell und nutze für die heikelste Arbeit ein sauberes Gerät.
+- Eine Browsererweiterung, die „alle deine Daten auf Websites lesen und ändern“ darf, kann auch orOS lesen. Nutze für orOS ein Browserprofil ohne Erweiterungen.
+- Dein Internetanbieter oder ein öffentliches WLAN kann nicht lesen, was du sendest, sieht aber, dass du orOS, Dropbox und das Relay nutzt. Die Tor-Taste in orOS USB und orOS Portable öffnet einen eigenen Tor Browser; orOS selbst läuft nicht über Tor.
+
+## Eine sicherere Einrichtung
+1. Nimm eine lange `Passphrase zur Verschlüsselung`: vier oder fünf zufällige Wörter, die du nirgends sonst verwendest.
+2. Hake `Auf diesem Gerät merken` nicht an einem Computer an, der dir abgenommen werden könnte.
+3. Schalte in den [Einstellungen](app:settings) die `Bildschirmsperre` mit einem Kennwort ein, wähle bei `Sperren nach` eine kurze Zeit und schalte `Sperren, wenn du die Seite verlässt` ein. Nutze `orOS sperren` im Menü, wenn du weggehst.
+4. Lass Benachrichtigungen aus.
+5. Nimm lieber deinen eigenen Nextcloud- oder WebDAV-Server als Dropbox.
+6. Für die heikelste Arbeit nutze orOS USB mit verschlüsseltem Speicher oder starte es ganz ohne gespeicherte Daten.
+7. Nutze ein Browserprofil ohne Erweiterungen.
+8. Halte Quellen bei Signal oder SecureDrop, nie in der E-Mail.
+9. Schalte in den `Einstellungen` unter `Sicherungen` `Sicherungsdateien verschlüsseln` ein: sonst ist eine Datei aus `Sicherungsdatei exportieren` **nicht** verschlüsselt. Siehe [Sicherung und Wiederherstellung](help:t/backup).
+
+## Wenn etwas schiefgeht
+- Glaubst du, dass jemand deine Passphrase kennt, nutze `Passphrase ändern` auf einem Gerät, dem du vertraust, siehe [Synchronisierung zwischen Geräten](help:t/sync).
+- Um alles zu löschen, siehe [Zurücksetzen auf Werkseinstellungen](help:t/reset). Das löscht auch deine orOS-Daten in der Cloud.
+- Organisationen wie die Freedom of the Press Foundation und die Digital Security Helpline von Access Now helfen Journalistinnen, Journalisten und Aktivistinnen kostenlos.
