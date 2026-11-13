@@ -396,7 +396,7 @@ test("publish: a music release with tracks, ISRCs and editions (wave M1); codes 
   const d0 = PB.put(PB.empty(), "titles", { id: "t0", t: "Old EP", mt: { k: "ep" }, ppl: [{ r: "a", n: "Band" }] }, T0);
   const d = PB.put(d0, "trk", { id: "k0", ti: "t0", t: "Old song", isrc: "GRA1B2500001" }, T0);
   const r = add("publish", clone(d), [
-    { title: "Night Songs", by: "Ann Example", release_type: "album", label: "Own Label", genre: "Folk", p_line: "2026 Ann Example", date: "2027-02-01",
+    { title: "Night Songs", by: "Ann Example", release_type: "album", record_label: "Own Label", genre: "Folk", p_line: "2026 Ann Example", date: "2027-02-01",
       tracks: [{ title: "Intro", length: "1:05", isrc: "GR-A1B-26-00001" }, { title: "Night Song", version: "Radio edit", length: "3:45", explicit: true }, "Dawn"],
       editions: [{ edition: "digital", upc: "5201234000001", distributor: "DistroKid" }, { edition: "cd", price: 12, catalogue_no: "OL-001" }] }
   ]);
@@ -434,6 +434,13 @@ test("publish: a music release with tracks, ISRCs and editions (wave M1); codes 
   assert.deepEqual(u.data.med, []);
   // the tool offers the fields
   const p = core.toolsFor({ creates: ["publish"] }).find((x) => x.name === "create_items").params.properties.items.items.properties;
-  ["release_type", "label", "genre", "p_line", "c_line", "tracks", "editions"].forEach((k) => assert.ok(p[k], k));
+  ["release_type", "record_label", "genre", "p_line", "c_line", "tracks", "editions"].forEach((k) => assert.ok(p[k], k));
   assert.deepEqual(p.release_type.enum, ["single", "ep", "album", "compilation"]);
+});
+
+test("create_items: no two fields share a name (one schema for every app)", () => {
+  const s = src("assistant/core.js"), i = s.indexOf("var CR_FIELDS"), blk = s.slice(i, s.indexOf("\n  ];", i));
+  const names = [...blk.matchAll(/^\s*\["([a-z_]+)", \[/gm)].map((m) => m[1]);
+  assert.ok(names.length > 50);
+  assert.deepEqual(names.filter((n, k) => names.indexOf(n) !== k), []);
 });

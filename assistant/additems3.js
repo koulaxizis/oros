@@ -834,7 +834,7 @@
     o.plan = false;
     o.fmts = [];
     o.mt = { k: PB_MT[rt] };
-    var mx = [["label", "lbl", 120, "a label's name"], ["genre", "gen", 60, "a genre"], ["p_line", "pl", 200, "the \u2117 line"], ["c_line", "cl", 200, "the \u00a9 line"]];
+    var mx = [["record_label", "lbl", 120, "a label's name"], ["genre", "gen", 60, "a genre"], ["p_line", "pl", 200, "the \u2117 line"], ["c_line", "cl", 200, "the \u00a9 line"]];
     for (var i = 0; i < mx.length; i++) {
       var y = text1(x, mx[i][0], mx[i][2], w, mx[i][3]);
       if (y.err) return y;
@@ -1019,8 +1019,8 @@
     if (!empty(x, "release_type")) {
       var me = normMusic(x, o, w, C);
       if (me) return me;
-    } else if (["tracks", "editions", "label", "genre", "p_line", "c_line"].some(function (k) { return !empty(x, k); })) {
-      return { err: w + "tracks, editions, label, genre, p_line and c_line are for a music release: give release_type too." };
+    } else if (["tracks", "editions", "record_label", "genre", "p_line", "c_line"].some(function (k) { return !empty(x, k); })) {
+      return { err: w + "tracks, editions, record_label, genre, p_line and c_line are for a music release: give release_type too." };
     }
     var by = ppl.filter(function (q) { return q.r === "a"; }).map(function (q) { return fold(q.n); }).join(",");
     return { o: o, key: fold(o.t) + "|" + by };

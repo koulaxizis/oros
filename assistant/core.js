@@ -2038,7 +2038,7 @@
     ["blurb", ["publish"], { type: "string", description: "publish: the back-cover text (up to 4000 characters)." }],
     ["release_plan", ["publish"], { type: "boolean", description: "publish with date: true adds the release plan counted back from the release date, false leaves it out (default: a plan for a book still to come, none for one released or out of print)." }],
     ["release_type", ["publish"], { type: "string", "enum": ["single", "ep", "album", "compilation"], description: "publish: makes the title a music release of this type (leave out for a book). A release has tracks and editions, never formats." }],
-    ["label", ["publish"], { type: "string", description: "publish music release: the record label." }],
+    ["record_label", ["publish"], { type: "string", description: "publish music release: the record label." }],
     ["genre", ["publish"], { type: "string", description: "publish music release: the genre." }],
     ["p_line", ["publish"], { type: "string", description: "publish music release: the \u2117 line (who owns the recording), e.g. 2026 Name." }],
     ["c_line", ["publish"], { type: "string", description: "publish music release: the \u00a9 line (who owns the artwork and texts)." }],
