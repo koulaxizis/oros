@@ -207,6 +207,7 @@
       "menu.moveTo":   "Move to…",
       "menu.copyTo":  "Copy to…",
       "menu.toDropbox": "Send to Dropbox…",
+      "menu.toDocs":    "Add to Documents",
       "menu.toComputer": "Send to This computer…",
       "menu.copyName": "Copy name",
       "menu.copyPath": "Copy path",
@@ -440,6 +441,7 @@
       "menu.moveTo":   "Μετακίνηση σε…",
       "menu.copyTo":   "Αντιγραφή σε…",
       "menu.toDropbox": "Αποστολή στο Dropbox…",
+      "menu.toDocs":    "Προσθήκη στα Έγγραφα",
       "menu.toComputer": "Αποστολή σε αυτόν τον υπολογιστή…",
       "menu.copyName": "Αντιγραφή ονόματος",
       "menu.copyPath": "Αντιγραφή διαδρομής",
@@ -602,6 +604,7 @@
 
   var MORE_SVG =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+  var DOCS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>';
   var TRASH_SVG =
     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
   var CLOCK_SVG =
@@ -1037,12 +1040,7 @@
   }
 
   function navigate(path) {
-    var d = dbx();
-    if (d && d.isActive()) d.leave();
-    var dv = drv();
-    if (dv && dv.isActive()) dv.leave();
-    var pc = cmp();
-    if (pc && pc.isActive()) pc.leave();
+    leavePlaces(null);
     view = "files";
     cwd = path;
     if (selectMode) setSelectMode(false);
@@ -1091,6 +1089,8 @@
     host.innerHTML = "";
     host.appendChild(makeQuickSection());
     host.appendChild(makeTreeNode(ROOT, t("tree.root"), 0, token));
+    var dc = docs();
+    if (dc) host.appendChild(dc.treeNode());
     var dv = drv();
     if (dv) host.appendChild(dv.treeNode());
     var pc = cmp();
@@ -1119,10 +1119,33 @@
     var c = window.OrosFilesComputer;
     return (c && typeof c.treeNode === "function") ? c : null;
   }
-  // Another place (Dropbox, orOS Drive, This computer) is shown instead of the disk.
+  // The Documents archive (files/docs.js, docs-core.js): a place of
+  // its own over files of the disk, details synced in "files-docs".
+  function docs() {
+    var d = window.OrosFilesDocs;
+    return (d && typeof d.treeNode === "function") ? d : null;
+  }
+  // Places shown instead of the disk. Each module has treeNode(),
+  // isActive() and leave(); a new place (Photos, …) adds its global
+  // name here and calls ctx.onEnter (= leavePlaces(itself)) on enter.
+  var PLACE_GLOBALS = ["OrosFilesDropbox", "OrosFilesDrive", "OrosFilesComputer", "OrosFilesDocs"];
+  function places() {
+    var out = [];
+    PLACE_GLOBALS.forEach(function (g) {
+      var p = window[g];
+      if (p && typeof p.isActive === "function" && typeof p.leave === "function") out.push(p);
+    });
+    return out;
+  }
+  function leavePlaces(except) {
+    places().forEach(function (p) { if (p !== except && p.isActive()) p.leave(); });
+  }
   function placeActive() {
-    var dv = drv(), pc = cmp();
-    return dbxActive() || !!(dv && dv.isActive()) || !!(pc && pc.isActive());
+    return places().some(function (p) { return p.isActive(); });
+  }
+  function docsCarry(from, to) {
+    var dc = docs();
+    if (dc && typeof dc.carry === "function") dc.carry(from, to);
   }
 
   function initDrive() {
@@ -1132,10 +1155,7 @@
       toast: transientNote,
       closeDrawer: closeTreeDrawer,
       onEnter: function () {
-        var d = dbx();
-        if (d && d.isActive()) d.leave();
-        var pc = cmp();
-        if (pc && pc.isActive()) pc.leave();
+        leavePlaces(drv());
         view = "files"; setSelectMode(false); clearSelection();
       },
       afterEnter: renderTree,
@@ -1171,10 +1191,7 @@
       toast: transientNote,
       closeDrawer: closeTreeDrawer,
       onEnter: function () {
-        var d = dbx();
-        if (d && d.isActive()) d.leave();
-        var dv = drv();
-        if (dv && dv.isActive()) dv.leave();
+        leavePlaces(cmp());
         view = "files"; setSelectMode(false); clearSelection();
       },
       afterEnter: renderTree,
@@ -1199,10 +1216,7 @@
       dialogHost: dialogHost,
       closeDrawer: closeTreeDrawer,
       onEnter: function () {
-        var dv = drv();
-        if (dv && dv.isActive()) dv.leave();
-        var pc = cmp();
-        if (pc && pc.isActive()) pc.leave();
+        leavePlaces(dbx());
         view = "files"; setSelectMode(false); clearSelection(); renderTree();
       },
       fmtKB: fmtKB,
@@ -1215,6 +1229,44 @@
       isTextExt: isTextExt,
       mimeFor: function (name) { return isTextExt(name) ? "text/plain" : mimeForExt(extOf(name)); }
     });
+  }
+
+  function initDocs() {
+    var dc = docs();
+    if (!dc) return;
+    dc.init({
+      toast: transientNote,
+      undoToast: undoToast,
+      closeDrawer: closeTreeDrawer,
+      onEnter: function () {
+        leavePlaces(docs());
+        view = "files"; setSelectMode(false); clearSelection();
+      },
+      afterEnter: renderTree,
+      fs: FS,
+      vault: vaultApi,
+      dialogHost: dialogHost,
+      uniqueName: uniqueName,
+      preview: function (p) { recentsTouch(p); openPreview(p); },
+      openFile: openFileAt,
+      setJob: setJob,
+      zip: { crc32: CORE.crc32, build: CORE.zipBuild },
+      zipSafePath: CORE.zipSafePath,
+      onChange: renderTree,
+      onDiskChanged: function () { forceStorageRecalc(); markDirty(); }
+    });
+  }
+
+  // Files' menu › Add to Documents: the selected files (not folders).
+  function addToDocs() {
+    var dc = docs();
+    if (!dc || view === "trash") return;
+    var paths = selectionPaths().filter(function (p) {
+      var e = null;
+      lastEntries.forEach(function (x) { if (entryPath(x) === p) e = x; });
+      return !(e && e.dir);
+    });
+    if (paths.length) dc.add(paths);
   }
 
   function makeTreeNode(path, label, depth, token) {
@@ -3316,6 +3368,9 @@
         selectionPaths().some(function (x) { return isImageExt(baseName(x)); }))) {
       ctxMenu.appendChild(mkItem(APP_SVG, "menu.sendAlbum", sendAlbum));
     }
+    if (docs() && !p.dir) {
+      ctxMenu.appendChild(mkItem(DOCS_SVG, "menu.toDocs", addToDocs));
+    }
     if (dbx() && dbx().exportFrom) {
       ctxMenu.appendChild(mkItem(dbx().icon || "", "menu.toDropbox", function () {
         sendToDropbox();
@@ -4038,12 +4093,7 @@
   }
 
   function openView(kind) {
-    var d = dbx();
-    if (d && d.isActive()) d.leave();
-    var dv = drv();
-    if (dv && dv.isActive()) dv.leave();
-    var pc = cmp();
-    if (pc && pc.isActive()) pc.leave();
+    leavePlaces(null);
     if (searchQuery !== null) {
       if (searchDebounce) { clearTimeout(searchDebounce); searchDebounce = null; }
       searchQuery = null; searchDir = null; search = null;
@@ -4086,7 +4136,7 @@
     transientNote(t(on ? "fav.added" : "fav.removed"));
     renderSelBar();
   }
-  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); }
+  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); docsCarry(from, to); }
   function favDropPath(p) { favCommit(CORE.favDrop(favs, p, Date.now())); }
 
   function registerFavSync() {
@@ -5260,6 +5310,7 @@
     initDropbox();
     initDrive();
     initComputer();
+    initDocs();
 
     // Multitasking (MT-S2): Files left open in the background lists the
     // folder again when it comes back; another app may have saved there.
