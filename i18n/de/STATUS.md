@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 42222 of 42739 (98%)
+- Strings: 42331 of 42848 (98%)
 - Help pages: 157 of 158 (99%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1804 / 1806 |
+| assistant | 99% | 1849 / 1851 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
@@ -166,7 +166,7 @@ text is still written in the code. They switch over wave by wave
 | weather | 100% | 186 / 186 |
 | whack | 100% | 51 / 51 |
 | wheel | 100% | 107 / 107 |
-| whiteboard | 100% | 195 / 195 |
+| whiteboard | 100% | 259 / 259 |
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
@@ -186,6 +186,7 @@ These show English until fixed (usually the English text changed).
 - de/help/publish.txt: links or key caps differ from publish/help.en.txt
 - de/help/settings.txt: links or key caps differ from settings/help.en.txt
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
+- de/help/whiteboard.txt: links or key caps differ from whiteboard/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
 - de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt
 
