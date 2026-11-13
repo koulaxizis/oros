@@ -34,6 +34,7 @@
   "use strict";
 
   var CORE = window.OrosPhotosCore;
+  var AL = window.OrosAlbumsCore;        // albums-core.js (P2, slice "files-photos")
   if (!CORE) return;
   var VIEW_LS = "oros-files-photos-view";
   var ROOT = "/internal";
@@ -53,6 +54,33 @@
   var STRINGS = {
     en: {
       "ph.tree":        "Photos",
+      "ph.tab.all":     "All",
+      "ph.tab.albums":  "Albums",
+      "ph.al.new":      "New album…",
+      "ph.al.name":     "Album name",
+      "ph.al.create":   "Create",
+      "ph.al.add":      "Add to album…",
+      "ph.al.addTitle": "Add {n} to an album",
+      "ph.al.added":    "Added to “{name}”: {n}",
+      "ph.al.remove":   "Remove from album",
+      "ph.al.removed":  "Removed from the album: {n}. The files stay where they are.",
+      "ph.al.back":     "All albums",
+      "ph.al.rename":   "Rename album…",
+      "ph.al.renameT":  "Rename the album",
+      "ph.al.save":     "Save",
+      "ph.al.delete":   "Delete album",
+      "ph.al.deleteAsk":"Delete the album “{name}”? The photos stay where they are on the disk.",
+      "ph.al.deleted":  "Album deleted. The photos are still in All.",
+      "ph.al.sendAll":  "Send the album…",
+      "ph.al.cover":    "Use as album cover",
+      "ph.al.covered":  "Album cover changed",
+      "ph.al.missing":  "{n} not on this device yet",
+      "ph.al.empty.title": "No albums yet",
+      "ph.al.empty.body":  "An album lists photos without moving or copying them, and it syncs to your other devices. Select photos in All and choose Add to album, or make one with New album.",
+      "ph.al.emptyOne": "This album is empty. In All, choose Select, pick photos and press Add to album.",
+      "ph.al.full":     "That is the most albums or photos an album can hold.",
+      "ph.al.saveFail": "Albums could not be saved on this device.",
+      "ph.i.albums":    "Albums",
       "ph.count":       "{n} items",
       "ph.countOne":    "1 item",
       "ph.smaller":     "Smaller",
@@ -112,6 +140,33 @@
     },
     el: {
       "ph.tree":        "Φωτογραφίες",
+      "ph.tab.all":     "Όλες",
+      "ph.tab.albums":  "Άλμπουμ",
+      "ph.al.new":      "Νέο άλμπουμ…",
+      "ph.al.name":     "Όνομα άλμπουμ",
+      "ph.al.create":   "Δημιουργία",
+      "ph.al.add":      "Σε άλμπουμ…",
+      "ph.al.addTitle": "Προσθήκη {n} σε άλμπουμ",
+      "ph.al.added":    "Μπήκαν στο «{name}»: {n}",
+      "ph.al.remove":   "Αφαίρεση από το άλμπουμ",
+      "ph.al.removed":  "Βγήκαν από το άλμπουμ: {n}. Τα αρχεία μένουν εκεί που είναι.",
+      "ph.al.back":     "Όλα τα άλμπουμ",
+      "ph.al.rename":   "Μετονομασία άλμπουμ…",
+      "ph.al.renameT":  "Μετονομασία του άλμπουμ",
+      "ph.al.save":     "Αποθήκευση",
+      "ph.al.delete":   "Διαγραφή άλμπουμ",
+      "ph.al.deleteAsk":"Να διαγραφεί το άλμπουμ «{name}»; Οι φωτογραφίες μένουν εκεί που είναι στον δίσκο.",
+      "ph.al.deleted":  "Το άλμπουμ διαγράφηκε. Οι φωτογραφίες είναι ακόμα στο «Όλες».",
+      "ph.al.sendAll":  "Αποστολή του άλμπουμ…",
+      "ph.al.cover":    "Εξώφυλλο του άλμπουμ",
+      "ph.al.covered":  "Το εξώφυλλο του άλμπουμ άλλαξε",
+      "ph.al.missing":  "{n} δεν είναι ακόμα σε αυτή τη συσκευή",
+      "ph.al.empty.title": "Δεν υπάρχουν ακόμα άλμπουμ",
+      "ph.al.empty.body":  "Ένα άλμπουμ δείχνει φωτογραφίες χωρίς να τις μετακινεί ή να τις αντιγράφει, και συγχρονίζεται στις άλλες συσκευές σου. Διάλεξε φωτογραφίες στο «Όλες» και πάτα «Σε άλμπουμ…» ή φτιάξε ένα με «Νέο άλμπουμ…».",
+      "ph.al.emptyOne": "Το άλμπουμ είναι άδειο. Στο «Όλες» πάτα «Επιλογή», διάλεξε φωτογραφίες και πάτα «Σε άλμπουμ…».",
+      "ph.al.full":     "Δεν χωράνε άλλα άλμπουμ ή άλλες φωτογραφίες σε αυτό το άλμπουμ.",
+      "ph.al.saveFail": "Τα άλμπουμ δεν αποθηκεύτηκαν σε αυτή τη συσκευή.",
+      "ph.i.albums":    "Άλμπουμ",
       "ph.count":       "{n} στοιχεία",
       "ph.countOne":    "1 στοιχείο",
       "ph.smaller":     "Μικρότερα",
@@ -196,6 +251,9 @@
     edit:   SVG('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', 20),
     folder: SVG('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', 20),
     send:   SVG('<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>', 20),
+    album:  SVG('<rect x="3" y="7" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/>', 20),
+    back:   SVG('<path d="M15 18l-6-6 6-6"/>'),
+    star:   SVG('<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>', 20),
     trash:  SVG('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>', 20)
   };
 
@@ -212,6 +270,8 @@
   var thumbJobs = [], thumbRunning = 0, cloudJobs = [], cloudRunning = false;
   var selecting = false, picked = {};
   var viewer = null;
+  var albums = AL ? AL.norm(null) : null;      // ALB v1 (synced)
+  var tab = "all", albumId = "", albumMissing = 0;
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -251,6 +311,58 @@
   }
   function scope() {
     return { skip: Array.isArray(view.skip) ? view.skip : CORE.SKIP, extra: view.extra || [] };
+  }
+
+  // ---------- albums: storage + sync (slice "files-photos") ----------
+  function syncApi() {
+    try { return (window.parent && window.parent !== window && window.parent.orosSync) || null; } catch (e) { return null; }
+  }
+  function loadAlbums() {
+    if (!AL) return;
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(AL.KEY)); } catch (e) { raw = null; }
+    albums = AL.norm(raw);
+  }
+  // R27: only a real change is stored and marks sync dirty; R30: a
+  // failed write is said, never swallowed.
+  function commitAlbums(next) {
+    if (!AL || next === albums || JSON.stringify(next) === JSON.stringify(albums)) return false;
+    albums = next;
+    try { localStorage.setItem(AL.KEY, JSON.stringify(albums)); }
+    catch (e) { toast(t("ph.al.saveFail")); }
+    var api = syncApi();
+    if (api && typeof api.markDirty === "function") api.markDirty();
+    albumsChanged();
+    return true;
+  }
+  function albumsChanged() {
+    if (albumId && !AL.find(albums, albumId)) albumId = "";
+    if (active && tab === "albums") rebuild();
+    else if (active) paintSelBar();
+  }
+  function registerSync() {
+    var api = syncApi();
+    if (!AL || !api || typeof api.registerSlice !== "function") return;
+    api.registerSlice(AL.SLICE, function () {
+      return AL.norm(albums);
+    }, function (incoming) {
+      // R6: a pull never marks dirty.
+      var next = AL.norm(incoming);
+      if (JSON.stringify(next) === JSON.stringify(albums)) return;
+      albums = next;
+      try { localStorage.setItem(AL.KEY, JSON.stringify(albums)); } catch (e) {}
+      if (!document.querySelector("dialog.ph-dlg[open]")) albumsChanged();
+    }, AL.KEY, AL.merge);
+  }
+  // Files moved a file or folder (rename, move, drop): path-keyed
+  // album items follow it, hash-keyed ones keep the new hint.
+  function carry(from, to) {
+    if (!AL) return;
+    commitAlbums(AL.carry(albums, from, to, Date.now()));
+  }
+  function albumName(id) { var a = AL && AL.find(albums, id); return a ? a.n : ""; }
+  function sortedAlbums() {
+    return AL ? AL.list(albums).sort(function (a, b) { return a.n.localeCompare(b.n, LOC, { sensitivity: "base" }) || (a.id < b.id ? -1 : 1); }) : [];
   }
 
   // ---------- IndexedDB ----------
@@ -468,8 +580,15 @@
   }
 
   function rebuild() {
-    var list = [];
-    Object.keys(recs).forEach(function (k) { var r = recs[k]; if (!isDoc(r)) list.push({ path: r.k, t: r.t, rec: r }); });
+    var list = [], all = [];
+    Object.keys(recs).forEach(function (k) { var r = recs[k]; if (!isDoc(r)) all.push(r); });
+    albumMissing = 0;
+    if (albumId && AL) {
+      var res = AL.resolve(AL.find(albums, albumId), all);
+      albumMissing = res.missing;
+      all = res.recs;
+    }
+    all.forEach(function (r) { list.push({ path: r.k, t: r.t, rec: r }); });
     months = CORE.timeline(list);
     order = [];
     flat = [];
@@ -666,7 +785,7 @@
   }
   function showThumb(tile, key, blob) {
     tile._busy = false;
-    if (!tile.isConnected || tile.querySelector("img")) return;
+    if (tile.querySelector("img")) return;           // a tile still in a fragment gets it too
     var img = el("img");
     img.alt = "";
     img.decoding = "async";
@@ -766,13 +885,33 @@
     if ($("ph-panel")) return;
     var bar = el("div", "dbx-bar ph-bar");
     bar.id = "ph-bar";
-    bar.appendChild(el("strong", "ph-title", t("ph.tree")));
+    var back = iconBtn("tool ph-back", ICON.back, t("ph.al.back"), function () { openAlbum(""); });
+    back.id = "ph-back";
+    back.hidden = true;
+    bar.appendChild(back);
+    var ttl = el("strong", "ph-title", t("ph.tree"));
+    ttl.id = "ph-title";
+    bar.appendChild(ttl);
+    if (AL) {
+      var tabs = el("span", "ph-tabs");
+      tabs.id = "ph-tabs";
+      tabs.setAttribute("role", "tablist");
+      [["all", "ph.tab.all"], ["albums", "ph.tab.albums"]].forEach(function (x) {
+        var b = el("button", "ph-tab", t(x[1]));
+        b.type = "button";
+        b.id = "ph-tab-" + x[0];
+        b.setAttribute("role", "tab");
+        b.addEventListener("click", function () { setTab(x[0]); });
+        tabs.appendChild(b);
+      });
+      bar.appendChild(tabs);
+    }
     var cnt = el("span", "ph-count");
     cnt.id = "ph-count";
     bar.appendChild(cnt);
     bar.appendChild(el("span", "ph-gap"));
-    bar.appendChild(iconBtn("tool", ICON.minus, t("ph.smaller"), function () { zoom(-1); }));
-    bar.appendChild(iconBtn("tool", ICON.plus, t("ph.bigger"), function () { zoom(1); }));
+    bar.appendChild(iconBtn("tool ph-zoom", ICON.minus, t("ph.smaller"), function () { zoom(-1); }));
+    bar.appendChild(iconBtn("tool ph-zoom", ICON.plus, t("ph.bigger"), function () { zoom(1); }));
     var sel = iconBtn("tool", ICON.check, t("ph.select"), function () { setSelecting(!selecting); });
     sel.id = "ph-select";
     bar.appendChild(sel);
@@ -810,6 +949,16 @@
     bs.type = "button"; bs.id = "ph-sel-send";
     bs.addEventListener("click", function () { sendPaths(pickedPaths()); });
     sb.appendChild(bs);
+    if (AL) {
+      var ba = el("button", "", t("ph.al.add"));
+      ba.type = "button"; ba.id = "ph-sel-album";
+      ba.addEventListener("click", function () { addToAlbumDialog(pickedPaths()); });
+      sb.appendChild(ba);
+      var bu = el("button", "", t("ph.al.remove"));
+      bu.type = "button"; bu.id = "ph-sel-unalbum";
+      bu.addEventListener("click", function () { removeFromAlbum(pickedPaths()); });
+      sb.appendChild(bu);
+    }
     var bt = el("button", "danger", t("ph.trash"));
     bt.type = "button"; bt.id = "ph-sel-trash";
     bt.addEventListener("click", function () { trashPaths(pickedPaths()); });
@@ -834,12 +983,42 @@
     if (sc) sc.style.setProperty("--ph-tile", SIZES[view.size] + "px");
   }
 
+  function paintHead() {
+    var inAlbum = !!albumId, ttl = $("ph-title"), back = $("ph-back"), tabs = $("ph-tabs");
+    if (ttl) ttl.textContent = inAlbum ? albumName(albumId) : t("ph.tree");
+    if (back) back.hidden = !inAlbum;
+    if (tabs) tabs.hidden = inAlbum;
+    var bar = $("ph-bar");
+    if (bar) bar.classList.toggle("in-album", inAlbum);
+    ["all", "albums"].forEach(function (x) {
+      var b = $("ph-tab-" + x);
+      if (b) b.setAttribute("aria-selected", tab === x ? "true" : "false");
+    });
+    var sel = $("ph-select");
+    if (sel) sel.hidden = tab === "albums" && !inAlbum;
+    var z = document.querySelectorAll("#ph-bar .ph-zoom");
+    for (var i = 0; i < z.length; i++) z[i].hidden = tab === "albums" && !inAlbum;
+  }
   function paintMsg() {
     var m = $("ph-msg"), cnt = $("ph-count");
-    if (cnt) cnt.textContent = order.length === 1 ? t("ph.countOne") : order.length ? t("ph.count", { n: order.length }) : "";
+    paintHead();
+    var nA = AL && tab === "albums" && !albumId ? albums.albums.length : -1;
+    if (cnt) cnt.textContent = nA >= 0 ? "" : order.length === 1 ? t("ph.countOne") : order.length ? t("ph.count", { n: order.length }) : "";
     if (!m) return;
     m.innerHTML = "";
     m.hidden = false;
+    if (nA === 0) {
+      var eb = el("div", "ph-empty");
+      eb.appendChild(el("strong", "", t("ph.al.empty.title")));
+      eb.appendChild(el("p", "", t("ph.al.empty.body")));
+      m.appendChild(eb);
+      return;
+    }
+    if (nA > 0) { m.hidden = true; return; }
+    if (albumId) {
+      if (!order.length && !albumMissing && !scanning) { m.textContent = t("ph.al.emptyOne"); return; }
+      if (albumMissing && !scanning) { m.textContent = t("ph.al.missing", { n: albumMissing }); return; }
+    }
     if (scanning && !order.length) { m.textContent = t("ph.looking"); return; }
     if (!scanning && !order.length) {
       var box = el("div", "ph-empty");
@@ -883,10 +1062,12 @@
     if (tileObs) tileObs.disconnect();
     if (moreObs) moreObs.disconnect();
     sc.innerHTML = "";
+    sc._lastDay = null; sc._grid = null;
     rendered = 0;
     tileObs = typeof IntersectionObserver === "function" ? new IntersectionObserver(function (list) {
       list.forEach(function (en) { if (en.isIntersecting) wantThumb(en.target); });
     }, { root: sc, rootMargin: "600px 0px" }) : null;
+    if (tab === "albums" && !albumId) { paintAlbums(sc); return; }
     var sentinel = el("div", "ph-more-sentinel");
     sentinel.id = "ph-sentinel";
     sc.appendChild(sentinel);
@@ -1004,6 +1185,204 @@
     if (h) h.scrollIntoView({ block: "start" });
   }
 
+  // ---------- albums ----------
+  function setTab(x) {
+    if (x === tab && !albumId) return;
+    if (selecting) setSelecting(false);
+    tab = x; albumId = "";
+    rebuild();
+    var sc = $("ph-scroll");
+    if (sc) sc.scrollTop = 0;
+  }
+  function openAlbum(id) {
+    if (selecting) setSelecting(false);
+    tab = "albums"; albumId = id && AL.find(albums, id) ? id : "";
+    rebuild();
+    var sc = $("ph-scroll");
+    if (sc) sc.scrollTop = 0;
+  }
+  function paintAlbums(sc) {
+    var years = $("ph-years");
+    if (years) years.hidden = true;
+    var all = [];
+    Object.keys(recs).forEach(function (k) { if (!isDoc(recs[k])) all.push(recs[k]); });
+    var grid = el("div", "ph-albums");
+    var add = el("button", "ph-album ph-album-new");
+    add.type = "button";
+    var plus = el("span", "ph-acover");
+    plus.innerHTML = ICON.plus;
+    add.appendChild(plus);
+    add.appendChild(el("span", "ph-aname", t("ph.al.new")));
+    add.addEventListener("click", function () { nameDialog(t("ph.al.new"), "", t("ph.al.create")).then(function (n) { if (n) newAlbum(n); }); });
+    grid.appendChild(add);
+    sortedAlbums().forEach(function (a) {
+      var res = AL.resolve(a, all), cover = null;
+      if (a.cv) cover = AL.resolve({ it: [{ k: a.cv, p: (a.it.filter(function (x) { return x.k === a.cv; })[0] || {}).p || "" }] }, all).recs[0] || null;
+      if (!cover && res.recs.length) cover = res.recs.slice().sort(function (x, y) { return (y.t || 0) - (x.t || 0) || (x.k < y.k ? -1 : 1); })[0];
+      var b = el("button", "ph-album");
+      b.type = "button";
+      b.dataset.id = a.id;
+      var c = el("span", "ph-acover");
+      c.innerHTML = ICON.album;
+      if (cover) {
+        c._rec = cover;
+        var key = thumbKey(cover);
+        if (urls[key]) showThumb(c, key, null);
+        else if (tileObs) tileObs.observe(c);
+        else wantThumb(c);
+      }
+      b.appendChild(c);
+      b.appendChild(el("span", "ph-aname", a.n));
+      var n = AL.live(a).length;
+      b.appendChild(el("span", "ph-acount", n === 1 ? t("ph.countOne") : t("ph.count", { n: n })));
+      b.addEventListener("click", function () { openAlbum(a.id); });
+      grid.appendChild(b);
+    });
+    sc.appendChild(grid);
+    paintSelBar();
+  }
+  function newAlbum(name) {
+    var r = AL.create(albums, name, Date.now());
+    if (!r.id) { toast(t("ph.al.full")); return ""; }
+    commitAlbums(r.state);
+    return r.id;
+  }
+  function itemsFor(paths) {
+    return paths.map(function (p) { return recs[p]; }).filter(Boolean).map(function (r) {
+      return { k: AL.keyOf(r), p: r.k };
+    }).filter(function (x) { return x.k; });
+  }
+  function addTo(id, paths) {
+    var items = itemsFor(paths), before = AL.live(AL.find(albums, id)).length;
+    var next = AL.addItems(albums, id, items, Date.now());
+    var after = AL.live(AL.find(next, id)).length;
+    commitAlbums(next);
+    if (after - before < items.length && after >= AL.MAX_ITEMS) toast(t("ph.al.full"));
+    else toast(t("ph.al.added", { name: albumName(id), n: items.length }));
+    if (selecting) setSelecting(false);
+  }
+  function removeFromAlbum(paths) {
+    if (!albumId) return;
+    var keys = [];
+    paths.forEach(function (p) {
+      var r = recs[p];
+      if (!r) return;
+      var a = AL.find(albums, albumId);
+      a.it.forEach(function (it) { if (!it.x && (it.k === AL.keyOf(r) || it.p === r.k)) keys.push(it.k); });
+    });
+    if (!keys.length) return;
+    commitAlbums(AL.removeItems(albums, albumId, keys, Date.now()));
+    toast(t("ph.al.removed", { n: paths.length }));
+    setSelecting(false);
+  }
+  function nameDialog(title, value, okText) {
+    return new Promise(function (resolve) {
+      var d = el("dialog", "ph-dlg");
+      var f = el("form");
+      f.method = "dialog";
+      f.appendChild(el("h3", "", title));
+      var lab = el("label", "ph-alabel", t("ph.al.name"));
+      var inp = el("input");
+      inp.type = "text";
+      inp.maxLength = AL.MAX_NAME;
+      inp.value = value || "";
+      inp.autocomplete = "off";
+      lab.appendChild(inp);
+      f.appendChild(lab);
+      var row = el("menu", "dlg-row");
+      var no = el("button", "", t("ph.cancel"));
+      no.type = "button";
+      no.addEventListener("click", function () { d.close(); });
+      var yes = el("button", "primary", okText);
+      yes.type = "submit";
+      yes.value = "ok";
+      row.appendChild(no); row.appendChild(yes);
+      f.appendChild(row);
+      d.appendChild(f);
+      document.body.appendChild(d);
+      d.addEventListener("close", function () {
+        var v = d.returnValue === "ok" ? inp.value.trim() : "";
+        d.remove();
+        resolve(v);
+      });
+      d.showModal();
+      inp.focus();
+      inp.select();
+    });
+  }
+  function addToAlbumDialog(paths) {
+    paths = paths.filter(function (p) { return recs[p]; });
+    if (!AL || !paths.length) return;
+    var d = el("dialog", "ph-dlg ph-pick");
+    var f = el("div");
+    f.appendChild(el("h3", "", paths.length === 1 ? t("ph.al.add").replace(/…$/, "") : t("ph.al.addTitle", { n: paths.length })));
+    var list = el("div", "ph-alist");
+    var picked = "";
+    sortedAlbums().forEach(function (a) {
+      var b = el("button", "ph-arow", a.n);
+      b.type = "button";
+      b.addEventListener("click", function () { picked = a.id; d.close("ok"); });
+      list.appendChild(b);
+    });
+    f.appendChild(list);
+    var form = el("form", "ph-anew");
+    var inp = el("input");
+    inp.type = "text";
+    inp.maxLength = AL.MAX_NAME;
+    inp.placeholder = t("ph.al.name");
+    inp.setAttribute("aria-label", t("ph.al.name"));
+    var mk = el("button", "primary", t("ph.al.create"));
+    mk.type = "submit";
+    form.appendChild(inp); form.appendChild(mk);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!inp.value.trim()) { inp.focus(); return; }
+      picked = newAlbum(inp.value);
+      if (picked) d.close("ok");
+    });
+    f.appendChild(form);
+    var row = el("menu", "dlg-row");
+    var no = el("button", "", t("ph.cancel"));
+    no.type = "button";
+    no.addEventListener("click", function () { d.close(); });
+    row.appendChild(no);
+    f.appendChild(row);
+    d.appendChild(f);
+    document.body.appendChild(d);
+    d.addEventListener("close", function () {
+      var ok = d.returnValue === "ok" && picked;
+      d.remove();
+      if (ok) addTo(picked, paths);
+    });
+    d.showModal();
+    (list.querySelector("button") || inp).focus();
+  }
+  function renameAlbum() {
+    var id = albumId;
+    if (!id) return;
+    nameDialog(t("ph.al.renameT"), albumName(id), t("ph.al.save")).then(function (n) {
+      if (n) commitAlbums(AL.rename(albums, id, n, Date.now()));
+    });
+  }
+  function deleteAlbum() {
+    var id = albumId;
+    if (!id) return;
+    confirmDlg(t("ph.al.deleteAsk", { name: albumName(id) }), t("ph.al.delete")).then(function (ok) {
+      if (!ok) return;
+      albumId = "";
+      commitAlbums(AL.remove(albums, id, Date.now()));
+      toast(t("ph.al.deleted"));
+    });
+  }
+  function coverCurrent() {
+    var r = viewer && viewer.rec;
+    if (!r || !albumId) return;
+    var a = AL.find(albums, albumId), key = "";
+    a.it.forEach(function (it) { if (!it.x && (it.k === AL.keyOf(r) || it.p === r.k)) key = it.k; });
+    if (!key) return;
+    if (commitAlbums(AL.setCover(albums, albumId, key, Date.now()))) toast(t("ph.al.covered"));
+  }
+
   // ---------- selecting ----------
   function setSelecting(on) {
     selecting = on;
@@ -1029,9 +1408,11 @@
     var n = pickedPaths().length;
     var c = $("ph-selcount");
     if (c) c.textContent = t("ph.selected", { n: n });
-    var s = $("ph-sel-send"), tr = $("ph-sel-trash");
+    var s = $("ph-sel-send"), tr = $("ph-sel-trash"), sa = $("ph-sel-album"), su = $("ph-sel-unalbum");
     if (s) s.disabled = !n || !shareApi();
     if (tr) tr.disabled = !n;
+    if (sa) sa.disabled = !n;
+    if (su) { su.hidden = !albumId; su.disabled = !n; }
   }
 
   // ---------- actions ----------
@@ -1108,6 +1489,13 @@
       b.setAttribute("role", "menuitem");
       b.addEventListener("click", function () { m.remove(); fn(); });
       m.appendChild(b);
+    }
+    if (albumId) {
+      item(t("ph.al.sendAll"), function () { sendPaths(order.map(function (r) { return r.k; })); });
+      item(t("ph.al.rename"), renameAlbum);
+      item(t("ph.al.delete"), deleteAlbum);
+    } else if (tab === "albums") {
+      item(t("ph.al.new"), function () { nameDialog(t("ph.al.new"), "", t("ph.al.create")).then(function (n) { if (n) newAlbum(n); }); });
     }
     item(t("ph.rescan"), scan);
     item(t("ph.folders"), foldersDialog);
@@ -1220,8 +1608,11 @@
     var folderBtn = iconBtn("ph-vbtn", ICON.folder, t("ph.inFolder"), function () { inFolder(); });
     var sendBtn = iconBtn("ph-vbtn", ICON.send, t("ph.send"), function () { if (viewer.rec) sendPaths([viewer.rec.k]); });
     var infoBtn = iconBtn("ph-vbtn", ICON.info, t("ph.info"), function () { toggleInfo(); });
+    var albumBtn = iconBtn("ph-vbtn", ICON.album, t("ph.al.add"), function () { if (viewer.rec) addToAlbumDialog([viewer.rec.k]); });
+    var coverBtn = iconBtn("ph-vbtn", ICON.star, t("ph.al.cover"), function () { coverCurrent(); });
     var trashBtn = iconBtn("ph-vbtn", ICON.trash, t("ph.trash"), function () { trashCurrent(); });
-    [editBtn, folderBtn, sendBtn, infoBtn, trashBtn].forEach(function (b) { top.appendChild(b); });
+    albumBtn.hidden = !AL;
+    [editBtn, folderBtn, sendBtn, albumBtn, coverBtn, infoBtn, trashBtn].forEach(function (b) { top.appendChild(b); });
     root.appendChild(top);
     var stage = el("div", "ph-stage");
     root.appendChild(stage);
@@ -1233,7 +1624,7 @@
     root.appendChild(info);
     document.body.appendChild(root);
     viewer = { root: root, stage: stage, title: title, info: info, closeBtn: closeBtn, editBtn: editBtn,
-               sendBtn: sendBtn, prev: prev, next: next, i: -1, rec: null, url: null, gen: 0, zoom: 1, fetched: null };
+               sendBtn: sendBtn, coverBtn: coverBtn, prev: prev, next: next, i: -1, rec: null, url: null, gen: 0, zoom: 1, fetched: null };
     root.addEventListener("keydown", function (e) {
       if (e.key === "Escape") { e.preventDefault(); closeViewer(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
@@ -1309,6 +1700,7 @@
     viewer.next.disabled = i >= order.length - 1;
     viewer.editBtn.hidden = r.kind !== "image";
     viewer.sendBtn.hidden = r.kind !== "image" || !shareApi();
+    viewer.coverBtn.hidden = !albumId;
     var fs = disk(), v = vault();
     var ready = Promise.resolve();
     if (r.cloud) {
@@ -1370,6 +1762,7 @@
     row("ph.i.size", r.s ? fmtSize(r.s) : "");
     row("ph.i.place", typeof r.lat === "number" ? r.lat.toFixed(5) + ", " + r.lon.toFixed(5) : "");
     row("ph.i.folder", parentOf(r.k).slice(ROOT.length + 1) || "/");
+    if (AL) row("ph.i.albums", AL.albumsWith(albums, AL.keyOf(r)).map(albumName).join(", "));
   }
   function toggleInfo() {
     if (!viewer) return;
@@ -1448,6 +1841,8 @@
       view.extra = Array.isArray(v.extra) ? v.extra.filter(function (x) { return typeof x === "string" && x.indexOf(ROOT + "/") === 0; }).slice(0, 50) : [];
     }
     window.addEventListener("pagehide", flushSaves);
+    loadAlbums();
+    registerSync();
     if (v && v.on) enter();
   }
 
@@ -1458,6 +1853,7 @@
     leave: leave,
     isActive: function () { return active; },
     refresh: function () { if (active) scan(); },
+    carry: carry,
     t: t
   };
 })();

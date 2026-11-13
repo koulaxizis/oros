@@ -116,7 +116,10 @@ Die orOS-Disk ist der verschlüsselte Ort: Mit eingeschalteter orOS-Synchronisie
 - `Auswählen` (oder langes Drücken am Handy) wählt mehrere. `Senden…` schickt die Fotos mit einem Link, wie `Fotos an jemanden senden…` in Dateien. `In den Papierkorb` fragt vorher; sie lassen sich 30 Tage lang aus dem `Papierkorb` wiederherstellen.
 - Fotos, die orOS Drive nur in der Cloud hält (zum Beispiel die `Camera backup` deines Handys), tragen ein Wolkenzeichen. Kommt eines ins Bild, wird es einmal für sein kleines Bild heruntergeladen und geht danach zurück in die Cloud, damit die Disk nicht vollläuft.
 - `⋯` › `Angezeigte Ordner…` legt fest, welche Ordner erscheinen. Ordner, in denen andere Apps ihre eigenen Bilder ablegen (Cover, Belege, Entwürfe), bleiben zuerst außen vor; hake die gewünschten an oder füge einen anderen Ordner hinzu. Dokumente und der Papierkorb erscheinen nie. `⋯` › `Nach neuen Fotos suchen` sucht erneut.
-> Die kleinen Bilder und die Daten entstehen auf diesem Gerät und bleiben dort. In Fotos wird nichts synchronisiert, und der Aufnahmeort verlässt dein Gerät nie.
+- `Alben` oben zeigt deine Alben. Ein Album zeigt Fotos, ohne sie zu verschieben oder zu kopieren, ein Foto kann also in mehreren Alben sein. Wähle unter `Alle` Fotos aus und tippe auf `Zum Album…` (oder auf die Album-Taste in der Ansicht), oder lege eins mit `Neues Album…` an.
+- In einem Album nimmt `Auswählen` › `Aus dem Album entfernen` Fotos heraus, und der Stern in der Ansicht macht ein Foto zum Albumcover. Unter `⋯` gibt es `Album senden…`, `Album umbenennen…` und `Album löschen`. Die Fotos bleiben immer auf dem Laufwerk.
+- Alben werden mit deinen anderen Geräten synchronisiert. Ein Foto, das die Synchronisierung überträgt, wird dort auch nach Verschieben oder Umbenennen wiedergefunden; ein Album zeigt, wie viele seiner Fotos noch nicht auf diesem Gerät sind.
+> Die kleinen Bilder und die Daten entstehen auf diesem Gerät und bleiben dort. Nur die Alben werden synchronisiert (ihre Namen und welche Fotos sie enthalten); der Aufnahmeort verlässt dein Gerät nie.
 
 ## orOS Drive
 - `orOS Drive` in der Ordnerliste zeigt die Ordner, die du mit der App orOS Drive von deinen Computern und Handys spiegelst.

@@ -116,7 +116,10 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 - `Select` (or a long press on a phone) picks several. `Send…` sends the photos with a link, as `Send photos to someone…` does in Files. `Move to Trash` asks first; they can be restored from `Trash` for 30 days.
 - Photos that orOS Drive keeps only in the cloud (for example your phone's `Camera backup`) show a cloud mark. When one comes into view it is downloaded once for its small picture, then it goes back to the cloud, so the disk does not fill up.
 - `⋯` › `Folders shown…` chooses which folders appear. Folders where other apps keep their own pictures (covers, receipts, designs) are left out at first; tick the ones you want, or add any other folder. Documents and the Trash never appear. `⋯` › `Look for new photos` checks again.
-> The small pictures and the dates are made on this device and stay on it. Nothing in Photos syncs, and the place a photo was taken never leaves your device.
+- `Albums` at the top lists your albums. An album lists photos without moving or copying them, so one photo can be in several albums. Select photos in `All` and press `Add to album…` (or use the album button in the viewer), or make one with `New album…`.
+- In an album, `Select` › `Remove from album` takes photos out of it, and the star in the viewer makes a photo the album's cover. `⋯` has `Send the album…`, `Rename album…` and `Delete album`. The photos always stay on the disk.
+- Albums sync to your other devices. A photo that sync carries is found again there even after it is moved or renamed; an album shows how many of its photos are not on this device yet.
+> The small pictures and the dates are made on this device and stay on it. Only the albums sync (their names and which photos they hold); the place a photo was taken never leaves your device.
 
 ## orOS Drive
 - `orOS Drive` in the folder list shows the folders you mirror from your computers and phones with the orOS Drive app.

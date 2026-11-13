@@ -1158,6 +1158,15 @@
   function placeActive() {
     return places().some(function (p) { return p.isActive(); });
   }
+  // Album items keyed by path follow a move (albums-core carry); the
+  // Photos scripts load for it only where albums are stored.
+  function photosCarry(from, to) {
+    var ph = photos();
+    if (ph && typeof ph.carry === "function") { ph.carry(from, to); return; }
+    var has = false;
+    try { var raw = JSON.parse(localStorage.getItem("oros-files-albums") || "null"); has = !!(raw && raw.albums && raw.albums.length); } catch (e) {}
+    if (has) loadPhotos().then(function (p) { if (p && p.carry) p.carry(from, to); }, function () {});
+  }
   function docsCarry(from, to) {
     var dc = docs();
     if (dc && typeof dc.carry === "function") dc.carry(from, to);
@@ -1323,12 +1332,12 @@
     });
   }
 
-  // photos.css, photos-core.js and photos.js (~88 KB) load the first time the
+  // photos.css, photos-core.js, albums-core.js and photos.js load the first time the
   // place opens, or at boot when Photos was open last time, so a plain
   // Files open stays inside its first-open budget (.github/qa). Until
   // then the tree shows this stand-in node with the same look.
   var PHOTOS_VIEW_KEY = "oros-files-photos-view";
-  var PHOTOS_SCRIPTS = ["photos-core.js", "photos.js"];
+  var PHOTOS_SCRIPTS = ["photos-core.js", "albums-core.js", "photos.js"];
   var photosLoading = null;
   function photosWasOpen() {
     try { var v = JSON.parse(localStorage.getItem(PHOTOS_VIEW_KEY) || "null"); return !!(v && v.on); }
@@ -4285,7 +4294,7 @@
     transientNote(t(on ? "fav.added" : "fav.removed"));
     renderSelBar();
   }
-  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); docsCarry(from, to); }
+  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); docsCarry(from, to); photosCarry(from, to); }
   function favDropPath(p) { favCommit(CORE.favDrop(favs, p, Date.now())); }
 
   function registerFavSync() {
