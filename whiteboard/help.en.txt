@@ -28,7 +28,7 @@ Whiteboard is an endless board for ideas: sticky notes, text, shapes, arrows tha
 - [[+]] and [[-]] zoom, [[0]] goes to 100%, [[1]] shows everything, [[Esc]] lets go of the selection.
 
 ## Export
-- `Export` in the top bar saves the `Whole board`, the `Selection` or, with one frame selected, `This frame`, as PNG, SVG or PDF, on a `Paper` or `Transparent` background. `Save in Files` keeps it in Files › Whiteboard.
+- `Export` in the top bar saves the `Whole board`, the `Selection` or, with one frame selected, `This frame`, as PNG, SVG, PDF or draw.io, on a `Paper` or `Transparent` background. `Save in Files` keeps it in Files › Whiteboard.
 - A selected frame also has `Export this frame` in its bar, which makes frames handy as pages.
 
 ## Diagram shapes
@@ -49,6 +49,12 @@ Whiteboard is an endless board for ideas: sticky notes, text, shapes, arrows tha
 - Select notes, texts and shapes joined by arrows and press `Lay out as a diagram`: `Tree` puts each one under the one its arrow comes from, with parents centred over their children (org charts, hierarchies); `Flow` puts them in layers along the arrows with as few crossings as it can (flowcharts, processes). Each goes `top to bottom` or `left to right`. `More` › `Lay out the board…` does the same for the whole board.
 - The group keeps its top-left corner, arrows follow, and frames, pictures and drawings stay where they are. One `Undo` puts everything back.
 - `Align and space` lines the selection up by its left, centre or right edges, or its top, middle or bottom edges. With three or more, `Same space across` and `Same space down` leave the same gap between each two, the first and last staying put.
+
+## draw.io and Mermaid
+- `More` › `Open a draw.io file…` opens a .drawio file (also compressed ones, .xml and .drawio.svg) from draw.io or diagrams.net. Each page becomes a new board: flowchart, UML and network shapes become the matching diagram shapes, swimlanes become frames, lines stay joined to their shapes with their heads and right angles, and colours take the nearest of the board's ten. Shapes it does not know come in as plain rectangles with their text, and it tells you how many.
+- `Export` › `draw.io` saves the board (or the selection) as a .drawio file that opens in draw.io and diagrams.net; brought back into Whiteboard it is the same as before.
+- `More` › `Draw from Mermaid text…` turns a Mermaid flowchart (it starts with `graph TD` or `flowchart LR`) into shapes and arrows, laid out as a flow; `subgraph` blocks become frames. The Assistant can do the same.
+- A draw.io file is read as text only: nothing in it is fetched from the web, and labels written as HTML become plain text.
 
 ## Templates
 - `More` (the three dots at the top right) › `Templates…` adds a ready board in the middle of the screen: `Brainstorm` (a topic with room for ideas around it), `Retrospective` (what went well, what to improve, what we do next), `SWOT` and `Roadmap` (now, next and later on a time line). It is one step: `Undo` takes it all back.
