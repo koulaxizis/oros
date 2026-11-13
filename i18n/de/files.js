@@ -402,6 +402,7 @@ orosPack("de", "files", {
  "tree.photosFail": "Fotos ließ sich nicht öffnen. Prüfe die Verbindung und versuche es erneut.",
  "tree.toggle": "Ordner anzeigen",
  "tree.trash": "Papierkorb",
+ "tree.docs": "Dokumente",
  "ui.hint": "Tipp",
  "unkeep": "Nicht mehr auf diesem Gerät behalten",
  "up": "Zum übergeordneten Ordner",

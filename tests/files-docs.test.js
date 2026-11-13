@@ -231,11 +231,13 @@ test("export and import: round trip by name, ids kept, nothing doubled", () => {
 
 test("wiring: Files loads the archive, registers the place, carries moves", () => {
   const html = read("files/index.html");
-  assert.match(html, /docs-core\.js\?v=/);
-  assert.match(html, /docs\.js\?v=/);
-  assert.ok(html.indexOf("docs-core.js") < html.indexOf("docs.js?v"), "core before the view");
-  assert.ok(html.indexOf("docs.js?v") < html.indexOf("files.js?v"), "the view before files.js");
+  assert.ok(!/<script[^>]+docs(-core)?\.js/.test(html), "Documents is not in the first open (budget)");
   const js = read("files/files.js");
+  assert.match(js, /DOCS_SCRIPTS = \["docs-core\.js", "docs\.js"\]/, "core before the view, on demand");
+  assert.match(js, /function loadDocs\(/);
+  assert.match(js, /"docs\.css\?v="/, "its styles load with it");
+  assert.ok(!/#doc-bar|\.doc-row/.test(read("files/files.css")), "Documents styles stay out of files.css");
+  assert.match(js, /docsStandIn\(\)/, "a node shows before the scripts load");
   assert.match(js, /OrosFilesDocs/);
   assert.match(js, /function places\(\)/);
   assert.match(js, /docsCarry\(/);
