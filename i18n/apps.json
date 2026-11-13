@@ -1013,12 +1013,6 @@
    ]
   },
   {
-   "app": "textcase",
-   "files": [
-    "textcase/textcase.js"
-   ]
-  },
-  {
    "app": "texttools",
    "files": [
     "texttools/texttools.js"

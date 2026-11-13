@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Text Tools — App logic (v1.0.0)
+// orOS Text Tools — App logic (v1.2.0)
 // Paste text, pick a tool, get the result live; chain several steps
 // and keep a chain as a recipe. The tools themselves are in core.js
 // (TextToolsCore); chains run in worker.js when the browser allows.
@@ -9,7 +9,16 @@
 //   - sessionStorage oros-texttools-session: the text, the steps and
 //     the open tab, for this browser session only (never stored on
 //     the device, never synced)
-//   - device-local oros-texttools-prefs: { layout: "stack"|"side" }
+//   - device-local oros-texttools-prefs: { layout: "stack"|"side", sel }
+//   - 1.2.0 (6.26, the Case Converter folded in): group "case" runs on
+//     textcase/core.js (TextCaseCore). Its My words stay the synced
+//     slice "textcase" (oros-textcase-data, same format, same merge),
+//     which this app now registers next to its own. The Case
+//     Converter's prefs (oros-textcase-prefs) are no longer read; its
+//     unsaved text (oros-textcase-draft) comes into the Text box once,
+//     when that box is empty, and the device copy is then removed
+//     (Text Tools keeps text for the session only). "Selection only" (prefs.sel) runs the steps on
+//     the selected part of the text for the "case" tools.
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. State: storage, session, prefs
@@ -27,6 +36,7 @@
   "use strict";
 
   var C = window.TextToolsCore;
+  var TC = window.TextCaseCore || null;     // Letters & accents (textcase/core.js)
   var STORAGE_KEY = "oros-texttools-data";
   var PREFS_KEY   = "oros-texttools-prefs";
   var SESSION_KEY = "oros-texttools-session";
@@ -52,6 +62,43 @@
       "app": "Text Tools",
       "grp.lines": "Lines", "grp.space": "Clean up", "grp.num": "Numbers", "grp.cols": "Columns", "grp.find": "Find",
       "grp.code": "Encode", "grp.cmp": "Compare",
+      "grp.case": "Letters & accents",
+      "tool.upper": "UPPERCASE", "tool.lower": "lowercase", "tool.sentence": "Sentence case", "tool.title": "Title Case",
+      "tool.capital": "Capitalize Each Word", "tool.toggle": "tOGGLE cASE", "tool.alt": "aLtErNaTiNg",
+      "tool.noaccents": "Remove accents", "tool.latin": "Greek → Latin", "tool.mixed": "Fix mixed letters",
+      "tool.codecase": "Names for code", "tool.fancy": "Fancy letters",
+      "hint.upper": "Capitals. Greek capitals lose their accents and keep the diaeresis where it belongs (τσάι → ΤΣΑΪ).",
+      "hint.lower": "Small letters, with a final ς. Capitals without accents cannot get their accents back (ΚΑΛΗΜΕΡΑ → καλημερα).",
+      "hint.sentence": "A capital at the start of each sentence. Words in My words keep their capitals.",
+      "hint.title": "Capitals for a title; small words such as “of”, “the”, “και”, “του” stay small. Words in My words keep their capitals.",
+      "hint.capital": "A capital at the start of every word. Words in My words keep their capitals.",
+      "hint.toggle": "Turns capitals into small letters and the other way round, handy after Caps Lock.",
+      "hint.alt": "Small and capital letters in turn, for fun.",
+      "hint.noaccents": "Takes away accents and diaereses, in Greek and in other languages (café → cafe).",
+      "hint.latin": "Greek in Latin letters: ELOT 743 as on passports (Θεσσαλονίκη → Thessaloniki), or casual Greeklish as in messages.",
+      "hint.mixed": "Finds Latin letters hiding in Greek words (an English A in ΑΘΗΝΑ) and the other way round.",
+      "hint.codecase": "Each line becomes one name for code. Greek is written in Latin letters unless you keep it.",
+      "hint.fancy": "Bold, italic and other Unicode letters for posts. Many screen readers read them badly; keep them for short titles. “Plain text” turns them back.",
+      "opt.lang": "Language", "val.lang.auto": "Automatic", "val.lang.en": "English", "val.lang.el": "Ελληνικά",
+      "val.lang.tr": "Türkçe", "val.lang.de": "Deutsch",
+      "opt.how": "How", "val.how.elot": "ELOT 743 (passports)", "val.how.casual": "Greeklish (messages)",
+      "opt.as": "Name style", "val.as.camel": "camelCase", "val.as.pascal": "PascalCase", "val.as.snake": "snake_case",
+      "val.as.kebab": "kebab-case", "val.as.constant": "CONSTANT_CASE", "val.as.dot": "dot.case", "val.as.path": "path/case",
+      "val.as.train": "Train-Case", "opt.keepGreek": "Keep Greek letters",
+      "opt.font": "Letters", "val.font.bold": "Bold", "val.font.italic": "Italic", "val.font.bolditalic": "Bold italic",
+      "val.font.sansbold": "Sans bold", "val.font.mono": "Monospace", "val.font.double": "Double-struck",
+      "val.font.smallcaps": "Small caps", "val.font.wide": "Fullwidth", "val.font.circled": "Circled",
+      "val.font.strike": "Strikethrough", "val.font.under": "Underline", "val.font.plain": "Plain text (undo fancy letters)",
+      "note.mixed": "{n} words fixed", "err.nocase": "The letters engine did not load: reopen the app",
+      "opt.sel": "Selection only", "sel.hint": "Select part of the text: only that part changes.",
+      "btn.words": "My words",
+      "words.title": "My words",
+      "words.hint": "These words keep their capitals in Sentence case, Title Case and Capitalize Each Word. They follow you to your other devices.",
+      "words.count": "{n} of {max}", "words.empty": "No words yet.", "words.new": "New word", "words.ph": "e.g. iPhone",
+      "words.add": "Add", "words.remove": "Remove {w}",
+      "toast.added": "Added to My words", "toast.same": "Already in My words",
+      "toast.bad": "A word has 1 to 40 characters and no spaces", "toast.full": "My words is full ({max})",
+      "toast.removed": "“{w}” removed",
       "tool.sort": "Sort", "tool.reverse": "Reverse order", "tool.dedupe": "Remove duplicates", "tool.dupes": "Only duplicates",
       "tool.count": "Count lines", "tool.noempty": "Remove empty lines", "tool.squeeze": "One empty line",
       "tool.filter": "Keep / remove lines", "tool.join": "Join lines", "tool.split": "Split into lines",
@@ -169,7 +216,7 @@
       "dlg.saveTitle": "Save as recipe", "dlg.renameTitle": "Rename recipe", "dlg.name": "Name",
       "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.close": "Close",
       "send.title": "Send the result to", "send.notes": "Notes (new page)", "send.sheet": "Spreadsheet (new sheet)",
-      "send.todo": "To-Do (one task per line)", "send.case": "Case Converter",
+      "send.todo": "To-Do (one task per line)",
       "toast.copied": "Copied", "toast.copyFail": "Could not copy: select the result and press Ctrl+C",
       "toast.pasteFail": "Could not read the clipboard: paste with Ctrl+V or a long press",
       "toast.cleared": "Text cleared", "toast.replaced": "Text replaced", "toast.undo": "Undo",
@@ -189,6 +236,43 @@
       "app": "Εργαλεία κειμένου",
       "grp.lines": "Γραμμές", "grp.space": "Καθάρισμα", "grp.num": "Αρίθμηση", "grp.cols": "Στήλες", "grp.find": "Εύρεση",
       "grp.code": "Κωδικοποίηση", "grp.cmp": "Σύγκριση",
+      "grp.case": "Γράμματα & τόνοι",
+      "tool.upper": "ΚΕΦΑΛΑΙΑ", "tool.lower": "πεζά", "tool.sentence": "Κεφαλαίο στην αρχή", "tool.title": "Τίτλος",
+      "tool.capital": "Κάθε Λέξη Με Κεφαλαίο", "tool.toggle": "αΝΤΙΣΤΡΟΦΗ", "tool.alt": "εΝαΛλΑξ",
+      "tool.noaccents": "Χωρίς τόνους", "tool.latin": "Ελληνικά → λατινικά", "tool.mixed": "Διόρθωση μικτών γραμμάτων",
+      "tool.codecase": "Ονόματα για κώδικα", "tool.fancy": "Φανταχτερά γράμματα",
+      "hint.upper": "Κεφαλαία. Τα ελληνικά κεφαλαία χάνουν τους τόνους και κρατούν τα διαλυτικά όπου χρειάζονται (τσάι → ΤΣΑΪ).",
+      "hint.lower": "Πεζά, με τελικό ς. Τα κεφαλαία χωρίς τόνους δεν ξαναπαίρνουν τόνους (ΚΑΛΗΜΕΡΑ → καλημερα).",
+      "hint.sentence": "Κεφαλαίο στην αρχή κάθε πρότασης. Οι λέξεις από το «Οι λέξεις μου» κρατούν τα κεφαλαία τους.",
+      "hint.title": "Κεφαλαία για τίτλο· μικρές λέξεις όπως «και», «του», “of”, “the” μένουν πεζές. Οι λέξεις από το «Οι λέξεις μου» κρατούν τα κεφαλαία τους.",
+      "hint.capital": "Κεφαλαίο στην αρχή κάθε λέξης. Οι λέξεις από το «Οι λέξεις μου» κρατούν τα κεφαλαία τους.",
+      "hint.toggle": "Κάνει τα κεφαλαία πεζά και τα πεζά κεφαλαία, χρήσιμο όταν έμεινε πατημένο το Caps Lock.",
+      "hint.alt": "Πεζά και κεφαλαία εναλλάξ, για πλάκα.",
+      "hint.noaccents": "Βγάζει τόνους και διαλυτικά, στα ελληνικά και σε άλλες γλώσσες (café → cafe).",
+      "hint.latin": "Ελληνικά με λατινικούς χαρακτήρες: ΕΛΟΤ 743 όπως στα διαβατήρια (Θεσσαλονίκη → Thessaloniki) ή πρόχειρα Greeklish όπως στα μηνύματα.",
+      "hint.mixed": "Βρίσκει λατινικά γράμματα κρυμμένα σε ελληνικές λέξεις (ένα αγγλικό A στο ΑΘΗΝΑ) και το ανάποδο.",
+      "hint.codecase": "Κάθε γραμμή γίνεται ένα όνομα για κώδικα. Τα ελληνικά γράφονται με λατινικά, εκτός αν τα κρατήσεις.",
+      "hint.fancy": "Έντονα, πλάγια και άλλα γράμματα Unicode για αναρτήσεις. Πολλοί αναγνώστες οθόνης τα διαβάζουν λάθος· κράτησέ τα για σύντομους τίτλους. Το «Απλό κείμενο» τα γυρίζει πίσω.",
+      "opt.lang": "Γλώσσα", "val.lang.auto": "Αυτόματα", "val.lang.en": "English", "val.lang.el": "Ελληνικά",
+      "val.lang.tr": "Türkçe", "val.lang.de": "Deutsch",
+      "opt.how": "Τρόπος", "val.how.elot": "ΕΛΟΤ 743 (διαβατήρια)", "val.how.casual": "Greeklish (μηνύματα)",
+      "opt.as": "Μορφή ονόματος", "val.as.camel": "camelCase", "val.as.pascal": "PascalCase", "val.as.snake": "snake_case",
+      "val.as.kebab": "kebab-case", "val.as.constant": "CONSTANT_CASE", "val.as.dot": "dot.case", "val.as.path": "path/case",
+      "val.as.train": "Train-Case", "opt.keepGreek": "Να μείνουν ελληνικά",
+      "opt.font": "Γράμματα", "val.font.bold": "Έντονα", "val.font.italic": "Πλάγια", "val.font.bolditalic": "Έντονα πλάγια",
+      "val.font.sansbold": "Έντονα sans", "val.font.mono": "Σταθερό πλάτος", "val.font.double": "Διπλή γραμμή",
+      "val.font.smallcaps": "Μικρά κεφαλαία", "val.font.wide": "Πλατιά", "val.font.circled": "Σε κύκλο",
+      "val.font.strike": "Διαγράμμιση", "val.font.under": "Υπογράμμιση", "val.font.plain": "Απλό κείμενο (χωρίς φανταχτερά)",
+      "note.mixed": "Διορθώθηκαν {n} λέξεις", "err.nocase": "Δεν φόρτωσαν τα γράμματα: άνοιξε ξανά την εφαρμογή",
+      "opt.sel": "Μόνο η επιλογή", "sel.hint": "Επίλεξε ένα μέρος του κειμένου: αλλάζει μόνο αυτό.",
+      "btn.words": "Οι λέξεις μου",
+      "words.title": "Οι λέξεις μου",
+      "words.hint": "Αυτές οι λέξεις κρατούν τα κεφαλαία τους στις μετατροπές «Κεφαλαίο στην αρχή», «Τίτλος» και «Κάθε Λέξη Με Κεφαλαίο». Σε ακολουθούν και στις άλλες συσκευές σου.",
+      "words.count": "{n} από {max}", "words.empty": "Καμία λέξη ακόμα.", "words.new": "Νέα λέξη", "words.ph": "π.χ. iPhone",
+      "words.add": "Προσθήκη", "words.remove": "Αφαίρεση {w}",
+      "toast.added": "Προστέθηκε στις λέξεις σου", "toast.same": "Υπάρχει ήδη στις λέξεις σου",
+      "toast.bad": "Μια λέξη έχει από 1 έως 40 χαρακτήρες και χωρίς κενά", "toast.full": "Οι λέξεις σου είναι γεμάτες ({max})",
+      "toast.removed": "Η λέξη «{w}» αφαιρέθηκε",
       "tool.sort": "Ταξινόμηση", "tool.reverse": "Αντίστροφη σειρά", "tool.dedupe": "Αφαίρεση διπλότυπων", "tool.dupes": "Μόνο τα διπλότυπα",
       "tool.count": "Μέτρημα γραμμών", "tool.noempty": "Χωρίς κενές γραμμές", "tool.squeeze": "Μία κενή γραμμή",
       "tool.filter": "Κράτα / βγάλε γραμμές", "tool.join": "Ένωση γραμμών", "tool.split": "Σπάσιμο σε γραμμές",
@@ -306,7 +390,7 @@
       "dlg.saveTitle": "Αποθήκευση ως συνταγή", "dlg.renameTitle": "Μετονομασία συνταγής", "dlg.name": "Όνομα",
       "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.close": "Κλείσιμο",
       "send.title": "Στείλε το αποτέλεσμα σε", "send.notes": "Σημειώσεις (νέα σελίδα)", "send.sheet": "Υπολογιστικό φύλλο (νέο φύλλο)",
-      "send.todo": "To-Do (μία εργασία ανά γραμμή)", "send.case": "Κεφαλαία & πεζά",
+      "send.todo": "To-Do (μία εργασία ανά γραμμή)",
       "toast.copied": "Αντιγράφηκε", "toast.copyFail": "Δεν έγινε αντιγραφή: επίλεξε το αποτέλεσμα και πάτα Ctrl+C",
       "toast.pasteFail": "Δεν διάβασα το πρόχειρο: επικόλλησε με Ctrl+V ή με παρατεταμένο πάτημα",
       "toast.cleared": "Το κείμενο καθαρίστηκε", "toast.replaced": "Το κείμενο άλλαξε", "toast.undo": "Αναίρεση",
@@ -376,7 +460,8 @@
 
   // ---------- 2. State ----------
   var data = null;                 // recipes (synced)
-  var prefs = { layout: "stack" };
+  var prefs = { layout: "stack", sel: false };
+  var words = null;                // My words (synced slice "textcase")
   // Session: the text, the steps and which step is open.
   var S = { text: "", other: "", chain: [{ tool: "sort", opts: {} }], active: 0, group: "lines", loaded: null };
 
@@ -404,8 +489,34 @@
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (p && (p.layout === "side" || p.layout === "stack")) prefs.layout = p.layout;
+      if (p) prefs.sel = p.sel === true;
     } catch (e) {}
   }
+
+  // My words: the Case Converter's synced list (seed words come in
+  // with m = 1, so any real change wins over them).
+  function loadWords() {
+    if (!TC) { words = null; return; }
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(TC.DATA_KEY) || "null"); } catch (e) { raw = null; }
+    words = TC.seeded(raw);
+  }
+  var wordsFailShown = false;
+  function saveWords() {
+    try { localStorage.setItem(TC.DATA_KEY, JSON.stringify(words)); wordsFailShown = false; }
+    catch (e) { if (!wordsFailShown) { wordsFailShown = true; showToast(t("toast.save")); } return; }   // R30
+    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+  }
+  // The Case Converter's unsaved text, once (see the header).
+  function takeCaseDraft() {
+    if (!TC) return;
+    var v = null;
+    try { v = localStorage.getItem(TC.DRAFT_KEY); } catch (e) { return; }
+    if (typeof v !== "string") return;
+    if (!S.text && v) { S.text = v.slice(0, C.MAX_TEXT); saveSessionNow(); }
+    if (S.text === v.slice(0, C.MAX_TEXT) || !v) { try { localStorage.removeItem(TC.DRAFT_KEY); } catch (e) {} }
+  }
+  function wordList() { return words ? words.words.map(function (w) { return w.w; }) : []; }
   function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {} }
 
   function loadSession() {
@@ -451,13 +562,13 @@
         var p = pending;
         pending = null;
         clearTimeout(p.timer);
-        if (m.ok) showResult(m.text, m.notes); else showError("err.run");
+        if (m.ok) showResult(p.wrap ? p.wrap[0] + m.text + p.wrap[1] : m.text, m.notes); else showError("err.run");
       };
       worker.onerror = function () {
         workerBroken = true;
         try { worker.terminate(); } catch (e) {}
         worker = null;
-        if (pending) { var p = pending; pending = null; clearTimeout(p.timer); runLocal(p.text, p.steps, p.ctx); }
+        if (pending) { var p = pending; pending = null; clearTimeout(p.timer); runLocal(p.text, p.steps, p.ctx, p.wrap); }
       };
     } catch (e) { workerBroken = true; worker = null; }
     return worker;
@@ -466,21 +577,40 @@
     if (worker) { try { worker.terminate(); } catch (e) {} }
     worker = null;
   }
-  function runLocal(text, steps, ctx) {
+  function runLocal(text, steps, ctx, wrap) {
     var r;
     try { r = C.run(text, steps, ctx || {}); } catch (e) { showError("err.run"); return; }
-    showResult(r.text, r.notes);
+    showResult(wrap ? wrap[0] + r.text + wrap[1] : r.text, r.notes);
+  }
+
+  // "Selection only" (Letters & accents): the part of the text that is
+  // selected, as [start, end), or null (no selection: the whole text).
+  var sel = { a: 0, b: 0 };
+  function selOn() { var st = activeStep(); return prefs.sel && !!st && !!C.TOOLS[st.tool] && C.TOOLS[st.tool].g === "case"; }
+  function selRange() {
+    if (!selOn() || !(sel.b > sel.a) || sel.b > S.text.length) return null;
+    return [sel.a, sel.b];
+  }
+  function trackSel() {
+    var ta = $("in"), a = ta.selectionStart || 0, b = ta.selectionEnd || 0;
+    if (a === sel.a && b === sel.b) return;
+    if (document.activeElement !== ta && !(b > a)) return;   // a click elsewhere keeps the last selection
+    sel.a = a; sel.b = b;
+    if (selOn()) schedule();
   }
 
   function runNow() {
     clearTimeout(liveTimer); liveTimer = null;
     var text = S.text, steps = copyObj(S.chain), ctx = C.usesOther(steps) ? { other: S.other } : {};
+    if (C.usesWords(steps)) ctx.words = wordList();
+    var rg = selRange(), wrap = null;
+    if (rg) { wrap = [text.slice(0, rg[0]), text.slice(rg[1])]; text = text.slice(rg[0], rg[1]); }
     if (pending) { clearTimeout(pending.timer); pending = null; }
     $("apply-btn").hidden = true;
     var w = getWorker();
-    if (!w) { runLocal(text, steps, ctx); return; }
+    if (!w) { runLocal(text, steps, ctx, wrap); return; }
     var id = ++seq, pattern = steps.some(C.usesPattern);
-    pending = { id: id, text: text, steps: steps, ctx: ctx };
+    pending = { id: id, text: text, steps: steps, ctx: ctx, wrap: wrap };
     pending.timer = setTimeout(function () {
       if (!pending || pending.id !== id) return;
       pending = null;
@@ -489,7 +619,7 @@
     }, pattern ? PATTERN_MS : CHAIN_MS);
     setNote(t("note.working"), false);
     try { w.postMessage({ id: id, text: text, steps: steps, ctx: ctx }); }
-    catch (e) { clearTimeout(pending.timer); pending = null; runLocal(text, steps, ctx); }
+    catch (e) { clearTimeout(pending.timer); pending = null; runLocal(text, steps, ctx, wrap); }
   }
 
   // Live preview while the text is not huge; above that, "Apply".
@@ -723,6 +853,120 @@
     });
     if (st.tool === "affix") host.appendChild(affixPresets());
     if (st.tool === "diff") host.appendChild(otherBox());
+    if (T.g === "case") host.appendChild(selRow());
+    if (C.usesWords([st])) {
+      var wb = el("button", "txt-btn words-btn", t("btn.words"));
+      wb.type = "button";
+      wb.setAttribute("aria-haspopup", "dialog");
+      wb.addEventListener("click", wordsDialog);
+      host.appendChild(wb);
+    }
+  }
+
+  // Letters & accents: "Selection only" (device-local, like the Case
+  // Converter's own switch).
+  function selRow() {
+    var row = el("label", "opt chk");
+    var cb = el("input");
+    cb.type = "checkbox";
+    cb.id = "o-sel";
+    cb.checked = prefs.sel;
+    cb.addEventListener("change", function () {
+      prefs.sel = cb.checked;
+      savePrefs();
+      $("sel-hint").hidden = !prefs.sel;
+      schedule();
+    });
+    row.appendChild(cb);
+    row.appendChild(el("span", "", t("opt.sel")));
+    var box = el("div", "");
+    box.appendChild(row);
+    var h = el("p", "hint", t("sel.hint"));
+    h.id = "sel-hint";
+    h.hidden = !prefs.sel;
+    box.appendChild(h);
+    return box;
+  }
+
+  // My words: words that keep their capitals (synced slice "textcase").
+  function wordsDialog() {
+    if (!words) { showToast(t("err.nocase")); return; }
+    var dlg = makeDialog("tt-words");
+    dlg.setAttribute("aria-labelledby", "tt-words-title");
+    var title = el("div", "dlg-title", t("words.title"));
+    title.id = "tt-words-title";
+    dlg.appendChild(title);
+    dlg.appendChild(el("p", "hint", t("words.hint")));
+    var form = el("form", "words-add");
+    var lab = el("label", "opt-lbl", t("words.new"));
+    lab.setAttribute("for", "tt-word-in");
+    var inp = el("input");
+    inp.id = "tt-word-in";
+    inp.type = "text";
+    inp.maxLength = TC.MAX_WORD_LEN;
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    inp.placeholder = t("words.ph");
+    var add = button(t("words.add"), "primary");
+    add.type = "submit";
+    form.appendChild(lab);
+    var line = el("div", "words-line");
+    line.appendChild(inp);
+    line.appendChild(add);
+    form.appendChild(line);
+    dlg.appendChild(form);
+    var count = el("div", "hint words-count");
+    var ul = el("ul", "words-list");
+    var empty = el("p", "hint", t("words.empty"));
+    dlg.appendChild(count);
+    dlg.appendChild(ul);
+    dlg.appendChild(empty);
+    function draw() {
+      ul.textContent = "";
+      var list = TC.sortedForList(words, LANG);
+      list.forEach(function (w) {
+        var li = el("li", "word");
+        li.appendChild(el("span", "word-text", w.w));
+        li.appendChild(iconBtn("mini danger", UI.x, t("words.remove", { w: w.w }), function () { remove(w); }));
+        ul.appendChild(li);
+      });
+      empty.hidden = list.length > 0;
+      count.textContent = t("words.count", { n: fmtNum(list.length), max: fmtNum(TC.MAX_WORDS) });
+    }
+    function remove(w) {
+      words = TC.removeWord(words, w.id, Date.now());
+      saveWords();
+      draw();
+      schedule();
+      inp.focus();
+      undoToast(t("toast.removed", { w: w.w }), function () {
+        var r = TC.addWord(words, w.w, Date.now());   // a newer edit resurrects (R17)
+        if (!r.ok) return;
+        words = r.data;
+        saveWords();
+        if (dlg.open) draw();
+        schedule();
+      });
+    }
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var r = TC.addWord(words, inp.value, Date.now());
+      if (!r.ok) { showToast(t("toast." + r.why, { max: fmtNum(TC.MAX_WORDS) })); inp.focus(); return; }
+      words = r.data;
+      saveWords();
+      inp.value = "";
+      draw();
+      schedule();
+      showToast(t("toast.added"));
+      inp.focus();
+    });
+    draw();
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    inp.focus();
   }
 
   // Compare: the second text. Session only, like the first one; never
@@ -1163,12 +1407,6 @@
     try { return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; }
     catch (e) { return null; }
   }
-  function hasApp(id) {
-    try {
-      var env = window.parent.orosTodayEnv;
-      return !!(env && typeof env.apps === "function" && env.apps().some(function (a) { return a.id === id; }));
-    } catch (e) { return false; }
-  }
   function sendTo(app, target) {
     var w = shellWin();
     if (!w) { showToast(t("toast.noBridge")); return false; }
@@ -1205,7 +1443,6 @@
       if (all.length > TODO_MAX) showToast(t("toast.todoCut"));
       sendTo("todo", { addItems: { from: t("from"), items: all.slice(0, TODO_MAX) } });
     });
-    if (hasApp("textcase")) add("send.case", function () { sendTo("textcase", { text: s }); });
     dlg.appendChild(list);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
@@ -1333,6 +1570,26 @@
     };
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("texttools", sliceGet, sliceSet, STORAGE_KEY, C.mergeRecipes);
+    // My words of Letters & accents: the Case Converter's slice, same
+    // name, key and merge as before the move (no data moves).
+    if (TC && words) api.registerSlice("textcase", wordsGet, wordsSet, TC.DATA_KEY, TC.mergeWords);
+  }
+  function wordsGet() { return TC.mergeWords(words, words); }   // canonical copy (R26)
+  function wordsSet(incoming) {
+    if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.words)) return;
+    var before = JSON.stringify(words);
+    window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
+    try {
+      words = TC.mergeWords(incoming, incoming);
+      localStorage.setItem(TC.DATA_KEY, JSON.stringify(words));
+    } catch (e) {
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+    if (JSON.stringify(words) === before) return;
+    var open = document.getElementById("tt-words");
+    if (open && open.open) { open.close(); wordsDialog(); }
+    if (C.usesWords(S.chain)) schedule();
   }
   function sliceGet() { return C.mergeRecipes(data, data); }   // canonical copy (R26)
   function sliceSet(incoming) {
@@ -1354,7 +1611,11 @@
   }
 
   // ---------- 11. Deep link, wiring & boot ----------
-  // Target { text }: another app (Case Converter, …) hands over a text.
+  // Target { text }: another app hands over a text.
+  // Target { group, tool? } (may come with text): open a group of tools,
+  // e.g. { group: "case" } from the old Case Converter id (APP-ALIAS);
+  // the open step switches to `tool`, or to the group's first tool when
+  // it is from another group.
   // Target { openFile: { token, name, size } }: a .txt / .csv / .tsv from
   // the system's "Open with" or Android Share (BR-FILE-OPEN); the File
   // itself is taken once from the shell with __orosTakeFile(token).
@@ -1362,10 +1623,21 @@
   function openTarget(tg) {
     if (!tg || typeof tg !== "object") return;
     if (tg.openFile && typeof tg.openFile === "object") { openFileTarget(tg.openFile); return; }
+    if (typeof tg.group === "string" && C.GROUPS.indexOf(tg.group) >= 0) openGroup(tg.group, tg.tool);
     if (typeof tg.text !== "string") return;
     if (document.querySelector("dialog[open]")) return;
     setText(tg.text, "toast.replaced");
     $("in").focus();
+  }
+  function openGroup(g, tool) {
+    var st = activeStep();
+    S.group = g;
+    var want = typeof tool === "string" && C.TOOLS[tool] && C.TOOLS[tool].g === g ? tool : null;
+    if (!want && !(C.TOOLS[st.tool] && C.TOOLS[st.tool].g === g)) want = C.toolsOf(g)[0];
+    if (want && st.tool !== want) { st.tool = want; st.opts = {}; }
+    saveSession();
+    renderGroups();
+    changedChain();
   }
   function openFileTarget(o) {
     var f = null;
@@ -1418,6 +1690,8 @@
 
   function wire() {
     $("in").addEventListener("input", onInput);
+    ["select", "keyup", "mouseup", "touchend"].forEach(function (ev) { $("in").addEventListener(ev, trackSel); });
+    document.addEventListener("selectionchange", function () { if (document.activeElement === $("in")) trackSel(); });
     $("stats").addEventListener("click", statsDialog);
     $("open-btn").addEventListener("click", openFile);
     $("paste-btn").addEventListener("click", pasteText);
@@ -1444,9 +1718,11 @@
   function boot() {
     load();
     loadPrefs();
+    loadWords();
     loadSession();
     applyI18n();
     applyLayout();
+    takeCaseDraft();
     $("in").value = S.text;
     wire();
     registerSync();
