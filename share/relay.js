@@ -33,8 +33,12 @@
 //   seal(key, id, plain, pw?, salt?)  → Promise<[piece bytes]>
 //   unseal(key, id, pieces, pw?, salt?) → Promise<plain bytes> (throws "pass" / "bad")
 //   unpack(plain)                     → Promise<{ x, e, bin? }> (throws "bad" / "big")
-//   create(env, { days, password?, bin?, now?, fetch?, relay? })
+//   create(env, { days, ms?, del?, password?, bin?, now?, fetch?, relay? })
 //                                     → Promise<{ code, id, del, exp }>
+//        ms: a lifetime in milliseconds instead of days (1 minute to
+//        30 days; the sign-in link, LINK-1, uses 15 minutes); del: the
+//        caller's own revoke secret (43 base64url characters), so it can
+//        travel sealed inside the item (LINK-1).
 //   open(code, { password?, now?, fetch?, relay? })
 //                                     → Promise<{ e, x, bin? } | { error }>
 //        error: "gone" (missing, expired or revoked) | "pass" | "bad" | "big" | "net"
@@ -231,8 +235,10 @@
     opts = opts || {};
     var days = DAYS.indexOf(opts.days) >= 0 ? opts.days : 7;
     var now = opts.now || Date.now();
-    var exp = now + days * DAY;
-    var id = b64u(rand(16)), key = b64u(rand(32)), del = b64u(rand(32));
+    var ms = (typeof opts.ms === "number" && opts.ms >= 60000 && opts.ms <= 30 * DAY) ? Math.floor(opts.ms) : days * DAY;
+    var exp = now + ms;
+    var id = b64u(rand(16)), key = b64u(rand(32));
+    var del = (typeof opts.del === "string" && /^[A-Za-z0-9_-]{43}$/.test(opts.del)) ? opts.del : b64u(rand(32));
     var password = opts.password ? String(opts.password) : "";
     var salt = password ? b64u(rand(16)) : "";
     var pieces;
