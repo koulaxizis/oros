@@ -413,6 +413,22 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
 dialog h2 { font-size: 15px; }
 dialog h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin: 16px 0 8px; }
 dialog select, dialog input[type="text"], dialog input[type="url"] { width: 100%; }
+.ld-live { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 4px; }
+.ld-cell { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; min-width: 0; }
+.ld-cell.ld-big { grid-column: 1 / -1; }
+.ld-k { font-size: 12px; color: var(--text-dim); }
+.ld-v { font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.ld-big .ld-v { font-size: 32px; }
+.ld-u { font-size: 11px; color: var(--text-dim); }
+.ld-v.ok { color: #33d17a; } .ld-v.warn { color: #f6d32d; } .ld-v.bad { color: #e01b24; }
+.ld-report table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; margin-top: 8px; }
+.ld-report th, .ld-report td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--border); }
+.ld-report th[scope="col"] { color: var(--text-dim); font-weight: 600; }
+.ld-report td, .ld-report th + th { text-align: right; }
+.ld-checks { list-style: none; padding: 0; margin: 10px 0 0; font-size: 13px; }
+.ld-checks li { display: flex; gap: 8px; padding: 4px 0; }
+.ld-checks .ld-mark { width: 1.2em; flex: none; font-weight: 700; }
+.ld-checks .ok .ld-mark { color: #33d17a; } .ld-checks .bad .ld-mark { color: #e01b24; } .ld-checks .warn .ld-mark { color: #f6d32d; }
 .cr-text { width: 100%; box-sizing: border-box; resize: vertical; font: inherit; font-size: 13px; line-height: 1.4; }
 dialog input[type="range"] { width: 100%; min-height: 32px; }
 .dlg-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }

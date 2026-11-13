@@ -146,6 +146,14 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - `Add to Music` makes the same file in the chosen format, puts it in the Music folder on the orOS disk and plays it in Music.
 - `Make a ringtone` turns the notes of the instrument tracks (not the drum kit) into a one-voice melody and opens it in Ringtone Composer: where notes overlap the highest one wins, and you press `Import` there to keep it.
 
+## Loudness
+`LUFS` on the master strip (or `Loudness…` in the export window, on a phone) opens the loudness meter. It measures by EBU R128 (ITU BS.1770), the same way as NULL Loudness Meter, on what the master sends to the speakers.
+- While the song plays it shows momentary (400 ms) and short-term (3 s) loudness, the integrated loudness of everything played so far, the loudness range (LRA) and the true peak. Stopping does not pull the integrated value down; `Reset` starts it again.
+- `Measure the song` mixes the song as the export would and measures all of it: integrated loudness, range, the loudest 3 seconds, true and sample peak, RMS and noise floor. `Measure a file…` does the same for any audio file.
+- `Target` says what a service will do with it. Spotify, Apple Music, YouTube and podcast apps play every track at about their own loudness, so a louder master only gets turned down; broadcast uses EBU R128 (-23 LUFS). A true peak above -1 dBTP may distort once the service encodes it.
+- The audiobook targets (ACX for Audible, Storytel) check what they reject: RMS -23 to -18 dBFS, peaks at most -3 dB, noise floor at most -60 dBFS, room tone at the start (0.5 to 1 s) and end (1 to 5 s), no digital silence, no clipping, at most 120 minutes. Storytel publishes no numbers of its own, so it starts from ACX's.
+- `Choose a reference…` measures a song you like: its numbers stand next to yours, and `Play it at the song's loudness` plays it turned to your song's integrated loudness, so you compare the sound and not the volume.
+
 ## Sync and backup
 - Projects, tracks and clips, the notes of MIDI clips too, follow you to your other devices through orOS sync.
 - The audio itself is kept as files on the orOS disk, in the `Studio` folder of the [Files](app:files) app. With sync on and [Vault Drive](help:t/sync) turned on, the files travel to your other devices too. Until a file arrives, its clips show that the audio is not on this device yet.
