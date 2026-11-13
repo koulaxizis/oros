@@ -3887,6 +3887,15 @@
         render();
         return x;
       },
+      // F3: a closed day → one income entry in Budget (BR-B1 prefill)
+      budgetReady: budgetReady,
+      sendBudgetZ: function (z, note) {
+        var p = shellWin();
+        if (!budgetReady() || !z || !(z.g > 0)) return false;
+        var ok = p.__orosOpenBudgetNew({ k: "i", a: z.g, d: z.d, n: String(note || "").slice(0, 140), c: "i-other", src: "stock" });
+        if (ok === false) showToast(t("ed.badNum"));
+        return ok !== false;
+      },
       openSheet: openAtFn() ? function (name, rows, sum) { openAtFn().__orosOpenAt("spreadsheet", { newSheet: { name: name, rows: rows, sum: sum } }); } : null,
       putZ: function (row) {
         if (!Array.isArray(data.zs)) data.zs = [];

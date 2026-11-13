@@ -61,7 +61,7 @@ Jeder Verkauf ist auch eine normale Bewegung `Verkauf`, also funktionieren Besta
 `Veranstaltungen` in der Kasse hält eine Messe, eine Buchvorstellung oder einen Markt fest: `Name`, die Tage (`Von`, `Bis`), das `Lager des Stands` (wähle eins, oder Bestand legt ein neues Lager mit dem Namen der Veranstaltung an), eine `Preisliste` und das `Wechselgeld pro Tag`. Dann:
 1. `Für den Stand packen`: Gib ein, wie viele du von jedem Produkt mitnimmst; eine Umbuchung bringt sie vom Hauptlager zum Stand.
 2. Am Stand wähle oben in der Kasse die Veranstaltung: Sie nutzt das Lager des Stands und die Preisliste der Veranstaltung, und jeder Verkauf zählt für sie. Zwei Handys am selben Stand können gleichzeitig verkaufen, auch offline; beim Synchronisieren kommt alles zusammen.
-3. Öffne am Ende jedes Tages den `Z-Bericht`: Das `Wechselgeld` kommt aus der Veranstaltung; gib das `Gezählte Bargeld` ein (oder `Zählen…` Schein für Schein), um zu sehen, was in der Kasse sein sollte und ob etwas fehlt, und dann `Tag abschließen`.
+3. Öffne am Ende jedes Tages den `Z-Bericht`: Das `Wechselgeld` kommt aus der Veranstaltung; gib das `Gezählte Bargeld` ein (oder `Zählen…` Schein für Schein), um zu sehen, was in der Kasse sein sollte und ob etwas fehlt, und dann `Tag abschließen`. `Zu Budget hinzufügen` öffnet danach eine Einnahme mit der Tagessumme in [Budget](app:budget), ausgefüllt zum Speichern.
 4. `Bericht` zeigt die ganze Veranstaltung über alle Tage: Verkäufe, Netto, MwSt., Rabatte, nach Zahlungsart, pro Tag und pro Titel, was zum Stand ging, was verkauft wurde, was zurückkam und was übrig ist. Drucke ihn auf der Rolle oder öffne ihn in Tabellen.
 5. `Zurückholen` bringt alles, was noch am Stand ist, mit einer Umbuchung zurück ins Hauptlager.
 

@@ -75,7 +75,8 @@
       repT: "Report: {n}", repDays: "Days", repTitles: "Titles", repTaken: "Taken", repSold: "Sold", repBackC: "Back", repLeft: "Left", repPrint: "Print", repSheet: "Open in Spreadsheet",
       repNone: "No sales at this event yet.",
       drFl: "Cash float", drCc: "Cash counted", drCount: "Count…", drExp: "Expected in the drawer: {e}", drDiff: "Difference: {d}", drOk: "The drawer is right.",
-      drCountT: "Count the cash", drTotal: "Total: {t}", drUse: "Use this total"
+      drCountT: "Count the cash", drTotal: "Total: {t}", drUse: "Use this total",
+      zBudget: "Add to Budget", zBudgetN: "Z #{n} · {d}"
     },
     el: {
       "pos.title": "Σημείο πώλησης (POS)", pl: "Τιμοκατάλογος", retail: "Λιανική", wh: "Αποθήκη",
@@ -129,7 +130,8 @@
       repT: "Αναφορά: {n}", repDays: "Ημέρες", repTitles: "Τίτλοι", repTaken: "Πήγαν", repSold: "Πουλήθηκαν", repBackC: "Γύρισαν", repLeft: "Έμειναν", repPrint: "Εκτύπωση", repSheet: "Άνοιγμα στο Υπολογιστικό φύλλο",
       repNone: "Καμία πώληση σε αυτή την εκδήλωση ακόμα.",
       drFl: "Αρχικό ποσό ταμείου", drCc: "Μετρητά που μετρήθηκαν", drCount: "Μέτρημα…", drExp: "Αναμενόμενα στο συρτάρι: {e}", drDiff: "Διαφορά: {d}", drOk: "Το ταμείο είναι σωστό.",
-      drCountT: "Μέτρημα μετρητών", drTotal: "Σύνολο: {t}", drUse: "Χρήση του συνόλου"
+      drCountT: "Μέτρημα μετρητών", drTotal: "Σύνολο: {t}", drUse: "Χρήση του συνόλου",
+      zBudget: "Στα Έσοδα & Έξοδα", zBudgetN: "Ζ #{n} · {d}"
     }
   };
 
@@ -1185,8 +1187,18 @@
         paint();
       });
     });
+    // F3: one income entry per closed day (Chris 2026-11-13: one per day)
+    var budB = api.budgetReady && api.budgetReady() ? btn(t("zBudget"), "", function () {
+      var rep = P.zReport(D(), dIn.value);
+      if (!rep.z) return;
+      var evs = P.evsOn(D(), rep.d).filter(function (e) { return P.evSales(D(), e.id).some(function (s) { return s.d === rep.d && s.v !== 1; }); });
+      var note = t("zBudgetN", { n: rep.z.no, d: api.fmtDay(rep.d, true) }) + (evs.length ? " · " + evs.map(function (e) { return e.name; }).join(", ") : "");
+      api.sendBudgetZ(rep.z, note);
+    }) : null;
+    if (budB) budB.id = "st-pos-zbud";
     acts.appendChild(printB);
     acts.appendChild(closeB);
+    if (budB) acts.appendChild(budB);
     acts.appendChild(btn(t("close"), "", function () { dlg.close(); }));
     dlg.appendChild(acts);
     dIn.addEventListener("change", function () { if (api.core.isYmd(dIn.value)) { paint(); fillDrawer(); } });
@@ -1202,6 +1214,7 @@
       printB.disabled = !rep.n && !rep.voids;
       closeB.disabled = !rep.n;
       closeB.hidden = !!rep.z && !rep.after;
+      if (budB) budB.hidden = !rep.z || !(rep.z.g > 0);
       if (rep.z) {
         box.appendChild(el("p", "hint", t("zClosed", { t: hm(rep.z.at), n: rep.z.no, g: api.money(rep.z.g) })));
         if (rep.after) box.appendChild(el("p", "hint warn", t("zAfter", { n: rep.after })));

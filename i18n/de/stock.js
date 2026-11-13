@@ -782,5 +782,7 @@ orosPack("de", "stock", {
  "drOk": "Die Kasse stimmt.",
  "drCountT": "Bargeld zählen",
  "drTotal": "Summe: {t}",
- "drUse": "Diese Summe nehmen"
+ "drUse": "Diese Summe nehmen",
+ "zBudget": "Zu Budget hinzufügen",
+ "zBudgetN": "Z #{n} · {d}"
 });
