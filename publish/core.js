@@ -13,6 +13,8 @@
 //                "list"|"net", k "" | format kind, adv }]
 //                rc (wave P8): review copies [{ id, n, out, email, d,
 //                st "sent"|"rev"|"no", url, q, rd, fu }]
+//                eps (LY-EPUB): EPUB ready per e-book format [{ f, d,
+//                p, n }] (Layout's EPUB export, recorded here)
 //     blocks: [{ id, m, p, note }],      ISBN blocks: p = the prefix as
 //                the agency gave it, with hyphens ("978-618-5321")
 //     isbnx:  [{ id, m, note }],         numbers used outside the app or
@@ -261,7 +263,7 @@
     if (wid > 0 && okId(raw.wp.a)) out.wp = { a: raw.wp.a, id: wid };
     return out;
   }
-  var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov", "plan", "roy", "rc", "mt"];
+  var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov", "plan", "roy", "rc", "eps", "mt"];
   // Release plan (wave P4): the steps from manuscript to presentation,
   // each with a date counted back from the release date (days).
   var STAGES = ["ms", "ed", "p1", "cov", "p2", "isbn", "p3", "print", "pres", "x"];
@@ -331,6 +333,22 @@
       st: oneOf(raw.st, RC_ST, "sent"), url: /^https:\/\/[^\s<>"]+$/.test(url) ? url : "", q: text(raw.q, 600).trim(),
       rd: okYmd(raw.rd) ? raw.rd : "", fu: okYmd(raw.fu) ? raw.fu : ""
     };
+  }
+  // EPUB ready (Layout's EPUB export, LY-EPUB): per e-book format the
+  // last EPUB made, its day (d), the copy on the orOS disk (p, under
+  // /internal/Layout/EPUB/) and its size in bytes (n). One per format.
+  var EPS_RE = /^\/internal\/Layout\/EPUB\/[^/]{1,200}\.epub$/;
+  function cleanEps(list, fids) {
+    var seen = {}, out = [];
+    (Array.isArray(list) ? list : []).forEach(function (raw) {
+      if (!raw || typeof raw !== "object" || !okId(raw.f) || seen[raw.f] || (fids && !fids[raw.f]) || !okYmd(raw.d)) return;
+      seen[raw.f] = 1;
+      var o = { f: raw.f, d: raw.d, n: num(raw.n, 0, 2e9, 0) };
+      var p = typeof raw.p === "string" && EPS_RE.test(raw.p) ? raw.p : "";
+      if (p) o.p = p;
+      out.push(o);
+    });
+    return out.slice(0, MAX_FMTS).sort(function (a, b) { return a.f < b.f ? -1 : a.f > b.f ? 1 : 0; });
   }
   // Copies to follow up: sent, no review yet, and `days` (21) since
   // they went out or since the last follow-up. → [{ title, rc }]
@@ -607,6 +625,8 @@
       return true;
     }).slice(0, MAX_RC);
     if (rc.length) out.rc = rc;
+    var eps = cleanEps(raw.eps, fids);
+    if (eps.length) out.eps = eps;
     var mt = cleanMt(raw.mt);          // wave M1: a music release
     if (mt) out.mt = mt;
     // Fields of a later version ride along unchanged (bounded).
@@ -1182,7 +1202,7 @@
     planState: planState, byDay: byDay,
     ROY_BASES: ROY_BASES, MAX_ROY: MAX_ROY, cleanRoy: cleanRoy, cleanStmt: cleanStmt,
     SUB_ST: SUB_ST, TPL_KEYS: TPL_KEYS, cleanSub: cleanSub, subsLate: subsLate, fillTpl: fillTpl,
-    RC_ST: RC_ST, RC_DAYS: RC_DAYS, MAX_RC: MAX_RC, cleanRc: cleanRc, rcDue: rcDue, quotes: quotes, pressList: pressList,
+    RC_ST: RC_ST, RC_DAYS: RC_DAYS, MAX_RC: MAX_RC, cleanRc: cleanRc, rcDue: rcDue, cleanEps: cleanEps, EPS_RE: EPS_RE, quotes: quotes, pressList: pressList,
     MT_KINDS: MT_KINDS, MED_KINDS: MED_KINDS, MAX_TRK_PER: MAX_TRK_PER, isMusic: isMusic, cleanMt: cleanMt,
     parseIsrc: parseIsrc, fmtIsrc: fmtIsrc, parseIsrcPrefix: parseIsrcPrefix, gtinCheck: gtinCheck, parseUpc: parseUpc,
     upcKey: upcKey, parseUpcPrefix: parseUpcPrefix, blockUpc: blockUpc, cleanTrk: cleanTrk, cleanMed: cleanMed,

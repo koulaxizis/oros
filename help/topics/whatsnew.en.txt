@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.49.00
+- **Layout makes EPUB e-books.** `Export` › `Editions` › `EPUB` turns the same document into an EPUB 3 e-book whose text flows to the reader's screen: chapters from the headings, the contents from the heading levels, the styles as the book's look, pictures with their descriptions and captions, the fonts inside, the cover, and the ISBN, title, people and description from the linked Publishing title. The print edition's page numbers ride along, so a reader can go to "page 87 of the book". A report lists what went in, pictures without a description and what e-book stores usually ask for. `Preview in Library` opens it without adding it, `Mark ready in Publishing` records it on the e-book format, and `More` › `Check an EPUB…` checks any EPUB file.
+
 ## Version 6.48.00
 - **Lyric Sync has a stage.** Press `Stage` on a song to play it live: big words with the chords above them, full screen, the screen kept on. It scrolls with the recording when the song is synced, or by itself at the song's tempo, and a foot pedal or Page Down turns the page.
 
