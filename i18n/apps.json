@@ -241,6 +241,7 @@
     "designkit/fx.js",
     "designkit/media.js",
     "designkit/model.js",
+    "designkit/pathedit.js",
     "designkit/show.js",
     "designkit/templates.js"
    ]
