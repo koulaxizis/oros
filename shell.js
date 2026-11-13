@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.30.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.31.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -5443,7 +5443,11 @@
         Object.keys(cats).forEach(function (c) {
           var cl = catTextOf(c);
           cats[c] = cats[c].filter(function (app) {
-            return [appLabelOf(app), app.name, app.id, cl].some(function (f) {
+            // Search words (apps.json "words" + app.<id>.words): an app is
+            // also found by what people call what it does (Lyric Sync =
+            // songbook, chords, setlist).
+            var wk = "app." + app.id + ".words", tw = window.t(wk);
+            return [appLabelOf(app), app.name, app.id, cl, app.words || "", tw === wk ? "" : tw].some(function (f) {
               return menuFold(f).indexOf(q) !== -1;
             });
           });

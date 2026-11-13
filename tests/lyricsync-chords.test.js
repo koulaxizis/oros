@@ -250,5 +250,17 @@ test("app wiring: chords.js loads before formats.js, files open here, names stay
   const app = read("lyricsync/app.js");
   assert.ok(!/innerHTML/.test(app), "chords and words only through textContent");
   const sw = read("sw.js");
-  assert.ok(sw.includes("./lyricsync/chords.js"), "precached");
+  assert.ok(sw.includes("\"lyricsync/chords.js\""), "precached");
+});
+
+test("songbook: the menu search finds Lyric Sync by its search words (EN, EL, DE)", () => {
+  const fs = require("fs"), path = require("path"), ROOT = path.join(__dirname, "..");
+  const apps = JSON.parse(fs.readFileSync(path.join(ROOT, "apps.json"), "utf8")).apps;
+  const ls = apps.find((a) => a.id === "lyricsync");
+  assert.ok(/songbook/.test(ls.words) && /chords/.test(ls.words), "apps.json words");
+  const tr = fs.readFileSync(path.join(ROOT, "translations.js"), "utf8");
+  assert.equal((tr.match(/"app\.lyricsync\.words":/g) || []).length, 2, "EN + EL words");
+  assert.ok(fs.readFileSync(path.join(ROOT, "i18n/de/shell.js"), "utf8").includes('"app.lyricsync.words":'), "DE words");
+  const sh = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
+  assert.ok(sh.includes('app.words || "", tw === wk ? "" : tw'), "menu search matches the words");
 });

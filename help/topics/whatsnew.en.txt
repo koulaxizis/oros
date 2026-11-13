@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.31.00
+- **Songbook in Lyric Sync.** Turn on `Chords` in Lyrics to write chords over the words, paste a chord sheet or open a ChordPro file, tap a word to put a chord, and transpose to any key with the capo helper. A song can now start from its words only, without a recording. Search the menu for songbook or chords to find it.
+
 ## Version 6.30.00
 - **Device info is now in Settings.** Open Settings › Device for the same cards about your browser, screen, storage and connection, with Copy report. Old links and shortcuts to Device Info open it there.
 
