@@ -21,6 +21,7 @@
       <button type="button" class="icon-btn" id="new-btn"></button>
       <button type="button" class="icon-btn" id="dup-btn"></button>
       <button type="button" class="icon-btn danger" id="del-btn"></button>
+      <button type="button" class="icon-btn mode-btn" id="page-btn" aria-pressed="false"></button>
     </div>
     <div class="tb-row" id="tb-b">
       <div class="seg" id="tab-seg" role="group">
@@ -140,6 +141,60 @@
       </section>
     </form>
 
+    <!-- Link-in-bio page editor (page mode) -->
+    <form id="page-form" autocomplete="off" novalidate>
+      <p class="hint pg-need" id="pg-need" data-i18n="pg.need" hidden>Add a username on the card first.</p>
+      <div id="pg-body">
+        <section class="sec">
+          <h2 data-i18n="pg.sec.show">On the page</h2>
+          <div id="pg-show"></div>
+          <p class="hint" data-i18n="pg.showHint">The page shows what the card shows.</p>
+        </section>
+
+        <section class="sec">
+          <h2 data-i18n="pg.sec.links">Page links</h2>
+          <p class="hint" id="pg-links-hint"></p>
+          <div id="pg-links"></div>
+          <div class="pg-adds">
+            <button type="button" class="txt-btn" id="pg-add-link"></button>
+            <button type="button" class="txt-btn" id="pg-add-head"></button>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h2 data-i18n="pg.sec.look">Look</h2>
+          <div id="pg-themes" role="radiogroup"></div>
+          <div class="pg-row">
+            <label for="pg-ac" data-i18n="pg.accent">Button colour</label>
+            <input type="color" id="pg-ac">
+            <button type="button" class="txt-btn" id="pg-ac-reset" data-i18n="pg.accentReset">Style colour</button>
+          </div>
+          <div class="pg-row">
+            <span class="pg-lbl" id="pg-bt-lbl" data-i18n="pg.shape">Buttons</span>
+            <div class="seg" id="pg-bt" role="radiogroup" aria-labelledby="pg-bt-lbl"></div>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h2 data-i18n="pg.sec.more">Publishing</h2>
+          <div class="pfld">
+            <label for="pg-ti" data-i18n="pg.title">Page title</label>
+            <input id="pg-ti" maxlength="60">
+          </div>
+          <div class="pfld">
+            <label for="pg-url" data-i18n="pg.url">Page address</label>
+            <input id="pg-url" type="url" maxlength="200" spellcheck="false" autocapitalize="off">
+            <p class="hint" data-i18n="pg.urlHint">Where you put the HTML file.</p>
+          </div>
+          <div class="pfld">
+            <label class="chk"><input type="checkbox" id="pg-vc"><span data-i18n="pg.vc">Save contact button</span></label>
+            <p class="hint" data-i18n="pg.vcHint">Visitors save you as a contact.</p>
+          </div>
+          <p class="hint pg-host" data-i18n="pg.hostHint">Export the page as HTML and upload it.</p>
+        </section>
+      </div>
+    </form>
+
     <!-- Live card -->
     <section id="stage">
       <div id="flip">
@@ -147,11 +202,13 @@
         <div class="face back" id="face-back"></div>
       </div>
       <p id="side-label" class="hint"></p>
+      <!-- page mode adds #pg-frame here (pageFrame()): the exported HTML itself, sandboxed -->
     </section>
   </main>
 
-  <!-- Share-link viewer (the card from #c=…, view only) -->
+  <!-- Share-link viewer (the card from #c=…, or the page from #p=…, view only) -->
   <div id="viewer" hidden>
+    <!-- a #p= link adds #v-page here (pageFrame()) -->
     <div id="v-flip">
       <div class="face front" id="v-front"></div>
       <div class="face back" id="v-back"></div>
