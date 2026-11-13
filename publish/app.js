@@ -120,7 +120,7 @@
       "plan.make": "Make the plan", "plan.redate": "Re-date from the release date", "plan.redateHint": "Open steps get new dates from the release date; done steps keep theirs.",
       "plan.add": "+ Step", "plan.addName": "Name of the step", "plan.todo": "Send to To-Do", "plan.del": "Remove step",
       "plan.late": "late", "plan.lateN": "{n} late", "plan.next": "Next: {s} · {d}", "plan.allDone": "All steps done.",
-      "plan.noRel": "Set the release date first.", "plan.todoBy": "By {d} · {t}", "plan.todoNone": "No open steps to send.", "plan.date": "Date",
+      "plan.noneMus": "Set the release date, then make the plan: orOS dates every step back from it (master, artwork, metadata and codes, upload to the distributor, pitch, pre-save, first week).", "plan.noRel": "Set the release date first.", "plan.todoBy": "By {d} · {t}", "plan.todoNone": "No open steps to send.", "plan.date": "Date",
       "tab.roy": "Royalties",
       "sec.roy": "Royalties", "roy.none": "No royalty terms. Add who is paid for this book, how much and on what.",
       "roy.add": "+ Terms", "roy.who": "Paid to", "roy.pct": "Royalty (%)", "roy.base": "On", "roy.base.list": "List price", "roy.base.net": "What came in (net)",
@@ -465,7 +465,7 @@
       "plan.make": "Φτιάξε την πορεία", "plan.redate": "Νέες ημερομηνίες από την κυκλοφορία", "plan.redateHint": "Τα ανοιχτά βήματα παίρνουν νέες ημερομηνίες από την κυκλοφορία· όσα έγιναν κρατούν τις δικές τους.",
       "plan.add": "+ Βήμα", "plan.addName": "Όνομα βήματος", "plan.todo": "Στείλε στο To-Do", "plan.del": "Αφαίρεση βήματος",
       "plan.late": "καθυστερεί", "plan.lateN": "{n} καθυστερούν", "plan.next": "Επόμενο: {s} · {d}", "plan.allDone": "Έγιναν όλα τα βήματα.",
-      "plan.noRel": "Βάλε πρώτα ημερομηνία κυκλοφορίας.", "plan.todoBy": "Έως {d} · {t}", "plan.todoNone": "Δεν υπάρχουν ανοιχτά βήματα.", "plan.date": "Ημερομηνία",
+      "plan.noneMus": "Βάλε ημερομηνία κυκλοφορίας και φτιάξε την πορεία: το orOS βάζει ημερομηνίες σε κάθε βήμα μετρώντας ανάποδα (master, artwork, στοιχεία και κωδικοί, ανέβασμα στον διανομέα, pitch, pre-save, πρώτη εβδομάδα).", "plan.noRel": "Βάλε πρώτα ημερομηνία κυκλοφορίας.", "plan.todoBy": "Έως {d} · {t}", "plan.todoNone": "Δεν υπάρχουν ανοιχτά βήματα.", "plan.date": "Ημερομηνία",
       "tab.roy": "Δικαιώματα",
       "sec.roy": "Δικαιώματα", "roy.none": "Δεν υπάρχουν όροι δικαιωμάτων. Πρόσθεσε ποιος πληρώνεται για αυτό το βιβλίο, πόσο και επί ποιου.",
       "roy.add": "+ Όροι", "roy.who": "Δικαιούχος", "roy.pct": "Ποσοστό (%)", "roy.base": "Επί", "roy.base.list": "Τιμής καταλόγου", "roy.base.net": "Εισπράξεων (καθαρά)",
@@ -1080,7 +1080,6 @@
     function onKind() {
       var mus = kind.value !== "book";
       auF.firstChild.textContent = t(mus ? "new.artist" : "new.author");
-      pll.hidden = mus;          // the music release plan comes with wave M3
     }
     kind.addEventListener("change", onKind);
     onKind();
@@ -1096,7 +1095,7 @@
       else if (pf.isbn) row.fmts = [{ id: C.uid(), k: "pb", isbn: pf.isbn }];
       if (C.okYmd(rel.value)) {
         row.rel = rel.value;
-        if (pl.checked && !mus) row.plan = C.makePlan(rel.value, [], C.uid);
+        if (pl.checked) row.plan = C.makePlan(rel.value, [], C.uid, planOpts(mus));
       }
       dlg.close();
       var next = C.put(data, "titles", row, now);
@@ -1210,12 +1209,11 @@
       sec.appendChild(editionsSection(tt));
     }
 
-    // Release plan (wave P4); the music plan comes with wave M3
+    // Release plan (wave P4; a music release's own steps since M3)
     var sp = el("section", "sec plan");
     sp.id = "ed-plan";
     sec.appendChild(sp);
-    if (!music) renderPlan();
-    else sp.hidden = true;
+    renderPlan();
 
     // Royalty terms (wave P6)
     var sr = el("section", "sec roy");
@@ -2275,6 +2273,10 @@
 
   // ---------- 6a. Release plan (wave P4) ----------
   var PF = window.OrosPublishFeed;
+  // Wave M3: a music release's plan names each step in the app's language.
+  function planOpts(music) {
+    return music ? { music: true, name: function (k) { return PF ? PF.stage(k, "", LANG) : k; } } : null;
+  }
   function stageName(st) { return PF ? PF.stage(st.k, st.n, LANG) : (st.n || st.k); }
   function todayYmd() {
     var d = new Date();
@@ -2291,8 +2293,8 @@
     box.appendChild(el("h3", "", t("plan.title")));
     var plan = tt.plan || [];
     if (!plan.length) {
-      box.appendChild(el("p", "muted", t("plan.none")));
-      var mk = button(t("plan.make"), "btn small pri", function () { writePlan(C.makePlan(currentTitle().rel, [], C.uid)); });
+      box.appendChild(el("p", "muted", t(C.isMusic(tt) ? "plan.noneMus" : "plan.none")));
+      var mk = button(t("plan.make"), "btn small pri", function () { writePlan(C.makePlan(currentTitle().rel, [], C.uid, planOpts(C.isMusic(currentTitle())))); });
       mk.disabled = !tt.rel;
       box.appendChild(mk);
       if (!tt.rel) box.appendChild(el("p", "muted small", t("plan.noRel")));
@@ -2329,7 +2331,7 @@
     });
     box.appendChild(ul);
     var acts = el("div", "send-row");
-    var rd = button(t("plan.redate"), "btn small", function () { writePlan(C.makePlan(currentTitle().rel, currentTitle().plan, C.uid)); });
+    var rd = button(t("plan.redate"), "btn small", function () { var c = currentTitle(); writePlan(C.makePlan(c.rel, c.plan, C.uid, planOpts(C.isMusic(c)))); });
     rd.disabled = !tt.rel;
     rd.title = t("plan.redateHint");
     acts.appendChild(rd);

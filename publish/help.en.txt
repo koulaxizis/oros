@@ -106,6 +106,8 @@ Each list shows what its shares add up to, in red when it is not 100%. A name th
 
 The ISRC and UPC/EAN fields check the code as you type and warn when another track or edition already has it. If your distributor gives you the codes, type them in. If you have your own prefixes (Codes tab), `Next free` fills in the next unused one. `Still missing` lists what a release still needs: artist, tracks, ISRCs, lengths, shares that make 100%, an edition, UPC/EAN, release date and cover.
 
+A release has its own `Release plan`, dated back from the release day: master ready (6 weeks before), artwork 3000 × 3000 px, metadata and codes, upload to the distributor (4 weeks before; most stores want 3 to 4 weeks), editorial pitch (3 weeks before; Spotify for Artists needs at least 7 days), pre-save link and posts (2 weeks before), and first-week posts. Move, rename, add or remove steps as in a book plan; the steps also show in Calendar, Today and To-Do.
+
 ## Codes
 Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `Codes` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.
 

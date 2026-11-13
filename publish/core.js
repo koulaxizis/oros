@@ -269,8 +269,21 @@
   var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov", "plan", "roy", "rc", "eps", "mt"];
   // Release plan (wave P4): the steps from manuscript to presentation,
   // each with a date counted back from the release date (days).
-  var STAGES = ["ms", "ed", "p1", "cov", "p2", "isbn", "p3", "print", "pres", "x"];
-  var STAGE_DAYS = { ms: -120, ed: -90, p1: -60, cov: -50, p2: -45, isbn: -40, p3: -30, print: -21, pres: 14 };
+  var STAGES = ["ms", "ed", "p1", "cov", "p2", "isbn", "p3", "print", "pres",
+                "mst", "art", "meta", "up", "pitch", "pre", "wk1", "x"];
+  var STAGE_DAYS = { ms: -120, ed: -90, p1: -60, cov: -50, p2: -45, isbn: -40, p3: -30, print: -21, pres: 14,
+                     mst: -42, art: -35, meta: -30, up: -28, pitch: -21, pre: -14, wk1: 7 };
+  // A music release's plan (wave M3): master, artwork 3000 px, metadata
+  // and codes, upload to the distributor (most stores want 3-4 weeks),
+  // editorial pitch (Spotify for Artists needs 7 days or more), pre-save
+  // and posts, first-week posts. A music step always carries its name
+  // (n): a device before M3 reads an unknown kind as an own step, which
+  // it keeps only with a name.
+  var BOOK_STAGES = ["ms", "ed", "p1", "cov", "p2", "isbn", "p3", "print", "pres"];
+  var MUSIC_STAGES = ["mst", "art", "meta", "up", "pitch", "pre", "wk1"];
+  // The names a music step gets when the caller gives none (English).
+  var MUSIC_STAGE_EN = { mst: "Master ready", art: "Artwork 3000 × 3000 px", meta: "Metadata and codes", up: "Upload to the distributor",
+                         pitch: "Editorial pitch", pre: "Pre-save link and posts", wk1: "First-week posts" };
   var MAX_PLAN = 20;
   function cleanStep(raw) {
     if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
@@ -1071,18 +1084,22 @@
   // The standard steps dated back from the release date. Steps already
   // in the plan keep their id, their done mark and their own name; a
   // done step keeps its date; own steps ("x") stay as they are.
-  function makePlan(rel, plan, newId) {
+  // o: { music: true, name: k → the step's name } for a music release.
+  function makePlan(rel, plan, newId, o) {
     if (!okYmd(rel)) return (plan || []).slice();
-    var have = {};
+    o = o || {};
+    var kinds = o.music ? MUSIC_STAGES : BOOK_STAGES, have = {};
     (plan || []).forEach(function (s) { if (s.k !== "x" && !have[s.k]) have[s.k] = s; });
-    var out = STAGES.filter(function (k) { return k !== "x"; }).map(function (k) {
+    var out = kinds.map(function (k) {
       var old = have[k];
       var d = old && old.done && old.d ? old.d : addDays(rel, STAGE_DAYS[k]);
       var s = { id: old ? old.id : newId(), k: k, d: d, done: old ? old.done : 0 };
-      if (old && old.n) s.n = old.n;
+      var n = old && old.n ? old.n : o.music ? line((o.name && o.name(k)) || MUSIC_STAGE_EN[k], 80) : "";
+      if (n) s.n = n;
       return s;
     });
-    (plan || []).forEach(function (s) { if (s.k === "x") out.push(s); });
+    // own steps, and steps of the other template, stay as they are
+    (plan || []).forEach(function (s) { if (s.k === "x" || kinds.indexOf(s.k) < 0) out.push(s); });
     return sortPlan(out).slice(0, MAX_PLAN);
   }
   function sortPlan(plan) {
@@ -1398,7 +1415,7 @@
     fold: fold, authors: authors, list: list, gaps: gaps, okYmd: okYmd, num: num,
     coverPath: coverPath, coversInUse: coversInUse, fromPrefill: fromPrefill,
     shopDraft: shopDraft, stockPrefill: stockPrefill, newsBlocks: newsBlocks, pressRelease: pressRelease,
-    STAGES: STAGES, STAGE_DAYS: STAGE_DAYS, MAX_PLAN: MAX_PLAN, addDays: addDays, makePlan: makePlan, sortPlan: sortPlan,
+    STAGES: STAGES, STAGE_DAYS: STAGE_DAYS, BOOK_STAGES: BOOK_STAGES, MUSIC_STAGES: MUSIC_STAGES, MUSIC_STAGE_EN: MUSIC_STAGE_EN, MAX_PLAN: MAX_PLAN, addDays: addDays, makePlan: makePlan, sortPlan: sortPlan,
     planState: planState, byDay: byDay,
     ROY_BASES: ROY_BASES, MAX_ROY: MAX_ROY, cleanRoy: cleanRoy, cleanStmt: cleanStmt,
     SUB_ST: SUB_ST, TPL_KEYS: TPL_KEYS, cleanSub: cleanSub, subsLate: subsLate, fillTpl: fillTpl,
