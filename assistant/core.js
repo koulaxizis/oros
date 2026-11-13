@@ -2047,7 +2047,15 @@
                                                       artist: { type: "string", description: "Only when not the release's artist." },
                                                       isrc: { type: "string", description: "CC-XXX-YY-NNNNN, hyphens allowed." },
                                                       length: { type: "string", description: "m:ss, e.g. 3:45." },
-                                                      language: { type: "string" }, explicit: { type: "boolean" } } } }],
+                                                      language: { type: "string" }, explicit: { type: "boolean" },
+                                                      credits: { type: "array", items: { type: "object", properties: {
+                                                        role: { type: "string", "enum": ["artist", "featured", "composer", "lyricist", "arranger", "producer", "mixing", "mastering", "engineer", "musician", "other"] },
+                                                        name: { type: "string" }, instrument: { type: "string", description: "musician: the instrument; other: what they did." } } } },
+                                                      writers: { type: "array", description: "Songwriting shares, adding up to 100.", items: { type: "object", properties: {
+                                                        name: { type: "string" }, share: { type: "number", description: "Percent." }, society: { type: "string", description: "Collecting society, e.g. AEPI, PRS." },
+                                                        ipi: { type: "string", description: "The writer's IPI number, only when the user gave it." } } } },
+                                                      masters: { type: "array", description: "Who owns the recording, shares adding up to 100.", items: { type: "object", properties: {
+                                                        name: { type: "string" }, share: { type: "number" } } } } } } }],
     ["editions", ["publish"], { type: "array", description: "publish music release: its editions, up to 8; only codes the user gave, never a made-up UPC.",
                items: { type: "object", properties: { edition: { type: "string", "enum": ["digital", "cd", "vinyl", "cassette", "other"] },
                                                       upc: { type: "string", description: "UPC-A (12 digits) or EAN-13 (13 digits)." },

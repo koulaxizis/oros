@@ -819,6 +819,60 @@
   var PB_MT = { single: "single", ep: "ep", album: "album", compilation: "comp" };
   var PB_MED = { digital: "dig", cd: "cd", vinyl: "vin", cassette: "cas", other: "ot" };
   var PB_TRK = 200;
+  // wave M2: credits and shares on a track
+  var PB_CR = { artist: "art", featured: "feat", composer: "comp", lyricist: "lyr", arranger: "arr", producer: "prod", mixing: "mix",
+                mastering: "mast", engineer: "eng", musician: "mus", other: "o" };
+  function sharesArg(x, k, w, writer, C) {
+    if (empty(x, k)) return { v: [] };
+    if (!Array.isArray(x[k])) return { err: w + k + " must be a list of { name, share" + (writer ? ", society, ipi" : "") + " }." };
+    if (x[k].length > C.MAX_SH) return { err: w + k + ": a track keeps " + C.MAX_SH + " people here." };
+    var out = [];
+    for (var i = 0; i < x[k].length; i++) {
+      var y = x[k][i], yw = w + k + "[" + i + "].";
+      if (!isObj(y)) return { err: yw + " must be an object." };
+      var n = text1(y, "name", 120, yw, "a name");
+      if (n.err) return n;
+      if (!n.v) return { err: yw + "name is required." };
+      var s = numArg(y, "share", 0, 100, yw);
+      if (s.err) return s;
+      if (s.v === null) return { err: yw + "share is required (percent, 0-100)." };
+      var o = { n: n.v, pct: Math.round(s.v * 100) / 100 };
+      if (writer) {
+        var so = text1(y, "society", 60, yw, "a society's name");
+        if (so.err) return so;
+        if (so.v) o.soc = so.v;
+        if (!empty(y, "ipi")) {
+          var ipi = String(y.ipi).replace(/\D/g, "");
+          if (!/^\d{9,11}$/.test(ipi)) return { err: yw + "ipi must be the 9 to 11 digit IPI number; leave it out when unsure." };
+          o.ipi = ipi;
+        }
+      }
+      out.push(o);
+    }
+    if (out.length && C.shareSum(out) !== 100) return { err: w + k + " add up to " + C.shareSum(out) + "%; the shares must make 100%. Ask the user rather than guess." };
+    return { v: out };
+  }
+  function creditsArg(x, w, C) {
+    if (empty(x, "credits")) return { v: [] };
+    if (!Array.isArray(x.credits)) return { err: w + "credits must be a list of { role, name, instrument }." };
+    if (x.credits.length > C.MAX_CR) return { err: w + "credits: a track keeps " + C.MAX_CR + " credits." };
+    var out = [];
+    for (var i = 0; i < x.credits.length; i++) {
+      var y = x.credits[i], yw = w + "credits[" + i + "].";
+      if (!isObj(y)) return { err: yw + " must be an object." };
+      var r = empty(y, "role") ? "other" : String(y.role);
+      if (!has(PB_CR, r)) return { err: yw + "role must be one of " + Object.keys(PB_CR).join(", ") + "." };
+      var n = text1(y, "name", 120, yw, "a name");
+      if (n.err) return n;
+      if (!n.v) return { err: yw + "name is required." };
+      var ins = text1(y, "instrument", 60, yw, "an instrument");
+      if (ins.err) return ins;
+      var o = { r: PB_CR[r], n: n.v };
+      if (ins.v) o.ins = ins.v;
+      out.push(o);
+    }
+    return { v: out };
+  }
   function durArg(x, k, w) {
     if (empty(x, k)) return { v: 0 };
     if (typeof x[k] === "number" && x[k] >= 0 && x[k] <= 36000 && Math.floor(x[k]) === x[k]) return { v: x[k] };
@@ -869,6 +923,15 @@
       var du = durArg(tr, "length", tw);
       if (du.err) return du;
       to.dur = du.v;
+      var cr = creditsArg(tr, tw, C);
+      if (cr.err) return cr;
+      if (cr.v.length) to.cr = cr.v;
+      var sw = sharesArg(tr, "writers", tw, true, C);
+      if (sw.err) return sw;
+      if (sw.v.length) to.sw = sw.v;
+      var sm = sharesArg(tr, "masters", tw, false, C);
+      if (sm.err) return sm;
+      if (sm.v.length) to.sm = sm.v;
       o.trk.push(to);
     }
     var el = empty(x, "editions") ? [] : x.editions;
@@ -1112,7 +1175,9 @@
       });
       (o.trk || []).forEach(function (x, n) {
         var mm = Math.floor(x.dur / 60), ss = x.dur % 60;
-        f.push(["track", (n + 1) + ". " + x.t + (x.ver ? " (" + x.ver + ")" : "") + (x.dur ? " " + mm + ":" + (ss < 10 ? "0" : "") + ss : "") + (x.isrc ? " \u00b7 " + C.fmtIsrc(x.isrc) : "")]);
+        f.push(["track", (n + 1) + ". " + x.t + (x.ver ? " (" + x.ver + ")" : "") + (x.dur ? " " + mm + ":" + (ss < 10 ? "0" : "") + ss : "") + (x.isrc ? " \u00b7 " + C.fmtIsrc(x.isrc) : "") +
+          (x.sw ? " \u00b7 \u270e " + x.sw.map(function (y) { return y.n + " " + y.pct + "%"; }).join(", ") : "") +
+          (x.sm ? " \u00b7 \u2117 " + x.sm.map(function (y) { return y.n + " " + y.pct + "%"; }).join(", ") : "")]);
       });
       (o.med || []).forEach(function (x) {
         f.push(["format", keyOf(PB_MED, x.k) + (x.price ? "|" + x.price.toFixed(2) + " " + d.set.cur : "")]);
@@ -1141,7 +1206,8 @@
       if (o.mt) row.mt = clone(o.mt);
       d = C.put(d, "titles", row, s);
       (o.trk || []).forEach(function (x, n) {
-        d = C.put(d, "trk", { id: newIdIn(now, taken), ti: id, no: n + 1, disc: 1, t: x.t, ver: x.ver, art: x.art, isrc: x.isrc, dur: x.dur, lang: x.lang, ex: x.ex }, s);
+        d = C.put(d, "trk", { id: newIdIn(now, taken), ti: id, no: n + 1, disc: 1, t: x.t, ver: x.ver, art: x.art, isrc: x.isrc, dur: x.dur, lang: x.lang, ex: x.ex,
+                              cr: x.cr, sw: x.sw, sm: x.sm }, s);
       });
       (o.med || []).forEach(function (x) {
         d = C.put(d, "med", { id: newIdIn(now, taken), ti: id, k: x.k, upc: x.upc, cat: x.cat, price: x.price, dist: x.dist }, s);

@@ -30,7 +30,10 @@
 //                submission is flagged (90); own (wave P15) = other
 //                names the publisher goes by, comma separated; unknown
 //                fields ride along
-//     trk:    [{ id, m, ti, no, disc, t, ver, art, isrc, dur, lang, ex? }]
+//     trk:    [{ id, m, ti, no, disc, t, ver, art, isrc, dur, lang, ex?,
+//                cr?: [{ r, n, ins?, crm? }], sw?: [{ n, pct, soc?, ipi?, crm? }],
+//                sm?: [{ n, pct, crm? }] }]   (credits, songwriting and
+//                master shares: wave M2)
 //                tracks of a music release (wave M1): ti = the title,
 //                isrc = 12 characters without hyphens, dur in seconds
 //     med:    [{ id, m, ti, k dig|cd|vin|cas|ot, upc, cat, price, dist, note }]
@@ -507,7 +510,43 @@
     return data + gtinCheck(data);
   }
 
-  var TRK_KEYS = ["id", "m", "ti", "no", "disc", "t", "ver", "art", "isrc", "dur", "lang", "ex"];
+  var TRK_KEYS = ["id", "m", "ti", "no", "disc", "t", "ver", "art", "isrc", "dur", "lang", "ex", "cr", "sw", "sm"];
+  // Wave M2: who made the track (cr), who wrote it and their share of
+  // the song (sw: songwriting / publishing shares), who owns the
+  // recording (sm: master shares). Each share list sums to 100 when
+  // filled in; the app warns, it never rounds anyone's share away.
+  var CR_ROLES = ["art", "feat", "comp", "lyr", "arr", "prod", "mix", "mast", "eng", "mus", "o"];
+  var MAX_CR = 30, MAX_SH = 20;
+  function cleanCredit(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var n = line(raw.n, 120);
+    if (!n) return null;
+    var o = { r: oneOf(raw.r, CR_ROLES, "o"), n: n };
+    var ins = line(raw.ins, 60);
+    if (ins) o.ins = ins;            // the instrument (musician) or what they did (other)
+    if (okId(raw.crm)) o.crm = raw.crm;
+    return o;
+  }
+  function cleanShare(raw, writer) {
+    if (!raw || typeof raw !== "object") return null;
+    var n = line(raw.n, 120);
+    if (!n) return null;
+    var o = { n: n, pct: num(raw.pct, 0, 100, 2) };
+    if (writer) {
+      var soc = line(raw.soc, 60), ipi = String(raw.ipi == null ? "" : raw.ipi).replace(/\D/g, "");
+      if (soc) o.soc = soc;          // the collecting society, free text
+      if (/^\d{9,11}$/.test(ipi)) o.ipi = ipi;
+    }
+    if (okId(raw.crm)) o.crm = raw.crm;
+    return o;
+  }
+  function shareSum(list) { return Math.round((list || []).reduce(function (s, x) { return s + (x.pct || 0); }, 0) * 100) / 100; }
+  // "" when the list is empty or sums to 100, else "under" / "over"
+  function shareState(list) {
+    if (!list || !list.length) return "";
+    var s = shareSum(list);
+    return s === 100 ? "" : s < 100 ? "under" : "over";
+  }
   function rideAlong(raw, keys, out) {
     var extra = {}, any = false;
     Object.keys(raw).forEach(function (k) {
@@ -530,6 +569,12 @@
               t: t, ver: line(raw.ver, 120), art: line(raw.art, 200), isrc: pi.ok ? pi.isrc : "",
               dur: num(raw.dur, 0, 36000, 0), lang: line(raw.lang, 40) };
     if (raw.ex === 1) o.ex = 1;
+    var cr = (Array.isArray(raw.cr) ? raw.cr : []).map(cleanCredit).filter(Boolean).slice(0, MAX_CR);
+    if (cr.length) o.cr = cr;
+    var sw = (Array.isArray(raw.sw) ? raw.sw : []).map(function (x) { return cleanShare(x, true); }).filter(Boolean).slice(0, MAX_SH);
+    if (sw.length) o.sw = sw;
+    var sm = (Array.isArray(raw.sm) ? raw.sm : []).map(function (x) { return cleanShare(x, false); }).filter(Boolean).slice(0, MAX_SH);
+    if (sm.length) o.sm = sm;
     return rideAlong(raw, TRK_KEYS, o);
   }
   var MED_KEYS = ["id", "m", "ti", "k", "upc", "cat", "price", "dist", "note"];
@@ -887,6 +932,7 @@
       if (tr.some(function (r) { return !r.dur; })) g.push("dur");
       if (!ed.length) g.push("ed");
       if (ed.some(function (r) { return !r.upc; })) g.push("upc");
+      if (tr.some(function (r) { return shareState(r.sw) || shareState(r.sm); })) g.push("splits");
     }
     if (!t.rel) g.push("rel");
     if (!t.cov) g.push("cov");
@@ -1056,6 +1102,45 @@
     return out;
   }
 
+  // ---------- Split sheet (wave M2) ----------
+  // A plain-text split sheet for one track, for Writer (newDoc): the
+  // release, the track and its codes, the writers' shares with society
+  // and IPI, the master shares, the credits, and a line to sign for
+  // each person. S: the strings in the app's language (app.js "ss.*");
+  // roles: { role → its name }.
+  function splitSheet(t, r, S, roles, o) {
+    o = o || {};
+    function f(k, vars) {
+      var s = S[k] || "";
+      Object.keys(vars || {}).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
+      return s;
+    }
+    function pct(v) { return String(v).replace(".", o.comma ? "," : ".") + "%"; }
+    var parts = [f("head", { t: r.t })];
+    var info = [f("release", { t: t.t + (authors(t).length ? " · " + authors(t).join(", ") : "") })];
+    if (r.ver) info.push(f("version", { v: r.ver }));
+    if (r.isrc) info.push("ISRC " + fmtIsrc(r.isrc));
+    if (o.date) info.push(f("date", { d: o.date }));
+    parts.push(info.join("\n"));
+    if (r.sw && r.sw.length) {
+      parts.push(S.writers + "\n" + r.sw.map(function (x) {
+        return "- " + x.n + " · " + pct(x.pct) + (x.soc ? " · " + x.soc : "") + (x.ipi ? " · IPI " + x.ipi : "");
+      }).join("\n") + (shareState(r.sw) ? "\n" + f("sum", { s: pct(shareSum(r.sw)) }) : ""));
+    }
+    if (r.sm && r.sm.length) {
+      parts.push(S.masters + "\n" + r.sm.map(function (x) { return "- " + x.n + " · " + pct(x.pct); }).join("\n") +
+        (shareState(r.sm) ? "\n" + f("sum", { s: pct(shareSum(r.sm)) }) : ""));
+    }
+    if (r.cr && r.cr.length) {
+      parts.push(S.credits + "\n" + r.cr.map(function (x) { return "- " + (roles[x.r] || x.r) + (x.ins ? " (" + x.ins + ")" : "") + ": " + x.n; }).join("\n"));
+    }
+    parts.push(S.agree);
+    var who = [];
+    (r.sw || []).concat(r.sm || []).forEach(function (x) { if (who.indexOf(x.n) < 0) who.push(x.n); });
+    if (who.length) parts.push(who.map(function (n) { return n + "\n" + S.sign; }).join("\n\n"));
+    return { title: line(f("doc", { t: r.t }), 200), text: parts.join("\n\n") };
+  }
+
   // ---------- To other apps (wave P2) ----------
   // Each builder is pure: the app sends what it returns through the
   // shell (WooCommerce via orosLinks, the others as deep links), and
@@ -1189,6 +1274,8 @@
     tracksOf: tracksOf, editionsOf: editionsOf, runTime: runTime, usedCodes: usedCodes, codeClashes: codeClashes,
     nextIsrc: nextIsrc, nextUpc: nextUpc, isrcUsage: isrcUsage, upcUsage: upcUsage, musicGaps: musicGaps,
     removeRelease: removeRelease, orderTracks: orderTracks,
+    CR_ROLES: CR_ROLES, MAX_CR: MAX_CR, MAX_SH: MAX_SH, cleanCredit: cleanCredit, cleanShare: cleanShare,
+    shareSum: shareSum, shareState: shareState, splitSheet: splitSheet,
     POST_NETS: POST_NETS, POST_MAX: POST_MAX, POST_HOME: POST_HOME, cleanPost: cleanPost, postsDue: postsDue, postUrl: postUrl, postLen: postLen
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
