@@ -209,7 +209,8 @@
       "application/x-subrip": [".srt"],
       "text/vtt": [".vtt"],
       "application/ttml+xml": [".ttml"],
-      "text/x-ssa": [".ass", ".ssa"] } }
+      "text/x-ssa": [".ass", ".ssa"],
+      "application/x-chordpro": [".cho", ".chopro", ".chordpro", ".crd"] } }
   ];
   var TEXT_MAX = 5 * 1024 * 1024;
 
