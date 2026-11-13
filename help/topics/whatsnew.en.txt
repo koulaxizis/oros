@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.47.00
+- **Documents in Files: an archive of your papers.** Receipts, bills, contracts, warranties and certificates get a type, tags, a date, the company, an amount, an expiry date and a keep-until date, and you find them again by any of these. Any file can be a document and stays where it is; new ones go to `Documents` › (this year). Export everything as a .zip with a spreadsheet, and import it on another device. See [Files](app:files).
+
 ## Version 6.46.00
 - **Moon & Sky is now in Weather.** Open the `Sky tonight` tab in Weather for the Moon, planets and stars over your Weather city. Old links and shortcuts to Moon & Sky open that tab.
 
