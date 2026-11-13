@@ -814,6 +814,93 @@
   var PB = { title: 200, sub: 200, ser: 120, sn: 12, lang: 40, blurb: 4000, notes: 4000, name: 120, ppl: 12, fmts: 8, max: 5000 };
   var PB_ST = { idea: "idea", production: "prod", released: "out", out_of_print: "oop" };
   var PB_FMT = { paperback: "pb", hardback: "hb", ebook: "eb", audiobook: "ab", other: "ot" };
+  // wave M1 (music releases): release_type, tracks and editions, as
+  // Publishing's New title › Music and its Tracks / Editions sections
+  var PB_MT = { single: "single", ep: "ep", album: "album", compilation: "comp" };
+  var PB_MED = { digital: "dig", cd: "cd", vinyl: "vin", cassette: "cas", other: "ot" };
+  var PB_TRK = 200;
+  function durArg(x, k, w) {
+    if (empty(x, k)) return { v: 0 };
+    if (typeof x[k] === "number" && x[k] >= 0 && x[k] <= 36000 && Math.floor(x[k]) === x[k]) return { v: x[k] };
+    var m = /^\s*(?:(\d{1,2}):)?(\d{1,3}):(\d{2})\s*$/.exec(String(x[k]));
+    if (m && +m[3] < 60) return { v: (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]) };
+    return { err: w + k + " must be the length as m:ss (e.g. 3:45) or whole seconds." };
+  }
+  function normMusic(x, o, w, C) {
+    var rt = String(x.release_type);
+    if (!has(PB_MT, rt)) return { err: w + "release_type must be single, ep, album or compilation." };
+    if (Array.isArray(x.formats) && x.formats.length) return { err: w + "a music release has editions, not formats; give editions." };
+    if (x.release_plan === true) return { err: w + "release_plan is for books for now; leave it out for a music release." };
+    o.plan = false;
+    o.fmts = [];
+    o.mt = { k: PB_MT[rt] };
+    var mx = [["label", "lbl", 120, "a label's name"], ["genre", "gen", 60, "a genre"], ["p_line", "pl", 200, "the \u2117 line"], ["c_line", "cl", 200, "the \u00a9 line"]];
+    for (var i = 0; i < mx.length; i++) {
+      var y = text1(x, mx[i][0], mx[i][2], w, mx[i][3]);
+      if (y.err) return y;
+      if (y.v) o.mt[mx[i][1]] = y.v;
+    }
+    var seen = {};
+    var tl = empty(x, "tracks") ? [] : x.tracks;
+    if (!Array.isArray(tl)) return { err: w + "tracks must be a list." };
+    if (tl.length > PB_TRK) return { err: w + "a release keeps " + PB_TRK + " tracks in Publishing; give fewer." };
+    o.trk = [];
+    for (i = 0; i < tl.length; i++) {
+      var tr = typeof tl[i] === "string" ? { title: tl[i] } : tl[i], tw = w + "tracks[" + i + "].";
+      if (!isObj(tr)) return { err: w + "tracks[" + i + "] must be an object (or a title)." };
+      var r = text1(tr, "title", 200, tw, "a track's title");
+      if (r.err) return r;
+      if (!r.v) return { err: tw + "title is required." };
+      var to = { t: r.v, ver: "", art: "", isrc: "", dur: 0, lang: o.lang, ex: tr.explicit === true ? 1 : 0 };
+      var tx = [["version", "ver", 120, "a version"], ["artist", "art", 200, "an artist"], ["language", "lang", 40, "a language"]];
+      for (var j = 0; j < tx.length; j++) {
+        var z = text1(tr, tx[j][0], tx[j][2], tw, tx[j][3]);
+        if (z.err) return z;
+        if (z.v) to[tx[j][1]] = z.v;
+      }
+      if (!empty(tr, "explicit") && typeof tr.explicit !== "boolean") return { err: tw + "explicit must be true or false." };
+      if (!empty(tr, "isrc")) {
+        var pi = C.parseIsrc(String(tr.isrc));
+        if (!pi.ok) return { err: tw + "isrc " + String(tr.isrc).slice(0, 30) + " is not a valid ISRC (CC-XXX-YY-NNNNN). Leave it out when unsure; never make one up." };
+        if (seen[pi.isrc]) return { err: tw + "isrc " + C.fmtIsrc(pi.isrc) + " is given twice." };
+        seen[pi.isrc] = 1;
+        to.isrc = pi.isrc;
+      }
+      var du = durArg(tr, "length", tw);
+      if (du.err) return du;
+      to.dur = du.v;
+      o.trk.push(to);
+    }
+    var el = empty(x, "editions") ? [] : x.editions;
+    if (!Array.isArray(el)) return { err: w + "editions must be a list." };
+    if (el.length > PB.fmts) return { err: w + "a release keeps " + PB.fmts + " editions in Publishing; give fewer." };
+    o.med = [];
+    for (i = 0; i < el.length; i++) {
+      var e = el[i], ew = w + "editions[" + i + "].";
+      if (!isObj(e)) return { err: w + "editions[" + i + "] must be an object." };
+      var k = empty(e, "edition") ? "digital" : String(e.edition);
+      if (!has(PB_MED, k)) return { err: ew + "edition must be digital, cd, vinyl, cassette or other." };
+      var eo = { k: PB_MED[k], upc: "", cat: "", price: 0, dist: "" };
+      if (!empty(e, "upc")) {
+        var pu = C.parseUpc(String(e.upc));
+        if (!pu.ok) return { err: ew + "upc " + String(e.upc).slice(0, 30) + " is not a valid UPC (12 digits) or EAN (13 digits)" + (pu.why === "check" ? " (its check digit is wrong)" : pu.why === "isbn" ? " (it is an ISBN)" : "") + ". Leave it out when unsure; never make one up." };
+        if (seen[C.upcKey(pu.upc)]) return { err: ew + "upc " + pu.upc + " is given twice." };
+        seen[C.upcKey(pu.upc)] = 1;
+        eo.upc = pu.upc;
+      }
+      var cz = text1(e, "catalogue_no", 40, ew, "a catalogue number");
+      if (cz.err) return cz;
+      eo.cat = cz.v;
+      var dz = text1(e, "distributor", 80, ew, "a distributor's name");
+      if (dz.err) return dz;
+      eo.dist = dz.v;
+      var p = numArg(e, "price", 0, 1e6, ew);
+      if (p.err) return p;
+      eo.price = p.v ? Math.round(p.v * 100) / 100 : 0;
+      o.med.push(eo);
+    }
+    return null;
+  }
   function pubCore() {
     if (root.OrosPublishCore) return root.OrosPublishCore;
     if (NODE) { try { return require("../publish/core.js"); } catch (e) { return null; } }
@@ -929,6 +1016,12 @@
       }
       o.fmts.push(fo);
     }
+    if (!empty(x, "release_type")) {
+      var me = normMusic(x, o, w, C);
+      if (me) return me;
+    } else if (["tracks", "editions", "label", "genre", "p_line", "c_line"].some(function (k) { return !empty(x, k); })) {
+      return { err: w + "tracks, editions, label, genre, p_line and c_line are for a music release: give release_type too." };
+    }
     var by = ppl.filter(function (q) { return q.r === "a"; }).map(function (q) { return fold(q.n); }).join(",");
     return { o: o, key: fold(o.t) + "|" + by };
   }
@@ -956,6 +1049,22 @@
         if (seenWp[kk] !== undefined && seenWp[kk] !== q) return bad("items[" + seenWp[kk] + "] and items[" + q + "] have the same shop product " + wp.id + "; each edition has its own.");
         seenWp[kk] = q;
         if (linked[kk] && fold(linked[kk].t) !== fold(items[q].t)) return bad("items[" + q + "]: shop product " + wp.id + " is already linked to \u201c" + linked[kk].t + "\u201d in Publishing. Check the number; nothing was added.");
+      }
+    }
+    // music codes (wave M1): an ISRC or UPC/EAN already on another
+    // release (or marked used elsewhere), or twice in this call
+    var mused = C.usedCodes(d), mseen = {};
+    for (var mi = 0; mi < items.length; mi++) {
+      var codes = (items[mi].trk || []).map(function (x) { return x.isrc; }).concat((items[mi].med || []).map(function (x) { return x.upc ? C.upcKey(x.upc) : ""; }));
+      for (var mj = 0; mj < codes.length; mj++) {
+        var mc = codes[mj];
+        if (!mc) continue;
+        if (mseen[mc] !== undefined && mseen[mc] !== mi) return bad("items[" + mseen[mc] + "] and items[" + mi + "] have the same code " + mc + "; each track and edition needs its own.");
+        mseen[mc] = mi;
+        var mu = mused[mc] ? mused[mc][0] : null;
+        if (!mu) continue;
+        var mon = mu.x ? null : C.find(d, "titles", mu.title);
+        return bad("items[" + mi + "]: code " + mc + " is already " + (mon ? "on \u201c" + mon.t + "\u201d" : "marked as used outside Publishing") + ". Check the code; nothing was added.");
       }
     }
     var used = C.used(d), seen = {};
@@ -987,6 +1096,11 @@
         if (list.length) f.push([nm[r], list.join(", ")]);
       });
       if (o.ser) f.push(["series", o.ser + (o.sn ? " #" + o.sn : "")]);
+      if (o.mt) {
+        f.push(["mtype", keyOf(PB_MT, o.mt.k)]);
+        if (o.mt.lbl) f.push(["label", o.mt.lbl]);
+        if (o.mt.gen) f.push(["genre", o.mt.gen]);
+      }
       f.push(["status", keyOf(PB_ST, o.st)]);
       if (o.rel) f.push([o.plan ? "rel" : "release", o.rel]);
       if (o.lang) f.push(["lang", o.lang]);
@@ -995,6 +1109,14 @@
         if (x.isbn) f.push(["isbn", C.hyphen(x.isbn, d.blocks)]);
         if (x.pages) f.push(["pages", String(x.pages)]);
         if (x.wp) f.push(["product", "#" + x.wp.id + (shopName(x.wp.a) ? " \u00b7 " + shopName(x.wp.a) : "")]);
+      });
+      (o.trk || []).forEach(function (x, n) {
+        var mm = Math.floor(x.dur / 60), ss = x.dur % 60;
+        f.push(["track", (n + 1) + ". " + x.t + (x.ver ? " (" + x.ver + ")" : "") + (x.dur ? " " + mm + ":" + (ss < 10 ? "0" : "") + ss : "") + (x.isrc ? " \u00b7 " + C.fmtIsrc(x.isrc) : "")]);
+      });
+      (o.med || []).forEach(function (x) {
+        f.push(["format", keyOf(PB_MED, x.k) + (x.price ? "|" + x.price.toFixed(2) + " " + d.set.cur : "")]);
+        if (x.upc) f.push(["upc", x.upc]);
       });
       if (o.blurb) f.push(["blurb", preview(o.blurb, 120)]);
       if (o.notes) f.push(["note", preview(o.notes, 120)]);
@@ -1016,7 +1138,14 @@
                   }),
                   blurb: o.blurb, notes: o.notes };
       if (o.plan) row.plan = C.makePlan(o.rel, [], function () { return newIdIn(now, taken); });
+      if (o.mt) row.mt = clone(o.mt);
       d = C.put(d, "titles", row, s);
+      (o.trk || []).forEach(function (x, n) {
+        d = C.put(d, "trk", { id: newIdIn(now, taken), ti: id, no: n + 1, disc: 1, t: x.t, ver: x.ver, art: x.art, isrc: x.isrc, dur: x.dur, lang: x.lang, ex: x.ex }, s);
+      });
+      (o.med || []).forEach(function (x) {
+        d = C.put(d, "med", { id: newIdIn(now, taken), ti: id, k: x.k, upc: x.upc, cat: x.cat, price: x.price, dist: x.dist }, s);
+      });
       var t = C.find(d, "titles", id);
       made.push({ i: i, id: id, title: o.t, target: { title: id } });
       undo.items.push({ id: id, x: clone(t) });
@@ -1032,7 +1161,8 @@
     }
     u.items.forEach(function (it) {
       var x = C.find(d, "titles", it.id);
-      if (x) d = C.remove(d, "titles", it.id, stampAfter(now, x.m));
+      // a music release goes with its tracks and editions (wave M1)
+      if (x) d = C.removeRelease(d, it.id, stampAfter(now, Math.max.apply(null, [x.m].concat(C.tracksOf(d, it.id).concat(C.editionsOf(d, it.id)).map(function (r) { return r.m; })))));
     });
     return { ok: true, data: C.normalize(d) };
   }
