@@ -1136,6 +1136,41 @@
         pers.forEach(function (a) { plist.appendChild(boxOf(a)); });
         c.appendChild(plist);
       }
+      // GATE-FILES (F1): the folders of the orOS disk Claude may use with
+      // the files_* tools (Files must be on above; «May change» for writes).
+      if (typeof G.folders === "function" && typeof G.setFolders === "function") {
+        var fl = G.folders() || [];
+        var fb = el("div", "gt-folders");
+        fb.appendChild(el("div", "pair-label", t("gt.fold.title")));
+        fb.appendChild(el("div", "hint", t("gt.fold.hint")));
+        if (!fl.length) fb.appendChild(el("div", "hint", t("gt.fold.none")));
+        fl.forEach(function (f) {
+          var ln = el("div", "gt-chg-row");
+          ln.appendChild(el("span", "", f.replace(/^\/internal\/?/, "") || "/"));
+          ln.appendChild(button(t("gt.fold.rm"), "gt.fold.rm:" + f, function () {
+            G.setFolders(fl.filter(function (x) { return x !== f; })).then(function () { render(); }, function () { gateNote = "gt.fail"; render(); });
+          }, "btn-sm"));
+          fb.appendChild(ln);
+        });
+        var fi = el("input", "dav-input");
+        fi.id = "f-gt-fold";
+        fi.type = "text";
+        fi.autocomplete = "off";
+        fi.spellcheck = false;
+        fi.placeholder = "Drive/ckdesktop/Τιμολόγια";   // i18n-inline-ok: an example path, the same in every language
+        var addF = function () {
+          var v = fi.value.trim();
+          if (!v) return;
+          G.setFolders(fl.concat([v])).then(function (next) {
+            gateNote = next && next.length > fl.length ? "" : "gt.fold.bad";
+            render();
+          }, function () { gateNote = "gt.fail"; render(); });
+        };
+        fi.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); addF(); } });
+        fb.appendChild(row(t("gt.fold.add"), fi, { hint: t("gt.fold.addHint"), forId: "f-gt-fold", stack: true }));
+        fb.appendChild(actions(button(t("gt.fold.go"), "gt.fold.go", addF)));
+        c.appendChild(fb);
+      }
       var writers = G.apps().filter(function (a) { return a.write; }).map(function (a) { return a.name; });
       if (writers.length) {
         // One rule (5.78.00): no write window; changes can be paused.

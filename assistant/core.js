@@ -2275,6 +2275,88 @@
       }
     }
   };
+  // GATE-FILES F1 (2026-11-13): files on the orOS disk, only inside
+  // the folders the owner marks for Claude (Settings › Connected
+  // services › orOS Gate › Claude's folders; assistant/claudefiles.js).
+  var FILES_WHERE = " Only inside the owner's folders for Claude (files_list without path lists them); names that look like keys or secrets are never shown.";
+  var TOOL_FILES_LIST = {
+    name: "files_list",
+    description: "List a folder on the orOS disk: subfolders first, then files with kind (text, document, pdf, image, media, other), size and modified time; " +
+      "on_device false = a file of an orOS Drive folder that is in the cloud only (files_read still reads it)." + FILES_WHERE +
+      " Without path: the owner's folders for Claude.",
+    params: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "A folder, e.g. \"Drive/ckdesktop/Τιμολόγια/2026\" (the /internal/ in front may be left out)." },
+        depth: { type: "integer", minimum: 1, maximum: 3, description: "1 (default) = this folder; 2 or 3 also lists inside its subfolders (paths relative to path)." },
+        offset: { type: "integer", minimum: 0, description: "200 entries a page: next_offset of the last answer." }
+      }
+    }
+  };
+  var TOOL_FILES_READ = {
+    name: "files_read",
+    description: "Read one file on the orOS disk as text: text files as they are; Word, LibreOffice, spreadsheets, slides and e-books by their text; PDFs by their text layer (a scan is read with OCR, the first pages). " +
+      "100,000 characters a call: pass next_offset as offset for the rest. Also returns version: pass it as if_version to files_write, files_move or files_delete. " +
+      "Pictures, audio and video give their size and type only." + FILES_WHERE,
+    params: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The file, e.g. \"Drive/ckdesktop/Χειρόγραφα/Νέο.docx\"." },
+        offset: { type: "integer", minimum: 0, description: "First character (0 = the start)." },
+        length: { type: "integer", minimum: 1, maximum: 100000, description: "Characters to return (at most 100,000)." }
+      },
+      required: ["path"]
+    }
+  };
+  var TOOL_FILES_WRITE = {
+    name: "files_write",
+    description: "Write a text file on the orOS disk (Markdown, CSV, JSON, plain text…; at most 1 MB). mode create (default) makes a new file and never overwrites one that is there; " +
+      "mode replace changes a file and needs if_version (from files_read or files_list): the old content goes to Files' Trash, so it can be undone. Missing folders are made. " +
+      "The user may be asked first. The owner is notified of the change and can undo it." + FILES_WHERE,
+    params: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The file, e.g. \"Drive/ckdesktop/Instagram/Αποφθέγματα/2026-11-14.md\"." },
+        text: { type: "string", description: "The whole content of the file." },
+        mode: { type: "string", enum: ["create", "replace"], description: "create (default) or replace." },
+        if_version: { type: "string", description: "replace: the version the file had when read." }
+      },
+      required: ["path", "text"]
+    }
+  };
+  var TOOL_FILES_MOVE = {
+    name: "files_move",
+    description: "Move or rename one file or folder on the orOS disk; nothing is ever overwritten (a taken name is refused). A file needs if_version (from files_read or files_list). " +
+      "The user may be asked first. The owner is notified of the change and can undo it." + FILES_WHERE,
+    params: {
+      type: "object",
+      properties: {
+        from: { type: "string", description: "The file or folder now." },
+        to: { type: "string", description: "Its new full path (folders are made as needed)." },
+        if_version: { type: "string", description: "A file's version when read." }
+      },
+      required: ["from", "to"]
+    }
+  };
+  var TOOL_FILES_DELETE = {
+    name: "files_delete",
+    description: "Delete files or folders on the orOS disk (at most 50): they go to Files' Trash, restorable for 30 days. Every file needs its version (from files_read or files_list). " +
+      "Deleting is always confirmed by the owner on the device first; nothing is deleted without it." + FILES_WHERE,
+    params: {
+      type: "object",
+      properties: {
+        paths: { type: "array", minItems: 1, maxItems: 50, items: {
+          type: "object",
+          properties: {
+            path: { type: "string" },
+            if_version: { type: "string", description: "A file's version when read (not needed for a folder)." }
+          },
+          required: ["path"]
+        } }
+      },
+      required: ["paths"]
+    }
+  };
   var TOOL_LINK = {
     name: "link_contact",
     description: "Link CRM customers to contacts in Contacts: the contact becomes one of the customer's people, shown live on the " +
@@ -3229,7 +3311,9 @@
   // recipes: the installed apps with automations, creates: the app ids
   // create_items may add to, links: CRM and Contacts are both readable,
   // openFile: Writer is installed, for open_file; rebuild, house: Layout
-  // is installed, for rebuild_in_layout and the house style tools)
+  // is installed, for rebuild_in_layout and the house style tools;
+  // files: the user picked folders for Claude, "write" when it may
+  // change them too, for the files_* tools)
   function toolsFor(opts) {
     opts = opts || {};
     var out = [];
@@ -3245,6 +3329,8 @@
     if (opts.data && opts.partnerLinks) out.push(TOOL_LINK_ITEMS);
     if (opts.actions && opts.actions.length) out.push(doTool(opts.actions));
     if (opts.history) out.push(TOOL_HISTORY, TOOL_UNDO);
+    if (opts.files) out.push(TOOL_FILES_LIST, TOOL_FILES_READ);
+    if (opts.files === "write") out.push(TOOL_FILES_WRITE, TOOL_FILES_MOVE, TOOL_FILES_DELETE);
     if (opts.data && opts.lines) opts.lines.forEach(function (id) { if (TOOL_LINE[id]) out.push(TOOL_LINE[id]); });
     if (opts.kbCols) out.push(TOOL_KB_COLS);
     if (opts.data && opts.edits && Object.keys(opts.edits).length) out.push(readAppTool(Object.keys(opts.edits)), editTool(opts.edits));
@@ -3268,7 +3354,8 @@
   // do_action too; the app opens on the owner's screen and does it there.
   var GATE_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                     "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule",
+                    "files_list", "files_read", "files_write", "files_move", "files_delete"];
   // GATE-PAR P3 (2026-11-08): the Assistant's tools that hand work to an
   // app's own window. Through the gate the app opens on the owner's
   // screen with it at once (Layout does its work and reports; a form is
@@ -3334,9 +3421,9 @@
       if (GATE_OPEN.indexOf(x.name) >= 0) x.description = (GATE_OPEN_HEAD[x.name] || openSay(x.description)) + GATE_OPEN_SAY;
       if (x.name === "edit_in_app") x.description = x.description.split("\n")[0] + GATE_EDIT_GUIDE;
       walk(x.params);
-      var ro = /^(search_data|read_item|app_summary|read_in_app|change_history)$/.test(x.name);
+      var ro = /^(search_data|read_item|app_summary|read_in_app|change_history|files_list|files_read)$/.test(x.name);
       return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
-               annotations: { readOnlyHint: ro, destructiveHint: /^(change_item|undo_change|edit_in_app)$/.test(x.name) } };
+               annotations: { readOnlyHint: ro, destructiveHint: /^(change_item|undo_change|edit_in_app|files_write|files_move|files_delete)$/.test(x.name) } };
     });
   }
 

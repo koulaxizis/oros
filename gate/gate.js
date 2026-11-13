@@ -390,6 +390,7 @@
     if (SUMMARY[id] || ACT.indexOf(id) >= 0) t.push("app_summary");
     if (DOCS.indexOf(id) >= 0) t.push("read_in_app");
     if (LINES[id]) t.push(LINES[id]);
+    if (id === "files") t = t.concat(FILE_READ);
     return t;
   }
   function pushLog(list, entry) {
@@ -1487,6 +1488,11 @@
   // Assistant changes with edit_in_app (assistant.js EDIT_SRC). The app
   // opens on the owner's screen and applies the commands there.
   var DOCS = ["atelier", "layout", "mindmap", "montage", "photolab", "slides", "spreadsheet", "studio", "whiteboard", "writer"];
+  // GATE-FILES F1 (2026-11-13, Chris «Προχώρα, όλα τα κύματα»): Files
+  // joins the gate with its own tools (assistant/claudefiles.js), only
+  // inside Claude's folders (FILES_KEY, synced). Files stays outside
+  // ACT: change_item on files is not offered through the gate.
+  var FILE_READ = ["files_list", "files_read"], FILE_WRITE = ["files_write", "files_move", "files_delete"];
   // The changes the relay may queue while orOS is closed (relay/gate.js
   // closedCall): its own change tools less budget_delete and
   // budget_transfer (it deletes entries too), and
@@ -1496,15 +1502,15 @@
                 "change_item", "link_items", "link_contact"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"].concat(FILE_READ, FILE_WRITE);
   // GATE-PAR P3: tools that open an app on the owner's screen with the
   // work (= core.js GATE_OPEN); like do_action they need an app Claude
   // may change, no pause, and the frame checks the target app.
-  var ACT_OPEN = ACT_TOOLS.slice(12);
-  var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"];
+  var ACT_OPEN = ACT_TOOLS.slice(12, 22);
+  var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"].concat(FILE_WRITE);
   var DOC_WRITE = ["edit_in_app", "undo_change"];
-  function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0); }
-  function actable(id) { return ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0; }
+  function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"); }
+  function actable(id) { return ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"; }
   // One rule, orOS open or closed (Chris 08/11, 5.78.00): Claude may
   // change an app set to "write", unless the owner paused changes
   // (hold = paused until, ms). Every change is notified and undoable.
@@ -1569,21 +1575,21 @@
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
                    kanban_add_columns: "added Kanban columns",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
-                   link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}" } },
+                   link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}", files_write: "wrote files", files_move: "moved files", files_delete: "deleted files" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
           tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά", budget_balances: "συμφώνησε τα υπόλοιπα λογαριασμών του Budget",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
                    kanban_add_columns: "πρόσθεσε στήλες στο Kanban",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
-                   link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})" } },
+                   link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})", files_write: "έγραψε αρχεία", files_move: "μετακίνησε αρχεία", files_delete: "έσβησε αρχεία" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
           tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt", budget_balances: "die Kontostände im Budget abgeglichen",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
                    kanban_add_columns: "Kanban-Spalten hinzugefügt",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
-                   link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})" } }
+                   link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})", files_write: "Dateien geschrieben", files_move: "Dateien verschoben", files_delete: "Dateien gelöscht" } }
   };
   function fill(s, o) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return o[k] !== undefined ? o[k] : m; }); }
   // → { subject, text } in the owner's language (en, el, de).
@@ -2269,7 +2275,8 @@
           var o = { id: a.id, name: a.name, tools: toolsOf(a.id) };
           if (sensitive(a.id)) o.sensitive = "Personal app the owner allowed after a warning: read only, only while orOS is open (never in the closed copy). Read only what the owner's request needs.";
           if (p.lv[a.id] === "write" && writable(a.id)) {
-            o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : DOCS.indexOf(a.id) >= 0 ? DOC_WRITE.slice() : ACT_WRITE.filter(function (n) { return n !== "edit_in_app"; });
+            o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : DOCS.indexOf(a.id) >= 0 ? DOC_WRITE.slice() : a.id === "files" ? FILE_WRITE.concat("undo_change")
+              : ACT_WRITE.filter(function (n) { return n !== "edit_in_app" && FILE_WRITE.indexOf(n) < 0; });
             o.changes = canWrite(p.lv, p.hold, a.id, Date.now()) ? "allowed (the owner is notified of each change)" : "paused by the owner until " + new Date(p.hold).toISOString();
           }
           return o;
@@ -2506,6 +2513,67 @@
     });
   }
 
+  // GATE-FILES: deleting files is always asked here, naming them (at
+  // most 10 shown); no answer within 20 s, or orOS hidden or locked = no.
+  function askFiles(names) {
+    return new Promise(function (ok) {
+      var settled = false, wrap = null, list = Array.isArray(names) ? names.map(String) : [];
+      function end(v) { if (settled) return; settled = true; if (wrap) wrap.remove(); ok(v); }
+      if (!list.length || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false); return; }
+      var shown = list.slice(0, 10).join("\n") + (list.length > 10 ? "\n" + tr("gate.fdel.more").replace("{n}", String(list.length - 10)) : "");
+      wrap = dialog(tr("gate.fdel.title"), tr("gate.fdel.body").replace("{n}", String(list.length)), shown, tr("gate.del.no"), tr("gate.fdel.yes"),
+        function () { end(false); }, function () { end(true); });
+      setTimeout(function () { end(false); }, 20000);
+    });
+  }
+  // Claude's folders (synced slice "gatefiles"): { ver, m, f: [path] };
+  // the newer m wins whole, a tie goes to the larger JSON (R5).
+  var FILES_KEY = "oros-gate-files";
+  // Kept as written (setFolders cleans with claudefiles.js); a pulled
+  // list is held to plain disk paths here and cleaned again before use.
+  function foldersClean(x) {
+    if (!isObj(x) || typeof x.m !== "number" || !Array.isArray(x.f)) return { ver: 1, m: 0, f: [] };
+    var f = x.f.filter(function (p, i, l) {
+      return typeof p === "string" && p.length <= 1024 && p.indexOf("/internal/") === 0 && !/(^|\/)\.|[\u0000-\u001f]/.test(p.slice(10)) && l.indexOf(p) === i;
+    }).slice(0, 50).sort();
+    return { ver: 1, m: Math.floor(x.m), f: f };
+  }
+  var cfP = null;
+  function claudeFiles() {
+    if (root.OrosClaudeFiles) return Promise.resolve(root.OrosClaudeFiles);
+    if (!cfP) {
+      cfP = new Promise(function (ok, no) {
+        var s = document.createElement("script");
+        var v = root.orosTodayEnv && root.orosTodayEnv.version ? "?v=" + encodeURIComponent(root.orosTodayEnv.version) : "";
+        s.src = "assistant/claudefiles.js" + v;
+        s.onload = function () { root.OrosClaudeFiles ? ok(root.OrosClaudeFiles) : no(new Error("claudefiles")); };
+        s.onerror = function () { cfP = null; no(new Error("claudefiles")); };
+        document.head.appendChild(s);
+      });
+    }
+    return cfP;
+  }
+  function foldersRead() { return foldersClean(readJSON(FILES_KEY)); }
+  function foldersMerge(a, b) {
+    var A = foldersClean(a), B = foldersClean(b);
+    if (A.m !== B.m) return A.m > B.m ? A : B;
+    return JSON.stringify(A) >= JSON.stringify(B) ? A : B;
+  }
+  function foldersSlice(n) {
+    var S = root.orosSync;
+    if (S && typeof S.registerSlice === "function") {
+      S.registerSlice("gatefiles", function () { var raw = null; try { raw = localStorage.getItem(FILES_KEY); } catch (e) {} return raw ? foldersRead() : null; },
+        function (data) {
+          var v = foldersClean(data), cur = foldersRead();
+          if (JSON.stringify(v) === JSON.stringify(cur)) return;
+          writeJSON(FILES_KEY, v);                         // pulled: never markDirty
+          changed();
+        }, FILES_KEY, foldersMerge);
+      return;
+    }
+    if (n < 40) setTimeout(function () { foldersSlice(n + 1); }, 500);
+  }
+
   function onCall(sock, text) {
     var q;
     try { q = JSON.parse(text); } catch (e) { return; }
@@ -2541,7 +2609,7 @@
   var api = {
     // For the hidden Assistant frame (assistant.js GATE).
     frameReady: function () { if (actReady) actReady(); },
-    act: ACT.concat(DOCS),
+    act: ACT.concat(DOCS, ["files"]),
     levels: function () {
       var p = pref(), out = {};
       if (!p.on || !isObj(p.lv)) return out;
@@ -2567,6 +2635,20 @@
       return "";
     },
     askDelete: function (n) { return askDelete(n); },
+    // GATE-FILES: every delete of files is asked on the device, with the names.
+    askFiles: function (names) { return askFiles(names); },
+    // Claude's folders on the orOS disk (synced): [path]
+    folders: function () { return foldersRead().f.slice(); },
+    // → Promise<[path] saved> (cleaned: valid, no secrets, none inside another)
+    setFolders: function (list) {
+      return claudeFiles().then(function (CF) {
+        var cur = foldersRead(), f = CF.cleanFolders(list);
+        if (JSON.stringify(f) === JSON.stringify(cur.f)) return f;
+        if (!writeJSON(FILES_KEY, { ver: 1, m: stampAfter(Date.now(), cur.m), f: f })) throw new Error("save");
+        dirty(); changed();
+        return f;
+      });
+    },
     relayUrl: function () { return relay() + "/mcp"; },
     // The relay this gate runs on, and which kind: own | mail | shared.
     relayInfo: function () {
@@ -2830,7 +2912,7 @@
     box.appendChild(h); box.appendChild(pTxt);
     if (note) {
       var nt = document.createElement("p");
-      nt.style.cssText = "margin:0 0 16px;line-height:1.45;opacity:.8;font-size:.92rem";
+      nt.style.cssText = "margin:0 0 16px;line-height:1.45;opacity:.8;font-size:.92rem;white-space:pre-line;overflow-wrap:anywhere;max-height:40vh;overflow:auto";
       nt.textContent = note;
       box.appendChild(nt);
     }
@@ -2905,6 +2987,7 @@
     seatSlice(0);
     chgSlice(0);
     digSlice(0);
+    foldersSlice(0);
     setInterval(function () { copySoon(0); }, 30 * 60000);
     // SY-AD (5.96.00): data Claude wrote before this version for an app
     // never opened on this device (Publishing, CRM…) reaches sync now.
