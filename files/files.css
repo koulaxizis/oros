@@ -1306,6 +1306,137 @@ body.dbx-mode #status { display: none; }
   .dbx-pick-row { min-height: 44px; }
 }
 
+/* ---------- Documents: the archive of papers (files/docs.js) ---------- */
+
+#doc-bar, .doc-panel { display: none; }
+body.doc-mode #doc-bar { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+body.doc-mode .doc-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+body.doc-mode #up,
+body.doc-mode #storage-bar,
+body.doc-mode #crumbs,
+body.doc-mode #bar #actions,
+body.doc-mode #bar > .spacer,
+body.doc-mode #search-bar,
+body.doc-mode #list-wrap,
+body.doc-mode #status { display: none; }
+.doc-tree { border-top: 0; margin-top: 2px; padding-top: 0; }
+.doc-tree .tnode .glyph { color: var(--accent, #6d4aff); }
+.doc-tree .tnode.selected .glyph { color: var(--accent-ink, #fff); }
+.doc-tree .tcount { margin-left: auto; padding-left: 6px; font-size: 11px; color: var(--text-dim, #999); }
+.doc-tree .tnode.selected .tcount { color: var(--accent-ink, #fff); opacity: .8; }
+.doc-title { white-space: nowrap; font-size: 14px; padding: 0 4px; }
+.doc-search { flex: 1; min-width: 0; display: flex; }
+.doc-search input {
+  flex: 1; min-width: 0; box-sizing: border-box;
+  padding: 6px 10px; border-radius: 6px; font: inherit; font-size: 13px;
+  background: var(--bg, #17161a); color: var(--text, #eee);
+  border: 1px solid var(--border, #2c2b31); outline: none;
+}
+.doc-search input:focus { border-color: var(--accent, #6d4aff); }
+.doc-chips {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  padding: 8px 12px; border-bottom: 1px solid var(--border, #2c2b31);
+}
+.doc-chip, .doc-sel {
+  padding: 4px 10px; border-radius: 999px; font: inherit; font-size: 12px;
+  background: var(--panel-bg, #2a2832); color: var(--text, #eee);
+  border: 1px solid var(--border, #2c2b31); cursor: pointer; max-width: 100%;
+}
+.doc-sel { padding-right: 6px; }
+.doc-chip.on, .doc-sel.on { background: var(--accent, #6d4aff); color: var(--accent-ink, #fff); border-color: transparent; }
+.doc-list .entry.doc-row { grid-template-columns: 22px 1fr auto; align-items: start; cursor: pointer; }
+.doc-row .glyph { padding-top: 2px; }
+.doc-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.doc-sub { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 12px; color: var(--text-dim, #999); min-width: 0; }
+.doc-type { color: var(--text, #ddd); }
+.doc-tag {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 1px 7px; border-radius: 999px; font-size: 11px;
+  background: var(--accent-soft, #2a2832); color: var(--text, #ddd); max-width: 100%;
+}
+.doc-tag > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-pv { display: inline-flex; color: var(--text-dim, #999); }
+.doc-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; }
+.doc-badge.warn { color: var(--danger, #d93025); }
+.doc-badge.soon { color: #e8a33d; }
+.doc-badge.keep { color: var(--text-dim, #999); font-style: italic; }
+.doc-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+/* The document date stays on phones too (the disk list hides its column). */
+.doc-row .doc-right .col-date { display: block; }
+.entry.selected .doc-sub, .entry.selected .doc-type { color: var(--accent-ink, #fff); }
+.doc-none { list-style: none; padding: 24px 12px; text-align: center; color: var(--text-dim, #999); }
+.doc-menu {
+  position: fixed; z-index: 60; min-width: 220px; max-width: calc(100vw - 16px);
+  display: flex; flex-direction: column; padding: 4px;
+  background: var(--panel-bg, #232229); border: 1px solid var(--border, #2c2b31);
+  border-radius: 8px; box-shadow: var(--shadow, 0 12px 40px rgba(0,0,0,0.5));
+}
+.doc-menu button {
+  text-align: left; padding: 8px 12px; border: 0; border-radius: 6px;
+  background: none; color: inherit; font: inherit; font-size: 13px; cursor: pointer;
+}
+.doc-menu button:hover, .doc-menu button:focus-visible { background: var(--accent-soft, #2a2832); }
+dialog.doc-dlg { width: min(620px, calc(100vw - 32px)); max-width: none; box-sizing: border-box; overflow-y: auto; }
+dialog.doc-confirm, dialog.doc-name { width: min(420px, calc(100vw - 32px)); }
+.doc-edit form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.doc-edit h3, .doc-edit menu, .doc-field.wide { grid-column: 1 / -1; }
+.doc-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.doc-lbl { font-size: 12px; color: var(--text-dim, #aaa); }
+.doc-dlg input[type="text"], .doc-dlg input[type="date"], .doc-dlg input[type="number"],
+.doc-dlg select, .doc-dlg textarea {
+  width: 100%; box-sizing: border-box; margin: 0;
+  padding: 8px 10px; border-radius: 6px; font: inherit; font-size: 14px;
+  background: var(--bg, #17161a); color: var(--text, #eee);
+  border: 1px solid var(--border, #2c2b31); outline: none;
+}
+.doc-dlg input:focus, .doc-dlg select:focus, .doc-dlg textarea:focus { border-color: var(--accent, #6d4aff); }
+.doc-dlg input:disabled { opacity: .5; }
+.doc-dlg textarea { resize: vertical; min-height: 60px; }
+.doc-amt { display: grid; grid-template-columns: 1fr 72px; gap: 6px; }
+.doc-tags {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  padding: 6px; border-radius: 6px; border: 1px solid var(--border, #2c2b31); background: var(--bg, #17161a);
+}
+.doc-tags input[type="text"] { flex: 1; min-width: 120px; width: auto; border: 0; padding: 4px; background: none; }
+.doc-tag-x { display: inline-flex; padding: 2px; border: 0; background: none; color: inherit; cursor: pointer; border-radius: 50%; }
+.doc-check { display: flex; align-items: center; gap: 6px; font-size: 13px; margin-top: 4px; }
+.doc-hint { font-size: 11px; color: var(--text-dim, #999); line-height: 1.4; }
+.doc-path { font-size: 12px; color: var(--text-dim, #aaa); word-break: break-all; }
+.doc-lost { color: var(--danger, #d93025) !important; margin: 0 !important; font-size: 12px !important; }
+.doc-file-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.doc-file-btns button, .doc-madd {
+  padding: 6px 12px; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer;
+  background: var(--panel-bg, #2a2832); color: var(--text, #eee); border: 1px solid var(--border, #2c2b31);
+}
+.doc-file-btns button:disabled { opacity: .5; cursor: default; }
+.doc-msec { margin-bottom: 14px; }
+.doc-mhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.doc-mhead h4 { margin: 6px 0; font-size: 13px; }
+.doc-mlist { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border, #2c2b31); border-radius: 8px; }
+.doc-mlist li { display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; border-bottom: 1px solid var(--border, #2c2b31); }
+.doc-mlist li:last-child { border-bottom: 0; }
+.doc-mname { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13px; }
+.doc-mname small { font-size: 11px; color: var(--text-dim, #999); }
+.doc-manage .tool { width: 32px; height: 32px; padding: 0; }
+@media (max-width: 720px) {
+  .doc-title { display: none; }
+  .doc-edit form { grid-template-columns: 1fr; }
+  .doc-list .entry.doc-row { grid-template-columns: 22px 1fr auto; }
+}
+@media (pointer: coarse) {
+  #doc-bar button.tool { min-width: 44px; min-height: 44px; }
+  .doc-chip, .doc-sel { min-height: 36px; }
+  .doc-menu button { min-height: 44px; }
+  .doc-tag-x { min-width: 28px; min-height: 28px; justify-content: center; align-items: center; }
+  .doc-manage .tool { width: 44px; height: 44px; }
+}
+
 /* The HTML [hidden] attribute must always win. Without this rule
    "#empty { display: flex }" kept the "This folder is empty" block on
    screen under a full file list. KEEP THIS THE LAST RULE OF THE FILE. */
