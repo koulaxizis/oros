@@ -11282,3 +11282,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** studio/core.js, tests/studio-forward.test.js, Bible STUDIO-AB.
 - **Tests:** new `tests/studio-forward.test.js` (unknown fields, lists and records survive a round trip and a merge from either side, limits, old data keeps its bytes, cross-window objects); full suite; Playwright Chromium in the real shell (two devices).
 - **Next:** A1 loudness meter, A1b ID3v2.4 writer, A2 books, A3 check and delivery, A4a AAC encoder, A4 M4B.
+
+### 2026-11-13 — Kanban 6.41.00 — the Timeline becomes a Gantt chart, wave G1 (KB-GANTT, #982)
+- **Changes:** optional card keys `start`, `ms`, `deps` (fm group `g`, older fm counts `g` at `d`); Start and Milestone in the card dialog; Timeline bars start → due with drag to move / resize, keyboard, progress from subtasks, milestones as diamonds, zoom Day / Week / Month, groups by column or lane, Only workdays per board (`gw` on the columns); export / import / templates / CSV keep the plan; Undo compares cards by content (`plain()` with sorted keys), a faded toast no longer catches clicks.
+- **Files:** kanban/model.js 1.1.0, kanban/tools.js, kanban/kanban.js, kanban/index.html, kanban/kanban.css, i18n/de/kanban.js, help EN/EL/DE, tests/kanban-gantt.test.js, tests/fixtures/kanban-model-6.29.00.js, .github/qa/budget.json (kanban 742 KB), Bible KB-GANTT.
+- **Tests:** new `tests/kanban-gantt.test.js` (bytes unchanged, canon, per-group merges, a mixed fleet with the 6.29.00 model converging, plan helpers, export / import / CSV); full suite; Playwright Chromium 1280 px and 360 px (move, resize, keyboard, Undo, workdays, zoom, groups).
+- **Next:** G2 dependencies and critical path, G3 PDF, Calendar and Today marks, Assistant + Gate, imported start dates (both built, in the merge queue after this).
