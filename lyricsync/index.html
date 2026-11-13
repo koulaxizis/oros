@@ -25,9 +25,43 @@
 
     <!-- The list of songs -->
     <section id="v-list">
+      <div id="list-tabs" class="seg list-tabs" role="tablist">
+        <button type="button" role="tab" id="lt-songs" data-lt="songs" data-i18n="lt.songs">Songs</button>
+        <button type="button" role="tab" id="lt-sets" data-lt="sets" data-i18n="lt.sets">Sets</button>
+      </div>
+      <div id="songs-pane">
       <p class="hint" data-i18n="list.intro">Time your lyrics to the music, line by line, and save them as LRC, SRT, WebVTT or TTML. The song never leaves this device.</p>
       <ul id="songs"></ul>
       <p id="empty" class="hint" data-i18n="list.empty">No songs yet. Press New song, or open a song or a lyrics file.</p>
+      </div>
+      <!-- Songbook S3: sets -->
+      <div id="sets-pane" hidden>
+        <p class="hint" data-i18n="set.intro">A set is the songs of a gig or a rehearsal, in order, each in the key you play it there.</p>
+        <ul id="sets"></ul>
+        <p id="sets-empty" class="hint" data-i18n="set.empty">No sets yet. Press New set.</p>
+      </div>
+    </section>
+
+    <!-- One set -->
+    <section id="v-set" hidden>
+      <div class="fields">
+        <label><span data-i18n="set.name">Name</span><input type="text" id="set-name" maxlength="120" autocomplete="off"></label>
+        <label><span data-i18n="set.date">Date</span><input type="date" id="set-date"></label>
+        <label class="wide"><span data-i18n="set.note">Notes</span><textarea id="set-note" rows="2" maxlength="2000"></textarea></label>
+      </div>
+      <div class="row set-actions">
+        <button type="button" id="set-stage" class="chip pri" data-i18n="sg.open">Stage</button>
+        <button type="button" id="set-pdf" class="chip" data-i18n="pdf.btn">PDF</button>
+        <button type="button" id="set-export" class="chip" data-i18n="set.export">Export</button>
+        <button type="button" id="set-cal" class="chip" data-i18n="set.cal">Add to Calendar</button>
+        <button type="button" id="set-del" class="chip del" data-i18n="set.del">Delete set</button>
+      </div>
+      <ol id="set-items" class="set-items"></ol>
+      <p id="set-none" class="hint" data-i18n="set.none">No songs in this set yet.</p>
+      <div class="row set-add">
+        <label class="grow"><span class="sr-only" data-i18n="set.pick">Song to add</span><select id="set-pick"></select></label>
+        <button type="button" id="set-add" class="chip pri" data-i18n="set.add">Add song</button>
+      </div>
     </section>
 
     <!-- One song -->
@@ -171,6 +205,8 @@
       <button type="button" id="sg-cin" class="chip" aria-pressed="false" data-i18n="sg.cin">Count-in</button>
       <button type="button" id="sg-smaller" class="chip icon" data-i18n-aria="sg.smaller">A−</button>
       <button type="button" id="sg-bigger" class="chip icon" data-i18n-aria="sg.bigger">A+</button>
+      <button type="button" id="sg-prev" class="chip icon" data-i18n-aria="sg.prev" hidden>⏮</button>
+      <button type="button" id="sg-next" class="chip icon" data-i18n-aria="sg.next" hidden>⏭</button>
       <label class="sg-showl"><span class="sr-only" data-i18n="sg.show">Show</span>
         <select id="sg-show">
           <option value="both" data-i18n="sg.both">Words and chords</option>
@@ -182,6 +218,7 @@
     <div id="sg-body" class="sg-body" tabindex="0">
       <div id="sg-sheet" class="sheet stage-sheet"></div>
     </div>
+    <div id="sg-nextup" class="sg-nextup dim" hidden></div>
     <div class="sg-pages">
       <button type="button" id="sg-up" class="chip sg-page" data-i18n-aria="sg.up">▲</button>
       <button type="button" id="sg-down" class="chip sg-page" data-i18n-aria="sg.down">▼</button>
@@ -267,6 +304,29 @@
     </div>
   </dialog>
 
+  <dialog id="pdf-dlg" aria-labelledby="pdf-title">
+    <h2 id="pdf-title" data-i18n="pdf.title">PDF and print</h2>
+    <p class="hint" id="pdf-what"></p>
+    <div class="fields">
+      <label><span data-i18n="pdf.page">Paper</span><select id="pdf-page"><option value="a4">A4</option><option value="letter">Letter</option></select></label>
+      <label><span data-i18n="pdf.cols">Columns</span><select id="pdf-cols"><option value="1">1</option><option value="2">2</option></select></label>
+      <label><span data-i18n="pdf.size">Font size</span><select id="pdf-size"><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="14">14</option><option value="16">16</option><option value="18">18</option></select></label>
+      <label><span data-i18n="sg.show">Show</span><select id="pdf-show"><option value="both" data-i18n="sg.both">Words and chords</option><option value="words" data-i18n="sg.words">Words only</option><option value="chords" data-i18n="sg.chords">Chords only</option></select></label>
+    </div>
+    <p id="pdf-status" class="hint" role="status"></p>
+    <div class="dlg-btns">
+      <button type="button" class="chip" id="pdf-no" data-i18n="btn.close">Close</button>
+      <button type="button" class="chip" id="pdf-print" data-i18n="pdf.print">Print</button>
+      <button type="button" class="chip pri" id="pdf-save" data-i18n="pdf.save">Save PDF</button>
+    </div>
+  </dialog>
+
+  <dialog id="setx-dlg" aria-labelledby="setx-title">
+    <h2 id="setx-title" data-i18n="set.export">Export</h2>
+    <ul id="setx-list"></ul>
+    <div class="dlg-btns"><button type="button" class="chip" id="setx-close" data-i18n="btn.close">Close</button></div>
+  </dialog>
+
   <dialog id="confirm-dlg" aria-labelledby="confirm-msg">
     <p id="confirm-msg"></p>
     <div class="dlg-btns">
@@ -280,6 +340,8 @@
   <script src="../i18n.js?v=6.30.00" data-app="lyricsync"></script>
   <script src="core.js?v=6.30.00"></script>
   <script src="chords.js?v=6.30.00"></script>
+  <script src="sets.js?v=6.30.00"></script>
+  <script src="sheetpdf.js?v=6.30.00"></script>
   <script src="formats.js?v=6.30.00"></script>
   <script src="wave.js?v=6.30.00"></script>
   <script src="id3.js?v=6.30.00"></script>
