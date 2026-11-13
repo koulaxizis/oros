@@ -246,12 +246,6 @@
    ]
   },
   {
-   "app": "device",
-   "files": [
-    "device/device.js"
-   ]
-  },
-  {
    "app": "diary",
    "files": [
     "diary/core.js",

@@ -13,11 +13,27 @@
 //            of t, ms | null, never before s, never going back),
 //            v (wave 2: singer 2-4; none = singer 1) }
 //   project.vn = singer names (wave 2), at most 4
+// Songbook S1 (chords; all optional, so the timing exports never see
+// them):
+//   line.c = [[i, chord]]: chord names over the words, i = the offset
+//            in t (0..t.length), never going back, at most 32
+//   line.k = "v" | "c" | "b": a verse, chorus or bridge starts here
+//   line.x = [row]: rows shown before the line, at most 48
+//   project.xo = [row] after the last line (outro), at most 64
+//   row = { t (≤ 200 chars), c? (as on a line), m? 1 = a comment,
+//           tb? 1 = a tab line (spaces kept), p? 1 = a blank line
+//           before it, k? a section starts here }: never timed
+//   line.q = 1: a second blank line, between its rows and the line
+//   (a line with rows keeps p, the verse break, when its block has a
+//   blank line anywhere)
+//   project.key ("Am", the key of the chords as written), capo 1-11,
+//   bpm 20-300, ts ("3/4", "6/8")
 // A line's end is optional: with none it ends where the next timed
 // line starts (Tap mode); Hold mode and "End" write it.
 // Sync rules (OROS_BIBLE.md Part I, Part VI):
 //   - merge(a, b) === merge(b, a): union by project id, the newer
-//     mtime wins, a tie goes to the larger JSON (never "local wins");
+//     mtime wins, a tie goes to the longer JSON, then the larger one
+//     (never "local wins");
 //   - merge(a, a) === a, so a pull never makes the slice dirty;
 //   - a tombstone at least as new as the project deletes it, a newer
 //     edit brings it back (R17);
@@ -37,6 +53,54 @@
   function str(v, max) { return typeof v === "string" ? v.slice(0, max) : ""; }
   function ms(v) { return typeof v === "number" && isFinite(v) && v > 0 ? Math.floor(v) : 0; }
   function tm(v) { return typeof v === "number" && isFinite(v) && v >= 0 && v <= MAX_MS ? Math.round(v) : null; }
+  // ---------- Chords (Songbook S1) ----------
+  // A chord name: root, accidental, quality (a fixed set of parts, so
+  // "Be" or "Do" are never chords), an optional bass. N.C. = no chord.
+  var CHORD_RE = /^([A-G])([#b]?)((?:maj|min|mi|m|M|dim|aug|sus|add|alt|no|omit|\u00b0|\u00f8|\u0394|\+|-|\^|[#b]?\d{1,2}|\((?:[^()\s]){1,12}\)|\/\d{1,2})*)(?:\/([A-G])([#b]?))?$/;
+  var MAX_CHORD = 16, MAX_CHORDS = 32, MAX_ROWS = 48, MAX_ROWS_END = 64, MAX_ROW = 200;
+  function isChord(v) {
+    return typeof v === "string" && v.length <= MAX_CHORD && (CHORD_RE.test(v) || v === "N.C." || v === "NC");
+  }
+  function isKey(v) { return typeof v === "string" && /^[A-G][#b]?m?$/.test(v); }
+  function cleanChords(c, t) {
+    if (!Array.isArray(c) || !c.length || c.length > MAX_CHORDS) return null;
+    var out = [], last = 0;
+    for (var k = 0; k < c.length; k++) {
+      var x = c[k];
+      if (!Array.isArray(x) || x.length !== 2 || typeof x[0] !== "number" || x[0] !== Math.floor(x[0]) ||
+          x[0] < last || x[0] > t.length || !isChord(x[1])) return null;
+      last = x[0];
+      out.push([x[0], x[1]]);
+    }
+    return out;
+  }
+  function cleanRow(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var tb = raw.tb === 1 && raw.m !== 1;
+    var t = tb ? str(raw.t, MAX_ROW).replace(/\t/g, "    ").replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+$/, "").slice(0, MAX_ROW)
+               : oneLine(raw.t, MAX_ROW);
+    var out = { t: t };
+    var c = tb ? null : cleanChords(raw.c, t);
+    if (c) out.c = c;
+    if (raw.m === 1 && !c) out.m = 1;
+    if (tb) out.tb = 1;
+    if (raw.p === 1) out.p = 1;
+    if (raw.k === "v" || raw.k === "c" || raw.k === "b") out.k = raw.k;
+    if (!t && !c) return null;
+    return out;
+  }
+  function cleanRows(v, max) {
+    if (!Array.isArray(v)) return null;
+    var out = [];
+    for (var k = 0; k < v.length && out.length < max; k++) { var r = cleanRow(v[k]); if (r) out.push(r); }
+    return out.length ? out : null;
+  }
+  function hasChords(p) {
+    if (!p) return false;
+    if (p.key || (p.xo && p.xo.length)) return true;
+    return (p.ln || []).some(function (l) { return !!(l.c || l.x || l.k); });
+  }
+
   function oneLine(v, max) { return str(v, max * 2).replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max); }
 
   function newId(prefix, rand) {
@@ -57,6 +121,12 @@
     var w = cleanWords(raw.w, out);
     if (w) out.w = w;
     if (raw.v === 2 || raw.v === 3 || raw.v === 4) out.v = raw.v;
+    var c = cleanChords(raw.c, out.t);
+    if (c) out.c = c;
+    if (raw.k === "v" || raw.k === "c" || raw.k === "b") out.k = raw.k;
+    var x = cleanRows(raw.x, MAX_ROWS);
+    if (x) out.x = x;
+    if (raw.q === 1 && x && out.p) out.q = 1;
     return out;
   }
   function words(t) { return String(t || "").split(/\s+/).filter(Boolean); }
@@ -97,6 +167,12 @@
       while (vn.length && !vn[vn.length - 1]) vn.pop();
       if (vn.length) out.vn = vn;
     }
+    var xo = cleanRows(raw.xo, MAX_ROWS_END);
+    if (xo) out.xo = xo;
+    if (isKey(raw.key)) out.key = raw.key;
+    if (typeof raw.capo === "number" && raw.capo >= 1 && raw.capo <= 11 && raw.capo === Math.floor(raw.capo)) out.capo = raw.capo;
+    if (typeof raw.bpm === "number" && raw.bpm >= 20 && raw.bpm <= 300 && raw.bpm === Math.floor(raw.bpm)) out.bpm = raw.bpm;
+    if (typeof raw.ts === "string" && /^([1-9]|1[0-9]|2[0-9]|3[0-2])\/(1|2|4|8|16|32)$/.test(raw.ts)) out.ts = raw.ts;
     return out;
   }
 
@@ -117,9 +193,14 @@
   }
   function fileOf(src) { return String(src || "").split("/").pop(); }
 
+  // Equal mtime: the longer JSON wins (Songbook S1: a copy that an
+  // older build saved without the chords is shorter, so the chords
+  // come back), then the larger one. Pure and symmetric.
   function newer(a, b) {
     if (a.mtime !== b.mtime) return a.mtime > b.mtime;
-    return JSON.stringify(a) > JSON.stringify(b);
+    var ja = JSON.stringify(a), jb = JSON.stringify(b);
+    if (ja.length !== jb.length) return ja.length > jb.length;
+    return ja > jb;
   }
   function byId(a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; }
 
@@ -206,20 +287,39 @@
   // New lyrics text for existing lines: the lines that stay the same
   // (longest common run, in order) keep their id and times, so a typo
   // fix elsewhere never loses the timing already done.
-  function relyric(lines, text, rand) {
-    var neu = splitText(text), a = lines.map(function (l) { return l.t; }), b = neu.map(function (l) { return l.t; });
+  function relyric(lines, text, rand) { return relyricLines(lines, splitText(text), rand, false); }
+  // The same for lines read from a chord sheet (chords.js parseSheet):
+  // own = true takes the chords, sections and rows from `neu`; false
+  // keeps those of the old lines (the plain-text editor), and a line
+  // that changed takes the chords of the old line in the same place
+  // when the changed run has as many lines as before.
+  function clampChords(c, t) {
+    if (!c) return null;
+    return cleanChords(c.map(function (x) { return [Math.min(x[0], t.length), x[1]]; }), t);
+  }
+  function relyricLines(lines, neu, rand, own) {
+    var a = lines.map(function (l) { return l.t; }), b = neu.map(function (l) { return l.t; });
     var n = a.length, m = b.length, i, j;
     var L = [];
     for (i = 0; i <= n; i++) { L.push(new Array(m + 1).fill(0)); }
     for (i = n - 1; i >= 0; i--) for (j = m - 1; j >= 0; j--) {
       L[i][j] = a[i] === b[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
     }
-    var keep = new Array(m).fill(-1);
+    var keep = new Array(m).fill(-1), pairs = [];
     i = 0; j = 0;
     while (i < n && j < m) {
-      if (a[i] === b[j]) { keep[j] = i; i++; j++; }
+      if (a[i] === b[j]) { keep[j] = i; pairs.push([i, j]); i++; j++; }
       else if (L[i + 1][j] >= L[i][j + 1]) i++;
       else j++;
+    }
+    // Changed runs: old lines oi..oe-1 became new lines ni..ne-1.
+    var near = new Array(m).fill(-1);
+    if (!own) {
+      var pi = 0, pj = 0;
+      pairs.concat([[n, m]]).forEach(function (pr) {
+        if (pr[0] - pi === pr[1] - pj) for (var k = 0; k < pr[1] - pj; k++) near[pj + k] = pi + k;
+        pi = pr[0] + 1; pj = pr[1] + 1;
+      });
     }
     return neu.map(function (l, k) {
       var old = keep[k] >= 0 ? lines[keep[k]] : null;
@@ -227,6 +327,14 @@
       if (l.p) out.p = 1;
       if (old && old.w) out.w = old.w.slice();
       if (old && old.v) out.v = old.v;
+      var from = own ? l : (old || (near[k] >= 0 ? lines[near[k]] : null));
+      if (from) {
+        var c = own ? cleanChords(from.c, out.t) : clampChords(from.c, out.t);
+        if (c) out.c = c;
+        if (from.k) out.k = from.k;
+        if (from.x) out.x = from.x.map(function (r) { return Object.assign({}, r); });
+        if (from.q && out.x && out.p) out.q = 1;
+      }
       return out;
     });
   }
@@ -448,7 +556,8 @@
     VER: VER, MAX_LINES: MAX_LINES, MAX_LINE: MAX_LINE, MAX_PROJECTS: MAX_PROJECTS,
     empty: empty, normalize: normalize, merge: merge, serialize: serialize, cleanProject: cleanProject,
     find: find, live: live, put: put, remove: remove, newProject: newProject, newId: newId,
-    splitText: splitText, toText: toText, relyric: relyric,
+    splitText: splitText, toText: toText, relyric: relyric, relyricLines: relyricLines,
+    isChord: isChord, isKey: isKey, hasChords: hasChords, cleanRow: cleanRow, MAX_ROW: MAX_ROW, MAX_ROWS: MAX_ROWS, MAX_ROWS_END: MAX_ROWS_END, MAX_CHORDS: MAX_CHORDS,
     startAt: startAt, endAt: endAt, clearTime: clearTime, clearAll: clearAll, nudge: nudge, setStart: setStart, shiftAll: shiftAll,
     nextUntimed: nextUntimed, prevTimed: prevTimed, nextTimed: nextTimed, timedCount: timedCount,
     timed: timed, lineAt: lineAt, fmt: fmt, parseTime: parseTime,

@@ -391,3 +391,56 @@ test("publish: cover designer, narrator and other people get Publishing's roles 
   const it = items("publish", [{ title: "Άμμος", by: "A. Writer", cover_designer: "C. Art", narrator: "N. Voice", other: "T. Setter, P. Reader" }]);
   assert.deepEqual(it[0].ppl, [{ r: "a", n: "A. Writer" }, { r: "c", n: "C. Art" }, { r: "n", n: "N. Voice" }, { r: "o", n: "T. Setter" }, { r: "o", n: "P. Reader" }]);
 });
+
+test("publish: a music release with tracks, ISRCs and editions (wave M1); codes checked; Undo takes tracks and editions back", () => {
+  const d0 = PB.put(PB.empty(), "titles", { id: "t0", t: "Old EP", mt: { k: "ep" }, ppl: [{ r: "a", n: "Band" }] }, T0);
+  const d = PB.put(d0, "trk", { id: "k0", ti: "t0", t: "Old song", isrc: "GRA1B2500001" }, T0);
+  const r = add("publish", clone(d), [
+    { title: "Night Songs", by: "Ann Example", release_type: "album", record_label: "Own Label", genre: "Folk", p_line: "2026 Ann Example", date: "2027-02-01",
+      tracks: [{ title: "Intro", length: "1:05", isrc: "GR-A1B-26-00001" }, { title: "Night Song", version: "Radio edit", length: "3:45", explicit: true }, "Dawn"],
+      editions: [{ edition: "digital", upc: "5201234000001", distributor: "DistroKid" }, { edition: "cd", price: 12, catalogue_no: "OL-001" }] }
+  ]);
+  const f = r.p.rows[0].fields;
+  assert.deepEqual(f.find((x) => x[0] === "mtype"), ["mtype", "album"]);
+  assert.deepEqual(f.filter((x) => x[0] === "track").map((x) => x[1]), ["1. Intro 1:05 · GR-A1B-26-00001", "2. Night Song (Radio edit) 3:45", "3. Dawn"]);
+  assert.deepEqual(f.find((x) => x[0] === "upc"), ["upc", "5201234000001"]);
+  assert.deepEqual(f.filter((x) => x[0] === "format").map((x) => x[1]), ["digital", "cd|12.00 EUR"]);
+  assert.equal(r.a.ok, true, r.a.err);
+  const data = r.a.data, id = r.a.made[0].id;
+  assert.equal(J(data), PB.serialize(data));
+  const t = PB.find(data, "titles", id);
+  assert.deepEqual(t.mt, { k: "album", lbl: "Own Label", gen: "Folk", pl: "2026 Ann Example" });
+  assert.equal(t.plan, undefined);                  // the music plan comes with wave M3
+  assert.deepEqual(t.fmts, []);
+  assert.deepEqual(PB.tracksOf(data, id).map((x) => [x.no, x.t, x.ver, x.dur, x.isrc, x.ex || 0]),
+    [[1, "Intro", "", 65, "GRA1B2600001", 0], [2, "Night Song", "Radio edit", 225, "", 1], [3, "Dawn", "", 0, "", 0]]);
+  assert.deepEqual(PB.editionsOf(data, id).map((x) => [x.k, x.upc, x.cat, x.price, x.dist]),
+    [["dig", "5201234000001", "", 0, "DistroKid"], ["cd", "", "OL-001", 12, ""]]);
+  // codes: invalid, twice, or already on another release → refused
+  assert.match(err("publish", [{ title: "X", release_type: "single", tracks: [{ title: "A", isrc: "GR-A1B-26" }] }]), /not a valid ISRC/);
+  assert.match(err("publish", [{ title: "X", release_type: "single", editions: [{ upc: "5201234000002" }] }]), /check digit/);
+  assert.match(err("publish", [{ title: "X", release_type: "single", editions: [{ upc: "9780306406157" }] }]), /ISBN/);
+  assert.match(err("publish", [{ title: "X", release_type: "single", tracks: [{ title: "A", isrc: "GRA1B2600009" }, { title: "B", isrc: "GR-A1B-26-00009" }] }]), /given twice/);
+  assert.match(A.plan("publish", d, items("publish", [{ title: "New", release_type: "single", tracks: [{ title: "A", isrc: "GRA1B2500001" }] }]), CTX).err, /already on .Old EP/);
+  assert.match(err("publish", [{ title: "X", release_type: "ep", formats: [{ format: "ebook" }] }]), /editions, not formats/);
+  assert.match(err("publish", [{ title: "X", tracks: ["A"] }]), /give release_type/);
+  assert.match(err("publish", [{ title: "X", release_type: "mixtape" }]), /single, ep, album or compilation/);
+  assert.match(err("publish", [{ title: "X", release_type: "single", tracks: [{ title: "A", length: "3m45" }] }]), /m:ss/);
+  // Undo: the release, its tracks and editions go; the old release stays
+  const u = A.undo("publish", data, r.a.undo, NOW + 5);
+  assert.equal(u.ok, true, u.err);
+  assert.deepEqual(u.data.titles.map((x) => x.id), ["t0"]);
+  assert.deepEqual(u.data.trk.map((x) => x.id), ["k0"]);
+  assert.deepEqual(u.data.med, []);
+  // the tool offers the fields
+  const p = core.toolsFor({ creates: ["publish"] }).find((x) => x.name === "create_items").params.properties.items.items.properties;
+  ["release_type", "record_label", "genre", "p_line", "c_line", "tracks", "editions"].forEach((k) => assert.ok(p[k], k));
+  assert.deepEqual(p.release_type.enum, ["single", "ep", "album", "compilation"]);
+});
+
+test("create_items: no two fields share a name (one schema for every app)", () => {
+  const s = src("assistant/core.js"), i = s.indexOf("var CR_FIELDS"), blk = s.slice(i, s.indexOf("\n  ];", i));
+  const names = [...blk.matchAll(/^\s*\["([a-z_]+)", \[/gm)].map((m) => m[1]);
+  assert.ok(names.length > 50);
+  assert.deepEqual(names.filter((n, k) => names.indexOf(n) !== k), []);
+});
