@@ -108,6 +108,21 @@ Die orOS-Disk ist der verschlüsselte Ort: Mit eingeschalteter orOS-Synchronisie
 - `⋯` › `Dokumente exportieren (.zip)` speichert die gezeigten Dokumente mit ihren Dateien, einer `documents.json` und einer `documents.csv` für Tabellen. `Archiv importieren (.zip)` holt so ein Archiv zurück, auf jedem Gerät: Die Dateien kommen nach `Documents` › `Importiert` (Datum).
 > Nichts in Dokumente löscht eine Datei. Die Angaben werden verschlüsselt mit orOS Sync synchronisiert, die Dateien wie immer über die Disk.
 
+## Fotos
+`Fotos` in der Ordnerliste zeigt alle Fotos und Videos der Disk nach dem Tag, an dem sie aufgenommen wurden, die neuesten zuerst, wie die Galerie eines Handys. Die Dateien bleiben, wo sie sind.
+- Das Datum stammt von der Kamera (den Details des Fotos), sonst vom Video, sonst aus einem Namen wie `IMG_20261112_143015.jpg`, sonst von der Zeit der Datei. `Details` im Betrachter sagt, woher.
+- Tippe auf ein Foto, um es zu öffnen. Wische oder nutze die Pfeile für das nächste, tippe doppelt zum Zoomen und spiele Videos direkt ab. Die Knöpfe oben sind `In Photo Lab bearbeiten`, `Im Ordner zeigen`, `Senden…`, `Details` (Kamera, Größe, Ort) und `In den Papierkorb`.
+- `−` und `+` machen die Bilder kleiner oder größer. Auf einem breiten Bildschirm springen die Jahre rechts zu diesem Jahr.
+- `Auswählen` (oder langes Drücken am Handy) wählt mehrere. `Senden…` schickt die Fotos mit einem Link, wie `Fotos an jemanden senden…` in Dateien. `In den Papierkorb` fragt vorher; sie lassen sich 30 Tage lang aus dem `Papierkorb` wiederherstellen.
+- Fotos, die orOS Drive nur in der Cloud hält (zum Beispiel die `Camera backup` deines Handys), tragen ein Wolkenzeichen. Kommt eines ins Bild, wird es einmal für sein kleines Bild heruntergeladen und geht danach zurück in die Cloud, damit die Disk nicht vollläuft.
+- `⋯` › `Angezeigte Ordner…` legt fest, welche Ordner erscheinen. Ordner, in denen andere Apps ihre eigenen Bilder ablegen (Cover, Belege, Entwürfe), bleiben zuerst außen vor; hake die gewünschten an oder füge einen anderen Ordner hinzu. Dokumente und der Papierkorb erscheinen nie. `⋯` › `Nach neuen Fotos suchen` sucht erneut.
+- `Alben` oben zeigt deine Alben. Ein Album zeigt Fotos, ohne sie zu verschieben oder zu kopieren, ein Foto kann also in mehreren Alben sein. Wähle unter `Alle` Fotos aus und tippe auf `Zum Album…` (oder auf die Album-Taste in der Ansicht), oder lege eins mit `Neues Album…` an.
+- In einem Album nimmt `Auswählen` › `Aus dem Album entfernen` Fotos heraus, und der Stern in der Ansicht macht ein Foto zum Albumcover. Unter `⋯` gibt es `Album senden…`, `Album umbenennen…` und `Album löschen`. Die Fotos bleiben immer auf dem Laufwerk.
+- Alben werden mit deinen anderen Geräten synchronisiert. Ein Foto, das die Synchronisierung überträgt, wird dort auch nach Verschieben oder Umbenennen wiedergefunden; ein Album zeigt, wie viele seiner Fotos noch nicht auf diesem Gerät sind.
+- `Karte` zeigt die Fotos, die ihren Aufnahmeort enthalten, als kleine Bilder auf der Karte; eine Zahl heißt, dass mehrere nah beieinander aufgenommen wurden. Tippe eins an, um diese Fotos zu sehen, und `‹` führt zurück zur Karte. Die Kartenbilder kommen wie in Karten von OpenStreetMap; die Orte deiner Fotos werden nirgendwohin gesendet.
+- `⋯` › `Duplikate finden…` sucht dieselbe Datei, die doppelt gespeichert ist, und Fotos, die gleich aussehen und wenige Minuten nacheinander aufgenommen wurden (Serien, Wiederholungen). In jeder Gruppe bleibt die beste Kopie (die meisten Pixel) ohne Haken, die anderen sind angehakt, sodass `In den Papierkorb` sie nach einer Rückfrage auf einmal entfernt; nimm den Haken bei denen weg, die du behalten willst. Ohne dich wird nichts entfernt, und der Papierkorb hebt sie 30 Tage auf.
+> Die kleinen Bilder und die Daten entstehen auf diesem Gerät und bleiben dort. Nur die Alben werden synchronisiert (ihre Namen und welche Fotos sie enthalten); der Aufnahmeort verlässt dein Gerät nie.
+
 ## orOS Drive
 - `orOS Drive` in der Ordnerliste zeigt die Ordner, die du mit der App orOS Drive von deinen Computern und Handys spiegelst.
 - Sie bleiben in der Cloud, bis du sie öffnest, damit dieses Gerät nicht vollläuft. Ein Wolken-Zeichen neben einem Namen bedeutet, dass die Datei noch nicht auf diesem Gerät ist.
@@ -135,7 +150,7 @@ Die Disk liegt in diesem Browser. Wenn die [orOS-Synchronisierung](help:t/sync) 
 
 - Die Anzeige in der Statusleiste zeigt `Disk synchronisiert`, `Änderungen warten auf Synchronisierung` oder `Disk-Synchronisierung nicht verfügbar`.
 - Wurde dieselbe Datei auf zwei Geräten geändert, werden beide Versionen behalten. Die andere Kopie bekommt "(conflict" plus Datum und Uhrzeit in ihren Namen.
-- Favoriten, Dokumente und der Papierkorb werden synchronisiert. Deine Sortierung, Listen- oder Rasteransicht, der Schalter `Inhalte`, der letzte Ordner, `Zuletzt` und die Speicheranzeige bleiben auf diesem Gerät.
+- Favoriten, Dokumente und der Papierkorb werden synchronisiert. Deine Sortierung, Listen- oder Rasteransicht, der Schalter `Inhalte`, der letzte Ordner, `Zuletzt`, die Speicheranzeige und alles in `Fotos` bleiben auf diesem Gerät.
 - orOS-[Sicherungen](help:t/backup) enthalten die ganze Disk, samt Papierkorb. Für eine einzelne Datei nimm `Herunterladen`.
 
 ## Tastenkürzel
@@ -156,6 +171,7 @@ Die Disk liegt in diesem Browser. Wenn die [orOS-Synchronisierung](help:t/sync) 
 - Die Suche in Dateien liest Textdateien bis 4 MB und PDFs bis 30 MB (die ersten 300 Seiten); größere oder unlesbare Dateien werden übersprungen und gezählt. Gescannte PDFs ohne Textebene lassen sich nicht durchsuchen.
 - Eine neue ZIP fasst bis zu 10.000 Dateien und 300 MB. Eine ZIP öffnet sich hier bis 300 MB, mit bis zu 20.000 Dateien, insgesamt 1 GB und 80 MB pro Datei nach dem Entpacken. Verschlüsselte und ZIP64-Archive werden nicht unterstützt, leere Ordner in einer ZIP werden nicht neu angelegt, und Dateinamen werden als UTF-8 gelesen (sehr alte Windows-ZIPs zeigen eventuell seltsame Namen).
 - Rasterbilder werden jedes Mal auf diesem Gerät erzeugt und nicht gespeichert. Nur Bilder und PDFs bis 20 MB bekommen eins.
+- Fotos zeigt bis zu 50.000 Dateien. HEIC-Fotos vom iPhone zeigen in den meisten Browsern nur einen Platzhalter, RAW-Dateien nur, wo der Browser sie lesen kann. Die kleinen Bilder belegen bis zu 300 MB auf diesem Gerät; die ältesten ungenutzten machen Platz.
 - `Zuletzt` behält die letzten 30 Dateien auf diesem Gerät.
 - Ein leerer Ordner, der auf einem Gerät in den Papierkorb kommt, erreicht den Papierkorb der anderen, ohne in deren Ordnern zu sein, weil leere Ordner nicht synchronisiert werden.
 - Sehr große Dateien synchronisieren langsam, weil jede am Stück verschlüsselt wird.

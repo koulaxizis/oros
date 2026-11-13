@@ -311,7 +311,8 @@
     "files/dropbox-callback.js",
     "files/dropbox.js",
     "files/files.js",
-    "files/gmedia.js"
+    "files/gmedia.js",
+    "files/photos.js"
    ]
   },
   {

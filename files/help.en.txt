@@ -108,6 +108,21 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 - `⋯` › `Export documents (.zip)` saves the documents shown, with their files, a `documents.json` and a `documents.csv` for a spreadsheet. `Import an archive (.zip)` brings such an archive back, on any device: the files go to `Documents` › `Imported` (date).
 > Nothing in Documents deletes a file. The details sync encrypted with orOS sync, the files through the disk as always.
 
+## Photos
+`Photos` in the folder list shows every photo and video on the disk by the day it was taken, newest first, like a phone's gallery. The files stay where they are.
+- The date comes from the camera (the photo's details), else from the video, else from a name like `IMG_20261112_143015.jpg`, else from the file's time. `Details` in the viewer says which.
+- Tap a photo to open it. Swipe or use the arrows to go to the next one, double-tap to zoom in, and play videos right there. The buttons at the top are `Edit in Photo Lab`, `Show in folder`, `Send…`, `Details` (camera, size, place) and `Move to Trash`.
+- `−` and `+` make the pictures smaller or bigger. On a wide screen the years on the right jump to that year.
+- `Select` (or a long press on a phone) picks several. `Send…` sends the photos with a link, as `Send photos to someone…` does in Files. `Move to Trash` asks first; they can be restored from `Trash` for 30 days.
+- Photos that orOS Drive keeps only in the cloud (for example your phone's `Camera backup`) show a cloud mark. When one comes into view it is downloaded once for its small picture, then it goes back to the cloud, so the disk does not fill up.
+- `⋯` › `Folders shown…` chooses which folders appear. Folders where other apps keep their own pictures (covers, receipts, designs) are left out at first; tick the ones you want, or add any other folder. Documents and the Trash never appear. `⋯` › `Look for new photos` checks again.
+- `Albums` at the top lists your albums. An album lists photos without moving or copying them, so one photo can be in several albums. Select photos in `All` and press `Add to album…` (or use the album button in the viewer), or make one with `New album…`.
+- In an album, `Select` › `Remove from album` takes photos out of it, and the star in the viewer makes a photo the album's cover. `⋯` has `Send the album…`, `Rename album…` and `Delete album`. The photos always stay on the disk.
+- Albums sync to your other devices. A photo that sync carries is found again there even after it is moved or renamed; an album shows how many of its photos are not on this device yet.
+- `Map` shows the photos that carry the place they were taken, as small pictures on the map; a number means several were taken close together. Tap one to see those photos, and `‹` goes back to the map. The map pictures come from OpenStreetMap, as in Maps; the places of your photos are never sent anywhere.
+- `⋯` › `Find duplicates…` looks for the same file saved twice and for photos that look alike and were taken within a few minutes (bursts, retakes). In each group the best copy (most pixels) is left unticked and the others are ticked, so `Move to Trash` clears them in one go after asking; untick any you want to keep. Nothing is removed without you, and the Trash keeps them for 30 days.
+> The small pictures and the dates are made on this device and stay on it. Only the albums sync (their names and which photos they hold); the place a photo was taken never leaves your device.
+
 ## orOS Drive
 - `orOS Drive` in the folder list shows the folders you mirror from your computers and phones with the orOS Drive app.
 - They stay in the cloud until you open them, so this device does not fill up. A cloud mark next to a name means the file is not on this device yet.
@@ -137,7 +152,7 @@ The disk lives in this browser. When [orOS sync](help:t/sync) is connected and u
 
 - The pill in the status bar shows `Disk synced`, `Changes pending sync` or `Disk sync unavailable`.
 - If the same file changed on two devices, both versions are kept. The other copy gets "(conflict" plus the date and time in its name.
-- Favourites, Documents and the Trash are synced. Your sort order, list or grid view, the `Contents` switch, last folder, `Recent` and the storage figure stay on this device.
+- Favourites, Documents and the Trash are synced. Your sort order, list or grid view, the `Contents` switch, last folder, `Recent`, the storage figure and everything in `Photos` stay on this device.
 - orOS [backups](help:t/backup) include the whole disk, Trash included. For a single file, use `Download`.
 
 ## Keyboard shortcuts
@@ -158,6 +173,7 @@ The disk lives in this browser. When [orOS sync](help:t/sync) is connected and u
 - Searching inside files reads text files up to 4 MB and PDFs up to 30 MB (the first 300 pages); bigger or unreadable files are skipped and counted. Scanned PDFs without a text layer can't be searched.
 - A new ZIP holds up to 10,000 files and 300 MB. A ZIP opens here up to 300 MB, with up to 20,000 files, 1 GB in all and 80 MB per file once unpacked. Encrypted and ZIP64 archives aren't supported, empty folders inside a ZIP are not recreated, and file names are read as UTF-8 (very old Windows ZIPs may show odd names).
 - Grid pictures are made on this device each time and are not stored. Only images and PDFs up to 20 MB get one.
+- Photos lists up to 50,000 files. HEIC photos from an iPhone show only a placeholder in most browsers, and RAW files only where the browser can read them. Small pictures take up to 300 MB on this device; the oldest unused ones make room.
 - `Recent` keeps the last 30 files on this device.
 - An empty folder moved to the Trash on one device reaches the others' Trash without being in their folders, because empty folders don't sync.
 - Very large files are slow to sync, as each is encrypted in one piece.
