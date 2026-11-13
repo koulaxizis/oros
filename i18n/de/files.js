@@ -400,6 +400,7 @@ orosPack("de", "files", {
  "tree.root": "Dateien",
  "tree.toggle": "Ordner anzeigen",
  "tree.trash": "Papierkorb",
+ "tree.docs": "Dokumente",
  "ui.hint": "Tipp",
  "unkeep": "Nicht mehr auf diesem Gerät behalten",
  "up": "Zum übergeordneten Ordner",

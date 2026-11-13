@@ -218,6 +218,7 @@
       "tree.recent":   "Recent",
       "tree.favs":     "Favourites",
       "tree.trash":    "Trash",
+      "tree.docs":     "Documents",
       "fav.add":       "Add to Favourites",
       "fav.remove":    "Remove from Favourites",
       "fav.added":     "Added to Favourites",
@@ -452,6 +453,7 @@
       "tree.recent":   "Πρόσφατα",
       "tree.favs":     "Αγαπημένα",
       "tree.trash":    "Κάδος",
+      "tree.docs":     "Έγγραφα",
       "fav.add":       "Προσθήκη στα Αγαπημένα",
       "fav.remove":    "Αφαίρεση από τα Αγαπημένα",
       "fav.added":     "Προστέθηκε στα Αγαπημένα",
@@ -1090,7 +1092,7 @@
     host.appendChild(makeQuickSection());
     host.appendChild(makeTreeNode(ROOT, t("tree.root"), 0, token));
     var dc = docs();
-    if (dc) host.appendChild(dc.treeNode());
+    host.appendChild(dc ? dc.treeNode() : docsStandIn());
     var dv = drv();
     if (dv) host.appendChild(dv.treeNode());
     var pc = cmp();
@@ -1146,6 +1148,57 @@
   function docsCarry(from, to) {
     var dc = docs();
     if (dc && typeof dc.carry === "function") dc.carry(from, to);
+    else if (docsStored()) loadDocs(function (d) { if (d && d.carry) d.carry(from, to); });
+  }
+
+  // Documents loads on demand (first-open budget, .github/qa/budget.json):
+  // at boot only where it was open last time or holds documents, else
+  // when its node or "Add to Documents" is first used.
+  var DOCS_SCRIPTS = ["docs-core.js", "docs.js"];
+  var docsWaiters = null;
+  function docsStored() {
+    try {
+      var v = localStorage.getItem("oros-files-docs-view");
+      if (v && JSON.parse(v).on) return true;
+      var raw = localStorage.getItem("oros-files-docs");
+      return !!(raw && JSON.parse(raw).docs && JSON.parse(raw).docs.length);
+    } catch (e) { return false; }
+  }
+  function loadDocs(cb) {
+    if (docs()) { if (cb) cb(docs()); return; }
+    if (docsWaiters) { if (cb) docsWaiters.push(cb); return; }
+    docsWaiters = cb ? [cb] : [];
+    var i = 0;
+    if (!document.getElementById("docs-css")) {
+      var css = document.createElement("link");
+      css.id = "docs-css";
+      css.rel = "stylesheet";
+      css.href = "docs.css?v=" + encodeURIComponent(SCRIPT_V);
+      css.onload = css.onerror = function () { next(); };    // styled before the first paint
+      document.head.appendChild(css);
+    } else setTimeout(next, 0);
+    function done(ok) {
+      var list = docsWaiters;
+      docsWaiters = null;
+      if (ok && docs()) { initDocs(); renderTree(); }
+      list.forEach(function (f) { try { f(docs()); } catch (e) {} });
+    }
+    function next() {
+      if (i >= DOCS_SCRIPTS.length) return done(true);
+      var sc = document.createElement("script");
+      sc.src = DOCS_SCRIPTS[i++] + "?v=" + encodeURIComponent(SCRIPT_V);
+      sc.onload = next;
+      sc.onerror = function () { done(false); };
+      document.body.appendChild(sc);
+    }
+  }
+  function docsStandIn() {
+    var wrap = document.createElement("div");
+    wrap.className = "dbx-tree doc-tree";
+    wrap.appendChild(makeSpecialNode("docs", t("tree.docs"), DOCS_SVG, function () {
+      loadDocs(function (d) { if (d) d.enter(); else transientNote(t("toast.opFail")); });
+    }));
+    return wrap;
   }
 
   function initDrive() {
@@ -1259,8 +1312,9 @@
 
   // Files' menu › Add to Documents: the selected files (not folders).
   function addToDocs() {
+    if (view === "trash") return;
     var dc = docs();
-    if (!dc || view === "trash") return;
+    if (!dc) { loadDocs(function (d) { if (d) addToDocs(); }); return; }
     var paths = selectionPaths().filter(function (p) {
       var e = null;
       lastEntries.forEach(function (x) { if (entryPath(x) === p) e = x; });
@@ -3368,7 +3422,7 @@
         selectionPaths().some(function (x) { return isImageExt(baseName(x)); }))) {
       ctxMenu.appendChild(mkItem(APP_SVG, "menu.sendAlbum", sendAlbum));
     }
-    if (docs() && !p.dir) {
+    if (!p.dir) {
       ctxMenu.appendChild(mkItem(DOCS_SVG, "menu.toDocs", addToDocs));
     }
     if (dbx() && dbx().exportFrom) {
@@ -4172,7 +4226,7 @@
     return sec;
   }
 
-  function makeSpecialNode(kind, label, svg) {
+  function makeSpecialNode(kind, label, svg, onGo) {
     var node = document.createElement("div");
     node.className = "tnode special" + (view === kind && !placeActive() ? " selected" : "");
     node.style.paddingLeft = "6px";
@@ -4190,7 +4244,7 @@
     nm.className = "tname";
     nm.textContent = label;
     node.appendChild(nm);
-    function go() { closeTreeDrawer(); openView(kind); }
+    function go() { closeTreeDrawer(); if (onGo) onGo(); else openView(kind); }
     node.addEventListener("click", go);
     node.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
@@ -5310,7 +5364,7 @@
     initDropbox();
     initDrive();
     initComputer();
-    initDocs();
+    if (docsStored()) loadDocs();
 
     // Multitasking (MT-S2): Files left open in the background lists the
     // folder again when it comes back; another app may have saved there.
