@@ -560,6 +560,23 @@ dialog.pc-dlg.pos-dlg { width: min(1180px, calc(100vw - 24px)); height: calc(100
 .pos-acts .pos-discbtn { flex: 0 1 auto; }
 .pos-qr { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .pos-qr svg { width: min(320px, 80vw); height: auto; background: #fff; border-radius: 6px; }
+/* F2: events, the stand, the cash drawer */
+.pos-top select.pos-ev { max-width: 240px; }
+.pos-evs { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.pos-evrow { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
+.pos-evrow .r-body { flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column; }
+.pos-evtabw { overflow-x: auto; max-width: 100%; }
+.pos-evtab { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.pos-evtab th, .pos-evtab td { padding: 4px 6px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+.pos-evtab th:first-child, .pos-evtab td:first-child { text-align: left; white-space: normal; overflow-wrap: anywhere; min-width: 8em; }
+.pos-drawer { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: flex-start; border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; }
+.pos-drawer .fld { flex: 1 1 140px; min-width: 0; }
+.pos-drawer .fld input { width: 100%; min-width: 0; }
+.pos-drawer .fld .dlg-btn { margin-top: 4px; }
+.pos-drawer .pos-change { flex: 1 1 100%; margin: 0; }
+.pos-cnt { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px 10px; }
+.pos-cntrow { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.pos-cntrow input { width: 4.5em; min-width: 0; text-align: right; }
 .pos-sale-acts { display: inline-flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
 .pos-pls { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .pos-plrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border: 1px solid var(--border); border-radius: 10px; padding: 8px; }

@@ -609,7 +609,9 @@
       paper: x.paper === 80 ? 80 : 58,
       dev: typeof x.dev === "string" && /^[A-Z2-9]{2}$/.test(x.dev) ? x.dev : "",
       // F1: the largest discount (%) this device may give; 0 = no limit
-      dmax: typeof x.dmax === "number" && x.dmax >= 1 && x.dmax <= 99 ? Math.floor(x.dmax) : 0
+      dmax: typeof x.dmax === "number" && x.dmax >= 1 && x.dmax <= 99 ? Math.floor(x.dmax) : 0,
+      // F2: the event this till sells at ("" = none)
+      ev: typeof x.ev === "string" && /^[a-z0-9]{6,40}$/.test(x.ev) ? x.ev : ""
     };
   }
   var prefsTimer = null;
@@ -3849,6 +3851,43 @@
         save();
         render();
       },
+      // F2: events, the stand's warehouse and its transfers
+      putEv: function (row) {
+        if (!Array.isArray(data.evs)) data.evs = [];
+        var x = C.normEv(Object.assign({}, row, { m: row.m || 0 }));
+        if (!x) return false;
+        if (upsert("evs", x)) { save(); render(); }
+        return true;
+      },
+      delEv: function (id) {
+        var cur = byId("evs", id);
+        if (!cur) return;
+        data.tombs[id] = Math.max(Date.now(), cur.m);
+        data.evs = data.evs.filter(function (x) { return x.id !== id; });
+        if (prefs.pos.ev === id) { prefs.pos.ev = ""; savePrefs(); }
+        save();
+        render();
+      },
+      newWh: function (name) {
+        var id = newId();
+        data.whs.push({ id: id, m: Date.now(), name: String(name).slice(0, 80), arch: 0 });
+        save();
+        render();
+        return id;
+      },
+      whName: whLabel,
+      whList: function () { return [["", mainWh()]].concat(extraWhs(false).map(function (w) { return [w.id, w.name]; })); },
+      whQty: function () { return whAll(); },
+      addMove: function (mv) {
+        if (data.close && mv.d <= data.close.d) { showToast(t("cl.locked", { d: fmtDay(data.close.d, true) })); return null; }
+        var x = C.normMove(mv);
+        if (!x) return null;
+        data.moves.push(x);
+        save();
+        render();
+        return x;
+      },
+      openSheet: openAtFn() ? function (name, rows, sum) { openAtFn().__orosOpenAt("spreadsheet", { newSheet: { name: name, rows: rows, sum: sum } }); } : null,
       putZ: function (row) {
         if (!Array.isArray(data.zs)) data.zs = [];
         var cur = byId("zs", row.id);

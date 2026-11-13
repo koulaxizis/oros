@@ -431,7 +431,15 @@
   //          Lines with i = POS_OTHER ("xother") are free items typed
   //          at the till: they are on the receipt and in the totals
   //          but never in the movement (no stock).
-  var POS_OTHER = "xother", DC_LEN = 40;
+  //   1.9 (wave F2): evs = events (a fair, a launch) LWW + tombs:
+  //          { id, m, name, from, to, w (the stand's warehouse, "" =
+  //          main), pl (price list), fl (cash float per day, cents),
+  //          arch }. A sale may carry ev (the event it was made at); a
+  //          closed day zs may carry fl (float) and cc (cash counted).
+  //          Packing for the stand and bringing back are ordinary
+  //          transfers with src "ev:<event id>". A 1.8 device drops
+  //          evs and these fields (its totals stay right).
+  var POS_OTHER = "xother", DC_LEN = 40, MAX_EVS = 200, EV_SRC = "ev:";
   var SALE_NO_LEN = 24, MAX_SALES = 50000, MAX_PLS = 50, MAX_ZS = 4000;
   var Z_RE = /^z\d{8}$/;
   function normSale(x) {
@@ -463,6 +471,7 @@
     // 1.9: dc = the discount's reason; pays = a split payment
     var dc = cleanText(x.dc, DC_LEN, false);
     if (dc) out.dc = dc;
+    if (ref(x.ev)) out.ev = x.ev;
     if (x.pays && typeof x.pays === "object" && !Array.isArray(x.pays)) {
       var pays = {}, parts = 0;
       PAYS.forEach(function (k) {
@@ -476,7 +485,7 @@
   }
   // the copy that knows its discount / split (a 1.8 device strips them)
   function saleRicher(x) {
-    return !!(x.dc || x.pays || x.lines.some(function (l) { return l.p0; }));
+    return !!(x.dc || x.pays || x.ev || x.lines.some(function (l) { return l.p0; }));
   }
   function normPl(x) {
     if (!base(x)) return null;
@@ -493,11 +502,24 @@
   function normZ(x) {
     if (!base(x) || !Z_RE.test(x.id) || !isYmd(x.d) || x.id !== "z" + x.d.replace(/-/g, "")) return null;
     function c(v) { var n = clampInt(v, -C_MAX, C_MAX); return n === null ? 0 : n; }
-    return {
+    var z = {
       id: x.id, m: x.m, d: x.d, at: clampInt(x.at, 0, 4102444800000) || 0, no: clampInt(x.no, 1, 1000000) || 1,
       n: clampInt(x.n, 0, MAX_SALES) || 0, g: c(x.g), net: c(x.net), vat: c(x.vat),
       cash: c(x.cash), card: c(x.card), other: c(x.other)
     };
+    // F2: the drawer (float and cash counted), only when given
+    var fl = clampInt(x.fl, 0, C_MAX), cc = clampInt(x.cc, 0, C_MAX);
+    if (fl !== null) z.fl = fl;
+    if (cc !== null) z.cc = cc;
+    return z;
+  }
+  function normEv(x) {
+    if (!base(x) || !isYmd(x.from)) return null;
+    var name = cleanText(x.name, NAME_LEN, false);
+    if (!name) return null;
+    var to = isYmd(x.to) && x.to >= x.from ? x.to : x.from;
+    var out = { id: x.id, m: x.m, name: name, from: x.from, to: to, w: whRef(x.w), pl: ref(x.pl), fl: clampInt(x.fl, 0, C_MAX) || 0, arch: x.arch === 1 ? 1 : 0 };
+    return out;
   }
   // union by id; a void is final (the voided copy wins whatever its m)
   function mergeSales(la, lb) {
@@ -626,6 +648,8 @@
     if (zs.length) out.zs = zs;
     var cons = pick("cons", normCons, MAX_CONS);
     if (cons.length) out.cons = cons;
+    var evs = pick("evs", normEv, MAX_EVS);
+    if (evs.length) out.evs = evs;
     var sa = normSettings(a.settings), sb = normSettings(b.settings);
     out.settings = sb.m > sa.m || (sb.m === sa.m && canon(sb) > canon(sa)) ? sb : sa;
     var sortedTombs = {};
@@ -1677,7 +1701,7 @@
     LOT_LEN: LOT_LEN, lotsOf: lotsOf, allLots: allLots, expiring: expiring, lotNames: lotNames,
     OPEN_ID: OPEN_ID, normClose: normClose, openMove: openMove, closeInfo: closeInfo, closePeriod: closePeriod,
     ARCHIVE_DIR: ARCHIVE_DIR, ARCH_RE: ARCH_RE, archivePath: archivePath,
-    PAYS: PAYS, POS_OTHER: POS_OTHER, DC_LEN: DC_LEN, normSale: normSale, normPl: normPl, normZ: normZ, mergeSales: mergeSales,
+    PAYS: PAYS, POS_OTHER: POS_OTHER, DC_LEN: DC_LEN, EV_SRC: EV_SRC, normEv: normEv, normSale: normSale, normPl: normPl, normZ: normZ, mergeSales: mergeSales,
     CONS_SRC: CONS_SRC, normCons: normCons, consOf: consOf, consList: consList, lastSettle: lastSettle,
     consDue: consDue, settleMove: settleMove, consInvoice: consInvoice, addMonths: addMonths
   };
