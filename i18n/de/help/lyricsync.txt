@@ -80,6 +80,15 @@ Liedtext-Sync ist auch ein Songbook: Ein Lied kann Akkorde über dem Text haben,
 - ▲ ▼, die Pfeiltasten und Bild auf / Bild ab gehen einen Bildschirm zurück oder weiter; die meisten Fußpedale zum Umblättern senden diese Tasten. [[Esc]] schließt die Bühne.
 - `A−` `A+` ändern die Größe, und `Anzeigen` wählt Text und Akkorde, nur Text (für Singende) oder nur Akkorde. Die Bühne merkt sich das auf diesem Gerät.
 
+## Setlists, PDF und Drucken
+- Auf dem ersten Bildschirm stehen unter `Setlists` deine Setlists. `Neue Setlist` legt eine an: gib ihr einen Namen, wenn du willst ein Datum und Notizen, und füge mit `Lied hinzufügen` Lieder hinzu. ↑ ↓ ändern die Reihenfolge, ✕ nimmt ein Lied heraus (das Lied selbst bleibt).
+- `Tonart hier` spielt ein Lied der Setlist in einer anderen Tonart; überall sonst behält das Lied seine eigene.
+- `Bühne` bei einer Setlist spielt ihre Lieder nacheinander. Am Ende eines Liedes geht das Pedal (oder Bild ab) zum nächsten; ⏮ ⏭, ein Wischen nach links oder rechts und die Tasten [[N]] und [[P]] wechseln das Lied. Unten steht, welches Lied als Nächstes kommt.
+- `PDF` macht ein Blatt zum Drucken: ein Lied über `Exportieren`, oder die ganze Setlist mit einer ersten Seite, die ihre Lieder auflistet. Wähle A4 oder Letter, eine oder zwei Spalten und die Schriftgröße; `Drucken` schickt dieselben Seiten an den Drucker. Griechisch und Polytonisch werden in Noto gedruckt.
+- `Exportieren` bei einer Setlist speichert alle ihre Lieder in einer ChordPro-Datei oder die Liste als Text. Eine ChordPro-Datei mit mehreren Liedern (`{new_song}` dazwischen) fügt alle Lieder und eine Setlist mit ihnen hinzu.
+- `In den Kalender` trägt eine Setlist mit Datum als ganztägigen Termin in den Kalender ein; der Kalender zeigt ihn, bevor er ihn hinzufügt.
+- Setlists werden wie die Lieder mit deinen Geräten synchronisiert.
+
 ## Deine Daten
 - Der Liedtext und seine Zeiten werden laufend gespeichert. Mit eingeschaltetem orOS-Sync in den [Einstellungen](app:settings) folgen sie dir verschlüsselt auf deine anderen Geräte.
 - Die Lieddatei bleibt nur auf dem Gerät, auf dem du sie gewählt hast. Auf einem anderen Gerät zeigt das Lied „Lieddatei nicht auf diesem Gerät“, bis du sie auch dort wählst. Ein Lied aus Musik wird aus deinem Musik-Ordner gelesen und ist damit auf jedem Gerät da, das die Datei hat (Vault Drive).
