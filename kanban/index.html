@@ -77,9 +77,14 @@
       <label for="c-notes" data-i18n="card.notes">Notes</label>
       <textarea id="c-notes" rows="4"></textarea>
 
+      <!-- Gantt (G1): start date, then due date; live-save -->
+      <label for="c-start" data-i18n="card.start">Start</label>
+      <input id="c-start" type="date" autocomplete="off">
+
       <!-- Due date (Kanban → Calendar integration): live-save, all-day event -->
       <label for="c-due" data-i18n="card.due">Due</label>
       <input id="c-due" type="date" autocomplete="off">
+      <label class="chk"><input type="checkbox" id="c-ms"> <span data-i18n="card.ms.long">Milestone (a diamond on the due date)</span></label>
 
       <!-- K1: swimlane field -->
       <label for="c-lane" data-i18n="card.lane">Lane</label>

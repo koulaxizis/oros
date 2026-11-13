@@ -11,7 +11,9 @@ Ein neues Board hat drei Spalten: Zu erledigen, In Arbeit und Erledigt.
 ## Karten
 Der Dialog `Karte` speichert, während du tippst. Er hat:
 - `Text` und `Notizen`.
+- `Beginn`: der Tag, an dem die Arbeit an der Karte beginnt (freiwillig). Mit Beginn und Fälligkeit ist die Karte ein Balken in der Zeitleiste. Ein Beginn nach der Fälligkeit schiebt die Fälligkeit mit.
 - `Fällig`: ein Datum. Die Karte zeigt `Heute`, `Morgen` oder `Überfällig`, wenn es nah ist oder vorbei.
+- `Meilenstein`: Die Karte ist in der Zeitleiste eine Raute am Fälligkeitstag statt eines Balkens, für eine Frist oder ein Ereignis.
 - `Labels`: Tippe auf `Labels hinzufügen / verwalten`, um Labels zu wählen oder ein neues mit Farbe anzulegen. Der Stift neben einem Label öffnet `Label bearbeiten`: Name oder Farbe ändern oder das Label löschen. Jede Karte mit diesem Label ändert sich mit.
 - `Unteraufgaben`: eine Checkliste. Die Karte zeigt, wie viele erledigt sind, zum Beispiel 2/5.
 - `Weitere Infos`: eigene Felder, jedes mit einem Namen (`Feld`) und einem `Wert`.
@@ -35,7 +37,8 @@ Der Dialog `Karte` speichert, während du tippst. Er hat:
 Der Ansichtsknopf neben `Nach Label filtern` öffnet `Ansicht und Board-Optionen`. Die gewählte Ansicht bleibt pro Board auf diesem Gerät.
 - `Board`: die Spalten.
 - `Tabelle`: alle Karten in einer sortierbaren Liste. Tippe auf eine Spaltenüberschrift, um danach zu sortieren; die Liste `Spalte` in jeder Zeile verschiebt die Karte.
-- `Zeitleiste`: Karten mit Fälligkeit auf einer Reihe von Tagen, heute hervorgehoben. Zieh eine Karte entlang der Tage, um ihre Fälligkeit zu ändern. Karten ohne Fälligkeit werden darunter gezählt.
+- `Zeitleiste`: ein Gantt-Diagramm. Jede Karte mit Beginn oder Fälligkeit ist ein Balken vom Beginn bis zur Fälligkeit (ein Meilenstein ist eine Raute), heute hervorgehoben. Zieh einen Balken, um ihn zu verschieben, oder sein linkes oder rechtes Ende, um Beginn oder Fälligkeit zu ändern; `Rückgängig` holt die Daten zurück. Mit der Tastatur verschieben die Pfeiltasten den gewählten Balken um einen Tag, Umschalt mit Pfeil ändert nur die Fälligkeit. Der dunklere Teil eines Balkens zeigt, wie viele Unteraufgaben erledigt sind; Karten in der letzten Spalte sehen fertig aus. Im Ansichtsmenü: `Zoom` (Tag, Woche, Monat), `Gruppen` (keine, nach Spalte oder nach Bahn) und `Nur Arbeitstage`. Karten ohne Daten werden darunter gezählt.
+- `Nur Arbeitstage` gilt für die Tafel auf jedem Gerät. Wochenenden sind dunkler schattiert, ein verschobener Balken behält seine Zahl an Arbeitstagen und beginnt oder endet nicht an einem Samstag oder Sonntag, und die Länge zählt in Arbeitstagen. Aus zählt jeder Tag.
 - `Swimlanes` teilt das Board in Zeilen quer über die Spalten: `Nach Label` (eine Zeile pro Label, dazu `Kein Label`) oder `Nach Bahn` (eine Zeile pro Bahnname, dazu `Keine Bahn`). Zieh eine Karte in eine andere Zeile, um ihr Label oder ihre Bahn zu ändern.
 
 ## Anhänge und Titelbild
@@ -52,7 +55,7 @@ Der Ansichtsknopf neben `Nach Label filtern` öffnet `Ansicht und Board-Optionen
 ## Export, Import und Vorlagen
 - `orOS-Datei (.orosboard)` speichert das Board als eine offene Datei mit seinem Namen: Spalten, Karten, Labels, Regeln und die Anhänge selbst. Es ist ein ZIP: Entpackst du es, findest du `content.json` (das Board), `media` (die Anhänge) sowie `preview/board.md` und `preview/board.csv`, die jeder Texteditor oder jede Tabellenkalkulation öffnet. `Aus anderen Apps importieren` öffnet sie wieder als neues Board, ebenso das Öffnen der Datei mit orOS aus deinem System (`Öffnen mit`). `Entpackter orOS-Ordner…` im selben Dialog holt eine entpackte .orosboard zurück, auch wenn du darin eine Datei geändert hast.
 - `Board exportieren (JSON)` speichert eine Datei mit dem ganzen Board: Spalten, Karten, Labels, Regeln und die Anhänge selbst (bis 25 MB insgesamt). `Aus anderen Apps importieren` liest diese Datei als neues Board zurück, so kannst du ein Board auch an jemand anderen weitergeben.
-- `Karten exportieren (CSV)` speichert die Karten als Tabelle für eine Tabellenkalkulation, eine Zeile pro Karte mit Spalte, Labels, Fälligkeit, Bahn und Unteraufgaben.
+- `Karten exportieren (CSV)` speichert die Karten als Tabelle für eine Tabellenkalkulation, eine Zeile pro Karte mit Spalte, Labels, Fälligkeit, Bahn, Unteraufgaben, Beginn und Meilenstein.
 - `Als Vorlage speichern…` behält Spalten, Labels, WIP-Limits, Regeln und Karten des Boards (ohne Fälligkeiten, Anhänge und Häkchen).
 - `Neues Board aus Vorlage…` startet ein Board aus einer deiner Vorlagen oder einer mitgelieferten: Persönlich, Software-Sprint oder Redaktionsplan. Dort kannst du auch deine eigenen Vorlagen löschen.
 
