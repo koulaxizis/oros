@@ -16,7 +16,7 @@ const E = require("../transfer/engine.js");
 
 // ---------- A relay room that behaves like relay/remote.js ----------
 class FakeRelay {
-  constructor() { this.rooms = new Map(); this.frames = []; this.full = 0; }
+  constructor() { this.rooms = new Map(); this.frames = []; this.times = []; this.full = 0; }
   WebSocket() {
     const relay = this;
     return class FakeSocket {
@@ -40,6 +40,7 @@ class FakeRelay {
         if (typeof data !== "string") throw new Error("text frames only");
         if (data === "ping") { this._recv("pong"); return; }
         relay.frames.push(data);
+        relay.times.push(Date.now());
         for (const o of relay.rooms.get(this.url)) if (o !== this) o._recv(data);
       }
       close() {
@@ -71,7 +72,7 @@ function fakeRtc(opts = {}) {
         log.binary++; log.bytes += u8.length;
         if (u8.length > 65536) throw new Error("message too big for a data channel");
       }
-      if (opts.dropAfter && log.binary > opts.dropAfter) { this.close(); return; }
+      if (opts.dropAfter && log.binary > opts.dropAfter && !log.dropped) { log.dropped = 1; this.close(); return; }
       const peer = this.peer, len = typeof data === "string" ? data.length : data.byteLength;
       this.bufferedAmount += len;
       log.maxBuffered = Math.max(log.maxBuffered, this.bufferedAmount);
@@ -96,7 +97,7 @@ function fakeRtc(opts = {}) {
     setRemoteDescription(d) {
       const peer = pcs.get(+String(d.sdp).split(":")[1]);
       this.remote = peer;
-      if (d.type === "answer" && !opts.noDirect) {
+      if (d.type === "answer" && !opts.noDirect && !(opts.noReturn && log.dropped)) {
         const a = this.chan, b = new Chan();
         a.peer = b; b.peer = a;
         setTimeout(() => {
@@ -158,7 +159,8 @@ function pair(files, o = {}) {
     onState: (p, i) => rLog.push(Object.assign({ p }, i))
   });
   return { relay, rtc, code, manifest, sender, receiver, sLog, rLog, sProg,
-    sLast: () => sLog[sLog.length - 1] || {}, rLast: () => rLog[rLog.length - 1] || {} };
+    sLast: () => sLog[sLog.length - 1] || {}, rLast: () => rLog[rLog.length - 1] || {},
+    get sStates() { return sLog.map((x) => x.p); }, get rStates() { return rLog.map((x) => x.p); } };
 }
 
 // ---------- 1. Codes and links ----------
@@ -376,7 +378,7 @@ test("a file that does not match its hash is reported, never passed off as whole
   assert.equal(sink.out[1].ok, false, "the sink is told to drop it");
 });
 
-test("declining, cancelling and a dropped link end both sides", async () => {
+test("declining and cancelling end both sides", async () => {
   {
     const t = pair(randomFiles([["a", 10]]));
     t.sender.start(); t.receiver.start();
@@ -396,15 +398,25 @@ test("declining, cancelling and a dropped link end both sides", async () => {
     assert.equal(t.rLast().e, "cancelled");
     assert.equal(t.sLast().e, "cancelled");
   }
-  {
-    const t = pair(randomFiles([["a", C.PIECE * 400]]), { rtcOpts: { dropAfter: 30 } });
+});
+
+for (const at of [120, 299, 301]) {
+  test("a dropped direct link comes back and the transfer goes on from where it stopped (drop after " + at + " pieces)", async () => {
+    const files = randomFiles([["a.bin", C.PIECE * 300], ["b.bin", C.PIECE * 50 + 7]]);
+    const t = pair(files, { rtcOpts: { dropAfter: at } });
     t.sender.start(); t.receiver.start();
     await until(() => t.rLast().p === "offer");
-    t.receiver.accept(memSink());
-    await until(() => t.rLast().p === "error" && t.sLast().p === "error");
-    assert.equal(t.rLast().e, "lost");
-  }
-});
+    const sink = memSink();
+    t.receiver.accept(sink);
+    await until(() => t.rLast().p === "done" && t.sLast().p === "done", 20000);
+    assert.ok(t.rtc.log.dropped, "the link really dropped");
+    assert.ok(t.rStates.includes("reconnecting") && t.sStates.includes("reconnecting"));
+    assert.deepEqual(t.rLast().bad, []);
+    assert.deepEqual(t.sLast().bad, []);
+    files.forEach((f, i) => assert.ok(sink.out[i].data.equals(f.bytes), f.path));
+    assert.ok(t.rtc.log.binary < 301 + 51 + E.WINDOW + 2, "resumed, not started over: " + t.rtc.log.binary + " pieces");
+  });
+}
 
 test("a wrong code never meets the sender; a third browser cannot join", async () => {
   const files = randomFiles([["a", 10]]);
@@ -425,10 +437,50 @@ test("a wrong code never meets the sender; a third browser cannot join", async (
   await until(() => u.rLast().p === "done");
 });
 
-test("no direct link: the transfer says so instead of sending through the relay", async () => {
-  const t = pair(randomFiles([["a", 10]]), { rtcOpts: { noDirect: true } });
+test("a link that does not come back ends both sides as lost", async () => {
+  const t = pair(randomFiles([["a", C.PIECE * 400]]), { rtcOpts: { dropAfter: 30, noReturn: true } });
   const real = global.setTimeout;
-  // shorten the 25 s link timer
+  global.setTimeout = (f, ms, ...a) => real(f, ms >= 25000 ? 30 : ms, ...a);
+  try {
+    t.sender.start(); t.receiver.start();
+    await until(() => t.rLast().p === "offer");
+    t.receiver.accept(memSink());
+    await until(() => t.rLast().p === "error" && t.sLast().p === "error");
+  } finally { global.setTimeout = real; }
+  assert.ok(t.rStates.includes("reconnecting"));
+  assert.equal(t.rLast().e, "lost");
+  assert.equal(t.sLast().e, "lost");
+});
+
+test("no direct link, small transfer: it goes through the relay, sealed, in small frames", async () => {
+  const files = randomFiles([["notes/a.txt", 20000], ["b.bin", 30000], ["empty", 0]]);
+  const t = pair(files, { rtcOpts: { noDirect: true } });
+  const real = global.setTimeout;
+  global.setTimeout = (f, ms, ...a) => real(f, ms >= 25000 ? 30 : ms, ...a);
+  const sink = memSink();
+  try {
+    t.sender.start(); t.receiver.start();
+    await until(() => t.rLast().p === "offer");
+    assert.equal(t.rLast().mode, "relay");
+    t.receiver.accept(sink);
+    await until(() => t.rLast().p === "done" && t.sLast().p === "done", 20000);
+  } finally { global.setTimeout = real; }
+  assert.deepEqual(t.rLast().bad, []);
+  files.forEach((f, i) => assert.ok(sink.out[i].data.equals(f.bytes), f.path));
+  assert.equal(t.rtc.log.binary, 0, "nothing went over a data channel");
+  assert.ok(t.relay.frames.every((f) => f.length < 16384), "every room frame fits the relay's limit");
+  const plain = t.relay.frames.join("");
+  assert.ok(!/notes|a\.txt/.test(plain), "names never reach the relay");
+  assert.ok(!plain.includes(files[0].bytes.subarray(0, 64).toString("base64")), "file bytes never reach the relay in the clear");
+  const pieceAt = t.relay.times.filter((_, k) => t.relay.frames[k].charAt(0) === "~");
+  assert.ok(pieceAt.length >= 6, "pieces of " + E.RELAY_PIECE + " bytes");
+  for (let k = 1; k < pieceAt.length; k++) assert.ok(pieceAt[k] - pieceAt[k - 1] >= 25, "pieces are paced under the relay's frame limit");
+});
+
+test("no direct link, more than 50 MB: the transfer says so", async () => {
+  const size = E.RELAY_MAX + 1;
+  const t = pair([{ path: "big.iso", size, mtime: 1 }], { rtcOpts: { noDirect: true }, read: () => Promise.reject(new Error("never read")) });
+  const real = global.setTimeout;
   global.setTimeout = (f, ms, ...a) => real(f, ms >= 25000 ? 30 : ms, ...a);
   try {
     t.sender.start(); t.receiver.start();
@@ -436,4 +488,40 @@ test("no direct link: the transfer says so instead of sending through the relay"
   } finally { global.setTimeout = real; }
   assert.equal(t.sLast().e, "nodirect");
   assert.equal(t.rLast().e, "nodirect");
+});
+
+// ---------- 7. History (synced slice "transfer") ----------
+test("history: union by id, tombstones remove, canonical and order-free, nothing private", () => {
+  const now = Date.now();
+  const a = C.historyItem({ id: "t0000000000000001", at: now - 5000, dir: "sent", files: [{ p: "Photos/a.jpg", s: 10 }, { p: "Photos/b.jpg", s: 5 }, { p: "x.txt", s: 1 }], dev: "Chrome · Linux", bad: [2], mode: "relay", end: "done" });
+  const b = C.historyItem({ id: "t0000000000000002", at: now - 1000, dir: "recv", files: [{ p: "song.flac", s: 99 }], dev: "Firefox · Android", dest: "disk", folder: "/internal/Transfers/2026-11-13 05.30", end: "done" });
+  assert.deepEqual([a.what, a.n, a.bytes, a.bad, a.mode], ["Photos, x.txt", 3, 16, 1, "relay"]);
+  assert.ok(!JSON.stringify(a).includes("a.jpg"), "only top names are kept");
+  const left = C.mergeHistory({ items: [a] }, null), right = C.mergeHistory({ items: [b] }, null);
+  const m1 = C.mergeHistory(left, right), m2 = C.mergeHistory(right, left);
+  assert.equal(JSON.stringify(m1), JSON.stringify(m2), "commutative");
+  assert.equal(JSON.stringify(C.mergeHistory(m1, m1)), JSON.stringify(m1), "idempotent");
+  assert.deepEqual(m1.items.map((x) => x.id), [b.id, a.id], "newest first");
+  const cleared = C.mergeHistory(m1, { tombs: { [a.id]: now } });
+  assert.deepEqual(cleared.items.map((x) => x.id), [b.id]);
+  assert.deepEqual(C.mergeHistory(cleared, left).items.map((x) => x.id), [b.id], "a cleared entry does not come back from an old copy");
+  // bad input is dropped, not trusted
+  const bad = C.mergeHistory({ items: [{ id: "../x", at: 1 }, { id: "tok123", at: -1 }, { id: "tok456", at: 5, folder: "/internal/Notes/../x", what: "a\u0000b" }], tombs: { "<x>": 5 } }, null);
+  assert.deepEqual(bad.items.map((x) => [x.id, x.folder, x.what]), [["tok456", "", "ab"]]);
+  assert.deepEqual(bad.tombs, {});
+  const many = { items: Array.from({ length: 250 }, (_, i) => ({ id: "t" + String(i).padStart(6, "0"), at: 1000 + i })) };
+  assert.equal(C.mergeHistory(many, null).items.length, C.HIST_MAX);
+});
+
+test("wiring: History slice, Files hand-off, relay and reconnecting texts", () => {
+  const app = fs.readFileSync(path.join(__dirname, "../transfer/app.js"), "utf8");
+  assert.ok(app.includes("api.registerSlice(APP_ID, sliceGet, sliceSet, C.HIST_KEY, C.mergeHistory)"));
+  assert.ok(app.includes("Array.isArray(target.send)"));
+  for (const k of ["st.reconnecting", "st.sendingRelay", "st.receivingRelay", "offer.relay", "tab.hist", "hist.clear"]) {
+    assert.equal(app.split('"' + k + '": ').length - 1, 2, k + " in EN and EL");
+  }
+  const files = fs.readFileSync(path.join(__dirname, "../files/files.js"), "utf8");
+  assert.ok(files.includes('__orosOpenAt("transfer", { send: paths })'));
+  assert.equal(files.split('"menu.transfer"').length - 1, 4, "EN, EL, context menu, selection bar");
+  for (const f of ["index.html", "receive.html"]) assert.ok(fs.readFileSync(path.join(__dirname, "../transfer", f), "utf8").includes('id="offer-relay"'), f);
 });

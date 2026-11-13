@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.28.00
+- **Transfer keeps going.** If the direct link drops in the middle, Transfer reconnects and goes on from where it stopped. When two devices cannot connect directly at all, transfers up to 50 MB go through the orOS relay, still end-to-end encrypted. In Files, `Send with Transfer…` sends the selected files and folders, and Transfer has a `History` of finished transfers that syncs with your devices.
+
 ## Version 6.27.00
 - **Case Converter is now part of Text Tools.** Its conversions are the new group `Letters & accents` in Text Tools, next to the other tools you can chain. Your words are kept, and old links and shortcuts to Case Converter open that group.
 
