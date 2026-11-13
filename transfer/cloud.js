@@ -118,7 +118,7 @@
           packs.push({ u: p.u, n: len, files: list });
         }
         var exp = +o.exp || 0;
-        return { id: String(o.id || ""), exp: exp, files: ok.files, total: ok.total, biggest: ok.biggest, packs: packs, h: hs };
+        return { id: String(o.id || ""), exp: exp, files: ok.files, total: ok.total, biggest: ok.biggest, packs: packs, h: hs, meta: C.cleanMeta(o.meta) };
       }).catch(function () { return null; });
   }
 
@@ -209,6 +209,8 @@
             packs.forEach(function (list, j) { if (list.indexOf(i) !== -1) k = j; });
             return { p: f.p, s: f.s, m: f.m, h: hashes[i], k: k };
           }), packs: packs.map(function (_, k) { return { u: links[k], n: lens[k] }; }) };
+          var meta = C.cleanMeta(o.meta);
+          if (meta) idx.meta = meta;                                  // D1: title and message, sealed with the index
           return sealIndex(keys.key, idx).then(function (box) { return o.drop.put(id + "/index", new Blob([box])); })
             .then(function () { return o.drop.link(id + "/index"); })
             .then(function (u) { progress("ready"); return { id: id, exp: idx.exp, frag: fragment(o.code, u) }; });
@@ -252,7 +254,7 @@
           if (!x) { fail("bad"); return; }
           if (x.exp && x.exp < Date.now()) { fail("expired"); return; }
           idx = x;
-          set("offer", { files: x.files, total: x.total, biggest: x.biggest, mode: "cloud", exp: x.exp });
+          set("offer", { files: x.files, total: x.total, biggest: x.biggest, mode: "cloud", exp: x.exp, meta: x.meta });
         }, function (e) { fail(e && e.code === "expired" ? "expired" : (e && e.code) || "lost"); });
       return self;
     };
