@@ -218,6 +218,8 @@
       "tree.recent":   "Recent",
       "tree.favs":     "Favourites",
       "tree.trash":    "Trash",
+      "tree.photos":   "Photos",
+      "tree.photosFail": "Photos could not be opened. Check the connection and try again.",
       "fav.add":       "Add to Favourites",
       "fav.remove":    "Remove from Favourites",
       "fav.added":     "Added to Favourites",
@@ -452,6 +454,8 @@
       "tree.recent":   "Πρόσφατα",
       "tree.favs":     "Αγαπημένα",
       "tree.trash":    "Κάδος",
+      "tree.photos":   "Φωτογραφίες",
+      "tree.photosFail": "Οι Φωτογραφίες δεν άνοιξαν. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "fav.add":       "Προσθήκη στα Αγαπημένα",
       "fav.remove":    "Αφαίρεση από τα Αγαπημένα",
       "fav.added":     "Προστέθηκε στα Αγαπημένα",
@@ -605,6 +609,7 @@
   var MORE_SVG =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
   var DOCS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>';
+  var PHOTO_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
   var TRASH_SVG =
     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
   var CLOCK_SVG =
@@ -1090,7 +1095,7 @@
     host.appendChild(makeQuickSection());
     host.appendChild(makeTreeNode(ROOT, t("tree.root"), 0, token));
     var ph = photos();
-    if (ph) host.appendChild(ph.treeNode());
+    host.appendChild(ph ? ph.treeNode() : photosStubNode());
     var dc = docs();
     if (dc) host.appendChild(dc.treeNode());
     var dv = drv();
@@ -1263,6 +1268,62 @@
       onChange: renderTree,
       onDiskChanged: function () { forceStorageRecalc(); markDirty(); }
     });
+  }
+
+  // photos.js and photos-core.js (~80 KB) load the first time the
+  // place opens, or at boot when Photos was open last time, so a plain
+  // Files open stays inside its first-open budget (.github/qa). Until
+  // then the tree shows this stand-in node with the same look.
+  var PHOTOS_VIEW_KEY = "oros-files-photos-view";
+  var PHOTOS_SCRIPTS = ["photos-core.js", "photos.js"];
+  var photosLoading = null;
+  function photosWasOpen() {
+    try { var v = JSON.parse(localStorage.getItem(PHOTOS_VIEW_KEY) || "null"); return !!(v && v.on); }
+    catch (e) { return false; }
+  }
+  function photosScriptVer() {
+    var s = document.querySelector('script[src^="files.js"]');
+    var m = s && /[?&]v=([^&]+)/.exec(s.getAttribute("src") || "");
+    return m ? "?v=" + m[1] : "";
+  }
+  function loadPhotos() {
+    if (photos()) return Promise.resolve(photos());
+    if (!photosLoading) {
+      var ver = photosScriptVer();
+      photosLoading = PHOTOS_SCRIPTS.reduce(function (p, src) {
+        return p.then(function () {
+          return new Promise(function (res, rej) {
+            var sc = document.createElement("script");
+            sc.src = src + ver;
+            sc.onload = res;
+            sc.onerror = function () { sc.remove(); rej(new Error(src)); };
+            document.head.appendChild(sc);
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        if (!photos()) throw new Error("photos");
+        initPhotos();
+        renderTree();
+        return photos();
+      });
+      photosLoading.then(null, function () {
+        photosLoading = null;
+        transientNote(t("tree.photosFail"));
+      });
+    }
+    return photosLoading;
+  }
+  function photosStubNode() {
+    var wrap = document.createElement("div");
+    wrap.className = "dbx-tree ph-tree";
+    var node = makeSpecialNode("photos", t("tree.photos"), PHOTO_SVG);
+    node.classList.remove("special", "selected");
+    wrap.appendChild(node);
+    return wrap;
+  }
+  function openPhotos() {
+    closeTreeDrawer();
+    loadPhotos().then(function (ph) { if (ph && !ph.isActive()) ph.enter(); }, function () {});
   }
 
   function initPhotos() {
@@ -4222,7 +4283,10 @@
     nm.className = "tname";
     nm.textContent = label;
     node.appendChild(nm);
-    function go() { closeTreeDrawer(); openView(kind); }
+    function go() {
+      if (kind === "photos") { openPhotos(); return; }
+      closeTreeDrawer(); openView(kind);
+    }
     node.addEventListener("click", go);
     node.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
@@ -5343,7 +5407,7 @@
     initDrive();
     initComputer();
     initDocs();
-    initPhotos();
+    if (photosWasOpen()) loadPhotos();
 
     // Multitasking (MT-S2): Files left open in the background lists the
     // folder again when it comes back; another app may have saved there.

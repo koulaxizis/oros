@@ -398,6 +398,8 @@ orosPack("de", "files", {
  "tree.favs": "Favoriten",
  "tree.recent": "Zuletzt",
  "tree.root": "Dateien",
+ "tree.photos": "Fotos",
+ "tree.photosFail": "Fotos ließ sich nicht öffnen. Prüfe die Verbindung und versuche es erneut.",
  "tree.toggle": "Ordner anzeigen",
  "tree.trash": "Papierkorb",
  "ui.hint": "Tipp",

@@ -25,7 +25,9 @@
 //   localStorage oros-files-photos-view { on, size, skip, extra }
 // All three are in the factory-reset list (shell.js).
 //
-// Files is the only caller: OrosFilesPhotos.init(ctx) at boot,
+// Files is the only caller and loads this file and photos-core.js the
+// first time the place opens (or at boot when it was open last time),
+// then OrosFilesPhotos.init(ctx),
 // treeNode() from renderTree(), leave() through leavePlaces().
 // ============================================================
 (function () {
