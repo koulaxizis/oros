@@ -19,6 +19,8 @@
       <button type="button" role="tab" id="tab-edit" class="tab on" aria-selected="true" data-i18n="tab.edit">Questions</button>
       <button type="button" role="tab" id="tab-prev" class="tab" aria-selected="false" data-i18n="tab.prev">Preview</button>
       <button type="button" role="tab" id="tab-set" class="tab" aria-selected="false" data-i18n="tab.set">Settings</button>
+      <button type="button" role="tab" id="tab-share" class="tab" aria-selected="false" data-i18n="tab.share">Share</button>
+      <button type="button" role="tab" id="tab-resp" class="tab" aria-selected="false" data-i18n="tab.resp">Answers</button>
     </nav>
     <span class="spacer"></span>
     <button type="button" id="new-btn" class="chip pri" data-i18n="btn.new">New form</button>
@@ -74,16 +76,21 @@
             <textarea id="s-note" rows="3" maxlength="1000"></textarea>
           </label>
           <label class="opt"><input type="checkbox" id="s-prog"> <span data-i18n="set.prog">Show a progress bar on forms with pages</span></label>
-        </div>
-        <div class="card">
-          <h2 class="sub" data-i18n="set.share">Sharing</h2>
-          <p class="hint" data-i18n="set.shareSoon">Sharing a form with a link, a QR code or on your website comes in the next update of Forms. For now you can build, preview and duplicate forms.</p>
+          <label class="fld">
+            <span data-i18n="set.back">Page to link to after sending (optional)</span>
+            <input id="s-back" type="url" maxlength="512" inputmode="url" placeholder="https://">
+          </label>
+          <p class="hint" id="s-back-hint" data-i18n="set.backHint">An https address, shown as a button on the thank-you message.</p>
+          <label class="opt"><input type="checkbox" id="s-once"> <span data-i18n="set.once">One answer per browser</span></label>
+          <p class="hint" data-i18n="set.onceHint">The page remembers in the browser that it was answered.</p>
         </div>
         <div class="bar end">
           <button type="button" id="dup-btn" class="chip" data-i18n="btn.dup">Duplicate form</button>
           <button type="button" id="del-btn" class="chip danger" data-i18n="btn.del">Delete form</button>
         </div>
       </div>
+      <div id="pane-share" role="tabpanel" aria-labelledby="tab-share" hidden></div>
+      <div id="pane-resp" role="tabpanel" aria-labelledby="tab-resp" hidden></div>
     </section>
   </main>
 
@@ -105,6 +112,16 @@
     </div>
   </dialog>
 
+  <!-- Stop sharing: asked first -->
+  <dialog id="stop-dlg" aria-labelledby="stop-h">
+    <h2 id="stop-h" data-i18n="sh.stop">Stop sharing</h2>
+    <p data-i18n="sh.stopAsk">Stop sharing this form?</p>
+    <div class="bar end">
+      <button type="button" class="chip" data-close data-i18n="btn.cancel">Cancel</button>
+      <button type="button" class="chip danger" id="stop-yes" data-i18n="sh.stopYes">Stop sharing</button>
+    </div>
+  </dialog>
+
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"><span id="toast-text"></span><button type="button" id="toast-btn" hidden></button></div>
 
@@ -112,6 +129,8 @@
   <script src="engine.js?v=6.43.00"></script>
   <script src="core.js?v=6.43.00"></script>
   <script src="render.js?v=6.43.00"></script>
+  <script src="pub.js?v=6.43.00"></script>
+  <script src="share.js?v=6.43.00"></script>
   <script src="app.js?v=6.43.00"></script>
 
 </body>
