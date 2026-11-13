@@ -14,12 +14,15 @@
 // owner device's push wake token { pid, wt, ct }.
 //
 // Public (only from FORM_ORIGINS; JSON; nothing logged):
-//   GET  /fm/<k>          → { def, open, cap?, taken? } | 404 { e:"gone" }
+//   GET  /fm/<k>          → { def, open, cap?, taken?, maxSeats? } | 404 { e:"gone" }
 //   POST /fm/<k>          { v, hp?, yes?, seats? } → { ok } | { ok, wait }
 //   POST /fm/<k>/report   → { ok } (same answer for every k)
 // App (POST /v1, origin-gated): { op:"frm", act, k, sec, ... }
-//   put  { def, open?, close?, cap? }  create or replace the form → { ok }
-//   upd  { open?, close?, cap?, taken?, push? }               → { ok }
+//   put  { def, open?, close?, cap?, maxSeats? }  create or replace → { ok }
+//   upd  { open?, close?, cap?, maxSeats?, taken?, push? }    → { ok }
+// Seats: a "yes" takes 1..maxSeats (default 4, at most 21) with one
+// conditional UPDATE, so the cap holds under racing answers; taken stays
+// within 0..cap; one IP gives at most 3 "yes" a day per seat form.
 //   peek {}                → { n, open, rep }      (waiting answers)
 //   pull { after }         → { rows:[{id,v,at,w?}], more, open, rep, taken }
 //   ack  { upto }          → { n }                 (deleted)
@@ -62,7 +65,9 @@ export const FRM_LIMITS = {
   postPerMin: 5,          // answers per client IP per form per minute
   postPerDay: 20,         // answers per client IP per form per UTC day
   reports: 3,             // distinct reports in a day that close a form
-  seats: 21,              // most seats one answer may take
+  seats: 21,              // most seats one answer may take (the owner's maxSeats, default 4)
+  seatsDefault: 4,
+  yesPerDay: 3,           // yes answers per client IP per form per UTC day (seat forms)
   capMax: 100000,         // largest seat cap
   wakeGapMs: 15 * 60000,  // one wake per form per 15 minutes
   purgeBatch: 200
@@ -85,7 +90,7 @@ export const FRM_SQL = {
         "open INTEGER NOT NULL DEFAULT 1, close INTEGER NOT NULL DEFAULT 0, cap INTEGER NOT NULL DEFAULT 0, taken INTEGER NOT NULL DEFAULT 0, " +
         "at INTEGER NOT NULL, pulled INTEGER NOT NULL, day INTEGER NOT NULL DEFAULT 0, dn INTEGER NOT NULL DEFAULT 0, " +
         "wn INTEGER NOT NULL DEFAULT 0, wb INTEGER NOT NULL DEFAULT 0, rday INTEGER NOT NULL DEFAULT 0, rn INTEGER NOT NULL DEFAULT 0, " +
-        "rep INTEGER NOT NULL DEFAULT 0, pid TEXT, wt TEXT, ct TEXT, woke INTEGER NOT NULL DEFAULT 0)",
+        "rep INTEGER NOT NULL DEFAULT 0, pid TEXT, wt TEXT, ct TEXT, woke INTEGER NOT NULL DEFAULT 0, ms INTEGER NOT NULL DEFAULT 4)",
   queue: "CREATE TABLE IF NOT EXISTS frm_q (id INTEGER PRIMARY KEY AUTOINCREMENT, k TEXT NOT NULL, v TEXT NOT NULL, n INTEGER NOT NULL, w INTEGER NOT NULL DEFAULT 0, at INTEGER NOT NULL)",
   rep: "CREATE TABLE IF NOT EXISTS frm_rep (k TEXT NOT NULL, h TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (k, h))",
   // one row (id 1): how many forms and how many bytes (defs + waiting
@@ -100,16 +105,24 @@ export const FRM_SQL = {
 
   getTot: "SELECT c, b FROM frm_tot WHERE id = 1",
   addTot: "UPDATE frm_tot SET c = c + ?1, b = b + ?2 WHERE id = 1",
-  getForm: "SELECT sec, dlen, open, close, cap, taken, day, dn, wn, wb, rday, rn, rep, pid, wt, ct, woke FROM frm_form WHERE k = ?1",
-  getPublic: "SELECT def, open, close, cap, taken FROM frm_form WHERE k = ?1",
-  addForm: "INSERT OR IGNORE INTO frm_form (k, sec, def, dlen, open, close, cap, taken, at, pulled) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 0, ?8, ?8)",
-  setDef: "UPDATE frm_form SET def = ?2, dlen = ?3, open = ?4, close = ?5, cap = ?6, rep = CASE WHEN ?4 = 1 THEN 0 ELSE rep END, rn = CASE WHEN ?4 = 1 THEN 0 ELSE rn END WHERE k = ?1",
-  setState: "UPDATE frm_form SET open = ?2, close = ?3, cap = ?4, taken = ?5, rep = ?6, rn = ?7 WHERE k = ?1",
+  getForm: "SELECT sec, dlen, open, close, cap, taken, ms, day, dn, wn, wb, rday, rn, rep, pid, wt, ct, woke FROM frm_form WHERE k = ?1",
+  getPublic: "SELECT def, open, close, cap, taken, ms FROM frm_form WHERE k = ?1",
+  addForm: "INSERT OR IGNORE INTO frm_form (k, sec, def, dlen, open, close, cap, taken, at, pulled, ms) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 0, ?8, ?8, ?9)",
+  setDef: "UPDATE frm_form SET def = ?2, dlen = ?3, open = ?4, close = ?5, cap = ?6, ms = ?7, taken = MIN(taken, CASE WHEN ?6 > 0 THEN ?6 ELSE taken END), rep = CASE WHEN ?4 = 1 THEN 0 ELSE rep END, rn = CASE WHEN ?4 = 1 THEN 0 ELSE rn END WHERE k = ?1",
+  // taken: ?5 < 0 keeps the counter (so a seat taken meanwhile is not lost);
+  // either way it stays within 0..cap when there is a cap
+  setState: "UPDATE frm_form SET open = ?2, close = ?3, cap = ?4, " +
+            "taken = CASE WHEN ?4 > 0 THEN MIN(CASE WHEN ?5 >= 0 THEN ?5 ELSE taken END, ?4) ELSE CASE WHEN ?5 >= 0 THEN ?5 ELSE taken END END, " +
+            "rep = ?6, rn = ?7, ms = ?8 WHERE k = ?1",
+  // Seats are taken by one conditional UPDATE, so two answers racing
+  // for the last seat cannot both get it (changes() = 0 → waiting list).
+  take: "UPDATE frm_form SET taken = taken + ?2 WHERE k = ?1 AND cap > 0 AND taken + ?2 <= cap",
+  untake: "UPDATE frm_form SET taken = MAX(0, taken - ?2) WHERE k = ?1",
   setPush: "UPDATE frm_form SET pid = ?2, wt = ?3, ct = ?4 WHERE k = ?1",
   setWoke: "UPDATE frm_form SET woke = ?2 WHERE k = ?1",
   pulled: "UPDATE frm_form SET pulled = ?2 WHERE k = ?1",
   addRow: "INSERT INTO frm_q (k, v, n, w, at) VALUES (?1, ?2, ?3, ?4, ?5)",
-  bump: "UPDATE frm_form SET day = ?2, dn = ?3, wn = wn + 1, wb = wb + ?4, taken = taken + ?5 WHERE k = ?1",
+  bump: "UPDATE frm_form SET day = ?2, dn = ?3, wn = wn + 1, wb = wb + ?4 WHERE k = ?1",
   pull: "SELECT id, v, w, at FROM frm_q WHERE k = ?1 AND id > ?2 ORDER BY id LIMIT ?3",
   // the rows an ack removes: at most `waiting` of one form, by index
   acked: "SELECT COUNT(*) AS c, COALESCE(SUM(n), 0) AS b FROM frm_q WHERE k = ?1 AND id <= ?2",
@@ -143,7 +156,7 @@ function changes(r) { return (r && r.meta && r.meta.changes) || 0; }
 
 // Answers not picked up within ttlDays, forms past their time and old
 // report hashes leave, at most `rounds` batches each. The Worker's cron
-// (worker.js) and every "put" run it. Never throws; → rows + forms gone.
+// (worker.js) runs it. Never throws; → rows + forms gone.
 export async function purgeForms(env, now, rounds) {
   let gone = 0;
   try {
@@ -189,7 +202,7 @@ export async function purgeForms(env, now, rounds) {
 }
 
 // ---------- per-IP counters (per isolate, best effort) ----------
-const gets = new Map(), posts = new Map();
+const gets = new Map(), posts = new Map(), yeses = new Map();
 function getLimited(ip, now) {
   if (!ip) return false;
   let h = gets.get(ip);
@@ -209,6 +222,19 @@ function postLimited(ip, k, now) {
   return false;
 }
 
+// A seat form takes at most yesPerDay "yes" answers from one IP a day.
+function yesLimited(ip, k, now) {
+  if (!ip) return false;
+  const key = ip + "|" + k, day = Math.floor(now / DAY);
+  let h = yeses.get(key);
+  if (!h || h.day !== day) h = { day, n: 0 };
+  if (h.n + 1 > FRM_LIMITS.yesPerDay) return true;
+  h.n++;
+  if (yeses.size > 5000) yeses.clear();
+  yeses.set(key, h);
+  return false;
+}
+
 // ---------- the app's op ----------
 function int(v, lo, hi) { return Number.isSafeInteger(v) && v >= lo && v <= hi; }
 export function validFrm(b) {
@@ -220,6 +246,7 @@ export function validFrm(b) {
     if (b.open !== undefined && b.open !== 0 && b.open !== 1) return "open";
     if (b.close !== undefined && !int(b.close, 0, 9e15)) return "close";
     if (b.cap !== undefined && !int(b.cap, 0, FRM_LIMITS.capMax)) return "cap";
+    if (b.maxSeats !== undefined && !int(b.maxSeats, 1, FRM_LIMITS.seats)) return "maxSeats";
   }
   if (b.act === "upd") {
     if (b.taken !== undefined && !int(b.taken, 0, FRM_LIMITS.capMax * 2)) return "taken";
@@ -245,7 +272,6 @@ function isOpen(row, now) { return row.open === 1 && !(row.close > 0 && row.clos
 export async function runFrm(b, env, now) {
   const d = await db(env);
   if (b.act === "put") {
-    await purgeForms(env, now, 1);
     const len = b.def.length;
     const open = b.open === 0 ? 0 : 1, close = b.close || 0, cap = b.cap || 0;
     const row = await q(d, FRM_SQL.getForm, b.k).first();
@@ -254,12 +280,12 @@ export async function runFrm(b, env, now) {
     if (row) {
       if (!sameHex(row.sec, hash)) throw new FrmError("gone", 404);
       if (tot && tot.b + len - row.dlen > FRM_LIMITS.store && len > row.dlen) throw new FrmError("full", 507);
-      await d.batch([q(d, FRM_SQL.setDef, b.k, b.def, len, open, close, cap), q(d, FRM_SQL.addTot, 0, len - row.dlen)]);
+      await d.batch([q(d, FRM_SQL.setDef, b.k, b.def, len, open, close, cap, b.maxSeats || row.ms || FRM_LIMITS.seatsDefault), q(d, FRM_SQL.addTot, 0, len - row.dlen)]);
       return { ok: true };
     }
     if (tot && tot.c >= FRM_LIMITS.forms) throw new FrmError("full", 507);
     if (tot && tot.b + len > FRM_LIMITS.store) throw new FrmError("full", 507);
-    const r = await q(d, FRM_SQL.addForm, b.k, hash, b.def, len, open, close, cap, now).run();
+    const r = await q(d, FRM_SQL.addForm, b.k, hash, b.def, len, open, close, cap, now, b.maxSeats || FRM_LIMITS.seatsDefault).run();
     if (!changes(r)) throw new FrmError("gone", 404);        // made a moment ago with another secret
     await q(d, FRM_SQL.addTot, 1, len).run();
     return { ok: true };
@@ -269,8 +295,8 @@ export async function runFrm(b, env, now) {
     const open = b.open === undefined ? row.open : b.open;
     const reopened = b.open === 1;
     await q(d, FRM_SQL.setState, b.k, open, b.close === undefined ? row.close : b.close,
-            b.cap === undefined ? row.cap : b.cap, b.taken === undefined ? row.taken : b.taken,
-            reopened ? 0 : row.rep, reopened ? 0 : row.rn).run();
+            b.cap === undefined ? row.cap : b.cap, b.taken === undefined ? -1 : b.taken,
+            reopened ? 0 : row.rep, reopened ? 0 : row.rn, b.maxSeats || row.ms || FRM_LIMITS.seatsDefault).run();
     if (b.push !== undefined) {
       const p = b.push;
       await q(d, FRM_SQL.setPush, b.k, p ? p.pid : null, p ? p.wt : null, p ? p.ct : null).run();
@@ -367,7 +393,7 @@ export async function handleForms(request, env, url, origin, ip, now) {
       const row = await q(d, FRM_SQL.getPublic, k).first();
       if (!row) return out(404, { e: "gone" }, okOrigin);
       const o = { def: row.def, open: isOpen(row, now) ? 1 : 0 };
-      if (row.cap > 0) { o.cap = row.cap; o.taken = row.taken; }
+      if (row.cap > 0) { o.cap = row.cap; o.taken = row.taken; o.maxSeats = row.ms; }
       return out(200, o, okOrigin);
     }
     if (request.method !== "POST") {
@@ -389,8 +415,9 @@ export async function handleForms(request, env, url, origin, ip, now) {
     if (b.hp) return out(200, { ok: true }, okOrigin);
     if (typeof b.v !== "string" || !V_RE.test(b.v)) return out(400, { e: "bad" }, okOrigin);
     if (b.yes !== undefined && b.yes !== 0 && b.yes !== 1) return out(400, { e: "bad" }, okOrigin);
-    if (b.seats !== undefined && !int(b.seats, 1, FRM_LIMITS.seats)) return out(400, { e: "bad" }, okOrigin);
+    if (b.seats !== undefined && !int(b.seats, 1, row.ms || FRM_LIMITS.seatsDefault)) return out(400, { e: "bad" }, okOrigin);
     if (postLimited(ip, k, now)) return out(429, { e: "busy" }, okOrigin);
+    if (row.cap > 0 && b.yes === 1 && yesLimited(ip, k, now)) return out(429, { e: "busy" }, okOrigin);
     const today = Math.floor(now / DAY);
     const used = row.day === today ? (row.dn | 0) : 0;
     const len = b.v.length;
@@ -399,14 +426,21 @@ export async function handleForms(request, env, url, origin, ip, now) {
     }
     const tot = await q(d, FRM_SQL.getTot).first();
     if (tot && tot.b + len > FRM_LIMITS.store) return out(507, { e: "full" }, okOrigin);
-    // Seats (Calendar RSVP): a "yes" over the cap is kept on the waiting list.
+    // Seats (Calendar RSVP): a "yes" takes its seats with one conditional
+    // UPDATE (atomic, so two answers cannot both get the last seat);
+    // when they do not fit it is kept on the waiting list.
     let take = 0, wait = 0;
     if (row.cap > 0 && b.yes === 1) {
       const seats = b.seats || 1;
-      if (row.taken + seats > row.cap) wait = 1; else take = seats;
+      if (changes(await q(d, FRM_SQL.take, k, seats).run())) take = seats; else wait = 1;
     }
-    await d.batch([q(d, FRM_SQL.addRow, k, b.v, len, wait, now), q(d, FRM_SQL.bump, k, today, used + 1, len, take),
-                   q(d, FRM_SQL.addTot, 0, len)]);
+    try {
+      await d.batch([q(d, FRM_SQL.addRow, k, b.v, len, wait, now), q(d, FRM_SQL.bump, k, today, used + 1, len),
+                     q(d, FRM_SQL.addTot, 0, len)]);
+    } catch (e) {
+      if (take) { try { await q(d, FRM_SQL.untake, k, take).run(); } catch (e2) { /* the owner can correct taken */ } }
+      throw e;
+    }
     await wake(d, env, k, row, now);
     return out(200, wait ? { ok: true, wait: true } : { ok: true }, okOrigin);
   } catch (e) {

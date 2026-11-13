@@ -506,8 +506,8 @@ op 503 `nostore`; a D1 failure is a 503 too, never its text.
 
 | Route | What it does |
 |---|---|
-| `GET /fm/<k>` | `{ def, open, cap?, taken? }` (60 a minute per IP) |
-| `POST /fm/<k>` | `text/plain` JSON ≤20 KB: `{ v, hp?, yes?, seats? }`. `{ ok }`, `{ ok, wait }` (a "yes" over `cap` goes on the waiting list), `{ e: "closed" }`, `{ e: "busy" }`. Honeypot `hp`: the usual answer, nothing kept. 5 a minute and 20 a day per IP and form; 500 a day, 1,000 or 5 MB waiting per form; 150 MB in all (507 `full`) |
+| `GET /fm/<k>` | `{ def, open, cap?, taken?, maxSeats? }` (60 a minute per IP) |
+| `POST /fm/<k>` | `text/plain` JSON ≤20 KB: `{ v, hp?, yes?, seats? }`. `{ ok }`, `{ ok, wait }` (a "yes" takes 1..`maxSeats` seats with one conditional UPDATE, so racing answers cannot pass `cap`; one that does not fit goes on the waiting list; 3 "yes" a day per IP on a seat form), `{ e: "closed" }`, `{ e: "busy" }`. Honeypot `hp`: the usual answer, nothing kept. 5 a minute and 20 a day per IP and form; 500 a day, 1,000 or 5 MB waiting per form; 150 MB in all (507 `full`) |
 | `POST /fm/<k>/report` | `{ ok }`. One report per IP, form and UTC day (stored as a hash only); the third in a day closes the form (`rep`) until the owner opens it again |
 
 CORS only for `https://useoros.online` (`FORMS_ORIGINS` overrides it);
@@ -521,14 +521,14 @@ App operation `POST /v1 { op: "frm", act, k, sec }`:
 
 | act | Extra fields | Returns |
 |---|---|---|
-| `put` | `def` (≤64 KB), `open?`, `close?` (ms), `cap?` | `{ ok }`: a new `k` takes this `sec` (at most 5,000 forms); an existing one needs the same `sec` and replaces `def` |
-| `upd` | `open?`, `close?`, `cap?`, `taken?`, `push?` ({pid, wt, ct} or null) | `{ ok }`; opening clears the report count |
+| `put` | `def` (≤64 KB), `open?`, `close?` (ms), `cap?`, `maxSeats?` (1..21, default 4) | `{ ok }`: a new `k` takes this `sec` (at most 5,000 forms); an existing one needs the same `sec` and replaces `def` |
+| `upd` | `open?`, `close?`, `cap?`, `maxSeats?`, `taken?`, `push?` ({pid, wt, ct} or null) | `{ ok }`; opening clears the report count; `taken` is kept within 0..`cap` |
 | `peek` | | `{ n, open, rep }` |
 | `pull` | `after` (row id) | `{ rows[{ id, v, at, w? }], more, open, rep, taken }` (≤100) |
 | `ack` | `upto` (row id) | `{ n }`: deletes the rows up to that id |
 | `drop` | | `{ ok }`: deletes the form and its rows |
 
-The cron (and every `put`) removes answers older than 30 days, forms
+The cron removes answers older than 30 days, forms
 closed for 30 days and forms no device pulled for 90 days. Payloads are
 never logged. Tests: `tests/forms-relay.test.js`.
 

@@ -332,6 +332,60 @@ test("seats (Calendar RSVP): yes answers take seats up to the cap, the rest wait
   assert.deepEqual(p.rows.map((r) => r.w || 0), [0, 0, 1, 0]);
   await op(env, { act: "upd", k: k.k, sec: k.sec, taken: 3 });
   assert.equal((await fm(env, "/fm/" + k.k, { method: "GET" })).body.taken, 3);
+  // taken stays within 0..cap; an upd without taken keeps the counter
+  await op(env, { act: "upd", k: k.k, sec: k.sec, taken: 99 });
+  assert.equal((await fm(env, "/fm/" + k.k, { method: "GET" })).body.taken, 5);
+  await op(env, { act: "upd", k: k.k, sec: k.sec, taken: 2 });
+  await op(env, { act: "upd", k: k.k, sec: k.sec, open: 1 });
+  assert.equal((await fm(env, "/fm/" + k.k, { method: "GET" })).body.taken, 2);
+  await op(env, { act: "upd", k: k.k, sec: k.sec, cap: 1 });
+  assert.equal((await fm(env, "/fm/" + k.k, { method: "GET" })).body.taken, 1);
+});
+
+test("seats: two answers racing for the last seat; maxSeats; 3 yes a day per IP", async () => {
+  const { D, env, k } = await setup();
+  await op(env, { act: "upd", k: k.k, sec: k.sec, cap: 3, maxSeats: 2 });
+  const g = (await fm(env, "/fm/" + k.k, { method: "GET" })).body;
+  assert.equal(g.maxSeats, 2);
+  // more seats than the owner allows
+  assert.equal((await fm(env, "/fm/" + k.k, post(await answer(k, { a: {} }, { yes: 1, seats: 3 })))).status, 400);
+  assert.deepEqual((await fm(env, "/fm/" + k.k, post(await answer(k, { a: {} }, { yes: 1, seats: 2 })))).body, { ok: true });
+  // one seat left: two answers at the same moment, only one gets it.
+  // Both requests read the form row before either writes (a barrier on
+  // the row read), the worst order a read-then-write check could meet.
+  const v1 = await answer(k, { a: {} }, { yes: 1 }), v2 = await answer(k, { a: {} }, { yes: 1 });
+  const prep = env.NL_DB.prepare;
+  let waiting = [], reads = 0;
+  env.NL_DB.prepare = (sql) => {
+    const st = prep(sql);
+    if (!/^SELECT sec, dlen/.test(sql)) return st;
+    const bind = st.bind;
+    st.bind = (...a) => {
+      const b = bind(...a), first = b.first;
+      b.first = async () => {
+        const row = await first();
+        if (++reads <= 2) await new Promise((res) => { waiting.push(res); if (waiting.length === 2) waiting.forEach((f) => f()); });
+        return row;
+      };
+      return b;
+    };
+    return st;
+  };
+  const [a1, a2] = await Promise.all([fm(env, "/fm/" + k.k, post(v1)), fm(env, "/fm/" + k.k, post(v2))]);
+  env.NL_DB.prepare = prep;
+  assert.equal(reads, 2);
+  assert.deepEqual([a1.body.wait || false, a2.body.wait || false].sort(), [false, true]);
+  assert.equal(D.db.prepare("SELECT taken FROM frm_form").get().taken, 3);
+  const p = (await op(env, { act: "pull", k: k.k, sec: k.sec, after: 0 })).body.data;
+  assert.equal(p.taken, 3);
+  assert.deepEqual(p.rows.map((r) => r.w || 0).sort(), [0, 0, 1]);
+  // one IP: three "yes" a day on a seat form, then busy; "no" answers still go in
+  const ip = "10.3.0.1";
+  for (let i = 0; i < 3; i++) assert.equal((await fm(env, "/fm/" + k.k, post(await answer(k, { a: {} }, { yes: 1 })), T0, ip)).status, 200);
+  assert.equal((await fm(env, "/fm/" + k.k, post(await answer(k, { a: {} }, { yes: 1 })), T0, ip)).status, 429);
+  assert.equal((await fm(env, "/fm/" + k.k, post(await answer(k, { a: {} }, { yes: 0 })), T0, ip)).status, 200);
+  // bad maxSeats
+  for (const m of [0, 22, 1.5]) assert.equal((await op(env, { act: "upd", k: k.k, sec: k.sec, maxSeats: m })).status, 400);
 });
 
 test("pull pages by 100; storage failures are fixed codes, never the D1 text", async () => {
