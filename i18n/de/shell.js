@@ -1173,5 +1173,7 @@ orosPack("de", "shell", {
  "wg.start.count": "{n} von {m} erledigt",
  "wg.start.hide": "Ausblenden",
  "wg.start.done": "erledigt",
- "wg.start.all": "Alles erledigt. orOS gehört dir!"
+ "wg.start.all": "Alles erledigt. orOS gehört dir!",
+ "cr.bergamot": "Übersetzung auf dem Gerät, wird bei Bedarf heruntergeladen (Textwerkzeuge)",
+ "cr.firefox-translations": "Übersetzungsmodelle Griechisch ↔ Englisch, werden bei Bedarf heruntergeladen (Textwerkzeuge)"
 });

@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.37.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.38.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -7917,6 +7917,12 @@
         { name: "Whisper tiny (ONNX export by Xenova)", url: "https://huggingface.co/Xenova/whisper-tiny",
           by: "OpenAI; ONNX export by Joshua Lochner", lic: "MIT; Apache-2.0 (export)",
           k: "cr.whisper-tiny" },
+        { name: "Bergamot translator 0.4.9", url: "https://github.com/browsermt/bergamot-translator",
+          by: "The Bergamot project (Edinburgh, Prague, Sheffield, Tartu, Mozilla); Marian NMT", lic: "MPL-2.0",
+          k: "cr.bergamot" },
+        { name: "Firefox Translations models", url: "https://github.com/mozilla/translations",
+          by: "Mozilla", lic: "MPL-2.0",
+          k: "cr.firefox-translations" },
         { name: "NULL JSFX", url: "https://nulljsfx.tech",
           by: "Christos Koulaxizis", lic: "MIT",
           k: "cr.null-jsfx" },
