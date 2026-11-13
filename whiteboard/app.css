@@ -279,6 +279,39 @@ dialog input[type="number"] {
 .pop-txt:hover, .pop .icon-btn:hover { background: var(--accent-soft); }
 
 /* ---- dialogs ---- */
+/* diagram shapes (DG1) */
+dialog.wb-dlg.wb-lib { width: min(680px, calc(100vw - 32px)); display: flex; flex-direction: column; }
+dialog.wb-dlg.wb-lib[open] { display: flex; }
+.lib-q {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+.lib-box { flex: 1 1 auto; min-height: 0; max-height: 58vh; overflow-y: auto; margin-top: 10px; }
+.lib-gh { font-size: 14px; font-weight: 700; margin: 12px 0 6px; color: var(--text-dim); }
+.lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 6px; }
+.lib-tile {
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+.lib-tile:hover, .lib-tile:focus-visible { border-color: var(--accent); background: var(--accent-soft); }
+.lib-tile svg { width: 64px; height: 48px; padding: 3px; border-radius: 6px; background: #fbfaf7; }
+.lib-name { font-size: 12px; line-height: 1.2; text-align: center; overflow-wrap: anywhere; hyphens: auto; }
+.lib-tile[hidden], .lib-g[hidden] { display: none; }
 dialog.wb-dlg {
   width: min(440px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);

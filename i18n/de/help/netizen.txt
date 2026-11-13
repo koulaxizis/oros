@@ -37,6 +37,31 @@ Bewahre bis zu 20 Karten auf, zum Beispiel eine für die Arbeit und eine fürs G
 
 >! Der Freigabelink enthält alles, was auf der Karte zu sehen ist, also kann jeder, der ihn hat, es lesen. Verborgene Felder bleiben draußen, und nichts wird an einen Server gesendet.
 
+## Link-in-Bio-Seite
+Jede Karte kann auch eine Seite mit all deinen Links sein, für den Link in deinem Social-Media-Profil. Tippe in der Werkzeugleiste auf `Seite`, um zwischen der Karte und ihrer Seite zu wechseln; auf dem Handy wechseln `Bearbeiten` und `Vorschau` zwischen den Einstellungen und der Seite. Tippe erneut auf `Seite`, um zur Karte zurückzukehren.
+
+Die Seite entsteht aus der Karte: Avatar, Name, Benutzername, Pronomen, Ort, Motto, Bio, Tags, die Links der Karte und deine Website. Unter `Auf der Seite` entfernst du das Häkchen bei allem, was die Seite weglassen soll. Was auf der Karte verborgen ist, bleibt auch von der Seite fern. E-Mail und Telefon sind anfangs abgewählt, denn die Seite ist öffentlich.
+
+### Links und Überschriften der Seite
+`Link hinzufügen` fügt einen Link nur für die Seite hinzu, nach den Links der Karte, mit einem Symbol nach Wahl (ein Emoji oder ein Buchstabe). Der Stern hebt einen Link hervor: größer und immer gefüllt. `Überschrift hinzufügen` setzt eine Überschrift zwischen die Links, zum Beispiel „Bücher“ oder „Musik“. Verschiebe sie nach oben oder unten oder entferne sie.
+
+Auf die Seite kommen nur Webadressen, E-Mail- (`mailto:`) und Telefonlinks (`tel:`). Einer Adresse ohne `https://` wird es vorangestellt; alles andere bleibt weg.
+
+### Aussehen
+Wähle einen von acht Stilen: die fünf Kartenstile sowie `Dunkel`, `Verlauf` und `Minimal`. `Tastenfarbe` ändert die Farbe der Tasten, `Stilfarbe` holt die Farbe des Stils zurück. Tasten können `Abgerundet`, `Eckig` oder `Umriss` sein. Die Schrift auf einer Taste ist immer schwarz oder weiß, je nachdem, was besser lesbar ist.
+
+### Deine Seite veröffentlichen
+`Exportieren` › `Seite · HTML (index.html)` speichert die Seite als eine einzige Datei. Sie enthält keinen Code und keine Tracker und lädt nichts von anderswo, daher läuft sie bei jedem Hoster und zählt nie Besucher. Lade sie bei einem kostenlosen Hoster hoch, zum Beispiel:
+- [Neocities](https://neocities.org): registriere dich, öffne `Edit site` und lade `index.html` anstelle der vorhandenen Datei hoch. Deine Seite liegt unter `https://your-name.neocities.org`.
+- [GitHub Pages](https://pages.github.com) oder [Codeberg Pages](https://codeberg.page): lege `index.html` in ein Repository und schalte Pages ein.
+- Deine eigene Website: lade `index.html` in einen Ordner hoch, zum Beispiel `/links/`.
+
+Trage dann die Adresse unter `Veröffentlichen` › `Seitenadresse` ein. Der QR-Code und Suchmaschinen verwenden sie. `Seitentitel` ersetzt den Titel im Browser-Tab und in Linkvorschauen. `Taste „Kontakt speichern“` fügt eine Taste hinzu, die dich als Kontakt speichert, nur mit dem, was die Seite zeigt. Exportiere nach jeder Änderung erneut und lade die neue Datei hoch.
+
+`Freigabelink` gibt einen Link, der die Seite selbst enthält, ohne Server und ohne Ablauf. Er ist lang und ändert sich, wenn du die Seite änderst. `Exportieren` bietet auch den QR-Code der Seite als `QR-Code · PNG` oder `QR-Code · SVG`: Er öffnet die Seitenadresse oder, solange es keine gibt, den geteilten Link.
+
+>! Die Seite ist öffentlich: Wer ihre Adresse oder ihren Link hat, sieht alles, was sie zeigt. Der Stil `orOS` übernimmt beim Export die Farben deines orOS.
+
 ## Synchronisierung und Sicherung
 Deine Karten werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Die offene Karte, der Tab auf dem Handy und die gezeigte Seite bleiben auf jedem Gerät. Die Exporte oben sind deine Kopien außerhalb von orOS; einen Import gibt es nicht, aber die orOS-[Sicherung](help:t/backup) enthält deine Karten.
 
@@ -46,5 +71,5 @@ Deine Karten werden über die [orOS-Synchronisierung](help:t/sync) zwischen dein
 - Probier `Neues Gesicht` ein paar Mal, bis dir eins gefällt, und feil es dann Pixel für Pixel aus.
 
 ## Grenzen
-- Bis zu 20 Karten, 8 Links und 12 Tags pro Karte. Der Text über dich hat bis zu 280 Zeichen und das Motto bis zu 100.
+- Bis zu 20 Karten, 8 Links und 12 Tags pro Karte. Eine Seite fügt bis zu 16 Links und 8 Überschriften hinzu. Der Text über dich hat bis zu 280 Zeichen und das Motto bis zu 100.
 - `Kartenbild kopieren` geht nicht in jedem Browser.

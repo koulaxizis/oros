@@ -339,3 +339,18 @@ test("isLate: a call read after the box's deadline (its clock) is not started (6
   assert.equal(G.isLate(undefined, 5000, 9e12), false, "an older relay sends no deadline");
   assert.equal(G.isLate(100000, null, 9e12), false, "no clock from the box yet");
 });
+
+test("publish_titles: a music release with its tracks and editions (wave M1)", () => {
+  const raw = { ver: 1, tombs: { k9: 9 }, titles: [{ id: "t1", m: 1, t: "Night Songs", st: "prod", mt: { k: "album", lbl: "Own" }, ppl: [{ r: "a", n: "Ann" }], fmts: [] }],
+    trk: [{ id: "k2", m: 1, ti: "t1", no: 2, disc: 1, t: "Dawn", isrc: "", dur: 250 }, { id: "k1", m: 1, ti: "t1", no: 1, disc: 1, t: "Intro", isrc: "GRA1B2600001", dur: 65, ex: 1 },
+          { id: "k9", m: 1, ti: "t1", no: 3, disc: 1, t: "Gone" }],
+    med: [{ id: "m1", m: 1, ti: "t1", k: "cd", upc: "5201234000001", cat: "OL-1", price: 12 }] };
+  const t = G.publishTitles(raw, {}).data.titles[0];
+  assert.equal(t.type, "album");
+  assert.equal(t.label, "Own");
+  assert.deepEqual(t.tracks, [{ no: 1, title: "Intro", isrc: "GR-A1B-26-00001", length: "1:05", explicit: true }, { no: 2, title: "Dawn", length: "4:10" }]);
+  assert.deepEqual(t.editions, [{ edition: "cd", upc: "5201234000001", catalogue_no: "OL-1", price: "12.00" }]);
+  assert.deepEqual(G.publishTitles(raw, { query: "GR-A1B-26" }).data.titles.map((x) => x.id), ["t1"]);
+  assert.deepEqual(G.publishTitles(raw, { query: "dawn" }).data.titles.map((x) => x.id), ["t1"]);
+  assert.deepEqual(G.publishTitles(raw, { query: "gone" }).data.titles.map((x) => x.id), []);
+});

@@ -19,7 +19,7 @@
   })();
 
   var APP_ID = "transfer";
-  var C = window.OrosTransferCore, E = window.OrosTransferEngine, S = window.OrosTransferStore;
+  var C = window.OrosTransferCore, E = window.OrosTransferEngine, S = window.OrosTransferStore, X = window.OrosTransferCloud;
   var PAGE = document.body.getAttribute("data-page") === "receive" ? "receive" : "app";
   var SHOW_MAX = 200;                       // files listed in the offer
 
@@ -47,6 +47,18 @@
       "send.sum": "{n} files · {s}", "send.sum1": "1 file · {s}",
       "send.counting": "Counting…",
       "btn.makeLink": "Create link",
+      "btn.makeCloud": "Send through my Dropbox", "btn.cloudDel": "Delete now",
+      "cloud.check": "Checking that a Dropbox link opens in a browser…",
+      "cloud.up": "Encrypting and uploading to your Dropbox…",
+      "cloud.ready": "Ready until {t}. You can close this page: the files wait in your Dropbox, encrypted.",
+      "cloud.keep": "Anyone with this link can download the files until {t}; after that they are deleted. Send it only to the person they are for.",
+      "cloud.deleted": "Deleted from your Dropbox. The link no longer works.",
+      "offer.cloud": "Through the sender's Dropbox, end-to-end encrypted. The link works until {t}.",
+      "err.expired": "This link has expired or the files were deleted (links through Dropbox last 4 hours). Ask for a new one.",
+      "err.cloudcheck": "Dropbox did not let this browser download its test file, so sending through Dropbox does not work here. Nothing was uploaded. Use Create link instead.",
+      "err.full": "Not enough free space in your Dropbox: {s} needed.",
+      "err.dropbox": "Dropbox did not take the upload. Check the sync connection in Settings › Sync, then try again.",
+      "hist.cloud": "through Dropbox",
       "btn.remove": "Remove",
       "share.code": "Code",
       "share.keep": "Keep this page open until the transfer is done. The link works once, for one person.",
@@ -123,6 +135,18 @@
       "send.sum": "{n} αρχεία · {s}", "send.sum1": "1 αρχείο · {s}",
       "send.counting": "Μέτρηση…",
       "btn.makeLink": "Δημιουργία συνδέσμου",
+      "btn.makeCloud": "Αποστολή μέσω του Dropbox μου", "btn.cloudDel": "Διαγραφή τώρα",
+      "cloud.check": "Ελέγχω ότι ένας σύνδεσμος Dropbox ανοίγει σε browser…",
+      "cloud.up": "Κρυπτογράφηση και ανέβασμα στο Dropbox σου…",
+      "cloud.ready": "Έτοιμο έως τις {t}. Μπορείς να κλείσεις τη σελίδα: τα αρχεία περιμένουν στο Dropbox σου, κρυπτογραφημένα.",
+      "cloud.keep": "Όποιος έχει αυτόν τον σύνδεσμο μπορεί να κατεβάσει τα αρχεία έως τις {t}· μετά σβήνονται. Στείλ' τον μόνο σε όποιον είναι για αυτόν.",
+      "cloud.deleted": "Σβήστηκαν από το Dropbox σου. Ο σύνδεσμος δεν ισχύει πια.",
+      "offer.cloud": "Μέσω του Dropbox του αποστολέα, κρυπτογραφημένα από άκρο σε άκρο. Ο σύνδεσμος ισχύει έως τις {t}.",
+      "err.expired": "Ο σύνδεσμος έληξε ή τα αρχεία σβήστηκαν (οι σύνδεσμοι μέσω Dropbox ισχύουν 4 ώρες). Ζήτα νέο.",
+      "err.cloudcheck": "Το Dropbox δεν άφησε αυτόν τον browser να κατεβάσει το δοκιμαστικό του αρχείο, οπότε η αποστολή μέσω Dropbox δεν δουλεύει εδώ. Δεν ανέβηκε τίποτα. Χρησιμοποίησε τη Δημιουργία συνδέσμου.",
+      "err.full": "Δεν φτάνει ο ελεύθερος χώρος στο Dropbox σου: χρειάζονται {s}.",
+      "err.dropbox": "Το Dropbox δεν δέχτηκε το ανέβασμα. Έλεγξε τη σύνδεση στις Ρυθμίσεις › Συγχρονισμός και δοκίμασε ξανά.",
+      "hist.cloud": "μέσω Dropbox",
       "btn.remove": "Αφαίρεση",
       "share.code": "Κωδικός",
       "share.keep": "Κράτα αυτή τη σελίδα ανοιχτή μέχρι να τελειώσει η μεταφορά. Ο σύνδεσμος ισχύει μία φορά, για ένα άτομο.",
@@ -383,6 +407,8 @@
     });
     show("chosen-empty", !chosen.length);
     $("make-link").disabled = !chosen.length;
+    var mc = $("make-cloud");
+    if (mc) { mc.hidden = !cloudApi() || !X; mc.disabled = true; }
     var seq = ++expandSeq;
     expanded = null;
     $("chosen-sum").textContent = chosen.length ? t("send.counting") : "";
@@ -393,6 +419,7 @@
       var total = all.reduce(function (a, f) { return a + f.size; }, 0);
       $("chosen-sum").textContent = t(all.length === 1 ? "send.sum1" : "send.sum", { n: all.length, s: size(total) });
       $("make-link").disabled = !all.length;
+      if ($("make-cloud")) $("make-cloud").disabled = !all.length;
     });
   }
   function addLocal() {
@@ -443,6 +470,7 @@
     if (svg) qr.appendChild(svg);
     show("pick", false); show("share", true);
     show("send-again", false); show("send-cancel", true); show("send-prog", false);
+    cloudShare(false);
     $("send-detail").textContent = "";
     var blobs = {};
     function blobOf(i) {
@@ -494,7 +522,100 @@
     }).start();
     function end() { show("send-cancel", false); show("send-again", true); sender = null; }
   }
-  function cancelSend() { if (sender) sender.cancel(); }
+  function cancelSend() { if (sender) sender.cancel(); if (cloudSend) cloudSend.stop = true; }
+
+  // ---------- 6b. Send through my Dropbox (TRANSFER-1 wave 4) ----------
+  function cloudApi() {
+    try { var p = shell(), d = p && p.orosSync && p.orosSync.cloudDrop; return d && typeof d.available === "function" && d.available() ? d : null; }
+    catch (e) { return null; }
+  }
+  var CLOUD_OK = "oros-transfer-cloud-ok";
+  function cloudShare(on) {
+    show("share-code-lab", !on); show("share-code", !on); show("cloud-del", false);
+    $("share-keep").textContent = t("share.keep");
+    if (on) { $("share-link").value = ""; $("share-qr").textContent = ""; $("share-code").textContent = ""; }
+  }
+  function hhmm(ms) {
+    try { return new Date(ms).toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB", { hour: "2-digit", minute: "2-digit" }); }
+    catch (e) { return new Date(ms).toISOString().slice(11, 16); }
+  }
+  var cloudSend = null;                   // { stop, id, drop } while one runs or waits
+  function startCloud() {
+    var drop = cloudApi();
+    if (!drop || !X || !expanded || !expanded.length || sender || cloudSend) return;
+    var fs = FS(), list = expanded.slice(), manifest = C.buildManifest(list), src = [];
+    list.forEach(function (f) { if (C.cleanPath(f.path)) src.push(f); });
+    var code = C.newCode(), st = $("send-status"), job = { stop: false, id: "", drop: drop };
+    cloudSend = job;
+    show("pick", false); show("share", true);
+    show("send-again", false); show("send-cancel", true); show("send-prog", true);
+    cloudShare(true);
+    $("share-keep").textContent = "";
+    $("send-detail").textContent = "";
+    st.className = "status";
+    busy = true; stayAwake(true);
+    var blobs = {};
+    function read(i, a, b) {
+      var f = src[i];
+      var p = blobs[i] ? Promise.resolve(blobs[i]) : (f.file ? Promise.resolve(f.file) : fs.read(f.src)).then(function (bl) { blobs = {}; blobs[i] = bl; return bl; });
+      return p.then(function (bl) { return bl.slice(a, b).arrayBuffer(); }).then(function (buf) { return new Uint8Array(buf); });
+    }
+    var need = manifest.reduce(function (n, f) { return n + X.packLen(f.s); }, 0);
+    var checked = false;
+    try { checked = localStorage.getItem(CLOUD_OK) === "1"; } catch (e) {}
+    st.textContent = t(checked ? "cloud.up" : "cloud.check");
+    (checked ? Promise.resolve(true) : X.probe(drop, window.fetch.bind(window))).then(function (ok) {
+      if (!ok) { var e = new Error("cloudcheck"); e.code = "cloudcheck"; throw e; }
+      try { localStorage.setItem(CLOUD_OK, "1"); } catch (e2) {}
+      st.textContent = t("cloud.up");
+      return drop.space();
+    }).then(function (sp) {
+      if (sp && sp.allocated - sp.used < need) { var e = new Error("full"); e.code = "full"; throw e; }
+      return X.send({
+        code: code, files: manifest, read: read, drop: drop, temp: S.temp,
+        cancelled: function () { return job.stop; },
+        onProgress: function (pr) {
+          setProg("send-prog", pr.bytes, pr.total);
+          $("send-detail").textContent = t("prog", { a: size(pr.bytes), b: size(pr.total) });
+        }
+      });
+    }).then(function (r) {
+      job.id = r.id;
+      var url = C.linkFor(code, location.origin).split("#")[0] + "#" + r.frag;
+      $("share-link").value = url;
+      var qr = $("share-qr"), svg = qrSvg(url);
+      qr.textContent = "";
+      if (svg) qr.appendChild(svg);
+      st.textContent = t("cloud.ready", { t: hhmm(r.exp) });
+      st.className = "status ok";
+      $("share-keep").textContent = t("cloud.keep", { t: hhmm(r.exp) });
+      show("send-cancel", false); show("cloud-del", true); show("send-again", true);
+      busy = false; stayAwake(false);
+      record({ dir: "sent", files: manifest, dev: "", mode: "cloud", end: "done" });
+      cloudSend = null;
+      setTimeout(function () { if (job.id && !job.gone) drop.remove(job.id).catch(function () {}); }, Math.max(0, r.exp - Date.now() + 10 * 60000));
+      $("cloud-del").onclick = function () {
+        drop.remove(job.id).then(function () {
+          job.gone = true;
+          st.textContent = t("cloud.deleted"); st.className = "status";
+          $("share-link").value = ""; $("share-qr").textContent = ""; $("share-keep").textContent = "";
+          show("cloud-del", false);
+        }, function () { toast(t("err.dropbox")); });
+      };
+    }).catch(function (e) {
+      busy = false; stayAwake(false);
+      cloudSend = null;
+      var c = e && e.code;
+      st.textContent = c === "full" ? t("err.full", { s: size(need) }) : c === "cancelled" ? t("err.cancelled") : c === "cloudcheck" ? t("err.cloudcheck") : c === "io" ? t("err.io") : t("err.dropbox");
+      st.className = "status warn";
+      show("send-cancel", false); show("send-again", true); show("send-prog", false);
+    });
+  }
+  // Leftovers in the person's Dropbox older than 4 hours (the app page only).
+  function cloudSweep() {
+    var drop = cloudApi();
+    if (drop && X) X.sweep(drop);
+  }
   function sendAgain() {
     chosen = []; expanded = null;
     show("share", false); show("pick", true);
@@ -510,14 +631,16 @@
     $("recv-detail").textContent = "";
     result = null;
   }
-  function startRecv(code) {
+  function startRecv(code, link) {
     if (receiver) return;
     resetRecv();
     show("code-form", false); show("recv-box", true);
     var dev = "";
     recvHow = "direct"; recvDest = ""; recvDev = "";
-    receiver = new E.Transfer({
-      role: "receiver", code: code, dev: devName(),
+    var Engine = link && X ? X.Receiver : E.Transfer;
+    if (link) dev = recvDev = "Dropbox";
+    receiver = new Engine({
+      role: "receiver", code: code, dev: devName(), link: link,
       onState: function (p, info) {
         if (info.dev) dev = recvDev = info.dev;
         if (p === "connecting") recvStatus(t("st.connecting"));
@@ -527,6 +650,7 @@
         else if (p === "receiving") {
           if (receiver) recvHow = receiver.mode() || recvHow;
           recvStatus(t(recvHow === "relay" ? "st.receivingRelay" : "st.receiving")); busy = true; stayAwake(true);
+          if (recvHow === "cloud") show("recv-cancel", true);
         }
         else if (p === "reconnecting") recvStatus(t("st.reconnecting"));
         else if (p === "done") finishRecv(info);
@@ -552,7 +676,8 @@
     show("offer", true);
     show("recv-cancel", false);           // Decline is the way out here
     $("offer-sum").textContent = t(o.files.length === 1 ? "offer.sum1" : "offer.sum", { n: o.files.length, s: size(o.total), dev: dev || "?" });
-    show("offer-relay", o.mode === "relay");
+    show("offer-relay", o.mode === "relay" || o.mode === "cloud");
+    $("offer-relay").textContent = o.mode === "cloud" ? t("offer.cloud", { t: hhmm(o.exp) }) : t("offer.relay");
     var list = $("offer-list");
     list.textContent = "";
     o.files.slice(0, SHOW_MAX).forEach(function (f) {
@@ -716,6 +841,7 @@
       var parts = [when(x.at), t(x.dir === "recv" ? "hist.recv" : "hist.sent", { dev: x.dev || t("hist.someone") }),
         x.n === 1 ? t("hist.one", { s: size(x.bytes) }) : t("hist.sum", { n: x.n, s: size(x.bytes) })];
       if (x.mode === "relay") parts.push(t("hist.relay"));
+      else if (x.mode === "cloud") parts.push(t("hist.cloud"));
       if (x.dir === "recv" && x.dest) parts.push(t(x.dest === "disk" ? "hist.disk" : "hist.device"));
       body.appendChild(el("span", "meta", parts.join(" · ")));
       if (x.end === "stopped") body.appendChild(el("span", "meta warn", t("hist.stopped")));
@@ -761,8 +887,16 @@
     });
   }
   function codeFromHash(h) {
+    if (/^#d=/.test(String(h || ""))) return "";
     var m = /^#(?:r=)?(.+)$/.exec(String(h || ""));
     return m ? C.normCode(decodeURIComponent(m[1])) : "";
+  }
+  // "#d=CODE.LINK" (through Dropbox) → { code, link }; "#CODE" / "#r=CODE" → { code }
+  function hashTarget(h) {
+    var c = X && X.parseFragment(h);
+    if (c) return c;
+    var code = codeFromHash(h);
+    return code ? { code: code } : null;
   }
   function wire() {
     if ($("tab-send")) {
@@ -772,6 +906,7 @@
       $("hist-clear").addEventListener("click", clearHist);
       $("add-local").addEventListener("click", addLocal);
       $("make-link").addEventListener("click", startSend);
+      $("make-cloud").addEventListener("click", startCloud);
       $("send-cancel").addEventListener("click", cancelSend);
       $("send-again").addEventListener("click", sendAgain);
       $("copy-link").addEventListener("click", function () {
@@ -801,9 +936,9 @@
       into.textContent = t("into.oros");
       into.addEventListener("click", function (ev) {
         ev.preventDefault();
-        var c = codeFromHash(location.hash) || C.normCode($("code-in").value);
+        var ht = hashTarget(location.hash), c = (ht && ht.code) || C.normCode($("code-in").value);
         if (receiver) receiver.cancel();
-        location.href = "../?open=transfer&app-at=" + encodeURIComponent("#r=" + (c ? C.fmtCode(c) : ""));
+        location.href = "../?open=transfer&app-at=" + encodeURIComponent(ht && ht.link ? location.hash : "#r=" + (c ? C.fmtCode(c) : ""));
       });
       into.dataset.known = known ? "1" : "";
     }
@@ -834,19 +969,20 @@
   window.__orosOpenAt = function (target) {
     if (target && Array.isArray(target.send)) { takeSend(target.send); return; }
     var c = target && typeof target.receive === "string" ? C.normCode(target.receive) : "";
+    var link = target && X && X.okLink(target.link) ? target.link : "";
     if (!c) return;
     if ($("tab-recv")) tab("recv");
-    $("code-in").value = C.fmtCode(c);
-    startRecv(c);
+    $("code-in").value = link ? "" : C.fmtCode(c);
+    startRecv(c, link);
   };
   function takePending() {
-    var c = codeFromHash(location.hash);
-    if (c) {
+    var ht = hashTarget(location.hash);
+    if (ht) {
       if ($("tab-recv")) tab("recv");
-      $("code-in").value = C.fmtCode(c);
+      $("code-in").value = ht.link ? "" : C.fmtCode(ht.code);
       var into = $("into-oros");
       if (into && into.dataset.known) into.hidden = false;
-      startRecv(c);
+      startRecv(ht.code, ht.link);
       return;
     }
     try {
@@ -866,10 +1002,11 @@
     watchPalette();
     if ($("disk")) { renderDisk(); renderChosen(); loadHist(); renderHist(); registerSync(); }
     S.sweep();
+    if (PAGE === "app") setTimeout(cloudSweep, 3000);
     takePending();
     window.addEventListener("hashchange", function () {
-      var c = codeFromHash(location.hash);
-      if (c && !receiver) { $("code-in").value = C.fmtCode(c); startRecv(c); }
+      var ht = hashTarget(location.hash);
+      if (ht && !receiver) { $("code-in").value = ht.link ? "" : C.fmtCode(ht.code); startRecv(ht.code, ht.link); }
     });
   }
   boot();

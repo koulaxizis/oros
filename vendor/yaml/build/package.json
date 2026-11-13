@@ -1,0 +1,9 @@
+{
+  "name": "oros-yaml-build",
+  "private": true,
+  "description": "Build recipe for vendor/yaml (see BUILD.md). Not served.",
+  "dependencies": {
+    "esbuild": "0.25.10",
+    "yaml": "2.9.1"
+  }
+}

@@ -43,6 +43,8 @@
 // https only). Kept with the source so a song can list its credits.
 // New fields (sc, auto, inst, MIDI clips, lic) are written only when set, so
 // projects made before them keep the very same bytes.
+// Forward safe (wave A0): fields, lists and top-level records this version
+// does not know are kept, bounded, and merged (see "Forward safety").
 // The audio itself is never in this slice: it lives on the disk and
 // travels with Vault Drive.
 // ============================================================
@@ -97,7 +99,90 @@
   function okId(id, kind) { return typeof id === "string" && ID_RE.test(id) && id.charAt(0) === kind; }
   function okM(m) { return isInt(m) && m >= 0; }
 
-  // ---------- Normalise (every field bounded; unknown fields dropped) ----------
+  // ---------- Forward safety (Studio wave A0) ----------
+  // A newer Studio may add fields to a row or whole lists to the slice.
+  // This one keeps what it does not know, bounded, so syncing through an
+  // older device never drops a newer device's data: a field keeps its
+  // place on its row (rides along, last change wins with the row), a list
+  // of { id, m, ... } rows merges row by row (newer m wins, tombstones
+  // delete), an object { m, ... } at the top merges as one record.
+  // Fields this version knows are never kept as extras, so a known field
+  // that fails its check is still dropped.
+  var ANY_ID_RE      = /^[a-z][a-z0-9]{6,20}$/;      // tombstones and rows of lists this version does not know
+  var EXTRA_KEY_RE   = /^[a-z][A-Za-z0-9_]{0,23}$/;
+  var BAD_KEYS       = { constructor: 1, prototype: 1, hasOwnProperty: 1, toString: 1, valueOf: 1 };
+  var MAX_EXTRA_KEYS = 16;          // unknown fields on one row
+  var MAX_EXTRA      = 8000;        // their JSON, in characters, on one row
+  var MAX_XLISTS     = 8;           // unknown top-level lists or records
+  var MAX_XROWS      = 2000;        // rows in one unknown list
+  var MAX_XROW       = 16000;       // JSON characters of one such row
+  var MAX_DEPTH      = 6;
+  var MAX_VER        = 99;
+  function okKey(k) { return typeof k === "string" && EXTRA_KEY_RE.test(k) && !BAD_KEYS[k]; }
+  // a plain object, also one made in another window (sync.js parses in the shell)
+  function isPlain(v) {
+    if (!v || typeof v !== "object" || Array.isArray(v) || Object.prototype.toString.call(v) !== "[object Object]") return false;
+    var pr = Object.getPrototypeOf(v);
+    return pr === null || Object.getPrototypeOf(pr) === null;
+  }
+  // A JSON-safe copy of v (strings, finite numbers, booleans, null, arrays,
+  // plain objects with safe keys), or undefined when it is not one.
+  function plainJson(v, depth) {
+    if (v === null || typeof v === "boolean") return v;
+    if (typeof v === "string") return v.length <= MAX_XROW ? v : undefined;
+    if (isNum(v)) return v;
+    if (depth >= MAX_DEPTH) return undefined;
+    var out, bad = false;
+    if (Array.isArray(v)) {
+      if (v.length > MAX_XROW) return undefined;
+      out = [];
+      for (var i = 0; i < v.length && !bad; i++) {
+        var e = plainJson(v[i], depth + 1);
+        if (e === undefined) bad = true; else out.push(e);
+      }
+      return bad ? undefined : out;
+    }
+    if (!isPlain(v)) return undefined;
+    out = {};
+    var ks = Object.keys(v);
+    for (var j = 0; j < ks.length && !bad; j++) {
+      var k = ks[j];
+      if (!okKey(k) && !/^[0-9]{1,6}$/.test(k)) { bad = true; break; }
+      var x = plainJson(v[k], depth + 1);
+      if (x === undefined) bad = true; else out[k] = x;
+    }
+    return bad ? undefined : out;
+  }
+  // Copy the fields of raw that this version does not know onto o, in key
+  // order after the known ones (so the JSON is canonical).
+  function keepExtras(o, raw, known) {
+    var n = 0, size = 0;
+    Object.keys(raw).filter(function (k) { return !known[k] && okKey(k); }).sort(cmpStr).forEach(function (k) {
+      if (n >= MAX_EXTRA_KEYS) return;
+      var v = plainJson(raw[k], 1);
+      if (v === undefined) return;
+      var len = JSON.stringify(v).length + k.length;
+      if (size + len > MAX_EXTRA) return;
+      o[k] = v; n++; size += len;
+    });
+    return o;
+  }
+  function keySet(list) { var o = {}; list.forEach(function (k) { o[k] = 1; }); return o; }
+  var KNOWN = {
+    projects: keySet(["id", "m", "name", "bpm", "sig", "vol", "loop", "fx"]),
+    tracks: keySet(["id", "m", "p", "name", "color", "vol", "pan", "mute", "solo", "ord", "fx", "inst", "smp", "auto", "br", "lv"]),
+    sources: keySet(["id", "m", "p", "name", "path", "dur", "ch", "lic"]),
+    clips: keySet(["id", "m", "p", "t", "s", "at", "off", "len", "gain", "fi", "fo", "name", "n"])
+  };
+  var TOP_KEYS = keySet(["ver", "projects", "tracks", "sources", "clips", "tombs"]);
+  // A row of a list this version does not know, or null.
+  function normXRow(x) {
+    if (!isPlain(x) || typeof x.id !== "string" || !ANY_ID_RE.test(x.id) || !okM(x.m)) return null;
+    var v = plainJson(x, 0);
+    return v !== undefined && JSON.stringify(v).length <= MAX_XROW ? v : null;
+  }
+
+  // ---------- Normalise (every field bounded; unknown fields ride along, see above) ----------
   // An effect chain; effects this version does not know are kept, so a
   // newer device's chain survives a round trip through an older one.
   function normFx(list) {
@@ -259,7 +344,7 @@
     var lp = x.loop && typeof x.loop === "object" ? x.loop : {};
     var a = num(lp.a, 0, MAX_SEC, 0, 4), b = num(lp.b, 0, MAX_SEC, 0, 4);
     if (b < a) { var tmp = a; a = b; b = tmp; }
-    return {
+    return keepExtras({
       id: x.id, m: x.m,
       name: clipLine(x.name, MAX_NAME),
       bpm: num(x.bpm, MIN_BPM, MAX_BPM, DEFAULT.bpm, 2),
@@ -267,7 +352,7 @@
       vol: num(x.vol, VOL_MIN, VOL_MAX, 0, 1),
       loop: { on: !!(x.loop && x.loop.on === true && b - a >= MIN_LEN), a: a, b: b },
       fx: normFx(x.fx)
-    };
+    }, x, KNOWN.projects);
   }
   function normTrack(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "t") || !okM(x.m) || !okId(x.p, "p")) return null;
@@ -302,7 +387,7 @@
       t.lv = { id: lv.id, name: clipLine(lv.name, 80), st: "" };
       if (typeof lv.st === "string" && PATH_RE.test(lv.st) && lv.st.indexOf("/..") < 0) t.lv.st = lv.st;
     }
-    return t;
+    return keepExtras(t, x, KNOWN.tracks);
   }
   // A source's licence card; null when there is none.
   function normLic(x) {
@@ -325,7 +410,7 @@
     };
     var lic = normLic(x.lic);
     if (lic) o.lic = lic;
-    return o;
+    return keepExtras(o, x, KNOWN.sources);
   }
   // The sounds a project's clips play that carry a licence card, in the
   // order they first play: [{ id, name, lic, credit }], credit = true when
@@ -377,7 +462,7 @@
       if (nm) o.name = nm;
       o.n = normNotes(x.n);
     }
-    return o;
+    return keepExtras(o, x, KNOWN.clips);
   }
   // A MIDI clip at another tempo: everything scaled by r (old bpm / new bpm),
   // so the notes stay on the same bars and beats.
@@ -425,7 +510,7 @@
     [a.tombs, b.tombs].forEach(function (tm) {
       if (!tm || typeof tm !== "object" || Array.isArray(tm)) return;
       Object.keys(tm).forEach(function (id) {
-        if (!ID_RE.test(id) || !okM(tm[id])) return;
+        if (!ANY_ID_RE.test(id) || !okM(tm[id])) return;
         if (!(id in tombs) || tm[id] > tombs[id]) tombs[id] = tm[id];
       });
     });
@@ -447,6 +532,40 @@
       });
     });
     Object.keys(tombs).sort(cmpStr).forEach(function (id) { out.tombs[id] = tombs[id]; });
+    // a newer Studio's data version and its lists or records (wave A0)
+    [a.ver, b.ver].forEach(function (v) { if (isInt(v) && v > out.ver && v <= MAX_VER) out.ver = v; });
+    var xkeys = {};
+    [a, b].forEach(function (d) {
+      if (!isPlain(d)) return;
+      Object.keys(d).forEach(function (k) { if (!TOP_KEYS[k] && okKey(k)) xkeys[k] = 1; });
+    });
+    Object.keys(xkeys).sort(cmpStr).slice(0, MAX_XLISTS).forEach(function (key) {
+      var va = a[key], vb = b[key];
+      if (Array.isArray(va) || Array.isArray(vb)) {
+        var best = {};
+        [va, vb].forEach(function (list) {
+          if (!Array.isArray(list)) return;
+          list.forEach(function (raw) {
+            var x = normXRow(raw);
+            if (!x) return;
+            var cur = best[x.id];
+            if (!cur || x.m > cur.m || (x.m === cur.m && tieWins(x, cur))) best[x.id] = x;
+          });
+        });
+        out[key] = Object.keys(best).sort(cmpStr).filter(function (id) {
+          return !(id in tombs && tombs[id] >= best[id].m);
+        }).slice(0, MAX_XROWS).map(function (id) { return best[id]; });
+        return;
+      }
+      var rec = null;
+      [va, vb].forEach(function (r) {
+        if (!isPlain(r) || !okM(r.m)) return;
+        var x = plainJson(r, 0);
+        if (x === undefined || JSON.stringify(x).length > MAX_XROW) return;
+        if (!rec || x.m > rec.m || (x.m === rec.m && tieWins(x, rec))) rec = x;
+      });
+      if (rec) out[key] = rec;
+    });
     return out;
   }
 
@@ -733,7 +852,7 @@
     DATA_VER: DATA_VER, MAX_PROJECTS: MAX_PROJECTS, MAX_TRACKS: MAX_TRACKS, MAX_CLIPS: MAX_CLIPS,
     MAX_NAME: MAX_NAME, MIN_BPM: MIN_BPM, MAX_BPM: MAX_BPM, SIGS: SIGS, MAX_SEC: MAX_SEC, MIN_LEN: MIN_LEN,
     VOL_MIN: VOL_MIN, VOL_MAX: VOL_MAX, GAIN_MIN: GAIN_MIN, GAIN_MAX: GAIN_MAX, COLORS: COLORS,
-    ID_RE: ID_RE, DEFAULT: DEFAULT, LISTS: LISTS,
+    ID_RE: ID_RE, ANY_ID_RE: ANY_ID_RE, DEFAULT: DEFAULT, LISTS: LISTS,
     normProject: normProject, normTrack: normTrack, normSource: normSource, normClip: normClip,
     emptyData: emptyData, mergeStudio: mergeStudio,
     find: find, ofProject: ofProject, tracksOf: tracksOf, clipsOfTrack: clipsOfTrack,

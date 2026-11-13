@@ -44,6 +44,22 @@ Pad ist ein Editor für reinen Text und Code, im Geist von Notepad++. Es öffnet
 ## Werkzeuge
 - `Werkzeuge…` unter `Mehr` wirkt auf die markierten Zeilen, oder auf die ganze Datei, wenn nichts markiert ist: `JSON formatieren` (ein Eintrag pro Zeile, eingerückt wie die Datei), `JSON kompakt` (alles in einer Zeile), `Zeilen sortieren A → Z` und `Z → A` (Zahlen in natürlicher Reihenfolge, also 2 vor 10), `Doppelte Zeilen entfernen` (die erste bleibt) und `Leerzeichen am Zeilenende entfernen`. [[Ctrl+Z]] nimmt jedes davon zurück.
 - `JSON formatieren` ändert nur Leerzeichen und Zeilenumbrüche: Schlüssel behalten ihre Reihenfolge, Zahlen und Texte bleiben genau so, wie sie geschrieben sind. Ist das JSON nicht gültig, sagt Pad, in welcher Zeile und Spalte, und ändert nichts.
+- Die Werkzeugliste hat ein Suchfeld und Gruppen; [[Alt+T]] öffnet sie über die Tastatur. Werkzeuge, die zur Auswahl passen (eine Farbe, ein Zeitstempel, eine Zahl), stehen oben.
+
+## Entwicklerwerkzeuge
+- `JSON prüfen` und `YAML prüfen` sagen, ob der Text gültig ist. Wenn nicht, setzen sie den Cursor an die Stelle des Fehlers und nennen ihn. Nichts wird geändert.
+- `JSON-Schlüssel sortieren A → Z` sortiert die Schlüssel auf jeder Ebene; Listen behalten ihre Reihenfolge, Zahlen und Strings bleiben genau so, wie sie geschrieben sind.
+- `YAML formatieren` gibt dem YAML eine gleichmäßige Einrückung und behält Kommentare, Anker, Anführungszeichen und Zahlen bei (`0x1F` bleibt `0x1F`).
+- `JSON → YAML` und `YAML → JSON` öffnen das Ergebnis in einem neuen Tab; das Original bleibt, wie es ist. JSON kennt keine Kommentare, daher lässt `YAML → JSON` sie weg und sagt es. Eine YAML-Datei mit mehreren Dokumenten (`---`) wird zu einer Liste.
+- `Hashes (MD5, SHA)…` zeigt MD5, SHA-1, SHA-256, SHA-384 und SHA-512, hex und Base64. Mit einer Auswahl sind es die Hashes des markierten Textes (UTF-8), ohne Auswahl die der ganzen Datei genau so, wie `Speichern` sie schreibt, mit ihrer Kodierung und ihren Zeilenenden, sodass sie zu `sha256sum` und den `.sha256`-Dateien von Downloads passen. Füge eine Prüfsumme in `Vergleichen mit` ein, um sofort zu sehen, ob sie gleich ist.
+- `UUID v4 einfügen` schreibt eine zufällige UUID an den Cursor, `UUID v7 einfügen` eine, die mit der Zeit beginnt und sich so in der Reihenfolge ihrer Erstellung sortiert. Mit mehreren Cursorn bekommt jeder seine eigene.
+- `Zeitstempel…` wandelt eine markierte Unix-Zeit (Sekunden, Millisekunden, Mikro- oder Nanosekunden, an der Zahl der Ziffern erkannt) oder ein Datum wie 2026-11-13 in Ortszeit, ISO 8601 und Unix-Zeit um und zeigt die Zeit jetzt, zum Einfügen bereit.
+- `Zahlensysteme…` zeigt eine markierte ganze Zahl (255, `0xFF`, `0b1010`, `0o17` oder `$xFF` in JSFX) dezimal, hexadezimal, binär und oktal. `Farbe…` zeigt eine markierte CSS-Farbe als Hex, `rgb()` und `hsl()`, mit Muster.
+- Die Ergebnisse öffnen sich in einem Bereich neben dem Text (auf dem Handy an seiner Stelle). `Kopieren` kopiert einen Wert, `Einfügen` setzt ihn an die Stelle der Auswahl. [[Esc]] oder `Schließen` schließt den Bereich.
+- `In Textwerkzeugen öffnen` schickt die Auswahl (oder die Datei) an die [Textwerkzeuge](app:texttools) für Base64, URL, HTML-Entitäten und ihre anderen Kodierer.
+- Alles läuft auf diesem Gerät, auch offline. Nichts, was du prüfst, umwandelst oder hashst, wird irgendwohin geschickt oder gespeichert.
+
+## Vorschau und Vergleich
 - `Vorschau` in der oberen Leiste (für Markdown-Dateien) zeigt den Text formatiert, auf einem breiten Bildschirm neben dem Editor, auf einem schmalen an seiner Stelle. Sie folgt beim Tippen. Links öffnen sich in einem neuen Fenster, Bilder werden nicht angezeigt.
 - `Mit einem anderen Tab vergleichen…` unter `Mehr` zeigt zwei offene Tabs Zeile für Zeile: Zeilen nur links sind rot, Zeilen nur rechts grün, und lange Abschnitte gleicher Zeilen werden eingeklappt. `Nächste Änderung` und `Vorherige Änderung` (oder [[F7]] und [[Shift+F7]]) springen zwischen den Änderungen, [[Esc]] schließt den Vergleich.
 - `Tastenleiste` unter `Mehr` fügt über der unteren Leiste eine Reihe Tasten hinzu, die Handy-Tastaturen fehlen: Einrücken, Pfeile, Klammern, Anführungszeichen und andere Zeichen, Rückgängig und Wiederholen. Auf Touchscreens ist sie von selbst an.
@@ -55,7 +71,7 @@ Pad ist ein Editor für reinen Text und Code, im Geist von Notepad++. Es öffnet
 ## Tastenkürzel
 - [[Ctrl+S]]: speichern. [[Ctrl+Shift+S]]: speichern unter.
 - [[Ctrl+O]]: öffnen.
-- [[Alt+N]]: neuer Tab. [[Alt+W]]: Tab schließen.
+- [[Alt+N]]: neuer Tab. [[Alt+W]]: Tab schließen. [[Alt+T]]: Werkzeuge.
 - [[Alt+PageDown]] und [[Alt+PageUp]]: nächster und vorheriger Tab.
 - [[Ctrl+F]]: suchen und ersetzen. [[Ctrl+G]]: gehe zu Zeile.
 - [[Ctrl+Z]] und [[Ctrl+Y]]: rückgängig und wiederholen. [[Ctrl+D]]: den nächsten Treffer des ausgewählten Worts auswählen. [[Alt+↑]] und [[Alt+↓]]: Zeile verschieben. [[Ctrl+/]]: Zeile auskommentieren.

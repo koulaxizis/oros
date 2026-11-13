@@ -1,5 +1,5 @@
 # Verlag
-Verlag ist der Schreibtisch eines kleinen Verlags: jedes Buch, das du verlegst, mit Ausgaben, ISBNs, Preisen, Maßen, Klappentext und Cover, deine ISBN-Blöcke mit der nächsten freien Nummer und Barcodes für die Rückseite.
+Verlag ist der Schreibtisch eines kleinen Verlags: jedes Buch, das du verlegst, mit Ausgaben, ISBNs, Preisen, Maßen, Klappentext und Cover, deine ISBN-Blöcke mit der nächsten freien Nummer und Barcodes für die Rückseite. Musiker und Labels führen hier auch ihre Singles, EPs und Alben: Titel mit ISRC, Ausgaben mit UPC/EAN und eigene Code-Präfixe.
 
 ## Erste Schritte
 1. Tippe auf `Neuer Titel`, schreibe den Titel und, wenn du willst, den Autor.
@@ -69,19 +69,31 @@ Plane deine Beiträge für soziale Netzwerke einmal: Text, Bild und Tag (wenn du
 
 Am Tag steht der Beitrag hier als fällig, im [Kalender](app:calendar) und in [Heute](app:today). Öffne ihn und poste ihn von der Seite des jeweiligen Netzwerks: `Kopieren und … öffnen` kopiert den Text und öffnet Mastodon, Bluesky, X, Threads oder LinkedIn mit dem Text schon darin. Facebook und Instagram haben keine solche Seite, deshalb öffnet sich ihre Startseite und du fügst den Text ein. `Bild kopieren` und `Bild speichern` geben dir das Bild. Nichts wird von orOS gesendet und hier ist kein Konto nötig; für Mastodon trage deinen Server in den Einstellungen ein (zum Beispiel mastodon.social). Dann `Als gepostet markieren`.
 
-## ISBN
-Die nationale ISBN-Agentur gibt einem Verlag einen Nummernblock, zum Beispiel 978-618-5321 für 100 Bücher. Im Tab `ISBN` tippst du auf `Block hinzufügen` und schreibst das Präfix mit seinen Bindestrichen genau so, wie die Agentur es vergeben hat.
+## Musikveröffentlichungen
+Wähle unter `Neuer Titel` die `Art` › `Musik: Single`, `EP`, `Album` oder `Compilation`. Eine Musikveröffentlichung hat denselben Status, Erscheinungstag, Personen, Texte und Cover wie ein Buch (die Hauptperson ist der `Künstler`), und statt Ausgaben eines Buchs:
+
+- `Angaben zur Veröffentlichung`: Art, dein Label, Genre und die ℗- und ©-Zeilen, die Shops anzeigen (wem die Aufnahme gehört, wem Artwork und Texte gehören).
+- `Titel`: `+ Titel` nimmt einen Titel oder die ganze Titelliste auf einmal, einen pro Zeile; eine Länge am Ende (3:45) wird mitgelesen. Tippe auf einen Titel, um ihn zu öffnen: Name, Version (Radio Edit, Remix…), der Künstler, wenn es nicht der der Veröffentlichung ist, ISRC, Länge, Sprache des Textes und ob der Text explizit ist. ↑ und ↓ ändern die Reihenfolge.
+- `Ausgaben`: digital, CD, Vinyl, Kassette oder andere, jede mit UPC oder EAN, Katalognummer, Preis und Vertrieb. `Barcode` zeigt die Striche des Codes für CD oder Hülle.
+
+Die Felder für ISRC und UPC/EAN prüfen den Code beim Tippen und warnen, wenn ein anderer Titel oder eine andere Ausgabe ihn schon hat. Gibt dir dein Vertrieb die Codes, trage sie ein. Hast du eigene Präfixe (Tab Codes), setzt `Nächster freier` den nächsten unbenutzten ein. `Es fehlt noch` nennt, was eine Veröffentlichung noch braucht: Künstler, Titel, ISRCs, Längen, eine Ausgabe, UPC/EAN, Erscheinungstag und Cover.
+
+## Codes
+Die nationale ISBN-Agentur gibt einem Verlag einen Nummernblock, zum Beispiel 978-618-5321 für 100 Bücher. Im Tab `Codes` tippst du auf `Block hinzufügen` und schreibst das Präfix mit seinen Bindestrichen genau so, wie die Agentur es vergeben hat.
 
 Für jeden Block siehst du, wie viele Nummern vergeben sind, die nächste freie (`Kopieren` oder `Neuer Titel damit`) und die Liste der vergebenen Nummern mit ihren Titeln.
 
 - `Außerhalb der App vergeben`: Nummern, die du vor orOS an Bücher vergeben hast, oder verdorbene. orOS bietet sie nicht mehr an.
 - `Doppelt vergebene Nummern` erscheint oben, wenn zwei Ausgaben dieselbe ISBN haben.
-- `ISBN prüfen` sagt dir, ob eine Nummer gültig ist, zeigt ihre ISBN-10 und ob einer deiner Titel sie hat.
+- `ISRC-Präfixe`: Land und Erstinhabercode, wie die Agentur sie vergeben hat (zum Beispiel DE-A1B). Jedes Präfix zeigt die vergebenen Codes und den nächsten freien für dieses Jahr (CC-XXX-YY-NNNNN).
+- `UPC-/EAN-Präfixe (GS1)`: deine GS1-Basisnummer, als EAN-13 oder UPC-A. Du siehst, wie viele Codes vergeben sind, und den nächsten freien mit Prüfziffer.
+- `Anderswo verwendete Veröffentlichungscodes`: ISRCs, UPCs oder EANs, die du außerhalb der App verwendet hast, oder verdorbene; sie werden nie als frei angeboten.
+- `Code prüfen` sagt dir, ob eine ISBN, ISRC, UPC oder EAN gültig ist, zeigt bei einer ISBN die ISBN-10 und ob einer deiner Titel sie hat.
 
 ## Deine Daten
 - Alles bleibt auf diesem Gerät und wird laufend gespeichert.
 - Mit eingeschaltetem orOS-Sync in den [Einstellungen](app:settings) folgen dir Titel und Blöcke verschlüsselt auf deine anderen Geräte. Coverbilder reisen mit Vault Drive.
 
 ## Von überall finden
-- Das Suchfeld im Menü findet einen Titel über seine Wörter, seine Personen oder eine seiner ISBNs (mit oder ohne Bindestriche, auch ISBN-10). Die Auswahl öffnet den Titel.
+- Das Suchfeld im Menü findet einen Titel über seine Wörter, seine Personen oder eine seiner ISBNs (mit oder ohne Bindestriche, auch ISBN-10); eine Musikveröffentlichung auch über ihre Titel, ISRCs und UPC/EANs. Die Auswahl öffnet den Titel.
 - [Heute](app:today) zeigt deine Beiträge und die Schritte des Erscheinungsplans, wenn sie fällig sind, die kommenden Erscheinungstage, Rezensionsexemplare zum Nachfassen und in einer Zeile die Manuskripte, die zu lange auf Antwort warten.

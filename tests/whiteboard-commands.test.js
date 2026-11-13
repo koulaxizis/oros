@@ -74,7 +74,7 @@ test("the guide names every command and field; the tool declares every field wit
 test("check: unknown commands, fields and values go back to the model; removals need a pick", () => {
   assert.match(CMD.check([]).err, /empty/);
   assert.match(CMD.check([{ op: "zap" }]).err, /unknown command "zap"/);
-  assert.match(CMD.check([{ op: "style", shape: "star" }]).err, /shape "star" is not allowed/);
+  assert.match(CMD.check([{ op: "style", shape: "blob" }]).err, /shape "blob" is not allowed/);
   assert.match(CMD.check([{ op: "style", track: 2 }]).err, /track is not a field of style/);
   assert.match(CMD.check([{ op: "style" }]).err, /give c, shape, fill, size, ends, dash or sw/);
   assert.match(CMD.check([{ op: "move" }]).err, /give dx, dy, x, y, w, h or order/);

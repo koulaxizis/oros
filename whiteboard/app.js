@@ -82,7 +82,13 @@
       "drop": "Drop pictures here",
       "btn.more": "More",
       "m.vote": "Dot voting…", "m.results": "Voting results…", "m.timer": "Timer…", "m.tpl": "Templates…",
-      "m.mind": "Bring in a mind map…", "m.send": "Send the notes to an app…",
+      "m.mind": "Bring in a mind map…", "m.send": "Send the notes to an app…", "m.lib": "Diagram shapes… (L)",
+      "lib.title": "Diagram shapes", "lib.search": "Search the shapes", "lib.none": "No shape has that name.",
+      "lib.how": "Tap a shape to put it in the middle of the screen.", "lib.howChange": "Tap a shape: the selected shapes become it.",
+      "lib.added": "{name} added", "ctx.lib": "More shapes (L)",
+      "lib.classTx": "Name\n--\n+ attribute: Type\n--\n+ method()", "lib.ifaceTx": "Name\n--\n+ method()",
+      "lib.g.flow": "Flowchart", "lib.g.org": "Org chart", "lib.g.uml": "UML", "lib.g.basic": "Basic shapes", "lib.g.net": "Network and IT",
+      "sym.process": "Process step", "sym.decision": "Decision", "sym.terminator": "Start or end", "sym.data": "Data (input or output)", "sym.document": "Document", "sym.documents": "Several documents", "sym.predefined": "Predefined process", "sym.manual-input": "Manual input", "sym.manual-op": "Manual operation", "sym.preparation": "Preparation", "sym.database": "Database", "sym.delay": "Delay", "sym.off-page": "Link to another page", "sym.connector": "Connector", "sym.merge": "Merge", "sym.person": "Person card", "sym.unit": "Team or department", "sym.class": "UML class", "sym.interface": "UML interface", "sym.actor": "Actor", "sym.usecase": "Use case", "sym.package": "Package", "sym.component": "Component", "sym.comment": "Comment", "sym.node": "Node (device)", "sym.start": "Start point", "sym.end": "End point", "sym.hexagon": "Hexagon", "sym.octagon": "Octagon", "sym.star": "Star", "sym.cross": "Cross", "sym.arrow-right": "Block arrow", "sym.arrow-both": "Double block arrow", "sym.cloud": "Cloud", "sym.callout": "Speech bubble", "sym.server": "Server", "sym.router": "Router", "sym.switch": "Network switch", "sym.firewall": "Firewall", "sym.internet": "Internet", "sym.laptop": "Laptop", "sym.desktop": "Desktop computer", "sym.phone": "Phone", "sym.tablet": "Tablet", "sym.db-server": "Database server", "sym.storage": "Storage", "sym.user": "User", "sym.printer": "Printer", "sym.wifi": "Wi-Fi access point",
       "ctx.send": "Send to an app…", "ctx.atelier": "Open in Atelier",
       "vote.title": "Dot voting", "vote.per": "Dots for each person",
       "vote.how": "Tap a note, shape, text or picture to put one of your dots on it; tap your dot again to take it back. When you are done, hand over the device and tap Next person: they get dots of another colour.",
@@ -158,7 +164,13 @@
       "drop": "Άφησε εδώ τις εικόνες",
       "btn.more": "Περισσότερα",
       "m.vote": "Ψηφοφορία με κουκκίδες…", "m.results": "Αποτελέσματα ψηφοφορίας…", "m.timer": "Χρονόμετρο…", "m.tpl": "Πρότυπα…",
-      "m.mind": "Εισαγωγή νοητικού χάρτη…", "m.send": "Αποστολή των σημειώσεων σε εφαρμογή…",
+      "m.mind": "Εισαγωγή νοητικού χάρτη…", "m.send": "Αποστολή των σημειώσεων σε εφαρμογή…", "m.lib": "Σχήματα διαγραμμάτων… (L)",
+      "lib.title": "Σχήματα διαγραμμάτων", "lib.search": "Αναζήτηση σχημάτων", "lib.none": "Κανένα σχήμα δεν έχει αυτό το όνομα.",
+      "lib.how": "Άγγιξε ένα σχήμα για να μπει στη μέση της οθόνης.", "lib.howChange": "Άγγιξε ένα σχήμα: τα επιλεγμένα σχήματα γίνονται αυτό.",
+      "lib.added": "Προστέθηκε: {name}", "ctx.lib": "Περισσότερα σχήματα (L)",
+      "lib.classTx": "Όνομα\n--\n+ ιδιότητα: Τύπος\n--\n+ μέθοδος()", "lib.ifaceTx": "Όνομα\n--\n+ μέθοδος()",
+      "lib.g.flow": "Διάγραμμα ροής", "lib.g.org": "Οργανόγραμμα", "lib.g.uml": "UML", "lib.g.basic": "Βασικά σχήματα", "lib.g.net": "Δίκτυα και υποδομές",
+      "sym.process": "Βήμα διαδικασίας", "sym.decision": "Απόφαση", "sym.terminator": "Αρχή ή τέλος", "sym.data": "Δεδομένα (είσοδος ή έξοδος)", "sym.document": "Έγγραφο", "sym.documents": "Πολλά έγγραφα", "sym.predefined": "Προκαθορισμένη διαδικασία", "sym.manual-input": "Χειροκίνητη εισαγωγή", "sym.manual-op": "Χειροκίνητη ενέργεια", "sym.preparation": "Προετοιμασία", "sym.database": "Βάση δεδομένων", "sym.delay": "Καθυστέρηση", "sym.off-page": "Σύνδεση με άλλη σελίδα", "sym.connector": "Σημείο σύνδεσης", "sym.merge": "Συγχώνευση", "sym.person": "Κάρτα προσώπου", "sym.unit": "Ομάδα ή τμήμα", "sym.class": "Κλάση UML", "sym.interface": "Διεπαφή UML", "sym.actor": "Χειριστής", "sym.usecase": "Περίπτωση χρήσης", "sym.package": "Πακέτο", "sym.component": "Στοιχείο λογισμικού", "sym.comment": "Σχόλιο", "sym.node": "Κόμβος (συσκευή)", "sym.start": "Σημείο έναρξης", "sym.end": "Σημείο τέλους", "sym.hexagon": "Εξάγωνο", "sym.octagon": "Οκτάγωνο", "sym.star": "Αστέρι", "sym.cross": "Σταυρός", "sym.arrow-right": "Βέλος-μπλοκ", "sym.arrow-both": "Διπλό βέλος-μπλοκ", "sym.cloud": "Σύννεφο", "sym.callout": "Συννεφάκι λόγου", "sym.server": "Διακομιστής", "sym.router": "Δρομολογητής", "sym.switch": "Μεταγωγέας δικτύου", "sym.firewall": "Τείχος προστασίας", "sym.internet": "Διαδίκτυο", "sym.laptop": "Φορητός υπολογιστής", "sym.desktop": "Επιτραπέζιος υπολογιστής", "sym.phone": "Κινητό", "sym.tablet": "Tablet", "sym.db-server": "Διακομιστής βάσης δεδομένων", "sym.storage": "Αποθηκευτικός χώρος", "sym.user": "Χρήστης", "sym.printer": "Εκτυπωτής", "sym.wifi": "Σημείο πρόσβασης Wi-Fi",
       "ctx.send": "Αποστολή σε εφαρμογή…", "ctx.atelier": "Άνοιγμα στο Atelier",
       "vote.title": "Ψηφοφορία με κουκκίδες", "vote.per": "Κουκκίδες για κάθε άτομο",
       "vote.how": "Πάτησε ένα αυτοκόλλητο, σχήμα, κείμενο ή εικόνα για να βάλεις μια κουκκίδα σου· πάτησε ξανά την κουκκίδα σου για να την πάρεις πίσω. Όταν τελειώσεις, δώσε τη συσκευή στον επόμενο και πάτησε Επόμενο άτομο: παίρνει κουκκίδες άλλου χρώματος.",
@@ -352,7 +364,9 @@
     pause: ic('<path d="M9 5v14M15 5v14"/>'),
     play: ic('<path d="M7 5l12 7-12 7z"/>'),
     close: ic('<path d="M6 6l12 12M18 6L6 18"/>'),
-    next: ic('<path d="M5 12h14M13 6l6 6-6 6"/>')
+    next: ic('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+    lib: ic('<rect x="3" y="3" width="8" height="6" rx="1"/><path d="M17 2.5l4.5 4.5-4.5 4.5-4.5-4.5z"/><circle cx="7" cy="17" r="4"/><path d="M13.5 13.5h7v7h-7z"/>'),
+    search: ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>')
   };
   function iconBtn(cls, icon, lbl, fn) {
     var b = el("button", cls);
@@ -1091,7 +1105,7 @@
     }
     if (kinds.shape) {
       var s0 = list.filter(function (o) { return o.k === "shape"; })[0];
-      shapeBtn(s0.shp, function (s) { prefs.shape = s; savePrefs(); each(["shape"], function (o) { o.shp = s; }); });
+      shapeBtn(s0.shp, function (s) { prefs.shape = s; savePrefs(); each(["shape"], function (o) { o.shp = s; delete o.sym; }); }, true);
       var fb = add(iconBtn("icon-btn", "f_" + s0.f, t("ctx.fill"), function () {
         pop(fb, C.FILLS.map(function (f) { return choice("f_" + f, t("f." + f), function () { each(["shape"], function (o) { o.f = f; }); }); }));
       }));
@@ -1127,9 +1141,11 @@
     add(iconBtn("icon-btn del", "trash", t("ctx.del"), removeSel));
     bar.hidden = false;
   }
-  function shapeBtn(cur0, fn) {
+  function shapeBtn(cur0, fn, change) {
     var b = iconBtn("icon-btn", "s_" + cur0, t("ctx.shape"), function () {
-      pop(b, C.SHAPES.map(function (s) { return choice("s_" + s, t("shp." + s), function () { fn(s); }); }));
+      var items = C.SHAPES.map(function (s) { return choice("s_" + s, t("shp." + s), function () { fn(s); }); });
+      items.push(choice("lib", t("ctx.lib"), function () { openLibrary(change); }));
+      pop(b, items);
     });
     b.setAttribute("aria-haspopup", "menu");
     $("ctx").appendChild(b);
@@ -1206,7 +1222,7 @@
     if (!sel.length) { say(t("live.none")); return; }
     if (sel.length > 1) { say(t("live.selN", { n: sel.length })); return; }
     var o = objById(sel[0]);
-    if (o) say(t("live.sel", { kind: t("k." + o.k), text: C.words(o).slice(0, 120) }));
+    if (o) say(t("live.sel", { kind: kindName(o), text: C.words(o).slice(0, 120) }));
   }
 
   // ---------- 12. Pictures ----------
@@ -1638,6 +1654,7 @@
     if (objs().some(K.isDot)) item(t("m.results"), openResults);
     item(t("m.timer"), openTimer);
     item(t("m.mind"), openMindmap);
+    item(t("m.lib"), function () { openLibrary(false); });
     if (sendApi()) item(t("m.send"), function () { sendItems(K.items(objs())); });
     pop($("more-btn"), items);
   }
@@ -1830,6 +1847,92 @@
       console.error("[orOS] whiteboard: frame to Atelier failed", e);
       toast(e && e.message === "nofs" ? t("at.nofs") : t("at.fail"));
     });
+  }
+
+  // ---- Diagram shapes (wave DG1): the symbol library ----
+  // change: the picked symbol goes to the selected shapes; else a new
+  // shape of it is put in the middle of the screen.
+  function kindName(o) { return C.symOf(o) ? t("sym." + o.sym) : t("k." + o.k); }
+  function foldName(s) { return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+  function symTile(id, fn) {
+    var s = C.SYMS[id], name = t("sym." + id);
+    var b = textBtn("lib-tile", "", fn);
+    b.setAttribute("aria-label", name);
+    b.title = name;
+    var sample = { id: "pv", b: "-", k: "shape", shp: s[1], sym: id, f: "soft", c: "blue", x: 0, y: 0, w: s[2], h: s[3], z: 0,
+      tx: id === "class" || id === "interface" ? "\n--\n\n--\n" : "" };
+    var sv = document.createElementNS(SVGNS, "svg");
+    sv.setAttribute("viewBox", "-4 -4 " + (s[2] + 8) + " " + (s[3] + 8));
+    sv.setAttribute("aria-hidden", "true");
+    C.scene([sample], { measure: measure }).forEach(function (nd) { sv.appendChild(build(nd)); });
+    b.appendChild(sv);
+    b.appendChild(el("span", "lib-name", name));
+    return b;
+  }
+  function openLibrary(change) {
+    var dlg = makeDialog("wb-lib", t("lib.title"));
+    dlg.classList.add("wb-lib");
+    dlg.appendChild(el("p", "dlg-sub", t(change ? "lib.howChange" : "lib.how")));
+    var q = el("input", "lib-q");
+    q.type = "search";
+    q.id = "wb-lib-q";
+    q.setAttribute("aria-label", t("lib.search"));
+    q.placeholder = t("lib.search");
+    q.autocomplete = "off";
+    dlg.appendChild(q);
+    var box = el("div", "lib-box"), none = el("p", "dlg-sub", t("lib.none"));
+    none.hidden = true;
+    var tiles = [];
+    C.SYM_GROUPS.forEach(function (g) {
+      var sec = el("section", "lib-g"), h = el("h3", "lib-gh", t("lib.g." + g)), grid = el("div", "lib-grid");
+      h.id = "wb-lib-" + g;
+      sec.setAttribute("aria-labelledby", h.id);
+      sec.appendChild(h);
+      C.SYM_IDS.filter(function (id) { return C.SYMS[id][0] === g; }).forEach(function (id) {
+        var tile = symTile(id, function () { dlg.close(); if (change) setSym(id); else addSym(id); });
+        tiles.push({ el: tile, sec: sec, key: foldName([t("sym." + id), STR.en["sym." + id], id, t("lib.g." + g), STR.en["lib.g." + g]].join(" ")) });
+        grid.appendChild(tile);
+      });
+      sec.appendChild(grid);
+      box.appendChild(sec);
+    });
+    box.appendChild(none);
+    dlg.appendChild(box);
+    q.addEventListener("input", function () {
+      var words = foldName(q.value).split(/\s+/).filter(Boolean), shown = 0, secs = [];
+      tiles.forEach(function (x) {
+        var on = words.every(function (w) { return x.key.indexOf(w) >= 0; });
+        x.el.hidden = !on;
+        if (on) { shown++; if (secs.indexOf(x.sec) < 0) secs.push(x.sec); }
+      });
+      tiles.forEach(function (x) { x.sec.hidden = secs.indexOf(x.sec) < 0; });
+      none.hidden = shown > 0;
+    });
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(textBtn("dlg-btn", t("close"), function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    // A phone keeps its keyboard down until the search is tapped: the
+    // dialog opens with the first shape focused instead.
+    if (isTouch && tiles.length) tiles[0].el.autofocus = true;
+    showDialog(dlg);
+  }
+  // A new shape of the symbol, in the middle of the screen, selected.
+  function addSym(id) {
+    var s = C.SYMS[id], r = stageRect(), c = toWorld(r.left + r.width / 2, r.top + r.height / 2), oid = newId(), rows = {};
+    var tx = id === "class" ? t("lib.classTx") : id === "interface" ? t("lib.ifaceTx") : "";
+    rows[oid] = { id: oid, b: board || "-", k: "shape", shp: s[1], sym: id, f: "soft", c: prefs.line === "ink" ? "blue" : prefs.line,
+      x: r1(c.x - s[2] / 2), y: r1(c.y - s[3] / 2), w: s[2], h: s[3], tx: tx, z: zTop() };
+    if (voting) stopVote();
+    setTool("select");
+    if (!commit(rows)) return;
+    sel = [oid];
+    say(t("lib.added", { name: t("sym." + id) }));
+    render();
+  }
+  function setSym(id) {
+    var s = C.SYMS[id];
+    each(["shape"], function (o) { o.sym = id; o.shp = s[1]; });
+    render();
   }
 
   // ---- Templates ----
@@ -2064,6 +2167,7 @@
       if (e.code === "Digit0") { zoomAt(1 / view.s); return; }
       if (e.code === "Digit1") { fit(); return; }
       if (e.code === "KeyI") { pickPicture(); return; }
+      if (e.code === "KeyL") { openLibrary(sel.some(function (id) { var o = objById(id); return o && o.k === "shape"; })); return; }
       if (KEY_TOOLS[e.code]) { if (voting) stopVote(); setTool(KEY_TOOLS[e.code]); }
     });
     document.addEventListener("keyup", function (e) { if (e.code === "Space") spaceDown = false; });

@@ -1541,6 +1541,73 @@
 
   // Storage facade for vault.js (orosSync.storage): engine gates
   // first, then the provider. Callers may pass bytes or a Blob.
+  // ---------- TRANSFER-1 wave 4: orOS Transfer through Dropbox ----------
+  // Names are "<id>/<part>": id 8-40 of [a-z0-9], part 1-40 of
+  // [a-z0-9.-]. A temporary link (files/get_temporary_link) lasts 4 h.
+  var DROP_ROOT = "/transfer";
+  function dropPath(name) {
+    name = String(name || "");
+    if (!/^[a-z0-9]{8,40}(\/[a-z0-9.-]{1,40})?$/.test(name)) throw new Error("bad-name");
+    return DROP_ROOT + "/" + name;
+  }
+  function dropReady() {
+    if (provider.id !== "dropbox") return Promise.reject(new Error("not-dropbox"));
+    return adapterEnsureConnected();
+  }
+  var cloudDrop = {
+    available: function () { return provider.id === "dropbox" && isConnected() && !suspended; },
+    put: function (name, blob) {
+      return dropReady().then(function () {
+        var path = dropPath(name);
+        if (!(blob instanceof Blob)) blob = new Blob([blob]);
+        if (blob.size > SINGLE_SHOT_MAX) return adapterUploadSession(path, blob, undefined);
+        return adapterUploadOnce(path, blob, undefined).then(function (res) {
+          if (!res.ok) throw new Error(res.status === 507 ? "dropbox-full" : "upload failed: " + res.status);
+          return true;
+        });
+      });
+    },
+    link: function (name) {
+      return dropReady().then(function () { return rpc("files/get_temporary_link", { path: dropPath(name) }); }).then(function (res) {
+        if (!res.ok) throw new Error("link failed: " + res.status);
+        return res.json();
+      }).then(function (j) {
+        var u = j && typeof j.link === "string" ? j.link : "";
+        if (!/^https:\/\/[a-z0-9.-]+\.dropboxusercontent\.com\//i.test(u)) throw new Error("link failed: shape");
+        return u;
+      });
+    },
+    remove: function (id) {
+      return dropReady().then(function () { return rpc("files/delete_v2", { path: dropPath(id) }); }).then(function (res) {
+        if (res.ok || res.status === 409) return true;
+        throw new Error("delete failed: " + res.status);
+      });
+    },
+    // [{ id, modified }] for the folders under /transfer (one page is plenty).
+    list: function () {
+      return dropReady().then(function () { return rpc("files/list_folder", { path: DROP_ROOT, limit: 500 }); }).then(function (res) {
+        if (res.status === 409) return { entries: [] };
+        if (!res.ok) throw new Error("list failed: " + res.status);
+        return res.json();
+      }).then(function (j) {
+        return (j.entries || []).filter(function (e) { return e && e[".tag"] === "folder" && /^[a-z0-9]{8,40}$/.test(e.name || ""); })
+          .map(function (e) { return { id: e.name }; });
+      });
+    },
+    // { used, allocated } bytes, or null when Dropbox does not say.
+    space: function () {
+      return dropReady().then(ensureFreshToken).then(function (token) {
+        return fetch(RPC_API + "users/get_space_usage", { method: "POST", headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" }, body: "null" });
+      }).then(function (res) {
+        if (!res.ok) return null;
+        return res.json().then(function (j) {
+          var a = j && j.allocation && (+j.allocation.allocated || 0);
+          return a ? { used: +j.used || 0, allocated: a } : null;
+        });
+      }).catch(function () { return null; });
+    }
+  };
+
   var storageAdapter = {
     putObject: function (key, blob, knownRev) {
       return adapterEnsureConnected().then(function () {
@@ -4152,8 +4219,11 @@
       }
     },
 
-    // Wave 2 — Vault Drive: unified storage adapter (provider-
-    // agnostic surface over `provider.storage`) + vault crypto.
+    // TRANSFER-1 wave 4: orOS Transfer's "send through my Dropbox".
+    // Only the Dropbox provider, only under /transfer/<id>/ in the
+    // app folder (outside /vault: the vault, its clean-up and orOS
+    // Drive never see it). Transfer uploads ciphertext only.
+    cloudDrop: cloudDrop,
     storage: storageAdapter,
     vaultCrypto: {
       sha256Hex:    sha256Hex,     // ArrayBuffer → hex digest (content addressing)

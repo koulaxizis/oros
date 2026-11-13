@@ -154,7 +154,7 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 #groups { order: 2; }
 #tools { order: 3; }
 #chain-sec { order: 4; }
-#opts-sec { order: 5; }
+#opts-sec, #tr-sec { order: 5; }
 #out-pane { order: 6; }
 #main .pane, #main .sec, #groups, #tools { flex-shrink: 0; }
 
@@ -249,6 +249,20 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 .other-head { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
 .other-head .opt-lbl { margin-bottom: 0; }
 #opts textarea#other { height: 22vh; height: 22dvh; min-height: 120px; }
+
+/* Translate (on the device) */
+.tr-langs { display: flex; align-items: flex-end; gap: 6px; margin-top: 8px; }
+.tr-langs .opt { flex: 1 1 0; min-width: 0; }
+.tr-langs select { width: 100%; }
+.tr-swap { flex: 0 0 auto; margin-bottom: 1px; }
+.tr-swap svg { transform: rotate(90deg); }
+.tr-info:empty { display: none; }
+.tr-go { width: 100%; justify-content: center; margin-top: 10px; }
+.tr-list { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 8px; }
+.tr-list-h { font-size: 12px; font-weight: 700; color: var(--text-dim); margin: 0 0 4px; }
+.tr-row { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 13.5px; }
+.tr-row-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.link-btn.danger { color: var(--danger); }
 
 /* ---------- 6. Text panes ---------- */
 .pane { display: flex; flex-direction: column; gap: 6px; min-height: 0; min-width: 0; }

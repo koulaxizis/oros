@@ -225,12 +225,69 @@
     return { from: from, to: to, days: daysBetween(from, to) + 1 };
   }
 
+  // ---------- Gantt (wave G1): spans, workdays, progress ----------
+  function isWeekend(ymd) {
+    var d = parseYmd(ymd);
+    return !!d && (d.getDay() === 0 || d.getDay() === 6);
+  }
+  // The same day when it is a workday, else the next one in direction dir.
+  function nextWorkday(ymd, dir) {
+    var d = ymd, n = 0;
+    while (d && isWeekend(d) && n++ < 3) d = addDays(d, dir < 0 ? -1 : 1);
+    return d;
+  }
+  // Days a span covers, both ends included (workdays only when wd).
+  function spanDays(from, to, wd) {
+    var n = daysBetween(from, to);
+    if (n < 0) { var x = from; from = to; to = x; n = -n; }
+    if (!wd) return n + 1;
+    var c = 0;
+    for (var i = 0; i <= n && i < 4000; i++) if (!isWeekend(addDays(from, i))) c++;
+    return c;
+  }
+  // A card's bar: from..to (YYYY-MM-DD), or null without any date. A
+  // milestone sits on its due date (else its start); a start after the
+  // due date is shown the other way round, never lost.
+  function planSpan(card) {
+    if (!card) return null;
+    var s = YMD.test(card.start || "") ? card.start : null;
+    var d = YMD.test(card.due || "") ? card.due : null;
+    if (!s && !d) return null;
+    var ms = card.ms === 1 || card.ms === true;
+    if (ms) { var at = d || s; return { from: at, to: at, ms: true }; }
+    s = s || d; d = d || s;
+    return s <= d ? { from: s, to: d, ms: false } : { from: d, to: s, ms: false };
+  }
+  // Move a span by delta days. With workdays the start lands on a
+  // workday (in the direction of the move) and the span keeps its
+  // number of workdays, so a week-long job stays a working week.
+  function shiftSpan(from, to, delta, wd) {
+    if (!wd) return { from: addDays(from, delta), to: addDays(to, delta) };
+    var len = Math.max(1, spanDays(from, to, true));
+    var f = nextWorkday(addDays(from, delta), delta < 0 ? -1 : 1);
+    var e = f, k = 1, guard = 0;
+    while (k < len && guard++ < 4000) { e = addDays(e, 1); if (!isWeekend(e)) k++; }
+    return { from: f, to: e };
+  }
+  // Share of done subtasks (0..1), null without subtasks.
+  function progressOf(card) {
+    var subs = arr(card && card.subtasks).filter(function (x) { return x && typeof x === "object"; });
+    if (!subs.length) return null;
+    return subs.filter(function (x) { return x.completed; }).length / subs.length;
+  }
+  // The board's "Only workdays" switch rides on its columns (gw: 1): the
+  // board header keeps no unknown keys in older merges, a column does.
+  function boardWorkdays(board) {
+    return arr(board && board.columns).some(function (c) { return c && c.gw === 1; });
+  }
+
   // ---------- normalise + re-id (export import, templates, built-ins) ----------
   // src: a board-shaped object from anywhere (our export, a template).
   // opts: { uid, now, name, keepDue, keepAtt, untick, id, archived }
   // fileMap (out): old file name → new file name, for attachments.
   function rebuild(src, opts, fileMap) {
     var uid = opts.uid, now = opts.now;
+    var cardMap = {}, withDeps = [];
     var lblMap = {}, labels = [];
     arr(src && src.labels).slice(0, 200).forEach(function (l) {
       if (!l || typeof l !== "object") return;
@@ -248,6 +305,7 @@
       var nc = { id: uid(), name: str(col.name, MAX.name).trim() || "—", mtime: now, om: now, pos: columns.length, cards: [] };
       var wip = Math.floor(+col.wip);
       if (wip > 0 && wip < 1000) nc.wip = wip;
+      if (col.gw === 1) nc.gw = 1;
       var au = col.auto && typeof col.auto === "object" ? col.auto : null;
       if (au) {
         var na = {};
@@ -274,6 +332,11 @@
         };
         var lane = str(c.lane, MAX.lane).trim();
         if (lane) card.lane = lane;
+        // Gantt (G1): start with the due date, milestone; deps are re-mapped below
+        if (opts.keepDue && YMD.test(c.start || "")) card.start = c.start;
+        if (c.ms === 1 || c.ms === true) card.ms = 1;
+        if (typeof c.id === "string") cardMap[c.id] = card.id;
+        if (Array.isArray(c.deps) && c.deps.length) withDeps.push({ card: card, deps: c.deps });
         var attMap = {};
         if (opts.keepAtt) {
           var att = [];
@@ -296,6 +359,10 @@
         nc.cards.push(card);
       });
       columns.push(nc);
+    });
+    withDeps.forEach(function (w) {
+      var d = M.cleanDeps(w.deps.map(function (id) { return cardMap[id]; }), w.card.id);
+      if (d.length) w.card.deps = d;
     });
     var board = {
       id: opts.id || uid(),
@@ -352,7 +419,9 @@
           subs.length ? subs.filter(function (s) { return s && s.completed; }).length + "/" + subs.length : "",
           c.lane || "",
           arr(c.info).map(function (f) { return [str(f.label), str(f.value)].filter(Boolean).join(": "); }).filter(Boolean).join("; "),
-          arr(c.att).map(function (x) { return x.name; }).join("; ")
+          arr(c.att).map(function (x) { return x.name; }).join("; "),
+          YMD.test(c.start || "") ? c.start : "",
+          c.ms ? "1" : ""
         ].map(csvCell).join(","));
       });
     });
@@ -731,7 +800,9 @@
     ATT_DIR: ATT_DIR, FILE_RE: FILE_RE, ymdOf: ymdOf, addDays: addDays, dueEndMs: dueEndMs, daysBetween: daysBetween,
     attPath: attPath, findCard: findCard,
     applyArrival: applyArrival, hasRules: hasRules, overdueLabel: overdueLabel, applyOverdue: applyOverdue,
-    laneKey: laneKey, lanes: lanes, setLane: setLane, sortRows: sortRows, timelineRange: timelineRange,
+    laneKey: laneKey, lanes: lanes,
+    isWeekend: isWeekend, nextWorkday: nextWorkday, spanDays: spanDays, planSpan: planSpan, shiftSpan: shiftSpan,
+    progressOf: progressOf, boardWorkdays: boardWorkdays, setLane: setLane, sortRows: sortRows, timelineRange: timelineRange,
     rebuild: rebuild, counter: counter, exportBoard: exportBoard, isExport: isExport, parseExport: parseExport,
     boardCsv: boardCsv, csvCell: csvCell, packBoard: packBoard, isPackage: isPackage, parsePackage: parsePackage, boardMd: boardMd,
     PKG_KIND: PKG_KIND, templateFromBoard: templateFromBoard, boardFromTemplate: boardFromTemplate,

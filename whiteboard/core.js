@@ -9,8 +9,10 @@
 // Kinds and their own fields:
 //   note   x y w h tx                sticky note, text fitted inside
 //   text   x y w h tx fs             free text, h follows the lines
-//   shape  x y w h tx shp f          rect | round | ellipse | diamond | tri,
-//                                    f = fill none | soft | solid
+//   shape  x y w h tx shp f sym?     rect | round | ellipse | diamond | tri,
+//                                    f = fill none | soft | solid; sym = a
+//                                    symbol of the diagram library (DG1),
+//                                    shp then the nearest basic shape
 //   arrow  ax ay bx by ao bo hd ds tx   ends are points, or stuck to
 //                                    objects (ao / bo = their ids);
 //                                    hd = end | both | none, ds = dashed
@@ -23,6 +25,10 @@
 // row removes it, a newer edit brings it back (R17); an object whose
 // board is gone is left out; no clock or random inside the merge;
 // serialize() is canonical (rows sorted by id, tombs by key).
+// FORWARD SAFE (DG1): a flat field this version does not know rides
+// along unchanged (see extras()), and on equal stamps the row with
+// more fields wins, so an older device that drops a newer field never
+// takes it away from a newer device.
 // ============================================================
 (function (root) {
   "use strict";
@@ -35,6 +41,33 @@
   var SHAPES = ["rect", "round", "ellipse", "diamond", "tri"];
   var FILLS = ["none", "soft", "solid"];
   var HEADS = ["end", "both", "none"];
+  // Diagram symbols (wave DG1): id: [group, nearest basic shape, w, h].
+  // The drawing of each one is in GEO further down.
+  var SYM_GROUPS = ["flow", "org", "uml", "basic", "net"];
+  var SYMS = {
+    process: ["flow", "rect", 160, 90], decision: ["flow", "diamond", 160, 110], terminator: ["flow", "round", 160, 70],
+    data: ["flow", "rect", 160, 90], document: ["flow", "rect", 160, 100], documents: ["flow", "rect", 170, 110],
+    predefined: ["flow", "rect", 160, 90], "manual-input": ["flow", "rect", 160, 90], "manual-op": ["flow", "rect", 160, 90],
+    preparation: ["flow", "rect", 160, 90], database: ["flow", "rect", 120, 110], delay: ["flow", "round", 150, 90],
+    "off-page": ["flow", "rect", 100, 100], connector: ["flow", "ellipse", 60, 60], merge: ["flow", "rect", 110, 90],
+    person: ["org", "rect", 200, 80], unit: ["org", "rect", 220, 110],
+    "class": ["uml", "rect", 200, 160], "interface": ["uml", "rect", 200, 140], actor: ["uml", "rect", 80, 130],
+    usecase: ["uml", "ellipse", 180, 90], "package": ["uml", "rect", 200, 140], component: ["uml", "rect", 180, 100],
+    comment: ["uml", "rect", 160, 110], node: ["uml", "rect", 180, 130], start: ["uml", "ellipse", 40, 40],
+    end: ["uml", "ellipse", 44, 44],
+    hexagon: ["basic", "rect", 140, 110], octagon: ["basic", "rect", 120, 120], star: ["basic", "rect", 120, 120],
+    cross: ["basic", "rect", 100, 100], "arrow-right": ["basic", "rect", 160, 90], "arrow-both": ["basic", "rect", 180, 90],
+    cloud: ["basic", "ellipse", 180, 120], callout: ["basic", "rect", 180, 120],
+    server: ["net", "rect", 100, 130], router: ["net", "rect", 100, 130], "switch": ["net", "rect", 100, 130],
+    firewall: ["net", "rect", 100, 130], internet: ["net", "rect", 100, 130], laptop: ["net", "rect", 100, 130],
+    desktop: ["net", "rect", 100, 130], phone: ["net", "rect", 100, 130], tablet: ["net", "rect", 100, 130],
+    "db-server": ["net", "rect", 100, 130], storage: ["net", "rect", 100, 130], user: ["net", "rect", 100, 130],
+    printer: ["net", "rect", 100, 130], wifi: ["net", "rect", 100, 130]
+  };
+  var SYM_IDS = Object.keys(SYMS);
+  // A symbol name of this or a later version (kept even when unknown).
+  var SYM_RE = /^[a-z][a-z0-9-]{0,23}$/;
+  function symOf(o) { return o && o.k === "shape" && o.sym && own(SYMS, o.sym) ? o.sym : ""; }
   // name: [strong, soft]. Notes are soft, lines and text are strong.
   var COLORS = {
     yellow: ["#e0a800", "#fff1a8"], orange: ["#e8590c", "#ffd8a8"], pink: ["#d6336c", "#fcc2d7"],
@@ -59,6 +92,26 @@
   function pick(v, list, def) { return list.indexOf(v) >= 0 ? v : def; }
   function idOk(v) { return typeof v === "string" && v.length > 0 && v.length <= 64; }
 
+  // Fields of a later version (FORWARD SAFE): a flat field with a
+  // plain name that this version does not know is kept as it came:
+  // a string up to 500 characters, a finite number, true / false or
+  // a list of up to 64 numbers; at most 16 of them, sorted by name.
+  var KNOWN = {};
+  "id b k z m c x y w h tx fs shp f sym ax ay bx by ao bo hd ds pts sw src".split(" ").forEach(function (k) { KNOWN[k] = 1; });
+  var EXTRA_RE = /^[a-z][a-zA-Z0-9]{0,15}$/, MAX_EXTRA = 16;
+  function okNum(v) { return typeof v === "number" && isFinite(v) && Math.abs(v) <= 1e9; }
+  function extraOk(v) {
+    if (typeof v === "string") return v.length <= 500;
+    if (typeof v === "boolean") return true;
+    if (Array.isArray(v)) return v.length <= 64 && v.every(okNum);
+    return okNum(v);
+  }
+  function extras(raw, o) {
+    Object.keys(raw).filter(function (k) { return !KNOWN[k] && EXTRA_RE.test(k) && extraOk(raw[k]); })
+      .sort().slice(0, MAX_EXTRA).forEach(function (k) { o[k] = Array.isArray(raw[k]) ? raw[k].slice() : raw[k]; });
+    return o;
+  }
+
   function cleanBoard(raw) {
     if (!raw || typeof raw !== "object" || !idOk(raw.id)) return null;
     return { id: raw.id, name: str(raw.name, MAX_NAME), m: ms(raw.m) };
@@ -80,7 +133,7 @@
       o.hd = pick(raw.hd, HEADS, "end");
       o.ds = raw.ds === true;
       o.tx = str(raw.tx, MAX_NAME);
-      return o;
+      return extras(raw, o);
     }
     var x = num(raw.x), y = num(raw.y), w = size(raw.w), h = size(raw.h);
     if (x === null || y === null || w === null || h === null) return null;
@@ -88,7 +141,10 @@
     if (k === "note" || k === "text" || k === "shape") o.tx = str(raw.tx, MAX_TEXT);
     if (k === "frame") o.tx = str(raw.tx, MAX_NAME);
     if (k === "text") { var fs = num(raw.fs); o.fs = fs !== null && fs >= 8 && fs <= 200 ? Math.round(fs) : 24; }
-    if (k === "shape") { o.shp = pick(raw.shp, SHAPES, "rect"); o.f = pick(raw.f, FILLS, "soft"); }
+    if (k === "shape") {
+      o.shp = pick(raw.shp, SHAPES, "rect"); o.f = pick(raw.f, FILLS, "soft");
+      if (typeof raw.sym === "string" && SYM_RE.test(raw.sym)) o.sym = raw.sym;   // written only when set
+    }
     if (k === "pen") {
       var p = raw.pts;
       if (!Array.isArray(p) || p.length < 2 || p.length > MAX_PTS || p.length % 2) return null;
@@ -102,11 +158,17 @@
       if (typeof raw.src !== "string" || raw.src.length > IMG_LEN || !IMG_RE.test(raw.src)) return null;
       o.src = raw.src;
     }
-    return o;
+    return extras(raw, o);
   }
 
+  // Equal stamps: the row with more fields wins, then the larger JSON.
+  // An older version drops the fields it does not know without a new
+  // stamp, so counting fields first keeps the fuller row; it is still
+  // one total order, so merge(a, b) === merge(b, a).
   function newer(a, b) {
     if (a.m !== b.m) return a.m > b.m;
+    var na = Object.keys(a).length, nb = Object.keys(b).length;
+    if (na !== nb) return na > nb;
     return JSON.stringify(a) > JSON.stringify(b);
   }
   function byId(a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; }
@@ -427,8 +489,10 @@
   }
   function col(o, i) { return COLORS[o.c] ? COLORS[o.c][i] : COLORS.ink[i]; }
 
-  function textLines(lines, x, y, fs, anchor, fill) {
-    return n("text", { x: x, y: y, "font-size": fs, "font-family": FONT, fill: fill, "text-anchor": anchor },
+  function textLines(lines, x, y, fs, anchor, fill, more) {
+    var a = { x: x, y: y, "font-size": fs, "font-family": FONT, fill: fill, "text-anchor": anchor };
+    if (more) Object.keys(more).forEach(function (k) { a[k] = more[k]; });
+    return n("text", a,
       lines.map(function (l, i) {
         return n("tspan", { x: x, dy: i ? r2(fs * LH) : r2(fs * 0.95) }, null, l || " ");
       }));
@@ -440,6 +504,165 @@
     if (o.shp === "diamond") return n("path", { d: "M" + r2(x + w / 2) + " " + y + "L" + r2(x + w) + " " + r2(y + h / 2) + "L" + r2(x + w / 2) + " " + r2(y + h) + "L" + x + " " + r2(y + h / 2) + "Z" });
     if (o.shp === "tri") return n("path", { d: "M" + r2(x + w / 2) + " " + y + "L" + r2(x + w) + " " + r2(y + h) + "L" + x + " " + r2(y + h) + "Z" });
     return n("rect", { x: x, y: y, width: w, height: h, rx: o.shp === "round" ? Math.min(16, w / 4, h / 4) : 0 });
+  }
+
+  // ---------- diagram symbols: the drawing ----------
+  // Each symbol is drawn in a 100 × 100 grid: m "fit" stretches it to
+  // the object's box, m "icon" keeps it square (icons, and the round
+  // start / end nodes). lab: the text goes under the icon (the icon
+  // takes the top 72 %). tb: the text box as parts of the box
+  // [left, top, right, bottom]. cls: a UML class (1) or interface (2),
+  // with compartments from the text. p: what to draw, in order:
+  //   [role, "M x y L x y C … Q … Z"]   a path (absolute, grid units)
+  //   [role + "c", cx, cy, r]           a circle (an ellipse in "fit")
+  //   [role + "r", x, y, w, h, rx]      a rectangle, rx in pixels or "pill"
+  // Roles: b body (the fill, a strong outline), l a line on the body
+  // (paper-coloured on a full-colour body), L a line that is always
+  // strong, s a dot on the body (paper-coloured on full colour), S a
+  // dot that is always strong, w a paper-filled part with an outline.
+  var STAR = (function () {
+    var d = "";
+    for (var i = 0; i < 10; i++) {
+      var a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 20 : 50;
+      d += (i ? "L" : "M") + r2(50 + r * Math.cos(a)) + " " + r2(50 + r * Math.sin(a) * 1.05 + 3);
+    }
+    return d + "Z";
+  })();
+  var CYL = [["b", "M0 12C0 -4 100 -4 100 12L100 88C100 104 0 104 0 88Z"], ["l", "M0 12C0 28 100 28 100 12"]];
+  var GEO = {
+    process: { m: "fit", p: [["br", 0, 0, 100, 100, 0]] },
+    decision: { m: "fit", tb: [0.22, 0.22, 0.78, 0.78], p: [["b", "M50 0L100 50L50 100L0 50Z"]] },
+    terminator: { m: "fit", tb: [0.12, 0.08, 0.88, 0.92], p: [["br", 0, 0, 100, 100, "pill"]] },
+    data: { m: "fit", tb: [0.2, 0.06, 0.8, 0.94], p: [["b", "M20 0L100 0L80 100L0 100Z"]] },
+    document: { m: "fit", tb: [0.05, 0.05, 0.95, 0.8], p: [["b", "M0 0L100 0L100 82C80 72 65 72 50 84C35 96 18 96 0 86Z"]] },
+    documents: { m: "fit", tb: [0.05, 0.16, 0.84, 0.82], p: [["L", "M12 6L12 0L100 0L100 70L94 70"], ["L", "M6 12L6 6L94 6L94 76L88 76"],
+      ["b", "M0 12L88 12L88 88C70 80 58 80 44 90C30 100 14 100 0 92Z"]] },
+    predefined: { m: "fit", tb: [0.12, 0.06, 0.88, 0.94], p: [["br", 0, 0, 100, 100, 0], ["l", "M10 0L10 100M90 0L90 100"]] },
+    "manual-input": { m: "fit", tb: [0.05, 0.3, 0.95, 0.95], p: [["b", "M0 28L100 0L100 100L0 100Z"]] },
+    "manual-op": { m: "fit", tb: [0.2, 0.06, 0.8, 0.94], p: [["b", "M0 0L100 0L80 100L20 100Z"]] },
+    preparation: { m: "fit", tb: [0.16, 0.06, 0.84, 0.94], p: [["b", "M15 0L85 0L100 50L85 100L15 100L0 50Z"]] },
+    database: { m: "fit", tb: [0.06, 0.3, 0.94, 0.92], p: CYL },
+    delay: { m: "fit", tb: [0.05, 0.08, 0.8, 0.92], p: [["b", "M0 0L60 0C113 0 113 100 60 100L0 100Z"]] },
+    "off-page": { m: "fit", tb: [0.08, 0.06, 0.92, 0.68], p: [["b", "M0 0L100 0L100 70L50 100L0 70Z"]] },
+    connector: { m: "fit", tb: [0.16, 0.16, 0.84, 0.84], p: [["bc", 50, 50, 50]] },
+    merge: { m: "fit", tb: [0.22, 0.04, 0.78, 0.5], p: [["b", "M0 0L100 0L50 100Z"]] },
+    person: { m: "fit", tb: [0.1, 0.06, 0.96, 0.94], p: [["br", 0, 0, 100, 100, 0], ["sr", 0, 0, 5, 100, 0]] },
+    unit: { m: "fit", tb: [0.05, 0.28, 0.95, 0.94], p: [["br", 0, 0, 100, 100, 0], ["sr", 0, 0, 100, 18, 0]] },
+    "class": { m: "fit", cls: 1, p: [["br", 0, 0, 100, 100, 0]] },
+    "interface": { m: "fit", cls: 2, p: [["br", 0, 0, 100, 100, 0]] },
+    actor: { m: "icon", lab: 1, p: [["Lc", 50, 15, 12], ["L", "M50 27L50 62M22 40L78 40M50 62L28 97M50 62L72 97"]] },
+    usecase: { m: "fit", tb: [0.14, 0.14, 0.86, 0.86], p: [["bc", 50, 50, 50]] },
+    "package": { m: "fit", tb: [0.05, 0.24, 0.95, 0.95], p: [["b", "M0 0L42 0L42 18L0 18Z"], ["b", "M0 18L100 18L100 100L0 100Z"]] },
+    component: { m: "fit", tb: [0.2, 0.06, 0.95, 0.94], p: [["b", "M10 0L100 0L100 100L10 100Z"], ["wr", 0, 18, 20, 16, 0], ["wr", 0, 62, 20, 16, 0]] },
+    comment: { m: "fit", tb: [0.06, 0.08, 0.9, 0.94], p: [["b", "M0 0L82 0L100 18L100 100L0 100Z"], ["l", "M82 0L82 18L100 18"]] },
+    node: { m: "fit", tb: [0.05, 0.22, 0.8, 0.95], p: [["b", "M0 15L15 0L100 0L85 15Z"], ["b", "M85 15L100 0L100 85L85 100Z"], ["b", "M0 15L85 15L85 100L0 100Z"]] },
+    start: { m: "icon", p: [["Sc", 50, 50, 50]] },
+    end: { m: "icon", p: [["Lc", 50, 50, 48], ["Sc", 50, 50, 32]] },
+    hexagon: { m: "fit", tb: [0.2, 0.08, 0.8, 0.92], p: [["b", "M25 0L75 0L100 50L75 100L25 100L0 50Z"]] },
+    octagon: { m: "fit", tb: [0.12, 0.12, 0.88, 0.88], p: [["b", "M30 0L70 0L100 30L100 70L70 100L30 100L0 70L0 30Z"]] },
+    star: { m: "fit", tb: [0.3, 0.36, 0.7, 0.72], p: [["b", STAR]] },
+    cross: { m: "fit", tb: [0.1, 0.36, 0.9, 0.64], p: [["b", "M35 0L65 0L65 35L100 35L100 65L65 65L65 100L35 100L35 65L0 65L0 35L35 35Z"]] },
+    "arrow-right": { m: "fit", tb: [0.04, 0.32, 0.72, 0.68], p: [["b", "M0 30L65 30L65 0L100 50L65 100L65 70L0 70Z"]] },
+    "arrow-both": { m: "fit", tb: [0.2, 0.32, 0.8, 0.68], p: [["b", "M0 50L25 0L25 30L75 30L75 0L100 50L75 100L75 70L25 70L25 100Z"]] },
+    cloud: { m: "fit", tb: [0.16, 0.24, 0.84, 0.84], p: [["b", "M25 90C5 90 0 70 12 60C0 45 15 25 32 32C38 10 68 8 74 28C92 22 104 45 92 58C104 72 92 92 75 88C65 100 38 100 25 90Z"]] },
+    callout: { m: "fit", tb: [0.05, 0.06, 0.95, 0.72], p: [["b", "M0 0L100 0L100 76L45 76L22 100L26 76L0 76Z"]] },
+    server: { m: "icon", lab: 1, p: [["br", 24, 4, 52, 92, 4], ["l", "M32 22L68 22M32 38L68 38M32 54L68 54"], ["sc", 36, 80, 4], ["sc", 50, 80, 4]] },
+    router: { m: "icon", lab: 1, p: [["b", "M4 38C4 22 96 22 96 38L96 64C96 80 4 80 4 64Z"], ["l", "M4 38C4 54 96 54 96 38"],
+      ["l", "M34 34L66 42M66 34L34 42"]] },
+    "switch": { m: "icon", lab: 1, p: [["br", 4, 32, 92, 36, 4], ["sr", 12, 48, 9, 9, 0], ["sr", 26, 48, 9, 9, 0], ["sr", 40, 48, 9, 9, 0],
+      ["sr", 54, 48, 9, 9, 0], ["sr", 68, 48, 9, 9, 0], ["sc", 84, 42, 3]] },
+    firewall: { m: "icon", lab: 1, p: [["br", 6, 12, 88, 76, 0],
+      ["l", "M6 31L94 31M6 50L94 50M6 69L94 69M50 12L50 31M28 31L28 50M72 31L72 50M50 50L50 69M28 69L28 88M72 69L72 88"]] },
+    internet: { m: "icon", lab: 1, p: [["bc", 50, 50, 46], ["l", "M4 50L96 50M50 4C24 24 24 76 50 96M50 4C76 24 76 76 50 96M12 27L88 27M12 73L88 73"]] },
+    laptop: { m: "icon", lab: 1, p: [["br", 16, 16, 68, 50, 3], ["wr", 22, 22, 56, 38, 0], ["b", "M6 70L94 70L100 82L0 82Z"]] },
+    desktop: { m: "icon", lab: 1, p: [["br", 6, 8, 88, 60, 3], ["wr", 12, 14, 76, 48, 0], ["L", "M50 68L50 84M30 90L70 90"]] },
+    phone: { m: "icon", lab: 1, p: [["br", 28, 2, 44, 96, 7], ["l", "M43 10L57 10"], ["sc", 50, 88, 4]] },
+    tablet: { m: "icon", lab: 1, p: [["br", 12, 10, 76, 80, 6], ["wr", 18, 16, 64, 62, 0], ["sc", 50, 84, 3]] },
+    "db-server": { m: "icon", lab: 1, p: [["b", "M14 14C14 2 86 2 86 14L86 86C86 98 14 98 14 86Z"], ["l", "M14 14C14 26 86 26 86 14M14 38C14 50 86 50 86 38M14 62C14 74 86 74 86 62"]] },
+    storage: { m: "icon", lab: 1, p: [["br", 8, 16, 84, 68, 4], ["l", "M8 39L92 39M8 61L92 61M18 28L54 28M18 50L54 50M18 72L54 72"],
+      ["sc", 80, 28, 4], ["sc", 80, 50, 4], ["sc", 80, 72, 4]] },
+    user: { m: "icon", lab: 1, p: [["bc", 50, 28, 20], ["b", "M12 98C12 62 88 62 88 98Z"]] },
+    printer: { m: "icon", lab: 1, p: [["wr", 26, 8, 48, 32, 0], ["br", 8, 36, 84, 40, 6], ["wr", 26, 62, 48, 32, 0], ["sc", 80, 46, 3]] },
+    wifi: { m: "icon", lab: 1, p: [["Sc", 50, 82, 7], ["L", "M30 62C40 51 60 51 70 62M17 47C35 28 65 28 83 47M4 32C30 6 70 6 96 32"]] }
+  };
+
+  // A grid path in pixels: x → ox + x · sx, y → oy + y · sy.
+  function gridPath(d, ox, oy, sx, sy) {
+    var i = 0;
+    return d.replace(/-?\d*\.?\d+/g, function (v) {
+      var out = (i++ % 2) ? oy + parseFloat(v) * sy : ox + parseFloat(v) * sx;
+      return String(r2(out));
+    });
+  }
+
+  function drawSym(o, def, strong, soft, opt, kids) {
+    var X = o.x, Y = o.y, W = o.w, H = o.h, iconH = def.lab ? H * 0.72 : H, sx, sy, ox, oy;
+    if (def.m === "icon") {
+      var side = Math.max(1, Math.min(W, iconH));
+      sx = sy = side / 100; ox = X + (W - side) / 2; oy = Y + (iconH - side) / 2;
+    } else { sx = W / 100; sy = H / 100; ox = X; oy = Y; }
+    var solid = o.f === "solid", fill = solid ? strong : o.f === "soft" ? soft : "none";
+    if (opt.live) kids.push(n("rect", { x: X, y: Y, width: W, height: H, fill: "transparent" }));
+    def.p.forEach(function (pr) {
+      var role = pr[0].charAt(0), type = pr[0].charAt(1), nd;
+      if (type === "c") {
+        nd = def.m === "icon" ? n("circle", { cx: r2(ox + pr[1] * sx), cy: r2(oy + pr[2] * sy), r: r2(pr[3] * sx) })
+          : n("ellipse", { cx: r2(ox + pr[1] * sx), cy: r2(oy + pr[2] * sy), rx: r2(pr[3] * sx), ry: r2(pr[3] * sy) });
+      } else if (type === "r") {
+        var rw = pr[3] * sx, rh = pr[4] * sy;
+        nd = n("rect", { x: r2(ox + pr[1] * sx), y: r2(oy + pr[2] * sy), width: r2(rw), height: r2(rh),
+          rx: pr[5] === "pill" ? r2(Math.min(rw, rh) / 2) : Math.min(pr[5], rw / 4, rh / 4) });
+      } else nd = n("path", { d: gridPath(pr[1], ox, oy, sx, sy) });
+      var a = nd.a;
+      if (role === "b") { a.fill = fill; a.stroke = strong; a["stroke-width"] = 2; a["stroke-linejoin"] = "round"; }
+      else if (role === "w") { a.fill = PAPER; a.stroke = strong; a["stroke-width"] = 2; a["stroke-linejoin"] = "round"; }
+      else if (role === "l" || role === "L") {
+        a.fill = "none"; a.stroke = role === "l" && solid ? PAPER : strong; a["stroke-width"] = 2;
+        a["stroke-linecap"] = "round"; a["stroke-linejoin"] = "round";
+      } else a.fill = role === "s" && solid ? PAPER : strong;
+      kids.push(nd);
+    });
+    var ink = solid && !def.lab ? "#ffffff" : INK;
+    if (def.cls) { drawClass(o, def.cls === 2, strong, solid, ink, opt.measure, kids); return; }
+    if (!o.tx) return;
+    var tb = def.tb || [0.06, 0.06, 0.94, 0.94], bx, by, bw, bh, max = 28;
+    if (def.lab) { bx = X; by = Y + iconH + 2; bw = W; bh = Math.max(10, H - iconH - 2); max = 16; }
+    else { bx = X + tb[0] * W; by = Y + tb[1] * H; bw = (tb[2] - tb[0]) * W; bh = (tb[3] - tb[1]) * H; }
+    var f = fit(o.tx, Math.max(8, bw - 8), Math.max(10, bh - 4), max, opt.measure), th = f.lines.length * f.fs * LH;
+    kids.push(textLines(f.lines, r2(bx + bw / 2), r2(def.lab ? by : by + (bh - th) / 2), f.fs, "middle", ink));
+  }
+
+  // A UML class: the first part of the text is its name, a line of
+  // two or more dashes starts the next compartment (attributes, then
+  // methods). The largest size up to 16 whose lines all fit is used.
+  function drawClass(o, iface, strong, solid, ink, measure, kids) {
+    var secs = [[]];
+    String(o.tx || "").split("\n").forEach(function (l) {
+      if (/^\s*-{2,}\s*$/.test(l)) secs.push([]); else secs[secs.length - 1].push(l);
+    });
+    var head = secs[0].length ? secs[0] : [""], rest = secs.slice(1), W = o.w, H = o.h;
+    if (iface) head = ["«interface»"].concat(head);
+    var pickFs = null, hw, rw, wr;
+    for (var i = 0; i < FIT.length && !pickFs; i++) {
+      var fs = FIT[i];
+      if (fs > 16) continue;
+      wr = function (lines) { var out = []; lines.forEach(function (l) { wrap(l, W - 16, fs, measure).forEach(function (x) { out.push(x); }); }); return out; };
+      hw = wr(head); rw = rest.map(wr);
+      var tot = hw.length * fs * LH + 12;
+      rw.forEach(function (r) { tot += Math.max(1, r.length) * fs * LH + 10; });
+      if (tot <= H || fs === FIT[FIT.length - 1]) pickFs = fs;
+    }
+    var line = solid ? PAPER : strong, y = o.y + 6;
+    kids.push(textLines(hw, r2(o.x + W / 2), r2(y), pickFs, "middle", ink, { "font-weight": 600 }));
+    y += hw.length * pickFs * LH + 6;
+    if (!rw.length) rw = [[]];
+    rw.forEach(function (r) {
+      if (y >= o.y + H - 2) return;
+      kids.push(n("path", { d: "M" + o.x + " " + r2(y) + "L" + r2(o.x + W) + " " + r2(y), stroke: line, "stroke-width": 1.5, fill: "none" }));
+      var room = Math.floor((o.y + H - y - 6) / (pickFs * LH));
+      if (r.length && room > 0) kids.push(textLines(r.slice(0, room), r2(o.x + 8), r2(y + 5), pickFs, "start", ink));
+      y += Math.max(1, r.length) * pickFs * LH + 10;
+    });
   }
 
   function penPath(o) {
@@ -473,6 +696,8 @@
     } else if (o.k === "text") {
       if (live) kids.push(n("rect", { x: o.x, y: o.y, width: o.w, height: r2(textHeight(o, measure)), fill: "transparent" }));
       kids.push(textLines(wrap(o.tx, o.w, o.fs, measure), o.x, o.y, o.fs, "start", strong));
+    } else if (o.k === "shape" && symOf(o)) {
+      drawSym(o, GEO[o.sym], strong, soft, opt, kids);
     } else if (o.k === "shape") {
       var s = shapePath(o);
       s.a.fill = o.f === "solid" ? strong : o.f === "soft" ? soft : live ? "transparent" : "none";
@@ -565,7 +790,7 @@
   function words(o) { return typeof o.tx === "string" ? o.tx.replace(/\s+/g, " ").trim() : ""; }
 
   var API = {
-    VER: VER, KINDS: KINDS, SHAPES: SHAPES, FILLS: FILLS, HEADS: HEADS, COLORS: COLORS, COLOR_KEYS: COLOR_KEYS,
+    VER: VER, KINDS: KINDS, SHAPES: SHAPES, SYMS: SYMS, SYM_IDS: SYM_IDS, SYM_GROUPS: SYM_GROUPS, GEO: GEO, symOf: symOf, FILLS: FILLS, HEADS: HEADS, COLORS: COLORS, COLOR_KEYS: COLOR_KEYS,
     DEF_COLOR: DEF_COLOR, PAPER: PAPER, FONT: FONT, LH: LH, IMG_LEN: IMG_LEN, MAX_PTS: MAX_PTS, MAX_TEXT: MAX_TEXT,
     empty: empty, normalize: normalize, merge: merge, serialize: serialize, cleanObj: cleanObj,
     uid: uid, apply: apply, putBoard: putBoard, removeBoard: removeBoard, boards: boards, board: board,

@@ -465,7 +465,74 @@ const STRINGS = {
     'mm.busy': 'Creating {i} of {n}…',
     'mm.done': 'Mail merge done: {n} records',
     'mm.capped': 'Only the first {n} records are used.',
-    'mm.docTitle': '{title} (mail merge)'
+    'mm.docTitle': '{title} (mail merge)',
+    'cat.translate': 'Translate this document…',
+    'cat.list': 'Translations',
+    'cat.close': 'Close',
+    'cat.new': 'New translation',
+    'cat.noDisk': 'Translations need the orOS disk. Open Writer inside orOS.',
+    'cat.err': 'Something went wrong with the translation. Please try again.',
+    'cat.loading': 'Loading…',
+    'cat.none': 'No translations yet. Start one from a document.',
+    'cat.untitled': 'Untitled translation',
+    'cat.pct': '{p}% done',
+    'cat.delAsk': 'Move “{name}” to the Trash? You can put it back from Files for 30 days.',
+    'cat.del': 'Delete',
+    'cat.deleted': 'Moved to the Trash',
+    'cat.create': 'Create',
+    'cat.source': 'Document to translate',
+    'cat.fromFile': 'From a file…',
+    'cat.from': 'From',
+    'cat.to': 'Into',
+    'cat.name': 'Name',
+    'cat.pickSrc': 'Choose a document to translate.',
+    'cat.sameLang': 'Choose two different languages.',
+    'cat.empty': 'This document has no text to translate.',
+    'cat.noSrc': 'This translation’s source is missing. It may still be syncing from another device.',
+    'cat.gone': 'This translation is no longer here.',
+    'cat.back': 'Back to the document',
+    'cat.search': 'Search source and translation',
+    'cat.filter': 'Show',
+    'cat.f.all': 'All segments',
+    'cat.f.todo': 'Not done yet',
+    'cat.f.draft': 'Drafts',
+    'cat.f.done': 'Done',
+    'cat.f.rev': 'Reviewed',
+    'cat.f.tags': 'Formatting to check',
+    'cat.chapter': 'Go to chapter',
+    'cat.build': 'Build document',
+    'cat.rename': 'Rename',
+    'cat.nextTodo': 'Next untranslated',
+    'cat.more': 'More',
+    'cat.keys': 'Ctrl+Enter confirm and next · Ctrl+Shift+Enter reviewed · Alt+↑/↓ move · Alt+S copy source · Alt+T next tag',
+    'cat.s0': 'Not translated',
+    'cat.s1': 'Draft',
+    'cat.s2': 'Done',
+    'cat.s3': 'Reviewed',
+    'cat.joined': 'Joined to the segment before',
+    'cat.prog': '{p}% · {d} of {w} words',
+    'cat.segN': 'Translation of segment {n}',
+    'cat.copySrc': 'Copy source',
+    'cat.copySrcT': 'Put the source text here (Alt+S)',
+    'cat.repeat': 'Same as {n}',
+    'cat.join': 'Join',
+    'cat.joinT': 'Leave this segment empty: its meaning is in the translation of the one before',
+    'cat.reviewed': 'Reviewed',
+    'cat.reviewedT': 'Mark as reviewed and go on (Ctrl+Shift+Enter)',
+    'cat.confirm': 'Confirm',
+    'cat.confirmT': 'Mark as done and go on (Ctrl+Enter)',
+    'cat.tagMiss': 'Formatting {n} ({name}) is missing: tap to put it in',
+    'cat.tagIns': 'Put formatting {n} ({name}) in',
+    'cat.tagOrder': 'Check the order of the formatting marks',
+    'cat.allDone': 'Every segment is translated.',
+    'cat.emptyOk': 'Write the translation first, or use Join.',
+    'cat.saving': 'Saving…',
+    'cat.saved': 'Saved',
+    'cat.notSaved': 'Not saved yet, trying again',
+    'cat.builtLeft': 'Document built. {n} segments are still in the source language.',
+    'cat.built': 'Document built.',
+    'cat.updateAsk': 'Update “{name}” with this translation? Its current text goes into Version History.',
+    'cat.update': 'Update'
   },
   el: {
     'app.name': 'Writer',
@@ -832,7 +899,74 @@ const STRINGS = {
     'mm.busy': 'Δημιουργία {i} από {n}…',
     'mm.done': 'Η συγχώνευση ολοκληρώθηκε: {n} εγγραφές',
     'mm.capped': 'Χρησιμοποιούνται μόνο οι πρώτες {n} εγγραφές.',
-    'mm.docTitle': '{title} (συγχώνευση)'
+    'mm.docTitle': '{title} (συγχώνευση)',
+    'cat.translate': 'Μετάφραση αυτού του εγγράφου…',
+    'cat.list': 'Μεταφράσεις',
+    'cat.close': 'Κλείσιμο',
+    'cat.new': 'Νέα μετάφραση',
+    'cat.noDisk': 'Οι μεταφράσεις χρειάζονται τον δίσκο του orOS. Άνοιξε τον Writer μέσα στο orOS.',
+    'cat.err': 'Κάτι πήγε στραβά με τη μετάφραση. Δοκίμασε ξανά.',
+    'cat.loading': 'Φόρτωση…',
+    'cat.none': 'Δεν υπάρχουν ακόμη μεταφράσεις. Ξεκίνα μία από ένα έγγραφο.',
+    'cat.untitled': 'Μετάφραση χωρίς τίτλο',
+    'cat.pct': '{p}% έτοιμη',
+    'cat.delAsk': 'Μεταφορά της «{name}» στον Κάδο; Μπορείς να την επαναφέρεις από τα Αρχεία για 30 ημέρες.',
+    'cat.del': 'Διαγραφή',
+    'cat.deleted': 'Μεταφέρθηκε στον Κάδο',
+    'cat.create': 'Δημιουργία',
+    'cat.source': 'Έγγραφο προς μετάφραση',
+    'cat.fromFile': 'Από αρχείο…',
+    'cat.from': 'Από',
+    'cat.to': 'Σε',
+    'cat.name': 'Όνομα',
+    'cat.pickSrc': 'Διάλεξε ένα έγγραφο για μετάφραση.',
+    'cat.sameLang': 'Διάλεξε δύο διαφορετικές γλώσσες.',
+    'cat.empty': 'Αυτό το έγγραφο δεν έχει κείμενο για μετάφραση.',
+    'cat.noSrc': 'Λείπει το πρωτότυπο αυτής της μετάφρασης. Ίσως συγχρονίζεται ακόμη από άλλη συσκευή.',
+    'cat.gone': 'Αυτή η μετάφραση δεν υπάρχει πια.',
+    'cat.back': 'Πίσω στο έγγραφο',
+    'cat.search': 'Αναζήτηση σε πρωτότυπο και μετάφραση',
+    'cat.filter': 'Εμφάνιση',
+    'cat.f.all': 'Όλα τα τμήματα',
+    'cat.f.todo': 'Δεν έχουν τελειώσει',
+    'cat.f.draft': 'Πρόχειρα',
+    'cat.f.done': 'Έτοιμα',
+    'cat.f.rev': 'Ελεγμένα',
+    'cat.f.tags': 'Μορφοποίηση για έλεγχο',
+    'cat.chapter': 'Μετάβαση σε κεφάλαιο',
+    'cat.build': 'Δημιουργία εγγράφου',
+    'cat.rename': 'Μετονομασία',
+    'cat.nextTodo': 'Επόμενο αμετάφραστο',
+    'cat.more': 'Περισσότερα',
+    'cat.keys': 'Ctrl+Enter επιβεβαίωση και επόμενο · Ctrl+Shift+Enter ελεγμένο · Alt+↑/↓ μετακίνηση · Alt+S αντιγραφή πρωτοτύπου · Alt+T επόμενη ετικέτα',
+    'cat.s0': 'Αμετάφραστο',
+    'cat.s1': 'Πρόχειρο',
+    'cat.s2': 'Έτοιμο',
+    'cat.s3': 'Ελεγμένο',
+    'cat.joined': 'Ενώθηκε με το προηγούμενο τμήμα',
+    'cat.prog': '{p}% · {d} από {w} λέξεις',
+    'cat.segN': 'Μετάφραση τμήματος {n}',
+    'cat.copySrc': 'Αντιγραφή πρωτοτύπου',
+    'cat.copySrcT': 'Βάλε εδώ το κείμενο του πρωτοτύπου (Alt+S)',
+    'cat.repeat': 'Ίδιο με το {n}',
+    'cat.join': 'Ένωση',
+    'cat.joinT': 'Άφησε κενό αυτό το τμήμα: το νόημά του είναι στη μετάφραση του προηγούμενου',
+    'cat.reviewed': 'Ελέγχθηκε',
+    'cat.reviewedT': 'Σήμανση ως ελεγμένο και συνέχεια (Ctrl+Shift+Enter)',
+    'cat.confirm': 'Επιβεβαίωση',
+    'cat.confirmT': 'Σήμανση ως έτοιμο και συνέχεια (Ctrl+Enter)',
+    'cat.tagMiss': 'Λείπει η μορφοποίηση {n} ({name}): πάτησε για να μπει',
+    'cat.tagIns': 'Βάλε τη μορφοποίηση {n} ({name})',
+    'cat.tagOrder': 'Έλεγξε τη σειρά των σημαδιών μορφοποίησης',
+    'cat.allDone': 'Όλα τα τμήματα έχουν μεταφραστεί.',
+    'cat.emptyOk': 'Γράψε πρώτα τη μετάφραση ή χρησιμοποίησε την Ένωση.',
+    'cat.saving': 'Αποθήκευση…',
+    'cat.saved': 'Αποθηκεύτηκε',
+    'cat.notSaved': 'Δεν αποθηκεύτηκε ακόμη, νέα προσπάθεια',
+    'cat.builtLeft': 'Το έγγραφο δημιουργήθηκε. {n} τμήματα είναι ακόμη στη γλώσσα του πρωτοτύπου.',
+    'cat.built': 'Το έγγραφο δημιουργήθηκε.',
+    'cat.updateAsk': 'Ενημέρωση του «{name}» με αυτή τη μετάφραση; Το τωρινό κείμενό του πηγαίνει στο Ιστορικό εκδόσεων.',
+    'cat.update': 'Ενημέρωση'
   }
 };
 
@@ -2368,6 +2502,8 @@ function openSearchTarget(t) {
     if (f) ioOpenFile(f);
     return;
   }
+  if (t && typeof t.translate === 'string') { catLoad().then(c => c.openProject(t.translate), catFailed); return; }
+  if (t && t.translations === true) { catLoad().then(c => c.openManager(), catFailed); return; }
   if (t && typeof t.doc === 'string') activateTab(t.doc);
 }
 function takeOpenFile(o) {
@@ -2408,6 +2544,84 @@ function assistLoad() {
     assistP.catch(() => { assistP = null; });
   }
   return assistP;
+}
+
+// WR-CAT (book translation): the screens are cat.js (with catcore.js
+// and catstore.js), loaded on first use; this is what they may use of
+// Writer. Projects live on the orOS disk (/internal/Writer/Translations),
+// never in the Writer slice.
+function catFs() {
+  try {
+    const p = window.parent;
+    if (p && p !== window && p.orosFS && typeof p.orosFS.writeText === 'function') return p.orosFS;
+    if (window.orosFS && typeof window.orosFS.writeText === 'function') return window.orosFS;
+  } catch (e) {}
+  return null;
+}
+// The built translation: a new document, or the earlier one replaced
+// (its current text goes into Version History first).
+function catWriteDoc(doc, o) {
+  const html = WriterIO.sanitizeHtml(String(o.html || ''));
+  const fns = (Array.isArray(o.footnotes) ? o.footnotes : [])
+    .filter(f => f && typeof f.id === 'string')
+    .map(f => ({ id: f.id, text: String(f.text || '') }));
+  const title = String(o.title || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  if (doc && !doc.del) {
+    takeManualSnapshot(doc);
+    clearTimeout(saveTimer);
+    dirty = false;
+  } else {
+    doc = createDoc({ title: title, html: '', silent: true });
+  }
+  doc.html = html;
+  doc.footnotes = fns;
+  doc.header = String(o.header || '').slice(0, 2000);
+  doc.footer = String(o.footer || '').slice(0, 2000);
+  if (title) doc.title = title;
+  const pg = o.page || {};
+  if (typeof pg.pageSize === 'string' && PAPER_SIZES[pg.pageSize]) doc.pageSize = pg.pageSize;
+  if (pg.margins) doc.margins = cleanMargins(pg.margins);
+  const lang = String(o.lang || '').split('-')[0];
+  doc.lang = cleanLang(lang) || 'none';   // no dictionary for it: no false spelling marks
+  stampDoc(doc);
+  renderTabs();
+  if (doc.id === state.activeTab) renderEditor();
+  scheduleSave();
+  return doc;
+}
+window.WriterCatHost = {
+  t: t, toast: showToast, openDialog: openDialog, wConfirm: wConfirm, wPrompt: wPrompt, openMenu: openMenu,
+  docs: () => state.docs.filter(d => !d.del), getDoc: getDoc, activeDoc: activeDoc, flushSave: flushSave,
+  untitled: tabLabel, lang: () => window.orosLang || 'en',
+  locale: () => (window.orosLang === 'el' ? 'el-GR' : window.orosLang === 'de' ? 'de-DE' : 'en-US'),
+  fs: catFs,
+  openFile: accept => { const h = dialogHost(); return h ? h.openFile(accept) : localPickFile(accept); },
+  importFileAsDoc: file => ioParseFile(file).then(res => {
+    if (!res || res.kind === 'db') throw new Error('not a document');
+    return ioApplyImport(res, 'new');
+  }),
+  writeDoc: catWriteDoc, activateTab: activateTab
+};
+let catP = null;
+function catFailed(e) { console.warn('[writer] translation load failed:', e); showToast(t('cat.err')); }
+function catLoad() {
+  if (window.WriterCat) return Promise.resolve(window.WriterCat);
+  if (!catP) {
+    const v = (document.querySelector('script[src*="writer.js?v="]') || {}).src || '', m = v.match(/[?&]v=([^&#]+)/);
+    const load = f => new Promise((ok, fail) => {
+      const s = document.createElement('script');
+      s.src = f + (m ? '?v=' + m[1] : '');
+      s.onload = ok; s.onerror = () => fail(new Error(f));
+      document.head.appendChild(s);
+    });
+    catP = (window.WriterCore ? Promise.resolve() : load('core.js'))
+      .then(() => load('catcore.js')).then(() => load('catstore.js')).then(() => load('cat.js')).then(() => {
+        if (!window.WriterCat) throw new Error('cat');
+        return window.WriterCat;
+      });
+    catP.catch(() => { catP = null; });
+  }
+  return catP;
 }
 
 function boot() {
@@ -7147,7 +7361,7 @@ function ioApplyImport(parsed, mode) {
     renderEditor();
     scheduleSave();
     showToast(t('io.imported'));
-    return;
+    return doc;
   }
 
   flushSave();
@@ -8021,7 +8235,10 @@ function openReviewMenu(anchor) {
     { label: t('rv.track'), checked: !!(doc && doc.track), disabled: !doc, action: tcToggle },
     { label: t('rv.changes'), disabled: !doc, action: () => tcTogglePanel(true) },
     null,
-    { label: t('rv.merge'), disabled: !doc, action: openMailMerge }
+    { label: t('rv.merge'), disabled: !doc, action: openMailMerge },
+    null,
+    { label: t('cat.translate'), disabled: !doc, action: () => { const id = doc && doc.id; catLoad().then(c => c.newProject(id), catFailed); } },
+    { label: t('cat.list'), action: () => catLoad().then(c => c.openManager(), catFailed) }
   ]);
 }
 

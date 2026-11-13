@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — pdf.js (v1.1.0)
+// orOS designkit — pdf.js (v1.2.0)
 // Vector PDF export with jsPDF (vendor/jspdf.umd.min.js): text as
 // real, selectable text in the embedded fonts (Noto, or a family the
 // document names: every subset file of it, each character written in
@@ -8,7 +8,9 @@
 // shapes as paths (free paths too, even-odd or non-zero), linear and
 // radial gradients as PDF shadings (stop opacity is left out), images cropped to their frames, CMYK swatches as
 // CMYK, rotation and opacity, bleed, TrimBox/BleedBox and crop marks,
-// single pages or spreads.
+// single pages or spreads. E-book PDF (v1.2.0, LY-OUT): every colour
+// as RGB, the document language (/Lang), links (the contents lines to
+// their pages) and bookmarks (the headings).
 // Needs orosDK.model + orosDK.text + orosDK.render (Node: require).
 // Exposes orosDK.pdf (browser) or module.exports (Node).
 // ============================================================
@@ -68,7 +70,7 @@
     var c = M.swatchColor(doc, id);
     if (!c) return false;
     var fn = kind === "fill" ? "setFillColor" : kind === "draw" ? "setDrawColor" : "setTextColor";
-    if (c.cmyk) pdf[fn](c.cmyk[0] / 100, c.cmyk[1] / 100, c.cmyk[2] / 100, c.cmyk[3] / 100);
+    if (c.cmyk && !pdf.orosRgb) pdf[fn](c.cmyk[0] / 100, c.cmyk[1] / 100, c.cmyk[2] / 100, c.cmyk[3] / 100);
     else pdf[fn](c.rgb[0], c.rgb[1], c.rgb[2]);
     return true;
   }
@@ -218,13 +220,18 @@
   }
 
   // opts: { pages: [pageId] (default all), spreads, bleed, marks,
-  //         title, lang }
+  //         title, lang (BCP 47: the PDF's /Lang), rgb (every colour
+  //         as RGB: an e-book) }
   // deps: { jsPDF, layout (computeLayout result, optional),
   //         images: { itemId: { data, fmt, rect, alias } },
   //         clip: { itemId: { x, y, w, h } } (page coordinates: the
   //           item is cut to that box — N-up cards, optional),
   //         pdf: a jsPDF document made by an earlier build() to add
-  //           these pages to (optional; long data merges in parts) }
+  //           these pages to (optional; long data merges in parts;
+  //           an e-book's cover page),
+  //         links: [{ pg, x, y, w, h, to }] (page ids, page points:
+  //           a link on page pg to page to, both among the pages out),
+  //         outline: [{ t, lvl 1-3, to | pg (page id) }] (bookmarks) }
   // Returns the jsPDF document (caller: .output("blob")).
   function build(doc, opts, deps) {
     opts = opts || {}; deps = deps || {};
@@ -252,6 +259,7 @@
     var slug = opts.marks ? SLUG : 0;
 
     var pdf = deps.pdf || null, gstates = pdf ? (pdf.orosGstates = pdf.orosGstates || {}) : {};
+    var at = {};   // page id → { n (PDF page number), dx (its x on a spread) }
     groups.forEach(function (g) {
       var W = s.w * g.length + 2 * (b + slug), H = s.h + 2 * (b + slug);
       var orient = W > H ? "l" : "p";
@@ -260,6 +268,10 @@
         pdf.orosGstates = gstates;
         pdf.setProperties({ title: opts.title || doc.name, creator: "orOS Layout" });
       } else pdf.addPage([W, H], orient);
+      if (opts.rgb) pdf.orosRgb = 1;
+      if (opts.lang && !pdf.orosLang && typeof pdf.setLanguage === "function") {
+        try { pdf.setLanguage(opts.lang); pdf.orosLang = opts.lang; } catch (e) { void e; }
+      }
       var info = pdf.internal.getCurrentPageInfo().pageContext;
       var box = function (x0, y0, x1, y1) { return { bottomLeftX: x0, bottomLeftY: y0, topRightX: x1, topRightY: y1 }; };
       info.trimBox = box(b + slug, b + slug, W - b - slug, H - b - slug);
@@ -267,6 +279,7 @@
 
       g.forEach(function (page, k) {
         var ox = slug + b + k * s.w, oy = slug + b;
+        at[page.id] = { n: pdf.internal.getNumberOfPages(), dx: ox, dy: oy };
         var idx = L.pageOf[page.id], side = M.sideOf(doc, idx);
         pdf.saveGraphicsState();
         // clip to this page's trim + bleed (outer sides only on a spread)
@@ -285,7 +298,36 @@
       });
       if (opts.marks) cropMarks(pdf, b + slug, b + slug, s.w * g.length, s.h, b);
     });
+    addLinks(pdf, deps.links, at);
+    addOutline(pdf, deps.outline, at);
     return pdf;
+  }
+
+  // Links between pages that both went out, on the page they sit on.
+  function addLinks(pdf, links, at) {
+    if (!links || !links.length) return;
+    var cur = pdf.internal.getCurrentPageInfo().pageNumber;
+    links.forEach(function (ln) {
+      var from = at[ln.pg], to = at[ln.to];
+      if (!from || !to || !(ln.w > 0) || !(ln.h > 0)) return;
+      pdf.setPage(from.n);
+      pdf.link(from.dx + ln.x, from.dy + ln.y, ln.w, ln.h, { pageNumber: to.n });
+    });
+    pdf.setPage(cur);
+  }
+  // Bookmarks: a level-2 heading under the level-1 before it, and so on.
+  function addOutline(pdf, list, at) {
+    if (!list || !list.length || !pdf.outline || typeof pdf.outline.add !== "function") return;
+    var parents = [null, null, null, null];
+    list.forEach(function (h) {
+      var to = at[h.to || h.pg];
+      if (!to || !h.t) return;
+      var lv = Math.max(1, Math.min(3, h.lvl || 1)), par = null;
+      for (var i = lv - 1; i >= 1 && !par; i--) par = parents[i];
+      var node = pdf.outline.add(par, String(h.t).slice(0, 200), { pageNumber: to.n });
+      parents[lv] = node;
+      for (var j = lv + 1; j <= 3; j++) parents[j] = null;
+    });
   }
 
   // Image placement for the PDF: the visible part of the image (the

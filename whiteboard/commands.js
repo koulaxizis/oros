@@ -50,7 +50,7 @@
     return o;
   }
   function plus(a, b) { var o = {}; [a, b].forEach(function (x) { Object.keys(x).forEach(function (k) { o[k] = x[k]; }); }); return o; }
-  var LOOK = { c: { t: "color" }, shape: oneOf([""].concat(C.SHAPES)), fill: oneOf([""].concat(C.FILLS)), size: i(8, 200) };
+  var LOOK = { c: { t: "color" }, shape: oneOf([""].concat(C.SHAPES, C.SYM_IDS)), fill: oneOf([""].concat(C.FILLS)), size: i(8, 200) };
   var LINE = { ends: oneOf([""].concat(C.HEADS)), dash: ONOFF };
 
   // kind: "doc" (every command edits a board)
@@ -76,10 +76,10 @@
     "null or \"\" leaves a field as it is):\n" + [
     "replace: find → repl in the text of the picked notes, texts, shapes, arrow labels and frame names (cs = match case, word = whole words)",
     "settext: the text of the picked objects becomes `text`",
-    "style: for the picked objects c (colour), shape " + C.SHAPES.join("|") + " (shapes), fill " + C.FILLS.join("|") + " (shapes), size (8-200, font size of free text), ends " + C.HEADS.join("|") + " (arrow heads), dash on|off (dashed arrows), sw (1-40, pen width)",
+    "style: for the picked objects c (colour), shape (shapes: a basic one " + C.SHAPES.join("|") + ", or a diagram symbol " + C.SYM_IDS.join("|") + "), fill " + C.FILLS.join("|") + " (shapes), size (8-200, font size of free text), ends " + C.HEADS.join("|") + " (arrow heads), dash on|off (dashed arrows), sw (1-40, pen width)",
     "move: the picked objects go by dx, dy, or to x, y (the first picked one; the others keep their place next to it); w, h resize notes, texts, shapes, pictures, frames and drawings; order front|back brings them to the front or sends them back",
     "arrange: lay the picked notes, shapes, texts and pictures out in a grid of n columns (default: about square) with gap pixels between them (default 24), starting at x, y (default: where the first one is)",
-    "add: a new object (what note|text|shape|frame) with text (a frame's name), at x, y (default: to the right of everything on the board), size w, h, colour c, shape, fill, size (free text)",
+    "add: a new object (what note|text|shape|frame) with text (a frame's name), at x, y (default: to the right of everything on the board), size w, h (a diagram symbol has its own default size), colour c, shape, fill, size (free text); a UML class or interface gets its compartments from text: the name, then a line of -- before the attributes and another before the methods",
     "connect: an arrow from the object `from` to the object `to` (an id, or words of its text), with text (its label), c, ends, dash",
     "remove: delete the picked objects (needs ids, what, has or frame)",
     "rename: the board's name becomes `title`"
@@ -193,6 +193,12 @@
   }
   function r1(v) { return Math.round(v); }
   // A text object's height follows its lines.
+  // A basic shape, or a diagram symbol with its nearest basic shape.
+  function setShape(o, s) {
+    if (Object.prototype.hasOwnProperty.call(C.SYMS, s)) { o.sym = s; o.shp = C.SYMS[s][1]; }
+    else { o.shp = s; delete o.sym; }
+    return o;
+  }
   function fitText(o) { if (o.k === "text") o.h = Math.max(8, r1(C.textHeight(o))); return o; }
 
   // ---------- 3. Applying ----------
@@ -236,13 +242,14 @@
         return done();
       case "add": {
         if (!room(w, 1, env)) return 0;
-        var sz = SIZE[st.what], bx = C.bounds(list(w), null, 0);
+        var sym = st.what === "shape" && C.SYM_IDS.indexOf(st.shape) >= 0 ? st.shape : "";
+        var sz = sym ? C.SYMS[sym].slice(2) : SIZE[st.what], bx = C.bounds(list(w), null, 0);
         var o = { id: fresh(), b: w.bid, k: st.what, c: st.c ? nearestColor(st.c) : C.DEF_COLOR[st.what],
           x: given(st.x) ? st.x : bx ? bx.x + bx.w + 40 : 0, y: given(st.y) ? st.y : bx ? bx.y : 0,
           w: given(st.w) ? st.w : sz[0], h: given(st.h) ? st.h : sz[1], tx: st.text || "",
           z: st.what === "frame" ? C.zBottom(w.data, w.bid) : C.zTop(w.data, w.bid) };
         if (st.what === "text") o.fs = given(st.size) ? st.size : 24;
-        if (st.what === "shape") { o.shp = st.shape || "rect"; o.f = st.fill || "soft"; }
+        if (st.what === "shape") { setShape(o, st.shape || "rect"); o.f = st.fill || "soft"; }
         rows[o.id] = fitText(o);
         put(w, rows, now);
         return done();
@@ -284,7 +291,7 @@
         picked.forEach(function (o) {
           var c = copy(o);
           if (st.c && o.k !== "image") c.c = nearestColor(st.c);
-          if (o.k === "shape") { if (st.shape) c.shp = st.shape; if (st.fill) c.f = st.fill; }
+          if (o.k === "shape") { if (st.shape) setShape(c, st.shape); if (st.fill) c.f = st.fill; }
           if (o.k === "text" && given(st.size)) c.fs = st.size;
           if (o.k === "arrow") { if (st.ends) c.hd = st.ends; if (st.dash) c.ds = st.dash === "on"; }
           if (o.k === "pen" && given(st.sw)) c.sw = st.sw;
@@ -420,7 +427,7 @@
         if (x.ds) e.dash = "on";
       } else { e.x = x.x; e.y = x.y; e.w = x.w; e.h = x.h; }
       if (TEXT_KINDS[x.k] && x.tx) e.text = x.tx;
-      if (x.k === "shape") { e.shape = x.shp; e.fill = x.f; }
+      if (x.k === "shape") { e.shape = x.sym || x.shp; e.fill = x.f; }
       if (x.k === "text") e.size = x.fs;
       if (x.k === "pen") e.sw = x.sw;
       if (inF[x.id]) e.frame = inF[x.id];
