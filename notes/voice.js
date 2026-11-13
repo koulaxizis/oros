@@ -129,6 +129,13 @@
     });
   }
 
+  // notes.js loads this file at start when the flag is there, so a
+  // cut-off recording is offered back (recover clears it when none is left).
+  var LIVE_KEY = "oros-notes-rec-live";
+  function liveFlag(on) {
+    try { if (on) localStorage.setItem(LIVE_KEY, "1"); else localStorage.removeItem(LIVE_KEY); } catch (e) {}
+  }
+
   // ---------- Writing a recording to the disk ----------
   // → Promise<name>. Never over an existing file (freeName + stat).
   function writeFile(blob, at, ext) {
@@ -180,6 +187,7 @@
           mime: mr.mimeType || fmt.mime, saving: false, cancelled: false, failedIdb: false
         };
         rec = r;
+        liveFlag(true);
         idbPutRec({ rid: r.rid, page: r.pageId, mime: r.mime, ext: r.ext, at: r.started, ms: 0 }).catch(function () { r.failedIdb = true; });
         mr.ondataavailable = function (e) {
           if (!e.data || !e.data.size || r.cancelled) return;
@@ -276,7 +284,7 @@
     r.done = true;
     release(r);
     if (rec === r) rec = null;
-    if (r.cancelled) { idbDrop(r.rid).catch(function () {}); hideBar(); return; }
+    if (r.cancelled) { idbDrop(r.rid).then(recover, function () {}); hideBar(); return; }
     var ms = r.ms || elapsed(r);
     var blob = new Blob(r.parts, { type: r.mime.split(";")[0] || "audio/webm" });
     if (!blob.size) { hideBar(); idbDrop(r.rid).catch(function () {}); host.toast(t("vc.empty")); return; }
@@ -287,7 +295,7 @@
     return writeFile(blob, at, ext).then(function (name) {
       var used = addLine(pageId, name, ms);
       host.toast(used ? t("vc.saved") : t("vc.savedNoPage"));
-      return idbDrop(rid).catch(function () {});
+      return idbDrop(rid).then(function () { if (!rec) recover(); }, function () {});
     }, function () {
       host.toast(noBackup ? t("vc.saveFailLost") : t("vc.saveFail"));
     });
@@ -672,7 +680,7 @@
     idbAll("recs").then(function (list) {
       var r = (list || []).filter(function (x) { return x && x.rid && (!rec || rec.rid !== x.rid); })
         .sort(function (a, b) { return a.at - b.at; })[0];
-      if (!r) return;
+      if (!r) { if (!rec) liveFlag(false); return; }
       var pg = host.page(r.page);
       host.ask(t("vc.recoverT"), tf(pg ? "vc.recoverB" : "vc.recoverB2", { dur: V.fmtDur(r.ms || 0), title: pg ? (pg.title || t("page.untitled")) : "" }), [
         { label: t("vc.discard"), fn: function () { idbDrop(r.rid).then(recover, function () {}); } },

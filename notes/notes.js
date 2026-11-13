@@ -628,11 +628,55 @@
     }
   });
   var MD = window.OrosNotesMd;
-  // NOTES-VOICE: voice notes (voice-core.js pure, voice.js the UI).
-  // VUI is set up once the editor is built (voiceInit).
+  // NOTES-VOICE: voice notes. voice-core.js (pure, small) loads with
+  // the page; the UI (voice.js + ../files/files-core.js for the Trash)
+  // loads only when it is needed (loadVoice): the mic button, a page
+  // with a voice line, Unused recordings, or a recording to recover.
   var VCORE = window.OrosNotesVoice || null;
   var VUI = null;
   var voiceCaretPage = null;   // the page whose caret the person has placed
+  var voiceLoading = null;
+  var VOICE_MIC = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/></svg>';
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = src + "?v=" + encodeURIComponent((document.querySelector('script[src*="notes.js?v="]') || { src: "" }).src.split("?v=")[1] || "");
+      sc.onload = function () { res(); };
+      sc.onerror = function () { sc.remove(); rej(new Error("load " + src)); };
+      document.head.appendChild(sc);
+    });
+  }
+  function loadVoice() {
+    if (VUI) return Promise.resolve(VUI);
+    if (!VCORE) return Promise.reject(new Error("no-voice"));
+    if (!voiceLoading) {
+      voiceLoading = (window.OrosFilesCore ? Promise.resolve() : loadScript("../files/files-core.js"))
+        .then(function () { return window.OrosNotesVoiceUI ? null : loadScript("voice.js"); })
+        .then(function () {
+          voiceInit();
+          if (!VUI) throw new Error("no-voice");
+          var p = pageById(prefs.current);
+          VUI.renderStrip(p);
+          renderPreview();
+          return VUI;
+        });
+      voiceLoading.catch(function () { voiceLoading = null; });
+    }
+    return voiceLoading;
+  }
+  // The page names a recording: the UI is needed to show its player.
+  function voiceNeeded(page) {
+    if (VUI || !VCORE || !page || String(page.text || "").indexOf("voice:") === -1) return;
+    if (VCORE.listIn(page.text).length) loadVoice().catch(function () {});
+  }
+  function voiceRefresh(page) {
+    if (VUI) VUI.renderStrip(page);
+    else {
+      var b = document.getElementById("btn-voice");
+      if (b) b.hidden = !page;
+      voiceNeeded(page);
+    }
+  }
   function voiceInit() {
     if (VUI || !VCORE || !window.OrosNotesVoiceUI) return;
     VUI = window.OrosNotesVoiceUI.init({
@@ -1265,7 +1309,7 @@
       syncField(text, page.text || "");
       renderChips(page);
       renderLinksStrip(page);
-      if (VUI) VUI.renderStrip(page);
+      voiceRefresh(page);
       renderPreview();
       return;
     }
@@ -1282,7 +1326,7 @@
     renderChips(page);
     renderLinksStrip(page);   // v0.17.0: outgoing [[links]] + backlinks
     voiceCaretPage = null;
-    if (VUI) VUI.renderStrip(page);   // NOTES-VOICE: the page's recordings
+    voiceRefresh(page);   // NOTES-VOICE: the page's recordings
     var tb = document.getElementById("md-toolbar");
     if (tb) tb.classList.toggle("off", !page);
     renderPreview();
@@ -2978,7 +3022,7 @@
     linksTimer = setTimeout(function () {
       linksTimer = null;
       renderLinksStrip(pageById(prefs.current));
-      if (VUI) VUI.renderStrip(pageById(prefs.current));
+      voiceRefresh(pageById(prefs.current));
     }, 300);
   }
 
@@ -3041,6 +3085,7 @@
       voice: VCORE ? VCORE.voiceLine : null
     });
     if (VUI) VUI.hydrate(pv, page);    // NOTES-VOICE: players in the voice blocks
+    else if (pv.querySelector("div.md-voice")) loadVoice().catch(function () {});
   }
   var previewTimer = null;
   function queuePreview() {
@@ -4209,7 +4254,9 @@
           }]
         ];
         if (IMP) actions.push([t("imp.btn"), openImport]);
-        if (VUI) actions.push([t("vc.unused"), VUI.openUnused]);
+        if (VCORE) actions.push([t("vc.unused"), function () {
+          loadVoice().then(function (v) { v.openUnused(); }, function () {});
+        }]);
         if (hhOn()) actions.push([t(hhOf(nb.id) ? "hh.stop.t" : "hh.share.t"), function () { hhAsk(nb.id); }, "nt-hh"]);
         
         actions.forEach(function (pair) {
@@ -4476,8 +4523,23 @@
       var shareRef = document.getElementById("btn-share-page");
       header.insertBefore(todayBtn, shareRef || null);
     }
-    voiceInit();
-    if (VUI && header) VUI.mountButton(header, document.getElementById("btn-today"));
+    if (VCORE && header && !document.getElementById("btn-voice")) {
+      var micBtn = document.createElement("button");
+      micBtn.id = "btn-voice";
+      micBtn.type = "button";
+      micBtn.className = "icon-btn";
+      micBtn.title = t("vc.record");
+      micBtn.setAttribute("aria-label", t("vc.record"));
+      micBtn.innerHTML = VOICE_MIC;
+      micBtn.hidden = !pageById(prefs.current);
+      micBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        loadVoice().then(function (v) { v.start(); }, function () { notifyTransient(t("vc.noRec")); });
+      });
+      header.insertBefore(micBtn, document.getElementById("btn-today"));
+    }
+    // A recording that was cut off (voice.js keeps this flag while one runs)
+    try { if (localStorage.getItem("oros-notes-rec-live")) loadVoice().catch(function () {}); } catch (e) {}
     // Page actions (⋮) in the editor header: the tree menu (rename, move,
     // delete…) is otherwise reachable only by right-click or long-press in
     // the drawer, which phones hide and draggable rows can swallow.
