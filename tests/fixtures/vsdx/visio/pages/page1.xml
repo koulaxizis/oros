@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PageContents xmlns="http://schemas.microsoft.com/office/visio/2012/main">
+  <Shapes>
+    <Shape ID="1" Master="5" Type="Shape"><Cell N="PinX" V="2"/><Cell N="PinY" V="10"/><Cell N="FillForegnd" V="#d5e8d4"/><Text>Start</Text></Shape>
+    <Shape ID="2" Master="2" Type="Shape"><Cell N="PinX" V="2"/><Cell N="PinY" V="8.5"/><Text>Check the<cp IX="0"/> order</Text></Shape>
+    <Shape ID="3" Master="3" Type="Shape"><Cell N="PinX" V="2"/><Cell N="PinY" V="7"/><Cell N="FillForegnd" V="#c00000"/><Text>OK?</Text></Shape>
+    <Shape ID="4" Master="4" Type="Shape"><Cell N="BeginX" V="2"/><Cell N="BeginY" V="9.75"/><Cell N="EndX" V="2"/><Cell N="EndY" V="8.875"/></Shape>
+    <Shape ID="5" Master="4" Type="Shape"><Cell N="BeginX" V="2"/><Cell N="BeginY" V="8.125"/><Cell N="EndX" V="2"/><Cell N="EndY" V="7.5"/><Cell N="LinePattern" V="2"/><Text>next</Text></Shape>
+    <Shape ID="6" Master="6" Type="Shape"><Cell N="PinX" V="6"/><Cell N="PinY" V="8"/><Text>Billing</Text></Shape>
+    <Shape ID="7" Master="7" Type="Shape"><Cell N="PinX" V="6"/><Cell N="PinY" V="8"/><Text>Gizmo</Text></Shape>
+    <Shape ID="8" Type="Group"><Cell N="PinX" V="2"/><Cell N="PinY" V="4"/><Cell N="Width" V="2"/><Cell N="Height" V="2"/>
+      <Shapes>
+        <Shape ID="9" Master="8" Type="Shape"><Cell N="PinX" V="0.5"/><Cell N="PinY" V="1.5"/><Text>Web</Text></Shape>
+        <Shape ID="10" Type="Shape"><Cell N="PinX" V="1.5"/><Cell N="PinY" V="0.5"/><Cell N="Width" V="1"/><Cell N="Height" V="1"/><Text>Plain</Text></Shape>
+      </Shapes>
+    </Shape>
+  </Shapes>
+  <Connects>
+    <Connect FromSheet="4" FromCell="BeginX" ToSheet="1" ToCell="PinX"/>
+    <Connect FromSheet="4" FromCell="EndX" ToSheet="2" ToCell="PinX"/>
+    <Connect FromSheet="5" FromCell="BeginX" ToSheet="2" ToCell="PinX"/>
+    <Connect FromSheet="5" FromCell="EndX" ToSheet="3" ToCell="PinX"/>
+  </Connects>
+</PageContents>

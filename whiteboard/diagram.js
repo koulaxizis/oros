@@ -653,7 +653,196 @@
     return { objs: objs, nodes: order.length, edges: edges.length, cut: cut };
   }
 
-  var API = { parseXml: parseXml, styleOf: styleOf, nearest: nearest, readDrawio: readDrawio, writeDrawio: writeDrawio, readMermaid: readMermaid,
+  // ---------- 7. Visio .vsdx in (wave DG5, basic) ----------
+  // A .vsdx is a zip of XML parts (designkit/zipin.js reads it). Each
+  // foreground page becomes a board: shapes by their master's name
+  // (Process, Decision, …) → DG1 symbols, else a plain rectangle
+  // (counted); text, size, place, fill and line colour; connectors
+  // joined through <Connects> (dynamic connectors are elbow lines);
+  // containers and swimlanes → frames; groups are flattened. Visio's
+  // own geometry, pictures (EMF) and themes are not drawn. Units are
+  // inches with y going up: 1 in = 96 px here.
+  var MAX_VSDX = 30000000, MAX_PART = 12000000, PX = 96;
+  var VMASTER = [[/^(start ?\/ ?end|terminator|start|end)\b/, "terminator"], [/^decision/, "decision"], [/^(predefined process|subprocess|sub-process)/, "predefined"],
+    [/^multiple documents?/, "documents"], [/^document/, "document"], [/^manual input/, "manual-input"], [/^manual operation/, "manual-op"],
+    [/^preparation/, "preparation"], [/^(database|stored data|direct data|data store)/, "database"], [/^data/, "data"], [/^delay/, "delay"],
+    [/^off-?page reference/, "off-page"], [/^on-?page reference/, "connector"], [/^merge|^extract/, "merge"], [/^(process|step)\b/, "process"],
+    [/^(executive|manager|position|assistant|consultant|staff|vacancy)\b/, "person"], [/^(team|department|unit)\b/, "unit"],
+    [/^(class)\b/, "class"], [/^interface\b/, "interface"], [/^actor\b/, "actor"], [/^use ?case\b/, "usecase"], [/^package\b/, "package"],
+    [/^component\b/, "component"], [/^(note|comment|annotation)\b/, "comment"], [/^node\b/, "node"],
+    [/^hexagon/, "hexagon"], [/^octagon/, "octagon"], [/^star/, "star"], [/^cross/, "cross"], [/^(double arrow|2-d double)/, "arrow-both"],
+    [/^(arrow|block arrow|2-d single|right arrow)/, "arrow-right"], [/^cloud/, "cloud"], [/^(callout|speech)/, "callout"],
+    [/server.*(data|stor)|database server/, "db-server"], [/server/, "server"], [/router/, "router"], [/switch/, "switch"], [/firewall/, "firewall"],
+    [/laptop/, "laptop"], [/(pc|desktop|workstation|computer|monitor)\b/, "desktop"], [/(phone|mobile|smartphone)/, "phone"], [/tablet/, "tablet"],
+    [/printer/, "printer"], [/(wireless|wi-?fi|access point)/, "wifi"], [/(storage|disk|nas\b|san\b)/, "storage"], [/(internet|globe)/, "internet"],
+    [/^(user|person|people)\b/, "user"]];
+  var VBASIC = [[/^(rounded rectangle|rounded square)/, "round"], [/^(rectangle|square|box)/, "rect"], [/^(ellipse|circle|oval)/, "ellipse"],
+    [/^diamond/, "diamond"], [/^triangle/, "tri"]];
+  function vsdxPath(base, target) {
+    var parts = base.split("/").slice(0, -1);
+    String(target).split("/").forEach(function (p) { if (p === "..") parts.pop(); else if (p && p !== ".") parts.push(p); });
+    return parts.join("/");
+  }
+  function relsOf(x) {
+    var out = {};
+    if (x) x.kids.forEach(function (r) { if (r.name === "Relationship" && r.attrs.Id) out[r.attrs.Id] = r.attrs.Target || ""; });
+    return out;
+  }
+  function attrNS(e, local) {
+    for (var k in e.attrs) if (own(e.attrs, k) && (k === local || k.slice(-local.length - 1) === ":" + local)) return e.attrs[k];
+    return "";
+  }
+  // The cells of a shape (and its master's, as the fallback).
+  function cellsOf(sh) {
+    var c = {};
+    sh.kids.forEach(function (k) { if (k.name === "Cell" && k.attrs.N) c[k.attrs.N] = k.attrs.V !== undefined ? k.attrs.V : ""; });
+    return c;
+  }
+  function vText(sh) {
+    var t = kid(sh, "Text");
+    if (!t) return null;
+    var s = t.text;
+    t.kids.forEach(function (k) { if (k.name === "fld") s += k.text; });
+    return label(s.replace(/\u2028|\u2029/g, "\n"), false);
+  }
+  function readVsdx(blob, newId) {
+    newId = newId || C.uid;
+    var zip = node ? require("../designkit/zipin.js") : root.orosZipIn;
+    if (!zip) return Promise.reject(new Error("zipin"));
+    if (!blob || blob.size > MAX_VSDX) return Promise.reject(new Error("big"));
+    return zip.list(blob).then(function (entries) {
+      var by = {};
+      entries.forEach(function (e) { by[e.name.toLowerCase()] = e; });
+      function xml(name, optional) {
+        var e = by[String(name).toLowerCase()];
+        if (!e) { if (optional) return Promise.resolve(null); throw new Error("notvsdx"); }
+        return e.get(MAX_PART).then(function (b) { return b.text(); }).then(function (t) { return parseXml(t); });
+      }
+      if (!by["visio/pages/pages.xml"]) throw new Error("notvsdx");
+      return Promise.all([xml("visio/pages/pages.xml"), xml("visio/pages/_rels/pages.xml.rels", true), xml("visio/masters/masters.xml", true), xml("visio/masters/_rels/masters.xml.rels", true)])
+        .then(function (r) {
+          var pagesX = r[0], prels = relsOf(r[1]), mrels = relsOf(r[3]), masters = {};
+          // master id → { name, file }
+          if (r[2]) r[2].kids.forEach(function (m) {
+            if (m.name !== "Master") return;
+            var rel = kid(m, "Rel"), file = rel ? mrels[attrNS(rel, "id")] : "";
+            masters[m.attrs.ID] = { name: String(m.attrs.NameU || m.attrs.Name || ""), file: file ? vsdxPath("visio/masters/masters.xml", file) : "" };
+          });
+          var pages = pagesX.kids.filter(function (p) { return p.name === "Page" && p.attrs.Background !== "1"; }).slice(0, MAX_PAGES);
+          // the masters' own first shapes: sizes and cells a shape may leave out
+          var need = {};
+          Object.keys(masters).forEach(function (id) { if (masters[id].file) need[masters[id].file] = 1; });
+          return Promise.all(Object.keys(need).map(function (f) { return xml(f, true).then(function (x) { return [f, x]; }, function () { return [f, null]; }); })).then(function (mx) {
+            var mshape = {};
+            mx.forEach(function (p) {
+              var shapes = p[1] && kid(p[1], "Shapes"), first = shapes && shapes.kids.filter(function (k) { return k.name === "Shape"; })[0];
+              if (first) mshape[p[0]] = cellsOf(first);
+            });
+            Object.keys(masters).forEach(function (id) { masters[id].cells = mshape[masters[id].file] || {}; });
+            return Promise.all(pages.map(function (pg) {
+              var rel = kid(pg, "Rel"), target = rel ? prels[attrNS(rel, "id")] : "";
+              if (!target) return null;
+              var sheet = kid(pg, "PageSheet"), ph = sheet ? parseFloat(cellsOf(sheet).PageHeight) : NaN;
+              return xml(vsdxPath("visio/pages/pages.xml", target), true).then(function (x) {
+                return x ? { name: String(pg.attrs.NameU || pg.attrs.Name || ""), x: x, ph: isFinite(ph) ? ph : 11 } : null;
+              });
+            }));
+          }).then(function (list) {
+            var out = { pages: [], simplified: 0, skipped: 0, cut: false };
+            list.forEach(function (p) {
+              if (!p) return;
+              var res = readVsdxPage(p.x, p.ph, masters, newId);
+              out.simplified += res.simplified; out.skipped += res.skipped; out.cut = out.cut || res.cut;
+              out.pages.push({ name: p.name.slice(0, 120), objs: res.objs });
+            });
+            if (!out.pages.length) throw new Error("empty");
+            return out;
+          });
+        });
+    });
+  }
+  function readVsdxPage(x, pageH, masters, newId) {
+    var objs = [], made = {}, ends = {}, simplified = 0, skipped = 0, cut = false, z = 1, conn = [];
+    function f(v, d) { var n = parseFloat(v); return isFinite(n) && Math.abs(n) < 1e5 ? n : d; }
+    function push(o) { if (objs.length >= MAX_OBJS) { cut = true; return false; } o.z = z++; objs.push(o); return true; }
+    // box: the parent's frame in page inches { x, y (top), h }
+    function walk(shapesEl, box, mInherit, depth) {
+      if (!shapesEl || depth > 20) return;
+      shapesEl.kids.forEach(function (sh) {
+        if (sh.name !== "Shape") return;
+        var m = masters[sh.attrs.Master] || mInherit || { name: "", cells: {} }, own2 = cellsOf(sh), mc = m.cells || {};
+        var cell = function (n, d) { return own(own2, n) ? own2[n] : own(mc, n) ? mc[n] : d; };
+        var w = f(cell("Width"), 1), h = f(cell("Height"), 0.75), px = f(cell("PinX"), 0), py = f(cell("PinY"), 0);
+        var lx = f(cell("LocPinX"), w / 2), ly = f(cell("LocPinY"), h / 2);
+        var left = box.x + px - lx, top = box.y + (box.h - (py - ly + h));
+        var tx = vText(sh), name = m.name.toLowerCase().replace(/\.\d+$/, "").trim(), id = sh.attrs.ID;
+        var oneD = own(own2, "BeginX") || own(mc, "BeginX") || /connector|^line|^arc/.test(name);
+        if (oneD) {
+          var bx = f(cell("BeginX"), left), by2 = f(cell("BeginY"), top), ex = f(cell("EndX"), left + w), ey = f(cell("EndY"), top);
+          conn.push({ id: id, a: { x: box.x + bx, y: box.y + box.h - by2 }, b: { x: box.x + ex, y: box.y + box.h - ey }, tx: tx || "", name: name,
+            line: cell("LineColor", ""), dash: f(cell("LinePattern"), 1), ba: f(cell("BeginArrow"), 0), ea: f(cell("EndArrow"), /connector/.test(name) ? 0 : 0), route: f(cell("ConLineRouteExt"), 0) });
+          return;
+        }
+        var kids = kid(sh, "Shapes");
+        if (sh.attrs.Type === "Group" && kids) {
+          if (tx && /container|swimlane|lane|pool|frame/.test(name)) push({ id: newId(), k: "frame", x: left, y: top, w: w, h: h, tx: tx.replace(/\n/g, " ").slice(0, 120), c: "gray" });
+          walk(kids, { x: left, y: top, h: h }, null, depth + 1);
+          return;
+        }
+        var o;
+        if (/container|swimlane|lane|pool|phase|separator/.test(name)) o = { id: newId(), k: "frame", tx: (tx || "").replace(/\n/g, " ").slice(0, 120), c: "gray" };
+        else {
+          var sym = "", shp = "rect", i;
+          for (i = 0; i < VMASTER.length && !sym; i++) if (VMASTER[i][0].test(name)) sym = VMASTER[i][1];
+          for (i = 0; i < VBASIC.length && !sym && shp === "rect"; i++) if (VBASIC[i][0].test(name)) shp = VBASIC[i][1];
+          if (!sym && shp === "rect" && name && !/^(rectangle|square|box)/.test(name)) simplified++;
+          if (!name && !tx) { skipped++; return; }
+          var fill = String(cell("FillForegnd", "")), line = String(cell("LineColor", "")), pat = f(cell("FillPattern"), 1), col;
+          if (pat === 0 || !/^#/.test(fill) || whiteish(fill)) { var lc = nearest(/^#/.test(line) ? line : C.COLORS.ink[0]); col = { c: lc ? lc.c : "ink", f: "none" }; }
+          else { var fc = nearest(fill); col = { c: fc ? fc.c : "blue", f: fc && fc.strong ? "solid" : "soft" }; }
+          o = { id: newId(), k: "shape", shp: shp, f: col.f, c: col.c, tx: tx || "" };
+          if (sym && C.SYMS[sym]) { o.sym = sym; o.shp = C.SYMS[sym][1]; }
+        }
+        o.x = left; o.y = top; o.w = w; o.h = h;
+        // an icon's label goes under the icon, inside its box (as draw.io's)
+        if (o.sym && C.SYMS[o.sym][0] === "net" && o.tx) { var gw = Math.max(0, 100 / PX - o.w); o.x -= gw / 2; o.w += gw; o.h += 34 / PX; }
+        if (push(o)) made[id] = o;
+      });
+    }
+    var shapes = kid(x, "Shapes");
+    walk(shapes, { x: 0, y: 0, h: pageH }, null, 0);
+    // connections: FromSheet (the line) BeginX / EndX → ToSheet
+    var cx = kid(x, "Connects");
+    if (cx) cx.kids.forEach(function (c) {
+      if (c.name !== "Connect") return;
+      var e = ends[c.attrs.FromSheet] = ends[c.attrs.FromSheet] || {};
+      if (/^Begin/.test(c.attrs.FromCell || "")) e.a = c.attrs.ToSheet; else if (/^End/.test(c.attrs.FromCell || "")) e.b = c.attrs.ToSheet;
+    });
+    var HEAD = function (n) { return !n ? "none" : n === 4 || n === 5 ? "tri" : n === 13 || n === 1 || n === 2 ? "arrow" : n >= 20 && n <= 22 ? "dia" : n === 10 ? "dot" : "arrow"; };
+    conn.forEach(function (l) {
+      var e = ends[l.id] || {}, A = e.a && made[e.a], B = e.b && made[e.b];
+      var ha = HEAD(l.ba), hb = HEAD(l.ea);
+      if (!l.ea && !l.ba && /connector/.test(l.name)) hb = "arrow";          // a dynamic connector's usual end
+      var col = nearest(/^#/.test(l.line) ? l.line : C.COLORS.ink[0]);
+      var o = { id: newId(), k: "arrow", ax: r2(l.a.x), ay: r2(l.a.y), bx: r2(l.b.x), by: r2(l.b.y), ao: A ? A.id : "", bo: B ? B.id : "",
+        hd: C.hdFor(ha, hb), ds: l.dash > 1, tx: l.tx.replace(/\n/g, " ").slice(0, 120), c: col ? col.c : "ink" };
+      if (ha !== "none" || hb !== "arrow") { o.ha = ha; o.hb = hb; }
+      if (/connector/.test(l.name)) o.rt = l.route === 2 ? "curve" : "elbow";
+      push(o);
+    });
+    // inches → px, top-left at 0, 0, frames under the rest
+    var minX = Infinity, minY = Infinity;
+    objs.forEach(function (o) { if (o.k !== "arrow") { minX = Math.min(minX, o.x); minY = Math.min(minY, o.y); } });
+    if (!isFinite(minX)) { minX = 0; minY = 0; }
+    objs.forEach(function (o) {
+      if (o.k === "frame") o.z = 0;
+      if (o.k === "arrow") { o.ax = r2((o.ax - minX) * PX); o.ay = r2((o.ay - minY) * PX); o.bx = r2((o.bx - minX) * PX); o.by = r2((o.by - minY) * PX); }
+      else { o.x = r2((o.x - minX) * PX); o.y = r2((o.y - minY) * PX); o.w = Math.max(8, r2(o.w * PX)); o.h = Math.max(8, r2(o.h * PX)); }
+    });
+    return { objs: objs, simplified: simplified, skipped: skipped, cut: cut };
+  }
+
+  var API = { parseXml: parseXml, styleOf: styleOf, nearest: nearest, readDrawio: readDrawio, writeDrawio: writeDrawio, readMermaid: readMermaid, readVsdx: readVsdx, MAX_VSDX: MAX_VSDX,
     MAX_FILE: MAX_FILE, MAX_PAGES: MAX_PAGES, MAX_NODES: MAX_NODES, MAX_MERMAID: MAX_MERMAID };
   if (node) module.exports = API;
   if (root) root.WhiteboardDiagram = API;

@@ -93,10 +93,10 @@
       "lay.tree.v": "Tree, top to bottom", "lay.tree.h": "Tree, left to right", "lay.flow.v": "Flow, top to bottom", "lay.flow.h": "Flow, left to right",
       "al.l": "Align left edges", "al.c": "Align centres", "al.r": "Align right edges", "al.t": "Align top edges", "al.m": "Align middles", "al.b": "Align bottom edges",
       "sp.h": "Same space across", "sp.v": "Same space down", "lay.same": "Already in place.",
-      "m.drawio": "Open a draw.io file…", "m.mermaid": "Draw from Mermaid text…",
-      "dio.added": "{n} boards from draw.io.", "dio.added1": "The draw.io file is open as a new board.", "dio.simpl": "{n} shapes came in as plain shapes.",
+      "m.drawio": "Open a draw.io or Visio file…", "m.mermaid": "Draw from Mermaid text…",
+      "dio.added": "{n} boards from the file.", "dio.added1": "The file is open as a new board.", "dio.simpl": "{n} shapes came in as plain shapes.",
       "dio.skip": "{n} things were left out (pictures from the web, lines with no ends).", "dio.cut": "A page was cut at 2000 items.",
-      "dio.bad": "This is not a draw.io file Whiteboard can read.", "dio.big": "This file is too big.",
+      "dio.bad": "This is not a draw.io or Visio (.vsdx) file Whiteboard can read.", "dio.vsd": "Old Visio .vsd files cannot be opened. Save it as .vsdx in Visio first.", "dio.big": "This file is too big.",
       "dio.old": "This browser cannot open compressed draw.io files. In draw.io, untick File › Properties › Compressed and save again.",
       "mmd.title": "Draw from Mermaid text", "mmd.lbl": "Mermaid flowchart",
       "mmd.hint": "Paste a flowchart, for example:\ngraph TD\n  A[Start] --> B{Paid?}\n  B -->|yes| C[Ship]\n  B -->|no| D[Remind]",
@@ -191,10 +191,10 @@
       "lay.tree.v": "Δέντρο, από πάνω προς τα κάτω", "lay.tree.h": "Δέντρο, από αριστερά προς τα δεξιά", "lay.flow.v": "Ροή, από πάνω προς τα κάτω", "lay.flow.h": "Ροή, από αριστερά προς τα δεξιά",
       "al.l": "Στοίχιση αριστερών άκρων", "al.c": "Στοίχιση κέντρων", "al.r": "Στοίχιση δεξιών άκρων", "al.t": "Στοίχιση πάνω άκρων", "al.m": "Στοίχιση στη μέση", "al.b": "Στοίχιση κάτω άκρων",
       "sp.h": "Ίση απόσταση οριζόντια", "sp.v": "Ίση απόσταση κάθετα", "lay.same": "Είναι ήδη στη θέση τους.",
-      "m.drawio": "Άνοιγμα αρχείου draw.io…", "m.mermaid": "Σχεδίαση από κείμενο Mermaid…",
-      "dio.added": "{n} πίνακες από το draw.io.", "dio.added1": "Το αρχείο draw.io άνοιξε ως νέος πίνακας.", "dio.simpl": "{n} σχήματα μπήκαν ως απλά σχήματα.",
+      "m.drawio": "Άνοιγμα αρχείου draw.io ή Visio…", "m.mermaid": "Σχεδίαση από κείμενο Mermaid…",
+      "dio.added": "{n} πίνακες από το αρχείο.", "dio.added1": "Το αρχείο άνοιξε ως νέος πίνακας.", "dio.simpl": "{n} σχήματα μπήκαν ως απλά σχήματα.",
       "dio.skip": "{n} στοιχεία έμειναν έξω (εικόνες από το διαδίκτυο, γραμμές χωρίς άκρες).", "dio.cut": "Μια σελίδα κόπηκε στα 2000 στοιχεία.",
-      "dio.bad": "Αυτό δεν είναι αρχείο draw.io που μπορεί να διαβάσει ο Πίνακας ιδεών.", "dio.big": "Το αρχείο είναι πολύ μεγάλο.",
+      "dio.bad": "Αυτό δεν είναι αρχείο draw.io ή Visio (.vsdx) που μπορεί να διαβάσει ο Πίνακας ιδεών.", "dio.vsd": "Τα παλιά αρχεία Visio .vsd δεν ανοίγουν. Αποθήκευσέ το πρώτα ως .vsdx στο Visio.", "dio.big": "Το αρχείο είναι πολύ μεγάλο.",
       "dio.old": "Αυτός ο περιηγητής δεν ανοίγει συμπιεσμένα αρχεία draw.io. Στο draw.io, βγάλε το τικ από Αρχείο › Ιδιότητες › Συμπιεσμένο και αποθήκευσε ξανά.",
       "mmd.title": "Σχεδίαση από κείμενο Mermaid", "mmd.lbl": "Διάγραμμα ροής Mermaid",
       "mmd.hint": "Επικόλλησε ένα διάγραμμα ροής, για παράδειγμα:\ngraph TD\n  A[Αρχή] --> B{Πληρώθηκε;}\n  B -->|ναι| C[Αποστολή]\n  B -->|όχι| D[Υπενθύμιση]",
@@ -2095,17 +2095,20 @@
   }
   function openDrawio() {
     var file;
-    localPickFile(".drawio,.xml,.svg,application/xml,text/xml,image/svg+xml").then(function (f) {
+    localPickFile(".drawio,.xml,.svg,.vsdx,.vsd,application/xml,text/xml,image/svg+xml,application/vnd.ms-visio.drawing").then(function (f) {
       if (!f) return null;
       file = f;
-      return loadScript("diagram.js").then(function () {
+      if (/\.vsd$/i.test(f.name || "")) throw new Error("vsd");
+      var vsdx = /\.vsdx$/i.test(f.name || "");
+      return (vsdx ? loadScript("../designkit/zipin.js") : Promise.resolve()).then(function () { return loadScript("diagram.js"); }).then(function () {
         var D = window.WhiteboardDiagram;
+        if (vsdx) return D.readVsdx(f, newId);
         if (f.size > D.MAX_FILE) throw new Error("big");
         return f.text().then(function (txt) { return D.readDrawio(txt, inflateRaw, newId); });
       });
     }).then(function (res) {
       if (!res) return;
-      var d = data, now = Date.now(), first = "", base = String(file.name || "").replace(/\.(drawio|xml|svg)$/i, "").replace(/\.drawio$/i, "");
+      var d = data, now = Date.now(), first = "", base = String(file.name || "").replace(/\.(drawio|xml|svg|vsdx)$/i, "").replace(/\.drawio$/i, "");
       res.pages.forEach(function (pg, i) {
         var id = newId(), rows = {};
         d = C.putBoard(d, id, (pg.name && res.pages.length > 1 ? (base ? base + " · " : "") + pg.name : base || pg.name || t("board.untitled")).slice(0, 120), now);
@@ -2122,8 +2125,8 @@
       toast(msg);
     }).catch(function (e) {
       var m = e && e.message;
-      toast(t(m === "big" ? "dio.big" : m === "old" ? "dio.old" : "dio.bad"));
-      if (m !== "big" && m !== "old") console.warn("[orOS] whiteboard: draw.io", e);
+      toast(t(m === "big" || m === "toobig" ? "dio.big" : m === "old" ? "dio.old" : m === "vsd" ? "dio.vsd" : "dio.bad"));
+      if (m !== "big" && m !== "toobig" && m !== "old" && m !== "vsd") console.warn("[orOS] whiteboard: draw.io", e);
     });
   }
   function openMermaid() {
