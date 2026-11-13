@@ -15,6 +15,7 @@ Die Länderliste und die Regeln sind in der App gespeichert, daher braucht die A
 ## Urheber oder Werk nachschlagen
 
 - Wähle eine Person, um zu sehen, wann alles frei ist, was sie geschrieben oder geschaffen hat. Wähle ein Werk (einen Roman, einen Film, ein Lied), um zu sehen, wann dieses Werk frei ist. Bei einem Werk sucht die App seine Urheber, und wer zuletzt starb, zählt.
+- Im [Verlag](app:publish) öffnet `Ist es gemeinfrei?` bei einem Titel diese App mit seinem Autor schon in der Suche.
 - Suche auf Deutsch, Griechisch oder Englisch. Die Ergebnisse zeigen die Beschreibung aus Wikidata; so unterscheidest du Personen mit gleichem Namen.
 - Deine letzten 10 Suchen erscheinen unter `Zuletzt`. Tippe auf eine, um sie erneut nachzuschlagen, oder auf `Leeren`, um sie zu vergessen.
 
