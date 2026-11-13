@@ -7,8 +7,8 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=transfer" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Transfer · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=6.27.00">
-  <link rel="stylesheet" href="app.css?v=6.27.00">
+  <link rel="stylesheet" href="../fonts.css?v=6.28.00">
+  <link rel="stylesheet" href="app.css?v=6.28.00">
 </head>
 <body data-page="app">
 
@@ -17,6 +17,7 @@
     <nav id="tabs" role="tablist">
       <button type="button" role="tab" id="tab-send" class="tab on" aria-selected="true" data-i18n="tab.send">Send</button>
       <button type="button" role="tab" id="tab-recv" class="tab" aria-selected="false" data-i18n="tab.recv">Receive</button>
+      <button type="button" role="tab" id="tab-hist" class="tab" aria-selected="false" data-i18n="tab.hist">History</button>
     </nav>
   </header>
 
@@ -78,6 +79,7 @@
         <div id="recv-status" class="status" role="status"></div>
         <div id="offer" hidden>
           <p id="offer-sum"></p>
+          <p id="offer-relay" hidden data-i18n="offer.relay">No direct link between the two devices: it comes through the orOS relay, still end-to-end encrypted, more slowly.</p>
           <ul id="offer-list" class="rows small"></ul>
           <fieldset id="dest">
             <legend data-i18n="dest.where">Save to</legend>
@@ -102,15 +104,24 @@
         </div>
       </div>
     </section>
+
+    <!-- History (synced slice "transfer") -->
+    <section id="hist" role="tabpanel" aria-labelledby="tab-hist" hidden>
+      <ul id="hist-list" class="rows"></ul>
+      <p id="hist-empty" class="hint" data-i18n="hist.empty">No transfers yet. Finished ones are listed here, on every device you sync.</p>
+      <div class="bar end">
+        <button type="button" id="hist-clear" class="chip" hidden data-i18n="hist.clear">Clear history</button>
+      </div>
+    </section>
   </main>
 
   <div id="toast" role="status"></div>
 
-  <script src="../qr/qr-encode.js?v=6.27.00"></script>
-  <script src="core.js?v=6.27.00"></script>
-  <script src="engine.js?v=6.27.00"></script>
-  <script src="store.js?v=6.27.00"></script>
-  <script src="app.js?v=6.27.00"></script>
+  <script src="../qr/qr-encode.js?v=6.28.00"></script>
+  <script src="core.js?v=6.28.00"></script>
+  <script src="engine.js?v=6.28.00"></script>
+  <script src="store.js?v=6.28.00"></script>
+  <script src="app.js?v=6.28.00"></script>
 
 </body>
 </html>

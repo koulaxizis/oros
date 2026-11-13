@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Transfer — engine.js, v1.0.0
+   orOS Transfer — engine.js, v1.1.0
    One transfer between two browsers: the sender, who has the files,
    and the receiver, who opened the link or typed the code.
 
@@ -9,18 +9,31 @@
       holds two sockets, so a transfer has one receiver.
    2. Direct link. The sender offers a WebRTC data channel; offer,
       answer and candidates go through the room, sealed. The file
-      bytes go only over the data channel, never through a server
-      (W1: when no direct link can be made, the transfer says so).
-   3. The files. Over the channel the sender sends the list (sealed),
-      the receiver looks and answers go or no; then every file in
-      pieces of 60 KiB (core.js sealPiece: AES-GCM on top of WebRTC's
-      own encryption), each file followed by its SHA-256. The receiver
+      bytes go over the data channel, never through a server.
+   3. Relay path (W2). When no direct link opens within LINK_MS and
+      the whole transfer is at most RELAY_MAX (50 MB), the sender says
+      "relay" and the same messages go through the room instead: pieces
+      of 8 KiB as text ("~" + base64), at most ~33 frames a second so
+      the relay's per-socket limit (400 frames / 10 s) is never hit.
+      They are sealed exactly like the direct ones: the relay still
+      sees nothing but ciphertext. Over 50 MB the sender says
+      "nodirect" and both sides stop.
+   4. The files. The sender sends the list (sealed), the receiver
+      looks and answers go or no; then every file in pieces
+      (core.js sealPiece: AES-GCM with file and piece number as
+      additional data), each file followed by its SHA-256. The receiver
       checks the order of every piece, the size and the hash of every
       file, and tells which files did not arrive whole.
-   4. Pace. The receiver acknowledges what it has written; the sender
+   5. Pace. The receiver acknowledges what it has written; the sender
       never has more than WINDOW pieces unacknowledged and waits while
-      the channel's buffer is full, so neither side holds a big file
-      in memory.
+      the channel's buffer is full.
+   6. Resume (W2). When the direct channel drops mid-transfer while
+      the room still stands, the sender offers a new channel; on it the
+      receiver says where it stopped (file and piece, once everything
+      it already had is written) and the sender goes on from there,
+      re-hashing the start of that file from its own copy. No new
+      channel within RESUME_MS: "lost". A page that was closed or
+      reloaded starts again from the beginning.
 
    new OrosTransferEngine.Transfer({
      role: "sender"|"receiver", code, relay?, dev,
@@ -28,11 +41,12 @@
      files (sender: manifest from core.buildManifest),
      read(i, start, end) → Promise<Uint8Array> (sender),
      onState(phase, info), onProgress({ bytes, total, file })
-   }).start(), .accept(sink) (receiver), .decline(), .cancel()
+   }).start(), .accept(sink) (receiver), .decline(), .cancel(), .mode()
    sink = { open(i, f) → Promise, write(i, bytes) → Promise, close(i, ok) → Promise }
-   Phases, sender:   connecting → wait → linking → offered → sending → done {bad}
-           receiver: connecting → [wait] → linking → offer {files,total,biggest,dev} → receiving → done {bad}
-           either:   error {e}  e ∈ noroom, left, nodirect, declined, cancelled, lost, bad, version, nocrypto, io
+   Phases, sender:   connecting → wait → linking → offered {mode} → sending → done {bad}
+           receiver: connecting → [wait] → linking → offer {files,total,biggest,mode} → receiving → done {bad}
+           either:   reconnecting (then back to sending / receiving), error {e}
+           e ∈ noroom, left, nodirect, declined, cancelled, lost, bad, version, nocrypto, io
    ============================================================ */
 (function (root) {
   "use strict";
@@ -40,22 +54,32 @@
   var CORE = root.OrosTransferCore || (typeof require === "function" ? require("./core.js") : null);
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";
   var ICE = [{ urls: "stun:stun.cloudflare.com:3478" }];
-  var WINDOW = 256;                 // pieces sent but not yet written on the other side (~15 MB)
+  var WINDOW = 256;                 // pieces sent but not yet written on the other side
   var ACK_EVERY = 32;
-  var READ_PIECES = 16;             // the sender reads ~1 MB of a file at a time
+  var READ_PIECES = 16;             // the sender reads ~1 MB of a file at a time (direct)
   var BUF_HIGH = 8 * 1048576, BUF_LOW = 1048576;
   var LINK_MS = 25000;              // a direct link must open within this
+  var RECV_LINK_MS = 45000;         // the receiver waits longer: the sender decides relay or not
+  var RESUME_MS = 40000;
   var PING_MS = 20000;
+  var RELAY_MAX = 50 * 1048576;     // the most a transfer may send through the relay room
+  var RELAY_PIECE = 8192;           // "~" + base64(12 + 12 + 8192 + 16) ≈ 11,000 characters < 16 KB frame
+  var RELAY_GAP_MS = 30;            // one piece frame per 30 ms at most
+  var RELAY_MAN = 9000;
 
   function wsUrl(relay, room) { return String(relay).replace(/^http(s?):/, "ws$1:").replace(/\/+$/, "") + "/rt/" + room; }
+  function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function stale() { var e = new Error("stale"); e.code = "stale"; return e; }
 
   function Transfer(o) {
     var self = this;
     var role = o.role === "receiver" ? "receiver" : "sender", other = role === "sender" ? "receiver" : "sender";
     var WS = o.WebSocket || root.WebSocket, RTC = o.RTCPeerConnection || root.RTCPeerConnection;
-    var keys = null, ws = null, pc = null, dc = null, ended = false, opened = false, tries = 0;
-    var saidHi = false, linkTimer = 0, pingTimer = 0;
-    var sendQ = Promise.resolve(), inQ = Promise.resolve(), dcQ = Promise.resolve();
+    var keys = null, ws = null, pc = null, dc = null, ended = false, tries = 0;
+    var saidHi = false, linkTimer = 0, pingTimer = 0, resumeTimer = 0;
+    var mode = "";                  // "direct" | "relay" once the files are offered
+    var resuming = "";              // the phase to go back to after a reconnect
+    var sendQ = Promise.resolve(), dcQ = Promise.resolve();
     this.role = role;
     this.phase = "";
 
@@ -67,9 +91,15 @@
       if (ended) shutdown();
     }
     function fail(e) { set("error", { e: e }); }
+    function failFrom(err) {
+      if (err && err.code === "stale") return;
+      fail(err && (err.code === "io" || err.code === "lost") ? err.code : "bad");
+    }
     function progress(p) { if (o.onProgress) { try { o.onProgress(p); } catch (e) {} } }
+    function transferring() { return self.phase === "sending" || self.phase === "receiving" || self.phase === "reconnecting"; }
 
     // ----- the room -----
+    function wsOpen() { return !!(ws && ws.readyState === 1); }
     function roomSend(obj) {
       var w = ws;
       sendQ = sendQ.then(function () { return CORE.seal(keys.key, role, obj); }).then(function (txt) {
@@ -88,13 +118,16 @@
       try { w = new WS(wsUrl(o.relay || RELAY, keys.room)); } catch (e) { fail("noroom"); return; }
       ws = w;
       var gotOpen = false;
-      w.onopen = function () { gotOpen = true; opened = true; tries = 0; };
+      w.onopen = function () { gotOpen = true; tries = 0; };
       w.onmessage = function (e) { if (w === ws) onRoom(e.data); };
       w.onerror = function () {};
       w.onclose = function () {
         if (w !== ws) return;
         ws = null;
-        if (ended || (dc && dc.readyState === "open")) return;    // the direct link carries on
+        if (ended) return;
+        if (mode === "relay" && (self.phase !== "linking")) { fail("lost"); return; }
+        if (dcOpen()) return;                                    // the direct link carries on
+        if (transferring()) { fail("lost"); return; }
         saidHi = false;
         // A full room (someone else is receiving) or no network: a few tries, then say so.
         if (++tries > (gotOpen ? 6 : 3)) { fail("noroom"); return; }
@@ -106,12 +139,13 @@
       if (data.charAt(0) === "{") {
         var sys = null;
         try { sys = JSON.parse(data).sys; } catch (e) {}
-        inQ = inQ.then(function () {
+        dcQ = dcQ.then(function () {
           if (ended || !sys) return;
-          if (sys === "wait") { if (!dcOpen()) set("wait"); }
+          if (sys === "wait") { if (!dcOpen() && mode !== "relay" && !transferring()) set("wait"); }
           else if (sys === "peer") hello();
           else if (sys === "left") {
-            if (dcOpen()) return;
+            if (dcOpen() && !resuming) return;
+            if (mode === "relay" || transferring()) { fail("left"); return; }
             dropRtc();
             saidHi = false;
             if (role === "receiver") fail("left");
@@ -120,17 +154,38 @@
         });
         return;
       }
-      inQ = inQ.then(function () { return CORE.unseal(keys.key, other, data); }).then(function (m) {
-        if (!m || ended) return;
-        if (m.t === "hi") {
-          if (m.v !== CORE.PROTO) { fail("version"); return; }
-          hello();
-          set("linking", { dev: CORE.cleanDev(m.dev) });
-          if (role === "sender") startRtc();
-        } else if (m.t === "sdp" && m.d && typeof m.d.sdp === "string") onSdp(m.d);
-        else if (m.t === "ice" && m.d && pc) pc.addIceCandidate(m.d).catch(function () {});
-        else if (m.t === "x") fail("cancelled");
-      });
+      // One queue for everything from the room: on the relay path pieces
+      // and control messages must be read in the order they came.
+      if (data.charAt(0) === "~") {
+        if (role !== "receiver" || mode !== "relay") return;
+        var bytes;
+        try { bytes = CORE.unb64(data.slice(1)); } catch (e) { return; }
+        dcQ = dcQ.then(function () { return onPiece(bytes); }).catch(failFrom);
+        return;
+      }
+      dcQ = dcQ.then(function () { return CORE.unseal(keys.key, other, data); }).then(function (m) {
+        if (!m || ended) return null;
+        return onRoomMsg(m);
+      }).catch(failFrom);
+    }
+    function onRoomMsg(m) {
+      if (m.t === "hi") {
+        if (m.v !== CORE.PROTO) { fail("version"); return null; }
+        hello();
+        if (transferring()) return null;
+        set("linking", { dev: CORE.cleanDev(m.dev) });
+        if (role === "sender") startRtc();
+        else armLinkTimer(RECV_LINK_MS);
+      } else if (m.t === "sdp" && m.d && typeof m.d.sdp === "string") onSdp(m.d);
+      else if (m.t === "ice" && m.d && pc) pc.addIceCandidate(m.d).catch(function () {});
+      else if (m.t === "x") fail("cancelled");
+      else if (m.t === "relay" && role === "receiver" && self.phase === "linking") {
+        mode = "relay";
+        clearTimeout(linkTimer);
+        dropRtc();
+      } else if (m.t === "nodirect" && role === "receiver") fail("nodirect");
+      else if (mode === "relay") return onCtrl(m);
+      return null;
     }
     function dcOpen() { return !!(dc && dc.readyState === "open"); }
 
@@ -141,29 +196,43 @@
         if (e.candidate) roomSend({ t: "ice", d: e.candidate.toJSON ? e.candidate.toJSON() : e.candidate });
       };
       p.onconnectionstatechange = function () {
-        if (p !== pc) return;
-        if (p.connectionState === "failed") { if (self.phase === "sending" || self.phase === "receiving" || self.phase === "offer" || self.phase === "offered") fail("lost"); else noDirect(); }
+        if (p !== pc || p.connectionState !== "failed") return;
+        if (resuming || transferring()) lostLink();
+        else if (role === "sender") noDirect();
       };
       return p;
     }
-    function armLinkTimer() {
+    function armLinkTimer(ms) {
       clearTimeout(linkTimer);
-      linkTimer = setTimeout(function () { if (!dcOpen()) noDirect(); }, LINK_MS);
+      linkTimer = setTimeout(function () {
+        if (dcOpen() || ended || mode === "relay") return;
+        if (role === "sender") noDirect(); else if (!resuming) fail("nodirect");
+      }, ms);
     }
-    function noDirect() { if (!ended && !dcOpen()) fail("nodirect"); }
+    // No direct link: the sender decides between the relay path and giving up.
+    function noDirect() {
+      if (ended || dcOpen() || mode || role !== "sender") return;
+      dropRtc();
+      if (total <= RELAY_MAX && wsOpen()) {
+        mode = "relay";
+        roomSend({ t: "relay" }).then(offerFiles);
+      } else {
+        roomSend({ t: "nodirect" }).then(function () { fail("nodirect"); });
+      }
+    }
     function startRtc() {
-      if (typeof RTC !== "function") { fail("nodirect"); return; }
+      if (typeof RTC !== "function") { if (resuming) fail("lost"); else noDirect(); return; }
       dropRtc();
       pc = newPc();
       dc = pc.createDataChannel("oros-transfer", { ordered: true });
       wireDc(dc);
       pc.createOffer().then(function (d) { return pc.setLocalDescription(d); }).then(function () {
         roomSend({ t: "sdp", d: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } });
-      }).catch(noDirect);
-      armLinkTimer();
+      }).catch(function () { if (resuming) lostLink(); else noDirect(); });
+      if (!resuming) armLinkTimer(LINK_MS);
     }
     function onSdp(d) {
-      if (typeof RTC !== "function") { fail("nodirect"); return; }
+      if (typeof RTC !== "function" || mode === "relay") return;
       if (d.type === "offer" && role === "receiver") {
         dropRtc();
         pc = newPc();
@@ -171,23 +240,30 @@
         pc.setRemoteDescription(d).then(function () { return pc.createAnswer(); })
           .then(function (a) { return pc.setLocalDescription(a); })
           .then(function () { roomSend({ t: "sdp", d: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } }); })
-          .catch(noDirect);
-        armLinkTimer();
+          .catch(function () {});
       } else if (d.type === "answer" && role === "sender" && pc) {
-        pc.setRemoteDescription(d).catch(noDirect);
+        pc.setRemoteDescription(d).catch(function () { if (resuming) lostLink(); else noDirect(); });
       }
     }
     function wireDc(ch) {
       ch.binaryType = "arraybuffer";
       try { ch.bufferedAmountLowThreshold = BUF_LOW; } catch (e) {}
       ch.onopen = function () {
-        if (ch !== dc) return;
+        if (ch !== dc || ended) return;
         clearTimeout(linkTimer);
+        if (resuming) {
+          // the receiver says where it stopped, once all it had is written
+          if (role === "receiver") dcQ = dcQ.then(sendResume).catch(failFrom);
+          return;
+        }
+        mode = "direct";
         if (role === "sender") offerFiles();
       };
       ch.onclose = function () {
         if (ch !== dc || ended) return;
-        fail(self.phase === "linking" ? "nodirect" : "lost");
+        if (transferring() && mode === "direct") lostLink();
+        else if (role === "sender" && self.phase === "linking") noDirect();
+        else if (self.phase !== "linking") fail("lost");
       };
       ch.onbufferedamountlow = function () { var w = bufWaiters; bufWaiters = []; w.forEach(function (f) { f(); }); };
       ch.onmessage = function (e) {
@@ -195,24 +271,26 @@
         var d = e.data;
         if (typeof d === "string") {
           dcQ = dcQ.then(function () { return CORE.unseal(keys.key, other, d); }).then(function (m) { if (m && !ended) return onCtrl(m); })
-            .catch(function (err) { fail(err && err.code === "io" ? "io" : "bad"); });
+            .catch(failFrom);
         } else if (role === "receiver") {
-          dcQ = dcQ.then(function () { return onPiece(d); }).catch(function (err) { fail(err && err.code === "io" ? "io" : "bad"); });
+          dcQ = dcQ.then(function () { return onPiece(d); }).catch(failFrom);
         }
       };
     }
-    function dcSend(obj) {
+    // Control messages go where the files go.
+    function send(obj) {
+      if (mode === "relay") return roomSend(obj);
       return CORE.seal(keys.key, role, obj).then(function (txt) {
         if (dcOpen()) dc.send(txt);
       });
     }
     var bufWaiters = [];
     function roomInBuffer() {
-      if (!dc || dc.bufferedAmount <= BUF_HIGH) return Promise.resolve();
+      var ch = mode === "relay" ? ws : dc;
+      if (!ch || !(ch.bufferedAmount > (mode === "relay" ? 262144 : BUF_HIGH))) return Promise.resolve();
       return new Promise(function (res) {
         bufWaiters.push(res);
-        // some browsers miss the event while the channel closes
-        setTimeout(res, 2000);
+        setTimeout(res, mode === "relay" ? 50 : 2000);           // some browsers miss the event
       }).then(roomInBuffer);
     }
     function dropRtc() {
@@ -222,105 +300,179 @@
       try { if (d) d.close(); } catch (e) {}
       try { if (p) p.close(); } catch (e) {}
     }
+    // The direct channel dropped mid-transfer: try a new one over the room.
+    function lostLink() {
+      if (ended) return;
+      if (!wsOpen() || mode !== "direct") { fail("lost"); return; }
+      if (!resuming) {
+        resuming = self.phase;
+        set("reconnecting");
+        clearTimeout(resumeTimer);
+        resumeTimer = setTimeout(function () { if (resuming) fail("lost"); }, RESUME_MS);
+      }
+      gen++;
+      wake();
+      dropRtc();
+      if (role === "sender") setTimeout(function () { if (resuming && !ended) startRtc(); }, 500);
+    }
+    function resumed() {
+      clearTimeout(resumeTimer);
+      var back = resuming;
+      resuming = "";
+      set(back);
+    }
 
     // ----- the sender -----
     var files = role === "sender" ? (o.files || []) : [], total = 0, acked = 0, ackedBytes = 0, ackWaiters = [];
+    var sent = 0, gen = 0;
     files.forEach(function (f) { total += f.s; });
+    function pieceSize() { return mode === "relay" ? RELAY_PIECE : CORE.PIECE; }
+    function wake() { var w = ackWaiters; ackWaiters = []; w.forEach(function (f) { f(); }); w = bufWaiters; bufWaiters = []; w.forEach(function (f) { f(); }); }
     function offerFiles() {
-      set("offered");
-      var parts = CORE.splitManifest(files);
+      if (ended) return null;
+      set("offered", { mode: mode });
+      var parts = CORE.splitManifest(files, mode === "relay" ? RELAY_MAN : 30000);
       var q = Promise.resolve();
       parts.forEach(function (p, i) {
-        q = q.then(function () { return dcSend({ t: "man", i: i, n: parts.length, files: p, total: total }); });
+        q = q.then(function () { return send({ t: "man", i: i, n: parts.length, files: p, total: total, mode: mode }); });
+      });
+      return q;
+    }
+    function waitWindow(g) {
+      if (g !== gen) return Promise.reject(stale());
+      if (sent - acked < WINDOW || ended) return Promise.resolve();
+      return new Promise(function (res) { ackWaiters.push(res); }).then(function () { return waitWindow(g); });
+    }
+    function readChecked(fi, a, b) {
+      return Promise.resolve(o.read(fi, a, b)).then(function (bytes) {
+        if (!bytes || bytes.length !== b - a) { var er = new Error("read"); er.code = "io"; throw er; }
+        return bytes;
       });
     }
-    function waitWindow(sent) {
-      if (sent - acked < WINDOW || ended) return Promise.resolve();
-      return new Promise(function (res) { ackWaiters.push(res); }).then(function () { return waitWindow(sent); });
-    }
-    function sendAll() {
-      set("sending");
-      var sent = 0, i = 0;
-      function nextFile() {
-        if (ended) return null;
-        if (i >= files.length) return dcSend({ t: "fin" });
-        var f = files[i], fi = i, h = new CORE.Sha256(), n = 0, pos = 0;
+    // Send from file `startFile`, piece `startN` on (0, 0 at first).
+    function sendFrom(startFile, startN) {
+      var g = gen, i = startFile, ps = pieceSize(), lastFrame = 0;
+      function nextFile(firstN) {
+        if (ended || g !== gen) return null;
+        if (i >= files.length) return send({ t: "fin" });
+        var f = files[i], fi = i, h = new CORE.Sha256(), n = firstN || 0, pos = Math.min(f.s, n * ps);
+        // a resumed file: hash what the receiver already has, from our own copy
+        function rehash(at) {
+          if (at >= pos) return Promise.resolve();
+          var end = Math.min(pos, at + READ_PIECES * CORE.PIECE);
+          return readChecked(fi, at, end).then(function (b) {
+            if (g !== gen) throw stale();
+            h.update(b);
+            return rehash(end);
+          });
+        }
         function block() {
           if (ended) return null;
+          if (g !== gen) throw stale();
           if (pos >= f.s) {
-            return dcSend({ t: "end", i: fi, h: h.hex(), s: f.s }).then(function () { i++; return nextFile(); });
+            return send({ t: "end", i: fi, h: h.hex(), s: f.s }).then(function () { i++; return nextFile(0); });
           }
-          var end = Math.min(f.s, pos + READ_PIECES * CORE.PIECE);
-          return Promise.resolve(o.read(fi, pos, end)).then(function (bytes) {
-            if (!bytes || bytes.length !== end - pos) { var er = new Error("read"); er.code = "io"; throw er; }
+          var end = Math.min(f.s, pos + Math.max(1, Math.floor(READ_PIECES * CORE.PIECE / ps)) * ps);
+          return readChecked(fi, pos, end).then(function (bytes) {
             h.update(bytes);
             var q = Promise.resolve();
-            for (var off = 0; off < bytes.length; off += CORE.PIECE) {
+            for (var off = 0; off < bytes.length; off += ps) {
               (function (part) {
-                q = q.then(function () { return waitWindow(sent); }).then(roomInBuffer).then(function () {
+                q = q.then(function () { return waitWindow(g); }).then(roomInBuffer).then(function () {
                   if (ended) return null;
-                  return CORE.sealPiece(keys.key, fi, n++, part).then(function (buf) {
-                    if (!dcOpen()) { var er = new Error("lost"); er.code = "lost"; throw er; }
-                    dc.send(buf);
+                  if (mode !== "relay") return null;
+                  var wait = lastFrame + RELAY_GAP_MS - Date.now();
+                  return wait > 0 ? delay(wait) : null;
+                }).then(function () {
+                  if (ended) return null;
+                  if (g !== gen) throw stale();
+                  return CORE.sealPiece(keys.key, fi, n, part).then(function (buf) {
+                    if (g !== gen) throw stale();
+                    if (mode === "relay") {
+                      if (!wsOpen()) { var er = new Error("lost"); er.code = "lost"; throw er; }
+                      ws.send("~" + CORE.b64(buf));
+                      lastFrame = Date.now();
+                    } else {
+                      if (!dcOpen()) throw stale();                // the channel dropped: a resume takes over
+                      dc.send(buf);
+                    }
+                    n++;
                     sent++;
                   });
                 });
-              })(bytes.subarray(off, Math.min(bytes.length, off + CORE.PIECE)));
+              })(bytes.subarray(off, Math.min(bytes.length, off + ps)));
             }
             pos = end;
             return q.then(block);
           });
         }
-        return block();
+        return rehash(0).then(block);
       }
-      Promise.resolve().then(nextFile).catch(function (err) { fail(err && err.code === "lost" ? "lost" : "io"); });
+      Promise.resolve().then(function () { return nextFile(startN); }).catch(failFrom);
     }
 
     // ----- the receiver -----
     var manParts = [], manN = 0, offer = null, sink = null, cur = -1, curN = 0, curBytes = 0, curHash = null, curOpen = false;
     var written = 0, writtenBytes = 0, bad = [], doneFiles = 0;
+    function sendResume() {
+      if (ended || !resuming) return null;
+      var at = curOpen ? { i: cur, n: curN } : { i: doneFiles, n: 0 };
+      return send({ t: "resume", i: at.i, n: at.n, w: written, b: writtenBytes }).then(resumed);
+    }
     function onCtrl(m) {
       if (role === "sender") {
-        if (m.t === "go" && self.phase === "offered") sendAll();
+        if (m.t === "go" && self.phase === "offered") { set("sending"); sendFrom(0, 0); }
         else if (m.t === "no") fail("declined");
         else if (m.t === "ack") {
           if (+m.n > acked) { acked = +m.n; ackedBytes = +m.b || ackedBytes; }
           progress({ bytes: ackedBytes, total: total, file: +m.f || 0 });
           var w = ackWaiters; ackWaiters = []; w.forEach(function (f) { f(); });
+        } else if (m.t === "resume" && resuming) {
+          var ri = +m.i, rn = +m.n;
+          if (!(ri >= 0 && ri <= files.length) || !(rn >= 0) || Math.floor(rn) !== rn) { fail("bad"); return null; }
+          gen++;
+          wake();
+          acked = sent = Math.max(0, +m.w || 0);
+          ackedBytes = Math.max(0, +m.b || 0);
+          resumed();
+          sendFrom(ri, rn);
         } else if (m.t === "done") {
           var b = Array.isArray(m.bad) ? m.bad.filter(function (x) { return x >= 0 && x < files.length; }) : [];
           progress({ bytes: total, total: total, file: files.length });
           set("done", { bad: b });
         } else if (m.t === "x") fail("cancelled");
-        return;
+        return null;
       }
       // receiver
       if (m.t === "man" && !offer) {
-        if (!(m.n >= 1 && m.n <= 1000) || !(m.i >= 0 && m.i < m.n) || !Array.isArray(m.files)) { refuse(); return; }
+        if (!(m.n >= 1 && m.n <= 5000) || !(m.i >= 0 && m.i < m.n) || !Array.isArray(m.files)) { refuse(); return null; }
         manN = m.n;
         manParts[m.i] = m.files;
-        for (var k = 0; k < manN; k++) if (!manParts[k]) return;
+        for (var k = 0; k < manN; k++) if (!manParts[k]) return null;
         var all = [].concat.apply([], manParts);
         var ok = CORE.checkManifest(all);
-        if (!ok) { refuse(); return; }
+        if (!ok) { refuse(); return null; }
+        if (mode === "relay" && ok.total > RELAY_MAX) { refuse(); return null; }
         offer = ok;
-        set("offer", { files: ok.files, total: ok.total, biggest: ok.biggest });
+        set("offer", { files: ok.files, total: ok.total, biggest: ok.biggest, mode: mode });
       } else if (m.t === "end") {
         return endFile(m);                     // in order with the pieces (same queue)
       } else if (m.t === "fin") {
         if (self.phase !== "receiving" || doneFiles !== offer.files.length) throw new Error("bad");
-        return dcSend({ t: "done", bad: bad }).then(function () { set("done", { bad: bad.slice() }); });
+        return send({ t: "done", bad: bad }).then(function () { set("done", { bad: bad.slice() }); });
       } else if (m.t === "x") fail("cancelled");
+      return null;
     }
-    function refuse() { dcSend({ t: "no" }); fail("bad"); }
+    function refuse() { send({ t: "no" }); fail("bad"); }
     function ioErr(e) { var er = new Error("io"); er.code = "io"; er.cause = e; throw er; }
+    function receivingNow() { return (self.phase === "receiving" || self.phase === "reconnecting") && !!sink; }
     function startFile(i) {
       if (i !== doneFiles || !offer || i >= offer.files.length) throw new Error("bad");
       cur = i; curN = 0; curBytes = 0; curHash = new CORE.Sha256(); curOpen = true;
       return Promise.resolve(sink.open(i, offer.files[i])).catch(ioErr);
     }
     function onPiece(buf) {
-      if (self.phase !== "receiving" || !sink) throw new Error("bad");
+      if (!receivingNow()) throw new Error("bad");
       return CORE.openPiece(keys.key, buf).then(function (p) {
         if (!p) throw new Error("bad");
         var start = (!curOpen || p.file !== cur) ? startFile(p.file) : Promise.resolve();
@@ -332,12 +484,12 @@
         }).then(function () {
           written++; writtenBytes += p.bytes.length;
           progress({ bytes: writtenBytes, total: offer.total, file: cur });
-          if (written % ACK_EVERY === 0) dcSend({ t: "ack", n: written, b: writtenBytes, f: cur });
+          if (written % ACK_EVERY === 0 && !resuming) send({ t: "ack", n: written, b: writtenBytes, f: cur });
         });
       });
     }
     function endFile(m) {
-      if (self.phase !== "receiving") throw new Error("bad");
+      if (!receivingNow()) throw new Error("bad");
       var start = (!curOpen || m.i !== cur) ? startFile(m.i) : Promise.resolve();    // an empty file has no pieces
       return start.then(function () {
         var f = offer.files[cur];
@@ -347,7 +499,7 @@
         doneFiles++;
         return Promise.resolve(sink.close(cur, whole)).catch(ioErr);
       }).then(function () {
-        dcSend({ t: "ack", n: written, b: writtenBytes, f: cur });
+        if (!resuming) send({ t: "ack", n: written, b: writtenBytes, f: cur });
       });
     }
 
@@ -355,6 +507,7 @@
     function shutdown() {
       clearInterval(pingTimer);
       clearTimeout(linkTimer);
+      clearTimeout(resumeTimer);
       var w = ws;
       // let the last sealed words go out first
       Promise.all([sendQ, dcQ]).then(function () {
@@ -364,12 +517,13 @@
           try { if (w) w.close(1000, "bye"); } catch (e) {}
         }, 300);
       });
-      var a = ackWaiters; ackWaiters = []; a.forEach(function (f) { f(); });
+      gen++;
+      wake();
     }
 
     this.start = function () {
       set("connecting");
-      if (!CORE || !root.crypto && !(typeof require === "function")) { fail("nocrypto"); return self; }
+      if (!CORE || !CORE.derive) { fail("nocrypto"); return self; }
       CORE.derive(o.code).then(function (k) {
         if (ended) return;
         keys = k;
@@ -382,22 +536,24 @@
       if (role !== "receiver" || self.phase !== "offer" || !s) return false;
       sink = s;
       set("receiving");
-      dcSend({ t: "go" });
+      send({ t: "go" });
       return true;
     };
     this.decline = function () {
       if (role !== "receiver" || self.phase !== "offer") return;
-      dcSend({ t: "no" }).then(function () { fail("declined"); });
+      send({ t: "no" }).then(function () { fail("declined"); });
     };
     this.cancel = function () {
       if (ended) return;
-      var say = dcOpen() ? dcSend({ t: "x" }) : (keys && ws ? roomSend({ t: "x" }) : Promise.resolve());
+      var say = (mode === "direct" && dcOpen()) ? send({ t: "x" }) : (keys && ws ? roomSend({ t: "x" }) : Promise.resolve());
       Promise.resolve(say).catch(function () {}).then(function () { fail("cancelled"); });
     };
     this.offer = function () { return offer; };
+    this.mode = function () { return mode; };
   }
 
-  var api = { VERSION: "1.0.0", Transfer: Transfer, wsUrl: wsUrl, RELAY: RELAY, WINDOW: WINDOW };
+  var api = { VERSION: "1.1.0", Transfer: Transfer, wsUrl: wsUrl, RELAY: RELAY, WINDOW: WINDOW,
+    RELAY_MAX: RELAY_MAX, RELAY_PIECE: RELAY_PIECE };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.OrosTransferEngine = api;
 })(typeof window !== "undefined" ? window : globalThis);

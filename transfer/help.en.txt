@@ -7,6 +7,7 @@ Transfer sends big files and whole folders from the orOS disk, or from this devi
 - Press `Create link`. You get a code like 7K2M-9QXH-4RTB, a QR code and a link. Send the link, let the other person scan the QR with their phone's camera, or read them the code.
 - Keep the page open. You see when they connect, when they look at the list, and how much has arrived. `Cancel` stops it on both sides.
 - One link is for one person and one transfer. `Send something else` starts a new one with a new code.
+- In Files, select files or folders and choose `Send with Transfer…`: Transfer opens with them on the `To send` list.
 
 ## Receive
 - Open the link you got, or open `Receive` and type the code. The sender's page has to be open.
@@ -15,9 +16,17 @@ Transfer sends big files and whole folders from the orOS disk, or from this devi
 - `This device` keeps one file as it is, or several files as one ZIP. When it is done, press `Save`.
 - Without orOS, the link opens a receive page that saves to the device. In a browser where orOS is set up, `Receive into my orOS instead` opens it inside orOS.
 
+## If the connection drops
+- If the direct link drops in the middle (Wi-Fi changes, a phone moves between networks), both sides say `Reconnecting` and the transfer goes on from where it stopped, as long as both pages stay open. After about 40 seconds without a link it stops.
+- When the two devices cannot connect directly at all (company Wi-Fi, a VPN, some mobile networks), a transfer of up to 50 MB in total goes through the orOS relay instead. It is slower, and still end-to-end encrypted: the relay passes sealed pieces on and stores nothing. Over 50 MB Transfer says it could not connect; try both on the same Wi-Fi, or send less at a time.
+
+## History
+- `History` lists the finished transfers, newest first: when, to or from which device, how many files and how big, and where they went. `Open` shows a folder that arrived on the orOS disk.
+- The history keeps only the names of the top files and folders, never their contents, and syncs with your other devices. `Clear history` (press it twice) empties it everywhere.
+
 ## Privacy and limits
 - The code makes the encryption key. It stays in the link after the # sign, which a browser never sends to a server. The orOS relay only introduces the two browsers to each other and sees only sealed messages.
 - Every file is checked when it arrives. A file that did not arrive whole is named on both sides and is not kept on the orOS disk.
 - orOS sets no size limit; the receiving browser's free space does, and it is checked before you accept. Some browsers without private storage for websites (older Safari) keep a transfer in memory and take at most 500 MB.
-- Both devices must be online at the same time. Some networks (company Wi-Fi, a VPN, some mobile networks) do not let two devices connect directly; Transfer then says so. Try both on the same Wi-Fi.
+- Both devices must be online at the same time, with their Transfer pages open.
 - The screen is kept on during a transfer where the browser allows it. On a phone, keep the browser in front.

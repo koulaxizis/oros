@@ -27,7 +27,14 @@
   var STR = {
     en: {
       "app.name": "Transfer",
-      "tab.send": "Send", "tab.recv": "Receive",
+      "tab.send": "Send", "tab.recv": "Receive", "tab.hist": "History",
+      "hist.empty": "No transfers yet. Finished ones are listed here, on every device you sync.",
+      "hist.sent": "Sent to {dev}", "hist.recv": "Received from {dev}", "hist.someone": "another device",
+      "hist.sum": "{n} files · {s}", "hist.one": "1 file · {s}",
+      "hist.bad": "{n} did not arrive whole", "hist.stopped": "Stopped before the end", "hist.relay": "through the orOS relay",
+      "hist.disk": "on the orOS disk", "hist.device": "on that device",
+      "hist.open": "Open", "hist.clear": "Clear history", "hist.sure": "Press again to clear",
+      "note.sent": "Transfer: sent {what}", "note.recv": "Transfer: received {what}",
       "send.intro": "Pick files and folders from the orOS disk or this device. The other person opens the link or types the code; the files go straight between the two browsers, end-to-end encrypted.",
       "disk.empty": "This folder is empty.",
       "disk.none": "The orOS disk is not available here.",
@@ -37,7 +44,7 @@
       "btn.addLocal": "Add from this device…",
       "send.chosen": "To send",
       "send.none": "Nothing chosen yet. Tick files or folders above.",
-      "send.sum": "{n} files · {s}",
+      "send.sum": "{n} files · {s}", "send.sum1": "1 file · {s}",
       "send.counting": "Counting…",
       "btn.makeLink": "Create link",
       "btn.remove": "Remove",
@@ -58,7 +65,7 @@
       "space.low": "This browser has about {s} free; this transfer needs {t}.",
       "btn.decline": "Decline", "btn.accept": "Accept",
       "btn.openFiles": "Open in Files", "btn.save": "Save", "btn.recvMore": "Receive something else",
-      "offer.sum": "{n} files · {s} from {dev}",
+      "offer.sum": "{n} files · {s} from {dev}", "offer.sum1": "1 file · {s} from {dev}",
       "offer.more": "… and {n} more",
       "st.connecting": "Connecting…",
       "st.wait.send": "Waiting for the other person to open the link…",
@@ -67,6 +74,10 @@
       "st.offered": "{dev} is looking at the list…",
       "st.offer": "Do you want these files?",
       "st.sending": "Sending…",
+      "st.sendingRelay": "Sending through the orOS relay (no direct link, so slower)…",
+      "st.receivingRelay": "Receiving through the orOS relay (no direct link, so slower)…",
+      "st.reconnecting": "The connection dropped. Reconnecting; the transfer goes on from where it stopped…",
+      "offer.relay": "No direct link between the two devices: it comes through the orOS relay, still end-to-end encrypted, more slowly.",
       "st.receiving": "Receiving…",
       "st.done.send": "Done. Every file arrived whole.",
       "st.done.recv": "Done. Every file arrived whole.",
@@ -78,10 +89,10 @@
       "prog": "{a} of {b}",
       "err.noroom": "Could not reach the sender. Check the code, or someone else is already receiving it.",
       "err.left": "The other side closed the page.",
-      "err.nodirect": "These two devices could not connect directly (a strict network, a VPN or a firewall). Try both on the same Wi-Fi, or another network.",
+      "err.nodirect": "These two devices could not connect directly (a strict network, a VPN or a firewall), and over 50 MB does not go through the orOS relay. Try both on the same Wi-Fi, another network, or send less at a time.",
       "err.declined": "The transfer was declined.",
       "err.cancelled": "The transfer was cancelled.",
-      "err.lost": "The connection was lost. Start the transfer again.",
+      "err.lost": "The connection was lost and did not come back. Start the transfer again.",
       "err.bad": "Something arrived that was not part of this transfer. It was stopped.",
       "err.version": "The other side runs another version of Transfer. Reload both pages.",
       "err.nocrypto": "This browser cannot encrypt (it needs a secure https page).",
@@ -92,7 +103,14 @@
     },
     el: {
       "app.name": "Μεταφορά",
-      "tab.send": "Αποστολή", "tab.recv": "Λήψη",
+      "tab.send": "Αποστολή", "tab.recv": "Λήψη", "tab.hist": "Ιστορικό",
+      "hist.empty": "Καμία μεταφορά ακόμα. Όσες τελειώνουν εμφανίζονται εδώ, σε κάθε συσκευή που συγχρονίζεις.",
+      "hist.sent": "Στάλθηκε σε {dev}", "hist.recv": "Λήφθηκε από {dev}", "hist.someone": "άλλη συσκευή",
+      "hist.sum": "{n} αρχεία · {s}", "hist.one": "1 αρχείο · {s}",
+      "hist.bad": "{n} δεν έφτασαν ακέραια", "hist.stopped": "Σταμάτησε πριν το τέλος", "hist.relay": "μέσω του αναμεταδότη orOS",
+      "hist.disk": "στον δίσκο του orOS", "hist.device": "σε εκείνη τη συσκευή",
+      "hist.open": "Άνοιγμα", "hist.clear": "Καθαρισμός ιστορικού", "hist.sure": "Πάτα ξανά για καθαρισμό",
+      "note.sent": "Μεταφορά: στάλθηκε {what}", "note.recv": "Μεταφορά: λήφθηκε {what}",
       "send.intro": "Διάλεξε αρχεία και φακέλους από τον δίσκο του orOS ή από αυτή τη συσκευή. Ο άλλος ανοίγει τον σύνδεσμο ή γράφει τον κωδικό· τα αρχεία πάνε κατευθείαν από browser σε browser, κρυπτογραφημένα από άκρο σε άκρο.",
       "disk.empty": "Ο φάκελος είναι άδειος.",
       "disk.none": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.",
@@ -102,7 +120,7 @@
       "btn.addLocal": "Προσθήκη από τη συσκευή…",
       "send.chosen": "Για αποστολή",
       "send.none": "Δεν έχεις διαλέξει τίποτα ακόμα. Τσέκαρε αρχεία ή φακέλους από πάνω.",
-      "send.sum": "{n} αρχεία · {s}",
+      "send.sum": "{n} αρχεία · {s}", "send.sum1": "1 αρχείο · {s}",
       "send.counting": "Μέτρηση…",
       "btn.makeLink": "Δημιουργία συνδέσμου",
       "btn.remove": "Αφαίρεση",
@@ -123,7 +141,7 @@
       "space.low": "Αυτός ο browser έχει περίπου {s} ελεύθερα· η μεταφορά χρειάζεται {t}.",
       "btn.decline": "Απόρριψη", "btn.accept": "Αποδοχή",
       "btn.openFiles": "Άνοιγμα στα Αρχεία", "btn.save": "Αποθήκευση", "btn.recvMore": "Λήψη κάτι άλλου",
-      "offer.sum": "{n} αρχεία · {s} από {dev}",
+      "offer.sum": "{n} αρχεία · {s} από {dev}", "offer.sum1": "1 αρχείο · {s} από {dev}",
       "offer.more": "… και {n} ακόμα",
       "st.connecting": "Σύνδεση…",
       "st.wait.send": "Περιμένω τον άλλον να ανοίξει τον σύνδεσμο…",
@@ -132,6 +150,10 @@
       "st.offered": "Ο/Η {dev} κοιτάζει τη λίστα…",
       "st.offer": "Θέλεις αυτά τα αρχεία;",
       "st.sending": "Αποστολή…",
+      "st.sendingRelay": "Αποστολή μέσω του αναμεταδότη orOS (χωρίς απευθείας σύνδεση, άρα πιο αργά)…",
+      "st.receivingRelay": "Λήψη μέσω του αναμεταδότη orOS (χωρίς απευθείας σύνδεση, άρα πιο αργά)…",
+      "st.reconnecting": "Η σύνδεση διακόπηκε. Επανασύνδεση· η μεταφορά συνεχίζει από εκεί που σταμάτησε…",
+      "offer.relay": "Οι δύο συσκευές δεν συνδέθηκαν απευθείας: τα αρχεία έρχονται μέσω του αναμεταδότη orOS, πάντα κρυπτογραφημένα από άκρο σε άκρο, πιο αργά.",
       "st.receiving": "Λήψη…",
       "st.done.send": "Έγινε. Όλα τα αρχεία έφτασαν ακέραια.",
       "st.done.recv": "Έγινε. Όλα τα αρχεία έφτασαν ακέραια.",
@@ -143,10 +165,10 @@
       "prog": "{a} από {b}",
       "err.noroom": "Δεν βρέθηκε ο αποστολέας. Έλεγξε τον κωδικό, ή κάποιος άλλος τον παραλαμβάνει ήδη.",
       "err.left": "Η άλλη πλευρά έκλεισε τη σελίδα.",
-      "err.nodirect": "Οι δύο συσκευές δεν μπόρεσαν να συνδεθούν απευθείας (αυστηρό δίκτυο, VPN ή firewall). Δοκίμασε και τις δύο στο ίδιο Wi-Fi ή σε άλλο δίκτυο.",
+      "err.nodirect": "Οι δύο συσκευές δεν μπόρεσαν να συνδεθούν απευθείας (αυστηρό δίκτυο, VPN ή firewall), και πάνω από 50 MB δεν περνούν από τον αναμεταδότη orOS. Δοκίμασε και τις δύο στο ίδιο Wi-Fi, σε άλλο δίκτυο, ή στείλε λιγότερα κάθε φορά.",
       "err.declined": "Η μεταφορά απορρίφθηκε.",
       "err.cancelled": "Η μεταφορά ακυρώθηκε.",
-      "err.lost": "Η σύνδεση χάθηκε. Ξεκίνα τη μεταφορά από την αρχή.",
+      "err.lost": "Η σύνδεση χάθηκε και δεν επανήλθε. Ξεκίνα τη μεταφορά από την αρχή.",
       "err.bad": "Έφτασε κάτι που δεν ανήκει σε αυτή τη μεταφορά. Σταμάτησε.",
       "err.version": "Η άλλη πλευρά έχει άλλη έκδοση της Μεταφοράς. Ανανέωσε και τις δύο σελίδες.",
       "err.nocrypto": "Αυτός ο browser δεν μπορεί να κρυπτογραφήσει (χρειάζεται ασφαλή σελίδα https).",
@@ -369,7 +391,7 @@
       if (seq !== expandSeq) return;
       expanded = all;
       var total = all.reduce(function (a, f) { return a + f.size; }, 0);
-      $("chosen-sum").textContent = t("send.sum", { n: all.length, s: size(total) });
+      $("chosen-sum").textContent = t(all.length === 1 ? "send.sum1" : "send.sum", { n: all.length, s: size(total) });
       $("make-link").disabled = !all.length;
     });
   }
@@ -429,7 +451,8 @@
       var p = f.file ? Promise.resolve(f.file) : fs.read(f.src);
       return p.then(function (b) { blobs = {}; blobs[i] = b; return b; });
     }
-    var dev = "";
+    var dev = "", started = false, how = "direct";
+    function log(end, bad) { if (started) record({ dir: "sent", files: manifest, dev: dev, bad: bad, mode: how, end: end }); }
     sender = new E.Transfer({
       role: "sender", code: code, dev: devName(), files: manifest,
       read: function (i, a, b) {
@@ -443,17 +466,24 @@
         else if (p === "wait") st.textContent = t("st.wait.send");
         else if (p === "linking") st.textContent = t("st.linking", { dev: dev });
         else if (p === "offered") st.textContent = t("st.offered", { dev: dev });
-        else if (p === "sending") { st.textContent = t("st.sending"); busy = true; stayAwake(true); }
+        else if (p === "sending") {
+          if (sender) how = sender.mode() || how;
+          started = true;
+          st.textContent = t(how === "relay" ? "st.sendingRelay" : "st.sending"); busy = true; stayAwake(true);
+        }
+        else if (p === "reconnecting") st.textContent = t("st.reconnecting");
         else if (p === "done") {
           busy = false; stayAwake(false);
           var bad = info.bad || [];
           st.textContent = bad.length ? t("st.someBad", { n: bad.length, names: bad.slice(0, 5).map(function (i) { return manifest[i].p; }).join(", ") }) : t("st.done.send");
           st.className = "status " + (bad.length ? "warn" : "ok");
+          log("done", bad);
           end();
         } else if (p === "error") {
           busy = false; stayAwake(false);
           st.textContent = errText(info.e);
           st.className = "status warn";
+          log("stopped", []);
           end();
         }
       },
@@ -472,7 +502,7 @@
   }
 
   // ---------- 7. Receive ----------
-  var receiver = null, sink = null, result = null, offerInfo = null;
+  var receiver = null, sink = null, result = null, offerInfo = null, recvHow = "direct", recvDest = "", recvDev = "";
   function recvStatus(text, cls) { var s = $("recv-status"); s.textContent = text; s.className = "status" + (cls ? " " + cls : ""); }
   function resetRecv() {
     show("offer", false); show("recv-prog", false); show("recv-bad", false);
@@ -485,19 +515,25 @@
     resetRecv();
     show("code-form", false); show("recv-box", true);
     var dev = "";
+    recvHow = "direct"; recvDest = ""; recvDev = "";
     receiver = new E.Transfer({
       role: "receiver", code: code, dev: devName(),
       onState: function (p, info) {
-        if (info.dev) dev = info.dev;
+        if (info.dev) dev = recvDev = info.dev;
         if (p === "connecting") recvStatus(t("st.connecting"));
         else if (p === "wait") recvStatus(t("st.wait.recv"));
         else if (p === "linking") recvStatus(t("st.linking", { dev: dev }));
         else if (p === "offer") showOffer(info, dev);
-        else if (p === "receiving") { recvStatus(t("st.receiving")); busy = true; stayAwake(true); }
+        else if (p === "receiving") {
+          if (receiver) recvHow = receiver.mode() || recvHow;
+          recvStatus(t(recvHow === "relay" ? "st.receivingRelay" : "st.receiving")); busy = true; stayAwake(true);
+        }
+        else if (p === "reconnecting") recvStatus(t("st.reconnecting"));
         else if (p === "done") finishRecv(info);
         else if (p === "error") {
           busy = false; stayAwake(false);
           recvStatus(errText(info.e), "warn");
+          if (sink && offerInfo) record({ dir: "recv", files: offerInfo.files, dev: dev, mode: recvHow, dest: recvDest, end: "stopped" });
           if (sink) sink.drop();
           sink = null;
           endRecv();
@@ -515,7 +551,8 @@
     recvStatus(t("st.offer"));
     show("offer", true);
     show("recv-cancel", false);           // Decline is the way out here
-    $("offer-sum").textContent = t("offer.sum", { n: o.files.length, s: size(o.total), dev: dev || "?" });
+    $("offer-sum").textContent = t(o.files.length === 1 ? "offer.sum1" : "offer.sum", { n: o.files.length, s: size(o.total), dev: dev || "?" });
+    show("offer-relay", o.mode === "relay");
     var list = $("offer-list");
     list.textContent = "";
     o.files.slice(0, SHOW_MAX).forEach(function (f) {
@@ -557,6 +594,7 @@
   function accept() {
     if (!receiver || !offerInfo) return;
     var dest = destValue();
+    recvDest = dest;
     sink = S.sink({ dest: dest, files: offerInfo.files, fs: FS(), zipName: "orOS Transfer " + new Date().toISOString().slice(0, 10) + ".zip" });
     show("offer", false);
     show("recv-cancel", true);
@@ -569,6 +607,7 @@
     s.finish().then(function (r) {
       busy = false; stayAwake(false);
       result = r;
+      record({ dir: "recv", files: files, dev: recvDev, bad: bad, mode: recvHow, dest: r.kind === "disk" ? "disk" : "device", folder: r.kind === "disk" ? r.folder : "", end: "done" });
       var badNames = bad.slice(0, 5).map(function (i) { return files[i] ? files[i].p : "?"; }).join(", ");
       if (bad.length) {
         $("recv-bad").textContent = t(r.kind === "file" && files.length > 1 ? "st.someBadZip" : "st.someBad", { n: bad.length, names: badNames });
@@ -621,12 +660,105 @@
     if (PAGE === "receive") try { history.replaceState(null, "", location.pathname); } catch (e) {}
   }
 
+  // ---------- 7b. History (synced slice "transfer") ----------
+  // Only the orOS app keeps one; the receive page outside orOS does not.
+  var hist = { ver: 1, items: [], tombs: {} };
+  function syncApi() {
+    try { return (window.parent && window.parent !== window && window.parent.orosSync) || null; } catch (e) { return null; }
+  }
+  var suppress = false;
+  function loadHist() {
+    try { hist = C.mergeHistory(JSON.parse(localStorage.getItem(C.HIST_KEY) || "null"), null); } catch (e) { hist = C.mergeHistory(null, null); }
+  }
+  function saveHist() {
+    try { localStorage.setItem(C.HIST_KEY, JSON.stringify(hist)); } catch (e) { return; }
+    var api = syncApi();
+    if (!suppress && api && typeof api.markDirty === "function") try { api.markDirty(); } catch (e) {}
+  }
+  function record(o) {
+    if (PAGE !== "app") return;
+    var item = C.historyItem(o);
+    if (!item) return;
+    hist = C.mergeHistory(hist, { items: [item] });
+    saveHist();
+    renderHist();
+    var root = shell();
+    if (root && o.end === "done" && document.hidden) {
+      try { if (root.orosNotifs && typeof root.orosNotifs.transient === "function") root.orosNotifs.transient({ ns: APP_ID, title: t(o.dir === "recv" ? "note.recv" : "note.sent", { what: item.what }) }); } catch (e) {}
+    }
+  }
+  function sliceGet() { return C.mergeHistory(hist, hist); }      // canonical (R26)
+  function sliceSet(incoming) {
+    if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.items)) return;
+    var before = JSON.stringify(hist);
+    suppress = true;                                             // R6: a pull never marks dirty
+    try { hist = C.mergeHistory(incoming, incoming); saveHist(); } finally { suppress = false; }
+    if (JSON.stringify(hist) !== before) renderHist();
+  }
+  function registerSync() {
+    var api = syncApi();
+    if (!api || typeof api.registerSlice !== "function") return;
+    try { api.registerSlice(APP_ID, sliceGet, sliceSet, C.HIST_KEY, C.mergeHistory); } catch (e) {}
+  }
+  function when(ms) {
+    try { return new Date(ms).toLocaleString(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); }
+    catch (e) { return new Date(ms).toISOString().slice(0, 16).replace("T", " "); }
+  }
+  function renderHist() {
+    var list = $("hist-list");
+    if (!list) return;
+    list.textContent = "";
+    hist.items.forEach(function (x) {
+      var li = el("li");
+      li.appendChild(el("span", "arrow", x.dir === "recv" ? "↓" : "↑"));
+      var body = el("div", "body");
+      body.appendChild(el("span", "what", x.what || "—"));
+      var parts = [when(x.at), t(x.dir === "recv" ? "hist.recv" : "hist.sent", { dev: x.dev || t("hist.someone") }),
+        x.n === 1 ? t("hist.one", { s: size(x.bytes) }) : t("hist.sum", { n: x.n, s: size(x.bytes) })];
+      if (x.mode === "relay") parts.push(t("hist.relay"));
+      if (x.dir === "recv" && x.dest) parts.push(t(x.dest === "disk" ? "hist.disk" : "hist.device"));
+      body.appendChild(el("span", "meta", parts.join(" · ")));
+      if (x.end === "stopped") body.appendChild(el("span", "meta warn", t("hist.stopped")));
+      else if (x.bad) body.appendChild(el("span", "meta warn", t("hist.bad", { n: x.bad })));
+      li.appendChild(body);
+      if (x.folder && FS()) {
+        var b = el("button", "chip small", t("hist.open"));
+        b.type = "button";
+        b.addEventListener("click", function () {
+          try { var p = shell(); if (p && typeof p.__orosOpenAt === "function") p.__orosOpenAt("files", { path: x.folder, dir: true }); } catch (e) {}
+        });
+        li.appendChild(b);
+      }
+      list.appendChild(li);
+    });
+    show("hist-empty", !hist.items.length);
+    show("hist-clear", hist.items.length > 0);
+  }
+  var clearArmed = 0;
+  function clearHist() {
+    var b = $("hist-clear");
+    if (!clearArmed) {
+      b.textContent = t("hist.sure");
+      clearArmed = setTimeout(function () { clearArmed = 0; b.textContent = t("hist.clear"); }, 4000);
+      return;
+    }
+    clearTimeout(clearArmed); clearArmed = 0;
+    b.textContent = t("hist.clear");
+    var now = Date.now(), tombs = {};
+    hist.items.forEach(function (x) { tombs[x.id] = now; });
+    hist = C.mergeHistory(hist, { tombs: tombs });
+    saveHist();
+    renderHist();
+  }
+
   // ---------- 8. Tabs, wiring, deep links ----------
   function tab(which) {
-    var send = which === "send";
-    $("tab-send").classList.toggle("on", send); $("tab-send").setAttribute("aria-selected", String(send));
-    $("tab-recv").classList.toggle("on", !send); $("tab-recv").setAttribute("aria-selected", String(!send));
-    show("send", send); show("recv", !send);
+    ["send", "recv", "hist"].forEach(function (k) {
+      var b = $("tab-" + k), on = k === which;
+      if (!b) return;
+      b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on));
+      show(k, on);
+    });
   }
   function codeFromHash(h) {
     var m = /^#(?:r=)?(.+)$/.exec(String(h || ""));
@@ -636,6 +768,8 @@
     if ($("tab-send")) {
       $("tab-send").addEventListener("click", function () { tab("send"); });
       $("tab-recv").addEventListener("click", function () { tab("recv"); });
+      $("tab-hist").addEventListener("click", function () { tab("hist"); });
+      $("hist-clear").addEventListener("click", clearHist);
       $("add-local").addEventListener("click", addLocal);
       $("make-link").addEventListener("click", startSend);
       $("send-cancel").addEventListener("click", cancelSend);
@@ -674,8 +808,31 @@
       into.dataset.known = known ? "1" : "";
     }
   }
+  // Files hands over disk paths to send: { send: ["/internal/…", …] }
+  function takeSend(paths) {
+    var fs = FS();
+    if (!fs || !$("disk") || sender) return;
+    tab("send");
+    if (!$("share").hidden) { chosen = []; expanded = null; show("share", false); show("pick", true); }   // a finished send: start a new list
+    var q = Promise.resolve(fs.ready && fs.ready()).catch(function () {});
+    paths.slice(0, 500).forEach(function (p) {
+      p = String(p || "").replace(/\/+$/, "");
+      if (p.indexOf(ROOT + "/") !== 0 || /(^|\/)\.\.?(\/|$)/.test(p.slice(ROOT.length + 1))) return;
+      var key = "d:" + p;
+      if (isChosen(key)) return;
+      q = q.then(function () { return fs.stat(p); }).then(function (st) {
+        if (st && !isChosen(key)) chosen.push({ key: key, kind: "disk", path: p, dir: !!st.dir, name: p.slice(p.lastIndexOf("/") + 1) });
+      }, function () {});
+    });
+    q.then(function () {
+      var first = chosen.length ? chosen[chosen.length - 1].path : "";
+      if (first) cwd = first.slice(0, first.lastIndexOf("/")) || ROOT;
+      renderChosen(); renderDisk();
+    });
+  }
   // A link or another app hands over a code: { receive: code }
   window.__orosOpenAt = function (target) {
+    if (target && Array.isArray(target.send)) { takeSend(target.send); return; }
     var c = target && typeof target.receive === "string" ? C.normCode(target.receive) : "";
     if (!c) return;
     if ($("tab-recv")) tab("recv");
@@ -707,7 +864,7 @@
     wire();
     inheritPalette();
     watchPalette();
-    if ($("disk")) { renderDisk(); renderChosen(); }
+    if ($("disk")) { renderDisk(); renderChosen(); loadHist(); renderHist(); registerSync(); }
     S.sweep();
     takePending();
     window.addEventListener("hashchange", function () {
