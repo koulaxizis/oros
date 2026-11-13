@@ -223,6 +223,7 @@
       "pf.actCopies": "Asked in the Author Portal for {q} author copies of «{t}».",
       "pf.links": "Links:",
       "pf.photo": "A photo came with the request.",
+      "pf.photoFile": "Photo {d}", "pf.photoAlt": "The creator's new photo", "pf.photoBig": "The photo is too large for the orOS relay and the shop could not be reached directly. Open the request on the site.", "pf.photoBad": "The photo is not a JPEG, PNG or WebP picture, so orOS did not open it.", "pf.photoNone": "The photo could not be read right now.", "pf.photoSave": "Save to the partner's folder", "pf.photoSaved": "Saved in the partner's folder.",
       "pf.note": "Note:",
       "pf.toast": "Creator requests from the Author Portal: {n} (in Agenda)",
       "pf.left": "Creator requests for a beneficiary no partner here is linked to:",
@@ -536,6 +537,7 @@
       "pf.actCopies": "Ζητήθηκαν από το Author Portal {q} αντίτυπα συγγραφέα του «{t}».",
       "pf.links": "Σύνδεσμοι:",
       "pf.photo": "Το αίτημα έχει και φωτογραφία.",
+      "pf.photoFile": "Φωτογραφία {d}", "pf.photoAlt": "Η νέα φωτογραφία του δημιουργού", "pf.photoBig": "Η φωτογραφία είναι πολύ μεγάλη για τον αναμεταδότη του orOS και το site δεν απάντησε απευθείας. Άνοιξε το αίτημα στο site.", "pf.photoBad": "Η φωτογραφία δεν είναι εικόνα JPEG, PNG ή WebP, οπότε το orOS δεν την άνοιξε.", "pf.photoNone": "Η φωτογραφία δεν διαβάστηκε αυτή τη στιγμή.", "pf.photoSave": "Αποθήκευση στον φάκελο του συνεργάτη", "pf.photoSaved": "Αποθηκεύτηκε στον φάκελο του συνεργάτη.",
       "pf.note": "Σημείωση:",
       "pf.toast": "Αιτήματα δημιουργών από το Author Portal: {n} (στην Ατζέντα)",
       "pf.left": "Αιτήματα δημιουργών για δικαιούχο που δεν είναι συνδεδεμένος με κανέναν συνεργάτη εδώ:",
@@ -2310,12 +2312,31 @@
       pfLeft[shop.id] = x.left;
     }
     if (taken) marks = marks.concat(RS.pfCloseList(data, shop.id, taken, pfDefReply));
-    return pfFiles(files).then(function () { return markProfile(shop, marks); });
+    return pfFiles(files, shop).then(function () { return markProfile(shop, marks); });
   }
   // the page text of each new bio request as a text file in the partner's
   // folder (best effort: without the orOS disk the note and "See the
   // request" still have it)
-  function pfFiles(list) {
+  // RS-PF W2: the creator's photo → { blob, type } | { err } (never throws)
+  function pfPhoto(shop, id) {
+    var RS = window.OrosCrmRs, L = shopLinks(), r = RS && RS.reqPfPhoto ? RS.reqPfPhoto(id) : null;
+    if (!L || !r) return Promise.resolve({ err: "none" });
+    return Promise.resolve(L.call(shop.id, [r])).then(function (res) {
+      var x = res && res[0];
+      if (x && x.blob && /^image\/(jpeg|png|webp)$/.test(x.type)) return { blob: x.blob, type: x.type };
+      return { err: x && (x.err === "photo-big" || x.err === "big") ? "big" : (x && x.err === "photo-type" ? "bad" : "none") };
+    }, function (e) { return { err: e && e.code === "big" ? "big" : "none" }; });
+  }
+  var PHOTO_EXT = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp" };
+  function pfSavePhoto(fs, cust, at, ph) {
+    var dir = folderOf(cust), day = C.ymdOf ? C.ymdOf(at || Date.now()) : todayYmd();
+    return Promise.resolve(fs.stat(dir)).catch(function () { return null; }).then(function (st) {
+      return st ? null : Promise.resolve(fs.mkdir("/internal/CRM")).catch(function () {}).then(function () { return fs.mkdir(dir); });
+    }).then(function () {
+      return freePath(fs, dir, fileName({ name: t("pf.photoFile", { d: day }) }) + PHOTO_EXT[ph.type]);
+    }).then(function (path) { return fs.write(path, ph.blob); });
+  }
+  function pfFiles(list, shop) {
     var fs = diskApi();
     if (!fs || !list.length) return Promise.resolve();
     return list.reduce(function (p, it) {
@@ -2330,6 +2351,10 @@
           return freePath(fs, dir, fileName({ name: t("pf.bioFile", { d: day }) }));
         }).then(function (path) {
           return fs.write(path, new Blob([body.join("\n") + "\n"], { type: "text/plain" }));
+        }).then(function () {
+          // the photo too, when it came and can be read (best effort)
+          if (!q.photo || !shop) return;
+          return pfPhoto(shop, q.id).then(function (ph) { if (ph.blob) return pfSavePhoto(fs, it.cust, q.at, ph); });
         });
       }).catch(function () {});
     }, Promise.resolve());
@@ -2608,6 +2633,30 @@
       a.rows = 8;
       body.appendChild(copyBtn(function () { return a.value; }));
     }
+    // the photo only ever as a blob URL in an <img> (JPEG, PNG, WebP by its bytes)
+    var photoUrl = "";
+    dlg.addEventListener("close", function () { if (photoUrl) { try { URL.revokeObjectURL(photoUrl); } catch (e) {} photoUrl = ""; } });
+    function photoBlock(q) {
+      var box = el("div", "");
+      box.appendChild(el("p", "hint", t("pf.photo")));
+      body.appendChild(box);
+      if (!foundShop) return;
+      pfPhoto(foundShop, q.id).then(function (ph) {
+        if (!dlg.isConnected) return;
+        if (!ph.blob) { box.appendChild(el("p", "hint late", t(ph.err === "big" ? "pf.photoBig" : ph.err === "bad" ? "pf.photoBad" : "pf.photoNone"))); return; }
+        photoUrl = URL.createObjectURL(ph.blob);
+        var img = el("img", "pf-photo");
+        img.src = photoUrl;
+        img.alt = t("pf.photoAlt");
+        box.appendChild(img);
+        var fs = diskApi(), f = foundFup && C.byId(data.fups, foundFup), cust = f && C.byId(data.cust, f.cust);
+        if (fs && cust) {
+          box.appendChild(button(t("pf.photoSave"), "", function () {
+            pfSavePhoto(fs, cust, q.at, ph).then(function () { showToast(t("pf.photoSaved")); }, function () { showToast(t("pf.photoNone")); });
+          }));
+        }
+      });
+    }
     function show(q) {
       body.innerHTML = "";
       if (!q) { body.appendChild(el("p", "hint late", t("pf.gone"))); return; }
@@ -2627,14 +2676,14 @@
             body.appendChild(p);
           });
         }
-        if (q.photo) body.appendChild(el("p", "hint", t("pf.photo")));
+        if (q.photo) photoBlock(q);
       } else {
         body.appendChild(el("p", "", t("pf.actCopies", { q: q.qty || 0, t: q.title || ("#" + (q.pid || 0)) })));
       }
       if (q.note) body.appendChild(el("p", "hint", t("pf.note") + " " + q.note));
       if (q.state === "done" || q.state === "declined") body.appendChild(el("p", "hint", t("pf.closed." + q.state) + (q.reply ? ": " + q.reply : "")));
     }
-    var found = null;
+    var found = null, foundShop = null, foundFup = fupId;
     rsShops().reduce(function (p, shop) {
       return p.then(function () {
         if (found) return;
@@ -2642,7 +2691,7 @@
           if (!k) return;
           return Promise.resolve(L.call(shop.id, [RS.REQ_PF_ALL])).then(function (res) {
             var list = res && res[0] && !L.statusCode(res[0]) ? RS.parsePfRequests(res[0].data) : null;
-            (list || []).some(function (q) { if (RS.pfIds(shop.id, q).fup === fupId) { found = q; return true; } return false; });
+            (list || []).some(function (q) { if (RS.pfIds(shop.id, q).fup === fupId) { found = q; foundShop = shop; return true; } return false; });
           });
         });
       }).catch(function () {});

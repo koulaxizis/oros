@@ -184,6 +184,20 @@ const RS_RENEWAL = ["on", "prev_to", "to"];
 // RS-CTR: Revenue Splitter 1.14.2's contracts routes and key (= links/core.js)
 const RS_ROUTE = /^\/rs\/(contract(s|-requests)|profile-requests|production)(\/|\?|$)/, RS_KEY = /^rsc_[A-Za-z0-9_-]{16,128}$/;
 function rsRoute(p, path) { return p === "woo" && typeof path === "string" && RS_ROUTE.test(path); }
+// RS-PF W2 (Revenue Splitter 1.18.0): a creator's photo, binary. Only
+// JPEG, PNG or WebP by its first bytes (never the shop's Content-Type),
+// at most imgOut, alone in its call; larger only straight to the shop.
+const RS_PHOTO = /^\/rs\/profile-requests\/[A-Za-z0-9_-]{1,64}\/photo$/;
+function rsPhoto(p, path) { return p === "woo" && typeof path === "string" && RS_PHOTO.test(path); }
+export function photoType(u8) {
+  if (!u8 || u8.length < 12) return "";
+  if (u8[0] === 0xff && u8[1] === 0xd8 && u8[2] === 0xff) return "image/jpeg";
+  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (png.every((v, i) => u8[i] === v)) return "image/png";
+  const at = (o, s) => [...s].every((c, i) => u8[o + i] === c.charCodeAt(0));
+  if (at(0, "RIFF") && at(8, "WEBP")) return "image/webp";
+  return "";
+}
 function okRsCtr(x) {
   if (!onlyKeys(x, RS_CTR_KEYS.concat("renewals")) || !RS_CTR_KEYS.every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
   if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
@@ -331,6 +345,8 @@ export const PLATFORMS = {
       // RS-PF / RS-PROD (1.18.0): page and author-copy requests, production stage
       ["GET", /^\/rs\/profile-requests$/, { state: RS_RQ_Q }, null],
       ["POST", /^\/rs\/profile-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rspfst", reply: "rsreply" }, "rspf"],
+      // RS-PF W2: the creator's new photo, GET alone in its call, no query
+      ["GET", RS_PHOTO, null, null],
       ["GET", /^\/rs\/production$/, null, null],
       ["POST", /^\/rs\/production$/, null, { v: "rsv", sent: "rsday", works: "rsworks" }, "rsp"],
       // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
@@ -737,6 +753,8 @@ export function validExt(b) {
   if (pl.once && b.reqs.length > 1 && b.reqs.some(r => r && r.m !== "GET")) return "reqs";
   // a product picture travels alone in its call (CPU: base64 runs on the relay)
   if (b.reqs.length > 1 && b.reqs.some(r => r && r.img !== undefined)) return "reqs";
+  // so does a creator's photo (RS-PF W2)
+  if (b.reqs.length > 1 && b.reqs.some(r => r && rsPhoto(b.p, r.path))) return "reqs";
   for (const r of b.reqs) {
     if (r && r.body !== undefined) {
       if (typeof r.body !== "string" || r.body.length > bodyCap(b.p, b.reqs)) return "body";
@@ -790,6 +808,18 @@ function b64(bytes) {
   let s = "";
   for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   return btoa(s);
+}
+// A creator's photo (RS-PF W2): the contracts key, no redirect; only a
+// 2xx with a JPEG, PNG or WebP by its first bytes comes back, as base64
+// with the type read from those bytes. Nothing else from the shop.
+async function onePhoto(url, headers, fetchFn, signal, room) {
+  const res = await fetchFn(url, { method: "GET", headers, redirect: "manual", signal });
+  if (res.status < 200 || res.status > 299) { try { if (res.body) await res.body.cancel(); } catch (e) {} return { status: res.status }; }
+  const bytes = room > 0 ? await readBytes(res, room) : null;
+  if (!bytes) { try { if (res.body) await res.body.cancel(); } catch (e) {} return { status: res.status, err: "photo-big" }; }
+  const type = photoType(bytes);
+  if (!type) return { status: res.status, err: "photo-type" };
+  return { status: res.status, type, b64: b64(bytes), n: bytes.length };
 }
 // One product picture: no keys, no cookies, only an image back.
 async function oneImg(url, fetchFn, signal, room) {
@@ -870,6 +900,26 @@ export async function runExt(b, fetchFn, now) {
     headers[auth[0]] = auth[1];
     const extra = pl.extraOf ? pl.extraOf(b) : pl.extra;
     if (extra) Object.keys(extra).forEach((k) => { headers[k] = extra[k]; });
+    if (rsPhoto(b.p, r.path)) {
+      headers.Accept = "image/webp,image/png,image/jpeg";
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), Math.min(lim(b.p, "timeout"), left));
+      const room = Math.max(0, Math.min(EXT_LIMITS.imgOut, Math.floor((EXT_LIMITS.totalOut - outBytes) * 3 / 4)));
+      outBytes += room;
+      try {
+        const x = await onePhoto(url, headers, fetchFn, ctl.signal, room);
+        outBytes -= room;
+        outBytes += x.b64 ? x.b64.length : 0;
+        delete x.n;
+        out[i] = x;
+      } catch (e) {
+        outBytes -= room;
+        out[i] = { err: ctl.signal.aborted ? "timeout" : "network" };
+      } finally {
+        clearTimeout(timer);
+      }
+      return;
+    }
     let body;
     if (r.body !== undefined) { headers["Content-Type"] = "application/json"; body = r.body; }
     const ctl = new AbortController();

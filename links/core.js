@@ -465,6 +465,20 @@
   // and author-copy requests and the production stage take the same key.
   var RS_ROUTE = /^\/rs\/(contract(s|-requests)|profile-requests|production)(\/|\?|$)/;
   function rsRoute(p, path) { return p === "woo" && typeof path === "string" && RS_ROUTE.test(path); }
+  // RS-PF W2: a creator's photo (binary). Its type comes only from its
+  // first bytes: JPEG, PNG or WebP (= relay/ext.js photoType).
+  var RS_PHOTO = /^\/rs\/profile-requests\/[A-Za-z0-9_-]{1,64}\/photo$/, RS_PHOTO_MAX = 10 * 1024 * 1024;
+  function rsPhoto(p, path) { return p === "woo" && typeof path === "string" && RS_PHOTO.test(path); }
+  function photoType(u8) {
+    if (!u8 || u8.length < 12) return "";
+    if (u8[0] === 0xff && u8[1] === 0xd8 && u8[2] === 0xff) return "image/jpeg";
+    var png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], i;
+    for (i = 0; i < 8 && u8[i] === png[i]; i++) {}
+    if (i === 8) return "image/png";
+    function at(o, s) { for (var j = 0; j < s.length; j++) if (u8[o + j] !== s.charCodeAt(j)) return false; return true; }
+    if (at(0, "RIFF") && at(8, "WEBP")) return "image/webp";
+    return "";
+  }
   // → "all" | "none" | "mixed"
   function rsCall(p, reqs) {
     var list = Array.isArray(reqs) ? reqs : [reqs], n = 0;
@@ -820,6 +834,8 @@
       // "oros", closed "done" / "declined" with a reply for the creator
       ["GET", /^\/rs\/profile-requests$/, { state: RS_RQ_Q }, null],
       ["POST", /^\/rs\/profile-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rspfst", reply: "rsreply" }, "rspf"],
+      // RS-PF W2: the creator's new photo (binary, alone in its call)
+      ["GET", RS_PHOTO, null, null],
       // RS-PROD (1.18.0): the production stage of the works (the whole
       // list each time, Kanban board → seven public phases)
       ["GET", /^\/rs\/production$/, null, null],
@@ -1103,7 +1119,7 @@
     ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, DB_RE: DB_RE, TOL_TYPES: TOL_TYPES, ODOO: ODOO,
     validHost: validHost, normSite: normSite, siteParts: siteParts,
     normAcct: normAcct, merge: merge, live: live, find: find, checkKeys: checkKeys,
-    extId: extId, checkReq: checkReq, keysFor: keysFor, rsRoute: rsRoute, rsCall: rsCall, utf8Len: utf8Len, relayTooBig: relayTooBig, RS_MAX: RS_MAX, RS_BYTES: RS_BYTES, RS_RELAY_BYTES: RS_RELAY_BYTES, SHOPIFY_Q: SHOPIFY_Q, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
+    extId: extId, checkReq: checkReq, rsPhoto: rsPhoto, photoType: photoType, RS_PHOTO_MAX: RS_PHOTO_MAX, keysFor: keysFor, rsRoute: rsRoute, rsCall: rsCall, utf8Len: utf8Len, relayTooBig: relayTooBig, RS_MAX: RS_MAX, RS_BYTES: RS_BYTES, RS_RELAY_BYTES: RS_RELAY_BYTES, SHOPIFY_Q: SHOPIFY_Q, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
     okEmail: okEmail
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

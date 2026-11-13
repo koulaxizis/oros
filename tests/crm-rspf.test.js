@@ -41,8 +41,12 @@ const CASES = [
   [{ m: "POST", path: "/rs/profile-requests/17", body: { state: "done", note: "x" } }, "body"],
   [{ m: "POST", path: "/rs/profile-requests/" + "x".repeat(65), body: { state: "oros" } }, "path"],
   [{ m: "POST", path: "/rs/profile-requests", body: { state: "oros" } }, "path"],
-  // the photo is a later wave: not allowed yet
-  [{ m: "GET", path: "/rs/profile-requests/17/photo" }, "path"],
+  // W2: the creator's photo, GET only, no query or body
+  [{ m: "GET", path: "/rs/profile-requests/17/photo" }, ""],
+  [{ m: "GET", path: "/rs/profile-requests/17/photo?size=big" }, "query"],
+  [{ m: "POST", path: "/rs/profile-requests/17/photo", body: { state: "oros" } }, "path"],
+  [{ m: "GET", path: "/rs/profile-requests/17/photo/x" }, "path"],
+  [{ m: "GET", path: "/rs/profile-requests/" + "x".repeat(65) + "/photo" }, "path"],
   [{ m: "GET", path: "/rs/production" }, ""],
   [{ m: "GET", path: "/rs/production?ben=Anna" }, "query"],
   [prod([work()]), ""],
@@ -105,6 +109,65 @@ test("relay: a production list up to 256 KB goes alone through the relay, larger
   assert.equal(L.relayTooBig("woo", [{ m: "POST", path: "/rs/production", body: rows(300) }]), false);
   // the larger cap only alone in its call
   assert.equal(X.validExt(ext([mid, { m: "GET", path: "/rs/production" }])), "body");
+});
+
+// RS-PF W2: the creator's photo through the relay
+const JPG = [0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46, 0, 1];
+const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13];
+const WEBP = [...Buffer.from("RIFF"), 1, 2, 3, 4, ...Buffer.from("WEBPVP8 ")];
+const bytes = (head, n) => { const u = new Uint8Array(n || 64); u.set(head); return u; };
+function fakeShop(status, body, type) {
+  const calls = [];
+  const f = async (url, init) => { calls.push({ url, init }); return new Response(status === 204 ? null : body, { status, headers: { "Content-Type": type || "image/jpeg" } }); };
+  f.calls = calls;
+  return f;
+}
+const photoExt = (reqs) => ({ op: "ext", p: "woo", host: "shop.example.gr", base: "", rsk: RK, reqs: reqs || [{ m: "GET", path: "/rs/profile-requests/17/photo" }] });
+
+test("photo: the type comes from the first bytes only (both copies agree)", () => {
+  const cases = [[bytes(JPG), "image/jpeg"], [bytes(PNG), "image/png"], [bytes(WEBP), "image/webp"],
+    [bytes([...Buffer.from("GIF89a")]), ""], [bytes([...Buffer.from("<svg xmlns")]), ""], [bytes([...Buffer.from("<html>")]), ""],
+    [bytes(PNG.slice(0, 7)), ""], [bytes([...Buffer.from("RIFF"), 1, 2, 3, 4, ...Buffer.from("WAVE")]), ""],
+    [new Uint8Array(JPG.slice(0, 11)), ""], [new Uint8Array(0), ""]];
+  for (const [u8, want] of cases) {
+    assert.equal(X.photoType(u8), want, "relay " + Buffer.from(u8.slice(0, 8)).toString("hex"));
+    assert.equal(L.photoType(u8), want, "app " + Buffer.from(u8.slice(0, 8)).toString("hex"));
+  }
+});
+
+test("photo: alone in its call, the contracts key only", () => {
+  assert.equal(X.validExt(photoExt()), "");
+  assert.equal(X.validExt(photoExt([{ m: "GET", path: "/rs/profile-requests/17/photo" }, { m: "GET", path: "/rs/profile-requests?state=new" }])), "reqs");
+  assert.equal(X.validExt(photoExt([{ m: "GET", path: "/rs/profile-requests/17/photo" }, { m: "GET", path: "/rs/profile-requests/18/photo" }])), "reqs");
+  assert.equal(X.validExt(Object.assign(photoExt(), { rsk: undefined, ck: CK, cs: CS })), "key");
+  assert.deepEqual(L.keysFor("woo", { ck: CK, cs: CS, rsk: RK }, [{ m: "GET", path: "/rs/profile-requests/17/photo" }]), { rsk: RK });
+});
+
+test("photo: the relay sends back only the bytes and the type they show", async () => {
+  const img = bytes(PNG, 2000);
+  const f = fakeShop(200, img, "text/html");
+  const out = await X.runExt(photoExt(), f);
+  assert.equal(f.calls.length, 1);
+  assert.equal(f.calls[0].url, "https://shop.example.gr/wp-json/rs/v1/profile-requests/17/photo");
+  assert.equal(f.calls[0].init.redirect, "manual");
+  assert.equal(f.calls[0].init.headers["X-RS-Key"], RK);
+  assert.deepEqual(out.res, [{ status: 200, type: "image/png", b64: Buffer.from(img).toString("base64") }]);
+});
+
+test("photo: over 512 KB → photo-big, a GIF or SVG with a jpeg Content-Type → photo-type, a non-2xx → only its status", async () => {
+  const max = 512 * 1024;
+  let out = await X.runExt(photoExt(), fakeShop(200, bytes(JPG, max + 1)));
+  assert.deepEqual(out.res, [{ status: 200, err: "photo-big" }]);
+  out = await X.runExt(photoExt(), fakeShop(200, bytes(JPG, max)));
+  assert.equal(out.res[0].type, "image/jpeg");
+  out = await X.runExt(photoExt(), fakeShop(200, bytes([...Buffer.from("GIF89a")]), "image/jpeg"));
+  assert.deepEqual(out.res, [{ status: 200, err: "photo-type" }]);
+  out = await X.runExt(photoExt(), fakeShop(200, Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'), "image/jpeg"));
+  assert.deepEqual(out.res, [{ status: 200, err: "photo-type" }]);
+  out = await X.runExt(photoExt(), fakeShop(404, '{"code":"rest_no_route","message":"secret detail"}', "application/json"));
+  assert.deepEqual(out.res, [{ status: 404 }]);
+  out = await X.runExt(photoExt(), fakeShop(302, "", "text/html"));
+  assert.deepEqual(out.res, [{ status: 302 }]);
 });
 
 // ---------- crm/rs.js ----------

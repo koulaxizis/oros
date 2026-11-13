@@ -249,6 +249,12 @@
     if (r) body.reply = r;
     return { m: "POST", path: "/rs/profile-requests/" + id, body: body };
   }
+  // RS-PF W2: the creator's new photo (binary; links/host.js answers
+  // { status, type, blob } with the type from its first bytes)
+  function reqPfPhoto(id) {
+    var s = String(id);
+    return /^[A-Za-z0-9_-]{1,64}$/.test(s) ? { m: "GET", path: "/rs/profile-requests/" + s + "/photo" } : null;
+  }
   function longText(v, max) {
     return typeof v === "string" ? v.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f]+/g, " ").trim().slice(0, max) : "";
   }
@@ -380,7 +386,7 @@
   var API = { REQ_BAL: REQ_BAL, reqReport: reqReport, parseBal: parseBal, parseRep: parseRep, card: card, suggest: suggest,
               REQ_CTR: REQ_CTR, REQ_RQ_NEW: REQ_RQ_NEW, REQ_RQ_OROS: REQ_RQ_OROS, reqPushCtr: reqPushCtr, reqMark: reqMark,
               parseSaved: parseSaved, parseRequests: parseRequests, rqIds: rqIds, importPlan: importPlan, closeList: closeList,
-              REQ_PF_NEW: REQ_PF_NEW, REQ_PF_OROS: REQ_PF_OROS, REQ_PF_ALL: REQ_PF_ALL, reqPfMark: reqPfMark, pfReply: pfReply,
+              REQ_PF_NEW: REQ_PF_NEW, REQ_PF_OROS: REQ_PF_OROS, REQ_PF_ALL: REQ_PF_ALL, reqPfMark: reqPfMark, reqPfPhoto: reqPfPhoto, pfReply: pfReply,
               parsePfRequests: parsePfRequests, pfIds: pfIds, pfIdsOf: pfIdsOf, pfKind: pfKind, pfImportPlan: pfImportPlan, pfReplyOf: pfReplyOf,
               pfOutcome: pfOutcome, pfCloseList: pfCloseList, pfActText: pfActText };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
