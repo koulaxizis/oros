@@ -95,13 +95,18 @@
     return dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d;
   }
   function date(s) { return okDate(s) ? s : ""; }
+  // W2: the text read from each document, one plain file per document,
+  // synced through Vault Drive like any file; hidden in Files.
+  var TEXT_DIR = ROOT + "/.docs/text";
+  function textPath(id) { return TEXT_DIR + "/" + id + ".txt"; }
   function isDiskPath(p) {
     if (typeof p !== "string" || p.length > 4096 || p.indexOf(ROOT + "/") !== 0) return false;
     var segs = p.slice(ROOT.length + 1).split("/");
     for (var i = 0; i < segs.length; i++) {
       if (segs[i] === "" || segs[i] === "." || segs[i] === "..") return false;
     }
-    return true;
+    // Files' hidden folders (the Trash, the texts below) hold no documents.
+    return segs[0] !== ".trash" && segs[0] !== ".docs";
   }
   function isTrashPath(p) { return typeof p === "string" && (p === TRASH || p.indexOf(TRASH + "/") === 0); }
   function under(p, dir) { return p === dir || p.indexOf(dir + "/") === 0; }
@@ -440,7 +445,8 @@
     opts = opts || {};
     var d = { id: newId("d", now, rnd), p: p, t: titleFromName(p.slice(p.lastIndexOf("/") + 1)), tg: [], ln: [] };
     if (opts.h) d.h = opts.h;
-    if (opts.mtime) d.d = isoDay(opts.mtime);
+    // x.fd: the date is only the file's time; the text (W2) may replace it.
+    if (opts.mtime) { d.d = isoDay(opts.mtime); d.x = { fd: 1 }; }
     return d;
   }
   // Add files as documents; a file that already is one is left alone.
@@ -551,7 +557,7 @@
       if (q.flag === "untyped" && d.ty) return false;
       if (words.length) {
         var h = haystack(s, d, lang);
-        var more = extraText ? fold(extraText(d) || "") : "";
+        var more = extraText ? extraText(d) || "" : "";     // already folded (docs.js keeps it so)
         for (var i = 0; i < words.length; i++) {
           if (h.indexOf(words[i]) === -1 && more.indexOf(words[i]) === -1) return false;
         }
@@ -681,7 +687,7 @@
   function addDir(now) { return DOCS_DIR + "/" + new Date(now).getFullYear(); }
 
   var API = {
-    VERSION: "1.0.0", KEY: KEY, SLICE: SLICE, ROOT: ROOT, DOCS_DIR: DOCS_DIR,
+    VERSION: "1.1.0", KEY: KEY, SLICE: SLICE, ROOT: ROOT, DOCS_DIR: DOCS_DIR, TEXT_DIR: TEXT_DIR, textPath: textPath,
     MAX_DOCS: MAX_DOCS, WARN_DOCS: WARN_DOCS, FOREVER: FOREVER, BUILTIN: BUILTIN, setNames: setNames,
     norm: norm, merge: merge, okDate: okDate, isDiskPath: isDiskPath, fold: fold,
     getDoc: getDoc, docAt: docAt, docsUnder: docsUnder, isDocument: isDocument,

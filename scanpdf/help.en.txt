@@ -117,6 +117,7 @@ The picture is placed in the middle, as large as fits. The app remembers these c
 `Save PDF` asks for a file name and where it goes:
 - `On this device`: the usual save window of your browser, or a download.
 - `In Files › PDF`: the PDF goes into Files. When the name is taken, it gets a number, such as "Report (2).pdf".
+- `Also add it to Documents` (only with `In Files`): the PDF also becomes a document in Files › Documents, where you give it a type and dates.
 
 ## Making a PDF smaller
 `Make it smaller` in the save window shrinks a PDF for email or upload forms:
