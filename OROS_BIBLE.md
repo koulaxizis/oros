@@ -11181,3 +11181,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** layout/outprof.js (new, precached), layout/io.js, panels.js, houseui.js, layout.js, layout.css, index.html, help EN/EL, designkit/pdf.js 1.2.0, i18n/de/layout.js, shell.js, sw.js, whatsnew EN/EL, Bible (Part IV LY-OUT, Part IX decision).
 - **Tests:** `tests/layout-outprof.test.js`; full suite; Playwright at 360 px and desktop, EL and EN (Editions, Edit editions, e-book PDF with pages, /Lang, links, outline). Not tested: a real phone, a store upload.
 - **Next:** E2 reflowable EPUB (LY-EPUB), E3 fixed layout, E4 Assistant + Gate.
+
+### 2026-11-13 — Notes 6.34.00 — voice notes, wave V1: record, play, recover, Trash (NOTES-VOICE, #975)
+- **Changes:** a mic button in the editor header records into the open page (MediaRecorder, webm/Opus or mp4; no Web Speech API, rule 30). The file goes to `/internal/Notes/Voice/` on the orOS disk (Vault Drive per file, never the `notes` slice); the page gets one strict `🎙 voice:<name> (m:ss)` line, shown as a player in the Recordings strip and in Preview (speed 1×/1.5×/2×, Download, Delete to Files' Trash). 5 s pieces in IDB `oros-notes-rec` recover a cut-off recording. `Unused recordings…` on request only (never files younger than 24 h). voice.js and files-core.js load on first need (first-open budget).
+- **Schema:** none (the line is page text; `DATA_VER` unchanged). Part IV Notes NOTES-VOICE.
+- **Files:** notes/voice-core.js and notes/voice.js (new, precached), notes/md.js (voice hook), notes.js, notes.css, index.html, help EN/EL, i18n/de (notes.js, help/notes.txt), shell.js, sw.js, whatsnew EN/EL, Bible (Part IV NOTES-VOICE).
+- **Tests:** `tests/notes-voice.test.js`; full suite; Playwright with a fake microphone at 360 px EL and desktop EN (record, file on the disk, strip and preview players, delete to the Trash, reload mid-recording and recover, unused dialog, two-device sync). Not tested: a real microphone, Android with the screen locked, Safari (mp4), a real Dropbox/WebDAV.
+- **Next:** V2 trim, on-device transcription, send to Studio.
