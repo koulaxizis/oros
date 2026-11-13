@@ -905,14 +905,6 @@
    ]
   },
   {
-   "app": "sky",
-   "files": [
-    "sky/core.js",
-    "sky/sky.js",
-    "sky/stars.js"
-   ]
-  },
-  {
    "app": "slider",
    "files": [
     "slider/slider.js"
