@@ -54,6 +54,9 @@
       "sg.download": "Download my signed copy again", "sg.copy": "Copy the answer", "sg.copied": "Copied",
       "sg.copyFail": "Could not copy: select the text and copy it.", "sg.share": "Share…", "sg.email": "Email it to {f}",
       "sg.answer": "Your answer (a link)", "sg.answerNote": "Until {f} opens it, they don't know you signed. The answer stays on the orOS server for 30 days, encrypted.",
+      "sg.doneAuto": "Your signed copy was downloaded. Keep it: it is your proof. Your answer went back to {f} on its own: there is nothing more to do.",
+      "sg.declinedAuto": "Your answer went back to {f} on its own: there is nothing more to do.",
+      "sg.autoNote": "It waits for {f} on the orOS server, encrypted, and goes when they open orOS (at most 30 days after the link's end).",
       "sg.mailSubject": "Signed: {n}", "sg.mailSubjectNo": "Declined: {n}",
       "sg.mailBody": "Hello,\n\nI signed \"{n}\". Please open this link to get the signed PDF:\n{l}\n\n{name}",
       "sg.mailBodyNo": "Hello,\n\nI declined to sign \"{n}\". Open this link to see my answer:\n{l}\n\n{name}",
@@ -95,6 +98,9 @@
       "sg.download": "Κατέβασε ξανά το αντίγραφό μου", "sg.copy": "Αντιγραφή της απάντησης", "sg.copied": "Αντιγράφηκε",
       "sg.copyFail": "Η αντιγραφή απέτυχε: επίλεξε το κείμενο και αντέγραψέ το.", "sg.share": "Κοινοποίηση…", "sg.email": "Email στον/στην {f}",
       "sg.answer": "Η απάντησή σου (σύνδεσμος)", "sg.answerNote": "Μέχρι να την ανοίξει ο/η {f}, δεν ξέρει ότι υπέγραψες. Η απάντηση μένει κρυπτογραφημένη στον server του orOS για 30 ημέρες.",
+      "sg.doneAuto": "Το υπογεγραμμένο αντίγραφό σου κατέβηκε. Κράτησέ το: είναι η απόδειξή σου. Η απάντησή σου πήγε μόνη της στον/στην {f}: δεν χρειάζεται να κάνεις κάτι άλλο.",
+      "sg.declinedAuto": "Η απάντησή σου πήγε μόνη της στον/στην {f}: δεν χρειάζεται να κάνεις κάτι άλλο.",
+      "sg.autoNote": "Περιμένει τον/την {f} κρυπτογραφημένη στον server του orOS και φεύγει όταν ανοίξει το orOS (το πολύ 30 ημέρες μετά τη λήξη του συνδέσμου).",
       "sg.mailSubject": "Υπογράφηκε: {n}", "sg.mailSubjectNo": "Άρνηση: {n}",
       "sg.mailBody": "Καλησπέρα,\n\nυπέγραψα το «{n}». Ανοίξτε αυτόν τον σύνδεσμο για να πάρετε το υπογεγραμμένο PDF:\n{l}\n\n{name}",
       "sg.mailBodyNo": "Καλησπέρα,\n\nδεν υπέγραψα το «{n}». Ανοίξτε αυτόν τον σύνδεσμο για να δείτε την απάντησή μου:\n{l}\n\n{name}",
@@ -176,7 +182,7 @@
   function label(f) { return t("sg.f." + f.k); }
 
   // ---------- state ----------
-  var code = "", rid = "", req = null, pdf = null, expires = 0, password = "";
+  var code = "", rid = "", req = null, pdf = null, expires = 0, password = "", rbox = null;
   var vals = {}, opened = 0, consented = 0, signedBlob = null, sigs = { sig: null, init: null };
   var fieldEls = {};
 
@@ -192,6 +198,7 @@
       return S.sha256(bytes).then(function (h) {
         if (h !== rq.h) { state(t("sg.changed"), true); return; }
         req = rq; pdf = bytes; expires = r.x; opened = Date.now();
+        rbox = S.cleanBox(e.d.bx, "w");
         show();
       });
     }).catch(function () { state(t("sg.crypto"), true); });
@@ -574,21 +581,38 @@
     if (!b) { b = el("div", "sg-busy"); b.setAttribute("role", "status"); document.body.appendChild(b); }
     b.textContent = text;
   }
+  // The answer goes into the sender's reply box when the request has
+  // one (it comes back to them on its own); else, or when that fails
+  // (too big for the box, the box gone), as a link to send back.
   function send(reply) {
+    busy(t("sg.sending"));
+    if (!rbox || !R.putBox) { sendLink(reply); return; }
+    var env = { v: 1, k: "signed", d: reply };
+    R.putBox({ id: rbox.id, key: rbox.k, wt: rbox.w }, env, { exp: Date.now() + 30 * 86400000 }).then(function () {
+      busy("");
+      done(reply, "");
+    }, function (e) {
+      if (e && e.message === "net") { sendFailed(reply); return; }
+      rbox = null;
+      sendLink(reply);
+    });
+  }
+  function sendFailed(reply) {
+    busy("");
+    var box = $("finish");
+    box.textContent = "";
+    box.appendChild(el("p", "sg-msg err", t("sg.sendFail")));
+    var acts = el("div", "acts");
+    acts.appendChild(btn(t("sg.sendAgain"), "prim", function () { send(reply); }));
+    if (signedBlob) acts.appendChild(btn(t("sg.download"), "", download));
+    box.appendChild(acts);
+  }
+  function sendLink(reply) {
     busy(t("sg.sending"));
     R.create({ v: 1, k: "signed", d: reply }, { days: 30 }).then(function (r) {
       busy("");
       done(reply, S.replyLink(location.origin, r.code));
-    }, function () {
-      busy("");
-      var box = $("finish");
-      box.textContent = "";
-      box.appendChild(el("p", "sg-msg err", t("sg.sendFail")));
-      var acts = el("div", "acts");
-      acts.appendChild(btn(t("sg.sendAgain"), "prim", function () { send(reply); }));
-      if (signedBlob) acts.appendChild(btn(t("sg.download"), "", download));
-      box.appendChild(acts);
-    });
+    }, function () { sendFailed(reply); });
   }
   function declineForm() {
     var box = $("finish");
@@ -618,6 +642,13 @@
     box.textContent = "";
     box.classList.add("sg-done");
     box.appendChild(el("h2", "", t(signedOk ? "sg.doneH" : "sg.declinedH")));
+    if (!link) {                                     // it went into the reply box
+      box.appendChild(el("p", "", t(signedOk ? "sg.doneAuto" : "sg.declinedAuto", { f: f })));
+      if (signedOk) { var only = el("div", "acts"); only.appendChild(btn(t("sg.download"), "prim", download)); box.appendChild(only); }
+      box.appendChild(el("p", "hint small", t("sg.autoNote", { f: f })));
+      box.scrollIntoView({ block: "start", behavior: "smooth" });
+      return;
+    }
     box.appendChild(el("p", "", t(signedOk ? "sg.doneText" : "sg.declinedText", { f: f })));
     var lab = el("label", "sg-field");
     lab.appendChild(el("span", "", t("sg.answer")));
