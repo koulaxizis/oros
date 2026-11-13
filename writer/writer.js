@@ -559,7 +559,51 @@ const STRINGS = {
     'tm.tooBig': 'This file is too big (more than 64 MB).',
     'tm.badTmx': 'This is not a TMX file.',
     'tm.imported': '{n} units imported, {s} skipped.',
-    'tm.emptyMem': 'This memory is empty.'
+    'tm.emptyMem': 'This memory is empty.',
+    'cat.f.qa': 'Problems to check',
+    'gl.add': 'Add a term…',
+    'gl.edit': 'Change term',
+    'gl.manage': 'Glossaries…',
+    'gl.default': 'My glossary',
+    'gl.bad': 'This file could not be read as a glossary (CSV or TBX).',
+    'gl.count': '{n} terms',
+    'gl.delAsk': 'Move the glossary “{name}” to the Trash? You can put it back from Files for 30 days.',
+    'gl.empty': 'This glossary has no terms for this language pair.',
+    'gl.exportCsv': 'Export CSV',
+    'gl.exportTbx': 'Export TBX',
+    'gl.forb': 'Do not use (separate with ;)',
+    'gl.import': 'Import CSV or TBX…',
+    'gl.imported': '{n} terms imported, {s} skipped.',
+    'gl.insT': 'Put in “{t}” (Alt+G)',
+    'gl.needTerm': 'Write the term first.',
+    'gl.new': 'New glossary',
+    'gl.noTerms': 'No terms.',
+    'gl.none': 'No glossaries yet. The first term you add makes one.',
+    'gl.not': 'not: {w}',
+    'gl.note': 'Note',
+    'gl.pairNote': 'Terms come from every glossary, for {from} → {to}. New terms go into the one you choose.',
+    'gl.save': 'Save',
+    'gl.saved': 'Term saved',
+    'gl.search': 'Search terms',
+    'gl.term': 'Term ({l})',
+    'gl.terms': 'Terms…',
+    'gl.tgt': 'Translation ({l})',
+    'gl.tooBig': 'This file is too big (more than 32 MB).',
+    'gl.untitled': 'Untitled glossary',
+    'gl.writes': 'new terms go here',
+    'qa.report': 'Check the translation…',
+    'qa.clean': 'No problems found.',
+    'qa.count': '{n} things to check in {s} segments.',
+    'qa.go': 'Go',
+    'qa.term': 'The term “{a}” should be “{b}”',
+    'qa.forb': '“{a}” is not to be used (use “{b}”)',
+    'qa.num': 'Numbers differ (source: {a})',
+    'qa.tag': 'Formatting marks to check',
+    'qa.space': 'Double space',
+    'qa.lead': 'Space at the start or the end',
+    'qa.punct': 'The ending punctuation differs ({a} / {b})',
+    'qa.same': 'The same as the source: not translated?',
+    'qa.cons': 'Translated differently in segment {a}'
   },
   el: {
     'app.name': 'Writer',
@@ -1020,7 +1064,51 @@ const STRINGS = {
     'tm.tooBig': 'Το αρχείο είναι πολύ μεγάλο (πάνω από 64 MB).',
     'tm.badTmx': 'Αυτό δεν είναι αρχείο TMX.',
     'tm.imported': 'Εισήχθησαν {n} μονάδες, παραλείφθηκαν {s}.',
-    'tm.emptyMem': 'Αυτή η μνήμη είναι κενή.'
+    'tm.emptyMem': 'Αυτή η μνήμη είναι κενή.',
+    'cat.f.qa': 'Προβλήματα για έλεγχο',
+    'gl.add': 'Προσθήκη όρου…',
+    'gl.edit': 'Αλλαγή όρου',
+    'gl.manage': 'Γλωσσάρια…',
+    'gl.default': 'Το γλωσσάρι μου',
+    'gl.bad': 'Αυτό το αρχείο δεν διαβάστηκε ως γλωσσάρι (CSV ή TBX).',
+    'gl.count': '{n} όροι',
+    'gl.delAsk': 'Μεταφορά του γλωσσαρίου «{name}» στον Κάδο; Μπορείς να το επαναφέρεις από τα Αρχεία για 30 ημέρες.',
+    'gl.empty': 'Αυτό το γλωσσάρι δεν έχει όρους για αυτό το ζεύγος γλωσσών.',
+    'gl.exportCsv': 'Εξαγωγή CSV',
+    'gl.exportTbx': 'Εξαγωγή TBX',
+    'gl.forb': 'Να μη χρησιμοποιείται (χώρισε με ;)',
+    'gl.import': 'Εισαγωγή CSV ή TBX…',
+    'gl.imported': 'Εισήχθησαν {n} όροι, παραλείφθηκαν {s}.',
+    'gl.insT': 'Βάλε «{t}» (Alt+G)',
+    'gl.needTerm': 'Γράψε πρώτα τον όρο.',
+    'gl.new': 'Νέο γλωσσάρι',
+    'gl.noTerms': 'Δεν υπάρχουν όροι.',
+    'gl.none': 'Δεν υπάρχουν ακόμη γλωσσάρια. Ο πρώτος όρος που προσθέτεις φτιάχνει ένα.',
+    'gl.not': 'όχι: {w}',
+    'gl.note': 'Σημείωση',
+    'gl.pairNote': 'Οι όροι έρχονται από όλα τα γλωσσάρια, για {from} → {to}. Οι νέοι όροι μπαίνουν σε αυτό που διαλέγεις.',
+    'gl.save': 'Αποθήκευση',
+    'gl.saved': 'Ο όρος αποθηκεύτηκε',
+    'gl.search': 'Αναζήτηση όρων',
+    'gl.term': 'Όρος ({l})',
+    'gl.terms': 'Όροι…',
+    'gl.tgt': 'Απόδοση ({l})',
+    'gl.tooBig': 'Το αρχείο είναι πολύ μεγάλο (πάνω από 32 MB).',
+    'gl.untitled': 'Γλωσσάρι χωρίς όνομα',
+    'gl.writes': 'εδώ μπαίνουν οι νέοι όροι',
+    'qa.report': 'Έλεγχος της μετάφρασης…',
+    'qa.clean': 'Δεν βρέθηκαν προβλήματα.',
+    'qa.count': '{n} σημεία για έλεγχο σε {s} τμήματα.',
+    'qa.go': 'Μετάβαση',
+    'qa.term': 'Ο όρος «{a}» αποδίδεται «{b}»',
+    'qa.forb': 'Το «{a}» δεν χρησιμοποιείται (βάλε «{b}»)',
+    'qa.num': 'Οι αριθμοί διαφέρουν (πρωτότυπο: {a})',
+    'qa.tag': 'Σημάδια μορφοποίησης για έλεγχο',
+    'qa.space': 'Διπλό κενό',
+    'qa.lead': 'Κενό στην αρχή ή στο τέλος',
+    'qa.punct': 'Διαφέρει η στίξη στο τέλος ({a} / {b})',
+    'qa.same': 'Ίδιο με το πρωτότυπο: δεν μεταφράστηκε;',
+    'qa.cons': 'Μεταφράστηκε αλλιώς στο τμήμα {a}'
   }
 };
 
@@ -2600,7 +2688,7 @@ function assistLoad() {
   return assistP;
 }
 
-// WR-CAT (book translation): the screens are cat.js (with catcore.js,
+// WR-CAT (book translation): the screens are cat.js (with catcore.js, catqa.js,
 // cattm.js and catstore.js), loaded on first use; this is what they may use of
 // Writer. Projects live on the orOS disk (/internal/Writer/Translations),
 // never in the Writer slice.
@@ -2670,7 +2758,7 @@ function catLoad() {
       document.head.appendChild(s);
     });
     catP = (window.WriterCore ? Promise.resolve() : load('core.js'))
-      .then(() => load('catcore.js')).then(() => load('cattm.js')).then(() => load('catstore.js')).then(() => load('cat.js')).then(() => {
+      .then(() => load('catcore.js')).then(() => load('cattm.js')).then(() => load('catqa.js')).then(() => load('catstore.js')).then(() => load('cat.js')).then(() => {
         if (!window.WriterCat) throw new Error('cat');
         return window.WriterCat;
       });

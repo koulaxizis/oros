@@ -508,13 +508,15 @@
   }
   // meta files (name, translated document) → one meta: newer wins per field
   function mergeMeta(list) {
-    var out = { name: "", nm: 0, out: "", om: 0, tm: "", tmm: 0 };
+    var out = { name: "", nm: 0, out: "", om: 0, tm: "", tmm: 0, gl: "", glm: 0 };
     (list || []).forEach(function (m) {
       if (!m || typeof m !== "object") return;
       if (typeof m.name === "string" && Number(m.nm) > 0 && (m.nm > out.nm || (m.nm === out.nm && m.name > out.name))) { out.name = m.name.slice(0, 200); out.nm = m.nm; }
       if (typeof m.out === "string" && Number(m.om) > 0 && (m.om > out.om || (m.om === out.om && m.out > out.out))) { out.out = m.out.slice(0, 80); out.om = m.om; }
       // T2: the memory this project's confirmed segments go into
       if (typeof m.tm === "string" && Number(m.tmm) > 0 && (m.tmm > out.tmm || (m.tmm === out.tmm && m.tm > out.tm))) { out.tm = m.tm.slice(0, 40); out.tmm = m.tmm; }
+      // T3: the glossary new terms go into
+      if (typeof m.gl === "string" && Number(m.glm) > 0 && (m.glm > out.glm || (m.glm === out.glm && m.gl > out.gl))) { out.gl = m.gl.slice(0, 40); out.glm = m.glm; }
     });
     return out;
   }

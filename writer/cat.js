@@ -12,6 +12,9 @@
 //     fills an empty one as a draft), confirmed segments go into the
 //     project's memory, repetitions are translated once, concordance,
 //     memories with TMX in and out.
+//   - (T3) glossaries: terms marked in the source, put in with a tap or
+//     Alt+G, checks (terms, forbidden words, numbers, tags, spaces,
+//     punctuation, untranslated, inconsistent), CSV and TBX in and out.
 // Everything shown from a project goes through textContent (the
 // segments are data). Writes go through catstore (own files only).
 // window.WriterCatHost (writer.js) is what it may use of Writer.
@@ -20,8 +23,8 @@
 (function () {
   "use strict";
 
-  var H = window.WriterCatHost, C = window.WriterCatCore, S = window.WriterCatStore, TM = window.WriterCatTM;
-  if (!H || !C || !S || !TM) return;
+  var H = window.WriterCatHost, C = window.WriterCatCore, S = window.WriterCatStore, TM = window.WriterCatTM, QA = window.WriterCatQA;
+  if (!H || !C || !S || !TM || !QA) return;
   var t = H.t;
 
   var DEV_KEY = "oros-writer-tr-dev", SUM_KEY = "oros-writer-tr-sum";
@@ -237,7 +240,8 @@
     V = { id: id, p: pr.p, src: pr.src, rows: pr.rows, meta: pr.meta, sig: pr.sig, root: root,
       pending: {}, saveTimer: null, poll: null, cur: -1, ta: null, rowsEl: [], filter: "all", q: "",
       reps: C.repeats(pr.src), chaps: C.chapters(pr.src), same: sameGroups(pr.src),
-      tm: { list: [], maps: {}, sigs: {}, index: null, local: {}, localIx: null, write: pr.meta.tm || "", pending: {}, timer: null, polls: 0, ready: false } };
+      tm: { list: [], maps: {}, sigs: {}, index: null, local: {}, localIx: null, write: pr.meta.tm || "", pending: {}, timer: null, polls: 0, ready: false },
+      gl: { list: [], maps: {}, sigs: {}, terms: null, write: pr.meta.gl || "", ready: false } };
     // header
     var head = el("div", "cat-head");
     head.appendChild(btn("tb-btn cat-back", "←", closeView, t("cat.back")));
@@ -272,7 +276,7 @@
     tools.appendChild(q);
     var fsel = el("select", "w-field cat-filter");
     fsel.setAttribute("aria-label", t("cat.filter"));
-    [["all", "cat.f.all"], ["todo", "cat.f.todo"], ["draft", "cat.f.draft"], ["done", "cat.f.done"], ["rev", "cat.f.rev"], ["tags", "cat.f.tags"]].forEach(function (x) {
+    [["all", "cat.f.all"], ["todo", "cat.f.todo"], ["draft", "cat.f.draft"], ["done", "cat.f.done"], ["rev", "cat.f.rev"], ["tags", "cat.f.qa"]].forEach(function (x) {
       var o = el("option", "", t(x[1]));
       o.value = x[0];
       fsel.appendChild(o);
@@ -298,6 +302,10 @@
         { label: t("tm.concord"), action: function () { concord(""); } },
         { label: t("tm.fill100"), action: fill100 },
         { label: t("tm.manage"), action: manageMemories },
+        null,
+        { label: t("qa.report"), action: qaReport },
+        { label: t("gl.add"), action: function () { addTerm(selectedSource()); } },
+        { label: t("gl.manage"), action: manageGlossaries },
         null,
         { label: t("cat.del"), action: delProject }
       ]);
@@ -345,6 +353,7 @@
     var first = firstTodo(-1);
     focusRow(first < 0 ? 0 : first, true);
     loadMemories(V);
+    loadGlossaries(V);
     V.poll = setInterval(poll, POLL_MS);
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("pagehide", flushNow);
@@ -357,13 +366,13 @@
 
   // a segment's text with its tags as small numbered chips
   var STYLE = { b: "b", strong: "b", i: "i", em: "i", u: "u", s: "s", strike: "s", del: "s", sup: "sup", sub: "sub", a: "a", code: "code" };
-  function paint(box, text, i) {
+  function paint(box, text, i, terms) {
     box.textContent = "";
     var tags = C.segTags(V.src, i), kinds = tags.map(function (x) { return x.kind; });
     var toks = C.readTags(text, kinds), stack = [box];
     toks.forEach(function (tk) {
       var top = stack[stack.length - 1];
-      if (tk.x !== undefined) { top.appendChild(document.createTextNode(tk.x)); return; }
+      if (tk.x !== undefined) { addText(top, tk.x, terms); return; }
       var n = tk.v || tk.o || tk.c, info = tags[n - 1] || {};
       var chip = el("span", "cat-tag", tk.c ? "/" + n : String(n));
       chip.title = info.name || "";
@@ -380,6 +389,18 @@
       stack[stack.length - 1].appendChild(chip);
     });
   }
+  // text, with the glossary's terms marked (source only)
+  function addText(top, txt, terms) {
+    var hits = terms ? terms.find(txt) : [], at = 0;
+    hits.forEach(function (h) {
+      if (h.a > at) top.appendChild(document.createTextNode(txt.slice(at, h.a)));
+      var m = el("mark", "cat-term", txt.slice(h.a, h.b));
+      m.title = h.e.term + " → " + (h.e.tgt || "—") + (h.e.note ? " · " + h.e.note : "") + (h.e.forb.length ? " · " + fmt("gl.not", { w: h.e.forb.join(", ") }) : "");
+      top.appendChild(m);
+      at = h.b;
+    });
+    if (at < txt.length) top.appendChild(document.createTextNode(txt.slice(at)));
+  }
   function rowOf(i) { return V.rows[i] || null; }
   function statusOf(i) { var r = rowOf(i); return r ? (r[0].trim() || r[1] >= C.ST_DONE ? r[1] : 0) : 0; }
   var ST_ICON = ["○", "✎", "✓", "✓✓"], ST_KEY = ["cat.s0", "cat.s1", "cat.s2", "cat.s3"];
@@ -394,8 +415,7 @@
     if (V.cur === i && V.ta) return;
     if (row && row[0]) paint(tg, row[0], i);
     else { tg.textContent = ""; if (row && row[1] >= C.ST_DONE) tg.appendChild(el("span", "cat-muted", t("cat.joined"))); }
-    var bad = row && row[0] && C.checkTags(V.src, i, row[0]);
-    r.classList.toggle("cat-bad", !!(bad && (bad.missing.length || bad.twice.length || bad.order)));
+    r.classList.toggle("cat-bad", problems(i).length > 0);
   }
 
   function progress() {
@@ -438,7 +458,7 @@
     ta.spellcheck = true;
     var row = rowOf(i);
     ta.value = row ? row[0] : "";
-    ta.addEventListener("input", function () { changed(i, ta.value, null); grow(ta); tagHints(); });
+    ta.addEventListener("input", function () { changed(i, ta.value, null); grow(ta); tagHints(); qaSoon(i); });
     ta.addEventListener("keydown", keys);
     box.appendChild(ta);
     var bar = el("div", "cat-ebar");
@@ -457,13 +477,22 @@
     bar.appendChild(btn("fb-btn cat-rev", t("cat.reviewed"), function () { setStatus(i, C.ST_REVIEWED); next(i); }, t("cat.reviewedT")));
     bar.appendChild(btn("fb-btn primary cat-ok", t("cat.confirm"), function () { setStatus(i, C.ST_DONE); next(i); }, t("cat.confirmT")));
     box.appendChild(bar);
+    var gbox = el("div", "cat-gl");
+    box.appendChild(gbox);
+    var qbox = el("div", "cat-qa");
+    qbox.setAttribute("aria-live", "polite");
+    box.appendChild(qbox);
     var mbox = el("div", "cat-tm");
     box.appendChild(mbox);
     tg.appendChild(box);
     V.ta = ta;
     V.tagsBox = tagsBox;
     V.tmBox = mbox;
+    V.glBox = gbox;
+    V.qaBox = qbox;
     tagHints();
+    showTerms(i);
+    showProblems(i);
     showMatches(i);
     grow(ta);
     if (!noScroll) r.scrollIntoView({ block: "nearest" });
@@ -476,6 +505,8 @@
     V.cur = -1;
     V.ta = null;
     V.tmBox = null;
+    V.glBox = null;
+    V.qaBox = null;
     V.matches = [];
     if (r) { r.classList.remove("cat-cur"); paintRow(i); }
   }
@@ -531,6 +562,8 @@
       if (k === "S") { e.preventDefault(); copySource(); return; }
       if (k === "T") { e.preventDefault(); nextMissingTag(); return; }
       if (k === "K") { e.preventDefault(); concord(selectedSource()); return; }
+      if (k === "G") { e.preventDefault(); nextTerm(); return; }
+      if (k === "N") { e.preventDefault(); addTerm(selectedSource()); return; }
       var dg = /^Digit([1-3])$/.exec(e.code || "");
       if (dg && V.matches && V.matches[+dg[1] - 1]) { e.preventDefault(); useMatch(V.matches[+dg[1] - 1]); return; }
     }
@@ -562,6 +595,7 @@
     if (old && old[0] === txt && old[1] === st) return;
     var row = [txt, st, Math.max(now, old ? old[2] + 1 : 0)];
     V.rows[i] = row;
+    V.cons = null;
     V.pending[i] = row;
     paintRow(i);
     progress();
@@ -623,7 +657,7 @@
   function poll() {
     if (!V || document.visibilityState === "hidden") return;
     var view = V;
-    if (++V.tm.polls % TM_POLL === 0) pollMemories(view);
+    if (++V.tm.polls % TM_POLL === 0) { pollMemories(view); pollGlossaries(view); }
     getStore().sig(V.id).then(function (s) {
       if (V !== view || s === V.sig) return;
       return getStore().reload(V.id).then(function (x) {
@@ -655,7 +689,7 @@
       else if (f === "draft") ok = st === C.ST_DRAFT;
       else if (f === "done") ok = st >= C.ST_DONE;
       else if (f === "rev") ok = st === C.ST_REVIEWED;
-      else if (f === "tags") { var c = row && row[0] ? C.checkTags(V.src, i, row[0]) : null; ok = !!(c && (c.missing.length || c.twice.length || c.order)); }
+      else if (f === "tags") ok = problems(i).length > 0;
       if (ok && q) ok = fold(C.plainText(V.src, i)).indexOf(q) >= 0 || (row && fold(row[0]).indexOf(q) >= 0);
       V.rowsEl[i].hidden = !ok && i !== V.cur;
       if (ok) shown++;
@@ -981,6 +1015,352 @@
         return H.saveText(TM.tmx(units, { name: m.name }), nm + ".tmx", "application/x-tmx+xml");
       }).catch(failed);
     }
+    draw();
+  }
+
+  // ---------- glossary and checks (T3) ----------
+  function loadGlossaries(view) {
+    var st = getStore();
+    st.listGls().then(function (list) {
+      if (V !== view) return;
+      view.gl.list = list;
+      if (view.gl.write && !list.some(function (g) { return g.id === view.gl.write; })) view.gl.write = "";
+      if (!view.gl.write && list.length) view.gl.write = list[0].id;
+      return Promise.all(list.map(function (g) {
+        return st.loadGl(g.id).then(function (r) { view.gl.maps[g.id] = r.entries; view.gl.sigs[g.id] = r.sig; }, function (e) { console.warn("[writer] glossary:", e); });
+      }));
+    }).then(function () {
+      if (V !== view) return;
+      view.gl.ready = true;
+      rebuildTerms(view);
+    }).catch(failed);
+  }
+  function rebuildTerms(view) {
+    var maps = view.gl.list.map(function (g) { return view.gl.maps[g.id] || {}; });
+    view.gl.terms = new QA.Terms(maps, view.p.from, view.p.to);
+    view.cons = null;
+    // the source again, with the terms marked; the rows' checks too
+    view.src.segs.forEach(function (sg, i) {
+      var r = view.rowsEl[i];
+      if (!r) return;
+      paint(r.children[1], sg.s, i, view.gl.terms.size ? view.gl.terms : null);
+      paintRow(i);
+    });
+    if (view.cur >= 0) { showTerms(view.cur); showProblems(view.cur); }
+  }
+  function pollGlossaries(view) {
+    var st = getStore();
+    st.listGls().then(function (list) {
+      if (V !== view) return;
+      var any = list.length !== view.gl.list.length;
+      view.gl.list = list;
+      return Promise.all(list.map(function (g) {
+        return st.glSig(g.id).then(function (sg) {
+          if (sg === view.gl.sigs[g.id]) return;
+          any = true;
+          return st.loadGl(g.id).then(function (r) { view.gl.maps[g.id] = r.entries; view.gl.sigs[g.id] = r.sig; });
+        });
+      })).then(function () { if (any && V === view) rebuildTerms(view); });
+    }).catch(function () {});
+  }
+  // the checks of segment i (QA.check, and another translation of the same source)
+  function problems(i) {
+    if (!V) return [];
+    var l = QA.check(V.src, V.rows, i, V.gl.terms && V.gl.terms.size ? V.gl.terms : null, { from: V.p.from, to: V.p.to });
+    if (!V.cons) V.cons = QA.inconsistent(V.src, V.rows);
+    if (V.cons[i] !== undefined) l.push({ k: "cons", a: String(V.cons[i] + 1) });
+    return l;
+  }
+  function problemText(p) {
+    var none = p.k === "punct" ? "—" : "";
+    return fmt("qa." + p.k, { a: p.a || none, b: p.b || none });
+  }
+  var qaT = null;
+  function qaSoon(i) { clearTimeout(qaT); qaT = setTimeout(function () { if (V && V.cur === i) { V.cons = null; showProblems(i); } }, 400); }
+  function showProblems(i) {
+    if (!V || V.cur !== i || !V.qaBox) return;
+    var box = V.qaBox, l = problems(i);
+    box.textContent = "";
+    l.forEach(function (p) { box.appendChild(el("div", "cat-qa-item", "⚠ " + problemText(p))); });
+  }
+  function termsOf(i) {
+    var tr = V.gl.terms;
+    return tr && tr.size ? tr.find(C.plainText(V.src, i)) : [];
+  }
+  function showTerms(i) {
+    if (!V || V.cur !== i || !V.glBox) return;
+    var box = V.glBox, hits = termsOf(i), seen = {};
+    box.textContent = "";
+    hits.forEach(function (h) {
+      if (seen[h.e.key]) return;
+      seen[h.e.key] = 1;
+      var b = btn("cat-glbtn", "", function () { insertText(h.e.tgt || h.e.term, true); }, fmt("gl.insT", { t: h.e.tgt || h.e.term }));
+      b.appendChild(el("span", "cat-gl-src", h.e.term));
+      b.appendChild(document.createTextNode(" → "));
+      b.appendChild(el("span", "cat-gl-tgt", h.e.tgt || "—"));
+      if (h.e.note || h.e.forb.length) b.title += " · " + [h.e.note, h.e.forb.length ? fmt("gl.not", { w: h.e.forb.join(", ") }) : ""].filter(Boolean).join(" · ");
+      b.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      box.appendChild(b);
+    });
+  }
+  function insertText(txt, word) {
+    if (!V || !V.ta || !txt) return;
+    var ta = V.ta, a = ta.selectionStart, b = ta.selectionEnd;
+    // a term put in next to a word gets a space between
+    if (word) {
+      if (a > 0 && /[\p{L}\p{N}]/u.test(ta.value.charAt(a - 1))) txt = " " + txt;
+      if (/^[\p{L}\p{N}]/u.test(ta.value.charAt(b))) txt += " ";
+    }
+    ta.value = ta.value.slice(0, a) + txt + ta.value.slice(b);
+    ta.setSelectionRange(a + txt.length, a + txt.length);
+    changed(V.cur, ta.value, null);
+    grow(ta);
+    tagHints();
+    qaSoon(V.cur);
+    ta.focus();
+  }
+  // Alt+G: the next term of this segment whose translation is not in yet
+  function nextTerm() {
+    if (!V || V.cur < 0 || !V.ta) return;
+    var tr = V.gl.terms, hits = termsOf(V.cur);
+    for (var k = 0; k < hits.length; k++) {
+      var e = hits[k].e;
+      if (e.tgt && !tr.has(V.ta.value, e.tw)) { insertText(e.tgt, true); return; }
+    }
+  }
+  function glWrite(view) {
+    var st = getStore();
+    if (view.gl.write) return Promise.resolve(view.gl.write);
+    return st.createGl(t("gl.default")).then(function (g) {
+      view.gl.list.push(g);
+      view.gl.maps[g.id] = {};
+      view.gl.write = g.id;
+      return st.saveMeta(view.id, { gl: g.id }).then(function () { return g.id; });
+    });
+  }
+  // one term: new, or an entry to change (e) of glossary id
+  function addTerm(term, e, id) {
+    if (!V) return;
+    var view = V, st = getStore();
+    var dlg = H.openDialog(e ? t("gl.edit") : t("gl.add").replace(/…$/, ""), "", [
+      { class: "fb-btn", label: t("wx.cancel"), onClick: function () { dlg.close(); } },
+      { class: "fb-btn primary", label: t("gl.save"), onClick: save }
+    ]);
+    dlg.classList.add("cat-dlg");
+    var body = dlg.querySelector(".w-dialog-body"), f = el("div", "cat-form");
+    function field(label, value, area) {
+      var l = el("label", "cat-frow");
+      l.appendChild(el("span", "cat-flabel", label));
+      var c = el(area ? "textarea" : "input", "w-field");
+      if (!area) c.type = "text";
+      c.value = value || "";
+      c.maxLength = area ? 2000 : 300;
+      l.appendChild(c);
+      f.appendChild(l);
+      return c;
+    }
+    var a = field(fmt("gl.term", { l: langName(view.p.from) }), e ? e.term : term);
+    a.setAttribute("lang", view.p.from || "");
+    var b = field(fmt("gl.tgt", { l: langName(view.p.to) }), e ? e.tgt : "");
+    b.setAttribute("lang", view.p.to || "");
+    var n = field(t("gl.note"), e ? e.note : "", true);
+    var x = field(t("gl.forb"), e ? e.forb.join("; ") : "");
+    x.setAttribute("lang", view.p.to || "");
+    body.appendChild(f);
+    setTimeout(function () { (a.value ? b : a).focus(); }, 0);
+    function save() {
+      var term = a.value.trim();
+      if (!term) { H.toast(t("gl.needTerm")); return; }
+      var key = QA.keyOf(view.p.from, view.p.to, term);
+      (id ? Promise.resolve(id) : glWrite(view)).then(function (gid) {
+        var map = view.gl.maps[gid] = view.gl.maps[gid] || {}, ch = {}, now = Date.now();
+        var stamp = function (k) { return Math.max(now, map[k] ? map[k][4] + 1 : 0); };
+        // renamed: the old term goes (a deletion that syncs)
+        if (e && e.key !== key) ch[e.key] = [e.term, "", "", "", stamp(e.key), 1];
+        ch[key] = [term, b.value.trim(), n.value.trim(), x.value, stamp(key), 0];
+        return st.saveEntries(gid, ch).then(function () {
+          Object.keys(ch).forEach(function (k) { map[k] = QA.cleanEntry(ch[k]); });
+          return st.glSig(gid).then(function (sg) { view.gl.sigs[gid] = sg; });
+        });
+      }).then(function () {
+        dlg.close();
+        if (V === view) rebuildTerms(view);
+        H.toast(t("gl.saved"));
+      }).catch(failed);
+    }
+  }
+  // the whole book's checks, each with a Go button
+  function qaReport() {
+    if (!V) return;
+    var view = V;
+    if (view.ta) { var o = rowOf(view.cur); if (!o || o[0] !== view.ta.value) changed(view.cur, view.ta.value, null); }
+    view.cons = null;
+    var all = QA.checkAll(view.src, view.rows, view.gl.terms && view.gl.terms.size ? view.gl.terms : null, { from: view.p.from, to: view.p.to });
+    var dlg = H.openDialog(t("qa.report").replace(/…$/, ""), "", [{ class: "fb-btn", label: t("cat.close"), onClick: function () { dlg.close(); } }]);
+    dlg.classList.add("cat-dlg");
+    var body = dlg.querySelector(".w-dialog-body");
+    var n = all.reduce(function (s, x) { return s + x.list.length; }, 0);
+    body.appendChild(el("p", "cat-muted", n ? fmt("qa.count", { n: num(n), s: num(all.length) }) : t("qa.clean")));
+    var list = el("div", "cat-conc");
+    all.slice(0, 500).forEach(function (x) {
+      var it = el("div", "cat-conc-item");
+      var s = el("div", "cat-conc-src", fmt("cat.segN", { n: x.i + 1 }) + " · " + C.plainText(view.src, x.i).slice(0, 120));
+      var p = el("div", "cat-conc-tgt", x.list.map(problemText).join(" · "));
+      it.appendChild(s);
+      it.appendChild(p);
+      it.appendChild(btn("fb-btn cat-conc-use", t("qa.go"), function () {
+        dlg.close();
+        if (V !== view) return;
+        if (view.rowsEl[x.i].hidden) { view.filter = "all"; view.root.querySelector(".cat-filter").value = "all"; applyFilter(); }
+        focusRow(x.i);
+      }));
+      list.appendChild(it);
+    });
+    body.appendChild(list);
+  }
+  // Glossaries: which one new terms go into, the terms, CSV/TBX, delete
+  function manageGlossaries() {
+    if (!V) return;
+    var view = V, st = getStore();
+    var dlg = H.openDialog(t("gl.manage").replace(/…$/, ""), "", [
+      { class: "fb-btn", label: t("cat.close"), onClick: function () { dlg.close(); } },
+      { class: "fb-btn primary", label: t("gl.new"), onClick: function () {
+        H.wPrompt(t("gl.new"), "").then(function (nm) {
+          if (!nm) return;
+          st.createGl(nm).then(function (g) { view.gl.list.push(g); view.gl.maps[g.id] = {}; draw(); }, failed);
+        });
+      } }
+    ]);
+    dlg.classList.add("cat-dlg");
+    var body = dlg.querySelector(".w-dialog-body");
+    function draw() {
+      body.textContent = "";
+      body.appendChild(el("p", "cat-muted", fmt("gl.pairNote", { from: langName(view.p.from), to: langName(view.p.to) })));
+      if (!view.gl.list.length) body.appendChild(el("p", "cat-muted", t("gl.none")));
+      var ul = el("ul", "cat-plist");
+      view.gl.list.forEach(function (g) {
+        var li = el("li", "cat-pitem cat-tmitem");
+        var lab = el("label", "cat-tmpick");
+        var r = el("input");
+        r.type = "radio";
+        r.name = "cat-gl-write";
+        r.checked = view.gl.write === g.id;
+        r.addEventListener("change", function () { if (r.checked) { view.gl.write = g.id; st.saveMeta(view.id, { gl: g.id }).catch(failed); draw(); } });
+        lab.appendChild(r);
+        var txt = el("span", "cat-tmtext");
+        txt.appendChild(el("span", "cat-pname", g.name || t("gl.untitled")));
+        var cnt = QA.listOf(view.gl.maps[g.id] || {}, view.p.from, view.p.to).length;
+        txt.appendChild(el("span", "cat-pmeta", fmt("gl.count", { n: num(cnt) }) + (view.gl.write === g.id ? " · " + t("gl.writes") : "")));
+        lab.appendChild(txt);
+        li.appendChild(lab);
+        var more = btn("tb-btn cat-tmmore", "⋯", function () {
+          H.openMenu(more, [
+            { label: t("gl.terms"), action: function () { dlg.close(); termsList(g); } },
+            { label: t("cat.rename"), action: function () {
+              H.wPrompt(t("cat.rename"), g.name).then(function (nm) { if (nm) st.renameGl(g.id, nm).then(function () { g.name = nm; draw(); }, failed); });
+            } },
+            { label: t("gl.import"), action: function () { importGl(g); } },
+            { label: t("gl.exportCsv"), action: function () { exportGl(g, "csv"); } },
+            { label: t("gl.exportTbx"), action: function () { exportGl(g, "tbx"); } },
+            null,
+            { label: t("cat.del"), action: function () {
+              H.wConfirm(fmt("gl.delAsk", { name: g.name || t("gl.untitled") }), { danger: true, ok: t("cat.del") }).then(function (yes) {
+                if (!yes) return;
+                st.trashGl(g.id).then(function () {
+                  view.gl.list = view.gl.list.filter(function (x) { return x !== g; });
+                  delete view.gl.maps[g.id];
+                  if (view.gl.write === g.id) { view.gl.write = view.gl.list.length ? view.gl.list[0].id : ""; if (view.gl.write) st.saveMeta(view.id, { gl: view.gl.write }).catch(failed); }
+                  rebuildTerms(view);
+                  H.toast(t("cat.deleted"));
+                  draw();
+                }, failed);
+              });
+            } }
+          ]);
+        }, t("cat.more"));
+        more.setAttribute("aria-haspopup", "menu");
+        li.appendChild(more);
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    }
+    function importGl(g) {
+      H.openFile(".csv,.tsv,.txt,.tbx,.xml").then(function (f) {
+        if (!f) return;
+        if (f.size > QA.MAX_FILE) { H.toast(t("gl.tooBig")); return; }
+        return f.text().then(function (text) {
+          var isX = /\.(tbx|xml)$/i.test(f.name) || /^\s*(\uFEFF)?</.test(text);
+          var r = isX ? QA.parseTbx(text, view.p.from, view.p.to) : QA.parseCsv(text, view.p.from, view.p.to);
+          if (r.err) { H.toast(t("gl.bad")); return; }
+          var map = view.gl.maps[g.id] = view.gl.maps[g.id] || {}, ch = {}, now = Date.now(), n = 0;
+          r.entries.forEach(function (e) {
+            var k = QA.keyOf(view.p.from, view.p.to, e.term);
+            if (!k) return;
+            ch[k] = [e.term, e.tgt, e.note, e.forb.join("; "), Math.max(now, map[k] ? map[k][4] + 1 : 0), 0];
+            n++;
+          });
+          return st.saveEntries(g.id, ch).then(function () {
+            Object.keys(ch).forEach(function (k) { map[k] = QA.cleanEntry(ch[k]); });
+            return st.glSig(g.id).then(function (sg) { view.gl.sigs[g.id] = sg; });
+          }).then(function () {
+            rebuildTerms(view);
+            H.toast(fmt("gl.imported", { n: num(n), s: num(r.skipped) }));
+            draw();
+          });
+        });
+      }).catch(failed);
+    }
+    function exportGl(g, kind) {
+      var list = QA.listOf(view.gl.maps[g.id] || {}, view.p.from, view.p.to);
+      if (!list.length) { H.toast(t("gl.empty")); return; }
+      var nm = String(g.name || "glossary").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").trim().slice(0, 80) || "glossary";
+      if (kind === "csv") H.saveText(QA.csv(list, view.p.from, view.p.to), nm + ".csv", "text/csv");
+      else H.saveText(QA.tbx(list, view.p.from, view.p.to), nm + ".tbx", "application/x-tbx+xml");
+    }
+    draw();
+  }
+  // a glossary's terms: search, change, delete
+  function termsList(g) {
+    if (!V) return;
+    var view = V, st = getStore();
+    var dlg = H.openDialog(g.name || t("gl.untitled"), "", [
+      { class: "fb-btn", label: t("cat.close"), onClick: function () { dlg.close(); } },
+      { class: "fb-btn primary", label: t("gl.add").replace(/…$/, ""), onClick: function () { dlg.close(); addTerm("", null, g.id); } }
+    ]);
+    dlg.classList.add("cat-dlg");
+    var body = dlg.querySelector(".w-dialog-body");
+    var q = el("input", "w-field");
+    q.type = "search";
+    q.placeholder = t("gl.search");
+    q.setAttribute("aria-label", t("gl.search"));
+    var list = el("div", "cat-conc");
+    body.appendChild(q);
+    body.appendChild(list);
+    function draw() {
+      list.textContent = "";
+      var f = TM.fold(q.value.trim()), all = QA.listOf(view.gl.maps[g.id] || {}, view.p.from, view.p.to);
+      var shown = all.filter(function (e) { return !f || TM.fold(e.term).indexOf(f) >= 0 || TM.fold(e.tgt).indexOf(f) >= 0; });
+      if (!shown.length) { list.appendChild(el("p", "cat-muted", t("gl.noTerms"))); return; }
+      shown.slice(0, 300).forEach(function (e) {
+        var it = el("div", "cat-conc-item");
+        it.appendChild(el("div", "cat-conc-src", e.term + (e.note ? " · " + e.note : "")));
+        it.appendChild(el("div", "cat-conc-tgt", (e.tgt || "—") + (e.forb.length ? " · " + fmt("gl.not", { w: e.forb.join(", ") }) : "")));
+        var bx = el("div", "cat-conc-use cat-gl-acts");
+        bx.appendChild(btn("fb-btn", t("gl.edit"), function () { dlg.close(); addTerm("", e, g.id); }));
+        bx.appendChild(btn("tb-btn", "×", function () {
+          var map = view.gl.maps[g.id], ch = {};
+          ch[e.key] = [e.term, "", "", "", Math.max(Date.now(), e.m + 1), 1];
+          st.saveEntries(g.id, ch).then(function () {
+            map[e.key] = QA.cleanEntry(ch[e.key]);
+            rebuildTerms(view);
+            draw();
+          }, failed);
+        }, t("cat.del")));
+        it.appendChild(bx);
+        list.appendChild(it);
+      });
+    }
+    q.addEventListener("input", draw);
     draw();
   }
 
