@@ -10,6 +10,7 @@
      5. Avatar painter
      6. Card stage + flip
      7. Share viewer
+    7b. Link-in-bio page (mode button, editor, preview)
      8. Dialogs (export, share) — centered (R32)
      9. Toast + screen-reader helper
     10. Mobile + touch adaptations
@@ -391,6 +392,71 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; flex: 0 0 aut
 body.viewing #toolbar, body.viewing #main { visibility: hidden; }
 .v-acts { display: flex; gap: 8px; width: min(100%, 420px); }
 
+/* ---------- 7b. Link-in-bio page ---------- */
+.mode-btn { width: auto; gap: 6px; padding: 0 10px; }
+.mode-btn .lbl { font-size: 12px; font-weight: 700; }
+.mode-btn.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+#page-form {
+  display: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 14px 32px;
+  border-right: 1px solid var(--border);
+  scrollbar-width: thin;
+}
+body[data-mode="page"] #form { display: none; }
+body[data-mode="page"] #page-form { display: block; }
+body[data-mode="page"] #flip, body[data-mode="page"] #side-label { display: none; }
+#pg-frame { display: none; }
+body[data-mode="page"] #pg-frame {
+  display: block;
+  width: min(100%, 420px);
+  height: 100%;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px var(--shadow);
+}
+body[data-mode="page"] #stage { justify-content: stretch; }
+.pg-need { padding: 16px 0; font-size: 14px; }
+
+#pg-show { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 12px; margin-bottom: 8px; }
+#pg-show .chk input:disabled + span { opacity: 0.55; }
+#pg-links-hint { margin-bottom: 8px; }
+.pg-item {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 4px;
+  padding: 6px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.pg-item .pg-e { text-align: center; padding: 7px 4px; }
+.pg-item .pg-u, .pg-item .pg-h { grid-column: 1 / -1; }
+.pg-item.head { background: var(--accent-soft); }
+.pg-btns { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 4px; }
+.mini.star[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.mini.star[aria-pressed="true"] svg { fill: currentColor; }
+.pg-adds { display: flex; flex-wrap: wrap; gap: 8px; }
+#pg-themes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.pg-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; font-size: 13px; font-weight: 700; color: var(--text-dim); }
+.pg-row label, .pg-lbl { min-width: 110px; }
+#pg-ac { flex: 0 0 auto; width: 52px; padding: 2px; cursor: pointer; }
+.pfld { margin-bottom: 12px; display: grid; gap: 4px; }
+.pfld > label:not(.chk) { font-size: 12px; font-weight: 700; color: var(--text-dim); }
+.pg-host { margin-top: 4px; }
+.style-sw[data-st="dark"], .style-sw[data-st="gradient"], .style-sw[data-st="minimal"] { font-family: inherit; }
+
+#v-page { display: none; }
+#viewer.page { padding: 0; gap: 0; }
+#viewer.page #v-flip, #viewer.page #v-flip-btn { display: none; }
+#viewer.page #v-page { display: block; flex: 1 1 auto; width: 100%; min-height: 0; border: 0; }
+#viewer.page .v-acts { padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); width: 100%; justify-content: center; }
+#viewer.page .v-acts .dlg-btn { max-width: 420px; }
+
 /* ---------- 8. Dialogs (R32: margin auto, scroll inside) ---------- */
 dialog.mm-dlg {
   margin: auto;
@@ -504,6 +570,10 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   #form { border-right: none; }
   body[data-tab="edit"] #stage { display: none; }
   body[data-tab="card"] #form { display: none; }
+  #page-form { border-right: none; }
+  body[data-tab="card"] #page-form { display: none; }
+  .mode-btn .lbl { display: none; }
+  .mode-btn { width: 38px; padding: 0; }
 }
 @media (max-width: 480px) {
   #toolbar { padding-left: 8px; padding-right: 8px; gap: 6px; }
@@ -518,6 +588,7 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 @media (pointer: coarse) {
   .seg-btn, #card-select, .icon-btn, .dlg-btn, .txt-btn { min-height: 44px; }
   .icon-btn { width: 44px; }
+  .mode-btn { width: auto; min-width: 44px; }
   .sw { width: 44px; height: 44px; }
   .mini { width: 44px; height: 44px; }
   .eye { width: 44px; height: 36px; top: -10px; }

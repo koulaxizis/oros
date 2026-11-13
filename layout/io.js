@@ -154,7 +154,9 @@
   }
 
   // A PDF of any document (not only the open one) → Promise<Blob>.
-  // opts: pages (ids, default all), spreads, bleed, marks, ppi.
+  // opts: pages (ids, default all), spreads, bleed, marks, ppi; and for
+  // an e-book (LY-OUT): rgb, lang, links, outline, layout (of `doc`),
+  // cover ({ doc, page } a Book cover's page: its front panel first).
   function pdfBlob(doc, opts) {
     var images = {}, JsPDF;
     var pages = opts.pages || M.pagesInOrder(doc).map(function (p) { return p.id; });
@@ -166,10 +168,86 @@
       });
       return chain;
     }).then(function () {
-      var L = doc === LY.doc && ED.L ? ED.L : LY.R.computeLayout(doc);
-      var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name },
-        { jsPDF: JsPDF, layout: L, images: images });
+      return opts.cover ? coverPage(JsPDF, doc, opts.cover, opts.ppi || 150) : null;
+    }).then(function (first) {
+      var L = opts.layout || (doc === LY.doc && ED.L ? ED.L : LY.R.computeLayout(doc));
+      var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name, rgb: !!opts.rgb, lang: opts.lang || "" },
+        { jsPDF: JsPDF, layout: L, images: images, pdf: first, links: opts.links, outline: opts.outline });
       return pdf.output("blob");
+    });
+  }
+
+  // The front panel of a Book cover document (designkit/cover.js keeps
+  // its trim, spine and flaps in setup.ext.cover, mm) as the first page
+  // of an e-book PDF, the size of the book's page.
+  function coverPage(JsPDF, book, cov, ppi) {
+    var cd = cov.doc, g = cd && cd.setup && cd.setup.ext && cd.setup.ext.cover;
+    var page = cd && M.pagesInOrder(cd)[0];
+    if (!g || !page) return Promise.resolve(null);
+    var MM = M.PT_PER.mm;   // the page is the trimmed spread: [flap] back · spine · front [flap]
+    var fx = ((g.flap || 0) + g.w + (g.spine || 0)) * MM, fw = g.w * MM, fh = g.h * MM;
+    var chain = Promise.resolve();
+    imageItems(cd, [page.id]).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }); });
+    return chain.then(function () {
+      var scale = Math.min(ppi / 72, Math.sqrt(16e6 / (cd.setup.w * cd.setup.h)));
+      var full = LY.R.renderPage(cd, page, LY.R.computeLayout(cd), scale, { getImage: A.get, background: "#fff" });
+      var cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(fw * scale)); cv.height = Math.max(1, Math.round(fh * scale));
+      cv.getContext("2d").drawImage(full, -fx * scale, 0);
+      return toBlob(cv, "image/jpeg", 0.9);
+    }).then(function (blob) { return blob.arrayBuffer(); }).then(function (ab) {
+      var W = book.setup.w, H = book.setup.h;
+      var pdf = new JsPDF({ unit: "pt", format: [W, H], orientation: W > H ? "l" : "p", compress: true });
+      pdf.setProperties({ title: book.name, creator: "orOS Layout" });
+      // the picture keeps its proportions, centred on the page
+      var k = Math.min(W / fw, H / fh), w = fw * k, h = fh * k;
+      pdf.addImage(new Uint8Array(ab), "JPEG", (W - w) / 2, (H - h) / 2, w, h, "cover", "FAST");
+      return pdf;
+    });
+  }
+
+  // The book's Publishing title data (read only; R19: the Publishing
+  // app owns it).
+  function publishData() {
+    try { return JSON.parse(localStorage.getItem("oros-publish-data") || "null"); } catch (e) { return null; }
+  }
+  LY.publishData = publishData;
+
+  // An output profile of the open document (LY-OUT): its edition (the
+  // format's ISBN), its pages, and for an e-book PDF RGB, /Lang, the
+  // contents as links and the headings as bookmarks.
+  function exportProfile(prof) {
+    var doc = LY.doc, O = window.LY_OUT;
+    if (!doc || exporting || !O) return;
+    LY.flushStory && LY.flushStory();
+    var data = publishData(), ed = O.edition(doc, prof, data), d = ed.doc;
+    var L = ed.changed ? LY.R.computeLayout(d) : (ED.L || LY.R.computeLayout(d));
+    var pages = O.pagesFor(d, prof);
+    if (!pages.length) { LY.toast(t("out.noPages")); return; }
+    var opts = { pages: pages, layout: L, ppi: prof.q === "screen" ? 150 : 300 };
+    if (prof.k === "print") {
+      opts.bleed = !!prof.bleed; opts.marks = !!prof.marks; opts.spreads = !!(prof.spreads && d.setup.facing);
+    } else {
+      var heads = O.headings(d, L);
+      opts.rgb = true;
+      opts.lang = O.lang(d, ed.pub);
+      opts.outline = heads;
+      opts.links = O.tocLinks(d, L, heads);
+      var cd = prof.cover ? LY.data().docs.filter(function (x) { return x.id === prof.cover && !x.del; })[0] : null;
+      if (cd) opts.cover = { doc: cd };
+    }
+    exporting = true;
+    LY.toast(t("exp.working"));
+    var suffix = prof.k === "ebook" ? "-ebook" : "";
+    pdfBlob(d, opts).then(function (blob) {
+      return saveBlob(blob, fileName(doc, suffix + ".pdf"), "application/pdf", "PDF", ".pdf");
+    }).then(function (ok) {
+      exporting = false;
+      if (ok) LY.toast(ed.isbn ? t("out.doneIsbn", { isbn: ed.isbn }) : t("exp.done"));
+    }, function (e) {
+      exporting = false;
+      try { console.error("[orOS] layout: PDF export failed", e); } catch (x) {}
+      LY.toast(t("exp.fail"));
     });
   }
 
@@ -1081,7 +1159,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    exportPdf: exportPdf, exportProfile: exportProfile, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName

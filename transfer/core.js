@@ -464,7 +464,7 @@
       n: num(x.n), bytes: num(x.bytes),
       what: String(x.what || "").replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 120),
       dev: cleanDev(x.dev), bad: Math.min(num(x.bad), num(x.n)),
-      mode: x.mode === "relay" ? "relay" : "direct",
+      mode: x.mode === "relay" || x.mode === "cloud" ? x.mode : "direct",
       dest: x.dest === "disk" || x.dest === "device" ? x.dest : "",
       end: x.end === "stopped" ? "stopped" : "done",
       folder: typeof x.folder === "string" && /^\/internal\/Transfers\/[^\u0000-\u001f]{1,300}$/.test(x.folder) && x.folder.indexOf("..") < 0 ? x.folder : ""
