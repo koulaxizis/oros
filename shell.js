@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.25.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.34.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -49,6 +49,7 @@
     wpland:          null,   // "Living land" { style, seed, motion } or null (= defaults)
     icons:           "classic", // icon pack (ICONPACK-1, iconpacks.css)
     apps:            [],
+    aliases:         [],     // APP-ALIAS: old app ids that now live inside another app (apps.json "aliases")
     running:         null,
     deferredPrompt:  null,   // PWA install event
     // sync UI state
@@ -205,7 +206,6 @@
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     layout: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/><path d="M12.5 13h5M12.5 17h5"/></svg>',
     wallpaper: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="2.5"/><path d="M2.5 15c3-3 5.5-3 8.5 0s5.5 3 10.5-1"/><path d="M2.5 10.5c3-2.5 5.5-2.5 8.5 0s5.5 2.5 10.5-1"/></svg>',
-    trees: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-8"/><path d="M12 14l-3.5-3.5M12 16l4-4"/><path d="M12 14c-5 0-8-3-8-6.5a4.5 4.5 0 0 1 4.5-4.5c1.4 0 2.6.6 3.5 1.6A4.5 4.5 0 0 1 20 7.5C20 11 17 14 12 14z"/></svg>',
     aura: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c3-1 4-5 7-7s6-1 9-5"/><path d="M4 13c2 0 3-2 5-3" opacity=".55"/><circle cx="18" cy="17" r="1.2"/><circle cx="14" cy="20" r=".8"/><circle cx="20.5" cy="12.5" r=".8"/></svg>',
     photolab: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M3 15l4-4 4 4 2-2 4 4"/><path d="M14 3l7 7"/><path d="M19 3l2 2-6 6-3 1 1-3z"/></svg>',
     capture: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M21 16v3a2 2 0 0 1-2 2h-3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="3.5"/></svg>',
@@ -224,7 +224,6 @@
     chores: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4.5"/><path d="M12 2v5.5M12 16.5V22M2 12h5.5M16.5 12H22"/></svg>',
     travel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="17" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M8 7v13M16 7v13"/></svg>',
     passwords: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10.5" width="18" height="11" rx="2"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/></svg>',
-    device: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 10.5v5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/><path d="M10.5 18.5h3"/></svg>',
     assistant: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M13 7.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>',
     automations: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>',
     today: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M8.5 15l2.3 2.3 4.7-4.6"/></svg>',
@@ -281,7 +280,6 @@
     units: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="13" width="20" height="8" rx="1.5"/><path d="M6 13v3M10 13v4M14 13v3M18 13v4"/><path d="M4 6h16"/><path d="M7 3L4 6l3 3"/><path d="M17 3l3 3-3 3"/></svg>',
     stickies: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10l6-6V5a2 2 0 0 0-2-2z"/><path d="M15 21v-4a2 2 0 0 1 2-2h4"/><path d="M7 8h8"/><path d="M7 12h5"/></svg>',
     pad: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M10 13l-2 2 2 2M14 13l2 2-2 2"/></svg>',
-    textcase: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18L7.5 6 12 18"/><path d="M4.7 14h5.6"/><circle cx="17.5" cy="15" r="3"/><path d="M20.5 12v6"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
     split: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4"/><circle cx="17" cy="17" r="4"/><path d="M14 4h4a2 2 0 0 1 2 2v3"/><path d="M18 7l2 2 2-2"/><path d="M10 20H6a2 2 0 0 1-2-2v-3"/><path d="M6 17l-2-2-2 2"/></svg>',
     radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>',
@@ -293,6 +291,7 @@
     lyricsync: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h11"/><path d="M3 10h11"/><path d="M3 15h6"/><path d="M17 18V4l4 2"/><circle cx="14.5" cy="18" r="2.5"/></svg>',
     television: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>',
     montage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16M2 9h5M2 15h5M17 9h5M17 15h5"/><path d="M10.5 9.5l4 2.5-4 2.5z"/></svg>',
+    transfer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13"/><polyline points="13 4 17 8 13 12"/><path d="M20 16H7"/><polyline points="11 12 7 16 11 20"/></svg>',
     mail: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>'
   };
 
@@ -3545,11 +3544,61 @@
   }
 
   // ---------- 8. Apps loading & menu ----------
+  // APP-ALIAS (app merges, 2026-11-12): an app that was folded into
+  // another one keeps its id as an alias in apps.json "aliases":
+  //   { id, name, to, target? }
+  // It is not an app any more (not in state.apps: no menu row, no
+  // folder to load), but everything that names the old id still works:
+  // __orosOpenAt(id, t) and openAppById(id) open `to` with `target`
+  // merged under t (the caller's keys win), and so do ?open=<id>
+  // links, desktop and Dock shortcuts (launcher.js), the command bar
+  // ("open case converter"), the Assistant and the Gate, which all go
+  // through these calls. The menu search still finds it by its old
+  // name. Its data (slice, storage keys) is untouched: the host app
+  // reads it. An alias whose `to` is not an internal app is dropped.
+  var ALIAS_ID_RE = /^[a-z0-9][a-z0-9_-]{0,47}$/;
+  function appAliasesFrom(data, apps) {
+    var list = (data && Array.isArray(data.aliases)) ? data.aliases : [], out = [], seen = {};
+    var ids = {};
+    (apps || []).forEach(function (a) { if (a && a.type === "internal") ids[a.id] = true; });
+    list.forEach(function (x) {
+      if (!x || typeof x !== "object" || typeof x.id !== "string" || !ALIAS_ID_RE.test(x.id)) return;
+      if (ids[x.id] || seen[x.id] || typeof x.to !== "string" || !ids[x.to]) return;
+      var tg = (x.target && typeof x.target === "object" && !Array.isArray(x.target)) ? x.target : null;
+      seen[x.id] = true;
+      out.push({ id: x.id, name: typeof x.name === "string" ? x.name : x.id, to: x.to, target: tg });
+    });
+    return out;
+  }
+  function appAlias(id) {
+    for (var i = 0; i < state.aliases.length; i++) if (state.aliases[i].id === id) return state.aliases[i];
+    return null;
+  }
+  // The target the host gets: the alias's own target with the caller's
+  // keys over it (a caller's non-object target is dropped: the host
+  // would not know what it means).
+  function aliasTarget(al, target) {
+    var out = {}, k;
+    if (al.target) for (k in al.target) if (Object.prototype.hasOwnProperty.call(al.target, k)) out[k] = al.target[k];
+    if (target && typeof target === "object" && !Array.isArray(target)) {
+      for (k in target) if (Object.prototype.hasOwnProperty.call(target, k)) out[k] = target[k];
+    }
+    return Object.keys(out).length ? out : null;
+  }
+  // The host app of an alias (for icons and labels), or null.
+  function aliasHost(id) {
+    var al = appAlias(id);
+    if (!al) return null;
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === al.to) return state.apps[i];
+    return null;
+  }
+
   function loadApps() {
     fetch("apps.json")
       .then(function (r) { return r.json(); })
       .then(function (data) {
         state.apps = (data && Array.isArray(data.apps)) ? data.apps : [];
+        state.aliases = appAliasesFrom(data, state.apps);
         renderMenu();
         splashDone();
         helpBtnRefresh();
@@ -3695,6 +3744,14 @@
     params.delete("app-at");
     if (!id) return;
     params.delete("open");
+    if (appAlias(id)) {          // APP-ALIAS: an old link (or a bookmark of the old app)
+      try {
+        var qa = params.toString();
+        window.history.replaceState(null, "", window.location.pathname + (qa ? "?" + qa : "") + window.location.hash);
+      } catch (e) {}
+      window.__orosOpenAt(id, null);
+      return;
+    }
     try {
       var qs = params.toString();
       window.history.replaceState(null, "", window.location.pathname + (qs ? "?" + qs : "") + window.location.hash);
@@ -3892,6 +3949,8 @@
   // does not take it simply opens — nothing breaks.
   window.__orosOpenAt = function (appId, target) {
     appId = String(appId || "");
+    var al = appAlias(appId);    // APP-ALIAS: the old id opens its new home
+    if (al) { appId = al.to; target = aliasTarget(al, target); }
     var app = null;
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === appId) { app = state.apps[i]; break; }
@@ -4625,7 +4684,13 @@
       if (en && en["app." + a.id]) names.push(en["app." + a.id]);
       if (el && el["app." + a.id]) names.push(el["app." + a.id]);
       return { id: a.id, names: names };
-    });
+    }).concat(state.aliases.map(function (al) {   // APP-ALIAS: "open case converter" still works
+      var names = [al.name, cmdAppName(al.id)];
+      var TR = window.OROS_TRANSLATIONS || {}, en = TR.en, el = TR.el;
+      if (en && en["app." + al.id]) names.push(en["app." + al.id]);
+      if (el && el["app." + al.id]) names.push(el["app." + al.id]);
+      return { id: al.id, names: names };
+    }));
   }
   // null until commands/ is loaded (the menu row then waits for it).
   function cmdParse(q) {
@@ -5378,11 +5443,30 @@
         Object.keys(cats).forEach(function (c) {
           var cl = catTextOf(c);
           cats[c] = cats[c].filter(function (app) {
-            return [appLabelOf(app), app.name, app.id, cl].some(function (f) {
+            // Search words (apps.json "words" + app.<id>.words): an app is
+            // also found by what people call what it does (Lyric Sync =
+            // songbook, chords, setlist).
+            var wk = "app." + app.id + ".words", tw = window.t(wk);
+            return [appLabelOf(app), app.name, app.id, cl, app.words || "", tw === wk ? "" : tw].some(function (f) {
               return menuFold(f).indexOf(q) !== -1;
             });
           });
           if (!cats[c].length) delete cats[c];
+        });
+        // APP-ALIAS: an app folded into another one is still found by
+        // its old name; its row opens the new home at the old place.
+        state.aliases.forEach(function (al) {
+          var host = aliasHost(al.id);
+          if (!host) return;
+          var old = cmdAppName(al.id);
+          if (![old, al.name, al.id].some(function (f) { return menuFold(f).indexOf(q) !== -1; })) return;
+          var c = String(host.category || "other").toLowerCase();
+          if (!catRaw[c]) catRaw[c] = String(host.category || "other");
+          var row = {};
+          for (var k in host) if (Object.prototype.hasOwnProperty.call(host, k)) row[k] = host[k];
+          row._alias = al.id;
+          row._aliasLabel = old + " → " + appLabelOf(host);
+          (cats[c] = cats[c] || []).push(row);
         });
         if (!Object.keys(cats).length) {
           var none = document.createElement("div");
@@ -5437,7 +5521,7 @@
           btn.className = "menu-item" + (mtActive() && appLive(app.id) ? " mt-open" : "");
           btn.setAttribute("data-app", app.id);
           if (!firstMatch && q) firstMatch = app;
-          var label = appLabelOf(app);
+          var label = app._alias ? app._aliasLabel : appLabelOf(app);
           if (ICONS[app.icon]) {
             btn.innerHTML =
               '<span class="app-ico" data-cat="' + iconCat(app) + '" data-hue="' + iconHue(app) + '">' + ICONS[app.icon] + '</span>' +
@@ -5447,7 +5531,7 @@
           }
           btn.addEventListener("click", function () { openApp(app); });
           // Favourites (launcher.js): the star at the end of the row.
-          catList.appendChild(window.orosLauncher ? window.orosLauncher.menuRow(btn, app) : btn);
+          catList.appendChild(window.orosLauncher && !app._alias ? window.orosLauncher.menuRow(btn, app) : btn);
         });
         wrap.appendChild(catList);
         appsHost.appendChild(wrap);
@@ -5519,7 +5603,7 @@
     devBtn.textContent = window.t("menu.deviceInfo");
     devBtn.addEventListener("click", function () {
       closeMenu();
-      openAppById("device");
+      window.orosSettings.open("device");   // Settings › Device (APP-ALIAS)
     });
     devRow.appendChild(devBtn);
     menu.appendChild(devRow);
@@ -11819,6 +11903,7 @@
   }
 
   function openApp(app, at) {
+    if (app && app._alias) { window.__orosOpenAt(app._alias, null); return; }   // APP-ALIAS menu search row
     // BOOT-L1: an app opened before the late bundle is in (a launch
     // link, a notification, a quick tap) waits for it: its bridges to
     // the shell live there. The last request wins.
@@ -12546,6 +12631,7 @@
   // Direct single-click open; when the entry is missing from a
   // stale apps.json, fall back to the menu instead of dying silently.
   function openAppById(id) {
+    if (appAlias(id)) { window.__orosOpenAt(id, null); return; }   // APP-ALIAS
     if (state.running && state.running.id === id) return;   // already there
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === id) { openApp(state.apps[i]); return; }
@@ -14000,6 +14086,10 @@
     window.orosLauncher.attach({
       apps: function () { return state.apps; },
       open: openApp,
+      // APP-ALIAS: a shortcut kept for an app that moved into another
+      // one shows that app and opens it at the old app's place.
+      aliasHost: aliasHost,
+      openAlias: function (id) { if (!appAlias(id)) return false; window.__orosOpenAt(id, null); return true; },
       running: function () { return state.running; },
       isOpen: function (id) { return mtActive() && appLive(id); },   // multitasking: alive behind
       icons: ICONS,

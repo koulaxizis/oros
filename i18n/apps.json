@@ -246,12 +246,6 @@
    ]
   },
   {
-   "app": "device",
-   "files": [
-    "device/device.js"
-   ]
-  },
-  {
    "app": "diary",
    "files": [
     "diary/core.js",
@@ -1013,12 +1007,6 @@
    ]
   },
   {
-   "app": "textcase",
-   "files": [
-    "textcase/textcase.js"
-   ]
-  },
-  {
    "app": "texttools",
    "files": [
     "texttools/texttools.js"
@@ -1087,12 +1075,6 @@
     "travel/search.js",
     "travel/today.js",
     "travel/travel.js"
-   ]
-  },
-  {
-   "app": "trees",
-   "files": [
-    "trees/trees.js"
    ]
   },
   {

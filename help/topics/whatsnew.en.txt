@@ -1,6 +1,33 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.34.00
+- **Voice notes in Notes.** The microphone button next to a page's title records into the page. The recording is kept on the orOS disk and syncs like your other files; a player appears under the page and in Preview, with speeds up to 2×. If the tab closes mid-recording, Notes offers to save what was recorded. Deleting a recording moves it to the Trash in Files.
+
+## Version 6.33.00
+- **Layout editions: one document for every edition.** Export now starts with Editions: the print PDF and an e-book PDF from the same document, each with its own ISBN and price from Publishing, and pages you leave out (empty pages, the contents). The e-book PDF has links from the contents, bookmarks and the book's language. Pictures can have a description (alt text) in Properties, and paragraph styles a heading level.
+
+## Version 6.32.00
+- **Netizen ID makes a link-in-bio page.** Press `Page` to turn a card into a page with all your links, headings and eight styles. Export it as one HTML file for any free host, share it as a link, or print its QR code. The page has no trackers and loads nothing from outside.
+
+## Version 6.31.00
+- **Songbook in Lyric Sync.** Turn on `Chords` in Lyrics to write chords over the words, paste a chord sheet or open a ChordPro file, tap a word to put a chord, and transpose to any key with the capo helper. A song can now start from its words only, without a recording. Search the menu for songbook or chords to find it.
+
+## Version 6.30.00
+- **Device info is now in Settings.** Open Settings › Device for the same cards about your browser, screen, storage and connection, with Copy report. Old links and shortcuts to Device Info open it there.
+
+## Version 6.29.00
+- **Tree Sketcher is now part of the Wallpaper Generator.** Pick the `Tree` style to get all its settings and your saved trees, and export the tree as an SVG drawing. Old links and shortcuts to Tree Sketcher open it there.
+
+## Version 6.28.00
+- **Transfer keeps going.** If the direct link drops in the middle, Transfer reconnects and goes on from where it stopped. When two devices cannot connect directly at all, transfers up to 50 MB go through the orOS relay, still end-to-end encrypted. In Files, `Send with Transfer…` sends the selected files and folders, and Transfer has a `History` of finished transfers that syncs with your devices.
+
+## Version 6.27.00
+- **Case Converter is now part of Text Tools.** Its conversions are the new group `Letters & accents` in Text Tools, next to the other tools you can chain. Your words are kept, and old links and shortcuts to Case Converter open that group.
+
+## Version 6.26.00
+- **New app: Transfer.** Send big files and whole folders from the orOS disk straight to another browser. Pick them in Transfer, create a link and send it, or show the QR code. The other person needs no orOS: they open the link, see the files and accept. Everything goes directly between the two devices, end-to-end encrypted, and each file is checked when it arrives.
+
 ## Version 6.25.00
 - **Claude can tick Kanban subtasks.** Through orOS Gate, Claude can add subtasks to a card, tick, untick or reword them, and read a whole card with its ticks. It never removes a subtask, and you can undo each change in `Claude's changes`.
 

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <title>Transfer · orOS</title>
+  <link rel="stylesheet" href="../fonts.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body data-page="receive">
+  <!-- The receive page: opens in any browser, orOS or not. The code is
+       in the #fragment, which never leaves this browser. -->
+  <header id="toolbar">
+    <h1 id="title" data-i18n="app.name">Transfer</h1>
+    <span class="brand">orOS</span>
+  </header>
+
+  <main id="main">
+    <!-- Receive -->
+    <section id="recv">
+      <form id="code-form" autocomplete="off">
+        <p class="hint" data-i18n="recv.intro">Type the code you were given, or open the link you got.</p>
+        <div class="bar">
+          <label for="code-in" class="sr-only" data-i18n="recv.code">Code</label>
+          <input id="code-in" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="XXXX-XXXX-XXXX">
+          <button type="submit" class="chip pri" data-i18n="btn.receive">Receive</button>
+        </div>
+      </form>
+      <p class="into"><a href="../" id="into-oros" hidden>Receive into my orOS instead</a></p>
+      <div id="recv-box" hidden>
+        <div id="recv-status" class="status" role="status"></div>
+        <div id="offer" hidden>
+          <p id="offer-sum"></p>
+          <p id="offer-relay" hidden data-i18n="offer.relay">No direct link between the two devices: it comes through the orOS relay, still end-to-end encrypted, more slowly.</p>
+          <ul id="offer-list" class="rows small"></ul>
+          <fieldset id="dest">
+            <legend data-i18n="dest.where">Save to</legend>
+            <label class="opt"><input type="radio" name="dest" value="disk" id="dest-disk"> <span data-i18n="dest.disk">The orOS disk (Transfers folder)</span></label>
+            <p id="dest-disk-why" class="hint" hidden></p>
+            <label class="opt"><input type="radio" name="dest" value="device" id="dest-dev"> <span id="dest-dev-txt" data-i18n="dest.device">This device</span></label>
+          </fieldset>
+          <p id="space-warn" class="warn" hidden></p>
+          <div class="bar end">
+            <button type="button" id="decline" class="chip" data-i18n="btn.decline">Decline</button>
+            <button type="button" id="accept" class="chip pri" data-i18n="btn.accept">Accept</button>
+          </div>
+        </div>
+        <div class="progress" id="recv-prog" hidden><div class="fill"></div></div>
+        <p id="recv-detail" class="dim"></p>
+        <p id="recv-bad" class="warn" hidden></p>
+        <div class="bar end">
+          <button type="button" id="recv-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
+          <button type="button" id="open-files" class="chip" hidden data-i18n="btn.openFiles">Open in Files</button>
+          <button type="button" id="save-file" class="chip pri" hidden data-i18n="btn.save">Save</button>
+          <button type="button" id="recv-again" class="chip" hidden data-i18n="btn.recvMore">Receive something else</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" role="status"></div>
+
+  <script src="../dialogs.js"></script>
+  <script src="core.js"></script>
+  <script src="engine.js"></script>
+  <script src="store.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>

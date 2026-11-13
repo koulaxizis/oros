@@ -198,20 +198,40 @@ test("wallpaper bridge: to the Tree style and back", () => {
   assert.equal(L.snow, "#ffffff");
 });
 
-test("wiring: app, palette, sync, wallpaper, help", () => {
-  const js = read("trees/trees.js"), html = read("trees/index.html");
-  assert.ok(js.includes("inheritPalette") && js.includes("watchPalette"));            // guard G3
-  assert.ok(/registerSlice\("trees", sliceGet, sliceSet, STORAGE_KEY, C\.mergeTrees\)/.test(js));
-  assert.ok(js.includes('"oros-trees-data"') && js.includes('"oros-trees-prefs"'));
-  assert.equal((js.match(/window\.__orosOpenAt = /g) || []).length, 1);
-  assert.ok(js.includes('__orosTakeTarget("trees")'));
-  assert.ok(html.indexOf("core.js") < html.indexOf("trees.js"));
-  // the Wallpaper Generator and Jigsaw load the tree generator before art.js
+test("merge: Tree Sketcher lives in the Wallpaper Generator (APP-ALIAS)", () => {
+  const apps = JSON.parse(read("apps.json"));
+  assert.ok(!apps.apps.some((a) => a.id === "trees"), "no menu entry of its own");
+  const al = apps.aliases.find((a) => a.id === "trees");
+  assert.deepEqual(al, { id: "trees", name: "Tree Sketcher", to: "wallpaper", target: { style: "tree" } });
+  // only the engine stays; the old page forwards through the alias
+  for (const f of ["trees.js", "trees.css", "help.en.txt", "help.el.txt"]) {
+    assert.ok(!fs.existsSync(path.join(__dirname, "..", "trees", f)), f);
+  }
+  assert.ok(read("trees/index.html").includes('"../?open=trees"'));
+  // the shell, the Wallpaper Generator and Jigsaw load the tree generator before art.js
   for (const f of ["wallpaper/index.html", "jigsaw/index.html"]) {
     const h = read(f);
     assert.ok(h.indexOf("../trees/core.js") > 0 && h.indexOf("../trees/core.js") < h.indexOf("art.js"), f);
   }
-  assert.ok(read("wallpaper/wallpaper.js").includes('__orosOpenAt("trees", { wall: recipe() })'));
-  assert.ok(read("wallpaper/index.html").includes('id="tree-btn"') && read("wallpaper/index.html").includes('id="tree-hint"'));
-  for (const f of ["help.en.txt", "help.el.txt"]) assert.ok(fs.existsSync(path.join(__dirname, "..", "trees", f)));
+  assert.ok(read("index.html").includes('<script src="trees/core.js'));
+  // Wallpaper: the tree controls, My trees in the same slice and key, deep link
+  const js = read("wallpaper/wallpaper.js"), html = read("wallpaper/index.html");
+  for (const id of ["tree-sec", "t-sp", "t-season", "t-ink", "t-ground", "t-br", "t-ang", "t-wind", "mine-sec", "mine", "mine-save", "mine-name"]) {
+    assert.ok(html.includes('id="' + id + '"'), id);
+  }
+  assert.ok(!html.includes('id="tree-btn"') && !js.includes('__orosOpenAt("trees"'), "no button to the old app");
+  assert.ok(js.includes('var TREES_KEY = "oros-trees-data"'));
+  assert.ok(js.includes('api.registerSlice("trees", treesSliceGet, treesSliceSet, TREES_KEY, TC.mergeTrees)'));
+  assert.ok(js.includes("R6: a pull never marks dirty", js.indexOf("function treesSliceSet")));
+  assert.equal((js.match(/window\.__orosOpenAt = /g) || []).length, 1);
+  assert.ok(js.includes('__orosTakeTarget("wallpaper")'));
+  assert.ok(js.includes("TC.toSVG(tr, w, h, tr.seed)"), "SVG export of the tree");
+});
+
+test("merge: a Wallpaper tree and a saved Tree Sketcher recipe convert both ways", () => {
+  const r = C.normRecipe({ seed: "Chris", sp: "olive", season: "autumn", br: 9, ang: 33, rnd: 70, fol: 20, wind: -40, ink: "chalk", ground: "hill" });
+  const w = C.toWallRecipe(r);
+  assert.equal(w.style, "tree");
+  assert.equal(w.dens, 20); assert.equal(w.chaos, 70);
+  assert.ok(C.sameRecipe(C.fromWallRecipe(w), r), "nothing of the tree is lost");
 });

@@ -74,14 +74,6 @@
       "type": "internal"
     },
     {
-      "id": "textcase",
-      "name": "Case Converter",
-      "category": "Accessories",
-      "icon": "textcase",
-      "url": "textcase/",
-      "type": "internal"
-    },
-    {
       "id": "pad",
       "name": "Pad",
       "category": "Accessories",
@@ -506,14 +498,6 @@
       "type": "internal"
     },
     {
-      "id": "trees",
-      "name": "Tree Sketcher",
-      "category": "Image",
-      "icon": "trees",
-      "url": "trees/",
-      "type": "internal"
-    },
-    {
       "id": "aura",
       "name": "Aura Painter",
       "category": "Image",
@@ -740,6 +724,14 @@
       "today": "today.js"
     },
     {
+      "id": "transfer",
+      "name": "Transfer",
+      "category": "Internet",
+      "icon": "transfer",
+      "url": "transfer/",
+      "type": "internal"
+    },
+    {
       "id": "dice",
       "name": "Dice & Coin",
       "category": "Fun",
@@ -847,6 +839,7 @@
       "category": "Sound",
       "icon": "lyricsync",
       "url": "lyricsync/",
+      "words": "songbook chords setlist",
       "search": "search.js",
       "type": "internal"
     },
@@ -1230,14 +1223,6 @@
       "type": "internal"
     },
     {
-      "id": "device",
-      "name": "Device Info",
-      "category": "System",
-      "icon": "device",
-      "url": "device/",
-      "type": "internal"
-    },
-    {
       "id": "assistant",
       "name": "Assistant",
       "category": "System",
@@ -1279,6 +1264,26 @@
       "url": "settings/",
       "type": "internal",
       "search": "search.js"
+    }
+  ],
+  "aliases": [
+    {
+      "id": "textcase",
+      "name": "Case Converter",
+      "to": "texttools",
+      "target": { "group": "case" }
+    },
+    {
+      "id": "trees",
+      "name": "Tree Sketcher",
+      "to": "wallpaper",
+      "target": { "style": "tree" }
+    },
+    {
+      "id": "device",
+      "name": "Device Info",
+      "to": "settings",
+      "target": { "section": "device" }
     }
   ]
 }

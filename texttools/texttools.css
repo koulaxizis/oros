@@ -333,6 +333,17 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .send-list { display: flex; flex-direction: column; gap: 8px; }
 .send-list .dlg-btn { text-align: left; }
 
+/* Letters & accents: My words */
+.words-btn { margin-top: 10px; }
+.words-add { margin-top: 10px; }
+.words-line { display: flex; gap: 8px; margin-top: 4px; }
+.words-line input { flex: 1; min-width: 0; min-height: 40px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+.words-line .dlg-btn { flex: 0 0 auto; }
+.words-count { margin-top: 12px; }
+.words-list { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; max-height: 40vh; overflow-y: auto; }
+.words-list .word { display: inline-flex; align-items: center; gap: 2px; padding: 2px 2px 2px 10px; border: 1px solid var(--border); border-radius: 999px; font-size: 14px; max-width: 100%; }
+.words-list .word-text { overflow-wrap: anywhere; }
+
 .stats-list {
   display: grid;
   grid-template-columns: 1fr auto;

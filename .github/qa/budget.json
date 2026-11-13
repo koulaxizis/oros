@@ -104,10 +104,6 @@
       "bytes": 492543,
       "ms": 63
     },
-    "device": {
-      "bytes": 283647,
-      "ms": 45
-    },
     "diary": {
       "bytes": 480255,
       "ms": 66
@@ -460,13 +456,9 @@
       "bytes": 184319,
       "ms": 54
     },
-    "textcase": {
-      "bytes": 239615,
-      "ms": 47
-    },
     "texttools": {
-      "bytes": 357375,
-      "ms": 50
+      "bytes": 439565,
+      "ms": 84
     },
     "tictactoe": {
       "bytes": 207871,
@@ -492,10 +484,6 @@
       "bytes": 614399,
       "ms": 55
     },
-    "trees": {
-      "bytes": 244735,
-      "ms": 80
-    },
     "typewriter": {
       "bytes": 211967,
       "ms": 40
@@ -505,8 +493,8 @@
       "ms": 54
     },
     "wallpaper": {
-      "bytes": 275455,
-      "ms": 64
+      "bytes": 338445,
+      "ms": 112
     },
     "water": {
       "bytes": 320511,
