@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 42304 of 42821 (98%)
-- Help pages: 157 of 158 (99%)
+- Strings: 42618 of 43151 (98%)
+- Help pages: 156 of 157 (99%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1804 / 1806 |
+| assistant | 99% | 1816 / 1818 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
@@ -43,7 +43,7 @@ text is still written in the code. They switch over wave by wave
 | crypt | 100% | 291 / 291 |
 | cycle | 100% | 203 / 203 |
 | designkit | 100% | 174 / 174 |
-| device | 100% | 124 / 124 |
+| device | English for now | 122 / 122 |
 | diary | 100% | 236 / 236 |
 | dice | 100% | 52 / 52 |
 | discover | English for now | 3 / 3 |
@@ -72,11 +72,11 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | 100% | 90 / 90 |
 | kanban | 99% | 315 / 318 |
 | labels | 100% | 88 / 88 |
-| layout | 99% | 953 / 961 |
+| layout | 99% | 997 / 1005 |
 | library | 100% | 323 / 323 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
-| lyricsync | 100% | 182 / 182 |
+| lyricsync | 100% | 224 / 224 |
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 496 / 496 |
 | mancala | 100% | 61 / 61 |
@@ -94,10 +94,10 @@ text is still written in the code. They switch over wave by wave
 | museum | 100% | 46 / 46 |
 | music | 99% | 538 / 539 |
 | names | 100% | 40 / 40 |
-| netizen | 100% | 121 / 121 |
+| netizen | 98% | 172 / 175 |
 | newsletter | 99% | 1003 / 1008 |
 | nonogram | 100% | 70 / 70 |
-| notes | 99% | 190 / 191 |
+| notes | 99% | 240 / 241 |
 | oracle | 100% | 38 / 38 |
 | pad | 100% | 265 / 265 |
 | passwords | 99% | 467 / 468 |
@@ -111,7 +111,7 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 332 / 332 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 95% | 497 / 521 |
+| publish | 96% | 595 / 619 |
 | qr | 100% | 248 / 248 |
 | quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |
@@ -125,10 +125,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1155 / 1170 |
+| settings | 98% | 1173 / 1188 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1174 / 1179 |
+| shell | 99% | 1175 / 1180 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 383 / 383 |
@@ -155,7 +155,7 @@ text is still written in the code. They switch over wave by wave
 | today | 100% | 155 / 155 |
 | todo | 100% | 271 / 271 |
 | together | 100% | 303 / 303 |
-| transfer | English for now | 0 / 92 |
+| transfer | English for now | 0 / 105 |
 | travel | 100% | 555 / 555 |
 | typewriter | 100% | 46 / 46 |
 | typing | 94% | 170 / 180 |

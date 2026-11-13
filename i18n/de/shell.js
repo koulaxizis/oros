@@ -48,6 +48,7 @@ orosPack("de", "shell", {
  "app.dots": "Käsekästchen",
  "app.familytree": "Stammbaum",
  "app.lyricsync": "Liedtext-Sync",
+ "app.lyricsync.words": "Liederbuch Akkorde Setlist Lieder songbook",
  "app.publish": "Verlag",
  "app.together": "Zusammen",
  "app.household": "Haushalt",

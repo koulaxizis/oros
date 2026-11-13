@@ -10,7 +10,8 @@
 //   - the audio file only on this device, in IndexedDB
 //     "oros-lyricsync" (store "audio", key = song id). It never leaves
 //     the device and is never synced; another device asks for it.
-//   - device-only settings in "oros-lyricsync-device" (mode, speed).
+//   - device-only settings in "oros-lyricsync-device" (mode, speed;
+//     Songbook S1: ch = chords on for new songs, sol = Ντο Ρε Μι names).
 // Boot order (OROS_BIBLE.md Part VI "Boot sequence"):
 //   load → applyI18n → wire → registerSync → inheritPalette →
 //   watchPalette → render → take a pending deep link.
@@ -31,9 +32,9 @@
   var APP_ID = "lyricsync";
   var STORAGE_KEY = "oros-lyricsync-data";
   var DEVICE_KEY = "oros-lyricsync-device";
-  var C = window.LyricsyncCore, F = window.LyricsyncFormats, ID3 = window.LyricsyncId3;
+  var C = window.LyricsyncCore, F = window.LyricsyncFormats, ID3 = window.LyricsyncId3, H = window.LyricsyncChords;
   var MAX_AUDIO = 400 * 1024 * 1024, MAX_TEXT_FILE = 4 * 1024 * 1024, MAX_UNDO = 300;
-  var LYRIC_ACCEPT = ".lrc,.elrc,.srt,.vtt,.ttml,.dfxp,.xml,.ass,.ssa,.json,.txt";
+  var LYRIC_ACCEPT = ".lrc,.elrc,.srt,.vtt,.ttml,.dfxp,.xml,.ass,.ssa,.json,.txt,.cho,.chopro,.chordpro,.crd";
   var MAX_WAVE = 80 * 1024 * 1024, SPANS = [4, 8, 16, 32, 64];
   var AUDIO_ACCEPT = "audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.oga,.opus,.webm";
 
@@ -126,6 +127,20 @@
       "au.net": "Could not download the speech model. Check the connection and try again.",
       "au.needText": "Write the lyrics first.",
       "au.noRun": "Rough sync does not work in this browser.",
+      "ch.on": "Chords", "ch.key": "Key", "ch.capo": "Capo", "ch.bpm": "Tempo", "ch.ts": "Time", "ch.names": "Chord names", "ch.transpose": "Transpose",
+      "ch.none": "—", "ch.tapHint": "Tap a word to put a chord on it, or change the one it has.",
+      "f.lyricsCh": "Words and chords. Put a chord in brackets just before its syllable, as in [Am]Hello, or paste a sheet with the chords written over the words. [Verse], [Chorus] and [Bridge] start a section, {c: text} is a note, a line of chords only is played, not sung. Blank lines start a new verse.",
+      "ch.info": "{key}", "ch.infoKey": "Key {key}", "ch.infoCapo": "capo {n}, sounds in {key}", "ch.infoCapoOnly": "capo {n}",
+      "ch.badBpm": "The tempo is a number from 20 to 300.",
+      "cd.title": "Chord", "cd.word": "On “{w}”", "cd.wordEnd": "At the end of the line", "cd.label": "Chord name (for example Am, F#7, D/F#, Λα-)",
+      "cd.del": "No chord", "cd.set": "Put", "cd.bad": "“{c}” is not a chord name Lyric Sync knows. Try Am, F#7, Bbmaj7 or D/F#.",
+      "tr.title": "Transpose", "tr.down": "Down a semitone", "tr.up": "Up a semitone", "tr.rewrite": "Change the chords",
+      "tr.capo": "Keep the chord shapes and move the capo", "tr.apply": "Transpose",
+      "tr.now": "{n} semitones", "tr.nowKey": "{from} → {to} ({n})", "tr.hintCapo": "Capo {from} → {to}. You play the same shapes; the song sounds {n} higher.",
+      "tr.hintCapoBad": "The capo goes from 0 to 11: change the chords instead.", "tr.hintRewrite": "Every chord moves by the same step. Undo takes it back.",
+      "tr.done": "Transposed by {n}", "list.key": "key {key}", "sec.v": "Verse", "sec.c": "Chorus", "sec.b": "Bridge",
+      "ex.cho": "ChordPro", "ex.choD": "Words and chords for songbook apps such as OnSong, SongbookPro and ChordPro.",
+      "ex.chtxt": "Chords over the words", "ex.chtxtD": "Plain text with each chord over its syllable, to print or send.",
       "full": "This device is out of storage space. The change was not saved."
     },
     el: {
@@ -215,6 +230,20 @@
       "au.net": "Δεν ήταν δυνατή η λήψη του μοντέλου ομιλίας. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "au.needText": "Γράψε πρώτα τους στίχους.",
       "au.noRun": "Ο πρόχειρος συγχρονισμός δεν λειτουργεί σε αυτόν τον browser.",
+      "ch.on": "Ακόρντα", "ch.key": "Τόνος", "ch.capo": "Καποτάστο", "ch.bpm": "Τέμπο", "ch.ts": "Μέτρο", "ch.names": "Ονόματα ακόρντων", "ch.transpose": "Μεταφορά τόνου",
+      "ch.none": "—", "ch.tapHint": "Πάτησε μια λέξη για να βάλεις ακόρντο πάνω της ή να αλλάξεις αυτό που έχει.",
+      "f.lyricsCh": "Στίχοι και ακόρντα. Γράψε το ακόρντο σε αγκύλες ακριβώς πριν από τη συλλαβή του, όπως [Am]Γεια σου, ή επικόλλησε ένα κείμενο με τα ακόρντα γραμμένα πάνω από τα λόγια. Τα [Κουπλέ], [Ρεφρέν] και [Γέφυρα] ξεκινούν ενότητα, το {c: κείμενο} είναι σημείωση, και μια σειρά μόνο με ακόρντα παίζεται, δεν τραγουδιέται. Μια κενή σειρά ξεκινά νέα στροφή.",
+      "ch.info": "{key}", "ch.infoKey": "Τόνος {key}", "ch.infoCapo": "καποτάστο {n}, ακούγεται σε {key}", "ch.infoCapoOnly": "καποτάστο {n}",
+      "ch.badBpm": "Το τέμπο είναι αριθμός από 20 έως 300.",
+      "cd.title": "Ακόρντο", "cd.word": "Στο «{w}»", "cd.wordEnd": "Στο τέλος της σειράς", "cd.label": "Όνομα ακόρντου (για παράδειγμα Am, F#7, D/F#, Λα-)",
+      "cd.del": "Χωρίς ακόρντο", "cd.set": "Βάλε", "cd.bad": "Το «{c}» δεν είναι όνομα ακόρντου που ξέρει ο Συγχρονισμός στίχων. Δοκίμασε Am, F#7, Bbmaj7 ή D/F#.",
+      "tr.title": "Μεταφορά τόνου", "tr.down": "Ένα ημιτόνιο κάτω", "tr.up": "Ένα ημιτόνιο πάνω", "tr.rewrite": "Άλλαξε τα ακόρντα",
+      "tr.capo": "Κράτα τα ίδια σχήματα και μετακίνησε το καποτάστο", "tr.apply": "Μεταφορά",
+      "tr.now": "{n} ημιτόνια", "tr.nowKey": "{from} → {to} ({n})", "tr.hintCapo": "Καποτάστο {from} → {to}. Παίζεις τα ίδια σχήματα και το τραγούδι ακούγεται {n} ψηλότερα.",
+      "tr.hintCapoBad": "Το καποτάστο πάει από 0 έως 11: άλλαξε τα ακόρντα καλύτερα.", "tr.hintRewrite": "Κάθε ακόρντο μετακινείται το ίδιο. Η Αναίρεση το παίρνει πίσω.",
+      "tr.done": "Μεταφορά κατά {n}", "list.key": "τόνος {key}", "sec.v": "Κουπλέ", "sec.c": "Ρεφρέν", "sec.b": "Γέφυρα",
+      "ex.cho": "ChordPro", "ex.choD": "Στίχοι και ακόρντα για εφαρμογές τραγουδιών όπως OnSong, SongbookPro και ChordPro.",
+      "ex.chtxt": "Ακόρντα πάνω από τους στίχους", "ex.chtxtD": "Απλό κείμενο με κάθε ακόρντο πάνω από τη συλλαβή του, για εκτύπωση ή αποστολή.",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε."
     }
   };
@@ -249,7 +278,7 @@
 
   // ---------- 2. Data: local first, then sync ----------
   var data = C.empty();
-  var dev = { mode: "tap", speed: 1, lat: 0, span: 8 };
+  var dev = { mode: "tap", speed: 1, lat: 0, span: 8, ch: 0, sol: 0 };
 
   function syncApi() {
     try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
@@ -265,6 +294,8 @@
       if (typeof d.lat === "number" && d.lat >= 0 && d.lat <= 400) dev.lat = Math.round(d.lat);
       if (SPANS.indexOf(d.span) >= 0) dev.span = d.span;
       if ([1, 0.9, 0.75, 0.5].indexOf(d.speed) >= 0) dev.speed = d.speed;
+      if (d.ch === 1) dev.ch = 1;
+      if (d.sol === 1) dev.sol = 1;
     } catch (e) { /* defaults */ }
   }
   function saveDev() { try { localStorage.setItem(DEVICE_KEY, JSON.stringify(dev)); } catch (e) { /* not kept */ } }
@@ -432,6 +463,7 @@
   var lyricsTimer = 0;
   var wl = 0, wk = 0;          // Words mode: the next line and word to time
   var peaks = null, wave = null, loopOn = false;
+  var chordOn = false;         // Songbook S1: the Lyrics tab shows words and chords
 
   function timedList() { if (!tlist && cur) tlist = C.timed(cur.ln, cur.dur); return tlist || []; }
   function nowMs() { return player ? Math.round(player.currentTime * 1000) : 0; }
@@ -439,37 +471,51 @@
   // song time, so it scales with the speed).
   function tapMs() { return Math.max(0, nowMs() - Math.round(dev.lat * (player ? player.playbackRate : 1))); }
 
-  // A change of lines: undo point, save, repaint.
-  function setLines(lines, keepRedo) {
-    if (!cur) return;
-    undoStack.push({ ln: cur.ln, cursor: cursor, sel: sel });
+  // What undo brings back: the lines and the song's chord fields.
+  var SHEET = ["ln", "xo", "key", "capo", "bpm", "ts"];
+  function snap() { var o = {}; SHEET.forEach(function (k) { o[k] = cur[k]; }); return o; }
+  function withSnap(base, sn) {
+    var o = Object.assign({}, base);
+    SHEET.forEach(function (k) { if (sn[k] === undefined || sn[k] === null || sn[k] === "") delete o[k]; else o[k] = sn[k]; });
+    return o;
+  }
+  function pushUndo() {
+    undoStack.push({ s: snap(), cursor: cursor, sel: sel });
     if (undoStack.length > MAX_UNDO) undoStack.shift();
+  }
+  // A change of lines (or of the chord fields): undo point, save, repaint.
+  function setSheet(fields, keepRedo) {
+    if (!cur) return false;
+    pushUndo();
     if (!keepRedo) redoStack = [];
-    var next = Object.assign({}, cur, { ln: lines });
-    if (!putProject(next)) { undoStack.pop(); return; }
+    var next = withSnap(cur, Object.assign(snap(), fields));
+    if (!putProject(next)) { undoStack.pop(); return false; }
     cur = C.find(data, cur.id);
     tlist = null;
     renderSync();
+    if (tab === "lyrics") renderEditor(true);
+    return true;
   }
+  function setLines(lines, keepRedo) { setSheet({ ln: lines }, keepRedo); }
   function undo() {
     if (!cur || !undoStack.length) { toast(t("sync.nothing")); return; }
     var u = undoStack.pop();
-    redoStack.push({ ln: cur.ln, cursor: cursor, sel: sel });
-    if (putProject(Object.assign({}, cur, { ln: u.ln }))) {
+    redoStack.push({ s: snap(), cursor: cursor, sel: sel });
+    if (putProject(withSnap(cur, u.s))) {
       cur = C.find(data, cur.id); tlist = null;
       cursor = u.cursor; sel = u.sel;
-      renderEditor(true);
+      renderEditor(false);
       toast(t("sync.undone"));
     }
   }
   function redo() {
     if (!cur || !redoStack.length) return;
     var r = redoStack.pop();
-    undoStack.push({ ln: cur.ln, cursor: cursor, sel: sel });
-    if (putProject(Object.assign({}, cur, { ln: r.ln }))) {
+    undoStack.push({ s: snap(), cursor: cursor, sel: sel });
+    if (putProject(withSnap(cur, r.s))) {
       cur = C.find(data, cur.id); tlist = null;
       cursor = r.cursor; sel = r.sel;
-      renderEditor(true);
+      renderEditor(false);
     }
   }
 
@@ -483,7 +529,7 @@
       var open = el("button", "song-open");
       open.type = "button";
       open.appendChild(el("span", "song-name", p.name || t("list.untitled")));
-      var meta = [p.ar, t("list.count", { n: C.timedCount(p.ln), total: p.ln.length })];
+      var meta = [p.ar, p.key ? t("list.key", { key: H.show(p.key, dev.sol) }) : "", t("list.count", { n: C.timedCount(p.ln), total: p.ln.length })];
       if (p.src) meta.push(t("list.music"));
       else if (p.au && !haveAudio[p.id]) meta.push(t("list.noAudio"));
       open.appendChild(el("span", "song-meta dim", meta.filter(Boolean).join(" · ")));
@@ -534,8 +580,9 @@
     undoStack = []; redoStack = [];
     cursor = C.nextUntimed(cur.ln, 0); sel = -1; holding = -1;
     wl = cursor < cur.ln.length ? cursor : 0; wk = 0; loopOn = false; peaks = null;
+    chordOn = C.hasChords(cur) || !!dev.ch;
     showView(true);
-    setTab(toTab || (cur.ln.length ? "sync" : "lyrics"));
+    setTab(toTab || (cur.ln.length && !(C.hasChords(cur) && !C.timedCount(cur.ln)) ? "sync" : "lyrics"));
     renderEditor(false);
     loadAudio();
   }
@@ -650,8 +697,9 @@
     });
     if (document.activeElement !== $("f-singers")) $("f-singers").value = (cur.vn || []).join(", ");
     var ta = $("lyrics-text");
-    if (!(keepText && document.activeElement === ta)) ta.value = C.toText(cur.ln);
+    if (!(keepText && document.activeElement === ta)) ta.value = editorText();
     $("lyrics-count").textContent = t("lyrics.count", { n: cur.ln.length });
+    renderChords();
     cursor = Math.min(cursor, cur.ln.length);
     if (sel >= cur.ln.length) sel = -1;
     renderAudio();
@@ -659,17 +707,175 @@
     renderStage();
   }
 
-  // Lyrics text → lines, keeping the times of unchanged lines.
+  // Lyrics text → lines, keeping the times of unchanged lines. With
+  // chords on, the text is a chord sheet (chords.js): its chords,
+  // sections and rows replace the old ones, the times stay.
+  function editorText() { return chordOn ? H.toEditor(cur, LANG) : C.toText(cur.ln); }
   function flushLyrics() {
     if (!lyricsTimer) return;
     clearTimeout(lyricsTimer); lyricsTimer = 0;
     if (!cur) return;
     var text = $("lyrics-text").value;
-    if (text === C.toText(cur.ln)) return;
-    setLines(C.relyric(cur.ln, text, Math.random));
+    if (text === editorText()) return;
+    if (chordOn) {
+      var r = H.parseSheet(text, { lang: LANG }), m = r.meta, f = { ln: C.relyricLines(cur.ln, r.lines, Math.random, true), xo: r.xo.length ? r.xo : undefined };
+      ["key", "capo", "bpm", "ts"].forEach(function (k) { if (m[k]) f[k] = m[k]; });
+      var other = {};
+      ["name", "ar", "al"].forEach(function (k) { if (m[k] && !cur[k]) other[k] = m[k]; });
+      if (Object.keys(other).length && putProject(Object.assign({}, cur, other))) cur = C.find(data, cur.id);
+      setSheet(f);
+    } else setLines(C.relyric(cur.ln, text, Math.random));
     cursor = C.nextUntimed(cur.ln, 0);
     $("lyrics-count").textContent = t("lyrics.count", { n: cur.ln.length });
   }
+
+  // ---------- 8b. Chords (Songbook S1) ----------
+  var KEYS = ["C", "C#", "Db", "D", "Eb", "E", "F", "F#", "Gb", "G", "Ab", "A", "Bb", "B",
+              "Cm", "C#m", "Dm", "D#m", "Ebm", "Em", "Fm", "F#m", "Gm", "G#m", "Am", "Bbm", "Bm"];
+  var TIMES = ["2/4", "3/4", "4/4", "5/4", "6/8", "7/8", "9/8", "12/8"];
+  function fillSelect(sel, values, label, val) {
+    var want = values.join("|") + "/" + dev.sol;
+    if (sel.dataset.v !== want) {
+      sel.textContent = "";
+      values.forEach(function (v) { var o = el("option", "", label(v)); o.value = v; sel.appendChild(o); });
+      sel.dataset.v = want;
+    }
+    sel.value = val;
+  }
+  function renderChords() {
+    if (!cur) return;
+    $("ch-on").checked = chordOn;
+    $("ch-tools").hidden = !chordOn;
+    $("sheet-box").hidden = !chordOn;
+    $("lyrics-lbl").textContent = t(chordOn ? "f.lyricsCh" : "f.lyrics");
+    if (!chordOn) return;
+    fillSelect($("ch-key"), [""].concat(KEYS), function (v) { return v ? H.show(v, dev.sol) : t("ch.none"); }, cur.key || "");
+    fillSelect($("ch-capo"), ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"], function (v) { return v === "0" ? t("ch.none") : v; }, String(cur.capo || 0));
+    fillSelect($("ch-ts"), [""].concat(TIMES), function (v) { return v || t("ch.none"); }, cur.ts || "");
+    if (document.activeElement !== $("ch-bpm")) $("ch-bpm").value = cur.bpm ? String(cur.bpm) : "";
+    $("ch-names").value = dev.sol ? "1" : "0";
+    renderSheet();
+  }
+  function infoText() {
+    var bits = [];
+    if (cur.key) bits.push(t("ch.infoKey", { key: H.show(cur.key, dev.sol) }));
+    if (cur.capo) bits.push(cur.key ? t("ch.infoCapo", { n: cur.capo, key: H.show(H.keyAfter(cur.key, cur.capo), dev.sol) }) : t("ch.infoCapoOnly", { n: cur.capo }));
+    if (cur.bpm) bits.push(cur.bpm + " bpm");
+    if (cur.ts) bits.push(cur.ts);
+    return bits.join(" · ");
+  }
+  // The sheet: chords over the words, each word a button that opens
+  // the chord picker. Text only through textContent.
+  function renderSheet() {
+    var box = $("sheet");
+    box.textContent = "";
+    $("sheet-info").textContent = infoText();
+    $("sheet-info").hidden = !$("sheet-info").textContent;
+    box.lang = cur.lg || "";
+    var first = true;
+    function gap() { if (!first) box.appendChild(el("div", "sh-gap")); }
+    function label(k) { box.appendChild(el("div", "sh-sec", t("sec." + k))); }
+    function row(r) {
+      if (r.p) gap();
+      if (r.k) label(r.k);
+      if (r.m) box.appendChild(el("div", "sh-note", r.t));
+      else if (r.tb) box.appendChild(el("pre", "sh-tab", r.t));
+      else box.appendChild(el("div", "sh-crow", H.rowPlain(r, dev.sol)));
+      first = false;
+    }
+    cur.ln.forEach(function (l, i) {
+      var rp = (l.x || []).some(function (r) { return r.p; });
+      (l.x || []).forEach(row);
+      if (l.p && (!rp || l.q)) gap();
+      if (l.k) label(l.k);
+      var line = el("div", "sh-line");
+      H.cells(l).forEach(function (c) {
+        var cell = el(c.word || c.a === l.t.length ? "button" : "span", "sh-cell");
+        if (cell.tagName === "BUTTON") {
+          cell.type = "button";
+          cell.addEventListener("click", function () { openPicker(i, c.a); });
+        }
+        cell.appendChild(el("span", "sh-ch", c.ch.map(function (x) { return H.show(x, dev.sol); }).join(" ") || "\u00a0"));
+        cell.appendChild(el("span", "sh-tx", l.t.slice(c.a, c.b) || "\u00a0"));
+        line.appendChild(cell);
+      });
+      if (!(l.c || []).some(function (x) { return x[0] === l.t.length; })) {
+        var end = el("button", "sh-cell sh-end");
+        end.type = "button";
+        end.setAttribute("aria-label", t("cd.wordEnd"));
+        end.appendChild(el("span", "sh-ch", "+"));
+        end.appendChild(el("span", "sh-tx", "\u00a0"));
+        end.addEventListener("click", function () { openPicker(i, l.t.length); });
+        line.appendChild(end);
+      }
+      box.appendChild(line);
+      first = false;
+    });
+    (cur.xo || []).forEach(row);
+  }
+  var pick = null;
+  function openPicker(i, a) {
+    flushLyrics();
+    var l = cur && cur.ln[i];
+    if (!l) return;
+    pick = { id: l.id, a: a };
+    var word = (/^\S+/.exec(l.t.slice(a)) || [""])[0];
+    $("cd-word").textContent = word ? t("cd.word", { w: word }) : t("cd.wordEnd");
+    var have = (l.c || []).filter(function (x) { return x[0] === a; }).map(function (x) { return x[1]; });
+    $("cd-in").value = have.length ? have[have.length - 1] : "";
+    $("cd-del").hidden = !have.length;
+    var box = $("cd-sugg");
+    box.textContent = "";
+    H.suggest(cur).forEach(function (ch) {
+      var b = el("button", "chip sugg-chip", H.show(ch, dev.sol));
+      b.type = "button";
+      b.addEventListener("click", function () { $("cd-in").value = ch; putChord(); });
+      box.appendChild(b);
+    });
+    $("chord-dlg").showModal();
+    $("cd-in").focus();
+  }
+  function putChord(remove) {
+    if (!cur || !pick) return;
+    var raw = remove ? "" : $("cd-in").value.trim(), ch = raw ? H.norm(raw) : "";
+    if (raw && !ch) { toast(t("cd.bad", { c: raw })); return; }
+    var i = -1;
+    cur.ln.forEach(function (l, k) { if (l.id === pick.id) i = k; });
+    if (i < 0) { $("chord-dlg").close(); return; }
+    var lines = cur.ln.slice();
+    lines[i] = H.setChord(lines[i], Math.min(pick.a, lines[i].t.length), ch);
+    $("chord-dlg").close();
+    setSheet({ ln: lines });
+  }
+  var trN = 0;
+  function openTranspose() {
+    flushLyrics();
+    trN = 0;
+    renderTranspose();
+    $("tr-dlg").showModal();
+  }
+  function renderTranspose() {
+    var n = (trN > 0 ? "+" : "") + trN, capo = $("tr-capo").checked;
+    $("tr-now").textContent = cur.key ? t("tr.nowKey", { from: H.show(cur.key, dev.sol), to: H.show(H.keyAfter(cur.key, trN), dev.sol), n: n }) : t("tr.now", { n: n });
+    var c0 = cur.capo || 0, c1 = c0 + trN;
+    $("tr-hint").textContent = !capo ? t("tr.hintRewrite") : (c1 < 0 || c1 > 11 ? t("tr.hintCapoBad") : t("tr.hintCapo", { from: c0, to: c1, n: n }));
+    $("tr-yes").disabled = !trN || (capo && (c1 < 0 || c1 > 11));
+  }
+  function applyTranspose() {
+    if (!cur || !trN) return;
+    var n = trN;
+    $("tr-dlg").close();
+    if ($("tr-capo").checked) {
+      var c1 = (cur.capo || 0) + n;
+      if (c1 < 0 || c1 > 11) return;
+      setSheet({ capo: c1 || undefined });
+    } else {
+      var r = H.transposeSong(cur, n);
+      setSheet({ ln: r.ln, xo: r.xo, key: r.key || undefined });
+    }
+    toast(t("tr.done", { n: (n > 0 ? "+" : "") + n }));
+  }
+
   function saveField(key, value) {
     if (!cur || (cur[key] || "") === value) return;
     var next = Object.assign({}, cur); next[key] = value;
@@ -1112,6 +1318,7 @@
       if (l.p) o.p = 1;
       if (l.w) o.w = l.w;
       if (l.v) o.v = l.v;
+      ["c", "k", "x", "q"].forEach(function (k) { if (l[k]) o[k] = l[k]; });
       return o;
     });
   }
@@ -1120,7 +1327,12 @@
     ["name", "ar", "al", "lg"].forEach(function (k) { if (r[k] && !cur[k]) next[k] = r[k]; });
     if (r.dur && !cur.dur) next.dur = r.dur;
     if (r.vn && r.vn.filter(Boolean).length && !(cur.vn && cur.vn.length)) next.vn = r.vn;
-    undoStack.push({ ln: cur.ln, cursor: cursor, sel: sel }); redoStack = [];
+    // Songbook S1: a chord sheet brings its key, capo, tempo, time and
+    // closing rows; the old ones go with the old lines.
+    next.xo = r.xo && r.xo.length ? r.xo : undefined;
+    ["key", "capo", "bpm", "ts"].forEach(function (k) { if (r[k]) next[k] = r[k]; });
+    if (C.hasChords(next)) chordOn = true;
+    pushUndo(); redoStack = [];
     if (putProject(next)) {
       cur = C.find(data, cur.id); tlist = null;
       cursor = C.nextUntimed(cur.ln, 0); sel = -1;
@@ -1151,7 +1363,7 @@
       if (!p) return;
       cur = p;
       applyImport(r, file.name);
-      openSong(p.id, C.timedCount(cur.ln) ? "preview" : "sync");
+      openSong(p.id, C.timedCount(cur.ln) ? "preview" : C.hasChords(cur) ? "lyrics" : "sync");
     });
   }
 
@@ -1169,8 +1381,9 @@
       sum.appendChild(ck);
     }
     ul.textContent = "";
-    ["lrc", "elrc", "srt", "vtt", "ttml", "ass", "json", "txt"].forEach(function (k) {
-      var spec = F.EXPORTS[k], timedOnly = k !== "json" && k !== "txt";
+    var chords = C.hasChords(cur);
+    (chords ? ["cho", "chtxt"] : []).concat(["lrc", "elrc", "srt", "vtt", "ttml", "ass", "json", "txt"]).forEach(function (k) {
+      var spec = F.EXPORTS[k], timedOnly = k !== "json" && k !== "txt" && !spec.chords;
       if (spec.words && !nw) return;
       var li = el("li", "ex-row");
       var txt = el("div", "ex-txt");
@@ -1180,8 +1393,8 @@
       b.type = "button";
       b.disabled = timedOnly && !n;
       b.addEventListener("click", function () {
-        var name = fileTitle(cur) + (k === "elrc" ? ".karaoke" : "") + spec.ext;
-        saveFile(spec.fn(cur), name, spec.mime, spec.ext).then(function (ok) { if (ok) toast(t("ex.saved", { name: name })); });
+        var name = fileTitle(cur) + (k === "elrc" ? ".karaoke" : k === "chtxt" ? ".chords" : "") + spec.ext;
+        saveFile(spec.fn(cur, { solfege: !!dev.sol, lang: LANG, words: { key: t("ch.key"), capo: t("ch.capo"), v: t("sec.v"), c: t("sec.c"), b: t("sec.b") } }), name, spec.mime, spec.ext).then(function (ok) { if (ok) toast(t("ex.saved", { name: name })); });
       });
       li.appendChild(txt);
       li.appendChild(b);
@@ -1301,6 +1514,36 @@
       lyricsTimer = setTimeout(flushLyrics, 700);
     });
     $("lyrics-text").addEventListener("blur", flushLyrics);
+
+    // Songbook S1: chords
+    $("ch-on").addEventListener("change", function () {
+      if (!cur) return;
+      flushLyrics();
+      chordOn = $("ch-on").checked;
+      dev.ch = chordOn ? 1 : 0; saveDev();
+      renderEditor(false);
+    });
+    $("ch-key").addEventListener("change", function () { if (cur) setSheet({ key: $("ch-key").value || undefined }); });
+    $("ch-capo").addEventListener("change", function () { if (cur) setSheet({ capo: +$("ch-capo").value || undefined }); });
+    $("ch-ts").addEventListener("change", function () { if (cur) setSheet({ ts: $("ch-ts").value || undefined }); });
+    $("ch-bpm").addEventListener("change", function () {
+      if (!cur) return;
+      var v = $("ch-bpm").value.trim();
+      if (v && !(/^\d{2,3}$/.test(v) && +v >= 20 && +v <= 300)) { toast(t("ch.badBpm")); $("ch-bpm").value = cur.bpm ? String(cur.bpm) : ""; return; }
+      setSheet({ bpm: v ? +v : undefined });
+    });
+    $("ch-names").addEventListener("change", function () { dev.sol = $("ch-names").value === "1" ? 1 : 0; saveDev(); if (cur) renderChords(); });
+    $("ch-tr").addEventListener("click", openTranspose);
+    $("cd-yes").addEventListener("click", function () { putChord(false); });
+    $("cd-del").addEventListener("click", function () { putChord(true); });
+    $("cd-no").addEventListener("click", function () { $("chord-dlg").close(); });
+    $("cd-in").addEventListener("keydown", function (e) { if (e.code === "Enter" || e.code === "NumpadEnter") { e.preventDefault(); putChord(false); } });
+    $("tr-down").addEventListener("click", function () { trN = Math.max(-11, trN - 1); renderTranspose(); });
+    $("tr-up").addEventListener("click", function () { trN = Math.min(11, trN + 1); renderTranspose(); });
+    $("tr-rewrite").addEventListener("change", renderTranspose);
+    $("tr-capo").addEventListener("change", renderTranspose);
+    $("tr-no").addEventListener("click", function () { $("tr-dlg").close(); });
+    $("tr-yes").addEventListener("click", applyTranspose);
 
     $("play-btn").addEventListener("click", togglePlay);
     $("rew-btn").addEventListener("click", function () { seekBy(-5); });
