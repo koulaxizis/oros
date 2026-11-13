@@ -1,0 +1,110 @@
+/* ============================================================
+   orOS Settings › Device (device/view.css) — was the Device Info
+   app. Loaded with device/view.js when the section first opens. Every rule sits under .dv, so nothing reaches the other
+   sections.
+   ============================================================ */
+.dv { max-width: 1040px; margin: 0 auto; }
+.dv-bar-top { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 12px; }
+.dv .dv-icon { flex: 0 0 44px; width: 44px; min-width: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+.dv .dv-small { min-height: 36px; padding: 0 12px; font-size: 14px; margin-top: 8px; }
+.dv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.dv-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  min-width: 0;
+}
+.dv-card > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 14px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.dv-card > summary::-webkit-details-marker { display: none; }
+.dv-card > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dv-card > summary::after {
+  content: "";
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--text-dim);
+  border-bottom: 2px solid var(--text-dim);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  flex: 0 0 auto;
+}
+.dv-card[open] > summary::after { transform: rotate(225deg); }
+.dv-card h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+.dv-body { padding: 0 14px 14px; }
+.dv-about { margin: 14px auto 0; text-align: center; }
+
+.dv .kv { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dv .kv th { text-align: left; font-weight: 400; color: var(--text-dim); padding: 7px 10px 7px 0; vertical-align: top; }
+.dv .kv td { text-align: right; font-weight: 700; padding: 7px 0; overflow-wrap: anywhere; }
+.dv .kv tr + tr th, .dv .kv tr + tr td { border-top: 1px solid var(--border); }
+.dv .big { font-size: 24px; font-weight: 800; line-height: 1.2; }
+.dv .big small { display: block; font-size: 14px; font-weight: 600; color: var(--text-dim); }
+.dv .bar { height: 8px; border-radius: 4px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; margin: 8px 0 4px; }
+.dv .bar > span { display: block; height: 100%; background: var(--accent); }
+.dv .bar.warn > span { background: var(--warn); }
+.dv .bar.bad > span { background: var(--danger); }
+.dv .note { font-size: 13px; line-height: 1.45; border-radius: 10px; padding: 8px 10px; margin-top: 8px; background: var(--accent-soft); }
+.dv .note.bad { border: 1px solid var(--danger); }
+.dv .ok { color: var(--ok); }
+.dv .bad { color: var(--danger); }
+.dv .warn-t { color: var(--warn); }
+.dv .feat { list-style: none; font-size: 14px; padding: 0; margin: 0; }
+.dv .feat li { display: flex; gap: 10px; padding: 7px 0; align-items: flex-start; }
+.dv .feat li + li { border-top: 1px solid var(--border); }
+.dv .feat .mark { flex: 0 0 18px; font-weight: 800; text-align: center; }
+.dv .feat .txt { flex: 1 1 auto; min-width: 0; }
+.dv .feat .sub { display: block; color: var(--text-dim); font-size: 13px; margin-top: 2px; }
+.dv .apps { list-style: none; margin: 6px 0 0; padding: 0; }
+.dv .apps li + li { border-top: 1px solid var(--border); }
+.dv .app-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  font-size: 14px;
+}
+.dv button.app-row { cursor: pointer; }
+.dv button.app-row:hover .app-name { color: var(--accent); }
+.dv .app-name { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dv .app-size { font-weight: 700; white-space: nowrap; }
+.dv .app-row .bar { grid-column: 1 / -1; margin: 2px 0 0; height: 5px; border: none; }
+.dv .more { margin-top: 6px; }
+.dv .sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+@media (max-width: 420px) {
+  .dv-card > summary { padding: 0 12px; }
+  .dv-body { padding: 0 12px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dv-card > summary::after { transition: none; }
+}
