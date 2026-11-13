@@ -33,7 +33,7 @@ test("normalise: bounds, defaults and bad entities", () => {
   assert.equal(t.pan, 100);
   assert.equal(t.color, C.COLORS[0]);
   assert.equal(t.name, "a b");
-  assert.equal("extra" in t, false);
+  assert.equal(t.extra, 1);                                                // unknown fields ride along (wave A0)
   assert.equal(C.normSource(S("ssource1", 1, { path: "/internal/Notes/x.wav" })), null);   // only the Studio folder
   assert.equal(C.normSource(S("ssource1", 1, { path: "/internal/Studio/../x.wav" })), null);
   assert.equal(C.normClip(K("cclip001", 1, { len: 0 })), null);

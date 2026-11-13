@@ -520,8 +520,10 @@
       "f.perweek": "Times a week", "f.permonth": "Times a month", "f.water": "Water every (days)", "f.nextdue": "Next due",
       "f.until": "Last day", "f.platform": "Platform",
       "f.sub": "Subtitle", "f.translator": "Translator", "f.illustrator": "Illustrator", "f.editor": "Editor", "f.series": "Series",
-      "f.release": "Release date", "f.lang": "Language", "f.format": "Edition", "f.pages": "Pages", "f.product": "Shop product", "f.blurb": "Back-cover text",
+      "f.mtype": "Release type", "f.label": "Label", "f.genre": "Genre", "f.track": "Track", "f.upc": "UPC/EAN", "f.release": "Release date", "f.lang": "Language", "f.format": "Edition", "f.pages": "Pages", "f.product": "Shop product", "f.blurb": "Back-cover text",
       "pf.paperback": "Paperback", "pf.hardback": "Hardback", "pf.ebook": "E-book", "pf.audiobook": "Audiobook", "pf.other": "Other",
+      "pf.digital": "Digital", "pf.cd": "CD", "pf.vinyl": "Vinyl", "pf.cassette": "Cassette",
+      "pm.single": "Single", "pm.ep": "EP", "pm.album": "Album", "pm.compilation": "Compilation",
       "st.idea": "Idea", "st.production": "In production", "st.released": "Released", "st.out_of_print": "Out of print",
       "ft.a.run": "Running", "ft.a.walk": "Walking", "ft.a.bike": "Cycling", "ft.a.swim": "Swimming", "ft.a.row": "Rowing",
       "f.deck": "Deck", "f.front": "Front", "f.back": "Back", "f.songs": "Songs", "chg.disk": "The change could not be written to the orOS disk.", "f.read": "Read", "f.played": "Played", "f.queue": "In the queue", "f.price": "Price", "v.read": "read", "v.unread": "not read", "v.played": "played", "v.unplayed": "not played",
@@ -1164,8 +1166,10 @@
       "f.perweek": "Φορές την εβδομάδα", "f.permonth": "Φορές τον μήνα", "f.water": "Πότισμα κάθε (μέρες)", "f.nextdue": "Επόμενη φορά",
       "f.until": "Τελευταία μέρα", "f.platform": "Πλατφόρμα",
       "f.sub": "Υπότιτλος", "f.translator": "Μετάφραση", "f.illustrator": "Εικονογράφηση", "f.editor": "Επιμέλεια", "f.series": "Σειρά",
-      "f.release": "Ημερομηνία κυκλοφορίας", "f.lang": "Γλώσσα", "f.format": "Έκδοση", "f.pages": "Σελίδες", "f.product": "Προϊόν στο κατάστημα", "f.blurb": "Κείμενο οπισθόφυλλου",
+      "f.mtype": "Είδος κυκλοφορίας", "f.label": "Δισκογραφική", "f.genre": "Είδος μουσικής", "f.track": "Κομμάτι", "f.upc": "UPC/EAN", "f.release": "Ημερομηνία κυκλοφορίας", "f.lang": "Γλώσσα", "f.format": "Έκδοση", "f.pages": "Σελίδες", "f.product": "Προϊόν στο κατάστημα", "f.blurb": "Κείμενο οπισθόφυλλου",
       "pf.paperback": "Χαρτόδετο", "pf.hardback": "Σκληρόδετο", "pf.ebook": "E-book", "pf.audiobook": "Ηχητικό βιβλίο", "pf.other": "Άλλο",
+      "pf.digital": "Ψηφιακή", "pf.cd": "CD", "pf.vinyl": "Βινύλιο", "pf.cassette": "Κασέτα",
+      "pm.single": "Single", "pm.ep": "EP", "pm.album": "Άλμπουμ", "pm.compilation": "Συλλογή",
       "st.idea": "Ιδέα", "st.production": "Σε παραγωγή", "st.released": "Κυκλοφορεί", "st.out_of_print": "Εξαντλημένο",
       "ft.a.run": "Τρέξιμο", "ft.a.walk": "Περπάτημα", "ft.a.bike": "Ποδήλατο", "ft.a.swim": "Κολύμπι", "ft.a.row": "Κωπηλασία",
       "f.deck": "Τράπουλα", "f.front": "Μπροστά", "f.back": "Πίσω", "f.songs": "Τραγούδια", "chg.disk": "Η αλλαγή δεν γράφτηκε στον δίσκο του orOS.", "f.read": "Διαβασμένο", "f.played": "Ακούστηκε", "f.queue": "Στην ουρά", "f.price": "Τιμή", "v.read": "διαβασμένο", "v.unread": "αδιάβαστο", "v.played": "ακούστηκε", "v.unplayed": "δεν ακούστηκε",
@@ -5346,6 +5350,8 @@
     if ((f === "record" || f === "media") && STRINGS.en["v." + (v === "renewal" ? "reminder" : v)] !== undefined) return t("v." + (v === "renewal" ? "reminder" : v));
     if (f === "status" && STRINGS.en["st." + v] !== undefined) return t("st." + v);
     if (f === "activity" && STRINGS.en["ft.a." + v] !== undefined) return t("ft.a." + v);
+    // wave M1: a music release's type
+    if (f === "mtype" && STRINGS.en["pm." + v] !== undefined) return t("pm." + v);
     // AS-ADD7: a Publishing format, "paperback|14.50 EUR"
     if (f === "format" && typeof v === "string") {
       var fp = v.split("|");

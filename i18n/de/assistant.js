@@ -1839,5 +1839,18 @@ orosPack("de", "assistant", {
  "st.idea": "Idee",
  "st.production": "In Produktion",
  "st.released": "Erschienen",
- "st.out_of_print": "Vergriffen"
+ "st.out_of_print": "Vergriffen",
+ "f.mtype": "Art der Veröffentlichung",
+ "f.label": "Label",
+ "f.genre": "Genre",
+ "f.track": "Titel",
+ "f.upc": "UPC/EAN",
+ "pf.digital": "Digital",
+ "pf.cd": "CD",
+ "pf.vinyl": "Vinyl",
+ "pf.cassette": "Kassette",
+ "pm.single": "Single",
+ "pm.ep": "EP",
+ "pm.album": "Album",
+ "pm.compilation": "Compilation"
 });
