@@ -97,7 +97,7 @@
   }
 
   // prepare(text, base) → { doc, body, css: [paths], styles: [text],
-  //   imgs: [paths], bodyClass, lang, dir }
+  //   imgs: [paths], bodyClass, lang, dir, vp? { w, h } (fixed layout) }
   // The reader loads css/imgs from the ZIP, then calls build().
   function prepare(text, base) {
     var doc = parse(text);
@@ -121,6 +121,14 @@
     if (body && body.getAttribute) {
       out.bodyClass = cleanValue(body.getAttribute("class")).slice(0, 200);
       out.dir = /^(ltr|rtl)$/i.test(body.getAttribute("dir") || "") ? body.getAttribute("dir").toLowerCase() : "";
+    }
+    // a fixed-layout page's size: <meta name="viewport" content="width=…, height=…">
+    var metas = doc.getElementsByTagName("meta");
+    for (var k = 0; k < metas.length; k++) {
+      if (String(metas[k].getAttribute("name") || "").toLowerCase() !== "viewport") continue;
+      var vc = String(metas[k].getAttribute("content") || ""), vw = /width\s*=\s*(\d{1,5})/i.exec(vc), vh = /height\s*=\s*(\d{1,5})/i.exec(vc);
+      if (vw && vh && +vw[1] > 0 && +vh[1] > 0) out.vp = { w: Math.min(20000, +vw[1]), h: Math.min(20000, +vh[1]) };
+      break;
     }
     var html = doc.documentElement;
     if (html && html.getAttribute) {

@@ -134,8 +134,19 @@ function epub(doc, opts) {
   const L = R.computeLayout(d), pub = ed.pub;
   const meta = pub ? { title: pub.t, sub: pub.sub, ser: pub.ser, sn: pub.sn, lang: O.lang(d, pub), ppl: pub.ppl, isbn: ed.isbn, printIsbn: ed.printIsbn,
     publisher: data && data.set && data.set.imp, date: pub.rel, desc: pub.blurb, kw: pub.kw } : { title: d.name, lang: O.lang(d, null) };
+  const pages = O.pagesFor(d, prof);
+  if (prof.fx) {
+    // fixed layout: a plain picture stands for each page's render
+    const backgrounds = {};
+    pages.forEach((id) => { backgrounds[id] = { data: png(Math.round(d.setup.w / 2), Math.round(d.setup.h / 2), [250, 250, 245]), type: "image/png" }; });
+    return E.buildFixed(d, {
+      L, pages, meta, modified: "2026-11-13T08:00:00Z", mode: prof.fx === 2 ? "image" : "text", backgrounds,
+      cover: opts.cover === undefined ? null : opts.cover,
+      fontFiles: prof.nf ? null : (opts.fontFiles || fontFiles), zip: Z, sha1
+    });
+  }
   return E.build(d, {
-    L, pages: O.pagesFor(d, prof), meta, modified: "2026-11-13T08:00:00Z",
+    L, pages, meta, modified: "2026-11-13T08:00:00Z",
     images: opts.images === undefined ? images() : opts.images,
     cover: opts.cover === undefined ? { data: png(160, 256, [240, 240, 230]), type: "image/png", w: 160, h: 256 } : opts.cover,
     fontFiles: prof.nf ? null : (opts.fontFiles || fontFiles), pageList: !prof.npl, zip: Z, sha1

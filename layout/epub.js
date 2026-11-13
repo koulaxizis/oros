@@ -38,7 +38,7 @@
     M = require("../designkit/model.js"); T = require("../designkit/text.js"); O = require("./outprof.js");
   } else { M = root.orosDK.model; T = root.orosDK.text; O = root.LY_OUT; }
 
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
   var MAX_IMG = 2400;           // px on the long side (the browser side resizes)
   var XHTML_WARN = 300 * 1024;  // bytes per chapter file before a warning
   var ROLE = { a: "aut", t: "trl", i: "ill", e: "edt", c: "cov", n: "nrt", o: "oth" };
@@ -54,9 +54,9 @@
   // The book's own words (content in the book's language, not the
   // interface's). i18n-inline-ok: text that goes into the e-book
   var WORDS = {
-    el: { toc: "Περιεχόμενα", cover: "Εξώφυλλο", start: "Αρχή", pages: "Σελίδες", landmarks: "Σημεία", summary: "Το βιβλίο έχει πίνακα περιεχομένων με τις επικεφαλίδες του, σωστή σειρά ανάγνωσης και τους αριθμούς σελίδων της έντυπης έκδοσης.", summaryNp: "Το βιβλίο έχει πίνακα περιεχομένων με τις επικεφαλίδες του και σωστή σειρά ανάγνωσης." },
-    de: { toc: "Inhalt", cover: "Umschlag", start: "Beginn", pages: "Seiten", landmarks: "Orientierung", summary: "Das Buch hat ein Inhaltsverzeichnis aus seinen Überschriften, eine richtige Lesereihenfolge und die Seitenzahlen der Druckausgabe.", summaryNp: "Das Buch hat ein Inhaltsverzeichnis aus seinen Überschriften und eine richtige Lesereihenfolge." },
-    en: { toc: "Contents", cover: "Cover", start: "Start", pages: "Pages", landmarks: "Landmarks", summary: "The book has a table of contents from its headings, a correct reading order and the page numbers of the print edition.", summaryNp: "The book has a table of contents from its headings and a correct reading order." }
+    el: { toc: "Περιεχόμενα", cover: "Εξώφυλλο", start: "Αρχή", pages: "Σελίδες", landmarks: "Σημεία", summary: "Το βιβλίο έχει πίνακα περιεχομένων με τις επικεφαλίδες του, σωστή σειρά ανάγνωσης και τους αριθμούς σελίδων της έντυπης έκδοσης.", summaryNp: "Το βιβλίο έχει πίνακα περιεχομένων με τις επικεφαλίδες του και σωστή σειρά ανάγνωσης.", summaryFx: "Βιβλίο σταθερής διάταξης: κάθε σελίδα όπως στο έντυπο, με το κείμενό της ως κείμενο, πίνακα περιεχομένων και τους αριθμούς σελίδων του έντυπου.", summaryFxi: "Βιβλίο σταθερής διάταξης: κάθε σελίδα είναι εικόνα της έντυπης σελίδας, με το κείμενό της κρυφό από κάτω για αναζήτηση και ανάγνωση φωναχτά." },
+    de: { toc: "Inhalt", cover: "Umschlag", start: "Beginn", pages: "Seiten", landmarks: "Orientierung", summary: "Das Buch hat ein Inhaltsverzeichnis aus seinen Überschriften, eine richtige Lesereihenfolge und die Seitenzahlen der Druckausgabe.", summaryNp: "Das Buch hat ein Inhaltsverzeichnis aus seinen Überschriften und eine richtige Lesereihenfolge.", summaryFx: "Buch mit festem Layout: jede Seite wie im Druck, ihr Text als Text, mit Inhaltsverzeichnis und den Seitenzahlen der Druckausgabe.", summaryFxi: "Buch mit festem Layout: jede Seite ist ein Bild der Druckseite, ihr Text liegt unsichtbar darunter zum Suchen und Vorlesen." },
+    en: { toc: "Contents", cover: "Cover", start: "Start", pages: "Pages", landmarks: "Landmarks", summary: "The book has a table of contents from its headings, a correct reading order and the page numbers of the print edition.", summaryNp: "The book has a table of contents from its headings and a correct reading order.", summaryFx: "A fixed-layout book: every page as in print, its text as text, with a table of contents and the print edition's page numbers.", summaryFxi: "A fixed-layout book: every page is a picture of the printed page, with its text hidden underneath for search and reading aloud." }
   };
   function words(lang) { return WORDS[String(lang || "").split("-")[0]] || WORDS.en; }
 
@@ -306,10 +306,11 @@
         if (!im) return;
         report.images++;
         var x = e.it.ext || {}, alt = x.deco ? "" : (typeof x.alt === "string" ? x.alt : "");
+        // no description: no alt attribute (an empty alt says "decorative")
         if (!x.deco && !alt) report.noAlt.push({ item: e.it.id, page: String(e.page + first) });
         var name = "images/" + e.it.id + (im.type === "image/png" ? ".png" : ".jpg");
         var wPct = Math.max(10, Math.min(100, Math.round(e.it.w / Math.max(1, doc.setup.w - 2 * 36) * 100)));
-        var html = marker(e.page) + "<figure class=\"fig\"><img src=\"../" + name + "\" alt=\"" + esc(alt) + "\"" + (x.deco ? " role=\"presentation\"" : "") + " style=\"width: " + wPct + "%\"/>";
+        var html = marker(e.page) + "<figure class=\"fig\"><img src=\"../" + name + "\"" + (x.deco || alt ? " alt=\"" + esc(alt) + "\"" : "") + (x.deco ? " role=\"presentation\"" : "") + " style=\"width: " + wPct + "%\"/>";
         if (e.cap) {
           html += "<figcaption>" + e.cap.map(function (ci) {
             var pe = entries[ci], ps = T.resolvePs(psMap, pe.para.ps);
@@ -422,7 +423,8 @@
   }
 
   // The OPF. ids: manifest rows [{ id, href, type, props }], spine ids.
-  function opf(meta, uid, lang, modified, man, spine, a11y) {
+  // fx (fixed layout, E3): { spread: "auto"|"none", props: { spine id: properties } }
+  function opf(meta, uid, lang, modified, man, spine, a11y, fx) {
     var md = [];
     md.push("<dc:identifier id=\"uid\">" + esc(uid) + "</dc:identifier>");
     md.push("<dc:title id=\"title\">" + esc(meta.title) + "</dc:title>");
@@ -452,6 +454,11 @@
       md.push("<meta property=\"pageBreakSource\">urn:isbn:" + meta.printIsbn + "</meta>");
     }
     md.push("<meta property=\"dcterms:modified\">" + modified + "</meta>");
+    if (fx) {
+      md.push("<meta property=\"rendition:layout\">pre-paginated</meta>");
+      md.push("<meta property=\"rendition:orientation\">auto</meta>");
+      md.push("<meta property=\"rendition:spread\">" + (fx.spread === "none" ? "none" : "auto") + "</meta>");
+    }
     a11y.modes.forEach(function (m) { md.push("<meta property=\"schema:accessMode\">" + m + "</meta>"); });
     a11y.sufficient.forEach(function (m) { md.push("<meta property=\"schema:accessModeSufficient\">" + m + "</meta>"); });
     a11y.features.forEach(function (f) { md.push("<meta property=\"schema:accessibilityFeature\">" + f + "</meta>"); });
@@ -466,7 +473,7 @@
       "<package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\" unique-identifier=\"uid\" xml:lang=\"" + lang + "\">\n" +
       "<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n" + md.join("\n") + "\n</metadata>\n" +
       "<manifest>\n" + items.join("\n") + "\n</manifest>\n" +
-      "<spine>\n" + spine.map(function (id) { return "<itemref idref=\"" + id + "\"" + (id === "nav" ? " linear=\"no\"" : "") + "/>"; }).join("\n") + "\n</spine>\n</package>\n";
+      "<spine>\n" + spine.map(function (id) { var pr = fx && fx.props[id]; return "<itemref idref=\"" + id + "\"" + (id === "nav" ? " linear=\"no\"" : "") + (pr ? " properties=\"" + pr + "\"" : "") + "/>"; }).join("\n") + "\n</spine>\n</package>\n";
   }
 
   // IDPF font obfuscation: the first 1040 bytes XOR the SHA-1 of the
@@ -592,7 +599,217 @@
     });
   }
 
-  var api = { VERSION: VERSION, MAX_IMG: MAX_IMG, isbnOk: isbnOk, flow: flow, compose: compose, build: build, tocOl: tocOl, obfuscate: obfuscate, uuidOf: uuidOf, ROLE: ROLE };
+  // ---------- Fixed layout (LY-EPUB fixed, wave L7 E3) ----------
+  // One XHTML file per page that goes out, the size of the print page
+  // (1 pt = 1 CSS px, the viewport), its picture behind and its text as
+  // text, every word where the print page has it:
+  //   mode "text"  the picture is the page without its text (io.js
+  //                renders it with render.js skipText = live), the text
+  //                is real text over it in the book's fonts;
+  //   mode "image" the picture is the whole page, the text lies on top
+  //                invisible (search, selection, reading aloud).
+  // A rotated text frame stays in the picture (live() false).
+  //   buildFixed(doc, opts) → Promise<{ bytes, report }>
+  //   opts as build() plus mode, backgrounds: { pageId: { data, type } }
+  function live(it) { return it && it.t === "text" && !it.hide && !it.rot; }
+  function hex2(v) { return "#" + v.map(function (x) { return (x < 16 ? "0" : "") + x.toString(16); }).join(""); }
+  function fxPage(doc, L, pg, ctx) {
+    var out = [], lvCache = ctx.lvl;
+    function level(ps) { if (!(ps in lvCache)) lvCache[ps] = O.level(doc, ps); return lvCache[ps]; }
+    function cls(r) {
+      var c = M.swatchColor(doc, r.color), col = c ? hex2(c.rgb) : "#000000";
+      var k = r.key + "|" + r3(r.size) + "|" + col + "|" + (r.track || 0) + "|" + (r.u ? 1 : 0) + "|" + (r.kern ? 1 : 0);
+      if (!ctx.cls[k]) {
+        var n = "t" + (++ctx.nCls), fk = T.FAMILIES[r.key.split("-")[0]] ? r.key : T.fallbackKey(r.key), ff = fontFace(fk);
+        var asc = T.ascent(r.key, r.size), dsc = T.descent(r.key, r.size);
+        ctx.keys[fk] = 1;
+        ctx.cls[k] = { n: n, asc: asc, css: "." + n + " { font-family: \"" + famName(ff.fam) + "\", " + generic(ff.fam) + "; font-weight: " + ff.weight + "; font-style: " + ff.style +
+          "; font-size: " + r3(r.size) + "px; line-height: " + r3(asc + dsc) + "px; color: " + col +
+          (r.track ? "; letter-spacing: " + r3(r.track * r.size / 1000) + "px" : "") + (r.u ? "; text-decoration: underline" : "") +
+          "; font-kerning: " + (r.kern ? "normal" : "none") + "; }" };
+      }
+      return ctx.cls[k];
+    }
+    var items = M.itemsOn(doc, pg.id);
+    items.filter(function (it) { return live(it) && L.frames[it.id]; }).sort(function (a, b) { return a.y - b.y || a.x - b.x || M.cmpStr(a.id, b.id); }).forEach(function (it) {
+      var st = M.story(doc, it.story), lines = L.frames[it.id].lines;
+      var open = null;
+      lines.forEach(function (ln, li) {
+        var para = st && st.paras[ln.p];
+        if (!open || open.p !== ln.p) {
+          if (open) out.push("</" + open.tag + ">");
+          var lv = para ? level(para.ps) : 0, hid = "";
+          var hk = it.id + ":" + ln.p;
+          if (lv > 0 && ctx.headIds[hk]) hid = ctx.headIds[hk];
+          open = { p: ln.p, tag: lv > 0 ? "h" + Math.min(3, lv) : "p" };
+          out.push("<" + open.tag + (hid ? " id=\"" + hid + "\"" : "") + ">");
+        }
+        var nextLn = lines[li + 1];
+        ln.runs.forEach(function (r, k) {
+          if (!r.t) return;
+          var c = cls(r), auto = r.t === "-" && typeof r.o !== "number" && k === ln.runs.length - 1;
+          var nx = ln.runs[k + 1];
+          var gap = nx ? nx.x > r.x + (r.w || 0) + 0.3 : !auto && !!(nextLn && nextLn.p === ln.p);
+          var x = it.x + r.x, y = it.y + r.y - c.asc;
+          out.push("<span class=\"" + c.n + (ctx.inv ? " inv" : "") + "\" style=\"left: " + r3(x) + "px; top: " + r3(y) + "px\"" + (auto ? " aria-hidden=\"true\"" : "") + ">" + esc(r.t) + (gap ? " " : "") + "</span>");
+        });
+      });
+      if (open) out.push("</" + open.tag + ">");
+    });
+    // pictures: the description over the place the picture has (it is
+    // in the background)
+    items.forEach(function (it) {
+      if (it.t !== "img" || !it.a || it.hide) return;
+      ctx.report.images++;
+      var x = it.ext || {};
+      if (x.deco) return;
+      if (!x.alt) { ctx.report.noAlt.push({ item: it.id, page: ctx.label }); return; }
+      ctx.anyAlt = true;
+      out.push("<span class=\"im\" role=\"img\" aria-label=\"" + esc(x.alt) + "\" style=\"left: " + r3(it.x) + "px; top: " + r3(it.y) + "px; width: " + r3(it.w) + "px; height: " + r3(it.h) + "px\"></span>");
+    });
+    // the contents: each line a link to its chapter's page
+    (ctx.links[pg.id] || []).forEach(function (lk) {
+      out.push("<a class=\"lk\" href=\"" + lk.href + "\" style=\"left: " + r3(lk.x) + "px; top: " + r3(lk.y) + "px; width: " + r3(lk.w) + "px; height: " + r3(lk.h) + "px\"><span class=\"sr\">" + esc(lk.t) + "</span></a>");
+    });
+    items.forEach(function (it) { if (it.t === "text" && !it.hide && it.rot && L.frames[it.id]) ctx.report.rotated++; });
+    return out.join("\n");
+  }
+  function fxXhtml(lang, title, w, h, bgName, body) {
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n" +
+      "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" xml:lang=\"" + lang + "\" lang=\"" + lang + "\">\n" +
+      "<head>\n<meta charset=\"UTF-8\"/>\n<meta name=\"viewport\" content=\"width=" + w + ", height=" + h + "\"/>\n<title>" + esc(title) + "</title>\n" +
+      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../css/fxl.css\"/>\n</head>\n<body>\n<div class=\"pg\" style=\"width: " + w + "px; height: " + h + "px\">\n" +
+      (bgName ? "<img class=\"bg\" src=\"../" + bgName + "\" alt=\"\"/>\n" : "") + body + "\n</div>\n</body>\n</html>\n";
+  }
+  function buildFixed(doc, opts) {
+    opts = opts || {};
+    var meta = Object.assign({ title: doc.name || "Untitled" }, opts.meta || {});
+    var lang = O.okLang(meta.lang) || "und", L = opts.L, mode = opts.mode === "image" ? "image" : "text";
+    var order = M.pagesInOrder(doc), idx = {}, first = M.firstNumber(doc);
+    order.forEach(function (p, i) { idx[p.id] = i; });
+    var pages = (opts.pages || order.map(function (p) { return p.id; })).filter(function (id) { return idx[id] !== undefined; })
+      .sort(function (a, b) { return idx[a] - idx[b]; });
+    var W = Math.max(1, Math.round(doc.setup.w)), H = Math.max(1, Math.round(doc.setup.h));
+    var report = { fixed: 1, mode: mode, chapters: 0, headings: 0, images: 0, noAlt: [], overset: 0, shapes: 0, dropped: order.length - pages.length, rotated: 0, fonts: [], pages: pages.length, warnings: [] };
+    var fileOf = {}, labelOf = {};
+    pages.forEach(function (id, k) { fileOf[id] = "pages/p" + ("000" + (k + 1)).slice(-4) + ".xhtml"; labelOf[id] = String(idx[id] + first); });
+    // headings → nav (only on pages that go out)
+    var heads = O.headings(doc, L).filter(function (h) { return fileOf[h.pg]; }), headIds = {};
+    heads.forEach(function (h, k) { h.id = "h" + (k + 1); });
+    // a heading's id sits on the paragraph of its first line
+    heads.forEach(function (h) {
+      var lines = (L.frames[h.item] || {}).lines || [];
+      var it = M.find(doc.items, h.item);
+      var hit = false;
+      for (var i = 0; i < lines.length; i++) { if (it && live(it) && it.y + lines[i].y - lines[i].h === h.y) { headIds[h.item + ":" + lines[i].p] = h.id; hit = true; break; } }
+      if (!hit) h.id = "";   // in the picture (a rotated frame): the nav goes to its page
+    });
+    report.headings = heads.length;
+    var links = {};
+    O.tocLinks(doc, L, O.headings(doc, L)).forEach(function (lk) {
+      if (!fileOf[lk.pg] || !fileOf[lk.to]) return;
+      var to = heads.filter(function (h) { return h.pg === lk.to; })[0];
+      (links[lk.pg] = links[lk.pg] || []).push({ x: lk.x, y: lk.y, w: lk.w, h: lk.h, href: fileOf[lk.to].replace(/^pages\//, "") + (to && to.id ? "#" + to.id : ""), t: to ? to.t : labelOf[lk.to] });
+    });
+    var ctx = { cls: {}, nCls: 0, keys: {}, lvl: {}, headIds: headIds, links: links, report: report, inv: mode === "image", anyAlt: false, label: "" };
+    var bodies = pages.map(function (id) { ctx.label = labelOf[id]; return fxPage(doc, L, M.find(doc.pages, id), ctx); });
+    var sha1 = opts.sha1;
+    var uidP = isbnOk(meta.isbn) ? Promise.resolve("urn:isbn:" + meta.isbn)
+      : sha1(utf8("orOS Layout EPUB " + doc.id)).then(function (h) { return "urn:uuid:" + uuidOf(hexOf(h)); });
+    return uidP.then(function (uid) {
+      return sha1(utf8(uid.replace(/[\u0020\u0009\u000D\u000A]/g, ""))).then(function (obfKey) {
+        var files = [], man = [], spine = [], enc = [], props = {};
+        var css = ["@charset \"UTF-8\";"];
+        if (opts.fontFiles && mode === "text") {
+          var faces = {};
+          Object.keys(ctx.keys).sort().forEach(function (fk) {
+            var ff = fontFace(fk), fam = ff.fam, parts = opts.fontFiles(fk), famRow = T.FAMILIES[fam];
+            if (!parts || !parts.length) { report.fonts.push({ key: fk, name: famName(fam), ok: 0, why: "missing" }); return; }
+            var open = !/^uf_/.test(fam);
+            parts.forEach(function (pt, k) {
+              var file = "fonts/" + fk + (parts.length > 1 ? "-" + (k + 1) : "") + ".ttf";
+              if (faces[file]) return;
+              faces[file] = 1;
+              files.push({ name: "EPUB/" + file, data: open ? pt.data : obfuscate(pt.data, obfKey) });
+              man.push({ id: "f-" + fk.replace(/_/g, "-") + "-" + (k + 1), href: file, type: "font/ttf" });
+              if (!open) enc.push("EPUB/" + file);
+              css.push("@font-face { font-family: \"" + (famRow ? famRow.name : fam) + "\"; font-weight: " + ff.weight + "; font-style: " + ff.style + "; src: url(../" + file + ")" + (pt.range ? "; unicode-range: " + pt.range : "") + "; }");
+            });
+            report.fonts.push({ key: fk, name: famName(fam), ok: 1, obf: open ? 0 : 1 });
+          });
+        }
+        css.push("html, body { margin: 0; padding: 0; background: #fff; }");
+        css.push(".pg { position: relative; overflow: hidden; }");
+        css.push(".pg .bg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }");
+        css.push(".pg p, .pg h1, .pg h2, .pg h3 { margin: 0; padding: 0; font-size: 1em; font-weight: normal; }");
+        css.push(".pg span, .pg a { position: absolute; margin: 0; padding: 0; white-space: pre; }");
+        css.push(".pg .inv { color: transparent !important; }");
+        css.push(".pg .im, .pg .lk { display: block; }");
+        css.push(".pg .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }");
+        Object.keys(ctx.cls).sort(function (a, b) { return +ctx.cls[a].n.slice(1) - +ctx.cls[b].n.slice(1); }).forEach(function (k) { css.push(ctx.cls[k].css); });
+        files.push({ name: "EPUB/css/fxl.css", data: css.join("\n") + "\n" });
+        man.push({ id: "css", href: "css/fxl.css", type: "text/css" });
+        var cover = opts.cover && opts.cover.data ? opts.cover : null;
+        if (cover) {
+          var cname = "images/cover" + (cover.type === "image/png" ? ".png" : ".jpg");
+          files.push({ name: "EPUB/" + cname, data: cover.data });
+          man.push({ id: "cover-image", href: cname, type: cover.type === "image/png" ? "image/png" : "image/jpeg", props: "cover-image" });
+          files.push({ name: "EPUB/pages/cover.xhtml", data: fxXhtml(lang, words(lang).cover, W, H, "", "<img class=\"bg\" src=\"../" + cname + "\" alt=\"" + esc(meta.title) + "\" style=\"object-fit: contain\"/>") });
+          man.push({ id: "cover", href: "pages/cover.xhtml", type: "application/xhtml+xml" });
+          spine.push("cover");
+          if (doc.setup.facing) props.cover = "rendition:page-spread-center";
+        }
+        pages.forEach(function (id, k) {
+          var bg = opts.backgrounds && opts.backgrounds[id], sid = "p" + ("000" + (k + 1)).slice(-4), bgName = "";
+          if (bg && bg.data) {
+            bgName = "images/" + sid + (bg.type === "image/png" ? ".png" : ".jpg");
+            files.push({ name: "EPUB/" + bgName, data: bg.data });
+            man.push({ id: "bg-" + sid, href: bgName, type: bg.type === "image/png" ? "image/png" : "image/jpeg", props: !cover && k === 0 ? "cover-image" : "" });
+          } else report.warnings.push({ k: "nobg", page: labelOf[id] });
+          var x = fxXhtml(lang, meta.title + " · " + labelOf[id], W, H, bgName, bodies[k]);
+          files.push({ name: "EPUB/" + fileOf[id], data: utf8(x) });
+          man.push({ id: sid, href: fileOf[id], type: "application/xhtml+xml" });
+          spine.push(sid);
+          if (doc.setup.facing) props[sid] = M.sideOf(doc, idx[id]) === "L" ? "page-spread-left" : "page-spread-right";
+        });
+        // nav
+        var Wd = words(lang);
+        var navHeads = heads.length ? heads.map(function (h) { return { t: h.t, lvl: h.lvl, f: fileOf[h.pg], id: h.id }; }) : [{ t: meta.title, lvl: 1, f: fileOf[pages[0]], id: "" }];
+        var hrefN = function (h) { return h.f + (h.id ? "#" + h.id : ""); };
+        var nav = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n" +
+          "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" xml:lang=\"" + lang + "\" lang=\"" + lang + "\">\n" +
+          "<head>\n<meta charset=\"UTF-8\"/>\n<title>" + esc(Wd.toc) + "</title>\n</head>\n<body>\n" +
+          "<nav epub:type=\"toc\" id=\"toc\" role=\"doc-toc\">\n<h1>" + esc(Wd.toc) + "</h1>\n" + tocOl(navHeads, hrefN) + "\n</nav>\n" +
+          "<nav epub:type=\"landmarks\" id=\"landmarks\" hidden=\"\">\n<h2>" + esc(Wd.landmarks) + "</h2>\n<ol>" +
+          (cover ? "<li><a epub:type=\"cover\" href=\"pages/cover.xhtml\">" + esc(Wd.cover) + "</a></li>" : "") +
+          "<li><a epub:type=\"bodymatter\" href=\"" + (heads[0] ? fileOf[heads[0].pg] : fileOf[pages[0]]) + "\">" + esc(Wd.start) + "</a></li></ol>\n</nav>\n" +
+          "<nav epub:type=\"page-list\" id=\"page-list\" hidden=\"\">\n<h2>" + esc(Wd.pages) + "</h2>\n<ol>" +
+          pages.map(function (id) { return "<li><a href=\"" + fileOf[id] + "\">" + esc(labelOf[id]) + "</a></li>"; }).join("") + "</ol>\n</nav>\n</body>\n</html>\n";
+        files.push({ name: "EPUB/nav.xhtml", data: nav });
+        man.push({ id: "nav", href: "nav.xhtml", type: "application/xhtml+xml", props: "nav" });
+        var features = ["tableOfContents", "pageNavigation"];
+        if (heads.length) features.push("structuralNavigation");
+        if (ctx.anyAlt) features.push("alternativeText");
+        var a11y = { modes: ["textual", "visual"], sufficient: ["textual,visual"], features: features,
+          summary: mode === "image" ? Wd.summaryFxi : Wd.summaryFx, pageList: true, conforms: false };
+        var modified = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(opts.modified || "") ? opts.modified : new Date().toISOString().replace(/\.\d+Z$/, "Z");
+        var pkg = opf(meta, uid, lang, modified, man, spine, a11y, { spread: doc.setup.facing ? "auto" : "none", props: props });
+        var zipFiles = [{ name: "mimetype", data: "application/epub+zip" },
+          { name: "META-INF/container.xml", data: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\">\n<rootfiles>\n<rootfile full-path=\"EPUB/package.opf\" media-type=\"application/oebps-package+xml\"/>\n</rootfiles>\n</container>\n" }];
+        if (enc.length) {
+          zipFiles.push({ name: "META-INF/encryption.xml", data: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<encryption xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\" xmlns:enc=\"http://www.w3.org/2001/04/xmlenc#\">\n" +
+            enc.map(function (f) { return "<enc:EncryptedData><enc:EncryptionMethod Algorithm=\"http://www.idpf.org/2008/embedding\"/><enc:CipherData><enc:CipherReference URI=\"" + esc(f) + "\"/></enc:CipherData></enc:EncryptedData>"; }).join("\n") + "\n</encryption>\n" });
+        }
+        zipFiles.push({ name: "EPUB/package.opf", data: pkg });
+        var bytes = opts.zip.write(zipFiles.concat(files));
+        report.bytes = bytes.length;
+        report.uid = uid;
+        return { bytes: bytes, report: report };
+      });
+    });
+  }
+
+  var api = { VERSION: VERSION, MAX_IMG: MAX_IMG, isbnOk: isbnOk, flow: flow, compose: compose, build: build, buildFixed: buildFixed, live: live, tocOl: tocOl, obfuscate: obfuscate, uuidOf: uuidOf, ROLE: ROLE };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_EPUB = api;
 })(typeof window !== "undefined" ? window : this);

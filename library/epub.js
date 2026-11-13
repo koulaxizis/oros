@@ -11,6 +11,9 @@
 // Paged mode: CSS columns, one page = the frame's width (two columns
 // on wide screens); the frame scrolls sideways by whole pages.
 // Scroll mode: the chapter scrolls down; the next one follows at the end.
+// Fixed layout (rendition:layout pre-paginated, with a viewport): one
+// spine item is one page, shown whole, scaled to fit and centred, in
+// the book's own colours (Layout's fixed-layout EPUB, LY-EPUB E3).
 // Places: "e:<spine index>:<offset>" in the chapter's text (sanitize.js
 // textNodes); highlights are <mark class="lib-hl"> around their text,
 // re-found by their quote if the offsets ever move.
@@ -38,6 +41,9 @@
     var lower = {};
     var frame = null, doc = null, root = null, idx = -1, nodes = [], text = "", nodeStart = null;
     var page = 0, pages = 1, W = 0, H = 0, geo = null;
+    // fixed layout (pre-paginated): the page's viewport { w, h }, one
+    // page per spine item, scaled to fit the stage; null = reflowable
+    var fx = null;
     var marks = [], destroyed = false, renderGen = 0, moveTimer = null, selTimer = null;
     var lastWheel = 0, touch = null;
     var P = ctx.prefs();
@@ -103,7 +109,7 @@
           var css = sheets.join("\n") + "\n" + prep.styles.map(function (s) { return S.css(s, n, resSync); }).join("\n");
           var html = S.build(prep, n, resSync);
           var tx = S.textOf(html).text;
-          return store(i, { html: html, css: css, text: tx, lang: prep.lang, dir: prep.dir, bodyClass: prep.bodyClass });
+          return store(i, { html: html, css: css, text: tx, lang: prep.lang, dir: prep.dir, bodyClass: prep.bodyClass, vp: prep.vp || null });
         });
       });
     }
@@ -198,6 +204,7 @@
       return chapterFull(i).then(function (ch) {
         if (destroyed || my !== renderGen) return;
         idx = i;
+        fx = spine[i].fxl && ch.vp ? ch.vp : null;
         measure();
         var lang = ch.lang || "";
         var html = "<!doctype html><html" + (lang ? " lang=\"" + lang + "\"" : "") + (ch.dir ? " dir=\"" + ch.dir + "\"" : "") + ">" +
@@ -214,7 +221,7 @@
             root = doc && doc.getElementById(S.ROOT_ID);
             if (!root) { resolve(); return; }
             if (ch.bodyClass) root.className = ch.bodyClass;
-            doc.documentElement.classList.toggle("scroll", P.mode === "scroll");
+            doc.documentElement.classList.toggle("scroll", P.mode === "scroll" && !fx);
             wire(doc);
             paintNow();
             tocOffsets();
@@ -259,7 +266,24 @@
       });
       return out;
     }
+    // A fixed-layout page keeps the book's own look (no theme, size or
+    // font of the reader), scaled to fit and centred.
+    function fixedCss() {
+      var th = theme(), s = Math.min(W / fx.w, H / fx.h);
+      var l = Math.max(0, (W - fx.w * s) / 2), tp = Math.max(0, (H - fx.h * s) / 2);
+      return "html{height:100%;overflow:hidden;background:" + th.bg + " !important}" +
+        "body{margin:0 !important;padding:0 !important;height:100%;overflow:hidden;background:transparent !important}" +
+        "#" + S.ROOT_ID + "{position:absolute;left:" + l + "px;top:" + tp + "px;width:" + fx.w + "px;height:" + fx.h + "px;overflow:hidden;background:#fff;" +
+        "transform:scale(" + s + ");transform-origin:0 0}" +
+        "mark.lib-hl{color:inherit;border-radius:2px;cursor:pointer}" +
+        HL.map(function (c, i) { return "mark.lib-hl.c" + i + "{background:" + c + " !important}"; }).join("") +
+        "mark.lib-hl.has-n{border-bottom:2px dotted currentColor}" +
+        "::highlight(lib-flash){background-color:" + th.link + ";color:" + th.bg + "}" +
+        "::highlight(lib-speak){background-color:rgba(255,170,40,.32)}" +
+        "::selection{background:rgba(66,133,244,.32)}";
+    }
     function readerCss() {
+      if (fx) return fixedCss();
       var th = theme(), g = geo || { ph: 20, pv: 24, cols: 1, cw: 400 };
       var paged = P.mode === "paged";
       var fam = P.font === "serif" ? "\"Lib Noto Serif\", Georgia, serif" : P.font === "sans" ? "\"Lib Noto Sans\", system-ui, sans-serif" : "";
@@ -292,7 +316,7 @@
       if (!doc) return;
       var st = doc.getElementById("__lib_css");
       if (st) st.textContent = readerCss();
-      doc.documentElement.classList.toggle("scroll", P.mode === "scroll");
+      doc.documentElement.classList.toggle("scroll", P.mode === "scroll" && !fx);
     }
 
     // ---------- Text index ----------
@@ -376,6 +400,7 @@
     function layout() {
       if (!doc || !root) return;
       reindex();
+      if (fx) { pages = 1; return; }
       if (P.mode === "paged") {
         var sw = scroller().scrollWidth;
         pages = Math.max(1, Math.ceil((sw - 2) / W));
@@ -386,11 +411,13 @@
     function setPage(p) {
       if (!doc) return;
       page = Math.max(0, Math.min(pages - 1, p));
+      if (fx) return;
       if (P.mode === "paged") scroller().scrollLeft = page * W;
       else scroller().scrollTop = page * H;
     }
     function goOffset(o, flashEnd) {
       if (!doc) return;
+      if (fx) { page = 0; if (flashEnd) flash(o, flashEnd); return; }
       var r = charRect(Math.max(0, Math.min(o, text.length)));
       if (P.mode === "paged") {
         if (r) setPage(Math.floor((r.left + r.width / 2 + scroller().scrollLeft) / W));
@@ -417,7 +444,7 @@
 
     // First character at the top-left of the view.
     function firstVisible() {
-      if (!nodes.length) return 0;
+      if (!nodes.length || fx) return 0;
       var paged = P.mode === "paged";
       function after(rect) { return paged ? rect.right > 1 : rect.bottom > 1; }
       var r = doc.createRange();
@@ -695,7 +722,8 @@
     // ---------- Navigation ----------
     function next() {
       if (!doc) return;
-      if (P.mode === "paged") {
+      if (fx) { /* one page per spine item */ }
+      else if (P.mode === "paged") {
         if (page < pages - 1) { setPage(page + 1); report(false); return; }
       } else {
         var sc = scroller();
@@ -705,14 +733,16 @@
     }
     function prev() {
       if (!doc) return;
-      if (P.mode === "paged") {
+      if (fx) { /* one page per spine item */ }
+      else if (P.mode === "paged") {
         if (page > 0) { setPage(page - 1); report(false); return; }
       } else {
         var sc = scroller();
         if (sc.scrollTop > 2) { sc.scrollTop = Math.max(0, sc.scrollTop - H * 0.9); return; }
       }
       if (idx > 0) render(idx - 1).then(function () {
-        if (P.mode === "paged") setPage(pages - 1);
+        if (fx) setPage(0);
+        else if (P.mode === "paged") setPage(pages - 1);
         else scroller().scrollTop = scroller().scrollHeight;
         report(true);
       });
