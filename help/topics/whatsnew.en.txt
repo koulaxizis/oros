@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.38.00
+- **Translation on the device in Text Tools.** The new `Translate` group turns the whole text from Greek into English or from English into Greek with Mozilla's Firefox Translations models. Your text never leaves the device. The first time, the button says how much it downloads (about 15 MB per direction, plus 5 MB once); after that it works offline, and a short text translates as you type. See [Text Tools](app:texttools).
+
 ## Version 6.37.00
 - **Developer tools in Pad.** `Tools…` (Alt+T) is now a searchable list: check and format JSON and YAML (comments kept), sort JSON keys, JSON ↔ YAML in a new tab, MD5 and SHA hashes of the file exactly as saved with `Compare with`, UUID v4 and v7, time stamps, number bases and CSS colours. Base64 and URL stay in Text Tools, one click away.
 

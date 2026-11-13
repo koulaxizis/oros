@@ -1717,6 +1717,8 @@ var PRECACHE_URLS = [
   "texttools/core.js",
   "texttools/texttools.js",
   "texttools/worker.js",
+  "translate/engine.js",
+  "translate/worker.js",
   "units/",
   "units/index.html",
   "units/units.css",
