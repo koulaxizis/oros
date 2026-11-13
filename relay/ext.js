@@ -13,7 +13,8 @@
 //
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
 //           POST /v1 { op: "ext", p: "woo", host, base, rsk, reqs: [...] }   (Revenue Splitter
-//             1.14.2 contracts routes only, RS_ROUTE: the contracts key, never ck/cs)
+//             1.14.2 contracts and 1.18.0 profile-requests / production routes only,
+//             RS_ROUTE: the contracts key, never ck/cs)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop" | "notion" | "ebank", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "trello" | "paypal", key, token, reqs: [...] }
@@ -92,7 +93,7 @@ function lim(p, k) { return LIMITS_BY[p] && LIMITS_BY[p][k] !== undefined ? LIMI
 export const RS_RELAY_BYTES = 256 * 1024;
 function rsPush(p, reqs) {
   return p === "woo" && Array.isArray(reqs) && reqs.length === 1 && !!reqs[0] &&
-    reqs[0].m === "POST" && reqs[0].path === "/rs/contracts";
+    reqs[0].m === "POST" && (reqs[0].path === "/rs/contracts" || reqs[0].path === "/rs/production");
 }
 function bodyCap(p, reqs) { return rsPush(p, reqs) ? RS_RELAY_BYTES : lim(p, "reqBytes"); }
 // The largest "ext" request JSON a call can need (relay/core.js): its
@@ -181,7 +182,7 @@ const RS_ID = /^[A-Za-z0-9_-]{1,64}$/, RS_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/,
 const rsText = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f<>]/.test(v);
 const RS_RENEWAL = ["on", "prev_to", "to"];
 // RS-CTR: Revenue Splitter 1.14.2's contracts routes and key (= links/core.js)
-const RS_ROUTE = /^\/rs\/contract(s|-requests)(\/|\?|$)/, RS_KEY = /^rsc_[A-Za-z0-9_-]{16,128}$/;
+const RS_ROUTE = /^\/rs\/(contract(s|-requests)|profile-requests|production)(\/|\?|$)/, RS_KEY = /^rsc_[A-Za-z0-9_-]{16,128}$/;
 function rsRoute(p, path) { return p === "woo" && typeof path === "string" && RS_ROUTE.test(path); }
 function okRsCtr(x) {
   if (!onlyKeys(x, RS_CTR_KEYS.concat("renewals")) || !RS_CTR_KEYS.every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
@@ -193,6 +194,17 @@ function okRsCtr(x) {
   // 1.14.2: each renewal's day, the end before it and the new end
   return x.renewals === undefined || listOf(x.renewals, 0, 50, (e) =>
     onlyKeys(e, RS_RENEWAL) && RS_RENEWAL.every((k) => typeof e[k] === "string" && RS_DAY.test(e[k])));
+}
+// RS-PF / RS-PROD (Revenue Splitter 1.18.0, = links/core.js rsLong, okRsWork)
+const rsLong = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u0009\u000b-\u001f\u007f]/.test(v);
+const RS_WORK_KEYS = ["id", "ben", "title", "phase", "since", "release", "note"], RS_WORKS = 500;
+const rsDayOrEmpty = (v) => v === undefined || v === "" || (typeof v === "string" && RS_DAY.test(v));
+function okRsWork(x) {
+  if (!onlyKeys(x, RS_WORK_KEYS) || !["id", "ben", "title", "phase"].every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
+  if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
+  if (!Number.isInteger(x.phase) || x.phase < 1 || x.phase > 7) return false;
+  if (!rsDayOrEmpty(x.since) || !rsDayOrEmpty(x.release)) return false;
+  return x.note === undefined || rsLong(x.note, 1000);
 }
 function okMlItem(x) {
   if (!onlyKeys(x, ["method", "path", "body"]) || x.method !== "POST" || x.path !== "api/subscribers") return false;
@@ -263,6 +275,12 @@ const WHOLE = {
     new Set(b.contracts.map((x) => x.id)).size === b.contracts.length &&
     new TextEncoder().encode(JSON.stringify(b)).length <= RS_BYTES,
   rsrq: (b) => Object.keys(b).length === 1,
+  // RS-PF: "oros" alone; done / declined may carry the creator's reply
+  rspf: (b) => "state" in b && (b.state !== "oros" || Object.keys(b).length === 1),
+  // RS-PROD: all three parts, unique ids, ≤ 1 MB (UTF-8)
+  rsp: (b) => "v" in b && "sent" in b && "works" in b &&
+    new Set(b.works.map((x) => x.id)).size === b.works.length &&
+    new TextEncoder().encode(JSON.stringify(b)).length <= RS_BYTES,
   // "subscribed" only for new addresses: never over someone who left
   mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false),
   // Odoo: the fixed filter and fields must be there (without them
@@ -310,6 +328,11 @@ export const PLATFORMS = {
       ["POST", /^\/rs\/contracts$/, null, { v: "rsv", sent: "rsday", contracts: "rsctrs" }, "rsc"],
       ["GET", /^\/rs\/contract-requests$/, { state: RS_RQ_Q }, null],
       ["POST", /^\/rs\/contract-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rsrqst" }, "rsrq"],
+      // RS-PF / RS-PROD (1.18.0): page and author-copy requests, production stage
+      ["GET", /^\/rs\/profile-requests$/, { state: RS_RQ_Q }, null],
+      ["POST", /^\/rs\/profile-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rspfst", reply: "rsreply" }, "rspf"],
+      ["GET", /^\/rs\/production$/, null, null],
+      ["POST", /^\/rs\/production$/, null, { v: "rsv", sent: "rsday", works: "rsworks" }, "rsp"],
       // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
       ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
       // Publishing «Cost & result» (P15): Production Ledger 1.1+'s report per product, read only
@@ -613,6 +636,9 @@ function okVal(kind, v) {
   if (kind === "rsday") return typeof v === "string" && RS_DAY.test(v);
   if (kind === "rsctrs") return listOf(v, 0, RS_MAX, okRsCtr);
   if (kind === "rsrqst") return v === "oros" || v === "closed";
+  if (kind === "rspfst") return v === "oros" || v === "done" || v === "declined";
+  if (kind === "rsreply") return rsLong(v, 500);
+  if (kind === "rsworks") return listOf(v, 0, RS_WORKS, okRsWork);
   if (kind === "dims") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
     Object.keys(v).every((k) => (k === "length" || k === "width" || k === "height") && okVal("dec", v[k]));
   if (kind === "tolinv") return okInvoice(v);

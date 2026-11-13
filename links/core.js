@@ -461,7 +461,9 @@
   // <site>/wp-json/rs/v1/contracts… and take only the contracts key
   // (header X-RS-Key), never the WooCommerce key. A call is all of them
   // or none of them.
-  var RS_ROUTE = /^\/rs\/contract(s|-requests)(\/|\?|$)/;
+  // RS-PF / RS-PROD (Revenue Splitter 1.18.0): the Author Portal's page
+  // and author-copy requests and the production stage take the same key.
+  var RS_ROUTE = /^\/rs\/(contract(s|-requests)|profile-requests|production)(\/|\?|$)/;
   function rsRoute(p, path) { return p === "woo" && typeof path === "string" && RS_ROUTE.test(path); }
   // → "all" | "none" | "mixed"
   function rsCall(p, reqs) {
@@ -473,7 +475,7 @@
   // RS_RELAY_BYTES, its CPU budget) is sent only straight to the shop
   function relayTooBig(p, reqs) {
     return p === "woo" && Array.isArray(reqs) && reqs.some(function (r) {
-      return r && r.m === "POST" && r.path === "/rs/contracts" && r.body !== undefined &&
+      return r && r.m === "POST" && (r.path === "/rs/contracts" || r.path === "/rs/production") && r.body !== undefined &&
         JSON.stringify(r.body).length > RS_RELAY_BYTES;
     });
   }
@@ -657,7 +659,9 @@
       RS_CTR_KEYS = ["id", "ben", "title", "fmt", "from", "to", "state", "renewed"],
       RS_RENEWAL = ["on", "prev_to", "to"],
       RS_RQ_Q = /^(new|oros|closed|all)$/, RS_MAX = 2000, RS_BYTES = 1000000,
-      RS_RELAY_BYTES = 256 * 1024;   // = relay/ext.js: larger lists go only straight to the shop
+      RS_RELAY_BYTES = 256 * 1024,   // = relay/ext.js: larger lists go only straight to the shop
+      // RS-PROD: the production list (POST /rs/production, RS 1.18.0)
+      RS_WORK_KEYS = ["id", "ben", "title", "phase", "since", "release", "note"], RS_WORKS = 500;
   function rsText(v, max) { return typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f<>]/.test(v); }
   function okRsCtr(x) {
     if (!onlyKeys(x, RS_CTR_KEYS.concat("renewals"))) return false;
@@ -671,6 +675,17 @@
     return x.renewals === undefined || listOf(x.renewals, 0, 50, function (e) {
       return onlyKeys(e, RS_RENEWAL) && RS_RENEWAL.every(function (k) { return typeof e[k] === "string" && RS_DAY.test(e[k]); });
     });
+  }
+  // RS-PF: a reply the creator reads in the portal (≤ 500, line breaks allowed)
+  function rsLong(v, max) { return typeof v === "string" && v.length <= max && !/[\u0000-\u0009\u000b-\u001f\u007f]/.test(v); }
+  // RS-PROD: one work of the production list
+  function okRsWork(x) {
+    if (!onlyKeys(x, RS_WORK_KEYS) || !has(x, "id") || !has(x, "ben") || !has(x, "title") || !has(x, "phase")) return false;
+    if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
+    if (!isInt(x.phase) || x.phase < 1 || x.phase > 7) return false;
+    if (x.since !== undefined && x.since !== "" && !(typeof x.since === "string" && RS_DAY.test(x.since))) return false;
+    if (x.release !== undefined && x.release !== "" && !(typeof x.release === "string" && RS_DAY.test(x.release))) return false;
+    return x.note === undefined || rsLong(x.note, 1000);
   }
   // UTF-8 bytes of a text (the shop counts bytes)
   function utf8Len(t) {
@@ -694,6 +709,18 @@
       return utf8Len(JSON.stringify(b)) <= RS_BYTES;
     },
     rsrq: function (b) { return Object.keys(b).length === 1; },
+    // RS-PF: "oros" alone; done / declined may carry the creator's reply
+    rspf: function (b) { return has(b, "state") && (b.state !== "oros" || Object.keys(b).length === 1); },
+    // RS-PROD: all three parts, unique ids, ≤ 1 MB
+    rsp: function (b) {
+      if (!has(b, "v") || !has(b, "sent") || !has(b, "works")) return false;
+      var seen = {};
+      for (var i = 0; i < b.works.length; i++) {
+        if (has(seen, b.works[i].id)) return false;
+        seen[b.works[i].id] = 1;
+      }
+      return utf8Len(JSON.stringify(b)) <= RS_BYTES;
+    },
     // adding someone as "subscribed" must never overwrite a person who
     // already left: only new addresses are added that way
     mcbatch: function (b) {
@@ -788,6 +815,14 @@
       ["POST", /^\/rs\/contracts$/, null, { v: "rsv", sent: "rsday", contracts: "rsctrs" }, "rsc"],
       ["GET", /^\/rs\/contract-requests$/, { state: RS_RQ_Q }, null],
       ["POST", /^\/rs\/contract-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rsrqst" }, "rsrq"],
+      // RS-PF (1.18.0): page and author-copy requests, read, then marked
+      // "oros", closed "done" / "declined" with a reply for the creator
+      ["GET", /^\/rs\/profile-requests$/, { state: RS_RQ_Q }, null],
+      ["POST", /^\/rs\/profile-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rspfst", reply: "rsreply" }, "rspf"],
+      // RS-PROD (1.18.0): the production stage of the works (the whole
+      // list each time, Kanban board → seven public phases)
+      ["GET", /^\/rs\/production$/, null, null],
+      ["POST", /^\/rs\/production$/, null, { v: "rsv", sent: "rsday", works: "rsworks" }, "rsp"],
       // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
       ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
       // Publishing «Cost & result» (P15): Production Ledger 1.1+'s report per product, read only
@@ -931,6 +966,9 @@
     if (kind === "rsday") return typeof v === "string" && RS_DAY.test(v);
     if (kind === "rsctrs") return listOf(v, 0, RS_MAX, okRsCtr);
     if (kind === "rsrqst") return v === "oros" || v === "closed";
+    if (kind === "rspfst") return v === "oros" || v === "done" || v === "declined";
+    if (kind === "rsreply") return rsLong(v, 500);
+    if (kind === "rsworks") return listOf(v, 0, RS_WORKS, okRsWork);
     if (kind === "mlbatch") return listOf(v, 1, 50, okMlItem);
     if (kind === "mcmembers") return listOf(v, 1, 250, okMcMember);
     if (kind === "bvrows") return listOf(v, 1, 250, okBvRow);

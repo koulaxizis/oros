@@ -217,6 +217,39 @@
       "rq.untitled": "a contract",
       "rq.toast": "Renewal requests from the Author Portal: {n} (in Agenda)",
       "rq.noWrite": "{shop} refused the contracts key, so the renewal requests could not be marked as read. Replace the key in Settings › Connected services.",
+      "pf.fupBio": "Update the creator page: {n}",
+      "pf.fupCopies": "Author copies: {q} × «{t}»",
+      "pf.actBio": "Asked in the Author Portal for a new text on their page:",
+      "pf.actCopies": "Asked in the Author Portal for {q} author copies of «{t}».",
+      "pf.links": "Links:",
+      "pf.photo": "A photo came with the request.",
+      "pf.note": "Note:",
+      "pf.toast": "Creator requests from the Author Portal: {n} (in Agenda)",
+      "pf.left": "Creator requests for a beneficiary no partner here is linked to:",
+      "pf.noWrite": "{shop} refused the contracts key, so the creator requests could not be marked. Replace the key in Settings › Connected services.",
+      "pf.dlgT": "Answer the creator",
+      "pf.dlgHint": "The creator reads this in the Author Portal. If you close this window, «Done» goes with the reply shown.",
+      "pf.result": "Result",
+      "pf.done": "Done",
+      "pf.declined": "Declined",
+      "pf.reply": "Reply (up to 500 characters)",
+      "pf.later": "Later",
+      "pf.send": "Send",
+      "pf.defBio": "Your page has been updated. Thank you!",
+      "pf.defCopies": "Your author copies are on their way.",
+      "pf.ansDone": "Answer in the Author Portal (done):",
+      "pf.ansDecl": "Answer in the Author Portal (declined):",
+      "pf.view": "See the request",
+      "pf.viewT": "Request from the Author Portal",
+      "pf.loading": "Reading the request from the shop…",
+      "pf.gone": "The request could not be read from the shop (no connection, no contracts key, or Revenue Splitter before 1.18).",
+      "pf.new": "New text",
+      "pf.was": "Text on the page now",
+      "pf.copy": "Copy",
+      "pf.copied": "Copied",
+      "pf.closed.done": "Closed as done",
+      "pf.closed.declined": "Closed as declined",
+      "pf.bioFile": "Page text request {d}.txt",
       "cx.set": "Contracts", "cx.lbl": "Calendar label for the end days", "cx.lbl.own": "CRM (its own chip)", "cx.kb": "Kanban board for contract cards", "cx.kbPh": "Empty = the board that is open",
       "toast.ctrDel": "Contract deleted", "toast.noDisk": "The orOS disk is not available here.", "toast.fileSaved": "Saved in Files: {p}", "toast.fileBig": "Up to 20 MB per file.",
       "act.inv": "Invoice", "act.quote": "Quote",
@@ -467,6 +500,39 @@
       "rq.untitled": "ένα συμφωνητικό",
       "rq.toast": "Αιτήματα ανανέωσης από το Author Portal: {n} (στην Ατζέντα)",
       "rq.noWrite": "Το {shop} δεν δέχτηκε το κλειδί συμφωνητικών, οπότε τα αιτήματα ανανέωσης δεν σημειώθηκαν ως διαβασμένα. Άλλαξε το κλειδί στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "pf.fupBio": "Αλλαγή σελίδας δημιουργού: {n}",
+      "pf.fupCopies": "Αντίτυπα συγγραφέα: {q} × «{t}»",
+      "pf.actBio": "Ζητήθηκε από το Author Portal νέο κείμενο για τη σελίδα:",
+      "pf.actCopies": "Ζητήθηκαν από το Author Portal {q} αντίτυπα συγγραφέα του «{t}».",
+      "pf.links": "Σύνδεσμοι:",
+      "pf.photo": "Το αίτημα έχει και φωτογραφία.",
+      "pf.note": "Σημείωση:",
+      "pf.toast": "Αιτήματα δημιουργών από το Author Portal: {n} (στην Ατζέντα)",
+      "pf.left": "Αιτήματα δημιουργών για δικαιούχο που δεν είναι συνδεδεμένος με κανέναν συνεργάτη εδώ:",
+      "pf.noWrite": "Το {shop} δεν δέχτηκε το κλειδί συμφωνητικών, οπότε τα αιτήματα δημιουργών δεν σημειώθηκαν. Άλλαξε το κλειδί στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "pf.dlgT": "Απάντηση στον δημιουργό",
+      "pf.dlgHint": "Ο δημιουργός τη διαβάζει στο Author Portal. Αν κλείσεις το παράθυρο, στέλνεται «Έγινε» με την απάντηση που βλέπεις.",
+      "pf.result": "Αποτέλεσμα",
+      "pf.done": "Έγινε",
+      "pf.declined": "Απορρίφθηκε",
+      "pf.reply": "Απάντηση (έως 500 χαρακτήρες)",
+      "pf.later": "Αργότερα",
+      "pf.send": "Αποστολή",
+      "pf.defBio": "Η σελίδα σου ενημερώθηκε. Ευχαριστούμε!",
+      "pf.defCopies": "Τα αντίτυπά σου ετοιμάζονται και έρχονται.",
+      "pf.ansDone": "Απάντηση στο Author Portal (έγινε):",
+      "pf.ansDecl": "Απάντηση στο Author Portal (απορρίφθηκε):",
+      "pf.view": "Δες το αίτημα",
+      "pf.viewT": "Αίτημα από το Author Portal",
+      "pf.loading": "Διαβάζω το αίτημα από το κατάστημα…",
+      "pf.gone": "Το αίτημα δεν διαβάστηκε από το κατάστημα (χωρίς σύνδεση, χωρίς κλειδί συμφωνητικών ή Revenue Splitter πριν το 1.18).",
+      "pf.new": "Νέο κείμενο",
+      "pf.was": "Κείμενο της σελίδας τώρα",
+      "pf.copy": "Αντιγραφή",
+      "pf.copied": "Αντιγράφηκε",
+      "pf.closed.done": "Έκλεισε ως «έγινε»",
+      "pf.closed.declined": "Έκλεισε ως «απορρίφθηκε»",
+      "pf.bioFile": "Αίτημα κειμένου σελίδας {d}.txt",
       "cx.set": "Συμφωνητικά", "cx.lbl": "Ετικέτα Ημερολογίου για τις λήξεις", "cx.lbl.own": "CRM (δική του ετικέτα)", "cx.kb": "Πίνακας Kanban για κάρτες συμφωνητικών", "cx.kbPh": "Κενό = ο πίνακας που είναι ανοιχτός",
       "toast.ctrDel": "Το συμφωνητικό διαγράφηκε", "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "toast.fileSaved": "Αποθηκεύτηκε στα Αρχεία: {p}", "toast.fileBig": "Έως 20 MB ανά αρχείο.",
       "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
@@ -839,6 +905,8 @@
     var cur = C.byId(data.fups, f.id);
     if (!cur || cur.done) return;
     upsert("fups", Object.assign({}, cur, { done: todayYmd() }));
+    // RS-PF: a creator's request asks what to answer them
+    if (window.OrosCrmRs && window.OrosCrmRs.pfKind(cur.id) === "fup") { pfAnswer(cur.id); return; }
     actionToast(t("toast.done", { text: cur.text }), t("toast.logIt"), function () {
       logEditor(null, cur.cust, { text: cur.text, deal: cur.deal || "" });
     }, function () {
@@ -2056,6 +2124,12 @@
         left.slice(0, 20).forEach(function (q) { line([q.ben, q.title].filter(Boolean).join(" · ")); });
       }
       if (rqNoWrite[shop.id]) line(t("rq.noWrite", { shop: shop.name || shop.site }), "late");
+      var pl = pfLeft[shop.id] || [];
+      if (pl.length) {
+        line(t("pf.left"), "late");
+        pl.slice(0, 20).forEach(function (q) { line([q.ben, q.type === "copies" ? q.title : ""].filter(Boolean).join(" · ")); });
+      }
+      if (pfNoWrite[shop.id]) line(t("pf.noWrite", { shop: shop.name || shop.site }), "late");
       if (send) send.textContent = t("cx.portalSend", { n: x.body.contracts.length });
     }
     if (shopSel) shopSel.addEventListener("change", function () { shop = rsShop({ a: shopSel.value }, list); draw(); });
@@ -2094,9 +2168,17 @@
   function pullShop(shop) {
     var RS = window.OrosCrmRs, L = shopLinks();
     return hasRsKey(shop).then(function (k) {
-      return k ? L.call(shop.id, [RS.REQ_RQ_NEW, RS.REQ_RQ_OROS]) : null;   // no contracts key: nothing to pull
+      // no contracts key: nothing to pull. RS-PF (1.18.0): the creator
+      // requests come in the same call (an older shop answers them 404)
+      return k ? L.call(shop.id, [RS.REQ_RQ_NEW, RS.REQ_RQ_OROS, RS.REQ_PF_NEW, RS.REQ_PF_OROS]) : null;
     }).then(function (res) {
       if (!res) return;
+      return pullContracts(shop, res).then(function () { return pullProfile(shop, res.slice(2)); });
+    });
+  }
+  function pullContracts(shop, res) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    return Promise.resolve().then(function () {
       var fresh = res && res[0] && !L.statusCode(res[0]) ? RS.parseRequests(res[0].data) : null;
       var taken = res && res[1] && !L.statusCode(res[1]) ? RS.parseRequests(res[1].data) : null;
       if (!fresh && !taken) return;              // an older Revenue Splitter: nothing to pull
@@ -2120,6 +2202,85 @@
       return markRequests(shop, marks);
     });
   }
+  // RS-PF: the Author Portal's page and author-copy requests. Each new one
+  // becomes a follow-up for today and a note on the partner's card,
+  // committed BEFORE the shop is told ("oros"); the page text also goes
+  // to the partner's folder when the orOS disk is there. A taken request
+  // whose answer is in CRM (pfOutcome) is closed with the reply.
+  var pfLeft = {}, pfNoWrite = {};
+  function pfDefReply(q) { return t(q && q.type === "copies" ? "pf.defCopies" : "pf.defBio"); }
+  function pfWords() {
+    return { bio: t("pf.actBio"), copies: t("pf.actCopies"), links: t("pf.links"), photo: t("pf.photo"), note: t("pf.note") };
+  }
+  function pfFupText(q, cust) {
+    return q.type === "copies" ? t("pf.fupCopies", { q: q.qty || 0, t: q.title || ("#" + (q.pid || 0)) }) : t("pf.fupBio", { n: C.custName(cust) });
+  }
+  function pullProfile(shop, res) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    var fresh = res && res[0] && !L.statusCode(res[0]) ? RS.parsePfRequests(res[0].data) : null;
+    var taken = res && res[1] && !L.statusCode(res[1]) ? RS.parsePfRequests(res[1].data) : null;
+    if (!fresh && !taken) return Promise.resolve();   // Revenue Splitter before 1.18.0
+    var marks = [], files = [];
+    if (fresh) {
+      var x = RS.pfImportPlan(data, shop.id, firstShop(), fresh), added = 0, today = todayYmd(), words = pfWords();
+      x.plan.forEach(function (it) {
+        if (it.have) return;
+        putRow("fups", { id: it.ids.fup, cust: it.cust.id, d: today, text: C.cleanText(pfFupText(it.req, it.cust), 300) });
+        putRow("acts", { id: it.ids.act, cust: it.cust.id, k: "note", at: it.req.at || Date.now(), who: it.req.ben,
+                         text: C.cleanText(RS.pfActText(it.req, words), 2000, true) });
+        if (it.req.type === "bio") files.push(it);
+        added++;
+      });
+      if (added && !commit()) return Promise.resolve();   // nothing is marked: the next pull tries again
+      if (added) showToast(t("pf.toast", { n: added }));
+      x.plan.forEach(function (it) { marks.push({ id: it.req.id, state: "oros" }); });
+      pfLeft[shop.id] = x.left;
+    }
+    if (taken) marks = marks.concat(RS.pfCloseList(data, shop.id, taken, pfDefReply));
+    return pfFiles(files).then(function () { return markProfile(shop, marks); });
+  }
+  // the page text of each new bio request as a text file in the partner's
+  // folder (best effort: without the orOS disk the note and "See the
+  // request" still have it)
+  function pfFiles(list) {
+    var fs = diskApi();
+    if (!fs || !list.length) return Promise.resolve();
+    return list.reduce(function (p, it) {
+      return p.then(function () {
+        var q = it.req, dir = folderOf(it.cust), day = C.ymdOf ? C.ymdOf(q.at || Date.now()) : todayYmd();
+        var body = [t("pf.fupBio", { n: C.custName(it.cust) }), "", t("pf.new") + ":", q.bio || "", "", t("pf.was") + ":", q.was || ""];
+        if (q.links && q.links.length) body.push("", t("pf.links"), q.links.join("\n"));
+        if (q.note) body.push("", t("pf.note") + " " + q.note);
+        return Promise.resolve(fs.stat(dir)).catch(function () { return null; }).then(function (st) {
+          return st ? null : Promise.resolve(fs.mkdir("/internal/CRM")).catch(function () {}).then(function () { return fs.mkdir(dir); });
+        }).then(function () {
+          return freePath(fs, dir, fileName({ name: t("pf.bioFile", { d: day }) }));
+        }).then(function (path) {
+          return fs.write(path, new Blob([body.join("\n") + "\n"], { type: "text/plain" }));
+        });
+      }).catch(function () {});
+    }, Promise.resolve());
+  }
+  function markProfile(shop, marks) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    if (!marks.length || pfNoWrite[shop.id]) return Promise.resolve();
+    var chunks = [];
+    for (var i = 0; i < marks.length; i += 10) chunks.push(marks.slice(i, i + 10));
+    return chunks.reduce(function (p, ch) {
+      return p.then(function (go) {
+        if (!go) return false;
+        return Promise.resolve(L.call(shop.id, ch.map(function (m) { return RS.reqPfMark(m.id, m.state, m.reply); }))).then(function (res) {
+          // 409: already closed on the site, 404: gone there (both: nothing more to send)
+          if ((res || []).some(function (r) { return L.statusCode(r) === "auth"; })) {
+            pfNoWrite[shop.id] = true;
+            showToast(t("pf.noWrite", { shop: shop.name || shop.site }));
+            return false;
+          }
+          return true;
+        });
+      });
+    }, Promise.resolve(true));
+  }
   function markRequests(shop, marks) {
     var RS = window.OrosCrmRs, L = shopLinks();
     if (!marks.length || rqNoWrite[shop.id]) return Promise.resolve();
@@ -2138,6 +2299,103 @@
         });
       });
     }, Promise.resolve(true));
+  }
+  // RS-PF: the answer the creator reads in the Author Portal. Kept as a
+  // CRM note (ids from the follow-up's id), sent on the next pull.
+  function pfAnswered(ids) { return !!(C.byId(data.acts, ids.done) || C.byId(data.acts, ids.decl)); }
+  function pfAnswer(fupId) {
+    var RS = window.OrosCrmRs, ids = RS && RS.pfIdsOf(fupId), f = C.byId(data.fups, fupId);
+    if (!ids || !f || pfAnswered(ids)) return;
+    var dlg = makeDialog("crm-pf-answer");
+    dlg.appendChild(el("h2", "dlg-title", t("pf.dlgT")));
+    dlg.appendChild(el("p", "hint", f.text));
+    var st = seg([["done", t("pf.done")], ["declined", t("pf.declined")]], "done");
+    dlg.appendChild(el("span", "dlg-lbl", t("pf.result")));
+    dlg.appendChild(st);
+    var reply = field(dlg, t("pf.reply"), area(t(ids.type === "copies" ? "pf.defCopies" : "pf.defBio"), 500));
+    reply.rows = 4;
+    dlg.appendChild(el("p", "hint", t("pf.dlgHint")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("pf.later"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("pf.send"), "primary", function () {
+      var done = st.value() === "done", r = RS.pfReply(reply.value);
+      dlg.close();
+      var head = t(done ? "pf.ansDone" : "pf.ansDecl");
+      putRow("acts", { id: done ? ids.done : ids.decl, cust: f.cust, k: "note", at: Date.now(),
+                       text: C.cleanText(head + (r ? "\n" + r : ""), 2000, true) });
+      if (commit()) render();
+    }));
+    dlg.appendChild(acts);
+    // closed without Send: the follow-up is done, so "done" goes with the
+    // default reply on the pull right after
+    dlg.addEventListener("close", function () { setTimeout(function () { pullRequests(true); }, 500); });
+    showDialog(dlg);
+    reply.focus();
+  }
+  // RS-PF: the request itself, read from the shop (the whole page text,
+  // the text on the page now, links, the copies asked for)
+  function pfView(fupId) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    if (!RS || !L) return;
+    var dlg = makeDialog("crm-pf-view", true);
+    dlg.appendChild(el("h2", "dlg-title", t("pf.viewT")));
+    var body = el("div", "");
+    body.appendChild(el("p", "hint", t("pf.loading")));
+    dlg.appendChild(body);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    function copyBtn(get) {
+      return button(t("pf.copy"), "", function () {
+        try { navigator.clipboard.writeText(get()).then(function () { showToast(t("pf.copied")); }, function () {}); } catch (e) {}
+      });
+    }
+    function textBlock(label, value) {
+      var a = field(body, label, area(value || "", 5000));
+      a.readOnly = true;
+      a.rows = 8;
+      body.appendChild(copyBtn(function () { return a.value; }));
+    }
+    function show(q) {
+      body.innerHTML = "";
+      if (!q) { body.appendChild(el("p", "hint late", t("pf.gone"))); return; }
+      if (q.ben) body.appendChild(el("p", "hint", q.ben + (q.at ? " · " + new Date(q.at).toLocaleDateString(LOCALE) : "")));
+      if (q.type === "bio") {
+        textBlock(t("pf.new"), q.bio);
+        textBlock(t("pf.was"), q.was);
+        if (q.links && q.links.length) {
+          body.appendChild(el("span", "dlg-lbl", t("pf.links")));
+          q.links.forEach(function (u) {
+            var a = el("a", "", u);
+            a.href = u;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            var p = el("p", "");
+            p.appendChild(a);
+            body.appendChild(p);
+          });
+        }
+        if (q.photo) body.appendChild(el("p", "hint", t("pf.photo")));
+      } else {
+        body.appendChild(el("p", "", t("pf.actCopies", { q: q.qty || 0, t: q.title || ("#" + (q.pid || 0)) })));
+      }
+      if (q.note) body.appendChild(el("p", "hint", t("pf.note") + " " + q.note));
+      if (q.state === "done" || q.state === "declined") body.appendChild(el("p", "hint", t("pf.closed." + q.state) + (q.reply ? ": " + q.reply : "")));
+    }
+    var found = null;
+    rsShops().reduce(function (p, shop) {
+      return p.then(function () {
+        if (found) return;
+        return hasRsKey(shop).then(function (k) {
+          if (!k) return;
+          return Promise.resolve(L.call(shop.id, [RS.REQ_PF_ALL])).then(function (res) {
+            var list = res && res[0] && !L.statusCode(res[0]) ? RS.parsePfRequests(res[0].data) : null;
+            (list || []).some(function (q) { if (RS.pfIds(shop.id, q).fup === fupId) { found = q; return true; } return false; });
+          });
+        });
+      }).catch(function () {});
+    }, Promise.resolve()).then(function () { if (dlg.isConnected) show(found); });
   }
   // Calendar's own labels, read only (oros-calendar-data), for Settings
   function calLabels() {
@@ -3146,6 +3404,7 @@
     item("clock", t("ag.snooze1"), function () { snooze(f, 1); });
     item("clock", t("ag.snooze7"), function () { snooze(f, 7); });
     item("edit", t("ag.edit"), function () { fupEditor(f, f.cust); });
+    if (window.OrosCrmRs && window.OrosCrmRs.pfKind(f.id) === "fup") item("note", t("pf.view"), function () { pfView(f.id); });
     if (c) item("users", c.name, function () { selectCust(c.id); });
     if (canTodo()) item("todo", t("ag.todo"), function () { sendToTodo(f); });
     dlg.appendChild(list);
@@ -3794,6 +4053,13 @@
       doneRow.appendChild(done); doneRow.appendChild(el("span", "", t("ed.fupDone")));
       dlg.appendChild(doneRow);
     }
+    if (f && window.OrosCrmRs && window.OrosCrmRs.pfKind(f.id) === "fup") {
+      var pv = el("button", "link-btn", t("pf.view"));
+      pv.type = "button";
+      pv.style.marginTop = "8px";
+      pv.addEventListener("click", function () { pfView(f.id); });
+      dlg.appendChild(pv);
+    }
     if (f && canTodo()) {
       var td = el("button", "link-btn", t("ag.todo"));
       td.type = "button";
@@ -3811,12 +4077,14 @@
       });
       if (!r.t) delete r.t;
       if (!r.deal) delete r.deal;
+      var nowDone = false;
       if (done) {
-        if (done.checked && !r.done) r.done = todayYmd();
+        if (done.checked && !r.done) { r.done = todayYmd(); nowDone = true; }
         if (!done.checked) delete r.done;
       }
       dlg.close();
       upsert("fups", r);
+      if (nowDone && window.OrosCrmRs && window.OrosCrmRs.pfKind(r.id) === "fup") pfAnswer(r.id);
     }
     actions(dlg, save, f ? function () { dlg.close(); removeRow("fups", f.id); } : null);
     showDialog(dlg);
