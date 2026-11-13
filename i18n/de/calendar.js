@@ -212,6 +212,7 @@ orosPack("de", "calendar", {
  "lbl.feed.garage": "Garage",
  "lbl.feed.habits": "Gewohnheiten",
  "lbl.feed.hol": "Feiertage",
+ "lbl.feed.docs": "Dokumente",
  "lbl.feed.inv": "Rechnungen",
  "lbl.feed.kanban": "Kanban",
  "lbl.feed.meals": "Mahlzeiten",

@@ -1178,7 +1178,7 @@
   // Documents loads on demand (first-open budget, .github/qa/budget.json):
   // at boot only where it was open last time or holds documents, else
   // when its node or "Add to Documents" is first used.
-  var DOCS_SCRIPTS = ["docs-core.js", "docs-text.js", "docs.js"];   // docs.js loads docs-read.js itself
+  var DOCS_SCRIPTS = ["docs-core.js", "docs-text.js", "docs-due.js", "docs.js"];   // docs.js loads docs-read.js itself
   var docsWaiters = null;
   function docsStored() {
     try {
@@ -5508,6 +5508,17 @@
     // Automations (item 25): { importFile: { token, name } }, a file from a
     // folder orOS Bridge watches. Added to the open folder only after Add.
     if (t && t.importFile && typeof t.importFile.token === "string") { takeIncoming(t.importFile.token); return; }
+    // Documents (DOCS-1 W3: reminder, Today, Calendar): { doc: id } opens
+    // one document, { docs: "soon" | "keep" } the list.
+    if (t && (typeof t.doc === "string" || typeof t.docs === "string")) {
+      if (!isAvailable()) return;
+      loadDocs(function (D) {
+        if (!D) return;
+        if (typeof t.doc === "string" && /^d-[0-9a-z_-]{1,41}$/.test(t.doc)) D.open(t.doc);
+        else D.show(t.docs);
+      });
+      return;
+    }
     // Single app (solo.js) icon shortcut { newFolder: true }.
     if (t && t.newFolder === true) {
       if (isAvailable() && !document.querySelector("dialog[open]")) openNameDialog("folder");
