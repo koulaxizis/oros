@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v6.44.00";
+var CACHE_VERSION = "oros-v6.45.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
@@ -2095,6 +2095,8 @@ var PRECACHE_URLS = [
   "budget/keypad.js",
   "calculator/core.js",
   "calendar/free.js",
+  "calendar/guests.js",
+  "calendar/guestsui.js",
   "calendar/quickadd.js",
   "calendar/subs.js",
   "calendar/house.js",
