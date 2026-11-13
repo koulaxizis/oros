@@ -845,7 +845,9 @@
   {
    "app": "scanpdf",
    "files": [
-    "scanpdf/scanpdf.js"
+    "scanpdf/scanpdf.js",
+    "scanpdf/search.js",
+    "scanpdf/sign.js"
    ]
   },
   {
