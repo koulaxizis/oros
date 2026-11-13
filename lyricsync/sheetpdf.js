@@ -144,6 +144,20 @@
       if (p.info) text(p.info, "r", size * 0.9, 0);
       if (p.nt) text(p.nt, "r", size * 0.9, 0);
       y += lh;
+      // Songbook S4: the song's chord diagrams in a strip under the title.
+      if (opts.diagram && opts.allChords && opts.chordsOf) {
+        var cell = 46, per = Math.max(1, Math.floor(colW / cell)), k = 0, rowH = 0;
+        opts.chordsOf(opts.allChords(p)).slice(0, 24).forEach(function (ch) {
+          var d = opts.diagram(ch);
+          if (!d) return;
+          var sc = 40 / Math.max(d.w, 64), hh = d.h * sc + size * 1.1 + 4;
+          if (k % per === 0) { if (k) y += rowH; room(hh); }
+          rowH = Math.max(rowH, hh);
+          page.items.push({ dg: d, sc: sc, x: colX() + (k % per) * cell, y: y, name: H.show(ch, sol), s: size * 0.85, f: "b" });
+          k++;
+        });
+        if (k) y += rowH + lh * 0.5;
+      }
       var first = true;
       (p.ln || []).forEach(function (l) {
         var rp = (l.x || []).some(function (r) { return r.p; });
@@ -210,6 +224,7 @@
       lay.pages.forEach(function (p, i) {
         if (i) doc.addPage([pg[0], pg[1]]);
         p.items.forEach(function (it) {
+          if (it.dg) { drawDiagram(doc, it); return; }
           if (!it.t) return;
           doc.setFont(NAMES[it.f][0], NAMES[it.f][1]);
           doc.setFontSize(it.s);
@@ -217,6 +232,32 @@
         });
       });
       return doc.output("blob");
+    });
+  }
+
+  // A diagram from diagrams.js draw(): lines, dots, boxes, text.
+  function drawDiagram(doc, it) {
+    var sc = it.sc, ox = it.x, oy = it.y, d = it.dg;
+    doc.setDrawColor(0); doc.setFillColor(0); doc.setTextColor(0);
+    doc.setFont("NotoSans", "bold"); doc.setFontSize(it.s);
+    doc.text(String(it.name), ox + d.w * sc / 2, oy, { baseline: "top", align: "center" });
+    oy += it.s * 1.1 + 2;
+    d.items.forEach(function (g) {
+      if (g.k === "line") { doc.setLineWidth(g.sw * sc * 0.8); doc.line(ox + g.x1 * sc, oy + g.y1 * sc, ox + g.x2 * sc, oy + g.y2 * sc); }
+      else if (g.k === "dot") {
+        doc.setLineWidth(0.6);
+        if (g.hi) doc.setFillColor(255);           // a dot on a black piano key
+        doc.circle(ox + g.x * sc, oy + g.y * sc, g.r * sc, g.fill ? "F" : "S");
+        doc.setFillColor(0);
+      }
+      else if (g.k === "box") {
+        doc.setLineWidth(0.5);
+        if (g.rx) doc.roundedRect(ox + g.x * sc, oy + g.y * sc, g.w * sc, g.h * sc, g.rx * sc, g.rx * sc, g.fill ? "F" : "S");
+        else doc.rect(ox + g.x * sc, oy + g.y * sc, g.w * sc, g.h * sc, g.fill ? "FD" : "S");
+      } else if (g.k === "text") {
+        doc.setFont("NotoSans", "normal"); doc.setFontSize(g.size * sc * 1.1);
+        doc.text(g.t === "\u00d7" ? "x" : String(g.t), ox + g.x * sc, oy + g.y * sc, { align: g.anchor === "middle" ? "center" : g.anchor === "end" ? "right" : "left" });
+      }
     });
   }
 
