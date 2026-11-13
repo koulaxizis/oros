@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.46.00
+- **Moon & Sky is now in Weather.** Open the `Sky tonight` tab in Weather for the Moon, planets and stars over your Weather city. Old links and shortcuts to Moon & Sky open that tab.
+
 ## Version 6.45.00
 - **Guest lists, QR tickets and a door check-in for your events.** A one-off event of your own calendar now has `Guests…`: add people from Contacts or by name, keep their answers, set the places (plus-ones count) and keep a waiting list; when a place frees up, the Calendar shows who is next and gives it only when you tap. Every guest gets a QR ticket to share, save or print, and `Door` checks tickets with the phone's camera, even without internet, with a big green welcome. Export CSV, print the door list, or send the usual event tasks to To-Do. See [Calendar](app:calendar).
 
