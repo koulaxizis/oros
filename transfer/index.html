@@ -17,6 +17,7 @@
     <nav id="tabs" role="tablist">
       <button type="button" role="tab" id="tab-send" class="tab on" aria-selected="true" data-i18n="tab.send">Send</button>
       <button type="button" role="tab" id="tab-recv" class="tab" aria-selected="false" data-i18n="tab.recv">Receive</button>
+      <button type="button" role="tab" id="tab-hist" class="tab" aria-selected="false" data-i18n="tab.hist">History</button>
     </nav>
   </header>
 
@@ -78,6 +79,7 @@
         <div id="recv-status" class="status" role="status"></div>
         <div id="offer" hidden>
           <p id="offer-sum"></p>
+          <p id="offer-relay" hidden data-i18n="offer.relay">No direct link between the two devices: it comes through the orOS relay, still end-to-end encrypted, more slowly.</p>
           <ul id="offer-list" class="rows small"></ul>
           <fieldset id="dest">
             <legend data-i18n="dest.where">Save to</legend>
@@ -100,6 +102,15 @@
           <button type="button" id="save-file" class="chip pri" hidden data-i18n="btn.save">Save</button>
           <button type="button" id="recv-again" class="chip" hidden data-i18n="btn.recvMore">Receive something else</button>
         </div>
+      </div>
+    </section>
+
+    <!-- History (synced slice "transfer") -->
+    <section id="hist" role="tabpanel" aria-labelledby="tab-hist" hidden>
+      <ul id="hist-list" class="rows"></ul>
+      <p id="hist-empty" class="hint" data-i18n="hist.empty">No transfers yet. Finished ones are listed here, on every device you sync.</p>
+      <div class="bar end">
+        <button type="button" id="hist-clear" class="chip" hidden data-i18n="hist.clear">Clear history</button>
       </div>
     </section>
   </main>

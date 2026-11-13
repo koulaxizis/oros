@@ -253,6 +253,7 @@
       "menu.extract":  "Extract here",
       "menu.convert":  "Convert to orOS",
       "menu.pdfTools": "Open in Scanner & PDF",
+      "menu.transfer": "Send with Transfer…",
       "zip.archive":   "Archive",
       "zip.working":   "Compressing… {n} of {t}",
       "zip.done":      "Created \"{name}\"",
@@ -485,6 +486,7 @@
       "menu.extract":  "Αποσυμπίεση εδώ",
       "menu.convert":  "Μετατροπή σε orOS",
       "menu.pdfTools": "Άνοιγμα στο Σαρωτής & PDF",
+      "menu.transfer": "Αποστολή με Μεταφορά…",
       "zip.archive":   "Συμπιεσμένο",
       "zip.working":   "Συμπίεση… {n} από {t}",
       "zip.done":      "Δημιουργήθηκε το «{name}»",
@@ -616,6 +618,8 @@
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg>';
   var PDFTOOLS_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>';
+  var TRANSFER_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-4-4"/><path d="M20 16H6l4 4"/></svg>';
   var UNZIP_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><path d="M12 10v6M9 13l3 3 3-3"/></svg>';
   var GRID_SVG =
@@ -918,6 +922,20 @@
     var paths = pdfToolPaths();
     if (!paths.length) return;
     try { window.parent.__orosOpenAt("scanpdf", { paths: paths }); } catch (e) {}
+  }
+  // "Send with Transfer…": the selected files and folders go to the
+  // Transfer app's list (TRANSFER-1 wave 2), only when it is installed.
+  function transferPaths() {
+    var env = null;
+    try { env = window.parent && window.parent !== window ? window.parent.orosTodayEnv : null; } catch (e) {}
+    if (!env || typeof env.apps !== "function" ||
+        !env.apps().some(function (a) { return a && a.id === "transfer"; })) return [];
+    return selectionPaths().filter(function (p) { return !CORE.isTrashPath(p); });
+  }
+  function sendWithTransfer() {
+    var paths = transferPaths();
+    if (!paths.length) return;
+    try { window.parent.__orosOpenAt("transfer", { send: paths }); } catch (e) {}
   }
   // Rows of the Recent and Trash views carry their own full path.
   function entryPath(e) { return e.path || join(cwd, e.name); }
@@ -3320,6 +3338,9 @@
     if (pdfToolPaths().length) {
       ctxMenu.appendChild(mkItem(PDFTOOLS_SVG, "menu.pdfTools", openPdfTools));
     }
+    if (view !== "trash" && transferPaths().length) {
+      ctxMenu.appendChild(mkItem(TRANSFER_SVG, "menu.transfer", sendWithTransfer));
+    }
     ctxMenu.appendChild(hr());
     ctxMenu.appendChild(mkItem("", "menu.copyName", function () {
       copyToClipboard(p, "name");
@@ -4688,6 +4709,7 @@
     bar.appendChild(selBtn("sb-zip", ZIP_SVG, "menu.zip", function () { zipCreate(selectionPaths()); }));
     bar.appendChild(selBtn("sb-conv", CONVERT_SVG, "menu.convert", convertSelection));
     bar.appendChild(selBtn("sb-pdf", PDFTOOLS_SVG, "menu.pdfTools", openPdfTools));
+    bar.appendChild(selBtn("sb-xfer", TRANSFER_SVG, "menu.transfer", sendWithTransfer));
     bar.appendChild(selBtn("sb-move", MV_SVG, "menu.moveTo", function () { openPickerDialog("move"); }));
     bar.appendChild(selBtn("sb-copy", CP_SVG, "menu.copyTo", function () { openPickerDialog("copy"); }));
     if (dbx() && dbx().exportFrom) {
@@ -4724,6 +4746,8 @@
     show("sb-conv", conv, conv);
     var pdft = !trash && n > 0 && pdfToolPaths().length > 0;
     show("sb-pdf", pdft, pdft);
+    var xfer = !trash && n > 0 && transferPaths().length > 0;
+    show("sb-xfer", xfer, xfer);
     show("sb-move", !trash, n > 0);
     show("sb-copy", !trash, n > 0);
     show("sb-dbx", !trash, n > 0);

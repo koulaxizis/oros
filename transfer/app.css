@@ -32,6 +32,7 @@ html, body {
   color: var(--text);
   font: 15px/1.45 "Nunito", system-ui, sans-serif;
 }
+body { min-height: 100vh; min-height: 100dvh; }   /* the receive page's light colours fill the screen */
 
 #toolbar {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
@@ -77,6 +78,7 @@ section > * + * { margin-top: 10px; }
 .rows input[type="checkbox"] { width: 20px; height: 20px; flex: none; accent-color: var(--accent); }
 #disk { max-height: 46vh; overflow: auto; }
 #offer-list { max-height: 40vh; overflow: auto; }
+#offer-relay { color: var(--text-dim); font-size: 14px; }
 
 input[type="text"] {
   flex: 1; min-width: 0; min-height: 40px; padding: 8px 10px;
@@ -124,3 +126,16 @@ legend { padding: 0 4px; color: var(--text-dim); font-size: 14px; }
   opacity: 0; pointer-events: none; transition: opacity .2s;
 }
 #toast.show { opacity: 1; }
+
+/* History */
+#hist-list li { align-items: flex-start; padding: 8px 10px; }
+#hist-list .arrow { flex: none; width: 22px; text-align: center; color: var(--accent); font-weight: 700; padding-top: 1px; }
+#hist-list .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+#hist-list .what { overflow-wrap: anywhere; }
+#hist-list .meta { font-size: 13px; color: var(--text-dim); overflow-wrap: anywhere; }
+#hist-list .meta.warn { color: var(--danger); }
+#hist-list .chip { flex: none; }
+@media (max-width: 400px) {
+  #toolbar h1 { font-size: 15px; }
+  .tab { padding: 4px 9px; }
+}

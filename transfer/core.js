@@ -23,13 +23,15 @@
    5. The list of files (manifest): names cleaned so nothing can climb
       out of the target folder, sizes checked.
 
+   1.1.0 (W2): PROTO 2, splitManifest(files, max), b64 / unb64.
+
    window.OrosTransferCore (browser) / module.exports (Node).
    ============================================================ */
 (function (root) {
   "use strict";
 
-  var VERSION = "1.0.0";
-  var PROTO = 1;
+  var VERSION = "1.1.0";
+  var PROTO = 2;                      // 2: relay path, resume (W2)
   var NS = "oros-transfer/v1";
   var ALPHA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
   var CODE_LEN = 12;
@@ -407,11 +409,14 @@
     return stem + " (" + Date.now() + ")" + ext;
   }
   // Split a manifest into sealed-size parts (a long list of files).
-  function splitManifest(files) {
+  // max: characters of JSON per part (30,000 on a data channel; ~9,000
+  // through the relay, whose frames hold 16 KB once sealed and in base64).
+  function splitManifest(files, max) {
     var parts = [], cur = [], len = 0;
+    max = max || 30000;
     files.forEach(function (f) {
       var l = JSON.stringify(f).length + 1;
-      if (cur.length && len + l > 30000) { parts.push(cur); cur = []; len = 0; }
+      if (cur.length && len + l > max) { parts.push(cur); cur = []; len = 0; }
       cur.push(f); len += l;
     });
     if (cur.length) parts.push(cur);
@@ -437,15 +442,83 @@
   }
   function cleanDev(s) { return String(s || "").replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 60); }
 
+  // ----- History (synced slice "transfer", TRANSFER-1 wave 2) -----
+  // { ver: 1, items: [{ id, at, dir: "sent"|"recv", n, bytes, what, dev,
+  //   bad, mode: "direct"|"relay", dest: ""|"disk"|"device", end:
+  //   "done"|"stopped", folder }],
+  //   tombs: { id: ms } }. Entries are written once and never edited:
+  // the union by id, the larger canonical JSON on a clash, a tombstone
+  // removes (Clear writes one per entry). Newest HIST_MAX entries kept,
+  // tombstones for TOMB_DAYS. Canonical (R26): items newest first, then
+  // by id; tombs by key.
+  var HIST_KEY = "oros-transfer-data", HIST_MAX = 200, TOMB_DAYS = 120;
+  function cleanItem(x) {
+    if (!x || typeof x !== "object") return null;
+    var id = String(x.id || "");
+    if (!/^[a-z0-9]{6,40}$/.test(id)) return null;
+    var at = +x.at;
+    if (!(at > 0) || Math.floor(at) !== at) return null;
+    var num = function (v) { v = +v; return v >= 0 && Math.floor(v) === v ? v : 0; };
+    return {
+      id: id, at: at, dir: x.dir === "recv" ? "recv" : "sent",
+      n: num(x.n), bytes: num(x.bytes),
+      what: String(x.what || "").replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 120),
+      dev: cleanDev(x.dev), bad: Math.min(num(x.bad), num(x.n)),
+      mode: x.mode === "relay" ? "relay" : "direct",
+      dest: x.dest === "disk" || x.dest === "device" ? x.dest : "",
+      end: x.end === "stopped" ? "stopped" : "done",
+      folder: typeof x.folder === "string" && /^\/internal\/Transfers\/[^\u0000-\u001f]{1,300}$/.test(x.folder) && x.folder.indexOf("..") < 0 ? x.folder : ""
+    };
+  }
+  function canon(o) { return JSON.stringify(o); }
+  function mergeHistory(a, b, now) {
+    now = now || Date.now();
+    var tombs = {}, byId = {};
+    [a, b].forEach(function (d) {
+      if (!d || typeof d !== "object") return;
+      var t = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
+      Object.keys(t).forEach(function (k) {
+        var v = +t[k];
+        if (/^[a-z0-9]{6,40}$/.test(k) && v > 0 && v > now - TOMB_DAYS * 86400000) tombs[k] = Math.max(tombs[k] || 0, v);
+      });
+      (Array.isArray(d.items) ? d.items : []).forEach(function (x) {
+        var c = cleanItem(x);
+        if (!c) return;
+        var had = byId[c.id];
+        if (!had || canon(c) > canon(had)) byId[c.id] = c;
+      });
+    });
+    var items = Object.keys(byId).map(function (k) { return byId[k]; }).filter(function (x) { return !tombs[x.id]; });
+    items.sort(function (x, y) { return (y.at - x.at) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0); });
+    var keys = Object.keys(tombs).sort(), tb = {};
+    keys.forEach(function (k) { tb[k] = tombs[k]; });
+    return { ver: 1, items: items.slice(0, HIST_MAX), tombs: tb };
+  }
+  function newId() {
+    return "t" + hex(C.getRandomValues(new Uint8Array(8)));
+  }
+  // A finished (or stopped) transfer → one history entry.
+  function historyItem(o) {
+    var files = o.files || [];
+    var tops = topNames(files);
+    return cleanItem({
+      id: o.id || newId(), at: o.at || Date.now(), dir: o.dir, n: files.length,
+      bytes: files.reduce(function (s, f) { return s + (f.s || 0); }, 0),
+      what: tops.slice(0, 3).join(", ") + (tops.length > 3 ? " +" + (tops.length - 3) : ""),
+      dev: o.dev, bad: (o.bad || []).length, mode: o.mode, dest: o.dest, folder: o.folder, end: o.end
+    });
+  }
+
   var api = {
     VERSION: VERSION, PROTO: PROTO, NS: NS, CODE_RE: CODE_RE, PIECE: PIECE, HEAD: HEAD, MAX_CTRL: MAX_CTRL,
     MAX_FILES: MAX_FILES, DISK_MAX: DISK_MAX, MEM_MAX: MEM_MAX,
-    hex: hex, newCode: newCode, normCode: normCode, fmtCode: fmtCode, linkFor: linkFor, isLocalOrigin: isLocalOrigin,
+    hex: hex, b64: b64, unb64: unb64, newCode: newCode, normCode: normCode, fmtCode: fmtCode, linkFor: linkFor, isLocalOrigin: isLocalOrigin,
     derive: derive, seal: seal, unseal: unseal, sealPiece: sealPiece, openPiece: openPiece, pieces: pieces,
     Sha256: Sha256, crc32: crc32, ZipWriter: ZipWriter,
     cleanName: cleanName, cleanPath: cleanPath, buildManifest: buildManifest, checkManifest: checkManifest,
     topNames: topNames, freeName: freeName, splitManifest: splitManifest,
-    fmtSize: fmtSize, browserLabel: browserLabel, cleanDev: cleanDev
+    fmtSize: fmtSize, browserLabel: browserLabel, cleanDev: cleanDev,
+    HIST_KEY: HIST_KEY, HIST_MAX: HIST_MAX, mergeHistory: mergeHistory, historyItem: historyItem, cleanItem: cleanItem
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.OrosTransferCore = api;
