@@ -46,7 +46,7 @@
       "tool.frame": "Frame (F)",
       "btn.undo": "Undo (Ctrl+Z)", "btn.redo": "Redo (Ctrl+Y)", "btn.pic": "Add a picture", "btn.export": "Export",
       "btn.zoomIn": "Zoom in", "btn.zoomOut": "Zoom out", "btn.zoom100": "Zoom to 100%", "btn.fit": "Show everything",
-      "ctx.color": "Colour", "ctx.shape": "Shape", "ctx.fill": "Fill", "ctx.head": "Arrow heads", "ctx.dash": "Dashed line",
+      "ctx.color": "Colour", "ctx.shape": "Shape", "ctx.fill": "Fill", "ctx.dash": "Dashed line",
       "ctx.smaller": "Smaller text", "ctx.bigger": "Bigger text", "ctx.width": "Line width", "ctx.edit": "Edit text",
       "ctx.front": "Bring to front", "ctx.back": "Send to back", "ctx.dup": "Duplicate (Ctrl+D)", "ctx.del": "Delete",
       "ctx.exportFrame": "Export this frame",
@@ -54,7 +54,10 @@
       "c.blue": "Blue", "c.teal": "Teal", "c.green": "Green", "c.gray": "Grey", "c.ink": "Black",
       "shp.rect": "Rectangle", "shp.round": "Rounded rectangle", "shp.ellipse": "Ellipse", "shp.diamond": "Diamond",
       "shp.tri": "Triangle", "f.none": "No fill", "f.soft": "Light fill", "f.solid": "Full colour",
-      "hd.end": "One head", "hd.both": "Two heads", "hd.none": "No head",
+      "ctx.route": "Line shape", "rt.line": "Straight", "rt.elbow": "Right angles, around shapes", "rt.curve": "Curved",
+      "ctx.headA": "Start of the arrow", "ctx.headB": "End of the arrow",
+      "hs.arrow": "Arrow", "hs.open": "Open arrow", "hs.tri": "Hollow triangle (UML: inherits)", "hs.dia": "Filled diamond (UML: made of)",
+      "hs.odia": "Hollow diamond (UML: has)", "hs.dot": "Dot", "hs.none": "Nothing",
       "w.thin": "Thin", "w.mid": "Medium", "w.thick": "Thick", "w.marker": "Marker",
       "k.note": "Sticky note", "k.text": "Text", "k.shape": "Shape", "k.arrow": "Arrow", "k.pen": "Pen line",
       "k.image": "Picture", "k.frame": "Frame",
@@ -128,7 +131,7 @@
       "tool.frame": "Πλαίσιο (F)",
       "btn.undo": "Αναίρεση (Ctrl+Z)", "btn.redo": "Επανάληψη (Ctrl+Y)", "btn.pic": "Προσθήκη εικόνας", "btn.export": "Εξαγωγή",
       "btn.zoomIn": "Μεγέθυνση", "btn.zoomOut": "Σμίκρυνση", "btn.zoom100": "Ζουμ στο 100%", "btn.fit": "Δείξε τα όλα",
-      "ctx.color": "Χρώμα", "ctx.shape": "Σχήμα", "ctx.fill": "Γέμισμα", "ctx.head": "Αιχμές βέλους", "ctx.dash": "Διακεκομμένη γραμμή",
+      "ctx.color": "Χρώμα", "ctx.shape": "Σχήμα", "ctx.fill": "Γέμισμα", "ctx.dash": "Διακεκομμένη γραμμή",
       "ctx.smaller": "Μικρότερο κείμενο", "ctx.bigger": "Μεγαλύτερο κείμενο", "ctx.width": "Πάχος γραμμής", "ctx.edit": "Επεξεργασία κειμένου",
       "ctx.front": "Μπροστά απ' όλα", "ctx.back": "Πίσω απ' όλα", "ctx.dup": "Διπλότυπο (Ctrl+D)", "ctx.del": "Διαγραφή",
       "ctx.exportFrame": "Εξαγωγή αυτού του πλαισίου",
@@ -136,7 +139,10 @@
       "c.blue": "Μπλε", "c.teal": "Γαλαζοπράσινο", "c.green": "Πράσινο", "c.gray": "Γκρι", "c.ink": "Μαύρο",
       "shp.rect": "Ορθογώνιο", "shp.round": "Στρογγυλεμένο ορθογώνιο", "shp.ellipse": "Έλλειψη", "shp.diamond": "Ρόμβος",
       "shp.tri": "Τρίγωνο", "f.none": "Χωρίς γέμισμα", "f.soft": "Απαλό γέμισμα", "f.solid": "Γεμάτο χρώμα",
-      "hd.end": "Μία αιχμή", "hd.both": "Δύο αιχμές", "hd.none": "Χωρίς αιχμή",
+      "ctx.route": "Μορφή γραμμής", "rt.line": "Ευθεία", "rt.elbow": "Σε ορθές γωνίες, γύρω από τα σχήματα", "rt.curve": "Καμπύλη",
+      "ctx.headA": "Αρχή του βέλους", "ctx.headB": "Τέλος του βέλους",
+      "hs.arrow": "Βέλος", "hs.open": "Ανοιχτό βέλος", "hs.tri": "Κενό τρίγωνο (UML: κληρονομεί)", "hs.dia": "Γεμάτος ρόμβος (UML: αποτελείται από)",
+      "hs.odia": "Κενός ρόμβος (UML: έχει)", "hs.dot": "Τελεία", "hs.none": "Τίποτα",
       "w.thin": "Λεπτό", "w.mid": "Μεσαίο", "w.thick": "Χοντρό", "w.marker": "Μαρκαδόρος",
       "k.note": "Αυτοκόλλητο", "k.text": "Κείμενο", "k.shape": "Σχήμα", "k.arrow": "Βέλος", "k.pen": "Γραμμή μολυβιού",
       "k.image": "Εικόνα", "k.frame": "Πλαίσιο",
@@ -217,7 +223,7 @@
 
   // ---------- 2. Data: local first, then sync ----------
   var data = C.empty();
-  var prefs = { board: "", views: {}, tool: "select", note: "yellow", shape: "rect", line: "ink", pen: "ink", sw: 3, bg: "paper", fmt: "png",
+  var prefs = { board: "", views: {}, tool: "select", note: "yellow", shape: "rect", line: "ink", route: "line", pen: "ink", sw: 3, bg: "paper", fmt: "png",
     votes: 5, timer: { end: 0, left: 0, dur: 0 } };
 
   function syncApi() {
@@ -235,6 +241,7 @@
       });
     } catch (e) { /* defaults */ }
     if (["select", "hand", "pen"].indexOf(prefs.tool) < 0) prefs.tool = "select";
+    if (C.ROUTES.indexOf(prefs.route) < 0) prefs.route = "line";
     prefs.votes = Math.max(1, Math.min(K.MAX_VOTES, Math.round(+prefs.votes) || 5));
     var tm = prefs.timer || {};
     function msOk(v) { return typeof v === "number" && isFinite(v) && v >= 0 ? v : 0; }
@@ -348,9 +355,16 @@
     s_ellipse: ic('<ellipse cx="12" cy="12" rx="9" ry="6"/>'),
     s_diamond: ic('<path d="M12 3l9 9-9 9-9-9z"/>'),
     s_tri: ic('<path d="M12 4l9 16H3z"/>'),
-    h_end: ic('<path d="M4 12h16M14 6l6 6-6 6"/>'),
-    h_both: ic('<path d="M4 12h16M14 6l6 6-6 6M10 6l-6 6 6 6"/>'),
-    h_none: ic('<path d="M4 12h16"/>'),
+    r_line: ic('<path d="M4 19L20 5"/>'),
+    r_elbow: ic('<path d="M4 19h8V5h8"/>'),
+    r_curve: ic('<path d="M4 19C12 19 12 5 20 5"/>'),
+    hs_arrow: ic('<path d="M3 12h13"/><path d="M14 7l7 5-7 5z" fill="currentColor"/>'),
+    hs_open: ic('<path d="M3 12h18M14 6l7 6-7 6"/>'),
+    hs_tri: ic('<path d="M3 12h11"/><path d="M14 6l7 6-7 6z"/>'),
+    hs_dia: ic('<path d="M3 12h9"/><path d="M12 12l4.5-4 4.5 4-4.5 4z" fill="currentColor"/>'),
+    hs_odia: ic('<path d="M3 12h9"/><path d="M12 12l4.5-4 4.5 4-4.5 4z"/>'),
+    hs_dot: ic('<path d="M3 12h13"/><circle cx="18" cy="12" r="3" fill="currentColor"/>'),
+    hs_none: ic('<path d="M3 12h18"/>'),
     f_none: ic('<rect x="4" y="5" width="16" height="14" rx="2"/>'),
     f_soft: ic('<rect x="4" y="5" width="16" height="14" rx="2" fill="currentColor" fill-opacity=".3"/>'),
     f_solid: ic('<rect x="4" y="5" width="16" height="14" rx="2" fill="currentColor"/>'),
@@ -602,7 +616,7 @@
             ui.appendChild(sv("circle", { cx: p[1].x, cy: p[1].y, r: hs, "class": "hd", "data-h": p[0], "stroke-width": 1.5 * px }));
           });
         } else {
-          ui.appendChild(sv("path", { d: "M" + e.a.x + " " + e.a.y + "L" + e.b.x + " " + e.b.y, "class": "sel", "stroke-width": 6 * px }));
+          ui.appendChild(sv("path", { d: C.routeD(C.route(o, m)), "class": "sel", "stroke-width": 6 * px, fill: "none" }));
         }
         return;
       }
@@ -740,7 +754,8 @@
     }
     if (tool === "arrow") {
       var from = objAtPoint(e.clientX, e.clientY, "");
-      gesture = Object.assign(start, { type: "create", kind: "arrow", id: newId(), from: from });
+      gesture = Object.assign(start, { type: "create", kind: "arrow", id: newId(), from: from,
+        port: from && prefs.route !== "line" ? C.portAt(objById(from), start.w) : "" });
       return;
     }
     if (tool === "pen") {
@@ -829,7 +844,7 @@
   function shapeFrom(g, w) {
     if (g.kind === "arrow") {
       return { id: g.id, b: board || "-", k: "arrow", ax: r1(g.w.x), ay: r1(g.w.y), bx: r1(w.x), by: r1(w.y),
-        ao: g.from || "", bo: "", hd: "end", c: prefs.line, z: zTop() };
+        ao: g.from || "", bo: "", hd: "end", c: prefs.line, z: zTop(), rt: prefs.route, ap: g.port || "" };
     }
     var x = Math.min(g.w.x, w.x), y = Math.min(g.w.y, w.y), ww = Math.max(16, Math.abs(w.x - g.w.x)), hh = Math.max(16, Math.abs(w.y - g.w.y));
     if (g.kind === "frame") return { id: g.id, b: board || "-", k: "frame", x: r1(x), y: r1(y), w: r1(ww), h: r1(hh), tx: "", c: "gray", z: 0 };
@@ -860,6 +875,7 @@
       draft = {};
       if (g.moved && ar) {
         if (g.target) { if (g.end === "a") ar.ao = g.target; else ar.bo = g.target; }
+        setPort(ar, g.end, g.target, w);
         rows[g.id] = keepEnds(ar);
         commit(rows);
       }
@@ -871,6 +887,7 @@
       if (g.kind === "arrow") {
         if (!g.moved || !o) { toast(t("hint.arrow")); render(); return; }
         if (g.target) o.bo = g.target;
+        setPort(o, "b", g.target, w);
         rows[g.id] = keepEnds(o);
         if (commit(rows)) { sel = [g.id]; setTool("select"); }
       } else {
@@ -903,6 +920,15 @@
       }
     }
     render();
+  }
+
+  // The side an elbow or curved line leaves or reaches its object at:
+  // where its end was let go, when that is near a side (else chosen by
+  // itself). Straight lines keep aiming at the middle.
+  function setPort(ar, end, target, w) {
+    var key = end === "a" ? "ap" : "bp", o = target && objById(target);
+    var side = o && ar.rt && ar.rt !== "line" ? C.portAt(o, w) : "";
+    if (side) ar[key] = side; else delete ar[key];
   }
 
   // An arrow stuck to an object also keeps where it last pointed, so
@@ -958,7 +984,7 @@
   function placeEditor() {
     var o = editing.obj, ed = $("editor"), s = view.s, st = ed.style, x, y, w, h, fs;
     if (o.k === "arrow") {
-      var e = C.ends(o, C.index(objs())), mx = (e.a.x + e.b.x) / 2, my = (e.a.y + e.b.y) / 2;
+      var lp = C.labelAt(o, C.index(objs())), mx = lp.x, my = lp.y;
       w = 200; h = 34; fs = 14; x = mx - 100; y = my - 17;
     } else if (o.k === "frame") { x = o.x; y = o.y - 30; w = Math.max(160, o.w); h = 28; fs = 14; }
     else if (o.k === "text") { x = o.x; y = o.y; w = o.w; h = Math.max(o.fs * C.LH, C.textHeight(Object.assign({}, o, { tx: ed.value }), measure)) + 4; fs = o.fs; }
@@ -1090,7 +1116,10 @@
       } else if (tool === "shape") {
         shapeBtn(prefs.shape, function (s) { prefs.shape = s; savePrefs(); render(); });
         colorBtn(function (c) { prefs.line = c; savePrefs(); render(); });
-      } else if (tool === "text" || tool === "arrow") colorBtn(function (c) { prefs.line = c; savePrefs(); render(); });
+      } else if (tool === "arrow") {
+        routeBtn(prefs.route, function (r) { prefs.route = r; savePrefs(); render(); });
+        colorBtn(function (c) { prefs.line = c; savePrefs(); render(); });
+      } else if (tool === "text") colorBtn(function (c) { prefs.line = c; savePrefs(); render(); });
       bar.hidden = !bar.childNodes.length;
       return;
     }
@@ -1113,10 +1142,27 @@
     }
     if (kinds.arrow) {
       var a0 = list.filter(function (o) { return o.k === "arrow"; })[0];
-      var hb = add(iconBtn("icon-btn", "h_" + a0.hd, t("ctx.head"), function () {
-        pop(hb, C.HEADS.map(function (h) { return choice("h_" + h, t("hd." + h), function () { each(["arrow"], function (o) { o.hd = h; }); }); }));
-      }));
-      hb.setAttribute("aria-haspopup", "menu");
+      routeBtn(a0.rt || "line", function (r) {
+        prefs.route = r; savePrefs();
+        each(["arrow"], function (o) { if (r === "line") { delete o.rt; delete o.ap; delete o.bp; } else o.rt = r; });
+      });
+      var h0 = C.headsOf(a0);
+      ["a", "b"].forEach(function (end) {
+        var hb = add(iconBtn("icon-btn" + (end === "a" ? " flip" : ""), "hs_" + h0[end], t(end === "a" ? "ctx.headA" : "ctx.headB"), function () {
+          pop(hb, C.HEAD_STYLES.map(function (h) {
+            var c = choice("hs_" + h, t("hs." + h), function () {
+              each(["arrow"], function (o) {
+                var hz = C.headsOf(o);
+                hz[end] = h;
+                o.ha = hz.a; o.hb = hz.b; o.hd = C.hdFor(hz.a, hz.b);
+              });
+            });
+            if (end === "a") c.classList.add("flip");
+            return c;
+          }));
+        }));
+        hb.setAttribute("aria-haspopup", "menu");
+      });
       var db = add(iconBtn("icon-btn", "dash", t("ctx.dash"), function () {
         var on = !a0.ds;
         each(["arrow"], function (o) { o.ds = on; });
@@ -1140,6 +1186,13 @@
     if (sendApi() && K.items(list).length) add(iconBtn("icon-btn", "send", t("ctx.send"), function () { sendItems(K.items(list)); }));
     add(iconBtn("icon-btn del", "trash", t("ctx.del"), removeSel));
     bar.hidden = false;
+  }
+  function routeBtn(cur0, fn) {
+    var b = iconBtn("icon-btn", "r_" + cur0, t("ctx.route"), function () {
+      pop(b, C.ROUTES.map(function (r) { return choice("r_" + r, t("rt." + r), function () { fn(r); }); }));
+    });
+    b.setAttribute("aria-haspopup", "menu");
+    $("ctx").appendChild(b);
   }
   function shapeBtn(cur0, fn, change) {
     var b = iconBtn("icon-btn", "s_" + cur0, t("ctx.shape"), function () {

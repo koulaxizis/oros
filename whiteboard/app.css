@@ -279,6 +279,8 @@ dialog input[type="number"] {
 .pop-txt:hover, .pop .icon-btn:hover { background: var(--accent-soft); }
 
 /* ---- dialogs ---- */
+/* diagram connectors (DG2): the start-head icons point left */
+.icon-btn.flip svg { transform: scaleX(-1); }
 /* diagram shapes (DG1) */
 dialog.wb-dlg.wb-lib { width: min(680px, calc(100vw - 32px)); display: flex; flex-direction: column; }
 dialog.wb-dlg.wb-lib[open] { display: flex; }
