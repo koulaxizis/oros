@@ -679,7 +679,8 @@
   {
    "app": "pad",
    "files": [
-    "pad/app.js"
+    "pad/app.js",
+    "pad/devui.js"
    ]
   },
   {

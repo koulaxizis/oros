@@ -377,6 +377,7 @@ orosPack("de", "shell", {
  "cr.thanks": "Danke an alle, die das bauen und teilen, oft ohne zu wissen, dass es orOS gibt. Radio- und TV-Streams gehören ihren Sendern. Alle Details: CREDITS.md im Quellcode.",
  "cr.three-js": "3D-Buchmockups (Mockups)",
  "cr.codemirror": "Der Text- und Code-Editor (Pad)",
+ "cr.yaml": "YAML lesen und formatieren (Pad)",
  "cr.timologisi-online": "Verbundene Dienste: Rechnungen an myDATA senden (Rechnungen)",
  "cr.title": "Danksagungen & Lizenzen",
  "cr.tmdb": "Filme und Serien, optional (Medienregal)",
