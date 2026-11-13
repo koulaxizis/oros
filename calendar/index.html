@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Calendar · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=6.30.00">
-  <link rel="stylesheet" href="calendar.css?v=6.30.00">
+  <link rel="stylesheet" href="../fonts.css?v=6.47.00">
+  <link rel="stylesheet" href="calendar.css?v=6.47.00">
 
 </head>
 <body>
@@ -186,6 +186,7 @@
       <button id="ev-track" type="button" class="btn" data-i18n="ev.track" hidden></button>
       <button id="ev-log" type="button" class="btn" data-i18n="ev.logTime" hidden></button>
       <button id="ev-mail" type="button" class="btn" data-i18n="ev.mail" hidden></button>
+      <button id="ev-guests" type="button" class="btn" data-i18n="gu.btn" hidden></button>
       <button id="ev-share" type="button" class="btn" data-i18n="ev.share" hidden></button>
       <button id="ev-delete" type="button" class="btn danger" data-i18n="ev.delete"></button>
     </div>
@@ -414,6 +415,128 @@
     </div>
   </dialog>
 
+  <!-- Events with guests (wave E1): the guest list of one event -->
+  <dialog id="gu-dlg" aria-labelledby="gu-dlg-title">
+    <h3 id="gu-dlg-title" data-i18n="gu.title"></h3>
+    <p id="gu-when" class="del-text"></p>
+    <p id="gu-sum" class="gu-sum" aria-live="polite"></p>
+    <div class="gu-cap">
+      <label for="gu-cap" data-i18n="gu.cap"></label>
+      <input id="gu-cap" type="number" min="0" max="100000" step="1" inputmode="numeric">
+      <span class="gu-hint" data-i18n="gu.cap.hint"></span>
+    </div>
+    <div id="gu-next" class="gu-next" hidden>
+      <p id="gu-next-text"></p>
+      <div class="dlg-row">
+        <button id="gu-give" type="button" class="btn prim" data-i18n="gu.give"></button>
+      </div>
+    </div>
+    <div id="gu-tell" class="gu-next" hidden>
+      <p id="gu-tell-text"></p>
+      <div id="gu-tell-row" class="dlg-row"></div>
+    </div>
+    <div class="dlg-row gu-tools">
+      <button id="gu-door-btn" type="button" class="btn prim" data-i18n="gu.door"></button>
+      <button id="gu-from-ct" type="button" class="btn" data-i18n="gu.add.contacts"></button>
+      <button id="gu-add" type="button" class="btn" data-i18n="gu.add.one"></button>
+    </div>
+    <form id="gu-form" class="ev-form gu-form" hidden>
+      <label for="gu-n" data-i18n="gu.f.name"></label>
+      <input id="gu-n" type="text" maxlength="80" autocomplete="off">
+      <div class="date-pair">
+        <div>
+          <label for="gu-m" data-i18n="gu.f.mail"></label>
+          <input id="gu-m" type="email" maxlength="200" autocomplete="off">
+        </div>
+        <div>
+          <label for="gu-p" data-i18n="gu.f.phone"></label>
+          <input id="gu-p" type="tel" maxlength="40" autocomplete="off">
+        </div>
+      </div>
+      <div class="date-pair">
+        <div>
+          <label for="gu-s" data-i18n="gu.f.answer"></label>
+          <select id="gu-s"></select>
+        </div>
+        <div>
+          <label for="gu-k" data-i18n="gu.f.plus"></label>
+          <input id="gu-k" type="number" min="0" max="20" step="1" inputmode="numeric">
+        </div>
+      </div>
+      <label for="gu-x" data-i18n="gu.f.note"></label>
+      <input id="gu-x" type="text" maxlength="200" autocomplete="off">
+      <div class="dlg-row">
+        <button id="gu-save" type="submit" class="btn prim" data-i18n="gu.save"></button>
+        <button id="gu-form-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+        <button id="gu-tix-btn" type="button" class="btn" data-i18n="gu.tix" hidden></button>
+        <button id="gu-del" type="button" class="btn danger" data-i18n="gu.del" hidden></button>
+      </div>
+    </form>
+    <div class="gu-filter">
+      <input id="gu-q" type="search" maxlength="80" data-i18n-ph="gu.search" data-i18n-aria="gu.search">
+      <select id="gu-f" data-i18n-aria="gu.filter"></select>
+    </div>
+    <ul id="gu-list" class="gu-list"></ul>
+    <p id="gu-empty" class="empty" hidden></p>
+    <div class="dlg-row gu-tools">
+      <button id="gu-todo" type="button" class="btn" data-i18n="gu.todo" hidden></button>
+      <button id="gu-csv" type="button" class="btn" data-i18n="gu.csv"></button>
+      <button id="gu-print" type="button" class="btn" data-i18n="gu.print"></button>
+      <button id="gu-tixall" type="button" class="btn" data-i18n="gu.tixall"></button>
+    </div>
+    <div class="dlg-row">
+      <button id="gu-done" type="button" class="btn prim" data-i18n="lbl.done"></button>
+    </div>
+  </dialog>
+
+  <!-- A guest's ticket (wave E3) -->
+  <dialog id="gu-tix" aria-labelledby="gu-tix-title">
+    <h3 id="gu-tix-title" data-i18n="gu.tix.title"></h3>
+    <div class="gu-ticket">
+      <canvas id="gu-tix-qr" width="264" height="264" role="img" data-i18n-aria="gu.tix.qr"></canvas>
+      <p id="gu-tix-name" class="gu-tix-name"></p>
+      <p id="gu-tix-ev" class="gu-tix-ev"></p>
+      <p class="gu-hint" data-i18n="gu.tix.hint"></p>
+    </div>
+    <div class="dlg-row gu-tools">
+      <button id="gu-tix-share" type="button" class="btn" data-i18n="gu.tix.share" hidden></button>
+      <button id="gu-tix-save" type="button" class="btn" data-i18n="gu.tix.save"></button>
+      <button id="gu-tix-done" type="button" class="btn prim" data-i18n="lbl.done"></button>
+    </div>
+  </dialog>
+
+  <!-- Check-in at the door with the camera (wave E3) -->
+  <dialog id="gu-door" aria-labelledby="gu-door-title">
+    <h3 id="gu-door-title" data-i18n="gu.door"></h3>
+    <p id="gu-door-count" class="gu-sum" aria-live="polite"></p>
+    <div class="gu-cam"><video id="gu-door-video" playsinline muted></video></div>
+    <div id="gu-door-res" class="gu-door-res" role="status" aria-live="assertive"></div>
+    <div id="gu-door-ask" class="dlg-row" hidden>
+      <button id="gu-door-let" type="button" class="btn prim" data-i18n="gu.door.let"></button>
+      <button id="gu-door-skip" type="button" class="btn" data-i18n="gu.door.skip"></button>
+    </div>
+    <div class="dlg-row">
+      <button id="gu-door-cam" type="button" class="btn"></button>
+      <button id="gu-door-done" type="button" class="btn prim" data-i18n="lbl.done"></button>
+    </div>
+  </dialog>
+
+  <!-- Guests from Contacts -->
+  <dialog id="gu-pick" aria-labelledby="gu-pick-title">
+    <h3 id="gu-pick-title" data-i18n="gu.pick.title"></h3>
+    <div class="gu-filter">
+      <input id="gu-pick-q" type="search" maxlength="80" data-i18n-ph="gu.pick.search" data-i18n-aria="gu.pick.search">
+      <select id="gu-pick-lbl" data-i18n-aria="gu.pick.lbl"></select>
+    </div>
+    <label class="chk"><input id="gu-pick-all" type="checkbox"> <span data-i18n="gu.pick.all"></span></label>
+    <ul id="gu-pick-list" class="gu-list gu-pick-list"></ul>
+    <p id="gu-pick-empty" class="empty" data-i18n="gu.pick.none" hidden></p>
+    <div class="dlg-row">
+      <button id="gu-pick-go" type="button" class="btn prim"></button>
+      <button id="gu-pick-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+    </div>
+  </dialog>
+
   <!-- Print copy of the current view (wave 8): built just before printing -->
   <div id="print-area" aria-hidden="true"></div>
 
@@ -425,49 +548,51 @@
     </div>
   </dialog>
 
-  <script src="../i18n.js?v=6.30.00" data-app="calendar,recordpkg,google-import"></script>
-  <script src="../plants/core.js?v=6.30.00"></script>
-  <script src="../chores/core.js?v=6.30.00"></script>
-  <script src="../petcare/core.js?v=6.30.00"></script>
-  <script src="../petcare/house.js?v=6.30.00"></script>
-  <script src="../garage/core.js?v=6.30.00"></script>
-  <script src="../household/group.js?v=6.30.00"></script>
-  <script src="../garage/house.js?v=6.30.00"></script>
-  <script src="../baby/core.js?v=6.30.00"></script>
-  <script src="../together/core.js?v=6.30.00"></script>
-  <script src="../together/house.js?v=6.30.00"></script>
-  <script src="../travel/core.js?v=6.30.00"></script>
-  <script src="../meals/core.js?v=6.30.00"></script>
-  <script src="../budget/feed.js?v=6.30.00"></script>
-  <script src="../budget/loans.js?v=6.30.00"></script>
-  <script src="../shelf/feed.js?v=6.30.00"></script>
-  <script src="../publish/core.js?v=6.30.00"></script>
-  <script src="../publish/feed.js?v=6.30.00"></script>
-  <script src="../invoices/core.js?v=6.30.00"></script>
-  <script src="../timesheet/core.js?v=6.30.00"></script>
-  <script src="../familytree/ft-core.js?v=6.30.00"></script>
-  <script src="../sky/core.js?v=6.30.00"></script>
-  <script src="../todo/core.js?v=6.30.00"></script>
-  <script src="../kanban/core.js?v=6.30.00"></script>
-  <script src="../contacts/dates.js?v=6.30.00"></script>
-  <script src="../habits/core.js?v=6.30.00"></script>
-  <script src="../crm/core.js?v=6.30.00"></script>
-  <script src="../health/core.js?v=6.30.00"></script>
-  <script src="occur.js?v=6.30.00"></script>
-  <script src="../household/core.js?v=6.30.00"></script>
-  <script src="house.js?v=6.30.00"></script>
-  <script src="namedays.js?v=6.30.00"></script>
-  <script src="ics.js?v=6.30.00"></script>
-  <script src="../google-import.js?v=6.30.00"></script>
-  <script src="gcal.js?v=6.30.00"></script>
-  <script src="quickadd.js?v=6.30.00"></script>
-  <script src="subs.js?v=6.30.00"></script>
-  <script src="free.js?v=6.30.00"></script>
-  <script src="../bundle.js?v=6.30.00"></script>
-  <script src="../recordpkg.js?v=6.30.00"></script>
-  <script src="package.js?v=6.30.00"></script>
-  <script src="../weather/days.js?v=6.30.00"></script>
-  <script src="calendar.js?v=6.30.00"></script>
+  <script src="../i18n.js?v=6.47.00" data-app="calendar,recordpkg,google-import"></script>
+  <script src="../plants/core.js?v=6.47.00"></script>
+  <script src="../chores/core.js?v=6.47.00"></script>
+  <script src="../petcare/core.js?v=6.47.00"></script>
+  <script src="../petcare/house.js?v=6.47.00"></script>
+  <script src="../garage/core.js?v=6.47.00"></script>
+  <script src="../household/group.js?v=6.47.00"></script>
+  <script src="../garage/house.js?v=6.47.00"></script>
+  <script src="../baby/core.js?v=6.47.00"></script>
+  <script src="../together/core.js?v=6.47.00"></script>
+  <script src="../together/house.js?v=6.47.00"></script>
+  <script src="../travel/core.js?v=6.47.00"></script>
+  <script src="../meals/core.js?v=6.47.00"></script>
+  <script src="../budget/feed.js?v=6.47.00"></script>
+  <script src="../budget/loans.js?v=6.47.00"></script>
+  <script src="../shelf/feed.js?v=6.47.00"></script>
+  <script src="../publish/core.js?v=6.47.00"></script>
+  <script src="../publish/feed.js?v=6.47.00"></script>
+  <script src="../invoices/core.js?v=6.47.00"></script>
+  <script src="../timesheet/core.js?v=6.47.00"></script>
+  <script src="../familytree/ft-core.js?v=6.47.00"></script>
+  <script src="../sky/core.js?v=6.47.00"></script>
+  <script src="../todo/core.js?v=6.47.00"></script>
+  <script src="../kanban/core.js?v=6.47.00"></script>
+  <script src="../contacts/dates.js?v=6.47.00"></script>
+  <script src="../habits/core.js?v=6.47.00"></script>
+  <script src="../crm/core.js?v=6.47.00"></script>
+  <script src="../health/core.js?v=6.47.00"></script>
+  <script src="occur.js?v=6.47.00"></script>
+  <script src="../household/core.js?v=6.47.00"></script>
+  <script src="house.js?v=6.47.00"></script>
+  <script src="namedays.js?v=6.47.00"></script>
+  <script src="ics.js?v=6.47.00"></script>
+  <script src="../google-import.js?v=6.47.00"></script>
+  <script src="gcal.js?v=6.47.00"></script>
+  <script src="quickadd.js?v=6.47.00"></script>
+  <script src="subs.js?v=6.47.00"></script>
+  <script src="free.js?v=6.47.00"></script>
+  <script src="guests.js?v=6.47.00"></script>
+  <script src="guestsui.js?v=6.47.00"></script>
+  <script src="../bundle.js?v=6.47.00"></script>
+  <script src="../recordpkg.js?v=6.47.00"></script>
+  <script src="package.js?v=6.47.00"></script>
+  <script src="../weather/days.js?v=6.47.00"></script>
+  <script src="calendar.js?v=6.47.00"></script>
 
 </body>
 </html>
