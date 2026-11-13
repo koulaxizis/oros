@@ -14,6 +14,7 @@ Die drei Knöpfe oben wechseln zwischen `Stöbern`, `Statistik` und `Einstellung
 ## Mit einem Impuls arbeiten
 Jede Karte hat diese Knöpfe:
 - `Nutzen` öffnet den Impuls als neues Dokument im [Texteditor](app:writer), damit du sofort losschreiben kannst (mit der Variante, wenn sie angezeigt wird). Allein außerhalb von orOS geöffnet, kopiert er stattdessen den Impuls.
+- `Auf der Schreibmaschine` öffnet eine neue Seite in der [Schreibmaschine](app:typewriter), die mit dem Impuls beginnt, damit du Taste für Taste darunter schreibst. Die Seite wird gespeichert, sobald du etwas tippst.
 - `Kopieren` kopiert den Impuls in die Zwischenablage.
 - `Variante` (bei manchen Impulsen) fügt unter dem Impuls eine zusätzliche Wendung hinzu; `Kopieren` kopiert dann beides.
 - `Merken` macht ihn zum Favoriten (★); `Nicht merken` entfernt ihn.
