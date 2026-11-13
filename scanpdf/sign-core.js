@@ -16,6 +16,9 @@
 //         pages, by: sender's name, be?: sender's email, to: signer's
 //         name, te?: signer's email, msg?, lang, lk: 1 with an access
 //         code, fields: [field] }
+//       + bx?: { id, k, w } the reply box (wave 4): its id, key and
+//         write token, so the signer's page puts the answer there and
+//         it comes back on its own (cleanBox; not part of cleanRequest)
 //   field = { id, pg (0-based page), fx, fy (centre, fractions of the
 //             page as it shows), w, h (fractions of the page as it
 //             shows), k (core FIELDS), req (must be filled) }
@@ -31,11 +34,12 @@
 //   item = { id, a: sent at, q: the request (cleanRequest, without
 //            the PDF: the fields to put the answer back on), x:
 //            expires, c: link code, d?: revoke secret, p?: original in
-//            Files, got?: { at, st, nm, rh, hf?, pf?, why? }, rv?:
+//            Files, b?: { id, k, r } the reply box (id, key, read
+//            token), got?: { at, st, nm, rh, hf?, pf?, why? }, rv?:
 //            { at }, gone?: at }
 //   merge: union by id; the fixed fields of an id are the same on
 //   every device (larger JSON wins a difference); got / rv / gone:
-//   the earlier one wins; a closed item drops its revoke secret, a
+//   the earlier one wins; a closed item drops its secrets (d, b), a
 //   removed one keeps only { id, a, gone } (tombstone); at most
 //   MAX_ITEMS, newest first. Deterministic and associative (R26).
 // UMD: window.ScanPdfSign, or module.exports in Node.
@@ -46,7 +50,7 @@
   var NODE = typeof module !== "undefined" && module.exports;
   var C = NODE ? require("./core.js") : root.ScanPdfCore;
 
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
   var STORE_KEY = "oros-scanpdf-sign";
   var SLICE = "scanpdfSign";
   var KINDS = C.FIELDS;
@@ -76,6 +80,15 @@
   }
   function stamp(v) { v = Number(v); return Number.isSafeInteger(v) && v > 0 ? v : 0; }
   function lang(v) { return LANGS.indexOf(v) !== -1 ? v : "en"; }
+  // The reply box: in a request { id, k, w } (write token), in the
+  // sender's list { id, k, r } (read token). null when not well formed.
+  function cleanBox(v, tok) {
+    if (!v || typeof v !== "object" || typeof v.id !== "string" || !ID_RE.test(v.id)) return null;
+    if (typeof v.k !== "string" || !SECRET_RE.test(v.k) || typeof v[tok] !== "string" || !SECRET_RE.test(v[tok])) return null;
+    var o = { id: v.id, k: v.k };
+    o[tok] = v[tok];
+    return o;
+  }
 
   // ---------- fields ----------
   function cleanField(f, pages) {
@@ -324,6 +337,8 @@
     var rv = it.rv && stamp(it.rv.at);
     if (rv) o.rv = { at: rv };
     if (!got && !rv && typeof it.d === "string" && SECRET_RE.test(it.d)) o.d = it.d;
+    var b = !got && !rv && cleanBox(it.b, "r");
+    if (b) o.b = b;
     return o;
   }
   function readStore(raw) {
@@ -365,13 +380,15 @@
       var d = x.d || y.d;
       if (x.d && y.d && x.d !== y.d) d = x.d > y.d ? x.d : y.d;
       if (d) o.d = d;
+      var bs = [x.b, y.b].filter(Boolean).sort(function (u, v) { return canon(u) < canon(v) ? -1 : canon(u) > canon(v) ? 1 : 0; });
+      if (bs.length) o.b = bs.pop();
     }
     return cleanItem(o.id, o);
   }
   // The parts of an item that never change after it is sent.
   function fixed(it) {
     var o = Object.assign({}, it);
-    delete o.got; delete o.rv; delete o.d; delete o.p;
+    delete o.got; delete o.rv; delete o.d; delete o.p; delete o.b;
     return o;
   }
   function merge(a, b) {
@@ -412,6 +429,11 @@
     if (!it) return s;
     s.items[id] = { id: id, a: it.a, gone: at };
     return canonStore(s);
+  }
+  // Waiting items with a reply box to ask the relay about (at most 50).
+  function boxesToPoll(store, now) {
+    return list(store, now).filter(function (it) { return it.status === "waiting" && it.b; }).slice(0, 50)
+      .map(function (it) { return { item: it.id, id: it.b.id, key: it.b.k, rt: it.b.r }; });
   }
   // "waiting" | "signed" | "declined" | "revoked" | "expired"
   function status(it, now) {
@@ -456,7 +478,8 @@
     missing: missing, valueOvs: valueOvs, stampItems: stampItems, canon: canon, sha256: sha256, record: record,
     cert: cert, iso: iso, readStore: readStore, merge: merge, canonStore: canonStore, addItem: addItem, setGot: setGot,
     setRevoked: setRevoked, remove: remove, status: status, list: list, signLink: signLink, replyLink: replyLink,
-    replyCode: replyCode, requestCode: requestCode, signedName: signedName, sentName: sentName, email: email
+    replyCode: replyCode, requestCode: requestCode, signedName: signedName, sentName: sentName, email: email,
+    cleanBox: cleanBox, boxesToPoll: boxesToPoll
   };
   if (NODE) module.exports = api;
   else root.ScanPdfSign = api;

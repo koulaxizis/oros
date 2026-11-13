@@ -508,10 +508,18 @@ IP in the database.
 | `POST /v1 {op:"shr", act:"fin", id, tok}` | Needs all `n` pieces and exactly `size` bytes; then the item can be read. Answers `{exp}` |
 | `GET /s/<id>/<i>` | One piece, `application/octet-stream`, `nosniff`, `Content-Disposition: attachment`, `Content-Security-Policy: sandbox`, `Cache-Control: no-store`; CORS only for `ALLOWED_ORIGINS`. The same 404 for missing, expired, revoked and not finished |
 | `POST /v1 {op:"shr", act:"del", id, del}` | Revoke: deletes everything when SHA-256(`del`) matches. Always `{ok:true}` |
+| `POST /v1 {op:"shr", act:"box", exp, boxes:[{id, rh, wh}]}` | Reply boxes (Scanner & PDF signature requests): 1–20 per call, `exp` ≤ now + 120 days, `rh`/`wh` = SHA-256 hex of the read and the write token (made in the sender's browser). Each box reserves 64 KB in the store total. Answers `{exp}`; an id in use: 409, and none of the call's boxes stays |
+| `PUT /s/<box>/0` | The answer, once: `Authorization: Bearer <write token>`, at most 64 KB. A second write: 409. A wrong token or an expired box: the same 404 as no box |
+| `POST /v1 {op:"shr", act:"boxes", boxes:[{id, rt}]}` | Up to 50 boxes asked about in one call: `{st: {id: "wait" \| "ready" \| "gone"}}` (a wrong read token is `gone`). 30 calls per client IP per minute |
+| `GET /s/<box>/0` | The answer, with `Authorization: Bearer <read token>` only (the write token reads nothing). The box goes with `del` and its read token |
 
 Limits: 25 MB per item, 400 MB in all (declared sizes, counted at
 `new`; answer 507 `full`), 20 items and 100 MB per client IP per day,
 300 PUT and 600 GET per client IP per minute (separate from `/v1`).
+The store total is one row (`shr_tot`, seeded once from the table),
+moved by every insert and delete, so `new` never sums `shr_obj`.
+A waiting reply box is a row with `n = -1`: the purge of unfinished
+uploads leaves it alone; it goes at its own expiry or on `del`.
 Expired items and uploads unfinished after an hour are deleted by the
 hourly cron (`scheduled()` → `purgeShares`, in batches) and on every
 `new`. The relay cannot check what it stores (that is the point); the
@@ -524,7 +532,8 @@ relay). The tables are created on first use. Without the binding the op and `/s/
 503 `nostore`.
 
 Tests: `tests/share-relay.test.js` (an in-memory D1 that knows exactly
-the statements in `SHR_SQL`).
+the statements in `SHR_SQL`, `tests/shr-fake.js`) and
+`tests/share-box.test.js` (reply boxes on a real SQLite).
 
 ## Send to someone: song link previews (`/p/`)
 `GET|HEAD /p/1.<base64url deflate-raw JSON>` (`relay/preview.js`, BR-SHARE-PREVIEW, Music share wave 2). Chat apps never see a share link's `#fragment`, so for an unlocked song (kind `track`) the sender may give this link instead: the relay answers with Open Graph / Twitter tags (title · artist, album · licence, the cover's own address) and a meta refresh plus a link to `https://useoros.online/share/#<the same code>`.

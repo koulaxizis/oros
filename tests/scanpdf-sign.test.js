@@ -208,45 +208,8 @@ test.before(async () => {
   SR = await import("../relay/share.js");
   R._setIter(1000);
 });
-function fakeD1() {
-  const objs = new Map(), chunks = new Map();
-  function chunksOf(id) { return [...chunks.values()].filter((c) => c.id === id); }
-  function exec(sql, a) {
-    const Q = SR.SHR_SQL;
-    switch (sql) {
-      case Q.obj: case Q.chunk: case Q.indexExp: case Q.indexOpen: case Q.shl: case Q.shlLast: case Q.shlDay: case Q.shlTot: case Q.shlTot1: return { meta: {} };
-      case Q.getObj: { const o = objs.get(a[0]); return { first: o ? { ...o } : null }; }
-      case Q.used: return { first: { s: [...objs.values()].reduce((x, o) => x + o.size, 0) } };
-      case Q.addObj:
-        if (objs.has(a[0])) return { meta: { changes: 0 } };
-        objs.set(a[0], { exp: a[1], size: a[2], n: a[3], delh: a[4], tokh: a[5], at: a[6], fin: 0 });
-        return { meta: { changes: 1 } };
-      case Q.got: { const cs = chunksOf(a[0]); return { first: { c: cs.length, s: cs.reduce((x, c) => x + c.len, 0) } }; }
-      case Q.addChunk: {
-        const k = a[0] + "|" + a[1];
-        if (chunks.has(k)) return { meta: { changes: 0 } };
-        chunks.set(k, { id: a[0], i: a[1], len: a[2], data: a[3] });
-        return { meta: { changes: 1 } };
-      }
-      case Q.dropChunk: chunks.delete(a[0] + "|" + a[1]); return { meta: {} };
-      case Q.fin: { const o = objs.get(a[0]); if (o && !o.fin) { o.fin = 1; return { meta: { changes: 1 } }; } return { meta: { changes: 0 } }; }
-      case Q.read: {
-        const o = objs.get(a[0]), c = chunks.get(a[0] + "|" + a[1]);
-        return { first: o && c && o.fin === 1 && o.exp > a[2] ? { data: Array.from(new Uint8Array(c.data)) } : null };
-      }
-      case Q.dropChunks: for (const c of chunksOf(a[0])) chunks.delete(c.id + "|" + c.i); return { meta: {} };
-      case Q.dropObj: objs.delete(a[0]); return { meta: {} };
-      case Q.stale: return { all: [...objs.entries()].filter(([, o]) => o.exp <= a[0] || (o.fin === 0 && o.at < a[1])).slice(0, a[2]).map(([id]) => ({ id })) };
-    }
-    throw new Error("unknown SQL " + sql);
-  }
-  function stmt(sql, args) {
-    return { bind: (...b) => stmt(sql, b), first: async () => exec(sql, args || []).first,
-             all: async () => ({ results: exec(sql, args || []).all }), run: async () => exec(sql, args || []),
-             _run: () => exec(sql, args || []) };
-  }
-  return { objs, prepare: (sql) => stmt(sql), batch: async (ss) => ss.map((s) => s._run()) };
-}
+// relay/share.js on an in-memory D1 (tests/shr-fake.js)
+function fakeD1() { return require("./shr-fake.js").fakeD1(SR.SHR_SQL); }
 function relayFetch(env, clock) {
   let n = 0;
   return async (url, init) => {
@@ -293,4 +256,71 @@ test("round trip: request with an access code, reply, the sender's copy matches 
   // taking the request back after the reply
   await R.revoke(sent.id, sent.del, opts);
   assert.equal((await R.open(sent.code, Object.assign({ password: "1234-abcd" }, opts))).error, "gone");
+});
+
+test("wave 4: the answer comes back on its own through a reply box; too big falls back to a link", async () => {
+  const D = fakeD1(), env = { SHR_DB: D }, clock = { now: Date.now() }, fetch = relayFetch(env, clock);
+  const opts = { fetch, relay: "https://relay.test", now: clock.now };
+  const bytes = await pdfOf([[595.28, 841.89]]);
+  const req = S.cleanRequest(request({ h: await S.sha256(bytes) }));
+  // the sender: a box, then the request carrying its id, key and write token
+  const [box] = await R.boxes(1, Object.assign({ exp: clock.now + 37 * DAY }, opts));
+  assert.match(box.rt, /^[A-Za-z0-9_-]{43}$/);
+  const sent = await R.create({ v: 1, k: "sign", d: Object.assign({}, req, { bx: { id: box.id, k: box.key, w: box.wt } }) },
+    Object.assign({ days: 7, bin: bytes }, opts));
+  let store = S.addItem(S.readStore(null), { id: sent.id, a: clock.now, q: req, x: sent.exp, c: sent.code, d: sent.del,
+                                             b: { id: box.id, k: box.key, r: box.rt } });
+  assert.deepEqual(store.items[sent.id].b, { id: box.id, k: box.key, r: box.rt });
+  assert.ok(!("bx" in S.cleanRequest(Object.assign({}, req, { bx: { id: box.id, k: box.key, w: box.wt } }))), "the write token never goes into the list");
+  // only hashes of the tokens are on the relay
+  const row = D.objs.get(box.id);
+  assert.equal(row.n, -1);
+  assert.notEqual(row.delh, box.rt);
+  assert.ok(!JSON.stringify([...D.objs.values()]).includes(box.wt));
+  // the signer's page finds the box in the request and answers into it
+  const got = await R.open(sent.code, opts);
+  const rbox = S.cleanBox(got.e.d.bx, "w");
+  assert.deepEqual(rbox, { id: box.id, k: box.key, w: box.wt });
+  assert.equal(S.cleanBox(got.e.d.bx, "r"), null);
+  const reply = S.cleanReply({ v: 1, rq: sent.id, h: req.h, st: "signed", nm: "Maria", at: clock.now + 6e4, op: clock.now + 1e3,
+    ca: clock.now + 5e4, vals: { f1: SIG, f2: "13/11/2026" } }, req);
+  const wbox = { id: rbox.id, key: rbox.k, wt: rbox.w };
+  assert.equal(await R.putBox(wbox, { v: 1, k: "signed", d: reply }, Object.assign({ exp: clock.now + 30 * DAY }, opts)), true);
+  await assert.rejects(R.putBox(wbox, { v: 1, k: "signed", d: reply }, opts), /used/);
+  // the sender asks once for every waiting request, then takes the ready one
+  const want = S.boxesToPoll(store, clock.now);
+  assert.deepEqual(want, [{ item: sent.id, id: box.id, key: box.key, rt: box.rt }]);
+  assert.deepEqual(await R.poll(want, opts), { [box.id]: "ready" });
+  const ans = await R.takeBox(want[0], opts);
+  assert.equal(ans.e.k, "signed");
+  assert.deepEqual(S.cleanReply(ans.e.d, req), reply);
+  // the write token reads nothing; a closed item drops its box; the box goes
+  assert.equal((await R.takeBox({ id: box.id, key: box.key, rt: box.wt }, opts)).error, "gone");
+  store = S.setGot(store, sent.id, { at: clock.now + 7e4, st: "signed", nm: "Maria" });
+  assert.equal(store.items[sent.id].b, undefined);
+  assert.deepEqual(S.boxesToPoll(store, clock.now), []);
+  await R.revoke(box.id, box.rt, opts);
+  assert.deepEqual(await R.poll(want, opts), { [box.id]: "gone" });
+  // an answer too big for a box is refused before it is sent (the page then sends a link)
+  const [b2] = await R.boxes(1, opts);
+  const big = Object.assign({}, reply, { why: undefined, vals: { f1: { src: "data:image/png;base64," + zlib.deflateSync(Buffer.alloc(1)).toString("base64") } } });
+  const noise = Buffer.from(require("crypto").randomBytes(120000)).toString("base64");
+  await assert.rejects(R.putBox({ id: b2.id, key: b2.key, wt: b2.wt }, { v: 1, k: "signed", d: Object.assign({}, big, { pad: noise }) }, opts), /big/);
+  assert.deepEqual(await R.poll([{ id: b2.id, rt: b2.rt }], opts), { [b2.id]: "wait" });
+});
+
+test("wave 4 store: the box is a fixed part of an open item; merges keep it; a tombstone has none", () => {
+  const q = S.cleanRequest(request({ h: "a".repeat(64) }));
+  const b = { id: "B".repeat(22), k: "k".repeat(43), r: "r".repeat(43) };
+  const base = { id: "I".repeat(22), a: 5, q, x: 10 * DAY, c: "r1." + "x".repeat(22) + "." + "y".repeat(43) + ".1", d: "d".repeat(43) };
+  const withBox = S.addItem(S.readStore(null), Object.assign({ b }, base));
+  const without = S.addItem(S.readStore(null), base);
+  assert.deepEqual(S.merge(withBox, without).items[base.id].b, b, "a device that has the box wins it");
+  assert.deepEqual(S.merge(without, withBox), S.merge(withBox, without));
+  assert.equal(S.addItem(S.readStore(null), Object.assign({ b: { id: "bad", k: b.k, r: b.r } }, base)).items[base.id].b, undefined);
+  const gone = S.remove(withBox, base.id, 9);
+  assert.deepEqual(gone.items[base.id], { id: base.id, a: 5, gone: 9 });
+  const rv = S.setRevoked(withBox, base.id, 7);
+  assert.equal(rv.items[base.id].b, undefined);
+  assert.equal(S.boxesToPoll(withBox, 11 * DAY).length, 0, "an expired request is not asked about");
 });

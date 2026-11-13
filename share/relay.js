@@ -40,6 +40,19 @@
 //        error: "gone" (missing, expired or revoked) | "pass" | "bad" | "big" | "net"
 //   revoke(id, del, { fetch?, relay? }) → Promise<true> (throws "net")
 // create() throws Error(code): "full" | "rate" | "nostore" | "net" | "bad".
+//
+// Reply boxes (relay/share.js act "box"): a place on the relay where
+// someone with the write token puts ONE answer of at most BOX_PIECE
+// bytes, once, for the box's maker to read with the read token. Both
+// tokens and the key are made here; the relay keeps only SHA-256 of
+// the tokens. The answer is one piece: iv ‖ AES-GCM(pack(env, exp),
+// AAD "orOS share|<box id>|0|1").
+//   boxes(n, { exp, fetch?, relay? })  → Promise<[{ id, key, rt, wt }]>
+//   putBox({ id, key, wt }, env, { exp, fetch?, relay? }) → Promise<true>
+//        throws "big" (over BOX_PIECE) | "gone" | "used" | "rate" | "net" | "bad"
+//   poll([{ id, rt }], opts)           → Promise<{ id: "wait" | "ready" | "gone" }>
+//   takeBox({ id, key, rt }, opts)     → Promise<{ e, x } | { error }>  (as open())
+//   a box goes with revoke(id, rt).
 // ============================================================
 (function (root) {
   "use strict";
@@ -52,6 +65,8 @@
   var ITER = 600000;
   var DAY = 86400000;
   var INFO = "orOS share q1";
+  var BOX_PIECE = 65536;            // = relay/share.js SHR_LIMITS.boxBytes
+  var BOX_DAYS = 120;               // = SHR_LIMITS.boxMaxDays
   var CODE_RE = /^(r1|q1)\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{43})\.([1-9]\d{0,2})(?:\.([A-Za-z0-9_-]{22}))?$/;
 
   // ---------- bytes ----------
@@ -289,6 +304,61 @@
     });
   }
 
+  // ---------- reply boxes ----------
+  function boxes(n, opts) {
+    opts = opts || {};
+    var now = opts.now || Date.now();
+    var exp = Math.min(Number(opts.exp) || now + 37 * DAY, now + BOX_DAYS * DAY);
+    var list = [];
+    for (var i = 0; i < n; i++) list.push({ id: b64u(rand(16)), key: b64u(rand(32)), rt: b64u(rand(32)), wt: b64u(rand(32)) });
+    function h(s) { return cr().subtle.digest("SHA-256", utf8(s)).then(hexOf); }
+    return Promise.all(list.map(function (b) {
+      return Promise.all([h(b.rt), h(b.wt)]).then(function (x) { return { id: b.id, rh: x[0], wh: x[1] }; });
+    })).then(function (rows) {
+      return op(opts, { act: "box", exp: exp, boxes: rows });
+    }).then(function () { return list.map(function (b) { return Object.assign({ exp: exp }, b); }); });
+  }
+  function putBox(box, env, opts) {
+    opts = opts || {};
+    return pack(env, Number(opts.exp) || (opts.now || Date.now()) + 30 * DAY, null).then(function (plain) {
+      if (plain.length > BOX_PIECE - 28) throw new Error("big");
+      return seal(box.key, box.id, plain);
+    }).then(function (pieces) {
+      var piece = pieces[0];
+      return fetchFn(opts)(base(opts) + "/s/" + box.id + "/0", { method: "PUT", body: piece, credentials: "omit", cache: "no-store",
+        headers: { "Authorization": "Bearer " + box.wt, "Content-Type": "application/octet-stream" } })
+        .then(function (r) {
+          if (r.ok) return true;
+          throw new Error(r.status === 404 ? "gone" : r.status === 409 ? "used" : r.status === 429 ? "rate" : "bad");
+        }, function () { throw new Error("net"); });
+    });
+  }
+  function poll(list, opts) {
+    var rows = (list || []).slice(0, 50).map(function (b) { return { id: b.id, rt: b.rt }; });
+    if (!rows.length) return Promise.resolve({});
+    return op(opts, { act: "boxes", boxes: rows }).then(function (d) {
+      var st = (d && d.st) || {}, out = {};
+      rows.forEach(function (b) { out[b.id] = st[b.id] === "ready" || st[b.id] === "wait" ? st[b.id] : "gone"; });
+      return out;
+    });
+  }
+  function takeBox(box, opts) {
+    opts = opts || {};
+    var f;
+    try { f = fetchFn(opts); } catch (e) { return Promise.resolve({ error: "net" }); }
+    return f(base(opts) + "/s/" + box.id + "/0", { credentials: "omit", cache: "no-store", headers: { "Authorization": "Bearer " + box.rt } })
+      .then(function (r) {
+        if (r.status === 404) throw new Error("gone");
+        if (!r.ok) throw new Error("net");
+        return r.arrayBuffer().then(function (ab) { return new Uint8Array(ab); });
+      }, function () { throw new Error("net"); })
+      .then(function (piece) { return unseal(box.key, box.id, [piece]); })
+      .then(unpack).then(function (o) { return o; }, function (e) {
+        var m = e && e.message;
+        return { error: ["gone", "big", "net"].indexOf(m) >= 0 ? m : "bad" };
+      });
+  }
+
   function revoke(id, del, opts) {
     return op(opts, { act: "del", id: id, del: del }).then(function () { return true; }, function (e) {
       throw new Error(e && e.message === "net" ? "net" : "bad");
@@ -316,7 +386,8 @@
 
   var api = { RELAY: RELAY, PIECE: PIECE, MAX_PIECES: MAX_PIECES, MAX_PLAIN: MAX_PLAIN, DAYS: DAYS, ITER: ITER,
               parse: parse, isLocked: isLocked, pack: pack, seal: seal, unseal: unseal, unpack: unpack,
-              create: create, open: open, revoke: revoke, short: short, _setIter: function (n) { ITER = n; } };
+              create: create, open: open, revoke: revoke, short: short,
+              BOX_PIECE: BOX_PIECE, boxes: boxes, putBox: putBox, poll: poll, takeBox: takeBox, _setIter: function (n) { ITER = n; } };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosShareRelay = api;
 })(typeof window !== "undefined" ? window : globalThis);
