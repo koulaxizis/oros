@@ -54,13 +54,17 @@
       "send.counting": "Counting…",
       "btn.makeLink": "Create link",
       "btn.makeCloud": "Send through my Dropbox", "btn.cloudDel": "Delete now",
+      "hold.lab": "Keep in Dropbox for", "hold.h": "{n} hours",
+      "btn.resign": "Sign in to Dropbox again",
+      "err.scope": "Keeping files longer than 4 hours needs a new Dropbox permission. Sign in to Dropbox again once (your data stays as it is), then send again. 4 hours works without it.",
+      "err.sharecheck": "Dropbox did not let this browser download a test file through a shared link, so only 4 hours works here. Nothing was uploaded.",
       "cloud.check": "Checking that a Dropbox link opens in a browser…",
       "cloud.up": "Encrypting and uploading to your Dropbox…",
       "cloud.ready": "Ready until {t}. You can close this page: the files wait in your Dropbox, encrypted.",
       "cloud.keep": "Anyone with this link can download the files until {t}; after that they are deleted. Send it only to the person they are for.",
       "cloud.deleted": "Deleted from your Dropbox. The link no longer works.",
       "offer.cloud": "Through the sender's Dropbox, end-to-end encrypted. The link works until {t}.",
-      "err.expired": "This link has expired or the files were deleted (links through Dropbox last 4 hours). Ask for a new one.",
+      "err.expired": "This link has expired or the files were deleted (the sender chose how long they stay). Ask for a new one.",
       "err.cloudcheck": "Dropbox did not let this browser download its test file, so sending through Dropbox does not work here. Nothing was uploaded. Use Create link instead.",
       "err.full": "Not enough free space in your Dropbox: {s} needed.",
       "err.dropbox": "Dropbox did not take the upload. Check the sync connection in Settings › Sync, then try again.",
@@ -148,13 +152,17 @@
       "send.counting": "Μέτρηση…",
       "btn.makeLink": "Δημιουργία συνδέσμου",
       "btn.makeCloud": "Αποστολή μέσω του Dropbox μου", "btn.cloudDel": "Διαγραφή τώρα",
+      "hold.lab": "Διατήρηση στο Dropbox για", "hold.h": "{n} ώρες",
+      "btn.resign": "Σύνδεση ξανά στο Dropbox",
+      "err.scope": "Για διατήρηση πάνω από 4 ώρες χρειάζεται μια νέα άδεια του Dropbox. Συνδέσου ξανά στο Dropbox μία φορά (τα δεδομένα σου μένουν ως έχουν) και στείλε ξανά. Οι 4 ώρες δουλεύουν και χωρίς αυτήν.",
+      "err.sharecheck": "Το Dropbox δεν άφησε αυτόν τον browser να κατεβάσει ένα δοκιμαστικό αρχείο μέσω κοινόχρηστου συνδέσμου, οπότε εδώ δουλεύουν μόνο οι 4 ώρες. Δεν ανέβηκε τίποτα.",
       "cloud.check": "Ελέγχω ότι ένας σύνδεσμος Dropbox ανοίγει σε browser…",
       "cloud.up": "Κρυπτογράφηση και ανέβασμα στο Dropbox σου…",
       "cloud.ready": "Έτοιμο έως τις {t}. Μπορείς να κλείσεις τη σελίδα: τα αρχεία περιμένουν στο Dropbox σου, κρυπτογραφημένα.",
       "cloud.keep": "Όποιος έχει αυτόν τον σύνδεσμο μπορεί να κατεβάσει τα αρχεία έως τις {t}· μετά σβήνονται. Στείλ' τον μόνο σε όποιον είναι για αυτόν.",
       "cloud.deleted": "Σβήστηκαν από το Dropbox σου. Ο σύνδεσμος δεν ισχύει πια.",
       "offer.cloud": "Μέσω του Dropbox του αποστολέα, κρυπτογραφημένα από άκρο σε άκρο. Ο σύνδεσμος ισχύει έως τις {t}.",
-      "err.expired": "Ο σύνδεσμος έληξε ή τα αρχεία σβήστηκαν (οι σύνδεσμοι μέσω Dropbox ισχύουν 4 ώρες). Ζήτα νέο.",
+      "err.expired": "Ο σύνδεσμος έληξε ή τα αρχεία σβήστηκαν (ο αποστολέας διάλεξε πόσο μένουν). Ζήτα νέο.",
       "err.cloudcheck": "Το Dropbox δεν άφησε αυτόν τον browser να κατεβάσει το δοκιμαστικό του αρχείο, οπότε η αποστολή μέσω Dropbox δεν δουλεύει εδώ. Δεν ανέβηκε τίποτα. Χρησιμοποίησε τη Δημιουργία συνδέσμου.",
       "err.full": "Δεν φτάνει ο ελεύθερος χώρος στο Dropbox σου: χρειάζονται {s}.",
       "err.dropbox": "Το Dropbox δεν δέχτηκε το ανέβασμα. Έλεγξε τη σύνδεση στις Ρυθμίσεις › Συγχρονισμός και δοκίμασε ξανά.",
@@ -478,6 +486,7 @@
     $("make-link").disabled = !chosen.length;
     var mc = $("make-cloud");
     if (mc) { mc.hidden = !cloudApi() || !X; mc.disabled = true; }
+    if ($("hold-field")) $("hold-field").hidden = !mc || mc.hidden;
     var seq = ++expandSeq;
     expanded = null;
     $("chosen-sum").textContent = chosen.length ? t("send.counting") : "";
@@ -643,8 +652,30 @@
     if (on) { $("share-link").value = ""; $("share-qr").textContent = ""; $("share-code").textContent = ""; }
   }
   function hhmm(ms) {
-    try { return new Date(ms).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" }); }
-    catch (e) { return new Date(ms).toISOString().slice(11, 16); }
+    var d = new Date(ms), now = new Date(), o = { hour: "2-digit", minute: "2-digit" };
+    if (d.toDateString() !== now.toDateString()) { o.weekday = "short"; o.day = "numeric"; o.month = "short"; }
+    try { return d.toLocaleString(locale(), o); }
+    catch (e) { return d.toISOString().slice(0, 16).replace("T", " "); }
+  }
+  // Wave 5: how long the files stay in Dropbox (hours, remembered on this device).
+  var HOLD_KEY = "oros-transfer-hold", SHARE_OK = "oros-transfer-share-ok";
+  function holdNow() {
+    var el = $("hold"), h = el ? +el.value : 4;
+    return X && X.okHold ? X.okHold(h) : 4;
+  }
+  function fillHold() {
+    var el = $("hold");
+    if (!el || !X || !X.HOLDS) return;
+    var keep = 4;
+    try { keep = X.okHold(+localStorage.getItem(HOLD_KEY) || 4); } catch (e) {}
+    el.textContent = "";
+    X.HOLDS.forEach(function (h) {
+      var op = document.createElement("option");
+      op.value = String(h); op.textContent = t("hold.h", { n: h });
+      if (h === keep) op.selected = true;
+      el.appendChild(op);
+    });
+    el.onchange = function () { try { localStorage.setItem(HOLD_KEY, String(holdNow())); } catch (e) {} };
   }
   var cloudSend = null;                   // { stop, id, drop } while one runs or waits
   function startCloud() {
@@ -669,18 +700,20 @@
       return p.then(function (bl) { return bl.slice(a, b).arrayBuffer(); }).then(function (buf) { return new Uint8Array(buf); });
     }
     var need = manifest.reduce(function (n, f) { return n + X.packLen(f.s); }, 0);
+    var hold = holdNow(), shared = hold > 4, okKey = shared ? SHARE_OK : CLOUD_OK;
+    show("resign", false);
     var checked = false;
-    try { checked = localStorage.getItem(CLOUD_OK) === "1"; } catch (e) {}
+    try { checked = localStorage.getItem(okKey) === "1"; } catch (e) {}
     st.textContent = t(checked ? "cloud.up" : "cloud.check");
-    (checked ? Promise.resolve(true) : X.probe(drop, window.fetch.bind(window))).then(function (ok) {
-      if (!ok) { var e = new Error("cloudcheck"); e.code = "cloudcheck"; throw e; }
-      try { localStorage.setItem(CLOUD_OK, "1"); } catch (e2) {}
+    (checked ? Promise.resolve(true) : X.probe(drop, window.fetch.bind(window), shared)).then(function (ok) {
+      if (!ok) { var e = new Error("cloudcheck"); e.code = shared ? "sharecheck" : "cloudcheck"; throw e; }
+      try { localStorage.setItem(okKey, "1"); } catch (e2) {}
       st.textContent = t("cloud.up");
       return drop.space();
     }).then(function (sp) {
       if (sp && sp.allocated - sp.used < need) { var e = new Error("full"); e.code = "full"; throw e; }
       return X.send({
-        code: code, files: manifest, meta: meta, read: read, drop: drop, temp: S.temp,
+        code: code, hold: hold, files: manifest, meta: meta, read: read, drop: drop, temp: S.temp,
         cancelled: function () { return job.stop; },
         onProgress: function (pr) {
           setProg("send-prog", pr.bytes, pr.total);
@@ -717,7 +750,10 @@
       busy = false; stayAwake(false);
       cloudSend = null;
       var c = e && e.code;
-      st.textContent = c === "full" ? t("err.full", { s: size(need) }) : c === "cancelled" ? t("err.cancelled") : c === "cloudcheck" ? t("err.cloudcheck") : c === "io" ? t("err.io") : t("err.dropbox");
+      if (c === "scope") { try { localStorage.removeItem(SHARE_OK); } catch (e3) {} }
+      st.textContent = c === "full" ? t("err.full", { s: size(need) }) : c === "cancelled" ? t("err.cancelled") : c === "cloudcheck" ? t("err.cloudcheck") :
+        c === "sharecheck" ? t("err.sharecheck") : c === "scope" ? t("err.scope") : c === "io" ? t("err.io") : t("err.dropbox");
+      show("resign", c === "scope");
       st.className = "status warn";
       show("send-cancel", false); show("send-again", true); show("send-prog", false);
     });
@@ -1056,6 +1092,10 @@
       });
       $("make-link").addEventListener("click", startSend);
       $("make-cloud").addEventListener("click", startCloud);
+      fillHold();
+      if ($("resign")) $("resign").addEventListener("click", function () {
+        try { var p = shell(); if (p && p.orosSync && p.orosSync.connect) p.orosSync.connect(); } catch (e) {}
+      });
       $("send-cancel").addEventListener("click", cancelSend);
       $("send-again").addEventListener("click", sendAgain);
       $("copy-link").addEventListener("click", function () {

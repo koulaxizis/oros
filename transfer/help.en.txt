@@ -24,11 +24,13 @@ Transfer sends big files and whole folders from the orOS disk, or from this devi
 - When the two devices cannot connect directly at all (company Wi-Fi, a VPN, some mobile networks), a transfer of up to 50 MB in total goes through the orOS relay instead. It is slower, and still end-to-end encrypted: the relay passes sealed pieces on and stores nothing. Over 50 MB Transfer says it could not connect; try both on the same Wi-Fi, or send less at a time.
 
 ## Through your Dropbox
-- When orOS syncs with Dropbox, `Send through my Dropbox` appears next to `Create link`. orOS encrypts the files on this device and uploads them to your Dropbox (the orOS app folder, under Transfer). Then you get a link and a QR code. You can close the page: the other person has about 4 hours to open the link.
+- When orOS syncs with Dropbox, `Send through my Dropbox` appears next to `Create link`. orOS encrypts the files on this device and uploads them to your Dropbox (the orOS app folder, under Transfer). Then you get a link and a QR code. You can close the page: the other person can open the link for as long as you chose.
 - Dropbox only stores encrypted bytes. The key is in the link after the # sign, which is never sent to a server. The other person needs no Dropbox account and no orOS.
 - Anyone who has the link can download the files until it expires, so send it only to the person they are for. There is no code to type: use the link or the QR code.
-- After 4 hours the link stops working, and the next time you open Transfer the files are deleted from your Dropbox. `Delete now` deletes them at once.
-- The first time on a device, Transfer checks with a small test file that this browser can download from a Dropbox link. If it cannot, it says so and uploads nothing.
+- `Keep in Dropbox for` sets how long: 4, 12, 24, 48, 60, 72, 84 or 96 hours. Your choice is remembered on this device.
+- 4 hours uses Dropbox's temporary links, which stop by themselves. Longer times use Dropbox shared links, which need one more Dropbox permission: the first time, Transfer asks you to sign in to Dropbox again once (your data and passphrase stay as they are).
+- When the time is up the link stops working, and whichever of your devices has orOS open deletes the files from your Dropbox within the hour. If none is open, the encrypted files wait in your Dropbox until one opens. `Delete now` deletes them at once.
+- The first time on a device, Transfer checks with a small test file that this browser can download from a Dropbox link (once for 4 hours and once for longer times). If it cannot, it says so and uploads nothing.
 - The files take space in your Dropbox until they are deleted. Transfer checks the free space first.
 
 ## History
