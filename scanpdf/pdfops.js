@@ -27,6 +27,14 @@
 //     words (wordsFor(…, true)) keep the text layer.
 // wordsFor(lib, srcs, p, prefs, rec, display) -> where each word of
 //     an ocr record goes on that page (ocr.place).
+// stamp(lib, bytes, items, meta) -> Promise<Uint8Array> (signature
+//     requests, sign-core.js): the PDF itself (not copied page by
+//     page), with additions on some of its pages, a certificate page
+//     at the end and a file attached. items: [{ pg (0-based), ov:
+//     [core additions] }]; meta: { font (as build), cert: { title,
+//     rows: [[label, value]], note }, attach: { name, bytes,
+//     description, at (ms) } }. Same bytes and items give the same
+//     pages, so the sender's copy matches the one the signer kept.
 // Pages of a PDF are copied as they are (text, links on the page,
 // fonts); bookmarks and forms of the whole file are not carried.
 // A picture becomes one page sized by prefs (core.pageFor/fitRect).
@@ -122,7 +130,7 @@
     var chain = Promise.resolve();
     (p.ov || []).forEach(function (raw) {
       var o = C.cleanOv(raw);
-      if (!o) return;
+      if (!o || o.t === "field") return;          // a place to sign: travels beside the PDF
       chain = chain.then(function () {
         var c = centre(o.cx * g.W, o.cy * g.H);
         if (o.t === "img") {
@@ -134,6 +142,7 @@
         }
         if (o.t === "shape" || o.t === "ink") { drawParts(lib, page, c, o, S); return; }
         var size = o.fs * S, tw = font.widthOfTextAtSize(o.text, size), col = C.COLORS[o.color];
+        if (o.mw && tw > o.mw * S) { size *= o.mw * S / tw; tw = o.mw * S; }
         var a = C.anchor(c[0], c[1], -tw / 2, -C.BASELINE * size, o.A);
         page.drawText(o.text, { x: a.x, y: a.y, size: size, font: font, color: lib.rgb(col[0], col[1], col[2]), rotate: lib.degrees(o.A) });
       });
@@ -291,7 +300,99 @@
     });
   }
 
-  var api = { load: load, build: build, geom: geom, fromImages: fromImages, wordsFor: wordsFor, PRODUCER: PRODUCER };
+  // ---------- Signature requests ----------
+  var A4 = [595.28, 841.89];
+  // Lines of text no wider than w points (words kept whole; a word
+  // longer than the line, such as a hash, is cut where it must be).
+  function wrap(font, text, size, w) {
+    var out = [];
+    String(text).split("\n").forEach(function (para) {
+      var line = "";
+      para.split(/\s+/).filter(Boolean).forEach(function (word) {
+        var tryLine = line ? line + " " + word : word;
+        if (font.widthOfTextAtSize(tryLine, size) <= w) { line = tryLine; return; }
+        if (line) out.push(line);
+        line = "";
+        while (font.widthOfTextAtSize(word, size) > w && word.length > 1) {
+          var n = word.length;
+          while (n > 1 && font.widthOfTextAtSize(word.slice(0, n), size) > w) n--;
+          out.push(word.slice(0, n));
+          word = word.slice(n);
+        }
+        line = word;
+      });
+      out.push(line);
+    });
+    return out;
+  }
+  // The certificate: a title, then label / value rows, then a note,
+  // on as many A4 pages as it needs.
+  function certPages(lib, doc, font, cert) {
+    var M = 48, LW = 150, size = 9.5, lead = 13, dark = lib.rgb(0.1, 0.1, 0.12), dim = lib.rgb(0.38, 0.38, 0.42);
+    var page = null, y = 0;
+    function newPage() { page = doc.addPage(A4); y = A4[1] - M; }
+    function need(h) { if (!page || y - h < M) newPage(); }
+    newPage();
+    wrap(font, cert.title || "", 15, A4[0] - 2 * M).forEach(function (l) {
+      page.drawText(l, { x: M, y: y - 15, size: 15, font: font, color: dark });
+      y -= 20;
+    });
+    y -= 8;
+    (cert.rows || []).forEach(function (r) {
+      var ls = wrap(font, r[0] || "", size, LW - 10), vs = wrap(font, r[1] || "", size, A4[0] - 2 * M - LW);
+      var n = Math.max(ls.length, vs.length);
+      need(n * lead + 4);
+      for (var i = 0; i < n; i++) {
+        if (ls[i]) page.drawText(ls[i], { x: M, y: y - size, size: size, font: font, color: dim });
+        if (vs[i]) page.drawText(vs[i], { x: M + LW, y: y - size, size: size, font: font, color: dark });
+        y -= lead;
+      }
+      y -= 4;
+    });
+    if (cert.note) {
+      y -= 6;
+      wrap(font, cert.note, 8.5, A4[0] - 2 * M).forEach(function (l) {
+        need(12);
+        page.drawText(l, { x: M, y: y - 8.5, size: 8.5, font: font, color: dim });
+        y -= 12;
+      });
+    }
+  }
+  function stamp(lib, bytes, items, meta) {
+    var f = meta && meta.font;
+    if (!f || !f.fontkit || !f.bytes) return Promise.reject(codeErr("font"));
+    return load(lib, bytes).then(function (r) {
+      if (r.err) throw codeErr(r.err);
+      var doc = r.doc, images = {}, opts = C.readDocOpts(null);
+      doc.registerFontkit(f.fontkit);
+      return doc.embedFont(f.bytes, { subset: true }).then(function (font) {
+        return (items || []).reduce(function (c, it) {
+          return c.then(function () {
+            if (!(it && it.pg >= 0 && it.pg < r.pages)) throw codeErr("bad");
+            var page = doc.getPage(it.pg);
+            return decorate(lib, doc, page, geomOf(lib, page, page.getRotation().angle), { ov: it.ov || [] },
+                            0, 1, opts, font, images);
+          });
+        }, Promise.resolve()).then(function () {
+          if (meta.cert) certPages(lib, doc, font, meta.cert);
+          var at = new Date(meta.attach && meta.attach.at || 0);
+          if (meta.attach) {
+            return doc.attach(meta.attach.bytes, meta.attach.name, { mimeType: "application/json",
+              description: meta.attach.description || "", creationDate: at, modificationDate: at });
+          }
+        }).then(function () {
+          return doc.save({ useObjectStreams: true });
+        });
+      });
+    });
+  }
+  // Where a page shows (its turn and size) in a PDF already made.
+  function pageGeoms(lib, doc) {
+    return doc.getPages().map(function (pg) { return geomOf(lib, pg, pg.getRotation().angle); });
+  }
+
+  var api = { load: load, build: build, geom: geom, fromImages: fromImages, wordsFor: wordsFor, PRODUCER: PRODUCER,
+              stamp: stamp, pageGeoms: pageGeoms };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.ScanPdfOps = api;
 })(typeof window !== "undefined" ? window : this);

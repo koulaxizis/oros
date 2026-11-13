@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.44.00
+- **Ask someone to sign a PDF.** In Scanner & PDF, put boxes on the pages for the other person to fill (signature, initials, name, date, text, tick), then `Ask to sign`: they get an encrypted link that ends in 1, 7 or 30 days, can be locked with an access code, and opens in any browser with no account. They sign there and keep their signed copy; you get the same signed PDF, with a certificate page and the signing record inside, in Files › PDF › Signatures. `Signature requests` lists them all. A simple electronic signature under the EU eIDAS rules. See [Scanner & PDF](app:scanpdf).
+
 ## Version 6.43.00
 - **New app: Forms.** Make surveys, sign-up sheets and order forms in Office: many kinds of questions, pages, questions that show only for some answers and jumps between pages, with a preview that works exactly like the real form. Start blank or from six templates. Sharing a form and collecting answers come in the next update. See [Forms](app:forms).
 
