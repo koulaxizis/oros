@@ -226,6 +226,14 @@
       "type": "internal"
     },
     {
+      "id": "forms",
+      "name": "Forms",
+      "category": "Office",
+      "icon": "forms",
+      "url": "forms/",
+      "type": "internal"
+    },
+    {
       "id": "spreadsheet",
       "name": "Spreadsheet",
       "category": "Office",

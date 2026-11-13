@@ -337,6 +337,13 @@
    ]
   },
   {
+   "app": "forms",
+   "files": [
+    "forms/app.js",
+    "forms/render.js"
+   ]
+  },
+  {
    "app": "g2048",
    "files": [
     "g2048/g2048.js"

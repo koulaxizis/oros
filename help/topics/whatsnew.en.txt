@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.43.00
+- **New app: Forms.** Make surveys, sign-up sheets and order forms in Office: many kinds of questions, pages, questions that show only for some answers and jumps between pages, with a preview that works exactly like the real form. Start blank or from six templates. Sharing a form and collecting answers come in the next update. See [Forms](app:forms).
+
 ## Version 6.42.00
 - **Diagrams in Whiteboard.** `More` › `Diagram shapes…` (or L) opens a library of 49 shapes: flowchart, org chart, UML (classes with compartments), basic shapes and network and IT icons, with search. Selected shapes can be turned into another one with `Shape` › `More shapes`. On a device with an older orOS they show as plain shapes with the same text until it updates.
 
