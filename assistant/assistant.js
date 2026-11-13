@@ -295,6 +295,23 @@
       "rb.slaLines": "{n} of {t} lines break as in the PDF ({p} %).",
       "hs.head.learn": "Learn a house style · {app}",
       "hs.head.book": "Lay out a book · {app}",
+      "ep.head": "Make an EPUB · {app}",
+      "ep.byTitle": "The document linked to the Publishing title {t}.",
+      "ep.lay.reflowable": "Reflowable text", "ep.lay.fixed": "Fixed layout, text as text", "ep.lay.pictures": "Fixed layout, pages as pictures",
+      "ep.edition": "Edition: {e}.", "ep.ready": "Then marked ready in Publishing if the check finds no errors.",
+      "ep.hint": "Layout makes the e-book on this device, checks it and keeps a copy in Layout/EPUB on the orOS disk. Nothing is sent to the AI service.",
+      "ep.go": "Make EPUB",
+      "ep.working": "{app} is making the EPUB on this device…",
+      "ep.failed": "{app} could not make the EPUB. Nothing was made.",
+      "ep.noDoc": "{app} found no such document.",
+      "ep.noEdition": "That document has no EPUB edition by that name.",
+      "ep.busy": "{app} was busy with something else. Try again.",
+      "ep.repSum": "{p} pages, {h} headings, {i} pictures, {kb} KB.",
+      "ep.repErr": "{n} errors: e-book stores would refuse it ({list}).",
+      "ep.repOk": "No errors, {n} warnings.",
+      "ep.repAlt": "Pictures without a description on pages {list}.",
+      "ep.repPath": "Saved as {path}.",
+      "ep.repReady": "Marked ready in Publishing.",
       "hs.head.rule": "Add a house rule · {app}",
       "hs.docs": "From: {list}.",
       "hs.in": "In the house style {h}.",
@@ -938,6 +955,23 @@
       "rb.slaLines": "{n} από {t} γραμμές σπάνε όπως στο PDF ({p} %).",
       "hs.head.learn": "Εκμάθηση ύφους έκδοσης · {app}",
       "hs.head.book": "Σελιδοποίηση βιβλίου · {app}",
+      "ep.head": "Δημιουργία EPUB · {app}",
+      "ep.byTitle": "Το έγγραφο που συνδέεται με τον τίτλο {t} των Εκδόσεων.",
+      "ep.lay.reflowable": "Κείμενο ελεύθερης ροής", "ep.lay.fixed": "Σταθερή διάταξη, κείμενο ως κείμενο", "ep.lay.pictures": "Σταθερή διάταξη, σελίδες ως εικόνες",
+      "ep.edition": "Έκδοση: {e}.", "ep.ready": "Μετά σημειώνεται έτοιμο στις Εκδόσεις, αν ο έλεγχος δεν βρει σφάλματα.",
+      "ep.hint": "Το Layout φτιάχνει το e-book σε αυτή τη συσκευή, το ελέγχει και κρατά αντίγραφο στο Layout/EPUB του δίσκου του orOS. Τίποτα δεν στέλνεται στην υπηρεσία AI.",
+      "ep.go": "Δημιουργία EPUB",
+      "ep.working": "Το {app} φτιάχνει το EPUB σε αυτή τη συσκευή…",
+      "ep.failed": "Το {app} δεν μπόρεσε να φτιάξει το EPUB. Δεν έγινε τίποτα.",
+      "ep.noDoc": "Το {app} δεν βρήκε τέτοιο έγγραφο.",
+      "ep.noEdition": "Το έγγραφο δεν έχει έκδοση EPUB με αυτό το όνομα.",
+      "ep.busy": "Το {app} ήταν απασχολημένο με κάτι άλλο. Δοκίμασε ξανά.",
+      "ep.repSum": "{p} σελίδες, {h} επικεφαλίδες, {i} εικόνες, {kb} KB.",
+      "ep.repErr": "{n} σφάλματα: τα καταστήματα e-book θα το απέρριπταν ({list}).",
+      "ep.repOk": "Κανένα σφάλμα, {n} προειδοποιήσεις.",
+      "ep.repAlt": "Εικόνες χωρίς περιγραφή στις σελίδες {list}.",
+      "ep.repPath": "Αποθηκεύτηκε ως {path}.",
+      "ep.repReady": "Σημειώθηκε έτοιμο στις Εκδόσεις.",
       "hs.head.rule": "Νέος κανόνας ύφους · {app}",
       "hs.docs": "Από: {list}.",
       "hs.in": "Στο ύφος έκδοσης {h}.",
@@ -3163,7 +3197,7 @@
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
-                                            recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn,
+                                            recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn, epub: rbOn,
                                             lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps) });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
@@ -3184,7 +3218,7 @@
       files: builtin ? "" : "pdf",
       openFile: fileOn,
       rebuild: rbOn,
-      house: rbOn,
+      house: rbOn, epub: rbOn,
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       page: wmode === "native",
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
@@ -3369,6 +3403,7 @@
     if (call.name === "open_file") return Promise.resolve(proposeOpenFile(c, call.args));
     if (call.name === "rebuild_in_layout") return Promise.resolve(proposeRebuild(c, call.args));
     if (/^(learn_house_style|layout_book|add_house_rule)$/.test(call.name)) return Promise.resolve(proposeHouse(c, call.name, call.args));
+    if (call.name === "export_epub") return Promise.resolve(proposeEpub(c, call.args));
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
     if (call.name === "propose_rule") return Promise.resolve(proposeRule(call.args));
     if (call.name === "read_in_app") return readInApp(c, call.args, apps);
@@ -3669,6 +3704,36 @@
     return true;
   }
 
+  // export_epub (AS-EPUB, Layout LY-EPUB E4): checked now; the card's
+  // button hands it to Layout ({ epubOut }), which makes and checks the
+  // EPUB on the device and leaves its report under the card's key.
+  function proposeEpub(c, args) {
+    if (!installed().layout) return { content: "Error: Layout is not installed.", err: 1, ui: { k: "epubErr" } };
+    var e = C.normEpub(args);
+    if (!e.ok) return { content: "Error: " + e.err, err: 1, ui: { k: "epubErr" } };
+    var ui = { k: "epub", doc: e.doc, title: e.title, edition: e.edition, layout: e.layout, ready: e.ready, key: attId(), st: "" };
+    return { content: "Shown to the user as a card: making an EPUB of \u201c" + (e.doc || e.title) + "\u201d. Layout does it on the device when they press the button; nothing is made yet. The report will be added here when Layout is done.", ui: ui };
+  }
+  function runEpub(ui, c) {
+    var p = shell();
+    if (!p || typeof p.__orosOpenAt !== "function") return false;
+    var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", title: ui.title || "", edition: ui.edition || "", layout: ui.layout || "", ready: ui.ready === 1 ? 1 : 0 };
+    try { p.__orosOpenAt("layout", { epubOut: rq }); return true; } catch (e) { return false; }
+  }
+  function epubText(rep) {
+    return !rep || rep.failed ? "Layout could not make the EPUB. Nothing was made. Report: " + JSON.stringify(rep)
+      : "Layout made the EPUB on the device; its check report is open in Layout. Report: " + JSON.stringify(rep);
+  }
+  function takeEpub(r, c) {
+    var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
+    if (!rep || ui.st !== "opened") return false;
+    ui.rep = C.epubReport(rep);
+    ui.st = ui.rep && !ui.rep.failed ? "done" : "failed";
+    r.content = ui.st === "failed" ? "The user pressed the button, but " + epubText(ui.rep).charAt(0).toLowerCase() + epubText(ui.rep).slice(1) : epubText(ui.rep);
+    saveChat(c).then(function () { delete attRb[key]; }, function () {});
+    return true;
+  }
+
   // Only while this frame is alive: an app opened from a card may take
   // its place, and the report then waits for the next opening.
   function onRb() {
@@ -3676,7 +3741,7 @@
     if (!chat) return;
     var hit = false;
     chat.msgs.forEach(function (m) {
-      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)) || (r.ui.k === "edit" && takeEdited(r, chat)))) hit = true; });
+      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)) || (r.ui.k === "epub" && takeEpub(r, chat)) || (r.ui.k === "edit" && takeEdited(r, chat)))) hit = true; });
     });
     if (hit) renderMessages();
   }
@@ -7127,6 +7192,8 @@
         if (ui.k === "rebuildErr") return;
         if (ui.k === "house") { drawHouse(host, r, c); return; }
         if (ui.k === "houseErr") return;
+        if (ui.k === "epub") { drawEpub(host, r, c); return; }
+        if (ui.k === "epubErr") return;
         if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
         if (ui.k === "recipeErr") return;
         if (ui.k === "rule") { drawRule(host, r, c); return; }
@@ -7497,6 +7564,53 @@
       };
       if (op === "book") acts.appendChild(button(t("hs.all"), "", function () { go(true); }));
       acts.appendChild(button(t("hs.go." + op), "primary", function () { go(false); }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+
+  // An export_epub card: what goes out, then Layout's report.
+  function drawEpub(host, r, c) {
+    var ui = r.ui, have = installed();
+    if (!have.layout) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: "Layout" }))); return; }
+    takeEpub(r, c);
+    var name = have.layout, card = el("section", "entry-card");
+    card.appendChild(el("h3", "entry-head", t("ep.head", { app: name })));
+    card.appendChild(el("p", "entry-title", ui.doc || ui.title || ""));
+    var bits = [];
+    if (!ui.doc && ui.title) bits.push(t("ep.byTitle", { t: ui.title }));
+    if (ui.edition) bits.push(t("ep.edition", { e: ui.edition }));
+    if (ui.layout) bits.push(t("ep.lay." + ui.layout) + ".");
+    if (ui.ready === 1) bits.push(t("ep.ready"));
+    if (bits.length) card.appendChild(el("p", "dlg-hint", bits.join(" ")));
+    var rp = ui.rep;
+    if (ui.st === "done" && rp) {
+      var ul = el("ul", "entry-list");
+      ul.appendChild(el("li", "", t("ep.repSum", { p: rp.pages, h: rp.headings, i: rp.pictures, kb: Math.max(1, Math.round(rp.bytes / 1024)) })));
+      ul.appendChild(el("li", "", rp.errors.length ? t("ep.repErr", { n: rp.errors.length, list: rp.errors.join(", ") }) : t("ep.repOk", { n: rp.warnings.length })));
+      if (rp.picturesWithoutDescription.length) ul.appendChild(el("li", "", t("ep.repAlt", { list: rp.picturesWithoutDescription.slice(0, 20).join(", ") })));
+      if (rp.path) ul.appendChild(el("li", "", t("ep.repPath", { path: rp.path })));
+      if (rp.markedReady === "yes") ul.appendChild(el("li", "", t("ep.repReady")));
+      card.appendChild(ul);
+    } else if (ui.st === "opened") {
+      card.appendChild(el("p", "entry-state", t("ep.working", { app: name })));
+    } else if (ui.st === "failed") {
+      var why = rp && /^(noDoc|noEdition|busy)$/.test(rp.why) ? "ep." + rp.why : "ep.failed";
+      card.appendChild(el("p", "entry-state err", t(why, { app: name })));
+    } else if (ui.st) {
+      card.appendChild(el("p", "entry-state", t("entry." + ui.st, { app: name })));
+    } else {
+      card.appendChild(el("p", "dlg-hint", t("ep.hint")));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () { ui.st = "dismissed"; saveChat(c); renderMessages(); }));
+      acts.appendChild(button(t("ep.go"), "primary", function () {
+        ui.st = "opened";
+        // Saved before Layout opens (it may take this frame's place).
+        saveChat(c).then(function () {
+          if (!runEpub(ui, c)) { ui.st = "failed"; r.content = "The request could not be handed to Layout. Nothing was made."; saveChat(c); }
+          renderMessages();
+        });
+      }));
       card.appendChild(acts);
     }
     host.appendChild(card);
@@ -9100,7 +9214,7 @@
                              // GATE-PAR P3: work handed to an app's window (gatePress), once some app is at write
                              entries: on && entryKinds().length > 0, recipes: on ? recipeApps().filter(function (a) { return rd[a.id]; }).map(function (a) { return a.id; }) : [],
                              rules: on && rd.automations && !!window.OrosAutoCore, newsletter: on && rd.newsletter, cover: on && rd.layout,
-                             rebuild: on && rd.layout, house: on && rd.layout,
+                             rebuild: on && rd.layout, house: on && rd.layout, epub: on && rd.layout,
                              files: !cfRaw().length || !rd.files ? false : appOf(ga.write, "files") ? "write" : true });
     // edit_in_app only for the documents Claude may change
     var wc = editCats(ga.write), ed = Object.keys(wc).length ? C.toolsFor({ data: true, edits: wc }).filter(function (x) { return x.name === "edit_in_app"; }) : [];
@@ -9275,6 +9389,8 @@
       if (!cv.ok) return { ok: false, c: cv.err };
       app = "layout"; call = ["layout", { cover: JSON.parse(JSON.stringify(cv.cover)) }];
       note = "Layout's Book cover window is open on the owner's screen with these details, for the owner to create it there.";
+    } else if (ui.k === "epub") {
+      return gateEpub(ui, apps, Date.now() + 21000);
     } else if (ui.k === "rebuild" || ui.k === "house") {
       app = "layout";
       run = function () { return ui.k === "rebuild" ? runRebuild(ui, gateConv) : runHouse(ui, gateConv, false); };
@@ -9288,6 +9404,31 @@
     var done = run ? run() : runEntry({ call: { fn: "openAt", args: call } });
     if (!done) return { ok: false, c: "The app could not do it on the device." };
     return { ok: true, a: [app], k: 1, c: JSON.stringify({ done: "opened", app: app, note: note }) };
+  }
+  // export_epub through the gate: Layout opens on the owner's screen,
+  // makes the EPUB and its report is the answer (or, past the deadline,
+  // a note that it is still working; read_in_app reads it afterwards).
+  function gateEpub(ui, apps, deadline) {
+    var have = installed(), rd = {};
+    apps.forEach(function (x) { rd[x.id] = 1; });
+    if (!rd.layout) return Promise.resolve({ ok: false, c: "The owner does not let Claude use " + (have.layout || "Layout") + "." });
+    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk("layout") : "orOS Gate is not running.";
+    if (why) return Promise.resolve({ ok: false, c: why });
+    if (!runEpub(ui, gateConv)) return Promise.resolve({ ok: false, c: "The request could not be handed to Layout. Nothing was made." });
+    return new Promise(function (resolve) {
+      var key = ui.key;
+      var timer = setTimeout(function () {
+        delete gateWait[key];
+        resolve({ ok: true, a: ["layout"], k: 1, c: "Layout is open on the owner's screen and still making the EPUB; its report shows there. The file goes to /internal/Layout/EPUB/." });
+      }, Math.max(2000, deadline - Date.now()));
+      gateWait[key] = function (rep) {
+        clearTimeout(timer);
+        delete gateWait[key];
+        var r = C.epubReport(rep);
+        resolve(r && !r.failed ? { ok: true, a: ["layout"], k: 1, c: epubText(r) } : { ok: false, c: epubText(r) });
+      };
+      gateWatch();
+    });
   }
   // The undo data of a change in the history (JSON), or null.
   function gateMem(id) {

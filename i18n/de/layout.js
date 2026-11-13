@@ -72,6 +72,7 @@ orosPack("de", "layout", {
  "ep.savedAt": "Gespeichert als {path}",
  "ep.tooBig": "Die Datei ist zu groß für die Prüfung (höchstens 300 MB).",
  "ep.title": "EPUB",
+ "ep.working": "EPUB wird erstellt…",
  "ep.checkTitle": "Prüfung von {name}",
  "ep.errors": "{n} Probleme: E-Book-Shops würden diese Datei ablehnen.",
  "ep.okWarn": "Keine Fehler, {n} Hinweise.",

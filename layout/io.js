@@ -377,7 +377,7 @@
     if (!doc || exporting) return;
     LY.flushStory && LY.flushStory();
     exporting = true;
-    LY.toast(t("exp.working"));
+    LY.toast(t("ep.working"));
     epubOf(doc, prof).then(function (res) {
       exporting = false;
       LY.panels.epubReport(res, prof);
