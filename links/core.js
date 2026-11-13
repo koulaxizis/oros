@@ -676,16 +676,17 @@
       return onlyKeys(e, RS_RENEWAL) && RS_RENEWAL.every(function (k) { return typeof e[k] === "string" && RS_DAY.test(e[k]); });
     });
   }
-  // RS-PF: a reply the creator reads in the portal (≤ 500, line breaks allowed)
-  function rsLong(v, max) { return typeof v === "string" && v.length <= max && !/[\u0000-\u0009\u000b-\u001f\u007f]/.test(v); }
+  // RS-PROD: the note for the creator (≤ 1000, line breaks allowed, no <>)
+  function rsLong(v, max) { return typeof v === "string" && v.length <= max && !/[\u0000-\u0009\u000b-\u001f\u007f<>]/.test(v); }
   // RS-PROD: one work of the production list
   function okRsWork(x) {
-    if (!onlyKeys(x, RS_WORK_KEYS) || !has(x, "id") || !has(x, "ben") || !has(x, "title") || !has(x, "phase")) return false;
+    if (!onlyKeys(x, RS_WORK_KEYS)) return false;
+    for (var i = 0; i < RS_WORK_KEYS.length; i++) if (!has(x, RS_WORK_KEYS[i])) return false;
     if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
     if (!isInt(x.phase) || x.phase < 1 || x.phase > 7) return false;
-    if (x.since !== undefined && x.since !== "" && !(typeof x.since === "string" && RS_DAY.test(x.since))) return false;
-    if (x.release !== undefined && x.release !== "" && !(typeof x.release === "string" && RS_DAY.test(x.release))) return false;
-    return x.note === undefined || rsLong(x.note, 1000);
+    if (typeof x.since !== "string" || !RS_DAY.test(x.since)) return false;
+    if (x.release !== "" && !(typeof x.release === "string" && RS_DAY.test(x.release))) return false;
+    return rsLong(x.note, 1000);
   }
   // UTF-8 bytes of a text (the shop counts bytes)
   function utf8Len(t) {
@@ -709,7 +710,7 @@
       return utf8Len(JSON.stringify(b)) <= RS_BYTES;
     },
     rsrq: function (b) { return Object.keys(b).length === 1; },
-    // RS-PF: "oros" alone; done / declined may carry the creator's reply
+    // RS-PF: "oros" alone; done / declined may carry the creator's reply (one line, ≤ 500)
     rspf: function (b) { return has(b, "state") && (b.state !== "oros" || Object.keys(b).length === 1); },
     // RS-PROD: all three parts, unique ids, ≤ 1 MB
     rsp: function (b) {
@@ -967,7 +968,7 @@
     if (kind === "rsctrs") return listOf(v, 0, RS_MAX, okRsCtr);
     if (kind === "rsrqst") return v === "oros" || v === "closed";
     if (kind === "rspfst") return v === "oros" || v === "done" || v === "declined";
-    if (kind === "rsreply") return rsLong(v, 500);
+    if (kind === "rsreply") return rsText(v, 500);
     if (kind === "rsworks") return listOf(v, 0, RS_WORKS, okRsWork);
     if (kind === "mlbatch") return listOf(v, 1, 50, okMlItem);
     if (kind === "mcmembers") return listOf(v, 1, 250, okMcMember);

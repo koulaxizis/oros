@@ -196,15 +196,15 @@ function okRsCtr(x) {
     onlyKeys(e, RS_RENEWAL) && RS_RENEWAL.every((k) => typeof e[k] === "string" && RS_DAY.test(e[k])));
 }
 // RS-PF / RS-PROD (Revenue Splitter 1.18.0, = links/core.js rsLong, okRsWork)
-const rsLong = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u0009\u000b-\u001f\u007f]/.test(v);
+const rsLong = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u0009\u000b-\u001f\u007f<>]/.test(v);
 const RS_WORK_KEYS = ["id", "ben", "title", "phase", "since", "release", "note"], RS_WORKS = 500;
-const rsDayOrEmpty = (v) => v === undefined || v === "" || (typeof v === "string" && RS_DAY.test(v));
+const rsDay = (v) => typeof v === "string" && RS_DAY.test(v);
 function okRsWork(x) {
-  if (!onlyKeys(x, RS_WORK_KEYS) || !["id", "ben", "title", "phase"].every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
+  if (!onlyKeys(x, RS_WORK_KEYS) || !RS_WORK_KEYS.every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
   if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
   if (!Number.isInteger(x.phase) || x.phase < 1 || x.phase > 7) return false;
-  if (!rsDayOrEmpty(x.since) || !rsDayOrEmpty(x.release)) return false;
-  return x.note === undefined || rsLong(x.note, 1000);
+  if (!rsDay(x.since) || !(x.release === "" || rsDay(x.release))) return false;
+  return rsLong(x.note, 1000);
 }
 function okMlItem(x) {
   if (!onlyKeys(x, ["method", "path", "body"]) || x.method !== "POST" || x.path !== "api/subscribers") return false;
@@ -637,7 +637,7 @@ function okVal(kind, v) {
   if (kind === "rsctrs") return listOf(v, 0, RS_MAX, okRsCtr);
   if (kind === "rsrqst") return v === "oros" || v === "closed";
   if (kind === "rspfst") return v === "oros" || v === "done" || v === "declined";
-  if (kind === "rsreply") return rsLong(v, 500);
+  if (kind === "rsreply") return rsText(v, 500);
   if (kind === "rsworks") return listOf(v, 0, RS_WORKS, okRsWork);
   if (kind === "dims") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
     Object.keys(v).every((k) => (k === "length" || k === "width" || k === "height") && okVal("dec", v[k]));

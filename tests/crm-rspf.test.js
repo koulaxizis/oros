@@ -26,8 +26,12 @@ const CASES = [
   [{ m: "GET", path: "/rs/profile-requests?state=done" }, "query"],
   [{ m: "GET", path: "/rs/profile-requests?ben=Anna" }, "query"],
   [{ m: "POST", path: "/rs/profile-requests/17", body: { state: "oros" } }, ""],
-  [{ m: "POST", path: "/rs/profile-requests/17", body: { state: "done", reply: "Η σελίδα σου ενημερώθηκε.\nΕυχαριστούμε!" } }, ""],
-  [{ m: "POST", path: "/rs/profile-requests/rq_A-9", body: { state: "declined", reply: "" } }, ""],
+  [{ m: "POST", path: "/rs/profile-requests/17", body: { state: "done", reply: "Η σελίδα σου ενημερώθηκε. Ευχαριστούμε!" } }, ""],
+  [{ m: "POST", path: "/rs/profile-requests/17", body: { state: "done", reply: "Η σελίδα\nσου" } }, "body"],
+  [{ m: "POST", path: "/rs/profile-requests/17", body: { state: "done", reply: "<b>x</b>" } }, "body"],
+  [{ m: "POST", path: "/rs/profile-requests/17", body: { state: "done", reply: " x" } }, "body"],
+  [{ m: "POST", path: "/rs/profile-requests/rq_A-9", body: { state: "declined", reply: "" } }, "body"],
+  [{ m: "GET", path: "/rs/profile-requests?state=new&state=oros" }, "query"],
   [{ m: "POST", path: "/rs/profile-requests/17", body: { state: "declined" } }, ""],
   [{ m: "POST", path: "/rs/profile-requests/17", body: { state: "oros", reply: "x" } }, "body"],
   [{ m: "POST", path: "/rs/profile-requests/17", body: { reply: "x" } }, "body"],
@@ -43,8 +47,12 @@ const CASES = [
   [{ m: "GET", path: "/rs/production?ben=Anna" }, "query"],
   [prod([work()]), ""],
   [prod([]), ""],
-  [prod([work({ since: "", release: "", note: "" })]), ""],
-  [prod([work({ since: undefined, release: undefined, note: undefined })]), ""],
+  [prod([work({ since: "", release: "", note: "" })]), "body"],
+  [prod([work({ since: "2026-11-13", release: "", note: "" })]), ""],
+  [prod([work({ since: undefined })]), "body"],
+  [prod([work({ release: undefined })]), "body"],
+  [prod([work({ note: undefined })]), "body"],
+  [prod([work({ note: "a <b> c" })]), "body"],
   [prod([work({ id: "card-1", ben: "Άννα Π." }), work({ id: "card-2", ben: "Νίκος Κ." })]), ""],
   [prod([work(), work()]), "body"],
   [prod([work({ phase: 0 })]), "body"],
@@ -174,13 +182,13 @@ test("pfOutcome / pfCloseList: an answer note wins, else a done follow-up sends 
   data.tombs[i3.fup] = 9;
   const def = (q) => (q.type === "copies" ? "Έρχονται." : "Ενημερώθηκε.");
   assert.deepEqual(RS.pfOutcome(data, "s", q1, "Ενημερώθηκε."), { state: "done", reply: "Ενημερώθηκε.", at: 2 });
-  assert.deepEqual(RS.pfOutcome(data, "s", q2, "x"), { state: "declined", reply: "Δεν έχουμε άλλα αντίτυπα.\nΣυγγνώμη.", at: 5 });
+  assert.deepEqual(RS.pfOutcome(data, "s", q2, "x"), { state: "declined", reply: "Δεν έχουμε άλλα αντίτυπα. Συγγνώμη.", at: 5 });
   assert.deepEqual(RS.pfOutcome(data, "s", q3, "x"), { state: "declined", reply: "", at: 9 });
   assert.equal(RS.pfOutcome(data, "s", { id: "99", type: "bio" }, "x"), null);
   // only the requests orOS took ("oros") are closed
   assert.deepEqual(RS.pfCloseList(data, "s", [q1, q2, q3, q4], def), [
     { id: "17", state: "done", reply: "Ενημερώθηκε." },
-    { id: "18", state: "declined", reply: "Δεν έχουμε άλλα αντίτυπα.\nΣυγγνώμη." },
+    { id: "18", state: "declined", reply: "Δεν έχουμε άλλα αντίτυπα. Συγγνώμη." },
     { id: "19", state: "declined", reply: "" }]);
   // the newer answer wins when two devices wrote both
   data.acts[1].m = 6;
@@ -190,13 +198,17 @@ test("pfOutcome / pfCloseList: an answer note wins, else a done follow-up sends 
   assert.equal(RS.pfOutcome(merged, "s", q2, "x").reply, "Στάλθηκαν.");
 });
 
-test("reqPfMark: 'oros' alone, a reply only with done / declined, cut to 500", () => {
+test("reqPfMark: 'oros' alone, a reply only with done / declined: one line ≤ 500, no <>, left out when empty", () => {
   assert.deepEqual(RS.reqPfMark("17", "oros", "x"), { m: "POST", path: "/rs/profile-requests/17", body: { state: "oros" } });
-  const r = RS.reqPfMark("17", "done", "  " + "α".repeat(600) + "  ");
-  assert.equal(r.body.reply.length, 500);
+  const r = RS.reqPfMark("17", "done", "  " + "α".repeat(499) + " β  ");
+  assert.equal(r.body.reply.length, 499);
   assert.equal(L.checkReq("woo", r), "");
-  assert.equal(L.checkReq("woo", RS.reqPfMark("17", "declined", "a\r\nb\u0007c")), "");
-  assert.equal(RS.reqPfMark("17", "declined", "a\r\nb\u0007c").body.reply, "a\nb c");
+  const m = RS.reqPfMark("17", "declined", "a\r\nb\u0007c <i>d</i>");
+  assert.equal(m.body.reply, "a b c id/i");
+  assert.equal(L.checkReq("woo", m), "");
+  assert.equal(X.checkExtReq("woo", m), "");
+  assert.deepEqual(RS.reqPfMark("17", "declined", "  ").body, { state: "declined" });
+  assert.equal(L.checkReq("woo", RS.reqPfMark("17", "declined", "")), "");
 });
 
 test("pfActText: the ask, the new page text cut to fit 2000, links, photo and the creator's note", () => {

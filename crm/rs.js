@@ -245,15 +245,16 @@
   var PF_TYPES = ["bio", "copies"], PF_STATES = ["new", "oros", "done", "declined"];
   var PF_BIO = 5000, PF_REPLY = 500, PF_LINKS = 6;
   function reqPfMark(id, state, reply) {
-    var body = { state: state };
-    if (state !== "oros") body.reply = pfReply(reply);
+    var body = { state: state }, r = state !== "oros" ? pfReply(reply) : "";
+    if (r) body.reply = r;
     return { m: "POST", path: "/rs/profile-requests/" + id, body: body };
   }
   function longText(v, max) {
     return typeof v === "string" ? v.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f]+/g, " ").trim().slice(0, max) : "";
   }
-  // what RS takes as a reply: ≤ 500, line breaks kept, no other controls
-  function pfReply(v) { return longText(v, PF_REPLY); }
+  // what orOS sends as a reply: one line ≤ 500, no controls, no <> (the
+  // relay owner's rule, rsText)
+  function pfReply(v) { return text(typeof v === "string" ? v.replace(/[<>]/g, "") : "", PF_REPLY).trim(); }
   function okUrl(u) { return typeof u === "string" && /^https?:\/\/[^\s<>"]{1,500}$/i.test(u.trim()); }
   function parsePfRequests(j) {
     if (!j || typeof j !== "object" || !Array.isArray(j.requests)) return null;
