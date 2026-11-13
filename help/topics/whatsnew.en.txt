@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.40.00
+- **Studio is ready for audiobooks.** Studio now keeps everything a newer Studio writes, so books, chapters and podcast shows made on one device stay whole on a device that has not updated yet.
+
 ## Version 6.39.00
 - **Translate a book in Writer.** `Review` › `Translate this document…` puts the book side by side, one sentence a row: the source on the left, your translation on the right, with its bold, italics and footnotes kept as small marks. Each sentence is new, a draft, confirmed or reviewed; the bar shows how much is done. `Build document` makes the translated book as a normal Writer document. The project stays on the orOS disk and syncs, and two devices can work on it. See [Writer](app:writer).
 
