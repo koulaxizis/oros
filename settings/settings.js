@@ -2649,6 +2649,18 @@
     host.appendChild(c2);
 
     if (window.OrosTranslate) secTranslation(host);
+    else txLoad();
+  }
+
+  // translate/engine.js loads only when this section first shows, so
+  // Settings opens without it (first-open budget).
+  var txLoading = false;
+  function txLoad() {
+    if (txLoading) return;
+    txLoading = true;
+    loadScript("../translate/engine.js").then(function () {
+      if (window.OrosTranslate) render();
+    }, function () {});
   }
 
   // Translation on this device (translate/engine.js, Bible TRANSLATE):
