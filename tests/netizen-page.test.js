@@ -244,11 +244,11 @@ test("#p= payload: only what the page shows travels, and it comes back the same 
   assert.equal(NZ.pageFromPayload({ c: { user: "x" } }), null);
 });
 
-test("the page preview and viewer are sandboxed frames without same-origin or scripts", () => {
-  const frames = HTML.match(/<iframe[^>]*>/g) || [];
-  assert.equal(frames.length, 2);
-  frames.forEach((f) => {
-    assert.match(f, /sandbox="allow-popups allow-popups-to-escape-sandbox allow-downloads"/);
-    assert.doesNotMatch(f, /allow-scripts|allow-same-origin/);
-  });
+test("the page preview and viewer are sandboxed frames without same-origin or scripts, made only when needed", () => {
+  assert.doesNotMatch(HTML, /<iframe/i, "no frame until page mode or a #p= link");
+  assert.match(SRC, /var PAGE_SANDBOX = "allow-popups allow-popups-to-escape-sandbox allow-downloads";/);
+  assert.match(SRC, /f\.setAttribute\("sandbox", PAGE_SANDBOX\);/);
+  assert.doesNotMatch(cutFunction("pageFrame"), /allow-scripts|allow-same-origin/);
+  assert.match(SRC, /pageFrame\("pg-frame", \$\("stage"\), null\)/);
+  assert.match(SRC, /pageFrame\("v-page", \$\("viewer"\), \$\("viewer"\)\.firstChild\)\.srcdoc = buildPageHtml/);
 });

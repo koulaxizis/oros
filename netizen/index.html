@@ -202,14 +202,13 @@
         <div class="face back" id="face-back"></div>
       </div>
       <p id="side-label" class="hint"></p>
-      <!-- the page preview: the exported HTML itself, sandboxed (no script, no same origin) -->
-      <iframe id="pg-frame" sandbox="allow-popups allow-popups-to-escape-sandbox allow-downloads" referrerpolicy="no-referrer"></iframe>
+      <!-- page mode adds #pg-frame here (pageFrame()): the exported HTML itself, sandboxed -->
     </section>
   </main>
 
   <!-- Share-link viewer (the card from #c=…, or the page from #p=…, view only) -->
   <div id="viewer" hidden>
-    <iframe id="v-page" sandbox="allow-popups allow-popups-to-escape-sandbox allow-downloads" referrerpolicy="no-referrer"></iframe>
+    <!-- a #p= link adds #v-page here (pageFrame()) -->
     <div id="v-flip">
       <div class="face front" id="v-front"></div>
       <div class="face back" id="v-back"></div>

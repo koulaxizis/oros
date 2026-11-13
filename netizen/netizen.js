@@ -1348,7 +1348,7 @@
     document.body.classList.add("viewing");
     $("viewer").hidden = false;
     $("viewer").classList.remove("page");
-    $("v-page").removeAttribute("srcdoc");
+    if ($("v-page")) $("v-page").remove();
     $("v-front").innerHTML = cardSvg(card, "front", false);
     $("v-back").innerHTML = cardSvg(card, "back", false);
     $("v-front").querySelector("svg").setAttribute("aria-label", t("side.front"));
@@ -1366,7 +1366,7 @@
     document.body.classList.remove("viewing");
     $("viewer").hidden = true;
     $("viewer").classList.remove("page");
-    $("v-page").removeAttribute("srcdoc");
+    if ($("v-page")) $("v-page").remove();
     try { history.replaceState(null, "", location.href.split("#")[0]); } catch (e) { location.hash = ""; }
   }
 
@@ -1664,6 +1664,21 @@
     if (tab) tab.textContent = t(page ? "tab.preview" : "tab.card");
   }
 
+  // The page's frames are made only when needed (page mode, a #p= link):
+  // sandboxed with no scripts and no same origin, links open a new tab.
+  var PAGE_SANDBOX = "allow-popups allow-popups-to-escape-sandbox allow-downloads";
+  function pageFrame(id, parent, before) {
+    var f = $(id);
+    if (f) return f;
+    f = document.createElement("iframe");
+    f.id = id;
+    f.setAttribute("sandbox", PAGE_SANDBOX);
+    f.setAttribute("referrerpolicy", "no-referrer");
+    f.title = t("pg.frame");
+    parent.insertBefore(f, before || null);
+    return f;
+  }
+
   var pagePreviewTimer = null;
   function renderPagePreview() {
     if (prefs.mode !== "page") return;
@@ -1671,7 +1686,7 @@
     pagePreviewTimer = setTimeout(function () {
       var c = cur(), p = pageOf(c);
       var html = buildPageHtml(pageCard(c, p), p, { blank: true });
-      var f = $("pg-frame");
+      var f = pageFrame("pg-frame", $("stage"), null);
       if (f.getAttribute("data-html") !== html) {     // srcdoc reloads: only on a real change
         f.setAttribute("data-html", html);
         f.srcdoc = html;
@@ -1959,7 +1974,7 @@
     document.body.classList.add("viewing");
     $("viewer").hidden = false;
     $("viewer").classList.add("page");
-    $("v-page").srcdoc = buildPageHtml(card, page, { blank: true });
+    pageFrame("v-page", $("viewer"), $("viewer").firstChild).srcdoc = buildPageHtml(card, page, { blank: true });
     $("v-open").focus();
   }
 
@@ -2645,8 +2660,6 @@
     $("pg-add-head").innerHTML = UI_ICONS.plus + "<span>" + esc(t("pg.addHead")) + "</span>";
     $("pg-themes").setAttribute("aria-label", t("pg.themes"));
     $("pg-url").placeholder = t("pg.ph.url2");
-    $("pg-frame").title = t("pg.frame");
-    $("v-page").title = t("pg.frame");
   }
 
   function paintStatic() {
