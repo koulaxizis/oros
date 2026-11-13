@@ -848,3 +848,35 @@ body.remote-on #remote-ui { display: flex; flex-direction: column; flex: 1 1 aut
 /* the ASIO Compatible Logo, unaltered, on its own white */
 .io-asio { margin: 6px 0 2px; }
 .io-asio img { display: block; width: 72px; height: auto; background: #fff; }
+
+/* ---------- Markers and Publish as podcast (wave P1) ---------- */
+.ruler .mk {
+  position: absolute; top: 0; bottom: 0; padding: 0 4px 0 5px; border-left: 2px solid var(--accent);
+  display: flex; align-items: flex-end; font-size: 10px; line-height: 13px; color: var(--text); white-space: nowrap; max-width: 120px;
+  overflow: hidden; text-overflow: ellipsis; pointer-events: none; z-index: 1;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent), transparent);
+}
+dialog input[type="email"], dialog input[type="number"], dialog input[type="date"], dialog textarea { width: 100%; box-sizing: border-box; }
+.pod-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pod-two > div { min-width: 0; }
+.cb-line { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 10px; }
+.pod-cover { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pod-cover img { width: 96px; height: 96px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
+.pod-cover .dlg-actions { margin-top: 0; }
+#pod-ep-ch-pick, #pod-ep-kbps { margin-top: 6px; }
+.pod-ch { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.pod-eps, .pod-miss, .mk-list { list-style: none; margin: 0; padding: 0; }
+.pod-ep { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.pod-ep.cur .pod-ep-t { font-weight: 600; }
+.pod-ep-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pod-ep .hint { flex-shrink: 0; }
+.pod-miss li { font-size: 13px; padding: 2px 0 2px 14px; position: relative; }
+.pod-miss li::before { content: "•"; position: absolute; left: 2px; color: var(--accent); }
+.pod-feed { word-break: break-all; font-size: 12px; }
+.mk-row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 6px; align-items: center; padding: 4px 0; }
+.mk-row input { min-width: 0; width: 100%; }
+.mk-time { font-variant-numeric: tabular-nums; }
+@media (max-width: 420px) {
+  .mk-row { grid-template-columns: auto 1fr; }
+  .pod-two { grid-template-columns: 1fr; gap: 0; }
+}
