@@ -900,6 +900,7 @@ orosPack("de", "settings", {
  "v.wk.saved": "Vertragsschlüssel gespeichert. Das CRM sendet die Verträge damit.",
  "w.about": "info lizenzen credits",
  "w.add-browser": "koppeln neuer browser handy qr code anmelden ein schritt",
+ "w.signin-link": "magic link anmeldelink anmelden e-mail code später neuer browser",
  "w.autobackup": "täglich wöchentlich monatlich automatisch",
  "w.backup-encrypt": "verschlüsseln verschlüsselung passwort passphrase sperren sicher privat",
  "w.backup-folder": "ordner speicherort",
