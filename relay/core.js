@@ -45,7 +45,7 @@ import { validOasa, runOasa, OasaError } from "./oasa.js";
 import { validHookIn, runHookIn, handleHookIn, HookError } from "./hook.js";
 import { handlePreview } from "./preview.js";
 import { validShl, runShl, ShlError } from "./short.js";
-import { handleGate, isGatePath } from "./gate.js";
+import { handleGate, isGatePath, LOCAL_ORIGINS } from "./gate.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -174,6 +174,15 @@ export function validRequest(b, env, now) {
 }
 
 // ---------- CORS ----------
+// What the orOS on the person's own computer (LOCAL_ORIGINS) may ask of
+// /v1: Budget's bank reads, Enable Banking and PayPal Business (Chris's
+// installed orOS, 2026-11-13). The bank's return page is on
+// useoros.online, so connecting a bank stays there (budget/banklive.js).
+export const LOCAL_OPS = { ext: ["ebank", "paypal"] };
+function localOp(b) {
+  const ps = b && typeof b.op === "string" && Object.prototype.hasOwnProperty.call(LOCAL_OPS, b.op) ? LOCAL_OPS[b.op] : null;
+  return !!ps && typeof b.p === "string" && ps.indexOf(b.p) >= 0;
+}
 function allowedOrigins(env) {
   const raw = (env && env.ALLOWED_ORIGINS) || "https://useoros.online";
   return raw.split(",").map((s) => s.trim()).filter(Boolean);
@@ -211,7 +220,11 @@ function limited(ip, now) {
 // ---------- entry ----------
 export async function handle(request, env, connectFn, now, fetchFn) {
   const origin = request.headers.get("Origin") || "";
-  const okOrigin = allowedOrigins(env).indexOf(origin) >= 0 ? origin : "";
+  let okOrigin = allowedOrigins(env).indexOf(origin) >= 0 ? origin : "";
+  // The orOS that runs on the person's own computer (installed orOS,
+  // Portable, USB: LOCAL_ORIGINS) may use /v1 only for the ops in
+  // LOCAL_OPS; the body decides, below.
+  const localOrigin = !okOrigin && LOCAL_ORIGINS.indexOf(origin) >= 0 ? origin : "";
   const url = new URL(request.url);
 
   // Newsletter's public pages: called by any browser or mail client, so
@@ -274,13 +287,14 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   }
 
   if (request.method === "OPTIONS") {
-    if (!okOrigin) return new Response(null, { status: 403 });
-    return new Response(null, { status: 204, headers: corsHeaders(okOrigin) });
+    if (!okOrigin && !localOrigin) return new Response(null, { status: 403 });
+    return new Response(null, { status: 204, headers: corsHeaders(okOrigin || localOrigin) });
   }
   if (url.pathname === "/" && request.method === "GET") {
     return new Response("orOS mail relay\n", { status: 200, headers: { "Content-Type": "text/plain" } });
   }
-  if (!okOrigin) return fail(403, "origin", "origin not allowed", "");
+  if (!okOrigin && !localOrigin) return fail(403, "origin", "origin not allowed", "");
+  if (localOrigin) okOrigin = localOrigin;      // checked against LOCAL_OPS once the body is read
   if (url.pathname !== "/v1" || request.method !== "POST") return fail(404, "bad-request", "unknown route", okOrigin);
   if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) {
     return fail(429, "rate", "too many requests", okOrigin);
@@ -296,6 +310,7 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     const cap = b && b.op === "papi" ? PAPI_LIMITS.totalBytes : (b && b.op === "ext" ? extCap(b) : 0);
     if (!(text.length <= cap + LIMITS.bodyBytes)) return fail(413, "bad-request", "request too large", okOrigin);
   }
+  if (localOrigin && !localOp(b)) return fail(403, "origin", "origin not allowed", okOrigin);
   const bad = validRequest(b, env, now || Date.now());
   if (bad) return fail(400, "bad-request", "invalid " + bad, okOrigin);
 
