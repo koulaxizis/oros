@@ -716,7 +716,8 @@
     var meta = {}, given = rq.meta && typeof rq.meta === "object" ? rq.meta : {};
     ["title", "subtitle", "author", "isbn", "year", "publisher"].forEach(function (k) { if (typeof given[k] === "string" && given[k].trim()) meta[k] = given[k].trim().slice(0, 200); });
     var pub = meta.title ? pubTitles().filter(function (x) { return x.title.trim().toLocaleLowerCase() === meta.title.toLocaleLowerCase(); })[0] : null;
-    if (pub) { ["subtitle", "author", "isbn", "year"].forEach(function (k) { if (!meta[k] && pub[k]) meta[k] = pub[k]; }); meta.pub = pub.id; }
+    if (pub) ["subtitle", "author", "isbn", "year"].forEach(function (k) { if (!meta[k] && pub[k]) meta[k] = pub[k]; });
+    if (pub) meta.pub = pub.id;   // the title it belongs to (LY-OUT)
     // the book's questions (LY-IN): the Assistant's answers over the
     // series'; "All the questions…" shows them first
     var ask = I ? { sheet: overSheet(I.defaults(house), rq.sheet), quiet: rq.all !== 1, files: Array.isArray(photos) ? photos : [], missed: missed > 0 ? missed : 0 } : null;
