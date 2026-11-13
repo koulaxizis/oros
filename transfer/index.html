@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-/66UIe7j2DkfmE1CiNCdJ7gkH+oWPuflxMrTscpuQd4='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=transfer" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Transfer · orOS</title>
+  <link rel="stylesheet" href="../fonts.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body data-page="app">
+
+  <header id="toolbar">
+    <h1 id="title" data-i18n="app.name">Transfer</h1>
+    <nav id="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-send" class="tab on" aria-selected="true" data-i18n="tab.send">Send</button>
+      <button type="button" role="tab" id="tab-recv" class="tab" aria-selected="false" data-i18n="tab.recv">Receive</button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Send: pick, then share the code -->
+    <section id="send" role="tabpanel" aria-labelledby="tab-send">
+      <div id="pick">
+        <p class="hint" data-i18n="send.intro">Pick files and folders from the orOS disk or this device. The other person opens the link or types the code; the files go straight between the two browsers, end-to-end encrypted.</p>
+        <div class="bar">
+          <nav id="crumbs" aria-label="Folder"></nav>
+        </div>
+        <ul id="disk" class="rows"></ul>
+        <p id="disk-empty" class="hint" hidden data-i18n="disk.empty">This folder is empty.</p>
+        <p id="disk-none" class="hint" hidden data-i18n="disk.none">The orOS disk is not available here.</p>
+        <div class="bar">
+          <button type="button" id="add-local" class="chip" data-i18n="btn.addLocal">Add from this device…</button>
+        </div>
+        <h2 class="sub" data-i18n="send.chosen">To send</h2>
+        <ul id="chosen" class="rows"></ul>
+        <p id="chosen-empty" class="hint" data-i18n="send.none">Nothing chosen yet. Tick files or folders above.</p>
+        <div class="bar end">
+          <span id="chosen-sum" class="dim"></span>
+          <button type="button" id="make-link" class="chip pri" disabled data-i18n="btn.makeLink">Create link</button>
+        </div>
+      </div>
+
+      <div id="share" hidden>
+        <div class="card center">
+          <p class="dim" data-i18n="share.code">Code</p>
+          <p id="share-code" class="code"></p>
+          <div id="share-qr" class="qr"></div>
+          <div class="link-row">
+            <input id="share-link" type="text" readonly aria-label="Link">
+            <button type="button" id="copy-link" class="chip" data-i18n="btn.copy">Copy</button>
+          </div>
+          <p class="hint" data-i18n="share.keep">Keep this page open until the transfer is done. The link works once, for one person.</p>
+        </div>
+        <div id="send-status" class="status" role="status"></div>
+        <div class="progress" id="send-prog" hidden><div class="fill"></div></div>
+        <p id="send-detail" class="dim"></p>
+        <div class="bar end">
+          <button type="button" id="send-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
+          <button type="button" id="send-again" class="chip pri" hidden data-i18n="btn.sendMore">Send something else</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Receive -->
+    <section id="recv" role="tabpanel" aria-labelledby="tab-recv" hidden>
+      <form id="code-form" autocomplete="off">
+        <p class="hint" data-i18n="recv.intro">Type the code you were given, or open the link you got.</p>
+        <div class="bar">
+          <label for="code-in" class="sr-only" data-i18n="recv.code">Code</label>
+          <input id="code-in" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="XXXX-XXXX-XXXX">
+          <button type="submit" class="chip pri" data-i18n="btn.receive">Receive</button>
+        </div>
+      </form>
+      <div id="recv-box" hidden>
+        <div id="recv-status" class="status" role="status"></div>
+        <div id="offer" hidden>
+          <p id="offer-sum"></p>
+          <ul id="offer-list" class="rows small"></ul>
+          <fieldset id="dest">
+            <legend data-i18n="dest.where">Save to</legend>
+            <label class="opt"><input type="radio" name="dest" value="disk" id="dest-disk"> <span data-i18n="dest.disk">The orOS disk (Transfers folder)</span></label>
+            <p id="dest-disk-why" class="hint" hidden></p>
+            <label class="opt"><input type="radio" name="dest" value="device" id="dest-dev"> <span id="dest-dev-txt" data-i18n="dest.device">This device</span></label>
+          </fieldset>
+          <p id="space-warn" class="warn" hidden></p>
+          <div class="bar end">
+            <button type="button" id="decline" class="chip" data-i18n="btn.decline">Decline</button>
+            <button type="button" id="accept" class="chip pri" data-i18n="btn.accept">Accept</button>
+          </div>
+        </div>
+        <div class="progress" id="recv-prog" hidden><div class="fill"></div></div>
+        <p id="recv-detail" class="dim"></p>
+        <p id="recv-bad" class="warn" hidden></p>
+        <div class="bar end">
+          <button type="button" id="recv-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
+          <button type="button" id="open-files" class="chip" hidden data-i18n="btn.openFiles">Open in Files</button>
+          <button type="button" id="save-file" class="chip pri" hidden data-i18n="btn.save">Save</button>
+          <button type="button" id="recv-again" class="chip" hidden data-i18n="btn.recvMore">Receive something else</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" role="status"></div>
+
+  <script src="../qr/qr-encode.js"></script>
+  <script src="core.js"></script>
+  <script src="engine.js"></script>
+  <script src="store.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
