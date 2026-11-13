@@ -6,7 +6,9 @@
 // setup.ext.out = { v: 1, list: [profile] } (R39) only once the
 // person changes them; until then defaults() stands in.
 //   profile = { id "op-…", n (name ≤ 60), k "print" | "ebook" | "epub",
-//               (epub: nf 1 no fonts inside, npl 1 no page-list),
+//               (epub: nf 1 no fonts inside, npl 1 no page-list,
+//               fx 1 fixed layout with live text, 2 fixed layout of
+//               page pictures; E3),
 //               fmt (a Publishing format id, "" = none),
 //               blank 0|1 (leave out empty pages), toc 0|1 (leave out
 //               the contents pages), drop [page id] (≤ 2000),
@@ -61,7 +63,7 @@
     else if (typeof p.cover === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(p.cover)) o.cover = p.cover;
     // EPUB (E2): nf 1 = no fonts inside (the reader's own), npl 1 = no
     // print page numbers (page-list)
-    if (k === "epub") { if (p.nf) o.nf = 1; if (p.npl) o.npl = 1; }
+    if (k === "epub") { if (p.nf) o.nf = 1; if (p.npl) o.npl = 1; if (p.fx === 1 || p.fx === 2) o.fx = p.fx; }
     return o;
   }
   // The stored list, cleaned (unknown kinds become print, ≤ 8, unique

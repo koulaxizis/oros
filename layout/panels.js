@@ -1304,7 +1304,8 @@
     if (f && f.isbn) bits.push("ISBN " + f.isbn);
     else if (pub) bits.push(t("out.noIsbn"));
     if (p.k !== "print" && p.cover) bits.push(t("out.withCover"));
-    if (p.k === "epub" && p.nf) bits.push(t("ep.noFonts"));
+    if (p.k === "epub" && p.fx) bits.push(t("ep.fx" + p.fx + "s"));
+    if (p.k === "epub" && p.nf && p.fx !== 2) bits.push(t("ep.noFonts"));
     return bits.join(" · ");
   }
   function profilesSection(body, doc, close) {
@@ -1369,7 +1370,7 @@
             p.k = v;
             if (v === "print") { p.bleed = 1; p.marks = 0; p.spreads = 0; delete p.cover; p.q = "print"; }
             else { delete p.bleed; delete p.marks; delete p.spreads; p.q = "screen"; }
-            if (v !== "epub") { delete p.nf; delete p.npl; } else { p.blank = 1; p.toc = 1; }
+            if (v !== "epub") { delete p.nf; delete p.npl; delete p.fx; } else { p.blank = 1; p.toc = 1; }
             draw();
           })));
           box.appendChild(g);
@@ -1388,8 +1389,13 @@
             if (doc.setup.facing) r.appendChild(check(t("exp.spreads"), p.spreads, function (v) { p.spreads = v; }));
           }
           if (p.k === "epub") {
-            r.appendChild(check(t("ep.fonts"), !p.nf, function (v) { if (v) delete p.nf; else p.nf = 1; }));
-            r.appendChild(check(t("ep.pageList"), !p.npl, function (v) { if (v) delete p.npl; else p.npl = 1; }));
+            // reflowable, or fixed layout (E3): the pages as in print
+            box.appendChild(field(t("ep.fx"), select([["0", t("ep.fx0")], ["1", t("ep.fx1")], ["2", t("ep.fx2")]], String(p.fx || 0), function (v) {
+              if (v === "1" || v === "2") p.fx = +v; else delete p.fx;
+              draw();
+            })));
+            if (p.fx !== 2) r.appendChild(check(t("ep.fonts"), !p.nf, function (v) { if (v) delete p.nf; else p.nf = 1; }));
+            if (!p.fx) r.appendChild(check(t("ep.pageList"), !p.npl, function (v) { if (v) delete p.npl; else p.npl = 1; }));
           }
           box.appendChild(r);
           var drop = el("input", "inp"); drop.type = "text"; drop.placeholder = t("exp.rangeHint"); drop.value = idsRange(doc, p.drop);
@@ -1514,7 +1520,7 @@
       body.appendChild(el("p", "hint", t("ep.orosCheck")));
       if (rep) {
         body.appendChild(el("p", "hint", [
-          t("ep.sum", { c: rep.chapters, h: rep.headings, i: rep.images, p: rep.pages }), sizeText(rep.bytes),
+          rep.fixed ? t("ep.sumFx", { h: rep.headings, i: rep.images, p: rep.pages }) : t("ep.sum", { c: rep.chapters, h: rep.headings, i: rep.images, p: rep.pages }), sizeText(rep.bytes),
           /^urn:isbn:/.test(rep.uid) ? "ISBN " + rep.uid.slice(9) : t("ep.noIsbn")
         ].join(" · ")));
       }
@@ -1528,6 +1534,8 @@
         });
         if (rep.overset) epubRow(ul, "warn", t("ep.overset", { n: rep.overset }));
         if (rep.shapes) epubRow(ul, "ok", t("ep.shapes", { n: rep.shapes }));
+        if (rep.rotated) epubRow(ul, "ok", t("ep.rotated", { n: rep.rotated }));
+        if (rep.fixed) epubRow(ul, "ok", t("ep.fixedNote"));
         rep.fonts.forEach(function (f) {
           if (!f.ok) epubRow(ul, "warn", t("ep.fontMissing", { name: f.name }));
           else if (f.obf) epubRow(ul, "ok", t("ep.fontObf", { name: f.name }));

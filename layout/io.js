@@ -314,6 +314,25 @@
     var parts = T.faceParts(key).filter(function (p) { return !p.cff; });
     return parts.length ? parts.map(function (p) { return { data: p.bytes(), range: p.range }; }) : null;
   }
+  // Fixed layout (E3): each page's picture, at 150 ppi (screen) or 300
+  // (print), at most 16 MP; "text" mode leaves out the text that the
+  // EPUB carries as text (LY_EPUB.live frames).
+  function epubBackgrounds(d, pages, L, prof) {
+    var out = {}, chain = Promise.resolve(), w = d.setup.w, h = d.setup.h;
+    var scale = (prof.q === "print" ? 300 : 150) / 72;
+    if (w * h * scale * scale > IMG_MAX_PX) scale = Math.sqrt(IMG_MAX_PX / (w * h));
+    var skip = prof.fx === 2 ? null : window.LY_EPUB.live, cv = document.createElement("canvas");
+    imageItems(d, pages).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }).catch(function () {}); });
+    pages.forEach(function (id) {
+      chain = chain.then(function () {
+        var page = M.find(d.pages, id);
+        if (!page) return null;
+        LY.R.renderPage(d, page, L, scale, { getImage: A.get, background: "#fff", skipText: skip, canvas: cv });
+        return toBlob(cv, "image/jpeg", 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) { out[id] = { data: new Uint8Array(ab), type: "image/jpeg" }; });
+      });
+    });
+    return chain.then(function () { cv.width = cv.height = 1; return out; });
+  }
   function ymdOf(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
   // → Promise<{ bytes, report, check, name, ed, pub, cover }>
   function epubOf(doc, prof) {
@@ -327,6 +346,18 @@
         title: pub.t || d.name, sub: pub.sub, ser: pub.ser, sn: pub.sn, lang: O.lang(d, pub), ppl: pub.ppl, isbn: ed.isbn, printIsbn: ed.printIsbn,
         publisher: data && data.set && data.set.imp, date: /^\d{4}-\d\d-\d\d$/.test(pub.rel || "") ? pub.rel : ymdOf(new Date()), desc: pub.blurb, kw: pub.kw
       } : { title: d.name, lang: O.lang(d, null), date: ymdOf(new Date()) };
+      if (prof.fx) {
+        return Promise.all([epubBackgrounds(d, pages, L, prof), epubCover(prof, pub)]).then(function (r) {
+          return window.LY_EPUB.buildFixed(d, {
+            L: L, pages: pages, meta: meta, modified: new Date().toISOString().replace(/\.\d+Z$/, "Z"), mode: prof.fx === 2 ? "image" : "text",
+            backgrounds: r[0], cover: r[1], fontFiles: prof.nf ? null : epubFonts, zip: window.AtelierZip, sha1: sha1
+          }).then(function (res) {
+            return window.LY_EPUBCHECK.check(res.bytes, window.AtelierZip).then(function (chk) {
+              return { bytes: res.bytes, report: res.report, check: chk, name: fileName(doc, ".epub"), ed: ed, pub: pub, cover: r[1] || (r[0][pages[0]] ? { fx: 1, w: Math.round(d.setup.w * (prof.q === "print" ? 300 : 150) / 72), h: Math.round(d.setup.h * (prof.q === "print" ? 300 : 150) / 72) } : null) };
+            });
+          });
+        });
+      }
       return Promise.all([epubImages(d, pages, prof.q), epubCover(prof, pub)]).then(function (r) {
         return window.LY_EPUB.build(d, {
           L: L, pages: pages, meta: meta, modified: new Date().toISOString().replace(/\.\d+Z$/, "Z"),

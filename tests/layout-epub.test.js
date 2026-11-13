@@ -225,3 +225,80 @@ test("Publishing keeps one EPUB-ready row per format of the title, with a previe
   const lib = fs.readFileSync(path.join(ROOT, "library/app.js"), "utf8");
   assert.match(lib, /PREVIEW_RE = \/\^\\\/internal\\\/Layout\\\/EPUB\\\/\[\^\/\]\{1,200\}\\\.epub\$\//);
 });
+
+test("fixed layout: one page per file at the print size, text as text over the page picture", async () => {
+  const d = B.novel();
+  const r = await B.epub(d, { prof: { fx: 1 } });
+  const z = await unzip(r.bytes);
+  const opf = z.text("EPUB/package.opf");
+  assert.match(opf, /<meta property="rendition:layout">pre-paginated<\/meta>/);
+  assert.match(opf, /<meta property="rendition:spread">(auto|none)<\/meta>/);
+  assert.ok(!opf.includes("conformsTo"), "no WCAG claim for fixed layout");
+  assert.equal(r.report.fixed, 1);
+  assert.equal(r.report.mode, "text");
+  const pages = z.names.filter((n) => /^EPUB\/pages\/p\d{4}\.xhtml$/.test(n));
+  assert.equal(pages.length, r.report.pages);
+  for (const n of pages) {
+    const x = z.text(n);
+    assert.match(x, new RegExp('<meta name="viewport" content="width=' + Math.round(d.setup.w) + ", height=" + Math.round(d.setup.h) + '"/>'));
+    assert.match(x, /<img class="bg" src="\.\.\/images\/p\d{4}\.png" alt=""\/>/);
+  }
+  // facing pages: each page on its side of the spread
+  if (d.setup.facing) assert.match(opf, /properties="page-spread-(left|right)"/);
+  // the text is there as text, word by word, with its spaces
+  const all = pages.map((n) => z.text(n)).join("\n");
+  const words = [...all.matchAll(/<span class="t\d+" style="left: [\d.]+px; top: -?[\d.]+px"[^>]*>([^<]*)<\/span>/g)].map((m) => m[1]).join("");
+  assert.ok(words.length > 200, "words on the pages");
+  assert.match(words, /\S \S/, "words keep their spaces");
+  assert.match(z.text("EPUB/css/fxl.css"), /\.t1 \{ font-family: "Noto Serif"/);
+  assert.ok(z.names.some((n) => /^EPUB\/fonts\//.test(n)), "fonts inside");
+  // headings → nav entries to their page and id; a page-list of every page
+  const nav = z.text("EPUB/nav.xhtml");
+  const hrefs = [...nav.matchAll(/<nav epub:type="toc"[\s\S]*?<\/nav>/g)][0][0].match(/href="([^"]+)"/g).map((h) => h.slice(6, -1));
+  assert.ok(hrefs.length >= 2);
+  for (const h of hrefs) {
+    const [file, frag] = h.split("#");
+    assert.ok(z.names.includes("EPUB/" + file), file);
+    if (frag) assert.ok(z.text("EPUB/" + file).includes('id="' + frag + '"'), h);
+  }
+  const pl = [...nav.matchAll(/<nav epub:type="page-list"[\s\S]*?<\/nav>/g)][0][0];
+  assert.equal((pl.match(/<li>/g) || []).length, pages.length);
+  const chk = await C.check(r.bytes, Z);
+  assert.deepEqual(codes(chk), []);
+  assert.equal(chk.info.fixed, true);
+});
+
+test("fixed layout of page pictures: the text lies invisible on top, no fonts; a rotated frame stays in the picture", async () => {
+  const d = B.novel();
+  const frame = d.items.find((it) => it.t === "text" && it.story && d.stories.find((s) => s.id === it.story && s.paras.length > 3));
+  frame.rot = 90;
+  const r = await B.epub(d, { prof: { fx: 2 } });
+  const z = await unzip(r.bytes);
+  assert.equal(r.report.mode, "image");
+  assert.ok(r.report.rotated >= 1);
+  assert.ok(!z.names.some((n) => /^EPUB\/fonts\//.test(n)), "no fonts for invisible text");
+  const page = z.names.filter((n) => /^EPUB\/pages\/p\d{4}\.xhtml$/.test(n)).map((n) => z.text(n)).join("");
+  assert.match(page, /class="t\d+ inv"/);
+  assert.match(z.text("EPUB/css/fxl.css"), /\.pg \.inv \{ color: transparent !important; \}/);
+  assert.equal(E.live(frame), false);
+  assert.equal(E.live({ t: "text" }), true);
+  // the first page's picture is the cover when there is no other
+  assert.match(z.text("EPUB/package.opf"), /id="bg-p0001"[^>]*properties="cover-image"/);
+  const chk = await C.check(r.bytes, Z);
+  assert.deepEqual(codes(chk), []);
+});
+
+test("Library reads fixed layout: the book, a page by its itemref, and the viewport", () => {
+  const LC = require(path.join(ROOT, "library/core.js"));
+  const opf = (meta, props) => '<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="u"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="u">x</dc:identifier><dc:title>T</dc:title>' + meta + '</metadata><manifest><item id="a" href="a.xhtml" media-type="application/xhtml+xml"/><item id="b" href="b.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="a"/><itemref idref="b"' + (props ? ' properties="' + props + '"' : "") + "/></spine></package>";
+  let p = LC.parseOpf(opf('<meta property="rendition:layout">pre-paginated</meta>', ""), "EPUB/package.opf");
+  assert.equal(p.fixed, true);
+  assert.deepEqual(p.spine.map((s) => s.fxl), [true, true]);
+  p = LC.parseOpf(opf("", "rendition:layout-pre-paginated"), "EPUB/package.opf");
+  assert.equal(p.fixed, false);
+  assert.deepEqual(p.spine.map((s) => s.fxl), [false, true]);
+  p = LC.parseOpf(opf('<meta property="rendition:layout">pre-paginated</meta>', "rendition:layout-reflowable"), "EPUB/package.opf");
+  assert.deepEqual(p.spine.map((s) => s.fxl), [true, false]);
+  const src = fs.readFileSync(path.join(ROOT, "library/sanitize.js"), "utf8");
+  assert.match(src, /out\.vp = \{ w: Math\.min\(20000, \+vw\[1\]\), h: Math\.min\(20000, \+vh\[1\]\) \}/);
+});
