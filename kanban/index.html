@@ -86,6 +86,11 @@
       <input id="c-due" type="date" autocomplete="off">
       <label class="chk"><input type="checkbox" id="c-ms"> <span data-i18n="card.ms.long">Milestone (a diamond on the due date)</span></label>
 
+      <!-- Gantt (G2): finish-to-start dependencies on cards of this board -->
+      <label for="c-deps-add" data-i18n="card.deps">Depends on</label>
+      <div id="c-deps-chips"></div>
+      <select id="c-deps-add"></select>
+
       <!-- K1: swimlane field -->
       <label for="c-lane" data-i18n="card.lane">Lane</label>
       <input id="c-lane" type="text" list="c-lane-list" maxlength="60" autocomplete="off"

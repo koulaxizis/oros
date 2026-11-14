@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.64.00
+- **Dependencies in the Kanban Timeline.** In a card, `Depends on` lists the cards it waits for, or drag the dot after a bar onto another bar. Arrows join them and turn red when the next card starts too early; the message then offers `Move the next ones too`, with its own Undo. `Critical path` in the view menu outlines the cards that set the end of the plan. See [Kanban](app:kanban).
+
 ## Version 6.63.00
 - **A loudness meter in Studio.** `LUFS` on the master strip (or `Loudness…` in the export window on a phone) measures your song by EBU R128, the way NULL Loudness Meter does: momentary, short-term and integrated loudness, range and true peak while it plays. `Measure the song` mixes and measures all of it, `Measure a file…` does the same for any audio file, and `Target` says what Spotify, Apple Music, YouTube, podcast apps or broadcast will do with it. The audiobook targets (ACX, Storytel) check RMS, peaks, noise floor and room tone. `Choose a reference…` plays a song you like at your song's loudness, so you compare only the sound. See [Studio](app:studio).
 

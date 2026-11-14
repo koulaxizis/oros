@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 44455 of 44883 (99%)
+- Strings: 44579 of 45007 (99%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -72,7 +72,7 @@ text is still written in the code. They switch over wave by wave
 | household | 99% | 142 / 143 |
 | invoices | 97% | 659 / 673 |
 | jigsaw | 100% | 90 / 90 |
-| kanban | 99% | 341 / 344 |
+| kanban | 99% | 351 / 354 |
 | labels | 100% | 88 / 88 |
 | layout | 99% | 1074 / 1082 |
 | library | 100% | 327 / 327 |
@@ -127,7 +127,7 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 517 / 517 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1278 / 1293 |
+| settings | 98% | 1287 / 1302 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
 | shell | 99% | 1180 / 1185 |
@@ -146,18 +146,18 @@ text is still written in the code. They switch over wave by wave
 | stickies | 100% | 124 / 124 |
 | stock | 99% | 729 / 734 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 684 / 684 |
+| studio | 100% | 747 / 747 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 60 / 60 |
-| texttools | 95% | 405 / 422 |
+| texttools | 96% | 415 / 432 |
 | tictactoe | 100% | 54 / 54 |
 | time | 100% | 410 / 410 |
 | timesheet | 99% | 379 / 382 |
 | today | 100% | 155 / 155 |
 | todo | 100% | 271 / 271 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 116 / 116 |
+| transfer | 100% | 121 / 121 |
 | travel | 100% | 555 / 555 |
 | typewriter | 100% | 46 / 46 |
 | typing | 94% | 170 / 180 |
@@ -172,7 +172,7 @@ text is still written in the code. They switch over wave by wave
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
-| writer | 100% | 454 / 454 |
+| writer | 100% | 481 / 481 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
 
