@@ -648,6 +648,7 @@ var PRECACHE_URLS = [
   "transfer/index.html",
   "transfer/receive.html",
   "transfer/app.css",
+  "transfer/art.js",
   "transfer/core.js",
   "transfer/cloud.js",
   "transfer/engine.js",

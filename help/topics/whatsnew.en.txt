@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.51.00
+- **Transfer has a new look and its own page.** Each transfer now comes with a picture drawn from its code. Both sides see the same shapes, so a small copy on the sender's screen lets you check at a glance that the right person is connected. Add files with the big plus or drop them anywhere, and add an optional title and message, which travel encrypted with the files. Transfer now speaks German too, and useoros.online/transfer/about/ explains it to people who do not use orOS.
+
 ## Version 6.50.00
 - **Voice notes: trim, transcribe, send to Studio.** A recording's `⋯` menu can now trim it (the trimmed part is saved as a new file and the old one goes to the Trash), turn its speech into text on this device with the Whisper model that Montage and Lyric Sync use (only when you press `Transcribe`; the sound never leaves the device), and open it in Studio.
 
