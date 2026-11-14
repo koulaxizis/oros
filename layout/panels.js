@@ -1304,6 +1304,7 @@
     if (f && f.isbn) bits.push("ISBN " + f.isbn);
     else if (pub) bits.push(t("out.noIsbn"));
     if (p.k !== "print" && p.cover) bits.push(t("out.withCover"));
+    if (p.k === "epub" && p.nf) bits.push(t("ep.noFonts"));
     return bits.join(" · ");
   }
   function profilesSection(body, doc, close) {
@@ -1312,7 +1313,7 @@
     body.appendChild(el("h3", "pn-h", t("out.title")));
     var pub = O.pubOf(doc, LY.publishData());
     body.appendChild(el("p", "hint", pub ? t("out.pubOf", { t: pub.t }) : t("out.noPub")));
-    O.list(doc).filter(function (p) { return p.k !== "epub"; }).forEach(function (p) {
+    O.list(doc).forEach(function (p) {
       var row = el("div", "out-row");
       var txt = el("div", "out-txt");
       txt.appendChild(el("span", "out-name", profName(p)));
@@ -1364,10 +1365,11 @@
           nm.addEventListener("input", function () { p.n = nm.value; });
           var g = el("div", "grid2");
           g.appendChild(field(t("out.name"), nm));
-          g.appendChild(field(t("out.kind"), select([["print", t("out.k.print")], ["ebook", t("out.k.ebook")]], p.k, function (v) {
+          g.appendChild(field(t("out.kind"), select([["print", t("out.k.print")], ["ebook", t("out.k.ebook")], ["epub", t("out.k.epub")]], p.k, function (v) {
             p.k = v;
             if (v === "print") { p.bleed = 1; p.marks = 0; p.spreads = 0; delete p.cover; p.q = "print"; }
             else { delete p.bleed; delete p.marks; delete p.spreads; p.q = "screen"; }
+            if (v !== "epub") { delete p.nf; delete p.npl; } else { p.blank = 1; p.toc = 1; }
             draw();
           })));
           box.appendChild(g);
@@ -1384,6 +1386,10 @@
             r.appendChild(check(t("exp.bleed"), p.bleed, function (v) { p.bleed = v; }));
             r.appendChild(check(t("exp.marks"), p.marks, function (v) { p.marks = v; }));
             if (doc.setup.facing) r.appendChild(check(t("exp.spreads"), p.spreads, function (v) { p.spreads = v; }));
+          }
+          if (p.k === "epub") {
+            r.appendChild(check(t("ep.fonts"), !p.nf, function (v) { if (v) delete p.nf; else p.nf = 1; }));
+            r.appendChild(check(t("ep.pageList"), !p.npl, function (v) { if (v) delete p.npl; else p.npl = 1; }));
           }
           box.appendChild(r);
           var drop = el("input", "inp"); drop.type = "text"; drop.placeholder = t("exp.rangeHint"); drop.value = idsRange(doc, p.drop);
@@ -1481,6 +1487,101 @@
     }, true);
   }
 
+  // ---------- EPUB report (LY-EPUB) ----------
+  // After an EPUB export: what went in, what was left out, the
+  // on-device check (not EPUBCheck: the hint says so), the list most
+  // e-book stores ask for, then Save / Preview in Library / Publishing.
+  // res.only: an EPUB from elsewhere, checked only.
+  function epubRow(ul, sev, text, fn) {
+    var li = el("li"), b = el(fn ? "button" : "div", "pf-item " + sev);
+    if (fn) { b.type = "button"; b.addEventListener("click", fn); }
+    b.appendChild(el("span", "pf-dot"));
+    b.appendChild(el("span", "", text));
+    li.appendChild(b);
+    ul.appendChild(li);
+  }
+  function epubCode(r) {
+    var k = "ep.c." + r.c, s = t(k);
+    if (s === k) s = r.c;
+    return s + (r.f ? " · " + r.f : "") + (r.n ? " · " + r.n : "");
+  }
+  function sizeText(n) { return n < 1024 * 1024 ? Math.max(1, Math.round(n / 1024)) + " KB" : (Math.round(n / 104857.6) / 10).toLocaleString(LY.loc ? LY.loc() : undefined) + " MB"; }
+  function epubReport(res, prof) {
+    var chk = res.check, rep = res.report, doc = LY.doc;
+    LY.openDialog(res.only ? t("ep.checkTitle", { name: res.name }) : t("ep.title"), function (body, close) {
+      var errs = chk.errors.length, warns = chk.warnings.length;
+      body.appendChild(el("p", errs ? "ep-bad" : "pf-ok", errs ? (errs === 1 ? t("ep.errors1") : t("ep.errors", { n: errs })) : warns ? (warns === 1 ? t("ep.okWarn1") : t("ep.okWarn", { n: warns })) : t("ep.ok")));
+      body.appendChild(el("p", "hint", t("ep.orosCheck")));
+      if (rep) {
+        body.appendChild(el("p", "hint", [
+          t("ep.sum", { c: rep.chapters, h: rep.headings, i: rep.images, p: rep.pages }), sizeText(rep.bytes),
+          /^urn:isbn:/.test(rep.uid) ? "ISBN " + rep.uid.slice(9) : t("ep.noIsbn")
+        ].join(" · ")));
+      }
+      var ul = el("ul", "pf-list ep-list");
+      chk.errors.forEach(function (r) { epubRow(ul, "err", epubCode(r)); });
+      // a book made here: alt text and the cover have their own rows below
+      chk.warnings.forEach(function (r) { if (!rep || (r.c !== "no-alt" && r.c !== "no-cover")) epubRow(ul, "warn", epubCode(r)); });
+      if (rep) {
+        rep.noAlt.forEach(function (x) {
+          epubRow(ul, "warn", t("ep.noAlt", { n: x.page }), function () { close(); ED.gotoItem(x.item); });
+        });
+        if (rep.overset) epubRow(ul, "warn", t("ep.overset", { n: rep.overset }));
+        if (rep.shapes) epubRow(ul, "ok", t("ep.shapes", { n: rep.shapes }));
+        rep.fonts.forEach(function (f) {
+          if (!f.ok) epubRow(ul, "warn", t("ep.fontMissing", { name: f.name }));
+          else if (f.obf) epubRow(ul, "ok", t("ep.fontObf", { name: f.name }));
+        });
+        if (prof && prof.nf) epubRow(ul, "ok", t("ep.noFonts"));
+      }
+      if (ul.childNodes.length) body.appendChild(ul);
+      if (rep) {
+        // what e-book stores usually ask for (general, no store named)
+        body.appendChild(el("h3", "pn-h", t("ep.store")));
+        var sl = el("ul", "pf-list ep-list"), info = chk.info;
+        var cov = res.cover, big = cov && cov.h ? cov.h >= 1600 && cov.w >= 1000 : !!cov;
+        epubRow(sl, cov ? (big ? "ok" : "warn") : "err", cov ? (big ? t("ep.s.cover") : t("ep.s.coverSmall")) : t("ep.s.noCover"));
+        var hasIsbn = /^urn:isbn:/.test(info.uid), badIsbn = !hasIsbn && res.ed && res.ed.isbn && !window.LY_EPUB.isbnOk(res.ed.isbn);
+        epubRow(sl, hasIsbn ? "ok" : "warn", hasIsbn ? t("ep.s.isbn") : badIsbn ? t("ep.s.badIsbn") : t("ep.s.noIsbn"));
+        epubRow(sl, rep.headings ? "ok" : "warn", rep.headings ? t("ep.s.toc") : t("ep.s.noToc"));
+        epubRow(sl, info.lang && info.lang !== "und" ? "ok" : "err", info.lang && info.lang !== "und" ? t("ep.s.lang", { l: info.lang }) : t("ep.s.noLang"));
+        epubRow(sl, rep.noAlt.length ? "warn" : "ok", rep.noAlt.length ? t("ep.s.noA11y", { n: rep.noAlt.length }) : t("ep.s.a11y"));
+        var pub = res.pub;
+        var who = pub && (pub.ppl || []).some(function (x) { return x && x.n; });
+        epubRow(sl, pub && who && pub.blurb ? "ok" : "warn", pub ? (who && pub.blurb ? t("ep.s.meta") : t("ep.s.metaPart")) : t("ep.s.noPub"));
+        body.appendChild(sl);
+      }
+      var act = el("div", "dlg-actions");
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(btn(t("btn.close"), close));
+      if (!res.only) {
+        act.appendChild(btn(t("ep.preview"), function () { LY.io.previewEpub(res); }));
+        if (res.pub && res.ed && res.ed.fmt && res.ed.fmt.k === "eb" && !errs) act.appendChild(btn(t("ep.markPub"), function () { markInPublishing(res); }));
+        act.appendChild(btn(t("ep.save"), function () {
+          LY.io.saveEpub(res).then(function (ok) { if (ok) { LY.toast(t("exp.done")); close(); } });
+        }, "primary"));
+      }
+      body.appendChild(act);
+    }, true);
+  }
+  // Publishing (proposal 2): its e-book format shows "EPUB ready, date"
+  // and the file. Publishing writes its own data (R19): it gets the
+  // facts through its deep link.
+  function markInPublishing(res) {
+    var go = function () {
+      var p = window.parent;
+      try {
+        if (p && p !== window && typeof p.__orosOpenAt === "function") {
+          p.__orosOpenAt("publish", { epubReady: { title: res.pub.id, fmt: res.ed.fmt.id, path: res.path || "", bytes: res.bytes.length, doc: LY.doc.id } });
+          return;
+        }
+      } catch (e) {}
+      LY.toast(t("ep.noPub"));
+    };
+    if (res.path) go();
+    else LY.io.previewEpub(Object.assign(res, { quiet: true })).then(function (ok) { if (ok) go(); });
+  }
+
   // ---------- Preflight ----------
   function preflightDlg() {
     var doc = LY.doc, order = {};
@@ -1515,6 +1616,7 @@
   }
 
   LY.dlg = { newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg, preflight: preflightDlg };
+  LY.panels = Object.assign(LY.panels || {}, { epubReport: epubReport });
   // the small widgets, for dialogs in other files (mergeui.js)
   LY.ui = { field: field, select: select, check: check, seg: seg, btn: btn };
 
@@ -1533,7 +1635,8 @@
       { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },
       { label: t("more.selall"), fn: ED.selectAll },
       { sep: true },
-      { label: t("more.pkg"), fn: function () { LY.io.exportPackage(doc); } }
+      { label: t("more.pkg"), fn: function () { LY.io.exportPackage(doc); } },
+      { label: t("more.epubCheck"), fn: function () { LY.io.checkEpubFile(); } }
     ];
     if (doc.rec.length) items.push({ label: t("more.rec", { n: doc.rec.length }), fn: recDlg });
     LY.menu($("ed-more"), items);
