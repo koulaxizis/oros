@@ -171,6 +171,48 @@ input, textarea, select {
   to   { transform: rotate(360deg); }
 }
 
+/* ---------- 2b. Weather / Sky tonight tabs (APP-ALIAS merge 4) ---------- */
+#wx-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 12px 8px;
+  flex: 0 0 auto;
+}
+#wx-tabs button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+#wx-tabs button[aria-selected="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+#wx-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#sky-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 12px 40px;
+}
+@media (max-width: 480px) {
+  #wx-tabs { padding: 0 8px 6px; }
+  #sky-host { padding: 0 8px 40px; }
+}
+
 /* ---------- 3. Main scroll + offline badge + empty state ---------- */
 #wxmain {
   flex: 1;

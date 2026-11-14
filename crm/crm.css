@@ -486,3 +486,4 @@ textarea.wf-code { font-family: ui-monospace, Menlo, Consolas, monospace; font-s
 .doc-tot { font-size: 13px; margin: 4px 0 8px; color: var(--text-dim); }
 .deal-docs { margin: 10px 0 0; }
 .imp-sum { margin: 4px 0 10px; padding-left: 20px; line-height: 1.6; }
+.pf-photo { display: block; max-width: 100%; max-height: 320px; border-radius: 8px; margin: 6px 0; }

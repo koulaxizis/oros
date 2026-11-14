@@ -163,16 +163,32 @@ test("search provider: name and text, opens the PDF, leaves out what is gone fro
                  { p: "/internal/PDF/Gone.pdf", n: "Gone", t: "", d: 4 }, { p: "/etc/x.pdf", n: "bad" }];
   const ctx = { q: "invoice", lang: "en", readJSON: (k) => (k === "oros-scanpdf-index" ? store : null) };
   assert.equal(PROVIDER.id, "scanpdf");
-  assert.deepEqual(PROVIDER.keys, ["oros-scanpdf-index"]);
-  const all = await PROVIDER.search(ctx);
+  assert.deepEqual(PROVIDER.keys, ["oros-scanpdf-index", "oros-scanpdf-sign"]);
+  const pdfs = (hits) => hits.filter((h) => h.id.indexOf("sign:") !== 0);
+  const all = pdfs(await PROVIDER.search(ctx));
   assert.deepEqual(all.map((h) => h.title), ["Invoice", "Gone"], "without Files: every listed PDF");
   assert.deepEqual(all[0], { id: "/internal/PDF/Invoice.pdf", title: "Invoice", text: "total 1.240,00", when: 5,
                              target: { paths: ["/internal/PDF/Invoice.pdf"] } });
   globalThis.orosFS = { stat: (p) => Promise.resolve(p.includes("Gone") ? null : { size: 1 }) };
   try {
-    assert.deepEqual((await PROVIDER.search(ctx)).map((h) => h.title), ["Invoice"]);
+    assert.deepEqual(pdfs(await PROVIDER.search(ctx)).map((h) => h.title), ["Invoice"]);
   } finally { delete globalThis.orosFS; }
-  assert.deepEqual(await PROVIDER.search({ readJSON: () => "junk" }), []);
+  // signature requests: the ask hit (found by e-signature words) and each request
+  const junk = await PROVIDER.search({ readJSON: () => "junk" });
+  assert.deepEqual(junk.map((h) => [h.id, h.target]), [["sign:new", { signNew: 1 }]]);
+  assert.match(junk[0].text, /DocuSign/); assert.match(junk[0].text, /υπογραφή PDF/);
+  // a pack language (German) adds its title and words through orosI18n
+  globalThis.window = { orosI18n: { table: (t, app, l) => { assert.equal(app, "scanpdf");
+    t[l] = { "sx.ask": "PDF unterschreiben lassen", "sx.req": "Signaturanfrage", "sx.words": "unterschreiben" }; } } };
+  try {
+    const de = await PROVIDER.search({ lang: "de", readJSON: () => null });
+    assert.equal(de[0].title, "PDF unterschreiben lassen");
+    assert.match(de[0].text, /DocuSign/); assert.match(de[0].text, /unterschreiben/);
+  } finally { delete globalThis.window; }
+  const reqs = { v: 1, items: { a: { a: 7, q: { n: "Lease", to: "Maria", te: "m@x.org" } }, b: { a: 3, gone: 4 } } };
+  const sign = await PROVIDER.search({ lang: "el", readJSON: (k) => (k === "oros-scanpdf-sign" ? reqs : null) });
+  assert.deepEqual(sign.slice(1).map((h) => [h.title, h.target, h.when]), [["Lease", { signList: 1 }, 7]]);
+  assert.match(sign[1].text, /Maria m@x\.org/);
 });
 
 test("wiring: ocr.js loaded in order and precached, Tesseract from orOS's own folder, Stop, strings, no Greek in code", () => {
@@ -191,5 +207,6 @@ test("wiring: ocr.js loaded in order and precached, Tesseract from orOS's own fo
    "save.read", "save.readHint", "idx.title", "idx.hint", "idx.forget"].forEach((k) => {
     assert.ok(T.en[k] && T.el[k], k);
   });
-  ["scanpdf/ocr.js", "scanpdf/search.js"].forEach((f) => assert.ok(!/[Ͱ-Ͽἀ-῿]/.test(read(f)), f + " has no Greek"));
+  // search.js: Greek only in its el table (signature request words)
+  ["scanpdf/ocr.js", "scanpdf/search.js"].forEach((f) => assert.ok(!/[Ͱ-Ͽἀ-῿]/.test(read(f).replace(/\n    el: \{[\s\S]*?\n  \};/, "")), f + " has no Greek"));
 });

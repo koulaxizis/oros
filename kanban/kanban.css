@@ -1227,6 +1227,8 @@ dialog menu button.danger:hover {
   padding: 2px 4px;
   pointer-events: auto;
 }
+/* a faded toast must not catch clicks meant for the buttons under it */
+#toast:not(.show) button { pointer-events: none; }
 
 /* ---- Due date chip (Kanban → Calendar integration) ---- */
 .due-chip {
@@ -1406,6 +1408,8 @@ dialog menu button.danger:hover {
 /* CRM 1.10: a contract that ends soon or has ended (read from CRM) */
 .ctr-chip { font-size: 11px; font-weight: 600; color: var(--warn, #c98a00); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; cursor: pointer; }
 .ctr-chip.ended { color: var(--danger); }
+.pd-chip { font-size: 11px; font-weight: 600; color: var(--accent); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; cursor: pointer; }
+.pd-chip.off { color: var(--text-dim); }
 
 /* Swimlanes: sticky column heads, one row per lane */
 #columns.lanes {
@@ -1604,6 +1608,58 @@ dialog menu button.danger:hover {
 .tl-pill.done { opacity: 0.5; }
 .tl-pill.dragging { opacity: 0.8; cursor: grabbing; z-index: 2; }
 
+/* Gantt (wave G1): bars, ends, progress, milestones, groups, zoom */
+.tl-grid { --tl-we-c: color-mix(in srgb, var(--text) 5%, transparent); }
+.tl-grid.tl-wd { --tl-we-c: color-mix(in srgb, var(--text) 11%, transparent); }
+.tl-row:not(.tl-headrow) > .tl-track { background: var(--tl-we, none); background-size: var(--tl-we-w, auto) 100%; background-position: var(--tl-we-x, 0) 0; }
+.tl-bar { max-width: none; min-width: 0; padding: 0 10px; text-align: left; }
+.tl-bar.narrow { padding: 0; }
+.tl-bar.narrow .tl-bt { display: none; }
+.tl-bt { position: relative; pointer-events: none; }
+.tl-prog { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(0, 0, 0, 0.2); pointer-events: none; }
+.tl-h { position: absolute; top: 0; bottom: 0; width: 10px; cursor: ew-resize; z-index: 1; }
+.tl-h.l { left: 0; }
+.tl-h.r { right: 0; }
+.tl-bar:hover .tl-h, .tl-bar:focus-visible .tl-h { background: rgba(0, 0, 0, 0.14); }
+.tl-lab {
+  position: absolute;
+  top: 10px;
+  font-size: 11.5px;
+  color: var(--text);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.tl-ms {
+  position: absolute;
+  top: 10px;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: var(--ms-c, var(--accent));
+  transform: rotate(45deg);
+  cursor: grab;
+  touch-action: pan-y;
+  box-shadow: 0 1px 3px var(--shadow);
+}
+.tl-ms.due-overdue { outline: 2px solid var(--danger); outline-offset: 1px; }
+.tl-ms.done { opacity: 0.5; }
+.tl-ms.dragging { opacity: 0.8; cursor: grabbing; z-index: 2; }
+.tl-grp { min-height: 28px; }
+.tl-grp > .tl-track { min-height: 28px; }
+.tl-grpname {
+  min-height: 28px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-dim);
+}
+.tl-zw .tl-day, .tl-zm .tl-day { align-items: flex-start; padding-left: 3px; border-left-color: var(--border); }
+.tl-zm .tl-month { top: auto; bottom: 6px; }
+
 /* Card dialog: column select, attachments, cover */
 dialog select {
   width: 100%;
@@ -1740,6 +1796,9 @@ dialog label.chk.sel select { flex: 1; min-width: 0; width: auto; }
   .cov-opt { width: 40px; height: 40px; }
   dialog label.chk { min-height: 44px; }
   .tl-pill { height: 32px; border-radius: 16px; }
+  .tl-h { width: 16px; }
+  .tl-ms { top: 8px; width: 20px; height: 20px; margin-left: -10px; }
+  .tl-lab { top: 12px; }
 }
 
 /* Assistant prefill (asNew): the card's extras under the quick-add field */
