@@ -73,6 +73,13 @@ Liedtext-Sync ist auch ein Songbook: Ein Lied kann Akkorde über dem Text haben,
 - ChordPro-Dateien (.cho, .chopro, .chordpro, .crd) und Akkordblätter als .txt öffnen sich hier, über `Datei öffnen`, aus [Dateien](app:files) oder über „Öffnen mit“ deines Computers. Aus einer Datei mit mehreren Liedern wird nur das erste gelesen.
 - Liedtext-Sync lädt keine Akkorde von irgendeiner Seite: Du schreibst sie selbst oder öffnest deine eigenen Dateien.
 
+## Bühne: live spielen
+`Bühne` (neben `Transponieren` und in der `Vorschau`) füllt den Bildschirm mit dem Lied, um es live zu spielen, und hält den Bildschirm an, solange sie offen ist.
+- Ist die Lieddatei hier und sind die Zeilen synchronisiert, folgt sie dem Lied: Drück ▶ (oder tipp auf den Text), dann leuchtet die gesungene Zeile und bleibt im Blick.
+- Sonst scrollt ▶ gleichmäßig: das ganze Lied in seiner Länge (oder etwa zwei Takte pro Zeile im Tempo des Liedes). `−` und `+` machen es langsamer oder schneller; tipp auf den Text für eine Pause. Mit Tempo zählt `Einzählen` zuerst einen Takt vor.
+- ▲ ▼, die Pfeiltasten und Bild auf / Bild ab gehen einen Bildschirm zurück oder weiter; die meisten Fußpedale zum Umblättern senden diese Tasten. [[Esc]] schließt die Bühne.
+- `A−` `A+` ändern die Größe, und `Anzeigen` wählt Text und Akkorde, nur Text (für Singende) oder nur Akkorde. Die Bühne merkt sich das auf diesem Gerät.
+
 ## Deine Daten
 - Der Liedtext und seine Zeiten werden laufend gespeichert. Mit eingeschaltetem orOS-Sync in den [Einstellungen](app:settings) folgen sie dir verschlüsselt auf deine anderen Geräte.
 - Die Lieddatei bleibt nur auf dem Gerät, auf dem du sie gewählt hast. Auf einem anderen Gerät zeigt das Lied „Lieddatei nicht auf diesem Gerät“, bis du sie auch dort wählst. Ein Lied aus Musik wird aus deinem Musik-Ordner gelesen und ist damit auf jedem Gerät da, das die Datei hat (Vault Drive).

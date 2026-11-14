@@ -314,6 +314,20 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
   font-size: 13px; z-index: 6;
 }
 .crop-hint { max-width: 340px; color: var(--text-dim); }
+.pe-bar { gap: 4px; padding: 6px; flex-wrap: nowrap; overflow-x: auto; max-width: calc(100% - 16px); }
+.pe-b {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  min-height: 36px; padding: 4px 10px; border-radius: 8px;
+  background: transparent; color: var(--text); border: 1px solid transparent; font: inherit; font-size: 12px; cursor: pointer;
+}
+.pe-b:hover:not(:disabled) { background: var(--hover, rgba(127,127,127,0.15)); }
+.pe-b.on { border-color: var(--accent); color: var(--accent); }
+.pe-b.primary { background: var(--accent); color: var(--accent-ink, #fff); }
+.pe-b:disabled { opacity: 0.4; cursor: default; }
+.pe-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pen-tile { color: var(--text); }
+@media (max-width: 760px) { .pe-l { display: none; } .pe-b { padding: 4px 8px; min-width: 40px; justify-content: center; } }
+@media (pointer: coarse) { .pe-b { min-height: 44px; } }
 .banner .rng { width: 140px; }
 #pages {
   display: flex; align-items: center; gap: 8px;

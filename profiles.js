@@ -37,7 +37,7 @@
     work: ["writer", "spreadsheet", "slides", "kanban", "mail", "timesheet", "invoices", "quote", "crm",
            "stock", "newsletter", "signature", "certificates", "converter", "storage"],
     school: ["writer", "spreadsheet", "slides", "wiki", "mindmap", "units", "texttools", "library",
-             "museum", "sky", "maps", "habits", "pubdomain", "qr"],
+             "museum", "maps", "habits", "pubdomain", "qr"],
     create: ["atelier", "photolab", "pixel", "mockups", "layout", "writer", "slides", "prompter",
              "studio", "montage", "mixer", "wallpaper", "labels", "typewriter"],
     games: ["gamecenter", "memory", "connect4", "dots", "tictactoe", "simon", "slider", "lightsout",

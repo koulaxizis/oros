@@ -1,6 +1,7 @@
 // ============================================================
-// orOS Moon & Sky — App logic (v1.0.0)
-// What the sky holds tonight from your place, computed offline:
+// orOS Weather › Sky tonight (sky/view.js) — was the Moon & Sky app
+// (APP-ALIAS since the 2026-11-12 merge 4, old id "sky").
+// What the sky holds tonight above the Weather city, computed offline:
 //   - Tonight: the Moon as it looks (phase, tilt), moonrise and
 //     moonset, the Sun, twilights, golden and blue hour, the
 //     planets you can see, and what is coming up
@@ -8,10 +9,11 @@
 //     290 bright stars and 34 constellations; a time slider
 //   - Month: the Moon for every day, equinoxes and solstices,
 //     meteor shower peaks, supermoons and eclipses
-//   - time travel to any date; red night view
-// Location is the one in Time (its Sun & Moon card): Time's own
-// setting → Weather → this device's position, for this visit only.
-// "Change location" opens Time, so there is one place to set it.
+//   - time travel to any date; red night view (this tab only)
+// Loaded by weather/weather.js only when the tab first opens (with
+// core.js, stars.js, view.css and the "sky" language pack; this
+// folder keeps the pack name "sky"). SkyView.mount(host, place)
+// builds the tab once; setPlace() follows Weather's city.
 // Data: nothing synced; device-local prefs (R10) oros-sky-prefs
 // (tab, red night view, constellation lines).
 // Sections:
@@ -23,9 +25,9 @@
 //   6. Sky map
 //   7. Month
 //   8. Toasts
-//   9. Deep links + keyboard (Contract Β)
-//  10. Palette
-//  11. Wiring & boot
+//   9. Deep links + keyboard
+//  10. Red night view
+//  11. Mount
 // ============================================================
 (function () {
   "use strict";
@@ -33,7 +35,6 @@
   var C = window.OrosSkyCore;
   var CAT = window.OrosSkyStars;
   var PREFS_KEY = "oros-sky-prefs";
-  var TIME_KEY = "oros-time-data";
   var MIN = 60000, HOUR = 3600000, DAY = 86400000;
   var TABS = ["tonight", "map", "month"];
 
@@ -51,18 +52,13 @@
 
   var STRINGS = {
     en: {
-      "app.name": "Moon & Sky",
+      "app.name": "Sky tonight",
       "tab.tonight": "Tonight", "tab.map": "Sky map", "tab.month": "Month",
       "btn.today": "Today", "f.date": "Date", "btn.now": "Now", "btn.lines": "Constellations",
       "night.on": "Red night view: on", "night.off": "Red night view: off",
-      "loc.btn": "Change location (opens Time)",
-      "sub.time": "{place} · location from Time", "sub.weather": "{place} · location from Weather",
-      "sub.geo": "{place} · this device, for this visit",
+      "sub.weather": "{place} · the sky above your Weather city",
       "noloc.title": "Where are you?",
-      "noloc.hint": "Moon & Sky uses the location of the Sun & Moon card in Time, or the Weather app's. Set it once there and both apps use it.",
-      "noloc.time": "Set location in Time", "noloc.geo": "Use device location (this time only)",
-      "geo.wait": "Finding your location…", "geo.fail": "Location is not available",
-      "notime": "Time is not available here",
+      "noloc.hint": "Add a city at the top of Weather to see the sky above it.",
       "ph.0": "New moon", "ph.1": "Waxing crescent", "ph.2": "First quarter", "ph.3": "Waxing gibbous",
       "ph.4": "Full moon", "ph.5": "Waning gibbous", "ph.6": "Last quarter", "ph.7": "Waning crescent",
       "moon.meta": "{p}% lit · {age} days old · {km} km away",
@@ -108,18 +104,13 @@
       "km": "km", "dur.hm": "{h} h {m} min"
     },
     el: {
-      "app.name": "Σελήνη & Ουρανός",
+      "app.name": "Ο ουρανός απόψε",
       "tab.tonight": "Απόψε", "tab.map": "Χάρτης ουρανού", "tab.month": "Μήνας",
       "btn.today": "Σήμερα", "f.date": "Ημερομηνία", "btn.now": "Τώρα", "btn.lines": "Αστερισμοί",
       "night.on": "Κόκκινη νυχτερινή όψη: ανοιχτή", "night.off": "Κόκκινη νυχτερινή όψη: κλειστή",
-      "loc.btn": "Αλλαγή τοποθεσίας (ανοίγει την Ώρα)",
-      "sub.time": "{place} · τοποθεσία από την Ώρα", "sub.weather": "{place} · τοποθεσία από τον Καιρό",
-      "sub.geo": "{place} · αυτή η συσκευή, μόνο αυτή τη φορά",
+      "sub.weather": "{place} · ο ουρανός πάνω από την πόλη του Καιρού",
       "noloc.title": "Πού βρίσκεσαι;",
-      "noloc.hint": "Το Σελήνη & Ουρανός χρησιμοποιεί την τοποθεσία της κάρτας «Ήλιος & Σελήνη» της Ώρας ή του Καιρού. Όρισέ την μία φορά εκεί και τη χρησιμοποιούν και οι δύο εφαρμογές.",
-      "noloc.time": "Ορισμός τοποθεσίας στην Ώρα", "noloc.geo": "Τοποθεσία συσκευής (μόνο αυτή τη φορά)",
-      "geo.wait": "Εντοπισμός…", "geo.fail": "Η τοποθεσία δεν είναι διαθέσιμη",
-      "notime": "Το Time δεν είναι διαθέσιμο εδώ",
+      "noloc.hint": "Πρόσθεσε μια πόλη στο πάνω μέρος του Καιρού για να δεις τον ουρανό της.",
       "ph.0": "Νέα Σελήνη", "ph.1": "Αύξουσα μηνίσκος", "ph.2": "Πρώτο τέταρτο", "ph.3": "Αύξουσα αμφίκυρτη",
       "ph.4": "Πανσέληνος", "ph.5": "Φθίνουσα αμφίκυρτη", "ph.6": "Τελευταίο τέταρτο", "ph.7": "Φθίνουσα μηνίσκος",
       "moon.meta": "Φωτίζεται {p}% · {age} ημερών · σε απόσταση {km} χλμ.",
@@ -177,7 +168,9 @@
     }
     return s;
   }
-  function $(id) { return document.getElementById(id); }
+  var root = null;          // the mounted tab (ids are "sk-…")
+  function $(id) { return root ? root.querySelector("#sk-" + id) : null; }
+  function shown() { return !!(root && root.isConnected && !root.closest("[hidden]")); }
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -209,8 +202,7 @@
   (function () {
     var m = ((document.currentScript && document.currentScript.src) || "")
       .match(/[?&]v=([^&#]+)/);
-    document.documentElement.lang = LANG;
-    console.log("sky.js v" + (m ? m[1] : "?") + " boot");
+    console.log("sky/view.js v" + (m ? m[1] : "?") + " boot");
   })();
 
   // ---------- 2. Prefs + location ----------
@@ -229,54 +221,17 @@
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
   }
 
-  // Same order as Time's Sun & Moon card (time/astro.js getCoords).
-  // A device fix is kept in memory only, never stored.
-  var geoFix = null;
+  // The place is Weather's city (setPlace): { lat, lon, name }.
+  var place = null;
   function getCoords() {
-    try {
-      var d = JSON.parse(localStorage.getItem(TIME_KEY) || "null");
-      if (d && d.astro && typeof d.astro.lat === "number" && typeof d.astro.lon === "number") {
-        return { lat: d.astro.lat, lon: d.astro.lon, src: "time" };
-      }
-    } catch (e) {}
-    try {
-      var w = JSON.parse(localStorage.getItem("oros-weather") || "null");
-      if (w && typeof w.lat === "number" && typeof w.lon === "number") {
-        return { lat: w.lat, lon: w.lon, src: "weather", name: typeof w.name === "string" ? w.name : "" };
-      }
-      var tray = window.parent && window.parent !== window && window.parent.orosWeatherTray;
-      var tl = (tray && typeof tray.location === "function") ? tray.location() : null;
-      if (tl && typeof tl.lat === "number" && typeof tl.lon === "number") {
-        return { lat: tl.lat, lon: tl.lon, src: "weather", name: typeof tl.name === "string" ? tl.name : "" };
-      }
-    } catch (e) {}
-    if (geoFix) return { lat: geoFix.lat, lon: geoFix.lon, src: "geo" };
-    return null;
+    return place && typeof place.lat === "number" && typeof place.lon === "number"
+      ? { lat: place.lat, lon: place.lon, src: "weather", name: typeof place.name === "string" ? place.name : "" } : null;
   }
   var coords = null;
   function placeText(c) {
     var ll = Math.abs(c.lat).toFixed(2) + "°" + t(c.lat >= 0 ? "card.N" : "card.S") + " " +
              Math.abs(c.lon).toFixed(2) + "°" + t(c.lon >= 0 ? "card.E" : "card.W");
     return c.name ? c.name : ll;
-  }
-
-  function openTimeLocation() {
-    var p = null;
-    try { p = window.parent; } catch (e) {}
-    if (p && p !== window && typeof p.__orosOpenAt === "function") {
-      p.__orosOpenAt("time", { astro: "location" });
-    } else {
-      showToast(t("notime"));
-    }
-  }
-  function detectGeo() {
-    if (!navigator.geolocation) { showToast(t("geo.fail")); return; }
-    showToast(t("geo.wait"));
-    navigator.geolocation.getCurrentPosition(function (pos) {
-      geoFix = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-      refresh();
-    }, function () { showToast(t("geo.fail")); },
-    { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
   }
 
   // ---------- 3. Date + tabs ----------
@@ -520,7 +475,7 @@
     return precessed.stars;
   }
   function mapTime() { return baseTime() + mapOffset * MIN; }
-  function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function cssVar(name) { return getComputedStyle(root).getPropertyValue(name).trim(); }
 
   function objectsAt(ms) {
     var objs = [], lat = coords.lat, lon = coords.lon;
@@ -790,7 +745,7 @@
     try {
       var n = (window.parent && window.parent !== window && window.parent.orosNotifs) || null;
       if (n && typeof n.transient === "function" &&
-          n.transient({ ns: "sky", title: String(text) })) return;
+          n.transient({ ns: "weather", title: String(text) })) return;
     } catch (e) {}
     var box = $("toast");
     if (!box) return;
@@ -803,8 +758,9 @@
   }
 
   // ---------- 9. Deep links + keyboard ----------
-  // __orosOpenAt("sky", { date: "YYYY-MM-DD", tab: "tonight"|"map"|"month" })
-  // — used by the Calendar feed and by Time's Sun & Moon card.
+  // Weather passes { date: "YYYY-MM-DD", tab: "tonight"|"map"|"month" }
+  // (the Calendar feed, Today and Time's Sun & Moon card send them to
+  // the old id "sky", which opens Weather on this tab).
   function openAt(target) {
     if (!target || typeof target !== "object") return;
     var d = typeof target.date === "string" ? C.parseDate(target.date) : null;
@@ -812,18 +768,8 @@
     if (typeof target.tab === "string" && TABS.indexOf(target.tab) !== -1) setTab(target.tab);
     else if (d != null) setTab("tonight");
   }
-  window.__orosOpenAt = openAt;
 
   function wireKeyboard() {
-    // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
-    document.addEventListener("keydown", function (e) {
-      if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
-      var p = null;
-      try { p = window.parent; } catch (err) { return; }
-      if (!(p && p !== window && p.orosShortcuts &&
-            typeof p.orosShortcuts.handle === "function")) return;
-      if (p.orosShortcuts.handle(e)) e.stopPropagation();
-    }, true);
     // tab list: arrow keys move between tabs (ARIA pattern)
     $("tabs").addEventListener("keydown", function (e) {
       var i = TABS.indexOf(prefs.tab);
@@ -837,38 +783,11 @@
     });
   }
 
-  // ---------- 10. Palette ----------
-  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                  "--accent", "--accent-hover", "--accent-soft", "--accent-ink",
-                  "--panel-bg", "--border", "--shadow", "--danger"];
-  function inheritPalette() {
-    try {
-      var pRoot = window.parent.document.documentElement;
-      document.documentElement.setAttribute("data-theme",
-        pRoot.getAttribute("data-theme") || "dark");
-      var cs = window.parent.getComputedStyle(pRoot);
-      PAL_VARS.forEach(function (v) {
-        var val = cs.getPropertyValue(v).trim();
-        if (val) document.documentElement.style.setProperty(v, val);
-        else document.documentElement.style.removeProperty(v);
-      });
-    } catch (e) { /* standalone */ }
-    applyNight();
-  }
-  function watchPalette() {
-    try {
-      new MutationObserver(inheritPalette).observe(
-        window.parent.document.documentElement,
-        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
-      );
-    } catch (e) { /* standalone */ }
-  }
-  // The red view must beat the inherited palette, which sits in
-  // inline styles: while it is on, those inline values step aside.
+  // ---------- 10. Red night view ----------
+  // Only this tab turns red (.sky.night overrides the palette tokens
+  // on the tab's own node, so the inherited palette stays as it is).
   function applyNight() {
-    var root = document.documentElement;
     root.classList.toggle("night", !!prefs.night);
-    if (prefs.night) PAL_VARS.forEach(function (v) { root.style.removeProperty(v); });
     var b = $("night-btn");
     if (b) {
       setLabel(b, prefs.night ? t("night.on") : t("night.off"));
@@ -876,22 +795,19 @@
     }
   }
 
-  // ---------- 11. Wiring & boot ----------
+  // ---------- 11. Mount ----------
   var ICON = {
     night: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/><circle cx="17" cy="5" r="1.2" fill="currentColor"/></svg>',
-    loc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
     prev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>',
     next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
   };
 
   function applyI18n() {
-    [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
+    [].forEach.call(root.querySelectorAll("[data-i18n]"), function (n) {
       n.textContent = t(n.getAttribute("data-i18n"));
     });
-    document.title = t("app.name") + " · orOS";
-    $("title-view").textContent = t("app.name");
+    $("tabs").setAttribute("aria-label", t("app.name"));
     $("night-btn").innerHTML = ICON.night;
-    $("loc-btn").innerHTML = ICON.loc; setLabel($("loc-btn"), t("loc.btn"));
     $("prev-m").innerHTML = ICON.prev; setLabel($("prev-m"), t("prev"));
     $("next-m").innerHTML = ICON.next; setLabel($("next-m"), t("next"));
   }
@@ -927,12 +843,9 @@
     $("today-btn").addEventListener("click", function () { setDate(Date.now()); });
     $("night-btn").addEventListener("click", function () {
       prefs.night = !prefs.night; savePrefs();
-      inheritPalette();
+      applyNight();
       renderPane();
     });
-    $("loc-btn").addEventListener("click", openTimeLocation);
-    $("noloc-time").addEventListener("click", openTimeLocation);
-    $("noloc-geo").addEventListener("click", detectGeo);
     $("time-in").addEventListener("input", function () {
       mapOffset = parseInt(this.value, 10) || 0;
       showInfo(null);
@@ -951,18 +864,14 @@
     var rt = null;
     window.addEventListener("resize", function () {
       clearTimeout(rt);
-      rt = setTimeout(function () { if (coords && prefs.tab === "map") drawMap(); }, 120);
+      rt = setTimeout(function () { if (shown() && coords && prefs.tab === "map") drawMap(); }, 120);
     });
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "visible") refresh();
-    });
-    window.addEventListener("focus", function () {
-      var c = getCoords();
-      if (JSON.stringify(c) !== JSON.stringify(coords)) refresh();
+      if (document.visibilityState === "visible" && shown()) refresh();
     });
     // Today follows the clock: once a minute while open.
     setInterval(function () {
-      if (!coords || document.visibilityState !== "visible") return;
+      if (!coords || !shown() || document.visibilityState !== "visible") return;
       if (followToday && !isToday()) { setDate(Date.now()); return; }
       if (!isToday()) return;
       if (prefs.tab === "map") drawMap();
@@ -970,25 +879,143 @@
     }, 60000);
   }
 
-  function boot() {
-    loadPrefs();
-    applyI18n();
-    inheritPalette();
-    coords = getCoords();
-    var d = new Date(sel);
-    monthView = { y: d.getFullYear(), m: d.getMonth() };
-    wire();
-    wireKeyboard();
-    watchPalette();
-    render();
-    var target = null;
-    try {
-      if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function") {
-        target = window.parent.__orosTakeTarget("sky");
-      }
-    } catch (e) {}
-    if (target) openAt(target);
+  var TEMPLATE = [
+    "<div id=\"sk-toolbar\" class=\"sk-bar\">",
+    "    <div class=\"title\">",
+    "      <span id=\"sk-title-sub\" class=\"title-sub\"></span>",
+    "    </div>",
+    "    <span class=\"spacer\"></span>",
+    "    <button type=\"button\" id=\"sk-today-btn\" class=\"chip slim\" data-i18n=\"btn.today\" hidden>Today</button>",
+    "    <label class=\"date-wrap\">",
+    "      <span class=\"sr-only\" data-i18n=\"f.date\">Date</span>",
+    "      <input type=\"date\" id=\"sk-date-in\" min=\"1900-01-01\" max=\"2099-12-31\">",
+    "    </label>",
+    "    <button type=\"button\" id=\"sk-night-btn\" class=\"icon-btn toggle\"></button>",
+    "  </div>",
+    "",
+    "  <nav id=\"sk-tabs\" role=\"tablist\">",
+    "    <button type=\"button\" role=\"tab\" id=\"sk-tab-tonight\" class=\"tab\" aria-controls=\"sk-pane-tonight\" data-tab=\"tonight\" data-i18n=\"tab.tonight\">Tonight</button>",
+    "    <button type=\"button\" role=\"tab\" id=\"sk-tab-map\" class=\"tab\" aria-controls=\"sk-pane-map\" data-tab=\"map\" data-i18n=\"tab.map\">Sky map</button>",
+    "    <button type=\"button\" role=\"tab\" id=\"sk-tab-month\" class=\"tab\" aria-controls=\"sk-pane-month\" data-tab=\"month\" data-i18n=\"tab.month\">Month</button>",
+    "  </nav>",
+    "",
+    "  <div id=\"sk-main\">",
+    "    <!-- No location yet -->",
+    "    <section id=\"sk-noloc\" class=\"pane-inner\" hidden>",
+    "      <div class=\"card empty\">",
+    "        <h3 data-i18n=\"noloc.title\">Where are you?</h3>",
+    "        <p class=\"hint\" data-i18n=\"noloc.hint\"></p>",
+    "      </div>",
+    "    </section>",
+    "",
+    "    <!-- Tonight -->",
+    "    <section id=\"sk-pane-tonight\" class=\"pane\" role=\"tabpanel\" aria-labelledby=\"sk-tab-tonight\" tabindex=\"-1\">",
+    "      <div class=\"pane-inner\">",
+    "        <div class=\"card moon-card\">",
+    "          <div id=\"sk-moon-big\" class=\"moon-big\" role=\"img\"></div>",
+    "          <div class=\"moon-txt\">",
+    "            <h2 id=\"sk-moon-name\"></h2>",
+    "            <p id=\"sk-moon-meta\" class=\"meta\"></p>",
+    "            <dl id=\"sk-moon-next\" class=\"kv\"></dl>",
+    "          </div>",
+    "        </div>",
+    "        <div class=\"grid2\">",
+    "          <div class=\"card\">",
+    "            <h3 data-i18n=\"sec.moon\">Moon</h3>",
+    "            <dl id=\"sk-moon-times\" class=\"kv\"></dl>",
+    "          </div>",
+    "          <div class=\"card\">",
+    "            <h3 data-i18n=\"sec.sun\">Sun</h3>",
+    "            <dl id=\"sk-sun-times\" class=\"kv\"></dl>",
+    "          </div>",
+    "          <div class=\"card\">",
+    "            <h3 data-i18n=\"sec.dark\">When it gets dark</h3>",
+    "            <dl id=\"sk-twilight\" class=\"kv\"></dl>",
+    "          </div>",
+    "          <div class=\"card\">",
+    "            <h3 data-i18n=\"sec.photo\">Light for photos</h3>",
+    "            <dl id=\"sk-photo\" class=\"kv\"></dl>",
+    "          </div>",
+    "        </div>",
+    "        <div class=\"card\">",
+    "          <h3 data-i18n=\"sec.planets\">Planets tonight</h3>",
+    "          <ul id=\"sk-planets\" class=\"plist\"></ul>",
+    "        </div>",
+    "        <div class=\"card\" id=\"sk-soon-card\">",
+    "          <h3 data-i18n=\"sec.soon\">Coming up</h3>",
+    "          <ul id=\"sk-soon\" class=\"elist\"></ul>",
+    "        </div>",
+    "      </div>",
+    "    </section>",
+    "",
+    "    <!-- Sky map -->",
+    "    <section id=\"sk-pane-map\" class=\"pane\" role=\"tabpanel\" aria-labelledby=\"sk-tab-map\" tabindex=\"-1\" hidden>",
+    "      <div class=\"pane-inner map-inner\">",
+    "        <div class=\"map-wrap\">",
+    "          <canvas id=\"sk-map\" role=\"img\"></canvas>",
+    "        </div>",
+    "        <div class=\"map-ctl\">",
+    "          <label for=\"sk-time-in\" class=\"lbl\" id=\"sk-time-lbl\"></label>",
+    "          <input type=\"range\" id=\"sk-time-in\" min=\"-720\" max=\"720\" step=\"5\" value=\"0\">",
+    "          <div class=\"chips\">",
+    "            <button type=\"button\" id=\"sk-now-btn\" class=\"chip\" data-i18n=\"btn.now\">Now</button>",
+    "            <button type=\"button\" id=\"sk-lines-btn\" class=\"chip\" aria-pressed=\"true\" data-i18n=\"btn.lines\">Constellations</button>",
+    "          </div>",
+    "        </div>",
+    "        <div id=\"sk-map-info\" class=\"card info\" aria-live=\"polite\" hidden></div>",
+    "        <details class=\"card\" id=\"sk-up-list-box\">",
+    "          <summary data-i18n=\"map.list\">What is up (list)</summary>",
+    "          <ul id=\"sk-up-list\" class=\"plist\"></ul>",
+    "        </details>",
+    "      </div>",
+    "    </section>",
+    "",
+    "    <!-- Month -->",
+    "    <section id=\"sk-pane-month\" class=\"pane\" role=\"tabpanel\" aria-labelledby=\"sk-tab-month\" tabindex=\"-1\" hidden>",
+    "      <div class=\"pane-inner\">",
+    "        <div class=\"month-head\">",
+    "          <button type=\"button\" id=\"sk-prev-m\" class=\"icon-btn\"></button>",
+    "          <h2 id=\"sk-month-title\"></h2>",
+    "          <button type=\"button\" id=\"sk-next-m\" class=\"icon-btn\"></button>",
+    "        </div>",
+    "        <div id=\"sk-month-grid\" class=\"mgrid\" role=\"grid\"></div>",
+    "        <div class=\"card\">",
+    "          <h3 data-i18n=\"sec.events\">This month</h3>",
+    "          <ul id=\"sk-month-events\" class=\"elist\"></ul>",
+    "        </div>",
+    "      </div>",
+    "    </section>",
+    "  </div>"
+  ].join("\n");
+
+  // Build the tab once in host (Weather's #sky-host); later calls only
+  // re-attach it and take the new place.
+  function mount(host, where) {
+    if (!root) {
+      root = document.createElement("div");
+      root.className = "sky";
+      root.innerHTML = TEMPLATE;                         // static markup
+      host.appendChild(root);
+      loadPrefs();
+      applyI18n();
+      place = where || null;
+      coords = getCoords();
+      var d = new Date(sel);
+      monthView = { y: d.getFullYear(), m: d.getMonth() };
+      wire();
+      wireKeyboard();
+      applyNight();
+      render();
+      return;
+    }
+    if (root.parentNode !== host) host.appendChild(root);
+    setPlace(where);
+  }
+  // Weather's city changed (or the tab came back into view).
+  function setPlace(where) {
+    place = where || null;
+    if (root) refresh();
   }
 
-  boot();
+  window.SkyView = { mount: mount, setPlace: setPlace, openAt: openAt };
 })();

@@ -671,7 +671,8 @@
     var box = group(it, t("eve.title"), [{ head: "", rows: rows, more: day ? day.more : {} }], "eve", res.today, t("eve.none"));
     box.className = box.className.replace("w-soon", "w-eve");
     // the first thing YOU do tomorrow (a moonrise is not a start)
-    var first = rows.filter(function (r) { return r.time && r.app !== "sky"; }).map(function (r) { return r.time; }).sort()[0];
+    // (the sky rows come from Weather since merge 4: ids "sky:…")
+    var first = rows.filter(function (r) { return r.time && r.app !== "sky" && !(r.app === "weather" && /^sky:/.test(r.id)); }).map(function (r) { return r.time; }).sort()[0];
     if (first) box.insertBefore(el("div", "more eve-first", t("eve.first", { t: first })), box.children[1] || null);
     return box;
   }

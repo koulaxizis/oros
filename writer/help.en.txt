@@ -35,6 +35,15 @@ Just start typing; everything saves by itself.
 - `Mail merge…` fills placeholders such as {{Name}} or {{City}} in your document. The data comes from [Contacts](app:contacts) (all contacts, or one label) or from a CSV file. A field shows green when the data has it and red when it doesn't. Use the arrows to preview each record.
 - The result can be `One PDF`, `A PDF for each record (ZIP)` or `One new document`, with a page break between records. From Contacts you can use FullName, FirstName, LastName, Company, JobTitle, Email, Phone, Address, City, PostalCode, Country and Birthday. Greek names such as {{Όνομα}} or {{Πόλη}} also work.
 
+## Book translation
+- `Review` › `Translate this document…` starts a translation: choose the document (or `From a file…`, which opens a Word, OpenDocument, Markdown, HTML, text or PDF file as a new document first), the two languages and a name.
+- The translation screen shows the book cut into sentences, the source on the left and your translation on the right (one under the other on a phone). Tap a sentence to translate it. `Confirm` ([[Ctrl+Enter]]) marks it done and goes to the next one; `Reviewed` ([[Ctrl+Shift+Enter]]) marks it checked. A sentence you type in stays a draft until you confirm it.
+- Bold, italic, links, footnote numbers and pictures appear as small numbered marks such as 1 … /1. Put them around the same words in your translation, or tap a mark under the box to put it in ([[Alt+T]] puts in the next missing one). A mark you leave out never breaks the book: footnote numbers and pictures are put back at the end of the sentence.
+- `Copy source` ([[Alt+S]]) puts the original text in the box. `Same as 12` offers the translation of the same sentence earlier in the book. `Join` leaves a sentence empty when its meaning is already in the one before.
+- The bar at the top shows how much is done. Search, `Show` (not done, drafts, done, reviewed, formatting to check) and `Go to chapter` help you move around a long book.
+- `Build document` makes the translated book as a new Writer document, with the formatting, footnotes, header and footer of the original. Sentences not yet translated stay in the source language. Building again updates the same document; its earlier text goes into Version History.
+- `Review` › `Translations` lists your translations. Translations are kept on the orOS disk (Files › Writer › Translations) and sync to your other devices with the disk. Each device saves only its own changes, so two devices can work on the same book. Deleting a translation moves it to the Trash in Files for 30 days.
+
 ## Notes, comments and structure
 - `Footnotes`: tap `Add footnote` to place a numbered note at the cursor and type it in the side panel. The footnotes and endnotes of a Word file you open come in as footnotes.
 - `Comments`: select some text, then `Add comment`. A comment must stay inside one paragraph.
@@ -83,3 +92,4 @@ With [orOS sync](help:t/sync), your documents (text, footnotes, comments, versio
 - Spelling covers English and Greek only. It skips words with digits, mixed capitals (such as iPhone) and capitals of four letters or fewer (such as NASA). Long compound words that are not in the dictionary are marked. `Ignore` lasts until you close Writer.
 - Track changes records typed and deleted text only. Splitting or joining paragraphs and formatting changes are not tracked, and text pasted while tracking goes in as plain text. While tracking is on, Undo and Redo work in whole steps of typing or deleting.
 - In mail merge, a placeholder must not be split by formatting (for example half of it in bold). PDF outputs stop at 500 records. The new document keeps the text only, without footnotes or comments.
+- Translation (this first version): a sentence can't be split or joined with its neighbour in the source (use `Join`), the translation memory, glossary, XLIFF/TMX and Word round trip come in later updates, and a translation needs Writer opened inside orOS (it uses the orOS disk).

@@ -1,0 +1,68 @@
+name: EPUBCheck
+
+# Runs the official W3C EPUBCheck on the Layout EPUB export's synthetic
+# books (tests/layout-ebooks.js through .github/scripts/epub-samples.js):
+# every good-* book must pass with no error, every bad-* book must fail,
+# and the on-device check (layout/epubcheck.js) must not call clean a
+# book EPUBCheck rejects. EPUBCheck is downloaded at a pinned version and
+# its SHA-256 is checked; it never ships with orOS. Made-up text only.
+# See OROS_BIBLE.md "LY-EPUB".
+
+on:
+  pull_request:
+    paths:
+      - 'layout/epub.js'
+      - 'layout/epubcheck.js'
+      - 'layout/outprof.js'
+      - 'designkit/text.js'
+      - 'designkit/model.js'
+      - 'designkit/render.js'
+      - 'atelier/zip.js'
+      - 'tests/layout-ebooks.js'
+      - '.github/scripts/epub-samples.js'
+      - '.github/workflows/epubcheck.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'layout/epub.js'
+      - 'layout/epubcheck.js'
+      - 'tests/layout-ebooks.js'
+      - '.github/scripts/epub-samples.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: epubcheck-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  epubcheck:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      LANG: C.UTF-8
+      EPUBCHECK_VERSION: 5.2.1
+      EPUBCHECK_SHA256: 0532f6291faa2bb729dd253f958868a2a57dbd2c32f881a97c7c980c5940309e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Download EPUBCheck (pinned, hash checked)
+        run: |
+          curl -fsSL -o epubcheck.zip "https://github.com/w3c/epubcheck/releases/download/v${EPUBCHECK_VERSION}/epubcheck-${EPUBCHECK_VERSION}.zip"
+          echo "${EPUBCHECK_SHA256}  epubcheck.zip" | sha256sum -c -
+          unzip -q epubcheck.zip -d "$RUNNER_TEMP"
+          java -version
+      - name: Write the synthetic books
+        run: node .github/scripts/epub-samples.js write "$RUNNER_TEMP/books"
+      - name: EPUBCheck every book
+        run: |
+          for f in "$RUNNER_TEMP"/books/*.epub; do
+            java -jar "$RUNNER_TEMP/epubcheck-${EPUBCHECK_VERSION}/epubcheck.jar" "$f" --json "${f%.epub}.epubcheck.json" > /dev/null 2>&1 || true
+            test -s "${f%.epub}.epubcheck.json" || { echo "::error::EPUBCheck wrote no report for $f"; exit 1; }
+          done
+      - name: Compare with the on-device check
+        run: node .github/scripts/epub-samples.js compare "$RUNNER_TEMP/books"

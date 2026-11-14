@@ -607,7 +607,9 @@
       head: typeof x.head === "string" ? x.head.slice(0, 300) : "",
       foot: typeof x.foot === "string" ? x.foot.slice(0, 200) : "",
       paper: x.paper === 80 ? 80 : 58,
-      dev: typeof x.dev === "string" && /^[A-Z2-9]{2}$/.test(x.dev) ? x.dev : ""
+      dev: typeof x.dev === "string" && /^[A-Z2-9]{2}$/.test(x.dev) ? x.dev : "",
+      // F1: the largest discount (%) this device may give; 0 = no limit
+      dmax: typeof x.dmax === "number" && x.dmax >= 1 && x.dmax <= 99 ? Math.floor(x.dmax) : 0
     };
   }
   var prefsTimer = null;
@@ -3396,6 +3398,26 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 40000);
     showToast(t("toast.exported"));
   }
+  // F1: a built file (the receipt's PDF) through the shell's save
+  // dialog, else a download
+  function saveBlob(blob, filename, mime, desc, ext) {
+    var host = dialogHost();
+    if (host && typeof host.saveFile === "function") {
+      var types = [{ description: desc, accept: {} }];
+      types[0].accept[mime] = [ext];
+      host.saveFile({ blob: blob, filename: filename, mime: mime, types: types })
+        .then(function (r) { if (r && r.ok) showToast(t("toast.exported")); });
+      return;
+    }
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 40000);
+    showToast(t("toast.exported"));
+  }
   function csvText(head, rows) {
     var sep = LANG === "el" ? ";" : ",";
     var lines = [head.map(C.csvCell).join(sep)];
@@ -3810,6 +3832,7 @@
       setWh: function (w) { if (prefs.wh !== w) { prefs.wh = w; savePrefs(); } },
       decOf: decOf, fmtQ: fmtQ, fmtDay: fmtDay, qtyStr: qtyStr, readQty: readQty, readCents: readCents, centsStr: centsStr,
       money: money, esc: esc, printHtml: printHtml, todayYmd: todayYmd, newId: newId,
+      vatRates: C.VAT_RATES, defVat: function () { return data.settings.vat; }, saveBlob: saveBlob,
       posPrefs: posPrefs,
       setPosPref: function (k, v) { posPrefs()[k] = v; prefs.pos = readPos(prefs.pos); savePrefs(); },
       addSale: posAddSale, voidSale: posVoidSale,
@@ -3843,7 +3866,7 @@
     if (!s) return null;
     if (!Array.isArray(data.sales)) data.sales = [];
     data.sales.push(s);
-    data.moves.push(move);
+    if (move) data.moves.push(move);
     save();
     render();
     return byId("sales", s.id);

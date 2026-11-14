@@ -44,10 +44,14 @@ Beim Verkauf bietet ein Produkt mit Chargen eine Auswahl `Charge`; lass sie auf 
 `Neu` › `Kassensystem (Kasse)` ist eine Vollbild-Kasse für einen Laden. Links: ein Suchfeld (ein Scanner oder die 📷-Kamera fügt das Produkt sofort hinzu), Kategorie-Chips und ein Raster der Produkte mit Preis und Restmenge. Rechts: der Verkauf, mit − und + oder einer eingetippten Menge je Zeile, dem Nettobetrag, der MwSt. je Satz und der Summe.
 
 1. Wähle oben eine `Preisliste`. `Einzelhandel` nutzt den Verkaufspreis jedes Produkts. Unter `Preislisten` kannst du weitere anlegen, etwa `Großhandel`: ein Prozentsatz auf den Verkaufspreis (−10 heißt 10 % weniger) und, mit `Preise…`, ein eigener Preis für jedes Produkt.
-2. Wähle `Bar`, `Karte` oder `Sonstige`. Bei Barzahlung kannst du `Gegeben (bar)` eintippen, um das Rückgeld zu sehen.
+2. Wähle `Bar`, `Karte`, `Sonstige` oder `Geteilt` (ein Teil bar, der Rest mit Karte: tippe den Baranteil ein). Bei Barzahlung kannst du `Gegeben (bar)` eintippen, um das Rückgeld zu sehen.
 3. Tippe auf `Kassieren`. Die Produkte werden vom Bestand abgebucht (aus dem oben gezeigten Lager, wenn du mehrere hast), und der Beleg öffnet sich: Drucke ihn auf 58-mm- oder 80-mm-Rollenpapier. `Rückgängig` in der Meldung storniert den Verkauf sofort.
 
-`Beleg-Einstellungen` enthält den Belegkopf (Shopname, Adresse, USt-IdNr.) und den Belegfuß, die Papierbreite und den `Kassencode`: zwei Zeichen am Anfang der Belegnummern (etwa AB-261014-001), damit zwei Kassen nie dieselbe Nummer drucken. Diese Einstellungen bleiben auf jedem Gerät.
+Rabatte: Die Taste `%` an einer Zeile gibt dieser Zeile einen Prozentsatz oder einen Betrag Rabatt; `Rabatt` unter der Summe tut das für den ganzen Verkauf, mit einem optionalen Grund, der auf dem Beleg steht. Der Beleg zeigt auch den Preis vor dem Rabatt. `+ Anderer Artikel` verkauft etwas, das nicht im Bestand ist (ein Plakat, eine Eintrittskarte): Name, Preis inkl. MwSt. und Satz; er steht auf dem Beleg und in den Summen, nie im Bestand.
+
+Nach dem Verkauf kann der Beleg auch ohne Papier zum Kunden: `PDF teilen` (oder `PDF` am Computer) erstellt ein 80-mm-PDF, und `QR-Code` zeigt den Text des Belegs als Code für die Handykamera. Beides entsteht auf diesem Gerät; nichts wird verschickt.
+
+`Beleg-Einstellungen` enthält den Belegkopf (Shopname, Adresse, USt-IdNr.) und den Belegfuß, die Papierbreite und den `Kassencode`: zwei Zeichen am Anfang der Belegnummern (etwa AB-261014-001), damit zwei Kassen nie dieselbe Nummer drucken. `Höchster Rabatt auf diesem Gerät` begrenzt die Rabatte, die dieses Gerät geben darf (für das Handy einer Hilfe am Stand); leer heißt keine Grenze. Diese Einstellungen bleiben auf jedem Gerät.
 
 `Z-Bericht` zeigt die Verkäufe eines Tages: wie viele, netto, MwSt. je Satz, nach Zahlungsart und Preisliste, die Bestseller und jeden Beleg (von dort neu drucken oder `Stornieren`; die Produkte eines stornierten Verkaufs gehen zurück in den Bestand). `Tag abschließen` speichert die Tagessummen als nummerierten Z; Verkäufe danach erscheinen getrennt. `Z-Bericht drucken` druckt ihn auf die Rolle.
 
