@@ -21,7 +21,7 @@
   "use strict";
 
   var E = window.OrosFormsEngine, C = window.OrosFormsCore, R = window.OrosFormsRender, S = window.OrosFormsShare,
-      RS = window.OrosFormsResults;
+      RS = window.OrosFormsResults, LK = window.OrosFormsLinks;
   var STORAGE_KEY = C.STORAGE_KEY;
 
   // ---------- 1. Strings + helpers ----------
@@ -129,7 +129,7 @@
       "an.more": "Show {n} more",
       "an.otherName": "Other", "an.view": "View", "an.view.sum": "Summary", "an.view.each": "Each answer",
       "an.filter": "Show only", "an.filterAll": "All answers", "an.filtered": "{n} of {m} answers match.",
-      "an.sheet": "Open in Spreadsheet", "an.csv": "Download CSV", "an.saved": "Saved {name}",
+      "an.toContacts": "Add to Contacts", "an.toCrm": "Add to CRM", "dr.made": "New form from the Assistant: check the questions before you share it.", "an.sheet": "Open in Spreadsheet", "an.csv": "Download CSV", "an.saved": "Saved {name}",
       "an.sheetCap": "Only the newest {n} answers went to the Spreadsheet.",
       "res.answered": "{n} of {m} answered", "res.none": "Nobody answered this question yet.",
       "res.avg": "Average {x}", "res.range": "From {a} to {b}", "res.more": "And {n} more.",
@@ -262,7 +262,7 @@
       "an.more": "Εμφάνιση {n} ακόμα",
       "an.otherName": "Άλλο", "an.view": "Προβολή", "an.view.sum": "Σύνοψη", "an.view.each": "Κάθε απάντηση",
       "an.filter": "Μόνο", "an.filterAll": "Όλες οι απαντήσεις", "an.filtered": "Ταιριάζουν {n} από {m} απαντήσεις.",
-      "an.sheet": "Άνοιγμα στο Spreadsheet", "an.csv": "Λήψη CSV", "an.saved": "Αποθηκεύτηκε: {name}",
+      "an.toContacts": "Προσθήκη στις Επαφές", "an.toCrm": "Προσθήκη στο CRM", "dr.made": "Νέα φόρμα από τον Βοηθό: έλεγξε τις ερωτήσεις πριν τη μοιραστείς.", "an.sheet": "Άνοιγμα στο Spreadsheet", "an.csv": "Λήψη CSV", "an.saved": "Αποθηκεύτηκε: {name}",
       "an.sheetCap": "Στο Spreadsheet πήγαν μόνο οι {n} νεότερες απαντήσεις.",
       "res.answered": "Απάντησαν {n} από {m}", "res.none": "Κανείς δεν απάντησε ακόμα σε αυτή την ερώτηση.",
       "res.avg": "Μέσος όρος {x}", "res.range": "Από {a} έως {b}", "res.more": "Και {n} ακόμα.",
@@ -1429,6 +1429,12 @@
   function fileBase() {
     return (cur && cur.title ? cur.title.replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 60) : "") || t("f.untitled");
   }
+  // FORMS-4: an answer's person to Contacts or the CRM, as the apps'
+  // own New contact / New customer form (saved there only on Save).
+  function sendTo(app, target) {
+    var h = sheetHost();
+    if (h && target) h.__orosOpenAt(app, target);
+  }
   function sheetHost() { try { return window.parent && window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) { return null; } }
   function dialogHost() {
     try { return (window.parent && window.parent.orosDialog) || window.orosDialog || null; }
@@ -1511,6 +1517,7 @@
       RS.summary(cur, list, words).forEach(function (it) { pane.appendChild(summaryCard(it)); });
       return;
     }
+    var host = sheetHost();
     list.slice(0, respShown).forEach(function (r) {
       var card = el("article", "card answer");
       var top = el("div", "ans-top");
@@ -1525,6 +1532,13 @@
         dl.appendChild(dd);
       });
       card.appendChild(dl);
+      var who = LK && host ? LK.person(cur, r) : null;
+      if (who && who.name) {
+        var acts = el("div", "bar end");
+        acts.appendChild(chip(t("an.toContacts"), "", function () { sendTo("contacts", LK.toContact(who, cur.title)); }));
+        acts.appendChild(chip(t("an.toCrm"), "", function () { sendTo("crm", LK.toCrm(who, cur.title)); }));
+        card.appendChild(acts);
+      }
       pane.appendChild(card);
     });
     if (list.length > respShown) {
@@ -1753,9 +1767,20 @@
     document.addEventListener("visibilitychange", function () { if (document.hidden) commit(); });
   }
 
-  // Deep link: { form: id } opens a form.
+  // Deep link: { form: id, tab? } opens a form; { draft } (FORMS-4,
+  // the Assistant's entry card, links.js fromDraft) makes a new form
+  // from it and opens it.
   function openTarget(tg) {
-    if (tg && typeof tg.form === "string") openForm(tg.form, tg.tab);
+    if (tg && typeof tg.form === "string") { openForm(tg.form, tg.tab); return; }
+    var d = tg && LK ? LK.fromDraft(tg.draft) : null;
+    if (!d) return;
+    commit();
+    var rec = { id: E.newId(idsOfForms()), title: d.title, desc: d.desc, qs: d.qs, set: {} };
+    var res = C.put(data, rec, Date.now());
+    data = res.data;
+    persist();
+    openForm(rec.id);
+    toast(t("dr.made"));
   }
 
   function boot() {
