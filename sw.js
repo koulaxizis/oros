@@ -2472,7 +2472,7 @@ self.addEventListener("install", function (event) {
 
 // ---------- Activate: purge old caches ----------
 self.addEventListener("activate", function (event) {
-  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, LANG_CACHE, NULLFX_CACHE, SOUNDS_CACHE, "oros-television-api", SHARE_INBOX];
+  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, LANG_CACHE, NULLFX_CACHE, SOUNDS_CACHE, "oros-television-api", SHARE_INBOX, STRICT_CACHE];
   // SW-I: Add a guard against slow cache cleanup blocking claim.
   // If cleanup takes >30s (extreme), we still want to claim clients
   // to restore online/offline functionality. The background cleanup
@@ -2600,8 +2600,91 @@ function shareTargetPost(request) {
   }).catch(function () { return go(""); });
 }
 
+// STRICT (Sensitive work, lock.js window.orosStrict): the page tells
+// the worker the level and the hosts this device may reach. In "hard"
+// every cross-origin request (any method) to another host fails here,
+// so nothing leaves the device except the sync cloud. In "on" the
+// relay is only reported once (the page asks before relay use). The
+// state lives in the "oros-strict" cache so a restarted worker keeps
+// it. Limits (help page): a hard reload, a page the worker does not
+// control yet, WebSockets, cross-origin frames and new windows are
+// not covered.
+var STRICT_CACHE = "oros-strict";
+var strictState = { level: null, hosts: [], relays: [] };
+var strictWarned = {};
+var strictLoaded = false;
+function strictClean(m) {
+  var level = m && (m.level === "on" || m.level === "hard") ? m.level : null;
+  function list(a) {
+    return Array.isArray(a) ? a.filter(function (h) {
+      return typeof h === "string" && /^[a-z0-9.-]{1,253}(:[0-9]{1,5})?$/i.test(h);
+    }).slice(0, 32).map(function (h) { return h.toLowerCase(); }) : [];
+  }
+  return { level: level, hosts: list(m && m.hosts), relays: list(m && m.relays) };
+}
+var strictReady = caches.open(STRICT_CACHE).then(function (c) {
+  return c.match("/__strict");
+}).then(function (r) { return r ? r.json() : null; }).then(function (j) {
+  if (j) strictState = strictClean(j);
+}).catch(function () {}).then(function () { strictLoaded = true; });
+function strictTell(msg) {
+  return self.clients.matchAll({ type: "window" }).then(function (list) {
+    list.forEach(function (c) { try { c.postMessage(msg); } catch (e) {} });
+  }).catch(function () {});
+}
+self.addEventListener("message", function (event) {
+  var m = event.data;
+  if (!m || m.t !== "oros-strict") return;
+  strictState = strictClean(m);
+  strictWarned = {};
+  var body = JSON.stringify(strictState);
+  event.waitUntil(caches.open(STRICT_CACHE).then(function (c) {
+    return strictState.level
+      ? c.put("/__strict", new Response(body, { headers: { "Content-Type": "application/json" } }))
+      : c.delete("/__strict");
+  }).catch(function () {}));
+});
+function strictVerdict(url) {
+  if (url.origin === self.location.origin) return "ok";
+  if (url.protocol !== "https:" && url.protocol !== "http:") return "ok";
+  var host = url.host.toLowerCase();
+  if (strictState.level === "hard") {
+    return strictState.hosts.indexOf(host) >= 0 ? "ok" : "block";
+  }
+  if (strictState.level === "on" && strictState.relays.indexOf(host) >= 0) return "relay";
+  return "ok";
+}
+function strictNoteRelay(event, host) {
+  if (strictWarned[host]) return;
+  strictWarned[host] = 1;
+  event.waitUntil(strictTell({ t: "oros-strict-relay", host: host }));
+}
+function strictFetch(event, url) {
+    event.respondWith(strictReady.then(function () {
+    var v = strictVerdict(url);
+    if (v === "block") {
+      event.waitUntil(strictTell({ t: "oros-strict-blocked", host: url.host }));
+      return Response.error();
+    }
+    if (v === "relay") strictNoteRelay(event, url.host);
+    return fetch(event.request);
+  }));
+}
+
 self.addEventListener("fetch", function (event) {
   var request = event.request;
+
+  // STRICT first: it applies to every method.
+  var surl = new URL(request.url);
+  if (surl.origin !== self.location.origin) {
+    // Before the stored state is read (a few ms after the worker
+    // starts) everything but map tiles waits for it; tiles check it
+    // in their own branch below.
+    if (strictState.level === "hard" || (!strictLoaded && !isTileHost(surl.hostname))) {
+      return strictFetch(event, surl);
+    }
+    if (strictVerdict(surl) === "relay") strictNoteRelay(event, surl.host);
+  }
 
   if (request.method === "POST") {
     var purl = new URL(request.url);
@@ -2623,7 +2706,11 @@ self.addEventListener("fetch", function (event) {
   // pad their quota cost heavily.
   if (isTileHost(url.hostname)) {
     event.respondWith(
-      caches.open(TILE_CACHE).then(function (cache) {
+      strictReady.then(function () {
+        if (strictVerdict(url) !== "block") return caches.open(TILE_CACHE);
+        event.waitUntil(strictTell({ t: "oros-strict-blocked", host: url.host }));
+        throw new Error("strict");
+      }).then(function (cache) {
         return cache.match(url).then(function (hit) {
           // A legacy OPAQUE entry cannot answer a CORS request (the
           // browser rejects it → blank tile forever). Treat it as a

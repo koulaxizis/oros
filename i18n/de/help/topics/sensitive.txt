@@ -57,6 +57,13 @@ orOS lädt von useoros.online und aktualisiert sich selbst. Würden die Konten d
 8. Halte Quellen bei Signal oder SecureDrop, nie in der E-Mail.
 9. Schalte in den `Einstellungen` unter `Sicherungen` `Sicherungsdateien verschlüsseln` ein: sonst ist eine Datei aus `Sicherungsdatei exportieren` **nicht** verschlüsselt. Siehe [Sicherung und Wiederherstellung](help:t/backup).
 
+## Modus Sensible Arbeit
+In den [Einstellungen](app:settings) › `Sensible Arbeit` erledigt ein Schalter das meiste aus der Liste oben auf diesem Gerät. Er gilt nur auf diesem Gerät, löscht keine Daten, und wenn du ihn ausschaltest, kommen deine früheren Sperrzeiten und Push zurück. Zum Ausschalten fragt er nach der PIN oder dem Kennwort der Sperre.
+- **Normal**: Die Sperre greift spätestens nach 2 Minuten und wenn du die Seite verlässt, das Sync-Kennwort wird bei jedem Start abgefragt, Push ist aus, Link-Details kommen nur direkt von der Website, und orOS zeigt einen Hinweis, wenn Mail, CalDAV oder Transfer das Relay nutzen.
+- **Hardcore**: keine Bequemlichkeiten. Die Sperre nimmt nur ein Kennwort (keine PIN, kein Fingerabdruck oder Gesicht), greift nach 1 Minute und bei jedem Start, es gibt keine Link-Details, und das Gerät erreicht nichts außer deiner Sync-Cloud. Mail, Transfer, Karten, Radio, Wetter und alles andere Online stehen still, bis du es ausschaltest.
+- Ein Schild in der oberen Leiste zeigt, dass er an ist. Wenn dein orOS SOS hat, öffnet die Seite es auch.
+- Die Sperre von Hardcore wirkt, solange orOS installiert für die Offline-Nutzung läuft. Ein harter Neuladen umgeht sie bis zum nächsten normalen Start, und sie gilt nicht für Seiten, die außerhalb von orOS geöffnet werden.
+
 ## Wenn etwas schiefgeht
 - Glaubst du, dass jemand deine Passphrase kennt, nutze `Passphrase ändern` auf einem Gerät, dem du vertraust, siehe [Synchronisierung zwischen Geräten](help:t/sync).
 - Um alles zu löschen, siehe [Zurücksetzen auf Werkseinstellungen](help:t/reset). Das löscht auch deine orOS-Daten in der Cloud.

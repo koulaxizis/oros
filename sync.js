@@ -1963,7 +1963,17 @@
       });
   }
 
+  // Sensitive work (lock.js, "oros-strict"): the passphrase is never
+  // kept on this device while it is on, whatever asks for it.
+  function strictOn() {
+    try {
+      var r = JSON.parse(localStorage.getItem("oros-strict") || "null");
+      return !!(r && r.v === 1 && (r.level === "on" || r.level === "hard"));
+    } catch (e) { return false; }
+  }
+
   function sealPassphrase(pass) {
+    if (strictOn()) return clearVault();
     return openVaultDb()
       .then(getDeviceKey)
       .then(function (key) {
@@ -4184,6 +4194,8 @@
     hasPassphrase:     function () { return passphrase !== null; },
     forgetPassphrase:  function () { passphrase = null; },   // session only
     clearDevice:       clearDevice,      // forget + wipe device vault
+    forgetSealed:      clearVault,       // Sensitive work: drop the remembered copy, keep the session
+    passShort:         function () { return passphrase !== null && String(passphrase).length < 16; },
     hasDeviceVault:    hasDeviceVault,
     checkPassphrase:   checkPassphrase,  // (pw) → true | false | null (lock.js)
 

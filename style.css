@@ -1655,6 +1655,17 @@ html[data-oros-contrast="high"] #oros-greet { background: var(--panel-bg, var(--
 #ts-tray-chip:hover { background: var(--accent-soft); }
 #ts-tray-chip svg { display: block; flex-shrink: 0; pointer-events: none; }
 #oros-bar.bar-tight #ts-tray-chip { padding: 0 5px; }
+/* Sensitive work: shield in the bar while the mode is on */
+#strict-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 44px; min-height: 44px; padding: 0 6px;
+  background: transparent; border: none; border-radius: 6px;
+  color: var(--accent); cursor: pointer;
+}
+#strict-badge:hover { background: var(--accent-soft); }
+#strict-badge.strict-hard { color: var(--danger); }
+#strict-badge svg { display: block; pointer-events: none; }
+#oros-bar.bar-tight #strict-badge { min-width: 34px; padding: 0 3px; }
 /* Timesheet Wave 46: time away noticed → a dot on the chip; the timer menu */
 #ts-tray-chip.ts-away { position: relative; }
 #ts-tray-chip.ts-away::after {

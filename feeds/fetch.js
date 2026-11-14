@@ -44,12 +44,21 @@
     if (typeof r === "function") r = r();
     return (r && C.normRelayUrl(r)) || mailRelay();
   }
-  function relayAvailable(opts) { return !!relayUrl(opts); }
+  // Sensitive work (lock.js, "oros-strict"): "on" = nothing through the
+  // relay, "hard" = nothing fetched from other sites at all.
+  function strictLevel() {
+    try {
+      var r = JSON.parse(root.localStorage.getItem("oros-strict") || "null");
+      return r && r.v === 1 && (r.level === "on" || r.level === "hard") ? r.level : "off";
+    } catch (e) { return "off"; }
+  }
+  function relayAvailable(opts) { return strictLevel() === "off" && !!relayUrl(opts); }
   function online() { return !root.navigator || root.navigator.onLine !== false; }
 
   // One GET straight from the browser. CORS or mixed content -> "cors".
   function direct(url, opts) {
     opts = opts || {};
+    if (strictLevel() === "hard") return Promise.reject(new FetchError("strict"));
     var page = root.location && root.location.protocol;
     if (!/^https:/i.test(url) && page === "https:") return Promise.reject(new FetchError("cors"));
     var ctl = new AbortController();
@@ -75,6 +84,7 @@
   // Up to BATCH GETs through the relay, one call.
   function relay(reqs, opts) {
     opts = opts || {};
+    if (strictLevel() !== "off") return Promise.reject(new FetchError("strict"));
     var url = relayUrl(opts);
     if (!url) return Promise.reject(new FetchError("norelay"));
     if (!reqs.length) return Promise.resolve([]);
