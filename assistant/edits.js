@@ -117,7 +117,8 @@
   // PB-CHG: change_item's Publishing arguments (edits4.js checks them).
   var PUB_ARGS = [["subtitle", "s"], ["series", "s"], ["series_no", "s"], ["language", "s"], ["blurb", "s"], ["bio", "s"],
                   ["keywords", "s"], ["by", "s"], ["translator", "s"], ["illustrator", "s"], ["editor", "s"], ["cover_designer", "s"],
-                  ["narrator", "s"], ["other", "s"], ["formats", "list"], ["royalties", "list"]];
+                  ["narrator", "s"], ["other", "s"], ["formats", "list"], ["royalties", "list"],
+                  ["release_type", "s"], ["record_label", "s"], ["genre", "s"], ["p_line", "s"], ["c_line", "s"], ["tracks", "list"], ["editions", "list"]];
   var CTRL = /[\u0000-\u0008\u000b-\u001f\u007f\u2028\u2029]/g;
   var ID_RE = /^[A-Za-z0-9_.:-]{1,80}$/;
   function has(o, k) { return !!o && Object.prototype.hasOwnProperty.call(o, k); }

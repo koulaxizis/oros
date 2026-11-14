@@ -78,6 +78,9 @@
       "calc.mode.graph": "Graphing", "calc.mode.graph.s": "Graph",
       "calc.mode.prog": "Programmer", "calc.mode.prog.s": "Prog",
       "calc.mode.fin": "Finance", "calc.mode.fin.s": "Money",
+      "calc.mode.conv": "Convert", "calc.mode.conv.s": "Convert",
+      "calc.conv.loading": "Loading the converter…",
+      "calc.conv.loadFail": "The converter could not load. Check the connection and open Convert again.",
       "calc.kbd": "Type with the keyboard",
       "calc.sci.input": "Expression",
       "calc.2nd": "Second functions",
@@ -173,6 +176,9 @@
       "calc.mode.graph": "Γραφήματα", "calc.mode.graph.s": "Γράφ.",
       "calc.mode.prog": "Προγραμματιστή", "calc.mode.prog.s": "Προγρ.",
       "calc.mode.fin": "Οικονομικά", "calc.mode.fin.s": "Οικον.",
+      "calc.mode.conv": "Μετατροπή", "calc.mode.conv.s": "Μετατρ.",
+      "calc.conv.loading": "Φορτώνει ο μετατροπέας…",
+      "calc.conv.loadFail": "Ο μετατροπέας δεν φόρτωσε. Έλεγξε τη σύνδεση και άνοιξε ξανά τη Μετατροπή.",
       "calc.kbd": "Πληκτρολόγηση με το πληκτρολόγιο",
       "calc.sci.input": "Παράσταση",
       "calc.2nd": "Δεύτερες συναρτήσεις",
@@ -593,7 +599,8 @@
   // Device-local view state (R10): the mode, the angle units, the
   // graph's functions and view, programmer base / word size, the
   // finance tool and its fields. Never in the sync slice.
-  var MODES = ["std", "sci", "graph", "prog", "fin"];
+  // "conv" (Convert, merge 5) is the Unit Converter app folded in.
+  var MODES = ["std", "sci", "graph", "prog", "fin", "conv"];
   var ANGLES = ["deg", "rad", "grad"];
   function defaultUi() {
     return {
@@ -1353,8 +1360,8 @@
 
   // ---------- 9. Keyboard (app-level) ----------
   function onKey(e) {
-    if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && /^Digit[1-5]$/.test(e.code || "")) {
-      setMode(MODES[parseInt(e.code.slice(5), 10) - 1], true);   // Alt+1…5, like Windows
+    if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && /^Digit[1-6]$/.test(e.code || "")) {
+      setMode(MODES[parseInt(e.code.slice(5), 10) - 1], true);   // Alt+1…6, like Windows
       e.preventDefault();
       return;
     }
@@ -1456,14 +1463,21 @@
     els.graph.hidden = m !== "graph";
     els.prog.hidden = m !== "prog";
     els.fin.hidden = m !== "fin";
-    if (els.sendBtn) els.sendBtn.hidden = !sendApi() || m === "graph" || m === "fin";
+    els.conv.hidden = m !== "conv";
+    if (els.modeSel) els.modeSel.value = m;
+    if (els.sendBtn) els.sendBtn.hidden = !sendApi() || m === "graph" || m === "fin" || m === "conv";
     savePrefs();
     if (m === "sci") { loadRates(); sciPreview(); if (user && !coarse()) els.sciIn.focus(); }
     if (m === "graph") { graphResize(); scheduleDraw(true); }
     if (m === "prog") { progUpdate(); if (user && !coarse()) els.progIn.focus(); }
     if (m === "fin") finShow(state.ui.fin.tool);
+    if (m === "conv") showConv(user);
+    else if (window.UnitsView) window.UnitsView.flush();
   }
   function wireModes() {
+    // The mode menu (narrow screens: six tabs do not fit at 360 px)
+    els.modeSel = document.getElementById("calc-mode-sel");
+    if (els.modeSel) els.modeSel.addEventListener("change", function () { setMode(els.modeSel.value, true); });
     els.modes.addEventListener("click", function (e) {
       var b = e.target.closest("[data-mode]");
       if (!b) return;
@@ -1482,6 +1496,83 @@
       els.modes.querySelector('[data-mode="' + MODES[i] + '"]').focus();
       e.preventDefault();
     });
+  }
+
+  // ---------- Convert (APP-ALIAS merge 5, was the Unit Converter) ----------
+  // units/view.js, view.css and the "units" language pack load the
+  // first time the mode opens; the slice "units" is registered at
+  // boot (registerUnitsSlice) so it syncs before that.
+  var convLoad = null, convPending = null;
+  function convAsset(src) {
+    var v = window.orosI18n && window.orosI18n.ver;
+    return src + (v ? "?v=" + encodeURIComponent(v) : "");
+  }
+  function loadConv() {
+    if (window.UnitsView) return Promise.resolve();
+    if (convLoad) return convLoad;
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = convAsset("../units/view.css");
+    document.head.appendChild(css);
+    convLoad = new Promise(function (resolve) {
+      if (window.orosI18n && typeof window.orosI18n.ensure === "function") window.orosI18n.ensure(lang(), "units", resolve);
+      else resolve();
+    }).then(function () {
+      return new Promise(function (resolve, reject) {
+        var sc = document.createElement("script");
+        sc.src = convAsset("../units/view.js");
+        sc.onload = resolve; sc.onerror = reject;
+        document.head.appendChild(sc);
+      });
+    });
+    convLoad.catch(function () { convLoad = null; });
+    return convLoad;
+  }
+  function showConv(user, at) {
+    if (!window.UnitsCore) return;
+    if (window.UnitsView) {
+      var go = at || convPending;
+      convPending = null;
+      window.UnitsView.mount(els.conv, user && !go);
+      if (go) window.UnitsView.openAt(go);
+      return;
+    }
+    if (at) convPending = at;
+    var w = els.conv.querySelector(".conv-wait");
+    if (!w) {
+      w = mk("p", "conv-wait", t("calc.conv.loading"));
+      w.setAttribute("role", "status");
+      els.conv.appendChild(w);
+    } else w.textContent = t("calc.conv.loading");
+    loadConv().then(function () {
+      var w2 = els.conv.querySelector(".conv-wait");
+      if (w2) w2.parentNode.removeChild(w2);
+      if (state.ui.mode === "conv") showConv(user);
+    }, function () {
+      var w3 = els.conv.querySelector(".conv-wait");
+      if (w3) w3.textContent = t("calc.conv.loadFail");
+    });
+  }
+  // The slice "units" (oros-units-data), the Unit Converter's own,
+  // unchanged: favourites, recent, precision. Before the view is
+  // here the stored copy is the slice.
+  function registerUnitsSlice() {
+    var U = window.UnitsCore;
+    if (!U) return;
+    var sync = null;
+    try { sync = window.parent.orosSync; } catch (e) {}
+    if (!sync || typeof sync.registerSlice !== "function") return;
+    sync.registerSlice("units", function () {
+      var v = window.UnitsView && window.UnitsView.sliceGet();
+      if (v) return v;
+      var raw = null;
+      try { raw = JSON.parse(localStorage.getItem(U.DATA_KEY) || "null"); } catch (e) { raw = null; }
+      return raw && typeof raw === "object" ? U.mergeData(raw, raw) : null;
+    }, function (incoming) {
+      if (!incoming || typeof incoming !== "object") return;
+      if (window.UnitsView && window.UnitsView.sliceGet()) { window.UnitsView.sliceSet(incoming); return; }
+      try { localStorage.setItem(U.DATA_KEY, JSON.stringify(U.mergeData(incoming, incoming))); } catch (e) {}
+    }, U.DATA_KEY, U.mergeData);
   }
 
   // Inserts text at the caret of an <input> (or over its selection).
@@ -2692,6 +2783,7 @@
     els.progView = document.getElementById("prog-view");
     els.progKbd = document.getElementById("prog-kbd");
     els.fin = document.getElementById("fin");
+    els.conv = document.getElementById("conv");
     els.sendBtn = document.getElementById("calc-send");
     els.sendBtn.addEventListener("click", sendResult);
     wireModes();
@@ -2805,6 +2897,7 @@
     wireParentKeyRouting();
     wireShortcutForwarding();
     registerSlice();
+    registerUnitsSlice();       // merge 5: the Unit Converter's slice
     render();
     renderHistory();
     initDragResize();
@@ -2814,8 +2907,17 @@
     if (fxBtn) fxBtn.setAttribute("aria-pressed", state.sciOn ? "true" : "false");
     setMode(state.ui.mode, false);
     // Single app (solo.js) icon shortcuts: { mode } → that mode.
+    // APP-ALIAS (merge 5): the old id "units" forwards here with
+    // { mode: "conv" } plus the caller's { cat, from, to, value }
+    // (universal search, other apps), which Convert opens at.
     window.__orosOpenAt = function (t) {
-      if (t && typeof t.mode === "string" && MODES.indexOf(t.mode) !== -1) setMode(t.mode, true);
+      if (!t || typeof t !== "object") return;
+      var conv = t.mode === "conv" || typeof t.cat === "string";
+      if (conv) {
+        var at = typeof t.cat === "string" ? { cat: t.cat, from: t.from, to: t.to, value: t.value } : null;
+        if (state.ui.mode !== "conv") { convPending = at; setMode("conv", true); }
+        else showConv(true, at);
+      } else if (typeof t.mode === "string" && MODES.indexOf(t.mode) !== -1) setMode(t.mode, true);
     };
     try {
       if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")

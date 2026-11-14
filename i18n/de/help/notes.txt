@@ -40,13 +40,20 @@ Die Kalender-Taste neben dem Titel (`Notiz von heute`) öffnet die Seite für he
 Vorlagen sind Seiten unter einer Seite namens `Vorlagen` (in einem beliebigen Notizbuch). Die Vorlagen-Taste unter dem Baum oder `Neue Seite aus Vorlage…` im Seitenmenü listet sie auf; wähle eine, gib der neuen Seite einen Titel, und ihr Text wird hineinkopiert. In einer Vorlage wird `{{date}}` zum heutigen Datum, `{{time}}` zur Uhrzeit und `{{title}}` zum Titel der neuen Seite. Eine Vorlage namens `Täglich` wird statt der eingebauten für die tägliche Notiz verwendet.
 
 ## Sprachnotizen
-Die Mikrofon-Taste neben dem Titel nimmt in die offene Seite auf. Die Leiste unter der Werkzeugleiste zeigt die Zeit und den Pegel; `Pause` hält an, der Haken beendet und speichert, `×` verwirft. Nach dem Beenden kommt eine Zeile wie `🎙 voice:2026-11-12-181005-a7k2.webm (0:42)` in die Seite, nach der Zeile, in der dein Cursor stand (sonst ans Ende), und ein Player erscheint unter der Seite in der Leiste `Aufnahmen` und in der `Vorschau` an der Stelle dieser Zeile. Der Player spielt und pausiert, springt an jede Stelle und spielt mit 1×, 1,5× oder 2×; sein Menü `⋯` lädt die Datei herunter oder löscht sie.
+Die Mikrofon-Taste neben dem Titel nimmt in die offene Seite auf. Die Leiste unter der Werkzeugleiste zeigt die Zeit und den Pegel; `Pause` hält an, der Haken beendet und speichert, `×` verwirft. Nach dem Beenden kommt eine Zeile wie `🎙 voice:2026-11-12-181005-a7k2.webm (0:42)` in die Seite, nach der Zeile, in der dein Cursor stand (sonst ans Ende), und ein Player erscheint unter der Seite in der Leiste `Aufnahmen` und in der `Vorschau` an der Stelle dieser Zeile. Der Player spielt und pausiert, springt an jede Stelle und spielt mit 1×, 1,5× oder 2×; sein Menü `⋯` hat den Rest: `Transkribieren`, `Kürzen…`, `An Studio senden`, `Herunterladen` und `Löschen`.
 
 Der Ton wird auf diesem Gerät mit dem Rekorder des Browsers aufgenommen und geht nirgendwohin: Kein Sprachdienst hört ihn. Die Datei liegt auf der orOS-Festplatte unter Files › Notes › Voice und erreicht deine anderen Geräte über die [orOS-Synchronisierung](help:t/sync) wie jede andere Datei dort (etwa 14 MB pro Stunde). Bis sie ankommt, zeigt ein Player `Noch nicht auf diesem Gerät`.
 
 Schließt sich der Tab oder stoppt das Gerät mitten in einer Aufnahme, geht das Aufgenommene nicht verloren: Beim nächsten Öffnen bietet Notes `Speichern` an. Eine Aufnahme endet von selbst nach 2 Stunden.
 
 Löschen nimmt die Zeile aus der Seite und legt die Datei für 30 Tage in den Papierkorb von Files. Löschst du nur die Zeile im Text, bleibt die Datei, wo sie ist. `⋯` neben der Notizbuchauswahl › `Unbenutzte Aufnahmen…` listet die Dateien, die keine Seite auf diesem Gerät mehr nennt (nie welche aus den letzten 24 Stunden), und legt die angehakten in den Papierkorb.
+
+### Kürzen, transkribieren, an Studio senden
+`Kürzen…` zeigt die Wellenform der Aufnahme mit einem Anfang und einem Ende. Schieb sie auf den Teil, der bleiben soll, und hör ihn mit `Teil anhören`. `Speichern` schreibt eine neue Datei nur mit diesem Teil (Ogg Opus, oder WAV, wo der Browser keinen Opus-Encoder hat), ändert die Zeile der Seite auf sie und legt die alte Datei in den Papierkorb von Files, damit nichts verloren geht, falls du zu viel gekürzt hast.
+
+`Transkribieren` macht die Sprache auf diesem Gerät zu Text, mit demselben Whisper-Modell, das Montage und Lyric Sync nutzen. Beim ersten Mal fragt es, bevor das Modell geladen wird (etwa 53 MB, einmal für alle drei Apps); der Ton selbst verlässt das Gerät nie. Der Text kommt direkt unter die Zeile der Aufnahme in die Seite, sodass du ihn bearbeiten, durchsuchen und synchronisieren kannst wie jeden anderen Text. Es hört in der orOS-Sprache; bei langen Aufnahmen werden nur die ersten 30 Minuten transkribiert. `Abbrechen` stoppt es jederzeit.
+
+`An Studio senden` öffnet die Aufnahme in Studio, auf einer Audiospur des offenen Projekts (oder eines neuen).
 
 ## Links zwischen Seiten
 Schreib einen Seitentitel in doppelte eckige Klammern, etwa `[[Shopping]]`, um auf ihn zu verlinken. `[[Shopping|the list]]` zeigt „the list“, öffnet aber Shopping. Unter dem Text siehst du `Links` (Seiten, auf die diese verlinkt) und `Rückverweise` (Seiten, die hierher verlinken, aus jedem Notizbuch). Tippe oder klicke auf einen Link, hier oder in der `Vorschau`, um diese Seite zu öffnen.

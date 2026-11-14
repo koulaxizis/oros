@@ -207,10 +207,11 @@ test("caps: rows, bytes and the share store total answer 507 full, nothing evict
   assert.equal(r.body.error.code, "full");
   env.SHR_DB.db.prepare("UPDATE shl_tot SET s = ?1").run(tot);
   // the share store's total counts links with an expiry too
-  env.SHR_DB.db.prepare("INSERT INTO shr_obj (id, exp, size, n, delh, tokh, at, fin) VALUES ('x', ?1, ?2, 1, 'a', 'b', ?3, 1)").run(T0 + DAY, SR.SHR_LIMITS.store, T0);
+  // (its bytes are kept in one row, shr_tot, moved by every insert and delete)
+  env.SHR_DB.db.prepare("UPDATE shr_tot SET s = s + ?1").run(SR.SHR_LIMITS.store);
   r = await mk(env, song({ t: "new" }));
   assert.equal(r.status, 507);
-  env.SHR_DB.db.prepare("DELETE FROM shr_obj").run();
+  env.SHR_DB.db.prepare("UPDATE shr_tot SET s = s - ?1").run(SR.SHR_LIMITS.store);
   assert.equal(env.SHR_DB.db.prepare("SELECT COUNT(*) AS c FROM shl_link").get().c, 1, "nothing evicted");
   // ...and short links count in the expiry links' room
   const used = env.SHR_DB.db.prepare(SR.SHR_SQL.used).get().s;

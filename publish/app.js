@@ -346,6 +346,49 @@
       "codex.bad": "Not a valid ISRC, UPC or EAN.",
       "mclash.title": "Release codes used more than once",
       "chk.code": "Valid {kind} {c}",
+      // wave M2: credits and splits
+      "sec.cr": "Credits",
+      "sec.sw": "Songwriting shares",
+      "sec.sm": "Master ownership",
+      "cr.art": "Artist",
+      "cr.feat": "Featured artist",
+      "cr.comp": "Composer",
+      "cr.lyr": "Lyricist",
+      "cr.arr": "Arranger",
+      "cr.prod": "Producer",
+      "cr.mix": "Mixing engineer",
+      "cr.mast": "Mastering engineer",
+      "cr.eng": "Recording engineer",
+      "cr.mus": "Musician",
+      "cr.o": "Other",
+      "cr.ins": "Instrument or role",
+      "cr.add": "+ Credit",
+      "cr.none": "Who played, wrote, produced, mixed or mastered it.",
+      "sw.soc": "Society",
+      "sw.add": "+ Writer",
+      "sw.none": "Who wrote the song and their share of it (with their collecting society and IPI, if they have one).",
+      "sm.add": "+ Owner",
+      "sm.none": "Who owns the recording and their share of it.",
+      "sh.sumOk": "Adds up to {s}%.",
+      "sh.sumBad": "Adds up to {s}%: the shares should make 100%.",
+      "ss.btn": "Split sheet in Writer",
+      "ss.head": "Split sheet: {t}",
+      "ss.release": "Release: {t}",
+      "ss.version": "Version: {v}",
+      "ss.date": "Date: {d}",
+      "ss.writers": "Songwriting shares (composition and lyrics)",
+      "ss.masters": "Master ownership (the recording)",
+      "ss.credits": "Credits",
+      "ss.sum": "Note: the shares add up to {s}, not 100%.",
+      "ss.agree": "By signing below, each person agrees to the shares above for this track.",
+      "ss.sign": "Signature: ______________________    Date: ____________",
+      "ss.doc": "Split sheet · {t}",
+      "cr.all": "Same credits and splits on every track",
+      "cr.allNone": "This release has only this track.",
+      "cr.allAsk": "Copy the credits, songwriting shares and master ownership of “{t}” to the other {n} tracks? Theirs are replaced.",
+      "cr.allGo": "Copy",
+      "cr.allDone": "Copied to {n} tracks",
+      "gap.splits": "shares that add up to 100%",
       "untitled": "Untitled", "by": "by {list}"
     },
     el: {
@@ -648,6 +691,49 @@
       "codex.bad": "Δεν είναι έγκυρο ISRC, UPC ή EAN.",
       "mclash.title": "Κωδικοί κυκλοφορίας σε περισσότερες από μία χρήσεις",
       "chk.code": "Έγκυρο {kind} {c}",
+      // wave M2: credits and splits
+      "sec.cr": "Συντελεστές",
+      "sec.sw": "Ποσοστά δημιουργών (στίχοι και μουσική)",
+      "sec.sm": "Ιδιοκτησία ηχογράφησης (master)",
+      "cr.art": "Καλλιτέχνης",
+      "cr.feat": "Συμμετοχή (feat.)",
+      "cr.comp": "Συνθέτης",
+      "cr.lyr": "Στιχουργός",
+      "cr.arr": "Ενορχηστρωτής",
+      "cr.prod": "Παραγωγός",
+      "cr.mix": "Μίξη",
+      "cr.mast": "Mastering",
+      "cr.eng": "Ηχολήπτης",
+      "cr.mus": "Μουσικός",
+      "cr.o": "Άλλο",
+      "cr.ins": "Όργανο ή ρόλος",
+      "cr.add": "+ Συντελεστής",
+      "cr.none": "Ποιος έπαιξε, έγραψε, έκανε παραγωγή, μίξη ή mastering.",
+      "sw.soc": "Οργανισμός",
+      "sw.add": "+ Δημιουργός",
+      "sw.none": "Ποιος έγραψε το τραγούδι και το ποσοστό του (με τον οργανισμό συλλογικής διαχείρισης και το IPI του, αν έχει).",
+      "sm.add": "+ Ιδιοκτήτης",
+      "sm.none": "Σε ποιον ανήκει η ηχογράφηση και σε τι ποσοστό.",
+      "sh.sumOk": "Σύνολο {s}%.",
+      "sh.sumBad": "Σύνολο {s}%: τα ποσοστά πρέπει να κάνουν 100%.",
+      "ss.btn": "Split sheet στον Writer",
+      "ss.head": "Συμφωνία ποσοστών (split sheet): {t}",
+      "ss.release": "Κυκλοφορία: {t}",
+      "ss.version": "Εκδοχή: {v}",
+      "ss.date": "Ημερομηνία: {d}",
+      "ss.writers": "Ποσοστά δημιουργών (μουσική και στίχοι)",
+      "ss.masters": "Ιδιοκτησία ηχογράφησης (master)",
+      "ss.credits": "Συντελεστές",
+      "ss.sum": "Σημείωση: τα ποσοστά κάνουν {s}, όχι 100%.",
+      "ss.agree": "Με την υπογραφή του, καθένας συμφωνεί με τα παραπάνω ποσοστά για αυτό το κομμάτι.",
+      "ss.sign": "Υπογραφή: ______________________    Ημερομηνία: ____________",
+      "ss.doc": "Split sheet · {t}",
+      "cr.all": "Ίδιοι συντελεστές και ποσοστά σε όλα τα κομμάτια",
+      "cr.allNone": "Αυτή η κυκλοφορία έχει μόνο αυτό το κομμάτι.",
+      "cr.allAsk": "Να αντιγραφούν οι συντελεστές, τα ποσοστά δημιουργών και η ιδιοκτησία του «{t}» στα άλλα {n} κομμάτια; Τα δικά τους αντικαθίστανται.",
+      "cr.allGo": "Αντιγραφή",
+      "cr.allDone": "Αντιγράφηκε σε {n} κομμάτια",
+      "gap.splits": "ποσοστά που κάνουν 100%",
       "untitled": "Χωρίς τίτλο", "by": "του/της {list}"
     }
   };
@@ -1581,8 +1667,156 @@
     exl.appendChild(el("span", "", t("trk.ex")));
     g.appendChild(exl);
     box.appendChild(g);
+    box.appendChild(creditsBox(tt, r));          // wave M2
     return box;
   }
+  // ---------- 5c. Credits and splits (wave M2) ----------
+  // Per track: credits, songwriting shares (with society and IPI) and
+  // master shares. Typing writes after a pause (no rebuild); adding or
+  // removing a row writes at once and redraws the editor.
+  var SOCIETIES = ["AEPI", "Autodia", "EDEM", "GEA", "ASCAP", "BMI", "SESAC", "PRS for Music", "GEMA", "SACEM", "SIAE", "SGAE", "SOCAN",
+                   "APRA AMCOS", "STIM", "KODA", "TONO", "Teosto", "SUISA", "AKM", "BUMA/STEMRA", "SABAM", "ZAiKS", "JASRAC"];
+  function crmPartners() {
+    var K = window.OrosCrmCore, d = crmData();
+    if (!K || !d) return [];
+    return (d.cust || []).map(function (c) { return { id: c.id, n: K.custName ? K.custName(c) : (c.name || "") }; }).filter(function (x) { return x.n; });
+  }
+  // a typed name that is exactly one CRM partner's name links to it
+  function crmIdFor(name, list) {
+    var f = C.fold(String(name || "").trim()), hit = list.filter(function (x) { return C.fold(x.n) === f; });
+    return hit.length === 1 ? hit[0].id : "";
+  }
+  function datalist(id, values) {
+    var dl = $(id);
+    if (!dl) { dl = el("datalist"); dl.id = id; document.body.appendChild(dl); }
+    dl.textContent = "";
+    values.forEach(function (v) { var o = el("option"); o.value = v; dl.appendChild(o); });
+  }
+  function rowsEditor(box, title, rows, cols, max, save, extra) {
+    var sec = el("div", "subsec");
+    sec.appendChild(el("h4", "", title));
+    var arr = JSON.parse(JSON.stringify(rows || []));
+    var sumEl = extra && extra.sum ? el("p", "hint") : null;
+    function showSum() {
+      if (!sumEl) return;
+      var st = C.shareState(arr.filter(function (x) { return String(x.n || "").trim(); }).map(function (x) { return { pct: C.num(x.pct, 0, 100, 2) }; }));
+      var s = C.shareSum(arr.map(function (x) { return { pct: C.num(x.pct, 0, 100, 2) }; }));
+      sumEl.className = st ? "hint bad" : "hint good";
+      sumEl.textContent = arr.length ? t(st ? "sh.sumBad" : "sh.sumOk", { s: String(s).replace(".", LANG === "en" ? "." : ",") }) : "";
+    }
+    if (!arr.length) sec.appendChild(el("p", "muted small", extra && extra.none ? extra.none : ""));
+    arr.forEach(function (r, i) {
+      var row = el("div", "person share");
+      cols.forEach(function (col) {
+        var inp;
+        if (col.opts) {
+          inp = select(col.opts, r[col.k] || col.opts[0][0]);
+          inp.addEventListener("change", function () { arr[i][col.k] = inp.value; save(arr, true); });
+        } else {
+          inp = input(col.type || "text", r[col.k] == null ? "" : r[col.k], Object.assign({ maxlength: String(col.max || 120), "aria-label": col.label, placeholder: col.ph || col.label }, col.attrs || {}));
+          inp.addEventListener("input", function () { arr[i][col.k] = inp.value; showSum(); later(function () { save(arr, false); }, inp); });
+        }
+        if (col.cls) inp.classList.add(col.cls);
+        row.appendChild(inp);
+      });
+      var del = button("✕", "icon-btn", function () { arr.splice(i, 1); save(arr, true); });
+      del.setAttribute("aria-label", t("btn.remove"));
+      row.appendChild(del);
+      sec.appendChild(row);
+    });
+    if (sumEl) { showSum(); sec.appendChild(sumEl); }
+    if (arr.length < max) sec.appendChild(button(extra.add, "btn small", function () { arr.push(extra.blank()); save(arr, true); }));
+    box.appendChild(sec);
+  }
+  function creditsBox(tt, r) {
+    var box = el("div", "credits");
+    var partners = crmPartners();
+    datalist("pub-crm", partners.map(function (x) { return x.n; }));
+    datalist("pub-socs", SOCIETIES);
+    function cur() { return C.find(data, "trk", r.id) || r; }
+    function linked(list) {
+      return list.filter(function (x) { return String(x.n || "").trim(); }).map(function (x) {
+        var o = Object.assign({}, x), id = crmIdFor(x.n, partners);
+        if (id) o.crm = id; else delete o.crm;
+        return o;
+      });
+    }
+    function saver(key, conv) {
+      return function (arr, rebuild) {
+        var p = {};
+        p[key] = linked(arr).map(conv);
+        if (rebuild) {
+          // rows without a name yet stay on screen until typed: keep them in the redraw
+          pendingRows[r.id + key] = arr;
+          commit(C.put(data, "trk", Object.assign({}, cur(), p), Date.now()));
+        } else writeRow("trk", r.id, p);
+      };
+    }
+    var pr = pendingRows;
+    function rowsOf(key) { var x = pr[r.id + key]; delete pr[r.id + key]; return x || r[key] || []; }
+    rowsEditor(box, t("sec.cr"), rowsOf("cr"), [
+      { k: "r", opts: C.CR_ROLES.map(function (x) { return [x, t("cr." + x)]; }) },
+      { k: "n", label: t("ppl.name"), attrs: { list: "pub-crm", autocomplete: "off" } },
+      { k: "ins", label: t("cr.ins"), max: 60, cls: "narrow" }
+    ], C.MAX_CR, saver("cr", function (x) { return { r: x.r || "o", n: x.n, ins: x.ins, crm: x.crm }; }),
+      { add: t("cr.add"), none: t("cr.none"), blank: function () { return { r: C.isMusic(currentTitle()) && !(cur().cr || []).length ? "art" : "comp", n: "" }; } });
+    rowsEditor(box, t("sec.sw"), rowsOf("sw"), [
+      { k: "n", label: t("ppl.name"), attrs: { list: "pub-crm", autocomplete: "off" } },
+      { k: "pct", label: "%", type: "number", attrs: { min: "0", max: "100", step: "0.01", inputmode: "decimal" }, cls: "pct" },
+      { k: "soc", label: t("sw.soc"), max: 60, attrs: { list: "pub-socs", autocomplete: "off" }, cls: "narrow" },
+      { k: "ipi", label: "IPI", max: 11, attrs: { inputmode: "numeric" }, cls: "narrow" }
+    ], C.MAX_SH, saver("sw", function (x) { return { n: x.n, pct: C.num(x.pct, 0, 100, 2), soc: x.soc, ipi: x.ipi, crm: x.crm }; }),
+      { add: t("sw.add"), none: t("sw.none"), sum: true, blank: function () { return { n: "", pct: "" }; } });
+    rowsEditor(box, t("sec.sm"), rowsOf("sm"), [
+      { k: "n", label: t("ppl.name"), attrs: { list: "pub-crm", autocomplete: "off" } },
+      { k: "pct", label: "%", type: "number", attrs: { min: "0", max: "100", step: "0.01", inputmode: "decimal" }, cls: "pct" }
+    ], C.MAX_SH, saver("sm", function (x) { return { n: x.n, pct: C.num(x.pct, 0, 100, 2), crm: x.crm }; }),
+      { add: t("sm.add"), none: t("sm.none"), sum: true, blank: function () { return { n: "", pct: "" }; } });
+    var acts = el("div", "fmt-head");
+    acts.appendChild(button(t("ss.btn"), "btn small", function () { flushEdits(); splitSheetToWriter(r.id); }));
+    acts.appendChild(button(t("cr.all"), "btn small", function () { flushEdits(); copyCreditsToAll(r.id); }));
+    box.appendChild(acts);
+    return box;
+  }
+  var pendingRows = {};
+  function splitSheetToWriter(trkId) {
+    var tt = currentTitle(), r = C.find(data, "trk", trkId);
+    if (!tt || !r) return;
+    var S = {}, roles = {};
+    ["head", "release", "version", "date", "writers", "masters", "credits", "sum", "agree", "sign", "doc"].forEach(function (k) { S[k] = t("ss." + k); });
+    C.CR_ROLES.forEach(function (k) { roles[k] = t("cr." + k); });
+    var doc = C.splitSheet(tt, r, S, roles, { date: fmtDate(todayYmd()), comma: LANG !== "en" });
+    openAt("writer", { newDoc: { title: doc.title.slice(0, 120), text: doc.text } });
+  }
+  function copyCreditsToAll(trkId) {
+    var tt = currentTitle(), r = C.find(data, "trk", trkId);
+    if (!tt || !r) return;
+    var others = C.tracksOf(data, tt.id).filter(function (x) { return x.id !== r.id; });
+    if (!others.length) { toast(t("cr.allNone")); return; }
+    var dlg = el("dialog");
+    dlg.appendChild(el("h3", "", t("cr.all")));
+    dlg.appendChild(el("p", "", t("cr.allAsk", { n: others.length, t: r.t })));
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    acts.appendChild(button(t("cr.allGo"), "btn pri", function () {
+      dlg.close();
+      var keep = JSON.parse(JSON.stringify(others)), now = Date.now(), d = data;
+      others.forEach(function (x) {
+        var n = Object.assign({}, x);
+        ["cr", "sw", "sm"].forEach(function (k) { if (r[k]) n[k] = JSON.parse(JSON.stringify(r[k])); else delete n[k]; });
+        d = C.put(d, "trk", n, now);
+      });
+      commit(d);
+      toast(t("cr.allDone", { n: others.length }), t("btn.undo"), function () {
+        var d2 = data, now2 = Date.now();
+        keep.forEach(function (x) { d2 = C.put(d2, "trk", x, now2); });
+        commit(d2);
+      });
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+
   // One track per line; "1. Title", "Title - 3:45" and "Title 3:45"
   // are all read (the number is dropped, the length kept).
   function parseTrackLines(text) {
