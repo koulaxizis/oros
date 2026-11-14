@@ -50,6 +50,7 @@ Just start typing; everything saves by itself.
 - `Table of contents` lists your headings. Tap one to jump to it, or `Insert inline` to put a contents list into the text.
 - `Document metadata` holds `Title`, `Author`, `Tags` and `Category`.
 - `Page settings` sets `Paper size`, `Margins (mm)`, `Header` and `Footer`.
+- `Font for text` and `Font for headings` (also in `Page settings`) give the document fonts of its own: from your collections in [Settings › Fonts](help:a/settings) or the font files on this device. They show on screen, in print and in the PDF, and reach your other devices with sync (a font file reaches them like any file). A letter the font does not have is drawn in Writer's font; a font without an italic shows italic upright in the PDF.
 
 ## Versions, templates and goals
 - `Version history` keeps automatic versions while you write (at most one every 5 minutes, the newest 8). Tap `Snapshot` to save one yourself; those are never dropped. `Restore` saves the current text as a snapshot first.

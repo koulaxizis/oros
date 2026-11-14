@@ -219,6 +219,12 @@ const STRINGS = {
     'page.sizes.letter': 'Letter',
     'page.sizes.legal': 'Legal',
     'page.sizes.full-width': 'Full width',
+    'page.fontBody': 'Font for text',
+    'page.fontHead': 'Font for headings',
+    'page.fontDefault': 'Writer\'s font',
+    'page.fontMine': 'On this device',
+    'page.fontLoading': 'Loading fonts…',
+    'page.fontHint': 'From your collections in Settings › Fonts and the font files on this device. Used on screen, in print and in the PDF.',
     'toc.title': 'Contents',
     'toc.insert': 'Insert inline',
     'toc.empty': 'No headings — start with a heading style.',
@@ -653,6 +659,12 @@ const STRINGS = {
     'page.sizes.letter': 'Letter',
     'page.sizes.legal': 'Legal',
     'page.sizes.full-width': 'Πλήρες πλάτος',
+    'page.fontBody': 'Γραμματοσειρά κειμένου',
+    'page.fontHead': 'Γραμματοσειρά επικεφαλίδων',
+    'page.fontDefault': 'Η γραμματοσειρά του Writer',
+    'page.fontMine': 'Σε αυτή τη συσκευή',
+    'page.fontLoading': 'Φόρτωση γραμματοσειρών…',
+    'page.fontHint': 'Από τις συλλογές σας στις Ρυθμίσεις › Γραμματοσειρές και τα αρχεία γραμματοσειρών αυτής της συσκευής. Ισχύει στην οθόνη, στην εκτύπωση και στο PDF.',
     'toc.title': 'Περιεχόμενα',
     'toc.insert': 'Εισαγωγή inline',
     'toc.empty': 'Καμία επικεφαλίδα — ξεκίνα με style heading.',
@@ -2069,6 +2081,7 @@ function renderEditor() {
   viewAfterChange();
   tcSync(true);                    // Track changes of this doc (wave 22)
   spellAfterRender();              // fresh spelling marks for this doc
+  wfAfterRender();                 // the document's own fonts (FM-4)
   // Adopt the browser's serialization WITHOUT touching mtime, so a later
   // unrelated flush never sees a "change" that is only formatting noise.
   if (doc) {
@@ -5097,6 +5110,104 @@ function renderMetaTags(tags) {
   });
 }
 
+/* ----- A DOCUMENT'S OWN FONTS (FM-4) -----
+   writer/fonts.js (with designkit/text.js and designkit/fonts.js)
+   loads only for a document that names fonts in the "fonts" slice,
+   or when Page settings opens. The check is a look at the stored
+   slice (or the sync mailbox, when no app of this device has taken
+   the slice yet), so a document without fonts costs nothing. */
+const WF_KEYS = ['oros-fonts-data', 'oros-remote-carry'];
+window.WriterFontsHost = {
+  t: t, activeId: () => state.activeTab,
+  onChange: () => { if (pageDlg && pageDlg.open) { const d = activeDoc(); if (d) wfFillSelects(d); } }
+};
+let wfP = null;
+function wfLoad() {
+  if (window.WriterFonts) return Promise.resolve(window.WriterFonts);
+  if (!wfP) {
+    const v = (document.querySelector('script[src*="writer.js?v="]') || {}).src || '', m = v.match(/[?&]v=([^&#]+)/);
+    const load = f => new Promise((ok, fail) => {
+      const s = document.createElement('script');
+      s.src = f + (m ? '?v=' + m[1] : '');
+      s.onload = ok; s.onerror = () => { s.remove(); fail(new Error(f)); };
+      document.head.appendChild(s);
+    });
+    const dk = window.orosDK || {};
+    wfP = (dk.text ? Promise.resolve() : load('../designkit/text.js'))
+      .then(() => ((window.orosDK || {}).fonts ? null : load('../designkit/fonts.js')))
+      .then(() => load('fonts.js')).then(() => {
+        if (!window.WriterFonts) throw new Error('fonts');
+        return window.WriterFonts;
+      });
+    wfP.catch(() => { wfP = null; });
+  }
+  return wfP;
+}
+function wfHas(id) {
+  if (!id) return false;
+  const k = '"writer:' + id + '"';
+  return WF_KEYS.some(name => {
+    try { const raw = localStorage.getItem(name); return !!raw && raw.indexOf(k) >= 0; } catch (e) { return false; }
+  });
+}
+function wfAfterRender() {
+  const d = activeDoc(), id = d ? d.id : null;
+  if (window.WriterFonts) { window.WriterFonts.apply(id); return; }
+  if (wfHas(id)) wfLoad().then(W => W.apply(state.activeTab)).catch(() => {});
+}
+// The two selects of Page settings: Writer's font, each collection,
+// then the families on this device; a family the document names that
+// is in none of them stays listed.
+function wfFillSelects(doc) {
+  const sels = { body: document.getElementById('page-font-body'), head: document.getElementById('page-font-head') };
+  if (!sels.body || !sels.head) return;
+  wfLoad().then(W => W.choices(window.orosLang).then(groups => {
+    if (!document.body.contains(sels.body)) return;
+    const cur = W.get(doc.id), byId = {};
+    ['body', 'head'].forEach(role => {
+      const sel = sels[role], have = {};
+      sel.textContent = '';
+      const def = document.createElement('option');
+      def.value = ''; def.textContent = t('page.fontDefault');
+      sel.appendChild(def);
+      groups.forEach(g => {
+        const og = document.createElement('optgroup');
+        og.label = g.name;
+        g.fams.forEach(f => {
+          byId[f.id] = f;
+          const o = document.createElement('option');
+          o.value = f.id; o.textContent = f.name;
+          if (!have[f.id]) have[f.id] = o;
+          og.appendChild(o);
+        });
+        sel.appendChild(og);
+      });
+      const c = cur[role];
+      if (c && !have[c.id]) {
+        byId[c.id] = c;
+        const o = document.createElement('option');
+        o.value = c.id; o.textContent = c.name;
+        sel.insertBefore(o, def.nextSibling);
+        have[c.id] = o;
+      }
+      if (c) have[c.id].selected = true; else def.selected = true;
+      sel.onchange = () => {
+        W.set(doc.id, role, sel.value ? byId[sel.value] : null);
+      };
+    });
+  })).catch(() => {
+    ['body', 'head'].forEach(role => {
+      const sel = sels[role];
+      if (!sel) return;
+      sel.textContent = '';
+      const o = document.createElement('option');
+      o.value = ''; o.textContent = t('page.fontDefault');
+      sel.appendChild(o);
+      sel.disabled = true;
+    });
+  });
+}
+
 /* ----- PAGE SETTINGS ----- */
 const PAPER_SIZES = {
   'full-width': { w: 'auto', h: 'auto', label: 'page.sizes.full-width' },
@@ -5151,6 +5262,13 @@ function openPageSettings() {
       <label>${t('page.footer')}</label>
       <input type="text" class="w-field full" id="page-footer" placeholder="${t('page.headFootNote')}" value="${escAttr(doc.footer || '')}">
 
+      <label class="full page-font-label" for="page-font-body">${t('page.fontBody')}</label>
+      <select class="w-field full" id="page-font-body"><option value="">${t('page.fontLoading')}</option></select>
+
+      <label class="full page-font-label" for="page-font-head">${t('page.fontHead')}</label>
+      <select class="w-field full" id="page-font-head"><option value="">${t('page.fontLoading')}</option></select>
+      <p class="full page-font-hint">${t('page.fontHint')}</p>
+
       <div class="full paper-preview">
         <div class="paper-preview-inner" id="preview-paper">
           <div class="paper-margin-box" style="--pv-m:${Math.min(doc.margins.top,30)}px;"></div>
@@ -5187,6 +5305,8 @@ function openPageSettings() {
     doc.footer = e.target.value;
     markDoc(doc, 'p');
   });
+
+  wfFillSelects(doc);
 
   function updatePreview() {
     const pm = document.getElementById('preview-paper');
@@ -6882,9 +7002,10 @@ function ioBuildPdf(doc, html) {
   return ioLoadScript(IO_VENDOR_JSPDF)
     .then(() => Promise.all([
       ioPdfFonts(),
-      Promise.all(imgEls.map(im => ioPdfImage(im.getAttribute('src')).then(v => imgData.set(im, v))))
+      Promise.all(imgEls.map(im => ioPdfImage(im.getAttribute('src')).then(v => imgData.set(im, v)))),
+      (window.WriterFonts || wfHas(doc.id)) ? wfLoad().then(W => W.pdf(doc.id)).catch(() => null) : null
     ]))
-    .then(([fonts]) => {
+    .then(([fonts, , wf]) => {
       const JsPDF = window.jspdf.jsPDF;
       const pg = ioPageSizeMm(doc);
       const pdf = new JsPDF({ unit: 'mm', format: [pg.w, pg.h], compress: true });
@@ -6907,6 +7028,29 @@ function ioBuildPdf(doc, html) {
       if (fonts.mono) {
         try { pdf.addFileToVFS('NotoSansMono.ttf', fonts.mono); pdf.addFont('NotoSansMono.ttf', 'notomono', 'normal'); have.mono = true; } catch (e) { have.mono = false; }
       }
+      // The document's own fonts (FM-4): every TrueType file of a face
+      // is a font of its own ("wf0", "wf1"…); a word goes to the first
+      // file that has all its letters, else to Noto as before.
+      const wfam = { body: null, head: null };
+      let wfn = 0;
+      if (wf) ['body', 'head'].forEach(role => {
+        const src = wf[role];
+        if (!src) return;
+        if (role === 'head' && src === wf.body) { wfam.head = wfam.body; return; }
+        const reg = {};
+        Object.keys(src).forEach(st => {
+          const list = [];
+          src[st].forEach(part => {
+            const name = 'wf' + (wfn++), file = name + '.ttf';
+            try {
+              pdf.addFileToVFS(file, part.b64); pdf.addFont(file, name, 'normal'); pdf.setFont(name, 'normal');
+              list.push({ name: name, map: part.map });
+            } catch (e) { /* a file jsPDF cannot read: Noto stands in */ }
+          });
+          if (list.length) reg[st] = list;
+        });
+        if (reg.normal) wfam[role] = reg;
+      });
       pdf.setFont('noto', 'normal');
 
       const cmaps = {};
@@ -6944,9 +7088,31 @@ function ioBuildPdf(doc, html) {
 
       const styleOf = r => (r.b && r.i) ? 'bolditalic' : r.b ? 'bold' : r.i ? 'italic' : 'normal';
 
+      function wfPick(r, text) {
+        if (r.mono) return null;
+        const R = r.h ? (wfam.head || wfam.body) : wfam.body;
+        if (!R) return null;
+        const st = styleOf(r);
+        let list = R[st], synth = false;
+        if (!list && st === 'bolditalic' && R.bold) list = R.bold;
+        else if (!list && st === 'bolditalic' && R.italic) { list = R.italic; synth = true; }
+        if (!list) { list = R.normal; synth = !!r.b; }
+        for (const f of list) {
+          let ok = true;
+          for (const ch of text) {
+            const cp = ch.codePointAt(0);
+            if (cp > 32 && !f.map[cp]) { ok = false; break; }
+          }
+          if (ok) return { name: f.name, synth: synth };
+        }
+        return null;
+      }
+
       // Sets the font for one word; returns { size, synth }.
       function useFont(r, fs, text) {
         const size = (r.sup || r.sub) ? fs * 0.68 : fs;
+        const w = wfPick(r, text);
+        if (w) { pdf.setFont(w.name, 'normal'); pdf.setFontSize(size); return { size: size, synth: w.synth }; }
         let fam = 'noto', st = styleOf(r), synth = false;
         if (r.mono && have.mono && covers('notomono', 'normal', text)) { fam = 'notomono'; st = 'normal'; }
         else if (st !== 'normal' && !(have[st] && covers('noto', st, text))) { synth = !!r.b; st = 'normal'; }
@@ -7153,7 +7319,7 @@ function ioBuildPdf(doc, html) {
               const fsz = { H1: 22, H2: 17, H3: 14, H4: 12.5, H5: 11.5, H6: 11 }[ch.nodeName];
               if (y > MT + 0.01) y += fsz * PT * 0.55;
               need(fsz * PT * 1.3 + 11 * PT * 1.5 * 2);   // keep with the next lines
-              writeRuns(runsOf(ch, { b: true }), { x: ctx.x, w: ctx.w, fs: fsz, color: '#000000', align: align, lhK: 1.3, after: fsz * PT * 0.3 });
+              writeRuns(runsOf(ch, { b: true, h: true }), { x: ctx.x, w: ctx.w, fs: fsz, color: '#000000', align: align, lhK: 1.3, after: fsz * PT * 0.3 });
               break;
             }
             case 'BLOCKQUOTE': {

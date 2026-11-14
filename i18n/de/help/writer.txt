@@ -50,6 +50,7 @@ Schreib einfach los; alles speichert sich von selbst.
 - `Inhaltsverzeichnis` listet deine Überschriften auf. Tippe auf eine, um dorthin zu springen, oder auf `In den Text einfügen`, um ein Inhaltsverzeichnis in den Text zu setzen.
 - `Dokument-Metadaten` enthält `Titel`, `Autor`, `Tags` und `Kategorie`.
 - `Seiteneinstellungen` legt `Papierformat`, `Ränder (mm)`, `Kopfzeile` und `Fußzeile` fest.
+- `Schrift für Text` und `Schrift für Überschriften` (ebenfalls in den `Seiteneinstellungen`) geben dem Dokument eigene Schriften: aus deinen Sammlungen in [Einstellungen › Schriften](help:a/settings) oder aus den Schriftdateien dieses Geräts. Sie erscheinen auf dem Bildschirm, im Druck und im PDF und erreichen deine anderen Geräte mit der Synchronisierung (eine Schriftdatei erreicht sie wie jede Datei). Ein Zeichen, das die Schrift nicht hat, wird in der Schrift von Writer gezeichnet; eine Schrift ohne Kursiv zeigt Kursives im PDF aufrecht.
 
 ## Versionen, Vorlagen und Ziele
 - `Versionsverlauf` speichert automatische Versionen, während du schreibst (höchstens eine alle 5 Minuten, die neuesten 8). Tippe auf `Schnappschuss`, um selbst eine zu speichern; die werden nie entfernt. `Wiederherstellen` speichert den aktuellen Text zuerst als Schnappschuss.

@@ -1287,6 +1287,8 @@ sup.fn-ref:hover { text-decoration: underline; }
 }
 
 .form-grid .full { grid-column: 1 / -1; }
+.form-grid .page-font-label { text-align: left; margin-bottom: -4px; }
+.page-font-hint { margin: -4px 0 0; font-size: 12px; line-height: 1.4; color: var(--text-dim); }
 
 .form-tags-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 
