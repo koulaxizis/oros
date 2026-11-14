@@ -34,6 +34,9 @@ Seiten werden als reiner Text gespeichert, daher ändert sich an deinen Notizen 
 
 Die Tasten der Symbolleiste fügen das für dich um den markierten Text oder an der Schreibmarke ein. Drück eine Taste noch einmal, um es wieder zu entfernen.
 
+## Übersetzen
+Die Übersetzen-Taste am Ende der Formatierungsleiste übersetzt den markierten Text, oder die ganze Seite, wenn nichts markiert ist, auf diesem Gerät mit den Modellen von Mozilla (wie [Text Tools](app:texttools) › Übersetzen; beim ersten Mal für zwei Sprachen sagt sie, wie groß der Download ist). `Ersetzen` setzt die Übersetzung an die Stelle des Textes, `Darunter einfügen` fügt sie danach ein; `Strg+Z` nimmt beides zurück. Hat sich die Seite geändert, während das Fenster offen war, wird nichts eingefügt.
+
 ## Tägliche Notiz und Vorlagen
 Die Kalender-Taste neben dem Titel (`Notiz von heute`) öffnet die Seite für heute, betitelt wie `2026-10-14`, unter einer Seite namens `Täglich` oben im aktuellen Notizbuch. Beide werden beim ersten Mal angelegt; später öffnet sich dieselbe Seite.
 

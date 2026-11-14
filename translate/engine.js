@@ -1,5 +1,5 @@
 // ============================================================
-// orOS translation engine (translate/engine.js, v1.1.0)
+// orOS translation engine (translate/engine.js, v1.1.1)
 // Translation on the device with Mozilla's Firefox Translations
 // models and the Bergamot translator (both MPL-2.0). Any app frame
 // loads this file (<script src="../translate/engine.js">) and gets
@@ -333,8 +333,10 @@
       (ws[w] || []).forEach(function (l) { score[l] = (score[l] || 0) + 1; });
     });
     Object.keys(MARKS).forEach(function (l) { score[l] = (score[l] || 0) + Math.min(10, count(low, MARKS[l])); });
+    // English unless another language clearly wins: one shared short
+    // word ("a" is Czech and Hungarian too) does not make a text foreign.
     var best = PIVOT, top = score[PIVOT] || 0;
-    Object.keys(score).sort().forEach(function (l) { if (score[l] > top) { best = l; top = score[l]; } });
+    Object.keys(score).sort().forEach(function (l) { if (score[l] > top && score[l] >= 2) { best = l; top = score[l]; } });
     return best;
   }
 

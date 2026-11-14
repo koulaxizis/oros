@@ -2237,7 +2237,7 @@
     }
   };
   // AS-DO (wave A6): one thing done in an app on the user's press.
-  var DO_KINDS = ["timer", "alarm", "open", "play", "directions"];
+  var DO_KINDS = ["timer", "alarm", "open", "play", "directions", "translate"];
   function doTool(kinds) {
     var k = DO_KINDS.filter(function (x) { return kinds.indexOf(x) >= 0; });
     return {
@@ -2246,7 +2246,8 @@
         "timer (minutes and/or seconds, label?: starts a countdown in Time) · alarm (at HH:MM, label?, daily?: fills Time's alarm form; the user presses Add) · " +
         "open (ref: an item from search_data or create_items, or app: an app's id; with app layout, page shows that page of the open document) · " +
         "play (ref: a Music track, a Radio station or a Podcasts episode found with search_data; a followed Music artist plays its artist radio) · " +
-        "directions (to: an address or place name, or lat+lon; mode car|bike|foot: the route from the user's location in Maps). " +
+        "directions (to: an address or place name, or lat+lon; mode car|bike|foot: the route from the user's location in Maps) · " +
+        "translate (text, into: a language code such as de, from?: opens Text Tools › Translate with the text and the languages set, translated on the device by Mozilla's models; for when the user wants it translated on the device or kept off any AI). " +
         "Nothing happens before the press, so say it is ready, never that it is done. One action per call.",
       params: {
         type: "object",
@@ -2262,7 +2263,10 @@
           page: { type: "number", description: "open with app layout: the page of the open document to show (1 = first)." },
           to: { type: "string", description: "directions: an address or a place's name." },
           lat: { type: "number" }, lon: { type: "number" },
-          mode: { type: "string", "enum": ["car", "bike", "foot"] }
+          mode: { type: "string", "enum": ["car", "bike", "foot"] },
+          text: { type: "string", description: "translate: the text (up to 20000 characters)." },
+          into: { type: "string", description: "translate: the language to translate into, a code (en, el, de, fr …)." },
+          from: { type: "string", description: "translate: the text's language code; leave it out to detect it." }
         },
         required: ["kind"]
       }
@@ -3677,6 +3681,7 @@
     // AS-DO, AS-HIST (wave A6)
     if (!opts.builtin && opts.actions && opts.actions.length) {
       lines.push("When the user asks you to do something now (\"countdown 25 minutes\", \"wake me at 7\", \"play my jazz station\", \"open the invoice\", \"how do I get to Anna's\"), call do_action. " +
+        "To translate on the device without any AI (\"translate this on my phone\", \"keep it private\"), call do_action translate; otherwise translate yourself. " +
         "For play and open, find the item first with search_data (music, radio, podcasts or the item's app). For directions to a person or customer, read their address from Contacts or CRM and give it as to. " +
         "The user presses the card's button; never say it is started, set or playing.");
     }
@@ -4359,6 +4364,23 @@
         if (args.daily === true) view.fields.push(["daily", "yes"]);
       }
       if (lb) view.title = lb;
+      return out;
+    }
+    if (kind === "translate") {
+      if (!has("texttools")) return bad("The Text Tools app is not installed.");
+      out.app = "texttools";
+      var src = typeof args.text === "string" ? args.text.replace(/\r\n?/g, "\n") : "";
+      if (!src.trim()) return bad("translate needs text.");
+      if (src.length > 20000) return bad("translate takes at most 20000 characters at once.");
+      var into = typeof args.into === "string" ? args.into.trim().toLowerCase() : "";
+      var frm = args.from == null || args.from === "" ? "auto" : String(args.from).trim().toLowerCase();
+      if (!/^[a-z]{2,3}$/.test(into)) return bad("translate needs into: a language code such as de.");
+      if (frm !== "auto" && !/^[a-z]{2,3}$/.test(frm)) return bad("from is a language code such as en, or left out.");
+      if (frm === into) return bad("from and into are the same language.");
+      out.call = { fn: "openAt", args: ["texttools", { group: "translate", text: src, tr: { from: frm, to: into } }] };
+      view.title = line(src.split("\n")[0], 80);
+      if (frm !== "auto") view.fields.push(["from", frm]);
+      view.fields.push(["into", into]);
       return out;
     }
     if (kind === "directions") {

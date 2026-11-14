@@ -673,6 +673,10 @@
       "do.open": "Open in {app}",
       "do.play": "Play in {app}",
       "do.directions": "Route in {app}",
+      "do.translate": "Translate on the device ({app})",
+      "do.btn.translate": "Translate",
+      "do.f.into": "Into",
+      "do.f.from": "From",
       "do.btn.timer": "Start",
       "do.btn.alarm": "Set the alarm",
       "do.btn.open": "Open",
@@ -1319,6 +1323,10 @@
       "do.open": "Άνοιγμα: {app}",
       "do.play": "Αναπαραγωγή: {app}",
       "do.directions": "Διαδρομή: {app}",
+      "do.translate": "Μετάφραση στη συσκευή ({app})",
+      "do.btn.translate": "Μετάφραση",
+      "do.f.into": "Προς",
+      "do.f.from": "Από",
       "do.btn.timer": "Έναρξη",
       "do.btn.alarm": "Ρύθμιση ξυπνητηριού",
       "do.btn.open": "Άνοιγμα",
@@ -5741,6 +5749,7 @@
     if (have.time) out.push("timer", "alarm");
     if (have.music || have.radio || have.podcasts) out.push("play");
     if (have.maps) out.push("directions");
+    if (have.texttools) out.push("translate");
     return out;
   }
   function normDo(args, ref) {
@@ -5759,6 +5768,14 @@
       ui: { k: "do", args: JSON.parse(JSON.stringify(args)), ref: snap, st: "" }
     };
   }
+  // A language code as its name in the app's language (do_action translate).
+  function langLabel(code) {
+    try {
+      var n = new Intl.DisplayNames([LANG], { type: "language" }).of(code);
+      if (n && n !== code) return n.charAt(0).toUpperCase() + n.slice(1);
+    } catch (e) {}
+    return code;
+  }
   function drawDo(host, r, c) {
     var ui = r.ui, have = installed();
     var a = normDo(ui.args, ui.ref);
@@ -5771,7 +5788,8 @@
       var dl = el("dl", "entry-fields");
       v.fields.forEach(function (f) {
         dl.appendChild(el("dt", "", t("do.f." + f[0])));
-        dl.appendChild(el("dd", "", f[0] === "mode" ? t("do.mode." + f[1]) : f[0] === "daily" ? t("do.yes") : f[1]));
+        dl.appendChild(el("dd", "", f[0] === "mode" ? t("do.mode." + f[1]) : f[0] === "daily" ? t("do.yes") :
+          f[0] === "into" || f[0] === "from" ? langLabel(f[1]) : f[1]));
       });
       card.appendChild(dl);
     }

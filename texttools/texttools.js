@@ -1955,6 +1955,8 @@
   // e.g. { group: "case" } from the old Case Converter id (APP-ALIAS);
   // the open step switches to `tool`, or to the group's first tool when
   // it is from another group.
+  // Target { group: "translate", text, tr: { from, to } } (the Assistant's
+  // and the gate's do_action translate): the languages are set first.
   // Target { openFile: { token, name, size } }: a .txt / .csv / .tsv from
   // the system's "Open with" or Android Share (BR-FILE-OPEN); the File
   // itself is taken once from the shell with __orosTakeFile(token).
@@ -1962,6 +1964,15 @@
   function openTarget(tg) {
     if (!tg || typeof tg !== "object") return;
     if (tg.openFile && typeof tg.openFile === "object") { openFileTarget(tg.openFile); return; }
+    if (tg.tr && typeof tg.tr === "object" && TR) {
+      var f = tg.tr.from, to = tg.tr.to;
+      if (TR.tos().indexOf(to) >= 0) {
+        prefs.tr.to = to;
+        prefs.tr.from = f !== to && TR.froms().indexOf(f) >= 0 ? f : "auto";
+        savePrefs();
+        if (trOn()) trRender();
+      }
+    }
     if (typeof tg.group === "string" && GROUPS.indexOf(tg.group) >= 0) openGroup(tg.group, tg.tool);
     if (typeof tg.text !== "string") return;
     if (document.querySelector("dialog[open]")) return;

@@ -62,6 +62,7 @@ Reframe stellt den Clip auf `Bild füllen` um. Alles passiert auf diesem Gerät.
 - `SRT-Datei öffnen` fügt jede Zeile einer SRT- (oder WebVTT-) Untertiteldatei als eigenen Text zur richtigen Zeit hinzu. Du kannst jeden wie jeden anderen Text bearbeiten, verschieben oder löschen.
 - `Als SRT speichern` schreibt alle Texte der Zeile `Text` als SRT-Datei, für YouTube oder einen Videoplayer.
 - `Untertitel erstellen` unter `Untertitel aus Sprache` hört den Ton des Projekts an und schreibt das Gesprochene als Untertiteltexte. Wähl die `Sprache` (`English`, `Ελληνικά` oder `Erkennen`). Es läuft auf diesem Gerät: Der Ton wird nirgendwohin gesendet. Beim ersten Mal lädt Montage das Sprachmodell (Whisper von OpenAI, etwa 42 MB, von Hugging Face) und die Sprach-Laufzeit (etwa 11 MB, von dieser Seite) herunter und behält sie; danach funktioniert es offline. `Sprachmodell entfernen` gibt den Platz wieder frei.
+- `Untertitel übersetzen` übersetzt jeden Text in der Zeile `Text` auf diesem Gerät mit den Modellen von Mozilla (wie [Text Tools](app:texttools) › Übersetzen); jeder Untertitel behält Zeit, Platz und Stil, und ein zweizeiliger Untertitel bleibt zweizeilig. `Übersetzung verwenden` setzt sie alle als eine Änderung ein, die `Rückgängig` zurücknimmt.
 
 ## Sticker und Formen
 `Sticker` (wenn nichts ausgewählt ist) öffnet `Sticker und Formen`:
