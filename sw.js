@@ -2231,6 +2231,8 @@ var PRECACHE_URLS = [
   "stock/pos.js",
   "storage/core.js",
   "studio/encode.js",
+  "studio/meter.js",
+  "studio/meter.worklet.js",
   "studio/podcast.js",
   "studio/podcastui.js",
   "studio/fxchain.worklet.js",
