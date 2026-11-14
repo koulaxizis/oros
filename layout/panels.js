@@ -237,6 +237,14 @@
     }
     s2.appendChild(g3);
     s2.appendChild(check(t("props.dash"), common(items, "dash"), function (v) { editSel(function (it) { it.dash = v; }); }));
+    var VC = LY.ed.vec, PEs = window.orosDK.pathedit.str;
+    if (VC && one && VC.canOutline(one)) { var ro = row(); ro.appendChild(btn(PEs("pe.outline"), function () { VC.outline(one.id); }, "small")); s2.appendChild(ro); }
+    if (VC && VC.canCombine(items)) {
+      s2.appendChild(el("span", "fld-lbl", PEs("pe.ops")));
+      var rc = row();
+      ["union", "subtract", "intersect", "exclude"].forEach(function (k) { rc.appendChild(btn(PEs("pe." + k), function () { VC.combine(k); }, "small")); });
+      s2.appendChild(rc);
+    }
     body.appendChild(s2);
 
     if (one && (one.t === "rect" || one.t === "ell" || one.t === "path")) body.appendChild(gradSection(one));

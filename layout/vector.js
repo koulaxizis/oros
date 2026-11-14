@@ -9,13 +9,16 @@
 // A blend step that is edited becomes a plain shape (LayoutBlend
 // unlink).
 //   LY.ed.vec.pen(), .edit(id), .active(), .canEdit(it), .cancel()
+// Wave V2 (designkit/boolean.js): .canCombine(items), .combine(kind)
+// makes one path of the picked shapes (the back one's look and place);
+// .canOutline(it), .outline(id) turns a stroke into a filled path.
 // editor.js hands it the pointer, keys and the overlay while active.
 // ============================================================
 (function () {
   "use strict";
 
   var LY = window.LY, M = LY.M, t = LY.t, $ = LY.$;
-  var V = window.orosDK.vector, PE = window.orosDK.pathedit, LB = window.LayoutBlend;
+  var V = window.orosDK.vector, PE = window.orosDK.pathedit, LB = window.LayoutBlend, BO = window.orosDK.boolean;
   var ED = LY.ed;
 
   var S = null, editId = null, frame = null, P0 = null, writing = false;
@@ -165,6 +168,87 @@
   };
   function evOf(e, p) { return { sx: p[0], sy: p[1], shift: !!e.shiftKey, alt: !!e.altKey, touch: e.pointerType === "touch" || e.pointerType === "pen" }; }
   ED.vec = VEC;
+
+  // ---------- Wave V2: combine shapes, outline stroke ----------
+  function pagePaths(it) {
+    var ef = editFrame(it);
+    if (!ef.cmds) return null;
+    return V.fromCmds(ef.cmds.map(function (c) {
+      var o = [c[0]];
+      for (var i = 1; i < c.length; i += 2) { var q = fromFrame(ef.fr, c[i], c[i + 1]); o.push(q.x, q.y); }
+      return o;
+    }));
+  }
+  function byZ(a, b) { return a.z - b.z || (a.id < b.id ? -1 : 1); }
+  function areaShape(it) { return editable(it) && it.t !== "line"; }
+  function canCombine(items) {
+    return !!(BO && items && items.length >= 2 && items.every(areaShape) && items.every(function (x) { return x.pg === items[0].pg && (x.side || "") === (items[0].side || ""); }));
+  }
+  function canOutline(it) { return !!(BO && editable(it) && it.stroke && it.sw > 0); }
+  function ready(fn) { BO.need("../").then(fn, function () { LY.toast(PE.str("pe.opLoad")); }); }
+  var LOOK = ["fill", "stroke", "sw", "dash", "op", "gr", "eo", "wrap", "wo", "grp", "side", "hide"];
+  // A new path item on `like`'s page from page-space paths.
+  function pathFrom(doc, like, paths, now) {
+    var r = V.reframe({ x: 0, y: 0, w: 0, h: 0, rot: 0 }, paths);
+    var it = ED.addItem(doc, { t: "path", pg: like.pg, x: r.x, y: r.y, w: r.w, h: r.h, side: like.side }, now);
+    if (!it) return null;
+    LOOK.forEach(function (k) { if (like[k] !== undefined) it[k] = JSON.parse(JSON.stringify(like[k])); });
+    delete it.eo;                 // the result's holes are wound the other way: nonzero draws them
+    it.d = M.pathText(r.unit);
+    it.z = like.z;
+    return it;
+  }
+  function zAbove(doc, it) {
+    var up = null;
+    doc.items.forEach(function (x) { if (x.pg === it.pg && x.id !== it.id && x.z > it.z && (up === null || x.z < up)) up = x.z; });
+    return up === null ? it.z + 1 : it.z + (up - it.z) / 2;
+  }
+  function combine(kind) {
+    var items = ED.selItems().slice().sort(byZ);
+    if (!canCombine(items)) return;
+    if (S) S.cancel();
+    ready(function () {
+      var shapes = items.map(pagePaths);
+      var res = BO.op(kind, shapes);
+      if (!res) { LY.toast(PE.str("pe.opFail")); return; }
+      if (!res.length) { LY.toast(PE.str("pe.opNone")); return; }
+      if (V.count(res) > V.MAX_NODES) { LY.toast(PE.str("pe.tooBig")); return; }
+      var ids = items.map(function (x) { return x.id; }), made = null;
+      LY.op(function (doc, now) {
+        var base = M.find(doc.items, ids[0]);
+        if (!base) return false;
+        made = pathFrom(doc, base, res, now);
+        if (!made) return false;
+        ED.delItems(doc, ids, now);
+      });
+      if (made) { var id = made.id; setTimeout(function () { ED.select([id]); }, 0); LY.toast(PE.str("pe." + kind)); }
+    });
+  }
+  function outline(id) {
+    var it = M.find(LY.doc.items, id);
+    if (!canOutline(it)) return;
+    if (S) S.cancel();
+    ready(function () {
+      var sw = it.sw, res = BO.outline(pagePaths(it), { w: sw, join: "miter", miter: 10, cap: "butt", dash: it.dash ? [sw * 3, sw * 2] : null });
+      if (!res || !res.length) { LY.toast(PE.str("pe.opFail")); return; }
+      if (V.count(res) > V.MAX_NODES) { LY.toast(PE.str("pe.tooBig")); return; }
+      var keep = it.t !== "line" && !!(it.fill || it.gr), made = null;
+      LY.op(function (doc, now) {
+        var x = M.find(doc.items, id);
+        if (!x) return false;
+        made = pathFrom(doc, x, res, now);
+        if (!made) return false;
+        made.fill = x.stroke; made.stroke = ""; made.sw = 0; made.dash = 0; delete made.gr;
+        if (keep) { made.z = zAbove(doc, x); x.stroke = ""; M.touch(x, now); }
+        else ED.delItems(doc, [id], now);
+      });
+      if (made) { var mid = made.id; setTimeout(function () { ED.select([mid]); }, 0); LY.toast(PE.str("pe.outline")); }
+    });
+  }
+  VEC.canCombine = canCombine;
+  VEC.combine = combine;
+  VEC.canOutline = canOutline;
+  VEC.outline = outline;
 
   // The document changed under the points (undo, redo, another device,
   // a panel): follow it, or leave when the item is gone.

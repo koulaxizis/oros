@@ -15,6 +15,7 @@ Ist etwas ausgewählt, stellst du im Bereich `Eigenschaften` Position und Größ
 
 Zeichenstift und Punkte: `Zeichenstift (P)` zeichnet einen Pfad: Klick für Eckpunkte, Ziehen für einen gebogenen Punkt, Klick auf den ersten Punkt schließt die Form; `Fertig`, [[Enter]] oder ein Klick auf den letzten Punkt behält eine offene Linie. `Punkte bearbeiten` (Rechtsklick-Menü oder Doppelklick auf einen Pfad) zeigt die Punkte eines Pfads, Rechtecks, einer Ellipse oder Linie (sie wird zum Pfad). Zieh Punkte und Griffe ([[Alt]] bewegt die beiden Griffe getrennt), zieh einen Rahmen um mehrere Punkte, doppelklicke auf die Kontur für einen neuen Punkt, und nutze die Leiste: `Ecke`, `Glatt`, `Symmetrisch`, `Gerade`, `Punkt hinzufügen`, `Punkt löschen`, `Auftrennen`, `Verbinden` und `Pfad schließen` / `Pfad öffnen`. Die Pfeiltasten bewegen die gewählten Punkte; `Fertig` oder [[Esc]] beendet.
 
+Formen kombinieren: Wähle zwei oder mehr Rechtecke, Ellipsen oder Pfade und wähle `Vereinen`, `Vordere abziehen`, `Schnittmenge` oder `Überlappung ausschließen` im Rechtsklickmenü oder unter `Formen kombinieren` in den `Eigenschaften`. Du bekommst einen Pfad mit bearbeitbaren Punkten und dem Aussehen der hintersten Form. `Kontur in Form umwandeln` macht eine Kontur (auch gestrichelt) zu einem gefüllten Pfad; eine Form mit Füllung behält sie darunter.
 Zieh aus einem Lineal, um eine Hilfslinie anzulegen, und zieh sie zurück aufs Lineal, um sie zu entfernen. Das Menü `Zoom` hat `Seite einpassen`, `Doppelseite einpassen`, 50, 100 und 200 %.
 
 ### Text
