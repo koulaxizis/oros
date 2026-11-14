@@ -38,7 +38,11 @@
       "pe.hintEdit": "Drag points and handles. Double-tap the outline to add a point.",
       "pe.tooBig": "This outline has too many points.",
       "pe.min": "An outline needs at least two points.",
-      "pe.bar": "Points"
+      "pe.bar": "Points",
+      "pe.ops": "Combine shapes", "pe.union": "Unite", "pe.subtract": "Subtract front",
+      "pe.intersect": "Intersect", "pe.exclude": "Exclude overlap", "pe.outline": "Outline stroke",
+      "pe.opNone": "Nothing is left of these shapes.", "pe.opFail": "These shapes could not be combined.",
+      "pe.opLoad": "The shape tools could not load. Try again when you are online."
     },
     el: {
       "pe.pen": "Πένα", "pe.edit": "Επεξεργασία σημείων", "pe.done": "Τέλος", "pe.cancel": "Ακύρωση",
@@ -49,7 +53,11 @@
       "pe.hintEdit": "Σύρε σημεία και λαβές. Διπλό πάτημα στο περίγραμμα προσθέτει σημείο.",
       "pe.tooBig": "Αυτό το περίγραμμα έχει πάρα πολλά σημεία.",
       "pe.min": "Ένα περίγραμμα θέλει τουλάχιστον δύο σημεία.",
-      "pe.bar": "Σημεία"
+      "pe.bar": "Σημεία",
+      "pe.ops": "Συνδυασμός σχημάτων", "pe.union": "Συνένωση", "pe.subtract": "Αφαίρεση μπροστινών",
+      "pe.intersect": "Τομή", "pe.exclude": "Αποκλεισμός επικάλυψης", "pe.outline": "Πινελιά σε σχήμα",
+      "pe.opNone": "Δεν μένει τίποτα από αυτά τα σχήματα.", "pe.opFail": "Αυτά τα σχήματα δεν μπόρεσαν να συνδυαστούν.",
+      "pe.opLoad": "Τα εργαλεία σχημάτων δεν φόρτωσαν. Δοκίμασε ξανά όταν έχεις σύνδεση."
     }
   };
   function table() {
@@ -63,6 +71,12 @@
 
   // Icons for the bar (24 × 24, stroked).
   var ICON = {
+    ops: '<rect x="3" y="3" width="12" height="12" rx="1"/><circle cx="15" cy="15" r="6"/>',
+    union: '<path d="M3 3h12v6.3A6 6 0 1 1 9.3 15H3z"/>',
+    subtract: '<path d="M3 3h12v6.3A6 6 0 0 0 9.3 15H3z"/><circle cx="15" cy="15" r="6" stroke-dasharray="2 2"/>',
+    intersect: '<rect x="3" y="3" width="12" height="12" rx="1" stroke-dasharray="2 2"/><circle cx="15" cy="15" r="6" stroke-dasharray="2 2"/><path d="M15 9a6 6 0 0 0-5.7 6H15z" fill="currentColor"/>',
+    exclude: '<rect x="3" y="3" width="12" height="12" rx="1"/><circle cx="15" cy="15" r="6"/><path d="M9.5 15H15V9.5" stroke-width="3" opacity=".35"/>',
+    outline: '<path d="M4 18L18 4"/><path d="M7 21l14-14-3-3L4 18z"/>',
     corner: '<path d="M5 19L12 5l7 14"/><rect x="10" y="3" width="4" height="4"/>',
     smooth: '<path d="M4 18c3-12 13-12 16 0"/><path d="M5 7h14"/><circle cx="12" cy="7" r="2"/>',
     sym: '<path d="M4 18c3-12 13-12 16 0"/><path d="M6 7h12"/><circle cx="6" cy="7" r="1.5"/><circle cx="18" cy="7" r="1.5"/><circle cx="12" cy="7" r="2"/>',
@@ -548,7 +562,22 @@
     return S;
   }
 
-  var api = { session: session, STR: STR, str: tr, ICON: ICON };
+  // designkit/boolean.js and polygon-clipping load on the first
+  // Combine shapes / Outline stroke only (base = the way to the orOS root).
+  var boLoading = null;
+  function loadBoolean(base) {
+    var dk = typeof window !== "undefined" && window.orosDK;
+    if (dk && dk.boolean) return dk.boolean.need(base).then(function () { return dk.boolean; });
+    if (!boLoading) boLoading = new Promise(function (res, rej) {
+      var s = document.createElement("script");
+      s.src = (base || "../") + "designkit/boolean.js";
+      s.onload = function () { if (window.orosDK.boolean) res(); else { boLoading = null; rej(new Error("boolean")); } };
+      s.onerror = function () { boLoading = null; rej(new Error("boolean")); };
+      document.head.appendChild(s);
+    });
+    return boLoading.then(function () { return window.orosDK.boolean.need(base); }).then(function () { return window.orosDK.boolean; });
+  }
+  var api = { session: session, STR: STR, str: tr, ICON: ICON, loadBoolean: loadBoolean };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.pathedit = api; }
 })(typeof window !== "undefined" ? window : this);
