@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.50.00
+- **Voice notes: trim, transcribe, send to Studio.** A recording's `⋯` menu can now trim it (the trimmed part is saved as a new file and the old one goes to the Trash), turn its speech into text on this device with the Whisper model that Montage and Lyric Sync use (only when you press `Transcribe`; the sound never leaves the device), and open it in Studio.
+
 ## Version 6.49.00
 - **Layout makes EPUB e-books.** `Export` › `Editions` › `EPUB` turns the same document into an EPUB 3 e-book whose text flows to the reader's screen: chapters from the headings, the contents from the heading levels, the styles as the book's look, pictures with their descriptions and captions, the fonts inside, the cover, and the ISBN, title, people and description from the linked Publishing title. The print edition's page numbers ride along, so a reader can go to "page 87 of the book". A report lists what went in, pictures without a description and what e-book stores usually ask for. `Preview in Library` opens it without adding it, `Mark ready in Publishing` records it on the e-book format, and `More` › `Check an EPUB…` checks any EPUB file.
 
