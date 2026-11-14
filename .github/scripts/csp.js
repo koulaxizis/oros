@@ -36,8 +36,9 @@ const ROOT = path.join(__dirname, "..", "..");
 // CSP in its manifest; the rest are code, data or build trees.
 const SKIP = new Set([".git", ".github", "node_modules", "vendor", "extension", "android", "tests", "icons", "fonts"]);
 // Pages with a STRICTER policy of their own (the share-link viewer
-// decrypts content from strangers): kept as written, only checked.
-const OWN = new Set(["share/index.html"]);
+// decrypts content from strangers; the Forms fill-in page shows forms
+// made by strangers): kept as written, only checked.
+const OWN = new Set(["share/index.html", "forms/f/index.html"]);
 
 function listDocs(root) {
   root = root || ROOT;

@@ -13,6 +13,7 @@
     { "id": "notifications" },
     { "id": "shortcuts" },
     { "id": "privacy" },
+    { "id": "sensitive" },
     { "id": "reset" },
     { "id": "troubleshooting" },
     { "id": "faq" }

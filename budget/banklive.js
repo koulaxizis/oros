@@ -36,6 +36,8 @@
   var S = {
     en: {
       webOnly: "This orOS isn't opened at useoros.online, so banks and PayPal can't be reached from here yet. Open useoros.online in a browser to connect and update; entries reach this device through sync.",
+      localOnly: "Your banks and PayPal update here too. Connecting a bank or renewing its access works only in orOS opened at useoros.online in a browser, because the bank sends you back there; the accounts then reach this device through sync.",
+      localConnect: "Connect or renew a bank at useoros.online in a browser: the bank sends you back there.",
       bankBal: "Bank balance {a} ({d})", cardBal: "Debt {a} · available {v} ({d})", availBal: "Available {v} ({d})", availShort: "available {v}",
       cardNoLimit: "Type the card's credit limit below to see the debt.", cardLimit: "Credit limit", isCard: "This is a credit card", limitBad: "Type the limit as an amount, e.g. 2000.", balSame: "same in Budget", balBudget: "Budget {a}", balMatch: "Match",
       balMatchHint: "Writes a balance correction on that day so that Budget shows the bank's balance (not income or an expense)",
@@ -76,6 +78,8 @@
     },
     el: {
       webOnly: "Αυτό το orOS δεν είναι ανοιγμένο στο useoros.online, οπότε οι τράπεζες και το PayPal δεν είναι ακόμα προσβάσιμα από εδώ. Άνοιξε το useoros.online σε browser για σύνδεση και ενημέρωση· οι κινήσεις φτάνουν σε αυτή τη συσκευή μέσω συγχρονισμού.",
+      localOnly: "Οι τράπεζες και το PayPal ενημερώνονται και εδώ. Η σύνδεση τράπεζας ή η ανανέωση της πρόσβασης γίνεται μόνο στο orOS που ανοίγεις στο useoros.online μέσα σε browser, γιατί η τράπεζα σε επιστρέφει εκεί· οι λογαριασμοί φτάνουν μετά σε αυτή τη συσκευή μέσω συγχρονισμού.",
+      localConnect: "Σύνδεση ή ανανέωση τράπεζας γίνεται στο useoros.online μέσα σε browser: η τράπεζα σε επιστρέφει εκεί.",
       bankBal: "Υπόλοιπο τράπεζας {a} ({d})", cardBal: "Χρέος {a} · διαθέσιμο {v} ({d})", availBal: "Διαθέσιμο {v} ({d})", availShort: "διαθέσιμο {v}",
       cardNoLimit: "Γράψε από κάτω το πιστωτικό όριο της κάρτας για να φανεί το χρέος.", cardLimit: "Πιστωτικό όριο", isCard: "Είναι πιστωτική κάρτα", limitBad: "Γράψε το όριο ως ποσό, π.χ. 2000.", balSame: "ίδιο στο Budget", balBudget: "Budget {a}", balMatch: "Ταίριαξε",
       balMatchHint: "Γράφει διόρθωση υπολοίπου εκείνη τη μέρα ώστε το Budget να δείχνει το υπόλοιπο της τράπεζας (όχι έσοδο ή έξοδο)",
@@ -148,6 +152,14 @@
     try { return root.location.origin === "https://useoros.online"; }
     catch (e) { return true; }
   }
+  // The orOS on the person's own computer (installed orOS, Portable,
+  // USB): the relay answers its bank reads (relay LOCAL_OPS), but the
+  // bank's return page is on useoros.online, so it can't connect or renew.
+  function localOrigin() {
+    try { return root.location.origin === "http://localhost:47800"; }
+    catch (e) { return false; }
+  }
+  function canRead() { return webOrigin() || localOrigin(); }
   function live() { return (A.data().bnk || []).slice(); }
   function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function load(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
@@ -334,7 +346,7 @@
     } catch (e) {}
   }
   function bgRun() {
-    if (!webOrigin() || !canAuto() || !isDue(Date.now())) { bgDone(null); return; }
+    if (!canRead() || !canAuto() || !isDue(Date.now())) { bgDone(null); return; }
     refresh(true).then(bgDone, function (e) {
       var c = code(e);
       bgDone({ n: 0, errs: live().reduce(function (o, row) { o[row.id] = c; return o; }, {}) });
@@ -708,6 +720,8 @@
   }
   var waitMsg = null;
   function connect(bank, psu, la) {
+    // the bank's return page is on useoros.online (budget/bankapi.js REDIRECT)
+    if (!webOrigin()) { A.showToast(t("localConnect")); return; }
     var state = K.newState();
     if (!state) { A.showToast(t("err_other")); return; }
     // the window opens now (a click), the address comes after the call
@@ -832,15 +846,17 @@
       nowB.disabled = false;
       nowB.textContent = t("now");
       body.appendChild(el("p", "hint", t("lvIntro")));
-      // the relay (ALLOWED_ORIGINS) and the bank's return page answer
-      // useoros.online only: the installed app and Portable can't connect
-      if (!webOrigin()) body.appendChild(el("p", "err bk-web", t("webOnly")));
+      // the relay answers useoros.online and, for bank reads only, the
+      // installed orOS / Portable / USB (localhost:47800); the bank's
+      // return page is on useoros.online, so only there can a bank connect
+      if (localOrigin()) body.appendChild(el("p", "hint bk-web", t("localOnly")));
+      else if (!webOrigin()) body.appendChild(el("p", "err bk-web", t("webOnly")));
       if (!Lk) { body.appendChild(el("p", "", t("lvNoShell"))); nowB.hidden = true; return; }
       body.appendChild(appSection(dlg, function () { checkKeys().then(draw); }));
       body.appendChild(accsSection(draw));
       if (live().length) body.appendChild(timesSection());
       nowB.hidden = !live().length;
-      if (app() && keysHere) body.appendChild(connSection());
+      if (app() && keysHere && webOrigin()) body.appendChild(connSection());
       body.appendChild(ppSection(dlg));
     }
     checkKeys().then(draw, draw);
