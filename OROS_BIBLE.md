@@ -11689,3 +11689,8 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** calendar/guests.js, guestsui.js, calendar.js, index.html, calendar.css, rsvp.html, rsvp.js, rsvp.css (new, precached), help EN/EL, i18n/de (calendar.js, help/calendar.txt), .github/scripts/csp.js (OWN), .github/scripts/stamp-assets.js, tests/calendar-guests.test.js (20).
 - **Tests:** tests/calendar-guests.test.js; full suite; Playwright Chromium 360 px with a fake relay (answer, ticket QR decoded, open sign-up → waiting list, pick-up, taken fixed, stop).
 - **Next:** a real-phone test with the live relay.
+
+### 2026-11-14 — 6.80.00 — Claude's folders with every orOS closed: changes (GATE-FILES F3, #1022)
+- **Why:** Chris 2026-11-13 («Προχώρα, όλα τα κύματα»): Claude's routines also save their work into his folders while his PC is off; the on-device delete confirmation stays. Part VI "Claude's folders — wave F3".
+- **Changes:** `relay/gate.js` `closedFileChange` / `fileChangeCheck` / `FILE_CHANGE` / `queueChange` (closed `files_write` / `files_move` / `files_delete` checked against the sealed index, then the queue), MCP instructions; files_link page (GET shows a button, POST downloads), `FixedLengthStream`, `fetchPiece` host and size checks (Mail thread review of F2); `gate/gate.js` files tools in `QUEUED`, conflict copies, queued deletes held until the owner answers, index `w` / `hold`; `assistant/claudefiles.js` `writeConflict` / `conflictName`; help EN/EL. Relay change approved by the Mail thread at 33204c1.
+- **Verified:** node --test tests/*.test.js (gate-filecopy F3 + link page + piece checks, gate-files conflict names, gate-act QUEUED). The device's held-delete path is read, not run; not yet tried with a real device and Claude.
