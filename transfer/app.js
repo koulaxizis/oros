@@ -40,6 +40,11 @@
       "btn.fromDisk": "From the orOS disk", "btn.fromDevice": "From this device", "btn.done": "Done",
       "meta.title": "Title (optional)", "meta.msg": "Message (optional)",
       "btn.share": "Share…",
+      "bg.pick": "Background picture…", "bg.clear": "No picture",
+      "bg.hint": "The other person sees it behind the files. It is made smaller on this device and sent without camera details such as the place.",
+      "bg.busy": "Making the picture smaller…",
+      "bg.bad": "This picture could not be opened. Choose a JPEG, PNG or WebP picture.",
+      "share.matchPic": "The other person sees these shapes in the small circle next to the title. If theirs match, you are connected to each other.",
       "share.match": "The other person sees the same shapes in the background. If theirs match, you are connected to each other.",
       "recv.head": "Receive",
       "offer.safe": "Open files only from people you know.",
@@ -138,6 +143,11 @@
       "btn.fromDisk": "Από τον δίσκο orOS", "btn.fromDevice": "Από τη συσκευή", "btn.done": "Έτοιμο",
       "meta.title": "Τίτλος (προαιρετικό)", "meta.msg": "Μήνυμα (προαιρετικό)",
       "btn.share": "Κοινοποίηση…",
+      "bg.pick": "Εικόνα φόντου…", "bg.clear": "Χωρίς εικόνα",
+      "bg.hint": "Ο άλλος τη βλέπει πίσω από τα αρχεία. Μικραίνει σε αυτή τη συσκευή και φεύγει χωρίς στοιχεία κάμερας, όπως το μέρος.",
+      "bg.busy": "Η εικόνα μικραίνει…",
+      "bg.bad": "Αυτή η εικόνα δεν άνοιξε. Διάλεξε μια εικόνα JPEG, PNG ή WebP.",
+      "share.matchPic": "Ο άλλος βλέπει αυτά τα σχήματα στον μικρό κύκλο δίπλα στον τίτλο. Αν ταιριάζουν, είστε σωστά συνδεδεμένοι.",
       "share.match": "Ο άλλος βλέπει τα ίδια σχήματα στο φόντο. Αν ταιριάζουν με τα δικά σου, είστε σωστά συνδεδεμένοι.",
       "recv.head": "Λήψη",
       "offer.safe": "Άνοιγε αρχεία μόνο από ανθρώπους που ξέρεις.",
@@ -349,6 +359,80 @@
   function seedArt(code, then) {
     if (!A || !window.crypto || !window.crypto.subtle) { if (then) then(); return; }
     A.seedFrom(code).then(function (sd) { artSeed = sd; paintArt(true); if (then) then(); }, function () { if (then) then(); });
+  }
+  // ---------- 4c. The sender's own picture (D3, TRANSFER-BG) ----------
+  // Re-encoded here on a canvas (long side at most BG_SIDE, WebP or JPEG,
+  // smaller until it fits BG_GOAL), so no camera data (place, time,
+  // device) leaves the device. The page shows it behind the card; the
+  // generated art then stays only as the small match picture.
+  var BG_SIDE = 1920, BG_GOAL = 900 * 1024, BG_IN_MAX = 40 * 1048576;
+  var photoUrl = "", bgBytes = null;
+  function setPhoto(bytes, type) {
+    var img = $("photo");
+    if (!img) return;
+    if (photoUrl) { try { URL.revokeObjectURL(photoUrl); } catch (e) {} }
+    photoUrl = "";
+    if (!bytes) { img.removeAttribute("src"); img.hidden = true; return; }
+    photoUrl = URL.createObjectURL(new Blob([bytes], { type: type || C.picType(bytes) || "image/jpeg" }));
+    img.src = photoUrl;
+    img.hidden = false;
+  }
+  function canvasBlob(cv, type, q) {
+    return new Promise(function (res) { try { cv.toBlob(res, type, q); } catch (e) { res(null); } });
+  }
+  function shrinkPic(file) {
+    if (!file || file.size > BG_IN_MAX || !window.createImageBitmap) return Promise.reject(new Error("bg"));
+    return createImageBitmap(file, { imageOrientation: "from-image" }).catch(function () { return createImageBitmap(file); }).then(function (bmp) {
+      var side = BG_SIDE, tries = [0.82, 0.72, 0.62];
+      function attempt(k) {
+        var sc = Math.min(1, side / Math.max(bmp.width, bmp.height));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(bmp.width * sc)); cv.height = Math.max(1, Math.round(bmp.height * sc));
+        cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+        var q = tries[k % tries.length];
+        return canvasBlob(cv, "image/webp", q).then(function (b) {
+          return b && b.type === "image/webp" ? b : canvasBlob(cv, "image/jpeg", q);
+        }).then(function (b) {
+          if (!b) throw new Error("bg");
+          if (b.size <= BG_GOAL || (k >= 5 && b.size <= C.BG_MAX)) return b.arrayBuffer();
+          if (k >= 8) throw new Error("bg");
+          if (k % tries.length === tries.length - 1) side = Math.round(side * 0.75);
+          return attempt(k + 1);
+        });
+      }
+      return attempt(0).then(function (buf) {
+        try { bmp.close(); } catch (e) {}
+        var u8 = new Uint8Array(buf);
+        if (!C.picType(u8)) throw new Error("bg");
+        return u8;
+      });
+    });
+  }
+  function pickBg(file) {
+    var hint = $("bg-hint");
+    if (hint) hint.textContent = t("bg.busy");
+    shrinkPic(file).then(function (u8) {
+      bgBytes = u8;
+      setPhoto(u8);
+      show("bg-clear", true);
+      if (hint) hint.textContent = t("bg.hint");
+    }, function () {
+      if (hint) hint.textContent = t("bg.hint");
+      toast(t("bg.bad"));
+    });
+  }
+  function clearBg() {
+    bgBytes = null;
+    setPhoto(null);
+    show("bg-clear", false);
+    var f = $("bg-file"); if (f) f.value = "";
+  }
+  // With a picture behind the card, the match picture sits in the small circle.
+  function matchText() {
+    var n = $("share-match"), s = n && n.querySelector("[data-i18n]");
+    if (s) s.textContent = t(bgBytes ? "share.matchPic" : "share.match");
+    var th = n && n.querySelector(".th");
+    if (th) th.classList.toggle("round", !!bgBytes);
   }
   var artTm = 0;
   window.addEventListener("resize", function () { clearTimeout(artTm); artTm = setTimeout(paintArt, 160); });
@@ -568,7 +652,7 @@
     var code = C.newCode(), link = C.linkFor(code, location.origin), meta = metaNow();
     $("share-code").textContent = C.fmtCode(code);
     shareNative(link, meta);
-    seedArt(code, function () { artThumb($("share-match").querySelector(".th")); show("share-match", !!A); });
+    seedArt(code, function () { artThumb($("share-match").querySelector(".th")); matchText(); show("share-match", !!A); });
     $("share-link").value = link;
     var qr = $("share-qr");
     qr.textContent = "";
@@ -588,7 +672,7 @@
     var dev = "", started = false, how = "direct";
     function log(end, bad) { if (started) record({ dir: "sent", files: manifest, dev: dev, bad: bad, mode: how, end: end }); }
     sender = new E.Transfer({
-      role: "sender", code: code, dev: devName(), files: manifest, meta: meta,
+      role: "sender", code: code, dev: devName(), files: manifest, meta: meta, bg: bgBytes,
       read: function (i, a, b) {
         return blobOf(i).then(function (blob) { return blob.slice(a, b).arrayBuffer(); }).then(function (buf) { return new Uint8Array(buf); });
       },
@@ -713,7 +797,7 @@
     }).then(function (sp) {
       if (sp && sp.allocated - sp.used < need) { var e = new Error("full"); e.code = "full"; throw e; }
       return X.send({
-        code: code, hold: hold, files: manifest, meta: meta, read: read, drop: drop, temp: S.temp,
+        code: code, hold: hold, files: manifest, meta: meta, bg: bgBytes, read: read, drop: drop, temp: S.temp,
         cancelled: function () { return job.stop; },
         onProgress: function (pr) {
           setProg("send-prog", pr.bytes, pr.total);
@@ -725,7 +809,7 @@
       var url = C.linkFor(code, location.origin).split("#")[0] + "#" + r.frag;
       $("share-link").value = url;
       shareNative(url, meta);
-      seedArt(code, function () { artThumb($("share-match").querySelector(".th")); show("share-match", !!A); });
+      seedArt(code, function () { artThumb($("share-match").querySelector(".th")); matchText(); show("share-match", !!A); });
       var qr = $("share-qr"), svg = qrSvg(url);
       qr.textContent = "";
       if (svg) qr.appendChild(svg);
@@ -768,11 +852,13 @@
     if ($("meta-title")) { $("meta-title").value = ""; $("meta-msg").value = ""; }
     show("share-match", false); shareNative("", null);
     artSeed = Math.floor(Math.random() * 4294967296); paintArt(true);
+    clearBg();
     show("share", false); show("pick", true);
     renderChosen(); renderDisk();
   }
 
   // ---------- 7. Receive ----------
+  var recvPhoto = false;
   var receiver = null, sink = null, result = null, offerInfo = null, recvHow = "direct", recvDest = "", recvDev = "";
   function recvStatus(text, cls) { var s = $("recv-status"); s.textContent = text; s.className = "status" + (cls ? " " + cls : ""); }
   function resetRecv() {
@@ -784,6 +870,7 @@
   function startRecv(code, link) {
     if (receiver) return;
     resetRecv();
+    recvPhoto = false; setPhoto(null);
     seedArt(code);
     showHead(null, "");
     show("code-form", false); show("recv-box", true);
@@ -793,6 +880,7 @@
     if (link) dev = recvDev = "Dropbox";
     receiver = new Engine({
       role: "receiver", code: code, dev: devName(), link: link,
+      onBg: function (b) { if (receiver) { setPhoto(b.bytes, b.type); recvPhoto = true; } },
       onState: function (p, info) {
         if (info.dev) dev = recvDev = info.dev;
         if (p === "connecting") recvStatus(t("st.connecting"));
@@ -829,6 +917,8 @@
     ti.textContent = meta && meta.t ? meta.t : ""; ti.hidden = !(meta && meta.t);
     ms.textContent = meta && meta.m ? meta.m : ""; ms.hidden = !(meta && meta.m);
     av.textContent = meta && meta.t ? initials(meta.t) : "";
+    av.classList.toggle("th", recvPhoto && !!A);
+    if (recvPhoto && A) artThumb(av);            // D3: the match picture, since the background is the sender's photo
     $("offer-sum").textContent = sum || "";
   }
   function initials(s) {
@@ -947,6 +1037,7 @@
   function recvAgain() {
     if (sink) { sink.drop(); sink = null; }
     resetRecv();
+    recvPhoto = false; setPhoto(null);
     showHead(null, "");
     show("recv-box", false); show("code-form", true);
     $("code-in").value = "";
@@ -1074,6 +1165,9 @@
       $("hist-clear").addEventListener("click", clearHist);
       $("add-local").addEventListener("click", addLocal);
       $("add-big").addEventListener("click", function () { if (FS()) openDisk(); else addLocal(); });
+      $("bg-pick").addEventListener("click", function () { $("bg-file").click(); });
+      $("bg-file").addEventListener("change", function () { var f = this.files && this.files[0]; if (f) pickBg(f); });
+      $("bg-clear").addEventListener("click", clearBg);
       $("open-disk").addEventListener("click", openDisk);
       $("disk-done").addEventListener("click", closeDisk);
       var dz = $("drop");

@@ -145,9 +145,9 @@ function pair(files, o = {}) {
   const relay = o.relay || new FakeRelay(), rtc = o.rtc || fakeRtc(o.rtcOpts);
   const code = o.code || C.newCode();
   const manifest = C.buildManifest(files);
-  const sLog = [], rLog = [], sProg = [];
+  const sLog = [], rLog = [], sProg = [], bgs = [];
   const sender = new E.Transfer({
-    role: "sender", code, relay: "https://relay.test", dev: "Chrome · Linux", files: manifest, meta: o.meta,
+    role: "sender", code, relay: "https://relay.test", dev: "Chrome · Linux", files: manifest, meta: o.meta, bg: o.bg,
     WebSocket: relay.WebSocket(), RTCPeerConnection: rtc.PC,
     read: o.read || ((i, a, b) => Promise.resolve(new Uint8Array(files[i].bytes.subarray(a, b)))),
     onState: (p, i) => sLog.push(Object.assign({ p }, i)),
@@ -156,9 +156,10 @@ function pair(files, o = {}) {
   const receiver = new E.Transfer({
     role: "receiver", code: o.rcode || code, relay: "https://relay.test", dev: "Firefox · Android",
     WebSocket: relay.WebSocket(), RTCPeerConnection: rtc.PC,
-    onState: (p, i) => rLog.push(Object.assign({ p }, i))
+    onState: (p, i) => rLog.push(Object.assign({ p }, i)),
+    onBg: (b) => bgs.push(Object.assign({ at: rLog.length }, b))
   });
-  return { relay, rtc, code, manifest, sender, receiver, sLog, rLog, sProg,
+  return { relay, rtc, code, manifest, sender, receiver, sLog, rLog, sProg, bgs,
     sLast: () => sLog[sLog.length - 1] || {}, rLast: () => rLog[rLog.length - 1] || {},
     get sStates() { return sLog.map((x) => x.p); }, get rStates() { return rLog.map((x) => x.p); } };
 }
@@ -522,6 +523,94 @@ test("meta: through the relay too, with a long list of Greek names, frames under
   assert.equal(t.rLast().files.length, 160);
   assert.ok(t.relay.frames.every((f) => f.length < 16384), "every room frame fits the relay's limit");
   t.receiver.decline();
+});
+
+// ---------- D3: the sender's background picture ----------
+function fakeJpeg(n) {
+  const u = new Uint8Array(n);
+  for (let i = 0; i < n; i++) u[i] = (i * 7919 + 13) & 255;
+  u.set([0xff, 0xd8, 0xff, 0xe0]);
+  return u;
+}
+test("bg: picType knows JPEG, PNG and WebP by their bytes, nothing else, at most 2 MB", () => {
+  const png = new Uint8Array(16); png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const webp = new Uint8Array(16); webp.set([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x45, 0x42, 0x50]);
+  assert.equal(C.picType(fakeJpeg(100)), "image/jpeg");
+  assert.equal(C.picType(png), "image/png");
+  assert.equal(C.picType(webp), "image/webp");
+  assert.equal(C.picType(new TextEncoder().encode("<svg xmlns='http://www.w3.org/2000/svg'></svg>")), null);
+  assert.equal(C.picType(new Uint8Array(8)), null);
+  assert.equal(C.picType(fakeJpeg(C.BG_MAX + 1)), null);
+  assert.equal(C.picType(fakeJpeg(C.BG_MAX)), "image/jpeg");
+});
+
+test("bg: the picture arrives whole before the offer, sealed; without one there is none", async () => {
+  const files = randomFiles([["a.txt", 1000]]);
+  const pic = fakeJpeg(300000);
+  const t = pair(files, { bg: pic });
+  t.sender.start(); t.receiver.start();
+  await until(() => t.rLast().p === "offer");
+  assert.equal(t.bgs.length, 1);
+  assert.equal(t.bgs[0].type, "image/jpeg");
+  assert.deepEqual(Buffer.from(t.bgs[0].bytes), Buffer.from(pic));
+  assert.ok(t.bgs[0].at < t.rLog.length, "before the offer");
+  t.receiver.decline();
+  const u = pair(files);
+  u.sender.start(); u.receiver.start();
+  await until(() => u.rLast().p === "offer");
+  assert.equal(u.bgs.length, 0);
+  u.receiver.decline();
+  const v = pair(files, { bg: new TextEncoder().encode("not a picture at all") });
+  v.sender.start(); v.receiver.start();
+  await until(() => v.rLast().p === "offer");
+  assert.equal(v.bgs.length, 0, "the sender sends no bytes that are not a picture");
+  v.receiver.decline();
+});
+
+test("bg: through the relay, in frames under the limit, never in the clear", async () => {
+  const files = randomFiles([["a.txt", 5000]]);
+  const pic = fakeJpeg(120000);
+  pic.set(new TextEncoder().encode("SECRETPIXELS"), 500);
+  const t = pair(files, { bg: pic, rtcOpts: { noDirect: true } });
+  const real = global.setTimeout;
+  global.setTimeout = (f, ms, ...a) => real(f, ms >= 25000 ? 30 : ms, ...a);
+  try {
+    t.sender.start(); t.receiver.start();
+    await until(() => t.rLast().p === "offer", 20000);
+  } finally { global.setTimeout = real; }
+  assert.equal(t.rLast().mode, "relay");
+  assert.equal(t.bgs.length, 1);
+  assert.deepEqual(Buffer.from(t.bgs[0].bytes), Buffer.from(pic));
+  assert.ok(t.relay.frames.every((f) => f.length < 16384), "every room frame fits the relay's limit");
+  const plain = t.relay.frames.join("");
+  assert.ok(!plain.includes("SECRETPIXELS") && !plain.includes(Buffer.from("SECRETPIXELS").toString("base64").slice(0, 12)));
+  t.receiver.decline();
+});
+
+test("bg: a broken picture is dropped and the transfer goes on", async () => {
+  const files = randomFiles([["a.txt", 1000]]);
+  const t = pair(files);
+  const r = t.receiver;
+  // feed the receiver's handler directly: wrong hash, parts out of order, too big
+  let got = 0;
+  const h = (bytes) => { const x = new C.Sha256(); x.update(bytes); return x.hex(); };
+  const pic = fakeJpeg(5000);
+  const E2 = new E.Transfer({ role: "receiver", code: C.newCode(), onBg: () => got++, onState: () => {} });
+  const feed = E2.__bgPart;
+  assert.equal(typeof feed, "function");
+  feed({ t: "bg", i: 0, n: 1, s: 5000, h: "0".repeat(64), d: C.b64(pic) });
+  assert.equal(got, 0, "wrong hash");
+  const E3 = new E.Transfer({ role: "receiver", code: C.newCode(), onBg: () => got++, onState: () => {} });
+  E3.__bgPart({ t: "bg", i: 1, n: 2, s: 5000, d: C.b64(pic.subarray(2500)) });
+  E3.__bgPart({ t: "bg", i: 0, n: 2, s: 5000, h: h(pic), d: C.b64(pic.subarray(0, 2500)) });
+  assert.equal(got, 0, "out of order");
+  const E4 = new E.Transfer({ role: "receiver", code: C.newCode(), onBg: () => got++, onState: () => {} });
+  E4.__bgPart({ t: "bg", i: 0, n: 1, s: C.BG_MAX + 1, h: h(pic), d: C.b64(pic) });
+  assert.equal(got, 0, "too big");
+  const E5 = new E.Transfer({ role: "receiver", code: C.newCode(), onBg: () => got++, onState: () => {} });
+  E5.__bgPart({ t: "bg", i: 0, n: 1, s: 5000, h: h(pic), d: C.b64(pic) });
+  assert.equal(got, 1, "a good one is taken");
+  void r;
 });
 
 test("no direct link, more than 50 MB: the transfer says so", async () => {
