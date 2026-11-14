@@ -694,6 +694,13 @@ export async function fetchPiece(url, fetchFn) {
   if (typeof url !== "string" || !FILE_URL_RE.test(url)) throw new Error("bad-link");
   const res = await (fetchFn || fetch)(url, { redirect: "follow" });
   if (!res.ok) throw new Error("piece " + res.status);
+  // F3 (Mail thread review of F2): a redirect must end on Dropbox's content host too,
+  // and a piece that says it is too big is refused before it is read.
+  let host = "";
+  try { host = res.url ? new URL(res.url).hostname : "dl.dropboxusercontent.com"; } catch (e) { host = ""; }
+  if (host !== "dl.dropboxusercontent.com" && !/\.dropboxusercontent\.com$/.test(host)) throw new Error("piece host");
+  const len = Number(res.headers && res.headers.get ? res.headers.get("Content-Length") : NaN);
+  if (len > GATE_LIMITS.pieceBytes) throw new Error("piece size");
   const buf = await res.arrayBuffer();
   if (buf.byteLength > GATE_LIMITS.pieceBytes || buf.byteLength < 29) throw new Error("piece size");
   return buf;
@@ -834,6 +841,20 @@ export function fileChangeCheck(idx, name, args) {
   }
   return null;
 }
+// The page a files_link opens: one button that downloads the file once (POST).
+function flinkPage(head) {
+  const html = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
+    "<meta name=\"robots\" content=\"noindex\"><title>orOS file</title><style>body{font:16px/1.5 system-ui,sans-serif;margin:0;padding:48px 16px;background:#f6f6f4;color:#1d1d1f;text-align:center}" +
+    "button{font:inherit;padding:12px 24px;border-radius:10px;border:0;background:#1d1d1f;color:#fff;cursor:pointer}p{color:#555}" +
+    "@media (prefers-color-scheme:dark){body{background:#151516;color:#eee}button{background:#eee;color:#151516}p{color:#aaa}}</style></head><body>" +
+    "<h1>orOS file</h1><p>This link downloads the file once, within 15 minutes of when Claude made it.<br>Ο σύνδεσμος κατεβάζει το αρχείο μία φορά, μέσα σε 15 λεπτά.</p>" +
+    "<form method=\"post\"><button type=\"submit\">Download · Λήψη</button></form></body></html>";
+  return new Response(head ? null : html, { status: 200, headers: {
+    "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer",
+    "X-Robots-Tag": "noindex", "X-Frame-Options": "DENY",
+    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
+  } });
+}
 function sameText(a, b) {   // constant time for equal lengths
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
   let x = 0;
@@ -953,7 +974,10 @@ export async function handleGate(request, env, url, okOrigin, ip, now) {
     // GATE-FILES F2: a files_link download (one use, 15 minutes)
     const fm = FLINK_RE.exec(p);
     if (fm) {
-      if (request.method !== "GET") return new Response(null, { status: 405, headers: { "Allow": "GET" } });
+      // F3 (Mail thread review): GET only shows a button, so a link preview
+      // or a mail scanner opening the link does not use up the one download.
+      if (request.method === "GET" || request.method === "HEAD") return flinkPage(request.method === "HEAD");
+      if (request.method !== "POST") return new Response(null, { status: 405, headers: { "Allow": "GET, HEAD, POST" } });
       return stub(env, fm[1]).fetch(new Request("https://gate/flink", { headers: { "X-Now": String(now), "X-S": fm[2] } }));
     }
     return oauthErr(404, "not_found");
@@ -1688,7 +1712,8 @@ export class GateBox {
     if (!e || !Array.isArray(e.c) || !e.c.length) return new Response("The file is no longer in the copy.", { status: 410 });
     const fetchFn = this.fetchFn;
     const name = e.p.slice(e.p.lastIndexOf("/") + 1);
-    const ts = new TransformStream();
+    // Workers: FixedLengthStream keeps Content-Length honest (Mail thread review); Node tests: a plain TransformStream.
+    const ts = typeof FixedLengthStream === "function" && e.s > 0 ? new FixedLengthStream(e.s) : new TransformStream();
     (async () => {
       const w = ts.writable.getWriter();
       try {

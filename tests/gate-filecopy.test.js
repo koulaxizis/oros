@@ -188,11 +188,17 @@ test("orOS closed: files_list and files_read from the sealed index, files_link o
   assert.match(o.url, /^https:\/\/relay\.example\/gate\/f\/GaTeBoX0123456789_-abc\/[A-Za-z0-9_-]{43}$/);
   assert.equal(o.size, pdfBytes.length);
   const path = new URL(o.url).pathname;
+  // opening the link (a preview, a mail scanner) only shows the button
   let dl = await call(w, "GET", path);
+  assert.equal(dl.status, 200);
+  assert.match(dl.headers.get("Content-Type"), /text\/html/);
+  assert.match(await dl.text(), /<form method="post">/);
+  assert.equal((await call(w, "HEAD", path)).status, 200);
+  dl = await call(w, "POST", path);
   assert.equal(dl.status, 200);
   assert.equal(Buffer.from(await dl.arrayBuffer()).toString(), pdfBytes.toString());
   assert.match(dl.headers.get("Content-Disposition"), /inv-42\.pdf/);
-  dl = await call(w, "GET", path);
+  dl = await call(w, "POST", path);
   assert.equal(dl.status, 410, "one download only");
   assert.equal((await tc("files_link", { path: F + "/master.wav" })).isError, true, "a file not in the copy has no link");
   assert.doesNotMatch(JSON.stringify([...b.st.kv.entries()]), new RegExp(KS), "the gate key is never stored as it is");
@@ -200,7 +206,7 @@ test("orOS closed: files_list and files_read from the sealed index, files_link o
   o = JSON.parse((await tc("files_link", { path: F + "/notes.txt" })).content[0].text);
   const lk = [...(await b.st.storage.list({ prefix: "lk:" })).keys()][0];
   const row = await b.st.storage.get(lk); row.exp = 1; await b.st.storage.put(lk, row);
-  assert.equal((await call(w, "GET", new URL(o.url).pathname)).status, 410);
+  assert.equal((await call(w, "POST", new URL(o.url).pathname)).status, 410);
   // the device drops the copy (Sensitive work, the owner)
   sock.closed = false;
   await b.box.webSocketMessage(sock, JSON.stringify({ fdrop: 1 }));
@@ -289,4 +295,12 @@ test("F3: orOS closed: files_write / move / delete are checked against the index
   sock.closed = true;
   await bad("files_write", { path: F + "/b.txt", text: "x" }, /no copy of Claude's folders/);
   assert.equal((await queued()).length, 0);
+});
+
+test("a piece comes only from Dropbox's content host, and a too-big piece is refused unread", async () => {
+  const u = "https://dl.dropboxusercontent.com/scl/fi/p1/x?rlkey=k1";
+  const fake = (url, len) => async () => ({ ok: true, url, headers: new Headers(len ? { "Content-Length": String(len) } : {}), arrayBuffer: async () => new ArrayBuffer(64) });
+  assert.equal((await G.fetchPiece(u, fake(u))).byteLength, 64);
+  await assert.rejects(G.fetchPiece(u, fake("https://evil.example/x")), /piece host/);
+  await assert.rejects(G.fetchPiece(u, fake(u, 1e9)), /piece size/);
 });

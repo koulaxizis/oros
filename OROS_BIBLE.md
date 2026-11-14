@@ -2999,6 +2999,7 @@ Same thread, Chris 2026-11-13 («όλα τα κύματα»): changes wait in th
   - **Deletes:** a queued `files_delete` asks with the same dialog (`askFiles`). While orOS is hidden or locked, or when nobody answers in 20 s (`askLast` "none"), it is NOT acknowledged: it stays in the box queue and on the device (`cqHeld`), and is offered again when orOS comes on screen and on the next connect. Only `Move to Trash` or `Don't delete` ends it. A delete is never applied without the owner's yes on the device.
   - After file changes the closed copy is rebuilt within a minute (`fileCopySoon(60000)`).
 - **Dropping the copy** (`{fdrop}`, Sensitive work, turning the gate off) also drops what waits in the queue.
+- **files_link hardening (Mail thread review of F2):** GET/HEAD on a link only shows a page with one Download button (no-store, CSP, noindex), so link previews and mail scanners do not use up the one download; the POST streams the file (`FixedLengthStream` on Workers). `fetchPiece` refuses a redirect that ends off `*.dropboxusercontent.com` and a piece whose Content-Length is over `pieceBytes` before reading it.
 - **Tests:** `tests/gate-filecopy.test.js` (refusals before anything waits, accepted changes sealed in the queue, switch / pause / gate copy, no index), `tests/gate-files.test.js` (conflict name), `tests/gate-act.test.js` (QUEUED = relay writes + refs + files).
 
 ### orOS Transfer (TRANSFER-1) — wave 1 at 6.26.00, wave 2 at 6.28.00
