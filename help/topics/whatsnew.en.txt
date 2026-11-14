@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.70.00
+- **Photos in Files.** Files has a new **Photos** place: every picture and video on your disk in one timeline by the date it was taken, with a full-screen viewer. Make **albums** without moving any file (they sync to your other devices), see your photos on a **map** from the place they were taken, and find **duplicates** and near-duplicates so you can keep the best one and send the rest to the Trash. Photos that are only in the cloud download when you look at them. See [Files](app:files).
+
 ## Version 6.69.00
 - **SOS: erase everywhere.** If you think someone got into your orOS, Settings › System › `SOS: erase everywhere` closes the cloud and erases orOS on every device that syncs with your passphrase, closes your shared links, sign-in link, notifications, orOS Gate, webhook and households, and then shows what you still have to do (Dropbox password and connected apps, deleted files, passwords). Type SOS and your passphrase; you have 10 seconds to cancel. In Sensitive work mode the shield gives you the SOS button directly. After a **Factory reset** your other devices now stop and ask whether to erase themselves too or keep their data, instead of filling the cloud again. See [Settings](app:settings).
 
