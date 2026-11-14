@@ -24,6 +24,11 @@
 //     token wrapped with D (AES-256-GCM, AAD oros-lock/1/bio/<kid>).
 //     Only D from the app opens it. The PIN / passphrase stays the
 //     root: it is asked every 14 days, and a new fingerprint ends it.
+//   - Sensitive work (STRICT, 2026-11-13, section 1b and 6,
+//     window.orosStrict): a device-local mode, "on" or "hard", in
+//     "oros-strict". It keeps the lock on and within its limits,
+//     Hardcore takes a passphrase only and no biometrics; sync.js,
+//     webpush.js, feeds/fetch.js and sw.js read the same key.
 //   - Honest limit: it keeps people away from the screen. Anyone who
 //     can read the disk, or open the browser's developer tools, gets
 //     past it; the data on the device is not encrypted by it.
@@ -150,12 +155,58 @@
     return "ok";
   }
 
+  // ---------- 1b. Sensitive work (STRICT, 2026-11-13) ----------
+  // A device-local mode (Settings › Sensitive work) that tightens the
+  // lock and switches off what can leak. Two levels: "on" (normal) and
+  // "hard" (Hardcore: no conveniences, nothing leaves except to the
+  // sync cloud). Record in "oros-strict": { v:1, level, at, prev }
+  // where prev = the lock's idle / hidden and the push switch before it
+  // was turned on (restored when it is turned off).
+  var STRICT_KEY = "oros-strict";
+  var STRICT_CAPS = {
+    on:   { idle: 2, hidden: true, pass: false, bio: true,  grace: true,  relay: false, links: true  },
+    hard: { idle: 1, hidden: true, pass: true,  bio: false, grace: false, relay: false, links: false }
+  };
+  function parseStrict(raw) {
+    var s;
+    try { s = typeof raw === "string" ? JSON.parse(raw) : raw; } catch (e) { return null; }
+    if (!s || typeof s !== "object" || s.v !== 1) return null;
+    if (s.level !== "on" && s.level !== "hard") return null;
+    var p = (s.prev && typeof s.prev === "object") ? s.prev : {};
+    return { v: 1, level: s.level, at: typeof s.at === "number" && isFinite(s.at) ? s.at : 0,
+             prev: { idle: IDLES.indexOf(p.idle) !== -1 ? p.idle : DEFAULT_IDLE,
+                     hidden: p.hidden === true, push: p.push === true } };
+  }
+  function strictCaps(level) { return STRICT_CAPS[level] || null; }
+  // The lock config with the level's limits applied (a new object), or
+  // the same object when it already keeps them.
+  function clampCfg(c, level) {
+    var k = strictCaps(level);
+    if (!c || !k) return c;
+    var idle = (c.idle === 0 || c.idle > k.idle) ? k.idle : c.idle;
+    if (idle === c.idle && c.hidden === k.hidden) return c;
+    var out = {};
+    for (var f in c) if (Object.prototype.hasOwnProperty.call(c, f)) out[f] = c[f];
+    out.idle = idle;
+    out.hidden = k.hidden;
+    return out;
+  }
+  // Would this lock option loosen the level's limits?
+  function loosens(level, name, value) {
+    var k = strictCaps(level);
+    if (!k) return false;
+    if (name === "idle") return Number(value) === 0 || Number(value) > k.idle;
+    if (name === "hidden") return !value;
+    return false;
+  }
+
   var Core = {
     BIO_KEY: BIO_KEY, BIO_DAYS: BIO_DAYS, parseBio: parseBio, bioDue: bioDue,
     KEY: KEY, TRIES_KEY: TRIES_KEY, SEEN_KEY: SEEN_KEY, ITER: ITER, IDLES: IDLES,
     DEFAULT_IDLE: DEFAULT_IDLE, FREE_TRIES: FREE_TRIES, WAIT_MAX: WAIT_MAX, GRACE_MAX: GRACE_MAX,
     norm: norm, secretProblem: secretProblem, parseCfg: parseCfg, parseTries: parseTries,
-    afterFail: afterFail, waitLeft: waitLeft, stillOpen: stillOpen, sameText: sameText
+    afterFail: afterFail, waitLeft: waitLeft, stillOpen: stillOpen, sameText: sameText,
+    STRICT_KEY: STRICT_KEY, parseStrict: parseStrict, strictCaps: strictCaps, clampCfg: clampCfg, loosens: loosens
   };
 
   // ---------- 2. Crypto ----------
@@ -244,8 +295,20 @@
 
   function load() {
     try { cfg = parseCfg(root.localStorage.getItem(KEY)); } catch (e) { cfg = null; }
+    // Sensitive work: the lock keeps the level's limits, whatever an
+    // older copy of orOS or another tab wrote.
+    var lv = strictLevel();
+    if (cfg && lv !== "off") {
+      var c2 = clampCfg(cfg, lv);
+      if (c2 !== cfg) { try { root.localStorage.setItem(KEY, JSON.stringify(c2)); } catch (e) {} cfg = parseCfg(JSON.stringify(c2)); }
+    }
     return cfg;
   }
+  function strictRec() {
+    try { return parseStrict(root.localStorage.getItem(STRICT_KEY)); } catch (e) { return null; }
+  }
+  // "off" | "on" | "hard"
+  function strictLevel() { var r = strictRec(); return r ? r.level : "off"; }
   function save(c) {
     try {
       if (c) root.localStorage.setItem(KEY, JSON.stringify(c));
@@ -429,6 +492,7 @@
   }
   // The app holds the secret, and the 14 days have not run out.
   function bioReady() {
+    if (strictLevel() === "hard") return false;     // Hardcore: the PIN / passphrase only
     var r = bioRec(), info = bioInfo();
     return !!(cfg && r && bioLinked() && info && info.can === "ok" &&
               info.kids.indexOf(r.kid) >= 0 && bioDue(r, Date.now()) === "ok");
@@ -1004,6 +1068,7 @@
     enable: function (kind, secret) {
       var g = guard(kind, secret);
       if (g !== "ok") return Promise.resolve({ ok: false, code: g });
+      if (kind !== "pass" && strictLevel() === "hard") return Promise.resolve({ ok: false, code: "strict-pass" });
       if (load()) return Promise.resolve({ ok: false, code: "on" });
       return run(makeCfg(kind, secret, null).then(function (c) {
         if (!save(c)) return { ok: false, code: "storage" };
@@ -1017,6 +1082,7 @@
     change: function (current, kind, secret) {
       var g = guard(kind, secret);
       if (g !== "ok") return Promise.resolve({ ok: false, code: g });
+      if (kind !== "pass" && strictCaps(strictLevel()) && strictCaps(strictLevel()).pass) return Promise.resolve({ ok: false, code: "strict-pass" });
       return run(checkCurrent(current).then(function (r) {
         if (!r.ok) return r;
         bioTyped();
@@ -1029,6 +1095,7 @@
     // Turn the lock off: the current one first.
     disable: function (current) {
       if (busy) return Promise.resolve({ ok: false, code: "busy" });
+      if (strictLevel() !== "off") return Promise.resolve({ ok: false, code: "strict" });
       return run(checkCurrent(current).then(function (r) {
         if (!r.ok) return r;
         if (!save(null)) return { ok: false, code: "storage" };
@@ -1041,6 +1108,7 @@
     option: function (name, value) {
       var c = load();
       if (!c) return false;
+      if (loosens(strictLevel(), name, value)) return false;     // Sensitive work keeps its limits
       if (name === "idle" && IDLES.indexOf(Number(value)) !== -1) c.idle = Number(value);
       else if (name === "hidden") c.hidden = !!value;
       else return false;
@@ -1070,6 +1138,7 @@
       // lockout | invalidated | timeout | failed | storage.
       enable: function (current) {
         if (!load()) return Promise.resolve({ ok: false, code: "off" });
+        if (strictLevel() === "hard") return Promise.resolve({ ok: false, code: "strict" });
         if (busy) return Promise.resolve({ ok: false, code: "busy" });
         if (waitMs()) return Promise.resolve({ ok: false, code: "wait", wait: waitMs() });
         if (!current) return Promise.resolve({ ok: false, code: "wrong" });
@@ -1120,6 +1189,128 @@
   };
   root.orosLock = api;
 
+  // ---------- 6. Sensitive work: window.orosStrict ----------
+  // The mode itself; the shell paints the badge and passes the level to
+  // the service worker (Hardcore blocks every other address there), and
+  // sync.js, webpush.js and feeds/fetch.js read "oros-strict" to refuse
+  // a remembered passphrase, push and the relay. Never synced.
+  function strictWrite(rec) {
+    try {
+      if (rec) root.localStorage.setItem(STRICT_KEY, JSON.stringify(rec));
+      else root.localStorage.removeItem(STRICT_KEY);
+      return true;
+    } catch (e) { return false; }
+  }
+  function sync() { return root.orosSync || null; }
+  function pushApi() { var p = root.orosPush; return (p && typeof p.enabled === "function") ? p : null; }
+  function sosApi() { var x = root.orosSOS; return (x && typeof x.open === "function") ? x : null; }
+  function davConf() {
+    try { var c = JSON.parse(root.localStorage.getItem("oros-dav-conf") || "null"); return (c && typeof c.url === "string") ? c : null; }
+    catch (e) { return null; }
+  }
+  function backupPlain() {
+    try {
+      var ae = JSON.parse(root.localStorage.getItem("oros-autoexport") || "null");
+      var on = ae === "daily" || ae === "weekly" || ae === "monthly";
+      return on && root.localStorage.getItem("oros-backup-enc") !== "1";
+    } catch (e) { return false; }
+  }
+  // What turning a level on needs and what it changes, for Settings:
+  // [{ id, state }]; state "need" (blocks it), "fix" (it changes this),
+  // "advice" (worth doing) or "ok".
+  function strictCheck(level) {
+    var k = strictCaps(level), S = sync(), P = pushApi(), out = [];
+    if (!k) return { ready: false, items: out };
+    var c = load();
+    out.push({ id: "lock", state: c ? "ok" : "need" });
+    if (k.pass) out.push({ id: "lockPass", state: !c || c.kind === "pass" ? (c ? "ok" : "need") : "need" });
+    if (c) out.push({ id: "lockTimes", state: clampCfg(c, level) === c ? "ok" : "fix" });
+    var vault = false;
+    try { vault = !!(S && S.hasDeviceVault()); } catch (e) {}
+    out.push({ id: "remember", state: vault ? "fix" : "ok" });
+    out.push({ id: "push", state: P && P.enabled() ? "fix" : "ok" });
+    if (!k.bio) out.push({ id: "bio", state: bioRec() ? "fix" : "ok" });
+    var dc = davConf(), prov = "";
+    try { prov = S ? S.getProvider() : ""; } catch (e) {}
+    if (level === "hard") out.push({ id: "davRelay", state: prov === "webdav" && dc && dc.relay === true ? "need" : "ok" });
+    out.push({ id: "backup", state: backupPlain() ? (level === "hard" ? "need" : "advice") : "ok" });
+    var short = false;
+    try { short = !!(S && typeof S.passShort === "function" && S.passShort()); } catch (e) {}
+    out.push({ id: "passLen", state: short ? "advice" : "ok" });
+    if (level === "hard") {
+      var sw = false;
+      try { sw = !!(root.navigator.serviceWorker && root.navigator.serviceWorker.controller); } catch (e) {}
+      out.push({ id: "worker", state: sw ? "ok" : "need" });
+    }
+    return { ready: out.every(function (i) { return i.state !== "need"; }), items: out };
+  }
+  // The addresses Hardcore still lets through: the sync cloud only.
+  function strictHosts() {
+    var S = sync(), prov = "", hosts = [];
+    try { prov = S ? S.getProvider() : ""; } catch (e) {}
+    if (prov === "dropbox") hosts.push("api.dropboxapi.com", "content.dropboxapi.com");
+    var dc = davConf();
+    if (prov === "webdav" && dc && dc.relay !== true) {
+      try { hosts.push(new URL(dc.url).host); } catch (e) {}
+    }
+    return hosts;
+  }
+  var strictApi = {
+    v: 1,
+    // null when off, else "on" or "hard" (other code reads it too:
+    // gate/gate.js stops Claude's closed copy while it is not null).
+    level: function () { var r = strictRec(); return r ? r.level : null; },
+    caps: function (level) { var k = strictCaps(level || strictLevel()); return k ? JSON.parse(JSON.stringify(k)) : null; },
+    check: strictCheck,
+    hosts: strictHosts,
+    // Turn a level on, or go from "on" to "hard". → { ok, code }
+    // code: need (strictCheck not ready), lower (hard → on needs off first),
+    // storage.
+    enable: function (level) {
+      if (!strictCaps(level)) return Promise.resolve({ ok: false, code: "level" });
+      var cur = strictRec();
+      if (cur && cur.level === level) return Promise.resolve({ ok: true });
+      if (cur && cur.level === "hard") return Promise.resolve({ ok: false, code: "lower" });
+      if (!strictCheck(level).ready) return Promise.resolve({ ok: false, code: "need" });
+      var c = load(), P = pushApi(), S = sync();
+      var prev = cur ? cur.prev : { idle: c ? c.idle : DEFAULT_IDLE, hidden: c ? c.hidden : false, push: !!(P && P.enabled()) };
+      if (!strictWrite({ v: 1, level: level, at: Date.now(), prev: prev })) return Promise.resolve({ ok: false, code: "storage" });
+      load();                                          // the lock takes the limits now
+      lastActive = Date.now();
+      var jobs = [];
+      try { if (S && typeof S.forgetSealed === "function") jobs.push(S.forgetSealed()); } catch (e) {}
+      try { if (P && P.enabled()) jobs.push(P.disable()); } catch (e) {}
+      emit();
+      return Promise.all(jobs.map(function (j) { return Promise.resolve(j).catch(function () {}); }))
+        .then(function () { emit(); return { ok: true }; });
+    },
+    // Turn it off: the lock's PIN / passphrase first (when there is a
+    // lock). The lock times and push come back as they were.
+    disable: function (current) {
+      var cur = strictRec();
+      if (!cur) return Promise.resolve({ ok: true });
+      if (busy) return Promise.resolve({ ok: false, code: "busy" });
+      return run(checkCurrent(current).then(function (r) {
+        if (!r.ok) return r;
+        if (!strictWrite(null)) return { ok: false, code: "storage" };
+        var c = load();
+        if (c) { c.idle = cur.prev.idle; c.hidden = cur.prev.hidden; save(c); }
+        lastActive = Date.now();
+        var P = pushApi(), back = Promise.resolve(false);
+        if (cur.prev.push && P && typeof P.enable === "function") {
+          back = Promise.resolve().then(function () { return P.enable(); }).then(function () { return true; }, function () { return false; });
+        }
+        return back.then(function (pushed) { return { ok: true, push: cur.prev.push ? (pushed ? "on" : "failed") : "" }; });
+      }));
+    },
+    // The SOS card (window.orosSOS, Settings › System), when this
+    // orOS has it. Never starts anything by itself.
+    sosAvailable: function () { return !!sosApi(); },
+    sos: function () { var x = sosApi(); try { return x ? x.open() === true : false; } catch (e) { return false; } },
+    onChange: function (fn) { return api.onChange(fn); }
+  };
+  root.orosStrict = strictApi;
+
   // Other tabs of orOS: "Lock now" locks them too; a lock turned off
   // (or changed) there is read again here.
   try {
@@ -1129,7 +1320,7 @@
     }
   } catch (e) { bc = null; }
   root.addEventListener("storage", function (e) {
-    if (e.key !== KEY && e.key !== BIO_KEY && e.key !== null) return;
+    if (e.key !== KEY && e.key !== BIO_KEY && e.key !== STRICT_KEY && e.key !== null) return;
     load();
     if (!cfg && locked) unlock();
     emit();
@@ -1153,7 +1344,8 @@
   if (load()) {
     var seen = 0;
     try { seen = Number(root.sessionStorage.getItem(SEEN_KEY)) || 0; } catch (e) {}
-    if (stillOpen(cfg, seen, Date.now())) lastActive = seen;
+    // Hardcore: every start asks, even a reload a moment later.
+    if (strictLevel() !== "hard" && stillOpen(cfg, seen, Date.now())) lastActive = seen;
     else lock("start");
   }
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

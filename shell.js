@@ -6756,6 +6756,7 @@
     rememberTxt.textContent = window.t("sync.pass.remember");
     rememberRow.appendChild(rememberTxt);
     form.appendChild(rememberRow);
+    if (strictLevelNow()) { rememberCb.checked = false; rememberRow.hidden = true; }   // Sensitive work: never kept
 
     var errBox = document.createElement("div");
     errBox.style.cssText =
@@ -7362,6 +7363,7 @@
     rt.textContent = window.t("sync.pass.remember");
     rememberRow.appendChild(rt);
     form.appendChild(rememberRow);
+    if (strictLevelNow()) { rememberCb.checked = false; rememberRow.hidden = true; }   // Sensitive work: never kept
 
     var errBox = document.createElement("div");
     errBox.style.cssText = "font-size:12px;color:var(--danger);min-height:18px;margin:2px 0 8px;";
@@ -11336,6 +11338,64 @@
       var on = window.orosLock.isOn();
       if (on !== lockWasOn) { lockWasOn = on; renderMenu(); }
     });
+  }
+
+  // ---------- 9a. Sensitive work (lock.js window.orosStrict) ----------
+  // A shield in the bar while the mode is on (opens its Settings page),
+  // the level and the allowed hosts handed to the service worker (in
+  // Hardcore it blocks every other address), and a short note when
+  // the worker blocked an address or the relay was used.
+  var STRICT_RELAYS = ["oros-mail-relay.koulaxizis.workers.dev"];   // = mail.js DEFAULT_RELAY
+  var strictToldAt = {};
+  function strictLevelNow() {
+    var S = window.orosStrict;
+    try { return S && typeof S.level === "function" ? S.level() : null; } catch (e) { return null; }
+  }
+  function strictTellSW() {
+    var sw = navigator.serviceWorker;
+    if (!sw || !sw.controller || !window.orosStrict) return;
+    var lv = strictLevelNow(), hosts = [];
+    try { hosts = lv ? window.orosStrict.hosts() : []; } catch (e) {}
+    try { sw.controller.postMessage({ t: "oros-strict", level: lv, hosts: hosts, relays: lv ? STRICT_RELAYS : [] }); } catch (e) {}
+  }
+  function strictBadge() {
+    var bar = document.querySelector("#oros-bar .bar-right");
+    if (!bar) return;
+    var lv = strictLevelNow(), b = document.getElementById("strict-badge");
+    if (!lv) { if (b) b.remove(); return; }
+    if (!b) {
+      b = document.createElement("button");
+      b.id = "strict-badge";
+      b.type = "button";
+      b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/></svg>';
+      b.addEventListener("click", function (e) { e.stopPropagation(); window.orosSettings.open("sensitive"); });
+      bar.insertBefore(b, bar.firstChild);
+    }
+    b.classList.toggle("strict-hard", lv === "hard");
+    var title = window.t(lv === "hard" ? "strict.badge.hard" : "strict.badge.on");
+    if (b.title !== title) { b.title = title; b.setAttribute("aria-label", title); }
+  }
+  function strictUpdate() { strictBadge(); strictTellSW(); }
+  if (window.orosStrict && typeof window.orosStrict.onChange === "function") {
+    window.orosStrict.onChange(strictUpdate);
+    strictUpdate();
+    window.addEventListener("load", strictUpdate);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) strictTellSW(); });
+    if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
+      window.orosSync.onAutoSync(function (kind) { if (kind === "start") strictTellSW(); });
+    }
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener("controllerchange", strictTellSW);
+      navigator.serviceWorker.addEventListener("message", function (e) {
+        var d = e.data;
+        if (!d || (d.t !== "oros-strict-blocked" && d.t !== "oros-strict-relay") || typeof d.host !== "string") return;
+        var key = d.t + " " + d.host, now = Date.now();
+        if (strictToldAt[key] && now - strictToldAt[key] < 60000) return;   // one note a minute per address
+        strictToldAt[key] = now;
+        var txt = window.t(d.t === "oros-strict-blocked" ? "strict.blocked" : "strict.relay").replace("{h}", d.host.slice(0, 80));
+        scToast(d.t === "oros-strict-blocked" ? "err" : "", txt, function () { window.orosSettings.open("sensitive"); });
+      });
+    }
   }
 
   // ---------- 9b. Single apps (solo.js) ----------

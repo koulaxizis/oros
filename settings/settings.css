@@ -833,3 +833,17 @@ body.tr-open { overflow: hidden; }
 .pair-check { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; margin: 6px 0; }
 .pair-in { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: 0.06em; }
 .pair-cam { width: 100%; max-width: 320px; border-radius: 8px; margin: 8px 0; background: #000; }
+
+/* Sensitive work: what turning it on needs and changes */
+.sv-head { font-size: 14px; margin: 14px 0 6px; }
+.sv-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.sv-item { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; font-size: 13.5px; }
+.sv-text { flex: 1 1 12em; min-width: 0; }
+.sv-state { font-size: 12px; font-weight: 700; color: var(--text-dim); }
+.sv-need { border-color: var(--danger); }
+.sv-need .sv-state { color: var(--danger); }
+.sv-fix .sv-state { color: var(--accent); }
+.sv-advice .sv-state { color: var(--warn); }
+.sv-ok .sv-state { color: var(--ok); }
+.sv-item .hint { flex-basis: 100%; }
+.linkish { background: none; border: none; padding: 0; min-height: 24px; color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; cursor: pointer; }

@@ -1,0 +1,70 @@
+# Sensitive work and sources
+This page is for people whose work could put them or others at risk: journalists, researchers, activists, lawyers, and the people who talk to them. It says plainly what orOS protects, what it does not, and when another tool is the right one.
+
+>! orOS has not had an independent security audit yet. Use it as a private place to work, not as the only thing that keeps a person safe.
+
+## What orOS is good for
+orOS works well as a private workspace: research notes, drafts, documents, files, timelines and contacts, kept away from companies that read or analyse what you write.
+- **Encrypted before it leaves.** With [sync](help:t/sync) on, everything is encrypted on your device with your `Encryption passphrase` before it goes to Dropbox or your own Nextcloud. The cloud stores only unreadable data.
+- **File names hidden too.** In [Files](app:files), folder and file names live only inside the encrypted index. The cloud cannot even check whether you hold a particular known document.
+- **No accounts and no tracking.** There is no orOS account, no cookies, no analytics. See [Privacy and offline use](help:t/privacy).
+- **Works offline.** Once opened, orOS keeps working without a connection.
+
+## Do not use orOS to contact a source
+For talking to a source, or receiving documents from one, use tools made for it:
+- **Signal**, with disappearing messages, for conversations.
+- **SecureDrop** (many news organisations run one) or **OnionShare** for receiving documents anonymously.
+- **Tails**, a system that starts from a USB stick and leaves no trace, for the most sensitive work.
+
+[Mail](app:mail) and [Transfer](app:transfer) are not for sources. Email always shows who wrote to whom and when, even when the content is encrypted, and both pass through outside services. A source should never need to open orOS.
+
+## What orOS does not protect
+### Your device, if someone takes it
+The data on this device is **not encrypted**. `Screen lock` hides the screen, but someone who copies the browser's files, or opens the browser's developer tools, can read everything. If you ticked `Remember on this device`, they can also open your synced data from the same browser.
+
+On orOS USB with encrypted storage, the data is locked while the computer is off.
+
+### Being forced to unlock
+orOS has no fake or "duress" PIN. If you can be made to unlock it, assume everything on it can be read.
+
+### What the cloud can still see
+Dropbox cannot read your data, but it does know your account, the addresses (IP) you connect from, when you sync, and how many files you have and how large they are. Patterns can say something on their own, such as many large files uploaded the night before a story. Dropbox also keeps older versions of files for a while.
+
+Your own Nextcloud or WebDAV server, at home or with a host you trust, removes this company from the picture.
+
+### The relay
+Some features go through the orOS relay: [Mail](app:mail), Calendar and Contacts sync with your own server when you turn the relay on, link previews, short links, [Transfer](app:transfer) and notifications. The relay keeps no logs, but it runs on Cloudflare, which sees connection addresses. Mail and calendar content passes through it unencrypted (only the connection is encrypted).
+
+### Notifications
+Notifications are off by default. If you turn them on in Chrome, they are delivered through Google's service, which sees that a notification arrived and when, not what it says.
+
+### The code itself
+orOS loads from useoros.online and updates itself. If the project's accounts were ever taken over, a bad version could reach everyone. orOS Portable and orOS USB keep their copy on your stick, which helps, but they update too.
+
+### Spyware, extensions and your network
+- Spyware on your phone or computer can see everything you see. No app protects against it, Signal included. Keep your system updated and use a clean device for the most sensitive work.
+- A browser extension allowed to "read and change all your data on websites" can read orOS too. Use a browser profile with no extensions for orOS.
+- Your internet provider, or a public Wi-Fi, cannot read what you send, but can see that you use orOS, Dropbox and the relay. The Tor button on orOS USB and orOS Portable opens a separate Tor Browser; orOS itself does not go through Tor.
+
+## A safer setup
+1. Use a long `Encryption passphrase`: four or five random words, used nowhere else.
+2. Do not tick `Remember on this device` on a computer that could be taken.
+3. In [Settings](app:settings), turn on `Screen lock` with a passphrase, a short `Lock after` time, and `Lock when you leave the page`. Use `Lock orOS` from the menu when you step away.
+4. Leave notifications off.
+5. Prefer your own Nextcloud or WebDAV server to Dropbox.
+6. For the most sensitive work, use orOS USB with encrypted storage, or start it with no stored data at all.
+7. Use a browser profile with no extensions.
+8. Keep sources on Signal or SecureDrop, never in Mail.
+9. In `Settings` › `Backups`, turn on `Encrypt backup files`: otherwise a file from `Export backup file` is **not** encrypted. See [Backups](help:t/backup).
+
+## Sensitive work mode
+In [Settings](app:settings) › `Sensitive work`, one switch does most of the list above on this device. It applies only to this device, deletes no data, and when you turn it off your earlier lock times and push come back. Turning it off asks for the lock's PIN or passphrase.
+- **Normal**: the lock closes after 2 minutes at most and when you leave the page, the sync passphrase is asked on every start, push is off, link details come only straight from the site, and orOS shows a note when Mail, CalDAV or Transfer use the relay.
+- **Hardcore**: no conveniences. The lock takes a passphrase only (no PIN, no fingerprint or face), closes after 1 minute and on every start, there are no link details, and the device reaches nothing but your sync cloud. Mail, Transfer, maps, radio, weather and every other online part stop until you turn it off.
+- A shield in the top bar shows that it is on. If your orOS has SOS, the page opens it too.
+- Hardcore's block works while orOS runs installed for offline use. A hard reload skips it until the next normal start, and it does not cover pages opened outside orOS.
+
+## If something goes wrong
+- If you think your passphrase is known, use `Change passphrase` on a device you trust, see [Sync](help:t/sync).
+- To erase everything, see [Factory reset](help:t/reset). It also deletes your orOS data in the cloud.
+- Organisations such as the Freedom of the Press Foundation and the Access Now Digital Security Helpline help journalists and activists for free.
