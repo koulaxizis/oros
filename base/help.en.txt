@@ -1,0 +1,39 @@
+# Base
+Base keeps records with structure, like a small database: a catalogue of your books, a collection, the guests of an event, the tasks of a project. Each base holds tables, each table has fields of a fixed type, and you see the same records as a grid or as cards.
+
+## Getting started
+- Press `New base` and pick a template, or start with a blank base.
+- `Import CSV` turns a CSV file into a new base with one table. Base guesses the type of each column (number, date, choice, email…); check them in the column headers.
+- A base can hold many tables. Use the `+` next to the table names to add one.
+
+## Fields
+- Tap a column header to edit the field, sort by it, move it, hide it in this view or delete it. The `+` at the end of the header row adds a field.
+- Types: short and long text, number, currency, percent, date (with or without a time), checkbox, single choice, multiple choice, rating, email, link, phone, and three that Base fills in by itself: autonumber, created time and last changed time.
+- Changing a field's type converts its values. Values that do not fit are emptied, and Base tells you how many before it changes anything. `Undo` brings them back.
+- The first field names each record. Choose another one in the table menu (`⋯` › Field that names records).
+
+## Records
+- `New record` adds a record and opens it. In the grid, `New record` under the last row adds one in place.
+- In the grid, tap a cell to select it and tap it again (or press Enter) to edit. Arrow keys and Tab move, Delete empties a cell, Esc cancels.
+- Paste a block copied from a spreadsheet into the selected cell: it fills the cells to the right and below, and adds records when it needs more rows.
+- The expand button at the start of a row, or Shift+Enter, opens the whole record. There you can also duplicate or delete it.
+
+## Views
+- Each table starts with a grid view and a card view. Make more in the view list (`New view…`), each with its own filters, sorting, groups and fields.
+- `Filter` shows only the records that match all (or any) of your conditions. `Sort` orders them by up to five fields, `Group` puts them under headings by up to three fields; tap a heading to fold it.
+- `Fields` chooses which fields this view shows and in what order. A hidden field stays in the table and in other views.
+- The search box looks in the shown fields of this view only.
+- A new record added in a filtered view takes the values of the "is" conditions, so it stays in the view.
+
+## Export
+- Table menu (`⋯`) › Export this view as CSV saves the records and fields you see, in that order.
+- Open this view in Spreadsheet sends them to [Spreadsheet](app:spreadsheet) as a new sheet (up to 499 records).
+
+## Your data
+- Everything stays on this device and is saved as you go. With orOS sync on in [Settings](app:settings), your bases follow you to your other devices, encrypted.
+- When two devices change different fields of the same record, both changes are kept.
+- Base holds up to 20,000 records on all your devices together; the home screen shows how many you have.
+- Deleting a base, table, field, view or record shows `Undo` for a few seconds.
+
+## Find it from anywhere
+- The menu's search box finds your bases and records. Choosing a record opens it in its table.

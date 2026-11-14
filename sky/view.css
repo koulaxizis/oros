@@ -1,0 +1,327 @@
+/* ============================================================
+   orOS Weather › Sky tonight (sky/view.css) — was the Moon & Sky
+   app. Loaded with sky/view.js when the tab first opens. Every
+   rule sits under .sky (ids "sk-…"), so nothing reaches the rest
+   of Weather; the red night view (.sky.night) only colours the tab.
+   The palette comes from Weather (which inherits the shell's).
+   ============================================================ */
+/* ---------- 1. Palette fallback + reset ---------- */
+.sky {
+  --sky:          #0b1020;
+  --sky-line:     rgba(140, 170, 220, 0.35);
+  --star:         #f4f1e6;
+  --moon-lit:     #f1ead2;
+  --moon-dark:    #2a2f3a;
+}
+
+/* Red night view: everything in dim red, so the eyes stay used to the dark */
+.sky.night {
+  --bg: #0a0000; --bg-desktop: #0a0000; --bar-bg: rgba(10, 0, 0, 0.95);
+  --text: #d23a2a; --text-dim: #8a2418; --accent: #ff4a33; --accent-hover: #ff6a55;
+  --accent-soft: rgba(255, 74, 51, 0.16); --panel-bg: #140302; --border: #3a0b06;
+  --shadow: rgba(0, 0, 0, 0.6); --danger: #ff4a33;
+  --sky: #070000; --sky-line: rgba(200, 50, 30, 0.40); --star: #e0402c;
+  --moon-lit: #d23a2a; --moon-dark: #2a0603;
+  color-scheme: dark;
+}
+
+.sky button, .sky input { font-family: inherit; color: inherit; }
+.sky button { cursor: pointer; }
+.sky ul { list-style: none; }
+
+.sky .spacer { flex: 1 1 0; min-width: 0; }
+
+/* ---------- 2. Toolbar + tabs ---------- */
+.sky #sk-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 59px;
+  padding: 10px 12px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sky .title { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.sky .title-main { font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sky .title-sub { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.sky .icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-dim);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.sky .icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.sky .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sky .icon-btn svg { width: 18px; height: 18px; }
+.sky .icon-btn.toggle[aria-pressed="true"] { color: var(--accent); }
+
+.sky .date-wrap input {
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  font-size: 13px;
+  color-scheme: inherit;
+}
+.sky .date-wrap input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.sky #sk-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 12px 0;
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.sky .tab {
+  min-height: 40px;
+  padding: 0 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sky .tab:hover { color: var(--text); }
+.sky .tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.sky .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* ---------- 3. Cards ---------- */
+.sky #sk-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg-desktop);
+  scrollbar-width: thin;
+}
+.sky .pane:focus { outline: none; }
+.sky .pane-inner {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 14px 14px 32px;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sky .card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  min-width: 0;
+}
+.sky .card h3 {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.sky .card.empty { text-align: center; padding: 28px 18px; }
+.sky .card.empty h3 { font-size: 18px; margin-bottom: 8px; }
+.sky .hint { color: var(--text-dim); font-size: 13px; line-height: 1.5; }
+.sky .small { font-size: 12px; }
+.sky .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+.sky .kv { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; font-size: 14px; }
+.sky .kv dt { color: var(--text-dim); }
+.sky .kv dd { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.sky .kv dd.soft { font-weight: 400; color: var(--text-dim); }
+
+.sky .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sky .chips.center { justify-content: center; margin-top: 14px; }
+.sky .chip {
+  min-height: 36px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sky .chip.slim { min-height: 32px; padding: 2px 12px; }
+.sky .chip:hover { border-color: var(--accent); color: var(--accent); }
+.sky .chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.sky .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.sky .gen-btn {
+  min-height: 40px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 800;
+}
+.sky .gen-btn:hover { background: var(--accent-hover); }
+.sky .gen-btn.ghost { background: transparent; color: var(--accent); }
+.sky .gen-btn.ghost:hover { background: var(--accent-soft); }
+.sky .gen-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- 4. Tonight ---------- */
+.sky .moon-card { display: flex; align-items: center; gap: 20px; }
+.sky .moon-big { width: 148px; height: 148px; flex-shrink: 0; }
+.sky .moon-big svg { width: 100%; height: 100%; display: block; }
+.sky .moon-txt { flex: 1 1 auto; min-width: 0; }
+.sky .moon-txt h2 { font-size: 22px; font-weight: 800; }
+.sky .meta { color: var(--text-dim); font-size: 14px; margin: 4px 0 10px; }
+
+.sky .plist { display: flex; flex-direction: column; gap: 8px; }
+.sky .plist li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 1.45; }
+.sky .plist .dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.sky .plist b { font-weight: 800; }
+.sky .plist .sub { color: var(--text-dim); font-size: 13px; }
+.sky .elist { display: flex; flex-direction: column; gap: 2px; }
+.sky .ev-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  min-height: 32px;
+  padding: 5px 6px;
+  margin: 0 -6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.45;
+  width: calc(100% + 12px);
+}
+.sky .ev-row:hover { border-color: var(--border); }
+.sky .ev-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sky .ev-row .when { color: var(--text-dim); flex: 0 0 108px; font-variant-numeric: tabular-nums; }
+.sky .ev-row .what { display: flex; flex-direction: column; min-width: 0; }
+.sky .ev-row .ev-title { color: var(--accent); font-weight: 700; }
+.sky .ev-row .sub { color: var(--text-dim); font-size: 13px; }
+
+/* ---------- 5. Sky map ---------- */
+.sky .map-inner { gap: 10px; }
+.sky .map-wrap {
+  width: min(100%, 640px);
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+  position: relative;
+}
+.sky #sk-map { width: 100%; height: 100%; display: block; touch-action: manipulation; cursor: crosshair; }
+.sky .map-ctl { display: flex; flex-direction: column; gap: 8px; width: min(100%, 640px); margin: 0 auto; }
+.sky .lbl { font-size: 13px; font-weight: 700; color: var(--text-dim); }
+.sky #sk-time-in { width: 100%; accent-color: var(--accent); min-height: 32px; }
+.sky .info { width: min(100%, 640px); margin: 0 auto; font-size: 14px; line-height: 1.5; }
+.sky .info b { font-size: 15px; }
+.sky details.card { width: min(100%, 640px); margin: 0 auto; }
+.sky details summary { cursor: pointer; font-weight: 700; font-size: 14px; min-height: 28px; }
+.sky details[open] summary { margin-bottom: 10px; }
+
+/* ---------- 6. Month ---------- */
+.sky .month-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sky .month-head h2 { font-size: 18px; font-weight: 800; text-align: center; flex: 1 1 auto; }
+.sky .mgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.sky .mgrid .dow { font-size: 11px; font-weight: 800; color: var(--text-dim); text-align: center; padding: 2px 0 4px; text-transform: uppercase; }
+.sky .mday {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 70px;
+  padding: 6px 2px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  position: relative;
+}
+.sky .mday:hover { border-color: var(--accent); }
+.sky .mday:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sky .mday.today { border-color: var(--accent); color: var(--accent); }
+.sky .mday.sel { background: var(--accent-soft); }
+.sky .mday svg { width: 30px; height: 30px; }
+.sky .mday .marks { display: flex; gap: 3px; height: 6px; }
+.sky .mday .mark { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.sky .mday .mark.eclipse { background: var(--danger); }
+.sky .mday .mark.shower { background: #7aa2f7; }
+.sky .mday .mark.season { background: #9ece6a; }
+.sky.night .mday .mark { background: var(--accent) !important; }
+.sky .mpad { min-height: 70px; }
+
+/* ---------- 7. Toast + screen reader ---------- */
+.sky #sk-toast {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  transform: translateY(-8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+.sky #sk-toast.show { opacity: 1; visibility: visible; transform: translateY(0); transition: opacity 0.3s ease, transform 0.3s ease; }
+.sky .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- 8. Mobile + touch ---------- */
+@media (max-width: 640px) {
+  .sky .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .sky .moon-card { flex-direction: column; text-align: center; gap: 10px; }
+  .sky .moon-card .kv { text-align: left; }
+  .sky .mday { min-height: 54px; padding: 4px 1px; font-size: 12px; }
+  .sky .mday svg { width: 22px; height: 22px; }
+  .sky .mpad { min-height: 54px; }
+  .sky .ev-row .when { flex-basis: 84px; font-size: 13px; }
+}
+@media (max-width: 480px) {
+  .sky #sk-toolbar { padding-left: 8px; padding-right: 8px; gap: 4px; }
+  .sky .date-wrap input { width: 128px; padding: 0 4px; font-size: 12px; }
+  .sky .pane-inner { padding-left: 10px; padding-right: 10px; }
+}
+@media (pointer: coarse) {
+  .sky .icon-btn { width: 44px; height: 44px; }
+  .sky .chip, .sky .gen-btn, .sky .tab, .sky .date-wrap input { min-height: 44px; }
+  .sky .date-wrap input { height: 44px; }
+  .sky .ev-row { min-height: 44px; }
+  .sky details summary { min-height: 44px; display: flex; align-items: center; }
+}
+
+/* ---------- 9. Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .sky .icon-btn, .sky #sk-toast { transition: none !important; }
+}
+
+.sky [hidden] { display: none !important; }

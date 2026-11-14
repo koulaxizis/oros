@@ -2,9 +2,11 @@
 Transfer sends big files and whole folders from the orOS disk, or from this device, straight to another browser. The other person opens a link or types a code; the files go directly between the two devices, end-to-end encrypted, and are never stored on a server. They do not need orOS.
 
 ## Send files and folders
-- Open `Send`. Tick files or folders on the orOS disk; tap a folder's name to look inside it. `Add from this device…` adds files that are not on the disk.
-- `To send` lists what you chose, with the number of files and the total size. Folders keep their folders inside.
-- Press `Create link`. You get a code like 7K2M-9QXH-4RTB, a QR code and a link. Send the link, let the other person scan the QR with their phone's camera, or read them the code.
+- Open `Send` and press the big plus (`Add files`), or drop files anywhere on the page. `From the orOS disk` opens the disk in a sheet: tick files or folders, tap a folder's name to look inside it, then press `Done`. `From this device` adds files that are not on the disk.
+- The list shows what you chose, with the number of files and the total size; `Remove` takes one off. Folders keep their folders inside.
+- Add a `Title` and a `Message` if you like. The other person sees them above the list of files, before they accept. They travel inside the encrypted transfer like the files.
+- Press `Create link`. You get a code like 7K2M-9QXH-4RTB, a QR code and a link. Send the link, use `Share…` on a phone, let the other person scan the QR with their phone's camera, or read them the code.
+- The background is drawn from the code, so both pages show the same shapes. If the small picture on your page matches the other person's background, you are connected to each other and to no one else.
 - Keep the page open. You see when they connect, when they look at the list, and how much has arrived. `Cancel` stops it on both sides.
 - One link is for one person and one transfer. `Send something else` starts a new one with a new code.
 - With orOS sync on Dropbox, `Send through my Dropbox` works without keeping the page open. See "Through your Dropbox" below.
@@ -12,7 +14,7 @@ Transfer sends big files and whole folders from the orOS disk, or from this devi
 
 ## Receive
 - Open the link you got, or open `Receive` and type the code. The sender's page has to be open.
-- You see every file and its size first. Choose where it goes and press `Accept`, or `Decline`.
+- You see every file and its size first, with the title and message if there are any. Choose where it goes and press `Accept`, or `Decline`.
 - `The orOS disk (Transfers folder)` puts the files in Files › Transfers, in a folder named after the date and time, with their folders inside. Nothing there is ever replaced: a name that is taken gets "(2)". The orOS disk syncs every file, so this choice is only there when each file is 200 MB or smaller.
 - `This device` keeps one file as it is, or several files as one ZIP. When it is done, press `Save`.
 - Without orOS, the link opens a receive page that saves to the device. In a browser where orOS is set up, `Receive into my orOS instead` opens it inside orOS.
