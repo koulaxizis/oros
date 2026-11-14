@@ -64,6 +64,29 @@ The top bar shows a weather icon and the temperature of one of your cities. It i
 - Offline, the top bar shows a crossed-out cloud and no temperature.
 - In the morning (8:00–12:00), orOS may send one [notification](help:t/notifications) when the day needs attention, like storms, fog, rain, high UV, heat or cold. A pleasant day stays quiet.
 
+## Sky tonight
+
+The `Sky tonight` tab at the top shows what the sky holds tonight above the city on screen: the Moon as it looks, when it rises and sets, when it gets dark, and which planets and stars you can see. It is worked out on your device, so it also works offline. It was the Moon & Sky app; old links and shortcuts to it open this tab.
+- The date box lets you travel to another day, for example a birthday. `Today` brings you back.
+- The moon button turns on the red night view: everything in the tab turns dim red, so your eyes stay used to the dark outside.
+
+### Tonight
+- The Moon as you see it, tilted the way it looks from your place, with how much of it is lit, its age, its distance and the next full and new moon.
+- `Moon`: moonrise and moonset, and where it is right now. `Sun`: sunrise, sunset, its highest point and the length of the day.
+- `When it gets dark`: when twilight ends, when the horizon fades, and when the sky is fully dark until morning. `Light for photos`: the golden and blue hours.
+- `Planets tonight`: Mercury to Saturn, when to look, in which direction, how high and how bright. Planets do not twinkle like stars do.
+- `Coming up`: the next full and new moons, meteor showers and eclipses. Tap or click one to see that day.
+
+### Sky map
+The dome above you: north at the top, east on the left, as if you lie on your back with your head to the north. It shows the Moon, the planets, about 290 bright stars and 34 constellations. Tap or click one to see its name, height and direction. The slider turns the sky through the night, `Now` brings it back, `Constellations` shows or hides the lines, and `What is up (list)` names the bright things above the horizon, as text.
+
+### Month
+Each day shows the Moon as it looks that evening; dots mark the main phases, equinoxes and solstices, meteor shower peaks and eclipses. `This month` lists them, with whether an eclipse can be seen from your place and whether a bright Moon spoils a meteor shower. Tap or click a day to open it in `Tonight`.
+
+### Calendar, Time and Today
+- In [Calendar](app:calendar) you can turn on the `Moon & Sky` feed (it starts off); a row opens that day here. The Sun & Moon card in [Time](app:time) has a `More in Weather` button, and the sky's moments also show in [Today](app:today).
+- Times use your device's time zone and are good to about a minute; hills and buildings on your horizon are not taken into account. Eclipses are listed from 2026 to 2035.
+
 ## Updates and offline
 
 The forecast updates when you open or return to the app, at most every 30 minutes. The refresh button at the top right fetches it right away. With no connection, you see `Offline — showing last known` and the last data the app got. It never makes up numbers.

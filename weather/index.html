@@ -7,8 +7,8 @@
   <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=weather" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Weather · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=6.33.00">
-  <link rel="stylesheet" href="weather.css?v=6.33.00">
+  <link rel="stylesheet" href="../fonts.css?v=6.54.00">
+  <link rel="stylesheet" href="weather.css?v=6.54.00">
 </head>
 <body>
 
@@ -26,8 +26,14 @@
     </button>
   </header>
 
+  <!-- APP-ALIAS (merge 4): the Moon & Sky app is the "Sky tonight" tab -->
+  <nav id="wx-tabs" role="tablist">
+    <button type="button" role="tab" id="wxt-wx" aria-controls="wxmain" aria-selected="true" data-i18n="tab.wx">Weather</button>
+    <button type="button" role="tab" id="wxt-sky" aria-controls="sky-host" aria-selected="false" tabindex="-1" data-i18n="tab.sky">Sky tonight</button>
+  </nav>
+
   <!-- Main scroll: offline badge → current → hourly → daily -->
-  <main id="wxmain">
+  <main id="wxmain" role="tabpanel" aria-labelledby="wxt-wx">
 
     <div id="offline-badge" hidden>
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 0 0 9 20h9a5 5 0 0 0 0-10z" opacity="0.6"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
@@ -144,6 +150,9 @@
 
   </main>
 
+  <!-- Sky tonight: sky/view.js mounts here on the first open -->
+  <section id="sky-host" role="tabpanel" aria-labelledby="wxt-sky" hidden></section>
+
   <!-- City management dialog: saved list (switch/delete) + geocoded add -->
   <dialog id="dlg-city">
     <h3 data-i18n="dlg.title">Cities</h3>
@@ -162,12 +171,12 @@
     <div id="warn-set-host" hidden></div>
   </dialog>
 
-  <script src="../i18n.js?v=6.33.00" data-app="weather"></script>
-  <script src="../feeds/core.js?v=6.33.00"></script>
-  <script src="../feeds/fetch.js?v=6.33.00"></script>
-  <script src="core.js?v=6.33.00"></script>
-  <script src="rainmap-core.js?v=6.33.00"></script>
-  <script src="rainmap.js?v=6.33.00"></script>
-  <script src="weather.js?v=6.33.00"></script>
+  <script src="../i18n.js?v=6.54.00" data-app="weather"></script>
+  <script src="../feeds/core.js?v=6.54.00"></script>
+  <script src="../feeds/fetch.js?v=6.54.00"></script>
+  <script src="core.js?v=6.54.00"></script>
+  <script src="rainmap-core.js?v=6.54.00"></script>
+  <script src="rainmap.js?v=6.54.00"></script>
+  <script src="weather.js?v=6.54.00"></script>
 </body>
 </html>
