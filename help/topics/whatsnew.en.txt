@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.76.00
+- **Fixed-layout e-books from Layout.** An EPUB edition now has a `Layout` choice (`Export` › `Editions` › `Edit editions…`): `Fixed: pages as in print, text as text` keeps every page exactly as designed, for picture books, comics, cookbooks and art books, with the text as real text readers can search and have read aloud; `Fixed: pages as pictures` puts each page in as one picture. Facing pages open side by side, and every page is in the book's page list. Library now opens fixed-layout EPUBs too, each page scaled to the screen.
+
 ## Version 6.75.00
 - **Setlists, PDF and print in Lyric Sync.** Put songs in a set for a gig or a rehearsal, each in its own key, and play the whole set on the stage, one song after the other. Make a PDF or print a song or a set with the chords above the words, in Greek too, and send a dated set to Calendar. See [Lyric Sync](app:lyricsync).
 
