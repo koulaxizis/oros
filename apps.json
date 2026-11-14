@@ -225,6 +225,15 @@
       "type": "internal"
     },
     {
+      "id": "base",
+      "name": "Base",
+      "category": "Office",
+      "icon": "base",
+      "url": "base/",
+      "type": "internal",
+      "search": "search.js"
+    },
+    {
       "id": "spreadsheet",
       "name": "Spreadsheet",
       "category": "Office",

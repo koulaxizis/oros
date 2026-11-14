@@ -128,6 +128,7 @@ orosPack("de", "shell", {
  "app.split": "Kosten teilen",
  "app.spot": "Finde den Unterschied",
  "app.spreadsheet": "Tabelle",
+ "app.base": "Datenbank",
  "app.forms": "Formulare",
  "app.stickies": "Haftnotizen",
  "app.stock": "Bestand",

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.58.00
+- **New app: Base.** Keep records with structure in Office › Base: a catalogue, a collection, a project. Make tables with typed fields (text, numbers, money, dates, choices, ratings and more), see them as a grid or as cards, and filter, sort and group them. Start from one of six templates, from scratch or from a CSV file, and send any view to Spreadsheet or save it as CSV. Two devices editing different cells of the same record both keep their change.
+
 ## Version 6.57.00
 - **Studio: publish your podcast.** `Publish as podcast` next to Export makes a show with its cover and turns each project into an episode. Markers on the timeline (press M) become chapters. Studio then makes the feed and a small site you download as a ZIP and upload to your own space, for example GitHub Pages. Apple Podcasts, Spotify and the Podcasts app can follow it there.
 

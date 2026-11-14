@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 43967 of 44395 (99%)
-- Help pages: 157 of 157 (100%)
+- Strings: 44413 of 44841 (99%)
+- Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -12,13 +12,14 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1861 / 1863 |
+| assistant | 99% | 1862 / 1864 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
+| base | 100% | 273 / 273 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
@@ -112,7 +113,7 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 332 / 332 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 96% | 600 / 624 |
+| publish | 96% | 642 / 666 |
 | qr | 100% | 248 / 248 |
 | quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |
@@ -129,7 +130,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 98% | 1278 / 1293 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1179 / 1184 |
+| shell | 99% | 1180 / 1185 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | English for now | 375 / 375 |
@@ -145,7 +146,7 @@ text is still written in the code. They switch over wave by wave
 | stickies | 100% | 124 / 124 |
 | stock | 99% | 729 / 734 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 555 / 555 |
+| studio | 100% | 684 / 684 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 60 / 60 |
