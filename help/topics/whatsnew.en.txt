@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.52.00
+- **Stock's till is ready for book fairs and markets.** Give a discount on one line or on the whole sale, as a percentage or an amount, with a reason printed on the receipt. You can also cap the largest discount on a device. A customer can pay part in cash and part by card, and the change is worked out from the cash part. `+ Other item` sells something that is not a Stock product, such as a tote bag or a donation, with a typed name and price. The receipt can be shared as a PDF or shown as a QR code instead of printed. It still says it is not a tax receipt.
+
 ## Version 6.51.00
 - **Transfer has a new look and its own page.** Each transfer now comes with a picture drawn from its code. Both sides see the same shapes, so a small copy on the sender's screen lets you check at a glance that the right person is connected. Add files with the big plus or drop them anywhere, and add an optional title and message, which travel encrypted with the files. Transfer now speaks German too, and useoros.online/transfer/about/ explains it to people who do not use orOS.
 
