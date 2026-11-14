@@ -196,6 +196,15 @@
   VIEWS.elements = function (body) {
     var s1 = sec(t("el.shapes"));
     var g = el("div", "el-grid");
+    if (ED.vec) {                                   // the pen (wave V1): an outline of your own
+      var pen = el("button", "el-tile ico pen-tile");
+      pen.type = "button";
+      var pl = window.orosDK.pathedit.str("pe.pen");
+      pen.title = pl; pen.setAttribute("aria-label", pl);
+      pen.innerHTML = AT.icon("pen");
+      pen.addEventListener("click", function () { if (window.matchMedia("(max-width: 760px)").matches) closeDrawer(); ED.vec.pen(); });
+      g.appendChild(pen);
+    }
     FX.SHAPES.forEach(function (sh) {
       var b = el("button", "el-tile");
       b.type = "button";
@@ -1229,6 +1238,7 @@
     var sb = colourBtn(t("ctx.stroke"), a.sc && it.sw > 0 ? a.sc : "", null, { kind: "stroke" });
     sb.classList.add("stroke");
     bar.appendChild(sb);
+    if (ED.vec && ED.vec.canEdit(it)) bar.appendChild(tool("nodes", window.orosDK.pathedit.str("pe.edit"), function () { ED.vec.edit(it.id); }, ED.vec.busyWith(it.id)));
     bar.appendChild(btn("ctx-txt", t("ctx.sw"), function (e) {
       AT.popover(e.currentTarget, function (m) {
         var mx = Math.max(20, Math.round(Math.min(it.w, it.h) / 4));

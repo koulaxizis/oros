@@ -44,7 +44,7 @@ Pad is an editor for plain text and code, in the spirit of Notepad++. It opens a
 ## Tools
 - `Tools…` in `More` works on the selected lines, or on the whole file when nothing is selected: `Format JSON` (one item per line, indented like the file), `Compact JSON` (all on one line), `Sort lines A → Z` and `Z → A` (numbers in their natural order, so 2 comes before 10), `Remove duplicate lines` (keeps the first) and `Remove spaces at line ends`. [[Ctrl+Z]] takes any of them back.
 - `Format JSON` changes only the spaces and line breaks: keys keep their order, and numbers and strings stay exactly as written. If the JSON is not valid, Pad says on which line and column, and changes nothing.
-- The list of tools has a search box and groups; [[Alt+T]] opens it from the keyboard. Tools that fit the selection (a colour, a time stamp, a number) come first.
+- The list of tools has a search box and groups; [[Alt+T]] opens it from the keyboard. Tools that fit the selection (a colour, a time stamp, a number, a JWT) come first.
 
 ## Developer tools
 - `Check JSON` and `Check YAML` say whether the text is valid. If not, they put the cursor where the mistake is and say what it is. Nothing changes.
@@ -55,6 +55,8 @@ Pad is an editor for plain text and code, in the spirit of Notepad++. It opens a
 - `Insert UUID v4` writes a random UUID at the cursor; `Insert UUID v7` one that starts with the time, so they sort in the order they were made. With several cursors each gets its own.
 - `Time stamps…` turns a selected Unix time (seconds, milliseconds, micro- or nanoseconds, found from the number of digits) or a date such as 2026-11-13 into local time, ISO 8601 and Unix time, and shows the time now, ready to insert.
 - `Number bases…` shows a selected whole number (255, `0xFF`, `0b1010`, `0o17`, or `$xFF` in JSFX) in decimal, hexadecimal, binary and octal. `Colour…` shows a selected CSS colour as hex, `rgb()` and `hsl()`, with a sample.
+- `Decode JWT` shows the header and payload of a selected JSON Web Token as formatted JSON, with its issued, valid-from and expiry times and whether it has expired. It only decodes: the signature is not checked, so a decoded token proves nothing about who made it. Encrypted tokens (JWE) cannot be read.
+- `Regex tester` tries a JavaScript regular expression on the whole file as you type, with the `i`, `m`, `s` and `u` flags. It lists the matches with their line, column and groups (numbered and named); click one to select it in the text, or `Select all matches` for one cursor on each. Fill in `Replace with` to see the result before you change anything; `Open in Find` takes the pattern to Find & replace. A pattern that runs for over a second is stopped, so a slow one cannot freeze Pad.
 - The results open in a panel next to the text (in its place on a phone). `Copy` copies a value, `Insert` puts it in place of the selection. [[Esc]] or `Close` closes the panel.
 - `Open in Text Tools` sends the selection (or the file) to [Text Tools](app:texttools) for Base64, URL, HTML entities and its other encoders.
 - Everything runs on this device, also offline. Nothing you check, convert or hash is sent anywhere or kept.
