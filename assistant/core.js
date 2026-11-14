@@ -1673,17 +1673,30 @@
       "a block ending in {.center}, {.right} or {.justify} gets that alignment; made when the user presses Open. To bring a file the user attached into Writer use open_file instead) · " +
       "mind_map (title = the central idea, outline: one idea per line, two spaces per level; opens Mind map's Paste a list box) · " +
       "text_file (title = the file name with its extension such as notes.txt, script.py, config.json, index.html, text: the whole file exactly as it should be, " +
-      "code or plain text, every space and line kept; lang?: the language when the name does not tell; opens as a new tab in Pad, which never runs it; the user saves it where they want). " +
+      "code or plain text, every space and line kept; lang?: the language when the name does not tell; opens as a new tab in Pad, which never runs it; the user saves it where they want) · " +
+      "form (title, desc?, questions: a survey, sign-up or order form for Forms, each question {label, type?, options?, required?}; made in Forms when the user presses Open, not shared until they publish it). " +
       "Give only what the user said or plainly meant; leave the rest out.",
     params: {
       type: "object",
       properties: {
         kind: { type: "string", "enum": ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
                                          "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
-                                         "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file"] },
+                                         "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file", "form"] },
         title: { type: "string", description: "The entry's title or name (event, note, sheet, presentation, bookmark, card, habit, plant, media, place, car service or reminder, pet record, shared expense)." },
         text: { type: "string", description: "note: the note's text (plain text). post: the post's text, hashtags included. wiki_article, document: the whole text (Markdown). text_file: the whole file, as it is." },
         lang: { type: "string", "enum": PAD_LANGS, description: "text_file: the language for colours, only when the file name does not tell (default: from the name)." },
+        questions: { type: "array", description: "form: the questions in order, up to 100.",
+                     items: { type: "object", properties: {
+                       label: { type: "string", description: "The question as the person reads it." },
+                       type: { type: "string", "enum": ["text", "para", "email", "phone", "number", "date", "time", "choice", "multi", "select", "scale", "stars", "yesno", "matrix", "info", "page"],
+                               description: "text (short answer, default), para (long answer), choice (one of options), multi (checkboxes), select (drop-down), scale (low..high), stars, yesno, matrix (rows × options), info (a text block, no answer), page (a page break)." },
+                       options: { type: "array", items: { type: "string" }, description: "choice, multi, select, matrix: the options (matrix: the columns)." },
+                       rows: { type: "array", items: { type: "string" }, description: "matrix: the rows." },
+                       required: { type: "boolean" },
+                       low: { type: "integer", description: "scale: 0 or 1 (default 1)." },
+                       high: { type: "integer", description: "scale: up to 10 (default 5); stars: 3-10 (default 5)." } },
+                     required: ["label"] } },
+        desc: { type: "string", description: "form: the line under the title." },
         cards: { type: "array", description: "flashcards: up to 500 cards.",
                  items: { type: "object", properties: { front: { type: "string" }, back: { type: "string" },
                                                          both: { type: "boolean", description: "Also the reverse card (back → front)." },
@@ -1779,6 +1792,7 @@
       "each has; with label (a label's name, or \"none\" for events without a label) and/or month it lists " +
       "those events, any date, with their label, time, place and note, and a ref for change_item. " +
       "crm with partner answers 'what is open with X?' for one partner. " +
+      "forms (every form: questions, shared and open or not, how many answers and how many new, with a ref; with form one form's results: counts, shares and averages per question, never what people wrote) " +
       "automations lists every rule in words (with a ref; on or off) and this device's recent runs: when, which rule, whether it was a time or something that happened, and what came of it (notice shown, notices off, skipped because an app is missing, opened); use it for 'why did this run?' and to suggest a better rule with propose_rule. " +
       "The user sees the summary first and may hold it back.",
     params: {
@@ -1795,6 +1809,7 @@
         status: { type: "string", "enum": ["want", "now", "done", "drop", "reading", "finished", "unread"], description: "shelf: want, now (in progress), done, drop. library: reading, finished, unread." },
         board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board)." },
         days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." },
+        form: { type: "string", description: "forms: one form's title: its results (how many answered each question, counts, shares and averages); never the people's written answers or contact details." },
         partner: { type: "string", description: "crm: a customer's, supplier's, shop's or author's name: everything open with them (owed both ways, consignment stock, orders, unbilled hours, royalties, contracts, next follow-up)." }
       },
       required: ["app"]
@@ -3740,11 +3755,14 @@
     flashcards: "flashcards", wiki_article: "wiki", document: "writer", mind_map: "mindmap",
     // Pad wave 4: a text or code file opens as a new, unsaved tab in Pad
     // (__orosOpenAt("pad", { newText })); the user saves it.
-    text_file: "pad"
+    text_file: "pad",
+    // FORMS-4: a new form in Forms (forms/links.js fromDraft), made
+    // there when the user presses Open; nothing is published.
+    form: "forms"
   };
   var ENTRY_ORDER = ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
                      "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
-                     "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file"];
+                     "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file", "form"];
   // The receivers' own caps (flashcards/make.js, wiki/core.js MAX_TEXT,
   // writer.js NEWDOC_MAX, mindmap.js paste box): longer is refused.
   var A4_MAX = { cards: 500, field: 20000, wiki: 200000, doc: 500000, map: 20000, pad: 500000 };
@@ -3993,6 +4011,38 @@
       if (kind === "document") ls3 = ls3.map(function (x) { return mdPlain(x); }).filter(Boolean);
       view.list = ls3.slice(0, 8);
       if (ls3.length > 8) view.more = ls3.length - 8;
+      return out;
+    }
+    if (kind === "form") {
+      // The same limits as Forms (engine.js LIM, links.js MAX_DRAFT);
+      // links.js fromDraft maps the types again in the app.
+      var FQT = { text: 1, para: 1, email: 1, phone: 1, number: 1, date: 1, time: 1, choice: 1, multi: 1, select: 1, scale: 1, stars: 1, yesno: 1, matrix: 1, info: 1, page: 1 };
+      var rawQs = Array.isArray(args.questions) ? args.questions : [];
+      if (rawQs.length > 100) return bad("form: at most 100 questions.");
+      var strs = function (a, n) { return (Array.isArray(a) ? a : []).map(function (x) { return line(x, 200); }).filter(Boolean).slice(0, n); };
+      var dq = [];
+      rawQs.forEach(function (q) {
+        if (typeof q === "string") q = { label: q };
+        if (!q || typeof q !== "object") return;
+        var ty = typeof q.type === "string" && FQT[q.type] ? q.type : "text";
+        var lb = line(q.label, 500);
+        if (!lb && ty !== "page") return;
+        var o = { label: lb, type: ty };
+        if (q.required === true) o.required = true;
+        if (/^(choice|multi|select|matrix)$/.test(ty)) o.options = strs(q.options, 50);
+        if (ty === "matrix") o.rows = strs(q.rows, 30);
+        if (ty === "scale" && q.low === 0) o.low = 0;
+        if ((ty === "scale" || ty === "stars") && typeof q.high === "number") o.high = q.high;
+        dq.push(o);
+      });
+      if (!dq.length) return bad("form needs questions.");
+      var dr = { title: title.slice(0, 200), questions: dq };
+      var fdesc = para(args.desc, 2000);
+      if (fdesc) dr.desc = fdesc;
+      out.call = { fn: "openAt", args: [app, { draft: dr }] };
+      view.title = title;
+      view.list = dq.filter(function (x) { return x.label; }).slice(0, 8).map(function (x) { return x.label; });
+      if (dq.length > 8) view.more = dq.length - 8;
       return out;
     }
     if (kind === "text_file") {

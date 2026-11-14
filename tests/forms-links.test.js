@@ -90,3 +90,40 @@ test("wiring: links.js before app.js, buttons and draft in the app, strings in E
     assert.ok(de.includes('"' + k + '"'), k + " in DE");
   }
 });
+
+test("Assistant / Gate: propose_entry form opens a draft in Forms; app_summary forms gives counts only", () => {
+  global.window = global.window || {};
+  const AC = require("../assistant/core.js");
+  const S = require("../assistant/summary.js");
+  const RS = require("../forms/results.js");
+  const r = AC.normEntry({ kind: "form", title: "Fair sign-up", desc: "Sat 10:00", questions: [
+    "Name", { label: "E-mail", type: "email", required: true }, { label: "Day", type: "choice", options: ["Sat", "Sun"] }, { label: "Odd", type: "upload" }] });
+  assert.equal(r.ok, true);
+  assert.equal(r.app, "forms");
+  assert.equal(r.call.fn, "openAt");
+  const draft = r.call.args[1].draft;
+  assert.equal(draft.questions[3].type, "text");
+  // what the Assistant sends is what Forms makes
+  const f = E.normForm(Object.assign({ id: "fz" }, L.fromDraft(draft)));
+  assert.deepEqual(f.qs.map((q) => q.t), ["text", "email", "choice", "text"]);
+  assert.match(AC.normEntry({ kind: "form", title: "x", questions: [] }).err, /needs questions/);
+  assert.match(AC.normEntry({ kind: "form", title: "x", questions: Array(101).fill("q") }).err, /at most 100/);
+  // the same tool on both sides: the Gate takes the Assistant's tools
+  const pe = AC.toolsFor({ entries: 1 }).find((t) => t.name === "propose_entry");
+  assert.ok(pe && pe.params.properties.kind.enum.includes("form"));
+
+  const data = { ver: 1, forms: [{ id: "f1", m: 1, title: "Fair", x: { k: "abcdefghijklmnop", open: 1 },
+    qs: [{ id: "n", t: "text", label: "Name" }, { id: "e", t: "email", label: "Mail" }, { id: "c", t: "choice", label: "Day", opts: [{ id: "a", label: "Sat" }, { id: "b", label: "Sun" }] }] }] };
+  const ans = { ver: 1, seen: { f1: 1500 }, rs: [
+    { id: "abcdefghijklmnop.1", f: "f1", at: 1000, a: { n: "Maria", e: "m@x.gr", c: "a" } },
+    { id: "abcdefghijklmnop.2", f: "f1", at: 2000, a: { n: "Bo", e: "b@x.gr", c: "a" } }] };
+  const list = S.formsSummary(data, ans, {});
+  assert.deepEqual(list.forms[0], { title: "Fair", questions: 3, shared: true, open: true, answers: 2, new: 1, last: "1970-01-01", target: { form: "f1" } });
+  const W = { yes: "Yes", no: "No", other: (x) => x, otherName: "Other", time: "Time", wait: "Waiting list" };
+  const one = S.formsSummary(data, ans, { form: "fair" }, RS, W);
+  assert.deepEqual(one.results[2].counts, [{ option: "Sat", n: 2, pct: 100 }, { option: "Sun", n: 0, pct: 0 }]);
+  const txt = JSON.stringify(one);
+  for (const secret of ["Maria", "m@x.gr", "Bo", "b@x.gr"]) assert.ok(!txt.includes(secret), secret + " stays out");
+  assert.match(S.formsSummary(data, ans, { form: "nope" }, RS, W).err, /No form called/);
+  assert.equal(S.normArgs({ app: "forms", form: "  Fair " }, "2026-11-14").form, "Fair");
+});
