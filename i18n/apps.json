@@ -319,7 +319,8 @@
     "files/dropbox-callback.js",
     "files/dropbox.js",
     "files/files.js",
-    "files/gmedia.js"
+    "files/gmedia.js",
+    "files/photos.js"
    ]
   },
   {
@@ -1111,13 +1112,6 @@
     "typing/app.js",
     "typing/due.js",
     "typing/layouts.js"
-   ]
-  },
-  {
-   "app": "units",
-   "files": [
-    "units/core.js",
-    "units/units.js"
    ]
   },
   {

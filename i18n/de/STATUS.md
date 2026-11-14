@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 44770 of 45247 (98%)
+- Strings: 45111 of 45590 (98%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1882 / 1884 |
+| assistant | 99% | 1885 / 1887 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
@@ -24,8 +24,8 @@ text is still written in the code. They switch over wave by wave
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
 | bubble | 100% | 54 / 54 |
-| budget | 90% | 1065 / 1180 |
-| calculator | 100% | 166 / 166 |
+| budget | 90% | 1065 / 1182 |
+| calculator | 100% | 170 / 170 |
 | calendar | 90% | 575 / 634 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
@@ -54,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | feeds | 100% | 325 / 325 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 99% | 571 / 572 |
+| files | 99% | 715 / 716 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -74,11 +74,11 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | 100% | 90 / 90 |
 | kanban | 99% | 351 / 354 |
 | labels | 100% | 88 / 88 |
-| layout | 99% | 1074 / 1082 |
+| layout | 99% | 1083 / 1091 |
 | library | 100% | 327 / 327 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
-| lyricsync | 100% | 241 / 241 |
+| lyricsync | 100% | 288 / 288 |
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 496 / 496 |
 | mancala | 100% | 61 / 61 |
@@ -125,12 +125,12 @@ text is still written in the code. They switch over wave by wave
 | ringtones | 100% | 107 / 107 |
 | roots | 100% | 226 / 226 |
 | rps | 100% | 60 / 60 |
-| scanpdf | 100% | 517 / 517 |
+| scanpdf | 100% | 526 / 526 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1318 / 1333 |
+| settings | 98% | 1416 / 1431 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1180 / 1185 |
+| shell | 99% | 1207 / 1212 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | English for now | 375 / 375 |
@@ -161,7 +161,7 @@ text is still written in the code. They switch over wave by wave
 | travel | 100% | 555 / 555 |
 | typewriter | 100% | 46 / 46 |
 | typing | 94% | 170 / 180 |
-| units | 100% | 214 / 214 |
+| units | English for now | 214 / 214 |
 | wallpaper | 100% | 130 / 130 |
 | water | 100% | 94 / 94 |
 | wayfarers | 100% | 549 / 549 |
@@ -191,3 +191,4 @@ These show English until fixed (usually the English text changed).
 - de/help/whiteboard.txt: links or key caps differ from whiteboard/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
 - de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt
+- de/help/topics/sensitive.txt: links or key caps differ from help/topics/sensitive.en.txt

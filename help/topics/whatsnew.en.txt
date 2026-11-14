@@ -1,6 +1,42 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.78.00
+- **Claude reads its folders with orOS closed.** An open orOS now keeps a sealed copy of Claude's folders in your Dropbox (up to 250 MB unless you change it, kept 7 days), so Claude can list and read them even when every orOS is closed, and can give you a link to one file that works once, for 15 minutes. Changes still wait for an open orOS. `Delete the copy now` in Settings › orOS Gate removes it; nothing is copied during Sensitive work. Dropbox may ask you to sign in again once for this. See [Settings](app:settings).
+
+## Version 6.77.00
+- **Keep a folder on all your devices.** In Files › orOS Drive, `Keep on all my devices` keeps a folder downloaded on every device where you use orOS with sync, not only this one, so it works offline everywhere and orOS Drive mirrors all of it. Turn it off the same way. See [Files](app:files).
+
+## Version 6.76.00
+- **Fixed-layout e-books from Layout.** An EPUB edition now has a `Layout` choice (`Export` › `Editions` › `Edit editions…`): `Fixed: pages as in print, text as text` keeps every page exactly as designed, for picture books, comics, cookbooks and art books, with the text as real text readers can search and have read aloud; `Fixed: pages as pictures` puts each page in as one picture. Facing pages open side by side, and every page is in the book's page list. Library now opens fixed-layout EPUBs too, each page scaled to the screen.
+
+## Version 6.75.00
+- **Setlists, PDF and print in Lyric Sync.** Put songs in a set for a gig or a rehearsal, each in its own key, and play the whole set on the stage, one song after the other. Make a PDF or print a song or a set with the chords above the words, in Greek too, and send a dated set to Calendar. See [Lyric Sync](app:lyricsync).
+
+## Version 6.74.00
+- **Documents can now be searched by their text.** Files › Documents reads the words of a PDF, and with your OK recognises the text of scans and photos on this device (Greek and English). Search finds a document by any word in it, `From the text:` suggests its type, date, amount and expiry, and in Scanner & PDF `Also add it to Documents` files a new scan straight away. See [Files](app:files).
+
+## Version 6.73.00
+- **Unit Converter is now part of the Calculator.** Open the `Convert` mode in the Calculator for every unit, currency and cooking conversion, with your favourites and recent ones kept. Old links and shortcuts to Unit Converter open that mode.
+
+## Version 6.72.00
+- **Signed PDFs come back on their own.** When you ask someone to sign a PDF in Scanner & PDF, the signed copy now comes back to your orOS by itself: no need to paste the reply link any more. Requests that wait have a `Remind` button that writes a short reminder for your email app. If the automatic way cannot be used, the signer still gets a reply link to send you, as before. See [Scanner & PDF](app:scanpdf).
+
+## Version 6.71.00
+- **Claude's folders.** In Settings › Connected services › orOS Gate you can now choose `Claude's folders`: folders of the orOS disk (for example the ones orOS Drive mirrors from your computer) that Claude may list and read, and with `May change` on Files also write, move and rename text files in. Every change can be undone, a replaced file goes to the Trash first, and deleting always asks you on the device. Key and secret files are never shown. The Assistant gets the same folders. See [Settings](app:settings).
+
+## Version 6.70.01
+- **Banks in the installed orOS.** Budget's banks and PayPal now update in the installed orOS, orOS Portable and orOS USB too: with Update now, when you open Budget and at the times you set. Connecting a bank or renewing its access still happens at useoros.online in a browser, because the bank sends you back there.
+
+## Version 6.70.00
+- **Photos in Files.** Files has a new **Photos** place: every picture and video on your disk in one timeline by the date it was taken, with a full-screen viewer. Make **albums** without moving any file (they sync to your other devices), see your photos on a **map** from the place they were taken, and find **duplicates** and near-duplicates so you can keep the best one and send the rest to the Trash. Photos that are only in the cloud download when you look at them. See [Files](app:files).
+
+## Version 6.69.00
+- **SOS: erase everywhere.** If you think someone got into your orOS, Settings › System › `SOS: erase everywhere` closes the cloud and erases orOS on every device that syncs with your passphrase, closes your shared links, sign-in link, notifications, orOS Gate, webhook and households, and then shows what you still have to do (Dropbox password and connected apps, deleted files, passwords). Type SOS and your passphrase; you have 10 seconds to cancel. In Sensitive work mode the shield gives you the SOS button directly. After a **Factory reset** your other devices now stop and ask whether to erase themselves too or keep their data, instead of filling the cloud again. See [Settings](app:settings).
+
+## Version 6.68.00
+- **Sensitive work.** A new page in Settings for journalists, their sources and anyone whose work must not leak. One switch, on this device only, tightens the screen lock, keeps no sync passphrase here, turns off push, sign-in links and fetching through the relay. `Hardcore` goes further: a passphrase lock only, and this device reaches nothing but your sync cloud. A shield in the top bar shows it is on; turning it off brings your earlier settings back. See [Sensitive work and sources](help:t/sensitive), a new help page that also says plainly what orOS cannot protect.
+
 ## Version 6.67.00
 - **Share a form with a link.** In Forms open a form and `Share`: `Publish` gives a link, a QR code and a code to put the form on your website. People fill it in on a page that needs no orOS; their answers are locked in their browser so only your orOS can read them, and they show up in `Answers`. You can close the form, set when it opens and closes, allow one answer per browser and add a button to your page after sending. Waiting answers show in Today, as an orOS notice and, where it is on, as a push notice. See [Forms](app:forms).
 
