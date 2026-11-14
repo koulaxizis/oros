@@ -3837,7 +3837,13 @@
     var doc = null;
     ((src.full && src.full.docs) || []).forEach(function (d) { if (d.id === tg.docs[0].id) doc = d; });
     if (!doc) return Promise.resolve({ content: "Error: the " + C.EDIT_APP[n.app].noun + " could not be read from this device's disk yet (it may still be syncing).", err: 1, ui: { k: "editErr" } });
-    var o = mod.outline(doc, EDIT_SRC[n.app].style ? readStore(EDIT_SRC[n.app].style) : null), text = JSON.stringify(o);
+    var o = mod.outline(doc, EDIT_SRC[n.app].style ? readStore(EDIT_SRC[n.app].style) : null);
+    // WR-CAT T2: Writer's book translations (progress, as this device last saw it)
+    if (n.app === "writer" && o && typeof mod.translations === "function") {
+      var tr = mod.translations(readStore("oros-writer-tr-sum"), doc.id);
+      if (tr.length) { o.translations = tr; o.translations_note = "Book translations in Writer (Review › Translations), as last seen on this device; read only."; }
+    }
+    var text = JSON.stringify(o);
     var title = doc.name || t("ed.untitled");
     var okP = app.perm === "always" ? Promise.resolve(true) : askRead(title, app.name, text);
     return okP.then(function (ok) {

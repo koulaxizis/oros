@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.62.00
+- **Translation memory in Writer.** Every sentence you confirm in a book translation is kept in a memory for that language pair. When a new sentence is like one you translated before, the earlier translation appears under it with how close it is and what changed; an exact match fills an empty sentence as a draft. `Search the memory…` finds a word or phrase in all your earlier translations, and a sentence that comes again in the book fills itself when you confirm the first one. Memories import and export as TMX, the format other translation tools use. See [Writer](app:writer).
+
 ## Version 6.61.00
 - **Choose how long Transfer keeps your files in Dropbox.** With `Send through my Dropbox`, pick `Keep in Dropbox for` 4, 12, 24, 48, 60, 72, 84 or 96 hours. Longer than 4 hours needs one more Dropbox sign-in on each device, the first time. When the time is up, the link stops working and orOS deletes the files.
 

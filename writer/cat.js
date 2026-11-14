@@ -8,6 +8,10 @@
 //   - The translation screen: source and translation side by side per
 //     segment (one under the other on a phone), status per segment,
 //     progress, search, filter, chapters, Build document.
+//   - (T2) translation memory: matches under the open segment (100%
+//     fills an empty one as a draft), confirmed segments go into the
+//     project's memory, repetitions are translated once, concordance,
+//     memories with TMX in and out.
 // Everything shown from a project goes through textContent (the
 // segments are data). Writes go through catstore (own files only).
 // window.WriterCatHost (writer.js) is what it may use of Writer.
@@ -16,12 +20,12 @@
 (function () {
   "use strict";
 
-  var H = window.WriterCatHost, C = window.WriterCatCore, S = window.WriterCatStore;
-  if (!H || !C || !S) return;
+  var H = window.WriterCatHost, C = window.WriterCatCore, S = window.WriterCatStore, TM = window.WriterCatTM;
+  if (!H || !C || !S || !TM) return;
   var t = H.t;
 
   var DEV_KEY = "oros-writer-tr-dev", SUM_KEY = "oros-writer-tr-sum";
-  var SAVE_MS = 1200, POLL_MS = 15000;
+  var SAVE_MS = 1200, POLL_MS = 15000, TM_POLL = 4;     // memories: every 4th poll
 
   // ---------- device + store ----------
   function devId() {
@@ -45,9 +49,11 @@
     return store;
   }
   function sums() { try { var o = JSON.parse(localStorage.getItem(SUM_KEY) || "{}"); return o && typeof o === "object" ? o : {}; } catch (e) { return {}; } }
+  // [pct, words, name, from, to, source doc, done words, when]: the list's
+  // percentages and what the Assistant / orOS Gate read (this device)
   function saveSum(id, st) {
     var o = sums();
-    o[id] = [st.pct, st.words];
+    o[id] = [st.pct, st.words, V ? V.nameEl.textContent : "", V ? V.p.from : "", V ? V.p.to : "", V ? V.p.src : "", st.doneWords, Date.now()];
     try { localStorage.setItem(SUM_KEY, JSON.stringify(o)); } catch (e) {}
   }
 
@@ -230,7 +236,8 @@
     root.setAttribute("aria-label", t("cat.list"));
     V = { id: id, p: pr.p, src: pr.src, rows: pr.rows, meta: pr.meta, sig: pr.sig, root: root,
       pending: {}, saveTimer: null, poll: null, cur: -1, ta: null, rowsEl: [], filter: "all", q: "",
-      reps: C.repeats(pr.src), chaps: C.chapters(pr.src) };
+      reps: C.repeats(pr.src), chaps: C.chapters(pr.src), same: sameGroups(pr.src),
+      tm: { list: [], maps: {}, sigs: {}, index: null, local: {}, localIx: null, write: pr.meta.tm || "", pending: {}, timer: null, polls: 0, ready: false } };
     // header
     var head = el("div", "cat-head");
     head.appendChild(btn("tb-btn cat-back", "←", closeView, t("cat.back")));
@@ -288,6 +295,10 @@
         { label: t("cat.rename"), action: rename },
         { label: t("cat.nextTodo"), action: function () { nextTodo(V.cur); } },
         null,
+        { label: t("tm.concord"), action: function () { concord(""); } },
+        { label: t("tm.fill100"), action: fill100 },
+        { label: t("tm.manage"), action: manageMemories },
+        null,
         { label: t("cat.del"), action: delProject }
       ]);
     }, t("cat.more"));
@@ -333,6 +344,7 @@
     // the first segment still to do
     var first = firstTodo(-1);
     focusRow(first < 0 ? 0 : first, true);
+    loadMemories(V);
     V.poll = setInterval(poll, POLL_MS);
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("pagehide", flushNow);
@@ -445,10 +457,14 @@
     bar.appendChild(btn("fb-btn cat-rev", t("cat.reviewed"), function () { setStatus(i, C.ST_REVIEWED); next(i); }, t("cat.reviewedT")));
     bar.appendChild(btn("fb-btn primary cat-ok", t("cat.confirm"), function () { setStatus(i, C.ST_DONE); next(i); }, t("cat.confirmT")));
     box.appendChild(bar);
+    var mbox = el("div", "cat-tm");
+    box.appendChild(mbox);
     tg.appendChild(box);
     V.ta = ta;
     V.tagsBox = tagsBox;
+    V.tmBox = mbox;
     tagHints();
+    showMatches(i);
     grow(ta);
     if (!noScroll) r.scrollIntoView({ block: "nearest" });
     else r.scrollIntoView({ block: "center" });
@@ -459,6 +475,8 @@
     var i = V.cur, r = V.rowsEl[i];
     V.cur = -1;
     V.ta = null;
+    V.tmBox = null;
+    V.matches = [];
     if (r) { r.classList.remove("cat-cur"); paintRow(i); }
   }
   function grow(ta) { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight + 2, 400) + "px"; }
@@ -512,6 +530,9 @@
       var k = (e.code || "").replace(/^Key/, "");
       if (k === "S") { e.preventDefault(); copySource(); return; }
       if (k === "T") { e.preventDefault(); nextMissingTag(); return; }
+      if (k === "K") { e.preventDefault(); concord(selectedSource()); return; }
+      var dg = /^Digit([1-3])$/.exec(e.code || "");
+      if (dg && V.matches && V.matches[+dg[1] - 1]) { e.preventDefault(); useMatch(V.matches[+dg[1] - 1]); return; }
     }
   }
   function visible(i) { var r = V.rowsEl[i]; return r && !r.hidden; }
@@ -550,6 +571,25 @@
     var txt = text !== undefined ? text : (V.cur === i && V.ta ? V.ta.value : (rowOf(i) ? rowOf(i)[0] : ""));
     if (st >= C.ST_DONE && !txt.trim() && text === undefined) { H.toast(t("cat.emptyOk")); return; }
     changed(i, txt, st);
+    if (st >= C.ST_DONE && txt.trim()) { remember(i, txt); repeatTo(i, txt); }
+  }
+  // the same source elsewhere in the book, not started yet: translated once
+  function sameGroups(src) {
+    var by = {}, out = {};
+    src.segs.forEach(function (sg, i) { var k = sg.s.trim(); (by[k] = by[k] || []).push(i); });
+    Object.keys(by).forEach(function (k) { if (by[k].length > 1) by[k].forEach(function (i) { out[i] = by[k]; }); });
+    return out;
+  }
+  function repeatTo(i, txt) {
+    var g = V.same[i], n = 0;
+    if (!g) return;
+    g.forEach(function (j) {
+      var r = rowOf(j);
+      if (j === i || (r && (r[0].trim() || r[1] !== C.ST_NEW))) return;
+      changed(j, txt, C.ST_DONE);
+      n++;
+    });
+    if (n) H.toast(fmt("tm.repeated", { n: num(n) }));
   }
 
   // ---------- saving and other devices ----------
@@ -577,12 +617,13 @@
   function scheduleSaveLater(view) { setTimeout(function () { if (V === view) flushNow(); }, 10000); }
   function onVis() {
     if (!V) return;
-    if (document.visibilityState === "hidden") flushNow();
+    if (document.visibilityState === "hidden") { flushNow(); flushTm(V); }
     else poll();
   }
   function poll() {
     if (!V || document.visibilityState === "hidden") return;
     var view = V;
+    if (++V.tm.polls % TM_POLL === 0) pollMemories(view);
     getStore().sig(V.id).then(function (s) {
       if (V !== view || s === V.sig) return;
       return getStore().reload(V.id).then(function (x) {
@@ -620,6 +661,327 @@
       if (ok) shown++;
     });
     V.list.classList.toggle("cat-none", !shown);
+  }
+
+  // ---------- translation memory (T2) ----------
+  function loadMemories(view) {
+    var st = getStore();
+    st.listTms().then(function (list) {
+      if (V !== view) return;
+      view.tm.list = list;
+      if (view.tm.write && !list.some(function (m) { return m.id === view.tm.write; })) view.tm.write = "";
+      if (!view.tm.write && list.length) view.tm.write = list[0].id;
+      return Promise.all(list.map(function (m) {
+        return st.loadTm(m.id).then(function (r) { view.tm.maps[m.id] = r.units; view.tm.sigs[m.id] = r.sig; }, function (e) { console.warn("[writer] memory:", e); });
+      }));
+    }).then(function () {
+      if (V !== view) return;
+      rebuildIndex(view);
+      view.tm.ready = true;
+      if (view.cur >= 0) showMatches(view.cur, true);
+    }).catch(failed);
+  }
+  function rebuildIndex(view) {
+    var maps = view.tm.list.map(function (m) { return view.tm.maps[m.id] || {}; });
+    view.tm.index = new TM.Index(maps, view.p.from, view.p.to);
+    view.tm.localIx = new TM.Index([view.tm.local], view.p.from, view.p.to);
+  }
+  function pollMemories(view) {
+    var st = getStore();
+    st.listTms().then(function (list) {
+      if (V !== view) return;
+      var changedAny = list.length !== view.tm.list.length;
+      view.tm.list = list;
+      return Promise.all(list.map(function (m) {
+        return st.tmSig(m.id).then(function (sg) {
+          if (sg === view.tm.sigs[m.id]) return;
+          changedAny = true;
+          return st.loadTm(m.id).then(function (r) { view.tm.maps[m.id] = r.units; view.tm.sigs[m.id] = r.sig; });
+        });
+      })).then(function () { if (changedAny && V === view) rebuildIndex(view); });
+    }).catch(function () {});
+  }
+  // the best matches for segment i (memory and what was confirmed here)
+  function matchesFor(i) {
+    var tm = V.tm, q = V.src.segs[i].s, out = [], seen = {};
+    [tm.localIx, tm.index].forEach(function (ix) {
+      if (!ix) return;
+      ix.lookup(q, { max: 3 }).forEach(function (m) { if (!seen[m.key + "|" + m.tgt]) { seen[m.key + "|" + m.tgt] = 1; out.push(m); } });
+    });
+    out.sort(function (a, b) { return b.score - a.score || b.m - a.m; });
+    var tg = {};
+    return out.filter(function (m) { if (tg[m.tgt]) return false; tg[m.tgt] = 1; return true; }).slice(0, 3);
+  }
+  function showMatches(i, late) {
+    if (!V || V.cur !== i || !V.tmBox) return;
+    var box = V.tmBox;
+    box.textContent = "";
+    V.matches = [];
+    if (!V.tm.ready) { box.appendChild(el("div", "cat-muted", t("tm.loading"))); return; }
+    var ms = matchesFor(i);
+    V.matches = ms;
+    if (!ms.length) return;
+    // a 100% match fills an empty segment as a draft (never confirmed)
+    var row = rowOf(i);
+    if (ms[0].score === 100 && (!row || (!row[0].trim() && row[1] === C.ST_NEW)) && V.ta && !V.ta.value.trim()) {
+      V.ta.value = ms[0].tgt;
+      changed(i, ms[0].tgt, C.ST_DRAFT);
+      grow(V.ta);
+      tagHints();
+      box.appendChild(el("div", "cat-muted cat-tm-auto", t("tm.auto")));
+    }
+    ms.forEach(function (m, k) {
+      var it = el("div", "cat-tm-item");
+      var head = el("div", "cat-tm-head");
+      head.appendChild(el("span", "cat-tm-score cat-tm-s" + (m.score === 100 ? "100" : m.score >= 90 ? "90" : "70"), m.score + "%"));
+      var src = el("span", "cat-tm-src");
+      TM.diff(V.src.segs[i].s, m.src).forEach(function (d) {
+        if (d.op === -1) return;
+        src.appendChild(d.op === 1 ? el("mark", "cat-dx", d.t) : document.createTextNode(d.t));
+      });
+      src.setAttribute("lang", V.p.from || "");
+      head.appendChild(src);
+      it.appendChild(head);
+      var tgt = el("div", "cat-tm-tgt");
+      tgt.setAttribute("lang", V.p.to || "");
+      paint(tgt, m.tgt, i);
+      it.appendChild(tgt);
+      var use = btn("fb-btn cat-tm-use", t("tm.use"), function () { useMatch(m); }, fmt("tm.useT", { n: k + 1 }));
+      use.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      it.appendChild(use);
+      box.appendChild(it);
+    });
+  }
+  function useMatch(m) {
+    if (!V || V.cur < 0 || !V.ta) return;
+    V.ta.value = m.tgt;
+    changed(V.cur, m.tgt, null);
+    grow(V.ta);
+    tagHints();
+    V.ta.focus();
+  }
+  // a confirmed segment → the project's memory (saved a moment later)
+  function remember(i, txt) {
+    var tm = V.tm, src = V.src.segs[i].s, key = TM.keyOf(V.p.from, V.p.to, src);
+    if (!key) return;
+    var old = tm.local[key] || (tm.write && tm.maps[tm.write] ? tm.maps[tm.write][key] : null);
+    if (old && !old[3] && old[1] === txt) return;
+    var u = [src, txt, Math.max(Date.now(), old ? old[2] + 1 : 0), 0];
+    tm.local[key] = u;
+    tm.pending[key] = u;
+    tm.localIx = new TM.Index([tm.local], V.p.from, V.p.to);
+    clearTimeout(tm.timer);
+    var view = V;
+    tm.timer = setTimeout(function () { flushTm(view); }, 2000);
+  }
+  function flushTm(view) {
+    if (!view) return Promise.resolve();
+    var tm = view.tm, batch = tm.pending, st = getStore();
+    clearTimeout(tm.timer);
+    if (!Object.keys(batch).length) return Promise.resolve();
+    tm.pending = {};
+    var idP = tm.write ? Promise.resolve(tm.write) : st.createTm(t("tm.default")).then(function (m) {
+      tm.list.push(m);
+      tm.maps[m.id] = {};
+      tm.write = m.id;
+      return st.saveMeta(view.id, { tm: m.id }).then(function () { return m.id; });
+    });
+    return idP.then(function (id) {
+      return st.saveUnits(id, batch).then(function () {
+        var map = tm.maps[id] = tm.maps[id] || {};
+        Object.keys(batch).forEach(function (k) { map[k] = batch[k]; });
+        return st.tmSig(id).then(function (sg) { tm.sigs[id] = sg; });
+      });
+    }).catch(function (e) {
+      Object.keys(batch).forEach(function (k) { if (!tm.pending[k] || tm.pending[k][2] < batch[k][2]) tm.pending[k] = batch[k]; });
+      if (V === view) tm.timer = setTimeout(function () { flushTm(view); }, 10000);
+      failed(e);
+    });
+  }
+  // every empty segment with a 100% match → a draft
+  function fill100() {
+    if (!V.tm.ready) { H.toast(t("tm.loading")); return; }
+    var n = 0;
+    V.src.segs.forEach(function (sg, i) {
+      var r = rowOf(i);
+      if (i === V.cur || (r && (r[0].trim() || r[1] !== C.ST_NEW))) return;
+      var m = matchesFor(i)[0];
+      if (m && m.score === 100) { changed(i, m.tgt, C.ST_DRAFT); n++; }
+    });
+    H.toast(n ? fmt("tm.filled", { n: num(n) }) : t("tm.filledNone"));
+  }
+  function selectedSource() {
+    var sel = window.getSelection && String(window.getSelection() || "").trim();
+    if (sel) return sel.slice(0, 200);
+    if (V && V.ta && V.ta.selectionEnd > V.ta.selectionStart) return V.ta.value.slice(V.ta.selectionStart, V.ta.selectionEnd).slice(0, 200);
+    return "";
+  }
+  // concordance: where a phrase was translated before
+  function concord(q) {
+    if (!V) return;
+    var view = V;
+    var dlg = H.openDialog(t("tm.concord").replace(/…$/, ""), "", [{ class: "fb-btn", label: t("cat.close"), onClick: function () { dlg.close(); } }]);
+    dlg.classList.add("cat-dlg");
+    var body = dlg.querySelector(".w-dialog-body");
+    var inp = el("input", "w-field");
+    inp.type = "search";
+    inp.placeholder = t("tm.concordQ");
+    inp.setAttribute("aria-label", t("tm.concordQ"));
+    inp.value = q || "";
+    var list = el("div", "cat-conc");
+    body.appendChild(inp);
+    body.appendChild(list);
+    var tmr = null;
+    function run() {
+      list.textContent = "";
+      if (!view.tm.ready) { list.appendChild(el("p", "cat-muted", t("tm.loading"))); return; }
+      var v = inp.value.trim();
+      if (v.length < 2) return;
+      var seen = {}, res = [];
+      [view.tm.localIx, view.tm.index].forEach(function (ix) {
+        if (ix) ix.concord(v, { limit: 50 }).forEach(function (r) { if (!seen[r.key]) { seen[r.key] = 1; res.push(r); } });
+      });
+      res.sort(function (a, b) { return b.m - a.m; });
+      if (!res.length) { list.appendChild(el("p", "cat-muted", t("tm.concordNone"))); return; }
+      res.slice(0, 50).forEach(function (r) {
+        var it = el("div", "cat-conc-item");
+        var s = el("div", "cat-conc-src", r.src.replace(/\u27E6\/?\d+\/?\u27E7/g, ""));
+        s.setAttribute("lang", view.p.from || "");
+        var tg = el("div", "cat-conc-tgt", r.tgt.replace(/\u27E6\/?\d+\/?\u27E7/g, ""));
+        tg.setAttribute("lang", view.p.to || "");
+        it.appendChild(s);
+        it.appendChild(tg);
+        if (view.cur >= 0) it.appendChild(btn("fb-btn cat-conc-use", t("tm.insert"), function () {
+          dlg.close();
+          if (V !== view || !V.ta) return;
+          var ta = V.ta, a = ta.selectionStart, b = ta.selectionEnd, ins = r.tgt.replace(/\u27E6\/?\d+\/?\u27E7/g, "");
+          ta.value = ta.value.slice(0, a) + ins + ta.value.slice(b);
+          ta.setSelectionRange(a + ins.length, a + ins.length);
+          changed(V.cur, ta.value, null);
+          grow(ta);
+          tagHints();
+          ta.focus();
+        }));
+        list.appendChild(it);
+      });
+    }
+    inp.addEventListener("input", function () { clearTimeout(tmr); tmr = setTimeout(run, 200); });
+    run();
+    setTimeout(function () { inp.focus(); }, 0);
+  }
+  // Translation memories: which one this project writes to, new,
+  // rename, TMX in and out, delete
+  function manageMemories() {
+    if (!V) return;
+    var view = V, st = getStore();
+    var dlg = H.openDialog(t("tm.manage").replace(/…$/, ""), "", [
+      { class: "fb-btn", label: t("cat.close"), onClick: function () { dlg.close(); } },
+      { class: "fb-btn primary", label: t("tm.new"), onClick: function () {
+        H.wPrompt(t("tm.new"), "").then(function (nm) {
+          if (!nm) return;
+          st.createTm(nm).then(function (m) { view.tm.list.push(m); view.tm.maps[m.id] = {}; draw(); }, failed);
+        });
+      } }
+    ]);
+    dlg.classList.add("cat-dlg");
+    var body = dlg.querySelector(".w-dialog-body");
+    function draw() {
+      body.textContent = "";
+      body.appendChild(el("p", "cat-muted", fmt("tm.pairNote", { from: langName(view.p.from), to: langName(view.p.to) })));
+      if (!view.tm.list.length) { body.appendChild(el("p", "cat-muted", t("tm.none"))); }
+      var ul = el("ul", "cat-plist");
+      view.tm.list.forEach(function (m) {
+        var li = el("li", "cat-pitem cat-tmitem");
+        var lab = el("label", "cat-tmpick");
+        var r = el("input");
+        r.type = "radio";
+        r.name = "cat-tm-write";
+        r.checked = view.tm.write === m.id;
+        r.addEventListener("change", function () {
+          if (!r.checked) return;
+          flushTm(view).then(function () {
+            view.tm.write = m.id;
+            st.saveMeta(view.id, { tm: m.id }).catch(failed);
+          });
+        });
+        lab.appendChild(r);
+        var txt = el("span", "cat-tmtext");
+        txt.appendChild(el("span", "cat-pname", m.name || t("tm.untitled")));
+        var c = TM.count(view.tm.maps[m.id] || {});
+        txt.appendChild(el("span", "cat-pmeta", fmt("tm.count", { n: num(c.all) }) + (view.tm.write === m.id ? " · " + t("tm.writes") : "")));
+        lab.appendChild(txt);
+        li.appendChild(lab);
+        var more = btn("tb-btn cat-tmmore", "⋯", function () {
+          H.openMenu(more, [
+            { label: t("cat.rename"), action: function () {
+              H.wPrompt(t("cat.rename"), m.name).then(function (nm) {
+                if (!nm) return;
+                st.renameTm(m.id, nm).then(function () { m.name = nm; draw(); }, failed);
+              });
+            } },
+            { label: t("tm.import"), action: function () { importTmx(m); } },
+            { label: t("tm.export"), action: function () { exportTmx(m); } },
+            null,
+            { label: t("cat.del"), action: function () {
+              H.wConfirm(fmt("tm.delAsk", { name: m.name || t("tm.untitled") }), { danger: true, ok: t("cat.del") }).then(function (yes) {
+                if (!yes) return;
+                (view.tm.write === m.id ? flushTm(view) : Promise.resolve()).then(function () { return st.trashTm(m.id); }).then(function () {
+                  view.tm.list = view.tm.list.filter(function (x) { return x !== m; });
+                  delete view.tm.maps[m.id];
+                  if (view.tm.write === m.id) { view.tm.write = view.tm.list.length ? view.tm.list[0].id : ""; if (view.tm.write) st.saveMeta(view.id, { tm: view.tm.write }).catch(failed); }
+                  rebuildIndex(view);
+                  H.toast(t("cat.deleted"));
+                  draw();
+                }, failed);
+              });
+            } }
+          ]);
+        }, t("cat.more"));
+        more.setAttribute("aria-haspopup", "menu");
+        li.appendChild(more);
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    }
+    function importTmx(m) {
+      H.openFile(".tmx,.xml").then(function (f) {
+        if (!f) return;
+        if (f.size > 64 * 1024 * 1024) { H.toast(t("tm.tooBig")); return; }
+        H.toast(t("cat.loading"));
+        return f.text().then(function (text) {
+          var r = TM.parseTmx(text);
+          if (r.err) { H.toast(t("tm.badTmx")); return; }
+          var cur = view.tm.maps[m.id] || {}, add = {}, n = 0;
+          r.units.forEach(function (u) {
+            var k = TM.keyOf(u.from, u.to, u.src);
+            if (!k) return;
+            var old = cur[k] || add[k];
+            if (old && old[2] >= u.m) return;        // a newer one here stays
+            add[k] = [u.src, u.tgt, u.m, 0];
+            n++;
+          });
+          return st.saveUnits(m.id, add).then(function () {
+            Object.keys(add).forEach(function (k) { cur[k] = add[k]; });
+            view.tm.maps[m.id] = cur;
+            return st.tmSig(m.id).then(function (sg) { view.tm.sigs[m.id] = sg; });
+          }).then(function () {
+            rebuildIndex(view);
+            H.toast(fmt("tm.imported", { n: num(n), s: num(r.skipped + (r.units.length - n)) }));
+            draw();
+            if (V === view && view.cur >= 0) showMatches(view.cur);
+          });
+        });
+      }).catch(failed);
+    }
+    function exportTmx(m) {
+      flushTm(view).then(function () {
+        var units = TM.unitsOf(view.tm.maps[m.id] || {});
+        if (!units.length) { H.toast(t("tm.emptyMem")); return; }
+        var nm = String(m.name || "memory").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").trim().slice(0, 80) || "memory";
+        return H.saveText(TM.tmx(units, { name: m.name }), nm + ".tmx", "application/x-tmx+xml");
+      }).catch(failed);
+    }
+    draw();
   }
 
   // ---------- Build document ----------
@@ -673,6 +1035,7 @@
     var view = V;
     if (V.ta) { var v = V.ta.value, i = V.cur; var old = rowOf(i); if (!old || old[0] !== v) changed(i, v, null); }
     flushNow();
+    flushTm(view);
     clearInterval(view.poll);
     document.removeEventListener("visibilitychange", onVis);
     window.removeEventListener("pagehide", flushNow);
