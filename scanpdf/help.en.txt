@@ -1,5 +1,5 @@
 # Scanner & PDF
-Scan paper pages with the camera, put PDFs together, take them apart and set their pages in order, sign them, write and draw on them, number their pages, make them smaller, read the text of scanned pages so the PDF can be searched, and make a PDF from pictures. Everything happens on your device: nothing is uploaded, and your own files are never changed.
+Scan paper pages with the camera, put PDFs together, take them apart and set their pages in order, sign them, write and draw on them, number their pages, make them smaller, read the text of scanned pages so the PDF can be searched, make a PDF from pictures, and ask someone else to sign a PDF. Everything happens on your device: nothing is uploaded unless you ask someone to sign (then the PDF travels encrypted), and your own files are never changed.
 
 ## Getting started
 1. Drop PDFs or pictures on the app, or press `Add PDFs or pictures`.
@@ -76,6 +76,19 @@ With a shape or drawing chosen, the bar above the page sets its colour (black, b
 Shapes and drawings go into the PDF as sharp lines that stay clear at any zoom.
 A cover only hides what is under it: the page beneath is still in the PDF, and its text can still be selected and copied. To remove it for good, save with `Make it smaller` (the pages become pictures), in a document whose text you have not had read with `Make it searchable` (text read from a page is kept under it).
 
+## Asking someone to sign
+Send a PDF to someone for their signature, like DocuSign, with nothing to install and no account for them or you.
+1. Put the pages in the list. Open a page with its pen button, press `Fields` and choose what the other person fills in: `Signature`, `Initials`, `Name`, `Date`, `Text` or `Tick`. Drag each box into place and drag its corner to size it. `Must be filled` turns a box optional or required; `Put on every page` puts initials on each page.
+2. Press `Ask to sign` under the pages. Write their name (and email if you like), your name, a message, and how long the link works: 1, 7 or 30 days. With no `Signature` box on the pages, one is put at the bottom of the last page.
+3. `Lock it with an access code` asks for a code before the document opens. Tell them the code another way (by phone, in a message), so the link alone is not enough.
+4. Press `Send`. The PDF goes to the orOS server encrypted (only the link has the key) and you get the link: copy it, email it or share it. The original is kept in Files › PDF › Signatures.
+The other person opens the link in any browser. They read the pages, fill the yellow boxes, agree to sign electronically and press `Sign` (or `Decline`, with a reason). Their signed copy downloads at once, and they get an answer link to send back to you.
+When the answer comes, open its link, or paste it in `Signature requests` (the signature button at the top) › `Add the answer`. orOS makes the signed PDF from your own original, so the pages are exactly the ones you sent, and saves it in Files › PDF › Signatures. It is the same file the signer kept. The request then leaves the orOS server.
+`Signature requests` lists every request with its state: waiting (until when), signed, declined, taken back or expired. `Copy link` gives the link again; `Take back` removes it from the server so it no longer opens. The list syncs with your other devices.
+The signed PDF ends with a certificate page (in English and Greek): the document and its SHA-256 fingerprint, who sent it and to whom, the name the signer typed, how they were identified (the link, and the access code), when it was opened, agreed and signed, their time zone and browser. The full record is attached inside the PDF as `signing-record.json`. `Check a signed PDF` tells whether a PDF is one of your signed copies, unchanged, or the original you sent.
+This is a simple electronic signature under the EU eIDAS rules: it counts as evidence and cannot be refused just for being electronic, but it is not an advanced or qualified signature. Where the law asks for a qualified signature (some contracts, public services), use a qualified provider. Times come from each person's device.
+The answer stays on the orOS server for 30 days; open it before then. A PDF can be up to 24 MB to send.
+
 ## Page numbers, watermark and details
 The `Options` button at the bottom sets what goes on every page of the PDFs you save or split:
 - `Page numbers`: where (bottom or top, left, centre or right), the style (3 or 3 / 12) and the first number. Each part of a split is numbered on its own.
@@ -143,7 +156,7 @@ In the scanner:
 While text is read, [[Esc]] stops it.
 
 ## Privacy and sync
-Everything happens on your device; no file is sent anywhere. The app keeps no data of its own and has nothing to sync: PDFs you save into Files are synced like the rest of Files when Vault Drive is on. Only your choices (picture pages, where to save, how much smaller, Auto in the scanner, the reading language, Make it searchable), the list of saved PDFs for search and the signatures you keep are kept, on this device. Signatures are never synced, on purpose: they stay on the device where you made them.
+Everything happens on your device; no file is sent anywhere, except a PDF you ask someone to sign, which goes to the orOS server encrypted with a key that only the link holds, and leaves it when it expires, when you take it back or when the answer comes. The list of signature requests syncs with your other devices (encrypted, like all orOS sync). Otherwise the app has nothing to sync: PDFs you save into Files are synced like the rest of Files when Vault Drive is on. Only your choices (picture pages, where to save, how much smaller, Auto in the scanner, the reading language, Make it searchable), the list of saved PDFs for search and the signatures you keep are kept, on this device. Signatures are never synced, on purpose: they stay on the device where you made them.
 
 ## Limits
 - PDFs locked with a password can't be changed: their pages can't be copied without it.

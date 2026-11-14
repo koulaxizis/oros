@@ -23,7 +23,8 @@
 // Deep link: __orosOpenAt("library", { book, loc? }) opens a book
 // (at loc or where you stopped); { openFile: { token } } takes a
 // file handed over by the shell (BR-FILE-OPEN); { path } opens a
-// book file of the orOS disk.
+// book file of the orOS disk; { preview: { path } } shows an EPUB of
+// /internal/Layout/EPUB/ without adding it (Layout's EPUB export).
 // ============================================================
 (function () {
   "use strict";
@@ -549,7 +550,16 @@
       return;
     }
     if (typeof target.path === "string" && /^\/internal\/./.test(target.path)) LIB.home.openPath(target.path);
+    // Layout's EPUB export (LY-EPUB): read it without adding it; the
+    // reader keeps no place, marks or time until "Add to Library"
+    var pv = target.preview;
+    if (pv && typeof pv === "object" && typeof pv.path === "string" && PREVIEW_RE.test(pv.path)) LIB.preview(pv.path);
   }
+  var PREVIEW_RE = /^\/internal\/Layout\/EPUB\/[^/]{1,200}\.epub$/;
+  LIB.preview = function (path) {
+    var name = path.split("/").pop().replace(/\.epub$/i, "");
+    LIB.reader.open({ id: "preview", fmt: "epub", title: name, preview: true }, path, null);
+  };
   window.__orosOpenAt = function (target) { openTarget(target); };
 
   // Opens a book by id: the reader if the file is here, else the

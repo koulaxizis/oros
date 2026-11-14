@@ -29,6 +29,16 @@
     $("rd-back").innerHTML = UI.back;
     label($("rd-back"), t("rd.back"));
     $("rd-back").addEventListener("click", function () { close(false); });
+    // short on the bar (a phone has little room), whole as its name
+    $("rd-keep").textContent = t("rd.keepShort");
+    $("rd-keep").title = t("rd.keep");
+    $("rd-keep").setAttribute("aria-label", t("rd.keep"));
+    $("rd-keep").addEventListener("click", function () {
+      if (!cur || !cur.book.preview) return;
+      var path = cur.path;
+      close(true);
+      LIB.home.openPath(path);
+    });
     [["rd-search", UI.search, "rd.search", function () { panel("search"); }],
      ["rd-toc", UI.toc, "rd.toc", function () { panel("toc"); }],
      ["rd-notes", UI.notes, "rd.notes", function () { panel("notes"); }],
@@ -87,15 +97,19 @@
       $("home").hidden = true;
       $("reader").hidden = false;
       document.body.classList.add("reading");
-      $("rd-title").textContent = book.title;
+      $("rd-title").textContent = book.preview ? t("rd.preview", { t: book.title }) : book.title;
+      // a preview (Layout's EPUB, { preview }): nothing is kept until it is added
+      $("rd-keep").hidden = !book.preview;
       var saved = LIB.data.pos[book.id] && LIB.data.pos[book.id].loc;
       var start = loc || saved || null;
       c.keep = saved && (!loc || loc === saved) ? saved : null;
       return c.engine.open(bytes, start, C.kindOf(path), path).then(function (info) {
         if (cur !== c) return;
         c.toc = info && info.toc || [];
+        // a preview shows the title of the book, not of its file
+        if (book.preview && info && info.title) { book.title = info.title; $("rd-title").textContent = t("rd.preview", { t: info.title }); }
         // books added before page estimates: fill them in once
-        if (info && info.pages && !book.pages && book.fmt === "epub") {
+        if (info && info.pages && !book.pages && book.fmt === "epub" && !book.preview) {
           c.book = LIB.putBook({ id: book.id, pages: info.pages }) || c.book;
         }
         c.ready = true;
@@ -144,6 +158,7 @@
         if (c.keep && c.ready && !keptVisible(c)) c.keep = null;
         bars();
         hidePop();
+        if (c.book.preview) return;
         clearTimeout(c.saveTimer);
         c.saveTimer = setTimeout(flush, SAVE_MS);
         if (h.pct >= 999 && !c.book.fin && !c.askedFin) {
@@ -176,7 +191,7 @@
   // layout changed) it is kept: another device's screen starts its page
   // elsewhere, and re-saving that would move the place for nothing.
   function flush() {
-    if (!cur || !cur.here) return;
+    if (!cur || !cur.here || cur.book.preview) return;
     clearTimeout(cur.saveTimer);
     cur.saveTimer = null;
     if (cur.keep && keptVisible(cur)) return;
@@ -197,6 +212,7 @@
     if (cur.secs >= 60) flushTime(true);
   }
   function flushTime(force) {
+    if (cur && cur.book.preview) cur.secs = 0;
     if (!cur || !cur.secs || (!force && cur.secs < 60)) return;
     var s = cur.secs;
     cur.secs = 0;
@@ -231,6 +247,7 @@
   }
   function toggleBookmark() {
     if (!cur || !cur.here) return;
+    if (cur.book.preview) { LIB.toast(t("rd.previewKeep")); return; }
     var bm = currentBookmark();
     if (bm) { LIB.delMark(bm.id); bars(); return; }
     var h = cur.here;
@@ -289,6 +306,7 @@
     var s = cur.engine.selection();
     hideSel();
     if (!s) return;
+    if (cur.book.preview) { cur.engine.clearSel(); LIB.toast(t("rd.previewKeep")); return; }
     var k = LIB.putMark({ b: cur.book.id, k: "hl", loc: s.loc, end: s.end, q: s.q, pre: s.pre, suf: s.suf, c: color,
                           lbl: s.label || "", pct: cur.here ? cur.here.pct : 0 });
     cur.engine.clearSel();

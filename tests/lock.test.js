@@ -163,3 +163,43 @@ test("checkPassphrase: an empty cloud or no connection cannot tell (null)", asyn
   C.sync.forgetPassphrase();
   assert.equal(await C.sync.checkPassphrase("anything"), null);
 });
+
+// Sensitive work (STRICT, oros-strict): the record, the limits each
+// level puts on the lock, and the hooks that read it.
+test("sensitive work: the record is read defensively", () => {
+  const rec = { v: 1, level: "hard", at: 5, prev: { idle: 10, hidden: false, push: true } };
+  assert.deepEqual(L.parseStrict(JSON.stringify(rec)), rec);
+  assert.equal(L.parseStrict(null), null);
+  assert.equal(L.parseStrict("{"), null);
+  assert.equal(L.parseStrict(JSON.stringify({ v: 1, level: "max" })), null);
+  assert.equal(L.parseStrict(JSON.stringify({ v: 2, level: "on" })), null);
+  const odd = L.parseStrict(JSON.stringify({ v: 1, level: "on", prev: { idle: 7, hidden: "yes", push: 1 } }));
+  assert.deepEqual(odd.prev, { idle: L.DEFAULT_IDLE, hidden: false, push: false });
+});
+
+test("sensitive work: Normal caps the lock at 2 min, Hardcore at 1, both lock on leaving", () => {
+  const c = { v: 1, kind: "pin", idle: 0, hidden: false };
+  assert.deepEqual([L.clampCfg(c, "on").idle, L.clampCfg(c, "on").hidden], [2, true]);
+  assert.equal(L.clampCfg(c, "hard").idle, 1);
+  assert.equal(c.idle, 0, "the stored object is not changed");
+  const tight = { v: 1, kind: "pass", idle: 1, hidden: true };
+  assert.equal(L.clampCfg(tight, "on"), tight, "already within the limits");
+  assert.equal(L.clampCfg(c, null), c);
+  assert.equal(L.loosens("on", "idle", 0), true);
+  assert.equal(L.loosens("on", "idle", 5), true);
+  assert.equal(L.loosens("on", "idle", 1), false);
+  assert.equal(L.loosens("hard", "idle", 2), true);
+  assert.equal(L.loosens("on", "hidden", false), true);
+  assert.equal(L.loosens(null, "idle", 60), false);
+  assert.equal(L.strictCaps("hard").pass, true);
+  assert.equal(L.strictCaps("on").pass, false);
+  assert.equal(L.strictCaps("hard").bio, false);
+});
+
+test("sensitive work: sync, push, link details and the worker read the same key", () => {
+  assert.match(read("sync.js"), /oros-strict/);
+  assert.match(read("webpush.js"), /oros-strict/);
+  assert.match(read("feeds/fetch.js"), /oros-strict/);
+  assert.match(read("sw.js"), /"oros-strict"/);
+  assert.match(read("shell.js"), /t: "oros-strict"/);
+});

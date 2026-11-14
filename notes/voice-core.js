@@ -183,13 +183,92 @@
   }
   function sizeAt(ms) { return Math.round(BITS / 8 * (ms / 1000)); }
 
+  // ---------- V2: trim and transcription ----------
+  var MIN_TRIM_MS = 500;
+  // A trim range kept inside the sound and at least half a second long.
+  function clampTrim(a, b, dur) {
+    dur = Math.max(0, +dur || 0);
+    a = Math.max(0, Math.min(+a || 0, dur));
+    b = Math.max(0, Math.min(b == null ? dur : +b, dur));
+    if (b < a) { var x = a; a = b; b = x; }
+    if (b - a < MIN_TRIM_MS) {
+      b = Math.min(dur, a + MIN_TRIM_MS);
+      a = Math.max(0, b - MIN_TRIM_MS);
+    }
+    return { a: Math.round(a), b: Math.round(b) };
+  }
+  // Mono samples → a 16-bit PCM WAV file (where no Opus encoder exists).
+  function wav16(samples, rate) {
+    var n = samples.length, buf = new Uint8Array(44 + n * 2), dv = new DataView(buf.buffer);
+    function str(o, s) { for (var i = 0; i < s.length; i++) buf[o + i] = s.charCodeAt(i); }
+    str(0, "RIFF"); dv.setUint32(4, 36 + n * 2, true); str(8, "WAVE");
+    str(12, "fmt "); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+    dv.setUint32(24, rate, true); dv.setUint32(28, rate * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+    str(36, "data"); dv.setUint32(40, n * 2, true);
+    for (var i = 0; i < n; i++) {
+      var v = Math.max(-1, Math.min(1, samples[i] || 0));
+      dv.setInt16(44 + i * 2, v < 0 ? Math.round(v * 32768) : Math.round(v * 32767), true);
+    }
+    return buf;
+  }
+  // Peaks for a waveform: `cols` values 0..1 (the largest |sample| per column).
+  function peaks(samples, cols) {
+    var n = samples.length, out = new Array(Math.max(1, cols | 0)), step = n / out.length;
+    for (var c = 0; c < out.length; c++) {
+      var a = Math.floor(c * step), b = Math.max(a + 1, Math.floor((c + 1) * step)), m = 0;
+      for (var i = a; i < b && i < n; i++) { var v = Math.abs(samples[i]); if (v > m) m = v; }
+      out[c] = Math.min(1, m);
+    }
+    return out;
+  }
+  // Whisper cues → page text: one paragraph per stretch of speech; a
+  // pause of PARA_GAP s or more starts a new one. Lines that would read
+  // as Markdown blocks or as a voice line are kept as text (escaped).
+  var PARA_GAP = 2;
+  function safeLine(s) {
+    s = String(s || "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+    if (/^(#{1,6}\s|>|[-*+]\s|\d{1,9}[.)]\s|```|~~~|\||[-*_=]{3,})/.test(s) || s.indexOf(MARK) === 0) s = "\\" + s;
+    return s;
+  }
+  function transcriptText(cues) {
+    var paras = [], cur = [], last = null;
+    (cues || []).forEach(function (c) {
+      var tx = String(c && c.text || "").replace(/\s+/g, " ").trim();
+      if (!tx) return;
+      if (last !== null && +c.start - last >= PARA_GAP && cur.length) { paras.push(cur.join(" ")); cur = []; }
+      cur.push(tx);
+      last = +c.end || +c.start || 0;
+    });
+    if (cur.length) paras.push(cur.join(" "));
+    return paras.map(safeLine).filter(Boolean).join("\n\n");
+  }
+  // The text with `block` put right after the (first) line of `name`,
+  // a blank line before and after. Null when the page has no such line.
+  function insertAfter(text, name, block) {
+    var lines = String(text || "").replace(/\r\n?/g, "\n").split("\n"), at = -1;
+    scan(text, function (v, i) { if (at === -1 && v.name === name) at = i; });
+    if (at === -1) return null;
+    var before = lines.slice(0, at + 1), after = lines.slice(at + 1);
+    while (after.length && after[0] === "") after.shift();
+    var out = before.concat([""], String(block).split("\n"));
+    if (after.length) out = out.concat([""], after);
+    return out.join("\n");
+  }
+  // A Whisper language from the orOS language ("el-GR" → "el"), or auto.
+  function asrLang(code) {
+    var c = String(code || "").toLowerCase().slice(0, 2);
+    return /^[a-z]{2}$/.test(c) ? c : "auto";
+  }
+
   var api = {
     DIR: DIR, EXTS: EXTS, MARK: MARK, MAX_MS: MAX_MS, CHUNK_MS: CHUNK_MS, BITS: BITS, BIG_MS: BIG_MS, UNUSED_AGE: UNUSED_AGE,
     isName: isName, extOf: extOf, mimeOf: mimeOf, pathOf: pathOf, timeOf: timeOf,
     fileName: fileName, freeName: freeName, fmtDur: fmtDur, parseDur: parseDur,
     lineFor: lineFor, voiceLine: voiceLine, listIn: listIn, insertLine: insertLine,
     removeFrom: removeFrom, replaceIn: replaceIn, unused: unused,
-    pickMime: pickMime, extForMime: extForMime, sizeAt: sizeAt
+    pickMime: pickMime, extForMime: extForMime, sizeAt: sizeAt,
+    MIN_TRIM_MS: MIN_TRIM_MS, PARA_GAP: PARA_GAP, clampTrim: clampTrim, wav16: wav16, peaks: peaks,
+    transcriptText: transcriptText, insertAfter: insertAfter, asrLang: asrLang
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.OrosNotesVoice = api;

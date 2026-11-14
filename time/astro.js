@@ -52,7 +52,7 @@
       "ph.3": "Waxing gibbous", "ph.4": "Full moon", "ph.5": "Waning gibbous",
       "ph.6": "Last quarter", "ph.7": "Waning crescent",
       "u.days": "d",
-      "astro.more": "More in Moon & Sky"
+      "astro.more": "More in Weather"
     },
     el: {
       "astro.title": "Ήλιος & Σελήνη",
@@ -87,7 +87,7 @@
       "ph.3": "Αύξουσα αμφίκυρτη", "ph.4": "Πανσέληνος", "ph.5": "Φθίνουσα αμφίκυρτη",
       "ph.6": "Τελευταίο τέταρτο", "ph.7": "Φθίνουσα ημισέληνος",
       "u.days": "ημ.",
-      "astro.more": "Περισσότερα στο Σελήνη & Ουρανός"
+      "astro.more": "Περισσότερα στον Καιρό"
     }
   };
   if (window.orosI18n) window.orosI18n.table(STR, "time", LANG);
@@ -373,8 +373,9 @@
     if (skyBtn) skyBtn.addEventListener("click", openSky);
   }
 
-  // Moon & Sky (sky/) is the full version of this card: same location,
-  // more detail. It opens on tonight.
+  // Weather's Sky tonight tab (was the Moon & Sky app; the old id "sky"
+  // is an alias that opens it) is the full version of this card. It
+  // opens on tonight.
   function openSky() {
     try {
       var p = window.parent;
