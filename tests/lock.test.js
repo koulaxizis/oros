@@ -203,3 +203,22 @@ test("sensitive work: sync, push, link details and the worker read the same key"
   assert.match(read("sw.js"), /"oros-strict"/);
   assert.match(read("shell.js"), /t: "oros-strict"/);
 });
+
+test("sensitive work: the duress record is read defensively", () => {
+  const d = { v: 1, kind: "pin", salt: "c2FsdA==", hash: "aGFzaA==", i: 600000, cloud: true };
+  assert.deepEqual(L.parseDuress(JSON.stringify(d)), d);
+  assert.equal(L.parseDuress(JSON.stringify(Object.assign({}, d, { cloud: "yes" }))).cloud, false, "cloud wipe only on true");
+  assert.equal(L.parseDuress(null), null);
+  assert.equal(L.parseDuress("{"), null);
+  assert.equal(L.parseDuress(JSON.stringify(Object.assign({}, d, { kind: "face" }))), null);
+  assert.equal(L.parseDuress(JSON.stringify(Object.assign({}, d, { i: 1e9 }))), null);
+  assert.equal(L.parseDuress(JSON.stringify(Object.assign({}, d, { hash: "" }))), null);
+});
+
+test("sensitive work: panic lock reaches app frames, duress goes through the reset paths", () => {
+  const sh = read("shell.js");
+  assert.match(sh, /function strictPanicKey/);
+  assert.match(sh, /w\.addEventListener\("keydown", function \(e\) \{\s*strictPanicKey\(e\);/);
+  assert.match(sh, /duress: strictDuress/);
+  assert.match(sh, /scFactoryReset\(btn, "follow"\)/);
+});

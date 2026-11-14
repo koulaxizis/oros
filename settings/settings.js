@@ -2281,7 +2281,7 @@
       var code = (r && r.code) || "crypto";
       lk.cur = "";
       if (code === "wait") lockMsg("err", "l.msg.wait", { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) });
-      else lockMsg("err", "l.msg." + (/^(wrong|pin|short|long|storage|busy|strict|strict-pass)$/.test(code) ? code : "crypto"));
+      else lockMsg("err", "l.msg." + (/^(wrong|pin|short|long|storage|busy|strict|strict-pass|duress)$/.test(code) ? code : "crypto"));
     }
     render();
   }
@@ -2508,7 +2508,7 @@
   // turning it off asks for the lock's PIN or passphrase and brings the
   // earlier lock times and push back. The typed secret stays in `sv.cur`
   // only until it is handed over.
-  var sv = { level: "on", off: false, cur: "", msg: null, gateMsg: null };
+  var sv = { level: "on", off: false, cur: "", msg: null, gateMsg: null, dz: false, dzCur: "", dzA: "", dzB: "", dzCloud: false, dzMsg: null };
   var SV_ITEMS = ["lock", "lockPass", "lockTimes", "remember", "push", "bio", "davRelay", "backup", "passLen", "worker"];
 
   function strictApi() {
@@ -2654,6 +2654,8 @@
     if (sv.msg) c1.appendChild(el("p", "msg msg-" + sv.msg.kind, t(sv.msg.key, sv.msg.vars)));
     host.appendChild(c1);
 
+    if (cur) secSensitiveMore(host, S, L, k);
+
     // SOS (window.orosSOS): only when this orOS has it.
     if (typeof S.sosAvailable === "function" && S.sosAvailable()) {
       var c2 = card(t("sv.sos"));
@@ -2689,6 +2691,102 @@
     c3.appendChild(el("p", "hint", t("sv.honest")));
     c3.appendChild(actions(button(t("sv.help"), "sv-help", function () { openHelpTopic("sensitive"); })));
     host.appendChild(c3);
+  }
+
+  // Panic lock, duress PIN and the discreet tab (STRICT-2), while the
+  // mode is on. Typed secrets stay in `sv` only until handed over.
+  function svField(key, label, kind) {
+    var wrap = el("div", "dav-field");
+    var lab = el("label", "row-label", label);
+    lab.htmlFor = "f-sv-" + key;
+    wrap.appendChild(lab);
+    var inp = el("input");
+    inp.id = "f-sv-" + key;
+    inp.type = "password";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    inp.setAttribute("autocapitalize", "off");
+    if (kind === "pin") { inp.inputMode = "numeric"; inp.maxLength = 12; inp.setAttribute("pattern", "[0-9]*"); }
+    else inp.maxLength = 256;
+    inp.value = sv[key];
+    inp.setAttribute("data-k", "sv-" + key);
+    inp.addEventListener("input", function () { sv[key] = inp.value; });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+  function secSensitiveMore(host, S, L, k) {
+    var kind = k.kind || "pin";
+    var cp = card(t("sv.panic"));
+    cp.appendChild(el("p", "hint", t("sv.panic.text")));
+    cp.appendChild(actions(button(t("l.lockNow"), "sv-lock", function () { L.lock(); }, "primary")));
+    host.appendChild(cp);
+
+    if (S.duress && typeof S.duress.state === "function") {
+      var ds = S.duress.state();
+      var cd = card(t("sv.dz"));
+      cd.appendChild(el("p", "hint", t(kind === "pass" ? "sv.dz.textPass" : "sv.dz.text")));
+      var sr = row(t("sv.status"), null);
+      sr.appendChild(el("div", "version", t(!ds.on ? "sv.dz.off" : ds.cloud ? "sv.dz.onCloud" : "sv.dz.onDevice")));
+      cd.appendChild(sr);
+      if (sv.dz) {
+        var form = el("form", "pass dav-form");
+        form.setAttribute("autocomplete", "off");
+        form.appendChild(svField("dzCur", t("l.current." + kind), kind));
+        form.appendChild(svField("dzA", t(kind === "pass" ? "sv.dz.newPass" : "sv.dz.newPin"), kind));
+        form.appendChild(svField("dzB", t("l.again"), kind));
+        var cr = el("label", "sv-check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = sv.dzCloud;
+        cb.setAttribute("data-k", "sv-dz-cloud");
+        cb.addEventListener("change", function () { sv.dzCloud = cb.checked; render(); });
+        cr.appendChild(cb);
+        cr.appendChild(el("span", null, t("sv.dz.cloud")));
+        form.appendChild(cr);
+        form.appendChild(el("p", "hint" + (sv.dzCloud ? " warn" : ""), t(sv.dzCloud ? "sv.dz.cloud.warn" : "sv.dz.device")));
+        var go = el("button", "btn danger", t("sv.dz.save"));
+        go.type = "submit";
+        go.setAttribute("data-k", "sv-dz-go");
+        if (k.busy) go.disabled = true;
+        form.appendChild(actions(go, button(t("l.cancel"), "sv-dz-cancel", function () {
+          sv.dz = false; sv.dzCur = sv.dzA = sv.dzB = ""; sv.dzMsg = null; render();
+        })));
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (strictApi() !== S || L.snapshot().busy) return;
+          if (sv.dzA !== sv.dzB) { sv.dzB = ""; sv.dzMsg = { kind: "err", key: "l.msg.mismatch" }; render(); return; }
+          var cur2 = sv.dzCur, a = sv.dzA, cloud = sv.dzCloud;
+          sv.dzCur = sv.dzA = sv.dzB = "";
+          sv.dzMsg = { kind: "dim", key: "l.msg.working" };
+          render();
+          S.duress.set(cur2, a, cloud).then(function (r) {
+            if (r && r.ok) { sv.dz = false; sv.dzMsg = { kind: "ok", key: cloud ? "sv.dz.doneCloud" : "sv.dz.done" }; }
+            else if (r && r.code === "wait") sv.dzMsg = { kind: "err", key: "l.msg.wait", vars: { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) } };
+            else if (r && r.code === "same") sv.dzMsg = { kind: "err", key: "sv.dz.same" };
+            else sv.dzMsg = { kind: "err", key: "l.msg." + (/^(wrong|pin|short|long|storage|busy)$/.test(r && r.code) ? r.code : "crypto") };
+            render();
+          }, function () { sv.dzMsg = { kind: "err", key: "sv.msg.err" }; render(); });
+        });
+        cd.appendChild(form);
+      } else {
+        cd.appendChild(actions(
+          button(t(ds.on ? "sv.dz.change" : "sv.dz.set"), "sv-dz", function () {
+            sv.dz = true; sv.dzCloud = ds.cloud; sv.dzCur = sv.dzA = sv.dzB = ""; sv.dzMsg = null; render();
+            var f = $("f-sv-dzCur"); if (f) f.focus();
+          }, ds.on ? null : "primary"),
+          ds.on ? button(t("sv.dz.remove"), "sv-dz-rm", function () { S.duress.clear(); sv.dzMsg = { kind: "ok", key: "sv.dz.removed" }; render(); }) : null));
+      }
+      if (sv.dzMsg) cd.appendChild(el("p", "msg msg-" + sv.dzMsg.kind, t(sv.dzMsg.key, sv.dzMsg.vars)));
+      cd.appendChild(el("p", "hint", t("sv.dz.honest")));
+      host.appendChild(cd);
+    }
+
+    if (typeof S.discreet === "function") {
+      var cx = card(t("sv.disc"));
+      cx.appendChild(row(t("sv.disc.switch"), switchBtn(S.discreet(), "sv-disc", function (v) { S.discreet(v); render(); }, t("sv.disc.switch")),
+        { hint: t("sv.disc.hint") }));
+      host.appendChild(cx);
+    }
   }
 
   // ---------- 6c. Section: Users ----------

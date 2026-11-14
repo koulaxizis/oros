@@ -1078,6 +1078,7 @@ orosPack("de", "shell", {
  "strict.badge.hard": "Sensible Arbeit: Hardcore ist an",
  "strict.blocked": "Blockiert: {h} (Hardcore)",
  "strict.relay": "Das lief über das orOS-Relay: {h}",
+ "strict.disc.title": "Notizen",
  "qs.title": "Schnelleinstellungen",
  "qs.settings": "Einstellungen",
  "qs.lock": "orOS sperren",

@@ -25,7 +25,7 @@ Die Daten auf diesem Gerät sind **nicht verschlüsselt**. Die `Bildschirmsperre
 Mit orOS USB und verschlüsseltem Speicher sind die Daten gesperrt, solange der Computer aus ist.
 
 ### Wenn man dich zum Entsperren zwingt
-orOS hat keine falsche PIN und keine „Notfall-PIN“. Wenn man dich zwingen kann, es zu entsperren, geh davon aus, dass alles darauf gelesen werden kann.
+Außerhalb von `Sensible Arbeit` hat orOS keine Notfall-PIN. Wenn man dich zwingen kann, es zu entsperren, geh davon aus, dass alles darauf gelesen werden kann. Im Modus kannst du eine festlegen, siehe unten; sie hilft nur, wenn niemand den Speicher des Geräts vorher kopiert hat.
 
 ### Was die Cloud trotzdem sieht
 Dropbox kann deine Daten nicht lesen, kennt aber dein Konto, die Adressen (IP), von denen du dich verbindest, wann du synchronisierst und wie viele Dateien du hast und wie groß sie sind. Muster können für sich etwas verraten, zum Beispiel viele große Dateien in der Nacht vor einer Veröffentlichung. Dropbox hebt außerdem eine Zeit lang ältere Versionen von Dateien auf.
@@ -62,6 +62,9 @@ In den [Einstellungen](app:settings) › `Sensible Arbeit` erledigt ein Schalter
 - **Normal**: Die Sperre greift spätestens nach 2 Minuten und wenn du die Seite verlässt, das Sync-Kennwort wird bei jedem Start abgefragt, Push ist aus, Link-Details kommen nur direkt von der Website, orOS zeigt einen Hinweis, wenn Mail, CalDAV oder Transfer das Relay nutzen, und `Anmeldelink senden` ist aus (Code oder QR fügen weiter einen Browser hinzu).
 - **Hardcore**: keine Bequemlichkeiten. Die Sperre nimmt nur ein Kennwort (keine PIN, kein Fingerabdruck oder Gesicht), greift nach 1 Minute und bei jedem Start, es gibt keine Link-Details, und das Gerät erreicht nichts außer deiner Sync-Cloud. Mail, Transfer, Karten, Radio, Wetter und alles andere Online stehen still, bis du es ausschaltest.
 - Ein Schild in der oberen Leiste zeigt, dass er an ist. Wenn dein orOS SOS hat, öffnet die Seite es auch.
+- **Panik-Sperre**: Drück dreimal schnell Esc, und orOS sperrt sofort, wo immer du bist. Am Handy nutze `Jetzt sperren`.
+- **Notfall-PIN**: eine zweite PIN (oder ein Kennwort, wenn deine Sperre eines nutzt) für den Fall, dass dich jemand zum Entsperren zwingt. Auf dem Sperrbildschirm sieht es wie ein normales Entsperren aus, während orOS dieses Gerät löscht und als frisches, leeres orOS öffnet. Du wählst, ob sie auch deine orOS-Daten in der Cloud löscht; dann löschen sich deine anderen Geräte bei der nächsten Synchronisierung, und nichts lässt sich zurückholen. Sie wirkt nur, solange der Modus an ist, und wird entfernt, wenn du ihn ausschaltest.
+- **Unauffälliger Tab**: Der Browser-Tab zeigt „Notizen“ und ein schlichtes Seitensymbol statt orOS. Eine installierte App behält ihren eigenen Namen und ihr Symbol.
 - Die Sperre von Hardcore wirkt, solange orOS installiert für die Offline-Nutzung läuft. Ein harter Neuladen umgeht sie bis zum nächsten normalen Start, und sie gilt nicht für Seiten, die außerhalb von orOS geöffnet werden.
 
 ## Wenn etwas schiefgeht

@@ -25,7 +25,7 @@ The data on this device is **not encrypted**. `Screen lock` hides the screen, bu
 On orOS USB with encrypted storage, the data is locked while the computer is off.
 
 ### Being forced to unlock
-orOS has no fake or "duress" PIN. If you can be made to unlock it, assume everything on it can be read.
+Outside `Sensitive work` orOS has no duress PIN. If you can be made to unlock it, assume everything on it can be read. In the mode you can set one, see below; it only helps if nobody copied the device's storage before.
 
 ### What the cloud can still see
 Dropbox cannot read your data, but it does know your account, the addresses (IP) you connect from, when you sync, and how many files you have and how large they are. Patterns can say something on their own, such as many large files uploaded the night before a story. Dropbox also keeps older versions of files for a while.
@@ -62,6 +62,9 @@ In [Settings](app:settings) › `Sensitive work`, one switch does most of the li
 - **Normal**: the lock closes after 2 minutes at most and when you leave the page, the sync passphrase is asked on every start, push is off, link details come only straight from the site, orOS shows a note when Mail, CalDAV or Transfer use the relay, and `Send a sign-in link` is off (the code or QR still adds a browser).
 - **Hardcore**: no conveniences. The lock takes a passphrase only (no PIN, no fingerprint or face), closes after 1 minute and on every start, there are no link details, and the device reaches nothing but your sync cloud. Mail, Transfer, maps, radio, weather and every other online part stop until you turn it off.
 - A shield in the top bar shows that it is on. If your orOS has SOS, the page opens it too.
+- **Panic lock**: press Esc three times quickly and orOS locks at once, wherever you are. On a phone, use `Lock now`.
+- **Duress PIN**: a second PIN (or passphrase, if your lock uses one) for when someone forces you to unlock. Typed on the lock screen it looks like a normal unlock, while orOS erases this device and opens as a fresh, empty orOS. You choose whether it also deletes your orOS data in the cloud; then your other devices erase themselves when they next sync, and nothing can be brought back. It works only while the mode is on and is removed when you turn the mode off.
+- **Discreet tab**: the browser tab shows “Notes” and a plain page icon instead of orOS. An installed app keeps its own name and icon.
 - Hardcore's block works while orOS runs installed for offline use. A hard reload skips it until the next normal start, and it does not cover pages opened outside orOS.
 
 ## If something goes wrong

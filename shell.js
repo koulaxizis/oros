@@ -4934,6 +4934,7 @@
       var w;
       try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
       w.addEventListener("keydown", function (e) {
+        strictPanicKey(e);
         if (!cmdIsCtrlK(e)) return;
         if (state.running && CMD_OWN_CTRLK[state.running.id]) return;   // the app's own Ctrl+K
         e.preventDefault();
@@ -11741,6 +11742,7 @@
   if (window.orosLock && typeof window.orosLock.setHooks === "function") {
     window.orosLock.setHooks({
       reset: lockDeviceReset,
+      duress: strictDuress,
       recovered: function () {
         window.orosSettings.open("lock");
         scToast("ok", window.t("lock.recovered"));
@@ -11788,7 +11790,62 @@
     var title = window.t(lv === "hard" ? "strict.badge.hard" : "strict.badge.on");
     if (b.title !== title) { b.title = title; b.setAttribute("aria-label", title); }
   }
-  function strictUpdate() { strictBadge(); strictTellSW(); }
+  // Duress PIN typed on the lock screen (STRICT-2): a silent wipe.
+  // cloud false: this device only, nothing is sent (the SOS "follow"
+  // wipe: backup folder and this device's relay boxes go too).
+  // cloud true: every relay box of the person's data, then the cloud
+  // (reset signal + wipe + revoke, the factory reset), then this device.
+  // No what-now list after the reload: it opens like a new orOS.
+  function strictDuress(cloud) {
+    if (osResetting) return;
+    osResetting = true;
+    var btn = { disabled: false, textContent: "" };
+    if (!cloud) { scFactoryReset(btn, "follow"); return; }
+    Promise.race([sosRelay(true), new Promise(function (r) { setTimeout(r, 8000); })])
+      .catch(function () {}).then(function () { scFactoryReset(btn, false); });
+  }
+  // Panic lock (STRICT-2): Escape three times within 1.5 s locks at once.
+  // Keys typed inside an app frame never reach this document, so
+  // cmdWireFrame passes them on too.
+  var strictEsc = [];
+  function strictPanicKey(e) {
+    if (e.key !== "Escape" || !strictLevelNow() || !window.orosLock || !window.orosLock.isOn()) return;
+    var now = Date.now();
+    strictEsc = (strictEsc || []).filter(function (t) { return now - t < 1500; });
+    strictEsc.push(now);
+    if (strictEsc.length >= 3) { strictEsc = []; window.orosLock.lock(); }
+  }
+  document.addEventListener("keydown", strictPanicKey, true);
+  // Discreet title and icon (STRICT-2): the tab says "Notes" with a
+  // plain page icon while the mode is on and the switch is set.
+  var DISC_ICON = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="6" y="3" width="20" height="26" rx="3" fill="#e8e8e8" stroke="#888" stroke-width="2"/><path d="M11 11h10M11 16h10M11 21h6" stroke="#888" stroke-width="2"/></svg>');
+  var discIcon = null, discObs = null;
+  function strictDiscreetOn() {
+    var S = window.orosStrict;
+    try { return !!(strictLevelNow() && S && typeof S.discreet === "function" && S.discreet()); } catch (e) { return false; }
+  }
+  function strictDiscreet() {
+    var on = strictDiscreetOn();
+    var icon = document.querySelector('link[rel="icon"]');
+    if (icon) {
+      if (discIcon === null) discIcon = icon.getAttribute("href");
+      var want = on ? DISC_ICON : discIcon;
+      if (icon.getAttribute("href") !== want) icon.setAttribute("href", want);
+    }
+    var title = window.t("strict.disc.title");
+    if (on && document.title !== title) document.title = title;
+    if (on && !discObs && typeof MutationObserver === "function") {
+      var el = document.querySelector("title");
+      if (el) {
+        discObs = new MutationObserver(function () {
+          if (strictDiscreetOn() && document.title !== window.t("strict.disc.title")) document.title = window.t("strict.disc.title");
+        });
+        discObs.observe(el, { childList: true, characterData: true, subtree: true });
+      }
+    }
+    if (!on && discObs) { discObs.disconnect(); discObs = null; if (document.title === title) document.title = "orOS"; }
+  }
+  function strictUpdate() { strictBadge(); strictTellSW(); strictDiscreet(); }
   if (window.orosStrict && typeof window.orosStrict.onChange === "function") {
     window.orosStrict.onChange(strictUpdate);
     strictUpdate();

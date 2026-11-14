@@ -200,13 +200,24 @@
     return false;
   }
 
+  // Duress secret (STRICT-2, oros-lock-duress): read defensively, an odd
+  // record is no duress secret; cloud wipe only when it says true.
+  function parseDuress(raw) {
+    var d;
+    try { d = JSON.parse(raw || "null"); } catch (e) { return null; }
+    if (!d || d.v !== 1 || (d.kind !== "pin" && d.kind !== "pass") || typeof d.salt !== "string" || typeof d.hash !== "string" || !d.hash) return null;
+    if (typeof d.i !== "number" || d.i < ITER_MIN || d.i > ITER_MAX) return null;
+    return { v: 1, kind: d.kind, salt: d.salt, hash: d.hash, i: d.i, cloud: d.cloud === true };
+  }
+
   var Core = {
     BIO_KEY: BIO_KEY, BIO_DAYS: BIO_DAYS, parseBio: parseBio, bioDue: bioDue,
     KEY: KEY, TRIES_KEY: TRIES_KEY, SEEN_KEY: SEEN_KEY, ITER: ITER, IDLES: IDLES,
     DEFAULT_IDLE: DEFAULT_IDLE, FREE_TRIES: FREE_TRIES, WAIT_MAX: WAIT_MAX, GRACE_MAX: GRACE_MAX,
     norm: norm, secretProblem: secretProblem, parseCfg: parseCfg, parseTries: parseTries,
     afterFail: afterFail, waitLeft: waitLeft, stillOpen: stillOpen, sameText: sameText,
-    STRICT_KEY: STRICT_KEY, parseStrict: parseStrict, strictCaps: strictCaps, clampCfg: clampCfg, loosens: loosens
+    STRICT_KEY: STRICT_KEY, parseStrict: parseStrict, strictCaps: strictCaps, clampCfg: clampCfg, loosens: loosens,
+    parseDuress: parseDuress
   };
 
   // ---------- 2. Crypto ----------
@@ -290,7 +301,7 @@
   var busy = false;
   var lastActive = Date.now();
   var listeners = [];
-  var hooks = { reset: null, recovered: null };
+  var hooks = { reset: null, recovered: null, duress: null };
   var bc = null;
 
   function load() {
@@ -309,6 +320,26 @@
   }
   // "off" | "on" | "hard"
   function strictLevel() { var r = strictRec(); return r ? r.level : "off"; }
+  // Duress PIN (STRICT-2): a second PIN / passphrase of the lock's kind,
+  // only while Sensitive work is on. Typed on the lock screen it wipes
+  // (shell hook duress(cloud)): this device only, or also the cloud.
+  // Device-local "oros-lock-duress" = { v:1, kind, salt, hash, i, cloud }.
+  var DURESS_KEY = "oros-lock-duress";
+  function duressRec() {
+    try { return parseDuress(root.localStorage.getItem(DURESS_KEY)); } catch (e) { return null; }
+  }
+  function duressWrite(d) {
+    try {
+      if (d) root.localStorage.setItem(DURESS_KEY, JSON.stringify(d));
+      else root.localStorage.removeItem(DURESS_KEY);
+      return true;
+    } catch (e) { return false; }
+  }
+  // Live only with the mode on and the lock of the same kind.
+  function duressLive() {
+    var d = duressRec(), c = cfg || load();
+    return (d && c && d.kind === c.kind && strictRec()) ? d : null;
+  }
   function save(c) {
     try {
       if (c) root.localStorage.setItem(KEY, JSON.stringify(c));
@@ -950,6 +981,19 @@
     setBusy(true);
     say(ui.msg, "lock.msg.checking", "dim");
     matches(cfg, secret).then(function (ok) {
+      if (ok) return ok;
+      var d = duressLive();
+      if (!d || typeof hooks.duress !== "function") return false;
+      return matches(d, secret).then(function (hit) { return hit ? "duress" : false; });
+    }).then(function (ok) {
+      if (ok === "duress") {
+        // Looks like any other unlock while the wipe runs; the reload
+        // then opens a fresh orOS.
+        var d = duressRec();
+        resetting = true;
+        try { hooks.duress(!!(d && d.cloud)); } catch (e) {}
+        return;
+      }
       setBusy(false);
       if (ok) { clearTries(); bioTyped(); unlock(); return; }
       failOnce();
@@ -1086,9 +1130,15 @@
       return run(checkCurrent(current).then(function (r) {
         if (!r.ok) return r;
         bioTyped();
-        var prev = cfg;
-        return makeCfg(kind, secret, prev).then(function (c) {
-          return save(c) ? { ok: true } : { ok: false, code: "storage" };
+        var prev = cfg, d = duressRec();
+        var same = d && d.kind === kind ? matches(d, secret) : Promise.resolve(false);
+        return same.then(function (hit) {
+          if (hit) return { ok: false, code: "duress" };
+          return makeCfg(kind, secret, prev).then(function (c) {
+            if (!save(c)) return { ok: false, code: "storage" };
+            if (d && d.kind !== kind) duressWrite(null);     // the duress secret must be of the lock's kind
+            return { ok: true };
+          });
         });
       }));
     },
@@ -1185,6 +1235,7 @@
     setHooks: function (h) {
       if (h && typeof h.reset === "function") hooks.reset = h.reset;
       if (h && typeof h.recovered === "function") hooks.recovered = h.recovered;
+      if (h && typeof h.duress === "function") hooks.duress = h.duress;
     }
   };
   root.orosLock = api;
@@ -1293,6 +1344,8 @@
       return run(checkCurrent(current).then(function (r) {
         if (!r.ok) return r;
         if (!strictWrite(null)) return { ok: false, code: "storage" };
+        duressWrite(null);                               // the duress secret lives only in the mode
+        try { root.localStorage.removeItem("oros-strict-disc"); } catch (e) {}
         var c = load();
         if (c) { c.idle = cur.prev.idle; c.hidden = cur.prev.hidden; save(c); }
         lastActive = Date.now();
@@ -1305,6 +1358,51 @@
     },
     // The SOS card (window.orosSOS, Settings › System), when this
     // orOS has it. Never starts anything by itself.
+    // Duress PIN / passphrase (STRICT-2). state() → { on, cloud, kind }.
+    // set(current, secret, cloud): the lock's secret first; the new one
+    // has the lock's kind and must differ from it. → { ok, code }
+    // code: off (no mode / no lock), wrong, wait, pin, short, long,
+    // same, storage, busy.
+    duress: {
+      state: function () { var d = duressLive(); return { on: !!d, cloud: !!(d && d.cloud), kind: d ? d.kind : null }; },
+      set: function (current, secret, cloud) {
+        var c = load();
+        if (!strictRec() || !c) return Promise.resolve({ ok: false, code: "off" });
+        if (busy) return Promise.resolve({ ok: false, code: "busy" });
+        var why = secretProblem(c.kind, secret);
+        if (why !== "ok") return Promise.resolve({ ok: false, code: why });
+        return run(checkCurrent(current).then(function (r) {
+          if (!r.ok) return r;
+          return matches(c, secret).then(function (same) {
+            if (same) return { ok: false, code: "same" };
+            return makeCfg(c.kind, secret, null).then(function (n) {
+              var rec = { v: 1, kind: n.kind, salt: n.salt, hash: n.hash, i: n.i, cloud: cloud === true };
+              return duressWrite(rec) ? { ok: true } : { ok: false, code: "storage" };
+            });
+          });
+        }));
+      },
+      // Also wipe the cloud (or not): the lock's secret first.
+      cloud: function (current, on) {
+        var d = duressLive();
+        if (!d) return Promise.resolve({ ok: false, code: "off" });
+        if (busy) return Promise.resolve({ ok: false, code: "busy" });
+        return run(checkCurrent(current).then(function (r) {
+          if (!r.ok) return r;
+          d.cloud = on === true;
+          return duressWrite(d) ? { ok: true } : { ok: false, code: "storage" };
+        }));
+      },
+      // Remove it (no secret asked: it only takes a wipe away).
+      clear: function () { duressWrite(null); emit(); return true; }
+    },
+    // Discreet title and icon (STRICT-2), device-local "oros-strict-disc".
+    discreet: function (on) {
+      if (on === undefined) { try { return root.localStorage.getItem("oros-strict-disc") === "1"; } catch (e) { return false; } }
+      try { if (on) root.localStorage.setItem("oros-strict-disc", "1"); else root.localStorage.removeItem("oros-strict-disc"); } catch (e) { return false; }
+      emit();
+      return true;
+    },
     sosAvailable: function () { return !!sosApi(); },
     sos: function () { var x = sosApi(); try { return x ? x.open() === true : false; } catch (e) { return false; } },
     onChange: function (fn) { return api.onChange(fn); }
