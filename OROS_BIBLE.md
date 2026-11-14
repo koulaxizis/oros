@@ -11669,3 +11669,11 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Why:** Chris 2026-11-13 (Dropbox, 250 MB by default and changeable, 7 days; «Προχώρα, όλα τα κύματα»): Claude's routines read Γλαρόλυκοι material while his PC is off. Part VI "Claude's folders — wave F2".
 - **Changes:** `gate/filecopy.js` (new: sealing, plan, quota), `gate/gate.js` (closed copy, `dropCopy`, `fileCopyInfo`, `setQuota`, `refreshFileCopy`, quota `q` in the `gatefiles` slice), `sync.js` `gateDrop`, `assistant/assistant.js` `text`, `relay/gate.js` (sealed index `{fidx}`, closed `files_list` / `files_read`, new tool `files_link`, `{fdrop}`), Settings closed-copy block, help EN/EL, DE strings, `sw.js` precache `gate/filecopy.js`. Relay change approved by the Mail thread at b69abe0.
 - **Verified:** node --test tests/*.test.js (tests/gate-filecopy.test.js new; gate-relay, gate-parity). Not yet tried with a real Dropbox and a real Claude session.
+
+
+### 2026-11-14 — 6.79.00 — Calendar: invitation links and RSVP answers (CAL-EV wave E2, #1021)
+- **Changes:** `Guests…` › `Invitation links (RSVP)`: `Make invitation links` (one Forms relay form per event), `Invitation…` per guest (their own link with the ticket code, by Email, SMS, Share or copy), `Open sign-up link`, `Places one answer may take`, `Check answers` (also on opening and every 10 min while the Calendar is open), `Stop the links`. Public page `calendar/rsvp.html`: the event in the guest's zone, Coming / Maybe / Not coming, plus-ones, note, sealed answer, the waiting list at once, the ticket QR and an .ics for Coming.
+- **Schema:** `calguests` list head `ms`, `op`, `off`; `rv {k, sec, key, priv}` (smallest k wins); links `calendar/rsvp.html#<k>.<key>[~<ticket>[~<name>]]`; answer `{rsvp 1, s, k, x?, t | n m? p?, l}`. No relay change (FORMS-2 as approved in #1009).
+- **Files:** calendar/guests.js, guestsui.js, calendar.js, index.html, calendar.css, rsvp.html, rsvp.js, rsvp.css (new, precached), help EN/EL, i18n/de (calendar.js, help/calendar.txt), .github/scripts/csp.js (OWN), .github/scripts/stamp-assets.js, tests/calendar-guests.test.js (20).
+- **Tests:** tests/calendar-guests.test.js; full suite; Playwright Chromium 360 px with a fake relay (answer, ticket QR decoded, open sign-up → waiting list, pick-up, taken fixed, stop).
+- **Next:** a real-phone test with the live relay.
