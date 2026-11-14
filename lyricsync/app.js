@@ -11,7 +11,9 @@
 //     "oros-lyricsync" (store "audio", key = song id). It never leaves
 //     the device and is never synced; another device asks for it.
 //   - device-only settings in "oros-lyricsync-device" (mode, speed;
-//     Songbook S1: ch = chords on for new songs, sol = Ντο Ρε Μι names).
+//     Songbook S1: ch = chords on for new songs, sol = Ντο Ρε Μι names;
+//     S2 stage: sfs font px, sshow both|words|chords, ssp speed, cin
+//     count-in).
 // Boot order (OROS_BIBLE.md Part VI "Boot sequence"):
 //   load → applyI18n → wire → registerSync → inheritPalette →
 //   watchPalette → render → take a pending deep link.
@@ -141,6 +143,9 @@
       "tr.done": "Transposed by {n}", "list.key": "key {key}", "sec.v": "Verse", "sec.c": "Chorus", "sec.b": "Bridge",
       "ex.cho": "ChordPro", "ex.choD": "Words and chords for songbook apps such as OnSong, SongbookPro and ChordPro.",
       "ex.chtxt": "Chords over the words", "ex.chtxtD": "Plain text with each chord over its syllable, to print or send.",
+      "sg.open": "Stage", "sg.close": "Close the stage", "sg.play": "Start scrolling", "sg.pause": "Pause", "sg.up": "Back a screen", "sg.down": "Next screen",
+      "sg.smaller": "Smaller", "sg.bigger": "Bigger", "sg.slower": "Slower", "sg.faster": "Faster", "sg.follow": "Follows the song",
+      "sg.speed": "Speed {n}%", "sg.show": "Show", "sg.both": "Words and chords", "sg.words": "Words only", "sg.chords": "Chords only", "sg.cin": "Count-in",
       "full": "This device is out of storage space. The change was not saved."
     },
     el: {
@@ -244,6 +249,9 @@
       "tr.done": "Μεταφορά κατά {n}", "list.key": "τόνος {key}", "sec.v": "Κουπλέ", "sec.c": "Ρεφρέν", "sec.b": "Γέφυρα",
       "ex.cho": "ChordPro", "ex.choD": "Στίχοι και ακόρντα για εφαρμογές τραγουδιών όπως OnSong, SongbookPro και ChordPro.",
       "ex.chtxt": "Ακόρντα πάνω από τους στίχους", "ex.chtxtD": "Απλό κείμενο με κάθε ακόρντο πάνω από τη συλλαβή του, για εκτύπωση ή αποστολή.",
+      "sg.open": "Σκηνή", "sg.close": "Κλείσιμο σκηνής", "sg.play": "Έναρξη κύλισης", "sg.pause": "Παύση", "sg.up": "Μια οθόνη πίσω", "sg.down": "Επόμενη οθόνη",
+      "sg.smaller": "Μικρότερα", "sg.bigger": "Μεγαλύτερα", "sg.slower": "Πιο αργά", "sg.faster": "Πιο γρήγορα", "sg.follow": "Ακολουθεί το τραγούδι",
+      "sg.speed": "Ταχύτητα {n}%", "sg.show": "Εμφάνιση", "sg.both": "Στίχοι και ακόρντα", "sg.words": "Μόνο στίχοι", "sg.chords": "Μόνο ακόρντα", "sg.cin": "Μέτρημα",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε."
     }
   };
@@ -278,7 +286,7 @@
 
   // ---------- 2. Data: local first, then sync ----------
   var data = C.empty();
-  var dev = { mode: "tap", speed: 1, lat: 0, span: 8, ch: 0, sol: 0 };
+  var dev = { mode: "tap", speed: 1, lat: 0, span: 8, ch: 0, sol: 0, sfs: 28, sshow: "both", ssp: 1, cin: 0 };
 
   function syncApi() {
     try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
@@ -296,6 +304,10 @@
       if ([1, 0.9, 0.75, 0.5].indexOf(d.speed) >= 0) dev.speed = d.speed;
       if (d.ch === 1) dev.ch = 1;
       if (d.sol === 1) dev.sol = 1;
+      if (typeof d.sfs === "number" && d.sfs >= 14 && d.sfs <= 64) dev.sfs = Math.round(d.sfs);
+      if (d.sshow === "words" || d.sshow === "chords") dev.sshow = d.sshow;
+      if (typeof d.ssp === "number" && d.ssp >= 0.25 && d.ssp <= 4) dev.ssp = Math.round(d.ssp * 100) / 100;
+      if (d.cin === 1) dev.cin = 1;
     } catch (e) { /* defaults */ }
   }
   function saveDev() { try { localStorage.setItem(DEVICE_KEY, JSON.stringify(dev)); } catch (e) { /* not kept */ } }
@@ -587,6 +599,7 @@
     loadAudio();
   }
   function closeSong() {
+    closeStage();
     flushLyrics();
     stopAudio();
     cur = null; tlist = null;
@@ -767,12 +780,17 @@
   // The sheet: chords over the words, each word a button that opens
   // the chord picker. Text only through textContent.
   function renderSheet() {
-    var box = $("sheet");
-    box.textContent = "";
     $("sheet-info").textContent = infoText();
     $("sheet-info").hidden = !$("sheet-info").textContent;
+    buildSheet($("sheet"), openPicker);
+  }
+  // Draws the song into box; onWord(i, a) makes each word a button (the
+  // Lyrics tab), none draws it for reading (the stage). → the line
+  // elements by line index.
+  function buildSheet(box, onWord) {
+    box.textContent = "";
     box.lang = cur.lg || "";
-    var first = true;
+    var first = true, byLine = [];
     function gap() { if (!first) box.appendChild(el("div", "sh-gap")); }
     function label(k) { box.appendChild(el("div", "sh-sec", t("sec." + k))); }
     function row(r) {
@@ -789,30 +807,175 @@
       if (l.p && (!rp || l.q)) gap();
       if (l.k) label(l.k);
       var line = el("div", "sh-line");
+      line.dataset.i = i;
       H.cells(l).forEach(function (c) {
-        var cell = el(c.word || c.a === l.t.length ? "button" : "span", "sh-cell");
-        if (cell.tagName === "BUTTON") {
+        var tap = onWord && (c.word || c.a === l.t.length);
+        var cell = el(tap ? "button" : "span", "sh-cell");
+        if (tap) {
           cell.type = "button";
-          cell.addEventListener("click", function () { openPicker(i, c.a); });
+          cell.addEventListener("click", function () { onWord(i, c.a); });
         }
-        cell.appendChild(el("span", "sh-ch", c.ch.map(function (x) { return H.show(x, dev.sol); }).join(" ") || "\u00a0"));
+        cell.appendChild(el("span", "sh-ch" + (c.ch.length ? "" : " sh-empty"), c.ch.map(function (x) { return H.show(x, dev.sol); }).join(" ") || "\u00a0"));
         cell.appendChild(el("span", "sh-tx", l.t.slice(c.a, c.b) || "\u00a0"));
         line.appendChild(cell);
       });
-      if (!(l.c || []).some(function (x) { return x[0] === l.t.length; })) {
+      if (onWord && !(l.c || []).some(function (x) { return x[0] === l.t.length; })) {
         var end = el("button", "sh-cell sh-end");
         end.type = "button";
         end.setAttribute("aria-label", t("cd.wordEnd"));
         end.appendChild(el("span", "sh-ch", "+"));
         end.appendChild(el("span", "sh-tx", "\u00a0"));
-        end.addEventListener("click", function () { openPicker(i, l.t.length); });
+        end.addEventListener("click", function () { onWord(i, l.t.length); });
         line.appendChild(end);
       }
       box.appendChild(line);
+      byLine[i] = line;
       first = false;
     });
     (cur.xo || []).forEach(row);
+    return byLine;
   }
+
+  // ---------- 8c. Stage (Songbook S2) ----------
+  // Full screen for playing live: big words and chords, the screen kept
+  // on, scrolling by itself (with the synced times when the song has
+  // them and its file is here, else at a steady speed), pedal keys.
+  var stg = null;              // { lines, raf, last, run, pos, lock, cin }
+  function stageCanFollow() { return audioOk && C.timedCount(cur.ln) > 0; }
+  function openStage() {
+    if (!cur) return;
+    flushLyrics();
+    stg = { lines: [], raf: 0, last: 0, run: false, pos: 0, lock: null, cin: null, now: -1 };
+    var box = $("stage2");
+    box.hidden = false;
+    document.body.classList.add("staging");
+    $("sg-title").textContent = cur.name || t("list.untitled");
+    $("sg-info").textContent = infoText();
+    renderStageSheet();
+    $("sg-body").scrollTop = 0;
+    if (box.requestFullscreen) box.requestFullscreen().catch(function () {});
+    keepAwake();
+    renderStageBar();
+    $("sg-body").focus();
+  }
+  function renderStageSheet() {
+    var body = $("sg-sheet");
+    body.className = "sheet stage-sheet show-" + dev.sshow;
+    body.style.fontSize = dev.sfs + "px";
+    stg.lines = buildSheet(body, null);
+  }
+  function renderStageBar() {
+    if (!stg) return;
+    var follow = stageCanFollow();
+    $("sg-play").textContent = stg.run || (follow && player && !player.paused) ? "\u275a\u275a" : "\u25b6";
+    $("sg-play").setAttribute("aria-label", t(stg.run || (follow && player && !player.paused) ? "sg.pause" : "sg.play"));
+    $("sg-mode").textContent = follow ? t("sg.follow") : t("sg.speed", { n: Math.round(dev.ssp * 100) });
+    $("sg-slower").hidden = $("sg-faster").hidden = follow;
+    $("sg-show").value = dev.sshow;
+    $("sg-cin").setAttribute("aria-pressed", dev.cin ? "true" : "false");
+    $("sg-cin").hidden = follow || !cur.bpm;
+  }
+  function closeStage() {
+    if (!stg) return;
+    stopScroll();
+    if (stg.cin) { try { stg.cin.close(); } catch (e) {} }
+    if (stg.lock) { try { stg.lock.release(); } catch (e) {} }
+    stg = null;
+    $("stage2").hidden = true;
+    document.body.classList.remove("staging");
+    if (document.fullscreenElement === $("stage2")) document.exitFullscreen().catch(function () {});
+  }
+  // The screen stays on while the stage is open (Wake Lock; asked again
+  // when the page comes back, since the browser drops it when hidden).
+  function keepAwake() {
+    if (!stg || !navigator.wakeLock || document.visibilityState !== "visible") return;
+    navigator.wakeLock.request("screen").then(function (l) { if (stg) stg.lock = l; else l.release(); }, function () {});
+  }
+  // Steady speed: the whole sheet in the song's length (its file, else
+  // bars × beats at the tempo), else 30 px a second; × the speed the
+  // person set on this device.
+  function stagePxPerSec() {
+    var b = $("sg-body"), span = Math.max(0, b.scrollHeight - b.clientHeight);
+    var sec = cur.dur ? cur.dur / 1000 : 0;
+    if (!sec && cur.bpm) {
+      var beats = +(String(cur.ts || "4/4").split("/")[0]) || 4;
+      sec = cur.ln.length * 2 * beats * 60 / cur.bpm;   // about two bars a line
+    }
+    var base = sec > 20 && span > 0 ? span / sec : 30;
+    return base * dev.ssp;
+  }
+  function stopScroll() {
+    if (!stg) return;
+    stg.run = false;
+    if (stg.raf) cancelAnimationFrame(stg.raf);
+    stg.raf = 0;
+  }
+  function startScroll() {
+    if (!stg) return;
+    stg.run = true; stg.last = 0; stg.pos = $("sg-body").scrollTop;
+    var step = function (ts) {
+      if (!stg || !stg.run) return;
+      var b = $("sg-body");
+      if (stg.last) {
+        stg.pos += stagePxPerSec() * (ts - stg.last) / 1000;
+        b.scrollTop = stg.pos;
+        if (b.scrollTop + b.clientHeight >= b.scrollHeight - 1) { stopScroll(); renderStageBar(); return; }
+      }
+      stg.last = ts;
+      stg.raf = requestAnimationFrame(step);
+    };
+    stg.raf = requestAnimationFrame(step);
+  }
+  // One bar of clicks at the song's tempo before the scrolling starts.
+  function countIn(then) {
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx || !cur.bpm) { then(); return; }
+    var beats = +(String(cur.ts || "4/4").split("/")[0]) || 4, gapS = 60 / cur.bpm, ac;
+    try { ac = new Ctx(); } catch (e) { then(); return; }
+    stg.cin = ac;
+    var t0 = ac.currentTime + 0.1;
+    for (var k = 0; k < beats; k++) {
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = k ? 1000 : 1500;
+      g.gain.setValueAtTime(0.0001, t0 + k * gapS);
+      g.gain.exponentialRampToValueAtTime(0.5, t0 + k * gapS + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + k * gapS + 0.08);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t0 + k * gapS); o.stop(t0 + k * gapS + 0.1);
+    }
+    setTimeout(function () { try { ac.close(); } catch (e) {} if (stg && stg.cin === ac) { stg.cin = null; then(); } }, Math.round((beats * gapS + 0.1) * 1000));
+  }
+  function stagePlay() {
+    if (!stg) return;
+    if (stageCanFollow()) { togglePlay(); renderStageBar(); return; }
+    if (stg.run) stopScroll();
+    else if (dev.cin && cur.bpm && !stg.cin) countIn(function () { startScroll(); renderStageBar(); });
+    else startScroll();
+    renderStageBar();
+  }
+  // Pedal and keys: a screen down or up (most page-turn pedals send
+  // PageDown/PageUp or the arrow keys).
+  function stagePage(dir) {
+    var b = $("sg-body");
+    var to = Math.max(0, b.scrollTop + dir * Math.round(b.clientHeight * 0.8));
+    if (stg) stg.pos = to;
+    b.scrollTo({ top: to, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }
+  // With the song playing: the line being sung lit and kept in view.
+  function stageFollow(ms) {
+    if (!stg || !stageCanFollow()) return;
+    var L = timedList(), k = C.lineAt(L, ms);
+    var i = k >= 0 ? L[k].i : -1;
+    if (i === stg.now) return;
+    if (stg.lines[stg.now]) stg.lines[stg.now].classList.remove("now");
+    stg.now = i;
+    var ln = stg.lines[i];
+    if (!ln) return;
+    ln.classList.add("now");
+    var b = $("sg-body"), top = ln.offsetTop - b.clientHeight * 0.35;
+    b.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }
+
   var pick = null;
   function openPicker(i, a) {
     flushLyrics();
@@ -1079,6 +1242,7 @@
       [].forEach.call($("lines").children, function (li) { li.classList.toggle("now", +li.dataset.i === idx); });
       renderStage();
     } else stageWords(ms);
+    stageFollow(ms);
     drawWave();
   }
   var raf = 0;
@@ -1483,8 +1647,8 @@
       tick();
     });
     player.addEventListener("error", function () { if (audioUrl) { toast(t("audio.bad")); } });
-    player.addEventListener("play", function () { $("play-btn").textContent = "❚❚"; $("play-btn").setAttribute("aria-label", t("btn.pause")); renderPad(); if (!raf) raf = requestAnimationFrame(loop); });
-    player.addEventListener("pause", function () { $("play-btn").textContent = "▶"; $("play-btn").setAttribute("aria-label", t("btn.play")); renderPad(); if (holding >= 0) padUp(); tick(); });
+    player.addEventListener("play", function () { renderStageBar(); $("play-btn").textContent = "❚❚"; $("play-btn").setAttribute("aria-label", t("btn.pause")); renderPad(); if (!raf) raf = requestAnimationFrame(loop); });
+    player.addEventListener("pause", function () { renderStageBar(); $("play-btn").textContent = "▶"; $("play-btn").setAttribute("aria-label", t("btn.play")); renderPad(); if (holding >= 0) padUp(); tick(); });
     player.addEventListener("seeked", tick);
     player.addEventListener("ended", function () { renderPad(); });
 
@@ -1534,6 +1698,34 @@
     });
     $("ch-names").addEventListener("change", function () { dev.sol = $("ch-names").value === "1" ? 1 : 0; saveDev(); if (cur) renderChords(); });
     $("ch-tr").addEventListener("click", openTranspose);
+    // Songbook S2: stage
+    $("stage-btn").addEventListener("click", openStage);
+    $("stage-btn2").addEventListener("click", openStage);
+    $("sg-close").addEventListener("click", closeStage);
+    $("sg-play").addEventListener("click", stagePlay);
+    $("sg-up").addEventListener("click", function () { stagePage(-1); });
+    $("sg-down").addEventListener("click", function () { stagePage(1); });
+    $("sg-smaller").addEventListener("click", function () { dev.sfs = Math.max(14, dev.sfs - 2); saveDev(); renderStageSheet(); });
+    $("sg-bigger").addEventListener("click", function () { dev.sfs = Math.min(64, dev.sfs + 2); saveDev(); renderStageSheet(); });
+    $("sg-slower").addEventListener("click", function () { dev.ssp = Math.max(0.25, Math.round((dev.ssp - 0.1) * 100) / 100); saveDev(); renderStageBar(); });
+    $("sg-faster").addEventListener("click", function () { dev.ssp = Math.min(4, Math.round((dev.ssp + 0.1) * 100) / 100); saveDev(); renderStageBar(); });
+    $("sg-show").addEventListener("change", function () { dev.sshow = $("sg-show").value; saveDev(); renderStageSheet(); });
+    $("sg-cin").addEventListener("click", function () { dev.cin = dev.cin ? 0 : 1; saveDev(); renderStageBar(); });
+    // A tap on the words plays or pauses; a scroll by hand moves the
+    // steady scrolling with it.
+    $("sg-body").addEventListener("click", function (e) { if (e.target.closest("button")) return; stagePlay(); });
+    $("sg-body").addEventListener("scroll", function () { if (stg && !stg.run) stg.pos = $("sg-body").scrollTop; });
+    $("stage2").addEventListener("keydown", function (e) {
+      if (!stg) return;
+      switch (e.code) {
+        case "PageDown": case "ArrowDown": case "ArrowRight": e.preventDefault(); stagePage(1); break;
+        case "PageUp": case "ArrowUp": case "ArrowLeft": e.preventDefault(); stagePage(-1); break;
+        case "Space": case "Enter": if (!e.target.closest("button, select")) { e.preventDefault(); stagePlay(); } break;
+        case "Escape": e.preventDefault(); closeStage(); break;
+      }
+    });
+    document.addEventListener("visibilitychange", function () { if (stg && document.visibilityState === "visible") keepAwake(); });
+    document.addEventListener("fullscreenchange", function () { if (stg && !document.fullscreenElement && !$("stage2").hidden) { /* left full screen: the stage stays as a page */ } });
     $("cd-yes").addEventListener("click", function () { putChord(false); });
     $("cd-del").addEventListener("click", function () { putChord(true); });
     $("cd-no").addEventListener("click", function () { $("chord-dlg").close(); });
@@ -1649,7 +1841,7 @@
     // Keys on the Sync and Preview tabs (e.code, never e.key; the shell
     // keeps Ctrl+Alt+Shift).
     document.addEventListener("keydown", function (e) {
-      if (!cur || $("v-edit").hidden || typing(e) || document.querySelector("dialog[open]")) return;
+      if (!cur || $("v-edit").hidden || typing(e) || document.querySelector("dialog[open]") || stg) return;
       if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey) return;
       var mod = e.ctrlKey || e.metaKey;
       if (mod && e.code === "KeyZ") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }

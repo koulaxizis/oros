@@ -1,6 +1,65 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.55.00
+- **Atelier and Layout: draw with a pen and edit points.** Tap to place corner points, drag for curves, tap the first point to close the shape. Double-click any shape (or choose Edit points) to move its points and handles, add or remove points, make them corner or smooth, break or join the outline. Press P for the pen.
+
+## Version 6.54.00
+- **Settings › Fonts: your own font files and the free fonts in one place,** with a sample in your own text, which Greek and polytonic letters each font has and what its licence says. Add .ttf, .otf, .woff and now .woff2 files (Layout and Atelier take .woff2 too); remove a font to the Trash.
+
+## Version 6.53.00
+- **The Author Portal and orOS now talk both ways (Revenue Splitter 1.18.0).** When a creator asks in the Author Portal for a new text on their page or for author copies, CRM brings the request in as a follow-up for today on their card, with the new text, the text on the page now and any new photo saved in their folder. When you tick it done, write a short reply that the creator reads in the Portal. In CRM › Contracts › `Production stage…`, tick the cards of your Kanban board that the Portal may show: each creator then sees which of the seven phases their work is in, its release day and only the text after `For the creator:` in the card. Kanban shows `Portal · phase N` on those cards and sends the change by itself when a card moves.
+
+## Version 6.52.00
+- **Stock's till is ready for book fairs and markets.** Give a discount on one line or on the whole sale, as a percentage or an amount, with a reason printed on the receipt. You can also cap the largest discount on a device. A customer can pay part in cash and part by card, and the change is worked out from the cash part. `+ Other item` sells something that is not a Stock product, such as a tote bag or a donation, with a typed name and price. The receipt can be shared as a PDF or shown as a QR code instead of printed. It still says it is not a tax receipt.
+
+## Version 6.51.00
+- **Transfer has a new look and its own page.** Each transfer now comes with a picture drawn from its code. Both sides see the same shapes, so a small copy on the sender's screen lets you check at a glance that the right person is connected. Add files with the big plus or drop them anywhere, and add an optional title and message, which travel encrypted with the files. Transfer now speaks German too, and useoros.online/transfer/about/ explains it to people who do not use orOS.
+
+## Version 6.50.00
+- **Voice notes: trim, transcribe, send to Studio.** A recording's `⋯` menu can now trim it (the trimmed part is saved as a new file and the old one goes to the Trash), turn its speech into text on this device with the Whisper model that Montage and Lyric Sync use (only when you press `Transcribe`; the sound never leaves the device), and open it in Studio.
+
+## Version 6.49.00
+- **Layout makes EPUB e-books.** `Export` › `Editions` › `EPUB` turns the same document into an EPUB 3 e-book whose text flows to the reader's screen: chapters from the headings, the contents from the heading levels, the styles as the book's look, pictures with their descriptions and captions, the fonts inside, the cover, and the ISBN, title, people and description from the linked Publishing title. The print edition's page numbers ride along, so a reader can go to "page 87 of the book". A report lists what went in, pictures without a description and what e-book stores usually ask for. `Preview in Library` opens it without adding it, `Mark ready in Publishing` records it on the e-book format, and `More` › `Check an EPUB…` checks any EPUB file.
+
+## Version 6.48.00
+- **Lyric Sync has a stage.** Press `Stage` on a song to play it live: big words with the chords above them, full screen, the screen kept on. It scrolls with the recording when the song is synced, or by itself at the song's tempo, and a foot pedal or Page Down turns the page.
+
+## Version 6.47.00
+- **Documents in Files: an archive of your papers.** Receipts, bills, contracts, warranties and certificates get a type, tags, a date, the company, an amount, an expiry date and a keep-until date, and you find them again by any of these. Any file can be a document and stays where it is; new ones go to `Documents` › (this year). Export everything as a .zip with a spreadsheet, and import it on another device. See [Files](app:files).
+
+## Version 6.46.00
+- **Moon & Sky is now in Weather.** Open the `Sky tonight` tab in Weather for the Moon, planets and stars over your Weather city. Old links and shortcuts to Moon & Sky open that tab.
+
+## Version 6.45.00
+- **Guest lists, QR tickets and a door check-in for your events.** A one-off event of your own calendar now has `Guests…`: add people from Contacts or by name, keep their answers, set the places (plus-ones count) and keep a waiting list; when a place frees up, the Calendar shows who is next and gives it only when you tap. Every guest gets a QR ticket to share, save or print, and `Door` checks tickets with the phone's camera, even without internet, with a big green welcome. Export CSV, print the door list, or send the usual event tasks to To-Do. See [Calendar](app:calendar).
+
+## Version 6.44.00
+- **Ask someone to sign a PDF.** In Scanner & PDF, put boxes on the pages for the other person to fill (signature, initials, name, date, text, tick), then `Ask to sign`: they get an encrypted link that ends in 1, 7 or 30 days, can be locked with an access code, and opens in any browser with no account. They sign there and keep their signed copy; you get the same signed PDF, with a certificate page and the signing record inside, in Files › PDF › Signatures. `Signature requests` lists them all. A simple electronic signature under the EU eIDAS rules. See [Scanner & PDF](app:scanpdf).
+
+## Version 6.43.00
+- **New app: Forms.** Make surveys, sign-up sheets and order forms in Office: many kinds of questions, pages, questions that show only for some answers and jumps between pages, with a preview that works exactly like the real form. Start blank or from six templates. Sharing a form and collecting answers come in the next update. See [Forms](app:forms).
+
+## Version 6.42.00
+- **Diagrams in Whiteboard.** `More` › `Diagram shapes…` (or L) opens a library of 49 shapes: flowchart, org chart, UML (classes with compartments), basic shapes and network and IT icons, with search. Selected shapes can be turned into another one with `Shape` › `More shapes`. On a device with an older orOS they show as plain shapes with the same text until it updates.
+
+## Version 6.41.00
+- **The Kanban Timeline is a Gantt chart.** A card can have a `Start` date and be a `Milestone`. In the Timeline every card is a bar from its start to its due date: drag it to move it, drag its ends to change the dates, and `Undo` brings them back. Bars show how many subtasks are done. The view menu has `Zoom` (Day, Week, Month), `Groups` (by column or lane) and `Only workdays`, kept for the board on every device. See [Kanban](app:kanban).
+
+## Version 6.40.00
+- **Studio is ready for audiobooks.** Studio now keeps everything a newer Studio writes, so books, chapters and podcast shows made on one device stay whole on a device that has not updated yet.
+
+## Version 6.39.00
+- **Translate a book in Writer.** `Review` › `Translate this document…` puts the book side by side, one sentence a row: the source on the left, your translation on the right, with its bold, italics and footnotes kept as small marks. Each sentence is new, a draft, confirmed or reviewed; the bar shows how much is done. `Build document` makes the translated book as a normal Writer document. The project stays on the orOS disk and syncs, and two devices can work on it. See [Writer](app:writer).
+
+## Version 6.38.00
+- **Translation on the device in Text Tools.** The new `Translate` group turns the whole text from Greek into English or from English into Greek with Mozilla's Firefox Translations models. Your text never leaves the device. The first time, the button says how much it downloads (about 15 MB per direction, plus 5 MB once); after that it works offline, and a short text translates as you type. See [Text Tools](app:texttools).
+
+## Version 6.37.00
+- **Developer tools in Pad.** `Tools…` (Alt+T) is now a searchable list: check and format JSON and YAML (comments kept), sort JSON keys, JSON ↔ YAML in a new tab, MD5 and SHA hashes of the file exactly as saved with `Compare with`, UUID v4 and v7, time stamps, number bases and CSS colours. Base64 and URL stay in Text Tools, one click away.
+
+## Version 6.36.00
+- **Transfer through your Dropbox.** With orOS sync on Dropbox, `Send through my Dropbox` encrypts the files on this device, uploads them to your Dropbox and gives you a link and a QR code. You can close the page: the other person has about 4 hours to download them, with no Dropbox account and no orOS. Dropbox only stores encrypted bytes, and the files are deleted afterwards.
 ## Version 6.35.00
 - **Music releases in Publishing.** A new title can now be a single, EP, album or compilation, with its tracks (ISRC, length, version) and editions (digital, CD, vinyl, cassette with UPC/EAN and barcode). The ISBN tab is now Codes and also keeps your ISRC and UPC/EAN prefixes, offering the next free code.
 

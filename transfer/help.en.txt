@@ -2,16 +2,19 @@
 Transfer sends big files and whole folders from the orOS disk, or from this device, straight to another browser. The other person opens a link or types a code; the files go directly between the two devices, end-to-end encrypted, and are never stored on a server. They do not need orOS.
 
 ## Send files and folders
-- Open `Send`. Tick files or folders on the orOS disk; tap a folder's name to look inside it. `Add from this device…` adds files that are not on the disk.
-- `To send` lists what you chose, with the number of files and the total size. Folders keep their folders inside.
-- Press `Create link`. You get a code like 7K2M-9QXH-4RTB, a QR code and a link. Send the link, let the other person scan the QR with their phone's camera, or read them the code.
+- Open `Send` and press the big plus (`Add files`), or drop files anywhere on the page. `From the orOS disk` opens the disk in a sheet: tick files or folders, tap a folder's name to look inside it, then press `Done`. `From this device` adds files that are not on the disk.
+- The list shows what you chose, with the number of files and the total size; `Remove` takes one off. Folders keep their folders inside.
+- Add a `Title` and a `Message` if you like. The other person sees them above the list of files, before they accept. They travel inside the encrypted transfer like the files.
+- Press `Create link`. You get a code like 7K2M-9QXH-4RTB, a QR code and a link. Send the link, use `Share…` on a phone, let the other person scan the QR with their phone's camera, or read them the code.
+- The background is drawn from the code, so both pages show the same shapes. If the small picture on your page matches the other person's background, you are connected to each other and to no one else.
 - Keep the page open. You see when they connect, when they look at the list, and how much has arrived. `Cancel` stops it on both sides.
 - One link is for one person and one transfer. `Send something else` starts a new one with a new code.
+- With orOS sync on Dropbox, `Send through my Dropbox` works without keeping the page open. See "Through your Dropbox" below.
 - In Files, select files or folders and choose `Send with Transfer…`: Transfer opens with them on the `To send` list.
 
 ## Receive
 - Open the link you got, or open `Receive` and type the code. The sender's page has to be open.
-- You see every file and its size first. Choose where it goes and press `Accept`, or `Decline`.
+- You see every file and its size first, with the title and message if there are any. Choose where it goes and press `Accept`, or `Decline`.
 - `The orOS disk (Transfers folder)` puts the files in Files › Transfers, in a folder named after the date and time, with their folders inside. Nothing there is ever replaced: a name that is taken gets "(2)". The orOS disk syncs every file, so this choice is only there when each file is 200 MB or smaller.
 - `This device` keeps one file as it is, or several files as one ZIP. When it is done, press `Save`.
 - Without orOS, the link opens a receive page that saves to the device. In a browser where orOS is set up, `Receive into my orOS instead` opens it inside orOS.
@@ -19,6 +22,14 @@ Transfer sends big files and whole folders from the orOS disk, or from this devi
 ## If the connection drops
 - If the direct link drops in the middle (Wi-Fi changes, a phone moves between networks), both sides say `Reconnecting` and the transfer goes on from where it stopped, as long as both pages stay open. After about 40 seconds without a link it stops.
 - When the two devices cannot connect directly at all (company Wi-Fi, a VPN, some mobile networks), a transfer of up to 50 MB in total goes through the orOS relay instead. It is slower, and still end-to-end encrypted: the relay passes sealed pieces on and stores nothing. Over 50 MB Transfer says it could not connect; try both on the same Wi-Fi, or send less at a time.
+
+## Through your Dropbox
+- When orOS syncs with Dropbox, `Send through my Dropbox` appears next to `Create link`. orOS encrypts the files on this device and uploads them to your Dropbox (the orOS app folder, under Transfer). Then you get a link and a QR code. You can close the page: the other person has about 4 hours to open the link.
+- Dropbox only stores encrypted bytes. The key is in the link after the # sign, which is never sent to a server. The other person needs no Dropbox account and no orOS.
+- Anyone who has the link can download the files until it expires, so send it only to the person they are for. There is no code to type: use the link or the QR code.
+- After 4 hours the link stops working, and the next time you open Transfer the files are deleted from your Dropbox. `Delete now` deletes them at once.
+- The first time on a device, Transfer checks with a small test file that this browser can download from a Dropbox link. If it cannot, it says so and uploads nothing.
+- The files take space in your Dropbox until they are deleted. Transfer checks the free space first.
 
 ## History
 - `History` lists the finished transfers, newest first: when, to or from which device, how many files and how big, and where they went. `Open` shows a folder that arrived on the orOS disk.

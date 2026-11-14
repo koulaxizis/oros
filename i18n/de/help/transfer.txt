@@ -1,0 +1,43 @@
+# Transfer
+Transfer sendet große Dateien und ganze Ordner von der orOS-Disk oder von diesem Gerät direkt an einen anderen Browser. Die andere Person öffnet einen Link oder gibt einen Code ein; die Dateien gehen direkt zwischen den beiden Geräten, Ende-zu-Ende-verschlüsselt, und werden nie auf einem Server gespeichert. Sie braucht kein orOS.
+
+## Dateien und Ordner senden
+- Öffne `Senden` und drücke das große Plus (`Dateien hinzufügen`), oder lege Dateien irgendwo auf der Seite ab. `Von der orOS-Disk` öffnet die Disk in einem Blatt: Hake Dateien oder Ordner an, tippe auf einen Ordnernamen, um hineinzusehen, und drücke dann `Fertig`. `Von diesem Gerät` fügt Dateien hinzu, die nicht auf der Disk liegen.
+- Die Liste zeigt, was du gewählt hast, mit der Zahl der Dateien und der Gesamtgröße; `Entfernen` nimmt eine wieder heraus. Ordner behalten ihre Unterordner.
+- Füge, wenn du magst, einen `Titel` und eine `Nachricht` hinzu. Die andere Person sieht sie über der Dateiliste, bevor sie annimmt. Sie reisen wie die Dateien in der verschlüsselten Übertragung.
+- Drücke `Link erstellen`. Du bekommst einen Code wie 7K2M-9QXH-4RTB, einen QR-Code und einen Link. Schick den Link, nutze `Teilen…` auf dem Handy, lass die andere Person den QR-Code mit der Handykamera scannen, oder lies ihr den Code vor.
+- Der Hintergrund wird aus dem Code gezeichnet, deshalb zeigen beide Seiten dieselben Formen. Passt das kleine Bild auf deiner Seite zum Hintergrund der anderen Person, seid ihr miteinander verbunden und mit niemandem sonst.
+- Lass die Seite offen. Du siehst, wann sie sich verbindet, wann sie die Liste ansieht und wie viel angekommen ist. `Abbrechen` stoppt auf beiden Seiten.
+- Ein Link ist für eine Person und eine Übertragung. `Noch etwas senden` beginnt eine neue mit einem neuen Code.
+- Mit orOS-Sync über Dropbox funktioniert `Über meine Dropbox senden`, ohne dass die Seite offen bleibt. Siehe „Über deine Dropbox“ unten.
+- Wähle in Dateien Dateien oder Ordner und dann `Mit Transfer senden…`: Transfer öffnet sich mit ihnen in der Liste.
+
+## Empfangen
+- Öffne den Link, den du bekommen hast, oder öffne `Empfangen` und gib den Code ein. Die Seite des Absenders muss offen sein.
+- Du siehst zuerst jede Datei und ihre Größe, dazu Titel und Nachricht, falls es welche gibt. Wähle, wohin sie gehen, und drücke `Annehmen` oder `Ablehnen`.
+- `Die orOS-Disk (Ordner Transfers)` legt die Dateien in Dateien › Transfers ab, in einem Ordner mit Datum und Uhrzeit, samt ihren Unterordnern. Dort wird nie etwas ersetzt: Ein vergebener Name bekommt „(2)“. Die orOS-Disk synchronisiert jede Datei, deshalb gibt es diese Wahl nur, wenn jede Datei höchstens 200 MB groß ist.
+- `Dieses Gerät` behält eine Datei, wie sie ist, oder mehrere Dateien als eine ZIP. Wenn es fertig ist, drücke `Speichern`.
+- Ohne orOS öffnet der Link eine Empfangsseite, die aufs Gerät speichert. In einem Browser, in dem orOS eingerichtet ist, öffnet `Stattdessen in mein orOS empfangen` sie in orOS.
+
+## Wenn die Verbindung abbricht
+- Bricht die direkte Verbindung mittendrin ab (WLAN wechselt, ein Handy wechselt das Netz), zeigen beide Seiten `Neu verbinden`, und die Übertragung geht dort weiter, wo sie stand, solange beide Seiten offen bleiben. Nach etwa 40 Sekunden ohne Verbindung stoppt sie.
+- Können sich die beiden Geräte gar nicht direkt verbinden (Firmen-WLAN, ein VPN, manche Mobilnetze), geht eine Übertragung von insgesamt bis zu 50 MB stattdessen über das orOS-Relay. Das ist langsamer und weiterhin Ende-zu-Ende-verschlüsselt: Das Relay reicht versiegelte Stücke weiter und speichert nichts. Über 50 MB meldet Transfer, dass keine Verbindung möglich war; versucht es im selben WLAN, oder sende weniger auf einmal.
+
+## Über deine Dropbox
+- Wenn orOS mit Dropbox synchronisiert, erscheint `Über meine Dropbox senden` neben `Link erstellen`. orOS verschlüsselt die Dateien auf diesem Gerät und lädt sie in deine Dropbox hoch (den orOS-App-Ordner, unter Transfer). Dann bekommst du einen Link und einen QR-Code. Du kannst die Seite schließen: Die andere Person hat etwa 4 Stunden, um den Link zu öffnen.
+- Dropbox speichert nur verschlüsselte Bytes. Der Schlüssel steht im Link nach dem #-Zeichen, das nie an einen Server geht. Die andere Person braucht kein Dropbox-Konto und kein orOS.
+- Jeder mit dem Link kann die Dateien herunterladen, bis er abläuft, also schick ihn nur der Person, für die sie sind. Es gibt keinen Code zum Eintippen: Nutze den Link oder den QR-Code.
+- Nach 4 Stunden funktioniert der Link nicht mehr, und beim nächsten Öffnen von Transfer werden die Dateien aus deiner Dropbox gelöscht. `Jetzt löschen` löscht sie sofort.
+- Beim ersten Mal auf einem Gerät prüft Transfer mit einer kleinen Testdatei, ob dieser Browser von einem Dropbox-Link herunterladen kann. Wenn nicht, sagt es das und lädt nichts hoch.
+- Die Dateien belegen Platz in deiner Dropbox, bis sie gelöscht sind. Transfer prüft vorher den freien Platz.
+
+## Verlauf
+- `Verlauf` listet die abgeschlossenen Übertragungen, die neuesten zuerst: wann, an oder von welchem Gerät, wie viele Dateien und wie groß, und wohin sie gingen. `Öffnen` zeigt einen Ordner, der auf der orOS-Disk angekommen ist.
+- Der Verlauf behält nur die Namen der obersten Dateien und Ordner, nie ihren Inhalt, und synchronisiert sich mit deinen anderen Geräten. `Verlauf löschen` (zweimal drücken) leert ihn überall.
+
+## Privatsphäre und Grenzen
+- Aus dem Code entsteht der Schlüssel. Er bleibt im Link nach dem #-Zeichen, das ein Browser nie an einen Server schickt. Das orOS-Relay stellt die beiden Browser nur einander vor und sieht nur versiegelte Nachrichten.
+- Jede Datei wird bei der Ankunft geprüft. Eine Datei, die nicht vollständig ankam, wird auf beiden Seiten genannt und nicht auf der orOS-Disk behalten.
+- orOS setzt keine Größengrenze; der freie Platz im empfangenden Browser tut es, und er wird vor dem Annehmen geprüft. Manche Browser ohne privaten Speicher für Websites (ältere Safari) halten eine Übertragung im Speicher und nehmen höchstens 500 MB.
+- Beide Geräte müssen gleichzeitig online sein, mit offenen Transfer-Seiten.
+- Der Bildschirm bleibt während einer Übertragung an, wo der Browser es erlaubt. Auf dem Handy lass den Browser im Vordergrund.

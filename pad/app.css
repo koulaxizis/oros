@@ -477,3 +477,42 @@ button { font: inherit; color: inherit; }
 #keys .key { flex: none; min-width: 40px; height: 40px; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px;
   background: var(--bg); color: var(--text); font: 16px var(--mono); cursor: pointer; touch-action: manipulation; }
 #keys .key:active { background: var(--accent-soft); }
+
+/* ---------- Wave D1: developer tools ---------- */
+.pd-filter { width: 100%; min-height: 40px; margin-bottom: 8px; padding: 8px 10px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+.pd-list > .pd-row { flex-shrink: 0; }
+.pd-row[hidden], .pd-head[hidden] { display: none; }
+/* The result panel: beside the text when there is room, instead of it on a phone. */
+#dev { flex: 0 0 min(440px, 46%); min-width: 0; display: flex; flex-direction: column; border-left: 1px solid var(--border); background: var(--bg); }
+#dev[hidden] { display: none; }
+@media (max-width: 899px) {
+  body.dv-on #editor { display: none; }
+  #dev { flex: 1 1 0; border-left: 0; }
+}
+.dv-bar { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--panel-bg); border-bottom: 1px solid var(--border); }
+.dv-title { flex: 1; min-width: 0; font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+.dv-body { flex: 1; min-height: 0; overflow: auto; padding: 10px 12px 40px; }
+.dv-head { margin: 14px 0 4px; font-size: 13px; font-weight: 700; color: var(--text-dim); overflow-wrap: anywhere; }
+.dv-head:first-child { margin-top: 0; }
+.dv-note { margin: 0 0 8px; font-size: 14px; color: var(--text-dim); overflow-wrap: anywhere; }
+.dv-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; padding: 6px 8px;
+  border: 1px solid var(--border); border-radius: 8px; margin-bottom: 4px; }
+.dv-row.hit { border-color: var(--accent); background: var(--accent-soft); }
+.dv-k { grid-column: 1; font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.dv-v { grid-column: 1; font: 13px/1.4 var(--mono); overflow-wrap: anywhere; word-break: break-all; user-select: text; }
+.dv-btns { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.chip.sm { min-height: 36px; padding: 4px 10px; font-size: 13px; }
+.dv-lbl { display: flex; flex-direction: column; gap: 4px; margin: 4px 0 6px; font-size: 14px; color: var(--text-dim); }
+.dv-lbl input { min-height: 40px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: 14px var(--mono); }
+.dv-match { min-height: 1.3em; margin: 0 0 6px; font-size: 14px; font-weight: 600; }
+.dv-match.ok { color: var(--tk-ins, var(--accent)); }
+.dv-match.no { color: var(--danger); }
+/* A see-through colour shows over a checkerboard. */
+.dv-swatch { height: 64px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden;
+  background: repeating-conic-gradient(rgba(128,128,128,.35) 0% 25%, transparent 0% 50%) 0 0 / 16px 16px; }
+.dv-fill { width: 100%; height: 100%; }
+@media (max-width: 420px) {
+  .dv-row { grid-template-columns: minmax(0, 1fr); }
+  .dv-btns { grid-column: 1; grid-row: auto; justify-content: flex-start; }
+}
