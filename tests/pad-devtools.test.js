@@ -203,6 +203,94 @@ test("sniff suggests the tool for a colour, a time stamp or a number", () => {
   assert.equal(D.sniff("a\nb"), "");
 });
 
+// ----- Wave D2 -----
+const JWT_IO = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+const RFC7519 = "eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+const seg = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+
+test("JWT decode: the jwt.io and RFC 7519 examples, times, Bearer and quotes", () => {
+  const r = D.jwtDecode(JWT_IO, Date.UTC(2026, 10, 13));
+  assert.equal(r.alg, "HS256");
+  assert.equal(r.typ, "JWT");
+  assert.equal(r.signed, true);
+  assert.deepEqual(JSON.parse(r.payload), { sub: "1234567890", name: "John Doe", iat: 1516239022 });
+  assert.match(r.header, /\n  "alg": "HS256"/, "formatted with two spaces");
+  assert.deepEqual(r.times, [{ k: "iat", ms: 1516239022000 }]);
+  assert.equal(r.expired, false);
+  assert.equal(r.early, false);
+  const x = D.jwtDecode(RFC7519, Date.UTC(2026, 0, 1));
+  assert.equal(JSON.parse(x.payload)["http://example.com/is_root"], true);
+  assert.equal(x.expired, true, "exp 1300819380 is in 2011");
+  assert.equal(D.jwtDecode(RFC7519, 1300819379000).expired, false);
+  assert.equal(D.jwtDecode("Bearer " + JWT_IO).alg, "HS256");
+  assert.equal(D.jwtDecode('"' + JWT_IO + '"').alg, "HS256");
+  const early = D.jwtDecode(seg({ alg: "none" }) + "." + seg({ nbf: 4102444800 }) + ".", Date.UTC(2026, 0, 1));
+  assert.equal(early.early, true);
+  assert.equal(early.signed, false, "alg none has an empty third part");
+  const greek = D.jwtDecode(seg({ alg: "HS256" }) + "." + seg({ name: "Χρήστος" }) + ".x");
+  assert.equal(JSON.parse(greek.payload).name, "Χρήστος", "UTF-8 payloads read right");
+});
+
+test("JWT decode refuses what is not a readable token, and never checks a signature", () => {
+  assert.deepEqual(D.jwtDecode("hello"), { error: "parts" });
+  assert.deepEqual(D.jwtDecode("a.b.c.d.e"), { error: "jwe" });
+  assert.deepEqual(D.jwtDecode("!!.e30.x"), { error: "header" });
+  assert.deepEqual(D.jwtDecode(seg({ alg: "HS256" }) + ".bm90IGpzb24.x"), { error: "payload" });
+  assert.deepEqual(D.jwtDecode(seg([1, 2]) + "." + seg({}) + ".x"), { error: "header" }, "header must be an object");
+  assert.deepEqual(D.jwtDecode(Buffer.from([0xff, 0xfe]).toString("base64url") + "." + seg({}) + ".x"), { error: "header" }, "bad UTF-8");
+  const r = D.jwtDecode(seg({ alg: "HS256" }) + "." + seg({ exp: "tomorrow", iat: 1e15 }) + ".sig");
+  assert.deepEqual(r.times, [], "times that are not plain seconds are left out");
+  const src = read("pad/devtools.js") + read("pad/devui.js");
+  assert.ok(!/subtle\.(verify|importKey)/.test(src), "decode only: no keys, no verification");
+  assert.equal(D.sniff(JWT_IO), "jwt");
+  assert.equal(D.sniff("Bearer " + JWT_IO), "jwt");
+  assert.equal(D.looksJwt("eyJ.not"), false);
+});
+
+test("regexRun: matches, groups, named groups, flags, replace and limits", () => {
+  const text = "2026-11-13 and 1999-01-02\nfoo";
+  const r = D.regexRun("(\\d{4})-(?<m>\\d{2})-\\d{2}", "", text, undefined, 10000);
+  assert.equal(r.count, 2);
+  assert.deepEqual(r.matches[0], { i: 0, len: 10, text: "2026-11-13", groups: ["2026", "11"], named: { m: "11" } });
+  assert.deepEqual(r.pos, [0, 10, 15, 10]);
+  assert.equal(r.more, false);
+  assert.equal(r.replaced, undefined);
+  assert.equal(D.regexRun("(\\d{4})-(\\d{2})-(\\d{2})", "", text, "$3/$2/$1").replaced, "13/11/2026 and 02/01/1999\nfoo");
+  assert.equal(D.regexRun("(?<y>\\d{4})", "", "x 2026", "[$<y>]").replaced, "x [2026]");
+  assert.equal(D.regexRun("FOO", "", text).count, 0);
+  assert.equal(D.regexRun("FOO", "i", text).count, 1);
+  assert.equal(D.regexRun("^foo", "", text).count, 0);
+  assert.equal(D.regexRun("^foo", "m", text).count, 1);
+  assert.equal(D.regexRun("13.and", "", "13\nand").count, 0);
+  assert.equal(D.regexRun("13.and", "s", "13\nand").count, 1);
+  assert.equal(D.regexRun("^.$", "u", "😀").count, 1);
+  assert.equal(D.regexFlags("gimsuyd"), "gimsu", "always global, only i m s u");
+  assert.equal(D.regexRun("(a)|b", "", "b").matches[0].groups[0], null, "a group that took no part is null");
+  // Empty matches move on (also past a surrogate pair with u) and end.
+  assert.equal(D.regexRun("", "", "abc").count, 4);
+  assert.equal(D.regexRun("", "u", "😀x").count, 3);
+  assert.equal(D.regexRun("x*", "", "aaa").count, 4);
+  const many = D.regexRun("a", "", "a".repeat(20000), undefined, 10000);
+  assert.equal(many.count, 10000);
+  assert.equal(many.more, true);
+  assert.equal(many.matches.length, 200, "the list stops at 200");
+  assert.equal(many.pos.length, 20000, "every match can still be selected");
+  assert.ok(D.regexRun("(", "", "x").error, "a broken pattern is an error, not a throw");
+});
+
+test("the regex runs in a Worker that is stopped after a second", () => {
+  const w = read("pad/regex-worker.js"), ui = read("pad/devui.js");
+  assert.match(w, /^importScripts\("devtools\.js"\);/m);
+  assert.match(w, /regexRun\(d\.pattern, d\.flags, d\.text, d\.replace, 10000\)/);
+  assert.ok(!/fetch|XMLHttpRequest|importScripts\([^)]*http/.test(w), "the worker loads nothing else");
+  assert.match(read("sw.js"), /"pad\/regex-worker\.js"/, "precached for offline use");
+  assert.match(ui, /RX_MS = 1000/);
+  assert.match(ui, /new Worker\("regex-worker\.js"/);
+  assert.match(ui, /rxWorker\.terminate\(\)/);
+  assert.match(ui, /closeDev[\s\S]{0,400}rxStop\(\)/, "closing the panel stops a run");
+  assert.ok(!/new RegExp/.test(ui), "no pattern is ever run on the page itself");
+});
+
 test("Pad loads the tools lazily, precaches them, and shows results as text only", () => {
   const app = read("pad/app.js"), html = read("pad/index.html"), ui = read("pad/devui.js");
   assert.ok(!/devtools\.js|devui\.js|yaml\.min\.js/.test(html), "not on the first-open path");
@@ -223,7 +311,9 @@ test("every new string is in English, Greek and German", () => {
   const body = ui.slice(ui.indexOf("window.PadDevUI"));
   const keys = [...new Set([...body.matchAll(/[^\w.]t\("([a-zA-Z0-9.]+)"/g)].map((m) => m[1]).filter((k) => !k.endsWith(".")))];
   const extra = ["ts.u.s", "ts.u.ms", "ts.u.us", "ts.u.ns", "ts.u.date", "ts.local", "ts.isoLocal", "ts.isoUtc", "ts.unixS", "ts.unixMs", "ts.rel",
-    "nb.dec", "nb.hex", "nb.bin", "nb.oct", "nb.eel2"];
+    "nb.dec", "nb.hex", "nb.bin", "nb.oct", "nb.eel2",
+    "jwt.jwe", "jwt.bad", "jwt.early", "jwt.valid", "jwt.noTimes", "jwt.unchecked", "jwt.unsigned", "jwt.iat", "jwt.nbf", "jwt.exp",
+    "rx.countMore", "rx.fi", "rx.fm", "rx.fs", "rx.fu"];
   const en = ui.slice(ui.indexOf("en: {"), ui.indexOf("el: {")), el = ui.slice(ui.indexOf("el: {"), ui.indexOf("window.PadDevUI"));
   const appEn = app.slice(app.indexOf("en: {"), app.indexOf("el: {")), appEl = app.slice(app.indexOf("el: {"));
   assert.ok(keys.length > 40);
