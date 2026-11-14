@@ -11516,3 +11516,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** studio/meter.js (new, precached), studio/meter.worklet.js (new, precached), studio/studio.js, studio/index.html, studio/studio.css, help EN/EL, i18n/de (studio.js), Bible STUDIO-AB.
 - **Tests:** new `tests/studio-meter.test.js` (EBU Tech 3341 cases 1-5, Tech 3342 cases 1-4, equal to the NULL `loudness_meter` effect within 1e-9, levels, room tone); full suite; Playwright Chromium in the real shell.
 - **Next:** A1b ID3v2.4 writer, A2 books, A3 check and delivery, A4a AAC encoder, A4 M4B.
+
+### 2026-11-14 — Kanban 6.64.00 — Gantt dependencies and critical path, wave G2 (KB-GANTT, #1006)
+- **Changes:** `Depends on` in the card dialog (chips + a list without loop candidates, ≤ 20), the dot after each bar to link by dragging, SVG arrows (grey, accent on the critical path, red when broken), the toast "Move the next ones too" with its own Undo when a change breaks a dependency, `Critical path` in the view menu (device-local `cp`); pure `tools.js` `wouldCycle`, `brokenDeps`, `shiftAfter`, `criticalPath`, `dayAfter` with bounded walks.
+- **Files:** kanban/tools.js, kanban/kanban.js, kanban/index.html, kanban/kanban.css, i18n/de/kanban.js, help EN/EL/DE, tests/kanban-gantt-deps.test.js, Bible KB-GANTT.
+- **Tests:** new `tests/kanban-gantt-deps.test.js` (cycles, broken links, shifting with and without workdays, critical path, loops from sync); full suite; Playwright Chromium 1280 px and 360 px (arrows, red link, shift + Undo, dot drag, loop refused).
+- **Next:** G3 PDF export, Calendar and Today marks, Assistant + Gate, imported start dates (built, next PR).
