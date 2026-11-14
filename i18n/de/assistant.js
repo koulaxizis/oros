@@ -1841,6 +1841,7 @@ orosPack("de", "assistant", {
  "st.released": "Erschienen",
  "st.out_of_print": "Vergriffen",
  "f.mtype": "Art der Veröffentlichung",
+ "f.pline": "℗- und ©-Zeilen",
  "f.label": "Label",
  "f.genre": "Genre",
  "f.track": "Titel",

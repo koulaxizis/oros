@@ -96,7 +96,15 @@ In `New title`, pick `Type` › `Music: Single`, `EP`, `Album` or `Compilation`.
 - `Tracks`: `+ Tracks` takes one track or the whole track list at once, one per line; a length at the end (3:45) is read too. Tap a track to open it: its title, version (Radio edit, Remix…), the artist when it is not the release's, its ISRC, its length, the language of the lyrics and whether the lyrics are explicit. ↑ and ↓ change the order.
 - `Editions`: digital, CD, vinyl, cassette or other, each with its UPC or EAN, catalogue number, price and distributor. `Barcode` gives the code's bars for the CD or sleeve.
 
-The ISRC and UPC/EAN fields check the code as you type and warn when another track or edition already has it. If your distributor gives you the codes, type them in. If you have your own prefixes (Codes tab), `Next free` fills in the next unused one. `Still missing` lists what a release still needs: artist, tracks, ISRCs, lengths, an edition, UPC/EAN, release date and cover.
+Inside each track:
+
+- `Credits`: who sang, played, wrote, produced, mixed or mastered it, with the instrument for a musician.
+- `Songwriting shares`: who wrote the song (music and lyrics) and their percent, with their collecting society (free text; the list only suggests names) and IPI number when they have one.
+- `Master ownership`: who owns the recording and their percent.
+
+Each list shows what its shares add up to, in red when it is not 100%. A name that matches a CRM partner is linked to them. `Split sheet in Writer` writes a split sheet for the track (release, ISRC, shares, credits and a line to sign for each person) as a new Writer document, to print or send for signing. `Same credits and splits on every track` copies the open track's three lists to the others (Undo puts theirs back).
+
+The ISRC and UPC/EAN fields check the code as you type and warn when another track or edition already has it. If your distributor gives you the codes, type them in. If you have your own prefixes (Codes tab), `Next free` fills in the next unused one. `Still missing` lists what a release still needs: artist, tracks, ISRCs, lengths, shares that make 100%, an edition, UPC/EAN, release date and cover.
 
 ## Codes
 Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `Codes` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.

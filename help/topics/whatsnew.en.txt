@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.56.00
+- **Publishing: credits and splits for music releases.** Each track keeps who played, wrote, produced, mixed and mastered it, the songwriting shares (with collecting society and IPI) and who owns the recording. A red line shows when shares don't add up to 100 %. `Split sheet in Writer` turns a track into a document for everyone to sign, and `Same credits and splits on every track` saves typing on an album. The Assistant and Claude can change a release's label, genre, ℗ and © lines, tracks and editions too.
+
 ## Version 6.55.00
 - **Atelier and Layout: draw with a pen and edit points.** Tap to place corner points, drag for curves, tap the first point to close the shape. Double-click any shape (or choose Edit points) to move its points and handles, add or remove points, make them corner or smooth, break or join the outline. Press P for the pen.
 

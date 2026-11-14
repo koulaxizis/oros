@@ -122,3 +122,98 @@ test("refs past r99999 are accepted (KB-SUB 2026-11-12)", () => {
   assert.equal(E.normArgs({ ref: "r133506", action: "update", status: "released" }).ok, true);
   assert.equal(E.normArgs({ ref: "r1335060000", action: "update", status: "released" }).ok, false);
 });
+
+// PB-MUS wave M2: a music release's fields, tracks (by ISRC, else
+// title) with credits and splits, and editions (by UPC, else kind).
+function music() {
+  let d = C.empty();
+  d = C.put(d, "titles", { id: "m1", t: "Νυχτερινά", st: "prod", mt: { k: "ep", lbl: "Γλαρόλυκοι" }, ppl: [{ r: "a", n: "Nox" }], fmts: [] }, NOW - 1000);
+  d = C.put(d, "trk", { id: "k1", ti: "m1", no: 1, t: "Πρώτο", isrc: "GRA1B2600001", dur: 200,
+                        sw: [{ n: "Nox", pct: 100, crm: "cust000001" }] }, NOW - 1000);
+  d = C.put(d, "trk", { id: "k2", ti: "m1", no: 2, t: "Δεύτερο" }, NOW - 1000);
+  d = C.put(d, "med", { id: "e1", ti: "m1", k: "dig", upc: "" }, NOW - 1000);
+  d = C.put(d, "titles", { id: "m2", t: "Άλλη", mt: { k: "single" }, fmts: [] }, NOW - 1000);
+  d = C.put(d, "trk", { id: "k9", ti: "m2", no: 1, t: "Ξένο", isrc: "GRA1B2600009" }, NOW - 1000);
+  d = C.put(d, "med", { id: "e9", ti: "m2", k: "dig", upc: "036000291452" }, NOW - 1000);
+  return JSON.parse(JSON.stringify(d));
+}
+const MT = { title: "m1" };
+function runM(d, args) {
+  const ch = ok(args);
+  const p = E.plan("publish", d, MT, ch, NOW);
+  if (!p.ok) return p;
+  const a = E.apply("publish", d, MT, ch, NOW, p.before);
+  assert.equal(a.ok, true, a.err);
+  return Object.assign(a, { plan: p });
+}
+
+test("music: release fields, tracks by ISRC and title, a new track, credits and splits; undo takes it all back", () => {
+  const d = music();
+  const r = runM(d, {
+    release_type: "album", genre: "Ambient", record_label: "", p_line: "2026 Nox",
+    tracks: [
+      { isrc: "GR-A1B-26-00001", length: "3:45", writers: [{ name: "Nox", share: 50 }, { name: "Mira", share: "50%", society: "AEPI", ipi: "00123456789" }],
+        credits: [{ role: "producer", name: "Mira" }, { role: "musician", name: "Ari", instrument: "cello" }] },
+      { title: "δεύτερο", isrc: "GRA1B2600002", explicit: true, masters: [{ name: "Γλαρόλυκοι", share: 100 }] },
+      { title: "Τρίτο", version: "Radio edit", length: 180 }
+    ],
+    editions: [{ edition: "digital", upc: "012345678905", distributor: "DistroKid" }, { edition: "vinyl", catalogue_no: "GL-001", price: 25 }]
+  });
+  const nd = C.normalize(r.data), t = C.find(nd, "titles", "m1");
+  assert.deepEqual(t.mt, { k: "album", gen: "Ambient", pl: "2026 Nox" });
+  const tr = C.tracksOf(nd, "m1");
+  assert.equal(tr.length, 3);
+  assert.equal(tr[0].dur, 225);
+  assert.deepEqual(tr[0].sw, [{ n: "Nox", pct: 50, crm: "cust000001" }, { n: "Mira", pct: 50, soc: "AEPI", ipi: "00123456789" }]);
+  assert.deepEqual(tr[0].cr, [{ r: "prod", n: "Mira" }, { r: "mus", n: "Ari", ins: "cello" }]);
+  assert.equal(tr[1].isrc, "GRA1B2600002");
+  assert.equal(tr[1].ex, 1);
+  assert.deepEqual(tr[2].t + "|" + tr[2].ver + "|" + tr[2].no + "|" + tr[2].dur, "Τρίτο|Radio edit|3|180");
+  const ed = C.editionsOf(nd, "m1");
+  assert.equal(ed.length, 2);
+  assert.equal(ed[0].id, "e1");
+  assert.equal(ed[0].upc, "012345678905");
+  assert.equal(ed[1].k, "vin");
+  const f = r.rows.map((x) => x.f);
+  ["mtype", "label", "genre", "pline", "track", "format"].forEach((k) => assert.ok(f.includes(k), k));
+  const u = E.undo("publish", r.data, r.undo, NOW + 1);
+  assert.equal(u.ok, true, u.err);
+  const ud = C.normalize(u.data);
+  assert.deepEqual(C.find(ud, "titles", "m1").mt, { k: "ep", lbl: "Γλαρόλυκοι" });
+  assert.equal(C.tracksOf(ud, "m1").length, 2);
+  assert.equal(C.tracksOf(ud, "m1")[0].dur, 200);
+  assert.deepEqual(C.tracksOf(ud, "m1")[0].sw, [{ n: "Nox", pct: 100, crm: "cust000001" }]);
+  assert.equal(C.editionsOf(ud, "m1").length, 1);
+  assert.equal(C.editionsOf(ud, "m1")[0].upc, "");
+});
+
+test("music: refused codes, shares, formats on a release and music fields on a book", () => {
+  const d = music();
+  const no = (args, re, tgt) => {
+    const p = E.plan("publish", d, tgt || MT, ok(args), NOW);
+    assert.equal(p.ok, false, JSON.stringify(args));
+    assert.match(p.err, re);
+  };
+  no({ tracks: [{ title: "Δεύτερο", isrc: "GRA1B2600009" }] }, /Άλλη/);
+  no({ tracks: [{ title: "Πρώτο", isrc: "GRA1B2600003" }] }, /already has ISRC/);
+  no({ tracks: [{ isrc: "GRA1B26" }] }, /not a valid ISRC/);
+  no({ tracks: [{ isrc: "GRA1B2600077" }] }, /give title/);
+  no({ tracks: [{ title: "Πρώτο", writers: [{ name: "A", share: 60 }, { name: "B", share: 30 }] }] }, /add up to 90%/);
+  no({ editions: [{ upc: "036000291452" }] }, /Άλλη/);
+  no({ editions: [{ upc: "036000291453" }] }, /check digit/);
+  no({ formats: [{ format: "paperback" }] }, /editions, not formats/);
+  no({ tracks: [{ title: "X", bpm: 120 }] }, /has no bpm/);
+  let b = C.put(C.empty(), "titles", { id: "t1", t: "Βιβλίο", fmts: [] }, NOW - 1000);
+  const p = E.plan("publish", JSON.parse(JSON.stringify(b)), T, ok({ tracks: [{ title: "X" }] }), NOW);
+  assert.equal(p.ok, false);
+  assert.match(p.err, /is a book/);
+});
+
+test("music: undo refused when a track changed since", () => {
+  const d = music();
+  const r = runM(d, { tracks: [{ title: "Δεύτερο", length: "2:00" }] });
+  const later = C.put(C.normalize(r.data), "trk", Object.assign({}, C.find(C.normalize(r.data), "trk", "k2"), { t: "Αλλαγή" }), NOW + 5);
+  const u = E.undo("publish", JSON.parse(JSON.stringify(later)), r.undo, NOW + 10);
+  assert.equal(u.ok, false);
+  assert.match(u.err, /changed since/);
+});
