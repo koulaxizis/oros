@@ -2303,3 +2303,18 @@ mark.cat-dx { background: var(--accent-soft); color: var(--text); border-bottom:
   .cat-tm-use, .cat-conc-use { grid-column: 1; grid-row: auto; justify-self: end; }
 }
 .cat-tmpick input { accent-color: var(--accent); }
+/* WR-CAT T3: glossary terms and checks */
+mark.cat-term { background: none; color: inherit; border-bottom: 2px dotted var(--accent); cursor: help; }
+.cat-gl { display: flex; flex-wrap: wrap; gap: 6px; }
+.cat-gl:empty, .cat-qa:empty { display: none; }
+.cat-glbtn {
+  display: inline-flex; align-items: baseline; gap: 4px; max-width: 100%;
+  padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--panel-bg); color: var(--text); font: 12px/1.4 var(--font-stack); cursor: pointer; text-align: left;
+}
+.cat-glbtn:hover { border-color: var(--accent); background: var(--accent-soft); }
+.cat-gl-src { color: var(--text-dim); overflow-wrap: anywhere; }
+.cat-gl-tgt { font-weight: 600; overflow-wrap: anywhere; }
+.cat-qa { display: flex; flex-direction: column; gap: 2px; }
+.cat-qa-item { color: var(--warn, var(--danger)); font-size: 12px; }
+.cat-gl-acts { display: flex; gap: 4px; align-items: center; }

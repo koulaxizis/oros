@@ -442,7 +442,9 @@
     BUCKETS: BUCKETS, MIN_SCORE: MIN_SCORE, MAX_UNITS: MAX_UNITS, TM_RX: TM_RX, KEY_RX: KEY_RX, DEV_RX: DEV_RX,
     base: base, keyOf: keyOf, pairOf: pairOf, bucketOf: bucketOf, cleanUnit: cleanUnit, mergeUnits: mergeUnits,
     unitsName: unitsName, unitsFile: unitsFile, readUnitsFile: readUnitsFile, readTm: readTm, newTmId: newTmId, count: count,
-    score: score, Index: Index, diff: diff, parseTmx: parseTmx, tmx: tmx, unitsOf: unitsOf, fold: fold
+    score: score, Index: Index, diff: diff, parseTmx: parseTmx, tmx: tmx, unitsOf: unitsOf, fold: fold,
+    // shared with catqa.js (T3)
+    fnv: fnv, ws: ws, strip: strip, xesc: xesc, xml: { parse: parseXml, kids: kids, textOf: textOf }
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.WriterCatTM = api;

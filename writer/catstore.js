@@ -24,6 +24,8 @@
 //   (T2) /internal/Writer/Memories/<id>/: translation memories, the
 //   same rules: tm.json written last, units-<dev>-<bucket>.json (32
 //   buckets by key, cattm.js), meta-<dev>.json for a rename.
+//   (T3) /internal/Writer/Glossaries/<id>/: the same with gl.json and
+//   entries-<dev>-<bucket>.json (catqa.js).
 // ============================================================
 (function (root) {
   "use strict";
@@ -31,9 +33,11 @@
   var node = typeof module !== "undefined" && module.exports;
   var C = node ? require("./catcore.js") : root.WriterCatCore;
   var TM = node ? require("./cattm.js") : root.WriterCatTM;
+  var QA = node ? require("./catqa.js") : root.WriterCatQA;
 
   var ROOT = "/internal/Writer/Translations";
   var TMROOT = "/internal/Writer/Memories";     // T2: translation memories
+  var GLROOT = "/internal/Writer/Glossaries";   // T3: glossaries
   var TRASH = "/internal/.trash";
   var MAX_FILE = 64 * 1024 * 1024;
 
@@ -162,7 +166,7 @@
         });
       })).then(function () { return Object.keys(chunks).length; });
     };
-    // meta = { name?, out?, tm? } → this device's meta file (merged with what it had)
+    // meta = { name?, out?, tm?, gl? } → this device's meta file (merged with what it had)
     self.saveMeta = function (id, meta) {
       var path = dirOf(id) + "/meta-" + dev + ".json";
       return readJson(fs, path).then(function (cur) {
@@ -170,9 +174,11 @@
         if (m.nm) { o.name = m.name; o.nm = m.nm; }
         if (m.om) { o.out = m.out; o.om = m.om; }
         if (m.tmm) { o.tm = m.tm; o.tmm = m.tmm; }
+        if (m.glm) { o.gl = m.gl; o.glm = m.glm; }
         if (typeof meta.name === "string") { o.name = meta.name.slice(0, 200); o.nm = Math.max(t, (m.nm || 0) + 1); }
         if (typeof meta.out === "string") { o.out = meta.out.slice(0, 80); o.om = Math.max(t, (m.om || 0) + 1); }
         if (typeof meta.tm === "string") { o.tm = meta.tm.slice(0, 40); o.tmm = Math.max(t, (m.tmm || 0) + 1); }
+        if (typeof meta.gl === "string") { o.gl = meta.gl.slice(0, 40); o.glm = Math.max(t, (m.glm || 0) + 1); }
         o.v = 1;
         return fs.writeText(path, JSON.stringify(o));
       });
@@ -191,103 +197,126 @@
       return trashDir(dirOf(id), id).then(function () { delete own[id]; });
     };
 
-    // ---- translation memories (T2) ----
-    // /internal/Writer/Memories/<id>/: tm.json (written last), meta-<dev>.json
-    // (rename), units-<dev>-<bucket>.json (only this device's units)
-    var ownU = {};      // { id: { bucket: { key: unit } } }
-    function tmDir(id) { return TMROOT + "/" + id; }
-    self.listTms = function () {
-      return ls(fs, TMROOT).then(function (ents) {
-        return Promise.all(ents.filter(function (e) { return e.dir && TM.TM_RX.test(e.name); }).map(function (e) {
-          var d = tmDir(e.name);
-          return Promise.all([readJson(fs, d + "/tm.json"), ls(fs, d)]).then(function (r) {
-            var m = TM.readTm(r[0]);
-            if (!m || m.id !== e.name) return null;
-            var metas = r[1].filter(function (x) { return !x.dir && C.metaName(x.name); });
-            return Promise.all(metas.map(function (x) { return readJson(fs, d + "/" + x.name); })).then(function (ms) {
-              var mm = C.mergeMeta(ms);
-              if (mm.name) m.name = mm.name;
-              return m;
+    // ---- translation memories (T2) and glossaries (T3) ----
+    // <root>/<id>/: <head>.json (written last), meta-<dev>.json (rename),
+    // <prefix>-<dev>-<bucket>.json (only this device's items)
+    function Coll(o) {
+      var mine = {};      // { id: { bucket: { key: item } } }
+      function dir(id) { return o.root + "/" + id; }
+      function files(id) {
+        return ls(fs, dir(id)).then(function (ents) { return ents.filter(function (e) { return !e.dir && o.name(e.name); }); });
+      }
+      var c = {};
+      c.list = function () {
+        return ls(fs, o.root).then(function (ents) {
+          return Promise.all(ents.filter(function (e) { return e.dir && o.rx.test(e.name); }).map(function (e) {
+            var d = dir(e.name);
+            return Promise.all([readJson(fs, d + "/" + o.head), ls(fs, d)]).then(function (r) {
+              var m = o.readHead(r[0]);
+              if (!m || m.id !== e.name) return null;
+              var metas = r[1].filter(function (x) { return !x.dir && C.metaName(x.name); });
+              return Promise.all(metas.map(function (x) { return readJson(fs, d + "/" + x.name); })).then(function (ms) {
+                var mm = C.mergeMeta(ms);
+                if (mm.name) m.name = mm.name;
+                return m;
+              });
             });
-          });
-        }));
-      }).then(function (list) {
-        return list.filter(Boolean).sort(function (a, b) { return (a.at - b.at) || (a.id < b.id ? -1 : 1); });
-      });
-    };
-    self.createTm = function (name) {
-      var id = TM.newTmId(now(), Math.random());
-      var m = { v: 1, id: id, name: String(name || "").slice(0, 200), at: now() };
-      return fs.writeText(tmDir(id) + "/tm.json", JSON.stringify(m)).then(function () { ownU[id] = {}; return TM.readTm(m); });
-    };
-    self.renameTm = function (id, name) {
-      if (!TM.TM_RX.test(id)) return Promise.reject(new Error("id"));
-      var path = tmDir(id) + "/meta-" + dev + ".json";
-      return readJson(fs, path).then(function (cur) {
-        var m = C.mergeMeta([cur]);
-        return fs.writeText(path, JSON.stringify({ v: 1, name: String(name).slice(0, 200), nm: Math.max(now(), (m.nm || 0) + 1) }));
-      });
-    };
-    function unitFiles(id) {
-      var d = tmDir(id);
-      return ls(fs, d).then(function (ents) { return ents.filter(function (e) { return !e.dir && TM.unitsName(e.name); }); });
-    }
-    // → { units: { key: unit } over every device, sig }
-    self.loadTm = function (id) {
-      if (!TM.TM_RX.test(id)) return Promise.reject(new Error("id"));
-      var d = tmDir(id);
-      return unitFiles(id).then(function (ents) {
-        return Promise.all(ents.map(function (e) {
-          return Promise.all([readJson(fs, d + "/" + e.name), fs.stat(d + "/" + e.name).catch(function () { return null; })])
-            .then(function (r) { return { name: e.name, obj: r[0], st: r[1] }; });
-        }));
-      }).then(function (files) {
-        var maps = [], mine = ownU[id] = ownU[id] || {};
-        files.forEach(function (f) {
-          var un = TM.unitsName(f.name), u = TM.readUnitsFile(f.obj, un.dev, un.bucket);
-          maps.push(u);
-          if (un.dev === dev) mine[un.bucket] = TM.mergeUnits([mine[un.bucket], u]);
+          }));
+        }).then(function (list) {
+          return list.filter(Boolean).sort(function (x, y) { return (x.at - y.at) || (x.id < y.id ? -1 : 1); });
         });
-        Object.keys(mine).forEach(function (b) { maps.push(mine[b]); });
-        return { units: TM.mergeUnits(maps), sig: sigOf(files) };
-      });
-    };
-    self.tmSig = function (id) {
-      var d = tmDir(id);
-      return unitFiles(id).then(function (ents) {
-        return Promise.all(ents.map(function (e) {
-          return fs.stat(d + "/" + e.name).then(function (st) { return { name: e.name, st: st }; }, function () { return { name: e.name, st: null }; });
-        }));
-      }).then(sigOf);
-    };
-    // changed = { key: unit } → the buckets they fall in, each file read
-    // first (another window of this device), merged, written
-    self.saveUnits = function (id, changed) {
-      if (!TM.TM_RX.test(id)) return Promise.reject(new Error("id"));
-      var d = tmDir(id), mine = ownU[id] = ownU[id] || {}, buckets = {};
-      Object.keys(changed || {}).forEach(function (k) {
-        var u = TM.cleanUnit(changed[k]);
-        if (!u || !TM.KEY_RX.test(k)) return;
-        var b = TM.bucketOf(k);
-        mine[b] = mine[b] || {};
-        mine[b][k] = u;
-        buckets[b] = 1;
-      });
-      return Promise.all(Object.keys(buckets).map(function (b) {
-        var path = d + "/units-" + dev + "-" + b + ".json";
+      };
+      c.create = function (name) {
+        var id = o.newId(now(), Math.random());
+        var m = { v: 1, id: id, name: String(name || "").slice(0, 200), at: now() };
+        return fs.writeText(dir(id) + "/" + o.head, JSON.stringify(m)).then(function () { mine[id] = {}; return o.readHead(m); });
+      };
+      c.rename = function (id, name) {
+        if (!o.rx.test(id)) return Promise.reject(new Error("id"));
+        var path = dir(id) + "/meta-" + dev + ".json";
         return readJson(fs, path).then(function (cur) {
-          mine[b] = TM.mergeUnits([TM.readUnitsFile(cur, dev, +b), mine[b]]);
-          return fs.writeText(path, JSON.stringify(TM.unitsFile(dev, mine[b])));
+          var m = C.mergeMeta([cur]);
+          return fs.writeText(path, JSON.stringify({ v: 1, name: String(name).slice(0, 200), nm: Math.max(now(), (m.nm || 0) + 1) }));
         });
-      })).then(function () { return Object.keys(buckets).length; });
-    };
-    self.trashTm = function (id) {
-      if (!TM.TM_RX.test(id)) return Promise.reject(new Error("id"));
-      return trashDir(tmDir(id), id).then(function () { delete ownU[id]; });
-    };
+      };
+      // → { items: { key: item } over every device, sig }
+      c.load = function (id) {
+        if (!o.rx.test(id)) return Promise.reject(new Error("id"));
+        var d = dir(id);
+        return files(id).then(function (ents) {
+          return Promise.all(ents.map(function (e) {
+            return Promise.all([readJson(fs, d + "/" + e.name), fs.stat(d + "/" + e.name).catch(function () { return null; })])
+              .then(function (r) { return { name: e.name, obj: r[0], st: r[1] }; });
+          }));
+        }).then(function (fl) {
+          var maps = [], my = mine[id] = mine[id] || {};
+          fl.forEach(function (f) {
+            var un = o.name(f.name), u = o.readFile(f.obj, un.dev, un.bucket);
+            maps.push(u);
+            if (un.dev === dev) my[un.bucket] = o.merge([my[un.bucket], u]);
+          });
+          Object.keys(my).forEach(function (bk) { maps.push(my[bk]); });
+          return { items: o.merge(maps), sig: sigOf(fl) };
+        });
+      };
+      c.sig = function (id) {
+        var d = dir(id);
+        return files(id).then(function (ents) {
+          return Promise.all(ents.map(function (e) {
+            return fs.stat(d + "/" + e.name).then(function (st) { return { name: e.name, st: st }; }, function () { return { name: e.name, st: null }; });
+          }));
+        }).then(sigOf);
+      };
+      // changed = { key: item } → the buckets they fall in, each file read
+      // first (another window of this device), merged, written
+      c.save = function (id, changed) {
+        if (!o.rx.test(id)) return Promise.reject(new Error("id"));
+        var d = dir(id), my = mine[id] = mine[id] || {}, buckets = {};
+        Object.keys(changed || {}).forEach(function (k) {
+          var u = o.clean(changed[k]);
+          if (!u || !TM.KEY_RX.test(k)) return;
+          var bk = TM.bucketOf(k);
+          my[bk] = my[bk] || {};
+          my[bk][k] = u;
+          buckets[bk] = 1;
+        });
+        return Promise.all(Object.keys(buckets).map(function (bk) {
+          var path = d + "/" + o.prefix + "-" + dev + "-" + bk + ".json";
+          return readJson(fs, path).then(function (cur) {
+            my[bk] = o.merge([o.readFile(cur, dev, +bk), my[bk]]);
+            return fs.writeText(path, JSON.stringify(o.file(dev, my[bk])));
+          });
+        })).then(function () { return Object.keys(buckets).length; });
+      };
+      c.trash = function (id) {
+        if (!o.rx.test(id)) return Promise.reject(new Error("id"));
+        return trashDir(dir(id), id).then(function () { delete mine[id]; });
+      };
+      return c;
+    }
+    var tms = Coll({ root: TMROOT, rx: TM.TM_RX, head: "tm.json", prefix: "units", readHead: TM.readTm, newId: TM.newTmId,
+      name: TM.unitsName, readFile: TM.readUnitsFile, file: TM.unitsFile, merge: TM.mergeUnits, clean: TM.cleanUnit });
+    self.listTms = tms.list;
+    self.createTm = tms.create;
+    self.renameTm = tms.rename;
+    self.loadTm = function (id) { return tms.load(id).then(function (r) { return { units: r.items, sig: r.sig }; }); };
+    self.tmSig = tms.sig;
+    self.saveUnits = tms.save;
+    self.trashTm = tms.trash;
+    if (QA) {
+      var gls = Coll({ root: GLROOT, rx: QA.GL_RX, head: "gl.json", prefix: "entries", readHead: QA.readGl, newId: QA.newGlId,
+        name: QA.entriesName, readFile: QA.readEntriesFile, file: QA.entriesFile, merge: QA.mergeEntries, clean: QA.cleanEntry });
+      self.listGls = gls.list;
+      self.createGl = gls.create;
+      self.renameGl = gls.rename;
+      self.loadGl = function (id) { return gls.load(id).then(function (r) { return { entries: r.items, sig: r.sig }; }); };
+      self.glSig = gls.sig;
+      self.saveEntries = gls.save;
+      self.trashGl = gls.trash;
+    }
   }
 
-  var api = { Store: Store, ROOT: ROOT, TMROOT: TMROOT, dirOf: dirOf };
+  var api = { Store: Store, ROOT: ROOT, TMROOT: TMROOT, GLROOT: GLROOT, dirOf: dirOf };
   if (node) module.exports = api;
   else root.WriterCatStore = api;
 })(this);
