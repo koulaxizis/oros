@@ -25,7 +25,9 @@
 // ============================================================
 (function (root) {
   "use strict";
-  var E = (typeof module !== "undefined" && module.exports) ? require("./engine.js") : root.OrosFormsEngine;
+  var NODE = typeof module !== "undefined" && module.exports;
+  var E = NODE ? require("./engine.js") : root.OrosFormsEngine;
+  var Q = NODE ? require("./quiz.js") : root.OrosFormsQuiz;
 
   var LIST_MAX = 50;
   var BINS = 8;
@@ -68,7 +70,10 @@
       if (typeof v === "number") sum += v;
     });
     var o = { kind: "bars", n: n, bars: keys.map(function (k) {
-      return { key: k.key, label: k.label, n: count[k.key], pct: pct(count[k.key], n) };
+      var b = { key: k.key, label: k.label, n: count[k.key], pct: pct(count[k.key], n) };
+      // W5: the right option(s) of a quiz question
+      if (q.key !== undefined && (Array.isArray(q.key) ? q.key.indexOf(k.key) >= 0 : q.key === k.key)) b.ok = 1;
+      return b;
     }) };
     if ((q.t === "scale" || q.t === "stars") && n) o.avg = round(sum / n);
     return o;
@@ -138,12 +143,29 @@
 
   function summary(form, rows, words) {
     rows = Array.isArray(rows) ? rows : [];
+    var quiz = !!(Q && Q.on(form));
     return asked(form).map(function (q) {
       var s = BAR[q.t] ? bars(q, rows, words) : q.t === "number" ? hist(q, rows)
             : q.t === "matrix" ? grid(q, rows) : list(q, rows);
       s.q = q.id; s.t = q.t; s.label = q.label; s.of = rows.length;
+      // W5: how many got it right, of those who answered it
+      if (quiz && q.key !== undefined) {
+        var ok = 0;
+        rows.forEach(function (r) { if (Q.right(q, val(q, r.a))) ok++; });
+        s.right = ok;
+      }
       return s;
     });
+  }
+  // W5: the average score of these answers → { avg, max, n } | null
+  function quizAvg(form, rows) {
+    if (!Q || !Q.on(form)) return null;
+    var sum = 0, mx = 0, n = 0;
+    (Array.isArray(rows) ? rows : []).forEach(function (r) {
+      var sc = Q.score(form, r.a);
+      if (sc && sc.max) { sum += sc.pts; mx += sc.max; n++; }
+    });
+    return n ? { avg: round(sum / n), max: round(mx / n), n: n } : { avg: 0, max: 0, n: 0 };
   }
 
   function filterable(form, words) {
@@ -167,8 +189,10 @@
     var qs = asked(form);
     rows = (Array.isArray(rows) ? rows : []).slice().sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
     var anyWait = rows.some(function (r) { return r.w; });
+    var quiz = !!(Q && Q.on(form));
     var head = [words.time];
     if (anyWait) head.push(words.wait);
+    if (quiz) head.push(words.score || "Score");
     qs.forEach(function (q) {
       if (q.t === "matrix") (q.rows || []).forEach(function (r) { head.push((q.label || "") + " – " + (r.label || "")); });
       else head.push(q.label || "");
@@ -177,6 +201,7 @@
     rows.forEach(function (r) {
       var line = [iso(r.at)];
       if (anyWait) line.push(r.w ? words.yes : "");
+      if (quiz) { var sc = Q.score(form, r.a); line.push(sc ? sc.pts : ""); }
       qs.forEach(function (q) {
         var v = val(q, r.a);
         var label = function (id) {
@@ -219,7 +244,7 @@
     return "﻿" + (tbl || []).map(function (r) { return r.map(cell).join(";"); }).join("\r\n") + "\r\n";
   }
 
-  var api = { summary: summary, filterable: filterable, filter: filter, table: table, csv: csv, cell: cell,
+  var api = { summary: summary, quizAvg: quizAvg, filterable: filterable, filter: filter, table: table, csv: csv, cell: cell,
               LIST_MAX: LIST_MAX, BINS: BINS };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosFormsResults = api;

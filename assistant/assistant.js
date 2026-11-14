@@ -3748,7 +3748,7 @@
     if (window.OrosFormsResults) return Promise.resolve();
     if (!formsP) {
       var v = (document.querySelector('script[src*="assistant.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
-      formsP = ["../forms/engine.js", "../forms/results.js"].reduce(function (p, f) {
+      formsP = ["../forms/engine.js", "../forms/quiz.js", "../forms/results.js"].reduce(function (p, f) {
         return p.then(function () {
           return new Promise(function (ok) {
             var s = document.createElement("script");

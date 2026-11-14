@@ -297,4 +297,14 @@ dl.ans dd.dim { font-style: italic; }
 }
 @media (forced-colors: active) { .res-fill { fill: Highlight; } .res-track { fill: GrayText; } }
 
+/* W5 quiz: the score after sending, the marks, the builder's key box */
+.ff-score { font-size: 18px; font-weight: 600; margin: 12px 0 4px; }
+.ff-marks { list-style: none; margin: 4px 0 0; padding: 0; font-size: 14px; }
+.ff-marks li { padding: 4px 0; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
+.ff-marks .ff-mark { font-weight: 600; }
+.quiz-box { border: 1px dashed var(--border); border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
+.quiz-box legend { padding: 0 4px; font-size: 14px; color: var(--text-dim); }
+.badge.score { font-variant-numeric: tabular-nums; }
+@media (forced-colors: active) { .quiz-box { border-color: CanvasText; } }
+
 [hidden] { display: none !important; }

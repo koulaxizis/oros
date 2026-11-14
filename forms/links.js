@@ -13,8 +13,10 @@
 //     ({ asNew: { name, email, phone, from } }), or null without a name
 //   fromDraft(d) → { title, desc, qs } | null: a form the Assistant (or
 //     Claude through the Gate) drafted, in simple words:
-//     { title, desc?, questions: [{ label, type?, options?, required?,
-//       low?, high?, rows? }] }; unknown types become short text, at
+//     { title, desc?, quiz?, questions: [{ label, type?, options?, required?,
+//       low?, high?, rows?, answer?, points? }] } (answer, points: quiz
+//       only; answer = option label(s), yes / no, a number or accepted
+//       texts); unknown types become short text, at
 //     most MAX_DRAFT questions; ids are fresh. The app runs the result
 //     through engine.normForm like every other form.
 // ============================================================
@@ -111,10 +113,25 @@
         q.lo = lo; q.hi = isFinite(hi) && hi >= lo + 1 && hi <= 10 ? hi : 5;
       }
       if (t === "stars") { var h = Math.round(Number(x.high)); q.hi = isFinite(h) && h >= 3 && h <= 10 ? h : 5; }
+      // W5: a quiz question's right answer (option labels, yes / no, a
+      // number or accepted texts) and its points
+      if (d.quiz === true && E.KEYED[q.t] && x.answer !== undefined && x.answer !== null) {
+        var byLabel = function (l) { var o = (q.opts || []).filter(function (y) { return fold(y.label) === fold(l); })[0]; return o ? o.id : ""; };
+        var key;
+        if (q.t === "choice" || q.t === "select") key = byLabel(Array.isArray(x.answer) ? x.answer[0] : x.answer) || undefined;
+        else if (q.t === "multi") key = (Array.isArray(x.answer) ? x.answer : [x.answer]).map(byLabel).filter(Boolean);
+        else if (q.t === "yesno") { var yn = fold(x.answer); key = yn === "yes" || yn === "true" ? "yes" : yn === "no" || yn === "false" ? "no" : undefined; }
+        else if (q.t === "number") key = typeof x.answer === "number" ? x.answer : Number(x.answer);
+        else key = (Array.isArray(x.answer) ? x.answer : [x.answer]).map(function (a) { return str(String(a), E.LIM.opt); }).filter(Boolean);
+        var k2 = E.normItem(Object.assign({}, q, { key: key, pts: x.points }));
+        if (k2 && k2.key !== undefined) { q.key = k2.key; if (k2.pts) q.pts = k2.pts; }
+      }
       qs.push(q);
     });
     if (!title && !qs.length) return null;
-    return { title: title, desc: typeof d.desc === "string" ? d.desc.slice(0, E.LIM.desc) : "", qs: qs };
+    var out = { title: title, desc: typeof d.desc === "string" ? d.desc.slice(0, E.LIM.desc) : "", qs: qs };
+    if (d.quiz === true) out.set = { quiz: 1 };
+    return out;
   }
 
   var api = { person: person, toContact: toContact, toCrm: toCrm, fromDraft: fromDraft, MAX_DRAFT: MAX_DRAFT };

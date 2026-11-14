@@ -21,7 +21,7 @@
   "use strict";
 
   var E = window.OrosFormsEngine, C = window.OrosFormsCore, R = window.OrosFormsRender, S = window.OrosFormsShare,
-      RS = window.OrosFormsResults, LK = window.OrosFormsLinks;
+      RS = window.OrosFormsResults, LK = window.OrosFormsLinks, QZ = window.OrosFormsQuiz;
   var STORAGE_KEY = C.STORAGE_KEY;
 
   // ---------- 1. Strings + helpers ----------
@@ -129,7 +129,7 @@
       "an.more": "Show {n} more",
       "an.otherName": "Other", "an.view": "View", "an.view.sum": "Summary", "an.view.each": "Each answer",
       "an.filter": "Show only", "an.filterAll": "All answers", "an.filtered": "{n} of {m} answers match.",
-      "an.toContacts": "Add to Contacts", "an.toCrm": "Add to CRM", "dr.made": "New form from the Assistant: check the questions before you share it.", "an.sheet": "Open in Spreadsheet", "an.csv": "Download CSV", "an.saved": "Saved {name}",
+      "set.quiz": "This is a quiz: score the answers", "set.quizHint": "Each question with one right answer gets a Correct answer box and points.", "set.score": "Show people their score after sending", "set.scoreHint": "The right answers then travel inside the form's page, so someone who knows how could read them before answering. Leave it off for a test that counts.", "set.reveal": "Also show which answers were right", "qz.key": "Correct answer", "qz.none": "No correct answer", "qz.pts": "Points", "qz.accept": "Accepted answers, one per line", "qz.score": "Score", "qz.avg": "Average score: {p} of {m}", "qz.of": "{p} of {m}", "qz.right": "right", "res.rightN": "{n} of {m} got it right", "an.toContacts": "Add to Contacts", "an.toCrm": "Add to CRM", "dr.made": "New form from the Assistant: check the questions before you share it.", "an.sheet": "Open in Spreadsheet", "an.csv": "Download CSV", "an.saved": "Saved {name}",
       "an.sheetCap": "Only the newest {n} answers went to the Spreadsheet.",
       "res.answered": "{n} of {m} answered", "res.none": "Nobody answered this question yet.",
       "res.avg": "Average {x}", "res.range": "From {a} to {b}", "res.more": "And {n} more.",
@@ -262,7 +262,7 @@
       "an.more": "Εμφάνιση {n} ακόμα",
       "an.otherName": "Άλλο", "an.view": "Προβολή", "an.view.sum": "Σύνοψη", "an.view.each": "Κάθε απάντηση",
       "an.filter": "Μόνο", "an.filterAll": "Όλες οι απαντήσεις", "an.filtered": "Ταιριάζουν {n} από {m} απαντήσεις.",
-      "an.toContacts": "Προσθήκη στις Επαφές", "an.toCrm": "Προσθήκη στο CRM", "dr.made": "Νέα φόρμα από τον Βοηθό: έλεγξε τις ερωτήσεις πριν τη μοιραστείς.", "an.sheet": "Άνοιγμα στο Spreadsheet", "an.csv": "Λήψη CSV", "an.saved": "Αποθηκεύτηκε: {name}",
+      "set.quiz": "Είναι κουίζ: βαθμολόγησε τις απαντήσεις", "set.quizHint": "Κάθε ερώτηση με μία σωστή απάντηση παίρνει πεδίο Σωστή απάντηση και βαθμούς.", "set.score": "Δείξε στους άλλους τη βαθμολογία τους μετά την αποστολή", "set.scoreHint": "Οι σωστές απαντήσεις τότε ταξιδεύουν μέσα στη σελίδα της φόρμας, οπότε κάποιος που ξέρει πώς θα μπορούσε να τις διαβάσει πριν απαντήσει. Άφησέ το κλειστό για τεστ που μετράει.", "set.reveal": "Δείξε και ποιες απαντήσεις ήταν σωστές", "qz.key": "Σωστή απάντηση", "qz.none": "Χωρίς σωστή απάντηση", "qz.pts": "Βαθμοί", "qz.accept": "Αποδεκτές απαντήσεις, μία ανά γραμμή", "qz.score": "Βαθμολογία", "qz.avg": "Μέση βαθμολογία: {p} από {m}", "qz.of": "{p} από {m}", "qz.right": "σωστό", "res.rightN": "{n} από {m} το βρήκαν", "an.toContacts": "Προσθήκη στις Επαφές", "an.toCrm": "Προσθήκη στο CRM", "dr.made": "Νέα φόρμα από τον Βοηθό: έλεγξε τις ερωτήσεις πριν τη μοιραστείς.", "an.sheet": "Άνοιγμα στο Spreadsheet", "an.csv": "Λήψη CSV", "an.saved": "Αποθηκεύτηκε: {name}",
       "an.sheetCap": "Στο Spreadsheet πήγαν μόνο οι {n} νεότερες απαντήσεις.",
       "res.answered": "Απάντησαν {n} από {m}", "res.none": "Κανείς δεν απάντησε ακόμα σε αυτή την ερώτηση.",
       "res.avg": "Μέσος όρος {x}", "res.range": "Από {a} έως {b}", "res.more": "Και {n} ακόμα.",
@@ -526,6 +526,13 @@
   }
 
   // ---------- 4. Editor ----------
+  function fillQuiz() {
+    $("s-quiz").checked = !!cur.set.quiz;
+    $("s-score").checked = !!cur.set.score;
+    $("s-reveal").checked = !!cur.set.reveal;
+    $("s-reveal").disabled = !cur.set.score;
+    $("s-quiz-more").hidden = !cur.set.quiz;
+  }
   function renderForm() {
     if (!cur) return;
     var ti = $("f-title"), de = $("f-desc");
@@ -536,6 +543,7 @@
     $("s-prog").checked = !!cur.set.prog;
     if (document.activeElement !== $("s-back")) $("s-back").value = cur.set.back || backDraft || "";
     $("s-once").checked = !!cur.set.once;
+    fillQuiz();
     respTab();
     if (!$("pane-share").hidden) renderShare();
     renderItems();
@@ -678,6 +686,7 @@
     box.appendChild(field(hl, areaIn(q.help, E.LIM.help, function (v) { q.help = v; changed(false); })));
     typeFields(box, q);
     if (E.ASKS[q.t]) box.appendChild(checkIn(t("ed.req"), q.req, function (on) { q.req = on ? 1 : 0; changed(false); }));
+    if (cur.set && cur.set.quiz && E.KEYED[q.t]) keyEditor(box, q);
     if (q.t !== "page") showEditor(box, q, i);
     jumpEditor(box, q, i, nums);
     // Actions
@@ -700,6 +709,38 @@
     bar.appendChild(done);
     box.appendChild(bar);
     return box;
+  }
+
+  // W5: the correct answer and the points of one question.
+  function keyEditor(box, q) {
+    var fs = el("fieldset", "quiz-box");
+    fs.appendChild(el("legend", "", t("qz.key")));
+    var set = function (v) { if (v === undefined || v === "" || (Array.isArray(v) && !v.length)) { delete q.key; delete q.pts; } else q.key = v; changed(false); };
+    if (q.t === "choice" || q.t === "select" || q.t === "yesno") {
+      var os = q.t === "yesno" ? [["yes", t("an.yes")], ["no", t("an.no")]] :
+        q.opts.map(function (o, j) { return [o.id, o.label || t("ed.optN", { n: j + 1 })]; });
+      fs.appendChild(field(t("qz.key"), selectIn([["", t("qz.none")]].concat(os), q.key || "", function (v) { set(v || undefined); renderItems(); })));
+    } else if (q.t === "multi") {
+      q.opts.forEach(function (o, j) {
+        var onK = Array.isArray(q.key) && q.key.indexOf(o.id) >= 0;
+        fs.appendChild(checkIn(o.label || t("ed.optN", { n: j + 1 }), onK, function (on) {
+          var k = Array.isArray(q.key) ? q.key.slice() : [];
+          if (on && k.indexOf(o.id) < 0) k.push(o.id);
+          if (!on) k = k.filter(function (x) { return x !== o.id; });
+          set(k.length ? k : undefined);
+        }));
+      });
+    } else if (q.t === "number") {
+      fs.appendChild(field(t("qz.key"), numIn(q.key, function (v) { set(toNum(v)); })));
+    } else if (q.t === "text") {
+      fs.appendChild(field(t("qz.accept"), areaIn(Array.isArray(q.key) ? q.key.join("\n") : "", 2000, function (v) {
+        set(v.split("\n").map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 10));
+      })));
+    }
+    if (q.key !== undefined) {
+      fs.appendChild(field(t("qz.pts"), numIn(q.pts || 1, function (v) { var n = toNum(v); if (n === undefined || n === 1) delete q.pts; else q.pts = Math.max(1, Math.min(100, Math.round(n))); changed(false); })));
+    }
+    box.appendChild(fs);
   }
 
   function words() { return { opt1: t("q.opt1"), row1: t("q.row1"), col1: t("q.col1") }; }
@@ -1354,7 +1395,7 @@
   var SVGNS = "http://www.w3.org/2000/svg";
   function resWords() {
     return { yes: t("an.yes"), no: t("an.no"), other: function (v) { return t("an.other", { x: v }); },
-             otherName: t("an.otherName"), time: t("res.col.time"), wait: t("res.col.wait") };
+             otherName: t("an.otherName"), time: t("res.col.time"), wait: t("res.col.wait"), score: t("qz.score") };
   }
   function fmtNum(x) {
     try { return Number(x).toLocaleString(locale(), { maximumFractionDigits: 2 }); } catch (e) { return String(x); }
@@ -1394,9 +1435,10 @@
     if (!it.n) { card.appendChild(el("p", "dim", t("res.none"))); return card; }
     if (it.kind === "bars" || it.kind === "hist") {
       var box = el("div", "res-bars");
-      it.bars.forEach(function (b) { box.appendChild(barRow(b.label, b.n, b.pct)); });
+      it.bars.forEach(function (b) { box.appendChild(barRow(b.ok ? "✓ " + b.label + " (" + t("qz.right") + ")" : b.label, b.n, b.pct)); });
       card.appendChild(box);
       var notes = [];
+      if (it.right !== undefined) notes.push(t("res.rightN", { n: it.right, m: it.n }));
       if (it.t === "multi") notes.push(t("res.multi"));
       if (it.avg !== undefined) notes.push(t("res.avg", { x: fmtNum(it.avg) }));
       if (it.kind === "hist") notes.push(t("res.range", { a: fmtNum(it.min), b: fmtNum(it.max) }));
@@ -1420,6 +1462,7 @@
       it.texts.forEach(function (x) { ul.appendChild(el("li", "", x.text)); });
       card.appendChild(ul);
       if (it.more) card.appendChild(el("p", "hint", t("res.more", { n: it.more })));
+      if (it.right !== undefined) card.appendChild(el("p", "hint", t("res.rightN", { n: it.right, m: it.n })));
     }
     return card;
   }
@@ -1514,6 +1557,8 @@
     if (fq) pane.appendChild(el("p", "hint", t("an.filtered", { n: list.length, m: all.length })));
 
     if (respView === "sum") {
+      var qa = RS.quizAvg(cur, list);
+      if (qa && qa.n) pane.appendChild(el("p", "card res-q", t("qz.avg", { p: fmtNum(qa.avg), m: fmtNum(qa.max) })));
       RS.summary(cur, list, words).forEach(function (it) { pane.appendChild(summaryCard(it)); });
       return;
     }
@@ -1524,6 +1569,8 @@
       top.appendChild(el("span", "when", fmtTime(r.at)));
       if (r.at > seen) top.appendChild(el("span", "badge", t("an.new")));
       if (r.w) top.appendChild(el("span", "badge dim", t("an.wait")));
+      var sc = QZ ? QZ.score(cur, r.a) : null;
+      if (sc && sc.max) top.appendChild(el("span", "badge score", t("qz.score") + ": " + t("qz.of", { p: sc.pts, m: sc.max })));
       card.appendChild(top);
       var dl = el("dl", "ans");
       C.answerLines(cur, r.a, words).forEach(function (ln) {
@@ -1741,6 +1788,18 @@
       backDraft = ok ? "" : $("s-back").value;
       if (ok) { if (v) cur.set.back = v; else delete cur.set.back; changed(false); }
     });
+    // W5: quiz settings (score needs quiz, reveal needs score)
+    $("s-quiz").addEventListener("change", function () {
+      if (!cur) return;
+      if ($("s-quiz").checked) cur.set.quiz = 1; else { delete cur.set.quiz; delete cur.set.score; delete cur.set.reveal; }
+      changed(false); fillQuiz(); renderItems();
+    });
+    $("s-score").addEventListener("change", function () {
+      if (!cur) return;
+      if ($("s-score").checked) cur.set.score = 1; else { delete cur.set.score; delete cur.set.reveal; }
+      changed(false); fillQuiz();
+    });
+    $("s-reveal").addEventListener("change", function () { if (!cur) return; if ($("s-reveal").checked) cur.set.reveal = 1; else delete cur.set.reveal; changed(false); });
     $("s-once").addEventListener("change", function () { if (!cur) return; if ($("s-once").checked) cur.set.once = 1; else delete cur.set.once; changed(false); });
     $("stop-yes").addEventListener("click", function () { closeDlg($("stop-dlg")); stopSharing(); });
     $("dup-btn").addEventListener("click", dupForm);
@@ -1775,7 +1834,7 @@
     var d = tg && LK ? LK.fromDraft(tg.draft) : null;
     if (!d) return;
     commit();
-    var rec = { id: E.newId(idsOfForms()), title: d.title, desc: d.desc, qs: d.qs, set: {} };
+    var rec = { id: E.newId(idsOfForms()), title: d.title, desc: d.desc, qs: d.qs, set: d.set || {} };
     var res = C.put(data, rec, Date.now());
     data = res.data;
     persist();

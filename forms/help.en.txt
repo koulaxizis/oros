@@ -53,3 +53,9 @@ Forms makes surveys, sign-up sheets and order forms: questions of many kinds, pa
 - Under each answer in `Each answer`, `Add to Contacts` and `Add to CRM` open a new contact or customer with the name, e-mail and phone from that answer filled in. Nothing is saved until you press Save there. The name comes from a question whose label says "name" (or the first short answer).
 - The Assistant can draft a form for you ("make a sign-up form for the fair with name, e-mail and day"). Its card shows the questions; `Open` makes the form here, and it is not shared until you publish it. The Assistant can also tell you how many answered and how the answers add up, never what people wrote or their contact details.
 - The menu search finds your forms by title, description and questions.
+
+## Quiz
+- In `Settings`, `This is a quiz: score the answers` gives every question with one right answer (one choice, drop-down, checkboxes, yes/no, number, short answer) a `Correct answer` box and `Points` (1 by default). Short answers accept up to 10 answers, one per line, compared without capitals, accents or extra spaces. Checkboxes count as right only with exactly the right boxes ticked.
+- `Answers` then shows the average score, the right option with a ✓ and how many got each question right; each answer shows its score, and the export gets a `Score` column. Only the questions a person was asked count.
+- `Show people their score after sending` shows them their score on the thank-you page, and `Also show which answers were right` adds a right / not right line per question. With it on, the right answers travel inside the form's page, so someone who knows how could read them first. Leave it off for a test that counts: the form's page then gets no right answers at all, and only you see the scores.
+- The Assistant can draft a quiz too ("make a 10-question quiz on European capitals").

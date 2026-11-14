@@ -50,6 +50,8 @@
                multi: 1, select: 1, scale: 1, stars: 1, yesno: 1, matrix: 1 };
   var CHOICE = { choice: 1, select: 1, multi: 1 };
   var JUMPS = { choice: 1, select: 1, yesno: 1 };
+  // W5 (quiz): the kinds that can have a correct answer (key) and points.
+  var KEYED = { choice: 1, select: 1, multi: 1, yesno: 1, number: 1, text: 1 };
   var OPS = ["eq", "ne", "has", "set", "unset", "gt", "lt"];
   var LIM = {
     title: 200, desc: 2000, label: 500, help: 1000, opt: 200, opts: 50, cols: 10, rows: 30,
@@ -171,7 +173,41 @@
       if (Object.keys(go).length) o.go = go;
     }
     if (t === "page" && typeof q.next === "string" && (q.next === "end" || ID_RE.test(q.next))) o.next = q.next;
+    if (KEYED[t] && q.key !== undefined) {
+      var key = normKey(o, q.key);
+      if (key !== undefined) {
+        o.key = key;
+        var pts = clampInt(q.pts, 1, 100, 1);
+        if (pts !== 1) o.pts = pts;
+      }
+    }
     return o;
+  }
+
+  // W5: a correct answer that fits the item, or undefined.
+  //   choice, select: an option id · multi: the option ids that must all
+  //   be ticked (and no other) · yesno: "yes" | "no" · number: the value
+  //   · text: up to 10 accepted answers (compared without case, accents
+  //   or extra spaces, see quiz.js)
+  function normKey(o, k) {
+    var ids = (o.opts || []).map(function (x) { return x.id; });
+    if (o.t === "choice" || o.t === "select") return typeof k === "string" && ids.indexOf(k) >= 0 ? k : undefined;
+    if (o.t === "multi") {
+      var want = Array.isArray(k) ? k : [];
+      var m = ids.filter(function (id) { return want.indexOf(id) >= 0; });
+      return m.length ? m : undefined;
+    }
+    if (o.t === "yesno") return k === "yes" || k === "no" ? k : undefined;
+    if (o.t === "number") { var n = typeof k === "string" && k.trim() !== "" ? Number(k) : k; return isNum(n) ? n : undefined; }
+    if (o.t === "text") {
+      var seen = {}, out = [];
+      (Array.isArray(k) ? k : [k]).forEach(function (x) {
+        var v = line(x, LIM.opt), f = v.toLowerCase();
+        if (v && !seen[f] && out.length < 10) { seen[f] = 1; out.push(v); }
+      });
+      return out.length ? out : undefined;
+    }
+    return undefined;
   }
 
   // Answer keys of an item that a jump or a condition can name.
@@ -239,6 +275,13 @@
     var back = typeof s.back === "string" ? s.back.trim() : "";
     if (validBack(back)) set.back = back;
     if (s.once) set.once = 1;
+    // W5: a quiz scores the correct answers (keys); score = the person
+    // sees their score after sending, reveal = also which were right.
+    if (s.quiz) {
+      set.quiz = 1;
+      if (s.score) set.score = 1;
+      if (s.score && s.reveal) set.reveal = 1;
+    }
     out.set = set;
     return out;
   }
@@ -486,7 +529,7 @@
   }
 
   var api = {
-    VERSION: VERSION, TYPES: TYPES, ASKS: ASKS, LIM: LIM, OTHER: OTHER, ID_RE: ID_RE,
+    VERSION: VERSION, TYPES: TYPES, ASKS: ASKS, KEYED: KEYED, LIM: LIM, OTHER: OTHER, ID_RE: ID_RE,
     normItem: normItem, normForm: normForm, pages: pages, keysOf: keysOf,
     valueOf: valueOf, checkOne: checkOne, shownMap: shownMap, nextPage: nextPage, path: path,
     checkPage: checkPage, submit: submit, blank: blank, reid: reid, newId: newId,

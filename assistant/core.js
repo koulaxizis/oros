@@ -1674,7 +1674,7 @@
       "mind_map (title = the central idea, outline: one idea per line, two spaces per level; opens Mind map's Paste a list box) · " +
       "text_file (title = the file name with its extension such as notes.txt, script.py, config.json, index.html, text: the whole file exactly as it should be, " +
       "code or plain text, every space and line kept; lang?: the language when the name does not tell; opens as a new tab in Pad, which never runs it; the user saves it where they want) · " +
-      "form (title, desc?, questions: a survey, sign-up or order form for Forms, each question {label, type?, options?, required?}; made in Forms when the user presses Open, not shared until they publish it). " +
+      "form (title, desc?, quiz?, questions: a survey, sign-up, order form or quiz for Forms, each question {label, type?, options?, required?, answer? and points? for a quiz}; made in Forms when the user presses Open, not shared until they publish it). " +
       "Give only what the user said or plainly meant; leave the rest out.",
     params: {
       type: "object",
@@ -1694,9 +1694,12 @@
                        rows: { type: "array", items: { type: "string" }, description: "matrix: the rows." },
                        required: { type: "boolean" },
                        low: { type: "integer", description: "scale: 0 or 1 (default 1)." },
-                       high: { type: "integer", description: "scale: up to 10 (default 5); stars: 3-10 (default 5)." } },
+                       high: { type: "integer", description: "scale: up to 10 (default 5); stars: 3-10 (default 5)." },
+                       answer: { description: "form with quiz: the right answer: an option's text (choice, select), the options' texts (multi, an array), yes or no, a number, or accepted texts (text, an array)." },
+                       points: { type: "integer", description: "form with quiz: points for a right answer, 1-100 (default 1)." } },
                      required: ["label"] } },
         desc: { type: "string", description: "form: the line under the title." },
+        quiz: { type: "boolean", description: "form: a quiz that scores the answers (give each question its answer)." },
         cards: { type: "array", description: "flashcards: up to 500 cards.",
                  items: { type: "object", properties: { front: { type: "string" }, back: { type: "string" },
                                                          both: { type: "boolean", description: "Also the reverse card (back → front)." },
@@ -4033,10 +4036,15 @@
         if (ty === "matrix") o.rows = strs(q.rows, 30);
         if (ty === "scale" && q.low === 0) o.low = 0;
         if ((ty === "scale" || ty === "stars") && typeof q.high === "number") o.high = q.high;
+        if (args.quiz === true && q.answer !== undefined && q.answer !== null) {
+          o.answer = Array.isArray(q.answer) ? strs(q.answer, 50) : typeof q.answer === "number" ? q.answer : line(String(q.answer), 200);
+          if (typeof q.points === "number") o.points = Math.max(1, Math.min(100, Math.round(q.points)));
+        }
         dq.push(o);
       });
       if (!dq.length) return bad("form needs questions.");
       var dr = { title: title.slice(0, 200), questions: dq };
+      if (args.quiz === true) dr.quiz = true;
       var fdesc = para(args.desc, 2000);
       if (fdesc) dr.desc = fdesc;
       out.call = { fn: "openAt", args: [app, { draft: dr }] };

@@ -3077,6 +3077,16 @@ Claude reads a person's orOS through their own open device. Plan: Claude Doc htt
 - **Assistant / Gate (GATE-PAR):** `propose_entry` kind `form` (title, desc?, questions; the same limits, checked in `assistant/core.js`) → `openAt("forms", { draft })`; `app_summary` app `forms`: every form (questions, shared, open, answers, new, last day, target) and with `form` (a title or id) that form's results through `forms/results.js` (loaded on demand): counts, shares, averages, min / max, grid counts; written answers only as a count, never names, e-mails, phones or texts (other people's data). The Gate runs the Assistant's own tools, so both sides have both.
 - **Not in W4a:** Base (`fromTable` / `addRecords`, W4b after Base B4); answers in universal search (they are other people's words); an automatic copy of every answer to the CRM.
 
+### orOS Forms (FORMS-5) — wave 5 (quiz)
+
+- **Engine (`engine.js`):** `KEYED` kinds (choice, select, multi, yesno, number, text) keep a `key` that fits (choice / select: an option id; multi: the option ids, in option order, that must all and only be ticked; yesno: yes / no; number: the value; text: ≤ 10 accepted answers) and `pts` 1..100 (1 is not stored); a key that does not fit is dropped with its points. `set.quiz`, `set.score` (needs quiz), `set.reveal` (needs score).
+- **`forms/quiz.js`** (pure `OrosFormsQuiz`, tests `tests/forms-quiz.test.js`): `on(form)`, `right(q, v)` (text compared lower-case, without accents, final sigma folded, spaces folded), `score(form, a)` → `{pts, max, n, items}` over the keyed questions the person was asked (their page path and shown items; unanswered = 0), `pub(form)` = the public copy: keys, points and the quiz settings removed unless `set.score`, so a test that counts never sends its answers to the relay or the page (`share.js defObj`).
+- **Public page:** with `set.score` the thank-you shows "Your score: p of m", with `set.reveal` a right / not right line per question (text only).
+- **Results:** the right option(s) marked ✓ (never colour alone), "n of m got it right" per keyed question, the average score card, a score badge per answer, a `Score` column in Spreadsheet / CSV after the time (and waiting list). App summary for the Assistant / Gate adds `right` per question and `quiz {average, of, scored}`.
+- **Builder:** Settings › quiz, score, reveal (with the warning that shown scores carry the answers in the page); a `Correct answer` box with `Points` in each keyed question when the form is a quiz.
+- **Assistant / Gate:** `propose_entry form` takes `quiz: true` and per question `answer` (option text(s), yes / no, a number or accepted texts) and `points`; `links.js fromDraft` maps option texts to ids.
+- **Old devices:** a device older than this wave keeps a quiz form's keys only until it edits that form (its engine does not know them); the PWA updates itself, so this is a short window.
+
 ### orOS Base (BASE-1) — wave B1 (core)
 
 - **Files:** `base/core.js` (pure, Node-tested `OrosBaseCore`: slice, merge, types, query, layout, CSV), `base/app.js` (UI), `base/app.css`, `base/search.js` (read-only search provider), `base/help.{en,el}.txt`, `i18n/de/base.js`, `i18n/de/help/base.txt`. Tests `tests/base.test.js`.

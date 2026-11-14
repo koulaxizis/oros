@@ -1160,10 +1160,13 @@
       if (it.avg !== undefined) o.average = it.avg;
       if (it.kind === "hist" && it.n) { o.min = it.min; o.max = it.max; }
       if (it.kind === "grid") o.grid = { columns: it.cols, rows: it.rows.map(function (r) { return { row: r.label, counts: r.counts }; }) };
+      if (it.right !== undefined) o.right = it.right;
       if (it.kind === "list") o.note = "written answers: count only";
       if (it.t === "multi") o.note = "several may be ticked; pct is of those who answered";
       return o;
     }) };
+    var qa = typeof R.quizAvg === "function" ? R.quizAvg(f, by[f.id] || []) : null;
+    if (qa && qa.n) res.quiz = { average: qa.avg, of: qa.max, scored: qa.n };
     return res;
   }
 
