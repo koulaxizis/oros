@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.43.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.67.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -57,6 +57,8 @@
     pair:            null,     // PAIR-1: Add a browser in progress (pairForSettings)
     pairPrefill:     "",       // PAIR-1: a code that came in with #pair=
     pairQr:          null,
+    plink:           null,     // LINK-1: a sign-in link this device sent (linkForSettings)
+    linkIn:          null,     // LINK-1: a sign-in link that opened this browser
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
     syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
     vaultClean:      null,   // VD-GC: { busy: "check"|"clean"|"", usage, result, code, err } once Settings asked
@@ -159,7 +161,6 @@
     mood: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.4"/></svg>',
     diary: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8.5h6"/></svg>',
     clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>',
-    sky: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/><path d="M17 3v3M15.5 4.5h3M20.5 8.5v2M19.5 9.5h2"/></svg>',
     calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
     quote: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10.7 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/><path d="M16.2 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/></svg>',
     timesheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>',
@@ -202,6 +203,7 @@
     maps: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
     feeds: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>',
     museum: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 18h16M12 3l9 5H3z"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/></svg>',
+    base: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
     forms: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1"/><line x1="11.5" y1="8.5" x2="16" y2="8.5"/><circle cx="8.5" cy="12.5" r="1"/><line x1="11.5" y1="12.5" x2="16" y2="12.5"/><polyline points="7.5 16.5 8.5 17.5 10 15.8"/><line x1="11.5" y1="16.5" x2="16" y2="16.5"/></svg>',
     spreadsheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
@@ -292,7 +294,7 @@
     lyricsync: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h11"/><path d="M3 10h11"/><path d="M3 15h6"/><path d="M17 18V4l4 2"/><circle cx="14.5" cy="18" r="2.5"/></svg>',
     television: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>',
     montage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16M2 9h5M2 15h5M17 9h5M17 15h5"/><path d="M10.5 9.5l4 2.5-4 2.5z"/></svg>',
-    transfer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13"/><polyline points="13 4 17 8 13 12"/><path d="M20 16H7"/><polyline points="11 12 7 16 11 20"/></svg>',
+    transfer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 6.5 19 12l-8.5 5.5z"/><path d="M4 9h3"/><path d="M2 12h5"/><path d="M4 15h3"/></svg>',
     mail: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>'
   };
 
@@ -7242,6 +7244,168 @@
     })();
   }
 
+  // LINK-1: a sign-in link. pair.js seals the same bundle as a
+  // password link of "Send to someone" (share/relay.js) that lives 15
+  // minutes; the 8-character code is shown here and never goes into
+  // the link. state.plink (signed-in device) = { phase: "making" |
+  // "ready" | "used" | "gone" | "error", url, code, exp, id, del, err };
+  // state.linkIn (new browser) = { phase: "code" | "opening" | "adopting"
+  // | "done" | "error", share, err, session, dev }. Neither is stored.
+  var linkTimer = null;
+  function linkNeed() {
+    return pairNeed(false).then(function () {
+      if (window.OrosShareRelay) return;
+      return new Promise(function (res, rej) {
+        var s = document.createElement("script");
+        s.src = "share/relay.js?v=" + APP_VERSION;
+        s.onload = function () { window.OrosShareRelay ? res() : rej(new Error("pair-load")); };
+        s.onerror = function () { rej(new Error("pair-load")); };
+        document.head.appendChild(s);
+      });
+    });
+  }
+  function linkSet(fields) {
+    if (!state.plink) return;
+    for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) state.plink[k] = fields[k];
+    settingsNotify();
+  }
+  function linkStopWatch() { if (linkTimer) { clearTimeout(linkTimer); linkTimer = null; } }
+  // While the link waits: every 15 s ask the relay whether it is still
+  // there; gone before its time means the new browser used it.
+  function linkWatch() {
+    linkStopWatch();
+    var p = state.plink;
+    if (!p || p.phase !== "ready") return;
+    linkTimer = setTimeout(function () {
+      linkTimer = null;
+      var q = state.plink;
+      if (!q || q.phase !== "ready" || q.id !== p.id) return;
+      if (Date.now() >= q.exp) { linkSet({ phase: "gone" }); return; }
+      window.OrosPair.linkAlive(q.id).then(function (alive) {
+        var r = state.plink;
+        if (!r || r.phase !== "ready" || r.id !== q.id) return;
+        if (alive === false) linkSet({ phase: Date.now() < r.exp - 5000 ? "used" : "gone" });
+        else linkWatch();
+      });
+    }, 15000);
+  }
+  function linkMake() {
+    var S = window.orosSync;
+    if (!S || typeof S.pairBundle !== "function" || !S.isConnected() || !S.hasPassphrase()) return;
+    if (state.plink && state.plink.phase === "making") return;
+    linkStopWatch();
+    state.plink = { phase: "making", url: "", code: "", exp: 0, id: "", del: "", err: "" };
+    settingsNotify();
+    linkNeed().then(function () {
+      return S.pairBundle();
+    }).then(function (b) {
+      if (!state.plink || state.plink.phase !== "making") return;
+      return window.OrosPair.sendLink(b, { dev: pairUa(), origin: location.origin }).then(function (r) {
+        if (!state.plink || state.plink.phase !== "making") {
+          window.OrosShareRelay.revoke(r.id, r.del).catch(function () {});
+          return;
+        }
+        linkSet({ phase: "ready", url: r.url, code: window.OrosPair.fmtLinkCode(r.code), exp: r.exp, id: r.id, del: r.del });
+        linkWatch();
+      });
+    }).catch(function (e) {
+      var m = String((e && e.message) || "net");
+      linkSet({ phase: "error", err: m === "pair-locked" ? "pair-locked" : m === "rate" || m === "full" || m === "nostore" ? "rate" : "net" });
+    });
+  }
+  // Cancel: the pieces are deleted on the relay (best effort; they
+  // expire anyway), and the card closes.
+  function linkCancel() {
+    var p = state.plink;
+    linkStopWatch();
+    state.plink = null;
+    settingsNotify();
+    if (p && p.id && p.del && p.phase === "ready" && window.OrosShareRelay) {
+      window.OrosShareRelay.revoke(p.id, p.del).catch(function () {});
+    }
+  }
+  // SOS (SOS-1) cancels every sign-in link this device still holds:
+  // the one in memory (a link is never stored, so links from a closed
+  // tab cannot be cancelled and expire by themselves within 15 minutes),
+  // and forgets a link that opened this browser. Resolves when the
+  // relay has answered or failed; never rejects.
+  function linkCancelAll() {
+    var p = state.plink;
+    linkStopWatch();
+    state.plink = null;
+    state.linkIn = null;
+    settingsNotify();
+    if (p && p.id && p.del && window.OrosShareRelay) {
+      return window.OrosShareRelay.revoke(p.id, p.del).then(function () { return 1; }, function () { return 0; });
+    }
+    return Promise.resolve(0);
+  }
+  window.orosPairLink = { cancelAll: linkCancelAll };
+  function linkInSet(fields) {
+    if (!state.linkIn) return;
+    for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) state.linkIn[k] = fields[k];
+    settingsNotify();
+  }
+  // The new browser: the code typed, the link opened, the bundle adopted
+  // (sync.js pairAdopt, as PAIR-1), the pieces deleted, unlocked.
+  function linkOpen(code) {
+    var S = window.orosSync, L = state.linkIn;
+    if (!L || !S || typeof S.pairAdopt !== "function") return;
+    if (L.phase === "opening" || L.phase === "adopting" || L.phase === "done") return;
+    if (S.isConnected()) { linkInSet({ phase: "error", err: "pair-connected" }); return; }
+    linkInSet({ phase: "opening", err: "" });
+    linkNeed().then(function () {
+      return window.OrosPair.openLink(L.share, code);
+    }).then(function (r) {
+      if (state.linkIn !== L) return;
+      if (r.error) {
+        // A wrong code can be typed again; anything else ends the link.
+        linkInSet({ phase: r.error === "pass" ? "code" : "error", err: r.error });
+        return;
+      }
+      linkInSet({ phase: "adopting", dev: r.dev || "" });
+      var only = !!L.session;
+      return S.pairAdopt(r.b, { session: only }).then(function (res) {
+        window.OrosShareRelay.revoke(r.id, r.del).catch(function () {});
+        state.syncUserEmail = (r.b && r.b.acc && typeof r.b.acc.email === "string") ? r.b.acc.email : null;
+        linkInSet({ phase: "done" });
+        syncUnlock(res.pw, !only);
+      });
+    }).catch(function (e) {
+      if (state.linkIn !== L) return;
+      var m = String((e && e.message) || "net");
+      linkInSet({ phase: "error", err: m === "pair-connected" ? "pair-connected" : m === "pair-bad" ? "refused" : "net" });
+    });
+  }
+  function linkForSettings() {
+    var p = state.plink;
+    return p ? { phase: p.phase, url: p.url || "", code: p.code || "", exp: p.exp || 0, err: p.err || "" } : null;
+  }
+  function linkInForSettings() {
+    var L = state.linkIn;
+    return L ? { phase: L.phase, err: L.err || "", session: !!L.session, dev: L.dev || "" } : null;
+  }
+  // A sign-in link opened orOS (#signin=…): the secret part leaves the
+  // address bar at once, and Settings › Sync asks for the code.
+  function linkFromHash() {
+    var m = /^#signin=([A-Za-z0-9_.\-]{1,200})$/.exec(location.hash || "");
+    if (!m) return;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    var share = m[1];
+    if (!/^q1\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\.[1-9]\d{0,2}\.[A-Za-z0-9_-]{22}$/.test(share)) return;
+    state.linkIn = { phase: "code", share: share, err: "", session: false, dev: "" };
+    settingsNotify();
+    var tries = 0;
+    (function open() {
+      if (document.getElementById("oro-splash") || !state.apps.length || !window.orosSettings) {
+        if (++tries > 120) return;
+        setTimeout(open, 250);
+        return;
+      }
+      window.orosSettings.open("sync");
+    })();
+  }
+
   // User picked an automatic folder-backup cadence (shell slice).
   function setAutoexportUser(v) {
     if (v !== "off" && v !== "daily" && v !== "weekly" && v !== "monthly") return;
@@ -7902,6 +8066,9 @@
         { name: "fzstd 0.1.1", url: "https://github.com/101arrowz/fzstd",
           by: "Arjun Barrett", lic: "MIT",
           k: "cr.fzstd" },
+        { name: "brotli.js 2.1.0 (decoder) + base64-js 1.5.1", url: "https://github.com/foliojs/brotli.js",
+          by: "Devon Govett; Brotli decoder port by Google Inc.; Jameson Little", lic: "MIT + Apache-2.0",
+          k: "cr.brotli-js" },
         { name: "OpenPGP.js 6.3.1", url: "https://openpgpjs.org/",
           by: "OpenPGP.js contributors, Proton AG", lic: "LGPL-3.0-or-later",
           k: "cr.openpgp-js" },
@@ -9408,6 +9575,9 @@
     // PAIR-1: a code from a scanned QR (#pair=…), at boot and later.
     pairFromHash();
     window.addEventListener("hashchange", pairFromHash);
+    // LINK-1: a sign-in link (#signin=…), at boot and later.
+    linkFromHash();
+    window.addEventListener("hashchange", linkFromHash);
 
     // OAuth return → flip the menu to connected state once tokens land
     if (window.orosSync && window.orosSync.redirectHandled) {
@@ -11079,6 +11249,8 @@
         paired: !!(connected && typeof S.isPaired === "function" && S.isPaired()),
         pair: pairForSettings(),
         pairPrefill: state.pairPrefill || "",
+        link: linkForSettings(),
+        linkIn: linkInForSettings(),
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
@@ -11235,6 +11407,11 @@
       case "sync.pair.approve": pairApprove(); return;
       case "sync.pair.cancel":  pairCancel(); return;
       case "sync.pair.clear":   state.pairPrefill = ""; settingsNotify(); return;
+      case "sync.link.make":    linkMake(); return;
+      case "sync.link.cancel":  linkCancel(); return;
+      case "sync.link.open":    if (arg && typeof arg.code === "string") linkOpen(arg.code.slice(0, 40)); return;
+      case "sync.link.session": if (state.linkIn && state.linkIn.phase !== "done") linkInSet({ session: !!(arg && arg.on) }); return;
+      case "sync.link.close":   state.linkIn = null; settingsNotify(); return;
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -12787,6 +12964,9 @@
   function tourFirstRun() {
     try {
       if (localStorage.getItem(TOUR_DONE) === "1") return;
+      // LINK-1: a sign-in link is opening this browser: the person is not
+      // new (apps, menu and tips settings come with sync), so no tour.
+      if (state.linkIn || /^#signin=/.test(location.hash || "")) { localStorage.setItem(TOUR_DONE, "1"); return; }
       localStorage.setItem(TOUR_KEY, "1");
       if (profilesWanted()) localStorage.setItem(PROFILE_KEY, "1");
     } catch (e) { return; }
@@ -13221,12 +13401,22 @@
     var pending;
     try { pending = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { pending = false; }
     if (!pending || tourBox || profilesBusy) return;
+    // LINK-1: a sign-in link opened this browser: not a new user (the
+    // apps and menu come with sync), and the link card must stay in view.
+    if (state.linkIn) {
+      try { localStorage.removeItem(TOUR_KEY); localStorage.removeItem(PROFILE_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
+      return;
+    }
     var tries = 0;
     (function wait() {
       // Splash still up, apps.json not in yet, or an app on screen.
       if (document.getElementById("oro-splash") || !state.apps.length || state.running) {
         if (state.running || ++tries > 60) return;   // returnToDesktop retries
         setTimeout(wait, 250);
+        return;
+      }
+      if (state.linkIn) {
+        try { localStorage.removeItem(TOUR_KEY); localStorage.removeItem(PROFILE_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
         return;
       }
       var prof = false;

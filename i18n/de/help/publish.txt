@@ -76,7 +76,15 @@ Wähle unter `Neuer Titel` die `Art` › `Musik: Single`, `EP`, `Album` oder `Co
 - `Titel`: `+ Titel` nimmt einen Titel oder die ganze Titelliste auf einmal, einen pro Zeile; eine Länge am Ende (3:45) wird mitgelesen. Tippe auf einen Titel, um ihn zu öffnen: Name, Version (Radio Edit, Remix…), der Künstler, wenn es nicht der der Veröffentlichung ist, ISRC, Länge, Sprache des Textes und ob der Text explizit ist. ↑ und ↓ ändern die Reihenfolge.
 - `Ausgaben`: digital, CD, Vinyl, Kassette oder andere, jede mit UPC oder EAN, Katalognummer, Preis und Vertrieb. `Barcode` zeigt die Striche des Codes für CD oder Hülle.
 
-Die Felder für ISRC und UPC/EAN prüfen den Code beim Tippen und warnen, wenn ein anderer Titel oder eine andere Ausgabe ihn schon hat. Gibt dir dein Vertrieb die Codes, trage sie ein. Hast du eigene Präfixe (Tab Codes), setzt `Nächster freier` den nächsten unbenutzten ein. `Es fehlt noch` nennt, was eine Veröffentlichung noch braucht: Künstler, Titel, ISRCs, Längen, eine Ausgabe, UPC/EAN, Erscheinungstag und Cover.
+In jedem Titel:
+
+- `Mitwirkende`: wer gesungen, gespielt, geschrieben, produziert, gemischt oder gemastert hat, bei Musikern mit Instrument.
+- `Urheberanteile (Musik und Text)`: wer den Song geschrieben hat und mit welchem Prozentsatz, mit Verwertungsgesellschaft (freier Text; die Liste schlägt nur Namen vor) und IPI-Nummer, falls vorhanden.
+- `Rechte an der Aufnahme (Master)`: wem die Aufnahme gehört und mit welchem Anteil.
+
+Jede Liste zeigt, was ihre Anteile ergeben, rot, wenn es nicht 100 % sind. Ein Name, der zu einem CRM-Partner passt, wird mit ihm verknüpft. `Split Sheet in Writer` schreibt ein Split Sheet für den Titel (Veröffentlichung, ISRC, Anteile, Mitwirkende und eine Unterschriftszeile für jede Person) als neues Writer-Dokument, zum Drucken oder Unterschreiben. `Gleiche Mitwirkende und Anteile für alle Titel` kopiert die drei Listen des offenen Titels auf die anderen (Rückgängig stellt deren Listen wieder her).
+
+Die Felder für ISRC und UPC/EAN prüfen den Code beim Tippen und warnen, wenn ein anderer Titel oder eine andere Ausgabe ihn schon hat. Gibt dir dein Vertrieb die Codes, trage sie ein. Hast du eigene Präfixe (Tab Codes), setzt `Nächster freier` den nächsten unbenutzten ein. `Es fehlt noch` nennt, was eine Veröffentlichung noch braucht: Künstler, Titel, ISRCs, Längen, Anteile, die 100 % ergeben, eine Ausgabe, UPC/EAN, Erscheinungstag und Cover.
 
 ## Codes
 Die nationale ISBN-Agentur gibt einem Verlag einen Nummernblock, zum Beispiel 978-618-5321 für 100 Bücher. Im Tab `Codes` tippst du auf `Block hinzufügen` und schreibst das Präfix mit seinen Bindestrichen genau so, wie die Agentur es vergeben hat.

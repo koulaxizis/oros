@@ -1070,6 +1070,19 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
 }
 .vc-btn.primary { background: var(--accent); color: var(--accent-ink, #fff); border: none; }
 .vc-btn.primary.danger { background: var(--danger); color: #fff; }
+/* V2: progress, trim */
+.vc-prog { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; margin: 0 0 14px; }
+.vc-prog i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+.vc-trim { box-sizing: border-box; width: min(520px, calc(100vw - 32px)); }
+.vc-wave { width: 100%; margin: 0 0 10px; border-radius: 8px; background: var(--bg-elev, rgba(127,127,127,.08)); overflow: hidden; }
+.vc-wave canvas { display: block; }
+.vc-tr-row { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 13px; }
+.vc-tr-row input { width: 100%; min-width: 0; accent-color: var(--accent); }
+.vc-tr-lab { color: var(--text-dim); }
+.vc-tr-val { text-align: right; font-variant-numeric: tabular-nums; }
+.vc-tr-len { margin-top: 6px; font-variant-numeric: tabular-nums; }
+@media (pointer: coarse) { .vc-tr-row input { height: 32px; } }
+@media (prefers-reduced-motion: reduce) { .vc-prog i { transition: none; } }
 @media (max-width: 420px) {
   .vb-state { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .voice-bar { gap: 4px 8px; }

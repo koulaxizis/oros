@@ -169,7 +169,7 @@ test("core: normalize is canonical and merge(a, a) = a (R26)", () => {
   ] });
   assert.deepEqual(a.forms.map((f) => f.id), ["aa", "dd", "zz"]);
   assert.deepEqual(a.forms[1], { id: "dd", m: 9, del: 1 });
-  assert.deepEqual(a.forms[0].x, { pub: { k: "abc" } });
+  assert.equal(a.forms[0].x, undefined);            // W2: x is only ever a real published form (normX)
   assert.equal(JSON.stringify(C.merge(a, a)), JSON.stringify(a));
   assert.equal(JSON.stringify(C.normalize(a)), JSON.stringify(a));
 });
