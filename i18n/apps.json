@@ -64,6 +64,12 @@
    ]
   },
   {
+   "app": "base",
+   "files": [
+    "base/app.js"
+   ]
+  },
+  {
    "app": "battleship",
    "files": [
     "battleship/battleship.js"
@@ -242,6 +248,7 @@
     "designkit/fx.js",
     "designkit/media.js",
     "designkit/model.js",
+    "designkit/pathedit.js",
     "designkit/show.js",
     "designkit/templates.js"
    ]
@@ -869,6 +876,7 @@
    "app": "settings",
    "files": [
     "settings/core.js",
+    "settings/fonts.js",
     "settings/search.js"
    ]
   },
@@ -1073,6 +1081,12 @@
    "files": [
     "together/app.js",
     "together/core.js"
+   ]
+  },
+  {
+   "app": "transfer",
+   "files": [
+    "transfer/app.js"
    ]
   },
   {

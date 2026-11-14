@@ -222,7 +222,17 @@
       "category": "Office",
       "icon": "forms",
       "url": "forms/",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
+    },
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "Office",
+      "icon": "base",
+      "url": "base/",
+      "type": "internal",
+      "search": "search.js"
     },
     {
       "id": "spreadsheet",

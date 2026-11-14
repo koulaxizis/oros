@@ -7,11 +7,13 @@ Press `New document` and choose a `Page size` (such as A4, `Business card` or `C
 Your documents appear as cards on the home screen, where you can search, rename, duplicate or delete them (with undo right after). Each document is also a file in Files › Layout, so it takes as much room as a book needs, is synced with your other devices like every file, and goes into backups with the orOS disk. Double-click such a file in Files to open the document; a deleted document goes to the Trash in Files. If the same document was changed on two devices at once, Layout puts both versions together, so no change is lost.
 
 ## Place things on the page
-Pick a tool on the left and drag on the page: `Text frame (T)`, `Image frame (F)`, `Rectangle (R)`, `Ellipse (E)` or `Line (L)`. `Select (V)` moves and resizes objects; `Hand (H)` moves the view.
+Pick a tool on the left and drag on the page: `Text frame (T)`, `Image frame (F)`, `Rectangle (R)`, `Ellipse (E)`, `Line (L)` or `Pen (P)`. `Select (V)` moves and resizes objects; `Hand (H)` moves the view.
 
 With something selected, the `Properties` panel sets position and size, `Rotation`, `Opacity`, `Fill`, `Gradient` (for shapes: `Linear` or `Radial`, start and end colour, angle), `Stroke`, `Arrange`, `Align`, `Group` and `Lock position`. Right-click (or long-press) an object for a quick menu. `Hide` hides an object; with nothing selected, the page panel has `Show hidden objects`.
 
 Blend: select two shapes (rectangles, ellipses or paths) and the `Properties` panel shows `Blend`. Set `Steps` (1 to 50) and press `Blend`: new shapes appear in between, changing evenly in place, size, rotation, outline and colours. Each step gets a colour swatch of its own when its colour is new. Changed one of the two ends? Select a step and press `Update`, or change `Steps`. `Release` keeps the steps as plain shapes.
+
+Pen and points: `Pen (P)` draws a path: click to add corner points, drag to make a curved point, click the first point to close the shape; `Done`, [[Enter]] or a click on the last point keeps an open line. `Edit points` (right-click menu, or a double-click on a path) shows the points of a path, rectangle, ellipse or line (it becomes a path). Drag points and handles ([[Alt]] moves the two handles apart), drag a box around several points, double-click the outline to add a point, and use the bar: `Corner`, `Smooth`, `Symmetric`, `Straight`, `Add point`, `Delete point`, `Break`, `Join` and `Close path` / `Open path`. Arrow keys move the chosen points; `Done` or [[Esc]] ends.
 
 Drag from a ruler to add a guide, and drag a guide back onto the ruler to remove it. The `Zoom` menu has `Fit page`, `Fit spread`, 50, 100 and 200 %.
 
