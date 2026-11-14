@@ -873,6 +873,9 @@ dialog input[type="email"], dialog input[type="number"], dialog input[type="date
 .pod-miss li { font-size: 13px; padding: 2px 0 2px 14px; position: relative; }
 .pod-miss li::before { content: "•"; position: absolute; left: 2px; color: var(--accent); }
 .pod-feed { word-break: break-all; font-size: 12px; }
+.pod-gh { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border, rgba(127,127,127,.25)); }
+.pod-gh input { width: 100%; box-sizing: border-box; }
+#pod-gh-where, #pod-gh-err { overflow-wrap: anywhere; }
 .mk-row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 6px; align-items: center; padding: 4px 0; }
 .mk-row input { min-width: 0; width: 100%; }
 .mk-time { font-variant-numeric: tabular-nums; }
