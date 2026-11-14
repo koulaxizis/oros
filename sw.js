@@ -890,6 +890,8 @@ var PRECACHE_URLS = [
   "help/topics/privacy.en.txt",
   "help/topics/reset.el.txt",
   "help/topics/reset.en.txt",
+  "help/topics/sensitive.el.txt",
+  "help/topics/sensitive.en.txt",
   "help/topics/share.el.txt",
   "help/topics/share.en.txt",
   "help/topics/shortcuts.el.txt",

@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.67.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.68.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -11407,7 +11407,7 @@
       case "sync.pair.approve": pairApprove(); return;
       case "sync.pair.cancel":  pairCancel(); return;
       case "sync.pair.clear":   state.pairPrefill = ""; settingsNotify(); return;
-      case "sync.link.make":    linkMake(); return;
+      case "sync.link.make":    if (!strictLevelNow()) linkMake(); return;   // Sensitive work: no sign-in link
       case "sync.link.cancel":  linkCancel(); return;
       case "sync.link.open":    if (arg && typeof arg.code === "string") linkOpen(arg.code.slice(0, 40)); return;
       case "sync.link.session": if (state.linkIn && state.linkIn.phase !== "done") linkInSet({ session: !!(arg && arg.on) }); return;

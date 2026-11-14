@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.68.00
+- **Sensitive work.** A new page in Settings for journalists, their sources and anyone whose work must not leak. One switch, on this device only, tightens the screen lock, keeps no sync passphrase here, turns off push, sign-in links and fetching through the relay. `Hardcore` goes further: a passphrase lock only, and this device reaches nothing but your sync cloud. A shield in the top bar shows it is on; turning it off brings your earlier settings back. See [Sensitive work and sources](help:t/sensitive), a new help page that also says plainly what orOS cannot protect.
+
 ## Version 6.67.00
 - **Share a form with a link.** In Forms open a form and `Share`: `Publish` gives a link, a QR code and a code to put the form on your website. People fill it in on a page that needs no orOS; their answers are locked in their browser so only your orOS can read them, and they show up in `Answers`. You can close the form, set when it opens and closes, allow one answer per browser and add a button to your page after sending. Waiting answers show in Today, as an orOS notice and, where it is on, as a push notice. See [Forms](app:forms).
 

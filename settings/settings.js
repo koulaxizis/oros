@@ -1599,9 +1599,10 @@
     if (!p && !pairUi.open && y.link) return linkSendPart(c, y);
     if (!p && !pairUi.open) {
       c.appendChild(el("p", "hint", t("y.pair.add.hint")));
+      var noLink = !!strictLevel();      // Sensitive work: no sign-in link (QR and code stay)
       c.appendChild(actions(button(t("y.pair.add"), "y.pair.add", function () { pairUi.open = true; render(); var f = $("f-pair-code"); if (f) f.focus(); }),
-        button(t("y.link.make"), "y.link.make", function () { linkUi.note = ""; act("sync.link.make"); })));
-      c.appendChild(el("div", "hint", t("y.link.what")));
+        noLink ? null : button(t("y.link.make"), "y.link.make", function () { linkUi.note = ""; act("sync.link.make"); })));
+      c.appendChild(el("div", "hint", t(noLink ? "y.link.strict" : "y.link.what")));
       return c;
     }
     if (!p) {
