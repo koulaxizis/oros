@@ -40,7 +40,7 @@ test("gate tools: only the gate's set, no card or press in any text", () => {
                    "timesheet", "meals", "stickies", "habits", "plants", "petcare", "garage", "travel_plan", "travel_pack"];
   const full = C.toolsFor({ data: true, summary: true, entries: true, changes: true, creates, links: true, partnerLinks: true,
                             history: true, actions: ["timer"], web: true, rebuild: true, house: true, recipes: ["layout"], newsletter: true, cover: true, rules: true,
-                            edits: { writer: { CATALOG: [] }, slides: { CATALOG: [] } } });
+                            edits: { writer: { CATALOG: [] }, slides: { CATALOG: [] } }, files: "write" });
   const g = C.gateTools(full);
   assert.deepEqual(g.map((t) => t.name).sort(), C.GATE_TOOLS.slice().sort());
   assert.deepEqual(C.GATE_TOOLS, G.ACT_TOOLS, "gate.js and core.js name the same tools");
@@ -49,7 +49,7 @@ test("gate tools: only the gate's set, no card or press in any text", () => {
   assert.deepEqual(bad, []);
   g.forEach((t) => {
     assert.equal(t.inputSchema.type, "object", t.name);
-    assert.equal(t.annotations.readOnlyHint, ["search_data", "read_item", "app_summary", "read_in_app", "change_history"].indexOf(t.name) >= 0, t.name);
+    assert.equal(t.annotations.readOnlyHint, ["search_data", "read_item", "app_summary", "read_in_app", "change_history", "files_list", "files_read"].indexOf(t.name) >= 0, t.name);
   });
   assert.match(g.find((t) => t.name === "change_item").description, /paused/);
   assert.match(g.find((t) => t.name === "create_items").description, /paused/);
@@ -119,7 +119,7 @@ test("closed orOS: the device runs only the changes the relay may queue", () => 
   // 6.05.02 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με κλειστό το orOS»):
   // every relay change waits, budget_delete and budget_transfer too
   const relayWrites = R.TOOLS.filter((t) => !(t.annotations && t.annotations.readOnlyHint === true)).map((t) => t.name);
-  assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED).sort(), "5.96.00: changes and links by ref too");
+  assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED, Object.keys(R.FILE_CHANGE)).sort(), "5.96.00: changes and links by ref too; F3: Claude's folders");
   assert.ok(G.QUEUED.indexOf("budget_delete") >= 0 && G.QUEUED.indexOf("budget_transfer") >= 0);
   const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
   assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) return \{ ok: false/, "applyQueue checks the list");

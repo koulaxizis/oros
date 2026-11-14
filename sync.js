@@ -1608,6 +1608,96 @@
     }
   };
 
+  // ---------- GATE-FILES F2: Claude's closed copy of files (orOS Gate) ----------
+  // Sealed pieces under /gate/<gate id>/<32 hex> in the orOS app folder
+  // (beside /vault and /transfer, never inside the vault; VD-GC never
+  // looks here). Each piece gets a shared link (sharing.write) that the
+  // relay fetches while a Claude call runs: ciphertext only.
+  var GATE_ROOT = "/gate";
+  function gatePath(name) {
+    name = String(name || "");
+    if (!/^[A-Za-z0-9_-]{22}(\/[0-9a-f]{32})?$/.test(name)) throw new Error("bad-name");
+    return GATE_ROOT + "/" + name;
+  }
+  function gateDirect(u) {
+    var m = /^https:\/\/(?:www\.)?dropbox\.com\/((?:scl\/fi|s)\/[A-Za-z0-9_\/.%-]+)(\?[^#\s]*)?$/.exec(String(u || ""));
+    if (!m) return "";
+    var q = new URLSearchParams(m[2] || ""), keep = new URLSearchParams();
+    if (q.get("rlkey")) keep.set("rlkey", q.get("rlkey"));
+    var qs = keep.toString();
+    return "https://dl.dropboxusercontent.com/" + m[1] + (qs ? "?" + qs : "");
+  }
+  function gateErr(res, what) {
+    return res.text().then(function (t) {
+      var j = null;
+      try { j = JSON.parse(t); } catch (e) { j = null; }
+      var sum = String(j && j.error_summary || "");
+      if (res.status === 401 && /missing_scope/.test(sum)) throw new Error("dropbox-scope");
+      if (res.status === 507 || /insufficient_space/.test(sum)) throw new Error("dropbox-full");
+      var e = new Error(what + " failed: " + res.status);
+      e.summary = sum; e.body = j;
+      throw e;
+    });
+  }
+  var gateDrop = {
+    available: function () { return provider.id === "dropbox" && isConnected() && !suspended; },
+    // name = "<gid>/<32 hex>"; bytes ≤ 150 MB
+    put: function (name, bytes) {
+      return dropReady().then(function () {
+        var path = gatePath(name);
+        return adapterUploadOnce(path, bytes instanceof Blob ? bytes : new Blob([bytes]), undefined).then(function (res) {
+          if (!res.ok) return gateErr(res, "upload");
+          return true;
+        });
+      });
+    },
+    // → the piece's direct shared link (the same one again if it exists)
+    share: function (name) {
+      var path;
+      return dropReady().then(function () { path = gatePath(name); return rpc("sharing/create_shared_link_with_settings", { path: path }); }).then(function (res) {
+        if (res.ok) return res.json();
+        return gateErr(res, "share").catch(function (e) {
+          var j = e.body;
+          if (!/shared_link_already_exists/.test(e.summary || "")) throw e;
+          var md = j && j.error && j.error.shared_link_already_exists && j.error.shared_link_already_exists.metadata;
+          if (md && md.url) return md;
+          return rpc("sharing/list_shared_links", { path: path, direct_only: true }).then(function (r2) {
+            if (!r2.ok) throw new Error("share failed: " + r2.status);
+            return r2.json().then(function (l) { return (l.links || [])[0] || {}; });
+          });
+        });
+      }).then(function (md) {
+        var u = gateDirect(md && md.url);
+        if (!u) throw new Error("share failed: shape");
+        return u;
+      });
+    },
+    // [{ name, size, at (ms) }] of one gate's pieces (all pages)
+    list: function (gid) {
+      var out = [];
+      function page(res) {
+        if (res.status === 409) return out;
+        if (!res.ok) throw new Error("list failed: " + res.status);
+        return res.json().then(function (j) {
+          (j.entries || []).forEach(function (e) {
+            if (e && e[".tag"] === "file" && /^[0-9a-f]{32}$/.test(e.name || "")) out.push({ name: e.name, size: +e.size || 0, at: Date.parse(e.server_modified || "") || 0 });
+          });
+          if (j.has_more && j.cursor) return rpc("files/list_folder/continue", { cursor: j.cursor }).then(page);
+          return out;
+        });
+      }
+      return dropReady().then(function () { return rpc("files/list_folder", { path: gatePath(gid), limit: 2000 }); }).then(page);
+    },
+    // one piece ("<gid>/<hex>") or the whole gate ("<gid>")
+    remove: function (name) {
+      return dropReady().then(function () { return rpc("files/delete_v2", { path: gatePath(name) }); }).then(function (res) {
+        if (res.ok || res.status === 409) return true;
+        throw new Error("delete failed: " + res.status);
+      });
+    },
+    space: function () { return cloudDrop.space(); }
+  };
+
   var storageAdapter = {
     putObject: function (key, blob, knownRev) {
       return adapterEnsureConnected().then(function () {
@@ -4224,6 +4314,7 @@
     // app folder (outside /vault: the vault, its clean-up and orOS
     // Drive never see it). Transfer uploads ciphertext only.
     cloudDrop: cloudDrop,
+    gateDrop: gateDrop,
     storage: storageAdapter,
     vaultCrypto: {
       sha256Hex:    sha256Hex,     // ArrayBuffer → hex digest (content addressing)
