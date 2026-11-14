@@ -26,7 +26,7 @@
 (function (root) {
   "use strict";
 
-  var LIM = { guests: 2000, lists: 500, name: 80, mail: 200, phone: 40, note: 200, plus: 20, cap: 100000 };
+  var LIM = { guests: 2000, lists: 500, name: 80, mail: 200, phone: 40, note: 200, plus: 20, cap: 100000, seats: 21, seatsDefault: 4 };
   var STATUSES = ["i", "y", "m", "n", "w"];
   var ID_RE = /^[A-Za-z0-9_.:-]{1,64}$/;
   // event ids come from many places (imports, CalDAV): any one-line text without "/"
@@ -74,7 +74,29 @@
     var g = (Array.isArray(l.g) ? l.g : []).map(function (x) { return normGuest(x, strict); }).filter(Boolean);
     var out = { id: l.id, cap: cap, mtime: num(l.mtime) ? l.mtime : 0, g: g };
     if (typeof l.sk === "string" && SK_RE.test(l.sk)) out.sk = l.sk;
+    // RSVP links (E2): seats one answer may take, open sign-up on/off,
+    // links stopped, and the form's secrets at the relay
+    if (num(l.ms) && l.ms >= 1) out.ms = Math.min(LIM.seats, Math.floor(l.ms));
+    if (l.op === 1) out.op = 1;
+    if (l.off === 1) out.off = 1;
+    var rv = normRv(l.rv);
+    if (rv) out.rv = rv;
     return out;
+  }
+  // { k, sec, key, priv } of forms/pub.js newKeys (priv = the RSA JWK
+  // the answers are opened with). Made once; never changes.
+  var RV_K = /^[a-z0-9]{16}$/, RV_SEC = /^[A-Za-z0-9]{32}$/, B64U = /^[A-Za-z0-9_-]{1,1200}$/;
+  function normRv(rv) {
+    if (!rv || typeof rv !== "object" || !RV_K.test(rv.k || "") || !RV_SEC.test(rv.sec || "") || !SK_RE.test(rv.key || "")) return null;
+    var p = rv.priv, jwk = { kty: "RSA" };
+    if (!p || typeof p !== "object" || p.kty !== "RSA") return null;
+    var parts = ["n", "e", "d", "p", "q", "dp", "dq", "qi"];
+    for (var i = 0; i < parts.length; i++) {
+      if (typeof p[parts[i]] !== "string" || !B64U.test(p[parts[i]])) return null;
+      jwk[parts[i]] = p[parts[i]];
+    }
+    jwk.alg = "RSA-OAEP-256";
+    return { k: rv.k, sec: rv.sec, key: rv.key, priv: jwk };
   }
 
   function newer(a, b) {   // a beats b?
@@ -85,7 +107,7 @@
   function byId(a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); }
 
   function merge(local, remote) {
-    var tomb = {}, lists = {}, guests = {}, keys = {};
+    var tomb = {}, lists = {}, guests = {}, keys = {}, rvs = {};
     [local, remote].forEach(function (side) {
       if (!side || typeof side !== "object") return;
       (Array.isArray(side.deleted) ? side.deleted : []).map(normTomb).filter(Boolean).forEach(function (d) {
@@ -95,10 +117,15 @@
         var l = normList(raw, true);
         if (!l) return;
         var head = { id: l.id, cap: l.cap, mtime: l.mtime };
+        if (l.ms) head.ms = l.ms;
+        if (l.op) head.op = 1;
+        if (l.off) head.off = 1;
         if (newer(head, lists[l.id])) lists[l.id] = head;
         // the ticket key never changes once made: the smallest one wins
         // (two devices making one before they synced is the only clash)
         if (l.sk && (!keys[l.id] || l.sk < keys[l.id])) keys[l.id] = l.sk;
+        // the same for the RSVP form: the smallest relay name wins
+        if (l.rv && (!rvs[l.id] || l.rv.k < rvs[l.id].k)) rvs[l.id] = l.rv;
         var gs = guests[l.id] || (guests[l.id] = {});
         l.g.forEach(function (g) { if (newer(g, gs[g.id])) gs[g.id] = g; });
       });
@@ -118,7 +145,9 @@
       if (lt && (headAlive || keep.length)) delete tomb[lid];
       keep.sort(byId);
       var row = { id: lid, cap: headAlive ? head.cap : 0, mtime: headAlive ? head.mtime : lt.mtime, g: keep };
+      if (headAlive) ["ms", "op", "off"].forEach(function (f) { if (head[f]) row[f] = head[f]; });
       if (keys[lid]) row.sk = keys[lid];
+      if (rvs[lid]) row.rv = rvs[lid];
       outLists.push(row);
     });
     // guest tombstones under a list tombstone that covers them say nothing more
@@ -366,11 +395,159 @@
     }, function () { return { r: "bad" }; });
   }
 
+  // ---------- RSVP links (wave E2; relay/forms.js through forms/pub.js) ----------
+  // One relay form per event. Its link opens calendar/rsvp.html:
+  //   open sign-up   <site>calendar/rsvp.html#<k>.<key>
+  //   one guest      … #<k>.<key>~<ticket code>[~<name, base64url UTF-8>]
+  // The ticket code (E3) is the guest's proof: an answer that carries it
+  // changes only that guest, and the page can show the ticket. The
+  // fragment is never sent to any server.
+  var SITE = "https://useoros.online/";
+  var LINK_RE = /^#?([a-z0-9]{16})\.([A-Za-z0-9_-]{43})(?:~(OT1\.[A-Za-z0-9_.:-]{1,64}\.[A-Za-z0-9_-]{22}))?(?:~([A-Za-z0-9_-]{1,400}))?$/;
+  function utf8b64u(s) {
+    var b = new TextEncoder().encode(s);
+    return b64u(b);
+  }
+  function rsvpLink(list, code, name, site) {
+    if (!list || !list.rv) return "";
+    var h = list.rv.k + "." + list.rv.key;
+    if (code) {
+      h += "~" + code;
+      var n = str(name, LIM.name);
+      if (n) h += "~" + utf8b64u(n);
+    }
+    return (site || SITE) + "calendar/rsvp.html#" + h;
+  }
+  // "#…" (or the whole URL) → { k, key, code?, name? } | null
+  function parseRsvp(s) {
+    var t = String(s || "").trim(), i = t.indexOf("#");
+    var m = LINK_RE.exec(i >= 0 ? t.slice(i) : t);
+    if (!m) return null;
+    var o = { k: m[1], key: m[2] };
+    if (m[3]) o.code = m[3];
+    if (m[3] && m[4]) {
+      try { o.name = str(new TextDecoder("utf-8", { fatal: true }).decode(unb64u(m[4])), LIM.name); } catch (e) {}
+      if (!o.name) delete o.name;
+    }
+    return o;
+  }
+  function maxSeats(list) { return list && list.ms ? list.ms : LIM.seatsDefault; }
+  // Head edits of the links: { ms?, op?, off? }
+  function setRsvp(data, evId, o, now) {
+    var st = clone(data || empty()), l = ensureList(st, evId, now);
+    if (!l) return st;
+    if (o.ms !== undefined) {
+      var ms = num(o.ms) ? Math.max(1, Math.min(LIM.seats, Math.floor(o.ms))) : LIM.seatsDefault;
+      if (ms === LIM.seatsDefault) delete l.ms; else l.ms = ms;
+    }
+    if (o.op !== undefined) { if (o.op) l.op = 1; else delete l.op; }
+    if (o.off !== undefined) { if (o.off) l.off = 1; else delete l.off; }
+    l.mtime = now;
+    return merge(st, null);
+  }
+  // The form's secrets, kept once made (returns a new state)
+  function withRsvp(data, evId, rv, now) {
+    var st = clone(data || empty()), l = ensureList(st, evId, now), n = normRv(rv);
+    if (!l || !n || l.rv) return st;
+    l.rv = n;
+    l.mtime = now;
+    return merge(st, null);
+  }
+  // What the page gets (the app adds pub, the key answers are sealed for).
+  // e = { t title, s start ms, e end ms, ad all day, loc, d notes, tz }
+  function rsvpDef(list, e, lang) {
+    var o = { v: 1, cal: 1, ev: { t: str(e.t, 200) }, ms: maxSeats(list), op: list && list.op ? 1 : 0, l: lang || "en" };
+    if (num(e.s)) o.ev.s = e.s;
+    if (num(e.e)) o.ev.e = e.e;
+    if (e.ad) o.ev.ad = 1;
+    var loc = str(e.loc, 300), d = typeof e.d === "string" ? e.d.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "").trim().slice(0, 1000) : "";
+    if (loc) o.ev.loc = loc;
+    if (d) o.ev.d = d;
+    if (typeof e.tz === "string" && /^[A-Za-z0-9_+\-\/]{1,60}$/.test(e.tz)) o.ev.tz = e.tz;
+    return o;
+  }
+  // The relay keeps the form until a day after the event (at most 90
+  // days from now, at least an hour).
+  function rsvpClose(e, now) {
+    var end = num(e.e) ? e.e : (num(e.s) ? e.s : now);
+    return Math.max(now + 3600000, Math.min(end + 86400000, now + 90 * 86400000));
+  }
+  // One opened answer → the list. row = { id, at, w? } from "pull",
+  // o = the payload the guest's browser sealed:
+  //   { rsvp: 1, s: "y"|"m"|"n", k: plus-ones, x?: note,
+  //     t: ticket code (one guest's link) | n, m?, p? (open sign-up) }
+  // → Promise<{ state, r: "upd"|"new"|"bad"|"gone"|"closed", guest? }>
+  // A "yes" the relay put on the waiting list (row.w) stays waiting: a
+  // place goes only on the organiser's tap (Chris Q4).
+  function rsvpAnswer(subtle, data, evId, row, o, now) {
+    var l = listOf(data, evId);
+    var same = function (r) { return Promise.resolve({ state: data, r: r }); };
+    if (!l || !o || typeof o !== "object" || o.rsvp !== 1 || ["y", "m", "n"].indexOf(o.s) === -1) return same("bad");
+    var k = num(o.k) ? Math.max(0, Math.min(maxSeats(l) - 1, Math.floor(o.k))) : 0;
+    var wish = o.s === "y" && row && row.w ? "w" : o.s;
+    var raw = { s: wish, k: k };
+    var x = str(o.x, LIM.note);
+    if (x) raw.x = x;
+    function put(r) {
+      var res = putGuest(data, evId, raw, now);
+      return res.error ? { state: data, r: "bad" } : { state: res.state, r: r, guest: res.guest, bumped: res.bumped };
+    }
+    if (typeof o.t === "string") {
+      return check(subtle, l, o.t).then(function (c) {
+        if (c.r === "bad") return { state: data, r: "bad" };
+        if (c.r === "removed") return { state: data, r: "gone" };
+        raw.id = c.g.id;
+        if (c.g["in"]) { raw.s = "y"; }            // already at the door: stays in
+        return put("upd");
+      });
+    }
+    if (!l.op) return same("closed");
+    var n = str(o.n, LIM.name);
+    if (!n || !row || !num(row.id)) return same("bad");
+    raw.id = "r" + Math.floor(row.id);
+    raw.n = n;
+    var m = str(o.m, LIM.mail), p = str(o.p, LIM.phone);
+    if (m) raw.m = m;
+    if (p) raw.p = p;
+    return Promise.resolve(put("new"));
+  }
+  // .ics of the event for the guest's own calendar (RFC 5545, UTC times)
+  function icsText(def, uid, stamp) {
+    var e = def && def.ev ? def.ev : {};
+    function esc(v) { return String(v || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n"); }
+    function utc(ms) { return new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, ""); }
+    function day(ms) { return new Date(ms).toISOString().slice(0, 10).replace(/-/g, ""); }
+    function fold(line) {
+      var out = [], b = line;
+      while (b.length > 74) { out.push(b.slice(0, 74)); b = " " + b.slice(74); }
+      out.push(b);
+      return out.join("\r\n");
+    }
+    var L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//orOS//Calendar RSVP//EN", "BEGIN:VEVENT",
+             "UID:" + uid + "@useoros.online", "DTSTAMP:" + utc(stamp)];
+    if (num(e.s)) {
+      if (e.ad) {
+        L.push("DTSTART;VALUE=DATE:" + day(e.s));
+        L.push("DTEND;VALUE=DATE:" + day(num(e.e) && e.e > e.s ? e.e : e.s + 86400000));
+      } else {
+        L.push("DTSTART:" + utc(e.s));
+        L.push("DTEND:" + utc(num(e.e) && e.e > e.s ? e.e : e.s + 3600000));
+      }
+    }
+    L.push("SUMMARY:" + esc(e.t));
+    if (e.loc) L.push("LOCATION:" + esc(e.loc));
+    if (e.d) L.push("DESCRIPTION:" + esc(e.d));
+    L.push("END:VEVENT", "END:VCALENDAR");
+    return L.map(fold).join("\r\n") + "\r\n";
+  }
+
   var api = { LIM: LIM, STATUSES: STATUSES, normGuest: normGuest, merge: merge, empty: empty,
     listOf: listOf, counts: counts, fits: fits, waiting: waiting, nextUp: nextUp, settle: settle,
     putGuest: putGuest, removeGuest: removeGuest, setCap: setCap, checkIn: checkIn, dropList: dropList,
     fromContact: fromContact, csv: csv, view: view, seatsOf: seatsOf,
-    withKey: withKey, ticket: ticket, parseTicket: parseTicket, check: check };
+    withKey: withKey, ticket: ticket, parseTicket: parseTicket, check: check,
+    rsvpLink: rsvpLink, parseRsvp: parseRsvp, maxSeats: maxSeats, setRsvp: setRsvp, withRsvp: withRsvp,
+    rsvpDef: rsvpDef, rsvpClose: rsvpClose, rsvpAnswer: rsvpAnswer, icsText: icsText };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.OrosCalGuests = api;
 })(typeof window !== "undefined" ? window : null);

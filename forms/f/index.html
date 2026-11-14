@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src https://oros-mail-relay.koulaxizis.workers.dev; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="A form made with orOS. Your answers are encrypted in your browser.">
+  <title>orOS Forms</title>
+  <link rel="icon" href="../../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../fonts.css?v=6.43.00">
+  <link rel="stylesheet" href="../app.css?v=6.43.00">
+  <link rel="stylesheet" href="fill.css?v=6.43.00">
+</head>
+<body>
+  <header id="top">
+    <a id="brand" href="../../" rel="noopener"><img src="../../icon.svg" alt="" width="24" height="24"><span>orOS</span></a>
+    <span id="top-sub" data-i18n="p.sub">Forms</span>
+  </header>
+  <main id="page" aria-live="polite">
+    <div id="warn"></div>
+    <div id="form"><p class="ff-dim" id="state" data-i18n="p.loading">Opening the form…</p></div>
+    <div id="hp" aria-hidden="true"><label>Website <input type="text" id="hp-in" tabindex="-1" autocomplete="off"></label></div>
+  </main>
+  <footer id="foot">
+    <p class="ff-dim" id="privacy" data-i18n="p.privacy">Your answers are encrypted in this browser. Only the person who made the form can read them.</p>
+    <p class="links">
+      <a href="../../" id="what" data-i18n="p.what">What is orOS?</a>
+      <button type="button" id="report-btn" class="linkish" data-i18n="p.report">Report this form</button>
+    </p>
+    <div id="report" hidden>
+      <p data-i18n="p.reportAsk">Is this form trying to get passwords, card numbers or money, or is it abusive? Reporting is anonymous. A form several people report is closed.</p>
+      <button type="button" id="report-go" class="ff-btn" data-i18n="p.reportGo">Report</button>
+    </div>
+  </footer>
+
+  <script src="../../i18n.js?v=6.43.00" data-app="forms"></script>
+  <script src="../engine.js?v=6.43.00"></script>
+  <script src="../render.js?v=6.43.00"></script>
+  <script src="../pub.js?v=6.43.00"></script>
+  <script src="fill.js?v=6.43.00"></script>
+</body>
+</html>

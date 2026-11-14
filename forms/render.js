@@ -8,7 +8,10 @@
 // (engine.js submit) to opts.onDone.
 // Everything from the form is text: only textContent and attributes
 // this file sets itself, never innerHTML with form data.
-//   OrosFormsRender.mount(host, form, { t, preview, onDone }) → { destroy }
+//   OrosFormsRender.mount(host, form, { t, preview, onDone, send, after }) → { destroy }
+//   send(answers) → Promise (the public page, W2): Submit waits for it;
+//   a rejection { code } shows "f.sendErr.<code>" (or "f.sendErr") and
+//   keeps the answers. after(card, result) adds to the thank-you card.
 //   t(key, vars) = the page's string lookup (keys "f.*" below)
 // ============================================================
 (function (root) {
@@ -35,7 +38,13 @@
       "f.err.opt": "Choose one of the answers.", "f.err.other": "Write your other answer.",
       "f.err.few": "Choose at least {n}.", "f.err.many": "Choose at most {n}.",
       "f.err.rows": "Answer every row.",
-      "f.untitled": "Untitled form", "f.noQ": "Untitled question"
+      "f.untitled": "Untitled form", "f.noQ": "Untitled question",
+      "f.sending": "Sending…",
+      "f.sendErr": "Your answers could not be sent. Check your connection and try again.",
+      "f.sendErr.closed": "This form has just closed. Your answers were not sent.",
+      "f.sendErr.gone": "This form isn't available any more.",
+      "f.sendErr.busy": "This form is getting too many answers right now. Please try again in a few minutes.",
+      "f.sendErr.full": "The service is full right now. Please try again later."
     },
     el: {
       "f.req": "Υποχρεωτικό", "f.reqMark": "Υποχρεωτική ερώτηση",
@@ -55,7 +64,13 @@
       "f.err.opt": "Διαλέξτε μία από τις απαντήσεις.", "f.err.other": "Γράψτε την άλλη απάντησή σας.",
       "f.err.few": "Διαλέξτε τουλάχιστον {n}.", "f.err.many": "Διαλέξτε το πολύ {n}.",
       "f.err.rows": "Απαντήστε σε κάθε γραμμή.",
-      "f.untitled": "Φόρμα χωρίς τίτλο", "f.noQ": "Ερώτηση χωρίς τίτλο"
+      "f.untitled": "Φόρμα χωρίς τίτλο", "f.noQ": "Ερώτηση χωρίς τίτλο",
+      "f.sending": "Αποστολή…",
+      "f.sendErr": "Δεν ήταν δυνατή η αποστολή των απαντήσεών σας. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά.",
+      "f.sendErr.closed": "Η φόρμα μόλις έκλεισε. Οι απαντήσεις σας δεν στάλθηκαν.",
+      "f.sendErr.gone": "Αυτή η φόρμα δεν είναι πια διαθέσιμη.",
+      "f.sendErr.busy": "Η φόρμα δέχεται πάρα πολλές απαντήσεις αυτή τη στιγμή. Δοκιμάστε ξανά σε λίγα λεπτά.",
+      "f.sendErr.full": "Η υπηρεσία είναι γεμάτη αυτή τη στιγμή. Δοκιμάστε ξανά αργότερα."
     }
   };
 
@@ -125,7 +140,7 @@
         if (code && !first) first = nodes[id];
       });
       var sum = root.querySelector(".ff-sum");
-      if (sum) sum.hidden = !first;
+      if (sum) { sum.hidden = !first; if (first) sum.textContent = t("f.errs"); }
       if (first && focus) {
         var f = first.querySelector("input, textarea, select");
         if (f) f.focus();
@@ -404,10 +419,30 @@
         showErrs(res.errs, true);
         return;
       }
-      done(res.answers);
+      if (typeof opts.send !== "function") { done(res.answers, null); return; }
+      // The public page: send first, thank only once the relay has it.
+      var go = root.querySelector(".ff-go"), sum = root.querySelector(".ff-sum");
+      if (sending) return;
+      sending = true;
+      if (go) { go.disabled = true; go.textContent = t("f.sending"); }
+      opts.send(res.answers).then(function (r) {
+        sending = false;
+        done(res.answers, r || {});
+      }, function (e) {
+        sending = false;
+        if (go) { go.disabled = false; go.textContent = t("f.submit"); }
+        if (sum) {
+          var key = "f.sendErr." + (e && e.code);
+          var s = t(key);
+          sum.textContent = s === key ? t("f.sendErr") : s;
+          sum.hidden = false;
+          if (sum.scrollIntoView) sum.scrollIntoView({ block: "center" });
+        }
+      });
     }
+    var sending = false;
 
-    function done(answers) {
+    function done(answers, result) {
       root.textContent = "";
       var card = el("div", "ff-card ff-done");
       card.appendChild(el("h2", "ff-title", form.title || t("f.untitled")));
@@ -419,6 +454,7 @@
         again.addEventListener("click", function () { ans = {}; stack = [0]; drawPage(); });
         card.appendChild(again);
       }
+      if (typeof opts.after === "function") opts.after(card, result);
       root.appendChild(card);
       if (typeof opts.onDone === "function") opts.onDone(answers);
     }

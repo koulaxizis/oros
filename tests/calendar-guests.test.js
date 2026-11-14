@@ -197,7 +197,111 @@ test("tickets: signed per event and guest, checked offline", async () => {
 
 test("guests: both Calendar guest scripts parse in strict mode", () => {
   const vm = require("vm");
-  for (const f of ["calendar/guests.js", "calendar/guestsui.js"]) {
+  for (const f of ["calendar/guests.js", "calendar/guestsui.js", "calendar/rsvp.js"]) {
     assert.doesNotThrow(() => new vm.Script("\"use strict\";" + fs.readFileSync(path.join(ROOT, f), "utf8"), { filename: f }), f);
   }
+});
+
+// ---------- wave E2: RSVP links ----------
+async function rvKeys() {
+  const kp = await subtle.generateKey({ name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" }, true, ["encrypt", "decrypt"]);
+  const priv = await subtle.exportKey("jwk", kp.privateKey);
+  return { k: "abcdefgh12345678", sec: "A".repeat(32), key: "k".repeat(43), priv };
+}
+
+test("rsvp: links carry the ticket and the name, parse back", async () => {
+  let st = put(G.empty(), { id: "g1", n: "Μαρία", s: "i" }, 1).state;
+  st = G.withKey(st, EV, R1, 2);
+  st = G.withRsvp(st, EV, await rvKeys(), 3);
+  const l = G.listOf(st, EV);
+  const code = await G.ticket(subtle, l, "g1");
+  const open = G.rsvpLink(l);
+  assert.equal(open, "https://useoros.online/calendar/rsvp.html#abcdefgh12345678." + "k".repeat(43));
+  assert.deepEqual(G.parseRsvp(open), { k: "abcdefgh12345678", key: "k".repeat(43) });
+  const one = G.rsvpLink(l, code, "Μαρία");
+  assert.deepEqual(G.parseRsvp(one), { k: "abcdefgh12345678", key: "k".repeat(43), code, name: "Μαρία" });
+  assert.equal(G.parseRsvp("#abc.def"), null);
+  assert.equal(G.parseRsvp(open + "~<b>"), null);
+});
+
+test("rsvp: the form's secrets are kept once, smallest wins, head fields merge", async () => {
+  const a = await rvKeys(), b = Object.assign({}, a, { k: "zzzzzzzz12345678" });
+  let st = put(G.empty(), { id: "g1", n: "A" }, 1).state;
+  const s1 = G.withRsvp(st, EV, a, 2), s2 = G.withRsvp(st, EV, b, 3);
+  assert.equal(G.listOf(G.withRsvp(s1, EV, b, 9), EV).rv.k, a.k, "kept");
+  const m = G.merge(s2, s1);
+  assert.equal(JSON.stringify(m), JSON.stringify(G.merge(s1, s2)));
+  assert.equal(G.listOf(m, EV).rv.k, a.k);
+  assert.ok(!G.listOf(G.withRsvp(st, EV, { k: "x" }, 2), EV).rv, "bad secrets refused");
+  let h = G.setRsvp(m, EV, { ms: 2, op: 1 }, 20);
+  assert.equal(G.maxSeats(G.listOf(h, EV)), 2);
+  assert.equal(G.listOf(h, EV).op, 1);
+  h = G.setRsvp(h, EV, { ms: 99, off: 1 }, 21);
+  assert.equal(G.listOf(h, EV).ms, 21);
+  assert.equal(JSON.stringify(G.merge(h, h)), JSON.stringify(h), "canonical");
+  assert.equal(G.maxSeats(G.listOf(G.setRsvp(h, EV, { ms: 4 }, 22), EV)), 4);
+  assert.ok(!("ms" in G.listOf(G.setRsvp(h, EV, { ms: 4 }, 22), EV)), "default not stored");
+});
+
+test("rsvp: an answer changes only its own guest, open sign-ups add guests", async () => {
+  let st = G.setCap(G.empty(), EV, 3, 1);
+  st = put(st, { id: "g1", n: "A" }, 2).state;
+  st = put(st, { id: "g2", n: "B" }, 3).state;
+  st = G.withKey(st, EV, R1, 4);
+  st = G.withRsvp(st, EV, await rvKeys(), 5);
+  st = G.setRsvp(st, EV, { ms: 3 }, 6);
+  const l = G.listOf(st, EV);
+  const c1 = await G.ticket(subtle, l, "g1");
+  let r = await G.rsvpAnswer(subtle, st, EV, { id: 1, at: 10 }, { rsvp: 1, s: "y", k: 9, x: "veggie", t: c1 }, 10);
+  assert.equal(r.r, "upd");
+  let g1 = G.listOf(r.state, EV).g.find((g) => g.id === "g1");
+  assert.deepEqual([g1.s, g1.k, g1.x], ["y", 2, "veggie"], "plus-ones clamped to maxSeats - 1");
+  st = r.state;
+  // a forged code for g2 made from g1's
+  r = await G.rsvpAnswer(subtle, st, EV, { id: 2, at: 11 }, { rsvp: 1, s: "n", t: c1.replace("OT1.g1.", "OT1.g2.") }, 11);
+  assert.equal(r.r, "bad");
+  assert.equal(r.state, st);
+  // open sign-up while closed
+  r = await G.rsvpAnswer(subtle, st, EV, { id: 3, at: 12 }, { rsvp: 1, s: "y", n: "Walk-in" }, 12);
+  assert.equal(r.r, "closed");
+  st = G.setRsvp(st, EV, { op: 1 }, 13);
+  // the relay said "wait": stays waiting even when a seat looks free here
+  r = await G.rsvpAnswer(subtle, st, EV, { id: 4, at: 14, w: 1 }, { rsvp: 1, s: "y", n: "Walk-in", m: "w@x.gr" }, 14);
+  assert.equal(r.r, "new");
+  const w = G.listOf(r.state, EV).g.find((g) => g.id === "r4");
+  assert.deepEqual([w.n, w.m, w.s, w.w], ["Walk-in", "w@x.gr", "w", 14]);
+  // the same row again (an ack that did not arrive) does not add twice
+  const again = await G.rsvpAnswer(subtle, r.state, EV, { id: 4, at: 14, w: 1 }, { rsvp: 1, s: "y", n: "Walk-in" }, 15);
+  assert.equal(G.listOf(again.state, EV).g.length, 3);
+  // a removed guest's link
+  st = G.removeGuest(r.state, EV, "g1", 20);
+  r = await G.rsvpAnswer(subtle, st, EV, { id: 5, at: 21 }, { rsvp: 1, s: "m", t: c1 }, 21);
+  assert.equal(r.r, "gone");
+  assert.equal((await G.rsvpAnswer(subtle, st, EV, { id: 6 }, { s: "y" }, 22)).r, "bad");
+});
+
+test("rsvp: the page's form, the closing time and the .ics", () => {
+  const l = { id: EV, cap: 0, mtime: 1, g: [], ms: 2, op: 1 };
+  const d = G.rsvpDef(l, { t: "Launch\nparty", s: Date.UTC(2026, 11, 5, 18), e: Date.UTC(2026, 11, 5, 21), loc: "Athens, Greece", d: "Bring; friends", tz: "Europe/Athens" }, "el");
+  assert.deepEqual(d, { v: 1, cal: 1, ev: { t: "Launch party", s: Date.UTC(2026, 11, 5, 18), e: Date.UTC(2026, 11, 5, 21), loc: "Athens, Greece", d: "Bring; friends", tz: "Europe/Athens" }, ms: 2, op: 1, l: "el" });
+  const now = Date.UTC(2026, 10, 14);
+  assert.equal(G.rsvpClose(d.ev, now), d.ev.e + 86400000);
+  assert.equal(G.rsvpClose({ e: now + 400 * 86400000 }, now), now + 90 * 86400000);
+  const ics = G.icsText(d, "u1", now);
+  assert.ok(ics.includes("DTSTART:20261205T180000Z\r\nDTEND:20261205T210000Z"));
+  assert.ok(ics.includes("LOCATION:Athens\\, Greece"));
+  assert.ok(ics.includes("DESCRIPTION:Bring\\; friends"));
+  const allDay = G.icsText({ ev: { t: "Fair", s: Date.UTC(2026, 11, 5), ad: 1 } }, "u2", now);
+  assert.ok(allDay.includes("DTSTART;VALUE=DATE:20261205\r\nDTEND;VALUE=DATE:20261206"));
+});
+
+test("rsvp: the public page shows text only and keeps its strict policy", () => {
+  const js = fs.readFileSync(path.join(ROOT, "calendar/rsvp.js"), "utf8").replace(/\/\/.*$/gm, "");
+  assert.ok(!/innerHTML|outerHTML|insertAdjacentHTML|document\.write|eval\(/.test(js));
+  const html = fs.readFileSync(path.join(ROOT, "calendar/rsvp.html"), "utf8");
+  const csp = /Content-Security-Policy" content="([^"]+)"/.exec(html)[1];
+  assert.match(csp, /script-src 'self';/);
+  assert.match(csp, /connect-src https:\/\/oros-mail-relay\.koulaxizis\.workers\.dev;/);
+  assert.ok(!/unsafe/.test(csp));
+  assert.ok(!/<script>/.test(html), "no inline script");
 });

@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 43477 of 44010 (98%)
+- Strings: 43711 of 44293 (98%)
 - Help pages: 156 of 157 (99%)
 - Shown in the language list: yes
 
@@ -25,7 +25,7 @@ text is still written in the code. They switch over wave by wave
 | bubble | 100% | 54 / 54 |
 | budget | 90% | 1065 / 1180 |
 | calculator | 100% | 166 / 166 |
-| calendar | 98% | 551 / 561 |
+| calendar | 90% | 575 / 634 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
@@ -57,7 +57,7 @@ text is still written in the code. They switch over wave by wave
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
-| forms | 100% | 226 / 226 |
+| forms | 100% | 333 / 333 |
 | g2048 | 100% | 55 / 55 |
 | gamecenter | 100% | 158 / 158 |
 | garage | 100% | 437 / 437 |
@@ -73,11 +73,11 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | 100% | 90 / 90 |
 | kanban | 99% | 331 / 334 |
 | labels | 100% | 88 / 88 |
-| layout | 99% | 997 / 1005 |
-| library | 100% | 323 / 323 |
+| layout | 99% | 1074 / 1082 |
+| library | 100% | 327 / 327 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
-| lyricsync | 100% | 224 / 224 |
+| lyricsync | 100% | 241 / 241 |
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 496 / 496 |
 | mancala | 100% | 61 / 61 |
@@ -112,7 +112,7 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 332 / 332 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 96% | 595 / 619 |
+| publish | 96% | 600 / 624 |
 | qr | 100% | 248 / 248 |
 | quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |

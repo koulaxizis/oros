@@ -1875,3 +1875,10 @@ dialog#gu-dlg::backdrop, dialog#gu-pick::backdrop, dialog#gu-tix::backdrop, dial
   .pr-tix-card { display: grid; justify-items: center; gap: 1mm; border: 1px dashed #999; padding: 4mm; break-inside: avoid; text-align: center; font-size: 10pt; }
   .pr-tix-card img { width: 45mm; height: 45mm; image-rendering: pixelated; }
 }
+
+/* RSVP links (wave E2) */
+.gu-rv { margin: 8px 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; }
+.gu-rv summary { cursor: pointer; font-weight: 700; min-height: 32px; display: list-item; }
+.gu-rv > * + * { margin-top: 8px; }
+.gu-rv-op { display: flex; align-items: center; gap: 8px; min-height: 40px; }
+.gu-rv-op input { width: 20px; height: 20px; flex: none; }

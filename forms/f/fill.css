@@ -1,0 +1,27 @@
+/* orOS Forms — the public fill-in page (forms/f/). The form itself
+   is styled by ../app.css (.ff-*, the same as the app's preview);
+   this file only lays out the page around it. 360 px and up. */
+#top {
+  display: flex; align-items: center; gap: 10px;
+  max-width: 720px; margin: 0 auto; padding: 12px 16px;
+}
+#brand { display: inline-flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none; font-weight: 700; }
+#top-sub { color: var(--text-dim); font-size: 14px; }
+#page { max-width: 720px; margin: 0 auto; padding: 0 16px 24px; }
+#page #form > * + * { margin-top: 12px; }
+.frm-banner {
+  margin: 0 0 12px; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--border); border-left: 4px solid var(--danger);
+  background: var(--panel-bg); font-size: 14px; overflow-wrap: anywhere;
+}
+#hp { position: absolute; left: -5000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+.ff-backline { margin-top: 12px; }
+.ff-backline .ff-btn { display: inline-flex; align-items: center; text-decoration: none; }
+.ff-host { overflow-wrap: anywhere; }
+#foot { max-width: 720px; margin: 0 auto; padding: 0 16px 32px; font-size: 14px; }
+#foot > * + * { margin-top: 8px; }
+#foot .links { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+#foot a, .linkish { color: var(--text-dim); }
+.linkish { background: none; border: 0; padding: 8px 0; font: inherit; text-decoration: underline; cursor: pointer; min-height: 40px; }
+#report { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); }
+#report > * + * { margin-top: 8px; }
