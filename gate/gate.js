@@ -1499,7 +1499,9 @@
   // create_items. applyQueue runs nothing else (defence in depth).
   var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "budget_delete", "budget_transfer", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
-                "change_item", "link_items", "link_contact"];
+                "change_item", "link_items", "link_contact",
+                // GATE-FILES F3: checked against the closed copy's index; deletes wait for the owner's yes here
+                "files_write", "files_move", "files_delete"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"].concat(FILE_READ, FILE_WRITE);
@@ -1805,6 +1807,7 @@
   }
   function ranAdd(id) { var l = ranList(); l.push({ id: id, t: Date.now() }); writeJSON(RAN_KEY, l.slice(-RAN_MAX)); }
   function ranHas(id) { return ranList().some(function (e) { return e.id === id; }); }
+  function ranDrop(id) { writeJSON(RAN_KEY, ranList().filter(function (e) { return e.id !== id; })); }
   function chgList() {
     var l = readJSON(CHG_KEY);
     if (!Array.isArray(l)) {                          // before 5.78.00: this device's own undo list
@@ -2088,33 +2091,52 @@
   // Changes Claude left while orOS was closed: applied here, in order,
   // with the same rules as a live call (the switches and a pause as they
   // are now), then the box is told which ones are done.
+  // F3: queued deletions waiting for the owner (id → queue item).
+  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 };
+  function heldAgain() {
+    var ids = Object.keys(cqHeld);
+    if (!ids.length || !ws || ws.readyState !== 1 || document.visibilityState !== "visible") return;
+    applyQueue(ws, JSON.stringify({ cq: ids.map(function (id) { return cqHeld[id]; }) }));
+  }
   function applyQueue(sock, text) {
     var o, k = gateKey();
     try { o = JSON.parse(text); } catch (e) { return; }
     if (!isObj(o) || !Array.isArray(o.cq) || !k || !pref().on) return;
     whenUnlocked(function () {
-      var done = [];
+      var done = [], files = false;
       o.cq.slice(0, 50).reduce(function (chain, it) {
         return chain.then(function () {
           if (!isObj(it) || typeof it.id !== "string") return;
           if (ranHas(it.id)) { done.push(it.id); return; }   // done live already (answered late), or sent twice (6.01.02)
+          if (cqBusy[it.id]) return BUSY;                     // F3: its dialog is open now
           ranAdd(it.id);
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
             if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
             if (x.n === "change_item" && isObj(x.a) && (x.a.action === "delete" || (Array.isArray(x.a.changes) && x.a.changes.some(function (ch) { return isObj(ch) && ch.action === "delete"; })))) return { ok: false, c: "refused" };
+            // F3: a deletion waits for the owner's Delete on this device; hidden,
+            // locked or unanswered, it stays queued (offered again when orOS is
+            // on screen, and on the next connect). Writes keep a conflict copy.
+            if (x.n === "files_delete" && (document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()))) { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }
+            if (FILE_WRITE.indexOf(x.n) >= 0) { files = true; if (x.n === "files_write") x.a = Object.assign({}, isObj(x.a) ? x.a : {}, { __q: 1 }); }
+            cqBusy[it.id] = 1;
+            askLast = "";
             return run(x.n, x.a).then(function (res) {
+              delete cqBusy[it.id];
+              if (x.n === "files_delete" && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
+              delete cqHeld[it.id];
               var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
               if (res.u) entry.u = res.u;
               writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
               return res;
             });
-          }).then(function () { done.push(it.id); }, function () { done.push(it.id); });   // never in a loop
+          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e !== HELD) done.push(it.id); });   // never in a loop
         });
       }, Promise.resolve()).then(function () {
         try { if (sock.readyState === 1) sock.send(JSON.stringify({ cqa: done })); } catch (e) {}
         changed();
         copySoon(2000);
+        if (files) fileCopySoon(60000);
       });
     });
   }
@@ -2217,7 +2239,7 @@
       if (hidden) hidAt = Date.now();
       else if (hidAt && Date.now() - hidAt > SLEPT_MS && pref().on) { hidAt = 0; renew(); return; }   // 6.01.02
       else hidAt = 0;
-      if (ws) { sendVis(ws); return; }
+      if (ws) { sendVis(ws); if (!hidden) setTimeout(heldAgain, 1500); return; }
       if (!hidden && pref().on && wsState !== "gone") { retry = 0; clearTimeout(retryTimer); connect(); }
     });
     // Page Lifecycle: a frozen page that runs again (Chrome, Android).
@@ -2517,15 +2539,18 @@
 
   // GATE-FILES: deleting files is always asked here, naming them (at
   // most 10 shown); no answer within 20 s, or orOS hidden or locked = no.
+  // F3: askLast tells a queued deletion "no" (Keep) from "none" (nobody
+  // answered, or orOS hidden or locked: the deletion keeps waiting).
+  var askLast = "";
   function askFiles(names) {
     return new Promise(function (ok) {
       var settled = false, wrap = null, list = Array.isArray(names) ? names.map(String) : [];
-      function end(v) { if (settled) return; settled = true; if (wrap) wrap.remove(); ok(v); }
-      if (!list.length || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false); return; }
+      function end(v, how) { if (settled) return; settled = true; askLast = how; if (wrap) wrap.remove(); ok(v); }
+      if (!list.length || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
       var shown = list.slice(0, 10).join("\n") + (list.length > 10 ? "\n" + tr("gate.fdel.more").replace("{n}", String(list.length - 10)) : "");
       wrap = dialog(tr("gate.fdel.title"), tr("gate.fdel.body").replace("{n}", String(list.length)), shown, tr("gate.del.no"), tr("gate.fdel.yes"),
-        function () { end(false); }, function () { end(true); });
-      setTimeout(function () { end(false); }, 20000);
+        function () { end(false, "no"); }, function () { end(true, "yes"); });
+      setTimeout(function () { end(false, "none"); }, 20000);
     });
   }
   // Claude's folders (synced slice "gatefiles"): { ver, m, f: [path] };
@@ -2746,7 +2771,10 @@
         });
       }, Promise.resolve()).then(function () { return pl; });
     }).then(function (pl) {
-      var idx = { v: 1, at: Date.now(), f: CF.cleanFolders(fr.f), q: FC.quotaOf(fr.q), used: pl.used, files: files };
+      var pp = pref();
+      var idx = { v: 1, at: Date.now(), f: CF.cleanFolders(fr.f), q: FC.quotaOf(fr.q), used: pl.used, files: files,
+                  w: isObj(pp.lv) && pp.lv.files === "write" ? 1 : 0 };   // F3: the relay checks closed changes against these
+      if (typeof pp.hold === "number" && pp.hold > Date.now()) idx.hold = pp.hold;
       var text = JSON.stringify(idx);
       while (utf8Len(text) > FIDX_MAX && idx.files.length) { idx.files.pop(); idx.cut = 1; text = JSON.stringify(idx); }
       return seal(k, text).then(function (sealed) {

@@ -4625,6 +4625,9 @@
         var nc = cfNoCloud(CF, st, p);
         if (nc) return cfErr(nc);
         return (st && !st.dir ? cfVer(x.fs, p) : Promise.resolve("")).then(function (v) {
+          // GATE-FILES F3: written while orOS was closed, and the file changed
+          // since: the text goes next to it as a conflict copy, nothing is replaced.
+          if (GATE && a.__q === 1 && CF.writeConflict(a, { st: st, v: v })) return cfConflict(c, a, apps, x, p, 1);
           var r = CF.planWrite(a, { st: st, v: v }, x.folders, Date.now());
           if (!r.ok) return cfErr(r.err);
           var name = p.slice(p.lastIndexOf("/") + 1), len = a.text.length;
@@ -4633,6 +4636,13 @@
           return cfApply(c, x, "write", [r.step], cards, [CF.show(p)]);
         });
       });
+    });
+  }
+  function cfConflict(c, a, apps, x, p, n) {
+    var q = x.CF.conflictName(p, Date.now(), n);
+    return cfStat(x.fs, q).then(function (st) {
+      if (st) return n < 9 ? cfConflict(c, a, apps, x, p, n + 1) : cfErr("\"" + x.CF.show(p) + "\" changed since, and no free name was left for a conflict copy. Nothing was written.");
+      return filesWrite(c, { path: q, text: a.text, mode: "create" }, apps);
     });
   }
   function filesMove(c, a, apps) {

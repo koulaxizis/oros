@@ -174,7 +174,8 @@ test("orOS closed: files_list and files_read from the sealed index, files_link o
   assert.equal(r.text, undefined);
   assert.match(r.note, /not in the copy/);
   const wr = await tc("files_write", { path: F + "/a.txt", text: "x" });
-  assert.equal(wr.isError, true, "writes wait for F3: " + wr.content[0].text);
+  assert.equal(wr.isError, true, "Files is not «May change» in this index: " + wr.content[0].text);
+  assert.match(wr.content[0].text, /may not change files/);
   // a tampered piece is refused
   const first = idx.files[1].c[0], keep = D.m.get(first);
   D.m.set(first, Buffer.from(keep).fill(1, 20, 30));
@@ -219,4 +220,73 @@ test("a stranger's socket cannot replace or drop the index", async () => {
   assert.equal(await b.st.storage.get("fidx"), undefined);
   await b.box.webSocketMessage(odd, JSON.stringify({ fdrop: 1 }));
   assert.equal(odd.sent.length, 0);
+});
+
+test("F3: orOS closed: files_write / move / delete are checked against the index and wait in the queue", async () => {
+  const w = world();
+  assert.equal((await dev(w, { act: "new", th: hex(TOK) })).status, 200);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const sock = { sent: [], closed: false, __g: { th: hex(TOK), v: 1, at: 1 }, send(x) { this.sent.push(x); const q = JSON.parse(x); if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1); }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const F = "/internal/Drive/pc/Manuscripts";
+  const V = "0123456789abcdef";
+  const idx = { v: 1, at: 1.7e12, f: [F], q: FC.QUOTA_DEF, used: 0, w: 1, files: [
+    { p: F + "/book.txt", s: 10, m: 1.7e12, k: "text", v: V, x: "quota" },
+    { p: F + "/old/draft.txt", s: 10, m: 1.7e12, k: "text", v: "fedcba9876543210", x: "quota" }
+  ] };
+  const putIdx = async (o) => { sock.closed = false; await b.box.webSocketMessage(sock, JSON.stringify({ fidx: await G.sealText(K, JSON.stringify(o)) })); sock.closed = true; };
+  await putIdx(idx);
+  const tc = async (name, args) => (await (await call(w, "POST", "/mcp", { bearer: t.access_token, json: { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } } })).json()).result;
+  await b.st.storage.put("devtools", ["files_list", "files_read", "files_write", "files_move", "files_delete"].map((n) => ({ name: n, description: "x", inputSchema: { type: "object" }, annotations: { readOnlyHint: /list|read/.test(n) } })));
+  const queued = async () => [...(await b.st.storage.list({ prefix: "q:" })).values()];
+  const bad = async (name, args, re) => { const r = await tc(name, args); assert.equal(r.isError, true, name + " " + JSON.stringify(args)); if (re) assert.match(r.content[0].text, re); };
+  // refused before anything waits
+  await bad("files_write", { path: "Drive/pc/Other/a.txt", text: "x" }, /outside the folders/);
+  await bad("files_write", { path: F, text: "x" }, /Claude's folders itself/);
+  await bad("files_write", { path: F + "/book.txt", text: "x" }, /already exists/);
+  await bad("files_write", { path: F + "/old", text: "x" }, /already exists/);
+  await bad("files_write", { path: F + "/book.txt", text: "x", mode: "replace", if_version: "aaaaaaaaaaaaaaaa" }, /Read it again/);
+  await bad("files_write", { path: F + "/book.txt", text: "x", mode: "replace" }, /if_version/);
+  await bad("files_move", { from: F + "/book.txt", to: F + "/old/draft.txt", if_version: V }, /already exists/);
+  await bad("files_delete", { paths: [{ path: F + "/book.txt", if_version: V }, { path: F + "/gone.txt", if_version: V }] }, /not in the copy/);
+  await bad("files_delete", { paths: [] });
+  assert.equal((await queued()).length, 0, "nothing waits after a refusal");
+  // accepted: they wait, sealed
+  let r = await tc("files_write", { path: F + "/ch-12.txt", text: "Κεφάλαιο 12" });
+  assert.equal(r.isError, false, r.content[0].text);
+  assert.match(JSON.parse(r.content[0].text).note, /conflict copy/);
+  r = await tc("files_write", { path: "Drive/pc/Manuscripts/book.txt", text: "new", mode: "replace", if_version: V.toUpperCase() });
+  assert.equal(r.isError, false, r.content[0].text);
+  r = await tc("files_move", { from: F + "/book.txt", to: F + "/old/book.txt", if_version: V });
+  assert.equal(r.isError, false, r.content[0].text);
+  r = await tc("files_delete", { paths: [{ path: F + "/old/draft.txt", if_version: "fedcba9876543210" }] });
+  assert.equal(r.isError, false, r.content[0].text);
+  assert.match(JSON.parse(r.content[0].text).note, /taps Delete on the device/);
+  const q = await queued();
+  assert.equal(q.length, 4);
+  assert.doesNotMatch(JSON.stringify(q), /Κεφάλαιο|ch-12|draft/, "queued changes are sealed");
+  const names = [];
+  for (const row of q) names.push(JSON.parse(await G.openText(K, row.c)).n);
+  assert.deepEqual(names.sort(), ["files_delete", "files_move", "files_write", "files_write"]);
+  // the owner's switch and pause, as the device last sent them
+  await putIdx(Object.assign({}, idx, { w: 0 }));
+  await bad("files_write", { path: F + "/b.txt", text: "x" }, /may not change files/);
+  await putIdx(Object.assign({}, idx, { hold: Date.now() + 3600000 }));
+  await bad("files_write", { path: F + "/b.txt", text: "x" }, /paused/);
+  // the copy of the apps says Files is read only now: refused too
+  await putIdx(idx);
+  sock.closed = false;
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, JSON.stringify({ at: Date.now(), lv: { files: "read" }, ans: {} })) }));
+  sock.closed = true;
+  await bad("files_write", { path: F + "/b.txt", text: "x" }, /may not change files/);
+  // the device takes the queue on connect, deletions included
+  assert.equal(G.queueFor(await b.st.storage.list({ prefix: "q:" }), Date.now()).length, 4);
+  // no index at all (dropping the copy drops what waits too)
+  sock.closed = false;
+  await b.box.webSocketMessage(sock, JSON.stringify({ fdrop: 1 }));
+  sock.closed = true;
+  await bad("files_write", { path: F + "/b.txt", text: "x" }, /no copy of Claude's folders/);
+  assert.equal((await queued()).length, 0);
 });
