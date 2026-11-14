@@ -9,7 +9,16 @@
 //     fields: [{ id, m, tb, name, type, ord, opt }],
 //     views:  [{ id, m, tb, name, kind, ord, cfg }],      kind grid | cards
 //     recs:   [{ id, t, c, m, v: { fid: value }, fm: { fid: ms } }],
+//     links:  [{ id, m, f, a, b }],                       wave B2
 //     tombs:  { id: deletedAt } }
+//
+// Links (wave B2): a link field F in table A pairs with a field F' in
+// table B (opt.inv both ways; a table linked to itself uses one field).
+// Each link is its own row, stored once under the smaller of F / F'
+// (a = a record of that field's table, b = the other side), with an id
+// computed from (f, a, b) (R16): the same link made on two devices is
+// one row, two devices adding different links to one record keep both,
+// and the other side is read from the same rows, never stored twice.
 //
 // Sync rules (OROS_BIBLE.md Part I R5, R16, R17, R26, R27):
 //   - bases, tables, fields, views: the newer m wins the whole row, an
@@ -23,7 +32,10 @@
 //     brings it back. A deleted base, table or field takes its tables,
 //     fields, views, records and values with it inside the merge;
 //   - nothing in the slice moves by itself: autonumber, created and
-//     modified times are computed from c and m, never stored;
+//     modified times are computed from c and m, lookups, rollups,
+//     counts and formulas from the records, never stored;
+//   - a link whose field or record is deleted goes with it; a link to
+//     a record or field this copy has not seen yet is kept;
 //   - no uid() or Date.now() inside the merge; output sorted by id.
 // ============================================================
 (function (root) {
@@ -39,12 +51,19 @@
   var MAX_TEXT = 2000;
   var MAX_LONG = 50000;
   var MAX_ID = 40;
+  var MAX_LINKS = 100000;          // all bases together
+  var MAX_EXPR = 4000;             // characters of a formula
 
   // Field types of wave B1. A type this code does not know (a newer
   // device) is kept with its options and values exactly as they came.
   var TYPES = ["text", "long", "number", "currency", "percent", "date", "check",
-    "select", "multi", "rating", "email", "url", "phone", "auto", "ctime", "mtime"];
-  var COMPUTED = { auto: 1, ctime: 1, mtime: 1 };
+    "select", "multi", "rating", "email", "url", "phone", "auto", "ctime", "mtime",
+    "link", "lookup", "rollup", "count", "formula"];
+  // shown, never typed in
+  var COMPUTED = { auto: 1, ctime: 1, mtime: 1, lookup: 1, rollup: 1, count: 1, formula: 1 };
+  // no value in rec.v (links live in their own rows)
+  var NOSTORE = { auto: 1, ctime: 1, mtime: 1, lookup: 1, rollup: 1, count: 1, formula: 1, link: 1 };
+  var ROLL_FNS = ["SUM", "AVG", "MIN", "MAX", "COUNT", "COUNTA", "CONCAT", "AND", "OR"];
   var COLORS = ["gray", "red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "brown"];
   var VIEW_KINDS = { grid: 1, cards: 1 };
 
@@ -87,7 +106,7 @@
     } catch (e) { return null; }
   }
 
-  function empty() { return { ver: VER, bases: [], tables: [], fields: [], views: [], recs: [], tombs: {} }; }
+  function empty() { return { ver: VER, bases: [], tables: [], fields: [], views: [], recs: [], links: [], tombs: {} }; }
 
   // ---------- options of a field ----------
   function cleanOpt(type, raw) {
@@ -108,6 +127,21 @@
         list.push({ id: c.id, n: line(c.n, MAX_NAME), c: COLORS.indexOf(c.c) >= 0 ? c.c : "gray" });
       });
       out.ch = list;
+    } else if (type === "link") {
+      out.to = okId(o.to) ? o.to : "";
+      out.inv = okId(o.inv) ? o.inv : "";
+      if (o.one === true) out.one = true;
+    } else if (type === "lookup" || type === "rollup" || type === "count") {
+      out.via = okId(o.via) ? o.via : "";
+      if (type !== "count") out.f = okId(o.f) ? o.f : "";
+      if (type === "rollup") {
+        out.fn = ROLL_FNS.indexOf(o.fn) >= 0 ? o.fn : "SUM";
+        if (typeof o.dec === "number") out.dec = int(o.dec, 0, 8, 0);
+      }
+    } else if (type === "formula") {
+      out.expr = para(o.expr, MAX_EXPR);
+      if (typeof o.dec === "number") out.dec = int(o.dec, 0, 8, 0);
+      if (o.as === "date") out.as = "date";
     } else if (TYPES.indexOf(type) < 0) {
       return plain(raw, 20000) || {};   // a newer type: kept verbatim
     }
@@ -128,6 +162,7 @@
   function cleanVal(field, v) {
     var type = field ? field.type : "";
     if (v === null || v === undefined || v === "") return undefined;
+    if (NOSTORE[type]) return undefined;           // computed or a link: never in rec.v
     switch (type) {
       case "text": case "email": case "phone":
         var s = line(v, MAX_TEXT).trim(); return s || undefined;
@@ -154,8 +189,6 @@
         v.forEach(function (x) { if (okId(x) && !seen[x]) { seen[x] = 1; out.push(x); } });
         out.sort();
         return out.length ? out.slice(0, MAX_OPTS) : undefined;
-      case "auto": case "ctime": case "mtime":
-        return undefined;          // computed, never stored
       default:
         return plain(v, MAX_LONG) === null ? undefined : plain(v, MAX_LONG);   // newer type or unknown field
     }
@@ -233,6 +266,23 @@
     return out;
   }
 
+  // FNV-1a, two seeds: the id of the link (f, a, b), the same everywhere
+  function hash32(s, h) {
+    h = h >>> 0;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h;
+  }
+  function linkId(f, a, b) {
+    var s = f + "|" + a + "|" + b;
+    return "l" + hash32(s, 2166136261).toString(36) + hash32(s, 0x9747b28c).toString(36);
+  }
+  function cleanLink(r) {
+    if (!isObj(r) || !okId(r.f) || !okId(r.a) || !okId(r.b)) return null;
+    var id = linkId(r.f, r.a, r.b);
+    if (r.id !== id) return null;           // the id must be the link's own (R16)
+    return { id: id, m: ms(r.m), f: r.f, a: r.a, b: r.b };
+  }
+
   function newerRow(a, b) {   // true when b beats a
     if (!a) return true;
     if (b.m !== a.m) return b.m > a.m;
@@ -263,8 +313,8 @@
 
   // ---------- merge / normalize ----------
   function mergeAll(list) {
-    var maps = { bases: {}, tables: {}, fields: {}, views: {} };
-    var CLEAN = { bases: cleanBase, tables: cleanTable, fields: cleanField, views: cleanView };
+    var maps = { bases: {}, tables: {}, fields: {}, views: {}, links: {} };
+    var CLEAN = { bases: cleanBase, tables: cleanTable, fields: cleanField, views: cleanView, links: cleanLink };
     var recs = {}, tombs = {};
     list.forEach(function (d) {
       if (!isObj(d)) return;
@@ -327,6 +377,18 @@
       outRecs.push(o);
     });
 
+    // a link goes with a deleted field or record; one whose field or
+    // record this copy has never seen (it arrives later) stays
+    var liveRec = {};
+    outRecs.forEach(function (r) { liveRec[r.id] = 1; });
+    var links = alive(maps.links);
+    Object.keys(links).forEach(function (id) {
+      var L = links[id];
+      function gone(x, live, known) { return !live[x] && (has(known, x) || has(tombs, x)); }
+      if (gone(L.f, fields, maps.fields) || gone(L.a, liveRec, recs) || gone(L.b, liveRec, recs) ||
+          (fields[L.f] && fields[L.f].type !== "link")) delete links[id];
+    });
+
     var out = empty();
     function sorted(map) { return Object.keys(map).sort().map(function (id) { return map[id]; }); }
     out.bases = sorted(bases);
@@ -334,6 +396,7 @@
     out.fields = sorted(fields);
     out.views = sorted(views);
     out.recs = outRecs;
+    out.links = sorted(links);
     Object.keys(tombs).sort().forEach(function (id) { out.tombs[id] = tombs[id]; });
     return out;
   }
@@ -363,6 +426,22 @@
     });
     ix.auto = {};
     Object.keys(ix.tbRecs).forEach(function (k) { ix.tbRecs[k].forEach(function (r, i) { ix.auto[r.id] = i + 1; }); });
+    // links, both ways: ix.lk[fieldId][recId] = [linked record ids], oldest link first
+    ix.lk = {};
+    function push(fid, from, to) {
+      var m = ix.lk[fid] || (ix.lk[fid] = {});
+      var l = m[from] || (m[from] = []);
+      if (l.indexOf(to) < 0) l.push(to);
+    }
+    (d.links || []).slice().sort(function (a, b) { return a.m - b.m || byId(a, b); }).forEach(function (L) {
+      var F = ix.fields[L.f], ra = ix.recs[L.a], rb = ix.recs[L.b];
+      if (!F || F.type !== "link" || !ra || !rb || ra.t !== F.tb || rb.t !== F.opt.to) return;
+      push(F.id, L.a, L.b);
+      var inv = F.opt.inv ? ix.fields[F.opt.inv] : null;
+      if (inv && inv.id === F.id) { if (L.a !== L.b) push(F.id, L.b, L.a); }
+      else if (inv && inv.type === "link" && inv.tb === F.opt.to && inv.opt.to === F.tb) push(inv.id, L.b, L.a);
+    });
+    ix.memo = {}; ix.busy = {}; ix.kinds = {}; ix.fx = null; ix.src = {};
     return ix;
   }
 
@@ -375,12 +454,267 @@
   }
 
   // The value of a field on a record, computed fields included.
+  // link: [record ids]; lookup: [values] (flat); count: number;
+  // rollup, formula: number | string | boolean (an error is "#…!").
   function value(ix, rec, f) {
     if (!f) return undefined;
     if (f.type === "auto") return ix.auto[rec.id];
     if (f.type === "ctime") return rec.c;
     if (f.type === "mtime") return rec.m;
+    if (f.type === "link") { var l = linked(ix, rec, f.id); return l.length ? l.slice() : undefined; }
+    if (f.type === "count") return linked(ix, rec, f.opt.via).length;
+    if (f.type === "lookup" || f.type === "rollup" || f.type === "formula") return computed(ix, rec, f);
     return has(rec.v, f.id) ? rec.v[f.id] : undefined;
+  }
+
+  // ---------- links, lookups, rollups, formulas (wave B2) ----------
+  var CYC = "#CYC!";
+  function isErr(v) { return typeof v === "string" && /^#(DIV\/0!|N\/A|NAME\?|NUM!|REF!|VALUE!|CYC!|ERROR!|NULL!)$/.test(v); }
+  // the records linked to rec through a link field of its own table
+  function linked(ix, rec, viaId) {
+    var L = ix.fields[viaId];
+    if (!L || L.type !== "link" || L.tb !== rec.t) return [];
+    return (ix.lk[L.id] && ix.lk[L.id][rec.id]) || [];
+  }
+  // the field a lookup / rollup reads, when it is still where it should be
+  function target(ix, f) {
+    var L = ix.fields[f.opt.via], T = ix.fields[f.opt.f];
+    if (!L || L.type !== "link" || L.tb !== f.tb || !T || T.tb !== L.opt.to) return null;
+    return T;
+  }
+  function computed(ix, rec, f) {
+    var key = rec.id + "|" + f.id;
+    if (has(ix.memo, key)) return ix.memo[key];
+    if (ix.busy[key]) return CYC;          // reads itself, through links or formulas
+    ix.busy[key] = 1;
+    var out;
+    try {
+      out = f.type === "formula" ? formulaVal(ix, rec, f) : f.type === "lookup" ? lookupVal(ix, rec, f) : rollupVal(ix, rec, f);
+    } finally { delete ix.busy[key]; }
+    ix.memo[key] = out;
+    return out;
+  }
+  function lookupVal(ix, rec, f) {
+    var T = target(ix, f);
+    if (!T) return undefined;
+    var out = [];
+    linked(ix, rec, f.opt.via).forEach(function (id) {
+      var v = value(ix, ix.recs[id], T);
+      if (v === undefined || v === null || v === "") return;
+      if (Array.isArray(v)) v.forEach(function (x) { out.push(x); }); else out.push(v);
+    });
+    return out.length ? out : undefined;
+  }
+  function rollupVal(ix, rec, f) {
+    var T = target(ix, f);
+    if (!T) return undefined;
+    var fn = f.opt.fn, vals = [], texts = [], isCheck = kindOf(ix, T) === "check";
+    linked(ix, rec, f.opt.via).forEach(function (id) {
+      var r = ix.recs[id], v = value(ix, r, T);
+      if (isCheck && (fn === "AND" || fn === "OR")) { vals.push(v === true); return; }   // unticked is false
+      if (v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length)) return;
+      vals.push(v);
+      if (fn === "CONCAT") { var s = text(ix, r, T); if (s) texts.push(s); }
+    });
+    if (fn === "COUNTA") return vals.length;
+    if (fn === "CONCAT") return texts.length ? texts.join(", ") : undefined;
+    if (fn === "AND") return vals.length ? vals.every(truthy) : undefined;
+    if (fn === "OR") return vals.length ? vals.some(truthy) : undefined;
+    var flat = [];
+    vals.forEach(function (v) { (Array.isArray(v) ? v : [v]).forEach(function (x) { flat.push(x); }); });
+    for (var i = 0; i < flat.length; i++) if (isErr(flat[i])) return flat[i];
+    var k = kindOf(ix, T);
+    if ((fn === "MIN" || fn === "MAX") && (k === "date" || k === "stamp")) {
+      var best;
+      flat.forEach(function (x) { if (best === undefined || (fn === "MIN" ? x < best : x > best)) best = x; });
+      return best;
+    }
+    var nums = flat.filter(function (x) { return typeof x === "number" && isFinite(x); });
+    if (fn === "COUNT") return nums.length;
+    if (fn === "SUM") return +nums.reduce(function (a, b) { return a + b; }, 0).toFixed(10);
+    if (!nums.length) return undefined;
+    if (fn === "AVG") return +(nums.reduce(function (a, b) { return a + b; }, 0) / nums.length).toFixed(10);
+    if (fn === "MIN") return Math.min.apply(null, nums);
+    if (fn === "MAX") return Math.max.apply(null, nums);
+    return undefined;
+  }
+  function truthy(v) { return !(v === false || v === 0 || v === "" || v === null || v === undefined || isErr(v)); }
+
+  // What a field's values are, for filters, sorting, groups and totals:
+  // num | date (YYYY-MM-DD…) | stamp (ms) | check | select | multi | list | text
+  function kindOf(ix, f) {
+    if (!f) return "text";
+    var t = f.type;
+    if (isNumType(t) || t === "count") return "num";
+    if (t === "date") return "date";
+    if (t === "ctime" || t === "mtime") return "stamp";
+    if (t === "check" || t === "select" || t === "multi") return t;
+    if (t === "link" || t === "lookup") return "list";
+    if (t === "rollup") {
+      var fn = f.opt.fn;
+      if (fn === "CONCAT") return "text";
+      if (fn === "AND" || fn === "OR") return "check";
+      if (fn === "MIN" || fn === "MAX") {
+        var T = has(ix.kinds, f.id + ">") ? null : target(ix, f);
+        if (T) {
+          ix.kinds[f.id + ">"] = 1;               // a rollup of a rollup of itself
+          var k = kindOf(ix, T);
+          delete ix.kinds[f.id + ">"];
+          if (k === "date" || k === "stamp") return k;
+        }
+      }
+      return "num";
+    }
+    if (t === "formula") {
+      if (f.opt.as === "date") return "date";
+      if (has(ix.kinds, f.id)) return ix.kinds[f.id];
+      ix.kinds[f.id] = "text";                    // while sampling (a formula of itself)
+      var list = ix.tbRecs[f.tb] || [], seen = 0, nums = 0, bools = 0;
+      for (var i = 0; i < list.length && seen < 30; i++) {
+        var v = computed(ix, list[i], f);
+        if (v === undefined || v === null || v === "" || isErr(v)) continue;
+        seen++;
+        if (typeof v === "number") nums++; else if (typeof v === "boolean") bools++;
+      }
+      var kind = seen && nums === seen ? "num" : seen && bools === seen ? "check" : "text";
+      ix.kinds[f.id] = kind;
+      return kind;
+    }
+    return "text";
+  }
+  function isNumField(ix, f) { return kindOf(ix, f) === "num"; }
+
+  // ---- formulas: {Field} names, the Spreadsheet's engine (OrosSheetFx) ----
+  function fxLib() {
+    if (root && root.OrosSheetFx) return root.OrosSheetFx;
+    if (typeof module !== "undefined" && typeof require === "function") {
+      try { return require("../spreadsheet/functions.js"); } catch (e) {}
+    }
+    return null;
+  }
+  // Walks a formula's text and hands every {…} outside "strings" to fn
+  // (with \} and \\ unescaped); fn returns the replacement, or null for
+  // a name that does not exist. Returns { text } or { bad: name }.
+  function braces(src, fn) {
+    var out = "", i = 0, inStr = false;
+    while (i < src.length) {
+      var c = src[i];
+      if (inStr) {
+        out += c;
+        if (c === '"') { if (src[i + 1] === '"') { out += '"'; i++; } else inStr = false; }
+        i++; continue;
+      }
+      if (c === '"') { inStr = true; out += c; i++; continue; }
+      if (c !== "{") { out += c; i++; continue; }
+      var name = "", j = i + 1, closed = false;
+      for (; j < src.length; j++) {
+        var x = src[j];
+        if (x === "\\" && j + 1 < src.length) { name += src[++j]; continue; }
+        if (x === "}") { closed = true; break; }
+        name += x;
+      }
+      if (!closed) return { bad: name };
+      var rep = fn(name);
+      if (rep === null) return { bad: name };
+      out += rep;
+      i = j + 1;
+    }
+    return { text: out };
+  }
+  // the formula as people read it: {Field name}
+  function exprNames(ix, tbId, expr) {
+    var r = braces(expr || "", function (id) {
+      var f = ix.fields[id];
+      return f && f.tb === tbId ? "{" + f.name.replace(/[\\}]/g, "\\$&") + "}" : "{" + id + "}";
+    });
+    return r.text !== undefined ? r.text : expr || "";
+  }
+  // the formula as it is stored: {fieldId}; { expr } or { bad: name }
+  function exprIds(ix, tbId, src) {
+    var list = ix.tbFields[tbId] || [];
+    var r = braces(String(src || ""), function (name) {
+      var n = fold(name.trim());
+      for (var i = 0; i < list.length; i++) if (fold(list[i].name.trim()) === n) return "{" + list[i].id + "}";
+      if (ix.fields[name] && ix.fields[name].tb === tbId) return "{" + name + "}";
+      return null;
+    });
+    return r.bad !== undefined ? { bad: r.bad } : { expr: r.text.slice(0, MAX_EXPR) };
+  }
+  // stored formula → the engine's own text: field k of the table is A(k+1)
+  // of a one-column sheet whose id is the record's id
+  function fxSource(ix, f) {
+    if (has(ix.src, f.id)) return ix.src[f.id];
+    var lib = fxLib(), list = ix.tbFields[f.tb] || [], pos = {};
+    list.forEach(function (g, k) { pos[g.id] = k; });
+    var src = String(f.opt.expr || "").trim();
+    var out = null;
+    if (lib && src) {
+      if (src.charAt(0) === "=") src = src.slice(1);
+      // cell references typed by hand are not part of a Base formula
+      var probe = braces(src, function () { return "0"; });
+      var refs = false;
+      try { lib.tokenize("=" + (probe.text || "")).forEach(function (tk) { if (tk.t === lib.T.REF) refs = true; }); } catch (e) {}
+      var r = refs || probe.bad !== undefined ? null : braces(src, function (id) { return has(pos, id) ? "A" + (pos[id] + 1) : null; });
+      out = r && r.text !== undefined ? "=" + r.text : "#REF!";
+    }
+    ix.src[f.id] = out;
+    return out;
+  }
+  // a value as a cell of the engine's sheet
+  function cellOf(ix, rec, g) {
+    if (g.type === "formula") { var s = fxSource(ix, g); return s && s.charAt(0) === "=" ? s : s || ""; }
+    var v = value(ix, rec, g);
+    if (v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length)) return "";
+    var lib = fxLib(), k = kindOf(ix, g);
+    if (typeof v === "boolean") return v ? "TRUE" : "FALSE";
+    if (isErr(v)) return v;
+    if (k === "date" && typeof v === "string") {
+      var s2 = lib.serialOf(+v.slice(0, 4), +v.slice(5, 7), +v.slice(8, 10));
+      if (v.length > 10) s2 += (+v.slice(11, 13) * 60 + +v.slice(14, 16)) / 1440;
+      return String(s2);
+    }
+    if (k === "stamp" && typeof v === "number") {
+      var dt = new Date(v);
+      return String(lib.serialOf(dt.getFullYear(), dt.getMonth() + 1, dt.getDate()) + (dt.getHours() * 60 + dt.getMinutes()) / 1440);
+    }
+    if (typeof v === "number" && k === "num") return String(v);
+    var str2 = text(ix, rec, g);
+    return '="' + str2.replace(/"/g, '""') + '"';
+  }
+  function engine(ix) {
+    if (ix.fx) return ix.fx;
+    var lib = fxLib();
+    if (!lib) return null;
+    ix.fx = lib.engine({
+      raw: function (sid, r, c) {
+        var rec = ix.recs[sid];
+        if (c !== 0 || !rec) return "";
+        var g = (ix.tbFields[rec.t] || [])[r];
+        return g ? cellOf(ix, rec, g) : "";
+      },
+      sheetId: function () { return undefined; },
+      lang: "en",
+      now: Date.now
+    });
+    return ix.fx;
+  }
+  function formulaVal(ix, rec, f) {
+    var src = fxSource(ix, f);
+    if (!src) return undefined;
+    if (src.charAt(0) !== "=") return src;          // "#REF!"
+    var fx = engine(ix);
+    if (!fx) return undefined;
+    var pos = (ix.tbFields[f.tb] || []).indexOf(f);
+    var v = pos >= 0 ? fx.value(rec.id, pos, 0) : fx.formula(rec.id, src);
+    if (v === null || v === undefined || v === "") return undefined;
+    if (typeof v === "number" && !isFinite(v)) return "#NUM!";
+    if (f.opt.as === "date" && typeof v === "number") {
+      var lib = fxLib();
+      var p = lib.partsOf(v);
+      var out = p.y + "-" + pad(p.m) + "-" + pad(p.d);
+      return v % 1 ? out + "T" + pad(p.hh) + ":" + pad(p.mi) : out;
+    }
+    return v;
   }
 
   function optOf(f, id) {
@@ -399,18 +733,57 @@
   function text(ix, rec, f, o) {
     var v = value(ix, rec, f);
     if (v === undefined || v === null) return "";
+    if (f.type === "link") {
+      var pf = primary(ix, f.opt.to);
+      return v.map(function (id) { var r = ix.recs[id]; return r && pf && pf.type !== "link" ? text(ix, r, pf, o) || "…" : "…"; }).join(", ");
+    }
+    if (f.type === "lookup") {
+      var T = target(ix, f), parts = [];
+      if (!T) return "";
+      linked(ix, rec, f.opt.via).forEach(function (id) { var s0 = text(ix, ix.recs[id], T, o); if (s0) parts.push(s0); });
+      return parts.join(", ");
+    }
+    return show(ix, f, v, o);
+  }
+  // How a number looks: dec places (null = as it is, up to 10)
+  function numText(v, dec, o) {
+    if (typeof v !== "number") return String(v);
+    if (o && o.locale) {
+      try { return v.toLocaleString(o.locale, dec === null ? { maximumFractionDigits: 10 } : { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
+      catch (e) { /* fall through */ }
+    }
+    return String(dec === null ? +v.toFixed(10) : +v.toFixed(dec));
+  }
+  // The text of a value v of field f (also for footer totals).
+  function show(ix, f, v, o) {
+    if (v === undefined || v === null) return "";
+    if (isErr(v)) return v;
     switch (f.type) {
       case "number": case "currency": case "percent":
         var dec = f.opt && typeof f.opt.dec === "number" ? f.opt.dec : 0;
-        var s;
-        if (o && o.locale) {
-          try { s = v.toLocaleString(o.locale, { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
-          catch (e) { s = v.toFixed(dec); }
-        } else s = String(+v.toFixed(dec));
+        var s = numText(v, dec, o);
         if (f.type === "currency" && o) return s + " " + (f.opt.sym || "");
         if (f.type === "percent" && o) return s + "%";
         return s;
-      case "check": return o ? "✓" : "true";
+      case "count": return numText(v, 0, o);
+      case "rollup":
+        var k = kindOf(ix, f);
+        if (k === "check") return v === true ? (o ? "✓" : "true") : v === false ? (o ? "" : "false") : String(v);
+        if (k === "date" && typeof v === "string") return o && o.locale ? fmtDate(v, o.locale) : v;
+        if (k === "stamp" && typeof v === "number") return o && o.locale ? fmtStamp(v, o.locale) : localYmdHm(v);
+        if (typeof v !== "number") return String(v);
+        var T = target(ix, f), fn = f.opt.fn;
+        if (T && (T.type === "number" || T.type === "currency" || T.type === "percent") && fn !== "COUNT" && fn !== "COUNTA") {
+          var d2 = typeof f.opt.dec === "number" ? f.opt.dec : typeof T.opt.dec === "number" ? T.opt.dec : 0;
+          return show(ix, Object.assign({}, T, { opt: Object.assign({}, T.opt, { dec: d2 }) }), v, o);
+        }
+        return numText(v, typeof f.opt.dec === "number" ? f.opt.dec : fn === "AVG" ? null : 0, o);
+      case "formula":
+        if (typeof v === "boolean") return v ? (o ? "✓" : "true") : (o ? "" : "false");
+        if (typeof v === "number") return numText(v, typeof f.opt.dec === "number" ? f.opt.dec : null, o);
+        if (f.opt.as === "date" && typeof v === "string" && DATE_RE.test(v.slice(0, 10))) return o && o.locale ? fmtDate(v, o.locale) : v;
+        return String(v);
+      case "check": return v === true ? (o ? "✓" : "true") : "";
       case "select": var c = optOf(f, v); return c ? c.n : "";
       case "multi": return v.map(function (id) { var c = optOf(f, id); return c ? c.n : ""; }).filter(Boolean).join(", ");
       case "rating": return o ? new Array(v + 1).join("★") : String(v);
@@ -438,15 +811,18 @@
   // ---------- filters, sorting, groups ----------
   function isNumType(t) { return t === "number" || t === "currency" || t === "percent" || t === "rating" || t === "auto"; }
   function isDateType(t) { return t === "date" || t === "ctime" || t === "mtime"; }
-  function dayOf(f, v) {   // a comparable "YYYY-MM-DD" in local time, or ""
-    if (v === undefined || v === null) return "";
-    if (f.type === "date") return v.slice(0, 10);
-    return localYmd(v);
+  function dayOf(kind, v) {   // a comparable "YYYY-MM-DD" in local time, or ""
+    if (v === undefined || v === null || isErr(v)) return "";
+    if (kind === "date") return typeof v === "string" ? v.slice(0, 10) : "";
+    return typeof v === "number" ? localYmd(v) : "";
   }
   function fold(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
 
   // Which operators each kind of field offers (the app's filter menu).
+  // The kind of a field (kindOf) or a B1 type name.
+  var KIND_TYPE = { num: "number", date: "date", stamp: "ctime", list: "text" };
   function opsFor(type) {
+    if (KIND_TYPE[type]) type = KIND_TYPE[type];
     if (isNumType(type)) return ["eq", "ne", "gt", "lt", "gte", "lte", "empty", "nempty"];
     if (isDateType(type)) return ["eq", "before", "after", "today", "past", "future", "empty", "nempty"];
     if (type === "check") return ["checked", "unchecked"];
@@ -458,14 +834,14 @@
 
   // one condition; today = "YYYY-MM-DD" (the app passes the local day)
   function test1(ix, rec, f, c, today) {
-    var v = value(ix, rec, f);
+    var v = value(ix, rec, f), kind = kindOf(ix, f);
     var isEmpty = v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length);
     if (c.op === "empty") return isEmpty;
     if (c.op === "nempty") return !isEmpty;
-    if (f.type === "check") return c.op === "checked" ? v === true : v !== true;
+    if (kind === "check") return c.op === "checked" ? v === true : v !== true;
     var w = c.v;
     if (needsValue(c.op) && (w === undefined || w === null || w === "" || (Array.isArray(w) && !w.length))) return true;   // unfinished filter: no effect
-    if (isNumType(f.type)) {
+    if (kind === "num") {
       var b = typeof w === "number" ? w : parseFloat(String(w).replace(",", "."));
       if (!isFinite(b)) return true;
       if (isEmpty) return c.op === "ne";
@@ -476,8 +852,8 @@
       }
       return true;
     }
-    if (isDateType(f.type)) {
-      var d = dayOf(f, v);
+    if (kind === "date" || kind === "stamp") {
+      var d = dayOf(kind, v);
       if (c.op === "today") return d === today;
       if (c.op === "past") return !!d && d < today;
       if (c.op === "future") return !!d && d > today;
@@ -510,9 +886,12 @@
     return true;
   }
 
-  function cmpVals(f, a, b) {   // undefined (empty) goes last in both directions: handled by caller
-    if (isNumType(f.type) || f.type === "ctime" || f.type === "mtime") return a - b;
-    if (f.type === "check") return (a ? 1 : 0) - (b ? 1 : 0);
+  function cmpVals(f, a, b, kind) {   // undefined (empty) goes last in both directions: handled by caller
+    if (kind === "num" || kind === "stamp") {
+      if (typeof a === "number" && typeof b === "number") return a - b;
+      return (typeof a === "number" ? 0 : 1) - (typeof b === "number" ? 0 : 1);   // errors after numbers
+    }
+    if (kind === "check") return (a === true ? 1 : 0) - (b === true ? 1 : 0);
     if (f.type === "select") {
       var ch = f.opt.ch || [], ia = -1, ib = -1;
       for (var i = 0; i < ch.length; i++) { if (ch[i].id === a) ia = i; if (ch[i].id === b) ib = i; }
@@ -529,9 +908,10 @@
     var a = value(ix, ra, f), b = value(ix, rb, f);
     var ea = a === undefined || (Array.isArray(a) && !a.length), eb = b === undefined || (Array.isArray(b) && !b.length);
     if (ea || eb) return ea === eb ? 0 : ea ? 1 : -1;
-    var r = cmpVals(f, a, b);
-    if (r || isNumType(f.type) || f.type === "check" || f.type === "select") return r;
-    if (f.type === "date") return a < b ? -1 : a > b ? 1 : 0;
+    var kind = kindOf(ix, f);
+    var r = cmpVals(f, a, b, kind);
+    if (r || kind === "num" || kind === "stamp" || kind === "check" || f.type === "select") return r;
+    if (kind === "date") return a < b ? -1 : a > b ? 1 : 0;
     return collator().compare(text(ix, ra, f), text(ix, rb, f));
   }
 
@@ -586,8 +966,10 @@
     var v = value(ix, rec, f);
     if (v === undefined || (Array.isArray(v) && !v.length)) return "\u0000";
     if (f.type === "multi") return v.join(",");
-    if (f.type === "ctime" || f.type === "mtime") return localYmd(v);
-    if (f.type === "date") return v.slice(0, 10);
+    if (f.type === "link" || f.type === "lookup") return canon(text(ix, rec, f));
+    var kind = kindOf(ix, f);
+    if (kind === "stamp" && typeof v === "number") return localYmd(v);
+    if (kind === "date" && typeof v === "string") return v.slice(0, 10);
     return canon(v);
   }
 
@@ -652,24 +1034,25 @@
   // Footer numbers of a field over some records.
   function summary(ix, recs, f) {
     var n = 0, filled = 0, sum = 0, min = null, max = null, checked = 0;
+    var numeric = kindOf(ix, f) === "num" && f.type !== "auto";
     recs.forEach(function (r) {
       var v = value(ix, r, f);
       n++;
       if (v === undefined || (Array.isArray(v) && !v.length)) return;
       filled++;
       if (v === true) checked++;
-      if (typeof v === "number" && (isNumType(f.type))) {
+      if (typeof v === "number" && numeric) {
         sum += v;
         if (min === null || v < min) min = v;
         if (max === null || v > max) max = v;
       }
     });
     var out = { count: n, filled: filled, empty: n - filled };
-    if (isNumType(f.type) && f.type !== "auto") {
+    if (numeric) {
       out.sum = +sum.toFixed(10); out.min = min; out.max = max;
       out.avg = filled ? +(sum / filled).toFixed(10) : null;
     }
-    if (f.type === "check") out.checked = checked;
+    if (kindOf(ix, f) === "check") out.checked = checked;
     return out;
   }
 
@@ -736,12 +1119,27 @@
   }
 
   // Delete with a tombstone; Undo = restore the rows with a fresh m.
+  // A link field goes with its other side, a table with the link fields
+  // of other tables that point at it.
+  var KINDS = ["bases", "tables", "fields", "views", "recs", "links"];
+  function partners(d, id) {
+    var ids = [id];
+    (d.fields || []).forEach(function (f) {
+      if (f.type !== "link") return;
+      if (f.id === id && f.opt.inv && f.opt.inv !== id) ids.push(f.opt.inv);
+      else if (f.opt.to === id && f.tb !== id) ids.push(f.id);
+    });
+    return ids;
+  }
   function remove(d, id, now) {
     var out = clone(d);
-    var row = null;
-    ["bases", "tables", "fields", "views", "recs"].forEach(function (k) { row = row || find(out[k], id); });
-    var at = Math.max(now, row ? row.m : 0);
-    out.tombs[id] = Math.max(out.tombs[id] || 0, at);
+    if (!out.links) out.links = [];
+    partners(out, id).forEach(function (x) {
+      var row = null;
+      KINDS.forEach(function (k) { row = row || find(out[k], x); });
+      var at = Math.max(now, row ? row.m : 0);
+      out.tombs[x] = Math.max(out.tombs[x] || 0, at);
+    });
     return normalize(out);
   }
 
@@ -755,7 +1153,7 @@
     var changed = false;
     Object.keys(patch).forEach(function (k) {
       var f = ix.fields[k];
-      if (!f || f.tb !== r.t || COMPUTED[f.type]) return;
+      if (!f || f.tb !== r.t || NOSTORE[f.type]) return;
       var nv = cleanVal(f, patch[k]);
       // a value that does not fit is ignored; only null, "" or false clear
       var clears = patch[k] === null || patch[k] === "" || patch[k] === false || (Array.isArray(patch[k]) && !patch[k].length);
@@ -781,7 +1179,7 @@
     var r = { id: rid, t: tbId, c: now, m: now, v: {}, fm: {} };
     Object.keys(vals || {}).forEach(function (k) {
       var f = ix.fields[k];
-      if (!f || f.tb !== tbId || COMPUTED[f.type]) return;
+      if (!f || f.tb !== tbId || NOSTORE[f.type]) return;
       var nv = cleanVal(f, vals[k]);
       if (nv === undefined) return;
       r.v[k] = nv; r.fm[k] = now;
@@ -795,6 +1193,7 @@
   // tombstone, so the undo also wins on every other device.
   function restore(d, rows, now) {
     var out = clone(d);
+    if (!out.links) out.links = [];
     (rows || []).forEach(function (x) {
       var kind = x.kind, row = clone(x.row);
       delete out.tombs[row.id];
@@ -814,25 +1213,110 @@
     return normalize(out);
   }
 
-  // Everything that goes away with a base / table / field (for Undo).
+  // Everything that goes away with a base / table / field / record (for Undo).
   function rowsUnder(d, id) {
-    var rows = [], ix = index(d);
-    function push(kind, row) { if (row) rows.push({ kind: kind, row: clone(row) }); }
-    if (ix.bases[id]) {
-      push("bases", ix.bases[id]);
-      (ix.baseTables[id] || []).forEach(function (t) { rows = rows.concat(rowsUnder(d, t.id)); });
-    } else if (ix.tables[id]) {
-      push("tables", ix.tables[id]);
-      (ix.tbFields[id] || []).forEach(function (f) { push("fields", f); });
-      (ix.tbViews[id] || []).forEach(function (v) { push("views", v); });
-      (ix.tbRecs[id] || []).forEach(function (r) { push("recs", r); });
-    } else if (ix.fields[id]) {
-      push("fields", ix.fields[id]);
-      var f = ix.fields[id];
-      (ix.tbRecs[f.tb] || []).forEach(function (r) { if (has(r.fm, id)) push("recs", r); });
-    } else if (ix.views[id]) push("views", ix.views[id]);
-    else if (ix.recs[id]) push("recs", ix.recs[id]);
+    var rows = [], seen = {}, ix = index(d);
+    function push(kind, row) { if (row && !seen[row.id]) { seen[row.id] = 1; rows.push({ kind: kind, row: clone(row) }); } }
+    function linksOf(test) { (d.links || []).forEach(function (L) { if (test(L)) push("links", L); }); }
+    var walked = {};
+    (function walk(id) {
+      if (walked[id]) return;
+      walked[id] = 1;
+      if (ix.bases[id]) {
+        push("bases", ix.bases[id]);
+        (ix.baseTables[id] || []).forEach(function (t) { walk(t.id); });
+      } else if (ix.tables[id]) {
+        push("tables", ix.tables[id]);
+        (ix.tbFields[id] || []).forEach(function (f) { walk(f.id); });
+        (ix.tbViews[id] || []).forEach(function (v) { push("views", v); });
+        var mine = {};
+        (ix.tbRecs[id] || []).forEach(function (r) { push("recs", r); mine[r.id] = 1; });
+        linksOf(function (L) { return mine[L.a] || mine[L.b]; });
+        d.fields.forEach(function (f) { if (f.type === "link" && f.opt.to === id) walk(f.id); });
+      } else if (ix.fields[id]) {
+        var f = ix.fields[id];
+        push("fields", f);
+        (ix.tbRecs[f.tb] || []).forEach(function (r) { if (has(r.fm, id)) push("recs", r); });
+        if (f.type === "link") {
+          linksOf(function (L) { return L.f === id || L.f === f.opt.inv; });
+          if (f.opt.inv && f.opt.inv !== id && ix.fields[f.opt.inv]) walk(f.opt.inv);
+        }
+      } else if (ix.views[id]) push("views", ix.views[id]);
+      else if (ix.recs[id]) {
+        push("recs", ix.recs[id]);
+        linksOf(function (L) { return L.a === id || L.b === id; });
+      }
+    })(id);
     return rows;
+  }
+
+  // ---------- links (wave B2) ----------
+  // A link field and its other side. Linking a table to itself makes one
+  // field. names: { inv } = the other side's name. Returns the data.
+  function addLinkField(d, tbId, name, toTb, now, invName, ids, one) {
+    var out = normalize(d);
+    ids = ids || {};
+    var a = ids.a || fid(), b = toTb === tbId ? a : ids.b || fid();
+    var opt = { to: toTb, inv: b };
+    if (one) opt.one = true;
+    out = putRow(out, "fields", { id: a, tb: tbId, name: name, type: "link", ord: nextOrd(out.fields, "tb", tbId), opt: opt }, now);
+    if (b !== a) out = putRow(out, "fields", { id: b, tb: toTb, name: invName || name, type: "link", ord: nextOrd(out.fields, "tb", toTb), opt: { to: tbId, inv: a } }, now);
+    return out;
+  }
+  // How "rec a links to rec b through field F" is stored (see the top).
+  function orient(ix, F, a, b) {
+    var inv = F.opt.inv && ix.fields[F.opt.inv] ? F.opt.inv : "";
+    if (inv === F.id) return a < b ? { f: F.id, a: a, b: b } : { f: F.id, a: b, b: a };
+    if (inv && inv < F.id) return { f: inv, a: b, b: a };
+    return { f: F.id, a: a, b: b };
+  }
+  // The records rec links to through field F become `targets` (in that
+  // order for new ones). A field with opt.one keeps only the first.
+  // Only links that really come or go change (R27).
+  function setLinks(d, fieldId, recId, targets, now) {
+    var out = normalize(d), ix = index(out);
+    var F = ix.fields[fieldId], r = ix.recs[recId];
+    if (!F || F.type !== "link" || !r || r.t !== F.tb) return out;
+    var want = [], seen = {};
+    (targets || []).forEach(function (id) {
+      var x = ix.recs[id];
+      if (!x || x.t !== F.opt.to || seen[id] || (F.opt.inv === F.id && id === recId)) return;
+      seen[id] = 1; want.push(id);
+    });
+    if (F.opt.one) want = want.slice(0, 1);
+    var cur = (ix.lk[F.id] && ix.lk[F.id][recId]) || [];
+    var changed = false;
+    cur.forEach(function (id) {
+      if (seen[id] && want.indexOf(id) >= 0) return;
+      var o = orient(ix, F, recId, id), lid = linkId(o.f, o.a, o.b);
+      var row = find(out.links, lid);
+      out.tombs[lid] = Math.max(out.tombs[lid] || 0, now, row ? row.m : 0);
+      changed = true;
+    });
+    want.forEach(function (id, k) {
+      if (cur.indexOf(id) >= 0) return;
+      if (out.links.length >= MAX_LINKS) return;
+      var o = orient(ix, F, recId, id), lid = linkId(o.f, o.a, o.b);
+      var row = find(out.links, lid);
+      if (row) out.links.splice(out.links.indexOf(row), 1);
+      var m = Math.max(now + k, (out.tombs[lid] || 0) + 1, row ? row.m + 1 : 0);
+      delete out.tombs[lid];
+      out.links.push({ id: lid, m: m, f: o.f, a: o.a, b: o.b });
+      changed = true;
+    });
+    return changed ? normalize(out) : out;
+  }
+  // The links of one record, copied to another (Duplicate).
+  function copyLinks(d, fromId, toId, now) {
+    var out = normalize(d), ix = index(out);
+    var r = ix.recs[fromId];
+    if (!r || !ix.recs[toId]) return out;
+    (ix.tbFields[r.t] || []).forEach(function (F) {
+      if (F.type !== "link") return;
+      var l = (ix.lk[F.id] && ix.lk[F.id][fromId]) || [];
+      if (l.length) out = setLinks(out, F.id, toId, l, now);
+    });
+    return out;
   }
 
   // Change a field's type: every stored value is converted (the text
@@ -1065,7 +1549,7 @@
       rows.push(fields.map(function (f) {
         var v = value(ix, r, f);
         if (v === undefined) return "";
-        if (typeof v === "number" && isNumType(f.type)) return v;
+        if (typeof v === "number" && kindOf(ix, f) === "num") return v;
         return text(ix, r, f);
       }));
     });
@@ -1077,7 +1561,10 @@
 
   var API = {
     VER: VER, STORAGE_KEY: STORAGE_KEY, MAX_RECS: MAX_RECS, MAX_FIELDS: MAX_FIELDS, MAX_TABLES: MAX_TABLES,
-    MAX_OPTS: MAX_OPTS, TYPES: TYPES, COMPUTED: COMPUTED, COLORS: COLORS,
+    MAX_OPTS: MAX_OPTS, TYPES: TYPES, COMPUTED: COMPUTED, NOSTORE: NOSTORE, COLORS: COLORS,
+    MAX_LINKS: MAX_LINKS, MAX_EXPR: MAX_EXPR, ROLL_FNS: ROLL_FNS,
+    linkId: linkId, addLinkField: addLinkField, setLinks: setLinks, copyLinks: copyLinks, linked: linked,
+    kindOf: kindOf, isNumField: isNumField, show: show, isErr: isErr, exprNames: exprNames, exprIds: exprIds,
     empty: empty, normalize: normalize, merge: merge, serialize: serialize, canon: canon,
     index: index, primary: primary, value: value, text: text, optOf: optOf, cleanVal: cleanVal, cleanOpt: cleanOpt,
     opsFor: opsFor, needsValue: needsValue, query: query, layout: layout, groupKey: groupKey,

@@ -8,9 +8,21 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 
 ## Felder
 - Tippe auf einen Spaltenkopf, um das Feld zu bearbeiten, danach zu sortieren, es zu verschieben, in dieser Ansicht auszublenden oder zu löschen. Das `+` am Ende der Kopfzeile fügt ein Feld hinzu.
-- Typen: kurzer und langer Text, Zahl, Betrag, Prozent, Datum (mit oder ohne Uhrzeit), Häkchen, Einfachauswahl, Mehrfachauswahl, Bewertung, E-Mail, Link, Telefon, und drei, die die Datenbank selbst ausfüllt: laufende Nummer, Erstellt am und Zuletzt geändert am.
+- Typen: kurzer und langer Text, Zahl, Betrag, Prozent, Datum (mit oder ohne Uhrzeit), Häkchen, Einfachauswahl, Mehrfachauswahl, Bewertung, E-Mail, Webadresse, Telefon, verknüpfte Einträge, und die, die die Datenbank selbst ausfüllt: laufende Nummer, Erstellt am, Zuletzt geändert am, Nachschlagen, Zusammenfassungen, Anzahl Verknüpfungen und Formeln.
 - Wenn du den Typ eines Felds änderst, werden seine Werte umgewandelt. Werte, die nicht passen, werden geleert, und die Datenbank sagt dir vorher, wie viele es sind. `Rückgängig` holt sie zurück.
 - Das erste Feld benennt jeden Eintrag. Ein anderes wählst du im Tabellenmenü (`⋯` › Feld, das die Einträge benennt).
+
+## Verknüpfungen zwischen Tabellen
+- Ein Feld `Verknüpfte Einträge` verknüpft einen Eintrag mit Einträgen einer anderen Tabelle derselben Datenbank, zum Beispiel ein Buch mit seinen Autoren. Die andere Tabelle bekommt ein eigenes Feld, das dieselben Verknüpfungen von ihrer Seite zeigt. Hake `Nur ein Eintrag` an für eine Verknüpfung pro Eintrag.
+- Tippe auf eine Verknüpfungszelle (oder drück Enter), um Einträge zu wählen. Suche, tippe zum Verknüpfen oder Lösen, oder lege einen neuen Eintrag mit dem eingegebenen Namen an. Im geöffneten Eintrag öffnet ein Tipp auf den Namen den verknüpften Eintrag.
+- Füge Namen aus einer Tabellenkalkulation in eine Verknüpfungsspalte ein: Die Datenbank verknüpft die Einträge mit diesen Namen und sagt dir, welche sie nicht gefunden hat.
+- `Nachschlagen` zeigt ein Feld der verknüpften Einträge, `Zusammenfassung` fasst sie zusammen (Summe, Durchschnitt, kleinster, größter Wert, Anzahlen, alle als Text, alle oder mindestens einer angehakt), `Anzahl Verknüpfungen` zählt sie. Die Datenbank hält sie selbst aktuell.
+- Wenn zwei Geräte demselben Eintrag verschiedene Verknüpfungen hinzufügen, bleiben beide. Wer ein Verknüpfungsfeld löscht, löscht auch seine andere Seite; `Rückgängig` holt beide mit ihren Verknüpfungen zurück.
+
+## Formeln
+- Ein Feld `Formel` berechnet einen Wert aus den anderen Feldern des Eintrags. Schreib Feldnamen in geschweifte Klammern: `{Preis} * {Exemplare}`, `IF({Seiten} > 300, "lang", "kurz")`, `{Erschienen} + 30` mit `Ergebnis als Datum zeigen`.
+- Die Funktionen sind die der [Tabellenkalkulation](app:spreadsheet) (IF, ROUND, SUM, CONCATENATE, TODAY, YEAR…), auf Englisch, mit Punkt für Dezimalstellen. `Feld einfügen` setzt einen Namen an die Cursorstelle, und die Zeile darunter zeigt das Ergebnis für den ersten Eintrag.
+- Umbenannte Felder lassen Formeln weiter funktionieren. Eine Formel, die sich selbst liest, zeigt `#CYC!`, eine Division durch null `#DIV/0!`; Zellbezüge wie A1 gibt es in Datenbank-Formeln nicht.
 
 ## Einträge
 - `Neuer Eintrag` fügt einen Eintrag hinzu und öffnet ihn. Im Raster fügt `Neuer Eintrag` unter der letzten Zeile einen direkt dort hinzu.
