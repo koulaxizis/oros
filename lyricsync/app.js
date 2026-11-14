@@ -11,7 +11,9 @@
 //     "oros-lyricsync" (store "audio", key = song id). It never leaves
 //     the device and is never synced; another device asks for it.
 //   - device-only settings in "oros-lyricsync-device" (mode, speed;
-//     Songbook S1: ch = chords on for new songs, sol = Ντο Ρε Μι names).
+//     Songbook S1: ch = chords on for new songs, sol = Ντο Ρε Μι names;
+//     S2 stage: sfs font px, sshow both|words|chords, ssp speed, cin
+//     count-in).
 // Boot order (OROS_BIBLE.md Part VI "Boot sequence"):
 //   load → applyI18n → wire → registerSync → inheritPalette →
 //   watchPalette → render → take a pending deep link.
@@ -33,6 +35,8 @@
   var STORAGE_KEY = "oros-lyricsync-data";
   var DEVICE_KEY = "oros-lyricsync-device";
   var C = window.LyricsyncCore, F = window.LyricsyncFormats, ID3 = window.LyricsyncId3, H = window.LyricsyncChords;
+  var S = window.LyricsyncSets, P = window.LyricsyncSheetPdf;
+  var SETS_KEY = "oros-songbook-data";   // Songbook S3: sets, synced as slice "songbook"
   var MAX_AUDIO = 400 * 1024 * 1024, MAX_TEXT_FILE = 4 * 1024 * 1024, MAX_UNDO = 300;
   var LYRIC_ACCEPT = ".lrc,.elrc,.srt,.vtt,.ttml,.dfxp,.xml,.ass,.ssa,.json,.txt,.cho,.chopro,.chordpro,.crd";
   var MAX_WAVE = 80 * 1024 * 1024, SPANS = [4, 8, 16, 32, 64];
@@ -141,6 +145,10 @@
       "tr.done": "Transposed by {n}", "list.key": "key {key}", "sec.v": "Verse", "sec.c": "Chorus", "sec.b": "Bridge",
       "ex.cho": "ChordPro", "ex.choD": "Words and chords for songbook apps such as OnSong, SongbookPro and ChordPro.",
       "ex.chtxt": "Chords over the words", "ex.chtxtD": "Plain text with each chord over its syllable, to print or send.",
+      "lt.songs": "Songs", "lt.sets": "Sets", "set.intro": "A set is the songs of a gig or a rehearsal, in order, each in the key you play it there.", "set.empty": "No sets yet. Press New set.", "set.new": "New set", "set.untitled": "Untitled set", "set.count": "{n} songs", "set.back": "Back to the sets", "set.name": "Name", "set.date": "Date", "set.note": "Notes", "set.export": "Export", "set.cal": "Add to Calendar", "set.del": "Delete set", "set.delAsk": "Delete the set “{name}”? Its songs stay.", "set.deleted": "Set deleted", "set.none": "No songs in this set yet.", "set.pick": "Song to add", "set.add": "Add song", "set.keyHere": "Key here", "set.ownKey": "its own", "set.itemNote": "Note for this song", "set.up": "Move up", "set.down": "Move down", "set.remove": "Take out of the set", "set.imported": "{n} songs added, with a set of them", "set.calNo": "Calendar opens only inside orOS.", "setx.bundle": "ChordPro, all songs", "setx.bundleD": "Every song of the set in one file, in the key of this set.", "setx.list": "Song list", "setx.listD": "The set as a numbered list, to print or send.", "sg.prev": "Previous song", "sg.next": "Next song", "sg.nextUp": "Next: {name}", "pdf.btn": "PDF", "pdf.title": "PDF and print", "pdf.page": "Paper", "pdf.cols": "Columns", "pdf.size": "Font size", "pdf.print": "Print", "pdf.save": "Save PDF", "pdf.whatSong": "“{name}”, chords in bold above the words.", "pdf.whatSet": "“{name}”: a page with the list, then {n} songs, each on a new page.", "pdf.making": "Making the PDF…", "pdf.fail": "The PDF could not be made. Try again.", "ex.pdf": "PDF", "ex.pdfD": "The song sheet to print, with chords above the words.",
+      "sg.open": "Stage", "sg.close": "Close the stage", "sg.play": "Start scrolling", "sg.pause": "Pause", "sg.up": "Back a screen", "sg.down": "Next screen",
+      "sg.smaller": "Smaller", "sg.bigger": "Bigger", "sg.slower": "Slower", "sg.faster": "Faster", "sg.follow": "Follows the song",
+      "sg.speed": "Speed {n}%", "sg.show": "Show", "sg.both": "Words and chords", "sg.words": "Words only", "sg.chords": "Chords only", "sg.cin": "Count-in",
       "full": "This device is out of storage space. The change was not saved."
     },
     el: {
@@ -244,6 +252,10 @@
       "tr.done": "Μεταφορά κατά {n}", "list.key": "τόνος {key}", "sec.v": "Κουπλέ", "sec.c": "Ρεφρέν", "sec.b": "Γέφυρα",
       "ex.cho": "ChordPro", "ex.choD": "Στίχοι και ακόρντα για εφαρμογές τραγουδιών όπως OnSong, SongbookPro και ChordPro.",
       "ex.chtxt": "Ακόρντα πάνω από τους στίχους", "ex.chtxtD": "Απλό κείμενο με κάθε ακόρντο πάνω από τη συλλαβή του, για εκτύπωση ή αποστολή.",
+      "lt.songs": "Τραγούδια", "lt.sets": "Λίστες", "set.intro": "Μια λίστα είναι τα τραγούδια μιας συναυλίας ή μιας πρόβας, με τη σειρά, το καθένα στον τόνο που το παίζεις εκεί.", "set.empty": "Δεν υπάρχουν λίστες ακόμα. Πάτησε Νέα λίστα.", "set.new": "Νέα λίστα", "set.untitled": "Λίστα χωρίς όνομα", "set.count": "{n} τραγούδια", "set.back": "Πίσω στις λίστες", "set.name": "Όνομα", "set.date": "Ημερομηνία", "set.note": "Σημειώσεις", "set.export": "Εξαγωγή", "set.cal": "Στο Ημερολόγιο", "set.del": "Διαγραφή λίστας", "set.delAsk": "Να διαγραφεί η λίστα «{name}»; Τα τραγούδια της μένουν.", "set.deleted": "Η λίστα διαγράφηκε", "set.none": "Δεν υπάρχουν ακόμα τραγούδια σε αυτή τη λίστα.", "set.pick": "Τραγούδι για προσθήκη", "set.add": "Προσθήκη τραγουδιού", "set.keyHere": "Τόνος εδώ", "set.ownKey": "ο δικός του", "set.itemNote": "Σημείωση για αυτό το τραγούδι", "set.up": "Πιο πάνω", "set.down": "Πιο κάτω", "set.remove": "Βγάλ’ το από τη λίστα", "set.imported": "Προστέθηκαν {n} τραγούδια, μαζί με μια λίστα τους", "set.calNo": "Το Ημερολόγιο ανοίγει μόνο μέσα στο orOS.", "setx.bundle": "ChordPro, όλα τα τραγούδια", "setx.bundleD": "Όλα τα τραγούδια της λίστας σε ένα αρχείο, στον τόνο αυτής της λίστας.", "setx.list": "Κατάλογος τραγουδιών", "setx.listD": "Η λίστα με αριθμούς, για εκτύπωση ή αποστολή.", "sg.prev": "Προηγούμενο τραγούδι", "sg.next": "Επόμενο τραγούδι", "sg.nextUp": "Επόμενο: {name}", "pdf.btn": "PDF", "pdf.title": "PDF και εκτύπωση", "pdf.page": "Χαρτί", "pdf.cols": "Στήλες", "pdf.size": "Μέγεθος γραμμάτων", "pdf.print": "Εκτύπωση", "pdf.save": "Αποθήκευση PDF", "pdf.whatSong": "«{name}», με τα ακόρντα έντονα πάνω από τους στίχους.", "pdf.whatSet": "«{name}»: μια σελίδα με τον κατάλογο και μετά {n} τραγούδια, το καθένα σε νέα σελίδα.", "pdf.making": "Φτιάχνεται το PDF…", "pdf.fail": "Το PDF δεν έγινε. Δοκίμασε ξανά.", "ex.pdf": "PDF", "ex.pdfD": "Το φύλλο του τραγουδιού για εκτύπωση, με τα ακόρντα πάνω από τους στίχους.",
+      "sg.open": "Σκηνή", "sg.close": "Κλείσιμο σκηνής", "sg.play": "Έναρξη κύλισης", "sg.pause": "Παύση", "sg.up": "Μια οθόνη πίσω", "sg.down": "Επόμενη οθόνη",
+      "sg.smaller": "Μικρότερα", "sg.bigger": "Μεγαλύτερα", "sg.slower": "Πιο αργά", "sg.faster": "Πιο γρήγορα", "sg.follow": "Ακολουθεί το τραγούδι",
+      "sg.speed": "Ταχύτητα {n}%", "sg.show": "Εμφάνιση", "sg.both": "Στίχοι και ακόρντα", "sg.words": "Μόνο στίχοι", "sg.chords": "Μόνο ακόρντα", "sg.cin": "Μέτρημα",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε."
     }
   };
@@ -278,7 +290,7 @@
 
   // ---------- 2. Data: local first, then sync ----------
   var data = C.empty();
-  var dev = { mode: "tap", speed: 1, lat: 0, span: 8, ch: 0, sol: 0 };
+  var dev = { mode: "tap", speed: 1, lat: 0, span: 8, ch: 0, sol: 0, sfs: 28, sshow: "both", ssp: 1, cin: 0, lt: "songs", pp: "a4", pc: 1, ps: 11, pshow: "both" };
 
   function syncApi() {
     try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
@@ -296,6 +308,15 @@
       if ([1, 0.9, 0.75, 0.5].indexOf(d.speed) >= 0) dev.speed = d.speed;
       if (d.ch === 1) dev.ch = 1;
       if (d.sol === 1) dev.sol = 1;
+      if (typeof d.sfs === "number" && d.sfs >= 14 && d.sfs <= 64) dev.sfs = Math.round(d.sfs);
+      if (d.sshow === "words" || d.sshow === "chords") dev.sshow = d.sshow;
+      if (typeof d.ssp === "number" && d.ssp >= 0.25 && d.ssp <= 4) dev.ssp = Math.round(d.ssp * 100) / 100;
+      if (d.cin === 1) dev.cin = 1;
+      if (d.lt === "sets") dev.lt = "sets";
+      if (d.pp === "letter") dev.pp = "letter";
+      if (d.pc === 2) dev.pc = 2;
+      if ([9, 10, 11, 12, 14, 16, 18].indexOf(d.ps) >= 0) dev.ps = d.ps;
+      if (d.pshow === "words" || d.pshow === "chords") dev.pshow = d.pshow;
     } catch (e) { /* defaults */ }
   }
   function saveDev() { try { localStorage.setItem(DEVICE_KEY, JSON.stringify(dev)); } catch (e) { /* not kept */ } }
@@ -323,7 +344,8 @@
     persist();
     if (cur && !C.find(data, cur.id)) { closeSong(); return; }   // deleted on another device
     if (cur) { cur = C.find(data, cur.id); tlist = null; renderEditor(true); }
-    else renderList();
+    else if (curSet) renderSet();
+    else { renderList(); if (listTab === "sets") renderSets(); }
   }
 
   function registerSync() {
@@ -331,6 +353,8 @@
     if (!api || typeof api.registerSlice !== "function") return;
     try { api.registerSlice(APP_ID, sliceGet, sliceSet, STORAGE_KEY, C.merge); }   // 5 args, always
     catch (e) { /* engine busy: the next boot registers again */ }
+    try { api.registerSlice("songbook", setsGet, setsSet, SETS_KEY, S.merge); }
+    catch (e) { /* the same */ }
   }
 
   // ---------- 3. Audio on this device (IndexedDB) ----------
@@ -563,6 +587,7 @@
 
   // ---------- 8. One song ----------
   function showView(edit) {
+    $("v-set").hidden = true;
     $("v-list").hidden = edit;
     $("v-edit").hidden = !edit;
     $("back-btn").hidden = !edit;
@@ -587,12 +612,14 @@
     loadAudio();
   }
   function closeSong() {
+    closeStage(true);
     flushLyrics();
     stopAudio();
     cur = null; tlist = null;
     showView(false);
     refreshAudioKeys();
     renderList();
+    if (listTab === "sets") renderSets();
   }
 
   function stopAudio() {
@@ -756,23 +783,30 @@
     $("ch-names").value = dev.sol ? "1" : "0";
     renderSheet();
   }
-  function infoText() {
+  function infoText(song) {
+    var p = song || cur;
     var bits = [];
-    if (cur.key) bits.push(t("ch.infoKey", { key: H.show(cur.key, dev.sol) }));
-    if (cur.capo) bits.push(cur.key ? t("ch.infoCapo", { n: cur.capo, key: H.show(H.keyAfter(cur.key, cur.capo), dev.sol) }) : t("ch.infoCapoOnly", { n: cur.capo }));
-    if (cur.bpm) bits.push(cur.bpm + " bpm");
-    if (cur.ts) bits.push(cur.ts);
+    if (p.key) bits.push(t("ch.infoKey", { key: H.show(p.key, dev.sol) }));
+    if (p.capo) bits.push(p.key ? t("ch.infoCapo", { n: p.capo, key: H.show(H.keyAfter(p.key, p.capo), dev.sol) }) : t("ch.infoCapoOnly", { n: p.capo }));
+    if (p.bpm) bits.push(p.bpm + " bpm");
+    if (p.ts) bits.push(p.ts);
     return bits.join(" · ");
   }
   // The sheet: chords over the words, each word a button that opens
   // the chord picker. Text only through textContent.
   function renderSheet() {
-    var box = $("sheet");
-    box.textContent = "";
     $("sheet-info").textContent = infoText();
     $("sheet-info").hidden = !$("sheet-info").textContent;
-    box.lang = cur.lg || "";
-    var first = true;
+    buildSheet($("sheet"), openPicker);
+  }
+  // Draws the song into box; onWord(i, a) makes each word a button (the
+  // Lyrics tab), none draws it for reading (the stage). → the line
+  // elements by line index.
+  function buildSheet(box, onWord, song) {
+    var song0 = song || cur;
+    box.textContent = "";
+    box.lang = song0.lg || "";
+    var first = true, byLine = [];
     function gap() { if (!first) box.appendChild(el("div", "sh-gap")); }
     function label(k) { box.appendChild(el("div", "sh-sec", t("sec." + k))); }
     function row(r) {
@@ -783,36 +817,227 @@
       else box.appendChild(el("div", "sh-crow", H.rowPlain(r, dev.sol)));
       first = false;
     }
-    cur.ln.forEach(function (l, i) {
+    song0.ln.forEach(function (l, i) {
       var rp = (l.x || []).some(function (r) { return r.p; });
       (l.x || []).forEach(row);
       if (l.p && (!rp || l.q)) gap();
       if (l.k) label(l.k);
       var line = el("div", "sh-line");
+      line.dataset.i = i;
       H.cells(l).forEach(function (c) {
-        var cell = el(c.word || c.a === l.t.length ? "button" : "span", "sh-cell");
-        if (cell.tagName === "BUTTON") {
+        var tap = onWord && (c.word || c.a === l.t.length);
+        var cell = el(tap ? "button" : "span", "sh-cell");
+        if (tap) {
           cell.type = "button";
-          cell.addEventListener("click", function () { openPicker(i, c.a); });
+          cell.addEventListener("click", function () { onWord(i, c.a); });
         }
-        cell.appendChild(el("span", "sh-ch", c.ch.map(function (x) { return H.show(x, dev.sol); }).join(" ") || "\u00a0"));
+        cell.appendChild(el("span", "sh-ch" + (c.ch.length ? "" : " sh-empty"), c.ch.map(function (x) { return H.show(x, dev.sol); }).join(" ") || "\u00a0"));
         cell.appendChild(el("span", "sh-tx", l.t.slice(c.a, c.b) || "\u00a0"));
         line.appendChild(cell);
       });
-      if (!(l.c || []).some(function (x) { return x[0] === l.t.length; })) {
+      if (onWord && !(l.c || []).some(function (x) { return x[0] === l.t.length; })) {
         var end = el("button", "sh-cell sh-end");
         end.type = "button";
         end.setAttribute("aria-label", t("cd.wordEnd"));
         end.appendChild(el("span", "sh-ch", "+"));
         end.appendChild(el("span", "sh-tx", "\u00a0"));
-        end.addEventListener("click", function () { openPicker(i, l.t.length); });
+        end.addEventListener("click", function () { onWord(i, l.t.length); });
         line.appendChild(end);
       }
       box.appendChild(line);
+      byLine[i] = line;
       first = false;
     });
-    (cur.xo || []).forEach(row);
+    (song0.xo || []).forEach(row);
+    return byLine;
   }
+
+  // ---------- 8c. Stage (Songbook S2) ----------
+  // Full screen for playing live: big words and chords, the screen kept
+  // on, scrolling by itself (with the synced times when the song has
+  // them and its file is here, else at a steady speed), pedal keys.
+  // { lines, raf, last, run, pos, lock, cin, now, set: { id, list, k } | null }
+  var stg = null;
+  function stageCanFollow() { return audioOk && C.timedCount(cur.ln) > 0; }
+  // set (S3): { id, list: [{ item, song }], k } plays the songs of a set
+  // one after the other, each in the set's key for it.
+  function openStage(set) {
+    if (!cur) return;
+    flushLyrics();
+    stg = { lines: [], raf: 0, last: 0, run: false, pos: 0, lock: null, cin: null, now: -1, set: set && set.list ? set : null };   // a click event is not a set
+    var box = $("stage2");
+    box.hidden = false;
+    document.body.classList.add("staging");
+    stageSong();
+    if (box.requestFullscreen) box.requestFullscreen().catch(function () {});
+    keepAwake();
+    $("sg-body").focus();
+  }
+  // The song on stage as it is shown: in a set, moved to the set's key.
+  function stageView() {
+    var it = stg && stg.set ? stg.set.list[stg.set.k].item : null;
+    var n = it && it.key ? S.steps(cur.key, it.key) : 0;
+    return n ? Object.assign({}, cur, H.transposeSong(cur, n)) : cur;
+  }
+  function stageSong() {
+    var v = stageView(), st = stg.set;
+    $("sg-title").textContent = (st ? (st.k + 1) + "/" + st.list.length + " · " : "") + (cur.name || t("list.untitled"));
+    var it = st ? st.list[st.k].item : null;
+    $("sg-info").textContent = [infoText(v), it && it.nt ? it.nt : "", cur.nt || ""].filter(Boolean).join(" · ");
+    stg.now = -1;
+    renderStageSheet();
+    $("sg-body").scrollTop = 0;
+    stg.pos = 0;
+    var nx = st && st.list[st.k + 1];
+    $("sg-nextup").hidden = !nx;
+    $("sg-nextup").textContent = nx ? t("sg.nextUp", { name: nx.song.name || t("list.untitled") }) : "";
+    $("sg-prev").hidden = $("sg-next").hidden = !st;
+    if (st) { $("sg-prev").disabled = st.k === 0; $("sg-next").disabled = st.k >= st.list.length - 1; }
+    renderStageBar();
+  }
+  // Next or previous song of the set; the stage stays open.
+  function stageGo(dir) {
+    var st = stg && stg.set;
+    if (!st) return false;
+    var k = st.k + dir;
+    if (k < 0 || k >= st.list.length) return false;
+    stopScroll();
+    if (player && !player.paused) player.pause();
+    st.k = k;
+    var p = C.find(data, st.list[k].song.id);
+    if (!p) return false;
+    openSong(p.id, "preview");
+    if (!stg) return false;
+    stageSong();
+    return true;
+  }
+  function renderStageSheet() {
+    var body = $("sg-sheet");
+    body.className = "sheet stage-sheet show-" + dev.sshow;
+    body.style.fontSize = dev.sfs + "px";
+    stg.lines = buildSheet(body, null, stageView());
+  }
+  function renderStageBar() {
+    if (!stg) return;
+    var follow = stageCanFollow();
+    $("sg-play").textContent = stg.run || (follow && player && !player.paused) ? "\u275a\u275a" : "\u25b6";
+    $("sg-play").setAttribute("aria-label", t(stg.run || (follow && player && !player.paused) ? "sg.pause" : "sg.play"));
+    $("sg-mode").textContent = follow ? t("sg.follow") : t("sg.speed", { n: Math.round(dev.ssp * 100) });
+    $("sg-slower").hidden = $("sg-faster").hidden = follow;
+    $("sg-show").value = dev.sshow;
+    $("sg-cin").setAttribute("aria-pressed", dev.cin ? "true" : "false");
+    $("sg-cin").hidden = follow || !cur.bpm;
+  }
+  function closeStage(stay) {
+    if (!stg) return;
+    stopScroll();
+    if (stg.cin) { try { stg.cin.close(); } catch (e) {} }
+    if (stg.lock) { try { stg.lock.release(); } catch (e) {} }
+    var fromSet = stg.set ? stg.set.id : "";
+    stg = null;
+    $("stage2").hidden = true;
+    document.body.classList.remove("staging");
+    if (document.fullscreenElement === $("stage2")) document.exitFullscreen().catch(function () {});
+    // A set's stage goes back to the set.
+    if (fromSet && cur && stay !== true) { closeSong(); openSet(fromSet); }
+  }
+  // The screen stays on while the stage is open (Wake Lock; asked again
+  // when the page comes back, since the browser drops it when hidden).
+  function keepAwake() {
+    if (!stg || !navigator.wakeLock || document.visibilityState !== "visible") return;
+    navigator.wakeLock.request("screen").then(function (l) { if (stg) stg.lock = l; else l.release(); }, function () {});
+  }
+  // Steady speed: the whole sheet in the song's length (its file, else
+  // bars × beats at the tempo), else 30 px a second; × the speed the
+  // person set on this device.
+  function stagePxPerSec() {
+    var b = $("sg-body"), span = Math.max(0, b.scrollHeight - b.clientHeight);
+    var sec = cur.dur ? cur.dur / 1000 : 0;
+    if (!sec && cur.bpm) {
+      var beats = +(String(cur.ts || "4/4").split("/")[0]) || 4;
+      sec = cur.ln.length * 2 * beats * 60 / cur.bpm;   // about two bars a line
+    }
+    var base = sec > 20 && span > 0 ? span / sec : 30;
+    return base * dev.ssp;
+  }
+  function stopScroll() {
+    if (!stg) return;
+    stg.run = false;
+    if (stg.raf) cancelAnimationFrame(stg.raf);
+    stg.raf = 0;
+  }
+  function startScroll() {
+    if (!stg) return;
+    stg.run = true; stg.last = 0; stg.pos = $("sg-body").scrollTop;
+    var step = function (ts) {
+      if (!stg || !stg.run) return;
+      var b = $("sg-body");
+      if (stg.last) {
+        stg.pos += stagePxPerSec() * (ts - stg.last) / 1000;
+        b.scrollTop = stg.pos;
+        if (b.scrollTop + b.clientHeight >= b.scrollHeight - 1) { stopScroll(); renderStageBar(); return; }
+      }
+      stg.last = ts;
+      stg.raf = requestAnimationFrame(step);
+    };
+    stg.raf = requestAnimationFrame(step);
+  }
+  // One bar of clicks at the song's tempo before the scrolling starts.
+  function countIn(then) {
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx || !cur.bpm) { then(); return; }
+    var beats = +(String(cur.ts || "4/4").split("/")[0]) || 4, gapS = 60 / cur.bpm, ac;
+    try { ac = new Ctx(); } catch (e) { then(); return; }
+    stg.cin = ac;
+    var t0 = ac.currentTime + 0.1;
+    for (var k = 0; k < beats; k++) {
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = k ? 1000 : 1500;
+      g.gain.setValueAtTime(0.0001, t0 + k * gapS);
+      g.gain.exponentialRampToValueAtTime(0.5, t0 + k * gapS + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + k * gapS + 0.08);
+      o.connect(g); g.connect(ac.destination);
+      o.start(t0 + k * gapS); o.stop(t0 + k * gapS + 0.1);
+    }
+    setTimeout(function () { try { ac.close(); } catch (e) {} if (stg && stg.cin === ac) { stg.cin = null; then(); } }, Math.round((beats * gapS + 0.1) * 1000));
+  }
+  function stagePlay() {
+    if (!stg) return;
+    if (stageCanFollow()) { togglePlay(); renderStageBar(); return; }
+    if (stg.run) stopScroll();
+    else if (dev.cin && cur.bpm && !stg.cin) countIn(function () { startScroll(); renderStageBar(); });
+    else startScroll();
+    renderStageBar();
+  }
+  // Pedal and keys: a screen down or up (most page-turn pedals send
+  // PageDown/PageUp or the arrow keys).
+  function stagePage(dir) {
+    var b = $("sg-body");
+    // In a set: at the end of a song the pedal goes on to the next one,
+    // at its top back to the one before.
+    if (stg && stg.set) {
+      if (dir > 0 && b.scrollTop + b.clientHeight >= b.scrollHeight - 2 && stageGo(1)) return;
+      if (dir < 0 && b.scrollTop <= 1 && stageGo(-1)) return;
+    }
+    var to = Math.max(0, b.scrollTop + dir * Math.round(b.clientHeight * 0.8));
+    if (stg) stg.pos = to;
+    b.scrollTo({ top: to, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }
+  // With the song playing: the line being sung lit and kept in view.
+  function stageFollow(ms) {
+    if (!stg || !stageCanFollow()) return;
+    var L = timedList(), k = C.lineAt(L, ms);
+    var i = k >= 0 ? L[k].i : -1;
+    if (i === stg.now) return;
+    if (stg.lines[stg.now]) stg.lines[stg.now].classList.remove("now");
+    stg.now = i;
+    var ln = stg.lines[i];
+    if (!ln) return;
+    ln.classList.add("now");
+    var b = $("sg-body"), top = ln.offsetTop - b.clientHeight * 0.35;
+    b.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }
+
   var pick = null;
   function openPicker(i, a) {
     flushLyrics();
@@ -880,6 +1105,358 @@
     if (!cur || (cur[key] || "") === value) return;
     var next = Object.assign({}, cur); next[key] = value;
     if (putProject(next)) { cur = C.find(data, cur.id); $("title").textContent = cur.name || t("list.untitled"); }
+  }
+
+  // ---------- 8d. Sets, PDF and print (Songbook S3) ----------
+  // Sets are their own synced slice "songbook" (sets.js); a set holds
+  // song ids, so a song deleted on another device just leaves its set.
+  var sets = S.empty();
+  var curSet = "";             // the open set's id
+  var listTab = "songs";
+  var backToSet = "";          // a song opened from a set goes back to it
+  function loadSets() {
+    try { sets = S.normalize(JSON.parse(localStorage.getItem(SETS_KEY) || "null")); }
+    catch (e) { sets = S.empty(); }
+  }
+  function persistSets() {
+    try { localStorage.setItem(SETS_KEY, S.serialize(sets)); return true; }
+    catch (e) { toast(t("full")); return false; }
+  }
+  function commitSets(next) {
+    sets = next;
+    if (!persistSets()) return false;
+    var api = syncApi();
+    if (api && typeof api.markDirty === "function") api.markDirty();
+    return true;
+  }
+  function setsGet() { return S.normalize(sets); }
+  function setsSet(incoming) {
+    var merged = S.merge(sets, incoming);
+    if (S.serialize(merged) === S.serialize(sets)) return;
+    sets = merged;
+    persistSets();
+    if (curSet && !S.find(sets, curSet)) { closeSet(); return; }
+    if (curSet) renderSet(); else if (!cur) renderSets();
+  }
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
+  function fmtDate(ymd) {
+    if (!ymd) return "";
+    try { return new Date(ymd + "T12:00:00").toLocaleDateString(LANG, { weekday: "short", day: "numeric", month: "short", year: "numeric" }); }
+    catch (e) { return ymd; }
+  }
+
+  function setListTab(which) {
+    listTab = which === "sets" ? "sets" : "songs";
+    dev.lt = listTab; saveDev();
+    $("songs-pane").hidden = listTab !== "songs";
+    $("sets-pane").hidden = listTab !== "sets";
+    ["songs", "sets"].forEach(function (k) {
+      var b = $("lt-" + k);
+      b.setAttribute("aria-selected", k === listTab ? "true" : "false");
+      b.classList.toggle("on", k === listTab);
+    });
+    $("new-btn").textContent = t(listTab === "sets" ? "set.new" : "btn.new");
+    $("open-btn").hidden = false;
+    if (listTab === "sets") renderSets();
+  }
+  function renderSets() {
+    var ul = $("sets"), list = S.live(sets, today());
+    ul.textContent = "";
+    list.forEach(function (st) {
+      var li = el("li", "song");
+      var open = el("button", "song-open");
+      open.type = "button";
+      open.appendChild(el("span", "song-name", st.name || t("set.untitled")));
+      var n = S.songsOf(st, data).length;
+      open.appendChild(el("span", "song-meta dim", [fmtDate(st.date), t("set.count", { n: n })].filter(Boolean).join(" · ")));
+      open.addEventListener("click", function () { openSet(st.id); });
+      li.appendChild(open);
+      ul.appendChild(li);
+    });
+    $("sets-empty").hidden = list.length > 0;
+  }
+  function newSetNow() {
+    var st = S.newSet("", Date.now(), Math.random);
+    if (!commitSets(S.put(sets, st, Date.now()))) return;
+    openSet(st.id);
+    setTimeout(function () { $("set-name").focus(); }, 0);
+  }
+  function showSetView(on) {
+    $("v-list").hidden = on;
+    $("v-set").hidden = !on;
+    $("back-btn").hidden = !on;
+    $("back-btn").setAttribute("aria-label", t(on ? "set.back" : "btn.back"));
+    $("open-btn").hidden = on;
+    $("new-btn").hidden = on;
+  }
+  function openSet(id) {
+    if (!S.find(sets, id)) return;
+    curSet = id;
+    showSetView(true);
+    renderSet(true);
+  }
+  function closeSet() {
+    flushSet();
+    curSet = "";
+    showSetView(false);
+    $("title").textContent = t("app.name");
+    setListTab("sets");
+  }
+  function theSet() { return curSet ? S.find(sets, curSet) : null; }
+  function putSet(next) { if (commitSets(S.put(sets, next, Date.now()))) renderSet(); }
+  // The name, date and notes are written when the field is left.
+  function flushSet() {
+    var st = theSet();
+    if (!st || $("v-set").hidden) return;
+    var name = $("set-name").value.trim().slice(0, 120), date = $("set-date").value, nt = $("set-note").value.slice(0, 2000);
+    if (!S.isDate(date)) date = "";
+    if (name === (st.name || "") && date === (st.date || "") && nt.trim() === (st.nt || "")) return;
+    var next = Object.assign({}, st, { name: name, nt: nt });
+    if (date) next.date = date; else delete next.date;
+    commitSets(S.put(sets, next, Date.now()));
+  }
+  function renderSet(fields) {
+    var st = theSet();
+    if (!st) return;
+    $("title").textContent = st.name || t("set.untitled");
+    if (fields || document.activeElement !== $("set-name")) $("set-name").value = st.name || "";
+    if (fields || document.activeElement !== $("set-date")) $("set-date").value = st.date || "";
+    if (fields || document.activeElement !== $("set-note")) $("set-note").value = st.nt || "";
+    var ol = $("set-items"), have = S.songsOf(st, data);
+    ol.textContent = "";
+    have.forEach(function (x, n) {
+      var li = el("li", "set-item");
+      var main = el("div", "si-main");
+      var nm = el("button", "link-btn si-name", (n + 1) + ". " + (x.song.name || t("list.untitled")));
+      nm.type = "button";
+      nm.addEventListener("click", function () { flushSet(); backToSet = curSet; curSet = ""; showSetView(false); openSong(x.song.id, "lyrics"); });
+      main.appendChild(nm);
+      main.appendChild(el("span", "dim si-meta", [x.song.ar, x.song.key ? t("list.key", { key: H.show(x.song.key, dev.sol) }) : ""].filter(Boolean).join(" · ")));
+      li.appendChild(main);
+      var tools = el("div", "si-tools");
+      if (x.song.key) {
+        var lab = el("label", "mini");
+        lab.appendChild(el("span", "", t("set.keyHere")));
+        var sel = el("select", "");
+        S.keysLike(x.song.key).forEach(function (k) {
+          var o = el("option", "", H.show(k, dev.sol) + (k === x.song.key ? " · " + t("set.ownKey") : ""));
+          o.value = k === x.song.key ? "" : k;
+          sel.appendChild(o);
+        });
+        sel.value = x.item.key && x.item.key !== x.song.key ? x.item.key : "";
+        sel.addEventListener("change", function () { putSet(S.setItem(theSet(), x.i, { key: sel.value })); });
+        lab.appendChild(sel);
+        tools.appendChild(lab);
+      }
+      var note = el("input", "si-note");
+      note.type = "text"; note.maxLength = 200;
+      note.placeholder = t("set.itemNote");
+      note.setAttribute("aria-label", t("set.itemNote"));
+      note.value = x.item.nt || "";
+      note.addEventListener("change", function () { putSet(S.setItem(theSet(), x.i, { nt: note.value })); });
+      tools.appendChild(note);
+      function btn(txt, aria, fn, off) {
+        var b = el("button", "chip icon", txt);
+        b.type = "button"; b.setAttribute("aria-label", aria); b.disabled = !!off;
+        b.addEventListener("click", fn);
+        tools.appendChild(b);
+      }
+      btn("\u2191", t("set.up"), function () { putSet(S.move(theSet(), x.i, have[n - 1].i)); }, n === 0);
+      btn("\u2193", t("set.down"), function () { putSet(S.move(theSet(), x.i, have[n + 1].i)); }, n === have.length - 1);
+      btn("\u2715", t("set.remove"), function () { putSet(S.removeAt(theSet(), x.i)); });
+      li.appendChild(tools);
+      ol.appendChild(li);
+    });
+    $("set-none").hidden = have.length > 0;
+    var pick = $("set-pick"), inSet = {};
+    have.forEach(function (x) { inSet[x.song.id] = 1; });
+    pick.textContent = "";
+    C.live(data).slice().sort(function (a, b) { return (a.name || "").localeCompare(b.name || "", LANG); }).forEach(function (p) {
+      var o = el("option", "", (p.name || t("list.untitled")) + (p.ar ? " · " + p.ar : "") + (inSet[p.id] ? " \u2713" : ""));
+      o.value = p.id;
+      pick.appendChild(o);
+    });
+    $("set-add").disabled = !pick.options.length || st.items.length >= S.MAX_ITEMS;
+    $("set-stage").disabled = $("set-pdf").disabled = !have.length;
+    $("set-cal").disabled = !st.date;
+  }
+  function addToSet() {
+    var id = $("set-pick").value;
+    if (!id || !theSet()) return;
+    putSet(S.addSong(theSet(), id));
+  }
+  function stageSet() {
+    flushSet();
+    var st = theSet();
+    if (!st) return;
+    var list = S.songsOf(st, data);
+    if (!list.length) return;
+    curSet = "";
+    showSetView(false);
+    openSong(list[0].song.id, "preview");
+    openStage({ id: st.id, list: list, k: 0 });
+  }
+
+  // PDF and print: one song (from Export) or the open set.
+  var pdfFor = null;           // { songs: [view], title, cover? }
+  function songForPrint(p, setKey) {
+    var n = setKey ? S.steps(p.key, setKey) : 0;
+    var v = n ? Object.assign({}, p, H.transposeSong(p, n)) : p;
+    return Object.assign({}, v, { info: infoText(v) });
+  }
+  function openPdf(what) {
+    pdfFor = what;
+    $("pdf-what").textContent = what.cover ? t("pdf.whatSet", { name: what.title, n: what.songs.length }) : t("pdf.whatSong", { name: what.title });
+    $("pdf-page").value = dev.pp; $("pdf-cols").value = String(dev.pc); $("pdf-size").value = String(dev.ps); $("pdf-show").value = dev.pshow;
+    $("pdf-status").textContent = "";
+    $("pdf-dlg").showModal();
+  }
+  function pdfOpts() {
+    dev.pp = $("pdf-page").value === "letter" ? "letter" : "a4";
+    dev.pc = $("pdf-cols").value === "2" ? 2 : 1;
+    dev.ps = +$("pdf-size").value || 11;
+    dev.pshow = ["both", "words", "chords"].indexOf($("pdf-show").value) >= 0 ? $("pdf-show").value : "both";
+    saveDev();
+    var words = { untitled: t("list.untitled") };
+    ["v", "c", "b"].forEach(function (k) { words["sec." + k] = t("sec." + k); });
+    return { page: dev.pp, cols: dev.pc, size: dev.ps, show: dev.pshow, solfege: !!dev.sol, words: words, cover: pdfFor.cover, title: pdfFor.title };
+  }
+  function makePdf() {
+    if (!pdfFor) return Promise.resolve(null);
+    $("pdf-status").textContent = t("pdf.making");
+    return P.render(pdfFor.songs, pdfOpts()).then(function (blob) { $("pdf-status").textContent = ""; return blob; },
+      function () { $("pdf-status").textContent = t("pdf.fail"); return null; });
+  }
+  function pdfName() {
+    return String(pdfFor.title || "songbook").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120) + ".pdf";
+  }
+  function savePdf() {
+    makePdf().then(function (blob) {
+      if (!blob) return;
+      var name = pdfName();
+      saveBlob(blob, name, "application/pdf", ".pdf").then(function (ok) { if (ok) { $("pdf-dlg").close(); toast(t("ex.saved", { name: name })); } });
+    });
+  }
+  // Print: the same PDF in a hidden frame and the browser's print; if
+  // the browser cannot print a PDF in a frame, it is saved instead.
+  function printPdf() {
+    makePdf().then(function (blob) {
+      if (!blob) return;
+      var url = URL.createObjectURL(blob), fr = document.createElement("iframe");
+      fr.className = "print-frame";
+      fr.setAttribute("aria-hidden", "true");
+      fr.src = url;
+      fr.onload = function () {
+        try { fr.contentWindow.focus(); fr.contentWindow.print(); }
+        catch (e) { saveBlob(blob, pdfName(), "application/pdf", ".pdf"); }
+        setTimeout(function () { URL.revokeObjectURL(url); fr.remove(); }, 60000);
+      };
+      document.body.appendChild(fr);
+      $("pdf-dlg").close();
+    });
+  }
+  function pdfSong() {
+    if (!cur) return;
+    flushLyrics();
+    $("export-dlg").close();
+    openPdf({ songs: [songForPrint(cur)], title: fileTitle(cur) });
+  }
+  function pdfSet() {
+    flushSet();
+    var st = theSet();
+    if (!st) return;
+    var list = S.songsOf(st, data);
+    openPdf({
+      songs: list.map(function (x) { return songForPrint(x.song, x.item.key); }),
+      title: st.name || t("set.untitled"),
+      cover: {
+        title: st.name || t("set.untitled"), sub: fmtDate(st.date), note: st.nt || "",
+        list: list.map(function (x) {
+          var key = x.item.key || x.song.key;
+          return [x.song.name || t("list.untitled"), x.song.ar, key ? H.show(key, dev.sol) : ""].filter(Boolean).join(" · ") + (x.item.nt ? " (" + x.item.nt + ")" : "");
+        })
+      }
+    });
+  }
+
+  // Set export: one ChordPro bundle (each song in the set's key) and a
+  // text list.
+  function setFileName(st, ext) {
+    return String(st.name || t("set.untitled")).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120) + ext;
+  }
+  function openSetExport() {
+    flushSet();
+    var st = theSet();
+    if (!st) return;
+    var ul = $("setx-list"), list = S.songsOf(st, data);
+    ul.textContent = "";
+    [["bundle", ".cho", "application/x-chordpro", function () {
+      return S.joinBundle(list.map(function (x) {
+        var n = x.item.key ? S.steps(x.song.key, x.item.key) : 0;
+        return H.toChordPro(n ? Object.assign({}, x.song, H.transposeSong(x.song, n)) : x.song);
+      }));
+    }], ["list", ".txt", "text/plain", function () {
+      return S.toList(st, data, { untitled: t("list.untitled"), show: function (k) { return H.show(k, dev.sol); } });
+    }]].forEach(function (row) {
+      var li = el("li", "ex-row");
+      var txt = el("div", "ex-txt");
+      txt.appendChild(el("strong", "", t("setx." + row[0]) + " (" + row[1] + ")"));
+      txt.appendChild(el("span", "dim", t("setx." + row[0] + "D")));
+      var b = el("button", "chip pri", t("ex.save"));
+      b.type = "button";
+      b.disabled = !list.length;
+      b.addEventListener("click", function () {
+        var name = setFileName(st, row[0] === "list" ? ".list.txt" : row[1]);
+        saveFile(row[3](), name, row[2], row[1]).then(function (ok) { if (ok) toast(t("ex.saved", { name: name })); });
+      });
+      li.appendChild(txt);
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    $("setx-dlg").showModal();
+  }
+  // A ChordPro file with several songs ({new_song}): every song is
+  // added, and a set with them in that order.
+  function importBundle(text, fileName) {
+    var parts = S.splitBundle(text);
+    if (parts.length < 2) return false;
+    var now = Date.now(), d = data, ids = [];
+    parts.forEach(function (part) {
+      var r = null;
+      try { r = F.parse("song.cho", part); } catch (e) { r = null; }
+      if (!r || !r.lines || !r.lines.length) return;
+      var p = C.newProject(r.name || baseName(fileName), now, Math.random);
+      var next = Object.assign({}, p, { ln: linesFrom(r) });
+      ["ar", "al", "lg", "key", "capo", "bpm", "ts"].forEach(function (k) { if (r[k]) next[k] = r[k]; });
+      if (r.xo && r.xo.length) next.xo = r.xo;
+      d = C.put(d, next, now);
+      if (C.find(d, p.id)) ids.push(p.id);
+    });
+    if (!ids.length) return false;
+    if (!commit(d)) return true;
+    var st = S.newSet(baseName(fileName), now, Math.random);
+    ids.slice(0, S.MAX_ITEMS).forEach(function (id) { st = S.addSong(st, id); });
+    if (commitSets(S.put(sets, st, now))) { openSet(st.id); toast(t("set.imported", { n: ids.length })); }
+    return true;
+  }
+  // Calendar, only on the person's tap: the set as an all-day event
+  // through Calendar's own .ics import (it shows what it adds).
+  function icsText(s) { return String(s).replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n"); }
+  function setToCalendar() {
+    flushSet();
+    var st = theSet();
+    if (!st || !st.date) return;
+    var d = st.date.replace(/-/g, ""), nd = new Date(st.date + "T12:00:00");
+    nd.setDate(nd.getDate() + 1);
+    var end = nd.getFullYear() + ("0" + (nd.getMonth() + 1)).slice(-2) + ("0" + nd.getDate()).slice(-2);
+    var list = S.toList(st, data, { untitled: t("list.untitled"), show: function (k) { return H.show(k, dev.sol); } });
+    var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//orOS//Lyric Sync//EN", "BEGIN:VEVENT",
+      "UID:" + st.id + "@lyricsync.oros", "DTSTAMP:" + d + "T120000Z", "DTSTART;VALUE=DATE:" + d, "DTEND;VALUE=DATE:" + end,
+      "SUMMARY:" + icsText(st.name || t("set.untitled")), "DESCRIPTION:" + icsText(list.slice(0, 4000)), "END:VEVENT", "END:VCALENDAR"].join("\r\n") + "\r\n";
+    if (!shellOpen("calendar", { importIcs: { name: setFileName(st, ".ics"), text: ics } })) toast(t("set.calNo"));
   }
 
   // ---------- 9. Sync screen ----------
@@ -1079,6 +1656,7 @@
       [].forEach.call($("lines").children, function (li) { li.classList.toggle("now", +li.dataset.i === idx); });
       renderStage();
     } else stageWords(ms);
+    stageFollow(ms);
     drawWave();
   }
   var raf = 0;
@@ -1357,6 +1935,16 @@
       attachAudio(file);
       return;
     }
+    if (file.size <= MAX_TEXT_FILE && /\.(cho|chopro|chordpro|crd|pro|txt)$/i.test(file.name || "")) {
+      file.text().then(function (text) {
+        if (/\{\s*(new_song|ns)\s*\}/i.test(text) && importBundle(text, file.name || "")) return;
+        openLyricsFile(file);
+      }, function () { toast(t("imp.bad")); });
+      return;
+    }
+    openLyricsFile(file);
+  }
+  function openLyricsFile(file) {
     readLyricsFile(file).then(function (r) {
       if (!r) return;
       var p = newSong(r.name || baseName(file.name));
@@ -1414,6 +2002,16 @@
       li.appendChild(b);
       ul.appendChild(li);
     }
+    var pli = el("li", "ex-row");
+    var ptx = el("div", "ex-txt");
+    ptx.appendChild(el("strong", "", t("ex.pdf") + " (.pdf)"));
+    ptx.appendChild(el("span", "dim", t("ex.pdfD")));
+    var pb = el("button", "chip pri", t("pdf.btn"));
+    pb.type = "button";
+    pb.disabled = !cur.ln.length;
+    pb.addEventListener("click", pdfSong);
+    pli.appendChild(ptx); pli.appendChild(pb);
+    ul.insertBefore(pli, ul.firstChild);
     if (cur.src) extra("music", "x.saveHere", saveNextToSong);
     if (audioBlob && (/\.mp3$/i.test(audioBlob.name || (cur.au && cur.au.n) || cur.src || "") || /mpeg|mp3/i.test(audioBlob.type || ""))) extra("mp3", "x.make", makeMp3);
     if (cur.src) extra("video", "x.open", toMontage);
@@ -1483,13 +2081,54 @@
       tick();
     });
     player.addEventListener("error", function () { if (audioUrl) { toast(t("audio.bad")); } });
-    player.addEventListener("play", function () { $("play-btn").textContent = "❚❚"; $("play-btn").setAttribute("aria-label", t("btn.pause")); renderPad(); if (!raf) raf = requestAnimationFrame(loop); });
-    player.addEventListener("pause", function () { $("play-btn").textContent = "▶"; $("play-btn").setAttribute("aria-label", t("btn.play")); renderPad(); if (holding >= 0) padUp(); tick(); });
+    player.addEventListener("play", function () { renderStageBar(); $("play-btn").textContent = "❚❚"; $("play-btn").setAttribute("aria-label", t("btn.pause")); renderPad(); if (!raf) raf = requestAnimationFrame(loop); });
+    player.addEventListener("pause", function () { renderStageBar(); $("play-btn").textContent = "▶"; $("play-btn").setAttribute("aria-label", t("btn.play")); renderPad(); if (holding >= 0) padUp(); tick(); });
     player.addEventListener("seeked", tick);
     player.addEventListener("ended", function () { renderPad(); });
 
-    $("back-btn").addEventListener("click", closeSong);
-    $("new-btn").addEventListener("click", function () { var p = newSong(""); if (p) openSong(p.id, "lyrics"); });
+    $("back-btn").addEventListener("click", function () {
+      if (curSet) { closeSet(); return; }
+      var back = backToSet;
+      backToSet = "";
+      closeSong();
+      if (back && S.find(sets, back)) openSet(back);
+    });
+    $("new-btn").addEventListener("click", function () {
+      if (listTab === "sets") { newSetNow(); return; }
+      var p = newSong(""); if (p) openSong(p.id, "lyrics");
+    });
+    // Songbook S3: sets.
+    $("lt-songs").addEventListener("click", function () { setListTab("songs"); });
+    $("lt-sets").addEventListener("click", function () { setListTab("sets"); });
+    ["set-name", "set-date", "set-note"].forEach(function (id) { $(id).addEventListener("change", function () { flushSet(); renderSet(); }); });
+    $("set-add").addEventListener("click", addToSet);
+    $("set-stage").addEventListener("click", stageSet);
+    $("set-pdf").addEventListener("click", pdfSet);
+    $("set-export").addEventListener("click", openSetExport);
+    $("setx-close").addEventListener("click", function () { $("setx-dlg").close(); });
+    $("set-cal").addEventListener("click", setToCalendar);
+    $("set-del").addEventListener("click", function () {
+      var st = theSet();
+      if (!st) return;
+      confirmDlg(t("set.delAsk", { name: st.name || t("set.untitled") }), t("btn.delete"), function () {
+        if (commitSets(S.remove(sets, st.id, Date.now()))) { curSet = ""; showSetView(false); $("title").textContent = t("app.name"); setListTab("sets"); toast(t("set.deleted")); }
+      });
+    });
+    $("pdf-no").addEventListener("click", function () { $("pdf-dlg").close(); });
+    $("pdf-save").addEventListener("click", savePdf);
+    $("pdf-print").addEventListener("click", printPdf);
+    $("sg-prev").addEventListener("click", function () { stageGo(-1); });
+    $("sg-next").addEventListener("click", function () { stageGo(1); });
+    // A swipe left or right on the stage: the next or previous song of a set.
+    var swipe = null;
+    $("sg-body").addEventListener("touchstart", function (e) { var p = e.touches[0]; swipe = p ? { x: p.clientX, y: p.clientY } : null; }, { passive: true });
+    $("sg-body").addEventListener("touchend", function (e) {
+      var p = e.changedTouches[0];
+      if (!swipe || !p || !stg || !stg.set) return;
+      var dx = p.clientX - swipe.x, dy = p.clientY - swipe.y;
+      swipe = null;
+      if (Math.abs(dx) > 80 && Math.abs(dx) > 2 * Math.abs(dy)) stageGo(dx < 0 ? 1 : -1);
+    }, { passive: true });
     $("open-btn").addEventListener("click", function () { pickFile(AUDIO_ACCEPT + "," + LYRIC_ACCEPT).then(openAnyFile); });
     $("export-btn").addEventListener("click", openExport);
     $("export-close").addEventListener("click", function () { $("export-dlg").close(); });
@@ -1534,6 +2173,36 @@
     });
     $("ch-names").addEventListener("change", function () { dev.sol = $("ch-names").value === "1" ? 1 : 0; saveDev(); if (cur) renderChords(); });
     $("ch-tr").addEventListener("click", openTranspose);
+    // Songbook S2: stage
+    $("stage-btn").addEventListener("click", openStage);
+    $("stage-btn2").addEventListener("click", openStage);
+    $("sg-close").addEventListener("click", closeStage);
+    $("sg-play").addEventListener("click", stagePlay);
+    $("sg-up").addEventListener("click", function () { stagePage(-1); });
+    $("sg-down").addEventListener("click", function () { stagePage(1); });
+    $("sg-smaller").addEventListener("click", function () { dev.sfs = Math.max(14, dev.sfs - 2); saveDev(); renderStageSheet(); });
+    $("sg-bigger").addEventListener("click", function () { dev.sfs = Math.min(64, dev.sfs + 2); saveDev(); renderStageSheet(); });
+    $("sg-slower").addEventListener("click", function () { dev.ssp = Math.max(0.25, Math.round((dev.ssp - 0.1) * 100) / 100); saveDev(); renderStageBar(); });
+    $("sg-faster").addEventListener("click", function () { dev.ssp = Math.min(4, Math.round((dev.ssp + 0.1) * 100) / 100); saveDev(); renderStageBar(); });
+    $("sg-show").addEventListener("change", function () { dev.sshow = $("sg-show").value; saveDev(); renderStageSheet(); });
+    $("sg-cin").addEventListener("click", function () { dev.cin = dev.cin ? 0 : 1; saveDev(); renderStageBar(); });
+    // A tap on the words plays or pauses; a scroll by hand moves the
+    // steady scrolling with it.
+    $("sg-body").addEventListener("click", function (e) { if (e.target.closest("button")) return; stagePlay(); });
+    $("sg-body").addEventListener("scroll", function () { if (stg && !stg.run) stg.pos = $("sg-body").scrollTop; });
+    $("stage2").addEventListener("keydown", function (e) {
+      if (!stg) return;
+      switch (e.code) {
+        case "PageDown": case "ArrowDown": case "ArrowRight": e.preventDefault(); stagePage(1); break;
+        case "PageUp": case "ArrowUp": case "ArrowLeft": e.preventDefault(); stagePage(-1); break;
+        case "Space": case "Enter": if (!e.target.closest("button, select")) { e.preventDefault(); stagePlay(); } break;
+        case "Escape": e.preventDefault(); closeStage(); break;
+        case "KeyN": if (stg.set) { e.preventDefault(); stageGo(1); } break;
+        case "KeyP": if (stg.set) { e.preventDefault(); stageGo(-1); } break;
+      }
+    });
+    document.addEventListener("visibilitychange", function () { if (stg && document.visibilityState === "visible") keepAwake(); });
+    document.addEventListener("fullscreenchange", function () { if (stg && !document.fullscreenElement && !$("stage2").hidden) { /* left full screen: the stage stays as a page */ } });
     $("cd-yes").addEventListener("click", function () { putChord(false); });
     $("cd-del").addEventListener("click", function () { putChord(true); });
     $("cd-no").addEventListener("click", function () { $("chord-dlg").close(); });
@@ -1649,7 +2318,7 @@
     // Keys on the Sync and Preview tabs (e.code, never e.key; the shell
     // keeps Ctrl+Alt+Shift).
     document.addEventListener("keydown", function (e) {
-      if (!cur || $("v-edit").hidden || typing(e) || document.querySelector("dialog[open]")) return;
+      if (!cur || $("v-edit").hidden || typing(e) || document.querySelector("dialog[open]") || stg) return;
       if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey) return;
       var mod = e.ctrlKey || e.metaKey;
       if (mod && e.code === "KeyZ") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
@@ -1764,12 +2433,14 @@
   // ---------- 15. Boot (last, after every declaration) ----------
   function boot() {
     load();
+    loadSets();
     applyI18n();
     wire();
     registerSync();
     inheritPalette();
     watchPalette();
     renderList();
+    setListTab(dev.lt);
     refreshAudioKeys();
     takePending();
   }

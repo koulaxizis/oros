@@ -23,7 +23,7 @@ const F = globalThis.FTCore = req("familytree/ft-core.js");
 const SK = globalThis.OrosSkyCore = req("sky/core.js");
 globalThis.OrosCalOccur = req("calendar/occur.js");
 const P = {};
-["cycle", "mood", "minimalism", "familytree", "sky", "calendar"].forEach((id) => { P[id] = req(id + "/today.js"); });
+["cycle", "mood", "minimalism", "familytree", "weather", "calendar"].forEach((id) => { P[id] = req(id + "/today.js"); });
 
 const DAY = 86400000;
 const pad = (n) => String(n).padStart(2, "0");
@@ -210,16 +210,20 @@ test("family tree provider: death anniversaries of today and the next days", asy
   ]);
 });
 
-test("moon & sky provider: the Calendar feed's events, today's as top lines", async () => {
+test("weather provider, Sky tonight rows (merge 4, was Moon & Sky): the Calendar feed's events, today's as top lines", async () => {
   // find a day with a sky event, then look at it from two days before
   let day = "2026-10-01";
   while (!SK.feedFor(day, "en").length) day = A.addDays(day, 1);
   const from = A.addDays(day, -2);
-  const rows = await viaAgg(P.sky, ctx({}, from, "en"));
+  const rows = await viaAgg(P.weather, ctx({}, from, "en"));
   const ev = SK.feedFor(day, "en");
   assert.deepEqual(rows.filter((r) => r.due === day).map((r) => [r.kind, r.title, JSON.stringify(r.target)]),
-    ev.map((e) => ["event", e.title, JSON.stringify({ date: day })]));
-  const today = await viaAgg(P.sky, ctx({}, day, "el"));
+    ev.map((e) => ["event", e.title, JSON.stringify({ sky: true, date: day })]));
+  assert.ok(rows.every((r) => r.id.startsWith("sky:")));
+  const opened = [];
+  P.weather.open({ sky: true, date: day }, { __orosOpenAt: (id, t) => opened.push([id, t]) });
+  assert.deepEqual(opened, [["weather", { sky: true, date: day }]]);
+  const today = await viaAgg(P.weather, ctx({}, day, "el"));
   assert.ok(today.length >= 1 && today.every((r) => r.kind === "info" && r.due === day));
   assert.deepEqual(today.map((r) => r.title), SK.feedFor(day, "el").map((e) => e.title));
 });

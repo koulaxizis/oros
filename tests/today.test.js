@@ -471,7 +471,9 @@ test("contactsCelebrating: one row per contact, name kept, junk skipped", () => 
   assert.deepEqual(ND.contactsCelebrating([{ id: "c1", given: "Δημήτρης" }], "bad"), []);
 });
 
-test("weather: nearest city's today row from a fresh cache, never a stale one", () => {
+test("weather: nearest city's today row from a fresh cache, never a stale one", async () => {
+  // (since merge 4 the provider also carries the Sky tonight rows, ids "sky:…")
+  const wx = async (cx) => (await P.weather.collect(cx)).filter((r) => !r.id.startsWith("sky:"));
   const today = "2026-10-11", now = at(11, 8);
   const data = { units: "metric", active: "c2", cities: [
     { id: "c1", label: "Athens", lat: 37.98, lon: 23.72, pos: 0 },
@@ -481,14 +483,14 @@ test("weather: nearest city's today row from a fresh cache, never a stale one", 
     c2: { at: now - 3600e3, daily: [{ date: today, max: 20, min: 11 }] }
   };
   const c = (o) => ctx(Object.assign({ "oros-weatherapp-data": data, "oros-weatherapp-cache": cache }, o), today, now);
-  assert.deepEqual(P.weather.collect(c({ "oros-weather": { lat: 37.97, lon: 23.73 } })).map((r) => r.title), ["Athens: 24° / 16° · rain 10%"]);
-  assert.deepEqual(P.weather.collect(c({})).map((r) => r.title), ["Thessaloniki: 20° / 11°"]);
+  assert.deepEqual((await wx(c({ "oros-weather": { lat: 37.97, lon: 23.73 } }))).map((r) => r.title), ["Athens: 24° / 16° · rain 10%"]);
+  assert.deepEqual((await wx(c({}))).map((r) => r.title), ["Thessaloniki: 20° / 11°"]);
   const imp = Object.assign({}, data, { units: "imperial" });
-  assert.deepEqual(P.weather.collect(c({ "oros-weatherapp-data": imp })).map((r) => r.title), ["Thessaloniki: 68° / 52°"]);
+  assert.deepEqual((await wx(c({ "oros-weatherapp-data": imp }))).map((r) => r.title), ["Thessaloniki: 68° / 52°"]);
   const stale = { c2: { at: now - 25 * 3600e3, daily: [{ date: today, max: 20, min: 11 }] } };
-  assert.deepEqual(P.weather.collect(c({ "oros-weatherapp-cache": stale })), []);
+  assert.deepEqual(await wx(c({ "oros-weatherapp-cache": stale })), []);
   const yesterday = { c2: { at: now, daily: [{ date: "2026-10-10", max: 20, min: 11 }] } };
-  assert.deepEqual(P.weather.collect(c({ "oros-weatherapp-cache": yesterday })), []);
+  assert.deepEqual(await wx(c({ "oros-weatherapp-cache": yesterday })), []);
 });
 
 test("time: today's later alarms; timers and other days left out", () => {
