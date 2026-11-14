@@ -384,6 +384,36 @@ button.sh-cell:hover .sh-tx, button.sh-cell:focus-visible .sh-tx { background: v
 .tr-now { min-width: 9em; text-align: center; font-size: 1.1em; }
 #cd-in { width: 100%; }
 
+/* Songbook S2: the stage */
+body.staging { overflow: hidden; }
+.stage2 {
+  position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column;
+  background: var(--bg); color: var(--text);
+}
+.stage2[hidden] { display: none; }
+.sg-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding: 6px max(8px, env(safe-area-inset-right)) 6px max(8px, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--border); background: var(--panel-bg);
+}
+.sg-head { display: flex; flex-direction: column; min-width: 0; flex: 1 1 120px; }
+.sg-head strong, .sg-head span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg-head span { font-size: 12px; }
+.sg-mode { font-size: 12px; min-width: 4.5em; }
+#sg-cin[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.sg-showl select { width: auto; }
+.sg-body { flex: 1; overflow-y: auto; padding: 16px max(16px, env(safe-area-inset-left)) 40vh; outline: none; }
+.stage-sheet { border: 0; background: none; padding: 0; line-height: 1.3; }
+.stage-sheet .sh-line.now .sh-tx { color: var(--accent); }
+.stage-sheet.show-words .sh-ch, .stage-sheet.show-words .sh-crow, .stage-sheet.show-words .sh-tab { display: none; }
+.stage-sheet.show-chords .sh-tx { display: none; }
+.stage-sheet.show-chords .sh-ch.sh-empty { display: none; }
+.sg-pages {
+  position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 8px;
+}
+.sg-page { min-width: 56px; min-height: 56px; font-size: 20px; opacity: .85; }
+
 @media (max-width: 420px) {
   #toolbar .chip { padding: 6px 8px; }
   .st.now { font-size: 22px; }
