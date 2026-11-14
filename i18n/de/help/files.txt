@@ -97,6 +97,17 @@ Die orOS-Disk ist der verschlüsselte Ort: Mit eingeschalteter orOS-Synchronisie
 
 > Dateien gehen direkt zwischen diesem Browser und Dropbox hin und her. Die Verbindung wird nur auf diesem Gerät gespeichert und nicht synchronisiert.
 
+## Dokumente
+`Dokumente` in der Ordnerliste ist ein Archiv deiner Unterlagen: Belege, Rechnungen, Verträge, Garantien, Bescheinigungen. Jede Datei kann ein Dokument sein; sie bleibt, wo sie in Files ist.
+- Wähle eine oder mehrere Dateien, öffne das Menü (Rechtsklick oder `⋯`) und wähle `Zu Dokumenten hinzufügen`. Oder öffne `Dokumente` und tippe auf `+`, um neue Dateien vom Gerät hinzuzufügen: Sie kommen in den Ordner `Documents` › (dieses Jahr).
+- Tippe auf ein Dokument, um Titel, Art, Schlagwörter, Absender, Datum, Betrag, Ablauf und Aufbewahrung einzutragen. `Speichern` behält die Änderungen; `Öffnen` zeigt die Datei und `Im Ordner zeigen` bringt dich hin.
+- Die Wahl einer Art schlägt ein Datum für `Aufbewahren bis` vor, etwa fünf Jahre für Rechnungen und Steuerunterlagen oder bis zum Ablauf einer Garantie. Es ist nur ein Vorschlag, keine Rechtsberatung: Ändere ihn nach Bedarf oder hake `Für immer aufbewahren` an.
+- Oben zeigen `Alle`, `Läuft bald ab` (innerhalb von 30 Tagen), `Kann weg` (Aufbewahrung vorbei) und `Ohne Art`; die Listen daneben filtern nach Art, Schlagwort, Absender und Jahr. Die Suche findet Wörter in Titeln, Notizen, Arten, Schlagwörtern und Absendern.
+- `⋯` › `Arten, Schlagwörter und Absender` benennt sie um oder löscht sie und fügt eigene Arten mit eigenem Vorschlag hinzu. Eine Art kann privat sein: Ihre Dokumente sieht weder der Assistant noch Claude. Medizinische Dokumente und Ausweise sind von Anfang an privat.
+- `Aus Dokumenten entfernen` vergisst nur die Angaben; die Datei bleibt. Wer eine Datei in Files verschiebt oder umbenennt, behält ihr Dokument. Hat eine andere App oder ein anderes Gerät sie verschoben, findet `⋯` › `Verschobene Dateien finden` sie über ihren Inhalt wieder.
+- `⋯` › `Dokumente exportieren (.zip)` speichert die gezeigten Dokumente mit ihren Dateien, einer `documents.json` und einer `documents.csv` für Tabellen. `Archiv importieren (.zip)` holt so ein Archiv zurück, auf jedem Gerät: Die Dateien kommen nach `Documents` › `Importiert` (Datum).
+> Nichts in Dokumente löscht eine Datei. Die Angaben werden verschlüsselt mit orOS Sync synchronisiert, die Dateien wie immer über die Disk.
+
 ## orOS Drive
 - `orOS Drive` in der Ordnerliste zeigt die Ordner, die du mit der App orOS Drive von deinen Computern und Handys spiegelst.
 - Sie bleiben in der Cloud, bis du sie öffnest, damit dieses Gerät nicht vollläuft. Ein Wolken-Zeichen neben einem Namen bedeutet, dass die Datei noch nicht auf diesem Gerät ist.
@@ -124,7 +135,7 @@ Die Disk liegt in diesem Browser. Wenn die [orOS-Synchronisierung](help:t/sync) 
 
 - Die Anzeige in der Statusleiste zeigt `Disk synchronisiert`, `Änderungen warten auf Synchronisierung` oder `Disk-Synchronisierung nicht verfügbar`.
 - Wurde dieselbe Datei auf zwei Geräten geändert, werden beide Versionen behalten. Die andere Kopie bekommt "(conflict" plus Datum und Uhrzeit in ihren Namen.
-- Favoriten und der Papierkorb werden synchronisiert. Deine Sortierung, Listen- oder Rasteransicht, der Schalter `Inhalte`, der letzte Ordner, `Zuletzt` und die Speicheranzeige bleiben auf diesem Gerät.
+- Favoriten, Dokumente und der Papierkorb werden synchronisiert. Deine Sortierung, Listen- oder Rasteransicht, der Schalter `Inhalte`, der letzte Ordner, `Zuletzt` und die Speicheranzeige bleiben auf diesem Gerät.
 - orOS-[Sicherungen](help:t/backup) enthalten die ganze Disk, samt Papierkorb. Für eine einzelne Datei nimm `Herunterladen`.
 
 ## Tastenkürzel

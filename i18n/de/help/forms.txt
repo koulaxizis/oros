@@ -1,0 +1,34 @@
+# Formulare
+Formulare erstellt Umfragen, Anmeldelisten und Bestellformulare: Fragen vieler Arten, Seiten, Fragen, die nur bei bestimmten Antworten erscheinen, und Sprünge zwischen Seiten. Diese erste Version von Formulare erstellt Formulare und zeigt sie in der Vorschau; das Teilen per Link und das Sammeln der Antworten kommt mit dem nächsten Update.
+
+## Ein Formular erstellen
+- Tippe auf `Neues Formular`. Wähle `Leeres Formular` oder eine Vorlage: Kontaktformular, Anmeldung zur Veranstaltung, Feedback, Bestellformular, Zufriedenheitsumfrage oder Kursanmeldung. Eine Vorlage ist nur ein Anfang: Ändere darin, was du willst.
+- Gib dem Formular einen Titel und, wenn du magst, eine Beschreibung. Beides steht oben im Formular.
+- Jede Änderung wird beim Tippen gespeichert und wie der Rest von orOS mit deinen anderen Geräten synchronisiert.
+
+## Fragen
+- `Frage hinzufügen` öffnet die Liste der Arten. Die neue Frage kommt nach der geöffneten Frage oder ans Ende.
+- Arten: `Kurzantwort`, `Absatz`, `E-Mail`, `Telefon`, `Zahl`, `Datum`, `Uhrzeit`, `Eine Auswahl`, `Kontrollkästchen`, `Drop-down`, `Lineare Skala` (zum Beispiel 1 bis 5 oder 0 bis 10 mit einer Beschriftung an jedem Ende), `Bewertung` (Sterne), `Ja / Nein` und `Raster` (Zeilen und Spalten, eine oder mehrere Antworten pro Zeile).
+- `Textblock` fügt einen Titel und Text zwischen den Fragen ein. `Seitenumbruch` beginnt eine neue Seite.
+- Tippe auf eine Frage, um sie zu öffnen: Schreib die Frage und einen optionalen Hilfetext, ändere die Art, setz `Pflichtfrage` und lege Grenzen fest (Zeichen, kleinste und größte Zahl, frühestes und spätestes Datum, wie viele Kontrollkästchen). Bei Auswahlfragen schreibst du jede Antwort; die Eingabetaste fügt die nächste hinzu. `„Sonstiges“ mit Textfeld hinzufügen` lässt andere eine eigene Antwort schreiben.
+- Die Knöpfe unter einer geöffneten Frage verschieben sie nach oben oder unten, duplizieren oder löschen sie. Eine gelöschte Frage kommt einige Sekunden lang mit `Rückgängig` zurück. `Fertig` schließt sie, ebenso Esc.
+
+## Nur bei bestimmten Antworten zeigen
+- `Nur zeigen, wenn …` zeigt eine Frage, einen Textblock oder die Fragen einer Seite nur, wenn eine frühere Antwort passt: zum Beispiel „Lieferadresse“ nur, wenn bei „Wie möchten Sie es erhalten?“ „Lieferung“ gewählt ist.
+- Was du verlangen kannst, hängt von der früheren Frage ab: ist oder ist nicht eine ihrer Antworten, enthält (Kontrollkästchen), ist größer oder kleiner als (Zahlen, Skalen, Sterne, Daten), ist beantwortet oder ist nicht beantwortet.
+- Eine ausgeblendete Frage gilt nie als beantwortet, daher bleiben auch Fragen ausgeblendet, die von ihr abhängen. Eine Pflichtfrage ist nur Pflicht, solange sie sichtbar ist.
+
+## Seiten und Sprünge
+- Mit Seitenumbrüchen gehen andere das Formular Seite für Seite durch, mit `Zurück` und `Weiter`. Jede Seite wird geprüft, bevor es weitergeht.
+- Bei einem Seitenumbruch schickt `Nach dieser Seite weiter zu …` alle auf eine andere Seite oder direkt zu `Formular absenden`.
+- Bei `Eine Auswahl`, `Drop-down` und `Ja / Nein` schickt `Je nach Antwort zu einer Seite springen` andere je nach ihrer Wahl auf eine Seite: zum Beispiel führt „Nein“ bei „Kommen Sie?“ direkt zum Ende. Hat eine Seite mehrere solcher Fragen, entscheidet die zuletzt beantwortete.
+- Sprünge gehen nur nach vorn, daher hat jeder Weg durch ein Formular ein Ende.
+
+## Vorschau
+- `Vorschau` zeigt das Formular genau so, wie andere es sehen werden, mit Seiten, Sprüngen, ausgeblendeten Fragen und allen Prüfungen. Füll es aus, um es zu testen: Was du dort antwortest, wird nicht gespeichert, und `Erneut ausfüllen` beginnt von vorn.
+
+## Einstellungen
+- `Nachricht nach dem Absenden` lesen andere, wenn sie fertig sind. Leer bedeutet „Danke. Ihre Antworten wurden gespeichert.“
+- `Hinweis oben` steht in einem Kasten unter der Beschreibung, zum Beispiel um zu sagen, wofür die Antworten sind.
+- `Fortschrittsbalken bei Formularen mit Seiten zeigen` zeigt, wie weit andere schon sind.
+- `Formular duplizieren` erstellt eine Kopie zum Ändern. `Formular löschen` entfernt es auf allen deinen Geräten; `Rückgängig` holt es einige Sekunden lang zurück.

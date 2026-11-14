@@ -84,6 +84,7 @@
     language: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
     solo: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M17 3v6M14 6h6"/></svg>',
     system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    fonts: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19 8.5 5h1L15 19M5.2 14h7.6"/><path d="M21 19v-5.5a2.75 2.75 0 0 0-5.5 0M21 16.2c-1-.9-5.6-1.2-5.6 1.2 0 2.4 4.4 2 5.6-.6"/></svg>',
     device: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 10.5v5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/><path d="M10.5 18.5h3"/></svg>',
     files: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M12 11v6"/></svg>',
     menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
@@ -2647,6 +2648,57 @@
       c2.appendChild(list);
     }
     host.appendChild(c2);
+
+    if (window.OrosTranslate) secTranslation(host);
+    else txLoad();
+  }
+
+  // translate/engine.js loads only when this section first shows, so
+  // Settings opens without it (first-open budget).
+  var txLoading = false;
+  function txLoad() {
+    if (txLoading) return;
+    txLoading = true;
+    loadScript("../translate/engine.js").then(function () {
+      if (window.OrosTranslate) render();
+    }, function () {});
+  }
+
+  // Translation on this device (translate/engine.js, Bible TRANSLATE):
+  // the downloaded languages with their size, Remove (two taps), the
+  // device-local "use the Assistant's AI" switch and a way to Text Tools.
+  var txList = null, txBusy = false;
+  function secTranslation(host) {
+    var TR = window.OrosTranslate;
+    var c = card(t("tx.title"), "device");
+    c.appendChild(el("p", "hint", t("tx.hint")));
+    if (txList === null) {
+      if (!txBusy) {
+        txBusy = true;
+        TR.installed().then(function (l) { txList = l; }, function () { txList = []; })
+          .then(function () { txBusy = false; render(); });
+      }
+    } else if (!txList.length) {
+      c.appendChild(el("p", "hint", t("tx.none")));
+    } else {
+      txList.forEach(function (x) {
+        var ab = x.pair.split("-");
+        var r = row(t("tx.row", { a: TR.name(ab[0], LANG), b: TR.name(ab[1], LANG), mb: x.mb }),
+          confirmBtn(t("tx.remove"), t("tx.removeSure"), "tx:" + x.pair, function () {
+            TR.remove(x.pair).then(function () { txList = null; render(); }, function () { txList = null; render(); });
+          }, "danger"));
+        c.appendChild(r);
+      });
+    }
+    var on = TR.ai.on();
+    c.appendChild(row(t("tx.ai"), switchBtn(on, "tx.ai", function (v) { TR.ai.set(v); render(); }, t("tx.ai")),
+      { hint: t("tx.ai.hint") }));
+    c.appendChild(actions(button(t("tx.open"), "tx.open", function () {
+      var p = parentWin();
+      if (p && typeof p.__orosOpenAt === "function") { p.__orosOpenAt("texttools", { group: "translate" }); return; }
+      act("openApp", "texttools");
+    })));
+    host.appendChild(c);
   }
 
   // On-screen keyboard (osk.js through the shell; never on phones,
@@ -3295,6 +3347,39 @@
     }, function () { wait.textContent = t("dv.loadFail"); });
   }
 
+  // ---------- Section: Fonts (FM-1) ----------
+  // designkit/text.js + fonts.js, Files' core (for the Trash) and
+  // settings/fonts.js + fonts.css load on the first open only (Settings
+  // size budget); SettingsFonts keeps one live node that each repaint
+  // re-attaches.
+  var fmLoad = null;
+  function loadFonts() {
+    if (window.SettingsFonts) return Promise.resolve();
+    if (fmLoad) return fmLoad;
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    var v = window.orosI18n && window.orosI18n.ver;
+    css.href = "fonts.css" + (v ? "?v=" + encodeURIComponent(v) : "");
+    document.head.appendChild(css);
+    fmLoad = loadScript("../designkit/text.js")
+      .then(function () { return loadScript("../designkit/fonts.js"); })
+      .then(function () { return window.OrosFilesCore ? null : loadScript("../files/files-core.js"); })
+      .then(function () { return loadScript("fonts.js"); });
+    fmLoad.catch(function () { fmLoad = null; });
+    return fmLoad;
+  }
+  function secFonts(host) {
+    if (window.SettingsFonts) { window.SettingsFonts.mount(host, { t: t }); return; }
+    var wait = el("p", "hint", t("fm.loading"));
+    host.appendChild(wait);
+    loadFonts().then(function () {
+      if (current !== "fonts" || !host.isConnected) return;
+      if (wait.parentNode) wait.parentNode.removeChild(wait);
+      window.SettingsFonts.mount(host, { t: t });
+      if (lit && lit.row[1] === "fonts" && Date.now() < lit.until) lightUp(true);
+    }, function () { wait.textContent = t("fm.loadFail"); });
+  }
+
   function secSystem(host, s) {
     var c1 = card(null);
     var vr = row(t("x.version"), null);
@@ -3487,7 +3572,7 @@
   }
 
   var SECTION_FN = {
-    appearance: secAppearance, accessibility: secAccessibility, menu: secMenu, notifications: secNotifications, sync: secSync, lock: secLock, users: secUsers,
+    appearance: secAppearance, fonts: secFonts, accessibility: secAccessibility, menu: secMenu, notifications: secNotifications, sync: secSync, lock: secLock, users: secUsers,
     backup: secBackup, language: secLanguage, files: secFiles, solo: secSolo, services: secServices, system: secSystem,
     device: secDevice
   };
@@ -3644,7 +3729,7 @@
   // label, a button or a link row, matched by its text.
   function labelEl(key) {
     var txt = t(key);
-    var all = $("page").querySelectorAll(".card-head h3, .dv-card h3, .row-label, .btn, .link-row > span");
+    var all = $("page").querySelectorAll(".card-head h3, .dv-card h3, .row-label, .btn, .link-row > span, .fm-tab");
     for (var i = 0; i < all.length; i++) {
       if (all[i].textContent.trim() !== txt) continue;
       var n = all[i];

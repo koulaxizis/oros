@@ -8,7 +8,7 @@
   "use strict";
 
   // The groups, in the order shown. A deep link names one of these.
-  var SECTIONS = ["appearance", "accessibility", "menu", "notifications", "sync", "lock", "users", "backup", "language", "files", "solo", "services", "system", "device"];
+  var SECTIONS = ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "users", "backup", "language", "files", "solo", "services", "system", "device"];
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
@@ -56,6 +56,9 @@
     ["dock-autohide", "appearance", "k.autohide", "k.dock", "k.on", "dock"],
     ["dock-over", "appearance", "k.over", "k.dock", "k.on", "dock"],
     ["pet", "appearance", "a.pet"],
+    ["fm-mine", "fonts", "fm.mine"],
+    ["fm-install", "fonts", "fm.install", "fm.mine"],
+    ["fm-free", "fonts", "fm.tab.free"],
     ["textsize", "accessibility", "ac.size"],
     ["contrast", "accessibility", "ac.contrast"],
     ["focus", "accessibility", "ac.focus"],
@@ -160,6 +163,9 @@
       "dv.loading": "Reading this device…", "dv.loadFail": "Could not load this section. Check the connection and open it again.",
       "dv.storage": "Storage", "dv.apps": "Space per app", "dv.battery": "Battery", "dv.network": "Network",
       "dv.screen": "Screen", "dv.features": "Browser features", "dv.report": "Copy report",
+      "s.fonts": "Fonts", "d.fonts": "Your font files, free fonts, Greek and polytonic letters, licences",
+      "fm.mine": "Your fonts", "fm.install": "Add font files…", "fm.tab.free": "Free fonts", "fm.free": "Free fonts",
+      "fm.loadFail": "Could not load this section. Check the connection and open it again.", "fm.loading": "Reading your fonts…",
       "s.accessibility": "Accessibility",
       "d.accessibility": "Text size, high contrast, focus ring",
 
@@ -590,6 +596,14 @@
       "tr.title": "Help translate",
       "tr.card.hint": "Translate orOS into another language, line by line, without touching any code. What you write stays on this device until you send it.",
       "tr.open": "Open",
+      "tx.title": "Translation on this device",
+      "tx.hint": "Text Tools translates on this device with Mozilla's models. The languages you downloaded:",
+      "tx.none": "No languages downloaded yet. Text Tools › Translate downloads one when you first use it.",
+      "tx.row": "{a} → {b} · {mb} MB",
+      "tx.remove": "Remove", "tx.removeSure": "Tap again to remove",
+      "tx.ai": "Where no model fits, use the Assistant's AI",
+      "tx.ai.hint": "Off by default, this device only. The text then goes to the AI service you set up in the Assistant.",
+      "tx.open": "Open Text Tools",
       "tr.close": "Close",
       "tr.lang": "Language",
       "tr.app": "Part of orOS",
@@ -1004,6 +1018,9 @@
       "w.greet": "greeting good morning welcome start hello",
       "w.tips": "tips tip hints first open guide help",
       "w.wallpaper": "background desktop picture image",
+      "w.fm-mine": "fonts font manager typeface typography greek polytonic coverage licence license specimen",
+      "w.fm-install": "add install font file ttf otf woff woff2 upload",
+      "w.fm-free": "free fonts fontsource google open font license ofl download",
       "w.me": "name greeting nickname call me personal",
       "w.seasonal": "christmas snow holiday festive decorations halloween easter",
       "w.seasonal-motion": "animation moving still reduce motion",
@@ -1116,6 +1133,9 @@
       "dv.loading": "Διαβάζω αυτή τη συσκευή…", "dv.loadFail": "Η ενότητα δεν φόρτωσε. Έλεγξε τη σύνδεση και άνοιξέ την ξανά.",
       "dv.storage": "Χώρος", "dv.apps": "Χώρος ανά εφαρμογή", "dv.battery": "Μπαταρία", "dv.network": "Δίκτυο",
       "dv.screen": "Οθόνη", "dv.features": "Δυνατότητες browser", "dv.report": "Αντιγραφή αναφοράς",
+      "s.fonts": "Γραμματοσειρές", "d.fonts": "Τα αρχεία γραμματοσειρών σου, δωρεάν γραμματοσειρές, ελληνικά και πολυτονικά, άδειες",
+      "fm.mine": "Οι γραμματοσειρές σου", "fm.install": "Προσθήκη αρχείων γραμματοσειράς…", "fm.tab.free": "Δωρεάν", "fm.free": "Δωρεάν γραμματοσειρές",
+      "fm.loadFail": "Η ενότητα δεν φόρτωσε. Έλεγξε τη σύνδεση και άνοιξέ την ξανά.", "fm.loading": "Διαβάζω τις γραμματοσειρές σου…",
       "s.accessibility": "Προσβασιμότητα",
       "d.accessibility": "Μέγεθος κειμένου, υψηλή αντίθεση, περίγραμμα εστίασης",
 
@@ -1546,6 +1566,14 @@
       "tr.title": "Βοήθησε στη μετάφραση",
       "tr.card.hint": "Μετάφρασε το orOS σε άλλη γλώσσα, γραμμή γραμμή, χωρίς να αγγίξεις κώδικα. Ό,τι γράφεις μένει σε αυτή τη συσκευή μέχρι να το στείλεις.",
       "tr.open": "Άνοιγμα",
+      "tx.title": "Μετάφραση στη συσκευή",
+      "tx.hint": "Τα Εργαλεία κειμένου μεταφράζουν μέσα στη συσκευή με τα μοντέλα της Mozilla. Οι γλώσσες που έχεις κατεβάσει:",
+      "tx.none": "Δεν έχεις κατεβάσει ακόμη γλώσσες. Τα Εργαλεία κειμένου › Μετάφραση κατεβάζουν μία την πρώτη φορά.",
+      "tx.row": "{a} → {b} · {mb} MB",
+      "tx.remove": "Αφαίρεση", "tx.removeSure": "Πάτα ξανά για αφαίρεση",
+      "tx.ai": "Όπου δεν υπάρχει μοντέλο, να μεταφράζει η AI του Βοηθού",
+      "tx.ai.hint": "Κλειστό από πριν, μόνο σε αυτή τη συσκευή. Τότε το κείμενο πηγαίνει στην υπηρεσία AI που έχεις ρυθμίσει στον Βοηθό.",
+      "tx.open": "Άνοιγμα Εργαλείων κειμένου",
       "tr.close": "Κλείσιμο",
       "tr.lang": "Γλώσσα",
       "tr.app": "Μέρος του orOS",
@@ -1959,6 +1987,9 @@
       "w.greet": "χαιρετισμός καλημέρα καλωσόρισμα εκκίνηση γεια",
       "w.tips": "συμβουλές συμβουλή υποδείξεις πρώτο άνοιγμα οδηγός βοήθεια",
       "w.wallpaper": "φόντο επιφάνεια εργασίας εικόνα",
+      "w.fm-mine": "γραμματοσειρές γραμματοσειρά τυπογραφία φόντ ελληνικά πολυτονικά κάλυψη άδεια δείγμα",
+      "w.fm-install": "προσθήκη εγκατάσταση αρχείο γραμματοσειράς ttf otf woff woff2",
+      "w.fm-free": "δωρεάν γραμματοσειρές fontsource google ανοιχτή άδεια ofl λήψη",
       "w.me": "όνομα χαιρετισμός παρατσούκλι προσωπικό",
       "w.seasonal": "χριστούγεννα χιόνι γιορτές στολισμός διακόσμηση πάσχα απόκριες",
       "w.seasonal-motion": "κίνηση κινούμενα ακίνητα",

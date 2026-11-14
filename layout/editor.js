@@ -4,7 +4,8 @@
 // (select, text, image, rect, ellipse, line, hand), selection with
 // move / resize / rotate handles, snapping (page edges, margins,
 // columns, guides, other objects), threads between text frames,
-// master editing, keyboard shortcuts, clipboard.
+// master editing, keyboard shortcuts, clipboard. The pen and point
+// editing (vector.js) take the pointer, keys and overlay while on.
 // Sections:
 //   1. State + geometry of the pasteboard
 //   2. Document operations (items, stories, threads, pages)
@@ -34,7 +35,8 @@
   function scale() { return ED.zoom * K; }
   function toScreen(wx, wy) { var s = scale(); return [(wx - ED.camX) * s, (wy - ED.camY) * s]; }
   function toWorld(sx, sy) { var s = scale(); return [sx / s + ED.camX, sy / s + ED.camY]; }
-  ED.toScreen = toScreen; ED.scale = scale; ED.palette = palette;
+  ED.toScreen = toScreen; ED.toWorld = toWorld; ED.scale = scale; ED.palette = palette;
+  function vecOn() { return !!(ED.vec && ED.vec.active()); }
 
   // P = { id (owner id), page (entity), x, y, w, h, side, idx, master }
   function buildWorld() {
@@ -89,6 +91,7 @@
     return null;
   }
   LY.pOf = pOf;
+  ED.pageAt = pageAt;
   function curP() {
     var c = toWorld(W / 2, H / 2);
     return pageAt(c[0], c[1], true);
@@ -407,7 +410,7 @@
         if (last) drawPort(last, true, true);
       });
     }
-    var items = selItems();
+    var items = vecOn() ? [] : selItems();
     items.forEach(function (it) {
       var P = pOf(it);
       if (!P) return;
@@ -461,6 +464,7 @@
       ctx.setLineDash([]);
     }
     if (LY.inframe) LY.inframe.draw(ctx);
+    if (vecOn()) ED.vec.paint(ctx);
     ctx.restore();
   }
 
@@ -686,6 +690,10 @@
   }
 
   ED.setTool = function (tool) {
+    if (ED.vec) {
+      if (tool === "pen") { ED.tool = tool; ED.vec.pen(); }
+      else if (vecOn()) ED.vec.cancel();
+    }
     ED.tool = tool;
     [].forEach.call(document.querySelectorAll("#tools .tool"), function (b) {
       var on = b.getAttribute("data-tool") === tool;
@@ -871,6 +879,7 @@
       clearTimeout(pressTimer);
       if (drag && drag.kind === "move" && LY.inGesture()) LY.endGesture();
       if (typeDrag !== null) { LY.inframe.up(); typeDrag = null; }
+      if (drag && drag.kind === "vec" && vecOn()) ED.vec.up(e, evPos(e));
       drag = null; ED.marquee = null; ED.draft = null; ED.snaps = [];
       var a = pointers[ids[0]], b = pointers[ids[1]];
       pinch = { d0: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, z0: ED.zoom, mid0: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], cam: [ED.camX, ED.camY] };
@@ -881,6 +890,11 @@
     var p = evPos(e), w = toWorld(p[0], p[1]), touch = e.pointerType === "touch";
     if (e.button === 1 || ED.tool === "hand" || spaceDown) { startDrag(e, "pan", { cam: [ED.camX, ED.camY] }); return; }
     if (e.button === 2) return;   // contextmenu handles it
+    if (vecOn()) {
+      if (ED.vec.down(e, p)) startDrag(e, "vec");
+      else startDrag(e, "pan", { cam: [ED.camX, ED.camY], vecTap: true });
+      return;
+    }
     // typing in a frame: clicks place the caret / select text
     if (LY.inframe && LY.inframe.isOn() && LY.inframe.down(e, w)) { typeDrag = e.pointerId; return; }
 
@@ -915,6 +929,7 @@
         // double click / tap on a text frame → Story Editor
         var nowT = Date.now();
         if (lastTap.id === it.id && nowT - lastTap.t < 350 && it.t === "text") { lastTap = { t: 0, id: null }; editText(it.id, w, e); return; }
+        if (lastTap.id === it.id && nowT - lastTap.t < 350 && it.t === "path" && ED.vec && ED.vec.canEdit(it)) { lastTap = { t: 0, id: null }; ED.vec.edit(it.id); return; }
         lastTap = { t: nowT, id: it.id };
         beginMove(e);
         if (touch) {
@@ -930,6 +945,7 @@
       else startDrag(e, "marquee");
       return;
     }
+    if (ED.tool === "pen") { if (ED.vec) ED.setTool("pen"); return; }
     // drawing tools; the Text tool on a text frame types into it
     if (ED.tool === "text") {
       var tf = hitItem(w[0], w[1], touch ? 10 : 4);
@@ -989,6 +1005,7 @@
       return;
     }
     if (typeDrag === e.pointerId) { var tp = evPos(e); LY.inframe.move(toWorld(tp[0], tp[1])); return; }
+    if (vecOn() && (!drag || drag.kind === "vec")) { if (!drag || drag.pid === e.pointerId) ED.vec.move(e, evPos(e)); return; }
     if (!drag || drag.pid !== e.pointerId) return;
     var p = evPos(e), w = toWorld(p[0], p[1]);
     var dxs = p[0] - drag.x0, dys = p[1] - drag.y0;
@@ -1059,6 +1076,7 @@
     relayout();
     ED.render();
   }
+  ED.live = liveEdit;
 
   function resizeTo(w, keep, tol) {
     var o = drag.item, P = drag.P, h = drag.h;
@@ -1120,6 +1138,8 @@
     var d = drag; drag = null;
     var p = evPos(e), w = toWorld(p[0], p[1]);
     ED.snaps = [];
+    if (d.kind === "vec") { if (vecOn()) ED.vec.up(e, p); ED.render(); return; }
+    if (d.kind === "pan" && d.vecTap && !d.moved) { if (vecOn()) ED.vec.tapEmpty(); ED.render(); return; }
     if (d.kind === "guide") finishGuide(d, p);
     else if (d.kind === "marquee") {
       ED.marquee = null;
@@ -1255,6 +1275,7 @@
     var list = [];
     if (items.length === 1 && items[0].t === "text") list.push({ label: t("props.edit"), fn: function () { LY.story.open(items[0].id); } });
     if (items.length === 1 && items[0].t === "img") list.push({ label: items[0].a ? t("props.replace") : t("props.place"), fn: function () { LY.io.placeImage(items[0].id); } });
+    if (items.length === 1 && ED.vec && ED.vec.canEdit(items[0])) list.push({ label: window.orosDK.pathedit.str("pe.edit"), fn: function () { ED.vec.edit(items[0].id); } });
     if (items.length) {
       list.push({ label: t("props.dup"), fn: duplicate });
       list.push({ label: t("props.front"), fn: function () { ED.arrange("front"); } });
@@ -1439,6 +1460,7 @@
     if (!LY.doc || $("editor").hidden) return;
     if (e.key === " " && !typing(e)) { spaceDown = true; }
     if (typing(e)) return;
+    if (vecOn() && ED.vec.key(e)) { e.preventDefault(); return; }
     var mod = e.ctrlKey || e.metaKey;
     if (mod && e.altKey && e.shiftKey) return;            // shell shortcuts
     var k = e.key, code = e.code;
@@ -1473,7 +1495,7 @@
       if (it && it.t === "text") { e.preventDefault(); editText(it.id, null); }
       return;
     }
-    var tools = { KeyV: "select", KeyT: "text", KeyF: "image", KeyR: "rect", KeyE: "ell", KeyL: "line", KeyH: "hand" };
+    var tools = { KeyV: "select", KeyT: "text", KeyF: "image", KeyR: "rect", KeyE: "ell", KeyL: "line", KeyP: "pen", KeyH: "hand" };
     if (tools[code] && !e.shiftKey && !e.altKey) { ED.setTool(tools[code]); return; }
     if (code === "KeyW" && !e.shiftKey) { ED.togglePreview(); }
   }
@@ -1489,8 +1511,8 @@
   function buildTools() {
     var host = $("tools");
     host.innerHTML = "";
-    [["select", "select"], ["text", "text"], ["image", "image"], ["rect", "rect"], ["ell", "ell"], ["line", "line"], ["hand", "hand"]].forEach(function (d) {
-      var b = LY.iconBtn(d[1], t("tool." + d[0]), "tool");
+    [["select", "select"], ["text", "text"], ["image", "image"], ["rect", "rect"], ["ell", "ell"], ["line", "line"], ["pen", "pen"], ["hand", "hand"]].forEach(function (d) {
+      var b = LY.iconBtn(d[1], d[0] === "pen" ? window.orosDK.pathedit.str("pe.pen") + " (P)" : t("tool." + d[0]), "tool");
       b.setAttribute("data-tool", d[0]);
       b.setAttribute("aria-pressed", "false");
       b.addEventListener("click", function () { ED.setTool(d[0]); });
@@ -1556,10 +1578,12 @@
     cv.addEventListener("pointerdown", onDown);
     cv.addEventListener("pointermove", onMove);
     cv.addEventListener("pointerup", onUp);
-    cv.addEventListener("pointercancel", function (e) { delete pointers[e.pointerId]; pinch = null; if (typeDrag === e.pointerId) { typeDrag = null; LY.inframe.up(); } if (drag && drag.pid === e.pointerId) { drag = null; ED.marquee = null; ED.draft = null; ED.gdrag = null; ED.snaps = []; LY.endGesture(); ED.render(); } });
+    cv.addEventListener("pointercancel", function (e) { if (drag && drag.kind === "vec" && vecOn()) { ED.vec.up(e, evPos(e)); drag = null; } delete pointers[e.pointerId]; pinch = null; if (typeDrag === e.pointerId) { typeDrag = null; LY.inframe.up(); } if (drag && drag.pid === e.pointerId) { drag = null; ED.marquee = null; ED.draft = null; ED.gdrag = null; ED.snaps = []; LY.endGesture(); ED.render(); } });
     cv.addEventListener("dblclick", function (e) {
       var p = evPos(e), w = toWorld(p[0], p[1]), it = hitItem(w[0], w[1], 4);
+      if (vecOn()) return;
       if (it && it.t === "text") { if (!LY.inframe.isOn()) editText(it.id, w); }
+      else if (it && it.t === "path" && ED.vec && ED.vec.canEdit(it)) ED.vec.edit(it.id);
       else if (it && it.t === "img") LY.io.placeImage(it.id);
     });
     cv.addEventListener("contextmenu", function (e) {

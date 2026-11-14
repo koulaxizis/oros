@@ -44,7 +44,7 @@ orOS selbst läuft auf deinem Gerät, aber manche Apps brauchen das Internet fü
 - [Essensplaner](app:meals): die Rezeptseiten, deren Adressen du einfügst, und Open Food Facts, wenn du ein Lebensmittel suchst oder einen Barcode für die Nährwerte scannst.
 - [Training](app:fitness): wger für Übungsbilder, nur wenn du die Details einer Übung öffnest.
 - [Montage](app:montage): Hugging Face, einmal, um das Sprachmodell für `Untertitel erstellen` herunterzuladen, nur wenn du darauf drückst. Dein Ton verlässt das Gerät nie.
-- [Textwerkzeuge](app:texttools): GitHub Pages (die eigene Kopie der Übersetzungsmodelle von Mozilla), einmal pro Sprachrichtung, nur wenn du auf die Schaltfläche `Übersetzen` tippst, die den Download nennt. Dein Text verlässt das Gerät nie.
+- [Textwerkzeuge](app:texttools): GitHub Pages (die eigene Kopie der Übersetzungsmodelle von Mozilla), einmal pro Sprachrichtung, nur wenn du auf die Schaltfläche `Übersetzen` tippst, die den Download nennt. Dein Text verlässt das Gerät nie, außer du schaltest `Wo kein Modell passt, die KI des Assistenten nutzen` ein: Dann gehen die Richtungen ohne Modell an den KI-Dienst, den du im Assistenten eingerichtet hast, nur wenn du auf `Mit der KI übersetzen` tippst.
 - [Podcasts](app:podcasts): gpodder.net oder deine eigene Nextcloud, nur wenn du sie zur Synchronisierung verbindest.
 - [Mail](app:mail): dein eigener Mail-Anbieter, über das orOS-Relay, das deine Mails nur durchreicht und nichts behält.
 - [Wiki](app:wiki): Wikipedia, nur wenn du `Mit Wikipedia beginnen` nutzt; gesendet wird nur der Titel, den du eintippst.

@@ -520,7 +520,7 @@
       "f.perweek": "Times a week", "f.permonth": "Times a month", "f.water": "Water every (days)", "f.nextdue": "Next due",
       "f.until": "Last day", "f.platform": "Platform",
       "f.sub": "Subtitle", "f.translator": "Translator", "f.illustrator": "Illustrator", "f.editor": "Editor", "f.series": "Series",
-      "f.mtype": "Release type", "f.label": "Label", "f.genre": "Genre", "f.track": "Track", "f.upc": "UPC/EAN", "f.release": "Release date", "f.lang": "Language", "f.format": "Edition", "f.pages": "Pages", "f.product": "Shop product", "f.blurb": "Back-cover text",
+      "f.mtype": "Release type", "f.pline": "℗ and © lines", "f.label": "Label", "f.genre": "Genre", "f.track": "Track", "f.upc": "UPC/EAN", "f.release": "Release date", "f.lang": "Language", "f.format": "Edition", "f.pages": "Pages", "f.product": "Shop product", "f.blurb": "Back-cover text",
       "pf.paperback": "Paperback", "pf.hardback": "Hardback", "pf.ebook": "E-book", "pf.audiobook": "Audiobook", "pf.other": "Other",
       "pf.digital": "Digital", "pf.cd": "CD", "pf.vinyl": "Vinyl", "pf.cassette": "Cassette",
       "pm.single": "Single", "pm.ep": "EP", "pm.album": "Album", "pm.compilation": "Compilation",
@@ -1166,7 +1166,7 @@
       "f.perweek": "Φορές την εβδομάδα", "f.permonth": "Φορές τον μήνα", "f.water": "Πότισμα κάθε (μέρες)", "f.nextdue": "Επόμενη φορά",
       "f.until": "Τελευταία μέρα", "f.platform": "Πλατφόρμα",
       "f.sub": "Υπότιτλος", "f.translator": "Μετάφραση", "f.illustrator": "Εικονογράφηση", "f.editor": "Επιμέλεια", "f.series": "Σειρά",
-      "f.mtype": "Είδος κυκλοφορίας", "f.label": "Δισκογραφική", "f.genre": "Είδος μουσικής", "f.track": "Κομμάτι", "f.upc": "UPC/EAN", "f.release": "Ημερομηνία κυκλοφορίας", "f.lang": "Γλώσσα", "f.format": "Έκδοση", "f.pages": "Σελίδες", "f.product": "Προϊόν στο κατάστημα", "f.blurb": "Κείμενο οπισθόφυλλου",
+      "f.mtype": "Είδος κυκλοφορίας", "f.pline": "Γραμμές ℗ και ©", "f.label": "Δισκογραφική", "f.genre": "Είδος μουσικής", "f.track": "Κομμάτι", "f.upc": "UPC/EAN", "f.release": "Ημερομηνία κυκλοφορίας", "f.lang": "Γλώσσα", "f.format": "Έκδοση", "f.pages": "Σελίδες", "f.product": "Προϊόν στο κατάστημα", "f.blurb": "Κείμενο οπισθόφυλλου",
       "pf.paperback": "Χαρτόδετο", "pf.hardback": "Σκληρόδετο", "pf.ebook": "E-book", "pf.audiobook": "Ηχητικό βιβλίο", "pf.other": "Άλλο",
       "pf.digital": "Ψηφιακή", "pf.cd": "CD", "pf.vinyl": "Βινύλιο", "pf.cassette": "Κασέτα",
       "pm.single": "Single", "pm.ep": "EP", "pm.album": "Άλμπουμ", "pm.compilation": "Συλλογή",
@@ -3837,7 +3837,13 @@
     var doc = null;
     ((src.full && src.full.docs) || []).forEach(function (d) { if (d.id === tg.docs[0].id) doc = d; });
     if (!doc) return Promise.resolve({ content: "Error: the " + C.EDIT_APP[n.app].noun + " could not be read from this device's disk yet (it may still be syncing).", err: 1, ui: { k: "editErr" } });
-    var o = mod.outline(doc, EDIT_SRC[n.app].style ? readStore(EDIT_SRC[n.app].style) : null), text = JSON.stringify(o);
+    var o = mod.outline(doc, EDIT_SRC[n.app].style ? readStore(EDIT_SRC[n.app].style) : null);
+    // WR-CAT T2: Writer's book translations (progress, as this device last saw it)
+    if (n.app === "writer" && o && typeof mod.translations === "function") {
+      var tr = mod.translations(readStore("oros-writer-tr-sum"), doc.id);
+      if (tr.length) { o.translations = tr; o.translations_note = "Book translations in Writer (Review › Translations), as last seen on this device; read only."; }
+    }
+    var text = JSON.stringify(o);
     var title = doc.name || t("ed.untitled");
     var okP = app.perm === "always" ? Promise.resolve(true) : askRead(title, app.name, text);
     return okP.then(function (ok) {
