@@ -3164,7 +3164,7 @@
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
                                             recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn,
-                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps) });
+                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps), fonts: !data.set.chat });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -3363,6 +3363,7 @@
       });
     }
     if (call.name === "app_summary") return appSummary(c, call.args, apps);
+    if (call.name === "list_fonts") return listFonts(call.args);
     if (LINE_APPS[call.name]) return lineTool(c, call.name, call.args, apps);
     if (call.name === "kanban_add_columns") return kanbanColumns(c, call.args, apps);
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
@@ -6122,6 +6123,63 @@
       card.appendChild(acts);
     }
     host.appendChild(card);
+  }
+
+  // ---------- list_fonts (FM-7) ----------
+  // The families of Settings › Fonts: designkit/fonts.js (loaded the
+  // first time) reads the disk's font files and the collections;
+  // overview() does the rest. A file's letters and licence are kept
+  // per file name (the name is its hash, so they never change).
+  var fontsKit = null, fontFacts = {};
+  function fontsCore() {
+    if (window.orosDK && window.orosDK.fonts) return Promise.resolve(window.orosDK.fonts);
+    if (fontsKit) return fontsKit;
+    var chain = Promise.resolve();
+    ["../designkit/text.js", "../designkit/fonts.js"].forEach(function (src) {
+      chain = chain.then(function () {
+        return new Promise(function (resolve) {
+          var sc = document.createElement("script");
+          sc.src = src;
+          sc.onload = sc.onerror = function () { resolve(); };
+          document.head.appendChild(sc);
+        });
+      });
+    });
+    fontsKit = chain.then(function () { return (window.orosDK && window.orosDK.fonts) || null; });
+    fontsKit.then(function (F) { if (!F) fontsKit = null; });
+    return fontsKit;
+  }
+  function fontFact(F, file) {
+    if (fontFacts[file]) return Promise.resolve(fontFacts[file]);
+    return F.fetcher("asset:" + file).then(function (buf) {
+      var r = buf ? F.inspect(buf) : null;
+      if (!r) return null;
+      fontFacts[file] = { cov: { greek: F.level(r.cov.greek), poly: F.level(r.cov.poly) }, lic: r.lic.kind, embed: r.lic.embed };
+      return fontFacts[file];
+    }, function () { return null; });
+  }
+  function listFonts(args) {
+    return fontsCore().then(function (F) {
+      if (!F) return { content: "Error: the fonts could not be read on this device.", err: 1 };
+      var cols = F.cols.normalize(readStore(F.cols.KEY)), ui = readStore("oros-uifont");
+      var free = Object.keys(cols.mem).some(function (k) { return cols.mem[k].on && k.indexOf(":fs_") > 0; });
+      return Promise.all([
+        F.library({ all: true }).then(function (lib) {
+          var fams = F.families(lib);
+          return Promise.all(fams.map(function (e) {
+            return fontFact(F, e.r).then(function (x) {
+              return Object.assign({}, e, { cov: x ? x.cov : null, lic: x ? x.lic : null, embed: x ? x.embed : "" });
+            });
+          }));
+        }, function () { return []; }),
+        free ? F.catalog().then(null, function () { return []; }) : Promise.resolve([])
+      ]).then(function (got) {
+        var res = F.overview({ disk: got[0], cols: cols, catalog: got[1], ui: ui && typeof ui === "object" ? ui : null, lang: LANG }, args || {});
+        if (!res.ok) return { content: "Error: " + res.err, err: 1 };
+        delete res.ok;
+        return { content: JSON.stringify(res) };
+      });
+    });
   }
 
   // ---------- app_summary (assistant/summary.js) ----------
@@ -9119,7 +9177,7 @@
     var wr = ga.write.filter(function (a) { return a.id !== "files"; });
     var on = wr.length > 0, rd = {}, have = installed();
     ga.read.forEach(function (a) { if (have[a.id]) rd[a.id] = 1; });
-    var tools = C.toolsFor({ data: ga.read.length > 0, summary: summaryIds(ga.read).length > 0,
+    var tools = C.toolsFor({ data: ga.read.length > 0, summary: summaryIds(ga.read).length > 0, fonts: ga.read.length > 0,
                              changes: chg.length > 0, creates: crIds,
                              links: crIds.indexOf("crm") >= 0 && crIds.indexOf("contacts") >= 0,
                              partnerLinks: partnerLinksOn(crIds, wr), history: ga.write.length > 0,

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — fonts.js (v1.4.0)
+// orOS designkit — fonts.js (v1.5.0)
 // Font families a Layout document names besides the built-in Noto
 // ones. Owner: Layout.
 //   - "fs_<id>": a Fontsource family (open licences, mostly SIL OFL),
@@ -31,6 +31,9 @@
 // 1.3.0 (FM-3) adds ttcFace(): one face of a .ttc/.otc collection.
 // 1.4.0 (FM-6) adds uses(): where a family is used (documents, Writer,
 // the font of orOS), from what the caller read.
+// 1.5.0 (FM-7) adds overview(): the families the person can use, with
+// letters, kind, licence and collections, for the Assistant and orOS
+// Gate (list_fonts), from what the caller read.
 // Exposes orosDK.fonts (browser) or module.exports (Node: the pure
 // parts).
 // ============================================================
@@ -1100,6 +1103,109 @@
     return out;
   }
 
+  // ---------- 11. The families one can use (1.5.0, FM-7) ----------
+  // src (what the caller read, nothing is fetched):
+  //   disk: [{ id, name, fb, r, b, i, bi, cov: { greek, poly } levels
+  //          or null, lic: "ofl" | "apache" | "" or null, embed }]
+  //          (families() of the disk, with inspect() of each regular file);
+  //   cols: FONTS v1 data; catalog: Fontsource entries (catalog()) for
+  //   the free families in collections, [] when not at hand;
+  //   ui: the font of orOS ({ id, name }) or null; lang.
+  // filt: { letters: "greek" | "polytonic" (all or nearly all of those
+  //   letters), kind: "serif" | "sans" | "mono", collection: a name,
+  //   source: "disk" | "free", query: part of the name }.
+  // → { ok, total, families: [{ name, source, kind, greek, polytonic,
+  //   licence, styles, collections, note?, ui? }] (≤ 100, by name),
+  //   more?, collections: [names], ui: the font of orOS's name } or
+  //   { ok: false, err }. Levels: full, most, some, few, none, unknown.
+  var OV_MAX = 100;
+  var OV_STYLE = { r: "regular", b: "bold", i: "italic", bi: "bold italic" };
+  function ovKind(fb) { return fb === "serif" || fb === "mono" ? fb : "sans"; }
+  function ovLic(s) {
+    s = String(s || "");
+    if (/^ofl/i.test(s)) return "OFL";
+    if (/^apache/i.test(s)) return "Apache 2.0";
+    return s ? s.slice(0, 40) : "";
+  }
+  function overview(src, filt) {
+    src = src || {};
+    var f = filt && typeof filt === "object" ? filt : {};
+    var lang = src.lang || "en";
+    var letters = f.letters === "greek" || f.letters === "polytonic" ? f.letters : "";
+    if (f.letters && !letters) return { ok: false, err: "letters must be greek or polytonic." };
+    var kind = f.kind ? String(f.kind) : "";
+    if (kind && ["serif", "sans", "mono"].indexOf(kind) < 0) return { ok: false, err: "kind must be serif, sans or mono." };
+    var source = f.source ? String(f.source) : "";
+    if (source && source !== "disk" && source !== "free") return { ok: false, err: "source must be disk or free." };
+    var d = colsNorm(src.cols), names = colOrder(d, lang).map(function (c) { return d.cols[c].name; });
+    var cid = "";
+    if (f.collection) {
+      cid = colByName(d, String(f.collection), lang);
+      if (!cid) return { ok: false, err: "no collection named " + cleanLine(String(f.collection), 60) + (names.length ? "; the collections are: " + names.join(", ") + "." : "; there are no collections.") };
+    }
+    function fold(x) { return String(x).toLowerCase().replace(/\s+/g, ""); }
+    var q = fold(cleanLine(String(f.query || ""), 60));
+    var cat = {};
+    (Array.isArray(src.catalog) ? src.catalog : []).forEach(function (c) { if (c && isFam(c.id)) cat[c.id] = c; });
+    var rows = {}, order = [];
+    function row(id) {
+      if (!rows[id]) { rows[id] = { id: id }; order.push(id); }
+      return rows[id];
+    }
+    (Array.isArray(src.disk) ? src.disk : []).forEach(function (e) {
+      if (!e || !isFam(e.id) || typeof e.name !== "string") return;
+      var x = row(e.id);
+      x.name = cleanLine(e.name, 60); x.source = "disk"; x.kind = ovKind(e.fb);
+      x.greek = e.cov ? e.cov.greek || "unknown" : "unknown";
+      x.polytonic = e.cov ? e.cov.poly || "unknown" : "unknown";
+      x.licence = e.lic === "ofl" ? "OFL" : e.lic === "apache" ? "Apache 2.0" : e.lic === "" ? "other (see Settings › Fonts)" : "unknown";
+      if (e.embed && e.embed !== "installable") x.embedding = e.embed;
+      x.styles = ["r", "b", "i", "bi"].filter(function (v) { return !!e[v]; }).map(function (v) { return OV_STYLE[v]; });
+    });
+    Object.keys(d.mem).forEach(function (k) {
+      var m = d.mem[k], id = k.slice(k.indexOf(":") + 1);
+      if (!m.on || !isFam(id)) return;
+      var x = row(id);
+      if (x.source) return;
+      var c = cat[id];
+      x.name = cleanLine(m.name || (c && c.family) || id, 60);
+      x.source = id.indexOf("fs_") === 0 ? "free" : "disk";
+      x.kind = ovKind(c ? c.cat : m.fb);
+      if (c) {
+        x.greek = c.greek ? "full" : "none"; x.polytonic = c.poly ? "full" : "none"; x.licence = ovLic(c.lic) || "open";
+        x.styles = (Array.isArray(c.vars) ? c.vars : []).map(function (v) { return OV_STYLE[v]; }).filter(Boolean);
+      } else {
+        x.greek = "unknown"; x.polytonic = "unknown"; x.licence = x.source === "free" ? "open" : "unknown"; x.styles = [];
+        if (x.source === "disk") x.missing = true;     // in a collection, its files not on this disk
+      }
+    });
+    var uiId = src.ui && isFam(src.ui.id) ? src.ui.id : "";
+    var good = { full: 1, most: 1 };
+    var out = order.map(function (id) {
+      var x = rows[id], o = { name: x.name, source: x.source, kind: x.kind, greek: x.greek, polytonic: x.polytonic, licence: x.licence, styles: x.styles };
+      if (x.embedding) o.embedding = x.embedding;
+      if (x.missing) o.files = "not on the disk";
+      o.collections = colsOf(d, id, lang).map(function (c) { return d.cols[c].name; });
+      var n = d.notes[id];
+      if (n && n.t) o.note = n.t.slice(0, 200);
+      if (id === uiId) o.ui = true;
+      o._id = id;
+      return o;
+    }).filter(function (o) {
+      if (letters && !good[letters === "greek" ? o.greek : o.polytonic]) return false;
+      if (kind && o.kind !== kind) return false;
+      if (source && o.source !== source) return false;
+      if (cid && !(d.mem[cid + ":" + o._id] && d.mem[cid + ":" + o._id].on)) return false;
+      if (q && fold(o.name).indexOf(q) < 0) return false;
+      return true;
+    }).sort(function (a, b) { return a.name.localeCompare(b.name, lang, { sensitivity: "base" }) || (a._id < b._id ? -1 : 1); });
+    out.forEach(function (o) { delete o._id; });
+    var res = { ok: true, total: out.length, families: out.slice(0, OV_MAX), collections: names,
+                ui: uiId ? cleanLine((src.ui && src.ui.name) || (rows[uiId] && rows[uiId].name) || uiId, 60) : "Nunito" };
+    if (out.length > OV_MAX) res.more = out.length - OV_MAX;
+    return res;
+  }
+
   var api = {
     FOLDER: FOLDER, FILE_RE: FILE_RE, MAX: MAX,
     isFam: isFam, fsIdOf: fsIdOf, ufIdOf: ufIdOf, squash: squash, info: info, check: check,
@@ -1119,7 +1225,9 @@
     // 1.3.0
     ttcFace: ttcFace,
     // 1.4.0
-    uses: uses
+    uses: uses,
+    // 1.5.0
+    overview: overview
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.fonts = api; }
