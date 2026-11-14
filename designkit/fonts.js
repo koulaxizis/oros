@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — fonts.js (v1.3.0)
+// orOS designkit — fonts.js (v1.4.0)
 // Font families a Layout document names besides the built-in Noto
 // ones. Owner: Layout.
 //   - "fs_<id>": a Fontsource family (open licences, mostly SIL OFL),
@@ -29,6 +29,8 @@
 // 1.2.0 (FM-2) adds cols: font collections and notes, the synced
 // slice "fonts" (section 8), and keepOffline() for a collection.
 // 1.3.0 (FM-3) adds ttcFace(): one face of a .ttc/.otc collection.
+// 1.4.0 (FM-6) adds uses(): where a family is used (documents, Writer,
+// the font of orOS), from what the caller read.
 // Exposes orosDK.fonts (browser) or module.exports (Node: the pure
 // parts).
 // ============================================================
@@ -1054,6 +1056,50 @@
     return chain.then(function () { return { ok: ok, failed: failed, total: urls.length }; });
   }
 
+  // ---------- 10. Where a family is used (1.4.0, FM-6) ----------
+  // id: a family id. src (what the caller read, nothing is fetched):
+  //   layout / atelier: [{ path, text }] (package files, JSON text);
+  //   writer: the Writer slice ({ docs: [{ id, title, del }] }) or null;
+  //   cols: FONTS v1 data (its docs["writer:<id>"]); ui: the font of
+  //   orOS ({ id } or null).
+  // → [{ app, doc, name }] (app "layout" | "atelier" | "writer" | "oros";
+  // doc the document id; name its name, "" when it has none), Layout
+  // and Atelier by name. A package names the family only as a JSON
+  // string (ext.fam, setup.ext.fonts[].id), so its quoted id is enough
+  // to tell; only those packages are parsed, for their name and id.
+  function uses(id, src) {
+    var out = [];
+    if (!isFam(id) || !src) return out;
+    var q = JSON.stringify(id);
+    ["layout", "atelier"].forEach(function (app) {
+      var rows = [];
+      (Array.isArray(src[app]) ? src[app] : []).forEach(function (f) {
+        if (!f || typeof f.text !== "string" || f.text.indexOf(q) < 0) return;
+        var pkg = null;
+        try { pkg = JSON.parse(f.text); } catch (e) { return; }
+        var d = pkg && pkg.doc;
+        if (!d || typeof d.id !== "string") return;
+        rows.push({ app: app, doc: d.id, name: typeof d.name === "string" ? cleanLine(d.name, 80) : "" });
+      });
+      rows.sort(function (a, b) { return a.name.localeCompare(b.name) || (a.doc < b.doc ? -1 : 1); });
+      out = out.concat(rows);
+    });
+    var docs = src.cols && src.cols.docs, titles = {};
+    ((src.writer && Array.isArray(src.writer.docs)) ? src.writer.docs : []).forEach(function (d) {
+      if (d && typeof d.id === "string") titles[d.id] = d.del ? null : (typeof d.title === "string" ? cleanLine(d.title, 80) : "");
+    });
+    Object.keys(docs || {}).sort().forEach(function (k) {
+      var x = docs[k];
+      if (k.indexOf("writer:") !== 0 || !x) return;
+      if (!((x.body && x.body.id === id) || (x.head && x.head.id === id))) return;
+      var wid = k.slice(7);
+      if (titles[wid] === null) return;                // deleted
+      out.push({ app: "writer", doc: wid, name: titles[wid] || "" });
+    });
+    if (src.ui && src.ui.id === id) out.push({ app: "oros", doc: "", name: "" });
+    return out;
+  }
+
   var api = {
     FOLDER: FOLDER, FILE_RE: FILE_RE, MAX: MAX,
     isFam: isFam, fsIdOf: fsIdOf, ufIdOf: ufIdOf, squash: squash, info: info, check: check,
@@ -1071,7 +1117,9 @@
       docCol: docCol, bind: colsBind, keepOffline: keepOffline, docFonts: docFontsOf, setDocFonts: docFontsSet
     },
     // 1.3.0
-    ttcFace: ttcFace
+    ttcFace: ttcFace,
+    // 1.4.0
+    uses: uses
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.fonts = api; }

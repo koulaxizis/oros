@@ -89,6 +89,12 @@
       "fm.ui.back": "Back to Nunito",
       "fm.ui.hint": "Menus, buttons and the text of the apps, on this device only. A letter the font does not have stays in Nunito. Documents keep their own fonts.",
       "fm.ui.noGreek": "This font has no Greek letters: Greek text stays in Nunito.",
+      "fm.where": "Where it's used", "fm.where.find": "Find where it's used", "fm.where.again": "Look again",
+      "fm.where.looking": "Looking through your documents…", "fm.where.none": "No Layout, Atelier or Writer document uses this font, and orOS does not.",
+      "fm.where.n1": "Used in 1 place:", "fm.where.n": "Used in {n} places:", "fm.where.fail": "Some documents could not be read.",
+      "fm.where.layout": "Layout", "fm.where.atelier": "Atelier", "fm.where.writer": "Writer", "fm.where.oros": "The font of orOS on this device",
+      "fm.where.untitled": "Untitled", "fm.where.open": "Open",
+      "fm.where.hint": "Looks only when you ask: the documents on the orOS disk, Writer's documents on this device and the font of orOS.",
       "fm.removed": "Moved to the Trash: {name}", "fm.removeFail": "Could not move it to the Trash.",
       "fm.free.intro": "Free fonts from Fontsource (mostly SIL Open Font License). Layout and Atelier list them in their font lists; each one downloads the first time a document uses it and then works offline.",
       "fm.free.offline": "The list of free fonts needs a connection the first time.",
@@ -182,6 +188,12 @@
       "fm.ui.back": "Επιστροφή στη Nunito",
       "fm.ui.hint": "Μενού, κουμπιά και το κείμενο των εφαρμογών, μόνο σε αυτή τη συσκευή. Ένα γράμμα που δεν έχει η γραμματοσειρά μένει σε Nunito. Τα έγγραφα κρατούν τις δικές τους γραμματοσειρές.",
       "fm.ui.noGreek": "Αυτή η γραμματοσειρά δεν έχει ελληνικά: το ελληνικό κείμενο μένει σε Nunito.",
+      "fm.where": "Πού χρησιμοποιείται", "fm.where.find": "Βρες πού χρησιμοποιείται", "fm.where.again": "Ξανά αναζήτηση",
+      "fm.where.looking": "Ψάχνω στα έγγραφά σου…", "fm.where.none": "Κανένα έγγραφο Layout, Atelier ή Writer δεν τη χρησιμοποιεί, ούτε το orOS.",
+      "fm.where.n1": "Χρησιμοποιείται σε 1 σημείο:", "fm.where.n": "Χρησιμοποιείται σε {n} σημεία:", "fm.where.fail": "Κάποια έγγραφα δεν διαβάστηκαν.",
+      "fm.where.layout": "Layout", "fm.where.atelier": "Atelier", "fm.where.writer": "Writer", "fm.where.oros": "Η γραμματοσειρά του orOS σε αυτή τη συσκευή",
+      "fm.where.untitled": "Χωρίς τίτλο", "fm.where.open": "Άνοιγμα",
+      "fm.where.hint": "Ψάχνει μόνο όταν το ζητήσεις: στα έγγραφα του δίσκου του orOS, στα έγγραφα του Writer αυτής της συσκευής και στη γραμματοσειρά του orOS.",
       "fm.removed": "Μεταφέρθηκε στα Απορρίμματα: {name}", "fm.removeFail": "Δεν μεταφέρθηκε στα Απορρίμματα.",
       "fm.free.intro": "Δωρεάν γραμματοσειρές από το Fontsource (κυρίως με άδεια SIL Open Font License). Το Layout και το Atelier τις δείχνουν στις λίστες γραμματοσειρών τους· η καθεμία κατεβαίνει την πρώτη φορά που τη χρησιμοποιεί ένα έγγραφο και μετά δουλεύει χωρίς σύνδεση.",
       "fm.free.offline": "Η λίστα με τις δωρεάν γραμματοσειρές θέλει σύνδεση την πρώτη φορά.",
@@ -715,6 +727,8 @@
       var ur = insp[f.main.file], ug = ur ? DK.level(ur.cov.greek) : "full";
       rootEl.appendChild(uiCard(ue, ug !== "full" && ug !== "most"));
     }
+    // before a removal the same search runs by itself (first press)
+    rootEl.appendChild(whereCard(ufOf(f), S.armed));
     var fc = card(t("fm.files"));
     if (f.cff) fc.appendChild(el("p", "hint", t("fm.cff.hint")));
     f.files.forEach(function (r) {
@@ -756,6 +770,72 @@
     return DK.ufIdOf(r.file);
   }
   function colData() { return CB ? CB.get() : DK.cols.normalize(null); }
+
+  // ---------- Where it's used (FM-6) ----------
+  // Only on request: the package files of /internal/Layout and
+  // /internal/Atelier (≤ 400 each, conflict copies left out), Writer's
+  // slice on this device, the fonts slice and the font of orOS, through
+  // designkit/fonts.js uses(). S.where = { id, busy, rows, fail }.
+  var WHERE_DIRS = [["layout", "/internal/Layout", ".oroslayout"], ["atelier", "/internal/Atelier", ".orosdesign"]];
+  function shellFs() { try { return (window.parent && window.parent.orosFS) || window.orosFS || null; } catch (e) { return null; } }
+  function readDir(FS, dir, ext, bad) {
+    return FS.ls(dir).then(function (list) {
+      var files = (list || []).filter(function (e) {
+        return e && !e.dir && typeof e.name === "string" && e.name.slice(-ext.length) === ext && e.name.indexOf("(conflict") < 0;
+      }).slice(0, 400);
+      return Promise.all(files.map(function (e) {
+        var path = dir + "/" + e.name;
+        return FS.read(path).then(function (b) { return b && b.text ? b.text() : null; })
+          .then(function (text) { return typeof text === "string" ? { path: path, text: text } : null; }, function () { bad.n++; return null; });
+      }));
+    }, function () { return []; }).then(function (l) { return l.filter(Boolean); });
+  }
+  function findUses(id) {
+    var FS = shellFs(), bad = { n: 0 }, src = { cols: colData(), ui: UI ? UI.get() : null, writer: null };
+    try { src.writer = JSON.parse(localStorage.getItem("oros-writer-data") || "null"); } catch (e) { src.writer = null; }
+    var reads = WHERE_DIRS.map(function (x) { return FS ? readDir(FS, x[1], x[2], bad).then(function (l) { src[x[0]] = l; }) : null; });
+    return Promise.all(reads).then(function () { return { rows: DK.uses(id, src), fail: bad.n > 0 }; });
+  }
+  function openUse(r) {
+    try { if (window.parent && typeof window.parent.__orosOpenAt === "function") window.parent.__orosOpenAt(r.app, { doc: r.doc }); } catch (e) {}
+  }
+  function whereCard(id, auto) {
+    var c = card(t("fm.where"));
+    var w = S.where && S.where.id === id ? S.where : null;
+    function run() {
+      S.where = { id: id, busy: true, rows: null, fail: false };
+      draw();
+      findUses(id).then(function (res) {
+        if (!S.where || S.where.id !== id) return;
+        S.where = { id: id, busy: false, rows: res.rows, fail: res.fail };
+        if (rootEl.isConnected) draw();
+      }, function () { S.where = { id: id, busy: false, rows: [], fail: true }; if (rootEl.isConnected) draw(); });
+    }
+    if (!w && auto) { setTimeout(run, 0); w = { busy: true }; }
+    if (w && w.busy) c.appendChild(el("p", "hint", t("fm.where.looking")));
+    else if (w && w.rows) {
+      c.appendChild(el("p", w.rows.length ? "" : "hint", w.rows.length ? (w.rows.length === 1 ? t("fm.where.n1") : t("fm.where.n", { n: w.rows.length })) : t("fm.where.none")));
+      w.rows.forEach(function (r) {
+        var row = el("div", "fm-userow");
+        row.appendChild(el("span", "fm-usename", r.app === "oros" ? t("fm.where.oros") : (r.name || t("fm.where.untitled"))));
+        if (r.app !== "oros") {
+          row.appendChild(el("span", "fm-badge", t("fm.where." + r.app)));
+          var acts = el("div", "actions fm-colacts");
+          acts.appendChild(btn(t("fm.where.open"), "btn", function () { openUse(r); }));
+          row.appendChild(acts);
+        }
+        c.appendChild(row);
+      });
+      if (w.fail) c.appendChild(el("p", "msg msg-err", t("fm.where.fail")));
+    }
+    if (!w || !w.busy) {
+      var acts2 = el("div", "actions");
+      acts2.appendChild(btn(t(w ? "fm.where.again" : "fm.where.find"), "btn", run));
+      c.appendChild(acts2);
+    }
+    c.appendChild(el("p", "hint", t("fm.where.hint")));
+    return c;
+  }
 
   // ---------- The font of orOS (FM-5) ----------
   // The shell keeps it (key oros-uifont, this device); ctx.ui from
@@ -1249,6 +1329,7 @@
     rootEl.appendChild(slot);
     rootEl.appendChild(colsCard({ id: f.id, name: f.family, fb: f.cat }));
     if (UI) rootEl.appendChild(uiCard({ id: f.id, name: f.family, fb: f.cat }, !f.greek));
+    rootEl.appendChild(whereCard(f.id, false));
     var slug = f.id.slice(3).replace(/_/g, "-");
     var v = S.style;
     fontsourceInfo(f.id).then(function (j) {
