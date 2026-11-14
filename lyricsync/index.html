@@ -7,8 +7,8 @@
   <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=lyricsync" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Lyric Sync · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=6.36.00">
-  <link rel="stylesheet" href="app.css?v=6.36.00">
+  <link rel="stylesheet" href="../fonts.css?v=6.51.00">
+  <link rel="stylesheet" href="app.css?v=6.51.00">
 </head>
 <body>
 
@@ -62,6 +62,7 @@
             <label class="mini"><span data-i18n="ch.ts">Time</span><select id="ch-ts"></select></label>
             <label class="mini"><span data-i18n="ch.names">Chord names</span><select id="ch-names"><option value="0">C D E</option><option value="1">Ντο Ρε Μι</option></select></label>
             <button type="button" id="ch-tr" class="chip" data-i18n="ch.transpose">Transpose</button>
+            <button type="button" id="stage-btn" class="chip pri" data-i18n="sg.open">Stage</button>
           </span>
         </div>
         <label for="lyrics-text" id="lyrics-lbl" class="lbl" data-i18n="f.lyrics">Lyrics, one line per line. A blank line starts a new verse.</label>
@@ -147,7 +148,7 @@
 
       <!-- Preview -->
       <div id="p-preview" role="tabpanel" aria-labelledby="tab-preview" hidden>
-        <div class="row"><button type="button" id="full-btn" class="chip" data-i18n="btn.full">Full screen</button></div>
+        <div class="row"><button type="button" id="full-btn" class="chip" data-i18n="btn.full">Full screen</button><button type="button" id="stage-btn2" class="chip" data-i18n="sg.open">Stage</button></div>
         <div id="stage" aria-live="off">
           <p id="st-prev" class="st dim"></p>
           <p id="st-now" class="st now"></p>
@@ -157,6 +158,35 @@
       </div>
     </section>
   </main>
+
+  <!-- Songbook S2: the stage -->
+  <section id="stage2" class="stage2" hidden>
+    <div class="sg-bar">
+      <button type="button" id="sg-close" class="chip icon" data-i18n-aria="sg.close">✕</button>
+      <div class="sg-head"><strong id="sg-title"></strong><span id="sg-info" class="dim"></span></div>
+      <button type="button" id="sg-play" class="chip pri icon" data-i18n-aria="sg.play">▶</button>
+      <span id="sg-mode" class="dim sg-mode"></span>
+      <button type="button" id="sg-slower" class="chip icon" data-i18n-aria="sg.slower">−</button>
+      <button type="button" id="sg-faster" class="chip icon" data-i18n-aria="sg.faster">+</button>
+      <button type="button" id="sg-cin" class="chip" aria-pressed="false" data-i18n="sg.cin">Count-in</button>
+      <button type="button" id="sg-smaller" class="chip icon" data-i18n-aria="sg.smaller">A−</button>
+      <button type="button" id="sg-bigger" class="chip icon" data-i18n-aria="sg.bigger">A+</button>
+      <label class="sg-showl"><span class="sr-only" data-i18n="sg.show">Show</span>
+        <select id="sg-show">
+          <option value="both" data-i18n="sg.both">Words and chords</option>
+          <option value="words" data-i18n="sg.words">Words only</option>
+          <option value="chords" data-i18n="sg.chords">Chords only</option>
+        </select>
+      </label>
+    </div>
+    <div id="sg-body" class="sg-body" tabindex="0">
+      <div id="sg-sheet" class="sheet stage-sheet"></div>
+    </div>
+    <div class="sg-pages">
+      <button type="button" id="sg-up" class="chip sg-page" data-i18n-aria="sg.up">▲</button>
+      <button type="button" id="sg-down" class="chip sg-page" data-i18n-aria="sg.down">▼</button>
+    </div>
+  </section>
 
   <audio id="player" preload="auto"></audio>
 
@@ -247,15 +277,15 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=6.36.00" data-app="lyricsync"></script>
-  <script src="core.js?v=6.36.00"></script>
-  <script src="chords.js?v=6.36.00"></script>
-  <script src="formats.js?v=6.36.00"></script>
-  <script src="wave.js?v=6.36.00"></script>
-  <script src="id3.js?v=6.36.00"></script>
-  <script src="align.js?v=6.36.00"></script>
-  <script src="../montage/asr.js?v=6.36.00"></script>
-  <script src="app.js?v=6.36.00"></script>
+  <script src="../i18n.js?v=6.51.00" data-app="lyricsync"></script>
+  <script src="core.js?v=6.51.00"></script>
+  <script src="chords.js?v=6.51.00"></script>
+  <script src="formats.js?v=6.51.00"></script>
+  <script src="wave.js?v=6.51.00"></script>
+  <script src="id3.js?v=6.51.00"></script>
+  <script src="align.js?v=6.51.00"></script>
+  <script src="../montage/asr.js?v=6.51.00"></script>
+  <script src="app.js?v=6.51.00"></script>
 
 </body>
 </html>
