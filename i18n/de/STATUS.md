@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 44973 of 45403 (99%)
-- Help pages: 159 of 159 (100%)
+- Strings: 45015 of 45445 (99%)
+- Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -25,7 +25,7 @@ text is still written in the code. They switch over wave by wave
 | breakout | 100% | 56 / 56 |
 | bubble | 100% | 54 / 54 |
 | budget | 90% | 1065 / 1182 |
-| calculator | 100% | 166 / 166 |
+| calculator | 100% | 170 / 170 |
 | calendar | 98% | 551 / 561 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
@@ -54,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | feeds | 100% | 325 / 325 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 99% | 675 / 676 |
+| files | 99% | 711 / 712 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -125,7 +125,7 @@ text is still written in the code. They switch over wave by wave
 | ringtones | 100% | 107 / 107 |
 | roots | 100% | 226 / 226 |
 | rps | 100% | 60 / 60 |
-| scanpdf | 100% | 524 / 524 |
+| scanpdf | 100% | 526 / 526 |
 | scores | 100% | 147 / 147 |
 | settings | 98% | 1404 / 1419 |
 | share | 100% | 220 / 220 |
@@ -161,7 +161,7 @@ text is still written in the code. They switch over wave by wave
 | travel | 100% | 555 / 555 |
 | typewriter | 100% | 46 / 46 |
 | typing | 94% | 170 / 180 |
-| units | 100% | 214 / 214 |
+| units | English for now | 214 / 214 |
 | wallpaper | 100% | 130 / 130 |
 | water | 100% | 94 / 94 |
 | wayfarers | 100% | 549 / 549 |

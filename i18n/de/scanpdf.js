@@ -225,6 +225,8 @@ orosPack("de", "scanpdf", {
  "save.name": "Dateiname",
  "save.pages": "{n} Seiten kommen ins PDF.",
  "save.pages.one": "1 Seite kommt ins PDF.",
+ "save.docs": "Auch zu Dokumenten hinzufügen",
+ "toast.savedDocs": "In Dateien › {dir} gespeichert. Es erscheint in Dateien › Dokumente.",
  "save.read": "Durchsuchbar machen",
  "save.readHint": "Der Text gescannter Seiten und Bilder wird zuerst gelesen und unter jede Seite gelegt, damit sich das PDF durchsuchen und kopieren lässt.",
  "save.title": "PDF speichern",

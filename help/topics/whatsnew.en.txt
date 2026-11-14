@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.74.00
+- **Documents can now be searched by their text.** Files › Documents reads the words of a PDF, and with your OK recognises the text of scans and photos on this device (Greek and English). Search finds a document by any word in it, `From the text:` suggests its type, date, amount and expiry, and in Scanner & PDF `Also add it to Documents` files a new scan straight away. See [Files](app:files).
+
 ## Version 6.73.00
 - **Unit Converter is now part of the Calculator.** Open the `Convert` mode in the Calculator for every unit, currency and cooking conversion, with your favourites and recent ones kept. Old links and shortcuts to Unit Converter open that mode.
 
