@@ -341,7 +341,11 @@
    "app": "forms",
    "files": [
     "forms/app.js",
-    "forms/render.js"
+    "forms/f/fill.js",
+    "forms/host.js",
+    "forms/pub.js",
+    "forms/render.js",
+    "forms/today.js"
    ]
   },
   {

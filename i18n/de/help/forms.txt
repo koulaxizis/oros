@@ -1,5 +1,5 @@
 # Formulare
-Formulare erstellt Umfragen, Anmeldelisten und Bestellformulare: Fragen vieler Arten, Seiten, Fragen, die nur bei bestimmten Antworten erscheinen, und Sprünge zwischen Seiten. Diese erste Version von Formulare erstellt Formulare und zeigt sie in der Vorschau; das Teilen per Link und das Sammeln der Antworten kommt mit dem nächsten Update.
+Formulare erstellt Umfragen, Anmeldelisten und Bestellformulare: Fragen vieler Arten, Seiten, Fragen, die nur bei bestimmten Antworten erscheinen, und Sprünge zwischen Seiten. Teile ein Formular per Link, QR-Code oder auf deiner Website; andere füllen es ohne Konto aus, und die Antworten kommen verschlüsselt auf dieses Gerät. Diagramme und Export der Antworten kommen mit dem nächsten Update.
 
 ## Ein Formular erstellen
 - Tippe auf `Neues Formular`. Wähle `Leeres Formular` oder eine Vorlage: Kontaktformular, Anmeldung zur Veranstaltung, Feedback, Bestellformular, Zufriedenheitsumfrage oder Kursanmeldung. Eine Vorlage ist nur ein Anfang: Ändere darin, was du willst.
@@ -31,4 +31,20 @@ Formulare erstellt Umfragen, Anmeldelisten und Bestellformulare: Fragen vieler A
 - `Nachricht nach dem Absenden` lesen andere, wenn sie fertig sind. Leer bedeutet „Danke. Ihre Antworten wurden gespeichert.“
 - `Hinweis oben` steht in einem Kasten unter der Beschreibung, zum Beispiel um zu sagen, wofür die Antworten sind.
 - `Fortschrittsbalken bei Formularen mit Seiten zeigen` zeigt, wie weit andere schon sind.
+- `Seite für einen Link nach dem Absenden` setzt eine Schaltfläche in die Dankesnachricht, zum Beispiel zurück zu deinem Shop. Es muss eine https-Adresse sein. Niemand wird von selbst dorthin geschickt.
+- `Eine Antwort pro Browser`: Die Seite merkt sich in diesem Browser, dass das Formular beantwortet wurde, und nimmt von ihm keine zweite Antwort an. Das verhindert Versehen, nicht jemanden, der schummeln will (ein anderer Browser kann noch antworten).
 - `Formular duplizieren` erstellt eine Kopie zum Ändern. `Formular löschen` entfernt es auf allen deinen Geräten; `Rückgängig` holt es einige Sekunden lang zurück.
+
+## Teilen
+- `Teilen` › `Veröffentlichen` gibt dem Formular einen Link (useoros.online/forms/f/…), einen QR-Code und Code, um das Formular auf deine Website zu setzen. Andere füllen es in jedem Browser aus, ohne Konto.
+- Die Fragen werden mit einem Schlüssel verschlüsselt, der nur im Link steht (nach dem #, das Browser nie senden), und jede Antwort wird im Browser der Person für dieses Formular verschlüsselt. Das orOS-Relay hält sie dazwischen und kann beides nicht lesen.
+- Wenn du das Formular änderst, stellt `Änderungen veröffentlichen` die neue Fassung online. Bis dahin sehen andere die veröffentlichte.
+- `Formular schließen` nimmt keine neuen Antworten mehr an; `Formular öffnen` nimmt sie wieder an. `Automatisch schließen am` schließt es zu einem Datum und einer Uhrzeit. Ein geschlossenes Formular wird 30 Tage nach dem Schließen vom Relay entfernt, ebenso eines, das 90 Tage lang kein Gerät geprüft hat.
+- Jede Seite zeigt eine Warnung: Das Formular hat jemand erstellt, der orOS nutzt, nicht orOS selbst, und niemand soll Passwörter oder Kartennummern eingeben. Jeder kann ein Formular melden; melden es mehrere am selben Tag, wird es geschlossen, bis du es wieder öffnest.
+- `Teilen beenden` schaltet den Link endgültig ab und löscht Antworten, die noch beim Relay warten. Die Antworten auf deinen Geräten bleiben.
+
+## Antworten
+- Ein Gerät holt die Antworten ab: das, das das Formular veröffentlicht hat, oder das, auf dem du `Auf diesem Gerät abholen` drückst. Es prüft, wenn du Formulare öffnest, und alle paar Minuten, solange Formulare offen ist; `Nach Antworten sehen` prüft sofort. Bei geschlossenem Formulare prüft orOS alle 10 Minuten, solange es offen ist, und zeigt eine Mitteilung, wenn Antworten warten; Heute zeigt sie auch.
+- `Auf diesem Gerät auch bei geschlossenem orOS benachrichtigen` sendet eine Benachrichtigung, die nur „Neue Antwort in einem Formular“ sagt, höchstens alle 15 Minuten. Dafür muss `Benachrichtigungen bei geschlossenem orOS` unter Einstellungen › Benachrichtigungen an sein.
+- Antworten warten höchstens 30 Tage beim Relay. Einmal abgeholt, werden sie dort gelöscht und hier behalten, und sie synchronisieren sich mit deinen anderen Geräten.
+- `Antworten` zeigt jede Antwort, die neueste zuerst, mit den Fragen. Ein Punkt auf dem Reiter heißt: neue, die du noch nicht angesehen hast.
