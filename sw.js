@@ -1749,6 +1749,7 @@ var PRECACHE_URLS = [
   "texttools/worker.js",
   "translate/engine.js",
   "translate/worker.js",
+  "translate/panel.js",
   "units/",
   "units/index.html",
   "units/units.css",

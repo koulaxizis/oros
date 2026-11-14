@@ -1158,6 +1158,23 @@
     return merge(d, null);
   }
 
+  // New texts for text clips (Translate the subtitles), all in one edit:
+  // texts = { itemId: text }; timings, boxes and styles stay; a clip
+  // that is gone, is not a title or gets an empty text is left as it is.
+  function setTexts(data, pid, texts, now) {
+    var d = clone(data), p = d.projects[pid];
+    if (!p || !texts || typeof texts !== "object") return d;
+    Object.keys(texts).forEach(function (iid) {
+      var it = p.items[iid], s = typeof texts[iid] === "string" ? texts[iid].trim() : "";
+      if (!it || it.k !== "title" || !s || s === it.text.t) return;
+      var n = normItem(Object.assign({}, it, { text: Object.assign({}, it.text, { t: s }) }), iid);
+      if (!n) return;
+      n.m = tick(it.m, now);
+      p.items[iid] = n;
+    });
+    return merge(d, null);
+  }
+
   // Freeze frame: a still picture (pic, the frame at t) is held for
   // `hold` seconds inside a main video clip: the clip splits at t and
   // the still goes between the two parts. ids = { tail, still }.
@@ -1192,7 +1209,7 @@
     projectList: projectList, fmtTime: fmtTime, exportName: exportName,
     kfAt: kfAt, kfSet: kfSet, kfSplit: kfSplit, kfProps: kfProps, MAX_KEYS: MAX_KEYS,
     parseCube: parseCube, lutPixels: lutPixels, srcTime: srcTime,
-    parseSrt: parseSrt, toSrt: toSrt, addSubtitles: addSubtitles, freezeAt: freezeAt, SUB_BOX: SUB_BOX, DUCK_RAMP: DUCK_RAMP,
+    parseSrt: parseSrt, toSrt: toSrt, addSubtitles: addSubtitles, setTexts: setTexts, freezeAt: freezeAt, SUB_BOX: SUB_BOX, DUCK_RAMP: DUCK_RAMP,
     hasRamp: hasRamp, fwdPos: fwdPos, fwdLocal: fwdLocal, rateAt: rateAt, srAt: srAt, srSet: srSet, rampPreset: rampPreset,
     RAMPS: Object.keys(RAMPS), SR_MIN: SR_MIN, SR_MAX: SR_MAX, MAX_SR: MAX_SR, srcPieces: srcPieces, trimSrc: trimSrc,
     chromaKey: chromaKey, ckParams: ckParams, fcAt: fcAt, fcSet: fcSet, MAX_FC: MAX_FC, mediaTime: mediaTime, uvOf: uvOf, shownPoint: shownPoint

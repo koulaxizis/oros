@@ -222,6 +222,7 @@
       "toast.sent": "Sent", "toast.sentNoCopy": "Sent. A copy could not be filed in Sent.",
       "toast.queued": "In the Outbox: it goes out when you are online.", "toast.outSent": "Sent from the Outbox: {n}",
       "out.bar": "Outbox: {n}", "out.title": "Outbox",
+      "tr.btn": "Translate", "tr.none": "This message has no text to translate.", "tr.fail": "The translator could not be loaded.",
       "to.btn": "Other apps", "to.title": "Use this message in…", "to.app": "Mail", "to.from": "From:", "to.date": "Date:", "to.subj": "Subject:",
       "to.todo": "A To-Do task", "to.todoHint": "The subject as the task, the message as its note.",
       "to.note": "A note", "to.noteHint": "Saves the message's text as a new page in Notes.",
@@ -433,6 +434,7 @@
       "toast.sent": "Στάλθηκε", "toast.sentNoCopy": "Στάλθηκε. Δεν μπήκε αντίγραφο στα Απεσταλμένα.",
       "toast.queued": "Μπήκε στα Εξερχόμενα: θα σταλεί μόλις συνδεθείς.", "toast.outSent": "Στάλθηκαν από τα Εξερχόμενα: {n}",
       "out.bar": "Εξερχόμενα: {n}", "out.title": "Εξερχόμενα",
+      "tr.btn": "Μετάφραση", "tr.none": "Αυτό το μήνυμα δεν έχει κείμενο για μετάφραση.", "tr.fail": "Ο μεταφραστής δεν φορτώθηκε.",
       "to.btn": "Άλλες εφαρμογές", "to.title": "Χρήση του μηνύματος σε…", "to.app": "Αλληλογραφία", "to.from": "Από:", "to.date": "Ημερομηνία:", "to.subj": "Θέμα:",
       "to.todo": "Εργασία στο To-Do", "to.todoHint": "Το θέμα γίνεται εργασία, το μήνυμα σημείωσή της.",
       "to.note": "Σημείωση", "to.noteHint": "Αποθηκεύει το κείμενο του μηνύματος ως νέα σελίδα στις Σημειώσεις.",
@@ -1870,6 +1872,7 @@
       });
     }
     if (shellApps()) acts.appendChild(button(t("to.btn"), "small", function () { appsDialog(m, p); }));
+    acts.appendChild(button(t("tr.btn"), "small", function () { translateMsg(m, p); }));
     var org = el("span", "org-acts");
     orgButtons(org, [openMsg.uid], true);
     acts.appendChild(org);
@@ -4302,6 +4305,20 @@
   function msgText(p) {
     var s = p.text !== null ? p.text : (p.html !== null ? htmlText(p.html) : "");
     return String(s || "").replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  // Translate (translate/panel.js, TRANSLATE T3): the subject and the
+  // message text, on the device; shown in the panel, never stored.
+  function translateMsg(m, p) {
+    var body = msgText(p), subj = String(m.subj || "").trim();
+    if (!body && !subj) { showToast(t("tr.none")); return; }
+    var o = { text: (subj ? subj + "\n\n" : "") + body, lang: LANG };
+    if (window.OrosTranslatePanel) { window.OrosTranslatePanel.open(o); return; }
+    var v = window.orosI18n && window.orosI18n.ver, s = document.createElement("script");
+    var fail = function () { showToast(t("tr.fail")); };
+    s.src = "../translate/panel.js" + (v ? "?v=" + encodeURIComponent(v) : "");
+    s.onload = function () { if (window.OrosTranslatePanel) window.OrosTranslatePanel.open(o); else fail(); };
+    s.onerror = fail;
+    document.head.appendChild(s);
   }
   // http(s) links of the message, text first seen as their title
   function msgLinks(p) {

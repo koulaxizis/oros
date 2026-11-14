@@ -18,6 +18,9 @@ Du kommst von einem anderen Reader? Nutze `Aus anderem Reader importieren (OPML)
 ### Zusammenfassen
 Die Funkeltaste (`Zusammenfassen`) über einem Artikel fragt nach einer kurzen Zusammenfassung: ein Satz und ein paar Kernpunkte, in der Sprache, in der orOS gerade läuft. Sie nutzt die KI, die du im [Assistenten](app:assistant) eingerichtet hast: deinen eigenen Schlüssel (Claude, ChatGPT, Gemini…), einen Server auf deinem Computer oder das eingebaute Modell des Browsers. Nur Titel und Text dieses Artikels gehen an diesen Anbieter, direkt von diesem Gerät; orOS hat keinen eigenen KI-Schlüssel. Ohne eingerichteten Assistenten sagt die Taste, wie es geht. `Kopieren` kopiert die Zusammenfassung; sie wird nicht gespeichert.
 
+### Übersetzen
+Die Übersetzen-Taste über einem Artikel öffnet `Übersetzen` mit Titel und Text des Artikels. Sie übersetzt auf diesem Gerät mit den Modellen von Mozilla, wie [Text Tools](app:texttools) › Übersetzen: Beim ersten Mal für zwei Sprachen sagt sie, wie groß der Download ist, danach geht es auch offline. `Von` erkennt die Sprache selbst; `Nach` merkt sich deine letzte Wahl. `Kopieren` kopiert die Übersetzung; sie wird nicht gespeichert.
+
 ## Newsletter aus Mail
 `Newsletter aus Mail` (in `Feed hinzufügen`, in den `Einstellungen` und auf dem ersten Bildschirm) zeigt einen Ordner der App [Mail](app:mail) als Feed, zum Beispiel einen, in den eine Mail-Regel deine Newsletter legt. Seine Nachrichten werden zu Artikeln: Gib ihnen einen Stern oder ein Tag, durchsuche sie und markiere sie hier als gelesen. Bilder sind aus, bis du sie für diesen Feed erlaubst, damit Absender nicht erfahren, dass du eine Nachricht geöffnet hast. `In Mail öffnen` öffnet die Nachricht in Mail.
 

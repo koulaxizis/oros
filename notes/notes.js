@@ -627,6 +627,8 @@
       "fmt.task": "Checkbox",
       "fmt.link": "Link",
       "fmt.code": "Code",
+      "tr.btn": "Translate", "tr.replace": "Replace", "tr.replaceSel": "Replace the selection", "tr.below": "Add below",
+      "tr.none": "There is no text to translate yet.", "tr.fail": "The translator could not be loaded.", "tr.changed": "The page changed meanwhile, so nothing was put in.",
       "preview.empty": "Nothing here yet. Switch to Edit to write.",
       "daily.btn": "Today",
       "daily.title": "Today's note",
@@ -663,6 +665,8 @@
       "fmt.task": "Κουτάκι επιλογής",
       "fmt.link": "Σύνδεσμος",
       "fmt.code": "Κώδικας",
+      "tr.btn": "Μετάφραση", "tr.replace": "Αντικατάσταση", "tr.replaceSel": "Αντικατάσταση της επιλογής", "tr.below": "Προσθήκη από κάτω",
+      "tr.none": "Δεν υπάρχει ακόμη κείμενο για μετάφραση.", "tr.fail": "Ο μεταφραστής δεν φορτώθηκε.", "tr.changed": "Η σελίδα άλλαξε στο μεταξύ, οπότε δεν μπήκε τίποτα.",
       "preview.empty": "Δεν υπάρχει τίποτα ακόμη. Πάτα Επεξεργασία για να γράψεις.",
       "daily.btn": "Σήμερα",
       "daily.title": "Η σημερινή σελίδα",
@@ -3193,6 +3197,7 @@
     link: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
     code: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'
   };
+  var TR_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M5.5 5c.8 3 2.8 5.3 5.5 6.5M10.5 5c-.9 3.4-3 6-6.5 7.5"/><path d="M12 21l4-9 4 9M13.5 18h5"/></svg>';
   var VIEW_ICONS = {
     edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     preview: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
@@ -3231,6 +3236,44 @@
     replaceEditorText(ta, r.text, r.a, r.b);
   }
 
+  // Translate (translate/panel.js, TRANSLATE T3): the selection, or the
+  // whole page, on the device. Replace / Add below go in as one edit of
+  // the textarea (Ctrl+Z undoes it), only if the page is still the same.
+  function translatePage() {
+    var ta = document.getElementById("page-text");
+    var page = pageById(prefs.current);
+    if (!ta || !page) return;
+    var a = ta.selectionStart, b = ta.selectionEnd, all = a === b;
+    var src = all ? ta.value : ta.value.slice(a, b);
+    if (!src.trim()) { toast(t("tr.none")); return; }
+    var pid = page.id, before = ta.value;
+    function put(fn) {
+      return function (r) {
+        var el = document.getElementById("page-text");
+        if (!el || el.disabled || prefs.current !== pid || el.value !== before) { toast(t("tr.changed")); return; }
+        fn(el, r.text);
+      };
+    }
+    var o = { text: src, lang: LANG, actions: [
+      { label: t(all ? "tr.replace" : "tr.replaceSel"), run: put(function (el, txt) {
+        var s = all ? 0 : a, e = all ? before.length : b;
+        replaceEditorText(el, before.slice(0, s) + txt + before.slice(e), s, s + txt.length);
+      }) },
+      { label: t("tr.below"), run: put(function (el, txt) {
+        var e = all ? before.length : b, gap = before.slice(0, e).replace(/[ \t]+$/, "").slice(-1) === "\n" ? "\n" : "\n\n";
+        var ins = gap + txt;
+        replaceEditorText(el, before.slice(0, e) + ins + before.slice(e), e + gap.length, e + ins.length);
+      }) }
+    ] };
+    if (window.OrosTranslatePanel) { window.OrosTranslatePanel.open(o); return; }
+    var v = window.orosI18n && window.orosI18n.ver, sc = document.createElement("script");
+    var fail = function () { toast(t("tr.fail")); };
+    sc.src = "../translate/panel.js" + (v ? "?v=" + encodeURIComponent(v) : "");
+    sc.onload = function () { if (window.OrosTranslatePanel) window.OrosTranslatePanel.open(o); else fail(); };
+    sc.onerror = fail;
+    document.head.appendChild(sc);
+  }
+
   function buildToolbar() {
     var bar = document.getElementById("md-toolbar");
     if (!bar || bar.childNodes.length) return;
@@ -3251,6 +3294,17 @@
       b.addEventListener("click", function () { applyFormat(k); });
       fmt.appendChild(b);
     });
+    var trb = document.createElement("button");
+    trb.type = "button";
+    trb.className = "fmt-btn";
+    trb.id = "btn-translate";
+    trb.title = t("tr.btn");
+    trb.setAttribute("aria-label", t("tr.btn"));
+    trb.innerHTML = TR_ICON;
+    trb.addEventListener("pointerdown", function (e) { e.preventDefault(); });
+    trb.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    trb.addEventListener("click", translatePage);
+    fmt.appendChild(trb);
     bar.appendChild(fmt);
     var vw = document.createElement("div");
     vw.className = "vw-group";
