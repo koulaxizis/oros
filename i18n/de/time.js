@@ -18,7 +18,7 @@ orosPack("de", "time", {
  "astro.lon": "Längengrad",
  "astro.manual": "Standort festlegen",
  "astro.moonage": "Mondalter",
- "astro.more": "Mehr in Mond & Himmel",
+ "astro.more": "Mehr im Wetter",
  "astro.none": "Kein Standort festgelegt",
  "astro.none.hint": "Nutzt automatisch den Standort der Wetter-App, oder leg selbst einen fest.",
  "astro.noon": "Sonnenhöchststand",

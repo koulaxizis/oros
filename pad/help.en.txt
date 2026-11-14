@@ -44,6 +44,22 @@ Pad is an editor for plain text and code, in the spirit of Notepad++. It opens a
 ## Tools
 - `Tools…` in `More` works on the selected lines, or on the whole file when nothing is selected: `Format JSON` (one item per line, indented like the file), `Compact JSON` (all on one line), `Sort lines A → Z` and `Z → A` (numbers in their natural order, so 2 comes before 10), `Remove duplicate lines` (keeps the first) and `Remove spaces at line ends`. [[Ctrl+Z]] takes any of them back.
 - `Format JSON` changes only the spaces and line breaks: keys keep their order, and numbers and strings stay exactly as written. If the JSON is not valid, Pad says on which line and column, and changes nothing.
+- The list of tools has a search box and groups; [[Alt+T]] opens it from the keyboard. Tools that fit the selection (a colour, a time stamp, a number) come first.
+
+## Developer tools
+- `Check JSON` and `Check YAML` say whether the text is valid. If not, they put the cursor where the mistake is and say what it is. Nothing changes.
+- `Sort JSON keys A → Z` sorts the keys at every level; lists keep their order, numbers and strings stay exactly as written.
+- `Format YAML` gives the YAML even indentation and keeps its comments, anchors, quotes and numbers as they were (`0x1F` stays `0x1F`).
+- `JSON → YAML` and `YAML → JSON` open the result in a new tab; the original stays as it is. JSON has no comments, so `YAML → JSON` leaves them out and says so. A YAML file with several documents (`---`) becomes one list.
+- `Hashes (MD5, SHA)…` shows MD5, SHA-1, SHA-256, SHA-384 and SHA-512, in hex and Base64. With a selection they are the hashes of the selected text (UTF-8); without one, of the whole file exactly as `Save` writes it, with its encoding and line endings, so they match `sha256sum` and the `.sha256` files of downloads. Paste a checksum into `Compare with` to see at once whether it is the same.
+- `Insert UUID v4` writes a random UUID at the cursor; `Insert UUID v7` one that starts with the time, so they sort in the order they were made. With several cursors each gets its own.
+- `Time stamps…` turns a selected Unix time (seconds, milliseconds, micro- or nanoseconds, found from the number of digits) or a date such as 2026-11-13 into local time, ISO 8601 and Unix time, and shows the time now, ready to insert.
+- `Number bases…` shows a selected whole number (255, `0xFF`, `0b1010`, `0o17`, or `$xFF` in JSFX) in decimal, hexadecimal, binary and octal. `Colour…` shows a selected CSS colour as hex, `rgb()` and `hsl()`, with a sample.
+- The results open in a panel next to the text (in its place on a phone). `Copy` copies a value, `Insert` puts it in place of the selection. [[Esc]] or `Close` closes the panel.
+- `Open in Text Tools` sends the selection (or the file) to [Text Tools](app:texttools) for Base64, URL, HTML entities and its other encoders.
+- Everything runs on this device, also offline. Nothing you check, convert or hash is sent anywhere or kept.
+
+## Preview and compare
 - `Preview` in the top bar (for Markdown files) shows the text formatted, next to the editor on a wide screen and in its place on a narrow one. It follows as you type. Links open in a new window; pictures are not shown.
 - `Compare with another tab…` in `More` shows two open tabs line by line: lines only on the left are red, lines only on the right are green, and long runs of the same lines fold away. `Next change` and `Previous change` (or [[F7]] and [[Shift+F7]]) move between the changes, [[Esc]] closes the comparison.
 - `Key row` in `More` adds a row of keys above the bottom bar that phone keyboards lack: indent, arrows, brackets, quotes and other signs, undo and redo. It is on by itself on touch screens.
@@ -55,7 +71,7 @@ Pad is an editor for plain text and code, in the spirit of Notepad++. It opens a
 ## Keyboard shortcuts
 - [[Ctrl+S]]: save. [[Ctrl+Shift+S]]: save as.
 - [[Ctrl+O]]: open.
-- [[Alt+N]]: new tab. [[Alt+W]]: close the tab.
+- [[Alt+N]]: new tab. [[Alt+W]]: close the tab. [[Alt+T]]: tools.
 - [[Alt+PageDown]] and [[Alt+PageUp]]: next and previous tab.
 - [[Ctrl+F]]: find and replace. [[Ctrl+G]]: go to line.
 - [[Ctrl+Z]] and [[Ctrl+Y]]: undo and redo. [[Ctrl+D]]: select the next match of the selected word. [[Alt+↑]] and [[Alt+↓]]: move the line. [[Ctrl+/]]: comment out the line.
