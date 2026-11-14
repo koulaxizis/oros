@@ -438,12 +438,45 @@
     var init = { method: r.m, headers: headers, mode: "cors", credentials: "omit", cache: "no-store",
                  redirect: "error", referrerPolicy: "no-referrer" };
     if (r.body) { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(r.body); }
+    var photo = L.rsPhoto && L.rsPhoto(a.p, r.path);
+    if (photo) headers.Accept = "image/webp,image/png,image/jpeg";
     return withTimeout(timeoutOf(a.p), function (signal) {
       init.signal = signal;
       return fetch(url, init).then(function (res) {
+        if (photo) return photoOf(res);
         return res.text().then(function (t) { return parse(res.status, t); });
       });
     });
+  }
+  // RS-PF W2: a creator's photo → { status, type, blob } | { status, err }.
+  // Read up to RS_PHOTO_MAX, its type only from its first bytes (JPEG,
+  // PNG, WebP); a non-2xx answer is only its status.
+  function photoOf(res) {
+    function drop() { try { if (res.body) res.body.cancel(); } catch (e) {} }
+    if (res.status < 200 || res.status > 299) { drop(); return { status: res.status }; }
+    var reader = res.body && res.body.getReader ? res.body.getReader() : null;
+    if (!reader) return { status: res.status, err: "photo-type" };
+    var chunks = [], size = 0;
+    function step() {
+      return reader.read().then(function (x) {
+        if (x.done) return null;
+        size += x.value.length;
+        if (size > L.RS_PHOTO_MAX) { try { reader.cancel(); } catch (e) {} return "big"; }
+        chunks.push(x.value);
+        return step();
+      });
+    }
+    return step().then(function (big) {
+      if (big) return { status: res.status, err: "photo-big" };
+      var all = new Uint8Array(size), o = 0;
+      chunks.forEach(function (c) { all.set(c, o); o += c.length; });
+      return photoBlob(res.status, all);
+    });
+  }
+  function photoBlob(status, bytes) {
+    var type = L.photoType(bytes);
+    if (!type) return { status: status, err: "photo-type" };
+    return { status: status, type: type, blob: new Blob([bytes], { type: type }) };
   }
   function viaRelay(a, keys, reqs) {
     var body = { op: "ext", p: a.p };
@@ -471,8 +504,17 @@
     }).then(function (j) {
       // the relay's own reason (origin, rate, bad-request…) helps tell a setup fault apart
       if (!j || !j.ok || !j.data || !Array.isArray(j.data.res)) throw err("relay", j && j.error && typeof j.error.code === "string" ? j.error.code.slice(0, 40) : "");
-      return j.data.res.map(function (x) {
+      return j.data.res.map(function (x, i) {
         if (x && x.err) return { status: x.status || 0, err: x.err };
+        if (reqs[i] && L.rsPhoto && L.rsPhoto(a.p, reqs[i].path)) {
+          // checked again here: the bytes decide the type, never the relay's word
+          if (!x || typeof x.b64 !== "string") return { status: (x && x.status) || 0 };
+          var bin;
+          try { bin = atob(x.b64); } catch (e) { return { status: x.status, err: "photo-type" }; }
+          var u8 = new Uint8Array(bin.length);
+          for (var k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+          return photoBlob(x.status, u8);
+        }
         if (x && typeof x.b64 === "string") return { status: x.status, type: String(x.type || ""), b64: x.b64 };   // a product picture
         return parse(x.status, x.body);
       });
@@ -488,6 +530,8 @@
     for (var i = 0; i < reqs.length; i++) if (L.checkReq(a.p, reqs[i])) return Promise.reject(err("denied"));
     if (typeof navigator !== "undefined" && navigator.onLine === false) return Promise.reject(err("offline"));
     if (L.rsCall(a.p, reqs) === "mixed") return Promise.reject(err("bad"));   // RS-CTR: other keys, other routes
+    // RS-PF W2: a creator's photo travels alone in its call
+    if (reqs.length > 1 && L.rsPhoto && reqs.some(function (r) { return L.rsPhoto(a.p, r.path); })) return Promise.reject(err("bad"));
     var pl = L.PLATFORMS[a.p];
     // Product pictures (WooCommerce, Newsletter wave E4) only come this
     // way when the app could not read them itself: straight to the relay.

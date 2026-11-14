@@ -532,7 +532,34 @@ const STRINGS = {
     'cat.builtLeft': 'Document built. {n} segments are still in the source language.',
     'cat.built': 'Document built.',
     'cat.updateAsk': 'Update “{name}” with this translation? Its current text goes into Version History.',
-    'cat.update': 'Update'
+    'cat.update': 'Update',
+    'tm.concord': 'Search the memory…',
+    'tm.fill100': 'Fill 100% matches',
+    'tm.manage': 'Translation memories…',
+    'tm.repeated': 'Also filled where the same sentence comes again ({n}).',
+    'tm.loading': 'Reading the translation memory…',
+    'tm.auto': 'Filled from the memory (100%), as a draft.',
+    'tm.use': 'Use',
+    'tm.useT': 'Use this translation (Alt+{n})',
+    'tm.default': 'My translations',
+    'tm.filled': '{n} segments filled from the memory as drafts.',
+    'tm.filledNone': 'No 100% matches for the empty segments.',
+    'tm.concordQ': 'Word or phrase',
+    'tm.concordNone': 'Not in the memory yet.',
+    'tm.insert': 'Insert',
+    'tm.new': 'New memory',
+    'tm.pairNote': 'Matches come from every memory, for {from} → {to}. Confirmed segments are saved in the one you choose.',
+    'tm.none': 'No memories yet. The first confirmed segment makes one.',
+    'tm.untitled': 'Untitled memory',
+    'tm.count': '{n} units',
+    'tm.writes': 'this project saves here',
+    'tm.import': 'Import TMX…',
+    'tm.export': 'Export TMX',
+    'tm.delAsk': 'Move the memory “{name}” to the Trash? You can put it back from Files for 30 days.',
+    'tm.tooBig': 'This file is too big (more than 64 MB).',
+    'tm.badTmx': 'This is not a TMX file.',
+    'tm.imported': '{n} units imported, {s} skipped.',
+    'tm.emptyMem': 'This memory is empty.'
   },
   el: {
     'app.name': 'Writer',
@@ -966,7 +993,34 @@ const STRINGS = {
     'cat.builtLeft': 'Το έγγραφο δημιουργήθηκε. {n} τμήματα είναι ακόμη στη γλώσσα του πρωτοτύπου.',
     'cat.built': 'Το έγγραφο δημιουργήθηκε.',
     'cat.updateAsk': 'Ενημέρωση του «{name}» με αυτή τη μετάφραση; Το τωρινό κείμενό του πηγαίνει στο Ιστορικό εκδόσεων.',
-    'cat.update': 'Ενημέρωση'
+    'cat.update': 'Ενημέρωση',
+    'tm.concord': 'Αναζήτηση στη μνήμη…',
+    'tm.fill100': 'Συμπλήρωση των 100%',
+    'tm.manage': 'Μεταφραστικές μνήμες…',
+    'tm.repeated': 'Συμπληρώθηκε και όπου ξαναβγαίνει η ίδια πρόταση ({n}).',
+    'tm.loading': 'Ανάγνωση της μεταφραστικής μνήμης…',
+    'tm.auto': 'Συμπληρώθηκε από τη μνήμη (100%), ως πρόχειρο.',
+    'tm.use': 'Χρήση',
+    'tm.useT': 'Χρήση αυτής της μετάφρασης (Alt+{n})',
+    'tm.default': 'Οι μεταφράσεις μου',
+    'tm.filled': '{n} τμήματα συμπληρώθηκαν από τη μνήμη ως πρόχειρα.',
+    'tm.filledNone': 'Δεν υπάρχουν αντιστοιχίες 100% για τα κενά τμήματα.',
+    'tm.concordQ': 'Λέξη ή φράση',
+    'tm.concordNone': 'Δεν υπάρχει ακόμη στη μνήμη.',
+    'tm.insert': 'Εισαγωγή',
+    'tm.new': 'Νέα μνήμη',
+    'tm.pairNote': 'Οι προτάσεις έρχονται από όλες τις μνήμες, για {from} → {to}. Τα επιβεβαιωμένα τμήματα αποθηκεύονται σε αυτή που διαλέγεις.',
+    'tm.none': 'Δεν υπάρχουν ακόμη μνήμες. Το πρώτο επιβεβαιωμένο τμήμα φτιάχνει μία.',
+    'tm.untitled': 'Μνήμη χωρίς όνομα',
+    'tm.count': '{n} μονάδες',
+    'tm.writes': 'εδώ αποθηκεύει αυτό το έργο',
+    'tm.import': 'Εισαγωγή TMX…',
+    'tm.export': 'Εξαγωγή TMX',
+    'tm.delAsk': 'Μεταφορά της μνήμης «{name}» στον Κάδο; Μπορείς να την επαναφέρεις από τα Αρχεία για 30 ημέρες.',
+    'tm.tooBig': 'Το αρχείο είναι πολύ μεγάλο (πάνω από 64 MB).',
+    'tm.badTmx': 'Αυτό δεν είναι αρχείο TMX.',
+    'tm.imported': 'Εισήχθησαν {n} μονάδες, παραλείφθηκαν {s}.',
+    'tm.emptyMem': 'Αυτή η μνήμη είναι κενή.'
   }
 };
 
@@ -2546,8 +2600,8 @@ function assistLoad() {
   return assistP;
 }
 
-// WR-CAT (book translation): the screens are cat.js (with catcore.js
-// and catstore.js), loaded on first use; this is what they may use of
+// WR-CAT (book translation): the screens are cat.js (with catcore.js,
+// cattm.js and catstore.js), loaded on first use; this is what they may use of
 // Writer. Projects live on the orOS disk (/internal/Writer/Translations),
 // never in the Writer slice.
 function catFs() {
@@ -2600,7 +2654,8 @@ window.WriterCatHost = {
     if (!res || res.kind === 'db') throw new Error('not a document');
     return ioApplyImport(res, 'new');
   }),
-  writeDoc: catWriteDoc, activateTab: activateTab
+  writeDoc: catWriteDoc, activateTab: activateTab,
+  saveText: (text, name, mime) => downloadBlob(text, name, mime)
 };
 let catP = null;
 function catFailed(e) { console.warn('[writer] translation load failed:', e); showToast(t('cat.err')); }
@@ -2615,7 +2670,7 @@ function catLoad() {
       document.head.appendChild(s);
     });
     catP = (window.WriterCore ? Promise.resolve() : load('core.js'))
-      .then(() => load('catcore.js')).then(() => load('catstore.js')).then(() => load('cat.js')).then(() => {
+      .then(() => load('catcore.js')).then(() => load('cattm.js')).then(() => load('catstore.js')).then(() => load('cat.js')).then(() => {
         if (!window.WriterCat) throw new Error('cat');
         return window.WriterCat;
       });

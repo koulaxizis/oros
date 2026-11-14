@@ -45,7 +45,7 @@ test("a push makes one backup a day and keeps the newest seven", async () => {
   assert.deepEqual((await cloudPayload(db, A)).apps.notes, { items: { a: 3 } });
 });
 
-test("factory reset deletes the blob, the backups and the vault, then revokes", async () => {
+test("factory reset leaves a reset signal, deletes the backups and the vault, then revokes", async () => {
   const db = new FakeDropbox();
   const A = await createDevice(db, "A", SLICES);
   writeKey(A, "app-notes", { items: { a: 1 } });
@@ -58,8 +58,12 @@ test("factory reset deletes the blob, the backups and the vault, then revokes", 
 
   const res = await A.sync.wipeEverything();
   assert.equal(res.revoked, true);
-  assert.ok(res.wiped >= 3);
-  assert.deepEqual([...db.files.keys()], ["/someone-else.txt"], "only orOS files went");
+  assert.ok(res.wiped >= 2, "the backup and /vault (the blob stays as the signal)");
+  assert.equal(res.signalled, true);
+  assert.deepEqual([...db.files.keys()].sort(), ["/orOS-data.json", "/someone-else.txt"], "only orOS files went");
+  const sig = JSON.parse(db.files.get("/orOS-data.json").text);
+  assert.equal(sig.ver, "oros-signal", "SOS-1: the blob is a reset signal");
+  assert.equal(sig.sig.kind, "reset");
   assert.equal(db.log.filter((e) => e.op === "revoke").length, 1);
   assert.equal(A.sync.isConnected(), false);
 });

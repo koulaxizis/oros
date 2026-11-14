@@ -37,12 +37,14 @@ This group is the former Case Converter app: an old Case Converter shortcut, lin
 `My words`, under the options of `Sentence case`, `Title Case` and `Capitalize Each Word`, holds words that always keep their capitals, such as iPhone, NASA or ΔΕΗ. Type a word and press `Add`; the × next to a word removes it (`Undo` brings it back). A few common words are there at first.
 
 ## Translate
-`Translate` turns the whole text from Greek into English or from English into Greek, right on this device, with Mozilla's Firefox Translations models (the ones the Firefox browser uses). Your text never leaves the device and no account is needed.
-1. Pick `From` (`Detect` finds Greek or English by itself) and `To`. The arrows between them swap the languages and move the translation up into the `Text` box, so you can check it the other way round.
-2. The first time for a direction, the button says how much it downloads (about 15 MB, plus about 5 MB once for the translator itself). Press it: the files come from orOS's own copy, are checked, and stay on the device, so it works offline from then on.
+`Translate` turns the whole text into another language right on this device, with Mozilla's Firefox Translations models (the ones the Firefox browser uses). Your text never leaves the device and no account is needed. It knows English and 21 more languages, among them Greek, German, French, Spanish, Italian, Turkish, Bulgarian, Albanian, Romanian, Ukrainian and Arabic; two languages other than English go through English (two models, as in Firefox). Russian translates only into other languages for now, Chinese and Japanese only from them.
+1. Pick `From` (`Detect` finds the language by itself) and `To`. The arrows between them swap the languages and move the translation up into the `Text` box, so you can check it the other way round.
+2. The first time for a direction, the button says how much it downloads (15 to 30 MB per model, plus about 5 MB once for the translator itself). Press it: the files come from orOS's own copy, are checked, and stay on the device, so it works offline from then on.
 3. Once the language is on the device, a short text translates as you type; a long one when you press `Translate`. `Stop` stops a long translation or a download.
 
-Line breaks, empty lines and spaces at the start of a line stay where they were. `Languages on this device` lists what is downloaded and how much room it takes; `Remove` (tap twice) deletes it. Translation is not a step, so it does not go into recipes.
+Line breaks, empty lines and spaces at the start of a line stay where they were. `Languages on this device` lists what is downloaded and how much room it takes; `Remove` (tap twice) deletes it. The same list is in [Settings](app:settings) › `Language & search` › `Translation on this device`. Translation is not a step, so it does not go into recipes.
+
+`Where no model fits, use the Assistant's AI` (off until you turn it on, this device only) lets the AI you set up in the [Assistant](app:assistant) translate the directions that have no model, such as Greek into Russian. Then that text goes to that AI service (your own key or your own computer), the button says `Translate with the AI` and the line under the languages names the service. It never translates as you type, only when you press the button.
 
 >i The models are small and quick, made for understanding a text and for a first draft. Read the translation before you send it: names and rare words can come out wrong. For a book, [Writer](app:writer) will offer the same engine sentence by sentence.
 

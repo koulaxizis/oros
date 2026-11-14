@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Transfer — engine.js, v1.1.0
+   orOS Transfer — engine.js, v1.2.0 (1.2.0, D1: the sender's title and message in the first manifest part)
    One transfer between two browsers: the sender, who has the files,
    and the receiver, who opened the link or typed the code.
 
@@ -323,6 +323,7 @@
     }
 
     // ----- the sender -----
+    var meta = role === "sender" ? CORE.cleanMeta(o.meta) : null;
     var files = role === "sender" ? (o.files || []) : [], total = 0, acked = 0, ackedBytes = 0, ackWaiters = [];
     var sent = 0, gen = 0;
     files.forEach(function (f) { total += f.s; });
@@ -331,10 +332,14 @@
     function offerFiles() {
       if (ended) return null;
       set("offered", { mode: mode });
-      var parts = CORE.splitManifest(files, mode === "relay" ? RELAY_MAN : 30000);
+      var parts = CORE.splitManifest(files, (mode === "relay" ? RELAY_MAN : 30000) - (meta ? 1200 : 0));   // room for the title and message
       var q = Promise.resolve();
       parts.forEach(function (p, i) {
-        q = q.then(function () { return send({ t: "man", i: i, n: parts.length, files: p, total: total, mode: mode }); });
+        q = q.then(function () {
+          var man = { t: "man", i: i, n: parts.length, files: p, total: total, mode: mode };
+          if (i === 0 && meta) man.meta = meta;        // D1: the title and message ride in the first part
+          return send(man);
+        });
       });
       return q;
     }
@@ -412,7 +417,7 @@
     }
 
     // ----- the receiver -----
-    var manParts = [], manN = 0, offer = null, sink = null, cur = -1, curN = 0, curBytes = 0, curHash = null, curOpen = false;
+    var manParts = [], manN = 0, offerMeta = null, offer = null, sink = null, cur = -1, curN = 0, curBytes = 0, curHash = null, curOpen = false;
     var written = 0, writtenBytes = 0, bad = [], doneFiles = 0;
     function sendResume() {
       if (ended || !resuming) return null;
@@ -448,13 +453,14 @@
         if (!(m.n >= 1 && m.n <= 5000) || !(m.i >= 0 && m.i < m.n) || !Array.isArray(m.files)) { refuse(); return null; }
         manN = m.n;
         manParts[m.i] = m.files;
+        if (m.i === 0) offerMeta = CORE.cleanMeta(m.meta);
         for (var k = 0; k < manN; k++) if (!manParts[k]) return null;
         var all = [].concat.apply([], manParts);
         var ok = CORE.checkManifest(all);
         if (!ok) { refuse(); return null; }
         if (mode === "relay" && ok.total > RELAY_MAX) { refuse(); return null; }
         offer = ok;
-        set("offer", { files: ok.files, total: ok.total, biggest: ok.biggest, mode: mode });
+        set("offer", { files: ok.files, total: ok.total, biggest: ok.biggest, mode: mode, meta: offerMeta });
       } else if (m.t === "end") {
         return endFile(m);                     // in order with the pieces (same queue)
       } else if (m.t === "fin") {
@@ -552,7 +558,7 @@
     this.mode = function () { return mode; };
   }
 
-  var api = { VERSION: "1.1.0", Transfer: Transfer, wsUrl: wsUrl, RELAY: RELAY, WINDOW: WINDOW,
+  var api = { VERSION: "1.2.0", Transfer: Transfer, wsUrl: wsUrl, RELAY: RELAY, WINDOW: WINDOW,
     RELAY_MAX: RELAY_MAX, RELAY_PIECE: RELAY_PIECE };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.OrosTransferEngine = api;

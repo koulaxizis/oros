@@ -16,6 +16,9 @@
 //   object-src 'none', base-uri 'self', form-action 'self'.
 // A page that loads files/gmedia.js (the one-time Google Drive / Photos
 // import, approved) may also load https://apis.google.com (Picker).
+// Library's EPUB reader (library/epub.js) gives a book's own fonts
+// as blob: URLs of its files; its book frame inherits the page's
+// policy, so that page alone also has blob: in font-src.
 //
 // The meta goes right after <meta charset> (a CSP meta only covers what
 // follows it). Run by stamp-assets.js after every push to main, so an
@@ -33,8 +36,9 @@ const ROOT = path.join(__dirname, "..", "..");
 // CSP in its manifest; the rest are code, data or build trees.
 const SKIP = new Set([".git", ".github", "node_modules", "vendor", "extension", "android", "tests", "icons", "fonts"]);
 // Pages with a STRICTER policy of their own (the share-link viewer
-// decrypts content from strangers): kept as written, only checked.
-const OWN = new Set(["share/index.html"]);
+// decrypts content from strangers; the Forms fill-in page shows forms
+// made by strangers): kept as written, only checked.
+const OWN = new Set(["share/index.html", "forms/f/index.html"]);
 
 function listDocs(root) {
   root = root || ROOT;
@@ -67,13 +71,14 @@ const sha = (s) => "'sha256-" + crypto.createHash("sha256").update(s, "utf8").di
 function policyFor(html) {
   const hashes = [...new Set(inlineScripts(html).map(sha))];
   const extra = /gmedia\.js/.test(html) ? ["https://apis.google.com"] : [];
+  const fontBlob = /<script src="epub\.js[?"]/.test(html) ? " blob:" : "";
   return [
     "default-src 'self'",
     ["script-src 'self' blob: 'wasm-unsafe-eval'"].concat(hashes, extra).join(" "),
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' https: data: blob:",
     "media-src 'self' https: data: blob:",
-    "font-src 'self' https: data:",
+    "font-src 'self' https: data:" + fontBlob,
     "connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*",
     "worker-src 'self' blob:",
     "frame-src 'self' https: blob: data:",

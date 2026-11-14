@@ -3,6 +3,7 @@ import { connect } from "cloudflare:sockets";
 import { handle } from "./core.js";
 import { purgeShares } from "./share.js";
 import { purgeShort } from "./short.js";
+import { purgeForms } from "./forms.js";
 export { RemoteRoom } from "./remote.js";
 export { PushBox } from "./push.js";
 export { HouseBox } from "./house.js";
@@ -20,9 +21,11 @@ export default {
   },
   // Hourly cron (wrangler.toml [triggers]): expired share links and
   // unfinished uploads leave the database, and so do short links for
-  // songs nobody opened for a year (short.js).
+  // songs nobody opened for a year (short.js); Forms answers and forms
+  // past their time (forms.js).
   scheduled(event, env, ctx) {
     ctx.waitUntil(purgeShares(env, Date.now()));
     ctx.waitUntil(purgeShort(env, Date.now()));
+    ctx.waitUntil(purgeForms(env, Date.now()));
   }
 };
