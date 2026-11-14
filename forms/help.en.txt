@@ -59,3 +59,8 @@ Forms makes surveys, sign-up sheets and order forms: questions of many kinds, pa
 - `Answers` then shows the average score, the right option with a ✓ and how many got each question right; each answer shows its score, and the export gets a `Score` column. Only the questions a person was asked count.
 - `Show people their score after sending` shows them their score on the thank-you page, and `Also show which answers were right` adds a right / not right line per question. With it on, the right answers travel inside the form's page, so someone who knows how could read them first. Leave it off for a test that counts: the form's page then gets no right answers at all, and only you see the scores.
 - The Assistant can draft a quiz too ("make a 10-question quiz on European capitals").
+
+## Base
+- In Base, a table's `Public form` opens Forms with a new form: one question for each field a form can ask (text, long text, e-mail, link, phone, number, money, percent, rating, date, checkbox, one or several choices). Formulas, links, lookups, attachments and automatic fields are left out. Check the questions, then share the form as usual.
+- In `Answers`, `Send to Base` adds the answers to that table, oldest first, up to 500 a time. Base writes each answer once, so pressing it again never makes copies; this device remembers what it sent and sends only the new ones. Base lists any answer or field that did not fit.
+- Questions you add later are not sent: only the questions made from the table's fields have a column there.

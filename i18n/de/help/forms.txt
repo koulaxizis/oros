@@ -59,3 +59,8 @@ Formulare erstellt Umfragen, Anmeldelisten und Bestellformulare: Fragen vieler A
 - `Antworten` zeigt dann den Durchschnitt, die richtige Option mit ✓ und wie viele jede Frage richtig hatten; jede Antwort zeigt ihre Punkte, und der Export bekommt eine Spalte `Punkte`. Es zählen nur die Fragen, die jemand gesehen hat.
 - `Den Leuten nach dem Senden ihre Punkte zeigen` zeigt ihnen ihre Punkte auf der Dankesseite, `Auch zeigen, welche Antworten richtig waren` dazu eine Zeile richtig / nicht richtig pro Frage. Ist es an, reisen die richtigen Antworten in der Seite des Formulars mit, wer sich auskennt, könnte sie vorher lesen. Lass es für einen Test, der zählt, aus: Dann bekommt die Seite keine richtige Antwort, und nur du siehst die Punkte.
 - Der Assistent kann auch ein Quiz entwerfen („mach ein Quiz mit 10 Fragen zu Europas Hauptstädten“).
+
+## Base
+- In Base öffnet `Öffentliches Formular` einer Tabelle Forms mit einem neuen Formular: eine Frage für jedes Feld, das ein Formular fragen kann (Text, langer Text, E-Mail, Link, Telefon, Zahl, Betrag, Prozent, Bewertung, Datum, Kontrollkästchen, eine oder mehrere Auswahlen). Formeln, Verknüpfungen, Nachschlagefelder, Anhänge und automatische Felder bleiben weg. Fragen prüfen, dann das Formular wie gewohnt teilen.
+- Unter `Antworten` fügt `An Base senden` die Antworten in diese Tabelle ein, die ältesten zuerst, bis zu 500 auf einmal. Base schreibt jede Antwort nur einmal, erneutes Tippen macht also keine Kopien; dieses Gerät merkt sich, was es gesendet hat, und sendet nur die neuen. Base zeigt, welche Antworten oder Felder nicht passten.
+- Später hinzugefügte Fragen werden nicht gesendet: nur die aus den Feldern der Tabelle erstellten Fragen haben dort eine Spalte.

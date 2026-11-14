@@ -53,7 +53,10 @@
   function defObj(rec, x, lang) {
     // W5: quiz.js pub drops the right answers unless the page shows the score
     var f = Q ? Q.pub(rec) : E.normForm(rec);
-    return { v: 1, form: { id: f.id, title: f.title, desc: f.desc, qs: f.qs, set: f.set }, pub: P.pubOf(x.priv), l: lang };
+    // W4b: the Base table it fills stays with the owner
+    var set = Object.assign({}, f.set);
+    delete set.base;
+    return { v: 1, form: { id: f.id, title: f.title, desc: f.desc, qs: f.qs, set: set }, pub: P.pubOf(x.priv), l: lang };
   }
 
   // → Promise<x> (the record's new x; the app commits it)

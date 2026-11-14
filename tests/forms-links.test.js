@@ -83,7 +83,7 @@ test("wiring: links.js before app.js, buttons and draft in the app, strings in E
   const html = fs.readFileSync(path.join(root, "forms/index.html"), "utf8");
   assert.ok(html.indexOf("links.js") > 0 && html.indexOf("links.js") < html.indexOf("app.js?"));
   const app = fs.readFileSync(path.join(root, "forms/app.js"), "utf8");
-  assert.ok(app.includes("LK.toContact(") && app.includes("LK.toCrm(") && app.includes("LK.fromDraft(tg.draft)"));
+  assert.ok(app.includes("LK.toContact(") && app.includes("LK.toCrm(") && app.includes("LK.fromDraft(tg && tg.draft)"));
   const de = fs.readFileSync(path.join(root, "i18n/de/forms.js"), "utf8");
   for (const k of ["an.toContacts", "an.toCrm", "dr.made", "srch.qs", "srch.untitled"]) {
     if (!k.startsWith("srch.")) assert.ok(app.split('"' + k + '"').length - 1 >= 2, k + " in EN and EL");

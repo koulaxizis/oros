@@ -7,7 +7,8 @@
 // shows is exactly what a respondent gets.
 // No DOM, no storage. Node-tested (tests/forms.test.js).
 //
-// A form: { id, title, desc?, qs: [item], set: { thanks?, prog?, note? } }
+// A form: { id, title, desc?, qs: [item], set: { thanks?, prog?, note?, back?,
+//   once?, quiz?, score?, reveal?, base? } }
 // An item (question, statement or page break):
 //   { id, t, label, help?, req?, show?, ...type fields }
 //   t: text | para | email | phone | number | date | time | choice |
@@ -59,6 +60,7 @@
   };
   var OTHER = "_o";
   var ID_RE = /^[a-z0-9]{1,24}$/;
+  var BASE_ID = /^[A-Za-z0-9_-]{1,40}$/;   // Base ids (base/core.js okId)
   var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
   var TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
   var EMAIL_RE = /^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[^\s@<>()",;:.]{2,}$/;
@@ -281,6 +283,17 @@
       set.quiz = 1;
       if (s.score) set.score = 1;
       if (s.score && s.reveal) set.reveal = 1;
+    }
+    // W4b (Base, Bible BASE-1 "Forms contract"): the Base table this
+    // form was made from, and which question fills which field
+    // (m: question id -> field id; only questions that still exist).
+    var bs = isObj(s.base) ? s.base : null;
+    if (bs && BASE_ID.test(bs.b) && BASE_ID.test(bs.t) && isObj(bs.m)) {
+      var m = {}, nm = 0;
+      Object.keys(bs.m).sort().forEach(function (qid) {
+        if (nm < LIM.items && before[qid] && BASE_ID.test(bs.m[qid])) { m[qid] = bs.m[qid]; nm++; }
+      });
+      if (nm) set.base = { b: bs.b, t: bs.t, n: line(bs.n, LIM.title), m: m };
     }
     out.set = set;
     return out;

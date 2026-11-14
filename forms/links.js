@@ -19,6 +19,13 @@
 //       texts); unknown types become short text, at
 //     most MAX_DRAFT questions; ids are fresh. The app runs the result
 //     through engine.normForm like every other form.
+//   fromTable(ft) → { title, desc, qs, set: { base } } | null (W4b):
+//     a form from a Base table ({ base, table, name, fields: [{ id, name,
+//     type, opts?, required? }] }); fields of a type no question asks
+//     are skipped; set.base = { b, t, n, m: { questionId: fieldId } }
+//   toBase(form, rows) → { addRecords: { base, table, from: "forms",
+//     rows: [{ key: "frm:<formId>:<answerId>", values: { fieldId: v } }] } }
+//     | null; at most BATCH rows; Base writes a key once.
 // ============================================================
 (function (root) {
   "use strict";
@@ -134,7 +141,95 @@
     return out;
   }
 
-  var api = { person: person, toContact: toContact, toCrm: toCrm, fromDraft: fromDraft, MAX_DRAFT: MAX_DRAFT };
+  // ---------- W4b: Base (Bible BASE-1 "Forms contract") ----------
+  // Base field type -> question type; any other type (formula, link,
+  // lookup, rollup, count, auto, ctime, mtime, attachments, a newer
+  // one) is skipped.
+  var BASE_TYPE = {
+    text: "text", long: "para", email: "email", url: "text", phone: "phone",
+    number: "number", currency: "number", percent: "number", rating: "stars",
+    date: "date", check: "yesno", select: "choice", multi: "multi"
+  };
+  var BASE_ID = /^[A-Za-z0-9_-]{1,40}$/;
+  var BATCH = 500;
+  // A Base field's choices: ["label"] or [{ id?, n | name | label }], or { ch: [...] }
+  function baseChoices(o) {
+    var list = Array.isArray(o) ? o : isObj(o) && Array.isArray(o.ch) ? o.ch : [];
+    return list.map(function (c) { return isObj(c) ? (c.n !== undefined ? c.n : c.name !== undefined ? c.name : c.label) : c; });
+  }
+  // fromTable(ft) -> { title, desc, qs, set: { base } } | null
+  function fromTable(ft) {
+    if (!isObj(ft) || !BASE_ID.test(ft.base) || !BASE_ID.test(ft.table)) return null;
+    var name = str(ft.name, E.LIM.title), taken = {}, qs = [], m = {}, seen = {};
+    (Array.isArray(ft.fields) ? ft.fields : []).slice(0, E.LIM.items).forEach(function (f) {
+      if (!isObj(f) || !BASE_ID.test(f.id) || seen[f.id] || typeof f.type !== "string" || !BASE_TYPE.hasOwnProperty(f.type)) return;
+      var t = BASE_TYPE[f.type], label = str(f.name, E.LIM.label);
+      if (!label) return;
+      var q = { id: E.newId(taken), t: t, label: label };
+      if (f.required === true) q.req = 1;
+      if (t === "choice" || t === "multi") {
+        q.opts = opts(baseChoices(f.opts));
+        if (!q.opts.length) { if (t === "multi") return; q.t = "text"; delete q.opts; }
+      }
+      if (t === "stars") {
+        var mx = Math.round(Number(isObj(f.opts) ? f.opts.max : NaN));
+        q.hi = isFinite(mx) && mx >= 3 && mx <= 10 ? mx : 5;
+      }
+      seen[f.id] = 1;
+      m[q.id] = f.id;
+      qs.push(q);
+    });
+    if (!qs.length) return null;
+    return { title: name, desc: "", qs: qs, set: { base: { b: ft.base, t: ft.table, n: name, m: m } } };
+  }
+  // One answer's values for Base: text as strings, numbers, a day
+  // "YYYY-MM-DD", single choice as its label, several as labels, yes /
+  // no as true / false; empty answers are left out.
+  function baseValue(q, v, other) {
+    v = E.valueOf(q, v);
+    if (v === undefined) return undefined;
+    var lab = function (k) {
+      if (k === E.OTHER) return str(other, E.LIM.other) || undefined;
+      var o = (q.opts || []).filter(function (x) { return x.id === k; })[0];
+      return o ? o.label : undefined;
+    };
+    switch (q.t) {
+      case "text": case "para": case "email": case "phone": return v.trim() ? v : undefined;
+      case "number": case "stars": case "scale": return v;
+      case "date": return v;
+      case "yesno": return v === "yes";
+      case "choice": case "select": return lab(v);
+      case "multi": var l = v.map(lab).filter(Boolean); return l.length ? l : undefined;
+      default: return undefined;
+    }
+  }
+  // toBase(form, rows) -> { addRecords: { base, table, from, rows } } | null
+  // rows: the form's answers ({ id, a }), at most BATCH of them.
+  function toBase(form, rows) {
+    var f = E.normForm(form), bs = f.set.base;
+    if (!bs) return null;
+    var byId = {};
+    f.qs.forEach(function (q) { byId[q.id] = q; });
+    var out = [];
+    (Array.isArray(rows) ? rows : []).slice(0, BATCH).forEach(function (r) {
+      if (!r || typeof r.id !== "string" || !/^[a-z0-9]{16}\.[0-9]{1,16}$/.test(r.id)) return;
+      var a = isObj(r.a) ? r.a : {}, values = {}, n = 0;
+      Object.keys(bs.m).forEach(function (qid) {
+        var q = byId[qid];
+        if (!q) return;
+        var v = baseValue(q, a[qid], a[qid + ".o"]);
+        if (v !== undefined) { values[bs.m[qid]] = v; n++; }
+      });
+      out.push({ key: "frm:" + f.id + ":" + r.id, values: values });
+    });
+    if (!out.length) return null;
+    return { addRecords: { base: bs.b, table: bs.t, from: "forms", rows: out } };
+  }
+
+  var api = {
+    person: person, toContact: toContact, toCrm: toCrm, fromDraft: fromDraft,
+    fromTable: fromTable, toBase: toBase, MAX_DRAFT: MAX_DRAFT, BATCH: BATCH, BASE_TYPE: BASE_TYPE
+  };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosFormsLinks = api;
 })(typeof window !== "undefined" ? window : this);

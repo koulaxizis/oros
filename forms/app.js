@@ -129,7 +129,7 @@
       "an.more": "Show {n} more",
       "an.otherName": "Other", "an.view": "View", "an.view.sum": "Summary", "an.view.each": "Each answer",
       "an.filter": "Show only", "an.filterAll": "All answers", "an.filtered": "{n} of {m} answers match.",
-      "set.quiz": "This is a quiz: score the answers", "set.quizHint": "Each question with one right answer gets a Correct answer box and points.", "set.score": "Show people their score after sending", "set.scoreHint": "The right answers then travel inside the form's page, so someone who knows how could read them before answering. Leave it off for a test that counts.", "set.reveal": "Also show which answers were right", "qz.key": "Correct answer", "qz.none": "No correct answer", "qz.pts": "Points", "qz.accept": "Accepted answers, one per line", "qz.score": "Score", "qz.avg": "Average score: {p} of {m}", "qz.of": "{p} of {m}", "qz.right": "right", "res.rightN": "{n} of {m} got it right", "an.toContacts": "Add to Contacts", "an.toCrm": "Add to CRM", "dr.made": "New form from the Assistant: check the questions before you share it.", "an.sheet": "Open in Spreadsheet", "an.csv": "Download CSV", "an.saved": "Saved {name}",
+      "set.quiz": "This is a quiz: score the answers", "set.quizHint": "Each question with one right answer gets a Correct answer box and points.", "set.score": "Show people their score after sending", "set.scoreHint": "The right answers then travel inside the form's page, so someone who knows how could read them before answering. Leave it off for a test that counts.", "set.reveal": "Also show which answers were right", "qz.key": "Correct answer", "qz.none": "No correct answer", "qz.pts": "Points", "qz.accept": "Accepted answers, one per line", "qz.score": "Score", "qz.avg": "Average score: {p} of {m}", "qz.of": "{p} of {m}", "qz.right": "right", "res.rightN": "{n} of {m} got it right", "bs.send": "Send to Base", "bs.sent": "Sending {n} answers to {name} in Base. Base lists any that did not fit.", "bs.more": "Sending {n} answers to {name} in Base; {m} more on the next press.", "bs.allSent": "This device already sent every answer to Base.", "bs.made": "New form from the Base table {name}: check the questions, then share it. Answers go back with Send to Base.", "bs.none": "This table has no field a form can ask.", "bs.hint": "Made from the Base table {name}.", "an.toContacts": "Add to Contacts", "an.toCrm": "Add to CRM", "dr.made": "New form from the Assistant: check the questions before you share it.", "an.sheet": "Open in Spreadsheet", "an.csv": "Download CSV", "an.saved": "Saved {name}",
       "an.sheetCap": "Only the newest {n} answers went to the Spreadsheet.",
       "res.answered": "{n} of {m} answered", "res.none": "Nobody answered this question yet.",
       "res.avg": "Average {x}", "res.range": "From {a} to {b}", "res.more": "And {n} more.",
@@ -262,7 +262,7 @@
       "an.more": "Εμφάνιση {n} ακόμα",
       "an.otherName": "Άλλο", "an.view": "Προβολή", "an.view.sum": "Σύνοψη", "an.view.each": "Κάθε απάντηση",
       "an.filter": "Μόνο", "an.filterAll": "Όλες οι απαντήσεις", "an.filtered": "Ταιριάζουν {n} από {m} απαντήσεις.",
-      "set.quiz": "Είναι κουίζ: βαθμολόγησε τις απαντήσεις", "set.quizHint": "Κάθε ερώτηση με μία σωστή απάντηση παίρνει πεδίο Σωστή απάντηση και βαθμούς.", "set.score": "Δείξε στους άλλους τη βαθμολογία τους μετά την αποστολή", "set.scoreHint": "Οι σωστές απαντήσεις τότε ταξιδεύουν μέσα στη σελίδα της φόρμας, οπότε κάποιος που ξέρει πώς θα μπορούσε να τις διαβάσει πριν απαντήσει. Άφησέ το κλειστό για τεστ που μετράει.", "set.reveal": "Δείξε και ποιες απαντήσεις ήταν σωστές", "qz.key": "Σωστή απάντηση", "qz.none": "Χωρίς σωστή απάντηση", "qz.pts": "Βαθμοί", "qz.accept": "Αποδεκτές απαντήσεις, μία ανά γραμμή", "qz.score": "Βαθμολογία", "qz.avg": "Μέση βαθμολογία: {p} από {m}", "qz.of": "{p} από {m}", "qz.right": "σωστό", "res.rightN": "{n} από {m} το βρήκαν", "an.toContacts": "Προσθήκη στις Επαφές", "an.toCrm": "Προσθήκη στο CRM", "dr.made": "Νέα φόρμα από τον Βοηθό: έλεγξε τις ερωτήσεις πριν τη μοιραστείς.", "an.sheet": "Άνοιγμα στο Spreadsheet", "an.csv": "Λήψη CSV", "an.saved": "Αποθηκεύτηκε: {name}",
+      "set.quiz": "Είναι κουίζ: βαθμολόγησε τις απαντήσεις", "set.quizHint": "Κάθε ερώτηση με μία σωστή απάντηση παίρνει πεδίο Σωστή απάντηση και βαθμούς.", "set.score": "Δείξε στους άλλους τη βαθμολογία τους μετά την αποστολή", "set.scoreHint": "Οι σωστές απαντήσεις τότε ταξιδεύουν μέσα στη σελίδα της φόρμας, οπότε κάποιος που ξέρει πώς θα μπορούσε να τις διαβάσει πριν απαντήσει. Άφησέ το κλειστό για τεστ που μετράει.", "set.reveal": "Δείξε και ποιες απαντήσεις ήταν σωστές", "qz.key": "Σωστή απάντηση", "qz.none": "Χωρίς σωστή απάντηση", "qz.pts": "Βαθμοί", "qz.accept": "Αποδεκτές απαντήσεις, μία ανά γραμμή", "qz.score": "Βαθμολογία", "qz.avg": "Μέση βαθμολογία: {p} από {m}", "qz.of": "{p} από {m}", "qz.right": "σωστό", "res.rightN": "{n} από {m} το βρήκαν", "bs.send": "Αποστολή στη Βάση", "bs.sent": "Στέλνονται {n} απαντήσεις στον πίνακα {name} της Βάσης. Η Βάση δείχνει όσες δεν χώρεσαν.", "bs.more": "Στέλνονται {n} απαντήσεις στον πίνακα {name} της Βάσης· άλλες {m} με το επόμενο πάτημα.", "bs.allSent": "Αυτή η συσκευή έχει ήδη στείλει όλες τις απαντήσεις στη Βάση.", "bs.made": "Νέα φόρμα από τον πίνακα {name} της Βάσης: έλεγξε τις ερωτήσεις και μετά μοιράσου τη. Οι απαντήσεις γυρίζουν με την Αποστολή στη Βάση.", "bs.none": "Αυτός ο πίνακας δεν έχει πεδίο που να ρωτιέται σε φόρμα.", "bs.hint": "Φτιάχτηκε από τον πίνακα {name} της Βάσης.", "an.toContacts": "Προσθήκη στις Επαφές", "an.toCrm": "Προσθήκη στο CRM", "dr.made": "Νέα φόρμα από τον Βοηθό: έλεγξε τις ερωτήσεις πριν τη μοιραστείς.", "an.sheet": "Άνοιγμα στο Spreadsheet", "an.csv": "Λήψη CSV", "an.saved": "Αποθηκεύτηκε: {name}",
       "an.sheetCap": "Στο Spreadsheet πήγαν μόνο οι {n} νεότερες απαντήσεις.",
       "res.answered": "Απάντησαν {n} από {m}", "res.none": "Κανείς δεν απάντησε ακόμα σε αυτή την ερώτηση.",
       "res.avg": "Μέσος όρος {x}", "res.range": "Από {a} έως {b}", "res.more": "Και {n} ακόμα.",
@@ -1472,6 +1472,31 @@
   function fileBase() {
     return (cur && cur.title ? cur.title.replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 60) : "") || t("f.untitled");
   }
+  // W4b: answers to the Base table the form was made from. Base writes
+  // each key ("frm:<form>:<answer>") once, so sending again is safe;
+  // this device remembers the last answer it sent (oros-forms-base,
+  // device-local) and sends the next ones, oldest first, BATCH a time.
+  var BASE_SENT = "oros-forms-base";
+  function baseSent() {
+    try { var o = JSON.parse(localStorage.getItem(BASE_SENT) || "{}"); return o && typeof o === "object" && !Array.isArray(o) ? o : {}; }
+    catch (e) { return {}; }
+  }
+  function toBaseNow() {
+    var h = sheetHost();
+    if (!h || !cur || !LK || !cur.set || !cur.set.base) return;
+    var marks = baseSent(), mk = marks[cur.id], all = C.answersOf(ans, cur.id).slice().reverse();
+    var after = function (r) { return !mk || r.at > mk.at || (r.at === mk.at && r.id > mk.id); };
+    var todo = all.filter(after);
+    if (!todo.length) { toast(t("bs.allSent")); return; }
+    var batch = todo.slice(0, LK.BATCH), tg = LK.toBase(cur, batch);
+    if (!tg) return;
+    var last = batch[batch.length - 1];
+    marks[cur.id] = { at: last.at, id: last.id };
+    try { localStorage.setItem(BASE_SENT, JSON.stringify(marks)); } catch (e) {}
+    var name = cur.set.base.n || t("f.untitled");
+    toast(todo.length > batch.length ? t("bs.more", { n: batch.length, m: todo.length - batch.length, name: name }) : t("bs.sent", { n: batch.length, name: name }));
+    h.__orosOpenAt("base", tg);
+  }
   // FORMS-4: an answer's person to Contacts or the CRM, as the apps'
   // own New contact / New customer form (saved there only on Save).
   function sendTo(app, target) {
@@ -1551,9 +1576,11 @@
     }
     pane.appendChild(bar);
     var bar2 = el("div", "bar end");
+    if (sheetHost() && LK && cur.set && cur.set.base) bar2.appendChild(chip(t("bs.send"), "", toBaseNow));
     if (sheetHost()) bar2.appendChild(chip(t("an.sheet"), "", function () { toSheet(list); }));
     bar2.appendChild(chip(t("an.csv"), "", function () { toCsv(list); }));
     pane.appendChild(bar2);
+    if (cur.set && cur.set.base) pane.appendChild(el("p", "hint", t("bs.hint", { name: cur.set.base.n || t("f.untitled") })));
     if (fq) pane.appendChild(el("p", "hint", t("an.filtered", { n: list.length, m: all.length })));
 
     if (respView === "sum") {
@@ -1831,15 +1858,18 @@
   // from it and opens it.
   function openTarget(tg) {
     if (tg && typeof tg.form === "string") { openForm(tg.form, tg.tab); return; }
-    var d = tg && LK ? LK.fromDraft(tg.draft) : null;
-    if (!d) return;
+    // W4b: { fromTable } (Base's "Public form", Bible BASE-1): a form
+    // whose questions are the table's fields; its answers go back there.
+    var fromT = !!(tg && tg.fromTable);
+    var d = !LK ? null : fromT ? LK.fromTable(tg.fromTable) : LK.fromDraft(tg && tg.draft);
+    if (!d) { if (fromT) toast(t("bs.none")); return; }
     commit();
     var rec = { id: E.newId(idsOfForms()), title: d.title, desc: d.desc, qs: d.qs, set: d.set || {} };
     var res = C.put(data, rec, Date.now());
     data = res.data;
     persist();
     openForm(rec.id);
-    toast(t("dr.made"));
+    toast(fromT ? t("bs.made", { name: d.title || t("f.untitled") }) : t("dr.made"));
   }
 
   function boot() {
