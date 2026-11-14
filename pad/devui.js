@@ -91,6 +91,48 @@
       "nb.eel2": "EEL2 (JSFX)",
       "col.title": "Colour",
       "col.none": "Select a CSS colour such as #ff8800, rgb(255 136 0) or hsl(32 100% 50%).",
+      "tools.jwt": "Decode JWT",
+      "tools.jwtSub": "Shows the header, payload and times; the signature is not checked",
+      "tools.gFind": "Find",
+      "tools.regex": "Regex tester",
+      "tools.regexSub": "Try a regular expression on the file, with groups and replace",
+      "jwt.none": "Select a JSON Web Token (three parts joined by dots).",
+      "jwt.jwe": "This is an encrypted token (JWE); it cannot be read without the key.",
+      "jwt.bad": "This token's header or payload is not valid JSON.",
+      "jwt.title": "JSON Web Token",
+      "jwt.expired": "Expired",
+      "jwt.early": "Not valid yet",
+      "jwt.valid": "Within its times",
+      "jwt.noTimes": "No expiry time",
+      "jwt.unchecked": "Signed with {alg}. The signature is not checked here, so do not trust what it says.",
+      "jwt.unsigned": "Not signed (alg none). Anyone could have written it.",
+      "jwt.iat": "Issued",
+      "jwt.nbf": "Valid from",
+      "jwt.exp": "Expires",
+      "jwt.header": "Header",
+      "jwt.payload": "Payload",
+      "rx.noWorker": "The regex tester could not start here.",
+      "rx.title": "Regex tester",
+      "rx.pattern": "Pattern",
+      "rx.fi": "ignore case",
+      "rx.fm": "multiline",
+      "rx.fs": "dot matches newline",
+      "rx.fu": "Unicode",
+      "rx.replace": "Replace with (optional)",
+      "rx.replacePh": "$1, $<name>, $&",
+      "rx.selectAll": "Select all matches",
+      "rx.toFind": "Open in Find",
+      "rx.preview": "Replace preview",
+      "rx.empty": "Type a pattern.",
+      "rx.slow": "Stopped: this pattern took over a second. Try a simpler one.",
+      "rx.bad": "Not a valid pattern: {msg}",
+      "rx.count": "{n} matches",
+      "rx.countMore": "More than {n} matches",
+      "rx.none": "No matches",
+      "rx.at": "Line {line}, column {col}",
+      "rx.emptyMatch": "(empty match)",
+      "rx.listed": "The first {n} are listed.",
+      "rx.big": "The file is too big for the tester.",
       "tt.none": "Text Tools opens only inside orOS."
     },
     el: {
@@ -173,6 +215,48 @@
       "nb.eel2": "EEL2 (JSFX)",
       "col.title": "Χρώμα",
       "col.none": "Επίλεξε ένα χρώμα CSS όπως #ff8800, rgb(255 136 0) ή hsl(32 100% 50%).",
+      "tools.jwt": "Αποκωδικοποίηση JWT",
+      "tools.jwtSub": "Δείχνει κεφαλίδα, περιεχόμενο και χρόνους· η υπογραφή δεν ελέγχεται",
+      "tools.gFind": "Εύρεση",
+      "tools.regex": "Δοκιμή regex",
+      "tools.regexSub": "Δοκίμασε μια κανονική έκφραση στο αρχείο, με ομάδες και αντικατάσταση",
+      "jwt.none": "Επίλεξε ένα JSON Web Token (τρία μέρη χωρισμένα με τελείες).",
+      "jwt.jwe": "Είναι κρυπτογραφημένο token (JWE)· δεν διαβάζεται χωρίς το κλειδί.",
+      "jwt.bad": "Η κεφαλίδα ή το περιεχόμενο του token δεν είναι έγκυρο JSON.",
+      "jwt.title": "JSON Web Token",
+      "jwt.expired": "Έχει λήξει",
+      "jwt.early": "Δεν ισχύει ακόμη",
+      "jwt.valid": "Μέσα στους χρόνους του",
+      "jwt.noTimes": "Χωρίς χρόνο λήξης",
+      "jwt.unchecked": "Υπογεγραμμένο με {alg}. Η υπογραφή δεν ελέγχεται εδώ, άρα μην εμπιστεύεσαι όσα γράφει.",
+      "jwt.unsigned": "Χωρίς υπογραφή (alg none). Θα μπορούσε να το έχει γράψει οποιοσδήποτε.",
+      "jwt.iat": "Εκδόθηκε",
+      "jwt.nbf": "Ισχύει από",
+      "jwt.exp": "Λήγει",
+      "jwt.header": "Κεφαλίδα",
+      "jwt.payload": "Περιεχόμενο",
+      "rx.noWorker": "Η δοκιμή regex δεν μπόρεσε να ξεκινήσει εδώ.",
+      "rx.title": "Δοκιμή regex",
+      "rx.pattern": "Μοτίβο",
+      "rx.fi": "χωρίς πεζά/κεφαλαία",
+      "rx.fm": "πολλές γραμμές",
+      "rx.fs": "η τελεία πιάνει αλλαγή γραμμής",
+      "rx.fu": "Unicode",
+      "rx.replace": "Αντικατάσταση με (προαιρετικά)",
+      "rx.replacePh": "$1, $<όνομα>, $&",
+      "rx.selectAll": "Επιλογή όλων",
+      "rx.toFind": "Άνοιγμα στην Εύρεση",
+      "rx.preview": "Προεπισκόπηση αντικατάστασης",
+      "rx.empty": "Γράψε ένα μοτίβο.",
+      "rx.slow": "Σταμάτησε: το μοτίβο πήρε πάνω από ένα δευτερόλεπτο. Δοκίμασε κάτι απλούστερο.",
+      "rx.bad": "Μη έγκυρο μοτίβο: {msg}",
+      "rx.count": "{n} ταιριάσματα",
+      "rx.countMore": "Πάνω από {n} ταιριάσματα",
+      "rx.none": "Κανένα ταίριασμα",
+      "rx.at": "Γραμμή {line}, στήλη {col}",
+      "rx.emptyMatch": "(κενό ταίριασμα)",
+      "rx.listed": "Φαίνονται τα πρώτα {n}.",
+      "rx.big": "Το αρχείο είναι πολύ μεγάλο για τη δοκιμή.",
       "tt.none": "Τα Εργαλεία κειμένου ανοίγουν μόνο μέσα στο orOS."
     }
   };
@@ -340,12 +424,14 @@
       var p = $("dev");
       if (!p || p.hidden) return;
       p.hidden = true;
+      rxStop();
       document.body.classList.remove("dv-on");
       $("dev-body").textContent = "";
       if (V()) V().focus();
     }
     // build(body) fills it. The panel shows a copy of the moment it opened.
     function showDev(title, build) {
+      rxStop();
       H.previewOff();
       H.closeCompare();
       $("dev-title").textContent = title;
@@ -463,6 +549,164 @@
       });
     }
 
+    // ----- JWT (wave D2): decode only, the signature is never checked -----
+    var JWT_KEYS = { iat: "jwt.iat", nbf: "jwt.nbf", exp: "jwt.exp" };
+    function jwtTool() {
+      devNeeds(function (D) {
+        var src = selText().trim() || (V() ? V().state.doc.toString().trim() : "");
+        if (!src || src.length > 100000) { H.toast(t("jwt.none")); return; }
+        var r = D.jwtDecode(src, Date.now());
+        if (r.error) { H.toast(t(r.error === "jwe" ? "jwt.jwe" : r.error === "parts" ? "jwt.none" : "jwt.bad")); return; }
+        showDev(t("jwt.title"), function (body) {
+          var st = H.el("p", "dv-match " + (r.expired || r.early ? "no" : "ok"),
+            r.expired ? t("jwt.expired") : r.early ? t("jwt.early") : r.times.some(function (x) { return x.k !== "iat"; }) ? t("jwt.valid") : t("jwt.noTimes"));
+          body.appendChild(st);
+          devNote(body, t(r.signed ? "jwt.unchecked" : "jwt.unsigned", { alg: r.alg || "?" }));
+          r.times.forEach(function (x) {
+            var d = new Date(x.ms), v;
+            try { v = new Intl.DateTimeFormat(H.locale(), { dateStyle: "medium", timeStyle: "medium" }).format(d); } catch (e) { v = d.toISOString(); }
+            devRow(body, t(JWT_KEYS[x.k]), v + " · " + D.relTime(x.ms, Date.now(), H.locale()), false);
+          });
+          devHead(body, t("jwt.header"));
+          devBlock(body, r.header);
+          devHead(body, t("jwt.payload"));
+          devBlock(body, r.payload);
+        });
+      });
+    }
+    // A block of JSON as text, with Copy.
+    function devBlock(body, text) {
+      var box = H.el("div", "dv-block");
+      box.appendChild(H.el("pre", "dv-pre", text));
+      var b = H.el("span", "dv-btns");
+      b.appendChild(H.button(t("dev.copy"), "chip sm", function () { copyText(text); }));
+      box.appendChild(b);
+      body.appendChild(box);
+    }
+
+    // ----- Regular expressions (wave D2) -----
+    // Matched in pad/regex-worker.js; a run that takes over a second is
+    // stopped. The text is the whole file; nothing is kept after closing
+    // except the last pattern while Pad stays open.
+    var RX_MS = 1000, RX_MAX_TEXT = 5000000, rxWorker = null, rxTimer = 0, rxId = 0, rxLast = { pattern: "", flags: "", replace: "" };
+    function rxStop() {
+      clearTimeout(rxTimer);
+      if (rxWorker) { try { rxWorker.terminate(); } catch (e) {} rxWorker = null; }
+    }
+    function rxRun(job, done) {
+      rxStop();
+      try { rxWorker = new Worker("regex-worker.js" + (H.v ? "?v=" + H.v : "")); }
+      catch (e) { done({ error: t("rx.noWorker") }); return; }
+      var id = ++rxId, w = rxWorker;
+      w.onmessage = function (e) { if (e.data && e.data.id === id) { clearTimeout(rxTimer); done(e.data); } };
+      w.onerror = function () { clearTimeout(rxTimer); done({ error: t("rx.noWorker") }); };
+      rxTimer = setTimeout(function () { if (rxWorker === w) { rxStop(); done({ slow: true }); } }, RX_MS);
+      job.id = id;
+      w.postMessage(job);
+    }
+    function selectRanges(pos) {
+      var v = V(), CMs = window.OrosCM && window.OrosCM.state;
+      if (!v || !CMs || !pos.length) return;
+      var len = v.state.doc.length, ranges = [];
+      for (var i = 0; i < pos.length; i += 2) {
+        var a = Math.min(pos[i], len), b = Math.min(pos[i] + pos[i + 1], len);
+        ranges.push(CMs.EditorSelection.range(a, b));
+      }
+      v.dispatch({ selection: CMs.EditorSelection.create(ranges, 0), scrollIntoView: true });
+      v.focus();
+    }
+    function regexTool() {
+      if (!V()) return;
+      var sel = selText();
+      var start = sel && !/\n/.test(sel) && sel.length <= 200 ? sel : rxLast.pattern;
+      showDev(t("rx.title"), function (body) {
+        function field(label, val, ph) {
+          var lab = H.el("label", "dv-lbl", label), inp = H.el("input");
+          inp.type = "text"; inp.autocomplete = "off"; inp.spellcheck = false; inp.value = val || "";
+          if (ph) inp.setAttribute("placeholder", ph);
+          lab.appendChild(inp); body.appendChild(lab);
+          return inp;
+        }
+        var pat = field(t("rx.pattern"), start, "\\d{4}-\\d{2}-\\d{2}");
+        var flagsBox = H.el("div", "dv-flags"), flags = {};
+        [["i", "rx.fi"], ["m", "rx.fm"], ["s", "rx.fs"], ["u", "rx.fu"]].forEach(function (f) {
+          var lab = H.el("label", "dv-flag"), cb = H.el("input");
+          cb.type = "checkbox"; cb.checked = rxLast.flags.indexOf(f[0]) >= 0;
+          lab.appendChild(cb); lab.appendChild(H.el("span", "", f[0] + " · " + t(f[1])));
+          flagsBox.appendChild(lab); flags[f[0]] = cb;
+        });
+        body.appendChild(flagsBox);
+        var rep = field(t("rx.replace"), rxLast.replace, t("rx.replacePh"));
+        var status = H.el("p", "dv-match");
+        status.setAttribute("role", "status");
+        body.appendChild(status);
+        var acts = H.el("div", "dv-acts");
+        var allBtn = H.button(t("rx.selectAll"), "chip sm", function () { if (lastPos.length) selectRanges(lastPos); });
+        var findBtn = H.button(t("rx.toFind"), "chip sm", toFind);
+        acts.appendChild(allBtn); acts.appendChild(findBtn);
+        body.appendChild(acts);
+        var list = H.el("div", "dv-list");
+        body.appendChild(list);
+        var prevHead = H.el("h3", "dv-head", t("rx.preview")), prev = H.el("pre", "dv-pre");
+        prevHead.hidden = prev.hidden = true;
+        body.appendChild(prevHead); body.appendChild(prev);
+        var lastPos = [], timer = 0;
+        function flagStr() { return Object.keys(flags).filter(function (k) { return flags[k].checked; }).join(""); }
+        function toFind() {
+          var S = window.OrosCM && window.OrosCM.search, v = V();
+          if (!S || !v || !pat.value) return;
+          v.dispatch({ effects: S.setSearchQuery.of(new S.SearchQuery({ search: pat.value, regexp: true, caseSensitive: !flags.i.checked, replace: rep.value })) });
+          S.openSearchPanel(v);
+        }
+        function paint(r) {
+          list.textContent = "";
+          lastPos = [];
+          allBtn.disabled = findBtn.disabled = true;
+          prevHead.hidden = prev.hidden = true;
+          status.className = "dv-match";
+          if (!pat.value) { status.textContent = t("rx.empty"); return; }
+          if (r.slow) { status.className = "dv-match no"; status.textContent = t("rx.slow"); return; }
+          if (r.error) { status.className = "dv-match no"; status.textContent = t("rx.bad", { msg: r.error }); return; }
+          findBtn.disabled = false;
+          status.className = "dv-match" + (r.count ? " ok" : "");
+          status.textContent = r.count ? t(r.more ? "rx.countMore" : "rx.count", { n: r.count.toLocaleString(H.locale()) }) : t("rx.none");
+          if (!r.count) return;
+          lastPos = r.pos || [];
+          allBtn.disabled = !lastPos.length;
+          var doc = V().state.doc;
+          r.matches.forEach(function (m) {
+            var ln = doc.lineAt(Math.min(m.i, doc.length));
+            var b = H.el("button", "dv-hit");
+            b.type = "button";
+            b.appendChild(H.el("span", "dv-k", t("rx.at", { line: ln.number, col: m.i - ln.from + 1 })));
+            b.appendChild(H.el("code", "dv-v", m.text === "" ? t("rx.emptyMatch") : m.text));
+            m.groups.forEach(function (g, gi) { b.appendChild(H.el("span", "dv-g", "$" + (gi + 1) + " = " + (g === null ? "—" : g))); });
+            Object.keys(m.named).forEach(function (k) { b.appendChild(H.el("span", "dv-g", "$<" + k + "> = " + (m.named[k] === null ? "—" : m.named[k]))); });
+            b.addEventListener("click", function () { selectRanges([m.i, m.len]); });
+            list.appendChild(b);
+          });
+          if (r.matches.length < r.count) list.appendChild(H.el("p", "dv-note", t("rx.listed", { n: r.matches.length })));
+          if (typeof r.replaced === "string") {
+            prevHead.hidden = prev.hidden = false;
+            prev.textContent = r.replaced;
+          }
+        }
+        function run() {
+          rxLast = { pattern: pat.value, flags: flagStr(), replace: rep.value };
+          if (!pat.value) { paint({}); return; }
+          var text = V().state.doc.toString();
+          if (text.length > RX_MAX_TEXT) { status.className = "dv-match no"; status.textContent = t("rx.big"); return; }
+          rxRun({ pattern: pat.value, flags: flagStr(), text: text, replace: rep.value ? rep.value : undefined }, paint);
+        }
+        function later() { clearTimeout(timer); timer = setTimeout(run, 200); }
+        pat.addEventListener("input", later);
+        rep.addEventListener("input", later);
+        Object.keys(flags).forEach(function (k) { flags[k].addEventListener("change", run); });
+        pat.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); run(); } });
+        run();
+      });
+    }
+
     // Base64, URL and the other encoders live in Text Tools.
     function textToolsTool() {
       var text = selText() || (V() ? V().state.doc.toString() : "");
@@ -478,6 +722,13 @@
     // The Tools list: groups, a search box, and a suggestion from the
     // selection (a colour, a time stamp, a number).
     function toolsMenu() {
+      if (!V()) return;
+      // The suggestion needs devtools.js; load it first (a small file), and
+      // open the list without it if it cannot load.
+      if (!window.PadDev) { loadDev().then(openMenu); return; }
+      openMenu();
+    }
+    function openMenu() {
       if (!V()) return;
       var sel = selText(), lang = A().lang, rows = [];
       var JSON_ROWS = [
@@ -498,7 +749,11 @@
         { head: t("tools.gCodes"), rows: [
           { value: "hash", label: t("tools.hash"), sub: t("tools.hashSub"), kw: "hash md5 sha sha1 sha256 sha512 checksum" },
           { value: "uuid4", label: t("tools.uuid4"), sub: t("tools.uuid4Sub"), kw: "uuid guid random" },
-          { value: "uuid7", label: t("tools.uuid7"), sub: t("tools.uuid7Sub"), kw: "uuid guid time" }
+          { value: "uuid7", label: t("tools.uuid7"), sub: t("tools.uuid7Sub"), kw: "uuid guid time" },
+          { value: "jwt", label: t("tools.jwt"), sub: t("tools.jwtSub"), kw: "jwt token bearer decode oauth" }
+        ] },
+        { head: t("tools.gFind"), rows: [
+          { value: "regex", label: t("tools.regex"), sub: t("tools.regexSub"), kw: "regex regexp regular expression test match pattern" }
         ] },
         { head: t("tools.gValues"), rows: [
           { value: "time", label: t("tools.time"), sub: t("tools.timeSub"), kw: "time timestamp unix epoch date iso" },
@@ -519,7 +774,7 @@
       if (lang === "yaml") groups.splice(0, 2, groups[1], groups[0]);
       var hint = window.PadDev ? window.PadDev.sniff(sel) : "";
       if (hint) {
-        var pick = { color: "color", time: "time", base: "base" }[hint], all = [].concat.apply([], groups.map(function (g) { return g.rows; }));
+        var pick = { color: "color", time: "time", base: "base", jwt: "jwt" }[hint], all = [].concat.apply([], groups.map(function (g) { return g.rows; }));
         var s = all.filter(function (r) { return r.value === pick; })[0];
         if (s) rows.push({ head: t("tools.gHint") }, { value: s.value, label: s.label, sub: s.sub, kw: s.kw });
       }
@@ -530,7 +785,7 @@
           jsonCheck: jsonCheckTool, jsonSort: jsonSortTool, jsonYaml: jsonToYamlTool,
           yamlCheck: yamlCheckTool, yamlFormat: yamlFormatTool, yamlJson: yamlToJsonTool,
           hash: hashTool, uuid4: function () { uuidTool(false); }, uuid7: function () { uuidTool(true); },
-          time: timeTool, base: baseTool, color: colorTool, tt: textToolsTool,
+          time: timeTool, base: baseTool, color: colorTool, tt: textToolsTool, jwt: jwtTool, regex: regexTool,
           az: function () { H.applyTool(function (x) { return H.C.sortLines(x, false, H.locale()); }); },
           za: function () { H.applyTool(function (x) { return H.C.sortLines(x, true, H.locale()); }); },
           uniq: function () { H.applyTool(H.C.uniqueLines); },
