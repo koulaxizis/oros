@@ -11650,3 +11650,8 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** layout/epub.js, epubcheck.js, io.js, panels.js, outprof.js, layout.js, help EN/EL, i18n/de/layout.js, designkit/render.js, library/ (core.js, epub.js, sanitize.js), .github/scripts/epub-samples.js, tests/layout-ebooks.js, tests/layout-epub.test.js, shell.js, what's new EN/EL, Bible.
 - **Tests:** `tests/layout-epub.test.js` (+3); full `node --test tests/*.test.js`; official EPUBCheck 5.2.1 on the samples (good-fixed, good-fixed-pictures pass, bad-fixed-viewport fails); Playwright overlay alignment and Library fixed-layout preview at 360 px (EL, EN) and desktop. Not tested: a real phone, real e-book readers.
 - **Next:** E4 Assistant + Gate `export_epub` (AS-EPUB).
+
+### 2026-11-14 — 6.77.00 — Keep an orOS Drive folder on all devices (DRIVE-ALL D1, #1019)
+- **Why:** Chris 2026-11-13 20:10 («Ναι, μετά το F1»), thread «Αρχεία του orOS μέσω Gate με κλειστό PC»: a folder orOS Drive mirrors in full on the PC must stay downloaded on every device, so Claude's folders and the closed copy see all of it.
+- **Changes:** `vault.js` synced key `oros-vault-offline-all` `{ver, m, f}` (slice `driveoffline`, newer `m` wins, then the larger JSON), offline folders = this device's ∪ all devices'; API `offlineAll`, `isKeptOfflineAll`, `setKeptOfflineAll`; `files/drive.js` `Keep on all my devices` button; help EN/EL, DE strings; Part II synced key + VD-OD DRIVE-ALL. No oros-drive change.
+- **Verified:** node --test tests/*.test.js (tests/vault-ondemand.test.js +2: merge rules, a pull keeps the folder downloaded on another device); qa budget for Files updated (Documents W1 + this button).
