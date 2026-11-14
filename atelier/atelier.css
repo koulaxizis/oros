@@ -427,6 +427,10 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 .fn-row.busy { opacity: 0.7; }
 .fn-name { flex: 1; min-width: 0; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fn-badge { flex: none; font-size: 11px; color: var(--text-dim); }
+.fn-col { display: flex; flex-direction: column; gap: 4px; margin: 0 0 8px; }
+.fn-colh { margin: 8px 0 4px; font-weight: 700; font-size: 13px; }
+.fn-col .inp.sm { min-height: 40px; }
+.fn-row:disabled { cursor: default; opacity: .6; }
 .ctx-font { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Brand kit */

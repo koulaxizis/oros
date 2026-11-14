@@ -66,3 +66,15 @@
 .fm .fm-lictext pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; max-height: 280px; overflow: auto; margin: 6px 0 0; }
 .fm .fm-link { display: inline-flex; align-items: center; min-height: 32px; color: var(--accent); font-weight: 700; overflow-wrap: anywhere; }
 .fm .fm-size-kb { color: var(--text-dim); font-size: 13px; }
+
+/* collections and notes (FM-2) */
+.fm .fm-newcol { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fm .fm-newcol .find-in { flex: 1 1 200px; min-width: 0; }
+.fm .fm-colchecks { display: flex; flex-direction: column; gap: 4px; }
+.fm .fm-colchk { min-height: 40px; display: flex; align-items: center; gap: 10px; overflow-wrap: anywhere; }
+.fm .fm-colchk input { width: 24px; height: 24px; flex: 0 0 auto; accent-color: var(--accent); }
+.fm .fm-notel { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.fm .fm-colname { font-family: var(--fm-ui); font-weight: 700; font-size: 18px; }
+.fm .fm-colrow { cursor: default; }
+.fm .fm-colrow:hover { border-color: var(--border); }
+.fm .fm-colacts { margin: 0; }

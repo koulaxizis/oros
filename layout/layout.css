@@ -349,6 +349,9 @@ body.panel-closed #side { display: none; }
 .fp-row:hover, .fp-row:focus-visible { background: var(--accent-soft); }
 .fp-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fp-sub { flex: 0 0 auto; font-size: 12px; color: var(--text-dim); }
+.fp-col { display: flex; flex-direction: column; gap: 4px; margin: 4px 0 8px; }
+.fp-colh { margin: 10px 0 2px; font-size: 14px; }
+.fp-row:disabled { cursor: default; opacity: .6; background: transparent; }
 .sw-chip { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
 .sw-name { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sw-val { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }

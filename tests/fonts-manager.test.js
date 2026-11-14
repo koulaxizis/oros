@@ -298,9 +298,9 @@ test("settings: Fonts is a section right after Appearance, with search rows and 
   assert.equal(C.SECTIONS[1], "fonts");
   assert.equal(C.sectionOf({ section: "fonts" }), "fonts");
   const rows = C.FIND.filter((r) => r[1] === "fonts").map((r) => r[0]);
-  assert.deepEqual(rows, ["fm-mine", "fm-install", "fm-free"]);
+  assert.deepEqual(rows, ["fm-mine", "fm-install", "fm-free", "fm-cols"]);
   const de = read("i18n/de/settings.js");
-  for (const k of ["s.fonts", "d.fonts", "fm.mine", "fm.install", "fm.tab.free", "fm.loading", "fm.loadFail", "w.fm-mine", "w.fm-install", "w.fm-free"]) {
+  for (const k of ["s.fonts", "d.fonts", "fm.mine", "fm.install", "fm.tab.free", "fm.loading", "fm.loadFail", "w.fm-mine", "w.fm-install", "w.fm-free", "fm.tab.cols", "w.fm-cols"]) {
     assert.ok(C.STRINGS.en[k] && C.STRINGS.el[k], k + " in en and el");
     assert.ok(de.indexOf('"' + k + '"') >= 0, k + " in de");
   }

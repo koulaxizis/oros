@@ -30,15 +30,17 @@ To find one option quickly, type in `Search settings` at the top of the list: a 
 - `Device`: storage, space per app, battery, network, sync state, screen, orOS & browser and browser features, read only, with `Copy report` (see "Device" below). The menu's `Device info` row opens it.
 
 ### Fonts
-`Fonts` is where you look after the fonts that [Layout](app:layout) and [Atelier](app:atelier) use. It has two tabs.
+`Fonts` is where you look after the fonts that [Layout](app:layout) and [Atelier](app:atelier) use. It has three tabs.
 - `In orOS`: your own font files. `Add font files…` (or drop files on that card) takes `.ttf`, `.otf`, `.woff` and `.woff2` files, up to 15 MB each, several at once. orOS keeps each file once on the orOS disk, in the Fonts folder, and Sync carries it, encrypted, to all your devices. A font whose licence does not allow embedding it in documents is not kept. A font with PostScript outlines (some `.otf` files) is marked `Atelier only`, because Layout's PDF can't embed it.
 - `Free fonts`: the free families of Fontsource, most of them under the SIL Open Font License. The list needs a connection the first time. Layout and Atelier already list these fonts; each one downloads the first time a document uses it and then works offline.
-- `Find a font`, `Greek`, `Polytonic` and the kind (serif, sans serif, monospace) narrow both lists. Each font's name is written in the font itself, with badges for Greek and polytonic letters.
+- `Collections`: named groups of fonts for a project, such as a book or a series of covers, made from your own fonts and the free ones. `Create` makes one; open it to rename it, take fonts out, `Keep for offline use` (downloads every file of its free fonts now) or `Delete collection` (press twice; the fonts stay). In [Layout](app:layout)'s `Fonts` dialog and [Atelier](app:atelier)'s font panel, `This document's collection` picks the collection that document lists first. Collections sync to all your devices.
+- `Find a font`, `Greek`, `Polytonic` and the kind (serif, sans serif, monospace) narrow the font lists. Each font's name is written in the font itself, with badges for Greek and polytonic letters.
 
 Open a font to see:
 - `Sample`: Greek, polytonic, Latin, numbers and signs, or `Mine` for your own text, in every style the family has (regular, bold, italic, bold italic), at the size you choose, with smaller lines below. Your text and size stay on this device.
 - `Letters`: how many letters of monotonic Greek, polytonic Greek, Latin, Latin with accents and Cyrillic the font has, counted from the font's own character table, and which ones are missing.
 - `Licence`: what the font file says about itself: whether it may be embedded in PDFs and documents, whether it names an open licence (SIL Open Font License or Apache), its copyright, designer, maker, version, the licence text and a link to the licence page. Check the licence you got with the font too: that is the one that counts.
+- `Collections and note`: tick the collections the font belongs to, or make a new one, and keep a note such as where you bought it and for how many computers. The note syncs to all your devices.
 - `Files`: each style's file and size. `Remove from orOS` (press twice) moves the family's files to the Trash of [Files](app:files) for 30 days, on every device; documents that use it show the built-in Noto font in its place until you add it again.
 
 ### Screen lock

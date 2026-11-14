@@ -198,13 +198,13 @@ orosPack("de", "layout", {
  "font.sans": "Noto Sans",
  "font.serif": "Noto Serif",
  "fp.add": "Schriftdatei hinzufügen…",
- "fp.addHint": "TTF, OTF oder WOFF. Die Datei liegt in Dateien › Fonts und wird wie jede Datei synchronisiert; Dokumente, die sie nutzen, nennen sie.",
+ "fp.addHint": "TTF, OTF, WOFF oder WOFF2. Die Datei liegt in Dateien › Fonts und wird wie jede Datei synchronisiert; Dokumente, die sie nutzen, nennen sie.",
  "fp.added": "„{name}“ hinzugefügt.",
  "fp.err.disk": "Die Schrift konnte nicht auf der orOS-Festplatte gespeichert werden.",
  "fp.err.outlines": "Diese Schrift hat PostScript-Konturen (CFF), die der PDF-Export noch nicht einbetten kann. Nimm ihre TTF-Version.",
  "fp.err.restricted": "Die Lizenz der Schrift erlaubt kein Einbetten in Dokumente.",
  "fp.err.size": "Die Datei ist zu groß für eine Schrift (höchstens 15 MB).",
- "fp.err.type": "Das ist keine Schriftdatei, die Layout lesen kann (TTF, OTF oder WOFF).",
+ "fp.err.type": "Das ist keine Schriftdatei, die Layout lesen kann (TTF, OTF, WOFF oder WOFF2).",
  "fp.free": "Freie Schriften (Fontsource)",
  "fp.greek": "Nur Schriften mit Griechisch",
  "fp.hasGreek": "Griechisch",
@@ -575,7 +575,6 @@ orosPack("de", "layout", {
  "toast.gone": "Dieses Dokument wurde auf einem anderen Gerät gelöscht.",
  "toast.locked": "Dieses Objekt ist gesperrt.",
  "toast.maxItems": "Ein Dokument kann höchstens {n} Objekte haben.",
-
  "toast.save": "Speicher voll: Die letzten Änderungen konnten auf diesem Gerät nicht gespeichert werden.",
  "toast.diskSave": "Die letzten Änderungen konnten noch nicht in Dateien › Layout geschrieben werden. Sie bleiben hier und werden bei der nächsten Änderung geschrieben.",
  "toast.diskRead": "Dateien in Dateien › Layout, die nicht gelesen werden konnten: {n}. Sie bleiben, wie sie sind.",
@@ -1073,5 +1072,9 @@ orosPack("de", "layout", {
  "rb.off": "Seiten, auf denen Zeilen verrutscht sind. Prüfe sie vor dem Druck:",
  "rb.offLine": "{n} Zeilen",
  "rb.back": "Zurück zum Assistenten",
- "rb.noPage": "Dieses Dokument hat keine Seite {n}."
+ "rb.noPage": "Dieses Dokument hat keine Seite {n}.",
+ "fp.cols": "Sammlungen",
+ "fp.docCol": "Sammlung dieses Dokuments (steht oben)",
+ "fp.docCol.none": "Keine",
+ "fp.notHere": "noch nicht auf diesem Gerät"
 });

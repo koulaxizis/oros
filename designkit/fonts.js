@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — fonts.js (v1.1.0)
+// orOS designkit — fonts.js (v1.2.0)
 // Font families a Layout document names besides the built-in Noto
 // ones. Owner: Layout.
 //   - "fs_<id>": a Fontsource family (open licences, mostly SIL OFL),
@@ -26,6 +26,8 @@
 // library({ all: true }) (PostScript-outline files too, marked cff),
 // remove() (a font file to the orOS Trash) and catalog() entries
 // with poly (greek-ext) and lic (the Fontsource licence id).
+// 1.2.0 (FM-2) adds cols: font collections and notes, the synced
+// slice "fonts" (section 8), and keepOffline() for a collection.
 // Exposes orosDK.fonts (browser) or module.exports (Node: the pure
 // parts).
 // ============================================================
@@ -759,6 +761,236 @@
     });
   }
 
+
+  // ---------- 8. Collections and notes (1.2.0, FM-2) ----------
+  // The synced slice "fonts" (FONTS v1, key oros-fonts-data), shared by
+  // Settings › Fonts, Layout and Atelier:
+  //   { ver: 1,
+  //     cols:  { <cid>: { name, m } },
+  //     mem:   { "<cid>:<family id>": { on: 0|1, name, fb, m } },
+  //     notes: { <family id>: { t, m } },          t "" = note removed
+  //     tombs: { <cid>: <ts> } }
+  // Every record is LWW by m (equal m → the larger canonical JSON); a
+  // family's place in a collection is its own record, so two devices
+  // that add fonts to one collection at once keep both. Tombstones
+  // max-union; a tomb ≥ m drops the collection and its members.
+  // A document keeps only its collection's id in setup.ext.col.
+  var COLS_KEY = "oros-fonts-data";
+  var CLIM = { cols: 100, mem: 5000, notes: 1000, tombs: 300, name: 60, note: 500 };
+  var CID_RE = /^c[a-z0-9]{4,24}$/;
+  function okM(m) { return typeof m === "number" && isFinite(m) && m > 0; }
+  function cleanLine(s, max) {
+    if (typeof s !== "string") return "";
+    return s.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+  }
+  function cleanNote(s) {
+    if (typeof s !== "string") return "";
+    return s.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f]+/g, " ").trim().slice(0, CLIM.note);
+  }
+  function canon(x) {
+    if (x === null || typeof x !== "object") return JSON.stringify(x);
+    if (Array.isArray(x)) return "[" + x.map(canon).join(",") + "]";
+    return "{" + Object.keys(x).sort().map(function (k) { return JSON.stringify(k) + ":" + canon(x[k]); }).join(",") + "}";
+  }
+  function newest(obj, max, mOf) {
+    return Object.keys(obj).sort(function (a, b) { return mOf(obj[b]) - mOf(obj[a]) || (a < b ? -1 : 1); }).slice(0, max).sort();
+  }
+  function famOk(id) { return isFam(id) && (id.indexOf("uf_") !== 0 || /^uf_[0-9a-f]{16}$/.test(id)); }
+  function colsNorm(data) {
+    var out = { ver: 1, cols: {}, mem: {}, notes: {}, tombs: {} };
+    if (!data || typeof data !== "object") return out;
+    var src = data.tombs && typeof data.tombs === "object" ? data.tombs : {}, tombs = {};
+    Object.keys(src).forEach(function (id) { if (CID_RE.test(id) && okM(src[id])) tombs[id] = src[id]; });
+    newest(tombs, CLIM.tombs, function (v) { return v; }).forEach(function (id) { out.tombs[id] = tombs[id]; });
+    function dead(cid, m) { return out.tombs[cid] !== undefined && out.tombs[cid] >= m; }
+    var c = data.cols && typeof data.cols === "object" ? data.cols : {}, cols = {};
+    Object.keys(c).forEach(function (id) {
+      var x = c[id];
+      if (!CID_RE.test(id) || !x || typeof x !== "object" || !okM(x.m) || dead(id, x.m)) return;
+      var name = cleanLine(x.name, CLIM.name);
+      if (name) cols[id] = { name: name, m: x.m };
+    });
+    newest(cols, CLIM.cols, function (v) { return v.m; }).forEach(function (id) { out.cols[id] = cols[id]; });
+    var mm = data.mem && typeof data.mem === "object" ? data.mem : {}, mem = {};
+    Object.keys(mm).forEach(function (k) {
+      var x = mm[k], i = k.indexOf(":"), cid = k.slice(0, i), fam = k.slice(i + 1);
+      if (i < 0 || !CID_RE.test(cid) || !famOk(fam) || !x || typeof x !== "object" || !okM(x.m) || dead(cid, x.m)) return;
+      mem[k] = { on: x.on === 1 ? 1 : 0, name: cleanLine(x.name, CLIM.name) || fam, fb: BUILTIN.indexOf(x.fb) >= 0 ? x.fb : "sans", m: x.m };
+    });
+    newest(mem, CLIM.mem, function (v) { return v.m; }).forEach(function (k) { out.mem[k] = mem[k]; });
+    var nn = data.notes && typeof data.notes === "object" ? data.notes : {}, notes = {};
+    Object.keys(nn).forEach(function (fam) {
+      var x = nn[fam];
+      if (!famOk(fam) || !x || typeof x !== "object" || !okM(x.m)) return;
+      notes[fam] = { t: cleanNote(x.t), m: x.m };
+    });
+    newest(notes, CLIM.notes, function (v) { return v.m; }).forEach(function (k) { out.notes[k] = notes[k]; });
+    return out;
+  }
+  function newer(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    if (a.m !== b.m) return a.m > b.m ? a : b;
+    return canon(a) >= canon(b) ? a : b;
+  }
+  function colsMerge(A, B) {
+    var a = colsNorm(A), b = colsNorm(B), out = { cols: {}, mem: {}, notes: {}, tombs: {} };
+    [a, b].forEach(function (x) {
+      Object.keys(x.tombs).forEach(function (id) { out.tombs[id] = Math.max(out.tombs[id] || 0, x.tombs[id]); });
+      ["cols", "mem", "notes"].forEach(function (part) {
+        Object.keys(x[part]).forEach(function (k) { out[part][k] = newer(out[part][k], x[part][k]); });
+      });
+    });
+    return colsNorm(out);
+  }
+  function stamp(d, now) {
+    // a stamp after every record already there, so an edit always wins here
+    var m = Math.max(now || Date.now(), 1);
+    ["cols", "mem", "notes"].forEach(function (p) { Object.keys(d[p]).forEach(function (k) { if (d[p][k].m >= m) m = d[p][k].m + 1; }); });
+    Object.keys(d.tombs).forEach(function (k) { if (d.tombs[k] >= m) m = d.tombs[k] + 1; });
+    return m;
+  }
+  function colOrder(d, lang) {
+    var cs = (d && d.cols) || {};
+    return Object.keys(cs).sort(function (a, b) {
+      return cs[a].name.localeCompare(cs[b].name, lang || "en", { sensitivity: "base" }) || (a < b ? -1 : 1);
+    });
+  }
+  function colByName(d, name, lang) {
+    var n = cleanLine(name, CLIM.name), ids = colOrder(d, lang);
+    if (!n) return "";
+    for (var i = 0; i < ids.length; i++) if (d.cols[ids[i]].name.localeCompare(n, lang || "en", { sensitivity: "base" }) === 0) return ids[i];
+    return "";
+  }
+  // The families in a collection: [{ id, name, fb }] by name.
+  function colFams(d, cid, lang) {
+    var out = [];
+    if (!d || !d.cols || !d.cols[cid]) return out;
+    Object.keys(d.mem).forEach(function (k) {
+      var x = d.mem[k];
+      if (x.on && k.slice(0, k.indexOf(":")) === cid) out.push({ id: k.slice(k.indexOf(":") + 1), name: x.name, fb: x.fb });
+    });
+    return out.sort(function (a, b) { return a.name.localeCompare(b.name, lang || "en", { sensitivity: "base" }) || (a.id < b.id ? -1 : 1); });
+  }
+  // The collections a family is in (ids, by name).
+  function colsOf(d, fam, lang) {
+    return colOrder(d, lang).filter(function (cid) { var x = d.mem[cid + ":" + fam]; return !!(x && x.on); });
+  }
+  // Edits (in place on a normalized copy; each returns the copy).
+  function colAdd(d, name, now, rnd, lang) {
+    var n = cleanLine(name, CLIM.name);
+    if (!n) return { d: d, id: "" };
+    var have = colByName(d, n, lang);
+    if (have) return { d: d, id: have };
+    var r = typeof rnd === "number" ? rnd : Math.random();
+    var m = stamp(d, now), id = "c" + m.toString(36) + Math.floor(r * 1679616).toString(36);
+    d.cols[id] = { name: n, m: m };
+    return { d: colsNorm(d), id: id };
+  }
+  function colRename(d, cid, name, now) {
+    var n = cleanLine(name, CLIM.name);
+    if (n && d.cols[cid]) d.cols[cid] = { name: n, m: stamp(d, now) };
+    return colsNorm(d);
+  }
+  function colDelete(d, cid, now) {
+    if (!d.cols[cid]) return d;
+    d.tombs[cid] = stamp(d, now);
+    return colsNorm(d);
+  }
+  function colSet(d, cid, fam, on, now) {
+    if (!d.cols[cid] || !famOk(fam && fam.id)) return d;
+    d.mem[cid + ":" + fam.id] = { on: on ? 1 : 0, name: cleanLine(fam.name, CLIM.name) || fam.id, fb: fam.fb, m: stamp(d, now) };
+    return colsNorm(d);
+  }
+  function noteOf(d, fam) { var x = d && d.notes && d.notes[fam]; return x ? x.t : ""; }
+  function noteSet(d, fam, text, now) {
+    if (!famOk(fam)) return d;
+    var t = cleanNote(text);
+    if (t === noteOf(d, fam)) return d;
+    d.notes[fam] = { t: t, m: stamp(d, now) };
+    return colsNorm(d);
+  }
+  // A document's collection (setup.ext.col), when it still exists.
+  function docCol(doc, d) {
+    var c = doc && doc.setup && doc.setup.ext && doc.setup.ext.col;
+    return typeof c === "string" && CID_RE.test(c) && (!d || d.cols[c]) ? c : "";
+  }
+  // The slice in a page: load, register with orOS sync (the shell's,
+  // when the page is an app frame), edit, follow other windows and
+  // devices. onChange(data) after a pull or another window's write.
+  function syncApi(win) {
+    try { return (win.parent && win.parent.orosSync) || win.orosSync || null; }
+    catch (e) { return win.orosSync || null; }
+  }
+  function colsBind(win, onChange) {
+    var data = colsNorm(null), suppress = false;
+    function read() {
+      var raw = null;
+      try { raw = win.localStorage.getItem(COLS_KEY); } catch (e) {}
+      if (!raw) return colsNorm(null);
+      try { return colsNorm(JSON.parse(raw)); } catch (e) { return colsNorm(null); }
+    }
+    data = read();
+    function write() {
+      try { win.localStorage.setItem(COLS_KEY, JSON.stringify(data)); } catch (e) { return false; }
+      if (!suppress) { var s = syncApi(win); if (s && s.markDirty) s.markDirty(); }
+      return true;
+    }
+    var api = syncApi(win);
+    if (api && typeof api.registerSlice === "function") {
+      api.registerSlice("fonts", function () { return colsNorm(data); }, function (incoming) {
+        if (!incoming || typeof incoming !== "object") return;
+        var next = colsNorm(incoming);
+        if (canon(next) === canon(data)) return;
+        suppress = true;
+        try { data = next; write(); } finally { suppress = false; }   // a pull never marks dirty
+        if (onChange) onChange(data);
+      }, COLS_KEY, colsMerge);
+    }
+    // another window of this device (storage event)
+    try {
+      win.addEventListener("storage", function (e) {
+        if (e.key !== COLS_KEY || !e.newValue) return;
+        var next;
+        try { next = colsMerge(data, JSON.parse(e.newValue)); } catch (x) { return; }
+        if (canon(next) === canon(data)) return;
+        data = next;
+        if (onChange) onChange(data);
+      });
+    } catch (e) {}
+    return {
+      get: function () { return data; },
+      // fn(copy) → the edited copy; written and synced when it changed
+      edit: function (fn) {
+        var before = canon(data), next = fn(colsNorm(JSON.parse(JSON.stringify(data))));
+        if (!next || canon(next) === before) return false;
+        // whatever another window wrote meanwhile is kept
+        var stored = read();
+        data = colsMerge(next, stored);
+        return write();
+      }
+    };
+  }
+  // Every file of the Fontsource families given, into the cache, so
+  // they work offline. progress(done, total). Promise of { ok, failed }.
+  function keepOffline(fams, progress) {
+    var urls = [];
+    (fams || []).forEach(function (f) {
+      if (!f || typeof f.id !== "string" || f.id.indexOf("fs_") !== 0 || !isFam(f.id)) return;
+      var u = fontsourceUrls(f.id), vars = Array.isArray(f.vars) && f.vars.length ? f.vars : ["r", "b", "i", "bi"];
+      vars.forEach(function (v) { (u[v] || []).forEach(function (x) { urls.push(x); }); });
+    });
+    var done = 0, ok = 0, failed = 0;
+    if (progress) progress(0, urls.length);
+    var chain = Promise.resolve();
+    urls.forEach(function (u) {
+      chain = chain.then(function () {
+        return fetcher(u).then(function () { ok++; }, function () { failed++; }).then(function () { done++; if (progress) progress(done, urls.length); });
+      });
+    });
+    return chain.then(function () { return { ok: ok, failed: failed, total: urls.length }; });
+  }
+
   var api = {
     FOLDER: FOLDER, FILE_RE: FILE_RE, MAX: MAX,
     isFam: isFam, fsIdOf: fsIdOf, ufIdOf: ufIdOf, squash: squash, info: info, check: check,
@@ -767,7 +999,14 @@
     catalog: catalog, match: match,
     // 1.1.0
     woff2: woff2, brotli: brotli, coverage: coverage, level: level, subsetLevels: subsetLevels, SETS: SETS, SET_KEYS: SET_KEYS,
-    licence: licence, inspect: inspect, remove: remove, fontsourceUrls: fontsourceUrls
+    licence: licence, inspect: inspect, remove: remove, fontsourceUrls: fontsourceUrls,
+    // 1.2.0
+    cols: {
+      KEY: COLS_KEY, CID_RE: CID_RE, LIM: CLIM,
+      normalize: colsNorm, merge: colsMerge, order: colOrder, byName: colByName, fams: colFams, of: colsOf,
+      add: colAdd, rename: colRename, remove: colDelete, set: colSet, note: noteOf, setNote: noteSet,
+      docCol: docCol, bind: colsBind, keepOffline: keepOffline
+    }
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.fonts = api; }
