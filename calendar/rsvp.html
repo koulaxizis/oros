@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src https://oros-mail-relay.koulaxizis.workers.dev; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="An invitation made with orOS. Your answer is encrypted in your browser.">
+  <title>orOS invitation</title>
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../fonts.css?v=6.49.00">
+  <link rel="stylesheet" href="rsvp.css?v=6.49.00">
+</head>
+<body>
+  <header id="top">
+    <a id="brand" href="../" rel="noopener"><img src="../icon.svg" alt="" width="24" height="24"><span>orOS</span></a>
+    <span id="top-sub" data-i18n="r.sub">Invitation</span>
+  </header>
+  <main id="page" aria-live="polite">
+    <div id="warn"></div>
+    <div id="card"><p class="dim" id="state" data-i18n="r.loading">Opening the invitation…</p></div>
+    <div id="hp" aria-hidden="true"><label>Website <input type="text" id="hp-in" tabindex="-1" autocomplete="off"></label></div>
+  </main>
+  <footer id="foot">
+    <p class="dim" data-i18n="r.privacy">Your answer is encrypted in this browser. Only the person who invited you can read it.</p>
+    <p class="links">
+      <a href="../" data-i18n="r.what">What is orOS?</a>
+      <button type="button" id="report-btn" class="linkish" data-i18n="r.report">Report this page</button>
+    </p>
+    <div id="report" hidden>
+      <p data-i18n="r.reportAsk">Is this page trying to get passwords, card numbers or money, or is it abusive? Reporting is anonymous. A page several people report is closed.</p>
+      <button type="button" id="report-go" class="btn" data-i18n="r.reportGo">Report</button>
+    </div>
+  </footer>
+
+  <script src="../forms/pub.js?v=6.49.00"></script>
+  <script src="guests.js?v=6.49.00"></script>
+  <script src="rsvp.js?v=6.49.00"></script>
+</body>
+</html>

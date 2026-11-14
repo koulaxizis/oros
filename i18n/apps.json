@@ -119,6 +119,7 @@
    "files": [
     "calendar/calendar.js",
     "calendar/package.js",
+    "calendar/rsvp.js",
     "calendar/search.js",
     "calendar/today.js"
    ]
