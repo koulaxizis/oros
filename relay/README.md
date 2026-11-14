@@ -25,6 +25,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja, Todoist, Trello, GitHub, Raindrop.io, Notion, Enable Banking and PayPal, all read-only; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `crmform.js` | CRM's public contact form (`/crm/f/<k>`) and op `crmf`, kept in the same D1 until the user's CRM picks the messages up (see below) |
+| `forms.js` | Forms' public forms (`/fm/<k>`) and op `frm`: encrypted form definitions and sealed answers in the same D1 until the owner's device picks them up (see below) |
 | `share.js` | "Send to someone" links with an expiry: op `shr` and `/s/<id>/<i>`, encrypted pieces kept in their own D1 until they expire or are revoked (see below) |
 | `oasa.js` | Maps' `oasa` operation: live bus arrivals at Athens stops from OASA Telematics, which sends no CORS headers; fixed host, exact `act` allowlist, digit-only stop codes, 64 KB / 8 s, JSON only, 15 s shared cache (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
@@ -488,6 +489,49 @@ App operation `POST /v1 { op: "crmf", act, k (16 a-z0-9), sec (32 A-Za-z0-9) }`:
 Errors: `nostore` (503: no binding or a D1 failure), `auth` (403),
 `gone` (404), `full`, `bad-request`. Tests: `tests/crm-form-relay.test.js`.
 
+## Forms: published forms (`/fm/`, op `frm`)
+
+The Forms app publishes a form here; people fill it in on
+`https://useoros.online/forms/f/#<k>.<key>`. Same D1 binding `NL_DB`,
+own tables `frm_form` (k, SHA-256 of sec, def, open, close, cap,
+taken, day counters, waiting count and bytes, report counters, push
+target), `frm_q` (id, k, v, n, w, at), `frm_rep` (k, hashed reporter,
+at) and `frm_tot` (one row: forms and bytes stored). The relay never
+sees anything in clear: `def` is AES-256-GCM with a key that lives only
+in the link's `#` part (AAD `orOS-forms|<k>`), and every answer `v` is
+sealed in the person's browser to the form's RSA-OAEP-256 public key
+(the Newsletter seal). Caps are kept in counter rows; public paths never
+COUNT. Without the binding the public routes answer 503 `off` and the
+op 503 `nostore`; a D1 failure is a 503 too, never its text.
+
+| Route | What it does |
+|---|---|
+| `GET /fm/<k>` | `{ def, open, cap?, taken?, maxSeats? }` (60 a minute per IP) |
+| `POST /fm/<k>` | `text/plain` JSON ≤20 KB: `{ v, hp?, yes?, seats? }`. `{ ok }`, `{ ok, wait }` (a "yes" takes 1..`maxSeats` seats with one conditional UPDATE, so racing answers cannot pass `cap`; one that does not fit goes on the waiting list; 3 "yes" a day per IP on a seat form), `{ e: "closed" }`, `{ e: "busy" }`. Honeypot `hp`: the usual answer, nothing kept. 5 a minute and 20 a day per IP and form; 500 a day, 1,000 or 5 MB waiting per form; 150 MB in all (507 `full`) |
+| `POST /fm/<k>/report` | `{ ok }`. One report per IP, form and UTC day (stored as a hash only); the third in a day closes the form (`rep`) until the owner opens it again |
+
+CORS only for `https://useoros.online` (`FORMS_ORIGINS` overrides it);
+any other Origin gets 403. A missing form and a wrong secret look the
+same (`gone`). When an answer or a report arrives and the owner turned
+on push, the relay wakes the owner's device through the `push` Durable
+Object (`{act:"wake", wt, ct}`) at most every 15 minutes; a `gone` from
+it clears the target.
+
+App operation `POST /v1 { op: "frm", act, k, sec }`:
+
+| act | Extra fields | Returns |
+|---|---|---|
+| `put` | `def` (≤64 KB), `open?`, `close?` (ms), `cap?`, `maxSeats?` (1..21, default 4) | `{ ok }`: a new `k` takes this `sec` (at most 5,000 forms); an existing one needs the same `sec` and replaces `def` |
+| `upd` | `open?`, `close?`, `cap?`, `maxSeats?`, `taken?`, `push?` ({pid, wt, ct} or null) | `{ ok }`; opening clears the report count; `taken` is kept within 0..`cap` |
+| `peek` | | `{ n, open, rep }` |
+| `pull` | `after` (row id) | `{ rows[{ id, v, at, w? }], more, open, rep, taken }` (≤100) |
+| `ack` | `upto` (row id) | `{ n }`: deletes the rows up to that id |
+| `drop` | | `{ ok }`: deletes the form and its rows |
+
+The cron removes answers older than 30 days, forms
+closed for 30 days and forms no device pulled for 90 days. Payloads are
+never logged. Tests: `tests/forms-relay.test.js`.
+
 ## Send to someone: links with an expiry (`/s/`, op `shr`)
 
 For items too big for a link, or when the sender wants an expiry and a
@@ -508,10 +552,18 @@ IP in the database.
 | `POST /v1 {op:"shr", act:"fin", id, tok}` | Needs all `n` pieces and exactly `size` bytes; then the item can be read. Answers `{exp}` |
 | `GET /s/<id>/<i>` | One piece, `application/octet-stream`, `nosniff`, `Content-Disposition: attachment`, `Content-Security-Policy: sandbox`, `Cache-Control: no-store`; CORS only for `ALLOWED_ORIGINS`. The same 404 for missing, expired, revoked and not finished |
 | `POST /v1 {op:"shr", act:"del", id, del}` | Revoke: deletes everything when SHA-256(`del`) matches. Always `{ok:true}` |
+| `POST /v1 {op:"shr", act:"box", exp, boxes:[{id, rh, wh}]}` | Reply boxes (Scanner & PDF signature requests): 1–20 per call, `exp` ≤ now + 120 days, `rh`/`wh` = SHA-256 hex of the read and the write token (made in the sender's browser). Each box reserves 64 KB in the store total. Answers `{exp}`; an id in use: 409, and none of the call's boxes stays |
+| `PUT /s/<box>/0` | The answer, once: `Authorization: Bearer <write token>`, at most 64 KB. A second write: 409. A wrong token or an expired box: the same 404 as no box |
+| `POST /v1 {op:"shr", act:"boxes", boxes:[{id, rt}]}` | Up to 50 boxes asked about in one call: `{st: {id: "wait" \| "ready" \| "gone"}}` (a wrong read token is `gone`). 30 calls per client IP per minute |
+| `GET /s/<box>/0` | The answer, with `Authorization: Bearer <read token>` only (the write token reads nothing). The box goes with `del` and its read token |
 
 Limits: 25 MB per item, 400 MB in all (declared sizes, counted at
 `new`; answer 507 `full`), 20 items and 100 MB per client IP per day,
 300 PUT and 600 GET per client IP per minute (separate from `/v1`).
+The store total is one row (`shr_tot`, seeded once from the table),
+moved by every insert and delete, so `new` never sums `shr_obj`.
+A waiting reply box is a row with `n = -1`: the purge of unfinished
+uploads leaves it alone; it goes at its own expiry or on `del`.
 Expired items and uploads unfinished after an hour are deleted by the
 hourly cron (`scheduled()` → `purgeShares`, in batches) and on every
 `new`. The relay cannot check what it stores (that is the point); the
@@ -524,7 +576,8 @@ relay). The tables are created on first use. Without the binding the op and `/s/
 503 `nostore`.
 
 Tests: `tests/share-relay.test.js` (an in-memory D1 that knows exactly
-the statements in `SHR_SQL`).
+the statements in `SHR_SQL`, `tests/shr-fake.js`) and
+`tests/share-box.test.js` (reply boxes on a real SQLite).
 
 ## Send to someone: song link previews (`/p/`)
 `GET|HEAD /p/1.<base64url deflate-raw JSON>` (`relay/preview.js`, BR-SHARE-PREVIEW, Music share wave 2). Chat apps never see a share link's `#fragment`, so for an unlocked song (kind `track`) the sender may give this link instead: the relay answers with Open Graph / Twitter tags (title · artist, album · licence, the cover's own address) and a meta refresh plus a link to `https://useoros.online/share/#<the same code>`.
@@ -928,7 +981,12 @@ Tests: `tests/dav-relay.test.js`.
 
 ## Rules it enforces
 
-- Only pages listed in `ALLOWED_ORIGINS` get an answer (CORS). This
+- Only pages listed in `ALLOWED_ORIGINS` get an answer (CORS). The
+  orOS on the person's own computer (`LOCAL_ORIGINS` =
+  `http://localhost:47800`: installed orOS, Portable, USB) gets one on
+  `/v1` only for the ops in `LOCAL_OPS` (`relay/core.js`): `ext` with
+  `p` `ebank` or `paypal`, Budget's bank reads; anything else from it
+  is refused with `origin`, and it also has the gate routes. This
   stops other websites from using it through a visitor's browser; it
   does not stop a script that fakes the header, which is why the
   rest matters.

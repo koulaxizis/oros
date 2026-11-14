@@ -124,3 +124,59 @@ test("barcode for a release code: UPC or EAN over the bars", () => {
   assert.match(C.barcodeSvg("5201234000001", [], { label: "EAN", code: "5201234000001" }), />EAN 5201234000001</);
   assert.equal(C.barcodeSvg("5201234000002", [], { label: "EAN" }), "");
 });
+
+// ---------- wave M2: credits and splits ----------
+test("credits and shares: cleaned rows, sums, gaps; an older track keeps them", () => {
+  let d = C.empty();
+  d = C.put(d, "titles", { id: "t1", t: "S", mt: { k: "single" }, ppl: [{ r: "a", n: "Ann" }], fmts: [] }, 1);
+  d = C.put(d, "trk", { id: "k1", ti: "t1", t: "One", isrc: "GRA1B2600001", dur: 100,
+    cr: [{ r: "prod", n: " Mira ", crm: "cust000001" }, { r: "nope", n: "Q" }, { r: "mus", n: "" }],
+    sw: [{ n: "Ann", pct: 60.004, soc: "AEPI", ipi: "001-234-567-89" }, { n: "Mira", pct: 30, ipi: "12" }],
+    sm: [{ n: "Own", pct: 100, soc: "ignored" }] }, 2);
+  const r = C.find(d, "trk", "k1");
+  assert.deepEqual(r.cr, [{ r: "prod", n: "Mira", crm: "cust000001" }, { r: "o", n: "Q" }]);
+  assert.deepEqual(r.sw, [{ n: "Ann", pct: 60, soc: "AEPI", ipi: "00123456789" }, { n: "Mira", pct: 30 }]);
+  assert.deepEqual(r.sm, [{ n: "Own", pct: 100 }]);
+  assert.equal(C.shareSum(r.sw), 90);
+  assert.equal(C.shareState(r.sw), "under");
+  assert.equal(C.shareState([{ n: "a", pct: 70 }, { n: "b", pct: 40 }]), "over");
+  assert.equal(C.shareState(r.sm), "");
+  assert.equal(C.shareState([]), "");
+  assert.ok(C.musicGaps(C.find(d, "titles", "t1"), d).includes("splits"));
+});
+
+test("split sheet: writers, masters, credits and a line to sign for each", () => {
+  const t = { id: "t1", t: "Night", ppl: [{ r: "a", n: "Ann" }] };
+  const r = { t: "One", ver: "Live", isrc: "GRA1B2600001", sw: [{ n: "Ann", pct: 50.5, soc: "AEPI", ipi: "00123456789" }, { n: "Mira", pct: 49.5 }],
+              sm: [{ n: "Ann", pct: 100 }], cr: [{ r: "mus", n: "Ari", ins: "cello" }] };
+  const S = { head: "Split sheet: {t}", release: "Release: {t}", version: "Version: {v}", date: "Date: {d}", writers: "Writers", masters: "Masters",
+              credits: "Credits", sum: "Sum {s}", agree: "We agree.", sign: "Signature ____", doc: "Split sheet {t}" };
+  const o = C.splitSheet(t, r, S, { mus: "Musician" }, { date: "2026-11-13", comma: true });
+  assert.equal(o.title, "Split sheet One");
+  assert.match(o.text, /Release: Night · Ann/);
+  assert.match(o.text, /ISRC GR-A1B-26-00001/);
+  assert.match(o.text, /- Ann · 50,5% · AEPI · IPI 00123456789/);
+  assert.match(o.text, /- Musician \(cello\): Ari/);
+  assert.doesNotMatch(o.text, /Sum/);
+  assert.equal(o.text.split("Signature ____").length - 1, 2);
+  const o2 = C.splitSheet(t, Object.assign({}, r, { sw: [{ n: "Ann", pct: 40 }] }), S, {}, {});
+  assert.match(o2.text, /Sum 40%/);
+});
+
+test("trackArgs and editionArgs: only fields given, codes checked, shares must make 100", () => {
+  assert.deepEqual(C.trackArgs("Song", "t.").v, { t: "Song" });
+  assert.deepEqual(C.trackArgs({ length: "1:02:03", explicit: false }, "t.").v, { dur: 3723, ex: 0 });
+  assert.deepEqual(C.trackArgs({ credits: [{ name: "A" }, { role: "featured", name: "B" }] }, "t.").v, { cr: [{ n: "A", r: "o" }, { n: "B", r: "feat" }] });
+  assert.deepEqual(C.trackArgs({ writers: [] }, "t.").v, { sw: [] });
+  assert.match(C.trackArgs({ isrc: "XX" }, "t.").err, /never make one up/);
+  assert.match(C.trackArgs({ length: "3:75" }, "t.").err, /m:ss/);
+  assert.match(C.trackArgs({ masters: [{ name: "A", share: 50 }] }, "t.").err, /add up to 50%/);
+  assert.match(C.trackArgs({ writers: [{ name: "A", share: 100, ipi: "1" }] }, "t.").err, /IPI/);
+  assert.match(C.trackArgs({ credits: [{ role: "boss", name: "A" }] }, "t.").err, /role must be/);
+  assert.match(C.trackArgs({ title: "x".repeat(201) }, "t.").err, /201 characters/);
+  assert.deepEqual(C.editionArgs({ edition: "vinyl", upc: "036000291452", price: "19,90" }, "e.").v, { k: "vin", upc: "036000291452", price: 19.9 });
+  assert.match(C.editionArgs({ upc: "9786185775643" }, "e.").err, /ISBN/);
+  assert.match(C.editionArgs({ edition: "tape" }, "e.").err, /digital, cd/);
+  assert.match(C.editionArgs({ format: "cd" }, "e.").err, /has no format/);
+  assert.equal(C.argName(C.ARG_CR, "mast"), "mastering");
+});

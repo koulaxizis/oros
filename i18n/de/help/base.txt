@@ -1,0 +1,39 @@
+# Datenbank
+Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den Katalog deiner Bücher, eine Sammlung, die Gäste einer Veranstaltung, die Aufgaben eines Projekts. Jede Datenbank hat Tabellen, jede Tabelle hat Felder mit festem Typ, und dieselben Einträge siehst du als Raster oder als Karten.
+
+## Erste Schritte
+- Drück `Neue Datenbank` und wähle eine Vorlage, oder fang mit einer leeren Datenbank an.
+- `CSV importieren` macht aus einer CSV-Datei eine neue Datenbank mit einer Tabelle. Die Datenbank errät den Typ jeder Spalte (Zahl, Datum, Auswahl, E-Mail…); prüfe sie in den Spaltenköpfen.
+- Eine Datenbank kann viele Tabellen haben. Mit dem `+` neben den Tabellennamen fügst du eine hinzu.
+
+## Felder
+- Tippe auf einen Spaltenkopf, um das Feld zu bearbeiten, danach zu sortieren, es zu verschieben, in dieser Ansicht auszublenden oder zu löschen. Das `+` am Ende der Kopfzeile fügt ein Feld hinzu.
+- Typen: kurzer und langer Text, Zahl, Betrag, Prozent, Datum (mit oder ohne Uhrzeit), Häkchen, Einfachauswahl, Mehrfachauswahl, Bewertung, E-Mail, Link, Telefon, und drei, die die Datenbank selbst ausfüllt: laufende Nummer, Erstellt am und Zuletzt geändert am.
+- Wenn du den Typ eines Felds änderst, werden seine Werte umgewandelt. Werte, die nicht passen, werden geleert, und die Datenbank sagt dir vorher, wie viele es sind. `Rückgängig` holt sie zurück.
+- Das erste Feld benennt jeden Eintrag. Ein anderes wählst du im Tabellenmenü (`⋯` › Feld, das die Einträge benennt).
+
+## Einträge
+- `Neuer Eintrag` fügt einen Eintrag hinzu und öffnet ihn. Im Raster fügt `Neuer Eintrag` unter der letzten Zeile einen direkt dort hinzu.
+- Im Raster tippst du auf eine Zelle, um sie auszuwählen, und noch einmal (oder Enter), um sie zu bearbeiten. Pfeiltasten und Tab bewegen, Entf leert eine Zelle, Esc bricht ab.
+- Füge einen Block aus einer Tabellenkalkulation in die ausgewählte Zelle ein: Er füllt die Zellen rechts und darunter und legt Einträge an, wenn mehr Zeilen nötig sind.
+- Der Knopf am Anfang einer Zeile, oder Umschalt+Enter, öffnet den ganzen Eintrag. Dort kannst du ihn auch duplizieren oder löschen.
+
+## Ansichten
+- Jede Tabelle beginnt mit einer Rasteransicht und einer Kartenansicht. Weitere legst du in der Ansichtsliste an (`Neue Ansicht…`), jede mit eigenen Filtern, Sortierung, Gruppen und Feldern.
+- `Filter` zeigt nur die Einträge, die alle (oder eine) deiner Bedingungen erfüllen. `Sortieren` ordnet sie nach bis zu fünf Feldern, `Gruppieren` stellt sie unter Überschriften nach bis zu drei Feldern; tippe auf eine Überschrift, um sie einzuklappen.
+- `Felder` wählt, welche Felder diese Ansicht zeigt und in welcher Reihenfolge. Ein ausgeblendetes Feld bleibt in der Tabelle und in anderen Ansichten.
+- Das Suchfeld sucht nur in den gezeigten Feldern dieser Ansicht.
+- Ein neuer Eintrag in einer gefilterten Ansicht übernimmt die Werte der „ist“-Bedingungen, damit er in der Ansicht bleibt.
+
+## Export
+- Tabellenmenü (`⋯`) › Diese Ansicht als CSV exportieren speichert die Einträge und Felder, die du siehst, in dieser Reihenfolge.
+- Diese Ansicht in Tabelle öffnen schickt sie an [Tabelle](app:spreadsheet) als neues Blatt (bis zu 499 Einträge).
+
+## Deine Daten
+- Alles bleibt auf diesem Gerät und wird laufend gespeichert. Mit dem orOS-Sync in den [Einstellungen](app:settings) folgen dir deine Datenbanken verschlüsselt auf deine anderen Geräte.
+- Wenn zwei Geräte verschiedene Felder desselben Eintrags ändern, bleiben beide Änderungen erhalten.
+- Die Datenbank hält bis zu 20.000 Einträge auf allen deinen Geräten zusammen; der Startbildschirm zeigt, wie viele du hast.
+- Nach dem Löschen einer Datenbank, Tabelle, eines Felds, einer Ansicht oder eines Eintrags erscheint ein paar Sekunden lang `Rückgängig`.
+
+## Von überall finden
+- Das Suchfeld im Menü findet deine Datenbanken und Einträge. Wählst du einen Eintrag, öffnet er sich in seiner Tabelle.
