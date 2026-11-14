@@ -4681,6 +4681,24 @@
       });
     });
   }
+  // GATE-FILES F2: the text of a file for the closed copy's sidecar
+  // (gate/gate.js fileCopy): PDFs and documents, as files_read reads them.
+  // → Promise<{ ok, text } | { ok: false }>
+  function cfText(path) {
+    var fs = filesFS();
+    if (!fs || typeof fs.read !== "function") return Promise.resolve({ ok: false });
+    return cfMod().then(function (CF) {
+      if (!CF) return { ok: false };
+      var p = CF.normPath(path), name = p.slice(p.lastIndexOf("/") + 1), kind = CF.kindOf(name);
+      if (!p || CF.secret(p) || !/^(text|document|pdf)$/.test(kind)) return { ok: false };
+      return cfBytes(fs, p).then(function (bytes) {
+        if (kind === "text") return new TextDecoder("utf-8").decode(bytes);
+        if (kind === "pdf") return pdfBytesText(bytes);
+        if (!DT) throw new Error("doctext");
+        return DT.read(bytes, name, { sheets: sheets, max: 2000000 });
+      }).then(function (text) { return { ok: true, text: String(text || "") }; }, function () { return { ok: false }; });
+    });
+  }
   function cfUndo(done) {
     var fs = filesFS();
     if (!fs || typeof fs.read !== "function") return Promise.resolve(undoFail(t("hist.noMod")));
@@ -9305,7 +9323,7 @@
       gateRefsLoad();
       window.__asGate = { v: 1, run: function (n, a) {
                             return gateRun(n, a).then(function (r) { if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; });
-                          }, tools: gateToolList, index: gateIndex,
+                          }, tools: gateToolList, index: gateIndex, text: cfText,
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };
       try { var g = gateShell(); if (g && typeof g.frameReady === "function") g.frameReady(); } catch (e) {}
     });

@@ -1753,6 +1753,7 @@
       else sendBase(sock);
       pushReg();
       copySoon(4000);
+      fileCopySoon(60000);
       clearInterval(pingTimer);
       pingAt = Date.now();
       pingTimer = setInterval(function () {
@@ -1769,6 +1770,7 @@
       if (ev.data.indexOf('{"lv"') === 0) { onLv(ev.data); return; }
       if (ev.data.indexOf('{"cq"') === 0) { applyQueue(sock, ev.data); return; }
       if (ev.data.indexOf('{"snapok"') === 0) return;
+      if (ev.data.indexOf('{"fidxok"') === 0) { fileCopyAck(); return; }
       onCall(sock, ev.data);
     };
     sock.onclose = function (ev) {
@@ -2536,7 +2538,9 @@
     var f = x.f.filter(function (p, i, l) {
       return typeof p === "string" && p.length <= 1024 && p.indexOf("/internal/") === 0 && !/(^|\/)\.|[\u0000-\u001f]/.test(p.slice(10)) && l.indexOf(p) === i;
     }).slice(0, 50).sort();
-    return { ver: 1, m: Math.floor(x.m), f: f };
+    var out = { ver: 1, m: Math.floor(x.m), f: f };
+    if (typeof x.q === "number" && isFinite(x.q) && x.q >= 52428800) out.q = Math.min(Math.floor(x.q), 1e12);   // F2: the closed copy's quota (bytes)
+    return out;
   }
   var cfP = null;
   function claudeFiles() {
@@ -2572,6 +2576,212 @@
       return;
     }
     if (n < 40) setTimeout(function () { foldersSlice(n + 1); }, 500);
+  }
+
+  // ---- GATE-FILES F2: the closed copy of Claude's folders ----
+  // gate/filecopy.js seals; sync.js gateDrop stores the pieces in
+  // Dropbox (/gate/<gate id>/) behind shared links; the sealed index
+  // goes to the gate box ({ fidx }), which reads it only during a call.
+  // Never while Sensitive work is on (window.orosStrict, PR #1010) or
+  // the device is locked; one run at a time; unchanged files are not
+  // read again (FC_KEY keeps size, time and hash per path).
+  var FC_KEY = "oros-gate-fcopy", FIDX_MAX = 880000, fcBusy = false, fcTimer = null, fcErr = "";
+  var fcModP = null;
+  function fcMod() {
+    if (root.OrosGateFileCopy) return Promise.resolve(root.OrosGateFileCopy);
+    if (!fcModP) {
+      fcModP = new Promise(function (ok, no) {
+        var s = document.createElement("script");
+        var v = root.orosTodayEnv && root.orosTodayEnv.version ? "?v=" + encodeURIComponent(root.orosTodayEnv.version) : "";
+        s.src = "gate/filecopy.js" + v;
+        s.onload = function () { root.OrosGateFileCopy ? ok(root.OrosGateFileCopy) : no(new Error("filecopy")); };
+        s.onerror = function () { fcModP = null; no(new Error("filecopy")); };
+        document.head.appendChild(s);
+      });
+    }
+    return fcModP;
+  }
+  function strictOn() {
+    try { var S = root.orosStrict; return !!(S && typeof S.level === "function" && S.level()); } catch (e) { return false; }
+  }
+  function fcDrop() { var S = root.orosSync; return S && S.gateDrop && typeof S.gateDrop.available === "function" && S.gateDrop.available() ? S.gateDrop : null; }
+  function fcState() { var o = readJSON(FC_KEY); return isObj(o) ? o : {}; }
+  function fileCopySoon(ms) { clearTimeout(fcTimer); fcTimer = setTimeout(fileCopy, typeof ms === "number" ? ms : 60000); }
+  function fcFilesOn(p) { return isObj(p.lv) && (p.lv.files === "read" || p.lv.files === "write"); }
+  // Every file under the folders: [{ p, s, m, cloud: { h } | null }]
+  function fcWalk(CF, folders) {
+    var FS = root.orosFS, V = root.orosVault, rows = [], seen = {};
+    function go(dir, d) {
+      if (rows.length >= 3000 || d > 12) return Promise.resolve();
+      return Promise.resolve().then(function () { return FS.ls(dir); }).catch(function () { return []; }).then(function (list) {
+        return (list || []).reduce(function (pr, e) {
+          return pr.then(function () {
+            if (!e || !e.name || e.name.charAt(0) === ".") return;
+            var p = dir + "/" + e.name;
+            if (CF.secret(p)) return;
+            if (e.dir) return go(p, d + 1);
+            return Promise.resolve().then(function () { return FS.stat(p); }).catch(function () { return null; }).then(function (st) {
+              if (!st || st.dir || seen[p]) return;
+              seen[p] = 1;
+              rows.push({ p: p, s: st.size || 0, m: st.mtime || 0, cloud: null });
+            });
+          });
+        }, Promise.resolve());
+      });
+    }
+    return folders.reduce(function (pr, f) { return pr.then(function () { return go(f, 0); }); }, Promise.resolve()).then(function () {
+      if (V && typeof V.remoteOnly === "function") {
+        folders.forEach(function (f) {
+          var l = [];
+          try { l = V.remoteOnly(f) || []; } catch (e) { l = []; }
+          l.forEach(function (e) {
+            if (!e || typeof e.path !== "string" || seen[e.path] || CF.secret(e.path) || /\/\./.test(e.path.slice(f.length))) return;
+            seen[e.path] = 1;
+            rows.push({ p: e.path, s: e.s || 0, m: e.m || 0, cloud: { h: String(e.h || "") } });
+          });
+        });
+      }
+      return rows;
+    });
+  }
+  function fcBytes(r) {
+    if (r.cloud) return root.orosVault.peek(r.p).then(function (b) { return new Uint8Array(b); });
+    return Promise.resolve(root.orosFS.read(r.p)).then(function (b) { return b && typeof b.arrayBuffer === "function" ? b.arrayBuffer() : b; }).then(function (b) { return new Uint8Array(b); });
+  }
+  // The version files_* tools give (assistant.js cfVer): sha256[0:16]; a
+  // file over 32 MB that was not read, from its size and time.
+  function fcMetaVer(FC, r) { return FC.sha256(new TextEncoder().encode("size:" + r.s + ":" + (r.m || 0))).then(function (h) { return h.slice(0, 16); }); }
+  function fileCopy() {
+    var p = pref(), k = gateKey(), D = fcDrop();
+    if (fcBusy) return Promise.resolve(false);
+    if (!p.on || !k || !ws || ws.readyState !== 1 || !fcFilesOn(p) || strictOn() || !D) return Promise.resolve(false);
+    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) return Promise.resolve(false);
+    if (!root.orosFS) return Promise.resolve(false);
+    var fr = foldersRead();
+    if (!fr.f.length) return Promise.resolve(false);
+    fcBusy = true;
+    fcErr = "";
+    var kRaw = keyBytes(k), gid = p.id, st = fcState(), cache = isObj(st.c) ? st.c : {}, FC, CF;
+    var have = {}, names = {}, newCache = {}, files = [], rows;
+    var known = {}, spaceOk = true, put = 0;
+    return Promise.all([fcMod(), claudeFiles()]).then(function (m) {
+      FC = m[0]; CF = m[1];
+      known = FC.known(st.idx);
+      return fcWalk(CF, CF.cleanFolders(fr.f));
+    }).then(function (r) {
+      rows = r;
+      // hashes: cloud entries carry theirs; unchanged files keep theirs
+      return rows.reduce(function (pr, x) {
+        return pr.then(function () {
+          x.kind = CF.kindOf(x.p.slice(x.p.lastIndexOf("/") + 1));
+          var c = cache[x.p];
+          if (x.cloud && /^[0-9a-f]{64}$/.test(x.cloud.h)) x.h = x.cloud.h;
+          else if (isObj(c) && c.s === x.s && c.m === x.m && typeof c.h === "string") x.h = c.h;
+          else if (FC.wants(x).c) return fcBytes(x).then(function (b) { return FC.sha256(b); }).then(function (h) { x.h = h; }, function () { x.h = ""; });
+        }).then(function () {
+          if (x.h) newCache[x.p] = { s: x.s, m: x.m, h: x.h };
+        });
+      }, Promise.resolve());
+    }).then(function () {
+      return D.list(gid).then(function (l) { l.forEach(function (e) { have[e.name] = e; }); }, function () {});
+    }).then(function () {
+      return D.space().then(function (sp) { if (sp && sp.allocated && (sp.allocated - sp.used) < sp.allocated * 0.1) spaceOk = false; });
+    }).then(function () {
+      var pl = FC.plan(rows.filter(function (x) { return !FC.wants(x).c || x.h; }).map(function (x) { return { p: x.p, s: x.s, kind: x.kind }; }), FC.quotaOf(fr.q));
+      // one part ("c" / "t") of one file: its links, uploading only what is
+      // new. n = its piece count when known (content), else from the bytes.
+      function reuse(x, tag, n) {
+        var old = known[x.h + "|" + tag];
+        if (!old || (n && old.length !== n)) return Promise.resolve(null);
+        return Promise.all(old.map(function (_, i) { return FC.pieceName(kRaw, x.h, tag, i); })).then(function (nms) {
+          if (!nms.every(function (nm) { return have[nm]; })) return null;
+          nms.forEach(function (nm) { names[nm] = 1; });
+          return old;
+        });
+      }
+      function part(x, tag, n, getBytes) {
+        return reuse(x, tag, n).then(function (old) {
+          if (old) return old;
+          return getBytes().then(function (bytes) {
+            if (!bytes) return null;
+            var cnt = FC.count(bytes.length), links = [], chain = Promise.resolve();
+            for (var i = 0; i < cnt; i++) (function (i) {
+              chain = chain.then(function () { return FC.pieceName(kRaw, x.h, tag, i); }).then(function (nm) {
+                names[nm] = 1;
+                var up = have[nm] ? Promise.resolve() : !spaceOk ? Promise.reject(new Error("space")) :
+                  FC.seal(kRaw, x.h, tag, i, bytes.slice(i * FC.PIECE, (i + 1) * FC.PIECE)).then(function (b) { put += b.length; return D.put(gid + "/" + nm, b); });
+                return up.then(function () { have[nm] = { name: nm }; return D.share(gid + "/" + nm); }).then(function (u) { links[i] = u; });
+              });
+            })(i);
+            return chain.then(function () { return links; });
+          });
+        });
+      }
+      return rows.reduce(function (pr, x) {
+        return pr.then(function () {
+          var e = { p: x.p, s: x.s, m: x.m, k: x.kind };
+          files.push(e);
+          var t = pl.take[x.p];
+          var vP = x.h && !(x.s > 33554432 && !x.cloud) ? Promise.resolve(x.h.slice(0, 16)) : fcMetaVer(FC, x);
+          return vP.then(function (v) {
+            e.v = v;
+            if (!t) { e.x = pl.out[x.p] || "none"; return; }
+            e.h = x.h;
+            return part(x, "c", FC.count(x.s), function () { return fcBytes(x); }).then(function (c) {
+              e.c = c;
+              if (!t.t) return;
+              return part(x, "t", 0, function () {
+                return actFrame().then(function (F) {
+                  if (!F || typeof F.text !== "function") return null;
+                  return F.text(x.p).then(function (r) { return r && r.ok && r.text ? FC.textBytes(r.text) : null; });
+                });
+              }).then(function (tl) { if (tl) e.t = tl; });
+            }).catch(function (err) {
+              delete e.c; delete e.t; delete e.h;
+              e.x = err && err.message === "space" ? "space" : "err";
+              if (err && /dropbox-scope/.test(err.message || "")) fcErr = "scope";
+              if (err && /dropbox-full/.test(err.message || "")) { fcErr = "full"; spaceOk = false; }
+            });
+          });
+        });
+      }, Promise.resolve()).then(function () { return pl; });
+    }).then(function (pl) {
+      var idx = { v: 1, at: Date.now(), f: CF.cleanFolders(fr.f), q: FC.quotaOf(fr.q), used: pl.used, files: files };
+      var text = JSON.stringify(idx);
+      while (utf8Len(text) > FIDX_MAX && idx.files.length) { idx.files.pop(); idx.cut = 1; text = JSON.stringify(idx); }
+      return seal(k, text).then(function (sealed) {
+        if (!ws || ws.readyState !== 1) throw new Error("offline");
+        ws.send(JSON.stringify({ fidx: sealed }));
+        writeJSON(FC_KEY, { at: idx.at, c: newCache, idx: { files: files.map(function (e) { return { h: e.h, c: e.c, t: e.t }; }).filter(function (e) { return e.h; }) }, n: Object.keys(names), up: put, used: pl.used, err: fcErr });
+        changed();
+      });
+    }).then(function () { fcBusy = false; return true; }, function () { fcBusy = false; return false; });
+  }
+  // The box kept the new index: pieces no index names any more go, once
+  // they are a day old (another device may still name them for a while).
+  function fileCopyAck() {
+    var p = pref(), D = fcDrop(), st = fcState();
+    if (!D || !p.id || !Array.isArray(st.n)) return;
+    var keep = {};
+    st.n.forEach(function (n) { keep[n] = 1; });
+    D.list(p.id).then(function (l) {
+      var old = l.filter(function (e) { return !keep[e.name] && e.at && Date.now() - e.at > 86400000; }).slice(0, 200);
+      return old.reduce(function (pr, e) { return pr.then(function () { return D.remove(p.id + "/" + e.name).catch(function () {}); }); }, Promise.resolve());
+    }).catch(function () {});
+  }
+  // Sensitive work (and the owner) can drop Claude's closed copy at once:
+  // the box forgets the copy and the file index, and the pieces leave Dropbox.
+  function dropCopyNow() {
+    var p = pref();
+    if (!p.on || !p.id) { var e1 = new Error("gate-off"); e1.code = "gate-off"; return Promise.reject(e1); }
+    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) { var e2 = new Error("locked"); e2.code = "locked"; return Promise.reject(e2); }
+    if (!ws || ws.readyState !== 1) { var e3 = new Error("offline"); e3.code = "offline"; return Promise.reject(e3); }
+    ws.send(JSON.stringify({ fdrop: 1 }));
+    copyLast = "";
+    try { localStorage.removeItem(FC_KEY); } catch (e) {}
+    var D = fcDrop();
+    changed();
+    return (D ? D.remove(p.id).catch(function () {}) : Promise.resolve()).then(function () { return { ok: true }; });
   }
 
   function onCall(sock, text) {
@@ -2637,6 +2847,20 @@
     askDelete: function (n) { return askDelete(n); },
     // GATE-FILES: every delete of files is asked on the device, with the names.
     askFiles: function (names) { return askFiles(names); },
+    // F2: drop Claude's closed copy now (Sensitive work, Settings) → Promise<{ ok }>;
+    // rejects with e.code "gate-off" | "offline" | "locked"
+    dropCopy: function () { return dropCopyNow(); },
+    // F2: the closed copy of the files: { at, used, quota, up, err } (err "scope": sign in to Dropbox again)
+    fileCopyInfo: function () { var st = fcState(); return { at: st.at || 0, used: st.used || 0, quota: (foldersRead().q || 262144000), up: st.up || 0, err: st.err || "" }; },
+    setQuota: function (bytes) {
+      var cur = foldersRead(), q = Math.floor(+bytes || 0);
+      if (!(q >= 52428800)) return false;
+      var next = { ver: 1, m: stampAfter(Date.now(), cur.m), f: cur.f, q: q };
+      if (!writeJSON(FILES_KEY, next)) return false;
+      dirty(); changed(); fileCopySoon(5000);
+      return true;
+    },
+    refreshFileCopy: function () { return fileCopy(); },
     // Claude's folders on the orOS disk (synced): [path]
     folders: function () { return foldersRead().f.slice(); },
     // → Promise<[path] saved> (cleaned: valid, no secrets, none inside another)
@@ -2644,8 +2868,10 @@
       return claudeFiles().then(function (CF) {
         var cur = foldersRead(), f = CF.cleanFolders(list);
         if (JSON.stringify(f) === JSON.stringify(cur.f)) return f;
-        if (!writeJSON(FILES_KEY, { ver: 1, m: stampAfter(Date.now(), cur.m), f: f })) throw new Error("save");
-        dirty(); changed();
+        var next = { ver: 1, m: stampAfter(Date.now(), cur.m), f: f };
+        if (cur.q) next.q = cur.q;
+        if (!writeJSON(FILES_KEY, next)) throw new Error("save");
+        dirty(); changed(); fileCopySoon(5000);
         return f;
       });
     },
@@ -2833,6 +3059,8 @@
     disable: function () {
       var p = pref();
       actDrop();
+      if (p.id && fcDrop()) fcDrop().remove(p.id).catch(function () {});   // F2: the closed copy's pieces
+      try { localStorage.removeItem(FC_KEY); } catch (e) {}
       var gone = p.id && p.tok ? devCall({ act: "del", id: p.id, tok: p.tok }).catch(function () {}) : Promise.resolve();
       drop();
       return gone.then(function () {
@@ -2989,6 +3217,7 @@
     digSlice(0);
     foldersSlice(0);
     setInterval(function () { copySoon(0); }, 30 * 60000);
+    setInterval(function () { fileCopySoon(0); }, 30 * 60000);
     // SY-AD (5.96.00): data Claude wrote before this version for an app
     // never opened on this device (Publishing, CRM…) reaches sync now.
     setTimeout(adoptWritten, 8000);

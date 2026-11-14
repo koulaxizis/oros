@@ -1169,6 +1169,29 @@
         fi.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); addF(); } });
         fb.appendChild(row(t("gt.fold.add"), fi, { hint: t("gt.fold.addHint"), forId: "f-gt-fold", stack: true }));
         fb.appendChild(actions(button(t("gt.fold.go"), "gt.fold.go", addF)));
+        // F2: the closed copy (Dropbox), its quota, and dropping it now
+        if (typeof G.fileCopyInfo === "function" && fl.length) {
+          var fi2 = G.fileCopyInfo(), MB = 1048576;
+          fb.appendChild(el("div", "hint", fi2.at ? t("gt.fcopy.at", { when: gateWhen(fi2.at), used: Math.round(fi2.used / MB), quota: Math.round(fi2.quota / MB) }) : t("gt.fcopy.none")));
+          if (fi2.err === "scope") fb.appendChild(el("div", "hint", t("gt.fcopy.scope")));
+          if (fi2.err === "full") fb.appendChild(el("div", "hint", t("gt.fcopy.full")));
+          var qi = el("input", "dav-input");
+          qi.id = "f-gt-fquota";
+          qi.type = "number";
+          qi.min = "50";
+          qi.step = "50";
+          qi.value = String(Math.round(fi2.quota / MB));
+          fb.appendChild(row(t("gt.fcopy.quota"), qi, { hint: t("gt.fcopy.quotaHint"), forId: "f-gt-fquota", stack: true }));
+          fb.appendChild(actions(
+            button(t("gt.fcopy.save"), "gt.fcopy.save", function () {
+              var v = Math.floor(+qi.value || 0);
+              gateNote = v >= 50 && G.setQuota(v * MB) ? "gt.fcopy.saved" : "gt.fcopy.bad";
+              render();
+            }),
+            confirmBtn(t("gt.fcopy.drop"), t("gt.fcopy.dropSure"), "gt.fcopy.drop", function () {
+              G.dropCopy().then(function () { gateNote = "gt.fcopy.dropped"; render(); }, function () { gateNote = "gt.fail"; render(); });
+            })));
+        }
         c.appendChild(fb);
       }
       var writers = G.apps().filter(function (a) { return a.write; }).map(function (a) { return a.name; });
