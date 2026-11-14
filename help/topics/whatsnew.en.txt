@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.70.01
+- **Banks in the installed orOS.** Budget's banks and PayPal now update in the installed orOS, orOS Portable and orOS USB too: with Update now, when you open Budget and at the times you set. Connecting a bank or renewing its access still happens at useoros.online in a browser, because the bank sends you back there.
+
 ## Version 6.70.00
 - **Photos in Files.** Files has a new **Photos** place: every picture and video on your disk in one timeline by the date it was taken, with a full-screen viewer. Make **albums** without moving any file (they sync to your other devices), see your photos on a **map** from the place they were taken, and find **duplicates** and near-duplicates so you can keep the best one and send the rest to the Trash. Photos that are only in the cloud download when you look at them. See [Files](app:files).
 
