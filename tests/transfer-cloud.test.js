@@ -88,10 +88,10 @@ async function sendAll(dbx, files, extra = {}) {
 }
 function receive(dbx, frag, onOffer) {
   const f = X.parseFragment(frag);
-  const states = [];
-  const rx = new X.Receiver({ code: f.code, link: f.link, fetch: dbx.fetch, onState: (p, i) => states.push(Object.assign({ p }, i)) });
+  const states = [], bgs = [];
+  const rx = new X.Receiver({ code: f.code, link: f.link, fetch: dbx.fetch, onState: (p, i) => states.push(Object.assign({ p }, i)), onBg: (b) => bgs.push(b) });
   rx.start();
-  return { rx, states, last: () => states[states.length - 1] || {} };
+  return { rx, states, bgs, last: () => states[states.length - 1] || {} };
 }
 
 test("links: the fragment carries the code and a Dropbox temporary link, nothing else", () => {
@@ -151,6 +151,25 @@ test("the title and message travel sealed in the index (D1)", async () => {
   const t2 = receive(dbx, r2.frag);
   await until(() => t2.last().p === "offer");
   assert.equal(t2.last().meta, null);
+});
+
+test("the background picture travels sealed in the index (D3)", async () => {
+  const dbx = fakeDropbox();
+  const files = filesOf([["a.txt", 100]]);
+  const pic = new Uint8Array(40000); for (let i = 0; i < pic.length; i++) pic[i] = (i * 31) & 255;
+  pic.set([0xff, 0xd8, 0xff, 0xe0]); pic.set(Buffer.from("PIXELSECRET"), 900);
+  const r = await sendAll(dbx, files, { bg: pic });
+  const all = Buffer.concat([...dbx.store.values()].map((b) => Buffer.from(b)));
+  assert.ok(!all.includes(Buffer.from("PIXELSECRET")), "Dropbox never sees the picture");
+  const t = receive(dbx, r.frag);
+  await until(() => t.last().p === "offer");
+  assert.equal(t.bgs.length, 1);
+  assert.equal(t.bgs[0].type, "image/jpeg");
+  assert.ok(Buffer.from(t.bgs[0].bytes).equals(Buffer.from(pic)));
+  const r2 = await sendAll(dbx, files, { bg: Buffer.from("<svg></svg>") });
+  const t2 = receive(dbx, r2.frag);
+  await until(() => t2.last().p === "offer");
+  assert.equal(t2.bgs.length, 0, "only a real picture goes");
 });
 
 test("a download cut off mid-pack goes on with a Range request", async () => {
