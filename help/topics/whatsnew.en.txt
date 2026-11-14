@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.57.00
+- **Studio: publish your podcast.** `Publish as podcast` next to Export makes a show with its cover and turns each project into an episode. Markers on the timeline (press M) become chapters. Studio then makes the feed and a small site you download as a ZIP and upload to your own space, for example GitHub Pages. Apple Podcasts, Spotify and the Podcasts app can follow it there.
+
 ## Version 6.56.00
 - **Publishing: credits and splits for music releases.** Each track keeps who played, wrote, produced, mixed and mastered it, the songwriting shares (with collecting society and IPI) and who owns the recording. A red line shows when shares don't add up to 100 %. `Split sheet in Writer` turns a track into a document for everyone to sign, and `Same credits and splits on every track` saves typing on an album. The Assistant and Claude can change a release's label, genre, ℗ and © lines, tracks and editions too.
 

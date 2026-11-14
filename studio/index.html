@@ -377,6 +377,8 @@
     </div>
     <p id="export-status" class="hint" aria-live="polite"></p>
     <div class="dlg-actions">
+      <button type="button" id="export-mk" class="chip" aria-haspopup="dialog" data-i18n="mk.btn">Markers</button>
+      <button type="button" id="export-pod" class="chip" aria-haspopup="dialog" data-i18n="pod.btn">Publish as podcast</button>
       <button type="button" id="export-ring" class="chip" data-i18n="btn.ringtone" hidden>Make a ringtone</button>
       <button type="button" id="export-music" class="chip" data-i18n="btn.toMusic" hidden>Add to Music</button>
       <button type="button" id="export-lyrics" class="chip" data-i18n="btn.toLyrics" hidden>Sync lyrics</button>
@@ -385,6 +387,132 @@
   </dialog>
 
   <!-- Settings -->
+  <!-- Publish as podcast (podcastui.js, wave P1) -->
+  <dialog id="pod-dlg" class="wide" aria-labelledby="pod-h">
+    <div class="dlg-head">
+      <h2 id="pod-h" data-i18n="pod.btn">Publish as podcast</h2>
+      <span class="spacer"></span>
+      <button type="button" id="pod-close" class="chip" data-i18n="btn.close">Close</button>
+    </div>
+    <p class="hint small" data-i18n="pod.intro.hint"></p>
+    <h3 data-i18n="pod.sec.show">Show</h3>
+    <label class="field" for="pod-show" data-i18n="pod.f.show">Show</label>
+    <select id="pod-show"></select>
+    <label class="field" for="pod-title" data-i18n="pod.f.title">Title</label>
+    <input type="text" id="pod-title" maxlength="120" autocomplete="off">
+    <label class="field" for="pod-author" data-i18n="pod.f.author">Made by</label>
+    <input type="text" id="pod-author" maxlength="120" autocomplete="off">
+    <label class="field" for="pod-desc" data-i18n="pod.f.desc">Description</label>
+    <textarea id="pod-desc" class="cr-text" rows="4" maxlength="4000"></textarea>
+    <div class="pod-two">
+      <div><label class="field" for="pod-lang" data-i18n="pod.f.lang">Language</label><select id="pod-lang"></select></div>
+      <div><label class="field" for="pod-type" data-i18n="pod.f.type">Order</label><select id="pod-type"></select></div>
+    </div>
+    <label class="field" for="pod-cat" data-i18n="pod.f.cat">Category</label>
+    <select id="pod-cat"></select>
+    <label class="cb-line"><input type="checkbox" id="pod-explicit"> <span data-i18n="pod.f.explicit">Explicit content</span></label>
+    <label class="field" for="pod-url" data-i18n="pod.f.url">Site address</label>
+    <input type="url" id="pod-url" maxlength="500" autocomplete="off" inputmode="url" placeholder="https://">
+    <p class="hint small" data-i18n="pod.urlHint"></p>
+    <label class="field" for="pod-email" data-i18n="pod.f.email">Owner e-mail (optional, public)</label>
+    <input type="email" id="pod-email" maxlength="120" autocomplete="off" inputmode="email">
+    <p class="hint small" data-i18n="pod.emailHint"></p>
+    <label class="field" for="pod-fund" data-i18n="pod.f.fund">Support link (optional)</label>
+    <input type="url" id="pod-fund" maxlength="500" autocomplete="off" inputmode="url" placeholder="https://ko-fi.com/…">
+    <div id="pod-cover-sec">
+      <label class="field" data-i18n="pod.f.cover">Cover</label>
+      <div class="pod-cover">
+        <img id="pod-cover-img" alt="" width="96" height="96" hidden>
+        <p id="pod-cover-none" class="hint small" data-i18n="pod.coverNone"></p>
+        <div class="dlg-actions spread">
+          <button type="button" id="pod-cover-pick" class="chip" data-i18n="pod.coverPick">Choose a picture</button>
+          <button type="button" id="pod-cover-atelier" class="chip" data-i18n="pod.coverAtelier">Design it in Atelier</button>
+        </div>
+      </div>
+      <p class="hint small" data-i18n="pod.coverHint"></p>
+    </div>
+    <p id="pod-show-err" class="hint small" aria-live="polite"></p>
+    <div class="dlg-actions">
+      <button type="button" id="pod-del" class="chip danger" data-i18n="pod.del">Delete show</button>
+      <button type="button" id="pod-save" class="chip primary" data-i18n="pod.save">Save show</button>
+    </div>
+    <div id="pod-ep-sec">
+      <h3 data-i18n="pod.sec.ep">This project as an episode</h3>
+      <div id="pod-ep-join">
+        <p id="pod-ep-other" class="hint small"></p>
+        <button type="button" id="pod-ep-add" class="chip primary" data-i18n="pod.epAdd">Add to this show</button>
+      </div>
+      <div id="pod-ep-form">
+        <div class="pod-two">
+          <div><label class="field" for="pod-ep-n" data-i18n="pod.f.n">Episode number</label><input type="number" id="pod-ep-n" min="0" max="9999" inputmode="numeric"></div>
+          <div><label class="field" for="pod-ep-se" data-i18n="pod.f.se">Season</label><input type="number" id="pod-ep-se" min="0" max="99" inputmode="numeric"></div>
+        </div>
+        <div class="pod-two">
+          <div><label class="field" for="pod-ep-type" data-i18n="pod.f.epType">Kind</label><select id="pod-ep-type"></select></div>
+          <div><label class="field" for="pod-ep-date" data-i18n="pod.f.date">Date</label><input type="date" id="pod-ep-date"></div>
+        </div>
+        <label class="field" for="pod-ep-title" data-i18n="pod.f.epTitle">Episode title</label>
+        <input type="text" id="pod-ep-title" maxlength="120" autocomplete="off">
+        <label class="field" for="pod-ep-desc" data-i18n="pod.f.epDesc">Show notes</label>
+        <textarea id="pod-ep-desc" class="cr-text" rows="4" maxlength="1500"></textarea>
+        <label class="cb-line"><input type="checkbox" id="pod-ep-explicit"> <span data-i18n="pod.f.explicit">Explicit content</span></label>
+        <label class="field" data-i18n="pod.f.sound">Sound</label>
+        <div id="pod-ep-ch-pick" class="chips" role="radiogroup" data-i18n-aria="pod.f.sound"></div>
+        <div id="pod-ep-kbps" class="chips" role="radiogroup" data-i18n-aria="sec.kbps"></div>
+        <p id="pod-ep-size" class="hint small"></p>
+        <div class="pod-ch">
+          <span id="pod-ep-ch" class="hint small"></span>
+          <button type="button" id="pod-ep-mk" class="chip" aria-haspopup="dialog" data-i18n="mk.btn">Markers</button>
+        </div>
+        <p id="pod-ep-file" class="hint small"></p>
+        <p id="pod-ep-err" class="hint small" aria-live="polite"></p>
+        <div class="dlg-actions">
+          <button type="button" id="pod-ep-leave" class="chip danger" data-i18n="pod.epLeave">Take out of the show</button>
+          <button type="button" id="pod-ep-save" class="chip" data-i18n="pod.epSave">Save</button>
+          <button type="button" id="pod-ep-go" class="chip primary" data-i18n="pod.make">Make the episode file</button>
+        </div>
+      </div>
+    </div>
+    <div id="pod-eps-sec">
+      <h3 data-i18n="pod.sec.eps">Episodes</h3>
+      <ul id="pod-eps" class="pod-eps"></ul>
+      <p id="pod-eps-none" class="hint small" data-i18n="pod.epsNone"></p>
+    </div>
+    <div id="pod-site-sec">
+      <h3 data-i18n="pod.sec.site">The site</h3>
+      <p class="hint small" data-i18n="pod.siteHint"></p>
+      <ul id="pod-miss" class="pod-miss"></ul>
+      <p class="hint small"><span data-i18n="pod.feedIs">Feed address:</span> <code id="pod-feed" class="pod-feed"></code></p>
+      <p id="pod-site-err" class="hint small" aria-live="polite"></p>
+      <div class="dlg-actions spread">
+        <button type="button" id="pod-feed-copy" class="chip" data-i18n="pod.copy">Copy the feed address</button>
+        <button type="button" id="pod-subscribe" class="chip" data-i18n="pod.subscribe">Follow in Podcasts</button>
+        <button type="button" id="pod-zip" class="chip primary" data-i18n="pod.zip">Download the site (ZIP)</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- A themed yes/no for the podcast dialog (R14: no native confirm) -->
+  <dialog id="pod-ask" aria-describedby="pod-ask-text">
+    <p id="pod-ask-text"></p>
+    <div class="dlg-actions">
+      <button type="button" id="pod-ask-no" class="chip" data-i18n="btn.cancel">Cancel</button>
+      <button type="button" id="pod-ask-yes" class="chip primary" data-i18n="btn.ok">OK</button>
+    </div>
+  </dialog>
+
+  <!-- Markers on the timeline: the chapters of an episode -->
+  <dialog id="mk-dlg" aria-labelledby="mk-h">
+    <h2 id="mk-h" data-i18n="mk.btn">Markers</h2>
+    <p class="hint small" data-i18n="mk.hint"></p>
+    <ul id="mk-list" class="mk-list"></ul>
+    <p id="mk-none" class="hint small" data-i18n="mk.none"></p>
+    <div class="dlg-actions">
+      <button type="button" id="mk-add" class="chip" data-i18n="mk.add">Add at the playhead</button>
+      <button type="button" id="mk-close" class="chip primary" data-i18n="btn.close">Close</button>
+    </div>
+  </dialog>
+
   <dialog id="more-dlg" aria-labelledby="more-title">
     <div class="dlg-head">
       <h2 id="more-title" data-i18n="more.title">Studio settings</h2>
@@ -625,6 +753,8 @@
   <script src="remote.js?v=6.56.00"></script>
   <script src="fx.js?v=6.56.00"></script>
   <script src="encode.js?v=6.56.00"></script>
+  <script src="podcast.js?v=6.56.00"></script>
+  <script src="podcastui.js?v=6.56.00"></script>
   <script src="midi.js?v=6.56.00"></script>
   <script src="sfz.js?v=6.56.00"></script>
   <script src="sounds.js?v=6.56.00"></script>
