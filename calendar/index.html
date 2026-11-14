@@ -425,6 +425,28 @@
       <input id="gu-cap" type="number" min="0" max="100000" step="1" inputmode="numeric">
       <span class="gu-hint" data-i18n="gu.cap.hint"></span>
     </div>
+    <details id="gu-rv" class="gu-rv">
+      <summary data-i18n="gu.rv"></summary>
+      <p id="gu-rv-state" class="gu-hint" aria-live="polite"></p>
+      <div id="gu-rv-off" class="dlg-row">
+        <button id="gu-rv-make" type="button" class="btn prim" data-i18n="gu.rv.make"></button>
+      </div>
+      <div id="gu-rv-on" hidden>
+        <div class="dlg-row">
+          <button id="gu-rv-check" type="button" class="btn prim" data-i18n="gu.rv.check"></button>
+          <button id="gu-rv-stop" type="button" class="btn danger" data-i18n="gu.rv.stop"></button>
+        </div>
+        <div class="gu-cap">
+          <label for="gu-rv-ms" data-i18n="gu.rv.ms"></label>
+          <select id="gu-rv-ms"></select>
+        </div>
+        <label class="gu-rv-op"><input id="gu-rv-op" type="checkbox"> <span data-i18n="gu.rv.op"></span></label>
+        <div id="gu-rv-op-row" class="dlg-row" hidden>
+          <button id="gu-rv-copy" type="button" class="btn" data-i18n="gu.rv.copy"></button>
+          <button id="gu-rv-share" type="button" class="btn" data-i18n="gu.rv.share" hidden></button>
+        </div>
+      </div>
+    </details>
     <div id="gu-next" class="gu-next" hidden>
       <p id="gu-next-text"></p>
       <div class="dlg-row">
@@ -468,6 +490,7 @@
       <div class="dlg-row">
         <button id="gu-save" type="submit" class="btn prim" data-i18n="gu.save"></button>
         <button id="gu-form-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+        <button id="gu-inv-btn" type="button" class="btn" data-i18n="gu.inv" hidden></button>
         <button id="gu-tix-btn" type="button" class="btn" data-i18n="gu.tix" hidden></button>
         <button id="gu-del" type="button" class="btn danger" data-i18n="gu.del" hidden></button>
       </div>

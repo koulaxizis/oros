@@ -37,8 +37,9 @@ const ROOT = path.join(__dirname, "..", "..");
 const SKIP = new Set([".git", ".github", "node_modules", "vendor", "extension", "android", "tests", "icons", "fonts"]);
 // Pages with a STRICTER policy of their own (the share-link viewer
 // decrypts content from strangers; the Forms fill-in page shows forms
-// made by strangers): kept as written, only checked.
-const OWN = new Set(["share/index.html", "forms/f/index.html"]);
+// made by strangers; the Calendar RSVP page the same): kept as written,
+// only checked.
+const OWN = new Set(["share/index.html", "forms/f/index.html", "calendar/rsvp.html"]);
 
 function listDocs(root) {
   root = root || ROOT;

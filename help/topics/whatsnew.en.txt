@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.79.00
+- **Guests answer by themselves.** In the Calendar, an event's `Guests…` now makes invitation links: every guest gets their own link to answer Coming, Maybe or Not coming (with plus-ones and a note) in any browser, and sees their QR ticket when they come. An open sign-up link fills the places and the waiting list for you. Answers come back encrypted, by themselves. See [Calendar](app:calendar).
+
 ## Version 6.78.00
 - **Claude reads its folders with orOS closed.** An open orOS now keeps a sealed copy of Claude's folders in your Dropbox (up to 250 MB unless you change it, kept 7 days), so Claude can list and read them even when every orOS is closed, and can give you a link to one file that works once, for 15 minutes. Changes still wait for an open orOS. `Delete the copy now` in Settings › orOS Gate removes it; nothing is copied during Sensitive work. Dropbox may ask you to sign in again once for this. See [Settings](app:settings).
 
