@@ -246,6 +246,7 @@
       "tool.held": "you kept {n} back",
       "tool.noneShared": "you shared nothing",
       "tool.apps": "Looked at which apps it may search",
+      "tool.cfFolders": "Looked at which folders it may use", "tool.cfList": "Looked in {path}", "tool.cfRead": "Read {path}",
       "tool.err": "A step didn't work",
       "tool.err.args": "A step didn't work: the AI sent details orOS couldn't read.",
       "tool.err.unknown": "A step didn't work: the AI asked for a tool orOS doesn't have ({name}).",
@@ -888,6 +889,7 @@
       "tool.held": "κράτησες {n}",
       "tool.noneShared": "δεν μοιράστηκες τίποτα",
       "tool.apps": "Κοίταξε σε ποιες εφαρμογές μπορεί να ψάξει",
+      "tool.cfFolders": "Κοίταξε ποιους φακέλους μπορεί να χρησιμοποιήσει", "tool.cfList": "Κοίταξε στο {path}", "tool.cfRead": "Διάβασε το {path}",
       "tool.err": "Ένα βήμα δεν δούλεψε",
       "tool.err.args": "Ένα βήμα δεν δούλεψε: η AI έστειλε στοιχεία που το orOS δεν μπόρεσε να διαβάσει.",
       "tool.err.unknown": "Ένα βήμα δεν δούλεψε: η AI ζήτησε ένα εργαλείο που το orOS δεν έχει ({name}).",
@@ -2880,9 +2882,10 @@
     var blob = new Blob([b64Bytes(attMem[a.id])], { type: a.type });
     return ocrImage(blob, onProgress);
   }
-  function pdfText(a, onProgress) {
+  function pdfText(a, onProgress) { return pdfBytesText(b64Bytes(attMem[a.id]), onProgress); }
+  function pdfBytesText(bytes, onProgress) {
     return pdfjs().then(function (lib) {
-      return lib.getDocument({ data: b64Bytes(attMem[a.id]), isEvalSupported: false, enableXfa: false,
+      return lib.getDocument({ data: bytes, isEvalSupported: false, enableXfa: false,
                                disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise;
     }).then(function (pdf) {
       var n = Math.min(pdf.numPages, READ_PAGES), parts = [], chain = Promise.resolve();
@@ -3161,7 +3164,7 @@
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
                                             recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn,
-                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps) });
+                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps) });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -3374,6 +3377,11 @@
     if (call.name === "book_cover") return Promise.resolve(proposeCover(c, call.args));
     if (call.name === "newsletter_check") return Promise.resolve(proposeNlCheck(c, call.args));
     if (call.name === "read_item") return readItem(c, call.args, apps);
+    if (call.name === "files_list") return filesList(c, call.args, apps);
+    if (call.name === "files_read") return filesRead(c, call.args, apps);
+    if (call.name === "files_write") return filesWrite(c, call.args, apps);
+    if (call.name === "files_move") return filesMove(c, call.args, apps);
+    if (call.name === "files_delete") return filesDelete(c, call.args, apps);
     if (call.name === "change_item") return changeItem(c, call.args, apps);
     if (call.name === "create_items") return createItems(c, call.args, apps);
     if (call.name === "link_contact") return linkContact(c, call.args, apps);
@@ -4396,6 +4404,307 @@
         if (r.ok) filesFavs(done.map(function (u) { return u.k === "mv" ? { k: "mv", from: u.to, to: u.from } : { k: "x" }; }));
         return r;
       });
+    });
+  }
+  // ---- GATE-FILES (F1): files in the folders the owner lets Claude use ----
+  // assistant/claudefiles.js plans and checks every step; the folders
+  // come from the gate's list (Settings › Connected services › orOS
+  // Gate › Claude's folders), the same here and through the gate
+  // (PARITY). A file's version is the first 16 hex of its SHA-256 (a
+  // cloud-only file's from its manifest entry); a file over 32 MB gets
+  // one from its size and time instead of reading it all.
+  var CF_HASH_MAX = 32 * 1024 * 1024, CF_TEXT_MAX = 50 * 1024 * 1024;
+  // The Assistant offers the files tools once the owner picked folders
+  // and Files may always be read; the changes once Files takes changes.
+  function cfOn(apps, chg) {
+    var f = appOf(apps, "files");
+    if (!f || f.perm !== "always" || !cfRaw().length) return false;
+    return appOf(chg, "files") ? "write" : true;
+  }
+  function cfMod() { return loadOnce("claudefiles.js").then(function () { return window.OrosClaudeFiles || null; }); }
+  function cfRaw() {
+    var g = gateShell();
+    try { var l = g && typeof g.folders === "function" ? g.folders() : []; return Array.isArray(l) ? l : []; } catch (e) { return []; }
+  }
+  function cfFolders(CF) { return CF.cleanFolders(cfRaw()); }
+  function cfVault() {
+    try { var p = shell(), V = p && p.orosVault; return V && typeof V.remoteOnly === "function" && typeof V.peek === "function" ? V : null; } catch (e) { return null; }
+  }
+  function cfCloud(path) {
+    var V = cfVault(), hit = null;
+    try { if (V && V.isRemoteOnly(path)) V.remoteOnly(path).forEach(function (e) { if (e.path === path) hit = e; }); } catch (e) { hit = null; }
+    return hit;
+  }
+  function cfU8(x) { return x instanceof Uint8Array ? x : new Uint8Array(x); }
+  function cfHex(bytes) {
+    return crypto.subtle.digest("SHA-256", bytes).then(function (d) {
+      return Array.prototype.map.call(new Uint8Array(d), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("").slice(0, 16);
+    });
+  }
+  function cfStat(fs, path) {
+    return Promise.resolve().then(function () { return fs.stat(path); }).then(function (s) { return s || null; }, function () { return null; }).then(function (s) {
+      if (s) return s;
+      var c = cfCloud(path);
+      return c ? { path: path, dir: false, size: c.s || 0, mtime: c.m || 0, cloud: true } : null;
+    });
+  }
+  function cfBytes(fs, path) {
+    var V = cfVault();
+    if (cfCloud(path)) return V.peek(path).then(cfU8);
+    return Promise.resolve(fs.read(path)).then(function (b) { return b && typeof b.arrayBuffer === "function" ? b.arrayBuffer() : b; }).then(cfU8);
+  }
+  function cfVer(fs, path) {
+    var c = cfCloud(path);
+    if (c && typeof c.h === "string") return Promise.resolve(c.h.slice(0, 16).toLowerCase());
+    return cfStat(fs, path).then(function (st) {
+      if (!st || st.dir) return "";
+      if (st.size > CF_HASH_MAX) return cfHex(new TextEncoder().encode("size:" + st.size + ":" + (st.mtime || 0)));
+      return cfBytes(fs, path).then(cfHex);
+    });
+  }
+  // The folder's tree, depth levels deep, with the files that are in
+  // the cloud only on this device (orOS Drive folders, VD-OD).
+  function cfWalk(fs, path, depth) {
+    var rows = [], have = {};
+    function go(dir, d) {
+      return Promise.resolve().then(function () { return fs.ls(dir); }).catch(function () { return []; }).then(function (list) {
+        return (list || []).reduce(function (pr, e) {
+          return pr.then(function () {
+            if (rows.length >= 2000 || !e || !e.name || e.name.charAt(0) === ".") return;
+            var p = dir + "/" + e.name;
+            have[p] = 1;
+            if (e.dir) { rows.push({ path: p, dir: true }); return d > 1 ? go(p, d - 1) : null; }
+            return cfStat(fs, p).then(function (st) { rows.push({ path: p, dir: false, size: st ? st.size : 0, mtime: st ? st.mtime : 0 }); });
+          });
+        }, Promise.resolve());
+      });
+    }
+    return go(path, depth).then(function () {
+      var V = cfVault(), lim = path.split("/").length + depth, cloud = [];
+      try { cloud = V ? V.remoteOnly(path) : []; } catch (e) { cloud = []; }
+      cloud.forEach(function (e) {
+        if (!e || typeof e.path !== "string" || e.path.indexOf(path + "/") !== 0 || have[e.path] || e.path.split("/").length > lim) return;
+        var segs = e.path.slice(path.length + 1).split("/");
+        for (var i = 1; i < segs.length; i++) {
+          var dp = path + "/" + segs.slice(0, i).join("/");
+          if (!have[dp]) { have[dp] = 1; rows.push({ path: dp, dir: true }); }
+        }
+        have[e.path] = 1;
+        rows.push({ path: e.path, dir: false, size: e.s || 0, mtime: e.m || 0, cloud: true });
+      });
+      return rows;
+    });
+  }
+  // → Promise<{ CF, fs, folders } | { err }>
+  function cfPrep(apps, write) {
+    var app = appOf(apps, "files");
+    if (app && write && !GATE && !changeApps(apps).some(function (y) { return y.id === "files"; })) app = null;
+    if (!app) return Promise.resolve({ err: write ? "Claude may not change files." : "Claude may not read Files." });
+    var fs = filesFS();
+    if (!fs || typeof fs.read !== "function") return Promise.resolve({ err: "the orOS disk is not reachable right now." });
+    return cfMod().then(function (CF) {
+      if (!CF) return { err: "the file tools could not be loaded right now." };
+      return { CF: CF, fs: fs, app: app, folders: cfFolders(CF) };
+    });
+  }
+  function cfErr(msg) { return { content: "Error: " + msg, err: 1, ui: { k: "toolErr", why: "cf" } }; }
+  function filesList(c, a, apps) {
+    a = a && typeof a === "object" ? a : {};
+    return cfPrep(apps, false).then(function (x) {
+      if (x.err) return cfErr(x.err);
+      var CF = x.CF;
+      if (a.path == null || String(a.path).trim() === "" || String(a.path).trim() === "/") {
+        if (!x.folders.length) return cfErr(CF.reach("/internal/x", []));
+        return { content: JSON.stringify({ folders: x.folders.map(CF.show), note: "Claude's folders; list one with path." }), ui: { k: "cfList", path: "" } };
+      }
+      var p = CF.normPath(a.path), why = CF.reach(p, x.folders);
+      if (why) return cfErr(why);
+      var depth = Math.max(1, Math.min(CF.DEPTH_MAX, Math.floor(Number(a.depth) || 1)));
+      return cfStat(x.fs, p).then(function (st) {
+        if (!st) return cfErr("\"" + CF.show(p) + "\" is not there.");
+        if (!st.dir) return cfErr("\"" + CF.show(p) + "\" is a file; read it with files_read.");
+        return cfWalk(x.fs, p, depth).then(function (rows) {
+          var out = CF.listOut(p, rows, x.folders, a.offset);
+          return out.entries.reduce(function (pr, e) {
+            return pr.then(function () {
+              if (e.kind === "folder") return;
+              return cfVer(x.fs, p + "/" + e.name).then(function (v) { if (v) e.version = v; }, function () {});
+            });
+          }, Promise.resolve()).then(function () { return { content: JSON.stringify(out), ui: { k: "cfList", path: CF.show(p) } }; });
+        });
+      });
+    });
+  }
+  function filesRead(c, a, apps) {
+    a = a && typeof a === "object" ? a : {};
+    return cfPrep(apps, false).then(function (x) {
+      if (x.err) return cfErr(x.err);
+      var CF = x.CF, p = CF.normPath(a.path), why = CF.reach(p, x.folders);
+      if (why) return cfErr(why);
+      return cfStat(x.fs, p).then(function (st) {
+        if (!st) return cfErr("\"" + CF.show(p) + "\" is not there.");
+        if (st.dir) return cfErr("\"" + CF.show(p) + "\" is a folder; use files_list.");
+        var name = p.slice(p.lastIndexOf("/") + 1), kind = CF.kindOf(name);
+        var head = { path: CF.show(p), kind: kind, size: st.size || 0 };
+        if (st.mtime) head.modified = new Date(st.mtime).toISOString();
+        if (st.cloud) head.on_device = false;
+        return cfVer(x.fs, p).then(function (v) {
+          head.version = v;
+          var ui = { k: "cfRead", path: CF.show(p) };
+          if (!/^(text|document|pdf)$/.test(kind) || st.size > CF_TEXT_MAX) {
+            head.note = kind === "image" || kind === "media" || kind === "other"
+              ? "Only the details: files_read gives the text of text files, documents and PDFs."
+              : "Only the details: the file is over 50 MB.";
+            return { content: JSON.stringify(head), ui: ui };
+          }
+          return cfBytes(x.fs, p).then(function (bytes) {
+            if (kind === "text") return new TextDecoder("utf-8").decode(bytes);
+            if (kind === "pdf") return pdfBytesText(bytes);
+            if (!DT) throw new Error("doctext");
+            return DT.read(bytes, name, { sheets: sheets, max: CF.READ_MAX * 4 });
+          }).then(function (text) {
+            var pg = CF.page(String(text || ""), a.offset, a.length);
+            Object.keys(pg).forEach(function (k) { head[k] = pg[k]; });
+            return { content: JSON.stringify(head), ui: ui };
+          }, function () { return cfErr("\"" + CF.show(p) + "\" could not be read" + (st.cloud ? " (it is in the cloud only and could not be fetched)." : ".")); });
+        });
+      });
+    });
+  }
+  // files_write, files_move, files_delete: one card in the Assistant;
+  // through the gate the owner's "Claude may also change Files" and the
+  // pause apply, and a delete always asks on the device (never skipped).
+  function cfAsk(x, kind, cards, names) {
+    if (GATE) {
+      var g = gateShell(), why = g && typeof g.writeOk === "function" ? g.writeOk("files") : "orOS Gate is not running.";
+      if (why) { gateNote = why; return Promise.resolve(false); }
+      if (kind !== "delete") return Promise.resolve(true);
+      if (!g || typeof g.askFiles !== "function") { gateNote = "This orOS can't ask the owner on the device; nothing was deleted."; return Promise.resolve(false); }
+      return Promise.resolve(g.askFiles(names)).then(function (yes) {
+        if (!yes) gateNote = "The owner did not confirm on the device; nothing was deleted.";
+        return !!yes;
+      }, function () { gateNote = "The owner did not confirm on the device; nothing was deleted."; return false; });
+    }
+    var pl = cards.length > 1 ? { many: cards, del: kind === "delete" } : { title: cards[0].title, rows: cards[0].rows, del: kind === "delete" };
+    return askChange(x.app.name, pl, kind === "delete" ? "delete" : "update");
+  }
+  function cfApply(c, x, kind, steps, cards, names) {
+    var CF = x.CF, act = kind === "delete" ? "delete" : "update";
+    var base = cards.length > 1 ? { k: "change", app: x.app.name, act: act, title: t("chg.many", { n: cards.length }), many: cards }
+                                : { k: "change", app: x.app.name, act: act, title: cards[0].title, rows: cards[0].rows };
+    return cfAsk(x, kind, cards, names).then(function (ok) {
+      if (!ok) {
+        base.st = "declined";
+        return { content: JSON.stringify({ applied: false, note: "The user did not apply the change. Nothing changed." }), ui: base };
+      }
+      return CF.run(x.fs, steps, function (p) { return cfVer(x.fs, p); }).then(function (res) {
+        if (!res.done.length) {
+          base.st = "failed";
+          base.msg = res.fail;
+          return { content: "Error: " + res.fail + " Nothing was changed.", err: 1, ui: base };
+        }
+        var uid = newId(), out = { applied: true, items: res.done.length };
+        remember(uid, { app: "files", cf: res.done }, { kind: "change", app: "files", name: x.app.name, act: act, title: base.title, items: cards.map(function (y) { return y.title; }) });
+        res.done.forEach(function (u) { if (u.k === "unmake" || u.k === "unreplace") { out.path = CF.show(u.path); out.version = u.v; } });
+        base.st = "done";
+        base.u = uid;
+        out.note = (kind === "delete" ? "Moved to Files' Trash (restorable there for 30 days)." : kind === "write" && steps[0].k === "replace" ? "Done; the old version is in Files' Trash." : "Done.") +
+          (res.fail ? " Only " + res.done.length + " of " + steps.length + " were done: " + res.fail + " The rest was left as it is." : "") + " They can undo it.";
+        return { content: JSON.stringify(out), ui: base };
+      });
+    });
+  }
+  function cfNoCloud(CF, st, p) { return st && st.cloud ? "\"" + CF.show(p) + "\" is in the cloud only on this device; keep its folder offline in Files first, then try again." : ""; }
+  function filesWrite(c, a, apps) {
+    a = a && typeof a === "object" ? a : {};
+    return cfPrep(apps, true).then(function (x) {
+      if (x.err) return cfErr(x.err);
+      var CF = x.CF, p = CF.normPath(a.path), why = CF.reach(p, x.folders);
+      if (why) return cfErr(why);
+      return cfStat(x.fs, p).then(function (st) {
+        var nc = cfNoCloud(CF, st, p);
+        if (nc) return cfErr(nc);
+        return (st && !st.dir ? cfVer(x.fs, p) : Promise.resolve("")).then(function (v) {
+          var r = CF.planWrite(a, { st: st, v: v }, x.folders, Date.now());
+          if (!r.ok) return cfErr(r.err);
+          var name = p.slice(p.lastIndexOf("/") + 1), len = a.text.length;
+          var cards = [{ title: name, rows: [{ f: "folder", b: r.step.k === "make" ? "" : CF.show(p.slice(0, p.lastIndexOf("/"))), a: CF.show(p.slice(0, p.lastIndexOf("/"))) },
+                                             { f: "text", b: r.step.k === "make" ? "" : (st.size || 0) + " B", a: len + " chars" }] }];
+          return cfApply(c, x, "write", [r.step], cards, [CF.show(p)]);
+        });
+      });
+    });
+  }
+  function filesMove(c, a, apps) {
+    a = a && typeof a === "object" ? a : {};
+    return cfPrep(apps, true).then(function (x) {
+      if (x.err) return cfErr(x.err);
+      var CF = x.CF, f = CF.normPath(a.from), to = CF.normPath(a.to), why = CF.reach(f, x.folders) || CF.reach(to, x.folders);
+      if (why) return cfErr(why);
+      return Promise.all([cfStat(x.fs, f), cfStat(x.fs, to)]).then(function (s) {
+        var nc = cfNoCloud(CF, s[0], f);
+        if (nc) return cfErr(nc);
+        return (s[0] && !s[0].dir ? cfVer(x.fs, f) : Promise.resolve("")).then(function (v) {
+          var r = CF.planMove(a, { st: s[0], v: v }, s[1], x.folders);
+          if (!r.ok) return cfErr(r.err);
+          var cards = [{ title: f.slice(f.lastIndexOf("/") + 1), rows: [{ f: "folder", b: CF.show(f), a: CF.show(to) }] }];
+          return cfApply(c, x, "move", [r.step], cards, [CF.show(f)]);
+        });
+      });
+    });
+  }
+  function filesDelete(c, a, apps) {
+    a = a && typeof a === "object" ? a : {};
+    var list = Array.isArray(a.paths) ? a.paths : [];
+    return cfPrep(apps, true).then(function (x) {
+      if (x.err) return cfErr(x.err);
+      var CF = x.CF;
+      if (list.length > CF.PATHS_MAX) return cfErr("At most " + CF.PATHS_MAX + " at a time.");
+      var items = list.map(function (it) {
+        var o = it && typeof it === "object" ? it : { path: it };
+        return { path: CF.normPath(o.path), want: o.if_version };
+      });
+      for (var i = 0; i < items.length; i++) { var why = CF.reach(items[i].path, x.folders); if (why) return cfErr(why); }
+      return items.reduce(function (pr, it) {
+        return pr.then(function () {
+          return cfStat(x.fs, it.path).then(function (st) {
+            it.st = st;
+            return st && !st.dir ? cfVer(x.fs, it.path).then(function (v) { it.v = v; }) : null;
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        for (var j = 0; j < items.length; j++) { var nc = cfNoCloud(CF, items[j].st, items[j].path); if (nc) return cfErr(nc); }
+        var r = CF.planDelete(items, x.folders, Date.now());
+        if (!r.ok) return cfErr(r.err);
+        var cards = r.steps.map(function (s) { return { title: s.from.slice(s.from.lastIndexOf("/") + 1), rows: [{ f: "folder", b: CF.show(s.from.slice(0, s.from.lastIndexOf("/"))), a: null }] }; });
+        return cfApply(c, x, "delete", r.steps, cards, r.names);
+      });
+    });
+  }
+  // GATE-FILES F2: the text of a file for the closed copy's sidecar
+  // (gate/gate.js fileCopy): PDFs and documents, as files_read reads them.
+  // → Promise<{ ok, text } | { ok: false }>
+  function cfText(path) {
+    var fs = filesFS();
+    if (!fs || typeof fs.read !== "function") return Promise.resolve({ ok: false });
+    return cfMod().then(function (CF) {
+      if (!CF) return { ok: false };
+      var p = CF.normPath(path), name = p.slice(p.lastIndexOf("/") + 1), kind = CF.kindOf(name);
+      if (!p || CF.secret(p) || !/^(text|document|pdf)$/.test(kind)) return { ok: false };
+      return cfBytes(fs, p).then(function (bytes) {
+        if (kind === "text") return new TextDecoder("utf-8").decode(bytes);
+        if (kind === "pdf") return pdfBytesText(bytes);
+        if (!DT) throw new Error("doctext");
+        return DT.read(bytes, name, { sheets: sheets, max: 2000000 });
+      }).then(function (text) { return { ok: true, text: String(text || "") }; }, function () { return { ok: false }; });
+    });
+  }
+  function cfUndo(done) {
+    var fs = filesFS();
+    if (!fs || typeof fs.read !== "function") return Promise.resolve(undoFail(t("hist.noMod")));
+    return cfMod().then(function (CF) {
+      if (!CF) return undoFail(t("hist.noMod"));
+      return CF.undo(fs, done, function (p) { return cfVer(fs, p); }, Date.now());
     });
   }
   // Wave A3: the changes of some apps (and their cores) load the first
@@ -5500,6 +5809,7 @@
     var now = Date.now();
     if (mem.edit) return editUndo(mem.edit);
     if (mem.files) return filesUndo(mem.files);
+    if (mem.cf) return cfUndo(mem.cf);
     if (mem.kb) {
       var G = gateCore();
       if (!G) return Promise.resolve(undoFail(t("hist.noMod")));
@@ -6862,6 +7172,8 @@
         else if (ui.k === "read") txt = t("tool.read", { title: ui.title || "" });
         else if (ui.k === "readNo") txt = t("tool.readNo", { title: ui.title || "" });
         else if (ui.k === "readGone") txt = t("tool.readGone", { title: ui.title || "" });
+        else if (ui.k === "cfList") txt = ui.path ? t("tool.cfList", { path: ui.path }) : t("tool.cfFolders");
+        else if (ui.k === "cfRead") txt = t("tool.cfRead", { path: ui.path || "" });
         else if (ui.k === "sum") txt = t("tool.sum", { app: ui.app || "" });
         else if (ui.k === "sumNo") txt = t("tool.sumNo", { app: ui.app || "" });
         else if (ui.k === "chgErr") txt = t("chg.err", { app: ui.app || "" });
@@ -8785,20 +9097,23 @@
   // The tool list Claude sees through the gate (MCP shape).
   function gateToolList() {
     var ga = gateApps();
-    var crIds = createApps(ga.write).map(function (a) { return a.id; }).filter(function (id) { return id !== "budget"; });
+    var crIds = createApps(ga.write).map(function (a) { return a.id; }).filter(function (id) { return id !== "budget" && id !== "files"; });
     var chg = changeApps(ga.write).filter(function (a) { return a.id !== "budget" && a.id !== "files"; });
-    var on = ga.write.length > 0, rd = {}, have = installed();
+    // Files at write gives the files_* changes only, not the other apps' tools
+    var wr = ga.write.filter(function (a) { return a.id !== "files"; });
+    var on = wr.length > 0, rd = {}, have = installed();
     ga.read.forEach(function (a) { if (have[a.id]) rd[a.id] = 1; });
     var tools = C.toolsFor({ data: ga.read.length > 0, summary: summaryIds(ga.read).length > 0,
                              changes: chg.length > 0, creates: crIds,
                              links: crIds.indexOf("crm") >= 0 && crIds.indexOf("contacts") >= 0,
-                             partnerLinks: partnerLinksOn(crIds, ga.write), history: ga.write.length > 0,
+                             partnerLinks: partnerLinksOn(crIds, wr), history: ga.write.length > 0,
                              edits: editCats(ga.read),   // W5: read_in_app (the documents Claude may read)
                              actions: gateKinds(ga),
                              // GATE-PAR P3: work handed to an app's window (gatePress), once some app is at write
                              entries: on && entryKinds().length > 0, recipes: on ? recipeApps().filter(function (a) { return rd[a.id]; }).map(function (a) { return a.id; }) : [],
                              rules: on && rd.automations && !!window.OrosAutoCore, newsletter: on && rd.newsletter, cover: on && rd.layout,
-                             rebuild: on && rd.layout, house: on && rd.layout });
+                             rebuild: on && rd.layout, house: on && rd.layout,
+                             files: !cfRaw().length || !rd.files ? false : appOf(ga.write, "files") ? "write" : true });
     // edit_in_app only for the documents Claude may change
     var wc = editCats(ga.write), ed = Object.keys(wc).length ? C.toolsFor({ data: true, edits: wc }).filter(function (x) { return x.name === "edit_in_app"; }) : [];
     tools = tools.filter(function (x) { return x.name !== "edit_in_app"; }).concat(ed);
@@ -8807,12 +9122,12 @@
   // do_action's kinds through the gate: offered once the owner lets
   // Claude change some app; play only for apps Claude may read.
   function gateKinds(ga) {
-    if (!ga.write.length) return [];
+    if (!ga.write.some(function (a) { return a.id !== "files"; })) return [];
     var rd = {};
     ga.read.forEach(function (a) { rd[a.id] = 1; });
     return actionKinds().filter(function (k) { return k !== "play" || rd.music || rd.radio || rd.podcasts; });
   }
-  var GATE_WRITE = { change_item: 1, create_items: 1, link_contact: 1, link_items: 1, undo_change: 1, edit_in_app: 1 };
+  var GATE_WRITE = { change_item: 1, create_items: 1, link_contact: 1, link_items: 1, undo_change: 1, edit_in_app: 1, files_write: 1, files_move: 1, files_delete: 1 };
   // One call → Promise<{ ok, c (text), a (apps) }>.
   function gateRun(name, args) {
     if (C.GATE_TOOLS.indexOf(name) < 0) return Promise.resolve({ ok: false, c: "Unknown tool." });
@@ -9008,7 +9323,7 @@
       gateRefsLoad();
       window.__asGate = { v: 1, run: function (n, a) {
                             return gateRun(n, a).then(function (r) { if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; });
-                          }, tools: gateToolList, index: gateIndex,
+                          }, tools: gateToolList, index: gateIndex, text: cfText,
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };
       try { var g = gateShell(); if (g && typeof g.frameReady === "function") g.frameReady(); } catch (e) {}
     });

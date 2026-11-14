@@ -60,7 +60,13 @@ export const GATE_LIMITS = {
   // calls skip it, and a change that finds no awake device waits like
   // one made with orOS closed.
   aliveMs: 150000,
-  lateMs: 120000                  // a timed-out change waits this long before another device gets it
+  lateMs: 120000,                 // a timed-out change waits this long before another device gets it
+  // GATE-FILES F2: Claude's folders while orOS is closed
+  fidxChars: 900 * 1024,         // the sealed file index (base64url)
+  linkMs: 15 * 60000,            // a files_link download link lives this long, for one download
+  links: 20,                     // download links waiting per gate
+  pieceBytes: 1048576 + 28,      // one sealed piece: 1 MiB + IV + tag
+  readChars: 100000              // characters of text per files_read
 };
 
 // orOS that runs on the person's own computer (orOS Portable, the
@@ -90,6 +96,7 @@ const TOK_RE = /^[A-Za-z0-9_-]{43}$/;
 const BEARER_RE = /^([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{43})$/;
 const HEX64_RE = /^[0-9a-f]{64}$/;
 const WS_RE = /^\/gate\/ws\/([A-Za-z0-9_-]{22})$/;
+const FLINK_RE = /^\/gate\/f\/([A-Za-z0-9_-]{22})\/([A-Za-z0-9_-]{43})$/;
 
 // What Claude sees. orOS checks every call again on the device (the
 // app's level, the gate itself, the lock); this list only describes.
@@ -448,6 +455,20 @@ export const TOOLS = [
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
   }
+  ,
+  {
+    name: "files_link",
+    description: "A one-time download link (15 minutes, one download) for a file in Claude's folders on the orOS disk, made from the owner's sealed copy of those folders (it works with orOS closed; the answer says of when). Use it for PDFs, images, audio, video and other files a tool answer cannot carry: fetch the link with curl or similar. Paths are as files_list shows them. Files not in the copy (too big, media, over the owner's quota) have no link.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The file, inside one of Claude's folders (as files_list shows it, e.g. \"Drive/ckdesktop/Invoices/2026-11.pdf\")." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: true }
+  }
 ];
 const TOOL_NAMES = TOOLS.map((t) => t.name);
 const READ_ONLY = {};
@@ -651,6 +672,121 @@ export async function openText(kRaw, sealed) {
   const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64u(iv) }, await aesKey(kRaw, ["decrypt"]), unb64u(ct));
   return new TextDecoder().decode(pt);
 }
+// ---- GATE-FILES F2: the sealed copy of Claude's folders (gate/filecopy.js) ----
+// Pieces: iv(12) ‖ AES-GCM-256 under FK = HMAC-K("orOS-gate-fk|" + sha256)
+// with "orOS-gate-file|<sha256>|<c|t>|<i>" as additional data, fetched
+// from Dropbox shared links that only the sealed index names.
+const FILE_URL_RE = /^https:\/\/dl\.dropboxusercontent\.com\/(?:scl\/fi|s)\/[A-Za-z0-9_\/.%-]+(?:\?rlkey=[A-Za-z0-9]+)?$/;
+const H64_RE = /^[0-9a-f]{64}$/;
+async function fileKeyOf(kRaw, h) {
+  const hk = await crypto.subtle.importKey("raw", kRaw, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const raw = new Uint8Array(await crypto.subtle.sign("HMAC", hk, new TextEncoder().encode("orOS-gate-fk|" + h)));
+  return aesKey(raw, ["decrypt"]);
+}
+export async function openPiece(kRaw, h, part, i, sealed) {
+  const u = new Uint8Array(sealed);
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: u.slice(0, 12), additionalData: new TextEncoder().encode("orOS-gate-file|" + h + "|" + part + "|" + i) },
+    await fileKeyOf(kRaw, h), u.slice(12));
+  return new Uint8Array(pt);
+}
+// One piece from its link: only Dropbox's download host, at most one piece's size.
+export async function fetchPiece(url, fetchFn) {
+  if (typeof url !== "string" || !FILE_URL_RE.test(url)) throw new Error("bad-link");
+  const res = await (fetchFn || fetch)(url, { redirect: "follow" });
+  if (!res.ok) throw new Error("piece " + res.status);
+  const buf = await res.arrayBuffer();
+  if (buf.byteLength > GATE_LIMITS.pieceBytes || buf.byteLength < 29) throw new Error("piece size");
+  return buf;
+}
+// "Τιμολόγια", "Drive/pc/x", "/internal/…" → "/internal/…" | "" (claudefiles.js normPath)
+export function filePath(f) {
+  let s = String(f == null ? "" : f).normalize("NFC").trim().replace(/\s*›\s*/g, "/").replace(/\\/g, "/").replace(/\/+/g, "/").replace(/\/$/, "");
+  if (!s) return "";
+  if (s !== "/internal" && s.indexOf("/internal/") !== 0) s = "/internal/" + s.replace(/^\/+/, "");
+  if (s.length > 1024) return "";
+  if (s === "/internal") return s;
+  for (const seg of s.slice(10).split("/")) if (!seg || seg === "." || seg === ".." || seg.charAt(0) === "." || /[\u0000-\u001f]/.test(seg)) return "";
+  return s;
+}
+function fileShow(p) { return String(p).replace(/^\/internal\/?/, "") || "/"; }
+function underDir(p, d) { return p === d || p.indexOf(d + "/") === 0; }
+// files_list from the index: the same shape as the open answer (assistant/claudefiles.js listOut) plus as_of.
+export function filesListFrom(idx, args, when) {
+  const folders = Array.isArray(idx.f) ? idx.f : [];
+  const a = args && typeof args === "object" ? args : {};
+  if (a.path == null || String(a.path).trim() === "" || String(a.path).trim() === "/") {
+    return { ok: true, c: JSON.stringify({ folders: folders.map(fileShow), as_of: when, note: "orOS is closed: Claude's folders as of the copy; list one with path." }) };
+  }
+  const p = filePath(a.path);
+  if (!p || !folders.some((f) => underDir(p, f))) return { ok: false, c: "\"" + fileShow(p || String(a.path)) + "\" is outside the folders the owner lets Claude use: " + folders.map(fileShow).join(", ") + "." };
+  const depth = Math.max(1, Math.min(3, Math.floor(Number(a.depth) || 1)));
+  const lim = p.split("/").length + depth, rows = [], dirs = {};
+  (Array.isArray(idx.files) ? idx.files : []).forEach((e) => {
+    if (!e || typeof e.p !== "string" || e.p.indexOf(p + "/") !== 0) return;
+    const segs = e.p.slice(p.length + 1).split("/");
+    for (let i = 1; i < segs.length && i <= depth; i++) dirs[p + "/" + segs.slice(0, i).join("/")] = 1;
+    if (e.p.split("/").length <= lim) rows.push(e);
+  });
+  if (!rows.length && !Object.keys(dirs).length && !folders.some((f) => underDir(f, p) || underDir(p, f))) return { ok: false, c: "\"" + fileShow(p) + "\" is not in the copy of " + when + "." };
+  const all = Object.keys(dirs).sort().map((d) => ({ name: d.slice(p.length + 1), kind: "folder" }))
+    .concat(rows.sort((x, y) => (x.p < y.p ? -1 : 1)).map((e) => {
+      const o = { name: e.p.slice(p.length + 1), kind: e.k || "other", size: e.s || 0 };
+      if (e.m) o.modified = new Date(e.m).toISOString();
+      if (e.v) o.version = e.v;
+      o.in_copy = !!(Array.isArray(e.c) && e.c.length);
+      if (e.x) o.not_in_copy = e.x;
+      return o;
+    }));
+  const off = Math.max(0, Math.floor(Number(a.offset) || 0)), part = all.slice(off, off + 200);
+  return { ok: true, c: JSON.stringify({ path: fileShow(p), as_of: when, folders: folders.map(fileShow), entries: part, total: all.length, offset: off,
+    next_offset: off + part.length < all.length ? off + part.length : null, note: "orOS is closed: this is the copy of " + when + ". Changes wait until orOS opens (files_write and the other changes say so)." }) };
+}
+export function fileEntry(idx, path) {
+  const folders = Array.isArray(idx.f) ? idx.f : [];
+  const p = filePath(path);
+  if (!p || !folders.some((f) => underDir(p, f))) return { err: "\"" + fileShow(p || String(path || "")) + "\" is outside the folders the owner lets Claude use: " + folders.map(fileShow).join(", ") + "." };
+  const e = (Array.isArray(idx.files) ? idx.files : []).find((x) => x && x.p === p);
+  return e ? { e } : { err: "\"" + fileShow(p) + "\" is not in the copy." };
+}
+// The pieces of one part, opened and joined (text: at most `max` bytes).
+async function readPart(kRaw, e, part, fetchFn) {
+  const links = part === "t" ? e.t : e.c;
+  if (!Array.isArray(links) || !links.length || !H64_RE.test(e.h || "")) return null;
+  const out = [];
+  let n = 0;
+  for (let i = 0; i < links.length; i++) {
+    const b = await openPiece(kRaw, e.h, part, i, await fetchPiece(links[i], fetchFn));
+    out.push(b); n += b.length;
+  }
+  const all = new Uint8Array(n);
+  let at = 0;
+  out.forEach((b) => { all.set(b, at); at += b.length; });
+  return all;
+}
+export async function filesReadFrom(idx, args, kRaw, when, fetchFn) {
+  const a = args && typeof args === "object" ? args : {};
+  const f = fileEntry(idx, a.path);
+  if (f.err) return { ok: false, c: f.err };
+  const e = f.e, head = { path: fileShow(e.p), kind: e.k || "other", size: e.s || 0, as_of: when };
+  if (e.m) head.modified = new Date(e.m).toISOString();
+  if (e.v) head.version = e.v;
+  let bytes = null;
+  try {
+    if (Array.isArray(e.t) && e.t.length) bytes = await readPart(kRaw, e, "t", fetchFn);
+    else if (e.k === "text" && Array.isArray(e.c) && e.c.length && (e.s || 0) <= 25 * 1048576) bytes = await readPart(kRaw, e, "c", fetchFn);
+  } catch (x) {
+    return { ok: false, c: "The copy of \"" + head.path + "\" could not be read (Dropbox did not give it, or it did not pass the check). Ask the owner to open orOS." };
+  }
+  if (!bytes) {
+    head.note = e.x ? "Only the details: this file is not in the copy (" + e.x + ")." : "Only the details here; get the file itself with files_link.";
+    return { ok: true, c: "[orOS is closed: this is the copy of " + when + "]\n" + JSON.stringify(head) };
+  }
+  const text = new TextDecoder("utf-8").decode(bytes);
+  const o = Math.max(0, Math.floor(Number(a.offset) || 0)), len = Math.max(1, Math.min(GATE_LIMITS.readChars, Math.floor(Number(a.length) || GATE_LIMITS.readChars)));
+  const part = text.slice(o, o + len);
+  head.text = part; head.offset = o; head.total = text.length; head.next_offset = o + part.length < text.length ? o + part.length : null;
+  return { ok: true, c: "[orOS is closed: this is the copy of " + when + "]\n" + JSON.stringify(head) };
+}
 function sameText(a, b) {   // constant time for equal lengths
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
   let x = 0;
@@ -767,6 +903,12 @@ export async function handleGate(request, env, url, okOrigin, ip, now) {
     if (p === "/gate/pair") return await pairPage(request, env, url, now);
     if (p === "/gate/token") return token(request, env, now);
     if (p === "/mcp") return mcp(request, env, base, now);
+    // GATE-FILES F2: a files_link download (one use, 15 minutes)
+    const fm = FLINK_RE.exec(p);
+    if (fm) {
+      if (request.method !== "GET") return new Response(null, { status: 405, headers: { "Allow": "GET" } });
+      return stub(env, fm[1]).fetch(new Request("https://gate/flink", { headers: { "X-Now": String(now), "X-S": fm[2] } }));
+    }
     return oauthErr(404, "not_found");
   } catch (e) {
     return oauthErr(503, "temporarily_unavailable");   // never the text
@@ -940,7 +1082,7 @@ async function mcp(request, env, base, now) {
   if (text === null) return jsonRes(413, rpcErr(null, -32600, "request too large"));
   const res = await stub(env, bm[1]).fetch(new Request("https://gate/mcp", {
     method: "POST",
-    headers: { "X-Now": String(now), "X-Tok": bm[2], "X-Gid": bm[1] },
+    headers: { "X-Now": String(now), "X-Tok": bm[2], "X-Gid": bm[1], "X-Base": base },
     body: text
   }));
   if (res.status === 401) return jsonRes(401, { error: "invalid_token" }, challenge);
@@ -1048,6 +1190,7 @@ export class GateBox {
       if (p === "/dev") return await this.dev(await request.json(), now);
       if (p === "/token") return await this.token(await request.json(), now);
       if (p === "/mcp") return await this.mcp(request, now);
+      if (p === "/flink") return await this.fileDownload(request.headers.get("X-S") || "", now);
       if (p === "/ws") return await this.accept(request, now);
       if (p === "/adddev") return await this.addDev(await request.json(), now);
       if (p === "/jointake") return await this.joinTake(now);
@@ -1324,6 +1467,8 @@ export class GateBox {
     try { o = JSON.parse(msg); } catch (e) { return; }
     if (o && o.lv !== undefined && o.r === undefined) { await this.shareLv(ws, o.lv, o.base === 1); return; }
     if (o && typeof o.snap === "string" && o.r === undefined) { await this.putCopy(ws, o.snap); return; }
+    if (o && typeof o.fidx === "string" && o.r === undefined) { await this.putFileIndex(ws, o.fidx); return; }
+    if (o && o.fdrop === 1 && o.r === undefined) { await this.dropFromDevice(ws); return; }
     if (o && Array.isArray(o.cqa) && o.r === undefined) { await this.queueDone(ws, o.cqa); return; }
     if (!o || typeof o.r !== "string") return;
     const w = this.wait.get(o.r);
@@ -1390,8 +1535,8 @@ export class GateBox {
   }
   async dropCopy(wraps) {
     const keys = [];
-    for (const pre of wraps ? ["s:", "q:", "kw:"] : ["s:", "q:"]) (await this.st.list({ prefix: pre })).forEach((v, k) => keys.push(k));
-    keys.push("copy");
+    for (const pre of wraps ? ["s:", "q:", "kw:", "x:", "lk:"] : ["s:", "q:", "x:", "lk:"]) (await this.st.list({ prefix: pre })).forEach((v, k) => keys.push(k));
+    keys.push("copy", "fidx");
     for (let i = 0; i < keys.length; i += 128) await this.st.delete(keys.slice(i, i + 128));
   }
   // A device sends the encrypted copy of what Claude may read (the
@@ -1418,6 +1563,99 @@ export class GateBox {
     for (let i = 0; i < c.n; i++) { const x = await this.st.get("s:" + i); if (typeof x !== "string") return null; parts.push(x); }
     try { const o = JSON.parse(await openText(kRaw, parts.join(""))); return o && typeof o === "object" ? o : null; } catch (e) { return null; }
   }
+  // GATE-FILES F2: the sealed index of Claude's folders (gate/gate.js fileCopy).
+  async putFileIndex(ws, sealed) {
+    const m = await this.meta();
+    if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    if (sealed.length > GATE_LIMITS.fidxChars || !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(sealed)) return;
+    const old = await this.st.get("fidx");
+    const n = Math.ceil(sealed.length / GATE_LIMITS.chunkChars);
+    for (let i = 0; i < n; i++) await this.st.put("x:" + i, sealed.slice(i * GATE_LIMITS.chunkChars, (i + 1) * GATE_LIMITS.chunkChars));
+    if (old && old.n > n) { const gone = []; for (let i = n; i < old.n; i++) gone.push("x:" + i); await this.st.delete(gone); }
+    const now = Date.now();
+    await this.st.put("fidx", { n: n, at: now });
+    m.cp = 1; m.seen = now;
+    await this.st.put("meta", m);
+    await this.arm(m, now);
+    try { ws.send(JSON.stringify({ fidxok: now })); } catch (e) {}
+  }
+  async readFileIndex(kRaw) {
+    const c = await this.st.get("fidx");
+    if (!c || !kRaw) return null;
+    const parts = [];
+    for (let i = 0; i < c.n; i++) { const x = await this.st.get("x:" + i); if (typeof x !== "string") return null; parts.push(x); }
+    try { const o = JSON.parse(await openText(kRaw, parts.join(""))); return o && typeof o === "object" && Array.isArray(o.files) ? o : null; } catch (e) { return null; }
+  }
+  // A device drops Claude's closed copy now (Sensitive work, the owner).
+  async dropFromDevice(ws) {
+    const m = await this.meta();
+    if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    await this.dropCopy(false);
+    delete m.cp;
+    await this.st.put("meta", m);
+    try { ws.send(JSON.stringify({ fdropok: Date.now() })); } catch (e) {}
+  }
+  async closedFiles(name, args, kRaw) {
+    const idx = kRaw ? await this.readFileIndex(kRaw) : null;
+    if (!idx) return { ok: false, c: "orOS is closed and there is no copy of Claude's folders yet (an open orOS with Files allowed and folders chosen makes it; it is wiped after 7 days without an open device). Ask the owner to open orOS." };
+    const when = new Date(+idx.at || 0).toISOString();
+    if (name === "files_list") return filesListFrom(idx, args, when);
+    return await filesReadFrom(idx, args, kRaw, when, this.fetchFn);
+  }
+  // files_link: a one-time link, 15 minutes. The box keeps K only wrapped
+  // under the link's own secret (as for tokens) until it is used or expires.
+  async fileLink(args, kRaw, gid, base, now) {
+    const idx = kRaw ? await this.readFileIndex(kRaw) : null;
+    if (!idx) return { ok: false, c: "There is no copy of Claude's folders yet (an open orOS with Files allowed and folders chosen makes it). Ask the owner to open orOS." };
+    const f = fileEntry(idx, args && args.path);
+    if (f.err) return { ok: false, c: f.err };
+    const e = f.e, when = new Date(+idx.at || 0).toISOString();
+    if (!Array.isArray(e.c) || !e.c.length || !H64_RE.test(e.h || "")) return { ok: false, c: "\"" + fileShow(e.p) + "\" is not in the copy" + (e.x ? " (" + e.x + ")" : "") + ", so it has no link. With orOS open, files_read gives its text." };
+    const old = await this.st.list({ prefix: "lk:" });
+    const gone = [];
+    old.forEach((v, k) => { if (!v || v.exp <= now) gone.push(k); });
+    if (gone.length) await this.st.delete(gone);
+    if (old.size - gone.length >= GATE_LIMITS.links) return { ok: false, c: "Too many download links are waiting; use them or wait 15 minutes." };
+    const sec = rand43();
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await wrapKey("link|" + sec), kRaw));
+    const exp = now + GATE_LIMITS.linkMs;
+    await this.st.put("lk:" + await sha256hex(sec), { p: e.p, exp: exp, w: b64u(iv) + "." + b64u(ct) });
+    return { ok: true, c: JSON.stringify({ url: base + "/gate/f/" + gid + "/" + sec, name: e.p.slice(e.p.lastIndexOf("/") + 1), size: e.s || 0, version: e.v || undefined,
+      expires: new Date(exp).toISOString(), as_of: when, note: "One download, within 15 minutes, e.g. curl -fL -o <name> <url>. The file is as it was in the copy of " + when + "." }) };
+  }
+  // GET /gate/f/<gate>/<secret>: the file, opened piece by piece as it streams.
+  async fileDownload(sec, now) {
+    if (!TOK_RE.test(sec || "")) return new Response("Not found", { status: 404 });
+    const key = "lk:" + await sha256hex(sec), row = await this.st.get(key);
+    if (!row) return new Response("This link was used or has expired.", { status: 410 });
+    await this.st.delete(key);                                  // one use
+    if (row.exp <= now) return new Response("This link has expired.", { status: 410 });
+    let kRaw;
+    try {
+      const [iv, ct] = String(row.w).split(".");
+      kRaw = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64u(iv) }, await wrapKey("link|" + sec), unb64u(ct)));
+    } catch (e) { return new Response("This link does not open.", { status: 410 }); }
+    const idx = await this.readFileIndex(kRaw);
+    const e = idx && Array.isArray(idx.files) ? idx.files.find((x) => x && x.p === row.p) : null;
+    if (!e || !Array.isArray(e.c) || !e.c.length) return new Response("The file is no longer in the copy.", { status: 410 });
+    const fetchFn = this.fetchFn;
+    const name = e.p.slice(e.p.lastIndexOf("/") + 1);
+    const ts = new TransformStream();
+    (async () => {
+      const w = ts.writable.getWriter();
+      try {
+        for (let i = 0; i < e.c.length; i++) await w.write(await openPiece(kRaw, e.h, "c", i, await fetchPiece(e.c[i], fetchFn)));
+        await w.close();
+      } catch (x) { try { await w.abort(x); } catch (y) {} }
+    })();
+    return new Response(ts.readable, { status: 200, headers: {
+      "Content-Type": "application/octet-stream",
+      "Content-Disposition": "attachment; filename*=UTF-8''" + encodeURIComponent(name),
+      "Content-Length": String(e.s || 0),
+      "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer"
+    } });
+  }
   async queueDone(ws, ids) {
     const m = await this.meta();
     if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
@@ -1428,6 +1666,7 @@ export class GateBox {
   // in the queue (since 6.05.02 Budget deletions and transfers too;
   // deleting other apps' items by ref still waits for an open device).
   async closedCall(name, args, kRaw, now, qidWant) {
+    if (name === "files_list" || name === "files_read") return await this.closedFiles(name, args, kRaw);
     if (!kRaw) return { ok: false, c: "orOS is closed and there is no copy Claude may read yet. Ask the owner to open orOS once on a device with the gate on." };
     const cp = await this.readCopy(kRaw);
     if (!cp || typeof cp.at !== "number" || !cp.ans || typeof cp.ans !== "object") {
@@ -1570,6 +1809,10 @@ export class GateBox {
     m.used = now;
     await this.st.put("meta", m);
     await this.touch(m, now);
+    if (p.name === "files_link") {
+      const fl = await this.fileLink(args, await this.unwrapK(tok), String(request.headers.get("X-Gid") || ""), String(request.headers.get("X-Base") || ""), now);
+      return jsonRes(200, rpcOk(id, toolText(fl.c, !fl.ok)));
+    }
     let ans = await this.ask(p.name, args);
     // The gate this link points to (5.90.00): its first 6 characters, the
     // id orOS › Settings › orOS Gate shows, so a link to an old gate shows.

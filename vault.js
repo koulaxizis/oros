@@ -1564,6 +1564,14 @@
       return Object.prototype.hasOwnProperty.call(getOnDemand(), path);
     },
     fetch: fetchOnDemand,
+    // GATE-FILES (2026-11-13): a cloud-only file's content, hash-checked
+    // (VD-H), in memory only: nothing is written to the disk and the
+    // file stays on demand. → Promise<bytes>
+    peek: function (path) {
+      var entry = getOnDemand()[path];
+      if (!entry) return Promise.reject(new Error("not in the cloud only"));
+      return downloadObject(entry);
+    },
     evict: evictOnDemand,
     removeRemote: removeOnDemand,
     offlineFolders: offlineFolders,

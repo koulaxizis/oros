@@ -390,6 +390,7 @@
     if (SUMMARY[id] || ACT.indexOf(id) >= 0) t.push("app_summary");
     if (DOCS.indexOf(id) >= 0) t.push("read_in_app");
     if (LINES[id]) t.push(LINES[id]);
+    if (id === "files") t = t.concat(FILE_READ);
     return t;
   }
   function pushLog(list, entry) {
@@ -1487,6 +1488,11 @@
   // Assistant changes with edit_in_app (assistant.js EDIT_SRC). The app
   // opens on the owner's screen and applies the commands there.
   var DOCS = ["atelier", "layout", "mindmap", "montage", "photolab", "slides", "spreadsheet", "studio", "whiteboard", "writer"];
+  // GATE-FILES F1 (2026-11-13, Chris «Προχώρα, όλα τα κύματα»): Files
+  // joins the gate with its own tools (assistant/claudefiles.js), only
+  // inside Claude's folders (FILES_KEY, synced). Files stays outside
+  // ACT: change_item on files is not offered through the gate.
+  var FILE_READ = ["files_list", "files_read"], FILE_WRITE = ["files_write", "files_move", "files_delete"];
   // The changes the relay may queue while orOS is closed (relay/gate.js
   // closedCall): its own change tools less budget_delete and
   // budget_transfer (it deletes entries too), and
@@ -1496,15 +1502,15 @@
                 "change_item", "link_items", "link_contact"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"].concat(FILE_READ, FILE_WRITE);
   // GATE-PAR P3: tools that open an app on the owner's screen with the
   // work (= core.js GATE_OPEN); like do_action they need an app Claude
   // may change, no pause, and the frame checks the target app.
-  var ACT_OPEN = ACT_TOOLS.slice(12);
-  var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"];
+  var ACT_OPEN = ACT_TOOLS.slice(12, 22);
+  var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"].concat(FILE_WRITE);
   var DOC_WRITE = ["edit_in_app", "undo_change"];
-  function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0); }
-  function actable(id) { return ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0; }
+  function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"); }
+  function actable(id) { return ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"; }
   // One rule, orOS open or closed (Chris 08/11, 5.78.00): Claude may
   // change an app set to "write", unless the owner paused changes
   // (hold = paused until, ms). Every change is notified and undoable.
@@ -1569,21 +1575,21 @@
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
                    kanban_add_columns: "added Kanban columns",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
-                   link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}" } },
+                   link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}", files_write: "wrote files", files_move: "moved files", files_delete: "deleted files" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
           tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά", budget_balances: "συμφώνησε τα υπόλοιπα λογαριασμών του Budget",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
                    kanban_add_columns: "πρόσθεσε στήλες στο Kanban",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
-                   link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})" } },
+                   link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})", files_write: "έγραψε αρχεία", files_move: "μετακίνησε αρχεία", files_delete: "έσβησε αρχεία" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
           tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt", budget_balances: "die Kontostände im Budget abgeglichen",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
                    kanban_add_columns: "Kanban-Spalten hinzugefügt",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
-                   link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})" } }
+                   link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})", files_write: "Dateien geschrieben", files_move: "Dateien verschoben", files_delete: "Dateien gelöscht" } }
   };
   function fill(s, o) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return o[k] !== undefined ? o[k] : m; }); }
   // → { subject, text } in the owner's language (en, el, de).
@@ -1747,6 +1753,7 @@
       else sendBase(sock);
       pushReg();
       copySoon(4000);
+      fileCopySoon(60000);
       clearInterval(pingTimer);
       pingAt = Date.now();
       pingTimer = setInterval(function () {
@@ -1763,6 +1770,7 @@
       if (ev.data.indexOf('{"lv"') === 0) { onLv(ev.data); return; }
       if (ev.data.indexOf('{"cq"') === 0) { applyQueue(sock, ev.data); return; }
       if (ev.data.indexOf('{"snapok"') === 0) return;
+      if (ev.data.indexOf('{"fidxok"') === 0) { fileCopyAck(); return; }
       onCall(sock, ev.data);
     };
     sock.onclose = function (ev) {
@@ -2269,7 +2277,8 @@
           var o = { id: a.id, name: a.name, tools: toolsOf(a.id) };
           if (sensitive(a.id)) o.sensitive = "Personal app the owner allowed after a warning: read only, only while orOS is open (never in the closed copy). Read only what the owner's request needs.";
           if (p.lv[a.id] === "write" && writable(a.id)) {
-            o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : DOCS.indexOf(a.id) >= 0 ? DOC_WRITE.slice() : ACT_WRITE.filter(function (n) { return n !== "edit_in_app"; });
+            o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : DOCS.indexOf(a.id) >= 0 ? DOC_WRITE.slice() : a.id === "files" ? FILE_WRITE.concat("undo_change")
+              : ACT_WRITE.filter(function (n) { return n !== "edit_in_app" && FILE_WRITE.indexOf(n) < 0; });
             o.changes = canWrite(p.lv, p.hold, a.id, Date.now()) ? "allowed (the owner is notified of each change)" : "paused by the owner until " + new Date(p.hold).toISOString();
           }
           return o;
@@ -2506,6 +2515,275 @@
     });
   }
 
+  // GATE-FILES: deleting files is always asked here, naming them (at
+  // most 10 shown); no answer within 20 s, or orOS hidden or locked = no.
+  function askFiles(names) {
+    return new Promise(function (ok) {
+      var settled = false, wrap = null, list = Array.isArray(names) ? names.map(String) : [];
+      function end(v) { if (settled) return; settled = true; if (wrap) wrap.remove(); ok(v); }
+      if (!list.length || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false); return; }
+      var shown = list.slice(0, 10).join("\n") + (list.length > 10 ? "\n" + tr("gate.fdel.more").replace("{n}", String(list.length - 10)) : "");
+      wrap = dialog(tr("gate.fdel.title"), tr("gate.fdel.body").replace("{n}", String(list.length)), shown, tr("gate.del.no"), tr("gate.fdel.yes"),
+        function () { end(false); }, function () { end(true); });
+      setTimeout(function () { end(false); }, 20000);
+    });
+  }
+  // Claude's folders (synced slice "gatefiles"): { ver, m, f: [path] };
+  // the newer m wins whole, a tie goes to the larger JSON (R5).
+  var FILES_KEY = "oros-gate-files";
+  // Kept as written (setFolders cleans with claudefiles.js); a pulled
+  // list is held to plain disk paths here and cleaned again before use.
+  function foldersClean(x) {
+    if (!isObj(x) || typeof x.m !== "number" || !Array.isArray(x.f)) return { ver: 1, m: 0, f: [] };
+    var f = x.f.filter(function (p, i, l) {
+      return typeof p === "string" && p.length <= 1024 && p.indexOf("/internal/") === 0 && !/(^|\/)\.|[\u0000-\u001f]/.test(p.slice(10)) && l.indexOf(p) === i;
+    }).slice(0, 50).sort();
+    var out = { ver: 1, m: Math.floor(x.m), f: f };
+    if (typeof x.q === "number" && isFinite(x.q) && x.q >= 52428800) out.q = Math.min(Math.floor(x.q), 1e12);   // F2: the closed copy's quota (bytes)
+    return out;
+  }
+  var cfP = null;
+  function claudeFiles() {
+    if (root.OrosClaudeFiles) return Promise.resolve(root.OrosClaudeFiles);
+    if (!cfP) {
+      cfP = new Promise(function (ok, no) {
+        var s = document.createElement("script");
+        var v = root.orosTodayEnv && root.orosTodayEnv.version ? "?v=" + encodeURIComponent(root.orosTodayEnv.version) : "";
+        s.src = "assistant/claudefiles.js" + v;
+        s.onload = function () { root.OrosClaudeFiles ? ok(root.OrosClaudeFiles) : no(new Error("claudefiles")); };
+        s.onerror = function () { cfP = null; no(new Error("claudefiles")); };
+        document.head.appendChild(s);
+      });
+    }
+    return cfP;
+  }
+  function foldersRead() { return foldersClean(readJSON(FILES_KEY)); }
+  function foldersMerge(a, b) {
+    var A = foldersClean(a), B = foldersClean(b);
+    if (A.m !== B.m) return A.m > B.m ? A : B;
+    return JSON.stringify(A) >= JSON.stringify(B) ? A : B;
+  }
+  function foldersSlice(n) {
+    var S = root.orosSync;
+    if (S && typeof S.registerSlice === "function") {
+      S.registerSlice("gatefiles", function () { var raw = null; try { raw = localStorage.getItem(FILES_KEY); } catch (e) {} return raw ? foldersRead() : null; },
+        function (data) {
+          var v = foldersClean(data), cur = foldersRead();
+          if (JSON.stringify(v) === JSON.stringify(cur)) return;
+          writeJSON(FILES_KEY, v);                         // pulled: never markDirty
+          changed();
+        }, FILES_KEY, foldersMerge);
+      return;
+    }
+    if (n < 40) setTimeout(function () { foldersSlice(n + 1); }, 500);
+  }
+
+  // ---- GATE-FILES F2: the closed copy of Claude's folders ----
+  // gate/filecopy.js seals; sync.js gateDrop stores the pieces in
+  // Dropbox (/gate/<gate id>/) behind shared links; the sealed index
+  // goes to the gate box ({ fidx }), which reads it only during a call.
+  // Never while Sensitive work is on (window.orosStrict, PR #1010) or
+  // the device is locked; one run at a time; unchanged files are not
+  // read again (FC_KEY keeps size, time and hash per path).
+  var FC_KEY = "oros-gate-fcopy", FIDX_MAX = 880000, fcBusy = false, fcTimer = null, fcErr = "";
+  var fcModP = null;
+  function fcMod() {
+    if (root.OrosGateFileCopy) return Promise.resolve(root.OrosGateFileCopy);
+    if (!fcModP) {
+      fcModP = new Promise(function (ok, no) {
+        var s = document.createElement("script");
+        var v = root.orosTodayEnv && root.orosTodayEnv.version ? "?v=" + encodeURIComponent(root.orosTodayEnv.version) : "";
+        s.src = "gate/filecopy.js" + v;
+        s.onload = function () { root.OrosGateFileCopy ? ok(root.OrosGateFileCopy) : no(new Error("filecopy")); };
+        s.onerror = function () { fcModP = null; no(new Error("filecopy")); };
+        document.head.appendChild(s);
+      });
+    }
+    return fcModP;
+  }
+  function strictOn() {
+    try { var S = root.orosStrict; return !!(S && typeof S.level === "function" && S.level()); } catch (e) { return false; }
+  }
+  function fcDrop() { var S = root.orosSync; return S && S.gateDrop && typeof S.gateDrop.available === "function" && S.gateDrop.available() ? S.gateDrop : null; }
+  function fcState() { var o = readJSON(FC_KEY); return isObj(o) ? o : {}; }
+  function fileCopySoon(ms) { clearTimeout(fcTimer); fcTimer = setTimeout(fileCopy, typeof ms === "number" ? ms : 60000); }
+  function fcFilesOn(p) { return isObj(p.lv) && (p.lv.files === "read" || p.lv.files === "write"); }
+  // Every file under the folders: [{ p, s, m, cloud: { h } | null }]
+  function fcWalk(CF, folders) {
+    var FS = root.orosFS, V = root.orosVault, rows = [], seen = {};
+    function go(dir, d) {
+      if (rows.length >= 3000 || d > 12) return Promise.resolve();
+      return Promise.resolve().then(function () { return FS.ls(dir); }).catch(function () { return []; }).then(function (list) {
+        return (list || []).reduce(function (pr, e) {
+          return pr.then(function () {
+            if (!e || !e.name || e.name.charAt(0) === ".") return;
+            var p = dir + "/" + e.name;
+            if (CF.secret(p)) return;
+            if (e.dir) return go(p, d + 1);
+            return Promise.resolve().then(function () { return FS.stat(p); }).catch(function () { return null; }).then(function (st) {
+              if (!st || st.dir || seen[p]) return;
+              seen[p] = 1;
+              rows.push({ p: p, s: st.size || 0, m: st.mtime || 0, cloud: null });
+            });
+          });
+        }, Promise.resolve());
+      });
+    }
+    return folders.reduce(function (pr, f) { return pr.then(function () { return go(f, 0); }); }, Promise.resolve()).then(function () {
+      if (V && typeof V.remoteOnly === "function") {
+        folders.forEach(function (f) {
+          var l = [];
+          try { l = V.remoteOnly(f) || []; } catch (e) { l = []; }
+          l.forEach(function (e) {
+            if (!e || typeof e.path !== "string" || seen[e.path] || CF.secret(e.path) || /\/\./.test(e.path.slice(f.length))) return;
+            seen[e.path] = 1;
+            rows.push({ p: e.path, s: e.s || 0, m: e.m || 0, cloud: { h: String(e.h || "") } });
+          });
+        });
+      }
+      return rows;
+    });
+  }
+  function fcBytes(r) {
+    if (r.cloud) return root.orosVault.peek(r.p).then(function (b) { return new Uint8Array(b); });
+    return Promise.resolve(root.orosFS.read(r.p)).then(function (b) { return b && typeof b.arrayBuffer === "function" ? b.arrayBuffer() : b; }).then(function (b) { return new Uint8Array(b); });
+  }
+  // The version files_* tools give (assistant.js cfVer): sha256[0:16]; a
+  // file over 32 MB that was not read, from its size and time.
+  function fcMetaVer(FC, r) { return FC.sha256(new TextEncoder().encode("size:" + r.s + ":" + (r.m || 0))).then(function (h) { return h.slice(0, 16); }); }
+  function fileCopy() {
+    var p = pref(), k = gateKey(), D = fcDrop();
+    if (fcBusy) return Promise.resolve(false);
+    if (!p.on || !k || !ws || ws.readyState !== 1 || !fcFilesOn(p) || strictOn() || !D) return Promise.resolve(false);
+    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) return Promise.resolve(false);
+    if (!root.orosFS) return Promise.resolve(false);
+    var fr = foldersRead();
+    if (!fr.f.length) return Promise.resolve(false);
+    fcBusy = true;
+    fcErr = "";
+    var kRaw = keyBytes(k), gid = p.id, st = fcState(), cache = isObj(st.c) ? st.c : {}, FC, CF;
+    var have = {}, names = {}, newCache = {}, files = [], rows;
+    var known = {}, spaceOk = true, put = 0;
+    return Promise.all([fcMod(), claudeFiles()]).then(function (m) {
+      FC = m[0]; CF = m[1];
+      known = FC.known(st.idx);
+      return fcWalk(CF, CF.cleanFolders(fr.f));
+    }).then(function (r) {
+      rows = r;
+      // hashes: cloud entries carry theirs; unchanged files keep theirs
+      return rows.reduce(function (pr, x) {
+        return pr.then(function () {
+          x.kind = CF.kindOf(x.p.slice(x.p.lastIndexOf("/") + 1));
+          var c = cache[x.p];
+          if (x.cloud && /^[0-9a-f]{64}$/.test(x.cloud.h)) x.h = x.cloud.h;
+          else if (isObj(c) && c.s === x.s && c.m === x.m && typeof c.h === "string") x.h = c.h;
+          else if (FC.wants(x).c) return fcBytes(x).then(function (b) { return FC.sha256(b); }).then(function (h) { x.h = h; }, function () { x.h = ""; });
+        }).then(function () {
+          if (x.h) newCache[x.p] = { s: x.s, m: x.m, h: x.h };
+        });
+      }, Promise.resolve());
+    }).then(function () {
+      return D.list(gid).then(function (l) { l.forEach(function (e) { have[e.name] = e; }); }, function () {});
+    }).then(function () {
+      return D.space().then(function (sp) { if (sp && sp.allocated && (sp.allocated - sp.used) < sp.allocated * 0.1) spaceOk = false; });
+    }).then(function () {
+      var pl = FC.plan(rows.filter(function (x) { return !FC.wants(x).c || x.h; }).map(function (x) { return { p: x.p, s: x.s, kind: x.kind }; }), FC.quotaOf(fr.q));
+      // one part ("c" / "t") of one file: its links, uploading only what is
+      // new. n = its piece count when known (content), else from the bytes.
+      function reuse(x, tag, n) {
+        var old = known[x.h + "|" + tag];
+        if (!old || (n && old.length !== n)) return Promise.resolve(null);
+        return Promise.all(old.map(function (_, i) { return FC.pieceName(kRaw, x.h, tag, i); })).then(function (nms) {
+          if (!nms.every(function (nm) { return have[nm]; })) return null;
+          nms.forEach(function (nm) { names[nm] = 1; });
+          return old;
+        });
+      }
+      function part(x, tag, n, getBytes) {
+        return reuse(x, tag, n).then(function (old) {
+          if (old) return old;
+          return getBytes().then(function (bytes) {
+            if (!bytes) return null;
+            var cnt = FC.count(bytes.length), links = [], chain = Promise.resolve();
+            for (var i = 0; i < cnt; i++) (function (i) {
+              chain = chain.then(function () { return FC.pieceName(kRaw, x.h, tag, i); }).then(function (nm) {
+                names[nm] = 1;
+                var up = have[nm] ? Promise.resolve() : !spaceOk ? Promise.reject(new Error("space")) :
+                  FC.seal(kRaw, x.h, tag, i, bytes.slice(i * FC.PIECE, (i + 1) * FC.PIECE)).then(function (b) { put += b.length; return D.put(gid + "/" + nm, b); });
+                return up.then(function () { have[nm] = { name: nm }; return D.share(gid + "/" + nm); }).then(function (u) { links[i] = u; });
+              });
+            })(i);
+            return chain.then(function () { return links; });
+          });
+        });
+      }
+      return rows.reduce(function (pr, x) {
+        return pr.then(function () {
+          var e = { p: x.p, s: x.s, m: x.m, k: x.kind };
+          files.push(e);
+          var t = pl.take[x.p];
+          var vP = x.h && !(x.s > 33554432 && !x.cloud) ? Promise.resolve(x.h.slice(0, 16)) : fcMetaVer(FC, x);
+          return vP.then(function (v) {
+            e.v = v;
+            if (!t) { e.x = pl.out[x.p] || "none"; return; }
+            e.h = x.h;
+            return part(x, "c", FC.count(x.s), function () { return fcBytes(x); }).then(function (c) {
+              e.c = c;
+              if (!t.t) return;
+              return part(x, "t", 0, function () {
+                return actFrame().then(function (F) {
+                  if (!F || typeof F.text !== "function") return null;
+                  return F.text(x.p).then(function (r) { return r && r.ok && r.text ? FC.textBytes(r.text) : null; });
+                });
+              }).then(function (tl) { if (tl) e.t = tl; });
+            }).catch(function (err) {
+              delete e.c; delete e.t; delete e.h;
+              e.x = err && err.message === "space" ? "space" : "err";
+              if (err && /dropbox-scope/.test(err.message || "")) fcErr = "scope";
+              if (err && /dropbox-full/.test(err.message || "")) { fcErr = "full"; spaceOk = false; }
+            });
+          });
+        });
+      }, Promise.resolve()).then(function () { return pl; });
+    }).then(function (pl) {
+      var idx = { v: 1, at: Date.now(), f: CF.cleanFolders(fr.f), q: FC.quotaOf(fr.q), used: pl.used, files: files };
+      var text = JSON.stringify(idx);
+      while (utf8Len(text) > FIDX_MAX && idx.files.length) { idx.files.pop(); idx.cut = 1; text = JSON.stringify(idx); }
+      return seal(k, text).then(function (sealed) {
+        if (!ws || ws.readyState !== 1) throw new Error("offline");
+        ws.send(JSON.stringify({ fidx: sealed }));
+        writeJSON(FC_KEY, { at: idx.at, c: newCache, idx: { files: files.map(function (e) { return { h: e.h, c: e.c, t: e.t }; }).filter(function (e) { return e.h; }) }, n: Object.keys(names), up: put, used: pl.used, err: fcErr });
+        changed();
+      });
+    }).then(function () { fcBusy = false; return true; }, function () { fcBusy = false; return false; });
+  }
+  // The box kept the new index: pieces no index names any more go, once
+  // they are a day old (another device may still name them for a while).
+  function fileCopyAck() {
+    var p = pref(), D = fcDrop(), st = fcState();
+    if (!D || !p.id || !Array.isArray(st.n)) return;
+    var keep = {};
+    st.n.forEach(function (n) { keep[n] = 1; });
+    D.list(p.id).then(function (l) {
+      var old = l.filter(function (e) { return !keep[e.name] && e.at && Date.now() - e.at > 86400000; }).slice(0, 200);
+      return old.reduce(function (pr, e) { return pr.then(function () { return D.remove(p.id + "/" + e.name).catch(function () {}); }); }, Promise.resolve());
+    }).catch(function () {});
+  }
+  // Sensitive work (and the owner) can drop Claude's closed copy at once:
+  // the box forgets the copy and the file index, and the pieces leave Dropbox.
+  function dropCopyNow() {
+    var p = pref();
+    if (!p.on || !p.id) { var e1 = new Error("gate-off"); e1.code = "gate-off"; return Promise.reject(e1); }
+    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) { var e2 = new Error("locked"); e2.code = "locked"; return Promise.reject(e2); }
+    if (!ws || ws.readyState !== 1) { var e3 = new Error("offline"); e3.code = "offline"; return Promise.reject(e3); }
+    ws.send(JSON.stringify({ fdrop: 1 }));
+    copyLast = "";
+    try { localStorage.removeItem(FC_KEY); } catch (e) {}
+    var D = fcDrop();
+    changed();
+    return (D ? D.remove(p.id).catch(function () {}) : Promise.resolve()).then(function () { return { ok: true }; });
+  }
+
   function onCall(sock, text) {
     var q;
     try { q = JSON.parse(text); } catch (e) { return; }
@@ -2541,7 +2819,7 @@
   var api = {
     // For the hidden Assistant frame (assistant.js GATE).
     frameReady: function () { if (actReady) actReady(); },
-    act: ACT.concat(DOCS),
+    act: ACT.concat(DOCS, ["files"]),
     levels: function () {
       var p = pref(), out = {};
       if (!p.on || !isObj(p.lv)) return out;
@@ -2567,6 +2845,36 @@
       return "";
     },
     askDelete: function (n) { return askDelete(n); },
+    // GATE-FILES: every delete of files is asked on the device, with the names.
+    askFiles: function (names) { return askFiles(names); },
+    // F2: drop Claude's closed copy now (Sensitive work, Settings) → Promise<{ ok }>;
+    // rejects with e.code "gate-off" | "offline" | "locked"
+    dropCopy: function () { return dropCopyNow(); },
+    // F2: the closed copy of the files: { at, used, quota, up, err } (err "scope": sign in to Dropbox again)
+    fileCopyInfo: function () { var st = fcState(); return { at: st.at || 0, used: st.used || 0, quota: (foldersRead().q || 262144000), up: st.up || 0, err: st.err || "" }; },
+    setQuota: function (bytes) {
+      var cur = foldersRead(), q = Math.floor(+bytes || 0);
+      if (!(q >= 52428800)) return false;
+      var next = { ver: 1, m: stampAfter(Date.now(), cur.m), f: cur.f, q: q };
+      if (!writeJSON(FILES_KEY, next)) return false;
+      dirty(); changed(); fileCopySoon(5000);
+      return true;
+    },
+    refreshFileCopy: function () { return fileCopy(); },
+    // Claude's folders on the orOS disk (synced): [path]
+    folders: function () { return foldersRead().f.slice(); },
+    // → Promise<[path] saved> (cleaned: valid, no secrets, none inside another)
+    setFolders: function (list) {
+      return claudeFiles().then(function (CF) {
+        var cur = foldersRead(), f = CF.cleanFolders(list);
+        if (JSON.stringify(f) === JSON.stringify(cur.f)) return f;
+        var next = { ver: 1, m: stampAfter(Date.now(), cur.m), f: f };
+        if (cur.q) next.q = cur.q;
+        if (!writeJSON(FILES_KEY, next)) throw new Error("save");
+        dirty(); changed(); fileCopySoon(5000);
+        return f;
+      });
+    },
     relayUrl: function () { return relay() + "/mcp"; },
     // The relay this gate runs on, and which kind: own | mail | shared.
     relayInfo: function () {
@@ -2751,6 +3059,8 @@
     disable: function () {
       var p = pref();
       actDrop();
+      if (p.id && fcDrop()) fcDrop().remove(p.id).catch(function () {});   // F2: the closed copy's pieces
+      try { localStorage.removeItem(FC_KEY); } catch (e) {}
       var gone = p.id && p.tok ? devCall({ act: "del", id: p.id, tok: p.tok }).catch(function () {}) : Promise.resolve();
       drop();
       return gone.then(function () {
@@ -2830,7 +3140,7 @@
     box.appendChild(h); box.appendChild(pTxt);
     if (note) {
       var nt = document.createElement("p");
-      nt.style.cssText = "margin:0 0 16px;line-height:1.45;opacity:.8;font-size:.92rem";
+      nt.style.cssText = "margin:0 0 16px;line-height:1.45;opacity:.8;font-size:.92rem;white-space:pre-line;overflow-wrap:anywhere;max-height:40vh;overflow:auto";
       nt.textContent = note;
       box.appendChild(nt);
     }
@@ -2905,7 +3215,9 @@
     seatSlice(0);
     chgSlice(0);
     digSlice(0);
+    foldersSlice(0);
     setInterval(function () { copySoon(0); }, 30 * 60000);
+    setInterval(function () { fileCopySoon(0); }, 30 * 60000);
     // SY-AD (5.96.00): data Claude wrote before this version for an app
     // never opened on this device (Publishing, CRM…) reaches sync now.
     setTimeout(adoptWritten, 8000);
