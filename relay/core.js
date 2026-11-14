@@ -24,6 +24,8 @@
 //           /dav      WebDAV pass-through, target in X-Oros-Target (Sync through WebDAV, see dav.js)
 //           /nl/...   public sign-up form and one-click unsubscribe (newsletter.js)
 //           /crm/f/<k> public CRM contact form (crmform.js)
+//           POST /v1  { op: "frm", act, k, sec, ... }  (Forms, see forms.js)
+//           /fm/<k>   GET the encrypted form, POST one sealed answer, /fm/<k>/report (forms.js)
 // Response: { ok:true, data } | { ok:false, error:{ code, msg } }
 // ============================================================
 
@@ -34,6 +36,7 @@ import { withSmtp, validAddr, SMTP_LIMITS } from "./smtp.js";
 import { runSieve, SIEVE_LIMITS } from "./sieve.js";
 import { validNl, runNl, handleNl, page as nlPage, NlError, validHook, runHook } from "./newsletter.js";
 import { validCrmf, runCrmf, handleCrmForm, crmPage, CrmfError } from "./crmform.js";
+import { validFrm, runFrm, handleForms, FrmError } from "./forms.js";
 import { validPapi, runPapi, PAPI_LIMITS } from "./papi.js";
 import { validExt, runExt, EXT_LIMITS, extCap } from "./ext.js";
 import { handleRemote, ROOM_RE } from "./remote.js";
@@ -57,7 +60,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, nlhook: 1, papi: 1, ext: 1, crmf: 1, shr: 1, shl: 1, push: 1, oasa: 1, hook: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, nlhook: 1, papi: 1, ext: 1, crmf: 1, frm: 1, shr: 1, shl: 1, push: 1, oasa: 1, hook: 1 };
 const SIEVE_PORT = 4190;
 
 // ---------- validation ----------
@@ -107,6 +110,7 @@ export function validRequest(b, env, now) {
   if (b.op === "nl") return validNl(b);   // Newsletter: sign-ups and unsubscribes waiting in D1
   if (b.op === "nlhook") return validHook(b, checkUrl);   // Newsletter: signed "issue sent" notice (N3)
   if (b.op === "crmf") return validCrmf(b);   // CRM: web form messages waiting in D1
+  if (b.op === "frm") return validFrm(b);     // Forms: encrypted forms and sealed answers in D1
   if (b.op === "shr") return validShr(b, now);   // Send to someone: encrypted items with an expiry
   if (b.op === "shl") return validShl(b);        // Send to someone: a song's short link
   if (b.op === "papi") return validPapi(b);   // Newsletter: provider HTTP APIs
@@ -224,6 +228,12 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   if (url.pathname.startsWith("/crm/")) {
     if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) return crmPage(429, "en", "busy");
     return handleCrmForm(request, env, url, now || Date.now());
+  }
+
+  // Forms' public routes (relay/forms.js): the fill-in page at
+  // useoros.online only, own CORS and rate limits, JSON answers.
+  if (url.pathname.startsWith("/fm/")) {
+    return handleForms(request, env, url, origin, request.headers.get("CF-Connecting-IP") || "", now || Date.now());
   }
 
   // Automations' incoming webhooks (relay/hook.js): any sender, POST only,
@@ -369,6 +379,16 @@ export async function handle(request, env, connectFn, now, fetchFn) {
       return json(200, { ok: true, data }, okOrigin);
     } catch (e) {
       if (e instanceof CrmfError) return fail(e.status, e.code, e.message, okOrigin);
+      return fail(503, "nostore", "storage failed", okOrigin);           // a D1 failure; never its text
+    }
+  }
+
+  if (b.op === "frm") {
+    try {
+      const data = await runFrm(b, env, now || Date.now());
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      if (e instanceof FrmError) return fail(e.status, e.code, e.code, okOrigin);
       return fail(503, "nostore", "storage failed", okOrigin);           // a D1 failure; never its text
     }
   }

@@ -44,10 +44,14 @@ When you sell, a product with lots offers a `Lot` choice; leave it on `First to 
 `New` › `Point of sale (till)` is a full-screen till for a shop. On the left: a search box (a scanner or the 📷 camera adds the product straight away), category chips and a grid of products with their price and what is left. On the right: the sale, with − and + or a typed quantity per line, the net, the VAT per rate and the total.
 
 1. Pick a `Price list` at the top. `Retail` uses each product's sale price. Under `Price lists` you can add others, such as `Wholesale`: a percentage on the sale price (−10 means 10% off) and, with `Prices…`, a price of its own for any product.
-2. Choose `Cash`, `Card` or `Other`. For cash you can type `Cash given` to see the change.
+2. Choose `Cash`, `Card`, `Other` or `Split` (part cash, part card: type the `Cash part`, the rest is card). For cash you can type `Cash given` to see the change.
 3. Press `Charge`. The products come off stock (from the warehouse shown at the top, when you have several), and the receipt opens: print it on 58 mm or 80 mm roll paper. `Undo` in the message voids the sale right away.
 
-`Receipt settings` holds the receipt's header (shop name, address, VAT number) and footer, the paper width and the `Register code`: two characters at the start of the receipt numbers (like AB-261014-001), so two tills never print the same number. These settings stay on each device.
+Discounts: the `%` button on a line gives that line a percentage or an amount off; `Discount` under the total does the same for the whole sale, with an optional reason (students, an author signing) that is printed on the receipt. The receipt shows the price before the discount. `+ Other item` sells something that is not in Stock (a poster, a ticket, a donation): type its name, price with VAT and VAT rate; it is on the receipt and in the totals but never in stock.
+
+After a sale the receipt can also go to the customer without paper: `Share PDF` (or `PDF` on a computer) makes an 80 mm PDF, and `QR code` shows the receipt's text as a code the customer scans with the phone camera. Both are made on this device; nothing is sent anywhere.
+
+`Receipt settings` holds the receipt's header (shop name, address, VAT number) and footer, the paper width and the `Register code`: two characters at the start of the receipt numbers (like AB-261014-001), so two tills never print the same number. `Largest discount on this device` caps the discounts this device may give (for a helper's phone at a stand); empty means no limit. These settings stay on each device.
 
 `Z report` shows a day's sales: how many, net, VAT per rate, by payment method and price list, the best sellers and every receipt (reprint or `Void` from there; a voided sale's products go back into stock). `Close the day` keeps the day's totals as a numbered Z; sales made after it show apart. `Print Z report` prints it on the roll.
 

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — the point of sale (stock/pos.js, v1.0.0, wave 46)
+// orOS Stock — the point of sale (stock/pos.js, v1.1.0, wave 46 + F1)
 // A till screen on top of Stock: product grid with search, categories
 // and barcode (scanner or camera), a cart, price lists (retail, plus
 // any the user adds, e.g. wholesale), payment method, cash change, a
@@ -11,6 +11,11 @@
 // Loaded by stock/index.html after pos-core.js; stock.js calls
 // window.OrosStockPos.open(api). Everything shown is textContent;
 // the printed receipt / Z report escape every text (api.esc).
+// F1 (fair till): discounts per line and on the whole sale (% or an
+// amount, with a reason; a device-local cap for a helper's phone),
+// split payment (cash + card), free items typed at the till (no
+// stock) and the receipt as a PDF (jsPDF + Noto, shared or saved) or
+// a QR code of its text, both built on this device only.
 // ============================================================
 (function () {
   "use strict";
@@ -47,7 +52,18 @@
       stPaper: "Paper", stDev: "Register code", stDevHint: "Two characters at the start of this device's receipt numbers.",
       stLocal: "These settings stay on this device (each register prints its own).", stSaved: "Saved",
       w: "Time", no: "No.", paid: "Paid", givenR: "Given", changeR: "Change", totalR: "TOTAL",
-      notFiscal: "Not a tax receipt."
+      notFiscal: "Not a tax receipt.",
+      discT: "Discount", discLine: "Discount: {n}", discSale: "Discount on the whole sale", discPct: "%", discAmt: "Amount off",
+      discReason: "Reason (optional)", discReasonPh: "Students, author signing…", discApply: "Apply", discNone: "No discount",
+      discBad: "Type a percentage from 1 to 100 or an amount.", discMax: "This device may give at most {p}% off (this sale: {q}%).",
+      was: "was", split: "Split", splitCash: "Cash part", splitCard: "Card: {c}", splitBad: "The cash part must be between 0 and {t}.",
+      otherBtn: "+ Other item", otherT: "Other item (not in stock)", otherName: "Name", otherPrice: "Price with VAT",
+      otherVat: "VAT", otherQty: "Quantity", otherHint: "Sold without stock: it is on the receipt and in the totals only.",
+      otherBad: "Type a name and a price.", otherAdd: "Add",
+      pdf: "PDF", share: "Share PDF", qr: "QR code", qrHint: "The customer scans it with the phone camera and keeps the receipt as text.",
+      pdfFail: "Could not make the PDF.", qrLong: "This receipt is too long for a QR code; use the PDF.",
+      stDmax: "Largest discount on this device (%)", stDmaxHint: "Empty = no limit. Useful on a helper's phone at a stand.",
+      zDisc: "Discounts given", zSplit: "Split payments"
     },
     el: {
       "pos.title": "Σημείο πώλησης (POS)", pl: "Τιμοκατάλογος", retail: "Λιανική", wh: "Αποθήκη",
@@ -78,11 +94,26 @@
       stPaper: "Χαρτί", stDev: "Κωδικός ταμείου", stDevHint: "Δύο χαρακτήρες στην αρχή των αριθμών απόδειξης αυτής της συσκευής.",
       stLocal: "Οι ρυθμίσεις μένουν σε αυτή τη συσκευή (κάθε ταμείο τυπώνει τις δικές του).", stSaved: "Αποθηκεύτηκε",
       w: "Ώρα", no: "Αρ.", paid: "Πληρωμή", givenR: "Δόθηκαν", changeR: "Ρέστα", totalR: "ΣΥΝΟΛΟ",
-      notFiscal: "Δεν είναι φορολογική απόδειξη."
+      notFiscal: "Δεν είναι φορολογική απόδειξη.",
+      discT: "Έκπτωση", discLine: "Έκπτωση: {n}", discSale: "Έκπτωση σε όλη την πώληση", discPct: "%", discAmt: "Ποσό έκπτωσης",
+      discReason: "Λόγος (προαιρετικά)", discReasonPh: "Φοιτητές, υπογραφή συγγραφέα…", discApply: "Εφαρμογή", discNone: "Χωρίς έκπτωση",
+      discBad: "Γράψε ποσοστό από 1 έως 100 ή ένα ποσό.", discMax: "Αυτή η συσκευή δίνει έως {p}% έκπτωση (αυτή η πώληση: {q}%).",
+      was: "αντί", split: "Μικτή", splitCash: "Μετρητά", splitCard: "Κάρτα: {c}", splitBad: "Τα μετρητά πρέπει να είναι από 0 έως {t}.",
+      otherBtn: "+ Άλλο είδος", otherT: "Άλλο είδος (εκτός αποθέματος)", otherName: "Όνομα", otherPrice: "Τιμή με ΦΠΑ",
+      otherVat: "ΦΠΑ", otherQty: "Ποσότητα", otherHint: "Πωλείται χωρίς απόθεμα: μπαίνει μόνο στην απόδειξη και στα σύνολα.",
+      otherBad: "Γράψε όνομα και τιμή.", otherAdd: "Προσθήκη",
+      pdf: "PDF", share: "Κοινοποίηση PDF", qr: "Κωδικός QR", qrHint: "Ο πελάτης τον σαρώνει με την κάμερα του κινητού και κρατά την απόδειξη ως κείμενο.",
+      pdfFail: "Δεν έγινε το PDF.", qrLong: "Η απόδειξη είναι πολύ μεγάλη για QR· χρησιμοποίησε το PDF.",
+      stDmax: "Μέγιστη έκπτωση σε αυτή τη συσκευή (%)", stDmaxHint: "Κενό = χωρίς όριο. Χρήσιμο στο κινητό βοηθού σε έναν πάγκο.",
+      zDisc: "Εκπτώσεις που δόθηκαν", zSplit: "Μικτές πληρωμές"
     }
   };
 
-  var api = null, LANG = "en", cart = [], payMode = "cash";
+  var api = null, LANG = "en", cart = [], payMode = "cash", saleDisc = null, saleDc = "";
+  // ?v= of this script, for the libraries loaded on demand (PDF, QR)
+  var SV = (function () {
+    try { var m = /[?&]v=([^&#]+)/.exec(document.currentScript.src); return m ? m[1] : ""; } catch (e) { return ""; }
+  })();
   function t(k, p) {
     var s = (STR[LANG] || STR.en)[k];
     if (s === undefined) s = STR.en[k] !== undefined ? STR.en[k] : k;
@@ -93,6 +124,12 @@
   function el(tag, cls, txt) { return api.el(tag, cls, txt); }
   function btn(label, cls, fn) { return api.button(label, cls, fn); }
   function byItem(id) { return api.byItem(id); }
+  // a cart line's product, or a stand-in for a free item
+  function lineItem(l) {
+    if (l.i === P.OTHER) return { id: P.OTHER, name: l.n, vat: l.vat, unit: "pcs", price: l.p };
+    return byItem(l.i);
+  }
+  var lineSeq = 0;
   function gross(p, vat) { return Math.round(p * (100 + (vat || 0)) / 100); }
   function hm(ms) { var d = new Date(ms), z = function (n) { return (n < 10 ? "0" : "") + n; }; return z(d.getHours()) + ":" + z(d.getMinutes()); }
   function prefs() { return api.posPrefs(); }
@@ -162,6 +199,8 @@
     left.appendChild(msg);
     var chips = el("div", "chips pos-cats");
     left.appendChild(chips);
+    var otherB = btn(t("otherBtn"), "pos-other", function () { otherDialog(function (l) { cart.push(l); paint(); }); });
+    otherB.id = "st-pos-other";
     var grid = el("div", "pos-grid");
     grid.id = "st-pos-grid";
     left.appendChild(grid);
@@ -180,7 +219,7 @@
     payRow.setAttribute("role", "radiogroup");
     payRow.setAttribute("aria-label", t("pay"));
     var payBtns = {};
-    P.PAYS.forEach(function (k) {
+    P.PAYS.concat(["split"]).forEach(function (k) {
       var b = el("button", "chip pos-paybtn", t(k));
       b.type = "button";
       b.setAttribute("role", "radio");
@@ -203,13 +242,32 @@
     givenWrap.appendChild(chg);
     right.appendChild(givenWrap);
     given.addEventListener("input", paintChange);
+    var splitWrap = el("div", "pos-given pos-split");
+    var splitIn = el("input");
+    splitIn.type = "text";
+    splitIn.inputMode = "decimal";
+    splitIn.autocomplete = "off";
+    splitIn.id = "st-pos-split";
+    var sl = el("label", "dlg-lbl", t("splitCash"));
+    sl.htmlFor = "st-pos-split";
+    splitWrap.appendChild(sl);
+    splitWrap.appendChild(splitIn);
+    var splitOut = el("span", "pos-change");
+    splitWrap.appendChild(splitOut);
+    right.insertBefore(splitWrap, givenWrap);
+    splitIn.addEventListener("input", paintChange);
     var acts = el("div", "dlg-actions pos-acts");
+    var discB = btn(t("discT"), "pos-discbtn", function () {
+      discDialog(t("discSale"), saleDisc, saleDc, true, function (dc, why) { saleDisc = dc; saleDc = why; paint(); });
+    });
+    discB.id = "st-pos-disc";
     var clearB = btn(t("clear"), "", function () {
       if (!cart.length) return;
-      api.confirm(t("clearQ"), t("clear"), true, function () { cart = []; given.value = ""; paint(); scan.focus(); });
+      api.confirm(t("clearQ"), t("clear"), true, function () { reset(); paint(); scan.focus(); });
     });
     var chargeB = btn(t("charge", { t: "" }), "primary pos-charge", function () { charge(false); });
     chargeB.id = "st-pos-charge";
+    acts.appendChild(discB);
     acts.appendChild(clearB);
     acts.appendChild(chargeB);
     right.appendChild(acts);
@@ -217,19 +275,30 @@
     dlg.appendChild(body);
 
     var cat = "";
+    function reset() { cart = []; given.value = ""; splitIn.value = ""; saleDisc = null; saleDc = ""; if (payMode === "split") payMode = "cash"; }
     function wh() { return whSel ? whSel.value : ""; }
     function qLeft(id) { return api.qtyAt(id, wh()); }
     function priceFor(it) { return P.priceOf(D(), it, plSel.value); }
+    // the lines as they will be charged: list price (p0), then the
+    // line's own discount and the whole sale's (pos-core applyDisc)
     function cartLines() {
-      return cart.map(function (l) {
-        var it = byItem(l.i);
-        return { i: l.i, q: l.q, p: typeof l.p === "number" ? l.p : priceFor(it), vat: it ? it.vat : 0 };
-      });
+      return P.applyDisc(cart.map(function (l) {
+        var it = lineItem(l);
+        var x = { i: l.i, q: l.q, p0: typeof l.p === "number" ? l.p : priceFor(it), vat: it ? it.vat : 0, k: l.k };
+        if (l.i === P.OTHER) x.n = l.n;
+        if (l.dl) x.dl = l.dl;
+        return x;
+      }), saleDisc);
+    }
+    function splitParts(g) {
+      var c = splitIn.value.trim() ? api.readCents(splitIn) : null;
+      if (c === null || c < 0 || c > g) return null;
+      return { cash: c, card: g - c };
     }
     function add(it, q) {
       msg.hidden = true;
       for (var i = 0; i < cart.length; i++) {
-        if (cart[i].i === it.id) {
+        if (cart[i].i === it.id && it.id !== P.OTHER) {
           cart[i].q += q;
           if (cart[i].q <= 0) cart.splice(i, 1);
           paint();
@@ -238,9 +307,16 @@
         }
       }
       if (q <= 0) return;
-      cart.push({ i: it.id, q: q });
+      cart.push({ k: "l" + (++lineSeq), i: it.id, q: q });
       paint();
       api.live(it.name);
+    }
+    function bump(l, d) {
+      l.q += d;
+      if (l.q <= 0) cart = cart.filter(function (x) { return x !== l; });
+      paint();
+      var it = lineItem(l);
+      api.live(it.name + ": " + (l.q > 0 ? api.fmtQ(l.q, it) : "0"));
     }
     function words() { return api.core.fold(scan.value.trim()).split(" ").filter(Boolean); }
     function paintGrid() {
@@ -258,6 +334,7 @@
           chips.appendChild(b);
         });
       }
+      chips.appendChild(otherB);
       var w = words();
       var list = api.byName(d.items.filter(function (it) {
         return !it.arch && (!cat || it.cat === cat) && api.matchItem(it, w);
@@ -278,34 +355,55 @@
       if (!list.length) grid.appendChild(el("p", "muted pad", t("pos.none")));
       note.textContent = list.length > shown.length ? t("more", { n: shown.length, t: list.length }) : "";
     }
+    // the cash the customer owes: everything, or the cash part of a split
+    function cashDue(gross) {
+      if (payMode === "cash") return gross;
+      if (payMode !== "split") return 0;
+      var sp = splitParts(gross);
+      return sp ? sp.cash : 0;
+    }
     function paintChange() {
       var tt = P.totals(cartLines());
-      if (payMode !== "cash" || !given.value.trim()) { chg.textContent = ""; chg.className = "pos-change"; return; }
+      if (payMode === "split") {
+        var sp = splitParts(tt.gross);
+        splitOut.textContent = sp ? t("splitCard", { c: api.money(sp.card) }) : (splitIn.value.trim() ? t("splitBad", { t: api.money(tt.gross) }) : "");
+        splitOut.className = "pos-change" + (sp ? " good" : (splitIn.value.trim() ? " bad" : ""));
+      }
+      var due = cashDue(tt.gross);
+      if (!due || !given.value.trim()) { chg.textContent = ""; chg.className = "pos-change"; return; }
       var g = api.readCents(given);
       if (g === null) { chg.textContent = ""; return; }
-      var c = P.change(tt.gross, g);
-      chg.textContent = c === null ? t("short", { c: api.money(tt.gross - g) }) : t("change", { c: api.money(c) });
+      var c = P.change(due, g);
+      chg.textContent = c === null ? t("short", { c: api.money(due - g) }) : t("change", { c: api.money(c) });
       chg.className = "pos-change" + (c === null ? " bad" : " good");
     }
     function paint() {
-      cart = cart.filter(function (l) { return byItem(l.i); });
+      cart = cart.filter(function (l) { return lineItem(l); });
       ul.innerHTML = "";
       if (!cart.length) ul.appendChild(el("li", "muted pad", t("empty")));
-      cart.forEach(function (l) {
-        var it = byItem(l.i);
-        var p = typeof l.p === "number" ? l.p : priceFor(it);
+      var charged = cartLines();
+      cart.forEach(function (l, ix) {
+        var it = lineItem(l), cl = charged[ix];
+        var p = cl.p;
         var li = el("li", "row cart-line");
         var bd = el("span", "r-body");
         bd.appendChild(el("span", "r-name", it.name));
         var sub = el("span", "r-sub");
         sub.appendChild(el("span", "", api.money(gross(p, it.vat)) + " · " + it.vat + "%"));
+        if (cl.p0) sub.appendChild(el("span", "pos-was", t("was") + " " + api.money(gross(cl.p0, it.vat))));
         bd.appendChild(sub);
         li.appendChild(bd);
+        var db = el("button", "icon-btn ctr-btn pos-ldisc" + (l.dl ? " on" : ""), "%");
+        db.type = "button";
+        db.setAttribute("aria-label", t("discLine", { n: it.name }));
+        db.addEventListener("click", function () {
+          discDialog(t("discLine", { n: it.name }), l.dl, "", false, function (dc) { if (dc) l.dl = dc; else delete l.dl; paint(); });
+        });
         var qb = el("span", "ctr-q");
         var minus = el("button", "icon-btn ctr-btn", "−");
         minus.type = "button";
         minus.setAttribute("aria-label", t("less") + ": " + it.name);
-        minus.addEventListener("click", function () { add(it, -1000); });
+        minus.addEventListener("click", function () { bump(l, -1000); });
         var qi = el("input", "pos-qty");
         qi.type = "text";
         qi.inputMode = "decimal";
@@ -321,16 +419,17 @@
         var plus = el("button", "icon-btn ctr-btn", "+");
         plus.type = "button";
         plus.setAttribute("aria-label", t("moreOne") + ": " + it.name);
-        plus.addEventListener("click", function () { add(it, 1000); });
+        plus.addEventListener("click", function () { bump(l, 1000); });
         qb.appendChild(minus);
         qb.appendChild(qi);
         qb.appendChild(plus);
         li.appendChild(qb);
+        li.appendChild(db);
         var n = P.lineNet({ q: l.q, p: p });
         li.appendChild(el("span", "r-val", api.money(n + Math.round(n * it.vat / 100))));
         ul.appendChild(li);
       });
-      var tt = P.totals(cartLines());
+      var tt = P.totals(charged), off = P.saved(charged);
       sums.innerHTML = "";
       function sr(k, v, cls) {
         var r = el("div", "pos-sum" + (cls ? " " + cls : ""));
@@ -338,14 +437,18 @@
         r.appendChild(el("span", "", v));
         sums.appendChild(r);
       }
+      if (off > 0) sr(t("discT") + (saleDc ? " · " + saleDc : ""), "−" + api.money(off), "pos-off");
       sr(t("net"), api.money(tt.net));
       tt.byVat.forEach(function (r) { sr(t("vat") + " " + r.rate + "%", api.money(r.vat)); });
       sr(t("total"), api.money(tt.gross), "grand");
-      P.PAYS.forEach(function (k) {
+      Object.keys(payBtns).forEach(function (k) {
         payBtns[k].classList.toggle("on", payMode === k);
         payBtns[k].setAttribute("aria-checked", payMode === k ? "true" : "false");
       });
-      givenWrap.hidden = payMode !== "cash";
+      givenWrap.hidden = payMode !== "cash" && payMode !== "split";
+      splitWrap.hidden = payMode !== "split";
+      discB.disabled = !cart.length;
+      discB.classList.toggle("on", !!saleDisc);
       chargeB.textContent = t("charge", { t: api.money(tt.gross) });
       chargeB.disabled = !cart.length;
       clearB.disabled = !cart.length;
@@ -373,7 +476,7 @@
       if (!cart.length) return;
       var lines = cartLines();
       if (!force) {
-        var neg = lines.filter(function (l) { var q0 = qLeft(l.i); return q0 - l.q < 0 && q0 - l.q < q0; })[0];
+        var neg = lines.filter(function (l) { if (l.i === P.OTHER) return false; var q0 = qLeft(l.i); return q0 - l.q < 0 && q0 - l.q < q0; })[0];
         if (neg) {
           var nit = byItem(neg.i), after = qLeft(neg.i) - neg.q;
           if (D().settings.neg === 0) { msg.textContent = t("neg", { n: nit.name, q: api.fmtQ(after, nit) }) + " " + t("negBlocked"); msg.hidden = false; return; }
@@ -382,18 +485,26 @@
         }
       }
       var tt = P.totals(lines);
-      var g = payMode === "cash" && given.value.trim() ? api.readCents(given) : null;
+      var cap = prefs().dmax, pc = P.discPct(lines);
+      if (cap && pc > cap) { msg.textContent = t("discMax", { p: cap, q: pc }); msg.hidden = false; return; }
+      var pays = null;
+      if (payMode === "split") {
+        pays = splitParts(tt.gross);
+        if (!pays) { msg.textContent = t("splitBad", { t: api.money(tt.gross) }); msg.hidden = false; splitIn.focus(); return; }
+      }
+      var due = cashDue(tt.gross);
+      var g = due && given.value.trim() ? api.readCents(given) : null;
       var now = Date.now();
       var r = P.makeSale({
-        data: D(), cart: lines.map(function (l) { return { i: l.i, q: l.q, p: l.p }; }), pl: plSel.value, pay: payMode,
-        given: g !== null && g >= tt.gross ? g : undefined, w: wh(), d: api.todayYmd(), now: now, dev: prefs().dev,
+        data: D(), cart: lines.map(function (l) { return { i: l.i, q: l.q, p: l.p, p0: l.p0, n: l.n, vat: l.vat }; }), pl: plSel.value,
+        pay: pays ? (pays.cash ? "cash" : "card") : payMode, pays: pays,
+        dc: saleDc, given: g !== null && g >= due ? g : undefined, w: wh(), d: api.todayYmd(), now: now, dev: prefs().dev,
         id: api.newId(), mvId: api.newId()
       });
       if (!r) return;
       var saved = api.addSale(r.sale, r.move);
       if (!saved) return;
-      cart = [];
-      given.value = "";
+      reset();
       paint();
       api.actionToast(t("sold", { n: saved.no, t: api.money(tt.gross) }), t("receipt"), function () { receiptDialog(saved.id); },
         function () { api.voidSale(saved.id); paint(); });
@@ -406,15 +517,222 @@
     scan.focus();
   }
 
+  // ---------- F1: discount and free item dialogs ----------
+  // A discount as % or an amount off (gross); onDone(null) removes it.
+  function discDialog(title, cur, why, withReason, onDone) {
+    var dlg = api.makeDialog("st-pos-dsc");
+    dlg.appendChild(el("div", "dlg-title", title));
+    var kind = api.selectInput([["pct", t("discPct")], ["amt", t("discAmt")]], cur && cur.k === "amt" ? "amt" : "pct");
+    dlg.appendChild(api.field(t("discT"), kind, "st-pos-dk"));
+    var v = el("input");
+    v.type = "text";
+    v.inputMode = "decimal";
+    v.autocomplete = "off";
+    v.value = cur ? (cur.k === "amt" ? api.centsStr(cur.v) : String(cur.v)) : "";
+    dlg.appendChild(api.field(t("discPct") + " / " + t("discAmt"), v, "st-pos-dv"));
+    var reason = null;
+    if (withReason) {
+      reason = el("input");
+      reason.type = "text";
+      reason.maxLength = 40;
+      reason.value = why || "";
+      reason.placeholder = t("discReasonPh");
+      dlg.appendChild(api.field(t("discReason"), reason, "st-pos-dr"));
+    }
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(btn(t("discNone"), "", function () { dlg.close(); onDone(null, ""); }));
+    acts.appendChild(btn(t("discApply"), "primary", function () {
+      var n;
+      if (kind.value === "pct") {
+        n = parseInt(String(v.value).replace(/[^\d]/g, ""), 10);
+        if (!isFinite(n) || n < 1 || n > 100) { err.textContent = t("discBad"); err.hidden = false; return; }
+      } else {
+        n = api.readCents(v);
+        if (n === null || n <= 0) { err.textContent = t("discBad"); err.hidden = false; return; }
+      }
+      dlg.close();
+      onDone({ k: kind.value, v: n }, reason ? reason.value.trim().slice(0, 40) : "");
+    }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    v.focus();
+  }
+  // A free item: typed name, price with VAT and VAT rate; no stock.
+  function otherDialog(onAdd) {
+    var dlg = api.makeDialog("st-pos-oth");
+    dlg.appendChild(el("div", "dlg-title", t("otherT")));
+    dlg.appendChild(el("p", "dlg-sub", t("otherHint")));
+    var name = el("input");
+    name.type = "text";
+    name.maxLength = 80;
+    dlg.appendChild(api.field(t("otherName"), name, "st-pos-on"));
+    var price = el("input");
+    price.type = "text";
+    price.inputMode = "decimal";
+    price.autocomplete = "off";
+    dlg.appendChild(api.field(t("otherPrice"), price, "st-pos-op"));
+    var rates = (api.vatRates || [24, 13, 6, 0]).map(function (r) { return [String(r), r + "%"]; });
+    var vat = api.selectInput(rates, String(api.defVat ? api.defVat() : 24));
+    dlg.appendChild(api.field(t("otherVat"), vat, "st-pos-ov"));
+    var qty = el("input");
+    qty.type = "text";
+    qty.inputMode = "numeric";
+    qty.value = "1";
+    dlg.appendChild(api.field(t("otherQty"), qty, "st-pos-oq"));
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(btn(t("otherAdd"), "primary", function () {
+      var n = name.value.trim(), g = api.readCents(price), r = parseInt(vat.value, 10) || 0;
+      var q = parseInt(String(qty.value).replace(/[^\d]/g, ""), 10);
+      if (!n || g === null || g < 0 || !isFinite(q) || q < 1) { err.textContent = t("otherBad"); err.hidden = false; return; }
+      dlg.close();
+      onAdd({ k: "o" + Date.now().toString(36), i: P.OTHER, q: q * 1000, p: P.netFor(g, r), vat: r, n: n.slice(0, 80) });
+    }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    name.focus();
+  }
+
+  // ---------- F1: the receipt as a PDF or a QR code ----------
+  function loadScript(src, ready, done) {
+    if (ready()) { done(true); return; }
+    var sc = document.createElement("script");
+    sc.src = src + (SV ? "?v=" + SV : "");
+    sc.onload = function () { done(ready()); };
+    sc.onerror = function () { sc.remove(); done(false); };
+    document.head.appendChild(sc);
+  }
+  var fonts = null;
+  function loadFonts(done) {
+    if (fonts) { done(fonts); return; }
+    function get(path) {
+      return fetch(path).then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(function (buf) {
+        var bytes = new Uint8Array(buf), bin = "";
+        for (var i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+        return btoa(bin);
+      });
+    }
+    Promise.all([get("../vendor/noto/NotoSans-Regular.ttf"), get("../vendor/noto/NotoSans-Bold.ttf")])
+      .then(function (r) { fonts = { reg: r[0], bold: r[1] }; done(fonts); })
+      .catch(function () { done(null); });
+  }
+  // 80 mm wide, as long as the rows need: the same rows as the print.
+  function receiptPdf(rows, done) {
+    loadScript("../vendor/jspdf.umd.min.js", function () { return !!(window.jspdf && window.jspdf.jsPDF); }, function (ok) {
+      if (!ok) { done(null); return; }
+      loadFonts(function (f) {
+        try {
+          var W = 80, M = 5, R = W - M, lh = 4.2;
+          var probe = new window.jspdf.jsPDF({ unit: "mm", format: [W, 200] });
+          var FONT = "helvetica";
+          function setup(doc) {
+            if (f) {
+              doc.addFileToVFS("NotoSans-Regular.ttf", f.reg);
+              doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+              doc.addFileToVFS("NotoSans-Bold.ttf", f.bold);
+              doc.addFont("NotoSans-Bold.ttf", "NotoSans", "bold");
+              FONT = "NotoSans";
+            }
+          }
+          setup(probe);
+          function lay(doc, draw) {
+            var y = M + 3;
+            rows.forEach(function (r) {
+              var bold = r.k === "head" || r.k === "item" || r.k === "total" || r.k === "void";
+              doc.setFont(FONT, bold ? "bold" : "normal");
+              doc.setFontSize(r.k === "total" ? 11 : 8.5);
+              if (r.k === "meta" || r.k === "total") { if (draw) doc.line(M, y - 3, R, y - 3); y += 1; }
+              if (r.k === "head" || r.k === "foot" || r.k === "void") {
+                doc.splitTextToSize(String(r.l), R - M).forEach(function (ln) { if (draw) doc.text(ln, W / 2, y, { align: "center" }); y += lh; });
+                return;
+              }
+              var rw = r.r ? doc.getTextWidth(String(r.r)) + 2 : 0;
+              var lines = doc.splitTextToSize(String(r.l), R - M - rw - (r.k === "sub" ? 2 : 0));
+              lines.forEach(function (ln, i) {
+                if (draw) {
+                  doc.text(ln, M + (r.k === "sub" ? 2 : 0), y);
+                  if (i === 0 && r.r) doc.text(String(r.r), R, y, { align: "right" });
+                }
+                y += lh;
+              });
+              if (r.k === "meta" || r.k === "total") { if (draw) doc.line(M, y - 2.5, R, y - 2.5); y += 1; }
+            });
+            return y + M;
+          }
+          var H = Math.max(60, Math.ceil(lay(probe, false)));
+          var doc = new window.jspdf.jsPDF({ unit: "mm", format: [W, H] });
+          setup(doc);
+          doc.setLineDashPattern([0.8, 0.8], 0);
+          lay(doc, true);
+          done(doc.output("blob"));
+        } catch (e) { done(null); }
+      });
+    });
+  }
+  function canShareFiles() {
+    try {
+      return typeof navigator.share === "function" && typeof navigator.canShare === "function" &&
+             navigator.canShare({ files: [new File(["x"], "x.pdf", { type: "application/pdf" })] });
+    } catch (e) { return false; }
+  }
+  function pdfAction(sale, rows) {
+    receiptPdf(rows, function (blob) {
+      if (!blob) { api.toast(t("pdfFail")); return; }
+      var name = (t("receipt") + " " + sale.no).replace(/[\\\/:*?"<>|]+/g, " ") + ".pdf";
+      if (canShareFiles()) {
+        navigator.share({ files: [new File([blob], name, { type: "application/pdf" })], title: name }).catch(function () {});
+        return;
+      }
+      api.saveBlob(blob, name, "application/pdf", "PDF", ".pdf");
+    });
+  }
+  function qrDialog(rows) {
+    var dlg = api.makeDialog("st-pos-qr");
+    dlg.appendChild(el("div", "dlg-title", t("qr")));
+    var box = el("div", "pos-qr");
+    dlg.appendChild(box);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    loadScript("../qr/qr-encode.js", function () { return !!(window.orosQR && typeof window.orosQR.encode === "function"); }, function (ok) {
+      var txt = P.receiptText(rows), q = null;
+      if (ok && txt.length <= 1200) { try { q = window.orosQR.encode(txt, { ecl: "L" }); } catch (e) { q = null; } }
+      if (!q) { box.appendChild(el("p", "hint warn", t("qrLong"))); return; }
+      var NS = "http://www.w3.org/2000/svg", n = q.size + 8;
+      var svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("viewBox", "0 0 " + n + " " + n);
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", t("qr"));
+      svg.setAttribute("shape-rendering", "crispEdges");
+      var bg = document.createElementNS(NS, "rect");
+      bg.setAttribute("width", n); bg.setAttribute("height", n); bg.setAttribute("fill", "#fff");
+      svg.appendChild(bg);
+      var d = "";
+      for (var r = 0; r < q.size; r++) for (var c = 0; c < q.size; c++) if (q.modules[r][c]) d += "M" + (c + 4) + " " + (r + 4) + "h1v1h-1z";
+      var path = document.createElementNS(NS, "path");
+      path.setAttribute("d", d); path.setAttribute("fill", "#000");
+      svg.appendChild(path);
+      box.appendChild(svg);
+      box.appendChild(el("p", "dlg-sub", t("qrHint")));
+    });
+  }
+
   // ---------- Receipt ----------
   function saleById(id) { return (D().sales || []).filter(function (s) { return s.id === id; })[0] || null; }
   function rowsOf(sale) {
     var pp = prefs();
     return P.receiptRows(sale, {
       head: pp.head, foot: [pp.foot, t("notFiscal")].filter(Boolean).join("\n"), money: api.money,
-      qty: function (l) { return api.fmtQ(l.q, byItem(l.i) || { unit: "pcs" }, true); },
+      qty: function (l) { return api.fmtQ(l.q, (l.i !== P.OTHER && byItem(l.i)) || { unit: "pcs" }, true); },
       when: api.fmtDay(sale.d, true) + " " + hm(sale.at),
-      labels: { no: t("no"), net: t("net"), vat: t("vat"), total: t("totalR"), pay: t("paid"), given: t("givenR"),
+      labels: { no: t("no"), net: t("net"), vat: t("vat"), total: t("totalR"), pay: t("paid"), given: t("givenR"), was: t("was"), disc: t("discT"),
                 change: t("changeR"), payName: { cash: t("cash"), card: t("card"), other: t("other") } }
     });
   }
@@ -462,6 +780,8 @@
     var pw = prefs().paper === 80 ? 80 : 58;
     acts.appendChild(btn(t(pw === 80 ? "print80" : "print58"), "primary", function () { api.printHtml(rollHtml(t("receiptTitle", { n: sale.no }), rows, pw)); }));
     acts.appendChild(btn(t(pw === 80 ? "print58" : "print80"), "", function () { api.printHtml(rollHtml(t("receiptTitle", { n: sale.no }), rows, pw === 80 ? 58 : 80)); }));
+    acts.appendChild(btn(canShareFiles() ? t("share") : t("pdf"), "", function () { pdfAction(sale, rows); }));
+    acts.appendChild(btn(t("qr"), "", function () { qrDialog(rows); }));
     acts.appendChild(btn(t("newSale"), "", function () { dlg.close(); }));
     dlg.appendChild(acts);
     api.showDialog(dlg);
@@ -515,8 +835,10 @@
       kv(box, t("zVat"), api.money(rep.vat));
       kv(box, t("zGross"), api.money(rep.g), "grand");
       if (rep.first) box.appendChild(el("p", "muted", t("zFirst", { a: hm(rep.first), b: hm(rep.last) })));
+      if (rep.disc) kv(box, t("zDisc"), "−" + api.money(rep.disc));
       box.appendChild(el("div", "pos-h", t("zByPay")));
       P.PAYS.forEach(function (k) { if (rep.byPay[k]) kv(box, t(k), api.money(rep.byPay[k])); });
+      if (rep.splits) kv(box, t("zSplit"), String(rep.splits));
       box.appendChild(el("div", "pos-h", t("zByVat")));
       rep.byVat.forEach(function (r) { kv(box, r.rate + "%", api.money(r.net) + " + " + api.money(r.vat)); });
       var pls = Object.keys(rep.byPl);
@@ -535,7 +857,7 @@
         var li = el("li", "row" + (s.v === 1 ? " voided" : ""));
         var bd = el("span", "r-body");
         bd.appendChild(el("span", "r-name", s.no));
-        bd.appendChild(el("span", "r-sub", hm(s.at) + " · " + t(s.pay) + (s.pl ? " · " + plLabel(s.pl) : "") + (s.v === 1 ? " · " + t("isVoid") : "")));
+        bd.appendChild(el("span", "r-sub", hm(s.at) + " · " + (s.pays ? t("split") : t(s.pay)) + (s.pl ? " · " + plLabel(s.pl) : "") + (s.v === 1 ? " · " + t("isVoid") : "")));
         li.appendChild(bd);
         li.appendChild(el("span", "r-val", api.money(tt.gross)));
         var ra = el("span", "pos-sale-acts");
@@ -565,6 +887,7 @@
     });
     rows.push({ k: "total", l: t("totalR"), r: m(rep.g) });
     P.PAYS.forEach(function (k) { if (rep.byPay[k]) rows.push({ k: "sum", l: t(k), r: m(rep.byPay[k]) }); });
+    if (rep.disc) rows.push({ k: "sum", l: t("zDisc"), r: "−" + m(rep.disc) });
     if (rep.z && rep.after) rows.push({ k: "foot", l: t("zAfter", { n: rep.after }), r: "" });
     rows.push({ k: "foot", l: t("notFiscal"), r: "" });
     return rows;
@@ -711,6 +1034,13 @@
     dev.autocomplete = "off";
     dlg.appendChild(api.field(t("stDev"), dev, "st-pos-dev"));
     dlg.appendChild(el("p", "dlg-sub", t("stDevHint") + " " + t("stLocal")));
+    var dmax = el("input");
+    dmax.type = "text";
+    dmax.inputMode = "numeric";
+    dmax.maxLength = 2;
+    dmax.value = pp.dmax ? String(pp.dmax) : "";
+    dlg.appendChild(api.field(t("stDmax"), dmax, "st-pos-dmax"));
+    dlg.appendChild(el("p", "dlg-sub", t("stDmaxHint")));
     var acts = el("div", "dlg-actions");
     acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
     acts.appendChild(btn(t("save"), "primary", function () {
@@ -719,6 +1049,8 @@
       api.setPosPref("foot", foot.value.slice(0, 200));
       api.setPosPref("paper", paper.value === "80" ? 80 : 58);
       if (d.length === 2) api.setPosPref("dev", d);
+      var dm = parseInt(String(dmax.value).replace(/[^\d]/g, ""), 10);
+      api.setPosPref("dmax", isFinite(dm) && dm >= 1 && dm <= 99 ? dm : 0);
       api.toast(t("stSaved"));
       dlg.close();
     }));

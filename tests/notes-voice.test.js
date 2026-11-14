@@ -136,3 +136,72 @@ test("md.js: a voice line is an empty, escaped block at the top level only", () 
   assert.ok(!/<script>/.test(evil));
   assert.ok(/data-voice="&quot;&gt;&lt;script&gt;"/.test(evil));
 });
+
+// ---------- V2: trim, transcription, Studio ----------
+test("clampTrim keeps a range of at least MIN_TRIM_MS inside the file", () => {
+  assert.deepEqual(V.clampTrim(0, 10000, 10000), { a: 0, b: 10000 });
+  assert.deepEqual(V.clampTrim(-5, 99999, 10000), { a: 0, b: 10000 });
+  assert.deepEqual(V.clampTrim(8000, 2000, 10000), { a: 2000, b: 8000 });
+  assert.deepEqual(V.clampTrim(3000, 3100, 10000), { a: 3000, b: 3000 + V.MIN_TRIM_MS });
+  assert.deepEqual(V.clampTrim(9900, 10000, 10000), { a: 10000 - V.MIN_TRIM_MS, b: 10000 });
+  assert.deepEqual(V.clampTrim("x", null, 4000), { a: 0, b: 4000 });
+  assert.deepEqual(V.clampTrim(0, 0, 0), { a: 0, b: 0 });
+});
+
+test("wav16 writes a valid mono 16-bit header and clamps samples", () => {
+  const w = V.wav16(new Float32Array([0, 1, -1, 2, -2]), 22050);
+  const dv = new DataView(w.buffer);
+  const s = (o, n) => String.fromCharCode(...w.slice(o, o + n));
+  assert.equal(w.length, 44 + 10);
+  assert.equal(s(0, 4), "RIFF"); assert.equal(s(8, 4), "WAVE"); assert.equal(s(36, 4), "data");
+  assert.equal(dv.getUint32(4, true), 36 + 10);
+  assert.equal(dv.getUint16(22, true), 1);
+  assert.equal(dv.getUint32(24, true), 22050);
+  assert.equal(dv.getUint32(40, true), 10);
+  assert.deepEqual([0, 1, 2, 3, 4].map((i) => dv.getInt16(44 + i * 2, true)), [0, 32767, -32768, 32767, -32768]);
+});
+
+test("peaks: one value per column, the largest |sample|", () => {
+  assert.deepEqual(V.peaks([0, -0.5, 0.25, 0.1], 2), [0.5, 0.25]);
+  assert.equal(V.peaks(new Float32Array(1000), 300).length, 300);
+  assert.deepEqual(V.peaks([3], 1), [1]);
+  assert.deepEqual(V.peaks([], 3), [0, 0, 0]);
+});
+
+test("transcriptText: paragraphs at pauses, Markdown starts escaped", () => {
+  const cues = [
+    { start: 0, end: 1.5, text: " Hello  there. " },
+    { start: 1.6, end: 3, text: "Second bit." },
+    { start: 6, end: 7, text: "# not a heading" },
+    { start: 7.1, end: 8, text: "" },
+    { start: 10, end: 11, text: "- not a list" },
+    { start: 13, end: 14, text: MIC + " voice:" + NAME },
+    { start: 16, end: 17, text: "---" }
+  ];
+  const out = V.transcriptText(cues);
+  assert.equal(out, ["Hello there. Second bit.", "\\# not a heading", "\\- not a list", "\\" + MIC + " voice:" + NAME, "\\---"].join("\n\n"));
+  // a transcript can never become a player or a block
+  assert.equal(V.listIn(out).length, 0);
+  assert.ok(!/<h1|<ul|md-voice|<hr/.test(M.render(out, { voice: V.voiceLine })));
+  assert.equal(V.transcriptText([]), "");
+  assert.equal(V.transcriptText(null), "");
+});
+
+test("insertAfter puts the transcript right under its recording's line", () => {
+  const b = "2026-11-12-181006-bbbb.ogg";
+  const text = ["A", V.lineFor(NAME, 1000), "", "", "B", V.lineFor(b, 0)].join("\n");
+  assert.equal(V.insertAfter(text, NAME, "T1\n\nT2"), ["A", V.lineFor(NAME, 1000), "", "T1", "", "T2", "", "B", V.lineFor(b, 0)].join("\n"));
+  assert.equal(V.insertAfter(text, b, "T"), ["A", V.lineFor(NAME, 1000), "", "", "B", V.lineFor(b, 0), "", "T"].join("\n"));
+  assert.equal(V.insertAfter(text, "2026-11-13-090000-cccc.ogg", "T"), null);
+  // a line inside code is not the recording
+  assert.equal(V.insertAfter("```\n" + V.lineFor(NAME, 1) + "\n```", NAME, "T"), null);
+});
+
+test("asrLang: two-letter orOS language or auto", () => {
+  assert.equal(V.asrLang("el-GR"), "el");
+  assert.equal(V.asrLang("EN"), "en");
+  assert.equal(V.asrLang("de"), "de");
+  assert.equal(V.asrLang(""), "auto");
+  assert.equal(V.asrLang(null), "auto");
+  assert.equal(V.asrLang("1x"), "auto");
+});

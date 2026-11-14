@@ -1800,6 +1800,26 @@
       required: ["app"]
     }
   };
+  // PB-MUS: one track and one edition of a music release, as
+  // create_items and change_item both take them (publish/core.js
+  // trackArgs, editionArgs read them).
+  var PB_TRACK_ITEM = { type: "object", properties: { title: { type: "string" }, version: { type: "string", description: "e.g. Radio edit, Remix." },
+                                                      artist: { type: "string", description: "Only when not the release's artist." },
+                                                      isrc: { type: "string", description: "CC-XXX-YY-NNNNN, hyphens allowed." },
+                                                      length: { type: "string", description: "m:ss, e.g. 3:45." },
+                                                      language: { type: "string" }, explicit: { type: "boolean" },
+                                                      credits: { type: "array", items: { type: "object", properties: {
+                                                        role: { type: "string", "enum": ["artist", "featured", "composer", "lyricist", "arranger", "producer", "mixing", "mastering", "engineer", "musician", "other"] },
+                                                        name: { type: "string" }, instrument: { type: "string", description: "musician: the instrument; other: what they did." } } } },
+                                                      writers: { type: "array", description: "Songwriting shares, adding up to 100.", items: { type: "object", properties: {
+                                                        name: { type: "string" }, share: { type: "number", description: "Percent." }, society: { type: "string", description: "Collecting society, e.g. AEPI, PRS." },
+                                                        ipi: { type: "string", description: "The writer's IPI number, only when the user gave it." } } } },
+                                                      masters: { type: "array", description: "Who owns the recording, shares adding up to 100.", items: { type: "object", properties: {
+                                                        name: { type: "string" }, share: { type: "number" } } } } } };
+  var PB_EDITION_ITEM = { type: "object", properties: { edition: { type: "string", "enum": ["digital", "cd", "vinyl", "cassette", "other"] },
+                                                      upc: { type: "string", description: "UPC-A (12 digits) or EAN-13 (13 digits)." },
+                                                      catalogue_no: { type: "string" }, price: { type: "number" },
+                                                      distributor: { type: "string", description: "e.g. DistroKid, CD Baby." } } };
   // Wave 48: changes to records the user already shared (assistant/
   // edits.js). The user sees a before → after card and presses Apply;
   // nothing changes before that.
@@ -1852,7 +1872,8 @@
       "publish (a title the user publishes, update: title / subtitle / series / series_no / language / keywords / blurb / bio = the author's bio / note / " +
       "status / date = the release date / by, translator, illustrator, editor, cover_designer, narrator, other = that role's whole new list of names " +
       "(comma separated; \"\" clears it) / formats = the editions to change or add, each found by its isbn, else by its format (an edition not there is added; none is removed) / " +
-      "royalties = the title's whole new list of royalty terms (replaces)). Never guess a ref.",
+      "royalties = the title's whole new list of royalty terms (replaces); a music release instead of formats: release_type / record_label / genre / p_line / c_line / " +
+      "tracks = the tracks to change or add (found by isrc, else title; credits, writers and masters per track) / editions = found by upc, else edition). Never guess a ref.",
     params: {
       type: "object",
       properties: {
@@ -1949,6 +1970,15 @@
                        format: { type: "string", "enum": ["all", "paperback", "hardback", "ebook", "audiobook", "other"], description: "Which editions (default all)." },
                        advance: { type: "number", description: "The advance paid, in currency units." } },
                        required: ["name", "percent"] } },
+        release_type: { type: "string", "enum": ["single", "ep", "album", "compilation"], description: "publish music release: its type." },
+        record_label: { type: "string", description: "publish music release: the record label (\"\" clears it)." },
+        genre: { type: "string", description: "publish music release: the genre." },
+        p_line: { type: "string", description: "publish music release: the \u2117 line (who owns the recording)." },
+        c_line: { type: "string", description: "publish music release: the \u00a9 line (artwork and texts)." },
+        tracks: { type: "array", maxItems: 200, description: "publish music release: the tracks to change or add, each found by its isrc, else by its title (and version); only the fields given change (credits, writers, masters: the track's whole new list); a track not there is added at the end; none is removed. Only codes the user gave, never a made-up ISRC; shares add up to 100.",
+                  items: PB_TRACK_ITEM },
+        editions: { type: "array", maxItems: 8, description: "publish music release: the editions to change or add, each found by its upc, else by its edition; only the fields given change; one not there is added; none is removed. Never a made-up UPC.",
+                    items: PB_EDITION_ITEM },
         category: { type: "string", "enum": ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"] }
       },
       required: ["action"]
@@ -2043,16 +2073,9 @@
     ["p_line", ["publish"], { type: "string", description: "publish music release: the \u2117 line (who owns the recording), e.g. 2026 Name." }],
     ["c_line", ["publish"], { type: "string", description: "publish music release: the \u00a9 line (who owns the artwork and texts)." }],
     ["tracks", ["publish"], { type: "array", description: "publish music release: the tracks in order, up to 200; only codes the user gave, never a made-up ISRC.",
-               items: { type: "object", properties: { title: { type: "string" }, version: { type: "string", description: "e.g. Radio edit, Remix." },
-                                                      artist: { type: "string", description: "Only when not the release's artist." },
-                                                      isrc: { type: "string", description: "CC-XXX-YY-NNNNN, hyphens allowed." },
-                                                      length: { type: "string", description: "m:ss, e.g. 3:45." },
-                                                      language: { type: "string" }, explicit: { type: "boolean" } } } }],
+               items: PB_TRACK_ITEM }],
     ["editions", ["publish"], { type: "array", description: "publish music release: its editions, up to 8; only codes the user gave, never a made-up UPC.",
-               items: { type: "object", properties: { edition: { type: "string", "enum": ["digital", "cd", "vinyl", "cassette", "other"] },
-                                                      upc: { type: "string", description: "UPC-A (12 digits) or EAN-13 (13 digits)." },
-                                                      catalogue_no: { type: "string" }, price: { type: "number" },
-                                                      distributor: { type: "string", description: "e.g. DistroKid, CD Baby." } } } }],
+               items: PB_EDITION_ITEM }],
     ["formats", ["publish"], { type: "array", description: "publish: the book's editions, up to 8; only numbers the user gave, never a made-up ISBN.",
                items: { type: "object", properties: { format: { type: "string", "enum": ["paperback", "hardback", "ebook", "audiobook", "other"] },
                                                       isbn: { type: "string", description: "ISBN-13 (or ISBN-10), hyphens allowed." },
