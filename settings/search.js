@@ -30,6 +30,7 @@
     ["sync", "dropbox", "connect"],
     ["sync", "passphrase", "passphrase"],
     ["lock", "lock", "lock"],
+    ["sensitive", "sensitive", "sensitive"],
     ["backup", "backups", "export"],
     ["language", "language", "lang"],
     ["language", "menusearch", "menusearch"],
@@ -88,7 +89,9 @@
           "st.reset": "Factory reset",
           "st.reset.words": "erase delete everything reset",
           "st.lock": "Screen lock",
-          "st.lock.words": "lock pin passphrase screen idle away security" },
+          "st.lock.words": "lock pin passphrase screen idle away security",
+          "st.sensitive": "Sensitive work",
+          "st.sensitive.words": "sensitive journalist journalism source sources privacy anonymity hardcore strict leak" },
     el: { "st.theme": "Θέμα: σκοτεινό ή φωτεινό",
           "st.theme.words": "σκοτεινό φωτεινό λειτουργία νύχτα",
           "st.colour": "Χρώμα συστήματος",
@@ -136,7 +139,9 @@
           "st.reset": "Επαναφορά εργοστασιακών",
           "st.reset.words": "διαγραφή σβήσιμο όλα",
           "st.lock": "Κλείδωμα οθόνης",
-          "st.lock.words": "κλείδωμα κλειδωμα pin φράση κωδικός οθόνη αδράνεια ασφάλεια lock" }
+          "st.lock.words": "κλείδωμα κλειδωμα pin φράση κωδικός οθόνη αδράνεια ασφάλεια lock",
+          "st.sensitive": "Ευαίσθητη δουλειά",
+          "st.sensitive.words": "ευαίσθητη ευαισθητη δημοσιογράφος δημοσιογραφος πηγή πηγες ιδιωτικότητα ανωνυμία hardcore αυστηρή διαρροή" }
   };
 
 

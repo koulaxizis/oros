@@ -489,10 +489,95 @@
     } catch (err) { return { error: { line: 1, col: 1, msg: "", big: true } }; }
   }
 
+  // ---------- JWT (RFC 7519), decode only (wave D2) ----------
+  // The signature is never checked: no key is asked for or kept.
+  function b64urlBytes(s) {
+    if (!/^[A-Za-z0-9_-]*$/.test(s)) return null;
+    s = s.replace(/-/g, "+").replace(/_/g, "/");
+    if (s.length % 4 === 1) return null;
+    while (s.length % 4) s += "=";
+    var bin;
+    try { bin = (typeof atob === "function" ? atob(s) : Buffer.from(s, "base64").toString("binary")); } catch (e) { return null; }
+    var b = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b;
+  }
+  function partJson(seg) {
+    var b = b64urlBytes(seg);
+    if (!b) return null;
+    var text;
+    try { text = new TextDecoder("utf-8", { fatal: true }).decode(b); } catch (e) { return null; }
+    var pretty = PC.jsonFormat(text, "  ");
+    if (pretty.error) return null;
+    var obj = null;
+    try { obj = JSON.parse(text); } catch (e) { obj = null; }
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
+    return { text: pretty.text.replace(/\n$/, ""), obj: obj };
+  }
+  // "eyJ…" (also "Bearer eyJ…" or with quotes) → { header, payload,
+  // alg, signed, times: [{ k: "exp"|"nbf"|"iat", ms }], expired, early }
+  // | { error: "parts" | "header" | "payload" | "jwe" }.
+  function jwtDecode(text, now) {
+    var s = String(text || "").trim().replace(/^(?:bearer|authorization:\s*bearer)\s+/i, "").replace(/^["']|["']$/g, "");
+    var parts = s.split(".");
+    if (parts.length === 5) return { error: "jwe" };
+    if (parts.length !== 3) return { error: "parts" };
+    var h = partJson(parts[0]);
+    if (!h) return { error: "header" };
+    var p = partJson(parts[1]);
+    if (!p) return { error: "payload" };
+    var times = [], t = typeof now === "number" ? now : Date.now();
+    ["iat", "nbf", "exp"].forEach(function (k) {
+      var v = p.obj[k];
+      if (typeof v === "number" && isFinite(v) && Math.abs(v) < 1e12) times.push({ k: k, ms: Math.round(v * 1000) });
+    });
+    var exp = times.filter(function (x) { return x.k === "exp"; })[0], nbf = times.filter(function (x) { return x.k === "nbf"; })[0];
+    return {
+      header: h.text, payload: p.text, alg: typeof h.obj.alg === "string" ? h.obj.alg : "", typ: typeof h.obj.typ === "string" ? h.obj.typ : "",
+      signed: parts[2].length > 0, times: times, expired: !!exp && exp.ms <= t, early: !!nbf && nbf.ms > t
+    };
+  }
+  function looksJwt(sel) { return /^(?:bearer\s+)?["']?eyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*["']?$/i.test(String(sel || "").trim()); }
+
+  // ---------- Regular expressions (wave D2) ----------
+  // Runs in pad/regex-worker.js, so a pattern that never ends (such as
+  // (a+)+$ on a long line) is stopped by the page instead of freezing it.
+  function regexFlags(f) {
+    var out = "g";
+    String(f || "").split("").forEach(function (c) { if ("imsu".indexOf(c) >= 0 && out.indexOf(c) < 0) out += c; });
+    return out;
+  }
+  // → { count, matches: [{ i, len, text, groups: [..], named: {..} }], more, replaced? } | { error }
+  function regexRun(pattern, flags, text, replace, max) {
+    var re;
+    try { re = new RegExp(String(pattern), regexFlags(flags)); } catch (e) { return { error: String(e && e.message || e) }; }
+    var s = String(text), limit = max || 10000, matches = [], pos = [], m, count = 0, cap = 200;
+    re.lastIndex = 0;
+    while ((m = re.exec(s)) !== null) {
+      count++;
+      pos.push(m.index, m[0].length);
+      if (matches.length < cap) {
+        var named = {};
+        if (m.groups) Object.keys(m.groups).forEach(function (k) { named[k] = m.groups[k] === undefined ? null : m.groups[k]; });
+        matches.push({ i: m.index, len: m[0].length, text: m[0].slice(0, 500),
+          groups: m.slice(1).map(function (g) { return g === undefined ? null : g.slice(0, 500); }), named: named });
+      }
+      if (m[0] === "") re.lastIndex += (re.unicode && s.codePointAt(re.lastIndex) > 0xFFFF) ? 2 : 1;
+      if (count >= limit) break;
+    }
+    var out = { count: count, matches: matches, more: count >= limit, pos: pos };
+    if (typeof replace === "string") {
+      try { out.replaced = s.replace(new RegExp(String(pattern), regexFlags(flags)), replace).slice(0, 20000); } catch (e) { out.replaced = ""; }
+    }
+    return out;
+  }
+
   // ---------- What the selection looks like (suggested tool) ----------
   function sniff(sel) {
     var s = String(sel || "").trim();
-    if (!s || s.length > 300 || /\n/.test(s)) return "";
+    if (!s || /\n/.test(s)) return "";
+    if (s.length > 40 && s.length < 20000 && looksJwt(s)) return "jwt";
+    if (s.length > 300) return "";
     if (parseColor(s)) return "color";
     if (/^\d{9,19}$/.test(s) || (parseStamp(s) && /^\d{4}-/.test(s))) return "time";
     if (parseNumber(s) !== null) return "base";
@@ -504,7 +589,8 @@
     uuid4: uuid4, uuid7: uuid7, parseStamp: parseStamp, isoLocal: isoLocal, relTime: relTime, stampRows: stampRows,
     parseNumber: parseNumber, baseRows: baseRows, parseColor: parseColor, colorRows: colorRows,
     jsonTree: jsonTree, jsonCheck: jsonCheck, jsonSortKeys: jsonSortKeys, jsonToYaml: jsonToYaml, yamlStr: yamlStr,
-    yamlCheck: yamlCheck, yamlFormat: yamlFormat, yamlToJson: yamlToJson, sniff: sniff
+    yamlCheck: yamlCheck, yamlFormat: yamlFormat, yamlToJson: yamlToJson, sniff: sniff,
+    jwtDecode: jwtDecode, looksJwt: looksJwt, regexFlags: regexFlags, regexRun: regexRun
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.PadDev = api;

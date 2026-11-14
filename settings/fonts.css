@@ -1,0 +1,68 @@
+/* ============================================================
+   orOS Settings › Fonts (settings/fonts.css, FM-1). Loaded with
+   settings/fonts.js when the section first opens. Every rule sits
+   under .fm, so nothing reaches the other sections.
+   ============================================================ */
+.fm { --fm-ui: "Nunito", system-ui, sans-serif; display: flex; flex-direction: column; gap: 12px; max-width: 1040px; min-width: 0; }
+.fm .fm-intro { margin: 0; }
+.fm .fm-tabs { align-self: flex-start; }
+.fm .fm-drop.fm-over { border-color: var(--accent); background: var(--accent-soft); }
+.fm .fm-drop .msg { overflow-wrap: anywhere; }
+
+.fm .fm-filters { display: flex; flex-direction: column; gap: 8px; }
+.fm .fm-q { padding-right: 12px; }
+.fm .fm-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fm .fm-chip {
+  min-height: 40px; padding: 0 14px; border-radius: 20px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  font: inherit; font-weight: 700; cursor: pointer;
+}
+.fm .fm-chip.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.fm .fm-chip:focus-visible, .fm .fm-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.fm .fm-list { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.fm .fm-total { margin: 0; }
+.fm .fm-row {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  width: 100%; min-width: 0; min-height: 56px; padding: 10px 14px; text-align: left;
+  background: var(--panel-bg); color: var(--text); border: 1px solid var(--border); border-radius: 14px;
+  font: inherit; cursor: pointer;
+}
+.fm .fm-row:hover { border-color: var(--accent); }
+.fm .fm-name { font-size: 22px; line-height: 1.25; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm .fm-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-family: var(--fm-ui); font-size: 13px; color: var(--text-dim); }
+.fm .fm-badges { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.fm .fm-badge { padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); font-size: 12px; font-weight: 700; }
+.fm .fm-ok { color: var(--ok); border-color: var(--ok); }
+.fm .fm-part { color: var(--warn); border-color: var(--warn); }
+.fm .fm-no, .fm .fm-wait, .fm .fm-lic { color: var(--text-dim); }
+.fm .fm-more { align-self: center; }
+
+.fm .fm-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.fm .fm-back { flex: 0 0 auto; width: auto; }
+.fm .fm-title { margin: 0; font-size: 20px; overflow-wrap: anywhere; min-width: 0; }
+.fm .fm-spec-bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.fm .fm-size { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+.fm .fm-size input { width: 140px; max-width: 40vw; min-height: 32px; accent-color: var(--accent); }
+.fm .fm-sizev { min-width: 48px; color: var(--text-dim); font-weight: 400; }
+.fm .fm-own {
+  width: 100%; box-sizing: border-box; min-height: 56px; padding: 8px 10px; resize: vertical;
+  border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit;
+}
+.fm .fm-spec { display: flex; flex-direction: column; gap: 10px; min-width: 0; overflow-wrap: anywhere; }
+.fm .fm-big { line-height: 1.2; }
+.fm .fm-water { display: flex; gap: 10px; align-items: baseline; min-width: 0; }
+.fm .fm-pt { flex: 0 0 24px; font-family: var(--fm-ui); font-size: 11px; font-style: normal; font-weight: 400; color: var(--text-dim); }
+.fm .fm-wtx { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.fm .fm-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; align-items: start; }
+.fm .fm-lv { font-weight: 700; font-size: 14px; border: none; }
+.fm .fm-miss { overflow-wrap: anywhere; }
+.fm .fm-open { margin: 0; font-weight: 700; font-size: 14px; }
+.fm .fm-info { display: flex; flex-direction: column; gap: 2px; }
+.fm .fm-info-k { font-weight: 700; font-size: 13px; color: var(--text-dim); }
+.fm .fm-val { font-size: 14px; overflow-wrap: anywhere; }
+.fm .fm-lictext summary { cursor: pointer; font-weight: 700; min-height: 32px; }
+.fm .fm-lictext pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; max-height: 280px; overflow: auto; margin: 6px 0 0; }
+.fm .fm-link { display: inline-flex; align-items: center; min-height: 32px; color: var(--accent); font-weight: 700; overflow-wrap: anywhere; }
+.fm .fm-size-kb { color: var(--text-dim); font-size: 13px; }

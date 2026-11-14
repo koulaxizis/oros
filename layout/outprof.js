@@ -6,6 +6,7 @@
 // setup.ext.out = { v: 1, list: [profile] } (R39) only once the
 // person changes them; until then defaults() stands in.
 //   profile = { id "op-…", n (name ≤ 60), k "print" | "ebook" | "epub",
+//               (epub: nf 1 no fonts inside, npl 1 no page-list),
 //               fmt (a Publishing format id, "" = none),
 //               blank 0|1 (leave out empty pages), toc 0|1 (leave out
 //               the contents pages), drop [page id] (≤ 2000),
@@ -58,6 +59,9 @@
     if (drop.length) o.drop = drop.sort();
     if (k === "print") { o.bleed = bit(p.bleed); o.marks = bit(p.marks); o.spreads = bit(p.spreads); }
     else if (typeof p.cover === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(p.cover)) o.cover = p.cover;
+    // EPUB (E2): nf 1 = no fonts inside (the reader's own), npl 1 = no
+    // print page numbers (page-list)
+    if (k === "epub") { if (p.nf) o.nf = 1; if (p.npl) o.npl = 1; }
     return o;
   }
   // The stored list, cleaned (unknown kinds become print, ≤ 8, unique
@@ -69,12 +73,13 @@
     return list.length ? { v: 1, list: list } : null;
   }
 
-  // What a document starts with: the printer's PDF and the e-book PDF
-  // (the EPUB profile arrives with the EPUB export, wave E2).
+  // What a document starts with: the printer's PDF, the e-book PDF and
+  // the EPUB (E2: no empty pages, the contents pages become its nav).
   function defaults() {
     return [
       { id: "op-print", n: "", k: "print", fmt: "", blank: 0, toc: 0, q: "print", bleed: 1, marks: 0, spreads: 0 },
-      { id: "op-ebook", n: "", k: "ebook", fmt: "", blank: 1, toc: 0, q: "screen" }
+      { id: "op-ebook", n: "", k: "ebook", fmt: "", blank: 1, toc: 0, q: "screen" },
+      { id: "op-epub", n: "", k: "epub", fmt: "", blank: 1, toc: 1, q: "screen" }
     ];
   }
   function stored(doc) { return norm(doc && doc.setup && doc.setup.ext && doc.setup.ext.out); }
@@ -287,6 +292,14 @@
     }
     return out + digits.slice(k);
   }
+  // The book's own words for the line (content in the book's language,
+  // not the interface's).
+  function printLabel(lg) {
+    var k = String(lg || "").split("-")[0];
+    // i18n-inline-ok: text that goes into the book, in the book's language
+    var L = { el: "ISBN έντυπης έκδοσης: ", de: "ISBN der Druckausgabe: ", fr: "ISBN de l’édition imprimée : ", it: "ISBN dell’edizione cartacea: ", es: "ISBN de la edición impresa: " };
+    return L[k] || "Print edition ISBN: ";
+  }
   // A copy of the document for the profile ({ doc, changed }); the
   // original is never touched. data: the Publishing app's data or null.
   function edition(doc, prof, data) {
@@ -295,26 +308,41 @@
     var price = priceText(f, data && data.set && data.set.cur);
     var others = [];
     if (pub && isbn) (pub.fmts || []).forEach(function (x) { if (x && /^\d{13}$/.test(x.isbn || "") && x.isbn !== isbn) others.push(x.isbn); });
-    var d = JSON.parse(JSON.stringify(doc)), changed = 0;
+    // the print edition's number, for the e-book's "Print edition ISBN"
+    // line (only an e-book replaces it)
+    var printIsbn = "";
+    if (pub && isbn && prof.k !== "print") (pub.fmts || []).forEach(function (x) {
+      if (!printIsbn && x && (x.k === "pb" || x.k === "hb") && /^\d{13}$/.test(x.isbn || "") && x.isbn !== isbn) printIsbn = x.isbn;
+    });
+    var d = JSON.parse(JSON.stringify(doc)), changed = 0, lineAdded = false;
     d.stories.forEach(function (st) {
-      st.paras.forEach(function (p) {
+      for (var pi = 0; pi < st.paras.length; pi++) {
+        var p = st.paras[pi], printShape = "";
         (p.runs || []).forEach(function (r) {
           if (typeof r.t !== "string" || !r.t) return;
           var t0 = r.t, t1 = t0;
+          if (printIsbn && !printShape) { var mm = t0.match(isbnPattern(printIsbn)); if (mm) printShape = mm[0]; }
           others.forEach(function (o) { t1 = t1.replace(isbnPattern(o), function (m) { return shaped(m, isbn); }); });
           if (isbn) t1 = t1.replace(/\{isbn\}/gi, isbn);
           if (price) t1 = t1.replace(/\{(price|τιμή)\}/gi, price);
           if (t1 !== t0) { r.t = t1; changed++; }
         });
-      });
+        if (printShape && !lineAdded) {
+          // the same style as the ISBN line, right after it
+          lineAdded = true;
+          st.paras.splice(pi + 1, 0, { ps: p.ps, runs: [{ t: printLabel(lang(doc, pub)) + printShape }] });
+          changed++; pi++;
+        }
+      }
     });
-    return { doc: d, changed: changed, isbn: isbn, fmt: f, pub: pub };
+    return { doc: d, changed: changed, isbn: isbn, fmt: f, pub: pub, printIsbn: printIsbn };
   }
 
   var api = {
     KINDS: KINDS, MAX: MAX, LANGS: LANGS, norm: norm, defaults: defaults, stored: stored, list: list, save: save, newId: newId,
     okLang: okLang, lang: lang, setLevel: setLevel, guessLevel: guessLevel, level: level, headings: headings, tocLinks: tocLinks,
-    pagesFor: pagesFor, blankPage: blankPage, tocPage: tocPage, pubOf: pubOf, formatOf: formatOf, edition: edition, fold: fold
+    pagesFor: pagesFor, blankPage: blankPage, tocPage: tocPage, pubOf: pubOf, formatOf: formatOf, edition: edition, fold: fold,
+    framesInOrder: framesInOrder, paraText: paraText
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_OUT = api;
