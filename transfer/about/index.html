@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <!-- orOS Transfer landing page (TRANSFER-LAND, wave D2). Static: every
+       language is in the page, so crawlers and no-JS readers get it all. -->
+  <meta name="description" content="orOS Transfer sends big files and whole folders from your browser to theirs, end-to-end encrypted. No account, no upload to a company, no ads. Free forever.">
+  <title>orOS Transfer: send big files, straight to them</title>
+  <link rel="canonical" href="https://useoros.online/transfer/about/">
+  <!-- Link previews (Open Graph + Twitter/X card); image: transfer/about/og-image.png, 1200x630 -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="orOS">
+  <meta property="og:title" content="orOS Transfer: send big files, straight to them">
+  <meta property="og:description" content="Files and whole folders from your browser to theirs, end-to-end encrypted. No account, no ads. Free forever.">
+  <meta property="og:url" content="https://useoros.online/transfer/about/">
+  <meta property="og:image" content="https://useoros.online/transfer/about/og-image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="orOS Transfer: a sunset artwork with the words Send big files. Straight to them.">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="el_GR">
+  <meta property="og:locale:alternate" content="de_DE">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="orOS Transfer: send big files, straight to them">
+  <meta name="twitter:description" content="Files and whole folders from your browser to theirs, end-to-end encrypted. No account, no ads. Free forever.">
+  <meta name="twitter:image" content="https://useoros.online/transfer/about/og-image.png">
+  <meta name="twitter:image:alt" content="orOS Transfer: a sunset artwork with the words Send big files. Straight to them.">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../fonts.css">
+  <link rel="stylesheet" href="about.css">
+</head>
+<body>
+  <div id="art" class="art" aria-hidden="true"></div>
+  <div class="shade" aria-hidden="true"></div>
+
+  <header class="head">
+    <a class="mark" href="./" aria-label="orOS Transfer">
+      <svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#1a1712"/><path d="M20 13.5 L36.5 24 L20 34.5 Z" fill="#d4af37" stroke="#d4af37" stroke-width="3" stroke-linejoin="round"/><path d="M8 18h8M5 24h11M8 30h8" stroke="#d4af37" stroke-width="3" stroke-linecap="round" opacity=".75"/></svg>
+      <span>orOS Transfer</span>
+    </a>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-l="en" aria-pressed="true">EN</button>
+      <button type="button" data-l="el" aria-pressed="false">EL</button>
+      <button type="button" data-l="de" aria-pressed="false">DE</button>
+    </div>
+  </header>
+
+  <!-- ============ English ============ -->
+  <article lang="en" id="en">
+    <section class="hero">
+      <h1>Send big files.<br><em>Straight to them.</em></h1>
+      <p class="lead">orOS Transfer sends files and whole folders from your browser to theirs, end-to-end encrypted. No account, no upload to a company, no ads. Free forever.</p>
+      <div class="cta">
+        <a class="btn pri" href="/?open=transfer">Start sending</a>
+        <form class="codein" data-code>
+          <label class="sr-only" for="code-en">Code</label>
+          <input id="code-en" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="80" placeholder="XXXX-XXXX-XXXX">
+          <button type="submit">Receive</button>
+        </form>
+      </div>
+      <ul class="trust"><li>No account</li><li>End-to-end encrypted</li><li>No size limit from us</li><li>Free and open source (MIT)</li></ul>
+    </section>
+    <section class="sec">
+      <h2>Three steps, one screen</h2>
+      <ol class="steps">
+        <li><b>01</b><h3>Add files</h3><p>Files and folders from your device or your orOS disk.</p></li>
+        <li><b>02</b><h3>Share the link</h3><p>A link, a QR code or a short code.</p></li>
+        <li><b>03</b><h3>They download</h3><p>In any browser, no orOS needed. Every file is checked on arrival.</p></li>
+      </ol>
+      <h2>Why it is different</h2>
+      <div class="tiles">
+        <div class="tile"><span class="ti" aria-hidden="true">⇄</span><h3>Browser to browser</h3><p>The files go straight between the two devices. Our server only introduces them.</p></div>
+        <div class="tile"><span class="ti" aria-hidden="true">🔒</span><h3>Only you hold the key</h3><p>The key lives in the link, after the #. Nobody in the middle can read the files.</p></div>
+        <div class="tile"><span class="ti" aria-hidden="true">♥</span><h3>Free, for good</h3><p>No plans, no trials, no ads, no tracking.</p></div>
+      </div>
+      <div class="honest">
+        <h3>Honest limits</h3>
+        <ul>
+          <li>Direct sending needs both of you online at the same time.</li>
+          <li>If your networks block a direct link, up to 50 MB goes through the orOS relay, still encrypted.</li>
+          <li>For later pickup, send a link from your own Dropbox (it lasts 4 hours).</li>
+        </ul>
+      </div>
+    </section>
+    <footer class="foot">
+      <p>orOS Transfer is part of <a href="/">orOS</a>, a free operating system in your browser. <a href="/privacy.html">Privacy</a> · <a href="https://github.com/koulaxizis/oros">Source code</a> · Support orOS on <a href="https://ko-fi.com/koulaxizis">Ko-fi</a></p>
+      <p>Designed with &lt;3 by Christos Koulaxizis (koulaxizis.gr). Assisted by Lumo. Audited by Claude.</p>
+    </footer>
+  </article>
+
+  <!-- ============ Ελληνικά ============ -->
+  <article lang="el" id="el" hidden>
+    <section class="hero">
+      <h1>Στείλε μεγάλα αρχεία.<br><em>Κατευθείαν.</em></h1>
+      <p class="lead">Το orOS Transfer στέλνει αρχεία και ολόκληρους φακέλους από τον browser σου στον δικό τους, κρυπτογραφημένα από άκρη σε άκρη. Χωρίς λογαριασμό, χωρίς ανέβασμα σε εταιρεία, χωρίς διαφημίσεις. Δωρεάν για πάντα.</p>
+      <div class="cta">
+        <a class="btn pri" href="/?open=transfer">Ξεκίνα αποστολή</a>
+        <form class="codein" data-code>
+          <label class="sr-only" for="code-el">Κωδικός</label>
+          <input id="code-el" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="80" placeholder="XXXX-XXXX-XXXX">
+          <button type="submit">Λήψη</button>
+        </form>
+      </div>
+      <ul class="trust"><li>Χωρίς λογαριασμό</li><li>Κρυπτογράφηση από άκρη σε άκρη</li><li>Χωρίς όριο μεγέθους από εμάς</li><li>Ελεύθερο λογισμικό (MIT)</li></ul>
+    </section>
+    <section class="sec">
+      <h2>Τρία βήματα, μία οθόνη</h2>
+      <ol class="steps">
+        <li><b>01</b><h3>Πρόσθεσε αρχεία</h3><p>Αρχεία και φακέλους από τη συσκευή ή τον δίσκο orOS.</p></li>
+        <li><b>02</b><h3>Μοιράσου τον σύνδεσμο</h3><p>Σύνδεσμος, QR ή σύντομος κωδικός.</p></li>
+        <li><b>03</b><h3>Κατεβάζουν</h3><p>Σε οποιονδήποτε browser, χωρίς orOS. Κάθε αρχείο ελέγχεται όταν φτάνει.</p></li>
+      </ol>
+      <h2>Γιατί είναι αλλιώς</h2>
+      <div class="tiles">
+        <div class="tile"><span class="ti" aria-hidden="true">⇄</span><h3>Από browser σε browser</h3><p>Τα αρχεία πάνε κατευθείαν από τη μία συσκευή στην άλλη. Ο server μας μόνο τις συστήνει.</p></div>
+        <div class="tile"><span class="ti" aria-hidden="true">🔒</span><h3>Το κλειδί το έχεις μόνο εσύ</h3><p>Το κλειδί είναι στον σύνδεσμο, μετά το #. Κανείς στη μέση δεν διαβάζει τα αρχεία.</p></div>
+        <div class="tile"><span class="ti" aria-hidden="true">♥</span><h3>Δωρεάν, οριστικά</h3><p>Χωρίς πακέτα, δοκιμές, διαφημίσεις ή παρακολούθηση.</p></div>
+      </div>
+      <div class="honest">
+        <h3>Τα όρια, με ειλικρίνεια</h3>
+        <ul>
+          <li>Η απευθείας αποστολή θέλει και τους δύο online την ίδια στιγμή.</li>
+          <li>Αν τα δίκτυα μπλοκάρουν την απευθείας σύνδεση, έως 50 MB περνούν από το relay του orOS, πάλι κρυπτογραφημένα.</li>
+          <li>Για παραλαβή αργότερα, στείλε σύνδεσμο από το δικό σου Dropbox (ισχύει 4 ώρες).</li>
+        </ul>
+      </div>
+    </section>
+    <footer class="foot">
+      <p>Το orOS Transfer είναι μέρος του <a href="/">orOS</a>, ενός δωρεάν λειτουργικού στον browser. <a href="/privacy.html">Απόρρητο</a> · <a href="https://github.com/koulaxizis/oros">Πηγαίος κώδικας</a> · Στήριξε το orOS στο <a href="https://ko-fi.com/koulaxizis">Ko-fi</a></p>
+      <p>Designed with &lt;3 by Christos Koulaxizis (koulaxizis.gr). Assisted by Lumo. Audited by Claude.</p>
+    </footer>
+  </article>
+
+  <!-- ============ Deutsch ============ -->
+  <article lang="de" id="de" hidden>
+    <section class="hero">
+      <h1>Große Dateien senden.<br><em>Direkt ans Ziel.</em></h1>
+      <p class="lead">orOS Transfer schickt Dateien und ganze Ordner von deinem Browser in ihren, Ende-zu-Ende-verschlüsselt. Kein Konto, kein Upload zu einer Firma, keine Werbung. Für immer kostenlos.</p>
+      <div class="cta">
+        <a class="btn pri" href="/?open=transfer">Jetzt senden</a>
+        <form class="codein" data-code>
+          <label class="sr-only" for="code-de">Code</label>
+          <input id="code-de" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="80" placeholder="XXXX-XXXX-XXXX">
+          <button type="submit">Empfangen</button>
+        </form>
+      </div>
+      <ul class="trust"><li>Kein Konto</li><li>Ende-zu-Ende-verschlüsselt</li><li>Keine Größengrenze von uns</li><li>Frei und quelloffen (MIT)</li></ul>
+    </section>
+    <section class="sec">
+      <h2>Drei Schritte, ein Bildschirm</h2>
+      <ol class="steps">
+        <li><b>01</b><h3>Dateien hinzufügen</h3><p>Dateien und Ordner von deinem Gerät oder deiner orOS-Festplatte.</p></li>
+        <li><b>02</b><h3>Link teilen</h3><p>Ein Link, ein QR-Code oder ein kurzer Code.</p></li>
+        <li><b>03</b><h3>Sie laden herunter</h3><p>In jedem Browser, ohne orOS. Jede Datei wird beim Ankommen geprüft.</p></li>
+      </ol>
+      <h2>Was anders ist</h2>
+      <div class="tiles">
+        <div class="tile"><span class="ti" aria-hidden="true">⇄</span><h3>Von Browser zu Browser</h3><p>Die Dateien gehen direkt zwischen den beiden Geräten. Unser Server stellt sie nur einander vor.</p></div>
+        <div class="tile"><span class="ti" aria-hidden="true">🔒</span><h3>Nur du hast den Schlüssel</h3><p>Der Schlüssel steht im Link, nach dem #. Niemand dazwischen kann die Dateien lesen.</p></div>
+        <div class="tile"><span class="ti" aria-hidden="true">♥</span><h3>Kostenlos, dauerhaft</h3><p>Keine Tarife, keine Testphasen, keine Werbung, kein Tracking.</p></div>
+      </div>
+      <div class="honest">
+        <h3>Ehrliche Grenzen</h3>
+        <ul>
+          <li>Direktes Senden braucht euch beide gleichzeitig online.</li>
+          <li>Blockieren eure Netze eine direkte Verbindung, gehen bis 50 MB über das orOS-Relay, weiterhin verschlüsselt.</li>
+          <li>Für später: schick einen Link aus deinem eigenen Dropbox (4 Stunden gültig).</li>
+        </ul>
+      </div>
+    </section>
+    <footer class="foot">
+      <p>orOS Transfer ist Teil von <a href="/">orOS</a>, einem kostenlosen Betriebssystem im Browser. <a href="/privacy.html">Datenschutz</a> · <a href="https://github.com/koulaxizis/oros">Quellcode</a> · orOS auf <a href="https://ko-fi.com/koulaxizis">Ko-fi</a> unterstützen</p>
+      <p>Designed with &lt;3 by Christos Koulaxizis (koulaxizis.gr). Assisted by Lumo. Audited by Claude.</p>
+    </footer>
+  </article>
+
+  <script src="../art.js"></script>
+  <script src="about.js"></script>
+</body>
+</html>

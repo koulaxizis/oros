@@ -125,10 +125,10 @@ test("names: clean, base, output parts, unique, .pdf added once", () => {
 });
 
 test("prefs: defaults and unknown values", () => {
-  assert.deepEqual(C.readPrefs(null), { size: "a4", orient: "auto", margin: "small", dest: "device", cmp: "off", ocr: "ell+eng", read: "auto" });
-  assert.deepEqual(C.readPrefs({ size: "fit", orient: "landscape", margin: "none", dest: "files", cmp: "medium", ocr: "eng", read: "on", x: 1 }),
-    { size: "fit", orient: "landscape", margin: "none", dest: "files", cmp: "medium", ocr: "eng", read: "on" });
-  assert.deepEqual(C.readPrefs({ size: "a3", orient: 9, margin: "<b>", dest: "cloud", cmp: "max", ocr: "fra", read: 1 }), C.readPrefs(null));
+  assert.deepEqual(C.readPrefs(null), { size: "a4", orient: "auto", margin: "small", dest: "device", cmp: "off", ocr: "ell+eng", read: "auto", docs: "off" });
+  assert.deepEqual(C.readPrefs({ size: "fit", orient: "landscape", margin: "none", dest: "files", cmp: "medium", ocr: "eng", read: "on", docs: "on", x: 1 }),
+    { size: "fit", orient: "landscape", margin: "none", dest: "files", cmp: "medium", ocr: "eng", read: "on", docs: "on" });
+  assert.deepEqual(C.readPrefs({ size: "a3", orient: 9, margin: "<b>", dest: "cloud", cmp: "max", ocr: "fra", read: 1, docs: "yes" }), C.readPrefs(null));
 });
 
 // ---------- core: picture pages ----------
@@ -608,6 +608,12 @@ test("scanpdf.js: palette, deep link, R33 dialogs, no innerHTML from data, every
   // every English string has a Greek one
   const el = new Function("return " + js.slice(js.indexOf("var STRINGS = ") + 14, js.indexOf("\n  };\n", js.indexOf("var STRINGS = ")) + 4))().el;
   Object.keys(en).forEach((k) => assert.ok(el[k] !== undefined, "no Greek for " + k));
-  // saved signatures stay device-local: never handed to sync
-  assert.ok(js.includes("C.SIGS_KEY") && !/orosSync|__slices/.test(js));
+  // saved signatures stay device-local: never handed to sync. The only
+  // slice is the list of signature requests (scanpdfSign, sign-core.js).
+  assert.ok(js.includes("C.SIGS_KEY") && !/__slices/.test(js));
+  const regs = [...js.matchAll(/registerSlice\(([^,]+),/g)].map((m) => m[1].trim());
+  assert.deepEqual(regs, ["SG.SLICE"]);
+  const sc = read("scanpdf/sign-core.js");
+  assert.match(sc, /SLICE\s*=\s*"scanpdfSign"/);
+  assert.ok(!/SIGS_KEY|oros-scanpdf-sigs/.test(sc));
 });

@@ -287,6 +287,7 @@
   // wave M1: music releases (title.mt, lists trk and med)
   var MTS = { single: "single", ep: "ep", album: "album", comp: "compilation" };
   var MEDS = { dig: "digital", cd: "cd", vin: "vinyl", cas: "cassette", ot: "other" };
+  var CRS = { art: "artist", feat: "featured", comp: "composer", lyr: "lyricist", arr: "arranger", prod: "producer", mix: "mixing", mast: "mastering", eng: "engineer", mus: "musician", o: "other" };
   function isrcOut(c) { return typeof c === "string" && /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/.test(c) ? c.slice(0, 2) + "-" + c.slice(2, 5) + "-" + c.slice(5, 7) + "-" + c.slice(7) : ""; }
   function publishTitles(raw, args) {
     if (!isObj(args)) return { ok: false, err: "The arguments must be an object." };
@@ -338,6 +339,17 @@
             put(t, "version", r.ver); put(t, "artist", r.art); put(t, "isrc", isrcOut(r.isrc)); put(t, "language", r.lang);
             if (r.dur) t.length = Math.floor(r.dur / 60) + ":" + (r.dur % 60 < 10 ? "0" : "") + (r.dur % 60);
             if (r.ex === 1) t.explicit = true;
+            // PB-MUS M2: who made it and who owns what (the change_item names)
+            var cr = (Array.isArray(r.cr) ? r.cr : []).filter(isObj).map(function (c) { var y = { role: CRS[c.r] || "other", name: String(c.n || "") }; put(y, "instrument", c.ins); return y; });
+            if (cr.length) t.credits = cr;
+            [["sw", "writers"], ["sm", "masters"]].forEach(function (k) {
+              var l = (Array.isArray(r[k[0]]) ? r[k[0]] : []).filter(isObj).map(function (x) {
+                var y = { name: String(x.n || ""), share: typeof x.pct === "number" && isFinite(x.pct) ? x.pct : 0 };
+                put(y, "society", x.soc); put(y, "ipi", x.ipi);
+                return y;
+              });
+              if (l.length) t[k[1]] = l;
+            });
             return t;
           });
           if (tr.length) o.tracks = tr;

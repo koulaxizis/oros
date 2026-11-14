@@ -471,3 +471,6 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 
 [hidden] { display: none !important; }
+.tr-ai { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; font-size: 13.5px; line-height: 1.4; cursor: pointer; }
+.tr-ai input { margin: 2px 0 0; width: 18px; height: 18px; flex: none; }
+.tr-ai + .hint { margin-top: 4px; }

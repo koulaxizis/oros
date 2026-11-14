@@ -207,6 +207,7 @@
       "menu.moveTo":   "Move to…",
       "menu.copyTo":  "Copy to…",
       "menu.toDropbox": "Send to Dropbox…",
+      "menu.toDocs":    "Add to Documents",
       "menu.toComputer": "Send to This computer…",
       "menu.copyName": "Copy name",
       "menu.copyPath": "Copy path",
@@ -217,6 +218,9 @@
       "tree.recent":   "Recent",
       "tree.favs":     "Favourites",
       "tree.trash":    "Trash",
+      "tree.docs":     "Documents",
+      "tree.photos":   "Photos",
+      "tree.photosFail": "Photos could not be opened. Check the connection and try again.",
       "fav.add":       "Add to Favourites",
       "fav.remove":    "Remove from Favourites",
       "fav.added":     "Added to Favourites",
@@ -276,7 +280,7 @@
       "sel.count":     "{n} selected",
       "sel.one":       "1 selected",
       "sel.none":      "Tap items to select them",
-      "err.reserved":  "This name is reserved for the Trash.",
+      "err.reserved":  "This name is reserved for orOS (the Trash and Documents).",
       "name.newFolder": "New folder",
       "name.newFile":   "New file.txt",
 	  "act.import": "Import files",
@@ -440,6 +444,7 @@
       "menu.moveTo":   "Μετακίνηση σε…",
       "menu.copyTo":   "Αντιγραφή σε…",
       "menu.toDropbox": "Αποστολή στο Dropbox…",
+      "menu.toDocs":    "Προσθήκη στα Έγγραφα",
       "menu.toComputer": "Αποστολή σε αυτόν τον υπολογιστή…",
       "menu.copyName": "Αντιγραφή ονόματος",
       "menu.copyPath": "Αντιγραφή διαδρομής",
@@ -450,6 +455,9 @@
       "tree.recent":   "Πρόσφατα",
       "tree.favs":     "Αγαπημένα",
       "tree.trash":    "Κάδος",
+      "tree.docs":     "Έγγραφα",
+      "tree.photos":   "Φωτογραφίες",
+      "tree.photosFail": "Οι Φωτογραφίες δεν άνοιξαν. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "fav.add":       "Προσθήκη στα Αγαπημένα",
       "fav.remove":    "Αφαίρεση από τα Αγαπημένα",
       "fav.added":     "Προστέθηκε στα Αγαπημένα",
@@ -509,7 +517,7 @@
       "sel.count":     "{n} επιλεγμένα",
       "sel.one":       "1 επιλεγμένο",
       "sel.none":      "Πάτα στοιχεία για να τα επιλέξεις",
-      "err.reserved":  "Αυτό το όνομα είναι δεσμευμένο για τον Κάδο.",
+      "err.reserved":  "Αυτό το όνομα είναι δεσμευμένο για το orOS (Κάδος και Έγγραφα).",
       "name.newFolder": "Νέος φάκελος",
       "name.newFile":   "Νέο αρχείο.txt",
 	  "act.import": "Εισαγωγή αρχείων",
@@ -602,6 +610,8 @@
 
   var MORE_SVG =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+  var DOCS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>';
+  var PHOTO_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
   var TRASH_SVG =
     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
   var CLOCK_SVG =
@@ -955,8 +965,10 @@
     return !!(fs && typeof fs.ls === "function");
   }
 
-  // raw === true keeps the hidden Trash folder (/internal/.trash);
-  // every view, chooser and search of this app leaves it out.
+  // raw === true keeps the hidden folders at the root: the Trash
+  // (/internal/.trash) and the text Documents reads (/internal/.docs);
+  // every view, chooser and search of this app leaves them out.
+  var HIDDEN_ROOT = [".trash", ".docs"];
   function fsList(path, raw) {
     // Opened on its own (?standalone) there is no orOS file system: a
     // rejected promise, never a TypeError, so callers show their fallback.
@@ -964,7 +976,7 @@
     return FS().ls(path).then(function (list) {
       var dirs = [], files = [];
       (list || []).forEach(function (e) {
-        if (!raw && path === ROOT && e.name === ".trash") return;
+        if (!raw && path === ROOT && HIDDEN_ROOT.indexOf(e.name) !== -1) return;
         (e.dir ? dirs : files).push(e);
       });
       var byName = function (a, b) { return a.name < b.name ? -1 : 1; };
@@ -1037,12 +1049,7 @@
   }
 
   function navigate(path) {
-    var d = dbx();
-    if (d && d.isActive()) d.leave();
-    var dv = drv();
-    if (dv && dv.isActive()) dv.leave();
-    var pc = cmp();
-    if (pc && pc.isActive()) pc.leave();
+    leavePlaces(null);
     view = "files";
     cwd = path;
     if (selectMode) setSelectMode(false);
@@ -1091,6 +1098,10 @@
     host.innerHTML = "";
     host.appendChild(makeQuickSection());
     host.appendChild(makeTreeNode(ROOT, t("tree.root"), 0, token));
+    var ph = photos();
+    host.appendChild(ph ? ph.treeNode() : photosStubNode());
+    var dc = docs();
+    host.appendChild(dc ? dc.treeNode() : docsStandIn());
     var dv = drv();
     if (dv) host.appendChild(dv.treeNode());
     var pc = cmp();
@@ -1119,10 +1130,100 @@
     var c = window.OrosFilesComputer;
     return (c && typeof c.treeNode === "function") ? c : null;
   }
-  // Another place (Dropbox, orOS Drive, This computer) is shown instead of the disk.
+  // The Documents archive (files/docs.js, docs-core.js): a place of
+  // its own over files of the disk, details synced in "files-docs".
+  function docs() {
+    var d = window.OrosFilesDocs;
+    return (d && typeof d.treeNode === "function") ? d : null;
+  }
+  // The Photos timeline (files/photos.js, photos-core.js): every photo
+  // and video of the disk by the day it was taken; device-local only.
+  function photos() {
+    var p = window.OrosFilesPhotos;
+    return (p && typeof p.treeNode === "function") ? p : null;
+  }
+  // Places shown instead of the disk. Each module has treeNode(),
+  // isActive() and leave(); a new place (Photos, …) adds its global
+  // name here and calls ctx.onEnter (= leavePlaces(itself)) on enter.
+  var PLACE_GLOBALS = ["OrosFilesDropbox", "OrosFilesDrive", "OrosFilesComputer", "OrosFilesDocs", "OrosFilesPhotos"];
+  function places() {
+    var out = [];
+    PLACE_GLOBALS.forEach(function (g) {
+      var p = window[g];
+      if (p && typeof p.isActive === "function" && typeof p.leave === "function") out.push(p);
+    });
+    return out;
+  }
+  function leavePlaces(except) {
+    places().forEach(function (p) { if (p !== except && p.isActive()) p.leave(); });
+  }
   function placeActive() {
-    var dv = drv(), pc = cmp();
-    return dbxActive() || !!(dv && dv.isActive()) || !!(pc && pc.isActive());
+    return places().some(function (p) { return p.isActive(); });
+  }
+  // Album items keyed by path follow a move (albums-core carry); the
+  // Photos scripts load for it only where albums are stored.
+  function photosCarry(from, to) {
+    var ph = photos();
+    if (ph && typeof ph.carry === "function") { ph.carry(from, to); return; }
+    var has = false;
+    try { var raw = JSON.parse(localStorage.getItem("oros-files-albums") || "null"); has = !!(raw && raw.albums && raw.albums.length); } catch (e) {}
+    if (has) loadPhotos().then(function (p) { if (p && p.carry) p.carry(from, to); }, function () {});
+  }
+  function docsCarry(from, to) {
+    var dc = docs();
+    if (dc && typeof dc.carry === "function") dc.carry(from, to);
+    else if (docsStored()) loadDocs(function (d) { if (d && d.carry) d.carry(from, to); });
+  }
+
+  // Documents loads on demand (first-open budget, .github/qa/budget.json):
+  // at boot only where it was open last time or holds documents, else
+  // when its node or "Add to Documents" is first used.
+  var DOCS_SCRIPTS = ["docs-core.js", "docs-text.js", "docs.js"];   // docs.js loads docs-read.js itself
+  var docsWaiters = null;
+  function docsStored() {
+    try {
+      var v = localStorage.getItem("oros-files-docs-view");
+      if (v && JSON.parse(v).on) return true;
+      if (localStorage.getItem("oros-files-docs-inbox")) return true;      // Scanner & PDF left some
+      var raw = localStorage.getItem("oros-files-docs");
+      return !!(raw && JSON.parse(raw).docs && JSON.parse(raw).docs.length);
+    } catch (e) { return false; }
+  }
+  function loadDocs(cb) {
+    if (docs()) { if (cb) cb(docs()); return; }
+    if (docsWaiters) { if (cb) docsWaiters.push(cb); return; }
+    docsWaiters = cb ? [cb] : [];
+    var i = 0;
+    if (!document.getElementById("docs-css")) {
+      var css = document.createElement("link");
+      css.id = "docs-css";
+      css.rel = "stylesheet";
+      css.href = "docs.css?v=" + encodeURIComponent(SCRIPT_V);
+      css.onload = css.onerror = function () { next(); };    // styled before the first paint
+      document.head.appendChild(css);
+    } else setTimeout(next, 0);
+    function done(ok) {
+      var list = docsWaiters;
+      docsWaiters = null;
+      if (ok && docs()) { initDocs(); renderTree(); }
+      list.forEach(function (f) { try { f(docs()); } catch (e) {} });
+    }
+    function next() {
+      if (i >= DOCS_SCRIPTS.length) return done(true);
+      var sc = document.createElement("script");
+      sc.src = DOCS_SCRIPTS[i++] + "?v=" + encodeURIComponent(SCRIPT_V);
+      sc.onload = next;
+      sc.onerror = function () { done(false); };
+      document.body.appendChild(sc);
+    }
+  }
+  function docsStandIn() {
+    var wrap = document.createElement("div");
+    wrap.className = "dbx-tree doc-tree";
+    wrap.appendChild(makeSpecialNode("docs", t("tree.docs"), DOCS_SVG, function () {
+      loadDocs(function (d) { if (d) d.enter(); else transientNote(t("toast.opFail")); });
+    }));
+    return wrap;
   }
 
   function initDrive() {
@@ -1132,10 +1233,7 @@
       toast: transientNote,
       closeDrawer: closeTreeDrawer,
       onEnter: function () {
-        var d = dbx();
-        if (d && d.isActive()) d.leave();
-        var pc = cmp();
-        if (pc && pc.isActive()) pc.leave();
+        leavePlaces(drv());
         view = "files"; setSelectMode(false); clearSelection();
       },
       afterEnter: renderTree,
@@ -1171,10 +1269,7 @@
       toast: transientNote,
       closeDrawer: closeTreeDrawer,
       onEnter: function () {
-        var d = dbx();
-        if (d && d.isActive()) d.leave();
-        var dv = drv();
-        if (dv && dv.isActive()) dv.leave();
+        leavePlaces(cmp());
         view = "files"; setSelectMode(false); clearSelection();
       },
       afterEnter: renderTree,
@@ -1199,10 +1294,7 @@
       dialogHost: dialogHost,
       closeDrawer: closeTreeDrawer,
       onEnter: function () {
-        var dv = drv();
-        if (dv && dv.isActive()) dv.leave();
-        var pc = cmp();
-        if (pc && pc.isActive()) pc.leave();
+        leavePlaces(dbx());
         view = "files"; setSelectMode(false); clearSelection(); renderTree();
       },
       fmtKB: fmtKB,
@@ -1215,6 +1307,130 @@
       isTextExt: isTextExt,
       mimeFor: function (name) { return isTextExt(name) ? "text/plain" : mimeForExt(extOf(name)); }
     });
+  }
+
+  function initDocs() {
+    var dc = docs();
+    if (!dc) return;
+    dc.init({
+      toast: transientNote,
+      undoToast: undoToast,
+      closeDrawer: closeTreeDrawer,
+      onEnter: function () {
+        leavePlaces(docs());
+        view = "files"; setSelectMode(false); clearSelection();
+      },
+      afterEnter: renderTree,
+      fs: FS,
+      vault: vaultApi,
+      dialogHost: dialogHost,
+      uniqueName: uniqueName,
+      preview: function (p) { recentsTouch(p); openPreview(p); },
+      openFile: openFileAt,
+      setJob: setJob,
+      zip: { crc32: CORE.crc32, build: CORE.zipBuild },
+      zipSafePath: CORE.zipSafePath,
+      onChange: renderTree,
+      onDiskChanged: function () { forceStorageRecalc(); markDirty(); },
+      pdfOpen: pdfOpen,
+      ver: SCRIPT_V
+    });
+  }
+
+  // photos.css, photos-core.js, albums-core.js and photos.js load the first time the
+  // place opens, or at boot when Photos was open last time, so a plain
+  // Files open stays inside its first-open budget (.github/qa). Until
+  // then the tree shows this stand-in node with the same look.
+  var PHOTOS_VIEW_KEY = "oros-files-photos-view";
+  var PHOTOS_SCRIPTS = ["photos-core.js", "albums-core.js", "photos.js"];
+  var photosLoading = null;
+  function photosWasOpen() {
+    try { var v = JSON.parse(localStorage.getItem(PHOTOS_VIEW_KEY) || "null"); return !!(v && v.on); }
+    catch (e) { return false; }
+  }
+  function loadPhotos() {
+    if (photos()) return Promise.resolve(photos());
+    if (!photosLoading) {
+      var ver = "?v=" + encodeURIComponent(SCRIPT_V);
+      var css = document.getElementById("photos-css") ? Promise.resolve() : new Promise(function (res) {
+        var l = document.createElement("link");
+        l.id = "photos-css";
+        l.rel = "stylesheet";
+        l.href = "photos.css" + ver;
+        l.onload = l.onerror = function () { res(); };   // styled before the first paint
+        document.head.appendChild(l);
+      });
+      photosLoading = PHOTOS_SCRIPTS.reduce(function (p, src) {
+        return p.then(function () {
+          return new Promise(function (res, rej) {
+            var sc = document.createElement("script");
+            sc.src = src + ver;
+            sc.onload = res;
+            sc.onerror = function () { sc.remove(); rej(new Error(src)); };
+            document.head.appendChild(sc);
+          });
+        });
+      }, css).then(function () {
+        if (!photos()) throw new Error("photos");
+        initPhotos();
+        renderTree();
+        return photos();
+      });
+      photosLoading.then(null, function () {
+        photosLoading = null;
+        transientNote(t("tree.photosFail"));
+      });
+    }
+    return photosLoading;
+  }
+  function photosStubNode() {
+    var wrap = document.createElement("div");
+    wrap.className = "dbx-tree ph-tree";
+    var node = makeSpecialNode("photos", t("tree.photos"), PHOTO_SVG, openPhotos);
+    node.classList.remove("special", "selected");
+    wrap.appendChild(node);
+    return wrap;
+  }
+  function openPhotos() {
+    loadPhotos().then(function (ph) { if (ph && !ph.isActive()) ph.enter(); }, function () {});
+  }
+
+  function initPhotos() {
+    var ph = photos();
+    if (!ph) return;
+    ph.init({
+      toast: transientNote,
+      closeDrawer: closeTreeDrawer,
+      onEnter: function () {
+        leavePlaces(photos());
+        view = "files"; setSelectMode(false); clearSelection();
+      },
+      afterEnter: renderTree,
+      fs: FS,
+      vault: vaultApi,
+      docs: docs,
+      share: shareApi,
+      openFile: openFileAt,
+      pickFolder: pickFolderDialog,
+      ver: SCRIPT_V,
+      trash: function (p) {
+        return moveToTrash(p).then(function () { favDropPath(p); markDirty(); });
+      },
+      onDiskChanged: forceStorageRecalc
+    });
+  }
+
+  // Files' menu › Add to Documents: the selected files (not folders).
+  function addToDocs() {
+    if (view === "trash") return;
+    var dc = docs();
+    if (!dc) { loadDocs(function (d) { if (d) addToDocs(); }); return; }
+    var paths = selectionPaths().filter(function (p) {
+      var e = null;
+      lastEntries.forEach(function (x) { if (entryPath(x) === p) e = x; });
+      return !(e && e.dir);
+    });
+    if (paths.length) dc.add(paths);
   }
 
   function makeTreeNode(path, label, depth, token) {
@@ -1742,7 +1958,7 @@
     var name = raw.trim();
     if (!name) return { ok: false, err: t("err.required") };
     if (BAD_CHARS.test(name)) return { ok: false, err: t("err.chars") };
-    if (dialogDir === ROOT && name === ".trash") return { ok: false, err: t("err.reserved") };
+    if (dialogDir === ROOT && HIDDEN_ROOT.indexOf(name) !== -1) return { ok: false, err: t("err.reserved") };
     if (name === "." || name === "..") return { ok: false, err: t("err.required") };
     for (var i = 0; i < existingNames.length; i++) {
       if (existingNames[i] === name) return { ok: false, err: t("err.exists") };
@@ -2359,7 +2575,7 @@
 
   function sanitizeFileName(name) {
     var n = name.replace(/[\/\\:*?"<>|]/g, "_");
-    return n === ".trash" ? "_trash" : n;
+    return HIDDEN_ROOT.indexOf(n) !== -1 ? "_" + n.slice(1) : n;
   }
 
   // #22 FIX: no dead base64 computation — Blob flows straight into
@@ -3316,6 +3532,9 @@
         selectionPaths().some(function (x) { return isImageExt(baseName(x)); }))) {
       ctxMenu.appendChild(mkItem(APP_SVG, "menu.sendAlbum", sendAlbum));
     }
+    if (!p.dir) {
+      ctxMenu.appendChild(mkItem(DOCS_SVG, "menu.toDocs", addToDocs));
+    }
     if (dbx() && dbx().exportFrom) {
       ctxMenu.appendChild(mkItem(dbx().icon || "", "menu.toDropbox", function () {
         sendToDropbox();
@@ -4038,12 +4257,7 @@
   }
 
   function openView(kind) {
-    var d = dbx();
-    if (d && d.isActive()) d.leave();
-    var dv = drv();
-    if (dv && dv.isActive()) dv.leave();
-    var pc = cmp();
-    if (pc && pc.isActive()) pc.leave();
+    leavePlaces(null);
     if (searchQuery !== null) {
       if (searchDebounce) { clearTimeout(searchDebounce); searchDebounce = null; }
       searchQuery = null; searchDir = null; search = null;
@@ -4086,7 +4300,7 @@
     transientNote(t(on ? "fav.added" : "fav.removed"));
     renderSelBar();
   }
-  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); }
+  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); docsCarry(from, to); photosCarry(from, to); }
   function favDropPath(p) { favCommit(CORE.favDrop(favs, p, Date.now())); }
 
   function registerFavSync() {
@@ -4122,7 +4336,7 @@
     return sec;
   }
 
-  function makeSpecialNode(kind, label, svg) {
+  function makeSpecialNode(kind, label, svg, onGo) {
     var node = document.createElement("div");
     node.className = "tnode special" + (view === kind && !placeActive() ? " selected" : "");
     node.style.paddingLeft = "6px";
@@ -4140,7 +4354,7 @@
     nm.className = "tname";
     nm.textContent = label;
     node.appendChild(nm);
-    function go() { closeTreeDrawer(); openView(kind); }
+    function go() { closeTreeDrawer(); if (onGo) onGo(); else openView(kind); }
     node.addEventListener("click", go);
     node.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
@@ -4374,7 +4588,7 @@
         }).then(function (list) {
           var names = list.map(function (e) { return e.name; });
           var name = uniqueName(item.name, names);
-          if (parent === ROOT && name === ".trash") name = uniqueName("_trash", names);
+          if (parent === ROOT && HIDDEN_ROOT.indexOf(name) !== -1) name = uniqueName("_" + name.slice(1), names);
           var op = item.made ? FS().mkdir(join(parent, name)) : FS().mv(p, join(parent, name));
           return op.then(function () {
             done++;
@@ -5260,6 +5474,12 @@
     initDropbox();
     initDrive();
     initComputer();
+    if (docsStored()) loadDocs();
+    // Scanner & PDF › Save › "Also add it to Documents" while Files is open.
+    window.addEventListener("storage", function (e) {
+      if (e.key === "oros-files-docs-inbox" && e.newValue && !docs()) loadDocs();
+    });
+    if (photosWasOpen()) loadPhotos();
 
     // Multitasking (MT-S2): Files left open in the background lists the
     // folder again when it comes back; another app may have saved there.

@@ -264,3 +264,14 @@ test("songbook: the menu search finds Lyric Sync by its search words (EN, EL, DE
   const sh = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
   assert.ok(sh.includes('app.words || "", tw === wk ? "" : tw'), "menu search matches the words");
 });
+
+test("stage (S2): screen kept on, pedal keys, follows the times, settings per device", () => {
+  const app = read("lyricsync/app.js"), html = read("lyricsync/index.html");
+  assert.ok(app.includes('navigator.wakeLock.request("screen")') && app.includes("lock.release()"), "Wake Lock asked and given back");
+  assert.ok(app.includes('addEventListener("visibilitychange"'), "asked again when the page comes back");
+  for (const k of ["PageDown", "PageUp", "ArrowDown", "ArrowUp", "Escape"]) assert.ok(app.includes('"' + k + '"'), k);
+  assert.ok(/function stageFollow\(ms\)[\s\S]{0,200}C\.lineAt\(/.test(app), "follows the synced times");
+  assert.ok(/stageFollow\(ms\);\s*drawWave\(\);/.test(app), "from the player clock");
+  for (const id of ["stage2", "sg-play", "sg-up", "sg-down", "sg-show", "sg-cin", "stage-btn", "stage-btn2"]) assert.ok(html.includes('id="' + id + '"'), id);
+  assert.ok(/d\.sfs >= 14 && d\.sfs <= 64/.test(app) && /d\.ssp >= 0\.25 && d\.ssp <= 4/.test(app), "device settings checked on load");
+});
