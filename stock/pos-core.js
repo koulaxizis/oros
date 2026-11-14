@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — pos-core.js (pure, v1.1.0; wave 46, fair till F1)
+// orOS Stock — pos-core.js (pure, v1.2.0; wave 46, fair till F1 + F2)
 // The point of sale's rules: prices per price list, cart totals with
 // VAT per rate, receipt numbers, the sale + its stock movement, the
 // day's Z report and the receipt's rows. No DOM, no storage: the POS
@@ -36,6 +36,16 @@
 //   discPct(lines)               → that as a % of the list gross (0-100)
 //   payParts(sale)               → { cash, card, other } in gross cents
 //   receiptText(rows)            → plain text of receipt rows (share, QR)
+// F2 (1.2): events (a fair, a launch) and the cash drawer
+//   evOf(data, id) · evsOn(data, d) (events running that day, newest
+//   start first) · evSales(data, evId)
+//   evReport(data, ev, whq)      → the event's totals, per day and per
+//                                  title (taken to the stand, sold,
+//                                  brought back, left); whq = core.whQty
+//   packMove(ev, lines, o)       → the transfer main → stand (src ev:id)
+//   backMove(ev, whq, o)         → the transfer of what is left back
+//   drawer(rep, fl, cc)          → { exp: float + cash sales, cc, diff }
+//   DENOMS                       → euro notes and coins, in cents
 // ============================================================
 (function (root) {
   "use strict";
@@ -242,6 +252,7 @@
     if (o.pl) sale.pl = o.pl;
     if (isInt(o.given) && o.given > 0) sale.given = o.given;
     if (o.w) sale.w = o.w;
+    if (o.ev) sale.ev = o.ev;
     var dc = String(o.dc || "").trim().slice(0, 40);
     if (dc && lines.some(function (l) { return l.p0; })) sale.dc = dc;
     // a split: two or more parts that add up to the receipt; pay = the
@@ -324,6 +335,13 @@
       cash: rep.byPay.cash || 0, card: rep.byPay.card || 0, other: rep.byPay.other || 0
     };
   }
+  // F2: the close with its drawer (fl float, cc cash counted; either may be absent)
+  function zRowDrawer(rep, now, no, fl, cc) {
+    var z = zRow(rep, now, no);
+    if (isInt(fl) && fl >= 0) z.fl = fl;
+    if (isInt(cc) && cc >= 0) z.cc = cc;
+    return z;
+  }
   function nextZ(data) {
     var max = 0;
     ((data && data.zs) || []).forEach(function (z) { if (z.no > max) max = z.no; });
@@ -368,6 +386,85 @@
     return rows;
   }
 
+  // ---------- F2: events and the cash drawer ----------
+  function evOf(data, id) { return id ? byId(data && data.evs, id) : null; }
+  function evsOn(data, d) {
+    return ((data && data.evs) || []).filter(function (e) { return !e.arch && e.from <= d && d <= e.to; })
+      .sort(function (a, b) { return cmpStr(b.from, a.from) || cmpStr(a.name, b.name); });
+  }
+  function evSales(data, evId) {
+    return ((data && data.sales) || []).filter(function (s) { return s.ev === evId; })
+      .sort(function (a, b) { return cmpStr(a.d, b.d) || (a.at - b.at) || cmpStr(a.id, b.id); });
+  }
+  function evReport(data, ev, whq) {
+    var list = evSales(data, ev.id), live = list.filter(function (s) { return s.v !== 1; });
+    var days = {}, byPay = { cash: 0, card: 0, other: 0 }, titles = {}, rates = {};
+    var sum = { n: live.length, voids: list.length - live.length, g: 0, net: 0, vat: 0, disc: 0 };
+    function title(i, n) {
+      var key = i === OTHER ? OTHER + ":" + n : i;
+      return titles[key] || (titles[key] = { i: i, n: n, sold: 0, g: 0, taken: 0, back: 0, left: 0 });
+    }
+    live.forEach(function (s) {
+      var tt = totals(s.lines), parts = payParts(s);
+      var dd = days[s.d] || (days[s.d] = { d: s.d, n: 0, g: 0, cash: 0, card: 0, other: 0 });
+      dd.n++; dd.g += tt.gross;
+      PAYS.forEach(function (k) { dd[k] += parts[k]; byPay[k] += parts[k]; });
+      sum.g += tt.gross; sum.net += tt.net; sum.vat += tt.vat; sum.disc += saved(s.lines);
+      tt.byVat.forEach(function (r) {
+        var x = rates[r.rate] || (rates[r.rate] = { rate: r.rate, net: 0, vat: 0, gross: 0 });
+        x.net += r.net; x.vat += r.vat; x.gross += r.gross;
+      });
+      s.lines.forEach(function (l) { var x = title(l.i, l.n); x.sold += l.q; x.g += lineGross(l); });
+    });
+    // what went to the stand and came back: the event's own transfers
+    var names = {};
+    ((data && data.items) || []).forEach(function (it) { names[it.id] = it.name; });
+    ((data && data.moves) || []).forEach(function (mv) {
+      if (mv.v === 1 || mv.t !== "xfer" || mv.src !== "ev:" + ev.id) return;
+      var to = mv.w2 || "", from = mv.w || "";
+      mv.lines.forEach(function (l) {
+        var x = title(l.i, names[l.i] || l.i);
+        if (to === (ev.w || "")) x.taken += l.q;
+        else if (from === (ev.w || "")) x.back += l.q;
+      });
+    });
+    var standOwn = !!ev.w;
+    Object.keys(titles).forEach(function (k) {
+      var x = titles[k];
+      if (standOwn && x.i !== OTHER) x.left = (whq && whq[x.i] && whq[x.i][ev.w]) || 0;
+    });
+    sum.byVat = Object.keys(rates).map(Number).sort(function (a, b) { return b - a; }).map(function (r) { return rates[r]; });
+    sum.byPay = byPay;
+    sum.days = Object.keys(days).sort().map(function (d) { return days[d]; });
+    sum.titles = Object.keys(titles).map(function (k) { return titles[k]; })
+      .sort(function (a, b) { return (b.g - a.g) || (b.taken - a.taken) || cmpStr(a.n, b.n); });
+    return sum;
+  }
+  // o = { d, now, id }; lines [{ i, q > 0 }] → an xfer main → stand
+  function packMove(ev, lines, o) {
+    if (!ev || !ev.w) return null;
+    var ls = (lines || []).filter(function (l) { return l && typeof l.i === "string" && l.i !== OTHER && isInt(l.q) && l.q > 0; })
+      .map(function (l) { return { i: l.i, q: l.q }; });
+    if (!ls.length) return null;
+    return { id: o.id, m: o.now, d: o.d, t: "xfer", w2: ev.w, ref: ev.name, note: "", src: "ev:" + ev.id, lines: ls };
+  }
+  // everything still at the stand goes back to the main warehouse
+  function backMove(ev, whq, o) {
+    if (!ev || !ev.w) return null;
+    var ls = [];
+    Object.keys(whq || {}).sort(cmpStr).forEach(function (i) {
+      var q = whq[i] && whq[i][ev.w];
+      if (isInt(q) && q > 0) ls.push({ i: i, q: q });
+    });
+    if (!ls.length) return null;
+    return { id: o.id, m: o.now, d: o.d, t: "xfer", w: ev.w, ref: ev.name, note: "", src: "ev:" + ev.id, lines: ls };
+  }
+  function drawer(rep, fl, cc) {
+    var exp = (isInt(fl) ? fl : 0) + ((rep && rep.byPay && rep.byPay.cash) || 0);
+    return { exp: exp, cc: isInt(cc) ? cc : null, diff: isInt(cc) ? cc - exp : null };
+  }
+  var DENOMS = [50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
+
   function receiptText(rows) {
     return (rows || []).map(function (r, i) {
       if (r.k === "head" || r.k === "foot" || r.k === "void") return r.l;
@@ -379,6 +476,8 @@
   var api = {
     OTHER: OTHER, grossOf: grossOf, netFor: netFor, applyDisc: applyDisc, saved: saved, discPct: discPct,
     payParts: payParts, receiptText: receiptText,
+    evOf: evOf, evsOn: evsOn, evSales: evSales, evReport: evReport, packMove: packMove, backMove: backMove,
+    drawer: drawer, DENOMS: DENOMS, zRowDrawer: zRowDrawer,
     RETAIL: RETAIL, PAYS: PAYS, priceOf: priceOf, lineNet: lineNet, totals: totals, change: change,
     nextNo: nextNo, devCode: devCode, makeSale: makeSale, daySales: daySales, zReport: zReport, zRow: zRow,
     nextZ: nextZ, receiptRows: receiptRows

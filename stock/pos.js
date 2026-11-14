@@ -63,7 +63,19 @@
       pdf: "PDF", share: "Share PDF", qr: "QR code", qrHint: "The customer scans it with the phone camera and keeps the receipt as text.",
       pdfFail: "Could not make the PDF.", qrLong: "This receipt is too long for a QR code; use the PDF.",
       stDmax: "Largest discount on this device (%)", stDmaxHint: "Empty = no limit. Useful on a helper's phone at a stand.",
-      zDisc: "Discounts given", zSplit: "Split payments"
+      zDisc: "Discounts given", zSplit: "Split payments",
+      evNone: "No event", evBtn: "Events", evTitle: "Events", evHint: "A fair, a launch or a market: the till uses its stand's warehouse and price list, and its sales add up in one report.",
+      evAdd: "New event", evName: "Name", evNameDef: "Book fair", evFrom: "From", evTo: "To", evStand: "Stand's warehouse", evStandNew: "+ New warehouse with the event's name",
+      evPl: "Price list", evFl: "Cash float per day", evEdit: "Edit", evPack: "Pack for the stand", evBack: "Bring back", evRep: "Report",
+      evDel: "Delete", evDelQ: "Delete the event \"{n}\"? Its sales stay, without the event.", evSaved: "Event saved", evBad: "Type a name and the dates.",
+      evNoStand: "Pick a stand's warehouse to pack and bring back.", evNoneYet: "No events yet.", evArch: "Archived", evOn: "Selling at {n}",
+      packT: "Pack: {n}", packHint: "From the main warehouse to {w}. One transfer for everything.", packMain: "{q} in the main warehouse", packGo: "Move to the stand",
+      packNone: "Type at least one quantity.", packDone: "Moved to {w}", backT: "Bring back: {n}", backHint: "Everything still at {w} goes back to the main warehouse.",
+      backNone: "Nothing left at the stand.", backGo: "Bring everything back", backDone: "Back in the main warehouse",
+      repT: "Report: {n}", repDays: "Days", repTitles: "Titles", repTaken: "Taken", repSold: "Sold", repBackC: "Back", repLeft: "Left", repPrint: "Print", repSheet: "Open in Spreadsheet",
+      repNone: "No sales at this event yet.",
+      drFl: "Cash float", drCc: "Cash counted", drCount: "Count…", drExp: "Expected in the drawer: {e}", drDiff: "Difference: {d}", drOk: "The drawer is right.",
+      drCountT: "Count the cash", drTotal: "Total: {t}", drUse: "Use this total"
     },
     el: {
       "pos.title": "Σημείο πώλησης (POS)", pl: "Τιμοκατάλογος", retail: "Λιανική", wh: "Αποθήκη",
@@ -105,7 +117,19 @@
       pdf: "PDF", share: "Κοινοποίηση PDF", qr: "Κωδικός QR", qrHint: "Ο πελάτης τον σαρώνει με την κάμερα του κινητού και κρατά την απόδειξη ως κείμενο.",
       pdfFail: "Δεν έγινε το PDF.", qrLong: "Η απόδειξη είναι πολύ μεγάλη για QR· χρησιμοποίησε το PDF.",
       stDmax: "Μέγιστη έκπτωση σε αυτή τη συσκευή (%)", stDmaxHint: "Κενό = χωρίς όριο. Χρήσιμο στο κινητό βοηθού σε έναν πάγκο.",
-      zDisc: "Εκπτώσεις που δόθηκαν", zSplit: "Μικτές πληρωμές"
+      zDisc: "Εκπτώσεις που δόθηκαν", zSplit: "Μικτές πληρωμές",
+      evNone: "Χωρίς εκδήλωση", evBtn: "Εκδηλώσεις", evTitle: "Εκδηλώσεις", evHint: "Έκθεση, παρουσίαση ή παζάρι: το ταμείο παίρνει την αποθήκη του πάγκου και τον τιμοκατάλογό της, και οι πωλήσεις της αθροίζονται σε μία αναφορά.",
+      evAdd: "Νέα εκδήλωση", evName: "Όνομα", evNameDef: "Έκθεση βιβλίου", evFrom: "Από", evTo: "Έως", evStand: "Αποθήκη πάγκου", evStandNew: "+ Νέα αποθήκη με το όνομα της εκδήλωσης",
+      evPl: "Τιμοκατάλογος", evFl: "Αρχικό ποσό ταμείου ανά ημέρα", evEdit: "Αλλαγή", evPack: "Πακετάρισμα για τον πάγκο", evBack: "Επιστροφή", evRep: "Αναφορά",
+      evDel: "Διαγραφή", evDelQ: "Διαγραφή της εκδήλωσης «{n}»; Οι πωλήσεις της μένουν, χωρίς την εκδήλωση.", evSaved: "Η εκδήλωση αποθηκεύτηκε", evBad: "Γράψε όνομα και ημερομηνίες.",
+      evNoStand: "Διάλεξε αποθήκη πάγκου για πακετάρισμα και επιστροφή.", evNoneYet: "Καμία εκδήλωση ακόμα.", evArch: "Αρχειοθετημένη", evOn: "Πωλήσεις στο {n}",
+      packT: "Πακετάρισμα: {n}", packHint: "Από την κύρια αποθήκη στο {w}. Μία μεταφορά για όλα.", packMain: "{q} στην κύρια αποθήκη", packGo: "Μεταφορά στον πάγκο",
+      packNone: "Γράψε τουλάχιστον μία ποσότητα.", packDone: "Μεταφέρθηκαν στο {w}", backT: "Επιστροφή: {n}", backHint: "Ό,τι έμεινε στο {w} επιστρέφει στην κύρια αποθήκη.",
+      backNone: "Δεν έμεινε τίποτα στον πάγκο.", backGo: "Επιστροφή όλων", backDone: "Επέστρεψαν στην κύρια αποθήκη",
+      repT: "Αναφορά: {n}", repDays: "Ημέρες", repTitles: "Τίτλοι", repTaken: "Πήγαν", repSold: "Πουλήθηκαν", repBackC: "Γύρισαν", repLeft: "Έμειναν", repPrint: "Εκτύπωση", repSheet: "Άνοιγμα στο Υπολογιστικό φύλλο",
+      repNone: "Καμία πώληση σε αυτή την εκδήλωση ακόμα.",
+      drFl: "Αρχικό ποσό ταμείου", drCc: "Μετρητά που μετρήθηκαν", drCount: "Μέτρημα…", drExp: "Αναμενόμενα στο συρτάρι: {e}", drDiff: "Διαφορά: {d}", drOk: "Το ταμείο είναι σωστό.",
+      drCountT: "Μέτρημα μετρητών", drTotal: "Σύνολο: {t}", drUse: "Χρήση του συνόλου"
     }
   };
 
@@ -151,6 +175,36 @@
 
     var top = el("div", "pos-top");
     top.appendChild(el("div", "dlg-title pos-title", "🧾 " + t("pos.title")));
+    // F2: the event this till sells at; it brings its stand and price list
+    var evSel = el("select", "pos-ev");
+    evSel.id = "st-pos-ev";
+    evSel.setAttribute("aria-label", t("evTitle"));
+    function fillEv() {
+      evSel.innerHTML = "";
+      var today = api.todayYmd(), on = P.evsOn(D(), today).map(function (e) { return e.id; });
+      var list = (D().evs || []).filter(function (e) { return !e.arch; }).slice().sort(function (a, b) {
+        return ((on.indexOf(b.id) >= 0) - (on.indexOf(a.id) >= 0)) || (a.from < b.from ? 1 : a.from > b.from ? -1 : 0);
+      });
+      [["", t("evNone")]].concat(list.map(function (e) { return [e.id, e.name]; })).forEach(function (o) {
+        var op = el("option", "", o[1]);
+        op.value = o[0];
+        evSel.appendChild(op);
+      });
+      var want = prefs().ev || "";
+      evSel.value = list.some(function (e) { return e.id === want; }) ? want : "";
+      evSel.hidden = !list.length;
+    }
+    function useEv() {
+      var ev = P.evOf(D(), evSel.value);
+      api.setPosPref("ev", evSel.value);
+      if (ev) {
+        if (ev.pl !== undefined && (ev.pl === "" || (D().pls || []).some(function (x) { return x.id === ev.pl; }))) { plSel.value = ev.pl; api.setPosPref("pl", ev.pl); }
+        if (whSel && ev.w !== undefined) { whSel.value = ev.w; api.setWh(ev.w); }
+      }
+      cart.forEach(function (l) { delete l.p; });
+    }
+    evSel.addEventListener("change", function () { useEv(); paint(); });
+    top.appendChild(evSel);
     var plSel = el("select", "pos-pl");
     plSel.setAttribute("aria-label", t("pl"));
     plSel.id = "st-pos-pl";
@@ -165,6 +219,7 @@
       plSel.value = (D().pls || []).some(function (x) { return x.id === want; }) ? want : "";
     }
     fillPl();
+    fillEv();
     plSel.addEventListener("change", function () { api.setPosPref("pl", plSel.value); cart.forEach(function (l) { delete l.p; }); paint(); });
     top.appendChild(plSel);
     var whSel = null;
@@ -176,6 +231,9 @@
       top.appendChild(whSel);
     }
     var tools = el("div", "pos-tools");
+    tools.appendChild(btn(t("evBtn"), "", function () {
+      evDialog(function () { fillEv(); fillPl(); if (whSel) { /* a new stand warehouse shows on the next open */ } paint(); });
+    }));
     tools.appendChild(btn(t("zrep"), "", function () { zDialog(api.todayYmd()); }));
     tools.appendChild(btn(t("lists"), "", function () { plDialog(function () { fillPl(); paint(); }); }));
     tools.appendChild(btn(t("setup"), "", setupDialog));
@@ -276,7 +334,11 @@
 
     var cat = "";
     function reset() { cart = []; given.value = ""; splitIn.value = ""; saleDisc = null; saleDc = ""; if (payMode === "split") payMode = "cash"; }
-    function wh() { return whSel ? whSel.value : ""; }
+    function wh() {
+      if (whSel) return whSel.value;
+      var ev = P.evOf(D(), evSel.value);
+      return ev && ev.w ? ev.w : "";
+    }
     function qLeft(id) { return api.qtyAt(id, wh()); }
     function priceFor(it) { return P.priceOf(D(), it, plSel.value); }
     // the lines as they will be charged: list price (p0), then the
@@ -499,6 +561,7 @@
         data: D(), cart: lines.map(function (l) { return { i: l.i, q: l.q, p: l.p, p0: l.p0, n: l.n, vat: l.vat }; }), pl: plSel.value,
         pay: pays ? (pays.cash ? "cash" : "card") : payMode, pays: pays,
         dc: saleDc, given: g !== null && g >= due ? g : undefined, w: wh(), d: api.todayYmd(), now: now, dev: prefs().dev,
+        ev: P.evOf(D(), evSel.value) ? evSel.value : "",
         id: api.newId(), mvId: api.newId()
       });
       if (!r) return;
@@ -597,6 +660,293 @@
     dlg.appendChild(acts);
     api.showDialog(dlg);
     name.focus();
+  }
+
+  // ---------- F2: events ----------
+  function evDialog(onChange) {
+    var dlg = api.makeDialog("st-pos-evs", true);
+    dlg.appendChild(el("div", "dlg-title", "🎪 " + t("evTitle")));
+    dlg.appendChild(el("p", "dlg-sub", t("evHint")));
+    var box = el("div", "pos-evs");
+    dlg.appendChild(box);
+    function changed() { paint(); if (onChange) onChange(); }
+    function paint() {
+      box.innerHTML = "";
+      var list = (D().evs || []).slice().sort(function (a, b) { return a.from < b.from ? 1 : a.from > b.from ? -1 : 0; });
+      if (!list.length) box.appendChild(el("p", "muted pad", t("evNoneYet")));
+      list.forEach(function (ev) {
+        var r = el("div", "pos-evrow");
+        var bd = el("div", "r-body");
+        bd.appendChild(el("span", "r-name", ev.name + (ev.arch ? " · " + t("evArch") : "")));
+        bd.appendChild(el("span", "r-sub", api.fmtDay(ev.from, true) + (ev.to !== ev.from ? " – " + api.fmtDay(ev.to, true) : "") +
+          (ev.w ? " · " + api.whName(ev.w) : "") + " · " + plLabel(ev.pl)));
+        r.appendChild(bd);
+        var ra = el("div", "dlg-actions tight wrap");
+        ra.appendChild(btn(t("evRep"), "", function () { evReportDialog(ev.id); }));
+        ra.appendChild(btn(t("evPack"), "", function () { packDialog(ev.id, changed); }));
+        ra.appendChild(btn(t("evBack"), "", function () { backDialog(ev.id, changed); }));
+        ra.appendChild(btn(t("evEdit"), "", function () { evEditor(ev, changed); }));
+        r.appendChild(ra);
+        box.appendChild(r);
+      });
+    }
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("evAdd"), "", function () { evEditor(null, changed); }));
+    acts.appendChild(btn(t("close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    paint();
+  }
+  function evEditor(cur, onDone) {
+    var dlg = api.makeDialog("st-pos-ev1");
+    dlg.appendChild(el("div", "dlg-title", cur ? cur.name : t("evAdd")));
+    var name = el("input");
+    name.type = "text";
+    name.maxLength = 80;
+    name.value = cur ? cur.name : t("evNameDef");
+    dlg.appendChild(api.field(t("evName"), name, "st-ev-name"));
+    var today = api.todayYmd();
+    var from = el("input"); from.type = "date"; from.value = cur ? cur.from : today;
+    var to = el("input"); to.type = "date"; to.value = cur ? cur.to : today;
+    dlg.appendChild(api.field(t("evFrom"), from, "st-ev-from"));
+    dlg.appendChild(api.field(t("evTo"), to, "st-ev-to"));
+    var whs = api.whList().concat([["__new", t("evStandNew")]]);
+    var stand = api.selectInput(whs, cur ? (cur.w || "") : "__new");
+    dlg.appendChild(api.field(t("evStand"), stand, "st-ev-w"));
+    var pl = api.selectInput([["", t("retail")]].concat((D().pls || []).map(function (x) { return [x.id, x.name]; })), cur ? cur.pl : "");
+    dlg.appendChild(api.field(t("evPl"), pl, "st-ev-pl"));
+    var fl = el("input"); fl.type = "text"; fl.inputMode = "decimal"; fl.autocomplete = "off";
+    fl.value = cur && cur.fl ? api.centsStr(cur.fl) : "";
+    dlg.appendChild(api.field(t("evFl"), fl, "st-ev-fl"));
+    var arch = null;
+    if (cur) {
+      arch = el("input"); arch.type = "checkbox"; arch.checked = cur.arch === 1;
+      var al = el("label", "check-row");
+      al.appendChild(arch);
+      al.appendChild(el("span", "", t("evArch")));
+      dlg.appendChild(al);
+    }
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions wrap");
+    if (cur) acts.appendChild(btn(t("evDel"), "danger", function () {
+      api.confirm(t("evDelQ", { n: cur.name }), t("evDel"), true, function () { api.delEv(cur.id); dlg.close(); if (onDone) onDone(); });
+    }));
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(btn(t("save"), "primary", function () {
+      var n = name.value.trim(), f = from.value, tt = to.value || f;
+      var c = fl.value.trim() ? api.readCents(fl) : 0;
+      if (!n || !api.core.isYmd(f) || !api.core.isYmd(tt) || c === null || c < 0) { err.textContent = t("evBad"); err.hidden = false; return; }
+      var w = stand.value === "__new" ? api.newWh(n) : stand.value;
+      api.putEv({ id: cur ? cur.id : api.newId(), m: cur ? cur.m : 0, name: n, from: f, to: tt < f ? f : tt, w: w, pl: pl.value, fl: c,
+                  arch: arch && arch.checked ? 1 : 0 });
+      api.toast(t("evSaved"));
+      dlg.close();
+      if (onDone) onDone();
+    }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    name.focus();
+  }
+  function packDialog(evId, onDone) {
+    var ev = P.evOf(D(), evId);
+    if (!ev) return;
+    if (!ev.w) { api.toast(t("evNoStand")); return; }
+    var dlg = api.makeDialog("st-pos-pack", true);
+    dlg.appendChild(el("div", "dlg-title", t("packT", { n: ev.name })));
+    dlg.appendChild(el("p", "dlg-sub", t("packHint", { w: api.whName(ev.w) })));
+    var q = el("input");
+    q.type = "search";
+    q.placeholder = t("plSearch");
+    q.setAttribute("aria-label", t("plSearch"));
+    dlg.appendChild(q);
+    var list = el("div", "pick-list pos-plp");
+    dlg.appendChild(list);
+    var qty = {};
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    function paint() {
+      list.innerHTML = "";
+      var w = api.core.fold(q.value.trim()).split(" ").filter(Boolean);
+      api.byName(D().items.filter(function (it) { return !it.arch && api.matchItem(it, w); })).slice(0, 80).forEach(function (it) {
+        var r = el("div", "pos-plp-row");
+        var bd = el("span", "r-body");
+        bd.appendChild(el("span", "r-name", it.name));
+        bd.appendChild(el("span", "r-sub", t("packMain", { q: api.fmtQ(api.qtyAt(it.id, ""), it) })));
+        r.appendChild(bd);
+        var inp = el("input", "pos-plp-in");
+        inp.type = "text";
+        inp.inputMode = "decimal";
+        inp.setAttribute("aria-label", it.name);
+        inp.value = qty[it.id] || "";
+        inp.addEventListener("input", function () { qty[it.id] = inp.value; });
+        r.appendChild(inp);
+        list.appendChild(r);
+      });
+    }
+    q.addEventListener("input", paint);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(btn(t("packGo"), "primary", function () {
+      var lines = [];
+      Object.keys(qty).forEach(function (id) {
+        var it = byItem(id);
+        if (!it || !String(qty[id]).trim()) return;
+        var n = api.readQty({ value: qty[id] }, it);
+        if (n !== null && n > 0) lines.push({ i: id, q: n });
+      });
+      var mv = P.packMove(ev, lines, { d: api.todayYmd(), now: Date.now(), id: api.newId() });
+      if (!mv) { err.textContent = t("packNone"); err.hidden = false; return; }
+      if (!api.addMove(mv)) return;
+      api.toast(t("packDone", { w: api.whName(ev.w) }));
+      dlg.close();
+      if (onDone) onDone();
+    }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    paint();
+    q.focus();
+  }
+  function backDialog(evId, onDone) {
+    var ev = P.evOf(D(), evId);
+    if (!ev) return;
+    if (!ev.w) { api.toast(t("evNoStand")); return; }
+    var mv = P.backMove(ev, api.whQty(), { d: api.todayYmd(), now: Date.now(), id: api.newId() });
+    var dlg = api.makeDialog("st-pos-back");
+    dlg.appendChild(el("div", "dlg-title", t("backT", { n: ev.name })));
+    dlg.appendChild(el("p", "dlg-sub", t("backHint", { w: api.whName(ev.w) })));
+    var ul = el("ul", "rows");
+    if (!mv) ul.appendChild(el("li", "muted pad", t("backNone")));
+    else mv.lines.forEach(function (l) {
+      var it = byItem(l.i) || { name: l.i, unit: "pcs" };
+      var li = el("li", "row compact");
+      li.appendChild(el("span", "r-name", it.name));
+      li.appendChild(el("span", "r-val", api.fmtQ(l.q, it, true)));
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    if (mv) acts.appendChild(btn(t("backGo"), "primary", function () {
+      if (!api.addMove(mv)) return;
+      api.toast(t("backDone"));
+      dlg.close();
+      if (onDone) onDone();
+    }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+  }
+  function evReportDialog(evId) {
+    var ev = P.evOf(D(), evId);
+    if (!ev) return;
+    var rep = P.evReport(D(), ev, api.whQty()), m = api.money;
+    var dlg = api.makeDialog("st-pos-evrep", true);
+    dlg.appendChild(el("div", "dlg-title", "📊 " + t("repT", { n: ev.name })));
+    dlg.appendChild(el("p", "dlg-sub", api.fmtDay(ev.from, true) + (ev.to !== ev.from ? " – " + api.fmtDay(ev.to, true) : "") + (ev.w ? " · " + api.whName(ev.w) : "")));
+    var box = el("div", "pos-z");
+    dlg.appendChild(box);
+    function kv(k, v, cls) {
+      var r = el("div", "pos-sum" + (cls ? " " + cls : ""));
+      r.appendChild(el("span", "", k));
+      r.appendChild(el("span", "", v));
+      box.appendChild(r);
+    }
+    if (!rep.n && !rep.titles.length) box.appendChild(el("p", "muted pad", t("repNone")));
+    kv(t("zSales"), String(rep.n));
+    if (rep.voids) kv(t("zVoids"), String(rep.voids));
+    kv(t("zNet"), m(rep.net));
+    kv(t("zVat"), m(rep.vat));
+    if (rep.disc) kv(t("zDisc"), "−" + m(rep.disc));
+    kv(t("zGross"), m(rep.g), "grand");
+    box.appendChild(el("div", "pos-h", t("zByPay")));
+    P.PAYS.forEach(function (k) { if (rep.byPay[k]) kv(t(k), m(rep.byPay[k])); });
+    if (rep.days.length) {
+      box.appendChild(el("div", "pos-h", t("repDays")));
+      rep.days.forEach(function (d) { kv(api.fmtDay(d.d, true) + " · " + d.n, m(d.g)); });
+    }
+    if (rep.titles.length) {
+      box.appendChild(el("div", "pos-h", t("repTitles")));
+      var tb = el("table", "pos-evtab");
+      var hr = el("tr");
+      ["", t("repTaken"), t("repSold"), t("repBackC"), t("repLeft"), t("total")].forEach(function (h) { hr.appendChild(el("th", "", h)); });
+      tb.appendChild(hr);
+      rep.titles.forEach(function (x) {
+        var it = (x.i !== P.OTHER && byItem(x.i)) || { unit: "pcs" };
+        var tr = el("tr");
+        [x.n, x.taken ? api.fmtQ(x.taken, it) : "", x.sold ? api.fmtQ(x.sold, it) : "", x.back ? api.fmtQ(x.back, it) : "",
+         x.i === P.OTHER || !ev.w ? "" : api.fmtQ(x.left, it), x.g ? m(x.g) : ""].forEach(function (v) { tr.appendChild(el("td", "", v)); });
+        tb.appendChild(tr);
+      });
+      var wrap = el("div", "pos-evtabw");
+      wrap.appendChild(tb);
+      box.appendChild(wrap);
+    }
+    box.appendChild(el("p", "muted", t("notFiscal")));
+    function sheetRows() {
+      var head = [t("evName"), t("repTaken"), t("repSold"), t("repBackC"), t("repLeft"), t("total")];
+      return [head].concat(rep.titles.map(function (x) {
+        return [x.n, x.taken / 1000, x.sold / 1000, x.back / 1000, x.i === P.OTHER ? "" : x.left / 1000, x.g / 100];
+      }));
+    }
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(btn(t("repPrint"), "", function () { api.printHtml(rollHtml(t("repT", { n: ev.name }), evRows(ev, rep), prefs().paper === 80 ? 80 : 58)); }));
+    if (api.openSheet && rep.titles.length) acts.appendChild(btn(t("repSheet"), "", function () { api.openSheet(t("repT", { n: ev.name }), sheetRows().slice(0, 500), [1, 2, 3, 5]); }));
+    acts.appendChild(btn(t("close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+  }
+  function evRows(ev, rep) {
+    var m = api.money, rows = [], pp = prefs();
+    String(pp.head || "").split("\n").map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 8)
+      .forEach(function (x) { rows.push({ k: "head", l: x, r: "" }); });
+    rows.push({ k: "head", l: ev.name, r: "" });
+    rows.push({ k: "meta", l: api.fmtDay(ev.from, true) + (ev.to !== ev.from ? " – " + api.fmtDay(ev.to, true) : ""), r: "" });
+    rows.push({ k: "sum", l: t("zSales"), r: String(rep.n) });
+    if (rep.disc) rows.push({ k: "sum", l: t("zDisc"), r: "−" + m(rep.disc) });
+    rep.byVat.forEach(function (r) { rows.push({ k: "sum", l: t("vat") + " " + r.rate + "%", r: m(r.vat) }); });
+    rows.push({ k: "total", l: t("totalR"), r: m(rep.g) });
+    P.PAYS.forEach(function (k) { if (rep.byPay[k]) rows.push({ k: "sum", l: t(k), r: m(rep.byPay[k]) }); });
+    rep.days.forEach(function (d) { rows.push({ k: "sum", l: api.fmtDay(d.d, true), r: m(d.g) }); });
+    rep.titles.forEach(function (x) {
+      var it = (x.i !== P.OTHER && byItem(x.i)) || { unit: "pcs" };
+      rows.push({ k: "item", l: x.n, r: m(x.g) });
+      rows.push({ k: "sub", l: t("repSold") + " " + api.fmtQ(x.sold, it, true) + (ev.w && x.i !== P.OTHER ? " · " + t("repLeft") + " " + api.fmtQ(x.left, it, true) : ""), r: "" });
+    });
+    rows.push({ k: "foot", l: t("notFiscal"), r: "" });
+    return rows;
+  }
+  // cash count by notes and coins
+  function countDialog(onUse) {
+    var dlg = api.makeDialog("st-pos-cnt");
+    dlg.appendChild(el("div", "dlg-title", t("drCountT")));
+    var grid = el("div", "pos-cnt");
+    var ins = [];
+    P.DENOMS.forEach(function (c) {
+      var r = el("label", "pos-cntrow");
+      r.appendChild(el("span", "", api.money(c)));
+      var i = el("input"); i.type = "text"; i.inputMode = "numeric"; i.autocomplete = "off";
+      i.setAttribute("aria-label", api.money(c));
+      i.addEventListener("input", sum);
+      ins.push([c, i]);
+      r.appendChild(i);
+      grid.appendChild(r);
+    });
+    dlg.appendChild(grid);
+    var tot = el("p", "pos-change");
+    dlg.appendChild(tot);
+    function total() {
+      return ins.reduce(function (a, x) { var n = parseInt(String(x[1].value).replace(/[^\d]/g, ""), 10); return a + (isFinite(n) ? n * x[0] : 0); }, 0);
+    }
+    function sum() { tot.textContent = t("drTotal", { t: api.money(total()) }); }
+    sum();
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(btn(t("drUse"), "primary", function () { dlg.close(); onUse(total()); }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    ins[0][1].focus();
   }
 
   // ---------- F1: the receipt as a PDF or a QR code ----------
@@ -798,12 +1148,40 @@
     dlg.appendChild(api.field(t("zDay"), dIn, "st-pos-zday"));
     var box = el("div", "pos-z");
     dlg.appendChild(box);
+    // F2: the cash drawer: float + cash sales = expected; counted → difference
+    var drw = el("div", "pos-drawer");
+    var flIn = el("input"); flIn.type = "text"; flIn.inputMode = "decimal"; flIn.autocomplete = "off";
+    var ccIn = el("input"); ccIn.type = "text"; ccIn.inputMode = "decimal"; ccIn.autocomplete = "off";
+    drw.appendChild(api.field(t("drFl"), flIn, "st-pos-fl"));
+    var ccf = api.field(t("drCc"), ccIn, "st-pos-cc");
+    ccf.appendChild(btn(t("drCount"), "", function () { countDialog(function (c) { ccIn.value = api.centsStr(c) || "0"; paintDrawer(); }); }));
+    drw.appendChild(ccf);
+    var drOut = el("p", "pos-change");
+    drw.appendChild(drOut);
+    dlg.appendChild(drw);
+    function centsOf(inp) { return inp.value.trim() ? api.readCents(inp) : null; }
+    function fillDrawer() {
+      var rep = P.zReport(D(), dIn.value), ev = P.evsOn(D(), dIn.value)[0];
+      var fl = rep.z && typeof rep.z.fl === "number" ? rep.z.fl : (ev && ev.fl ? ev.fl : null);
+      flIn.value = fl !== null ? (api.centsStr(fl) || "0") : "";
+      ccIn.value = rep.z && typeof rep.z.cc === "number" ? (api.centsStr(rep.z.cc) || "0") : "";
+      paintDrawer();
+    }
+    function paintDrawer() {
+      var rep = P.zReport(D(), dIn.value), fl = centsOf(flIn), cc = centsOf(ccIn);
+      var dr = P.drawer(rep, fl === null ? 0 : fl, cc === null ? undefined : cc);
+      drOut.textContent = t("drExp", { e: api.money(dr.exp) }) + (dr.diff === null ? "" : " · " + (dr.diff ? t("drDiff", { d: (dr.diff > 0 ? "+" : "−") + api.money(Math.abs(dr.diff)) }) : t("drOk")));
+      drOut.className = "pos-change" + (dr.diff === null ? "" : dr.diff ? " bad" : " good");
+    }
+    flIn.addEventListener("input", paintDrawer);
+    ccIn.addEventListener("input", paintDrawer);
     var acts = el("div", "dlg-actions wrap");
-    var printB = btn(t("zPrint"), "", function () { var rep = P.zReport(D(), dIn.value); api.printHtml(rollHtml(t("zTitle") + " " + rep.d, zRows(rep), prefs().paper === 80 ? 80 : 58)); });
+    var printB = btn(t("zPrint"), "", function () { var rep = P.zReport(D(), dIn.value); api.printHtml(rollHtml(t("zTitle") + " " + rep.d, zRows(rep, centsOf(flIn), centsOf(ccIn)), prefs().paper === 80 ? 80 : 58)); });
     var closeB = btn(t("zClose"), "primary", function () {
       var rep = P.zReport(D(), dIn.value), no = rep.z ? rep.z.no : P.nextZ(D());
+      var fl = centsOf(flIn), cc = centsOf(ccIn);
       api.confirm(t("zCloseQ", { d: api.fmtDay(rep.d, true), n: no }), t("zClose"), false, function () {
-        api.putZ(P.zRow(rep, Date.now(), no));
+        api.putZ(P.zRowDrawer(rep, Date.now(), no, fl === null ? undefined : fl, cc === null ? undefined : cc));
         paint();
       });
     });
@@ -811,7 +1189,7 @@
     acts.appendChild(closeB);
     acts.appendChild(btn(t("close"), "", function () { dlg.close(); }));
     dlg.appendChild(acts);
-    dIn.addEventListener("change", function () { if (api.core.isYmd(dIn.value)) paint(); });
+    dIn.addEventListener("change", function () { if (api.core.isYmd(dIn.value)) { paint(); fillDrawer(); } });
     function kv(parent, k, v, cls) {
       var r = el("div", "pos-sum" + (cls ? " " + cls : ""));
       r.appendChild(el("span", "", k));
@@ -872,8 +1250,9 @@
     }
     api.showDialog(dlg);
     paint();
+    fillDrawer();
   }
-  function zRows(rep) {
+  function zRows(rep, fl, cc) {
     var pp = prefs(), m = api.money, rows = [];
     String(pp.head || "").split("\n").map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 8)
       .forEach(function (s) { rows.push({ k: "head", l: s, r: "" }); });
@@ -888,6 +1267,15 @@
     rows.push({ k: "total", l: t("totalR"), r: m(rep.g) });
     P.PAYS.forEach(function (k) { if (rep.byPay[k]) rows.push({ k: "sum", l: t(k), r: m(rep.byPay[k]) }); });
     if (rep.disc) rows.push({ k: "sum", l: t("zDisc"), r: "−" + m(rep.disc) });
+    if (typeof fl === "number" || typeof cc === "number") {
+      var dr = P.drawer(rep, typeof fl === "number" ? fl : 0, typeof cc === "number" ? cc : undefined);
+      if (typeof fl === "number") rows.push({ k: "sum", l: t("drFl"), r: m(fl) });
+      rows.push({ k: "sum", l: t("drExp", { e: "" }).replace(/[:\s]+$/, ""), r: m(dr.exp) });
+      if (dr.cc !== null) {
+        rows.push({ k: "sum", l: t("drCc"), r: m(dr.cc) });
+        rows.push({ k: "sum", l: t("drDiff", { d: "" }).replace(/[:\s]+$/, ""), r: (dr.diff > 0 ? "+" : dr.diff < 0 ? "−" : "") + m(Math.abs(dr.diff)) });
+      }
+    }
     if (rep.z && rep.after) rows.push({ k: "foot", l: t("zAfter", { n: rep.after }), r: "" });
     rows.push({ k: "foot", l: t("notFiscal"), r: "" });
     return rows;
