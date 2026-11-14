@@ -54,6 +54,10 @@ The view button next to `Filter by label` opens `View and board options`. The vi
 - `Automations…` in the view menu lists the rules of the board and has one more: when a due date passes, add the label "Overdue". Cards in the last column (usually Done) are left alone, and if you take the label off a card it is not added again for the same date.
 - Rules are part of the board, so they sync to your other devices.
 
+## Author Portal
+- When CRM sends a board's production stage to your shop (CRM › Contracts › `Production stage…`), each card ticked there shows `Portal · phase N` on that board, or `Portal · not sent` with the reason when you hold the pointer over it. Tap the chip to open the window in CRM.
+- Once CRM has sent the list, Kanban sends it again by itself a few seconds after you move a card on that board, even when CRM is closed. Kanban never changes anything in CRM.
+
 ## Export, import and templates
 - `orOS file (.orosboard)` saves the board as one open file named after it: columns, cards, labels, rules and the attachments themselves. It is a ZIP: unzip it and you find `content.json` (the board), `media` (the attachments) and `preview/board.md` and `preview/board.csv`, which any text editor or spreadsheet opens. `Import from other apps` opens it again as a new board, and so does opening the file with orOS from your system (`Open with`). `Unzipped orOS folder…` in the same dialog brings back a .orosboard that was unzipped, even after you changed a file in it.
 - `Export board (JSON)` saves one file with the whole board: columns, cards, labels, rules and the attachments themselves (up to 25 MB in total). `Import from other apps` reads that file back as a new board, so it also works for moving a board to someone else.

@@ -879,6 +879,239 @@
       "mm.ofolder": "Αποσυμπιεσμένος φάκελος orOS…"
     }
   });
+  // Events with guests (wave E1, calendar/guests.js + guestsui.js).
+  (function (more) {
+    ["en", "el"].forEach(function (l) {
+      Object.keys(more[l]).forEach(function (k) { STR[l][k] = more[l][k]; });
+    });
+  })({
+    en: {
+      "gu.btn": "Guests…",
+      "gu.btn.n": "Guests ({n})",
+      "gu.title": "Guests",
+      "gu.cap": "Places",
+      "gu.cap.hint": "0 = no limit",
+      "gu.s.i": "No answer",
+      "gu.s.y": "Coming",
+      "gu.s.m": "Maybe",
+      "gu.s.n": "Not coming",
+      "gu.s.w": "Waiting",
+      "gu.sum.places": "{s} of {cap} places taken",
+      "gu.sum.people": "{s} people coming",
+      "gu.sum.parts": "{y} coming · {m} maybe · {i} no answer · {n} not coming · {w} waiting",
+      "gu.sum.in": "Checked in: {n} ({s} people)",
+      "gu.free": "{f} free places. Next on the waiting list: {name}",
+      "gu.free1": "1 free place. Next on the waiting list: {name}",
+      "gu.give": "Give the place",
+      "gu.tell": "{name} has the place now. Let them know:",
+      "gu.tell.msg": "Good news: a place is free for you at “{t}”, {when}. See you there!",
+      "gu.tell.mail": "Email",
+      "gu.tell.sms": "SMS",
+      "gu.tell.copy": "Copy the message",
+      "gu.tell.copied": "Message copied",
+      "gu.add.contacts": "From Contacts…",
+      "gu.add.one": "Add a guest",
+      "gu.edit": "Change guest",
+      "gu.search": "Search guests…",
+      "gu.filter": "Show",
+      "gu.f.all": "Everyone",
+      "gu.f.in": "Checked in",
+      "gu.f.name": "Name",
+      "gu.f.mail": "Email",
+      "gu.f.phone": "Phone",
+      "gu.f.plus": "Plus-ones",
+      "gu.f.note": "Note",
+      "gu.f.answer": "Answer",
+      "gu.save": "Save",
+      "gu.del": "Remove",
+      "gu.del.sure": "Remove for sure?",
+      "gu.removed": "{name} removed from the guests",
+      "gu.in": "Check in",
+      "gu.in.at": "In {time}",
+      "gu.in.undo": "Undo the check-in of {name}?",
+      "gu.in.undo1": "Undo?",
+      "gu.plus": "+{k}",
+      "gu.waitpos": "#{n} waiting",
+      "gu.full": "No free place: {name} is on the waiting list. Raise the places to let them in.",
+      "gu.none": "No guests yet. Add them from Contacts or one by one.",
+      "gu.nomatch": "No guest matches.",
+      "gu.todo": "Tasks to To-Do",
+      "gu.csv": "Export CSV",
+      "gu.print": "Print list",
+      "gu.todo.list": "Event · {t}",
+      "gu.todo.1": "Send the invitations",
+      "gu.todo.2": "Remind those who have not answered",
+      "gu.todo.3": "Confirm the place and what is needed",
+      "gu.todo.4": "Print the guest list for the door",
+      "gu.todo.5": "Thank the guests after the event",
+      "gu.csv.name": "Name",
+      "gu.csv.mail": "Email",
+      "gu.csv.phone": "Phone",
+      "gu.csv.answer": "Answer",
+      "gu.csv.plus": "Plus-ones",
+      "gu.csv.wait": "Waiting since",
+      "gu.csv.in": "Checked in",
+      "gu.csv.note": "Note",
+      "gu.csv.done": "Guest list saved",
+      "gu.pr.title": "Guest list",
+      "gu.pr.in": "In",
+      "gu.pick.title": "Guests from Contacts",
+      "gu.pick.search": "Search contacts…",
+      "gu.pick.lbl": "Contacts label",
+      "gu.pick.lblall": "All contacts",
+      "gu.pick.all": "Select all shown",
+      "gu.pick.go": "Add {n}",
+      "gu.pick.go0": "Add",
+      "gu.pick.none": "No contacts to show",
+      "gu.pick.had": "already a guest",
+      "gu.pick.added": "{n} guests added",
+      "gu.pick.bumped": "{n} of them are on the waiting list (no free place)",
+      "gu.err.name": "Write a name",
+      "gu.err.lists": "Too many guest lists on this device (500)",
+      "gu.err.full": "This guest list is full (2,000 guests)",
+      "gu.err.cap": "Places: a whole number, 0 for no limit",
+      "gu.tix": "Ticket…",
+      "gu.tix.title": "Ticket",
+      "gu.tix.qr": "Ticket code",
+      "gu.tix.hint": "Show this code at the door. It works only for this event.",
+      "gu.tix.share": "Share…",
+      "gu.tix.save": "Save image",
+      "gu.tix.saved": "Ticket saved",
+      "gu.tix.file": "Ticket",
+      "gu.tix.fail": "The ticket could not be made on this device",
+      "gu.tixall": "Print tickets",
+      "gu.tixall.none": "No one is coming yet",
+      "gu.door": "Door",
+      "gu.door.count": "{n} of {y} in ({s} people)",
+      "gu.door.cam.on": "Start camera",
+      "gu.door.cam.off": "Stop camera",
+      "gu.door.wait": "Starting the camera…",
+      "gu.door.aim": "Hold a ticket in front of the camera",
+      "gu.door.nocam": "No camera here. Use the guest list: search and tap Check in.",
+      "gu.door.denied": "The camera is not allowed. Allow it in the browser, or check guests in from the list.",
+      "gu.door.ok": "Welcome, {name}",
+      "gu.door.plus": "with {k} more",
+      "gu.door.in": "Already in at {time}: {name}",
+      "gu.door.bad": "Not a ticket for this event",
+      "gu.door.removed": "This guest was removed from the list",
+      "gu.door.ask": "{name} is on the list as “{s}”. Let in?",
+      "gu.door.let": "Let in",
+      "gu.door.skip": "Not now",
+    },
+    el: {
+      "gu.btn": "Καλεσμένοι…",
+      "gu.btn.n": "Καλεσμένοι ({n})",
+      "gu.title": "Καλεσμένοι",
+      "gu.cap": "Θέσεις",
+      "gu.cap.hint": "0 = χωρίς όριο",
+      "gu.s.i": "Χωρίς απάντηση",
+      "gu.s.y": "Έρχεται",
+      "gu.s.m": "Ίσως",
+      "gu.s.n": "Δεν έρχεται",
+      "gu.s.w": "Σε αναμονή",
+      "gu.sum.places": "{s} από {cap} θέσεις πιασμένες",
+      "gu.sum.people": "Έρχονται {s} άτομα",
+      "gu.sum.parts": "{y} έρχονται · {m} ίσως · {i} χωρίς απάντηση · {n} δεν έρχονται · {w} σε αναμονή",
+      "gu.sum.in": "Είσοδοι: {n} ({s} άτομα)",
+      "gu.free": "{f} ελεύθερες θέσεις. Επόμενος στην αναμονή: {name}",
+      "gu.free1": "1 ελεύθερη θέση. Επόμενος στην αναμονή: {name}",
+      "gu.give": "Δώσε τη θέση",
+      "gu.tell": "Η θέση είναι τώρα του/της {name}. Ενημέρωσέ τον/την:",
+      "gu.tell.msg": "Καλά νέα: ελευθερώθηκε θέση για σένα στο «{t}», {when}. Τα λέμε εκεί!",
+      "gu.tell.mail": "Email",
+      "gu.tell.sms": "SMS",
+      "gu.tell.copy": "Αντιγραφή μηνύματος",
+      "gu.tell.copied": "Το μήνυμα αντιγράφηκε",
+      "gu.add.contacts": "Από τις Επαφές…",
+      "gu.add.one": "Νέος καλεσμένος",
+      "gu.edit": "Αλλαγή καλεσμένου",
+      "gu.search": "Αναζήτηση καλεσμένων…",
+      "gu.filter": "Εμφάνιση",
+      "gu.f.all": "Όλοι",
+      "gu.f.in": "Μπήκαν",
+      "gu.f.name": "Όνομα",
+      "gu.f.mail": "Email",
+      "gu.f.phone": "Τηλέφωνο",
+      "gu.f.plus": "Συνοδοί",
+      "gu.f.note": "Σημείωση",
+      "gu.f.answer": "Απάντηση",
+      "gu.save": "Αποθήκευση",
+      "gu.del": "Αφαίρεση",
+      "gu.del.sure": "Σίγουρα αφαίρεση;",
+      "gu.removed": "Ο/Η {name} βγήκε από τους καλεσμένους",
+      "gu.in": "Είσοδος",
+      "gu.in.at": "Μπήκε {time}",
+      "gu.in.undo": "Ακύρωση της εισόδου του/της {name};",
+      "gu.in.undo1": "Ακύρωση;",
+      "gu.plus": "+{k}",
+      "gu.waitpos": "#{n} στην αναμονή",
+      "gu.full": "Δεν υπάρχει ελεύθερη θέση: ο/η {name} μπήκε στην αναμονή. Αύξησε τις θέσεις για να μπει.",
+      "gu.none": "Δεν υπάρχουν καλεσμένοι ακόμα. Πρόσθεσέ τους από τις Επαφές ή έναν-έναν.",
+      "gu.nomatch": "Κανένας καλεσμένος δεν ταιριάζει.",
+      "gu.todo": "Εργασίες στο To-Do",
+      "gu.csv": "Εξαγωγή CSV",
+      "gu.print": "Εκτύπωση λίστας",
+      "gu.todo.list": "Εκδήλωση · {t}",
+      "gu.todo.1": "Στείλε τις προσκλήσεις",
+      "gu.todo.2": "Υπενθύμιση σε όσους δεν απάντησαν",
+      "gu.todo.3": "Επιβεβαίωση χώρου και ό,τι χρειάζεται",
+      "gu.todo.4": "Εκτύπωση της λίστας για την πόρτα",
+      "gu.todo.5": "Ευχαριστήριο στους καλεσμένους μετά την εκδήλωση",
+      "gu.csv.name": "Όνομα",
+      "gu.csv.mail": "Email",
+      "gu.csv.phone": "Τηλέφωνο",
+      "gu.csv.answer": "Απάντηση",
+      "gu.csv.plus": "Συνοδοί",
+      "gu.csv.wait": "Σε αναμονή από",
+      "gu.csv.in": "Είσοδος",
+      "gu.csv.note": "Σημείωση",
+      "gu.csv.done": "Η λίστα καλεσμένων αποθηκεύτηκε",
+      "gu.pr.title": "Λίστα καλεσμένων",
+      "gu.pr.in": "Μπήκε",
+      "gu.pick.title": "Καλεσμένοι από τις Επαφές",
+      "gu.pick.search": "Αναζήτηση επαφών…",
+      "gu.pick.lbl": "Ετικέτα επαφών",
+      "gu.pick.lblall": "Όλες οι επαφές",
+      "gu.pick.all": "Επιλογή όλων όσων φαίνονται",
+      "gu.pick.go": "Προσθήκη {n}",
+      "gu.pick.go0": "Προσθήκη",
+      "gu.pick.none": "Δεν υπάρχουν επαφές",
+      "gu.pick.had": "ήδη καλεσμένος",
+      "gu.pick.added": "Προστέθηκαν {n} καλεσμένοι",
+      "gu.pick.bumped": "Οι {n} από αυτούς μπήκαν στην αναμονή (δεν υπάρχει ελεύθερη θέση)",
+      "gu.err.name": "Γράψε ένα όνομα",
+      "gu.err.lists": "Πάρα πολλές λίστες καλεσμένων σε αυτή τη συσκευή (500)",
+      "gu.err.full": "Η λίστα είναι γεμάτη (2.000 καλεσμένοι)",
+      "gu.err.cap": "Θέσεις: ακέραιος αριθμός, 0 για χωρίς όριο",
+      "gu.tix": "Εισιτήριο…",
+      "gu.tix.title": "Εισιτήριο",
+      "gu.tix.qr": "Κωδικός εισιτηρίου",
+      "gu.tix.hint": "Δείξε αυτόν τον κωδικό στην πόρτα. Ισχύει μόνο για αυτή την εκδήλωση.",
+      "gu.tix.share": "Κοινοποίηση…",
+      "gu.tix.save": "Αποθήκευση εικόνας",
+      "gu.tix.saved": "Το εισιτήριο αποθηκεύτηκε",
+      "gu.tix.file": "Εισιτήριο",
+      "gu.tix.fail": "Δεν μπόρεσε να φτιαχτεί το εισιτήριο σε αυτή τη συσκευή",
+      "gu.tixall": "Εκτύπωση εισιτηρίων",
+      "gu.tixall.none": "Δεν έρχεται κανείς ακόμα",
+      "gu.door": "Πόρτα",
+      "gu.door.count": "Μπήκαν {n} από {y} ({s} άτομα)",
+      "gu.door.cam.on": "Άνοιγμα κάμερας",
+      "gu.door.cam.off": "Κλείσιμο κάμερας",
+      "gu.door.wait": "Ανοίγει η κάμερα…",
+      "gu.door.aim": "Κράτα ένα εισιτήριο μπροστά στην κάμερα",
+      "gu.door.nocam": "Δεν υπάρχει κάμερα εδώ. Χρησιμοποίησε τη λίστα: αναζήτηση και «Είσοδος».",
+      "gu.door.denied": "Η κάμερα δεν επιτρέπεται. Επίτρεψέ την στον browser ή κάνε την είσοδο από τη λίστα.",
+      "gu.door.ok": "Καλώς ήρθες, {name}",
+      "gu.door.plus": "με {k} ακόμα",
+      "gu.door.in": "Μπήκε ήδη στις {time}: {name}",
+      "gu.door.bad": "Δεν είναι εισιτήριο αυτής της εκδήλωσης",
+      "gu.door.removed": "Αυτός ο καλεσμένος βγήκε από τη λίστα",
+      "gu.door.ask": "Ο/Η {name} είναι στη λίστα ως «{s}». Να μπει;",
+      "gu.door.let": "Να μπει",
+      "gu.door.skip": "Όχι τώρα",
+    }
+  });
   // A pack language (German, …): STR[LANG] = English + the pack, and
   // weekday / month names from Intl in that language's locale.
   if (window.orosI18n) {
@@ -5187,6 +5420,29 @@ function transientNote(title, body) {
     });
   }
 
+  // Events with guests (wave E1): the guest list of a SAVED, one-off
+  // event of the person's own calendar (not a repeating one, not a
+  // household calendar). calendar/guestsui.js owns the window.
+  var guestsUi = null;
+  function guestsCan(e) {
+    return !!(e && !e._feed && !isHhEv(e) && !validRecur(e.recur) && findEvent(e.id) === e);
+  }
+  function guestsWhen(e) {
+    var s = longDate(e.date);
+    if (e.dateEnd && e.dateEnd !== e.date) s += " \u2013 " + longDate(e.dateEnd);
+    if (e.start) s += ", " + e.start + (e.end ? "\u2013" + e.end : "");
+    if (e.location) s += " · " + e.location;
+    return s;
+  }
+  if ($("ev-guests")) {
+    $("ev-guests").addEventListener("click", function () {
+      var id = editingId;
+      if (!guestsUi || !id) return;
+      $("ev-dlg").close();     // unsaved edits are left behind, like Cancel
+      guestsUi.open(id);
+    });
+  }
+
   if ($("ev-mail")) {
     $("ev-mail").addEventListener("click", function () {
       var p = shellOpenAt(), target = dlgMail;
@@ -5257,6 +5513,12 @@ function transientNote(title, body) {
     dlgShare = existing && shareApi() ? sharePayload(existing, occ) : null;
     var shareBtn = $("ev-share");
     if (shareBtn) shareBtn.hidden = !dlgShare;
+    var guBtn = $("ev-guests");
+    if (guBtn) {
+      guBtn.hidden = !(guestsUi && existing && mode !== "occ" && guestsCan(existing));
+      var gn = guBtn.hidden ? 0 : guestsUi.count(existing.id);
+      guBtn.textContent = gn ? t("gu.btn.n").replace("{n}", String(gn)) : t("gu.btn");
+    }
     var mailBtn = $("ev-mail");
     if (mailBtn) mailBtn.hidden = !dlgMail;
     // CA-8: what the dialog showed at open — a pull may update every
@@ -8533,6 +8795,21 @@ function transientNote(title, body) {
     // visible in the console instead of a silently dead sync.
     console.warn("[Calendar] sync registration failed:", e);
   }
+
+  // Events with guests (wave E1): own slice "calguests".
+  try {
+    if (window.OrosCalGuestsUI && window.OrosCalGuests) {
+      guestsUi = window.OrosCalGuestsUI.init({
+        t: t, loc: loc, note: transientNote, findEvent: findEvent, canHave: guestsCan,
+        whenText: guestsWhen, shellOpenAt: shellOpenAt, mailReady: mailReady,
+        dialogHost: dialogHost, contacts: contactsRaw, ctName: ctName
+      });
+      var guGone = {}, guHave = {};
+      state.events.forEach(function (e) { guHave[e.id] = 1; });
+      state.deleted.forEach(function (d) { if (!guHave[d.id]) guGone[d.id] = 1; });
+      guestsUi.cleanup(guGone);
+    }
+  } catch (e) { console.warn("[Calendar] guests failed to start:", e); }
 
   // A deep link staged while the Calendar was closed (one-shot take).
   try {

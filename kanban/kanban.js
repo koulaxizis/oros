@@ -249,6 +249,16 @@
       "ctr.chip":         "Contract ends {d}",
       "ctr.chipEnded":    "Contract ended",
       "ctr.chipHint":     "Open the contract in CRM",
+      "pd.chip":          "Portal · phase {n}",
+      "pd.chipOff":       "Portal · not sent",
+      "pd.chipHint":      "Shown to its creator in the Author Portal (CRM › Contracts › Production stage…)",
+      "pd.chipWhy":       "Ticked for the Author Portal but not sent: {why} (CRM › Contracts › Production stage…)",
+      "pd.why.noben":     "no creator linked",
+      "pd.why.badid":     "the card id cannot be sent",
+      "pd.why.notitle":   "no title",
+      "pd.why.old":       "released more than 30 days ago",
+      "pd.why.max":       "over 500 works",
+      "pd.why.nophase":   "its column has no phase",
       "export.oros":      "orOS file (.orosboard)",
       "export.json":      "Export board (JSON)",
       "export.csv":       "Export cards (CSV)",
@@ -511,6 +521,16 @@
       "ctr.chip":         "Λήξη συμφωνητικού {d}",
       "ctr.chipEnded":    "Έληξε συμφωνητικό",
       "ctr.chipHint":     "Άνοιγμα του συμφωνητικού στο CRM",
+      "pd.chip":          "Portal · φάση {n}",
+      "pd.chipOff":       "Portal · δεν στέλνεται",
+      "pd.chipHint":      "Φαίνεται στον δημιουργό στο Author Portal (CRM › Λήξεις › Στάδιο παραγωγής…)",
+      "pd.chipWhy":       "Τσεκαρισμένη για το Author Portal αλλά δεν στέλνεται: {why} (CRM › Λήξεις › Στάδιο παραγωγής…)",
+      "pd.why.noben":     "δεν έχει συνδεδεμένο δημιουργό",
+      "pd.why.badid":     "το id της κάρτας δεν μπορεί να σταλεί",
+      "pd.why.notitle":   "δεν έχει τίτλο",
+      "pd.why.old":       "κυκλοφόρησε πριν από πάνω από 30 μέρες",
+      "pd.why.max":       "πάνω από 500 έργα",
+      "pd.why.nophase":   "η στήλη της δεν έχει φάση",
       "export.oros":      "Αρχείο orOS (.orosboard)",
       "export.json":      "Εξαγωγή πίνακα (JSON)",
       "export.csv":       "Εξαγωγή καρτών (CSV)",
@@ -1034,6 +1054,7 @@
   function save() {
     writeStore();
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    pdChanged();
   }
 
   // orosDialog lives in the parent shell (same-origin iframe).
@@ -1211,6 +1232,7 @@
   //   - Columns + cards (όπως πριν, αλλά scoped στο currentBoard)
   
   function renderAll() {
+    pdView = null;
     // Header/board section
     var headerHost = $("board-header");
     if (headerHost) renderBoardHeader();
@@ -2346,6 +2368,101 @@
     });
     return sp;
   }
+  // RS-PROD (W4): the cards CRM sends to the Author Portal (CRM ›
+  // Contracts › Production stage…, the board and the ticked cards are
+  // CRM's cset.pb / cset.pc). Kanban only reads CRM and Publishing: a
+  // chip on each ticked card, and after a change on that board it sends
+  // the list itself (same plan, same last-sent record as CRM, so the two
+  // never send the same list twice), once CRM has sent it at least once.
+  var PD_SENT_KEY = "oros-crm-prod-sent", PD_WAIT = 4000, pdTimer = null, pdView = null;
+  var pdCache = { raw: undefined, data: null };
+  function pdCrm() {
+    var K = window.OrosCrmCore, raw = null;
+    if (!K || typeof K.norm !== "function" || !window.OrosCrmProd) return null;
+    try { raw = localStorage.getItem("oros-crm-data"); } catch (e) { raw = null; }
+    if (raw !== pdCache.raw) {
+      pdCache.raw = raw;
+      pdCache.data = null;
+      try { var d = raw ? JSON.parse(raw) : null; if (d && Array.isArray(d.cust)) pdCache.data = K.norm(d); } catch (e) { pdCache.data = null; }
+    }
+    var c = pdCache.data;
+    return c && c.cset && c.cset.pb ? c : null;
+  }
+  function pdJson(key) { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; } }
+  function pdShops(crm) {
+    var L = linksHost(), list = [];
+    if (L) { try { list = L.list("woo") || []; } catch (e) { list = []; } }
+    var first = list[0] ? list[0].id : "", ids = {};
+    (crm.rsl || []).forEach(function (r) {
+      if (r.n && (crm.cust || []).some(function (c) { return c.id === r.id; })) ids[r.a || first] = 1;
+    });
+    return { list: list.filter(function (a) { return ids[a.id]; }), first: first };
+  }
+  function pdPlanFor(crm, shopId, first) {
+    var cs = crm.cset;
+    return window.OrosCrmProd.plan({ kanban: pdJson(STORAGE_KEY), crm: crm, publish: pdJson("oros-publish-data"), board: cs.pb, map: cs.pm || null,
+                                    chosen: cs.pc || [], shopId: shopId, firstShopId: first, today: localDateStr(new Date()) });
+  }
+  // one plan per render (the first shop's view; the chip is a hint)
+  function pdViewNow() {
+    if (pdView) return pdView;
+    pdView = { on: false };
+    var crm = pdCrm(), board = currentBoard();
+    if (!crm || !board || window.OrosCrmProd.fold(board.name) !== window.OrosCrmProd.fold(crm.cset.pb)) return pdView;
+    var sh = pdShops(crm), shopId = sh.list[0] ? sh.list[0].id : sh.first, x;
+    try { x = pdPlanFor(crm, shopId, sh.first); } catch (e) { return pdView; }
+    var chosen = {}, phase = {}, why = {};
+    (crm.cset.pc || []).forEach(function (id) { chosen[id] = 1; });
+    x.body.works.forEach(function (w) { var id = w.id.replace(/-\d+$/, ""); phase[id] = w.phase; });
+    x.left.forEach(function (l) { if (!phase[l.card]) why[l.card] = l.why; });
+    pdView = { on: true, chosen: chosen, phase: phase, why: why };
+    return pdView;
+  }
+  function pdChip(card) {
+    var v = pdViewNow();
+    if (!v.on || !v.chosen[card.id]) return null;
+    var sp = document.createElement("span"), n = v.phase[card.id], why = v.why[card.id] || "nophase";
+    sp.className = "pd-chip" + (n ? "" : " off");
+    sp.textContent = n ? t("pd.chip", { n: n }) : t("pd.chipOff");
+    sp.title = n ? t("pd.chipHint") : t("pd.chipWhy", { why: t("pd.why." + why) });
+    sp.addEventListener("click", function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      try { window.parent.__orosOpenAt("crm", { prod: 1 }); } catch (err) {}
+    });
+    return sp;
+  }
+  function pdChanged() {
+    var L = linksHost();
+    if (!L || typeof L.hasRsKey !== "function" || !pdCrm()) return;
+    clearTimeout(pdTimer);
+    pdTimer = setTimeout(function () {
+      var crm = pdCrm(), sent = pdJson(PD_SENT_KEY) || {};
+      if (!crm) return;
+      var sh = pdShops(crm);
+      sh.list.reduce(function (p, shop) {
+        var x, json;
+        return p.then(function () {
+          // only where CRM has sent before, and only a list that changed
+          if (typeof sent[shop.id] !== "string") return false;
+          x = pdPlanFor(crm, shop.id, sh.first);
+          json = JSON.stringify(x.body.works);
+          if (sent[shop.id] === json) return false;
+          return Promise.resolve(L.hasRsKey(shop.id)).catch(function () { return false; });
+        }).then(function (k) {
+          if (!k) return;
+          return Promise.resolve(L.call(shop.id, [window.OrosCrmProd.req(x.body)])).then(function (res) {
+            var r = res && res[0];
+            if (L.statusCode(r) || !window.OrosCrmProd.parseSaved(r.data)) return;
+            var all = pdJson(PD_SENT_KEY) || {};
+            all[shop.id] = json;
+            try { localStorage.setItem(PD_SENT_KEY, JSON.stringify(all)); } catch (e) {}
+          });
+        });
+      }, Promise.resolve()).catch(function () {});
+    }, PD_WAIT);
+  }
+
   function fmtDay(ymd) {
     if (LANG === "en") return ymd;
     var sep = LANG === "de" ? "." : "/";
@@ -2462,6 +2579,8 @@
     }
     var cc = ctrChip(card);
     if (cc) meta.appendChild(cc);
+    var pc = pdChip(card);
+    if (pc) meta.appendChild(pc);
     if (meta.childNodes.length) el.appendChild(meta);
 
     // Extra info preview: μία dim, περικομμένη γραμμή "label: value · …"

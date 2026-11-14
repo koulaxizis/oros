@@ -5,8 +5,8 @@
   },
   "apps": {
     "assistant": {
-      "bytes": 1389567,
-      "ms": 205
+      "bytes": 1669272,
+      "ms": 175
     },
     "atelier": {
       "bytes": 2462541,
@@ -395,10 +395,6 @@
     "simon": {
       "bytes": 153599,
       "ms": 37
-    },
-    "sky": {
-      "bytes": 281599,
-      "ms": 64
     },
     "slider": {
       "bytes": 153599,

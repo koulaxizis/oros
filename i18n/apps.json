@@ -64,6 +64,12 @@
    ]
   },
   {
+   "app": "base",
+   "files": [
+    "base/app.js"
+   ]
+  },
+  {
    "app": "battleship",
    "files": [
     "battleship/battleship.js"
@@ -241,6 +247,7 @@
     "designkit/fx.js",
     "designkit/media.js",
     "designkit/model.js",
+    "designkit/pathedit.js",
     "designkit/show.js",
     "designkit/templates.js"
    ]
@@ -306,6 +313,7 @@
    "app": "files",
    "files": [
     "files/computer.js",
+    "files/docs.js",
     "files/drive.js",
     "files/dropbox-callback.js",
     "files/dropbox.js",
@@ -334,6 +342,13 @@
    "app": "flow",
    "files": [
     "flow/flow.js"
+   ]
+  },
+  {
+   "app": "forms",
+   "files": [
+    "forms/app.js",
+    "forms/render.js"
    ]
   },
   {
@@ -840,7 +855,9 @@
   {
    "app": "scanpdf",
    "files": [
-    "scanpdf/scanpdf.js"
+    "scanpdf/scanpdf.js",
+    "scanpdf/search.js",
+    "scanpdf/sign.js"
    ]
   },
   {
@@ -854,6 +871,7 @@
    "app": "settings",
    "files": [
     "settings/core.js",
+    "settings/fonts.js",
     "settings/search.js"
    ]
   },
@@ -893,14 +911,6 @@
    "app": "simon",
    "files": [
     "simon/simon.js"
-   ]
-  },
-  {
-   "app": "sky",
-   "files": [
-    "sky/core.js",
-    "sky/sky.js",
-    "sky/stars.js"
    ]
   },
   {
@@ -1066,6 +1076,12 @@
    "files": [
     "together/app.js",
     "together/core.js"
+   ]
+  },
+  {
+   "app": "transfer",
+   "files": [
+    "transfer/app.js"
    ]
   },
   {

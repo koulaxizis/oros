@@ -16,7 +16,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.5.0";
+  var VERSION = "1.6.0";
   var PREFS_KEY = "oros-scanpdf-prefs";      // device-local (R10), never synced
   var SIGS_KEY = "oros-scanpdf-sigs";        // device-local (R10), never synced
   var MAX_SIGS = 6;
@@ -313,11 +313,18 @@
   //   ink:    a pen or marker drawing: w, h (its box, fractions of S),
   //           pts (strokes, each [x, y, x, y, ...] as fractions of the
   //           box), color, sw, op (1 pen, below 1 marker).
+  //   field:  a place the other person fills in when asked to sign
+  //           (signature requests, sign-core.js): k (FIELDS), w, h as
+  //           fractions of S, req (must be filled). Never drawn into a
+  //           PDF: the request carries it beside the PDF.
+  //   text may carry mw (fractions of S): the widest it may be, its
+  //           size made smaller in the PDF when it is wider.
   // The display of a page turned by R (clockwise) is W' × H' with
   // W' = H when R is 90 or 270.
   var COLORS = { black: [0.07, 0.07, 0.09], blue: [0.1, 0.23, 0.6], red: [0.75, 0.1, 0.12],
                  green: [0.1, 0.5, 0.22], yellow: [1, 0.84, 0.1], white: [1, 1, 1] };
   var SHAPES = ["rect", "ellipse", "line", "arrow", "check", "cross"];
+  var FIELDS = ["sig", "init", "name", "date", "text", "check"];
   function dispSize(W, H, R) { return R % 180 ? [H, W] : [W, H]; }
   // Unturned point (px, py) → where it shows on the turned page.
   function toDisp(px, py, W, H, R) {
@@ -365,7 +372,7 @@
   // A clean overlay, or null: only known fields, numbers in range.
   function cleanOv(o) {
     if (!o || typeof o !== "object") return null;
-    var t = o.t === "img" || o.t === "shape" || o.t === "ink" ? o.t : "text";
+    var t = o.t === "img" || o.t === "shape" || o.t === "ink" || o.t === "field" ? o.t : "text";
     var c = { id: String(o.id || "").slice(0, 40) || "o", t: t,
               cx: clamp01(o.cx), cy: clamp01(o.cy), A: normRot(o.A) };
     if (t === "img") {
@@ -386,6 +393,11 @@
       c.color = COLORS[o.color] ? o.color : "red";
       c.fill = (c.k === "rect" || c.k === "ellipse") && o.fill === true;
       c.sw = Math.min(0.05, Math.max(c.fill ? 0 : 0.0005, Number(o.sw) >= 0 ? Number(o.sw) : 0.004));
+    } else if (t === "field") {
+      c.k = FIELDS.indexOf(o.k) !== -1 ? o.k : "sig";
+      c.w = sizeOf(o.w, 0.3, false);
+      c.h = sizeOf(o.h, 0.08, false);
+      c.req = o.req !== false;
     } else if (t === "ink") {
       c.w = Math.min(2, Math.max(0.002, Number(o.w) || 0.002));
       c.h = Math.min(2, Math.max(0.002, Number(o.h) || 0.002));
@@ -399,6 +411,7 @@
       if (!c.text.trim()) return null;
       c.fs = Math.min(0.5, Math.max(0.005, Number(o.fs) || 0.03));
       c.color = COLORS[o.color] ? o.color : "black";
+      if (Number(o.mw) > 0) c.mw = round4(Math.min(2, Math.max(0.01, Number(o.mw))));
     }
     return c;
   }
@@ -686,7 +699,7 @@
     history: history, record: record, undo: undo, redo: redo,
     parseRanges: parseRanges, splitPlan: splitPlan, rangeLabel: rangeLabel, parseTarget: parseTarget,
     SIGS_KEY: SIGS_KEY, MAX_SIGS: MAX_SIGS, MAX_OV: MAX_OV, COLORS: COLORS, BASELINE: BASELINE,
-    SHAPES: SHAPES, MAX_INK: MAX_INK, MAX_STROKES: MAX_STROKES, MAX_PIC_URL: MAX_PIC_URL, ovParts: ovParts,
+    SHAPES: SHAPES, FIELDS: FIELDS, MAX_INK: MAX_INK, MAX_STROKES: MAX_STROKES, MAX_PIC_URL: MAX_PIC_URL, ovParts: ovParts,
     COMPRESS: COMPRESS, WM_OP: WM_OP, NUM_POS: NUM_POS,
     cloneOv: cloneOv, dispSize: dispSize, toDisp: toDisp, fromDisp: fromDisp, ovAt: ovAt, ovDisp: ovDisp,
     anchor: anchor, cleanOv: cleanOv, setOverlays: setOverlays,

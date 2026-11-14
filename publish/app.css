@@ -378,3 +378,12 @@ label.check input { width: 20px; height: 20px; flex: 0 0 auto; }
 .btn.pick { display: block; width: 100%; margin-bottom: 6px; white-space: normal; text-align: start; }
 details.trk > summary { cursor: pointer; font-weight: 600; overflow-wrap: anywhere; padding: 2px 0; }
 details.trk[open] > summary { margin-bottom: 8px; }
+/* wave M2: credits and splits */
+.credits { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
+.credits .subsec { margin-bottom: 10px; }
+.credits h4 { margin: 4px 0 6px; font-size: .95em; }
+.person.share { display: flex; flex-wrap: wrap; gap: 6px; }
+.person.share > select, .person.share > input { flex: 1 1 140px; min-width: 0; width: auto; }
+.person.share > .pct { flex: 0 0 76px; }
+.person.share > .narrow { flex: 1 1 96px; }
+.person.share > .icon-btn { flex: 0 0 40px; }

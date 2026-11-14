@@ -1,6 +1,9 @@
 // ============================================================
 // orOS Notes — voice notes (notes/voice.js, window.OrosNotesVoiceUI)
-// NOTES-VOICE wave V1: record into a page, play, download, delete.
+// NOTES-VOICE V1: record into a page, play, download, delete.
+// V2: trim (a new file, the old one to the Trash), transcription on the
+// device with Montage's Whisper (montage/asr.js, the shared model in
+// IndexedDB oros-montage-ai), send to Studio (orosFileOpen.hand).
 // Pure rules live in voice-core.js (window.OrosNotesVoice).
 //   - The microphone goes through MediaRecorder (webm/Opus, Safari
 //     mp4/AAC). No speech recognition API is ever used (rule 30).
@@ -527,7 +530,12 @@
       b.addEventListener("click", function () { closeMenu(); fn(); });
       m.appendChild(b);
     }
-    if (!row.missing) item(t("vc.download"), function () { download(row); });
+    if (!row.missing) {
+      item(t("vc.transcribe"), function () { transcribe(row); });
+      item(t("vc.trim"), function () { trimDialog(row); });
+      if (studioOk()) item(t("vc.studio"), function () { toStudio(row); });
+      item(t("vc.download"), function () { download(row); });
+    }
     item(t("vc.delete"), function () { del(row); }, true);
     document.body.appendChild(m);
     var r = anchor.getBoundingClientRect();
@@ -581,6 +589,282 @@
         host.toast(t("vc.trashed"));
       }, function () { host.toast(t("vc.delFail")); });
     });
+  }
+
+  // ---------- V2: shared helpers ----------
+  var scripts = {};
+  function loadScript(src) {
+    if (scripts[src]) return scripts[src];
+    var ver = ((document.querySelector('script[src*="notes.js?v="]') || { src: "" }).src.split("?v=")[1]) || "";
+    scripts[src] = new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = src + (ver ? "?v=" + encodeURIComponent(ver) : "");
+      sc.onload = function () { res(); };
+      sc.onerror = function () { sc.remove(); delete scripts[src]; rej(new Error("load " + src)); };
+      document.head.appendChild(sc);
+    });
+    return scripts[src];
+  }
+  function readBlob(name) {
+    var fs = fsApi(), path = V.pathOf(name);
+    if (!fs || !path) return Promise.reject(new Error("no-disk"));
+    return Promise.resolve(fs.read(path));
+  }
+  // The recording as an AudioBuffer (the browser's own decoder).
+  function decode(name) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return Promise.reject(new Error("no-audio"));
+    return readBlob(name).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
+      return new Promise(function (res, rej) {
+        var ac = new AC();
+        var done = function (f, v) { try { ac.close(); } catch (e) {} f(v); };
+        ac.decodeAudioData(ab, function (buf) { done(res, buf); }, function (e) { done(rej, e || new Error("decode")); });
+      });
+    });
+  }
+  // [from, to) ms of a buffer, mixed to mono and resampled to `rate`.
+  function monoAt(buf, a, b, rate) {
+    var sec = Math.max(0.05, (b - a) / 1000), OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OAC) return Promise.reject(new Error("no-audio"));
+    var oc = new OAC(1, Math.max(1, Math.ceil(sec * rate)), rate), src = oc.createBufferSource();
+    src.buffer = buf; src.connect(oc.destination); src.start(0, a / 1000, sec);
+    return oc.startRendering().then(function (r) { return r.getChannelData(0); });
+  }
+  function busyDlg(title, onCancel) {
+    var old = document.getElementById("vc-busy");
+    if (old) old.remove();
+    var dlg = el("dialog", "vc-dlg");
+    dlg.id = "vc-busy";
+    dlg.appendChild(el("h3", null, title));
+    var st = el("p", "vc-dlg-p", "");
+    st.setAttribute("aria-live", "polite");
+    dlg.appendChild(st);
+    var bar = el("div", "vc-prog"); bar.appendChild(el("i"));
+    dlg.appendChild(bar);
+    var row = el("div", "vc-dlg-row");
+    if (onCancel) {
+      var no = el("button", "vc-btn", t("dlg.cancel")); no.type = "button";
+      no.addEventListener("click", function () { onCancel(); dlg.close(); });
+      row.appendChild(no);
+    }
+    dlg.appendChild(row);
+    dlg.addEventListener("cancel", function (e) { if (!onCancel) e.preventDefault(); else onCancel(); });
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    return {
+      say: function (txt, f) { st.textContent = txt; if (f != null) bar.firstChild.style.width = Math.round(Math.max(0, Math.min(1, f)) * 100) + "%"; },
+      close: function () { if (dlg.open) dlg.close(); }
+    };
+  }
+
+  // ---------- V2: trim (always a NEW file; the old one to the Trash) ----------
+  function trimDialog(row) {
+    var b = busyDlg(t("vc.trimT"), null);
+    b.say(t("vc.reading"), 0);
+    decode(row.name).then(function (buf) {
+      b.close();
+      return buf.numberOfChannels ? openTrim(row, buf) : null;
+    }, function () { b.close(); host.toast(t("vc.decodeFail")); });
+  }
+  function openTrim(row, buf) {
+    var dur = Math.round(buf.duration * 1000);
+    var ch0 = buf.getChannelData(0);
+    var dlg = el("dialog", "vc-dlg vc-trim");
+    dlg.id = "vc-trim";
+    dlg.appendChild(el("h3", null, t("vc.trimT")));
+    dlg.appendChild(el("p", "vc-dlg-p", t("vc.trimB")));
+    var wrap = el("div", "vc-wave");
+    var cv = el("canvas");
+    cv.setAttribute("aria-hidden", "true");
+    wrap.appendChild(cv);
+    dlg.appendChild(wrap);
+    function slider(label) {
+      var lab = el("label", "vc-tr-row");
+      lab.appendChild(el("span", "vc-tr-lab", label));
+      var r = el("input"); r.type = "range"; r.min = "0"; r.max = String(dur); r.step = "100";
+      lab.appendChild(r);
+      var v = el("span", "vc-tr-val");
+      lab.appendChild(v);
+      dlg.appendChild(lab);
+      return { r: r, v: v };
+    }
+    var sa = slider(t("vc.trimStart")), sb = slider(t("vc.trimEnd"));
+    sa.r.value = "0"; sb.r.value = String(dur);
+    var info = el("p", "vc-dlg-p vc-tr-len", "");
+    dlg.appendChild(info);
+    var rowEl = el("div", "vc-dlg-row");
+    var play = el("button", "vc-btn", t("vc.trimPlay")); play.type = "button";
+    var no = el("button", "vc-btn", t("dlg.cancel")); no.type = "button";
+    var go = el("button", "vc-btn primary", t("vc.trimSave")); go.type = "button";
+    rowEl.appendChild(play); rowEl.appendChild(no); rowEl.appendChild(go);
+    dlg.appendChild(rowEl);
+    var pk = null, src = null, pac = null;
+    function range() { return V.clampTrim(+sa.r.value, +sb.r.value, dur); }
+    function stopPlay() {
+      try { if (src) src.stop(); } catch (e) {}
+      try { if (pac) pac.close(); } catch (e2) {}
+      src = null; pac = null;
+      play.textContent = t("vc.trimPlay");
+    }
+    function draw() {
+      var w = Math.max(200, Math.round(wrap.clientWidth || 300)), h = 72, dpr = window.devicePixelRatio || 1;
+      cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + "px"; cv.style.height = h + "px";
+      var g = cv.getContext("2d");
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (!pk || pk.length !== w) pk = V.peaks(ch0, w);
+      var cs = getComputedStyle(dlg), on = cs.getPropertyValue("--accent").trim() || "#d4af37", off = cs.getPropertyValue("--text-dim").trim() || "#888";
+      var rg = range(), x0 = rg.a / dur * w, x1 = rg.b / dur * w;
+      g.clearRect(0, 0, w, h);
+      for (var x = 0; x < w; x++) {
+        var ph = Math.max(1, pk[x] * (h - 4));
+        g.fillStyle = x >= x0 && x <= x1 ? on : off;
+        g.globalAlpha = x >= x0 && x <= x1 ? 1 : 0.35;
+        g.fillRect(x, (h - ph) / 2, 1, ph);
+      }
+      g.globalAlpha = 1;
+      g.fillStyle = on;
+      g.fillRect(Math.max(0, x0 - 1), 0, 2, h);
+      g.fillRect(Math.min(w - 2, x1 - 1), 0, 2, h);
+      sa.v.textContent = V.fmtDur(rg.a);
+      sb.v.textContent = V.fmtDur(rg.b);
+      info.textContent = tf("vc.trimLen", { dur: V.fmtDur(rg.b - rg.a) });
+    }
+    function sync(e) {
+      var a = +sa.r.value, bb = +sb.r.value;
+      if (bb - a < V.MIN_TRIM_MS) {
+        if (e && e.target === sa.r) sa.r.value = String(Math.max(0, bb - V.MIN_TRIM_MS));
+        else sb.r.value = String(Math.min(dur, a + V.MIN_TRIM_MS));
+      }
+      stopPlay();
+      draw();
+    }
+    sa.r.addEventListener("input", sync);
+    sb.r.addEventListener("input", sync);
+    play.addEventListener("click", function () {
+      if (src) { stopPlay(); return; }
+      var AC = window.AudioContext || window.webkitAudioContext, rg = range();
+      if (!AC) return;
+      pac = new AC();
+      src = pac.createBufferSource();
+      src.buffer = buf; src.connect(pac.destination);
+      src.onended = function () { if (src) stopPlay(); };
+      src.start(0, rg.a / 1000, (rg.b - rg.a) / 1000);
+      play.textContent = t("vc.trimStop");
+    });
+    no.addEventListener("click", function () { dlg.close(); });
+    go.addEventListener("click", function () {
+      var rg = range();
+      dlg.close();
+      if (rg.a <= 0 && rg.b >= dur) return;            // nothing cut
+      saveTrim(row, buf, rg);
+    });
+    dlg.addEventListener("close", function () { stopPlay(); window.removeEventListener("resize", draw); dlg.remove(); });
+    window.addEventListener("resize", draw);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    draw();
+  }
+  // Opus (Ogg) through Studio's encoder where the browser has WebCodecs
+  // AudioEncoder; else a 22 kHz 16-bit WAV. → { blob, ext }
+  function encodeMono(buf, rg) {
+    return loadScript("../studio/encode.js").then(function () {
+      var E = window.StudioEncode;
+      return E && E.opusSupported ? E.opusSupported() : false;
+    }, function () { return false; }).then(function (opus) {
+      if (opus) {
+        return monoAt(buf, rg.a, rg.b, 48000).then(function (s) {
+          return window.StudioEncode.encodeOpus([s], 32, {});
+        }).then(function (bytes) { return { blob: new Blob([bytes], { type: "audio/ogg" }), ext: "ogg" }; });
+      }
+      return monoAt(buf, rg.a, rg.b, 22050).then(function (s) {
+        return { blob: new Blob([V.wav16(s, 22050)], { type: "audio/wav" }), ext: "wav" };
+      });
+    });
+  }
+  function saveTrim(row, buf, rg) {
+    var b = busyDlg(t("vc.trimT"), null);
+    b.say(t("vc.trimming"), 0.3);
+    var old = row.name, pageId = row.pageId;
+    encodeMono(buf, rg).then(function (out) {
+      b.say(t("vc.saving"), 0.8);
+      return writeFile(out.blob, Date.now(), out.ext);
+    }).then(function (name) {
+      var p = host.page(pageId), ms = rg.b - rg.a;
+      if (p) host.setText(p.id, V.replaceIn(p.text || "", old, name, ms), null);
+      if (audio && playing === old) { audio.pause(); playing = null; }
+      // the untrimmed file to the Trash only once the page names the new one
+      return trash(old).then(function () { b.close(); host.toast(t("vc.trimmed")); },
+        function () { b.close(); host.toast(t("vc.trimmedKept")); });
+    }, function () { b.close(); host.toast(t("vc.trimFail")); });
+  }
+
+  // ---------- V2: transcription on this device (Montage's Whisper) ----------
+  var MAX_ASR_MS = 30 * 60 * 1000;
+  function transcribe(row) {
+    loadScript("../montage/asr.js").then(function () {
+      var ASR = window.MontageASR;
+      if (!ASR || !(window.OfflineAudioContext || window.webkitOfflineAudioContext)) throw new Error("no-asr");
+      return Promise.resolve(ASR.ready()).catch(function () { return false; }).then(function (yes) {
+        if (yes) { runAsr(row, ASR); return; }
+        host.ask(t("vc.asrT"), tf("vc.asrNeed", { mb: ASR.MODEL_MB + ASR.RUNTIME_MB }), [
+          { label: t("dlg.cancel") },
+          { label: t("vc.asrGo"), primary: true, fn: function () { runAsr(row, ASR); } }
+        ]);
+      });
+    }).catch(function () { host.toast(t("vc.asrNo")); });
+  }
+  function runAsr(row, ASR) {
+    var stop = false, ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var b = busyDlg(t("vc.asrT"), function () { stop = true; if (ctl) ctl.abort(); });
+    b.say(t("vc.reading"), 0);
+    var name = row.name, pageId = row.pageId, cut = false;
+    decode(name).then(function (buf) {
+      if (stop) throw new Error("stop");
+      var dur = buf.duration * 1000, end = Math.min(dur, MAX_ASR_MS);
+      cut = dur > MAX_ASR_MS;
+      return monoAt(buf, 0, end, 16000);
+    }).then(function (samples) {
+      if (stop) throw new Error("stop");
+      return ASR.run(samples, {
+        lang: V.asrLang(host.locale), signal: ctl ? ctl.signal : undefined,
+        cancelled: function () { return stop; },
+        progress: function (q, stage) {
+          if (!stop) b.say(tf(stage === "download" ? "vc.asrDl" : "vc.asrRun", { p: Math.round(q * 100) }), q);
+        }
+      });
+    }).then(function (r) {
+      if (stop) return;
+      b.close();
+      var text = V.transcriptText((r && r.cues) || []);
+      if (!text) { host.toast(t("vc.asrNone")); return; }
+      var p = host.page(pageId);
+      var next = p ? V.insertAfter(p.text || "", name, text) : null;
+      if (next === null) { host.toast(t("vc.asrGone")); return; }
+      host.setText(p.id, next, null);
+      host.toast(cut ? t("vc.asrCut") : t("vc.asrDone"));
+    }, function (e) {
+      if (stop) return;
+      b.close();
+      host.toast(e && /^http|fetch|network|load/i.test(String(e.message || e)) ? t("vc.asrNet") : t("vc.asrFail"));
+    });
+  }
+
+  // ---------- V2: send to Studio ----------
+  function shell() { try { return window.parent !== window ? window.parent : null; } catch (e) { return null; } }
+  function studioOk() {
+    var w = shell();
+    try { return !!(w && w.orosFileOpen && typeof w.orosFileOpen.hand === "function" && typeof w.__orosOpenAt === "function"); }
+    catch (e) { return false; }
+  }
+  function toStudio(row) {
+    var w = shell();
+    readBlob(row.name).then(function (blob) {
+      var file = new File([blob], row.name, { type: blob.type || V.mimeOf(row.name) });
+      var tok = w.orosFileOpen.hand(file);
+      if (!tok) throw new Error("hand");
+      w.__orosOpenAt("studio", { openFile: { token: tok } });
+    }).catch(function () { host.toast(t("vc.studioFail")); });
   }
 
   // ---------- The page's recordings: strip and preview ----------

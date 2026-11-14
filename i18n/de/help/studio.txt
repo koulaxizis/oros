@@ -139,10 +139,25 @@ Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während
 ## Exportieren
 `Exportieren` (der Pfeil nach oben) mischt den Song in eine Stereodatei: den Loop, wenn er an ist, sonst alles vom Anfang bis zum Ende des letzten Clips. Instrumentenspuren, Effekte, Sidechain und Automation sind alle dabei.
 - `WAV`: 16 oder 24 Bit, 44,1 oder 48 kHz. Verlustfrei, die beste Wahl zum Weiterarbeiten.
-- `MP3`: 128 bis 320 kbit/s. Läuft überall; Studios eigener Encoder erstellt es auf diesem Gerät, und Player starten und beenden es ohne Lücke.
+- `MP3`: 64 bis 320 kbit/s (für Sprache reichen 64–96). Läuft überall; Studios eigener Encoder erstellt es auf diesem Gerät, und Player starten und beenden es ohne Lücke.
 - `Opus (OGG)`: eine kleinere Datei bei gleicher Qualität, immer 48 kHz. Angeboten, wo der Browser Opus kodieren kann (Chrome, Edge, Firefox).
 - `Zu Musik hinzufügen` erstellt dieselbe Datei im gewählten Format, legt sie in den Ordner Music auf der orOS-Disk und spielt sie in Musik ab.
 - `Klingelton machen` macht aus den Noten der Instrumentenspuren (ohne Schlagzeug) eine einstimmige Melodie und öffnet sie im Klingelton-Komponisten: Wo Noten sich überlappen, gewinnt die höchste, und du drückst dort `Importieren`, um sie zu behalten.
+
+## Marker
+- Ein Marker benennt eine Stelle auf der Zeitleiste: Drücke [[M]], um einen an der Abspielposition zu setzen, oder öffne `Marker` in `Exportieren`. Sie erscheinen auf dem Lineal.
+- In `Marker` benennst du einen um, setzt ihn an die Abspielposition (`Zur Abspielposition`), springst zu ihm (seine Zeit) oder löschst ihn. Ein Projekt hat bis zu 50.
+- In einer Podcast-Folge werden die Marker zu ihren Kapiteln (siehe unten). Das erste Kapitel beginnt immer am Anfang; ein Marker weniger als eine halbe Sekunde nach dem vorigen wird übersprungen.
+
+## Als Podcast veröffentlichen
+`Exportieren` › `Als Podcast veröffentlichen` macht aus deinen Projekten einen Podcast. Jede Folge ist ein Studio-Projekt; die Sendung hält sie zusammen.
+- `Sendung`: Titel, wer sie macht, eine Beschreibung, die Sprache, die Reihenfolge (neueste zuerst oder eine Serie der Reihe nach), eine Kategorie von Apple Podcasts und ob sie nicht jugendfrei ist. `Adresse der Website` ist, wo du die Website ablegst, zum Beispiel `https://deinname.github.io/sendung/` (nur https); der Feed ist diese Adresse plus `feed.xml`. Die E-Mail des Inhabers ist optional und öffentlich: Verzeichnisse prüfen damit, dass die Sendung dir gehört. `Unterstützungslink` kann deine Ko-fi-Seite sein.
+- `Cover`: ein quadratisches Bild mit mindestens 1400 × 1400 Pixeln. Studio schneidet es quadratisch zu, macht es höchstens 3000 × 3000 groß und entfernt versteckte Fotodaten (Ort, Kamera). `In Atelier gestalten` öffnet ein Design mit 3000 × 3000; speichere es als Bild und wähle es hier aus.
+- `Dieses Projekt als Folge`: `Zu dieser Sendung hinzufügen`, dann Nummer, Staffel, Art (Folge, Trailer, Bonus), Datum, Titel und Shownotes. `Ton`: Mono für Sprache, 64, 96 oder 128 kbit/s (96 Mono sind etwa 43 MB pro Stunde).
+- `Datei der Folge erstellen` mischt das Projekt (wie Exportieren) zu einem MP3 mit Titel, Sendung, Nummer, Datum, Cover und Kapiteln und legt es auf der orOS-Festplatte unter `Studio/Podcasts` ab. Änderst du später den Ton oder die Marker, erstelle es neu.
+- `Website herunterladen (ZIP)` liefert eine ZIP-Datei mit `feed.xml` (RSS 2.0 mit den Tags von Apple Podcasts und Podcasting 2.0), den Folgen, einer Kapiteldatei für jede, dem Cover und einer kleinen Seite mit Player (keine Skripte, nichts von anderen Websites). Lade ihren Inhalt mit den Ordnern an die Adresse der Website hoch: GitHub Pages, Netlify, Cloudflare Pages oder dein eigener Server. Lade sie nach jeder neuen Folge erneut herunter und überschreibe damit die alte.
+- Trage danach die Feed-Adresse einmal bei Apple Podcasts, Spotify und im Podcast Index ein; Podcast-Apps folgen ihr von dort. `In Podcasts folgen` fügt deine Sendung wie jede andere zu [Podcasts](app:podcasts) hinzu.
+- Jede Sendung und jede Folge behält für immer eine Kennung (podcast:guid), damit Abonnenten keine Folge doppelt sehen, auch wenn die Sendung an eine andere Adresse umzieht. Nichts läuft über orOS: Die Dateien gehen von deinem Gerät zu deinem Host.
 
 ## Synchronisierung und Sicherung
 - Projekte, Spuren und Clips, auch die Noten von MIDI-Clips, folgen dir über die orOS-Synchronisierung auf deine anderen Geräte.
@@ -155,7 +170,7 @@ Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während
 - Audio, das noch nicht auf diesem Gerät ist (noch unterwegs mit Vault Drive), fehlt in der Datei, und Studio sagt das.
 
 ## Tastenkürzel
-- [[Space]] Abspielen und Pause, [[R]] Aufnahme, [[L]] Loop, [[K]] Klick, [[Home]] zurück zum Anfang. [[Space]] spielt auch bei offenem Effektfenster.
+- [[Space]] Abspielen und Pause, [[R]] Aufnahme, [[L]] Loop, [[K]] Klick, [[M]] Marker an der Abspielposition, [[Home]] zurück zum Anfang. [[Space]] spielt auch bei offenem Effektfenster.
 - [[S]] Teilen, [[D]] Duplizieren, [[Delete]] ausgewählten Clip löschen, [[E]] oder [[Enter]] Noten eines MIDI-Clips bearbeiten, [[Esc]] Auswahl aufheben.
 - In der Pianorolle: [[B]] Zeichnen, [[V]] Auswählen, [[Q]] Quantisieren, [[Ctrl+A]] [[Ctrl+C]] [[Ctrl+X]] [[Ctrl+V]] [[Ctrl+D]] alle auswählen, kopieren, ausschneiden, einfügen, duplizieren, [[Delete]] löschen, die Pfeiltasten verschieben die ausgewählten Noten (mit [[Shift]] um einen Takt oder eine Oktave), [[Space]] abspielen, [[Esc]] schließen.
 - [[+]] und [[-]] zoomen, [[Ctrl+Z]] Rückgängig, [[Ctrl+Y]] Wiederholen.
@@ -186,7 +201,8 @@ Bitte den Assistenten, deine Songs mit Worten zu ändern, etwa „den Gesang 3 d
 - Loops sind im 4/4-Takt. Audioclips dehnen sich nicht mit dem Tempo; nur MIDI-Clips folgen ihm.
 - Ein älteres Studio auf einem anderen Gerät zeigt keine MIDI-Clips, und wenn es eine Instrumentenspur speichert, spielt die Spur als Klavier, bis ihr Klang neu gewählt wird. Eine Spur mit NULL Drum Machine spielt es mit dem eingebauten Schlagzeug, und wenn es die Spur speichert, geht das gezeichnete Pattern `User` verloren.
 - Automation kennt nur gerade Linien, und der Master hat keine Automationsspuren. Ein älteres Studio auf einem anderen Gerät verwirft Automationsspuren und Sidechain-Auswahl, wenn es diese Spur speichert.
-- Der MP3-Encoder ist einfach und hat eine konstante Bitrate: Bei 128 kbit/s klingt er weniger sauber als andere Encoder, wähle also 192 oder mehr.
+- Der MP3-Encoder ist einfach und hat eine konstante Bitrate: Bei 128 kbit/s klingt er weniger sauber als andere Encoder, wähle für Musik also 192 oder mehr (für Sprache reichen 64–96 kbit/s).
+- Eine Folge ist ein Projekt, also höchstens eine Stunde. Die Website ist eine ZIP-Datei, die du selbst hochlädst; direktes Hochladen zu GitHub Pages und Nextcloud kommt in späteren Wellen.
 - Effekte werden beim Start der Wiedergabe zurückgesetzt, wie in einem Desktop-Studio.
 - Audio gelöschter Clips bleibt im Ordner `Studio`; beim Löschen eines Projekts werden seine Dateien entfernt.
 - Wird derselbe Clip auf zwei Geräten vor der Synchronisierung geändert, gewinnt die neueste Änderung.

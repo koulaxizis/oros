@@ -774,6 +774,29 @@
     var o = { m: x.m };
     if (typeof x.lbl === "string" && /^[A-Za-z0-9_-]{1,60}$/.test(x.lbl)) o.lbl = x.lbl;
     put(o, "kb", cleanText(x.kb, 60));
+    // RS-PROD (Author Portal production stage): the Kanban board's name,
+    // the person's column → phase map over the built-in one (crm/prod.js,
+    // folded names, 0 = no phase of its own), and the cards chosen to go
+    put(o, "pb", cleanText(x.pb, 60));
+    if (x.pm && typeof x.pm === "object" && !Array.isArray(x.pm)) {
+      var pm = {}, n = 0;
+      Object.keys(x.pm).sort().forEach(function (k) {
+        var v = x.pm[k];
+        if (n >= 300 || typeof k !== "string" || !k || k.length > 80 || /[\u0000-\u001f]/.test(k)) return;
+        if (typeof v !== "number" || Math.floor(v) !== v || v < 0 || v > 7) return;
+        pm[k] = v;
+        n++;
+      });
+      if (n) o.pm = pm;
+    }
+    if (Array.isArray(x.pc)) {
+      var seen = {}, pc = x.pc.filter(function (id) {
+        if (typeof id !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(id) || seen[id]) return false;
+        seen[id] = 1;
+        return true;
+      }).sort().slice(0, 1000);
+      if (pc.length) o.pc = pc;
+    }
     return o;
   }
 
