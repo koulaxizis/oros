@@ -1071,6 +1071,12 @@
    ]
   },
   {
+   "app": "transfer",
+   "files": [
+    "transfer/app.js"
+   ]
+  },
+  {
    "app": "travel",
    "files": [
     "travel/booking.js",

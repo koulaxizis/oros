@@ -126,6 +126,21 @@ test("a folder goes up sealed and comes down whole, in several packs", async () 
   files.forEach((f, i) => { assert.ok(sink.out[i].data.equals(f.bytes), f.p); assert.equal(sink.out[i].ok, true); });
 });
 
+test("the title and message travel sealed in the index (D1)", async () => {
+  const dbx = fakeDropbox();
+  const files = filesOf([["a.txt", 100]]);
+  const r = await sendAll(dbx, files, { meta: { t: "For Eleni", m: "All of them." } });
+  const all = Buffer.concat([...dbx.store.values()].map((b) => Buffer.from(b)));
+  assert.ok(!all.includes(Buffer.from("Eleni")), "Dropbox never sees the message");
+  const t = receive(dbx, r.frag);
+  await until(() => t.last().p === "offer");
+  assert.deepEqual(t.last().meta, { t: "For Eleni", m: "All of them." });
+  const r2 = await sendAll(dbx, files);
+  const t2 = receive(dbx, r2.frag);
+  await until(() => t2.last().p === "offer");
+  assert.equal(t2.last().meta, null);
+});
+
 test("a download cut off mid-pack goes on with a Range request", async () => {
   const dbx = fakeDropbox();
   const files = filesOf([["big.bin", C.PIECE * 40 + 123]]);

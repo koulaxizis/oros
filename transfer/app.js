@@ -35,16 +35,22 @@
       "hist.disk": "on the orOS disk", "hist.device": "on that device",
       "hist.open": "Open", "hist.clear": "Clear history", "hist.sure": "Press again to clear",
       "note.sent": "Transfer: sent {what}", "note.recv": "Transfer: received {what}",
-      "send.intro": "Pick files and folders from the orOS disk or this device. The other person opens the link or types the code; the files go straight between the two browsers, end-to-end encrypted.",
+      "send.intro": "Straight from browser to browser, end-to-end encrypted. No size limit from us.",
+      "send.add": "Add files", "send.drop": "or drop files here",
+      "btn.fromDisk": "From the orOS disk", "btn.fromDevice": "From this device", "btn.done": "Done",
+      "meta.title": "Title (optional)", "meta.msg": "Message (optional)",
+      "btn.share": "Share…",
+      "share.match": "The other person sees the same shapes in the background. If theirs match, you are connected to each other.",
+      "recv.head": "Receive",
+      "offer.safe": "Open files only from people you know.",
+      "foot.sent": "Sent with", "foot.free": "free, no account, no ads",
       "disk.empty": "This folder is empty.",
       "disk.none": "The orOS disk is not available here.",
       "disk.root": "orOS disk",
       "disk.open": "Open {n}",
       "disk.pick": "Choose {n}",
-      "btn.addLocal": "Add from this device…",
       "send.chosen": "To send",
-      "send.none": "Nothing chosen yet. Tick files or folders above.",
-      "send.sum": "{n} files · {s}", "send.sum1": "1 file · {s}",
+            "send.sum": "{n} files · {s}", "send.sum1": "1 file · {s}",
       "send.counting": "Counting…",
       "btn.makeLink": "Create link",
       "btn.makeCloud": "Send through my Dropbox", "btn.cloudDel": "Delete now",
@@ -123,16 +129,22 @@
       "hist.disk": "στον δίσκο του orOS", "hist.device": "σε εκείνη τη συσκευή",
       "hist.open": "Άνοιγμα", "hist.clear": "Καθαρισμός ιστορικού", "hist.sure": "Πάτα ξανά για καθαρισμό",
       "note.sent": "Μεταφορά: στάλθηκε {what}", "note.recv": "Μεταφορά: λήφθηκε {what}",
-      "send.intro": "Διάλεξε αρχεία και φακέλους από τον δίσκο του orOS ή από αυτή τη συσκευή. Ο άλλος ανοίγει τον σύνδεσμο ή γράφει τον κωδικό· τα αρχεία πάνε κατευθείαν από browser σε browser, κρυπτογραφημένα από άκρο σε άκρο.",
+      "send.intro": "Κατευθείαν από browser σε browser, κρυπτογραφημένα από άκρο σε άκρο. Χωρίς όριο μεγέθους από εμάς.",
+      "send.add": "Πρόσθεσε αρχεία", "send.drop": "ή σύρε αρχεία εδώ",
+      "btn.fromDisk": "Από τον δίσκο orOS", "btn.fromDevice": "Από τη συσκευή", "btn.done": "Έτοιμο",
+      "meta.title": "Τίτλος (προαιρετικό)", "meta.msg": "Μήνυμα (προαιρετικό)",
+      "btn.share": "Κοινοποίηση…",
+      "share.match": "Ο άλλος βλέπει τα ίδια σχήματα στο φόντο. Αν ταιριάζουν με τα δικά σου, είστε σωστά συνδεδεμένοι.",
+      "recv.head": "Λήψη",
+      "offer.safe": "Άνοιγε αρχεία μόνο από ανθρώπους που ξέρεις.",
+      "foot.sent": "Στάλθηκε με", "foot.free": "δωρεάν, χωρίς λογαριασμό, χωρίς διαφημίσεις",
       "disk.empty": "Ο φάκελος είναι άδειος.",
       "disk.none": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.",
       "disk.root": "Δίσκος orOS",
       "disk.open": "Άνοιγμα {n}",
       "disk.pick": "Επιλογή {n}",
-      "btn.addLocal": "Προσθήκη από τη συσκευή…",
       "send.chosen": "Για αποστολή",
-      "send.none": "Δεν έχεις διαλέξει τίποτα ακόμα. Τσέκαρε αρχεία ή φακέλους από πάνω.",
-      "send.sum": "{n} αρχεία · {s}", "send.sum1": "1 αρχείο · {s}",
+            "send.sum": "{n} αρχεία · {s}", "send.sum1": "1 αρχείο · {s}",
       "send.counting": "Μέτρηση…",
       "btn.makeLink": "Δημιουργία συνδέσμου",
       "btn.makeCloud": "Αποστολή μέσω του Dropbox μου", "btn.cloudDel": "Διαγραφή τώρα",
@@ -206,17 +218,29 @@
   function appLang() {
     try {
       var l = localStorage.getItem("oros-lang") || (window.parent && window.parent !== window && window.parent.orosLang) || "";
-      if (!l && PAGE === "receive") l = /^el\b/i.test(navigator.language || "") ? "el" : "en";
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js) knows pack languages (German); the receive page
+  // outside orOS has no stored choice, so it follows the browser.
+  var I18N = window.orosI18n || null;
+  var LANG = I18N ? I18N.lang() : appLang();
+  var NAV_LANG = false;
+  if (PAGE === "receive" && LANG === "en") {
+    var stored = null;
+    try { stored = localStorage.getItem("oros-lang"); } catch (e) {}
+    var nav = String(navigator.language || "").slice(0, 2).toLowerCase();
+    if (!stored && !/[?&]lang=/.test(location.search) && (nav === "el" || (I18N && nav !== "en" && I18N.known(nav)))) { LANG = nav; NAV_LANG = true; }
+  }
+  function useTable() { if (I18N && LANG !== "en" && LANG !== "el") I18N.table(STR, APP_ID, LANG); }
+  useTable();
+  function locale() { return I18N ? I18N.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   function t(k, v) {
-    var s = STR[LANG][k] || STR.en[k] || k;
+    var s = (STR[LANG] && STR[LANG][k]) || STR.en[k] || k;
     if (v) Object.keys(v).forEach(function (n) { s = s.split("{" + n + "}").join(String(v[n])); });
     return s;
   }
-  function size(n) { return C.fmtSize(n, LANG); }
+  function size(n) { return C.fmtSize(n, LANG === "en" ? "en" : "el"); }   // a decimal comma in Greek and German
   function applyI18n() {
     document.documentElement.lang = LANG;
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) { n.textContent = t(n.getAttribute("data-i18n")); });
@@ -252,7 +276,7 @@
   function watchPalette() {
     try {
       if (window.parent === window) return;
-      new MutationObserver(inheritPalette).observe(window.parent.document.documentElement,
+      new MutationObserver(function () { inheritPalette(); paintArt(); }).observe(window.parent.document.documentElement,
         { attributes: true, attributeFilter: ["data-skin", "data-theme"] });
     } catch (e) { /* standalone */ }
   }
@@ -278,8 +302,48 @@
     var p = $(id);
     if (!p) return;
     p.hidden = false;
-    p.firstChild.style.width = (b > 0 ? Math.min(100, a / b * 100) : 100).toFixed(1) + "%";
+    var pc = b > 0 ? Math.min(100, a / b * 100) : 100;
+    var f = p.querySelector(".fill"), n = p.querySelector(".pct");
+    if (f) f.style.strokeDashoffset = (100 - pc).toFixed(2);
+    if (n) n.textContent = Math.floor(pc) + "%";
   }
+
+  // ---------- 4b. The artwork (art.js, TRANSFER-ART) ----------
+  // Before a code exists the page shows a picture of its own; once there
+  // is a code both sides draw from it, so sender and receiver see the
+  // same picture (a quick check that they reached each other).
+  var A = window.orosTransferArt || null;
+  var artSeed = Math.floor(Math.random() * 4294967296), artW = 0, artH = 0, artKey = "";
+  function accentNow() {
+    try { return getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#d4af37"; } catch (e) { return "#d4af37"; }
+  }
+  function lightNow() {
+    if (PAGE === "receive") { try { return window.matchMedia("(prefers-color-scheme: light)").matches; } catch (e) { return false; } }
+    return document.documentElement.getAttribute("data-theme") === "light";
+  }
+  function paintArt(force) {
+    var box = $("art");
+    if (!A || !box) return;
+    var w = window.innerWidth || 360, h = window.innerHeight || 640;
+    var key = artSeed + "|" + accentNow() + "|" + lightNow();
+    // phones change height while scrolling: only a real change redraws
+    if (!force && key === artKey && Math.abs(w - artW) < 40 && Math.abs(h - artH) < 160 && box.firstChild) return;
+    artW = w; artH = h; artKey = key;
+    var art = A.draw(artSeed, { accent: accentNow(), w: w, h: h, light: lightNow() });
+    box.textContent = "";
+    box.appendChild(A.toNode(art, document, "bg"));
+  }
+  function artThumb(host) {
+    if (!A || !host) return;
+    host.textContent = "";
+    host.appendChild(A.toNode(A.draw(artSeed, { accent: accentNow(), w: 560, h: 400, light: lightNow() }), document, "th"));
+  }
+  function seedArt(code, then) {
+    if (!A || !window.crypto || !window.crypto.subtle) { if (then) then(); return; }
+    A.seedFrom(code).then(function (sd) { artSeed = sd; paintArt(true); if (then) then(); }, function () { if (then) then(); });
+  }
+  var artTm = 0;
+  window.addEventListener("resize", function () { clearTimeout(artTm); artTm = setTimeout(paintArt, 160); });
   function devName() { return C.browserLabel(navigator.userAgent); }
   function errText(e) { return t("err." + e) !== "err." + e ? t("err." + e) : t("err.bad"); }
   // Keep the screen awake while a transfer runs, where the browser allows it.
@@ -324,8 +388,7 @@
     renderCrumbs();
     list.textContent = "";
     show("disk-empty", false);
-    if (!fs) { show("disk-none", true); return; }
-    show("disk-none", false);
+    if (!fs) { show("open-disk", false); return; }
     var at = cwd;
     Promise.resolve(fs.ready && fs.ready()).then(function () { return fs.ls(at); }).then(function (entries) {
       if (at !== cwd) return;
@@ -394,9 +457,13 @@
     list.textContent = "";
     chosen.forEach(function (c) {
       var li = el("li", c.dir ? "dir" : "");
-      li.appendChild(el("span", "name", c.kind === "disk" ? c.path.slice(ROOT.length + 1) : c.name));
-      var rm = el("button", "chip small", t("btn.remove"));
+      li.appendChild(badge(c.name, c.dir));
+      var nm = el("span", "name", c.name);
+      if (c.kind === "disk" && c.path.lastIndexOf("/") > ROOT.length) nm.appendChild(el("small", "", c.path.slice(ROOT.length + 1, c.path.lastIndexOf("/"))));
+      li.appendChild(nm);
+      var rm = el("button", "x", "×");
       rm.type = "button";
+      rm.setAttribute("aria-label", t("btn.remove") + " " + c.name);
       rm.addEventListener("click", function () {
         chosen = chosen.filter(function (x) { return x !== c; });
         renderChosen();
@@ -406,6 +473,8 @@
       list.appendChild(li);
     });
     show("chosen-empty", !chosen.length);
+    show("chosen-box", chosen.length > 0);
+    $("drop").classList.toggle("compact", chosen.length > 0);
     $("make-link").disabled = !chosen.length;
     var mc = $("make-cloud");
     if (mc) { mc.hidden = !cloudApi() || !X; mc.disabled = true; }
@@ -426,12 +495,38 @@
     var d = dialogs();
     if (!d || typeof d.openFiles !== "function") return;
     d.openFiles("").then(function (files) {
-      (files || []).forEach(function (f) {
-        var key = "l:" + f.name + ":" + f.size + ":" + f.lastModified;
-        if (!isChosen(key)) chosen.push({ key: key, kind: "local", file: f, name: f.name });
-      });
-      renderChosen();
+      addFiles(files);
     });
+  }
+  function addFiles(files) {
+    [].forEach.call(files || [], function (f) {
+      if (!f || typeof f.size !== "number") return;
+      var key = "l:" + f.name + ":" + f.size + ":" + f.lastModified;
+      if (!isChosen(key)) chosen.push({ key: key, kind: "local", file: f, name: f.name });
+    });
+    renderChosen();
+  }
+  // A small type badge: the extension, tinted by kind from the skin's accent; a folder sign for folders.
+  var KIND = { jpg: 1, jpeg: 1, png: 1, gif: 1, webp: 1, heic: 1, svg: 1, mp4: 2, mov: 2, webm: 2, mkv: 2, mp3: 3, wav: 3, flac: 3, ogg: 3, m4a: 3, pdf: 4, zip: 5, "7z": 5, rar: 5 };
+  function badge(name, dir) {
+    var dot = String(name).lastIndexOf("."), ext = !dir && dot > 0 ? String(name).slice(dot + 1).toLowerCase() : "";
+    var b = el("span", "ic", dir ? "▤" : (ext.slice(0, 4).toUpperCase() || "•"));
+    b.setAttribute("aria-hidden", "true");
+    var k = dir ? 0 : (KIND[ext] || 6);
+    if (k) b.style.filter = "hue-rotate(" + [0, -12, -28, 22, 40, 60, 10][k] + "deg) saturate(" + (k === 6 ? 0.4 : 1) + ")";
+    return b;
+  }
+  // The orOS disk in a sheet (a centred <dialog>, R32)
+  function openDisk() {
+    var d = $("disk-sheet");
+    if (!FS()) { addLocal(); return; }
+    renderDisk();
+    try { d.showModal(); } catch (e) { d.setAttribute("open", ""); }
+  }
+  function closeDisk() { var d = $("disk-sheet"); try { d.close(); } catch (e) { d.removeAttribute("open"); } }
+  function metaNow() {
+    var ti = $("meta-title"), ms = $("meta-msg");
+    return C.cleanMeta({ t: ti ? ti.value : "", m: ms ? ms.value : "" });
   }
 
   // ---------- 6. Send: the transfer ----------
@@ -461,8 +556,10 @@
     // buildManifest keeps the order and drops only empty paths
     var src = [];
     list.forEach(function (f) { if (C.cleanPath(f.path)) src.push(f); });
-    var code = C.newCode(), link = C.linkFor(code, location.origin);
+    var code = C.newCode(), link = C.linkFor(code, location.origin), meta = metaNow();
     $("share-code").textContent = C.fmtCode(code);
+    shareNative(link, meta);
+    seedArt(code, function () { artThumb($("share-match").querySelector(".th")); show("share-match", !!A); });
     $("share-link").value = link;
     var qr = $("share-qr");
     qr.textContent = "";
@@ -482,7 +579,7 @@
     var dev = "", started = false, how = "direct";
     function log(end, bad) { if (started) record({ dir: "sent", files: manifest, dev: dev, bad: bad, mode: how, end: end }); }
     sender = new E.Transfer({
-      role: "sender", code: code, dev: devName(), files: manifest,
+      role: "sender", code: code, dev: devName(), files: manifest, meta: meta,
       read: function (i, a, b) {
         return blobOf(i).then(function (blob) { return blob.slice(a, b).arrayBuffer(); }).then(function (buf) { return new Uint8Array(buf); });
       },
@@ -522,6 +619,16 @@
     }).start();
     function end() { show("send-cancel", false); show("send-again", true); sender = null; }
   }
+  // The system share sheet, where the browser has one (phones mostly)
+  function shareNative(url, meta) {
+    var b = $("share-native");
+    if (!b) return;
+    var ok = !!(navigator.share && url);
+    b.hidden = !ok;
+    b.onclick = ok ? function () {
+      navigator.share({ title: (meta && meta.t) || "orOS Transfer", url: url }).catch(function () {});
+    } : null;
+  }
   function cancelSend() { if (sender) sender.cancel(); if (cloudSend) cloudSend.stop = true; }
 
   // ---------- 6b. Send through my Dropbox (TRANSFER-1 wave 4) ----------
@@ -536,7 +643,7 @@
     if (on) { $("share-link").value = ""; $("share-qr").textContent = ""; $("share-code").textContent = ""; }
   }
   function hhmm(ms) {
-    try { return new Date(ms).toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB", { hour: "2-digit", minute: "2-digit" }); }
+    try { return new Date(ms).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" }); }
     catch (e) { return new Date(ms).toISOString().slice(11, 16); }
   }
   var cloudSend = null;                   // { stop, id, drop } while one runs or waits
@@ -545,7 +652,8 @@
     if (!drop || !X || !expanded || !expanded.length || sender || cloudSend) return;
     var fs = FS(), list = expanded.slice(), manifest = C.buildManifest(list), src = [];
     list.forEach(function (f) { if (C.cleanPath(f.path)) src.push(f); });
-    var code = C.newCode(), st = $("send-status"), job = { stop: false, id: "", drop: drop };
+    var code = C.newCode(), st = $("send-status"), job = { stop: false, id: "", drop: drop }, meta = metaNow();
+    shareNative("", null); show("share-match", false);
     cloudSend = job;
     show("pick", false); show("share", true);
     show("send-again", false); show("send-cancel", true); show("send-prog", true);
@@ -572,7 +680,7 @@
     }).then(function (sp) {
       if (sp && sp.allocated - sp.used < need) { var e = new Error("full"); e.code = "full"; throw e; }
       return X.send({
-        code: code, files: manifest, read: read, drop: drop, temp: S.temp,
+        code: code, files: manifest, meta: meta, read: read, drop: drop, temp: S.temp,
         cancelled: function () { return job.stop; },
         onProgress: function (pr) {
           setProg("send-prog", pr.bytes, pr.total);
@@ -583,6 +691,8 @@
       job.id = r.id;
       var url = C.linkFor(code, location.origin).split("#")[0] + "#" + r.frag;
       $("share-link").value = url;
+      shareNative(url, meta);
+      seedArt(code, function () { artThumb($("share-match").querySelector(".th")); show("share-match", !!A); });
       var qr = $("share-qr"), svg = qrSvg(url);
       qr.textContent = "";
       if (svg) qr.appendChild(svg);
@@ -599,6 +709,7 @@
           job.gone = true;
           st.textContent = t("cloud.deleted"); st.className = "status";
           $("share-link").value = ""; $("share-qr").textContent = ""; $("share-keep").textContent = "";
+          shareNative("", null);
           show("cloud-del", false);
         }, function () { toast(t("err.dropbox")); });
       };
@@ -618,6 +729,9 @@
   }
   function sendAgain() {
     chosen = []; expanded = null;
+    if ($("meta-title")) { $("meta-title").value = ""; $("meta-msg").value = ""; }
+    show("share-match", false); shareNative("", null);
+    artSeed = Math.floor(Math.random() * 4294967296); paintArt(true);
     show("share", false); show("pick", true);
     renderChosen(); renderDisk();
   }
@@ -634,6 +748,8 @@
   function startRecv(code, link) {
     if (receiver) return;
     resetRecv();
+    seedArt(code);
+    showHead(null, "");
     show("code-form", false); show("recv-box", true);
     var dev = "";
     recvHow = "direct"; recvDest = ""; recvDev = "";
@@ -670,27 +786,42 @@
     }).start();
   }
   function endRecv() { receiver = null; show("recv-cancel", false); show("offer", false); show("recv-again", true); }
+  // The card's head: the sender's title and message (plain text), else the sizes only
+  function showHead(meta, sum) {
+    var ti = $("offer-title"), ms = $("offer-msg"), av = $("offer-av");
+    if (!ti) return;
+    ti.textContent = meta && meta.t ? meta.t : ""; ti.hidden = !(meta && meta.t);
+    ms.textContent = meta && meta.m ? meta.m : ""; ms.hidden = !(meta && meta.m);
+    av.textContent = meta && meta.t ? initials(meta.t) : "";
+    $("offer-sum").textContent = sum || "";
+  }
+  function initials(s) {
+    var w = String(s).split(/\s+/).filter(function (x) { return /[\p{L}\p{N}]/u.test(x); });
+    return w.slice(0, 2).map(function (x) { return Array.from(x.replace(/^[^\p{L}\p{N}]+/u, ""))[0] || ""; }).join("").toUpperCase();
+  }
   function showOffer(o, dev) {
     offerInfo = o;
     recvStatus(t("st.offer"));
     show("offer", true);
     show("recv-cancel", false);           // Decline is the way out here
-    $("offer-sum").textContent = t(o.files.length === 1 ? "offer.sum1" : "offer.sum", { n: o.files.length, s: size(o.total), dev: dev || "?" });
+    showHead(o.meta, t(o.files.length === 1 ? "offer.sum1" : "offer.sum", { n: o.files.length, s: size(o.total), dev: dev || "?" }));
     show("offer-relay", o.mode === "relay" || o.mode === "cloud");
     $("offer-relay").textContent = o.mode === "cloud" ? t("offer.cloud", { t: hhmm(o.exp) }) : t("offer.relay");
     var list = $("offer-list");
     list.textContent = "";
     o.files.slice(0, SHOW_MAX).forEach(function (f) {
       var li = el("li");
+      li.appendChild(badge(f.p, false));
       li.appendChild(el("span", "name", f.p));
       li.appendChild(el("span", "dim", size(f.s)));
       list.appendChild(li);
     });
     if (o.files.length > SHOW_MAX) list.appendChild(el("li", "dim", t("offer.more", { n: o.files.length - SHOW_MAX })));
     var disk = $("dest-disk"), dev2 = $("dest-dev"), why = $("dest-disk-why");
+    disk.closest(".opt").hidden = PAGE === "receive";        // outside orOS there is no disk: one clear choice
     var diskOk = !!FS() && o.biggest <= C.DISK_MAX;
     disk.disabled = !diskOk;
-    why.hidden = diskOk;
+    why.hidden = diskOk || PAGE === "receive";
     why.textContent = !FS() ? t("dest.noDisk") : t("dest.tooBig", { s: size(C.DISK_MAX) });
     $("dest-dev-txt").textContent = o.files.length > 1 ? t("dest.deviceZip") : t("dest.device");
     (diskOk ? disk : dev2).checked = true;
@@ -780,6 +911,7 @@
   function recvAgain() {
     if (sink) { sink.drop(); sink = null; }
     resetRecv();
+    showHead(null, "");
     show("recv-box", false); show("code-form", true);
     $("code-in").value = "";
     if (PAGE === "receive") try { history.replaceState(null, "", location.pathname); } catch (e) {}
@@ -826,7 +958,7 @@
     try { api.registerSlice(APP_ID, sliceGet, sliceSet, C.HIST_KEY, C.mergeHistory); } catch (e) {}
   }
   function when(ms) {
-    try { return new Date(ms).toLocaleString(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); }
+    try { return new Date(ms).toLocaleString(locale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); }
     catch (e) { return new Date(ms).toISOString().slice(0, 16).replace("T", " "); }
   }
   function renderHist() {
@@ -905,6 +1037,23 @@
       $("tab-hist").addEventListener("click", function () { tab("hist"); });
       $("hist-clear").addEventListener("click", clearHist);
       $("add-local").addEventListener("click", addLocal);
+      $("add-big").addEventListener("click", function () { if (FS()) openDisk(); else addLocal(); });
+      $("open-disk").addEventListener("click", openDisk);
+      $("disk-done").addEventListener("click", closeDisk);
+      var dz = $("drop");
+      ["dragenter", "dragover"].forEach(function (k) {
+        document.addEventListener(k, function (ev) {
+          if (!ev.dataTransfer || [].indexOf.call(ev.dataTransfer.types || [], "Files") < 0 || $("pick").hidden) return;
+          ev.preventDefault(); dz.classList.add("over");
+        });
+      });
+      ["dragleave", "drop"].forEach(function (k) {
+        document.addEventListener(k, function (ev) {
+          if (k === "dragleave" && ev.relatedTarget) return;
+          dz.classList.remove("over");
+          if (k === "drop" && ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files.length && !$("pick").hidden) { ev.preventDefault(); addFiles(ev.dataTransfer.files); }
+        });
+      });
       $("make-link").addEventListener("click", startSend);
       $("make-cloud").addEventListener("click", startCloud);
       $("send-cancel").addEventListener("click", cancelSend);
@@ -996,10 +1145,12 @@
 
   // ---------- 9. Boot ----------
   function boot() {
+    if (NAV_LANG && I18N && LANG !== "el") I18N.ensure(LANG, APP_ID, function () { useTable(); applyI18n(); });
     applyI18n();
     wire();
     inheritPalette();
     watchPalette();
+    paintArt(true);
     if ($("disk")) { renderDisk(); renderChosen(); loadHist(); renderHist(); registerSync(); }
     S.sweep();
     if (PAGE === "app") setTimeout(cloudSweep, 3000);
