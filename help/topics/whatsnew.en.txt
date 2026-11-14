@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.60.00
+- **Translate between 22 languages on the device.** Text Tools › Translate now covers 21 languages besides English (German, French, Spanish, Italian, Portuguese, Dutch, Polish, Russian, Turkish, Albanian, Bulgarian, Chinese, Japanese and more); languages without a direct model go through English. It recognises the language of the text by itself. Settings › Language & search › Translation on this device shows the downloaded languages with their size and removes them. Where no model fits, you can let the Assistant's AI translate (off by default, this device only).
+
 ## Version 6.59.00
 - **Decode JWT and test regular expressions in Pad.** In `Tools…` (Alt+T), `Decode JWT` shows a token's header, payload and expiry (the signature is not checked). `Regex tester` tries a pattern on the file as you type, with groups, a replace preview and `Select all matches`; a pattern that runs for over a second is stopped.
 
