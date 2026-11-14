@@ -378,6 +378,7 @@
       $("pod-feed").textContent = feed || t("pod.noFeed");
       $("pod-feed-copy").disabled = !feed;
       $("pod-subscribe").hidden = !feed || !podcastsHost();
+      renderGh();
     }
     function podcastsHost() {
       try { var w = root.parent; return w && w !== root && typeof w.__orosOpenPodcastsAdd === "function" ? w : null; } catch (e) { return null; }
@@ -416,15 +417,16 @@
       if (stale.length) return ask(t("pod.staleAsk", { n: stale.length }), t("pod.zip"), function () { zipNow(s, fs, eps); });
       zipNow(s, fs, eps);
     }
-    function zipNow(s, fs, eps) {
-      if (busy) return;
-      var f = P.files(s, eps), now = Date.now();
+    // everything the site holds: [{ name, data (Uint8Array or Blob) }]
+    // keep: <item>s of the published feed this device does not have (P2)
+    function siteItems(s, fs, eps, now, keep) {
+      var f = P.files(s, eps);
       var words = {
         feed: t("pod.page.feed"), support: t("pod.page.support"), episode: t("pod.page.episode"), season: t("pod.page.season"),
         trailer: t("pod.epType.trailer"), bonus: t("pod.epType.bonus"), untitled: t("pod.untitledEp"), credit: t("pod.page.credit")
       };
       var items = [
-        { name: f.feed, data: P.textBytes(P.feedXml(s, eps, { now: now, untitled: t("pod.untitledEp"), fundLabel: t("pod.page.support") })) },
+        { name: f.feed, data: P.textBytes(P.feedXml(s, eps, { now: now, untitled: t("pod.untitledEp"), fundLabel: t("pod.page.support"), keep: keep || [] })) },
         { name: f.page, data: P.textBytes(P.pageHtml(s, eps, words)) },
         { name: f.style, data: P.textBytes(P.PAGE_CSS) }
       ];
@@ -432,18 +434,47 @@
         var fe = f.eps[i];
         if (fe.chapters) items.push({ name: fe.chapters, data: P.textBytes(P.chaptersJson(P.chapters(e.mk, e.ep.dur, t("pod.intro")), t("pod.chapter"))) });
       });
-      busy = true; setBusy();
-      status("pod-site-err", t("pod.zipBusy"));
       var blobs = [{ name: f.cover, path: s.cover }].concat(eps.map(function (e, i) { return { name: f.eps[i].audio, path: e.ep.file }; }));
       var missing = [];
-      Promise.all(blobs.map(function (b) {
+      return Promise.all(blobs.map(function (b) {
         return Promise.resolve(fs.readBlob(b.path)).then(function (blob) {
           if (!blob) throw new Error("gone");
           return { name: b.name, data: blob };
         }, function () { missing.push(b.name); return null; });
       })).then(function (got) {
-        if (missing.length) throw new Error("missing");
-        items = items.concat(got);
+        if (missing.length) { var e = new Error("missing"); e.list = missing; throw e; }
+        return items.concat(got);
+      });
+    }
+    function siteFail(e) {
+      if (e && e.message === "missing") return t("pod.err.missing", { list: (e.list || []).join(", ") });
+      if (e && e.message === "zip-big") return t("pod.err.big");
+      if (e && /^gh-/.test(e.code || "")) return t("pod.gh.err." + e.code.slice(3));
+      return t("toast.exportFail");
+    }
+    // the published feed (if any): its episodes this device does not have are kept
+    // strict: a feed that cannot be read stops the publish (GitHub); the ZIP
+    // goes on without it (a site not online yet, or no CORS on that host)
+    function publishedKeep(s, eps, read, strict) {
+      return Promise.resolve().then(read).then(function (xml) { return P.keepItems(xml || "", P.guidsOf(eps)); }, function (e) {
+        if (strict) throw e;
+        return [];
+      });
+    }
+    function fetchFeed(s) {
+      var url = P.feedUrl(s);
+      if (!url || typeof fetch !== "function") return Promise.resolve("");
+      return fetch(url, { cache: "no-store", credentials: "omit" }).then(function (r) { return r.ok ? r.text() : ""; }, function () { return ""; });
+    }
+    function zipNow(s, fs, eps) {
+      if (busy) return;
+      var now = Date.now(), items;
+      busy = true; setBusy();
+      status("pod-site-err", t("pod.zipBusy"));
+      publishedKeep(s, eps, function () { return fetchFeed(s); }).then(function (keep) {
+        return siteItems(s, fs, eps, now, keep);
+      }).then(function (got) {
+        items = got;
         var crcs = [];
         var seq = items.reduce(function (pr, it) {
           return pr.then(function () {
@@ -462,8 +493,107 @@
         status("pod-site-err", ok ? t("pod.zipDone", { url: s.url }) : "");
       }, function (e) {
         busy = false; setBusy();
-        status("pod-site-err", e && e.message === "missing" ? t("pod.err.missing", { list: missing.join(", ") }) : e && e.message === "zip-big" ? t("pod.err.big") : t("toast.exportFail"));
+        status("pod-site-err", siteFail(e));
       });
+    }
+
+    // ---------- GitHub Pages (P2): the person's own repository and token ----------
+    // device-only: { token, repos: { showId: "owner/repo" } }; never synced
+    var GH_KEY = "oros-studio-gh";
+    function ghConf() {
+      try {
+        var c = JSON.parse(root.localStorage.getItem(GH_KEY) || "null");
+        if (c && typeof c === "object") return { token: typeof c.token === "string" ? c.token : "", repos: c.repos && typeof c.repos === "object" ? c.repos : {} };
+      } catch (e) { /* private window */ }
+      return { token: "", repos: {} };
+    }
+    function ghSave(c) {
+      try {
+        if (!c.token && !Object.keys(c.repos).length) root.localStorage.removeItem(GH_KEY);
+        else root.localStorage.setItem(GH_KEY, JSON.stringify(c));
+        return true;
+      } catch (e) { return false; }
+    }
+    function renderGh() {
+      var s = show(), G = root.StudioGhPages;
+      $("pod-gh-sec").hidden = !s || !G;
+      if (!s || !G) return;
+      var c = ghConf(), repo = G.parseRepo(c.repos[s.id] || "");
+      if (document.activeElement !== $("pod-gh-repo")) $("pod-gh-repo").value = repo ? G.repoName(repo) : "";
+      $("pod-gh-token-set").hidden = !c.token;
+      $("pod-gh-token-row").hidden = !!c.token;
+      $("pod-gh-forget").hidden = !c.token;
+      var miss = P.problems(s, P.episodes(dat(), s.id)).filter(function (k) { return k !== "url"; });
+      var r = G.parseRepo($("pod-gh-repo").value);
+      $("pod-gh-go").disabled = busy || miss.length > 0;
+      var where = r ? G.pagesUrl(r) : "";
+      $("pod-gh-where").textContent = where && s.url && s.url !== where ? t("pod.gh.other", { url: s.url, pages: where }) : "";
+    }
+    function ghStep(k, i, n) {
+      status("pod-gh-err", k === "file" ? t("pod.gh.step.file", { i: i, n: n }) : t("pod.gh.step." + k));
+    }
+    function sha1Hex(bytes) {
+      var G = root.StudioGhPages;
+      try {
+        if (root.crypto && root.crypto.subtle) return root.crypto.subtle.digest("SHA-1", bytes).then(function (d) { return G.hex(new Uint8Array(d)); });
+      } catch (e) { /* fall through */ }
+      return G.hex(P.sha1(bytes));
+    }
+    function bytesOf(d) { return isBlob(d) ? d.arrayBuffer().then(function (b) { return new Uint8Array(b); }) : d; }
+    function publishGh() {
+      var s = show(), fs = H.fs(), G = root.StudioGhPages;
+      if (busy || !s || !fs || !G) return;
+      var repo = G.parseRepo($("pod-gh-repo").value);
+      if (!repo) { status("pod-gh-err", t("pod.gh.err.repo")); $("pod-gh-repo").focus(); return; }
+      var c = ghConf(), typed = $("pod-gh-token").value.trim();
+      if (!c.token) {
+        if (!G.tokenOk(typed)) { status("pod-gh-err", t("pod.gh.err.token")); $("pod-gh-token").focus(); return; }
+        c.token = typed;
+      }
+      c.repos[s.id] = G.repoName(repo);
+      if (!ghSave(c)) { status("pod-gh-err", t("pod.gh.err.store")); return; }
+      $("pod-gh-token").value = "";
+      // no site address yet: GitHub Pages' own, which also makes the feed's guid
+      if (!s.url) {
+        s = P.normShow(Object.assign({}, s, { url: G.pagesUrl(repo), m: 0 }));
+        if (!s.guid) s.guid = P.feedGuid(P.feedUrl(s));
+        H.putShow(s);
+        fillShow();
+      }
+      var eps = P.episodes(dat(), s.id).filter(function (e) { return !!e.ep.file; });
+      var stale = eps.filter(P.stale);
+      var go = function () { ghNow(s, fs, eps, repo, c.token); };
+      if (stale.length) ask(t("pod.staleAsk", { n: stale.length }), t("pod.gh.go"), go); else go();
+    }
+    function ghNow(s, fs, eps, repo, token) {
+      if (busy) return;
+      var G = root.StudioGhPages, now = Date.now();
+      var deps = { fetch: function (u, i) { return root.fetch(u, i); }, token: token, sha1: sha1Hex, bytes: bytesOf };
+      busy = true; setBusy();
+      ghStep("feed");
+      publishedKeep(s, eps, function () { return G.readFile(deps, repo, "feed.xml"); }, true).then(function (keep) {
+        return siteItems(s, fs, eps, now, keep);
+      }).then(function (items) {
+        return G.publish(deps, repo, items.map(function (it) { return { path: it.name, data: it.data }; }), { onStep: ghStep, message: "orOS Studio: " + s.title });
+      }).then(function (res) {
+        busy = false; setBusy();
+        var url = res.pages || s.url;
+        var msg = res.changed ? t("pod.gh.done", { url: url }) : t("pod.gh.same", { url: url });
+        if (res.pagesManual) msg += " " + t("pod.gh.pagesOff", { repo: G.repoName(repo) });
+        if (res.pages && res.pages !== s.url) msg += " " + t("pod.gh.other", { url: s.url, pages: res.pages });
+        status("pod-gh-err", msg);
+      }, function (e) {
+        busy = false; setBusy();
+        if (e && e.code === "gh-auth") { var c = ghConf(); c.token = ""; ghSave(c); renderGh(); }
+        status("pod-gh-err", siteFail(e));
+      });
+    }
+    function forgetToken() {
+      var c = ghConf();
+      c.token = "";
+      ghSave(c);
+      status("pod-gh-err", t("pod.gh.forgot"));
+      renderGh();
     }
 
     // ---------- markers ----------
@@ -507,7 +637,7 @@
 
     // ---------- the whole dialog ----------
     function setBusy() {
-      ["pod-ep-go", "pod-zip", "pod-save", "pod-del", "pod-cover-pick", "pod-cover-atelier"].forEach(function (id) { if ($(id)) $(id).disabled = busy; });
+      ["pod-ep-go", "pod-zip", "pod-gh-go", "pod-save", "pod-del", "pod-cover-pick", "pod-cover-atelier"].forEach(function (id) { if ($(id)) $(id).disabled = busy; });
       renderSite();
     }
     function render() {
@@ -544,6 +674,9 @@
       $("pod-feed-copy").addEventListener("click", copyFeed);
       $("pod-subscribe").addEventListener("click", subscribe);
       $("pod-zip").addEventListener("click", makeZip);
+      $("pod-gh-go").addEventListener("click", publishGh);
+      $("pod-gh-forget").addEventListener("click", forgetToken);
+      $("pod-gh-repo").addEventListener("input", renderGh);
       $("mk-add").addEventListener("click", addMarkerHere);
       $("pod-ask-no").addEventListener("click", function () { askFn = null; H.hideDlg("pod-ask"); });
       $("pod-ask-yes").addEventListener("click", function () { var fn = askFn; askFn = null; H.hideDlg("pod-ask"); if (fn) fn(); });
