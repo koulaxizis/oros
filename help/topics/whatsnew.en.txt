@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.61.00
+- **Choose how long Transfer keeps your files in Dropbox.** With `Send through my Dropbox`, pick `Keep in Dropbox for` 4, 12, 24, 48, 60, 72, 84 or 96 hours. Longer than 4 hours needs one more Dropbox sign-in on each device, the first time. When the time is up, the link stops working and orOS deletes the files.
+
 ## Version 6.60.00
 - **Translate between 22 languages on the device.** Text Tools › Translate now covers 21 languages besides English (German, French, Spanish, Italian, Portuguese, Dutch, Polish, Russian, Turkish, Albanian, Bulgarian, Chinese, Japanese and more); languages without a direct model go through English. It recognises the language of the text by itself. Settings › Language & search › Translation on this device shows the downloaded languages with their size and removes them. Where no model fits, you can let the Assistant's AI translate (off by default, this device only).
 
