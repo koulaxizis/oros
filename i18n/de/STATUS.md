@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 44608 of 45036 (99%)
+- Strings: 44639 of 45067 (99%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -127,7 +127,7 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 517 / 517 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1287 / 1302 |
+| settings | 98% | 1318 / 1333 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
 | shell | 99% | 1180 / 1185 |
