@@ -562,7 +562,22 @@
     return S;
   }
 
-  var api = { session: session, STR: STR, str: tr, ICON: ICON };
+  // designkit/boolean.js and polygon-clipping load on the first
+  // Combine shapes / Outline stroke only (base = the way to the orOS root).
+  var boLoading = null;
+  function loadBoolean(base) {
+    var dk = typeof window !== "undefined" && window.orosDK;
+    if (dk && dk.boolean) return dk.boolean.need(base).then(function () { return dk.boolean; });
+    if (!boLoading) boLoading = new Promise(function (res, rej) {
+      var s = document.createElement("script");
+      s.src = (base || "../") + "designkit/boolean.js";
+      s.onload = function () { if (window.orosDK.boolean) res(); else { boLoading = null; rej(new Error("boolean")); } };
+      s.onerror = function () { boLoading = null; rej(new Error("boolean")); };
+      document.head.appendChild(s);
+    });
+    return boLoading.then(function () { return window.orosDK.boolean.need(base); }).then(function () { return window.orosDK.boolean; });
+  }
+  var api = { session: session, STR: STR, str: tr, ICON: ICON, loadBoolean: loadBoolean };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.pathedit = api; }
 })(typeof window !== "undefined" ? window : this);

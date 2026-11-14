@@ -18,7 +18,7 @@
   "use strict";
 
   var LY = window.LY, M = LY.M, t = LY.t, $ = LY.$;
-  var V = window.orosDK.vector, PE = window.orosDK.pathedit, LB = window.LayoutBlend, BO = window.orosDK.boolean;
+  var V = window.orosDK.vector, PE = window.orosDK.pathedit, LB = window.LayoutBlend, BO = null;               // designkit/boolean.js, loaded on first use
   var ED = LY.ed;
 
   var S = null, editId = null, frame = null, P0 = null, writing = false;
@@ -182,10 +182,10 @@
   function byZ(a, b) { return a.z - b.z || (a.id < b.id ? -1 : 1); }
   function areaShape(it) { return editable(it) && it.t !== "line"; }
   function canCombine(items) {
-    return !!(BO && items && items.length >= 2 && items.every(areaShape) && items.every(function (x) { return x.pg === items[0].pg && (x.side || "") === (items[0].side || ""); }));
+    return !!(items && items.length >= 2 && items.every(areaShape) && items.every(function (x) { return x.pg === items[0].pg && (x.side || "") === (items[0].side || ""); }));
   }
-  function canOutline(it) { return !!(BO && editable(it) && it.stroke && it.sw > 0); }
-  function ready(fn) { BO.need("../").then(fn, function () { LY.toast(PE.str("pe.opLoad")); }); }
+  function canOutline(it) { return !!(editable(it) && it.stroke && it.sw > 0); }
+  function ready(fn) { PE.loadBoolean("../").then(function (b) { BO = b; fn(); }, function () { LY.toast(PE.str("pe.opLoad")); }); }
   var LOOK = ["fill", "stroke", "sw", "dash", "op", "gr", "eo", "wrap", "wo", "grp", "side", "hide"];
   // A new path item on `like`'s page from page-space paths.
   function pathFrom(doc, like, paths, now) {

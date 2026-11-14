@@ -17,7 +17,7 @@
   "use strict";
 
   var AT = window.AT, M = AT.M, AX = AT.AX, t = AT.t, $ = AT.$;
-  var V = window.orosDK.vector, PE = window.orosDK.pathedit, BO = window.orosDK.boolean;
+  var V = window.orosDK.vector, PE = window.orosDK.pathedit, BO = null;               // designkit/boolean.js, loaded on first use
   var ED = AT.ed;
   var EXT_ROOM = 8000;               // designkit normX keeps ≤ 8192 characters of ext
 
@@ -162,14 +162,14 @@
   }
   function ptPage(it, x, y) { var q = fromFrame({ x: it.x, y: it.y, w: it.w, h: it.h, rot: it.rot || 0 }, x, y); return [q.x, q.y]; }
   function byZ(a, b) { return a.z - b.z || (a.id < b.id ? -1 : 1); }
-  function canCombine(list) { return !!(BO && list && list.length >= 2 && list.every(editable) && list.every(function (x) { return x.pg === list[0].pg; })); }
+  function canCombine(list) { return !!(list && list.length >= 2 && list.every(editable) && list.every(function (x) { return x.pg === list[0].pg; })); }
   function canOutline(it) {
-    if (!BO || !it || it.lock || !it.ax || !(it.sw > 0)) return false;
+    if (!it || it.lock || !it.ax || !(it.sw > 0)) return false;
     if (it.ax.k === "line") return true;
     return it.ax.k === "shape" && !it.ax.bg && !!it.ax.sc;
   }
   function ready(fn) {
-    BO.need("../").then(fn, function () { AT.toast(PE.str("pe.opLoad")); });
+    PE.loadBoolean("../").then(function (b) { BO = b; fn(); }, function () { AT.toast(PE.str("pe.opLoad")); });
   }
   // a z just above `it` on its page, below the next element
   function zAbove(d, it) {
