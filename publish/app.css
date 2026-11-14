@@ -373,3 +373,8 @@ label.check input { width: 20px; height: 20px; flex: 0 0 auto; }
 .ctr-line .ctr-head { margin: 0 0 2px; }
 .ctr-line.needs { border-color: var(--warn); }
 .ctr-line.over .ctr-head strong { color: var(--danger); }
+
+/* wave M1: music releases */
+.btn.pick { display: block; width: 100%; margin-bottom: 6px; white-space: normal; text-align: start; }
+details.trk > summary { cursor: pointer; font-weight: 600; overflow-wrap: anywhere; padding: 2px 0; }
+details.trk[open] > summary { margin-bottom: 8px; }

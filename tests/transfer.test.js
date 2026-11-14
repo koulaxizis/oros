@@ -147,7 +147,7 @@ function pair(files, o = {}) {
   const manifest = C.buildManifest(files);
   const sLog = [], rLog = [], sProg = [];
   const sender = new E.Transfer({
-    role: "sender", code, relay: "https://relay.test", dev: "Chrome · Linux", files: manifest,
+    role: "sender", code, relay: "https://relay.test", dev: "Chrome · Linux", files: manifest, meta: o.meta,
     WebSocket: relay.WebSocket(), RTCPeerConnection: rtc.PC,
     read: o.read || ((i, a, b) => Promise.resolve(new Uint8Array(files[i].bytes.subarray(a, b)))),
     onState: (p, i) => sLog.push(Object.assign({ p }, i)),
@@ -475,6 +475,53 @@ test("no direct link, small transfer: it goes through the relay, sealed, in smal
   const pieceAt = t.relay.times.filter((_, k) => t.relay.frames[k].charAt(0) === "~");
   assert.ok(pieceAt.length >= 6, "pieces of " + E.RELAY_PIECE + " bytes");
   for (let k = 1; k < pieceAt.length; k++) assert.ok(pieceAt[k] - pieceAt[k - 1] >= 25, "pieces are paced under the relay's frame limit");
+});
+
+// ---------- D1: the sender's title and message (TRANSFER-META) ----------
+test("meta: plain text only, trimmed to size, control and bidi characters dropped", () => {
+  assert.equal(C.cleanMeta(null), null);
+  assert.equal(C.cleanMeta({ t: "  ", m: "\u0000" }), null);
+  assert.equal(C.cleanMeta({ t: 5, m: {} }), null);
+  assert.deepEqual(C.cleanMeta({ t: "Wedding\nphotos‮", m: "Hi Eleni,\r\n\r\n\r\n\r\nall of them.​" }), { t: "Wedding photos", m: "Hi Eleni,\n\nall of them." });
+  const long = C.cleanMeta({ t: "α".repeat(200), m: ("line\n").repeat(40) + "x".repeat(900) });
+  assert.equal(long.t.length, C.META_T);
+  assert.ok(long.m.length <= C.META_M);
+  assert.ok(long.m.split("\n").length <= 12);
+  assert.deepEqual(C.cleanMeta({ t: "<b>hi</b>" }), { t: "<b>hi</b>", m: "" }, "kept as text: the page shows it with textContent");
+});
+
+test("meta: the title and message arrive with the offer, sealed; none means null", async () => {
+  const files = randomFiles([["a.txt", 1000], ["b.txt", 2000]]);
+  const meta = { t: "Οι φωτογραφίες του γάμου", m: "Ελένη, όλες σε πλήρη ανάλυση." };
+  const t = pair(files, { meta });
+  t.sender.start(); t.receiver.start();
+  await until(() => t.rLast().p === "offer");
+  assert.deepEqual(t.rLast().meta, meta);
+  assert.ok(!t.relay.frames.join("").includes("Ελένη"), "the message never reaches the relay in the clear");
+  t.receiver.decline();
+  const u = pair(files);
+  u.sender.start(); u.receiver.start();
+  await until(() => u.rLast().p === "offer");
+  assert.equal(u.rLast().meta, null);
+  u.receiver.decline();
+});
+
+test("meta: through the relay too, with a long list of Greek names, frames under the limit", async () => {
+  const spec = []; for (let i = 0; i < 160; i++) spec.push(["φάκελος με μεγάλο όνομα/αρχείο αριθμός " + i + ".txt", 10]);
+  const files = randomFiles(spec);
+  const meta = { t: "Τ".repeat(80), m: "Μ".repeat(500) };
+  const t = pair(files, { meta, rtcOpts: { noDirect: true } });
+  const real = global.setTimeout;
+  global.setTimeout = (f, ms, ...a) => real(f, ms >= 25000 ? 30 : ms, ...a);
+  try {
+    t.sender.start(); t.receiver.start();
+    await until(() => t.rLast().p === "offer", 20000);
+  } finally { global.setTimeout = real; }
+  assert.equal(t.rLast().mode, "relay");
+  assert.deepEqual(t.rLast().meta, meta);
+  assert.equal(t.rLast().files.length, 160);
+  assert.ok(t.relay.frames.every((f) => f.length < 16384), "every room frame fits the relay's limit");
+  t.receiver.decline();
 });
 
 test("no direct link, more than 50 MB: the transfer says so", async () => {

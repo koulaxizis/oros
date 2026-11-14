@@ -39,6 +39,22 @@ The calendar button next to the title (`Today's note`) opens the page for today,
 
 Templates are pages under a page named `Templates` (in any notebook). The template button under the tree, or `New page from template…` in the page menu, lists them; pick one, give the new page a title, and its text is copied in. In a template, `{{date}}` becomes today's date, `{{time}}` the time and `{{title}}` the new page's title. A template named `Daily` is used for the daily note instead of the built-in one.
 
+## Voice notes
+The microphone button next to the title records into the open page. The bar under the toolbar shows the time and the sound level; `Pause` holds it, the tick stops and saves, `×` throws it away. When you stop, a line such as `🎙 voice:2026-11-12-181005-a7k2.webm (0:42)` goes into the page, after the line where your cursor was (or at the end), and a player appears under the page in the `Recordings` strip and, in `Preview`, in the place of that line. A player plays and pauses, jumps to any point, and plays at 1×, 1.5× or 2×; its `⋯` menu has the rest: `Transcribe`, `Trim…`, `Send to Studio`, `Download` and `Delete`.
+
+The sound is recorded on this device with the browser's own recorder and never goes anywhere else: no speech service hears it. The file is kept on the orOS disk, in Files › Notes › Voice, and reaches your other devices through [orOS sync](help:t/sync) like any other file there (about 14 MB for an hour). Until it arrives, a player says `Not on this device yet`.
+
+If the tab closes or the device stops in the middle of a recording, what was recorded is not lost: the next time Notes opens it offers `Save it`. A recording stops by itself at 2 hours.
+
+Deleting a recording takes its line out of the page and moves the file to the Trash in Files for 30 days. Deleting only the line in the text leaves the file where it is. `⋯` next to the notebook selector › `Unused recordings…` lists the files no page on this device names any more (never ones from the last 24 hours) and moves the ones you tick to the Trash.
+
+### Trim, transcribe, send to Studio
+`Trim…` shows the recording's waveform with a start and an end. Move them to the part you want to keep and `Play the part` to hear it. `Save` writes a new file with only that part (Ogg Opus, or WAV where the browser has no Opus encoder), changes the page's line to it and moves the old file to the Trash in Files, so nothing is lost if you trimmed too much.
+
+`Transcribe` turns the speech into text on this device with the same Whisper model that Montage and Lyric Sync use. The first time it asks before downloading the model (about 53 MB, once for all three apps); the sound itself never leaves the device. The text goes into the page right under the recording's line, so you can edit it, search it and sync it like any other text. It listens in the orOS language; for long recordings only the first 30 minutes are transcribed. `Cancel` stops it at any time.
+
+`Send to Studio` opens the recording in Studio, on an audio track of the open project (or a new one).
+
 ## Links between pages
 Write a page title in double square brackets, like `[[Shopping]]`, to link to it. `[[Shopping|the list]]` shows “the list” but opens Shopping. Under the text you'll see `Links` (pages this one links to) and `Backlinks` (pages that link here, from any notebook). Tap or click a link, here or in `Preview`, to open that page.
 
@@ -103,7 +119,9 @@ The download button under the tree exports the notebook as a .zip of files, with
 - A `\` before a character shows it as it is: `\*not italic\*`.
 
 ## Limits
-- No images or attachments yet: an image written in Markdown shows as a link.
+- No images or file attachments yet: an image written in Markdown shows as a link. Voice notes are the one kind of attachment.
+- Recordings stay with your own devices: in a notebook shared with a household the others see the line, not the sound.
+- The browser asks for the microphone the first time; if you said no, allow it in the browser's site settings.
 - HTML typed into a page is shown as text, never run.
 - `Side by side` needs a window at least 900 pixels wide.
 - Exported files end with a short “Made with orOS” line.

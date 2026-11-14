@@ -306,6 +306,7 @@
    "app": "files",
    "files": [
     "files/computer.js",
+    "files/docs.js",
     "files/drive.js",
     "files/dropbox-callback.js",
     "files/dropbox.js",
@@ -334,6 +335,13 @@
    "app": "flow",
    "files": [
     "flow/flow.js"
+   ]
+  },
+  {
+   "app": "forms",
+   "files": [
+    "forms/app.js",
+    "forms/render.js"
    ]
   },
   {
@@ -673,7 +681,8 @@
   {
    "app": "pad",
    "files": [
-    "pad/app.js"
+    "pad/app.js",
+    "pad/devui.js"
    ]
   },
   {
@@ -839,7 +848,9 @@
   {
    "app": "scanpdf",
    "files": [
-    "scanpdf/scanpdf.js"
+    "scanpdf/scanpdf.js",
+    "scanpdf/search.js",
+    "scanpdf/sign.js"
    ]
   },
   {
@@ -893,14 +904,6 @@
    "app": "simon",
    "files": [
     "simon/simon.js"
-   ]
-  },
-  {
-   "app": "sky",
-   "files": [
-    "sky/core.js",
-    "sky/sky.js",
-    "sky/stars.js"
    ]
   },
   {
@@ -1066,6 +1069,12 @@
    "files": [
     "together/app.js",
     "together/core.js"
+   ]
+  },
+  {
+   "app": "transfer",
+   "files": [
+    "transfer/app.js"
    ]
   },
   {
