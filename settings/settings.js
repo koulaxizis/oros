@@ -2648,6 +2648,57 @@
       c2.appendChild(list);
     }
     host.appendChild(c2);
+
+    if (window.OrosTranslate) secTranslation(host);
+    else txLoad();
+  }
+
+  // translate/engine.js loads only when this section first shows, so
+  // Settings opens without it (first-open budget).
+  var txLoading = false;
+  function txLoad() {
+    if (txLoading) return;
+    txLoading = true;
+    loadScript("../translate/engine.js").then(function () {
+      if (window.OrosTranslate) render();
+    }, function () {});
+  }
+
+  // Translation on this device (translate/engine.js, Bible TRANSLATE):
+  // the downloaded languages with their size, Remove (two taps), the
+  // device-local "use the Assistant's AI" switch and a way to Text Tools.
+  var txList = null, txBusy = false;
+  function secTranslation(host) {
+    var TR = window.OrosTranslate;
+    var c = card(t("tx.title"), "device");
+    c.appendChild(el("p", "hint", t("tx.hint")));
+    if (txList === null) {
+      if (!txBusy) {
+        txBusy = true;
+        TR.installed().then(function (l) { txList = l; }, function () { txList = []; })
+          .then(function () { txBusy = false; render(); });
+      }
+    } else if (!txList.length) {
+      c.appendChild(el("p", "hint", t("tx.none")));
+    } else {
+      txList.forEach(function (x) {
+        var ab = x.pair.split("-");
+        var r = row(t("tx.row", { a: TR.name(ab[0], LANG), b: TR.name(ab[1], LANG), mb: x.mb }),
+          confirmBtn(t("tx.remove"), t("tx.removeSure"), "tx:" + x.pair, function () {
+            TR.remove(x.pair).then(function () { txList = null; render(); }, function () { txList = null; render(); });
+          }, "danger"));
+        c.appendChild(r);
+      });
+    }
+    var on = TR.ai.on();
+    c.appendChild(row(t("tx.ai"), switchBtn(on, "tx.ai", function (v) { TR.ai.set(v); render(); }, t("tx.ai")),
+      { hint: t("tx.ai.hint") }));
+    c.appendChild(actions(button(t("tx.open"), "tx.open", function () {
+      var p = parentWin();
+      if (p && typeof p.__orosOpenAt === "function") { p.__orosOpenAt("texttools", { group: "translate" }); return; }
+      act("openApp", "texttools");
+    })));
+    host.appendChild(c);
   }
 
   // On-screen keyboard (osk.js through the shell; never on phones,

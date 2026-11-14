@@ -1277,5 +1277,14 @@ orosPack("de", "settings", {
  "z.try": "Jetzt ausprobieren",
  "z.xmas": "Zu Weihnachten",
  "z.xmas.boat": "Boot",
- "z.xmas.tree": "Baum"
+ "z.xmas.tree": "Baum",
+ "tx.title": "Übersetzung auf diesem Gerät",
+ "tx.hint": "Die Textwerkzeuge übersetzen auf diesem Gerät mit den Modellen von Mozilla. Die Sprachen, die du geladen hast:",
+ "tx.none": "Noch keine Sprachen geladen. Textwerkzeuge › Übersetzen lädt eine beim ersten Mal.",
+ "tx.row": "{a} → {b} · {mb} MB",
+ "tx.remove": "Entfernen",
+ "tx.removeSure": "Zum Entfernen noch einmal tippen",
+ "tx.ai": "Wo kein Modell passt, die KI des Assistenten nutzen",
+ "tx.ai.hint": "Standardmäßig aus, nur auf diesem Gerät. Der Text geht dann an den KI-Dienst, den du im Assistenten eingerichtet hast.",
+ "tx.open": "Textwerkzeuge öffnen"
 });
