@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.77.00
+- **Keep a folder on all your devices.** In Files › orOS Drive, `Keep on all my devices` keeps a folder downloaded on every device where you use orOS with sync, not only this one, so it works offline everywhere and orOS Drive mirrors all of it. Turn it off the same way. See [Files](app:files).
+
 ## Version 6.76.00
 - **Fixed-layout e-books from Layout.** An EPUB edition now has a `Layout` choice (`Export` › `Editions` › `Edit editions…`): `Fixed: pages as in print, text as text` keeps every page exactly as designed, for picture books, comics, cookbooks and art books, with the text as real text readers can search and have read aloud; `Fixed: pages as pictures` puts each page in as one picture. Facing pages open side by side, and every page is in the book's page list. Library now opens fixed-layout EPUBs too, each page scaled to the screen.
 
