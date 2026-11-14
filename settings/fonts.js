@@ -1,13 +1,14 @@
 // ============================================================
-// orOS Settings › Fonts (settings/fonts.js, FM-1, v1.0.0)
+// orOS Settings › Fonts (settings/fonts.js, FM-1, v1.1.0)
 // The font manager: the person's font files on the orOS disk
 // (/internal/Fonts, synced by Vault like any file) and the free
 // Fontsource families, with a sample in their own text, which Greek,
 // polytonic, Latin and Cyrillic letters a font has, and what its
 // licence says. Loaded with designkit/text.js, designkit/fonts.js and
 // files/files-core.js when the section first opens (Settings size
-// budget). Reads and writes nothing but the font files themselves
-// (designkit/fonts.js importFile / remove) and one device-local
+// budget). Writes the font files themselves (designkit/fonts.js
+// importFile / remove), the synced slice "fonts" (collections and
+// notes, designkit/fonts.js cols, FM-2) and one device-local
 // convenience key (the sample text and size).
 // Every name, licence text and sample comes from a font file or the
 // Fontsource catalog, so all of it goes in with textContent only; a
@@ -89,7 +90,24 @@
       "fm.more": "Show more",
       "fm.free.page": "Fontsource page",
       "fm.free.fail": "This font did not load. Check the connection and open it again.",
-      "fm.free.wait": "Loading the font…"
+      "fm.free.wait": "Loading the font…",
+      "fm.tab.cols": "Collections",
+      "fm.cols.intro": "Group the fonts of a project, such as a book or a series of covers. Layout and Atelier list a document's collection first in their font lists. Collections and notes sync to all your devices.",
+      "fm.cols.new": "New collection", "fm.cols.name": "Name of the collection", "fm.cols.create": "Create",
+      "fm.cols.empty": "No collections yet.",
+      "fm.cols.n": "{n} fonts", "fm.cols.n1": "1 font", "fm.cols.n0": "No fonts yet",
+      "fm.col.empty": "No fonts in this collection yet. Open a font and tick this collection.",
+      "fm.col.rename": "Name",
+      "fm.col.open": "Open", "fm.col.out": "Take out",
+      "fm.col.missing": "Its file is not on this device yet; it arrives with the next sync.",
+      "fm.col.offline": "Keep for offline use", "fm.col.offline.hint": "Downloads every file of the free fonts in this collection now, so Layout and Atelier have them without a connection. Your own fonts are on the orOS disk already.",
+      "fm.col.offline.run": "Downloading {done} of {total}…", "fm.col.offline.done": "Ready for offline use: {n} files.", "fm.col.offline.fail": "{n} files did not download. Check the connection and try again.", "fm.col.offline.none": "No free fonts in this collection: nothing to download.",
+      "fm.col.delete": "Delete collection", "fm.col.delete.sure": "Press again to delete it",
+      "fm.col.delete.hint": "Only the collection goes; the fonts stay in orOS.",
+      "fm.col.deleted": "Deleted the collection {name}.",
+      "fm.inCols": "Collections and note", "fm.inCols.hint": "Tick the collections this font belongs to.",
+      "fm.note": "Your note", "fm.note.hint": "For example where you bought it and for how many computers. Syncs to all your devices.",
+      "fm.back.col": "Back to the collection"
     },
     el: {
       "fm.loading": "Διαβάζω τις γραμματοσειρές σου…",
@@ -149,7 +167,24 @@
       "fm.more": "Δείξε περισσότερες",
       "fm.free.page": "Σελίδα στο Fontsource",
       "fm.free.fail": "Η γραμματοσειρά δεν φόρτωσε. Έλεγξε τη σύνδεση και άνοιξέ την ξανά.",
-      "fm.free.wait": "Φορτώνω τη γραμματοσειρά…"
+      "fm.free.wait": "Φορτώνω τη γραμματοσειρά…",
+      "fm.tab.cols": "Συλλογές",
+      "fm.cols.intro": "Μάζεψε τις γραμματοσειρές ενός έργου, όπως ενός βιβλίου ή μιας σειράς εξωφύλλων. Το Layout και το Atelier δείχνουν πρώτη τη συλλογή του εγγράφου στις λίστες γραμματοσειρών τους. Οι συλλογές και οι σημειώσεις συγχρονίζονται σε όλες σου τις συσκευές.",
+      "fm.cols.new": "Νέα συλλογή", "fm.cols.name": "Όνομα της συλλογής", "fm.cols.create": "Δημιουργία",
+      "fm.cols.empty": "Δεν έχεις ακόμη συλλογές.",
+      "fm.cols.n": "{n} γραμματοσειρές", "fm.cols.n1": "1 γραμματοσειρά", "fm.cols.n0": "Χωρίς γραμματοσειρές ακόμη",
+      "fm.col.empty": "Δεν υπάρχουν ακόμη γραμματοσειρές σε αυτή τη συλλογή. Άνοιξε μια γραμματοσειρά και τσέκαρε αυτή τη συλλογή.",
+      "fm.col.rename": "Όνομα",
+      "fm.col.open": "Άνοιγμα", "fm.col.out": "Αφαίρεση",
+      "fm.col.missing": "Το αρχείο της δεν έχει έρθει ακόμη σε αυτή τη συσκευή· θα έρθει με τον επόμενο συγχρονισμό.",
+      "fm.col.offline": "Κράτησέ τη για χρήση χωρίς σύνδεση", "fm.col.offline.hint": "Κατεβάζει τώρα όλα τα αρχεία των δωρεάν γραμματοσειρών της συλλογής, ώστε το Layout και το Atelier να τα έχουν χωρίς σύνδεση. Οι δικές σου γραμματοσειρές είναι ήδη στον δίσκο του orOS.",
+      "fm.col.offline.run": "Κατεβάζω {done} από {total}…", "fm.col.offline.done": "Έτοιμη για χρήση χωρίς σύνδεση: {n} αρχεία.", "fm.col.offline.fail": "{n} αρχεία δεν κατέβηκαν. Έλεγξε τη σύνδεση και δοκίμασε ξανά.", "fm.col.offline.none": "Δεν υπάρχουν δωρεάν γραμματοσειρές σε αυτή τη συλλογή: δεν έχει κάτι να κατεβάσει.",
+      "fm.col.delete": "Διαγραφή συλλογής", "fm.col.delete.sure": "Πάτα ξανά για διαγραφή",
+      "fm.col.delete.hint": "Φεύγει μόνο η συλλογή· οι γραμματοσειρές μένουν στο orOS.",
+      "fm.col.deleted": "Διαγράφηκε η συλλογή {name}.",
+      "fm.inCols": "Συλλογές και σημείωση", "fm.inCols.hint": "Τσέκαρε τις συλλογές στις οποίες ανήκει αυτή η γραμματοσειρά.",
+      "fm.note": "Η σημείωσή σου", "fm.note.hint": "Για παράδειγμα πού την αγόρασες και για πόσους υπολογιστές. Συγχρονίζεται σε όλες σου τις συσκευές.",
+      "fm.back.col": "Πίσω στη συλλογή"
     }
   };
 
@@ -188,10 +223,12 @@
   var S = {
     tab: "mine", q: "", greek: false, poly: false, cat: "",
     fams: null, loading: false, msgs: [],
-    detail: null,                     // { kind: "mine", key } | { kind: "free", id }
+    detail: null,                     // { kind: "mine", key } | { kind: "free", id } | { kind: "col", id }
+    from: "",                         // the collection a font page was opened from
     free: null, freeErr: false, freeShown: PAGE,
-    style: "r", armed: false
+    style: "r", armed: false, offline: null
   };
+  var CB = null;                     // the "fonts" slice (collections, notes), bound at the first mount
   var P = prefs();
   var spec = { preset: P.preset || "greek", text: typeof P.text === "string" ? P.text.slice(0, 2000) : "", size: P.size >= 12 && P.size <= 96 ? P.size : 36 };
   var insp = {};                     // file → inspect() result (a file's name is its hash)
@@ -374,10 +411,10 @@
     var tabs = el("div", "seg fm-tabs");
     tabs.setAttribute("role", "group");
     tabs.setAttribute("aria-label", t("fm.tabs"));
-    [["mine", "fm.tab.mine"], ["free", "fm.tab.free"]].forEach(function (x) {
+    [["mine", "fm.tab.mine"], ["free", "fm.tab.free"], ["cols", "fm.tab.cols"]].forEach(function (x) {
       var b = btn(t(x[1]), "seg-btn fm-tab" + (S.tab === x[0] ? " on" : ""), function () {
         if (S.tab === x[0]) return;
-        S.tab = x[0]; S.msgs = [];
+        S.tab = x[0]; S.msgs = []; S.from = "";
         draw();
         if (S.tab === "free") loadFree();
       });
@@ -385,7 +422,7 @@
       tabs.appendChild(b);
     });
     rootEl.appendChild(tabs);
-    if (S.tab === "mine") drawMine(); else drawFree();
+    if (S.tab === "mine") drawMine(); else if (S.tab === "cols") drawCols(); else drawFree();
   }
   function drawMine() {
     var c = card(t("fm.mine"));
@@ -436,7 +473,7 @@
       badgeHosts[f.key] = bh;
       meta.appendChild(bh);
       b.appendChild(meta);
-      b.addEventListener("click", function () { S.detail = { kind: "mine", key: f.key }; S.style = "r"; S.armed = false; draw(); scrollTop(); });
+      b.addEventListener("click", function () { S.from = ""; S.detail = { kind: "mine", key: f.key }; S.style = "r"; S.armed = false; draw(); scrollTop(); });
       listHost.appendChild(b);
       if (insp[f.main.file]) paintBadges(f);
       else { bh.appendChild(el("span", "fm-badge fm-wait", t("fm.checking"))); }
@@ -600,13 +637,19 @@
   }
   function backBar(name) {
     var bar = el("div", "fm-head");
-    var b = btn("‹ " + t("fm.back"), "btn fm-back", function () { S.detail = null; S.armed = false; draw(); scrollTop(); });
+    var fromCol = S.from && CB && CB.get().cols[S.from] ? S.from : "";
+    var b = btn("‹ " + t(fromCol && S.detail.kind !== "col" ? "fm.back.col" : "fm.back"), "btn fm-back", function () {
+      S.detail = fromCol && S.detail.kind !== "col" ? { kind: "col", id: fromCol } : null;
+      if (!S.detail) S.from = "";
+      S.armed = false; draw(); scrollTop();
+    });
     bar.appendChild(b);
     bar.appendChild(el("h2", "fm-title", name));
     return bar;
   }
   function drawDetail() {
     if (S.detail.kind === "free") { drawFreeDetail(); return; }
+    if (S.detail.kind === "col") { drawColDetail(); return; }
     var f = (S.fams || []).filter(function (x) { return x.key === S.detail.key; })[0];
     if (!f) { S.detail = null; draw(); return; }
     rootEl.appendChild(backBar(f.name));
@@ -624,6 +667,7 @@
       slot.appendChild(covCard(r.cov, false));
       slot.appendChild(licCard(r.lic));
     });
+    rootEl.appendChild(colsCard({ id: ufOf(f), name: f.name, fb: f.fb }));
     var fc = card(t("fm.files"));
     if (f.cff) fc.appendChild(el("p", "hint", t("fm.cff.hint")));
     f.files.forEach(function (r) {
@@ -654,6 +698,212 @@
     fc.appendChild(acts);
     fc.appendChild(el("p", "hint", t("fm.remove.hint")));
     rootEl.appendChild(fc);
+  }
+
+
+  // ---------- Collections and notes (FM-2) ----------
+  // A family of the disk as Layout and Atelier name it: uf_ + the
+  // first 16 hex of its regular file (designkit/fonts.js families()).
+  function ufOf(f) {
+    var have = variants(f), r = have.r || have.b || have.i || have.bi || f.main;
+    return DK.ufIdOf(r.file);
+  }
+  function colData() { return CB ? CB.get() : DK.cols.normalize(null); }
+  function colEdit(fn) { if (CB) CB.edit(fn); }
+  function nFonts(n) { return n === 0 ? t("fm.cols.n0") : n === 1 ? t("fm.cols.n1") : t("fm.cols.n", { n: n }); }
+  function newColForm(onMade) {
+    var f = el("form", "fm-newcol");
+    var inp = el("input", "find-in");
+    inp.type = "text"; inp.maxLength = DK.cols.LIM.name;
+    inp.placeholder = t("fm.cols.name");
+    inp.setAttribute("aria-label", t("fm.cols.name"));
+    var go = el("button", "btn", t("fm.cols.create"));
+    go.type = "submit";
+    f.appendChild(inp); f.appendChild(go);
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var name = inp.value.trim();
+      if (!name) { inp.focus(); return; }
+      var id = "";
+      colEdit(function (d) { var r = DK.cols.add(d, name, Date.now(), undefined, LANG); id = r.id; return r.d; });
+      if (id && onMade) onMade(id);
+    });
+    return f;
+  }
+  function colsCard(fam) {
+    var c = card(t("fm.inCols"));
+    if (!CB || !DK.cols) return c;
+    var d = colData(), ids = DK.cols.order(d, LANG);
+    if (ids.length) {
+      c.appendChild(el("p", "hint", t("fm.inCols.hint")));
+      var box = el("div", "fm-colchecks");
+      ids.forEach(function (cid) {
+        var lab = el("label", "chk-row fm-colchk");
+        var cb = el("input");
+        cb.type = "checkbox";
+        var x = d.mem[cid + ":" + fam.id];
+        cb.checked = !!(x && x.on);
+        cb.addEventListener("change", function () {
+          colEdit(function (dd) { return DK.cols.set(dd, cid, fam, cb.checked, Date.now()); });
+        });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, d.cols[cid].name));
+        box.appendChild(lab);
+      });
+      c.appendChild(box);
+    }
+    c.appendChild(newColForm(function (cid) {
+      colEdit(function (dd) { return DK.cols.set(dd, cid, fam, true, Date.now()); });
+      draw();
+    }));
+    var lab2 = el("label", "fm-notel");
+    lab2.appendChild(el("span", "fm-info-k", t("fm.note")));
+    var ta = el("textarea", "fm-own fm-note");
+    ta.rows = 3;
+    ta.maxLength = DK.cols.LIM.note;
+    ta.value = DK.cols.note(d, fam.id);
+    var timer = 0;
+    function save() { clearTimeout(timer); colEdit(function (dd) { return DK.cols.setNote(dd, fam.id, ta.value, Date.now()); }); }
+    ta.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(save, 600); });
+    ta.addEventListener("change", save);
+    lab2.appendChild(ta);
+    c.appendChild(lab2);
+    c.appendChild(el("p", "hint", t("fm.note.hint")));
+    return c;
+  }
+  function drawCols() {
+    var c = card(t("fm.tab.cols"));
+    c.appendChild(el("p", "hint", t("fm.cols.intro")));
+    c.appendChild(newColForm(function (cid) { S.detail = { kind: "col", id: cid }; S.from = cid; S.armed = false; draw(); scrollTop(); }));
+    rootEl.appendChild(c);
+    listHost = null;
+    var d = colData(), ids = DK.cols.order(d, LANG), list = el("div", "fm-list");
+    if (!ids.length) list.appendChild(el("p", "hint", t("fm.cols.empty")));
+    ids.forEach(function (cid) {
+      var b = el("button", "fm-row");
+      b.type = "button";
+      b.appendChild(el("span", "fm-name fm-colname", d.cols[cid].name));
+      b.appendChild(el("span", "fm-meta", nFonts(DK.cols.fams(d, cid, LANG).length)));
+      b.addEventListener("click", function () { S.detail = { kind: "col", id: cid }; S.from = cid; S.armed = false; S.offline = null; draw(); scrollTop(); });
+      list.appendChild(b);
+    });
+    rootEl.appendChild(list);
+  }
+  function openFam(fam, cid) {
+    S.from = cid;
+    S.style = "r"; S.armed = false;
+    if (fam.id.indexOf("fs_") === 0) {
+      S.detail = { kind: "free", id: fam.id };
+      if (!S.free) {
+        rootEl.textContent = "";
+        rootEl.appendChild(el("p", "hint", t("fm.free.loading")));
+        DK.catalog().then(function (list) {
+          S.free = list && list.length ? list : null;
+          S.freeErr = !S.free;
+          if (!S.free) S.detail = { kind: "col", id: cid };
+          draw(); scrollTop();
+        });
+        return;
+      }
+    } else {
+      var f = (S.fams || []).filter(function (x) { return ufOf(x) === fam.id; })[0];
+      if (!f) return;
+      S.detail = { kind: "mine", key: f.key };
+    }
+    draw(); scrollTop();
+  }
+  function drawColDetail() {
+    var d = colData(), cid = S.detail.id, col = d.cols[cid];
+    if (!col) { S.detail = null; S.from = ""; S.tab = "cols"; draw(); return; }
+    rootEl.appendChild(backBar(col.name));
+    var c = card();
+    var lab = el("label", "fm-notel");
+    lab.appendChild(el("span", "fm-info-k", t("fm.col.rename")));
+    var nm = el("input", "find-in");
+    nm.type = "text"; nm.maxLength = DK.cols.LIM.name; nm.value = col.name;
+    nm.addEventListener("change", function () {
+      if (!nm.value.trim()) { nm.value = col.name; return; }
+      colEdit(function (dd) { return DK.cols.rename(dd, cid, nm.value, Date.now()); });
+      draw();
+    });
+    lab.appendChild(nm);
+    c.appendChild(lab);
+    rootEl.appendChild(c);
+    var fams = DK.cols.fams(d, cid, LANG), list = el("div", "fm-list");
+    if (!fams.length) list.appendChild(el("p", "hint", t("fm.col.empty")));
+    var known = {};
+    (S.fams || []).forEach(function (f) { known[ufOf(f)] = f; });
+    fams.forEach(function (fam) {
+      var r = el("div", "fm-row fm-colrow");
+      var name = el("span", "fm-name", fam.name);
+      var mineF = known[fam.id];
+      if (mineF) name.style.fontFamily = '"' + cssFam(mineF.main.file) + '", var(--fm-ui, sans-serif)';
+      else if (fam.id.indexOf("fs_") === 0) name.style.fontFamily = '"fs-' + fam.id.slice(3) + '", var(--fm-ui, sans-serif)';
+      r.appendChild(name);
+      var missing = fam.id.indexOf("uf_") === 0 && S.fams && !mineF;
+      if (missing) r.appendChild(el("span", "hint", t("fm.col.missing")));
+      var acts = el("div", "actions fm-colacts");
+      if (!missing) acts.appendChild(btn(t("fm.col.open"), "btn", function () { openFam(fam, cid); }));
+      acts.appendChild(btn(t("fm.col.out"), "btn", function () {
+        colEdit(function (dd) { return DK.cols.set(dd, cid, fam, false, Date.now()); });
+        draw();
+      }));
+      r.appendChild(acts);
+      list.appendChild(r);
+      if (fam.id.indexOf("fs_") === 0 && DK.fontsourceUrls) loadFace("fs-" + fam.id.slice(3), DK.fetcher(DK.fontsourceUrls(fam.id).r[0]));
+    });
+    rootEl.appendChild(list);
+    // offline
+    var oc = card(t("fm.col.offline"));
+    oc.appendChild(el("p", "hint", t("fm.col.offline.hint")));
+    var free = fams.filter(function (f) { return f.id.indexOf("fs_") === 0; });
+    var msg = el("div", "msg msg-dim");
+    function showOff() {
+      var o = S.offline && S.offline.cid === cid ? S.offline : null;
+      msg.hidden = !o;
+      if (!o) return;
+      msg.className = "msg " + (o.failed ? "msg-err" : o.end ? "msg-ok" : "msg-dim");
+      msg.textContent = o.none ? t("fm.col.offline.none") : !o.end ? t("fm.col.offline.run", { done: o.done, total: o.total })
+        : o.failed ? t("fm.col.offline.fail", { n: o.failed }) : t("fm.col.offline.done", { n: o.ok });
+    }
+    var go = btn(t("fm.col.offline"), "btn", function () {
+      if (!free.length) { S.offline = { cid: cid, none: true, end: true }; showOff(); return; }
+      go.disabled = true;
+      var vars = {};
+      (S.free || []).forEach(function (x) { vars[x.id] = x.vars; });
+      S.offline = { cid: cid, done: 0, total: 0 };
+      DK.cols.keepOffline(free.map(function (f) { return { id: f.id, vars: vars[f.id] }; }), function (dn, tot) {
+        S.offline = { cid: cid, done: dn, total: tot }; if (msg.isConnected) showOff();
+      }).then(function (res) {
+        S.offline = { cid: cid, end: true, ok: res.ok, failed: res.failed };
+        go.disabled = false;
+        if (msg.isConnected) showOff();
+      });
+    });
+    var ga = el("div", "actions");
+    ga.appendChild(go);
+    oc.appendChild(ga);
+    oc.appendChild(msg);
+    showOff();
+    rootEl.appendChild(oc);
+    // delete
+    var dc = card();
+    var rm = btn(S.armed ? t("fm.col.delete.sure") : t("fm.col.delete"), "btn danger" + (S.armed ? " armed" : ""), function () {
+      if (!S.armed) { S.armed = true; draw(); return; }
+      S.armed = false;
+      var name = col.name;
+      colEdit(function (dd) { return DK.cols.remove(dd, cid, Date.now()); });
+      S.detail = null; S.from = ""; S.tab = "cols";
+      S.msgs = [];
+      draw();
+      rootEl.insertBefore(el("div", "msg msg-ok", t("fm.col.deleted", { name: name })), rootEl.firstChild);
+      scrollTop();
+    });
+    var da = el("div", "actions");
+    da.appendChild(rm);
+    dc.appendChild(da);
+    dc.appendChild(el("p", "hint", t("fm.col.delete.hint")));
+    rootEl.appendChild(dc);
   }
 
   // ---------- Free fonts (Fontsource) ----------
@@ -711,7 +961,7 @@
       if (f.lic) list.push(["lic", f.lic]);
       meta.appendChild(badgeRow(list));
       b.appendChild(meta);
-      b.addEventListener("click", function () { S.detail = { kind: "free", id: f.id }; S.style = "r"; draw(); scrollTop(); });
+      b.addEventListener("click", function () { S.from = ""; S.detail = { kind: "free", id: f.id }; S.style = "r"; draw(); scrollTop(); });
       listHost.appendChild(b);
       previewWhenSeen(b, f);
     });
@@ -747,6 +997,7 @@
     rootEl.appendChild(c);
     var slot = el("div", "fm-cards");
     rootEl.appendChild(slot);
+    rootEl.appendChild(colsCard({ id: f.id, name: f.family, fb: f.cat }));
     var slug = f.id.slice(3).replace(/_/g, "-");
     var v = S.style;
     fontsourceInfo(f.id).then(function (j) {
@@ -782,6 +1033,13 @@
   function mount(h, ctx) {
     host = h;
     if (ctx && typeof ctx.t === "function") ctxT = ctx.t;
+    // collections and notes: other devices and windows redraw the page
+    // unless a field is being typed in
+    if (!CB && DK && DK.cols) CB = DK.cols.bind(window, function () {
+      var a = document.activeElement;
+      if (!rootEl.isConnected || (a && rootEl.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+      draw();
+    });
     if (!rootEl.childNodes.length) {
       if (S.fams === null && !S.loading) refresh();
       else draw();
