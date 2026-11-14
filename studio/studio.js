@@ -227,6 +227,26 @@
       "export.encoding": "Encoding… {n}%", "export.noOpus": "This browser cannot make Opus files. Chrome, Edge and Firefox can.",
       "export.opusRate": "Opus files are always 48 kHz.", "export.mp3Hint": "192 kbit/s or more keeps a mix close to the WAV. For speech 64–96 kbit/s is enough.",
       "toast.exportFail": "The export did not finish",
+      "ld.title": "Loudness", "ld.open": "Loudness…", "ld.m": "Momentary", "ld.s": "Short-term", "ld.i": "Integrated", "ld.lra": "Range", "ld.tp": "True peak",
+      "ld.hint": "Measured as the listener hears the master, by EBU R128. The live numbers count while the song plays.",
+      "ld.target": "Target", "ld.reset": "Reset", "ld.song": "Measure the song", "ld.file": "Measure a file…",
+      "ld.busy": "Measuring… {n}%", "ld.mixing": "Mixing the song…", "ld.fail": "That could not be measured.", "ld.empty": "There is nothing to measure yet.",
+      "ld.colSong": "This song", "ld.colFile": "{name}", "ld.colRef": "Reference",
+      "ld.r.i": "Integrated (LUFS)", "ld.r.lra": "Range (LU)", "ld.r.smax": "Loudest 3 s (LUFS)", "ld.r.tp": "True peak (dBTP)", "ld.r.sp": "Sample peak (dBFS)",
+      "ld.r.rms": "RMS (dBFS)", "ld.r.floor": "Noise floor (dBFS)", "ld.r.dur": "Length",
+      "ld.t.spotify": "Spotify (-14 LUFS)", "ld.t.apple": "Apple Music (-16 LUFS)", "ld.t.youtube": "YouTube (-14 LUFS)", "ld.t.podcast": "Podcast (-16 LUFS)",
+      "ld.t.ebu": "Broadcast, EBU R128 (-23 LUFS)", "ld.t.acx": "Audiobook: ACX (Audible)", "ld.t.storytel": "Audiobook: Storytel",
+      "ld.v.down": "{p} will play it {n} dB quieter.", "ld.v.up": "{p} will play it {n} dB louder.", "ld.v.same": "{p} will play it as it is.",
+      "ld.v.peak": "The true peak is above {n} dBTP: it may distort after the service encodes it.", "ld.v.none": "Play the song or measure it to see how {p} will play it.",
+      "ld.v.spec": "Measure the song to check it against {p}.", "ld.v.specOk": "Everything {p} checks passes.", "ld.v.specBad": "{n} of the checks for {p} do not pass yet.",
+      "ld.c.rms": "RMS {v} dBFS (needs {lo} to {hi})", "ld.c.peak": "Peak {v} dB (at most {hi})", "ld.c.floor": "Noise floor {v} dBFS (at most {hi})",
+      "ld.c.head": "Room tone at the start {v} s ({lo} to {hi} s)", "ld.c.tail": "Room tone at the end {v} s ({lo} to {hi} s)",
+      "ld.c.zero": "Digital silence {v} s (use room tone instead)", "ld.c.dur": "Length {v} min (at most {hi} min)", "ld.c.clip": "Clipped samples: {v}",
+      "ld.c.gain": "To reach RMS {to} dBFS it needs {g} dB.", "ld.c.limit": "Its peaks would then pass {hi} dB, so a limiter has to catch them.",
+      "ld.c.noisy": "Its noise floor would rise to {f} dBFS: reduce the noise first.",
+      "ld.ref": "Reference track", "ld.refHint": "Compare with a song you like: its numbers stand next to yours, and it plays at your song's loudness so you hear only the difference in sound.",
+      "ld.refPick": "Choose a reference…", "ld.refPlay": "Play it at the song's loudness", "ld.refStop": "Stop the reference", "ld.refDrop": "Remove",
+      "ld.refNoMatch": "Measure the song first, so the reference can play at its loudness.", "ld.refGain": "The reference plays {n} dB {dir}.", "ld.louder": "louder", "ld.quieter": "quieter",
       "btn.toMusic": "Add to Music", "btn.toLyrics": "Sync lyrics", "toast.toMusic": "Added to Music", "toast.toMusicFail": "Could not add it to Music",
       "btn.ringtone": "Make a ringtone", "toast.ringNoNotes": "Ringtone Composer needs notes: add an instrument track.",
       "au.btn": "A", "au.show": "Automation", "au.title": "Automation: {name}", "au.param": "Parameter",
@@ -442,6 +462,26 @@
       "export.encoding": "Κωδικοποίηση… {n}%", "export.noOpus": "Αυτός ο browser δεν φτιάχνει αρχεία Opus. Το Chrome, το Edge και το Firefox φτιάχνουν.",
       "export.opusRate": "Τα αρχεία Opus είναι πάντα 48 kHz.", "export.mp3Hint": "Από 192 kbit/s και πάνω η μίξη μένει κοντά στο WAV. Για ομιλία αρκούν 64–96 kbit/s.",
       "toast.exportFail": "Η εξαγωγή δεν ολοκληρώθηκε",
+      "ld.title": "Ένταση", "ld.open": "Ένταση…", "ld.m": "Στιγμιαία", "ld.s": "Σύντομη", "ld.i": "Συνολική", "ld.lra": "Εύρος", "ld.tp": "Πραγματική κορυφή",
+      "ld.hint": "Μετριέται όπως ακούει ο ακροατής το master, κατά EBU R128. Οι ζωντανές τιμές μετράνε όσο παίζει το τραγούδι.",
+      "ld.target": "Στόχος", "ld.reset": "Μηδενισμός", "ld.song": "Μέτρηση τραγουδιού", "ld.file": "Μέτρηση αρχείου…",
+      "ld.busy": "Μέτρηση… {n}%", "ld.mixing": "Γίνεται η μίξη του τραγουδιού…", "ld.fail": "Δεν ήταν δυνατή η μέτρηση.", "ld.empty": "Δεν υπάρχει ακόμη κάτι για μέτρηση.",
+      "ld.colSong": "Αυτό το τραγούδι", "ld.colFile": "{name}", "ld.colRef": "Αναφορά",
+      "ld.r.i": "Συνολική (LUFS)", "ld.r.lra": "Εύρος (LU)", "ld.r.smax": "Πιο δυνατά 3 s (LUFS)", "ld.r.tp": "Πραγματική κορυφή (dBTP)", "ld.r.sp": "Κορυφή δείγματος (dBFS)",
+      "ld.r.rms": "RMS (dBFS)", "ld.r.floor": "Θόρυβος βάθους (dBFS)", "ld.r.dur": "Διάρκεια",
+      "ld.t.spotify": "Spotify (-14 LUFS)", "ld.t.apple": "Apple Music (-16 LUFS)", "ld.t.youtube": "YouTube (-14 LUFS)", "ld.t.podcast": "Podcast (-16 LUFS)",
+      "ld.t.ebu": "Εκπομπή, EBU R128 (-23 LUFS)", "ld.t.acx": "Ηχητικό βιβλίο: ACX (Audible)", "ld.t.storytel": "Ηχητικό βιβλίο: Storytel",
+      "ld.v.down": "Το {p} θα το παίξει {n} dB πιο σιγά.", "ld.v.up": "Το {p} θα το παίξει {n} dB πιο δυνατά.", "ld.v.same": "Το {p} θα το παίξει όπως είναι.",
+      "ld.v.peak": "Η πραγματική κορυφή περνά τα {n} dBTP: μπορεί να παραμορφωθεί όταν το κωδικοποιήσει η υπηρεσία.", "ld.v.none": "Παίξε ή μέτρησε το τραγούδι για να δεις πώς θα το παίξει το {p}.",
+      "ld.v.spec": "Μέτρησε το τραγούδι για να το ελέγξεις με τις απαιτήσεις του {p}.", "ld.v.specOk": "Όλοι οι έλεγχοι του {p} περνούν.", "ld.v.specBad": "{n} από τους ελέγχους του {p} δεν περνούν ακόμη.",
+      "ld.c.rms": "RMS {v} dBFS (χρειάζεται {lo} έως {hi})", "ld.c.peak": "Κορυφή {v} dB (το πολύ {hi})", "ld.c.floor": "Θόρυβος βάθους {v} dBFS (το πολύ {hi})",
+      "ld.c.head": "Room tone στην αρχή {v} s ({lo} έως {hi} s)", "ld.c.tail": "Room tone στο τέλος {v} s ({lo} έως {hi} s)",
+      "ld.c.zero": "Ψηφιακή σιωπή {v} s (βάλε room tone στη θέση της)", "ld.c.dur": "Διάρκεια {v} λεπτά (το πολύ {hi})", "ld.c.clip": "Δείγματα με clipping: {v}",
+      "ld.c.gain": "Για RMS {to} dBFS χρειάζεται {g} dB.", "ld.c.limit": "Τότε οι κορυφές του θα περνούσαν τα {hi} dB, άρα πρέπει να τις πιάσει ένας limiter.",
+      "ld.c.noisy": "Ο θόρυβος βάθους θα ανέβαινε στα {f} dBFS: μείωσε πρώτα τον θόρυβο.",
+      "ld.ref": "Κομμάτι αναφοράς", "ld.refHint": "Σύγκρινε με ένα τραγούδι που σου αρέσει: οι τιμές του μπαίνουν δίπλα στις δικές σου και παίζει στην ένταση του τραγουδιού σου, ώστε να ακούς μόνο τη διαφορά στον ήχο.",
+      "ld.refPick": "Επιλογή αναφοράς…", "ld.refPlay": "Παίξε το στην ένταση του τραγουδιού", "ld.refStop": "Σταμάτα την αναφορά", "ld.refDrop": "Αφαίρεση",
+      "ld.refNoMatch": "Μέτρησε πρώτα το τραγούδι, για να παίξει η αναφορά στην ένταση του.", "ld.refGain": "Η αναφορά παίζει {n} dB {dir}.", "ld.louder": "πιο δυνατά", "ld.quieter": "πιο σιγά",
       "btn.toMusic": "Στη Μουσική", "btn.toLyrics": "Συγχρονισμός στίχων", "toast.toMusic": "Μπήκε στη Μουσική", "toast.toMusicFail": "Δεν μπόρεσε να μπει στη Μουσική",
       "btn.ringtone": "Κάνε το ήχο κλήσης", "toast.ringNoNotes": "Ο Ήχος κλήσης χρειάζεται νότες: πρόσθεσε ένα κανάλι οργάνου.",
       "au.btn": "A", "au.show": "Αυτοματισμός", "au.title": "Αυτοματισμός: {name}", "au.param": "Παράμετρος",
@@ -660,7 +700,8 @@
       prVel: int(p.prVel, 1, 127, 100),
       lpG: typeof p.lpG === "string" && /^[a-z]{0,12}$/.test(p.lpG) ? p.lpG : "",
       lpK: p.lpK === "drums" || p.lpK === "bass" || p.lpK === "keys" ? p.lpK : "",
-      lpT: p.lpT === "slow" || p.lpT === "mid" || p.lpT === "fast" ? p.lpT : ""
+      lpT: p.lpT === "slow" || p.lpT === "mid" || p.lpT === "fast" ? p.lpT : "",
+      ldT: typeof p.ldT === "string" && /^[a-z]{1,12}$/.test(p.ldT) ? p.ldT : ""
     };
   }
   // { trackId: value } kept for at most 64 tracks
@@ -2005,6 +2046,7 @@
     if (!loop && fromSec >= end) { if (opts.open) end = C.MAX_SEC; else fromSec = 0; }
     var t0 = a.currentTime + 0.06;
     playing = { t0: t0, loop: loop, passes: [newPass(fromSec, end, t0)], sources: [], clicks: [] };
+    ldRun(true);
     timeAt(trackNodes, t0, fromSec);
     schedAuto(a, trackNodes, fromSec, end, t0, true);
     if (projClips().some(function (c) { return !C.isMidi(c) && state[c.s] !== "ok"; })) showToast(t("toast.missing"));
@@ -2101,6 +2143,7 @@
     trackNodes = {};
     if (FX) FX.disconnect();
     playing = null;
+    ldRun(false);
   }
   function pause() {
     if (!playing) return;
@@ -4289,6 +4332,213 @@
     edit(function () { put("clips", C.normClip(Object.assign({}, c, fields))); }, burst(field + c.id));
   }
 
+  // ---------- 9b. Loudness (meter.js, Studio wave A1) ----------
+  // The live meter is an AudioWorklet on the master after its effects
+  // (what the speakers get); it counts only while the song plays. Measuring
+  // the song renders the mix (renderMix) and analyses it a slice at a time;
+  // a file or a reference track is decoded and analysed the same way.
+  var SM = window.StudioMeter;
+  var LD_TARGETS = ["spotify", "apple", "youtube", "podcast", "ebu", "acx", "storytel"];
+  var ld = { node: null, loading: null, live: null, cur: null, curName: "", curPid: "", ref: null, src: null, job: 0 };
+  function ldNode() {
+    var a = audio();
+    if (ld.node) return Promise.resolve(ld.node);
+    if (!a || !SM || !a.audioWorklet || typeof AudioWorkletNode === "undefined") return Promise.resolve(null);
+    if (!ld.loading) {
+      ld.loading = a.audioWorklet.addModule("meter.js").then(function () { return a.audioWorklet.addModule("meter.worklet.js"); }).then(function () {
+        var n = new AudioWorkletNode(a, "studio-loudness", { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+                                                             channelCount: 2, channelCountMode: "explicit", channelInterpretation: "speakers" });
+        var mute = a.createGain(); mute.gain.value = 0;   // a worklet runs only while it reaches the output
+        analyser.connect(n); n.connect(mute); mute.connect(a.destination);
+        n.port.onmessage = function (e) { if (e.data && typeof e.data === "object") { ld.live = e.data; ldShowLive(); } };
+        n.port.postMessage(playing ? "run" : "pause");
+        ld.node = n;
+        return n;
+      }).then(null, function () { ld.loading = null; return null; });
+    }
+    return ld.loading;
+  }
+  function ldRun(on) {
+    if (ld.node) { try { ld.node.port.postMessage(on ? "run" : "pause"); } catch (e) {} }
+    if (on) ldRefStop();
+  }
+  function ldOk(v, lo) { return typeof v === "number" && isFinite(v) && v > (lo == null ? -70 : lo); }
+  function ldNum(v, d, lo) { return ldOk(v, lo) ? numTxt(v, d) : "–"; }
+  function ldTarget() { return LD_TARGETS.indexOf(prefs.ldT) >= 0 ? prefs.ldT : "spotify"; }
+  function ldName(id) {
+    if (SM.SPECS[id]) return SM.SPECS[id].name;
+    var p = SM.PLATFORMS.filter(function (x) { return x.id === id; })[0];
+    return (p && p.name) || t("ld.t." + id).replace(/\s*\(.*\)\s*$/, "");
+  }
+  function ldShowLive() {
+    var r = ld.live;
+    if (!$("loud-dlg").open) return;
+    $("ld-m").textContent = r ? ldNum(r.m, 1) : "–";
+    $("ld-s").textContent = r ? ldNum(r.s, 1) : "–";
+    $("ld-i").textContent = r ? ldNum(r.i, 1) : "–";
+    $("ld-lra").textContent = r && ldOk(r.i) ? numTxt(r.lra, 1) : "–";
+    $("ld-tp").textContent = r && r.tp > 0 ? numTxt(SM.db(r.tp), 1) : "–";
+    if (!ld.cur) ldVerdict();
+  }
+  function ldLine(ul, cls, text) {
+    var li = el("li", cls), mk = el("span", "ld-mark", cls === "ok" ? "\u2713" : cls === "bad" ? "\u2717" : cls === "warn" ? "!" : "\u2192");
+    mk.setAttribute("aria-hidden", "true");
+    li.appendChild(mk); li.appendChild(el("span", "", text));
+    ul.appendChild(li);
+  }
+  // what the chosen target says about the measured song (or file), else the live numbers
+  function ldVerdict() {
+    var id = ldTarget(), name = ldName(id), out = $("ld-verdict"), ul = $("ld-checks");
+    ul.textContent = ""; ul.hidden = true;
+    if (SM.SPECS[id]) {
+      if (!ld.cur) { out.textContent = t("ld.v.spec", { p: name }); return; }
+      var rows = SM.check(ld.cur, id), s = SM.SPECS[id], bad = 0;
+      rows.forEach(function (c) {
+        if (!c.ok) bad++;
+        var v = c.k === "dur" ? numTxt(c.v / 60, 1) : c.k === "clip" ? String(c.v) : ldNum(c.v, c.k === "head" || c.k === "tail" || c.k === "zero" ? 2 : 1, -Infinity);
+        ldLine(ul, c.ok ? "ok" : "bad", t("ld.c." + c.k, { v: v, lo: c.lo == null ? "" : numTxt(c.lo, 1), hi: c.k === "dur" ? numTxt(c.hi / 60, 0) : numTxt(c.hi, c.k === "clip" ? 0 : 1) }));
+      });
+      var g = SM.gainFor(ld.cur, id);
+      if (g && !rows[0].ok) {
+        ldLine(ul, "", t("ld.c.gain", { to: numTxt((s.rms[0] + s.rms[1]) / 2, 1), g: (g.gain > 0 ? "+" : "") + numTxt(g.gain, 1) }));
+        if (g.limit) ldLine(ul, "warn", t("ld.c.limit", { hi: numTxt(s.peak, 1) }));
+        if (g.noisy) ldLine(ul, "warn", t("ld.c.noisy", { f: numTxt(g.floor, 1) }));
+      }
+      ul.hidden = false;
+      out.textContent = bad ? t("ld.v.specBad", { n: bad, p: name }) : t("ld.v.specOk", { p: name });
+      return;
+    }
+    var rep = ld.cur || (ld.live && ldOk(ld.live.i) ? { i: ld.live.i, tp: ld.live.tp > 0 ? SM.db(ld.live.tp) : -Infinity } : null);
+    var pf = rep ? SM.platform(rep, id) : null;
+    if (!pf) { out.textContent = t("ld.v.none", { p: name }); return; }
+    var n = numTxt(Math.abs(pf.gain), 1);
+    var txt = pf.gain < 0 ? t("ld.v.down", { p: name, n: n }) : pf.gain > 0 ? t("ld.v.up", { p: name, n: n }) : t("ld.v.same", { p: name });
+    if (pf.over) txt += " " + t("ld.v.peak", { n: numTxt(pf.tp, 0) });
+    out.textContent = txt;
+  }
+  var LD_ROWS = [["i", 1], ["lra", 1], ["smax", 1], ["tp", 1], ["sp", 1], ["rms", 1], ["floor", 1], ["dur", 0]];
+  function ldCell(rep, k, d) {
+    if (!rep) return "";
+    if (k === "dur") return C.fmtTime(rep.dur);
+    if (k === "lra") return ldOk(rep.i) ? numTxt(rep.lra, d) : "–";
+    return ldNum(rep[k], d, k === "i" || k === "smax" ? -70 : -Infinity);
+  }
+  function ldReport() {
+    var a = ld.cur, b = ld.ref && ld.ref.rep;
+    $("ld-report").hidden = !a && !b;
+    $("ld-col-a").textContent = a ? ld.curName : "";
+    $("ld-col-b").textContent = t("ld.colRef");
+    $("ld-col-b").hidden = !b;
+    var body = $("ld-rows");
+    body.textContent = "";
+    LD_ROWS.forEach(function (r) {
+      var tr = el("tr");
+      tr.appendChild(el("th", "", t("ld.r." + r[0]))).scope = "row";
+      tr.appendChild(el("td", "", ldCell(a, r[0], r[1])));
+      if (b) tr.appendChild(el("td", "", ldCell(b, r[0], r[1])));
+      body.appendChild(tr);
+    });
+    $("ld-refplay").hidden = !b;
+    $("ld-refdrop").hidden = !b;
+    ldVerdict();
+  }
+  function ldBusy(on) { ["ld-song", "ld-file", "ld-ref"].forEach(function (id) { $(id).disabled = on; }); }
+  // chans → report, a slice at a time; done(rep) or done(null)
+  function ldAnalyse(chans, rate, done) {
+    var job = ++ld.job, A;
+    try { A = new SM.Analysis(chans, rate); } catch (e) { done(null); return; }
+    var step = function () {
+      if (job !== ld.job) return;
+      try { if (A.step(rate * 4)) { done(A.result()); return; } } catch (e) { done(null); return; }
+      $("ld-status").textContent = t("ld.busy", { n: Math.floor(A.progress() * 100) });
+      setTimeout(step, 0);
+    };
+    step();
+  }
+  function ldFinish(rep, set) {
+    ldBusy(false);
+    $("ld-status").textContent = rep ? "" : t("ld.fail");
+    if (rep) set(rep);
+    ldReport();
+  }
+  function ldMeasureSong() {
+    var seq = proj && proj.loop.on && tracks().some(function (tr) { return !!nxOf(tr); });
+    if (!proj || !(projClips().length || seq)) { $("ld-status").textContent = t("ld.empty"); return; }
+    var clips = projClips(), r = C.exportRange(proj, clips);
+    if (r.b - r.a < C.MIN_LEN) { $("ld-status").textContent = t("ld.empty"); return; }
+    if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); return; }
+    ldBusy(true);
+    $("ld-status").textContent = t("ld.mixing");
+    var pid = proj.id, name = t("ld.colSong");
+    renderMix(r, 48000).then(function (chans) {
+      ldAnalyse(chans, 48000, function (rep) { ldFinish(rep, function (x) { if (proj && proj.id === pid) { ld.cur = x; ld.curName = name; ld.curPid = pid; } }); });
+    }, function () { ldFinish(null); });
+  }
+  function ldDecodeFile(f, done) {
+    if (!f) { done(null); return; }
+    if (f.size > MAX_FILE) { showToast(t("toast.tooBig", { name: f.name })); done(null); return; }
+    ldBusy(true);
+    $("ld-status").textContent = t("ld.busy", { n: 0 });
+    f.arrayBuffer().then(decode).then(function (buf) {
+      var chans = [];
+      for (var c = 0; c < Math.min(2, buf.numberOfChannels); c++) chans.push(buf.getChannelData(c));
+      ldAnalyse(chans, buf.sampleRate, function (rep) { done(rep, buf); });
+    }).then(null, function () { done(null); });
+  }
+  var LD_ACCEPT = "audio/*,.wav,.mp3,.ogg,.oga,.opus,.flac,.m4a,.m4b,.aac,.webm";
+  function ldMeasureFile() {
+    pickFilesP(LD_ACCEPT).then(function (files) {
+      var f = files && files[0];
+      if (!f) return;
+      ldDecodeFile(f, function (rep) { ldFinish(rep, function (x) { ld.cur = x; ld.curPid = ""; ld.curName = t("ld.colFile", { name: String(f.name).slice(0, 60) }); }); });
+    });
+  }
+  function ldPickRef() {
+    pickFilesP(LD_ACCEPT).then(function (files) {
+      var f = files && files[0];
+      if (!f) return;
+      ldDecodeFile(f, function (rep, buf) { ldRefStop(); ldFinish(rep, function (x) { ld.ref = { rep: x, buf: buf, name: String(f.name).slice(0, 60) }; }); });
+    });
+  }
+  // the reference plays at the song's loudness, past the master (it is not part of the mix)
+  function ldRefPlay() {
+    if (ld.src) { ldRefStop(); return; }
+    var a = audio(), ref = ld.ref, songI = ld.cur ? ld.cur.i : ld.live ? ld.live.i : -200;
+    if (!a || !ref || !ref.buf) return;
+    if (!ldOk(songI) || !ldOk(ref.rep.i)) { $("ld-status").textContent = t("ld.refNoMatch"); return; }
+    if (playing) pause();
+    resume();
+    var gdb = clamp(songI - ref.rep.i, -40, 24), g = a.createGain(), s = a.createBufferSource();
+    g.gain.value = C.dbToGain(gdb);
+    s.buffer = ref.buf; s.connect(g); g.connect(a.destination);
+    s.onended = function () { if (ld.src === s) ldRefStop(); };
+    s.start();
+    ld.src = s;
+    var b = $("ld-refplay");
+    b.setAttribute("aria-pressed", "true"); b.textContent = t("ld.refStop");
+    $("ld-status").textContent = t("ld.refGain", { n: numTxt(Math.abs(gdb), 1), dir: t(gdb >= 0 ? "ld.louder" : "ld.quieter") });
+  }
+  function ldRefStop() {
+    var s = ld.src;
+    ld.src = null;
+    if (s) { try { s.onended = null; s.stop(); } catch (e) {} try { s.disconnect(); } catch (e) {} }
+    var b = $("ld-refplay");
+    if (b) { b.setAttribute("aria-pressed", "false"); b.textContent = t("ld.refPlay"); }
+  }
+  function openLoudness() {
+    if (!SM) { showToast(t("ld.fail")); return; }
+    var sel = $("ld-target");
+    if (!sel.options.length) LD_TARGETS.forEach(function (id) { var o = el("option", "", t("ld.t." + id)); o.value = id; sel.appendChild(o); });
+    sel.value = ldTarget();
+    if (ld.curPid && (!proj || proj.id !== ld.curPid)) { ld.cur = null; ld.curPid = ""; }   // another song is open now
+    $("ld-status").textContent = "";
+    showDlg("loud-dlg");
+    ldShowLive();
+    ldReport();
+    ldNode();
+  }
+  function closeLoudness() { ldRefStop(); hideDlg("loud-dlg"); }
+
   // ---------- 10. Dialogs ----------
   function showDlg(id) {
     var d = $(id);
@@ -4684,7 +4934,7 @@
                  ["home-btn", "home", "btn.home"], ["stop-btn", "stop", "btn.stop"], ["rec-btn", "rec", "btn.rec"],
                  ["loop-btn", "loop", "btn.loop"], ["zoom-in", "zin", "btn.zoomIn"], ["zoom-out", "zout", "btn.zoomOut"],
                  ["clip-close", "close", "btn.close"], ["proj-close", "close", "btn.close"], ["track-close", "close", "btn.close"],
-                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"], ["fx-close", "close", "btn.close"],
+                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"], ["fx-close", "close", "btn.close"], ["loud-close", "close", "btn.close"],
                  ["add-close", "close", "btn.close"], ["pr-play", "play", "pr.play"]];
     icons.forEach(function (x) { $(x[0]).innerHTML = ICON[x[1]]; setLabel($(x[0]), t(x[2])); });
     var sig = $("sig-in");
@@ -4843,6 +5093,22 @@
     Roll.wire();
     $("track-auto").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); prefs.auto[id] = true; savePrefs(); renderRows(); });
     $("export-close").addEventListener("click", function () { hideDlg("export-dlg"); });
+    $("master-loud").addEventListener("click", openLoudness);
+    $("export-loud").addEventListener("click", function () { hideDlg("export-dlg"); openLoudness(); });
+    $("loud-close").addEventListener("click", closeLoudness);
+    $("loud-dlg").addEventListener("close", function () { ldRefStop(); ld.job++; ldBusy(false); });
+    $("ld-target").addEventListener("change", function () { prefs.ldT = this.value; savePrefs(); ldVerdict(); });
+    $("ld-reset").addEventListener("click", function () {
+      if (ld.node) { try { ld.node.port.postMessage("reset"); } catch (e) {} }
+      if (ld.live) ld.live = Object.assign({}, ld.live, { i: -200, lra: 0, mmax: -200, smax: -200, tp: 0, sp: 0 });
+      ld.cur = null; ld.curPid = "";
+      ldShowLive(); ldReport();
+    });
+    $("ld-song").addEventListener("click", ldMeasureSong);
+    $("ld-file").addEventListener("click", ldMeasureFile);
+    $("ld-ref").addEventListener("click", ldPickRef);
+    $("ld-refplay").addEventListener("click", ldRefPlay);
+    $("ld-refdrop").addEventListener("click", function () { ldRefStop(); ld.ref = null; $("ld-status").textContent = ""; ldReport(); });
     $("export-go").addEventListener("click", function () { doExport("file"); });
     $("export-cr-copy").addEventListener("click", copyCredits);
     $("export-cr-save").addEventListener("click", saveCredits);

@@ -60,6 +60,7 @@
       <label for="master-in" class="tp-lbl" data-i18n="f.master">Master</label>
       <input type="range" id="master-in" min="-60" max="6" step="0.5">
       <button type="button" id="master-fx" class="ms fx" aria-haspopup="dialog" data-i18n="fx.btn">FX</button>
+      <button type="button" id="master-loud" class="ms fx" aria-haspopup="dialog" data-i18n-aria="ld.title">LUFS</button>
       <canvas id="meter" width="80" height="10" aria-hidden="true"></canvas>
     </div>
   </div>
@@ -377,12 +378,53 @@
     </div>
     <p id="export-status" class="hint" aria-live="polite"></p>
     <div class="dlg-actions">
+      <button type="button" id="export-loud" class="chip" data-i18n="ld.open">Loudness…</button>
       <button type="button" id="export-mk" class="chip" aria-haspopup="dialog" data-i18n="mk.btn">Markers</button>
       <button type="button" id="export-pod" class="chip" aria-haspopup="dialog" data-i18n="pod.btn">Publish as podcast</button>
       <button type="button" id="export-ring" class="chip" data-i18n="btn.ringtone" hidden>Make a ringtone</button>
       <button type="button" id="export-music" class="chip" data-i18n="btn.toMusic" hidden>Add to Music</button>
       <button type="button" id="export-lyrics" class="chip" data-i18n="btn.toLyrics" hidden>Sync lyrics</button>
       <button type="button" id="export-go" class="chip primary" data-i18n="btn.export">Export</button>
+    </div>
+  </dialog>
+
+  <!-- Loudness (meter.js): live master meter, measuring, targets, reference -->
+  <dialog id="loud-dlg" aria-labelledby="loud-title">
+    <div class="dlg-head">
+      <h2 id="loud-title" data-i18n="ld.title">Loudness</h2>
+      <span class="spacer"></span>
+      <button type="button" id="loud-close" class="icon-btn"></button>
+    </div>
+    <p class="hint small" data-i18n="ld.hint">Measured as the listener hears the master, by EBU R128. The live numbers count while the song plays.</p>
+    <div id="ld-live" class="ld-live">
+      <div class="ld-cell"><span class="ld-k" data-i18n="ld.m">Momentary</span><span id="ld-m" class="ld-v">–</span><span class="ld-u">LUFS</span></div>
+      <div class="ld-cell"><span class="ld-k" data-i18n="ld.s">Short-term</span><span id="ld-s" class="ld-v">–</span><span class="ld-u">LUFS</span></div>
+      <div class="ld-cell ld-big"><span class="ld-k" data-i18n="ld.i">Integrated</span><span id="ld-i" class="ld-v">–</span><span class="ld-u">LUFS</span></div>
+      <div class="ld-cell"><span class="ld-k" data-i18n="ld.lra">Range</span><span id="ld-lra" class="ld-v">–</span><span class="ld-u">LU</span></div>
+      <div class="ld-cell"><span class="ld-k" data-i18n="ld.tp">True peak</span><span id="ld-tp" class="ld-v">–</span><span class="ld-u">dBTP</span></div>
+    </div>
+    <label class="field" for="ld-target" data-i18n="ld.target">Target</label>
+    <select id="ld-target"></select>
+    <p id="ld-verdict" class="hint" aria-live="polite"></p>
+    <div class="dlg-actions spread">
+      <button type="button" id="ld-reset" class="chip" data-i18n="ld.reset">Reset</button>
+      <button type="button" id="ld-song" class="chip primary" data-i18n="ld.song">Measure the song</button>
+      <button type="button" id="ld-file" class="chip" data-i18n="ld.file">Measure a file…</button>
+    </div>
+    <p id="ld-status" class="hint" aria-live="polite"></p>
+    <div id="ld-report" class="ld-report" hidden>
+      <table>
+        <thead><tr><th scope="col"></th><th scope="col" id="ld-col-a"></th><th scope="col" id="ld-col-b" hidden></th></tr></thead>
+        <tbody id="ld-rows"></tbody>
+      </table>
+      <ul id="ld-checks" class="ld-checks" hidden></ul>
+    </div>
+    <h3 data-i18n="ld.ref">Reference track</h3>
+    <p class="hint small" data-i18n="ld.refHint">Compare with a song you like: its numbers stand next to yours, and it plays at your song's loudness so you hear only the difference in sound.</p>
+    <div class="dlg-actions spread">
+      <button type="button" id="ld-ref" class="chip" data-i18n="ld.refPick">Choose a reference…</button>
+      <button type="button" id="ld-refplay" class="chip" aria-pressed="false" data-i18n="ld.refPlay" hidden>Play it at the song's loudness</button>
+      <button type="button" id="ld-refdrop" class="link-btn" data-i18n="ld.refDrop" hidden>Remove</button>
     </div>
   </dialog>
 
@@ -753,6 +795,7 @@
   <script src="remote.js?v=6.62.00"></script>
   <script src="fx.js?v=6.62.00"></script>
   <script src="encode.js?v=6.62.00"></script>
+  <script src="meter.js?v=6.62.00"></script>
   <script src="podcast.js?v=6.62.00"></script>
   <script src="podcastui.js?v=6.62.00"></script>
   <script src="midi.js?v=6.62.00"></script>
