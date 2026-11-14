@@ -85,6 +85,10 @@
       "fm.file.tt": "TrueType", "fm.file.cff": "PostScript (Atelier only)",
       "fm.remove": "Remove from orOS", "fm.remove.sure": "Press again to move it to the Trash",
       "fm.remove.hint": "The files go to the Trash of Files for 30 days, on every device. Documents that use this font show the built-in Noto font in its place.",
+      "fm.ui": "Font of orOS", "fm.ui.use": "Use for orOS", "fm.ui.on": "orOS uses this font on this device.",
+      "fm.ui.back": "Back to Nunito",
+      "fm.ui.hint": "Menus, buttons and the text of the apps, on this device only. A letter the font does not have stays in Nunito. Documents keep their own fonts.",
+      "fm.ui.noGreek": "This font has no Greek letters: Greek text stays in Nunito.",
       "fm.removed": "Moved to the Trash: {name}", "fm.removeFail": "Could not move it to the Trash.",
       "fm.free.intro": "Free fonts from Fontsource (mostly SIL Open Font License). Layout and Atelier list them in their font lists; each one downloads the first time a document uses it and then works offline.",
       "fm.free.offline": "The list of free fonts needs a connection the first time.",
@@ -174,6 +178,10 @@
       "fm.file.tt": "TrueType", "fm.file.cff": "PostScript (μόνο Atelier)",
       "fm.remove": "Αφαίρεση από το orOS", "fm.remove.sure": "Πάτα ξανά για μεταφορά στα Απορρίμματα",
       "fm.remove.hint": "Τα αρχεία πάνε στα Απορρίμματα των Αρχείων για 30 ημέρες, σε κάθε συσκευή. Τα έγγραφα που τη χρησιμοποιούν δείχνουν στη θέση της την ενσωματωμένη Noto.",
+      "fm.ui": "Γραμματοσειρά του orOS", "fm.ui.use": "Χρήση για το orOS", "fm.ui.on": "Το orOS χρησιμοποιεί αυτή τη γραμματοσειρά σε αυτή τη συσκευή.",
+      "fm.ui.back": "Επιστροφή στη Nunito",
+      "fm.ui.hint": "Μενού, κουμπιά και το κείμενο των εφαρμογών, μόνο σε αυτή τη συσκευή. Ένα γράμμα που δεν έχει η γραμματοσειρά μένει σε Nunito. Τα έγγραφα κρατούν τις δικές τους γραμματοσειρές.",
+      "fm.ui.noGreek": "Αυτή η γραμματοσειρά δεν έχει ελληνικά: το ελληνικό κείμενο μένει σε Nunito.",
       "fm.removed": "Μεταφέρθηκε στα Απορρίμματα: {name}", "fm.removeFail": "Δεν μεταφέρθηκε στα Απορρίμματα.",
       "fm.free.intro": "Δωρεάν γραμματοσειρές από το Fontsource (κυρίως με άδεια SIL Open Font License). Το Layout και το Atelier τις δείχνουν στις λίστες γραμματοσειρών τους· η καθεμία κατεβαίνει την πρώτη φορά που τη χρησιμοποιεί ένα έγγραφο και μετά δουλεύει χωρίς σύνδεση.",
       "fm.free.offline": "Η λίστα με τις δωρεάν γραμματοσειρές θέλει σύνδεση την πρώτη φορά.",
@@ -700,6 +708,13 @@
       slot.appendChild(licCard(r.lic));
     });
     rootEl.appendChild(colsCard({ id: ufOf(f), name: f.name, fb: f.fb }));
+    if (UI) {
+      var ue = { id: ufOf(f), name: f.name, fb: f.fb };
+      ["r", "b", "i", "bi"].forEach(function (v) { if (have[v]) ue[v] = have[v].file; });
+      if (!ue.r) ue.r = (have.b || have.i || have.bi || f.main).file;
+      var ur = insp[f.main.file], ug = ur ? DK.level(ur.cov.greek) : "full";
+      rootEl.appendChild(uiCard(ue, ug !== "full" && ug !== "most"));
+    }
     var fc = card(t("fm.files"));
     if (f.cff) fc.appendChild(el("p", "hint", t("fm.cff.hint")));
     f.files.forEach(function (r) {
@@ -741,6 +756,24 @@
     return DK.ufIdOf(r.file);
   }
   function colData() { return CB ? CB.get() : DK.cols.normalize(null); }
+
+  // ---------- The font of orOS (FM-5) ----------
+  // The shell keeps it (key oros-uifont, this device); ctx.ui from
+  // settings.js: get() → { id, name } or null, set(entry or null).
+  var UI = null;
+  function uiCard(entry, noGreek) {
+    var c = card(t("fm.ui"));
+    var on = !!(UI && UI.get() && UI.get().id === entry.id);
+    if (on) c.appendChild(el("p", "msg msg-ok", t("fm.ui.on")));
+    var acts = el("div", "actions");
+    acts.appendChild(on
+      ? btn(t("fm.ui.back"), "btn", function () { UI.set(null); draw(); })
+      : btn(t("fm.ui.use"), "btn", function () { UI.set(entry); draw(); }));
+    c.appendChild(acts);
+    if (noGreek) c.appendChild(el("p", "hint", t("fm.ui.noGreek")));
+    c.appendChild(el("p", "hint", t("fm.ui.hint")));
+    return c;
+  }
   function colEdit(fn) { if (CB) CB.edit(fn); }
   function nFonts(n) { return n === 0 ? t("fm.cols.n0") : n === 1 ? t("fm.cols.n1") : t("fm.cols.n", { n: n }); }
   function newColForm(onMade) {
@@ -1215,6 +1248,7 @@
     var slot = el("div", "fm-cards");
     rootEl.appendChild(slot);
     rootEl.appendChild(colsCard({ id: f.id, name: f.family, fb: f.cat }));
+    if (UI) rootEl.appendChild(uiCard({ id: f.id, name: f.family, fb: f.cat }, !f.greek));
     var slug = f.id.slice(3).replace(/_/g, "-");
     var v = S.style;
     fontsourceInfo(f.id).then(function (j) {
@@ -1250,6 +1284,7 @@
   function mount(h, ctx) {
     host = h;
     if (ctx && typeof ctx.t === "function") ctxT = ctx.t;
+    if (ctx && ctx.ui && typeof ctx.ui.get === "function" && typeof ctx.ui.set === "function") UI = ctx.ui;
     // collections and notes: other devices and windows redraw the page
     // unless a field is being typed in
     if (!CB && DK && DK.cols) CB = DK.cols.bind(window, function () {

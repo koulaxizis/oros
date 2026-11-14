@@ -497,6 +497,17 @@
     c3.appendChild(row(t("ac.focus"), switchBtn(a.focus, "focusRing", function (v) { set("focusRing", v); }, t("ac.focus")),
       { scope: "a11y", hint: t("ac.focus.hint") }));
     host.appendChild(c3);
+
+    // FM-5: the font of orOS (chosen on a font's page in Fonts)
+    if ("font" in a) {
+      var c4 = card(t("ac.font"), "a11y");
+      var fr = row(a.font ? a.font.name : t("ac.font.nunito"), null, { hint: t("ac.font.hint") });
+      c4.appendChild(fr);
+      var fb = [button(t("ac.font.choose"), "ac.font.choose", function () { go("fonts", true); })];
+      if (a.font) fb.push(button(t("ac.font.back"), "ac.font.back", function () { set("uiFont", null); }));
+      c4.appendChild(actions.apply(null, fb));
+      host.appendChild(c4);
+    }
   }
 
   // Seasonal decorations (seasonal.js through the shell): a main
@@ -3741,14 +3752,22 @@
     fmLoad.catch(function () { fmLoad = null; });
     return fmLoad;
   }
+  // FM-5: the font of orOS through the shell (older shells: none)
+  function fontsCtx() {
+    var s = snap(), ok = !!(s && s.a11y && "font" in s.a11y);
+    return { t: t, ui: ok ? {
+      get: function () { var x = snap(); return x && x.a11y ? x.a11y.font : null; },
+      set: function (v) { set("uiFont", v); }
+    } : null };
+  }
   function secFonts(host) {
-    if (window.SettingsFonts) { window.SettingsFonts.mount(host, { t: t }); return; }
+    if (window.SettingsFonts) { window.SettingsFonts.mount(host, fontsCtx()); return; }
     var wait = el("p", "hint", t("fm.loading"));
     host.appendChild(wait);
     loadFonts().then(function () {
       if (current !== "fonts" || !host.isConnected) return;
       if (wait.parentNode) wait.parentNode.removeChild(wait);
-      window.SettingsFonts.mount(host, { t: t });
+      window.SettingsFonts.mount(host, fontsCtx());
       if (lit && lit.row[1] === "fonts" && Date.now() < lit.until) lightUp(true);
     }, function () { wait.textContent = t("fm.loadFail"); });
   }
