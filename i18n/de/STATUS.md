@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 44951 of 45379 (99%)
+- Strings: 44973 of 45403 (99%)
 - Help pages: 159 of 159 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1882 / 1884 |
+| assistant | 99% | 1885 / 1887 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
@@ -24,7 +24,7 @@ text is still written in the code. They switch over wave by wave
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
 | bubble | 100% | 54 / 54 |
-| budget | 90% | 1065 / 1180 |
+| budget | 90% | 1065 / 1182 |
 | calculator | 100% | 166 / 166 |
 | calendar | 98% | 551 / 561 |
 | capture | 100% | 54 / 54 |
@@ -125,12 +125,12 @@ text is still written in the code. They switch over wave by wave
 | ringtones | 100% | 107 / 107 |
 | roots | 100% | 226 / 226 |
 | rps | 100% | 60 / 60 |
-| scanpdf | 100% | 517 / 517 |
+| scanpdf | 100% | 524 / 524 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1396 / 1411 |
+| settings | 98% | 1404 / 1419 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1203 / 1208 |
+| shell | 99% | 1207 / 1212 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | English for now | 375 / 375 |
