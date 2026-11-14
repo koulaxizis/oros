@@ -20,7 +20,8 @@
 (function () {
   "use strict";
 
-  var E = window.OrosFormsEngine, C = window.OrosFormsCore, R = window.OrosFormsRender, S = window.OrosFormsShare;
+  var E = window.OrosFormsEngine, C = window.OrosFormsCore, R = window.OrosFormsRender, S = window.OrosFormsShare,
+      RS = window.OrosFormsResults;
   var STORAGE_KEY = C.STORAGE_KEY;
 
   // ---------- 1. Strings + helpers ----------
@@ -126,7 +127,14 @@
       "an.count": "{n} answers", "an.count1": "1 answer", "an.new": "new", "an.wait": "On the waiting list",
       "an.empty": "(no answer)", "an.yes": "Yes", "an.no": "No", "an.other": "Other: {x}",
       "an.more": "Show {n} more",
-      "an.soon": "Charts, filters and export to Spreadsheet and CSV come in the next update.",
+      "an.otherName": "Other", "an.view": "View", "an.view.sum": "Summary", "an.view.each": "Each answer",
+      "an.filter": "Show only", "an.filterAll": "All answers", "an.filtered": "{n} of {m} answers match.",
+      "an.sheet": "Open in Spreadsheet", "an.csv": "Download CSV", "an.saved": "Saved {name}",
+      "an.sheetCap": "Only the newest {n} answers went to the Spreadsheet.",
+      "res.answered": "{n} of {m} answered", "res.none": "Nobody answered this question yet.",
+      "res.avg": "Average {x}", "res.range": "From {a} to {b}", "res.more": "And {n} more.",
+      "res.multi": "People could pick more than one, so the shares add up to more than 100%.",
+      "res.col.time": "Time", "res.col.wait": "Waiting list",
       "n.title": "New answers: {x}", "n.body1": "1 new answer", "n.body": "{n} new answers",
       "push.title": "Forms", "push.body": "New answer in a form",
       "new.title": "New form", "new.blank": "Blank form", "new.blankText": "Start from nothing.",
@@ -252,7 +260,14 @@
       "an.count": "{n} απαντήσεις", "an.count1": "1 απάντηση", "an.new": "νέα", "an.wait": "Στη λίστα αναμονής",
       "an.empty": "(χωρίς απάντηση)", "an.yes": "Ναι", "an.no": "Όχι", "an.other": "Άλλο: {x}",
       "an.more": "Εμφάνιση {n} ακόμα",
-      "an.soon": "Γραφήματα, φίλτρα και εξαγωγή σε Spreadsheet και CSV έρχονται στην επόμενη ενημέρωση.",
+      "an.otherName": "Άλλο", "an.view": "Προβολή", "an.view.sum": "Σύνοψη", "an.view.each": "Κάθε απάντηση",
+      "an.filter": "Μόνο", "an.filterAll": "Όλες οι απαντήσεις", "an.filtered": "Ταιριάζουν {n} από {m} απαντήσεις.",
+      "an.sheet": "Άνοιγμα στο Spreadsheet", "an.csv": "Λήψη CSV", "an.saved": "Αποθηκεύτηκε: {name}",
+      "an.sheetCap": "Στο Spreadsheet πήγαν μόνο οι {n} νεότερες απαντήσεις.",
+      "res.answered": "Απάντησαν {n} από {m}", "res.none": "Κανείς δεν απάντησε ακόμα σε αυτή την ερώτηση.",
+      "res.avg": "Μέσος όρος {x}", "res.range": "Από {a} έως {b}", "res.more": "Και {n} ακόμα.",
+      "res.multi": "Μπορούσαν να διαλέξουν περισσότερα από ένα, γι' αυτό τα ποσοστά ξεπερνούν το 100%.",
+      "res.col.time": "Ώρα", "res.col.wait": "Λίστα αναμονής",
       "n.title": "Νέες απαντήσεις: {x}", "n.body1": "1 νέα απάντηση", "n.body": "{n} νέες απαντήσεις",
       "push.title": "Φόρμες", "push.body": "Νέα απάντηση σε φόρμα",
       "new.title": "Νέα φόρμα", "new.blank": "Κενή φόρμα", "new.blankText": "Ξεκίνα από το μηδέν.",
@@ -1332,18 +1347,170 @@
     pane.appendChild(b5);
   }
 
-  var respShown = 50;
+  // Answers (W3): a summary with a chart per question or each answer,
+  // a filter on one choice, export to the Spreadsheet and CSV.
+  var respShown = 50, respView = "sum", respFilter = "", respFor = "";
+  var SHEET_ROWS = 499;   // + the heading row = the Spreadsheet's 500
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function resWords() {
+    return { yes: t("an.yes"), no: t("an.no"), other: function (v) { return t("an.other", { x: v }); },
+             otherName: t("an.otherName"), time: t("res.col.time"), wait: t("res.col.wait") };
+  }
+  function fmtNum(x) {
+    try { return Number(x).toLocaleString(locale(), { maximumFractionDigits: 2 }); } catch (e) { return String(x); }
+  }
+  // One bar: label, a thin SVG bar (width = share of the answers) with a
+  // hover title, then the count and share as text (never colour alone).
+  function barRow(label, n, share) {
+    var row = el("div", "res-row");
+    row.appendChild(el("span", "res-lab", label));
+    var svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", "0 0 100 8");
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.setAttribute("class", "res-bar");
+    svg.setAttribute("aria-hidden", "true");
+    var track = document.createElementNS(SVGNS, "rect");
+    track.setAttribute("class", "res-track");
+    track.setAttribute("x", "0"); track.setAttribute("y", "0"); track.setAttribute("width", "100"); track.setAttribute("height", "8");
+    svg.appendChild(track);
+    if (n > 0) {
+      var r = document.createElementNS(SVGNS, "rect");
+      r.setAttribute("class", "res-fill");
+      r.setAttribute("x", "0"); r.setAttribute("y", "0"); r.setAttribute("height", "8");
+      r.setAttribute("width", String(Math.max(1, Math.min(100, share))));
+      svg.appendChild(r);
+    }
+    var tip = document.createElementNS(SVGNS, "title");
+    tip.textContent = label + ": " + n + " (" + fmtNum(share) + "%)";
+    svg.appendChild(tip);
+    row.appendChild(svg);
+    row.appendChild(el("span", "res-num", n + " · " + fmtNum(share) + "%"));
+    return row;
+  }
+  function summaryCard(it) {
+    var card = el("article", "card res");
+    card.appendChild(el("h3", "res-q", it.label || t("ed.untitled")));
+    card.appendChild(el("p", "hint", t("res.answered", { n: it.n, m: it.of })));
+    if (!it.n) { card.appendChild(el("p", "dim", t("res.none"))); return card; }
+    if (it.kind === "bars" || it.kind === "hist") {
+      var box = el("div", "res-bars");
+      it.bars.forEach(function (b) { box.appendChild(barRow(b.label, b.n, b.pct)); });
+      card.appendChild(box);
+      var notes = [];
+      if (it.t === "multi") notes.push(t("res.multi"));
+      if (it.avg !== undefined) notes.push(t("res.avg", { x: fmtNum(it.avg) }));
+      if (it.kind === "hist") notes.push(t("res.range", { a: fmtNum(it.min), b: fmtNum(it.max) }));
+      if (notes.length) card.appendChild(el("p", "hint", notes.join(" · ")));
+    } else if (it.kind === "grid") {
+      var wrap = el("div", "res-grid");
+      var tb = el("table"), thead = el("thead"), hr = el("tr");
+      hr.appendChild(el("th", "", ""));
+      it.cols.forEach(function (c) { hr.appendChild(el("th", "", c)); });
+      thead.appendChild(hr); tb.appendChild(thead);
+      var tbody = el("tbody");
+      it.rows.forEach(function (r) {
+        var tr = el("tr");
+        tr.appendChild(el("th", "", r.label));
+        r.counts.forEach(function (c) { tr.appendChild(el("td", c ? "" : "dim", String(c))); });
+        tbody.appendChild(tr);
+      });
+      tb.appendChild(tbody); wrap.appendChild(tb); card.appendChild(wrap);
+    } else {
+      var ul = el("ul", "res-list");
+      it.texts.forEach(function (x) { ul.appendChild(el("li", "", x.text)); });
+      card.appendChild(ul);
+      if (it.more) card.appendChild(el("p", "hint", t("res.more", { n: it.more })));
+    }
+    return card;
+  }
+  function exportRows(list) {
+    return RS.table(cur, list, resWords());
+  }
+  function fileBase() {
+    return (cur && cur.title ? cur.title.replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 60) : "") || t("f.untitled");
+  }
+  function sheetHost() { try { return window.parent && window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) { return null; } }
+  function dialogHost() {
+    try { return (window.parent && window.parent.orosDialog) || window.orosDialog || null; }
+    catch (e) { return window.orosDialog || null; }
+  }
+  function toSheet(list) {
+    var host = sheetHost();
+    if (!host) return;
+    var rows = exportRows(list), head = rows.shift();
+    if (rows.length > SHEET_ROWS) { toast(t("an.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(rows.length - SHEET_ROWS); }
+    host.__orosOpenAt("spreadsheet", { newSheet: { name: fileBase().slice(0, 31), rows: [head].concat(rows) } });
+  }
+  function toCsv(list) {
+    var blob = new Blob([RS.csv(exportRows(list))], { type: "text/csv;charset=utf-8" });
+    var name = fileBase() + ".csv", dlg = dialogHost();
+    if (dlg && typeof dlg.saveFile === "function") {
+      Promise.resolve(dlg.saveFile({ blob: blob, filename: name, mime: "text/csv", types: [{ description: "CSV", accept: { "text/csv": [".csv"] } }] }))
+        .then(function (r) { if (r && r.ok) toast(t("an.saved", { name: r.name || name })); }, function () {});
+      return;
+    }
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
   function renderResp() {
     var pane = $("pane-resp");
     if (!cur) return;
+    if (respFor !== cur.id) { respFor = cur.id; respFilter = ""; respShown = 50; }
     pane.textContent = "";
-    var list = C.answersOf(ans, cur.id);
+    var all = C.answersOf(ans, cur.id);
     var seen = (ans.seen && ans.seen[cur.id]) || 0;
+    var words = resWords();
+    var fq = respFilter ? respFilter.split("|") : null;
+    var list = fq ? RS.filter(cur, all, { q: fq[0], v: fq.slice(1).join("|") }) : all;
+    if (fq && list === all) { respFilter = ""; fq = null; }
     var head = el("div", "card");
-    head.appendChild(el("p", "state", list.length ? t(list.length === 1 ? "an.count1" : "an.count", { n: list.length }) : t(cur.x ? "an.noneShared" : "an.none")));
-    if (list.length) head.appendChild(el("p", "hint", t("an.soon")));
+    head.appendChild(el("p", "state", all.length ? t(all.length === 1 ? "an.count1" : "an.count", { n: all.length }) : t(cur.x ? "an.noneShared" : "an.none")));
     pane.appendChild(head);
-    var words = { yes: t("an.yes"), no: t("an.no"), other: function (v) { return t("an.other", { x: v }); } };
+    if (!all.length) return;
+
+    // view, filter, export
+    var bar = el("div", "bar res-tools");
+    var seg = el("div", "seg");
+    seg.setAttribute("role", "group");
+    seg.setAttribute("aria-label", t("an.view"));
+    [["sum", "an.view.sum"], ["each", "an.view.each"]].forEach(function (v) {
+      var b = chip(t(v[1]), respView === v[0] ? "on" : "", function () { respView = v[0]; respShown = 50; renderResp(); });
+      b.setAttribute("aria-pressed", respView === v[0] ? "true" : "false");
+      seg.appendChild(b);
+    });
+    bar.appendChild(seg);
+    var fl = RS.filterable(cur, words);
+    if (fl.length) {
+      var lab = el("label", "res-filter");
+      lab.appendChild(el("span", "", t("an.filter")));
+      var sel = el("select");
+      sel.appendChild(new Option(t("an.filterAll"), ""));
+      fl.forEach(function (f) {
+        var g = document.createElement("optgroup");
+        g.label = f.label || t("ed.untitled");
+        f.opts.forEach(function (o) { g.appendChild(new Option(o.label, f.q + "|" + o.key)); });
+        sel.appendChild(g);
+      });
+      sel.value = respFilter;
+      sel.addEventListener("change", function () { respFilter = sel.value; respShown = 50; renderResp(); });
+      lab.appendChild(sel);
+      bar.appendChild(lab);
+    }
+    pane.appendChild(bar);
+    var bar2 = el("div", "bar end");
+    if (sheetHost()) bar2.appendChild(chip(t("an.sheet"), "", function () { toSheet(list); }));
+    bar2.appendChild(chip(t("an.csv"), "", function () { toCsv(list); }));
+    pane.appendChild(bar2);
+    if (fq) pane.appendChild(el("p", "hint", t("an.filtered", { n: list.length, m: all.length })));
+
+    if (respView === "sum") {
+      RS.summary(cur, list, words).forEach(function (it) { pane.appendChild(summaryCard(it)); });
+      return;
+    }
     list.slice(0, respShown).forEach(function (r) {
       var card = el("article", "card answer");
       var top = el("div", "ans-top");
