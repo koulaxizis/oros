@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 44746 of 45174 (99%)
-- Help pages: 158 of 158 (100%)
+- Strings: 44806 of 45234 (99%)
+- Help pages: 159 of 159 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -127,10 +127,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 517 / 517 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1318 / 1333 |
+| settings | 98% | 1374 / 1389 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1180 / 1185 |
+| shell | 99% | 1184 / 1189 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | English for now | 375 / 375 |
@@ -191,3 +191,4 @@ These show English until fixed (usually the English text changed).
 - de/help/whiteboard.txt: links or key caps differ from whiteboard/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
 - de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt
+- de/help/topics/sensitive.txt: links or key caps differ from help/topics/sensitive.en.txt

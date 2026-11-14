@@ -3,6 +3,8 @@ orOS ist dafür gebaut, dass deine Daten dir gehören. Es gibt keine Konten, kei
 
 Die vollständige Datenschutzerklärung steht im Web: [useoros.online/privacy.html](https://useoros.online/privacy.html).
 
+Arbeitest du an etwas Sensiblem oder mit Quellen? Lies [Sensible Arbeit und Quellen](help:t/sensitive).
+
 ## Deine Daten bleiben in deinem Browser
 Alles, was du in orOS erstellst, wird in diesem Browser auf diesem Gerät gespeichert. Es gibt keinen orOS-Server, der es sammelt. orOS nutzt keine Cookies und keinerlei Tracking oder Analyse.
 
