@@ -4,7 +4,8 @@
 // added to a playlist, a song taken out of one), Flashcards (a deck
 // renamed; a note's front, back and tags, or the note to another deck)
 // and Publishing (PB-CHG: a title's fields, people, editions and
-// royalty terms).
+// royalty terms; PB-MUS M2: a music release's fields, tracks with
+// credits and splits, and editions).
 // Loaded by assistant.js the first time one of their items is changed,
 // with the app's own core.js, and registered into assistant/edits.js
 // (extend), whose plan / apply / undo / diff and card stay the same.
@@ -253,7 +254,12 @@
   var PB_TEXT = [["title", "t", 200, 1], ["subtitle", "sub", 200, 1], ["series", "ser", 120, 1], ["series_no", "sn", 12, 1], ["language", "lang", 40, 1],
                  ["keywords", "kw", 400, 1], ["blurb", "blurb", 4000, 0], ["bio", "bio", 3000, 0], ["note", "notes", 4000, 0]];
   var PB_KEYS = ["title", "subtitle", "series", "series_no", "language", "keywords", "blurb", "bio", "note", "status", "date",
-                 "by", "translator", "illustrator", "editor", "cover_designer", "narrator", "other", "formats", "royalties"];
+                 "by", "translator", "illustrator", "editor", "cover_designer", "narrator", "other", "formats", "royalties",
+                 "release_type", "record_label", "genre", "p_line", "c_line", "tracks", "editions"];
+  // PB-MUS (wave M2): a music release's own fields, tracks and editions.
+  var PB_MUSIC = ["release_type", "record_label", "genre", "p_line", "c_line", "tracks", "editions"];
+  var PB_MT = { single: "single", ep: "ep", album: "album", compilation: "comp" };
+  var PB_MTX = [["record_label", "lbl", 120], ["genre", "gen", 60], ["p_line", "pl", 200], ["c_line", "cl", 200]];
   var FMT_NUM = [["price", "price", 0, 1e6, 2], ["pages", "pages", 0, 100000, 0], ["width", "w", 0, 2000, 1], ["height", "h", 0, 2000, 1],
                  ["spine", "sp", 0, 500, 1], ["weight", "wt", 0, 100000, 0], ["duration", "dur", 0, 100000, 0]];
   var FMT_TXT = [["binding", "bind", 60], ["paper", "paper", 80], ["note", "note", 200]];
@@ -275,6 +281,129 @@
     if (f.wp) b.push("product " + f.wp.id);
     if (f.note) b.push(f.note);
     return b.join(" · ");
+  }
+  function pbLen(n) { return Math.floor(n / 60) + ":" + ("0" + n % 60).slice(-2); }
+  function pbShares(l) { return (l || []).map(function (x) { return x.n + " " + x.pct + "%" + (x.soc ? " " + x.soc : "") + (x.ipi ? " IPI " + x.ipi : ""); }).join(", "); }
+  function pbTrkLine(C, r) {
+    var b = [(r.disc > 1 ? r.disc + "-" : "") + r.no + ". " + r.t + (r.ver ? " (" + r.ver + ")" : "")];
+    if (r.art) b.push(r.art);
+    if (r.isrc) b.push(C.fmtIsrc(r.isrc));
+    if (r.dur) b.push(pbLen(r.dur));
+    if (r.lang) b.push(r.lang);
+    if (r.ex) b.push("explicit");
+    if (r.cr && r.cr.length) b.push(r.cr.map(function (c) { return c.n + " (" + C.argName(C.ARG_CR, c.r) + (c.ins ? ", " + c.ins : "") + ")"; }).join(", "));
+    if (r.sw && r.sw.length) b.push("\u270e " + pbShares(r.sw));
+    if (r.sm && r.sm.length) b.push("\u2117 " + pbShares(r.sm));
+    return b.join(" \u00b7 ");
+  }
+  function pbMedLine(C, r) {
+    var b = [C.argName(C.ARG_MED, r.k)];
+    if (r.upc) b.push(r.upc);
+    if (r.cat) b.push(r.cat);
+    if (r.price) b.push(r.price.toFixed(2));
+    if (r.dist) b.push(r.dist);
+    if (r.note) b.push(r.note);
+    return b.join(" \u00b7 ");
+  }
+  // A music release as the card shows it: its fields, tracks, editions.
+  function pbMusicView(C, t, d) {
+    var v = pbView(t), mt = t.mt || {};
+    v.mtype = C.argName(PB_MT, mt.k);
+    v.label = mt.lbl || "";
+    v.genre = mt.gen || "";
+    v.pline = (mt.pl ? "\u2117 " + mt.pl : "") + (mt.pl && mt.cl ? " \u00b7 " : "") + (mt.cl ? "\u00a9 " + mt.cl : "");
+    v.track = C.tracksOf(d, t.id).map(function (r) { return pbTrkLine(C, r); }).join("\n");
+    v.format = C.editionsOf(d, t.id).map(function (r) { return pbMedLine(C, r); }).join("\n");
+    return v;
+  }
+  // A person who stays on a list keeps their CRM link.
+  function keepCrm(list, old, role) {
+    return list.map(function (x) {
+      var was = (old || []).filter(function (o) { return H.foldName(o.n) === H.foldName(x.n) && (!role || o.r === x.r); })[0];
+      return was && was.crm && !x.crm ? Object.assign({}, x, { crm: was.crm }) : x;
+    });
+  }
+  // Someone else's use of a code: "" when free (or only on `self`).
+  function pbCodeUse(C, d, used, key, self) {
+    var u = (used[key] || []).filter(function (x) { return !(self && (x.trk === self || x.med === self)); })[0];
+    if (!u) return "";
+    if (u.x) return "it is marked as used elsewhere in Publishing's Codes";
+    var tt = C.find(d, "titles", u.title);
+    return "it is already on " + (tt ? "\u00ab" + tt.t + "\u00bb" : "another release");
+  }
+  // tracks: each found by its isrc, else by its title (and version);
+  // only the fields given change, a track not there is added, none is
+  // removed. → { v: [rows to write] } | { err }
+  function pbTracks(C, d, t, list) {
+    var cur = clone(C.tracksOf(d, t.id)), used = C.usedCodes(d), seen = {}, out = {}, add = [];
+    for (var i = 0; i < list.length; i++) {
+      var w = "tracks[" + i + "].", ta = C.trackArgs(list[i], w);
+      if (ta.err) return ta;
+      var x = ta.v, at = null;
+      if (x.isrc) {
+        if (seen[x.isrc]) return { err: w + "isrc " + C.fmtIsrc(x.isrc) + " is given twice." };
+        seen[x.isrc] = 1;
+        at = cur.filter(function (r) { return r.isrc === x.isrc; })[0] || null;
+      }
+      if (!at && x.t) {
+        var hits = cur.filter(function (r) { return H.foldName(r.t) === H.foldName(x.t) && (x.ver == null || H.foldName(r.ver) === H.foldName(x.ver)); });
+        if (hits.length > 1) return { err: w + "the release has " + hits.length + " tracks named \u00ab" + x.t + "\u00bb; give version or isrc to say which." };
+        at = hits[0] || null;
+        if (at && x.isrc && at.isrc) return { err: w + "\u00ab" + at.t + "\u00bb already has ISRC " + C.fmtIsrc(at.isrc) + "; a track's ISRC is changed in Publishing itself." };
+      }
+      var row;
+      if (at) {
+        row = Object.assign(clone(out[at.id] || at), x);
+        if (x.cr) row.cr = keepCrm(x.cr, at.cr, true);
+        if (x.sw) row.sw = keepCrm(x.sw, at.sw);
+        if (x.sm) row.sm = keepCrm(x.sm, at.sm);
+      } else {
+        if (!x.t) return { err: w + "no track of the release has isrc " + C.fmtIsrc(x.isrc) + "; give title to add it as a new track." };
+        if (cur.length + add.length + 1 > C.MAX_TRK_PER) return { err: "tracks: a release keeps " + C.MAX_TRK_PER + " tracks in Publishing." };
+        var no = cur.concat(add).filter(function (r) { return r.disc === 1; }).reduce(function (m, r) { return Math.max(m, r.no); }, 0) + 1;
+        row = Object.assign({ id: C.uid(), ti: t.id, no: no, disc: 1, ver: "", art: "", isrc: "", dur: 0, lang: t.lang || "" }, x);
+        add.push(row);
+      }
+      ["cr", "sw", "sm"].forEach(function (k) { if (row[k] && !row[k].length) delete row[k]; });
+      if (row.isrc) {
+        var why = pbCodeUse(C, d, used, row.isrc, at && at.id);
+        if (why) return { err: w + "isrc " + C.fmtIsrc(row.isrc) + ": " + why + "; one ISRC is one recording." };
+      }
+      out[row.id] = row;
+    }
+    return { v: Object.keys(out).map(function (k) { return out[k]; }) };
+  }
+  // editions: each found by its upc, else by its edition (kind); added
+  // when none matches, none removed. → { v: [rows] } | { err }
+  function pbEditions(C, d, t, list) {
+    var cur = clone(C.editionsOf(d, t.id)), used = C.usedCodes(d), seen = {}, out = {}, add = 0;
+    for (var i = 0; i < list.length; i++) {
+      var w = "editions[" + i + "].", ea = C.editionArgs(list[i], w);
+      if (ea.err) return ea;
+      var x = ea.v, at = null, key = x.upc ? C.upcKey(x.upc) : "";
+      if (key) {
+        if (seen[key]) return { err: w + "upc " + x.upc + " is given twice." };
+        seen[key] = 1;
+        at = cur.filter(function (r) { return r.upc && C.upcKey(r.upc) === key; })[0] || null;
+      }
+      if (!at) {
+        var kin = cur.filter(function (r) { return (x.k ? r.k === x.k : true) && (!key || !r.upc); });
+        if (kin.length > 1) return { err: w + "the release has " + kin.length + " " + (x.k ? C.argName(C.ARG_MED, x.k) + " " : "") + "editions; give upc to say which." };
+        if (x.k || cur.length === 1) at = kin[0] || null;
+      }
+      var row;
+      if (at) row = Object.assign(clone(out[at.id] || at), x);
+      else {
+        if (cur.length + (++add) > C.MAX_FMTS) return { err: "editions: a release keeps " + C.MAX_FMTS + " editions in Publishing." };
+        row = Object.assign({ id: C.uid(), ti: t.id, k: "dig", upc: "", cat: "", price: 0, dist: "", note: "" }, x);
+      }
+      if (row.upc) {
+        var why = pbCodeUse(C, d, used, C.upcKey(row.upc), at && at.id);
+        if (why) return { err: w + "upc " + row.upc + ": " + why + "; each edition has its own code." };
+      }
+      out[row.id] = row;
+    }
+    return { v: Object.keys(out).map(function (k) { return out[k]; }) };
   }
   function pbView(t) {
     function who(r) { return t.ppl.filter(function (p) { return p.r === r; }).map(function (p) { return p.n; }).join(", "); }
@@ -418,7 +547,12 @@
     var nd = C.normalize(d);
     var t = C.find(nd, "titles", target.title);
     if (!t || nd.tombs[t.id] >= t.m) return bad("That title is no longer in Publishing.");
-    var s = ch.set, v = clone(t);
+    var s = ch.set, v = clone(t), music = C.isMusic(t);
+    if (!music) {
+      var mk = PB_MUSIC.filter(function (k) { return has(s, k); });
+      if (mk.length) return bad("\u00ab" + t.t + "\u00bb is a book; " + mk.join(", ") + " are for a music release (make a new release with create_items).");
+    } else if (has(s, "formats")) return bad("\u00ab" + t.t + "\u00bb is a music release: it has editions, not formats; give editions.");
+    else if (has(s, "narrator")) return bad("A music release has no narrator; give the track's credits instead.");
     for (var i = 0; i < PB_TEXT.length; i++) {
       var a = PB_TEXT[i];
       if (!has(s, a[0])) continue;
@@ -467,22 +601,61 @@
       });
       if (!v.roy.length) delete v.roy;
     }
-    var before = pbView(t);
+    var rows = [];
+    if (music) {
+      if (has(s, "release_type")) {
+        if (!has(PB_MT, s.release_type)) return bad("release_type is single, ep, album or compilation.");
+        v.mt.k = PB_MT[s.release_type];
+      }
+      for (i = 0; i < PB_MTX.length; i++) {
+        if (!has(s, PB_MTX[i][0])) continue;
+        var mv = H.line(String(s[PB_MTX[i][0]]), 100000);
+        if ((e = tooLong(PB_MTX[i][0], mv, PB_MTX[i][2], "Publishing"))) return e;
+        if (mv) v.mt[PB_MTX[i][1]] = mv; else delete v.mt[PB_MTX[i][1]];
+      }
+      var tr = has(s, "tracks") ? pbTracks(C, nd, t, s.tracks) : { v: [] };
+      if (tr.err) return bad(tr.err);
+      var er = has(s, "editions") ? pbEditions(C, nd, t, s.editions) : { v: [] };
+      if (er.err) return bad(er.err);
+      rows = tr.v.map(function (r) { return ["trk", r]; }).concat(er.v.map(function (r) { return ["med", r]; }));
+    }
+    function view(x, dd) { return music ? pbMusicView(C, x, dd) : pbView(x); }
+    var before = view(t, nd);
+    var prevRows = [];
     var out = C.put(nd, "titles", v, now);
+    for (i = 0; i < rows.length; i++) {
+      var was = C.find(nd, rows[i][0], rows[i][1].id);
+      out = C.put(out, rows[i][0], rows[i][1], now);
+      var got = C.find(out, rows[i][0], rows[i][1].id);
+      if (!got) return bad("Publishing would not keep " + (rows[i][0] === "trk" ? "track \u00ab" + (rows[i][1].t || "") + "\u00bb" : "that edition") + ".");
+      prevRows.push({ l: rows[i][0], prev: was ? clone(was) : null, next: clone(got) });
+    }
     var next = C.find(out, "titles", t.id);
     if (!next) return bad("Publishing would not keep that title.");
-    var after = pbView(next);
-    if (same(after, before)) return nothing("title");
+    var after = view(next, out);
+    if (same(after, before)) return nothing(music ? "release" : "title");
     adopt(d, out);
-    return { ok: true, title: t.t, before: before, after: after, del: false,
-             undo: { t: "set", app: "publish", prev: clone(t), next: clone(next) } };
+    var undo = { t: "set", app: "publish", prev: clone(t), next: clone(next) };
+    if (prevRows.length) undo.rows = prevRows;
+    return { ok: true, title: t.t, before: before, after: after, del: false, undo: undo };
   }
   function publishUndo(d, u, now) {
     var C = core("publish");
     if (!C || !isObj(d) || !isObj(u.prev) || !isObj(u.next)) return bad("bad undo");
     var nd = C.normalize(d), cur = C.find(nd, "titles", u.next.id);
     if (!cur || !same(cur, u.next)) return bad("The title changed since; nothing was undone.");
-    adopt(d, C.put(nd, "titles", clone(u.prev), now));
+    var rows = Array.isArray(u.rows) ? u.rows : [];
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (!isObj(r) || (r.l !== "trk" && r.l !== "med") || !isObj(r.next)) return bad("bad undo");
+      if (!same(C.find(nd, r.l, r.next.id), r.next)) return bad("A track or edition changed since; nothing was undone.");
+    }
+    var out = C.put(nd, "titles", clone(u.prev), now);
+    rows.forEach(function (r) {
+      // a row the change added goes; a changed row gets its old fields back
+      out = r.prev ? C.put(out, r.l, clone(r.prev), now) : C.remove(out, r.l, r.next.id, now);
+    });
+    adopt(d, out);
     return { ok: true };
   }
 

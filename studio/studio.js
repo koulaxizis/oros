@@ -103,6 +103,54 @@
       "proj.title": "Projects", "proj.empty": "No projects yet.", "proj.desc": "{n} tracks · {t}",
       "name.project": "Name of the project", "name.track": "Name of the track",
       "export.title": "Export", "sec.bits": "Bit depth", "sec.rate": "Sample rate",
+      "mk.btn": "Markers",
+      "mk.hint": "Markers name places on the timeline. In a podcast episode they become its chapters. Press M to add one at the playhead.",
+      "mk.none": "No markers yet.", "mk.add": "Add at the playhead", "mk.default": "Chapter {n}", "mk.added": "Marker at {time}",
+      "mk.max": "A project has up to {n} markers", "mk.go": "Go to {time}", "mk.name": "Marker name", "mk.here": "To the playhead", "mk.del": "Delete",
+      "mk.delName": "Delete marker {name}", "pod.btn": "Publish as podcast",
+      "pod.intro.hint": "Make a show, turn this project into one of its episodes, and download a ready site (feed, episodes, chapters, cover) to put on GitHub Pages, Netlify, Cloudflare Pages or a server of your own. Podcast apps follow its feed address.",
+      "pod.sec.show": "Show", "pod.f.show": "Show", "pod.newShow": "New show…", "pod.untitledShow": "Untitled show", "pod.f.title": "Title",
+      "pod.f.author": "Made by", "pod.f.desc": "Description", "pod.f.lang": "Language", "pod.f.type": "Order", "pod.type.episodic": "Newest first",
+      "pod.type.serial": "In order (series)", "pod.f.cat": "Category", "pod.catNone": "No category", "pod.f.explicit": "Explicit content",
+      "pod.f.url": "Site address",
+      "pod.urlHint": "Where you will upload the site, for example https://yourname.github.io/show/. It must start with https. The feed is this address plus feed.xml.",
+      "pod.f.email": "Owner e-mail (optional, public)",
+      "pod.emailHint": "Apple Podcasts and other directories use it to check the show is yours. It is written in the feed, so anyone can read it.",
+      "pod.f.fund": "Support link (optional)", "pod.f.cover": "Cover", "pod.coverNone": "No cover yet.", "pod.coverPick": "Choose a picture",
+      "pod.coverAtelier": "Design it in Atelier",
+      "pod.coverHint": "A square picture of at least 1400 × 1400 pixels. Studio cuts it square, makes it at most 3000 × 3000 and removes the photo's hidden details (place, camera).",
+      "pod.coverBusy": "Preparing the cover…", "pod.atelierHint": "Atelier opens a 3000 × 3000 design. Save it as a picture in Files, then choose it here.",
+      "pod.save": "Save show", "pod.del": "Delete show", "pod.saved": "Saved",
+      "pod.delAsk": "Delete the show “{name}”? Its {n} episodes stay as projects; they only leave the show.", "pod.sec.ep": "This project as an episode",
+      "pod.epAdd": "Add to this show", "pod.epOther": "This project is an episode of “{name}”.", "pod.f.n": "Episode number", "pod.f.se": "Season",
+      "pod.f.epType": "Kind", "pod.f.date": "Date", "pod.epType.full": "Episode", "pod.epType.trailer": "Trailer", "pod.epType.bonus": "Bonus",
+      "pod.f.epTitle": "Episode title", "pod.f.epDesc": "Show notes", "pod.f.sound": "Sound", "pod.mono": "Mono", "pod.stereo": "Stereo",
+      "pod.sizeHint": "About {s} an hour.", "pod.chapters": "{n} chapters from the markers",
+      "pod.noChapters": "No chapters: add markers on the timeline to make them.", "pod.intro": "Intro", "pod.chapter": "Chapter",
+      "pod.fileNone": "No episode file yet.", "pod.fileReady": "Episode file ready: {d}, {s}.",
+      "pod.stale": "The markers changed since: make the file again so its chapters match.", "pod.make": "Make the episode file",
+      "pod.remake": "Make the file again", "pod.fileMade": "The episode file is ready", "pod.epSave": "Save", "pod.epLeave": "Take out of the show",
+      "pod.leaveAsk": "Take this project out of the show? Its episode file stays on the disk until you delete the project.", "pod.untitledEp": "Episode",
+      "pod.sec.eps": "Episodes", "pod.epsNone": "No episodes yet. Open a project and add it to this show.", "pod.draft": "draft",
+      "pod.staleShort": "make again", "pod.sec.site": "The site",
+      "pod.siteHint": "The ZIP holds everything the show needs. Upload what is inside it to the site address, keeping the folders. After each new episode, download it again and upload it over the old one.",
+      "pod.feedIs": "Feed address:", "pod.noFeed": "set the site address first", "pod.copy": "Copy the feed address", "pod.copied": "Feed address copied",
+      "pod.subscribe": "Follow in Podcasts", "pod.zip": "Download the site (ZIP)", "pod.zipBusy": "Making the ZIP…",
+      "pod.zipDone": "Done. Upload its contents to {url}", "pod.staleAsk": "{n} episodes have chapters older than their markers. Make the site anyway?",
+      "pod.miss.title": "Give the show a title", "pod.miss.author": "Say who makes it", "pod.miss.desc": "Write a description",
+      "pod.miss.url": "Set the site address", "pod.miss.cover": "Choose a cover", "pod.miss.eps": "Make at least one episode file",
+      "pod.err.title": "The show needs a title.", "pod.err.url": "The site address must be a full https address.",
+      "pod.err.email": "That e-mail address does not look right.", "pod.err.fund": "The support link must be an http or https address.",
+      "pod.err.noDisk": "The orOS disk is not available here.", "pod.err.cover": "That picture could not be read.",
+      "pod.err.coverSmall": "The picture is smaller than 1400 × 1400 pixels.", "pod.err.long": "An episode can be at most one hour long.",
+      "pod.err.missing": "These files are not on this device: {list}. Make the episode files again here, or wait until the disk syncs.",
+      "pod.err.big": "The site is larger than 4 GB, which a ZIP cannot hold.", "pod.page.feed": "RSS feed", "pod.page.support": "Support",
+      "pod.page.episode": "Episode", "pod.page.season": "Season", "pod.page.credit": "Made with orOS Studio", "pod.cat.Arts": "Arts",
+      "pod.cat.Business": "Business", "pod.cat.Comedy": "Comedy", "pod.cat.Education": "Education", "pod.cat.Fiction": "Fiction",
+      "pod.cat.Government": "Government", "pod.cat.History": "History", "pod.cat.Health & Fitness": "Health & Fitness",
+      "pod.cat.Kids & Family": "Kids & Family", "pod.cat.Leisure": "Leisure", "pod.cat.Music": "Music", "pod.cat.News": "News",
+      "pod.cat.Religion & Spirituality": "Religion & Spirituality", "pod.cat.Science": "Science", "pod.cat.Society & Culture": "Society & Culture",
+      "pod.cat.Sports": "Sports", "pod.cat.Technology": "Technology", "pod.cat.True Crime": "True Crime", "pod.cat.TV & Film": "TV & Film",
       "bits.16": "16 bit", "bits.24": "24 bit", "rate.44100": "44.1 kHz", "rate.48000": "48 kHz",
       "export.loop": "The loop: {a} to {b}.", "export.all": "The whole song: {a} to {b}.",
       "export.busy": "Mixing…", "export.empty": "There is nothing to export yet.",
@@ -177,7 +225,7 @@
       "fx.keyHint": "The effect listens to that track, after its effects and before its fader, so a muted track still works as the key.",
       "sec.format": "Format", "fmt.wav": "WAV", "fmt.mp3": "MP3", "fmt.opus": "Opus (OGG)", "sec.kbps": "Bitrate", "kbps": "{n} kbit/s",
       "export.encoding": "Encoding… {n}%", "export.noOpus": "This browser cannot make Opus files. Chrome, Edge and Firefox can.",
-      "export.opusRate": "Opus files are always 48 kHz.", "export.mp3Hint": "192 kbit/s or more keeps a mix close to the WAV.",
+      "export.opusRate": "Opus files are always 48 kHz.", "export.mp3Hint": "192 kbit/s or more keeps a mix close to the WAV. For speech 64–96 kbit/s is enough.",
       "toast.exportFail": "The export did not finish",
       "ld.title": "Loudness", "ld.open": "Loudness…", "ld.m": "Momentary", "ld.s": "Short-term", "ld.i": "Integrated", "ld.lra": "Range", "ld.tp": "True peak",
       "ld.hint": "Measured as the listener hears the master, by EBU R128. The live numbers count while the song plays.",
@@ -284,6 +332,60 @@
       "proj.title": "Έργα", "proj.empty": "Κανένα έργο ακόμη.", "proj.desc": "{n} κανάλια · {t}",
       "name.project": "Όνομα του έργου", "name.track": "Όνομα του καναλιού",
       "export.title": "Εξαγωγή", "sec.bits": "Βάθος bit", "sec.rate": "Συχνότητα δειγματοληψίας",
+      "mk.btn": "Σημάδια",
+      "mk.hint": "Τα σημάδια ονομάζουν σημεία στη γραμμή χρόνου. Σε επεισόδιο podcast γίνονται τα κεφάλαιά του. Πάτα M για να προσθέσεις ένα στον δείκτη.",
+      "mk.none": "Δεν υπάρχουν σημάδια ακόμη.", "mk.add": "Προσθήκη στον δείκτη", "mk.default": "Κεφάλαιο {n}", "mk.added": "Σημάδι στο {time}",
+      "mk.max": "Ένα έργο έχει έως {n} σημάδια", "mk.go": "Μετάβαση στο {time}", "mk.name": "Όνομα σημαδιού", "mk.here": "Στον δείκτη", "mk.del": "Διαγραφή",
+      "mk.delName": "Διαγραφή του σημαδιού {name}", "pod.btn": "Δημοσίευση ως podcast",
+      "pod.intro.hint": "Φτιάξε μια εκπομπή, κάνε αυτό το έργο επεισόδιό της και κατέβασε έτοιμο site (feed, επεισόδια, κεφάλαια, εξώφυλλο) για να το ανεβάσεις σε GitHub Pages, Netlify, Cloudflare Pages ή δικό σου server. Οι εφαρμογές podcast ακολουθούν τη διεύθυνση του feed.",
+      "pod.sec.show": "Εκπομπή", "pod.f.show": "Εκπομπή", "pod.newShow": "Νέα εκπομπή…", "pod.untitledShow": "Εκπομπή χωρίς τίτλο", "pod.f.title": "Τίτλος",
+      "pod.f.author": "Δημιουργός", "pod.f.desc": "Περιγραφή", "pod.f.lang": "Γλώσσα", "pod.f.type": "Σειρά", "pod.type.episodic": "Πρώτα τα νεότερα",
+      "pod.type.serial": "Με τη σειρά (σειρά επεισοδίων)", "pod.f.cat": "Κατηγορία", "pod.catNone": "Χωρίς κατηγορία",
+      "pod.f.explicit": "Περιεχόμενο για ενήλικες", "pod.f.url": "Διεύθυνση του site",
+      "pod.urlHint": "Εκεί που θα ανεβάσεις το site, για παράδειγμα https://onoma.github.io/ekpompi/. Πρέπει να ξεκινά με https. Το feed είναι αυτή η διεύθυνση και μετά feed.xml.",
+      "pod.f.email": "Email ιδιοκτήτη (προαιρετικό, δημόσιο)",
+      "pod.emailHint": "Το Apple Podcasts και άλλοι κατάλογοι το χρησιμοποιούν για να ελέγξουν ότι η εκπομπή είναι δική σου. Γράφεται στο feed, άρα μπορεί να το διαβάσει οποιοσδήποτε.",
+      "pod.f.fund": "Σύνδεσμος υποστήριξης (προαιρετικό)", "pod.f.cover": "Εξώφυλλο", "pod.coverNone": "Δεν υπάρχει εξώφυλλο ακόμη.",
+      "pod.coverPick": "Επιλογή εικόνας", "pod.coverAtelier": "Σχεδίασέ το στο Atelier",
+      "pod.coverHint": "Τετράγωνη εικόνα τουλάχιστον 1400 × 1400 pixel. Το Studio την κόβει τετράγωνη, την κάνει το πολύ 3000 × 3000 και σβήνει τα κρυφά στοιχεία της φωτογραφίας (τόπο, κάμερα).",
+      "pod.coverBusy": "Ετοιμάζεται το εξώφυλλο…",
+      "pod.atelierHint": "Το Atelier ανοίγει σχέδιο 3000 × 3000. Αποθήκευσέ το ως εικόνα στα Αρχεία και διάλεξέ το εδώ.", "pod.save": "Αποθήκευση εκπομπής",
+      "pod.del": "Διαγραφή εκπομπής", "pod.saved": "Αποθηκεύτηκε",
+      "pod.delAsk": "Διαγραφή της εκπομπής «{name}»; Τα {n} επεισόδιά της μένουν ως έργα, απλώς φεύγουν από την εκπομπή.",
+      "pod.sec.ep": "Αυτό το έργο ως επεισόδιο", "pod.epAdd": "Προσθήκη σε αυτή την εκπομπή",
+      "pod.epOther": "Αυτό το έργο είναι επεισόδιο της εκπομπής «{name}».", "pod.f.n": "Αριθμός επεισοδίου", "pod.f.se": "Σεζόν", "pod.f.epType": "Είδος",
+      "pod.f.date": "Ημερομηνία", "pod.epType.full": "Επεισόδιο", "pod.epType.trailer": "Τρέιλερ", "pod.epType.bonus": "Μπόνους",
+      "pod.f.epTitle": "Τίτλος επεισοδίου", "pod.f.epDesc": "Σημειώσεις επεισοδίου", "pod.f.sound": "Ήχος", "pod.mono": "Μονοφωνικό",
+      "pod.stereo": "Στερεοφωνικό", "pod.sizeHint": "Περίπου {s} την ώρα.", "pod.chapters": "{n} κεφάλαια από τα σημάδια",
+      "pod.noChapters": "Χωρίς κεφάλαια: πρόσθεσε σημάδια στη γραμμή χρόνου για να γίνουν.", "pod.intro": "Εισαγωγή", "pod.chapter": "Κεφάλαιο",
+      "pod.fileNone": "Δεν υπάρχει αρχείο επεισοδίου ακόμη.", "pod.fileReady": "Το αρχείο του επεισοδίου είναι έτοιμο: {d}, {s}.",
+      "pod.stale": "Τα σημάδια άλλαξαν από τότε: φτιάξε ξανά το αρχείο για να ταιριάζουν τα κεφάλαια.", "pod.make": "Δημιουργία αρχείου επεισοδίου",
+      "pod.remake": "Νέα δημιουργία αρχείου", "pod.fileMade": "Το αρχείο του επεισοδίου είναι έτοιμο", "pod.epSave": "Αποθήκευση",
+      "pod.epLeave": "Αφαίρεση από την εκπομπή",
+      "pod.leaveAsk": "Να αφαιρεθεί αυτό το έργο από την εκπομπή; Το αρχείο του επεισοδίου μένει στον δίσκο μέχρι να διαγράψεις το έργο.",
+      "pod.untitledEp": "Επεισόδιο", "pod.sec.eps": "Επεισόδια",
+      "pod.epsNone": "Δεν υπάρχουν επεισόδια ακόμη. Άνοιξε ένα έργο και πρόσθεσέ το σε αυτή την εκπομπή.", "pod.draft": "πρόχειρο",
+      "pod.staleShort": "θέλει νέο αρχείο", "pod.sec.site": "Το site",
+      "pod.siteHint": "Το ZIP έχει όλα όσα χρειάζεται η εκπομπή. Ανέβασε ό,τι περιέχει στη διεύθυνση του site, με τους φακέλους του. Μετά από κάθε νέο επεισόδιο κατέβασέ το ξανά και ανέβασέ το πάνω στο παλιό.",
+      "pod.feedIs": "Διεύθυνση feed:", "pod.noFeed": "όρισε πρώτα τη διεύθυνση του site", "pod.copy": "Αντιγραφή διεύθυνσης feed",
+      "pod.copied": "Η διεύθυνση του feed αντιγράφηκε", "pod.subscribe": "Παρακολούθηση στο Podcasts", "pod.zip": "Λήψη του site (ZIP)",
+      "pod.zipBusy": "Φτιάχνεται το ZIP…", "pod.zipDone": "Έτοιμο. Ανέβασε το περιεχόμενό του στο {url}",
+      "pod.staleAsk": "{n} επεισόδια έχουν κεφάλαια παλιότερα από τα σημάδια τους. Να γίνει το site έτσι κι αλλιώς;",
+      "pod.miss.title": "Δώσε τίτλο στην εκπομπή", "pod.miss.author": "Γράψε ποιος τη φτιάχνει", "pod.miss.desc": "Γράψε περιγραφή",
+      "pod.miss.url": "Όρισε τη διεύθυνση του site", "pod.miss.cover": "Διάλεξε εξώφυλλο", "pod.miss.eps": "Φτιάξε τουλάχιστον ένα αρχείο επεισοδίου",
+      "pod.err.title": "Η εκπομπή χρειάζεται τίτλο.", "pod.err.url": "Η διεύθυνση του site πρέπει να είναι πλήρης διεύθυνση https.",
+      "pod.err.email": "Αυτό το email δεν μοιάζει σωστό.", "pod.err.fund": "Ο σύνδεσμος υποστήριξης πρέπει να είναι διεύθυνση http ή https.",
+      "pod.err.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "pod.err.cover": "Η εικόνα δεν διαβάστηκε.",
+      "pod.err.coverSmall": "Η εικόνα είναι μικρότερη από 1400 × 1400 pixel.", "pod.err.long": "Ένα επεισόδιο μπορεί να είναι έως μία ώρα.",
+      "pod.err.missing": "Αυτά τα αρχεία δεν είναι σε αυτή τη συσκευή: {list}. Φτιάξε ξανά τα αρχεία των επεισοδίων εδώ ή περίμενε να συγχρονιστεί ο δίσκος.",
+      "pod.err.big": "Το site είναι πάνω από 4 GB και δεν χωρά σε ZIP.", "pod.page.feed": "Feed RSS", "pod.page.support": "Υποστήριξη",
+      "pod.page.episode": "Επεισόδιο", "pod.page.season": "Σεζόν", "pod.page.credit": "Φτιαγμένο με το orOS Studio", "pod.cat.Arts": "Τέχνες",
+      "pod.cat.Business": "Επιχειρήσεις", "pod.cat.Comedy": "Κωμωδία", "pod.cat.Education": "Εκπαίδευση", "pod.cat.Fiction": "Μυθοπλασία",
+      "pod.cat.Government": "Δημόσια διοίκηση", "pod.cat.History": "Ιστορία", "pod.cat.Health & Fitness": "Υγεία & φυσική κατάσταση",
+      "pod.cat.Kids & Family": "Παιδιά & οικογένεια", "pod.cat.Leisure": "Ελεύθερος χρόνος", "pod.cat.Music": "Μουσική", "pod.cat.News": "Ειδήσεις",
+      "pod.cat.Religion & Spirituality": "Θρησκεία & πνευματικότητα", "pod.cat.Science": "Επιστήμη", "pod.cat.Society & Culture": "Κοινωνία & πολιτισμός",
+      "pod.cat.Sports": "Αθλητισμός", "pod.cat.Technology": "Τεχνολογία", "pod.cat.True Crime": "Αληθινά εγκλήματα",
+      "pod.cat.TV & Film": "Τηλεόραση & κινηματογράφος",
       "bits.16": "16 bit", "bits.24": "24 bit", "rate.44100": "44,1 kHz", "rate.48000": "48 kHz",
       "export.loop": "Το loop: από {a} έως {b}.", "export.all": "Όλο το τραγούδι: από {a} έως {b}.",
       "export.busy": "Γίνεται η μίξη…", "export.empty": "Δεν υπάρχει ακόμη κάτι για εξαγωγή.",
@@ -358,7 +460,7 @@
       "fx.keyHint": "Το εφέ ακούει εκείνο το κανάλι, μετά τα εφέ του και πριν από τον fader του, οπότε και ένα κανάλι σε σίγαση κάνει για κλειδί.",
       "sec.format": "Μορφή", "fmt.wav": "WAV", "fmt.mp3": "MP3", "fmt.opus": "Opus (OGG)", "sec.kbps": "Ρυθμός bit", "kbps": "{n} kbit/s",
       "export.encoding": "Κωδικοποίηση… {n}%", "export.noOpus": "Αυτός ο browser δεν φτιάχνει αρχεία Opus. Το Chrome, το Edge και το Firefox φτιάχνουν.",
-      "export.opusRate": "Τα αρχεία Opus είναι πάντα 48 kHz.", "export.mp3Hint": "Από 192 kbit/s και πάνω η μίξη μένει κοντά στο WAV.",
+      "export.opusRate": "Τα αρχεία Opus είναι πάντα 48 kHz.", "export.mp3Hint": "Από 192 kbit/s και πάνω η μίξη μένει κοντά στο WAV. Για ομιλία αρκούν 64–96 kbit/s.",
       "toast.exportFail": "Η εξαγωγή δεν ολοκληρώθηκε",
       "ld.title": "Ένταση", "ld.open": "Ένταση…", "ld.m": "Στιγμιαία", "ld.s": "Σύντομη", "ld.i": "Συνολική", "ld.lra": "Εύρος", "ld.tp": "Πραγματική κορυφή",
       "ld.hint": "Μετριέται όπως ακούει ο ακροατής το master, κατά EBU R128. Οι ζωντανές τιμές μετράνε όσο παίζει το τραγούδι.",
@@ -584,7 +686,7 @@
       bits: p.bits === 16 ? 16 : 24,
       rate: p.rate === 44100 ? 44100 : 48000,
       fmt: p.fmt === "mp3" || p.fmt === "opus" ? p.fmt : "wav",
-      kbps: [128, 192, 320].indexOf(p.kbps) >= 0 ? p.kbps : 192,
+      kbps: [64, 96, 112, 128, 192, 320].indexOf(p.kbps) >= 0 ? p.kbps : 192,
       okbps: [96, 128, 160, 256].indexOf(p.okbps) >= 0 ? p.okbps : 160,
       auto: idMap(p.auto, function (v) { return v === true; }),
       autoSel: idMap(p.autoSel, function (v) { return typeof v === "string" && v.length <= 40; }),
@@ -1269,6 +1371,14 @@
       m.style.left = (i * bar * z) + "px";
       r.appendChild(m);
     }
+    // markers (chapters of a podcast episode), wave P1
+    var PD = window.StudioPodcast;
+    (proj && PD ? PD.normMarkers(proj.mk) : []).forEach(function (x) {
+      var f = el("span", "mk", x.n);
+      f.style.left = (x.t * z) + "px";
+      f.title = C.fmtTime(x.t) + (x.n ? " · " + x.n : "");
+      r.appendChild(f);
+    });
     if (proj && (proj.loop.b > proj.loop.a)) {
       var lp = el("div", "loop" + (proj.loop.on ? " on" : ""));
       lp.style.left = (proj.loop.a * z) + "px";
@@ -3113,6 +3223,43 @@
     var tid = laneAt(x, y), row = tid && document.querySelector('#rows .row.track[data-t="' + tid + '"]');
     if (row) row.classList.add("drop");
   }
+  // ---------- Publish as podcast (podcast.js + podcastui.js, wave P1) ----------
+  var Pod = null;
+  function podSetProject(fields, opts) {
+    var pid = opts && opts.pid || (proj && proj.id), p = pid && C.find(data, "projects", pid);
+    if (!p) return;
+    var n = Object.assign({}, p);
+    Object.keys(fields).forEach(function (k) { if (fields[k] === undefined) delete n[k]; else n[k] = fields[k]; });
+    if (proj && pid === proj.id) edit(function () { put("projects", n); });
+    else { put("projects", n); save(); }
+  }
+  function makePodcast() {
+    if (!window.StudioPodcastUI || !window.StudioPodcast) return;
+    Pod = window.StudioPodcastUI({
+      t: t, lang: LANG, encoder: E,
+      data: function () { return data; }, proj: function () { return proj; },
+      setProject: podSetProject,
+      putShow: function (x) { if (!Array.isArray(data.shows)) data.shows = []; put("shows", Object.assign({}, x)); save(); },
+      removeShow: function (id) { if (Array.isArray(data.shows)) { remove("shows", id); save(); } },
+      newId: function (kind) { return C.newId(kind, Math.random); },
+      playhead: function () { return playing ? position() : playhead; },
+      seek: function (sec) { seek(sec); },
+      fmtTime: C.fmtTime,
+      renderMix: function (r, rate) { return renderMix(r, rate); },
+      mixRange: function () { return proj ? C.exportRange(proj, projClips()) : null; },
+      mixProblem: function () {
+        var clips = projClips(), seq = proj && proj.loop.on && tracks().some(function (tr) { return !!nxOf(tr); });
+        if (!proj || !(clips.length || seq)) return "export.empty";
+        var r = C.exportRange(proj, clips);
+        if (r.b - r.a < C.MIN_LEN) return "export.empty";
+        if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) return "toast.missing";
+        if (!(window.OfflineAudioContext || window.webkitOfflineAudioContext)) return "toast.noAudio";
+        return "";
+      },
+      fs: musicFs, dialog: dialogHost, pickLocal: function (accept) { return localPickFiles(accept).then(function (l) { return l && l[0] || null; }); },
+      saveFile: saveFileP, toast: showToast, showDlg: showDlg, hideDlg: hideDlg, radioChips: radioChips, shellOpen: shellOpen
+    });
+  }
   function makeRoll() {
     Roll = window.StudioRoll({
       C: C, N: N, M: M, L: L, t: t, el: el, setLabel: setLabel, ICON: ICON, numTxt: numTxt,
@@ -3246,7 +3393,7 @@
     if (opusChip && opusOk === false) { opusChip.disabled = true; opusChip.setAttribute("aria-disabled", "true"); }
     radioChips($("export-bits"), [16, 24], prefs.bits, function (v) { return t("bits." + v); }, function (v) { prefs.bits = v; savePrefs(); renderExportChips(); });
     radioChips($("export-rate"), [44100, 48000], prefs.rate, function (v) { return t("rate." + v); }, function (v) { prefs.rate = v; savePrefs(); renderExportChips(); });
-    var kb = fmt === "opus" ? [96, 128, 160, 256] : [128, 192, 320], cur = fmt === "opus" ? prefs.okbps : prefs.kbps;
+    var kb = fmt === "opus" ? [96, 128, 160, 256] : [64, 96, 112, 128, 192, 320], cur = fmt === "opus" ? prefs.okbps : prefs.kbps;
     radioChips($("export-kbps"), kb, cur, function (v) { return t("kbps", { n: v }); }, function (v) {
       if (fmt === "opus") prefs.okbps = v; else prefs.kbps = v;
       savePrefs(); renderExportChips();
@@ -4462,6 +4609,8 @@
     var keep = {};
     C.LISTS.forEach(function (key) { keep[key] = key === "projects" ? [p] : C.ofProject(data, key, pid).map(function (x) { return Object.assign({}, x); }); });
     var paths = keep.sources.map(function (s) { return s.path; });
+    var pep = window.StudioPodcast ? window.StudioPodcast.normEp(p.ep) : null;
+    if (pep && pep.file) paths.push(pep.file);
     if (proj && proj.id === pid) openProject(null);
     var part = C.emptyData(), now = Date.now();
     C.LISTS.forEach(function (key) { keep[key].forEach(function (x) { part.tombs[x.id] = Math.max(now, x.m); }); });
@@ -4677,6 +4826,7 @@
       else if (lk === "r") { e.preventDefault(); startRecording(); }
       else if (lk === "l") { e.preventDefault(); toggleLoop(); }
       else if (lk === "k") { e.preventDefault(); toggleMetro(); }
+      else if (lk === "m" && Pod) { e.preventDefault(); Pod.addMarkerHere(); }
       else if (lk === "s" && selClip) { e.preventDefault(); splitSel(); }
       else if (lk === "d" && selClip) { e.preventDefault(); dupSel(); }
       else if ((k === "Delete" || k === "Backspace") && selClip) { e.preventDefault(); delSel(); }
@@ -4763,6 +4913,7 @@
     if ($("proj-dlg").open) renderProjects();
     if ($("track-dlg").open) renderTrackDlg();
     FX.render();
+    if (Pod) Pod.refresh();
     if (playing && !recording) replayIfPlaying();
   }
 
@@ -4967,6 +5118,8 @@
     $("export-music").addEventListener("click", function () { doExport("music"); });
     $("export-lyrics").addEventListener("click", function () { doExport("lyrics"); });
     $("export-ring").addEventListener("click", makeRingtone);
+    $("export-pod").addEventListener("click", function () { if (!Pod) return; hideDlg("export-dlg"); Pod.open(); });
+    $("export-mk").addEventListener("click", function () { if (!Pod) return; hideDlg("export-dlg"); Pod.markers(); });
     $("more-close").addEventListener("click", function () { hideDlg("more-dlg"); });
     $("more-dlg").addEventListener("close", ioTestOff);
     $("io-mode").addEventListener("change", function () { prefs.io.on = $("io-mode").value === "br"; savePrefs(); renderIo(); });
@@ -5122,6 +5275,7 @@
     makeRemote();
     applyI18n();
     wire();
+    makePodcast();
     Remote.wire();
     registerSync();
     inheritPalette();

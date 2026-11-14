@@ -794,11 +794,32 @@
     if (all.length > OUT_PARAS) o.note = "Only the first " + OUT_PARAS + " of " + all.length + " paragraphs are listed.";
     return o;
   }
+  // WR-CAT T2: the book translations this device has worked on, from
+  // Writer's own summary (localStorage oros-writer-tr-sum: id → [pct,
+  // words, name, from, to, source doc, done words, when]); those made
+  // from docId first. Read with Writer's read permission, never written.
+  function translations(sum, docId) {
+    var out = [];
+    if (!sum || typeof sum !== "object") return out;
+    Object.keys(sum).forEach(function (id) {
+      var r = sum[id];
+      if (!/^tr[a-z0-9]{6,30}$/.test(id) || !Array.isArray(r) || typeof r[2] !== "string" || !r[2]) return;
+      var e = { name: short(r[2], 200), from: String(r[3] || ""), to: String(r[4] || ""),
+        percent_done: Number(r[0]) >= 0 ? Math.min(100, Number(r[0])) : 0, words: Math.max(0, Math.floor(Number(r[1]) || 0)),
+        words_done: Math.max(0, Math.floor(Number(r[6]) || 0)) };
+      if (docId && r[5] === docId) e.of_this_document = true;
+      var at = Number(r[7]);
+      if (at > 0) e.last_worked = new Date(at).toISOString().slice(0, 10);
+      out.push(e);
+    });
+    out.sort(function (a, b) { return (b.of_this_document ? 1 : 0) - (a.of_this_document ? 1 : 0) || String(b.last_worked || "").localeCompare(String(a.last_worked || "")); });
+    return out.slice(0, 50);
+  }
 
   var api = {
     CATALOG: CATALOG, ORDER: ORDER, GUIDE: GUIDE, MAX_STEPS: MAX_STEPS, WHAT: WHAT, TAGS: TAGS, PAPERS: PAPERS,
     check: check, parse: parse, ser: ser, blocks: blocks, pick: pick, paraSet: paraSet, work: work, apply: apply,
-    view: view, targets: targets, preview: preview, outline: outline
+    view: view, targets: targets, preview: preview, outline: outline, translations: translations
   };
   if (node) module.exports = api;
   else root.WriterCommands = api;

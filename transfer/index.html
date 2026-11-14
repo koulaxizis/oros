@@ -7,13 +7,15 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=transfer" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Transfer · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=6.39.00">
-  <link rel="stylesheet" href="app.css?v=6.39.00">
+  <link rel="stylesheet" href="../fonts.css?v=6.62.00">
+  <link rel="stylesheet" href="app.css?v=6.62.00">
 </head>
 <body data-page="app">
+  <div id="art" class="art" aria-hidden="true"></div>
+  <div class="shade" aria-hidden="true"></div>
 
   <header id="toolbar">
-    <h1 id="title" data-i18n="app.name">Transfer</h1>
+    <h1 id="title" class="mark"><svg class="logo" width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#1a1712"/><path d="M20 13.5 L36.5 24 L20 34.5 Z" fill="#d4af37" stroke="#d4af37" stroke-width="3" stroke-linejoin="round"/><path d="M8 18h8M5 24h11M8 30h8" stroke="#d4af37" stroke-width="3" stroke-linecap="round" opacity=".75"/></svg><span data-i18n="app.name">Transfer</span></h1>
     <nav id="tabs" role="tablist">
       <button type="button" role="tab" id="tab-send" class="tab on" aria-selected="true" data-i18n="tab.send">Send</button>
       <button type="button" role="tab" id="tab-recv" class="tab" aria-selected="false" data-i18n="tab.recv">Receive</button>
@@ -22,46 +24,51 @@
   </header>
 
   <main id="main">
-    <!-- Send: pick, then share the code -->
+    <!-- Send: one screen. Add files, then share the code -->
     <section id="send" role="tabpanel" aria-labelledby="tab-send">
-      <div id="pick">
-        <p class="hint" data-i18n="send.intro">Pick files and folders from the orOS disk or this device. The other person opens the link or types the code; the files go straight between the two browsers, end-to-end encrypted.</p>
-        <div class="bar">
-          <nav id="crumbs" aria-label="Folder"></nav>
+      <div id="pick" class="card">
+        <div id="drop" class="drop">
+          <button type="button" id="add-big" class="plus" aria-labelledby="drop-h"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+          <h2 id="drop-h" class="big" data-i18n="send.add">Add files</h2>
+          <p class="hint" data-i18n="send.drop">or drop files here</p>
         </div>
-        <ul id="disk" class="rows"></ul>
-        <p id="disk-empty" class="hint" hidden data-i18n="disk.empty">This folder is empty.</p>
+        <div class="bar two">
+          <button type="button" id="open-disk" class="chip" data-i18n="btn.fromDisk">From the orOS disk</button>
+          <button type="button" id="add-local" class="chip" data-i18n="btn.fromDevice">From this device</button>
+        </div>
         <p id="disk-none" class="hint" hidden data-i18n="disk.none">The orOS disk is not available here.</p>
-        <div class="bar">
-          <button type="button" id="add-local" class="chip" data-i18n="btn.addLocal">Add from this device…</button>
+        <div id="chosen-box" hidden>
+          <p class="sum"><span id="chosen-sum" class="dim"></span></p>
+          <ul id="chosen" class="files"></ul>
+          <label class="field"><span data-i18n="meta.title">Title (optional)</span><input id="meta-title" type="text" maxlength="80" autocomplete="off"></label>
+          <label class="field"><span data-i18n="meta.msg">Message (optional)</span><textarea id="meta-msg" rows="2" maxlength="500"></textarea></label>
         </div>
-        <h2 class="sub" data-i18n="send.chosen">To send</h2>
-        <ul id="chosen" class="rows"></ul>
-        <p id="chosen-empty" class="hint" data-i18n="send.none">Nothing chosen yet. Tick files or folders above.</p>
-        <div class="bar end">
-          <span id="chosen-sum" class="dim"></span>
+        <p id="chosen-empty" class="foot-note" data-i18n="send.intro">Straight from browser to browser, end-to-end encrypted. No size limit from us.</p>
+        <div class="bar stack">
+          <button type="button" id="make-link" class="chip pri big" disabled data-i18n="btn.makeLink">Create link</button>
           <button type="button" id="make-cloud" class="chip" disabled hidden data-i18n="btn.makeCloud">Send through my Dropbox</button>
-          <button type="button" id="make-link" class="chip pri" disabled data-i18n="btn.makeLink">Create link</button>
+          <label class="field" id="hold-field" hidden><span data-i18n="hold.lab">Keep in Dropbox for</span><select id="hold"></select></label>
         </div>
       </div>
 
-      <div id="share" hidden>
-        <div class="card center">
-          <p id="share-code-lab" class="dim" data-i18n="share.code">Code</p>
-          <p id="share-code" class="code"></p>
-          <div id="share-qr" class="qr"></div>
-          <div class="link-row">
-            <input id="share-link" type="text" readonly aria-label="Link">
-            <button type="button" id="copy-link" class="chip" data-i18n="btn.copy">Copy</button>
-          </div>
-          <p id="share-keep" class="hint" data-i18n="share.keep">Keep this page open until the transfer is done. The link works once, for one person.</p>
+      <div id="share" class="card" hidden>
+        <p id="share-code-lab" class="lbl center" data-i18n="share.code">Code</p>
+        <p id="share-code" class="code"></p>
+        <div id="share-qr" class="qr"></div>
+        <div class="link-row">
+          <input id="share-link" type="text" readonly aria-label="Link">
+          <button type="button" id="copy-link" class="chip" data-i18n="btn.copy">Copy</button>
         </div>
-        <div id="send-status" class="status" role="status"></div>
-        <div class="progress" id="send-prog" hidden><div class="fill"></div></div>
-        <p id="send-detail" class="dim"></p>
+        <button type="button" id="share-native" class="chip pri big" hidden data-i18n="btn.share">Share…</button>
+        <div id="send-status" class="status center" role="status"></div>
+        <div class="progress ring" id="send-prog" hidden><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="track" cx="50" cy="50" r="44"/><circle class="fill" cx="50" cy="50" r="44" pathLength="100"/></svg><div class="pc"><b class="pct"></b></div></div>
+        <p id="send-detail" class="dim center"></p>
+        <div id="share-match" class="match" hidden><span class="th" aria-hidden="true"></span><span data-i18n="share.match">The other person sees this same background. If theirs matches, you are connected to each other.</span></div>
+        <p id="share-keep" class="hint" data-i18n="share.keep">Keep this page open until the transfer is done. The link works once, for one person.</p>
         <div class="bar end">
           <button type="button" id="send-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
           <button type="button" id="cloud-del" class="chip" hidden data-i18n="btn.cloudDel">Delete now</button>
+          <button type="button" id="resign" class="chip" hidden data-i18n="btn.resign">Sign in to Dropbox again</button>
           <button type="button" id="send-again" class="chip pri" hidden data-i18n="btn.sendMore">Send something else</button>
         </div>
       </div>
@@ -69,7 +76,8 @@
 
     <!-- Receive -->
     <section id="recv" role="tabpanel" aria-labelledby="tab-recv" hidden>
-      <form id="code-form" autocomplete="off">
+      <form id="code-form" class="card" autocomplete="off">
+        <h2 class="big" data-i18n="recv.head">Receive</h2>
         <p class="hint" data-i18n="recv.intro">Type the code you were given, or open the link you got.</p>
         <div class="bar">
           <label for="code-in" class="sr-only" data-i18n="recv.code">Code</label>
@@ -77,12 +85,19 @@
           <button type="submit" class="chip pri" data-i18n="btn.receive">Receive</button>
         </div>
       </form>
-      <div id="recv-box" hidden>
+      <div id="recv-box" class="card" hidden>
+        <div class="from">
+          <span id="offer-av" class="av" aria-hidden="true"></span>
+          <div class="from-txt">
+            <h2 id="offer-title" class="big" hidden></h2>
+            <p id="offer-sum"></p>
+          </div>
+        </div>
+        <p id="offer-msg" class="msg" hidden></p>
         <div id="recv-status" class="status" role="status"></div>
         <div id="offer" hidden>
-          <p id="offer-sum"></p>
-          <p id="offer-relay" hidden data-i18n="offer.relay">No direct link between the two devices: it comes through the orOS relay, still end-to-end encrypted, more slowly.</p>
-          <ul id="offer-list" class="rows small"></ul>
+          <p id="offer-relay" class="note" hidden data-i18n="offer.relay">No direct link between the two devices: it comes through the orOS relay, still end-to-end encrypted, more slowly.</p>
+          <ul id="offer-list" class="files small"></ul>
           <fieldset id="dest">
             <legend data-i18n="dest.where">Save to</legend>
             <label class="opt"><input type="radio" name="dest" value="disk" id="dest-disk"> <span data-i18n="dest.disk">The orOS disk (Transfers folder)</span></label>
@@ -90,13 +105,14 @@
             <label class="opt"><input type="radio" name="dest" value="device" id="dest-dev"> <span id="dest-dev-txt" data-i18n="dest.device">This device</span></label>
           </fieldset>
           <p id="space-warn" class="warn" hidden></p>
-          <div class="bar end">
+          <p class="hint safe" data-i18n="offer.safe">Open files only from people you know.</p>
+          <div class="bar two">
             <button type="button" id="decline" class="chip" data-i18n="btn.decline">Decline</button>
-            <button type="button" id="accept" class="chip pri" data-i18n="btn.accept">Accept</button>
+            <button type="button" id="accept" class="chip pri big" data-i18n="btn.accept">Accept</button>
           </div>
         </div>
-        <div class="progress" id="recv-prog" hidden><div class="fill"></div></div>
-        <p id="recv-detail" class="dim"></p>
+        <div class="progress ring" id="recv-prog" hidden><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="track" cx="50" cy="50" r="44"/><circle class="fill" cx="50" cy="50" r="44" pathLength="100"/></svg><div class="pc"><b class="pct"></b></div></div>
+        <p id="recv-detail" class="dim center"></p>
         <p id="recv-bad" class="warn" hidden></p>
         <div class="bar end">
           <button type="button" id="recv-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
@@ -109,22 +125,37 @@
 
     <!-- History (synced slice "transfer") -->
     <section id="hist" role="tabpanel" aria-labelledby="tab-hist" hidden>
-      <ul id="hist-list" class="rows"></ul>
-      <p id="hist-empty" class="hint" data-i18n="hist.empty">No transfers yet. Finished ones are listed here, on every device you sync.</p>
-      <div class="bar end">
-        <button type="button" id="hist-clear" class="chip" hidden data-i18n="hist.clear">Clear history</button>
+      <div class="card">
+        <ul id="hist-list" class="rows"></ul>
+        <p id="hist-empty" class="hint" data-i18n="hist.empty">No transfers yet. Finished ones are listed here, on every device you sync.</p>
+        <div class="bar end">
+          <button type="button" id="hist-clear" class="chip" hidden data-i18n="hist.clear">Clear history</button>
+        </div>
       </div>
     </section>
   </main>
 
+  <!-- The orOS disk, chosen in a sheet so the send screen stays one card -->
+  <dialog id="disk-sheet" aria-labelledby="disk-h">
+    <div class="sheet-head">
+      <h2 id="disk-h" data-i18n="disk.root">orOS disk</h2>
+      <button type="button" id="disk-done" class="chip pri" data-i18n="btn.done">Done</button>
+    </div>
+    <nav id="crumbs" aria-label="Folder"></nav>
+    <ul id="disk" class="rows"></ul>
+    <p id="disk-empty" class="hint" hidden data-i18n="disk.empty">This folder is empty.</p>
+  </dialog>
+
   <div id="toast" role="status"></div>
 
-  <script src="../qr/qr-encode.js?v=6.39.00"></script>
-  <script src="core.js?v=6.39.00"></script>
-  <script src="cloud.js?v=6.39.00"></script>
-  <script src="engine.js?v=6.39.00"></script>
-  <script src="store.js?v=6.39.00"></script>
-  <script src="app.js?v=6.39.00"></script>
+  <script src="../i18n.js?v=6.62.00" data-app="transfer"></script>
+  <script src="../qr/qr-encode.js?v=6.62.00"></script>
+  <script src="art.js?v=6.62.00"></script>
+  <script src="core.js?v=6.62.00"></script>
+  <script src="cloud.js?v=6.62.00"></script>
+  <script src="engine.js?v=6.62.00"></script>
+  <script src="store.js?v=6.62.00"></script>
+  <script src="app.js?v=6.62.00"></script>
 
 </body>
 </html>

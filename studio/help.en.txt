@@ -141,7 +141,7 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 ## Export
 `Export` (the up arrow) mixes the song into one stereo file: the loop if it is on, else everything from the start to the end of the last clip. Instrument tracks, effects, sidechain and automation are all in it.
 - `WAV`: 16 or 24 bit, 44.1 or 48 kHz. Lossless, the best choice for further work.
-- `MP3`: 128 to 320 kbit/s. Plays everywhere; Studio's own encoder makes it on this device, and players start and end it without a gap.
+- `MP3`: 64 to 320 kbit/s (64–96 is enough for speech). Plays everywhere; Studio's own encoder makes it on this device, and players start and end it without a gap.
 - `Opus (OGG)`: a smaller file at the same quality, always 48 kHz. Offered where the browser can encode Opus (Chrome, Edge, Firefox).
 - `Add to Music` makes the same file in the chosen format, puts it in the Music folder on the orOS disk and plays it in Music.
 - `Make a ringtone` turns the notes of the instrument tracks (not the drum kit) into a one-voice melody and opens it in Ringtone Composer: where notes overlap the highest one wins, and you press `Import` there to keep it.
@@ -154,6 +154,21 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - The audiobook targets (ACX for Audible, Storytel) check what they reject: RMS -23 to -18 dBFS, peaks at most -3 dB, noise floor at most -60 dBFS, room tone at the start (0.5 to 1 s) and end (1 to 5 s), no digital silence, no clipping, at most 120 minutes. Storytel publishes no numbers of its own, so it starts from ACX's.
 - `Choose a reference…` measures a song you like: its numbers stand next to yours, and `Play it at the song's loudness` plays it turned to your song's integrated loudness, so you compare the sound and not the volume.
 
+## Markers
+- A marker names a place on the timeline: press [[M]] to put one at the playhead, or open `Markers` in `Export`. They show on the ruler.
+- In `Markers` you rename one, move it to the playhead (`To the playhead`), jump to it (its time) or delete it. A project has up to 50.
+- In a podcast episode the markers become its chapters (see below). The first chapter always starts at the beginning; a marker under half a second from the one before it is skipped.
+
+## Publish as podcast
+`Export` › `Publish as podcast` makes a podcast from your projects. Each episode is one Studio project; the show holds them together.
+- `Show`: its title, who makes it, a description, the language, the order (newest first or a series in order), an Apple Podcasts category and whether it is explicit. `Site address` is where you will put the site, for example `https://yourname.github.io/show/` (https only); the feed is that address plus `feed.xml`. The owner e-mail is optional and public: directories use it to check the show is yours. `Support link` can be your Ko-fi page.
+- `Cover`: a square picture of at least 1400 × 1400 pixels. Studio cuts it square, makes it at most 3000 × 3000 and drops hidden photo details (place, camera). `Design it in Atelier` opens a 3000 × 3000 design; save it as a picture and choose it here.
+- `This project as an episode`: `Add to this show`, then the number, season, kind (episode, trailer, bonus), date, title and show notes. `Sound`: mono for speech, 64, 96 or 128 kbit/s (96 mono is about 43 MB an hour).
+- `Make the episode file` mixes the project (as Export does) into an MP3 with its title, show, number, date, cover and chapters, and keeps it on the orOS disk under `Studio/Podcasts`. Change the sound or the markers later and make it again.
+- `Download the site (ZIP)` gives one ZIP with `feed.xml` (RSS 2.0 with the Apple Podcasts and Podcasting 2.0 tags), the episodes, a chapters file for each, the cover and a small page with a player (no scripts, nothing from other sites). Upload what is inside to the site address, keeping the folders: GitHub Pages, Netlify, Cloudflare Pages or a server of your own. After each new episode download it again and upload it over the old one.
+- Then add the feed address once to Apple Podcasts, Spotify and the Podcast Index; podcast apps follow it from there. `Follow in Podcasts` adds your show to [Podcasts](app:podcasts) like any other.
+- Each show and episode keeps one id forever (podcast:guid), so subscribers never see an episode twice, even if the show moves to another address. Nothing goes through orOS: the files go from your device to your host.
+
 ## Sync and backup
 - Projects, tracks and clips, the notes of MIDI clips too, follow you to your other devices through orOS sync.
 - The audio itself is kept as files on the orOS disk, in the `Studio` folder of the [Files](app:files) app. With sync on and [Vault Drive](help:t/sync) turned on, the files travel to your other devices too. Until a file arrives, its clips show that the audio is not on this device yet.
@@ -165,7 +180,7 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - Audio that is not on this device yet (still on its way with Vault Drive) is left out of the file, and Studio says so.
 
 ## Keyboard shortcuts
-- [[Space]] play and pause, [[R]] record, [[L]] loop, [[K]] click, [[Home]] back to the start. [[Space]] also plays while the effects window is open.
+- [[Space]] play and pause, [[R]] record, [[L]] loop, [[K]] click, [[M]] marker at the playhead, [[Home]] back to the start. [[Space]] also plays while the effects window is open.
 - [[S]] split, [[D]] duplicate, [[Delete]] delete the selected clip, [[E]] or [[Enter]] edit the notes of a MIDI clip, [[Esc]] deselect.
 - In the piano roll: [[B]] draw, [[V]] select, [[Q]] quantize, [[Ctrl+A]] [[Ctrl+C]] [[Ctrl+X]] [[Ctrl+V]] [[Ctrl+D]] select all, copy, cut, paste, duplicate, [[Delete]] delete, the arrow keys move the selected notes (by a bar or an octave with [[Shift]]), [[Space]] play, [[Esc]] close.
 - [[+]] and [[-]] zoom, [[Ctrl+Z]] undo, [[Ctrl+Y]] redo.
@@ -196,7 +211,8 @@ Ask the Assistant to change your songs in words, such as "turn the vocals down 3
 - Loops are in 4/4. Audio clips do not stretch with the tempo; only MIDI clips follow it.
 - An older Studio on another device does not show MIDI clips, and when it saves an instrument track, the track plays as piano until its sound is chosen again. It plays a NULL Drum Machine track with the built-in drum kit, and when it saves the track the drawn `User` pattern is lost.
 - Automation has straight lines only, and the master has no lanes. An older Studio on another device drops lanes and sidechain choices when it saves that track.
-- The MP3 encoder is simple and has constant bitrate: at 128 kbit/s it sounds less clean than other encoders, so choose 192 or more.
+- The MP3 encoder is simple and has constant bitrate: at 128 kbit/s it sounds less clean than other encoders, so choose 192 or more for music (64–96 kbit/s is fine for speech).
+- An episode is one project, so at most one hour. The site is a ZIP you upload yourself; direct upload to GitHub Pages and to Nextcloud comes in later waves.
 - Effects reset when playback starts, as in a desktop studio.
 - Audio of deleted clips stays in the `Studio` folder; deleting a project removes its files.
 - When the same clip is changed on two devices before they sync, the most recent change wins.
