@@ -283,6 +283,7 @@ test("the regex runs in a Worker that is stopped after a second", () => {
   assert.match(w, /^importScripts\("devtools\.js"\);/m);
   assert.match(w, /regexRun\(d\.pattern, d\.flags, d\.text, d\.replace, 10000\)/);
   assert.ok(!/fetch|XMLHttpRequest|importScripts\([^)]*http/.test(w), "the worker loads nothing else");
+  assert.match(read("sw.js"), /"pad\/regex-worker\.js"/, "precached for offline use");
   assert.match(ui, /RX_MS = 1000/);
   assert.match(ui, /new Worker\("regex-worker\.js"/);
   assert.match(ui, /rxWorker\.terminate\(\)/);
