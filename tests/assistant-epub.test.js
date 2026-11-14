@@ -83,7 +83,7 @@ test("the card's strings exist in English, Greek and German", () => {
 });
 
 test("Layout takes { epubOut } and reports only numbers", () => {
-  const ly = read("layout/layout.js");
+  const ly = read("layout/layout.js") + read("layout/epubout.js");
   assert.match(ly, /tg\.epubOut && typeof tg\.epubOut === "object"/);
   const fn = ly.slice(ly.indexOf("function epubSummary"), ly.indexOf("var epubBusy"));
   assert.ok(fn.length > 100);
