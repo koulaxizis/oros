@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.69.00
+- **SOS: erase everywhere.** If you think someone got into your orOS, Settings › System › `SOS: erase everywhere` closes the cloud and erases orOS on every device that syncs with your passphrase, closes your shared links, sign-in link, notifications, orOS Gate, webhook and households, and then shows what you still have to do (Dropbox password and connected apps, deleted files, passwords). Type SOS and your passphrase; you have 10 seconds to cancel. In Sensitive work mode the shield gives you the SOS button directly. After a **Factory reset** your other devices now stop and ask whether to erase themselves too or keep their data, instead of filling the cloud again. See [Settings](app:settings).
+
 ## Version 6.68.00
 - **Sensitive work.** A new page in Settings for journalists, their sources and anyone whose work must not leak. One switch, on this device only, tightens the screen lock, keeps no sync passphrase here, turns off push, sign-in links and fetching through the relay. `Hardcore` goes further: a passphrase lock only, and this device reaches nothing but your sync cloud. A shield in the top bar shows it is on; turning it off brings your earlier settings back. See [Sensitive work and sources](help:t/sensitive), a new help page that also says plainly what orOS cannot protect.
 
