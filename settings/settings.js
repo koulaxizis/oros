@@ -2508,7 +2508,7 @@
   // turning it off asks for the lock's PIN or passphrase and brings the
   // earlier lock times and push back. The typed secret stays in `sv.cur`
   // only until it is handed over.
-  var sv = { level: "on", off: false, cur: "", msg: null };
+  var sv = { level: "on", off: false, cur: "", msg: null, gateMsg: null };
   var SV_ITEMS = ["lock", "lockPass", "lockTimes", "remember", "push", "bio", "davRelay", "backup", "passLen", "worker"];
 
   function strictApi() {
@@ -2660,6 +2660,29 @@
       c2.appendChild(el("p", "hint", t("sv.sos.text")));
       c2.appendChild(actions(button(t("sv.sos.open"), "sv-sos", function () { S.sos(); }, "danger")));
       host.appendChild(c2);
+    }
+
+    // Claude's closed copy (Gate, GATE-FILES F2): while the mode is on
+    // this device stops refreshing it; here it can also be dropped now.
+    var G = gateApi(), gs = null;
+    try { gs = G && typeof G.dropCopy === "function" && typeof G.state === "function" ? G.state() : null; } catch (e) { gs = null; }
+    if (gs && gs.on) {
+      var cg = card(t("sv.gate"));
+      cg.appendChild(el("p", "hint", t(cur ? "sv.gate.on" : "sv.gate.off")));
+      cg.appendChild(actions(confirmBtn(t("sv.gate.drop"), t("sv.gate.confirm"), "sv-gate-drop", function () {
+        sv.gateMsg = { kind: "dim", key: "l.msg.working" };
+        render();
+        Promise.resolve().then(function () { return G.dropCopy(); }).then(function () {
+          sv.gateMsg = { kind: "ok", key: "sv.gate.done" };
+          render();
+        }, function (e) {
+          var code = e && (e.code || e.message);
+          sv.gateMsg = { kind: "err", key: "sv.gate.err." + (/^(gate-off|offline|locked)$/.test(code) ? code : "other") };
+          render();
+        });
+      }, "danger")));
+      if (sv.gateMsg) cg.appendChild(el("p", "msg msg-" + sv.gateMsg.kind, t(sv.gateMsg.key)));
+      host.appendChild(cg);
     }
 
     var c3 = card(null);
