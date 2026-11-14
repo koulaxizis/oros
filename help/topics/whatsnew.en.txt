@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.66.00
+- **Sign in a new browser later with a link.** On a signed-in device open Settings › Sync › `Send a sign-in link`. Send yourself the link (copy, share or your own email app) and keep the 8-character code it shows: the code is never in the link. Open the link on the new browser within 15 minutes and type the code; it connects your Dropbox or WebDAV, unlocks and syncs. The link works once and the device that sent it shows when it was used. See [Sync](help:t/sync).
+
 ## Version 6.65.00
 - **Diagram connectors in Whiteboard.** A selected arrow's `Line shape` can be `Right angles, around shapes` (it finds its way around the shapes in between and follows them when they move) or `Curved`. `Start of the arrow` and `End of the arrow` set each head on its own, with the UML heads (hollow triangle, filled and hollow diamond). On a right-angled or curved line, drop an end near a side to keep it on that side.
 
