@@ -242,7 +242,49 @@
       "save.read": "Make it searchable", "save.readHint": "The text of scanned pages and pictures is read first and put under each page, so the PDF can be searched and copied.",
       "idx.title": "Search", "idx.hint": "PDFs you save into Files can be found in orOS search by their name and text. This list stays on this device: {n} documents.",
       "idx.hint.one": "PDFs you save into Files can be found in orOS search by their name and text. This list stays on this device: 1 document.",
-      "idx.forget": "Forget them", "idx.forgot": "The list for search is empty now."
+      "idx.forget": "Forget them", "idx.forgot": "The list for search is empty now.",
+      "ed.field": "Fields", "ed.fields": "Fields for the signer", "ed.itemField": "Field for the signer: {k}",
+      "ed.req": "Must be filled", "ed.fieldHint": "The person you ask to sign fills this in. It is not drawn when you save the PDF yourself.",
+      "fld.sig": "Signature", "fld.init": "Initials", "fld.name": "Name", "fld.date": "Date", "fld.text": "Text", "fld.check": "Tick",
+      "btn.ask": "Ask to sign", "btn.requests": "Signature requests",
+      "rq.title": "Ask someone to sign", "rq.doc": "Name of the document", "rq.to": "Their name", "rq.te": "Their email (optional)",
+      "rq.by": "Your name", "rq.be": "Your email (optional, for their answer)", "rq.msg": "Message (optional)",
+      "rq.days": "The link works for", "rq.day1": "1 day", "rq.day7": "7 days", "rq.day30": "30 days",
+      "rq.lock": "Lock it with an access code", "rq.code": "Access code (at least 6 characters)",
+      "rq.codeHint": "Tell them the code another way (by phone, in a message): then the link alone is not enough to sign.",
+      "rq.autoField": "There is no place to sign yet, so a signature field goes at the bottom of the last page. To choose the places, open a page with the pen button › Fields.",
+      "rq.fields": "Fields for them: {n}", "rq.fields.one": "Fields for them: 1",
+      "rq.legal": "A simple electronic signature under the EU eIDAS rules. Where the law asks for a qualified signature (some contracts, public services), use a qualified provider.",
+      "rq.send": "Send", "rq.needTo": "Type their name.", "rq.needBy": "Type your name.", "rq.badEmail": "That email does not look right.",
+      "rq.shortCode": "The access code needs at least 6 characters.",
+      "rq.making": "Making the PDF…", "rq.saving": "Keeping the original in Files…", "rq.sending": "Sending it encrypted…",
+      "rq.err.full": "The orOS server is full right now. Try again later.", "rq.err.rate": "Too many links today. Try again tomorrow.",
+      "rq.err.net": "Could not reach the orOS server. Check your connection and try again.",
+      "rq.err.big": "This PDF is too big to send (at most 24 MB). Try Save › Make it smaller first.",
+      "rq.err.bad": "The request could not be made.", "rq.noCrypto": "This browser cannot send signature requests.",
+      "rq.noKeep": "The original could not be kept in Files. Keep this link valid until the answer comes: the signed copy is made from it.",
+      "rq.linkH": "The link is ready", "rq.linkText": "Send this link to {to}. It works until {d}.",
+      "rq.linkCode": "Tell {to} the access code another way.", "rq.link": "Link",
+      "rq.copy": "Copy the link", "rq.copied": "Link copied", "rq.email": "Email it", "rq.share": "Share…", "rq.done": "Done",
+      "rq.mailSubject": "Please sign: {n}",
+      "rq.mailBody": "Hello {to},\n\nplease read and sign “{n}” here:\n{l}\n\nThe link works until {d}.\n\n{by}",
+      "rq.listH": "Signature requests", "rq.none": "No signature requests yet. Add a PDF, then Ask to sign.",
+      "rq.paste": "Got an answer? Paste its link here", "rq.take": "Add the answer", "rq.close": "Close",
+      "rq.st.waiting": "Waiting · until {d}", "rq.st.signed": "Signed by {nm} · {d}", "rq.st.declined": "Declined by {nm} · {d}",
+      "rq.st.revoked": "Taken back", "rq.st.expired": "Expired · {d}", "rq.toLine": "To {to}", "rq.why": "Reason: {why}",
+      "rq.copyLink": "Copy link", "rq.revoke": "Take back", "rq.revokeSure": "Tap again to take it back", "rq.open": "Open",
+      "rq.saveCopy": "Save a copy", "rq.remove": "Remove from the list", "rq.verify": "Check a signed PDF",
+      "rq.v.signed": "This is the signed copy of “{n}”, signed by {nm} on {d}. Nothing in it has changed.",
+      "rq.v.original": "This is the original of “{n}” that you sent to {to}.",
+      "rq.v.none": "This PDF is not one of your signature requests, or it was changed after it was signed.",
+      "rq.opening": "Opening the answer…", "rq.building": "Making the signed PDF…",
+      "rq.gotSigned": "Signed by {nm}. Saved in Files › {dir}.", "rq.gotDeclined": "{nm} declined to sign.",
+      "rq.gotNotSaved": "Signed by {nm}, but the PDF could not be saved into Files.",
+      "rq.already": "This answer was already added.", "rq.badReply": "This is not an answer to a signature request, or it was cut short.",
+      "rq.replyGone": "This answer is no longer on the orOS server (it stays 30 days). Ask the signer for their signed copy.",
+      "rq.notMine": "This answer is for a request that is not in your list.",
+      "rq.noOriginal": "The original PDF is no longer in Files, so the signed copy cannot be made here. Ask the signer for their copy.",
+      "rq.revokeFail": "Could not take it back. Check your connection and try again.", "rq.someone": "the signer"
     },
     el: {
       "app.name": "Σαρωτής & PDF",
@@ -414,7 +456,49 @@
       "save.read": "Να γίνει αναζητήσιμο", "save.readHint": "Το κείμενο των σαρωμένων σελίδων και των εικόνων διαβάζεται πρώτα και μπαίνει κάτω από κάθε σελίδα, ώστε στο PDF να γίνεται αναζήτηση και αντιγραφή.",
       "idx.title": "Αναζήτηση", "idx.hint": "Τα PDF που αποθηκεύεις στα Αρχεία βρίσκονται στην αναζήτηση του orOS με το όνομα και το κείμενό τους. Η λίστα μένει σε αυτή τη συσκευή: {n} έγγραφα.",
       "idx.hint.one": "Τα PDF που αποθηκεύεις στα Αρχεία βρίσκονται στην αναζήτηση του orOS με το όνομα και το κείμενό τους. Η λίστα μένει σε αυτή τη συσκευή: 1 έγγραφο.",
-      "idx.forget": "Ξέχασέ τα", "idx.forgot": "Η λίστα για την αναζήτηση άδειασε."
+      "idx.forget": "Ξέχασέ τα", "idx.forgot": "Η λίστα για την αναζήτηση άδειασε.",
+      "ed.field": "Πεδία", "ed.fields": "Πεδία για τον υπογράφοντα", "ed.itemField": "Πεδίο για τον υπογράφοντα: {k}",
+      "ed.req": "Υποχρεωτικό", "ed.fieldHint": "Το συμπληρώνει όποιος ζητήσεις να υπογράψει. Δεν σχεδιάζεται όταν αποθηκεύεις εσύ το PDF.",
+      "fld.sig": "Υπογραφή", "fld.init": "Μονογραφή", "fld.name": "Όνομα", "fld.date": "Ημερομηνία", "fld.text": "Κείμενο", "fld.check": "Τικ",
+      "btn.ask": "Ζήτα υπογραφή", "btn.requests": "Αιτήσεις υπογραφής",
+      "rq.title": "Ζήτα από κάποιον να υπογράψει", "rq.doc": "Όνομα του εγγράφου", "rq.to": "Το όνομά του/της", "rq.te": "Το email του/της (προαιρετικό)",
+      "rq.by": "Το όνομά σου", "rq.be": "Το email σου (προαιρετικό, για την απάντηση)", "rq.msg": "Μήνυμα (προαιρετικό)",
+      "rq.days": "Ο σύνδεσμος ισχύει για", "rq.day1": "1 ημέρα", "rq.day7": "7 ημέρες", "rq.day30": "30 ημέρες",
+      "rq.lock": "Κλείδωμα με κωδικό πρόσβασης", "rq.code": "Κωδικός πρόσβασης (τουλάχιστον 6 χαρακτήρες)",
+      "rq.codeHint": "Πες του/της τον κωδικό με άλλο τρόπο (στο τηλέφωνο, σε μήνυμα): έτσι ο σύνδεσμος μόνος του δεν φτάνει για υπογραφή.",
+      "rq.autoField": "Δεν υπάρχει ακόμη θέση υπογραφής, οπότε μπαίνει ένα πεδίο υπογραφής στο κάτω μέρος της τελευταίας σελίδας. Για να διαλέξεις τις θέσεις, άνοιξε μια σελίδα με το μολύβι › Πεδία.",
+      "rq.fields": "Πεδία για συμπλήρωση: {n}", "rq.fields.one": "Πεδία για συμπλήρωση: 1",
+      "rq.legal": "Απλή ηλεκτρονική υπογραφή κατά τους κανόνες eIDAS της ΕΕ. Όπου ο νόμος ζητά εγκεκριμένη υπογραφή (ορισμένα συμβόλαια, δημόσιες υπηρεσίες), χρησιμοποίησε εγκεκριμένο πάροχο.",
+      "rq.send": "Αποστολή", "rq.needTo": "Γράψε το όνομά του/της.", "rq.needBy": "Γράψε το όνομά σου.", "rq.badEmail": "Αυτό το email δεν φαίνεται σωστό.",
+      "rq.shortCode": "Ο κωδικός πρόσβασης θέλει τουλάχιστον 6 χαρακτήρες.",
+      "rq.making": "Φτιάχνεται το PDF…", "rq.saving": "Κρατιέται το πρωτότυπο στα Αρχεία…", "rq.sending": "Στέλνεται κρυπτογραφημένο…",
+      "rq.err.full": "Ο server του orOS είναι γεμάτος αυτή τη στιγμή. Δοκίμασε αργότερα.", "rq.err.rate": "Πάρα πολλοί σύνδεσμοι σήμερα. Δοκίμασε αύριο.",
+      "rq.err.net": "Δεν βρέθηκε ο server του orOS. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.",
+      "rq.err.big": "Το PDF είναι πολύ μεγάλο για αποστολή (έως 24 MB). Δοκίμασε πρώτα Αποθήκευση › Μικρότερο αρχείο.",
+      "rq.err.bad": "Το αίτημα δεν μπόρεσε να φτιαχτεί.", "rq.noCrypto": "Αυτός ο browser δεν μπορεί να στείλει αιτήματα υπογραφής.",
+      "rq.noKeep": "Το πρωτότυπο δεν κρατήθηκε στα Αρχεία. Άφησε τον σύνδεσμο σε ισχύ μέχρι να έρθει η απάντηση: από αυτόν φτιάχνεται το υπογεγραμμένο αντίγραφο.",
+      "rq.linkH": "Ο σύνδεσμος είναι έτοιμος", "rq.linkText": "Στείλε αυτόν τον σύνδεσμο στον/στην {to}. Ισχύει έως {d}.",
+      "rq.linkCode": "Πες στον/στην {to} τον κωδικό πρόσβασης με άλλο τρόπο.", "rq.link": "Σύνδεσμος",
+      "rq.copy": "Αντιγραφή του συνδέσμου", "rq.copied": "Ο σύνδεσμος αντιγράφηκε", "rq.email": "Με email", "rq.share": "Κοινοποίηση…", "rq.done": "Τέλος",
+      "rq.mailSubject": "Για υπογραφή: {n}",
+      "rq.mailBody": "Καλησπέρα {to},\n\nδιάβασε και υπόγραψε το «{n}» εδώ:\n{l}\n\nΟ σύνδεσμος ισχύει έως {d}.\n\n{by}",
+      "rq.listH": "Αιτήσεις υπογραφής", "rq.none": "Δεν υπάρχουν ακόμη αιτήσεις υπογραφής. Πρόσθεσε ένα PDF και πάτησε Ζήτα υπογραφή.",
+      "rq.paste": "Ήρθε απάντηση; Επικόλλησε εδώ τον σύνδεσμό της", "rq.take": "Πρόσθεσε την απάντηση", "rq.close": "Κλείσιμο",
+      "rq.st.waiting": "Σε αναμονή · έως {d}", "rq.st.signed": "Υπέγραψε ο/η {nm} · {d}", "rq.st.declined": "Αρνήθηκε ο/η {nm} · {d}",
+      "rq.st.revoked": "Πάρθηκε πίσω", "rq.st.expired": "Έληξε · {d}", "rq.toLine": "Προς {to}", "rq.why": "Αιτία: {why}",
+      "rq.copyLink": "Αντιγραφή συνδέσμου", "rq.revoke": "Πάρ' το πίσω", "rq.revokeSure": "Πάτα ξανά για να το πάρεις πίσω", "rq.open": "Άνοιγμα",
+      "rq.saveCopy": "Αποθήκευση αντιγράφου", "rq.remove": "Αφαίρεση από τη λίστα", "rq.verify": "Έλεγχος υπογεγραμμένου PDF",
+      "rq.v.signed": "Αυτό είναι το υπογεγραμμένο αντίγραφο του «{n}», που υπέγραψε ο/η {nm} στις {d}. Δεν έχει αλλάξει τίποτα.",
+      "rq.v.original": "Αυτό είναι το πρωτότυπο του «{n}» που έστειλες στον/στην {to}.",
+      "rq.v.none": "Αυτό το PDF δεν είναι από τις αιτήσεις υπογραφής σου ή άλλαξε μετά την υπογραφή.",
+      "rq.opening": "Ανοίγει η απάντηση…", "rq.building": "Φτιάχνεται το υπογεγραμμένο PDF…",
+      "rq.gotSigned": "Υπέγραψε ο/η {nm}. Αποθηκεύτηκε στα Αρχεία › {dir}.", "rq.gotDeclined": "Ο/Η {nm} αρνήθηκε να υπογράψει.",
+      "rq.gotNotSaved": "Υπέγραψε ο/η {nm}, αλλά το PDF δεν αποθηκεύτηκε στα Αρχεία.",
+      "rq.already": "Αυτή η απάντηση έχει ήδη προστεθεί.", "rq.badReply": "Αυτό δεν είναι απάντηση σε αίτημα υπογραφής ή κόπηκε.",
+      "rq.replyGone": "Η απάντηση δεν βρίσκεται πια στον server του orOS (μένει 30 ημέρες). Ζήτα από τον υπογράφοντα το αντίγραφό του.",
+      "rq.notMine": "Αυτή η απάντηση είναι για αίτημα που δεν υπάρχει στη λίστα σου.",
+      "rq.noOriginal": "Το πρωτότυπο PDF δεν υπάρχει πια στα Αρχεία, οπότε το υπογεγραμμένο αντίγραφο δεν μπορεί να φτιαχτεί εδώ. Ζήτα από τον υπογράφοντα το δικό του.",
+      "rq.revokeFail": "Δεν πάρθηκε πίσω. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", "rq.someone": "τον υπογράφοντα"
     }
   };
 
@@ -494,6 +578,8 @@
     line: SVG + '<line x1="4" y1="20" x2="20" y2="4"/></svg>',
     arrow: SVG + '<line x1="4" y1="20" x2="19" y2="5"/><polyline points="10 5 19 5 19 14"/></svg>',
     tick: SVG + '<polyline points="4 13 9 18 20 6"/></svg>',
+    field: SVG + '<rect x="3" y="7" width="18" height="10" rx="1" stroke-dasharray="3 2.5"/><path d="M7 14c1.5 0 2-3 3-3s.5 3 2 3 1.5-2 2.5-2"/></svg>',
+    sign: SVG + '<path d="M3 17c2.5 0 3.5-6 6-6s1 5 3 5 2.5-3 4-3 2 2 5 2"/><line x1="3" y1="21" x2="21" y2="21"/></svg>',
     cross: SVG + '<line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>',
     fill: SVG + '<path d="M19 11 11 3 3 11l8 8z" fill="currentColor" fill-opacity="0.3"/><path d="M20 15s2 2.5 2 4a2 2 0 0 1-4 0c0-1.5 2-4 2-4z"/></svg>',
     copy: SVG + '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
@@ -817,6 +903,14 @@
         if (im.complete && im.naturalWidth) ctx.drawImage(im, -w / 2, -h / 2, w, h);
       } else if (o.t === "shape" || o.t === "ink") {
         drawParts(ctx, o, S * k);
+      } else if (o.t === "field") {
+        var fw = o.w * S * k, fh = o.h * S * k;
+        ctx.fillStyle = "rgba(255, 214, 26, 0.3)";
+        ctx.fillRect(-fw / 2, -fh / 2, fw, fh);
+        ctx.strokeStyle = "#b8860b";
+        ctx.lineWidth = Math.max(1, fh * 0.04);
+        if (ctx.setLineDash) ctx.setLineDash([4, 3]);
+        ctx.strokeRect(-fw / 2, -fh / 2, fw, fh);
       } else {
         var fs = o.fs * S * k;
         ctx.font = fs + "px " + SANS;
@@ -1324,6 +1418,8 @@
     mb.appendChild(body);
     var ok = $("modal-ok");
     $("modal-cancel").textContent = t("btn.cancel");
+    $("modal-cancel").hidden = false;
+    listOpen = false;
     ok.textContent = okText;
     ok.classList.toggle("danger", !!danger);
     ok.disabled = false;
@@ -1335,6 +1431,7 @@
   function closeModal() {
     $("modal-veil").hidden = true;
     modalOk = null;
+    listOpen = false;
     if (modalReturn && modalReturn.focus) { try { modalReturn.focus({ preventScroll: true }); } catch (e) {} }
   }
   function field(labelText, control) {
@@ -1608,6 +1705,7 @@
     if (!ed) return;
     endDraw();
     showShapes(false);
+    showFields(false);
     var e = ed, keys = Object.keys(e.changed);
     ed = null;
     $("editor").hidden = true;
@@ -1711,6 +1809,8 @@
     } else if (o.t === "shape" || o.t === "ink") {
       n.appendChild(document.createElementNS(SVGNS, "svg")).setAttribute("aria-hidden", "true");
       if (isLine(o)) n.classList.add("ov-line");
+    } else if (o.t === "field") {
+      n.appendChild(el("span", "ov-fld", fieldText(o)));
     } else {
       n.appendChild(el("span", "ov-txt", o.text));
     }
@@ -1729,7 +1829,9 @@
   var MIN_HIT = window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 36 : 24;
   function isLine(o) { return o.t === "shape" && (o.k === "line" || o.k === "arrow"); }
   function isCover(o) { return o.t === "shape" && o.fill && !o.sw; }
+  function fieldText(o) { return t("fld." + o.k) + (o.req ? " *" : ""); }
   function ovLabel(o) {
+    if (o.t === "field") return t("ed.itemField", { k: fieldText(o) });
     if (o.t === "img") return t(o.pic ? "ed.itemPic" : "ed.itemImg");
     if (o.t === "ink") return t(o.op < 1 ? "ed.itemMark" : "ed.itemInk");
     if (o.t === "shape") return isCover(o) ? t("ed.itemCover") : t("shape." + o.k);
@@ -1757,9 +1859,10 @@
     n.style.left = (v.fx * 100) + "%";
     n.style.top = (v.fy * 100) + "%";
     n.style.transform = "translate(-50%, -50%) rotate(" + v.turn + "deg)";
-    if (o.t === "img") {
+    if (o.t === "img" || o.t === "field") {
       n.style.width = (o.w * S * k) + "px";
       n.style.height = (o.h * S * k) + "px";
+      if (o.t === "field") n.style.fontSize = Math.max(9, Math.min(16, o.h * S * k * 0.4)) + "px";
     } else if (o.t === "shape" || o.t === "ink") {
       // at least a finger's width to grab, whatever its size
       var u = S * k, w = Math.abs(o.w) * u, h = Math.abs(o.h) * u, pad = o.sw * u;
@@ -1796,7 +1899,9 @@
     var o = ed && ed.sel ? ovById(ed.sel) : null, dr = ed && ed.draw;
     $("ed-props").hidden = !o && !dr;
     if (!o && !dr) return;
-    var isText = !!o && o.t === "text", vec = !!o && (o.t === "shape" || o.t === "ink");
+    var isText = !!o && o.t === "text", vec = !!o && (o.t === "shape" || o.t === "ink"), isField = !!o && o.t === "field";
+    $("ed-req").hidden = !isField || !!dr;
+    if (isField) $("ed-req").setAttribute("aria-pressed", o.req ? "true" : "false");
     var color = o ? o.color : dr.color, sw = o ? o.sw : dr.sw;
     $("ed-input").hidden = !isText || !!dr;
     $("ed-colors").hidden = !(isText || vec || dr);
@@ -1805,7 +1910,7 @@
     $("ed-unstroke").hidden = !dr;
     $("ed-unstroke").disabled = !(dr && dr.strokes.length);
     $("ed-all").hidden = $("ed-del").hidden = !o;
-    var note = dr ? t("ed.drawHint") : o && isCover(o) ? t("ed.coverHint") : "";
+    var note = dr ? t("ed.drawHint") : o && isCover(o) ? t("ed.coverHint") : isField ? t("ed.fieldHint") : "";
     $("ed-note").hidden = !note;
     $("ed-note").textContent = note;
     if (isText && document.activeElement !== $("ed-input")) $("ed-input").value = o.text;
@@ -1881,6 +1986,22 @@
   function showShapes(on) {
     $("ed-shapes").hidden = !on;
     $("ed-shape").setAttribute("aria-expanded", on ? "true" : "false");
+    if (on) showFields(false);
+  }
+  // A place for the person asked to sign (signature requests): where
+  // a signature usually goes, sized for what it holds.
+  var FIELD_BOX = { sig: [0.32, 0.09, 0.7, 0.84], init: [0.12, 0.06, 0.88, 0.94], name: [0.32, 0.05, 0.7, 0.9],
+                    date: [0.22, 0.045, 0.3, 0.9], text: [0.36, 0.05, 0.5, 0.5], check: [0.05, 0.05, 0.1, 0.5] };
+  function showFields(on) {
+    $("ed-fieldkinds").hidden = !on;
+    $("ed-field").setAttribute("aria-expanded", on ? "true" : "false");
+    if (on) { $("ed-shapes").hidden = true; $("ed-shape").setAttribute("aria-expanded", "false"); }
+  }
+  function addField(k) {
+    showFields(false);
+    var b = FIELD_BOX[k] || FIELD_BOX.sig;
+    var o = addOv({ t: "field", k: k, w: b[0], h: b[1], req: k !== "text" && k !== "check" && k !== "init" }, b[2], b[3]);
+    if (o) focusOv(o.id);
   }
   // A picture (a logo, a stamp, a photo) on the page: upright, at most
   // 1600 pixels on its long side, PNG when it has see-through parts,
@@ -2110,7 +2231,7 @@
     e.preventDefault();
     var o = ovById(ovDrag.id), n = ovNode(ovDrag.id), g = ed.g;
     if (!o || !n) return;
-    if (ovDrag.resize && o.t === "shape") {
+    if (ovDrag.resize && (o.t === "shape" || o.t === "field")) {
       reshape(o, ovDrag, e.clientX, e.clientY);
     } else if (ovDrag.resize) {
       var f = Math.max(0.1, Math.min(10, Math.hypot(e.clientX - ovDrag.cx, e.clientY - ovDrag.cy) / ovDrag.d0));
@@ -2156,7 +2277,8 @@
     }
     var w = v[0] / u, h = v[1] / u;
     if (!line) { w = Math.max(0.01, w); h = Math.max(0.01, h); }
-    var c = C.cleanOv({ t: "shape", k: o.k, w: w || 0.01, h: h, fill: o.fill, sw: o.sw, color: o.color });
+    var c = o.t === "field" ? C.cleanOv({ t: "field", k: o.k, w: w, h: h })
+          : C.cleanOv({ t: "shape", k: o.k, w: w || 0.01, h: h, fill: o.fill, sw: o.sw, color: o.color });
     o.w = c.w; o.h = c.h;
     var m = toScreen(o.w * u / 2, o.h * u / 2), sx, sy;
     if (line && dr.end === "0") { sx = a[0] - m[0]; sy = a[1] - m[1]; } else { sx = a[0] + m[0]; sy = a[1] + m[1]; }
@@ -2171,6 +2293,7 @@
       e.preventDefault();
       if (ed.draw) { endDraw(); return true; }
       if (!$("ed-shapes").hidden) { showShapes(false); $("ed-shape").focus(); return true; }
+      if (!$("ed-fieldkinds").hidden) { showFields(false); $("ed-field").focus(); return true; }
       if (ed.sel && !typing) { var id = ed.sel; selectOv(null); focusOv(id); } else cancelEditor();
       return true;
     }
@@ -2189,8 +2312,8 @@
     e.preventDefault();
     if (grow) {
       if (o.t === "img" || o.t === "ink") scaleBox(o, o.w * grow, o.h * grow);
-      else if (o.t === "shape") {
-        var c = C.cleanOv({ t: "shape", k: o.k, w: o.w * grow, h: o.h * grow, fill: o.fill, sw: o.sw });
+      else if (o.t === "shape" || o.t === "field") {
+        var c = C.cleanOv({ t: o.t, k: o.k, w: o.w * grow, h: o.h * grow, fill: o.fill, sw: o.sw });
         o.w = c.w; o.h = c.h;
       } else o.fs = C.cleanOv({ t: "text", text: "x", fs: o.fs * grow }).fs;
     } else {
@@ -3534,6 +3657,392 @@
     try { return O.cleanIndex(JSON.parse(localStorage.getItem(O.INDEX_KEY) || "null")).length; } catch (e) { return 0; }
   }
 
+  // ---------- 7f. Signature requests (sign-core.js, sign.html) ----------
+  // Ask to sign: the pages go out as one PDF with the fields beside it
+  // (an encrypted link with an expiry, share/relay.js); the original
+  // is kept in Files › PDF › Signatures. The answer comes back as a
+  // link (…/scanpdf/#signed=…); the signed PDF is made here from that
+  // original, so nothing of the pages comes from the other side.
+  // The list of requests is sync slice "scanpdfSign".
+  var SG = window.ScanPdfSign, RL = window.OrosShareRelay;
+  var SIGN_DIR = "Signatures", SIGN_ME = "oros-scanpdf-signme", MAX_SEND = 24 * 1048576;
+  var signStore = null, signQuiet = false, listOpen = false;
+  function signDir() { return C.diskDir() + "/" + SIGN_DIR; }
+  function syncApi() { try { return (window.parent && window.parent.orosSync) || null; } catch (e) { return null; } }
+  function loadSign() {
+    if (!signStore) {
+      try { signStore = SG.readStore(JSON.parse(localStorage.getItem(SG.STORE_KEY) || "null")); }
+      catch (e) { signStore = SG.readStore(null); }
+    }
+    return signStore;
+  }
+  function saveSign(next) {
+    signStore = SG.canonStore(next);
+    try { localStorage.setItem(SG.STORE_KEY, JSON.stringify(signStore)); } catch (e) {}
+    if (signQuiet) return;
+    var api = syncApi();
+    if (api && typeof api.markDirty === "function") api.markDirty();
+  }
+  function registerSignSlice() {
+    var api = syncApi();
+    if (!SG || !api || typeof api.registerSlice !== "function") return;
+    api.registerSlice(SG.SLICE, function () { return SG.canonStore(loadSign()); }, function (incoming) {
+      signQuiet = true;                       // R6: a pull never marks dirty
+      try { saveSign(SG.readStore(incoming)); } finally { signQuiet = false; }
+      if (listOpen) renderList();
+    }, SG.STORE_KEY, SG.merge);
+  }
+  function me() {
+    try { var m = JSON.parse(localStorage.getItem(SIGN_ME) || "null"); return m && typeof m === "object" ? m : {}; } catch (e) { return {}; }
+  }
+  function fmtDay(ms) {
+    try { return new Date(ms).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" }); }
+    catch (e) { return new Date(ms).toISOString().slice(0, 10); }
+  }
+  function textArea(value, max, rows) {
+    var ta = document.createElement("textarea");
+    ta.maxLength = max; ta.rows = rows || 3; ta.value = value || "";
+    return ta;
+  }
+  function inputOf(type, value, max) {
+    var i = document.createElement("input");
+    i.type = type; i.maxLength = max; i.value = value || ""; i.spellcheck = false;
+    return i;
+  }
+  function hasSigField() {
+    return pages.some(function (p) { return (p.ov || []).some(function (o) { return o.t === "field" && o.k === "sig"; }); });
+  }
+  function fieldCount() {
+    return pages.reduce(function (n, p) { return n + (p.ov || []).filter(function (o) { return o.t === "field"; }).length; }, 0);
+  }
+
+  function requestDialog() {
+    if (!pages.length) { listDialog(); return; }
+    if (!SG || !RL || !window.crypto || !window.crypto.subtle || !window.PDFLib) { showToast(t("rq.noCrypto")); return; }
+    var m = me(), body = el("div", "form");
+    var auto = !hasSigField();
+    body.appendChild(el("p", "hint small", auto ? t("rq.autoField") : tn("rq.fields", fieldCount())));
+    var doc = inputOf("text", defaultBase(), 120), to = inputOf("text", "", 120), te = inputOf("email", "", 254);
+    var by = inputOf("text", m.by || "", 120), be = inputOf("email", m.be || "", 254), msg = textArea("", 1000, 3);
+    to.autocomplete = "off"; te.autocomplete = "off"; by.autocomplete = "name"; be.autocomplete = "email";
+    body.appendChild(field(t("rq.doc"), doc));
+    body.appendChild(field(t("rq.to"), to));
+    body.appendChild(field(t("rq.te"), te));
+    body.appendChild(field(t("rq.by"), by));
+    body.appendChild(field(t("rq.be"), be));
+    body.appendChild(field(t("rq.msg"), msg));
+    var days = el("fieldset", "seg");
+    days.appendChild(el("legend", "field-l", t("rq.days")));
+    [1, 7, 30].forEach(function (d) { days.appendChild(radio("rqdays", String(d), t(d === 1 ? "rq.day1" : d === 7 ? "rq.day7" : "rq.day30"), d === 7)); });
+    body.appendChild(days);
+    var lock = check(t("rq.lock"), false), code = inputOf("text", "", 200);
+    code.autocomplete = "off";
+    var lockBox = el("div", "opt-fields");
+    lockBox.appendChild(field(t("rq.code"), code));
+    lockBox.appendChild(el("p", "hint small", t("rq.codeHint")));
+    body.appendChild(lock.row);
+    body.appendChild(lockBox);
+    function syncLock() { lockBox.hidden = !lock.box.checked; }
+    lock.box.addEventListener("change", syncLock);
+    syncLock();
+    var err = el("p", "hint small err");
+    err.hidden = true;
+    body.appendChild(err);
+    body.appendChild(el("p", "hint small", t("rq.legal")));
+    openModal(t("rq.title"), body, t("rq.send"), function () {
+      function bad(key, inp) { err.textContent = t(key); err.hidden = false; if (inp) inp.focus(); }
+      var o = { n: doc.value.trim() || defaultBase(), to: to.value.trim(), te: te.value.trim(), by: by.value.trim(),
+                be: be.value.trim(), msg: msg.value, days: Number(radioVal(body, "rqdays")) || 7,
+                code: lock.box.checked ? code.value : "" };
+      if (!o.to) return bad("rq.needTo", to);
+      if (o.te && !SG.email(o.te)) return bad("rq.badEmail", te);
+      if (!o.by) return bad("rq.needBy", by);
+      if (o.be && !SG.email(o.be)) return bad("rq.badEmail", be);
+      if (lock.box.checked && o.code.length < 6) return bad("rq.shortCode", code);
+      try { localStorage.setItem(SIGN_ME, JSON.stringify({ by: o.by, be: o.be })); } catch (e) {}
+      closeModal();
+      sendRequest(o, auto);
+    });
+  }
+  // No signature field yet: one at the bottom right of the last page.
+  function autoField() {
+    var p = pages[pages.length - 1], g = p && geomOf(p);
+    if (!g) return;
+    var at = C.ovAt(0.7, 0.86, g.W, g.H, g.R), map = {};
+    map[p.key] = C.cloneOv(p.ov).concat([{ id: ovId(), t: "field", k: "sig", w: 0.32, h: 0.09, req: true, cx: at.cx, cy: at.cy, A: g.R }]);
+    edit(C.setOverlays(pages, map));
+  }
+  function sendErr(e) {
+    var c = e && (e.code || e.message);
+    return ["full", "rate", "net", "big"].indexOf(c) >= 0 ? "rq.err." + c : c === "font" ? "err.font" : "rq.err.bad";
+  }
+  function sendRequest(o, auto) {
+    if (auto) autoField();
+    var list = pages.slice(), geoms = list.map(geomOf), bytes = null, req = null, path = "";
+    if (geoms.some(function (g) { return !g; })) { showToast(t("rq.err.bad")); return; }
+    showBusy(t("rq.making"));
+    buildPdf(list, o.n).then(function (blob) { return blob.arrayBuffer(); }).then(function (ab) {
+      bytes = new Uint8Array(ab);
+      if (bytes.length > MAX_SEND) throw codeErr("big");
+      return SG.sha256(bytes);
+    }).then(function (h) {
+      var fields = SG.fieldsOf(list.map(function (p, i) { return { ov: p.ov, g: geoms[i] }; }));
+      req = SG.cleanRequest({ v: 1, n: o.n, h: h, pages: list.length, by: o.by, be: o.be, to: o.to, te: o.te, msg: o.msg,
+                              lang: ["en", "el", "de"].indexOf(LANG) >= 0 ? LANG : "en", lk: o.code ? 1 : 0, fields: fields });
+      if (!req) throw codeErr("bad");
+      showBusy(t("rq.saving"));
+      return writeToFiles(new Blob([bytes], { type: "application/pdf" }), signDir(), SG.sentName(req.n))
+        .then(function (p) { path = p; }, function () { path = ""; });
+    }).then(function () {
+      showBusy(t("rq.sending"));
+      return RL.create({ v: 1, k: "sign", d: req }, { days: o.days, password: o.code || undefined, bin: bytes });
+    }).then(function (r) {
+      var it = { id: r.id, a: Date.now(), q: req, x: r.exp, c: r.code, d: r.del };
+      if (path) it.p = path;
+      saveSign(SG.addItem(loadSign(), it));
+      hideBusy();
+      linkDialog(r.id, o.code);
+      if (!path) showToast(t("rq.noKeep"));
+    }).catch(function (e) {
+      hideBusy();
+      try { console.error("[orOS] scanpdf sign request:", e); } catch (x) {}
+      showToast(t(sendErr(e)));
+    });
+  }
+  function origin() {
+    // links go to people outside this computer: a local orOS (Portable,
+    // a test server) hands out the public address instead
+    try {
+      var o = location.origin;
+      if (/^https:\/\//.test(o) && !/^https:\/\/(localhost|127\.|\[::1\])/.test(o)) return o;
+    } catch (e) {}
+    return "https://useoros.online";
+  }
+  function mailShell() {
+    var shell = null;
+    try { shell = window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) {}
+    if (!shell) return null;
+    try {
+      var m = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
+      return m && Array.isArray(m.accounts) && m.accounts.length ? shell : null;
+    } catch (e) { return null; }
+  }
+  function linkDialog(id, codeTold) {
+    var it = loadSign().items[id];
+    if (!it || it.gone) return;
+    var q = it.q, link = SG.signLink(origin(), it.c), d = fmtDay(it.x);
+    var body = el("div", "form");
+    body.appendChild(el("p", "", t("rq.linkText", { to: q.to, d: d })));
+    if (q.lk) body.appendChild(el("p", "hint small warn", t("rq.linkCode", { to: q.to })));
+    var out = textArea(link, 400, 3);
+    out.readOnly = true;
+    out.className = "rq-link";
+    body.appendChild(field(t("rq.link"), out));
+    var acts = el("div", "rq-acts");
+    function act(label, fn, cls) { var b = el("button", "btn small" + (cls ? " " + cls : ""), label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); return b; }
+    act(t("rq.copy"), function () { copyText(link).then(function () { showToast(t("rq.copied")); }, function () { out.select(); showToast(t("txt.noCopy")); }); }, "primary");
+    act(t("rq.email"), function () {
+      var subject = t("rq.mailSubject", { n: q.n }), text = t("rq.mailBody", { to: q.to, n: q.n, l: link, d: d, by: q.by });
+      var shell = mailShell();
+      if (shell) { closeModal(); shell.__orosOpenAt("mail", { compose: { to: q.te || "", subject: subject.slice(0, 300), body: text.slice(0, 20000) } }); return; }
+      window.open("mailto:" + encodeURIComponent(q.te || "") + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(text), "_self");
+    });
+    if (typeof navigator.share === "function") {
+      act(t("rq.share"), function () { navigator.share({ title: t("rq.mailSubject", { n: q.n }), url: link }).catch(function () {}); });
+    }
+    body.appendChild(acts);
+    openModal(t("rq.linkH"), body, t("rq.done"), closeModal);
+    $("modal-cancel").hidden = true;
+  }
+
+  // The list: status, link, take back, the answer's link, checking a PDF.
+  function listDialog() {
+    if (!SG) return;
+    var body = el("div", "form rq-list");
+    body.id = "rq-list";
+    openModal(t("rq.listH"), body, t("rq.close"), closeModal);
+    $("modal-cancel").hidden = true;
+    listOpen = true;
+    renderList();
+  }
+  function renderList() {
+    var body = $("rq-list");
+    if (!body || $("modal-veil").hidden) { listOpen = false; return; }
+    body.textContent = "";
+    var paste = inputOf("text", "", 400);
+    paste.placeholder = "https://…/scanpdf/#signed=r1.…";
+    var row = el("div", "rq-paste");
+    row.appendChild(field(t("rq.paste"), paste));
+    var take = el("button", "btn small primary", t("rq.take"));
+    take.type = "button";
+    take.addEventListener("click", function () { if (paste.value.trim()) takeReply(paste.value); });
+    paste.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); take.click(); } });
+    row.appendChild(take);
+    body.appendChild(row);
+    var items = SG.list(loadSign(), Date.now());
+    if (!items.length) body.appendChild(el("p", "hint", t("rq.none")));
+    var ul = el("ul", "rq-items");
+    items.forEach(function (it) { ul.appendChild(itemRow(it)); });
+    body.appendChild(ul);
+    var vb = el("button", "btn small", t("rq.verify"));
+    vb.type = "button";
+    vb.addEventListener("click", verifyPick);
+    body.appendChild(vb);
+    var vr = el("p", "hint small rq-verified");
+    vr.id = "rq-verified"; vr.hidden = true;
+    vr.setAttribute("aria-live", "polite");
+    body.appendChild(vr);
+  }
+  function itemRow(it) {
+    var q = it.q, li = el("li", "rq-item rq-" + it.status);
+    li.appendChild(el("span", "rq-name", q.n));
+    li.appendChild(el("span", "rq-to", t("rq.toLine", { to: q.to + (q.te ? " <" + q.te + ">" : "") })));
+    var st = it.status, nm = it.got ? (it.got.nm || q.to) : q.to;
+    var line = st === "waiting" ? t("rq.st.waiting", { d: fmtDay(it.x) }) : st === "expired" ? t("rq.st.expired", { d: fmtDay(it.x) }) :
+               st === "revoked" ? t("rq.st.revoked") : t("rq.st." + st, { nm: nm, d: fmtDay(it.got.at) });
+    li.appendChild(el("span", "rq-st", line));
+    if (it.got && it.got.why) li.appendChild(el("span", "rq-why", t("rq.why", { why: it.got.why })));
+    var acts = el("div", "rq-acts");
+    function act(label, fn, cls) { var b = el("button", "btn small" + (cls ? " " + cls : ""), label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); return b; }
+    if (st === "waiting") {
+      act(t("rq.copyLink"), function () { linkDialogFromList(it.id); });
+      var rv = act(t("rq.revoke"), function () {
+        if (!rv.classList.contains("sure")) { rv.classList.add("sure"); rv.textContent = t("rq.revokeSure"); return; }
+        revokeItem(it.id);
+      }, "danger");
+    }
+    if (st === "signed" && it.got.pf) {
+      act(t("rq.open"), function () { closeModal(); addPaths([it.got.pf]); });
+      act(t("rq.saveCopy"), function () {
+        var fs = fsApi();
+        if (!fs) return;
+        fs.readBlob(it.got.pf).then(function (b) { return saveBlob(b, SG.signedName(q.n)); }, function () { showToast(t("err.read")); });
+      });
+    }
+    if (st !== "waiting") act(t("rq.remove"), function () { saveSign(SG.remove(loadSign(), it.id, Date.now())); renderList(); });
+    li.appendChild(acts);
+    return li;
+  }
+  function linkDialogFromList(id) { closeModal(); linkDialog(id); }
+  function revokeItem(id) {
+    var it = loadSign().items[id];
+    if (!it) return;
+    var done = function () { saveSign(SG.setRevoked(loadSign(), id, Date.now())); renderList(); };
+    if (!it.d) { done(); return; }
+    RL.revoke(id, it.d).then(done, function () { showToast(t("rq.revokeFail")); });
+  }
+
+  // An answer: its link pasted here, or opened (…/scanpdf/#signed=…).
+  function takeReplyFromUrl() {
+    var h = "";
+    try { h = String(location.hash || ""); } catch (e) {}
+    if (!/^#signed=/.test(h)) return;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    setTimeout(function () { takeReply(h); }, 150);
+  }
+  var taking = false;
+  function takeReply(text) {
+    if (!SG || !RL || taking) return;
+    var code = SG.replyCode(text);
+    if (!code) { showToast(t("rq.badReply")); return; }
+    taking = true;
+    showBusy(t("rq.opening"));
+    RL.open(code).then(function (r) {
+      if (r.error) throw codeErr(r.error === "gone" ? "replyGone" : r.error === "net" ? "net" : "badReply");
+      var d = r.e && r.e.k === "signed" && r.e.d && typeof r.e.d === "object" ? r.e.d : null;
+      var it = d && typeof d.rq === "string" ? loadSign().items[d.rq] : null;
+      if (!d) throw codeErr("badReply");
+      if (!it || it.gone) throw codeErr("notMine");
+      if (it.got) { hideBusy(); showToast(t("rq.already")); return; }
+      var reply = SG.cleanReply(d, it.q);
+      if (!reply) throw codeErr("badReply");
+      return SG.sha256(SG.canon(reply)).then(function (rh) {
+        if (reply.st === "declined") return finish(it, { at: Date.now(), st: "declined", nm: reply.nm, why: reply.why, rh: rh });
+        showBusy(t("rq.building"));
+        return original(it).then(function (bytes) {
+          return signedPdf(bytes, it, reply);
+        }).then(function (signed) {
+          return SG.sha256(signed).then(function (hf) {
+            return writeToFiles(new Blob([signed], { type: "application/pdf" }), signDir(), SG.signedName(it.q.n)).then(function (pf) {
+              return finish(it, { at: Date.now(), st: "signed", nm: reply.nm, rh: rh, hf: hf, pf: pf });
+            }, function () {
+              finish(it, { at: Date.now(), st: "signed", nm: reply.nm, rh: rh, hf: hf }, true);
+              return saveBlob(new Blob([signed], { type: "application/pdf" }), SG.signedName(it.q.n));
+            });
+          });
+        });
+      });
+    }).then(function () { taking = false; hideBusy(); }, function (e) {
+      taking = false;
+      hideBusy();
+      var c = e && e.code;
+      showToast(t(c === "net" ? "rq.err.net" : ["replyGone", "notMine", "noOriginal", "badReply"].indexOf(c) >= 0 ? "rq." + c : "rq.err.bad"));
+    });
+  }
+  // Received: kept in the list, the request taken off the relay.
+  function finish(it, got, notSaved) {
+    saveSign(SG.setGot(loadSign(), it.id, got));
+    if (it.d) RL.revoke(it.id, it.d).then(null, function () {});
+    var nm = got.nm || it.q.to;
+    showToast(got.st === "declined" ? t("rq.gotDeclined", { nm: nm }) :
+              notSaved ? t("rq.gotNotSaved", { nm: nm }) : t("rq.gotSigned", { nm: nm, dir: shortDir(signDir()) }));
+    if (listOpen) renderList(); else listDialog();
+  }
+  // The original as sent: from Files, else from the request link while
+  // it is still there; it must hash to what the request says.
+  function original(it) {
+    var fs = fsApi();
+    var fromFiles = it.p && fs ? fs.readBlob(it.p).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
+      var bytes = new Uint8Array(ab);
+      return SG.sha256(bytes).then(function (h) { return h === it.q.h ? bytes : null; });
+    }, function () { return null; }) : Promise.resolve(null);
+    return fromFiles.then(function (bytes) {
+      if (bytes) return bytes;
+      if (it.q.lk) throw codeErr("noOriginal");
+      return RL.open(it.c).then(function (r) {
+        if (r.error || !r.bin) throw codeErr("noOriginal");
+        var b = new Uint8Array(r.bin);
+        return SG.sha256(b).then(function (h) { if (h !== it.q.h) throw codeErr("noOriginal"); return b; });
+      });
+    });
+  }
+  // The same PDF the signer made and kept (sign.js makeSigned).
+  function signedPdf(bytes, it, reply) {
+    var lib = window.PDFLib;
+    return Promise.all([pdfFont(), OPS.load(lib, bytes), SG.record(it.id, it.q, reply, {})]).then(function (a) {
+      var font = a[0], loaded = a[1], out = a[2];
+      if (loaded.err) throw codeErr("noOriginal");
+      return OPS.stamp(lib, bytes, SG.stampItems(it.q, reply, OPS.pageGeoms(lib, loaded.doc)), { font: font, cert: SG.cert(out),
+        attach: { name: "signing-record.json", bytes: new TextEncoder().encode(out.json), at: reply.at, description: "orOS signing record" } });
+    });
+  }
+
+  // Check a signed PDF: is it one of these, unchanged?
+  function verifyPick() {
+    var acc = ".pdf,application/pdf", dlg = dialogHost();
+    function go(f) {
+      if (!f) return;
+      readBytes(f).then(function (bytes) { return SG.sha256(bytes); }).then(function (h) {
+        var hit = null, kind = "none";
+        SG.list(loadSign(), Date.now()).forEach(function (it) {
+          if (hit) return;
+          if (it.got && it.got.hf === h) { hit = it; kind = "signed"; }
+          else if (it.q.h === h) { hit = it; kind = "original"; }
+        });
+        var out = $("rq-verified");
+        if (!out) return;
+        out.hidden = false;
+        out.textContent = !hit ? t("rq.v.none") : kind === "signed" ?
+          t("rq.v.signed", { n: hit.q.n, nm: hit.got.nm || hit.q.to, d: fmtDay(hit.got.at) }) : t("rq.v.original", { n: hit.q.n, to: hit.q.to });
+      }, function () { showToast(t("err.read")); });
+    }
+    if (dlg && typeof dlg.openFiles === "function") { dlg.openFiles(acc).then(function (files) { go(files && files[0]); }); return; }
+    var inp = document.createElement("input");
+    inp.type = "file"; inp.accept = acc;
+    inp.addEventListener("change", function () { go(inp.files && inp.files[0]); });
+    inp.click();
+  }
+
   // ---------- 8. Toast + busy ----------
   var toastTimer = null, toastShown = false;
   function showToast(msg) {
@@ -3681,6 +4190,9 @@
       } catch (e) {}
     }
     if (tg.paths.length) addPaths(tg.paths);
+    if (typeof target.signed === "string") setTimeout(function () { takeReply(target.signed); }, 0);
+    if (target.signList) setTimeout(function () { listDialog(); }, 0);
+    if (target.signNew) setTimeout(function () { if (pages.length) requestDialog(); else listDialog(); }, 0);
   }
   window.__orosOpenAt = function (target) { openTarget(target); };
 
@@ -3697,7 +4209,7 @@
                  "sel-del": ["del", "btn.del"], "ed-prev": ["left", "ed.prev"], "ed-next": ["right", "ed.next"],
                  "ed-cancel": ["close", "btn.close"], "sc-close": ["close", "sc.close"], "sc-photos": ["image", "sc.photos"],
                  "sc-torch": ["torch", "sc.torchOn"], "sc-rotl": ["rotl", "btn.rotl"], "sc-rotr": ["rotr", "btn.rotr"],
-                 "sc-del": ["del", "sc.delete"] };
+                 "sc-del": ["del", "sc.delete"], "req-btn": ["sign", "btn.requests"] };
     Object.keys(btns).forEach(function (id) {
       $(id).innerHTML = ICON[btns[id][0]];
       setLabel($(id), t(btns[id][1]));
@@ -3705,6 +4217,7 @@
     [["ed-sig", "sig", "ed.sig"], ["ed-text", "text", "ed.text"], ["ed-date", "date", "ed.date"],
      ["ed-shape", "shape", "ed.shape"], ["ed-pen", "pen", "ed.pen"], ["ed-marker", "marker", "ed.marker"],
      ["ed-cover", "cover", "ed.cover"], ["ed-pic", "image", "ed.pic"], ["ed-fill", "fill", "ed.fill"],
+     ["ed-field", "field", "ed.field"], ["ed-req", "tick", "ed.req"],
      ["ed-unstroke", "undo", "ed.unstroke"],
      ["ed-all", "copy", "ed.all"], ["ed-del", "del", "ed.del"]].forEach(function (b) {
       $(b[0]).innerHTML = ICON[b[1]];
@@ -3723,6 +4236,12 @@
       b.innerHTML = ICON[k === "check" ? "tick" : k];
       b.appendChild(el("span", "", t("shape." + k)));
       setLabel(b, t("shape." + k));
+    });
+    $("ed-fieldkinds").setAttribute("aria-label", t("ed.fields"));
+    [].forEach.call($("ed-fieldkinds").children, function (b) {
+      var k = b.getAttribute("data-f");
+      b.textContent = t("fld." + k);
+      setLabel(b, t("fld." + k));
     });
     $("ed-widths").setAttribute("aria-label", t("ed.width"));
     [].forEach.call($("ed-widths").children, function (b) {
@@ -3780,7 +4299,24 @@
     $("ed-pen").addEventListener("click", function () { if (ed) startDraw("pen"); });
     $("ed-marker").addEventListener("click", function () { if (ed) startDraw("marker"); });
     $("ed-cover").addEventListener("click", function () { endDraw(); showShapes(false); addCover(); });
-    $("ed-pic").addEventListener("click", function () { showShapes(false); addPic(); });
+    $("ed-pic").addEventListener("click", function () { showShapes(false); showFields(false); addPic(); });
+    $("ed-field").addEventListener("click", function () { endDraw(); showFields($("ed-fieldkinds").hidden); });
+    [].forEach.call($("ed-fieldkinds").children, function (b) {
+      b.addEventListener("click", function () { if (ed) addField(b.getAttribute("data-f")); });
+    });
+    $("ed-req").addEventListener("click", function () {
+      var o = ed && ed.sel ? ovById(ed.sel) : null;
+      if (!o || o.t !== "field") return;
+      o.req = !o.req;
+      touched();
+      var n = ovNode(o.id);
+      n.querySelector(".ov-fld").textContent = fieldText(o);
+      n.setAttribute("aria-label", ovLabel(o));
+      syncProps();
+    });
+    $("ask-btn").addEventListener("click", requestDialog);
+    $("req-btn").addEventListener("click", function () { listDialog(); });
+    $("req-open").addEventListener("click", function () { listDialog(); });
     $("ed-unstroke").addEventListener("click", unstroke);
     $("ed-fill").addEventListener("click", function () {
       var o = ed && ed.sel ? ovById(ed.sel) : null;
@@ -3900,6 +4436,7 @@
     wire();
     watchPalette();
     renderAll();
+    registerSignSlice();
     if (!window.PDFLib || !OPS) showToast(t("err.build"));
     try {
       var p = parentWin();
@@ -3908,6 +4445,7 @@
         if (pending) openTarget(pending);
       }
     } catch (e) {}
+    takeReplyFromUrl();
   }
 
   boot();

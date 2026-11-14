@@ -97,6 +97,17 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 
 > Files go straight between this browser and Dropbox. The connection is kept on this device only and is not synced.
 
+## Documents
+`Documents` in the folder list is an archive of your papers: receipts, bills, contracts, warranties, certificates. Any file can be a document; it stays where it is in Files.
+- Select one or more files, open the menu (right-click or `⋯`) and choose `Add to Documents`. Or open `Documents` and press `+` to add new files from your device: they go to the folder `Documents` › (this year).
+- Tap a document to fill in its title, type, tags, who it is from, the document date, an amount, when it expires and how long to keep it. `Save` keeps the changes; `Open` shows the file and `Show in folder` takes you to it.
+- Choosing a type suggests a `Keep until` date, for example five years for invoices and tax papers or until it expires for a warranty. It is only a suggestion, not legal advice: change it as you need, or tick `Keep for ever`.
+- The chips at the top show `All`, `Expires soon` (within 30 days), `Can be thrown away` (past its keep-until date) and `No type`; the lists next to them filter by type, tag, sender and year. The search field finds words in titles, notes, types, tags and senders.
+- `⋯` › `Types, tags and senders` renames or deletes them and adds your own types with their own suggestion. A type can be private: its documents are never shown to the Assistant or to Claude. Medical and ID documents are private from the start.
+- `Remove from Documents` forgets the details only; the file stays. Moving or renaming a file in Files keeps its document. If another app or device moved it, `⋯` › `Find moved files` finds it again by its content.
+- `⋯` › `Export documents (.zip)` saves the documents shown, with their files, a `documents.json` and a `documents.csv` for a spreadsheet. `Import an archive (.zip)` brings such an archive back, on any device: the files go to `Documents` › `Imported` (date).
+> Nothing in Documents deletes a file. The details sync encrypted with orOS sync, the files through the disk as always.
+
 ## orOS Drive
 - `orOS Drive` in the folder list shows the folders you mirror from your computers and phones with the orOS Drive app.
 - They stay in the cloud until you open them, so this device does not fill up. A cloud mark next to a name means the file is not on this device yet.
@@ -126,7 +137,7 @@ The disk lives in this browser. When [orOS sync](help:t/sync) is connected and u
 
 - The pill in the status bar shows `Disk synced`, `Changes pending sync` or `Disk sync unavailable`.
 - If the same file changed on two devices, both versions are kept. The other copy gets "(conflict" plus the date and time in its name.
-- Favourites and the Trash are synced. Your sort order, list or grid view, the `Contents` switch, last folder, `Recent` and the storage figure stay on this device.
+- Favourites, Documents and the Trash are synced. Your sort order, list or grid view, the `Contents` switch, last folder, `Recent` and the storage figure stay on this device.
 - orOS [backups](help:t/backup) include the whole disk, Trash included. For a single file, use `Download`.
 
 ## Keyboard shortcuts

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-ZnzhlUMpRNF8TslriepFKU5t+ZOgg7XxrC96srawdxw='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=base" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Base · orOS</title>
+  <link rel="stylesheet" href="../fonts.css?v=6.61.00">
+  <link rel="stylesheet" href="app.css?v=6.61.00">
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="back-btn" class="icon-btn" hidden></button>
+    <h1 id="title" data-i18n="app">Base</h1>
+    <span class="spacer"></span>
+    <button type="button" id="import-btn" class="chip" data-i18n="btn.importCsv">Import CSV</button>
+    <button type="button" id="new-btn" class="chip pri" data-i18n="btn.newBase">New base</button>
+    <button type="button" id="base-menu-btn" class="icon-btn" hidden></button>
+  </header>
+
+  <!-- All bases -->
+  <main id="home">
+    <div class="home-wrap">
+      <ul id="bases" class="base-grid"></ul>
+      <div id="home-empty" class="empty" hidden>
+        <p class="big" data-i18n="empty.title">No bases yet</p>
+        <p class="hint" data-i18n="empty.text">A base keeps records with structure: a catalogue, a collection, a project. Start from a template, from scratch or from a CSV file.</p>
+      </div>
+      <p id="space" class="hint"></p>
+    </div>
+  </main>
+
+  <!-- One base -->
+  <main id="basev" hidden>
+    <nav id="tables" class="tables" aria-label="Tables"></nav>
+    <div id="vbar" class="vbar">
+      <label for="view-sel" class="sr-only" data-i18n="view">View</label>
+      <select id="view-sel"></select>
+      <div class="vtools">
+        <button type="button" id="filter-btn" class="chip small"></button>
+        <button type="button" id="sort-btn" class="chip small"></button>
+        <button type="button" id="group-btn" class="chip small"></button>
+        <button type="button" id="fields-btn" class="chip small" data-i18n="btn.fields">Fields</button>
+      </div>
+      <div class="vsearch">
+        <label for="q" class="sr-only" data-i18n="search">Search in this view</label>
+        <input id="q" type="search" data-i18n-ph="search" placeholder="Search in this view">
+        <span id="count" class="dim"></span>
+      </div>
+      <span class="spacer"></span>
+      <button type="button" id="table-menu-btn" class="icon-btn"></button>
+      <button type="button" id="add-rec-btn" class="chip pri small" data-i18n="btn.addRec">New record</button>
+    </div>
+    <div id="content" class="content" tabindex="-1"></div>
+  </main>
+
+  <div id="toast" role="status"><span id="toast-text"></span><button type="button" id="toast-btn" hidden></button></div>
+
+  <script src="../i18n.js?v=6.61.00" data-app="base"></script>
+  <script src="core.js?v=6.61.00"></script>
+  <script src="app.js?v=6.61.00"></script>
+
+</body>
+</html>

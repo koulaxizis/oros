@@ -44,7 +44,7 @@ Pad ist ein Editor für reinen Text und Code, im Geist von Notepad++. Es öffnet
 ## Werkzeuge
 - `Werkzeuge…` unter `Mehr` wirkt auf die markierten Zeilen, oder auf die ganze Datei, wenn nichts markiert ist: `JSON formatieren` (ein Eintrag pro Zeile, eingerückt wie die Datei), `JSON kompakt` (alles in einer Zeile), `Zeilen sortieren A → Z` und `Z → A` (Zahlen in natürlicher Reihenfolge, also 2 vor 10), `Doppelte Zeilen entfernen` (die erste bleibt) und `Leerzeichen am Zeilenende entfernen`. [[Ctrl+Z]] nimmt jedes davon zurück.
 - `JSON formatieren` ändert nur Leerzeichen und Zeilenumbrüche: Schlüssel behalten ihre Reihenfolge, Zahlen und Texte bleiben genau so, wie sie geschrieben sind. Ist das JSON nicht gültig, sagt Pad, in welcher Zeile und Spalte, und ändert nichts.
-- Die Werkzeugliste hat ein Suchfeld und Gruppen; [[Alt+T]] öffnet sie über die Tastatur. Werkzeuge, die zur Auswahl passen (eine Farbe, ein Zeitstempel, eine Zahl), stehen oben.
+- Die Werkzeugliste hat ein Suchfeld und Gruppen; [[Alt+T]] öffnet sie über die Tastatur. Werkzeuge, die zur Auswahl passen (eine Farbe, ein Zeitstempel, eine Zahl, ein JWT), stehen oben.
 
 ## Entwicklerwerkzeuge
 - `JSON prüfen` und `YAML prüfen` sagen, ob der Text gültig ist. Wenn nicht, setzen sie den Cursor an die Stelle des Fehlers und nennen ihn. Nichts wird geändert.
@@ -55,6 +55,8 @@ Pad ist ein Editor für reinen Text und Code, im Geist von Notepad++. Es öffnet
 - `UUID v4 einfügen` schreibt eine zufällige UUID an den Cursor, `UUID v7 einfügen` eine, die mit der Zeit beginnt und sich so in der Reihenfolge ihrer Erstellung sortiert. Mit mehreren Cursorn bekommt jeder seine eigene.
 - `Zeitstempel…` wandelt eine markierte Unix-Zeit (Sekunden, Millisekunden, Mikro- oder Nanosekunden, an der Zahl der Ziffern erkannt) oder ein Datum wie 2026-11-13 in Ortszeit, ISO 8601 und Unix-Zeit um und zeigt die Zeit jetzt, zum Einfügen bereit.
 - `Zahlensysteme…` zeigt eine markierte ganze Zahl (255, `0xFF`, `0b1010`, `0o17` oder `$xFF` in JSFX) dezimal, hexadezimal, binär und oktal. `Farbe…` zeigt eine markierte CSS-Farbe als Hex, `rgb()` und `hsl()`, mit Muster.
+- `JWT dekodieren` zeigt Header und Payload eines markierten JSON Web Tokens als formatiertes JSON, mit Ausstellungs-, Gültig-ab- und Ablaufzeit und ob es abgelaufen ist. Es dekodiert nur: Die Signatur wird nicht geprüft, ein lesbares Token beweist also nicht, wer es erstellt hat. Verschlüsselte Tokens (JWE) lassen sich nicht lesen.
+- `Regex-Tester` probiert einen regulären Ausdruck von JavaScript beim Tippen an der ganzen Datei aus, mit den Flags `i`, `m`, `s` und `u`. Er listet die Treffer mit Zeile, Spalte und Gruppen (nummeriert und benannt); klicke einen an, um ihn im Text zu markieren, oder `Alle Treffer markieren` für einen Cursor auf jedem. Fülle `Ersetzen durch` aus, um das Ergebnis zu sehen, bevor du etwas änderst; `In Suchen öffnen` bringt das Muster in Suchen und Ersetzen. Ein Muster, das länger als eine Sekunde läuft, wird abgebrochen, damit ein langsames Pad nicht einfriert.
 - Die Ergebnisse öffnen sich in einem Bereich neben dem Text (auf dem Handy an seiner Stelle). `Kopieren` kopiert einen Wert, `Einfügen` setzt ihn an die Stelle der Auswahl. [[Esc]] oder `Schließen` schließt den Bereich.
 - `In Textwerkzeugen öffnen` schickt die Auswahl (oder die Datei) an die [Textwerkzeuge](app:texttools) für Base64, URL, HTML-Entitäten und ihre anderen Kodierer.
 - Alles läuft auf diesem Gerät, auch offline. Nichts, was du prüfst, umwandelst oder hashst, wird irgendwohin geschickt oder gespeichert.

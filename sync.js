@@ -1543,8 +1543,25 @@
   // first, then the provider. Callers may pass bytes or a Blob.
   // ---------- TRANSFER-1 wave 4: orOS Transfer through Dropbox ----------
   // Names are "<id>/<part>": id 8-40 of [a-z0-9], part 1-40 of
-  // [a-z0-9.-]. A temporary link (files/get_temporary_link) lasts 4 h.
+  // [a-z0-9.-]. A temporary link (files/get_temporary_link) lasts 4 h;
+  // a shared link (wave 5, sharing.write, for 12-96 h) lasts until the
+  // files are removed. A folder's first 8 characters are a base-36 time
+  // T: the folder is removed once T + 4 h 15 min has passed (T is
+  // "expiry - 4 h", so the 4-hour rule of older builds keeps a longer
+  // hold too). dropSweep below runs that on every open orOS, hourly.
   var DROP_ROOT = "/transfer";
+  var DROP_SWEEP_MS = 4 * 3600000 + 15 * 60000;
+  var DROP_SWEEP_KEY = "oros-transfer-sweep-at";
+  // https://www.dropbox.com/scl/fi/<id>/<name>?rlkey=…&dl=0 → the same
+  // file on dl.dropboxusercontent.com, which a browser may fetch.
+  function dropDirect(u) {
+    var m = /^https:\/\/(?:www\.)?dropbox\.com\/((?:scl\/fi|s)\/[A-Za-z0-9_\/.%-]+)(\?[^#\s]*)?$/.exec(String(u || ""));
+    if (!m) return "";
+    var q = new URLSearchParams(m[2] || ""), keep = new URLSearchParams();
+    if (q.get("rlkey")) keep.set("rlkey", q.get("rlkey"));
+    var qs = keep.toString();
+    return "https://dl.dropboxusercontent.com/" + m[1] + (qs ? "?" + qs : "");
+  }
   function dropPath(name) {
     name = String(name || "");
     if (!/^[a-z0-9]{8,40}(\/[a-z0-9.-]{1,40})?$/.test(name)) throw new Error("bad-name");
@@ -1577,6 +1594,33 @@
         return u;
       });
     },
+    // A shared link for 12-96 h (needs sharing.write). Errors: "dropbox-scope"
+    // when this sign-in predates the permission (sign in again).
+    share: function (name) {
+      var path;
+      return dropReady().then(function () { path = dropPath(name); return rpc("sharing/create_shared_link_with_settings", { path: path }); }).then(function (res) {
+        if (res.ok) return res.json();
+        return res.text().then(function (t) {
+          var j = null;
+          try { j = JSON.parse(t); } catch (e) { j = null; }
+          var sum = String(j && j.error_summary || "");
+          if (res.status === 401 && /missing_scope/.test(sum)) throw new Error("dropbox-scope");
+          if (res.status === 409 && /shared_link_already_exists/.test(sum)) {
+            var md = j.error && j.error.shared_link_already_exists && j.error.shared_link_already_exists.metadata;
+            if (md && md.url) return md;
+            return rpc("sharing/list_shared_links", { path: path, direct_only: true }).then(function (r2) {
+              if (!r2.ok) throw new Error("share failed: " + r2.status);
+              return r2.json().then(function (l) { return (l.links || [])[0] || {}; });
+            });
+          }
+          throw new Error("share failed: " + res.status);
+        });
+      }).then(function (md) {
+        var u = dropDirect(md && md.url);
+        if (!u) throw new Error("share failed: shape");
+        return u;
+      });
+    },
     remove: function (id) {
       return dropReady().then(function () { return rpc("files/delete_v2", { path: dropPath(id) }); }).then(function (res) {
         if (res.ok || res.status === 409) return true;
@@ -1594,6 +1638,15 @@
           .map(function (e) { return { id: e.name }; });
       });
     },
+    // Removes the folders whose time has passed (see DROP_SWEEP_MS).
+    sweep: function (now) {
+      now = now || Date.now();
+      return cloudDrop.list().then(function (list) {
+        var old = list.filter(function (x) { var t = parseInt(x.id.slice(0, 8), 36); return !(t > 0) || now - t > DROP_SWEEP_MS; });
+        return old.reduce(function (q, x) { return q.then(function () { return cloudDrop.remove(x.id); }); }, Promise.resolve()).then(function () { return old.length; });
+      });
+    },
+    direct: dropDirect,
     // { used, allocated } bytes, or null when Dropbox does not say.
     space: function () {
       return dropReady().then(ensureFreshToken).then(function (token) {
@@ -3479,8 +3532,22 @@
                               mins * 60 * 1000);
   }
 
+  // TRANSFER-1 wave 5: whichever orOS is open removes Transfer folders
+  // whose time has passed, at most once an hour (one list call).
+  function dropSweep() {
+    try {
+      if (!cloudDrop.available() || !navigator.onLine) return;
+      var last = +localStorage.getItem(DROP_SWEEP_KEY) || 0;
+      if (Date.now() - last < 3600000) return;
+      localStorage.setItem(DROP_SWEEP_KEY, String(Date.now()));
+      cloudDrop.sweep().catch(function () {});
+    } catch (e) {}
+  }
+
   function startAutoEngine() {
     scheduleAutoInterval();
+    setTimeout(dropSweep, 60000);
+    setInterval(dropSweep, 15 * 60000);
 
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") {

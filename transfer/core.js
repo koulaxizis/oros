@@ -24,13 +24,14 @@
       out of the target folder, sizes checked.
 
    1.1.0 (W2): PROTO 2, splitManifest(files, max), b64 / unb64.
+   1.2.0 (D1): cleanMeta, the sender's title and message (TRANSFER-META).
 
    window.OrosTransferCore (browser) / module.exports (Node).
    ============================================================ */
 (function (root) {
   "use strict";
 
-  var VERSION = "1.1.0";
+  var VERSION = "1.2.0";
   var PROTO = 2;                      // 2: relay path, resume (W2)
   var NS = "oros-transfer/v1";
   var ALPHA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -389,6 +390,25 @@
     }
     return { files: out, total: total, biggest: out.reduce(function (a, f) { return Math.max(a, f.s); }, 0) };
   }
+  // The sender's title and message (D1, TRANSFER-META): plain text only,
+  // control and bidi characters dropped, title one line ≤ 80, message
+  // ≤ 500 with at most 12 lines. Anything else → null. The receiver
+  // shows them through textContent and never as a link.
+  var META_T = 80, META_M = 500;
+  function cleanText(v, max, lines) {
+    if (typeof v !== "string") return "";
+    var s = v.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g, "");
+    if (!lines) s = s.replace(/\n+/g, " ");
+    else s = s.split("\n").slice(0, lines).join("\n").replace(/\n{3,}/g, "\n\n");
+    s = s.replace(/[ \t]+/g, " ").trim();
+    if (s.length > max) s = s.slice(0, max).trim();
+    return s;
+  }
+  function cleanMeta(m) {
+    if (!m || typeof m !== "object") return null;
+    var t = cleanText(m.t, META_T, 0), msg = cleanText(m.m, META_M, 12);
+    return t || msg ? { t: t, m: msg } : null;
+  }
   // A short label for a transfer: "photos" or "a.txt + 3 more" (the app formats it).
   function topNames(files) {
     var tops = [];
@@ -428,7 +448,7 @@
     n = +n || 0;
     while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
     var s = i === 0 ? String(Math.round(n)) : n.toFixed(n < 10 ? 1 : 0);
-    if (lang === "el") s = s.replace(".", ",");
+    if (lang === "el" || lang === "de") s = s.replace(".", ",");
     return s + " " + u[i];
   }
   function browserLabel(ua) {
@@ -512,6 +532,7 @@
   var api = {
     VERSION: VERSION, PROTO: PROTO, NS: NS, CODE_RE: CODE_RE, PIECE: PIECE, HEAD: HEAD, MAX_CTRL: MAX_CTRL,
     MAX_FILES: MAX_FILES, DISK_MAX: DISK_MAX, MEM_MAX: MEM_MAX,
+    cleanMeta: cleanMeta, META_T: META_T, META_M: META_M,
     hex: hex, b64: b64, unb64: unb64, newCode: newCode, normCode: normCode, fmtCode: fmtCode, linkFor: linkFor, isLocalOrigin: isLocalOrigin,
     derive: derive, seal: seal, unseal: unseal, sealPiece: sealPiece, openPiece: openPiece, pieces: pieces,
     Sha256: Sha256, crc32: crc32, ZipWriter: ZipWriter,

@@ -1,7 +1,8 @@
 // ============================================================
-// orOS Stock — core.js (shared logic, v1.8.0; 1.7 adds the point of
+// orOS Stock — core.js (shared logic, v1.9.0; 1.7 adds the point of
 // sale lists sales / pls / zs, see "Point of sale" below; 1.8 the
-// consignment list cons, see "Consignment" below)
+// consignment list cons, see "Consignment" below; 1.9 discounts,
+// split payments and free items on sales)
 // Business inventory: products with SKU / barcode, suppliers and a
 // ledger of stock movements. One file holds the rules, so the app,
 // the shell's low-stock check and the search provider can never
@@ -420,6 +421,17 @@
   //          no, n, g, net, vat, cash, card, other } — the totals as
   //          they were when the day was closed.
   var PAYS = ["cash", "card", "other"];
+  //   1.9 (fair till, wave F1): a line may carry p0 (list price
+  //          before a discount; p is always what was charged), a sale
+  //          dc (the discount's reason ≤ 40) and pays { cash, card,
+  //          other } (a split payment, two or more parts; pay stays
+  //          the largest part). A 1.8 device drops them on its own
+  //          merge: its totals and stock stay right (p is the price
+  //          charged); a tie on m prefers the copy that has them.
+  //          Lines with i = POS_OTHER ("xother") are free items typed
+  //          at the till: they are on the receipt and in the totals
+  //          but never in the movement (no stock).
+  var POS_OTHER = "xother", DC_LEN = 40;
   var SALE_NO_LEN = 24, MAX_SALES = 50000, MAX_PLS = 50, MAX_ZS = 4000;
   var Z_RE = /^z\d{8}$/;
   function normSale(x) {
@@ -431,7 +443,11 @@
       var q = clampInt(l.q, 1, Q_MAX), p = clampInt(l.p, 0, C_MAX);
       if (q === null || p === null) continue;
       var vat = clampInt(l.vat, 0, 100);
-      lines.push({ i: l.i, q: q, p: p, vat: vat === null ? 0 : vat, n: cleanText(l.n, NAME_LEN, false) });
+      var ln = { i: l.i, q: q, p: p, vat: vat === null ? 0 : vat, n: cleanText(l.n, NAME_LEN, false) };
+      // 1.9: p0 = the list price before a discount (only when higher)
+      var p0 = clampInt(l.p0, 0, C_MAX);
+      if (p0 !== null && p0 > p) ln.p0 = p0;
+      lines.push(ln);
     }
     if (!lines.length) return null;
     var out = {
@@ -444,8 +460,23 @@
     if (ref(x.mv)) out.mv = x.mv;
     var w = whRef(x.w);
     if (w) out.w = w;
+    // 1.9: dc = the discount's reason; pays = a split payment
+    var dc = cleanText(x.dc, DC_LEN, false);
+    if (dc) out.dc = dc;
+    if (x.pays && typeof x.pays === "object" && !Array.isArray(x.pays)) {
+      var pays = {}, parts = 0;
+      PAYS.forEach(function (k) {
+        var c = clampInt(x.pays[k], 0, C_MAX);
+        if (c) { pays[k] = c; parts++; }
+      });
+      if (parts > 1) out.pays = pays;
+    }
     if (x.v === 1) out.v = 1;
     return out;
+  }
+  // the copy that knows its discount / split (a 1.8 device strips them)
+  function saleRicher(x) {
+    return !!(x.dc || x.pays || x.lines.some(function (l) { return l.p0; }));
   }
   function normPl(x) {
     if (!base(x)) return null;
@@ -479,6 +510,8 @@
         var cur = best[x.id];
         if (!cur) { best[x.id] = x; return; }
         if ((x.v === 1) !== (cur.v === 1)) { if (x.v === 1) best[x.id] = x; return; }
+        var xr = saleRicher(x), cr = saleRicher(cur);
+        if (x.m === cur.m && xr !== cr) { if (xr) best[x.id] = x; return; }
         lww(best, x);
       });
     });
@@ -1644,7 +1677,7 @@
     LOT_LEN: LOT_LEN, lotsOf: lotsOf, allLots: allLots, expiring: expiring, lotNames: lotNames,
     OPEN_ID: OPEN_ID, normClose: normClose, openMove: openMove, closeInfo: closeInfo, closePeriod: closePeriod,
     ARCHIVE_DIR: ARCHIVE_DIR, ARCH_RE: ARCH_RE, archivePath: archivePath,
-    PAYS: PAYS, normSale: normSale, normPl: normPl, normZ: normZ, mergeSales: mergeSales,
+    PAYS: PAYS, POS_OTHER: POS_OTHER, DC_LEN: DC_LEN, normSale: normSale, normPl: normPl, normZ: normZ, mergeSales: mergeSales,
     CONS_SRC: CONS_SRC, normCons: normCons, consOf: consOf, consList: consList, lastSettle: lastSettle,
     consDue: consDue, settleMove: settleMove, consInvoice: consInvoice, addMonths: addMonths
   };

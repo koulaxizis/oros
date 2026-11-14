@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-uuiL4K20+tY9pO/3YraeukjaXR3Kd0sERmR4Mf5VGwg='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=forms" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Forms · orOS</title>
+  <link rel="stylesheet" href="../fonts.css?v=6.61.00">
+  <link rel="stylesheet" href="app.css?v=6.61.00">
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="back-btn" class="icon-btn" hidden></button>
+    <h1 id="title" data-i18n="app">Forms</h1>
+    <nav id="tabs" role="tablist" hidden>
+      <button type="button" role="tab" id="tab-edit" class="tab on" aria-selected="true" data-i18n="tab.edit">Questions</button>
+      <button type="button" role="tab" id="tab-prev" class="tab" aria-selected="false" data-i18n="tab.prev">Preview</button>
+      <button type="button" role="tab" id="tab-set" class="tab" aria-selected="false" data-i18n="tab.set">Settings</button>
+    </nav>
+    <span class="spacer"></span>
+    <button type="button" id="new-btn" class="chip pri" data-i18n="btn.new">New form</button>
+  </header>
+
+  <main id="main">
+    <!-- All forms -->
+    <section id="list-view">
+      <div class="bar" id="search-bar">
+        <label for="search" class="sr-only" data-i18n="search">Search forms</label>
+        <input id="search" type="search" data-i18n-ph="search" placeholder="Search forms">
+      </div>
+      <ul id="forms-list" class="rows"></ul>
+      <div id="list-empty" class="empty" hidden>
+        <p class="big" data-i18n="empty.title">No forms yet</p>
+        <p class="hint" data-i18n="empty.text">Make a survey, a sign-up sheet or an order form. Start from scratch or from a template.</p>
+      </div>
+      <p id="list-none" class="hint" hidden data-i18n="search.none">No form matches.</p>
+    </section>
+
+    <!-- One form -->
+    <section id="edit-view" hidden>
+      <div id="pane-edit" role="tabpanel" aria-labelledby="tab-edit">
+        <div class="card head-card">
+          <label class="fld">
+            <span data-i18n="ed.title">Form title</span>
+            <input id="f-title" type="text" maxlength="200">
+          </label>
+          <label class="fld">
+            <span data-i18n="ed.desc">Description (optional)</span>
+            <textarea id="f-desc" rows="2" maxlength="2000"></textarea>
+          </label>
+        </div>
+        <ol id="items" class="items"></ol>
+        <p id="items-empty" class="hint" hidden data-i18n="ed.empty">No questions yet. Add the first one.</p>
+        <div class="bar end">
+          <button type="button" id="add-btn" class="chip pri" data-i18n="ed.add">Add question</button>
+        </div>
+      </div>
+      <div id="pane-prev" role="tabpanel" aria-labelledby="tab-prev" hidden>
+        <p class="hint" data-i18n="prev.hint">This is how people see the form. Answers you give here are not kept.</p>
+        <div id="preview"></div>
+      </div>
+      <div id="pane-set" role="tabpanel" aria-labelledby="tab-set" hidden>
+        <div class="card">
+          <label class="fld">
+            <span data-i18n="set.thanks">Message after submitting</span>
+            <textarea id="s-thanks" rows="3" maxlength="1000"></textarea>
+          </label>
+          <p class="hint" data-i18n="set.thanksHint">Leave it empty for “Thank you. Your answers have been recorded.”</p>
+          <label class="fld">
+            <span data-i18n="set.note">Note at the top (for example how you use the answers)</span>
+            <textarea id="s-note" rows="3" maxlength="1000"></textarea>
+          </label>
+          <label class="opt"><input type="checkbox" id="s-prog"> <span data-i18n="set.prog">Show a progress bar on forms with pages</span></label>
+        </div>
+        <div class="card">
+          <h2 class="sub" data-i18n="set.share">Sharing</h2>
+          <p class="hint" data-i18n="set.shareSoon">Sharing a form with a link, a QR code or on your website comes in the next update of Forms. For now you can build, preview and duplicate forms.</p>
+        </div>
+        <div class="bar end">
+          <button type="button" id="dup-btn" class="chip" data-i18n="btn.dup">Duplicate form</button>
+          <button type="button" id="del-btn" class="chip danger" data-i18n="btn.del">Delete form</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- New form: blank or a template -->
+  <dialog id="new-dlg" aria-labelledby="new-h">
+    <h2 id="new-h" data-i18n="new.title">New form</h2>
+    <div id="tpl-grid" class="tpl-grid"></div>
+    <div class="bar end">
+      <button type="button" class="chip" data-close data-i18n="btn.cancel">Cancel</button>
+    </div>
+  </dialog>
+
+  <!-- Add a question: pick the type -->
+  <dialog id="type-dlg" aria-labelledby="type-h">
+    <h2 id="type-h" data-i18n="type.pick">Add</h2>
+    <div id="type-grid" class="type-grid"></div>
+    <div class="bar end">
+      <button type="button" class="chip" data-close data-i18n="btn.cancel">Cancel</button>
+    </div>
+  </dialog>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"><span id="toast-text"></span><button type="button" id="toast-btn" hidden></button></div>
+
+  <script src="../i18n.js?v=6.61.00" data-app="forms"></script>
+  <script src="engine.js?v=6.61.00"></script>
+  <script src="core.js?v=6.61.00"></script>
+  <script src="render.js?v=6.61.00"></script>
+  <script src="app.js?v=6.61.00"></script>
+
+</body>
+</html>

@@ -21,15 +21,6 @@
       "today": ["stage-core.js", "today.js"]
     },
     {
-      "id": "sky",
-      "name": "Moon & Sky",
-      "category": "Accessories",
-      "icon": "sky",
-      "url": "sky/",
-      "type": "internal",
-      "today": ["core.js", "today.js"]
-    },
-    {
       "id": "files",
       "name": "Files",
       "category": "Accessories",
@@ -224,6 +215,23 @@
       "url": "storage/",
       "search": "search.js",
       "type": "internal"
+    },
+    {
+      "id": "forms",
+      "name": "Forms",
+      "category": "Office",
+      "icon": "forms",
+      "url": "forms/",
+      "type": "internal"
+    },
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "Office",
+      "icon": "base",
+      "url": "base/",
+      "type": "internal",
+      "search": "search.js"
     },
     {
       "id": "spreadsheet",
@@ -1284,6 +1292,12 @@
       "name": "Device Info",
       "to": "settings",
       "target": { "section": "device" }
+    },
+    {
+      "id": "sky",
+      "name": "Moon & Sky",
+      "to": "weather",
+      "target": { "sky": true }
     }
   ]
 }

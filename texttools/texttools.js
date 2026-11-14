@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Text Tools — App logic (v1.3.0)
+// orOS Text Tools — App logic (v1.4.0)
 // Paste text, pick a tool, get the result live; chain several steps
 // and keep a chain as a recipe. The tools themselves are in core.js
 // (TextToolsCore); chains run in worker.js when the browser allows.
@@ -24,6 +24,10 @@
 //     (OrosTranslate, Bible "TRANSLATE"). Its languages are device-local
 //     prefs.tr = { from: "auto"|code, to: code }; the models live in
 //     IndexedDB "oros-translate", downloaded only on the person's tap.
+//   - 1.4.0 (Translate, T2): 21 languages with English (others through
+//     English), names from Intl.DisplayNames; "Where no model fits, use
+//     the Assistant's AI" (OrosTranslate.ai, off by default, this device
+//     only) translates other directions only on the button, never live.
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. State: storage, session, prefs
@@ -92,6 +96,15 @@
       "err.tr.pair": "There is no model for these languages yet",
       "err.tr.cancelled": "Stopped",
       "err.tr.engine": "The translation stopped with an error",
+      "tr.ai": "Where no model fits, use the Assistant's AI",
+      "tr.hintAi": "Translates on this device with Mozilla's Firefox Translations models. Only languages without a model go to the Assistant's AI.",
+      "tr.ai.hint": "Off by default, this device only. The text then goes to the AI service you set up in the Assistant.",
+      "tr.viaAi": "No model for these languages: the Assistant's AI translates them ({name}), so the text leaves the device.",
+      "tr.viaAiNone": "No model for these languages, and no AI is set up in the Assistant.",
+      "tr.goAi": "Translate with the AI", "tr.doneAi": "Translated by {name} ({a} → {b})",
+      "err.tr.ai-off": "The Assistant's AI is off for translation",
+      "err.tr.ai-none": "Set up an AI in the Assistant first",
+      "err.tr.ai": "The Assistant's AI did not answer. Try again later.",
       "tool.upper": "UPPERCASE", "tool.lower": "lowercase", "tool.sentence": "Sentence case", "tool.title": "Title Case",
       "tool.capital": "Capitalize Each Word", "tool.toggle": "tOGGLE cASE", "tool.alt": "aLtErNaTiNg",
       "tool.noaccents": "Remove accents", "tool.latin": "Greek → Latin", "tool.mixed": "Fix mixed letters",
@@ -286,6 +299,15 @@
       "err.tr.pair": "Δεν υπάρχει ακόμη μοντέλο για αυτές τις γλώσσες",
       "err.tr.cancelled": "Σταμάτησε",
       "err.tr.engine": "Η μετάφραση σταμάτησε με σφάλμα",
+      "tr.ai": "Όπου δεν υπάρχει μοντέλο, να μεταφράζει η AI του Βοηθού",
+      "tr.hintAi": "Μεταφράζει μέσα στη συσκευή με τα μοντέλα Firefox Translations της Mozilla. Μόνο οι γλώσσες χωρίς μοντέλο πηγαίνουν στην AI του Βοηθού.",
+      "tr.ai.hint": "Κλειστό από πριν, μόνο σε αυτή τη συσκευή. Τότε το κείμενο πηγαίνει στην υπηρεσία AI που έχεις ρυθμίσει στον Βοηθό.",
+      "tr.viaAi": "Δεν υπάρχει μοντέλο για αυτές τις γλώσσες: θα μεταφράσει η AI του Βοηθού ({name}), οπότε το κείμενο φεύγει από τη συσκευή.",
+      "tr.viaAiNone": "Δεν υπάρχει μοντέλο για αυτές τις γλώσσες, ούτε AI ρυθμισμένη στον Βοηθό.",
+      "tr.goAi": "Μετάφραση με την AI", "tr.doneAi": "Μεταφράστηκε από {name} ({a} → {b})",
+      "err.tr.ai-off": "Η AI του Βοηθού είναι κλειστή για μετάφραση",
+      "err.tr.ai-none": "Ρύθμισε πρώτα μια AI στον Βοηθό",
+      "err.tr.ai": "Η AI του Βοηθού δεν απάντησε. Ξαναδοκίμασε αργότερα.",
       "tool.upper": "ΚΕΦΑΛΑΙΑ", "tool.lower": "πεζά", "tool.sentence": "Κεφαλαίο στην αρχή", "tool.title": "Τίτλος",
       "tool.capital": "Κάθε Λέξη Με Κεφαλαίο", "tool.toggle": "αΝΤΙΣΤΡΟΦΗ", "tool.alt": "εΝαΛλΑξ",
       "tool.noaccents": "Χωρίς τόνους", "tool.latin": "Ελληνικά → λατινικά", "tool.mixed": "Διόρθωση μικτών γραμμάτων",
@@ -509,7 +531,7 @@
 
   // ---------- 2. State ----------
   var data = null;                 // recipes (synced)
-  var prefs = { layout: "stack", sel: false, tr: { from: "auto", to: LANG === "el" ? "el" : "en" } };
+  var prefs = { layout: "stack", sel: false, tr: { from: "auto", to: TR && LANG !== "en" && TR.tos().indexOf(LANG) >= 0 ? LANG : (LANG === "en" ? "en" : "el") } };
   var words = null;                // My words (synced slice "textcase")
   // Session: the text, the steps and which step is open.
   var S = { text: "", other: "", chain: [{ tool: "sort", opts: {} }], active: 0, group: "lines", loaded: null };
@@ -1111,16 +1133,21 @@
   // ---------- 4b. Translate (on the device) ----------
   // Not a step: the whole Text box goes to OrosTranslate. Nothing is
   // downloaded before the person presses the button that says how much.
-  var tr = { busy: false, stop: false, again: false, timer: null, armed: null, st: null };
+  var tr = { busy: false, stop: false, again: false, timer: null, armed: null, st: null, ai: null };
   function trOn() { return !!TR && S.group === TR_GROUP; }
-  function langName(l) { return hasKey("lang." + l) ? t("lang." + l) : l; }
+  function langName(l) { return TR && TR.name ? TR.name(l, LANG) : (hasKey("lang." + l) ? t("lang." + l) : l); }
+  // With the AI on, every language is on both sides; else only those a
+  // model starts from (From) or ends in (To).
+  function trLangs(from) {
+    var l = TR.ai.on() ? TR.languages() : (from ? TR.froms() : TR.tos());
+    return l.slice().sort(function (a, b) { return langName(a).localeCompare(langName(b), LANG); });
+  }
   function trFrom() { return prefs.tr.from === "auto" ? TR.detect(S.text) : prefs.tr.from; }
   // "Find the language" found the target language: the target turns to
   // another one (as the person would do by hand), and the list shows it.
   function trFix() {
     if (prefs.tr.from !== "auto" || !S.text.trim() || trFrom() !== prefs.tr.to) return;
-    var other = TR.languages().filter(function (l) { return l !== prefs.tr.to; })[0];
-    if (!other) return;
+    var other = prefs.tr.to !== "en" ? "en" : (LANG !== "en" && TR.tos().indexOf(LANG) >= 0 ? LANG : "el");
     prefs.tr.to = other;
     savePrefs();
     if ($("tr-to")) $("tr-to").value = other;
@@ -1159,7 +1186,7 @@
   function langSelect(id, withAuto) {
     var s = el("select");
     s.id = id;
-    (withAuto ? ["auto"] : []).concat(TR.languages()).forEach(function (l) {
+    (withAuto ? ["auto"] : []).concat(trLangs(withAuto)).forEach(function (l) {
       var o = el("option", "", l === "auto" ? t("tr.auto") : langName(l));
       o.value = l;
       s.appendChild(o);
@@ -1168,8 +1195,8 @@
     s.addEventListener("change", function () {
       if (withAuto) prefs.tr.from = s.value; else prefs.tr.to = s.value;
       if (prefs.tr.from === prefs.tr.to) {           // never the same language on both sides
-        var other = TR.languages().filter(function (l) { return l !== s.value; })[0];
-        if (withAuto) prefs.tr.to = other; else prefs.tr.from = other;
+        if (withAuto) prefs.tr.to = s.value === "en" ? (LANG !== "en" && TR.tos().indexOf(LANG) >= 0 ? LANG : "el") : "en";
+        else prefs.tr.from = "auto";
       }
       savePrefs();
       trRender();
@@ -1182,7 +1209,7 @@
     var host = $("tr-sec");
     host.innerHTML = "";
     host.appendChild(el("h2", "", t("grp.translate")));
-    host.appendChild(el("p", "hint", t("tr.hint")));
+    host.appendChild(el("p", "hint", t(TR.ai.on() ? "tr.hintAi" : "tr.hint")));
     var row = el("div", "tr-langs");
     [["tr-from", "tr.from", true], ["tr-to", "tr.to", false]].forEach(function (r, i) {
       var box = el("div", "opt");
@@ -1206,6 +1233,21 @@
     var list = el("div", "tr-list");
     list.id = "tr-list";
     host.appendChild(list);
+    var ai = el("label", "check tr-ai");
+    var cb = el("input");
+    cb.type = "checkbox";
+    cb.id = "tr-ai";
+    cb.checked = TR.ai.on();
+    cb.addEventListener("change", function () {
+      TR.ai.set(cb.checked);
+      tr.ai = null;
+      trRender();
+      trSchedule();
+    });
+    ai.appendChild(cb);
+    ai.appendChild(el("span", "", t("tr.ai")));
+    host.appendChild(ai);
+    host.appendChild(el("p", "hint", t("tr.ai.hint")));
     trRefresh();
   }
 
@@ -1215,16 +1257,25 @@
     if (!go || !info) return;
     var st = tr.st, from = TR ? trFrom() : "", to = prefs.tr.to, msg = "";
     if (prefs.tr.from === "auto" && S.text.trim()) msg = t("tr.detected", { lang: langName(from) }) + " ";
-    if (st && !st.legs) msg += t("tr.nopair");
+    var viaAi = !!st && !st.legs && TR.ai.on();
+    if (viaAi) msg += tr.ai ? t("tr.viaAi", { name: tr.ai.name }) : t("tr.viaAiNone");
+    else if (st && !st.legs) msg += t("tr.nopair");
     else if (st && !st.ok) msg += t("tr.need", { a: langName(from), b: langName(to), mb: st.mb });
     info.textContent = msg;
-    go.textContent = tr.busy ? t("tr.stop") : (st && !st.ok && st.legs ? t("tr.getGo", { mb: st.mb }) : t("tr.go"));
-    go.disabled = !tr.busy && !!st && !st.legs;
+    go.textContent = tr.busy ? t("tr.stop") : viaAi ? t("tr.goAi")
+      : (st && !st.ok && st.legs ? t("tr.getGo", { mb: st.mb }) : t("tr.go"));
+    go.disabled = !tr.busy && !!st && !st.legs && !(viaAi && tr.ai);
   }
   function trRefresh() {
     if (!TR) return;
     var from = trFrom(), to = prefs.tr.to;
-    TR.status(from, to).then(function (st) { tr.st = st; trButtons(); });
+    TR.status(from, to).then(function (st) {
+      tr.st = st;
+      trButtons();
+      if (!st.legs && TR.ai.on() && !tr.ai) {
+        TR.ai.ready().then(function (a) { tr.ai = a; trButtons(); });
+      }
+    });
     TR.installed().then(function (list) {
       var host = $("tr-list");
       if (!host) return;
@@ -1255,6 +1306,7 @@
       TR.status(from, to).then(function (st) {
         tr.st = st;
         trButtons();
+        if (!st.legs && TR.ai.on() && !tr.ai) TR.ai.ready().then(function (a) { tr.ai = a; trButtons(); });
         if (!trOn() || tr.busy) return;
         if (st.ok && S.text.length <= TR_LIVE_MAX) { trRun(); return; }
         $("out").value = "";                 // an older translation would mislead
@@ -1276,8 +1328,8 @@
     trButtons();
     var cancelled = function () { return tr.stop; };
     TR.status(from, to).then(function (st) {
-      if (!st.legs) { var e = new Error("pair"); e.code = "pair"; throw e; }
-      if (st.ok) return null;
+      if (!st.legs && !TR.ai.on()) { var e = new Error("pair"); e.code = "pair"; throw e; }
+      if (st.ok || !st.legs) return null;
       setNote(t("tr.downloading", { p: 0 }), false);
       return TR.install(from, to, {
         cancelled: cancelled,
@@ -1294,7 +1346,8 @@
       trButtons();
       if (!trOn() || tr.stop) return;
       $("out").value = r.text;
-      setNote(t("tr.done", { a: langName(from), b: langName(to) }), false);
+      setNote(r.engine === "ai" ? t("tr.doneAi", { name: r.via || "AI", a: langName(from), b: langName(to) })
+        : t("tr.done", { a: langName(from), b: langName(to) }), false);
     }, function (e) {
       tr.busy = false;
       trButtons();

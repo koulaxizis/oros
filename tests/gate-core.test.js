@@ -354,3 +354,13 @@ test("publish_titles: a music release with its tracks and editions (wave M1)", (
   assert.deepEqual(G.publishTitles(raw, { query: "dawn" }).data.titles.map((x) => x.id), ["t1"]);
   assert.deepEqual(G.publishTitles(raw, { query: "gone" }).data.titles.map((x) => x.id), []);
 });
+
+test("publish_titles: a track's credits, writers and masters (wave M2)", () => {
+  const raw = { ver: 1, tombs: {}, titles: [{ id: "t1", m: 1, t: "Night Songs", mt: { k: "single" }, fmts: [] }],
+    trk: [{ id: "k1", m: 1, ti: "t1", no: 1, t: "Intro", cr: [{ r: "prod", n: "Mira" }, { r: "mus", n: "Ari", ins: "cello" }, { r: "zz", n: "Q" }],
+            sw: [{ n: "Ann", pct: 60, soc: "AEPI", ipi: "00123456789", crm: "cust000001" }, { n: "Mira", pct: 40 }], sm: [{ n: "Own", pct: 100 }] }] };
+  const tr = G.publishTitles(raw, {}).data.titles[0].tracks[0];
+  assert.deepEqual(tr.credits, [{ role: "producer", name: "Mira" }, { role: "musician", name: "Ari", instrument: "cello" }, { role: "other", name: "Q" }]);
+  assert.deepEqual(tr.writers, [{ name: "Ann", share: 60, society: "AEPI", ipi: "00123456789" }, { name: "Mira", share: 40 }]);
+  assert.deepEqual(tr.masters, [{ name: "Own", share: 100 }]);
+});
