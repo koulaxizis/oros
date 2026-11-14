@@ -769,14 +769,18 @@
   //     cols:  { <cid>: { name, m } },
   //     mem:   { "<cid>:<family id>": { on: 0|1, name, fb, m } },
   //     notes: { <family id>: { t, m } },          t "" = note removed
+  //     docs:  { "<app>:<doc id>": { body, head, m } },
   //     tombs: { <cid>: <ts> } }
+  // docs: the fonts of a document of an app whose documents have no
+  // ext bag (Writer, FM-4): body / head = { id, name, fb } or null.
   // Every record is LWW by m (equal m → the larger canonical JSON); a
   // family's place in a collection is its own record, so two devices
   // that add fonts to one collection at once keep both. Tombstones
   // max-union; a tomb ≥ m drops the collection and its members.
   // A document keeps only its collection's id in setup.ext.col.
   var COLS_KEY = "oros-fonts-data";
-  var CLIM = { cols: 100, mem: 5000, notes: 1000, tombs: 300, name: 60, note: 500 };
+  var CLIM = { cols: 100, mem: 5000, notes: 1000, docs: 2000, tombs: 300, name: 60, note: 500 };
+  var DOCKEY_RE = /^[a-z]{2,16}:[A-Za-z0-9_-]{1,64}$/;
   var CID_RE = /^c[a-z0-9]{4,24}$/;
   function okM(m) { return typeof m === "number" && isFinite(m) && m > 0; }
   function cleanLine(s, max) {
@@ -797,7 +801,7 @@
   }
   function famOk(id) { return isFam(id) && (id.indexOf("uf_") !== 0 || /^uf_[0-9a-f]{16}$/.test(id)); }
   function colsNorm(data) {
-    var out = { ver: 1, cols: {}, mem: {}, notes: {}, tombs: {} };
+    var out = { ver: 1, cols: {}, mem: {}, notes: {}, docs: {}, tombs: {} };
     if (!data || typeof data !== "object") return out;
     var src = data.tombs && typeof data.tombs === "object" ? data.tombs : {}, tombs = {};
     Object.keys(src).forEach(function (id) { if (CID_RE.test(id) && okM(src[id])) tombs[id] = src[id]; });
@@ -825,6 +829,17 @@
       notes[fam] = { t: cleanNote(x.t), m: x.m };
     });
     newest(notes, CLIM.notes, function (v) { return v.m; }).forEach(function (k) { out.notes[k] = notes[k]; });
+    var dd = data.docs && typeof data.docs === "object" ? data.docs : {}, docs = {};
+    function famRec(f) {
+      if (!f || typeof f !== "object" || !famOk(f.id)) return null;
+      return { id: f.id, name: cleanLine(f.name, CLIM.name) || f.id, fb: BUILTIN.indexOf(f.fb) >= 0 ? f.fb : "serif" };
+    }
+    Object.keys(dd).forEach(function (k) {
+      var x = dd[k];
+      if (!DOCKEY_RE.test(k) || !x || typeof x !== "object" || !okM(x.m)) return;
+      docs[k] = { body: famRec(x.body), head: famRec(x.head), m: x.m };
+    });
+    newest(docs, CLIM.docs, function (v) { return v.m; }).forEach(function (k) { out.docs[k] = docs[k]; });
     return out;
   }
   function newer(a, b) {
@@ -834,10 +849,10 @@
     return canon(a) >= canon(b) ? a : b;
   }
   function colsMerge(A, B) {
-    var a = colsNorm(A), b = colsNorm(B), out = { cols: {}, mem: {}, notes: {}, tombs: {} };
+    var a = colsNorm(A), b = colsNorm(B), out = { cols: {}, mem: {}, notes: {}, docs: {}, tombs: {} };
     [a, b].forEach(function (x) {
       Object.keys(x.tombs).forEach(function (id) { out.tombs[id] = Math.max(out.tombs[id] || 0, x.tombs[id]); });
-      ["cols", "mem", "notes"].forEach(function (part) {
+      ["cols", "mem", "notes", "docs"].forEach(function (part) {
         Object.keys(x[part]).forEach(function (k) { out[part][k] = newer(out[part][k], x[part][k]); });
       });
     });
@@ -846,7 +861,7 @@
   function stamp(d, now) {
     // a stamp after every record already there, so an edit always wins here
     var m = Math.max(now || Date.now(), 1);
-    ["cols", "mem", "notes"].forEach(function (p) { Object.keys(d[p]).forEach(function (k) { if (d[p][k].m >= m) m = d[p][k].m + 1; }); });
+    ["cols", "mem", "notes", "docs"].forEach(function (p) { Object.keys(d[p]).forEach(function (k) { if (d[p][k].m >= m) m = d[p][k].m + 1; }); });
     Object.keys(d.tombs).forEach(function (k) { if (d.tombs[k] >= m) m = d.tombs[k] + 1; });
     return m;
   }
@@ -908,6 +923,19 @@
     var t = cleanNote(text);
     if (t === noteOf(d, fam)) return d;
     d.notes[fam] = { t: t, m: stamp(d, now) };
+    return colsNorm(d);
+  }
+  // The fonts of an app's document ("writer:<id>"): { body, head } or null.
+  function docFontsOf(d, key) {
+    var x = d && d.docs && d.docs[key];
+    return x ? { body: x.body, head: x.head } : null;
+  }
+  function docFontsSet(d, key, o, now) {
+    if (!DOCKEY_RE.test(key || "")) return d;
+    var cur = docFontsOf(d, key) || { body: null, head: null };
+    var next = { body: o && "body" in o ? o.body : cur.body, head: o && "head" in o ? o.head : cur.head };
+    if (canon(next) === canon(cur)) return d;
+    d.docs[key] = { body: next.body, head: next.head, m: stamp(d, now) };
     return colsNorm(d);
   }
   // A document's collection (setup.ext.col), when it still exists.
@@ -1005,7 +1033,7 @@
       KEY: COLS_KEY, CID_RE: CID_RE, LIM: CLIM,
       normalize: colsNorm, merge: colsMerge, order: colOrder, byName: colByName, fams: colFams, of: colsOf,
       add: colAdd, rename: colRename, remove: colDelete, set: colSet, note: noteOf, setNote: noteSet,
-      docCol: docCol, bind: colsBind, keepOffline: keepOffline
+      docCol: docCol, bind: colsBind, keepOffline: keepOffline, docFonts: docFontsOf, setDocFonts: docFontsSet
     }
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

@@ -1972,6 +1972,7 @@ Only the device in `dev` uploads. A create is inserted between `a` and `b` in th
   cols:  { <cid>: { name, m } },                         // cid c[a-z0-9]{4,24}; name ≤ 60, no control chars; ≤ 100, newest m kept
   mem:   { "<cid>:<family id>": { on: 0|1, name, fb, m } }, // family id fs_… or uf_<16 hex> (text.FAM_RE); name ≤ 60; fb sans|serif|mono; ≤ 5000
   notes: { <family id>: { t, m } },                      // t ≤ 500, newlines kept; t "" = note removed (kept, so the removal travels); ≤ 1000
+  docs:  { "<app>:<doc id>": { body, head, m } },       // app [a-z]{2,16}, doc id [A-Za-z0-9_-]{1,64}; body / head = { id, name, fb } or null; ≤ 2000 (FM-4: Writer, whose documents have no ext bag and whose hydrate drops unknown fields)
   tombs: { <cid>: ts } }                                 // ≤ 300; a tomb ≥ m drops the collection and its members
 ```
 

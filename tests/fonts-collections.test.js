@@ -43,7 +43,7 @@ test("normalize: bad ids, names and records are dropped; the result is stable", 
   assert.deepEqual(d.notes, { fs_noto_serif: { t: "bought  2025\nline", m: 7 } });
   assert.deepEqual(d.tombs, { cdead1: 9 });
   assert.deepEqual(C.normalize(d), d);
-  assert.deepEqual(C.normalize("nonsense"), { ver: 1, cols: {}, mem: {}, notes: {}, tombs: {} });
+  assert.deepEqual(C.normalize("nonsense"), { ver: 1, cols: {}, mem: {}, notes: {}, docs: {}, tombs: {} });
   const n = C.normalize({ cols: { cbook01: { name: "x".repeat(200), m: 1 } } });
   assert.equal(n.cols.cbook01.name.length, C.LIM.name);
 });
@@ -104,6 +104,22 @@ test("merge: a deleted collection stays deleted with its fonts; a removed note t
   const n2 = C.setNote(j(n1), "fs_noto_serif", "", 9000);
   assert.equal(C.note(C.merge(n1, n2), "fs_noto_serif"), "");
   assert.equal(C.note(C.merge(n2, n1), "fs_noto_serif"), "");
+});
+
+test("docs: a document's fonts (Writer) are one LWW record per document; bad keys and families dropped", () => {
+  let d = C.normalize(null);
+  d = C.setDocFonts(d, "writer:d1", { body: fam("fs_gfs_didot", "GFS Didot") }, 100);
+  assert.deepEqual(C.docFonts(d, "writer:d1"), { body: { id: "fs_gfs_didot", name: "GFS Didot", fb: "serif" }, head: null });
+  const same = C.setDocFonts(j(d), "writer:d1", { body: fam("fs_gfs_didot", "GFS Didot") }, 200);
+  assert.deepEqual(same, d, "no change, no new stamp");
+  const a = C.setDocFonts(j(d), "writer:d1", { head: fam("fs_alegreya", "Alegreya", "sans") }, 300);
+  const b = C.setDocFonts(j(d), "writer:d1", { body: null }, 300);
+  assert.deepEqual(C.merge(a, b), C.merge(b, a));
+  assert.equal(C.docFonts(C.normalize({ docs: { "Writer:x": { body: fam("fs_a", "A"), m: 1 } } }), "Writer:x"), null);
+  const n = C.normalize({ docs: { "writer:x": { body: { id: "<b>", name: "x" }, head: fam("fs_a", "A", "odd"), m: 1 } } });
+  assert.deepEqual(n.docs["writer:x"], { body: null, head: { id: "fs_a", name: "A", fb: "serif" }, m: 1 });
+  assert.deepEqual(C.docFonts(d, "writer:none"), null);
+  assert.deepEqual(C.setDocFonts(j(d), "bad key", { body: null }, 1), d);
 });
 
 test("docCol: only a collection id that exists", () => {
