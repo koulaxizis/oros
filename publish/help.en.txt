@@ -102,9 +102,13 @@ Inside each track:
 - `Songwriting shares`: who wrote the song (music and lyrics) and their percent, with their collecting society (free text; the list only suggests names) and IPI number when they have one.
 - `Master ownership`: who owns the recording and their percent.
 
-Each list shows what its shares add up to, in red when it is not 100%. A name that matches a CRM partner is linked to them. `Split sheet in Writer` writes a split sheet for the track (release, ISRC, shares, credits and a line to sign for each person) as a new Writer document, to print or send for signing. `Same credits and splits on every track` copies the open track's three lists to the others (Undo puts theirs back).
+Each list shows what its shares add up to, in red when it is not 100%. A name that matches a CRM partner is linked to them. `Split sheet in Writer` writes a split sheet for the track (release, ISRC, shares, credits and a line to sign for each person) as a new Writer document, to print or send for signing. `Lyrics` opens the track's song in Lyric Sync (found by its ISRC, else by title and artist; made when there is none, with the ISRC), and Lyric Sync's MP3 copy then carries the ISRC too. `Same credits and splits on every track` copies the open track's three lists to the others (Undo puts theirs back).
 
 The ISRC and UPC/EAN fields check the code as you type and warn when another track or edition already has it. If your distributor gives you the codes, type them in. If you have your own prefixes (Codes tab), `Next free` fills in the next unused one. `Still missing` lists what a release still needs: artist, tracks, ISRCs, lengths, shares that make 100%, an edition, UPC/EAN, release date and cover.
+
+`In Music` looks the track up in Music. On a CD, vinyl or cassette edition, `Item in Stock` adds it to Stock as a product with its UPC/EAN as SKU and barcode. `Release kit in Atelier` (in `Release details`) makes four editable designs from the cover: the 3000 × 3000 store cover, an Instagram post, a story and a site banner.
+
+A release has its own `Release plan`, dated back from the release day: master ready (6 weeks before), artwork 3000 × 3000 px, metadata and codes, upload to the distributor (4 weeks before; most stores want 3 to 4 weeks), editorial pitch (3 weeks before; Spotify for Artists needs at least 7 days), pre-save link and posts (2 weeks before), and first-week posts. Move, rename, add or remove steps as in a book plan; the steps also show in Calendar, Today and To-Do.
 
 ## Codes
 Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `Codes` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.

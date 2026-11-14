@@ -120,7 +120,7 @@
       "plan.make": "Make the plan", "plan.redate": "Re-date from the release date", "plan.redateHint": "Open steps get new dates from the release date; done steps keep theirs.",
       "plan.add": "+ Step", "plan.addName": "Name of the step", "plan.todo": "Send to To-Do", "plan.del": "Remove step",
       "plan.late": "late", "plan.lateN": "{n} late", "plan.next": "Next: {s} · {d}", "plan.allDone": "All steps done.",
-      "plan.noRel": "Set the release date first.", "plan.todoBy": "By {d} · {t}", "plan.todoNone": "No open steps to send.", "plan.date": "Date",
+      "plan.noneMus": "Set the release date, then make the plan: orOS dates every step back from it (master, artwork, metadata and codes, upload to the distributor, pitch, pre-save, first week).", "plan.noRel": "Set the release date first.", "plan.todoBy": "By {d} · {t}", "plan.todoNone": "No open steps to send.", "plan.date": "Date",
       "tab.roy": "Royalties",
       "sec.roy": "Royalties", "roy.none": "No royalty terms. Add who is paid for this book, how much and on what.",
       "roy.add": "+ Terms", "roy.who": "Paid to", "roy.pct": "Royalty (%)", "roy.base": "On", "roy.base.list": "List price", "roy.base.net": "What came in (net)",
@@ -159,7 +159,7 @@
       "tpl.yes.text": "Dear {name},\n\nWe read “{title}” with great pleasure and would like to talk about publishing it. When would it suit you to meet or speak?\n\nWith best wishes,\n{imprint}",
       "tpl.con.text": "PUBLISHING AGREEMENT (draft)\n\nDate: {date}\n\nBetween {imprint} (the Publisher) and {name} (the Author).\n\n1. The work. The Author grants the Publisher the right to publish “{title}” in these formats: {formats}.\n2. Royalties. The Publisher pays the Author {pct}% of {base} on every copy sold, with a statement at least once a year.\n3. Advance. On signing, the Publisher pays an advance of {adv}, recouped from the royalties.\n4. Term and territory: ______\n5. Delivery and approval of the manuscript: ______\n6. Rights return to the Author if the work stays out of print for ______\n\nThis draft is a starting point, not legal advice: have it checked before signing.\n\nFor the Publisher ______________          The Author ______________",
       "con.btn": "Contract in Writer", "con.doc": "Contract · {t} · {n}", "con.base.list": "the list price", "con.base.net": "the net receipts",
-      "kit.btn": "Release kit in Atelier", "kit.lineOn": "Out {d}", "kit.lineNow": "Out now",
+      "kit.btn": "Release kit in Atelier", "kit.lineOn": "Out {d}", "kit.lineMus": "Out {d} · pre-save now", "kit.lineNow": "Out now",
       "tab.posts": "Posts", "post.add": "+ Post", "post.none": "Plan your posts once: text, picture and day. On the day Publishing shows them as due (and the Calendar lists them); you post them from each network's own page, the text already in it.",
       "post.due": "Due now", "post.next": "Coming up", "post.done": "Posted", "post.dueN": "{n} posts to make", "post.title": "Post",
       "post.d": "Day", "post.at": "Time (optional)", "post.ti": "About the title (optional)", "post.noTi": "(none)", "post.tx": "Text",
@@ -287,6 +287,8 @@
       "trk.up": "Move up",
       "trk.down": "Move down",
       "trk.del": "Remove track",
+      "trk.lyr": "Lyrics",
+      "trk.music": "In Music",
       "trk.removed": "Track removed",
       "isrc.len": "An ISRC has 12 characters: CC-XXX-YY-NNNNN.",
       "isrc.shape": "Not an ISRC: 2 letters, then 3 letters or digits, then 7 digits.",
@@ -465,7 +467,7 @@
       "plan.make": "Φτιάξε την πορεία", "plan.redate": "Νέες ημερομηνίες από την κυκλοφορία", "plan.redateHint": "Τα ανοιχτά βήματα παίρνουν νέες ημερομηνίες από την κυκλοφορία· όσα έγιναν κρατούν τις δικές τους.",
       "plan.add": "+ Βήμα", "plan.addName": "Όνομα βήματος", "plan.todo": "Στείλε στο To-Do", "plan.del": "Αφαίρεση βήματος",
       "plan.late": "καθυστερεί", "plan.lateN": "{n} καθυστερούν", "plan.next": "Επόμενο: {s} · {d}", "plan.allDone": "Έγιναν όλα τα βήματα.",
-      "plan.noRel": "Βάλε πρώτα ημερομηνία κυκλοφορίας.", "plan.todoBy": "Έως {d} · {t}", "plan.todoNone": "Δεν υπάρχουν ανοιχτά βήματα.", "plan.date": "Ημερομηνία",
+      "plan.noneMus": "Βάλε ημερομηνία κυκλοφορίας και φτιάξε την πορεία: το orOS βάζει ημερομηνίες σε κάθε βήμα μετρώντας ανάποδα (master, artwork, στοιχεία και κωδικοί, ανέβασμα στον διανομέα, pitch, pre-save, πρώτη εβδομάδα).", "plan.noRel": "Βάλε πρώτα ημερομηνία κυκλοφορίας.", "plan.todoBy": "Έως {d} · {t}", "plan.todoNone": "Δεν υπάρχουν ανοιχτά βήματα.", "plan.date": "Ημερομηνία",
       "tab.roy": "Δικαιώματα",
       "sec.roy": "Δικαιώματα", "roy.none": "Δεν υπάρχουν όροι δικαιωμάτων. Πρόσθεσε ποιος πληρώνεται για αυτό το βιβλίο, πόσο και επί ποιου.",
       "roy.add": "+ Όροι", "roy.who": "Δικαιούχος", "roy.pct": "Ποσοστό (%)", "roy.base": "Επί", "roy.base.list": "Τιμής καταλόγου", "roy.base.net": "Εισπράξεων (καθαρά)",
@@ -504,7 +506,7 @@
       "tpl.yes.text": "Αγαπητέ/ή {name},\n\nδιαβάσαμε το «{title}» με μεγάλη χαρά και θα θέλαμε να μιλήσουμε για την έκδοσή του. Πότε θα σας βόλευε να συναντηθούμε ή να μιλήσουμε;\n\nΜε εκτίμηση,\n{imprint}",
       "tpl.con.text": "ΣΥΜΒΑΣΗ ΕΚΔΟΣΗΣ (σχέδιο)\n\nΗμερομηνία: {date}\n\nΜεταξύ {imprint} (ο Εκδότης) και {name} (ο Συγγραφέας).\n\n1. Το έργο. Ο Συγγραφέας παραχωρεί στον Εκδότη το δικαίωμα να εκδώσει το «{title}» στις εξής μορφές: {formats}.\n2. Δικαιώματα. Ο Εκδότης καταβάλλει στον Συγγραφέα {pct}% επί {base} για κάθε αντίτυπο που πωλείται, με εκκαθάριση τουλάχιστον μία φορά τον χρόνο.\n3. Προκαταβολή. Με την υπογραφή ο Εκδότης καταβάλλει προκαταβολή {adv}, που συμψηφίζεται με τα δικαιώματα.\n4. Διάρκεια και περιοχή: ______\n5. Παράδοση και έγκριση του χειρογράφου: ______\n6. Τα δικαιώματα επιστρέφουν στον Συγγραφέα αν το έργο μείνει εξαντλημένο για ______\n\nΤο σχέδιο αυτό είναι αφετηρία, όχι νομική συμβουλή: δώστε το για έλεγχο πριν την υπογραφή.\n\nΓια τον Εκδότη ______________          Ο Συγγραφέας ______________",
       "con.btn": "Συμβόλαιο στον Writer", "con.doc": "Συμβόλαιο · {t} · {n}", "con.base.list": "της τιμής καταλόγου", "con.base.net": "των καθαρών εισπράξεων",
-      "kit.btn": "Πακέτο κυκλοφορίας στο Atelier", "kit.lineOn": "Κυκλοφορεί {d}", "kit.lineNow": "Κυκλοφορεί τώρα",
+      "kit.btn": "Πακέτο κυκλοφορίας στο Atelier", "kit.lineOn": "Κυκλοφορεί {d}", "kit.lineMus": "Κυκλοφορεί {d} · κάνε pre-save", "kit.lineNow": "Κυκλοφορεί τώρα",
       "tab.posts": "Αναρτήσεις", "post.add": "+ Ανάρτηση", "post.none": "Σχεδίασε τις αναρτήσεις σου μία φορά: κείμενο, εικόνα και ημέρα. Την ημέρα τους οι Εκδόσεις τις δείχνουν ως έτοιμες (και το Ημερολόγιο τις γράφει)· τις δημοσιεύεις από τη σελίδα κάθε δικτύου, με το κείμενο ήδη μέσα.",
       "post.due": "Για τώρα", "post.next": "Επόμενες", "post.done": "Δημοσιεύτηκαν", "post.dueN": "{n} αναρτήσεις για δημοσίευση", "post.title": "Ανάρτηση",
       "post.d": "Ημέρα", "post.at": "Ώρα (προαιρετικά)", "post.ti": "Για τον τίτλο (προαιρετικά)", "post.noTi": "(κανένας)", "post.tx": "Κείμενο",
@@ -632,6 +634,8 @@
       "trk.up": "Πάνω",
       "trk.down": "Κάτω",
       "trk.del": "Αφαίρεση κομματιού",
+      "trk.lyr": "Στίχοι",
+      "trk.music": "Στη Μουσική",
       "trk.removed": "Το κομμάτι αφαιρέθηκε",
       "isrc.len": "Το ISRC έχει 12 χαρακτήρες: CC-XXX-YY-NNNNN.",
       "isrc.shape": "Δεν είναι ISRC: 2 γράμματα, μετά 3 γράμματα ή ψηφία, μετά 7 ψηφία.",
@@ -1080,7 +1084,6 @@
     function onKind() {
       var mus = kind.value !== "book";
       auF.firstChild.textContent = t(mus ? "new.artist" : "new.author");
-      pll.hidden = mus;          // the music release plan comes with wave M3
     }
     kind.addEventListener("change", onKind);
     onKind();
@@ -1096,7 +1099,7 @@
       else if (pf.isbn) row.fmts = [{ id: C.uid(), k: "pb", isbn: pf.isbn }];
       if (C.okYmd(rel.value)) {
         row.rel = rel.value;
-        if (pl.checked && !mus) row.plan = C.makePlan(rel.value, [], C.uid);
+        if (pl.checked) row.plan = C.makePlan(rel.value, [], C.uid, planOpts(mus));
       }
       dlg.close();
       var next = C.put(data, "titles", row, now);
@@ -1210,12 +1213,11 @@
       sec.appendChild(editionsSection(tt));
     }
 
-    // Release plan (wave P4); the music plan comes with wave M3
+    // Release plan (wave P4; a music release's own steps since M3)
     var sp = el("section", "sec plan");
     sp.id = "ed-plan";
     sec.appendChild(sp);
-    if (!music) renderPlan();
-    else sp.hidden = true;
+    renderPlan();
 
     // Royalty terms (wave P6)
     var sr = el("section", "sec roy");
@@ -1561,6 +1563,18 @@
       g.appendChild(f);
     });
     s.appendChild(g);
+    // Wave M3: the release kit in Atelier (store cover 3000 × 3000, post, story, banner)
+    var acts = el("div", "send-row");
+    acts.appendChild(button("🎨 " + t("kit.btn"), "btn small", function () {
+      flushEdits();
+      var x = currentTitle();
+      if (!x) return;
+      var ed = C.editionsOf(data, x.id).filter(function (y) { return y.price > 0; })[0];
+      openAt("atelier", { releaseKit: { music: true, title: x.t, sub: x.sub, author: C.authors(x).join(", "),
+        line: x.rel && x.rel > todayYmd() ? t("kit.lineMus", { d: fmtDate(x.rel) }) : t("kit.lineNow"),
+        price: ed ? money(ed.price) : "", imprint: x.mt.lbl || data.set.imp, img: C.coverPath(x.cov) || "" } });
+    }));
+    s.appendChild(acts);
     return s;
   }
 
@@ -1609,6 +1623,18 @@
     dn.disabled = idx === count - 1;
     head.appendChild(up);
     head.appendChild(dn);
+    // Wave M3: the track's lyrics in Lyric Sync (its song by ISRC, else made with it)
+    head.appendChild(button("🎤 " + t("trk.lyr"), "btn small", function () {
+      flushEdits();
+      var c = cur(), rt = currentTitle();
+      openAt("lyricsync", { track: { title: c.t, artist: c.art || C.authors(rt).join(", "), isrc: c.isrc, lang: c.lang || rt.lang || "" } });
+    }));
+    // the recording in Music (its search, where the master or the released song is found)
+    head.appendChild(button("🎧 " + t("trk.music"), "btn small", function () {
+      flushEdits();
+      var c = cur(), rt = currentTitle();
+      openAt("music", { findSong: { q: [c.t, c.art || C.authors(rt)[0] || ""].join(" ").trim() } });
+    }));
     head.appendChild(button(t("trk.del"), "btn small danger", function () {
       var keep = JSON.parse(JSON.stringify(cur()));
       commit(C.remove(data, "trk", r.id, Date.now()));
@@ -1883,6 +1909,15 @@
     var bc = button(t("fmt.barcode"), "btn small", function () { upcBarcodeDialog(e.id); });
     bc.disabled = !e.upc;
     head.appendChild(bc);
+    // Wave M3: a CD, vinyl or cassette goes to Stock as a product (UPC/EAN = SKU)
+    var stk = button("📦 " + t("send.stock"), "btn small", function () {
+      flushEdits();
+      var c = cur(), x = currentTitle();
+      if (c && x) openAt("stock", { newItem: C.stockPrefillMed(x, c, t("med." + c.k)) });
+    });
+    stk.hidden = e.k === "dig";
+    k.addEventListener("change", function () { stk.hidden = k.value === "dig"; });
+    head.appendChild(stk);
     head.appendChild(button(t("med.del"), "btn small danger", function () {
       var keep = JSON.parse(JSON.stringify(cur()));
       commit(C.remove(data, "med", e.id, Date.now()));
@@ -2275,6 +2310,10 @@
 
   // ---------- 6a. Release plan (wave P4) ----------
   var PF = window.OrosPublishFeed;
+  // Wave M3: a music release's plan names each step in the app's language.
+  function planOpts(music) {
+    return music ? { music: true, name: function (k) { return PF ? PF.stage(k, "", LANG) : k; } } : null;
+  }
   function stageName(st) { return PF ? PF.stage(st.k, st.n, LANG) : (st.n || st.k); }
   function todayYmd() {
     var d = new Date();
@@ -2291,8 +2330,8 @@
     box.appendChild(el("h3", "", t("plan.title")));
     var plan = tt.plan || [];
     if (!plan.length) {
-      box.appendChild(el("p", "muted", t("plan.none")));
-      var mk = button(t("plan.make"), "btn small pri", function () { writePlan(C.makePlan(currentTitle().rel, [], C.uid)); });
+      box.appendChild(el("p", "muted", t(C.isMusic(tt) ? "plan.noneMus" : "plan.none")));
+      var mk = button(t("plan.make"), "btn small pri", function () { writePlan(C.makePlan(currentTitle().rel, [], C.uid, planOpts(C.isMusic(currentTitle())))); });
       mk.disabled = !tt.rel;
       box.appendChild(mk);
       if (!tt.rel) box.appendChild(el("p", "muted small", t("plan.noRel")));
@@ -2329,7 +2368,7 @@
     });
     box.appendChild(ul);
     var acts = el("div", "send-row");
-    var rd = button(t("plan.redate"), "btn small", function () { writePlan(C.makePlan(currentTitle().rel, currentTitle().plan, C.uid)); });
+    var rd = button(t("plan.redate"), "btn small", function () { var c = currentTitle(); writePlan(C.makePlan(c.rel, c.plan, C.uid, planOpts(C.isMusic(c)))); });
     rd.disabled = !tt.rel;
     rd.title = t("plan.redateHint");
     acts.appendChild(rd);

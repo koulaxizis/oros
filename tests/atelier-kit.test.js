@@ -65,3 +65,22 @@ test("Atelier opens { releaseKit } and Publishing sends it", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "publish/app.js"), "utf8");
   assert.match(app, /openAt\("atelier", \{ releaseKit:/);
 });
+
+test("a music release's kit (Publishing M3): store cover 3000 × 3000, post, story, banner; square artwork fills the cover", () => {
+  const sq = { a: "b".repeat(64) + ".jpg", iw: 3000, ih: 3000, nm: "art.jpg" };
+  const docs = K.build(Object.assign({}, SPEC, { music: true, line: "Out 18 December · pre-save now" }), sq, 1000, { cover: "Cover" });
+  assert.equal(docs.length, 4);
+  assert.deepEqual(docs.map((d) => [Math.round(d.setup.w), Math.round(d.setup.h)]), [[3000, 3000], [1080, 1080], [1080, 1920], [1920, 600]]);
+  assert.equal(docs[0].name, "Sea Wolves · Cover");
+  const items = (d) => d.items.filter((i) => i.ax).map((i) => Object.assign({}, i.ax, { x: i.x, y: i.y, w: i.w, h: i.h }));
+  const photo = items(docs[0]).filter((x) => x.k === "photo");
+  assert.equal(photo.length, 1);
+  assert.deepEqual([photo[0].x, photo[0].y, photo[0].w, photo[0].h], [0, 0, 3000, 3000]);
+  assert.equal(items(docs[0]).filter((x) => x.k === "text").length, 0);   // no price or date on a store cover
+  // no artwork: title and artist on the colour
+  const bare = K.build(Object.assign({}, SPEC, { music: true }), null, 1000, {});
+  assert.deepEqual(items(bare[0]).filter((x) => x.k === "text").map((x) => x.tx).sort(), ["Anna Writer", "Sea Wolves"]);
+  // a book's kit is unchanged
+  assert.equal(K.build(SPEC, IMG, 1000, {}).length, 5);
+  assert.equal(K.norm(Object.assign({}, SPEC, { music: "yes" })).music, false);
+});

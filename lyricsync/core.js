@@ -162,6 +162,9 @@
              lg: oneLine(raw.lg, 20), dur: tm(raw.dur) || 0, au: au, ln: ln, mtime: ms(raw.mtime) };
     var src = diskPath(raw.src);
     if (src) out.src = src;
+    // Publishing M3: the recording's ISRC (12 characters), written into
+    // the MP3 copy as TSRC; a song made from a Publishing track has it.
+    if (typeof raw.isrc === "string" && /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/.test(raw.isrc)) out.isrc = raw.isrc;
     if (Array.isArray(raw.vn)) {
       var vn = raw.vn.slice(0, 4).map(function (x) { return oneLine(x, 60); });
       while (vn.length && !vn[vn.length - 1]) vn.pop();
@@ -242,6 +245,16 @@
   // Newest first, for the list of songs.
   function live(d) { return d.items.slice().sort(function (a, b) { return b.mtime - a.mtime || byId(a, b); }); }
 
+  // Publishing M3: the song of a release's track, by its ISRC, else
+  // by title and artist (case and accents aside).
+  function byTrack(d, tr) {
+    if (!tr) return null;
+    var songs = live(d);
+    if (tr.isrc) { var hit = songs.filter(function (p) { return p.isrc === tr.isrc; })[0]; if (hit) return hit; }
+    function f(v) { return String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }
+    if (!f(tr.title)) return null;
+    return songs.filter(function (p) { return (!tr.isrc || !p.isrc) && f(p.name) === f(tr.title) && (!f(tr.artist) || !f(p.ar) || f(p.ar) === f(tr.artist)); })[0] || null;
+  }
   // The newest song made from this disk file, or null.
   function bySrc(d, src) {
     src = diskPath(src);
@@ -562,7 +575,7 @@
     nextUntimed: nextUntimed, prevTimed: prevTimed, nextTimed: nextTimed, timedCount: timedCount,
     timed: timed, lineAt: lineAt, fmt: fmt, parseTime: parseTime,
     words: words, wordAt: wordAt, moveMark: moveMark, clearWords: clearWords, wordsDone: wordsDone, wordCount: wordCount, issues: issues,
-    diskPath: diskPath, lrcPath: lrcPath, fileOf: fileOf, bySrc: bySrc
+    diskPath: diskPath, lrcPath: lrcPath, fileOf: fileOf, bySrc: bySrc, byTrack: byTrack
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.LyricsyncCore = API;
