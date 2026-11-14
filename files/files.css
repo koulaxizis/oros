@@ -1306,6 +1306,13 @@ body.dbx-mode #status { display: none; }
   .dbx-pick-row { min-height: 44px; }
 }
 
+/* Documents: the tree node lives here (shown before docs.js loads);
+ * the rest is files/docs.css, loaded with docs.js (first-open budget). */
+.doc-tree { border-top: 0; margin-top: 2px; padding-top: 0; }
+.doc-tree .tnode .glyph { color: var(--accent, #6d4aff); }
+.doc-tree .tnode.selected .glyph { color: var(--accent-ink, #fff); }
+.doc-tree .tcount { margin-left: auto; padding-left: 6px; font-size: 11px; color: var(--text-dim, #999); }
+.doc-tree .tnode.selected .tcount { color: var(--accent-ink, #fff); opacity: .8; }
 /* The HTML [hidden] attribute must always win. Without this rule
    "#empty { display: flex }" kept the "This folder is empty" block on
    screen under a full file list. KEEP THIS THE LAST RULE OF THE FILE. */

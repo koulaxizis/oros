@@ -73,6 +73,13 @@ Lyric Sync is also a songbook: a song can have chords over its words, a key, a c
 - ChordPro files (.cho, .chopro, .chordpro, .crd) and chord sheets in .txt open here, from `Open file`, from [Files](app:files) or from your computer's "Open with". Only the first song of a file with several is read.
 - Lyric Sync downloads no chords from any site: you write them or open your own files.
 
+## Stage: playing live
+`Stage` (next to `Transpose`, and in `Preview`) fills the screen with the song for playing it live, and keeps the screen on while it is open.
+- With the song file here and the lines timed, it follows the song: press ▶ (or tap the words) and the line being sung lights up and stays in view.
+- Otherwise ▶ scrolls at a steady speed: the whole song in its length (or about two bars a line at the song's tempo). `−` and `+` make it slower or faster; tap the words to pause. With a tempo set, `Count-in` clicks one bar first.
+- ▲ ▼, the arrow keys and Page Up / Page Down move a screen back or on; most page-turn foot pedals send these keys. [[Esc]] closes the stage.
+- `A−` `A+` set the size, and `Show` picks words and chords, words only (for singers) or chords only. The stage remembers these on this device.
+
 ## Your data
 - The lyrics and their times are saved as you go. With orOS sync switched on in [Settings](app:settings), they follow you to your other devices, encrypted.
 - The song file stays only on the device where you chose it. On another device the song shows "song file not on this device" until you choose it there too. A song opened from Music is read from your Music folder, so it is there on every device that has the file (Vault Drive).
