@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.73.00
+- **Unit Converter is now part of the Calculator.** Open the `Convert` mode in the Calculator for every unit, currency and cooking conversion, with your favourites and recent ones kept. Old links and shortcuts to Unit Converter open that mode.
+
 ## Version 6.72.00
 - **Signed PDFs come back on their own.** When you ask someone to sign a PDF in Scanner & PDF, the signed copy now comes back to your orOS by itself: no need to paste the reply link any more. Requests that wait have a `Remind` button that writes a short reminder for your email app. If the automatic way cannot be used, the signer still gets a reply link to send you, as before. See [Scanner & PDF](app:scanpdf).
 

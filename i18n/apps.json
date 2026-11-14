@@ -1114,13 +1114,6 @@
    ]
   },
   {
-   "app": "units",
-   "files": [
-    "units/core.js",
-    "units/units.js"
-   ]
-  },
-  {
    "app": "wallpaper",
    "files": [
     "wallpaper/wallpaper.js"
