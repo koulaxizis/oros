@@ -202,3 +202,46 @@ test("removeRemote only acts inside orOS Drive", async () => {
   assert.equal(await B.vault.removeRemote("/internal/Drive/PCX"), 0, "a name prefix is not a folder");
   assert.equal(B.vault.queueLength(), 0);
 });
+
+// DRIVE-ALL (D1, Chris 2026-11-13 «πλήρες mirror»): a folder kept on
+// every device. The list is a synced slice; a device that gets it
+// downloads the folder as if it had kept it offline itself.
+test("keep on all devices: every device downloads and keeps the folder", async () => {
+  const { db } = await seeded();
+  const B = await vaultDevice(db, "B");
+  await B.sync();
+  assert.equal(B.vault.setKeptOfflineAll(PC + "/photos", true), true);
+  assert.deepEqual(Array.from(B.vault.offlineAll()), [PC + "/photos"]);
+  assert.equal(B.vault.isKeptOfflineAll(PC + "/photos/beach.jpg"), true);
+  assert.equal(B.vault.isKeptOffline(PC + "/photos/beach.jpg"), true, "counts as kept offline here too");
+  await B.sync();
+  assert.equal(await B.read(PC + "/photos/beach.jpg"), "jpeg bytes");
+  assert.equal(await B.vault.evict(PC), 0, "a folder kept on all devices is not evicted");
+  // Device C gets the list (as the sync slice would bring it)
+  const C = await vaultDevice(db, "C");
+  await C.sync();
+  assert.equal(C.disk.has(PC + "/photos/beach.jpg"), false);
+  // (the slice's setter writes the list and forgets the cached rev, as fetchKept does)
+  C.localStorage.setItem("oros-vault-offline-all", B.localStorage.getItem("oros-vault-offline-all"));
+  C.localStorage.removeItem("oros-vault-rev");
+  await C.sync();
+  assert.equal(await C.read(PC + "/photos/beach.jpg"), "jpeg bytes");
+  assert.equal(C.disk.has(PC + "/report.txt"), false, "other folders stay on demand");
+  // turning it off keeps the device's own choice
+  assert.equal(B.vault.setKeptOffline(PC + "/photos", true), true);
+  assert.equal(B.vault.setKeptOfflineAll(PC + "/photos", false), true);
+  assert.equal(B.vault.isKeptOffline(PC + "/photos/x"), true);
+  assert.equal(B.vault.setKeptOfflineAll("/internal/Notes", true), false, "only Drive folders");
+  assert.equal(B.vault.setKeptOfflineAll(B.vault.driveRoot, true), false, "not all of Drive");
+});
+
+test("keep on all devices: the newer list wins, bad entries are dropped", async () => {
+  const B = await vaultDevice(new BinDropbox(), "B");
+  const m = B.vault._allMerge, c = B.vault._allClean;
+  const a = { ver: 1, m: 5, f: [PC] }, b = { ver: 1, m: 9, f: [] };
+  const j = (x) => JSON.parse(JSON.stringify(x));
+  assert.deepEqual(j(m(a, b).f), [], "a later removal wins");
+  assert.deepEqual(j(m(b, a).f), []);
+  assert.deepEqual(j(c({ m: 1, f: [PC, PC, "/internal/Notes", "/internal/Drive", "/internal/Drive/PC/../x", 7] }).f), [PC]);
+  assert.deepEqual(j(c(null)), { ver: 1, m: 0, f: [] });
+});

@@ -67,6 +67,7 @@
   var DRIVE_ROOT     = "/internal/Drive";
   var OD_KEY         = "oros-vault-ondemand";     // { path: entry } in the cloud, not on this device
   var OFFLINE_KEY    = "oros-vault-offline";      // [folder] kept on this device (device-local)
+  var ALL_KEY        = "oros-vault-offline-all";  // { ver, m, f: [folder] } kept on every device (synced slice "driveoffline", DRIVE-ALL)
 
   // ---------- Internal state ----------
   var syncInFlight   = false;
@@ -253,9 +254,30 @@
     if (Object.keys(m).length) writeJson(OD_KEY, m);
     else { try { localStorage.removeItem(OD_KEY); } catch (e) {} }
   }
-  function offlineFolders() {
+  function deviceFolders() {
     var l = readJson(OFFLINE_KEY);
     return Array.isArray(l) ? l.filter(function (p) { return typeof p === "string" && under(p, DRIVE_ROOT); }) : [];
+  }
+  // DRIVE-ALL (D1, Chris 2026-11-13 «πλήρες mirror»): folders kept on
+  // every device of the owner, as if each had kept them offline.
+  function allClean(x) {
+    if (!x || typeof x !== "object" || Array.isArray(x) || typeof x.m !== "number" || !Array.isArray(x.f)) return { ver: 1, m: 0, f: [] };
+    var f = x.f.filter(function (p, i, l) {
+      return typeof p === "string" && p.length <= 1024 && under(p, DRIVE_ROOT) && p !== DRIVE_ROOT && !/(^|\/)\.\.?(\/|$)/.test(p) && l.indexOf(p) === i;
+    }).slice(0, 100).sort();
+    return { ver: 1, m: Math.floor(x.m), f: f };
+  }
+  function allRead() { return allClean(readJson(ALL_KEY)); }
+  function allMerge(a, b) {
+    a = allClean(a); b = allClean(b);
+    if (a.m !== b.m) return a.m > b.m ? a : b;
+    return JSON.stringify(a).length >= JSON.stringify(b).length ? a : b;
+  }
+  function allFolders() { return allRead().f; }
+  function offlineFolders() {
+    var out = deviceFolders();
+    allFolders().forEach(function (f) { if (out.indexOf(f) < 0) out.push(f); });
+    return out;
   }
   function keptOffline(path) {
     return offlineFolders().some(function (f) { return under(path, f); });
@@ -944,17 +966,45 @@
     });
   }
 
+  function fetchKept() {
+    // Its files are fetched by the next sync: forget the cached rev so
+    // an idle check does not skip the download.
+    setRev(null);
+    setTimeout(function () { sync("offline").catch(function () {}); }, 0);
+  }
+  function setKeptOfflineAll(folder, on) {
+    if (typeof folder !== "string" || !under(folder, DRIVE_ROOT) || folder === DRIVE_ROOT) return false;
+    var cur = allRead(), f = cur.f.filter(function (x) { return x !== folder; });
+    if (on) f.push(folder);
+    var next = allClean({ ver: 1, m: Math.max(Date.now(), cur.m + 1), f: f });
+    if (JSON.stringify(next.f) === JSON.stringify(cur.f)) return true;
+    writeJson(ALL_KEY, next);
+    if (JSON.stringify(allRead().f) !== JSON.stringify(next.f)) return false;   // storage full
+    try { if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty(); } catch (e) {}
+    if (on) fetchKept();
+    return true;
+  }
+  function allSlice(n) {
+    var S = window.orosSync;
+    if (S && typeof S.registerSlice === "function") {
+      S.registerSlice("driveoffline", function () { var raw = null; try { raw = localStorage.getItem(ALL_KEY); } catch (e) {} return raw ? allRead() : null; },
+        function (data) {
+          var v = allClean(data), cur = allRead();
+          if (JSON.stringify(v) === JSON.stringify(cur)) return;
+          var added = v.f.some(function (x) { return cur.f.indexOf(x) < 0; });
+          writeJson(ALL_KEY, v);                        // pulled: never markDirty
+          if (added) fetchKept();
+        }, ALL_KEY, allMerge);
+      return;
+    }
+    if (n < 40) setTimeout(function () { allSlice(n + 1); }, 500);
+  }
   function setKeptOffline(folder, on) {
     if (typeof folder !== "string" || !under(folder, DRIVE_ROOT)) return false;
-    var l = offlineFolders().filter(function (f) { return f !== folder; });
+    var l = deviceFolders().filter(function (f) { return f !== folder; });
     if (on) l.push(folder);
     if (l.length) writeJson(OFFLINE_KEY, l); else { try { localStorage.removeItem(OFFLINE_KEY); } catch (e) {} }
-    if (on) {
-      // Its files are fetched by the next sync: forget the cached rev so
-      // an idle check does not skip the download.
-      setRev(null);
-      setTimeout(function () { sync("offline").catch(function () {}); }, 0);
-    }
+    if (on) fetchKept();
     return true;
   }
 
@@ -1569,6 +1619,11 @@
     offlineFolders: offlineFolders,
     isKeptOffline: keptOffline,
     setKeptOffline: setKeptOffline,
+    // DRIVE-ALL: kept on every device (synced)
+    offlineAll: allFolders,
+    isKeptOfflineAll: function (path) { return allFolders().some(function (f) { return under(path, f); }); },
+    setKeptOfflineAll: setKeptOfflineAll,
+    _allMerge: allMerge, _allClean: allClean,
 
     // VD-GC: clean-up of unused cloud objects, only when asked.
     usage: gcUsage,
@@ -1582,5 +1637,6 @@
 
   // ---------- Boot ----------
   startAutoEngine();
+  allSlice(0);
   console.log("[orOS] vault.js v0.1.0 booted");
 })();
