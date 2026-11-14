@@ -8,9 +8,21 @@ Base keeps records with structure, like a small database: a catalogue of your bo
 
 ## Fields
 - Tap a column header to edit the field, sort by it, move it, hide it in this view or delete it. The `+` at the end of the header row adds a field.
-- Types: short and long text, number, currency, percent, date (with or without a time), checkbox, single choice, multiple choice, rating, email, link, phone, and three that Base fills in by itself: autonumber, created time and last changed time.
+- Types: short and long text, number, currency, percent, date (with or without a time), checkbox, single choice, multiple choice, rating, email, web address, phone, links to records, and those Base fills in by itself: autonumber, created time, last changed time, lookups, rollups, counts and formulas.
 - Changing a field's type converts its values. Values that do not fit are emptied, and Base tells you how many before it changes anything. `Undo` brings them back.
 - The first field names each record. Choose another one in the table menu (`⋯` › Field that names records).
+
+## Links between tables
+- A `Link to records` field links a record to records of another table of the same base, for example a book to its authors. The other table gets a field of its own that shows the same links from its side; tick `Only one record` for one link per record.
+- Tap a link cell (or press Enter) to pick records. Search, tap to link or unlink, or make a new record with the name you typed. In the open record, tap a linked record's name to open it.
+- Paste names copied from a spreadsheet into a link column: Base links the records with those names and tells you which it did not find.
+- `Lookup` shows a field of the linked records, `Rollup` sums them up (sum, average, smallest, largest, counts, all as text, all or any ticked), `Count of links` counts them. Base keeps them up to date by itself.
+- When two devices add different links to the same record, both are kept. Deleting a link field also deletes its other side; `Undo` brings both back with their links.
+
+## Formulas
+- A `Formula` field calculates a value from the other fields of the record. Write field names in braces: `{Price} * {Copies}`, `IF({Pages} > 300, "long", "short")`, `{Out} + 30` with `Show the result as a date`.
+- The functions are the [Spreadsheet](app:spreadsheet)'s (IF, ROUND, SUM, CONCATENATE, TODAY, YEAR…), written in English, with a dot for decimals. `Insert a field` adds a name at the cursor and the line below shows the result for the first record.
+- Renaming a field keeps formulas working. A formula that reads itself shows `#CYC!`, a division by zero `#DIV/0!`; cell references like A1 are not part of a Base formula.
 
 ## Records
 - `New record` adds a record and opens it. In the grid, `New record` under the last row adds one in place.

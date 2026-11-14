@@ -111,9 +111,50 @@
       "fld.tooMany": "A table holds at most {n} fields.", "fld.nameTaken": "Another field already has this name.",
       "type.text": "Short text", "type.long": "Long text", "type.number": "Number", "type.currency": "Currency",
       "type.percent": "Percent", "type.date": "Date", "type.check": "Checkbox", "type.select": "Single choice",
-      "type.multi": "Multiple choice", "type.rating": "Rating", "type.email": "Email", "type.url": "Link",
+      "type.multi": "Multiple choice", "type.rating": "Rating", "type.email": "Email", "type.url": "Web address",
       "type.phone": "Phone", "type.auto": "Autonumber", "type.ctime": "Created time", "type.mtime": "Last changed time",
       "type.other": "Newer field type",
+      "type.link": "Link to records",
+      "type.lookup": "Lookup",
+      "type.rollup": "Rollup",
+      "type.count": "Count of links",
+      "type.formula": "Formula",
+      "fld.linkTo": "Link to table",
+      "fld.linkOne": "Only one record",
+      "fld.linkHint": "The table “{z}” gets a field “{x}” that shows the same links from its side.",
+      "fld.linkSelf": "Records of this table link to each other.",
+      "fld.via": "Through the link field",
+      "fld.from": "Field of the linked records",
+      "fld.fn": "Summary",
+      "fn.SUM": "Sum",
+      "fn.AVG": "Average",
+      "fn.MIN": "Smallest",
+      "fn.MAX": "Largest",
+      "fn.COUNT": "Count of numbers",
+      "fn.COUNTA": "Count of filled values",
+      "fn.CONCAT": "All, as text",
+      "fn.AND": "All ticked",
+      "fn.OR": "At least one ticked",
+      "fld.noLink": "Add a “Link to records” field to this table first.",
+      "fld.expr": "Formula",
+      "fld.exprHint": "Write field names in braces, like {Price} * {Copies}. The functions are the Spreadsheet’s (IF, ROUND, CONCATENATE, TODAY…), in English, with a dot for decimals.",
+      "fld.insert": "Insert a field",
+      "fld.preview": "First record: {x}",
+      "fld.exprBad": "There is no field called “{x}” in this table.",
+      "fld.asDate": "Show the result as a date",
+      "fld.decAuto": "As it comes",
+      "fld.typeLocked": "A link field keeps its type. To change it, delete the field.",
+      "del.linkField": "Delete “{x}”? Its other side “{y}” in “{z}” and all the links go too.",
+      "lnk.title": "Link records",
+      "lnk.search": "Search in “{x}”",
+      "lnk.new": "New record “{x}”",
+      "lnk.add": "Link a record",
+      "lnk.unlink": "Unlink {x}",
+      "lnk.none": "No records match.",
+      "lnk.more": "The first {n} are shown. Search to find others.",
+      "lnk.gone": "The linked table was deleted.",
+      "lnk.removed": "Links removed",
+      "lnk.pasted": "{n} records not found, left out",
       "flt.title": "Filter", "flt.all": "Records that match all of these", "flt.any": "Records that match any of these",
       "flt.add": "Add a condition", "flt.none": "No conditions: every record is shown.", "flt.remove": "Remove condition",
       "flt.value": "Value",
@@ -205,6 +246,47 @@
       "type.multi": "Πολλές επιλογές", "type.rating": "Βαθμολογία", "type.email": "Email", "type.url": "Σύνδεσμος",
       "type.phone": "Τηλέφωνο", "type.auto": "Αύξων αριθμός", "type.ctime": "Ώρα δημιουργίας", "type.mtime": "Ώρα τελευταίας αλλαγής",
       "type.other": "Νεότερος τύπος πεδίου",
+      "type.link": "Σύνδεση με εγγραφές",
+      "type.lookup": "Αναζήτηση από σύνδεση",
+      "type.rollup": "Σύνοψη από σύνδεση",
+      "type.count": "Πλήθος συνδέσεων",
+      "type.formula": "Τύπος",
+      "fld.linkTo": "Σύνδεση με τον πίνακα",
+      "fld.linkOne": "Μόνο μία εγγραφή",
+      "fld.linkHint": "Ο πίνακας «{z}» παίρνει ένα πεδίο «{x}» που δείχνει τις ίδιες συνδέσεις από τη δική του πλευρά.",
+      "fld.linkSelf": "Οι εγγραφές αυτού του πίνακα συνδέονται μεταξύ τους.",
+      "fld.via": "Μέσω του πεδίου σύνδεσης",
+      "fld.from": "Πεδίο των συνδεδεμένων εγγραφών",
+      "fld.fn": "Σύνοψη",
+      "fn.SUM": "Άθροισμα",
+      "fn.AVG": "Μέσος όρος",
+      "fn.MIN": "Μικρότερο",
+      "fn.MAX": "Μεγαλύτερο",
+      "fn.COUNT": "Πλήθος αριθμών",
+      "fn.COUNTA": "Πλήθος συμπληρωμένων",
+      "fn.CONCAT": "Όλα, ως κείμενο",
+      "fn.AND": "Όλα τσεκαρισμένα",
+      "fn.OR": "Τουλάχιστον ένα τσεκαρισμένο",
+      "fld.noLink": "Πρόσθεσε πρώτα σε αυτόν τον πίνακα ένα πεδίο «Σύνδεση με εγγραφές».",
+      "fld.expr": "Τύπος",
+      "fld.exprHint": "Γράψε τα ονόματα των πεδίων σε άγκιστρα, π.χ. {Τιμή} * {Αντίτυπα}. Οι συναρτήσεις είναι του Υπολογιστικού φύλλου (IF, ROUND, CONCATENATE, TODAY…), στα αγγλικά, με τελεία για τα δεκαδικά.",
+      "fld.insert": "Βάλε πεδίο",
+      "fld.preview": "Πρώτη εγγραφή: {x}",
+      "fld.exprBad": "Δεν υπάρχει πεδίο «{x}» σε αυτόν τον πίνακα.",
+      "fld.asDate": "Δείξε το αποτέλεσμα ως ημερομηνία",
+      "fld.decAuto": "Όπως βγαίνει",
+      "fld.typeLocked": "Ένα πεδίο σύνδεσης κρατά τον τύπο του. Για να τον αλλάξεις, διάγραψε το πεδίο.",
+      "del.linkField": "Διαγραφή του «{x}»; Φεύγουν μαζί η άλλη του πλευρά «{y}» στον πίνακα «{z}» και όλες οι συνδέσεις.",
+      "lnk.title": "Σύνδεση εγγραφών",
+      "lnk.search": "Αναζήτηση στο «{x}»",
+      "lnk.new": "Νέα εγγραφή «{x}»",
+      "lnk.add": "Σύνδεσε εγγραφή",
+      "lnk.unlink": "Αποσύνδεση: {x}",
+      "lnk.none": "Καμία εγγραφή δεν ταιριάζει.",
+      "lnk.more": "Φαίνονται οι πρώτες {n}. Ψάξε για να βρεις τις άλλες.",
+      "lnk.gone": "Ο συνδεδεμένος πίνακας διαγράφηκε.",
+      "lnk.removed": "Οι συνδέσεις αφαιρέθηκαν",
+      "lnk.pasted": "{n} εγγραφές δεν βρέθηκαν και έμειναν έξω",
       "flt.title": "Φίλτρο", "flt.all": "Εγγραφές που ταιριάζουν σε όλα αυτά", "flt.any": "Εγγραφές που ταιριάζουν σε κάποιο από αυτά",
       "flt.add": "Προσθήκη συνθήκης", "flt.none": "Χωρίς συνθήκες: φαίνονται όλες οι εγγραφές.", "flt.remove": "Αφαίρεση συνθήκης",
       "flt.value": "Τιμή",
@@ -765,7 +847,7 @@
   var editing = null;      // { rec, f, input, cell }
   var gridState = null;    // { rows, cols, top }
 
-  var DEF_W = { text: 200, long: 260, number: 110, currency: 120, percent: 100, date: 140, check: 70, select: 150,
+  var DEF_W = { link: 200, lookup: 200, rollup: 120, count: 90, formula: 160, text: 200, long: 260, number: 110, currency: 120, percent: 100, date: 140, check: 70, select: 150,
     multi: 200, rating: 120, email: 210, url: 210, phone: 150, auto: 80, ctime: 170, mtime: 170 };
   function colW(f, isPf) {
     var w = prefs.w[f.id];
@@ -797,7 +879,7 @@
     var corner = el("div", "g-cell g-num g-corner");
     head.appendChild(corner);
     cols.forEach(function (f, i) {
-      var hc = el("div", "g-cell g-hcell" + (i === 0 ? " g-pf" : "") + (C.isNumType(f.type) ? " num" : ""));
+      var hc = el("div", "g-cell g-hcell" + (i === 0 ? " g-pf" : "") + (C.isNumField(ix, f) ? " num" : ""));
       hc.setAttribute("role", "columnheader");
       hc.style.width = widths[i] + "px";
       var hb = btn("g-hbtn", null, function () { fieldMenu(f); });
@@ -823,7 +905,7 @@
     var foot = el("div", "g-row g-foot");
     foot.appendChild(el("div", "g-cell g-num"));
     cols.forEach(function (f, i) {
-      var c = el("div", "g-cell g-sum" + (i === 0 ? " g-pf" : "") + (C.isNumType(f.type) ? " num" : ""));
+      var c = el("div", "g-cell g-sum" + (i === 0 ? " g-pf" : "") + (C.isNumField(ix, f) ? " num" : ""));
       c.style.width = widths[i] + "px";
       c.textContent = sumText(f, shown);
       foot.appendChild(c);
@@ -849,19 +931,16 @@
 
   function typeMark(type) {
     return { text: "Aa", long: "¶", number: "#", currency: "€", percent: "%", date: "▦", check: "☑", select: "◉", multi: "☰",
-      rating: "★", email: "@", url: "↗", phone: "☎", auto: "№", ctime: "⏱", mtime: "⏱" }[type] || "?";
+      rating: "★", email: "@", url: "↗", phone: "☎", auto: "№", ctime: "⏱", mtime: "⏱",
+      link: "⇄", lookup: "⤷", rollup: "∑", count: "⇄#", formula: "ƒx" }[type] || "?";
   }
   function typeLabel(type) { return C.TYPES.indexOf(type) >= 0 ? t("type." + type) : t("type.other"); }
 
   function sumText(f, recs) {
     if (!recs.length) return "";
     var s = C.summary(ix, recs, f);
-    if (f.type === "check") return t("sum.checked", { n: fmtNum(s.checked) });
-    if (s.sum !== undefined && s.filled) {
-      var fake = { id: "x", t: "", c: 0, m: 0, v: { x: s.sum }, fm: {} };
-      var ff = Object.assign({}, f, { id: "x" });
-      return t("sum.sum", { x: f.type === "rating" ? fmtNum(s.sum) : C.text(ix, fake, ff, fmt()) });
-    }
+    if (s.checked !== undefined) return t("sum.checked", { n: fmtNum(s.checked) });
+    if (s.sum !== undefined && s.filled) return t("sum.sum", { x: f.type === "rating" ? fmtNum(s.sum) : C.show(ix, f, s.sum, fmt()) });
     return s.filled ? t("sum.filled", { n: fmtNum(s.filled) }) : "";
   }
 
@@ -910,7 +989,7 @@
     num.appendChild(iconBtn(ICON.expand, t("rec.expand"), "g-exp", function () { openRecord(rec.id); }));
     r.appendChild(num);
     cols.forEach(function (f, c) {
-      var cell = el("div", "g-cell g-data" + (c === 0 ? " g-pf" : "") + (C.isNumType(f.type) ? " num" : "") + " t-" + f.type);
+      var cell = el("div", "g-cell g-data" + (c === 0 ? " g-pf" : "") + (C.isNumField(ix, f) ? " num" : "") + " t-" + f.type);
       cell.setAttribute("role", "gridcell");
       cell.style.width = widths[c] + "px";
       cell.dataset.f = f.id;
@@ -942,6 +1021,12 @@
   function valueNode(rec, f, plain) {
     var v = C.value(ix, rec, f);
     if (v === undefined || v === null || (Array.isArray(v) && !v.length)) return null;
+    if (f.type === "link") {
+      var lw = el("span", "pills");
+      v.forEach(function (id) { lw.appendChild(el("span", "pill lnk", recName(id))); });
+      return lw;
+    }
+    if (C.isErr(v)) return el("span", "val err", v);
     if (f.type === "select") {
       var o = C.optOf(f, v);
       return o ? el("span", "pill col-" + o.c, o.n || "—") : null;
@@ -971,6 +1056,13 @@
     var txt = C.text(ix, rec, f, fmt());
     if (f.type === "long") txt = txt.split("\n")[0];
     return el("span", "val", txt);
+  }
+
+  // the name of a record: its primary field's text
+  function recName(id) {
+    var r = ix.recs[id];
+    var pf = r ? C.primary(ix, r.t) : null;
+    return (r && pf && pf.type !== "link" && C.text(ix, r, pf, fmt())) || t("f.untitled");
   }
 
   // column resize (device-local widths)
@@ -1016,7 +1108,7 @@
       pf && f.id !== pf.id && at < order.length - 1 && { label: t("fld.right"), fn: function () { move(1); } },
       pf && f.id !== pf.id && { label: t("fld.hide"), fn: function () { setCfg({ hidden: v.cfg.hidden.concat([f.id]) }); } },
       pf && f.id !== pf.id && { label: t("fld.del"), danger: true, fn: function () {
-        confirmDlg(t("del.field", { x: f.name }), t("btn.delete"), function () { deleteRow(f.id); });
+        confirmDlg(delFieldText(f), t("btn.delete"), function () { deleteRow(f.id); });
       } }
     ]);
   }
@@ -1122,12 +1214,19 @@
       if (!f2 || !r2 || C.COMPUTED[f2.type]) return;
       var old = C.value(ix, r2, f2);
       if (old === undefined) return;
+      if (f2.type === "link") {
+        if (save(C.setLinks(data, f2.id, r2.id, [], Date.now()))) {
+          toast(t("lnk.removed"), function () { save(C.setLinks(data, f2.id, r2.id, old, Date.now())); });
+        }
+        return;
+      }
       setVal(r2, f2, null);
       toast(t("cleared"), function () { var o = {}; o[f2.id] = old; save(C.setValues(data, r2.id, o, Date.now())); });
     }
     else if (k.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && sel) {
       var f3 = ix.fields[sel.c];
       if (f3 && /^(text|long|number|currency|percent|email|url|phone)$/.test(f3.type)) { e.preventDefault(); startEdit(k); }
+      else if (f3 && f3.type === "link") { e.preventDefault(); startEdit(); }
     }
   }
 
@@ -1143,6 +1242,7 @@
     if (!sel || !gridState) return;
     var f = ix.fields[sel.c], rec = ix.recs[sel.r];
     if (!f || !rec) return;
+    if (f.type === "link") { linkPicker(rec, f); return; }
     if (C.COMPUTED[f.type]) { toast(t("readOnly")); return; }
     if (C.TYPES.indexOf(f.type) < 0) { openRecord(rec.id); return; }
     if (f.type === "long" || f.type === "multi" || f.type === "check" || f.type === "rating") { openRecord(rec.id, f.id); return; }
@@ -1251,7 +1351,7 @@
       var r = C.addRecord(d, cur.table, {}, now + k);
       d = r.data; rows.push(r.id); created.push(r.id);
     }
-    var dix = C.index(d);
+    var dix = C.index(d), oldLinks = [], missing = 0;
     lines.forEach(function (cells, li) {
       var recId = rows[ri + li];
       if (!recId) return;
@@ -1259,6 +1359,20 @@
       cells.forEach(function (s, cj) {
         var f = cols[ci + cj];
         if (!f || C.COMPUTED[f.type]) return;
+        if (f.type === "link") {
+          // names of the other table's records, comma separated
+          var pfT = C.primary(dix, f.opt.to), ids = [];
+          s.split(/\s*,\s*/).forEach(function (name) {
+            var key = C.fold(name.trim());
+            if (!key) return;
+            var hit = pfT && (dix.tbRecs[f.opt.to] || []).filter(function (r) { return C.fold(C.text(dix, r, pfT).trim()) === key; })[0];
+            if (hit) ids.push(hit.id); else missing++;
+          });
+          oldLinks.push([recId, f.id, (C.value(dix, dix.recs[recId], f) || []).slice()]);
+          d = C.setLinks(d, f.id, recId, ids, now);
+          n++;
+          return;
+        }
         var val = C.fromText(f, s);
         old[f.id] = C.value(dix, dix.recs[recId], f);
         patch[f.id] = val === undefined ? null : val;
@@ -1268,8 +1382,9 @@
       d = C.setValues(d, recId, patch, now);
     });
     if (!save(d)) return;
-    toast(t("pasted", { n: fmtNum(n) }), function () {
+    toast(t("pasted", { n: fmtNum(n) }) + (missing ? " · " + t("lnk.pasted", { n: fmtNum(missing) }) : ""), function () {
       var u = data, t2 = Date.now();
+      oldLinks.forEach(function (x) { u = C.setLinks(u, x[1], x[0], x[2], t2); });
       undo.forEach(function (x) {
         var o = {};
         Object.keys(x[1]).forEach(function (k2) { o[k2] = x[1][k2] === undefined ? null : x[1][k2]; });
@@ -1396,8 +1511,9 @@
         if (!roomFor(1)) return;
         var vals = {};
         Object.keys(rec.v).forEach(function (k) { vals[k] = rec.v[k]; });
-        var r = C.addRecord(data, rec.t, vals, Date.now());
-        if (save(r.data)) { recDlg.id = r.id; fillRecord(); toast(t("dup.done")); }
+        var now = Date.now();
+        var r = C.addRecord(data, rec.t, vals, now);
+        if (save(C.copyLinks(r.data, rec.id, r.id, now))) { recDlg.id = r.id; fillRecord(); toast(t("dup.done")); }
       }),
       btn("chip pri", t("btn.done"), function () { d.close(); }));
     void tb;
@@ -1410,6 +1526,7 @@
       var next = C.setValues(data, rec.id, p, Date.now());
       if (C.serialize(next) !== C.serialize(data)) save(next, { quiet: true });
     }
+    if (f.type === "link") return linkEditor(rec, f);
     if (C.COMPUTED[f.type] || C.TYPES.indexOf(f.type) < 0) {
       var ro = el("div", "rec-ro");
       var n = valueNode(rec, f, true);
@@ -1490,6 +1607,99 @@
     return inp;
   }
 
+  // ---------- 7b. Links: the record's chips and the picker ----------
+  function linkEditor(rec, f) {
+    var box = el("div", "link-box");
+    if (!ix.tables[f.opt.to]) { box.appendChild(el("span", "hint", t("lnk.gone"))); return box; }
+    var cur = C.value(ix, rec, f) || [];
+    var ul = el("ul", "link-list");
+    cur.forEach(function (id) {
+      var li = el("li", "pill lnk");
+      var name = recName(id);
+      li.appendChild(btn("lnk-open", name, function () { openRecord(id); }));
+      li.appendChild(iconBtn(ICON.x, t("lnk.unlink", { x: name }), "lnk-x", function () {
+        var now2 = Date.now(), list = (C.value(ix, ix.recs[rec.id], f) || []).filter(function (x) { return x !== id; });
+        save(C.setLinks(data, f.id, rec.id, list, now2), { quiet: true });
+        refreshOpenRecord();
+      }));
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    var add = btn("chip small", t("lnk.add"), function () { linkPicker(ix.recs[rec.id], f); });
+    add.dataset.f = f.id;
+    if (f.opt.one && cur.length) add.hidden = true;
+    box.appendChild(add);
+    return box;
+  }
+  // Pick the records a record links to. Each tap links or unlinks at once.
+  var PICK_MAX = 100;
+  function linkPicker(rec, f) {
+    var tbT = ix.tables[f.opt.to];
+    if (!rec || !tbT) { toast(t("lnk.gone")); return; }
+    var d = dialog(t("lnk.title"), "picker");
+    var q = input("search", "");
+    q.placeholder = t("lnk.search", { x: tbT.name });
+    q.setAttribute("aria-label", q.placeholder);
+    d.body.appendChild(q);
+    var list = el("ul", "pick-list");
+    d.body.appendChild(list);
+    var note = el("p", "hint");
+    d.body.appendChild(note);
+    function paint() {
+      var r = ix.recs[rec.id];
+      if (!r) { d.close(); return; }
+      var cur = C.value(ix, r, f) || [];
+      var key = C.fold(q.value.trim());
+      var all = (ix.tbRecs[f.opt.to] || []).filter(function (x) { return !(f.opt.inv === f.id && x.id === r.id); });
+      var hits = key ? all.filter(function (x) { return C.fold(recName(x.id)).indexOf(key) >= 0; }) : all;
+      // linked first, then the rest in the table's order
+      hits = hits.filter(function (x) { return cur.indexOf(x.id) >= 0; }).concat(hits.filter(function (x) { return cur.indexOf(x.id) < 0; }));
+      list.textContent = "";
+      hits.slice(0, PICK_MAX).forEach(function (x) {
+        var on = cur.indexOf(x.id) >= 0;
+        var li = el("li");
+        var b = btn("pick" + (on ? " on" : ""), recName(x.id), function () {
+          var now = Date.now(), now0 = C.value(ix, ix.recs[rec.id], f) || [];
+          var next = now0.indexOf(x.id) >= 0 ? now0.filter(function (y) { return y !== x.id; }) : f.opt.one ? [x.id] : now0.concat([x.id]);
+          save(C.setLinks(data, f.id, rec.id, next, now), { quiet: true });
+          if (f.opt.one && next.length) { d.close(); return; }
+          paint();
+        });
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+        li.appendChild(b);
+        list.appendChild(li);
+      });
+      note.textContent = !hits.length ? t("lnk.none") : hits.length > PICK_MAX ? t("lnk.more", { n: fmtNum(PICK_MAX) }) : "";
+      var exact = key && all.some(function (x) { return C.fold(recName(x.id)) === key; });
+      newBtn.hidden = !key || exact;
+      newBtn.textContent = t("lnk.new", { x: q.value.trim() });
+    }
+    var newBtn = btn("chip small", "", function () {
+      var name = q.value.trim();
+      var pfT = C.primary(ix, f.opt.to);
+      if (!name || !roomFor(1)) return;
+      var vals = {};
+      if (pfT && !C.NOSTORE[pfT.type]) vals[pfT.id] = name;
+      var now = Date.now();
+      var made = C.addRecord(data, f.opt.to, vals, now);
+      var cur = C.value(ix, ix.recs[rec.id], f) || [];
+      if (save(C.setLinks(made.data, f.id, rec.id, f.opt.one ? [made.id] : cur.concat([made.id]), now + 1), { quiet: true })) {
+        q.value = "";
+        if (f.opt.one) { d.close(); return; }
+        paint();
+      }
+    });
+    newBtn.hidden = true;
+    d.body.insertBefore(newBtn, note);
+    var tm = 0;
+    q.addEventListener("input", function () { clearTimeout(tm); tm = setTimeout(paint, 150); });
+    d.onclose(function () { renderContent(); refreshOpenRecord(); });
+    d.foot(btn("chip pri", t("btn.done"), function () { d.close(); }));
+    paint();
+    d.open();
+    q.focus();
+  }
+
   // ---------- 8. Field dialog ----------
   function fieldDialog(f) {
     var tb = curTable();
@@ -1506,17 +1716,123 @@
     var pf = C.primary(ix, tb.id);
     if (f && pf && pf.id === f.id) {
       // the primary field names records: keep it a kind of text
-      [].forEach.call(type.options, function (o) { if (!/^(text|long|email|url|phone|number|auto|date)$/.test(o.value)) o.disabled = true; });
+      [].forEach.call(type.options, function (o) { if (!/^(text|long|email|url|phone|number|auto|date|formula)$/.test(o.value)) o.disabled = true; });
     }
+    // a link field keeps its type, and an existing field does not become one
+    if (f && f.type === "link") type.disabled = true;
+    else if (f) [].forEach.call(type.options, function (o) { if (o.value === "link") o.disabled = true; });
     d.body.appendChild(fld(t("fld.type"), type));
+    if (f && f.type === "link") d.body.appendChild(el("p", "hint", t("fld.typeLocked")));
     var optBox = el("div", "opt-box");
     d.body.appendChild(optBox);
     var desc = el("textarea"); desc.rows = 2; desc.maxLength = 1000; desc.value = f && f.opt.desc || "";
     var opt = JSON.parse(JSON.stringify(f ? f.opt : {}));
+    var links = list.filter(function (x) { return x.type === "link" && ix.tables[x.opt.to]; });
+    var exprBox = null;                          // the formula as people write it
+    if (f && f.type === "formula") exprBox = C.exprNames(ix, tb.id, f.opt.expr);
+    function decSelect(cur, set) {
+      var s2 = el("select");
+      var a0 = el("option", null, t("fld.decAuto")); a0.value = ""; s2.appendChild(a0);
+      for (var k = 0; k <= 8; k++) { var ok = el("option", null, String(k)); ok.value = String(k); s2.appendChild(ok); }
+      s2.value = typeof cur === "number" ? String(cur) : "";
+      s2.addEventListener("change", function () { set(s2.value === "" ? undefined : +s2.value); });
+      return fld(t("fld.dec"), s2);
+    }
     function paintOpts() {
       optBox.textContent = "";
       var ty = type.value;
-      if (ty === "number" || ty === "currency" || ty === "percent") {
+      if (ty === "link") {
+        var others = ix.baseTables[tb.base] || [];
+        if (!f) {
+          var to = el("select");
+          others.forEach(function (x) { var o4 = el("option", null, x.name || t("f.untitled")); o4.value = x.id; to.appendChild(o4); });
+          if (!opt.to || !ix.tables[opt.to]) opt.to = (others.filter(function (x) { return x.id !== tb.id; })[0] || tb).id;
+          to.value = opt.to;
+          to.addEventListener("change", function () { opt.to = to.value; paintOpts(); });
+          optBox.appendChild(fld(t("fld.linkTo"), to));
+        }
+        var l1 = el("label", "opt");
+        var one = el("input"); one.type = "checkbox"; one.checked = opt.one === true;
+        one.addEventListener("change", function () { if (one.checked) opt.one = true; else delete opt.one; });
+        l1.appendChild(one); l1.appendChild(el("span", null, t("fld.linkOne")));
+        optBox.appendChild(l1);
+        var toT = ix.tables[opt.to];
+        if (toT && opt.to === tb.id) optBox.appendChild(el("p", "hint", t("fld.linkSelf")));
+        else if (toT) {
+          var inv = f ? ix.fields[f.opt.inv] : null;
+          optBox.appendChild(el("p", "hint", t("fld.linkHint", { x: inv ? inv.name : invName(tb, toT), z: toT.name })));
+        }
+      } else if (ty === "lookup" || ty === "rollup" || ty === "count") {
+        if (!links.length) { optBox.appendChild(el("p", "hint", t("fld.noLink"))); return; }
+        if (!links.some(function (x) { return x.id === opt.via; })) opt.via = links[0].id;
+        var via = fieldSelect(links, opt.via);
+        via.addEventListener("change", function () { opt.via = via.value; delete opt.f; paintOpts(); });
+        optBox.appendChild(fld(t("fld.via"), via));
+        if (ty === "count") return;
+        var far = (ix.tbFields[ix.fields[opt.via].opt.to] || []).filter(function (x) { return x.id !== opt.via && x.id !== ix.fields[opt.via].opt.inv; });
+        if (!far.length) return;
+        if (!far.some(function (x) { return x.id === opt.f; })) {
+          // a rollup starts on the first field with numbers
+          var numF = ty === "rollup" ? far.filter(function (x) { return C.isNumField(ix, x); })[0] : null;
+          opt.f = (numF || far[0]).id;
+        }
+        var from = fieldSelect(far, opt.f);
+        from.addEventListener("change", function () { opt.f = from.value; });
+        optBox.appendChild(fld(t("fld.from"), from));
+        if (ty === "rollup") {
+          var fn = el("select");
+          C.ROLL_FNS.forEach(function (k) { var o5 = el("option", null, t("fn." + k)); o5.value = k; fn.appendChild(o5); });
+          fn.value = opt.fn || "SUM";
+          opt.fn = fn.value;
+          fn.addEventListener("change", function () { opt.fn = fn.value; });
+          optBox.appendChild(fld(t("fld.fn"), fn));
+          optBox.appendChild(decSelect(opt.dec, function (v) { if (v === undefined) delete opt.dec; else opt.dec = v; }));
+        }
+      } else if (ty === "formula") {
+        var ta = el("textarea", "expr");
+        ta.rows = 3; ta.maxLength = C.MAX_EXPR; ta.spellcheck = false;
+        ta.value = exprBox || "";
+        ta.setAttribute("dir", "ltr");
+        var preview = el("p", "hint expr-out");
+        var ins = el("select");
+        var i0 = el("option", null, t("fld.insert")); i0.value = ""; ins.appendChild(i0);
+        list.forEach(function (x) { if (!f || x.id !== f.id) { var o6 = el("option", null, x.name); o6.value = x.id; ins.appendChild(o6); } });
+        ins.setAttribute("aria-label", t("fld.insert"));
+        ins.addEventListener("change", function () {
+          var x = ix.fields[ins.value];
+          ins.value = "";
+          if (!x) return;
+          var token = "{" + x.name.replace(/[\\}]/g, "\\$&") + "}";
+          var a = ta.selectionStart, b = ta.selectionEnd;
+          ta.value = ta.value.slice(0, a) + token + ta.value.slice(b);
+          ta.focus();
+          ta.selectionStart = ta.selectionEnd = a + token.length;
+          exprBox = ta.value; preview2();
+        });
+        var tmF = 0;
+        function preview2() {
+          var r = C.exprIds(ix, tb.id, ta.value);
+          if (r.bad !== undefined) { preview.textContent = t("fld.exprBad", { x: r.bad }); return; }
+          var first = (ix.tbRecs[tb.id] || [])[0];
+          if (!first) { preview.textContent = ""; return; }
+          var tmp = C.putRow(data, "fields", { id: f ? f.id : "fpreview", tb: tb.id, name: name.value || "x", type: "formula", ord: f ? f.ord : 1e8, opt: Object.assign({}, opt, { expr: r.expr }) }, Date.now());
+          var tix = C.index(tmp);
+          var tf = tix.fields[f ? f.id : "fpreview"];
+          preview.textContent = t("fld.preview", { x: (tf && tix.recs[first.id] && C.text(tix, tix.recs[first.id], tf, fmt())) || "—" });
+        }
+        ta.addEventListener("input", function () { exprBox = ta.value; clearTimeout(tmF); tmF = setTimeout(preview2, 300); });
+        optBox.appendChild(fld(t("fld.expr"), ta));
+        optBox.appendChild(el("p", "hint", t("fld.exprHint")));
+        optBox.appendChild(ins);
+        optBox.appendChild(preview);
+        optBox.appendChild(decSelect(opt.dec, function (v) { if (v === undefined) delete opt.dec; else opt.dec = v; preview2(); }));
+        var l2 = el("label", "opt");
+        var asD = el("input"); asD.type = "checkbox"; asD.checked = opt.as === "date";
+        asD.addEventListener("change", function () { if (asD.checked) opt.as = "date"; else delete opt.as; preview2(); });
+        l2.appendChild(asD); l2.appendChild(el("span", null, t("fld.asDate")));
+        optBox.appendChild(l2);
+        preview2();
+      } else if (ty === "number" || ty === "currency" || ty === "percent") {
         var dec = input("number", String(typeof opt.dec === "number" ? opt.dec : ty === "currency" ? 2 : 0));
         dec.min = 0; dec.max = 8;
         dec.addEventListener("input", function () { opt.dec = Math.max(0, Math.min(8, parseInt(dec.value, 10) || 0)); });
@@ -1577,7 +1893,7 @@
     if (f && (!pf || pf.id !== f.id)) {
       buttons.push(btn("chip danger", t("fld.del"), function () {
         d.close();
-        confirmDlg(t("del.field", { x: f.name }), t("btn.delete"), function () { deleteRow(f.id); });
+        confirmDlg(delFieldText(f), t("btn.delete"), function () { deleteRow(f.id); });
       }));
       buttons.push(el("span", "spacer"));
     }
@@ -1588,10 +1904,24 @@
       if (clash) { toast(t("fld.nameTaken")); name.focus(); return; }
       if (opt.ch) opt.ch = opt.ch.filter(function (c) { return c.n.trim(); });
       if (desc.value.trim()) opt.desc = desc.value; else delete opt.desc;
-      var now = Date.now();
+      var now = Date.now(), ty = type.value;
+      if ((ty === "lookup" || ty === "rollup" || ty === "count") && (!opt.via || (ty !== "count" && !opt.f))) { toast(t("fld.noLink")); return; }
+      if (ty === "formula") {
+        var ex = C.exprIds(ix, tb.id, exprBox || "");
+        if (ex.bad !== undefined) { toast(t("fld.exprBad", { x: ex.bad })); return; }
+        opt.expr = ex.expr;
+      }
+      if (!f && ty === "link") {
+        var toT = ix.tables[opt.to];
+        if (!toT) return;
+        if (toT.id !== tb.id && (ix.tbFields[toT.id] || []).length >= C.MAX_FIELDS) { toast(t("fld.tooMany", { n: C.MAX_FIELDS })); return; }
+        d.close();
+        save(C.addLinkField(data, tb.id, nm, toT.id, now, invName(tb, toT), null, opt.one === true));
+        return;
+      }
       if (!f) {
         d.close();
-        var nd = C.addField(data, tb.id, nm, type.value, opt, now);
+        var nd = C.addField(data, tb.id, nm, ty, opt, now);
         save(nd);
         return;
       }
@@ -1609,6 +1939,18 @@
     d.foot.apply(null, buttons);
     d.open();
     if (!f) name.select();
+  }
+  // the name of a link field's other side: the table's name, made unique there
+  function invName(tb, toT) {
+    var names = (ix.tbFields[toT.id] || []).map(function (x) { return C.fold(x.name); });
+    var base = tb.name || t("f.untitled"), nm = base, k = 2;
+    while (names.indexOf(C.fold(nm)) >= 0) nm = base + " " + k++;
+    return nm;
+  }
+  function delFieldText(f) {
+    var inv = f.type === "link" && f.opt.inv !== f.id ? ix.fields[f.opt.inv] : null;
+    if (inv) return t("del.linkField", { x: f.name, y: inv.name, z: (ix.tables[inv.tb] || {}).name || "" });
+    return t("del.field", { x: f.name });
   }
   function applyConvert(next) {
     var before = data;
@@ -1630,6 +1972,11 @@
     if (C.isDateType(type)) return t(op === "eq" ? "op.deq" : "op." + op);
     if (type === "multi") return t({ has: "op.mhas", hasnot: "op.mhasnot" }[op] || "op." + op);
     return t("op." + op);
+  }
+  // a field's kind as the B1 type name the filter menu speaks
+  function kt(f) {
+    var k = C.kindOf(ix, f);
+    return { num: "number", date: "date", stamp: "ctime", list: "text", text: "text" }[k] || k;
   }
   function fieldSelect(fields, val) {
     var s = el("select");
@@ -1659,12 +2006,12 @@
         var fs = fieldSelect(fields, c.f);
         fs.addEventListener("change", function () {
           var nf = ix.fields[fs.value];
-          conds[i] = { f: nf.id, op: C.opsFor(nf.type)[0] };
+          conds[i] = { f: nf.id, op: C.opsFor(kt(nf))[0] };
           commit(); paint();
         });
         var ops = el("select");
-        C.opsFor(f.type).filter(function (op) { return op !== "any" && op !== "none"; }).forEach(function (op) {
-          var o = el("option", null, opLabel(f.type, op)); o.value = op; ops.appendChild(o);
+        C.opsFor(kt(f)).filter(function (op) { return op !== "any" && op !== "none"; }).forEach(function (op) {
+          var o = el("option", null, opLabel(kt(f), op)); o.value = op; ops.appendChild(o);
         });
         ops.value = c.op;
         ops.addEventListener("change", function () { c.op = ops.value; if (!C.needsValue(c.op)) delete c.v; commit(); paint(); });
@@ -1677,19 +2024,19 @@
             (f.opt.ch || []).forEach(function (o) { var op2 = el("option", null, o.n || "—"); op2.value = o.id; w.appendChild(op2); });
             w.value = c.v || "";
             w.addEventListener("change", function () { if (w.value) c.v = w.value; else delete c.v; commit(); });
-          } else if (C.isDateType(f.type)) {
+          } else if (C.isDateType(kt(f))) {
             w = input("date", c.v || "");
             w.addEventListener("change", function () { if (w.value) c.v = w.value; else delete c.v; commit(); });
           } else {
             w = input("text", c.v === undefined ? "" : String(c.v));
-            if (C.isNumType(f.type)) w.inputMode = "decimal";
+            if (C.isNumType(kt(f))) w.inputMode = "decimal";
             var tm = 0;
             w.addEventListener("input", function () {
               clearTimeout(tm);
               tm = setTimeout(function () {
                 var s = w.value;
                 if (!s.trim()) delete c.v;
-                else if (C.isNumType(f.type)) { var n = C.parseNum(s); if (n === null) return; c.v = n; }
+                else if (C.isNumType(kt(f))) { var n = C.parseNum(s); if (n === null) return; c.v = n; }
                 else c.v = s;
                 commit();
               }, 300);
@@ -1703,7 +2050,7 @@
       });
       if (fields.length && conds.length < 30) d.body.appendChild(btn("chip small", t("flt.add"), function () {
         var f0 = fields[0];
-        conds.push({ f: f0.id, op: C.opsFor(f0.type)[0] });
+        conds.push({ f: f0.id, op: C.opsFor(kt(f0))[0] });
         commit(); paint();
       }));
     }

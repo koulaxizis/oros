@@ -131,7 +131,7 @@ test("values are typed by their field; bad ones are dropped, computed ones never
 
 test("a field type this code does not know keeps its options and values", () => {
   const d = seed();
-  const f = { id: "fx", m: 900, tb: "t1", name: "Future", type: "lookup", ord: 9, opt: { via: "fz", deep: { a: [1, 2] } } };
+  const f = { id: "fx", m: 900, tb: "t1", name: "Future", type: "geo", ord: 9, opt: { via: "fz", deep: { a: [1, 2] } } };
   const r = JSON.parse(JSON.stringify(rec(d, "r1")));
   r.v.fx = [{ any: "shape" }]; r.fm.fx = 900;
   const m = C.normalize({ bases: d.bases, tables: d.tables, fields: d.fields.concat([f]), views: d.views, recs: [r] });

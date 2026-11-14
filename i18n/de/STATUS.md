@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 44413 of 44841 (99%)
+- Strings: 44453 of 44882 (99%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -19,7 +19,7 @@ text is still written in the code. They switch over wave by wave
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
-| base | 100% | 273 / 273 |
+| base | 99% | 313 / 314 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
@@ -180,6 +180,7 @@ text is still written in the code. They switch over wave by wave
 
 These show English until fixed (usually the English text changed).
 
+- de/base: fld.exprHint must keep the placeholders {Copies}|{Price}
 - de/budget: unknown key cy.guess
 - de/passwords: af.apps must keep the same HTML tags as English
 - de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
