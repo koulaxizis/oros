@@ -8,7 +8,7 @@
   "use strict";
 
   // The groups, in the order shown. A deep link names one of these.
-  var SECTIONS = ["appearance", "accessibility", "menu", "notifications", "sync", "lock", "users", "backup", "language", "files", "solo", "services", "system", "device"];
+  var SECTIONS = ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "users", "backup", "language", "files", "solo", "services", "system", "device"];
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
@@ -56,6 +56,9 @@
     ["dock-autohide", "appearance", "k.autohide", "k.dock", "k.on", "dock"],
     ["dock-over", "appearance", "k.over", "k.dock", "k.on", "dock"],
     ["pet", "appearance", "a.pet"],
+    ["fm-mine", "fonts", "fm.mine"],
+    ["fm-install", "fonts", "fm.install", "fm.mine"],
+    ["fm-free", "fonts", "fm.tab.free"],
     ["textsize", "accessibility", "ac.size"],
     ["contrast", "accessibility", "ac.contrast"],
     ["focus", "accessibility", "ac.focus"],
@@ -160,6 +163,9 @@
       "dv.loading": "Reading this device…", "dv.loadFail": "Could not load this section. Check the connection and open it again.",
       "dv.storage": "Storage", "dv.apps": "Space per app", "dv.battery": "Battery", "dv.network": "Network",
       "dv.screen": "Screen", "dv.features": "Browser features", "dv.report": "Copy report",
+      "s.fonts": "Fonts", "d.fonts": "Your font files, free fonts, Greek and polytonic letters, licences",
+      "fm.mine": "Your fonts", "fm.install": "Add font files…", "fm.tab.free": "Free fonts", "fm.free": "Free fonts",
+      "fm.loadFail": "Could not load this section. Check the connection and open it again.", "fm.loading": "Reading your fonts…",
       "s.accessibility": "Accessibility",
       "d.accessibility": "Text size, high contrast, focus ring",
 
@@ -1004,6 +1010,9 @@
       "w.greet": "greeting good morning welcome start hello",
       "w.tips": "tips tip hints first open guide help",
       "w.wallpaper": "background desktop picture image",
+      "w.fm-mine": "fonts font manager typeface typography greek polytonic coverage licence license specimen",
+      "w.fm-install": "add install font file ttf otf woff woff2 upload",
+      "w.fm-free": "free fonts fontsource google open font license ofl download",
       "w.me": "name greeting nickname call me personal",
       "w.seasonal": "christmas snow holiday festive decorations halloween easter",
       "w.seasonal-motion": "animation moving still reduce motion",
@@ -1116,6 +1125,9 @@
       "dv.loading": "Διαβάζω αυτή τη συσκευή…", "dv.loadFail": "Η ενότητα δεν φόρτωσε. Έλεγξε τη σύνδεση και άνοιξέ την ξανά.",
       "dv.storage": "Χώρος", "dv.apps": "Χώρος ανά εφαρμογή", "dv.battery": "Μπαταρία", "dv.network": "Δίκτυο",
       "dv.screen": "Οθόνη", "dv.features": "Δυνατότητες browser", "dv.report": "Αντιγραφή αναφοράς",
+      "s.fonts": "Γραμματοσειρές", "d.fonts": "Τα αρχεία γραμματοσειρών σου, δωρεάν γραμματοσειρές, ελληνικά και πολυτονικά, άδειες",
+      "fm.mine": "Οι γραμματοσειρές σου", "fm.install": "Προσθήκη αρχείων γραμματοσειράς…", "fm.tab.free": "Δωρεάν", "fm.free": "Δωρεάν γραμματοσειρές",
+      "fm.loadFail": "Η ενότητα δεν φόρτωσε. Έλεγξε τη σύνδεση και άνοιξέ την ξανά.", "fm.loading": "Διαβάζω τις γραμματοσειρές σου…",
       "s.accessibility": "Προσβασιμότητα",
       "d.accessibility": "Μέγεθος κειμένου, υψηλή αντίθεση, περίγραμμα εστίασης",
 
@@ -1959,6 +1971,9 @@
       "w.greet": "χαιρετισμός καλημέρα καλωσόρισμα εκκίνηση γεια",
       "w.tips": "συμβουλές συμβουλή υποδείξεις πρώτο άνοιγμα οδηγός βοήθεια",
       "w.wallpaper": "φόντο επιφάνεια εργασίας εικόνα",
+      "w.fm-mine": "γραμματοσειρές γραμματοσειρά τυπογραφία φόντ ελληνικά πολυτονικά κάλυψη άδεια δείγμα",
+      "w.fm-install": "προσθήκη εγκατάσταση αρχείο γραμματοσειράς ttf otf woff woff2",
+      "w.fm-free": "δωρεάν γραμματοσειρές fontsource google ανοιχτή άδεια ofl λήψη",
       "w.me": "όνομα χαιρετισμός παρατσούκλι προσωπικό",
       "w.seasonal": "χριστούγεννα χιόνι γιορτές στολισμός διακόσμηση πάσχα απόκριες",
       "w.seasonal-motion": "κίνηση κινούμενα ακίνητα",

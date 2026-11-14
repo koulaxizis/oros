@@ -284,9 +284,19 @@
   var TITLE_ST = { idea: "idea", prod: "in production", out: "published", oop: "out of print" };
   var ROLES = { a: "author", t: "translator", i: "illustrator", e: "editor", c: "cover", n: "narrator", o: "other" };
   var FMTS = { pb: "paperback", hb: "hardback", eb: "ebook", ab: "audiobook", ot: "other" };
+  // wave M1: music releases (title.mt, lists trk and med)
+  var MTS = { single: "single", ep: "ep", album: "album", comp: "compilation" };
+  var MEDS = { dig: "digital", cd: "cd", vin: "vinyl", cas: "cassette", ot: "other" };
+  var CRS = { art: "artist", feat: "featured", comp: "composer", lyr: "lyricist", arr: "arranger", prod: "producer", mix: "mixing", mast: "mastering", eng: "engineer", mus: "musician", o: "other" };
+  function isrcOut(c) { return typeof c === "string" && /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/.test(c) ? c.slice(0, 2) + "-" + c.slice(2, 5) + "-" + c.slice(5, 7) + "-" + c.slice(7) : ""; }
   function publishTitles(raw, args) {
     if (!isObj(args)) return { ok: false, err: "The arguments must be an object." };
     var d = isObj(raw) ? raw : {}, tombs = isObj(d.tombs) ? d.tombs : {};
+    function live(r) { return isObj(r) && typeof r.id === "string" && typeof r.ti === "string" && !(typeof tombs[r.id] === "number" && tombs[r.id] >= (Number(r.m) || 0)); }
+    var trks = {}, meds = {};
+    (Array.isArray(d.trk) ? d.trk : []).filter(live).forEach(function (r) { (trks[r.ti] = trks[r.ti] || []).push(r); });
+    (Array.isArray(d.med) ? d.med : []).filter(live).forEach(function (r) { (meds[r.ti] = meds[r.ti] || []).push(r); });
+    Object.keys(trks).forEach(function (k) { trks[k].sort(function (a, b) { return (a.disc || 1) - (b.disc || 1) || (a.no || 0) - (b.no || 0) || (a.id < b.id ? -1 : 1); }); });
     var st = args.status ? String(args.status) : "";
     var stKey = "";
     Object.keys(TITLE_ST).forEach(function (k) { if (k === st || TITLE_ST[k] === st) stKey = k; });
@@ -296,7 +306,8 @@
       if (!isObj(x) || typeof x.id !== "string" || (typeof tombs[x.id] === "number" && tombs[x.id] >= (Number(x.m) || 0))) return false;
       if (stKey && x.st !== stKey) return false;
       if (q) {
-        var hay = [x.t, x.sub, x.ser].concat((x.ppl || []).map(function (p) { return p && p.n; }), (x.fmts || []).map(function (f) { return f && f.isbn; }));
+        var hay = [x.t, x.sub, x.ser].concat((x.ppl || []).map(function (p) { return p && p.n; }), (x.fmts || []).map(function (f) { return f && f.isbn; }),
+          (trks[x.id] || []).map(function (r) { return [r.t, r.isrc, isrcOut(r.isrc)].join(" "); }), (meds[x.id] || []).map(function (r) { return r.upc; }));
         if (hay.map(fold).join(" ").indexOf(q) < 0) return false;
       }
       return true;
@@ -319,6 +330,37 @@
           return r;
         });
         if (fm.length) o.formats = fm;
+        if (isObj(x.mt)) {
+          o.type = MTS[x.mt.k] || "single";
+          put(o, "label", x.mt.lbl); put(o, "genre", x.mt.gen); put(o, "p_line", x.mt.pl); put(o, "c_line", x.mt.cl);
+          var tr = (trks[x.id] || []).map(function (r) {
+            var t = { no: r.no || 1, title: String(r.t || "") };
+            if ((r.disc || 1) > 1) t.disc = r.disc;
+            put(t, "version", r.ver); put(t, "artist", r.art); put(t, "isrc", isrcOut(r.isrc)); put(t, "language", r.lang);
+            if (r.dur) t.length = Math.floor(r.dur / 60) + ":" + (r.dur % 60 < 10 ? "0" : "") + (r.dur % 60);
+            if (r.ex === 1) t.explicit = true;
+            // PB-MUS M2: who made it and who owns what (the change_item names)
+            var cr = (Array.isArray(r.cr) ? r.cr : []).filter(isObj).map(function (c) { var y = { role: CRS[c.r] || "other", name: String(c.n || "") }; put(y, "instrument", c.ins); return y; });
+            if (cr.length) t.credits = cr;
+            [["sw", "writers"], ["sm", "masters"]].forEach(function (k) {
+              var l = (Array.isArray(r[k[0]]) ? r[k[0]] : []).filter(isObj).map(function (x) {
+                var y = { name: String(x.n || ""), share: typeof x.pct === "number" && isFinite(x.pct) ? x.pct : 0 };
+                put(y, "society", x.soc); put(y, "ipi", x.ipi);
+                return y;
+              });
+              if (l.length) t[k[1]] = l;
+            });
+            return t;
+          });
+          if (tr.length) o.tracks = tr;
+          var ed = (meds[x.id] || []).map(function (r) {
+            var e = { edition: MEDS[r.k] || "other" };
+            put(e, "upc", r.upc); put(e, "catalogue_no", r.cat); put(e, "distributor", r.dist); put(e, "note", r.note);
+            if (typeof r.price === "number" && r.price > 0) e.price = (Math.round(r.price * 100) / 100).toFixed(2);
+            return e;
+          });
+          if (ed.length) o.editions = ed;
+        }
         if (x.blurb) o.blurb = String(x.blurb).slice(0, TEXT_MAX);
         if (x.notes) o.notes = String(x.notes).slice(0, TEXT_MAX);
         if (x.kw) o.keywords = x.kw;

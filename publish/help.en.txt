@@ -1,5 +1,5 @@
 # Publishing
-Publishing is a desk for a small publisher: every book you publish with its formats, ISBNs, prices, sizes, back-cover text and cover, your ISBN blocks with the next free number, and barcodes for the back cover.
+Publishing is a desk for a small publisher: every book you publish with its formats, ISBNs, prices, sizes, back-cover text and cover, your ISBN blocks with the next free number, and barcodes for the back cover. Musicians and labels keep their singles, EPs and albums here too: tracks with ISRCs, editions with UPC/EAN, and their own code prefixes.
 
 ## Getting started
 1. Press `New title`, write the title and, if you like, the author.
@@ -89,19 +89,39 @@ Plan your social posts once: the text, a picture and the day (a time if you like
 
 On the day the post is listed as due here, in the [Calendar](app:calendar) and in [Today](app:today). Open it and post it from each network's own page: `Copy and open` copies the text and opens Mastodon, Bluesky, X, Threads or LinkedIn with the text already in it. Facebook and Instagram have no such page, so they open their home page and you paste the text. `Copy the picture` and `Save the picture` hand you the picture. Nothing is sent from orOS and no network account is needed here; for Mastodon write your server in Settings (for example mastodon.social). Then `Mark posted`.
 
-## ISBN
-Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `ISBN` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.
+## Music releases
+In `New title`, pick `Type` › `Music: Single`, `EP`, `Album` or `Compilation`. A music release has the same status, release date, people, texts and cover as a book (the main person is the `Artist`), and instead of formats:
+
+- `Release details`: the type, your label, the genre, and the ℗ and © lines that stores show (who owns the recording, who owns the artwork and texts).
+- `Tracks`: `+ Tracks` takes one track or the whole track list at once, one per line; a length at the end (3:45) is read too. Tap a track to open it: its title, version (Radio edit, Remix…), the artist when it is not the release's, its ISRC, its length, the language of the lyrics and whether the lyrics are explicit. ↑ and ↓ change the order.
+- `Editions`: digital, CD, vinyl, cassette or other, each with its UPC or EAN, catalogue number, price and distributor. `Barcode` gives the code's bars for the CD or sleeve.
+
+Inside each track:
+
+- `Credits`: who sang, played, wrote, produced, mixed or mastered it, with the instrument for a musician.
+- `Songwriting shares`: who wrote the song (music and lyrics) and their percent, with their collecting society (free text; the list only suggests names) and IPI number when they have one.
+- `Master ownership`: who owns the recording and their percent.
+
+Each list shows what its shares add up to, in red when it is not 100%. A name that matches a CRM partner is linked to them. `Split sheet in Writer` writes a split sheet for the track (release, ISRC, shares, credits and a line to sign for each person) as a new Writer document, to print or send for signing. `Same credits and splits on every track` copies the open track's three lists to the others (Undo puts theirs back).
+
+The ISRC and UPC/EAN fields check the code as you type and warn when another track or edition already has it. If your distributor gives you the codes, type them in. If you have your own prefixes (Codes tab), `Next free` fills in the next unused one. `Still missing` lists what a release still needs: artist, tracks, ISRCs, lengths, shares that make 100%, an edition, UPC/EAN, release date and cover.
+
+## Codes
+Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `Codes` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.
 
 For every block you see how many numbers are in use, the next free one (`Copy` or `New title with it`) and the list of numbers in use with their titles.
 
 - `Used outside this app`: numbers you gave to books before you used orOS, or spoiled ones. orOS will not offer them again.
 - `Numbers used twice` appears at the top when two formats have the same ISBN.
-- `Check an ISBN` tells you if any number is valid, shows its ISBN-10 and whether one of your titles has it.
+- `ISRC prefixes`: your country and registrant code as the agency gave them (for example GR-A1B). Each prefix shows the codes in use and the next free one for this year (CC-XXX-YY-NNNNN).
+- `UPC / EAN prefixes (GS1)`: your GS1 company prefix, as EAN-13 or UPC-A. You see how many codes are in use and the next free one with its check digit.
+- `Release codes used elsewhere`: ISRCs, UPCs or EANs you used outside this app, or spoiled ones; they are never offered as free.
+- `Check a code` tells you if any ISBN, ISRC, UPC or EAN is valid, shows an ISBN's ISBN-10 and whether one of your titles has it.
 
 ## Your data
 - Everything stays on this device and is saved as you go.
 - With orOS sync switched on in [Settings](app:settings), your titles and blocks follow you to your other devices, encrypted. Cover pictures travel with Vault Drive.
 
 ## Find it from anywhere
-- The menu's search box finds a title by its words, its people or any of its ISBNs (with or without hyphens, ISBN-10 too). Choosing one opens the title.
+- The menu's search box finds a title by its words, its people or any of its ISBNs (with or without hyphens, ISBN-10 too); a music release also by its tracks, ISRCs and UPC/EANs. Choosing one opens the title.
 - [Today](app:today) lists your posts and release-plan steps when they are due, the release days coming up, review copies to follow up and, in one line, the manuscripts waiting too long for an answer.
