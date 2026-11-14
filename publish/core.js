@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Publishing — data model, ISBN and barcode math (pure, no DOM)
+// orOS Publishing — data model, ISBN, ISRC, UPC and barcode math (pure, no DOM)
 // Loaded by index.html before app.js, by search.js callers and by
 // Node in the tests. For any small publisher: nothing here names a
 // real house.
@@ -13,6 +13,8 @@
 //                "list"|"net", k "" | format kind, adv }]
 //                rc (wave P8): review copies [{ id, n, out, email, d,
 //                st "sent"|"rev"|"no", url, q, rd, fu }]
+//                eps (LY-EPUB): EPUB ready per e-book format [{ f, d,
+//                p, n }] (Layout's EPUB export, recorded here)
 //     blocks: [{ id, m, p, note }],      ISBN blocks: p = the prefix as
 //                the agency gave it, with hyphens ("978-618-5321")
 //     isbnx:  [{ id, m, note }],         numbers used outside the app or
@@ -30,7 +32,22 @@
 //                submission is flagged (90); own (wave P15) = other
 //                names the publisher goes by, comma separated; unknown
 //                fields ride along
+//     trk:    [{ id, m, ti, no, disc, t, ver, art, isrc, dur, lang, ex? }]
+//                tracks of a music release (wave M1): ti = the title,
+//                isrc = 12 characters without hyphens, dur in seconds
+//     med:    [{ id, m, ti, k dig|cd|vin|cas|ot, upc, cat, price, dist, note }]
+//                editions of a music release (wave M1), upc = the
+//                UPC-A (12) or EAN-13 (13) as written
+//     isrcb:  [{ id, m, p "GR-A1B", note }]  ISRC prefixes (country +
+//                registrant) as the agency gave them
+//     upcb:   [{ id, m, p, f upc|ean, note }]  GS1 company prefixes
+//     codex:  [{ id, m, note }]  ISRCs / UPCs used outside the app
 //     tombs:  { id: ms } }
+//   A title with mt { k single|ep|album|comp, gen?, lbl?, pl?, cl? } is
+//   a music release (wave M1). Its tracks and editions live in trk / med,
+//   never inside the title, so an older device (which keeps a title's
+//   unknown fields only up to 8000 bytes and rewrites unknown format
+//   kinds) still keeps them as rows of lists it does not know.
 //   Later waves add lists of { id, m, … } rows; until a device knows a
 //   list it keeps and merges it as it came (LWW by m per id), so an
 //   older device never drops what a newer one wrote (forward safe).
@@ -50,7 +67,7 @@
   "use strict";
 
   var VER = 1;
-  var LISTS = ["titles", "blocks", "isbnx", "stmts", "subs", "posts"];
+  var LISTS = ["titles", "blocks", "isbnx", "stmts", "subs", "posts", "trk", "med", "isrcb", "upcb", "codex"];
   var STATUS = ["idea", "prod", "out", "oop"];
   var FMT_KINDS = ["pb", "hb", "eb", "ab", "ot"];
   var ROLES = ["a", "t", "i", "e", "c", "n", "o"];
@@ -213,8 +230,10 @@
     var txt = '<text x="' + (q - 5) + '" y="' + y + '" ' + f + '>' + isbn[0] + '</text>' +
       '<text x="' + (q + 3 + 21) + '" y="' + y + '" ' + f + ' textLength="40">' + isbn.slice(1, 7) + '</text>' +
       '<text x="' + (q + 50 + 21) + '" y="' + y + '" ' + f + ' textLength="40">' + isbn.slice(7) + '</text>';
+    // o.label (wave M1): "UPC" / "EAN" over a release code instead of the ISBN
+    var head = o.label === "UPC" || o.label === "EAN" ? o.label + " " + (o.code || isbn).replace(/\D/g, "") : "ISBN " + hyphen(isbn, blocks).replace(/[^\d-]/g, "");
     var title = o.noTitle ? "" : '<text x="' + (q + 47.5) + '" y="9" ' + f.replace('font-size="9"', 'font-size="8"') +
-      ' textLength="95" lengthAdjust="spacingAndGlyphs">ISBN ' + hyphen(isbn, blocks).replace(/[^\d-]/g, "") + '</text>';
+      ' textLength="95" lengthAdjust="spacingAndGlyphs">' + head + '</text>';
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' + (w * mod).toFixed(2) + 'mm" height="' + (h * mod).toFixed(2) +
       'mm" viewBox="0 0 ' + w + " " + h + '"><rect width="' + w + '" height="' + h + '" fill="#fff"/><g fill="#000">' +
       rects.join("") + title + txt + "</g></svg>";
@@ -244,7 +263,7 @@
     if (wid > 0 && okId(raw.wp.a)) out.wp = { a: raw.wp.a, id: wid };
     return out;
   }
-  var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov", "plan", "roy", "rc"];
+  var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov", "plan", "roy", "rc", "eps", "mt"];
   // Release plan (wave P4): the steps from manuscript to presentation,
   // each with a date counted back from the release date (days).
   var STAGES = ["ms", "ed", "p1", "cov", "p2", "isbn", "p3", "print", "pres", "x"];
@@ -314,6 +333,22 @@
       st: oneOf(raw.st, RC_ST, "sent"), url: /^https:\/\/[^\s<>"]+$/.test(url) ? url : "", q: text(raw.q, 600).trim(),
       rd: okYmd(raw.rd) ? raw.rd : "", fu: okYmd(raw.fu) ? raw.fu : ""
     };
+  }
+  // EPUB ready (Layout's EPUB export, LY-EPUB): per e-book format the
+  // last EPUB made, its day (d), the copy on the orOS disk (p, under
+  // /internal/Layout/EPUB/) and its size in bytes (n). One per format.
+  var EPS_RE = /^\/internal\/Layout\/EPUB\/[^/]{1,200}\.epub$/;
+  function cleanEps(list, fids) {
+    var seen = {}, out = [];
+    (Array.isArray(list) ? list : []).forEach(function (raw) {
+      if (!raw || typeof raw !== "object" || !okId(raw.f) || seen[raw.f] || (fids && !fids[raw.f]) || !okYmd(raw.d)) return;
+      seen[raw.f] = 1;
+      var o = { f: raw.f, d: raw.d, n: num(raw.n, 0, 2e9, 0) };
+      var p = typeof raw.p === "string" && EPS_RE.test(raw.p) ? raw.p : "";
+      if (p) o.p = p;
+      out.push(o);
+    });
+    return out.slice(0, MAX_FMTS).sort(function (a, b) { return a.f < b.f ? -1 : a.f > b.f ? 1 : 0; });
   }
   // Copies to follow up: sent, no review yet, and `days` (21) since
   // they went out or since the last follow-up. → [{ title, rc }]
@@ -417,6 +452,136 @@
   function postLen(tx) { return Array.from(String(tx || "")).length; }
 
   // {name} → vars.name in a template; unknown names stay as written
+  // ---------- Music releases (wave M1) ----------
+  // A title with `mt` is a music release (single, EP, album,
+  // compilation). Its tracks and editions are rows of their own lists
+  // (trk, med), never inside the title: an older device keeps a title's
+  // unknown fields only up to MAX_EXTRA and rewrites unknown format
+  // kinds, but keeps a whole unknown list row by row (forward safe).
+  var MT_KINDS = ["single", "ep", "album", "comp"];
+  var MED_KINDS = ["dig", "cd", "vin", "cas", "ot"];
+  var MAX_TRK_PER = 200;
+  function cleanMt(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    var o = { k: oneOf(raw.k, MT_KINDS, "single") };
+    var gen = line(raw.gen, 60), lbl = line(raw.lbl, 120), pl = line(raw.pl, 200), cl = line(raw.cl, 200);
+    if (gen) o.gen = gen;
+    if (lbl) o.lbl = lbl;
+    if (pl) o.pl = pl;            // ℗ line: who owns the recording
+    if (cl) o.cl = cl;            // © line: who owns the artwork / texts
+    return o;
+  }
+  function isMusic(t) { return !!(t && t.mt && typeof t.mt === "object"); }
+
+  // ISRC: CC-XXX-YY-NNNNN (country, registrant, year, designation),
+  // kept as 12 characters without hyphens.
+  var ISRC_RE = /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/;
+  function parseIsrc(s) {
+    var v = typeof s === "string" ? s.replace(/^\s*isrc:?\s*/i, "").replace(/[\s‐-―_.-]/g, "").toUpperCase() : "";
+    if (v.length !== 12) return { ok: false, isrc: "", why: "len" };
+    if (!ISRC_RE.test(v)) return { ok: false, isrc: "", why: "shape" };
+    return { ok: true, isrc: v, why: "" };
+  }
+  function fmtIsrc(c) {
+    return ISRC_RE.test(c || "") ? c.slice(0, 2) + "-" + c.slice(2, 5) + "-" + c.slice(5, 7) + "-" + c.slice(7) : (c || "");
+  }
+  // An ISRC prefix as the agency gave it: "GR-A1B" (country + registrant).
+  function parseIsrcPrefix(p) {
+    var v = line(p, 20).replace(/[\s‐-―_.-]/g, "").toUpperCase();
+    return /^[A-Z]{2}[A-Z0-9]{3}$/.test(v) ? { p: v.slice(0, 2) + "-" + v.slice(2), d: v } : null;
+  }
+
+  // UPC-A (12 digits) and EAN-13 (13 digits): the GS1 mod-10 check,
+  // weights 3, 1, 3… from the right. ISBNs (978/979) are not release codes.
+  function gtinCheck(data) {
+    if (!/^\d{6,17}$/.test(data || "")) return null;
+    var sum = 0;
+    for (var i = 0; i < data.length; i++) sum += (+data[data.length - 1 - i]) * (i % 2 ? 1 : 3);
+    return String((10 - sum % 10) % 10);
+  }
+  function parseUpc(s) {
+    var d = digits(typeof s === "string" ? s.replace(/^\s*(upc|ean|gtin)(-1[23])?:?\s*/i, "") : "");
+    if (!/^\d{12,13}$/.test(d)) return { ok: false, upc: "", why: "len" };
+    if (gtinCheck(d.slice(0, -1)) !== d[d.length - 1]) return { ok: false, upc: "", why: "check" };
+    if (d.length === 13 && /^97[89]/.test(d)) return { ok: false, upc: "", why: "isbn" };
+    return { ok: true, upc: d, why: "" };
+  }
+  // One key for a code however it was written: a UPC-A is the EAN-13
+  // with a leading 0.
+  function upcKey(c) { return /^\d{12}$/.test(c || "") ? "0" + c : c; }
+  // A GS1 company prefix: f "upc" (UPC-A, 6-11 digits) or "ean"
+  // (EAN-13, 6-11 digits); the rest of the code numbers the releases.
+  function parseUpcPrefix(p, f) {
+    var d = digits(line(p, 30)), k = f === "upc" ? "upc" : "ean", len = k === "upc" ? 12 : 13;
+    if (!/^\d{6,11}$/.test(d) || (k === "ean" && /^97[89]/.test(d))) return null;
+    var n = len - 1 - d.length;
+    if (n < 1) return null;
+    return { p: d, f: k, d: d, n: n, size: Math.pow(10, n), len: len };
+  }
+  function blockUpc(b, i) {
+    var pb = parseUpcPrefix(b && b.p, b && b.f);
+    if (!pb || !(i >= 0 && i < pb.size) || Math.floor(i) !== i) return "";
+    var data = pb.d + pad(i, pb.n);
+    return data + gtinCheck(data);
+  }
+
+  var TRK_KEYS = ["id", "m", "ti", "no", "disc", "t", "ver", "art", "isrc", "dur", "lang", "ex"];
+  function rideAlong(raw, keys, out) {
+    var extra = {}, any = false;
+    Object.keys(raw).forEach(function (k) {
+      if (keys.indexOf(k) >= 0 || !/^[a-z][A-Za-z0-9]{0,23}$/.test(k)) return;
+      extra[k] = canon(plain(raw[k]));      // keys in order: same bytes on every device
+      any = true;
+    });
+    if (any && JSON.stringify(extra).length <= MAX_EXTRA) Object.keys(extra).forEach(function (k) { out[k] = extra[k]; });
+    return out;
+  }
+  // A track: its release (ti), place (disc, no), title and version,
+  // the artist when not the release's, ISRC, length in seconds,
+  // language, explicit lyrics. Later fields (credits, splits) ride along.
+  function cleanTrk(raw) {
+    if (!raw || typeof raw !== "object" || !okId(raw.id) || !okId(raw.ti)) return null;
+    var t = line(raw.t, 200);
+    if (!t) return null;
+    var pi = parseIsrc(typeof raw.isrc === "string" ? raw.isrc : "");
+    var o = { id: raw.id, m: ms(raw.m), ti: raw.ti, no: num(raw.no, 1, 999, 0) || 1, disc: num(raw.disc, 1, 99, 0) || 1,
+              t: t, ver: line(raw.ver, 120), art: line(raw.art, 200), isrc: pi.ok ? pi.isrc : "",
+              dur: num(raw.dur, 0, 36000, 0), lang: line(raw.lang, 40) };
+    if (raw.ex === 1) o.ex = 1;
+    return rideAlong(raw, TRK_KEYS, o);
+  }
+  var MED_KEYS = ["id", "m", "ti", "k", "upc", "cat", "price", "dist", "note"];
+  // An edition of a release: digital, CD, vinyl, cassette, other, with
+  // its UPC/EAN, catalogue number, price and distributor.
+  function cleanMed(raw) {
+    if (!raw || typeof raw !== "object" || !okId(raw.id) || !okId(raw.ti)) return null;
+    var pu = parseUpc(typeof raw.upc === "string" ? raw.upc : "");
+    var o = { id: raw.id, m: ms(raw.m), ti: raw.ti, k: oneOf(raw.k, MED_KINDS, "dig"), upc: pu.ok ? pu.upc : "",
+              cat: line(raw.cat, 40), price: num(raw.price, 0, 1e6, 2), dist: line(raw.dist, 80), note: line(raw.note, 200) };
+    return rideAlong(raw, MED_KEYS, o);
+  }
+  function cleanIsrcb(raw) {
+    if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
+    var pb = parseIsrcPrefix(raw.p);
+    if (!pb) return null;
+    return { id: raw.id, m: ms(raw.m), p: pb.p, note: line(raw.note, 200) };
+  }
+  function cleanUpcb(raw) {
+    if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
+    var pb = parseUpcPrefix(raw.p, raw.f);
+    if (!pb) return null;
+    return { id: raw.id, m: ms(raw.m), p: pb.p, f: pb.f, note: line(raw.note, 200) };
+  }
+  // A release code used outside the app or spoiled: id = the ISRC (12)
+  // or the UPC/EAN as written (12 or 13 digits).
+  function cleanCodex(raw) {
+    if (!raw || typeof raw !== "object" || typeof raw.id !== "string") return null;
+    var pi = parseIsrc(raw.id), pu = parseUpc(raw.id);
+    var id = pi.ok ? pi.isrc : pu.ok ? pu.upc : "";
+    if (!id || id !== raw.id) return null;
+    return { id: id, m: ms(raw.m), note: line(raw.note, 200) };
+  }
+
   function fillTpl(tpl, vars) {
     return String(tpl || "").replace(/\{([a-z]{1,12})\}/g, function (all, k) {
       return Object.prototype.hasOwnProperty.call(vars, k) ? String(vars[k]) : all;
@@ -460,6 +625,10 @@
       return true;
     }).slice(0, MAX_RC);
     if (rc.length) out.rc = rc;
+    var eps = cleanEps(raw.eps, fids);
+    if (eps.length) out.eps = eps;
+    var mt = cleanMt(raw.mt);          // wave M1: a music release
+    if (mt) out.mt = mt;
     // Fields of a later version ride along unchanged (bounded).
     var extra = {}, any = false;
     Object.keys(raw).forEach(function (k) {
@@ -490,7 +659,8 @@
     p.m = ms(raw.m);
     return p;
   }
-  var CLEAN = { titles: cleanTitle, blocks: cleanBlock, isbnx: cleanX, stmts: cleanStmt, subs: cleanSub, posts: cleanPost };
+  var CLEAN = { titles: cleanTitle, blocks: cleanBlock, isbnx: cleanX, stmts: cleanStmt, subs: cleanSub, posts: cleanPost,
+                trk: cleanTrk, med: cleanMed, isrcb: cleanIsrcb, upcb: cleanUpcb, codex: cleanCodex };
 
   function empty() { return { ver: VER, titles: [], blocks: [], isbnx: [], stmts: [], subs: [], set: { m: 0, cur: "EUR", imp: "" }, tombs: {} }; }
 
@@ -659,6 +829,113 @@
     return { id: b.id, p: pb.p, size: pb.size, used: rows.length, free: pb.size - rows.length, rows: rows };
   }
 
+  // ---------- Music: tracks, editions, code register (wave M1) ----------
+  function tracksOf(d, ti) {
+    return ((d && d.trk) || []).filter(function (r) { return r.ti === ti; }).sort(function (a, b) {
+      return a.disc - b.disc || a.no - b.no || byId(a, b);
+    });
+  }
+  function editionsOf(d, ti) {
+    return ((d && d.med) || []).filter(function (r) { return r.ti === ti; }).sort(function (a, b) {
+      return MED_KINDS.indexOf(a.k) - MED_KINDS.indexOf(b.k) || byId(a, b);
+    });
+  }
+  // Total length in seconds of a release's tracks.
+  function runTime(d, ti) { return tracksOf(d, ti).reduce(function (s, r) { return s + (r.dur || 0); }, 0); }
+  // Every release code in use, by key (ISRC as is, UPC as EAN-13):
+  // { key: [{ title, trk } | { title, med } | { x: true }] }
+  function usedCodes(d) {
+    var u = Object.create(null);
+    function add(k, v) { (u[k] = u[k] || []).push(v); }
+    var live = {};
+    ((d && d.titles) || []).forEach(function (t) { live[t.id] = 1; });
+    ((d && d.trk) || []).forEach(function (r) { if (r.isrc && live[r.ti]) add(r.isrc, { title: r.ti, trk: r.id }); });
+    ((d && d.med) || []).forEach(function (r) { if (r.upc && live[r.ti]) add(upcKey(r.upc), { title: r.ti, med: r.id }); });
+    ((d && d.codex) || []).forEach(function (x) { add(ISRC_RE.test(x.id) ? x.id : upcKey(x.id), { x: true }); });
+    return u;
+  }
+  function codeClashes(d) {
+    var u = usedCodes(d);
+    return Object.keys(u).sort().filter(function (k) { return u[k].length > 1; }).map(function (k) { return { code: k, uses: u[k] }; });
+  }
+  // The next free ISRC of a prefix for a year (YY), skipping codes in
+  // use and `skip`. "" = the year's 99 999 codes are all taken.
+  function nextIsrc(d, prefixId, year, skip) {
+    var b = find(d, "isrcb", prefixId), pb = b && parseIsrcPrefix(b.p);
+    if (!pb || !(year >= 1900 && year <= 2199)) return "";
+    var u = usedCodes(d), s = skip || [], head = pb.d + pad(year % 100, 2);
+    for (var i = 1; i <= 99999; i++) {
+      var c = head + pad(i, 5);
+      if (!u[c] && s.indexOf(c) < 0) return c;
+    }
+    return "";
+  }
+  function nextUpc(d, prefixId, skip) {
+    var b = find(d, "upcb", prefixId), pb = b && parseUpcPrefix(b.p, b.f);
+    if (!pb) return "";
+    var u = usedCodes(d), s = skip || [];
+    for (var i = 0; i < pb.size && i < 1e6; i++) {
+      var c = blockUpc(b, i);
+      if (!u[upcKey(c)] && s.indexOf(c) < 0) return c;
+    }
+    return "";
+  }
+  // Per prefix: { id, p, used, rows: [{ code, uses }] } (codes in use
+  // that start with it); for UPC/EAN also size and free.
+  function isrcUsage(d, prefixId) {
+    var b = find(d, "isrcb", prefixId), pb = b && parseIsrcPrefix(b.p);
+    if (!pb) return null;
+    var u = usedCodes(d), rows = [];
+    Object.keys(u).sort().forEach(function (k) { if (ISRC_RE.test(k) && k.indexOf(pb.d) === 0) rows.push({ code: k, uses: u[k] }); });
+    return { id: b.id, p: pb.p, used: rows.length, rows: rows };
+  }
+  function upcUsage(d, prefixId) {
+    var b = find(d, "upcb", prefixId), pb = b && parseUpcPrefix(b.p, b.f);
+    if (!pb) return null;
+    var u = usedCodes(d), rows = [], head = pb.f === "upc" ? "0" + pb.d : pb.d;
+    Object.keys(u).sort().forEach(function (k) { if (/^\d{13}$/.test(k) && k.indexOf(head) === 0) rows.push({ code: k, uses: u[k] }); });
+    return { id: b.id, p: pb.p, f: pb.f, size: pb.size, used: rows.length, free: pb.size - rows.length, rows: rows };
+  }
+  // What is missing before a release can go out.
+  function musicGaps(t, d) {
+    var g = [];
+    if (!authors(t).length) g.push("artist");
+    if (d) {
+      var tr = tracksOf(d, t.id), ed = editionsOf(d, t.id);
+      if (!tr.length) g.push("trk");
+      if (tr.some(function (r) { return !r.isrc; })) g.push("isrc");
+      if (tr.some(function (r) { return !r.dur; })) g.push("dur");
+      if (!ed.length) g.push("ed");
+      if (ed.some(function (r) { return !r.upc; })) g.push("upc");
+    }
+    if (!t.rel) g.push("rel");
+    if (!t.cov) g.push("cov");
+    return g;
+  }
+  // A title and its tracks and editions go together (one write).
+  function removeRelease(d, ti, now) {
+    var out = normalize(d);
+    function stamp(r) { out.tombs[r.id] = bump(r.m, now); }
+    var t = find(out, "titles", ti);
+    if (!t) return out;
+    stamp(t);
+    tracksOf(out, ti).forEach(stamp);
+    editionsOf(out, ti).forEach(stamp);
+    return normalize(out);
+  }
+  // Put tracks in the given order (ids): numbers 1, 2, 3… per disc as
+  // listed; only rows whose number changes are written.
+  function orderTracks(d, ti, ids, now) {
+    var out = normalize(d), per = {};
+    ids.forEach(function (id) {
+      var r = find(out, "trk", id);
+      if (!r || r.ti !== ti) return;
+      per[r.disc] = (per[r.disc] || 0) + 1;
+      if (r.no !== per[r.disc]) out = put(out, "trk", Object.assign({}, r, { no: per[r.disc] }), now);
+    });
+    return out;
+  }
+
   // ---------- titles ----------
   function fold(s) {
     return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ς/g, "σ");   // i18n-inline-ok: Greek final sigma folds to σ for search
@@ -674,13 +951,24 @@
   }
   // filter: { q, st } ; sort: "rel" (newest release first, no date last),
   // "t" (A-Z), "m" (last edited)
+  // filter.kind: "" | "book" | "mus" (wave M1); music titles are also
+  // found by their tracks' names, ISRCs and their editions' UPC/EAN.
   function list(d, filter, sort, locale) {
     var f = filter || {}, words = fold(f.q || "").split(/\s+/).filter(Boolean);
     var digitsQ = digits(f.q || "");
+    var more = {};
+    if (words.length) {
+      (d.trk || []).forEach(function (r) { more[r.ti] = (more[r.ti] || "") + " " + fold(r.t + " " + r.ver + " " + r.art) + " " + r.isrc.toLowerCase() + " " + fmtIsrc(r.isrc).toLowerCase(); });
+      (d.med || []).forEach(function (r) { more[r.ti] = (more[r.ti] || "") + " " + r.upc + " " + fold(r.cat); });
+    }
     var rows = (d.titles || []).filter(function (t) {
       if (f.st && t.st !== f.st) return false;
+      if (f.kind === "mus" && !isMusic(t)) return false;
+      if (f.kind === "book" && isMusic(t)) return false;
       if (!words.length) return true;
-      var h = haystack(t);
+      var h = haystack(t) + (more[t.id] || "");
+      var isr = (f.q || "").replace(/[\s-]/g, "").toLowerCase();
+      if (/^[a-z]{2}[a-z0-9]{3}\d{7}$/.test(isr) && h.indexOf(isr) >= 0) return true;
       if (/^\d{9,13}X?$/i.test(digitsQ) && h.indexOf(digitsQ.toLowerCase()) >= 0) return true;
       return words.every(function (w) { return h.indexOf(w) >= 0; });
     });
@@ -695,7 +983,8 @@
     return rows;
   }
   // What is missing before a title can go out: ["isbn", "price", …]
-  function gaps(t) {
+  function gaps(t, d) {
+    if (isMusic(t)) return musicGaps(t, d);
     var g = [];
     if (!authors(t).length) g.push("author");
     if (!t.fmts.length) g.push("fmt");
@@ -913,7 +1202,13 @@
     planState: planState, byDay: byDay,
     ROY_BASES: ROY_BASES, MAX_ROY: MAX_ROY, cleanRoy: cleanRoy, cleanStmt: cleanStmt,
     SUB_ST: SUB_ST, TPL_KEYS: TPL_KEYS, cleanSub: cleanSub, subsLate: subsLate, fillTpl: fillTpl,
-    RC_ST: RC_ST, RC_DAYS: RC_DAYS, MAX_RC: MAX_RC, cleanRc: cleanRc, rcDue: rcDue, quotes: quotes, pressList: pressList,
+    RC_ST: RC_ST, RC_DAYS: RC_DAYS, MAX_RC: MAX_RC, cleanRc: cleanRc, rcDue: rcDue, cleanEps: cleanEps, EPS_RE: EPS_RE, quotes: quotes, pressList: pressList,
+    MT_KINDS: MT_KINDS, MED_KINDS: MED_KINDS, MAX_TRK_PER: MAX_TRK_PER, isMusic: isMusic, cleanMt: cleanMt,
+    parseIsrc: parseIsrc, fmtIsrc: fmtIsrc, parseIsrcPrefix: parseIsrcPrefix, gtinCheck: gtinCheck, parseUpc: parseUpc,
+    upcKey: upcKey, parseUpcPrefix: parseUpcPrefix, blockUpc: blockUpc, cleanTrk: cleanTrk, cleanMed: cleanMed,
+    tracksOf: tracksOf, editionsOf: editionsOf, runTime: runTime, usedCodes: usedCodes, codeClashes: codeClashes,
+    nextIsrc: nextIsrc, nextUpc: nextUpc, isrcUsage: isrcUsage, upcUsage: upcUsage, musicGaps: musicGaps,
+    removeRelease: removeRelease, orderTracks: orderTracks,
     POST_NETS: POST_NETS, POST_MAX: POST_MAX, POST_HOME: POST_HOME, cleanPost: cleanPost, postsDue: postsDue, postUrl: postUrl, postLen: postLen
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
