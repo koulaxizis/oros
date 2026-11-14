@@ -1786,6 +1786,7 @@ var PRECACHE_URLS = [
   "pad/app.js",
   "pad/devui.js",
   "pad/devtools.js",
+  "pad/regex-worker.js",
   "textcase/",
   "textcase/index.html",
   "textcase/core.js",

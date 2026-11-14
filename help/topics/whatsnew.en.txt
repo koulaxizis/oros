@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.59.00
+- **Decode JWT and test regular expressions in Pad.** In `Tools…` (Alt+T), `Decode JWT` shows a token's header, payload and expiry (the signature is not checked). `Regex tester` tries a pattern on the file as you type, with groups, a replace preview and `Select all matches`; a pattern that runs for over a second is stopped.
+
 ## Version 6.58.00
 - **New app: Base.** Keep records with structure in Office › Base: a catalogue, a collection, a project. Make tables with typed fields (text, numbers, money, dates, choices, ratings and more), see them as a grid or as cards, and filter, sort and group them. Start from one of six templates, from scratch or from a CSV file, and send any view to Spreadsheet or save it as CSV. Two devices editing different cells of the same record both keep their change.
 
