@@ -1616,6 +1616,7 @@ var PRECACHE_URLS = [
   "base/core.js",
   "base/app.js",
   "base/search.js",
+  "base/package.js",
   "base/help.en.txt",
   "base/help.el.txt",
   "spreadsheet/",
