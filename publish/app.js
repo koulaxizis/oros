@@ -82,7 +82,8 @@
       "fmt.kind": "Format", "fmt.isbn": "ISBN", "fmt.price": "Price ({cur})", "fmt.pages": "Pages",
       "fmt.w": "Width (mm)", "fmt.h": "Height (mm)", "fmt.sp": "Spine (mm)", "fmt.wt": "Weight (g)",
       "fmt.bind": "Binding", "fmt.paper": "Paper", "fmt.dur": "Length (minutes)", "fmt.note": "Note",
-      "fmt.next": "Next free", "fmt.barcode": "Barcode", "fmt.cover": "Cover in Layout", "cov.noLayout": "Layout could not be opened from here.", "fmt.del": "Remove format",
+      "fmt.next": "Next free", "fmt.barcode": "Barcode", "fmt.cover": "Cover in Layout", "cov.noLayout": "Layout could not be opened from here.",
+      "fmt.epub": "EPUB from Layout", "fmt.epubReady": "EPUB ready, {d}", "fmt.epubOpen": "Preview", "ep.marked": "EPUB marked ready", "ep.noFmt": "That e-book format is no longer here.", "fmt.del": "Remove format",
       "isbn.ok": "Valid ISBN · ISBN-10 {ten}", "isbn.ok13": "Valid ISBN (979, no ISBN-10)",
       "isbn.len": "An ISBN has 13 digits (or 10 for an old one).", "isbn.check": "The check digit does not match: a typo?",
       "isbn.prefix": "An ISBN-13 starts with 978 or 979.",
@@ -383,7 +384,8 @@
       "fmt.kind": "Μορφή", "fmt.isbn": "ISBN", "fmt.price": "Τιμή ({cur})", "fmt.pages": "Σελίδες",
       "fmt.w": "Πλάτος (mm)", "fmt.h": "Ύψος (mm)", "fmt.sp": "Ράχη (mm)", "fmt.wt": "Βάρος (g)",
       "fmt.bind": "Βιβλιοδεσία", "fmt.paper": "Χαρτί", "fmt.dur": "Διάρκεια (λεπτά)", "fmt.note": "Σημείωση",
-      "fmt.next": "Επόμενο ελεύθερο", "fmt.barcode": "Barcode", "fmt.cover": "Εξώφυλλο στο Layout", "cov.noLayout": "Το Layout δεν άνοιξε από εδώ.", "fmt.del": "Αφαίρεση μορφής",
+      "fmt.next": "Επόμενο ελεύθερο", "fmt.barcode": "Barcode", "fmt.cover": "Εξώφυλλο στο Layout", "cov.noLayout": "Το Layout δεν άνοιξε από εδώ.",
+      "fmt.epub": "EPUB από το Layout", "fmt.epubReady": "EPUB έτοιμο, {d}", "fmt.epubOpen": "Προεπισκόπηση", "ep.marked": "Το EPUB σημειώθηκε έτοιμο", "ep.noFmt": "Αυτή η μορφή e-book δεν υπάρχει πια.", "fmt.del": "Αφαίρεση μορφής",
       "isbn.ok": "Σωστό ISBN · ISBN-10 {ten}", "isbn.ok13": "Σωστό ISBN (979, χωρίς ISBN-10)",
       "isbn.len": "Το ISBN έχει 13 ψηφία (ή 10 για παλιό).", "isbn.check": "Το ψηφίο ελέγχου δεν ταιριάζει: μήπως τυπογραφικό λάθος;",
       "isbn.prefix": "Το ISBN-13 αρχίζει από 978 ή 979.",
@@ -1289,10 +1291,26 @@
     bc.disabled = !f.isbn;
     head.appendChild(bc);
     if (f.k === "pb" || f.k === "hb") head.appendChild(button(t("fmt.cover"), "btn small", function () { coverInLayout(currentTitle(), f.id); }));
+    // the e-book: its EPUB from the Layout document of this title (LY-EPUB)
+    if (f.k === "eb") head.appendChild(button(t("fmt.epub"), "btn small", function () {
+      flushEdits();
+      try { window.parent.__orosOpenAt("layout", { epub: { title: (currentTitle() || tt).id, fmt: f.id } }); }
+      catch (e) { toast(t("cov.noLayout")); }
+    }));
     head.appendChild(button(t("fmt.del"), "btn small danger", function () {
       writeTitle({ fmts: currentTitle().fmts.filter(function (x) { return x.id !== f.id; }) }, true);
     }));
     box.appendChild(head);
+    var ep = f.k === "eb" ? (tt.eps || []).filter(function (x) { return x.f === f.id; })[0] : null;
+    if (ep) {
+      var er = el("p", "muted ep-ready");
+      er.appendChild(document.createTextNode(t("fmt.epubReady", { d: fmtDate(ep.d) })));
+      if (ep.p) er.appendChild(button(t("fmt.epubOpen"), "btn small", function () {
+        try { window.parent.__orosOpenAt("library", { preview: { path: ep.p } }); }
+        catch (e) { toast(t("cov.noLayout")); }
+      }));
+      box.appendChild(er);
+    }
 
     var grid = el("div", "grid");
     // ISBN with "next free"
@@ -3959,6 +3977,20 @@
   // before creating; nothing is written on arrival.
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object") return;
+    // Layout's EPUB export (LY-EPUB, "Mark ready in Publishing"): the
+    // e-book format records the EPUB made today; the person pressed it
+    if (target.epubReady && typeof target.epubReady === "object") {
+      var er = target.epubReady, et = typeof er.title === "string" ? C.find(data, "titles", er.title) : null;
+      var ef = et && typeof er.fmt === "string" ? (et.fmts || []).filter(function (x) { return x.id === er.fmt; })[0] : null;
+      if (!ef) { toast(t("ep.noFmt")); return; }
+      openTitle(et.id);
+      var rec = { f: ef.id, d: todayYmd(), n: typeof er.bytes === "number" ? er.bytes : 0 };
+      if (typeof er.path === "string" && C.EPS_RE.test(er.path)) rec.p = er.path;
+      writeTitle({ eps: (currentTitle().eps || []).filter(function (x) { return x.f !== ef.id; }).concat([rec]) }, true);
+      render();
+      toast(t("ep.marked"));
+      return;
+    }
     if (typeof target.title === "string" && C.find(data, "titles", target.title)) { openTitle(target.title); return; }
     if (TABS.indexOf(target.view) > 0) { setView({ name: target.view, id: "" }); render(); return; }
     // the Calendar's "Post" row (wave P12)

@@ -57,6 +57,10 @@
       "offline":       "Offline — showing last known",
       "empty.title":   "No city yet",
       "empty.hint":    "Tap the city button above to add one.",
+      "tab.wx":        "Weather",
+      "tab.sky":       "Sky tonight",
+      "sky.loading":   "Loading the sky…",
+      "sky.loadFail":  "The sky could not load. Check the connection and open the tab again.",
       "meta.feels":    "Feels like",
       "meta.humidity": "Humidity",
       "meta.wind":     "Wind",
@@ -114,6 +118,10 @@
       "offline":       "Εκτός σύνδεσης — εμφανίζονται τα τελευταία δεδομένα",
       "empty.title":   "Καμία πόλη ακόμα",
       "empty.hint":    "Πάτησε το κουμπί πόλης παραπάνω για προσθήκη.",
+      "tab.wx":        "Καιρός",
+      "tab.sky":       "Ο ουρανός απόψε",
+      "sky.loading":   "Φορτώνει ο ουρανός…",
+      "sky.loadFail":  "Ο ουρανός δεν φόρτωσε. Έλεγξε τη σύνδεση και άνοιξε ξανά την καρτέλα.",
       "meta.feels":    "Αίσθηση",
       "meta.humidity": "Υγρασία",
       "meta.wind":     "Άνεμος",
@@ -647,7 +655,8 @@
       cmp: Array.isArray(p.cmp) ? p.cmp.slice(0, 3) : ["ecmwf_ifs025", "icon_seamless", "gfs_seamless"],
       warnOn: p.warnOn !== false,
       notify: (p.notify === "severe" || p.notify === "all") ? p.notify : "off",
-      bf: (p.bf && typeof p.bf === "object") ? p.bf : {}
+      bf: (p.bf && typeof p.bf === "object") ? p.bf : {},
+      tab: p.tab === "sky" ? "sky" : "wx"    // merge 4: last open tab
     };
     out.cmp = out.cmp.map(function (m) { return (C && C.okModel(m)) ? m : ""; });
     while (out.cmp.length < 3) out.cmp.push("");
@@ -1223,6 +1232,7 @@
     ob.hidden = !obShow;                     // was flipped — badge never showed
     ob.style.display = obShow ? "" : "none";
     renderExtras(city, p);   // wave 38
+    skyFollowCity();         // merge 4
     if (!city || !p) return;
 
     // --- current ---
@@ -2691,6 +2701,107 @@
       if (api && typeof api.markDirty === "function") api.markDirty();
     }
   };
+  // ---------- Sky tonight tab (APP-ALIAS merge 4, was Moon & Sky) ----------
+  // The sky code (../sky/core.js, stars.js, view.js, view.css and the
+  // "sky" language pack) loads only when the tab first opens.
+  var SKY_TABS = ["tonight", "map", "month"];
+  var skyLoad = null, skyPending = null;
+  function skyAsset(src) {
+    var v = window.orosI18n && window.orosI18n.ver;
+    return src + (v ? "?v=" + encodeURIComponent(v) : "");
+  }
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      sc.src = skyAsset(src);
+      sc.onload = resolve; sc.onerror = reject;
+      document.head.appendChild(sc);
+    });
+  }
+  function loadSky() {
+    if (window.SkyView) return Promise.resolve();
+    if (skyLoad) return skyLoad;
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = skyAsset("../sky/view.css");
+    document.head.appendChild(css);
+    skyLoad = Promise.all([loadScript("../sky/core.js"), loadScript("../sky/stars.js")]).then(function () {
+      return new Promise(function (resolve) {
+        if (window.orosI18n && typeof window.orosI18n.ensure === "function") window.orosI18n.ensure(LANG, "sky", resolve);
+        else resolve();
+      });
+    }).then(function () { return loadScript("../sky/view.js"); });
+    skyLoad.catch(function () { skyLoad = null; });
+    return skyLoad;
+  }
+  // Weather's city as the sky's place: { lat, lon, name }.
+  function skyPlace() {
+    var c = activeCity();
+    return c && typeof c.lat === "number" && typeof c.lon === "number"
+      ? { lat: c.lat, lon: c.lon, name: c.label || "" } : null;
+  }
+  function skyShown() { var h = $("sky-host"); return !!h && !h.hidden; }
+  function showSky(at) {
+    var host = $("sky-host");
+    if (window.SkyView) {
+      window.SkyView.mount(host, skyPlace());
+      if (at) window.SkyView.openAt(at);
+      return;
+    }
+    skyPending = at || skyPending;
+    if (!host.querySelector(".sky-wait")) {
+      var w = document.createElement("p");
+      w.className = "sky-wait hint";
+      w.setAttribute("role", "status");
+      w.textContent = t("sky.loading");
+      host.appendChild(w);
+    }
+    loadSky().then(function () {
+      var w2 = host.querySelector(".sky-wait");
+      if (w2) w2.parentNode.removeChild(w2);
+      if (!skyShown()) return;
+      var a = skyPending; skyPending = null;
+      showSky(a);
+    }, function () {
+      var w3 = host.querySelector(".sky-wait");
+      if (w3) w3.textContent = t("sky.loadFail");
+    });
+  }
+  function setWxTab(which, focus, at) {
+    var sky = which === "sky";
+    var bw = $("wxt-wx"), bs = $("wxt-sky");
+    if (!bw || !bs) return;
+    bw.setAttribute("aria-selected", sky ? "false" : "true");
+    bs.setAttribute("aria-selected", sky ? "true" : "false");
+    bw.tabIndex = sky ? -1 : 0;
+    bs.tabIndex = sky ? 0 : -1;
+    $("wxmain").hidden = sky;
+    $("sky-host").hidden = !sky;
+    if (focus) (sky ? bs : bw).focus();
+    var pr = readPrefs();
+    if (pr.tab !== which) { pr.tab = sky ? "sky" : "wx"; writePrefs(pr); }
+    if (sky) showSky(at);
+  }
+  function wireWxTabs() {
+    var bar = $("wx-tabs");
+    if (!bar) return;
+    $("wxt-wx").addEventListener("click", function () { setWxTab("wx"); });
+    $("wxt-sky").addEventListener("click", function () { setWxTab("sky"); });
+    bar.addEventListener("keydown", function (e) {
+      var k = e.key;
+      if (k !== "ArrowLeft" && k !== "ArrowRight" && k !== "Home" && k !== "End") return;
+      e.preventDefault();
+      var cur = skyShown() ? 1 : 0;
+      var nx = k === "Home" ? 0 : k === "End" ? 1 : 1 - cur;
+      setWxTab(nx ? "sky" : "wx", true);
+    });
+    if (readPrefs().tab === "sky" && !skyShown()) setWxTab("sky");
+  }
+  // The city changed: the open sky follows it.
+  function skyFollowCity() {
+    if (window.SkyView && skyShown()) window.SkyView.setPlace(skyPlace());
+  }
+
   load();
   syncShellLocation();
   applyI18n();
@@ -2702,10 +2813,21 @@
   watchPalette();
   renderAll(readPayload());   // instant paint from cache (if any)…
   refresh(false);             // …then fetch if the cache is >30min old
+  wireWxTabs();               // merge 4: Weather | Sky tonight
   // Single app (solo.js) icon shortcut { addCity: true }: the city
   // dialog (search, or "My location" from its own button).
+  // APP-ALIAS (merge 4): the old id "sky" forwards here with
+  // { sky: true } plus the caller's { date, tab } (Calendar, Today,
+  // Time's Sun & Moon card); { tab: "wx" } goes back to the forecast.
   window.__orosOpenAt = function (t) {
-    if (t && t.addCity === true && !document.querySelector("dialog[open]")) openCityDialog();
+    if (!t || typeof t !== "object") return;
+    if (t.addCity === true && !document.querySelector("dialog[open]")) { setWxTab("wx"); openCityDialog(); return; }
+    if (t.sky === true || t.tab === "sky" || (typeof t.tab === "string" && SKY_TABS.indexOf(t.tab) !== -1)) {
+      var at = {};
+      if (typeof t.date === "string") at.date = t.date;
+      if (SKY_TABS.indexOf(t.tab) !== -1) at.tab = t.tab;
+      setWxTab("sky", false, at);
+    } else if (t.tab === "wx") setWxTab("wx");
   };
   try {
     if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")
