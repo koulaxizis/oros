@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.55.00
+- **Atelier and Layout: draw with a pen and edit points.** Tap to place corner points, drag for curves, tap the first point to close the shape. Double-click any shape (or choose Edit points) to move its points and handles, add or remove points, make them corner or smooth, break or join the outline. Press P for the pen.
+
 ## Version 6.54.00
 - **Settings › Fonts: your own font files and the free fonts in one place,** with a sample in your own text, which Greek and polytonic letters each font has and what its licence says. Add .ttf, .otf, .woff and now .woff2 files (Layout and Atelier take .woff2 too); remove a font to the Trash.
 
