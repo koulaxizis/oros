@@ -1196,7 +1196,7 @@ orosPack("de", "shell", {
  "sos.after.trash": "Dropbox behält gelöschte Dateien eine Zeit lang: Öffne auf dropbox.com die gelöschten Dateien und lösche die orOS-Dateien endgültig.",
  "sos.after.dav": "Nextcloud oder WebDAV: Entferne orOS unter Geräte & Sitzungen (oder ändere das Passwort) und leere dann den Papierkorb und die Dateiversionen.",
  "sos.after.passwords": "Ändere die Passwörter, die in Passwörter und in Mail waren, und erstelle neue Schlüssel für die Dienste, die du verbunden hattest.",
- "sos.after.addon": "Das orOS-Browser-Add-on und die Android-App behalten eine eigene Kopie zum Ausfüllen: Tippe in den Optionen des Add-ons auf „Remove the vault copy from this browser“ (das Add-on gibt es auf Englisch und Griechisch); lösche unter Android den Speicher der App.",
+ "sos.after.addon": "Das orOS-Browser-Add-on vergisst seine Kopie von Passwörter, sobald in diesem Browser wieder ein orOS-Tab geöffnet wird, und die orOS-App für Android löscht ihre Kopie zum Ausfüllen, wenn sie sich selbst löscht. Bei einem Browser oder Handy, das du nicht mehr öffnest: Tippe in den Optionen des Add-ons auf „Remove the vault copy from this browser“ (das Add-on gibt es auf Englisch und Griechisch); lösche unter Android den Speicher der App.",
  "sos.after.again": "Um neu anzufangen, verbinde die Synchronisierung und wähle eine neue Passphrase.",
  "sos.after.ok": "OK",
  "sync.err.cloud-sos": "Die Cloud wurde von einem anderen Gerät mit SOS geschlossen",
