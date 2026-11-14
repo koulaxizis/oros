@@ -70,7 +70,7 @@ function book(ext) {
 
 test("profiles: defaults until changed, cleaned when stored, kept by the model", () => {
   const d = book();
-  assert.deepEqual(O.list(d).map((p) => p.k), ["print", "ebook"]);
+  assert.deepEqual(O.list(d).map((p) => p.k), ["print", "ebook", "epub"]);
   assert.equal(O.stored(d), null);
   const s = JSON.parse(JSON.stringify(d.setup));
   O.save(s, [{ id: "op-x", k: "weird", n: "  Mine\u0007 ", drop: ["pg-a", "pg-a", 3], bleed: 1 }, { id: "op-x", k: "ebook" }, { id: "BAD" }]);

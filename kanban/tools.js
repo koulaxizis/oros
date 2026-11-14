@@ -281,6 +281,136 @@
     return arr(board && board.columns).some(function (c) { return c && c.gw === 1; });
   }
 
+  // ---------- Gantt (wave G2): finish-to-start dependencies ----------
+  // card.deps = ids of the cards it waits for (same board). Ids of cards
+  // that no longer exist are ignored, never an error.
+  function cardIndex(board) {
+    var m = {};
+    arr(board && board.columns).forEach(function (col, ci) {
+      arr(col && col.cards).forEach(function (c) { if (c && typeof c.id === "string") m[c.id] = { card: c, col: col, colIdx: ci }; });
+    });
+    return m;
+  }
+  function predsOf(card, idx) {
+    return arr(card && card.deps).filter(function (id) { return typeof id === "string" && idx[id] && id !== card.id; });
+  }
+  // Would "card waits for pred" close a loop? True when pred already
+  // waits (directly or through others) for card.
+  function wouldCycle(board, cardId, predId) {
+    if (cardId === predId) return true;
+    var idx = cardIndex(board), seen = {}, stack = [predId], n = 0;
+    while (stack.length && n++ < 20000) {
+      var id = stack.pop();
+      if (id === cardId) return true;
+      if (seen[id] || !idx[id]) continue;
+      seen[id] = true;
+      predsOf(idx[id].card, idx).forEach(function (p) { stack.push(p); });
+    }
+    return false;
+  }
+  // The first day a successor may start after pred ends.
+  function dayAfter(to, wd) {
+    var d = addDays(to, 1);
+    return wd ? nextWorkday(d, 1) : d;
+  }
+  // Dependencies that are not kept: the successor starts on or before
+  // the day its predecessor ends. → [{ from: predId, to: succId }]
+  function brokenDeps(board, wd) {
+    var idx = cardIndex(board), out = [];
+    Object.keys(idx).forEach(function (id) {
+      var c = idx[id].card, sp = planSpan(c);
+      if (!sp) return;
+      predsOf(c, idx).forEach(function (p) {
+        var ps = planSpan(idx[p].card);
+        if (ps && sp.from < dayAfter(ps.to, wd)) out.push({ from: p, to: id });
+      });
+    });
+    return out;
+  }
+  // Every card after the given one (transitively), pushed later just
+  // enough to keep each dependency; never pulled earlier. Each keeps its
+  // length (in workdays with wd). → [{ id, from, to }] in a safe order.
+  function shiftAfter(board, cardId, wd) {
+    var idx = cardIndex(board);
+    var succ = {};
+    Object.keys(idx).forEach(function (id) {
+      predsOf(idx[id].card, idx).forEach(function (p) { (succ[p] = succ[p] || []).push(id); });
+    });
+    // the cards reached from cardId
+    var reach = {}, stack = (succ[cardId] || []).slice(), n = 0;
+    while (stack.length && n++ < 20000) {
+      var id = stack.pop();
+      if (reach[id]) continue;
+      reach[id] = true;
+      (succ[id] || []).forEach(function (x) { stack.push(x); });
+    }
+    // topological order over the reached cards (Kahn; a loop is cut)
+    var spans = {};
+    Object.keys(idx).forEach(function (id) { var sp = planSpan(idx[id].card); if (sp) spans[id] = { from: sp.from, to: sp.to }; });
+    var order = [], indeg = {};
+    Object.keys(reach).forEach(function (id) {
+      indeg[id] = predsOf(idx[id].card, idx).filter(function (p) { return reach[p]; }).length;
+    });
+    var q = Object.keys(indeg).filter(function (id) { return !indeg[id]; }).sort();
+    while (q.length) {
+      var x = q.shift();
+      order.push(x);
+      (succ[x] || []).forEach(function (y) { if (reach[y] && --indeg[y] === 0) q.push(y); });
+    }
+    var out = [];
+    order.forEach(function (id) {
+      var sp = spans[id];
+      if (!sp) return;
+      var need = null;
+      predsOf(idx[id].card, idx).forEach(function (p) {
+        if (!spans[p]) return;
+        var d = dayAfter(spans[p].to, wd);
+        if (!need || d > need) need = d;
+      });
+      if (!need || sp.from >= need) return;
+      var moved = shiftSpan(sp.from, sp.to, daysBetween(sp.from, need), wd);
+      if (moved.from < need) moved = shiftSpan(moved.from, moved.to, daysBetween(moved.from, need), wd);
+      spans[id] = moved;
+      out.push({ id: id, from: moved.from, to: moved.to });
+    });
+    return out;
+  }
+  // Critical path: the cards with no slack before the end of the plan
+  // (the latest due date among the dated cards). Slack = days a card
+  // could end later without moving the end, through its successors.
+  // → { ids: { id: true }, end }
+  function criticalPath(board, wd) {
+    var idx = cardIndex(board), spans = {}, succ = {};
+    Object.keys(idx).forEach(function (id) { var sp = planSpan(idx[id].card); if (sp) spans[id] = sp; });
+    var ids = Object.keys(spans);
+    if (!ids.length) return { ids: {}, end: null };
+    var end = ids.reduce(function (m, id) { return spans[id].to > m ? spans[id].to : m; }, spans[ids[0]].to);
+    ids.forEach(function (id) {
+      predsOf(idx[id].card, idx).forEach(function (p) { if (spans[p]) (succ[p] = succ[p] || []).push(id); });
+    });
+    // latest finish, memoised; a loop counts as no constraint
+    var lf = {}, busy = {};
+    function latest(id) {
+      if (lf[id] !== undefined) return lf[id];
+      if (busy[id]) return end;
+      busy[id] = true;
+      var v = end;
+      (succ[id] || []).forEach(function (s) {
+        // the successor's latest start, minus one day
+        var ls = addDays(latest(s), -(daysBetween(spans[s].from, spans[s].to)));
+        var cand = addDays(ls, -1);
+        if (wd) cand = nextWorkday(cand, -1);
+        if (cand < v) v = cand;
+      });
+      busy[id] = false;
+      lf[id] = v;
+      return v;
+    }
+    var crit = {};
+    ids.forEach(function (id) { if (latest(id) <= spans[id].to) crit[id] = true; });
+    return { ids: crit, end: end };
+  }
+
   // ---------- normalise + re-id (export import, templates, built-ins) ----------
   // src: a board-shaped object from anywhere (our export, a template).
   // opts: { uid, now, name, keepDue, keepAtt, untick, id, archived }
@@ -802,7 +932,8 @@
     applyArrival: applyArrival, hasRules: hasRules, overdueLabel: overdueLabel, applyOverdue: applyOverdue,
     laneKey: laneKey, lanes: lanes,
     isWeekend: isWeekend, nextWorkday: nextWorkday, spanDays: spanDays, planSpan: planSpan, shiftSpan: shiftSpan,
-    progressOf: progressOf, boardWorkdays: boardWorkdays, setLane: setLane, sortRows: sortRows, timelineRange: timelineRange,
+    progressOf: progressOf, boardWorkdays: boardWorkdays,
+    wouldCycle: wouldCycle, brokenDeps: brokenDeps, shiftAfter: shiftAfter, criticalPath: criticalPath, dayAfter: dayAfter, setLane: setLane, sortRows: sortRows, timelineRange: timelineRange,
     rebuild: rebuild, counter: counter, exportBoard: exportBoard, isExport: isExport, parseExport: parseExport,
     boardCsv: boardCsv, csvCell: csvCell, packBoard: packBoard, isPackage: isPackage, parsePackage: parsePackage, boardMd: boardMd,
     PKG_KIND: PKG_KIND, templateFromBoard: templateFromBoard, boardFromTemplate: boardFromTemplate,

@@ -103,6 +103,54 @@
       "proj.title": "Projects", "proj.empty": "No projects yet.", "proj.desc": "{n} tracks · {t}",
       "name.project": "Name of the project", "name.track": "Name of the track",
       "export.title": "Export", "sec.bits": "Bit depth", "sec.rate": "Sample rate",
+      "mk.btn": "Markers",
+      "mk.hint": "Markers name places on the timeline. In a podcast episode they become its chapters. Press M to add one at the playhead.",
+      "mk.none": "No markers yet.", "mk.add": "Add at the playhead", "mk.default": "Chapter {n}", "mk.added": "Marker at {time}",
+      "mk.max": "A project has up to {n} markers", "mk.go": "Go to {time}", "mk.name": "Marker name", "mk.here": "To the playhead", "mk.del": "Delete",
+      "mk.delName": "Delete marker {name}", "pod.btn": "Publish as podcast",
+      "pod.intro.hint": "Make a show, turn this project into one of its episodes, and download a ready site (feed, episodes, chapters, cover) to put on GitHub Pages, Netlify, Cloudflare Pages or a server of your own. Podcast apps follow its feed address.",
+      "pod.sec.show": "Show", "pod.f.show": "Show", "pod.newShow": "New show…", "pod.untitledShow": "Untitled show", "pod.f.title": "Title",
+      "pod.f.author": "Made by", "pod.f.desc": "Description", "pod.f.lang": "Language", "pod.f.type": "Order", "pod.type.episodic": "Newest first",
+      "pod.type.serial": "In order (series)", "pod.f.cat": "Category", "pod.catNone": "No category", "pod.f.explicit": "Explicit content",
+      "pod.f.url": "Site address",
+      "pod.urlHint": "Where you will upload the site, for example https://yourname.github.io/show/. It must start with https. The feed is this address plus feed.xml.",
+      "pod.f.email": "Owner e-mail (optional, public)",
+      "pod.emailHint": "Apple Podcasts and other directories use it to check the show is yours. It is written in the feed, so anyone can read it.",
+      "pod.f.fund": "Support link (optional)", "pod.f.cover": "Cover", "pod.coverNone": "No cover yet.", "pod.coverPick": "Choose a picture",
+      "pod.coverAtelier": "Design it in Atelier",
+      "pod.coverHint": "A square picture of at least 1400 × 1400 pixels. Studio cuts it square, makes it at most 3000 × 3000 and removes the photo's hidden details (place, camera).",
+      "pod.coverBusy": "Preparing the cover…", "pod.atelierHint": "Atelier opens a 3000 × 3000 design. Save it as a picture in Files, then choose it here.",
+      "pod.save": "Save show", "pod.del": "Delete show", "pod.saved": "Saved",
+      "pod.delAsk": "Delete the show “{name}”? Its {n} episodes stay as projects; they only leave the show.", "pod.sec.ep": "This project as an episode",
+      "pod.epAdd": "Add to this show", "pod.epOther": "This project is an episode of “{name}”.", "pod.f.n": "Episode number", "pod.f.se": "Season",
+      "pod.f.epType": "Kind", "pod.f.date": "Date", "pod.epType.full": "Episode", "pod.epType.trailer": "Trailer", "pod.epType.bonus": "Bonus",
+      "pod.f.epTitle": "Episode title", "pod.f.epDesc": "Show notes", "pod.f.sound": "Sound", "pod.mono": "Mono", "pod.stereo": "Stereo",
+      "pod.sizeHint": "About {s} an hour.", "pod.chapters": "{n} chapters from the markers",
+      "pod.noChapters": "No chapters: add markers on the timeline to make them.", "pod.intro": "Intro", "pod.chapter": "Chapter",
+      "pod.fileNone": "No episode file yet.", "pod.fileReady": "Episode file ready: {d}, {s}.",
+      "pod.stale": "The markers changed since: make the file again so its chapters match.", "pod.make": "Make the episode file",
+      "pod.remake": "Make the file again", "pod.fileMade": "The episode file is ready", "pod.epSave": "Save", "pod.epLeave": "Take out of the show",
+      "pod.leaveAsk": "Take this project out of the show? Its episode file stays on the disk until you delete the project.", "pod.untitledEp": "Episode",
+      "pod.sec.eps": "Episodes", "pod.epsNone": "No episodes yet. Open a project and add it to this show.", "pod.draft": "draft",
+      "pod.staleShort": "make again", "pod.sec.site": "The site",
+      "pod.siteHint": "The ZIP holds everything the show needs. Upload what is inside it to the site address, keeping the folders. After each new episode, download it again and upload it over the old one.",
+      "pod.feedIs": "Feed address:", "pod.noFeed": "set the site address first", "pod.copy": "Copy the feed address", "pod.copied": "Feed address copied",
+      "pod.subscribe": "Follow in Podcasts", "pod.zip": "Download the site (ZIP)", "pod.zipBusy": "Making the ZIP…",
+      "pod.zipDone": "Done. Upload its contents to {url}", "pod.staleAsk": "{n} episodes have chapters older than their markers. Make the site anyway?",
+      "pod.miss.title": "Give the show a title", "pod.miss.author": "Say who makes it", "pod.miss.desc": "Write a description",
+      "pod.miss.url": "Set the site address", "pod.miss.cover": "Choose a cover", "pod.miss.eps": "Make at least one episode file",
+      "pod.err.title": "The show needs a title.", "pod.err.url": "The site address must be a full https address.",
+      "pod.err.email": "That e-mail address does not look right.", "pod.err.fund": "The support link must be an http or https address.",
+      "pod.err.noDisk": "The orOS disk is not available here.", "pod.err.cover": "That picture could not be read.",
+      "pod.err.coverSmall": "The picture is smaller than 1400 × 1400 pixels.", "pod.err.long": "An episode can be at most one hour long.",
+      "pod.err.missing": "These files are not on this device: {list}. Make the episode files again here, or wait until the disk syncs.",
+      "pod.err.big": "The site is larger than 4 GB, which a ZIP cannot hold.", "pod.page.feed": "RSS feed", "pod.page.support": "Support",
+      "pod.page.episode": "Episode", "pod.page.season": "Season", "pod.page.credit": "Made with orOS Studio", "pod.cat.Arts": "Arts",
+      "pod.cat.Business": "Business", "pod.cat.Comedy": "Comedy", "pod.cat.Education": "Education", "pod.cat.Fiction": "Fiction",
+      "pod.cat.Government": "Government", "pod.cat.History": "History", "pod.cat.Health & Fitness": "Health & Fitness",
+      "pod.cat.Kids & Family": "Kids & Family", "pod.cat.Leisure": "Leisure", "pod.cat.Music": "Music", "pod.cat.News": "News",
+      "pod.cat.Religion & Spirituality": "Religion & Spirituality", "pod.cat.Science": "Science", "pod.cat.Society & Culture": "Society & Culture",
+      "pod.cat.Sports": "Sports", "pod.cat.Technology": "Technology", "pod.cat.True Crime": "True Crime", "pod.cat.TV & Film": "TV & Film",
       "bits.16": "16 bit", "bits.24": "24 bit", "rate.44100": "44.1 kHz", "rate.48000": "48 kHz",
       "export.loop": "The loop: {a} to {b}.", "export.all": "The whole song: {a} to {b}.",
       "export.busy": "Mixing…", "export.empty": "There is nothing to export yet.",
@@ -177,8 +225,28 @@
       "fx.keyHint": "The effect listens to that track, after its effects and before its fader, so a muted track still works as the key.",
       "sec.format": "Format", "fmt.wav": "WAV", "fmt.mp3": "MP3", "fmt.opus": "Opus (OGG)", "sec.kbps": "Bitrate", "kbps": "{n} kbit/s",
       "export.encoding": "Encoding… {n}%", "export.noOpus": "This browser cannot make Opus files. Chrome, Edge and Firefox can.",
-      "export.opusRate": "Opus files are always 48 kHz.", "export.mp3Hint": "192 kbit/s or more keeps a mix close to the WAV.",
+      "export.opusRate": "Opus files are always 48 kHz.", "export.mp3Hint": "192 kbit/s or more keeps a mix close to the WAV. For speech 64–96 kbit/s is enough.",
       "toast.exportFail": "The export did not finish",
+      "ld.title": "Loudness", "ld.open": "Loudness…", "ld.m": "Momentary", "ld.s": "Short-term", "ld.i": "Integrated", "ld.lra": "Range", "ld.tp": "True peak",
+      "ld.hint": "Measured as the listener hears the master, by EBU R128. The live numbers count while the song plays.",
+      "ld.target": "Target", "ld.reset": "Reset", "ld.song": "Measure the song", "ld.file": "Measure a file…",
+      "ld.busy": "Measuring… {n}%", "ld.mixing": "Mixing the song…", "ld.fail": "That could not be measured.", "ld.empty": "There is nothing to measure yet.",
+      "ld.colSong": "This song", "ld.colFile": "{name}", "ld.colRef": "Reference",
+      "ld.r.i": "Integrated (LUFS)", "ld.r.lra": "Range (LU)", "ld.r.smax": "Loudest 3 s (LUFS)", "ld.r.tp": "True peak (dBTP)", "ld.r.sp": "Sample peak (dBFS)",
+      "ld.r.rms": "RMS (dBFS)", "ld.r.floor": "Noise floor (dBFS)", "ld.r.dur": "Length",
+      "ld.t.spotify": "Spotify (-14 LUFS)", "ld.t.apple": "Apple Music (-16 LUFS)", "ld.t.youtube": "YouTube (-14 LUFS)", "ld.t.podcast": "Podcast (-16 LUFS)",
+      "ld.t.ebu": "Broadcast, EBU R128 (-23 LUFS)", "ld.t.acx": "Audiobook: ACX (Audible)", "ld.t.storytel": "Audiobook: Storytel",
+      "ld.v.down": "{p} will play it {n} dB quieter.", "ld.v.up": "{p} will play it {n} dB louder.", "ld.v.same": "{p} will play it as it is.",
+      "ld.v.peak": "The true peak is above {n} dBTP: it may distort after the service encodes it.", "ld.v.none": "Play the song or measure it to see how {p} will play it.",
+      "ld.v.spec": "Measure the song to check it against {p}.", "ld.v.specOk": "Everything {p} checks passes.", "ld.v.specBad": "{n} of the checks for {p} do not pass yet.",
+      "ld.c.rms": "RMS {v} dBFS (needs {lo} to {hi})", "ld.c.peak": "Peak {v} dB (at most {hi})", "ld.c.floor": "Noise floor {v} dBFS (at most {hi})",
+      "ld.c.head": "Room tone at the start {v} s ({lo} to {hi} s)", "ld.c.tail": "Room tone at the end {v} s ({lo} to {hi} s)",
+      "ld.c.zero": "Digital silence {v} s (use room tone instead)", "ld.c.dur": "Length {v} min (at most {hi} min)", "ld.c.clip": "Clipped samples: {v}",
+      "ld.c.gain": "To reach RMS {to} dBFS it needs {g} dB.", "ld.c.limit": "Its peaks would then pass {hi} dB, so a limiter has to catch them.",
+      "ld.c.noisy": "Its noise floor would rise to {f} dBFS: reduce the noise first.",
+      "ld.ref": "Reference track", "ld.refHint": "Compare with a song you like: its numbers stand next to yours, and it plays at your song's loudness so you hear only the difference in sound.",
+      "ld.refPick": "Choose a reference…", "ld.refPlay": "Play it at the song's loudness", "ld.refStop": "Stop the reference", "ld.refDrop": "Remove",
+      "ld.refNoMatch": "Measure the song first, so the reference can play at its loudness.", "ld.refGain": "The reference plays {n} dB {dir}.", "ld.louder": "louder", "ld.quieter": "quieter",
       "btn.toMusic": "Add to Music", "btn.toLyrics": "Sync lyrics", "toast.toMusic": "Added to Music", "toast.toMusicFail": "Could not add it to Music",
       "btn.ringtone": "Make a ringtone", "toast.ringNoNotes": "Ringtone Composer needs notes: add an instrument track.",
       "au.btn": "A", "au.show": "Automation", "au.title": "Automation: {name}", "au.param": "Parameter",
@@ -264,6 +332,60 @@
       "proj.title": "Έργα", "proj.empty": "Κανένα έργο ακόμη.", "proj.desc": "{n} κανάλια · {t}",
       "name.project": "Όνομα του έργου", "name.track": "Όνομα του καναλιού",
       "export.title": "Εξαγωγή", "sec.bits": "Βάθος bit", "sec.rate": "Συχνότητα δειγματοληψίας",
+      "mk.btn": "Σημάδια",
+      "mk.hint": "Τα σημάδια ονομάζουν σημεία στη γραμμή χρόνου. Σε επεισόδιο podcast γίνονται τα κεφάλαιά του. Πάτα M για να προσθέσεις ένα στον δείκτη.",
+      "mk.none": "Δεν υπάρχουν σημάδια ακόμη.", "mk.add": "Προσθήκη στον δείκτη", "mk.default": "Κεφάλαιο {n}", "mk.added": "Σημάδι στο {time}",
+      "mk.max": "Ένα έργο έχει έως {n} σημάδια", "mk.go": "Μετάβαση στο {time}", "mk.name": "Όνομα σημαδιού", "mk.here": "Στον δείκτη", "mk.del": "Διαγραφή",
+      "mk.delName": "Διαγραφή του σημαδιού {name}", "pod.btn": "Δημοσίευση ως podcast",
+      "pod.intro.hint": "Φτιάξε μια εκπομπή, κάνε αυτό το έργο επεισόδιό της και κατέβασε έτοιμο site (feed, επεισόδια, κεφάλαια, εξώφυλλο) για να το ανεβάσεις σε GitHub Pages, Netlify, Cloudflare Pages ή δικό σου server. Οι εφαρμογές podcast ακολουθούν τη διεύθυνση του feed.",
+      "pod.sec.show": "Εκπομπή", "pod.f.show": "Εκπομπή", "pod.newShow": "Νέα εκπομπή…", "pod.untitledShow": "Εκπομπή χωρίς τίτλο", "pod.f.title": "Τίτλος",
+      "pod.f.author": "Δημιουργός", "pod.f.desc": "Περιγραφή", "pod.f.lang": "Γλώσσα", "pod.f.type": "Σειρά", "pod.type.episodic": "Πρώτα τα νεότερα",
+      "pod.type.serial": "Με τη σειρά (σειρά επεισοδίων)", "pod.f.cat": "Κατηγορία", "pod.catNone": "Χωρίς κατηγορία",
+      "pod.f.explicit": "Περιεχόμενο για ενήλικες", "pod.f.url": "Διεύθυνση του site",
+      "pod.urlHint": "Εκεί που θα ανεβάσεις το site, για παράδειγμα https://onoma.github.io/ekpompi/. Πρέπει να ξεκινά με https. Το feed είναι αυτή η διεύθυνση και μετά feed.xml.",
+      "pod.f.email": "Email ιδιοκτήτη (προαιρετικό, δημόσιο)",
+      "pod.emailHint": "Το Apple Podcasts και άλλοι κατάλογοι το χρησιμοποιούν για να ελέγξουν ότι η εκπομπή είναι δική σου. Γράφεται στο feed, άρα μπορεί να το διαβάσει οποιοσδήποτε.",
+      "pod.f.fund": "Σύνδεσμος υποστήριξης (προαιρετικό)", "pod.f.cover": "Εξώφυλλο", "pod.coverNone": "Δεν υπάρχει εξώφυλλο ακόμη.",
+      "pod.coverPick": "Επιλογή εικόνας", "pod.coverAtelier": "Σχεδίασέ το στο Atelier",
+      "pod.coverHint": "Τετράγωνη εικόνα τουλάχιστον 1400 × 1400 pixel. Το Studio την κόβει τετράγωνη, την κάνει το πολύ 3000 × 3000 και σβήνει τα κρυφά στοιχεία της φωτογραφίας (τόπο, κάμερα).",
+      "pod.coverBusy": "Ετοιμάζεται το εξώφυλλο…",
+      "pod.atelierHint": "Το Atelier ανοίγει σχέδιο 3000 × 3000. Αποθήκευσέ το ως εικόνα στα Αρχεία και διάλεξέ το εδώ.", "pod.save": "Αποθήκευση εκπομπής",
+      "pod.del": "Διαγραφή εκπομπής", "pod.saved": "Αποθηκεύτηκε",
+      "pod.delAsk": "Διαγραφή της εκπομπής «{name}»; Τα {n} επεισόδιά της μένουν ως έργα, απλώς φεύγουν από την εκπομπή.",
+      "pod.sec.ep": "Αυτό το έργο ως επεισόδιο", "pod.epAdd": "Προσθήκη σε αυτή την εκπομπή",
+      "pod.epOther": "Αυτό το έργο είναι επεισόδιο της εκπομπής «{name}».", "pod.f.n": "Αριθμός επεισοδίου", "pod.f.se": "Σεζόν", "pod.f.epType": "Είδος",
+      "pod.f.date": "Ημερομηνία", "pod.epType.full": "Επεισόδιο", "pod.epType.trailer": "Τρέιλερ", "pod.epType.bonus": "Μπόνους",
+      "pod.f.epTitle": "Τίτλος επεισοδίου", "pod.f.epDesc": "Σημειώσεις επεισοδίου", "pod.f.sound": "Ήχος", "pod.mono": "Μονοφωνικό",
+      "pod.stereo": "Στερεοφωνικό", "pod.sizeHint": "Περίπου {s} την ώρα.", "pod.chapters": "{n} κεφάλαια από τα σημάδια",
+      "pod.noChapters": "Χωρίς κεφάλαια: πρόσθεσε σημάδια στη γραμμή χρόνου για να γίνουν.", "pod.intro": "Εισαγωγή", "pod.chapter": "Κεφάλαιο",
+      "pod.fileNone": "Δεν υπάρχει αρχείο επεισοδίου ακόμη.", "pod.fileReady": "Το αρχείο του επεισοδίου είναι έτοιμο: {d}, {s}.",
+      "pod.stale": "Τα σημάδια άλλαξαν από τότε: φτιάξε ξανά το αρχείο για να ταιριάζουν τα κεφάλαια.", "pod.make": "Δημιουργία αρχείου επεισοδίου",
+      "pod.remake": "Νέα δημιουργία αρχείου", "pod.fileMade": "Το αρχείο του επεισοδίου είναι έτοιμο", "pod.epSave": "Αποθήκευση",
+      "pod.epLeave": "Αφαίρεση από την εκπομπή",
+      "pod.leaveAsk": "Να αφαιρεθεί αυτό το έργο από την εκπομπή; Το αρχείο του επεισοδίου μένει στον δίσκο μέχρι να διαγράψεις το έργο.",
+      "pod.untitledEp": "Επεισόδιο", "pod.sec.eps": "Επεισόδια",
+      "pod.epsNone": "Δεν υπάρχουν επεισόδια ακόμη. Άνοιξε ένα έργο και πρόσθεσέ το σε αυτή την εκπομπή.", "pod.draft": "πρόχειρο",
+      "pod.staleShort": "θέλει νέο αρχείο", "pod.sec.site": "Το site",
+      "pod.siteHint": "Το ZIP έχει όλα όσα χρειάζεται η εκπομπή. Ανέβασε ό,τι περιέχει στη διεύθυνση του site, με τους φακέλους του. Μετά από κάθε νέο επεισόδιο κατέβασέ το ξανά και ανέβασέ το πάνω στο παλιό.",
+      "pod.feedIs": "Διεύθυνση feed:", "pod.noFeed": "όρισε πρώτα τη διεύθυνση του site", "pod.copy": "Αντιγραφή διεύθυνσης feed",
+      "pod.copied": "Η διεύθυνση του feed αντιγράφηκε", "pod.subscribe": "Παρακολούθηση στο Podcasts", "pod.zip": "Λήψη του site (ZIP)",
+      "pod.zipBusy": "Φτιάχνεται το ZIP…", "pod.zipDone": "Έτοιμο. Ανέβασε το περιεχόμενό του στο {url}",
+      "pod.staleAsk": "{n} επεισόδια έχουν κεφάλαια παλιότερα από τα σημάδια τους. Να γίνει το site έτσι κι αλλιώς;",
+      "pod.miss.title": "Δώσε τίτλο στην εκπομπή", "pod.miss.author": "Γράψε ποιος τη φτιάχνει", "pod.miss.desc": "Γράψε περιγραφή",
+      "pod.miss.url": "Όρισε τη διεύθυνση του site", "pod.miss.cover": "Διάλεξε εξώφυλλο", "pod.miss.eps": "Φτιάξε τουλάχιστον ένα αρχείο επεισοδίου",
+      "pod.err.title": "Η εκπομπή χρειάζεται τίτλο.", "pod.err.url": "Η διεύθυνση του site πρέπει να είναι πλήρης διεύθυνση https.",
+      "pod.err.email": "Αυτό το email δεν μοιάζει σωστό.", "pod.err.fund": "Ο σύνδεσμος υποστήριξης πρέπει να είναι διεύθυνση http ή https.",
+      "pod.err.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "pod.err.cover": "Η εικόνα δεν διαβάστηκε.",
+      "pod.err.coverSmall": "Η εικόνα είναι μικρότερη από 1400 × 1400 pixel.", "pod.err.long": "Ένα επεισόδιο μπορεί να είναι έως μία ώρα.",
+      "pod.err.missing": "Αυτά τα αρχεία δεν είναι σε αυτή τη συσκευή: {list}. Φτιάξε ξανά τα αρχεία των επεισοδίων εδώ ή περίμενε να συγχρονιστεί ο δίσκος.",
+      "pod.err.big": "Το site είναι πάνω από 4 GB και δεν χωρά σε ZIP.", "pod.page.feed": "Feed RSS", "pod.page.support": "Υποστήριξη",
+      "pod.page.episode": "Επεισόδιο", "pod.page.season": "Σεζόν", "pod.page.credit": "Φτιαγμένο με το orOS Studio", "pod.cat.Arts": "Τέχνες",
+      "pod.cat.Business": "Επιχειρήσεις", "pod.cat.Comedy": "Κωμωδία", "pod.cat.Education": "Εκπαίδευση", "pod.cat.Fiction": "Μυθοπλασία",
+      "pod.cat.Government": "Δημόσια διοίκηση", "pod.cat.History": "Ιστορία", "pod.cat.Health & Fitness": "Υγεία & φυσική κατάσταση",
+      "pod.cat.Kids & Family": "Παιδιά & οικογένεια", "pod.cat.Leisure": "Ελεύθερος χρόνος", "pod.cat.Music": "Μουσική", "pod.cat.News": "Ειδήσεις",
+      "pod.cat.Religion & Spirituality": "Θρησκεία & πνευματικότητα", "pod.cat.Science": "Επιστήμη", "pod.cat.Society & Culture": "Κοινωνία & πολιτισμός",
+      "pod.cat.Sports": "Αθλητισμός", "pod.cat.Technology": "Τεχνολογία", "pod.cat.True Crime": "Αληθινά εγκλήματα",
+      "pod.cat.TV & Film": "Τηλεόραση & κινηματογράφος",
       "bits.16": "16 bit", "bits.24": "24 bit", "rate.44100": "44,1 kHz", "rate.48000": "48 kHz",
       "export.loop": "Το loop: από {a} έως {b}.", "export.all": "Όλο το τραγούδι: από {a} έως {b}.",
       "export.busy": "Γίνεται η μίξη…", "export.empty": "Δεν υπάρχει ακόμη κάτι για εξαγωγή.",
@@ -338,8 +460,28 @@
       "fx.keyHint": "Το εφέ ακούει εκείνο το κανάλι, μετά τα εφέ του και πριν από τον fader του, οπότε και ένα κανάλι σε σίγαση κάνει για κλειδί.",
       "sec.format": "Μορφή", "fmt.wav": "WAV", "fmt.mp3": "MP3", "fmt.opus": "Opus (OGG)", "sec.kbps": "Ρυθμός bit", "kbps": "{n} kbit/s",
       "export.encoding": "Κωδικοποίηση… {n}%", "export.noOpus": "Αυτός ο browser δεν φτιάχνει αρχεία Opus. Το Chrome, το Edge και το Firefox φτιάχνουν.",
-      "export.opusRate": "Τα αρχεία Opus είναι πάντα 48 kHz.", "export.mp3Hint": "Από 192 kbit/s και πάνω η μίξη μένει κοντά στο WAV.",
+      "export.opusRate": "Τα αρχεία Opus είναι πάντα 48 kHz.", "export.mp3Hint": "Από 192 kbit/s και πάνω η μίξη μένει κοντά στο WAV. Για ομιλία αρκούν 64–96 kbit/s.",
       "toast.exportFail": "Η εξαγωγή δεν ολοκληρώθηκε",
+      "ld.title": "Ένταση", "ld.open": "Ένταση…", "ld.m": "Στιγμιαία", "ld.s": "Σύντομη", "ld.i": "Συνολική", "ld.lra": "Εύρος", "ld.tp": "Πραγματική κορυφή",
+      "ld.hint": "Μετριέται όπως ακούει ο ακροατής το master, κατά EBU R128. Οι ζωντανές τιμές μετράνε όσο παίζει το τραγούδι.",
+      "ld.target": "Στόχος", "ld.reset": "Μηδενισμός", "ld.song": "Μέτρηση τραγουδιού", "ld.file": "Μέτρηση αρχείου…",
+      "ld.busy": "Μέτρηση… {n}%", "ld.mixing": "Γίνεται η μίξη του τραγουδιού…", "ld.fail": "Δεν ήταν δυνατή η μέτρηση.", "ld.empty": "Δεν υπάρχει ακόμη κάτι για μέτρηση.",
+      "ld.colSong": "Αυτό το τραγούδι", "ld.colFile": "{name}", "ld.colRef": "Αναφορά",
+      "ld.r.i": "Συνολική (LUFS)", "ld.r.lra": "Εύρος (LU)", "ld.r.smax": "Πιο δυνατά 3 s (LUFS)", "ld.r.tp": "Πραγματική κορυφή (dBTP)", "ld.r.sp": "Κορυφή δείγματος (dBFS)",
+      "ld.r.rms": "RMS (dBFS)", "ld.r.floor": "Θόρυβος βάθους (dBFS)", "ld.r.dur": "Διάρκεια",
+      "ld.t.spotify": "Spotify (-14 LUFS)", "ld.t.apple": "Apple Music (-16 LUFS)", "ld.t.youtube": "YouTube (-14 LUFS)", "ld.t.podcast": "Podcast (-16 LUFS)",
+      "ld.t.ebu": "Εκπομπή, EBU R128 (-23 LUFS)", "ld.t.acx": "Ηχητικό βιβλίο: ACX (Audible)", "ld.t.storytel": "Ηχητικό βιβλίο: Storytel",
+      "ld.v.down": "Το {p} θα το παίξει {n} dB πιο σιγά.", "ld.v.up": "Το {p} θα το παίξει {n} dB πιο δυνατά.", "ld.v.same": "Το {p} θα το παίξει όπως είναι.",
+      "ld.v.peak": "Η πραγματική κορυφή περνά τα {n} dBTP: μπορεί να παραμορφωθεί όταν το κωδικοποιήσει η υπηρεσία.", "ld.v.none": "Παίξε ή μέτρησε το τραγούδι για να δεις πώς θα το παίξει το {p}.",
+      "ld.v.spec": "Μέτρησε το τραγούδι για να το ελέγξεις με τις απαιτήσεις του {p}.", "ld.v.specOk": "Όλοι οι έλεγχοι του {p} περνούν.", "ld.v.specBad": "{n} από τους ελέγχους του {p} δεν περνούν ακόμη.",
+      "ld.c.rms": "RMS {v} dBFS (χρειάζεται {lo} έως {hi})", "ld.c.peak": "Κορυφή {v} dB (το πολύ {hi})", "ld.c.floor": "Θόρυβος βάθους {v} dBFS (το πολύ {hi})",
+      "ld.c.head": "Room tone στην αρχή {v} s ({lo} έως {hi} s)", "ld.c.tail": "Room tone στο τέλος {v} s ({lo} έως {hi} s)",
+      "ld.c.zero": "Ψηφιακή σιωπή {v} s (βάλε room tone στη θέση της)", "ld.c.dur": "Διάρκεια {v} λεπτά (το πολύ {hi})", "ld.c.clip": "Δείγματα με clipping: {v}",
+      "ld.c.gain": "Για RMS {to} dBFS χρειάζεται {g} dB.", "ld.c.limit": "Τότε οι κορυφές του θα περνούσαν τα {hi} dB, άρα πρέπει να τις πιάσει ένας limiter.",
+      "ld.c.noisy": "Ο θόρυβος βάθους θα ανέβαινε στα {f} dBFS: μείωσε πρώτα τον θόρυβο.",
+      "ld.ref": "Κομμάτι αναφοράς", "ld.refHint": "Σύγκρινε με ένα τραγούδι που σου αρέσει: οι τιμές του μπαίνουν δίπλα στις δικές σου και παίζει στην ένταση του τραγουδιού σου, ώστε να ακούς μόνο τη διαφορά στον ήχο.",
+      "ld.refPick": "Επιλογή αναφοράς…", "ld.refPlay": "Παίξε το στην ένταση του τραγουδιού", "ld.refStop": "Σταμάτα την αναφορά", "ld.refDrop": "Αφαίρεση",
+      "ld.refNoMatch": "Μέτρησε πρώτα το τραγούδι, για να παίξει η αναφορά στην ένταση του.", "ld.refGain": "Η αναφορά παίζει {n} dB {dir}.", "ld.louder": "πιο δυνατά", "ld.quieter": "πιο σιγά",
       "btn.toMusic": "Στη Μουσική", "btn.toLyrics": "Συγχρονισμός στίχων", "toast.toMusic": "Μπήκε στη Μουσική", "toast.toMusicFail": "Δεν μπόρεσε να μπει στη Μουσική",
       "btn.ringtone": "Κάνε το ήχο κλήσης", "toast.ringNoNotes": "Ο Ήχος κλήσης χρειάζεται νότες: πρόσθεσε ένα κανάλι οργάνου.",
       "au.btn": "A", "au.show": "Αυτοματισμός", "au.title": "Αυτοματισμός: {name}", "au.param": "Παράμετρος",
@@ -544,7 +686,7 @@
       bits: p.bits === 16 ? 16 : 24,
       rate: p.rate === 44100 ? 44100 : 48000,
       fmt: p.fmt === "mp3" || p.fmt === "opus" ? p.fmt : "wav",
-      kbps: [128, 192, 320].indexOf(p.kbps) >= 0 ? p.kbps : 192,
+      kbps: [64, 96, 112, 128, 192, 320].indexOf(p.kbps) >= 0 ? p.kbps : 192,
       okbps: [96, 128, 160, 256].indexOf(p.okbps) >= 0 ? p.okbps : 160,
       auto: idMap(p.auto, function (v) { return v === true; }),
       autoSel: idMap(p.autoSel, function (v) { return typeof v === "string" && v.length <= 40; }),
@@ -558,7 +700,8 @@
       prVel: int(p.prVel, 1, 127, 100),
       lpG: typeof p.lpG === "string" && /^[a-z]{0,12}$/.test(p.lpG) ? p.lpG : "",
       lpK: p.lpK === "drums" || p.lpK === "bass" || p.lpK === "keys" ? p.lpK : "",
-      lpT: p.lpT === "slow" || p.lpT === "mid" || p.lpT === "fast" ? p.lpT : ""
+      lpT: p.lpT === "slow" || p.lpT === "mid" || p.lpT === "fast" ? p.lpT : "",
+      ldT: typeof p.ldT === "string" && /^[a-z]{1,12}$/.test(p.ldT) ? p.ldT : ""
     };
   }
   // { trackId: value } kept for at most 64 tracks
@@ -1228,6 +1371,14 @@
       m.style.left = (i * bar * z) + "px";
       r.appendChild(m);
     }
+    // markers (chapters of a podcast episode), wave P1
+    var PD = window.StudioPodcast;
+    (proj && PD ? PD.normMarkers(proj.mk) : []).forEach(function (x) {
+      var f = el("span", "mk", x.n);
+      f.style.left = (x.t * z) + "px";
+      f.title = C.fmtTime(x.t) + (x.n ? " · " + x.n : "");
+      r.appendChild(f);
+    });
     if (proj && (proj.loop.b > proj.loop.a)) {
       var lp = el("div", "loop" + (proj.loop.on ? " on" : ""));
       lp.style.left = (proj.loop.a * z) + "px";
@@ -1895,6 +2046,7 @@
     if (!loop && fromSec >= end) { if (opts.open) end = C.MAX_SEC; else fromSec = 0; }
     var t0 = a.currentTime + 0.06;
     playing = { t0: t0, loop: loop, passes: [newPass(fromSec, end, t0)], sources: [], clicks: [] };
+    ldRun(true);
     timeAt(trackNodes, t0, fromSec);
     schedAuto(a, trackNodes, fromSec, end, t0, true);
     if (projClips().some(function (c) { return !C.isMidi(c) && state[c.s] !== "ok"; })) showToast(t("toast.missing"));
@@ -1991,6 +2143,7 @@
     trackNodes = {};
     if (FX) FX.disconnect();
     playing = null;
+    ldRun(false);
   }
   function pause() {
     if (!playing) return;
@@ -3070,6 +3223,43 @@
     var tid = laneAt(x, y), row = tid && document.querySelector('#rows .row.track[data-t="' + tid + '"]');
     if (row) row.classList.add("drop");
   }
+  // ---------- Publish as podcast (podcast.js + podcastui.js, wave P1) ----------
+  var Pod = null;
+  function podSetProject(fields, opts) {
+    var pid = opts && opts.pid || (proj && proj.id), p = pid && C.find(data, "projects", pid);
+    if (!p) return;
+    var n = Object.assign({}, p);
+    Object.keys(fields).forEach(function (k) { if (fields[k] === undefined) delete n[k]; else n[k] = fields[k]; });
+    if (proj && pid === proj.id) edit(function () { put("projects", n); });
+    else { put("projects", n); save(); }
+  }
+  function makePodcast() {
+    if (!window.StudioPodcastUI || !window.StudioPodcast) return;
+    Pod = window.StudioPodcastUI({
+      t: t, lang: LANG, encoder: E,
+      data: function () { return data; }, proj: function () { return proj; },
+      setProject: podSetProject,
+      putShow: function (x) { if (!Array.isArray(data.shows)) data.shows = []; put("shows", Object.assign({}, x)); save(); },
+      removeShow: function (id) { if (Array.isArray(data.shows)) { remove("shows", id); save(); } },
+      newId: function (kind) { return C.newId(kind, Math.random); },
+      playhead: function () { return playing ? position() : playhead; },
+      seek: function (sec) { seek(sec); },
+      fmtTime: C.fmtTime,
+      renderMix: function (r, rate) { return renderMix(r, rate); },
+      mixRange: function () { return proj ? C.exportRange(proj, projClips()) : null; },
+      mixProblem: function () {
+        var clips = projClips(), seq = proj && proj.loop.on && tracks().some(function (tr) { return !!nxOf(tr); });
+        if (!proj || !(clips.length || seq)) return "export.empty";
+        var r = C.exportRange(proj, clips);
+        if (r.b - r.a < C.MIN_LEN) return "export.empty";
+        if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) return "toast.missing";
+        if (!(window.OfflineAudioContext || window.webkitOfflineAudioContext)) return "toast.noAudio";
+        return "";
+      },
+      fs: musicFs, dialog: dialogHost, pickLocal: function (accept) { return localPickFiles(accept).then(function (l) { return l && l[0] || null; }); },
+      saveFile: saveFileP, toast: showToast, showDlg: showDlg, hideDlg: hideDlg, radioChips: radioChips, shellOpen: shellOpen
+    });
+  }
   function makeRoll() {
     Roll = window.StudioRoll({
       C: C, N: N, M: M, L: L, t: t, el: el, setLabel: setLabel, ICON: ICON, numTxt: numTxt,
@@ -3203,7 +3393,7 @@
     if (opusChip && opusOk === false) { opusChip.disabled = true; opusChip.setAttribute("aria-disabled", "true"); }
     radioChips($("export-bits"), [16, 24], prefs.bits, function (v) { return t("bits." + v); }, function (v) { prefs.bits = v; savePrefs(); renderExportChips(); });
     radioChips($("export-rate"), [44100, 48000], prefs.rate, function (v) { return t("rate." + v); }, function (v) { prefs.rate = v; savePrefs(); renderExportChips(); });
-    var kb = fmt === "opus" ? [96, 128, 160, 256] : [128, 192, 320], cur = fmt === "opus" ? prefs.okbps : prefs.kbps;
+    var kb = fmt === "opus" ? [96, 128, 160, 256] : [64, 96, 112, 128, 192, 320], cur = fmt === "opus" ? prefs.okbps : prefs.kbps;
     radioChips($("export-kbps"), kb, cur, function (v) { return t("kbps", { n: v }); }, function (v) {
       if (fmt === "opus") prefs.okbps = v; else prefs.kbps = v;
       savePrefs(); renderExportChips();
@@ -4142,6 +4332,213 @@
     edit(function () { put("clips", C.normClip(Object.assign({}, c, fields))); }, burst(field + c.id));
   }
 
+  // ---------- 9b. Loudness (meter.js, Studio wave A1) ----------
+  // The live meter is an AudioWorklet on the master after its effects
+  // (what the speakers get); it counts only while the song plays. Measuring
+  // the song renders the mix (renderMix) and analyses it a slice at a time;
+  // a file or a reference track is decoded and analysed the same way.
+  var SM = window.StudioMeter;
+  var LD_TARGETS = ["spotify", "apple", "youtube", "podcast", "ebu", "acx", "storytel"];
+  var ld = { node: null, loading: null, live: null, cur: null, curName: "", curPid: "", ref: null, src: null, job: 0 };
+  function ldNode() {
+    var a = audio();
+    if (ld.node) return Promise.resolve(ld.node);
+    if (!a || !SM || !a.audioWorklet || typeof AudioWorkletNode === "undefined") return Promise.resolve(null);
+    if (!ld.loading) {
+      ld.loading = a.audioWorklet.addModule("meter.js").then(function () { return a.audioWorklet.addModule("meter.worklet.js"); }).then(function () {
+        var n = new AudioWorkletNode(a, "studio-loudness", { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+                                                             channelCount: 2, channelCountMode: "explicit", channelInterpretation: "speakers" });
+        var mute = a.createGain(); mute.gain.value = 0;   // a worklet runs only while it reaches the output
+        analyser.connect(n); n.connect(mute); mute.connect(a.destination);
+        n.port.onmessage = function (e) { if (e.data && typeof e.data === "object") { ld.live = e.data; ldShowLive(); } };
+        n.port.postMessage(playing ? "run" : "pause");
+        ld.node = n;
+        return n;
+      }).then(null, function () { ld.loading = null; return null; });
+    }
+    return ld.loading;
+  }
+  function ldRun(on) {
+    if (ld.node) { try { ld.node.port.postMessage(on ? "run" : "pause"); } catch (e) {} }
+    if (on) ldRefStop();
+  }
+  function ldOk(v, lo) { return typeof v === "number" && isFinite(v) && v > (lo == null ? -70 : lo); }
+  function ldNum(v, d, lo) { return ldOk(v, lo) ? numTxt(v, d) : "–"; }
+  function ldTarget() { return LD_TARGETS.indexOf(prefs.ldT) >= 0 ? prefs.ldT : "spotify"; }
+  function ldName(id) {
+    if (SM.SPECS[id]) return SM.SPECS[id].name;
+    var p = SM.PLATFORMS.filter(function (x) { return x.id === id; })[0];
+    return (p && p.name) || t("ld.t." + id).replace(/\s*\(.*\)\s*$/, "");
+  }
+  function ldShowLive() {
+    var r = ld.live;
+    if (!$("loud-dlg").open) return;
+    $("ld-m").textContent = r ? ldNum(r.m, 1) : "–";
+    $("ld-s").textContent = r ? ldNum(r.s, 1) : "–";
+    $("ld-i").textContent = r ? ldNum(r.i, 1) : "–";
+    $("ld-lra").textContent = r && ldOk(r.i) ? numTxt(r.lra, 1) : "–";
+    $("ld-tp").textContent = r && r.tp > 0 ? numTxt(SM.db(r.tp), 1) : "–";
+    if (!ld.cur) ldVerdict();
+  }
+  function ldLine(ul, cls, text) {
+    var li = el("li", cls), mk = el("span", "ld-mark", cls === "ok" ? "\u2713" : cls === "bad" ? "\u2717" : cls === "warn" ? "!" : "\u2192");
+    mk.setAttribute("aria-hidden", "true");
+    li.appendChild(mk); li.appendChild(el("span", "", text));
+    ul.appendChild(li);
+  }
+  // what the chosen target says about the measured song (or file), else the live numbers
+  function ldVerdict() {
+    var id = ldTarget(), name = ldName(id), out = $("ld-verdict"), ul = $("ld-checks");
+    ul.textContent = ""; ul.hidden = true;
+    if (SM.SPECS[id]) {
+      if (!ld.cur) { out.textContent = t("ld.v.spec", { p: name }); return; }
+      var rows = SM.check(ld.cur, id), s = SM.SPECS[id], bad = 0;
+      rows.forEach(function (c) {
+        if (!c.ok) bad++;
+        var v = c.k === "dur" ? numTxt(c.v / 60, 1) : c.k === "clip" ? String(c.v) : ldNum(c.v, c.k === "head" || c.k === "tail" || c.k === "zero" ? 2 : 1, -Infinity);
+        ldLine(ul, c.ok ? "ok" : "bad", t("ld.c." + c.k, { v: v, lo: c.lo == null ? "" : numTxt(c.lo, 1), hi: c.k === "dur" ? numTxt(c.hi / 60, 0) : numTxt(c.hi, c.k === "clip" ? 0 : 1) }));
+      });
+      var g = SM.gainFor(ld.cur, id);
+      if (g && !rows[0].ok) {
+        ldLine(ul, "", t("ld.c.gain", { to: numTxt((s.rms[0] + s.rms[1]) / 2, 1), g: (g.gain > 0 ? "+" : "") + numTxt(g.gain, 1) }));
+        if (g.limit) ldLine(ul, "warn", t("ld.c.limit", { hi: numTxt(s.peak, 1) }));
+        if (g.noisy) ldLine(ul, "warn", t("ld.c.noisy", { f: numTxt(g.floor, 1) }));
+      }
+      ul.hidden = false;
+      out.textContent = bad ? t("ld.v.specBad", { n: bad, p: name }) : t("ld.v.specOk", { p: name });
+      return;
+    }
+    var rep = ld.cur || (ld.live && ldOk(ld.live.i) ? { i: ld.live.i, tp: ld.live.tp > 0 ? SM.db(ld.live.tp) : -Infinity } : null);
+    var pf = rep ? SM.platform(rep, id) : null;
+    if (!pf) { out.textContent = t("ld.v.none", { p: name }); return; }
+    var n = numTxt(Math.abs(pf.gain), 1);
+    var txt = pf.gain < 0 ? t("ld.v.down", { p: name, n: n }) : pf.gain > 0 ? t("ld.v.up", { p: name, n: n }) : t("ld.v.same", { p: name });
+    if (pf.over) txt += " " + t("ld.v.peak", { n: numTxt(pf.tp, 0) });
+    out.textContent = txt;
+  }
+  var LD_ROWS = [["i", 1], ["lra", 1], ["smax", 1], ["tp", 1], ["sp", 1], ["rms", 1], ["floor", 1], ["dur", 0]];
+  function ldCell(rep, k, d) {
+    if (!rep) return "";
+    if (k === "dur") return C.fmtTime(rep.dur);
+    if (k === "lra") return ldOk(rep.i) ? numTxt(rep.lra, d) : "–";
+    return ldNum(rep[k], d, k === "i" || k === "smax" ? -70 : -Infinity);
+  }
+  function ldReport() {
+    var a = ld.cur, b = ld.ref && ld.ref.rep;
+    $("ld-report").hidden = !a && !b;
+    $("ld-col-a").textContent = a ? ld.curName : "";
+    $("ld-col-b").textContent = t("ld.colRef");
+    $("ld-col-b").hidden = !b;
+    var body = $("ld-rows");
+    body.textContent = "";
+    LD_ROWS.forEach(function (r) {
+      var tr = el("tr");
+      tr.appendChild(el("th", "", t("ld.r." + r[0]))).scope = "row";
+      tr.appendChild(el("td", "", ldCell(a, r[0], r[1])));
+      if (b) tr.appendChild(el("td", "", ldCell(b, r[0], r[1])));
+      body.appendChild(tr);
+    });
+    $("ld-refplay").hidden = !b;
+    $("ld-refdrop").hidden = !b;
+    ldVerdict();
+  }
+  function ldBusy(on) { ["ld-song", "ld-file", "ld-ref"].forEach(function (id) { $(id).disabled = on; }); }
+  // chans → report, a slice at a time; done(rep) or done(null)
+  function ldAnalyse(chans, rate, done) {
+    var job = ++ld.job, A;
+    try { A = new SM.Analysis(chans, rate); } catch (e) { done(null); return; }
+    var step = function () {
+      if (job !== ld.job) return;
+      try { if (A.step(rate * 4)) { done(A.result()); return; } } catch (e) { done(null); return; }
+      $("ld-status").textContent = t("ld.busy", { n: Math.floor(A.progress() * 100) });
+      setTimeout(step, 0);
+    };
+    step();
+  }
+  function ldFinish(rep, set) {
+    ldBusy(false);
+    $("ld-status").textContent = rep ? "" : t("ld.fail");
+    if (rep) set(rep);
+    ldReport();
+  }
+  function ldMeasureSong() {
+    var seq = proj && proj.loop.on && tracks().some(function (tr) { return !!nxOf(tr); });
+    if (!proj || !(projClips().length || seq)) { $("ld-status").textContent = t("ld.empty"); return; }
+    var clips = projClips(), r = C.exportRange(proj, clips);
+    if (r.b - r.a < C.MIN_LEN) { $("ld-status").textContent = t("ld.empty"); return; }
+    if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); return; }
+    ldBusy(true);
+    $("ld-status").textContent = t("ld.mixing");
+    var pid = proj.id, name = t("ld.colSong");
+    renderMix(r, 48000).then(function (chans) {
+      ldAnalyse(chans, 48000, function (rep) { ldFinish(rep, function (x) { if (proj && proj.id === pid) { ld.cur = x; ld.curName = name; ld.curPid = pid; } }); });
+    }, function () { ldFinish(null); });
+  }
+  function ldDecodeFile(f, done) {
+    if (!f) { done(null); return; }
+    if (f.size > MAX_FILE) { showToast(t("toast.tooBig", { name: f.name })); done(null); return; }
+    ldBusy(true);
+    $("ld-status").textContent = t("ld.busy", { n: 0 });
+    f.arrayBuffer().then(decode).then(function (buf) {
+      var chans = [];
+      for (var c = 0; c < Math.min(2, buf.numberOfChannels); c++) chans.push(buf.getChannelData(c));
+      ldAnalyse(chans, buf.sampleRate, function (rep) { done(rep, buf); });
+    }).then(null, function () { done(null); });
+  }
+  var LD_ACCEPT = "audio/*,.wav,.mp3,.ogg,.oga,.opus,.flac,.m4a,.m4b,.aac,.webm";
+  function ldMeasureFile() {
+    pickFilesP(LD_ACCEPT).then(function (files) {
+      var f = files && files[0];
+      if (!f) return;
+      ldDecodeFile(f, function (rep) { ldFinish(rep, function (x) { ld.cur = x; ld.curPid = ""; ld.curName = t("ld.colFile", { name: String(f.name).slice(0, 60) }); }); });
+    });
+  }
+  function ldPickRef() {
+    pickFilesP(LD_ACCEPT).then(function (files) {
+      var f = files && files[0];
+      if (!f) return;
+      ldDecodeFile(f, function (rep, buf) { ldRefStop(); ldFinish(rep, function (x) { ld.ref = { rep: x, buf: buf, name: String(f.name).slice(0, 60) }; }); });
+    });
+  }
+  // the reference plays at the song's loudness, past the master (it is not part of the mix)
+  function ldRefPlay() {
+    if (ld.src) { ldRefStop(); return; }
+    var a = audio(), ref = ld.ref, songI = ld.cur ? ld.cur.i : ld.live ? ld.live.i : -200;
+    if (!a || !ref || !ref.buf) return;
+    if (!ldOk(songI) || !ldOk(ref.rep.i)) { $("ld-status").textContent = t("ld.refNoMatch"); return; }
+    if (playing) pause();
+    resume();
+    var gdb = clamp(songI - ref.rep.i, -40, 24), g = a.createGain(), s = a.createBufferSource();
+    g.gain.value = C.dbToGain(gdb);
+    s.buffer = ref.buf; s.connect(g); g.connect(a.destination);
+    s.onended = function () { if (ld.src === s) ldRefStop(); };
+    s.start();
+    ld.src = s;
+    var b = $("ld-refplay");
+    b.setAttribute("aria-pressed", "true"); b.textContent = t("ld.refStop");
+    $("ld-status").textContent = t("ld.refGain", { n: numTxt(Math.abs(gdb), 1), dir: t(gdb >= 0 ? "ld.louder" : "ld.quieter") });
+  }
+  function ldRefStop() {
+    var s = ld.src;
+    ld.src = null;
+    if (s) { try { s.onended = null; s.stop(); } catch (e) {} try { s.disconnect(); } catch (e) {} }
+    var b = $("ld-refplay");
+    if (b) { b.setAttribute("aria-pressed", "false"); b.textContent = t("ld.refPlay"); }
+  }
+  function openLoudness() {
+    if (!SM) { showToast(t("ld.fail")); return; }
+    var sel = $("ld-target");
+    if (!sel.options.length) LD_TARGETS.forEach(function (id) { var o = el("option", "", t("ld.t." + id)); o.value = id; sel.appendChild(o); });
+    sel.value = ldTarget();
+    if (ld.curPid && (!proj || proj.id !== ld.curPid)) { ld.cur = null; ld.curPid = ""; }   // another song is open now
+    $("ld-status").textContent = "";
+    showDlg("loud-dlg");
+    ldShowLive();
+    ldReport();
+    ldNode();
+  }
+  function closeLoudness() { ldRefStop(); hideDlg("loud-dlg"); }
+
   // ---------- 10. Dialogs ----------
   function showDlg(id) {
     var d = $(id);
@@ -4212,6 +4609,8 @@
     var keep = {};
     C.LISTS.forEach(function (key) { keep[key] = key === "projects" ? [p] : C.ofProject(data, key, pid).map(function (x) { return Object.assign({}, x); }); });
     var paths = keep.sources.map(function (s) { return s.path; });
+    var pep = window.StudioPodcast ? window.StudioPodcast.normEp(p.ep) : null;
+    if (pep && pep.file) paths.push(pep.file);
     if (proj && proj.id === pid) openProject(null);
     var part = C.emptyData(), now = Date.now();
     C.LISTS.forEach(function (key) { keep[key].forEach(function (x) { part.tombs[x.id] = Math.max(now, x.m); }); });
@@ -4427,6 +4826,7 @@
       else if (lk === "r") { e.preventDefault(); startRecording(); }
       else if (lk === "l") { e.preventDefault(); toggleLoop(); }
       else if (lk === "k") { e.preventDefault(); toggleMetro(); }
+      else if (lk === "m" && Pod) { e.preventDefault(); Pod.addMarkerHere(); }
       else if (lk === "s" && selClip) { e.preventDefault(); splitSel(); }
       else if (lk === "d" && selClip) { e.preventDefault(); dupSel(); }
       else if ((k === "Delete" || k === "Backspace") && selClip) { e.preventDefault(); delSel(); }
@@ -4513,6 +4913,7 @@
     if ($("proj-dlg").open) renderProjects();
     if ($("track-dlg").open) renderTrackDlg();
     FX.render();
+    if (Pod) Pod.refresh();
     if (playing && !recording) replayIfPlaying();
   }
 
@@ -4533,7 +4934,7 @@
                  ["home-btn", "home", "btn.home"], ["stop-btn", "stop", "btn.stop"], ["rec-btn", "rec", "btn.rec"],
                  ["loop-btn", "loop", "btn.loop"], ["zoom-in", "zin", "btn.zoomIn"], ["zoom-out", "zout", "btn.zoomOut"],
                  ["clip-close", "close", "btn.close"], ["proj-close", "close", "btn.close"], ["track-close", "close", "btn.close"],
-                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"], ["fx-close", "close", "btn.close"],
+                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"], ["fx-close", "close", "btn.close"], ["loud-close", "close", "btn.close"],
                  ["add-close", "close", "btn.close"], ["pr-play", "play", "pr.play"]];
     icons.forEach(function (x) { $(x[0]).innerHTML = ICON[x[1]]; setLabel($(x[0]), t(x[2])); });
     var sig = $("sig-in");
@@ -4692,6 +5093,22 @@
     Roll.wire();
     $("track-auto").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); prefs.auto[id] = true; savePrefs(); renderRows(); });
     $("export-close").addEventListener("click", function () { hideDlg("export-dlg"); });
+    $("master-loud").addEventListener("click", openLoudness);
+    $("export-loud").addEventListener("click", function () { hideDlg("export-dlg"); openLoudness(); });
+    $("loud-close").addEventListener("click", closeLoudness);
+    $("loud-dlg").addEventListener("close", function () { ldRefStop(); ld.job++; ldBusy(false); });
+    $("ld-target").addEventListener("change", function () { prefs.ldT = this.value; savePrefs(); ldVerdict(); });
+    $("ld-reset").addEventListener("click", function () {
+      if (ld.node) { try { ld.node.port.postMessage("reset"); } catch (e) {} }
+      if (ld.live) ld.live = Object.assign({}, ld.live, { i: -200, lra: 0, mmax: -200, smax: -200, tp: 0, sp: 0 });
+      ld.cur = null; ld.curPid = "";
+      ldShowLive(); ldReport();
+    });
+    $("ld-song").addEventListener("click", ldMeasureSong);
+    $("ld-file").addEventListener("click", ldMeasureFile);
+    $("ld-ref").addEventListener("click", ldPickRef);
+    $("ld-refplay").addEventListener("click", ldRefPlay);
+    $("ld-refdrop").addEventListener("click", function () { ldRefStop(); ld.ref = null; $("ld-status").textContent = ""; ldReport(); });
     $("export-go").addEventListener("click", function () { doExport("file"); });
     $("export-cr-copy").addEventListener("click", copyCredits);
     $("export-cr-save").addEventListener("click", saveCredits);
@@ -4701,6 +5118,8 @@
     $("export-music").addEventListener("click", function () { doExport("music"); });
     $("export-lyrics").addEventListener("click", function () { doExport("lyrics"); });
     $("export-ring").addEventListener("click", makeRingtone);
+    $("export-pod").addEventListener("click", function () { if (!Pod) return; hideDlg("export-dlg"); Pod.open(); });
+    $("export-mk").addEventListener("click", function () { if (!Pod) return; hideDlg("export-dlg"); Pod.markers(); });
     $("more-close").addEventListener("click", function () { hideDlg("more-dlg"); });
     $("more-dlg").addEventListener("close", ioTestOff);
     $("io-mode").addEventListener("change", function () { prefs.io.on = $("io-mode").value === "br"; savePrefs(); renderIo(); });
@@ -4856,6 +5275,7 @@
     makeRemote();
     applyI18n();
     wire();
+    makePodcast();
     Remote.wire();
     registerSync();
     inheritPalette();

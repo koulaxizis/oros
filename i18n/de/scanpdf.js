@@ -515,5 +515,12 @@ orosPack("de", "scanpdf", {
  "sg.sendAgain": "Noch einmal senden",
  "sg.buildFail": "Das unterschriebene PDF konnte in diesem Browser nicht erstellt werden.",
  "sg.legal": "Eine einfache elektronische Signatur nach den eIDAS-Regeln der EU. Sie ist keine qualifizierte elektronische Signatur.",
- "sg.fileName": "{n} (unterschrieben).pdf"
+ "sg.fileName": "{n} (unterschrieben).pdf",
+ "rq.remind": "Erinnern",
+ "rq.remindSubject": "Erinnerung: bitte unterschreiben: {n}",
+ "rq.remindBody": "Hallo {to},\n\neine Erinnerung: „{n}“ wartet hier noch auf deine Unterschrift:\n{l}\n\nDer Link gilt bis {d}.\n\n{by}",
+ "rq.auto": "Die Antwort kommt von selbst zurück.",
+ "sg.doneAuto": "Deine unterschriebene Kopie wurde heruntergeladen. Bewahre sie auf: Sie ist dein Nachweis. Deine Antwort ging von selbst an {f} zurück: Du musst nichts weiter tun.",
+ "sg.declinedAuto": "Deine Antwort ging von selbst an {f} zurück: Du musst nichts weiter tun.",
+ "sg.autoNote": "Sie wartet verschlüsselt auf dem orOS-Server auf {f} und verschwindet, wenn sie orOS öffnen (höchstens 30 Tage nach dem Ende des Links)."
 });
