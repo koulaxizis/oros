@@ -222,7 +222,8 @@
       "category": "Office",
       "icon": "forms",
       "url": "forms/",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "base",

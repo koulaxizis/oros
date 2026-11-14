@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.67.00
+- **Share a form with a link.** In Forms open a form and `Share`: `Publish` gives a link, a QR code and a code to put the form on your website. People fill it in on a page that needs no orOS; their answers are locked in their browser so only your orOS can read them, and they show up in `Answers`. You can close the form, set when it opens and closes, allow one answer per browser and add a button to your page after sending. Waiting answers show in Today, as an orOS notice and, where it is on, as a push notice. See [Forms](app:forms).
+
 ## Version 6.66.00
 - **Sign in a new browser later with a link.** On a signed-in device open Settings › Sync › `Send a sign-in link`. Send yourself the link (copy, share or your own email app) and keep the 8-character code it shows: the code is never in the link. Open the link on the new browser within 15 minutes and type the code; it connects your Dropbox or WebDAV, unlocks and syncs. The link works once and the device that sent it shows when it was used. See [Sync](help:t/sync).
 
