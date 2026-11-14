@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.65.00
+- **Diagram connectors in Whiteboard.** A selected arrow's `Line shape` can be `Right angles, around shapes` (it finds its way around the shapes in between and follows them when they move) or `Curved`. `Start of the arrow` and `End of the arrow` set each head on its own, with the UML heads (hollow triangle, filled and hollow diamond). On a right-angled or curved line, drop an end near a side to keep it on that side.
+
 ## Version 6.64.00
 - **Dependencies in the Kanban Timeline.** In a card, `Depends on` lists the cards it waits for, or drag the dot after a bar onto another bar. Arrows join them and turn red when the next card starts too early; the message then offers `Move the next ones too`, with its own Undo. `Critical path` in the view menu outlines the cards that set the end of the plan. See [Kanban](app:kanban).
 
