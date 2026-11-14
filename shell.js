@@ -8790,7 +8790,7 @@
   function scFactoryReset(btn, deviceOnly, sosPass) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
-    var follow = deviceOnly === "follow", sos = deviceOnly === "sos";
+    var follow = deviceOnly === "follow", sos = deviceOnly === "sos", travel = deviceOnly === "travel";
     var S = window.orosSync;
 
     function capped(p, ms) {
@@ -8802,7 +8802,10 @@
 
     // Cloud wipe (15s cap — a hanging network can never freeze the
     // reset; wipeEverything suspends the engine synchronously at call).
-    var cloud = follow ? Promise.resolve(S && typeof S.suspendEngine === "function" ? S.suspendEngine() : null)
+    // Travel (STRICT-3): the last push like "Reset this device", then this
+    // device's own relay boxes close; the cloud stays.
+    var cloud = travel ? lockLastPush().then(function () { return capped(sosRelay(false), 5000); })
+      : follow ? Promise.resolve(S && typeof S.suspendEngine === "function" ? S.suspendEngine() : null)
       : sos ? capped(sosRelay(true), 8000).then(function () {
           return (S && typeof S.sosEverywhere === "function") ? capped(S.sosEverywhere(sosPass), 15000) : null;
         })
@@ -11743,6 +11746,8 @@
     window.orosLock.setHooks({
       reset: lockDeviceReset,
       duress: strictDuress,
+      deadman: function () { strictDuress(false); },
+      travel: strictTravel,
       recovered: function () {
         window.orosSettings.open("lock");
         scToast("ok", window.t("lock.recovered"));
@@ -11803,6 +11808,32 @@
     if (!cloud) { scFactoryReset(btn, "follow"); return; }
     Promise.race([sosRelay(true), new Promise(function (r) { setTimeout(r, 8000); })])
       .catch(function () {}).then(function () { scFactoryReset(btn, false); });
+  }
+  // Travel mode (STRICT-3): only when the sync passphrase is proven and
+  // nothing is left unsent (settings, Files queue), then this device
+  // is erased like "Reset this device" (backup folder files too).
+  function strictTravel(pass) {
+    var S = window.orosSync, V = window.orosVault;
+    if (osResetting) return Promise.resolve({ ok: false, code: "busy" });
+    if (!S || !S.isConnected() || !S.hasPassphrase()) return Promise.resolve({ ok: false, code: "nosync" });
+    function capped(p, ms) {
+      return Promise.race([Promise.resolve(p).catch(function () { return null; }),
+        new Promise(function (r) { setTimeout(r, ms); })]);
+    }
+    return Promise.resolve().then(function () { return S.checkPassphrase(pass); }).then(function (r) {
+      if (r !== true) return { ok: false, code: r === false ? "wrong" : "cantcheck" };
+      return capped(S.isDirty() ? S.push() : null, 30000).then(function () {
+        var q = V && typeof V.queueLength === "function" ? V.queueLength() : 0;
+        return capped(q && typeof V.sync === "function" ? V.sync("travel") : null, 60000);
+      }).then(function () {
+        var q = V && typeof V.queueLength === "function" ? V.queueLength() : 0;
+        if (S.isDirty() || q) return { ok: false, code: "unsynced" };
+        if (osResetting) return { ok: false, code: "busy" };
+        osResetting = true;
+        setTimeout(function () { scFactoryReset({ disabled: false, textContent: "" }, "travel"); }, 0);
+        return { ok: true };
+      });
+    }, function () { return { ok: false, code: "cantcheck" }; });
   }
   // Panic lock (STRICT-2): Escape three times within 1.5 s locks at once.
   // Keys typed inside an app frame never reach this document, so

@@ -64,6 +64,8 @@ In [Settings](app:settings) › `Sensitive work`, one switch does most of the li
 - A shield in the top bar shows that it is on. If your orOS has SOS, the page opens it too.
 - **Panic lock**: press Esc three times quickly and orOS locks at once, wherever you are. On a phone, use `Lock now`.
 - **Duress PIN**: a second PIN (or passphrase, if your lock uses one) for when someone forces you to unlock. Typed on the lock screen it looks like a normal unlock, while orOS erases this device and opens as a fresh, empty orOS. You choose whether it also deletes your orOS data in the cloud; then your other devices erase themselves when they next sync, and nothing can be brought back. It works only while the mode is on and is removed when you turn the mode off.
+- **Travel mode**: before a border or a check, everything leaves this device and stays only in your encrypted cloud; the device opens as a fresh orOS. orOS first checks your sync passphrase and sends every waiting change; if anything is still waiting, nothing is erased. Montage media, offline maps and downloaded models live only on the device and are lost. To come back, connect the same sync in `Settings` › `Sync` with the same passphrase.
+- **Dead-man switch**: if the device is not unlocked for 1 to 30 days (you choose), orOS erases this device the next time it runs. The cloud stays. It cannot act while the device is off, and someone who changes the clock or copies the storage first can get around it.
 - **Discreet tab**: the browser tab shows “Notes” and a plain page icon instead of orOS. An installed app keeps its own name and icon.
 - Hardcore's block works while orOS runs installed for offline use. A hard reload skips it until the next normal start, and it does not cover pages opened outside orOS.
 

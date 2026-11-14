@@ -222,3 +222,27 @@ test("sensitive work: panic lock reaches app frames, duress goes through the res
   assert.match(sh, /duress: strictDuress/);
   assert.match(sh, /scFactoryReset\(btn, "follow"\)/);
 });
+
+test("sensitive work: the dead-man record is read defensively and is due only after its days", () => {
+  const day = 86400000, now = 100 * day;
+  const d = { v: 1, days: 3, alive: now - 2 * day };
+  assert.deepEqual(L.parseDms(JSON.stringify(d)), d);
+  assert.equal(L.parseDms(JSON.stringify(Object.assign({}, d, { days: 5 }))), null, "only the listed days");
+  assert.equal(L.parseDms(JSON.stringify(Object.assign({}, d, { alive: "x" }))), null);
+  assert.equal(L.parseDms(JSON.stringify(Object.assign({}, d, { v: 2 }))), null);
+  assert.equal(L.parseDms("{"), null);
+  assert.equal(L.dmsDue(d, now), false);
+  assert.equal(L.dmsDue(Object.assign({}, d, { alive: now - 3 * day - 1 }), now), true);
+  assert.equal(L.dmsDue(Object.assign({}, d, { alive: now + 9 * day }), now), false, "a clock far ahead never wipes");
+  assert.equal(L.dmsDue(null, now), false);
+  assert.deepEqual(L.DMS_DAYS, [1, 3, 7, 14, 30]);
+});
+
+test("sensitive work: travel erases nothing before the passphrase and the uploads are proven", () => {
+  const sh = read("shell.js");
+  const fn = sh.slice(sh.indexOf("function strictTravel"), sh.indexOf("// Panic lock (STRICT-2)"));
+  assert.ok(fn.indexOf("checkPassphrase") < fn.indexOf("scFactoryReset"));
+  assert.match(fn, /if \(S\.isDirty\(\) \|\| q\) return \{ ok: false, code: "unsynced" \}/);
+  assert.match(sh, /travel: strictTravel/);
+  assert.match(sh, /deadman: function \(\) \{ strictDuress\(false\); \}/);
+});

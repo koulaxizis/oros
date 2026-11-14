@@ -2508,7 +2508,8 @@
   // turning it off asks for the lock's PIN or passphrase and brings the
   // earlier lock times and push back. The typed secret stays in `sv.cur`
   // only until it is handed over.
-  var sv = { level: "on", off: false, cur: "", msg: null, gateMsg: null, dz: false, dzCur: "", dzA: "", dzB: "", dzCloud: false, dzMsg: null };
+  var sv = { level: "on", off: false, cur: "", msg: null, gateMsg: null, dz: false, dzCur: "", dzA: "", dzB: "", dzCloud: false, dzMsg: null,
+    tv: false, tvPass: "", tvMsg: null, dm: false, dmCur: "", dmDays: 7, dmMsg: null };
   var SV_ITEMS = ["lock", "lockPass", "lockTimes", "remember", "push", "bio", "davRelay", "backup", "passLen", "worker"];
 
   function strictApi() {
@@ -2725,7 +2726,7 @@
       var ds = S.duress.state();
       var cd = card(t("sv.dz"));
       cd.appendChild(el("p", "hint", t(kind === "pass" ? "sv.dz.textPass" : "sv.dz.text")));
-      var sr = row(t("sv.status"), null);
+      var sr = row(t("sv.state"), null);
       sr.appendChild(el("div", "version", t(!ds.on ? "sv.dz.off" : ds.cloud ? "sv.dz.onCloud" : "sv.dz.onDevice")));
       cd.appendChild(sr);
       if (sv.dz) {
@@ -2779,6 +2780,88 @@
       if (sv.dzMsg) cd.appendChild(el("p", "msg msg-" + sv.dzMsg.kind, t(sv.dzMsg.key, sv.dzMsg.vars)));
       cd.appendChild(el("p", "hint", t("sv.dz.honest")));
       host.appendChild(cd);
+    }
+
+    // Travel mode (STRICT-3): the sync passphrase, then two taps.
+    if (typeof S.travel === "function") {
+      var ct = card(t("sv.tv"));
+      ct.appendChild(el("p", "hint", t("sv.tv.text")));
+      if (sv.tv) {
+        var tf = el("form", "pass dav-form");
+        tf.setAttribute("autocomplete", "off");
+        tf.appendChild(svField("tvPass", t("sv.tv.pass"), "pass"));
+        tf.appendChild(el("p", "hint warn", t("sv.tv.warn")));
+        tf.appendChild(actions(
+          confirmBtn(t("sv.tv.go"), t("sv.tv.confirm"), "sv-tv-go", function () {
+            if (strictApi() !== S) return;
+            var pw = sv.tvPass;
+            sv.tvPass = "";
+            sv.tvMsg = { kind: "dim", key: "sv.tv.working" };
+            render();
+            S.travel(pw).then(function (r) {
+              if (r && r.ok) { sv.tvMsg = { kind: "ok", key: "sv.tv.done" }; render(); return; }
+              sv.tvMsg = { kind: "err", key: "sv.tv.err." + (/^(nosync|wrong|cantcheck|unsynced|busy)$/.test(r && r.code) ? r.code : "off") };
+              render();
+            }, function () { sv.tvMsg = { kind: "err", key: "sv.tv.err.unsynced" }; render(); });
+          }, "danger"),
+          button(t("l.cancel"), "sv-tv-cancel", function () { sv.tv = false; sv.tvPass = ""; sv.tvMsg = null; render(); })));
+        tf.addEventListener("submit", function (e) { e.preventDefault(); });
+        ct.appendChild(tf);
+      } else {
+        ct.appendChild(actions(button(t("sv.tv.start"), "sv-tv", function () {
+          sv.tv = true; sv.tvPass = ""; sv.tvMsg = null; render();
+          var f = $("f-sv-tvPass"); if (f) f.focus();
+        })));
+      }
+      if (sv.tvMsg) ct.appendChild(el("p", "msg msg-" + sv.tvMsg.kind, t(sv.tvMsg.key)));
+      ct.appendChild(el("p", "hint", t("sv.tv.back")));
+      host.appendChild(ct);
+    }
+
+    // Dead-man switch (STRICT-3): days without an unlock, then this
+    // device is erased the next time orOS runs. The lock's secret first.
+    if (S.deadman && typeof S.deadman.state === "function") {
+      var dst = S.deadman.state();
+      var cm = card(t("sv.dm"));
+      cm.appendChild(el("p", "hint", t("sv.dm.text")));
+      var mr = row(t("sv.state"), null);
+      mr.appendChild(el("div", "version", dst.on ? t("sv.dm.on", { n: dst.days }) : t("sv.dz.off")));
+      cm.appendChild(mr);
+      if (sv.dm) {
+        var mf = el("form", "pass dav-form");
+        mf.setAttribute("autocomplete", "off");
+        var opts = [{ value: 0, label: t("sv.dm.never") }].concat(S.deadman.days.map(function (n) { return { value: n, label: t("sv.dm.days", { n: n }) }; }));
+        var dr = row(t("sv.dm.after"), select(opts, sv.dmDays, "sv-dm-days", function (v) { sv.dmDays = Number(v) || 0; }));
+        mf.appendChild(dr);
+        mf.appendChild(svField("dmCur", t("l.current." + kind), kind));
+        var mg = el("button", "btn primary", t("sv.dm.save"));
+        mg.type = "submit";
+        mg.setAttribute("data-k", "sv-dm-go");
+        if (k.busy) mg.disabled = true;
+        mf.appendChild(actions(mg, button(t("l.cancel"), "sv-dm-cancel", function () { sv.dm = false; sv.dmCur = ""; sv.dmMsg = null; render(); })));
+        mf.addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (strictApi() !== S || L.snapshot().busy) return;
+          var cur3 = sv.dmCur, n = sv.dmDays;
+          sv.dmCur = "";
+          sv.dmMsg = { kind: "dim", key: "l.msg.working" };
+          render();
+          S.deadman.set(cur3, n).then(function (r) {
+            if (r && r.ok) { sv.dm = false; sv.dmMsg = { kind: "ok", key: n ? "sv.dm.done" : "sv.dm.offDone", vars: { n: n } }; }
+            else if (r && r.code === "wait") sv.dmMsg = { kind: "err", key: "l.msg.wait", vars: { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) } };
+            else sv.dmMsg = { kind: "err", key: "l.msg." + (/^(wrong|storage|busy)$/.test(r && r.code) ? r.code : "crypto") };
+            render();
+          }, function () { sv.dmMsg = { kind: "err", key: "sv.msg.err" }; render(); });
+        });
+        cm.appendChild(mf);
+      } else {
+        cm.appendChild(actions(button(t(dst.on ? "sv.dz.change" : "sv.dm.set"), "sv-dm", function () {
+          sv.dm = true; sv.dmDays = dst.on ? dst.days : 7; sv.dmCur = ""; sv.dmMsg = null; render();
+        }, dst.on ? null : "primary")));
+      }
+      if (sv.dmMsg) cm.appendChild(el("p", "msg msg-" + sv.dmMsg.kind, t(sv.dmMsg.key, sv.dmMsg.vars)));
+      cm.appendChild(el("p", "hint", t("sv.dm.honest")));
+      host.appendChild(cm);
     }
 
     if (typeof S.discreet === "function") {

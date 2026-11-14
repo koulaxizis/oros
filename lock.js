@@ -210,6 +210,20 @@
     return { v: 1, kind: d.kind, salt: d.salt, hash: d.hash, i: d.i, cloud: d.cloud === true };
   }
 
+  // Dead-man switch (STRICT-3, oros-strict-dms): {v:1, days, alive}.
+  // alive = the last real unlock; a record from a clock far ahead is
+  // not due (a wrong clock must not wipe), the next unlock resets it.
+  var DMS_DAYS = [1, 3, 7, 14, 30];
+  function parseDms(raw) {
+    var d;
+    try { d = JSON.parse(raw || "null"); } catch (e) { return null; }
+    if (!d || d.v !== 1 || DMS_DAYS.indexOf(d.days) === -1 || typeof d.alive !== "number" || !isFinite(d.alive) || d.alive <= 0) return null;
+    return { v: 1, days: d.days, alive: d.alive };
+  }
+  function dmsDue(d, now) {
+    return !!d && now - d.alive > d.days * 86400000;
+  }
+
   var Core = {
     BIO_KEY: BIO_KEY, BIO_DAYS: BIO_DAYS, parseBio: parseBio, bioDue: bioDue,
     KEY: KEY, TRIES_KEY: TRIES_KEY, SEEN_KEY: SEEN_KEY, ITER: ITER, IDLES: IDLES,
@@ -217,7 +231,7 @@
     norm: norm, secretProblem: secretProblem, parseCfg: parseCfg, parseTries: parseTries,
     afterFail: afterFail, waitLeft: waitLeft, stillOpen: stillOpen, sameText: sameText,
     STRICT_KEY: STRICT_KEY, parseStrict: parseStrict, strictCaps: strictCaps, clampCfg: clampCfg, loosens: loosens,
-    parseDuress: parseDuress
+    parseDuress: parseDuress, DMS_DAYS: DMS_DAYS, parseDms: parseDms, dmsDue: dmsDue
   };
 
   // ---------- 2. Crypto ----------
@@ -301,7 +315,7 @@
   var busy = false;
   var lastActive = Date.now();
   var listeners = [];
-  var hooks = { reset: null, recovered: null, duress: null };
+  var hooks = { reset: null, recovered: null, duress: null, deadman: null, travel: null };
   var bc = null;
 
   function load() {
@@ -325,6 +339,29 @@
   // (shell hook duress(cloud)): this device only, or also the cloud.
   // Device-local "oros-lock-duress" = { v:1, kind, salt, hash, i, cloud }.
   var DURESS_KEY = "oros-lock-duress";
+  var DMS_KEY = "oros-strict-dms";
+  function dmsRec() {
+    try { return parseDms(root.localStorage.getItem(DMS_KEY)); } catch (e) { return null; }
+  }
+  function dmsWrite(d) {
+    try {
+      if (d) root.localStorage.setItem(DMS_KEY, JSON.stringify(d));
+      else root.localStorage.removeItem(DMS_KEY);
+      return true;
+    } catch (e) { return false; }
+  }
+  // Live only while the mode and the lock are on.
+  function dmsLive() {
+    return (strictRec() && load()) ? dmsRec() : null;
+  }
+  var dmsFired = false;
+  function dmsCheck() {
+    if (dmsFired || resetting || typeof hooks.deadman !== "function") return;
+    if (!dmsDue(dmsLive(), Date.now())) return;
+    dmsFired = true;
+    resetting = true;
+    try { hooks.deadman(); } catch (e) {}
+  }
   function duressRec() {
     try { return parseDuress(root.localStorage.getItem(DURESS_KEY)); } catch (e) { return null; }
   }
@@ -897,6 +934,8 @@
     }
     lastActive = Date.now();
     markSeen();
+    var dm = dmsRec();
+    if (dm) { dm.alive = lastActive; dmsWrite(dm); }   // a real unlock keeps the dead-man switch away
     emit();
   }
 
@@ -1236,6 +1275,8 @@
       if (h && typeof h.reset === "function") hooks.reset = h.reset;
       if (h && typeof h.recovered === "function") hooks.recovered = h.recovered;
       if (h && typeof h.duress === "function") hooks.duress = h.duress;
+      if (h && typeof h.travel === "function") hooks.travel = h.travel;
+      if (h && typeof h.deadman === "function") { hooks.deadman = h.deadman; dmsCheck(); }
     }
   };
   root.orosLock = api;
@@ -1345,6 +1386,7 @@
         if (!r.ok) return r;
         if (!strictWrite(null)) return { ok: false, code: "storage" };
         duressWrite(null);                               // the duress secret lives only in the mode
+        dmsWrite(null);                                  // and so does the dead-man switch
         try { root.localStorage.removeItem("oros-strict-disc"); } catch (e) {}
         var c = load();
         if (c) { c.idle = cur.prev.idle; c.hidden = cur.prev.hidden; save(c); }
@@ -1396,6 +1438,41 @@
       // Remove it (no secret asked: it only takes a wipe away).
       clear: function () { duressWrite(null); emit(); return true; }
     },
+    // Dead-man switch (STRICT-3): if this device is not unlocked for
+    // `days`, the next time orOS runs (start, or the lock screen left
+    // open) it erases this device. state() → { on, days, alive, need }
+    // (need: the mode and the lock must be on). set(current, days):
+    // days one of DMS_DAYS, 0 = off; the lock's secret first.
+    // → { ok, code } code: off, days, wrong, wait, storage, busy.
+    deadman: {
+      days: DMS_DAYS.slice(),
+      state: function () {
+        var d = dmsLive();
+        return { on: !!d, days: d ? d.days : 0, alive: d ? d.alive : 0, need: !(strictRec() && load()) };
+      },
+      set: function (current, days) {
+        days = Number(days) || 0;
+        if (!strictRec() || !load()) return Promise.resolve({ ok: false, code: "off" });
+        if (days && DMS_DAYS.indexOf(days) === -1) return Promise.resolve({ ok: false, code: "days" });
+        if (busy) return Promise.resolve({ ok: false, code: "busy" });
+        return run(checkCurrent(current).then(function (r) {
+          if (!r.ok) return r;
+          var ok = dmsWrite(days ? { v: 1, days: days, alive: Date.now() } : null);
+          emit();
+          return ok ? { ok: true } : { ok: false, code: "storage" };
+        }));
+      }
+    },
+    // Travel mode (STRICT-3): everything leaves this device and stays
+    // encrypted in the cloud; sync and the passphrase bring it back.
+    // The shell does the work (hooks.travel). → { ok, code } code: off,
+    // nosync, wrong, cantcheck, unsynced, busy.
+    travel: function (pass) {
+      if (!strictRec()) return Promise.resolve({ ok: false, code: "off" });
+      if (typeof hooks.travel !== "function") return Promise.resolve({ ok: false, code: "off" });
+      return Promise.resolve().then(function () { return hooks.travel(String(pass || "")); })
+        .then(function (r) { return r || { ok: false, code: "off" }; }, function () { return { ok: false, code: "unsynced" }; });
+    },
     // Discreet title and icon (STRICT-2), device-local "oros-strict-disc".
     discreet: function (on) {
       if (on === undefined) { try { return root.localStorage.getItem("oros-strict-disc") === "1"; } catch (e) { return false; } }
@@ -1436,6 +1513,7 @@
   });
   root.addEventListener("pagehide", markSeen);
   setInterval(tick, 5000);
+  setInterval(dmsCheck, 60000);     // a lock screen left open for days
 
   // Start: locked, unless this same tab was open a moment ago (an
   // update reload, a return from the Dropbox sign-in).
