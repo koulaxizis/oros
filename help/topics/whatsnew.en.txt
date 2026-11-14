@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.71.00
+- **Claude's folders.** In Settings › Connected services › orOS Gate you can now choose `Claude's folders`: folders of the orOS disk (for example the ones orOS Drive mirrors from your computer) that Claude may list and read, and with `May change` on Files also write, move and rename text files in. Every change can be undone, a replaced file goes to the Trash first, and deleting always asks you on the device. Key and secret files are never shown. The Assistant gets the same folders. See [Settings](app:settings).
+
 ## Version 6.70.01
 - **Banks in the installed orOS.** Budget's banks and PayPal now update in the installed orOS, orOS Portable and orOS USB too: with Update now, when you open Budget and at the times you set. Connecting a bank or renewing its access still happens at useoros.online in a browser, because the bank sends you back there.
 
