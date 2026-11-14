@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.54.00
+- **Settings › Fonts: your own font files and the free fonts in one place,** with a sample in your own text, which Greek and polytonic letters each font has and what its licence says. Add .ttf, .otf, .woff and now .woff2 files (Layout and Atelier take .woff2 too); remove a font to the Trash.
+
 ## Version 6.53.00
 - **The Author Portal and orOS now talk both ways (Revenue Splitter 1.18.0).** When a creator asks in the Author Portal for a new text on their page or for author copies, CRM brings the request in as a follow-up for today on their card, with the new text, the text on the page now and any new photo saved in their folder. When you tick it done, write a short reply that the creator reads in the Portal. In CRM › Contracts › `Production stage…`, tick the cards of your Kanban board that the Portal may show: each creator then sees which of the seven phases their work is in, its release day and only the text after `For the creator:` in the card. Kanban shows `Portal · phase N` on those cards and sends the change by itself when a card moves.
 

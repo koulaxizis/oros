@@ -1176,5 +1176,6 @@ orosPack("de", "shell", {
  "wg.start.done": "erledigt",
  "wg.start.all": "Alles erledigt. orOS gehört dir!",
  "cr.bergamot": "Übersetzung auf dem Gerät, wird bei Bedarf heruntergeladen (Textwerkzeuge)",
+ "cr.brotli-js": ".woff2-Schriftdateien entpacken (Einstellungen › Schriften, Layout, Atelier)",
  "cr.firefox-translations": "Übersetzungsmodelle Griechisch ↔ Englisch, werden bei Bedarf heruntergeladen (Textwerkzeuge)"
 });

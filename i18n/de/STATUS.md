@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 43726 of 44154 (99%)
+- Strings: 43947 of 44375 (99%)
 - Help pages: 157 of 157 (100%)
 - Shown in the language list: yes
 
@@ -38,7 +38,7 @@ text is still written in the code. They switch over wave by wave
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 341 / 341 |
 | converter | 100% | 68 / 68 |
-| crm | 88% | 675 / 759 |
+| crm | 89% | 745 / 829 |
 | crossword | 100% | 171 / 171 |
 | crypt | 100% | 291 / 291 |
 | cycle | 100% | 203 / 203 |
@@ -71,7 +71,7 @@ text is still written in the code. They switch over wave by wave
 | household | 99% | 142 / 143 |
 | invoices | 97% | 659 / 673 |
 | jigsaw | 100% | 90 / 90 |
-| kanban | 99% | 331 / 334 |
+| kanban | 99% | 341 / 344 |
 | labels | 100% | 88 / 88 |
 | layout | 99% | 1074 / 1082 |
 | library | 100% | 327 / 327 |
@@ -126,10 +126,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 517 / 517 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1173 / 1188 |
+| settings | 98% | 1278 / 1293 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1178 / 1183 |
+| shell | 99% | 1179 / 1184 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | English for now | 375 / 375 |
@@ -143,7 +143,7 @@ text is still written in the code. They switch over wave by wave
 | spreadsheet | 82% | 409 / 495 |
 | startpage | English for now | 0 / 14 |
 | stickies | 100% | 124 / 124 |
-| stock | 99% | 694 / 699 |
+| stock | 99% | 729 / 734 |
 | storage | 100% | 179 / 179 |
 | studio | 100% | 555 / 555 |
 | sudoku | 100% | 139 / 139 |
