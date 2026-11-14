@@ -52,3 +52,17 @@ fb.setupNameTable({"familyName": "Oros Test CFF", "styleName": "Regular"})
 fb.setupOS2(sTypoAscender=800, usWinAscent=800, usWinDescent=200, fsType=0)
 fb.setupPost()
 fb.save(os.path.join(HERE, "oros-test-cff.otf"))
+
+# A font collection (.ttc, FM-3): the Noto Serif subset and its Apache
+# twin renamed, as a device's collection files come.
+from fontTools.ttLib import TTCollection
+a = TTFont(os.path.join(HERE, "noto-serif-sub.ttf"))
+b = TTFont(os.path.join(HERE, "noto-serif-sub-apache.ttf"))
+for r in b["name"].names:
+    if r.nameID == 6:
+        r.string = "OrosTwin-Regular"
+    if r.nameID in (1, 4, 16):
+        r.string = "Oros Twin"
+c = TTCollection()
+c.fonts = [a, b]
+c.save(os.path.join(HERE, "pair.ttc"))

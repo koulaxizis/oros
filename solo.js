@@ -971,7 +971,7 @@
     var frame = doc.createElement("iframe");
     frame.id = "solo-frame";
     frame.title = nameOf(id, "en");
-    frame.setAttribute("allow", "fullscreen; clipboard-read; clipboard-write; geolocation; camera; microphone; screen-wake-lock");
+    frame.setAttribute("allow", "fullscreen; clipboard-read; clipboard-write; geolocation; camera; microphone; screen-wake-lock; local-fonts");
     frame.src = src;
     doc.body.appendChild(frame);
     installBar(win, id, asked);

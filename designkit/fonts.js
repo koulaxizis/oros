@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — fonts.js (v1.2.0)
+// orOS designkit — fonts.js (v1.3.0)
 // Font families a Layout document names besides the built-in Noto
 // ones. Owner: Layout.
 //   - "fs_<id>": a Fontsource family (open licences, mostly SIL OFL),
@@ -28,6 +28,7 @@
 // with poly (greek-ext) and lic (the Fontsource licence id).
 // 1.2.0 (FM-2) adds cols: font collections and notes, the synced
 // slice "fonts" (section 8), and keepOffline() for a collection.
+// 1.3.0 (FM-3) adds ttcFace(): one face of a .ttc/.otc collection.
 // Exposes orosDK.fonts (browser) or module.exports (Node: the pure
 // parts).
 // ============================================================
@@ -762,6 +763,40 @@
   }
 
 
+  // ---------- 9. One face of a font collection (1.3.0, FM-3) ----------
+  // A .ttc / .otc (as the fonts of this device often come) → the face
+  // with this PostScript name (name ID 6; "" = the first) as a plain
+  // sfnt, its tables copied as they are. Any other font comes back as
+  // it is; null when the collection has no such face or is damaged.
+  function ttcFace(buf, ps) {
+    try {
+      var dv = new DataView(buf);
+      if (dv.byteLength < 12 || dv.getUint32(0) !== 0x74746366) return buf;     // "ttcf"
+      var n = dv.getUint32(8);
+      if (n < 1 || n > 256 || 12 + n * 4 > dv.byteLength) return null;
+      for (var k = 0; k < n; k++) {
+        var off = dv.getUint32(12 + k * 4);
+        if (off + 12 > dv.byteLength) return null;
+        var nt = dv.getUint16(off + 4), tb = {}, ok = true;
+        if (nt < 1 || nt > 100 || off + 12 + nt * 16 > dv.byteLength) return null;
+        for (var t = 0; t < nt; t++) {
+          var e = off + 12 + t * 16;
+          var tag = String.fromCharCode(dv.getUint8(e), dv.getUint8(e + 1), dv.getUint8(e + 2), dv.getUint8(e + 3));
+          var to = dv.getUint32(e + 8), tl = dv.getUint32(e + 12);
+          if (to + tl > dv.byteLength) { ok = false; break; }
+          tb[tag] = { off: to, len: tl };
+        }
+        if (!ok) return null;
+        var name = (nameStrings(dv, tb, [6])[6] || {}).s || "";
+        if (ps && name !== ps) continue;
+        var tbls = {};
+        Object.keys(tb).forEach(function (tg) { tbls[tg] = new Uint8Array(buf, tb[tg].off, tb[tg].len).slice(); });
+        return sfnt(dv.getUint32(off), tbls);
+      }
+      return null;
+    } catch (e) { return null; }
+  }
+
   // ---------- 8. Collections and notes (1.2.0, FM-2) ----------
   // The synced slice "fonts" (FONTS v1, key oros-fonts-data), shared by
   // Settings › Fonts, Layout and Atelier:
@@ -1034,7 +1069,9 @@
       normalize: colsNorm, merge: colsMerge, order: colOrder, byName: colByName, fams: colFams, of: colsOf,
       add: colAdd, rename: colRename, remove: colDelete, set: colSet, note: noteOf, setNote: noteSet,
       docCol: docCol, bind: colsBind, keepOffline: keepOffline, docFonts: docFontsOf, setDocFonts: docFontsSet
-    }
+    },
+    // 1.3.0
+    ttcFace: ttcFace
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.fonts = api; }

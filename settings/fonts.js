@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Settings › Fonts (settings/fonts.js, FM-1, v1.1.0)
+// orOS Settings › Fonts (settings/fonts.js, FM-1, v1.2.0)
 // The font manager: the person's font files on the orOS disk
 // (/internal/Fonts, synced by Vault like any file) and the free
 // Fontsource families, with a sample in their own text, which Greek,
@@ -9,7 +9,10 @@
 // budget). Writes the font files themselves (designkit/fonts.js
 // importFile / remove), the synced slice "fonts" (collections and
 // notes, designkit/fonts.js cols, FM-2) and one device-local
-// convenience key (the sample text and size).
+// convenience key (the sample text and size). This device's installed
+// fonts (FM-3, Local Font Access where the browser has it) are read
+// only when the person asks, and copied into orOS only after a
+// second press.
 // Every name, licence text and sample comes from a font file or the
 // Fontsource catalog, so all of it goes in with textContent only; a
 // licence address is a link only when it is http(s).
@@ -107,7 +110,19 @@
       "fm.col.deleted": "Deleted the collection {name}.",
       "fm.inCols": "Collections and note", "fm.inCols.hint": "Tick the collections this font belongs to.",
       "fm.note": "Your note", "fm.note.hint": "For example where you bought it and for how many computers. Syncs to all your devices.",
-      "fm.back.col": "Back to the collection"
+      "fm.back.col": "Back to the collection",
+      "fm.tab.dev": "On this device",
+      "fm.dev.intro": "The fonts installed on this computer, for a look at their letters and licence. Copy one into orOS to use it in Layout and Atelier on all your devices.",
+      "fm.dev.show": "Show this device's fonts", "fm.dev.ask": "Your browser asks once whether orOS may see the fonts installed here. Nothing is copied or sent unless you ask.",
+      "fm.dev.denied": "The browser did not allow orOS to see this device's fonts. You can allow it in the site settings of your browser (Fonts).",
+      "fm.dev.loading": "Reading this device's fonts…", "fm.dev.count": "{n} families on this device",
+      "fm.dev.copy": "Copy into orOS…", "fm.dev.copySure": "Yes, copy into orOS",
+      "fm.dev.copyWarn": "Fonts that came with Windows, macOS or other programs are often licensed for this computer only. Copy it only if your licence allows using it on your other devices: orOS keeps it on the orOS disk and Sync carries it to all of them.",
+      "fm.dev.noCopy": "This font's licence does not allow embedding it, so orOS can't keep it.",
+      "fm.dev.copying": "Copying {n} files…", "fm.dev.inOros": "In orOS",
+      "fm.dev.copied": "Copied into orOS: {name}. It is now under In orOS.",
+      "fm.dev.copyFail": "{file}: could not be copied ({why}).",
+      "fm.dev.readFail": "This font could not be read."
     },
     el: {
       "fm.loading": "Διαβάζω τις γραμματοσειρές σου…",
@@ -184,7 +199,19 @@
       "fm.col.deleted": "Διαγράφηκε η συλλογή {name}.",
       "fm.inCols": "Συλλογές και σημείωση", "fm.inCols.hint": "Τσέκαρε τις συλλογές στις οποίες ανήκει αυτή η γραμματοσειρά.",
       "fm.note": "Η σημείωσή σου", "fm.note.hint": "Για παράδειγμα πού την αγόρασες και για πόσους υπολογιστές. Συγχρονίζεται σε όλες σου τις συσκευές.",
-      "fm.back.col": "Πίσω στη συλλογή"
+      "fm.back.col": "Πίσω στη συλλογή",
+      "fm.tab.dev": "Σε αυτή τη συσκευή",
+      "fm.dev.intro": "Οι γραμματοσειρές που είναι εγκατεστημένες σε αυτόν τον υπολογιστή, για να δεις τα γράμματα και την άδειά τους. Αντίγραψε μία στο orOS για να τη χρησιμοποιείς στο Layout και στο Atelier σε όλες σου τις συσκευές.",
+      "fm.dev.show": "Δείξε τις γραμματοσειρές της συσκευής", "fm.dev.ask": "Ο φυλλομετρητής ρωτά μία φορά αν το orOS μπορεί να δει τις γραμματοσειρές που είναι εγκατεστημένες εδώ. Τίποτα δεν αντιγράφεται ούτε στέλνεται αν δεν το ζητήσεις.",
+      "fm.dev.denied": "Ο φυλλομετρητής δεν επέτρεψε στο orOS να δει τις γραμματοσειρές της συσκευής. Μπορείς να το επιτρέψεις στις ρυθμίσεις ιστοτόπου του φυλλομετρητή σου (Γραμματοσειρές).",
+      "fm.dev.loading": "Διαβάζω τις γραμματοσειρές της συσκευής…", "fm.dev.count": "{n} οικογένειες σε αυτή τη συσκευή",
+      "fm.dev.copy": "Αντιγραφή στο orOS…", "fm.dev.copySure": "Ναι, αντιγραφή στο orOS",
+      "fm.dev.copyWarn": "Οι γραμματοσειρές που ήρθαν με τα Windows, το macOS ή άλλα προγράμματα έχουν συχνά άδεια μόνο για αυτόν τον υπολογιστή. Αντίγραψέ τη μόνο αν η άδειά σου επιτρέπει να τη χρησιμοποιείς και στις άλλες σου συσκευές: το orOS την κρατά στον δίσκο του orOS και ο Συγχρονισμός τη μεταφέρει σε όλες.",
+      "fm.dev.noCopy": "Η άδεια αυτής της γραμματοσειράς δεν επιτρέπει ενσωμάτωση, γι' αυτό το orOS δεν μπορεί να την κρατήσει.",
+      "fm.dev.copying": "Αντιγράφω {n} αρχεία…", "fm.dev.inOros": "Στο orOS",
+      "fm.dev.copied": "Αντιγράφηκε στο orOS: {name}. Τη βρίσκεις πλέον στο «Στο orOS».",
+      "fm.dev.copyFail": "{file}: δεν αντιγράφηκε ({why}).",
+      "fm.dev.readFail": "Η γραμματοσειρά δεν διαβάστηκε."
     }
   };
 
@@ -226,8 +253,10 @@
     detail: null,                     // { kind: "mine", key } | { kind: "free", id } | { kind: "col", id }
     from: "",                         // the collection a font page was opened from
     free: null, freeErr: false, freeShown: PAGE,
-    style: "r", armed: false, offline: null
+    style: "r", armed: false, offline: null,
+    dev: null, devErr: "", devBusy: false, devShown: PAGE, devMsgs: []   // this device's fonts (FM-3)
   };
+  var HAS_LOCAL = typeof window.queryLocalFonts === "function";
   var CB = null;                     // the "fonts" slice (collections, notes), bound at the first mount
   var P = prefs();
   var spec = { preset: P.preset || "greek", text: typeof P.text === "string" ? P.text.slice(0, 2000) : "", size: P.size >= 12 && P.size <= 96 ? P.size : 36 };
@@ -411,7 +440,8 @@
     var tabs = el("div", "seg fm-tabs");
     tabs.setAttribute("role", "group");
     tabs.setAttribute("aria-label", t("fm.tabs"));
-    [["mine", "fm.tab.mine"], ["free", "fm.tab.free"], ["cols", "fm.tab.cols"]].forEach(function (x) {
+    [["mine", "fm.tab.mine"], ["dev", "fm.tab.dev"], ["free", "fm.tab.free"], ["cols", "fm.tab.cols"]].forEach(function (x) {
+      if (x[0] === "dev" && !HAS_LOCAL) return;
       var b = btn(t(x[1]), "seg-btn fm-tab" + (S.tab === x[0] ? " on" : ""), function () {
         if (S.tab === x[0]) return;
         S.tab = x[0]; S.msgs = []; S.from = "";
@@ -422,7 +452,7 @@
       tabs.appendChild(b);
     });
     rootEl.appendChild(tabs);
-    if (S.tab === "mine") drawMine(); else if (S.tab === "cols") drawCols(); else drawFree();
+    if (S.tab === "mine") drawMine(); else if (S.tab === "cols") drawCols(); else if (S.tab === "dev") drawDev(); else drawFree();
   }
   function drawMine() {
     var c = card(t("fm.mine"));
@@ -453,6 +483,7 @@
     if (!listHost) return;
     listHost.textContent = "";
     if (S.tab === "free") { drawFreeList(); return; }
+    if (S.tab === "dev") { drawDevList(); return; }
     if (S.loading && !S.fams) { listHost.appendChild(el("p", "hint", t("fm.loading"))); return; }
     var fams = S.fams || [];
     if (!fams.length) { listHost.appendChild(el("p", "hint", t("fm.empty"))); return; }
@@ -650,6 +681,7 @@
   function drawDetail() {
     if (S.detail.kind === "free") { drawFreeDetail(); return; }
     if (S.detail.kind === "col") { drawColDetail(); return; }
+    if (S.detail.kind === "dev") { drawDevDetail(); return; }
     var f = (S.fams || []).filter(function (x) { return x.key === S.detail.key; })[0];
     if (!f) { S.detail = null; draw(); return; }
     rootEl.appendChild(backBar(f.name));
@@ -904,6 +936,191 @@
     dc.appendChild(da);
     dc.appendChild(el("p", "hint", t("fm.col.delete.hint")));
     rootEl.appendChild(dc);
+  }
+
+
+  // ---------- This device's fonts (FM-3, Local Font Access) ----------
+  // Read only when the person asks (the browser asks for permission);
+  // nothing is kept or sent. A family is copied into orOS only after a
+  // second press that says what the licence may forbid, and only when
+  // its file allows embedding (designkit/fonts.js importFile checks).
+  function devVariant(fd) {
+    var st = String(fd.style || "").toLowerCase();
+    var b = /bold|black|heavy|semibold|demibold|extrabold/.test(st), i = /italic|oblique/.test(st);
+    return b ? (i ? "bi" : "b") : (i ? "i" : "r");
+  }
+  function loadDev() {
+    if (S.devBusy) return;
+    S.devBusy = true; S.devErr = "";
+    drawList();
+    var p;
+    try { p = window.queryLocalFonts(); } catch (e) { p = Promise.reject(e); }
+    Promise.resolve(p).then(function (list) {
+      var by = {}, out = [];
+      (list || []).forEach(function (fd) {
+        var fam = String(fd.family || "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, 120);
+        if (!fam) return;
+        var k = "dv~" + fam.toLowerCase(), f = by[k];
+        if (!f) { f = by[k] = { key: k, name: fam, faces: [], have: {} }; out.push(f); }
+        f.faces.push(fd);
+        var v = devVariant(fd);
+        if (!f.have[v] || /^(regular|normal|book|roman)$/i.test(String(fd.style || ""))) f.have[v] = fd;
+      });
+      out.forEach(function (f) { f.main = f.have.r || f.faces[0]; });
+      S.dev = out.sort(function (a, b) { return a.name.localeCompare(b.name); });
+      S.devBusy = false;
+      if (S.tab === "dev" && !S.detail) drawList();
+    }, function (e) {
+      S.devBusy = false;
+      S.devErr = e && (e.name === "NotAllowedError" || e.name === "SecurityError") ? "denied" : "fail";
+      if (S.tab === "dev" && !S.detail) drawList();
+    });
+  }
+  var devInsp = {};                  // postscript name → Promise of { buf, r } (r = inspect())
+  function devRead(fd) {
+    var k = fd.postscriptName || fd.fullName;
+    if (devInsp[k]) return devInsp[k];
+    devInsp[k] = Promise.resolve().then(function () { return fd.blob(); }).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
+      var buf = DK.ttcFace(ab, fd.postscriptName || "");
+      if (!buf) return null;
+      return { buf: buf, r: DK.inspect(buf) };
+    }).then(null, function () { return null; });
+    return devInsp[k];
+  }
+  function devCss(fd) { return "fmd-" + String(fd.postscriptName || fd.fullName || "x").replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 60); }
+  function drawDev() {
+    var c = card(t("fm.tab.dev"));
+    c.appendChild(el("p", "hint", t("fm.dev.intro")));
+    if (!S.dev) {
+      var row = el("div", "actions");
+      var b = btn(t("fm.dev.show"), "btn primary", loadDev);
+      b.disabled = S.devBusy;
+      row.appendChild(b);
+      c.appendChild(row);
+      c.appendChild(el("p", "hint", t("fm.dev.ask")));
+    }
+    S.devMsgs.forEach(function (m) { c.appendChild(el("div", "msg " + m.cls, m.text)); });
+    rootEl.appendChild(c);
+    if (S.dev) rootEl.appendChild(filterBar());
+    listHost = el("div", "fm-list");
+    rootEl.appendChild(listHost);
+    drawList();
+  }
+  var devIo = null, devByKey = {};
+  function devWhenSeen(node, f, bh) {
+    function go() {
+      devRead(f.main).then(function (x) {
+        if (x && x.r) {
+          insp["dv:" + f.key] = x.r;
+          loadFace(devCss(f.main), x.buf);
+          if (bh.isConnected) { bh.textContent = ""; bh.appendChild(badgeRow(badges(x.r.cov))); }
+        } else if (bh.isConnected) bh.textContent = "";
+      });
+    }
+    if (typeof IntersectionObserver === "undefined") { go(); return; }
+    if (!devIo) devIo = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        devIo.unobserve(e.target);
+        var fn = devByKey[e.target.getAttribute("data-dv")];
+        if (fn) fn();
+      });
+    }, { rootMargin: "120px" });
+    devByKey[f.key] = go;
+    node.setAttribute("data-dv", f.key);
+    devIo.observe(node);
+  }
+  function drawDevList() {
+    if (S.devErr) { listHost.appendChild(el("p", "msg msg-dim", t(S.devErr === "denied" ? "fm.dev.denied" : "fm.dev.readFail"))); return; }
+    if (S.devBusy) { listHost.appendChild(el("p", "hint", t("fm.dev.loading"))); return; }
+    if (!S.dev) return;
+    var mineNames = {};
+    (S.fams || []).forEach(function (f) { mineNames[f.name.toLowerCase()] = 1; });
+    var shown = S.dev.filter(function (f) {
+      var x = insp["dv:" + f.key];
+      return matches(f.name, !S.greek || !x || badgeOk(x, "greek"), !S.poly || !x || badgeOk(x, "poly"), S.cat ? (x ? x.info.fb : S.cat) : "");
+    });
+    listHost.appendChild(el("p", "hint fm-total", t("fm.dev.count", { n: shown.length })));
+    if (!shown.length) { listHost.appendChild(el("p", "hint", t("fm.none"))); return; }
+    shown.slice(0, S.devShown).forEach(function (f) {
+      var b = el("button", "fm-row");
+      b.type = "button";
+      var name = el("span", "fm-name", f.name);
+      name.style.fontFamily = '"' + devCss(f.main) + '", var(--fm-ui, sans-serif)';
+      b.appendChild(name);
+      var meta = el("span", "fm-meta");
+      meta.appendChild(el("span", "fm-count", f.faces.length === 1 ? t("fm.style1") : t("fm.styles", { n: f.faces.length })));
+      if (mineNames[f.name.toLowerCase()]) meta.appendChild(badgeRow([["ok", t("fm.dev.inOros")]]));
+      var bh = el("span", "fm-bh");
+      bh.appendChild(el("span", "fm-badge fm-wait", t("fm.checking")));
+      meta.appendChild(bh);
+      b.appendChild(meta);
+      b.addEventListener("click", function () { S.from = ""; S.detail = { kind: "dev", key: f.key }; S.style = "r"; S.armed = false; S.devMsgs = []; draw(); scrollTop(); });
+      listHost.appendChild(b);
+      devWhenSeen(b, f, bh);
+    });
+    if (shown.length > S.devShown) listHost.appendChild(btn(t("fm.more"), "btn fm-more", function () { S.devShown += PAGE; drawList(); }));
+  }
+  function badgeOk(x, k) { var l = DK.level(x.cov[k]); return l === "full" || l === "most"; }
+  function drawDevDetail() {
+    var f = (S.dev || []).filter(function (x) { return x.key === S.detail.key; })[0];
+    if (!f) { S.detail = null; draw(); return; }
+    rootEl.appendChild(backBar(f.name));
+    var c = card(t("fm.sample"));
+    specimen(c, function (v) { return '"' + devCss(f.have[v] || f.main) + '", var(--fm-ui, sans-serif)'; }, f.have);
+    rootEl.appendChild(c);
+    var cur = f.have[S.style] || f.main;
+    devRead(cur).then(function (x) { if (x) loadFace(devCss(cur), x.buf); });
+    var slot = el("div", "fm-cards");
+    rootEl.appendChild(slot);
+    var cc = card(t("fm.dev.copy").replace(/…$/, ""));
+    rootEl.appendChild(cc);
+    devRead(f.main).then(function (x) {
+      if (!slot.isConnected) return;
+      if (!x || !x.r) { slot.appendChild(el("p", "msg msg-dim", t("fm.dev.readFail"))); return; }
+      insp["dv:" + f.key] = x.r;
+      slot.appendChild(covCard(x.r.cov, false));
+      slot.appendChild(licCard(x.r.lic));
+      copyCard(cc, f, x.r.lic);
+    });
+  }
+  function copyCard(c, f, lic) {
+    S.devMsgs.forEach(function (m) { c.appendChild(el("div", "msg " + m.cls, m.text)); });
+    if (lic && lic.embed === "restricted") { c.appendChild(el("div", "msg msg-err", t("fm.dev.noCopy"))); return; }
+    c.appendChild(el("p", "hint", t("fm.dev.copyWarn")));
+    var row = el("div", "actions");
+    var b = btn(S.armed ? t("fm.dev.copySure") : t("fm.dev.copy"), "btn" + (S.armed ? " primary armed" : ""), function () {
+      if (!S.armed) { S.armed = true; draw(); return; }
+      S.armed = false;
+      b.disabled = true;
+      copyDev(f);
+    });
+    row.appendChild(b);
+    c.appendChild(row);
+  }
+  function copyDev(f) {
+    var faces = f.faces.slice(0, 16), out = [], okAny = false;
+    S.devMsgs = [{ cls: "msg-dim", text: t("fm.dev.copying", { n: faces.length }) }];
+    draw();
+    var chain = Promise.resolve();
+    faces.forEach(function (fd) {
+      chain = chain.then(function () { return devRead(fd); }).then(function (x) {
+        var label = fd.fullName || fd.postscriptName || f.name;
+        if (!x) { out.push({ cls: "msg-err", text: t("fm.dev.copyFail", { file: label, why: t("fm.dev.readFail") }) }); return; }
+        var blob = new Blob([x.buf], { type: "font/ttf" });
+        return DK.importFile(blob, { cff: true }).then(function (r) {
+          if (r && r.err) {
+            var k = r.err === "size" ? "fm.r.size" : r.err === "restricted" ? "fm.r.restricted" : r.err === "disk" ? "fm.r.disk" : "fm.r.type";
+            out.push({ cls: "msg-err", text: t(k, { file: label }) });
+          } else if (r) okAny = true;
+        });
+      });
+    });
+    chain.then(function () {
+      if (okAny) out.unshift({ cls: "msg-ok", text: t("fm.dev.copied", { name: f.name }) });
+      S.devMsgs = out;
+      refresh();
+    });
   }
 
   // ---------- Free fonts (Fontsource) ----------
