@@ -80,6 +80,15 @@ Lyric Sync is also a songbook: a song can have chords over its words, a key, a c
 - ▲ ▼, the arrow keys and Page Up / Page Down move a screen back or on; most page-turn foot pedals send these keys. [[Esc]] closes the stage.
 - `A−` `A+` set the size, and `Show` picks words and chords, words only (for singers) or chords only. The stage remembers these on this device.
 
+## Sets, PDF and print
+- On the first screen, `Sets` holds your setlists. `New set` makes one: give it a name, a date if you like, and notes, then add songs with `Add song`. ↑ ↓ change the order, ✕ takes a song out (the song itself stays).
+- `Key here` plays a song of the set in another key; the song keeps its own key everywhere else.
+- `Stage` on a set plays its songs one after the other. At the end of a song the pedal (or Page Down) goes on to the next one; ⏮ ⏭, a swipe left or right, and the keys [[N]] and [[P]] move between songs. The bottom shows the song that comes next.
+- `PDF` makes a sheet to print: one song from `Export`, or the whole set with a first page that lists its songs. Pick A4 or Letter, one or two columns and the font size; `Print` sends the same pages to your printer. Greek and polytonic print in Noto.
+- `Export` on a set saves all its songs in one ChordPro file, or the list as text. Opening a ChordPro file with several songs (`{new_song}` between them) adds every song and a set of them.
+- `Add to Calendar` puts a dated set in Calendar as a day event; Calendar shows it before it adds it.
+- Sets sync with your devices like the songs.
+
 ## Your data
 - The lyrics and their times are saved as you go. With orOS sync switched on in [Settings](app:settings), they follow you to your other devices, encrypted.
 - The song file stays only on the device where you chose it. On another device the song shows "song file not on this device" until you choose it there too. A song opened from Music is read from your Music folder, so it is there on every device that has the file (Vault Drive).
