@@ -354,6 +354,7 @@
     "forms/host.js",
     "forms/pub.js",
     "forms/render.js",
+    "forms/search.js",
     "forms/today.js"
    ]
   },

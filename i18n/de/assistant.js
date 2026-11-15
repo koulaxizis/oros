@@ -1053,6 +1053,7 @@ orosPack("de", "assistant", {
  "entry.income": "Neue Einnahme · {app}",
  "entry.invoice": "Neue Rechnung · {app}",
  "entry.media": "Neuer Titel · {app}",
+ "entry.form": "Neues Formular · {app}",
  "entry.mind_map": "Neue Mindmap · {app}",
  "entry.more": "+{n} weitere",
  "entry.note": "Neue Notiz · {app}",

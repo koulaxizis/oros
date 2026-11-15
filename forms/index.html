@@ -83,6 +83,13 @@
           <p class="hint" id="s-back-hint" data-i18n="set.backHint">An https address, shown as a button on the thank-you message.</p>
           <label class="opt"><input type="checkbox" id="s-once"> <span data-i18n="set.once">One answer per browser</span></label>
           <p class="hint" data-i18n="set.onceHint">The page remembers in the browser that it was answered.</p>
+          <label class="opt"><input type="checkbox" id="s-quiz"> <span data-i18n="set.quiz">This is a quiz: score the answers</span></label>
+          <p class="hint" data-i18n="set.quizHint">Each question with one right answer gets a Correct answer box and points.</p>
+          <div id="s-quiz-more" hidden>
+            <label class="opt"><input type="checkbox" id="s-score"> <span data-i18n="set.score">Show people their score after sending</span></label>
+            <p class="hint" data-i18n="set.scoreHint">The right answers then travel inside the form's page, so someone who knows how could read them before answering. Leave it off for a test that counts.</p>
+            <label class="opt"><input type="checkbox" id="s-reveal"> <span data-i18n="set.reveal">Also show which answers were right</span></label>
+          </div>
         </div>
         <div class="bar end">
           <button type="button" id="dup-btn" class="chip" data-i18n="btn.dup">Duplicate form</button>
@@ -131,6 +138,9 @@
   <script src="render.js?v=6.92.00"></script>
   <script src="pub.js?v=6.92.00"></script>
   <script src="share.js?v=6.92.00"></script>
+  <script src="quiz.js?v=6.92.00"></script>
+  <script src="results.js?v=6.92.00"></script>
+  <script src="links.js?v=6.92.00"></script>
   <script src="app.js?v=6.92.00"></script>
 
 </body>
