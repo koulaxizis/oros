@@ -233,7 +233,7 @@ test("wiring: Files loads the archive, registers the place, carries moves", () =
   const html = read("files/index.html");
   assert.ok(!/<script[^>]+docs(-core)?\.js/.test(html), "Documents is not in the first open (budget)");
   const js = read("files/files.js");
-  assert.match(js, /DOCS_SCRIPTS = \["docs-core\.js", "docs-text\.js", "docs\.js"\]/, "core before the view, on demand");
+  assert.match(js, /DOCS_SCRIPTS = \["docs-core\.js", "docs-text\.js", "docs-due\.js", "docs\.js"\]/, "core before the view, on demand");
   assert.match(js, /function loadDocs\(/);
   assert.match(js, /"docs\.css\?v="/, "its styles load with it");
   assert.ok(!/#doc-bar|\.doc-row/.test(read("files/files.css")), "Documents styles stay out of files.css");

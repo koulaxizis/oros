@@ -196,6 +196,7 @@
       "mailf.nobody": "This message is not on this device yet. Open it in Mail once and it shows here too.",
       "mailf.open": "Open in Mail", "mailf.note": "Reader shows the messages Mail has on this device. Open the folder in Mail to bring new ones.",
       "err.nomail": "Mail has no copy of this folder on this device. Open the folder in Mail once.",
+      "tr.btn": "Translate", "tr.none": "There is no text to translate yet.", "tr.fail": "The translator could not be loaded.",
       "ai.sum": "Summarise", "ai.sumTitle": "Summary", "ai.asking": "Asking {name}…", "ai.stop": "Stop",
       "ai.again": "Try again", "ai.copy": "Copy", "ai.copied": "Summary copied.", "ai.hide": "Hide the summary", "ai.empty": "The answer was empty. Try again.",
       "ai.sent": "Only this article went to {name}, straight from this device.",
@@ -334,6 +335,7 @@
       "mailf.nobody": "Αυτό το μήνυμα δεν υπάρχει ακόμη σε αυτή τη συσκευή. Άνοιξέ το μία φορά στην Αλληλογραφία και θα φαίνεται κι εδώ.",
       "mailf.open": "Άνοιγμα στην Αλληλογραφία", "mailf.note": "Ο Αναγνώστης δείχνει τα μηνύματα που έχει η Αλληλογραφία σε αυτή τη συσκευή. Άνοιξε τον φάκελο στην Αλληλογραφία για να έρθουν τα νέα.",
       "err.nomail": "Η Αλληλογραφία δεν έχει αντίγραφο αυτού του φακέλου σε αυτή τη συσκευή. Άνοιξε τον φάκελο εκεί μία φορά.",
+      "tr.btn": "Μετάφραση", "tr.none": "Δεν υπάρχει ακόμη κείμενο για μετάφραση.", "tr.fail": "Ο μεταφραστής δεν φορτώθηκε.",
       "ai.sum": "Περίληψη", "ai.sumTitle": "Περίληψη", "ai.asking": "Ρωτάω το {name}…", "ai.stop": "Διακοπή",
       "ai.again": "Ξανά", "ai.copy": "Αντιγραφή", "ai.copied": "Η περίληψη αντιγράφηκε.", "ai.hide": "Απόκρυψη της περίληψης", "ai.empty": "Η απάντηση ήταν κενή. Δοκίμασε ξανά.",
       "ai.sent": "Μόνο αυτό το άρθρο πήγε στο {name}, απευθείας από αυτή τη συσκευή.",
@@ -393,6 +395,7 @@
     vlist: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
     vcards: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
     vmag: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1"/><line x1="14" y1="5" x2="21" y2="5"/><line x1="14" y1="9" x2="21" y2="9"/><rect x="3" y="14" width="8" height="7" rx="1"/><line x1="14" y1="15" x2="21" y2="15"/><line x1="14" y1="19" x2="21" y2="19"/></svg>',
+    lang: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M5.5 5c.8 3 2.8 5.3 5.5 6.5M10.5 5c-.9 3.4-3 6-6.5 7.5"/><path d="M12 21l4-9 4 9M13.5 18h5"/></svg>',
     spark: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
     mail: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>',
     send: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>',
@@ -1597,6 +1600,10 @@
     bSum.id = "sum-btn";
     bSum.addEventListener("click", function () { summarise(openItem.id); });
     acts.appendChild(bSum);
+    var bTr = svgBtn("icon-btn", UI.lang, t("tr.btn"));
+    bTr.id = "tr-btn";
+    bTr.addEventListener("click", translateArticle);
+    acts.appendChild(bTr);
     acts.appendChild(el("span", "spacer"));
     var mt = openItem.head && openItem.head.mt;
     if (mt && shellOpenAt()) {
@@ -1864,6 +1871,22 @@
         if (openItem && openItem.id === id) renderReader();
       });
     });
+  }
+  // Translate (translate/panel.js, TRANSLATE T3): the article's text on
+  // the device; the translation is shown in the panel, never stored.
+  function translateArticle() {
+    var text = articlePlain();
+    if (!text) { showToast(t("tr.none")); return; }
+    var it = (openItem && (openItem.head || openItem.saved || itemOf(openItem.id))) || {};
+    translatePanel({ text: (it.title ? it.title + "\n\n" : "") + text, lang: LANG }, function () { showToast(t("tr.fail")); });
+  }
+  function translatePanel(o, fail) {
+    if (window.OrosTranslatePanel) { window.OrosTranslatePanel.open(o); return; }
+    var v = window.orosI18n && window.orosI18n.ver, s = document.createElement("script");
+    s.src = "../translate/panel.js" + (v ? "?v=" + encodeURIComponent(v) : "");
+    s.onload = function () { if (window.OrosTranslatePanel) window.OrosTranslatePanel.open(o); else fail(); };
+    s.onerror = fail;
+    document.head.appendChild(s);
   }
   function renderSumBox() {
     var s = openItem && sums[openItem.id];

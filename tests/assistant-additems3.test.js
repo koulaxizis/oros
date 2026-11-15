@@ -325,7 +325,7 @@ test("publish: a list of titles in one call; Publishing's own form; release plan
   assert.equal(t1.rel, "2027-03-01");
   assert.equal(t1.sn, "4");
   assert.deepEqual(t1.fmts.map((f) => [f.k, f.isbn, f.price, f.pages]), [["pb", "9781402894626", 14.5, 240], ["eb", "", 6.99, 0]]);
-  assert.equal(t1.plan.length, PB.STAGES.length - 1);
+  assert.equal(t1.plan.length, PB.BOOK_STAGES.length);
   assert.equal(t1.plan.find((s) => s.k === "print").d, PB.addDays("2027-03-01", PB.STAGE_DAYS.print));
   assert.equal(t2.st, "out");
   assert.equal(t2.plan, undefined);                 // a released book gets no plan unless asked
@@ -410,7 +410,8 @@ test("publish: a music release with tracks, ISRCs and editions (wave M1); codes 
   assert.equal(J(data), PB.serialize(data));
   const t = PB.find(data, "titles", id);
   assert.deepEqual(t.mt, { k: "album", lbl: "Own Label", gen: "Folk", pl: "2026 Ann Example" });
-  assert.equal(t.plan, undefined);                  // the music plan comes with wave M3
+  assert.deepEqual(t.plan.map((s) => s.k + " " + s.d + " " + s.n)[3], "up 2027-01-04 Upload to the distributor");   // wave M3: the music plan, named
+  assert.equal(t.plan.length, PB.MUSIC_STAGES.length);
   assert.deepEqual(t.fmts, []);
   assert.deepEqual(PB.tracksOf(data, id).map((x) => [x.no, x.t, x.ver, x.dur, x.isrc, x.ex || 0]),
     [[1, "Intro", "", 65, "GRA1B2600001", 0], [2, "Night Song", "Radio edit", 225, "", 1], [3, "Dawn", "", 0, "", 0]]);

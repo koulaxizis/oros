@@ -14,7 +14,7 @@ test.before(async () => { R = await import("../relay/gate.js"); });
 
 // Every Assistant tool (all options on).
 function assistantTools() {
-  return C.toolsFor({ data: 1, summary: 1, entries: 1, openFile: 1, rebuild: 1, house: 1, changes: 1, creates: ["todo"], links: 1,
+  return C.toolsFor({ data: 1, summary: 1, entries: 1, openFile: 1, rebuild: 1, house: 1, epub: 1, changes: 1, creates: ["todo"], links: 1,
                       partnerLinks: 1, actions: ["timer"], history: 1, edits: { writer: 1 }, recipes: ["layout"], newsletter: 1,
                       cover: 1, rules: 1, web: 1, lines: ["budget", "invoices", "stock", "publish"], kbCols: 1, files: "write" });
 }
@@ -92,7 +92,7 @@ test("the Assistant's list tools run the gate's own cores", () => {
 });
 
 test("the relay takes the device's whole tool list", () => {
-  const t = C.gateTools(C.toolsFor({ data: 1, summary: 1, entries: 1, rebuild: 1, house: 1, changes: 1, creates: ["todo", "calendar", "notes"],
+  const t = C.gateTools(C.toolsFor({ data: 1, summary: 1, entries: 1, rebuild: 1, house: 1, epub: 1, changes: 1, creates: ["todo", "calendar", "notes"],
     links: 1, partnerLinks: 1, actions: ["timer", "open"], history: 1, edits: { writer: { CATALOG: {} } }, recipes: ["layout", "atelier"],
     newsletter: 1, cover: 1, rules: 1 }));
   const own = new Set(R.TOOLS.map((x) => x.name));

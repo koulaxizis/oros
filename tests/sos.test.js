@@ -228,3 +228,33 @@ test("a passphrase change refuses a signal (no data to re-lock)", async () => {
   await rejectsWith(B.sync.changePassphrase(PASS, "a-brand-new-pass-1", false), "cloud-closed");
   assert.equal(blob(db).ver, "oros-signal");
 });
+
+test("S2: the signal carries vp, a proof under the vault key that orOS Drive (key only, no passphrase) can check", async () => {
+  const { webcrypto } = require("crypto");
+  const { BinDropbox, vaultDevice } = require("./vault-harness");
+  const db = new BinDropbox();
+  const A = await vaultDevice(db, "A");
+  await A.write("/internal/a.txt", "x");
+  await A.sync();
+  const st = A.ctx.orosSync.storage;
+  const doc = JSON.parse(Buffer.from(await st.getObject("key.json")).toString("utf8"));
+  const raw = Buffer.from((await A.ctx.orosSync.vaultCrypto.decryptJson(doc.wraps[0])).k, "base64");
+  const r = await A.ctx.orosSync.sosEverywhere(A.ctx.orosSync.getPassphrase ? A.ctx.orosSync.getPassphrase() : "test-passphrase");
+  assert.equal(r.signalled, true);
+  const f = [...db.files.entries()].find(([p]) => /orOS-data\.json$/i.test(p));
+  const sg = JSON.parse(Buffer.from(f[1].data).toString("utf8")).sig;
+  assert.equal(sg.kind, "sos");
+  const sk = await webcrypto.subtle.digest("SHA-256", Buffer.concat([Buffer.from("oros-signal"), raw]));
+  const hk = await webcrypto.subtle.importKey("raw", sk, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const want = Buffer.from(await webcrypto.subtle.sign("HMAC", hk, Buffer.from("sos:" + sg.n))).toString("base64");
+  assert.equal(sg.vp, want);
+});
+
+test("S2: no Vault, no vp; the signal still goes", async () => {
+  const db = new FakeDropbox();
+  const A = await withData(db, "A", { a: 1 });
+  await A.sync.push();
+  await A.sync.sosEverywhere(PASS);
+  assert.equal(blob(db).ver, "oros-signal");
+  assert.equal(blob(db).sig.vp, undefined);
+});

@@ -3,13 +3,14 @@
 // Reads a board or task list exported from another project tool and
 // turns it into the Trello-export shape kanban.js already imports
 //   { id, name, lists: [{ id, name, closed }],
-//     cards: [{ id, name, desc, due, idList, idLabels, closed, info }],
+//     cards: [{ id, name, desc, due, start?, idList, idLabels, closed, info }],
 //     labels: [{ id, name, color }],
 //     checklists: [{ idCard, checkItems: [{ id, name, state }] }] }
 // so every source lands through trelloAdapter and the same idempotent
 // merge (importInto): a card already here is never moved or
 // overwritten, a deleted one doesn't come back. `info` (extra fields
-// such as Assignee or Priority) is the one key Trello has not.
+// such as Assignee or Priority) is the one key Trello has not; start is
+// Trello's own start date, which the other sources fill from theirs.
 // Pure: no DOM, no storage.
 //
 // Sources (detected from CSV headers or the JSON shape):
@@ -176,13 +177,17 @@
       var id = o.lids ? l : self.label(l);
       if (id && ids.indexOf(id) === -1) ids.push(id);
     });
-    var info = [];
+    // Gantt G3: a start date becomes the card's plan start (Timeline),
+    // no longer an extra field, when it is a real day at most the due day.
+    var info = [], due = day(o.due) || null, start = day(o.start) || "";
     arr(o.info).forEach(function (f) {
       var l = line(f[0], MAX.info), v = line(f[1], MAX.info);
+      if (l === "Start Date" && !start && day(v) && (!due || day(v) <= due)) { start = day(v); return; }
       if (l && v && info.length < MAX.infoN) info.push({ label: l, value: v });
     });
     var c = { id: this.hid("card", key), name: name, desc: block(o.desc, MAX.notes),
-              due: day(o.due) || null, idList: o.col, idLabels: ids, closed: false, info: info };
+              due: due, idList: o.col, idLabels: ids, closed: false, info: info };
+    if (start && (!due || start <= due)) c.start = start;
     this.cards.push(c);
     this.cardBy[key] = c;
     return c;
@@ -354,6 +359,7 @@
     }
     var iSum = idx(["Summary"]), iKey = idx(["Issue key", "Key"]), iId = idx(["Issue id", "Issue ID"]);
     var iStatus = idx(["Status"]), iDesc = idx(["Description"]), iDue = idx(["Due Date", "Due date", "Due"]);
+    var iStart = idx(["Start date", "Start Date", "Custom field (Start date)", "Custom field (Start Date)", "Target start", "Custom field (Target start)"]);
     var iPName = idx(["Project name"]), iPKey = idx(["Project key"]);
     var iLabels = all("Labels"), iSprint = all("Sprint");
     var extra = [["Issue Type", ["Issue Type", "Issuetype"]], ["Priority", ["Priority"]], ["Assignee", ["Assignee"]],
@@ -378,7 +384,7 @@
       var info = extra.map(function (f) { return [f[0], v(r, f[1])]; });
       info.push(["Sprint", sprints.join(", ")]);
       b.card({ key: line(v(r, iId), 40) || key || sum, name: (key ? key + " " : "") + sum, desc: v(r, iDesc),
-               due: v(r, iDue), col: b.col(status, statusRank(status)), labels: labels, info: info });
+               due: v(r, iDue), start: v(r, iStart), col: b.col(status, statusRank(status)), labels: labels, info: info });
     });
     return result("jira", [b]);
   }

@@ -146,11 +146,12 @@ if (api.alarms) {
    closes the tab. The sync dot tells when the round is over: "synced"
    or "err" after a round; "off" (no sync) or "locked" (sync passphrase
    not remembered) ends it after a few seconds; at most 60 s. */
-function syncStateInPage(k) {
+function syncStateInPage(k, ek) {
   const d = document.getElementById("sync-dot");
-  let raw = null;
+  let raw = null, erased = null;
   try { raw = localStorage.getItem(k); } catch (e) { raw = null; }
-  return { s: d ? String(d.getAttribute("data-state") || "") : "", raw: raw };
+  try { erased = localStorage.getItem(ek); } catch (e) { erased = null; }   // SOS-1 S2
+  return { s: d ? String(d.getAttribute("data-state") || "") : "", raw: raw, erased: erased };
 }
 let updating = null;
 async function updateViaTab() {
@@ -161,18 +162,19 @@ async function updateViaTab() {
   if (open && open.length) return { ok: await OrosVault.refreshAll(base) };
   const t = await api.tabs.create({ url: base, active: false }).catch(() => null);
   if (!t) return { ok: false };
-  let raw = null, idle = 0;
+  let raw = null, erased = null, idle = 0;
   const end = Date.now() + 60000;
   try {
     while (Date.now() < end) {
       await wait(1000);
       let st = null;
       try {
-        const r = await api.scripting.executeScript({ target: { tabId: t.id }, func: syncStateInPage, args: [OrosVault.SLICE_KEY] });
+        const r = await api.scripting.executeScript({ target: { tabId: t.id }, func: syncStateInPage, args: [OrosVault.SLICE_KEY, OrosVault.ERASED_KEY] });
         st = r && r[0] ? r[0].result : null;
       } catch (e) { st = null; /* still loading */ }
       if (!st) continue;
       raw = st.raw;
+      erased = typeof st.erased === "string" ? st.erased : null;
       if (st.s === "synced" || st.s === "err") break;
       if (st.s === "syncing") { idle = 0; continue; }
       if (++idle >= (st.s === "off" || st.s === "locked" ? 4 : 15)) break;
@@ -180,7 +182,7 @@ async function updateViaTab() {
   } finally {
     await api.tabs.remove(t.id).catch(() => {});
   }
-  return { ok: raw ? await OrosVault.absorbText(raw) : false };
+  return { ok: raw || erased ? await OrosVault.absorbTab(raw, erased) : false };
 }
 
 /* Passwords PW-AF3: a login from the popup's "Save the login from

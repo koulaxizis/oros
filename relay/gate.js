@@ -369,6 +369,8 @@ export const TOOLS = [
             text: { type: "string", description: "The card's title, at most 500 characters." },
             notes: { type: "string", description: "At most 5000 characters." },
             due: { type: "string", description: "YYYY-MM-DD." },
+            start: { type: "string", description: "The planned first day on the Timeline (Gantt), YYYY-MM-DD, at most the due date." },
+            milestone: { type: "boolean", description: "true: a milestone (one day, its due date)." },
             labels: { type: "array", items: { type: "string" }, description: "Label names of this board." },
             position: { type: "string", enum: ["top", "bottom"], description: "Where in the column (bottom when left out)." }
           },
@@ -406,7 +408,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_change_card",
-    description: "Changes one card's text, notes, due date (\"\" clears it) or labels (the full new list of label names; [] clears them), adds subtasks at the end (add_subtasks) and ticks, unticks or rewords subtasks by id or exact text (change_subtasks); subtasks are never removed here. Read the whole card (notes, subtasks with ids and [x] when done) with read_item on its ref from search_data. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices.",
+    description: "Changes one card's text, notes, due date (\"\" clears it), plan (start, milestone, depends_on: the Timeline's Gantt) or labels (the full new list of label names; [] clears them), adds subtasks at the end (add_subtasks) and ticks, unticks or rewords subtasks by id or exact text (change_subtasks); subtasks are never removed here. Read the whole card (notes, subtasks with ids and [x] when done) with read_item on its ref from search_data. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices.",
     inputSchema: {
       type: "object",
       properties: {
@@ -415,6 +417,9 @@ export const TOOLS = [
         text: { type: "string" },
         notes: { type: "string" },
         due: { type: "string", description: "YYYY-MM-DD, or \"\" to clear." },
+        start: { type: "string", description: "The planned first day on the Timeline (Gantt), YYYY-MM-DD at most the due date, or \"\" to clear." },
+        milestone: { type: "boolean", description: "true makes it a milestone (one day, its due date), false a normal card." },
+        depends_on: { type: "array", maxItems: 20, items: { type: "string" }, description: "The whole new list of cards (ids, or exact text) on this board that must finish before this one starts; [] clears it. Loops are refused." },
         labels: { type: "array", items: { type: "string" } },
         add_subtasks: { type: "array", minItems: 1, maxItems: 30, items: { type: "string" }, description: "New subtasks, added unticked at the end (at most 500 characters each; a card holds at most 100)." },
         change_subtasks: { type: "array", minItems: 1, maxItems: 100, items: {
