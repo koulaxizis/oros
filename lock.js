@@ -1336,6 +1336,39 @@
     }
     return { ready: out.every(function (i) { return i.state !== "need"; }), items: out };
   }
+  // Security checkup (STRICT-6): this device's weak points, live, mode
+  // on or off. state: ok | advice (worth changing) | info (good to
+  // know) | check (orOS cannot see it: the person checks).
+  function strictAudit() {
+    var S = sync(), P = pushApi(), c = load(), out = [];
+    out.push({ id: "lock", state: c ? "ok" : "advice" });
+    if (c) {
+      out.push({ id: "lockPass", state: c.kind === "pass" ? "ok" : "advice" });
+      out.push({ id: "auditIdle", state: c.idle > 0 && c.idle <= 5 ? "ok" : "advice" });
+      out.push({ id: "auditHidden", state: c.hidden ? "ok" : "advice" });
+      out.push({ id: "auditBio", state: bioRec() ? "advice" : "ok" });
+    }
+    var vault = false, prov = "", short = false;
+    try { vault = !!(S && S.hasDeviceVault()); } catch (e) {}
+    try { prov = S && (typeof S.isConnected !== "function" || S.isConnected()) ? S.getProvider() : ""; } catch (e) {}
+    try { short = !!(S && typeof S.passShort === "function" && S.passShort()); } catch (e) {}
+    out.push({ id: "auditNoSync", state: prov ? "ok" : "info" });
+    if (prov) {
+      out.push({ id: "remember", state: vault ? "advice" : "ok" });
+      out.push({ id: "passLen", state: short ? "advice" : "ok" });
+      out.push({ id: "auditCloud", state: prov === "webdav" ? "ok" : "advice" });
+      var dc = davConf();
+      if (prov === "webdav") out.push({ id: "davRelay", state: dc && dc.relay === true ? "advice" : "ok" });
+    }
+    out.push({ id: "push", state: P && P.enabled() ? "advice" : "ok" });
+    out.push({ id: "backup", state: backupPlain() ? "advice" : "ok" });
+    var gate = false;
+    try { gate = !!(root.orosGate && typeof root.orosGate.state === "function" && root.orosGate.state().on); } catch (e) {}
+    out.push({ id: "auditGate", state: gate ? "info" : "ok" });
+    out.push({ id: "auditMode", state: strictRec() ? "ok" : "info" });
+    out.push({ id: "auditExt", state: "check" });
+    return { items: out, advice: out.filter(function (i) { return i.state === "advice"; }).length };
+  }
   // The addresses Hardcore still lets through: the sync cloud only.
   function strictHosts() {
     var S = sync(), prov = "", hosts = [];
@@ -1354,6 +1387,7 @@
     level: function () { var r = strictRec(); return r ? r.level : null; },
     caps: function (level) { var k = strictCaps(level || strictLevel()); return k ? JSON.parse(JSON.stringify(k)) : null; },
     check: strictCheck,
+    audit: strictAudit,
     hosts: strictHosts,
     // Turn a level on, or go from "on" to "hard". → { ok, code }
     // code: need (strictCheck not ready), lower (hard → on needs off first),

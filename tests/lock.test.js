@@ -246,3 +246,25 @@ test("sensitive work: travel erases nothing before the passphrase and the upload
   assert.match(sh, /travel: strictTravel/);
   assert.match(sh, /deadman: function \(\) \{ strictDuress\(false\); \}/);
 });
+
+test("sensitive work: every checkup item has its words in EN, EL and DE and a real place to go", () => {
+  const lk = read("lock.js");
+  const fn = lk.slice(lk.indexOf("function strictAudit"), lk.indexOf("function strictHosts"));
+  const ids = [...fn.matchAll(/id: "([A-Za-z]+)"/g)].map((m) => m[1]);
+  assert.ok(ids.length >= 14, "items listed");
+  assert.match(lk, /audit: strictAudit/);
+  const core = read("settings/core.js"), de = read("i18n/de/settings.js");
+  const cut = core.indexOf("\n    el: {"), en = core.slice(0, cut), el = core.slice(cut);
+  for (const id of ids) {
+    for (const [name, src] of [["en", en], ["el", el], ["de", de]]) {
+      assert.ok(src.includes('"sv.i.' + id + '"'), name + " sv.i." + id);
+    }
+  }
+  for (const st of ["ok", "advice", "info", "check"]) {
+    for (const src of [en, el, de]) assert.ok(src.includes('"sv.st.a.' + st + '"'), "sv.st.a." + st);
+  }
+  const C = require("../settings/core.js");
+  const ss = read("settings/settings.js");
+  const go = ss.slice(ss.indexOf("var AUDIT_GO"), ss.indexOf("function secAudit"));
+  for (const m of go.matchAll(/: "([a-z]+)"/g)) assert.ok(C.isSection(m[1]), "section " + m[1]);
+});

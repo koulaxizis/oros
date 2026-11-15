@@ -68,6 +68,7 @@ In [Settings](app:settings) › `Sensitive work`, one switch does most of the li
 - **Travel mode**: before a border or a check, everything leaves this device and stays only in your encrypted cloud; the device opens as a fresh orOS. orOS first checks your sync passphrase and sends every waiting change; if anything is still waiting, nothing is erased. Montage media, offline maps and downloaded models live only on the device and are lost. To come back, connect the same sync in `Settings` › `Sync` with the same passphrase.
 - **Dead-man switch**: if the device is not unlocked for 1 to 30 days (you choose), orOS erases this device the next time it runs. The cloud stays. It cannot act while the device is off, and someone who changes the clock or copies the storage first can get around it.
 - **Things that delete themselves**: a page in [Notes](app:notes) or a file in [Files](app:files) can delete itself after 1 hour to 30 days (`Delete itself…` in its menu), on every device the first time orOS runs there.
+- **Security checkup**: the `Security checkup` card on the same page lists what on this device is already safe and what is worth changing, with a link to the right setting. It works with the mode on or off and shows nothing you typed.
 - **Discreet tab**: the browser tab shows “Notes” and a plain page icon instead of orOS. An installed app keeps its own name and icon.
 - Hardcore's block works while orOS runs installed for offline use. A hard reload skips it until the next normal start, and it does not cover pages opened outside orOS.
 

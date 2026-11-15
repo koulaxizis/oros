@@ -2554,6 +2554,41 @@
     return { ul: ul, ready: res.ready };
   }
 
+  // Security checkup (STRICT-6, orosStrict.audit): live, mode on or off.
+  var AUDIT_GO = { lock: "lock", lockPass: "lock", auditIdle: "lock", auditHidden: "lock", auditBio: "lock",
+    auditNoSync: "sync", remember: "sync", passLen: "sync", auditCloud: "sync", davRelay: "sync",
+    push: "notifications", backup: "backup" };
+  function secAudit(host, S) {
+    var res;
+    try { res = S.audit(); } catch (e) { return; }
+    if (!res || !Array.isArray(res.items)) return;
+    var ca = card(t("sv.audit"));
+    ca.setAttribute("data-k", "sv-audit");
+    ca.appendChild(el("p", "hint", t("sv.audit.text")));
+    ca.appendChild(el("p", "sv-audit-sum" + (res.advice ? " warn" : ""), res.advice ? t("sv.audit.n", { n: res.advice }) : t("sv.audit.none")));
+    var order = { advice: 0, check: 1, info: 2, ok: 3 };
+    var ul = el("ul", "sv-list");
+    res.items.slice().sort(function (x, y) { return order[x.state] - order[y.state]; }).forEach(function (it) {
+      var li = el("li", "sv-item sv-" + (it.state === "advice" ? "need" : it.state === "ok" ? "ok" : "advice"));
+      li.setAttribute("data-k", "sv-audit:" + it.id);
+      li.appendChild(el("span", "sv-text", t("sv.i." + it.id)));
+      li.appendChild(el("span", "sv-state", t("sv.st.a." + it.state)));
+      var to = AUDIT_GO[it.id];
+      if (to && it.state !== "ok") {
+        var b = el("button", "linkish", t("sv.goto." + to));
+        b.type = "button";
+        b.setAttribute("data-k", "sv-audit-go:" + it.id);
+        b.addEventListener("click", function () { go(to, true); });
+        li.appendChild(b);
+      }
+      var why = it.state !== "ok" && it.id.indexOf("audit") === 0 ? t("sv.why." + it.id) : "";
+      if (why && why !== "sv.why." + it.id) li.appendChild(el("span", "hint", why));
+      ul.appendChild(li);
+    });
+    ca.appendChild(ul);
+    host.appendChild(ca);
+  }
+
   function secSensitive(host) {
     var S = strictApi(), L = lockApi();
     var c1 = card(null);
@@ -2654,6 +2689,7 @@
     }
     if (sv.msg) c1.appendChild(el("p", "msg msg-" + sv.msg.kind, t(sv.msg.key, sv.msg.vars)));
     host.appendChild(c1);
+    if (typeof S.audit === "function") secAudit(host, S);
 
     if (cur) secSensitiveMore(host, S, L, k);
 
