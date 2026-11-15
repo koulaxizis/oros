@@ -28,6 +28,11 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - `Add to Favourites` pins a folder or file to the top of the tree. Tap the star next to it there, or choose `Remove from Favourites`, to unpin it.
 - Favourites follow a rename or a move made in Files, and are synced to your other devices. A favourite that has not reached a device yet is shown faded.
 
+### Remove hidden details
+- `Remove hidden details` (in the menu) makes a clean copy, "name (clean).ext", next to each selected photo (JPEG, PNG, WebP), PDF, or Word, Excel, PowerPoint or OpenDocument file. The original stays as it is.
+- It removes what the file says about who made it, where, when and with what: GPS location and camera details from photos; author, program, dates and earlier saved versions from PDFs; author, last editor, dates, company, template, custom properties and Word's editing-session codes from office files. The picture and the text stay byte for byte; a turned photo keeps only its orientation.
+- Comments and tracked changes are not removed, because you can see and decide on them: the report says when a file still has them. Read the content itself too, see [Sensitive work and sources](help:t/sensitive).
+
 ### ZIP files
 - `Compress to ZIP` packs the selected files and folders into one .zip next to them, named after the item (or "Archive.zip" for several). Text and other files are compressed where the browser can; photos, videos and other already compressed files are stored as they are.
 - Open a .zip to see what is inside. `Extract` (or `Extract here` in the menu) unpacks it into a new folder next to it. A file never overwrites anything: names that are taken get " (1)".

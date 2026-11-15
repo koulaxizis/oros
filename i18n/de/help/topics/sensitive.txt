@@ -56,6 +56,7 @@ orOS lädt von useoros.online und aktualisiert sich selbst. Würden die Konten d
 7. Nutze ein Browserprofil ohne Erweiterungen.
 8. Halte Quellen bei Signal oder SecureDrop, nie in der E-Mail.
 9. Schalte in den `Einstellungen` unter `Sicherungen` `Sicherungsdateien verschlüsseln` ein: sonst ist eine Datei aus `Sicherungsdatei exportieren` **nicht** verschlüsselt. Siehe [Sicherung und Wiederherstellung](help:t/backup).
+10. Bevor ein Foto oder Dokument dein Gerät verlässt, nutze `Versteckte Angaben entfernen` in [Dateien](app:files): Es entfernt GPS, Kamera, Autor und Daten. Lies danach den Inhalt selbst.
 
 ## Modus Sensible Arbeit
 In den [Einstellungen](app:settings) › `Sensible Arbeit` erledigt ein Schalter das meiste aus der Liste oben auf diesem Gerät. Er gilt nur auf diesem Gerät, löscht keine Daten, und wenn du ihn ausschaltest, kommen deine früheren Sperrzeiten und Push zurück. Zum Ausschalten fragt er nach der PIN oder dem Kennwort der Sperre.

@@ -56,6 +56,7 @@ orOS loads from useoros.online and updates itself. If the project's accounts wer
 7. Use a browser profile with no extensions.
 8. Keep sources on Signal or SecureDrop, never in Mail.
 9. In `Settings` › `Backups`, turn on `Encrypt backup files`: otherwise a file from `Export backup file` is **not** encrypted. See [Backups](help:t/backup).
+10. Before a photo or document leaves, use `Remove hidden details` in [Files](app:files): it removes GPS, camera, author and dates. Then read the content itself.
 
 ## Sensitive work mode
 In [Settings](app:settings) › `Sensitive work`, one switch does most of the list above on this device. It applies only to this device, deletes no data, and when you turn it off your earlier lock times and push come back. Turning it off asks for the lock's PIN or passphrase.

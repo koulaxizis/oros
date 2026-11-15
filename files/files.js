@@ -258,6 +258,32 @@
       "menu.convert":  "Convert to orOS",
       "menu.pdfTools": "Open in Scanner & PDF",
       "menu.transfer": "Send with Transfer…",
+      "menu.clean": "Remove hidden details",
+      "clean.title": "Hidden details removed",
+      "clean.working": "Removing hidden details… {n} of {t}",
+      "clean.saved": "Saved as “{name}”. The original is unchanged.",
+      "clean.none": "“{name}”: nothing hidden was found.",
+      "clean.fail": "“{name}” could not be cleaned.",
+      "clean.encrypted": "“{name}” is password-protected; remove the password first.",
+      "clean.big": "“{name}” is too large to clean here (over {mb} MB).",
+      "clean.r.gps": "Location (GPS)",
+      "clean.r.camera": "Camera and photo details (EXIF)",
+      "clean.r.xmp": "Editing details (XMP)",
+      "clean.r.iptc": "Captions and credits (IPTC)",
+      "clean.r.comment": "A hidden comment",
+      "clean.r.text": "Description, keywords, notes",
+      "clean.r.time": "Time of the last change",
+      "clean.r.people": "Author and last editor",
+      "clean.r.dates": "Creation and change dates",
+      "clean.r.app": "Program, company, template, printer",
+      "clean.r.custom": "Custom properties",
+      "clean.r.rsid": "Word editing-session codes",
+      "clean.r.history": "Earlier saved versions inside the file",
+      "clean.w.comments": "It still has comments, with their authors’ names. Remove them in the program you write with.",
+      "clean.w.tracked": "It still has tracked changes, with names and times. Accept or reject them in the program you write with.",
+      "clean.w.annots": "It still has notes or highlights, which can carry a name. Remove them in a PDF editor.",
+      "clean.check": "Hidden details are only part of it. Read the content too: names, faces, places, what is visible in pictures, and words only one person would use.",
+      "clean.ok": "Close",
       "zip.archive":   "Archive",
       "zip.working":   "Compressing… {n} of {t}",
       "zip.done":      "Created \"{name}\"",
@@ -495,6 +521,32 @@
       "menu.convert":  "Μετατροπή σε orOS",
       "menu.pdfTools": "Άνοιγμα στο Σαρωτής & PDF",
       "menu.transfer": "Αποστολή με Μεταφορά…",
+      "menu.clean": "Αφαίρεση κρυφών στοιχείων",
+      "clean.title": "Τα κρυφά στοιχεία αφαιρέθηκαν",
+      "clean.working": "Αφαιρώ κρυφά στοιχεία… {n} από {t}",
+      "clean.saved": "Αποθηκεύτηκε ως «{name}». Το αρχικό δεν άλλαξε.",
+      "clean.none": "«{name}»: δεν βρέθηκε τίποτα κρυφό.",
+      "clean.fail": "Το «{name}» δεν καθαρίστηκε.",
+      "clean.encrypted": "Το «{name}» έχει κωδικό· αφαίρεσέ τον πρώτα.",
+      "clean.big": "Το «{name}» είναι πολύ μεγάλο για καθαρισμό εδώ (πάνω από {mb} MB).",
+      "clean.r.gps": "Τοποθεσία (GPS)",
+      "clean.r.camera": "Στοιχεία κάμερας και φωτογραφίας (EXIF)",
+      "clean.r.xmp": "Στοιχεία επεξεργασίας (XMP)",
+      "clean.r.iptc": "Λεζάντες και credits (IPTC)",
+      "clean.r.comment": "Ένα κρυφό σχόλιο",
+      "clean.r.text": "Περιγραφή, λέξεις-κλειδιά, σημειώσεις",
+      "clean.r.time": "Ώρα τελευταίας αλλαγής",
+      "clean.r.people": "Συντάκτης και τελευταίος που το άλλαξε",
+      "clean.r.dates": "Ημερομηνίες δημιουργίας και αλλαγής",
+      "clean.r.app": "Πρόγραμμα, εταιρεία, πρότυπο, εκτυπωτής",
+      "clean.r.custom": "Προσαρμοσμένες ιδιότητες",
+      "clean.r.rsid": "Κωδικοί συνεδριών επεξεργασίας του Word",
+      "clean.r.history": "Παλαιότερες αποθηκευμένες εκδοχές μέσα στο αρχείο",
+      "clean.w.comments": "Έχει ακόμη σχόλια, με τα ονόματα όσων τα έγραψαν. Αφαίρεσέ τα στο πρόγραμμα όπου γράφεις.",
+      "clean.w.tracked": "Έχει ακόμη παρακολούθηση αλλαγών, με ονόματα και ώρες. Αποδέξου ή απόρριψέ τες στο πρόγραμμα όπου γράφεις.",
+      "clean.w.annots": "Έχει ακόμη σημειώσεις ή επισημάνσεις, που μπορεί να έχουν όνομα. Αφαίρεσέ τες σε πρόγραμμα PDF.",
+      "clean.check": "Τα κρυφά στοιχεία είναι μόνο ένα μέρος. Διάβασε και το περιεχόμενο: ονόματα, πρόσωπα, μέρη, ό,τι φαίνεται στις εικόνες, και λέξεις που θα χρησιμοποιούσε μόνο ένας άνθρωπος.",
+      "clean.ok": "Κλείσιμο",
       "zip.archive":   "Συμπιεσμένο",
       "zip.working":   "Συμπίεση… {n} από {t}",
       "zip.done":      "Δημιουργήθηκε το «{name}»",
@@ -933,6 +985,127 @@
     if (!paths.length) return;
     try { window.parent.__orosOpenAt("scanpdf", { paths: paths }); } catch (e) {}
   }
+  // "Remove hidden details" (STRICT-4, files/clean-core.js): a clean copy
+  // "<name> (clean).<ext>" next to each selected photo, PDF or office
+  // file; the original is never changed. A short report says what went
+  // and what is still inside (comments, tracked changes).
+  var CLEAN_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>';
+  var CLEAN_MAX_MB = 200, cleanBusy = false;
+  function cleanPaths() {
+    var dirs = {};
+    lastEntries.forEach(function (e) { if (e.dir) dirs[entryPath(e)] = true; });
+    var C = window.orosClean;
+    return selectionPaths().filter(function (p) {
+      var n = baseName(p);
+      return !dirs[p] && !CORE.isTrashPath(p) && (C ? C.canClean(n) : /\.(jpe?g|png|webp|pdf|docx|docm|dotx|xlsx|xlsm|pptx|pptm|odt|ods|odp|odg)$/i.test(n));
+    });
+  }
+  function cleanScript(src, test) {
+    if (test()) return Promise.resolve();
+    return new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = src;
+      sc.onload = function () { if (test()) res(); else rej(new Error("load")); };
+      sc.onerror = function () { rej(new Error("load")); };
+      document.head.appendChild(sc);
+    });
+  }
+  function cleanOne(path, io) {
+    var C = window.orosClean, name = baseName(path);
+    return io.stat(path).then(function (st) {
+      if (st && st.size > CLEAN_MAX_MB * 1048576) return { name: name, err: "big" };
+      return io.read(path).then(function (blob) { return blob.arrayBuffer(); }).then(function (buf) {
+        var b = new Uint8Array(buf), kind = C.kindOf(name, b);
+        var job;
+        if (kind === "jpeg" || kind === "png" || kind === "webp") job = Promise.resolve().then(function () { return C.cleanImage(kind, b); });
+        else if (kind === "pdf") job = cleanScript("../vendor/pdf-lib/pdf-lib.min.js", function () { return !!window.PDFLib; })
+          .then(function () { return C.cleanPdf(b, window.PDFLib); });
+        else if (kind === "ooxml" || kind === "odf") job = C.cleanZip(kind, b, { Zip: window.AtelierZip, build: CORE.zipBuild, crc32: CORE.crc32,
+          deflate: deflateOk() ? deflate : null });
+        else return { name: name, err: "fail" };
+        return job.then(function (r) {
+          if (!r.removed.length) return { name: name, removed: [], warn: r.warn };
+          var parent = io.parent(path);
+          return io.list(parent).then(function (list) {
+            var out = uniqueName(C.cleanName(name), list.map(function (e) { return e.name; }));
+            var dst = join(parent, out);
+            return io.write(dst, new Blob([r.bytes])).then(function () {
+              io.done(dst);
+              return { name: name, out: out, removed: r.removed, warn: r.warn };
+            });
+          });
+        });
+      });
+    }).catch(function (e) {
+      return { name: name, err: e && e.message === "encrypted" ? "encrypted" : "fail" };
+    });
+  }
+  function cleanSelection() {
+    var paths = cleanPaths(), io = DISK_IO;
+    if (!paths.length) return;
+    if (cleanBusy) { transientNote(t("zip.busy")); return; }
+    cleanBusy = true;
+    var results = [];
+    setJob(tfmt("clean.working", { n: 0, t: paths.length }));
+    cleanScript("clean-core.js", function () { return !!window.orosClean; }).then(function () {
+      return paths.reduce(function (ch, p, i) {
+        return ch.then(function () { return cleanOne(p, io); }).then(function (r) {
+          results.push(r);
+          setJob(tfmt("clean.working", { n: i + 1, t: paths.length }));
+        });
+      }, Promise.resolve());
+    }).then(function () { cleanReport(results); }, function () { transientNote(t("toast.opFail")); })
+      .then(function () { cleanBusy = false; setJob(""); io.refresh(); });
+  }
+  function cleanReport(results) {
+    var old = document.getElementById("dlg-clean");
+    if (old) old.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = "dlg-clean";
+    var h = document.createElement("h3");
+    h.textContent = t("clean.title");
+    dlg.appendChild(h);
+    results.forEach(function (r) {
+      var box = document.createElement("div");
+      box.className = "clean-file";
+      var p = document.createElement("p");
+      if (r.err) p.textContent = tfmt(r.err === "encrypted" ? "clean.encrypted" : r.err === "big" ? "clean.big" : "clean.fail", { name: r.name, mb: CLEAN_MAX_MB });
+      else if (!r.removed.length) p.textContent = tfmt("clean.none", { name: r.name });
+      else p.textContent = tfmt("clean.saved", { name: r.out });
+      box.appendChild(p);
+      if (r.removed && r.removed.length) {
+        var ul = document.createElement("ul");
+        r.removed.forEach(function (k) { var li = document.createElement("li"); li.textContent = t("clean.r." + k); ul.appendChild(li); });
+        box.appendChild(ul);
+      }
+      (r.warn || []).forEach(function (k) {
+        var w = document.createElement("p");
+        w.className = "hint clean-warn";
+        w.textContent = t("clean.w." + k);
+        box.appendChild(w);
+      });
+      dlg.appendChild(box);
+    });
+    var hint = document.createElement("p");
+    hint.className = "clean-note";
+    hint.textContent = t("clean.check");
+    dlg.appendChild(hint);
+    var menu = document.createElement("menu");
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    var ok = document.createElement("button");
+    ok.type = "button";
+    ok.setAttribute("data-k", "clean-ok");
+    ok.textContent = t("clean.ok");
+    ok.addEventListener("click", function () { dlg.close(); dlg.remove(); });
+    menu.appendChild(sp);
+    menu.appendChild(ok);
+    dlg.appendChild(menu);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
   // "Send with Transfer…": the selected files and folders go to the
   // Transfer app's list (TRANSFER-1 wave 2), only when it is installed.
   function transferPaths() {
@@ -3559,6 +3732,9 @@
     }
     if (view !== "trash" && transferPaths().length) {
       ctxMenu.appendChild(mkItem(TRANSFER_SVG, "menu.transfer", sendWithTransfer));
+    }
+    if (view !== "trash" && cleanPaths().length) {
+      ctxMenu.appendChild(mkItem(CLEAN_SVG, "menu.clean", cleanSelection));
     }
     ctxMenu.appendChild(hr());
     ctxMenu.appendChild(mkItem("", "menu.copyName", function () {

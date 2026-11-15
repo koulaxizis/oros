@@ -1466,3 +1466,11 @@ body.cmp-mode #status { display: none; }
   .cmp-trash-item .col-size { display: none; }
   .cmp-list .cmp-more { opacity: .9; }
 }
+
+/* Remove hidden details (STRICT-4): the report */
+#dlg-clean { max-width: min(92vw, 480px); }
+#dlg-clean .clean-file { margin: 0 0 12px; }
+#dlg-clean .clean-file p { margin: 0 0 4px; overflow-wrap: anywhere; }
+#dlg-clean ul { margin: 0 0 4px; padding-left: 20px; }
+#dlg-clean .clean-warn { color: var(--warn, #e0a030); }
+#dlg-clean .clean-note { margin: 8px 0 0; font-size: 0.9em; opacity: 0.85; }
