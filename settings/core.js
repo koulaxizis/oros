@@ -21,7 +21,7 @@
     theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    fopen: "all", multitask: "device", pcfiles: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", backupenc: "device", caldav: "device", gate: "device"
+    fopen: "all", keys: "all", multitask: "device", pcfiles: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", backupenc: "device", caldav: "device", gate: "device"
   };
 
   // Search settings: one row per setting, in page order.
@@ -872,6 +872,11 @@
       "x.version": "orOS version", "x.updates": "Check for updates",
       "x.install": "Install orOS as an app", "x.install.hint": "Opens in its own window, works offline, starts from your home screen.",
       "x.shortcuts": "Keyboard shortcuts", "x.more": "More",
+      "sc.hint": "Every orOS shortcut is {p}a key. Change sets another key: press a letter or a digit. Off frees the key for the app you are in. Your keys follow you to all your devices.",
+      "sc.change": "Change", "sc.turnoff": "Off", "sc.default": "Default", "sc.cancel": "Cancel", "sc.swap": "Swap",
+      "sc.off": "Off", "sc.press": "Press a letter or a digit (Esc cancels)…",
+      "sc.taken": "{combo} is used by “{name}”. Swap gives it this one's key.",
+      "sc.resetAll": "Reset all to the defaults",
       "x.device": "Device info", "x.about": "About orOS, credits and licences",
       "x.apps": "Settings inside apps", "x.weather": "Weather on the taskbar",
       "x.wallgen": "Wallpaper Generator",
@@ -1332,7 +1337,7 @@
       "w.report": "problem bug error log logs diagnostics support help crash report",
       "w.weather": "taskbar temperature forecast",
       "w.wallgen": "make wallpaper generator create",
-      "w.shortcuts": "keys keyboard hotkeys ctrl",
+      "w.shortcuts": "keys keyboard hotkeys ctrl change remap rebind",
       "w.multitask": "windows keep open background switch apps",
       "w.pcfiles": "this computer files disks drives home folder windows linux",
       "w.sos": "sos emergency hacked stolen lost breach compromised panic remote wipe erase everywhere",
@@ -2069,6 +2074,11 @@
       "x.version": "Έκδοση orOS", "x.updates": "Έλεγχος για ενημέρωση",
       "x.install": "Εγκατάσταση του orOS ως εφαρμογή", "x.install.hint": "Ανοίγει σε δικό του παράθυρο, δουλεύει offline, ξεκινά από την αρχική οθόνη.",
       "x.shortcuts": "Συντομεύσεις πληκτρολογίου", "x.more": "Περισσότερα",
+      "sc.hint": "Κάθε συντόμευση του orOS είναι {p}ένα πλήκτρο. Με την «Αλλαγή» ορίζεις άλλο πλήκτρο: πάτα ένα γράμμα ή έναν αριθμό. Το «Ανενεργή» αφήνει το πλήκτρο ελεύθερο για την εφαρμογή που χρησιμοποιείς. Τα πλήκτρα σου ισχύουν σε όλες τις συσκευές σου.",
+      "sc.change": "Αλλαγή", "sc.turnoff": "Ανενεργή", "sc.default": "Προεπιλογή", "sc.cancel": "Άκυρο", "sc.swap": "Αντάλλαξε",
+      "sc.off": "Ανενεργή", "sc.press": "Πάτα ένα γράμμα ή έναν αριθμό (Esc για άκυρο)…",
+      "sc.taken": "Το {combo} το χρησιμοποιεί η «{name}». Η ανταλλαγή της δίνει το πλήκτρο αυτής εδώ.",
+      "sc.resetAll": "Επαναφορά όλων στις προεπιλογές",
       "x.device": "Πληροφορίες συσκευής", "x.about": "Σχετικά με το orOS, credits και άδειες",
       "x.apps": "Ρυθμίσεις μέσα σε εφαρμογές", "x.weather": "Ο καιρός στη γραμμή εργασιών",
       "x.wallgen": "Γεννήτρια ταπετσαρίας",
@@ -2528,7 +2538,7 @@
       "w.report": "πρόβλημα σφάλμα λάθος αναφορά καταγραφή logs διάγνωση υποστήριξη βοήθεια κόλλησε",
       "w.weather": "καιρός θερμοκρασία μπάρα",
       "w.wallgen": "δημιουργία ταπετσαρίας φόντο",
-      "w.shortcuts": "πλήκτρα συντομεύσεις πληκτρολόγιο ctrl",
+      "w.shortcuts": "πλήκτρα συντομεύσεις πληκτρολόγιο ctrl αλλαγή",
       "w.multitask": "πολυεργασία παράθυρα ανοιχτές παρασκήνιο",
       "w.pcfiles": "αυτός ο υπολογιστής αρχεία δίσκοι προσωπικός φάκελος windows linux",
       "w.sos": "sos έκτακτη ανάγκη παραβίαση χάκερ κλοπή χαμένο κλεμμένο πανικός απομακρυσμένο σβήσιμο παντού",

@@ -44,7 +44,7 @@ Tippe auf Englisch oder Griechisch, was du tun willst, und die erste Zeile der S
 
 Bevor du tippst, listet die Leiste deine letzten Befehle auf; tippe auf einen, um ihn noch einmal zu nutzen. Diese Liste bleibt nur auf diesem Gerät, und `Liste leeren` leert sie.
 
-Dieselben Befehle funktionieren in einer kleinen Leiste über jeder App: Drücke [[Ctrl+K]] (in Notizen und Wiki [[Ctrl+Alt+Shift+K]]). In der orOS-App für Android öffnet die Lupe der Startbildschirm-Widgets dieselbe Leiste. Alles, was kein Befehl ist, ist eine normale Suche, und wenn der [Assistent](app:assistant) installiert ist, fragt ihn die letzte Zeile. Befehle werden auf deinem Gerät verstanden; nichts wird irgendwohin gesendet.
+Dieselben Befehle funktionieren in einer kleinen Leiste über jeder App: Drücke [[Ctrl+Alt+Shift+K]]. In der orOS-App für Android öffnet die Lupe der Startbildschirm-Widgets dieselbe Leiste. Alles, was kein Befehl ist, ist eine normale Suche, und wenn der [Assistent](app:assistant) installiert ist, fragt ihn die letzte Zeile. Befehle werden auf deinem Gerät verstanden; nichts wird irgendwohin gesendet.
 
 ## Wählen, welche Apps das Menü zeigt
 Zu viele Apps? Blende die aus, die du nicht nutzt. Öffne [Einstellungen](app:settings) und wähle `Menü`:
