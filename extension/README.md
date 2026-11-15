@@ -41,6 +41,12 @@ Android's Share → orOS.
   ends it after 4 s; at most 60 s), reads the slice and closes the
   tab. The add-on still holds no cloud token and runs no sync of its
   own.
+- **After an SOS.** With the slice it also reads `oros-erased`, which
+  orOS leaves after an SOS (or after a device obeys one). A copy taken
+  before that moment is removed with its key (`pmvault.js`
+  `obeyErased`) before anything is read again, so the old vault never
+  merges back. The person does not have to press "Remove the vault
+  copy" any more, as long as an orOS tab opens in this browser.
 - **Unlock.** The master password opens the vault key with the same
   code as orOS (`pm/` is a byte-for-byte copy of `passwords/pmcrypto.js`,
   `pmcore.js`, `pmkinds.js` and hash-wasm's Argon2id; run

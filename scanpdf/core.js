@@ -150,7 +150,8 @@
   var DESTS = ["device", "files"];
   var CMPS = ["off", "light", "medium", "strong"];
   var OCR_LANGS = ["ell+eng", "ell", "eng"];   // wave 4: what Read text reads
-  var READS = ["auto", "on", "off"];           // Save › Make it searchable (auto: on when there are scans)
+  var READS = ["auto", "on", "off"];
+  var TO_DOCS = ["off", "on"];                 // Save › In Files: also add it to Files › Documents           // Save › Make it searchable (auto: on when there are scans)
   function pick(v, list, def) { return list.indexOf(v) !== -1 ? v : def; }
   function readPrefs(raw) {
     var p = raw && typeof raw === "object" ? raw : {};
@@ -161,7 +162,8 @@
       dest: pick(p.dest, DESTS, "device"),
       cmp: pick(p.cmp, CMPS, "off"),
       ocr: pick(p.ocr, OCR_LANGS, "ell+eng"),
-      read: pick(p.read, READS, "auto")
+      read: pick(p.read, READS, "auto"),
+      docs: pick(p.docs, TO_DOCS, "off")
     };
   }
 

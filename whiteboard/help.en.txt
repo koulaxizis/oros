@@ -45,6 +45,11 @@ Whiteboard is an endless board for ideas: sticky notes, text, shapes, arrows tha
 - `Start of the arrow` and `End of the arrow` set each head on its own: `Arrow`, `Open arrow`, `Hollow triangle (UML: inherits)`, `Filled diamond (UML: made of)`, `Hollow diamond (UML: has)`, `Dot` or `Nothing`.
 - The way of an elbow line is worked out when the board is drawn, so it follows the shapes when you move them. On a device that still has an older orOS, these arrows show as straight lines with plain heads until it updates; nothing is lost.
 
+## Lay out and align
+- Select notes, texts and shapes joined by arrows and press `Lay out as a diagram`: `Tree` puts each one under the one its arrow comes from, with parents centred over their children (org charts, hierarchies); `Flow` puts them in layers along the arrows with as few crossings as it can (flowcharts, processes). Each goes `top to bottom` or `left to right`. `More` › `Lay out the board…` does the same for the whole board.
+- The group keeps its top-left corner, arrows follow, and frames, pictures and drawings stay where they are. One `Undo` puts everything back.
+- `Align and space` lines the selection up by its left, centre or right edges, or its top, middle or bottom edges. With three or more, `Same space across` and `Same space down` leave the same gap between each two, the first and last staying put.
+
 ## Templates
 - `More` (the three dots at the top right) › `Templates…` adds a ready board in the middle of the screen: `Brainstorm` (a topic with room for ideas around it), `Retrospective` (what went well, what to improve, what we do next), `SWOT` and `Roadmap` (now, next and later on a time line). It is one step: `Undo` takes it all back.
 
