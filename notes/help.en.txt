@@ -22,6 +22,11 @@ Right-click a page in the tree, long-press it on a touch screen, or tap the ⋮ 
 
 On a computer you can also drag a page in the tree and drop it onto another page to make it a sub-page, or onto empty space to move it to the top level.
 
+### Pages that delete themselves
+- In a page's menu, `Delete itself…` sets it to go in 1 hour, 1 day, 7 days or 30 days. The editor shows how long is left; `Keep it (cancel)` takes it back.
+- When the time comes, the page is deleted on every device the first time orOS runs there, also while Notes is closed. It does not wait in a Trash. Its sub-pages move up one level and stay.
+- A device that is off keeps the page until it is turned on; an export or backup made before keeps a copy. See [Sensitive work and sources](help:t/sensitive).
+
 ## Formatting and preview
 Pages are stored as plain text, so nothing changes in your notes when you switch views. In `Preview` this Markdown is shown formatted:
 - `# Heading`, `## Smaller heading` (up to six levels).
@@ -33,6 +38,9 @@ Pages are stored as plain text, so nothing changes in your notes when you switch
 - `[text](https://example.org)` makes a link; addresses starting with http:// or https:// become links by themselves. Links open in a new tab.
 
 The toolbar buttons add this for you around the selected text, or at the cursor. Press a button again to take it away.
+
+## Translate
+The translate button at the end of the formatting bar translates the selected text, or the whole page when nothing is selected, on this device with Mozilla's models (the same as [Text Tools](app:texttools) › Translate; the first time for two languages it says how big the download is). `Replace` puts the translation in place of the text, `Add below` adds it after it; `Ctrl+Z` takes either back. If the page changed while the panel was open, nothing is put in.
 
 ## Daily note and templates
 The calendar button next to the title (`Today's note`) opens the page for today, titled like `2026-10-14`, under a page named `Daily` at the top of the current notebook. Both are made the first time; on later presses the same page opens.

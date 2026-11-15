@@ -45,7 +45,7 @@ Die Chips über dem Kalender sind deine Labels. Am Anfang hast du `Privat`, `Arb
 Andere Apps fügen schreibgeschützte Zeilen hinzu, jede mit eigenem Chip, damit du sie ausblenden kannst:
 - `Geburtstage`, `Jahrestage` und `Eigener Feed` aus [Kontakte](app:contacts).
 - `Aufgaben`: unerledigte Aufgaben an ihrem Fälligkeitstag, aus [Aufgaben](app:todo).
-- `Kanban`-Karten mit Fälligkeitsdatum, erledigte `Gewohnheiten`, `Stimmung`-Einträge, `Zyklus`-Perioden, `Training`, `Pflanzen`-Pflege und Momente von `Bildschirmtier`.
+- `Kanban`-Karten mit Fälligkeitsdatum (und „Beginnt: …“ am Starttag einer geplanten Karte), erledigte `Gewohnheiten`, `Stimmung`-Einträge, `Zyklus`-Perioden, `Training`, `Pflanzen`-Pflege und Momente von `Bildschirmtier`.
 - `Garage`: Verlängerungen und fällige Inspektionen aus [Garage](app:garage).
 - `Budget`: anstehende wiederkehrende Einträge aus [Budget](app:budget).
 - `Tiergesundheit`: Impfungen, Entwurmung, Besuche, nächste Fälligkeiten und Geburtstage aus [Tier-Gesundheitspass](app:petcare).

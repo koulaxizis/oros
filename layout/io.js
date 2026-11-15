@@ -377,7 +377,7 @@
     if (!doc || exporting) return;
     LY.flushStory && LY.flushStory();
     exporting = true;
-    LY.toast(t("exp.working"));
+    LY.toast(t("ep.working"));
     epubOf(doc, prof).then(function (res) {
       exporting = false;
       LY.panels.epubReport(res, prof);
@@ -1329,7 +1329,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    exportPdf: exportPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName

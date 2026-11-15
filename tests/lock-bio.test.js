@@ -63,7 +63,7 @@ test("LK-BIO page: device-local record, never synced; PIN typed resets the days;
   const src = read("lock.js");
   assert.match(src, /var BIO_KEY = "oros-lock-bio";/);
   assert.doesNotMatch(read("sync.js"), /oros-lock-bio/, "never registered with sync");
-  assert.match(src, /if \(ok\) \{ clearTries\(\); bioTyped\(\); unlock\(\); return; \}/, "a typed PIN resets the 14 days");
+  assert.match(src, /if \(ok\) \{ clearTries\(\); bioTyped\(\); (if \(tillActive\(\)\) setOwner\(true\); )?unlock\(\); return; \}/, "a typed PIN resets the 14 days");
   assert.match(src, /save\(null\);\n\s+bioForget\(\);\n\s+unlock\(\);/, "sync passphrase recovery ends it");
   assert.match(src, /if \(!save\(null\)\) return \{ ok: false, code: "storage" \};\n\s+bioForget\(\);/, "turning the lock off ends it");
   assert.match(src, /p\.bio\.open\(r\.kid, "lock"\)/);

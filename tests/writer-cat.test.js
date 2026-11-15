@@ -178,7 +178,7 @@ test("rows files: names, chunks, only the chunk's own rows are read", () => {
 
 test("mergeMeta: name and translated document, newer wins per field", () => {
   const m = C.mergeMeta([{ name: "A", nm: 5, out: "d1", om: 2 }, { name: "B", nm: 7 }, { out: "d2", om: 1 }, null, { name: 3, nm: 9 }]);
-  assert.deepEqual(m, { name: "B", nm: 7, out: "d1", om: 2, tm: "", tmm: 0 });
+  assert.deepEqual(m, { name: "B", nm: 7, out: "d1", om: 2, tm: "", tmm: 0, gl: "", glm: 0 });
   assert.equal(C.mergeMeta([{ tm: "tmaaaaaa1", tmm: 3 }, { tm: "tmbbbbbb2", tmm: 4 }]).tm, "tmbbbbbb2");
 });
 

@@ -89,6 +89,10 @@
       "lib.title": "Diagram shapes", "lib.search": "Search the shapes", "lib.none": "No shape has that name.",
       "lib.how": "Tap a shape to put it in the middle of the screen.", "lib.howChange": "Tap a shape: the selected shapes become it.",
       "lib.added": "{name} added", "ctx.lib": "More shapes (L)",
+      "m.lay": "Lay out the board…", "ctx.lay": "Lay out as a diagram", "ctx.align": "Align and space",
+      "lay.tree.v": "Tree, top to bottom", "lay.tree.h": "Tree, left to right", "lay.flow.v": "Flow, top to bottom", "lay.flow.h": "Flow, left to right",
+      "al.l": "Align left edges", "al.c": "Align centres", "al.r": "Align right edges", "al.t": "Align top edges", "al.m": "Align middles", "al.b": "Align bottom edges",
+      "sp.h": "Same space across", "sp.v": "Same space down", "lay.same": "Already in place.",
       "lib.classTx": "Name\n--\n+ attribute: Type\n--\n+ method()", "lib.ifaceTx": "Name\n--\n+ method()",
       "lib.g.flow": "Flowchart", "lib.g.org": "Org chart", "lib.g.uml": "UML", "lib.g.basic": "Basic shapes", "lib.g.net": "Network and IT",
       "sym.process": "Process step", "sym.decision": "Decision", "sym.terminator": "Start or end", "sym.data": "Data (input or output)", "sym.document": "Document", "sym.documents": "Several documents", "sym.predefined": "Predefined process", "sym.manual-input": "Manual input", "sym.manual-op": "Manual operation", "sym.preparation": "Preparation", "sym.database": "Database", "sym.delay": "Delay", "sym.off-page": "Link to another page", "sym.connector": "Connector", "sym.merge": "Merge", "sym.person": "Person card", "sym.unit": "Team or department", "sym.class": "UML class", "sym.interface": "UML interface", "sym.actor": "Actor", "sym.usecase": "Use case", "sym.package": "Package", "sym.component": "Component", "sym.comment": "Comment", "sym.node": "Node (device)", "sym.start": "Start point", "sym.end": "End point", "sym.hexagon": "Hexagon", "sym.octagon": "Octagon", "sym.star": "Star", "sym.cross": "Cross", "sym.arrow-right": "Block arrow", "sym.arrow-both": "Double block arrow", "sym.cloud": "Cloud", "sym.callout": "Speech bubble", "sym.server": "Server", "sym.router": "Router", "sym.switch": "Network switch", "sym.firewall": "Firewall", "sym.internet": "Internet", "sym.laptop": "Laptop", "sym.desktop": "Desktop computer", "sym.phone": "Phone", "sym.tablet": "Tablet", "sym.db-server": "Database server", "sym.storage": "Storage", "sym.user": "User", "sym.printer": "Printer", "sym.wifi": "Wi-Fi access point",
@@ -174,6 +178,10 @@
       "lib.title": "Σχήματα διαγραμμάτων", "lib.search": "Αναζήτηση σχημάτων", "lib.none": "Κανένα σχήμα δεν έχει αυτό το όνομα.",
       "lib.how": "Άγγιξε ένα σχήμα για να μπει στη μέση της οθόνης.", "lib.howChange": "Άγγιξε ένα σχήμα: τα επιλεγμένα σχήματα γίνονται αυτό.",
       "lib.added": "Προστέθηκε: {name}", "ctx.lib": "Περισσότερα σχήματα (L)",
+      "m.lay": "Τακτοποίηση πίνακα…", "ctx.lay": "Τακτοποίηση ως διάγραμμα", "ctx.align": "Στοίχιση και ίσες αποστάσεις",
+      "lay.tree.v": "Δέντρο, από πάνω προς τα κάτω", "lay.tree.h": "Δέντρο, από αριστερά προς τα δεξιά", "lay.flow.v": "Ροή, από πάνω προς τα κάτω", "lay.flow.h": "Ροή, από αριστερά προς τα δεξιά",
+      "al.l": "Στοίχιση αριστερών άκρων", "al.c": "Στοίχιση κέντρων", "al.r": "Στοίχιση δεξιών άκρων", "al.t": "Στοίχιση πάνω άκρων", "al.m": "Στοίχιση στη μέση", "al.b": "Στοίχιση κάτω άκρων",
+      "sp.h": "Ίση απόσταση οριζόντια", "sp.v": "Ίση απόσταση κάθετα", "lay.same": "Είναι ήδη στη θέση τους.",
       "lib.classTx": "Όνομα\n--\n+ ιδιότητα: Τύπος\n--\n+ μέθοδος()", "lib.ifaceTx": "Όνομα\n--\n+ μέθοδος()",
       "lib.g.flow": "Διάγραμμα ροής", "lib.g.org": "Οργανόγραμμα", "lib.g.uml": "UML", "lib.g.basic": "Βασικά σχήματα", "lib.g.net": "Δίκτυα και υποδομές",
       "sym.process": "Βήμα διαδικασίας", "sym.decision": "Απόφαση", "sym.terminator": "Αρχή ή τέλος", "sym.data": "Δεδομένα (είσοδος ή έξοδος)", "sym.document": "Έγγραφο", "sym.documents": "Πολλά έγγραφα", "sym.predefined": "Προκαθορισμένη διαδικασία", "sym.manual-input": "Χειροκίνητη εισαγωγή", "sym.manual-op": "Χειροκίνητη ενέργεια", "sym.preparation": "Προετοιμασία", "sym.database": "Βάση δεδομένων", "sym.delay": "Καθυστέρηση", "sym.off-page": "Σύνδεση με άλλη σελίδα", "sym.connector": "Σημείο σύνδεσης", "sym.merge": "Συγχώνευση", "sym.person": "Κάρτα προσώπου", "sym.unit": "Ομάδα ή τμήμα", "sym.class": "Κλάση UML", "sym.interface": "Διεπαφή UML", "sym.actor": "Χειριστής", "sym.usecase": "Περίπτωση χρήσης", "sym.package": "Πακέτο", "sym.component": "Στοιχείο λογισμικού", "sym.comment": "Σχόλιο", "sym.node": "Κόμβος (συσκευή)", "sym.start": "Σημείο έναρξης", "sym.end": "Σημείο τέλους", "sym.hexagon": "Εξάγωνο", "sym.octagon": "Οκτάγωνο", "sym.star": "Αστέρι", "sym.cross": "Σταυρός", "sym.arrow-right": "Βέλος-μπλοκ", "sym.arrow-both": "Διπλό βέλος-μπλοκ", "sym.cloud": "Σύννεφο", "sym.callout": "Συννεφάκι λόγου", "sym.server": "Διακομιστής", "sym.router": "Δρομολογητής", "sym.switch": "Μεταγωγέας δικτύου", "sym.firewall": "Τείχος προστασίας", "sym.internet": "Διαδίκτυο", "sym.laptop": "Φορητός υπολογιστής", "sym.desktop": "Επιτραπέζιος υπολογιστής", "sym.phone": "Κινητό", "sym.tablet": "Tablet", "sym.db-server": "Διακομιστής βάσης δεδομένων", "sym.storage": "Αποθηκευτικός χώρος", "sym.user": "Χρήστης", "sym.printer": "Εκτυπωτής", "sym.wifi": "Σημείο πρόσβασης Wi-Fi",
@@ -380,7 +388,17 @@
     close: ic('<path d="M6 6l12 12M18 6L6 18"/>'),
     next: ic('<path d="M5 12h14M13 6l6 6-6 6"/>'),
     lib: ic('<rect x="3" y="3" width="8" height="6" rx="1"/><path d="M17 2.5l4.5 4.5-4.5 4.5-4.5-4.5z"/><circle cx="7" cy="17" r="4"/><path d="M13.5 13.5h7v7h-7z"/>'),
-    search: ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>')
+    search: ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>'),
+    lay: ic('<rect x="9" y="3" width="6" height="4" rx="1"/><rect x="3" y="17" width="6" height="4" rx="1"/><rect x="15" y="17" width="6" height="4" rx="1"/><path d="M12 7v5M6 17v-5h12v5"/>'),
+    align: ic('<path d="M4 3v18"/><rect x="7" y="6" width="12" height="4" rx="1"/><rect x="7" y="14" width="7" height="4" rx="1"/>'),
+    al_l: ic('<path d="M4 3v18"/><rect x="7" y="6" width="12" height="4" rx="1"/><rect x="7" y="14" width="7" height="4" rx="1"/>'),
+    al_c: ic('<path d="M12 3v18"/><rect x="5" y="6" width="14" height="4" rx="1"/><rect x="8" y="14" width="8" height="4" rx="1"/>'),
+    al_r: ic('<path d="M20 3v18"/><rect x="5" y="6" width="12" height="4" rx="1"/><rect x="10" y="14" width="7" height="4" rx="1"/>'),
+    al_t: ic('<path d="M3 4h18"/><rect x="6" y="7" width="4" height="12" rx="1"/><rect x="14" y="7" width="4" height="7" rx="1"/>'),
+    al_m: ic('<path d="M3 12h18"/><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="8" width="4" height="8" rx="1"/>'),
+    al_b: ic('<path d="M3 20h18"/><rect x="6" y="5" width="4" height="12" rx="1"/><rect x="14" y="10" width="4" height="7" rx="1"/>'),
+    sp_h: ic('<path d="M3 4v16M21 4v16"/><rect x="9" y="8" width="6" height="8" rx="1"/>'),
+    sp_v: ic('<path d="M4 3h16M4 21h16"/><rect x="8" y="9" width="8" height="6" rx="1"/>')
   };
   function iconBtn(cls, icon, lbl, fn) {
     var b = el("button", cls);
@@ -1174,6 +1192,19 @@
       add(iconBtn("icon-btn", "small", t("ctx.smaller"), function () { textSize(-1); }));
       add(iconBtn("icon-btn", "big", t("ctx.bigger"), function () { textSize(1); }));
     }
+    var placeable = list.filter(function (o) { return o.k !== "arrow"; });
+    if (placeable.length >= 2) {
+      if (placeable.some(function (o) { return o.k === "note" || o.k === "text" || o.k === "shape"; })) {
+        var lb = add(iconBtn("icon-btn", "lay", t("ctx.lay"), function () { pop(lb, layItems(sel.slice())); }));
+        lb.setAttribute("aria-haspopup", "menu");
+      }
+      var ab = add(iconBtn("icon-btn", "align", t("ctx.align"), function () {
+        var items = C.ALIGN_EDGES.map(function (e) { return choice("al_" + e, t("al." + e), function () { placeAll(C.align(objs(), sel, e, "")); }); });
+        if (placeable.length >= 3) C.SPREAD_DIRS.forEach(function (d) { items.push(choice("sp_" + d, t("sp." + d), function () { placeAll(C.align(objs(), sel, "", d)); })); });
+        pop(ab, items);
+      }));
+      ab.setAttribute("aria-haspopup", "menu");
+    }
     if (list.length === 1 && editable(list[0])) add(iconBtn("icon-btn", "edit", t("ctx.edit"), function () { startEdit(list[0].id); }));
     add(el("span", "sep"));
     add(iconBtn("icon-btn", "front", t("ctx.front"), function () { var z = C.zTop(data, board); each(null, function (o) { o.z = z++; }); }));
@@ -1186,6 +1217,23 @@
     if (sendApi() && K.items(list).length) add(iconBtn("icon-btn", "send", t("ctx.send"), function () { sendItems(K.items(list)); }));
     add(iconBtn("icon-btn del", "trash", t("ctx.del"), removeSel));
     bar.hidden = false;
+  }
+  // Auto layout and alignment (DG3): one undo step; ids null = the
+  // whole board.
+  function layItems(ids) {
+    return ["tree.v", "tree.h", "flow.v", "flow.h"].map(function (k) {
+      var b = textBtn("pop-txt", t("lay." + k), function () {
+        closePop();
+        var p = k.split(".");
+        placeAll(C.layout(objs(), ids, { kind: p[0], dir: p[1] }));
+      });
+      b.setAttribute("role", "menuitem");
+      return b;
+    });
+  }
+  function placeAll(rows) {
+    if (!Object.keys(rows).length) { toast(t("lay.same")); return; }
+    commit(rows);
   }
   function routeBtn(cur0, fn) {
     var b = iconBtn("icon-btn", "r_" + cur0, t("ctx.route"), function () {
@@ -1708,6 +1756,7 @@
     item(t("m.timer"), openTimer);
     item(t("m.mind"), openMindmap);
     item(t("m.lib"), function () { openLibrary(false); });
+    item(t("m.lay"), function () { pop($("more-btn"), layItems(null)); });
     if (sendApi()) item(t("m.send"), function () { sendItems(K.items(objs())); });
     pop($("more-btn"), items);
   }
