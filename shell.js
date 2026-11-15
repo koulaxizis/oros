@@ -11747,6 +11747,7 @@
       tips: SOLO ? null : { on: !!tipsRead().on },
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
+      night: window.orosNight ? window.orosNight.snapshot() : null,   // NIGHT-1, this device
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
@@ -11816,6 +11817,10 @@
     if (/^seasonal:/.test(name)) {
       var SS = settingsSeasonalL();
       if (SS) SS.set(name.slice(9), value);
+      return;
+    }
+    if (/^night:/.test(name)) {          // nightlight.js: "night:<on|sched|from|to|warmth>"
+      if (window.orosNight) window.orosNight.set(name.slice(6), value);
       return;
     }
     if (/^widgets:/.test(name)) {        // widgets.js: "widgets:<kind>" on/off
@@ -15152,6 +15157,13 @@
       a11y: { get: a11ySnapshot, set: a11ySetUser },
       media: qsMedia
     });
+  }
+  // Night Light (nightlight.js, a shell component like qsettings.js):
+  // the warm filter over the whole shell. Sunset and sunrise come from
+  // the top-bar weather's place (wxLoc). A single app gets it too.
+  if (window.orosNight) {
+    window.orosNight.attach({ loc: wxLoc });
+    window.orosNight.onChange(function () { settingsNotify(); });
   }
   // Desktop widgets (widgets.js, a shell component like launcher.js):
   // clock, calendar, Today, weather, playing, sync on the desktop. A
