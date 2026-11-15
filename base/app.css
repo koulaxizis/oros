@@ -303,6 +303,30 @@ dialog.rec { width: min(640px, calc(100vw - 32px)); }
 #toast-btn { flex: none; min-height: 36px; padding: 4px 12px; border: 0; border-radius: 6px; background: var(--accent-soft); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* ---------- links (wave B2) ---------- */
+.pill.lnk { --c: var(--accent); border-radius: 6px; }
+.val.err { color: var(--danger); font-family: ui-monospace, monospace; font-size: 13px; }
+.link-box { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.link-list { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.link-list:empty { display: none; }
+.link-list .pill { display: inline-flex; align-items: center; gap: 2px; padding: 0 2px 0 0; max-width: 100%; }
+.lnk-open { background: none; border: 0; color: var(--text); font: inherit; font-size: 14px; padding: 4px 4px 4px 10px; min-height: 32px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+.lnk-open:hover { text-decoration: underline; }
+.lnk-x { width: 32px; height: 32px; }
+dialog.picker { width: min(460px, calc(100vw - 32px)); }
+.pick-list { list-style: none; display: flex; flex-direction: column; gap: 2px; max-height: min(52vh, 420px); overflow: auto; overscroll-behavior: contain; }
+.pick {
+  display: flex; align-items: center; width: 100%; min-height: 44px; padding: 6px 12px 6px 36px; position: relative;
+  background: none; border: 1px solid transparent; border-radius: 8px; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pick::before { content: ""; position: absolute; left: 12px; top: 50%; width: 14px; height: 14px; margin-top: -8px; border: 1px solid var(--text-dim); border-radius: 4px; }
+.pick.on { border-color: var(--accent); background: var(--accent-soft); }
+.pick.on::before { content: "✓"; border-color: var(--accent); background: var(--accent); color: var(--bg); font-size: 11px; line-height: 14px; text-align: center; }
+.pick:hover { background: var(--accent-soft); }
+textarea.expr { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 14px; }
+.expr-out { overflow-wrap: anywhere; }
+
 @media (max-width: 600px) {
   #toolbar { padding: 6px 10px; }
   .vbar { padding: 6px 10px; gap: 4px; }

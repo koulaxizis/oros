@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Studio — podcast (v1.0.0, wave P1 of "Publish as podcast")
+// orOS Studio — podcast (v1.1.0; P1 of "Publish as podcast", P2 keepItems)
 // Pure logic, no DOM, no Web Audio: a show and its episodes, chapter
 // markers, the RSS feed (RSS 2.0 + Apple's itunes: tags + Podcasting
 // 2.0's podcast: tags), the chapters file, a small web page for the
@@ -345,7 +345,7 @@
     return out;
   }
   function epTitle(e, untitled) { return e.ep.title || line(e.p.name, LIM.title) || untitled || "Episode"; }
-  // opts: { now (ms), untitled, intro, generator }
+  // opts: { now (ms), untitled, intro, generator, keep: keepItems(...) }
   function feedXml(show, eps, opts) {
     opts = opts || {};
     var ready = eps.filter(function (e) { return !!e.ep.file; });
@@ -407,6 +407,9 @@
       if (fe.chapters) x.push('      <podcast:chapters url="' + esc(base + fe.chapters) + '" type="application/json+chapters"/>');
       x.push("    </item>");
     });
+    // episodes the published feed has and this device does not (made or
+    // kept elsewhere): carried over as they were, never dropped (P2)
+    (opts.keep || []).forEach(function (it) { x.push("    " + it); });
     x.push("  </channel>");
     x.push("</rss>");
     return x.join("\n") + "\n";
@@ -563,6 +566,31 @@
   }
   function textBytes(s) { return new Uint8Array(utf8(s)); }
 
+  // ---------- 10. Republishing: keep what the published feed has (P2) ----------
+  // The feed online may hold episodes this device does not have (made on
+  // another device, or their project deleted here). Publishing again must
+  // never drop them: their <item>s are carried over unchanged, matched by
+  // guid. Only plain items are kept: no markup declarations, nothing nested.
+  var KEEP_MAX = 2000, KEEP_LEN = 20000;
+  function keepItems(xml, localGuids) {
+    var have = {}, out = [], seen = {};
+    (localGuids || []).forEach(function (g) { have[g] = true; });
+    if (typeof xml !== "string" || xml.length > 20 * 1024 * 1024) return out;
+    var ch = xml.indexOf("<channel>"), end = xml.lastIndexOf("</channel>");
+    if (ch < 0 || end < ch) return out;
+    var re = /<item>([\s\S]*?)<\/item>/g, m, body = xml.slice(ch, end);
+    while ((m = re.exec(body)) && out.length < KEEP_MAX) {
+      var it = m[0];
+      if (it.length > KEEP_LEN || /<!|<\?|<item[\s>]/.test(m[1]) || !/<enclosure\s[^>]*url="https:\/\/[^"<>]+"[^>]*\/>/.test(it)) continue;
+      var g = /<guid(?:\s+isPermaLink="(?:true|false)")?>([^<>&]{1,200})<\/guid>/.exec(it);
+      if (!g || have[g[1]] || seen[g[1]]) continue;
+      seen[g[1]] = true;
+      out.push(it.replace(/\r/g, ""));
+    }
+    return out;
+  }
+  function guidsOf(eps) { return (eps || []).filter(function (e) { return e.ep && e.ep.guid; }).map(function (e) { return e.ep.guid; }); }
+
   var api = {
     LIM: LIM, CATS: CATS, KBPS: KBPS, EP_TYPES: EP_TYPES, TYPES: TYPES, DIR: DIR, NS_PODCAST: NS_PODCAST, PAGE_CSS: PAGE_CSS, PAGE_CSP: PAGE_CSP,
     normShow: normShow, normEp: normEp, normMarkers: normMarkers, shows: shows, findShow: findShow,
@@ -571,7 +599,8 @@
     slug: slug, epSlug: epSlug, showDir: showDir, epPath: epPath, coverPath: coverPath,
     sha1: sha1, uuidV5: uuidV5, feedGuid: feedGuid, epGuid: epGuid, feedUrl: feedUrl, siteUrl: siteUrl,
     problems: problems, coverOk: coverOk, files: files, feedXml: feedXml, rfc822: rfc822, pageHtml: pageHtml, fmtDur: fmtDur,
-    id3Tags: id3Tags, crc32: crc32, zipParts: zipParts, textBytes: textBytes, utf8: utf8
+    id3Tags: id3Tags, crc32: crc32, zipParts: zipParts, textBytes: textBytes, utf8: utf8,
+    keepItems: keepItems, guidsOf: guidsOf
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.StudioPodcast = api;

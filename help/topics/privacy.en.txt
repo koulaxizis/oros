@@ -3,6 +3,8 @@ orOS is built to keep your data yours. It has no accounts, no cookies and no tra
 
 The full privacy policy is on the web: [useoros.online/privacy.html](https://useoros.online/privacy.html).
 
+Working on something sensitive, or with sources? Read [Sensitive work and sources](help:t/sensitive).
+
 ## Your data stays in your browser
 Everything you create in orOS is saved in this browser, on this device. There is no orOS server that collects it. orOS uses no cookies and no tracking or analytics of any kind.
 

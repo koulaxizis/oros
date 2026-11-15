@@ -127,6 +127,9 @@ Mail kann Nachrichten mit OpenPGP signieren und verschlüsseln, dem Standard von
 - `Zusammenfassung vom Assistenten` und `Antwortentwurf vom Assistenten` öffnen den [Assistent](app:assistant) mit der fertigen Frage und dem Schlüssel, den du dort eingestellt hast. Sehr lange Nachrichten werden passend gekürzt; senden tust du dort, und die Antwort kopierst du selbst in Mail.
 Andersherum öffnen eine E-Mail-Adresse auf einer Kontaktkarte in Kontakte und `E-Mail` bei einem gespeicherten Termin im [Kalender](app:calendar) hier eine neue Nachricht (wenn Mail auf diesem Gerät ein Konto hat).
 
+## Eine Nachricht übersetzen
+`Übersetzen` unter einer geöffneten Nachricht übersetzt Betreff und Text auf diesem Gerät mit den Modellen von Mozilla, wie [Text Tools](app:texttools) › Übersetzen. Beim ersten Mal für zwei Sprachen sagt es, wie groß der Download ist; danach geht es auch offline, und die Nachricht verlässt das Gerät nie. `Kopieren` kopiert die Übersetzung; nichts wird gespeichert.
+
 ## Konten und Einstellungen
 Die Zahnradtaste öffnet `Mail-Einstellungen`: deine `Konten` (mit `Bearbeiten`), `Immer als reinen Text zeigen`, `Nachrichten nach Unterhaltung gruppieren` und die `Relay-Adresse`. In einem Konto kannst du die Angaben ändern oder `Konto entfernen`; deine Mails bleiben auf dem Server.
 
