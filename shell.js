@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.93.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.94.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -8827,6 +8827,7 @@
         }
         for (var j = 0; j < doomed.length; j++) storage.removeItem(doomed[j]);
       }
+      wipePhoneCopies(sos || follow);
       try { sweep(sessionStorage); } catch (e) {}   // PKCE verifier
       sweep(localStorage);
 
@@ -8837,6 +8838,7 @@
       // IDB connection is open yet, so deleteDatabase() lands cleanly.
       localStorage.setItem("oros-reset-db", "1");
       if (sos) localStorage.setItem(SOS_AFTER_KEY, String(Date.now()));   // SOS-1: the what-now list, once
+      if (sos || follow) { try { localStorage.setItem(ERASED_KEY, JSON.stringify({ at: Date.now(), kind: sos ? "sos" : "follow" })); } catch (e) {} }
       location.reload();
     });
   }
@@ -8866,6 +8868,7 @@
     if (window.orosPairLink && typeof window.orosPairLink.cancelAll === "function") job(function () { return window.orosPairLink.cancelAll(); });
     if (all) {
       job(sosRevokeShares);
+      job(sosDropCrmForm);
       if (HH && typeof HH.list === "function" && typeof HH.leave === "function") job(function () {
         return Promise.all(HH.list().map(function (h) { return HH.leave(h.box).catch(function () {}); }));
       });
@@ -8888,6 +8891,46 @@
     }));
   }
   var SOS_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = share/relay.js RELAY
+  // SOS-1 S2: the CRM web form (crm/webform.js turnOff, op "crmf"
+  // "drop") stops taking messages and the relay drops the ones waiting.
+  // The form's relay is the Mail relay when one is set (webform.js
+  // relayOf), so the same address is used here.
+  function sosDropCrmForm() {
+    var d = null, m = null;
+    try { d = JSON.parse(localStorage.getItem("oros-crm-data") || "null"); } catch (e) {}
+    var w = d && d.wf;
+    if (!w || w.off || typeof w.k !== "string" || typeof w.sec !== "string") return null;
+    try { m = JSON.parse(localStorage.getItem("oros-mail-data") || "null"); } catch (e) {}
+    var u = m && m.relay && typeof m.relay.url === "string" ? m.relay.url.trim().replace(/\/+$/, "") : "";
+    if (!/^https:\/\/[^\s]+$/.test(u)) u = SOS_RELAY;
+    return fetch(u + "/v1", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ op: "crmf", act: "drop", k: w.k, sec: w.sec }), credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
+    }).catch(function () {});
+  }
+  // SOS-1 S2: the copies the orOS Android app (or orOS Passwords) keeps
+  // outside the page (phone.js, BR-PHONE): the sealed autofill lists and
+  // their Keystore keys, every fingerprint / face secret (Passwords and
+  // the screen lock), and with full = true (SOS and its follow-up) also
+  // what orOS wrote into the phone's contacts, calendar, reminders and
+  // Health Connect. Messages to the app go out at once (postMessage),
+  // before the reload.
+  function wipePhoneCopies(full) {
+    var P = window.orosPhone;
+    if (!P) return;
+    try { if (typeof P.afClear === "function") P.afClear(); } catch (e) {}
+    try {
+      var b = P.bio, info = b && typeof b.info === "function" ? b.info() : null;
+      (info && info.kids || []).forEach(function (kid) { try { b.clear(kid); } catch (e) {} });
+    } catch (e) {}
+    if (!full || typeof P.setEnabled !== "function") return;
+    ["contacts", "calendar", "reminders", "health"].forEach(function (k) { try { P.setEnabled(k, false); } catch (e) {} });
+  }
+  // SOS-1 S2: "oros-erased" { at, kind } is written after the sweep of an
+  // SOS or of its follow-up and stays (the next reset sweeps it). The
+  // orOS browser add-on reads it with the Passwords copy and forgets a
+  // copy it took before that moment (extension/pmvault.js).
+  var ERASED_KEY = "oros-erased";
 
   // Settings › System › SOS: the typed passphrase is checked first
   // (nothing is touched on a wrong one), then 10 s to cancel.
