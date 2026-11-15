@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 45319 of 45799 (98%)
+- Strings: 45347 of 45827 (98%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1885 / 1887 |
+| assistant | 99% | 1889 / 1891 |
 | atelier | 100% | 1408 / 1408 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
@@ -51,7 +51,7 @@ text is still written in the code. They switch over wave by wave
 | dots | 100% | 55 / 55 |
 | enrichui | 100% | 28 / 28 |
 | familytree | 100% | 200 / 200 |
-| feeds | 100% | 325 / 325 |
+| feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
 | files | 99% | 715 / 716 |
@@ -80,7 +80,7 @@ text is still written in the code. They switch over wave by wave
 | links | 100% | 2 / 2 |
 | lyricsync | 100% | 289 / 289 |
 | mahjong | 100% | 70 / 70 |
-| mail | 100% | 496 / 496 |
+| mail | 100% | 499 / 499 |
 | mancala | 100% | 61 / 61 |
 | maps | 100% | 1286 / 1286 |
 | mastermind | 100% | 74 / 74 |
@@ -91,7 +91,7 @@ text is still written in the code. They switch over wave by wave
 | minimalism | 100% | 1492 / 1492 |
 | mixer | 100% | 59 / 59 |
 | mockups | 100% | 283 / 283 |
-| montage | 100% | 378 / 378 |
+| montage | 100% | 383 / 383 |
 | mood | 100% | 256 / 256 |
 | museum | 100% | 46 / 46 |
 | music | 99% | 538 / 539 |
@@ -99,7 +99,7 @@ text is still written in the code. They switch over wave by wave
 | netizen | 98% | 172 / 175 |
 | newsletter | 99% | 1003 / 1008 |
 | nonogram | 100% | 70 / 70 |
-| notes | 99% | 270 / 271 |
+| notes | 99% | 277 / 278 |
 | oracle | 100% | 38 / 38 |
 | pad | 100% | 307 / 307 |
 | passwords | 99% | 467 / 468 |
@@ -157,7 +157,7 @@ text is still written in the code. They switch over wave by wave
 | today | 100% | 155 / 155 |
 | todo | 100% | 271 / 271 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 121 / 121 |
+| transfer | 100% | 127 / 127 |
 | travel | 100% | 555 / 555 |
 | typewriter | 100% | 46 / 46 |
 | typing | 94% | 170 / 180 |

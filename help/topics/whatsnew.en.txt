@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.88.00
+- **Transfer can send your own picture as the background.** `Background picture…` on the send card puts one of your pictures behind the files on the other person's screen. It is made smaller on your device and saved again without camera details such as the place, then sent encrypted with the files. The matching shapes that show you are connected move to a small circle next to the title.
+
 ## Version 6.87.00
 - **Translate from Mail, Reader, Notes and Montage.** A Translate button under a message, above an article, at the end of the Notes formatting bar and in Montage's `Subtitles` translates on the device, as in Text Tools. In Notes you replace the text or add the translation below it; in Montage every subtitle is translated at once and keeps its timing, with Undo. The Assistant can also open a translation on the device for you.
 
