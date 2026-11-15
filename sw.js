@@ -861,6 +861,7 @@ var PRECACHE_URLS = [
   "layout/outprof.js",
   "layout/epub.js",
   "layout/epubcheck.js",
+  "layout/epubout.js",
   "layout/houseui.js",
   "designkit/assets.js",
   "designkit/fx.js",

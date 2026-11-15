@@ -1576,11 +1576,11 @@
                 "files_write", "files_move", "files_delete"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"].concat(FILE_READ, FILE_WRITE);
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub"].concat(FILE_READ, FILE_WRITE);
   // GATE-PAR P3: tools that open an app on the owner's screen with the
   // work (= core.js GATE_OPEN); like do_action they need an app Claude
   // may change, no pause, and the frame checks the target app.
-  var ACT_OPEN = ACT_TOOLS.slice(12, 22);
+  var ACT_OPEN = ACT_TOOLS.slice(12, 23);
   var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"].concat(FILE_WRITE);
   var DOC_WRITE = ["edit_in_app", "undo_change"];
   function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"); }

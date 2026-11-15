@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.99.00
+- **Ask the Assistant for an e-book.** Say "make an EPUB of …" with the name of a Layout document or its title in Publishing (add "fixed layout" for a picture book or comic, or "mark it ready in Publishing"). The card `Make an EPUB · Layout` has Layout make and check the EPUB on this device, keep a copy in Layout/EPUB and show its report; the conversation gets only the numbers, never the book. Claude can do the same through orOS Gate.
+
 ## Version 6.98.00
 - **Chord diagrams in Lyric Sync.** Every chord of a song now shows how to play it on guitar, ukulele or piano, left-handed too: under the sheet, in the chord picker, with a tap on the stage, and in the PDF. See [Lyric Sync](app:lyricsync).
 
