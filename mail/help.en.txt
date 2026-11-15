@@ -127,6 +127,9 @@ Mail can sign and encrypt messages with OpenPGP, the standard used by Thunderbir
 - `Summary by the Assistant` and `Reply drafted by the Assistant` open the [AI Assistant](app:assistant) with the question ready, using the key you set there. Very long messages are cut to fit; you press send there, and you copy the reply into Mail yourself.
 From the other side, an email address on a contact's card in Contacts and `Email` on a saved event in [Calendar](app:calendar) open a new message here (when Mail has an account on this device).
 
+## Translate a message
+`Translate` under an open message translates its subject and text on this device with Mozilla's models, the same as [Text Tools](app:texttools) › Translate. The first time for two languages it says how big the download is; after that it works offline, and the message never leaves the device. `Copy` copies the translation; nothing is saved.
+
 ## Accounts and settings
 The gear button opens `Mail settings`: your `Accounts` (with `Edit`), `Always show plain text`, `Group messages by conversation` and the `Relay address`. In an account you can change its details or `Remove account`; your mail stays on the server.
 
