@@ -51,7 +51,8 @@
   }
   function plus(a, b) { var o = {}; [a, b].forEach(function (x) { Object.keys(x).forEach(function (k) { o[k] = x[k]; }); }); return o; }
   var LOOK = { c: { t: "color" }, shape: oneOf([""].concat(C.SHAPES, C.SYM_IDS)), fill: oneOf([""].concat(C.FILLS)), size: i(8, 200) };
-  var LINE = { ends: oneOf([""].concat(C.HEADS)), dash: ONOFF };
+  var LINE = { ends: oneOf([""].concat(C.HEADS)), dash: ONOFF, route: oneOf([""].concat(C.ROUTES)),
+    starthead: oneOf([""].concat(C.HEAD_STYLES)), endhead: oneOf([""].concat(C.HEAD_STYLES)) };
 
   // kind: "doc" (every command edits a board)
   var CATALOG = {
@@ -76,11 +77,11 @@
     "null or \"\" leaves a field as it is):\n" + [
     "replace: find → repl in the text of the picked notes, texts, shapes, arrow labels and frame names (cs = match case, word = whole words)",
     "settext: the text of the picked objects becomes `text`",
-    "style: for the picked objects c (colour), shape (shapes: a basic one " + C.SHAPES.join("|") + ", or a diagram symbol " + C.SYM_IDS.join("|") + "), fill " + C.FILLS.join("|") + " (shapes), size (8-200, font size of free text), ends " + C.HEADS.join("|") + " (arrow heads), dash on|off (dashed arrows), sw (1-40, pen width)",
+    "style: for the picked objects c (colour), shape (shapes: a basic one " + C.SHAPES.join("|") + ", or a diagram symbol " + C.SYM_IDS.join("|") + "), fill " + C.FILLS.join("|") + " (shapes), size (8-200, font size of free text), ends " + C.HEADS.join("|") + " (arrow heads), dash on|off (dashed arrows), route " + C.ROUTES.join("|") + " (an arrow's line: elbow goes in right angles around the shapes in between), starthead / endhead " + C.HEAD_STYLES.join("|") + " (the head at the start / end of an arrow: tri = UML inherits, dia = made of, odia = has), sw (1-40, pen width)",
     "move: the picked objects go by dx, dy, or to x, y (the first picked one; the others keep their place next to it); w, h resize notes, texts, shapes, pictures, frames and drawings; order front|back brings them to the front or sends them back",
     "arrange: lay the picked notes, shapes, texts and pictures out in a grid of n columns (default: about square) with gap pixels between them (default 24), starting at x, y (default: where the first one is)",
     "add: a new object (what note|text|shape|frame) with text (a frame's name), at x, y (default: to the right of everything on the board), size w, h (a diagram symbol has its own default size), colour c, shape, fill, size (free text); a UML class or interface gets its compartments from text: the name, then a line of -- before the attributes and another before the methods",
-    "connect: an arrow from the object `from` to the object `to` (an id, or words of its text), with text (its label), c, ends, dash",
+    "connect: an arrow from the object `from` to the object `to` (an id, or words of its text), with text (its label), c, ends, dash, route, starthead, endhead",
     "remove: delete the picked objects (needs ids, what, has or frame)",
     "rename: the board's name becomes `title`"
   ].join("\n");
@@ -113,7 +114,7 @@
     if (!st) return { err: raw.op + ": " + (bad.join("; ") || "not valid") };
     if (st.op === "remove" && !picks(st)) return { err: "remove: pick the objects with ids, what, has or frame" };
     if (st.op === "move" && !given(st.dx) && !given(st.dy) && !given(st.x) && !given(st.y) && !given(st.w) && !given(st.h) && !st.order) return { err: "move: give dx, dy, x, y, w, h or order" };
-    if (st.op === "style" && !st.c && !st.shape && !st.fill && !given(st.size) && !st.ends && !st.dash && !given(st.sw)) return { err: "style: give c, shape, fill, size, ends, dash or sw" };
+    if (st.op === "style" && !st.c && !st.shape && !st.fill && !given(st.size) && !st.ends && !st.dash && !st.route && !st.starthead && !st.endhead && !given(st.sw)) return { err: "style: give c, shape, fill, size, ends, dash, route, starthead, endhead or sw" };
     if (st.op === "add" && st.what !== "shape" && !given(st.text)) return { err: "add: a " + st.what + " needs text" };
     return { step: st };
   }
@@ -193,6 +194,22 @@
   }
   function r1(v) { return Math.round(v); }
   // A text object's height follows its lines.
+  // An arrow's heads, dash and line (DG2): ends sets both heads the old
+  // way; starthead / endhead set one each and keep hd in step for older
+  // devices; route line takes the elbow / curve and its sides off.
+  function lineLook(c, st) {
+    if (st.ends) { c.hd = st.ends; delete c.ha; delete c.hb; }
+    if (st.dash) c.ds = st.dash === "on";
+    if (st.starthead || st.endhead) {
+      var hz = C.headsOf(c);
+      if (st.starthead) hz.a = st.starthead;
+      if (st.endhead) hz.b = st.endhead;
+      c.ha = hz.a; c.hb = hz.b; c.hd = C.hdFor(hz.a, hz.b);
+    }
+    if (st.route === "line") { delete c.rt; delete c.ap; delete c.bp; }
+    else if (st.route) c.rt = st.route;
+    return c;
+  }
   // A basic shape, or a diagram symbol with its nearest basic shape.
   function setShape(o, s) {
     if (Object.prototype.hasOwnProperty.call(C.SYMS, s)) { o.sym = s; o.shp = C.SYMS[s][1]; }
@@ -261,6 +278,7 @@
         var ca = { x: A.x + A.w / 2, y: A.y + A.h / 2 }, cb = { x: B.x + B.w / 2, y: B.y + B.h / 2 };
         var ar = { id: fresh(), b: w.bid, k: "arrow", c: st.c ? nearestColor(st.c) : "ink", z: C.zTop(w.data, w.bid),
           ax: ca.x, ay: ca.y, bx: cb.x, by: cb.y, ao: A.id, bo: B.id, hd: st.ends || "end", ds: st.dash === "on", tx: st.text || "" };
+        lineLook(ar, st);
         rows[ar.id] = ar;
         put(w, rows, now);
         return done();
@@ -293,7 +311,7 @@
           if (st.c && o.k !== "image") c.c = nearestColor(st.c);
           if (o.k === "shape") { if (st.shape) setShape(c, st.shape); if (st.fill) c.f = st.fill; }
           if (o.k === "text" && given(st.size)) c.fs = st.size;
-          if (o.k === "arrow") { if (st.ends) c.hd = st.ends; if (st.dash) c.ds = st.dash === "on"; }
+          if (o.k === "arrow") lineLook(c, st);
           if (o.k === "pen" && given(st.sw)) c.sw = st.sw;
           rows[o.id] = fitText(c);
         });
@@ -424,6 +442,9 @@
       if (x.k === "arrow") {
         e.from = x.ao || [x.ax, x.ay]; e.to = x.bo || [x.bx, x.by];
         if (x.hd !== "end") e.ends = x.hd;
+        if (x.rt) e.route = x.rt;
+        if (x.ha) e.starthead = x.ha;
+        if (x.hb) e.endhead = x.hb;
         if (x.ds) e.dash = "on";
       } else { e.x = x.x; e.y = x.y; e.w = x.w; e.h = x.h; }
       if (TEXT_KINDS[x.k] && x.tx) e.text = x.tx;

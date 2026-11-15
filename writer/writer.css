@@ -2274,3 +2274,32 @@ button.cat-tag { cursor: pointer; }
   .cat-filter, .cat-chap { flex: 1 1 40%; max-width: none; }
   .cat-ebar .fb-btn { padding-left: 8px; padding-right: 8px; }
 }
+/* WR-CAT T2: translation memory matches, concordance, memories */
+.cat-tm { display: flex; flex-direction: column; gap: 6px; }
+.cat-tm:empty { display: none; }
+.cat-tm-item {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center;
+  padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-bg);
+}
+.cat-tm-head { display: flex; gap: 8px; align-items: baseline; min-width: 0; font-size: 12px; color: var(--text-dim); }
+.cat-tm-src { min-width: 0; overflow-wrap: anywhere; }
+.cat-tm-tgt { grid-column: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.45; }
+.cat-tm-use { grid-column: 2; grid-row: 1 / span 2; }
+.cat-tm-score { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; padding: 0 5px; border-radius: 4px; border: 1px solid currentColor; }
+.cat-tm-s100 { color: var(--ok, var(--accent)); }
+.cat-tm-s90 { color: var(--accent); }
+.cat-tm-s70 { color: var(--warn, var(--text-dim)); }
+mark.cat-dx { background: var(--accent-soft); color: var(--text); border-bottom: 2px solid var(--warn, var(--accent)); border-radius: 2px; padding: 0 1px; }
+.cat-tm-auto { font-size: 12px; }
+.cat-conc { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.cat-conc-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.cat-conc-src { color: var(--text-dim); font-size: 13px; overflow-wrap: anywhere; }
+.cat-conc-tgt { grid-column: 1; overflow-wrap: anywhere; }
+.cat-conc-use { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+.cat-tmpick { flex: 1; display: flex; align-items: center; gap: 10px; padding: 10px 4px; cursor: pointer; min-width: 0; }
+.cat-tmtext { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+@media (max-width: 640px) {
+  .cat-tm-item, .cat-conc-item { grid-template-columns: minmax(0, 1fr); }
+  .cat-tm-use, .cat-conc-use { grid-column: 1; grid-row: auto; justify-self: end; }
+}
+.cat-tmpick input { accent-color: var(--accent); }

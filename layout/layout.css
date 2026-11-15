@@ -206,6 +206,19 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
   box-shadow: 0 4px 16px var(--shadow);
   font-size: 13px;
 }
+.pe-bar { top: 28px; gap: 4px; padding: 6px; flex-wrap: nowrap; overflow-x: auto; width: max-content; z-index: 6; }
+.pe-b {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  min-height: 34px; padding: 4px 10px; border-radius: 8px;
+  background: transparent; color: var(--text); border: 1px solid transparent; font: inherit; font-size: 12px; cursor: pointer;
+}
+.pe-b:hover:not(:disabled) { background: rgba(127,127,127,0.15); }
+.pe-b.on { border-color: var(--accent); color: var(--accent); }
+.pe-b.primary { background: var(--accent); color: var(--accent-ink, #fff); }
+.pe-b:disabled { opacity: 0.4; cursor: default; }
+.pe-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (max-width: 760px) { .pe-l { display: none; } .pe-b { padding: 4px 8px; min-width: 40px; justify-content: center; } }
+@media (pointer: coarse) { .pe-b { min-height: 44px; } }
 #side {
   width: var(--side-w);
   display: flex; flex-direction: column;

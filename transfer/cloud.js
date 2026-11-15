@@ -16,11 +16,20 @@
    sealed bytes; the receiver needs no Dropbox account and no orOS.
    A pack is read as a stream and cut into pieces of known lengths;
    a dropped download goes on with a Range request from the last whole
-   piece. The sender's page may close once the link is shown. Folders
-   older than LINK_MS (+ a margin) are removed the next time Transfer
-   opens (sweep), or at once with "Delete now".
+   piece. The sender's page may close once the link is shown.
 
-   window.OrosTransferCloud = { fragment, parseFragment, okLink, plan,
+   Wave 5: the sender chooses how long the files stay (HOLDS: 4 to 96
+   hours). 4 h uses temporary links as above; longer holds use shared
+   links (sync.js cloudDrop.share, sharing.write) on the same
+   dl.dropboxusercontent.com host, which do not expire by themselves:
+   the sealed index says until when (exp, the receive page refuses
+   after it) and orOS removes the folder. A folder id starts with a
+   base-36 time T = start + (hold - 4 h) + UPLOAD_ALLOW, so the rule
+   "remove once T + 4 h 15 min has passed" (this sweep, sync.js's
+   hourly dropSweep on every open orOS, and the 4-hour builds) removes
+   every hold on time. Or at once with "Delete now".
+
+   window.OrosTransferCloud = { HOLDS, fragment, parseFragment, okLink, plan,
      cipherLen, packLen, newId, idTime, sealIndex, openIndex, Cutter,
      send(opts) → Promise<{ id, url, exp }>, Receiver(opts), probe(drop, fetch),
      sweep(drop, now) }
@@ -36,6 +45,9 @@
   var LINK_MS = 4 * 3600000;        // Dropbox temporary links last 4 hours
   var LINK_SAFE = LINK_MS - 10 * 60000;   // what we promise: 3 h 50 min after the links were made
   var SWEEP_MS = LINK_MS + 15 * 60000;
+  var HOLDS = [4, 12, 24, 48, 60, 72, 84, 96];   // hours the sender may choose
+  var HOUR = 3600000;
+  var UPLOAD_ALLOW = 2 * HOUR;      // uploads that take longer shorten the promise, never the sweep's margin
   var READ = 16 * 61440;            // bytes read from a source file at a time
   var RETRIES = 3;
   var INDEX_MAX = 8 * 1048576;
@@ -75,9 +87,18 @@
     if (cur.length) packs.push(cur);
     return packs;
   }
-  function newId(now) {
+  function okHold(h) { return HOLDS.indexOf(+h) !== -1 ? +h : 4; }
+  // T (see the header): the time the sweep counts from.
+  function sweepBase(start, hold) { return start + (okHold(hold) - 4) * HOUR + UPLOAD_ALLOW; }
+  function newId(now, hold) {
     var r = WC.getRandomValues(new Uint8Array(6));
-    return (now || Date.now()).toString(36) + C.hex(r);
+    return sweepBase(now || Date.now(), hold).toString(36) + C.hex(r);
+  }
+  // What the link promises: the links' own life, and never past T + 4 h (the sweep comes 15 min later).
+  function expiry(id, linksAt, hold) {
+    hold = okHold(hold);
+    var life = hold === 4 ? LINK_SAFE : hold * HOUR;
+    return Math.min(linksAt + life, idTime(id) + LINK_MS);
   }
   function idTime(id) { var t = parseInt(String(id).slice(0, 8), 36); return t > 0 ? t : 0; }
 
@@ -156,10 +177,11 @@
   function err(code, cause) { var e = new Error(code); e.code = code; e.cause = cause; return e; }
 
   // ----- the sender -----
-  // opts: { code, files (manifest [{p,s,m}]), read(i, a, b) → Uint8Array, drop (orosSync.cloudDrop),
+  // opts: { code, hold (hours, HOLDS; default 4), files (manifest [{p,s,m}]), read(i, a, b) → Uint8Array, drop (orosSync.cloudDrop),
   //   temp() → Promise<{ write, close, file, remove }>, onProgress({ bytes, total, step }), cancelled() → bool, packMax?, now? }
   function send(o) {
-    var id = newId(o.now && o.now()), files = o.files, packs = plan(files, o.packMax), hashes = [], keyP = C.derive(o.code);
+    var hold = okHold(o.hold), shared = hold > 4;
+    var id = newId(o.now && o.now(), hold), files = o.files, packs = plan(files, o.packMax), hashes = [], keyP = C.derive(o.code);
     var total = files.reduce(function (s, f) { return s + f.s; }, 0), done = 0;
     function stop() { if (o.cancelled && o.cancelled()) throw err("cancelled"); }
     function progress(step) { if (o.onProgress) o.onProgress({ bytes: done, total: total, step: step }); }
@@ -199,12 +221,13 @@
         });
       });
       return q.then(function () {
-        // links last 4 h from now: made only after every upload
+        // temporary links last 4 h from now: made only after every upload
         var links = [], l = Promise.resolve();
-        packs.forEach(function (_, k) { l = l.then(function () { return o.drop.link(id + "/p" + k).then(function (u) { links[k] = u; }); }); });
+        function mk(name) { return shared ? o.drop.share(name) : o.drop.link(name); }
+        packs.forEach(function (_, k) { l = l.then(function () { return mk(id + "/p" + k).then(function (u) { links[k] = u; }); }); });
         return l.then(function () {
           var t0 = o.now ? o.now() : Date.now();
-          var idx = { v: 1, id: id, exp: t0 + LINK_SAFE, files: files.map(function (f, i) {
+          var idx = { v: 1, id: id, exp: expiry(id, t0, hold), hold: hold, files: files.map(function (f, i) {
             var k = 0;
             packs.forEach(function (list, j) { if (list.indexOf(i) !== -1) k = j; });
             return { p: f.p, s: f.s, m: f.m, h: hashes[i], k: k };
@@ -212,13 +235,16 @@
           var meta = C.cleanMeta(o.meta);
           if (meta) idx.meta = meta;                                  // D1: title and message, sealed with the index
           return sealIndex(keys.key, idx).then(function (box) { return o.drop.put(id + "/index", new Blob([box])); })
-            .then(function () { return o.drop.link(id + "/index"); })
-            .then(function (u) { progress("ready"); return { id: id, exp: idx.exp, frag: fragment(o.code, u) }; });
+            .then(function () { return mk(id + "/index"); })
+            .then(function (u) { progress("ready"); return { id: id, exp: idx.exp, hold: hold, frag: fragment(o.code, u) }; });
         });
       });
     }).catch(function (e) {
       // leave nothing behind on a failure or a cancel
-      return Promise.resolve(o.drop.remove(id)).catch(function () {}).then(function () { throw e.code ? e : err(String(e && e.message || "").indexOf("dropbox-full") !== -1 ? "full" : "dropbox", e); });
+      var m = String(e && e.message || "");
+      return Promise.resolve(o.drop.remove(id)).catch(function () {}).then(function () {
+        throw e.code ? e : err(m.indexOf("dropbox-full") !== -1 ? "full" : m.indexOf("dropbox-scope") !== -1 ? "scope" : "dropbox", e);
+      });
     });
   }
 
@@ -348,16 +374,17 @@
     };
   }
 
-  // ----- the first time on a device: can this browser read a temporary link at all? -----
-  function probe(drop, F) {
-    var id = newId(), bytes = WC.getRandomValues(new Uint8Array(32));
-    return drop.put(id + "/probe", new Blob([bytes])).then(function () { return drop.link(id + "/probe"); }).then(function (u) {
+  // ----- the first time on a device: can this browser read a temporary (or, shared, a shared) link at all? -----
+  // Resolves true / false; rejects only with code "scope" (sign in to Dropbox again for shared links).
+  function probe(drop, F, shared) {
+    var id = newId(), bytes = WC.getRandomValues(new Uint8Array(32)), scope = false;
+    return drop.put(id + "/probe", new Blob([bytes])).then(function () { return shared ? drop.share(id + "/probe") : drop.link(id + "/probe"); }).then(function (u) {
       return F(u, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store" });
     }).then(function (res) { return res.ok ? res.arrayBuffer() : null; }).then(function (b) {
       var got = b ? new Uint8Array(b) : null;
       return !!got && got.length === bytes.length && got.every(function (x, i) { return x === bytes[i]; });
-    }, function () { return false; }).then(function (ok) {
-      return Promise.resolve(drop.remove(id)).catch(function () {}).then(function () { return ok; });
+    }, function (e) { scope = /dropbox-scope/.test(String(e && e.message || "")); return false; }).then(function (ok) {
+      return Promise.resolve(drop.remove(id)).catch(function () {}).then(function () { if (scope) throw err("scope"); return ok; });
     });
   }
   // Folders older than SWEEP_MS → removed. Resolves the number removed.
@@ -370,7 +397,8 @@
   }
 
   var api = {
-    PACK_MAX: PACK_MAX, LINK_MS: LINK_MS, LINK_SAFE: LINK_SAFE, SWEEP_MS: SWEEP_MS,
+    PACK_MAX: PACK_MAX, LINK_MS: LINK_MS, LINK_SAFE: LINK_SAFE, SWEEP_MS: SWEEP_MS, HOLDS: HOLDS, UPLOAD_ALLOW: UPLOAD_ALLOW,
+    okHold: okHold, expiry: expiry,
     fragment: fragment, parseFragment: parseFragment, okLink: okLink, plan: plan, cipherLen: cipherLen, packLen: packLen,
     newId: newId, idTime: idTime, sealIndex: sealIndex, openIndex: openIndex, Cutter: Cutter, pieceLens: pieceLens,
     send: send, Receiver: Receiver, probe: probe, sweep: sweep

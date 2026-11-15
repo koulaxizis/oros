@@ -1,12 +1,12 @@
 // ============================================================
-// orOS Files — universal search provider (v1.0.0)
+// orOS Files — universal search provider (v1.0.1)
 // Loaded by the shell on the first menu search (apps.json
 // "search"). Read-only: lists the local disk through the shell's
 // window.orosFS (ls only; file contents are never read). One hit
 // per file or folder: its name, the folder it is in as text.
 // The listing is walked at most every 10 s and capped (depth 12,
 // 3,000 entries) so a big disk cannot stall the search. Files'
-// Trash (/internal/.trash) is never listed.
+// Trash (/internal/.trash) and Documents' texts (/internal/.docs) are never listed.
 // Opens through the generic deep link: target { path, dir }.
 // ============================================================
 (function (root) {
@@ -23,7 +23,7 @@
         var subs = [];
         (Array.isArray(list) ? list : []).forEach(function (e) {
           if (!e || typeof e.name !== "string" || out.length >= MAX_ENTRIES) return;
-          if (path === ROOT && e.name === ".trash") return;      // Files' Trash stays out
+          if (path === ROOT && (e.name === ".trash" || e.name === ".docs")) return;   // Files' Trash and Documents' text stay out
 
           var p = path + "/" + e.name;
           out.push({ path: p, name: e.name, dir: !!e.dir, parent: path });
