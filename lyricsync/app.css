@@ -451,3 +451,24 @@ body.staging { overflow: hidden; }
   .pad.holding { transform: none; }
   .st.now .sw { transition: none; }
 }
+
+/* Songbook S4: chord diagrams */
+.dg-strip { display: flex; flex-wrap: wrap; gap: 6px 10px; margin: 6px 0 10px; }
+.dg-strip[hidden] { display: none; }
+.dg-card { margin: 0; display: inline-flex; flex-direction: column; align-items: center; color: var(--text); }
+.dg-name { font-weight: 700; font-size: 13px; }
+.dg-svg { display: block; overflow: visible; }
+.dg-ln { stroke: currentColor; }
+.dg-dot { fill: currentColor; stroke: none; }
+.dg-open { fill: none; stroke: currentColor; stroke-width: 1; }
+.dg-tx { fill: currentColor; font-family: inherit; }
+.dg-wk { fill: var(--panel-bg); stroke: currentColor; stroke-width: .8; }
+.dg-bk { fill: currentColor; stroke: currentColor; stroke-width: .8; }
+.dg-piano .dg-dot { fill: var(--accent); }
+.dg-piano .dg-dot.dg-bass { fill: var(--text-dim); }
+.dg-one { min-height: 0; }
+.dg-big { display: flex; justify-content: center; padding: 8px 0; }
+.dg-big .dg-svg { max-width: 100%; height: auto; }
+.sg-strip { margin: 0 0 14px; }
+.stage-sheet .sh-ch[data-c] { cursor: pointer; }
+.mini-check { white-space: nowrap; }

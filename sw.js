@@ -1696,6 +1696,7 @@ var PRECACHE_URLS = [
   "lyricsync/align.js",
   "lyricsync/chords.js",
   "lyricsync/sets.js",
+  "lyricsync/diagrams.js",
   "lyricsync/sheetpdf.js",
   "lyricsync/app.js",
   "lyricsync/search.js",
