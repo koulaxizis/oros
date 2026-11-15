@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 45236 of 45715 (98%)
+- Strings: 45319 of 45799 (98%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -13,13 +13,13 @@ text is still written in the code. They switch over wave by wave
 | App | Translated | Strings |
 |---|---|---|
 | assistant | 99% | 1885 / 1887 |
-| atelier | 100% | 1406 / 1406 |
+| atelier | 100% | 1408 / 1408 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
-| base | 100% | 273 / 273 |
+| base | 99% | 313 / 314 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
@@ -78,7 +78,7 @@ text is still written in the code. They switch over wave by wave
 | library | 100% | 327 / 327 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
-| lyricsync | 100% | 288 / 288 |
+| lyricsync | 100% | 289 / 289 |
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 496 / 496 |
 | mancala | 100% | 61 / 61 |
@@ -113,7 +113,7 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 332 / 332 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 96% | 642 / 666 |
+| publish | 96% | 653 / 677 |
 | qr | 100% | 248 / 248 |
 | quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |
@@ -146,7 +146,7 @@ text is still written in the code. They switch over wave by wave
 | stickies | 100% | 124 / 124 |
 | stock | 99% | 784 / 789 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 747 / 747 |
+| studio | 100% | 776 / 776 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 60 / 60 |
@@ -180,6 +180,7 @@ text is still written in the code. They switch over wave by wave
 
 These show English until fixed (usually the English text changed).
 
+- de/base: fld.exprHint must keep the placeholders {Copies}|{Price}
 - de/budget: unknown key cy.guess
 - de/passwords: af.apps must keep the same HTML tags as English
 - de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
