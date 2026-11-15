@@ -416,6 +416,7 @@
     if (window.orosOsk) window.orosOsk.refresh();   // on-screen keyboard labels
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
+    if (window.orosSmartBar) window.orosSmartBar.refresh(); // smart top bar chips
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
     // known) must relabel them too, or screen readers hear English.
@@ -1667,12 +1668,22 @@
     var left = bar && bar.querySelector(".bar-left");
     var right = bar && bar.querySelector(".bar-right");
     if (!left || !right) return;
-    for (var lvl = 0; ; lvl++) {
-      applyBarFit(lvl);
+    // Smart bar (smartbar.js): its chips give way after the tight level
+    // and before the weekday, the date or the language go.
+    var SB = window.orosSmartBar && window.orosSmartBar.fitDrop ? window.orosSmartBar : null;
+    if (SB) SB.fitReset();
+    function fits() {
       var cs = getComputedStyle(bar);
       var avail = bar.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      var need = left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4;
-      if (need <= avail || lvl >= (document.getElementById("qs-btn") ? BAR_FIT_MAX : 6)) return;
+      return left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4 <= avail;
+    }
+    // The first chip stays until the last level: the person asked for it.
+    var max = document.getElementById("qs-btn") ? BAR_FIT_MAX : 6;
+    for (var lvl = 0; ; lvl++) {
+      applyBarFit(lvl);
+      if (fits()) return;
+      if (lvl === 2 && SB) { while (SB.fitDrop(1)) { if (fits()) return; } }
+      if (lvl >= max) { if (SB) { while (SB.fitDrop(0)) { if (fits()) return; } } return; }
     }
   }
 
@@ -1777,6 +1788,7 @@
     tickSafe("mixerTrayTick", mixerTrayTick); // Sound Mixer: playing-with-app-closed chip (cheap, 1/s)
     tickSafe("wpDailyTick", wpDailyTick);     // Wallpaper "a new picture every day" (checks once a minute)
     tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
+    if (window.orosSmartBar) tickSafe("smartbarTick", window.orosSmartBar.tick); // Smart bar chips (cheap, 1/s)
   }
 
   // SH-Q2: one engine's failure is logged once (not 1/s) and never
@@ -11747,6 +11759,7 @@
       tips: SOLO ? null : { on: !!tipsRead().on },
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
+      smartbar: !SOLO && window.orosSmartBar && window.orosSmartBar.snapshot ? window.orosSmartBar.snapshot() : null,
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
@@ -11820,6 +11833,14 @@
     }
     if (/^widgets:/.test(name)) {        // widgets.js: "widgets:<kind>" on/off
       if (window.orosWidgets) window.orosWidgets.set(name.slice(8), !!value);
+      return;
+    }
+    if (/^smartbar:/.test(name)) {       // smartbar.js: "smartbar:<kind>" on/off
+      if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
+      return;
+    }
+    if (/^smartbar-move:/.test(name)) {  // smartbar.js: "smartbar-move:<kind>", value -1 (left) / 1 (right)
+      if (window.orosSmartBar) window.orosSmartBar.move(name.slice(14), Number(value) < 0 ? -1 : 1);
       return;
     }
     if (/^osk:/.test(name)) {
@@ -15180,6 +15201,21 @@
       toast: function (msg) { scToast("err", msg); },
       changed: function () { settingsNotify(); wxFetch(false); },
       start: { facts: startFacts, go: startGo }
+    });
+  }
+  // Smart top bar (smartbar.js): live chips (next event, focus, tasks,
+  // water, spent, till) the person switches on in Settings › Appearance.
+  // A single app keeps its plain bar.
+  if (window.orosSmartBar && !SOLO) {
+    window.orosSmartBar.attach({
+      lang: function () { return state.lang; },
+      strict: function () { return !!strictLevelNow(); },
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      open: function (id) { openAppById(id); },
+      version: function () { return APP_VERSION; },
+      toast: function (msg) { scToast("err", msg); },
+      changed: function () { settingsNotify(); },
+      fit: function () { queueFitBar(); }
     });
   }
   loadApps();
