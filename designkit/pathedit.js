@@ -45,7 +45,11 @@
       "pe.opLoad": "The shape tools could not load. Try again when you are online.",
       "pe.textPath": "Text on path", "pe.tpStart": "Start along the path", "pe.tpFlip": "Flip side",
       "pe.tpOff": "Release from path", "pe.tpNeed": "Pick one text and one shape or line.",
-      "pe.tpOver": "Part of the text does not fit on the path."
+      "pe.tpOver": "Part of the text does not fit on the path.",
+      "pe.toOutlines": "Text to outlines",
+      "pe.olHint": "The letters become shapes whose points you can edit, for a logo or a title. The text can no longer be edited as text (Undo brings it back).",
+      "pe.olMissing": "{n} characters have no outlines in their font and were left out.",
+      "pe.olNone": "This font has no outlines that can be read (PostScript outlines). Pick another font first."
     },
     el: {
       "pe.pen": "Πένα", "pe.edit": "Επεξεργασία σημείων", "pe.done": "Τέλος", "pe.cancel": "Ακύρωση",
@@ -63,7 +67,11 @@
       "pe.opLoad": "Τα εργαλεία σχημάτων δεν φόρτωσαν. Δοκίμασε ξανά όταν έχεις σύνδεση.",
       "pe.textPath": "Κείμενο σε διαδρομή", "pe.tpStart": "Αρχή πάνω στη διαδρομή", "pe.tpFlip": "Αλλαγή πλευράς",
       "pe.tpOff": "Αποδέσμευση από τη διαδρομή", "pe.tpNeed": "Διάλεξε ένα κείμενο και ένα σχήμα ή μια γραμμή.",
-      "pe.tpOver": "Μέρος του κειμένου δεν χωράει στη διαδρομή."
+      "pe.tpOver": "Μέρος του κειμένου δεν χωράει στη διαδρομή.",
+      "pe.toOutlines": "Κείμενο σε περιγράμματα",
+      "pe.olHint": "Τα γράμματα γίνονται σχήματα με σημεία που αλλάζεις, για λογότυπο ή τίτλο. Το κείμενο δεν αλλάζει πια ως κείμενο (η Αναίρεση το φέρνει πίσω).",
+      "pe.olMissing": "{n} χαρακτήρες δεν έχουν περιγράμματα στη γραμματοσειρά τους και παραλείφθηκαν.",
+      "pe.olNone": "Αυτή η γραμματοσειρά δεν έχει περιγράμματα που διαβάζονται (περιγράμματα PostScript). Διάλεξε πρώτα άλλη γραμματοσειρά."
     }
   };
   function table() {

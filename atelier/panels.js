@@ -913,7 +913,7 @@
       });
       body.appendChild(s);
     }
-    if (AX.tpOf(it) && ED.vec && ED.vec.tpSet) { body.appendChild(tpSection(it)); return; }
+    if (AX.tpOf(it) && ED.vec && ED.vec.tpSet) { body.appendChild(tpSection(it)); olSection(body, it); return; }
     var s2 = sec(t("fx.curve"));
     s2.appendChild(slider(t("fx.curve"), -100, 100, 1, it.ax.cv || 0, function (v) {
       edit(function (x) {
@@ -923,7 +923,16 @@
       });
     }));
     body.appendChild(s2);
+    olSection(body, it);
   };
+  // text to outlines (vector wave V5)
+  function olSection(body, it) {
+    if (!ED.vec || !ED.vec.canTextOutline || !ED.vec.canTextOutline(it)) return;
+    var s = sec(PEs("pe.toOutlines"));
+    s.appendChild(el("p", "hint", PEs("pe.olHint")));
+    s.appendChild(btn("btn block", PEs("pe.toOutlines"), function () { ED.vec.textOutline(it.id); }));
+    body.appendChild(s);
+  }
 
   // --- Filters (photos) ---
   var filterThumbs = {};

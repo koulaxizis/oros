@@ -16,6 +16,8 @@
 // .canTextPath(items), .textPath() lays the picked text frame's line
 // along the picked shape's or line's outline (the frame takes the
 // outline's box, the shape stays); .tpSet(id, { o, s }), .tpOff(id).
+// Wave V5: .canTextOutline(it), .textOutline(id) turns a text frame
+// into path items with its letters' outlines (designkit/fonts.js).
 // editor.js hands it the pointer, keys and the overlay while active.
 // ============================================================
 (function () {
@@ -319,6 +321,65 @@
       M.touch(it, now);
     });
   }
+
+  // ---------- Wave V5: text to outlines ----------
+  // A text frame's laid-out lines become path items with the letters'
+  // outlines, one per colour (else per line and colour when a path
+  // would pass the point limit), in the frame's place and turn, grouped
+  // when more than one; the frame goes, its story too when no other
+  // frame holds it (one undo step).
+  function canTextOutline(it) {
+    var F = window.orosDK.fonts;
+    if (!(it && !it.lock && it.t === "text" && F && F.outlineLines && ED.L && ED.L.frames[it.id] && ED.L.frames[it.id].lines.length)) return false;
+    // a frame of a longer thread would leave the rest of its story to flow back into its place
+    return !LY.doc.items.some(function (o) { return o.t === "text" && o.id !== it.id && o.story === it.story; });
+  }
+  function textOutline(id) {
+    if (LY.flushStory) LY.flushStory();
+    var it = M.find(LY.doc.items, id);
+    if (!canTextOutline(it)) return;
+    if (S) S.cancel();
+    var res = window.orosDK.fonts.outlineLines(ED.L.frames[id].lines);
+    if (!res.parts.length) { LY.toast(PE.str(res.missing ? "pe.olNone" : "pe.opFail")); return; }
+    var fr = { x: it.x, y: it.y, w: it.w, h: it.h, rot: it.rot || 0 }, list = [], lost = 0;
+    function fit(cmds, color) {
+      var paths = V.fromCmds(cmds);
+      if (!paths.length || V.count(paths) > V.MAX_NODES) return false;
+      list.push({ r: V.reframe(fr, paths), color: color });
+      return true;
+    }
+    var colors = [];
+    res.parts.forEach(function (p) { if (colors.indexOf(p.color) < 0) colors.push(p.color); });
+    colors.forEach(function (c) {
+      var mine = res.parts.filter(function (p) { return p.color === c; });
+      if (fit([].concat.apply([], mine.map(function (p) { return p.cmds; })), c)) return;
+      mine.forEach(function (p) { if (!fit(p.cmds, c)) lost++; });
+    });
+    if (!list.length) { LY.toast(PE.str("pe.tooBig")); return; }
+    var made = [];
+    LY.op(function (doc, now) {
+      var x = M.find(doc.items, id);
+      if (!x) return false;
+      var top = zAbove(doc, x), g = list.length > 1 ? M.newId("gr") : (x.grp || "");
+      list.forEach(function (q, i) {
+        var p = ED.addItem(doc, { t: "path", pg: x.pg, x: q.r.x, y: q.r.y, w: q.r.w, h: q.r.h, side: x.side }, now);
+        if (!p) return;
+        p.d = M.pathText(q.r.unit);
+        p.rot = q.r.rot; p.fill = q.color || "sw-black"; p.stroke = ""; p.sw = 0; p.op = x.op;
+        p.wrap = x.wrap; p.wo = x.wo; p.grp = g; p.hide = x.hide;
+        p.z = x.z + (top - x.z) * i / list.length;
+        made.push(p.id);
+      });
+      if (!made.length) return false;
+      ED.delItems(doc, [id], now);
+    });
+    if (!made.length) { LY.toast(PE.str("pe.tooBig")); return; }
+    setTimeout(function () { ED.select(made.slice()); }, 0);
+    var left = res.missing + lost;
+    LY.toast(left ? PE.str("pe.olMissing").replace("{n}", left) : PE.str("pe.toOutlines"));
+  }
+  VEC.canTextOutline = canTextOutline;
+  VEC.textOutline = textOutline;
   VEC.canTextPath = canTextPath;
   VEC.textPath = textPath;
   VEC.tpSet = tpSet;

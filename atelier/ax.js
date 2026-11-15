@@ -775,8 +775,122 @@
     return FX.shapePath(ax.shp || "rect", w, h, { round: ax.rd === undefined ? RD_DEF : ax.rd });
   }
 
+  // Text to outlines (vector wave V5): the glyphs of a text item as
+  // outlines in its box (frame space, y down), by line and word, each
+  // glyph its own command list (designkit/fonts.js outlineGlyphs);
+  // underlines are boxes at the end of their line. → { lines: [[[cmds
+  // of a glyph], …] (a word), …], missing } or null without fonts.js.
+  function fontsKit() {
+    if (typeof module !== "undefined" && module.exports) return require("../designkit/fonts.js");
+    return root.orosDK && root.orosDK.fonts;
+  }
+  function textOutlines(it) {
+    var F = fontsKit();
+    if (!F || !F.outlineGlyphs || !it || !it.ax || it.ax.k !== "text") return null;
+    var rows = [], boxes = [];
+    if (isCurved(it)) {
+      var cl = curveLayout(it), row = [];
+      cl.glyphs.forEach(function (g) {
+        var c = Math.cos(g.rot || 0), s = Math.sin(g.rot || 0);
+        row.push({ key: cl.key, ch: g.ch, size: cl.size, x: it.w / 2 + g.x - c * g.w / 2, y: it.h / 2 + g.y - s * g.w / 2, rot: g.rot || 0 });
+      });
+      rows.push({ glyphs: row, boxes: [] });
+    } else {
+      textLayout(it).lines.forEach(function (ln) {
+        var r = F.runGlyphs([ln]);
+        rows.push({ glyphs: r.glyphs, boxes: r.boxes });
+      });
+    }
+    var missing = 0, lines = [];
+    rows.forEach(function (row) {
+      var words = [], word = [];
+      row.glyphs.forEach(function (g) {
+        if (/^\s+$/.test(g.ch)) { if (word.length) words.push(word); word = []; return; }
+        var o = F.outlineGlyphs([g]);
+        missing += o.missing;
+        if (o.cmds.length) word.push(o.cmds);
+      });
+      if (word.length) words.push(word);
+      row.boxes.forEach(function (b) {
+        words.push([[["M", b[0], b[1]], ["L", b[0], b[1] + b[3]], ["L", b[0] + b[2], b[1] + b[3]], ["L", b[0] + b[2], b[1]], ["Z"]]]);   // turning as glyph outlines do (nonzero)
+      });
+      if (words.length) lines.push(words);
+    });
+    return { lines: lines, missing: missing };
+  }
+
+  // Text to outlines in a design (in place): the text item becomes
+  // shapes with its letters' outlines (ext.pth in the text's box and
+  // turn): one shape when the outline fits a record, else one per
+  // line, per word, per letter. Its colour or gradient, opacity and
+  // link go with it; the text goes. → { ids, lost (letters too big
+  // for a record), missing (no outline in the font) } or null.
+  var OL_ROOM = 8000;                // designkit normX keeps ≤ 8192 characters of ext
+  function outlineText(doc, it, nw) {
+    var res = textOutlines(it);
+    if (!res || !VEC) return null;
+    var ext = {};
+    if (it.ax.g && gradOf(it)) ext.gs = it.ext.gs;
+    if (it.ext && it.ext.lnk) ext.lnk = it.ext.lnk;
+    var room = OL_ROOM - JSON.stringify(ext).length - 12, fr = { x: it.x, y: it.y, w: it.w, h: it.h, rot: it.rot || 0 };
+    var list = [], lost = 0;
+    function flat(a) { return [].concat.apply([], a); }
+    function fit(cmds) {
+      if (!cmds.length) return true;
+      var paths = VEC.fromCmds(cmds);
+      if (!paths.length || VEC.count(paths) > VEC.MAX_NODES) return false;
+      var r = VEC.reframe(fr, paths), pk = VEC.pack(r.unit, room);
+      if (!pk) return false;
+      list.push({ r: r, p: pk });
+      return true;
+    }
+    var lineCmds = res.lines.map(function (ws) { return flat(ws.map(flat)); });
+    if (!fit(flat(lineCmds))) {
+      res.lines.forEach(function (ws, li) {
+        if (fit(lineCmds[li])) return;
+        ws.forEach(function (w) { if (!fit(flat(w))) w.forEach(function (g) { if (!fit(g)) lost++; }); });
+      });
+    }
+    var out = { ids: [], lost: lost, missing: res.missing };
+    if (!list.length) return out;
+    var up = null;
+    doc.items.forEach(function (x) { if (x.pg === it.pg && x.id !== it.id && x.z > it.z && (up === null || x.z < up)) up = x.z; });
+    var top = up === null ? it.z + 1 : up;
+    list.forEach(function (q, i) {
+      var spec = { k: "shape", shp: "rect", x: q.r.x, y: q.r.y, w: q.r.w, h: q.r.h, rot: q.r.rot, fc: it.ax.fc || "#000000", op: it.op,
+                   z: it.z + (top - it.z) * i / list.length, ext: { pth: q.p } };
+      Object.keys(ext).forEach(function (k) { spec.ext[k] = ext[k]; });
+      if (ext.gs || it.ax.g) spec.g = it.ax.g;
+      var sh = addItem(doc, it.pg, spec, nw);
+      if (sh) out.ids.push(sh.id);
+    });
+    if (out.ids.length) {
+      doc.items = doc.items.filter(function (x) { return x.id !== it.id; });
+      if (doc.tombs) doc.tombs[it.id] = nw;
+    }
+    return out;
+  }
+  // A library shape (star, heart, …) gets its outline as its own
+  // (ext.pth), so its points can be edited; true when it changed.
+  function shapeToPath(it) {
+    if (!VEC || !it || !it.ax || it.ax.k !== "shape" || it.ax.bg || pthOf(it)) return false;
+    var w = Math.max(0.01, it.w), h = Math.max(0.01, it.h);
+    var unit = shapeCmds(it).map(function (c) {
+      var o = [c[0]];
+      for (var i = 1; i < c.length; i += 2) o.push(c[i] / w, c[i + 1] / h);
+      return o;
+    });
+    var rest = {};
+    if (it.ext) Object.keys(it.ext).forEach(function (k) { if (k !== "pth" && k !== "bl") rest[k] = it.ext[k]; });
+    var pk = VEC.pack(unit, OL_ROOM - JSON.stringify(rest).length - 12);
+    if (!pk) return false;
+    rest.pth = pk;
+    it.ext = rest;
+    return true;
+  }
+
   var api = {
-    normLink: normLink, linkOf: linkOf, setLink: setLink, pthOf: pthOf, shapeCmds: shapeCmds, tpOf: tpOf, isCurved: isCurved, setTp: setTp,
+    normLink: normLink, linkOf: linkOf, setLink: setLink, pthOf: pthOf, shapeCmds: shapeCmds, tpOf: tpOf, isCurved: isCurved, setTp: setTp, textOutlines: textOutlines, outlineText: outlineText, shapeToPath: shapeToPath,
     KINDS: KINDS, BASE: BASE, TEXT_DEF: TEXT_DEF, RD_DEF: RD_DEF, MAX_TX: MAX_TX, HEADS: HEADS,
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,
     nextZ: nextZ, textStyle: textStyle, textLayout: textLayout, curveLayout: curveLayout, textHeight: textHeight,

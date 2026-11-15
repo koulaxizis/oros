@@ -240,6 +240,7 @@
     var VC = LY.ed.vec, PEs = window.orosDK.pathedit.str;
     if (VC && one && VC.canOutline(one)) { var ro = row(); ro.appendChild(btn(PEs("pe.outline"), function () { VC.outline(one.id); }, "small")); s2.appendChild(ro); }
     if (VC && VC.canTextPath && VC.canTextPath(items)) { var rt = row(); rt.appendChild(btn(PEs("pe.textPath"), function () { VC.textPath(); }, "small")); s2.appendChild(rt); }
+    if (VC && one && VC.canTextOutline && VC.canTextOutline(one)) { var rl = row(); rl.appendChild(btn(PEs("pe.toOutlines"), function () { VC.textOutline(one.id); }, "small")); s2.appendChild(rl); }
     if (VC && VC.canCombine(items)) {
       s2.appendChild(el("span", "fld-lbl", PEs("pe.ops")));
       var rc = row();

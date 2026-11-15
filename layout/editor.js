@@ -1278,6 +1278,7 @@
     if (items.length === 1 && ED.vec && ED.vec.canEdit(items[0])) list.push({ label: window.orosDK.pathedit.str("pe.edit"), fn: function () { ED.vec.edit(items[0].id); } });
     if (items.length === 1 && ED.vec && ED.vec.canOutline(items[0])) list.push({ label: window.orosDK.pathedit.str("pe.outline"), fn: function () { ED.vec.outline(items[0].id); } });
     if (ED.vec && ED.vec.canTextPath && ED.vec.canTextPath(items)) list.push({ label: window.orosDK.pathedit.str("pe.textPath"), fn: function () { ED.vec.textPath(); } });
+    if (items.length === 1 && ED.vec && ED.vec.canTextOutline && ED.vec.canTextOutline(items[0])) list.push({ label: window.orosDK.pathedit.str("pe.toOutlines"), fn: function () { ED.vec.textOutline(items[0].id); } });
     if (ED.vec && ED.vec.canCombine(items)) ["union", "subtract", "intersect", "exclude"].forEach(function (k) {
       list.push({ label: window.orosDK.pathedit.str("pe." + k), fn: function () { ED.vec.combine(k); } });
     });

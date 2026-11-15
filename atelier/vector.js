@@ -15,6 +15,8 @@
 // .textPath() puts the picked text on the picked shape's or line's
 // outline (the text takes the outline's box; the shape stays);
 // .tpSet(id, { o, s }) moves / flips it, .tpOff(id) frees the text.
+// Wave V5: .canTextOutline(it), .textOutline(id) turns a text into
+// shapes with its letters' outlines (AX.textOutlines, designkit/fonts.js).
 // editor.js hands it the pointer, keys and painting while active.
 // ============================================================
 (function () {
@@ -370,6 +372,38 @@
       M.touch(it, nw);
     });
   }
+
+  // ---------- Wave V5: text to outlines ----------
+  // The text becomes shapes with its letters' outlines (ext.pth, in the
+  // text's box and turn): one shape when the outline fits a record,
+  // else one per line, per word, per letter. Its colour or gradient,
+  // opacity and link go with it; the text goes (one undo step).
+  function canTextOutline(it) {
+    var F = window.orosDK.fonts;
+    return !!(it && !it.lock && it.ax && it.ax.k === "text" && (it.ax.tx || "").trim() && F && F.outlineGlyphs);
+  }
+  function textOutline(id) {
+    if (ED.exitText) ED.exitText();
+    var it = ED.find(id);
+    if (!canTextOutline(it)) return;
+    if (S) S.cancel();
+    var res = null;
+    AT.op(function (d, nw) {
+      var x = M.find(d.items, id);
+      if (!x) return false;
+      res = AX.outlineText(d, x, nw);
+      if (!res || !res.ids.length) return false;
+    });
+    if (!res || !res.ids.length) {
+      AT.toast(PE.str(res && res.missing && !res.lost ? "pe.olNone" : res && res.lost ? "pe.tooBig" : "pe.opFail"));
+      return;
+    }
+    ED.select(res.ids);
+    var left = res.missing + res.lost;
+    AT.toast(left ? PE.str("pe.olMissing").replace("{n}", left) : PE.str("pe.toOutlines"), t("btn.undo"), AT.undo);
+  }
+  VEC.canTextOutline = canTextOutline;
+  VEC.textOutline = textOutline;
   VEC.canTextPath = canTextPath;
   VEC.textPath = textPath;
   VEC.tpSet = tpSet;
