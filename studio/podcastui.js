@@ -643,6 +643,18 @@
         return true;
       } catch (e) { return false; }
     }
+    // davpub.js is loaded when the podcast dialog first opens (Studio's
+    // first-open budget); it is in the sw.js precache, so it works offline
+    var davLoading = false;
+    function loadDav() {
+      if (root.StudioDavPub || davLoading || !root.document) return;
+      davLoading = true;
+      var sc = document.createElement("script");
+      sc.src = "davpub.js";
+      sc.onload = function () { renderDav(); };
+      sc.onerror = function () { davLoading = false; };
+      document.head.appendChild(sc);
+    }
     function renderDav() {
       var s = show(), D = root.StudioDavPub;
       $("pod-dav-sec").hidden = !s || !D;
@@ -948,6 +960,7 @@
       if (p && p.sh && P.findShow(dat(), p.sh)) cur = p.sh;
       else if (!cur) { var list = P.shows(dat()); cur = list.length ? list[0].id : ""; }
       render();
+      loadDav();
       H.showDlg("pod-dlg");
     }
 
