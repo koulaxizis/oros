@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.97.00
+- **Documents remind you of their dates.** In Files › Documents, orOS tells you 30 and 7 days before a document expires, on the day itself, and when its keep-until date has passed (from 09:00 on this device; `⋯` › `Reminders of dates` changes the hour or turns them off). The same dates show in Today and as `Documents` in Calendar; a private document shows only its type there. A ready rule in Automations turns each reminder into a To-Do. Nothing is ever deleted. See [Files](app:files).
+
 ## Version 6.96.00
 - **Email Signature is now part of Mail.** Open `Email signatures` in Mail to make and keep your signatures, even with no mail account set up. Your signatures are kept, and old links and shortcuts to Email Signature open that view.
 
