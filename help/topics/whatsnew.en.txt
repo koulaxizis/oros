@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.86.00
+- **Base: link records between tables.** A `Link to records` field links a record to records of another table, for example a book to its authors, and the other table shows the same links from its side. `Lookup`, `Rollup` and `Count of links` fields show, add up or count what the links point to, and `Formula` fields work out a value from the other fields, such as `{Price} * {Copies}`, with the Spreadsheet's functions.
+
 ## Version 6.85.00
 - **Studio: publish your podcast on GitHub Pages.** In `Publish as podcast`, write your GitHub repository and paste a token of yours, and Studio puts the whole site there itself; GitHub Pages serves it for free. Publishing again sends only what changed and never drops an episode that is already online. The token stays on this device only.
 
