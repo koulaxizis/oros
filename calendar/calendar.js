@@ -190,6 +190,7 @@
       "feed.meals.b": "Breakfast", "feed.meals.l": "Lunch", "feed.meals.d": "Dinner", "feed.meals.s": "Snack", "feed.meals.x": "Extra",
       "lbl.feed.budget": "Budget", "feed.budLoan": "{n}: installment", "feed.budCard": "{n}: card payment due",
       "lbl.feed.shelf": "Media Shelf", "lbl.feed.publish": "Publishing",
+      "lbl.feed.docs": "Documents",
       "lbl.feed.inv": "Invoices", "feed.inv.due": "{n} due · {a}",
       "feed.garage.exp": "{vehicle}: {what} expires",
       "feed.garage.expired": "{vehicle}: {what} expired",
@@ -444,6 +445,7 @@
       "feed.meals.b": "Πρωινό", "feed.meals.l": "Μεσημεριανό", "feed.meals.d": "Βραδινό", "feed.meals.s": "Σνακ", "feed.meals.x": "Άλλο",
       "lbl.feed.budget": "Προϋπολογισμός", "feed.budLoan": "{n}: δόση", "feed.budCard": "{n}: λήξη πληρωμής κάρτας",
       "lbl.feed.shelf": "Το ράφι μου", "lbl.feed.publish": "Εκδόσεις",
+      "lbl.feed.docs": "Έγγραφα",
       "lbl.feed.inv": "Τιμολόγια", "feed.inv.due": "Λήγει το {n} · {a}",
       "feed.garage.exp": "{vehicle}: λήγει {what}",
       "feed.garage.expired": "{vehicle}: έληξε {what}",
@@ -1307,6 +1309,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-shelf",  color: "#d16ba5" },   // berry — Media Shelf finishes + wishlist release dates
     { id: "lbl-feed-publish", color: "#b5835a" },  // bronze — Publishing release dates + release-plan steps
     { id: "lbl-feed-inv",    color: "#e5a54b" },   // ochre — Invoices: unpaid documents on their due date
+    { id: "lbl-feed-docs",   color: "#a0a8b8" },   // paper grey — Files Documents: expiry + keep-until dates
     { id: "lbl-feed-baby",   color: "#f4a3c8" },   // soft pink — Baby milestones, health, monthly age
     { id: "lbl-feed-together", color: "#ef5d8a" }, // rose — Together anniversaries, milestones, moments
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
@@ -1341,6 +1344,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-shelf") return t("lbl.feed.shelf");
     if (l.id === "lbl-feed-publish") return t("lbl.feed.publish");
     if (l.id === "lbl-feed-inv") return t("lbl.feed.inv");
+    if (l.id === "lbl-feed-docs") return t("lbl.feed.docs");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     if (l.id === "lbl-feed-nameday") return t("lbl.feed.nameday");
@@ -3130,6 +3134,44 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Files › Documents read-only feed (DOCS-1 W3, files/docs-due.js,
+  // loaded by index.html: the same reading as the shell reminder and
+  // Today). An all-day row on each document's expiry date and on its
+  // keep-until date; a private document shows its type only. Rows are
+  // never stored; micro-cached ~1s like the other feeds. Click → the
+  // document in Files.
+  var docsCache = { when: 0, rows: null };
+  function docsRows() {
+    var now = Date.now(), D = window.OrosDocsDue;
+    if (!D) return null;
+    if (now - docsCache.when > 1000) {
+      docsCache.rows = null;
+      try {
+        var raw = JSON.parse(localStorage.getItem(D.KEY));
+        if (raw && Array.isArray(raw.docs) && raw.docs.length) docsCache.rows = D.feedRows(raw, LANG);
+      } catch (e) { docsCache.rows = null; }
+      docsCache.when = now;
+    }
+    return docsCache.rows;
+  }
+  function docsFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-docs")) return [];
+    var rows = docsRows(), out = [];
+    if (!rows) return out;
+    rows.forEach(function (r) {
+      if (r.day !== dateStr) return;
+      out.push({
+        id: "doc-" + r.key + "-" + dateStr,     // per-render key, never stored
+        title: r.title,
+        labelId: "lbl-feed-docs",
+        start: null,                            // all-day
+        _feed: true,
+        _openAt: { app: "files", target: { doc: r.id } }
+      });
+    });
+    return out;
+  }
+
   // Travel read-only feed (travel/core.js, loaded by index.html: the
   // same reading as the shell reminder). Each trip shows on every day
   // of its dates (all-day, "Rome · day 2/5"); itinerary entries that
@@ -3537,6 +3579,7 @@ function transientNote(title, body) {
     .concat(choresFeedOn(dateStr))
     .concat(petcareFeedOn(dateStr))
     .concat(garageFeedOn(dateStr))
+    .concat(docsFeedOn(dateStr))
     .concat(travelFeedOn(dateStr))
     .concat(mealsFeedOn(dateStr))
     .concat(budgetFeedOn(dateStr))

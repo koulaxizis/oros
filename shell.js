@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.96.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.97.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -1687,6 +1687,7 @@
       tickSafe("keepCheckTick", keepCheckTickThrottled);   // Contacts: keep in touch, "reach out" (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("storageCheckTick", storageCheckTickThrottled); // Storage: warranty ends + return-by dates (60s throttle)
+      tickSafe("docsCheckTick", docsCheckTickThrottled);   // Files Documents: expiry + keep-until dates (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
@@ -2475,6 +2476,60 @@
     if (now - storageLastTick < 60000) return;
     storageLastTick = now;
     storageCheckTick();
+  }
+
+  // Files › Documents (DOCS-1 W3) — expiry dates 30 days, 7 days and on
+  // the day (up to 7 days late after orOS was closed), and keep-until
+  // dates that passed (a note only: nothing is deleted). Reads
+  // "oros-files-docs" directly (works with Files CLOSED) through
+  // files/docs-due.js (loaded by index.html, the SAME file Files, Today
+  // and Calendar use). On by default at 09:00; the hour lives in the
+  // device-local "oros-files-docs-prefs" (remind 0-23, -1 = off).
+  // Each alert is announced once per step: device-local
+  // "oros-files-docs-notified" = { alertKey: lowest step announced },
+  // pruned to alerts that still exist. One grouped notice at most per
+  // tick, ns "files" (so the Files toggle and Automations "a notice
+  // from Files" apply). A private document shows its type only.
+  function docsCheckTick() {
+    var D = window.OrosDocsDue;
+    if (!D) return;                                     // stale bundle — silent
+    var raw, prefs, notified;
+    try {
+      prefs = D.readPrefs(JSON.parse(localStorage.getItem(D.PREFS_KEY)));
+      if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+      raw = JSON.parse(localStorage.getItem(D.KEY));
+      notified = JSON.parse(localStorage.getItem(D.NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.docs) || !raw.docs.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    if (todayAbsorbs("files")) return;                  // said in today's summary
+    var today = sysYmd();
+    var all = D.alerts(raw, today);
+    var fresh = D.toNotify(all, notified);
+    try { localStorage.setItem(D.NOTIFIED_KEY, JSON.stringify(D.nextNotified(all, fresh, notified))); } catch (e) {}
+    if (!fresh.length) return;
+    var lang = state.lang === "el" ? "el" : state.lang === "de" ? "de" : "en";
+    var lines = fresh.slice(0, 3).map(function (a) { return D.alertLine(a, raw, lang); });
+    if (fresh.length > 3) lines.push(tr("n.andmore", { n: fresh.length - 3 }));
+    var title = window.t("app.files");
+    if (title === "app.files") title = "Files";        // missing-key fallback
+    N.emit({
+      ns: "files",
+      key: "docs-" + today + "-" + garageHash(fresh.map(function (a) { return a.key + ":" + a.step; }).join("|")),
+      type: "reminder",
+      title: title,
+      body: lines.join(" \u00b7 "),
+      deepLink: "files:" + (fresh.length > 1 ? "soon" : "doc:" + fresh[0].id)
+    });
+  }
+
+  var docsLastTick = 0;
+  function docsCheckTickThrottled() {
+    var now = Date.now();
+    if (now - docsLastTick < 60000) return;
+    docsLastTick = now;
+    docsCheckTick();
   }
 
   // Travel — the evening before departure ("Rome tomorrow · 6 items

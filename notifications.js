@@ -587,6 +587,13 @@
       if (typeof window.__orosOpenAt !== 'function') return;
       window.__orosOpenAt('storage', target === 'lent' ? { view: 'lent' } : { id: String(target || '') });
     },
+    // Files Documents (DOCS-1 W3) — "files:doc:<id>" (one document) or
+    // "files:soon" (several: the "expires soon" list).
+    files:    function (target) {
+      if (typeof window.__orosOpenAt !== 'function') return;
+      var id = String(target || '');
+      window.__orosOpenAt('files', /^d-[0-9a-z_-]{1,41}$/.test(id) ? { doc: id } : { docs: 'soon' });
+    },
     // Garage — "garage:upcoming" (reminder) or "garage:<id>".
     garage:   function (target) { if (typeof window.__orosOpenGarage === 'function') window.__orosOpenGarage(target); },
     // Pet Health Book — "petcare:today" (daily reminder) or "petcare:<petId>".
