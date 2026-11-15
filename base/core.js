@@ -1991,7 +1991,7 @@
     opsFor: opsFor, needsValue: needsValue, query: query, layout: layout, groupKey: groupKey,
     ATT_DIR: ATT_DIR, FILE_RE: FILE_RE, MAX_ATT: MAX_ATT, attPath: attPath, usedFiles: usedFiles, cleanFiles: cleanFiles,
     coverField: coverField, coverOf: coverOf,
-    FORM_KEY: FORM_KEY, FORM_BATCH: FORM_BATCH, keyId: keyId, addFromForms: addFromForms, formSpec: formSpec,
+    FORM_KEY: FORM_KEY, FORM_BATCH: FORM_BATCH, keyId: keyId, addFromForms: addFromForms, formSpec: formSpec, inputVal: formVal,
     VIEW_KINDS: VIEW_KINDS, visibleFields: visibleFields, stackField: stackField, stacks: stacks, dateField: dateField, monthGrid: monthGrid, orderedFields: orderedFields, summary: summary, compare: compare,
     uid: uid, fid: fid, oid: oid, putRow: putRow, addBase: addBase, addTable: addTable, addField: addField,
     remove: remove, restore: restore, rowsUnder: rowsUnder, setValues: setValues, addRecord: addRecord,

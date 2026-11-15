@@ -1797,6 +1797,7 @@
       "crm with partner answers 'what is open with X?' for one partner. " +
       "forms (every form: questions, shared and open or not, how many answers and how many new, with a ref; with form one form's results: counts, shares and averages per question, never what people wrote) " +
       "studio lists the podcast shows made in Studio (feed address, how many episodes, how many have their episode file) and every episode with its show, number, date and whether its file is made; with show only that show. Read only: publishing is always the user's own tap in Studio. " +
+      "base (Base, the user's own databases: every base with its tables, each table's fields with their type and choices and how many records; with table that table's records with every field and a ref; use it before create_items base) " +
       "automations lists every rule in words (with a ref; on or off) and this device's recent runs: when, which rule, whether it was a time or something that happened, and what came of it (notice shown, notices off, skipped because an app is missing, opened); use it for 'why did this run?' and to suggest a better rule with propose_rule. " +
       "The user sees the summary first and may hold it back.",
     params: {
@@ -1813,6 +1814,8 @@
         status: { type: "string", "enum": ["want", "now", "done", "drop", "reading", "finished", "unread"], description: "shelf: want, now (in progress), done, drop. library: reading, finished, unread." },
         board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board)." },
         show: { type: "string", description: "studio: one podcast show's title: only its episodes." },
+        table: { type: "string", description: "base: one table's name: list its records with every field and a ref (leave out for the bases, tables and fields)." },
+        base: { type: "string", description: "base, with table: the base's name, when several bases have a table of that name." },
         days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." },
         form: { type: "string", description: "forms: one form's title: its results (how many answered each question, counts, shares and averages); never the people's written answers or contact details." },
         partner: { type: "string", description: "crm: a customer's, supplier's, shop's or author's name: everything open with them (owed both ways, consignment stock, orders, unbilled hours, royalties, contracts, next follow-up)." }
@@ -2068,7 +2071,9 @@
     // AS-ADD9 (GATE-PAR P4 wave 2)
     wiki: "wiki = a new article in Wiki (an article already there is changed with change_item)",
     flashcards: "flashcards = a new note (card) in Flashcards: front and back, or cloze text with {{c1::gaps}}",
-    split: "split = a shared expense in one of the user's Split groups, split equally"
+    split: "split = a shared expense in one of the user's Split groups, split equally",
+    // BASE-1 B4b (assistant/additems3.js)
+    base: "base = a record (row) in a table of Base, the user's own databases: fields by the names app_summary base lists (a choice label not there yet becomes a new choice)"
   };
   // [field, apps it is for, schema]
   var CR_FIELDS = [
@@ -2176,6 +2181,12 @@
     ["category", ["budget", "split"], { type: "string", description: "budget: groceries, eating-out, bills, home, transport, health, fun, clothes, gift, salary, freelance, other, or the name of one of the user's own categories. split: food, groceries, stay, transport, bills, fun or other." }],
     ["text", ["notes", "stickies", "wiki"], { type: "string", description: "notes: the page's text (Markdown). stickies: the note (up to 1000 characters, line breaks kept). wiki: the article in Wiki's Markdown, [[Other article]] links allowed (200000 characters)." }],
     ["wiki", ["wiki"], { type: "string", description: "wiki: the wiki's name (may be left out when the user has one)." }],
+    ["base", ["base"], { type: "string", description: "base: the base's name (may be left out when the user has one)." }],
+    ["table", ["base"], { type: "string", description: "base: the table's name in that base (may be left out when the base has one)." }],
+    ["fields", ["base"], { type: "array", description: "base: the record's values, one entry per field (app_summary base gives the fields and their types). Formula, lookup, rollup, count, autonumber, link and attachment fields are refused.",
+               items: { type: "object", properties: { name: { type: "string", description: "The field's name in Base." },
+                                                      value: { type: "string", description: "The value as text: a number like 12.5, a date as YYYY-MM-DD (YYYY-MM-DDTHH:MM when the field has a time), true or false for a checkbox, a choice's label." },
+                                                      choices: { type: "array", items: { type: "string" }, description: "A several-choices field: the labels, instead of value." } }, required: ["name"] } }],
     ["front", ["flashcards"], { type: "string", description: "flashcards: the question side (20000 characters; Flashcards' Markdown)." }],
     ["back", ["flashcards"], { type: "string", description: "flashcards: the answer side; with cloze, the extra shown after the answer." }],
     ["cloze", ["flashcards"], { type: "string", description: "flashcards: instead of front, a text with gaps like {{c1::Athens}} is the capital (one card per gap number)." }],

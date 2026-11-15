@@ -48,6 +48,11 @@
 //                                 run?"): every rule in words and the
 //                                 device's recent runs with what came of
 //                                 them; never what a notice said
+//   baseTables(C, raw, opts)     Base (BASE-1 B4b): every base with its
+//                                 tables, their fields (name, type,
+//                                 choices) and how many records; with
+//                                 table its records (every field as
+//                                 Base shows it) with a ref
 //   preview(sum, lang)           → [line] what the consent card shows
 // Exposes window.OrosAssistSummary and, under Node, module.exports.
 // ============================================================
@@ -61,7 +66,7 @@
   // Apps with a summary of their own; any other app needs a Today provider.
   var OWN = { budget: "month", timesheet: "month", todo: "lists", stock: "month", kanban: "boards",
               notes: "notebooks", bookmarks: "folders", contacts: "labels", shelf: "kinds", library: "books",
-              automations: "rules", studio: "shows" };   // AS-STRUCT; studio: STUDIO-POD P4
+              automations: "rules", studio: "shows", base: "tables" };   // AS-STRUCT; studio: STUDIO-POD P4; base: BASE-1 B4b
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -114,7 +119,7 @@
       return typeof args[k] === "string" && args[k].trim() ? args[k].replace(/\s+/g, " ").trim().slice(0, max || 120) : "";
     }
     var grp = { todo: ["list"], notes: ["notebook"], bookmarks: ["folder", "tag"], contacts: ["label"],
-                shelf: ["kind", "status", "tag"], library: ["status", "tag"], studio: ["show"] }[app] || [];
+                shelf: ["kind", "status", "tag"], library: ["status", "tag"], studio: ["show"], base: ["base", "table"] }[app] || [];
     grp.forEach(function (k) {
       var v = word(k, k === "folder" ? 240 : 120);
       if (v) out[k] = k === "kind" || k === "status" ? v.toLowerCase() : v;
@@ -1022,7 +1027,7 @@
           lbls: "Labels", lbl: "Label", nolbl: "No label", stMain: "Own stock", stSold: "sold",
           pick: "Which one", over: "overdue", nopart: "No partner called “{q}”", owes: "Owes you", owe: "You owe", settle: "settlement due",
           orders: "open orders", roy: "Royalties to pay", ctr: "Contract", next: "Next follow-up", ctrs: "Contracts", ctrNeed: "need a decision",
-          kbCard: "card", kbCards: "cards", kbArch: "Archived",
+          kbCard: "card", kbCards: "cards", kbArch: "Archived", bsRec: "record", bsRecs: "records",
           stLists: "Lists", stNbs: "Notebooks", stPages: "pages", stFolders: "Folders", stUnsorted: "Unsorted", stTags: "Tags",
           stBm: "bookmarks", stCt: "contacts", stFav: "favourites", stItems: "items", stBooks: "books",
           stReading: "reading", stFinished: "finished", stUnread: "unread", stWant: "want", stNow: "in progress", stDrop: "dropped",
@@ -1035,7 +1040,7 @@
           lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα", stMain: "Δικό σου απόθεμα", stSold: "πουλήθηκαν",
           pick: "Ποιος από αυτούς", over: "ληξιπρόθεσμα", nopart: "Κανένας συνεργάτης με όνομα «{q}»", owes: "Σου χρωστά", owe: "Του χρωστάς", settle: "οφείλεται εκκαθάριση",
           orders: "ανοιχτές παραγγελίες", roy: "Δικαιώματα προς πληρωμή", ctr: "Συμφωνητικό", next: "Επόμενο follow-up", ctrs: "Συμφωνητικά", ctrNeed: "θέλουν απόφαση",
-          kbCard: "κάρτα", kbCards: "κάρτες", kbArch: "Στο αρχείο",
+          kbCard: "κάρτα", kbCards: "κάρτες", kbArch: "Στο αρχείο", bsRec: "εγγραφή", bsRecs: "εγγραφές",
           stLists: "Λίστες", stNbs: "Τετράδια", stPages: "σελίδες", stFolders: "Φάκελοι", stUnsorted: "Χωρίς φάκελο", stTags: "Ετικέτες",
           stBm: "σελιδοδείκτες", stCt: "επαφές", stFav: "αγαπημένες", stItems: "στοιχεία", stBooks: "βιβλία",
           stReading: "διαβάζεις", stFinished: "τελείωσαν", stUnread: "αδιάβαστα", stWant: "θέλω", stNow: "σε εξέλιξη", stDrop: "παρατημένα",
@@ -1148,6 +1153,13 @@
     } else if (s.app === "studio" && Array.isArray(s.shows)) {
       s.shows.forEach(function (x) { out.push(x.title + ": " + x.episodes + " " + w.podEps + " · " + x.files_made + " " + w.podMade + (x.feed ? " · " + x.feed : "")); });
       if (!s.shows.length) out.push(w.none);
+    } else if (s.app === "base" && Array.isArray(s.bases)) {
+      s.bases.forEach(function (b) {
+        out.push(b.name + ": " + (b.tables.length ? b.tables.map(function (t) { return t.name + " (" + t.records + " " + (t.records === 1 ? w.bsRec : w.bsRecs) + ")"; }).join(", ") : "—"));
+      });
+      if (!s.bases.length) out.push(w.none);
+    } else if (s.app === "base" && s.table) {
+      out.push(s.base + " › " + s.table + ": " + s.records + " " + (s.records === 1 ? w.bsRec : w.bsRecs));
     } else if (s.app === "calendar" && Array.isArray(s.labels)) {
       out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.events + ")"; })
         .concat([w.nolbl + " (" + s.no_label + ")"]).join(", "));
@@ -1223,11 +1235,67 @@
     return res;
   }
 
+  // ---------- Base (BASE-1 B4b) ----------
+  // C = OrosBaseCore. Every base › table with its fields (name, type,
+  // the labels of a choice field, at most 40) and how many records;
+  // with opts.table (and opts.base when names repeat) that table's
+  // records: the primary field as title and every other field as Base
+  // shows it (200 characters each), with a ref. Attachments by name.
+  var BS_TYPE = { long: "long text", check: "checkbox", select: "choice", multi: "several choices", auto: "autonumber",
+                  ctime: "created", mtime: "modified", file: "attachments" };
+  function baseTables(C, d, opts) {
+    opts = opts || {};
+    if (!C) return { ok: false, err: "Base could not be read on this device." };
+    if (!isObj(d) || !Array.isArray(d.bases)) return { app: "base", bases: [], note: "Base has not been opened on this device yet." };
+    d = C.normalize(d);
+    var ix = C.index(d), fold = C.fold;
+    var bases = d.bases.slice().sort(function (a, b) { return (a.ord || 0) - (b.ord || 0) || (a.name < b.name ? -1 : 1); });
+    function fieldsOf(tb) {
+      return (ix.tbFields[tb.id] || []).slice(0, 60).map(function (f) {
+        var o = { name: str(f.name, 120), type: BS_TYPE[f.type] || f.type };
+        if ((f.type === "select" || f.type === "multi") && f.opt && f.opt.ch) o.choices = f.opt.ch.slice(0, 40).map(function (c) { return str(c.n, 120); });
+        if (f.type === "date" && f.opt && f.opt.time) o.time = true;
+        if (C.NOSTORE[f.type]) o.read_only = true;
+        return o;
+      });
+    }
+    var out = { app: "base", bases: bases.map(function (b) {
+      return { name: str(b.name, 120), tables: (ix.baseTables[b.id] || []).map(function (tb) {
+        return { name: str(tb.name, 120), records: (ix.tbRecs[tb.id] || []).length, fields: fieldsOf(tb) };
+      }) };
+    }) };
+    if (!opts.table) return out;
+    var hits = [];
+    bases.forEach(function (b) {
+      if (opts.base && fold(b.name) !== fold(opts.base)) return;
+      (ix.baseTables[b.id] || []).forEach(function (tb) { if (fold(tb.name) === fold(opts.table)) hits.push({ b: b, tb: tb }); });
+    });
+    if (!hits.length) return { ok: false, err: "No table called \"" + opts.table + "\"" + (opts.base ? " in the base " + opts.base : "") + ". The tables: " +
+      bases.map(function (b) { return (ix.baseTables[b.id] || []).map(function (tb) { return b.name + " › " + tb.name; }).join(", "); }).filter(Boolean).join(", ").slice(0, 2000) };
+    if (hits.length > 1) return { ok: false, err: "Several bases have a table called \"" + opts.table + "\" (" + hits.map(function (h) { return h.b.name; }).join(", ") + "); give base." };
+    var h = hits[0], pf = C.primary(ix, h.tb.id), fs = (ix.tbFields[h.tb.id] || []).slice(0, 30);
+    var items = (ix.tbRecs[h.tb.id] || []).map(function (r) {
+      var vals = {};
+      fs.forEach(function (f) {
+        if (pf && f.id === pf.id) return;
+        var t = "";
+        try { t = C.text(ix, r, f); } catch (e) { t = ""; }
+        t = str(t, 200);
+        if (t) vals[str(f.name, 120)] = t;
+      });
+      var title = "";
+      try { title = pf ? str(C.text(ix, r, pf), 160) : ""; } catch (e) { title = ""; }
+      return { title: title || "—", values: vals, target: { base: h.b.id, table: h.tb.id, rec: r.id } };
+    });
+    var res = { app: "base", base: str(h.b.name, 120), table: str(h.tb.name, 120), records: items.length, fields: fieldsOf(h.tb) };
+    return capItems(res, items);
+  }
+
   var API = {
     VERSION: "1.2.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
     normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth, stockMonth: stockMonth,
     todoLists: todoLists, todoList: todoList, kanbanBoards: kanbanBoards, notesBooks: notesBooks,
-    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, studioShows: studioShows, calendarEvents: calendarEvents, crmPartner: crmPartner, crmContracts: crmContracts, formsSummary: formsSummary, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
+    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, studioShows: studioShows, calendarEvents: calendarEvents, crmPartner: crmPartner, crmContracts: crmContracts, formsSummary: formsSummary, baseTables: baseTables, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root && root.document) root.OrosAssistSummary = API;

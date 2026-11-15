@@ -1552,8 +1552,8 @@
   // Assistant's own tools, run in a hidden Assistant frame
   // (assistant.js GATE). = the Assistant's create / change apps, less
   // NEVER, the apps with their own tools above (Budget, Kanban) and
-  // Files (tests/gate-act.test.js).
-  var ACT = ["bookmarks", "calendar", "chores", "contacts", "crm", "feeds", "flashcards", "garage", "habits", "invoices",
+  // Files (tests/gate-act.test.js). Base: BASE-1 B4b.
+  var ACT = ["base", "bookmarks", "calendar", "chores", "contacts", "crm", "feeds", "flashcards", "garage", "habits", "invoices",
              "library", "meals", "music", "notes", "petcare", "plants", "podcasts", "publish", "quote", "shelf", "split", "stickies", "stock",
              "timesheet", "todo", "travel", "wiki"];
   // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): the documents the
