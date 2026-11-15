@@ -1262,7 +1262,7 @@ orosPack("de", "settings", {
  "w.dv-features": "geräteinfo browserfunktionen berechtigungen benachrichtigungen standort",
  "w.dv-network": "geräteinfo netzwerk verbindung online offline geschwindigkeit",
  "w.dv-report": "geräteinfo bericht problem kopieren",
- "w.dv-screen": "geräteinfo bildschirm auflösung fenster pixel touch",
+ "w.dv-screen": "geräteinfo bildschirm auflösung fenster pixel touch bildschirme monitor zweiter bildschirm beamer erweitern duplizieren",
  "w.dv-storage": "geräteinfo speicher platz voll kontingent local storage schutz",
  "w.easter": "ostern orthodox westlich datum",
  "w.export": "speichern herunterladen sicherung datei",
