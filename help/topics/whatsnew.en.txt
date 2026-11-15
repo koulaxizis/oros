@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.95.00
+- **Several people sign one PDF.** In Scanner & PDF up to 5 people can sign the same document. In the editor choose a field and press `Signer 1` to give it to the next signer; each signer's fields have their own colour. `Ask to sign` gives each person their own link with only their fields. `Signature requests` shows the document once with everyone's state, and when the last one has signed orOS makes one PDF with all the signatures and a certificate for each signer, in Files › PDF › Signatures. See [Scanner & PDF](app:scanpdf).
+
 ## Version 6.94.00
 - **SOS now also reaches the copies outside orOS.** After an SOS the orOS browser add-on forgets its copy of Passwords the next time an orOS tab opens in that browser (add-on 2.2.0), the orOS Android app clears its autofill copy and fingerprint secrets, the CRM web form stops taking messages, and orOS Drive on a computer erases its own copies once it can confirm the SOS with the vault key. Every factory reset now also clears the Android app's autofill copy. See [Settings](app:settings).
 
