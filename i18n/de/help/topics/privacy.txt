@@ -24,6 +24,8 @@ Auf einem Android-Handy (orOS-App oder orOS Passwords) öffnet sich die Sperre a
 ### Zwischenablage-Verlauf
 Der `Zwischenablage-Verlauf` in den [Einstellungen](app:settings) (System) ist aus, bis du ihn einschaltest, auf jedem Gerät. Dann behält orOS den Text, den du in seinen Apps kopierst oder ausschneidest (bis zu 30 Kopien, für 1 Stunde, 1 Tag oder 7 Tage), und [[Ctrl+Alt+Shift+V]] oder `Zwischenablage` in den Schnelleinstellungen zeigt sie; ein Tippen kopiert eine erneut. Er sieht nur Kopien aus orOS-Apps, nie, was du in anderen Programmen kopierst. Er behält nie etwas aus Passwörter oder Einstellungen, aus Passwortfeldern oder 2FA-Links und nichts, solange der Bildschirm gesperrt oder [Sensible Arbeit](help:t/sensitive) an ist (das Einschalten vergisst auch die Liste). Die Liste bleibt auf diesem Gerät: Sie wird nie synchronisiert und ist in keiner Sicherung. Bilder werden nicht behalten. Ausschalten vergisst alles.
 
+In der Liste behält die Stecknadel eine Kopie, bis du sie löst (bis zu 10; `Alle löschen` lässt sie stehen), die Suche findet eine Kopie über ihre Wörter, und der Einfügen-Knopf setzt eine Kopie direkt in das Textfeld, in dem du zuletzt warst, in der App auf dem Bildschirm. `Zwischenablage` in der Befehlsleiste öffnet die Liste ebenfalls.
+
 ## Verschlüsselte Synchronisierung
 Die Synchronisierung ist freiwillig und nutzt dein eigenes Dropbox-Konto. orOS arbeitet dort nur in seinem eigenen App-Ordner.
 

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — cliphist.js (Clipboard history, shell component, v1.0.0)
+// orOS — cliphist.js (Clipboard history, shell component, v1.1.0)
 // ------------------------------------------------------------
 // A shell component, like qsettings.js and widgets.js: it runs IN the
 // shell document. shell.js calls attach() once at boot, wire(frame)
@@ -34,25 +34,35 @@
 //     on) and the desktop menu's "Clipboard history…". A tap copies the
 //     text again (and moves it to the top); × forgets one; "Clear all"
 //     forgets all of them.
+//   • 1.1.0 (W2): pin a copy (at most 10; pinned copies never expire,
+//     show first and stay through "Clear all"; turning the history
+//     off or Sensitive work on forgets them too); search (every word,
+//     case and accents ignored); "Paste into <app>": the text goes into
+//     the last text field the person was in, in an app on screen, at
+//     its caret, with an input event so the app saves it (never a
+//     password or one-time code field); the command bar's "clipboard"
+//     / "πρόχειρο" opens the panel (commands/core.js 1.5.0).
 //
 // Storage (device-local, never synced, not in exports; the factory-
 // reset oros-* sweep removes it):
-//   oros-cliphist = { v:1, keep:"hour"|"day"|"week", items:[{ t, at, app }] }
+//   oros-cliphist = { v:1, keep:"hour"|"day"|"week", items:[{ t, at, app, p? }] }
 //   t = the text, at = ms when copied (unique, newest first), app = the
-//   app folder it came from ("" when unknown). No key = off.
+//   app folder it came from ("" when unknown), p = 1 when pinned (W2).
+//   No key = off.
 //
 // Pure logic is unit-tested in node (tests/cliphist.test.js).
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var KEY = "oros-cliphist";
   var KEEPS = { hour: 3600000, day: 86400000, week: 7 * 86400000 };
   var KEEP_DEFAULT = "day";
   var MAX_ITEMS = 30;
   var MAX_ITEM = 10000;          // characters of one copy
   var MAX_TOTAL = 60000;         // characters of all copies together
+  var MAX_PINS = 10;             // pinned copies (W2), part of MAX_ITEMS
   // Apps whose copies are never kept: Passwords (passwords, codes, the
   // generator) and Settings (sign-in codes, recovery key, passphrase).
   var SKIP_APPS = { passwords: 1, settings: 1 };
@@ -71,7 +81,9 @@
       var t = clean(it.t);
       if (!t || seen[it.at]) return;
       seen[it.at] = 1;
-      items.push({ t: t, at: it.at, app: typeof it.app === "string" ? it.app.slice(0, 40) : "" });
+      var item = { t: t, at: it.at, app: typeof it.app === "string" ? it.app.slice(0, 40) : "" };
+      if (it.p === 1) item.p = 1;
+      items.push(item);
     });
     items.sort(function (a, b) { return b.at - a.at; });
     return { v: 1, keep: keepOf(o.keep), items: items };
@@ -94,13 +106,25 @@
   }
 
   // Expired copies out, then the newest first within the limits.
+  // Pinned copies (W2, p: 1) never expire and go first into the
+  // limits (at most MAX_PINS: an older pin past that counts as a
+  // plain copy); the rest share what is left.
   function prune(st, now) {
-    var limit = now - KEEPS[keepOf(st.keep)], total = 0, out = [];
+    var limit = now - KEEPS[keepOf(st.keep)], total = 0, n = 0, pins = 0, pinned = {}, keep = {};
     st.items.forEach(function (it) {
-      if (it.at < limit || out.length >= MAX_ITEMS) return;
-      if (total + it.t.length > MAX_TOTAL) return;
-      total += it.t.length;
-      out.push(it);
+      if (it.p !== 1 || pins >= MAX_PINS || total + it.t.length > MAX_TOTAL) return;
+      pins++; n++; total += it.t.length; pinned[it.at] = keep[it.at] = 1;
+    });
+    st.items.forEach(function (it) {
+      if (pinned[it.at] || it.at < limit || n >= MAX_ITEMS || total + it.t.length > MAX_TOTAL) return;
+      n++; total += it.t.length; keep[it.at] = 1;
+    });
+    var out = [];
+    st.items.forEach(function (it) {
+      if (!keep[it.at]) return;
+      var c = { t: it.t, at: it.at, app: it.app };
+      if (pinned[it.at]) c.p = 1;
+      out.push(c);
     });
     return { v: 1, keep: keepOf(st.keep), items: out };
   }
@@ -111,9 +135,50 @@
     if (!st || !t || secret(t)) return st;
     var at = now;
     st.items.forEach(function (it) { if (it.at >= at) at = it.at + 1; });
-    var items = st.items.filter(function (it) { return it.t !== t; });
-    items.unshift({ t: t, at: at, app: typeof app === "string" ? app.slice(0, 40) : "" });
+    var was = null;
+    var items = st.items.filter(function (it) { if (it.t === t) was = it; return it.t !== t; });
+    var item = { t: t, at: at, app: typeof app === "string" ? app.slice(0, 40) : "" };
+    if (was && was.p === 1) item.p = 1;    // a pinned text copied again stays pinned
+    items.unshift(item);
     return prune({ v: 1, keep: st.keep, items: items }, now);
+  }
+
+  // Pin or unpin one copy (W2).
+  function pin(st, at, on) {
+    if (!st) return st;
+    return { v: 1, keep: st.keep, items: st.items.map(function (it) {
+      var c = { t: it.t, at: it.at, app: it.app };
+      if (it.at === at ? on : it.p === 1) c.p = 1;
+      return c;
+    }) };
+  }
+
+  // "Clear all": the pinned copies stay (turning the history off, or
+  // Sensitive work, forgets them too).
+  function clearKeep(st) {
+    if (!st) return st;
+    return { v: 1, keep: st.keep, items: st.items.filter(function (it) { return it.p === 1; }) };
+  }
+
+  // i18n-inline-ok: the Greek final sigma in fold() is data, not a text to translate.
+  // Search (W2): every word of the query in the text, case, accents and
+  // final sigma ignored (Greek, German, English).
+  function fold(x) {
+    return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+      .replace(/ς/g, "σ").replace(/ß/g, "ss");
+  }
+  function matches(it, q) {
+    var words = fold(q).split(/\s+/).filter(Boolean);
+    if (!words.length) return true;
+    var f = fold(it.t);
+    return words.every(function (w) { return f.indexOf(w) !== -1; });
+  }
+
+  // The list as shown: pinned first, then the newest.
+  function shown(st, q) {
+    if (!st) return [];
+    var list = st.items.filter(function (it) { return matches(it, q); });
+    return list.filter(function (it) { return it.p === 1; }).concat(list.filter(function (it) { return it.p !== 1; }));
   }
 
   function remove(st, at) {
@@ -161,7 +226,8 @@
 
   var model = { VER: VER, KEY: KEY, KEEPS: KEEPS, MAX_ITEMS: MAX_ITEMS, MAX_ITEM: MAX_ITEM, MAX_TOTAL: MAX_TOTAL,
                 SKIP_APPS: SKIP_APPS, parse: parse, clean: clean, secret: secret, prune: prune, add: add,
-                remove: remove, appOk: appOk, fieldSecret: fieldSecret, appOfPath: appOfPath, ago: ago,
+                remove: remove, pin: pin, clearKeep: clearKeep, fold: fold, matches: matches, shown: shown,
+                MAX_PINS: MAX_PINS, appOk: appOk, fieldSecret: fieldSecret, appOfPath: appOfPath, ago: ago,
                 preview: preview, keepOf: keepOf };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
@@ -228,6 +294,52 @@
   }
 
   // ---------- 3. Frames ----------
+  var lastField = null;    // W2: { w, el, app, frame } the last text field focused in an app
+  function editable(f) {
+    if (!f || f.nodeType !== 1) return false;
+    if (f.isContentEditable) return true;
+    if (f.tagName === "TEXTAREA") return !f.readOnly && !f.disabled;
+    if (f.tagName !== "INPUT" || f.readOnly || f.disabled) return false;
+    return /^(text|search|url|email|tel)?$/i.test(f.getAttribute("type") || "");
+  }
+  // The field "Paste here" writes into, while it is still there and its
+  // app is on screen; else null.
+  function pasteTarget() {
+    var L = lastField;
+    if (!L) return null;
+    var ok = call(function () {
+      return L.el.isConnected && L.frame.isConnected && L.frame.contentWindow === L.w &&
+        L.frame.style.display !== "none" && editable(L.el) && !fieldSecret(L.el);
+    });
+    if (!ok) { lastField = null; return null; }
+    return L;
+  }
+  // Insert text at the field's caret (replacing what was selected), as
+  // typing would: an input event follows, so the app saves it.
+  // noFocus (the emoji picker stays open over it): text fields only.
+  function pasteInto(L, text, noFocus) {
+    var f = L.el, d = L.w.document;
+    if (noFocus && f.isContentEditable) return "close";
+    if (!noFocus) { try { L.w.focus(); f.focus(); } catch (e) {} }
+    if (f.isContentEditable) {
+      var ok = false;
+      try { ok = d.execCommand("insertText", false, text); } catch (e) {}
+      return ok;
+    }
+    var max = f.maxLength > 0 ? f.maxLength : Infinity;
+    var a = f.selectionStart, b = f.selectionEnd;
+    if (typeof a !== "number") { a = b = f.value.length; }
+    var room = max - (f.value.length - (b - a));
+    if (room <= 0) return false;
+    var ins = f.tagName === "INPUT" ? text.replace(/\s*\n\s*/g, " ") : text;
+    if (ins.length > room) ins = ins.slice(0, room);
+    try {
+      f.setRangeText(ins, a, b, "end");
+      f.dispatchEvent(new L.w.InputEvent("input", { bubbles: true, inputType: "insertFromPaste", data: ins }));
+    } catch (e) { return false; }
+    return true;
+  }
+
   // Every app frame is wired on each load (the shell calls wire() once
   // per frame). Listeners and wrappers do nothing while the history is
   // off, so turning it on works in apps that are already open.
@@ -272,6 +384,11 @@
     }
     w.addEventListener("copy", onCopy);
     w.addEventListener("cut", onCopy);
+    // W2 "Paste here": the last text field the person was in.
+    w.addEventListener("focusin", function (e) {
+      var f = e.target;
+      if (editable(f) && !fieldSecret(f) && !noclip()) lastField = { w: w, el: f, app: app, frame: frame };
+    });
     // The apps' Copy buttons: navigator.clipboard.writeText / write.
     var cb = call(function () { return w.navigator.clipboard; });
     if (cb && typeof cb.writeText === "function") {
@@ -309,7 +426,9 @@
   var SV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
   var IC = {
     clip: SV + '<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg>',
-    x: SV + '<path d="M18 6 6 18M6 6l12 12"/></svg>'
+    x: SV + '<path d="M18 6 6 18M6 6l12 12"/></svg>',
+    pin: SV + '<path d="M12 17v5"/><path d="M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V17h14v-1.8a2 2 0 0 0-1.1-1.8l-1.8-.9a2 2 0 0 1-1.1-1.8V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg>',
+    paste: SV + '<path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/><path d="M12 11v6"/><path d="m9 14 3 3 3-3"/></svg>'
   };
   var CSS = [
     "#clip-dlg { width: min(460px, calc(100vw - 24px)); max-height: min(640px, calc(100dvh - 32px)); box-sizing: border-box; padding: 0;",
@@ -334,6 +453,13 @@
     "  white-space: pre-wrap; }",
     ".clip-use small { font-size: 12px; opacity: .75; }",
     ".clip-row .clip-x { align-self: center; }",
+    ".clip-row.pinned { box-shadow: inset 3px 0 0 var(--accent); }",
+    ".clip-x.on { color: var(--accent); }",
+    ".clip-find { margin: 0 16px 10px; }",
+    ".clip-find input { width: 100%; box-sizing: border-box; min-height: 40px; padding: 0 12px; border: 1px solid var(--border);",
+    "  border-radius: 999px; background: transparent; color: var(--text); font: inherit; }",
+    ".clip-find input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }",
+    "@media (max-width: 420px) { .clip-row .clip-x { width: 40px; height: 40px; } .clip-use { padding-left: 10px; } }",
     ".clip-foot { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; padding: 10px 16px 14px; }",
     ".clip-foot button { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent;",
     "  color: var(--text); font: inherit; cursor: pointer; }",
@@ -370,6 +496,20 @@
     var noteP = el("p", "clip-note");
     noteP.setAttribute("role", "status");
     dlg.appendChild(noteP);
+    var find = el("div", "clip-find");
+    var q = el("input");
+    q.type = "search";
+    q.setAttribute("aria-label", t("clip.search"));
+    q.placeholder = t("clip.search");
+    q.setAttribute("autocomplete", "off");
+    q.addEventListener("input", function () { paint(); });
+    q.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      var first = parts && parts.list.querySelector(".clip-use");
+      if (first) { e.preventDefault(); first.click(); }
+    });
+    find.appendChild(q);
+    dlg.appendChild(find);
     var list = el("ul", "clip-list");
     dlg.appendChild(list);
     var foot = el("div", "clip-foot");
@@ -383,7 +523,7 @@
     dlg.addEventListener("click", function (e) { if (e.target === dlg) close(); });   // the backdrop
     var me = dlg;   // Escape closes it too: clean up the same way
     dlg.addEventListener("close", function () { if (dlg === me) close(); });
-    parts = { title: h, x: x, note: noteP, list: list, settings: settingsB, clear: clearB, on: onB };
+    parts = { title: h, x: x, note: noteP, find: find, q: q, list: list, settings: settingsB, clear: clearB, on: onB };
     doc.body.appendChild(dlg);
   }
   function footBtn(label, fn, primary) {
@@ -398,40 +538,79 @@
     return n || "";
   }
 
+  function iconBtn(icon, label, fn, on) {
+    var b = el("button", "clip-x" + (on ? " on" : ""));
+    b.type = "button";
+    b.innerHTML = icon;
+    b.setAttribute("aria-label", label);
+    b.title = label;
+    if (on != null) b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.addEventListener("click", fn);
+    return b;
+  }
+  // After a row's button changed the list: focus stays near.
+  function refocus(sel) {
+    var n = parts && (parts.list.querySelector(sel) || parts.list.querySelector(".clip-use"));
+    (n || (parts && parts.x) || dlg).focus();
+  }
+
   function paint() {
     if (!dlg || !parts) return;
     var acc = call(function () { return root.orosQS && root.orosQS.model.onAccent(getComputedStyle(dlg).getPropertyValue("--accent")); });
     if (acc) dlg.style.setProperty("--clip-on", acc);
     var strict = strictOn(), st = strict ? null : current(), now = Date.now();
+    var tgt = st ? pasteTarget() : null, tgtName = tgt ? appName(tgt.app) : "";
+    var q = parts.q.value, list = shown(st, q);
     parts.list.textContent = "";
-    var msg = strict ? t("clip.strict") : !load() ? t("clip.off") : !st.items.length ? t("clip.empty") : t("clip.hint");
+    var msg = strict ? t("clip.strict") : !load() ? t("clip.off") : !st.items.length ? t("clip.empty") :
+      !list.length ? t("clip.nomatch") : tgt ? t("clip.hintPaste", { app: tgtName || t("clip.thisapp") }) : t("clip.hint");
     parts.note.textContent = msg;
+    parts.find.hidden = !(st && st.items.length > 1);
     parts.on.hidden = strict || !!load();
-    parts.clear.hidden = !(st && st.items.length);
-    if (!st) return;
-    st.items.forEach(function (it) {
-      var li = el("li", "clip-row");
+    var pins = st ? st.items.filter(function (it) { return it.p === 1; }).length : 0;
+    parts.clear.hidden = !(st && st.items.length > pins);
+    parts.clear.textContent = t(pins ? "clip.clearRest" : "clip.clear");
+    list.forEach(function (it) {
+      var li = el("li", "clip-row" + (it.p === 1 ? " pinned" : ""));
+      li.setAttribute("data-at", String(it.at));
       var use = el("button", "clip-use");
       use.type = "button";
       use.appendChild(el("span", null, preview(it.t, 400)));
       var a = ago(it.at, now), name = appName(it.app);
-      use.appendChild(el("small", null, (name ? name + " · " : "") + t(a.k, { n: a.n })));
+      use.appendChild(el("small", null, (it.p === 1 ? t("clip.pinned") + " · " : "") + (name ? name + " · " : "") + t(a.k, { n: a.n })));
       use.setAttribute("aria-label", t("clip.copyit") + ": " + preview(it.t, 80));
       use.addEventListener("click", function () { copyAgain(it); });
       li.appendChild(use);
-      var del = el("button", "clip-x");
-      del.type = "button";
-      del.innerHTML = IC.x;
-      del.setAttribute("aria-label", t("clip.forget") + ": " + preview(it.t, 40));
-      del.title = t("clip.forget");
-      del.addEventListener("click", function () {
+      if (tgt) {
+        li.appendChild(iconBtn(IC.paste, t("clip.paste", { app: tgtName || t("clip.thisapp") }), function () { pasteAgain(it); }));
+      }
+      li.appendChild(iconBtn(IC.pin, t(it.p === 1 ? "clip.unpin" : "clip.pin"), function () {
+        var cur = load();
+        if (!cur) return;
+        var want = it.p !== 1;
+        if (want && cur.items.filter(function (x) { return x.p === 1; }).length >= MAX_PINS) {
+          if (host && host.toast) host.toast("err", t("clip.pinmax", { n: MAX_PINS }));
+          return;
+        }
+        save(pin(cur, it.at, want));
+        refocus('[data-at="' + it.at + '"] .clip-x[aria-pressed]');
+      }, it.p === 1));
+      li.appendChild(iconBtn(IC.x, t("clip.forget"), function () {
         save(remove(load(), it.at));
-        var next = parts && parts.list.querySelector(".clip-use");
-        (next || (parts && parts.x) || dlg).focus();
-      });
-      li.appendChild(del);
+        refocus(".clip-use");
+      }));
       parts.list.appendChild(li);
     });
+  }
+
+  // "Paste here" (W2): into the last text field of the app on screen.
+  function pasteAgain(it) {
+    var L = pasteTarget();
+    if (!L) { paint(); return; }
+    lastFocus = null;          // the field gets the focus, not the old one
+    close();
+    var ok = pasteInto(L, it.t);
+    if (!ok && host && host.toast) host.toast("err", t("clip.nopaste"));
   }
 
   // A tap: the text goes back on the clipboard (a gesture in the shell,
@@ -441,7 +620,7 @@
     function done(ok) {
       if (ok) {
         var st = load();
-        if (st) save(add(remove(st, it.at), text, it.app, Date.now()));
+        if (st) save(add(st, text, it.app, Date.now()));   // same text: moves up, keeps its pin
         close();
       }
       if (host && host.toast) host.toast(ok ? "ok" : "err", t(ok ? "clip.copied" : "clip.nocopy"));
@@ -496,9 +675,15 @@
     if (!st || !Object.prototype.hasOwnProperty.call(KEEPS, k)) return;
     save(prune({ v: 1, keep: k, items: st.items }, Date.now()));
   }
+  // Clear all: the pinned copies stay (W2). wipe(): everything
+  // (Sensitive work turned on).
   function clear() {
     var st = load();
-    if (st) save({ v: 1, keep: st.keep, items: [] });
+    if (st) save(clearKeep(st));
+  }
+  function wipe() {
+    var st = load();
+    if (st && st.items.length) save({ v: 1, keep: st.keep, items: [] });
   }
   function snapshot() {
     var st = current();
@@ -512,11 +697,11 @@
     // nothing is kept until the mode is off again).
     call(function () {
       root.orosStrict.onChange(function () {
-        if (strictOn()) clear();
+        if (strictOn()) wipe();
         changed();
       });
     });
-    if (strictOn()) clear();
+    if (strictOn()) wipe();
     // The desktop menu (quickmenu.js) lists "Clipboard history…" while on.
     (root.__orosDeskItems = root.__orosDeskItems || []).push(function () {
       return load() && !strictOn() ? [{ label: t("clip.desk"), run: open }] : [];
@@ -547,6 +732,23 @@
       return function () { var i = listeners.indexOf(fn); if (i !== -1) listeners.splice(i, 1); };
     },
     // The shell calls this after a language change.
-    refresh: function () { if (isOpen()) { close(); open(); } }
+    refresh: function () { if (isOpen()) { close(); open(); } },
+    // The last text field in an app on screen (emoji.js, W3):
+    // { app, name } or null; insert(text, { keepOpen }) puts text at its
+    // caret: true, false, or "close" (a rich text field needs the focus,
+    // so the caller closes its dialog and calls insert(text) again).
+    field: function () {
+      var L = pasteTarget();
+      return L ? { app: L.app, name: appName(L.app) } : null;
+    },
+    insert: function (text, opts) {
+      var L = pasteTarget();
+      if (!L || typeof text !== "string" || !text) return false;
+      return pasteInto(L, text, !!(opts && opts.keepOpen));
+    },
+    focusField: function () {
+      var L = pasteTarget();
+      if (L) call(function () { L.w.focus(); L.el.focus(); });
+    }
   };
 })(typeof window !== "undefined" ? window : globalThis);

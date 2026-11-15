@@ -113,6 +113,53 @@ test("ago and preview", () => {
   assert.equal(C.preview("abcdefghij", 5), "abcd…");
 });
 
+test("W2 pins: never expire, first in the list, kept by Clear all, at most 10", () => {
+  const now = 50 * DAY;
+  let st = { v: 1, keep: "hour", items: [
+    { t: "fresh", at: now - 60000, app: "notes" },
+    { t: "old plain", at: now - 5 * DAY + 1, app: "notes" },
+    { t: "old pinned", at: now - 5 * DAY, app: "notes" }
+  ] };
+  st = C.pin(st, now - 5 * DAY, true);
+  const p = C.prune(st, now);
+  assert.deepEqual(p.items.map((i) => i.t), ["fresh", "old pinned"]);
+  assert.deepEqual(C.shown(p, "").map((i) => i.t), ["old pinned", "fresh"]);
+  assert.deepEqual(C.clearKeep(p).items.map((i) => i.t), ["old pinned"]);
+  const again = C.add(p, "old pinned", "todo", now);
+  assert.equal(again.items[0].t, "old pinned");
+  assert.equal(again.items[0].p, 1, "copied again stays pinned");
+  assert.equal(C.pin(again, again.items[0].at, false).items[0].p, undefined);
+  let many = { v: 1, keep: "week", items: [] };
+  for (let i = 0; i < 14; i++) many = C.add(many, "p" + i, "", 1000 + i);
+  many = { v: 1, keep: "week", items: many.items.map((i) => Object.assign({}, i, { p: 1 })) };
+  const pr = C.prune(many, 2000);
+  assert.equal(pr.items.filter((i) => i.p === 1).length, C.MAX_PINS);
+  assert.equal(pr.items.length, 14, "pins past the limit stay as plain copies");
+  assert.equal(C.parse(JSON.stringify(pr)).items.filter((i) => i.p === 1).length, C.MAX_PINS);
+});
+
+test("W2 search: every word, case, accents and final sigma ignored", () => {
+  let st = C.add(C.add({ v: 1, keep: "day", items: [] }, "Ψάρι στη σχάρα", "", 1), "Große Straße", "", 2);
+  assert.deepEqual(C.shown(st, "ψαρι").map((i) => i.t), ["Ψάρι στη σχάρα"]);
+  assert.deepEqual(C.shown(st, "ΣΧΑΡΑ ψάρι").map((i) => i.t), ["Ψάρι στη σχάρα"]);
+  assert.deepEqual(C.shown(st, "strasse").map((i) => i.t), ["Große Straße"]);
+  assert.equal(C.shown(st, "  ").length, 2);
+  assert.equal(C.shown(st, "zzz").length, 0);
+  assert.equal(C.shown(null, "x").length, 0);
+});
+
+test("W2 command bar: clipboard words open the history only while it is on", () => {
+  const K = require(path.join(ROOT, "commands/core.js"));
+  const apps = [{ id: "settings", names: ["Settings"] }];
+  for (const w of ["πρόχειρο", "Ιστορικό προχείρου", "clipboard history", "open clipboard", "Zwischenablage"]) {
+    const c = K.parse(w, { today: "2026-11-15", apps, clipOn: true });
+    assert.deepEqual(c && c.data, { name: "clip", value: true }, w);
+    assert.equal(K.parse(w, { today: "2026-11-15", apps }), null, w + " while off");
+    assert.deepEqual(K.call(c, "el"), { fn: "setting", args: ["clip", true] });
+  }
+  assert.match(read("shell.js"), /if \(name === "clip"\) \{ if \(window\.orosClip\) window\.orosClip\.open\(\);/);
+});
+
 test("wiring: page, shell, Quick settings, Settings, desktop menu", () => {
   const html = read("index.html"), shell = read("shell.js");
   assert.ok(html.indexOf('src="cliphist.js') > html.indexOf('src="widgets.js'));
@@ -133,7 +180,8 @@ test("wiring: page, shell, Quick settings, Settings, desktop menu", () => {
 test("strings in English, Greek and German", () => {
   const keys = ["sc.desc.cliphist", "qs.clip", "qs.clip.n", "clip.title", "clip.close", "clip.settings", "clip.clear",
     "clip.turnon", "clip.off", "clip.strict", "clip.empty", "clip.hint", "clip.copyit", "clip.forget", "clip.copied",
-    "clip.nocopy", "clip.full", "clip.desk", "clip.now", "clip.min", "clip.hours", "clip.days", "clip.min1", "clip.hours1", "clip.days1"];
+    "clip.nocopy", "clip.full", "clip.desk", "clip.now", "clip.min", "clip.hours", "clip.days", "clip.min1", "clip.hours1", "clip.days1", "clip.search", "clip.nomatch", "clip.hintPaste", "clip.thisapp", "clip.clearRest",
+    "clip.pinned", "clip.paste", "clip.pin", "clip.unpin", "clip.pinmax", "clip.nopaste"];
   const tr = read("translations.js"), de = read("i18n/de/shell.js");
   for (const k of keys) {
     const n = tr.split('"' + k + '":').length - 1;

@@ -417,6 +417,7 @@
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
     if (window.orosClip) window.orosClip.refresh();         // clipboard history
+    if (window.orosEmoji) window.orosEmoji.refresh();       // emoji picker
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
     // known) must relabel them too, or screen readers hear English.
@@ -4819,7 +4820,8 @@
     if (U) { try { rates = U.storedRates(JSON.parse(localStorage.getItem(U.RATES_KEY))); } catch (e) { rates = null; } }
     return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick, lang: langBase(),
                         calc: window.CalcCore, units: U, rates: rates, send: window.OrosSendCore,
-                        lockOn: !!(window.orosLock && window.orosLock.isOn()), pw: window.PwCore });
+                        lockOn: !!(window.orosLock && window.orosLock.isOn()), pw: window.PwCore,
+                        clipOn: !!(window.orosClip && window.orosClip.isOn()) });
   }
   function cmdHistory() {
     try {
@@ -4861,6 +4863,7 @@
     var N = window.orosNotifs;
     if (name === "theme") { setThemeUser(value); notifySys("dim", text); return; }
     if (name === "lock") { if (window.orosLock && window.orosLock.isOn()) window.orosLock.lock(); return; }
+    if (name === "clip") { if (window.orosClip) window.orosClip.open(); return; }   // CLIP-1 W2
     if (!N || typeof N.setSetting !== "function") return;
     if (name === "notifs") {
       if (!value) notifySys("dim", text);
@@ -8256,6 +8259,12 @@
     {
       k: "cr.g.data",
       items: [
+        { name: "Unicode CLDR annotations 49.0.0", url: "https://cldr.unicode.org/",
+          by: "Unicode, Inc.", lic: "Unicode License V3",
+          k: "cr.cldr-emoji" },
+        { name: "unicode-emoji-json 0.9.0", url: "https://github.com/muan/unicode-emoji-json",
+          by: "Mu-An Chiou", lic: "MIT",
+          k: "cr.unicode-emoji-json" },
         { name: "FSRS-6 (ts-fsrs 5.4.2)", url: "https://github.com/open-spaced-repetition/ts-fsrs",
           by: "Open Spaced Repetition", lic: "MIT",
           k: "cr.fsrs-ts" },
@@ -8716,7 +8725,7 @@
     var rows = "";
     SC_DEFS.forEach(function (def) {
       rows += '<div class="sc-row"><span class="sc-key">' + comboPrefix +
-              def.key.toUpperCase() + '</span><span>' +
+              escapeHtml(scLabel(def)) + '</span><span>' +
               escapeHtml(window.t(def.label)) + '</span></div>';
     });
 
@@ -9275,8 +9284,14 @@
     { key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
     { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
     { key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } },
-    { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } }
+    { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } },
+    { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } }
   ];
+  // The key an SC_DEFS entry answers to (e.code) and how it is shown:
+  // a letter ("v" → KeyV, "V") or a non-letter default ("Period", ".").
+  var SC_CODE_LABEL = { Period: "." };
+  function scCode(def) { return def.code || ("Key" + def.key.toUpperCase()); }
+  function scLabel(def) { return def.code ? (SC_CODE_LABEL[def.code] || def.code) : def.key.toUpperCase(); }
 
 
   // Public contract consumed by iframe apps (same-origin, so this
@@ -9299,10 +9314,9 @@
           tgt.isContentEditable) return false;
     }
     var code = e.code || "";
-    if (code.indexOf("Key") !== 0) return false;   // letters only
-    var letter = code.charAt(code.length - 1).toUpperCase();
+    if (code.indexOf("Key") !== 0 && code !== "Period") return false;   // letters, and "." (emoji, CLIP-1 W3)
     for (var i = 0; i < SC_DEFS.length; i++) {
-      if (SC_DEFS[i].key.toUpperCase() === letter) {
+      if (scCode(SC_DEFS[i]) === code) {
         if (e.preventDefault) e.preventDefault();
         SC_DEFS[i].fn();
         return true;
@@ -11766,7 +11780,7 @@
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       shortcuts: SC_DEFS.map(function (d) {
-        return { combo: (mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+") + d.key.toUpperCase(),
+        return { combo: (mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+") + scLabel(d),
                  label: window.t(d.label) };
       })
     };
@@ -15173,6 +15187,14 @@
       toast: function (kind, msg) { scToast(kind, msg); }
     });
     window.orosClip.onChange(settingsNotify);
+  }
+  // Emoji picker (emoji.js, CLIP-1 W3): Ctrl+Alt+Shift+. and Quick settings.
+  if (window.orosEmoji) {
+    window.orosEmoji.attach({
+      lang: function () { return state.lang; },
+      version: function () { return APP_VERSION; },
+      toast: function (kind, msg) { scToast(kind, msg); }
+    });
   }
   // Desktop widgets (widgets.js, a shell component like launcher.js):
   // clock, calendar, Today, weather, playing, sync on the desktop. A
