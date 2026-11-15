@@ -727,7 +727,7 @@
       "f.notebook": "Notebook", "f.folder": "Folder", "f.inlist": "List", "cr.rem.d1": "1 day before",
       "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
-      "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
+      "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.plan": "Starts", "f.ms": "Milestone", "f.deps": "Depends on", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
       "f.watered": "Last watered", "f.labels": "Labels", "f.subtasks": "Subtasks", "f.position": "Position"
     },
     el: {
@@ -1378,7 +1378,7 @@
       "f.notebook": "Σημειωματάριο", "f.folder": "Φάκελος", "f.inlist": "Λίστα", "cr.rem.d1": "1 ημέρα πριν",
       "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
-      "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
+      "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.plan": "Έναρξη", "f.ms": "Ορόσημο", "f.deps": "Εξαρτάται από", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
       "f.watered": "Τελευταίο πότισμα", "f.labels": "Ετικέτες", "f.subtasks": "Υποεργασίες", "f.position": "Θέση"
     }
   };

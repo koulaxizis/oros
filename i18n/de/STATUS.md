@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 45347 of 45827 (98%)
+- Strings: 45399 of 45879 (98%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1889 / 1891 |
+| assistant | 99% | 1892 / 1894 |
 | atelier | 100% | 1408 / 1408 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
@@ -26,7 +26,7 @@ text is still written in the code. They switch over wave by wave
 | bubble | 100% | 54 / 54 |
 | budget | 90% | 1065 / 1182 |
 | calculator | 100% | 170 / 170 |
-| calendar | 90% | 575 / 634 |
+| calendar | 90% | 576 / 635 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
@@ -72,7 +72,7 @@ text is still written in the code. They switch over wave by wave
 | household | 99% | 142 / 143 |
 | invoices | 97% | 659 / 673 |
 | jigsaw | 100% | 90 / 90 |
-| kanban | 99% | 351 / 354 |
+| kanban | 99% | 355 / 358 |
 | labels | 100% | 88 / 88 |
 | layout | 99% | 1087 / 1095 |
 | library | 100% | 327 / 327 |
@@ -172,7 +172,7 @@ text is still written in the code. They switch over wave by wave
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
-| writer | 100% | 487 / 487 |
+| writer | 100% | 531 / 531 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
 

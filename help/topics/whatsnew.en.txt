@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.91.00
+- **Kanban plans leave the Timeline.** `Export timeline (PDF)` prints the Gantt chart with milestones, arrows and the critical path. Start dates show in [Calendar](app:calendar) and Today, the Assistant can set start dates, milestones and dependencies, and start dates come along when you import from Trello or Jira. See [Kanban](app:kanban).
+
 ## Version 6.90.00
 - **Podcast episodes carry their chapters and cover.** The MP3 that Studio makes for an episode now holds its title, show, number, date, language, show notes, cover and the chapters from your markers, so podcast apps and players show them even when they play the file directly. Every MP3 from Studio uses the same up-to-date tags (ID3v2.4). See [Studio](app:studio).
 

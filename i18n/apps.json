@@ -460,6 +460,7 @@
    "files": [
     "kanban/kanban.js",
     "kanban/search.js",
+    "kanban/today.js",
     "kanban/tools.js"
    ]
   },
