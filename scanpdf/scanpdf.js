@@ -239,6 +239,7 @@
       "ocr.none": "No text was found on these pages.",
       "txt.title": "Text of the pages", "txt.page": "Page {n}", "txt.empty": "No text was found on this page.",
       "txt.copy": "Copy the text", "txt.send": "Send to an app", "txt.copied": "Text copied", "txt.noCopy": "The text could not be copied here.",
+      "save.docs": "Also add it to Documents", "toast.savedDocs": "Saved in Files › {dir}. It will be in Files › Documents.",
       "save.read": "Make it searchable", "save.readHint": "The text of scanned pages and pictures is read first and put under each page, so the PDF can be searched and copied.",
       "idx.title": "Search", "idx.hint": "PDFs you save into Files can be found in orOS search by their name and text. This list stays on this device: {n} documents.",
       "idx.hint.one": "PDFs you save into Files can be found in orOS search by their name and text. This list stays on this device: 1 document.",
@@ -268,6 +269,10 @@
       "rq.copy": "Copy the link", "rq.copied": "Link copied", "rq.email": "Email it", "rq.share": "Share…", "rq.done": "Done",
       "rq.mailSubject": "Please sign: {n}",
       "rq.mailBody": "Hello {to},\n\nplease read and sign “{n}” here:\n{l}\n\nThe link works until {d}.\n\n{by}",
+      "rq.remind": "Remind",
+      "rq.remindSubject": "Reminder: please sign {n}",
+      "rq.remindBody": "Hello {to},\n\na reminder: “{n}” is still waiting for your signature here:\n{l}\n\nThe link works until {d}.\n\n{by}",
+      "rq.auto": "The answer comes back on its own.",
       "rq.listH": "Signature requests", "rq.none": "No signature requests yet. Add a PDF, then Ask to sign.",
       "rq.paste": "Got an answer? Paste its link here", "rq.take": "Add the answer", "rq.close": "Close",
       "rq.st.waiting": "Waiting · until {d}", "rq.st.signed": "Signed by {nm} · {d}", "rq.st.declined": "Declined by {nm} · {d}",
@@ -453,6 +458,7 @@
       "ocr.none": "Δεν βρέθηκε κείμενο σε αυτές τις σελίδες.",
       "txt.title": "Το κείμενο των σελίδων", "txt.page": "Σελίδα {n}", "txt.empty": "Δεν βρέθηκε κείμενο σε αυτή τη σελίδα.",
       "txt.copy": "Αντιγραφή του κειμένου", "txt.send": "Αποστολή σε εφαρμογή", "txt.copied": "Το κείμενο αντιγράφηκε", "txt.noCopy": "Το κείμενο δεν αντιγράφηκε εδώ.",
+      "save.docs": "Προσθήκη και στα Έγγραφα", "toast.savedDocs": "Αποθηκεύτηκε στα Αρχεία › {dir}. Θα το βρεις στα Αρχεία › Έγγραφα.",
       "save.read": "Να γίνει αναζητήσιμο", "save.readHint": "Το κείμενο των σαρωμένων σελίδων και των εικόνων διαβάζεται πρώτα και μπαίνει κάτω από κάθε σελίδα, ώστε στο PDF να γίνεται αναζήτηση και αντιγραφή.",
       "idx.title": "Αναζήτηση", "idx.hint": "Τα PDF που αποθηκεύεις στα Αρχεία βρίσκονται στην αναζήτηση του orOS με το όνομα και το κείμενό τους. Η λίστα μένει σε αυτή τη συσκευή: {n} έγγραφα.",
       "idx.hint.one": "Τα PDF που αποθηκεύεις στα Αρχεία βρίσκονται στην αναζήτηση του orOS με το όνομα και το κείμενό τους. Η λίστα μένει σε αυτή τη συσκευή: 1 έγγραφο.",
@@ -482,6 +488,10 @@
       "rq.copy": "Αντιγραφή του συνδέσμου", "rq.copied": "Ο σύνδεσμος αντιγράφηκε", "rq.email": "Με email", "rq.share": "Κοινοποίηση…", "rq.done": "Τέλος",
       "rq.mailSubject": "Για υπογραφή: {n}",
       "rq.mailBody": "Καλησπέρα {to},\n\nδιάβασε και υπόγραψε το «{n}» εδώ:\n{l}\n\nΟ σύνδεσμος ισχύει έως {d}.\n\n{by}",
+      "rq.remind": "Υπενθύμιση",
+      "rq.remindSubject": "Υπενθύμιση: υπόγραψε το {n}",
+      "rq.remindBody": "Καλησπέρα {to},\n\nμια υπενθύμιση: το «{n}» περιμένει ακόμη την υπογραφή σου εδώ:\n{l}\n\nΟ σύνδεσμος ισχύει έως {d}.\n\n{by}",
+      "rq.auto": "Η απάντηση θα έρθει μόνη της.",
       "rq.listH": "Αιτήσεις υπογραφής", "rq.none": "Δεν υπάρχουν ακόμη αιτήσεις υπογραφής. Πρόσθεσε ένα PDF και πάτησε Ζήτα υπογραφή.",
       "rq.paste": "Ήρθε απάντηση; Επικόλλησε εδώ τον σύνδεσμό της", "rq.take": "Πρόσθεσε την απάντηση", "rq.close": "Κλείσιμο",
       "rq.st.waiting": "Σε αναμονή · έως {d}", "rq.st.signed": "Υπέγραψε ο/η {nm} · {d}", "rq.st.declined": "Αρνήθηκε ο/η {nm} · {d}",
@@ -1355,6 +1365,7 @@
         return writeToFiles(blob, C.diskDir(), name).then(function (path) {
           indexDoc(path, name, list);
           var dir = shortDir(C.diskDir());
+          if (prefs.docs === "on" && toDocsInbox(path)) { showToast(t("toast.savedDocs", { dir: dir })); return; }
           showToast(sizes && sizes.a ? t("toast.smallerFiles", { dir: dir, a: sizes.a, b: sizes.b })
                     : sizes ? t("toast.notSmaller") : t("toast.savedFiles", { dir: dir }));
         });
@@ -1472,6 +1483,13 @@
     body.appendChild(field(t("save.name"), name));
     body.appendChild(el("p", "hint small", tn("save.pages", list.length)));
     body.appendChild(whereChoice("dest", prefs.dest, "save.device", "save.files"));
+    // In Files: also give it to Files › Documents (files/docs.js reads
+    // the inbox the next time Files runs; nothing else is shared).
+    var toDocs = check(t("save.docs"), prefs.docs === "on");
+    body.appendChild(toDocs.row);
+    function syncDocs() { toDocs.row.hidden = (radioVal(body, "dest") || "device") !== "files"; }
+    body.addEventListener("change", syncDocs);
+    syncDocs();
     var cmp = select([["off", t("cmp.off")], ["light", t("cmp.light")], ["medium", t("cmp.medium")], ["strong", t("cmp.strong")]], prefs.cmp);
     body.appendChild(field(t("cmp.label"), cmp));
     var cHint = el("p", "hint small", t("cmp.hint"));
@@ -1493,6 +1511,7 @@
       var dest = radioVal(body, "dest") || "device";
       var P = C.readPrefs({ cmp: cmp.value, ocr: lang.value });
       prefs.dest = dest; prefs.cmp = P.cmp; prefs.ocr = P.ocr;
+      prefs.docs = toDocs.box.checked ? "on" : "off";
       // remember a choice that differs from what "auto" would pick
       if (read.box.checked !== wantsRead(list) || prefs.read !== "auto") prefs.read = read.box.checked ? "on" : "off";
       savePrefs();
@@ -3646,6 +3665,19 @@
   }
 
   // Universal search: PDFs saved into Files, by name and text (search.js).
+  // Files › Documents inbox (device-local, R10): paths files/docs.js
+  // adds as documents the next time Files runs (DOCS-1 wave 2).
+  var DOCS_INBOX = "oros-files-docs-inbox";
+  function toDocsInbox(path) {
+    try {
+      var cur = JSON.parse(localStorage.getItem(DOCS_INBOX) || "[]");
+      if (!Array.isArray(cur)) cur = [];
+      cur = cur.filter(function (x) { return x && x.p !== path; }).slice(-199);
+      cur.push({ p: path, at: Date.now(), from: "scanpdf" });
+      localStorage.setItem(DOCS_INBOX, JSON.stringify(cur));
+      return true;
+    } catch (e) { return false; }
+  }
   function indexDoc(path, name, list) {
     var text = pagesText(list).filter(function (s) { return s.trim(); }).join(" ");
     var cur = null;
@@ -3665,7 +3697,7 @@
   // original, so nothing of the pages comes from the other side.
   // The list of requests is sync slice "scanpdfSign".
   var SG = window.ScanPdfSign, RL = window.OrosShareRelay;
-  var SIGN_DIR = "Signatures", SIGN_ME = "oros-scanpdf-signme", MAX_SEND = 24 * 1048576;
+  var DAY_MS = 86400000, SIGN_DIR = "Signatures", SIGN_ME = "oros-scanpdf-signme", MAX_SEND = 24 * 1048576;
   var signStore = null, signQuiet = false, listOpen = false;
   function signDir() { return C.diskDir() + "/" + SIGN_DIR; }
   function syncApi() { try { return (window.parent && window.parent.orosSync) || null; } catch (e) { return null; } }
@@ -3778,7 +3810,7 @@
   }
   function sendRequest(o, auto) {
     if (auto) autoField();
-    var list = pages.slice(), geoms = list.map(geomOf), bytes = null, req = null, path = "";
+    var list = pages.slice(), geoms = list.map(geomOf), bytes = null, req = null, path = "", box = null;
     if (geoms.some(function (g) { return !g; })) { showToast(t("rq.err.bad")); return; }
     showBusy(t("rq.making"));
     buildPdf(list, o.n).then(function (blob) { return blob.arrayBuffer(); }).then(function (ab) {
@@ -3795,16 +3827,25 @@
         .then(function (p) { path = p; }, function () { path = ""; });
     }).then(function () {
       showBusy(t("rq.sending"));
-      return RL.create({ v: 1, k: "sign", d: req }, { days: o.days, password: o.code || undefined, bin: bytes });
+      // a reply box, so the answer comes back on its own (wave 4); without
+      // one (an older relay, no room) the answer comes as a link
+      var until = Date.now() + (o.days || 7) * DAY_MS + 30 * DAY_MS;
+      return RL.boxes ? RL.boxes(1, { exp: until }).then(function (l) { return l[0]; }, function () { return null; }) : null;
+    }).then(function (bx) {
+      box = bx;
+      var d = box ? Object.assign({}, req, { bx: { id: box.id, k: box.key, w: box.wt } }) : req;
+      return RL.create({ v: 1, k: "sign", d: d }, { days: o.days, password: o.code || undefined, bin: bytes });
     }).then(function (r) {
       var it = { id: r.id, a: Date.now(), q: req, x: r.exp, c: r.code, d: r.del };
       if (path) it.p = path;
+      if (box) it.b = { id: box.id, k: box.key, r: box.rt };
       saveSign(SG.addItem(loadSign(), it));
       hideBusy();
       linkDialog(r.id, o.code);
       if (!path) showToast(t("rq.noKeep"));
     }).catch(function (e) {
       hideBusy();
+      if (box && RL.revoke) RL.revoke(box.id, box.rt).then(null, function () {});
       try { console.error("[orOS] scanpdf sign request:", e); } catch (x) {}
       showToast(t(sendErr(e)));
     });
@@ -3827,6 +3868,16 @@
       return m && Array.isArray(m.accounts) && m.accounts.length ? shell : null;
     } catch (e) { return null; }
   }
+  // The link by email: orOS Mail when it has an account, else mailto:.
+  // remind: the reminder text (Remind in the list).
+  function mailLink(it, remind) {
+    var q = it.q, link = SG.signLink(origin(), it.c), d = fmtDay(it.x);
+    var subject = t(remind ? "rq.remindSubject" : "rq.mailSubject", { n: q.n });
+    var text = t(remind ? "rq.remindBody" : "rq.mailBody", { to: q.to, n: q.n, l: link, d: d, by: q.by });
+    var shell = mailShell();
+    if (shell) { closeModal(); shell.__orosOpenAt("mail", { compose: { to: q.te || "", subject: subject.slice(0, 300), body: text.slice(0, 20000) } }); return; }
+    window.open("mailto:" + encodeURIComponent(q.te || "") + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(text), "_self");
+  }
   function linkDialog(id, codeTold) {
     var it = loadSign().items[id];
     if (!it || it.gone) return;
@@ -3841,12 +3892,7 @@
     var acts = el("div", "rq-acts");
     function act(label, fn, cls) { var b = el("button", "btn small" + (cls ? " " + cls : ""), label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); return b; }
     act(t("rq.copy"), function () { copyText(link).then(function () { showToast(t("rq.copied")); }, function () { out.select(); showToast(t("txt.noCopy")); }); }, "primary");
-    act(t("rq.email"), function () {
-      var subject = t("rq.mailSubject", { n: q.n }), text = t("rq.mailBody", { to: q.to, n: q.n, l: link, d: d, by: q.by });
-      var shell = mailShell();
-      if (shell) { closeModal(); shell.__orosOpenAt("mail", { compose: { to: q.te || "", subject: subject.slice(0, 300), body: text.slice(0, 20000) } }); return; }
-      window.open("mailto:" + encodeURIComponent(q.te || "") + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(text), "_self");
-    });
+    act(t("rq.email"), function () { mailLink(it, false); });
     if (typeof navigator.share === "function") {
       act(t("rq.share"), function () { navigator.share({ title: t("rq.mailSubject", { n: q.n }), url: link }).catch(function () {}); });
     }
@@ -3864,6 +3910,7 @@
     $("modal-cancel").hidden = true;
     listOpen = true;
     renderList();
+    pollBoxes(true);
   }
   function renderList() {
     var body = $("rq-list");
@@ -3904,8 +3951,10 @@
     if (it.got && it.got.why) li.appendChild(el("span", "rq-why", t("rq.why", { why: it.got.why })));
     var acts = el("div", "rq-acts");
     function act(label, fn, cls) { var b = el("button", "btn small" + (cls ? " " + cls : ""), label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); return b; }
+    if (st === "waiting" && it.b) li.appendChild(el("span", "rq-why", t("rq.auto")));
     if (st === "waiting") {
       act(t("rq.copyLink"), function () { linkDialogFromList(it.id); });
+      act(t("rq.remind"), function () { mailLink(it, true); });
       var rv = act(t("rq.revoke"), function () {
         if (!rv.classList.contains("sure")) { rv.classList.add("sure"); rv.textContent = t("rq.revokeSure"); return; }
         revokeItem(it.id);
@@ -3919,7 +3968,7 @@
         fs.readBlob(it.got.pf).then(function (b) { return saveBlob(b, SG.signedName(q.n)); }, function () { showToast(t("err.read")); });
       });
     }
-    if (st !== "waiting") act(t("rq.remove"), function () { saveSign(SG.remove(loadSign(), it.id, Date.now())); renderList(); });
+    if (st !== "waiting") act(t("rq.remove"), function () { dropBox(it); saveSign(SG.remove(loadSign(), it.id, Date.now())); renderList(); });
     li.appendChild(acts);
     return li;
   }
@@ -3928,6 +3977,7 @@
     var it = loadSign().items[id];
     if (!it) return;
     var done = function () { saveSign(SG.setRevoked(loadSign(), id, Date.now())); renderList(); };
+    dropBox(it);
     if (!it.d) { done(); return; }
     RL.revoke(id, it.d).then(done, function () { showToast(t("rq.revokeFail")); });
   }
@@ -3947,46 +3997,88 @@
     if (!code) { showToast(t("rq.badReply")); return; }
     taking = true;
     showBusy(t("rq.opening"));
-    RL.open(code).then(function (r) {
-      if (r.error) throw codeErr(r.error === "gone" ? "replyGone" : r.error === "net" ? "net" : "badReply");
-      var d = r.e && r.e.k === "signed" && r.e.d && typeof r.e.d === "object" ? r.e.d : null;
-      var it = d && typeof d.rq === "string" ? loadSign().items[d.rq] : null;
-      if (!d) throw codeErr("badReply");
-      if (!it || it.gone) throw codeErr("notMine");
-      if (it.got) { hideBusy(); showToast(t("rq.already")); return; }
-      var reply = SG.cleanReply(d, it.q);
-      if (!reply) throw codeErr("badReply");
-      return SG.sha256(SG.canon(reply)).then(function (rh) {
-        if (reply.st === "declined") return finish(it, { at: Date.now(), st: "declined", nm: reply.nm, why: reply.why, rh: rh });
-        showBusy(t("rq.building"));
-        return original(it).then(function (bytes) {
-          return signedPdf(bytes, it, reply);
-        }).then(function (signed) {
-          return SG.sha256(signed).then(function (hf) {
-            return writeToFiles(new Blob([signed], { type: "application/pdf" }), signDir(), SG.signedName(it.q.n)).then(function (pf) {
-              return finish(it, { at: Date.now(), st: "signed", nm: reply.nm, rh: rh, hf: hf, pf: pf });
-            }, function () {
-              finish(it, { at: Date.now(), st: "signed", nm: reply.nm, rh: rh, hf: hf }, true);
-              return saveBlob(new Blob([signed], { type: "application/pdf" }), SG.signedName(it.q.n));
-            });
+    RL.open(code).then(function (r) { return useReply(r, ""); })
+      .then(function () { taking = false; hideBusy(); }, replyFailed);
+  }
+  function replyFailed(e) {
+    taking = false;
+    hideBusy();
+    var c = e && e.code;
+    showToast(t(c === "net" ? "rq.err.net" : ["replyGone", "notMine", "noOriginal", "badReply"].indexOf(c) >= 0 ? "rq." + c : "rq.err.bad"));
+  }
+  // An opened answer (from its link, or from the reply box of item
+  // `want`): the signed PDF made and kept, the item closed.
+  function useReply(r, want) {
+    if (r.error) throw codeErr(r.error === "gone" ? "replyGone" : r.error === "net" ? "net" : "badReply");
+    var d = r.e && r.e.k === "signed" && r.e.d && typeof r.e.d === "object" ? r.e.d : null;
+    var it = d && typeof d.rq === "string" ? loadSign().items[d.rq] : null;
+    if (!d) throw codeErr("badReply");
+    if (want && d.rq !== want) throw codeErr("notMine");
+    if (!it || it.gone) throw codeErr("notMine");
+    if (it.got) { hideBusy(); showToast(t("rq.already")); return; }
+    var reply = SG.cleanReply(d, it.q);
+    if (!reply) throw codeErr("badReply");
+    return SG.sha256(SG.canon(reply)).then(function (rh) {
+      if (reply.st === "declined") return finish(it, { at: Date.now(), st: "declined", nm: reply.nm, why: reply.why, rh: rh });
+      showBusy(t("rq.building"));
+      return original(it).then(function (bytes) {
+        return signedPdf(bytes, it, reply);
+      }).then(function (signed) {
+        return SG.sha256(signed).then(function (hf) {
+          return writeToFiles(new Blob([signed], { type: "application/pdf" }), signDir(), SG.signedName(it.q.n)).then(function (pf) {
+            return finish(it, { at: Date.now(), st: "signed", nm: reply.nm, rh: rh, hf: hf, pf: pf });
+          }, function () {
+            finish(it, { at: Date.now(), st: "signed", nm: reply.nm, rh: rh, hf: hf }, true);
+            return saveBlob(new Blob([signed], { type: "application/pdf" }), SG.signedName(it.q.n));
           });
         });
       });
-    }).then(function () { taking = false; hideBusy(); }, function (e) {
-      taking = false;
-      hideBusy();
-      var c = e && e.code;
-      showToast(t(c === "net" ? "rq.err.net" : ["replyGone", "notMine", "noOriginal", "badReply"].indexOf(c) >= 0 ? "rq." + c : "rq.err.bad"));
     });
+  }
+
+  // Reply boxes: answers that came back on their own. Asked about when
+  // the app opens, when it comes back to the front and when the list
+  // opens, at most every POLL_MS; one call for all waiting requests.
+  var POLL_MS = 120000, lastPoll = 0, polling = false, quietTake = false;
+  function pollBoxes(force) {
+    if (!SG || !RL || !RL.poll || polling || taking) return;
+    var now = Date.now();
+    if (!force && now - lastPoll < POLL_MS) return;
+    var want = SG.boxesToPoll(loadSign(), now);
+    if (!want.length) return;
+    lastPoll = now;
+    polling = true;
+    RL.poll(want).then(function (st) {
+      var ready = want.filter(function (b) { return st[b.id] === "ready"; });
+      function next() {
+        var b = ready.shift();
+        if (!b) return null;
+        taking = true; quietTake = true;
+        return RL.takeBox(b).then(function (r) {
+          return useReply(r, b.item);
+        }).then(function () {
+          taking = false; quietTake = false; hideBusy();
+        }, function (e) {
+          taking = false; quietTake = false; hideBusy();
+          if (!(e && e.code === "net")) replyFailed(e);
+        }).then(next);
+      }
+      return next();
+    }).then(function () { polling = false; }, function () { polling = false; });
+  }
+  // The reply box goes from the relay (answered, taken back, removed).
+  function dropBox(it) {
+    if (it && it.b && RL && RL.revoke) RL.revoke(it.b.id, it.b.r).then(null, function () {});
   }
   // Received: kept in the list, the request taken off the relay.
   function finish(it, got, notSaved) {
     saveSign(SG.setGot(loadSign(), it.id, got));
     if (it.d) RL.revoke(it.id, it.d).then(null, function () {});
+    dropBox(it);
     var nm = got.nm || it.q.to;
     showToast(got.st === "declined" ? t("rq.gotDeclined", { nm: nm }) :
               notSaved ? t("rq.gotNotSaved", { nm: nm }) : t("rq.gotSigned", { nm: nm, dir: shortDir(signDir()) }));
-    if (listOpen) renderList(); else listDialog();
+    if (listOpen) renderList(); else if (!quietTake) listDialog();
   }
   // The original as sent: from Files, else from the request link while
   // it is still there; it must hash to what the request says.
@@ -4446,6 +4538,8 @@
       }
     } catch (e) {}
     takeReplyFromUrl();
+    setTimeout(function () { pollBoxes(false); }, 2500);
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") pollBoxes(false); });
   }
 
   boot();

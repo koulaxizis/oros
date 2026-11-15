@@ -877,7 +877,9 @@
 
   // Factory reset: delete every orOS file (blob, backups, the Vault
   // Drive folder). Best-effort per file. Resolves the number of paths.
-  function dropboxWipeAll() {
+  // keepBlob (SOS-1): the blob stays, because it now holds an SOS or
+  // reset signal. /transfer (Transfer's sealed packs) goes too.
+  function dropboxWipeAll(keepBlob) {
     function delAll(paths) {
       return paths.reduce(function (chain, p) {
         return chain.then(function () {
@@ -895,9 +897,11 @@
         // and its manifest survived a "brand new OS" reset. One
         // delete_v2 on the folder removes it recursively (409 when
         // it never existed — harmless).
-        var paths = [BLOB_PATH, ADAPTER_ROOT];   // direct delete even if listing failed
+        var paths = keepBlob ? [ADAPTER_ROOT, DROP_ROOT] : [BLOB_PATH, ADAPTER_ROOT, DROP_ROOT];   // direct delete even if listing failed
+        var blobLower = BLOB_PATH.toLowerCase();
         (listing.entries || []).forEach(function (e) {
           if (e.path_lower && e.name && e.name.indexOf("orOS-") === 0 &&
+              e.path_lower !== blobLower &&
               paths.indexOf(e.path_lower) === -1) paths.push(e.path_lower);
         });
         return delAll(paths).then(function () { return paths.length; });
@@ -951,7 +955,8 @@
   //   backupList() → Promise<[{ name, size, modified }]>
   //   backupGet(name) → Promise<text|null>
   //   backupDelete(name) → Promise<true>
-  //   wipeAll() → Promise<number>       — every orOS file + the Vault
+  //   wipeAll(keepBlob?) → Promise<number> — every orOS file + the Vault
+  //       (keepBlob: all but the blob, which holds an SOS-1 signal)
   //   revoke(timeoutMs?) → Promise<bool> — never rejects
   //   storage                    — the Vault Drive object contract
   // Network failures reject with "network error: …"; auth failures
@@ -1313,9 +1318,9 @@
     });
   }
 
-  function davWipeAll() {
+  function davWipeAll(keepBlob) {   // keepBlob: see dropboxWipeAll
     return davChildren("").catch(function () { return null; }).then(function (list) {
-      var doomed = [{ rel: BLOB_NAME, dir: false }, { rel: DAV_ROOT, dir: true }];
+      var doomed = keepBlob ? [{ rel: DAV_ROOT, dir: true }] : [{ rel: BLOB_NAME, dir: false }, { rel: DAV_ROOT, dir: true }];
       (list || []).forEach(function (e) {
         if (e.name.indexOf("orOS-") === 0 && e.rel !== BLOB_NAME) doomed.push({ rel: e.rel, dir: e.dir });
       });
@@ -1543,8 +1548,25 @@
   // first, then the provider. Callers may pass bytes or a Blob.
   // ---------- TRANSFER-1 wave 4: orOS Transfer through Dropbox ----------
   // Names are "<id>/<part>": id 8-40 of [a-z0-9], part 1-40 of
-  // [a-z0-9.-]. A temporary link (files/get_temporary_link) lasts 4 h.
+  // [a-z0-9.-]. A temporary link (files/get_temporary_link) lasts 4 h;
+  // a shared link (wave 5, sharing.write, for 12-96 h) lasts until the
+  // files are removed. A folder's first 8 characters are a base-36 time
+  // T: the folder is removed once T + 4 h 15 min has passed (T is
+  // "expiry - 4 h", so the 4-hour rule of older builds keeps a longer
+  // hold too). dropSweep below runs that on every open orOS, hourly.
   var DROP_ROOT = "/transfer";
+  var DROP_SWEEP_MS = 4 * 3600000 + 15 * 60000;
+  var DROP_SWEEP_KEY = "oros-transfer-sweep-at";
+  // https://www.dropbox.com/scl/fi/<id>/<name>?rlkey=…&dl=0 → the same
+  // file on dl.dropboxusercontent.com, which a browser may fetch.
+  function dropDirect(u) {
+    var m = /^https:\/\/(?:www\.)?dropbox\.com\/((?:scl\/fi|s)\/[A-Za-z0-9_\/.%-]+)(\?[^#\s]*)?$/.exec(String(u || ""));
+    if (!m) return "";
+    var q = new URLSearchParams(m[2] || ""), keep = new URLSearchParams();
+    if (q.get("rlkey")) keep.set("rlkey", q.get("rlkey"));
+    var qs = keep.toString();
+    return "https://dl.dropboxusercontent.com/" + m[1] + (qs ? "?" + qs : "");
+  }
   function dropPath(name) {
     name = String(name || "");
     if (!/^[a-z0-9]{8,40}(\/[a-z0-9.-]{1,40})?$/.test(name)) throw new Error("bad-name");
@@ -1577,6 +1599,33 @@
         return u;
       });
     },
+    // A shared link for 12-96 h (needs sharing.write). Errors: "dropbox-scope"
+    // when this sign-in predates the permission (sign in again).
+    share: function (name) {
+      var path;
+      return dropReady().then(function () { path = dropPath(name); return rpc("sharing/create_shared_link_with_settings", { path: path }); }).then(function (res) {
+        if (res.ok) return res.json();
+        return res.text().then(function (t) {
+          var j = null;
+          try { j = JSON.parse(t); } catch (e) { j = null; }
+          var sum = String(j && j.error_summary || "");
+          if (res.status === 401 && /missing_scope/.test(sum)) throw new Error("dropbox-scope");
+          if (res.status === 409 && /shared_link_already_exists/.test(sum)) {
+            var md = j.error && j.error.shared_link_already_exists && j.error.shared_link_already_exists.metadata;
+            if (md && md.url) return md;
+            return rpc("sharing/list_shared_links", { path: path, direct_only: true }).then(function (r2) {
+              if (!r2.ok) throw new Error("share failed: " + r2.status);
+              return r2.json().then(function (l) { return (l.links || [])[0] || {}; });
+            });
+          }
+          throw new Error("share failed: " + res.status);
+        });
+      }).then(function (md) {
+        var u = dropDirect(md && md.url);
+        if (!u) throw new Error("share failed: shape");
+        return u;
+      });
+    },
     remove: function (id) {
       return dropReady().then(function () { return rpc("files/delete_v2", { path: dropPath(id) }); }).then(function (res) {
         if (res.ok || res.status === 409) return true;
@@ -1594,6 +1643,15 @@
           .map(function (e) { return { id: e.name }; });
       });
     },
+    // Removes the folders whose time has passed (see DROP_SWEEP_MS).
+    sweep: function (now) {
+      now = now || Date.now();
+      return cloudDrop.list().then(function (list) {
+        var old = list.filter(function (x) { var t = parseInt(x.id.slice(0, 8), 36); return !(t > 0) || now - t > DROP_SWEEP_MS; });
+        return old.reduce(function (q, x) { return q.then(function () { return cloudDrop.remove(x.id); }); }, Promise.resolve()).then(function () { return old.length; });
+      });
+    },
+    direct: dropDirect,
     // { used, allocated } bytes, or null when Dropbox does not say.
     space: function () {
       return dropReady().then(ensureFreshToken).then(function (token) {
@@ -1606,6 +1664,96 @@
         });
       }).catch(function () { return null; });
     }
+  };
+
+  // ---------- GATE-FILES F2: Claude's closed copy of files (orOS Gate) ----------
+  // Sealed pieces under /gate/<gate id>/<32 hex> in the orOS app folder
+  // (beside /vault and /transfer, never inside the vault; VD-GC never
+  // looks here). Each piece gets a shared link (sharing.write) that the
+  // relay fetches while a Claude call runs: ciphertext only.
+  var GATE_ROOT = "/gate";
+  function gatePath(name) {
+    name = String(name || "");
+    if (!/^[A-Za-z0-9_-]{22}(\/[0-9a-f]{32})?$/.test(name)) throw new Error("bad-name");
+    return GATE_ROOT + "/" + name;
+  }
+  function gateDirect(u) {
+    var m = /^https:\/\/(?:www\.)?dropbox\.com\/((?:scl\/fi|s)\/[A-Za-z0-9_\/.%-]+)(\?[^#\s]*)?$/.exec(String(u || ""));
+    if (!m) return "";
+    var q = new URLSearchParams(m[2] || ""), keep = new URLSearchParams();
+    if (q.get("rlkey")) keep.set("rlkey", q.get("rlkey"));
+    var qs = keep.toString();
+    return "https://dl.dropboxusercontent.com/" + m[1] + (qs ? "?" + qs : "");
+  }
+  function gateErr(res, what) {
+    return res.text().then(function (t) {
+      var j = null;
+      try { j = JSON.parse(t); } catch (e) { j = null; }
+      var sum = String(j && j.error_summary || "");
+      if (res.status === 401 && /missing_scope/.test(sum)) throw new Error("dropbox-scope");
+      if (res.status === 507 || /insufficient_space/.test(sum)) throw new Error("dropbox-full");
+      var e = new Error(what + " failed: " + res.status);
+      e.summary = sum; e.body = j;
+      throw e;
+    });
+  }
+  var gateDrop = {
+    available: function () { return provider.id === "dropbox" && isConnected() && !suspended; },
+    // name = "<gid>/<32 hex>"; bytes ≤ 150 MB
+    put: function (name, bytes) {
+      return dropReady().then(function () {
+        var path = gatePath(name);
+        return adapterUploadOnce(path, bytes instanceof Blob ? bytes : new Blob([bytes]), undefined).then(function (res) {
+          if (!res.ok) return gateErr(res, "upload");
+          return true;
+        });
+      });
+    },
+    // → the piece's direct shared link (the same one again if it exists)
+    share: function (name) {
+      var path;
+      return dropReady().then(function () { path = gatePath(name); return rpc("sharing/create_shared_link_with_settings", { path: path }); }).then(function (res) {
+        if (res.ok) return res.json();
+        return gateErr(res, "share").catch(function (e) {
+          var j = e.body;
+          if (!/shared_link_already_exists/.test(e.summary || "")) throw e;
+          var md = j && j.error && j.error.shared_link_already_exists && j.error.shared_link_already_exists.metadata;
+          if (md && md.url) return md;
+          return rpc("sharing/list_shared_links", { path: path, direct_only: true }).then(function (r2) {
+            if (!r2.ok) throw new Error("share failed: " + r2.status);
+            return r2.json().then(function (l) { return (l.links || [])[0] || {}; });
+          });
+        });
+      }).then(function (md) {
+        var u = gateDirect(md && md.url);
+        if (!u) throw new Error("share failed: shape");
+        return u;
+      });
+    },
+    // [{ name, size, at (ms) }] of one gate's pieces (all pages)
+    list: function (gid) {
+      var out = [];
+      function page(res) {
+        if (res.status === 409) return out;
+        if (!res.ok) throw new Error("list failed: " + res.status);
+        return res.json().then(function (j) {
+          (j.entries || []).forEach(function (e) {
+            if (e && e[".tag"] === "file" && /^[0-9a-f]{32}$/.test(e.name || "")) out.push({ name: e.name, size: +e.size || 0, at: Date.parse(e.server_modified || "") || 0 });
+          });
+          if (j.has_more && j.cursor) return rpc("files/list_folder/continue", { cursor: j.cursor }).then(page);
+          return out;
+        });
+      }
+      return dropReady().then(function () { return rpc("files/list_folder", { path: gatePath(gid), limit: 2000 }); }).then(page);
+    },
+    // one piece ("<gid>/<hex>") or the whole gate ("<gid>")
+    remove: function (name) {
+      return dropReady().then(function () { return rpc("files/delete_v2", { path: gatePath(name) }); }).then(function (res) {
+        if (res.ok || res.status === 409) return true;
+        throw new Error("delete failed: " + res.status);
+      });
+    },
+    space: function () { return cloudDrop.space(); }
   };
 
   var storageAdapter = {
@@ -1727,23 +1875,53 @@
     return n;
   }
 
-  function encryptBlob(payloadObj) {
+  // { iter, salt, iv, data } sealing obj with the passphrase (SOS-1:
+  // shared by the blob and the SOS / reset signals).
+  function encryptEnvelope(obj) {
     var salt = saltForWrite();
     var iv   = new Uint8Array(12); crypto.getRandomValues(iv);
-    var plain = new TextEncoder().encode(JSON.stringify(payloadObj));
+    var plain = new TextEncoder().encode(JSON.stringify(obj));
 
     return deriveKey(salt, PBKDF2_ROUNDS).then(function (key) {
       return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, plain);
     })
       .then(function (cipher) {
-        return JSON.stringify({
-          ver:  BLOB_VERSION,
+        return {
           iter: PBKDF2_ROUNDS,                 // A70 (absent = PBKDF2_LEGACY)
           salt: b64encode(salt.buffer),
           iv:   b64encode(iv.buffer),
           data: b64encode(cipher)
-        });
+        };
       });
+  }
+
+  // The object sealed in an envelope (rejects: wrong passphrase, bad
+  // rounds, broken fields).
+  function openEnvelope(env) {
+    var rounds;
+    try { rounds = blobRounds(env); } catch (e) { return Promise.reject(e); }
+    var salt, iv, data;
+    try {
+      salt = b64decode(env.salt);
+      iv   = b64decode(env.iv);
+      data = b64decode(env.data);
+    } catch (e) { return Promise.reject(new Error("bad envelope")); }
+    return deriveKey(salt, rounds).then(function (key) {
+      return crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
+    }).then(function (plain) {
+      return JSON.parse(new TextDecoder().decode(plain));
+    });
+  }
+
+  function encryptBlob(payloadObj) {
+    return encryptEnvelope(payloadObj).then(function (e) {
+      var out = { ver: BLOB_VERSION, iter: e.iter, salt: e.salt, iv: e.iv, data: e.data };
+      // SOS-1: a cloud started again after an SOS carries that SOS on,
+      // so a device that missed it still erases itself (judgeCloud).
+      var r = sosRecord();
+      if (r) out.sig = r.sig;
+      return JSON.stringify(out);
+    });
   }
 
   function decryptBlob(blobText) {
@@ -1751,17 +1929,8 @@
     if (!blob || blob.ver !== BLOB_VERSION) {
       return Promise.reject(new Error("unsupported blob version"));
     }
-    var rounds;
-    try { rounds = blobRounds(blob); } catch (e) { return Promise.reject(e); }
-    var salt = b64decode(blob.salt);
-    var iv   = b64decode(blob.iv);
-    var data = b64decode(blob.data);
-
-    return deriveKey(salt, rounds).then(function (key) {
-        return crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
-  })
-    .then(function (plain) {
-      var payload = JSON.parse(new TextDecoder().decode(plain));
+    return openEnvelope(blob)
+    .then(function (payload) {
       // Check pwEpoch against local known epoch
       var cloudEpoch = (payload.meta && payload.meta.pwEpoch) || 0;
       var localEpoch = getWVEpoch();
@@ -1963,7 +2132,17 @@
       });
   }
 
+  // Sensitive work (lock.js, "oros-strict"): the passphrase is never
+  // kept on this device while it is on, whatever asks for it.
+  function strictOn() {
+    try {
+      var r = JSON.parse(localStorage.getItem("oros-strict") || "null");
+      return !!(r && r.v === 1 && (r.level === "on" || r.level === "hard"));
+    } catch (e) { return false; }
+  }
+
   function sealPassphrase(pass) {
+    if (strictOn()) return clearVault();
     return openVaultDb()
       .then(getDeviceKey)
       .then(function (key) {
@@ -2789,6 +2968,7 @@
   // a failed copy never blocks the push and is retried at the next.
   function maybeBackup() {
     if (cloudRev === null) return Promise.resolve(false);   // empty cloud — nothing to copy
+    if (cloudIsSignal) return Promise.resolve(false);       // SOS-1: a signal holds no data
     var last = parseInt(localStorage.getItem(BACKUP_STAMP_KEY) || "0", 10) || 0;
     var now = Date.now();
     if (last > now) last = 0;                               // clock moved back
@@ -3190,8 +3370,13 @@
       })
       .then(function (blobText) {
         if (!blobText) return;
-        return decryptBlob(blobText).then(function () {
-          lastSuccessfulPullAt = Date.now();   // proven — window re-arms
+        // SOS-1: an SOS or reset signal is never overwritten unless this
+        // device may take the cloud over (judgeCloud "adopt").
+        return judgeCloud(envOf(blobText), cloudRev).then(function (verdict) {
+          if (verdict === "adopt") { lastSuccessfulPullAt = Date.now(); return; }
+          return decryptBlob(blobText).then(function () {
+            lastSuccessfulPullAt = Date.now();   // proven — window re-arms
+          });
         });
         // OperationError rejects the chain → push refuses to run.
       });
@@ -3208,9 +3393,23 @@
       if (!cloud.text) {
         lastSuccessfulPullAt = Date.now();   // empty cloud — any passphrase OK
         cloudRev = null;
+        cloudIsSignal = false;
+        return { ok: true, empty: true, applied: 0 };
+      }
+      var env = envOf(cloud.text);
+      return judgeCloud(env, cloud.rev).then(function (verdict) {
+      if (verdict === "adopt") {
+        // SOS-1: a signal this device may replace counts as an empty
+        // cloud; the next push replaces exactly this revision.
+        lastSuccessfulPullAt = Date.now();
+        cloudRev = cloud.rev;
+        cloudIsSignal = true;
         return { ok: true, empty: true, applied: 0 };
       }
       return decryptBlob(cloud.text).then(function (payload) {
+        cloudIsSignal = false;
+        signalSeen = null;
+        if (env && sigShape(env.sig)) noteSos(env.sig);   // SOS-1: carried on in every write
         var restoreN = (payload && payload.meta && payload.meta.restoreEpoch) | 0;   // A43
         if (restoreNeeded(restoreN)) return followRestore(payload, cloud, restoreN);
         var applied = applyPayload(payload);
@@ -3218,6 +3417,7 @@
         lastSuccessfulPullAt = Date.now(); // passphrase PROVEN against cloud
         cloudRev = cloud.rev;              // may be undefined (fallback race) → push re-learns
         return { ok: true, empty: false, applied: applied, failed: lastApplyFailed.slice() };
+      });
       });
     });
   }
@@ -3323,6 +3523,8 @@
       .then(function (put) {
         // The blob in the cloud is now exactly our payload.
         cloudRev = put.rev;
+        cloudIsSignal = false;
+        adoptRev = null;
         // v0.8: the push that just succeeded IS the moment "what the
         // cloud holds" and "what the local slices hold" became one.
         // Record the baselines for every slice we just uploaded —
@@ -3479,8 +3681,22 @@
                               mins * 60 * 1000);
   }
 
+  // TRANSFER-1 wave 5: whichever orOS is open removes Transfer folders
+  // whose time has passed, at most once an hour (one list call).
+  function dropSweep() {
+    try {
+      if (!cloudDrop.available() || !navigator.onLine) return;
+      var last = +localStorage.getItem(DROP_SWEEP_KEY) || 0;
+      if (Date.now() - last < 3600000) return;
+      localStorage.setItem(DROP_SWEEP_KEY, String(Date.now()));
+      cloudDrop.sweep().catch(function () {});
+    } catch (e) {}
+  }
+
   function startAutoEngine() {
     scheduleAutoInterval();
+    setTimeout(dropSweep, 60000);
+    setInterval(dropSweep, 15 * 60000);
 
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") {
@@ -3518,13 +3734,23 @@
   // wipeEverything(): CLOUD-FIRST nuclear reset. Order is critical:
   //   1. suspend (nothing new can fire)
   //   2. wait out any in-flight push/reconcile (bounded 3s)
-  //   3. DELETE every orOS file in the app folder (blob + backups)
-  //   4. REVOKE this device's authorization at the provider (server-side)
-  //   5. disconnect() locally (tokens, account cache, passphrase)
-  // Works WITHOUT a passphrase — deletion and revoke never decrypt.
-  // Resolves { wiped: n, revoked: bool } even when not connected
-  // ({ wiped: 0 }) — the caller proceeds with the local wipe either way.
+  //   3. with the passphrase: the blob becomes a RESET signal (SOS-1),
+  //      so another device asks before it fills the cloud again;
+  //      without it (or when the signal cannot be written) the blob is
+  //      deleted as before
+  //   4. DELETE every other orOS file (backups, /vault, /transfer)
+  //   5. REVOKE this device's sign-in at the provider, unless it is
+  //      shared with a paired browser (PAIR-1: that one must still see
+  //      the signal)
+  //   6. disconnect() locally (tokens, account cache, passphrase)
+  // Resolves { wiped: n, revoked: bool, signalled: bool } even when not
+  // connected ({ wiped: 0 }) — the caller proceeds with the local wipe.
   function wipeEverything() {
+    return closeCloud("reset");
+  }
+
+  // Shared by the factory reset and SOS. kind: "reset" | "sos".
+  function closeCloud(kind) {
     suspendEngine();
 
     // Bounded wait: an in-flight push MUST land before we delete,
@@ -3545,18 +3771,178 @@
     }
 
     return waitFlight(3000).then(function () {
-      if (!isConnected()) return { wiped: 0, revoked: false };
+      if (!isConnected()) return { wiped: 0, revoked: false, signalled: false };
 
-      var wiped = 0;
-      return provider.wipeAll()
+      var wiped = 0, signalled = false;
+      var mark = passphrase ? putSignal(kind).then(function () { return true; }, function () { return false; })
+                            : Promise.resolve(false);
+      return mark
+        .then(function (ok) {
+          signalled = ok;
+          return provider.wipeAll(ok);
+        })
         .then(function (n) {
           wiped = n;
-          return provider.revoke();
+          return ownRevoke(provider.revoke);
         })
         .then(function (revoked) {
           disconnect();
-          return { wiped: wiped, revoked: revoked };
+          return { wiped: wiped, revoked: revoked, signalled: signalled };
         });
+    });
+  }
+
+  // ---------- SOS-1: SOS and reset signals ----------
+  // An SOS (Settings › System, Bible SOS-1) or a factory reset leaves
+  // a SIGNAL where the blob was:
+  //   { "ver": "oros-signal", "sig": { kind, n, iter, salt, iv, data } }
+  // kind "sos" | "reset" and n (ms, the signal's time) are in clear;
+  // data seals { sig: kind, n } with the passphrase, so only someone
+  // who holds the passphrase can make a signal a device obeys. Older
+  // bundles read ver "oros-signal" as an unsupported version: their
+  // pull fails and their push guard refuses to overwrite it.
+  // judgeCloud() decides on every pull and before every push:
+  //   · a device that synced this cloud before the signal ("stale",
+  //     staleFor) and whose passphrase opens it:
+  //       sos   → the engine stops and onSignal listeners erase the
+  //               device at once (the shell, sosFollow); nothing is sent;
+  //       reset → nothing is sent; the person chooses in Settings ›
+  //               Sync: erase this device too, or keep its data
+  //               (adoptSignal) and upload it as the new cloud;
+  //   · stale, passphrase does not open it → "cloud-closed": no pull,
+  //     no push, nothing erased (a forged signal erases nothing);
+  //   · a new device (no record, no baselines) or one whose record is
+  //     as new → the signal counts as an empty cloud ("adopt"); its
+  //     first push replaces exactly that revision.
+  // An SOS travels on: the device that starts the cloud again keeps it
+  // (SIG_KEY) and every blob it writes carries it as "sig", so a
+  // device that missed the SOS still erases itself when it next syncs
+  // with the old passphrase, even after the cloud was started again.
+  var SIG_VER = "oros-signal";
+  var SIG_KEY = "oros-sync-sos";   // { cloud, n, sig }: the newest SOS this device took over
+  var cloudIsSignal = false;       // the cloudRev we hold is a signal (no backup copy of it)
+  var adoptRev = null;             // a reset signal the person chose to replace (adoptSignal)
+  var signalSeen = null;           // { kind, n, verified } — last signal that stopped this device
+  var signalListeners = [];
+
+  function sigShape(sg) {
+    return !!(sg && typeof sg === "object" && (sg.kind === "sos" || sg.kind === "reset") &&
+      typeof sg.n === "number" && sg.n > 0 && sg.n === Math.floor(sg.n) &&
+      typeof sg.salt === "string" && typeof sg.iv === "string" && typeof sg.data === "string");
+  }
+  function envOf(text) {
+    try { var o = JSON.parse(text); return (o && typeof o === "object") ? o : null; } catch (e) { return null; }
+  }
+  function signalOnly(env) { return !!(env && env.ver === SIG_VER && sigShape(env.sig)); }
+
+  function sosRecord() {
+    var r = readJson(SIG_KEY);
+    return (r && r.cloud === cloudIdNow() && sigShape(r.sig) && r.sig.kind === "sos") ? r : null;
+  }
+  function noteSos(sg) {
+    if (!sigShape(sg) || sg.kind !== "sos") return;
+    var r = sosRecord();
+    if (r && r.n >= sg.n) return;
+    writeJson(SIG_KEY, { cloud: cloudIdNow(), n: sg.n, sig: sg });
+  }
+  // Does this device hold data from before signal n? A record for this
+  // cloud decides; without one, a device that synced before does.
+  function staleFor(n) {
+    var r = sosRecord();
+    if (r) return n > r.n;
+    return Object.keys(readBaselines()).length > 0;
+  }
+
+  function sealSignal(kind, n) {
+    return encryptEnvelope({ sig: kind, n: n }).then(function (e) {
+      return { kind: kind, n: n, iter: e.iter, salt: e.salt, iv: e.iv, data: e.data };
+    });
+  }
+  // true when this device's passphrase opens the signal; never rejects.
+  function openSignal(sg) {
+    return openEnvelope(sg).then(function (p) {
+      return !!(p && p.sig === sg.kind && p.n === sg.n);
+    }, function () { return false; });
+  }
+
+  // Write a signal over whatever the blob holds now (the engine is
+  // suspended; another device's push in between is retried over).
+  function putSignal(kind) {
+    var n = Date.now();
+    return sealSignal(kind, n).then(function (sg) {
+      var text = JSON.stringify({ ver: SIG_VER, sig: sg });
+      function attempt(i) {
+        return provider.blobGet().then(function (cloud) {
+          var rev = cloud.text ? cloud.rev : null;
+          if (rev === undefined) throw new Error("cloud-rev-unknown");
+          return provider.blobPut(text, rev);
+        }).catch(function (err) {
+          if (i < 3 && err && err.message === "cloud-changed") return attempt(i + 1);
+          throw err;
+        });
+      }
+      return attempt(0).then(function () { return sg; });
+    });
+  }
+
+  function emitSignal(info) {
+    signalListeners.forEach(function (fn) { try { fn(info); } catch (e) {} });
+  }
+
+  // env: the cloud's envelope; rev: its revision. Resolves "normal"
+  // (decrypt as usual) or "adopt" (an empty cloud); rejects
+  // "cloud-sos", "cloud-reset" or "cloud-closed".
+  function judgeCloud(env, rev) {
+    var sg = (env && sigShape(env.sig)) ? env.sig : null;
+    if (!sg) return Promise.resolve("normal");
+    var only = env.ver === SIG_VER;
+    if (!only && sg.kind !== "sos") return Promise.resolve("normal");   // only an SOS travels on
+    if (only && sg.kind === "reset" && adoptRev !== null && adoptRev === rev) return Promise.resolve("adopt");
+    if (!staleFor(sg.n)) {
+      if (!only) return Promise.resolve("normal");
+      noteSos(sg);
+      return Promise.resolve("adopt");
+    }
+    return openSignal(sg).then(function (ok) {
+      signalSeen = { kind: sg.kind, n: sg.n, verified: ok };
+      if (!ok) {
+        if (only) throw new Error("cloud-closed");
+        return "normal";                  // the blob's own decrypt decides
+      }
+      if (sg.kind === "sos") {
+        suspendEngine();
+        emitSignal({ kind: "sos", n: sg.n });
+        throw new Error("cloud-sos");
+      }
+      emitSignal({ kind: "reset", n: sg.n });
+      throw new Error("cloud-reset");
+    });
+  }
+
+  // SOS from this device (Settings › System). The engine stops, the
+  // blob becomes an SOS signal, every other orOS file in the cloud is
+  // deleted and this device's own sign-in is revoked (closeCloud).
+  // Needs the passphrase typed again (checked against the one in use).
+  // Resolves { wiped, revoked, signalled }; not connected → { wiped: 0 }.
+  function sosEverywhere(typed) {
+    if (isConnected() && (passphrase === null || typed !== passphrase)) {
+      return Promise.reject(new Error("wrong-passphrase"));
+    }
+    return closeCloud("sos");
+  }
+
+  // "Keep this device's data" after a reset signal: the next push
+  // replaces the signal with this device's data.
+  function adoptSignal() {
+    if (!isConnected() || passphrase === null) return Promise.reject(new Error("not-connected"));
+    return provider.blobGet().then(function (cloud) {
+      var env = cloud.text ? envOf(cloud.text) : null;
+      if (!signalOnly(env) || env.sig.kind !== "reset") return false;
+      adoptRev = cloud.rev;
+      signalSeen = null;
+      cloudRev = undefined;
+      markDirty();
+      return true;
     });
   }
 
@@ -4144,7 +4530,11 @@
     pull:               pull,
     push:               push,
     reconcile:          reconcile,        // pull→guard→push (UI may call)
-    wipeEverything:     wipeEverything,   // factory reset: cloud wipe + revoke
+    wipeEverything:     wipeEverything,   // factory reset: reset signal + cloud wipe + revoke
+    sosEverywhere:      sosEverywhere,    // SOS-1: (typed passphrase) SOS signal + cloud wipe + own revoke
+    adoptSignal:        adoptSignal,      // SOS-1: keep this device's data over a reset signal
+    cloudSignal:        function () { return signalSeen ? { kind: signalSeen.kind, n: signalSeen.n, verified: signalSeen.verified } : null; },
+    onSignal:           function (fn) { if (typeof fn === "function") signalListeners.push(fn); },
     suspendEngine:      suspendEngine,
 
     // Local rescue backup (plaintext, unencrypted)
@@ -4182,8 +4572,11 @@
     // Passphrase / vault
     setPassphrase:      setPassphrase,    // (pw, remember?) — remember = seal to device
     hasPassphrase:     function () { return passphrase !== null; },
+    isPassphrase:      function (pw) { return passphrase !== null && typeof pw === "string" && pw === passphrase; },   // SOS-1: typed again
     forgetPassphrase:  function () { passphrase = null; },   // session only
     clearDevice:       clearDevice,      // forget + wipe device vault
+    forgetSealed:      clearVault,       // Sensitive work: drop the remembered copy, keep the session
+    passShort:         function () { return passphrase !== null && String(passphrase).length < 16; },
     hasDeviceVault:    hasDeviceVault,
     checkPassphrase:   checkPassphrase,  // (pw) → true | false | null (lock.js)
 
@@ -4224,6 +4617,7 @@
     // app folder (outside /vault: the vault, its clean-up and orOS
     // Drive never see it). Transfer uploads ciphertext only.
     cloudDrop: cloudDrop,
+    gateDrop: gateDrop,
     storage: storageAdapter,
     vaultCrypto: {
       sha256Hex:    sha256Hex,     // ArrayBuffer → hex digest (content addressing)
@@ -4251,6 +4645,7 @@
       if (msg === "engine-suspended")   return "sync.err.suspended";
       if (msg === "storage-full")       return "sync.err.storage";   // SY-Q1
       if (/^restore-/.test(msg))        return "sync.err." + msg;    // A43
+      if (msg === "cloud-sos" || msg === "cloud-reset" || msg === "cloud-closed") return "sync.err." + msg;   // SOS-1
       if (/blob version/.test(msg)) return "sync.err.version";
       if (/^dav-/.test(msg))          return "sync.err." + msg;     // WebDAV W2 connect reasons
       if (/^move-/.test(msg))         return "sync.err." + msg;     // WebDAV W4 move reasons
@@ -4323,6 +4718,7 @@
             });
           }
           var cpBlob = JSON.parse(blobText);
+          if (signalOnly(cpBlob)) throw new Error("cloud-closed");   // SOS-1: no data to re-lock
           var cpRounds = blobRounds(cpBlob);       // A70
           var salt = b64decode(cpBlob.salt);
           var iv   = b64decode(cpBlob.iv);

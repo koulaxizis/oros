@@ -1,11 +1,11 @@
 // ============================================================
-// orOS translation worker (translate/worker.js, v1.0.0)
+// orOS translation worker (translate/worker.js, v1.1.0)
 // Runs Mozilla's Bergamot translator (vendor/bergamot, MPL-2.0,
 // unchanged) in this worker. translate/engine.js owns every file:
 // it reads the runtime and the models from IndexedDB and posts them
 // here, so nothing in this worker touches the network.
 // Messages in:  { id, op: "init", glue: Blob, wasm: ArrayBuffer }
-//               { id, op: "load", pair, model, lex, vocab }  (ArrayBuffers)
+//               { id, op: "load", pair, model, lex, vocab | srcvocab + trgvocab }  (ArrayBuffers)
 //               { id, op: "translate", legs: ["el-en"], texts: [{ text, html }] }
 //               { id, op: "free", pair }
 // Messages out: { id, ok: true, result } | { id, ok: false, error }
@@ -78,7 +78,11 @@ var Module = {};
     if (!service) throw new Error("not ready");
     if (models[m.pair]) return true;
     var vocabs = new Module.AlignedMemoryList();
-    vocabs.push_back(aligned(m.vocab, 64));
+    // One shared vocabulary, or one per side (Chinese, Japanese).
+    (m.vocab ? [m.vocab] : [m.srcvocab, m.trgvocab]).forEach(function (v) {
+      if (!v) throw new Error("vocab " + m.pair);
+      vocabs.push_back(aligned(v, 64));
+    });
     models[m.pair] = new Module.TranslationModel(CONFIG, aligned(m.model, 256), aligned(m.lex, 64), vocabs, null);
     return true;
   }

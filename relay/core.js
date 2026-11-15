@@ -24,6 +24,8 @@
 //           /dav      WebDAV pass-through, target in X-Oros-Target (Sync through WebDAV, see dav.js)
 //           /nl/...   public sign-up form and one-click unsubscribe (newsletter.js)
 //           /crm/f/<k> public CRM contact form (crmform.js)
+//           POST /v1  { op: "frm", act, k, sec, ... }  (Forms, see forms.js)
+//           /fm/<k>   GET the encrypted form, POST one sealed answer, /fm/<k>/report (forms.js)
 // Response: { ok:true, data } | { ok:false, error:{ code, msg } }
 // ============================================================
 
@@ -34,6 +36,7 @@ import { withSmtp, validAddr, SMTP_LIMITS } from "./smtp.js";
 import { runSieve, SIEVE_LIMITS } from "./sieve.js";
 import { validNl, runNl, handleNl, page as nlPage, NlError, validHook, runHook } from "./newsletter.js";
 import { validCrmf, runCrmf, handleCrmForm, crmPage, CrmfError } from "./crmform.js";
+import { validFrm, runFrm, handleForms, FrmError } from "./forms.js";
 import { validPapi, runPapi, PAPI_LIMITS } from "./papi.js";
 import { validExt, runExt, EXT_LIMITS, extCap } from "./ext.js";
 import { handleRemote, ROOM_RE } from "./remote.js";
@@ -45,7 +48,7 @@ import { validOasa, runOasa, OasaError } from "./oasa.js";
 import { validHookIn, runHookIn, handleHookIn, HookError } from "./hook.js";
 import { handlePreview } from "./preview.js";
 import { validShl, runShl, ShlError } from "./short.js";
-import { handleGate, isGatePath } from "./gate.js";
+import { handleGate, isGatePath, LOCAL_ORIGINS } from "./gate.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -57,7 +60,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, nlhook: 1, papi: 1, ext: 1, crmf: 1, shr: 1, shl: 1, push: 1, oasa: 1, hook: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, nlhook: 1, papi: 1, ext: 1, crmf: 1, frm: 1, shr: 1, shl: 1, push: 1, oasa: 1, hook: 1 };
 const SIEVE_PORT = 4190;
 
 // ---------- validation ----------
@@ -107,6 +110,7 @@ export function validRequest(b, env, now) {
   if (b.op === "nl") return validNl(b);   // Newsletter: sign-ups and unsubscribes waiting in D1
   if (b.op === "nlhook") return validHook(b, checkUrl);   // Newsletter: signed "issue sent" notice (N3)
   if (b.op === "crmf") return validCrmf(b);   // CRM: web form messages waiting in D1
+  if (b.op === "frm") return validFrm(b);     // Forms: encrypted forms and sealed answers in D1
   if (b.op === "shr") return validShr(b, now);   // Send to someone: encrypted items with an expiry
   if (b.op === "shl") return validShl(b);        // Send to someone: a song's short link
   if (b.op === "papi") return validPapi(b);   // Newsletter: provider HTTP APIs
@@ -174,6 +178,15 @@ export function validRequest(b, env, now) {
 }
 
 // ---------- CORS ----------
+// What the orOS on the person's own computer (LOCAL_ORIGINS) may ask of
+// /v1: Budget's bank reads, Enable Banking and PayPal Business (Chris's
+// installed orOS, 2026-11-13). The bank's return page is on
+// useoros.online, so connecting a bank stays there (budget/banklive.js).
+export const LOCAL_OPS = { ext: ["ebank", "paypal"] };
+function localOp(b) {
+  const ps = b && typeof b.op === "string" && Object.prototype.hasOwnProperty.call(LOCAL_OPS, b.op) ? LOCAL_OPS[b.op] : null;
+  return !!ps && typeof b.p === "string" && ps.indexOf(b.p) >= 0;
+}
 function allowedOrigins(env) {
   const raw = (env && env.ALLOWED_ORIGINS) || "https://useoros.online";
   return raw.split(",").map((s) => s.trim()).filter(Boolean);
@@ -211,7 +224,11 @@ function limited(ip, now) {
 // ---------- entry ----------
 export async function handle(request, env, connectFn, now, fetchFn) {
   const origin = request.headers.get("Origin") || "";
-  const okOrigin = allowedOrigins(env).indexOf(origin) >= 0 ? origin : "";
+  let okOrigin = allowedOrigins(env).indexOf(origin) >= 0 ? origin : "";
+  // The orOS that runs on the person's own computer (installed orOS,
+  // Portable, USB: LOCAL_ORIGINS) may use /v1 only for the ops in
+  // LOCAL_OPS; the body decides, below.
+  const localOrigin = !okOrigin && LOCAL_ORIGINS.indexOf(origin) >= 0 ? origin : "";
   const url = new URL(request.url);
 
   // Newsletter's public pages: called by any browser or mail client, so
@@ -224,6 +241,12 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   if (url.pathname.startsWith("/crm/")) {
     if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) return crmPage(429, "en", "busy");
     return handleCrmForm(request, env, url, now || Date.now());
+  }
+
+  // Forms' public routes (relay/forms.js): the fill-in page at
+  // useoros.online only, own CORS and rate limits, JSON answers.
+  if (url.pathname.startsWith("/fm/")) {
+    return handleForms(request, env, url, origin, request.headers.get("CF-Connecting-IP") || "", now || Date.now());
   }
 
   // Automations' incoming webhooks (relay/hook.js): any sender, POST only,
@@ -274,13 +297,14 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   }
 
   if (request.method === "OPTIONS") {
-    if (!okOrigin) return new Response(null, { status: 403 });
-    return new Response(null, { status: 204, headers: corsHeaders(okOrigin) });
+    if (!okOrigin && !localOrigin) return new Response(null, { status: 403 });
+    return new Response(null, { status: 204, headers: corsHeaders(okOrigin || localOrigin) });
   }
   if (url.pathname === "/" && request.method === "GET") {
     return new Response("orOS mail relay\n", { status: 200, headers: { "Content-Type": "text/plain" } });
   }
-  if (!okOrigin) return fail(403, "origin", "origin not allowed", "");
+  if (!okOrigin && !localOrigin) return fail(403, "origin", "origin not allowed", "");
+  if (localOrigin) okOrigin = localOrigin;      // checked against LOCAL_OPS once the body is read
   if (url.pathname !== "/v1" || request.method !== "POST") return fail(404, "bad-request", "unknown route", okOrigin);
   if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) {
     return fail(429, "rate", "too many requests", okOrigin);
@@ -296,6 +320,7 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     const cap = b && b.op === "papi" ? PAPI_LIMITS.totalBytes : (b && b.op === "ext" ? extCap(b) : 0);
     if (!(text.length <= cap + LIMITS.bodyBytes)) return fail(413, "bad-request", "request too large", okOrigin);
   }
+  if (localOrigin && !localOp(b)) return fail(403, "origin", "origin not allowed", okOrigin);
   const bad = validRequest(b, env, now || Date.now());
   if (bad) return fail(400, "bad-request", "invalid " + bad, okOrigin);
 
@@ -369,6 +394,16 @@ export async function handle(request, env, connectFn, now, fetchFn) {
       return json(200, { ok: true, data }, okOrigin);
     } catch (e) {
       if (e instanceof CrmfError) return fail(e.status, e.code, e.message, okOrigin);
+      return fail(503, "nostore", "storage failed", okOrigin);           // a D1 failure; never its text
+    }
+  }
+
+  if (b.op === "frm") {
+    try {
+      const data = await runFrm(b, env, now || Date.now());
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      if (e instanceof FrmError) return fail(e.status, e.code, e.code, okOrigin);
       return fail(503, "nostore", "storage failed", okOrigin);           // a D1 failure; never its text
     }
   }

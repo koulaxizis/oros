@@ -10,6 +10,10 @@
 //     device fetches it when it opens the design (until then, and
 //     whenever it cannot, the text shows in Sans)
 //   - "Your fonts" (recently used) stays on this device (prefs)
+//   - "Collections" (FM-2, made in Settings › Fonts, synced slice
+//     "fonts", designkit/fonts.js cols): the design's collection
+//     (setup.ext.col) first; an own font of a collection goes into the
+//     design's list (setup.ext.fonts) when it is applied
 // ============================================================
 (function () {
   "use strict";
@@ -97,6 +101,82 @@
     }, function () { busy = ""; AT.toast(t("fn.fail")); AT.renderDrawer(); });
   }
 
+  // ---------- collections (FM-2) ----------
+  var C = DKF && DKF.cols, CB = C ? C.bind(window, function () { AT.renderDrawer(); }) : null;
+  var ownFams = null;                       // designkit families() of the disk, read once per session
+  function loadOwn() {
+    if (ownFams || !DKF) return;
+    ownFams = [];
+    DKF.library().then(function (lib) { ownFams = DKF.families(lib); AT.renderDrawer(); }, function () {});
+  }
+  function applyOwn(e) {
+    if (!textSel().length) { AT.toast(t("fn.pick")); return; }
+    AT.op(function (doc) {
+      var s = JSON.parse(JSON.stringify(doc.setup || {}));
+      s.ext = s.ext || {};
+      s.ext.fonts = DKF.withEntry(AX.docFonts(doc), e);
+      doc.setup = s;
+    });
+    AX.useDocFonts(AT.doc);
+    apply(e.id, e.name);
+  }
+  function setDocCol(cid) {
+    if (cid && !(CB && CB.get().cols[cid])) return;
+    AT.op(function (doc) {
+      var s = JSON.parse(JSON.stringify(doc.setup || {}));
+      s.ext = s.ext || {};
+      if ((s.ext.col || "") === cid) return false;
+      if (cid) s.ext.col = cid; else delete s.ext.col;
+      if (!Object.keys(s.ext).length) delete s.ext;
+      doc.setup = s;
+    });
+    AT.renderDrawer();
+  }
+  function colsSec(cur) {
+    var d = CB.get(), ids = C.order(d, AT.LANG);
+    if (!ids.length) return null;
+    loadOwn();
+    var dc = C.docCol(AT.doc, d), s = sec(t("fn.cols"));
+    var lab = el("label", "fn-col");
+    lab.appendChild(el("span", "hint", t("fn.docCol")));
+    var sel = el("select", "inp sm");
+    sel.setAttribute("aria-label", t("fn.docCol"));
+    [["", t("fn.docCol.none")]].concat(ids.map(function (c) { return [c, d.cols[c].name]; })).forEach(function (o) {
+      var op = el("option", null, o[1]);
+      op.value = o[0];
+      if (o[0] === dc) op.selected = true;
+      sel.appendChild(op);
+    });
+    sel.disabled = !AT.doc;
+    sel.addEventListener("change", function () { setDocCol(sel.value); });
+    lab.appendChild(sel);
+    s.appendChild(lab);
+    var byId = {};
+    (ownFams || []).forEach(function (f) { byId[f.id] = f; });
+    (dc ? [dc] : []).concat(ids.filter(function (c) { return c !== dc; })).forEach(function (cid) {
+      var list = C.fams(d, cid, AT.LANG);
+      if (!list.length) return;
+      s.appendChild(el("div", "fn-colh", d.cols[cid].name));
+      list.forEach(function (x) {
+        if (AX.isExtraFont(x.id)) { s.appendChild(row(x.id, x.name, cur, "")); return; }
+        var f = byId[x.id];
+        if (f) {
+          var b = btn("fn-row" + (cur === f.id ? " on" : ""), "", function () { if (cur !== f.id) applyOwn(f); });
+          b.appendChild(el("span", "fn-name", f.name));
+          b.setAttribute("aria-pressed", cur === f.id ? "true" : "false");
+          s.appendChild(b);
+          return;
+        }
+        var nb = btn("fn-row", "");
+        nb.disabled = true;
+        nb.appendChild(el("span", "fn-name", x.name));
+        nb.appendChild(el("span", "fn-badge", t("fn.notHere")));
+        s.appendChild(nb);
+      });
+    });
+    return s;
+  }
+
   // ---------- catalog search (Fontsource, online) ----------
   var st = { q: "", greek: AT.LANG === "el", items: [], more: false, page: 1, busy: false, error: "", seq: 0 };
   var mem = {};
@@ -161,6 +241,10 @@
     Object.keys(used).forEach(function (id) { if (!shown[id]) { shown[id] = 1; s1.appendChild(row(id, AX.fontName(id), cur, t("fn.inDesign"))); } });
     recent().forEach(function (f) { if (!shown[f.id]) { shown[f.id] = 1; s1.appendChild(row(f.id, f.name, cur, "")); } });
     body.appendChild(s1);
+
+    // collections (FM-2)
+    var s15 = CB ? colsSec(cur) : null;
+    if (s15) body.appendChild(s15);
 
     // catalog
     var s2 = sec(t("fn.more"));
