@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.63.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.89.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -57,6 +57,8 @@
     pair:            null,     // PAIR-1: Add a browser in progress (pairForSettings)
     pairPrefill:     "",       // PAIR-1: a code that came in with #pair=
     pairQr:          null,
+    plink:           null,     // LINK-1: a sign-in link this device sent (linkForSettings)
+    linkIn:          null,     // LINK-1: a sign-in link that opened this browser
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
     syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
     vaultClean:      null,   // VD-GC: { busy: "check"|"clean"|"", usage, result, code, err } once Settings asked
@@ -278,7 +280,6 @@
     backgammon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M5 3l2 7 2-7M15 3l2 7 2-7M5 21l2-7 2 7M15 21l2-7 2 7"/></svg>',
     calculator: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="3" x2="16" y2="3"/><line x1="8" y1="8" x2="8" y2="8"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="16" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="10" y2="16"/><line x1="12" y1="16" x2="14" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>',
     texttools: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6V4h11v2"/><path d="M8.5 4v14"/><path d="M6 18h5"/><path d="M15 11h6"/><path d="M15 15h6"/><path d="M15 19h4"/></svg>',
-    units: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="13" width="20" height="8" rx="1.5"/><path d="M6 13v3M10 13v4M14 13v3M18 13v4"/><path d="M4 6h16"/><path d="M7 3L4 6l3 3"/><path d="M17 3l3 3-3 3"/></svg>',
     stickies: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10l6-6V5a2 2 0 0 0-2-2z"/><path d="M15 21v-4a2 2 0 0 1 2-2h4"/><path d="M7 8h8"/><path d="M7 12h5"/></svg>',
     pad: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M10 13l-2 2 2 2M14 13l2 2-2 2"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
@@ -6757,6 +6758,7 @@
     rememberTxt.textContent = window.t("sync.pass.remember");
     rememberRow.appendChild(rememberTxt);
     form.appendChild(rememberRow);
+    if (strictLevelNow()) { rememberCb.checked = false; rememberRow.hidden = true; }   // Sensitive work: never kept
 
     var errBox = document.createElement("div");
     errBox.style.cssText =
@@ -7241,6 +7243,168 @@
     })();
   }
 
+  // LINK-1: a sign-in link. pair.js seals the same bundle as a
+  // password link of "Send to someone" (share/relay.js) that lives 15
+  // minutes; the 8-character code is shown here and never goes into
+  // the link. state.plink (signed-in device) = { phase: "making" |
+  // "ready" | "used" | "gone" | "error", url, code, exp, id, del, err };
+  // state.linkIn (new browser) = { phase: "code" | "opening" | "adopting"
+  // | "done" | "error", share, err, session, dev }. Neither is stored.
+  var linkTimer = null;
+  function linkNeed() {
+    return pairNeed(false).then(function () {
+      if (window.OrosShareRelay) return;
+      return new Promise(function (res, rej) {
+        var s = document.createElement("script");
+        s.src = "share/relay.js?v=" + APP_VERSION;
+        s.onload = function () { window.OrosShareRelay ? res() : rej(new Error("pair-load")); };
+        s.onerror = function () { rej(new Error("pair-load")); };
+        document.head.appendChild(s);
+      });
+    });
+  }
+  function linkSet(fields) {
+    if (!state.plink) return;
+    for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) state.plink[k] = fields[k];
+    settingsNotify();
+  }
+  function linkStopWatch() { if (linkTimer) { clearTimeout(linkTimer); linkTimer = null; } }
+  // While the link waits: every 15 s ask the relay whether it is still
+  // there; gone before its time means the new browser used it.
+  function linkWatch() {
+    linkStopWatch();
+    var p = state.plink;
+    if (!p || p.phase !== "ready") return;
+    linkTimer = setTimeout(function () {
+      linkTimer = null;
+      var q = state.plink;
+      if (!q || q.phase !== "ready" || q.id !== p.id) return;
+      if (Date.now() >= q.exp) { linkSet({ phase: "gone" }); return; }
+      window.OrosPair.linkAlive(q.id).then(function (alive) {
+        var r = state.plink;
+        if (!r || r.phase !== "ready" || r.id !== q.id) return;
+        if (alive === false) linkSet({ phase: Date.now() < r.exp - 5000 ? "used" : "gone" });
+        else linkWatch();
+      });
+    }, 15000);
+  }
+  function linkMake() {
+    var S = window.orosSync;
+    if (!S || typeof S.pairBundle !== "function" || !S.isConnected() || !S.hasPassphrase()) return;
+    if (state.plink && state.plink.phase === "making") return;
+    linkStopWatch();
+    state.plink = { phase: "making", url: "", code: "", exp: 0, id: "", del: "", err: "" };
+    settingsNotify();
+    linkNeed().then(function () {
+      return S.pairBundle();
+    }).then(function (b) {
+      if (!state.plink || state.plink.phase !== "making") return;
+      return window.OrosPair.sendLink(b, { dev: pairUa(), origin: location.origin }).then(function (r) {
+        if (!state.plink || state.plink.phase !== "making") {
+          window.OrosShareRelay.revoke(r.id, r.del).catch(function () {});
+          return;
+        }
+        linkSet({ phase: "ready", url: r.url, code: window.OrosPair.fmtLinkCode(r.code), exp: r.exp, id: r.id, del: r.del });
+        linkWatch();
+      });
+    }).catch(function (e) {
+      var m = String((e && e.message) || "net");
+      linkSet({ phase: "error", err: m === "pair-locked" ? "pair-locked" : m === "rate" || m === "full" || m === "nostore" ? "rate" : "net" });
+    });
+  }
+  // Cancel: the pieces are deleted on the relay (best effort; they
+  // expire anyway), and the card closes.
+  function linkCancel() {
+    var p = state.plink;
+    linkStopWatch();
+    state.plink = null;
+    settingsNotify();
+    if (p && p.id && p.del && p.phase === "ready" && window.OrosShareRelay) {
+      window.OrosShareRelay.revoke(p.id, p.del).catch(function () {});
+    }
+  }
+  // SOS (SOS-1) cancels every sign-in link this device still holds:
+  // the one in memory (a link is never stored, so links from a closed
+  // tab cannot be cancelled and expire by themselves within 15 minutes),
+  // and forgets a link that opened this browser. Resolves when the
+  // relay has answered or failed; never rejects.
+  function linkCancelAll() {
+    var p = state.plink;
+    linkStopWatch();
+    state.plink = null;
+    state.linkIn = null;
+    settingsNotify();
+    if (p && p.id && p.del && window.OrosShareRelay) {
+      return window.OrosShareRelay.revoke(p.id, p.del).then(function () { return 1; }, function () { return 0; });
+    }
+    return Promise.resolve(0);
+  }
+  window.orosPairLink = { cancelAll: linkCancelAll };
+  function linkInSet(fields) {
+    if (!state.linkIn) return;
+    for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) state.linkIn[k] = fields[k];
+    settingsNotify();
+  }
+  // The new browser: the code typed, the link opened, the bundle adopted
+  // (sync.js pairAdopt, as PAIR-1), the pieces deleted, unlocked.
+  function linkOpen(code) {
+    var S = window.orosSync, L = state.linkIn;
+    if (!L || !S || typeof S.pairAdopt !== "function") return;
+    if (L.phase === "opening" || L.phase === "adopting" || L.phase === "done") return;
+    if (S.isConnected()) { linkInSet({ phase: "error", err: "pair-connected" }); return; }
+    linkInSet({ phase: "opening", err: "" });
+    linkNeed().then(function () {
+      return window.OrosPair.openLink(L.share, code);
+    }).then(function (r) {
+      if (state.linkIn !== L) return;
+      if (r.error) {
+        // A wrong code can be typed again; anything else ends the link.
+        linkInSet({ phase: r.error === "pass" ? "code" : "error", err: r.error });
+        return;
+      }
+      linkInSet({ phase: "adopting", dev: r.dev || "" });
+      var only = !!L.session;
+      return S.pairAdopt(r.b, { session: only }).then(function (res) {
+        window.OrosShareRelay.revoke(r.id, r.del).catch(function () {});
+        state.syncUserEmail = (r.b && r.b.acc && typeof r.b.acc.email === "string") ? r.b.acc.email : null;
+        linkInSet({ phase: "done" });
+        syncUnlock(res.pw, !only);
+      });
+    }).catch(function (e) {
+      if (state.linkIn !== L) return;
+      var m = String((e && e.message) || "net");
+      linkInSet({ phase: "error", err: m === "pair-connected" ? "pair-connected" : m === "pair-bad" ? "refused" : "net" });
+    });
+  }
+  function linkForSettings() {
+    var p = state.plink;
+    return p ? { phase: p.phase, url: p.url || "", code: p.code || "", exp: p.exp || 0, err: p.err || "" } : null;
+  }
+  function linkInForSettings() {
+    var L = state.linkIn;
+    return L ? { phase: L.phase, err: L.err || "", session: !!L.session, dev: L.dev || "" } : null;
+  }
+  // A sign-in link opened orOS (#signin=…): the secret part leaves the
+  // address bar at once, and Settings › Sync asks for the code.
+  function linkFromHash() {
+    var m = /^#signin=([A-Za-z0-9_.\-]{1,200})$/.exec(location.hash || "");
+    if (!m) return;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    var share = m[1];
+    if (!/^q1\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\.[1-9]\d{0,2}\.[A-Za-z0-9_-]{22}$/.test(share)) return;
+    state.linkIn = { phase: "code", share: share, err: "", session: false, dev: "" };
+    settingsNotify();
+    var tries = 0;
+    (function open() {
+      if (document.getElementById("oro-splash") || !state.apps.length || !window.orosSettings) {
+        if (++tries > 120) return;
+        setTimeout(open, 250);
+        return;
+      }
+      window.orosSettings.open("sync");
+    })();
+  }
+
   // User picked an automatic folder-backup cadence (shell slice).
   function setAutoexportUser(v) {
     if (v !== "off" && v !== "daily" && v !== "weekly" && v !== "monthly") return;
@@ -7363,6 +7527,7 @@
     rt.textContent = window.t("sync.pass.remember");
     rememberRow.appendChild(rt);
     form.appendChild(rememberRow);
+    if (strictLevelNow()) { rememberCb.checked = false; rememberRow.hidden = true; }   // Sensitive work: never kept
 
     var errBox = document.createElement("div");
     errBox.style.cssText = "font-size:12px;color:var(--danger);min-height:18px;margin:2px 0 8px;";
@@ -7486,7 +7651,9 @@
     "sync.err.storage":   "settings/backup",
     "sync.err.auth":      "settings/sync",
     "sync.err.dav-auth":  "settings/sync",
-    "sync.err.version":   ""
+    "sync.err.version":   "",
+    "sync.err.cloud-reset":  "settings/sync",   // SOS-1: keep or erase, the person decides there
+    "sync.err.cloud-closed": "settings/sync"
   };
   function syncNoticeDaily(ident, text, link) {
     var N = window.orosNotifs;
@@ -7903,6 +8070,9 @@
         { name: "brotli.js 2.1.0 (decoder) + base64-js 1.5.1", url: "https://github.com/foliojs/brotli.js",
           by: "Devon Govett; Brotli decoder port by Google Inc.; Jameson Little", lic: "MIT + Apache-2.0",
           k: "cr.brotli-js" },
+        { name: "polygon-clipping 0.15.7 (with splaytree 3.1.2, robust-predicates)", url: "https://github.com/mfogel/polygon-clipping",
+          by: "Mike Fogel; Alexander Milevski; Vladimir Agafonkin (after J. R. Shewchuk)", lic: "MIT + Unlicense",
+          k: "cr.polygon-clipping" },
         { name: "OpenPGP.js 6.3.1", url: "https://openpgpjs.org/",
           by: "OpenPGP.js contributors, Proton AG", lic: "LGPL-3.0-or-later",
           k: "cr.openpgp-js" },
@@ -8612,24 +8782,43 @@
   // deviceOnly (screen lock, "Reset this device"): the same local
   // wipe, but the cloud and the backup folder stay; `cloud` is then the
   // last push of unsynced changes (lockDeviceReset).
-  function scFactoryReset(btn, deviceOnly) {
+  // deviceOnly "follow" (SOS-1: an SOS or a reset signal reached this
+  // device): nothing is sent, the engine is already stopped; the
+  // backup folder and this device's relay boxes go too.
+  // deviceOnly "sos" (SOS-1, Settings › System): first every relay box
+  // this person's data knows of, then the cloud becomes an SOS signal
+  // (orosSync.sosEverywhere, sosPass = the passphrase typed again),
+  // then this device; after the reload the what-now list is shown.
+  function scFactoryReset(btn, deviceOnly, sosPass) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
+    var follow = deviceOnly === "follow", sos = deviceOnly === "sos";
+    var S = window.orosSync;
+
+    function capped(p, ms) {
+      return Promise.race([
+        Promise.resolve(p),
+        new Promise(function (res) { setTimeout(function () { res(null); }, ms); })
+      ]).catch(function () { return null; });
+    }
 
     // Cloud wipe (15s cap — a hanging network can never freeze the
     // reset; wipeEverything suspends the engine synchronously at call).
-    var cloud = deviceOnly ? lockLastPush()
-      : (window.orosSync && typeof window.orosSync.wipeEverything === "function")
-      ? Promise.race([
-          window.orosSync.wipeEverything(),
-          new Promise(function (res) { setTimeout(function () { res(null); }, 15000); })
-        ]).catch(function () { return null; })
+    var cloud = follow ? Promise.resolve(S && typeof S.suspendEngine === "function" ? S.suspendEngine() : null)
+      : sos ? capped(sosRelay(true), 8000).then(function () {
+          return (S && typeof S.sosEverywhere === "function") ? capped(S.sosEverywhere(sosPass), 15000) : null;
+        })
+      : deviceOnly ? lockLastPush()
+      : (S && typeof S.wipeEverything === "function")
+      ? capped(S.wipeEverything(), 15000)
       : Promise.resolve(null);
+    if (follow) cloud = cloud.then(function () { return capped(sosRelay(false), 5000); });
 
     // Folder wipe FIRST — it needs the oros-fs handle, which the
     // upcoming local sweep would orphan. OrosFS wipe rides along —
     // independent storage, best-effort like the rest.
-    Promise.all([deviceOnly ? false : wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), wipeMapPacks(), cloud]).then(function () {
+    var keepFolder = deviceOnly === true;
+    Promise.all([keepFolder ? false : wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), wipeMapPacks(), cloud]).then(function () {
       function sweep(storage) {
         var doomed = [];
         for (var i = 0; i < storage.length; i++) {
@@ -8647,7 +8836,206 @@
       // Consumed by factoryResetPending() on the next boot, where no
       // IDB connection is open yet, so deleteDatabase() lands cleanly.
       localStorage.setItem("oros-reset-db", "1");
+      if (sos) localStorage.setItem(SOS_AFTER_KEY, String(Date.now()));   // SOS-1: the what-now list, once
       location.reload();
+    });
+  }
+
+  // ---------- SOS-1: relay boxes, the follow-up, the what-now list ----------
+  // all = true (the SOS device): every box the person's synced data
+  // holds a token for: every device's Web Push box, orOS Gate (revoke
+  // every link to Claude, then leave), this device's webhook box, every
+  // live "Send to someone" link, every household (leave). all = false
+  // (a device that obeys a signal): only this device's own boxes.
+  // Best-effort; each call is capped by the caller.
+  var SOS_AFTER_KEY = "oros-sos-after";
+  function sosRelay(all) {
+    var jobs = [];
+    function job(fn) { try { jobs.push(Promise.resolve(fn()).catch(function () {})); } catch (e) {} }
+    var P = window.orosPush, G = window.orosGate, H = window.orosHookIn, HH = window.orosHousehold;
+    if (P) job(function () {
+      var rm = all && typeof P.devices === "function" ? P.devices().map(function (d) { return P.remove(d.id); }) : [];
+      return Promise.all(rm).then(function () { return P.disable(); });
+    });
+    if (G) job(function () {
+      var first = all && typeof G.revoke === "function" ? G.revoke().catch(function () {}) : Promise.resolve();
+      return first.then(function () { return G.disable(); });
+    });
+    if (H && typeof H.off === "function") job(function () { return H.off(); });
+    // A sign-in link this device made (PAIR-1 magic link) stops working now.
+    if (window.orosPairLink && typeof window.orosPairLink.cancelAll === "function") job(function () { return window.orosPairLink.cancelAll(); });
+    if (all) {
+      job(sosRevokeShares);
+      if (HH && typeof HH.list === "function" && typeof HH.leave === "function") job(function () {
+        return Promise.all(HH.list().map(function (h) { return HH.leave(h.box).catch(function () {}); }));
+      });
+    }
+    return Promise.all(jobs);
+  }
+  // Every live link in "My shared links" (share/out.js, synced): the
+  // relay drops its pieces (relay/share.js act "del").
+  function sosRevokeShares() {
+    var data = null;
+    try { data = JSON.parse(localStorage.getItem("oros-share-out") || "null"); } catch (e) {}
+    var items = (data && data.items) || {};
+    return Promise.all(Object.keys(items).map(function (id) {
+      var it = items[id];
+      if (!it || it.g || typeof it.d !== "string") return null;
+      return fetch(SOS_RELAY + "/v1", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ op: "shr", act: "del", id: id, del: it.d }), credentials: "omit", cache: "no-store"
+      }).catch(function () {});
+    }));
+  }
+  var SOS_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = share/relay.js RELAY
+
+  // Settings › System › SOS: the typed passphrase is checked first
+  // (nothing is touched on a wrong one), then 10 s to cancel.
+  var sosTimer = null;
+  // Public entry for other parts of orOS (Sensitive work mode, strict.js):
+  // opens Settings › System on the SOS card. It never starts anything;
+  // SOS + passphrase are still typed there and the countdown still runs.
+  window.orosSOS = {
+    open: function () {
+      if (osResetting || sosTimer) return false;
+      window.__orosOpenAt("settings", { section: "system", item: "sos" });
+      return true;
+    }
+  };
+  function sosStart(pass) {
+    var S = window.orosSync;
+    if (osResetting || sosTimer) return;
+    if (S && S.isConnected()) {
+      if (!S.hasPassphrase()) { scToast("err", window.t("sos.locked")); return; }
+      if (typeof S.isPassphrase !== "function" || !S.isPassphrase(pass)) { scToast("err", window.t("sos.wrongpass")); return; }
+    }
+    var left = 10;
+    var ov = document.createElement("div");
+    ov.id = "sos-overlay";
+    ov.setAttribute("role", "alertdialog");
+    ov.setAttribute("aria-modal", "true");
+    ov.style.cssText = "position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;" +
+      "background:rgba(0,0,0,.72);padding:16px;";
+    var box = document.createElement("div");
+    box.style.cssText = "max-width:360px;width:100%;background:var(--panel-bg);color:var(--text);" +
+      "border:1px solid var(--border,#444);border-radius:14px;padding:20px;text-align:center;";
+    var h = document.createElement("div");
+    h.id = "sos-title";
+    h.style.cssText = "font-weight:700;font-size:17px;margin-bottom:8px;";
+    h.textContent = window.t("sos.count.title");
+    var n = document.createElement("div");
+    n.id = "sos-count";
+    n.setAttribute("aria-live", "assertive");
+    n.style.cssText = "font-size:44px;font-weight:800;margin:8px 0;color:#e5484d;";
+    n.textContent = String(left);
+    var p = document.createElement("p");
+    p.style.cssText = "margin:0 0 16px;font-size:14px;color:var(--text-dim,#bbb);";
+    p.textContent = window.t("sos.count.body");
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.id = "sos-cancel";
+    cancel.style.cssText = "width:100%;min-height:44px;border-radius:10px;border:1px solid var(--border,#444);" +
+      "background:var(--accent);color:var(--accent-ink, #fff);font-weight:700;font-size:15px;cursor:pointer;";
+    cancel.textContent = window.t("sos.count.cancel");
+    box.appendChild(h); box.appendChild(n); box.appendChild(p); box.appendChild(cancel);
+    ov.setAttribute("aria-labelledby", "sos-title");
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    cancel.focus();
+    function stop() {
+      clearInterval(sosTimer); sosTimer = null;
+      document.removeEventListener("keydown", onKey, true);
+      ov.remove();
+    }
+    function onKey(e) { if (e.key === "Escape") { e.preventDefault(); stop(); scToast("ok", window.t("sos.cancelled")); } }
+    document.addEventListener("keydown", onKey, true);
+    cancel.addEventListener("click", function () { stop(); scToast("ok", window.t("sos.cancelled")); });
+    sosTimer = setInterval(function () {
+      left--;
+      if (left > 0) { n.textContent = String(left); return; }
+      clearInterval(sosTimer); sosTimer = null;
+      document.removeEventListener("keydown", onKey, true);
+      cancel.remove();
+      n.textContent = "";
+      p.textContent = window.t("sc.reset.working");
+      osResetting = true;
+      scFactoryReset({ disabled: false, textContent: "" }, "sos", pass);
+    }, 1000);
+  }
+
+  // After the reload: what the person still has to do, once.
+  function sosAfterShow() {
+    var at;
+    try { at = localStorage.getItem(SOS_AFTER_KEY); } catch (e) { return; }
+    if (!at) return;
+    try { localStorage.removeItem(SOS_AFTER_KEY); } catch (e) {}
+    var ov = document.createElement("div");
+    ov.id = "sos-after";
+    ov.setAttribute("role", "dialog");
+    ov.setAttribute("aria-modal", "true");
+    ov.setAttribute("aria-labelledby", "sos-after-title");
+    ov.style.cssText = "position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;" +
+      "background:rgba(0,0,0,.6);padding:16px;";
+    var box = document.createElement("div");
+    box.style.cssText = "max-width:520px;width:100%;max-height:calc(100% - 32px);overflow:auto;background:var(--panel-bg);" +
+      "color:var(--text,#fff);border:1px solid var(--border,#444);border-radius:14px;padding:20px;box-sizing:border-box;";
+    var h = document.createElement("h2");
+    h.id = "sos-after-title";
+    h.style.cssText = "margin:0 0 8px;font-size:18px;";
+    h.textContent = window.t("sos.after.title");
+    box.appendChild(h);
+    var intro = document.createElement("p");
+    intro.style.cssText = "margin:0 0 12px;font-size:14px;";
+    intro.textContent = window.t("sos.after.intro");
+    box.appendChild(intro);
+    var ol = document.createElement("ol");
+    ol.style.cssText = "margin:0 0 16px;padding-left:20px;font-size:14px;line-height:1.5;";
+    [["sos.after.dropbox", "https://www.dropbox.com/account/security"],
+     ["sos.after.apps", "https://www.dropbox.com/account/connected_apps"],
+     ["sos.after.trash", ""],
+     ["sos.after.dav", ""],
+     ["sos.after.passwords", ""],
+     ["sos.after.addon", ""],
+     ["sos.after.again", ""]].forEach(function (r) {
+      var li = document.createElement("li");
+      li.style.marginBottom = "6px";
+      li.appendChild(document.createTextNode(window.t(r[0]) + (r[1] ? " " : "")));
+      if (r[1]) {
+        var a = document.createElement("a");
+        a.href = r[1];
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = r[1].replace(/^https:\/\/(www\.)?/, "");
+        li.appendChild(a);
+      }
+      ol.appendChild(li);
+    });
+    box.appendChild(ol);
+    var ok = document.createElement("button");
+    ok.type = "button";
+    ok.style.cssText = "width:100%;min-height:44px;border-radius:10px;border:1px solid var(--border,#444);" +
+      "background:var(--accent);color:var(--accent-ink, #fff);font-weight:700;font-size:15px;cursor:pointer;";
+    ok.textContent = window.t("sos.after.ok");
+    ok.addEventListener("click", function () { ov.remove(); });
+    box.appendChild(ok);
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    ok.focus();
+  }
+  setTimeout(sosAfterShow, 1200);
+
+  // A signal reached this device (sync.js judgeCloud): an SOS erases it
+  // at once, without a word on screen; a reset waits for the person in
+  // Settings › Sync (bell line, A72).
+  if (window.orosSync && typeof window.orosSync.onSignal === "function") {
+    window.orosSync.onSignal(function (sg) {
+      if (sg && sg.kind === "sos") {
+        if (osResetting) return;
+        osResetting = true;
+        scFactoryReset({ disabled: false, textContent: "" }, "follow");
+        return;
+      }
+      settingsNotify();
     });
   }
 
@@ -8688,7 +9076,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-music-meta", "oros-music-srv", "oros-music-lb", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-files-photos", "oros-files-thumbs", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-music-meta", "oros-music-srv", "oros-music-lb", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -9409,6 +9797,9 @@
     // PAIR-1: a code from a scanned QR (#pair=…), at boot and later.
     pairFromHash();
     window.addEventListener("hashchange", pairFromHash);
+    // LINK-1: a sign-in link (#signin=…), at boot and later.
+    linkFromHash();
+    window.addEventListener("hashchange", linkFromHash);
 
     // OAuth return → flip the menu to connected state once tokens land
     if (window.orosSync && window.orosSync.redirectHandled) {
@@ -11080,6 +11471,8 @@
         paired: !!(connected && typeof S.isPaired === "function" && S.isPaired()),
         pair: pairForSettings(),
         pairPrefill: state.pairPrefill || "",
+        link: linkForSettings(),
+        linkIn: linkInForSettings(),
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
@@ -11095,6 +11488,8 @@
         clean: (connected && state.vaultClean) ? JSON.parse(JSON.stringify(state.vaultClean)) : null,
         cleanDays: (window.orosVault && window.orosVault.cleanMinAgeDays) || 30,
         restoring: state.syncRestoring,
+        // SOS-1: { kind: "sos"|"reset", n, verified } when a signal stopped sync here.
+        signal: (S && typeof S.cloudSignal === "function") ? S.cloudSignal() : null,
         oldPassFor: state.syncOldPassFor,
         msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text }
            : (state.syncAutoErr ? { kind: "err", text: state.syncAutoErr } : null)
@@ -11236,6 +11631,11 @@
       case "sync.pair.approve": pairApprove(); return;
       case "sync.pair.cancel":  pairCancel(); return;
       case "sync.pair.clear":   state.pairPrefill = ""; settingsNotify(); return;
+      case "sync.link.make":    if (!strictLevelNow()) linkMake(); return;   // Sensitive work: no sign-in link
+      case "sync.link.cancel":  linkCancel(); return;
+      case "sync.link.open":    if (arg && typeof arg.code === "string") linkOpen(arg.code.slice(0, 40)); return;
+      case "sync.link.session": if (state.linkIn && state.linkIn.phase !== "done") linkInSet({ session: !!(arg && arg.on) }); return;
+      case "sync.link.close":   state.linkIn = null; settingsNotify(); return;
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -11297,6 +11697,20 @@
       // The app arms and confirms first (two taps, like the Info modal);
       // this is the same wipe, with no button of its own to update.
       case "reset":           scFactoryReset({ disabled: false, textContent: "" }); return;
+      // SOS-1: arg = the passphrase typed again ("" when sync is off).
+      case "sos":             sosStart(typeof arg === "string" ? arg : ""); return;
+      // SOS-1: a reset signal from another device stopped sync here.
+      case "sync.signal.erase":
+        if (osResetting) return;
+        osResetting = true;
+        scFactoryReset({ disabled: false, textContent: "" }, "follow");
+        return;
+      case "sync.signal.keep":
+        if (!window.orosSync || typeof window.orosSync.adoptSignal !== "function") return;
+        window.orosSync.adoptSignal().then(function (ok) {
+          if (ok) return window.orosSync.reconcile("signal-keep");
+        }).catch(function () {}).then(function () { settingsNotify(); });
+        return;
     }
   }
 
@@ -11340,6 +11754,64 @@
       var on = window.orosLock.isOn();
       if (on !== lockWasOn) { lockWasOn = on; renderMenu(); }
     });
+  }
+
+  // ---------- 9a. Sensitive work (lock.js window.orosStrict) ----------
+  // A shield in the bar while the mode is on (opens its Settings page),
+  // the level and the allowed hosts handed to the service worker (in
+  // Hardcore it blocks every other address), and a short note when
+  // the worker blocked an address or the relay was used.
+  var STRICT_RELAYS = ["oros-mail-relay.koulaxizis.workers.dev"];   // = mail.js DEFAULT_RELAY
+  var strictToldAt = {};
+  function strictLevelNow() {
+    var S = window.orosStrict;
+    try { return S && typeof S.level === "function" ? S.level() : null; } catch (e) { return null; }
+  }
+  function strictTellSW() {
+    var sw = navigator.serviceWorker;
+    if (!sw || !sw.controller || !window.orosStrict) return;
+    var lv = strictLevelNow(), hosts = [];
+    try { hosts = lv ? window.orosStrict.hosts() : []; } catch (e) {}
+    try { sw.controller.postMessage({ t: "oros-strict", level: lv, hosts: hosts, relays: lv ? STRICT_RELAYS : [] }); } catch (e) {}
+  }
+  function strictBadge() {
+    var bar = document.querySelector("#oros-bar .bar-right");
+    if (!bar) return;
+    var lv = strictLevelNow(), b = document.getElementById("strict-badge");
+    if (!lv) { if (b) b.remove(); return; }
+    if (!b) {
+      b = document.createElement("button");
+      b.id = "strict-badge";
+      b.type = "button";
+      b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/></svg>';
+      b.addEventListener("click", function (e) { e.stopPropagation(); window.orosSettings.open("sensitive"); });
+      bar.insertBefore(b, bar.firstChild);
+    }
+    b.classList.toggle("strict-hard", lv === "hard");
+    var title = window.t(lv === "hard" ? "strict.badge.hard" : "strict.badge.on");
+    if (b.title !== title) { b.title = title; b.setAttribute("aria-label", title); }
+  }
+  function strictUpdate() { strictBadge(); strictTellSW(); }
+  if (window.orosStrict && typeof window.orosStrict.onChange === "function") {
+    window.orosStrict.onChange(strictUpdate);
+    strictUpdate();
+    window.addEventListener("load", strictUpdate);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) strictTellSW(); });
+    if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
+      window.orosSync.onAutoSync(function (kind) { if (kind === "start") strictTellSW(); });
+    }
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener("controllerchange", strictTellSW);
+      navigator.serviceWorker.addEventListener("message", function (e) {
+        var d = e.data;
+        if (!d || (d.t !== "oros-strict-blocked" && d.t !== "oros-strict-relay") || typeof d.host !== "string") return;
+        var key = d.t + " " + d.host, now = Date.now();
+        if (strictToldAt[key] && now - strictToldAt[key] < 60000) return;   // one note a minute per address
+        strictToldAt[key] = now;
+        var txt = window.t(d.t === "oros-strict-blocked" ? "strict.blocked" : "strict.relay").replace("{h}", d.host.slice(0, 80));
+        scToast(d.t === "oros-strict-blocked" ? "err" : "", txt, function () { window.orosSettings.open("sensitive"); });
+      });
+    }
   }
 
   // ---------- 9b. Single apps (solo.js) ----------
@@ -12730,6 +13202,9 @@
   function tourFirstRun() {
     try {
       if (localStorage.getItem(TOUR_DONE) === "1") return;
+      // LINK-1: a sign-in link is opening this browser: the person is not
+      // new (apps, menu and tips settings come with sync), so no tour.
+      if (state.linkIn || /^#signin=/.test(location.hash || "")) { localStorage.setItem(TOUR_DONE, "1"); return; }
       localStorage.setItem(TOUR_KEY, "1");
       if (profilesWanted()) localStorage.setItem(PROFILE_KEY, "1");
     } catch (e) { return; }
@@ -13164,12 +13639,22 @@
     var pending;
     try { pending = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { pending = false; }
     if (!pending || tourBox || profilesBusy) return;
+    // LINK-1: a sign-in link opened this browser: not a new user (the
+    // apps and menu come with sync), and the link card must stay in view.
+    if (state.linkIn) {
+      try { localStorage.removeItem(TOUR_KEY); localStorage.removeItem(PROFILE_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
+      return;
+    }
     var tries = 0;
     (function wait() {
       // Splash still up, apps.json not in yet, or an app on screen.
       if (document.getElementById("oro-splash") || !state.apps.length || state.running) {
         if (state.running || ++tries > 60) return;   // returnToDesktop retries
         setTimeout(wait, 250);
+        return;
+      }
+      if (state.linkIn) {
+        try { localStorage.removeItem(TOUR_KEY); localStorage.removeItem(PROFILE_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
         return;
       }
       var prof = false;

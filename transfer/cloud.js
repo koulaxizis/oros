@@ -113,6 +113,14 @@
     });
   }
   // bytes → { id, exp, files (checked), total, biggest, packs: [{ u, n, files: [i…] }], h: [hex…] } | null
+  // D3: the sender's background picture rides in the sealed index as base64.
+  function bgFrom(v) {
+    if (typeof v !== "string" || v.length > Math.ceil(C.BG_MAX / 3) * 4 + 4) return null;
+    var u8 = null;
+    try { u8 = C.unb64(v); } catch (e) { return null; }
+    var type = C.picType(u8);
+    return type ? { bytes: u8, type: type } : null;
+  }
   function openIndex(key, bytes) {
     var u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
     if (u8.length < 28 || u8.length > INDEX_MAX) return Promise.resolve(null);
@@ -139,7 +147,7 @@
           packs.push({ u: p.u, n: len, files: list });
         }
         var exp = +o.exp || 0;
-        return { id: String(o.id || ""), exp: exp, files: ok.files, total: ok.total, biggest: ok.biggest, packs: packs, h: hs, meta: C.cleanMeta(o.meta) };
+        return { id: String(o.id || ""), exp: exp, files: ok.files, total: ok.total, biggest: ok.biggest, packs: packs, h: hs, meta: C.cleanMeta(o.meta), bg: bgFrom(o.bg) };
       }).catch(function () { return null; });
   }
 
@@ -234,6 +242,7 @@
           }), packs: packs.map(function (_, k) { return { u: links[k], n: lens[k] }; }) };
           var meta = C.cleanMeta(o.meta);
           if (meta) idx.meta = meta;                                  // D1: title and message, sealed with the index
+          if (o.bg && C.picType(o.bg)) idx.bg = C.b64(o.bg);          // D3: the background picture, sealed with the index
           return sealIndex(keys.key, idx).then(function (box) { return o.drop.put(id + "/index", new Blob([box])); })
             .then(function () { return mk(id + "/index"); })
             .then(function (u) { progress("ready"); return { id: id, exp: idx.exp, hold: hold, frag: fragment(o.code, u) }; });
@@ -280,6 +289,7 @@
           if (!x) { fail("bad"); return; }
           if (x.exp && x.exp < Date.now()) { fail("expired"); return; }
           idx = x;
+          if (x.bg && o.onBg) { try { o.onBg(x.bg); } catch (e) {} }
           set("offer", { files: x.files, total: x.total, biggest: x.biggest, mode: "cloud", exp: x.exp, meta: x.meta });
         }, function (e) { fail(e && e.code === "expired" ? "expired" : (e && e.code) || "lost"); });
       return self;

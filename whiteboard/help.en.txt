@@ -13,7 +13,7 @@ Whiteboard is an endless board for ideas: sticky notes, text, shapes, arrows tha
 - With `Select and move`, tap an object to select it and drag it to move it. [[Shift]] + tap adds to the selection, and dragging an empty spot with the mouse draws a box around several objects.
 - Moving a frame moves everything inside it.
 - The square handle at the bottom right of a selected object resizes it. A selected arrow shows a dot at each end: drag one onto another object to stick it there, or onto an empty spot to free it.
-- The bar at the top shows what the selection can change: `Colour`, `Shape`, `Fill`, `Arrow heads`, `Dashed line`, `Line width`, `Smaller text` and `Bigger text`, then `Edit text`, `Bring to front`, `Send to back`, `Duplicate` and `Delete`. With a tool chosen and nothing selected, it sets the colour of the next object.
+- The bar at the top shows what the selection can change: `Colour`, `Shape`, `Fill`, `Line shape`, `Start of the arrow`, `End of the arrow`, `Dashed line`, `Line width`, `Smaller text` and `Bigger text`, then `Edit text`, `Bring to front`, `Send to back`, `Duplicate` and `Delete`. With a tool chosen and nothing selected, it sets the colour of the next object.
 - Double-tap an object, or press [[Enter]], to change its text. A note makes its text smaller as it fills up. Double-tap an empty spot to add a sticky note there.
 - `Undo` and `Redo` in the top bar ([[Ctrl+Z]] and [[Ctrl+Y]]) go back through your changes on this board.
 
@@ -38,6 +38,12 @@ Whiteboard is an endless board for ideas: sticky notes, text, shapes, arrows tha
 - A UML class takes its compartments from its text: the first lines are its name, a line of `--` starts the attributes and another `--` the methods.
 - Network and IT shapes put their text under the picture.
 - On a device that still has an older orOS, a diagram shape shows as a plain rectangle, diamond or ellipse with the same text until that device updates; nothing is lost.
+
+## Diagram connectors
+- With an arrow selected, `Line shape` picks `Straight`, `Right angles, around shapes` (Elbow: the line turns only at right angles and finds its way around the shapes in between) or `Curved`. New arrows take the line shape you chose last.
+- On a right-angled or curved line, drop an arrow's end near one side of a shape (top, right, bottom or left) and the line always leaves or arrives on that side. Drop it in the middle and it picks the side facing the other end.
+- `Start of the arrow` and `End of the arrow` set each head on its own: `Arrow`, `Open arrow`, `Hollow triangle (UML: inherits)`, `Filled diamond (UML: made of)`, `Hollow diamond (UML: has)`, `Dot` or `Nothing`.
+- The way of an elbow line is worked out when the board is drawn, so it follows the shapes when you move them. On a device that still has an older orOS, these arrows show as straight lines with plain heads until it updates; nothing is lost.
 
 ## Templates
 - `More` (the three dots at the top right) › `Templates…` adds a ready board in the middle of the screen: `Brainstorm` (a topic with room for ideas around it), `Retrospective` (what went well, what to improve, what we do next), `SWOT` and `Roadmap` (now, next and later on a time line). It is one step: `Undo` takes it all back.

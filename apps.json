@@ -35,6 +35,7 @@
       "category": "Accessories",
       "icon": "calculator",
       "url": "calculator/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -43,15 +44,6 @@
       "category": "Accessories",
       "icon": "texttools",
       "url": "texttools/",
-      "type": "internal"
-    },
-    {
-      "id": "units",
-      "name": "Unit Converter",
-      "category": "Accessories",
-      "icon": "units",
-      "url": "units/",
-      "search": "search.js",
       "type": "internal"
     },
     {
@@ -222,7 +214,8 @@
       "category": "Office",
       "icon": "forms",
       "url": "forms/",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "base",
@@ -1298,6 +1291,12 @@
       "name": "Moon & Sky",
       "to": "weather",
       "target": { "sky": true }
+    },
+    {
+      "id": "units",
+      "name": "Unit Converter",
+      "to": "calculator",
+      "target": { "mode": "conv" }
     }
   ]
 }

@@ -167,6 +167,7 @@ Bitte etwa „Countdown 25 Minuten“, „weck mich jeden Tag um 7:00“, „spi
 - `Starten` startet den Timer in [Zeit](app:time) sofort. `Wecker stellen` öffnet das Weckerformular von Zeit ausgefüllt, und du drückst dort `Wecker hinzufügen`.
 - `Abspielen` spielt einen Titel aus [Musik](app:music), einen Sender aus [Radio](app:radio) oder eine Folge aus [Podcasts](app:podcasts), die der Assistent vorher gefunden hat.
 - `Route zeigen` öffnet [Karten](app:maps) mit der Route von deinem Standort zu dieser Adresse oder diesem Ort, mit Auto, Fahrrad oder zu Fuß. Für eine Person nimmt der Assistent die Adresse aus Kontakte oder dem CRM.
+- `Übersetzen` öffnet [Text Tools](app:texttools) › Übersetzen mit dem Text und den Sprachen, wenn du um eine Übersetzung auf dem Gerät bittest („übersetze das auf meinem Handy ins Deutsche“): Die Modelle von Mozilla übersetzen ihn dort, und der Text geht an keine KI. Über das orOS Gate kann Claude dieselbe Karte vorbereiten.
 - `Öffnen` öffnet einen gefundenen Eintrag oder eine App.
 
 ## Änderungsverlauf
