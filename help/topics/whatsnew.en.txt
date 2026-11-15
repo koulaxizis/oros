@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.90.00
+- **Podcast episodes carry their chapters and cover.** The MP3 that Studio makes for an episode now holds its title, show, number, date, language, show notes, cover and the chapters from your markers, so podcast apps and players show them even when they play the file directly. Every MP3 from Studio uses the same up-to-date tags (ID3v2.4). See [Studio](app:studio).
+
 ## Version 6.89.00
 - **Glossary and checks for book translations in Writer.** Keep the terms of a book in a glossary: when a sentence has one, its translation shows under it and Alt+G puts it in. `Add a term…` takes the selected words, and terms can be marked as never to be used. As you type, Writer warns about a missing or forbidden term, numbers, formatting marks, spaces, end punctuation and a sentence translated two ways; `Check the translation…` lists every warning. Warnings never stop you. Glossaries import and export as CSV and TBX. See [Writer](app:writer).
 
