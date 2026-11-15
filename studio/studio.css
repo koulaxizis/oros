@@ -899,3 +899,6 @@ dialog input[type="email"], dialog input[type="number"], dialog input[type="date
   .mk-row { grid-template-columns: auto 1fr; }
   .pod-two { grid-template-columns: 1fr; gap: 0; }
 }
+
+#tr-text { width: 100%; box-sizing: border-box; min-height: 12em; font: inherit; font-size: 14px; line-height: 1.45; resize: vertical; }
+#tr-status { overflow-wrap: anywhere; }

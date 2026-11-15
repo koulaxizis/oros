@@ -243,6 +243,8 @@
       var e = { p: p, ep: ep, mk: mk };
       $("pod-ep-file").textContent = ep.file ? t("pod.fileReady", { d: P.fmtDur(ep.dur), s: mb(ep.bytes) }) + (P.stale(e) ? " " + t("pod.stale") : "") : t("pod.fileNone");
       $("pod-ep-go").textContent = ep.file ? t("pod.remake") : t("pod.make");
+      $("pod-ep-tr").disabled = !ep.file;
+      trState(s, ep);
       status("pod-ep-err", "");
     }
     function renderEpChips() {
@@ -317,7 +319,10 @@
             return Promise.resolve(fs.mkdir(P.DIR)).then(function () { return fs.mkdir(P.showDir(s.id)); })
               .then(function () { return fs.writeBlob(path, blob); })
               .then(function () {
-                if (ep.file && ep.file !== path && fs.rm) Promise.resolve(fs.rm(ep.file)).catch(function () {});
+                if (ep.file && ep.file !== path && fs.rm) {
+                  Promise.resolve(fs.rm(ep.file)).catch(function () {});
+                  moveTranscript(fs, ep.file.replace(/\.mp3$/, ".vtt"), path.replace(/\.mp3$/, ".vtt"));
+                }
                 H.setProject({ ep: P.normEp(Object.assign({}, ep, { file: path, bytes: blob.size, dur: dur, mh: P.markerHash(mk) })) }, { pid: p.id });
               });
           });
@@ -420,10 +425,16 @@
     // everything the site holds: [{ name, data (Uint8Array or Blob) }]
     // keep: <item>s of the published feed this device does not have (P2)
     function siteItems(s, fs, eps, now, keep) {
+      return Promise.all(eps.map(function (e) {
+        return readMaybe(fs, P.trPath(s.id, e.ep.slug)).then(function (b) { return Object.assign({}, e, { tr: !!b, trBlob: b }); });
+      })).then(function (list) { return siteItemsWith(s, fs, list, now, keep); });
+    }
+    function siteItemsWith(s, fs, eps, now, keep) {
       var f = P.files(s, eps);
       var words = {
         feed: t("pod.page.feed"), support: t("pod.page.support"), episode: t("pod.page.episode"), season: t("pod.page.season"),
-        trailer: t("pod.epType.trailer"), bonus: t("pod.epType.bonus"), untitled: t("pod.untitledEp"), credit: t("pod.page.credit")
+        trailer: t("pod.epType.trailer"), bonus: t("pod.epType.bonus"), untitled: t("pod.untitledEp"), credit: t("pod.page.credit"),
+        transcript: t("tr.btn")
       };
       var items = [
         { name: f.feed, data: P.textBytes(P.feedXml(s, eps, { now: now, untitled: t("pod.untitledEp"), fundLabel: t("pod.page.support"), keep: keep || [] })) },
@@ -433,6 +444,7 @@
       eps.forEach(function (e, i) {
         var fe = f.eps[i];
         if (fe.chapters) items.push({ name: fe.chapters, data: P.textBytes(P.chaptersJson(P.chapters(e.mk, e.ep.dur, t("pod.intro")), t("pod.chapter"))) });
+        if (fe.transcript && e.trBlob) items.push({ name: fe.transcript, data: e.trBlob });
       });
       var blobs = [{ name: f.cover, path: s.cover }].concat(eps.map(function (e, i) { return { name: f.eps[i].audio, path: e.ep.file }; }));
       var missing = [];
@@ -596,6 +608,167 @@
       renderGh();
     }
 
+    // ---------- the transcript (P3): on request, Whisper on this device, edited, then on the site ----------
+    function readMaybe(fs, path) {
+      try {
+        return Promise.resolve(fs.readBlob(path)).then(function (b) { return isBlob(b) ? b : null; }, function () { return null; });
+      } catch (e) { return Promise.resolve(null); }
+    }
+    function moveTranscript(fs, from, to) {
+      if (from === to) return;
+      readMaybe(fs, from).then(function (b) {
+        if (!b) return;
+        return Promise.resolve(fs.writeBlob(to, b)).then(function () { return fs.rm(from); });
+      }).catch(function () {});
+    }
+    var trHas = {};   // path → true/false, as last read here
+    function trState(s, ep) {
+      var line = $("pod-ep-tr-state");
+      if (!s || !ep || !ep.file) { line.textContent = ""; return; }
+      var path = P.trPath(s.id, ep.slug), fs = H.fs();
+      line.textContent = trHas[path] ? t("tr.has") : t("tr.none");
+      if (!fs) return;
+      readMaybe(fs, path).then(function (b) {
+        trHas[path] = !!b;
+        var e = curEp();
+        if (e && e.slug === ep.slug) line.textContent = b ? t("tr.has") : t("tr.none");
+      });
+    }
+    var tr = { path: "", saved: "", run: null };
+    function trOpen() {
+      var s = show(), ep = curEp(), fs = H.fs();
+      if (!s || !ep || !ep.file) return;
+      if (!fs) { status("pod-ep-err", t("pod.err.noDisk")); return; }
+      tr = { path: P.trPath(s.id, ep.slug), saved: "", run: null, dur: ep.dur, file: ep.file, lang: P.asrLang(s.lang) };
+      $("tr-text").value = "";
+      trBusy(false);
+      status("tr-status", t("tr.reading"));
+      H.showDlg("tr-dlg");
+      readMaybe(fs, tr.path).then(function (b) { return b ? b.text() : ""; }).then(function (txt) {
+        var cues = P.parseVtt(txt);
+        tr.saved = P.editText(cues);
+        $("tr-text").value = tr.saved;
+        status("tr-status", cues.length ? t("tr.loaded", { n: cues.length }) : t("tr.none"));
+        trButtons();
+      });
+    }
+    function trButtons() {
+      var running = !!tr.run, has = !!$("tr-text").value.trim();
+      $("tr-make").hidden = running;
+      $("tr-stop").hidden = !running;
+      $("tr-make").textContent = has ? t("tr.remake") : t("tr.make");
+      $("tr-save").disabled = running || !has;
+      $("tr-del").disabled = running || !tr.saved;
+      $("tr-text").readOnly = running;
+    }
+    function trBusy(on) { if (!on) tr.run = null; trButtons(); }
+    function trMake() {
+      if (tr.run) return;
+      var go = function () { trLoad(); };
+      if ($("tr-text").value.trim()) ask(t("tr.replaceAsk"), t("tr.remake"), go); else go();
+    }
+    function trLoad() {
+      var load = root.MontageASR ? Promise.resolve() : new Promise(function (res, rej) {
+        var sc = document.createElement("script");
+        sc.src = "../montage/asr.js";
+        sc.onload = res; sc.onerror = function () { rej(new Error("no-asr")); };
+        document.head.appendChild(sc);
+      });
+      load.then(function () {
+        var ASR = root.MontageASR;
+        if (!ASR || !(root.OfflineAudioContext || root.webkitOfflineAudioContext)) throw new Error("no-asr");
+        return Promise.resolve(ASR.ready()).catch(function () { return false; }).then(function (yes) {
+          if (yes) trRun(ASR);
+          else ask(t("tr.needAsk", { mb: ASR.MODEL_MB + ASR.RUNTIME_MB }), t("tr.download"), function () { trRun(ASR); });
+        });
+      }).catch(function () { status("tr-status", t("tr.noAsr")); });
+    }
+    function trRun(ASR) {
+      var fs = H.fs(), job = { stop: false, ctl: typeof AbortController === "function" ? new AbortController() : null };
+      if (!fs) return;
+      tr.run = job;
+      trButtons();
+      status("tr-status", t("tr.decoding"));
+      readMaybe(fs, tr.file).then(function (b) {
+        if (!b) throw new Error("gone");
+        return b.arrayBuffer();
+      }).then(function (buf) {
+        if (job.stop) throw new Error("stop");
+        var OAC = root.OfflineAudioContext || root.webkitOfflineAudioContext;
+        var ctx = new OAC(1, Math.max(1, Math.ceil((tr.dur + 2) * 16000)), 16000);
+        return new Promise(function (res, rej) { ctx.decodeAudioData(buf, res, rej); });
+      }).then(function (ab) {
+        if (job.stop) throw new Error("stop");
+        var n = ab.length, out = new Float32Array(n), ch = ab.numberOfChannels;
+        for (var c = 0; c < ch; c++) { var d = ab.getChannelData(c); for (var i = 0; i < n; i++) out[i] += d[i] / ch; }
+        return ASR.run(out, {
+          lang: tr.lang, signal: job.ctl ? job.ctl.signal : undefined,
+          cancelled: function () { return job.stop; },
+          progress: function (q, stage) {
+            if (!job.stop) status("tr-status", t(stage === "download" ? "tr.dl" : "tr.run", { p: Math.round(q * 100) }));
+          }
+        });
+      }).then(function (r) {
+        if (job.stop || tr.run !== job) return;
+        var cues = P.normCues((r && r.cues) || [], tr.dur);
+        trBusy(false);
+        if (!cues.length) { status("tr-status", t("tr.empty")); return; }
+        $("tr-text").value = P.editText(cues);
+        status("tr-status", t("tr.made", { n: cues.length }));
+        trButtons();
+      }, function (e) {
+        if (tr.run !== job) return;
+        trBusy(false);
+        if (job.stop) { status("tr-status", t("tr.stopped")); return; }
+        var m = String((e && e.message) || e);
+        status("tr-status", m === "gone" ? t("tr.gone") : /^http|fetch|network|load/i.test(m) ? t("tr.net") : t("tr.fail"));
+      });
+    }
+    function trStop() {
+      if (!tr.run) return;
+      tr.run.stop = true;
+      if (tr.run.ctl) try { tr.run.ctl.abort(); } catch (e) { /* nothing */ }
+      tr.run = null;
+      status("tr-status", t("tr.stopped"));
+      trButtons();
+    }
+    function trSave() {
+      var fs = H.fs(), s = show();
+      if (!fs || !s || tr.run) return;
+      var cues = P.fromEdit($("tr-text").value, tr.dur);
+      if (!cues.length) { status("tr-status", t("tr.badText")); return; }
+      var text = P.editText(cues), path = tr.path;
+      Promise.resolve(fs.mkdir(P.DIR)).then(function () { return fs.mkdir(P.showDir(s.id)); }).then(function () {
+        return fs.writeBlob(path, new Blob([P.vtt(cues)], { type: "text/vtt" }));
+      }).then(function () {
+        trHas[path] = true;
+        tr.saved = text;
+        $("tr-text").value = text;
+        status("tr-status", t("tr.saved", { n: cues.length }));
+        trButtons();
+        if ($("pod-dlg").open) trState(s, curEp());
+      }, function () { status("tr-status", t("tr.saveFail")); });
+    }
+    function trDelete() {
+      var fs = H.fs(), path = tr.path;
+      if (!fs || tr.run || !tr.saved) return;
+      ask(t("tr.delAsk"), t("tr.del"), function () {
+        Promise.resolve(fs.rm(path)).then(function () {
+          trHas[path] = false;
+          tr.saved = "";
+          $("tr-text").value = "";
+          status("tr-status", t("tr.deleted"));
+          trButtons();
+          if ($("pod-dlg").open) trState(show(), curEp());
+        }, function () { status("tr-status", t("tr.saveFail")); });
+      });
+    }
+    function trClose() {
+      var done = function () { trStop(); H.hideDlg("tr-dlg"); };
+      var now = $("tr-text").value.trim();
+      if (now && now !== tr.saved.trim()) ask(t("tr.dropAsk"), t("tr.drop"), done); else done();
+    }
+
     // ---------- markers ----------
     function addMarkerHere() {
       var p = proj();
@@ -677,6 +850,14 @@
       $("pod-gh-go").addEventListener("click", publishGh);
       $("pod-gh-forget").addEventListener("click", forgetToken);
       $("pod-gh-repo").addEventListener("input", renderGh);
+      $("pod-ep-tr").addEventListener("click", trOpen);
+      $("tr-make").addEventListener("click", trMake);
+      $("tr-stop").addEventListener("click", trStop);
+      $("tr-save").addEventListener("click", trSave);
+      $("tr-del").addEventListener("click", trDelete);
+      $("tr-close").addEventListener("click", trClose);
+      $("tr-text").addEventListener("input", trButtons);
+      $("tr-dlg").addEventListener("cancel", function (ev) { ev.preventDefault(); trClose(); });
       $("mk-add").addEventListener("click", addMarkerHere);
       $("pod-ask-no").addEventListener("click", function () { askFn = null; H.hideDlg("pod-ask"); });
       $("pod-ask-yes").addEventListener("click", function () { var fn = askFn; askFn = null; H.hideDlg("pod-ask"); if (fn) fn(); });
