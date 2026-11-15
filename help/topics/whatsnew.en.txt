@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.87.00
+- **Translate from Mail, Reader, Notes and Montage.** A Translate button under a message, above an article, at the end of the Notes formatting bar and in Montage's `Subtitles` translates on the device, as in Text Tools. In Notes you replace the text or add the translation below it; in Montage every subtitle is translated at once and keeps its timing, with Undo. The Assistant can also open a translation on the device for you.
+
 ## Version 6.86.00
 - **Base: link records between tables.** A `Link to records` field links a record to records of another table, for example a book to its authors, and the other table shows the same links from its side. `Lookup`, `Rollup` and `Count of links` fields show, add up or count what the links point to, and `Formula` fields work out a value from the other fields, such as `{Price} * {Copies}`, with the Spreadsheet's functions.
 
