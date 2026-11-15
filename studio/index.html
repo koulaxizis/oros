@@ -552,6 +552,29 @@
           <button type="button" id="pod-gh-go" class="chip primary" data-i18n="pod.gh.go">Publish</button>
         </div>
       </div>
+      <div id="pod-dav-sec" class="pod-gh">
+        <h3 data-i18n="pod.dav.h">Publish on Nextcloud or WebDAV</h3>
+        <p class="hint small" data-i18n="pod.dav.hint"></p>
+        <label class="field" for="pod-dav-url" data-i18n="pod.dav.url">The show's folder (WebDAV address)</label>
+        <input id="pod-dav-url" type="url" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="500" placeholder="https://cloud.example.com/remote.php/dav/files/name/Podcast">
+        <label class="field" for="pod-dav-share" data-i18n="pod.dav.share">Public link of that folder</label>
+        <input id="pod-dav-share" type="url" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="500" placeholder="https://cloud.example.com/s/AbCdEf123">
+        <label class="field" for="pod-dav-user" data-i18n="pod.dav.user">User name</label>
+        <input id="pod-dav-user" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="200">
+        <div id="pod-dav-pass-row">
+          <label class="field" for="pod-dav-pass" data-i18n="pod.dav.pass">App password</label>
+          <input id="pod-dav-pass" type="password" autocomplete="off" spellcheck="false" maxlength="300">
+        </div>
+        <p id="pod-dav-pass-set" class="hint small" data-i18n="pod.dav.passSet">A password is saved on this device only.</p>
+        <label class="cb-line"><input type="checkbox" id="pod-dav-relay"> <span data-i18n="pod.dav.relay">Through the orOS relay</span></label>
+        <p class="hint small" data-i18n="pod.dav.relayHint"></p>
+        <p id="pod-dav-where" class="hint small"></p>
+        <p id="pod-dav-err" class="hint small" aria-live="polite"></p>
+        <div class="dlg-actions spread">
+          <button type="button" id="pod-dav-forget" class="chip" data-i18n="pod.dav.forget">Forget the password</button>
+          <button type="button" id="pod-dav-go" class="chip primary" data-i18n="pod.dav.go">Publish</button>
+        </div>
+      </div>
     </div>
   </dialog>
 
@@ -835,6 +858,7 @@
   <script src="meter.js?v=6.85.00"></script>
   <script src="podcast.js?v=6.85.00"></script>
   <script src="ghpages.js?v=6.85.00"></script>
+<script src="davpub.js?v=6.85.00"></script>
   <script src="podcastui.js?v=6.85.00"></script>
   <script src="midi.js?v=6.85.00"></script>
   <script src="sfz.js?v=6.85.00"></script>

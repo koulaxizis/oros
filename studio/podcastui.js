@@ -384,6 +384,7 @@
       $("pod-feed-copy").disabled = !feed;
       $("pod-subscribe").hidden = !feed || !podcastsHost();
       renderGh();
+      renderDav();
     }
     function podcastsHost() {
       try { var w = root.parent; return w && w !== root && typeof w.__orosOpenPodcastsAdd === "function" ? w : null; } catch (e) { return null; }
@@ -462,6 +463,7 @@
       if (e && e.message === "missing") return t("pod.err.missing", { list: (e.list || []).join(", ") });
       if (e && e.message === "zip-big") return t("pod.err.big");
       if (e && /^gh-/.test(e.code || "")) return t("pod.gh.err." + e.code.slice(3));
+      if (e && /^dav-/.test(e.code || "")) return t("pod.dav.err." + e.code.slice(4));
       return t("toast.exportFail");
     }
     // the published feed (if any): its episodes this device does not have are kept
@@ -606,6 +608,126 @@
       ghSave(c);
       status("pod-gh-err", t("pod.gh.forgot"));
       renderGh();
+    }
+
+    // ---------- Nextcloud / WebDAV (P4): the person's own folder and app password ----------
+    // device-only: { shows: { showId: { url, user, relay, share, pass, sent } } }; never synced
+    var DAV_KEY = "oros-studio-dav", davFor = null;
+    function davAll() {
+      try {
+        var c = JSON.parse(root.localStorage.getItem(DAV_KEY) || "null");
+        if (c && typeof c === "object" && c.shows && typeof c.shows === "object") return c;
+      } catch (e) { /* private window */ }
+      return { shows: {} };
+    }
+    function davConf(id) {
+      var c = davAll().shows[id];
+      if (c && typeof c === "object") {
+        return { url: typeof c.url === "string" ? c.url : "", user: typeof c.user === "string" ? c.user : "", relay: c.relay === true,
+                 share: typeof c.share === "string" ? c.share : "", pass: typeof c.pass === "string" ? c.pass : "",
+                 sent: c.sent && typeof c.sent === "object" ? c.sent : {} };
+      }
+      // first time: the account of Settings › Sync over WebDAV, if there is one (never its password)
+      var d = null;
+      try { d = JSON.parse(root.localStorage.getItem("oros-dav-conf") || "null"); } catch (e) { d = null; }
+      var ok = d && typeof d.url === "string" && typeof d.user === "string";
+      return { url: ok ? d.url + "/" : "", user: ok ? d.user : "", relay: !!(ok && d.relay === true), share: "", pass: "", sent: {}, fresh: true };
+    }
+    function davSave(id, c) {
+      try {
+        var all = davAll();
+        if (c) all.shows[id] = { url: c.url, user: c.user, relay: c.relay, share: c.share, pass: c.pass, sent: c.sent || {} };
+        else delete all.shows[id];
+        if (!Object.keys(all.shows).length) root.localStorage.removeItem(DAV_KEY);
+        else root.localStorage.setItem(DAV_KEY, JSON.stringify(all));
+        return true;
+      } catch (e) { return false; }
+    }
+    function renderDav() {
+      var s = show(), D = root.StudioDavPub;
+      $("pod-dav-sec").hidden = !s || !D;
+      if (!s || !D) return;
+      var c = davConf(s.id);
+      // the form is filled when another show is shown, so what is being typed stays
+      if (davFor !== s.id) {
+        davFor = s.id;
+        ["url", "share", "user"].forEach(function (k) { $("pod-dav-" + k).value = c[k]; });
+        $("pod-dav-relay").checked = c.relay;
+        $("pod-dav-pass").value = "";
+      }
+      $("pod-dav-pass-set").hidden = !c.pass;
+      $("pod-dav-pass-row").hidden = !!c.pass;
+      $("pod-dav-forget").hidden = !c.pass;
+      var miss = P.problems(s, P.episodes(dat(), s.id)).filter(function (k) { return k !== "url"; });
+      $("pod-dav-go").disabled = busy || miss.length > 0;
+      var sh = D.parseShare($("pod-dav-share").value);
+      $("pod-dav-where").textContent = sh && s.url && s.url !== sh.base ? t("pod.dav.other", { url: s.url, pub: sh.base }) : "";
+    }
+    function davStep(k, i, n) {
+      status("pod-dav-err", k === "file" ? t("pod.gh.step.file", { i: i, n: n }) : t("pod.dav.step." + k));
+    }
+    function publishDav() {
+      var s = show(), fs = H.fs(), D = root.StudioDavPub;
+      if (busy || !s || !fs || !D) return;
+      var c = davConf(s.id);
+      c.url = D.normFolder($("pod-dav-url").value);
+      if (!c.url) { status("pod-dav-err", t("pod.dav.err.url")); $("pod-dav-url").focus(); return; }
+      var sh = D.parseShare($("pod-dav-share").value);
+      if (!sh) { status("pod-dav-err", t("pod.dav.err.share")); $("pod-dav-share").focus(); return; }
+      c.share = $("pod-dav-share").value.trim();
+      c.user = $("pod-dav-user").value.trim();
+      if (!c.user) { status("pod-dav-err", t("pod.dav.err.user")); $("pod-dav-user").focus(); return; }
+      c.relay = $("pod-dav-relay").checked;
+      if (!c.pass) {
+        var typed = $("pod-dav-pass").value;
+        if (!typed) { status("pod-dav-err", t("pod.dav.err.pass")); $("pod-dav-pass").focus(); return; }
+        c.pass = typed;
+      }
+      if (!davSave(s.id, c)) { status("pod-dav-err", t("pod.dav.err.store")); return; }
+      $("pod-dav-pass").value = "";
+      // no site address yet: the folder's public address, which also makes the feed's guid
+      if (!s.url) {
+        s = P.normShow(Object.assign({}, s, { url: sh.base, m: 0 }));
+        if (!s.guid) s.guid = P.feedGuid(P.feedUrl(s));
+        H.putShow(s);
+        fillShow();
+      }
+      var eps = P.episodes(dat(), s.id).filter(function (e) { return !!e.ep.file; });
+      var stale = eps.filter(P.stale);
+      var go = function () { davNow(s, fs, eps, c); };
+      if (stale.length) ask(t("pod.staleAsk", { n: stale.length }), t("pod.dav.go"), go); else go();
+    }
+    function davNow(s, fs, eps, c) {
+      if (busy) return;
+      var D = root.StudioDavPub, now = Date.now(), feedEtag = "";
+      var deps = { fetch: function (u, i) { return root.fetch(u, i); }, conf: { url: c.url, user: c.user, relay: c.relay }, pass: c.pass, sha1: sha1Hex, bytes: bytesOf };
+      busy = true; setBusy();
+      davStep("feed");
+      publishedKeep(s, eps, function () {
+        return D.readFeed(deps).then(function (f) { feedEtag = f.etag; return f.text; });
+      }, true).then(function (keep) {
+        return siteItems(s, fs, eps, now, keep);
+      }).then(function (items) {
+        return D.publish(deps, items.map(function (it) { return { path: it.name, data: it.data }; }), { sent: c.sent, feedEtag: feedEtag, onStep: davStep });
+      }).then(function (res) {
+        busy = false; setBusy();
+        var cc = davConf(s.id);
+        cc.sent = res.sent;
+        davSave(s.id, cc);
+        status("pod-dav-err", res.changed ? t("pod.dav.done", { url: s.url }) : t("pod.gh.same", { url: s.url }));
+      }, function (e) {
+        busy = false; setBusy();
+        if (e && e.code === "dav-auth") { var cc = davConf(s.id); cc.pass = ""; davSave(s.id, cc); renderDav(); }
+        status("pod-dav-err", siteFail(e));
+      });
+    }
+    function forgetDavPass() {
+      var s = show();
+      if (!s) return;
+      var c = davConf(s.id);
+      if (!c.fresh) { c.pass = ""; davSave(s.id, c); }
+      status("pod-dav-err", t("pod.dav.forgot"));
+      renderDav();
     }
 
     // ---------- the transcript (P3): on request, Whisper on this device, edited, then on the site ----------
@@ -810,7 +932,7 @@
 
     // ---------- the whole dialog ----------
     function setBusy() {
-      ["pod-ep-go", "pod-zip", "pod-gh-go", "pod-save", "pod-del", "pod-cover-pick", "pod-cover-atelier"].forEach(function (id) { if ($(id)) $(id).disabled = busy; });
+      ["pod-ep-go", "pod-zip", "pod-gh-go", "pod-dav-go", "pod-save", "pod-del", "pod-cover-pick", "pod-cover-atelier"].forEach(function (id) { if ($(id)) $(id).disabled = busy; });
       renderSite();
     }
     function render() {
@@ -850,6 +972,9 @@
       $("pod-gh-go").addEventListener("click", publishGh);
       $("pod-gh-forget").addEventListener("click", forgetToken);
       $("pod-gh-repo").addEventListener("input", renderGh);
+      $("pod-dav-go").addEventListener("click", publishDav);
+      $("pod-dav-forget").addEventListener("click", forgetDavPass);
+      $("pod-dav-share").addEventListener("input", renderDav);
       $("pod-ep-tr").addEventListener("click", trOpen);
       $("tr-make").addEventListener("click", trMake);
       $("tr-stop").addEventListener("click", trStop);

@@ -61,7 +61,7 @@
   // Apps with a summary of their own; any other app needs a Today provider.
   var OWN = { budget: "month", timesheet: "month", todo: "lists", stock: "month", kanban: "boards",
               notes: "notebooks", bookmarks: "folders", contacts: "labels", shelf: "kinds", library: "books",
-              automations: "rules" };   // AS-STRUCT
+              automations: "rules", studio: "shows" };   // AS-STRUCT; studio: STUDIO-POD P4
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -111,7 +111,7 @@
       return typeof args[k] === "string" && args[k].trim() ? args[k].replace(/\s+/g, " ").trim().slice(0, max || 120) : "";
     }
     var grp = { todo: ["list"], notes: ["notebook"], bookmarks: ["folder", "tag"], contacts: ["label"],
-                shelf: ["kind", "status", "tag"], library: ["status", "tag"] }[app] || [];
+                shelf: ["kind", "status", "tag"], library: ["status", "tag"], studio: ["show"] }[app] || [];
     grp.forEach(function (k) {
       var v = word(k, k === "folder" ? 240 : 120);
       if (v) out[k] = k === "kind" || k === "status" ? v.toLowerCase() : v;
@@ -120,6 +120,56 @@
       out.monthSet = monthSet;
       if (typeof args.label === "string" && args.label.trim()) out.label = args.label.replace(/\s+/g, " ").trim().slice(0, 40);
     }
+    return out;
+  }
+
+  // ---------- Studio: podcast shows and their episodes (STUDIO-POD P4) ----------
+  // Read only: Claude (Assistant or Gate) never publishes; an upload always
+  // needs the owner's own tap in Studio. No password, token or file path.
+  var SHOW_ID = /^h[a-z0-9]{6,20}$/, MAX_EPS = 200;
+  function studioShows(raw, opts) {
+    raw = isObj(raw) ? raw : {};
+    opts = opts || {};
+    var tombs = isObj(raw.tombs) ? raw.tombs : {};
+    var shows = arr(raw.shows).filter(function (x) { return isObj(x) && SHOW_ID.test(x.id || "") && !tombs.hasOwnProperty(x.id); });
+    var want = str(opts.show, 120).toLowerCase();
+    if (want) {
+      var hit = shows.filter(function (x) { return str(x.title, 120).toLowerCase() === want || x.id === want; });
+      if (!hit.length) return { ok: false, err: "No show is called \"" + str(opts.show, 120) + "\". The shows: " + (shows.map(function (x) { return str(x.title, 120) || "(untitled)"; }).join(", ") || "none") + "." };
+      shows = hit;
+    }
+    shows.sort(function (a, b) { var x = str(a.title, 120).toLowerCase(), y = str(b.title, 120).toLowerCase(); return x < y ? -1 : x > y ? 1 : 0; });
+    var ids = {};
+    shows.forEach(function (x) { ids[x.id] = x; });
+    var per = {}, items = [];
+    arr(raw.projects).forEach(function (p) {
+      if (!isObj(p) || !ids[p.sh] || !isObj(p.ep) || tombs.hasOwnProperty(p.id)) return;
+      var e = p.ep, sh = ids[p.sh], made = typeof e.file === "string" && /\.mp3$/.test(e.file);
+      var d = typeof e.date === "number" && e.date > 0 ? new Date(e.date).toISOString().slice(0, 10) : "";
+      var kind = e.type === "trailer" || e.type === "bonus" ? e.type : "episode";
+      var dur = made && typeof e.dur === "number" && e.dur > 0 ? Math.floor(e.dur / 60) + ":" + pad(Math.floor(e.dur % 60)) : "";
+      var c = per[sh.id] || (per[sh.id] = { episodes: 0, ready: 0, latest: "" });
+      c.episodes++;
+      if (made) c.ready++;
+      if (made && d > c.latest) c.latest = d;
+      items.push({ title: str(e.title, 120) || str(p.name, 120) || "(untitled)", date: d, by: str(sh.title, 120),
+                   text: [kind + (e.n ? " " + e.n : "") + (e.se ? ", season " + e.se : ""), made ? "episode file made" + (dur ? ", " + dur : "") : "no episode file yet"].join(" · "),
+                   n: typeof e.n === "number" ? e.n : 0 });
+    });
+    items.sort(function (a, b) { return a.by < b.by ? -1 : a.by > b.by ? 1 : (b.date > a.date ? 1 : b.date < a.date ? -1 : b.n - a.n); });
+    items.forEach(function (it) { delete it.n; });
+    var out = {
+      ok: true, app: "studio",
+      shows: shows.map(function (x) {
+        var url = typeof x.url === "string" && /^https:\/\/[^\s<>"]+\/$/.test(x.url) ? x.url : "";
+        var c = per[x.id] || { episodes: 0, ready: 0, latest: "" };
+        return { title: str(x.title, 120) || "(untitled)", author: str(x.author, 120), site: url, feed: url ? url + "feed.xml" : "",
+                 episodes: c.episodes, files_made: c.ready, latest: c.latest };
+      }),
+      items: items.slice(0, MAX_EPS),
+      note: "Read only. Publishing (ZIP, GitHub Pages, Nextcloud) is done by the owner in Studio › Export › Publish as podcast."
+    };
+    if (items.length > MAX_EPS) out.more_items = items.length - MAX_EPS;
     return out;
   }
 
@@ -975,7 +1025,7 @@
           stReading: "reading", stFinished: "finished", stUnread: "unread", stWant: "want", stNow: "in progress", stDrop: "dropped",
           kBook: "Books", kFilm: "Films", kSeries: "Series", kAlbum: "Music", kPodcast: "Podcasts", kGame: "Games",
           auRules: "rules", auOn: "on", auRuns: "Recent runs on this device", auOff: "off", auGone: "deleted",
-          "au.sent": "notice shown", "au.late": "shown late", "au.off": "notices off", "au.skip": "skipped, an app is missing", "au.run": "opened", "au.outErr": "push or webhook not delivered" },
+          "au.sent": "notice shown", "au.late": "shown late", "au.off": "notices off", "au.skip": "skipped, an app is missing", "au.run": "opened", "au.outErr": "push or webhook not delivered", podEps: "episodes", podMade: "files made" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
           run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία", toInv: "Προς τιμολόγηση",
@@ -988,7 +1038,7 @@
           stReading: "διαβάζεις", stFinished: "τελείωσαν", stUnread: "αδιάβαστα", stWant: "θέλω", stNow: "σε εξέλιξη", stDrop: "παρατημένα",
           kBook: "Βιβλία", kFilm: "Ταινίες", kSeries: "Σειρές", kAlbum: "Μουσική", kPodcast: "Podcasts", kGame: "Παιχνίδια",
           auRules: "κανόνες", auOn: "ενεργοί", auRuns: "Πρόσφατες εκτελέσεις σε αυτή τη συσκευή", auOff: "ανενεργός", auGone: "διαγράφηκε",
-          "au.sent": "εμφανίστηκε ειδοποίηση", "au.late": "εμφανίστηκε αργότερα", "au.off": "ειδοποιήσεις κλειστές", "au.skip": "παραλείφθηκε, λείπει εφαρμογή", "au.run": "το άνοιξες", "au.outErr": "η ειδοποίηση ή το webhook δεν παραδόθηκε" }
+          "au.sent": "εμφανίστηκε ειδοποίηση", "au.late": "εμφανίστηκε αργότερα", "au.off": "ειδοποιήσεις κλειστές", "au.skip": "παραλείφθηκε, λείπει εφαρμογή", "au.run": "το άνοιξες", "au.outErr": "η ειδοποίηση ή το webhook δεν παραδόθηκε", podEps: "επεισόδια", podMade: "με αρχείο" }
   };
   // A pack language (orosI18n, ../i18n.js) gets its tables here; in Node
   // (tests) there is no window and only en / el exist.
@@ -1092,6 +1142,9 @@
       out.push(w.ctrs + ": " + s.contracts_total + " · " + w.ctrNeed + ": " + s.need_decision);
       s.contracts.slice(0, 8).forEach(function (k) { out.push(k.title + (k.partner ? " · " + k.partner : "") + (k.to ? " → " + k.to : "")); });
       more((s.contracts.length > 8 ? s.contracts.length - 8 : 0) + (s.more_contracts || 0));
+    } else if (s.app === "studio" && Array.isArray(s.shows)) {
+      s.shows.forEach(function (x) { out.push(x.title + ": " + x.episodes + " " + w.podEps + " · " + x.files_made + " " + w.podMade + (x.feed ? " · " + x.feed : "")); });
+      if (!s.shows.length) out.push(w.none);
     } else if (s.app === "calendar" && Array.isArray(s.labels)) {
       out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.events + ")"; })
         .concat([w.nolbl + " (" + s.no_label + ")"]).join(", "));
@@ -1122,7 +1175,7 @@
     VERSION: "1.2.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
     normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth, stockMonth: stockMonth,
     todoLists: todoLists, todoList: todoList, kanbanBoards: kanbanBoards, notesBooks: notesBooks,
-    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, calendarEvents: calendarEvents, crmPartner: crmPartner, crmContracts: crmContracts, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
+    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, studioShows: studioShows, calendarEvents: calendarEvents, crmPartner: crmPartner, crmContracts: crmContracts, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root && root.document) root.OrosAssistSummary = API;

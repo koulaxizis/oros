@@ -6217,6 +6217,8 @@
         { lang: LANG, appName: function (id) { return have[id] || id; } }));
     }
     if (a.app === "crm" && a.partner) return crmPartnerSummary(a.partner, today);
+    // STUDIO-POD P4: the podcast shows and episodes, read only (never a publish)
+    if (a.app === "studio") return Promise.resolve(S.studioShows(readStore("oros-studio-data"), { show: a.show }));
     // CRM 1.10 (CTR-ALL): every contract, then what Today lists for CRM
     if (a.app === "crm" && !a.brief) {
       return crmCores().then(function (ok) {

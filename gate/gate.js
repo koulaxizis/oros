@@ -42,7 +42,7 @@
   // the device only while orOS is open and Claude asks.
   var SENSITIVE = ["baby", "cycle", "diary", "fitness", "health", "mail", "mood"];
   function sensitive(id) { return SENSITIVE.indexOf(id) >= 0; }
-  var SUMMARY = { budget: 1, stock: 1, kanban: 1 };
+  var SUMMARY = { budget: 1, stock: 1, kanban: 1, studio: 1 };   // studio: STUDIO-POD P4, read only
   // App-specific line tools (wave 2: Invoices, Stock, Publishing).
   var LINES = { budget: "budget_lines", invoices: "invoice_list", stock: "stock_items", publish: "publish_titles" };
   var PAGE = 500, TEXT_MAX = 1500, HITS_MAX = 60, SPAN_DAYS = 400;
@@ -2035,7 +2035,8 @@
     ok.forEach(function (id) {
       if (SUMMARY[id]) {
         calls.push(["app_summary", { app: id }]);
-        if (id !== "kanban") { calls.push(["app_summary", { app: id, month: month }]); calls.push(["app_summary", { app: id, month: prev }]); }
+        if (id === "studio") { /* no month: one summary of every show */ }
+        else if (id !== "kanban") { calls.push(["app_summary", { app: id, month: month }]); calls.push(["app_summary", { app: id, month: prev }]); }
         // each board by its name too (5.96.00: «δουλεύεις και σε κλειστό orOS»)
         else {
           var kb = readStore("oros-kanban-data"), seen = {};
@@ -2327,7 +2328,7 @@
         return { ok: true, c: JSON.stringify(list), quiet: 1 };
       });
     }
-    var budgetish = name === "app_summary" && (args.app === "budget" || args.app === "stock" || args.app === "kanban");
+    var budgetish = name === "app_summary" && (args.app === "budget" || args.app === "stock" || args.app === "kanban" || args.app === "studio");
     if (ACT_TOOLS.indexOf(name) >= 0 && !budgetish) {
       if ((ACT_WRITE.indexOf(name) >= 0 || name === "do_action" || ACT_OPEN.indexOf(name) >= 0) && !ok.some(function (a) { return p.lv[a.id] === "write" && actable(a.id); })) {
         return Promise.resolve({ ok: false, c: "The owner lets Claude change none of these apps (orOS › Settings › Connected services › orOS Gate: «Claude may also change …» per app)." });
@@ -2373,14 +2374,15 @@
     }
     if (name === "app_summary") {
       var app = String(args.app || "");
-      if (!SUMMARY[app]) return Promise.resolve({ ok: false, c: "app must be budget, stock or kanban." });
+      if (!SUMMARY[app]) return Promise.resolve({ ok: false, c: "app must be budget, stock, kanban or studio." });
       if (okIds.indexOf(app) < 0) return Promise.resolve({ ok: false, c: "The owner does not let Claude read " + app + "." });
       return summary().then(function (S) {
-        var n = S.normArgs({ app: app, month: args.month, board: args.board }, localDay());
+        var n = S.normArgs({ app: app, month: args.month, board: args.board, show: args.show }, localDay());
         if (!n.ok) return { ok: false, c: n.err };
         var lang = (root.orosLang || "en").slice(0, 2);
         var out = app === "budget" ? S.budgetMonth(readStore("oros-budget-data"), n.month, lang)
                 : app === "stock" ? S.stockMonth(readStore("oros-stock-data"), n.month, lang)
+                : app === "studio" ? S.studioShows(readStore("oros-studio-data"), { show: n.show })
                 : S.kanbanBoards(readStore("oros-kanban-data"), { board: n.board, today: localDay() });
         if (out && out.ok === false) return { ok: false, c: out.err };
         return { ok: true, a: [app], k: out && out.items ? out.items.length : 1, c: JSON.stringify(out) };
