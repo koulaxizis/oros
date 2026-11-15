@@ -324,7 +324,7 @@
     if (!a) return true;
     if (b.m !== a.m) return b.m > a.m;
     if (k === "views") {
-      // a device before 7.05.00 (B3a) reads a kanban or calendar view as
+      // a device on 7.04.00 or older (before B3a) reads a kanban or calendar view as
       // a grid without cfg.by, at the same time stamp: the copy it could
       // not have stripped wins the tie, so its sync never undoes them
       var ra = richView(a), rb = richView(b);
