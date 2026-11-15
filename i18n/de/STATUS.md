@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 45111 of 45590 (98%)
+- Strings: 45226 of 45705 (98%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -13,7 +13,7 @@ text is still written in the code. They switch over wave by wave
 | App | Translated | Strings |
 |---|---|---|
 | assistant | 99% | 1885 / 1887 |
-| atelier | 100% | 1402 / 1402 |
+| atelier | 100% | 1406 / 1406 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
 | baby | 100% | 341 / 341 |
@@ -74,7 +74,7 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | 100% | 90 / 90 |
 | kanban | 99% | 351 / 354 |
 | labels | 100% | 88 / 88 |
-| layout | 99% | 1083 / 1091 |
+| layout | 99% | 1087 / 1095 |
 | library | 100% | 327 / 327 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
@@ -127,7 +127,7 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 526 / 526 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1416 / 1431 |
+| settings | 98% | 1462 / 1477 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
 | shell | 99% | 1207 / 1212 |
@@ -144,7 +144,7 @@ text is still written in the code. They switch over wave by wave
 | spreadsheet | 82% | 409 / 495 |
 | startpage | English for now | 0 / 14 |
 | stickies | 100% | 124 / 124 |
-| stock | 99% | 729 / 734 |
+| stock | 99% | 784 / 789 |
 | storage | 100% | 179 / 179 |
 | studio | 100% | 747 / 747 |
 | sudoku | 100% | 139 / 139 |
@@ -172,7 +172,7 @@ text is still written in the code. They switch over wave by wave
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
-| writer | 100% | 481 / 481 |
+| writer | 100% | 487 / 487 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
 

@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.82.00
+- **Font collections.** In Settings › Fonts › Collections, group the fonts of a project, such as a book or a series of covers, from your own fonts and the free ones, and download a collection's free fonts for offline use. Layout's Fonts dialog and Atelier's font panel list the document's collection first. Each font can also keep a note, such as where you bought it. Collections and notes sync to all your devices.
+- **Your computer's fonts in orOS.** Settings › Fonts › On this device (Chrome and Edge on a computer) lists the fonts installed on this computer, with a sample, their Greek and polytonic letters and what their licence says. Copy one into orOS, after a confirmation, to use it in Layout and Atelier on all your devices; a font whose licence forbids embedding is never copied.
+- **Writer fonts.** Choose a font for text and one for headings in Writer's Page settings, from your font collections and the fonts on your orOS disk; they show on screen, in print and in the PDF.
+
 ## Version 6.81.00
 - **Stock's till now follows you to a fair.** Make an event with its dates, the stand's warehouse, a price list and a cash float. Pack books for the stand in one step and bring back what is left at the end. Every sale is tagged with the event, and the event report shows what sold each day, per title, and what is left at the stand. When you close the day you can count the cash drawer by notes and coins, and the till shows how much it is over or short.
 
