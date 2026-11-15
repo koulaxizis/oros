@@ -1,5 +1,6 @@
 orosPack("de", "signature", {
- "app.name": "E-Mail-Signatur",
+ "app.name": "E-Mail-Signaturen",
+ "btn.back": "Zurück zu den Mails",
  "aria.so.del": "Dieses Profil entfernen",
  "aria.so.kind": "Art des Profils",
  "ask.del": "Signatur „{name}“ löschen? Sie wird von allen deinen Geräten entfernt.",
@@ -148,7 +149,6 @@ orosPack("de", "signature", {
  "shape.square": "Quadratisch",
  "so.other": "Anderer Link",
  "so.url": "Profiladresse",
- "standalone": "Öffne E-Mail-Signatur in orOS, um Bilder und Synchronisierung zu nutzen.",
  "steps.apple.a": "Klicke hier auf `Signatur kopieren`.",
  "steps.apple.b": "Öffne in Mail Mail › Einstellungen › Signaturen und klicke unter dem Konto auf +.",
  "steps.apple.c": "Deaktiviere „Immer meiner Standardschrift entsprechen“ und füge sie rechts ein (Cmd+V).",

@@ -379,15 +379,6 @@
       "today": ["core.js", "today.js"]
     },
     {
-      "id": "signature",
-      "name": "Email Signature",
-      "category": "Business",
-      "icon": "signature",
-      "url": "signature/",
-      "type": "internal",
-      "search": "search.js"
-    },
-    {
       "id": "certificates",
       "name": "Certificates",
       "category": "Business",
@@ -1298,6 +1289,12 @@
       "name": "Unit Converter",
       "to": "calculator",
       "target": { "mode": "conv" }
+    },
+    {
+      "id": "signature",
+      "name": "Email Signature",
+      "to": "mail",
+      "target": { "view": "signatures" }
     }
   ]
 }

@@ -31,6 +31,7 @@
     <nav id="side" aria-label="Folders">
       <div id="accts"></div>
       <button type="button" class="side-add" id="add-acct"></button>
+      <button type="button" class="side-add side-sigs" id="sigs-btn"></button>
     </nav>
     <div id="scrim" hidden></div>
 
@@ -81,9 +82,14 @@
         <h1 data-i18n="wel.title">Your e-mail, inside orOS</h1>
         <p data-i18n="wel.text">Add an account to read your mail here, also offline.</p>
         <button type="button" class="dlg-btn primary" id="wel-add" data-i18n="acct.add">Add account</button>
+        <button type="button" class="dlg-btn" id="wel-sigs" data-i18n="sigs.open">Email signatures</button>
       </div>
     </section>
   </main>
+
+  <!-- Email signatures (was the Email Signature app, merge 6):
+       signature/view.js mounts here on the first open -->
+  <section id="sig-host" aria-label="Email signatures" hidden></section>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
@@ -103,6 +109,7 @@
   <script src="unsub.js?v=6.95.00"></script>
   <script src="pgpmime.js?v=6.95.00"></script>
   <script src="pgp.js?v=6.95.00"></script>
+  <script src="../signature/core.js?v=6.95.00"></script>
   <script src="mail.js?v=6.95.00"></script>
 
 </body>

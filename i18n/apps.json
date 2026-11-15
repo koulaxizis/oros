@@ -254,6 +254,12 @@
    ]
   },
   {
+   "app": "device",
+   "files": [
+    "device/view.js"
+   ]
+  },
+  {
    "app": "diary",
    "files": [
     "diary/core.js",
@@ -912,13 +918,21 @@
     "signature/core.js",
     "signature/package.js",
     "signature/search.js",
-    "signature/signature.js"
+    "signature/view.js"
    ]
   },
   {
    "app": "simon",
    "files": [
     "simon/simon.js"
+   ]
+  },
+  {
+   "app": "sky",
+   "files": [
+    "sky/core.js",
+    "sky/stars.js",
+    "sky/view.js"
    ]
   },
   {
@@ -1114,6 +1128,13 @@
     "typing/app.js",
     "typing/due.js",
     "typing/layouts.js"
+   ]
+  },
+  {
+   "app": "units",
+   "files": [
+    "units/core.js",
+    "units/view.js"
    ]
   },
   {
