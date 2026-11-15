@@ -24,11 +24,13 @@ Transfer sendet große Dateien und ganze Ordner von der orOS-Disk oder von diese
 - Können sich die beiden Geräte gar nicht direkt verbinden (Firmen-WLAN, ein VPN, manche Mobilnetze), geht eine Übertragung von insgesamt bis zu 50 MB stattdessen über das orOS-Relay. Das ist langsamer und weiterhin Ende-zu-Ende-verschlüsselt: Das Relay reicht versiegelte Stücke weiter und speichert nichts. Über 50 MB meldet Transfer, dass keine Verbindung möglich war; versucht es im selben WLAN, oder sende weniger auf einmal.
 
 ## Über deine Dropbox
-- Wenn orOS mit Dropbox synchronisiert, erscheint `Über meine Dropbox senden` neben `Link erstellen`. orOS verschlüsselt die Dateien auf diesem Gerät und lädt sie in deine Dropbox hoch (den orOS-App-Ordner, unter Transfer). Dann bekommst du einen Link und einen QR-Code. Du kannst die Seite schließen: Die andere Person hat etwa 4 Stunden, um den Link zu öffnen.
+- Wenn orOS mit Dropbox synchronisiert, erscheint `Über meine Dropbox senden` neben `Link erstellen`. orOS verschlüsselt die Dateien auf diesem Gerät und lädt sie in deine Dropbox hoch (den orOS-App-Ordner, unter Transfer). Dann bekommst du einen Link und einen QR-Code. Du kannst die Seite schließen: Die andere Person kann den Link so lange öffnen, wie du gewählt hast.
 - Dropbox speichert nur verschlüsselte Bytes. Der Schlüssel steht im Link nach dem #-Zeichen, das nie an einen Server geht. Die andere Person braucht kein Dropbox-Konto und kein orOS.
 - Jeder mit dem Link kann die Dateien herunterladen, bis er abläuft, also schick ihn nur der Person, für die sie sind. Es gibt keinen Code zum Eintippen: Nutze den Link oder den QR-Code.
-- Nach 4 Stunden funktioniert der Link nicht mehr, und beim nächsten Öffnen von Transfer werden die Dateien aus deiner Dropbox gelöscht. `Jetzt löschen` löscht sie sofort.
-- Beim ersten Mal auf einem Gerät prüft Transfer mit einer kleinen Testdatei, ob dieser Browser von einem Dropbox-Link herunterladen kann. Wenn nicht, sagt es das und lädt nichts hoch.
+- `In Dropbox behalten für` legt fest, wie lange: 4, 12, 24, 48, 60, 72, 84 oder 96 Stunden. Deine Wahl bleibt auf diesem Gerät gespeichert.
+- 4 Stunden nutzen die temporären Links von Dropbox, die von selbst ablaufen. Längere Zeiten nutzen geteilte Dropbox-Links, die eine weitere Dropbox-Berechtigung brauchen: Beim ersten Mal bittet Transfer dich, dich einmal erneut bei Dropbox anzumelden (deine Daten und deine Passphrase bleiben, wie sie sind).
+- Wenn die Zeit um ist, funktioniert der Link nicht mehr, und das Gerät, auf dem orOS gerade offen ist, löscht die Dateien innerhalb einer Stunde aus deiner Dropbox. Ist keines offen, warten die verschlüsselten Dateien in deiner Dropbox, bis eines öffnet. `Jetzt löschen` löscht sie sofort.
+- Beim ersten Mal auf einem Gerät prüft Transfer mit einer kleinen Testdatei, ob dieser Browser von einem Dropbox-Link herunterladen kann (einmal für 4 Stunden und einmal für längere Zeiten). Wenn nicht, sagt es das und lädt nichts hoch.
 - Die Dateien belegen Platz in deiner Dropbox, bis sie gelöscht sind. Transfer prüft vorher den freien Platz.
 
 ## Verlauf
