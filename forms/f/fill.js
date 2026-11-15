@@ -12,7 +12,7 @@
 // ============================================================
 (function () {
   "use strict";
-  var E = window.OrosFormsEngine, R = window.OrosFormsRender, P = window.OrosFormsPub;
+  var E = window.OrosFormsEngine, R = window.OrosFormsRender, P = window.OrosFormsPub, Q = window.OrosFormsQuiz;
   var SENT_KEY = "oros-forms-sent";
 
   var STRINGS = {
@@ -30,7 +30,8 @@
       "p.closed": "This form is closed and doesn't take answers any more.",
       "p.once": "You have already answered this form in this browser.",
       "p.back": "Continue", "p.wait": "The places are full: you are on the waiting list.",
-      "p.retry": "Try again"
+      "p.retry": "Try again",
+      "p.score": "Your score: {p} of {m}", "p.right": "Right", "p.wrong": "Not right"
     },
     el: {
       "p.sub": "Φόρμες", "p.loading": "Άνοιγμα της φόρμας…",
@@ -46,7 +47,8 @@
       "p.closed": "Η φόρμα έκλεισε και δεν δέχεται πια απαντήσεις.",
       "p.once": "Έχετε ήδη απαντήσει σε αυτή τη φόρμα από αυτόν τον browser.",
       "p.back": "Συνέχεια", "p.wait": "Οι θέσεις γέμισαν: είστε στη λίστα αναμονής.",
-      "p.retry": "Δοκιμάστε ξανά"
+      "p.retry": "Δοκιμάστε ξανά",
+      "p.score": "Η βαθμολογία σας: {p} από {m}", "p.right": "Σωστό", "p.wrong": "Λάθος"
     }
   };
   // The page's buttons speak the form's language when the form says it
@@ -145,11 +147,12 @@
     P.banner($("warn"), LANG);
     if (!res.open) { message(t("p.closed"), form.title || t("f.untitled")); return; }
     if (form.set.once && sentMap()[link.k]) { message(t("p.once"), form.title || t("f.untitled")); return; }
-    var host = $("form");
+    var host = $("form"), sentA = null;
     host.textContent = "";
     R.mount(host, form, {
       t: t,
       send: function (answers) {
+        sentA = answers;
         return P.send(link.k, obj.pub, { a: answers, t: Date.now(), l: LANG }, { hp: $("hp-in").value }).then(function (r) {
           markSent(link.k);
           return r;
@@ -157,6 +160,22 @@
       },
       after: function (card, r) {
         if (r && r.wait) card.appendChild(el("p", "ff-note", t("p.wait")));
+        // W5: a quiz that shows the score (the keys came with it only then)
+        var sc = form.set.score && Q ? Q.score(form, sentA) : null;
+        if (sc && sc.max) {
+          card.appendChild(el("p", "ff-score", t("p.score", { p: sc.pts, m: sc.max })));
+          if (form.set.reveal) {
+            var ul = el("ul", "ff-marks");
+            sc.items.forEach(function (it) {
+              var q = form.qs.filter(function (x) { return x.id === it.q; })[0];
+              var li = el("li", it.ok ? "ok" : "no");
+              li.appendChild(el("span", "ff-mark", (it.ok ? "✓ " : "✗ ") + t(it.ok ? "p.right" : "p.wrong")));
+              li.appendChild(el("span", "", " · " + (q && q.label ? q.label : "")));
+              ul.appendChild(li);
+            });
+            card.appendChild(ul);
+          }
+        }
         if (form.set.back && E.validBack(form.set.back)) {
           var a = el("a", "ff-btn pri", t("p.back"));
           a.href = form.set.back;

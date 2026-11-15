@@ -388,10 +388,6 @@
       "bytes": 510975,
       "ms": 61
     },
-    "signature": {
-      "bytes": 430079,
-      "ms": 47
-    },
     "simon": {
       "bytes": 153599,
       "ms": 37

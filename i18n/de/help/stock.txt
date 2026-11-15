@@ -61,11 +61,19 @@ Jeder Verkauf ist auch eine normale Bewegung `Verkauf`, also funktionieren Besta
 `Veranstaltungen` in der Kasse hält eine Messe, eine Buchvorstellung oder einen Markt fest: `Name`, die Tage (`Von`, `Bis`), das `Lager des Stands` (wähle eins, oder Bestand legt ein neues Lager mit dem Namen der Veranstaltung an), eine `Preisliste` und das `Wechselgeld pro Tag`. Dann:
 1. `Für den Stand packen`: Gib ein, wie viele du von jedem Produkt mitnimmst; eine Umbuchung bringt sie vom Hauptlager zum Stand.
 2. Am Stand wähle oben in der Kasse die Veranstaltung: Sie nutzt das Lager des Stands und die Preisliste der Veranstaltung, und jeder Verkauf zählt für sie. Zwei Handys am selben Stand können gleichzeitig verkaufen, auch offline; beim Synchronisieren kommt alles zusammen.
-3. Öffne am Ende jedes Tages den `Z-Bericht`: Das `Wechselgeld` kommt aus der Veranstaltung; gib das `Gezählte Bargeld` ein (oder `Zählen…` Schein für Schein), um zu sehen, was in der Kasse sein sollte und ob etwas fehlt, und dann `Tag abschließen`.
+3. Öffne am Ende jedes Tages den `Z-Bericht`: Das `Wechselgeld` kommt aus der Veranstaltung; gib das `Gezählte Bargeld` ein (oder `Zählen…` Schein für Schein), um zu sehen, was in der Kasse sein sollte und ob etwas fehlt, und dann `Tag abschließen`. `Zu Budget hinzufügen` öffnet danach eine Einnahme mit der Tagessumme in [Budget](app:budget), ausgefüllt zum Speichern.
 4. `Bericht` zeigt die ganze Veranstaltung über alle Tage: Verkäufe, Netto, MwSt., Rabatte, nach Zahlungsart, pro Tag und pro Titel, was zum Stand ging, was verkauft wurde, was zurückkam und was übrig ist. Drucke ihn auf der Rolle oder öffne ihn in Tabellen.
 5. `Zurückholen` bringt alles, was noch am Stand ist, mit einer Umbuchung zurück ins Hauptlager.
 
 Geräte mit einem älteren orOS verkaufen ohne Veranstaltungen; aktualisiere jedes Handy, das du zum Stand mitnimmst.
+
+#### Das Handy einer Hilfe (nur Kasse)
+Eine Hilfe kann auf dem eigenen Handy verkaufen, ohne den Rest von orOS zu sehen. Melde dich auf diesem Handy bei deiner Synchronisierung an, schalte [Einstellungen › Bildschirmsperre](app:settings) mit einer PIN ein, die nur du kennst, und wähle dann in der Kasse unter `Beleg-Einstellungen` `Dieses Gerät zur Kasse machen`. Stelle dort auch den `Höchster Rabatt auf diesem Gerät (%)` ein.
+- Ab dann öffnet orOS auf diesem Handy direkt die Kasse, ohne PIN. Schreibtisch, alle anderen Apps, Hilfe, Benachrichtigungen und Schnelleinstellungen sind ausgeblendet.
+- Ein Storno, `Beleg-Einstellungen`, `Veranstaltungen`, `Preislisten` und ein Rabatt über der Grenze fragen nach deiner PIN. `Zu Budget hinzufügen` gibt es in der Kasse nicht.
+- `Inhaber: orOS öffnen` oben in der Leiste zeigt den Sperrbildschirm: Deine PIN öffnet das ganze orOS; `Zurück zur Kasse` kehrt zurück. Sperren, ein unbenutztes Handy oder ein neuer Start von orOS führen zurück zur Kasse. Entsperren per Fingerabdruck gibt es an der Kasse nicht, denn die Fingerabdrücke auf dem Handy sind die der Hilfe.
+- Beenden: orOS mit deiner PIN öffnen, dann `Beleg-Einstellungen` › `Nur-Kasse-Modus beenden`. Auch das Ausschalten der Bildschirmsperre beendet ihn.
+- Das Handy hält weiter deine synchronisierten Daten, vor dem Bildschirm verborgen, nicht vor jemandem, der seinen Speicher lesen kann. Gib es nur jemandem, dem du vertraust.
 
 ### Inventur
 In einer `Inventur` gibst du ein, was du `Gezählt` hast. Bestand speichert die Differenz zu dem, was es erwartet hat, sodass ein Verkauf auf einem anderen Gerät im selben Moment trotzdem zählt.

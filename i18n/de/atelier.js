@@ -1379,6 +1379,8 @@ orosPack("de", "atelier", {
  "kit.go": "Paket erstellen",
  "kit.done": "Release-Paket fertig: {n} Designs im Ordner „{f}“.",
  "kit.noPic": "Das Cover ließ sich nicht lesen; die Designs haben an seiner Stelle eine Fläche.",
+ "kit.askMus": "Release-Kit für „{t}“ anlegen? Vier Designs (Shop-Cover 3000 × 3000, Instagram-Post, Story, Website-Banner) in einem neuen Ordner.",
+ "kit.cover": "Shop-Cover 3000 × 3000",
  "kit.post": "Instagram-Post",
  "kit.story": "Story",
  "kit.banner": "Website-Banner",
