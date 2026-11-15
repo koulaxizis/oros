@@ -36,7 +36,7 @@
            "travel", "split", "radio", "music", "podcasts", "maps", "feeds"],
     work: ["writer", "spreadsheet", "slides", "kanban", "mail", "timesheet", "invoices", "quote", "crm",
            "stock", "newsletter", "signature", "certificates", "converter", "storage"],
-    school: ["writer", "spreadsheet", "slides", "wiki", "mindmap", "units", "texttools", "library",
+    school: ["writer", "spreadsheet", "slides", "wiki", "mindmap", "texttools", "library",
              "museum", "maps", "habits", "pubdomain", "qr"],
     create: ["atelier", "photolab", "pixel", "mockups", "layout", "writer", "slides", "prompter",
              "studio", "montage", "mixer", "wallpaper", "labels", "typewriter"],

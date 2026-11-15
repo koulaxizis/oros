@@ -1400,5 +1400,9 @@ orosPack("de", "atelier", {
  "as.undone": "Die Änderung des Assistenten wurde rückgängig gemacht.",
  "as.changed": "Diese Designs wurden seitdem geändert, daher wurde die Änderung des Assistenten nicht rückgängig gemacht.",
  "as.gone": "Es gibt nichts mehr rückgängig zu machen.",
- "as.stopped": "Angehalten. Was getan ist, bleibt (Rückgängig holt es zurück)."
+ "as.stopped": "Angehalten. Was getan ist, bleibt (Rückgängig holt es zurück).",
+ "fn.cols": "Sammlungen",
+ "fn.docCol": "Sammlung dieses Designs (steht oben)",
+ "fn.docCol.none": "Keine",
+ "fn.notHere": "noch nicht auf diesem Gerät"
 });

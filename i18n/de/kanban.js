@@ -339,5 +339,15 @@ orosPack("de", "kanban", {
  "tl.wd": "Nur Arbeitstage",
  "tl.wd.on": "Nur Arbeitstage: für diese Tafel an",
  "tl.wd.off": "Nur Arbeitstage: aus, jeder Tag zählt",
- "toast.tlmoved": "Daten geändert"
+ "toast.tlmoved": "Daten geändert",
+ "card.deps": "Hängt ab von",
+ "deps.add": "Karte hinzufügen, auf die sie wartet …",
+ "deps.remove": "Entfernen: Diese Karte wartet nicht mehr darauf",
+ "deps.hint": "Zieh den Punkt hinter einem Balken auf einen anderen Balken: Diese Karte wartet dann darauf.",
+ "deps.drag": "Auf die Karte ziehen, die auf diese wartet",
+ "deps.loop": "Nicht hinzugefügt: Die Karten würden aufeinander warten",
+ "deps.added": "Abhängigkeit hinzugefügt",
+ "deps.shift": "Die nächsten mitverschieben",
+ "deps.shifted": "Die nächsten Karten wurden verschoben",
+ "tl.cp": "Kritischer Pfad"
 });

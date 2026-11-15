@@ -96,6 +96,42 @@
       "doc.nearFull":    "{n} documents: the archive holds up to {max}.",
       "doc.addFail":     "Could not add {name}",
       "doc.saveFail":    "Could not save the documents on this device",
+      "doc.tx.title":     "Text",
+      "doc.tx.none":      "The text has not been read yet.",
+      "doc.tx.at":        "Text read {date}: {n} characters.",
+      "doc.tx.empty":     "No text was found in this file.",
+      "doc.tx.wants":     "Only the PDF's own text was read; its pages are pictures. Read again to recognise them.",
+      "doc.tx.kind":      "Text can be read from PDFs, pictures and text files.",
+      "doc.tx.read":      "Read text",
+      "doc.tx.again":     "Read again",
+      "doc.tx.show":      "Show text",
+      "doc.tx.reading":   "Reading the text…",
+      "doc.tx.step.pdf":  "Reading page {i} of {n}…",
+      "doc.tx.step.ocr":  "Recognising page {i} of {n}…",
+      "doc.tx.done":      "Text read",
+      "doc.tx.fail":      "Could not read the text of {name}",
+      "doc.tx.offline":   "The text recognition engine could not be downloaded. Check the connection and try again.",
+      "doc.tx.big":       "The file is too big to read (over 80 MB).",
+      "doc.tx.ocrTitle":  "Recognise text on this device?",
+      "doc.tx.ocrBody":   "Scans and photos need the text recognition engine (Tesseract, English and Greek, about 7 MB). It is downloaded once from orOS's own site and runs on this device: your files never leave it.",
+      "doc.tx.ocrOk":     "Download and read",
+      "doc.tx.dlgTitle":  "Text of {name}",
+      "doc.tx.copy":      "Copy",
+      "doc.tx.copied":    "Copied",
+      "doc.tx.close":     "Close",
+      "doc.sg.title":     "From the text:",
+      "doc.sg.use":       "Fill in",
+      "doc.sg.hint":      "Fills only the empty fields.",
+      "doc.sg.expires":   "expires {date}",
+      "doc.all.read":     "Read the text of all documents",
+      "doc.all.stop":     "Stop reading texts",
+      "doc.all.job":      "Reading texts: {i} of {n}",
+      "doc.all.done":     "{n} texts read",
+      "doc.all.none":     "Every text is already read",
+      "doc.auto.on":      "Read the text of new documents: on (this device)",
+      "doc.auto.off":     "Read the text of new documents: off (this device)",
+      "doc.inbox":        "{n} added from Scanner & PDF",
+      "doc.inboxOne":     "Added from Scanner & PDF",
       "doc.lostFile":    "The file is not on this disk any more. If it was moved, Find moved files looks for it.",
       "doc.found":       "{n} moved files found",
       "doc.foundNone":   "No moved files found",
@@ -219,6 +255,42 @@
       "doc.nearFull":    "{n} έγγραφα: το αρχείο χωράει έως {max}.",
       "doc.addFail":     "Δεν ήταν δυνατή η προσθήκη του {name}",
       "doc.saveFail":    "Δεν ήταν δυνατή η αποθήκευση των εγγράφων σε αυτή τη συσκευή",
+      "doc.tx.title":     "Κείμενο",
+      "doc.tx.none":      "Το κείμενο δεν έχει διαβαστεί ακόμα.",
+      "doc.tx.at":        "Το κείμενο διαβάστηκε {date}: {n} χαρακτήρες.",
+      "doc.tx.empty":     "Δεν βρέθηκε κείμενο σε αυτό το αρχείο.",
+      "doc.tx.wants":     "Διαβάστηκε μόνο το κείμενο του ίδιου του PDF· οι σελίδες του είναι εικόνες. Πάτησε «Νέα ανάγνωση» για αναγνώριση.",
+      "doc.tx.kind":      "Κείμενο διαβάζεται από PDF, εικόνες και αρχεία κειμένου.",
+      "doc.tx.read":      "Ανάγνωση κειμένου",
+      "doc.tx.again":     "Νέα ανάγνωση",
+      "doc.tx.show":      "Εμφάνιση κειμένου",
+      "doc.tx.reading":   "Διαβάζεται το κείμενο…",
+      "doc.tx.step.pdf":  "Ανάγνωση σελίδας {i} από {n}…",
+      "doc.tx.step.ocr":  "Αναγνώριση σελίδας {i} από {n}…",
+      "doc.tx.done":      "Το κείμενο διαβάστηκε",
+      "doc.tx.fail":      "Δεν ήταν δυνατή η ανάγνωση του κειμένου: {name}",
+      "doc.tx.offline":   "Η μηχανή αναγνώρισης κειμένου δεν κατέβηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      "doc.tx.big":       "Το αρχείο είναι πολύ μεγάλο για ανάγνωση (πάνω από 80 MB).",
+      "doc.tx.ocrTitle":  "Αναγνώριση κειμένου σε αυτή τη συσκευή;",
+      "doc.tx.ocrBody":   "Οι σαρώσεις και οι φωτογραφίες χρειάζονται τη μηχανή αναγνώρισης κειμένου (Tesseract, αγγλικά και ελληνικά, περίπου 7 MB). Κατεβαίνει μία φορά από τον δικό ιστότοπο του orOS και τρέχει σε αυτή τη συσκευή: τα αρχεία σου δεν φεύγουν ποτέ από εδώ.",
+      "doc.tx.ocrOk":     "Λήψη και ανάγνωση",
+      "doc.tx.dlgTitle":  "Κείμενο: {name}",
+      "doc.tx.copy":      "Αντιγραφή",
+      "doc.tx.copied":    "Αντιγράφηκε",
+      "doc.tx.close":     "Κλείσιμο",
+      "doc.sg.title":     "Από το κείμενο:",
+      "doc.sg.use":       "Συμπλήρωση",
+      "doc.sg.hint":      "Συμπληρώνει μόνο τα κενά πεδία.",
+      "doc.sg.expires":   "λήγει {date}",
+      "doc.all.read":     "Ανάγνωση κειμένου όλων των εγγράφων",
+      "doc.all.stop":     "Διακοπή ανάγνωσης κειμένων",
+      "doc.all.job":      "Ανάγνωση κειμένων: {i} από {n}",
+      "doc.all.done":     "Διαβάστηκαν {n} κείμενα",
+      "doc.all.none":     "Όλα τα κείμενα έχουν ήδη διαβαστεί",
+      "doc.auto.on":      "Ανάγνωση κειμένου νέων εγγράφων: ναι (αυτή η συσκευή)",
+      "doc.auto.off":     "Ανάγνωση κειμένου νέων εγγράφων: όχι (αυτή η συσκευή)",
+      "doc.inbox":        "Προστέθηκαν {n} από το Scanner & PDF",
+      "doc.inboxOne":     "Προστέθηκε από το Scanner & PDF",
       "doc.lostFile":    "Το αρχείο δεν είναι πια στον δίσκο. Αν μετακινήθηκε, η «Εύρεση αρχείων που μετακινήθηκαν» το ψάχνει.",
       "doc.found":       "Βρέθηκαν {n} αρχεία που μετακινήθηκαν",
       "doc.foundNone":   "Δεν βρέθηκαν αρχεία που μετακινήθηκαν",
@@ -449,6 +521,7 @@
         if (state.docs.length >= CORE.WARN_DOCS) toast(t("doc.nearFull", { n: state.docs.length, max: CORE.MAX_DOCS }));
       }
       if (r.added.length === 1 && !quiet) openDoc(r.added[0]);
+      if (autoRead() && r.added.length) enqueue(r.added);
       return r.added;
     });
   }
@@ -516,6 +589,184 @@
     if (r.moved) { missing = {}; commit(r.state); }
     if (!quiet) toast(r.moved ? t("doc.found", { n: r.moved }) : t("doc.foundNone"));
     return Promise.resolve(r.moved);
+  }
+
+  // ---------- text (wave W2) ----------
+  // Each document's text lives in CORE.textPath(id) (a plain file the
+  // disk syncs); doc.x.tx = { at, src, n, h?, w? } says it was read
+  // (w: a PDF whose pictures still wait for recognition). In memory,
+  // texts[id] keeps the folded start of each text for search.
+  var OCR_FLAG = "oros-files-docs-ocr";        // device-local "1": the engine download was agreed to
+  var AUTO_LS = "oros-files-docs-auto";        // device-local "1": read the text of new documents
+  var INBOX_LS = "oros-files-docs-inbox";      // device-local [{ p, at, from }] (Scanner & PDF)
+  var TEXT_KEEP = 20000;                        // characters of each text kept for search
+  var TOMB_TEXT_DAYS = 7;                       // a removed document's text goes after this
+  var texts = {};
+  var textsToken = 0;
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+  function txOf(d) { return d && d.x && d.x.tx && typeof d.x.tx === "object" ? d.x.tx : null; }
+  function verQ() { return ctx && ctx.ver ? "?v=" + encodeURIComponent(ctx.ver) : ""; }
+  var readP = null;
+  function readMod() {
+    if (window.OrosDocsRead) return Promise.resolve(window.OrosDocsRead);
+    if (readP) return readP;
+    readP = new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = "docs-read.js" + verQ();
+      sc.onload = function () { window.OrosDocsRead ? res(window.OrosDocsRead) : rej(new Error("read")); };
+      sc.onerror = function () { readP = null; sc.remove(); rej(new Error("read")); };
+      document.body.appendChild(sc);
+    });
+    return readP;
+  }
+  function ocrAllowed(ask) {
+    if (lsGet(OCR_FLAG) === "1") return Promise.resolve(true);
+    if (!ask) return Promise.resolve(false);
+    return confirmBox(t("doc.tx.ocrTitle"), t("doc.tx.ocrBody"), t("doc.tx.ocrOk"), "primary").then(function (yes) {
+      if (yes) lsSet(OCR_FLAG, "1");
+      return yes;
+    });
+  }
+  // o { ask: may ask for the engine, quiet: no toasts, job, onStep }
+  function readDoc(id, o) {
+    o = o || {};
+    var d = CORE.getDoc(state, id), fs = disk();
+    if (!d || !fs) return Promise.resolve(false);
+    var job = o.job || { stop: false };
+    function run(R, may) { return R.read(d.p, { fs: fs, pdfOpen: ctx && ctx.pdfOpen, ocr: may, job: job, onStep: o.onStep }); }
+    return readMod().then(function (R) {
+      if (!R.canRead(d.p)) { if (!o.quiet) toast(t("doc.tx.kind")); return false; }
+      return ocrAllowed(false).then(function (may) {
+        return run(R, may).then(function (r) {
+          if (!r.needOcr || may || !o.ask) return r;
+          return ocrAllowed(true).then(function (yes) { return yes ? run(R, true) : r; });
+        });
+      }).then(function (r) {
+        if (job.stop) return false;
+        return storeText(id, r);
+      });
+    }).then(null, function (e) {
+      if (!o.quiet) {
+        var c = e && e.code;
+        toast(c === "offline" ? t("doc.tx.offline") : c === "big" ? t("doc.tx.big") : c === "kind" ? t("doc.tx.kind")
+              : t("doc.tx.fail", { name: d.t || baseName(d.p) }));
+      }
+      return false;
+    });
+  }
+  function storeText(id, r) {
+    var fs = disk(), T = window.OrosDocsText, d0 = CORE.getDoc(state, id);
+    if (!fs || !T || !d0) return Promise.resolve(false);
+    if (!r.src) return Promise.resolve(false);           // a picture, not recognised: nothing to keep
+    var text = T.clean(r.text);
+    return ensureDir(fs, CORE.TEXT_DIR).then(function () {
+      return fs.writeText(CORE.textPath(id), text);
+    }).then(function () { return hashOf(d0.p); }).then(function (h) {
+      var cur = CORE.getDoc(state, id);
+      if (!cur) return false;
+      var next = JSON.parse(JSON.stringify(cur));
+      var tx = { at: Date.now(), src: r.src || "pdf", n: text.length };
+      if (h) tx.h = h;
+      if (r.needOcr) tx.w = 1;
+      next.x = Object.assign({}, next.x || {}, { tx: tx });
+      if (h && !next.h) next.h = h;
+      texts[id] = CORE.fold(text.slice(0, TEXT_KEEP));
+      commit(CORE.putDoc(state, next, Date.now()));
+      if (ctx && ctx.onDiskChanged) ctx.onDiskChanged();
+      return true;
+    });
+  }
+  function textOf(id) {
+    var fs = disk();
+    if (!fs) return Promise.resolve("");
+    return fs.readText(CORE.textPath(id)).then(function (s) { return String(s || ""); }, function () { return ""; });
+  }
+  // The folded texts for search, a few at a time after the first paint.
+  function loadTexts() {
+    var token = ++textsToken, list = state.docs.filter(function (d) { return txOf(d) && texts[d.id] == null; }), i = 0, got = 0;
+    function next() {
+      if (token !== textsToken || i >= list.length) return Promise.resolve();
+      var d = list[i++];
+      return textOf(d.id).then(function (s) {
+        texts[d.id] = CORE.fold(s.slice(0, TEXT_KEEP));
+        if (s) got++;
+        return next();
+      });
+    }
+    return Promise.all([next(), next(), next(), next()]).then(function () {
+      if (token === textsToken && got && q.text) schedulePaint();
+    });
+  }
+  // Texts of documents removed more than a week ago (the Undo is long
+  // gone) leave the disk; a text whose document is unknown here stays:
+  // it may belong to a document that has not synced to this device yet.
+  function sweepTexts() {
+    var fs = disk();
+    if (!fs) return;
+    fs.ls(CORE.TEXT_DIR).then(function (list) {
+      var now = Date.now();
+      (list || []).forEach(function (e) {
+        var m = /^(d-[a-z0-9]+)\.txt$/.exec(e && e.name || "");
+        if (!m || CORE.getDoc(state, m[1])) return;
+        var tomb = state.tombs[m[1]];
+        if (tomb && now - tomb > TOMB_TEXT_DAYS * 864e5) fs.rm(CORE.textPath(m[1])).catch(function () {});
+      });
+    }, function () {});
+  }
+
+  // One document after another, in the background.
+  var queue = [], qJob = null, qDone = 0, qTotal = 0;
+  function enqueue(ids) {
+    ids.forEach(function (id) { if (queue.indexOf(id) === -1) queue.push(id); });
+    qTotal = qDone + queue.length + (qJob ? 1 : 0);
+    if (!qJob) pump();
+  }
+  function pump() {
+    if (!queue.length) {
+      var n = qDone;
+      qJob = null; qDone = qTotal = 0;
+      if (ctx && ctx.setJob) ctx.setJob("");
+      if (window.OrosDocsRead) window.OrosDocsRead.release();
+      if (n > 1) toast(t("doc.all.done", { n: n }));
+      return;
+    }
+    qJob = qJob || { stop: false };
+    var job = qJob, id = queue.shift();
+    if (ctx && ctx.setJob && qTotal > 1) ctx.setJob(t("doc.all.job", { i: Math.min(qTotal, qDone + 1), n: qTotal }));
+    readDoc(id, { quiet: true, job: job }).then(function (ok) {
+      if (ok) qDone++;
+      if (job.stop) queue = [];
+      setTimeout(pump, 30);
+    });
+  }
+  function readAll() {
+    if (qJob) { qJob.stop = true; queue = []; return; }
+    var flag = lsGet(OCR_FLAG) === "1";
+    readMod().then(function (R) {
+      var ids = state.docs.filter(function (d) {
+        var x = txOf(d);
+        return R.canRead(d.p) && !missing[d.p] && (!x || (x.w && flag));
+      }).map(function (d) { return d.id; });
+      if (!ids.length) { toast(t("doc.all.none")); return; }
+      ocrAllowed(true).then(function () { enqueue(ids); });
+    }, function () { toast(t("doc.tx.offline")); });
+  }
+  function autoRead() { return lsGet(AUTO_LS) === "1"; }
+  // Scanner & PDF › Save › In Files › "Also add it to Documents".
+  function takeInbox() {
+    var raw = lsGet(INBOX_LS), list = null;
+    if (!raw) return;
+    lsSet(INBOX_LS, null);
+    try { list = JSON.parse(raw); } catch (e) { list = null; }
+    if (!Array.isArray(list)) return;
+    var paths = list.map(function (x) { return x && typeof x.p === "string" ? x.p : ""; }).filter(CORE.isDiskPath);
+    if (!paths.length) return;
+    add(paths, true).then(function (ids) {
+      if (!ids.length) return;
+      toast(ids.length === 1 ? t("doc.inboxOne") : t("doc.inbox", { n: ids.length }));
+      enqueue(ids);          // their PDFs carry their own text: quick, no recognition needed
+    });
   }
 
   // ---------- panel ----------
@@ -639,7 +890,7 @@
     }
     msg.hidden = true;
     ul.hidden = false;
-    var rows = CORE.filter(state, q, today(), LANG);
+    var rows = CORE.filter(state, q, today(), LANG, function (d) { return texts[d.id] || ""; });
     if (!rows.length) {
       var li0 = el("li", "doc-none", t("doc.none"));
       ul.appendChild(li0);
@@ -734,7 +985,9 @@
     var m = el("div", "doc-menu");
     m.id = "doc-menu";
     m.setAttribute("role", "menu");
-    [["doc.export", exportDocs], ["doc.import", importArchive], ["doc.manage", openManage], ["doc.find", function () { relocate(false); }]].forEach(function (it) {
+    [[qJob ? "doc.all.stop" : "doc.all.read", readAll],
+     [autoRead() ? "doc.auto.on" : "doc.auto.off", function () { lsSet(AUTO_LS, autoRead() ? null : "1"); toast(t(autoRead() ? "doc.auto.on" : "doc.auto.off")); }],
+     ["doc.export", exportDocs], ["doc.import", importArchive], ["doc.manage", openManage], ["doc.find", function () { relocate(false); }]].forEach(function (it) {
       var b = textBtn("", t(it[0]), function () { close(); it[1](); });
       b.setAttribute("role", "menuitem");
       m.appendChild(b);
@@ -765,14 +1018,14 @@
     document.body.appendChild(d);
     return d;
   }
-  function confirmBox(title, text, okLabel) {
+  function confirmBox(title, text, okLabel, okCls) {
     return new Promise(function (resolve) {
       var d = modal("doc-confirm");
       d.appendChild(el("h3", "", title));
       d.appendChild(el("p", "", text));
       var row = el("menu", "dlg-row");
       row.appendChild(textBtn("", t("doc.cancel"), function () { d.close(); resolve(false); }));
-      row.appendChild(textBtn("danger", okLabel, function () { d.close(); resolve(true); }));
+      row.appendChild(textBtn(okCls || "danger", okLabel, function () { d.close(); resolve(true); }));
       d.appendChild(row);
       d.addEventListener("cancel", function () { resolve(false); });
       d.showModal();
@@ -932,10 +1185,80 @@
     fileBtns.appendChild(bShow);
     fileRow.appendChild(fileBtns);
     form.appendChild(fileRow);
+
+    // Text (W2): status, Read / Show, and what the text suggests.
+    var txRow = el("div", "doc-field wide doc-text");
+    txRow.appendChild(el("span", "doc-lbl", t("doc.tx.title")));
+    var txStat = el("p", "doc-hint doc-tx-stat");
+    txStat.setAttribute("aria-live", "polite");
+    txRow.appendChild(txStat);
+    var sug = el("div", "doc-sug");
+    sug.hidden = true;
+    txRow.appendChild(sug);
+    var txBtns = el("div", "doc-file-btns");
+    var bRead = textBtn("", t("doc.tx.read"), function () {
+      bRead.disabled = true;
+      txStat.textContent = t("doc.tx.reading");
+      readDoc(id, { ask: true, onStep: function (kind, i, n) { txStat.textContent = t("doc.tx.step." + kind, { i: i, n: n }); } }).then(function (ok) {
+        bRead.disabled = false;
+        if (dlg.open) paintText();                     // the status line says it; no toast
+        else if (ok) toast(t("doc.tx.done"));
+      });
+    });
+    var bText = textBtn("", t("doc.tx.show"), function () { showText(id, d.t || baseName(d.p)); });
+    txBtns.appendChild(bRead);
+    txBtns.appendChild(bText);
+    txRow.appendChild(txBtns);
+    form.appendChild(txRow);
+    function paintText() {
+      var cur = CORE.getDoc(state, id), x = txOf(cur);
+      bRead.textContent = t(x ? "doc.tx.again" : "doc.tx.read");
+      bText.hidden = !(x && x.n);
+      txStat.textContent = !x ? t("doc.tx.none") : x.w ? t("doc.tx.wants") : !x.n ? t("doc.tx.empty")
+        : t("doc.tx.at", { date: fmtDay(CORE.isoDay(x.at)), n: x.n.toLocaleString(LOC) });
+      if (!x || !x.n || !window.OrosDocsText) { sug.hidden = true; return; }
+      textOf(id).then(function (s) { if (dlg.open) paintSuggest(s); });
+    }
+    // Only what the empty fields could take (and a date that is only the
+    // file's time); "Fill in" fills those.
+    function cur0() { return CORE.getDoc(state, id) || d; }
+    function paintSuggest(text) {
+      var g = window.OrosDocsText.suggest(text, state, { today: today(), lang: LANG });
+      var take = {};
+      if (g.ty && !fType.value) take.ty = g.ty;
+      if (g.co && !fFrom.value.trim()) state.corr.forEach(function (c) { if (c.id === g.co) take.co = c.n; });
+      var fileDay = cur0().x && cur0().x.fd && fDate.value === cur0().d;
+      if (g.d && (!fDate.value || (fileDay && g.d !== fDate.value))) take.d = g.d;
+      if (g.ex && !fEx.value) take.ex = g.ex;
+      if (g.amt != null && fAmt.value === "") { take.amt = g.amt; take.cur = !fCur.value.trim() && g.cur ? g.cur : ""; }
+      sug.innerHTML = "";
+      var parts = [];
+      if (take.ty) { var ty = CORE.typeOf(state, take.ty, LANG); if (ty) parts.push(ty.name); }
+      if (take.co) parts.push(take.co);
+      if (take.d) parts.push(fmtDay(take.d));
+      if (take.amt != null) parts.push(fmtAmount({ amt: take.amt, cur: take.cur || fCur.value.trim().toUpperCase() || undefined }));
+      if (take.ex) parts.push(t("doc.sg.expires", { date: fmtDay(take.ex) }));
+      if (!parts.length) { sug.hidden = true; return; }
+      sug.appendChild(el("span", "doc-sug-t", t("doc.sg.title") + " " + parts.join(" · ")));
+      var use = textBtn("doc-sug-use", t("doc.sg.use"), function () {
+        if (take.co) fFrom.value = take.co;
+        if (take.d) fDate.value = take.d;
+        if (take.ex) fEx.value = take.ex;
+        if (take.amt != null) { fAmt.value = String(take.amt); if (take.cur) fCur.value = take.cur; }
+        if (take.ty) fType.value = take.ty;
+        // the type's keep-until suggestion follows the new type and dates
+        fType.dispatchEvent(new Event("change"));
+        sug.hidden = true;
+      });
+      use.title = t("doc.sg.hint");
+      sug.appendChild(use);
+      sug.hidden = false;
+    }
+    paintText();
     var fs = disk();
     if (fs) fs.stat(d.p).then(function (st) { return !!st; }, function () { return false; }).then(function (ok) {
       lost.hidden = ok;
-      bOpen.disabled = bShow.disabled = !ok;
+      bOpen.disabled = bShow.disabled = bRead.disabled = !ok;
       if (!ok && !missing[d.p]) { missing[d.p] = true; schedulePaint(); }
     });
 
@@ -965,6 +1288,7 @@
       var r = CORE.ensureCorr(st, fFrom.value, now); st = r.state; next.co = r.id || undefined;
       next.tg = [];
       tagNames.forEach(function (n) { var x = CORE.ensureTag(st, n, now); st = x.state; if (x.id && next.tg.indexOf(x.id) === -1) next.tg.push(x.id); });
+      if ((fDate.value || undefined) !== next.d && next.x && next.x.fd) { delete next.x.fd; if (!Object.keys(next.x).length) delete next.x; }
       next.d = fDate.value || undefined;
       next.amt = fAmt.value === "" ? undefined : Number(fAmt.value);
       next.cur = fCur.value.trim().toUpperCase() || undefined;
@@ -978,6 +1302,30 @@
     dlg.appendChild(form);
     dlg.showModal();
     fTitle.focus();
+  }
+
+  // The text as read, to look at or copy (read-only: it is the file's).
+  function showText(id, name) {
+    textOf(id).then(function (s) {
+      var dlg = modal("doc-textview");
+      dlg.appendChild(el("h3", "", t("doc.tx.dlgTitle", { name: name })));
+      var ta = el("textarea");
+      ta.readOnly = true;
+      ta.rows = 14;
+      ta.value = s;
+      ta.setAttribute("aria-label", t("doc.tx.title"));
+      dlg.appendChild(ta);
+      var row = el("menu", "dlg-row");
+      row.appendChild(textBtn("", t("doc.tx.copy"), function () {
+        var done = function () { toast(t("doc.tx.copied")); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(s).then(done, function () { ta.select(); });
+        else ta.select();
+      }));
+      row.appendChild(el("span", "spacer"));
+      row.appendChild(textBtn("primary", t("doc.tx.close"), function () { dlg.close(); }));
+      dlg.appendChild(row);
+      dlg.showModal();
+    });
   }
 
   function removeDoc(id) {
@@ -1279,6 +1627,8 @@
     if (qi) qi.value = q.text;
     paint();
     relocate(true).then(checkMissing);
+    takeInbox();
+    loadTexts().then(sweepTexts);
     if (ctx && ctx.afterEnter) ctx.afterEnter();
   }
   function leave() {
@@ -1295,6 +1645,9 @@
     registerSync();
     var view = readView();
     if (view && view.on) enter();
+    else takeInbox();
+    // Scanner & PDF saved something for Documents while Files is open.
+    window.addEventListener("storage", function (e) { if (e.key === INBOX_LS && e.newValue) takeInbox(); });
   }
 
   window.OrosFilesDocs = {

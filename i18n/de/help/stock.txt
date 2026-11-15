@@ -57,6 +57,16 @@ Nach dem Verkauf kann der Beleg auch ohne Papier zum Kunden: `PDF teilen` (oder 
 
 Jeder Verkauf ist auch eine normale Bewegung `Verkauf`, also funktionieren Bestand, Berichte und Synchronisierung wie bei jedem Verkauf. Zwei Kassen, die gleichzeitig verkaufen, verlieren nie einen Verkauf.
 
+#### Messen, Buchvorstellungen und Märkte
+`Veranstaltungen` in der Kasse hält eine Messe, eine Buchvorstellung oder einen Markt fest: `Name`, die Tage (`Von`, `Bis`), das `Lager des Stands` (wähle eins, oder Bestand legt ein neues Lager mit dem Namen der Veranstaltung an), eine `Preisliste` und das `Wechselgeld pro Tag`. Dann:
+1. `Für den Stand packen`: Gib ein, wie viele du von jedem Produkt mitnimmst; eine Umbuchung bringt sie vom Hauptlager zum Stand.
+2. Am Stand wähle oben in der Kasse die Veranstaltung: Sie nutzt das Lager des Stands und die Preisliste der Veranstaltung, und jeder Verkauf zählt für sie. Zwei Handys am selben Stand können gleichzeitig verkaufen, auch offline; beim Synchronisieren kommt alles zusammen.
+3. Öffne am Ende jedes Tages den `Z-Bericht`: Das `Wechselgeld` kommt aus der Veranstaltung; gib das `Gezählte Bargeld` ein (oder `Zählen…` Schein für Schein), um zu sehen, was in der Kasse sein sollte und ob etwas fehlt, und dann `Tag abschließen`.
+4. `Bericht` zeigt die ganze Veranstaltung über alle Tage: Verkäufe, Netto, MwSt., Rabatte, nach Zahlungsart, pro Tag und pro Titel, was zum Stand ging, was verkauft wurde, was zurückkam und was übrig ist. Drucke ihn auf der Rolle oder öffne ihn in Tabellen.
+5. `Zurückholen` bringt alles, was noch am Stand ist, mit einer Umbuchung zurück ins Hauptlager.
+
+Geräte mit einem älteren orOS verkaufen ohne Veranstaltungen; aktualisiere jedes Handy, das du zum Stand mitnimmst.
+
 ### Inventur
 In einer `Inventur` gibst du ein, was du `Gezählt` hast. Bestand speichert die Differenz zu dem, was es erwartet hat, sodass ein Verkauf auf einem anderen Gerät im selben Moment trotzdem zählt.
 
