@@ -327,6 +327,8 @@ input.bad, textarea.bad { border-color: var(--danger); box-shadow: 0 0 0 3px rgb
 .chip.st-pro, .chip.st-credit { color: var(--accent); border-color: var(--accent); }
 
 /* ---------- 5. Dashboard ---------- */
+.d-quotes { margin: 14px 0 6px; }
+.d-quotes[hidden] { display: none; }
 .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 6px; }
 .tile {
   display: flex;

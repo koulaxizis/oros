@@ -108,6 +108,9 @@
       "range.thisYear": "This year", "range.lastYear": "Last year", "range.custom": "Custom",
       "dash.inv": "Invoiced", "dash.col": "Collected", "dash.out": "Outstanding", "dash.over": "Overdue",
       "dash.sub": "{n} documents · net {net} · VAT {vat} · withheld {wht}. Outstanding and overdue count every period.",
+      "dash.quotes": "Quotes", "dash.qSent": "Sent", "dash.qAcc": "Accepted", "dash.qInv": "Invoiced", "dash.qPaid": "Paid",
+      "dash.qRate": "{p}% of the quotes sent were accepted.", "dash.qToInv": "Accepted, not invoiced", "dash.qUnpaid": "Invoiced, not paid",
+      "dash.qNone": "No quotes sent in this period.", "dash.qMonth": "Month",
       "dash.months": "Per month", "dash.top": "Top clients", "dash.vat": "VAT per rate",
       "dash.vatHint": "For reference when you prepare your VAT return; your accountant has the final word.",
       "dash.rate": "Rate", "dash.base": "Net", "dash.vatAmt": "VAT", "dash.other": "Recorded",
@@ -270,6 +273,9 @@
       "range.thisYear": "Φέτος", "range.lastYear": "Πέρσι", "range.custom": "Άλλη περίοδος",
       "dash.inv": "Τιμολογήθηκαν", "dash.col": "Εισπράχθηκαν", "dash.out": "Ανεξόφλητα", "dash.over": "Ληξιπρόθεσμα",
       "dash.sub": "{n} παραστατικά · καθαρά {net} · ΦΠΑ {vat} · παρακράτηση {wht}. Τα ανεξόφλητα και τα ληξιπρόθεσμα μετρούν από όλες τις περιόδους.",
+      "dash.quotes": "Προσφορές", "dash.qSent": "Σταλμένες", "dash.qAcc": "Αποδεκτές", "dash.qInv": "Τιμολογημένες", "dash.qPaid": "Πληρωμένες",
+      "dash.qRate": "Έγινε αποδεκτό το {p}% των προσφορών που στάλθηκαν.", "dash.qToInv": "Αποδεκτές, χωρίς τιμολόγιο", "dash.qUnpaid": "Τιμολογημένες, απλήρωτες",
+      "dash.qNone": "Καμία σταλμένη προσφορά σε αυτή την περίοδο.", "dash.qMonth": "Μήνας",
       "dash.months": "Ανά μήνα", "dash.top": "Κορυφαίοι πελάτες", "dash.vat": "ΦΠΑ ανά συντελεστή",
       "dash.vatHint": "Ενδεικτικά, για τη δήλωση ΦΠΑ· τον τελευταίο λόγο τον έχει ο λογιστής σου.",
       "dash.rate": "Συντελεστής", "dash.base": "Καθαρή αξία", "dash.vatAmt": "ΦΠΑ", "dash.other": "Καταχωρισμένα",
@@ -862,6 +868,56 @@
     }
     return [key(y, 0, 1), key(y, 11, 31)];
   }
+  // K4 (app merge 7): the quotes' way to money, worked out each time
+  // from both slices (OrosQuoteCore.pipeline) and never stored.
+  function quoteInvoiced(qid) {
+    var docs = liveList("docs").filter(function (d) { return d.src === "quote:" + qid && d.st === "issued"; });
+    if (!docs.length) return null;
+    var open = 0;
+    docs.forEach(function (d) { if (C.owes(d)) open += Math.max(0, C.balance(data, d)); });
+    return { paid: open <= 0, open: open };
+  }
+  function renderQuotePipeline(k, cur) {
+    var box = $("d-quotes"), Q = window.OrosQuoteCore;
+    if (!box) return;
+    box.textContent = "";
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem("oros-quote-data") || "null"); } catch (e) { raw = null; }
+    if (!Q || typeof Q.pipeline !== "function" || !raw) { box.hidden = true; return; }
+    box.hidden = false;
+    var p = Q.pipeline(raw, k[0], k[1], cur, quoteInvoiced);
+    box.appendChild(el("h3", "sec-h", t("dash.quotes")));
+    if (!p.sent) { box.appendChild(el("p", "hint", t("dash.qNone"))); return; }
+    var tiles = el("div", "tiles");
+    [["qSent", String(p.sent), ""], ["qAcc", String(p.accepted), ""], ["qToInv", money(p.toInvoice, cur), ""],
+     ["qUnpaid", money(p.unpaid, cur), p.unpaid ? "bad" : ""]].forEach(function (x) {
+      var tl = el("div", "tile " + x[2]);
+      tl.appendChild(el("span", "tile-l", t("dash." + x[0])));
+      tl.appendChild(el("span", "tile-v", x[1]));
+      tiles.appendChild(tl);
+    });
+    box.appendChild(tiles);
+    box.appendChild(el("p", "hint", t("dash.qRate", { p: Math.round(p.rate * 100) })));
+    var tb = el("table", "tbl");
+    var hr = el("tr");
+    ["qMonth", "qSent", "qAcc", "qInv", "qPaid"].forEach(function (h, i) { hr.appendChild(el("th", i ? "num" : "", t("dash." + h))); });
+    var th = el("thead");
+    th.appendChild(hr);
+    tb.appendChild(th);
+    var body = el("tbody");
+    p.months.forEach(function (m) {
+      if (!m.sent) return;
+      var tr = el("tr"), lbl = m.ym;
+      try { lbl = C.keyDate(m.ym + "-01").toLocaleDateString(loc(), { month: "short", year: "numeric" }); } catch (e) { lbl = m.ym; }
+      tr.appendChild(el("td", "", lbl));
+      [m.sent, m.accepted, m.invoiced, m.paid].forEach(function (v) { tr.appendChild(el("td", "num", String(v))); });
+      body.appendChild(tr);
+    });
+    tb.appendChild(body);
+    var wrap = el("div", "grid-wrap");
+    wrap.appendChild(tb);
+    box.appendChild(wrap);
+  }
   function renderDash() {
     fillSelect($("d-range"), RANGES.map(function (r) { return [r, t("range." + r)]; }), prefs.dash.range);
     var curs = C.currencies(data);
@@ -906,6 +962,7 @@
       col.appendChild(el("span", "bar-l", lbl));
       bars.appendChild(col);
     });
+    renderQuotePipeline(k, cur);
     var top = $("top");
     top.textContent = "";
     if (!s.top.length) top.appendChild(el("li", "hint", t("dash.noTop")));
