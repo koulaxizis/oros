@@ -33,7 +33,7 @@
       "sg.again": "Try again",
       "sg.codeH": "Access code", "sg.codeText": "The sender locked this document with an access code. They told it to you another way (by phone, in a message).",
       "sg.code": "Access code", "sg.open": "Open", "sg.wrongCode": "That access code is not right.",
-      "sg.kind": "Please sign", "sg.from": "From", "sg.for": "For", "sg.until": "Sign by", "sg.pages": "Pages",
+      "sg.kind": "Please sign", "sg.others": "Also asked to sign", "sg.from": "From", "sg.for": "For", "sg.until": "Sign by", "sg.pages": "Pages",
       "sg.message": "Message", "sg.howTo": "Tap each yellow box to fill it in. Boxes marked * must be filled.",
       "sg.f.sig": "Sign here", "sg.f.init": "Initials", "sg.f.name": "Name", "sg.f.date": "Date", "sg.f.text": "Text",
       "sg.f.check": "Tick", "sg.req": "*", "sg.filled": "Filled: {label}", "sg.empty1": "Empty: {label}",
@@ -77,7 +77,7 @@
       "sg.again": "Δοκίμασε ξανά",
       "sg.codeH": "Κωδικός πρόσβασης", "sg.codeText": "Ο αποστολέας κλείδωσε το έγγραφο με κωδικό πρόσβασης. Σου τον είπε με άλλο τρόπο (στο τηλέφωνο, σε μήνυμα).",
       "sg.code": "Κωδικός πρόσβασης", "sg.open": "Άνοιγμα", "sg.wrongCode": "Ο κωδικός πρόσβασης δεν είναι σωστός.",
-      "sg.kind": "Για υπογραφή", "sg.from": "Από", "sg.for": "Προς", "sg.until": "Υπογραφή έως", "sg.pages": "Σελίδες",
+      "sg.kind": "Για υπογραφή", "sg.others": "Ζητήθηκε υπογραφή και από", "sg.from": "Από", "sg.for": "Προς", "sg.until": "Υπογραφή έως", "sg.pages": "Σελίδες",
       "sg.message": "Μήνυμα", "sg.howTo": "Πάτησε κάθε κίτρινο πλαίσιο για να το συμπληρώσεις. Όσα έχουν * είναι υποχρεωτικά.",
       "sg.f.sig": "Υπόγραψε εδώ", "sg.f.init": "Μονογραφή", "sg.f.name": "Όνομα", "sg.f.date": "Ημερομηνία", "sg.f.text": "Κείμενο",
       "sg.f.check": "Τικ", "sg.req": "*", "sg.filled": "Συμπληρωμένο: {label}", "sg.empty1": "Κενό: {label}",
@@ -242,6 +242,7 @@
     function row(k, v) { if (!v) return; dl.appendChild(el("dt", "", k)); dl.appendChild(el("dd", "pre", v)); }
     row(t("sg.from"), req.by + (req.be ? " <" + req.be + ">" : ""));
     row(t("sg.for"), req.to);
+    row(t("sg.others"), (req.og || []).join(", "));
     row(t("sg.until"), expires ? fmtDay(expires) : "");
     row(t("sg.pages"), String(req.pages));
     row(t("sg.message"), req.msg || "");

@@ -173,7 +173,8 @@
       "dlg.oauth": "Outlook.com / Hotmail no longer accept passwords from other apps. Support needs a later update.",
       "dlg.generic": "Most providers (Papaki among them) use mail.{domain}. If the connection fails, check the server name in your provider's panel.",
       "dlg.passDevice": "The password stays sealed on this device and is never synced. Enter it once on each device.",
-      "sigIn.title": "Use this signature?", "sigIn.text": "The signature \"{name}\" from Email Signature replaces the signature of the account you pick, on all your devices.", "sigIn.acct": "Account", "sigIn.ok": "Use", "sigIn.none": "Add a mail account first, then use the signature again.", "sigIn.done": "Signature saved for {email}",
+      "sigIn.title": "Use this signature?", "sigIn.text": "The signature \"{name}\" from Email signatures replaces the signature of the account you pick, on all your devices.", "sigIn.acct": "Account", "sigIn.ok": "Use", "sigIn.none": "Add a mail account first, then use the signature again.", "sigIn.done": "Signature saved for {email}",
+      "sigs.open": "Email signatures", "sigs.loading": "Opening Email signatures…", "sigs.loadFail": "Email signatures could not open. Check the connection and try again.",
       "dlg.remove": "Remove account", "dlg.removeQ": "Remove {name} from orOS on all your devices? Your mail stays on the server.",
       "dlg.removeOk": "Remove",
       "set.title": "Mail settings", "set.accounts": "Accounts", "set.plain": "Always show plain text", "set.threads": "Group messages by conversation", "uni.title": "All inboxes", "uni.older": "Older messages are in each account's Inbox.", "thr.count": "{n} messages in this conversation",
@@ -222,6 +223,7 @@
       "toast.sent": "Sent", "toast.sentNoCopy": "Sent. A copy could not be filed in Sent.",
       "toast.queued": "In the Outbox: it goes out when you are online.", "toast.outSent": "Sent from the Outbox: {n}",
       "out.bar": "Outbox: {n}", "out.title": "Outbox",
+      "tr.btn": "Translate", "tr.none": "This message has no text to translate.", "tr.fail": "The translator could not be loaded.",
       "to.btn": "Other apps", "to.title": "Use this message in…", "to.app": "Mail", "to.from": "From:", "to.date": "Date:", "to.subj": "Subject:",
       "to.todo": "A To-Do task", "to.todoHint": "The subject as the task, the message as its note.",
       "to.note": "A note", "to.noteHint": "Saves the message's text as a new page in Notes.",
@@ -384,7 +386,8 @@
       "dlg.oauth": "Το Outlook.com / Hotmail δεν δέχεται πια κωδικούς από άλλες εφαρμογές. Θα υποστηριχτεί σε επόμενη ενημέρωση.",
       "dlg.generic": "Οι περισσότεροι πάροχοι (και το Papaki) χρησιμοποιούν mail.{domain}. Αν η σύνδεση αποτύχει, δες το όνομα του διακομιστή στο panel του παρόχου σου.",
       "dlg.passDevice": "Ο κωδικός μένει σφραγισμένος σε αυτή τη συσκευή και δεν συγχρονίζεται. Τον δίνεις μία φορά σε κάθε συσκευή.",
-      "sigIn.title": "Χρήση αυτής της υπογραφής;", "sigIn.text": "Η υπογραφή «{name}» από την Υπογραφή email αντικαθιστά την υπογραφή του λογαριασμού που θα διαλέξεις, σε όλες τις συσκευές σου.", "sigIn.acct": "Λογαριασμός", "sigIn.ok": "Χρήση", "sigIn.none": "Πρόσθεσε πρώτα έναν λογαριασμό email και μετά χρησιμοποίησε ξανά την υπογραφή.", "sigIn.done": "Η υπογραφή αποθηκεύτηκε για το {email}",
+      "sigIn.title": "Χρήση αυτής της υπογραφής;", "sigIn.text": "Η υπογραφή «{name}» από τις Υπογραφές email αντικαθιστά την υπογραφή του λογαριασμού που θα διαλέξεις, σε όλες τις συσκευές σου.", "sigIn.acct": "Λογαριασμός", "sigIn.ok": "Χρήση", "sigIn.none": "Πρόσθεσε πρώτα έναν λογαριασμό email και μετά χρησιμοποίησε ξανά την υπογραφή.", "sigIn.done": "Η υπογραφή αποθηκεύτηκε για το {email}",
+      "sigs.open": "Υπογραφές email", "sigs.loading": "Άνοιγμα Υπογραφών email…", "sigs.loadFail": "Οι Υπογραφές email δεν άνοιξαν. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "dlg.remove": "Αφαίρεση λογαριασμού", "dlg.removeQ": "Να αφαιρεθεί το {name} από το orOS σε όλες τις συσκευές σου; Τα μηνύματα μένουν στον διακομιστή.",
       "dlg.removeOk": "Αφαίρεση",
       "set.title": "Ρυθμίσεις αλληλογραφίας", "set.accounts": "Λογαριασμοί", "set.plain": "Πάντα ως απλό κείμενο", "set.threads": "Ομαδοποίηση μηνυμάτων ανά συζήτηση", "uni.title": "Όλα τα Εισερχόμενα", "uni.older": "Τα παλαιότερα μηνύματα είναι στα Εισερχόμενα κάθε λογαριασμού.", "thr.count": "{n} μηνύματα σε αυτή τη συζήτηση",
@@ -433,6 +436,7 @@
       "toast.sent": "Στάλθηκε", "toast.sentNoCopy": "Στάλθηκε. Δεν μπήκε αντίγραφο στα Απεσταλμένα.",
       "toast.queued": "Μπήκε στα Εξερχόμενα: θα σταλεί μόλις συνδεθείς.", "toast.outSent": "Στάλθηκαν από τα Εξερχόμενα: {n}",
       "out.bar": "Εξερχόμενα: {n}", "out.title": "Εξερχόμενα",
+      "tr.btn": "Μετάφραση", "tr.none": "Αυτό το μήνυμα δεν έχει κείμενο για μετάφραση.", "tr.fail": "Ο μεταφραστής δεν φορτώθηκε.",
       "to.btn": "Άλλες εφαρμογές", "to.title": "Χρήση του μηνύματος σε…", "to.app": "Αλληλογραφία", "to.from": "Από:", "to.date": "Ημερομηνία:", "to.subj": "Θέμα:",
       "to.todo": "Εργασία στο To-Do", "to.todoHint": "Το θέμα γίνεται εργασία, το μήνυμα σημείωσή της.",
       "to.note": "Σημείωση", "to.noteHint": "Αποθηκεύει το κείμενο του μηνύματος ως νέα σελίδα στις Σημειώσεις.",
@@ -1294,7 +1298,7 @@
     var net = $("net");
     var msg = !navigator.onLine ? t("net.offline") : (data.accounts.length && !relayUrl() ? t("net.norelay") : "");
     net.textContent = msg;
-    net.hidden = !msg;
+    net.hidden = !msg || sigsOn;
   }
 
   function currentFolder() {
@@ -1870,6 +1874,7 @@
       });
     }
     if (shellApps()) acts.appendChild(button(t("to.btn"), "small", function () { appsDialog(m, p); }));
+    acts.appendChild(button(t("tr.btn"), "small", function () { translateMsg(m, p); }));
     var org = el("span", "org-acts");
     orgButtons(org, [openMsg.uid], true);
     acts.appendChild(org);
@@ -2615,8 +2620,9 @@
     dlg.showModal();
   }
 
-  // A signature handed over by Email Signature (BR-MAIL-SIG): the
-  // person picks the account; Use replaces its signature.
+  // A signature handed over by Email signatures (BR-MAIL-SIG, the
+  // view's "Use in orOS Mail"): the person picks the account; Use
+  // replaces its signature.
   function signatureDialog(sg) {
     if (!data.accounts.length) { showToast(t("sigIn.none")); return; }
     var html = typeof sg.html === "string" && sg.html.length <= 400000 ? sg.html : "";
@@ -4303,6 +4309,20 @@
     var s = p.text !== null ? p.text : (p.html !== null ? htmlText(p.html) : "");
     return String(s || "").replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
   }
+  // Translate (translate/panel.js, TRANSLATE T3): the subject and the
+  // message text, on the device; shown in the panel, never stored.
+  function translateMsg(m, p) {
+    var body = msgText(p), subj = String(m.subj || "").trim();
+    if (!body && !subj) { showToast(t("tr.none")); return; }
+    var o = { text: (subj ? subj + "\n\n" : "") + body, lang: LANG };
+    if (window.OrosTranslatePanel) { window.OrosTranslatePanel.open(o); return; }
+    var v = window.orosI18n && window.orosI18n.ver, s = document.createElement("script");
+    var fail = function () { showToast(t("tr.fail")); };
+    s.src = "../translate/panel.js" + (v ? "?v=" + encodeURIComponent(v) : "");
+    s.onload = function () { if (window.OrosTranslatePanel) window.OrosTranslatePanel.open(o); else fail(); };
+    s.onerror = fail;
+    document.head.appendChild(s);
+  }
   // http(s) links of the message, text first seen as their title
   function msgLinks(p) {
     var out = [], seen = {};
@@ -5780,6 +5800,7 @@
     }, true);
     // j / k or arrows: next / previous message; Esc: back (phone)
     document.addEventListener("keydown", function (e) {
+      if (sigsOn) return;                  // Email signatures has its own keys
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       var tag = e.target && e.target.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
@@ -5956,6 +5977,10 @@
     sb.setAttribute("aria-label", t("btn.settings"));
     sb.title = t("btn.settings");
     $("wel-icon").innerHTML = UI.mail;
+    var sg = $("sigs-btn");
+    sg.innerHTML = UI.pen;
+    sg.appendChild(el("span", "", t("sigs.open")));
+    $("sig-host").setAttribute("aria-label", t("sigs.open"));
   }
 
   function wire() {
@@ -5973,6 +5998,8 @@
     $("compose-btn").addEventListener("click", function () { openCompose({}); });
     $("add-acct").addEventListener("click", function () { acctDialog(null); });
     $("wel-add").addEventListener("click", function () { acctDialog(null); });
+    $("sigs-btn").addEventListener("click", function () { showSigs(null); });
+    $("wel-sigs").addEventListener("click", function () { showSigs(null); });
     window.addEventListener("online", function () { renderBar(); flushOutbox(); refreshCurrent(false); });
     window.addEventListener("pagehide", flushMoves);
     $("sel-btn").addEventListener("click", function () { sel = {}; renderList(); });
@@ -5988,6 +6015,107 @@
     wireSearch();
   }
 
+  // ---------- Email signatures (merge 6) ----------
+  // The Email Signature app folded into Mail (APP-ALIAS, old id
+  // "signature" → { view: "signatures" }). Its code stays in
+  // signature/: core.js loads with this page (the slice), the view
+  // (view.js, view.css and the kit it uses) the first time it opens.
+  // It works with no account; its "Use in orOS Mail" hands the
+  // signature to signatureDialog (BR-MAIL-SIG, rich.js clean()).
+  var sigsOn = false, sigLoad = null, sigPending = null;
+  var SIG_JS = ["../designkit/assets.js", "../qr/qr-encode.js", "../bundle.js", "../recordpkg.js",
+                "../signature/package.js", "../signature/view.js"];
+  function sigAsset(src) {
+    var v = window.orosI18n && window.orosI18n.ver;
+    return src + (v ? "?v=" + encodeURIComponent(v) : "");
+  }
+  function sigScript(src) {
+    return new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      sc.src = sigAsset(src);
+      sc.onload = resolve; sc.onerror = reject;
+      document.head.appendChild(sc);
+    });
+  }
+  function sigPack(app) {
+    return new Promise(function (resolve) {
+      if (window.orosI18n && typeof window.orosI18n.ensure === "function") window.orosI18n.ensure(LANG, app, resolve);
+      else resolve();
+    });
+  }
+  function loadSigs() {
+    if (window.SignatureView) return Promise.resolve();
+    if (sigLoad) return sigLoad;
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = sigAsset("../signature/view.css");
+    document.head.appendChild(css);
+    sigLoad = Promise.all(["signature", "recordpkg", "designkit"].map(sigPack)).then(function () {
+      // in order: package.js needs bundle.js and recordpkg.js, the view all of them
+      return SIG_JS.reduce(function (p, src) { return p.then(function () { return sigScript(src); }); }, Promise.resolve());
+    });
+    sigLoad.catch(function () { sigLoad = null; });
+    return sigLoad;
+  }
+  function sigsShown(on) {
+    sigsOn = on;
+    $("toolbar").hidden = on;
+    $("app").hidden = on;
+    $("sig-host").hidden = !on;
+    if (on) $("net").hidden = true; else renderBar();
+  }
+  function showSigs(at) {
+    var host = $("sig-host");
+    if (view === "side") setView("list");
+    sigsShown(true);
+    if (window.SignatureView) {
+      var go = at || sigPending;
+      sigPending = null;
+      window.SignatureView.mount(host, { useInMail: signatureDialog, onBack: hideSigs });
+      if (go && (go.id || go.openFile)) window.SignatureView.openAt(go);
+      return;
+    }
+    if (at) sigPending = at;
+    var w = host.querySelector(".sig-wait");
+    if (!w) {
+      w = el("p", "sig-wait", t("sigs.loading"));
+      w.setAttribute("role", "status");
+      host.appendChild(w);
+    } else w.textContent = t("sigs.loading");
+    loadSigs().then(function () {
+      var w2 = host.querySelector(".sig-wait");
+      if (w2) w2.parentNode.removeChild(w2);
+      if (sigsOn) showSigs(null);
+    }, function () {
+      var w3 = host.querySelector(".sig-wait");
+      if (w3) w3.textContent = t("sigs.loadFail");
+    });
+  }
+  function hideSigs() {
+    if (window.SignatureView) window.SignatureView.flush();
+    sigsShown(false);
+    var b = $("sigs-btn");
+    if (b && b.offsetParent !== null) b.focus();
+  }
+  // The slice "signature" (oros-signature-data), the Email Signature
+  // app's own, unchanged. Before the view is here the stored copy is
+  // the slice.
+  function registerSignatureSlice() {
+    var S = window.SignatureCore, api = syncApi();
+    if (!S || !api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("signature", function () {
+      var v = window.SignatureView && window.SignatureView.sliceGet();
+      if (v) return v;
+      var d = null;
+      try { d = S.parse(localStorage.getItem(S.DATA_KEY)); } catch (e) { d = null; }
+      return d ? S.merge(d, null) : null;
+    }, function (incoming) {
+      if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.sigs)) return;
+      if (window.SignatureView && window.SignatureView.sliceGet()) { window.SignatureView.sliceSet(incoming); return; }
+      try { localStorage.setItem(S.DATA_KEY, JSON.stringify(S.merge(incoming, null))); } catch (e) {}
+    }, S.DATA_KEY, S.merge);
+  }
+
   // Deep links (shell __orosOpenAt / __orosTakeTarget), one receiver:
   //  - universal search: { acct, folder, uid }. Opens the folder and,
   //    when the message is in its cached list, the message. Unknown
@@ -5996,12 +6124,16 @@
   //  - other apps (Reader, Invoices…): { compose:{ to?, subject?, body?,
   //    attach? } } opens a prefilled draft, plain text, with the files
   //    (handedFiles); the person presses Send.
-  //  - Email Signature (BR-MAIL-SIG): { signature:{ html, text, name } }
+  //  - Email signatures (merge 6, old id "signature"): { view:
+  //    "signatures", id?, openFile? } opens it (a signature, or an
+  //    .orossignature file handed over by fileopen.js).
+  //  - BR-MAIL-SIG: { signature:{ html, text, name } }
   //    asks which account gets it; nothing changes before Use. The
   //    HTML goes through rich.js clean() like a typed signature.
   // A dialog open (maybe with unsaved edits) → no-op (returns false).
   function openSearchTarget(target) {
     if (!target || typeof target !== "object" || document.querySelector("dialog[open]")) return false;
+    if (target.view === "signatures") { showSigs(target); return true; }
     var sg = target.signature;
     if (sg && typeof sg === "object") { signatureDialog(sg); return true; }
     var c = target.compose;
@@ -6039,6 +6171,7 @@
     applyI18n();
     wire();
     registerSync();
+    registerSignatureSlice();
     inheritPalette();
     watchPalette();
     setView("list");
@@ -6051,6 +6184,8 @@
         pendingTarget = window.parent.__orosTakeTarget("mail");
       }
     } catch (e) {}
+    // Email signatures opens at once, with or without an account
+    if (pendingTarget && pendingTarget.view === "signatures") { openSearchTarget(pendingTarget); pendingTarget = null; }
     if (!acct) {
       if (pendingTarget && pendingTarget.compose) openSearchTarget(pendingTarget);   // → "add an account"
       return;

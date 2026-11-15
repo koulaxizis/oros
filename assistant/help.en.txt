@@ -167,6 +167,7 @@ Ask "countdown 25 minutes", "wake me at 7:00 every day", "play my jazz station",
 - `Start` starts the timer in [Time](app:time) at once. `Set the alarm` opens Time's alarm form filled in, and you press `Add alarm` there.
 - `Play` plays a track from [Music](app:music), a station from [Radio](app:radio) or an episode from [Podcasts](app:podcasts) that the assistant found first.
 - `Show the route` opens [Maps](app:maps) with the route from where you are to that address or place, by car, bike or on foot. For a person, the assistant takes the address from Contacts or CRM.
+- `Translate` opens [Text Tools](app:texttools) › Translate with the text and the languages set, when you ask for a translation on the device ("translate this into German on my phone"): Mozilla's models translate it there and the text goes to no AI. Through the orOS Gate, Claude can prepare the same card.
 - `Open` opens an item it found, or an app.
 
 ## Change history

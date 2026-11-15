@@ -15,6 +15,7 @@ Blend: select two shapes (rectangles, ellipses or paths) and the `Properties` pa
 
 Pen and points: `Pen (P)` draws a path: click to add corner points, drag to make a curved point, click the first point to close the shape; `Done`, [[Enter]] or a click on the last point keeps an open line. `Edit points` (right-click menu, or a double-click on a path) shows the points of a path, rectangle, ellipse or line (it becomes a path). Drag points and handles ([[Alt]] moves the two handles apart), drag a box around several points, double-click the outline to add a point, and use the bar: `Corner`, `Smooth`, `Symmetric`, `Straight`, `Add point`, `Delete point`, `Break`, `Join` and `Close path` / `Open path`. Arrow keys move the chosen points; `Done` or [[Esc]] ends.
 
+Combine shapes: pick two or more rectangles, ellipses or paths and choose `Unite`, `Subtract front`, `Intersect` or `Exclude overlap` in the right-click menu or under `Combine shapes` in `Properties`. You get one path with editable points and the look of the shape at the back. `Outline stroke` turns a stroke (dashes included) into a filled path; a shape with a fill keeps it underneath.
 Drag from a ruler to add a guide, and drag a guide back onto the ruler to remove it. The `Zoom` menu has `Fit page`, `Fit spread`, 50, 100 and 200 %.
 
 ### Text

@@ -125,6 +125,7 @@
    "files": [
     "calendar/calendar.js",
     "calendar/package.js",
+    "calendar/rsvp.js",
     "calendar/search.js",
     "calendar/today.js"
    ]
@@ -253,6 +254,12 @@
    ]
   },
   {
+   "app": "device",
+   "files": [
+    "device/view.js"
+   ]
+  },
+  {
    "app": "diary",
    "files": [
     "diary/core.js",
@@ -313,6 +320,7 @@
    "app": "files",
    "files": [
     "files/computer.js",
+    "files/docs-due.js",
     "files/docs.js",
     "files/drive.js",
     "files/dropbox-callback.js",
@@ -353,6 +361,7 @@
     "forms/host.js",
     "forms/pub.js",
     "forms/render.js",
+    "forms/search.js",
     "forms/today.js"
    ]
   },
@@ -459,6 +468,7 @@
    "files": [
     "kanban/kanban.js",
     "kanban/search.js",
+    "kanban/today.js",
     "kanban/tools.js"
    ]
   },
@@ -909,13 +919,21 @@
     "signature/core.js",
     "signature/package.js",
     "signature/search.js",
-    "signature/signature.js"
+    "signature/view.js"
    ]
   },
   {
    "app": "simon",
    "files": [
     "simon/simon.js"
+   ]
+  },
+  {
+   "app": "sky",
+   "files": [
+    "sky/core.js",
+    "sky/stars.js",
+    "sky/view.js"
    ]
   },
   {
@@ -1111,6 +1129,13 @@
     "typing/app.js",
     "typing/due.js",
     "typing/layouts.js"
+   ]
+  },
+  {
+   "app": "units",
+   "files": [
+    "units/core.js",
+    "units/view.js"
    ]
   },
   {

@@ -105,6 +105,16 @@ Nach `Senden` wartet die Nachricht ein paar Sekunden mit einer Taste `Rückgäng
 ### Offline: der Postausgang
 Nachrichten, die du offline sendest, warten im `Postausgang` in der Seitenleiste und gehen von selbst hinaus, sobald du wieder online bist. Wird eine abgelehnt (zum Beispiel wegen einer falschen Adresse), bleibt sie dort mit dem Grund: Öffne den `Postausgang`, um sie mit `Bearbeiten`, `Jetzt senden` oder `Löschen` zu behandeln.
 
+## E-Mail-Signaturen
+`E-Mail-Signaturen` war die App E-Mail-Signatur; alte Links und Verknüpfungen dorthin öffnen sie hier. Öffne sie mit `E-Mail-Signaturen` in der Seitenleiste (oder auf dem ersten Bildschirm, bevor du ein Konto hinzufügst: sie funktionieren auch ohne) und geh mit dem Pfeil oben links zurück. Erstelle einmal eine professionelle Signatur und nutze sie überall: Gmail, Outlook, Thunderbird, Apple Mail, dein Handy und orOS Mail. Sie wird aus deinen Daten gebaut, sieht daher in jeder Mail-App richtig aus und enthält nie versteckten Code.
+- `Signatur erstellen` (oder [[+]] für eine weitere), füll `Deine Daten` aus und wähle unter `Aussehen` ein `Layout`, eine `Hauptfarbe` und eine Schriftart. `Aus orOS ausfüllen` übernimmt dein Firmenprofil (Rechnungen), eine Karte aus Kontakte oder dein Brand-Kit (Atelier); `Rückgängig` stellt alles wieder her.
+- `Logo und Foto` behält die Bilder auf deinem orOS-Laufwerk. Gmail und Outlook im Web verwerfen Bilder, die in einer Signatur stecken: Gib dafür auch die `Adresse auf deiner Website` an. Dazu kommen Social-Media-Profile (bis zu 8), eine Schaltfläche, die auch Outlook zeigt, ein `Banner`, das nur zwischen zwei Daten erscheint, ein QR-Code mit deiner Kontaktkarte und Rechtstext.
+- `Vorschau & Nutzen` (auf dem Handy der zweite Reiter): `Wo verwendest du sie?` ändert die Vorschau und die Schritte unter `So fügst du sie hinzu`. `Signatur kopieren` kopiert sie mit Formatierung; `HTML-Code kopieren`, `.html speichern` und `.txt speichern` sind für Apps, die Code oder reinen Text wollen. `Prüfung` zeigt, was zu beheben ist (Links, blasse Farben, verworfene Bilder, Gmails Grenze von 10.000 Zeichen).
+- `In orOS Mail verwenden` fragt, welches deiner Konten die Signatur bekommt; vor `Verwenden` ändert sich nichts. Es ist dieselbe Signatur wie die `Signatur` des Kontos, auf dieselbe Weise bereinigt.
+- Unter [[⋯]]: `Diese Signatur duplizieren`, `Signaturen für ein Team (CSV)` (eine .html pro Person in einer .zip), `orOS-Datei (.orossignature)`, um alle Signaturen mit ihren Bildern zu speichern, und `orOS-Datei öffnen…`, um die Signaturen hinzuzufügen, die diesem Gerät fehlen (eine Datei löscht nie etwas; `Mit neueren Versionen aktualisieren` lässt neuere deine ersetzen).
+- Bis zu 30 Signaturen, verschlüsselt mit deinen Geräten synchronisiert und Teil des orOS-Exports. Nichts wird irgendwohin gesendet. [[Ctrl+Shift+C]] kopiert die Signatur, [[Esc]] schließt ein Fenster.
+- Die Suche im orOS-Menü findet deine Signaturen nach Name, Person, Firma, E-Mail oder Telefon; ein Tippen öffnet sie hier.
+
 ## Verschlüsselung (OpenPGP)
 Mail kann Nachrichten mit OpenPGP signieren und verschlüsseln, dem Standard von Thunderbird, Proton Mail, GnuPG und anderen. So können nur die Leute, denen du schreibst, sie lesen, und sie können sehen, dass die Nachricht wirklich von dir kommt.
 - Öffne die Zahnradtaste und tippe unter `Verschlüsselung (OpenPGP)` auf `Schlüssel`. `Meinen Schlüssel erstellen` erstellt einen Schlüssel für eines deiner Konten, gesperrt mit einer `Passphrase` deiner Wahl (mindestens 8 Zeichen). Niemand kann die Passphrase für dich wiederherstellen: Schreib sie an einem sicheren Ort auf.
@@ -126,6 +136,9 @@ Mail kann Nachrichten mit OpenPGP signieren und verschlüsseln, dem Standard von
 - `Im CRM festhalten`: öffnet [CRM](app:crm) mit einem neuen Eintrag für die andere Person (den Absender oder die Person, der du geschrieben hast), mit Betreff, Textanfang und Datum ausgefüllt; speichern tust du dort.
 - `Zusammenfassung vom Assistenten` und `Antwortentwurf vom Assistenten` öffnen den [Assistent](app:assistant) mit der fertigen Frage und dem Schlüssel, den du dort eingestellt hast. Sehr lange Nachrichten werden passend gekürzt; senden tust du dort, und die Antwort kopierst du selbst in Mail.
 Andersherum öffnen eine E-Mail-Adresse auf einer Kontaktkarte in Kontakte und `E-Mail` bei einem gespeicherten Termin im [Kalender](app:calendar) hier eine neue Nachricht (wenn Mail auf diesem Gerät ein Konto hat).
+
+## Eine Nachricht übersetzen
+`Übersetzen` unter einer geöffneten Nachricht übersetzt Betreff und Text auf diesem Gerät mit den Modellen von Mozilla, wie [Text Tools](app:texttools) › Übersetzen. Beim ersten Mal für zwei Sprachen sagt es, wie groß der Download ist; danach geht es auch offline, und die Nachricht verlässt das Gerät nie. `Kopieren` kopiert die Übersetzung; nichts wird gespeichert.
 
 ## Konten und Einstellungen
 Die Zahnradtaste öffnet `Mail-Einstellungen`: deine `Konten` (mit `Bearbeiten`), `Immer als reinen Text zeigen`, `Nachrichten nach Unterhaltung gruppieren` und die `Relay-Adresse`. In einem Konto kannst du die Angaben ändern oder `Konto entfernen`; deine Mails bleiben auf dem Server.
