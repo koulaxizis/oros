@@ -28,12 +28,16 @@
       "stage.ms": "Manuscript in", "stage.ed": "Editing", "stage.p1": "Proofs 1", "stage.cov": "Cover ready",
       "stage.p2": "Proofs 2", "stage.isbn": "ISBN and barcode", "stage.p3": "Proofs 3", "stage.print": "To the printer",
       "stage.pres": "Presentation", "stage.x": "Step",
+      "stage.mst": "Master ready", "stage.art": "Artwork 3000 × 3000 px", "stage.meta": "Metadata and codes", "stage.up": "Upload to the distributor",
+      "stage.pitch": "Editorial pitch", "stage.pre": "Pre-save link and posts", "stage.wk1": "First-week posts",
       "feed.rel": "Release: {t}", "feed.step": "{s} · {t}", "feed.post": "Post {h}· {t}"
     },
     el: {
       "stage.ms": "Παράδοση χειρογράφου", "stage.ed": "Επιμέλεια", "stage.p1": "Διορθώσεις 1", "stage.cov": "Έτοιμο εξώφυλλο",
       "stage.p2": "Διορθώσεις 2", "stage.isbn": "ISBN και barcode", "stage.p3": "Διορθώσεις 3", "stage.print": "Στο τυπογραφείο",
       "stage.pres": "Παρουσίαση", "stage.x": "Βήμα",
+      "stage.mst": "Έτοιμο master", "stage.art": "Artwork 3000 × 3000 px", "stage.meta": "Στοιχεία και κωδικοί", "stage.up": "Ανέβασμα στον διανομέα",
+      "stage.pitch": "Πρόταση σε playlist (pitch)", "stage.pre": "Pre-save και αναρτήσεις", "stage.wk1": "Αναρτήσεις πρώτης εβδομάδας",
       "feed.rel": "Κυκλοφορία: {t}", "feed.step": "{s} · {t}", "feed.post": "Ανάρτηση {h}· {t}"
     }
   };

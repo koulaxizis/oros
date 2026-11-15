@@ -14,48 +14,8 @@ const ORIGIN = "https://useoros.online";
 const DAY = 86400000;
 const T0 = Date.UTC(2026, 9, 17, 10, 0, 0);
 
-function fakeD1() {
-  const objs = new Map(), chunks = new Map();     // chunks: "id|i" → {id,i,len,data}
-  const log = [];
-  function chunksOf(id) { return [...chunks.values()].filter((c) => c.id === id); }
-  function exec(sql, a) {
-    const Q = S.SHR_SQL;
-    log.push(sql);
-    switch (sql) {
-      case Q.obj: case Q.chunk: case Q.indexExp: case Q.indexOpen: case Q.shl: case Q.shlLast: case Q.shlDay: case Q.shlTot: case Q.shlTot1: return { meta: {} };
-      case Q.getObj: { const o = objs.get(a[0]); return { first: o ? { ...o } : null }; }
-      case Q.used: return { first: { s: [...objs.values()].reduce((x, o) => x + o.size, 0) } };
-      case Q.addObj:
-        if (objs.has(a[0])) return { meta: { changes: 0 } };
-        objs.set(a[0], { exp: a[1], size: a[2], n: a[3], delh: a[4], tokh: a[5], at: a[6], fin: 0 });
-        return { meta: { changes: 1 } };
-      case Q.got: { const cs = chunksOf(a[0]); return { first: { c: cs.length, s: cs.reduce((x, c) => x + c.len, 0) } }; }
-      case Q.addChunk: {
-        const k = a[0] + "|" + a[1];
-        if (chunks.has(k)) return { meta: { changes: 0 } };
-        assert.ok(a[3] instanceof ArrayBuffer, "pieces are stored as BLOB");
-        chunks.set(k, { id: a[0], i: a[1], len: a[2], data: a[3] });
-        return { meta: { changes: 1 } };
-      }
-      case Q.dropChunk: chunks.delete(a[0] + "|" + a[1]); return { meta: {} };
-      case Q.fin: { const o = objs.get(a[0]); if (o && !o.fin) { o.fin = 1; return { meta: { changes: 1 } }; } return { meta: { changes: 0 } }; }
-      case Q.read: {
-        const o = objs.get(a[0]), c = chunks.get(a[0] + "|" + a[1]);
-        return { first: o && c && o.fin === 1 && o.exp > a[2] ? { data: Array.from(new Uint8Array(c.data)) } : null };
-      }
-      case Q.dropChunks: for (const c of chunksOf(a[0])) chunks.delete(c.id + "|" + c.i); return { meta: {} };
-      case Q.dropObj: objs.delete(a[0]); return { meta: {} };
-      case Q.stale: return { all: [...objs.entries()].filter(([, o]) => o.exp <= a[0] || (o.fin === 0 && o.at < a[1])).slice(0, a[2]).map(([id]) => ({ id })) };
-    }
-    throw new Error("unknown SQL " + sql);
-  }
-  function stmt(sql, args) {
-    return { bind: (...b) => stmt(sql, b), first: async () => exec(sql, args || []).first,
-             all: async () => ({ results: exec(sql, args || []).all }), run: async () => exec(sql, args || []),
-             _run: () => exec(sql, args || []) };
-  }
-  return { objs, chunks, log, prepare: (sql) => stmt(sql), batch: async (ss) => ss.map((s) => s._run()) };
-}
+// relay/share.js on an in-memory D1 (tests/shr-fake.js)
+function fakeD1() { return require("./shr-fake.js").fakeD1(S.SHR_SQL); }
 
 let ipN = 0;
 function nextIp() { return "10.9." + (ipN >> 8 & 255) + "." + (ipN++ & 255); }

@@ -1092,6 +1092,10 @@
       if (k !== "shape") bar.appendChild(sep());
       bar.appendChild(tool("blend", t("ctx.blend"), blendPop, !!bg));
     }
+    if (ED.vec && ED.vec.canCombine && ED.vec.canCombine(list)) {
+      if (k !== "shape") bar.appendChild(sep());
+      bar.appendChild(tool("ops", PEs("pe.ops"), opsMenu));
+    }
     bar.appendChild(sep());
     bar.appendChild(tool("position", t("ctx.position"), function () { openView("position"); }, view === "position"));
     bar.appendChild(tool("op", t("ctx.op"), opacityPop));
@@ -1102,6 +1106,20 @@
     bar.appendChild(tool("trash", t("ctx.del"), ED.remove));
   }
   AT.renderCtx = renderCtx;
+
+  // ---------- Combine shapes, outline stroke (vector wave V2) ----------
+  function PEs(k) { return window.orosDK.pathedit.str(k); }
+  function opsMenu(anchor) {
+    AT.menu(anchor, ["union", "subtract", "intersect", "exclude"].map(function (kind) {
+      return { label: PEs("pe." + kind), fn: function () { ED.vec.combine(kind); } };
+    }));
+  }
+  function outlineBtn(m, it, close) {
+    if (!ED.vec || !ED.vec.canOutline || !ED.vec.canOutline(it)) return;
+    var row = el("div", "dlg-actions");
+    row.appendChild(btn("btn", PEs("pe.outline"), function () { if (close) close(); ED.vec.outline(it.id); }));
+    m.appendChild(row);
+  }
 
   // ---------- Blend (wave C1, blend.js) ----------
   // The blend the picked elements belong to: a step of it, or one of
@@ -1240,7 +1258,7 @@
     bar.appendChild(sb);
     if (ED.vec && ED.vec.canEdit(it)) bar.appendChild(tool("nodes", window.orosDK.pathedit.str("pe.edit"), function () { ED.vec.edit(it.id); }, ED.vec.busyWith(it.id)));
     bar.appendChild(btn("ctx-txt", t("ctx.sw"), function (e) {
-      AT.popover(e.currentTarget, function (m) {
+      AT.popover(e.currentTarget, function (m, close) {
         var mx = Math.max(20, Math.round(Math.min(it.w, it.h) / 4));
         m.appendChild(slider(t("ctx.weight"), 0, mx, mx > 60 ? 1 : 0.5, it.sw || 0, function (v) {
           edit(function (x) { x.sw = v; if (v > 0 && !x.ax.sc) x.ax.sc = "#000000"; });
@@ -1250,6 +1268,7 @@
         cb.addEventListener("change", function () { edit(function (x) { x.dash = cb.checked ? 1 : 0; }); });
         c.appendChild(cb); c.appendChild(el("span", "", t("ctx.dashed")));
         m.appendChild(c);
+        outlineBtn(m, it, close);
       });
     }));
     if (a.shp === "rounded" || a.shp === "bubble") {
@@ -1273,7 +1292,7 @@
   function lineTools(bar, it) {
     bar.appendChild(colourBtn(t("ctx.colour"), it.ax.sc || "#000000", null, { kind: "fill" }));
     bar.appendChild(btn("ctx-txt", t("ctx.weight"), function (e) {
-      AT.popover(e.currentTarget, function (m) {
+      AT.popover(e.currentTarget, function (m, close) {
         var mx = Math.max(20, Math.round(Math.min(AT.doc.setup.w, AT.doc.setup.h) / 20));
         m.appendChild(slider(t("ctx.weight"), 0.5, mx, 0.5, it.sw || 1, function (v) { edit(function (x) { x.sw = v; }); }));
         var c = el("label", "chk");
@@ -1281,6 +1300,7 @@
         cb.addEventListener("change", function () { edit(function (x) { x.dash = cb.checked ? 1 : 0; }); });
         c.appendChild(cb); c.appendChild(el("span", "", t("ctx.dashed")));
         m.appendChild(c);
+        outlineBtn(m, it, close);
       });
     }));
     ["as", "ae"].forEach(function (end) {

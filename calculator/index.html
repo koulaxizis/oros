@@ -9,7 +9,7 @@
 <title>Calculator</title>
 
 
-<link rel="stylesheet" href="calculator.css?v=6.57.00">
+<link rel="stylesheet" href="calculator.css?v=6.84.00">
 
 </head>
 <body>
@@ -33,7 +33,20 @@
     <button type="button" role="tab" data-mode="graph" aria-selected="false" tabindex="-1"><span class="m-long" data-i18n="calc.mode.graph">Graphing</span><span class="m-short" data-i18n="calc.mode.graph.s">Graph</span></button>
     <button type="button" role="tab" data-mode="prog" aria-selected="false" tabindex="-1"><span class="m-long" data-i18n="calc.mode.prog">Programmer</span><span class="m-short" data-i18n="calc.mode.prog.s">Prog</span></button>
     <button type="button" role="tab" data-mode="fin" aria-selected="false" tabindex="-1"><span class="m-long" data-i18n="calc.mode.fin">Finance</span><span class="m-short" data-i18n="calc.mode.fin.s">Money</span></button>
+    <button type="button" role="tab" data-mode="conv" aria-selected="false" tabindex="-1"><span class="m-long" data-i18n="calc.mode.conv">Convert</span><span class="m-short" data-i18n="calc.mode.conv.s">Convert</span></button>
   </nav>
+  <!-- Narrow screens: the six modes as one menu (merge 5) -->
+  <div class="calc-mode-menu">
+    <label class="sr-only" for="calc-mode-sel" data-i18n="calc.modes">Mode</label>
+    <select id="calc-mode-sel">
+      <option value="std" data-i18n="calc.mode.std">Standard</option>
+      <option value="sci" data-i18n="calc.mode.sci">Scientific</option>
+      <option value="graph" data-i18n="calc.mode.graph">Graphing</option>
+      <option value="prog" data-i18n="calc.mode.prog">Programmer</option>
+      <option value="fin" data-i18n="calc.mode.fin">Finance</option>
+      <option value="conv" data-i18n="calc.mode.conv">Convert</option>
+    </select>
+  </div>
 
   <main class="calc-main">
 
@@ -211,6 +224,9 @@
       </div>
     </section>
 
+    <!-- Convert (merge 5, was the Unit Converter): units/view.js mounts here on the first open -->
+    <section class="mode-pane conv-pane" id="conv" hidden></section>
+
     <!-- History -->
     <aside class="calc-history">
       <div class="calc-history-head">
@@ -229,10 +245,10 @@
   </main>
 </div>
 
-<script src="../i18n.js?v=6.57.00" data-app="calculator"></script>
-<script src="../units/core.js?v=6.57.00"></script>
-<script src="core.js?v=6.57.00"></script>
-<script src="calculator.js?v=6.57.00"></script>
+<script src="../i18n.js?v=6.84.00" data-app="calculator"></script>
+<script src="../units/core.js?v=6.84.00"></script>
+<script src="core.js?v=6.84.00"></script>
+<script src="calculator.js?v=6.84.00"></script>
 
 </body>
 </html>
