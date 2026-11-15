@@ -262,7 +262,7 @@
             if (nm === "img") {
               // EPUBCheck accepts a picture without alt; a reader of the
               // screen does not, so it is a warning here too
-              if (!a.alt && a.role !== "presentation" && a.role !== "none") W("no-alt", m.path, a.src || "");
+              if (a.alt === undefined && a.role !== "presentation" && a.role !== "none") W("no-alt", m.path, a.src || "");
             }
             var refs = [];
             if (nm === "a" && a.href) refs.push(a.href);
@@ -275,7 +275,7 @@
           idsOf[m.path] = seen;
           if (hasSvg && m.props.indexOf("svg") < 0) E("svg-prop", m.path);
           if (hasScript && m.props.indexOf("scripted") < 0) E("script", m.path);
-          if (info.fixed && spine.indexOf(m) >= 0 && m.props.indexOf("nav") < 0 && !/width\s*=\s*\d+/.test(m.vp || "")) E("fxl-vp", m.path);
+          if (info.fixed && spine.indexOf(m) >= 0 && m.props.indexOf("nav") < 0 && !(/width\s*=\s*\d+/.test(m.vp || "") && /height\s*=\s*\d+/.test(m.vp || ""))) E("fxl-vp", m.path);
           if (m.path === navPath) {
             var toc = all(x, "nav").filter(function (n) { return /(^|\s)toc(\s|$)/.test(n.attrs["epub:type"] || ""); })[0];
             if (!toc || !all(toc, "li").length) E("nav-toc", m.path);

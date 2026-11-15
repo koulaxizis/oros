@@ -34,6 +34,9 @@ Pages are stored as plain text, so nothing changes in your notes when you switch
 
 The toolbar buttons add this for you around the selected text, or at the cursor. Press a button again to take it away.
 
+## Translate
+The translate button at the end of the formatting bar translates the selected text, or the whole page when nothing is selected, on this device with Mozilla's models (the same as [Text Tools](app:texttools) › Translate; the first time for two languages it says how big the download is). `Replace` puts the translation in place of the text, `Add below` adds it after it; `Ctrl+Z` takes either back. If the page changed while the panel was open, nothing is put in.
+
 ## Daily note and templates
 The calendar button next to the title (`Today's note`) opens the page for today, titled like `2026-10-14`, under a page named `Daily` at the top of the current notebook. Both are made the first time; on later presses the same page opens.
 

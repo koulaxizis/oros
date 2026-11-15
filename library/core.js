@@ -537,7 +537,8 @@
 
   // → { meta: { title, by, lang, publisher, year, desc, ident },
   //     items: { id: { path, type, props } }, spine: [{ id, path, type, linear }],
-  //     navPath, ncxPath, coverPath, dir: "ltr"|"rtl" }
+  //     navPath, ncxPath, coverPath, dir: "ltr"|"rtl", fixed (pre-paginated) }
+  //     (a spine row's fxl: that page is fixed layout)
   function parseOpf(xml, opfPath) {
     var r = xmlParse(xml);
     var pkg = find(r, "package") || r;
@@ -564,11 +565,16 @@
     });
     var spineNode = find(pkg, "spine");
     var spine = [];
+    // fixed layout (EPUB 3 rendition:layout): the whole book, or one
+    // page by its itemref properties
+    var fixed = kids(md, "meta").some(function (m) { return String(m.a.property || "") === "rendition:layout" && cleanText(textOf(m), 40) === "pre-paginated"; });
     kids(spineNode, "itemref").forEach(function (ir) {
       var it = items[ir.a.idref];
       if (!it) return;
       if (!/(x?html|xml)/.test(it.type) && !/\.x?html?$/i.test(it.path)) return;
-      spine.push({ id: ir.a.idref, path: it.path, type: it.type, linear: String(ir.a.linear || "yes").toLowerCase() !== "no" });
+      var pr = " " + String(ir.a.properties || "") + " ";
+      var fx = pr.indexOf(" rendition:layout-pre-paginated ") >= 0 ? true : pr.indexOf(" rendition:layout-reflowable ") >= 0 ? false : fixed;
+      spine.push({ id: ir.a.idref, path: it.path, type: it.type, linear: String(ir.a.linear || "yes").toLowerCase() !== "no", fxl: fx });
     });
     var navPath = null, ncxPath = null, coverPath = null;
     Object.keys(items).forEach(function (id) {
@@ -593,7 +599,7 @@
       });
     }
     var dir = String(spineNode && spineNode.a["page-progression-direction"] || "").toLowerCase() === "rtl" ? "rtl" : "ltr";
-    return { meta: meta, items: items, byPath: byPath, spine: spine, navPath: navPath, ncxPath: ncxPath, coverPath: coverPath, dir: dir };
+    return { meta: meta, items: items, byPath: byPath, spine: spine, navPath: navPath, ncxPath: ncxPath, coverPath: coverPath, dir: dir, fixed: fixed };
   }
 
   // TOC entries: [{ t (title), path, frag, d (depth 0…) }], max 3000.

@@ -23,6 +23,8 @@ for (const d of fs.readdirSync('.', { withFileTypes: true })) {
   const f = `${d.name}/index.html`;
   if (fs.existsSync(f)) { files.push(f); appDirs.push(d.name); }
 }
+// Pages below an app folder that the scan does not reach.
+for (const f of ['forms/f/index.html', 'calendar/rsvp.html']) if (fs.existsSync(f)) files.push(f);
 console.log('App folders found:', appDirs.join(', ') || '(none)');
 
 const safe = (p) => p.startsWith('http') || p.startsWith('//') || p.startsWith('/');

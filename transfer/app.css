@@ -51,7 +51,10 @@ body { min-height: 100vh; min-height: 100dvh; position: relative; overflow-x: hi
 .art, .shade { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 .art { background: var(--bg); }
 .art svg { width: 100%; height: 100%; display: block; }
-.art.photo { background-size: cover; background-position: center; }
+.photo { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.bg-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.av.th { overflow: hidden; padding: 0; background: var(--well); }
+.av.th svg { width: 100%; height: 100%; display: block; }
 .shade { z-index: 1; background: linear-gradient(180deg, rgba(10, 9, 6, .10), rgba(10, 9, 6, .40)); }
 :root[data-theme="light"] .shade { background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .25)); }
 #toolbar, #main, .pagefoot, #toast { position: relative; z-index: 2; }
@@ -192,6 +195,7 @@ input[type="text"]:not(.field input) {
 .match { display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 14px; background: var(--well); font-size: 12.5px; color: var(--text-dim); }
 .match .th { width: 56px; height: 40px; flex: none; border-radius: 8px; overflow: hidden; border: 1px solid var(--glass-line); }
 .match .th svg { width: 100%; height: 100%; display: block; }
+.match .th.round { width: 46px; height: 46px; border-radius: 50%; }
 
 /* ---------- status and progress ---------- */
 .status { font-weight: 700; }
