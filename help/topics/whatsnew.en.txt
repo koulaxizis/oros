@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.84.00
+- **Publishing: a release plan for music, and links to the other apps.** `Make the plan` on a single, EP or album dates every step back from the release day: master, artwork, metadata and codes, upload to the distributor, editorial pitch, pre-save and posts, first week. A track's `Lyrics` opens its song in Lyric Sync, and the MP3 copy from there now carries the track's ISRC. `In Music` finds the track in Music, `Item in Stock` puts a CD, vinyl or cassette edition into Stock with its barcode, and `Release kit in Atelier` makes the store cover (3000 × 3000), a post, a story and a banner.
+
 ## Version 6.83.00
 - **Atelier and Layout: combine shapes and outline strokes.** Pick two or more shapes and choose Unite, Subtract front, Intersect or Exclude overlap: you get one shape with points you can edit, looking like the shape at the back. Outline stroke turns a stroke (dashes and arrow heads too) into a filled shape.
 
