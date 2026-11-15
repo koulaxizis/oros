@@ -1,4 +1,16 @@
 // ============================================================
+// orOS Billing › Quotes (quote/view.js): was the Quote app (APP-ALIAS
+// since app merge 7, old id "quote" → invoices { tab: "quotes" }).
+// Loaded by invoices/invoices.js the first time the Quotes tab opens,
+// with quote/view.css and the "quote" language pack; quote/core.js and
+// accept-core.js load with Billing's page (the slice, Today, search).
+// QuoteView.mount(host) builds it once. Billing registers the slice
+// "quote" (oros-quote-data, unchanged) at its boot and hands it to
+// sliceGet / sliceSet here once mounted. Every id is "qv-<id>", the
+// text attributes are data-qv / data-qv-title / data-qv-ph, and the
+// styles live under .qv (view.css), so nothing touches Billing's page.
+// Everything below is the Quote app as it was (v0.1.0 notes kept).
+// ------------------------------------------------------------
 // orOS Quote — App logic (v0.1.0)
 // -------------------------------------------------------------
 // Πρώτη έκδοση: sync-first native ήπια μεταφοράς της beta
@@ -375,7 +387,10 @@
   function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
-  function $(id) { return document.getElementById(id); }
+  // The view lives inside Billing's page: every id is "qv-<id>" and
+  // every lookup goes through the view's own root.
+  var root = null, opts = {}, LATE = [];
+  function $(id) { return document.getElementById("qv-" + id); }
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>\x22\x27]/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -641,7 +656,7 @@
 
   function save() {
     writeStore();
-    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    markDirty();
   }
 
   function scheduleRender() {
@@ -911,7 +926,7 @@
     $("dlg-paypresets").showModal();
   }
 
-  $("dlg-paypresets").addEventListener("close", function () {
+  LATE.push(function () { $("dlg-paypresets").addEventListener("close", function () {
     if (!payEditBuffer) return;
     var changed = false;
     Object.keys(payEditBuffer).forEach(function (method) {
@@ -928,7 +943,7 @@
       save(); renderPaymentPresets();
       notifyTransient(t("toast.paypresets_saved"));
     }
-  });
+  }); });
 
   function recalcTotals() {
     var tt = calcTotals(cur || { items: [], gDisc: 0 });
@@ -982,7 +997,7 @@
        function (i) { it.code = i.value; editCommitted(); });
     mk("i-desc", t("items.desc"), it.desc,
        function (i) { it.desc = i.value; editCommitted(); }, "text",
-       { "data-i18n-ph": "items.desc" });
+       { "data-qv-ph": "items.desc" });
 
     mk("i-qty", t("items.qty"), it.qty, function (i) {
       it.qty = parseNum(i.value); recalcTotals(); editCommitted();
@@ -1030,21 +1045,21 @@
   function buildInstalmentSection() {
     var host = document.createElement("div");
     host.className = "instalments-section";
-    host.id = "instalments-section";
+    host.id = "qv-instalments-section";
     host.innerHTML =
-      '<label data-i18n="inst.title">' + esc(t("inst.title")) + '</label>' +
+      '<label data-qv="inst.title">' + esc(t("inst.title")) + '</label>' +
       '<div class="inst-gen-row">' +
-      '<span data-i18n="inst.count">' + esc(t("inst.count")) + '</span>' +
-      '<input id="inst-count" type="number" min="1" max="24" step="1" value="2">' +
-      '<button type="button" id="inst-generate" data-i18n="inst.generate">' +
+      '<span data-qv="inst.count">' + esc(t("inst.count")) + '</span>' +
+      '<input id="qv-inst-count" type="number" min="1" max="24" step="1" value="2">' +
+      '<button type="button" id="qv-inst-generate" data-qv="inst.generate">' +
         esc(t("inst.generate")) + '</button>' +
       '</div>' +
-      '<div id="inst-list"></div>' +
-      '<div id="inst-sum" class="inst-sum"></div>';
+      '<div id="qv-inst-list"></div>' +
+      '<div id="qv-inst-sum" class="inst-sum"></div>';
 
-    var pay = document.querySelector(".payment-section");
+    var pay = root.querySelector(".payment-section");
     if (pay) pay.parentNode.insertBefore(host, pay);
-    else document.getElementById("tab-create").appendChild(host);
+    else $("tab-create").appendChild(host);
 
     $("inst-generate").addEventListener("click", function () {
       var n = parseInt($("inst-count").value, 10);
@@ -1131,7 +1146,7 @@
 
   function toggleClientDropdown() {
     if (clientDropdownOpen) { closeClientDropdown(); return; }
-    var host = document.querySelector(".offer-client");
+    var host = root.querySelector(".offer-client");
     if (!host) return;
     var pop = $("client-dropdown");
     if (!pop) return;
@@ -1197,7 +1212,7 @@
   }
 
   function clientOutsideHandler(e) {
-    var host = document.querySelector(".offer-client");
+    var host = root.querySelector(".offer-client");
     if (host && !host.contains(e.target)) closeClientDropdown();
   }
 
@@ -1216,12 +1231,12 @@
   }
 
   // #1: edit button κλικ → ανοίγει το dialog με τρέχοντα πελάτη
-  $("client-edit").addEventListener("click", function () {
+  LATE.push(function () { $("client-edit").addEventListener("click", function () {
     closeClientDropdown();
     openClientDialog(cur ? cur.clientId : null);
-  });
+  }); });
 
-  $("client-form").addEventListener("submit", function () {
+  LATE.push(function () { $("client-form").addEventListener("submit", function () {
     var name = $("c-name").value.trim();
     if (!name) return;
 
@@ -1250,21 +1265,21 @@
     save(); scheduleRender();
     renderClientDisplay();
     notifyTransient(t("toast.client_saved"));
-  });
+  }); });
 
-  $("dlg-client").addEventListener("close", function () {
+  LATE.push(function () { $("dlg-client").addEventListener("close", function () {
     editingClientId = null;
     clientSnapshot = null;
-  });
+  }); });
 
   // QT-12 (R14): θεματικά dialogs αντί για native confirm()/prompt().
   // Esc/Άκυρο = τίποτα· στα καταστροφικά το focus ξεκινά στο Άκυρο,
   // ώστε ένα Enter να μη διαγράφει.
   function askDialog(opts) {
-    var stale = document.getElementById("quote-confirm");
+    var stale = $("quote-confirm");
     if (stale) stale.remove();
     var dlg = document.createElement("dialog");
-    dlg.id = "quote-confirm";
+    dlg.id = "qv-quote-confirm";
     dlg.className = "q-confirm";
     var form = document.createElement("form");
     form.method = "dialog";
@@ -1303,7 +1318,7 @@
     });
     dlg.addEventListener("close", function () { dlg.remove(); });
     dlg.appendChild(form);
-    document.body.appendChild(dlg);
+    root.appendChild(dlg);
     dlg.showModal();
     if (inp) { inp.focus(); inp.select(); } else { no.focus(); }
   }
@@ -1955,46 +1970,15 @@
     } catch (e) { return null; }
   }
 
-  // ---------- 12. Sync slice + palette ----------
-  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                  "--accent", "--accent-hover", "--accent-soft", "--accent-ink",
-                  "--panel-bg", "--border", "--shadow"];
-
-  function inheritPalette() {
+  // ---------- 12. Sync slice ----------
+  // Billing registers the slice "quote" at its boot (invoices.js,
+  // OrosQuoteCore); while the view is built it reads and writes it
+  // through sliceGet / sliceSet below. A local edit marks it dirty.
+  function markDirty() {
     try {
-      var pRoot = window.parent.document.documentElement;
-      document.documentElement.setAttribute("data-theme",
-        pRoot.getAttribute("data-theme") || "dark");
-      var cs = window.parent.getComputedStyle(pRoot);
-      PAL_VARS.forEach(function (v) {
-        document.documentElement.style.setProperty(v, cs.getPropertyValue(v).trim());
-      });
-    } catch (e) { /* standalone — fallback palette */ }
-  }
-
-  function watchPalette() {
-    try {
-      new MutationObserver(inheritPalette).observe(
-        window.parent.document.documentElement,
-        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
-      );
+      var api = window.parent && window.parent !== window ? window.parent.orosSync : null;
+      if (api && typeof api.markDirty === "function") api.markDirty();
     } catch (e) { /* standalone */ }
-  }
-
-  function registerSync() {
-    var api = (window.parent && window.parent.orosSync) || window.orosSync;
-
-    window.__orosSyncApi = {
-      _suppress: false,
-      dirty: function () {
-        if (this._suppress) return;
-        if (api && typeof api.markDirty === "function") api.markDirty();
-      }
-    };
-
-    if (!api || typeof api.registerSlice !== "function") return;
-    api.registerSlice("quote", sliceGet, sliceSet,
-                      "oros-quote-data", mergeQuoteStates);
   }
 
   function sliceGet() {
@@ -2034,7 +2018,7 @@
 
   function restoreFocus(f) {
     if (!f) return;
-    var el = document.querySelector(f.sel);
+    var el = root.querySelector(f.sel);
     if (!el) return;
     try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
     if (f.s !== null && f.s !== undefined) {
@@ -2085,22 +2069,22 @@
 
   // ---------- 13. Wiring & boot ----------
   function applyI18n() {
-    var n = document.querySelectorAll("[data-i18n]");
+    var n = root.querySelectorAll("[data-qv]");
     for (var i = 0; i < n.length; i++)
-      n[i].textContent = t(n[i].getAttribute("data-i18n"));
-    var ti = document.querySelectorAll("[data-i18n-title]");
+      n[i].textContent = t(n[i].getAttribute("data-qv"));
+    var ti = root.querySelectorAll("[data-qv-title]");
     for (var j = 0; j < ti.length; j++) {
-      ti[j].setAttribute("title", t(ti[j].getAttribute("data-i18n-title")));
+      ti[j].setAttribute("title", t(ti[j].getAttribute("data-qv-title")));
       ti[j].setAttribute("aria-label", ti[j].getAttribute("title"));
     }
-    var ph = document.querySelectorAll("[data-i18n-ph]");
+    var ph = root.querySelectorAll("[data-qv-ph]");
     for (var k = 0; k < ph.length; k++)
-      ph[k].setAttribute("placeholder", t(ph[k].getAttribute("data-i18n-ph")));
+      ph[k].setAttribute("placeholder", t(ph[k].getAttribute("data-qv-ph")));
   }
 
   function switchTab(tab) {
     activeTab = tab;
-    var tabs = document.querySelectorAll("#quote-tabs .tab");
+    var tabs = root.querySelectorAll("#qv-quote-tabs .tab");
     for (var i = 0; i < tabs.length; i++)
       tabs[i].classList.toggle("active", tabs[i].dataset.tab === tab);
     $("tab-create").classList.toggle("active", tab === "create");
@@ -2252,7 +2236,7 @@
       });
       $("ofile-close").addEventListener("click", function () { $("dlg-ofile").close(); });
     }
-    document.querySelectorAll("#quote-tabs .tab").forEach(function (b) {
+    root.querySelectorAll("#qv-quote-tabs .tab").forEach(function (b) {
       b.addEventListener("click", function () { switchTab(b.dataset.tab); });
     });
 
@@ -2279,7 +2263,7 @@
     });
     document.addEventListener("click", function (e) {
       var pop = $("status-pop");
-      if (pop && !pop.hidden && !e.target.closest("#filters")) pop.hidden = true;
+      if (pop && !pop.hidden && !e.target.closest("#qv-filters")) pop.hidden = true;
     });
 
     // --- Editor: meta fields ---
@@ -2380,23 +2364,12 @@
           tgt.isContentEditable);
         if (editable) return;
         if (document.querySelector("dialog[open]")) return;
+        if (!root || root.offsetParent === null) return;   // the Quotes tab is not in front
         e.preventDefault();
         newDraft();
         switchTab("create");
       }
     });
-
-    // Q-4: Contract B — shell-owned combos (Ctrl+Alt+Shift+*)
-    // προωθονται στο shell σε capture phase (parity με todo/
-    // kanban/writer/notes/prompter). Χωρίς αυτό, τα global
-    // shortcuts πεθαίνουν μέσα από τα quote inputs.
-    document.addEventListener("keydown", function (e) {
-      if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
-      var p = window.parent;
-      if (!(p && p.orosShortcuts &&
-            typeof p.orosShortcuts.handle === "function")) return;
-      if (p.orosShortcuts.handle(e)) e.stopPropagation();
-    }, true);
   }
 
   // ---------- 14. Wave 46: currencies, conversion, accept by link ----------
@@ -2503,7 +2476,8 @@
   // --- Accept by link (OrosQuoteAccept, accept-core.js) ---
   var A = window.OrosQuoteAccept || null;
   function acceptBase() {
-    return location.origin + location.pathname.replace(/[^\/]*$/, "") + "accept.html";
+    // quote/accept.html, next to this file (the page is Billing's).
+    return new URL("../quote/accept.html", location.href).href;
   }
   function syncAcceptUi() {
     var send = $("accept-link"), rec = $("accept-record"), info = $("acc-info");
@@ -2537,10 +2511,10 @@
     return f;
   }
   function panelDialog(id, title) {
-    var stale = document.getElementById(id);
+    var stale = $(id);
     if (stale) stale.remove();
     var dlg = document.createElement("dialog");
-    dlg.id = id;
+    dlg.id = "qv-" + id;
     dlg.className = "q-confirm q-panel";
     var h = document.createElement("h3");
     h.textContent = title;
@@ -2551,7 +2525,7 @@
     var menu = document.createElement("menu");
     dlg.appendChild(menu);
     dlg.addEventListener("close", function () { dlg.remove(); });
-    document.body.appendChild(dlg);
+    root.appendChild(dlg);
     return { dlg: dlg, body: body, menu: menu };
   }
   function mkBtn(label, cls, fn) {
@@ -2757,25 +2731,24 @@
     if (text) run(); else ta.focus();
   }
   // "…/quote/#acc=a1.…" (the client's answer link opened in this
-  // browser: the shell hands the fragment to this frame).
-  function takeAnswerFromUrl() {
-    var h = "";
-    try { h = String(location.hash || ""); } catch (e) {}
-    if (!/^#acc=/.test(h)) return;
-    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
-    if (A && A.readReply(h)) setTimeout(function () { recordAcceptance(h.slice(5)); }, 150);
+  // browser): quote/index.html hands the fragment to Billing, which
+  // passes it here once the view is built.
+  function recordAnswer(h) {
+    h = String(h || "");
+    if (!/^#?acc=/.test(h)) return false;
+    var code = h.replace(/^#?acc=/, "");
+    if (!A || !A.readReply("#acc=" + code)) return false;
+    setTimeout(function () { recordAcceptance(code); }, 150);
+    return true;
   }
 
   function boot() {
-    document.documentElement.setAttribute("lang", LANG);
+    LATE.forEach(function (f) { f(); });
     applyI18n();
     load();
     buildInstalmentSection();
     wire();
     renderPaymentPresets();
-    registerSync();
-    inheritPalette();
-    watchPalette();
 
     if (restoreDraftShelter()) {
       notifyTransient(t("toast.draft_restored"));
@@ -2786,18 +2759,15 @@
     }
     switchTab("create");
     scheduleRender();
-    takeAnswerFromUrl();
   }
-
-  boot();
 
   // Wave 13 — deep-link receiver. Contract: __orosOpenQuote(id)
   // in the shell pushes here for a running app; the sessionStorage
   // staging key 'oros-quote-open' covers cold boots.
-  window.__orosQuoteOpen = function (quoteId) {
+  function quoteOpen(quoteId) {
     if (!quoteId) return;
     try { openQuote(quoteId); switchTab("create"); } catch (e) {}
-  };
+  }
   // BR-Q1 — "Create quote" receiver (Timesheet → Quote). The shell
   // validated the payload ({items:[{d, q, p}], cur?, client?, notes?});
   // it becomes a NEW unsaved draft (shelter only, nothing synced) that
@@ -2805,7 +2775,7 @@
   // after a confirm. A client is matched by name; an unknown one opens
   // the New client dialog with the name filled in (saved only by the
   // user).
-  window.__orosQuoteNew = function (p) {
+  function quoteNew(p) {
     if (!p || !Array.isArray(p.items) || !p.items.length) return;
     var hasContent = curIsDraft && cur && (cur.clientId || (cur.notes || "").trim() ||
       (cur.items || []).some(function (it) { return (it.desc || "").trim() || it.price; }));
@@ -2815,7 +2785,7 @@
       return;
     }
     applyQuotePrefill(p);
-  };
+  }
   function applyQuotePrefill(p) {
     newDraft();
     if (curOk(p.cur)) cur.currency = p.cur;
@@ -2848,41 +2818,347 @@
     }
   }
 
-  // Universal deep link (shell __orosOpenAt / __orosTakeTarget):
+  // Deep link, from Billing's receiver (the shell's __orosOpenAt with
+  // the old id "quote" goes to Billing { tab: "quotes", ... }):
   //   { openFile: { token } }  "Open with" an .orosquote file
   //                            (fileopen.js), the File taken once with
   //                            window.parent.__orosTakeFile(token)
   //   "<quote id>" | { quote } opens that quote
+  //   { quoteNew: {...} }      BR-Q1 prefill (see quoteNew)
+  //   { acc: "a1.…" }          a client's answer link
   function openTarget(tg) {
-    if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
+    if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return true; }
+    if (tg && tg.quoteNew && typeof tg.quoteNew === "object") { quoteNew(tg.quoteNew); return true; }
+    if (tg && typeof tg.acc === "string") return recordAnswer(tg.acc);
     var id = typeof tg === "string" ? tg : (tg && typeof tg.quote === "string" ? tg.quote : "");
-    if (id && quoteById(id)) window.__orosQuoteOpen(id);
+    if (id && quoteById(id)) { quoteOpen(id); return true; }
+    return false;
   }
-  window.__orosOpenAt = openTarget;
-  try {
-    if (window.parent && window.parent !== window &&
-        typeof window.parent.__orosTakeTarget === "function") {
-      var pendingTarget = window.parent.__orosTakeTarget("quote");
-      if (pendingTarget) openTarget(pendingTarget);
-    }
-  } catch (e) {}
 
-  setTimeout(function () {
+  var TEMPLATE = [
+    "  <!-- Quote bar: tabs + search + new client + export -->",
+    "  <header id=\"qv-quotebar\">",
+    "    <nav id=\"qv-quote-tabs\">",
+    "      <button type=\"button\" class=\"tab active\" data-tab=\"create\"",
+    "              data-qv=\"tab.create\">Create</button>",
+    "      <button type=\"button\" class=\"tab\" data-tab=\"list\"",
+    "              data-qv=\"tab.list\">Quotes</button>",
+    "    </nav>",
+    "",
+    "    <div id=\"qv-search-wrap\" hidden>",
+    "      <input id=\"qv-search\" type=\"search\" autocomplete=\"off\" spellcheck=\"false\"",
+    "             placeholder=\"Search…\" data-qv-ph=\"search.ph\">",
+    "      <button type=\"button\" id=\"qv-search-clear\" hidden aria-label=\"Clear search\"",
+    "              data-qv-title=\"search.clear\" title=\"Clear\">",
+    "        <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg>",
+    "      </button>",
+    "    </div>",
+    "",
+    "    <div id=\"qv-filters\" hidden>",
+    "      <button type=\"button\" id=\"qv-status-filter\" aria-label=\"Filter by status\"",
+    "              data-qv-title=\"filter.status\" title=\"Filter by status\">",
+    "        <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"><polygon points=\"22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3\"/></svg>",
+    "        <span id=\"qv-filter-count\" hidden>0</span>",
+    "      </button>",
+    "      <div id=\"qv-status-pop\" hidden></div>",
+    "    </div>",
+    "",
+    "    <button id=\"qv-client-new\" type=\"button\" aria-label=\"New client\"",
+    "            data-qv-title=\"client.new\" title=\"New client\" hidden>",
+    "      <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><line x1=\"19\" y1=\"8\" x2=\"19\" y2=\"14\"/><line x1=\"22\" y1=\"11\" x2=\"16\" y2=\"11\"/></svg>",
+    "    </button>",
+    "",
+    "    <button id=\"qv-export-btn\" type=\"button\" aria-label=\"Export PDF\"",
+    "            data-qv-title=\"actions.export_pdf\" title=\"Export PDF\" hidden>",
+    "      <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/></svg>",
+    "    </button>",
+    "",
+    "    <!-- .orosquote: save / open every quote as one orOS file (../recordpkg.js, package.js) -->",
+    "    <button id=\"qv-ofile-btn\" type=\"button\" aria-label=\"Save and open\"",
+    "            data-qv-title=\"file.title\" title=\"Save and open\" hidden>",
+    "      <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z\"/></svg>",
+    "    </button>",
+    "",
+    "    <button id=\"qv-send-btn\" type=\"button\" aria-label=\"Send quote\"",
+    "            data-qv-title=\"actions.send\" title=\"Send via email\" hidden>",
+    "      <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z\"/><polyline points=\"22,6 12,13 2,6\"/></svg>",
+    "    </button>",
+    "  </header>",
+    "",
+    "  <!-- CREATE TAB: Full offer editor -->",
+    "  <section id=\"qv-tab-create\" class=\"tab-pane active\">",
+    "    <div id=\"qv-offer-editor\">",
+    "      <!-- Offer header -->",
+    "      <div class=\"offer-meta\">",
+    "        <div class=\"meta-row\">",
+    "          <label data-qv=\"offer.number\">Quote #</label>",
+    "          <input id=\"qv-q-number\" type=\"text\" readonly>",
+    "          <button id=\"qv-regenerate-num\" type=\"button\" title=\"Regenerate number\"",
+    "                  data-qv-title=\"offer.regenerate\">",
+    "            <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"23 4 23 10 17 10\"/><path d=\"M20.49 15a9 9 0 1 1-2.12-9.36L23 10\"/></svg>",
+    "          </button>",
+    "        </div>",
+    "",
+    "        <div class=\"meta-row\">",
+    "          <label data-qv=\"offer.date\">Date</label>",
+    "          <input id=\"qv-q-date\" type=\"date\">",
+    "          <label data-qv=\"offer.due_date\">Due</label>",
+    "          <input id=\"qv-q-due\" type=\"date\">",
+    "        </div>",
+    "",
+    "        <div class=\"meta-row status-row\">",
+    "          <label data-qv=\"offer.status\">Status</label>",
+    "          <select id=\"qv-q-status\">",
+    "            <option value=\"draft\" data-qv=\"status.draft\">Draft</option>",
+    "            <option value=\"sent\" data-qv=\"status.sent\">Sent</option>",
+    "            <option value=\"accepted\" data-qv=\"status.accepted\">Accepted</option>",
+    "            <option value=\"rejected\" data-qv=\"status.rejected\">Rejected</option>",
+    "            <option value=\"expired\" data-qv=\"status.expired\">Expired</option>",
+    "          </select>",
+    "        </div>",
+    "",
+    "        <div class=\"meta-row currency-row\">",
+    "          <label data-qv=\"offer.currency\">Currency</label>",
+    "          <select id=\"qv-q-currency\">",
+    "            <option value=\"EUR\">EUR</option>",
+    "            <option value=\"USD\">USD</option>",
+    "          </select>",
+    "        </div>",
+    "        <p id=\"qv-acc-info\" class=\"acc-info\" hidden></p>",
+    "      </div>",
+    "",
+    "      <!-- Client selection -->",
+    "      <div class=\"offer-client\">",
+    "        <label data-qv=\"client.select\">Select client</label>",
+    "        <div id=\"qv-client-selector\" class=\"dropdown-trigger\" role=\"button\" tabindex=\"0\">",
+    "          <span id=\"qv-client-name-display\">No client</span>",
+    "          <svg width=\"10\" height=\"10\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M6 9l6 6 6-6\"/></svg>",
+    "        </div>",
+    "        <button id=\"qv-client-edit\" type=\"button\" title=\"Edit client\" hidden",
+    "                data-qv-title=\"client.edit_btn\">",
+    "          <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg>",
+    "        </button>",
+    "        <button id=\"qv-client-select-new\" type=\"button\" title=\"New client\"",
+    "                data-qv-title=\"client.new\">",
+    "          <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg>",
+    "        </button>",
+    "        <div id=\"qv-client-dropdown\" class=\"dropdown-pop\" hidden></div>",
+    "      </div>",
+    "",
+    "      <!-- Line items -->",
+    "      <div class=\"items-section\">",
+    "        <div class=\"section-header\">",
+    "          <h3 data-qv=\"items.title\">Line Items</h3>",
+    "          <button id=\"qv-item-add\" type=\"button\" title=\"Add item\"",
+    "                  data-qv-title=\"items.add\">",
+    "            <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"><path d=\"M12 5v14M5 12h14\"/></svg>",
+    "          </button>",
+    "        </div>",
+    "",
+    "        <div class=\"items-head\" id=\"qv-items-head\">",
+    "          <span data-qv=\"items.code\">Code/SKU</span>",
+    "          <span data-qv=\"items.desc\">Description</span>",
+    "          <span data-qv=\"items.qty\">Qty</span>",
+    "          <span data-qv=\"items.unit_price\">Unit Price</span>",
+    "          <span data-qv=\"items.disc\">Disc %</span>",
+    "          <span data-qv=\"items.vat\">VAT %</span>",
+    "          <span></span>",
+    "        </div>",
+    "",
+    "        <div id=\"qv-items-container\"></div>",
+    "",
+    "        <div class=\"totals-section\">",
+    "          <div class=\"total-row\">",
+    "            <span data-qv=\"totals.subtotal\">Subtotal</span>",
+    "            <span id=\"qv-subtotal-val\">0.00</span>",
+    "          </div>",
+    "          <div class=\"total-row discount-row\">",
+    "            <label data-qv=\"totals.discount\">Discount (%)</label>",
+    "            <input id=\"qv-global-discount\" type=\"number\" min=\"0\" max=\"100\" step=\"0.1\" value=\"0\">",
+    "          </div>",
+    "          <div class=\"total-row vat-row\">",
+    "            <label data-qv=\"totals.vat_bulk\">VAT (%)</label>",
+    "            <input id=\"qv-global-vat\" type=\"number\" min=\"0\" max=\"100\" step=\"0.1\" value=\"24\">",
+    "          </div>",
+    "          <div class=\"total-row\">",
+    "            <span data-qv=\"totals.vat\">VAT</span>",
+    "            <span id=\"qv-vat-val\">0.00</span>",
+    "          </div>",
+    "          <div class=\"total-row grand\">",
+    "            <span data-qv=\"totals.total\">Total</span>",
+    "            <span id=\"qv-grand-total-val\">0.00</span>",
+    "          </div>",
+    "          <div class=\"total-row conv-row\" id=\"qv-conv-row\" hidden>",
+    "            <select id=\"qv-conv-to\" aria-label=\"Show the total in\" data-qv-title=\"conv.label\"></select>",
+    "            <span id=\"qv-conv-val\" aria-live=\"polite\"></span>",
+    "          </div>",
+    "        </div>",
+    "      </div>",
+    "",
+    "      <!-- Payment terms -->",
+    "      <div class=\"payment-section\">",
+    "        <label data-qv=\"payment.title\">Payment Terms</label>",
+    "        <div class=\"presets\">",
+    "          <div id=\"qv-payment-presets\" class=\"preset-btns\"></div>",
+    "          <button id=\"qv-paypresets-edit\" type=\"button\" class=\"presets-edit\"",
+    "                  title=\"Edit payment presets\" data-qv-title=\"paypresets.edit\">",
+    "            <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z\"/></svg>",
+    "          </button>",
+    "        </div>",
+    "        <small class=\"presets-hint\" data-qv=\"paypresets.hint\"></small>",
+    "        <textarea id=\"qv-q-payment\" rows=\"3\" placeholder=\"e.g., 50% upfront, 50% on delivery…\"",
+    "                  data-qv-ph=\"payment.ph\"></textarea>",
+    "      </div>",
+    "",
+    "      <!-- Notes -->",
+    "      <div class=\"notes-section\">",
+    "        <label data-qv=\"offer.notes\">Notes</label>",
+    "        <textarea id=\"qv-q-notes\" rows=\"4\" placeholder=\"Additional terms, conditions…\"",
+    "                  data-qv-ph=\"notes.ph\"></textarea>",
+    "      </div>",
+    "",
+    "      <!-- Actions -->",
+    "      <div class=\"offer-actions\">",
+    "        <button id=\"qv-save-quote\" type=\"button\" class=\"primary\"",
+    "                data-qv=\"actions.save\">Save</button>",
+    "        <button id=\"qv-save-template\" type=\"button\" class=\"ghost\"",
+    "                data-qv=\"actions.save_template\">Save as Template</button>",
+    "        <button id=\"qv-duplicate-quote\" type=\"button\" class=\"ghost\"",
+    "                data-qv=\"actions.duplicate\">Duplicate</button>",
+    "        <button id=\"qv-invoice-quote\" type=\"button\" class=\"ghost\" hidden",
+    "                data-qv=\"actions.invoice\">Make invoice</button>",
+    "        <button id=\"qv-accept-link\" type=\"button\" class=\"ghost\" hidden",
+    "                data-qv=\"acc.send\">Send for acceptance</button>",
+    "        <button id=\"qv-accept-record\" type=\"button\" class=\"ghost\" hidden",
+    "                data-qv=\"acc.record\">Record acceptance</button>",
+    "        <button id=\"qv-open-templates\" type=\"button\" class=\"ghost\"",
+    "                data-qv=\"templates.manage\">Templates</button>",
+    "        <button id=\"qv-delete-quote\" type=\"button\" class=\"danger\"",
+    "                data-qv=\"actions.delete\">Delete</button>",
+    "      </div>",
+    "    </div>",
+    "  </section>",
+    "",
+    "  <!-- LIST TAB: Quotes table/list with filters -->",
+    "  <section id=\"qv-tab-list\" class=\"tab-pane\">",
+    "    <div id=\"qv-quote-list-container\"></div>",
+    "    <div id=\"qv-list-empty\" hidden>",
+    "      <span data-qv=\"list.empty_title\">No quotes yet</span>",
+    "      <small data-qv=\"list.empty_hint\">Create your first quote in the Create tab.</small>",
+    "    </div>",
+    "  </section>",
+    "",
+    "  <!-- CLIENT DIALOG -->",
+    "  <dialog id=\"qv-dlg-client\">",
+    "    <form method=\"dialog\" id=\"qv-client-form\" autocomplete=\"off\">",
+    "      <h3 data-qv=\"client.edit\">Client Details</h3>",
+    "",
+    "      <label data-qv=\"client.name\">Name</label>",
+    "      <input id=\"qv-c-name\" type=\"text\" required>",
+    "",
+    "      <label data-qv=\"client.email\">Email</label>",
+    "      <input id=\"qv-c-email\" type=\"email\">",
+    "",
+    "      <label data-qv=\"client.phone\">Phone</label>",
+    "      <input id=\"qv-c-phone\" type=\"tel\">",
+    "",
+    "      <label data-qv=\"client.address\">Address</label>",
+    "      <textarea id=\"qv-c-address\" rows=\"3\"></textarea>",
+    "",
+    "      <label data-qv=\"client.tax_id\">Tax ID / VAT</label>",
+    "      <input id=\"qv-c-taxid\" type=\"text\">",
+    "",
+    "      <menu>",
+    "        <button id=\"qv-client-delete\" type=\"button\" class=\"danger\"",
+    "                data-qv=\"client.delete\">Delete</button>",
+    "        <span class=\"spacer\"></span>",
+    "        <button type=\"submit\" data-qv=\"save\">Save</button>",
+    "      </menu>",
+    "    </form>",
+    "  </dialog>",
+    "",
+    "  <!-- TEMPLATE LIBRARY DIALOG -->",
+    "  <dialog id=\"qv-dlg-templates\">",
+    "    <h3 data-qv=\"templates.manage\">Template Library</h3>",
+    "    <div id=\"qv-template-grid\"></div>",
+    "    <menu>",
+    "      <span class=\"spacer\"></span>",
+    "      <button type=\"button\" id=\"qv-templates-close\" data-qv=\"close\">Close</button>",
+    "    </menu>",
+    "  </dialog>",
+    "",
+    "  <!-- PAYMENT PRESETS DIALOG (synced, per-user editable) -->",
+    "  <dialog id=\"qv-dlg-paypresets\">",
+    "    <h3 data-qv=\"paypresets.title\">Payment Presets</h3>",
+    "    <div id=\"qv-paypresets-list\"></div>",
+    "    <menu>",
+    "      <span class=\"spacer\"></span>",
+    "      <button type=\"button\" id=\"qv-paypresets-close\" data-qv=\"close\">Close</button>",
+    "    </menu>",
+    "  </dialog>",
+    "",
+    "  <!-- .orosquote FILE DIALOG -->",
+    "  <dialog id=\"qv-dlg-ofile\">",
+    "    <h3 data-qv=\"file.title\">Save and open</h3>",
+    "    <p class=\"ofile-hint\" data-qv=\"file.hint\"></p>",
+    "    <div class=\"ofile-btns\">",
+    "      <button type=\"button\" id=\"qv-of-save\" data-qv=\"file.save\">orOS file (.orosquote)</button>",
+    "      <button type=\"button\" id=\"qv-of-open\" data-qv=\"file.open\">Open orOS file…</button>",
+    "      <button type=\"button\" id=\"qv-of-copy\" data-qv=\"file.copy\">Open as copy…</button>",
+    "      <button type=\"button\" id=\"qv-of-folder\" data-qv=\"file.folder\">Unzipped orOS folder…</button>",
+    "    </div>",
+    "    <p class=\"ofile-hint\" data-qv=\"file.copyHint\"></p>",
+    "    <menu>",
+    "      <span class=\"spacer\"></span>",
+    "      <button type=\"button\" id=\"qv-ofile-close\" data-qv=\"close\">Close</button>",
+    "    </menu>",
+    "  </dialog>",
+    "",
+    "  <!-- TOAST -->",
+    "  <div id=\"qv-toast\" role=\"status\"></div>",
+    "",
+    "  "
+  ].join("\n");
+
+  // Build the view once in host (Billing's Quotes tab). The device-local
+  // one-shot keys of BR-Q1 and the Wave 13 deep link (sessionStorage
+  // "oros-quote-new" / "oros-quote-open", written by older shells) are
+  // taken once here.
+  function mount(host, o) {
+    opts = o || {};
+    if (root) {
+      if (root.parentNode !== host) host.appendChild(root);
+      scheduleRender();
+      return;
+    }
+    root = document.createElement("div");
+    root.className = "qv";
+    root.innerHTML = TEMPLATE;                         // static markup
+    host.appendChild(root);
+    boot();
     try {
       var stagedNew = sessionStorage.getItem("oros-quote-new");
       if (stagedNew) {
         sessionStorage.removeItem("oros-quote-new");
         var pn = null;
         try { pn = JSON.parse(stagedNew); } catch (e2) { pn = null; }
-        if (pn) window.__orosQuoteNew(pn);
+        if (pn) quoteNew(pn);
       }
     } catch (e) {}
     try {
       var staged = sessionStorage.getItem("oros-quote-open");
       if (staged) {
         sessionStorage.removeItem("oros-quote-open");
-        window.__orosQuoteOpen(staged);
+        quoteOpen(staged);
       }
     } catch (e) {}
-  }, 100);
+  }
+
+  window.QuoteView = {
+    mount: mount,
+    openAt: function (tg) { return root ? openTarget(tg) : false; },
+    sliceGet: function () { return root ? sliceGet() : null; },
+    sliceSet: function (d) { if (root) sliceSet(d); },
+    flush: function () { if (root) writeShelterNow(); }
+  };
 })();

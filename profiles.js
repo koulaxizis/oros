@@ -34,7 +34,7 @@
   var PROFILES = {
     home: ["budget", "meals", "chores", "water", "habits", "health", "plants", "petcare", "garage",
            "travel", "split", "radio", "music", "podcasts", "maps", "feeds"],
-    work: ["writer", "spreadsheet", "slides", "kanban", "mail", "timesheet", "invoices", "quote", "crm",
+    work: ["writer", "spreadsheet", "slides", "kanban", "mail", "timesheet", "invoices", "crm",
            "stock", "newsletter", "certificates", "converter", "storage"],
     school: ["writer", "spreadsheet", "slides", "wiki", "mindmap", "texttools", "library",
              "museum", "maps", "habits", "pubdomain", "qr"],

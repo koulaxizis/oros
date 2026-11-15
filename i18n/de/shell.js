@@ -71,7 +71,7 @@ orosPack("de", "shell", {
  "app.health": "Gesundheit",
  "app.help": "Hilfe",
  "app.hexagon": "Hexagon-Puzzle",
- "app.invoices": "Rechnungen",
+ "app.invoices": "Abrechnung",
  "app.jigsaw": "Puzzle",
  "app.kanban": "Kanban",
  "app.labels": "Etiketten",

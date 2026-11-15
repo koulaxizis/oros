@@ -59,8 +59,9 @@
 
   var STRINGS = {
     en: {
-      "app": "Invoices", "settings": "Settings", "back": "Back", "new": "New",
+      "app": "Billing", "settings": "Settings", "back": "Back", "new": "New",
       "ek.go": "New invoice",
+      "tab.quotes": "Quotes", "qt.loading": "Opening Quotes…", "qt.loadFail": "Quotes could not open. Check the connection and try again.",
       "tab.docs": "Invoices", "tab.clients": "Clients", "tab.dash": "Dashboard", "tab.bills": "Received",
       "bl.search": "Search received invoices", "bl.new": "Received invoice", "bl.title": "Received invoice",
       "bl.empty": "No received invoices yet. Record the invoices your suppliers send you: you see what you owe, to whom and by when.",
@@ -219,8 +220,9 @@
       "pdf.draft": "DRAFT", "live.saved": "Saved", "mail.payOnline": "Pay online"
     },
     el: {
-      "app": "Τιμολόγια", "settings": "Ρυθμίσεις", "back": "Πίσω", "new": "Νέο",
+      "app": "Τιμολόγηση", "settings": "Ρυθμίσεις", "back": "Πίσω", "new": "Νέο",
       "ek.go": "Νέο τιμολόγιο",
+      "tab.quotes": "Προσφορές", "qt.loading": "Ανοίγουν οι Προσφορές…", "qt.loadFail": "Οι Προσφορές δεν άνοιξαν. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "tab.docs": "Παραστατικά", "tab.clients": "Πελάτες", "tab.dash": "Επισκόπηση", "tab.bills": "Λαμβανόμενα",
       "bl.search": "Αναζήτηση λαμβανόμενων", "bl.new": "Λαμβανόμενο", "bl.title": "Λαμβανόμενο τιμολόγιο",
       "bl.empty": "Κανένα λαμβανόμενο τιμολόγιο ακόμη. Κατάγραψε τα τιμολόγια που σου στέλνουν οι προμηθευτές: βλέπεις τι χρωστάς, σε ποιον και ως πότε.",
@@ -468,6 +470,7 @@
     plus:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     doc:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8z"/><path d="M14 2.5V8h5.5M8.5 13h7M8.5 17h5"/></svg>',
     users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
+    quote: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8z"/><path d="M14 2.5V8h5.5"/><path d="m8.5 14.5 2 2 4-4.5"/></svg>',
     inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></svg>',
     chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
     x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -508,7 +511,8 @@
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
-  var TABS = ["docs", "bills", "clients", "dash"];
+  // "quotes": the Quote app folded in (app merge 7, quote/view.js).
+  var TABS = ["quotes", "docs", "bills", "clients", "dash"];
   var RANGES = ["thisMonth", "lastMonth", "thisQuarter", "thisYear", "lastYear", "custom"];
   function loadPrefs() {
     var v = null;
@@ -652,6 +656,13 @@
     ["docs", "bills", "clients", "dash", "edit", "view", "set"].forEach(function (k) {
       $("v-" + k).hidden = k !== v;
     });
+    var qt = v === "quotes";
+    $("main").hidden = qt;
+    $("v-quotes").hidden = !qt;
+    $("new-btn").hidden = qt;
+    $("set-btn").hidden = qt;
+    if (qt) showQuotes(null);
+    else if (window.QuoteView) window.QuoteView.flush();
     TABS.forEach(function (k) {
       var b = $("tab-" + k), on = k === v || (k === "docs" && (v === "edit" || v === "view"));
       b.classList.toggle("on", on);
@@ -4140,6 +4151,7 @@
       var tg = e.target, tag = tg && tg.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (document.querySelector("dialog[open]")) return;
+      if (view === "quotes") return;                 // the Quotes tab has its own keys
       if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === "z" || e.key === "Z")) {
         if (undoFn) { e.preventDefault(); runUndo(); }
         return;
@@ -4217,7 +4229,7 @@
       n.textContent = t(n.getAttribute("data-i18n"));
     });
     document.title = t("app") + " · orOS";
-    var icons = { docs: UI.doc, bills: UI.inbox, clients: UI.users, dash: UI.chart };
+    var icons = { quotes: UI.quote, docs: UI.doc, bills: UI.inbox, clients: UI.users, dash: UI.chart };
     TABS.forEach(function (k) {
       var b = $("tab-" + k);
       b.innerHTML = icons[k] + "<span></span>";
@@ -4353,16 +4365,22 @@
     // EMPTY-1: the friendly empty screen (../emptykit.js)
     if (window.orosEmpty) window.orosEmpty.dress($("docs-empty"), { app: "invoices", action: { label: t("ek.go"), run: function () { $("new-btn").click(); } } });
     registerSync();
+    registerQuoteSlice();
     inheritPalette();
     watchPalette();
     runRecurring();
     showView(tab);
     takeShelter();
+    takeQuoteAnswer();
   }
 
   boot();
 
   // Deep links (shell __orosOpenAt / __orosTakeTarget):
+  //   { tab: "quotes", quote? | quoteNew? | openFile? | acc? } the
+  //                           Quotes tab (app merge 7: the old id "quote"
+  //                           is an alias with { tab: "quotes" }), and on
+  //                           to QuoteView.openAt (quote/view.js)
   //   { newDoc: "inv"|"rcpt", notes? } a blank invoice / receipt (single app)
   //   { new: {...} }          BR-INV-NEW prefill (CRM Lite, Quote, Timesheet,
   //                           Assistant): a new invoice draft, saved only
@@ -4380,6 +4398,7 @@
   //                           orOS Bridge watches, read like Import PDF
   //                           (its preview; nothing is saved before Import)
   function openTarget(tg) {
+    if (tg && typeof tg === "object" && tg.tab === "quotes") { openQuotes(tg); return; }
     if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     if (tg && tg.importPdf && typeof tg.importPdf.token === "string") {
       var pf = null;
@@ -4441,6 +4460,110 @@
       setTab("docs");
     }
   }
+  // ---------- Quotes tab (app merge 7) ----------
+  // The Quote app folded into Billing (APP-ALIAS, old id "quote" →
+  // { tab: "quotes" }). Its code stays in quote/: core.js and
+  // accept-core.js load with this page (the slice), the view
+  // (view.js, view.css, the "quote" pack and what it uses) the first
+  // time the tab opens. Its data (oros-quote-data) is untouched.
+  var QT_JS = ["../vendor/jspdf.umd.min.js", "../units/core.js", "../quote/accept-core.js", "../quote/package.js", "../quote/view.js"];
+  var qtLoad = null, qtPending = [];
+  function qtAsset(src) {
+    var v = window.orosI18n && window.orosI18n.ver;
+    return src + (v ? "?v=" + encodeURIComponent(v) : "");
+  }
+  function qtScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (src.indexOf("jspdf") >= 0 && window.jspdf && window.jspdf.jsPDF) { resolve(); return; }
+      if (src.indexOf("units/core") >= 0 && window.UnitsCore) { resolve(); return; }
+      var sc = document.createElement("script");
+      sc.src = qtAsset(src);
+      sc.onload = resolve; sc.onerror = reject;
+      document.head.appendChild(sc);
+    });
+  }
+  function qtPack(app) {
+    return new Promise(function (resolve) {
+      if (window.orosI18n && typeof window.orosI18n.ensure === "function") window.orosI18n.ensure(LANG, app, resolve);
+      else resolve();
+    });
+  }
+  function loadQuotes() {
+    if (window.QuoteView) return Promise.resolve();
+    if (qtLoad) return qtLoad;
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = qtAsset("../quote/view.css");
+    document.head.appendChild(css);
+    qtLoad = qtPack("quote").then(function () {
+      return QT_JS.reduce(function (p, src) { return p.then(function () { return qtScript(src); }); }, Promise.resolve());
+    });
+    qtLoad.catch(function () { qtLoad = null; });
+    return qtLoad;
+  }
+  function showQuotes(tg) {
+    var host = $("v-quotes");
+    if (tg) qtPending.push(tg);
+    if (window.QuoteView) {
+      window.QuoteView.mount(host);
+      var list = qtPending; qtPending = [];
+      list.forEach(function (x) { window.QuoteView.openAt(x); });
+      return;
+    }
+    var w = host.querySelector(".qt-wait");
+    if (!w) {
+      w = el("p", "qt-wait", t("qt.loading"));
+      w.setAttribute("role", "status");
+      host.appendChild(w);
+    } else w.textContent = t("qt.loading");
+    loadQuotes().then(function () {
+      var w2 = host.querySelector(".qt-wait");
+      if (w2) w2.parentNode.removeChild(w2);
+      if (view === "quotes") showQuotes(null);
+    }, function () {
+      var w3 = host.querySelector(".qt-wait");
+      if (w3) w3.textContent = t("qt.loadFail");
+    });
+  }
+  // A deep link for the Quotes tab: what it names goes to the view.
+  function openQuotes(tg) {
+    var rest = {}, k, any = false;
+    for (k in tg) if (k !== "tab" && Object.prototype.hasOwnProperty.call(tg, k)) { rest[k] = tg[k]; any = true; }
+    if (view === "edit" && ed && ed.dirty) {
+      closeEditorThen(function () { setTab("quotes"); if (any) showQuotes(rest); });
+      return;
+    }
+    if (view === "edit") { ed = null; shelter(); }
+    if (any) qtPending.push(rest);
+    setTab("quotes");
+  }
+  // A client's answer link (quote/#acc=…) comes here as #qacc=…
+  // (quote/index.html forwards it).
+  function takeQuoteAnswer() {
+    var h = "";
+    try { h = String(location.hash || ""); } catch (e) {}
+    if (!/^#qacc=/.test(h)) return;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    openQuotes({ tab: "quotes", acc: h.slice(6, 40000) });
+  }
+  // The slice "quote" (oros-quote-data), the Quote app's own,
+  // unchanged. Before the view is built the stored copy is the slice.
+  function registerQuoteSlice() {
+    var Q = window.OrosQuoteCore, api = syncApi();
+    if (!Q || !api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("quote", function () {
+      var v = window.QuoteView && window.QuoteView.sliceGet();
+      if (v) return v;
+      var d = null;
+      try { d = JSON.parse(localStorage.getItem("oros-quote-data") || "null"); } catch (e) { d = null; }
+      return d && typeof d === "object" ? Q.canonState(Q.merge(d, null)) : null;
+    }, function (incoming) {
+      if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.quotes)) return;
+      if (window.QuoteView && window.QuoteView.sliceGet()) { window.QuoteView.sliceSet(incoming); return; }
+      try { localStorage.setItem("oros-quote-data", JSON.stringify(Q.canonState(incoming))); } catch (e) {}
+    }, "oros-quote-data", Q.merge);
+  }
+
   function prefillNew(raw) {
     var p = C.normPrefill(raw);
     if (!p) return;

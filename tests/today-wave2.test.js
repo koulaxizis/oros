@@ -18,11 +18,12 @@ const A = req("today/agg.js");
 const OCC = globalThis.OrosCalOccur = req("calendar/occur.js");
 const TC = globalThis.OrosTodoCore = req("todo/core.js");
 const QC = globalThis.OrosQuoteCore = req("quote/core.js");
+globalThis.OrosInvoicesCore = req("invoices/core.js");
 const KC = globalThis.OrosKanbanCore = req("kanban/core.js");
 const CD = globalThis.OrosContactDates = req("contacts/dates.js");
 globalThis.OrosNamedays = req("calendar/namedays.js");
 const P = {};
-["todo", "quote", "kanban", "contacts", "calendar"].forEach((id) => { P[id] = req(id + "/today.js"); });
+["todo", "invoices", "kanban", "contacts", "calendar"].forEach((id) => { P[id] = req(id + "/today.js"); });
 
 function ctx(store, today, lang) {
   return {
@@ -239,16 +240,17 @@ test("todo provider: late, today and next days; Done carries list and task", () 
   assert.deepEqual(P.todo.collect(ctx({}, "2026-10-11")), []);
 });
 
-test("quote provider: open follow-ups with number and client", () => {
+// app merge 7: the quotes are Billing's Quotes tab, so their rows come
+// from invoices/today.js and open the tab (quote/today.js is gone)
+test("quote rows (Billing provider): open follow-ups with number and client", () => {
   const store = { "oros-quote-data": { clients: [{ id: "c1", name: "Acme" }], quotes: [
     { id: "q1", num: "OFF-2026-001", clientId: "c1", status: "sent", dueDate: "2026-10-09" },
     { id: "q2", num: "OFF-2026-002", status: "draft", dueDate: "2026-10-11" },
     { id: "q3", num: "OFF-2026-003", status: "accepted", dueDate: "2026-10-30" }] } };
-  const rows = P.quote.collect(ctx(store, "2026-10-11"));
+  const rows = P.invoices.collect(ctx(store, "2026-10-11"));
   assert.deepEqual(rows.map((r) => [r.title, r.due]), [["OFF-2026-001 · Acme", "2026-10-09"]]);
-  let opened = null;
-  P.quote.open({ quote: "q1" }, { __orosOpenQuote: (id) => { opened = id; } });
-  assert.equal(opened, "q1");
+  assert.equal(rows[0].id, "q-q1");
+  assert.deepEqual(rows[0].target, { tab: "quotes", quote: "q1" });
 });
 
 test("kanban provider: due cards outside the Done column, archived boards out", () => {
