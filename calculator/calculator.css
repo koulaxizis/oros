@@ -473,16 +473,55 @@ html, body {
   .calc-modes button { font-size: 12.5px; padding: 4px 2px; }
 }
 
+/* Mode menu (merge 5): six modes do not fit as tabs on a phone */
+.calc-mode-menu { display: none; }
+.calc-mode-menu select {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+.calc-mode-menu select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.calc-mode-menu option { background: var(--panel-bg); color: var(--text); }
+@media (max-width: 480px) {
+  .calc-modes { display: none; }
+  .calc-mode-menu {
+    display: block;
+    flex-shrink: 0;
+    padding: 6px 8px;
+    background: var(--bar-bg);
+    border-bottom: 1px solid var(--border);
+  }
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.conv-pane { flex: 1 1 auto; }
+.conv-wait { padding: 16px; color: var(--text-dim); font-size: 13px; }
+
 /* Which panes show in which mode */
 #calc-root:not([data-mode="std"]) .std-only { display: none; }
 #calc-root[data-mode="graph"] .calc-history,
 #calc-root[data-mode="prog"] .calc-history,
-#calc-root[data-mode="fin"] .calc-history { display: none; }
+#calc-root[data-mode="fin"] .calc-history,
+#calc-root[data-mode="conv"] .calc-history { display: none; }
 #calc-root[data-mode="std"] .calc-main,
 #calc-root[data-mode="sci"] .calc-main { overflow-y: auto; }
 #calc-root[data-mode="graph"] .calc-main,
 #calc-root[data-mode="prog"] .calc-main,
-#calc-root[data-mode="fin"] .calc-main { overflow-y: auto; }
+#calc-root[data-mode="fin"] .calc-main,
+#calc-root[data-mode="conv"] .calc-main { overflow-y: auto; }
 
 .mode-pane {
   display: flex;

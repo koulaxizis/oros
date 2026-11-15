@@ -89,6 +89,7 @@
     files: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M12 11v6"/></svg>',
     menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
     users: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 5.5 4.8"/></svg>',
+    sensitive: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9.5 12l2 2 3-3.5"/></svg>',
     lock: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1" fill="currentColor"/></svg>',
     services: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
     chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>',
@@ -1137,6 +1138,64 @@
         pers.forEach(function (a) { plist.appendChild(boxOf(a)); });
         c.appendChild(plist);
       }
+      // GATE-FILES (F1): the folders of the orOS disk Claude may use with
+      // the files_* tools (Files must be on above; «May change» for writes).
+      if (typeof G.folders === "function" && typeof G.setFolders === "function") {
+        var fl = G.folders() || [];
+        var fb = el("div", "gt-folders");
+        fb.appendChild(el("div", "pair-label", t("gt.fold.title")));
+        fb.appendChild(el("div", "hint", t("gt.fold.hint")));
+        if (!fl.length) fb.appendChild(el("div", "hint", t("gt.fold.none")));
+        fl.forEach(function (f) {
+          var ln = el("div", "gt-chg-row");
+          ln.appendChild(el("span", "", f.replace(/^\/internal\/?/, "") || "/"));
+          ln.appendChild(button(t("gt.fold.rm"), "gt.fold.rm:" + f, function () {
+            G.setFolders(fl.filter(function (x) { return x !== f; })).then(function () { render(); }, function () { gateNote = "gt.fail"; render(); });
+          }, "btn-sm"));
+          fb.appendChild(ln);
+        });
+        var fi = el("input", "dav-input");
+        fi.id = "f-gt-fold";
+        fi.type = "text";
+        fi.autocomplete = "off";
+        fi.spellcheck = false;
+        fi.placeholder = "Drive/ckdesktop/Τιμολόγια";   // i18n-inline-ok: an example path, the same in every language
+        var addF = function () {
+          var v = fi.value.trim();
+          if (!v) return;
+          G.setFolders(fl.concat([v])).then(function (next) {
+            gateNote = next && next.length > fl.length ? "" : "gt.fold.bad";
+            render();
+          }, function () { gateNote = "gt.fail"; render(); });
+        };
+        fi.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); addF(); } });
+        fb.appendChild(row(t("gt.fold.add"), fi, { hint: t("gt.fold.addHint"), forId: "f-gt-fold", stack: true }));
+        fb.appendChild(actions(button(t("gt.fold.go"), "gt.fold.go", addF)));
+        // F2: the closed copy (Dropbox), its quota, and dropping it now
+        if (typeof G.fileCopyInfo === "function" && fl.length) {
+          var fi2 = G.fileCopyInfo(), MB = 1048576;
+          fb.appendChild(el("div", "hint", fi2.at ? t("gt.fcopy.at", { when: gateWhen(fi2.at), used: Math.round(fi2.used / MB), quota: Math.round(fi2.quota / MB) }) : t("gt.fcopy.none")));
+          if (fi2.err === "scope") fb.appendChild(el("div", "hint", t("gt.fcopy.scope")));
+          if (fi2.err === "full") fb.appendChild(el("div", "hint", t("gt.fcopy.full")));
+          var qi = el("input", "dav-input");
+          qi.id = "f-gt-fquota";
+          qi.type = "number";
+          qi.min = "50";
+          qi.step = "50";
+          qi.value = String(Math.round(fi2.quota / MB));
+          fb.appendChild(row(t("gt.fcopy.quota"), qi, { hint: t("gt.fcopy.quotaHint"), forId: "f-gt-fquota", stack: true }));
+          fb.appendChild(actions(
+            button(t("gt.fcopy.save"), "gt.fcopy.save", function () {
+              var v = Math.floor(+qi.value || 0);
+              gateNote = v >= 50 && G.setQuota(v * MB) ? "gt.fcopy.saved" : "gt.fcopy.bad";
+              render();
+            }),
+            confirmBtn(t("gt.fcopy.drop"), t("gt.fcopy.dropSure"), "gt.fcopy.drop", function () {
+              G.dropCopy().then(function () { gateNote = "gt.fcopy.dropped"; render(); }, function () { gateNote = "gt.fail"; render(); });
+            })));
+        }
+        c.appendChild(fb);
+      }
       var writers = G.apps().filter(function (a) { return a.write; }).map(function (a) { return a.name; });
       if (writers.length) {
         // One rule (5.78.00): no write window; changes can be paused.
@@ -1467,15 +1526,141 @@
     });
     render();
   }
+  // LINK-1: a sign-in link. The shell makes it (pair.js sendLink) and
+  // this page shows the link and the code (y.link), or, on the new
+  // browser, asks for the code (y.linkIn). linkUi holds what is typed.
+  var linkUi = { code: "", note: "" };
+  function linkTime(ms) {
+    try { return new Date(ms).toLocaleTimeString(LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB", { hour: "2-digit", minute: "2-digit" }); }
+    catch (e) { return ""; }
+  }
+  function linkSendPart(c, y) {
+    var p = y.link;
+    if (p.phase === "making") c.appendChild(pairMsg("dim", t("y.link.making")));
+    if (p.phase === "ready") {
+      c.appendChild(el("p", "hint", t("y.link.ready", { time: linkTime(p.exp) })));
+      var url = el("input", "dav-input");
+      url.id = "f-link-url";
+      url.type = "text";
+      url.readOnly = true;
+      url.value = p.url;
+      url.setAttribute("data-k", "link-url");
+      url.setAttribute("aria-label", t("y.link.url"));
+      c.appendChild(url);
+      var box = el("div", "pair-show");
+      box.appendChild(el("div", "hint", t("y.link.code")));
+      var code = el("div", "pair-code", p.code);
+      code.setAttribute("data-k", "link-code");
+      box.appendChild(code);
+      c.appendChild(box);
+      c.appendChild(el("div", "hint warn", t("y.link.warn")));
+      var mail = el("a", "btn", t("y.link.mail"));
+      mail.setAttribute("data-k", "y.link.mail");
+      mail.href = "mailto:?subject=" + encodeURIComponent(t("y.link.mail.subject")) +
+        "&body=" + encodeURIComponent(t("y.link.mail.body", { time: linkTime(p.exp) }) + "\n\n" + p.url);
+      mail.target = "_blank";
+      mail.rel = "noopener";
+      c.appendChild(actions(
+        button(t("y.link.copy"), "y.link.copy", function () {
+          var done = function () { linkUi.note = "y.link.copied"; render(); };
+          try { navigator.clipboard.writeText(p.url).then(done, function () { url.select(); }); } catch (e) { url.select(); }
+        }, "primary"),
+        typeof navigator.share === "function" ? button(t("y.link.share"), "y.link.share", function () {
+          try { navigator.share({ title: t("y.link.mail.subject"), url: p.url }).catch(function () {}); } catch (e) {}
+        }) : null,
+        mail));
+      if (linkUi.note) c.appendChild(pairMsg("ok", t(linkUi.note)));
+    }
+    if (p.phase === "used") c.appendChild(pairMsg("ok", t("y.link.used")));
+    if (p.phase === "gone") c.appendChild(pairMsg("dim", t("y.link.gone")));
+    if (p.phase === "error") c.appendChild(pairMsg("err", t("y.link.err." + (p.err === "pair-locked" || p.err === "rate" ? p.err : "net"))));
+    c.appendChild(actions(
+      p.phase === "gone" || p.phase === "error" ? button(t("y.link.again"), "y.link.again", function () { linkUi.note = ""; act("sync.link.make"); }, "primary") : null,
+      button(t(p.phase === "ready" || p.phase === "making" ? "y.link.cancel" : "y.pair.close"), "y.link.cancel", function () {
+        linkUi.note = "";
+        act("sync.link.cancel");
+      })));
+    return c;
+  }
+  // The new browser opened a sign-in link: type the code, then in.
+  function linkInCard(y, st) {
+    var L = y.linkIn, c = card(t("y.link.in"));
+    c.setAttribute("data-k", "link-in");
+    if (L.phase === "code" && st !== "off") {
+      // Already signed in here: the link is not used (and stays for the
+      // browser it was meant for until it expires).
+      c.appendChild(pairMsg("err", t("y.link.err.pair-connected")));
+      c.appendChild(actions(button(t("y.pair.close"), "y.link.close", function () { act("sync.link.close"); })));
+      return c;
+    }
+    if (L.phase === "code") {
+      var form = el("form", "pass");
+      form.setAttribute("autocomplete", "off");
+      form.appendChild(el("p", "hint", t("y.link.in.hint")));
+      var lab = el("label", "row-label", t("y.link.in.code"));
+      lab.htmlFor = "f-link-code";
+      form.appendChild(lab);
+      var inp = el("input", "pair-in");
+      inp.id = "f-link-code";
+      inp.type = "text";
+      inp.autocomplete = "off";
+      inp.spellcheck = false;
+      inp.setAttribute("autocapitalize", "characters");
+      inp.setAttribute("data-k", "link-code-in");
+      inp.placeholder = "XXXX-XXXX";
+      inp.maxLength = 12;
+      inp.value = linkUi.code;
+      inp.addEventListener("input", function () { linkUi.code = inp.value; });
+      form.appendChild(inp);
+      if (L.err === "pass") form.appendChild(pairMsg("err", t("y.link.err.pass")));
+      var rl = el("label", "check");
+      var rc = el("input");
+      rc.type = "checkbox";
+      rc.setAttribute("data-k", "link-session");
+      rc.checked = !!L.session;
+      rc.addEventListener("change", function () { act("sync.link.session", { on: rc.checked }); });
+      rl.appendChild(rc);
+      rl.appendChild(el("span", null, t("y.pair.session")));
+      form.appendChild(rl);
+      form.appendChild(el("div", "hint", t("y.pair.session.hint")));
+      var go = el("button", "btn primary", t("y.link.in.go"));
+      go.type = "submit";
+      go.setAttribute("data-k", "y.link.in.go");
+      form.appendChild(actions(go, button(t("y.pair.cancel"), "y.link.close", function () { linkUi.code = ""; act("sync.link.close"); })));
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var code = linkUi.code;
+        linkUi.code = "";
+        act("sync.link.open", { code: code });
+      });
+      c.appendChild(form);
+      return c;
+    }
+    if (L.phase === "opening") c.appendChild(pairMsg("dim", t("y.link.opening")));
+    if (L.phase === "adopting") c.appendChild(pairMsg("dim", t("y.pair.adopting")));
+    if (L.phase === "done") c.appendChild(pairMsg("ok", t("y.pair.done.new")));
+    if (L.phase === "error") {
+      var k = "y.link.err." + L.err, v = t(k);
+      c.appendChild(pairMsg("err", v === k ? t("y.link.err.net") : v));
+    }
+    if (L.phase === "done" || L.phase === "error") {
+      c.appendChild(actions(button(t("y.pair.close"), "y.link.close", function () { act("sync.link.close"); })));
+    }
+    return c;
+  }
   // The signed-in device: type or scan the code, then approve.
   function pairOldCard(y) {
     var p = y.pair && y.pair.role === "old" ? y.pair : null;
     if (!p && y.pairPrefill && !pairUi.open) { pairUi.open = true; pairUi.code = y.pairPrefill; act("sync.pair.clear"); }
     var c = card(t("y.pair.add"));
     c.setAttribute("data-k", "pair-add");
+    if (!p && !pairUi.open && y.link) return linkSendPart(c, y);
     if (!p && !pairUi.open) {
       c.appendChild(el("p", "hint", t("y.pair.add.hint")));
-      c.appendChild(actions(button(t("y.pair.add"), "y.pair.add", function () { pairUi.open = true; render(); var f = $("f-pair-code"); if (f) f.focus(); })));
+      var noLink = !!strictLevel();      // Sensitive work: no sign-in link (QR and code stay)
+      c.appendChild(actions(button(t("y.pair.add"), "y.pair.add", function () { pairUi.open = true; render(); var f = $("f-pair-code"); if (f) f.focus(); }),
+        noLink ? null : button(t("y.link.make"), "y.link.make", function () { linkUi.note = ""; act("sync.link.make"); })));
+      c.appendChild(el("div", "hint", t(noLink ? "y.link.strict" : "y.link.what")));
       return c;
     }
     if (!p) {
@@ -1563,12 +1748,14 @@
     }
     status.appendChild(txt);
     c1.appendChild(status);
+    var sgc = st !== "off" ? signalCard(y) : null;
+    if (sgc) host.appendChild(sgc);
 
     if (st === "off") {
       if (y.available) {
         c1.appendChild(el("p", "hint", t("y.connect.hint")));
-        if (y.pair && y.pair.role === "new") {
-          // PAIR-1: the pairing card below replaces the buttons.
+        if ((y.pair && y.pair.role === "new") || y.linkIn) {
+          // PAIR-1 / LINK-1: the pairing or link card below replaces the buttons.
         } else if (dav.open && y.davAvailable) {
           c1.appendChild(davForm(y));
         } else {
@@ -1667,6 +1854,7 @@
     }
     host.appendChild(c1);
     if (y.pair && y.pair.role === "new" && (st === "off" || y.pair.phase === "done" || y.pair.phase === "adopting")) host.appendChild(pairNewCard(y));
+    if (y.linkIn && !(y.pair && y.pair.role === "new")) host.appendChild(linkInCard(y, st));
 
     if (st === "on" || st === "dirty") {
       if (y.pairAvailable) host.appendChild(pairOldCard(y));
@@ -2093,7 +2281,7 @@
       var code = (r && r.code) || "crypto";
       lk.cur = "";
       if (code === "wait") lockMsg("err", "l.msg.wait", { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) });
-      else lockMsg("err", "l.msg." + (/^(wrong|pin|short|long|storage|busy)$/.test(code) ? code : "crypto"));
+      else lockMsg("err", "l.msg." + (/^(wrong|pin|short|long|storage|busy|strict|strict-pass)$/.test(code) ? code : "crypto"));
     }
     render();
   }
@@ -2131,11 +2319,14 @@
     var curKind = k.kind || "pin";
     if (lk.mode !== "on") form.appendChild(lockField("cur", t("l.current." + curKind), curKind));
     if (lk.mode !== "off") {
-      var kr = row(t("l.kind"), null);
-      kr.appendChild(segmented([
-        { value: "pin", label: t("l.kind.pin") }, { value: "pass", label: t("l.kind.pass") }
-      ], lk.kind, "lk-kind", function (v) { lk.kind = v; lk.a = ""; lk.b = ""; lk.msg = null; render(); }, t("l.kind")));
-      form.appendChild(kr);
+      if (strictLevel() === "hard") lk.kind = "pass";    // Hardcore: a passphrase only
+      else {
+        var kr = row(t("l.kind"), null);
+        kr.appendChild(segmented([
+          { value: "pin", label: t("l.kind.pin") }, { value: "pass", label: t("l.kind.pass") }
+        ], lk.kind, "lk-kind", function (v) { lk.kind = v; lk.a = ""; lk.b = ""; lk.msg = null; render(); }, t("l.kind")));
+        form.appendChild(kr);
+      }
       form.appendChild(lockField("a", t("l.new." + lk.kind), lk.kind));
       form.appendChild(lockField("b", t("l.again"), lk.kind));
     }
@@ -2184,6 +2375,8 @@
     var sr = row(t("l.status"), null, { scope: "lock" });
     sr.appendChild(el("div", "version", t(!k.on ? "l.status.off" : k.kind === "pass" ? "l.status.pass" : "l.status.pin")));
     c1.appendChild(sr);
+    var strict = strictLevel();
+    if (lk.mode === "off" && strict) lk.mode = null;
     if (lk.mode) {
       c1.appendChild(lockForm(L, k));
     } else if (!k.on) {
@@ -2198,10 +2391,20 @@
           lk.mode = "change"; lk.kind = k.kind || "pin"; lk.msg = null; lockClear(); render();
           var f = $("f-lk-cur"); if (f) f.focus();
         }),
-        button(t("l.turnOff"), "lk-off", function () {
+        strict ? null : button(t("l.turnOff"), "lk-off", function () {
           lk.mode = "off"; lk.msg = null; lockClear(); render();
           var f = $("f-lk-cur"); if (f) f.focus();
         })));
+    }
+    if (strict) {
+      var sl = el("p", "hint", t(strict === "hard" ? "l.strict.hard" : "l.strict"));
+      sl.appendChild(document.createTextNode(" "));
+      var sb = el("button", "linkish", t("s.sensitive"));
+      sb.type = "button";
+      sb.setAttribute("data-k", "lk-strict");
+      sb.addEventListener("click", function () { go("sensitive", true); });
+      sl.appendChild(sb);
+      c1.appendChild(sl);
     }
     if (lk.msg) c1.appendChild(el("p", "msg msg-" + lk.msg.kind, t(lk.msg.key, lk.msg.vars)));
     host.appendChild(c1);
@@ -2209,15 +2412,19 @@
     if (k.on) {
       var c2 = card(t("l.when"));
       c2.appendChild(el("p", "hint", t("l.start")));
-      c2.appendChild(row(t("l.idle"), select(k.idles.map(function (m) {
+      var caps = strict ? (strictApi() && strictApi().caps(strict)) : null;
+      var idles = caps ? k.idles.filter(function (m) { return m > 0 && m <= caps.idle; }) : k.idles;
+      if (idles.indexOf(k.idle) === -1) idles = idles.concat([k.idle]);
+      c2.appendChild(row(t("l.idle"), select(idles.map(function (m) {
         return { value: m, label: m ? t("l.idle.min", { n: m }) : t("l.idle.never") };
       }), k.idle, "lk-idle", function (v) { L.option("idle", Number(v)); render(); }), { forId: "f-lk-idle" }));
-      c2.appendChild(row(t("l.hidden"), switchBtn(k.hidden, "lk-hidden", function (v) { L.option("hidden", v); render(); }, t("l.hidden")),
-        { hint: t("l.hidden.hint") }));
+      var hsw = switchBtn(k.hidden, "lk-hidden", function (v) { L.option("hidden", v); render(); }, t("l.hidden"));
+      if (caps && caps.hidden) hsw.disabled = true;     // Sensitive work keeps it on
+      c2.appendChild(row(t("l.hidden"), hsw, { hint: t("l.hidden.hint") }));
       host.appendChild(c2);
     }
 
-    if (k.on && L.bio && typeof L.bio.state === "function" && L.bio.state().linked) secLockBio(host, L, k);
+    if (k.on && strict !== "hard" && L.bio && typeof L.bio.state === "function" && L.bio.state().linked) secLockBio(host, L, k);
 
     var c3 = card(null);
     c3.appendChild(el("p", "hint", t("l.honest")));
@@ -2293,6 +2500,172 @@
     }
     if (lk.bioMsg) c.appendChild(el("p", "msg msg-" + lk.bioMsg.kind, t(lk.bioMsg.key, lk.bioMsg.vars)));
     host.appendChild(c);
+  }
+
+  // ---------- 6b2. Section: Sensitive work (lock.js window.orosStrict) ----------
+  // One switch for work that must not leak, on this device only: Normal
+  // or Hardcore. The list shows what turning it on needs and changes;
+  // turning it off asks for the lock's PIN or passphrase and brings the
+  // earlier lock times and push back. The typed secret stays in `sv.cur`
+  // only until it is handed over.
+  var sv = { level: "on", off: false, cur: "", msg: null };
+  var SV_ITEMS = ["lock", "lockPass", "lockTimes", "remember", "push", "bio", "davRelay", "backup", "passLen", "worker"];
+
+  function strictApi() {
+    var p = parentWin();
+    try { var S = p && p.orosStrict; return (S && S.v >= 1 && typeof S.check === "function") ? S : null; }
+    catch (e) { return null; }
+  }
+  function strictLevel() {
+    var S = strictApi();
+    try { return S ? S.level() : null; } catch (e) { return null; }
+  }
+  function svMsg(kind, key, vars) { sv.msg = { kind: kind, key: key, vars: vars || null }; }
+  function openHelpTopic(id) {
+    var p = parentWin();
+    try { if (p && p.orosHelp && typeof p.orosHelp.open === "function") p.orosHelp.open("t/" + id); } catch (e) {}
+  }
+
+  function svChecklist(S, level) {
+    var res = S.check(level), caps = S.caps(level) || {};
+    var ul = el("ul", "sv-list");
+    res.items.forEach(function (it) {
+      if (SV_ITEMS.indexOf(it.id) === -1) return;
+      var li = el("li", "sv-item sv-" + it.state);
+      li.setAttribute("data-k", "sv-item:" + it.id);
+      li.appendChild(el("span", "sv-text", t("sv.i." + it.id, { n: caps.idle || 2 })));
+      li.appendChild(el("span", "sv-state", t("sv.st." + it.state)));
+      if (it.state === "need" || it.state === "advice") {
+        var to = it.id === "lock" || it.id === "lockPass" ? "lock"
+               : it.id === "backup" ? "backup"
+               : it.id === "davRelay" || it.id === "passLen" ? "sync" : null;
+        if (to) {
+          var b = el("button", "linkish", t("sv.goto." + to));
+          b.type = "button";
+          b.setAttribute("data-k", "sv-goto:" + it.id);
+          b.addEventListener("click", function () { go(to, true); });
+          li.appendChild(b);
+        }
+        if (it.id === "worker") li.appendChild(el("span", "hint", t("sv.worker.hint")));
+      }
+      ul.appendChild(li);
+    });
+    return { ul: ul, ready: res.ready };
+  }
+
+  function secSensitive(host) {
+    var S = strictApi(), L = lockApi();
+    var c1 = card(null);
+    c1.appendChild(el("p", "hint", t("sv.intro")));
+    if (!S || !L || !L.available()) {
+      c1.appendChild(el("p", "msg msg-err", t("l.na")));
+      host.appendChild(c1);
+      return;
+    }
+    var cur = strictLevel(), k = L.snapshot();
+    var sr = row(t("sv.status"), null, { scope: "sensitive" });
+    sr.appendChild(el("div", "version", t(cur === "hard" ? "sv.status.hard" : cur ? "sv.status.on" : "sv.status.off")));
+    c1.appendChild(sr);
+
+    if (!cur || cur === "on") {
+      var pick = cur === "on" ? "hard" : sv.level;
+      if (!cur) {
+        var lr = row(t("sv.level"), null);
+        lr.appendChild(segmented([
+          { value: "on", label: t("sv.level.on") }, { value: "hard", label: t("sv.level.hard") }
+        ], sv.level, "sv-level", function (v) { sv.level = v; sv.msg = null; render(); }, t("sv.level")));
+        c1.appendChild(lr);
+      }
+      c1.appendChild(el("p", "hint", t(pick === "hard" ? "sv.hard.text" : "sv.on.text")));
+      c1.appendChild(el("h3", "sv-head", t("sv.check")));
+      var chk = svChecklist(S, pick);
+      c1.appendChild(chk.ul);
+      var onBtn = el("button", "btn " + (pick === "hard" ? "danger" : "primary"), t(pick === "hard" ? "sv.turnOnHard" : "sv.turnOn"));
+      onBtn.type = "button";
+      onBtn.setAttribute("data-k", "sv-on");
+      if (!chk.ready || k.busy) onBtn.disabled = true;
+      onBtn.addEventListener("click", function () {
+        if (strictApi() !== S) return;
+        svMsg("dim", "l.msg.working");
+        render();
+        S.enable(pick).then(function (r) {
+          if (r && r.ok) { sv.off = false; svMsg("ok", pick === "hard" ? "sv.msg.hard" : "sv.msg.on"); }
+          else svMsg("err", "sv.msg." + (/^(need|lower|storage)$/.test(r && r.code) ? r.code : "err"));
+          render();
+        }, function () { svMsg("err", "sv.msg.err"); render(); });
+      });
+      c1.appendChild(actions(onBtn));
+      if (!chk.ready) c1.appendChild(el("p", "hint", t("sv.msg.need")));
+    } else {
+      c1.appendChild(el("p", "hint", t("sv.hard.text")));
+    }
+
+    if (cur) {
+      if (sv.off) {
+        var form = el("form", "pass dav-form");
+        form.setAttribute("autocomplete", "off");
+        var kind = k.kind || "pin";
+        var wrap = el("div", "dav-field");
+        var lab = el("label", "row-label", t("l.current." + kind));
+        lab.htmlFor = "f-sv-cur";
+        wrap.appendChild(lab);
+        var inp = el("input");
+        inp.id = "f-sv-cur";
+        inp.type = "password";
+        inp.autocomplete = "off";
+        inp.spellcheck = false;
+        inp.setAttribute("autocapitalize", "off");
+        if (kind === "pin") { inp.inputMode = "numeric"; inp.maxLength = 12; inp.setAttribute("pattern", "[0-9]*"); }
+        else inp.maxLength = 256;
+        inp.value = sv.cur;
+        inp.setAttribute("data-k", "sv-cur");
+        inp.addEventListener("input", function () { sv.cur = inp.value; });
+        wrap.appendChild(inp);
+        form.appendChild(wrap);
+        var go2 = el("button", "btn danger", t("sv.turnOff"));
+        go2.type = "submit";
+        go2.setAttribute("data-k", "sv-off-go");
+        if (k.busy) go2.disabled = true;
+        form.appendChild(actions(go2, button(t("l.cancel"), "sv-off-cancel", function () {
+          sv.off = false; sv.cur = ""; sv.msg = null; render();
+        })));
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (strictApi() !== S || L.snapshot().busy) return;
+          var secret = sv.cur;
+          sv.cur = "";
+          svMsg("dim", "l.msg.working");
+          render();
+          S.disable(secret).then(function (r) {
+            if (r && r.ok) { sv.off = false; svMsg("ok", r.push === "failed" ? "sv.msg.offPush" : "sv.msg.off"); }
+            else if (r && r.code === "wait") svMsg("err", "l.msg.wait", { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) });
+            else svMsg("err", "l.msg." + (/^(wrong|busy|storage)$/.test(r && r.code) ? r.code : "crypto"));
+            render();
+          }, function () { svMsg("err", "sv.msg.err"); render(); });
+        });
+        c1.appendChild(form);
+      } else {
+        c1.appendChild(actions(button(t("sv.turnOff"), "sv-off", function () {
+          sv.off = true; sv.cur = ""; sv.msg = null; render();
+          var f = $("f-sv-cur"); if (f) f.focus();
+        })));
+      }
+    }
+    if (sv.msg) c1.appendChild(el("p", "msg msg-" + sv.msg.kind, t(sv.msg.key, sv.msg.vars)));
+    host.appendChild(c1);
+
+    // SOS (window.orosSOS): only when this orOS has it.
+    if (typeof S.sosAvailable === "function" && S.sosAvailable()) {
+      var c2 = card(t("sv.sos"));
+      c2.appendChild(el("p", "hint", t("sv.sos.text")));
+      c2.appendChild(actions(button(t("sv.sos.open"), "sv-sos", function () { S.sos(); }, "danger")));
+      host.appendChild(c2);
+    }
+
+    var c3 = card(null);
+    c3.appendChild(el("p", "hint", t("sv.honest")));
+    c3.appendChild(actions(button(t("sv.help"), "sv-help", function () { openHelpTopic("sensitive"); })));
+    host.appendChild(c3);
   }
 
   // ---------- 6c. Section: Users ----------
@@ -2648,6 +3021,57 @@
       c2.appendChild(list);
     }
     host.appendChild(c2);
+
+    if (window.OrosTranslate) secTranslation(host);
+    else txLoad();
+  }
+
+  // translate/engine.js loads only when this section first shows, so
+  // Settings opens without it (first-open budget).
+  var txLoading = false;
+  function txLoad() {
+    if (txLoading) return;
+    txLoading = true;
+    loadScript("../translate/engine.js").then(function () {
+      if (window.OrosTranslate) render();
+    }, function () {});
+  }
+
+  // Translation on this device (translate/engine.js, Bible TRANSLATE):
+  // the downloaded languages with their size, Remove (two taps), the
+  // device-local "use the Assistant's AI" switch and a way to Text Tools.
+  var txList = null, txBusy = false;
+  function secTranslation(host) {
+    var TR = window.OrosTranslate;
+    var c = card(t("tx.title"), "device");
+    c.appendChild(el("p", "hint", t("tx.hint")));
+    if (txList === null) {
+      if (!txBusy) {
+        txBusy = true;
+        TR.installed().then(function (l) { txList = l; }, function () { txList = []; })
+          .then(function () { txBusy = false; render(); });
+      }
+    } else if (!txList.length) {
+      c.appendChild(el("p", "hint", t("tx.none")));
+    } else {
+      txList.forEach(function (x) {
+        var ab = x.pair.split("-");
+        var r = row(t("tx.row", { a: TR.name(ab[0], LANG), b: TR.name(ab[1], LANG), mb: x.mb }),
+          confirmBtn(t("tx.remove"), t("tx.removeSure"), "tx:" + x.pair, function () {
+            TR.remove(x.pair).then(function () { txList = null; render(); }, function () { txList = null; render(); });
+          }, "danger"));
+        c.appendChild(r);
+      });
+    }
+    var on = TR.ai.on();
+    c.appendChild(row(t("tx.ai"), switchBtn(on, "tx.ai", function (v) { TR.ai.set(v); render(); }, t("tx.ai")),
+      { hint: t("tx.ai.hint") }));
+    c.appendChild(actions(button(t("tx.open"), "tx.open", function () {
+      var p = parentWin();
+      if (p && typeof p.__orosOpenAt === "function") { p.__orosOpenAt("texttools", { group: "translate" }); return; }
+      act("openApp", "texttools");
+    })));
+    host.appendChild(c);
   }
 
   // On-screen keyboard (osk.js through the shell; never on phones,
@@ -3382,6 +3806,8 @@
 
     host.appendChild(reportCard());
 
+    host.appendChild(sosCard(s));
+
     var c4 = card(t("x.reset"));
     c4.classList.add("danger-card");
     c4.appendChild(el("p", "hint", t("x.reset.hint")));
@@ -3396,6 +3822,79 @@
     host.appendChild(c4);
   }
   var resetting = false;
+
+  // SOS-1: erase everywhere. "SOS" typed and (with sync on) the sync
+  // passphrase typed again; the shell checks it before anything is
+  // touched and then gives 10 s to cancel.
+  var sos = { word: "", pass: "" };
+  function sosCard(s) {
+    var y = s.sync || {};
+    var c = card(t("x.sos"));
+    c.classList.add("danger-card");
+    c.appendChild(el("p", "hint", t("x.sos.hint")));
+    var ul = el("ul", "hint");
+    ["x.sos.l1", "x.sos.l2", "x.sos.l3", "x.sos.l4"].forEach(function (k) { ul.appendChild(el("li", null, t(k))); });
+    c.appendChild(ul);
+    c.appendChild(el("p", "msg msg-err", t("x.sos.warn")));
+    if (resetting) {
+      c.appendChild(el("p", "msg msg-dim", t("x.reset.working")));
+      return c;
+    }
+    if (y.connected && !y.unlocked) {
+      c.appendChild(el("p", "msg msg-dim", t("x.sos.locked")));
+      return c;
+    }
+    if (!y.connected) c.appendChild(el("p", "msg msg-dim", t("x.sos.off")));
+    c.appendChild(labelled(t("x.sos.type"), "sos-word", textInput("sos-word", sos.word, "SOS", function (v) {
+      sos.word = v;
+      var b = $("f-sos-go");
+      if (b) b.disabled = !sosReady(y);
+    })));
+    if (y.connected) {
+      c.appendChild(labelled(t("x.sos.pass"), "sos-pass", textInput("sos-pass", sos.pass, "", function (v) {
+        sos.pass = v;
+        var b = $("f-sos-go");
+        if (b) b.disabled = !sosReady(y);
+      }, "password")));
+    }
+    var go = button(t("x.sos.go"), "x.sos.go", function () {
+      if (!sosReady(y)) return;
+      var pw = y.connected ? sos.pass : "";
+      sos.word = ""; sos.pass = "";
+      act("sos", pw);
+    }, "danger");
+    go.id = "f-sos-go";
+    go.disabled = !sosReady(y);
+    c.appendChild(actions(go));
+    c.appendChild(el("p", "hint", t("x.sos.next")));
+    return c;
+  }
+  function sosReady(y) {
+    return sos.word.trim().toUpperCase() === "SOS" && (!y.connected || sos.pass.length > 0);
+  }
+
+  // SOS-1: a reset signal (or a signal this passphrase cannot open)
+  // stopped sync on this device; an SOS that this passphrase opens
+  // erases the device at once and never shows here.
+  function signalCard(y) {
+    var sg = y.signal;
+    if (!sg || (sg.kind === "sos" && sg.verified)) return null;
+    var d = sigDate(sg.n);
+    var c = card(t(sg.verified ? "y.sig.reset.title" : "y.sig.closed.title"));
+    c.classList.add("danger-card");
+    c.appendChild(el("p", "hint", t(sg.verified ? "y.sig.reset.body" : "y.sig.closed.body", { d: d })));
+    var keep = sg.kind === "reset" ? button(t("y.sig.keep"), "y.sig.keep", function () { act("sync.signal.keep"); }, "primary") : null;
+    c.appendChild(actions(keep,
+      confirmBtn(t("y.sig.erase"), t("y.sig.erase.confirm"), "y.sig.erase", function () { act("sync.signal.erase"); }, "danger")));
+    if (keep) c.appendChild(el("p", "hint", t("y.sig.keep.hint")));
+    return c;
+  }
+  function sigDate(n) {
+    try {
+      return new Date(n).toLocaleString(LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB",
+        { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    } catch (e) { return new Date(n).toISOString(); }
+  }
 
   // "Report a problem": settings/report.js builds one text file (no user
   // data); the person reads it here before it is saved. Under the orOS
@@ -3521,7 +4020,7 @@
   }
 
   var SECTION_FN = {
-    appearance: secAppearance, fonts: secFonts, accessibility: secAccessibility, menu: secMenu, notifications: secNotifications, sync: secSync, lock: secLock, users: secUsers,
+    appearance: secAppearance, fonts: secFonts, accessibility: secAccessibility, menu: secMenu, notifications: secNotifications, sync: secSync, lock: secLock, sensitive: secSensitive, users: secUsers,
     backup: secBackup, language: secLanguage, files: secFiles, solo: secSolo, services: secServices, system: secSystem,
     device: secDevice
   };

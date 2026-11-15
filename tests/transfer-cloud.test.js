@@ -27,6 +27,14 @@ function fakeDropbox() {
       links.set(u, name); log.links++;
       return Promise.resolve(u);
     },
+    // wave 5: a shared link on the direct host (sync.js cloudDrop.share after dropDirect)
+    share(name) {
+      if (drop.noScope) return Promise.reject(new Error("dropbox-scope"));
+      if (!store.has(name)) return Promise.reject(new Error("share failed: 409"));
+      const u = "https://dl.dropboxusercontent.com/scl/fi/" + crypto.randomBytes(9).toString("hex") + "/" + name.split("/")[1] + "?rlkey=" + crypto.randomBytes(6).toString("hex");
+      links.set(u, name); log.shares = (log.shares || 0) + 1;
+      return Promise.resolve(u);
+    },
     remove(id) { for (const k of [...store.keys()]) if (k.startsWith(id + "/")) store.delete(k); log.removed.push(id); return Promise.resolve(true); },
     list() { return Promise.resolve([...new Set([...store.keys()].map((k) => k.split("/")[0]))].map((id) => ({ id }))); }
   };
@@ -94,7 +102,11 @@ test("links: the fragment carries the code and a Dropbox temporary link, nothing
   assert.equal(X.parseFragment("#d=7K2M9QXH4RTB." + Buffer.from("http://uc1.dl.dropboxusercontent.com/x").toString("base64url")), null);
   assert.equal(X.parseFragment("#7K2M9QXH4RTB"), null);
   assert.equal(X.okLink("https://www.dropbox.com/s/x"), false);
-  assert.ok(X.idTime(X.newId(1731400000000)) === 1731400000000);
+  // the id's time is "start + (hold - 4 h) + UPLOAD_ALLOW", the time the sweep counts from
+  assert.equal(X.idTime(X.newId(1731400000000)), 1731400000000 + X.UPLOAD_ALLOW);
+  assert.equal(X.idTime(X.newId(1731400000000, 96)), 1731400000000 + 92 * 3600000 + X.UPLOAD_ALLOW);
+  assert.equal(X.idTime(X.newId(1731400000000, 7)), 1731400000000 + X.UPLOAD_ALLOW, "an hour not offered counts as 4");
+  assert.equal(X.newId(Date.now(), 96).length, 20);
 });
 
 test("packs end at file boundaries; lengths are exact", () => {
@@ -215,14 +227,75 @@ test("probe: a browser that cannot read the link says no; the probe is removed e
   assert.equal(dbx.store.size, 0);
 });
 
-test("sweep removes folders older than 4 h 15 min, keeps the rest", async () => {
+test("sweep removes a folder once its hold (+ upload allowance + 15 min) has passed, keeps the rest", async () => {
   const dbx = fakeDropbox();
-  const now = Date.now();
-  const fresh = X.newId(now - 3600000), old = X.newId(now - 5 * 3600000);
-  await dbx.drop.put(fresh + "/index", new Blob(["x"]));
-  await dbx.drop.put(old + "/index", new Blob(["x"]));
-  assert.equal(await X.sweep(dbx.drop, now), 1);
-  assert.deepEqual([...dbx.store.keys()], [fresh + "/index"]);
+  const now = Date.now(), H = 3600000;
+  const keep = [X.newId(now - 5 * H), X.newId(now - 50 * H, 96), X.newId(now - 13 * H, 12)];
+  const gone = [X.newId(now - 7 * H), X.newId(now - 99 * H, 96), X.newId(now - 15 * H, 12)];
+  for (const id of keep.concat(gone)) await dbx.drop.put(id + "/index", new Blob(["x"]));
+  assert.equal(await X.sweep(dbx.drop, now), 3);
+  assert.deepEqual([...dbx.store.keys()].sort(), keep.map((id) => id + "/index").sort());
+  // a 4-hour build's rule (T + 4 h 15 min) gives the same answer for every hold
+  const old = (id) => now - parseInt(id.slice(0, 8), 36) > 4 * H + 15 * 60000;
+  assert.deepEqual(keep.map(old), [false, false, false]);
+  assert.deepEqual(gone.map(old), [true, true, true]);
+});
+
+test("wave 5: a 24-hour send uses shared links and says until when; the promise never outlives the sweep", async () => {
+  const dbx = fakeDropbox();
+  const files = filesOf([["a.bin", 70000], ["b/c.txt", 9]]);
+  const r = await sendAll(dbx, files, { hold: 24 });
+  assert.equal(r.hold, 24);
+  assert.ok(Math.abs(r.exp - (Date.now() + 24 * 3600000)) < 60000, "24 hours from the links");
+  assert.equal(dbx.log.links, 0); assert.equal(dbx.log.shares, 2);
+  const f = X.parseFragment(r.frag);
+  assert.match(f.link, /^https:\/\/dl\.dropboxusercontent\.com\/scl\/fi\//);
+  const t = receive(dbx, r.frag);
+  await until(() => t.last().p === "offer");
+  assert.ok(Math.abs(t.last().exp - r.exp) < 2);
+  const sink = memSink();
+  t.rx.accept(sink);
+  await until(() => t.last().p === "done");
+  files.forEach((x, i) => assert.ok(sink.out[i].data.equals(x.bytes)));
+  // uploads that took longer than the allowance shorten what the link promises
+  const start = 1731400000000, H = 3600000, id = X.newId(start, 48);
+  assert.equal(X.expiry(id, start + H, 48), start + 49 * H);
+  assert.equal(X.expiry(id, start + 5 * H, 48), start + 48 * H + X.UPLOAD_ALLOW);
+  assert.equal(X.expiry(X.newId(start), start + H, 4), start + H + X.LINK_SAFE);
+  assert.ok(X.expiry(id, start + 5 * H, 48) < X.idTime(id) + X.SWEEP_MS);
+});
+
+test("wave 5: a sign-in without sharing.write fails as 'scope' and leaves nothing; the shared probe says so too", async () => {
+  const dbx = fakeDropbox();
+  dbx.drop.noScope = true;
+  await assert.rejects(sendAll(dbx, filesOf([["a.bin", 10]]), { hold: 12 }), (e) => e.code === "scope");
+  assert.equal(dbx.store.size, 0);
+  await assert.rejects(X.probe(dbx.drop, dbx.fetch, true), (e) => e.code === "scope");
+  assert.equal(dbx.store.size, 0);
+  dbx.drop.noScope = false;
+  assert.equal(await X.probe(dbx.drop, dbx.fetch, true), true);
+  assert.equal(dbx.log.links, 0);
+  // 4 hours still works without the permission
+  dbx.drop.noScope = true;
+  const r = await sendAll(dbx, filesOf([["a.bin", 10]]));
+  assert.ok(r.exp < Date.now() + 4 * 3600000);
+});
+
+test("wave 5: sync.js turns a shared link into its direct host, keeps only rlkey, refuses anything else", () => {
+  const src = fs.readFileSync(path.join(__dirname, "../sync.js"), "utf8");
+  const m = /  function dropDirect\(u\) \{[\s\S]*?\n  \}\n/.exec(src);
+  assert.ok(m);
+  const dropDirect = new Function(m[0] + "; return dropDirect;")();
+  assert.equal(dropDirect("https://www.dropbox.com/scl/fi/ab12cd/p0?rlkey=xyz9&dl=0"), "https://dl.dropboxusercontent.com/scl/fi/ab12cd/p0?rlkey=xyz9");
+  assert.equal(dropDirect("https://www.dropbox.com/s/ab12cd/index?dl=0"), "https://dl.dropboxusercontent.com/s/ab12cd/index");
+  assert.equal(dropDirect("https://evil.example/scl/fi/x/p0"), "");
+  assert.equal(dropDirect("https://www.dropbox.com.evil.example/scl/fi/x/p0"), "");
+  assert.equal(dropDirect("https://www.dropbox.com/home/secret"), "");
+  assert.ok(X.okLink(dropDirect("https://www.dropbox.com/scl/fi/ab12cd/p0?rlkey=xyz9&dl=0")));
+  // every open orOS sweeps hourly with the same rule
+  assert.ok(src.includes("var DROP_SWEEP_MS = 4 * 3600000 + 15 * 60000;"));
+  assert.ok(/setTimeout\(dropSweep, 60000\)/.test(src));
+  assert.ok(/sharing\/create_shared_link_with_settings/.test(src) && /missing_scope/.test(src));
 });
 
 test("wiring: sync.js keeps Transfer outside the vault; the pages load cloud.js", () => {
