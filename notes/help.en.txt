@@ -22,6 +22,11 @@ Right-click a page in the tree, long-press it on a touch screen, or tap the ⋮ 
 
 On a computer you can also drag a page in the tree and drop it onto another page to make it a sub-page, or onto empty space to move it to the top level.
 
+### Pages that delete themselves
+- In a page's menu, `Delete itself…` sets it to go in 1 hour, 1 day, 7 days or 30 days. The editor shows how long is left; `Keep it (cancel)` takes it back.
+- When the time comes, the page is deleted on every device the first time orOS runs there, also while Notes is closed. It does not wait in a Trash. Its sub-pages move up one level and stay.
+- A device that is off keeps the page until it is turned on; an export or backup made before keeps a copy. See [Sensitive work and sources](help:t/sensitive).
+
 ## Formatting and preview
 Pages are stored as plain text, so nothing changes in your notes when you switch views. In `Preview` this Markdown is shown formatted:
 - `# Heading`, `## Smaller heading` (up to six levels).

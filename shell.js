@@ -11315,6 +11315,72 @@
     } catch (e) { return null; }
   };
 
+  // ---------- 9k. Things that delete themselves (STRICT-5) ----------
+  // Self-deleting Notes pages (STRICT-5, notes/expire.js): while Notes
+  // is closed the shell deletes a page whose time has come, in the
+  // stored data, as Notes' Delete would (tomb + sub-pages up); sync
+  // carries the tombs. Notes open does it itself.
+  var notesExpLoad = null;
+  function notesExpireSweep() {
+    if (osResetting || appLive("notes")) return;
+    var raw = null;
+    try { raw = localStorage.getItem("oros-notes-data"); } catch (e) { return; }
+    if (!raw || raw.indexOf('"exp":') === -1) return;
+    if (!notesExpLoad) notesExpLoad = new Promise(function (res, rej) {
+      if (window.orosNotesExpire) { res(); return; }
+      var sc = document.createElement("script");
+      sc.src = "notes/expire.js";
+      sc.onload = res;
+      sc.onerror = function () { notesExpLoad = null; rej(new Error("load")); };
+      document.head.appendChild(sc);
+    });
+    notesExpLoad.then(function () {
+      var E = window.orosNotesExpire;
+      if (!E || appLive("notes")) return;
+      var now = Date.now(), cur, data;
+      try { cur = localStorage.getItem("oros-notes-data"); data = JSON.parse(cur); } catch (e) { return; }
+      if (!data || !E.dueIds(data.pages, now).length) return;
+      var gone = E.expire(data, now);
+      if (!gone.length) return;
+      try { localStorage.setItem("oros-notes-data", JSON.stringify(data)); } catch (e) { return; }
+      try { if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty(); } catch (e) {}
+    }).catch(function () {});
+  }
+  // Self-deleting files (STRICT-5, slice "files-exp", files-core.js
+  // expSet): with Files closed the shell deletes a due file for good
+  // (orosFS reports it to the disk sync) and stores the tomb.
+  var filesExpBusy = false;
+  function filesExpireSweep() {
+    if (osResetting || filesExpBusy || appLive("files")) return;
+    var FS = window.orosFS, st = null, now = Date.now();
+    if (!FS || typeof FS.rm !== "function") return;
+    try { st = JSON.parse(localStorage.getItem("oros-files-exp") || "null"); } catch (e) { return; }
+    var items = st && Array.isArray(st.items) ? st.items : [];
+    var due = items.filter(function (f) { return f && !f.del && typeof f.p === "string" && typeof f.e === "number" && f.e <= now; });
+    if (!due.length) return;
+    filesExpBusy = true;
+    due.reduce(function (ch, f) {
+      return ch.then(function () {
+        return Promise.resolve(FS.stat(f.p)).then(function (s2) {
+          return s2 && !s2.dir ? FS.rm(f.p) : null;
+        }, function () { return null; });
+      }).then(function () {
+        f.e = undefined; delete f.e;
+        f.del = true;
+        f.m = Math.max(Math.floor(Date.now()), (f.m || 0) + 1);
+      }, function () {});
+    }, Promise.resolve()).then(function () {
+      if (appLive("files")) { filesExpBusy = false; return; }   // Files opened meanwhile: it re-reads and sweeps itself
+      try { localStorage.setItem("oros-files-exp", JSON.stringify(st)); } catch (e) {}
+      try { if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty(); } catch (e) {}
+      filesExpBusy = false;
+    });
+  }
+  function expireSweeps() { notesExpireSweep(); filesExpireSweep(); }
+  setTimeout(expireSweeps, 8000);
+  setInterval(expireSweeps, 300000);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") expireSweeps(); });
+
   // ---------- 9j. Settings app bridge (window.orosSettings) ----------
   // The Settings app (settings/, System) is a plain iframe app: it
   // never writes storage and registers no slice. Every value comes

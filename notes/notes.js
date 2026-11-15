@@ -127,6 +127,7 @@
     (raw.pages || []).forEach(function (p) {
       if (typeof p.pinned !== "boolean") p.pinned = false;
       if (!Array.isArray(p.labels)) p.labels = [];
+      if (p.exp !== undefined && !expValid(p.exp)) delete p.exp;
     });
 
     state.ver       = DATA_VER;
@@ -330,6 +331,21 @@
       "labels.confirm":     "Delete this label?",      // v0.14.0
       "labels.deleted":      "Label deleted",  // v0.35.00 fix
       "page.pin":           "Pin to top",
+      "exp.menu": "Delete itself…",
+      "exp.title": "Delete this page by itself",
+      "exp.hint": "On every device, the first time orOS runs after this time. It does not wait in a Trash.",
+      "exp.in.1h": "In 1 hour",
+      "exp.in.1d": "In 1 day",
+      "exp.in.7d": "In 7 days",
+      "exp.in.30d": "In 30 days",
+      "exp.keep": "Keep it (cancel)",
+      "exp.set": "This page will delete itself",
+      "exp.off": "This page stays",
+      "exp.gone1": "A self-deleting page was deleted",
+      "exp.goneN": "{n} self-deleting pages were deleted",
+      "exp.left.d": "Deletes itself in {n} d",
+      "exp.left.h": "Deletes itself in {n} h",
+      "exp.left.m": "Deletes itself in {n} min",
       "page.unpin":         "Unpin",
       "toast.pinned":       "Pinned to top",
       "toast.unpinned":     "Unpinned",
@@ -396,6 +412,21 @@
       "labels.confirm":     "Διαγραφή αυτής της ετικέτας;",  // v0.14.0
       "labels.deleted":      "Η ετικέτα διαγράφηκε",  // v0.35.00 fix
       "page.pin":           "Καρφίτσωμα στην κορυφή",
+      "exp.menu": "Αυτοκαταστροφή…",
+      "exp.title": "Η σελίδα να σβηστεί μόνη της",
+      "exp.hint": "Σε κάθε συσκευή, την πρώτη φορά που τρέχει το orOS μετά από αυτή την ώρα. Δεν περιμένει σε Κάδο.",
+      "exp.in.1h": "Σε 1 ώρα",
+      "exp.in.1d": "Σε 1 μέρα",
+      "exp.in.7d": "Σε 7 μέρες",
+      "exp.in.30d": "Σε 30 μέρες",
+      "exp.keep": "Να μείνει (ακύρωση)",
+      "exp.set": "Η σελίδα θα σβηστεί μόνη της",
+      "exp.off": "Η σελίδα μένει",
+      "exp.gone1": "Μια σελίδα αυτοκαταστροφής σβήστηκε",
+      "exp.goneN": "Σβήστηκαν {n} σελίδες αυτοκαταστροφής",
+      "exp.left.d": "Σβήνεται σε {n} μ.",
+      "exp.left.h": "Σβήνεται σε {n} ώ.",
+      "exp.left.m": "Σβήνεται σε {n} λεπ.",
       "page.unpin":         "Αφαίρεση καρφιτσίματος",
       "toast.pinned":       "Καρφιτσώθηκε στην κορυφή",
       "toast.unpinned":     "Αφαιρέθηκε το καρφίτσωμα",
@@ -1368,6 +1399,7 @@
       syncField(title, page.title || "");
       syncField(text, page.text || "");
       renderChips(page);
+      renderExp(page);
       renderLinksStrip(page);
       voiceRefresh(page);
       renderPreview();
@@ -1384,6 +1416,7 @@
     title.value = page ? page.title : "";
     text.value  = page ? page.text : "";
     renderChips(page);
+    renderExp(page);
     renderLinksStrip(page);   // v0.17.0: outgoing [[links]] + backlinks
     voiceCaretPage = null;
     voiceRefresh(page);   // NOTES-VOICE: the page's recordings
@@ -1512,7 +1545,7 @@
       t("page.delete"), function () { doDeletePage(id); });
   }
 
-  function doDeletePage(id) {
+  function doDeletePage(id, quiet) {
     var gonePage = pageById(id);
     var upTo = gonePage ? (gonePage.parent || null) : null;
     // Tombstone — delete wins on merge, resurrected pages revive
@@ -1549,7 +1582,70 @@
     saveNow();
     markSyncDirty();
     renderAll();
-    notifyTransient(t("toast.deleted"));
+    if (!quiet) notifyTransient(t("toast.deleted"));
+  }
+
+  // ---------- STRICT-5: pages that delete themselves (expire.js) ----------
+  function expApi() { return window.orosNotesExpire || null; }
+  function sweepExpired() {
+    var E = expApi();
+    if (!E) return;
+    var ids = E.dueIds(state.pages, Date.now());
+    ids.forEach(function (id) { if (pageById(id)) doDeletePage(id, true); });
+    if (ids.length) notifyTransient(ids.length === 1 ? t("exp.gone1") : t("exp.goneN").replace("{n}", ids.length));
+  }
+  function setExpiry(id, ms) {
+    var page = pageById(id);
+    if (!page) return;
+    if (ms) page.exp = Date.now() + ms; else delete page.exp;
+    touchStruct(page);
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    notifyTransient(t(ms ? "exp.set" : "exp.off"));
+  }
+  function openExpMenu(page, x, y) {
+    var E = expApi();
+    if (!E) return;
+    closeMenus();
+    var menu = document.createElement("div");
+    menu.id = "node-menu";
+    var head = document.createElement("div");
+    head.className = "node-menu-title";
+    head.textContent = t("exp.title");
+    menu.appendChild(head);
+    var hint = document.createElement("p");
+    hint.className = "exp-hint";
+    hint.textContent = t("exp.hint");
+    menu.appendChild(hint);
+    var opts = E.CHOICES.map(function (c) { return [t("exp.in." + c.id), c.ms]; });
+    if (expValid(page.exp)) opts.push([t("exp.keep"), 0]);
+    opts.forEach(function (o) {
+      var b = document.createElement("button");
+      b.className = "node-menu-item";
+      b.setAttribute("data-k", "exp-" + (o[1] || "off"));
+      b.textContent = o[0];
+      b.addEventListener("click", function (e) { e.stopPropagation(); closeMenus(); setExpiry(page.id, o[1]); });
+      menu.appendChild(b);
+    });
+    document.body.appendChild(menu);
+    clampToViewport(menu, x, y);
+  }
+  function renderExp(page) {
+    var old = document.getElementById("page-exp");
+    var E = expApi();
+    if (!page || !expValid(page.exp) || !E) { if (old) old.remove(); return; }
+    var l = E.left(page.exp, Date.now());
+    var txt = t("exp.left." + l.unit).replace("{n}", l.n);
+    if (old && old.textContent === txt) return;
+    if (old) old.remove();
+    var header = document.getElementById("editor-header");
+    if (!header) return;
+    var el = document.createElement("span");
+    el.id = "page-exp";
+    el.textContent = txt;
+    el.title = t("exp.title");
+    header.appendChild(el);
   }
 
   function renamePage(id) {
@@ -3445,6 +3541,7 @@
       [t("page.moveto"),   function () { askMoveTo(page); }],
       [page.pinned ? t("page.unpin") : t("page.pin"), function () { togglePin(page.id); }],
       [t("labels.title"),  function () { openLabelPicker(page, x, y); }],
+      [t("exp.menu"),      function () { openExpMenu(page, x, y); }],
       [t("tpl.new"),               function () { newFromTemplate(); }],
       [t("menu.exportPage"),       function () { exportPageTxt(page); }],
       [t("menu.exportPageMd"),     function () { exportPageMd(page); }],
@@ -3672,7 +3769,9 @@
   }
   var NB_KEYS    = ["id", "name", "mtime", "pos"];
   var LABEL_KEYS = ["id", "nb", "name", "color", "mtime", "pos"];
-  var PAGE_KEYS  = ["id", "nb", "parent", "title", "text", "mtime", "pos", "labels", "pinned", "ct", "st", "h", "hx", "cf"];
+  // STRICT-5: a page's self-delete time (expire.js), a structure field.
+  function expValid(v) { return typeof v === "number" && isFinite(v) && v > 0; }
+  var PAGE_KEYS  = ["id", "nb", "parent", "title", "text", "mtime", "pos", "labels", "pinned", "ct", "st", "h", "hx", "cf", "exp"];
 
   function canonTombs(tombs, notebooks, pages, labels) {
     var alive = {}, maxTs = 0, src = tombs || {}, out = {};
@@ -3708,6 +3807,7 @@
       var c = canonEntity(p, PAGE_KEYS);
       c.labels = (Array.isArray(c.labels) ? c.labels.slice() : []).sort();
       c.pinned = !!c.pinned;
+      if (!expValid(c.exp)) delete c.exp;     // STRICT-5: a structure field
       // Both clocks are always spelled out (a page written by older
       // code has none; one last touched by older code has stale
       // ones) — the same page reads the same from every side.
@@ -3753,7 +3853,7 @@
   // fields the merge never rewrites, then notebook and parent (which
   // it may repair afterwards).
   function structKey(p) {
-    return JSON.stringify([p.pos, (Array.isArray(p.labels) ? p.labels.slice().sort() : []), !!p.pinned]) +
+    return JSON.stringify([p.pos, (Array.isArray(p.labels) ? p.labels.slice().sort() : []), !!p.pinned, expValid(p.exp) ? p.exp : 0]) +
            "|" + JSON.stringify([p.nb, (p.parent === undefined ? null : p.parent)]);
   }
   function mergePage(x, y, copies) {
@@ -3794,6 +3894,7 @@
         labels: Array.isArray(other.labels) ? other.labels.slice() : [],
         pinned: false, ct: oc, cf: 1
       });
+      if (expValid(out.exp)) copies[copies.length - 1].exp = out.exp;   // a copy of a self-deleting page goes with it
     }
     return out;
   }
@@ -4684,6 +4785,8 @@
   applyI18n();
   inheritPalette();
   renderAll();
+  sweepExpired();                              // STRICT-5: before anything is shown for long
+  setInterval(function () { sweepExpired(); renderExp(pageById(prefs.current)); }, 60000);
   registerNotesSlice();
   hhBoot();
   wireUI();

@@ -1474,3 +1474,10 @@ body.cmp-mode #status { display: none; }
 #dlg-clean ul { margin: 0 0 4px; padding-left: 20px; }
 #dlg-clean .clean-warn { color: var(--warn, #e0a030); }
 #dlg-clean .clean-note { margin: 8px 0 0; font-size: 0.9em; opacity: 0.85; }
+
+/* STRICT-5: self-deleting files */
+.exp-badge { margin-left: 6px; font-size: 0.85em; opacity: 0.85; }
+#dlg-exp .exp-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+#dlg-exp .exp-opts button { padding: 10px; border-radius: 8px; border: 1px solid var(--line, #444); background: transparent; color: inherit; font: inherit; cursor: pointer; }
+#dlg-exp p { overflow-wrap: anywhere; }
+#dlg-exp .clean-note { font-size: 0.9em; opacity: 0.85; }

@@ -33,6 +33,10 @@ Links stehen die Ordner, rechts der Inhalt des aktuellen Ordners. Auf dem Handy 
 - Es entfernt, was die Datei darüber verrät, wer sie gemacht hat, wo, wann und womit: GPS-Standort und Kameraangaben aus Fotos; Autor, Programm, Daten und frühere gespeicherte Fassungen aus PDFs; Autor, letzten Bearbeiter, Daten, Firma, Vorlage, benutzerdefinierte Eigenschaften und Word-Bearbeitungssitzungs-Codes aus Office-Dateien. Bild und Text bleiben Byte für Byte gleich; ein gedrehtes Foto behält nur seine Ausrichtung.
 - Kommentare und nachverfolgte Änderungen werden nicht entfernt, weil du sie siehst und selbst entscheidest: Der Bericht sagt, wenn eine Datei sie noch hat. Lies auch den Inhalt selbst, siehe [Sensible Arbeit und Quellen](help:t/sensitive).
 
+### Dateien, die sich selbst löschen
+- `Selbst löschen…` (im Menü, eine Datei) stellt ein, dass eine Datei in 1 Stunde, 1 Tag, 7 Tagen oder 30 Tagen verschwindet. Eine Sanduhr neben dem Namen zeigt es an; `Behalten` nimmt es zurück. Es folgt der Datei, wenn du sie in Dateien verschiebst oder umbenennst, auch in den Papierkorb.
+- Ist es so weit, wird die Datei auf jedem Gerät endgültig gelöscht, sobald orOS dort zum ersten Mal läuft, auch wenn Dateien geschlossen ist. Eine vorher gesendete, heruntergeladene oder gesicherte Kopie bleibt, wo sie ist. Verschlüsselte Teile in deiner Cloud entfernt nur `Unbenutzte Dateien in der Cloud`.
+
 ### ZIP-Dateien
 - `Als ZIP komprimieren` packt die ausgewählten Dateien und Ordner in eine .zip daneben, benannt nach dem Element (oder "Archiv.zip" bei mehreren). Text und andere Dateien werden komprimiert, wo der Browser es kann; Fotos, Videos und andere schon komprimierte Dateien werden so gespeichert, wie sie sind.
 - Öffne eine .zip, um zu sehen, was drin ist. `Entpacken` (oder `Hier entpacken` im Menü) packt sie in einen neuen Ordner daneben aus. Eine Datei überschreibt nie etwas: vergebene Namen bekommen " (1)".

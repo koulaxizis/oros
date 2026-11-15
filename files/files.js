@@ -72,6 +72,7 @@
   var ROOT_RECENTS = 10;         // shown on the main folder
   var SEARCH_PAGE = 100;         // results per "Show more"
   var FAVS_KEY = "oros-files-favs";   // synced slice "files" (Favourites)
+  var EXPS_KEY = "oros-files-exp";    // synced slice "files-exp" (self-deleting files, STRICT-5)
   var SWEEP_KEY = "oros-files-trash-swept";
   var CORE = window.OrosFilesCore;
   var TRASH = CORE.TRASH;
@@ -259,6 +260,21 @@
       "menu.pdfTools": "Open in Scanner & PDF",
       "menu.transfer": "Send with Transfer…",
       "menu.clean": "Remove hidden details",
+      "exp.menu": "Delete itself…",
+      "exp.title": "Delete this file by itself",
+      "exp.hint": "On every device, the first time orOS runs after this time. It is deleted for good, not put in the Trash.",
+      "exp.in.1h": "In 1 hour",
+      "exp.in.1d": "In 1 day",
+      "exp.in.7d": "In 7 days",
+      "exp.in.30d": "In 30 days",
+      "exp.keep": "Keep it",
+      "exp.set": "This file will delete itself",
+      "exp.off": "This file stays",
+      "exp.gone1": "A self-deleting file was deleted",
+      "exp.goneN": "{n} self-deleting files were deleted",
+      "exp.left.d": "Deletes itself in {n} d",
+      "exp.left.h": "Deletes itself in {n} h",
+      "exp.left.m": "Deletes itself in {n} min",
       "clean.title": "Hidden details removed",
       "clean.working": "Removing hidden details… {n} of {t}",
       "clean.saved": "Saved as “{name}”. The original is unchanged.",
@@ -522,6 +538,21 @@
       "menu.pdfTools": "Άνοιγμα στο Σαρωτής & PDF",
       "menu.transfer": "Αποστολή με Μεταφορά…",
       "menu.clean": "Αφαίρεση κρυφών στοιχείων",
+      "exp.menu": "Αυτοκαταστροφή…",
+      "exp.title": "Το αρχείο να σβηστεί μόνο του",
+      "exp.hint": "Σε κάθε συσκευή, την πρώτη φορά που τρέχει το orOS μετά από αυτή την ώρα. Σβήνεται οριστικά, δεν μπαίνει στον Κάδο.",
+      "exp.in.1h": "Σε 1 ώρα",
+      "exp.in.1d": "Σε 1 μέρα",
+      "exp.in.7d": "Σε 7 μέρες",
+      "exp.in.30d": "Σε 30 μέρες",
+      "exp.keep": "Να μείνει",
+      "exp.set": "Το αρχείο θα σβηστεί μόνο του",
+      "exp.off": "Το αρχείο μένει",
+      "exp.gone1": "Ένα αρχείο αυτοκαταστροφής σβήστηκε",
+      "exp.goneN": "Σβήστηκαν {n} αρχεία αυτοκαταστροφής",
+      "exp.left.d": "Σβήνεται σε {n} μ.",
+      "exp.left.h": "Σβήνεται σε {n} ώ.",
+      "exp.left.m": "Σβήνεται σε {n} λεπ.",
       "clean.title": "Τα κρυφά στοιχεία αφαιρέθηκαν",
       "clean.working": "Αφαιρώ κρυφά στοιχεία… {n} από {t}",
       "clean.saved": "Αποθηκεύτηκε ως «{name}». Το αρχικό δεν άλλαξε.",
@@ -1862,6 +1893,16 @@
         name.textContent = e.name;
       }
       li.title = e.name;
+      var ex = !e.dir ? CORE.expOf(exps, path) : 0;
+      if (ex) {
+        var xb = document.createElement("span");
+        xb.className = "exp-badge";
+        xb.textContent = "\u23F3";
+        xb.title = expLeftText(ex);
+        xb.setAttribute("aria-label", xb.title);
+        name.appendChild(xb);
+        li.title = e.name + " \u2014 " + xb.title;
+      }
       li.appendChild(name);
 
       // Size / modified columns — filled by fillStats() (FL-12).
@@ -3736,6 +3777,9 @@
     if (view !== "trash" && cleanPaths().length) {
       ctxMenu.appendChild(mkItem(CLEAN_SVG, "menu.clean", cleanSelection));
     }
+    if (view !== "trash" && !many && !p.dir && !CORE.isTrashPath(p.path)) {
+      ctxMenu.appendChild(mkItem(CLOCK_SVG, "exp.menu", function () { expDialog(p); }));
+    }
     ctxMenu.appendChild(hr());
     ctxMenu.appendChild(mkItem("", "menu.copyName", function () {
       copyToClipboard(p, "name");
@@ -4476,7 +4520,7 @@
     transientNote(t(on ? "fav.added" : "fav.removed"));
     renderSelBar();
   }
-  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); docsCarry(from, to); photosCarry(from, to); }
+  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); expCommit(CORE.expMove(exps, from, to, Date.now())); docsCarry(from, to); photosCarry(from, to); }
   function favDropPath(p) { favCommit(CORE.favDrop(favs, p, Date.now())); }
 
   function registerFavSync() {
@@ -4492,6 +4536,120 @@
       try { localStorage.setItem(FAVS_KEY, JSON.stringify(favs)); } catch (e) {}
       renderTree();
     }, FAVS_KEY, CORE.mergeFavs);
+  }
+
+  // ===== Self-deleting files (STRICT-5): synced slice "files-exp" =====
+  // A file may delete itself at a set time: here while Files is open
+  // (every minute), by the shell while it is closed. Deleted for good
+  // (no Trash); the disk sync carries the deletion to other devices.
+  var exps = CORE.normExps(null), expBusy = false;
+  function expLoad() {
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(EXPS_KEY)); } catch (e) { raw = null; }
+    exps = CORE.normExps(raw);
+  }
+  function expCommit(next) {
+    if (JSON.stringify(next) === JSON.stringify(exps)) return false;
+    exps = next;
+    try { localStorage.setItem(EXPS_KEY, JSON.stringify(exps)); } catch (e) { transientNote(t("toast.opFail")); }
+    var api = syncApi();
+    if (api && typeof api.markDirty === "function") api.markDirty();
+    return true;
+  }
+  function registerExpSync() {
+    var api = syncApi();
+    if (!api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("files-exp", function () {
+      return CORE.normExps(exps);
+    }, function (incoming) {
+      var next = CORE.normExps(incoming);
+      if (JSON.stringify(next) === JSON.stringify(exps)) return;
+      exps = next;
+      try { localStorage.setItem(EXPS_KEY, JSON.stringify(exps)); } catch (e) {}
+      expSweep();
+      refresh();
+    }, EXPS_KEY, CORE.mergeExps);
+  }
+  function expSweep() {
+    if (expBusy || !isAvailable()) return;
+    var due = CORE.expDue(exps, Date.now());
+    if (!due.length) return;
+    expBusy = true;
+    var n = 0;
+    due.reduce(function (ch, p) {
+      return ch.then(function () {
+        return FS().stat(p).then(function (st) {
+          if (!st || st.dir) return null;
+          return FS().rm(p).then(function () { n++; favDropPath(p); });
+        }, function () { return null; });
+      }).then(function () { expCommit(CORE.expSet(exps, p, 0, Date.now())); }, function () {});
+    }, Promise.resolve()).then(function () {
+      expBusy = false;
+      if (n) { transientNote(n === 1 ? t("exp.gone1") : tfmt("exp.goneN", { n: n })); forceStorageRecalc(); markDirty(); refresh(); }
+    });
+  }
+  function expDialog(p) {
+    var old = document.getElementById("dlg-exp");
+    if (old) old.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = "dlg-exp";
+    var h = document.createElement("h3");
+    h.textContent = t("exp.title");
+    dlg.appendChild(h);
+    var nm = document.createElement("p");
+    nm.textContent = p.name;
+    dlg.appendChild(nm);
+    var hint = document.createElement("p");
+    hint.className = "clean-note";
+    hint.textContent = t("exp.hint");
+    dlg.appendChild(hint);
+    var HOUR = 3600000, cur = CORE.expOf(exps, p.path);
+    var opts = [["1h", HOUR], ["1d", 24 * HOUR], ["7d", 7 * 24 * HOUR], ["30d", 30 * 24 * HOUR]];
+    var box = document.createElement("div");
+    box.className = "exp-opts";
+    opts.forEach(function (o) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("data-k", "exp-" + o[0]);
+      b.textContent = t("exp.in." + o[0]);
+      b.addEventListener("click", function () {
+        expCommit(CORE.expSet(exps, p.path, Date.now() + o[1], Date.now()));
+        transientNote(t("exp.set"));
+        dlg.close(); dlg.remove(); refresh();
+      });
+      box.appendChild(b);
+    });
+    dlg.appendChild(box);
+    var menu = document.createElement("menu");
+    if (cur) {
+      var keep = document.createElement("button");
+      keep.type = "button";
+      keep.setAttribute("data-k", "exp-off");
+      keep.textContent = t("exp.keep");
+      keep.addEventListener("click", function () {
+        expCommit(CORE.expSet(exps, p.path, 0, Date.now()));
+        transientNote(t("exp.off"));
+        dlg.close(); dlg.remove(); refresh();
+      });
+      menu.appendChild(keep);
+    }
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    menu.appendChild(sp);
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = t("dlg.cancel");
+    cancel.addEventListener("click", function () { dlg.close(); dlg.remove(); });
+    menu.appendChild(cancel);
+    dlg.appendChild(menu);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function expLeftText(e) {
+    var ms = Math.max(0, e - Date.now()), H = 3600000;
+    if (ms >= 24 * H) return tfmt("exp.left.d", { n: Math.floor(ms / (24 * H)) });
+    if (ms >= H) return tfmt("exp.left.h", { n: Math.floor(ms / H) });
+    return tfmt("exp.left.m", { n: Math.ceil(ms / 60000) });
   }
 
   // ===== Tree: Recent + Favourites on top, Trash under the disk =====
@@ -4644,6 +4802,9 @@
       // The record first: when the move fails it is taken back.
       return fs.writeText(CORE.trashMetaPath(id), JSON.stringify(meta)).then(function () {
         return fs.mv(path, CORE.trashItemDir(id) + "/" + baseName(path));
+      }).then(function (r) {
+        expCommit(CORE.expMove(exps, path, CORE.trashItemDir(id) + "/" + baseName(path), Date.now()));   // it still deletes itself in the Trash
+        return r;
       }).catch(function (e) {
         return fs.rm(CORE.trashMetaPath(id)).catch(function () {}).then(function () { throw e; });
       });
@@ -5608,6 +5769,7 @@
   function boot() {
     loadPrefs();
     favLoad();
+    expLoad();
     applyI18n();
     ensureTreeToggle();
     ensureToolbarExtras();
@@ -5632,6 +5794,9 @@
     renderSyncPill();
     watchVault();
     registerFavSync();
+    registerExpSync();
+    setTimeout(expSweep, 1500);
+    setInterval(expSweep, 60000);
     cwd = prefs.last && prefs.last.indexOf(ROOT) === 0 && !CORE.isTrashPath(prefs.last) ? prefs.last : ROOT;
     clearSelection();
 

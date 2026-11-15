@@ -513,6 +513,7 @@ var PRECACHE_URLS = [
   "notes/",
   "notes/index.html",
   "notes/notes.css",
+  "notes/expire.js",
   "notes/notes.js",
   "notes/package.js",
   "notes/house.js",
