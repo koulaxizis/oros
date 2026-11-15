@@ -61,14 +61,19 @@
   // device) is kept with its options and values exactly as they came.
   var TYPES = ["text", "long", "number", "currency", "percent", "date", "check",
     "select", "multi", "rating", "email", "url", "phone", "auto", "ctime", "mtime",
-    "link", "lookup", "rollup", "count", "formula"];
+    "link", "lookup", "rollup", "count", "formula", "file"];
   // shown, never typed in
   var COMPUTED = { auto: 1, ctime: 1, mtime: 1, lookup: 1, rollup: 1, count: 1, formula: 1 };
   // no value in rec.v (links live in their own rows)
   var NOSTORE = { auto: 1, ctime: 1, mtime: 1, lookup: 1, rollup: 1, count: 1, formula: 1, link: 1 };
   var ROLL_FNS = ["SUM", "AVG", "MIN", "MAX", "COUNT", "COUNTA", "CONCAT", "AND", "OR"];
+  // Attachments (B3b): the record keeps names, the files live on the
+  // orOS disk (they travel with Vault Drive, never with the slice)
+  var ATT_DIR = "/internal/Base/Attachments/";
+  var FILE_RE = /^[a-z0-9][a-z0-9-]{0,79}\.[a-z0-9]{1,8}$/;
+  var MAX_ATT = 20;
   var COLORS = ["gray", "red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "brown"];
-  var VIEW_KINDS = { grid: 1, cards: 1, kanban: 1, calendar: 1 };
+  var VIEW_KINDS = { grid: 1, cards: 1, kanban: 1, calendar: 1, gallery: 1, form: 1 };
 
   // ---------- small helpers ----------
   function str(v, max) { return typeof v === "string" ? v.slice(0, max) : ""; }
@@ -186,6 +191,8 @@
         return v === true ? true : undefined;
       case "select":
         return okId(v) ? v : undefined;
+      case "file":
+        return cleanFiles(v);
       case "multi":
         if (!Array.isArray(v)) return undefined;
         var seen = {}, out = [];
@@ -195,6 +202,32 @@
       default:
         return plain(v, MAX_LONG) === null ? undefined : plain(v, MAX_LONG);   // newer type or unknown field
     }
+  }
+
+  // [{ id, name, file, kind img|pdf|file, size }], in the order added
+  function cleanFiles(v) {
+    if (!Array.isArray(v)) return undefined;
+    var seen = {}, out = [];
+    v.forEach(function (x) {
+      if (!isObj(x) || !okId(x.id) || seen[x.id] || !FILE_RE.test(x.file || "") || out.length >= MAX_ATT) return;
+      seen[x.id] = 1;
+      out.push({ id: x.id, name: line(x.name, MAX_NAME) || x.file, file: x.file,
+        kind: x.kind === "img" || x.kind === "pdf" ? x.kind : "file", size: int(x.size, 0, 1e10, 0) });
+    });
+    return out.length ? out : undefined;
+  }
+  function attPath(file) { return FILE_RE.test(file || "") ? ATT_DIR + file : null; }
+  // every attachment file a live record still names → { file: 1 }
+  function usedFiles(d) {
+    var used = {}, files = {};
+    ((d && d.fields) || []).forEach(function (f) { if (f.type === "file") files[f.id] = 1; });
+    if (!Object.keys(files).length) return used;
+    ((d && d.recs) || []).forEach(function (r) {
+      Object.keys(r.v || {}).forEach(function (k) {
+        if (files[k] && Array.isArray(r.v[k])) r.v[k].forEach(function (x) { if (x && x.file) used[x.file] = 1; });
+      });
+    });
+    return used;
   }
 
   // ---------- rows ----------
@@ -796,6 +829,7 @@
         if (f.opt.as === "date" && typeof v === "string" && DATE_RE.test(v.slice(0, 10))) return o && o.locale ? fmtDate(v, o.locale) : v;
         return String(v);
       case "check": return v === true ? (o ? "✓" : "true") : "";
+      case "file": return Array.isArray(v) ? v.map(function (x) { return x && x.name || ""; }).filter(Boolean).join(", ") : "";
       case "select": var c = optOf(f, v); return c ? c.n : "";
       case "multi": return v.map(function (id) { var c = optOf(f, id); return c ? c.n : ""; }).filter(Boolean).join(", ");
       case "rating": return o ? new Array(v + 1).join("★") : String(v);
@@ -978,7 +1012,7 @@
     var v = value(ix, rec, f);
     if (v === undefined || (Array.isArray(v) && !v.length)) return "\u0000";
     if (f.type === "multi") return v.join(",");
-    if (f.type === "link" || f.type === "lookup") return canon(text(ix, rec, f));
+    if (f.type === "link" || f.type === "lookup" || f.type === "file") return canon(text(ix, rec, f));
     var kind = kindOf(ix, f);
     if (kind === "stamp" && typeof v === "number") return localYmd(v);
     if (kind === "date" && typeof v === "string") return v.slice(0, 10);
@@ -1046,6 +1080,22 @@
       weeks.push(row);
     }
     return { f: f, weeks: weeks, none: none, editable: f.type === "date" };
+  }
+  // Gallery (B3b): the attachment field whose first photo is a card's
+  // cover: cfg.by when it is one of this table, else the first. → field | null
+  function coverField(ix, view) {
+    var fs = ix.tbFields[view.tb] || [];
+    var f = ix.fields[view.cfg && view.cfg.by];
+    if (f && f.tb === view.tb && f.type === "file") return f;
+    for (var i = 0; i < fs.length; i++) if (fs[i].type === "file") return fs[i];
+    return null;
+  }
+  // the first photo of a record in that field → { id, name, file, … } | null
+  function coverOf(ix, rec, f) {
+    var v = f ? value(ix, rec, f) : null;
+    if (!Array.isArray(v)) return null;
+    for (var i = 0; i < v.length; i++) if (v[i] && v[i].kind === "img") return v[i];
+    return null;
   }
 
   // [{ depth, key, f, rec (first), count, recs? }] rows for the screen:
@@ -1828,6 +1878,8 @@
     empty: empty, normalize: normalize, merge: merge, serialize: serialize, canon: canon,
     index: index, primary: primary, value: value, text: text, optOf: optOf, cleanVal: cleanVal, cleanOpt: cleanOpt,
     opsFor: opsFor, needsValue: needsValue, query: query, layout: layout, groupKey: groupKey,
+    ATT_DIR: ATT_DIR, FILE_RE: FILE_RE, MAX_ATT: MAX_ATT, attPath: attPath, usedFiles: usedFiles, cleanFiles: cleanFiles,
+    coverField: coverField, coverOf: coverOf,
     VIEW_KINDS: VIEW_KINDS, visibleFields: visibleFields, stackField: stackField, stacks: stacks, dateField: dateField, monthGrid: monthGrid, orderedFields: orderedFields, summary: summary, compare: compare,
     uid: uid, fid: fid, oid: oid, putRow: putRow, addBase: addBase, addTable: addTable, addField: addField,
     remove: remove, restore: restore, rowsUnder: rowsUnder, setValues: setValues, addRecord: addRecord,

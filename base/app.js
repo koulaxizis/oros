@@ -100,6 +100,34 @@
       "cal.today": "Today", "cal.prev": "Previous month", "cal.next": "Next month", "cal.more": "+{n} more",
       "cal.noDate": "{n} records without a date in this view", "cal.noDate1": "1 record without a date in this view",
       "cal.add": "New record on this day",
+      "type.file": "Attachments",
+      "kind.gallery": "Gallery (cards with a photo)",
+      "kind.form": "Form (add records)",
+      "gal.by": "Cover from",
+      "gal.need": "Add an attachment field to show photos on the cards.",
+      "gal.addField": "Add an attachment field",
+      "form.hint": "Fill in the fields and press Add record. The form starts empty again.",
+      "form.skipped": "Links, attachments and computed fields are filled in the record afterwards.",
+      "form.clear": "Clear",
+      "form.submit": "Add record",
+      "form.empty": "Fill in at least one field.",
+      "form.saved": "Record added",
+      "menu.print": "Print or save as PDF",
+      "pr.cut": "Only the first {n} records are printed.",
+      "pr.no": "This browser cannot print from here.",
+      "att.add": "Add files…",
+      "att.noDisk": "The orOS disk is not available here.",
+      "att.max": "Up to {n} files per field.",
+      "att.bad": "Could not add “{x}” (unreadable, or over 10 MB).",
+      "att.added1": "1 file added",
+      "att.added": "{n} files added",
+      "att.removed": "File removed",
+      "att.missing": "Not on this device yet",
+      "att.missingLong": "This file is not on this device yet. It arrives with the orOS disk (Sync › Drive).",
+      "att.where": "Kept in Files › Base › Attachments. Photos are resized and their location data removed.",
+      "att.open": "Open",
+      "att.save": "Save a copy",
+      "att.remove": "Remove",
       "search": "Search in this view", "count": "{n} records", "count1": "1 record", "countOf": "{n} of {all} records",
       "filter": "Filter", "filterN": "Filter ({n})", "sort": "Sort", "sortN": "Sort ({n})", "group": "Group", "groupN": "Group ({n})",
       "f.empty": "(empty)", "f.untitled": "Untitled", 
@@ -152,7 +180,7 @@
       "fld.exprBad": "There is no field called “{x}” in this table.",
       "fld.asDate": "Show the result as a date",
       "fld.decAuto": "As it comes",
-      "fld.typeLocked": "A link field keeps its type. To change it, delete the field.",
+      "fld.typeLocked": "A link or attachment field keeps its type. To change it, delete the field.",
       "del.linkField": "Delete “{x}”? Its other side “{y}” in “{z}” and all the links go too.",
       "lnk.title": "Link records",
       "lnk.search": "Search in “{x}”",
@@ -245,6 +273,34 @@
       "cal.today": "Σήμερα", "cal.prev": "Προηγούμενος μήνας", "cal.next": "Επόμενος μήνας", "cal.more": "+{n} ακόμα",
       "cal.noDate": "{n} εγγραφές χωρίς ημερομηνία σε αυτή την προβολή", "cal.noDate1": "1 εγγραφή χωρίς ημερομηνία σε αυτή την προβολή",
       "cal.add": "Νέα εγγραφή αυτή τη μέρα",
+      "type.file": "Συνημμένα",
+      "kind.gallery": "Γκαλερί (κάρτες με φωτογραφία)",
+      "kind.form": "Φόρμα (προσθήκη εγγραφών)",
+      "gal.by": "Εξώφυλλο από",
+      "gal.need": "Πρόσθεσε πεδίο συνημμένων για να φαίνονται φωτογραφίες στις κάρτες.",
+      "gal.addField": "Προσθήκη πεδίου συνημμένων",
+      "form.hint": "Συμπλήρωσε τα πεδία και πάτα Προσθήκη εγγραφής. Η φόρμα αδειάζει ξανά.",
+      "form.skipped": "Συνδέσεις, συνημμένα και υπολογιζόμενα πεδία συμπληρώνονται μετά στην εγγραφή.",
+      "form.clear": "Καθαρισμός",
+      "form.submit": "Προσθήκη εγγραφής",
+      "form.empty": "Συμπλήρωσε τουλάχιστον ένα πεδίο.",
+      "form.saved": "Η εγγραφή προστέθηκε",
+      "menu.print": "Εκτύπωση ή αποθήκευση ως PDF",
+      "pr.cut": "Τυπώνονται μόνο οι πρώτες {n} εγγραφές.",
+      "pr.no": "Αυτός ο φυλλομετρητής δεν μπορεί να τυπώσει από εδώ.",
+      "att.add": "Προσθήκη αρχείων…",
+      "att.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.",
+      "att.max": "Έως {n} αρχεία ανά πεδίο.",
+      "att.bad": "Δεν προστέθηκε το «{x}» (δεν διαβάζεται ή ξεπερνά τα 10 MB).",
+      "att.added1": "Προστέθηκε 1 αρχείο",
+      "att.added": "Προστέθηκαν {n} αρχεία",
+      "att.removed": "Το αρχείο αφαιρέθηκε",
+      "att.missing": "Δεν έχει έρθει ακόμα σε αυτή τη συσκευή",
+      "att.missingLong": "Αυτό το αρχείο δεν έχει έρθει ακόμα σε αυτή τη συσκευή. Έρχεται με τον δίσκο του orOS (Συγχρονισμός › Drive).",
+      "att.where": "Φυλάσσεται στα Αρχεία › Base › Attachments. Οι φωτογραφίες μικραίνουν και χάνουν τα στοιχεία τοποθεσίας τους.",
+      "att.open": "Άνοιγμα",
+      "att.save": "Αποθήκευση αντιγράφου",
+      "att.remove": "Αφαίρεση",
       "search": "Αναζήτηση σε αυτή την προβολή", "count": "{n} εγγραφές", "count1": "1 εγγραφή", "countOf": "{n} από {all} εγγραφές",
       "filter": "Φίλτρο", "filterN": "Φίλτρο ({n})", "sort": "Ταξινόμηση", "sortN": "Ταξινόμηση ({n})", "group": "Ομάδες", "groupN": "Ομάδες ({n})",
       "f.empty": "(κενό)", "f.untitled": "Χωρίς όνομα", 
@@ -297,7 +353,7 @@
       "fld.exprBad": "Δεν υπάρχει πεδίο «{x}» σε αυτόν τον πίνακα.",
       "fld.asDate": "Δείξε το αποτέλεσμα ως ημερομηνία",
       "fld.decAuto": "Όπως βγαίνει",
-      "fld.typeLocked": "Ένα πεδίο σύνδεσης κρατά τον τύπο του. Για να τον αλλάξεις, διάγραψε το πεδίο.",
+      "fld.typeLocked": "Ένα πεδίο σύνδεσης ή συνημμένων κρατά τον τύπο του. Για να τον αλλάξεις, διάγραψε το πεδίο.",
       "del.linkField": "Διαγραφή του «{x}»; Φεύγουν μαζί η άλλη του πλευρά «{y}» στον πίνακα «{z}» και όλες οι συνδέσεις.",
       "lnk.title": "Σύνδεση εγγραφών",
       "lnk.search": "Αναζήτηση στο «{x}»",
@@ -407,6 +463,7 @@
     try { data = C.normalize(JSON.parse(localStorage.getItem(STORAGE_KEY) || "null")); }
     catch (e) { data = C.empty(); }
     ix = C.index(data);
+    noteFiles();
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (p && typeof p === "object") {
@@ -429,6 +486,8 @@
     data = next;
     ix = C.index(data);
     if (!persist()) { data = before; ix = C.index(data); render(); return false; }
+    noteFiles();
+    sweepLater();
     var api = syncApi();
     if (api && typeof api.markDirty === "function") api.markDirty();
     if (!(opts && opts.quiet)) render();
@@ -441,7 +500,10 @@
     data = merged;
     ix = C.index(data);
     persist();                 // R6: no markDirty for a pull
+    noteFiles();
     if (editing) return;       // the editor's cell repaints when it closes
+    var a = document.activeElement;
+    if (a && a.closest && a.closest(".bform")) return;   // do not pull the form away from the typist
     render();
     refreshOpenRecord();
   }
@@ -688,6 +750,8 @@
     var all = (ix.tbRecs[cur.table] || []).length;
     $("count").textContent = shown.length === all ? plural(all, "count1", "count") : t("countOf", { n: fmtNum(shown.length), all: fmtNum(all) });
     if (v.kind === "cards") renderCards(v);
+    else if (v.kind === "gallery") renderGallery(v);
+    else if (v.kind === "form") renderForm(v);
     else if (v.kind === "kanban") renderKanban(v);
     else if (v.kind === "calendar") renderCalendar(v);
     else renderGrid(v);
@@ -747,6 +811,7 @@
       } },
       { label: t("menu.newView"), fn: newViewDialog },
       v && { label: t("menu.exportCsv"), fn: exportCsv },
+      v && { label: t("menu.print"), fn: printView },
       v && sheetOpener() && { label: t("menu.sheet"), fn: openInSheet },
       v && views.length > 1 && { label: t("menu.delView"), danger: true, fn: function () {
         confirmDlg(t("del.view", { x: v.name }), t("btn.delete"), function () { deleteRow(v.id); });
@@ -829,7 +894,7 @@
     var name = input("text", t("v.newName", { n: views.length + 1 }));
     d.body.appendChild(fld(t("view.name"), name));
     var kind = el("select");
-    ["grid", "cards", "kanban", "calendar"].forEach(function (k) { var o = el("option", null, t("kind." + k)); o.value = k; kind.appendChild(o); });
+    ["grid", "cards", "gallery", "kanban", "calendar", "form"].forEach(function (k) { var o = el("option", null, t("kind." + k)); o.value = k; kind.appendChild(o); });
     d.body.appendChild(fld(t("view.kind"), kind));
     d.foot(btn("chip", t("btn.cancel"), function () { d.close(); }),
       btn("chip pri", t("btn.create"), function () {
@@ -961,7 +1026,7 @@
   function typeMark(type) {
     return { text: "Aa", long: "¶", number: "#", currency: "€", percent: "%", date: "▦", check: "☑", select: "◉", multi: "☰",
       rating: "★", email: "@", url: "↗", phone: "☎", auto: "№", ctime: "⏱", mtime: "⏱",
-      link: "⇄", lookup: "⤷", rollup: "∑", count: "⇄#", formula: "ƒx" }[type] || "?";
+      link: "⇄", lookup: "⤷", rollup: "∑", count: "⇄#", formula: "ƒx", file: "📎" }[type] || "?";
   }
   function typeLabel(type) { return C.TYPES.indexOf(type) >= 0 ? t("type." + type) : t("type.other"); }
 
@@ -1066,6 +1131,11 @@
       return w;
     }
     if (f.type === "check") return el("span", "tick", "✓");
+    if (f.type === "file") {
+      var fw = el("span", "pills");
+      v.forEach(function (x) { fw.appendChild(el("span", "pill att", x.name)); });
+      return fw;
+    }
     if (f.type === "rating") {
       var s = el("span", "stars");
       var max = f.opt && f.opt.max || 5;
@@ -1274,7 +1344,7 @@
     if (f.type === "link") { linkPicker(rec, f); return; }
     if (C.COMPUTED[f.type]) { toast(t("readOnly")); return; }
     if (C.TYPES.indexOf(f.type) < 0) { openRecord(rec.id); return; }
-    if (f.type === "long" || f.type === "multi" || f.type === "check" || f.type === "rating") { openRecord(rec.id, f.id); return; }
+    if (f.type === "long" || f.type === "multi" || f.type === "check" || f.type === "rating" || f.type === "file") { openRecord(rec.id, f.id); return; }
     revealSel();
     var cell = cellAt(rec.id, f.id);
     if (!cell) return;
@@ -1726,6 +1796,405 @@
     d.open();
   }
 
+  // ---------- 6c. Attachments, gallery, form, print (B3b) ----------
+  // An attachment field keeps [{ id, name, file, kind, size }] in the
+  // record; the file is /internal/Base/Attachments/<random>.<ext> on the
+  // orOS disk and travels with Vault Drive, never with the slice. Photos
+  // are redrawn on a canvas (long side ≤ 1600 px, JPEG): no EXIF or
+  // location kept. PDFs (header checked) and other files ≤ 10 MB are
+  // kept as they are and only offered to open or save, never rendered.
+  var ATT_MAX_IN = 40 * 1024 * 1024, ATT_MAX_FILE = 10 * 1024 * 1024;
+  var attUrls = {};                       // file → object URL (this session)
+  var seenFiles = {};                     // files a record named since the app opened
+  var sweepTimer = 0;
+  function fsApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : window.orosFS;
+      return f && typeof f.writeBlob === "function" && typeof f.readBlob === "function" && typeof f.rm === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function noteFiles() { Object.keys(C.usedFiles(data)).forEach(function (k) { seenFiles[k] = 1; }); }
+  // Files no record names any more leave the disk after the Undo window
+  // (a duplicate may share a file; Undo brings the record back first).
+  function sweepLater() {
+    clearTimeout(sweepTimer);
+    sweepTimer = setTimeout(function () {
+      var used = C.usedFiles(data);
+      Object.keys(seenFiles).forEach(function (k) { if (!used[k]) { delete seenFiles[k]; rmAtt(k); } });
+    }, 12000);
+  }
+  function attRandom() {
+    var a = new Uint8Array(12), out = "";
+    try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 256); }
+    for (var j = 0; j < a.length; j++) out += (a[j] % 36).toString(36);
+    return out;
+  }
+  function readAtt(file) {
+    var fs = fsApi(), path = C.attPath(file);
+    if (!fs || !path) return Promise.resolve(null);
+    return Promise.resolve(fs.readBlob(path)).then(function (b) { return b || null; }, function () { return null; });
+  }
+  function attUrl(file) {
+    if (attUrls[file]) return Promise.resolve(attUrls[file]);
+    return readAtt(file).then(function (b) {
+      if (!b) return null;
+      if (!attUrls[file]) attUrls[file] = URL.createObjectURL(b.slice(0, b.size, "image/jpeg"));
+      return attUrls[file];
+    });
+  }
+  function rmAtt(file) {
+    var fs = fsApi(), path = C.attPath(file);
+    if (attUrls[file]) { URL.revokeObjectURL(attUrls[file]); delete attUrls[file]; }
+    if (!fs || !path) return Promise.resolve();
+    return Promise.resolve(fs.rm(path)).catch(function () {});
+  }
+  var RASTER = /^image\/(jpeg|png|webp|gif|bmp|avif|heic|heif)$/i;
+  function encodeAtt(file) {
+    return new Promise(function (resolve) {
+      if (!file || !file.size || file.size > ATT_MAX_IN) { resolve(null); return; }
+      var ext = ((file.name || "").match(/\.([a-z0-9]{1,8})$/i) || [0, "bin"])[1].toLowerCase();
+      if (RASTER.test(file.type || "") || /^(jpe?g|png|webp|gif|bmp|avif|heic|heif)$/.test(ext)) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+          var w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) { URL.revokeObjectURL(url); resolve(null); return; }
+          var k = Math.min(1, 1600 / Math.max(w, h));
+          var cv = document.createElement("canvas");
+          cv.width = Math.max(1, Math.round(w * k));
+          cv.height = Math.max(1, Math.round(h * k));
+          var g = cv.getContext("2d");
+          g.fillStyle = "#fff";
+          g.fillRect(0, 0, cv.width, cv.height);
+          g.drawImage(img, 0, 0, cv.width, cv.height);
+          URL.revokeObjectURL(url);
+          cv.toBlob(function (b) { resolve(b && b.size ? { blob: b, ext: "jpg", kind: "img" } : null); }, "image/jpeg", 0.82);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
+        return;
+      }
+      if (file.size > ATT_MAX_FILE) { resolve(null); return; }
+      var pdf = file.type === "application/pdf" || ext === "pdf";
+      var head = file.slice(0, 5);
+      var rd = typeof head.text === "function" ? head.text() : Promise.resolve("%PDF-");
+      rd.then(function (h) {
+        if (pdf && h !== "%PDF-") { resolve(null); return; }
+        resolve({ blob: file.slice(0, file.size, "application/octet-stream"), ext: pdf ? "pdf" : ext, kind: pdf ? "pdf" : "file" });
+      }, function () { resolve(null); });
+    });
+  }
+  function pickAny() {
+    var host = dialogHost();
+    var pick = host && typeof host.openFiles === "function" ? host.openFiles("")
+      : host && typeof host.openFile === "function" ? Promise.resolve(host.openFile("")).then(function (f) { return f ? [f] : null; })
+      : localPickFiles("");
+    return Promise.resolve(pick).then(function (l) { return l ? [].slice.call(l) : []; });
+  }
+  // Files → the disk → the record's field, one at a time (the live record by id).
+  function addFiles(recId, f, files) {
+    var fs = fsApi();
+    if (!fs) { toast(t("att.noDisk")); return Promise.resolve(); }
+    var chain = Promise.resolve(), added = 0;
+    files.forEach(function (file) {
+      chain = chain.then(function () {
+        var rec = ix.recs[recId];
+        if (!rec) return;
+        var cur0 = C.value(ix, rec, f) || [];
+        if (cur0.length >= C.MAX_ATT) { toast(t("att.max", { n: C.MAX_ATT })); return; }
+        return encodeAtt(file).then(function (enc) {
+          if (!enc) { toast(t("att.bad", { x: String(file.name || "") })); return; }
+          var name = attRandom() + "." + enc.ext;
+          return Promise.resolve(fs.writeBlob(C.attPath(name), enc.blob)).then(function () {
+            var r2 = ix.recs[recId];
+            if (!r2) { rmAtt(name); return; }
+            var list = (C.value(ix, r2, f) || []).concat([{ id: C.uid(Date.now()), name: String(file.name || name).slice(0, 120), file: name, kind: enc.kind, size: enc.blob.size }]);
+            var p = {}; p[f.id] = list;
+            if (save(C.setValues(data, recId, p, Date.now()), { quiet: true })) added++;
+            else rmAtt(name);
+          });
+        });
+      });
+    });
+    return chain.then(function () {
+      if (added) { renderContent(); refreshOpenRecord(); toast(added === 1 ? t("att.added1") : t("att.added", { n: fmtNum(added) })); }
+    }, function () { toast(t("att.noDisk")); });
+  }
+  function removeAtt(recId, f, attId) {
+    var rec = ix.recs[recId];
+    if (!rec) return;
+    var list = (C.value(ix, rec, f) || []).filter(function (x) { return x.id !== attId; });
+    var p = {}; p[f.id] = list.length ? list : null;
+    if (save(C.setValues(data, recId, p, Date.now()))) {
+      refreshOpenRecord();
+      toast(t("att.removed"), function () {
+        var r2 = ix.recs[recId];
+        if (!r2) return;
+        var back = (C.value(ix, r2, f) || []).concat((C.value(ix, rec, f) || []).filter(function (x) { return x.id === attId; }));
+        var p2 = {}; p2[f.id] = back;
+        save(C.setValues(data, recId, p2, Date.now()));
+        refreshOpenRecord();
+      });
+    }
+  }
+  function fmtSize(n) {
+    if (!(n > 0)) return "";
+    if (n < 1024) return n + " B";
+    if (n < 1048576) return Math.round(n / 1024) + " KB";
+    return (n / 1048576).toLocaleString(locale(), { maximumFractionDigits: 1 }) + " MB";
+  }
+  function attKindText(x) { return x.kind === "pdf" ? "PDF" : (x.file.split(".").pop() || "").toUpperCase().slice(0, 4); }
+  function thumb(x, cls) {
+    var th = el("span", cls || "att-th");
+    if (x.kind === "img") {
+      attUrl(x.file).then(function (u) {
+        if (!u) { th.textContent = "!"; th.title = t("att.missing"); return; }
+        var im = el("img"); im.alt = ""; im.src = u; im.decoding = "async";
+        th.appendChild(im);
+      });
+    } else th.textContent = attKindText(x);
+    return th;
+  }
+  // the record dialog's editor: one row per file, Add files…
+  function fileEditor(rec, f) {
+    var box = el("div", "att-list");
+    box.dataset.f = f.id;
+    (C.value(ix, rec, f) || []).forEach(function (x) {
+      var row = btn("att-row", null, function () { attViewer(rec.id, f, x.id); });
+      row.appendChild(thumb(x));
+      row.appendChild(el("span", "att-name", x.name));
+      row.appendChild(el("span", "att-size dim", fmtSize(x.size)));
+      box.appendChild(row);
+    });
+    var n = (C.value(ix, rec, f) || []).length;
+    if (n < C.MAX_ATT) box.appendChild(btn("chip small att-add", t("att.add"), function () {
+      pickAny().then(function (files) { if (files.length) return addFiles(rec.id, f, files.slice(0, C.MAX_ATT - n)); });
+    }));
+    return box;
+  }
+  function attViewer(recId, f, attId) {
+    var rec = ix.recs[recId];
+    var x = rec && (C.value(ix, rec, f) || []).filter(function (y) { return y.id === attId; })[0];
+    if (!x) return;
+    var d = dialog(x.name, "att-dlg");
+    var box = el("div", "att-view");
+    d.body.appendChild(box);
+    d.body.appendChild(el("p", "hint", t("att.where")));
+    var blobNow = null, url = null;
+    var openB = x.kind === "pdf" ? btn("chip", t("att.open"), function () {
+      if (!url) return;
+      var a = el("a"); a.href = url; a.target = "_blank"; a.rel = "noopener";
+      document.body.appendChild(a); a.click(); a.remove();
+    }) : null;
+    var saveB = btn("chip", t("att.save"), function () {
+      if (!blobNow) return;
+      var mime = x.kind === "img" ? "image/jpeg" : x.kind === "pdf" ? "application/pdf" : "application/octet-stream";
+      var out = blobNow.slice(0, blobNow.size, mime), host = dialogHost();
+      if (host && typeof host.saveFile === "function") { host.saveFile({ blob: out, filename: x.name, mime: mime }); return; }
+      var a = el("a"), u = URL.createObjectURL(out);
+      a.href = u; a.download = x.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(u); }, 40000);
+    });
+    [openB, saveB].forEach(function (b) { if (b) b.disabled = true; });
+    d.foot(btn("chip danger", t("att.remove"), function () { d.close(); removeAtt(recId, f, attId); }),
+      el("span", "spacer"), openB, saveB, btn("chip pri", t("btn.close"), function () { d.close(); }));
+    d.onclose(function () { if (url) { var u = url; setTimeout(function () { URL.revokeObjectURL(u); }, 60000); } });
+    d.open();
+    readAtt(x.file).then(function (b) {
+      if (!b) { box.appendChild(el("p", "hint", t("att.missingLong"))); return; }
+      blobNow = b;
+      if (x.kind === "img") {
+        url = URL.createObjectURL(b.slice(0, b.size, "image/jpeg"));
+        var im = el("img"); im.alt = x.name; im.src = url;
+        box.appendChild(im);
+      } else {
+        if (x.kind === "pdf") url = URL.createObjectURL(b.slice(0, b.size, "application/pdf"));
+        box.appendChild(el("div", "att-big", attKindText(x) + " · " + fmtSize(x.size)));
+      }
+      [openB, saveB].forEach(function (bb) { if (bb) bb.disabled = false; });
+    });
+  }
+
+  // Gallery: cards with a cover, the first photo of an attachment field.
+  function renderGallery(v) {
+    gridState = null;
+    var box = $("content"), keep = box.scrollTop;
+    box.textContent = "";
+    box.className = "content gallery-host";
+    var fields = C.visibleFields(ix, v);
+    var cf = C.coverField(ix, v);
+    var files = (ix.tbFields[v.tb] || []).filter(function (f) { return f.type === "file"; });
+    var wrap = el("div", "cards gallery");
+    if (files.length) wrap.appendChild(byBar(v, t("gal.by"), files, cf));
+    else {
+      var tip = el("div", "gal-tip");
+      tip.appendChild(el("span", "hint", t("gal.need")));
+      tip.appendChild(btn("chip small", t("gal.addField"), function () { fieldDialog(null, "file"); }));
+      wrap.appendChild(tip);
+    }
+    var list = el("ul", "c-list gal-list");
+    shown.slice(0, cardLimit).forEach(function (rec) {
+      var li = el("li");
+      var card = miniCard(rec, fields, cf && cf.id);
+      card.classList.remove("mini");
+      card.classList.add("gal-card");
+      var cov = el("span", "gal-cover");
+      var x = C.coverOf(ix, rec, cf);
+      if (x) {
+        attUrl(x.file).then(function (u) {
+          if (!u) return;
+          var im = el("img"); im.alt = ""; im.src = u; im.loading = "lazy"; im.decoding = "async";
+          cov.appendChild(im);
+        });
+      } else cov.classList.add("none");
+      card.insertBefore(cov, card.firstChild);
+      li.appendChild(card);
+      list.appendChild(li);
+    });
+    wrap.appendChild(list);
+    if (shown.length > cardLimit) wrap.appendChild(btn("chip c-more", t("cards.more", { n: fmtNum(Math.min(200, shown.length - cardLimit)) }), function () { cardLimit += 200; renderContent(); }));
+    if (!shown.length) wrap.appendChild(el("p", "hint", (ix.tbRecs[v.tb] || []).length ? t("cards.none") : t("table.empty")));
+    box.appendChild(wrap);
+    box.scrollTop = keep;
+  }
+
+  // Form: the view's fields as a form; Add record saves one and clears.
+  // Computed, link and attachment fields are left out (they are filled
+  // in the record after).
+  var formDraft = {};                     // view id → values (this session)
+  function formFields(v) {
+    return C.visibleFields(ix, v).filter(function (f) { return !C.COMPUTED[f.type] && f.type !== "link" && f.type !== "file" && C.TYPES.indexOf(f.type) >= 0; });
+  }
+  function renderForm(v) {
+    gridState = null;
+    var box = $("content");
+    box.textContent = "";
+    box.className = "content form-host";
+    var tb = ix.tables[v.tb];
+    var vals = formDraft[v.id] = formDraft[v.id] || {};
+    var form = el("form", "bform");
+    form.noValidate = true;
+    form.appendChild(el("h2", "bform-title", (tb && tb.name) || t("f.untitled")));
+    form.appendChild(el("p", "hint", t("form.hint")));
+    var fields = formFields(v);
+    fields.forEach(function (f) {
+      var wrap = el("div", "fld rec-fld t-" + f.type);
+      var lab = el("span", "rec-label", f.name || t("f.untitled"));
+      wrap.appendChild(lab);
+      if (f.opt && f.opt.desc) wrap.appendChild(el("span", "hint", f.opt.desc));
+      wrap.appendChild(formInput(f, vals));
+      form.appendChild(wrap);
+    });
+    var skipped = C.visibleFields(ix, v).length - fields.length;
+    if (skipped) form.appendChild(el("p", "hint", t("form.skipped")));
+    var bar = el("div", "bar end");
+    bar.appendChild(btn("chip", t("form.clear"), function () { formDraft[v.id] = {}; renderContent(); }));
+    var sub = btn("chip pri", t("form.submit"), null);
+    sub.type = "submit";
+    bar.appendChild(sub);
+    form.appendChild(bar);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!roomFor(1)) return;
+      var clean = {}, any = false;
+      fields.forEach(function (f) { if (vals[f.id] !== undefined && vals[f.id] !== null && vals[f.id] !== "") { clean[f.id] = vals[f.id]; any = true; } });
+      if (!any) { toast(t("form.empty")); return; }
+      var r = C.addRecord(data, v.tb, clean, Date.now());
+      if (!save(r.data, { quiet: true })) return;
+      formDraft[v.id] = {};
+      renderContent();
+      toast(t("form.saved"), function () { deleteRow(r.id); });
+      var first = box.querySelector("input, select, textarea");
+      if (first) first.focus();
+    });
+    var outer = el("div", "bform-wrap");
+    outer.appendChild(form);
+    box.appendChild(outer);
+  }
+  function formInput(f, vals) {
+    var v = vals[f.id];
+    function put(x) { if (x === null || x === undefined || x === "" || (Array.isArray(x) && !x.length)) delete vals[f.id]; else vals[f.id] = x; }
+    if (f.type === "check") {
+      var lab = el("label", "opt");
+      var cb = el("input"); cb.type = "checkbox"; cb.checked = v === true;
+      cb.addEventListener("change", function () { put(cb.checked ? true : null); });
+      lab.appendChild(cb); lab.appendChild(el("span", null, f.name || ""));
+      return lab;
+    }
+    if (f.type === "multi") {
+      var box = el("div", "multi-box");
+      (f.opt.ch || []).forEach(function (o) {
+        var l2 = el("label", "pill-opt col-" + o.c);
+        var c2 = el("input"); c2.type = "checkbox"; c2.checked = Array.isArray(v) && v.indexOf(o.id) >= 0;
+        c2.addEventListener("change", function () {
+          var cur = (vals[f.id] || []).filter(function (x) { return x !== o.id; });
+          if (c2.checked) cur.push(o.id);
+          put(cur);
+        });
+        l2.appendChild(c2); l2.appendChild(el("span", null, o.n || "—"));
+        box.appendChild(l2);
+      });
+      return box;
+    }
+    if (f.type === "rating") {
+      var sbox = el("div", "rate");
+      var max = f.opt && f.opt.max || 5;
+      for (var i = 1; i <= max; i++) (function (n) {
+        var b = btn("star" + (v >= n ? " on" : ""), "★", function () {
+          var nv = vals[f.id] === n ? null : n;
+          put(nv);
+          [].forEach.call(sbox.children, function (c, k) { c.classList.toggle("on", nv !== null && k < nv); });
+        });
+        b.setAttribute("aria-label", n + "/" + max);
+        sbox.appendChild(b);
+      })(i);
+      return sbox;
+    }
+    var inp = editorFor(f, v);
+    function read() { var x = readEditor(f, inp); put(x === undefined ? null : x); }
+    inp.addEventListener("input", read);
+    inp.addEventListener("change", read);
+    return inp;
+  }
+
+  // Print / PDF: the view as a plain table on paper (the browser's
+  // print dialog also saves a PDF). Up to 5,000 records.
+  function printView() {
+    var v = curView(), tb = curTable();
+    if (!v || !tb) return;
+    var old = $("print-area");
+    if (old) old.remove();
+    var fields = C.visibleFields(ix, v).filter(function (f) { return f.type !== "file"; });
+    var area = el("section", "print-area");
+    area.id = "print-area";
+    var b = ix.bases[tb.base];
+    area.appendChild(el("h1", null, (b ? b.name + " › " : "") + (tb.name || "") + " · " + (v.name || "")));
+    var q = $("q").value.trim();
+    area.appendChild(el("p", "pr-meta", plural(shown.length, "count1", "count") + (q ? " · “" + q + "”" : "") + " · " + new Date().toLocaleDateString(locale(), { day: "numeric", month: "long", year: "numeric" })));
+    var table = el("table");
+    var thead = el("thead"), hr = el("tr");
+    fields.forEach(function (f) { hr.appendChild(el("th", null, f.name || "")); });
+    thead.appendChild(hr); table.appendChild(thead);
+    var tbody = el("tbody");
+    shown.slice(0, 5000).forEach(function (rec) {
+      var tr = el("tr");
+      fields.forEach(function (f) {
+        var td = el("td", C.kindOf(ix, f) === "num" ? "num" : null, C.text(ix, rec, f, fmt()));
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    area.appendChild(table);
+    if (shown.length > 5000) area.appendChild(el("p", "pr-meta", t("pr.cut", { n: fmtNum(5000) })));
+    document.body.appendChild(area);
+    document.body.classList.add("printing");
+    function done() { document.body.classList.remove("printing"); area.remove(); window.removeEventListener("afterprint", done); }
+    window.addEventListener("afterprint", done);
+    setTimeout(function () { try { window.focus(); window.print(); } catch (e) { toast(t("pr.no")); done(); } }, 60);
+  }
+
   // ---------- 7. Record dialog ----------
   var recDlg = null;       // { id, d, focus }
   function openRecord(id, focusField) {
@@ -1800,6 +2269,7 @@
       if (C.serialize(next) !== C.serialize(data)) save(next, { quiet: true });
     }
     if (f.type === "link") return linkEditor(rec, f);
+    if (f.type === "file") return fileEditor(rec, f);
     if (C.COMPUTED[f.type] || C.TYPES.indexOf(f.type) < 0) {
       var ro = el("div", "rec-ro");
       var n = valueNode(rec, f, true);
@@ -1991,11 +2461,11 @@
       // the primary field names records: keep it a kind of text
       [].forEach.call(type.options, function (o) { if (!/^(text|long|email|url|phone|number|auto|date|formula)$/.test(o.value)) o.disabled = true; });
     }
-    // a link field keeps its type, and an existing field does not become one
-    if (f && f.type === "link") type.disabled = true;
-    else if (f) [].forEach.call(type.options, function (o) { if (o.value === "link") o.disabled = true; });
+    // a link or attachment field keeps its type, and an existing field does not become one
+    if (f && (f.type === "link" || f.type === "file")) type.disabled = true;
+    else if (f) [].forEach.call(type.options, function (o) { if (o.value === "link" || o.value === "file") o.disabled = true; });
     d.body.appendChild(fld(t("fld.type"), type));
-    if (f && f.type === "link") d.body.appendChild(el("p", "hint", t("fld.typeLocked")));
+    if (f && (f.type === "link" || f.type === "file")) d.body.appendChild(el("p", "hint", t("fld.typeLocked")));
     var optBox = el("div", "opt-box");
     d.body.appendChild(optBox);
     var desc = el("textarea"); desc.rows = 2; desc.maxLength = 1000; desc.value = f && f.opt.desc || "";

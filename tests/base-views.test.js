@@ -38,7 +38,7 @@ test("views keep the kanban and calendar kinds and cfg.by; bad kinds become grid
   const vx = d.views.find((x) => x.id === "vx");
   assert.equal(vx.kind, "grid");
   assert.equal(vx.cfg.by, undefined);
-  assert.deepEqual(Object.keys(C.VIEW_KINDS).sort(), ["calendar", "cards", "grid", "kanban"]);
+  assert.deepEqual(Object.keys(C.VIEW_KINDS).sort(), ["calendar", "cards", "form", "gallery", "grid", "kanban"]);
 });
 
 test("kanban stacks by the first single choice, no value first, gone choices count as no value", () => {
@@ -122,12 +122,12 @@ test("a calendar follows cfg.by; a created-time field is a date but not editable
   assert.equal(C.monthGrid(ix, ix.views.vk, [], "2026-03"), null);
 });
 
-test("the app offers the four kinds and draws kanban and calendar with textContent only", () => {
+test("the app offers the kinds and draws kanban and calendar with textContent only", () => {
   const app = read("base/app.js");
-  assert.match(app, /\["grid", "cards", "kanban", "calendar"\]/);
+  assert.match(app, /\["grid", "cards", "gallery", "kanban", "calendar", "form"\]/);
   assert.match(app, /function renderKanban\(v\)/);
   assert.match(app, /function renderCalendar\(v\)/);
-  const sec = app.slice(app.indexOf("6b. Kanban and calendar"), app.indexOf("7. Record dialog"));
+  const sec = app.slice(app.indexOf("6b. Kanban and calendar"), app.indexOf("---------- 6c."));
   assert.doesNotMatch(sec, /innerHTML|insertAdjacentHTML|outerHTML/);
   for (const k of ["kind.kanban", "kind.calendar", "kb.by", "cal.by", "cal.add"]) {
     assert.ok(read("i18n/de/base.js").includes('"' + k + '"'), "de " + k);

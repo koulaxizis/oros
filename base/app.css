@@ -375,6 +375,53 @@ dialog .kb-list { padding: 0; }
 .cal-more { background: none; color: var(--text-dim); }
 .cal > .hint { margin: 10px 12px 0; }
 
+/* ---------- attachments, gallery, form, print (B3b) ---------- */
+.pill.att { --c: var(--text-dim); border-radius: 6px; }
+.att-list { display: flex; flex-direction: column; gap: 6px; }
+.att-row {
+  display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 10px 4px 4px; width: 100%;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.att-row:hover { border-color: var(--accent); }
+.att-th {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; overflow: hidden;
+  border-radius: 6px; background: var(--accent-soft); color: var(--text); font-size: 11px; font-weight: 700;
+}
+.att-th img { width: 100%; height: 100%; object-fit: cover; }
+.att-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.att-size { flex: none; font-size: 12px; }
+.att-add { align-self: flex-start; }
+.att-view { display: flex; justify-content: center; }
+.att-view img { max-width: 100%; max-height: 60vh; border-radius: 8px; }
+.att-big { padding: 32px 20px; font-size: 20px; font-weight: 700; }
+.gal-tip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.gallery .by-bar { position: static; padding: 0 0 10px; }
+.gal-list { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.card-rec.gal-card { padding: 0 0 10px; overflow: hidden; }
+.gal-card .c-title, .gal-card .c-fields { padding: 0 12px; }
+.gal-cover { display: block; aspect-ratio: 16 / 10; width: 100%; background: var(--accent-soft); overflow: hidden; }
+.gal-cover.none { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.gal-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.bform-wrap { padding: 16px 12px 80px; }
+.bform { display: flex; flex-direction: column; gap: 14px; max-width: 640px; margin: 0 auto; padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-bg); }
+.bform-title { margin: 0; font-size: 22px; }
+.bform .fld { display: flex; flex-direction: column; }
+.bform input:not([type="checkbox"]), .bform select, .bform textarea { width: 100%; }
+.print-area { display: none; }
+@media print {
+  body.printing > *:not(.print-area) { display: none !important; }
+  body.printing { background: #fff !important; color: #000 !important; }
+  body.printing .print-area { display: block; font: 10pt/1.35 system-ui, sans-serif; color: #000; }
+  .print-area h1 { margin: 0 0 4pt; font-size: 14pt; }
+  .print-area .pr-meta { margin: 0 0 8pt; color: #444; font-size: 9pt; }
+  .print-area table { width: 100%; border-collapse: collapse; }
+  .print-area th, .print-area td { padding: 3pt 5pt; border: 0.5pt solid #999; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+  .print-area th { background: #eee; }
+  .print-area td.num { text-align: right; }
+  .print-area thead { display: table-header-group; }
+  .print-area tr { break-inside: avoid; }
+}
+
 @media (max-width: 600px) {
   #toolbar { padding: 6px 10px; }
   .vbar { padding: 6px 10px; gap: 4px; }
@@ -387,6 +434,9 @@ dialog .kb-list { padding: 0; }
   .home-wrap { padding: 12px 12px 80px; }
   .c-list { grid-template-columns: 1fr; }
   .kanban { padding: 8px 10px 80px; gap: 8px; }
+  .gal-list { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .bform { padding: 14px; }
+  .bform-wrap { padding: 10px 8px 80px; }
   .kb-col { flex-basis: 82vw; }
   .cal-grid { margin: 8px 6px 0; }
   .cal-day { min-height: 56px; padding: 2px 1px; align-items: center; }
