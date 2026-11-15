@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.83.00
+- **Atelier and Layout: combine shapes and outline strokes.** Pick two or more shapes and choose Unite, Subtract front, Intersect or Exclude overlap: you get one shape with points you can edit, looking like the shape at the back. Outline stroke turns a stroke (dashes and arrow heads too) into a filled shape.
+
 ## Version 6.82.00
 - **Font collections.** In Settings › Fonts › Collections, group the fonts of a project, such as a book or a series of covers, from your own fonts and the free ones, and download a collection's free fonts for offline use. Layout's Fonts dialog and Atelier's font panel list the document's collection first. Each font can also keep a note, such as where you bought it. Collections and notes sync to all your devices.
 - **Your computer's fonts in orOS.** Settings › Fonts › On this device (Chrome and Edge on a computer) lists the fonts installed on this computer, with a sample, their Greek and polytonic letters and what their licence says. Copy one into orOS, after a confirmation, to use it in Layout and Atelier on all your devices; a font whose licence forbids embedding is never copied.

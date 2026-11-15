@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.82.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.83.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -8070,6 +8070,9 @@
         { name: "brotli.js 2.1.0 (decoder) + base64-js 1.5.1", url: "https://github.com/foliojs/brotli.js",
           by: "Devon Govett; Brotli decoder port by Google Inc.; Jameson Little", lic: "MIT + Apache-2.0",
           k: "cr.brotli-js" },
+        { name: "polygon-clipping 0.15.7 (with splaytree 3.1.2, robust-predicates)", url: "https://github.com/mfogel/polygon-clipping",
+          by: "Mike Fogel; Alexander Milevski; Vladimir Agafonkin (after J. R. Shewchuk)", lic: "MIT + Unlicense",
+          k: "cr.polygon-clipping" },
         { name: "OpenPGP.js 6.3.1", url: "https://openpgpjs.org/",
           by: "OpenPGP.js contributors, Proton AG", lic: "LGPL-3.0-or-later",
           k: "cr.openpgp-js" },
