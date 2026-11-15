@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Calendar · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=6.67.00">
-  <link rel="stylesheet" href="calendar.css?v=6.67.00">
+  <link rel="stylesheet" href="../fonts.css?v=6.92.00">
+  <link rel="stylesheet" href="calendar.css?v=6.92.00">
 
 </head>
 <body>
@@ -425,6 +425,28 @@
       <input id="gu-cap" type="number" min="0" max="100000" step="1" inputmode="numeric">
       <span class="gu-hint" data-i18n="gu.cap.hint"></span>
     </div>
+    <details id="gu-rv" class="gu-rv">
+      <summary data-i18n="gu.rv"></summary>
+      <p id="gu-rv-state" class="gu-hint" aria-live="polite"></p>
+      <div id="gu-rv-off" class="dlg-row">
+        <button id="gu-rv-make" type="button" class="btn prim" data-i18n="gu.rv.make"></button>
+      </div>
+      <div id="gu-rv-on" hidden>
+        <div class="dlg-row">
+          <button id="gu-rv-check" type="button" class="btn prim" data-i18n="gu.rv.check"></button>
+          <button id="gu-rv-stop" type="button" class="btn danger" data-i18n="gu.rv.stop"></button>
+        </div>
+        <div class="gu-cap">
+          <label for="gu-rv-ms" data-i18n="gu.rv.ms"></label>
+          <select id="gu-rv-ms"></select>
+        </div>
+        <label class="gu-rv-op"><input id="gu-rv-op" type="checkbox"> <span data-i18n="gu.rv.op"></span></label>
+        <div id="gu-rv-op-row" class="dlg-row" hidden>
+          <button id="gu-rv-copy" type="button" class="btn" data-i18n="gu.rv.copy"></button>
+          <button id="gu-rv-share" type="button" class="btn" data-i18n="gu.rv.share" hidden></button>
+        </div>
+      </div>
+    </details>
     <div id="gu-next" class="gu-next" hidden>
       <p id="gu-next-text"></p>
       <div class="dlg-row">
@@ -468,6 +490,7 @@
       <div class="dlg-row">
         <button id="gu-save" type="submit" class="btn prim" data-i18n="gu.save"></button>
         <button id="gu-form-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+        <button id="gu-inv-btn" type="button" class="btn" data-i18n="gu.inv" hidden></button>
         <button id="gu-tix-btn" type="button" class="btn" data-i18n="gu.tix" hidden></button>
         <button id="gu-del" type="button" class="btn danger" data-i18n="gu.del" hidden></button>
       </div>
@@ -548,51 +571,51 @@
     </div>
   </dialog>
 
-  <script src="../i18n.js?v=6.67.00" data-app="calendar,recordpkg,google-import"></script>
-  <script src="../plants/core.js?v=6.67.00"></script>
-  <script src="../chores/core.js?v=6.67.00"></script>
-  <script src="../petcare/core.js?v=6.67.00"></script>
-  <script src="../petcare/house.js?v=6.67.00"></script>
-  <script src="../garage/core.js?v=6.67.00"></script>
-  <script src="../household/group.js?v=6.67.00"></script>
-  <script src="../garage/house.js?v=6.67.00"></script>
-  <script src="../baby/core.js?v=6.67.00"></script>
-  <script src="../together/core.js?v=6.67.00"></script>
-  <script src="../together/house.js?v=6.67.00"></script>
-  <script src="../travel/core.js?v=6.67.00"></script>
-  <script src="../meals/core.js?v=6.67.00"></script>
-  <script src="../budget/feed.js?v=6.67.00"></script>
-  <script src="../budget/loans.js?v=6.67.00"></script>
-  <script src="../shelf/feed.js?v=6.67.00"></script>
-  <script src="../publish/core.js?v=6.67.00"></script>
-  <script src="../publish/feed.js?v=6.67.00"></script>
-  <script src="../invoices/core.js?v=6.67.00"></script>
-  <script src="../timesheet/core.js?v=6.67.00"></script>
-  <script src="../familytree/ft-core.js?v=6.67.00"></script>
-  <script src="../sky/core.js?v=6.67.00"></script>
-  <script src="../todo/core.js?v=6.67.00"></script>
-  <script src="../kanban/core.js?v=6.67.00"></script>
-  <script src="../contacts/dates.js?v=6.67.00"></script>
-  <script src="../habits/core.js?v=6.67.00"></script>
-  <script src="../crm/core.js?v=6.67.00"></script>
-  <script src="../health/core.js?v=6.67.00"></script>
-  <script src="occur.js?v=6.67.00"></script>
-  <script src="../household/core.js?v=6.67.00"></script>
-  <script src="house.js?v=6.67.00"></script>
-  <script src="namedays.js?v=6.67.00"></script>
-  <script src="ics.js?v=6.67.00"></script>
-  <script src="../google-import.js?v=6.67.00"></script>
-  <script src="gcal.js?v=6.67.00"></script>
-  <script src="quickadd.js?v=6.67.00"></script>
-  <script src="subs.js?v=6.67.00"></script>
-  <script src="free.js?v=6.67.00"></script>
-  <script src="guests.js?v=6.67.00"></script>
-  <script src="guestsui.js?v=6.67.00"></script>
-  <script src="../bundle.js?v=6.67.00"></script>
-  <script src="../recordpkg.js?v=6.67.00"></script>
-  <script src="package.js?v=6.67.00"></script>
-  <script src="../weather/days.js?v=6.67.00"></script>
-  <script src="calendar.js?v=6.67.00"></script>
+  <script src="../i18n.js?v=6.92.00" data-app="calendar,recordpkg,google-import"></script>
+  <script src="../plants/core.js?v=6.92.00"></script>
+  <script src="../chores/core.js?v=6.92.00"></script>
+  <script src="../petcare/core.js?v=6.92.00"></script>
+  <script src="../petcare/house.js?v=6.92.00"></script>
+  <script src="../garage/core.js?v=6.92.00"></script>
+  <script src="../household/group.js?v=6.92.00"></script>
+  <script src="../garage/house.js?v=6.92.00"></script>
+  <script src="../baby/core.js?v=6.92.00"></script>
+  <script src="../together/core.js?v=6.92.00"></script>
+  <script src="../together/house.js?v=6.92.00"></script>
+  <script src="../travel/core.js?v=6.92.00"></script>
+  <script src="../meals/core.js?v=6.92.00"></script>
+  <script src="../budget/feed.js?v=6.92.00"></script>
+  <script src="../budget/loans.js?v=6.92.00"></script>
+  <script src="../shelf/feed.js?v=6.92.00"></script>
+  <script src="../publish/core.js?v=6.92.00"></script>
+  <script src="../publish/feed.js?v=6.92.00"></script>
+  <script src="../invoices/core.js?v=6.92.00"></script>
+  <script src="../timesheet/core.js?v=6.92.00"></script>
+  <script src="../familytree/ft-core.js?v=6.92.00"></script>
+  <script src="../sky/core.js?v=6.92.00"></script>
+  <script src="../todo/core.js?v=6.92.00"></script>
+  <script src="../kanban/core.js?v=6.92.00"></script>
+  <script src="../contacts/dates.js?v=6.92.00"></script>
+  <script src="../habits/core.js?v=6.92.00"></script>
+  <script src="../crm/core.js?v=6.92.00"></script>
+  <script src="../health/core.js?v=6.92.00"></script>
+  <script src="occur.js?v=6.92.00"></script>
+  <script src="../household/core.js?v=6.92.00"></script>
+  <script src="house.js?v=6.92.00"></script>
+  <script src="namedays.js?v=6.92.00"></script>
+  <script src="ics.js?v=6.92.00"></script>
+  <script src="../google-import.js?v=6.92.00"></script>
+  <script src="gcal.js?v=6.92.00"></script>
+  <script src="quickadd.js?v=6.92.00"></script>
+  <script src="subs.js?v=6.92.00"></script>
+  <script src="free.js?v=6.92.00"></script>
+  <script src="guests.js?v=6.92.00"></script>
+  <script src="guestsui.js?v=6.92.00"></script>
+  <script src="../bundle.js?v=6.92.00"></script>
+  <script src="../recordpkg.js?v=6.92.00"></script>
+  <script src="package.js?v=6.92.00"></script>
+  <script src="../weather/days.js?v=6.92.00"></script>
+  <script src="calendar.js?v=6.92.00"></script>
 
 </body>
 </html>
