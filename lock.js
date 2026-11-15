@@ -1327,11 +1327,26 @@
         return true;
       },
       // The owner's PIN / passphrase: { ok, code: wrong | wait, wait }.
-      // Counts as a try, like the lock screen.
+      // Counts as a try, like the lock screen. The duress secret
+      // (STRICT-2) works here too: it looks like the owner's PIN while
+      // the wipe runs, as on the lock screen.
       check: function (secret) {
         if (!load()) return Promise.resolve({ ok: false, code: "off" });
         if (busy) return Promise.resolve({ ok: false, code: "busy" });
-        return checkCurrent(String(secret || ""));
+        if (waitMs()) return Promise.resolve({ ok: false, code: "wait", wait: waitMs() });
+        var s = String(secret || "");
+        var d = duressLive();
+        if (!d || typeof hooks.duress !== "function") return checkCurrent(s);
+        return matches(cfg, s).then(function (ok) {
+          if (ok) { clearTries(); return { ok: true }; }
+          return matches(d, s).then(function (hit) {
+            if (!hit) return checkCurrent(s);
+            var r = duressRec();
+            resetting = true;
+            try { hooks.duress(!!(r && r.cloud)); } catch (e) {}
+            return { ok: true };
+          });
+        });
       },
       // The till's "Owner" button: the lock screen, with a way back.
       ask: function () { return lock("owner"); }

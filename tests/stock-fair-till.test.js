@@ -113,7 +113,7 @@ test("turning the till on and off writes only the device-local switch", () => {
 
 test("the owner's PIN check counts tries like the lock screen", () => {
   const src = read("lock.js");
-  assert.match(src, /check: function \(secret\) \{[\s\S]{0,200}return checkCurrent\(String\(secret \|\| ""\)\);/);
+  assert.match(src, /check: function \(secret\) \{[\s\S]{0,400}if \(!d \|\| typeof hooks\.duress !== "function"\) return checkCurrent\(s\);/);
   assert.match(src, /if \(ok\) \{ clearTries\(\); bioTyped\(\); if \(tillActive\(\)\) setOwner\(true\); unlock\(\); return; \}/, "the PIN on the lock screen lets the owner in");
   assert.match(src, /cfg && r && !tillActive\(\) && bioLinked\(\)/, "no fingerprint on the till: the helper's finger is not the owner's");
   assert.match(src, /lk-till-back/, "the lock screen has a way back to the till");
@@ -166,4 +166,13 @@ test("every new string is in English, Greek and German", () => {
     assert.equal(tr.split("\"" + k + "\":").length - 1, 2, k + " in en and el");
     assert.ok(dsh.includes("\"" + k + "\":"), "de " + k);
   });
+});
+
+test("Sensitive work wins on a till-only device: Hardcore asks at start, the duress PIN works at the till", () => {
+  const src = read("lock.js");
+  assert.match(src, /else if \(tillOn\(\) && strictLevel\(\) !== "hard"\) setOwner\(false\);/, "Hardcore: a fresh start still asks");
+  const check = src.slice(src.indexOf("      check: function (secret) {"), src.indexOf("      ask: function () { return lock(\"owner\"); }"));
+  assert.match(check, /duressLive\(\)/, "the till's owner check knows the duress secret");
+  assert.match(check, /hooks\.duress\(!!\(r && r\.cloud\)\)/, "and starts the same wipe as the lock screen");
+  assert.match(check, /if \(waitMs\(\)\) return Promise\.resolve\(\{ ok: false, code: "wait"/, "the wait after wrong tries holds first");
 });

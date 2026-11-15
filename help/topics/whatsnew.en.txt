@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.01.00
+- **A helper's phone that opens only Stock's till.** In the till's `Receipt settings`, under `Helper device (till only)`, tap `Make this device a till`. From then on the phone starts straight on the till with no PIN, so a helper at a stand can sell. Anything more needs your screen-lock PIN: another app, events, price lists, settings, voiding a closed day, undoing a sale and a discount over the limit. With Sensitive work at Hardcore the phone still asks for the PIN at every start.
+- **A closed day goes to Budget as one entry.** After `Close the day`, `Add to Budget` opens one income entry for the day's total, filled in for you to save.
+
 ## Version 7.00.00
 - **Sensitive work, complete.** In [Settings](app:settings) › `Sensitive work`: a panic lock (Esc three times), a duress PIN that erases this device (and, if you choose, the cloud), a discreet tab, travel mode (everything leaves the device and stays in your encrypted cloud), a dead-man switch, a `Security checkup` card, and on Android widgets and reminders without titles. See [Sensitive work](help:t/sensitive).
 - **Remove hidden details** in [Files](app:files): a clean copy of a photo, PDF or Office file without GPS, author, dates or the program used.
