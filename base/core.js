@@ -125,6 +125,7 @@
       if (type === "currency") out.sym = line(o.sym, 6) || "€";
     } else if (type === "date") {
       if (o.time === true) out.time = true;
+      if (o.cal === true) out.cal = true;          // B4: shown in the Calendar app
     } else if (type === "rating") {
       out.max = int(o.max, 3, 10, 5);
     } else if (type === "select" || type === "multi") {
@@ -329,6 +330,11 @@
       // not have stripped wins the tie, so its sync never undoes them
       var ra = richView(a), rb = richView(b);
       if (ra !== rb) return rb > ra;
+    }
+    // a device before B4 drops "Show in Calendar" from a date field
+    if (k === "fields") {
+      var ca = a.opt && a.opt.cal ? 1 : 0, cb = b.opt && b.opt.cal ? 1 : 0;
+      if (ca !== cb) return cb > ca;
     }
     return canon(b) > canon(a);
   }
@@ -1619,6 +1625,111 @@
     }
   }
 
+  // ---------- Forms bridge (B4, Bible BASE-1 "Forms contract") ----------
+  // Forms → __orosOpenAt("base", { addRecords: { base, table, from: "forms",
+  //   rows: [{ key: "frm:<formId>:<answerId>", values: { fieldId: v } }] } }).
+  // A key becomes one record id (keyId), so an answer sent again, or a
+  // record deleted here, is never written a second time. Values: text
+  // as strings, numbers, "YYYY-MM-DD", yes/no as booleans, a single
+  // choice as its label, several as labels (a label not there yet,
+  // like an "Other" answer, becomes a new choice). A field that is gone,
+  // computed, a link or attachments, or a value that does not fit, is
+  // reported in skipped. → { data, table, rows: [{ key, ok, dup?, why?,
+  // skipped }], added, dup, failed } | { error }
+  var FORM_KEY = /^frm:[A-Za-z0-9_-]{1,40}:[a-z0-9]{16}\.[0-9]{1,16}$/;
+  var FORM_BATCH = 500;
+  function fnv(s, seed) {
+    var h = seed >>> 0;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h;
+  }
+  function keyId(key) { return "k" + fnv(key, 2166136261).toString(36) + fnv(key, 3735928559).toString(36) + (key.length % 36).toString(36); }
+  function formVal(f, v, now) {
+    switch (f.type) {
+      case "text": case "long": case "email": case "phone": case "url":
+        return typeof v === "string" ? cleanVal(f, v) : undefined;
+      case "number": case "currency": case "percent": case "rating":
+        return typeof v === "number" || typeof v === "string" ? cleanVal(f, typeof v === "string" ? parseNum(v) : v) : undefined;
+      case "date":
+        return typeof v === "string" ? cleanVal(f, v) : undefined;
+      case "check":
+        return v === true ? true : v === false ? null : undefined;       // null: "no", not stored, not skipped
+      case "select":
+        if (typeof v !== "string" || !v.trim()) return undefined;
+        return choiceFor(f, v, now) || undefined;
+      case "multi":
+        if (!Array.isArray(v)) return undefined;
+        var ids = v.filter(function (x) { return typeof x === "string" && x.trim(); }).map(function (x) { return choiceFor(f, x, now); }).filter(Boolean);
+        return ids.length ? cleanVal(f, ids) : undefined;
+      default:
+        return undefined;
+    }
+  }
+  // the id of a choice by its label; a new label becomes a new choice
+  function choiceFor(f, label, now) {
+    var id = choiceId(f, label);
+    if (id) return id;
+    var ch = f.opt.ch = f.opt.ch || [];
+    if (ch.length >= MAX_OPTS) return "";
+    // the same label gets the same id on every device that receives it
+    id = "o" + fnv(fold(label.trim()), 2166136261).toString(36);
+    if (ch.some(function (c) { return c.id === id; })) return id;
+    ch.push({ id: id, n: line(label.trim(), MAX_NAME), c: COLORS[ch.length % COLORS.length] });
+    bump(f, now);
+    return id;
+  }
+  function addFromForms(d, ar, now) {
+    if (!isObj(ar)) return { error: "bad" };
+    var out = clone(normalize(d));
+    var ix = index(out);
+    var tb = okId(ar.table) ? ix.tables[ar.table] : null;
+    if (!tb || tb.base !== ar.base) return { error: "table" };
+    var fieldsById = {};
+    out.fields.forEach(function (f) { fieldsById[f.id] = f; });
+    var have = {};
+    out.recs.forEach(function (r) { have[r.id] = 1; });
+    var room = MAX_RECS - out.recs.length, rows = [], added = 0, dup = 0, failed = 0, n = 0;
+    (Array.isArray(ar.rows) ? ar.rows : []).slice(0, FORM_BATCH).forEach(function (row) {
+      var key = isObj(row) && typeof row.key === "string" ? row.key : "";
+      if (!FORM_KEY.test(key)) { rows.push({ key: key.slice(0, 80), ok: false, why: "key", skipped: [] }); failed++; return; }
+      var rid = keyId(key);
+      if (have[rid] || has(out.tombs, rid)) { rows.push({ key: key, ok: true, dup: true, skipped: [] }); dup++; return; }
+      if (room <= 0) { rows.push({ key: key, ok: false, why: "full", skipped: [] }); failed++; return; }
+      var at = now + n++;
+      var r = { id: rid, t: tb.id, c: at, m: at, v: {}, fm: {} }, skipped = [];
+      var vals = isObj(row.values) ? row.values : {};
+      Object.keys(vals).slice(0, MAX_FIELDS).forEach(function (k) {
+        var f = fieldsById[k];
+        if (!f || f.tb !== tb.id || NOSTORE[f.type] || f.type === "file") { skipped.push(String(k).slice(0, 40)); return; }
+        var nv = formVal(f, vals[k], now);
+        if (nv === null) return;
+        if (nv === undefined) { skipped.push(k); return; }
+        r.v[k] = nv; r.fm[k] = at;
+      });
+      out.recs.push(r);
+      have[rid] = 1;
+      room--; added++;
+      rows.push({ key: key, ok: true, skipped: skipped });
+    });
+    return { data: normalize(out), table: tb.id, rows: rows, added: added, dup: dup, failed: failed };
+  }
+  // What Forms needs to make a public form of a table (fromTable):
+  // the fields a question can ask, in the table's order.
+  var FORM_TYPES = { text: 1, long: 1, email: 1, url: 1, phone: 1, number: 1, currency: 1, percent: 1, rating: 1, date: 1, check: 1, select: 1, multi: 1 };
+  function formSpec(ix, tbId) {
+    var tb = ix.tables[tbId];
+    if (!tb) return null;
+    var fields = [];
+    (ix.tbFields[tbId] || []).forEach(function (f) {
+      if (!FORM_TYPES[f.type]) return;
+      var x = { id: f.id, name: f.name, type: f.type };
+      if (f.type === "select" || f.type === "multi") x.opts = { ch: (f.opt.ch || []).map(function (c) { return { id: c.id, n: c.n }; }) };
+      if (f.type === "rating") x.opts = { max: f.opt.max || 5 };
+      fields.push(x);
+    });
+    return { base: tb.base, table: tb.id, name: tb.name, fields: fields };
+  }
+
   // Import rows (first = headings) as a new table of a base.
   // Returns { data, table, count, skipped }.
   function importRows(d, baseId, name, rows, now, names) {
@@ -1880,6 +1991,7 @@
     opsFor: opsFor, needsValue: needsValue, query: query, layout: layout, groupKey: groupKey,
     ATT_DIR: ATT_DIR, FILE_RE: FILE_RE, MAX_ATT: MAX_ATT, attPath: attPath, usedFiles: usedFiles, cleanFiles: cleanFiles,
     coverField: coverField, coverOf: coverOf,
+    FORM_KEY: FORM_KEY, FORM_BATCH: FORM_BATCH, keyId: keyId, addFromForms: addFromForms, formSpec: formSpec,
     VIEW_KINDS: VIEW_KINDS, visibleFields: visibleFields, stackField: stackField, stacks: stacks, dateField: dateField, monthGrid: monthGrid, orderedFields: orderedFields, summary: summary, compare: compare,
     uid: uid, fid: fid, oid: oid, putRow: putRow, addBase: addBase, addTable: addTable, addField: addField,
     remove: remove, restore: restore, rowsUnder: rowsUnder, setValues: setValues, addRecord: addRecord,

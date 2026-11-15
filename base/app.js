@@ -128,6 +128,23 @@
       "att.open": "Open",
       "att.save": "Save a copy",
       "att.remove": "Remove",
+      "menu.form": "Make a public form (Forms)",
+      "frm.off": "Forms opens only inside orOS.",
+      "frm.noFields": "This table has no field a form can ask.",
+      "frm.noTable": "Forms sent answers for a table that is not here (deleted, or not synced yet).",
+      "frm.title": "Answers from Forms",
+      "frm.none": "No new records.",
+      "frm.added1": "1 new record in “{x}”.",
+      "frm.added": "{n} new records in “{x}”.",
+      "frm.dup1": "1 answer was already here (or was deleted here) and was not added again.",
+      "frm.dup": "{n} answers were already here (or were deleted here) and were not added again.",
+      "frm.failed": "{n} answers could not be added (Base is full, or the answer was damaged).",
+      "frm.skipped": "Some answers had values that do not fit their field any more:",
+      "frm.goneField": "A field that is no longer here",
+      "frm.ans1": "1 answer",
+      "frm.ans": "{n} answers",
+      "cal.feed": "Show in Calendar",
+      "cal.feedHint": "Records with a date here appear in the Calendar app (Base label), on this and your other devices.",
       "search": "Search in this view", "count": "{n} records", "count1": "1 record", "countOf": "{n} of {all} records",
       "filter": "Filter", "filterN": "Filter ({n})", "sort": "Sort", "sortN": "Sort ({n})", "group": "Group", "groupN": "Group ({n})",
       "f.empty": "(empty)", "f.untitled": "Untitled", 
@@ -301,6 +318,23 @@
       "att.open": "Άνοιγμα",
       "att.save": "Αποθήκευση αντιγράφου",
       "att.remove": "Αφαίρεση",
+      "menu.form": "Δημόσια φόρμα (Φόρμες)",
+      "frm.off": "Οι Φόρμες ανοίγουν μόνο μέσα στο orOS.",
+      "frm.noFields": "Αυτός ο πίνακας δεν έχει πεδίο που να ρωτιέται σε φόρμα.",
+      "frm.noTable": "Οι Φόρμες έστειλαν απαντήσεις για πίνακα που δεν υπάρχει εδώ (διαγράφηκε ή δεν συγχρονίστηκε ακόμα).",
+      "frm.title": "Απαντήσεις από τις Φόρμες",
+      "frm.none": "Καμία νέα εγγραφή.",
+      "frm.added1": "1 νέα εγγραφή στο «{x}».",
+      "frm.added": "{n} νέες εγγραφές στο «{x}».",
+      "frm.dup1": "1 απάντηση υπήρχε ήδη (ή είχε διαγραφεί εδώ) και δεν προστέθηκε ξανά.",
+      "frm.dup": "{n} απαντήσεις υπήρχαν ήδη (ή είχαν διαγραφεί εδώ) και δεν προστέθηκαν ξανά.",
+      "frm.failed": "{n} απαντήσεις δεν προστέθηκαν (η Βάση γέμισε ή η απάντηση ήταν χαλασμένη).",
+      "frm.skipped": "Κάποιες απαντήσεις είχαν τιμές που δεν ταιριάζουν πια στο πεδίο τους:",
+      "frm.goneField": "Πεδίο που δεν υπάρχει πια",
+      "frm.ans1": "1 απάντηση",
+      "frm.ans": "{n} απαντήσεις",
+      "cal.feed": "Εμφάνιση στο Ημερολόγιο",
+      "cal.feedHint": "Οι εγγραφές με ημερομηνία εδώ φαίνονται στην εφαρμογή Ημερολόγιο (ετικέτα Βάση), σε αυτή και στις άλλες συσκευές σου.",
       "search": "Αναζήτηση σε αυτή την προβολή", "count": "{n} εγγραφές", "count1": "1 εγγραφή", "countOf": "{n} από {all} εγγραφές",
       "filter": "Φίλτρο", "filterN": "Φίλτρο ({n})", "sort": "Ταξινόμηση", "sortN": "Ταξινόμηση ({n})", "group": "Ομάδες", "groupN": "Ομάδες ({n})",
       "f.empty": "(κενό)", "f.untitled": "Χωρίς όνομα", 
@@ -812,6 +846,7 @@
       { label: t("menu.newView"), fn: newViewDialog },
       v && { label: t("menu.exportCsv"), fn: exportCsv },
       v && { label: t("menu.print"), fn: printView },
+      sheetOpener() && { label: t("menu.form"), fn: publicForm },
       v && sheetOpener() && { label: t("menu.sheet"), fn: openInSheet },
       v && views.length > 1 && { label: t("menu.delView"), danger: true, fn: function () {
         confirmDlg(t("del.view", { x: v.name }), t("btn.delete"), function () { deleteRow(v.id); });
@@ -2591,6 +2626,12 @@
         cb.addEventListener("change", function () { opt.time = cb.checked; });
         l.appendChild(cb); l.appendChild(el("span", null, t("fld.time")));
         optBox.appendChild(l);
+        var lc = el("label", "opt");
+        var cc = el("input"); cc.type = "checkbox"; cc.checked = opt.cal === true;
+        cc.addEventListener("change", function () { if (cc.checked) opt.cal = true; else delete opt.cal; });
+        lc.appendChild(cc); lc.appendChild(el("span", null, t("cal.feed")));
+        optBox.appendChild(lc);
+        optBox.appendChild(el("p", "hint", t("cal.feedHint")));
       } else if (ty === "rating") {
         var mx = el("select");
         for (var i = 3; i <= 10; i++) { var o = el("option", null, String(i)); o.value = String(i); mx.appendChild(o); }
@@ -3182,6 +3223,43 @@
     p.__orosOpenAt("spreadsheet", { newSheet: { name: (tb.name || t("app")).slice(0, 31), rows: C.toTable(ix, fields, recs) } });
   }
 
+  // ---------- 10b. Forms bridge (B4) ----------
+  // Public form: Forms makes a form from this table's fields
+  // ({ fromTable }); its answers come back as { addRecords } (one record
+  // per answer key, written once; Bible BASE-1 "Forms contract").
+  function publicForm() {
+    var p = sheetOpener(), tb = curTable();
+    if (!p) { toast(t("frm.off")); return; }
+    var spec = tb && C.formSpec(ix, tb.id);
+    if (!spec || !spec.fields.length) { toast(t("frm.noFields")); return; }
+    p.__orosOpenAt("forms", { fromTable: spec });
+  }
+  function takeForms(ar) {
+    var r = C.addFromForms(data, ar, Date.now());
+    if (r.error) { toast(t("frm.noTable")); return; }
+    if (r.added && !save(r.data)) return;
+    var tb = ix.tables[r.table];
+    openBase(tb.base, tb.id, "");
+    var skipped = {};
+    r.rows.forEach(function (row) { (row.skipped || []).forEach(function (k) { skipped[k] = (skipped[k] || 0) + 1; }); });
+    var d = dialog(t("frm.title"));
+    d.body.appendChild(el("p", null, !r.added ? t("frm.none") : r.added === 1 ? t("frm.added1", { x: tb.name }) : t("frm.added", { n: fmtNum(r.added), x: tb.name })));
+    if (r.dup) d.body.appendChild(el("p", "hint", r.dup === 1 ? t("frm.dup1") : t("frm.dup", { n: fmtNum(r.dup) })));
+    if (r.failed) d.body.appendChild(el("p", "hint", t("frm.failed", { n: fmtNum(r.failed) })));
+    var ks = Object.keys(skipped);
+    if (ks.length) {
+      d.body.appendChild(el("p", "hint", t("frm.skipped")));
+      var ul = el("ul", "frm-skip");
+      ks.forEach(function (k) {
+        var f = ix.fields[k];
+        ul.appendChild(el("li", null, (f ? f.name || t("f.untitled") : t("frm.goneField")) + " · " + plural(skipped[k], "frm.ans1", "frm.ans")));
+      });
+      d.body.appendChild(ul);
+    }
+    d.foot(btn("chip pri", t("btn.ok"), function () { d.close(); }));
+    d.open();
+  }
+
   // ---------- 11. Toast, palette, deep link, boot ----------
   var toastTimer = 0, toastUndo = null;
   function toast(msg, undo) {
@@ -3225,6 +3303,7 @@
     if (target.openFile) { if (recFile) recFile.openTarget(target.openFile); return; }
     var tg = target;
     if (tg.newTable) { closeAllDialogs(); newTableDialog(tg.newTable); return; }
+    if (tg.addRecords) { closeAllDialogs(); takeForms(tg.addRecords); return; }
     var b = typeof target.base === "string" ? target.base : "";
     if (!ix.bases[b]) {
       if (typeof target.rec === "string" && ix.recs[target.rec]) {

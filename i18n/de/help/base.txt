@@ -62,3 +62,7 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 
 ## Von überall finden
 - Das Suchfeld im Menü findet deine Datenbanken und Einträge. Wählst du einen Eintrag, öffnet er sich in seiner Tabelle.
+
+## Formulare und Kalender
+- Tabellenmenü (`⋯`) › Öffentliches Formular öffnet [Formulare](app:forms) mit einer Frage für jedes Feld, das ein Formular fragen kann. In Formulare schreibt `An Base senden` jede Antwort als Eintrag dieser Tabelle. Eine erneut gesendete Antwort, oder eine, deren Eintrag du hier gelöscht hast, kommt nie zweimal dazu; eine unter „Andere“ getippte Auswahl wird eine neue Auswahl. Die Datenbank sagt dir dann, wie viele Einträge hinzukamen und welche Antworten nicht passten.
+- Ein Datumsfeld kann seine Einträge im [Kalender](app:calendar) zeigen: bearbeite das Feld und hake `Im Kalender zeigen` an (anfangs aus). Sie erscheinen unter dem Label Datenbank; tippst du einen an, öffnet sich der Eintrag hier.
