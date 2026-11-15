@@ -180,3 +180,47 @@ test("trackArgs and editionArgs: only fields given, codes checked, shares must m
   assert.match(C.editionArgs({ format: "cd" }, "e.").err, /has no format/);
   assert.equal(C.argName(C.ARG_CR, "mast"), "mastering");
 });
+
+// ---------- wave M3: the music release plan ----------
+test("music plan: steps dated back from the release day, each with its name; re-date keeps done steps and own steps", () => {
+  let n = 0;
+  const id = () => "s" + (++n).toString().padStart(5, "0");
+  const names = { mst: "Master ready", art: "Artwork", meta: "Metadata", up: "Upload", pitch: "Pitch", pre: "Pre-save", wk1: "First week" };
+  const o = { music: true, name: (k) => names[k] };
+  const p = C.makePlan("2026-12-18", [], id, o);
+  assert.deepEqual(p.map((s) => s.k + " " + s.d), ["mst 2026-11-06", "art 2026-11-13", "meta 2026-11-18", "up 2026-11-20", "pitch 2026-11-27", "pre 2026-12-04", "wk1 2026-12-25"]);
+  assert.ok(p.every((s) => s.n === names[s.k]));
+  const done = p.map((s) => (s.k === "mst" ? Object.assign({}, s, { done: 1 }) : s)).concat([{ id: "own001", k: "x", n: "Video", d: "2026-12-01", done: 0 }]);
+  const p2 = C.makePlan("2027-01-15", done, id, o);
+  assert.equal(p2.find((s) => s.k === "mst").d, "2026-11-06");
+  assert.equal(p2.find((s) => s.k === "up").d, "2026-12-18");
+  assert.equal(p2.find((s) => s.k === "up").id, p.find((s) => s.k === "up").id);
+  assert.ok(p2.some((s) => s.n === "Video"));
+  assert.equal(p2.length, 8);
+  // a book plan is unchanged and has no music steps
+  assert.ok(C.makePlan("2026-12-18", [], id).every((s) => C.BOOK_STAGES.includes(s.k) && !s.n));
+  // through put: kinds and names stay
+  const d = C.put(C.empty(), "titles", { id: "t1", t: "S", mt: { k: "single" }, plan: p }, T);
+  assert.deepEqual(C.find(d, "titles", "t1").plan.map((s) => s.k), p.map((s) => s.k));
+});
+
+test("music plan on a device before M3: an unknown step kind with its name stays as an own step", () => {
+  const vm = require("node:vm"), fs = require("node:fs"), path = require("node:path");
+  const src = fs.readFileSync(path.join(__dirname, "../publish/core.js"), "utf8")
+    .replace(/,\s*"mst", "art", "meta", "up", "pitch", "pre", "wk1", "x"\]/, ', "x"]');
+  assert.ok(!/"x"\];[\s\S]*MUSIC_STAGES = \["mst"[\s\S]*STAGES = \[[^\]]*"mst"/.test(src));
+  const box = { module: { exports: {} } };
+  box.globalThis = box;
+  vm.runInNewContext(src, box);
+  const Old = box.module.exports;
+  const step = { id: "s00001", k: "up", d: "2026-11-20", done: 0, n: "Upload" };
+  const t = JSON.parse(JSON.stringify(Old.put(Old.empty(), "titles", { id: "t1", t: "S", plan: [step] }, T).titles[0]));
+  assert.deepEqual(t.plan, [{ id: "s00001", k: "x", d: "2026-11-20", done: 0, n: "Upload" }]);
+});
+
+test("Stock: a release's CD goes in with its UPC/EAN as SKU and barcode, else the catalogue number", () => {
+  const t = { t: "Night", ppl: [{ r: "a", n: "Ann" }] };
+  assert.deepEqual(C.stockPrefillMed(t, { upc: "5201234000001", price: 12.5, cat: "OL-1" }, "CD"),
+    { name: "Night (CD)", note: "Ann", sku: "5201234000001", bc: "5201234000001", price: 1250 });
+  assert.deepEqual(C.stockPrefillMed(t, { upc: "", cat: "OL-2", price: 0 }, "Vinyl"), { name: "Night (Vinyl)", note: "Ann", sku: "OL-2" });
+});

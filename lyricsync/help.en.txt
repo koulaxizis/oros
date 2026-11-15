@@ -89,6 +89,12 @@ Lyric Sync is also a songbook: a song can have chords over its words, a key, a c
 - `Add to Calendar` puts a dated set in Calendar as a day event; Calendar shows it before it adds it.
 - Sets sync with your devices like the songs.
 
+## Chord diagrams
+- Under `Chords`, `Diagrams` shows how to play each chord of the song: on guitar, ukulele or piano. The shapes come with Lyric Sync and work without a connection; `Left-handed` turns the guitar and ukulele diagrams round.
+- The song's chords show as a strip on top of the sheet and on the stage. On the stage, a tap on a chord shows it big with its notes; in the chord picker you see the shape of the chord you type.
+- `PDF` can put the diagrams on top of each song (`Chord diagrams on top of each song`).
+- Each shape is worked out from the chord's name, so an unusual chord gets a playable shape, but not always the one you know; the notes under the big diagram say what it holds.
+
 ## Your data
 - The lyrics and their times are saved as you go. With orOS sync switched on in [Settings](app:settings), they follow you to your other devices, encrypted.
 - The song file stays only on the device where you chose it. On another device the song shows "song file not on this device" until you choose it there too. A song opened from Music is read from your Music folder, so it is there on every device that has the file (Vault Drive).

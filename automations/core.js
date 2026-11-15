@@ -511,6 +511,7 @@
       "file.gone": "The file was changed or moved since it arrived.", "file.big": "The file is too large to open in orOS.",
       "file.printed": "Sent to the printer: {name}", "file.noprint": "This computer could not print the file.",
       "tpl.mail-todo": "Urgent e-mail to To-Do", "tpl.mail-todo.word": "urgent", "tpl.mail-todo.item": "{text}",
+      "tpl.doc-renew": "Expiring document to To-Do", "tpl.doc-renew.word": "expire", "tpl.doc-renew.item": "{text}",
       "tpl.habit-cheer": "Cheer for a habit", "tpl.habit-cheer.text": "Well done: {text}. Keep the streak going.",
       "tpl.workout-log": "After a workout", "tpl.workout-log.text": "Workout done: {text}. Drink some water.",
       "tpl.water-goal": "Water goal reached", "tpl.water-goal.text": "You drank {text} today. Well done.",
@@ -562,6 +563,7 @@
       "file.gone": "Το αρχείο άλλαξε ή μετακινήθηκε αφότου ήρθε.", "file.big": "Το αρχείο είναι πολύ μεγάλο για να ανοίξει στο orOS.",
       "file.printed": "Στάλθηκε στον εκτυπωτή: {name}", "file.noprint": "Αυτός ο υπολογιστής δεν μπόρεσε να εκτυπώσει το αρχείο.",
       "tpl.mail-todo": "Επείγον e-mail στο To-Do", "tpl.mail-todo.word": "επείγον", "tpl.mail-todo.item": "{text}",
+      "tpl.doc-renew": "Έγγραφο που λήγει στο To-Do", "tpl.doc-renew.word": "λήγει", "tpl.doc-renew.item": "{text}",
       "tpl.habit-cheer": "Μπράβο για μια συνήθεια", "tpl.habit-cheer.text": "Μπράβο: {text}. Συνέχισε το σερί.",
       "tpl.workout-log": "Μετά την προπόνηση", "tpl.workout-log.text": "Η προπόνηση τελείωσε: {text}. Πιες λίγο νερό.",
       "tpl.water-goal": "Ο στόχος για νερό", "tpl.water-goal.text": "Ήπιες {text} σήμερα. Μπράβο.",
@@ -718,6 +720,9 @@
     // wave A2: rules that follow what happens
     { id: "mail-todo", when: { t: "notice", app: "mail", word: "@tpl.mail-todo.word" },
       "do": [{ a: "todo", items: "@tpl.mail-todo.item" }] },
+    // DOCS-1 W3: Files' reminder that a document expires (ns "files")
+    { id: "doc-renew", when: { t: "notice", app: "files", word: "@tpl.doc-renew.word" },
+      "do": [{ a: "todo", items: "@tpl.doc-renew.item" }] },
     { id: "habit-cheer", when: { t: "event", ev: "habits.done" }, "do": [{ a: "notify", text: "@tpl.habit-cheer.text" }] },
     { id: "workout-log", when: { t: "event", ev: "fitness.done" },
       "do": [{ a: "notify", text: "@tpl.workout-log.text" }, { a: "open", app: "water" }] },

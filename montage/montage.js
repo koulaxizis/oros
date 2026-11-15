@@ -136,6 +136,8 @@
       "sub.hint": "SRT files (and WebVTT) from YouTube, subtitle sites or other editors come in as text clips you can edit.",
       "sub.none": "No subtitles found in this file.", "sub.added": "{n} subtitles added", "sub.big": "This subtitle file is too big.",
       "sub.empty": "There are no text clips to save yet.",
+      "sub.tr": "Translate the subtitles", "sub.trDo": "Use the translation", "sub.trDone": "{n} subtitles translated",
+      "sub.trChanged": "The subtitles changed meanwhile, so nothing was put in.", "sub.trFail": "The translator could not be loaded.",
       "asr.head": "Subtitles from speech",
       "asr.hint": "Montage listens to the project's sound and writes what is said as subtitles, on this device: the sound is not sent anywhere. Check the lines afterwards; names and quiet speech can come out wrong.",
       "asr.need": "The first time, Montage downloads the speech model (Whisper, about {mb} MB, from Hugging Face) and the speech runtime (about {rt} MB, from this site) and keeps them on this device. After that it works offline.",
@@ -284,6 +286,8 @@
       "sub.hint": "Αρχεία SRT (και WebVTT) από το YouTube, σελίδες υποτίτλων ή άλλα προγράμματα μπαίνουν ως κείμενα που μπορείς να αλλάξεις.",
       "sub.none": "Δεν βρέθηκαν υπότιτλοι σε αυτό το αρχείο.", "sub.added": "Προστέθηκαν {n} υπότιτλοι", "sub.big": "Αυτό το αρχείο υποτίτλων είναι πολύ μεγάλο.",
       "sub.empty": "Δεν υπάρχουν ακόμα κείμενα για αποθήκευση.",
+      "sub.tr": "Μετάφραση των υποτίτλων", "sub.trDo": "Χρήση της μετάφρασης", "sub.trDone": "Μεταφράστηκαν {n} υπότιτλοι",
+      "sub.trChanged": "Οι υπότιτλοι άλλαξαν στο μεταξύ, οπότε δεν μπήκε τίποτα.", "sub.trFail": "Ο μεταφραστής δεν φορτώθηκε.",
       "asr.head": "Υπότιτλοι από την ομιλία",
       "asr.hint": "Το Μοντάζ ακούει τον ήχο του έργου και γράφει όσα λέγονται ως υπότιτλους, σε αυτή τη συσκευή: ο ήχος δεν στέλνεται πουθενά. Έλεγξε τις γραμμές μετά· ονόματα και σιγανή ομιλία μπορεί να βγουν λάθος.",
       "asr.need": "Την πρώτη φορά το Μοντάζ κατεβάζει το μοντέλο ομιλίας (Whisper, περίπου {mb} MB, από το Hugging Face) και το πρόγραμμα που το τρέχει (περίπου {rt} MB, από αυτόν τον ιστότοπο) και τα κρατά σε αυτή τη συσκευή. Μετά δουλεύει και χωρίς σύνδεση.",
@@ -1547,6 +1551,7 @@
       [t("sub.export"), "", function () { closeDialog(); exportSubtitles(); }],
       [t("sub.add"), "primary", function () { closeDialog(); addSubtitle(); }]
     ]);
+    if (n) actions(body, [[t("sub.tr"), "", function () { closeDialog(); translateSubtitles(); }]]);
     if (!window.MontageASR || !MX.speech16k) return;
     // subtitles from speech (Whisper on the device)
     var f = el("div", "field");
@@ -1575,6 +1580,32 @@
       });
       row.insertBefore(rm, go);
     });
+  }
+  // Translate the subtitles (translate/panel.js, TRANSLATE T3): every
+  // text clip of the Text row on the device, timings kept; one edit
+  // with Undo, only if the clips are still as they were.
+  function translateSubtitles() {
+    var p = cur();
+    if (!p) return;
+    if (player && player.playing()) player.pause();
+    var list = C.trackItems(p, "tt").filter(function (it) { return it.text.t.trim(); });
+    if (!list.length) { showToast(t("sub.empty")); return; }
+    var ids = list.map(function (it) { return it.id; }), was = list.map(function (it) { return it.text.t; }), at = pid;
+    var o = { segments: was, lang: LANG, actions: [{ label: t("sub.trDo"), run: function (r) {
+      var q = cur();
+      var same = q && pid === at && ids.every(function (id, i) { var it = q.items[id]; return it && it.text.t === was[i]; });
+      if (!same) { showToast(t("sub.trChanged")); return; }
+      var map = {};
+      ids.forEach(function (id, i) { map[id] = r.segments[i]; });
+      if (commit(C.setTexts(data, pid, map, Date.now()))) undoToast(t("sub.trDone", { n: ids.length }), undo);
+    } }] };
+    if (window.OrosTranslatePanel) { window.OrosTranslatePanel.open(o); return; }
+    var v = window.orosI18n && window.orosI18n.ver, sc = document.createElement("script");
+    var fail = function () { showToast(t("sub.trFail")); };
+    sc.src = "../translate/panel.js" + (v ? "?v=" + encodeURIComponent(v) : "");
+    sc.onload = function () { if (window.OrosTranslatePanel) window.OrosTranslatePanel.open(o); else fail(); };
+    sc.onerror = fail;
+    document.head.appendChild(sc);
   }
   function autoSubtitles(lang) {
     var p = cur();
