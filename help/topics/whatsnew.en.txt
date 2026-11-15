@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.00.00
+- **Sensitive work, complete.** In [Settings](app:settings) › `Sensitive work`: a panic lock (Esc three times), a duress PIN that erases this device (and, if you choose, the cloud), a discreet tab, travel mode (everything leaves the device and stays in your encrypted cloud), a dead-man switch, a `Security checkup` card, and on Android widgets and reminders without titles. See [Sensitive work](help:t/sensitive).
+- **Remove hidden details** in [Files](app:files): a clean copy of a photo, PDF or Office file without GPS, author, dates or the program used.
+- **Pages and files that delete themselves**: `Delete itself…` in a page's menu in [Notes](app:notes) or a file's menu in Files, after 1 hour to 30 days, on every device.
+
 ## Version 6.99.00
 - **Ask the Assistant for an e-book.** Say "make an EPUB of …" with the name of a Layout document or its title in Publishing (add "fixed layout" for a picture book or comic, or "mark it ready in Publishing"). The card `Make an EPUB · Layout` has Layout make and check the EPUB on this device, keep a copy in Layout/EPUB and show its report; the conversation gets only the numbers, never the book. Claude can do the same through orOS Gate.
 

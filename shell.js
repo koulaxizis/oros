@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.99.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.00.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -4988,6 +4988,7 @@
       var w;
       try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
       w.addEventListener("keydown", function (e) {
+        strictPanicKey(e);
         if (!cmdIsCtrlK(e)) return;
         if (state.running && CMD_OWN_CTRLK[state.running.id]) return;   // the app's own Ctrl+K
         e.preventDefault();
@@ -8846,7 +8847,7 @@
   function scFactoryReset(btn, deviceOnly, sosPass) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
-    var follow = deviceOnly === "follow", sos = deviceOnly === "sos";
+    var follow = deviceOnly === "follow", sos = deviceOnly === "sos", travel = deviceOnly === "travel";
     var S = window.orosSync;
 
     function capped(p, ms) {
@@ -8858,7 +8859,10 @@
 
     // Cloud wipe (15s cap — a hanging network can never freeze the
     // reset; wipeEverything suspends the engine synchronously at call).
-    var cloud = follow ? Promise.resolve(S && typeof S.suspendEngine === "function" ? S.suspendEngine() : null)
+    // Travel (STRICT-3): the last push like "Reset this device", then this
+    // device's own relay boxes close; the cloud stays.
+    var cloud = travel ? lockLastPush().then(function () { return capped(sosRelay(false), 5000); })
+      : follow ? Promise.resolve(S && typeof S.suspendEngine === "function" ? S.suspendEngine() : null)
       : sos ? capped(sosRelay(true), 8000).then(function () {
           return (S && typeof S.sosEverywhere === "function") ? capped(S.sosEverywhere(sosPass), 15000) : null;
         })
@@ -11411,6 +11415,72 @@
     } catch (e) { return null; }
   };
 
+  // ---------- 9k. Things that delete themselves (STRICT-5) ----------
+  // Self-deleting Notes pages (STRICT-5, notes/expire.js): while Notes
+  // is closed the shell deletes a page whose time has come, in the
+  // stored data, as Notes' Delete would (tomb + sub-pages up); sync
+  // carries the tombs. Notes open does it itself.
+  var notesExpLoad = null;
+  function notesExpireSweep() {
+    if (osResetting || appLive("notes")) return;
+    var raw = null;
+    try { raw = localStorage.getItem("oros-notes-data"); } catch (e) { return; }
+    if (!raw || raw.indexOf('"exp":') === -1) return;
+    if (!notesExpLoad) notesExpLoad = new Promise(function (res, rej) {
+      if (window.orosNotesExpire) { res(); return; }
+      var sc = document.createElement("script");
+      sc.src = "notes/expire.js";
+      sc.onload = res;
+      sc.onerror = function () { notesExpLoad = null; rej(new Error("load")); };
+      document.head.appendChild(sc);
+    });
+    notesExpLoad.then(function () {
+      var E = window.orosNotesExpire;
+      if (!E || appLive("notes")) return;
+      var now = Date.now(), cur, data;
+      try { cur = localStorage.getItem("oros-notes-data"); data = JSON.parse(cur); } catch (e) { return; }
+      if (!data || !E.dueIds(data.pages, now).length) return;
+      var gone = E.expire(data, now);
+      if (!gone.length) return;
+      try { localStorage.setItem("oros-notes-data", JSON.stringify(data)); } catch (e) { return; }
+      try { if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty(); } catch (e) {}
+    }).catch(function () {});
+  }
+  // Self-deleting files (STRICT-5, slice "files-exp", files-core.js
+  // expSet): with Files closed the shell deletes a due file for good
+  // (orosFS reports it to the disk sync) and stores the tomb.
+  var filesExpBusy = false;
+  function filesExpireSweep() {
+    if (osResetting || filesExpBusy || appLive("files")) return;
+    var FS = window.orosFS, st = null, now = Date.now();
+    if (!FS || typeof FS.rm !== "function") return;
+    try { st = JSON.parse(localStorage.getItem("oros-files-exp") || "null"); } catch (e) { return; }
+    var items = st && Array.isArray(st.items) ? st.items : [];
+    var due = items.filter(function (f) { return f && !f.del && typeof f.p === "string" && typeof f.e === "number" && f.e <= now; });
+    if (!due.length) return;
+    filesExpBusy = true;
+    due.reduce(function (ch, f) {
+      return ch.then(function () {
+        return Promise.resolve(FS.stat(f.p)).then(function (s2) {
+          return s2 && !s2.dir ? FS.rm(f.p) : null;
+        }, function () { return null; });
+      }).then(function () {
+        f.e = undefined; delete f.e;
+        f.del = true;
+        f.m = Math.max(Math.floor(Date.now()), (f.m || 0) + 1);
+      }, function () {});
+    }, Promise.resolve()).then(function () {
+      if (appLive("files")) { filesExpBusy = false; return; }   // Files opened meanwhile: it re-reads and sweeps itself
+      try { localStorage.setItem("oros-files-exp", JSON.stringify(st)); } catch (e) {}
+      try { if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty(); } catch (e) {}
+      filesExpBusy = false;
+    });
+  }
+  function expireSweeps() { notesExpireSweep(); filesExpireSweep(); }
+  setTimeout(expireSweeps, 8000);
+  setInterval(expireSweeps, 300000);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") expireSweeps(); });
+
   // ---------- 9j. Settings app bridge (window.orosSettings) ----------
   // The Settings app (settings/, System) is a plain iframe app: it
   // never writes storage and registers no slice. Every value comes
@@ -11841,6 +11911,9 @@
   if (window.orosLock && typeof window.orosLock.setHooks === "function") {
     window.orosLock.setHooks({
       reset: lockDeviceReset,
+      duress: strictDuress,
+      deadman: function () { strictDuress(false); },
+      travel: strictTravel,
       recovered: function () {
         window.orosSettings.open("lock");
         scToast("ok", window.t("lock.recovered"));
@@ -11888,7 +11961,88 @@
     var title = window.t(lv === "hard" ? "strict.badge.hard" : "strict.badge.on");
     if (b.title !== title) { b.title = title; b.setAttribute("aria-label", title); }
   }
-  function strictUpdate() { strictBadge(); strictTellSW(); }
+  // Duress PIN typed on the lock screen (STRICT-2): a silent wipe.
+  // cloud false: this device only, nothing is sent (the SOS "follow"
+  // wipe: backup folder and this device's relay boxes go too).
+  // cloud true: every relay box of the person's data, then the cloud
+  // (reset signal + wipe + revoke, the factory reset), then this device.
+  // No what-now list after the reload: it opens like a new orOS.
+  function strictDuress(cloud) {
+    if (osResetting) return;
+    osResetting = true;
+    var btn = { disabled: false, textContent: "" };
+    if (!cloud) { scFactoryReset(btn, "follow"); return; }
+    Promise.race([sosRelay(true), new Promise(function (r) { setTimeout(r, 8000); })])
+      .catch(function () {}).then(function () { scFactoryReset(btn, false); });
+  }
+  // Travel mode (STRICT-3): only when the sync passphrase is proven and
+  // nothing is left unsent (settings, Files queue), then this device
+  // is erased like "Reset this device" (backup folder files too).
+  function strictTravel(pass) {
+    var S = window.orosSync, V = window.orosVault;
+    if (osResetting) return Promise.resolve({ ok: false, code: "busy" });
+    if (!S || !S.isConnected() || !S.hasPassphrase()) return Promise.resolve({ ok: false, code: "nosync" });
+    function capped(p, ms) {
+      return Promise.race([Promise.resolve(p).catch(function () { return null; }),
+        new Promise(function (r) { setTimeout(r, ms); })]);
+    }
+    return Promise.resolve().then(function () { return S.checkPassphrase(pass); }).then(function (r) {
+      if (r !== true) return { ok: false, code: r === false ? "wrong" : "cantcheck" };
+      return capped(S.isDirty() ? S.push() : null, 30000).then(function () {
+        var q = V && typeof V.queueLength === "function" ? V.queueLength() : 0;
+        return capped(q && typeof V.sync === "function" ? V.sync("travel") : null, 60000);
+      }).then(function () {
+        var q = V && typeof V.queueLength === "function" ? V.queueLength() : 0;
+        if (S.isDirty() || q) return { ok: false, code: "unsynced" };
+        if (osResetting) return { ok: false, code: "busy" };
+        osResetting = true;
+        setTimeout(function () { scFactoryReset({ disabled: false, textContent: "" }, "travel"); }, 0);
+        return { ok: true };
+      });
+    }, function () { return { ok: false, code: "cantcheck" }; });
+  }
+  // Panic lock (STRICT-2): Escape three times within 1.5 s locks at once.
+  // Keys typed inside an app frame never reach this document, so
+  // cmdWireFrame passes them on too.
+  var strictEsc = [];
+  function strictPanicKey(e) {
+    if (e.key !== "Escape" || !strictLevelNow() || !window.orosLock || !window.orosLock.isOn()) return;
+    var now = Date.now();
+    strictEsc = (strictEsc || []).filter(function (t) { return now - t < 1500; });
+    strictEsc.push(now);
+    if (strictEsc.length >= 3) { strictEsc = []; window.orosLock.lock(); }
+  }
+  document.addEventListener("keydown", strictPanicKey, true);
+  // Discreet title and icon (STRICT-2): the tab says "Notes" with a
+  // plain page icon while the mode is on and the switch is set.
+  var DISC_ICON = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="6" y="3" width="20" height="26" rx="3" fill="#e8e8e8" stroke="#888" stroke-width="2"/><path d="M11 11h10M11 16h10M11 21h6" stroke="#888" stroke-width="2"/></svg>');
+  var discIcon = null, discObs = null;
+  function strictDiscreetOn() {
+    var S = window.orosStrict;
+    try { return !!(strictLevelNow() && S && typeof S.discreet === "function" && S.discreet()); } catch (e) { return false; }
+  }
+  function strictDiscreet() {
+    var on = strictDiscreetOn();
+    var icon = document.querySelector('link[rel="icon"]');
+    if (icon) {
+      if (discIcon === null) discIcon = icon.getAttribute("href");
+      var want = on ? DISC_ICON : discIcon;
+      if (icon.getAttribute("href") !== want) icon.setAttribute("href", want);
+    }
+    var title = window.t("strict.disc.title");
+    if (on && document.title !== title) document.title = title;
+    if (on && !discObs && typeof MutationObserver === "function") {
+      var el = document.querySelector("title");
+      if (el) {
+        discObs = new MutationObserver(function () {
+          if (strictDiscreetOn() && document.title !== window.t("strict.disc.title")) document.title = window.t("strict.disc.title");
+        });
+        discObs.observe(el, { childList: true, characterData: true, subtree: true });
+      }
+    }
+    if (!on && discObs) { discObs.disconnect(); discObs = null; if (document.title === title) document.title = "orOS"; }
+  }
+  function strictUpdate() { strictBadge(); strictTellSW(); strictDiscreet(); }
   if (window.orosStrict && typeof window.orosStrict.onChange === "function") {
     window.orosStrict.onChange(strictUpdate);
     strictUpdate();
