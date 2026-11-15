@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.93.00
+- **See what your forms got back.** In [Forms](app:forms), `Answers` opens on a summary with a chart for each question; `Show only` keeps one kind of answer, and `Open in Spreadsheet` or `Download CSV` takes them with you. Each answer can go to Contacts or the CRM in one press, a form made from a Base table sends its answers back there, the Assistant drafts forms and tells you how they add up, and a form can be a quiz with right answers, points and scores.
+
 ## Version 6.92.00
 - **Lay out diagrams in Whiteboard.** Select shapes joined by arrows and press `Lay out as a diagram`: a tree for org charts or a flow for processes, top to bottom or left to right (`More` › `Lay out the board…` for everything). `Align and space` lines objects up by an edge or centre and spaces them evenly. One Undo puts it back.
 
