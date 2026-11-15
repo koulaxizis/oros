@@ -185,6 +185,68 @@
     return s;
   }
 
+  // ---------- Self-deleting files (STRICT-5, synced slice "files-exp") ----------
+  // { v:1, items:[{ p, e, m, del? }] } sorted by p: e = when the file
+  // deletes itself (ms). Same per-item rules as Favourites (favWinner):
+  // bigger m wins, a tie goes to the removal. A cancelled or done
+  // expiry is a tomb, so another device does not bring it back.
+  function normExpItem(it) {
+    if (!it || typeof it !== "object" || !safePath(it.p)) return null;
+    var m = typeof it.m === "number" && isFinite(it.m) && it.m > 0 ? Math.floor(it.m) : 0;
+    var o = { p: it.p, m: m };
+    if (it.del === true) { o.del = true; return o; }
+    if (!(typeof it.e === "number" && isFinite(it.e) && it.e > 0)) return null;
+    o.e = Math.floor(it.e);
+    return o;
+  }
+  function normExps(raw) {
+    var by = {};
+    var items = raw && typeof raw === "object" && Array.isArray(raw.items) ? raw.items : [];
+    items.forEach(function (it) {
+      var n = normExpItem(it);
+      if (!n) return;
+      by[n.p] = Object.prototype.hasOwnProperty.call(by, n.p) ? favWinner(by[n.p], n) : n;
+    });
+    var live = [], dead = [];
+    Object.keys(by).forEach(function (k) { (by[k].del ? dead : live).push(by[k]); });
+    dead.sort(function (a, b) { return b.m - a.m || (a.p < b.p ? -1 : a.p > b.p ? 1 : 0); });
+    var all = live.concat(dead.slice(0, FAV_TOMBS));
+    all.sort(function (a, b) { return a.p < b.p ? -1 : a.p > b.p ? 1 : 0; });
+    return { v: 1, items: all };
+  }
+  function mergeExps(a, b) {
+    var x = a && Array.isArray(a.items) ? a.items : [];
+    var y = b && Array.isArray(b.items) ? b.items : [];
+    return normExps({ items: x.concat(y) });
+  }
+  function expOf(state, p) {
+    var f = favFind(state, p);
+    return f && !f.del ? f.e : 0;
+  }
+  // e > 0 sets it, 0 cancels it.
+  function expSet(state, p, e, now) {
+    if (!safePath(p)) return normExps(state);
+    var old = favFind(state, p);
+    var items = (state && state.items || []).filter(function (f) { return f.p !== p; });
+    var it = { p: p, m: favStamp(old, now) };
+    if (e > 0) it.e = Math.floor(e); else it.del = true;
+    items.push(it);
+    return normExps({ items: items });
+  }
+  // A move / rename inside Files (the Trash too) carries it along.
+  function expMove(state, from, to, now) {
+    var s = normExps(state);
+    (s.items || []).filter(function (f) { return !f.del && (f.p === from || f.p.indexOf(from + "/") === 0); }).forEach(function (f) {
+      s = expSet(s, f.p, 0, now);
+      s = expSet(s, to + f.p.slice(from.length), f.e, now);
+    });
+    return s;
+  }
+  // The paths whose time has come.
+  function expDue(state, now) {
+    return (state && state.items || []).filter(function (f) { return !f.del && f.e <= now; }).map(function (f) { return f.p; });
+  }
+
   // ---------- Search: folding + snippets ----------
   // fold() keeps the length (one UTF-16 unit in, one out), so an index
   // found in the folded text is an index in the original: lower case,
@@ -460,6 +522,7 @@
     restoreParent: restoreParent,
     normFavs: normFavs, mergeFavs: mergeFavs, favIs: favIs, favLive: favLive, favSet: favSet,
     favMove: favMove, favDrop: favDrop,
+    normExps: normExps, mergeExps: mergeExps, expOf: expOf, expSet: expSet, expMove: expMove, expDue: expDue,
     fold: fold, plainText: plainText, findSnippet: findSnippet, extOf: extOf,
     contentKind: contentKind, looksBinary: looksBinary,
     TEXT_MAX: TEXT_MAX, PDF_MAX: PDF_MAX, PDF_PAGES: PDF_PAGES,
