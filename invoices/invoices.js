@@ -171,6 +171,7 @@
       "tpl.repm": "Every month", "tpl.repq": "Every 3 months", "tpl.repy": "Every year", "tpl.start": "First draft on",
       "tpl.repHint": "On that day a draft is made for you to check and issue. Nothing is issued by itself.",
       "tpl.pick": "Templates", "tpl.next": "next {d}", "tpl.del": "Delete template",
+      "set.quotes": "Quotes", "set.quotesHint": "Your business details above are printed on your quotes too.", "set.qPay": "Payment terms texts", "set.qTpl": "Quote templates",
       "set.title": "Settings", "set.biz": "Your business", "set.bizHint": "Printed on every invoice you issue from now on. Issued invoices keep the details they were issued with.",
       "set.name": "Name or company", "set.trade": "Trade name", "set.job": "Profession / business", "set.addr": "Address",
       "set.country": "Country", "set.afm": "Tax number (ΑΦΜ / VAT)", "set.doy": "Tax office (ΔΟΥ)", "set.phone": "Phone",
@@ -332,6 +333,7 @@
       "tpl.repm": "Κάθε μήνα", "tpl.repq": "Κάθε τρίμηνο", "tpl.repy": "Κάθε χρόνο", "tpl.start": "Πρώτο πρόχειρο στις",
       "tpl.repHint": "Εκείνη τη μέρα φτιάχνεται ένα πρόχειρο για να το ελέγξεις και να το εκδώσεις. Τίποτα δεν εκδίδεται μόνο του.",
       "tpl.pick": "Πρότυπα", "tpl.next": "επόμενο {d}", "tpl.del": "Διαγραφή προτύπου",
+      "set.quotes": "Προσφορές", "set.quotesHint": "Τα στοιχεία της επιχείρησής σου παραπάνω τυπώνονται και στις προσφορές.", "set.qPay": "Κείμενα όρων πληρωμής", "set.qTpl": "Πρότυπα προσφορών",
       "set.title": "Ρυθμίσεις", "set.biz": "Η επιχείρησή σου", "set.bizHint": "Τυπώνονται σε κάθε τιμολόγιο που εκδίδεις από εδώ και πέρα. Όσα έχουν εκδοθεί κρατούν τα στοιχεία της έκδοσής τους.",
       "set.name": "Ονοματεπώνυμο ή επωνυμία", "set.trade": "Διακριτικός τίτλος", "set.job": "Επάγγελμα / δραστηριότητα", "set.addr": "Διεύθυνση",
       "set.country": "Χώρα", "set.afm": "ΑΦΜ", "set.doy": "ΔΟΥ", "set.phone": "Τηλέφωνο",
@@ -660,7 +662,6 @@
     $("main").hidden = qt;
     $("v-quotes").hidden = !qt;
     $("new-btn").hidden = qt;
-    $("set-btn").hidden = qt;
     if (qt) showQuotes(null);
     else if (window.QuoteView) window.QuoteView.flush();
     TABS.forEach(function (k) {
@@ -2639,6 +2640,13 @@
     });
     sel.appendChild(g);
   }
+  // K3: the business details Billing prints, for the quotes' PDF
+  // (the main profile; read each time, never copied into the quote slice).
+  function profileForQuotes() {
+    var p = data && data.prof ? data.prof : {};
+    return { name: p.trade || p.name || "", addr: p.addr || "", afm: p.afm || "", doy: p.doy || "",
+             email: p.email || "", phone: p.phone || "", web: p.web || "" };
+  }
   // The Quotes tab's picker gets Billing's clients the same way.
   function clientsForQuotes() {
     return liveList("clients").map(function (c) {
@@ -2897,6 +2905,16 @@
       renderSettings();
     });
     body.appendChild(card);
+    // K3 (app merge 7): one settings page; the Quotes tab's own settings
+    // stay in the tab and are reached from here.
+    var qc = el("div", "card");
+    qc.appendChild(el("h3", "sec-h", t("set.quotes")));
+    qc.appendChild(el("p", "hint", t("set.quotesHint")));
+    var qa = el("div", "dlg-actions");
+    qa.appendChild(btn(t("set.qPay"), "", function () { openQuotes({ tab: "quotes", settings: "pay" }); }));
+    qa.appendChild(btn(t("set.qTpl"), "", function () { openQuotes({ tab: "quotes", settings: "tpl" }); }));
+    qc.appendChild(qa);
+    body.appendChild(qc);
     var addBiz = el("button", "link-btn", t("set.addBiz"));
     addBiz.type = "button";
     addBiz.addEventListener("click", function () {
@@ -4574,7 +4592,7 @@
     var host = $("v-quotes");
     if (tg) qtPending.push(tg);
     if (window.QuoteView) {
-      window.QuoteView.mount(host, { otherClients: clientsForQuotes, newInvoice: quoteToInvoice,
+      window.QuoteView.mount(host, { otherClients: clientsForQuotes, newInvoice: quoteToInvoice, profile: profileForQuotes,
                                      invoicesFor: invoicesOfQuote, openInvoice: function (id) { openTarget({ invoice: id }); } });
       var list = qtPending; qtPending = [];
       list.forEach(function (x) { window.QuoteView.openAt(x); });

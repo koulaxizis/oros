@@ -180,6 +180,7 @@ orosPack("de", "quote", {
  "paypresets.hint": "Klicke auf eine Vorlage, um ihren Text ins Angebot einzufügen. Mit dem Stift passt du sie an.",
  "paypresets.title": "Zahlungsvorlagen",
  "pdf.header_client": "Angebot für",
+ "pdf.taxid": "USt-IdNr. {v}",
  "prefill.replace": "Ersetzen",
  "price": "Einzelpreis",
  "print": "Drucken oder als PDF speichern",

@@ -93,7 +93,7 @@ Lege unter `Kunden` einen `Neuer Kunde` mit Name, Beruf, ΑΦΜ, ΔΟΥ, Adresse
 - Mehr als ein Unternehmen? In `Einstellungen` legt `Unternehmensprofil hinzufügen` einen weiteren Satz Daten, Logo, Bankzeilen, Bedingungen und Fußzeile an. Wähle das Unternehmen auf jedem Dokument (`Unternehmen`, sichtbar ab zwei). Verknüpfe einen Nummernkreis mit einem Profil (`Profil`, neben jeder Serie), damit jedes Unternehmen eigene Nummern behält. Vorlagen und Kopien behalten ihr Unternehmen.
 
 ## Angebote
-Alles in diesem Abschnitt war die App Angebot. Alte Links und Verknüpfungen zu Angebot öffnen diesen Tab.
+Alles in diesem Abschnitt war die App Angebot. Alte Links und Verknüpfungen zu Angebot öffnen diesen Tab. `Einstellungen` (das Zahnrad) ist eine Seite für beides: Ihr Teil `Angebote` öffnet die Texte für Zahlungsbedingungen und die Angebotsvorlagen.
 Mit Angebot schreibst du Preisangebote für deine Kunden: Positionen mit Rabatten und USt., Zahlungsbedingungen, Raten und ein PDF zum Versenden.
 
 ### Erste Schritte
@@ -125,7 +125,7 @@ Tippe oder klicke auf eine Zahlungsvorlage (`Banküberweisung`, `PayPal`, `IRIS`
 Der Tab `Angebote` listet alle deine Angebote auf. Suche nach Nummer, Kunde, Position, Notizen oder Zahlungsbedingungen, und filtere mit dem Trichter nach Status. Tippe oder klicke auf ein Angebot, um es zu öffnen.
 
 Ist ein Angebot geöffnet, kannst du mit den Schaltflächen oben:
-- `PDF exportieren`: das Angebot als A4-PDF speichern.
+- `PDF exportieren`: das Angebot als A4-PDF speichern. Deine Daten aus `Einstellungen` › `Dein Unternehmen` stehen oben rechts.
 - `Per E-Mail senden`: Hast du ein Konto in [Mail](app:mail), öffnet sich dort eine neue Nachricht mit der Adresse des Kunden, der Angebotsnummer, dem Fälligkeitsdatum und der Summe, und das PDF ist schon angehängt. Ohne Mail-Konto öffnet sich stattdessen dein eigenes E-Mail-Programm, und du hängst das PDF selbst an.
 
 ### Annahme per Link
