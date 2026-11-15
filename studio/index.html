@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Studio · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=6.72.00">
-  <link rel="stylesheet" href="studio.css?v=6.72.00">
+  <link rel="stylesheet" href="../fonts.css?v=6.95.00">
+  <link rel="stylesheet" href="studio.css?v=6.95.00">
 
 </head>
 <body>
@@ -531,6 +531,23 @@
         <button type="button" id="pod-subscribe" class="chip" data-i18n="pod.subscribe">Follow in Podcasts</button>
         <button type="button" id="pod-zip" class="chip primary" data-i18n="pod.zip">Download the site (ZIP)</button>
       </div>
+      <div id="pod-gh-sec" class="pod-gh">
+        <h3 data-i18n="pod.gh.h">Publish on GitHub Pages</h3>
+        <p class="hint small"><span data-i18n="pod.gh.hint"></span> <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer" data-i18n="pod.gh.newToken">Make a token</a></p>
+        <label class="field" for="pod-gh-repo" data-i18n="pod.gh.repo">Repository (owner/name)</label>
+        <input id="pod-gh-repo" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="200" placeholder="name/podcast">
+        <div id="pod-gh-token-row">
+          <label class="field" for="pod-gh-token" data-i18n="pod.gh.token">Token</label>
+          <input id="pod-gh-token" type="password" autocomplete="off" spellcheck="false" maxlength="300">
+        </div>
+        <p id="pod-gh-token-set" class="hint small" data-i18n="pod.gh.tokenSet">A token is saved on this device only.</p>
+        <p id="pod-gh-where" class="hint small"></p>
+        <p id="pod-gh-err" class="hint small" aria-live="polite"></p>
+        <div class="dlg-actions spread">
+          <button type="button" id="pod-gh-forget" class="chip" data-i18n="pod.gh.forget">Forget the token</button>
+          <button type="button" id="pod-gh-go" class="chip primary" data-i18n="pod.gh.go">Publish</button>
+        </div>
+      </div>
     </div>
   </dialog>
 
@@ -786,32 +803,33 @@
   </dialog>
 
   <!-- effects runtime (NULL JSFX) and the Effects dialog; before core.js -->
-  <script src="../i18n.js?v=6.72.00" data-app="studio"></script>
-  <script src="nullfx/runtime/eel-rt.js?v=6.72.00"></script>
-  <script src="nullfx/runtime/null-fx.js?v=6.72.00"></script>
-  <script src="nullfx/runtime/null-gfx.js?v=6.72.00"></script>
-  <script src="nullfx/runtime/null-node.js?v=6.72.00"></script>
-  <script src="../qr/qr-encode.js?v=6.72.00"></script>
-  <script src="remote.js?v=6.72.00"></script>
-  <script src="fx.js?v=6.72.00"></script>
-  <script src="encode.js?v=6.72.00"></script>
-  <script src="meter.js?v=6.72.00"></script>
-  <script src="podcast.js?v=6.72.00"></script>
-  <script src="podcastui.js?v=6.72.00"></script>
-  <script src="midi.js?v=6.72.00"></script>
-  <script src="sfz.js?v=6.72.00"></script>
-  <script src="sounds.js?v=6.72.00"></script>
-  <script src="notes.js?v=6.72.00"></script>
-  <script src="loops.js?v=6.72.00"></script>
-  <script src="roll.js?v=6.72.00"></script>
+  <script src="../i18n.js?v=6.95.00" data-app="studio"></script>
+  <script src="nullfx/runtime/eel-rt.js?v=6.95.00"></script>
+  <script src="nullfx/runtime/null-fx.js?v=6.95.00"></script>
+  <script src="nullfx/runtime/null-gfx.js?v=6.95.00"></script>
+  <script src="nullfx/runtime/null-node.js?v=6.95.00"></script>
+  <script src="../qr/qr-encode.js?v=6.95.00"></script>
+  <script src="remote.js?v=6.95.00"></script>
+  <script src="fx.js?v=6.95.00"></script>
+  <script src="encode.js?v=6.95.00"></script>
+  <script src="meter.js?v=6.95.00"></script>
+  <script src="podcast.js?v=6.95.00"></script>
+  <script src="ghpages.js?v=6.95.00"></script>
+  <script src="podcastui.js?v=6.95.00"></script>
+  <script src="midi.js?v=6.95.00"></script>
+  <script src="sfz.js?v=6.95.00"></script>
+  <script src="sounds.js?v=6.95.00"></script>
+  <script src="notes.js?v=6.95.00"></script>
+  <script src="loops.js?v=6.95.00"></script>
+  <script src="roll.js?v=6.95.00"></script>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="core.js?v=6.72.00"></script>
-  <script src="../bundle.js?v=6.72.00"></script>
-  <script src="package.js?v=6.72.00"></script>
-  <script src="studio.js?v=6.72.00"></script>
+  <script src="core.js?v=6.95.00"></script>
+  <script src="../bundle.js?v=6.95.00"></script>
+  <script src="package.js?v=6.95.00"></script>
+  <script src="studio.js?v=6.95.00"></script>
 
 </body>
 </html>

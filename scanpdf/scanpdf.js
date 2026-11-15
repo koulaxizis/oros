@@ -239,6 +239,7 @@
       "ocr.none": "No text was found on these pages.",
       "txt.title": "Text of the pages", "txt.page": "Page {n}", "txt.empty": "No text was found on this page.",
       "txt.copy": "Copy the text", "txt.send": "Send to an app", "txt.copied": "Text copied", "txt.noCopy": "The text could not be copied here.",
+      "save.docs": "Also add it to Documents", "toast.savedDocs": "Saved in Files › {dir}. It will be in Files › Documents.",
       "save.read": "Make it searchable", "save.readHint": "The text of scanned pages and pictures is read first and put under each page, so the PDF can be searched and copied.",
       "idx.title": "Search", "idx.hint": "PDFs you save into Files can be found in orOS search by their name and text. This list stays on this device: {n} documents.",
       "idx.hint.one": "PDFs you save into Files can be found in orOS search by their name and text. This list stays on this device: 1 document.",
@@ -288,7 +289,17 @@
       "rq.replyGone": "This answer is no longer on the orOS server (it stays 30 days). Ask the signer for their signed copy.",
       "rq.notMine": "This answer is for a request that is not in your list.",
       "rq.noOriginal": "The original PDF is no longer in Files, so the signed copy cannot be made here. Ask the signer for their copy.",
-      "rq.revokeFail": "Could not take it back. Check your connection and try again.", "rq.someone": "the signer"
+      "rq.revokeFail": "Could not take it back. Check your connection and try again.", "rq.someone": "the signer",
+      "ed.who": "Signer {n}", "ed.whoLabel": "This field is for signer {n}. Tap for the next signer.",
+      "rq.signers": "This document has places for {n} signers. Each one gets their own link, and the PDF signed by all of them is made here.",
+      "rq.signer": "Signer {n}", "rq.needSig": "Signer {n} has no place to sign yet. In the editor add a Signature field and set it to Signer {n}.",
+      "rq.linksText": "Send each person their own link. The links work until {d}.", "rq.linkFor": "Link for {to}",
+      "rq.g.waiting": "Signed {k} of {n} · until {d}", "rq.g.signed": "Signed by everyone · {d}",
+      "rq.p.waiting": "{to}: waiting", "rq.p.closed": "{to}: not signed", "rq.p.signed": "{to}: signed {d}", "rq.p.declined": "{to}: declined {d}",
+      "rq.gotOne": "Signed by {nm} ({k} of {n}).", "rq.gotAll": "Signed by everyone. Saved in Files › {dir}.",
+      "rq.makeAll": "Make the signed PDF",
+      "rq.allFail": "The PDF signed by everyone could not be made here. Try again on the device that took the answers in.",
+      "rq.v.all": "This is “{n}” signed by everyone ({nm}), finished on {d}. Nothing in it has changed."
     },
     el: {
       "app.name": "Σαρωτής & PDF",
@@ -457,6 +468,7 @@
       "ocr.none": "Δεν βρέθηκε κείμενο σε αυτές τις σελίδες.",
       "txt.title": "Το κείμενο των σελίδων", "txt.page": "Σελίδα {n}", "txt.empty": "Δεν βρέθηκε κείμενο σε αυτή τη σελίδα.",
       "txt.copy": "Αντιγραφή του κειμένου", "txt.send": "Αποστολή σε εφαρμογή", "txt.copied": "Το κείμενο αντιγράφηκε", "txt.noCopy": "Το κείμενο δεν αντιγράφηκε εδώ.",
+      "save.docs": "Προσθήκη και στα Έγγραφα", "toast.savedDocs": "Αποθηκεύτηκε στα Αρχεία › {dir}. Θα το βρεις στα Αρχεία › Έγγραφα.",
       "save.read": "Να γίνει αναζητήσιμο", "save.readHint": "Το κείμενο των σαρωμένων σελίδων και των εικόνων διαβάζεται πρώτα και μπαίνει κάτω από κάθε σελίδα, ώστε στο PDF να γίνεται αναζήτηση και αντιγραφή.",
       "idx.title": "Αναζήτηση", "idx.hint": "Τα PDF που αποθηκεύεις στα Αρχεία βρίσκονται στην αναζήτηση του orOS με το όνομα και το κείμενό τους. Η λίστα μένει σε αυτή τη συσκευή: {n} έγγραφα.",
       "idx.hint.one": "Τα PDF που αποθηκεύεις στα Αρχεία βρίσκονται στην αναζήτηση του orOS με το όνομα και το κείμενό τους. Η λίστα μένει σε αυτή τη συσκευή: 1 έγγραφο.",
@@ -506,7 +518,17 @@
       "rq.replyGone": "Η απάντηση δεν βρίσκεται πια στον server του orOS (μένει 30 ημέρες). Ζήτα από τον υπογράφοντα το αντίγραφό του.",
       "rq.notMine": "Αυτή η απάντηση είναι για αίτημα που δεν υπάρχει στη λίστα σου.",
       "rq.noOriginal": "Το πρωτότυπο PDF δεν υπάρχει πια στα Αρχεία, οπότε το υπογεγραμμένο αντίγραφο δεν μπορεί να φτιαχτεί εδώ. Ζήτα από τον υπογράφοντα το δικό του.",
-      "rq.revokeFail": "Δεν πάρθηκε πίσω. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", "rq.someone": "τον υπογράφοντα"
+      "rq.revokeFail": "Δεν πάρθηκε πίσω. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", "rq.someone": "τον υπογράφοντα",
+      "ed.who": "Υπογράφων {n}", "ed.whoLabel": "Αυτό το πεδίο είναι για τον/την υπογράφοντα {n}. Πάτα για τον επόμενο.",
+      "rq.signers": "Αυτό το έγγραφο έχει θέσεις για {n} υπογράφοντες. Ο καθένας παίρνει δικό του σύνδεσμο, και το PDF με όλες τις υπογραφές φτιάχνεται εδώ.",
+      "rq.signer": "Υπογράφων {n}", "rq.needSig": "Ο/Η υπογράφων {n} δεν έχει ακόμη θέση υπογραφής. Στον επεξεργαστή πρόσθεσε πεδίο Υπογραφή και όρισέ το στον/στην Υπογράφοντα {n}.",
+      "rq.linksText": "Στείλε στον καθένα τον δικό του σύνδεσμο. Οι σύνδεσμοι ισχύουν έως {d}.", "rq.linkFor": "Σύνδεσμος για {to}",
+      "rq.g.waiting": "Υπέγραψαν {k} από {n} · έως {d}", "rq.g.signed": "Υπέγραψαν όλοι · {d}",
+      "rq.p.waiting": "{to}: σε αναμονή", "rq.p.closed": "{to}: δεν υπέγραψε", "rq.p.signed": "{to}: υπέγραψε {d}", "rq.p.declined": "{to}: αρνήθηκε {d}",
+      "rq.gotOne": "Υπέγραψε ο/η {nm} ({k} από {n}).", "rq.gotAll": "Υπέγραψαν όλοι. Αποθηκεύτηκε στα Αρχεία › {dir}.",
+      "rq.makeAll": "Φτιάξε το υπογεγραμμένο PDF",
+      "rq.allFail": "Το PDF με όλες τις υπογραφές δεν μπόρεσε να φτιαχτεί εδώ. Δοκίμασε ξανά στη συσκευή που πήρε τις απαντήσεις.",
+      "rq.v.all": "Αυτό είναι το «{n}» υπογεγραμμένο από όλους ({nm}), ολοκληρώθηκε στις {d}. Δεν έχει αλλάξει τίποτα."
     }
   };
 
@@ -897,6 +919,10 @@
     });
     ctx.globalAlpha = 1;
   }
+  // A field's fill and edge per signer (scanpdf.css .ov-s2 … .ov-s5).
+  var FIELD_TINT = { 1: ["rgba(255, 214, 26, 0.3)", "#b8860b"], 2: ["rgba(80, 170, 255, 0.28)", "#1f6fb8"],
+                     3: ["rgba(90, 200, 120, 0.28)", "#2c8a4b"], 4: ["rgba(240, 120, 200, 0.26)", "#b23a8a"],
+                     5: ["rgba(255, 150, 60, 0.28)", "#b85a0b"] };
   function drawMarks(ctx, p, i, total, cw, ch, redraw) {
     var g = geomOf(p);
     if (!g) return;
@@ -913,9 +939,10 @@
         drawParts(ctx, o, S * k);
       } else if (o.t === "field") {
         var fw = o.w * S * k, fh = o.h * S * k;
-        ctx.fillStyle = "rgba(255, 214, 26, 0.3)";
+        var fc = FIELD_TINT[o.s || 1] || FIELD_TINT[1];
+        ctx.fillStyle = fc[0];
         ctx.fillRect(-fw / 2, -fh / 2, fw, fh);
-        ctx.strokeStyle = "#b8860b";
+        ctx.strokeStyle = fc[1];
         ctx.lineWidth = Math.max(1, fh * 0.04);
         if (ctx.setLineDash) ctx.setLineDash([4, 3]);
         ctx.strokeRect(-fw / 2, -fh / 2, fw, fh);
@@ -1363,6 +1390,7 @@
         return writeToFiles(blob, C.diskDir(), name).then(function (path) {
           indexDoc(path, name, list);
           var dir = shortDir(C.diskDir());
+          if (prefs.docs === "on" && toDocsInbox(path)) { showToast(t("toast.savedDocs", { dir: dir })); return; }
           showToast(sizes && sizes.a ? t("toast.smallerFiles", { dir: dir, a: sizes.a, b: sizes.b })
                     : sizes ? t("toast.notSmaller") : t("toast.savedFiles", { dir: dir }));
         });
@@ -1480,6 +1508,13 @@
     body.appendChild(field(t("save.name"), name));
     body.appendChild(el("p", "hint small", tn("save.pages", list.length)));
     body.appendChild(whereChoice("dest", prefs.dest, "save.device", "save.files"));
+    // In Files: also give it to Files › Documents (files/docs.js reads
+    // the inbox the next time Files runs; nothing else is shared).
+    var toDocs = check(t("save.docs"), prefs.docs === "on");
+    body.appendChild(toDocs.row);
+    function syncDocs() { toDocs.row.hidden = (radioVal(body, "dest") || "device") !== "files"; }
+    body.addEventListener("change", syncDocs);
+    syncDocs();
     var cmp = select([["off", t("cmp.off")], ["light", t("cmp.light")], ["medium", t("cmp.medium")], ["strong", t("cmp.strong")]], prefs.cmp);
     body.appendChild(field(t("cmp.label"), cmp));
     var cHint = el("p", "hint small", t("cmp.hint"));
@@ -1501,6 +1536,7 @@
       var dest = radioVal(body, "dest") || "device";
       var P = C.readPrefs({ cmp: cmp.value, ocr: lang.value });
       prefs.dest = dest; prefs.cmp = P.cmp; prefs.ocr = P.ocr;
+      prefs.docs = toDocs.box.checked ? "on" : "off";
       // remember a choice that differs from what "auto" would pick
       if (read.box.checked !== wantsRead(list) || prefs.read !== "auto") prefs.read = read.box.checked ? "on" : "off";
       savePrefs();
@@ -1806,7 +1842,7 @@
     syncProps();
   }
   function ovEl(o) {
-    var n = el("div", "ov ov-" + o.t + (ed.sel === o.id ? " on" : ""));
+    var n = el("div", "ov ov-" + o.t + (o.t === "field" && o.s > 1 ? " ov-s" + o.s : "") + (ed.sel === o.id ? " on" : ""));
     n.setAttribute("data-id", o.id);
     n.tabIndex = 0;
     n.setAttribute("role", "button");
@@ -1837,7 +1873,18 @@
   var MIN_HIT = window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 36 : 24;
   function isLine(o) { return o.t === "shape" && (o.k === "line" || o.k === "arrow"); }
   function isCover(o) { return o.t === "shape" && o.fill && !o.sw; }
-  function fieldText(o) { return t("fld." + o.k) + (o.req ? " *" : ""); }
+  function fieldText(o) {
+    var who = docSigners() > 1 ? " · " + (o.s || 1) : "";
+    return t("fld." + o.k) + who + (o.req ? " *" : "");
+  }
+  // How many signers the fields of the document ask for (field s).
+  // While editing, the pages' additions as they are being edited.
+  // skip: a field left out (the one being changed).
+  function docSigners(skip) {
+    var n = 1, lists = ed && ed.ov ? Object.keys(ed.ov).map(function (k) { return ed.ov[k]; }) : pages.map(function (p) { return p.ov || []; });
+    lists.forEach(function (l) { (l || []).forEach(function (o) { if (o.t === "field" && o !== skip && o.s > n) n = o.s; }); });
+    return n;
+  }
   function ovLabel(o) {
     if (o.t === "field") return t("ed.itemField", { k: fieldText(o) });
     if (o.t === "img") return t(o.pic ? "ed.itemPic" : "ed.itemImg");
@@ -1909,7 +1956,13 @@
     if (!o && !dr) return;
     var isText = !!o && o.t === "text", vec = !!o && (o.t === "shape" || o.t === "ink"), isField = !!o && o.t === "field";
     $("ed-req").hidden = !isField || !!dr;
-    if (isField) $("ed-req").setAttribute("aria-pressed", o.req ? "true" : "false");
+    $("ed-who").hidden = !isField || !!dr;
+    if (isField) {
+      $("ed-req").setAttribute("aria-pressed", o.req ? "true" : "false");
+      var wl = t("ed.who", { n: o.s || 1 });
+      $("ed-who").lastChild.textContent = wl;
+      setLabel($("ed-who"), t("ed.whoLabel", { n: o.s || 1 }));
+    }
     var color = o ? o.color : dr.color, sw = o ? o.sw : dr.sw;
     $("ed-input").hidden = !isText || !!dr;
     $("ed-colors").hidden = !(isText || vec || dr);
@@ -3654,6 +3707,19 @@
   }
 
   // Universal search: PDFs saved into Files, by name and text (search.js).
+  // Files › Documents inbox (device-local, R10): paths files/docs.js
+  // adds as documents the next time Files runs (DOCS-1 wave 2).
+  var DOCS_INBOX = "oros-files-docs-inbox";
+  function toDocsInbox(path) {
+    try {
+      var cur = JSON.parse(localStorage.getItem(DOCS_INBOX) || "[]");
+      if (!Array.isArray(cur)) cur = [];
+      cur = cur.filter(function (x) { return x && x.p !== path; }).slice(-199);
+      cur.push({ p: path, at: Date.now(), from: "scanpdf" });
+      localStorage.setItem(DOCS_INBOX, JSON.stringify(cur));
+      return true;
+    } catch (e) { return false; }
+  }
   function indexDoc(path, name, list) {
     var text = pagesText(list).filter(function (s) { return s.trim(); }).join(" ");
     var cur = null;
@@ -3673,7 +3739,7 @@
   // original, so nothing of the pages comes from the other side.
   // The list of requests is sync slice "scanpdfSign".
   var SG = window.ScanPdfSign, RL = window.OrosShareRelay;
-  var DAY_MS = 86400000, SIGN_DIR = "Signatures", SIGN_ME = "oros-scanpdf-signme", MAX_SEND = 24 * 1048576;
+  var DAY_MS = 86400000, SIGN_DIR = "Signatures", ANSWERS_DIR = "Answers", SIGN_ME = "oros-scanpdf-signme", MAX_SEND = 24 * 1048576;
   var signStore = null, signQuiet = false, listOpen = false;
   function signDir() { return C.diskDir() + "/" + SIGN_DIR; }
   function syncApi() { try { return (window.parent && window.parent.orosSync) || null; } catch (e) { return null; } }
@@ -3717,8 +3783,11 @@
     i.type = type; i.maxLength = max; i.value = value || ""; i.spellcheck = false;
     return i;
   }
-  function hasSigField() {
-    return pages.some(function (p) { return (p.ov || []).some(function (o) { return o.t === "field" && o.k === "sig"; }); });
+  // A signature field (for signer `who`, when given) on some page.
+  function hasSigField(who) {
+    return pages.some(function (p) {
+      return (p.ov || []).some(function (o) { return o.t === "field" && o.k === "sig" && (!who || (o.s || 1) === who); });
+    });
   }
   function fieldCount() {
     return pages.reduce(function (n, p) { return n + (p.ov || []).filter(function (o) { return o.t === "field"; }).length; }, 0);
@@ -3728,14 +3797,25 @@
     if (!pages.length) { listDialog(); return; }
     if (!SG || !RL || !window.crypto || !window.crypto.subtle || !window.PDFLib) { showToast(t("rq.noCrypto")); return; }
     var m = me(), body = el("div", "form");
-    var auto = !hasSigField();
-    body.appendChild(el("p", "hint small", auto ? t("rq.autoField") : tn("rq.fields", fieldCount())));
-    var doc = inputOf("text", defaultBase(), 120), to = inputOf("text", "", 120), te = inputOf("email", "", 254);
+    var n = docSigners(), auto = n === 1 && !hasSigField();
+    body.appendChild(el("p", "hint small", auto ? t("rq.autoField") : n > 1 ? t("rq.signers", { n: n }) : tn("rq.fields", fieldCount())));
+    var doc = inputOf("text", defaultBase(), 120), who = [];
     var by = inputOf("text", m.by || "", 120), be = inputOf("email", m.be || "", 254), msg = textArea("", 1000, 3);
-    to.autocomplete = "off"; te.autocomplete = "off"; by.autocomplete = "name"; be.autocomplete = "email";
+    by.autocomplete = "name"; be.autocomplete = "email";
     body.appendChild(field(t("rq.doc"), doc));
-    body.appendChild(field(t("rq.to"), to));
-    body.appendChild(field(t("rq.te"), te));
+    // one name and email per signer (several signers: each in its own box)
+    for (var i = 0; i < n; i++) {
+      var to = inputOf("text", "", 120), te = inputOf("email", "", 254), box = body;
+      to.autocomplete = "off"; te.autocomplete = "off";
+      if (n > 1) {
+        box = el("fieldset", "rq-signer rq-s" + (i + 1));
+        box.appendChild(el("legend", "field-l", t("rq.signer", { n: i + 1 })));
+        body.appendChild(box);
+      }
+      box.appendChild(field(t("rq.to"), to));
+      box.appendChild(field(t("rq.te"), te));
+      who.push({ to: to, te: te });
+    }
     body.appendChild(field(t("rq.by"), by));
     body.appendChild(field(t("rq.be"), be));
     body.appendChild(field(t("rq.msg"), msg));
@@ -3759,11 +3839,15 @@
     body.appendChild(el("p", "hint small", t("rq.legal")));
     openModal(t("rq.title"), body, t("rq.send"), function () {
       function bad(key, inp) { err.textContent = t(key); err.hidden = false; if (inp) inp.focus(); }
-      var o = { n: doc.value.trim() || defaultBase(), to: to.value.trim(), te: te.value.trim(), by: by.value.trim(),
+      var o = { n: doc.value.trim() || defaultBase(), by: by.value.trim(),
                 be: be.value.trim(), msg: msg.value, days: Number(radioVal(body, "rqdays")) || 7,
-                code: lock.box.checked ? code.value : "" };
-      if (!o.to) return bad("rq.needTo", to);
-      if (o.te && !SG.email(o.te)) return bad("rq.badEmail", te);
+                code: lock.box.checked ? code.value : "",
+                signers: who.map(function (w) { return { to: w.to.value.trim(), te: w.te.value.trim() }; }) };
+      for (var j = 0; j < who.length; j++) {
+        if (!o.signers[j].to) return bad("rq.needTo", who[j].to);
+        if (o.signers[j].te && !SG.email(o.signers[j].te)) return bad("rq.badEmail", who[j].te);
+        if (n > 1 && !hasSigField(j + 1)) { err.textContent = t("rq.needSig", { n: j + 1 }); err.hidden = false; return; }
+      }
       if (!o.by) return bad("rq.needBy", by);
       if (o.be && !SG.email(o.be)) return bad("rq.badEmail", be);
       if (lock.box.checked && o.code.length < 6) return bad("rq.shortCode", code);
@@ -3784,9 +3868,19 @@
     var c = e && (e.code || e.message);
     return ["full", "rate", "net", "big"].indexOf(c) >= 0 ? "rq.err." + c : c === "font" ? "err.font" : "rq.err.bad";
   }
+  // A new random id (22 base64url characters), for a group of signers.
+  function newId() {
+    var b = new Uint8Array(16), out = "";
+    crypto.getRandomValues(b);
+    for (var i = 0; i < b.length; i++) out += String.fromCharCode(b[i]);
+    return btoa(out).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  // One request per signer (several signers: each one gets the same
+  // PDF, their own fields, link and reply box; the items share g).
   function sendRequest(o, auto) {
     if (auto) autoField();
-    var list = pages.slice(), geoms = list.map(geomOf), bytes = null, req = null, path = "", box = null;
+    var list = pages.slice(), geoms = list.map(geomOf), bytes = null, reqs = [], path = "", made = [];
+    var n = o.signers.length, gid = n > 1 ? newId() : "";
     if (geoms.some(function (g) { return !g; })) { showToast(t("rq.err.bad")); return; }
     showBusy(t("rq.making"));
     buildPdf(list, o.n).then(function (blob) { return blob.arrayBuffer(); }).then(function (ab) {
@@ -3795,33 +3889,54 @@
       return SG.sha256(bytes);
     }).then(function (h) {
       var fields = SG.fieldsOf(list.map(function (p, i) { return { ov: p.ov, g: geoms[i] }; }));
-      req = SG.cleanRequest({ v: 1, n: o.n, h: h, pages: list.length, by: o.by, be: o.be, to: o.to, te: o.te, msg: o.msg,
-                              lang: ["en", "el", "de"].indexOf(LANG) >= 0 ? LANG : "en", lk: o.code ? 1 : 0, fields: fields });
-      if (!req) throw codeErr("bad");
+      var parts = n > 1 ? SG.splitFields(fields) : [fields];
+      o.signers.forEach(function (w, i) {
+        var og = n > 1 ? o.signers.filter(function (x, k) { return k !== i; }).map(function (x) { return x.to; }) : undefined;
+        var req = SG.cleanRequest({ v: 1, n: o.n, h: h, pages: list.length, by: o.by, be: o.be, to: w.to, te: w.te, msg: o.msg,
+                                    lang: ["en", "el", "de"].indexOf(LANG) >= 0 ? LANG : "en", lk: o.code ? 1 : 0,
+                                    fields: parts[i] || [], og: og });
+        reqs.push(req);
+      });
+      if (reqs.some(function (r) { return !r; })) throw codeErr("bad");
       showBusy(t("rq.saving"));
-      return writeToFiles(new Blob([bytes], { type: "application/pdf" }), signDir(), SG.sentName(req.n))
+      return writeToFiles(new Blob([bytes], { type: "application/pdf" }), signDir(), SG.sentName(reqs[0].n))
         .then(function (p) { path = p; }, function () { path = ""; });
     }).then(function () {
       showBusy(t("rq.sending"));
-      // a reply box, so the answer comes back on its own (wave 4); without
-      // one (an older relay, no room) the answer comes as a link
+      // a reply box per signer, so the answers come back on their own
+      // (wave 4); without one (an older relay, no room) as a link
       var until = Date.now() + (o.days || 7) * DAY_MS + 30 * DAY_MS;
-      return RL.boxes ? RL.boxes(1, { exp: until }).then(function (l) { return l[0]; }, function () { return null; }) : null;
-    }).then(function (bx) {
-      box = bx;
-      var d = box ? Object.assign({}, req, { bx: { id: box.id, k: box.key, w: box.wt } }) : req;
-      return RL.create({ v: 1, k: "sign", d: d }, { days: o.days, password: o.code || undefined, bin: bytes });
-    }).then(function (r) {
-      var it = { id: r.id, a: Date.now(), q: req, x: r.exp, c: r.code, d: r.del };
-      if (path) it.p = path;
-      if (box) it.b = { id: box.id, k: box.key, r: box.rt };
-      saveSign(SG.addItem(loadSign(), it));
-      hideBusy();
-      linkDialog(r.id, o.code);
-      if (!path) showToast(t("rq.noKeep"));
+      return RL.boxes ? RL.boxes(n, { exp: until }).then(null, function () { return []; }) : [];
+    }).then(function (bxs) {
+      return reqs.reduce(function (c, req, i) {
+        return c.then(function () {
+          var box = bxs && bxs[i] || null;
+          var d = box ? Object.assign({}, req, { bx: { id: box.id, k: box.key, w: box.wt } }) : req;
+          return RL.create({ v: 1, k: "sign", d: d }, { days: o.days, password: o.code || undefined, bin: bytes }).then(function (r) {
+            made.push({ r: r, box: box, req: req, i: i });
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        // boxes made but not used (fewer requests went out) go again
+        (bxs || []).slice(reqs.length).forEach(function (b) { if (RL.revoke) RL.revoke(b.id, b.rt).then(null, function () {}); });
+        made.forEach(function (m) {
+          var it = { id: m.r.id, a: Date.now(), q: m.req, x: m.r.exp, c: m.r.code, d: m.r.del };
+          if (path) it.p = path;
+          if (m.box) it.b = { id: m.box.id, k: m.box.key, r: m.box.rt };
+          if (gid) it.g = { id: gid, i: m.i, n: n };
+          saveSign(SG.addItem(loadSign(), it));
+        });
+        hideBusy();
+        linkDialog(made.map(function (m) { return m.r.id; }));
+        if (!path) showToast(t("rq.noKeep"));
+      }, function (e) {
+        // a request that could not go: none of them stays out
+        made.forEach(function (m) { if (m.r.del) RL.revoke(m.r.id, m.r.del).then(null, function () {}); });
+        (bxs || []).forEach(function (b) { if (RL.revoke) RL.revoke(b.id, b.rt).then(null, function () {}); });
+        throw e;
+      });
     }).catch(function (e) {
       hideBusy();
-      if (box && RL.revoke) RL.revoke(box.id, box.rt).then(null, function () {});
       try { console.error("[orOS] scanpdf sign request:", e); } catch (x) {}
       showToast(t(sendErr(e)));
     });
@@ -3854,25 +3969,30 @@
     if (shell) { closeModal(); shell.__orosOpenAt("mail", { compose: { to: q.te || "", subject: subject.slice(0, 300), body: text.slice(0, 20000) } }); return; }
     window.open("mailto:" + encodeURIComponent(q.te || "") + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(text), "_self");
   }
-  function linkDialog(id, codeTold) {
-    var it = loadSign().items[id];
-    if (!it || it.gone) return;
-    var q = it.q, link = SG.signLink(origin(), it.c), d = fmtDay(it.x);
+  // The links of the requests just sent (ids), or of one from the list.
+  function linkDialog(ids) {
+    var items = (Array.isArray(ids) ? ids : [ids]).map(function (id) { return loadSign().items[id]; })
+      .filter(function (it) { return it && !it.gone; });
+    if (!items.length) return;
+    var first = items[0], d = fmtDay(first.x), many = items.length > 1 || !!first.g;
     var body = el("div", "form");
-    body.appendChild(el("p", "", t("rq.linkText", { to: q.to, d: d })));
-    if (q.lk) body.appendChild(el("p", "hint small warn", t("rq.linkCode", { to: q.to })));
-    var out = textArea(link, 400, 3);
-    out.readOnly = true;
-    out.className = "rq-link";
-    body.appendChild(field(t("rq.link"), out));
-    var acts = el("div", "rq-acts");
-    function act(label, fn, cls) { var b = el("button", "btn small" + (cls ? " " + cls : ""), label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); return b; }
-    act(t("rq.copy"), function () { copyText(link).then(function () { showToast(t("rq.copied")); }, function () { out.select(); showToast(t("txt.noCopy")); }); }, "primary");
-    act(t("rq.email"), function () { mailLink(it, false); });
-    if (typeof navigator.share === "function") {
-      act(t("rq.share"), function () { navigator.share({ title: t("rq.mailSubject", { n: q.n }), url: link }).catch(function () {}); });
-    }
-    body.appendChild(acts);
+    body.appendChild(el("p", "", many ? t("rq.linksText", { d: d }) : t("rq.linkText", { to: first.q.to, d: d })));
+    if (first.q.lk) body.appendChild(el("p", "hint small warn", t("rq.linkCode", { to: items.map(function (it) { return it.q.to; }).join(", ") })));
+    items.forEach(function (it) {
+      var q = it.q, link = SG.signLink(origin(), it.c);
+      var out = textArea(link, 400, 3);
+      out.readOnly = true;
+      out.className = "rq-link";
+      body.appendChild(field(many ? t("rq.linkFor", { to: q.to }) : t("rq.link"), out));
+      var acts = el("div", "rq-acts");
+      function act(label, fn, cls) { var b = el("button", "btn small" + (cls ? " " + cls : ""), label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); return b; }
+      act(t("rq.copy"), function () { copyText(link).then(function () { showToast(t("rq.copied")); }, function () { out.select(); showToast(t("txt.noCopy")); }); }, "primary");
+      act(t("rq.email"), function () { mailLink(it, false); });
+      if (typeof navigator.share === "function") {
+        act(t("rq.share"), function () { navigator.share({ title: t("rq.mailSubject", { n: q.n }), url: link }).catch(function () {}); });
+      }
+      body.appendChild(acts);
+    });
     openModal(t("rq.linkH"), body, t("rq.done"), closeModal);
     $("modal-cancel").hidden = true;
   }
@@ -3902,10 +4022,10 @@
     paste.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); take.click(); } });
     row.appendChild(take);
     body.appendChild(row);
-    var items = SG.list(loadSign(), Date.now());
-    if (!items.length) body.appendChild(el("p", "hint", t("rq.none")));
+    var rows = SG.rows(loadSign(), Date.now());
+    if (!rows.length) body.appendChild(el("p", "hint", t("rq.none")));
     var ul = el("ul", "rq-items");
-    items.forEach(function (it) { ul.appendChild(itemRow(it)); });
+    rows.forEach(function (r) { ul.appendChild(r.g ? groupRow(r) : itemRow(r.it)); });
     body.appendChild(ul);
     var vb = el("button", "btn small", t("rq.verify"));
     vb.type = "button";
@@ -3948,7 +4068,66 @@
     li.appendChild(acts);
     return li;
   }
-  function linkDialogFromList(id) { closeModal(); linkDialog(id); }
+  function linkDialogFromList(id) { closeModal(); linkDialog([id]); }
+  // One document sent to several signers: one row, a line per signer.
+  function groupRow(r) {
+    var items = r.items, q = items[0].q, st = r.status, li = el("li", "rq-item rq-group rq-" + st);
+    var signed = items.filter(function (it) { return it.status === "signed"; });
+    var no = items.filter(function (it) { return it.status === "declined"; })[0];
+    var all = items[0].all, last = signed.reduce(function (m, it) { return Math.max(m, it.got.at); }, 0);
+    li.appendChild(el("span", "rq-name", q.n));
+    var line = st === "waiting" ? t("rq.g.waiting", { k: signed.length, n: items[0].g.n, d: fmtDay(items[0].x) }) :
+               st === "signed" ? t("rq.g.signed", { d: fmtDay(all ? all.at : last) }) :
+               st === "declined" ? t("rq.st.declined", { nm: no.got.nm || no.q.to, d: fmtDay(no.got.at) }) :
+               st === "revoked" ? t("rq.st.revoked") : t("rq.st.expired", { d: fmtDay(items[0].x) });
+    li.appendChild(el("span", "rq-st", line));
+    if (no && no.got.why) li.appendChild(el("span", "rq-why", t("rq.why", { why: no.got.why })));
+    var ul = el("ul", "rq-people");
+    items.forEach(function (it) {
+      var p = el("li", "rq-person rq-" + it.status);
+      var who = it.q.to + (it.q.te ? " <" + it.q.te + ">" : "");
+      p.appendChild(el("span", "rq-to", it.got ? t("rq.p." + it.got.st, { to: who, d: fmtDay(it.got.at) }) :
+                                         t("rq.p." + (it.status === "waiting" ? "waiting" : "closed"), { to: who })));
+      if (it.status === "waiting" && st === "waiting") {
+        var acts = el("div", "rq-acts");
+        [[t("rq.copyLink"), function () { linkDialogFromList(it.id); }], [t("rq.remind"), function () { mailLink(it, true); }]].forEach(function (a) {
+          var b = el("button", "btn small", a[0]);
+          b.type = "button"; b.addEventListener("click", a[1]); acts.appendChild(b);
+        });
+        p.appendChild(acts);
+      }
+      ul.appendChild(p);
+    });
+    li.appendChild(ul);
+    if (st === "waiting" && items.some(function (it) { return it.b && it.status === "waiting"; })) li.appendChild(el("span", "rq-why", t("rq.auto")));
+    var acts = el("div", "rq-acts");
+    function act(label, fn, cls) { var b = el("button", "btn small" + (cls ? " " + cls : ""), label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); return b; }
+    if (st === "waiting") {
+      var rv = act(t("rq.revoke"), function () {
+        if (!rv.classList.contains("sure")) { rv.classList.add("sure"); rv.textContent = t("rq.revokeSure"); return; }
+        items.forEach(function (it) { if (it.status === "waiting") revokeItem(it.id); });
+      }, "danger");
+    }
+    if (st === "signed" && all && all.pf) {
+      act(t("rq.open"), function () { closeModal(); addPaths([all.pf]); });
+      act(t("rq.saveCopy"), function () {
+        var fs = fsApi();
+        if (!fs) return;
+        fs.readBlob(all.pf).then(function (b) { return saveBlob(b, SG.signedName(q.n)); }, function () { showToast(t("err.read")); });
+      });
+    }
+    if (st === "signed" && !all) act(t("rq.makeAll"), function () { buildAll(r.g, true); }, "primary");
+    if (st !== "waiting") {
+      act(t("rq.remove"), function () {
+        var s0 = loadSign();
+        items.forEach(function (it) { dropBox(it); s0 = SG.remove(s0, it.id, Date.now()); });
+        saveSign(s0);
+        renderList();
+      });
+    }
+    li.appendChild(acts);
+    return li;
+  }
   function revokeItem(id) {
     var it = loadSign().items[id];
     if (!it) return;
@@ -3997,6 +4176,7 @@
     return SG.sha256(SG.canon(reply)).then(function (rh) {
       if (reply.st === "declined") return finish(it, { at: Date.now(), st: "declined", nm: reply.nm, why: reply.why, rh: rh });
       showBusy(t("rq.building"));
+      if (it.g) return groupReply(it, reply, rh);
       return original(it).then(function (bytes) {
         return signedPdf(bytes, it, reply);
       }).then(function (signed) {
@@ -4009,6 +4189,81 @@
           });
         });
       });
+    });
+  }
+
+  // One of several signers answered: the answer kept in Files (the
+  // PDF signed by all is made from the answers once they are all in),
+  // the hash of that signer's own signed copy kept to check it later.
+  function groupReply(it, reply, rh) {
+    var json = SG.canon(reply), ap = "";
+    var name = C.cleanName(it.q.n + " - " + it.q.to).replace(/[.\s]+$/, "") + ".json";
+    return writeToFiles(new Blob([json], { type: "application/json" }), signDir() + "/" + ANSWERS_DIR, name).then(function (p) { ap = p; }, function () {})
+      .then(function () {
+        return original(it).then(function (bytes) { return signedPdf(bytes, it, reply); }).then(SG.sha256, function () { return ""; });
+      }).then(function (hf) {
+        var got = { at: Date.now(), st: "signed", nm: reply.nm, rh: rh };
+        if (hf) got.hf = hf;
+        if (ap) got.ap = ap;
+        finish(it, got, !ap);
+        return buildAll(it.g.id, false);
+      });
+  }
+  // The PDF signed by everyone in group gid, once all have signed:
+  // the original with every signer's fields, one certificate for all
+  // and every signing record attached. Each answer must hash to the
+  // rh kept when it came in. ask: asked from the list (say why not).
+  var buildingAll = {};
+  function buildAll(gid, ask) {
+    var items = SG.groupItems(loadSign(), gid);
+    if (buildingAll[gid] || !items.length || items[0].all) return Promise.resolve();
+    if (items.length !== items[0].g.n || items.some(function (it) { return !it.got || it.got.st !== "signed"; })) return Promise.resolve();
+    var fs = fsApi();
+    if (!fs || items.some(function (it) { return !it.got.ap; })) { if (ask) showToast(t("rq.allFail")); return Promise.resolve(); }
+    buildingAll[gid] = true;
+    showBusy(t("rq.building"));
+    var lib = window.PDFLib, parts = [], bytes = null;
+    return Promise.all(items.map(function (it) {
+      return fs.readBlob(it.got.ap).then(function (b) { return b.text(); }).then(function (txt) {
+        var reply = SG.cleanReply(JSON.parse(txt), it.q);
+        if (!reply) throw codeErr("badReply");
+        return SG.sha256(SG.canon(reply)).then(function (h) {
+          if (h !== it.got.rh) throw codeErr("badReply");
+          return { it: it, q: it.q, reply: reply };
+        });
+      });
+    })).then(function (ps) {
+      parts = ps;
+      return original(items[0]);
+    }).then(function (b) {
+      bytes = b;
+      return Promise.all([pdfFont(), OPS.load(lib, bytes), Promise.all(parts.map(function (p) { return SG.record(p.it.id, p.q, p.reply, {}); }))]);
+    }).then(function (a) {
+      var font = a[0], loaded = a[1], outs = a[2];
+      if (loaded.err) throw codeErr("noOriginal");
+      var rec = SG.recordAll(outs), at = parts.reduce(function (m, p) { return Math.max(m, p.reply.at); }, 0);
+      return OPS.stamp(lib, bytes, SG.stampAll(parts, OPS.pageGeoms(lib, loaded.doc)), { font: font, cert: SG.certAll(outs),
+        attach: { name: "signing-record.json", bytes: new TextEncoder().encode(rec.json), at: at, description: "orOS signing record" } });
+    }).then(function (signed) {
+      return SG.sha256(signed).then(function (hf) {
+        var blob = new Blob([signed], { type: "application/pdf" });
+        return writeToFiles(blob, signDir(), SG.signedName(items[0].q.n)).then(function (pf) {
+          saveSign(SG.setAll(loadSign(), gid, { at: Date.now(), hf: hf, pf: pf }));
+          showToast(t("rq.gotAll", { dir: shortDir(signDir()) }));
+        }, function () {
+          saveSign(SG.setAll(loadSign(), gid, { at: Date.now(), hf: hf }));
+          return saveBlob(blob, SG.signedName(items[0].q.n));
+        });
+      });
+    }).then(function () {
+      buildingAll[gid] = false;
+      hideBusy();
+      if (listOpen) renderList();
+    }, function (e) {
+      buildingAll[gid] = false;
+      hideBusy();
+      try { console.error("[orOS] scanpdf signed by all:", e); } catch (x) {}
+      showToast(t(e && e.code === "noOriginal" ? "rq.noOriginal" : "rq.allFail"));
     });
   }
 
@@ -4052,7 +4307,10 @@
     if (it.d) RL.revoke(it.id, it.d).then(null, function () {});
     dropBox(it);
     var nm = got.nm || it.q.to;
-    showToast(got.st === "declined" ? t("rq.gotDeclined", { nm: nm }) :
+    if (it.g && got.st === "signed") {
+      var k = SG.groupItems(loadSign(), it.g.id).filter(function (x) { return x.got && x.got.st === "signed"; }).length;
+      showToast(t("rq.gotOne", { nm: nm, k: k, n: it.g.n }));
+    } else showToast(got.st === "declined" ? t("rq.gotDeclined", { nm: nm }) :
               notSaved ? t("rq.gotNotSaved", { nm: nm }) : t("rq.gotSigned", { nm: nm, dir: shortDir(signDir()) }));
     if (listOpen) renderList(); else if (!quietTake) listDialog();
   }
@@ -4094,13 +4352,15 @@
         var hit = null, kind = "none";
         SG.list(loadSign(), Date.now()).forEach(function (it) {
           if (hit) return;
-          if (it.got && it.got.hf === h) { hit = it; kind = "signed"; }
+          if (it.all && it.all.hf === h) { hit = it; kind = "all"; }
+          else if (it.got && it.got.hf === h) { hit = it; kind = "signed"; }
           else if (it.q.h === h) { hit = it; kind = "original"; }
         });
         var out = $("rq-verified");
         if (!out) return;
         out.hidden = false;
-        out.textContent = !hit ? t("rq.v.none") : kind === "signed" ?
+        var names = hit && hit.g ? SG.groupItems(loadSign(), hit.g.id).map(function (x) { return x.got && x.got.nm || x.q.to; }).join(", ") : "";
+        out.textContent = !hit ? t("rq.v.none") : kind === "all" ? t("rq.v.all", { n: hit.q.n, nm: names, d: fmtDay(hit.all.at) }) : kind === "signed" ?
           t("rq.v.signed", { n: hit.q.n, nm: hit.got.nm || hit.q.to, d: fmtDay(hit.got.at) }) : t("rq.v.original", { n: hit.q.n, to: hit.q.to });
       }, function () { showToast(t("err.read")); });
     }
@@ -4285,7 +4545,7 @@
     [["ed-sig", "sig", "ed.sig"], ["ed-text", "text", "ed.text"], ["ed-date", "date", "ed.date"],
      ["ed-shape", "shape", "ed.shape"], ["ed-pen", "pen", "ed.pen"], ["ed-marker", "marker", "ed.marker"],
      ["ed-cover", "cover", "ed.cover"], ["ed-pic", "image", "ed.pic"], ["ed-fill", "fill", "ed.fill"],
-     ["ed-field", "field", "ed.field"], ["ed-req", "tick", "ed.req"],
+     ["ed-field", "field", "ed.field"], ["ed-req", "tick", "ed.req"], ["ed-who", "sign", "ed.who"],
      ["ed-unstroke", "undo", "ed.unstroke"],
      ["ed-all", "copy", "ed.all"], ["ed-del", "del", "ed.del"]].forEach(function (b) {
       $(b[0]).innerHTML = ICON[b[1]];
@@ -4381,6 +4641,19 @@
       n.querySelector(".ov-fld").textContent = fieldText(o);
       n.setAttribute("aria-label", ovLabel(o));
       syncProps();
+    });
+    // Who fills this field in: signer 1, 2, … (one more than the
+    // highest so far, at most MAX_SIGNERS), then back to 1.
+    $("ed-who").addEventListener("click", function () {
+      var o = ed && ed.sel ? ovById(ed.sel) : null;
+      if (!o || o.t !== "field") return;
+      var top = Math.min(C.MAX_SIGNERS, docSigners(o) + 1), next = (o.s || 1) + 1;
+      if (next > top) next = 1;
+      if (next > 1) o.s = next; else delete o.s;
+      touched();
+      drawLayer();
+      var n = ovNode(o.id);
+      if (n) n.focus();
     });
     $("ask-btn").addEventListener("click", requestDialog);
     $("req-btn").addEventListener("click", function () { listDialog(); });

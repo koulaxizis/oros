@@ -215,7 +215,8 @@
       "icon": "forms",
       "url": "forms/",
       "type": "internal",
-      "today": "today.js"
+      "today": "today.js",
+      "search": "search.js"
     },
     {
       "id": "base",

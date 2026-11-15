@@ -16,7 +16,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.6.0";
+  var VERSION = "1.7.0";
   var PREFS_KEY = "oros-scanpdf-prefs";      // device-local (R10), never synced
   var SIGS_KEY = "oros-scanpdf-sigs";        // device-local (R10), never synced
   var MAX_SIGS = 6;
@@ -150,7 +150,8 @@
   var DESTS = ["device", "files"];
   var CMPS = ["off", "light", "medium", "strong"];
   var OCR_LANGS = ["ell+eng", "ell", "eng"];   // wave 4: what Read text reads
-  var READS = ["auto", "on", "off"];           // Save › Make it searchable (auto: on when there are scans)
+  var READS = ["auto", "on", "off"];
+  var TO_DOCS = ["off", "on"];                 // Save › In Files: also add it to Files › Documents           // Save › Make it searchable (auto: on when there are scans)
   function pick(v, list, def) { return list.indexOf(v) !== -1 ? v : def; }
   function readPrefs(raw) {
     var p = raw && typeof raw === "object" ? raw : {};
@@ -161,7 +162,8 @@
       dest: pick(p.dest, DESTS, "device"),
       cmp: pick(p.cmp, CMPS, "off"),
       ocr: pick(p.ocr, OCR_LANGS, "ell+eng"),
-      read: pick(p.read, READS, "auto")
+      read: pick(p.read, READS, "auto"),
+      docs: pick(p.docs, TO_DOCS, "off")
     };
   }
 
@@ -315,7 +317,8 @@
   //           box), color, sw, op (1 pen, below 1 marker).
   //   field:  a place the other person fills in when asked to sign
   //           (signature requests, sign-core.js): k (FIELDS), w, h as
-  //           fractions of S, req (must be filled). Never drawn into a
+  //           fractions of S, req (must be filled), s (the signer it
+  //           is for, 2..MAX_SIGNERS; none: the first). Never drawn into a
   //           PDF: the request carries it beside the PDF.
   //   text may carry mw (fractions of S): the widest it may be, its
   //           size made smaller in the PDF when it is wider.
@@ -325,6 +328,7 @@
                  green: [0.1, 0.5, 0.22], yellow: [1, 0.84, 0.1], white: [1, 1, 1] };
   var SHAPES = ["rect", "ellipse", "line", "arrow", "check", "cross"];
   var FIELDS = ["sig", "init", "name", "date", "text", "check"];
+  var MAX_SIGNERS = 5;
   function dispSize(W, H, R) { return R % 180 ? [H, W] : [W, H]; }
   // Unturned point (px, py) → where it shows on the turned page.
   function toDisp(px, py, W, H, R) {
@@ -398,6 +402,8 @@
       c.w = sizeOf(o.w, 0.3, false);
       c.h = sizeOf(o.h, 0.08, false);
       c.req = o.req !== false;
+      var who = Number(o.s);
+      if (Number.isSafeInteger(who) && who >= 2 && who <= MAX_SIGNERS) c.s = who;
     } else if (t === "ink") {
       c.w = Math.min(2, Math.max(0.002, Number(o.w) || 0.002));
       c.h = Math.min(2, Math.max(0.002, Number(o.h) || 0.002));
@@ -699,7 +705,7 @@
     history: history, record: record, undo: undo, redo: redo,
     parseRanges: parseRanges, splitPlan: splitPlan, rangeLabel: rangeLabel, parseTarget: parseTarget,
     SIGS_KEY: SIGS_KEY, MAX_SIGS: MAX_SIGS, MAX_OV: MAX_OV, COLORS: COLORS, BASELINE: BASELINE,
-    SHAPES: SHAPES, FIELDS: FIELDS, MAX_INK: MAX_INK, MAX_STROKES: MAX_STROKES, MAX_PIC_URL: MAX_PIC_URL, ovParts: ovParts,
+    SHAPES: SHAPES, FIELDS: FIELDS, MAX_SIGNERS: MAX_SIGNERS, MAX_INK: MAX_INK, MAX_STROKES: MAX_STROKES, MAX_PIC_URL: MAX_PIC_URL, ovParts: ovParts,
     COMPRESS: COMPRESS, WM_OP: WM_OP, NUM_POS: NUM_POS,
     cloneOv: cloneOv, dispSize: dispSize, toDisp: toDisp, fromDisp: fromDisp, ovAt: ovAt, ovDisp: ovDisp,
     anchor: anchor, cleanOv: cleanOv, setOverlays: setOverlays,

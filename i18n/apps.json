@@ -125,6 +125,7 @@
    "files": [
     "calendar/calendar.js",
     "calendar/package.js",
+    "calendar/rsvp.js",
     "calendar/search.js",
     "calendar/today.js"
    ]
@@ -359,6 +360,7 @@
     "forms/host.js",
     "forms/pub.js",
     "forms/render.js",
+    "forms/search.js",
     "forms/today.js"
    ]
   },
@@ -465,6 +467,7 @@
    "files": [
     "kanban/kanban.js",
     "kanban/search.js",
+    "kanban/today.js",
     "kanban/tools.js"
    ]
   },
