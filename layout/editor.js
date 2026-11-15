@@ -1281,6 +1281,10 @@
     if (ED.vec && ED.vec.canCombine(items)) ["union", "subtract", "intersect", "exclude"].forEach(function (k) {
       list.push({ label: window.orosDK.pathedit.str("pe." + k), fn: function () { ED.vec.combine(k); } });
     });
+    if (items.length && LY.io && LY.io.svgSelection) {
+      list.push({ label: t("svg.copy"), fn: function () { LY.io.svgSelection("copy"); } });
+      list.push({ label: t("svg.save"), fn: function () { LY.io.svgSelection("save"); } });
+    }
     if (items.length) {
       list.push({ label: t("props.dup"), fn: duplicate });
       list.push({ label: t("props.front"), fn: function () { ED.arrange("front"); } });

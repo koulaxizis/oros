@@ -1105,6 +1105,9 @@
     bar.appendChild(tool("position", t("ctx.position"), function () { openView("position"); }, view === "position"));
     bar.appendChild(tool("op", t("ctx.op"), opacityPop));
     bar.appendChild(tool("link", t("ctx.link"), linkPop, list.some(function (x) { return !!AX.linkOf(x); })));
+    if (AT.io && AT.io.svgSelection && window.AtelierWeb) bar.appendChild(tool("svg", t("ctx.svg"), function (b) {
+      AT.menu(b, [{ label: t("svg.copy"), fn: function () { AT.io.svgSelection("copy"); } }, { label: t("svg.save"), fn: function () { AT.io.svgSelection("save"); } }]);
+    }));
     bar.appendChild(tool("anim", t("ctx.animate"), function () { openView("animate"); }, view === "animate"));
     bar.appendChild(tool("lock", t("ctx.lock"), function () { edit(function (it) { it.lock = 1; }); }));
     bar.appendChild(tool("copy", t("ctx.dup"), ED.duplicate));

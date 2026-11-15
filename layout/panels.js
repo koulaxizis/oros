@@ -1295,14 +1295,17 @@
       function drawImg() {
         dpiWrap.innerHTML = ""; fmtWrap.innerHTML = "";
         dpiWrap.appendChild(seg([["72", "72 dpi"], ["150", "150 dpi"], ["300", "300 dpi"]], String(imgPrefs.dpi), function (v) { imgPrefs.dpi = +v; drawImg(); }));
-        fmtWrap.appendChild(seg([["png", "PNG"], ["jpg", "JPG"]], imgPrefs.fmt, function (v) { imgPrefs.fmt = v; drawImg(); }));
+        fmtWrap.appendChild(seg([["png", "PNG"], ["jpg", "JPG"], ["svg", "SVG"]], imgPrefs.fmt, function (v) { imgPrefs.fmt = v; drawImg(); }));
+        if (resField) resField.hidden = imgPrefs.fmt === "svg";   // an SVG has no resolution
       }
       drawImg();
       var gi = el("div", "grid2");
       gi.appendChild(field(t("exp.page"), pgSel));
       gi.appendChild(field(t("exp.format"), fmtWrap));
       body.appendChild(gi);
-      body.appendChild(field(t("exp.res"), dpiWrap));
+      var resField = field(t("exp.res"), dpiWrap);
+      resField.hidden = imgPrefs.fmt === "svg";
+      body.appendChild(resField);
       body.appendChild(btn(t("exp.imgGo"), function () { close(); LY.io.exportImage(imgPrefs); }, "block"));
       body.appendChild(el("h3", "pn-h", t("exp.merge")));
       body.appendChild(el("p", "hint", t("exp.mergeNote")));
