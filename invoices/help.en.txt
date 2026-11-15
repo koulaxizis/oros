@@ -81,7 +81,7 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 ## Budget, Quote, Timesheet and CRM
 - Every payment you record goes to [Budget](app:budget) by itself as freelance income (with its partner and the invoice number): the payment shows `In Budget (automatic)`. It appears the next time Budget opens on a device where you also use Invoices. Change the amount or date here and Budget follows; delete the payment and its income goes too. What you change or delete in Budget stays as you left it. Turn it off in `Settings` › `Payments go to Budget by themselves`; payments recorded before stay as they were.
 - With that setting off (and for older payments), next to each payment, `Add to Budget` opens [Budget](app:budget) with the payment filled in as freelance income; check it and save it there. It shows when the payment is in Budget's currency, and remembers that you sent it.
-- `Make invoice` on an accepted [Quote](app:quote), and `Create invoice` in a [Timesheet](app:timesheet) report, open a new invoice here with the client and the lines filled in.
+- `Make invoice` on an accepted quote in the `Quotes` tab, and `Create invoice` in a [Timesheet](app:timesheet) report, open a new invoice here with the client and the lines filled in.
 - On `Clients`, `From CRM` brings in customers from [CRM](app:crm); each one stays linked, so CRM can show its invoices.
 - On an issued invoice or receipt whose lines have a product code, `Take out of stock` opens a sale in [Stock](app:stock) with those products and prices; a credit note offers `Back into stock` for a customer return. Nothing changes in Stock until you save there. The button shows only once you use Stock.
 
@@ -104,7 +104,7 @@ Until you press `Save`, a new quote is a draft kept only on this device. If you 
 A quote can also start in another app: `Create quote` in a [Timesheet](app:timesheet) report fills in a new quote for you. Check it and press `Save`.
 
 ### Clients
-Tap or click `Select client` to pick a client, or the **+** next to it to add one. `Client Details` holds `Name`, `Email`, `Phone`, `Address` and `Tax ID / VAT`. The pencil edits the chosen client; `Delete` in that window removes the client after you confirm.
+Tap or click `Select client` to pick a client, or the **+** next to it to add one. `Client Details` holds `Name`, `Email`, `Phone`, `Address` and `Tax ID / VAT`. The pencil edits the chosen client; `Delete` in that window removes the client after you confirm. Quotes and invoices keep their own client lists: the list also shows, under `From Billing's clients`, the invoice clients your quotes don't have yet, and choosing one opens `Client Details` filled in (it is added only when you save). The invoice editor's `Client` list does the same with the quotes' clients.
 
 ### Line items and totals
 Press **+** next to `Line Items` to add a row with `Code/SKU`, `Description`, `Qty`, `Unit Price`, `Disc %` and `VAT %`. You can type amounts with a comma or a dot.
@@ -119,7 +119,7 @@ Under `Instalments`, set a `Count` and press `Generate` to split the total evenl
 ### Payment terms, notes and templates
 Tap or click a payment preset (`Bank Transfer`, `PayPal`, `IRIS`, `Cash`) to add its text to `Payment Terms`. The pencil lets you change the preset texts, for example to add your IBAN. Use `Notes` for any other terms.
 
-`Save as Template` stores the items, discount, payment terms, notes and instalments under a name. The `Template Library` button opens your templates, where `Use` starts from one. `Duplicate` makes a copy with a new number and the status `Draft`. On a quote marked `Accepted`, `Make invoice` opens a new invoice in [Invoices](app:invoices) with the same client and items; check it there and issue it.
+`Save as Template` stores the items, discount, payment terms, notes and instalments under a name. The `Template Library` button opens your templates, where `Use` starts from one. `Duplicate` makes a copy with a new number and the status `Draft`. On a quote marked `Accepted`, `Make invoice` opens a new invoice right here, in the `Invoices` tab, with the same client and items; check it and issue it. Nothing is saved until you press `Save draft` or `Issue`.
 
 ### Your quotes, PDF and email
 The `Quotes` tab lists all your quotes. Search by number, client, item, notes or payment terms, and use the funnel to filter by status. Tap or click a quote to open it.

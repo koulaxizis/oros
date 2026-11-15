@@ -117,7 +117,7 @@
       "ed.subNew": "Not saved yet", "ed.subDraft": "Saved as a draft", "ed.subNext": "Will be {n} when issued",
       "ed.subRecord": "Issued elsewhere: tracked here only",
       "ed.kind": "Kind", "ed.series": "Numbering", "ed.client": "Client", "ed.noClient": "No client (one-off)",
-      "ed.newClient": "New client", "ed.editClient": "Edit client", "ed.date": "Date", "ed.due": "Due",
+      "ed.newClient": "New client", "ed.fromQuotes": "From the quotes' clients", "ed.editClient": "Edit client", "ed.date": "Date", "ed.due": "Due",
       "ed.dueNone": "No due date", "ed.dueNow": "On receipt", "ed.dueDays": "{n} days",
       "ed.cur": "Currency", "ed.lines": "Items", "ed.addLine": "Add item", "ed.code": "Code", "ed.desc": "Description",
       "ed.qty": "Qty", "ed.unit": "Unit", "ed.price": "Unit price", "ed.disc": "Disc. %", "ed.vat": "VAT %",
@@ -152,7 +152,7 @@
       "toast.rcDone": "VAT set to 0 % with the reverse charge note",
       "c.statement": "Statement PDF", "toast.noOpen": "Nothing is owed by this client",
       "vw.remind": "Payment reminder", "rem.text": "Pick a tone. The message opens as a draft you can still edit.", "rem.soft": "Polite", "rem.firm": "Firm",
-      "vw.convert": "Make invoice", "vw.stockOut": "Take out of stock", "vw.stockRet": "Back into stock", "vw.void": "Cancel", "vw.edit": "Edit", "vw.delete": "Delete",
+      "vw.fromQuote": "From quote {n}", "vw.convert": "Make invoice", "vw.stockOut": "Take out of stock", "vw.stockRet": "Back into stock", "vw.void": "Cancel", "vw.edit": "Edit", "vw.delete": "Delete",
       "vw.sentOn": "Sent {d}", "vw.converted": "Turned into {n}", "vw.from": "From", "vw.to": "Bill to",
       "vw.dates": "Date {d} · due {u}", "vw.date": "Date {d}", "vw.corrects": "Corrects {n}", "vw.credits": "Credit notes",
       "vw.pays": "Payments", "vw.noPays": "No payments yet.", "vw.mark": "ΜΑΡΚ", "vw.markEdit": "Edit ΜΑΡΚ",
@@ -278,7 +278,7 @@
       "ed.subNew": "Δεν έχει αποθηκευτεί", "ed.subDraft": "Αποθηκευμένο ως πρόχειρο", "ed.subNext": "Με την έκδοση θα πάρει τον αριθμό {n}",
       "ed.subRecord": "Εκδόθηκε αλλού· εδώ μόνο παρακολουθείται",
       "ed.kind": "Είδος", "ed.series": "Σειρά αρίθμησης", "ed.client": "Πελάτης", "ed.noClient": "Χωρίς πελάτη (λιανική)",
-      "ed.newClient": "Νέος πελάτης", "ed.editClient": "Επεξεργασία πελάτη", "ed.date": "Ημερομηνία", "ed.due": "Λήξη",
+      "ed.newClient": "Νέος πελάτης", "ed.fromQuotes": "Από τους πελάτες των προσφορών", "ed.editClient": "Επεξεργασία πελάτη", "ed.date": "Ημερομηνία", "ed.due": "Λήξη",
       "ed.dueNone": "Χωρίς λήξη", "ed.dueNow": "Με την παραλαβή", "ed.dueDays": "{n} ημέρες",
       "ed.cur": "Νόμισμα", "ed.lines": "Είδη και υπηρεσίες", "ed.addLine": "Προσθήκη γραμμής", "ed.code": "Κωδικός", "ed.desc": "Περιγραφή",
       "ed.qty": "Ποσ.", "ed.unit": "Μον.", "ed.price": "Τιμή μονάδας", "ed.disc": "Έκπτ. %", "ed.vat": "ΦΠΑ %",
@@ -313,7 +313,7 @@
       "toast.rcDone": "ΦΠΑ 0 % με τη σημείωση αντίστροφης επιβάρυνσης",
       "c.statement": "Καρτέλα σε PDF", "toast.noOpen": "Ο πελάτης δεν οφείλει τίποτα",
       "vw.remind": "Υπενθύμιση πληρωμής", "rem.text": "Διάλεξε ύφος. Το μήνυμα ανοίγει ως πρόχειρο που μπορείς ακόμη να αλλάξεις.", "rem.soft": "Ευγενικό", "rem.firm": "Αυστηρό",
-      "vw.convert": "Μετατροπή σε τιμολόγιο", "vw.stockOut": "Έξοδος από απόθεμα", "vw.stockRet": "Επιστροφή στο απόθεμα", "vw.void": "Ακύρωση", "vw.edit": "Επεξεργασία", "vw.delete": "Διαγραφή",
+      "vw.fromQuote": "Από την προσφορά {n}", "vw.convert": "Μετατροπή σε τιμολόγιο", "vw.stockOut": "Έξοδος από απόθεμα", "vw.stockRet": "Επιστροφή στο απόθεμα", "vw.void": "Ακύρωση", "vw.edit": "Επεξεργασία", "vw.delete": "Διαγραφή",
       "vw.sentOn": "Στάλθηκε {d}", "vw.converted": "Έγινε {n}", "vw.from": "Εκδότης", "vw.to": "Πελάτης",
       "vw.dates": "Ημερομηνία {d} · λήξη {u}", "vw.date": "Ημερομηνία {d}", "vw.corrects": "Διορθώνει το {n}", "vw.credits": "Πιστωτικά",
       "vw.pays": "Πληρωμές", "vw.noPays": "Καμία πληρωμή ακόμη.", "vw.mark": "ΜΑΡΚ", "vw.markEdit": "Αλλαγή ΜΑΡΚ",
@@ -1110,6 +1110,7 @@
     }
     // Client
     var cSel = select(clientOpts(d.kind), d.cli);
+    addQuoteClients(cSel);
     edRefs.cli = cSel;
     var cw = el("div", "cli-pick");
     cw.appendChild(cSel);
@@ -1118,17 +1119,17 @@
     cNew.innerHTML = UI.plus;
     cNew.title = t("ed.newClient");
     cNew.setAttribute("aria-label", t("ed.newClient"));
-    cNew.addEventListener("click", function () {
-      clientDialog(null, function (c) {
-        d.cli = c.id;
-        d.c = C.partyOfClient(c);
-        fillSelect(cSel, clientOpts(d.kind), d.cli);
-        cEdit.hidden = false;
-        rebuildRefs();
-        paintRc();
-        touch();
-      });
-    });
+    function newClientChosen(c) {
+      d.cli = c.id;
+      d.c = C.partyOfClient(c);
+      fillSelect(cSel, clientOpts(d.kind), d.cli);
+      addQuoteClients(cSel);
+      cEdit.hidden = false;
+      rebuildRefs();
+      paintRc();
+      touch();
+    }
+    cNew.addEventListener("click", function () { clientDialog(null, newClientChosen); });
     var cEdit = el("button", "icon-btn", null);
     cEdit.type = "button";
     cEdit.innerHTML = UI.pen;
@@ -1140,6 +1141,7 @@
       clientDialog(d.cli, function (c) {
         d.c = C.partyOfClient(c);
         fillSelect(cSel, clientOpts(d.kind), d.cli);
+        addQuoteClients(cSel);
         paintRc();
         touch();
       });
@@ -1147,6 +1149,13 @@
     cw.appendChild(cEdit);
     cw.appendChild(cNew);
     cSel.addEventListener("change", function () {
+      if (cSel.value.indexOf("q:") === 0) {
+        // a client of the Quotes tab: New client filled in, saved only on Save
+        var qr = quoteClientRows().filter(function (r) { return "q:" + r.key === cSel.value; })[0];
+        cSel.value = d.cli || "";
+        if (qr) clientDialog(null, newClientChosen, qr.c);
+        return;
+      }
       d.cli = cSel.value;
       var c = C.client(data, d.cli);
       d.c = c ? C.partyOfClient(c) : C.normParty({});
@@ -1727,6 +1736,8 @@
       var sh = stockShell();
       if (sh) sh.__orosOpenAt("stock", { out: stockReq });
     }));
+    var fq = quoteOfDoc(d);
+    if (fq) acts.appendChild(btn(t("vw.fromQuote", { n: fq.num }), "", function () { openQuotes({ tab: "quotes", quote: fq.id }); }));
     if (MD) MD.actions(d, acts);
     if (d.st === "issued" && d.kind !== "ext") acts.appendChild(btn(t("vw.void"), "danger", function () { voidDoc(d); }));
     if (d.kind === "ext") acts.appendChild(btn(t("vw.delete"), "danger", function () { deleteRecord(d.id); }));
@@ -2594,6 +2605,45 @@
     });
     rows.sort(function (a, b) { return a.title.localeCompare(b.title); });
     pickDialog(t("cli.fromContacts"), rows, importClients, true);
+  }
+  // Billing (app merge 7, K2): the two client lists stay apart; the
+  // invoice editor's client list also offers the Quotes tab's clients
+  // that Billing lacks ("q:<id>" options in their own group).
+  function quoteClientRows() {
+    var o = readOther("oros-quote-data", "clients");
+    if (!o) return [];
+    var gone = o.deleted && typeof o.deleted === "object" ? o.deleted : {};
+    var rows = [];
+    o.clients.forEach(function (c) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string" || gone[c.id] || c.del) return;
+      var name = typeof c.name === "string" ? c.name.trim() : "";
+      if (!name) return;
+      var party = { name: name, addr: typeof c.address === "string" ? c.address : "",
+                    afm: typeof c.taxId === "string" ? c.taxId : "",
+                    email: typeof c.email === "string" ? c.email : "", phone: typeof c.phone === "string" ? c.phone : "" };
+      if (haveClient(name, party.afm)) return;
+      rows.push({ key: c.id, title: name, sub: [party.afm, party.email].filter(Boolean).join(" · "), c: party });
+    });
+    rows.sort(function (a, b) { return a.title.localeCompare(b.title); });
+    return rows.slice(0, 200);
+  }
+  function addQuoteClients(sel) {
+    var rows = quoteClientRows();
+    if (!rows.length) return;
+    var g = el("optgroup");
+    g.label = t("ed.fromQuotes");
+    rows.forEach(function (r) {
+      var op = el("option", "", r.title + (r.c.afm ? " · " + r.c.afm : ""));
+      op.value = "q:" + r.key;
+      g.appendChild(op);
+    });
+    sel.appendChild(g);
+  }
+  // The Quotes tab's picker gets Billing's clients the same way.
+  function clientsForQuotes() {
+    return liveList("clients").map(function (c) {
+      return { name: c.name, email: c.email || "", phone: c.phone || "", address: c.addr || "", taxId: c.afm || "" };
+    });
   }
   function fromQuote() {
     var o = readOther("oros-quote-data", "clients");
@@ -4501,11 +4551,31 @@
     qtLoad.catch(function () { qtLoad = null; });
     return qtLoad;
   }
+  // K2: the link both ways is the doc's src "quote:<id>" (wave 7),
+  // worked out each time and never stored a second time.
+  function invoicesOfQuote(qid) {
+    if (typeof qid !== "string" || !qid) return [];
+    return liveList("docs").filter(function (d) { return d.src === "quote:" + qid && d.st !== "void"; })
+      .map(function (d) { return { id: d.id, num: d.st === "draft" ? "" : d.num || "" }; });
+  }
+  function quoteOfDoc(d) {
+    if (!d || typeof d.src !== "string" || d.src.indexOf("quote:") !== 0) return null;
+    var id = d.src.slice(6), o = readOther("oros-quote-data", "quotes");
+    var q = o && o.quotes.filter(function (x) { return x && x.id === id && !x.del && !(o.deleted && o.deleted[id]); })[0];
+    return q ? { id: id, num: typeof q.num === "string" && q.num ? q.num.slice(0, 40) : id } : null;
+  }
+  // An accepted quote's "Make invoice": a new invoice on this screen
+  // (BR-INV-NEW prefill, nothing saved until Save or Issue).
+  function quoteToInvoice(payload) {
+    if (document.querySelector("dialog[open]")) return;
+    openTarget({ "new": payload });
+  }
   function showQuotes(tg) {
     var host = $("v-quotes");
     if (tg) qtPending.push(tg);
     if (window.QuoteView) {
-      window.QuoteView.mount(host);
+      window.QuoteView.mount(host, { otherClients: clientsForQuotes, newInvoice: quoteToInvoice,
+                                     invoicesFor: invoicesOfQuote, openInvoice: function (id) { openTarget({ invoice: id }); } });
       var list = qtPending; qtPending = [];
       list.forEach(function (x) { window.QuoteView.openAt(x); });
       return;
