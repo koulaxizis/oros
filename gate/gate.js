@@ -373,6 +373,9 @@
     return { ok: true, data: data };
   }
 
+  // DOCS-1 W5: what search_data finds in Files' Documents (files/docs-due.js
+  // searchHits); kept word for word in assistant/core.js search_data.
+  var DOCS_NOTE = "search_data in Files also finds Documents: type, date, sender, tags, amount, expiry and keep-until dates, the file and the first 300 characters of the text. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never appear.";
   // search_data: groups from orosAssistSearch → items for Claude.
   function packHits(groups, names) {
     var out = [];
@@ -2370,6 +2373,8 @@
       return Promise.resolve({ ok: true, a: [], k: ok.length, c: JSON.stringify({
         apps: ok.map(function (a) {
           var o = { id: a.id, name: a.name, tools: toolsOf(a.id) };
+          // DOCS-1 W5 (Chris 2026-11-15): the same words as the Assistant's search_data.
+          if (a.id === "files") o.documents = DOCS_NOTE;
           if (sensitive(a.id)) o.sensitive = "Personal app the owner allowed after a warning: read only, only while orOS is open (never in the closed copy). Read only what the owner's request needs.";
           if (p.lv[a.id] === "write" && writable(a.id)) {
             o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : DOCS.indexOf(a.id) >= 0 ? DOC_WRITE.slice() : a.id === "files" ? FILE_WRITE.concat("undo_change")
