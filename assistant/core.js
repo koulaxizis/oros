@@ -2066,7 +2066,7 @@
     ["series_no", ["publish"], { type: "string", description: "publish: its number in the series." }],
     ["language", ["publish"], { type: "string", description: "publish: the book's language, e.g. Greek." }],
     ["blurb", ["publish"], { type: "string", description: "publish: the back-cover text (up to 4000 characters)." }],
-    ["release_plan", ["publish"], { type: "boolean", description: "publish with date: true adds the release plan counted back from the release date, false leaves it out (default: a plan for a book still to come, none for one released or out of print)." }],
+    ["release_plan", ["publish"], { type: "boolean", description: "publish with date: true adds the release plan counted back from the release date, false leaves it out (default: a plan for a book or music release still to come, none for one released or out of print; a music release gets its own steps: master, artwork, metadata, upload, pitch, pre-save, first week)." }],
     ["release_type", ["publish"], { type: "string", "enum": ["single", "ep", "album", "compilation"], description: "publish: makes the title a music release of this type (leave out for a book). A release has tracks and editions, never formats." }],
     ["record_label", ["publish"], { type: "string", description: "publish music release: the record label." }],
     ["genre", ["publish"], { type: "string", description: "publish music release: the genre." }],
