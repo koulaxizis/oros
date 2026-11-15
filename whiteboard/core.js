@@ -586,6 +586,224 @@
   // hd that matches ha / hb, for older devices.
   function hdFor(ha, hb) { return ha !== "none" ? "both" : hb !== "none" ? "end" : "none"; }
 
+  // ---------- auto layout and alignment (wave DG3) ----------
+  // Pure: each returns { id: moved copy } for the objects that move
+  // and the arrows stuck to them (their kept ends brought up to date),
+  // so the app commits it as one undo step and the Assistant as one
+  // command. Frames, pen lines and pictures are never moved by layout.
+  var LAYOUT_KINDS = ["tree", "flow"], LAYOUT_DIRS = ["v", "h"], ALIGN_EDGES = ["l", "c", "r", "t", "m", "b"], SPREAD_DIRS = ["h", "v"];
+  var LAID = { note: 1, text: 1, shape: 1 };
+  // The kept ends of the arrows stuck to the moved objects.
+  function withArrows(list, out) {
+    var m = index(list.map(function (o) { return out[o.id] || o; }));
+    list.forEach(function (a) {
+      if (a.k !== "arrow" || !((a.ao && out[a.ao]) || (a.bo && out[a.bo]))) return;
+      var c = out[a.id] || JSON.parse(JSON.stringify(a)), e = ends(c, m);
+      c.ax = r2(e.a.x); c.ay = r2(e.a.y); c.bx = r2(e.b.x); c.by = r2(e.b.y);
+      out[a.id] = c;
+    });
+    return out;
+  }
+  function moveTo(out, o, x, y) {
+    var dx = r2(x - o.x), dy = r2(y - o.y);
+    if (dx || dy) out[o.id] = moved(o, dx, dy);
+  }
+
+  // Lays the picked notes, texts and shapes out along the arrows that
+  // join them: kind "tree" (each under the one its arrow comes from,
+  // parents centred over their children, as Mind map's org chart),
+  // "flow" (layers by the longest way in, fewer crossings by moving
+  // each toward the middle of its neighbours) or "" (tree when every
+  // object has at most one arrow coming in, else flow); dir "v" (top
+  // to bottom) or "h" (left to right). The laid-out group keeps its
+  // top-left corner. Elbow and curved arrows between them leave from
+  // the side facing the next layer (arrows going back: from the side).
+  function layout(list, ids, opts) {
+    opts = opts || {};
+    var want = {};
+    (ids || list.map(function (o) { return o.id; })).forEach(function (id) { want[id] = 1; });
+    var nodes = list.filter(function (o) { return want[o.id] && LAID[o.k]; });
+    if (nodes.length < 2) return {};
+    var v = opts.dir !== "h", gap = isFinite(opts.gap) && opts.gap >= 0 ? Math.min(2000, +opts.gap) : 40;
+    var mainGap = Math.max(60, gap * 1.5);
+    var N = {}, cs = function (o) { return v ? o.w : o.h; }, ms = function (o) { return v ? o.h : o.w; };
+    var cross0 = function (o) { return v ? o.x + o.w / 2 : o.y + o.h / 2; }, main0 = function (o) { return v ? o.y : o.x; };
+    // reading order: along the main way, then across
+    nodes.sort(function (a, b) { return main0(a) - main0(b) || cross0(a) - cross0(b) || (a.id < b.id ? -1 : 1); });
+    nodes.forEach(function (o, i) { N[o.id] = { o: o, i: i, out: [], inn: [] }; });
+    var seen = {}, arrows = list.filter(function (a) { return a.k === "arrow" && a.ao && a.bo && a.ao !== a.bo && N[a.ao] && N[a.bo]; });
+    // in drawing order; a pair joined both ways is a loop the walk below breaks
+    arrows.sort(function (p, q) { return p.z - q.z || byId(p, q); }).forEach(function (a) {
+      var key = a.ao + ">" + a.bo;
+      if (seen[key]) return;
+      seen[key] = 1;
+      N[a.ao].out.push(a.bo); N[a.bo].inn.push(a.ao);
+    });
+    // break cycles: an arrow back to an object still being walked is left out
+    var state = {}, back = {};
+    nodes.forEach(function (o) {
+      if (state[o.id]) return;
+      var st = [[o.id, 0]];
+      state[o.id] = 1;
+      while (st.length) {
+        var top = st[st.length - 1], u = N[top[0]];
+        if (top[1] >= u.out.length) { state[top[0]] = 2; st.pop(); continue; }
+        var w = u.out[top[1]++];
+        if (state[w] === 1) back[top[0] + ">" + w] = 1;
+        else if (!state[w]) { state[w] = 1; st.push([w, 0]); }
+      }
+    });
+    nodes.forEach(function (o) {
+      var n = N[o.id];
+      n.out = n.out.filter(function (w) { return !back[o.id + ">" + w]; });
+      n.inn = n.inn.filter(function (u) { return !back[u + ">" + o.id]; });
+    });
+    var byCross = function (a, b) { return cross0(N[a].o) - cross0(N[b].o) || N[a].i - N[b].i; };
+    nodes.forEach(function (o) { N[o.id].out.sort(byCross); });
+    var kind = LAYOUT_KINDS.indexOf(opts.kind) >= 0 ? opts.kind : (nodes.every(function (o) { return N[o.id].inn.length <= 1; }) ? "tree" : "flow");
+    // layers: the longest way in (Kahn order)
+    var deg = {}, q = [], order = [];
+    nodes.forEach(function (o) { deg[o.id] = N[o.id].inn.length; N[o.id].L = 0; if (!deg[o.id]) q.push(o.id); });
+    while (q.length) {
+      var u = q.shift();
+      order.push(u);
+      N[u].out.forEach(function (w) {
+        if (kind === "flow") N[w].L = Math.max(N[w].L, N[u].L + 1);
+        if (--deg[w] === 0) q.push(w);
+      });
+    }
+    var cpos = {};
+    if (kind === "tree") {
+      // each object under its first parent; the others' arrows just join
+      var par = {}, kids = {}, roots = [];
+      order.forEach(function (id) { kids[id] = []; });
+      order.forEach(function (id) {
+        var p = N[id].inn.filter(function (u) { return kids[u]; }).sort(function (a, b) { return N[a].i - N[b].i; })[0];
+        if (p) { par[id] = p; kids[p].push(id); } else roots.push(id);
+      });
+      order.forEach(function (id) { kids[id].sort(byCross); });
+      roots.sort(byCross);
+      var blk = {};
+      for (var k = order.length - 1; k >= 0; k--) {
+        var id = order[k], s = 0;
+        kids[id].forEach(function (c, j) { s += blk[c] + (j ? gap : 0); });
+        blk[id] = Math.max(cs(N[id].o), s);
+      }
+      var depth = {};
+      var place = function (list2, from, d) {
+        var x = from;
+        list2.forEach(function (id) {
+          depth[id] = d; cpos[id] = x + blk[id] / 2;
+          var s2 = 0;
+          kids[id].forEach(function (c, j) { s2 += blk[c] + (j ? gap : 0); });
+          place(kids[id], cpos[id] - s2 / 2, d + 1);
+          // over the middle of its first and last child, inside its block
+          var ks = kids[id], half = cs(N[id].o) / 2;
+          if (ks.length) cpos[id] = Math.min(x + blk[id] - half, Math.max(x + half, (cpos[ks[0]] + cpos[ks[ks.length - 1]]) / 2));
+          x += blk[id] + gap;
+        });
+      };
+      place(roots, 0, 0);
+      order.forEach(function (id) { N[id].L = depth[id]; });
+    } else {
+      var layers = [];
+      order.forEach(function (id) { (layers[N[id].L] = layers[N[id].L] || []).push(id); });
+      layers.forEach(function (ly) { ly.sort(byCross); });
+      var at = {};
+      var idx = function () { layers.forEach(function (ly) { ly.forEach(function (id, j) { at[id] = j; }); }); };
+      idx();
+      var mean = function (list2) { var s = 0; list2.forEach(function (x) { s += at[x]; }); return s / list2.length; };
+      for (var sweep = 0; sweep < 8; sweep++) {
+        var down = sweep % 2 === 0;
+        for (var li = down ? 1 : layers.length - 2; down ? li < layers.length : li >= 0; li += down ? 1 : -1) {
+          var key2 = {};
+          layers[li].forEach(function (id) { var nb = down ? N[id].inn : N[id].out; key2[id] = nb.length ? mean(nb) : at[id]; });
+          layers[li].sort(function (a, b) { return key2[a] - key2[b] || at[a] - at[b]; });
+          layers[li].forEach(function (id, j) { at[id] = j; });
+        }
+      }
+      // across: one after another, each pulled toward the middle of
+      // the ones its arrows come from, the layer then centred on them
+      layers.forEach(function (ly, li) {
+        var want2 = ly.map(function (id) {
+          var nb = N[id].inn.filter(function (u) { return cpos[u] !== undefined; });
+          if (!li || !nb.length) return null;
+          var s = 0; nb.forEach(function (u) { s += cpos[u]; }); return s / nb.length;
+        });
+        var x = -Infinity, sum = 0, cnt = 0;
+        ly.forEach(function (id, j) {
+          var w = cs(N[id].o), c = want2[j] !== null ? want2[j] : x === -Infinity ? w / 2 : x + gap + w / 2;
+          if (x !== -Infinity) c = Math.max(c, x + gap + w / 2);
+          cpos[id] = c; x = c + w / 2;
+          if (want2[j] !== null) { sum += want2[j] - c; cnt++; }
+        });
+        var shift = !li ? -(cpos[ly[ly.length - 1]] + cpos[ly[0]]) / 2 : cnt ? sum / cnt : 0;
+        ly.forEach(function (id) { cpos[id] += shift; });
+      });
+    }
+    // along: each layer as deep as its deepest object
+    var lmax = [], lpos = [0];
+    order.forEach(function (id) { var L = N[id].L; lmax[L] = Math.max(lmax[L] || 0, ms(N[id].o)); });
+    for (var L = 1; L < lmax.length; L++) lpos[L] = lpos[L - 1] + (lmax[L - 1] || 0) + mainGap;
+    // keep the group's top-left corner
+    var ox = Infinity, oy = Infinity, nx = Infinity, ny = Infinity, P = {};
+    nodes.forEach(function (o) {
+      var n = N[o.id], c = cpos[o.id], mn = lpos[n.L] + (lmax[n.L] - ms(o)) / 2;
+      P[o.id] = v ? { x: c - o.w / 2, y: mn } : { x: mn, y: c - o.h / 2 };
+      ox = Math.min(ox, o.x); oy = Math.min(oy, o.y); nx = Math.min(nx, P[o.id].x); ny = Math.min(ny, P[o.id].y);
+    });
+    var out = {};
+    nodes.forEach(function (o) { moveTo(out, o, r2(P[o.id].x + ox - nx), r2(P[o.id].y + oy - ny)); });
+    arrows.forEach(function (a) {
+      if (a.rt !== "elbow" && a.rt !== "curve") return;
+      var fwd = N[a.bo].L > N[a.ao].L, rev = N[a.ao].L > N[a.bo].L;
+      if (!fwd && !rev) return;
+      // forward: out of the side facing the next layer; back (a loop):
+      // out and in on the side, round the outside of the boxes between
+      var c = out[a.id] || JSON.parse(JSON.stringify(a)), s1 = v ? "b" : "r", s2 = v ? "t" : "l", side = v ? "r" : "b";
+      c.ap = fwd ? s1 : side; c.bp = fwd ? s2 : side;
+      if (c.ap !== a.ap || c.bp !== a.bp) out[a.id] = c;
+    });
+    return withArrows(list, out);
+  }
+
+  // Lines the picked objects up (edge l|c|r|t|m|b, against the box
+  // round all of them) or spreads them evenly (dist h|v: the same gap
+  // between each two, the first and last stay). Arrows follow.
+  function align(list, ids, edge, dist) {
+    var want = {};
+    ids.forEach(function (id) { want[id] = 1; });
+    var items = list.filter(function (o) { return want[o.id] && o.k !== "arrow"; }), out = {};
+    var bx = items.map(function (o) { return { o: o, b: box(o) }; });
+    if (bx.length < 2) return {};
+    var X = Infinity, Y = Infinity, X2 = -Infinity, Y2 = -Infinity;
+    bx.forEach(function (p) { X = Math.min(X, p.b.x); Y = Math.min(Y, p.b.y); X2 = Math.max(X2, p.b.x + p.b.w); Y2 = Math.max(Y2, p.b.y + p.b.h); });
+    if (ALIGN_EDGES.indexOf(edge) >= 0) {
+      bx.forEach(function (p) {
+        var o = p.o, b = p.b, nx = o.x, ny = o.y;
+        if (edge === "l") nx = o.x + X - b.x;
+        else if (edge === "c") nx = o.x + (X + X2) / 2 - (b.x + b.w / 2);
+        else if (edge === "r") nx = o.x + X2 - (b.x + b.w);
+        else if (edge === "t") ny = o.y + Y - b.y;
+        else if (edge === "m") ny = o.y + (Y + Y2) / 2 - (b.y + b.h / 2);
+        else ny = o.y + Y2 - (b.y + b.h);
+        moveTo(out, o, r2(nx), r2(ny));
+      });
+    } else if (SPREAD_DIRS.indexOf(dist) >= 0 && bx.length >= 3) {
+      var h = dist === "h", lo = h ? "x" : "y", sz = h ? "w" : "h";
+      bx.sort(function (p, q) { return (p.b[lo] + p.b[sz] / 2) - (q.b[lo] + q.b[sz] / 2) || (p.o.id < q.o.id ? -1 : 1); });
+      var first = bx[0].b, last = bx[bx.length - 1].b, total = 0;
+      bx.forEach(function (p) { total += p.b[sz]; });
+      var g = ((last[lo] + last[sz]) - first[lo] - total) / (bx.length - 1), pos = first[lo];
+      bx.forEach(function (p) {
+        var d = pos - p.b[lo];
+        moveTo(out, p.o, r2(p.o.x + (h ? d : 0)), r2(p.o.y + (h ? 0 : d)));
+        pos += p.b[sz] + g;
+      });
+    }
+    return withArrows(list, out);
+  }
+
   function index(list) {
     var m = {};
     list.forEach(function (o) { m[o.id] = o; });
@@ -1035,7 +1253,7 @@
     uid: uid, apply: apply, putBoard: putBoard, removeBoard: removeBoard, boards: boards, board: board,
     objsOf: objsOf, zTop: zTop, zBottom: zBottom, copies: copies,
     wrap: wrap, fit: fit, textHeight: textHeight, edge: edge, ends: ends, route: route, routeD: routeD, labelAt: labelAt, portAt: portAt, headsOf: headsOf, hdFor: hdFor,
-    ROUTES: ROUTES, SIDES: SIDES, HEAD_STYLES: HEAD_STYLES, index: index, box: box, bounds: bounds,
+    ROUTES: ROUTES, SIDES: SIDES, HEAD_STYLES: HEAD_STYLES, layout: layout, align: align, LAYOUT_KINDS: LAYOUT_KINDS, LAYOUT_DIRS: LAYOUT_DIRS, ALIGN_EDGES: ALIGN_EDGES, SPREAD_DIRS: SPREAD_DIRS, index: index, box: box, bounds: bounds,
     inRect: inRect, inFrame: inFrame, simplify: simplify, penFrom: penFrom, moved: moved, resized: resized,
     scene: scene, toSvg: toSvg, words: words
   };

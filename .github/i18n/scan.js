@@ -73,6 +73,15 @@ function packApps() {
     const m = /<script src="(?:\.\.\/)?i18n\.js[^"]*" data-app="([^"]+)"><\/script>/.exec(s);
     if (m) out.push({ dir, page, apps: m[1].split(",").map((a) => a.trim()) });
   }
+  // APP-ALIAS views (app merges): a folded app's <dir>/view.js is loaded
+  // by its host app, which ensures the view's pack on first open; the
+  // view keeps its own pack name (orosI18n.table(STRINGS, "<name>", …)).
+  for (const d of fs.readdirSync(ROOT)) {
+    const v = path.join(ROOT, d, "view.js");
+    if (!fs.existsSync(v)) continue;
+    const m = /orosI18n\.table\(STRINGS, "([a-z0-9][a-z0-9-]*)"/.exec(fs.readFileSync(v, "utf8"));
+    if (m && !out.some((p) => p.apps.includes(m[1]))) out.push({ dir: d, page: path.join(d, "view.js"), apps: [m[1]] });
+  }
   return out;
 }
 

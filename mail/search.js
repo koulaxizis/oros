@@ -24,6 +24,10 @@
 // gets created. Folder lists and headers are re-read at most every
 // 10 s.
 // Opens through the generic deep link: target { acct, folder, uid }.
+// Email signatures (merge 6, the Email Signature app folded into
+// Mail): its own provider (signature/search.js, loaded once from next
+// door, read-only on oros-signature-data) adds one hit per signature,
+// also with no mail account; target { view: "signatures", id }.
 // ============================================================
 (function (root) {
   "use strict";
@@ -56,6 +60,43 @@
       MIME_SRC = cs.src.replace(/search\.js(?=[?#]|$)/, "mime.js");
     }
   } catch (e) {}
+  var SIG_SRC = MIME_SRC.replace(/mail\/mime\.js(?=[?#]|$)/, "signature/search.js");
+  if (SIG_SRC === MIME_SRC) SIG_SRC = MIME_SRC.replace(/mime\.js(?=[?#]|$)/, "../signature/search.js");
+  var sigInner = null, sigWait = null;
+  function findSig() {
+    var list = root.orosSearchProviders || [];
+    for (var i = 0; i < list.length; i++) if (list[i] && list[i].id === "signature") return list[i];
+    return null;
+  }
+  function sigProvider() {
+    if (sigInner) return Promise.resolve(sigInner);
+    if (typeof module !== "undefined" && module.exports && typeof require === "function") {
+      try { sigInner = require("../signature/search.js"); return Promise.resolve(sigInner); } catch (e) {}
+    }
+    sigInner = findSig();
+    if (sigInner) return Promise.resolve(sigInner);
+    var doc = root.document;
+    if (!doc || !doc.head) return Promise.resolve(null);
+    if (sigWait) return sigWait;
+    sigWait = new Promise(function (resolve) {
+      var s = doc.createElement("script");
+      s.src = SIG_SRC;
+      s.onload = function () { sigInner = findSig(); resolve(sigInner); };
+      s.onerror = function () { sigWait = null; resolve(null); };
+      doc.head.appendChild(s);
+    });
+    return sigWait;
+  }
+  function sigHits(ctx) {
+    return sigProvider().then(function (p) {
+      var hits = [];
+      try { hits = p ? p.search(ctx) || [] : []; } catch (e) { hits = []; }
+      return hits.map(function (h) {
+        return { id: "sig:" + h.id, title: h.title, text: h.text, target: { view: "signatures", id: h.id } };
+      });
+    }, function () { return []; });
+  }
+
   var mimeLoading = null;
   function mime() {
     var M = root.orosMailMime;
@@ -278,25 +319,29 @@
 
   var PROVIDER = {
     id: "mail",
-    keys: [KEY],
     plain: plain,
+    keys: [KEY, "oros-signature-data"],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY);
-      if (!d || !Array.isArray(d.accounts) || !d.accounts.length) return [];
-      var M = null, t0 = Date.now();
-      return Promise.all([readSnapshot(), within(mime().then(function (m) { M = m; }), BUDGET_MS)])
-        .then(function (res) {
-          var s = res[0];
-          var keep = {};
-          s.bodyKeys.forEach(function (k) { keep[k] = true; });
-          Object.keys(texts).forEach(function (k) { if (!keep[k]) delete texts[k]; });
-          var left = BUDGET_MS - (Date.now() - t0);
-          var wait = M && left > 0 ? within(indexBodies(M, s.bodyKeys), left) : null;
-          if (M && left <= 0) indexBodies(M, s.bodyKeys);    // ready for the next search
-          return Promise.resolve(wait).then(function () { return build(ctx, d, s, M); });
-        });
+      return Promise.all([mailHits(ctx), sigHits(ctx)]).then(function (r) { return r[0].concat(r[1]); });
     }
   };
+
+  function mailHits(ctx) {
+    var d = ctx.readJSON(KEY);
+    if (!d || !Array.isArray(d.accounts) || !d.accounts.length) return Promise.resolve([]);
+    var M = null, t0 = Date.now();
+    return Promise.all([readSnapshot(), within(mime().then(function (m) { M = m; }), BUDGET_MS)])
+      .then(function (res) {
+        var s = res[0];
+        var keep = {};
+        s.bodyKeys.forEach(function (k) { keep[k] = true; });
+        Object.keys(texts).forEach(function (k) { if (!keep[k]) delete texts[k]; });
+        var left = BUDGET_MS - (Date.now() - t0);
+        var wait = M && left > 0 ? within(indexBodies(M, s.bodyKeys), left) : null;
+        if (M && left <= 0) indexBodies(M, s.bodyKeys);    // ready for the next search
+        return Promise.resolve(wait).then(function () { return build(ctx, d, s, M); });
+      });
+  }
 
   if (typeof module !== "undefined" && module.exports) module.exports = PROVIDER;
   if (root && root.document) {

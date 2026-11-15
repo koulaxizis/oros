@@ -20,7 +20,7 @@
 // ============================================================
 (function (root) {
   "use strict";
-  var P = root.OrosFormsPub, C = root.OrosFormsCore, E = root.OrosFormsEngine;
+  var P = root.OrosFormsPub, C = root.OrosFormsCore, E = root.OrosFormsEngine, Q = root.OrosFormsQuiz;
   var DEV_KEY = "oros-forms-dev";
   var MAX_PAGES = 10;
 
@@ -51,8 +51,12 @@
   // What the page gets: the form as people see it, the key answers are
   // sealed for, and the owner's language (the page's buttons).
   function defObj(rec, x, lang) {
-    var f = E.normForm(rec);
-    return { v: 1, form: { id: f.id, title: f.title, desc: f.desc, qs: f.qs, set: f.set }, pub: P.pubOf(x.priv), l: lang };
+    // W5: quiz.js pub drops the right answers unless the page shows the score
+    var f = Q ? Q.pub(rec) : E.normForm(rec);
+    // W4b: the Base table it fills stays with the owner
+    var set = Object.assign({}, f.set);
+    delete set.base;
+    return { v: 1, form: { id: f.id, title: f.title, desc: f.desc, qs: f.qs, set: set }, pub: P.pubOf(x.priv), l: lang };
   }
 
   // → Promise<x> (the record's new x; the app commits it)

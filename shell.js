@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.75.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "6.97.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -166,7 +166,6 @@
     timesheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>',
     invoices: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h14v20l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 7h6"/><path d="M9 11h6"/><path d="M13 15h2"/></svg>',
     newsletter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6"/><path d="M8 16h4"/></svg>',
-    signature: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c2.5-6 4.5-9 6-9 2 0-1.5 8 .5 8 1.5 0 2.5-4 4-4 1.2 0 .8 3 2.3 3 1 0 2-1 3.2-2"/><path d="M3 21h18"/></svg>',
     certificates: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/></svg>',
     publish: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/><path d="M16 4v6l2-1.5 2 1.5V4"/></svg>',
     wiki: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M7 9l1.6 6L10.5 10 12 15l1.5-5 1.9 5L17 9"/></svg>',
@@ -1688,6 +1687,7 @@
       tickSafe("keepCheckTick", keepCheckTickThrottled);   // Contacts: keep in touch, "reach out" (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("storageCheckTick", storageCheckTickThrottled); // Storage: warranty ends + return-by dates (60s throttle)
+      tickSafe("docsCheckTick", docsCheckTickThrottled);   // Files Documents: expiry + keep-until dates (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
@@ -2476,6 +2476,60 @@
     if (now - storageLastTick < 60000) return;
     storageLastTick = now;
     storageCheckTick();
+  }
+
+  // Files › Documents (DOCS-1 W3) — expiry dates 30 days, 7 days and on
+  // the day (up to 7 days late after orOS was closed), and keep-until
+  // dates that passed (a note only: nothing is deleted). Reads
+  // "oros-files-docs" directly (works with Files CLOSED) through
+  // files/docs-due.js (loaded by index.html, the SAME file Files, Today
+  // and Calendar use). On by default at 09:00; the hour lives in the
+  // device-local "oros-files-docs-prefs" (remind 0-23, -1 = off).
+  // Each alert is announced once per step: device-local
+  // "oros-files-docs-notified" = { alertKey: lowest step announced },
+  // pruned to alerts that still exist. One grouped notice at most per
+  // tick, ns "files" (so the Files toggle and Automations "a notice
+  // from Files" apply). A private document shows its type only.
+  function docsCheckTick() {
+    var D = window.OrosDocsDue;
+    if (!D) return;                                     // stale bundle — silent
+    var raw, prefs, notified;
+    try {
+      prefs = D.readPrefs(JSON.parse(localStorage.getItem(D.PREFS_KEY)));
+      if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+      raw = JSON.parse(localStorage.getItem(D.KEY));
+      notified = JSON.parse(localStorage.getItem(D.NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.docs) || !raw.docs.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    if (todayAbsorbs("files")) return;                  // said in today's summary
+    var today = sysYmd();
+    var all = D.alerts(raw, today);
+    var fresh = D.toNotify(all, notified);
+    try { localStorage.setItem(D.NOTIFIED_KEY, JSON.stringify(D.nextNotified(all, fresh, notified))); } catch (e) {}
+    if (!fresh.length) return;
+    var lang = state.lang === "el" ? "el" : state.lang === "de" ? "de" : "en";
+    var lines = fresh.slice(0, 3).map(function (a) { return D.alertLine(a, raw, lang); });
+    if (fresh.length > 3) lines.push(tr("n.andmore", { n: fresh.length - 3 }));
+    var title = window.t("app.files");
+    if (title === "app.files") title = "Files";        // missing-key fallback
+    N.emit({
+      ns: "files",
+      key: "docs-" + today + "-" + garageHash(fresh.map(function (a) { return a.key + ":" + a.step; }).join("|")),
+      type: "reminder",
+      title: title,
+      body: lines.join(" \u00b7 "),
+      deepLink: "files:" + (fresh.length > 1 ? "soon" : "doc:" + fresh[0].id)
+    });
+  }
+
+  var docsLastTick = 0;
+  function docsCheckTickThrottled() {
+    var now = Date.now();
+    if (now - docsLastTick < 60000) return;
+    docsLastTick = now;
+    docsCheckTick();
   }
 
   // Travel — the evening before departure ("Rome tomorrow · 6 items
@@ -8070,6 +8124,9 @@
         { name: "brotli.js 2.1.0 (decoder) + base64-js 1.5.1", url: "https://github.com/foliojs/brotli.js",
           by: "Devon Govett; Brotli decoder port by Google Inc.; Jameson Little", lic: "MIT + Apache-2.0",
           k: "cr.brotli-js" },
+        { name: "polygon-clipping 0.15.7 (with splaytree 3.1.2, robust-predicates)", url: "https://github.com/mfogel/polygon-clipping",
+          by: "Mike Fogel; Alexander Milevski; Vladimir Agafonkin (after J. R. Shewchuk)", lic: "MIT + Unlicense",
+          k: "cr.polygon-clipping" },
         { name: "OpenPGP.js 6.3.1", url: "https://openpgpjs.org/",
           by: "OpenPGP.js contributors, Proton AG", lic: "LGPL-3.0-or-later",
           k: "cr.openpgp-js" },
@@ -8824,6 +8881,7 @@
         }
         for (var j = 0; j < doomed.length; j++) storage.removeItem(doomed[j]);
       }
+      wipePhoneCopies(sos || follow);
       try { sweep(sessionStorage); } catch (e) {}   // PKCE verifier
       sweep(localStorage);
 
@@ -8834,6 +8892,7 @@
       // IDB connection is open yet, so deleteDatabase() lands cleanly.
       localStorage.setItem("oros-reset-db", "1");
       if (sos) localStorage.setItem(SOS_AFTER_KEY, String(Date.now()));   // SOS-1: the what-now list, once
+      if (sos || follow) { try { localStorage.setItem(ERASED_KEY, JSON.stringify({ at: Date.now(), kind: sos ? "sos" : "follow" })); } catch (e) {} }
       location.reload();
     });
   }
@@ -8863,6 +8922,7 @@
     if (window.orosPairLink && typeof window.orosPairLink.cancelAll === "function") job(function () { return window.orosPairLink.cancelAll(); });
     if (all) {
       job(sosRevokeShares);
+      job(sosDropCrmForm);
       if (HH && typeof HH.list === "function" && typeof HH.leave === "function") job(function () {
         return Promise.all(HH.list().map(function (h) { return HH.leave(h.box).catch(function () {}); }));
       });
@@ -8885,6 +8945,46 @@
     }));
   }
   var SOS_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = share/relay.js RELAY
+  // SOS-1 S2: the CRM web form (crm/webform.js turnOff, op "crmf"
+  // "drop") stops taking messages and the relay drops the ones waiting.
+  // The form's relay is the Mail relay when one is set (webform.js
+  // relayOf), so the same address is used here.
+  function sosDropCrmForm() {
+    var d = null, m = null;
+    try { d = JSON.parse(localStorage.getItem("oros-crm-data") || "null"); } catch (e) {}
+    var w = d && d.wf;
+    if (!w || w.off || typeof w.k !== "string" || typeof w.sec !== "string") return null;
+    try { m = JSON.parse(localStorage.getItem("oros-mail-data") || "null"); } catch (e) {}
+    var u = m && m.relay && typeof m.relay.url === "string" ? m.relay.url.trim().replace(/\/+$/, "") : "";
+    if (!/^https:\/\/[^\s]+$/.test(u)) u = SOS_RELAY;
+    return fetch(u + "/v1", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ op: "crmf", act: "drop", k: w.k, sec: w.sec }), credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
+    }).catch(function () {});
+  }
+  // SOS-1 S2: the copies the orOS Android app (or orOS Passwords) keeps
+  // outside the page (phone.js, BR-PHONE): the sealed autofill lists and
+  // their Keystore keys, every fingerprint / face secret (Passwords and
+  // the screen lock), and with full = true (SOS and its follow-up) also
+  // what orOS wrote into the phone's contacts, calendar, reminders and
+  // Health Connect. Messages to the app go out at once (postMessage),
+  // before the reload.
+  function wipePhoneCopies(full) {
+    var P = window.orosPhone;
+    if (!P) return;
+    try { if (typeof P.afClear === "function") P.afClear(); } catch (e) {}
+    try {
+      var b = P.bio, info = b && typeof b.info === "function" ? b.info() : null;
+      (info && info.kids || []).forEach(function (kid) { try { b.clear(kid); } catch (e) {} });
+    } catch (e) {}
+    if (!full || typeof P.setEnabled !== "function") return;
+    ["contacts", "calendar", "reminders", "health"].forEach(function (k) { try { P.setEnabled(k, false); } catch (e) {} });
+  }
+  // SOS-1 S2: "oros-erased" { at, kind } is written after the sweep of an
+  // SOS or of its follow-up and stays (the next reset sweeps it). The
+  // orOS browser add-on reads it with the Passwords copy and forgets a
+  // copy it took before that moment (extension/pmvault.js).
+  var ERASED_KEY = "oros-erased";
 
   // Settings › System › SOS: the typed passphrase is checked first
   // (nothing is touched on a wrong one), then 10 s to cancel.

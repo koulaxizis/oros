@@ -4,7 +4,8 @@
 // Builds a new ID3v2 tag for an MP3 with the song's lyrics in it:
 //   USLT  the words as plain text (what most players show),
 //   SYLT  one entry per timed line, in milliseconds (synced lyrics:
-//         Music, foobar2000, MusicBee, many car and phone players).
+//         Music, foobar2000, MusicBee, many car and phone players),
+//   TSRC  the ISRC, when the song is a track of a Publishing release.
 // Every other frame of the song's tag (title, artist, cover…) is
 // copied byte for byte; old USLT / SYLT frames are replaced. The
 // audio after the tag is never read or changed: the new file is
@@ -69,8 +70,13 @@
     if (flags & 0xd0) return null;          // unsynchronised, extended header, footer
     return { major: major, end: 10 + unsyncsafe(head, 6) };
   }
-  // The frames of the old tag except USLT and SYLT, as raw bytes.
-  function keepFrames(tag, major) {
+  // TSRC: the recording's ISRC (wave M3 of Publishing's music
+  // releases), 12 characters, plain ISO-8859-1 text.
+  function tsrc(isrc, v4) { return frame("TSRC", [0].concat(isrc.split("").map(function (c) { return c.charCodeAt(0); })), v4); }
+
+  // The frames of the old tag except USLT and SYLT (and TSRC when a
+  // new one is written), as raw bytes.
+  function keepFrames(tag, major, drop) {
     var out = [], o = 10, end = tag.length;
     while (o + 10 <= end) {
       if (tag[o] === 0) break;                                   // padding
@@ -78,13 +84,15 @@
       if (!/^[A-Z0-9]{4}$/.test(id)) return null;
       var size = major === 4 ? unsyncsafe(tag, o + 4) : ((tag[o + 4] << 24) | (tag[o + 5] << 16) | (tag[o + 6] << 8) | tag[o + 7]) >>> 0;
       if (o + 10 + size > end) return null;
-      if (id !== "USLT" && id !== "SYLT") for (var i = o; i < o + 10 + size; i++) out.push(tag[i]);
+      if (id !== "USLT" && id !== "SYLT" && !(drop && drop[id])) for (var i = o; i < o + 10 + size; i++) out.push(tag[i]);
       o += 10 + size;
     }
     return out;
   }
 
-  // lyrics: { text, lines: [{ s, t }], lg }. head: the old tag's
+  // lyrics: { text, lines: [{ s, t }], lg, isrc? }. isrc (12 letters
+  // and digits, as Publishing keeps it) replaces the tag's TSRC; an
+  // invalid one is left out. head: the old tag's
   // bytes (from readHeader's end) or the first bytes of a tagless
   // file. → { tag: Uint8Array, cut: bytes of the old file to skip }
   // | null.
@@ -92,14 +100,16 @@
     var h = readHeader(head);
     if (!h) return null;
     var v4 = h.major === 4, kept = [];
+    var isrc = typeof lyrics.isrc === "string" && /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/.test(lyrics.isrc) ? lyrics.isrc : "";
     if (!h.none) {
       if (head.length < h.end) return null;
-      kept = keepFrames(head.subarray ? head.subarray(0, h.end) : head.slice(0, h.end), h.major);
+      kept = keepFrames(head.subarray ? head.subarray(0, h.end) : head.slice(0, h.end), h.major, isrc ? { TSRC: 1 } : null);
       if (!kept) return null;
     }
     var lines = (lyrics.lines || []).filter(function (l) { return typeof l.s === "number" && l.s >= 0; });
     var body = kept.concat(uslt(lyrics.text || "", lyrics.lg, v4));
     if (lines.length) body = body.concat(sylt(lines, lyrics.lg, v4));
+    if (isrc) body = body.concat(tsrc(isrc, v4));
     var size = body.length + PAD;
     var tag = new Uint8Array(10 + size);
     tag.set([0x49, 0x44, 0x33, v4 ? 4 : 3, 0, 0].concat(syncsafe(size)), 0);
