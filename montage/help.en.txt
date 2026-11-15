@@ -62,6 +62,7 @@ Reframing switches the clip to `Fill the frame`. Everything happens on this devi
 - `Open an SRT file` adds every line of an SRT (or WebVTT) subtitle file as its own text at the right time. You can edit, move or delete each one like any text.
 - `Save as SRT` writes all texts on the `Text` row as an SRT file, for YouTube or a video player.
 - `Make subtitles`, under `Subtitles from speech`, listens to the project's sound and writes what is said as subtitle texts. Choose the `Language` (`English`, `Ελληνικά`, or `Find it`). It runs on this device: the sound is not sent anywhere. The first time, Montage downloads the speech model (OpenAI's Whisper, about 42 MB, from Hugging Face) and the speech runtime (about 11 MB, from this site) and keeps them; after that it works offline. `Remove the speech model` gives the space back.
+- `Translate the subtitles` translates every text on the `Text` row on this device with Mozilla's models (the same as [Text Tools](app:texttools) › Translate); each subtitle keeps its time, place and style, and a two-line subtitle stays two lines. `Use the translation` puts them all in as one change, which `Undo` takes back.
 
 ## Stickers and shapes
 `Stickers` (with nothing selected) opens `Stickers and shapes`:

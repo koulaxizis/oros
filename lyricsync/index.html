@@ -7,8 +7,8 @@
   <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=lyricsync" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Lyric Sync · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=6.86.00">
-  <link rel="stylesheet" href="app.css?v=6.86.00">
+  <link rel="stylesheet" href="../fonts.css?v=7.03.00">
+  <link rel="stylesheet" href="app.css?v=7.03.00">
 </head>
 <body>
 
@@ -95,6 +95,8 @@
             <label class="mini"><span data-i18n="ch.bpm">Tempo</span><input type="number" id="ch-bpm" min="20" max="300" step="1" inputmode="numeric"></label>
             <label class="mini"><span data-i18n="ch.ts">Time</span><select id="ch-ts"></select></label>
             <label class="mini"><span data-i18n="ch.names">Chord names</span><select id="ch-names"><option value="0">C D E</option><option value="1">Ντο Ρε Μι</option></select></label>
+            <label class="mini"><span data-i18n="dg.label">Diagrams</span><select id="ch-dg"><option value="" data-i18n="dg.off">None</option><option value="guitar" data-i18n="dg.guitar">Guitar</option><option value="ukulele" data-i18n="dg.ukulele">Ukulele</option><option value="piano" data-i18n="dg.piano">Piano</option></select></label>
+            <label class="check-row mini-check"><input type="checkbox" id="ch-lh"> <span data-i18n="dg.lefty">Left-handed</span></label>
             <button type="button" id="ch-tr" class="chip" data-i18n="ch.transpose">Transpose</button>
             <button type="button" id="stage-btn" class="chip pri" data-i18n="sg.open">Stage</button>
           </span>
@@ -103,6 +105,7 @@
         <textarea id="lyrics-text" rows="14" spellcheck="false"></textarea>
         <div id="sheet-box" hidden>
           <p class="hint" id="sheet-info"></p>
+          <div id="dg-strip" class="dg-strip" hidden></div>
           <p class="hint" data-i18n="ch.tapHint">Tap a word to put a chord on it.</p>
           <div id="sheet" class="sheet" lang=""></div>
         </div>
@@ -216,6 +219,7 @@
       </label>
     </div>
     <div id="sg-body" class="sg-body" tabindex="0">
+      <div id="sg-strip" class="dg-strip sg-strip" hidden></div>
       <div id="sg-sheet" class="sheet stage-sheet"></div>
     </div>
     <div id="sg-nextup" class="sg-nextup dim" hidden></div>
@@ -280,6 +284,7 @@
     <p class="hint" id="cd-word"></p>
     <label class="lbl" for="cd-in" data-i18n="cd.label">Chord name (for example Am, F#7, D/F#, Λα-)</label>
     <input type="text" id="cd-in" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div id="cd-dg" class="dg-one" aria-live="polite"></div>
     <div id="cd-sugg" class="sugg"></div>
     <div class="dlg-btns">
       <button type="button" class="chip" id="cd-del" data-i18n="cd.del">No chord</button>
@@ -311,6 +316,7 @@
       <label><span data-i18n="pdf.page">Paper</span><select id="pdf-page"><option value="a4">A4</option><option value="letter">Letter</option></select></label>
       <label><span data-i18n="pdf.cols">Columns</span><select id="pdf-cols"><option value="1">1</option><option value="2">2</option></select></label>
       <label><span data-i18n="pdf.size">Font size</span><select id="pdf-size"><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="14">14</option><option value="16">16</option><option value="18">18</option></select></label>
+      <label class="check-row"><input type="checkbox" id="pdf-dg"> <span data-i18n="pdf.dg">Chord diagrams on top of each song</span></label>
       <label><span data-i18n="sg.show">Show</span><select id="pdf-show"><option value="both" data-i18n="sg.both">Words and chords</option><option value="words" data-i18n="sg.words">Words only</option><option value="chords" data-i18n="sg.chords">Chords only</option></select></label>
     </div>
     <p id="pdf-status" class="hint" role="status"></p>
@@ -319,6 +325,13 @@
       <button type="button" class="chip" id="pdf-print" data-i18n="pdf.print">Print</button>
       <button type="button" class="chip pri" id="pdf-save" data-i18n="pdf.save">Save PDF</button>
     </div>
+  </dialog>
+
+  <dialog id="dg-dlg" aria-labelledby="dg-title">
+    <h2 id="dg-title"></h2>
+    <div id="dg-big" class="dg-one dg-big"></div>
+    <p id="dg-notes" class="hint"></p>
+    <div class="dlg-btns"><button type="button" class="chip" id="dg-close" data-i18n="btn.close">Close</button></div>
   </dialog>
 
   <dialog id="setx-dlg" aria-labelledby="setx-title">
@@ -337,17 +350,18 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=6.86.00" data-app="lyricsync"></script>
-  <script src="core.js?v=6.86.00"></script>
-  <script src="chords.js?v=6.86.00"></script>
-  <script src="sets.js?v=6.86.00"></script>
-  <script src="sheetpdf.js?v=6.86.00"></script>
-  <script src="formats.js?v=6.86.00"></script>
-  <script src="wave.js?v=6.86.00"></script>
-  <script src="id3.js?v=6.86.00"></script>
-  <script src="align.js?v=6.86.00"></script>
-  <script src="../montage/asr.js?v=6.86.00"></script>
-  <script src="app.js?v=6.86.00"></script>
+  <script src="../i18n.js?v=7.03.00" data-app="lyricsync"></script>
+  <script src="core.js?v=7.03.00"></script>
+  <script src="chords.js?v=7.03.00"></script>
+  <script src="sets.js?v=7.03.00"></script>
+  <script src="diagrams.js?v=7.03.00"></script>
+  <script src="sheetpdf.js?v=7.03.00"></script>
+  <script src="formats.js?v=7.03.00"></script>
+  <script src="wave.js?v=7.03.00"></script>
+  <script src="id3.js?v=7.03.00"></script>
+  <script src="align.js?v=7.03.00"></script>
+  <script src="../montage/asr.js?v=7.03.00"></script>
+  <script src="app.js?v=7.03.00"></script>
 
 </body>
 </html>

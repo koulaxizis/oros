@@ -44,7 +44,10 @@ test("no SVG, sound, mkv, html, json or zip are taken over", () => {
 });
 
 test("every app in the table exists and takes a file through its deep link", () => {
-  const apps = JSON.parse(read("apps.json")).apps.map((a) => a.id);
+  // APP-ALIAS: an old id folded into another app still takes its file
+  // (the shell forwards __orosOpenAt to the host with the alias target)
+  const reg = JSON.parse(read("apps.json"));
+  const apps = reg.apps.map((a) => a.id).concat((reg.aliases || []).map((a) => a.id));
   const files = {
     writer: ["writer/writer.js"], spreadsheet: ["spreadsheet/spreadsheet.js"],
     atelier: ["atelier/core.js"], slides: ["slides/app.js"], layout: ["layout/layout.js"],
@@ -61,7 +64,7 @@ test("every app in the table exists and takes a file through its deep link", () 
     crm: ["crm/crm.js"], timesheet: ["timesheet/timesheet.js"], quote: ["quote/quote.js"], split: ["split/split.js"],
     stock: ["stock/stock.js"], diary: ["diary/diary.js"], health: ["health/health.js"], fitness: ["fitness/fitness.js"],
     baby: ["baby/baby.js"], petcare: ["petcare/petcare.js"], plants: ["plants/plants.js"], garage: ["garage/garage.js"],
-    shelf: ["shelf/shelf.js"], signature: ["signature/signature.js"], newsletter: ["newsletter/newsletter.js"], storage: ["storage/storage.js"],
+    shelf: ["shelf/shelf.js"], signature: ["signature/view.js", "mail/mail.js"], newsletter: ["newsletter/newsletter.js"], storage: ["storage/storage.js"],
     flashcards: ["flashcards/app.js"], lyricsync: ["lyricsync/app.js"], pad: ["pad/app.js"],
     base: ["base/app.js", "recordpkg.js"]
   };

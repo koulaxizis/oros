@@ -35,6 +35,7 @@
   var P = typeof module !== "undefined" && module.exports ? require("./core.js") : root.OrosPublishCore;
 
   function key(n) { return P.fold(n); }
+  function advCur(pub) { return pub && pub.set && typeof pub.set.cur === "string" ? pub.set.cur : ""; }
   function r2(v) { return Math.round(v * 100) / 100; }
   function digits(s) { return String(s || "").replace(/[^0-9]/g, ""); }
 
@@ -94,10 +95,12 @@
 
   // Earned before this statement on one term: the rows of the earlier,
   // not voided statements of the same person (they end before `from`).
+  // Only statements in the advance's currency (the publisher's, set.cur)
+  // count: a distributor's report in another currency never recoups it.
   function earnedBefore(pub, k, ti, tr, from, selfId) {
-    var e = 0;
+    var e = 0, cur = advCur(pub);
     ((pub && pub.stmts) || []).forEach(function (s) {
-      if (s.v === 1 || s.id === selfId || key(s.n) !== k || s.to >= from) return;
+      if (s.v === 1 || s.id === selfId || key(s.n) !== k || s.to >= from || (cur && s.cur && s.cur !== cur)) return;
       s.rows.forEach(function (r) { if (r.ti === ti && r.tr === tr) e += r.e; });
     });
     return e;
@@ -127,7 +130,7 @@
     return out;
   }
 
-  // b = units × unit base, e = b × pct; per term: the advance left
+  // b = units × unit base (or the fixed fb), e = b × pct; per term: the advance left
   // before this period, then what is payable.
   function recompute(st, pub) {
     var k = key(st.n), terms = {};
@@ -136,7 +139,8 @@
     });
     var rows = st.rows.map(function (r) {
       var o = Object.assign({}, r);
-      o.b = Math.round(o.q * o.u);
+      // a row from a distributor's report keeps what came in (fb)
+      o.b = typeof o.fb === "number" ? o.fb : Math.round(o.q * o.u);
       o.e = Math.round(o.b * o.pct / 100);
       return o;
     });
@@ -144,7 +148,8 @@
     rows.forEach(function (r) {
       var id = r.ti + "/" + r.tr;
       if (at[id] === undefined) {
-        var term = terms[id], adv = term ? Math.round(term.adv * 100) : 0;
+        var term = terms[id], ac = advCur(pub);
+        var adv = term && (!ac || !st.cur || st.cur === ac) ? Math.round(term.adv * 100) : 0;
         // a statement already issued keeps the advance it showed
         var was = (st.rec || []).filter(function (x) { return x.ti === r.ti && x.tr === r.tr; })[0];
         if (st.id && was) adv = was.adv;
@@ -175,7 +180,7 @@
     ];
   }
 
-  var API = { people: people, sales: sales, build: build, recompute: recompute, periods: periods, key: key };
+  var API = { advCur: advCur, people: people, sales: sales, build: build, recompute: recompute, periods: periods, key: key };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosPublishRoyalty = API;
 })(typeof window !== "undefined" ? window : globalThis);

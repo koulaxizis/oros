@@ -3853,9 +3853,42 @@
     return Object.keys(readBaselines()).length > 0;
   }
 
+  // SOS-1 S2: "vp" lets a reader that holds the vault key but not the
+  // passphrase (orOS Drive keeps only the key) check the signal:
+  // base64 HMAC-SHA-256 of "<kind>:<n>" under SHA-256("oros-signal" ||
+  // raw vault key) (= Drive vault.subKey). Read from key.json before the
+  // wipe removes it; no Vault, or a key file this passphrase does not
+  // open, gives no vp (the signal still goes). Never rejects.
+  function vaultProof(kind, n) {
+    // provider.storage directly: the engine is already suspended here,
+    // which storageAdapter refuses.
+    return Promise.resolve(provider.storage && provider.storage.getObject(VAULT_KEY_FILE)).then(function (buf) {
+      var doc = buf ? JSON.parse(new TextDecoder().decode(buf)) : null;
+      var wraps = doc && Array.isArray(doc.wraps) ? doc.wraps : [];
+      function openAt(i) {
+        if (i >= wraps.length) return Promise.resolve(null);
+        return Promise.resolve(decryptBlob(wraps[i]))
+          .then(function (o) { return (o && typeof o.k === "string") ? o.k : openAt(i + 1); },
+                function () { return openAt(i + 1); });
+      }
+      return openAt(0);
+    }).then(function (k) {
+      if (!k) return null;
+      var raw = b64decode(k), label = new TextEncoder().encode("oros-signal");
+      var mix = new Uint8Array(label.length + raw.length);
+      mix.set(label, 0); mix.set(raw, label.length);
+      return crypto.subtle.digest("SHA-256", mix).then(function (sk) {
+        return crypto.subtle.importKey("raw", sk, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+      }).then(function (hk) {
+        return crypto.subtle.sign("HMAC", hk, new TextEncoder().encode(kind + ":" + n));
+      }).then(b64encode);
+    }).catch(function () { return null; });
+  }
   function sealSignal(kind, n) {
-    return encryptEnvelope({ sig: kind, n: n }).then(function (e) {
-      return { kind: kind, n: n, iter: e.iter, salt: e.salt, iv: e.iv, data: e.data };
+    return Promise.all([encryptEnvelope({ sig: kind, n: n }), vaultProof(kind, n)]).then(function (r) {
+      var e = r[0], sg = { kind: kind, n: n, iter: e.iter, salt: e.salt, iv: e.iv, data: e.data };
+      if (typeof r[1] === "string") sg.vp = r[1];
+      return sg;
     });
   }
   // true when this device's passphrase opens the signal; never rejects.

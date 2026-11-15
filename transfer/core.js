@@ -25,13 +25,14 @@
 
    1.1.0 (W2): PROTO 2, splitManifest(files, max), b64 / unb64.
    1.2.0 (D1): cleanMeta, the sender's title and message (TRANSFER-META).
+   1.3.0 (D3): picType / BG_MAX, the sender's own background picture (TRANSFER-BG).
 
    window.OrosTransferCore (browser) / module.exports (Node).
    ============================================================ */
 (function (root) {
   "use strict";
 
-  var VERSION = "1.2.0";
+  var VERSION = "1.3.0";
   var PROTO = 2;                      // 2: relay path, resume (W2)
   var NS = "oros-transfer/v1";
   var ALPHA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -409,6 +410,19 @@
     var t = cleanText(m.t, META_T, 0), msg = cleanText(m.m, META_M, 12);
     return t || msg ? { t: t, m: msg } : null;
   }
+  // D3: the sender's own background picture. Only JPEG, PNG or WebP,
+  // told apart by their first bytes (never by a name or a type the
+  // sender gives), at most BG_MAX. The app re-encodes it on the sender's
+  // device first, so no camera data (place, time, device) goes along.
+  var BG_MAX = 2 * 1048576;
+  function picType(u8) {
+    if (!u8 || !(u8.length >= 12) || u8.length > BG_MAX) return null;
+    if (u8[0] === 0xff && u8[1] === 0xd8 && u8[2] === 0xff) return "image/jpeg";
+    if (u8[0] === 0x89 && u8[1] === 0x50 && u8[2] === 0x4e && u8[3] === 0x47 && u8[4] === 0x0d && u8[5] === 0x0a) return "image/png";
+    if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46 &&
+        u8[8] === 0x57 && u8[9] === 0x45 && u8[10] === 0x42 && u8[11] === 0x50) return "image/webp";
+    return null;
+  }
   // A short label for a transfer: "photos" or "a.txt + 3 more" (the app formats it).
   function topNames(files) {
     var tops = [];
@@ -532,7 +546,7 @@
   var api = {
     VERSION: VERSION, PROTO: PROTO, NS: NS, CODE_RE: CODE_RE, PIECE: PIECE, HEAD: HEAD, MAX_CTRL: MAX_CTRL,
     MAX_FILES: MAX_FILES, DISK_MAX: DISK_MAX, MEM_MAX: MEM_MAX,
-    cleanMeta: cleanMeta, META_T: META_T, META_M: META_M,
+    cleanMeta: cleanMeta, META_T: META_T, META_M: META_M, BG_MAX: BG_MAX, picType: picType,
     hex: hex, b64: b64, unb64: unb64, newCode: newCode, normCode: normCode, fmtCode: fmtCode, linkFor: linkFor, isLocalOrigin: isLocalOrigin,
     derive: derive, seal: seal, unseal: unseal, sealPiece: sealPiece, openPiece: openPiece, pieces: pieces,
     Sha256: Sha256, crc32: crc32, ZipWriter: ZipWriter,

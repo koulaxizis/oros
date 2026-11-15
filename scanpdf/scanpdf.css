@@ -490,6 +490,11 @@ body.editing #toast { top: auto; bottom: calc(48px + env(safe-area-inset-bottom,
 .ov-live { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .ov-txt { font-family: "ScanPdfSans", "Noto Sans", sans-serif; line-height: 1.2; white-space: pre; pointer-events: none; }
 .ov-field { display: flex; align-items: center; justify-content: center; background: rgba(255, 214, 26, 0.3); border: 2px dashed #b8860b; border-radius: 3px; box-sizing: border-box; overflow: hidden; }
+.ov-field.ov-s2 { background: rgba(80, 170, 255, 0.28); border-color: #1f6fb8; }
+.ov-field.ov-s3 { background: rgba(90, 200, 120, 0.28); border-color: #2c8a4b; }
+.ov-field.ov-s4 { background: rgba(240, 120, 200, 0.26); border-color: #b23a8a; }
+.ov-field.ov-s5 { background: rgba(255, 150, 60, 0.28); border-color: #b85a0b; }
+.ov-s2 .ov-fld { color: #0c3358; } .ov-s3 .ov-fld { color: #11401f; } .ov-s4 .ov-fld { color: #52123c; } .ov-s5 .ov-fld { color: #4d2300; }
 .ov-fld { color: #3d2f00; font-weight: 700; line-height: 1.1; text-align: center; padding: 0 2px; pointer-events: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .ov-h {
   position: absolute;
@@ -794,6 +799,7 @@ body.editing #toast { top: auto; bottom: calc(48px + env(safe-area-inset-bottom,
   .ed-tools .btn span { display: none; }
   .ed-tools .btn { min-width: 44px; padding: 4px 10px; }
   .ed-props .btn span { display: none; }
+  .ed-props #ed-who span { display: inline; }
   .ed-sub .btn span { display: none; }
   .ed-stage { padding: 8px; }
   .sc-bar { padding-left: 8px; padding-right: 8px; }
