@@ -234,8 +234,20 @@
     if (thanks) set.thanks = thanks;
     if (note) set.note = note;
     if (s.prog) set.prog = 1;
+    // W2: a page to link to after sending (shown as a link, never a
+    // redirect) and "one answer per browser" (kept by the browser only).
+    var back = typeof s.back === "string" ? s.back.trim() : "";
+    if (validBack(back)) set.back = back;
+    if (s.once) set.once = 1;
     out.set = set;
     return out;
+  }
+
+  // An https address without user, password, spaces or quotes, ≤ 512.
+  function validBack(v) {
+    if (typeof v !== "string" || !v || v.length > 512 || /[\s<>"'`\\]/.test(v)) return false;
+    if (!/^https:\/\/[^/?#@]+\.[^/?#@]+([/?#].*)?$/i.test(v)) return false;
+    try { var u = new URL(v); return u.protocol === "https:" && !u.username && !u.password; } catch (e) { return false; }
   }
 
   // ---------- pages ----------
@@ -478,7 +490,7 @@
     normItem: normItem, normForm: normForm, pages: pages, keysOf: keysOf,
     valueOf: valueOf, checkOne: checkOne, shownMap: shownMap, nextPage: nextPage, path: path,
     checkPage: checkPage, submit: submit, blank: blank, reid: reid, newId: newId,
-    line: line, block: block, validDay: validDay
+    line: line, block: block, validDay: validDay, validBack: validBack
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosFormsEngine = api;

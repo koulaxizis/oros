@@ -247,4 +247,27 @@ dialog h2 { font-size: 17px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; border: 2px solid var(--bg); }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
+/* ---------- share + answers (W2) ---------- */
+#pane-share > * + *, #pane-resp > * + * { margin-top: 12px; }
+.state { font-weight: 700; }
+.state.on::before, .state.off::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+.state.on::before { background: var(--accent); }
+.state.off::before { background: var(--text-dim); }
+.hint.warn { color: var(--text); border-left: 3px solid var(--danger); padding-left: 8px; }
+.hint.bad { color: var(--danger); }
+.mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 13px; }
+textarea.mono { resize: vertical; }
+.qr-box { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.qr-box img { width: min(220px, 100%); height: auto; background: #fff; border-radius: 8px; image-rendering: pixelated; }
+.row-main .badge { align-self: flex-start; }
+.tab.has-new::after { content: ""; display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: var(--accent); vertical-align: 1px; }
+.answer .ans-top { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.answer .when { color: var(--text-dim); font-size: 13px; }
+.badge.dim { background: var(--border); }
+dl.ans { display: grid; gap: 2px 0; }
+dl.ans dt { font-weight: 700; font-size: 14px; margin-top: 8px; overflow-wrap: anywhere; }
+dl.ans dt:first-child { margin-top: 0; }
+dl.ans dd { white-space: pre-wrap; overflow-wrap: anywhere; }
+dl.ans dd.dim { font-style: italic; }
+
 [hidden] { display: none !important; }
