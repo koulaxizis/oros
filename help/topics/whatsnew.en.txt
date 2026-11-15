@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.96.00
+- **Email Signature is now part of Mail.** Open `Email signatures` in Mail to make and keep your signatures, even with no mail account set up. Your signatures are kept, and old links and shortcuts to Email Signature open that view.
+
 ## Version 6.95.00
 - **Several people sign one PDF.** In Scanner & PDF up to 5 people can sign the same document. In the editor choose a field and press `Signer 1` to give it to the next signer; each signer's fields have their own colour. `Ask to sign` gives each person their own link with only their fields. `Signature requests` shows the document once with everyone's state, and when the last one has signed orOS makes one PDF with all the signatures and a certificate for each signer, in Files › PDF › Signatures. See [Scanner & PDF](app:scanpdf).
 
