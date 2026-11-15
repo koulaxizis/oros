@@ -1838,6 +1838,26 @@
                                                       upc: { type: "string", description: "UPC-A (12 digits) or EAN-13 (13 digits)." },
                                                       catalogue_no: { type: "string" }, price: { type: "number" },
                                                       distributor: { type: "string", description: "e.g. DistroKid, CD Baby." } } };
+  // FM-7 (Settings › Fonts): the families the user can use, read only;
+  // the same through orOS Gate (GATE-PAR). designkit/fonts.js overview().
+  var TOOL_FONTS = {
+    name: "list_fonts",
+    description: "The font families the user can use in orOS (Settings › Fonts): the fonts on the orOS disk and the free (Fontsource) " +
+      "families in their font collections, each with its kind (serif, sans, mono), how fully it covers Greek and polytonic Greek " +
+      "(full, most, some, few, none, unknown), its licence, its styles, the collections it is in and the user's note on it; " +
+      "and the font orOS itself draws in. Read only. Use it for questions like 'which of my fonts have polytonic Greek?' or before " +
+      "suggesting a font for a book or a design.",
+    params: {
+      type: "object",
+      properties: {
+        letters: { type: "string", "enum": ["greek", "polytonic"], description: "Only the families with all or nearly all of these letters." },
+        kind: { type: "string", "enum": ["serif", "sans", "mono"], description: "Only this kind." },
+        collection: { type: "string", description: "Only the families in this collection (its name)." },
+        source: { type: "string", "enum": ["disk", "free"], description: "disk: the user's own font files; free: Fontsource families from their collections." },
+        query: { type: "string", description: "Part of a family's name." }
+      }
+    }
+  };
   // Wave 48: changes to records the user already shared (assistant/
   // edits.js). The user sees a before → after card and presses Apply;
   // nothing changes before that.
@@ -3429,12 +3449,14 @@
   // is installed, for rebuild_in_layout and the house style tools;
   // epub: Layout is installed, for export_epub;
   // files: the user picked folders for Claude, "write" when it may
-  // change them too, for the files_* tools)
+  // change them too, for the files_* tools;
+  // fonts: list_fonts, FM-7)
   function toolsFor(opts) {
     opts = opts || {};
     var out = [];
     if (opts.data) out.push(TOOL_SEARCH, TOOL_APPS, TOOL_READ);
     if (opts.data && opts.summary) out.push(TOOL_SUMMARY);
+    if (opts.fonts) out.push(TOOL_FONTS);
     if (opts.entries) out.push(TOOL_ENTRY);
     if (opts.openFile) out.push(TOOL_OPEN_FILE);
     if (opts.rebuild) out.push(TOOL_REBUILD);
@@ -3469,7 +3491,7 @@
   // user's consent is replaced (tests/gate-act.test.js keeps it so).
   // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): edit_in_app and
   // do_action too; the app opens on the owner's screen and does it there.
-  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
+  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                     "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
                     "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub",
                     "files_list", "files_read", "files_write", "files_move", "files_delete"];
@@ -3538,7 +3560,7 @@
       if (GATE_OPEN.indexOf(x.name) >= 0) x.description = (GATE_OPEN_HEAD[x.name] || openSay(x.description)) + GATE_OPEN_SAY;
       if (x.name === "edit_in_app") x.description = x.description.split("\n")[0] + GATE_EDIT_GUIDE;
       walk(x.params);
-      var ro = /^(search_data|read_item|app_summary|read_in_app|change_history|files_list|files_read)$/.test(x.name);
+      var ro = /^(search_data|read_item|app_summary|list_fonts|read_in_app|change_history|files_list|files_read)$/.test(x.name);
       return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
                annotations: { readOnlyHint: ro, destructiveHint: /^(change_item|undo_change|edit_in_app|files_write|files_move|files_delete)$/.test(x.name) } };
     });

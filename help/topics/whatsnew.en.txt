@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.02.00
+- **Your font for all of orOS.** On a font's page in Settings › Fonts, `Use for orOS` makes it the font of the menus, buttons and apps on this device, instead of Nunito, for example a font that is easier for you to read. Letters it does not have stay in Nunito, and documents keep their own fonts. Accessibility shows the font in use and takes you back to Nunito.
+- **Where a font is used.** `Find where it's used` on a font's page lists the Layout, Atelier and Writer documents that use it, each with Open, and it looks by itself before you remove a font.
+- **The Assistant knows your fonts.** The Assistant, and Claude through orOS Gate, can read your fonts, with their Greek and polytonic letters, licence and collections, to suggest one for a book or a design. They only read the list.
+
 ## Version 7.01.00
 - **A helper's phone that opens only Stock's till.** In the till's `Receipt settings`, under `Helper device (till only)`, tap `Make this device a till`. From then on the phone starts straight on the till with no PIN, so a helper at a stand can sell. Anything more needs your screen-lock PIN: another app, events, price lists, settings, voiding a closed day, undoing a sale and a discount over the limit. With Sensitive work at Hardcore the phone still asks for the PIN at every start.
 - **A closed day goes to Budget as one entry.** After `Close the day`, `Add to Budget` opens one income entry for the day's total, filled in for you to save.

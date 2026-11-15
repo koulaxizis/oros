@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 45500 of 45992 (98%)
+- Strings: 45732 of 46224 (98%)
 - Help pages: 157 of 157 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1899 / 1901 |
+| assistant | 99% | 1919 / 1921 |
 | atelier | 100% | 1408 / 1408 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 261 / 261 |
@@ -54,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 98% | 720 / 733 |
+| files | 98% | 761 / 774 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -74,11 +74,11 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | 100% | 90 / 90 |
 | kanban | 99% | 355 / 358 |
 | labels | 100% | 88 / 88 |
-| layout | 99% | 1087 / 1095 |
+| layout | 99% | 1088 / 1096 |
 | library | 100% | 327 / 327 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
-| lyricsync | 100% | 289 / 289 |
+| lyricsync | 100% | 299 / 299 |
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 502 / 502 |
 | mancala | 100% | 61 / 61 |
@@ -99,7 +99,7 @@ text is still written in the code. They switch over wave by wave
 | netizen | 98% | 172 / 175 |
 | newsletter | 99% | 1003 / 1008 |
 | nonogram | 100% | 70 / 70 |
-| notes | 99% | 277 / 278 |
+| notes | 99% | 292 / 293 |
 | oracle | 100% | 38 / 38 |
 | pad | 100% | 307 / 307 |
 | passwords | 99% | 467 / 468 |
@@ -127,10 +127,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 545 / 545 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1462 / 1477 |
+| settings | 99% | 1580 / 1595 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1208 / 1213 |
+| shell | 99% | 1215 / 1220 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 375 / 375 |
@@ -144,7 +144,7 @@ text is still written in the code. They switch over wave by wave
 | spreadsheet | 82% | 409 / 495 |
 | startpage | English for now | 0 / 14 |
 | stickies | 100% | 124 / 124 |
-| stock | 99% | 784 / 789 |
+| stock | 99% | 804 / 809 |
 | storage | 100% | 179 / 179 |
 | studio | 100% | 776 / 776 |
 | sudoku | 100% | 139 / 139 |

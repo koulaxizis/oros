@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.01.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.02.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -1064,6 +1064,7 @@
     try { w = f.contentWindow; d = f.contentDocument; } catch (e) { return; }   // not same-origin
     if (!w || !d || !d.documentElement) return;
     a11yMark(d);
+    if (window.orosUiFont) window.orosUiFont.frame(d);   // FM-5
     var r = d.documentElement, z = a11yZoom();
     if (r.hasAttribute("data-oros-zoom")) { r.style.removeProperty("zoom"); r.removeAttribute("data-oros-zoom"); }
     if (z === 1) return;
@@ -1109,8 +1110,69 @@
     return {
       size: a11y.size, sizes: A11Y_SIZES.slice(), contrast: a11y.contrast, focus: a11y.focus,
       high: a11yHigh(), forced: a11yMq("(forced-colors: active)"),
-      capped: a11yZoom() < a11y.size / 100
+      capped: a11yZoom() < a11y.size / 100,
+      font: uifGet()                                       // FM-5: null = Nunito
     };
+  }
+  // ---------- The font of orOS (FM-5, uifont.js) ----------
+  // A family of the person's (Settings › Fonts) instead of Nunito, on
+  // this device only (like the text size). uifont.js and the designkit
+  // font files load only while one is set.
+  var UIF_KEY = "oros-uifont";
+  var UIF_FILE = /^[0-9a-f]{64}\.ttf$/;
+  function uifClean(v) {
+    if (!v || typeof v !== "object" || typeof v.id !== "string" || !/^(fs_[a-z0-9_]{1,60}|uf_[0-9a-f]{16})$/.test(v.id)) return null;
+    var o = { id: v.id, name: String(v.name || v.id).replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 60) || v.id,
+              fb: v.fb === "serif" || v.fb === "mono" ? v.fb : "sans" };
+    if (o.id.indexOf("uf_") === 0) {
+      ["r", "b", "i", "bi"].forEach(function (k) { if (UIF_FILE.test(v[k] || "")) o[k] = v[k]; });
+      if (!o.r) return null;
+    }
+    return o;
+  }
+  function uifGet() {
+    var v = null;
+    try { v = JSON.parse(localStorage.getItem(UIF_KEY) || "null"); } catch (e) {}
+    return uifClean(v);
+  }
+  var uifP = null;
+  function uifLoad() {
+    if (window.orosUiFont) return Promise.resolve(window.orosUiFont);
+    if (!uifP) {
+      var one = function (src) {
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = src + "?v=" + APP_VERSION;
+          s.onload = ok;
+          s.onerror = function () { s.remove(); fail(new Error(src)); };
+          document.head.appendChild(s);
+        });
+      };
+      var dk = window.orosDK || {};
+      uifP = (dk.text ? Promise.resolve() : one("designkit/text.js"))
+        .then(function () { return (window.orosDK || {}).fonts ? null : one("designkit/fonts.js"); })
+        .then(function () { return one("uifont.js"); })
+        .then(function () { if (!window.orosUiFont) throw new Error("uifont"); return window.orosUiFont; });
+      uifP.catch(function () { uifP = null; });
+    }
+    return uifP;
+  }
+  function uifApply() {
+    var e = uifGet();
+    if (!e && !window.orosUiFont) return;
+    uifLoad().then(function (U) {
+      U.set(e, [document].concat(window.__orosAppDocs ? window.__orosAppDocs() : []));
+    }, function () {});
+  }
+  function uifSetUser(v) {
+    var e = v ? uifClean(v) : null;
+    if (v && !e) return;
+    try {
+      if (e) localStorage.setItem(UIF_KEY, JSON.stringify(e));
+      else localStorage.removeItem(UIF_KEY);
+    } catch (x) { scToast("err", window.t("a11y.savefail")); return; }
+    uifApply();
+    settingsNotify();
   }
   // The system's own contrast switch and a resize (the 320 px cap)
   // apply at once.
@@ -11734,6 +11796,7 @@
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
+      case "uiFont":       uifSetUser(value); return;
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;
       case "tips":         tipsSetUser(!!value); return;
@@ -14893,6 +14956,7 @@
   applyIcons();
   a11yApply();
   a11yWatch();
+  uifApply();
   applyLang();
   langKeepOffline();
   // Seasonal decorations (seasonal.js, a shell component like pet.js):

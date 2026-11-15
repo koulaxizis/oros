@@ -247,6 +247,7 @@ var PRECACHE_URLS = [
   "./icons/icon-maskable-192.png",
   "./icons/icon-maskable-512.png",
   "./solo.js",
+  "./uifont.js",
   "notes/solo.html",
   "notes/manifest.webmanifest",
   "calendar/solo.html",
