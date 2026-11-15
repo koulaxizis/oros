@@ -5829,7 +5829,35 @@
   //     sorted by id), so a converged state produces no phantom push.
   var SHELL_STAMPS_KEY = "oros-shell-stamps";   // { <field>: { t: ms, v: json } } — travels as `sm`
   var ALARM_TOMBS_KEY  = "oros-alarm-tombs";    // { <alarmId>: { t: ms, x: ms|0 } } — travels as `alarmTombs`
-  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "icons"];
+  // Default apps per file type (DEF-APPS D1): fileopen.js keeps them in
+  // localStorage "oros-file-open" { ver: 1, map: { ".txt": "pad" | "ask" } }.
+  // The synced field is the map alone, canonical by its shape only
+  // (sorted types, at most 300), never by the app list of this version,
+  // so every device makes the same string (R26). fileopen.js drops what
+  // its own table does not know when it reads it.
+  var FOPEN_KEY = "oros-file-open";
+  function fopenCanon(v) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    var out = {};
+    Object.keys(v).filter(function (k) {
+      return /^\.[a-z0-9]{1,24}$/.test(k) && typeof v[k] === "string" && /^(ask|[a-z][a-z0-9]{0,23})$/.test(v[k]);
+    }).sort().slice(0, 300).forEach(function (k) { out[k] = v[k]; });
+    return out;
+  }
+  function fopenRead() {
+    try {
+      var p = JSON.parse(localStorage.getItem(FOPEN_KEY) || "null");
+      return fopenCanon(p && p.map) || {};
+    } catch (e) { return {}; }
+  }
+  function fopenWrite(map) {
+    try {
+      if (Object.keys(map).length) localStorage.setItem(FOPEN_KEY, JSON.stringify({ ver: 1, map: map }));
+      else localStorage.removeItem(FOPEN_KEY);
+    } catch (e) {}
+  }
+
+  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "icons", "fopen"];
   var TOMB_GRACE_MS = 24 * 60 * 60 * 1000;      // a once-alarm tombstone outlives its alarm by a day (clock skew)
 
   function shellDefault(name) {
@@ -5843,6 +5871,7 @@
       case "wpart":        return null;
       case "wpland":       return null;
       case "icons":        return "classic";
+      case "fopen":        return {};
       default:             return { on: false, auto: false, lat: null, lon: null, label: "" };   // weather
     }
   }
@@ -5866,6 +5895,7 @@
         var wl = wplandCanon(v);
         return wl ? wl : undefined;
       case "icons":        return iconsCanon(v);
+      case "fopen":        return fopenCanon(v);
       default:
         if (!v || typeof v !== "object") return undefined;
         return {
@@ -5888,7 +5918,8 @@
       lang: state.lang, theme: state.theme, skin: state.skin,
       wallpaper: state.wallpaper, syncInterval: syncInterval,
       autoexport: state.autoexport, weather: wxRead(),
-      wpart: state.wpart, wpland: state.wpland, icons: state.icons
+      wpart: state.wpart, wpland: state.wpland, icons: state.icons,
+      fopen: fopenRead()
     };
     var out = {};
     for (var i = 0; i < SHELL_FIELDS.length; i++) {
@@ -6085,6 +6116,7 @@
       wpart:        vals.wpart,   // "Mine" wallpaper recipe (Wallpaper Generator)
       wpland:       vals.wpland,  // "Living land" { style, seed, motion } (wallpaper/land.js)
       icons:        vals.icons,   // icon pack (ICONPACK-1)
+      fopen:        vals.fopen,   // default apps per file type (DEF-APPS D1)
       ver:          2,
       sm:           sm,
       alarmTombs:   tombs
@@ -6145,6 +6177,11 @@
     if (data.wpland !== undefined && shellCanon("wpland", data.wpland) !== undefined) {
       state.wpland = shellCanon("wpland", data.wpland);
       wpLandWrite(state.wpland);
+    }
+    // Default apps (DEF-APPS D1): pulled, written for fileopen.js only
+    // (no push from a pull).
+    if (data.fopen !== undefined && fopenCanon(data.fopen) !== undefined) {
+      fopenWrite(fopenCanon(data.fopen));
     }
     if (iconsCanon(data.icons)) {     // pulled: apply only (no push from a pull)
       state.icons = iconsCanon(data.icons);
@@ -6344,6 +6381,7 @@
   }
   window.orosMe = { name: meName };
 
+  var fopenHooked = false;
   function registerShellSlice() {
     if (window.orosSync) {
       // SH-D1: stamps first (first-run migration + parked-legacy
@@ -6352,6 +6390,12 @@
       // is assembled from several keys and the shell is always live.
       try { shellStampsRefresh(); } catch (e) {}
       window.orosSync.registerSlice("shell", shellSliceGet, shellSliceSet, null, shellMerge);
+    }
+    // DEF-APPS D1: a default app picked in Settings or with "Always"
+    // in the chooser is a local change of the field "fopen".
+    if (!fopenHooked && window.orosFileOpen && typeof window.orosFileOpen.onChange === "function") {
+      fopenHooked = true;
+      window.orosFileOpen.onChange(noteLocalChange);
     }
   }
 

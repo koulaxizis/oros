@@ -48,7 +48,7 @@ With orOS installed from Chrome or Edge on Windows, Linux or Mac, orOS appears i
 
 The file is imported as a new item, or through the app's own preview; orOS never writes back to the original file. When more than one app can open a type, orOS asks which one, and `Always use this app` remembers your choice on this device. One file opens at a time.
 
-In [Settings](app:settings) under `Opening files` you see the list, pick the app for shared types, and find how to make orOS the default for a type on Windows, Linux or Mac. Only you can do that, in your system's settings.
+In [Settings](app:settings) under `Default apps` you see the list, pick the app for shared types (your pick follows you to all your devices), and find how to make orOS the default for a type on Windows, Linux or Mac. Only you can do that, in your system's settings.
 
 On Android, with orOS installed from Chrome, use `Share` › orOS in Files, Gmail or any app: the file opens in the matching orOS app. orOS can't be the default for opening files on Android yet.
 

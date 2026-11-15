@@ -3433,16 +3433,41 @@
     host.appendChild(c2);
   }
 
+  // DEF-APPS D1: the choices first (synced, "All devices"), then which
+  // app opens what, then the system's "Open with".
   function secFiles(host) {
     var F = fileOpen();
-    var c1 = card(t("f.status"), "files");
     if (!F) {
-      c1.appendChild(el("p", "hint", t("f.none")));
-      host.appendChild(c1);
+      var c0 = card(t("f.status"), "files");
+      c0.appendChild(el("p", "hint", t("f.none")));
+      host.appendChild(c0);
       return;
     }
-    c1.appendChild(el("p", "hint", !F.supported() ? t("f.unsupported") : F.installed() ? t("f.ready") : t("f.install")));
-    host.appendChild(c1);
+
+    var gs = F.groups ? F.groups() : F.shared().map(function (ext) { return { exts: [ext], apps: F.appsFor(ext) }; });
+    if (gs.length) {
+      var c3 = card(t("f.choose"), "fopen");
+      c3.appendChild(el("p", "hint", t("f.choose.hint")));
+      gs.forEach(function (g) {
+        var opts = [{ value: "", label: t("f.ask") }].concat(g.apps.map(function (id) {
+          return { value: id, label: appName(id) };
+        }));
+        var cur = F.choice(g.exts[0]);
+        var key = "file:" + g.exts[0].slice(1);
+        c3.appendChild(row(g.exts.join("  "), select(opts, cur === "ask" ? "" : cur, key, function (v) {
+          if (F.setChoices) F.setChoices(g.exts, v);
+          else g.exts.forEach(function (x) { F.setChoice(x, v); });
+          render();
+        }), { forId: "f-" + key }));
+      });
+      if (F.resetAll && F.count && F.count() > 0) {
+        c3.appendChild(actions(button(t("f.reset"), "f.reset", function () {
+          F.resetAll();
+          render();
+        })));
+      }
+      host.appendChild(c3);
+    }
 
     var c2 = card(t("f.apps"));
     F.handlers().forEach(function (h) {
@@ -3450,23 +3475,9 @@
     });
     host.appendChild(c2);
 
-    var sh = F.shared();
-    if (sh.length) {
-      var c3 = card(t("f.choose"), "files");
-      c3.appendChild(el("p", "hint", t("f.choose.hint")));
-      sh.forEach(function (ext) {
-        var opts = [{ value: "", label: t("f.ask") }].concat(F.appsFor(ext).map(function (id) {
-          return { value: id, label: appName(id) };
-        }));
-        var cur = F.choice(ext);
-        var key = "file:" + ext.slice(1);
-        c3.appendChild(row(ext, select(opts, cur === "ask" ? "" : cur, key, function (v) {
-          F.setChoice(ext, v);
-          render();
-        }), { forId: "f-" + key }));
-      });
-      host.appendChild(c3);
-    }
+    var c1 = card(t("f.status"), "files");
+    c1.appendChild(el("p", "hint", !F.supported() ? t("f.unsupported") : F.installed() ? t("f.ready") : t("f.install")));
+    host.appendChild(c1);
 
     var c4 = card(t("f.how"));
     c4.appendChild(el("p", "hint", t("f.how.hint")));

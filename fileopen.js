@@ -9,7 +9,7 @@
 //   - holds the one table of types → apps (HANDLERS). The manifest
 //     mirrors it (tests/fileopen.test.js keeps the two equal).
 //   - picks the app: the person's choice for that type (Settings →
-//     Opening files, this device only), else the only app, else an
+//     Default apps, synced), else the only app, else an
 //     "Open with" chooser (types more than one app reads).
 //   - hands the File to the app through the generic deep link:
 //     __orosOpenAt(app, { openFile: { token, name, size } }). A File
@@ -22,8 +22,10 @@
 //     their .oroscal / .oroscontacts bundles go as Files (textExt).
 //   - never reads, stores or runs the file itself. Nothing is written
 //     back to the original file.
-// Device-local preference: localStorage "oros-file-open" (oros-
-// prefix, so the factory reset sweeps it; never synced).
+// Preference: localStorage "oros-file-open" (oros- prefix, so the
+// factory reset sweeps it). Since DEF-APPS D1 the shell syncs its map
+// to every device (shell slice field "fopen"); this file only reads
+// and writes the key and tells the shell when the person changed it.
 // Shared by the shell (window.orosFileOpen) and node tests.
 // ============================================================
 (function (root) {
@@ -353,6 +355,22 @@
     return { ask: apps, ext: ext };
   }
 
+  // Settings › Default apps: the types with a choice, one row per set
+  // of types that the same apps open (".md" and ".markdown" share a
+  // row), in table order: [{ exts: [".md", ".markdown"], apps: [...] }].
+  function groups() {
+    var out = [], byKey = {};
+    shared().forEach(function (ext) {
+      var k = APPS_BY_EXT[ext].join(",");
+      if (!Object.prototype.hasOwnProperty.call(byKey, k)) {
+        byKey[k] = { exts: [], apps: APPS_BY_EXT[ext].slice() };
+        out.push(byKey[k]);
+      }
+      byKey[k].exts.push(ext);
+    });
+    return out;
+  }
+
   // The current choice for a type, for Settings: an app id, "ask", or
   // "" (no choice made: the only app, or the chooser).
   function choiceFor(ext, prefs) { return normPrefs(prefs).map[String(ext || "").toLowerCase()] || ""; }
@@ -428,7 +446,7 @@
 
   var api = {
     HANDLERS: HANDLERS, MAX_BYTES: MAX_BYTES, PREF_KEY: PREF_KEY, STRINGS: STRINGS,
-    extOf: extOf, appsFor: appsFor, extensions: extensions, shared: shared,
+    extOf: extOf, appsFor: appsFor, extensions: extensions, shared: shared, groups: groups,
     normPrefs: normPrefs, choose: choose, choiceFor: choiceFor, setChoice: setChoice,
     INSIDE: INSIDE, insideFor: insideFor, chooseInside: chooseInside,
     manifestHandlers: manifestHandlers, shareTarget: shareTarget, shareAccept: shareAccept,
@@ -468,8 +486,13 @@
     try { return normPrefs(JSON.parse(w.localStorage.getItem(PREF_KEY) || "null")); }
     catch (e) { return normPrefs(null); }
   }
+  // DEF-APPS (D1): the choices sync to every device in the shell slice
+  // (field "fopen"). A choice the person makes here tells the shell
+  // (onChange → noteLocalChange); a pulled one (setAll) never does.
+  var changeFns = [];
   function savePrefs(p) {
     try { w.localStorage.setItem(PREF_KEY, JSON.stringify(normPrefs(p))); } catch (e) {}
+    changeFns.forEach(function (fn) { try { fn(); } catch (e) {} });
   }
 
   // One-shot File handover. A token lives until taken or 10 minutes.
@@ -725,7 +748,7 @@
     hand: function (file) {
       return file && typeof file.size === "number" ? hold(ownFile(file)) : "";
     },
-    // Settings → Opening files.
+    // Settings → Default apps.
     supported: function () { return "launchQueue" in w; },
     installed: function () {
       try { return w.matchMedia("(display-mode: standalone)").matches || w.matchMedia("(display-mode: window-controls-overlay)").matches; }
@@ -733,12 +756,26 @@
     },
     handlers: function () { return HANDLERS.map(function (h) { return { app: h.app, exts: extsOf(h) }; }); },
     shared: shared,
+    groups: groups,
     appsFor: appsFor,
     choice: function (ext) { return choiceFor(ext, loadPrefs()); },
     setChoice: function (ext, value) {
       if (value && value !== "ask" && appsFor(ext).indexOf(value) === -1) return;
       savePrefs(setChoice(loadPrefs(), ext, value));
-    }
+    },
+    // Settings › Default apps: one choice for several types at once
+    // (a row of groups()), and Reset all (every type asks again).
+    setChoices: function (exts, value) {
+      var p = loadPrefs();
+      (exts || []).forEach(function (ext) {
+        if (!value || value === "ask" || appsFor(ext).indexOf(value) !== -1) p = setChoice(p, ext, value);
+      });
+      savePrefs(p);
+    },
+    resetAll: function () { savePrefs(normPrefs(null)); },
+    count: function () { return Object.keys(loadPrefs().map).length; },
+    // The shell (sync): told after every choice made on this device.
+    onChange: function (fn) { if (typeof fn === "function") changeFns.push(fn); }
   };
   function extsOf(h) {
     var out = [];

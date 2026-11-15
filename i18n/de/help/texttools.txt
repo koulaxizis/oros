@@ -7,7 +7,7 @@ Textwerkzeuge räumt reinen Text und einfache Tabellen auf und ordnet sie neu: Z
 3. Stelle seine Optionen ein. Das Feld `Ergebnis` folgt, während du tippst.
 4. `Kopieren` kopiert das Ergebnis, `Speichern` speichert es als Datei, und `Als Text verwenden` schiebt es nach oben in das Feld `Text`, damit du weiter daran arbeiten kannst.
 
-Wenn orOS installiert ist, kannst du eine .txt-, .csv- oder .tsv-Datei auch direkt aus dem Menü `Öffnen mit` deines Computers oder über `Teilen` auf Android mit Textwerkzeuge öffnen. Texteditor, Notizen, Mindmap und Tabelle öffnen diese Dateien auch, daher fragt orOS, welche App du willst; setze den Haken bei `Immer`, damit es nicht mehr fragt. [Einstellungen](app:settings) › `Dateien öffnen` ändert diese Wahl.
+Wenn orOS installiert ist, kannst du eine .txt-, .csv- oder .tsv-Datei auch direkt aus dem Menü `Öffnen mit` deines Computers oder über `Teilen` auf Android mit Textwerkzeuge öffnen. Texteditor, Notizen, Mindmap und Tabelle öffnen diese Dateien auch, daher fragt orOS, welche App du willst; setze den Haken bei `Immer`, damit es nicht mehr fragt. [Einstellungen](app:settings) › `Standard-Apps` ändert diese Wahl.
 
 Unter dem Text siehst du, wie viele Zeichen, Wörter und Zeilen er hat. Tippe oder klicke auf diese Zeile für mehr: Sätze, Absätze, Lesezeit und die häufigsten Wörter.
 
