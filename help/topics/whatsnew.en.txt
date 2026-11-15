@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.85.00
+- **Studio: publish your podcast on GitHub Pages.** In `Publish as podcast`, write your GitHub repository and paste a token of yours, and Studio puts the whole site there itself; GitHub Pages serves it for free. Publishing again sends only what changed and never drops an episode that is already online. The token stays on this device only.
+
 ## Version 6.84.00
 - **Publishing: a release plan for music, and links to the other apps.** `Make the plan` on a single, EP or album dates every step back from the release day: master, artwork, metadata and codes, upload to the distributor, editorial pitch, pre-save and posts, first week. A track's `Lyrics` opens its song in Lyric Sync, and the MP3 copy from there now carries the track's ISRC. `In Music` finds the track in Music, `Item in Stock` puts a CD, vinyl or cassette edition into Stock with its barcode, and `Release kit in Atelier` makes the store cover (3000 × 3000), a post, a story and a banner.
 
