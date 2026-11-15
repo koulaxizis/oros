@@ -1229,6 +1229,9 @@ window.OROS_TRANSLATIONS = {
     "lock.bio.unlockFinger":     "Unlock with fingerprint",
     "lock.bio.touch":            "Touch the fingerprint reader…",
     "lock.bio.prompt":           "Unlock orOS",
+    "lock.till.hint":            "This device is a till. Only the owner opens the rest of orOS.",
+    "lock.till.back":            "Back to the till",
+    "till.owner":                "Owner: open orOS",
     "lock.bio.err.nonePc":       "This computer no longer has its key, so this way of unlocking was turned off. Turn it on again in Settings › Screen lock.",
   },
 
@@ -2449,6 +2452,9 @@ window.OROS_TRANSLATIONS = {
     "lock.bio.unlockFinger":     "Ξεκλείδωμα με δακτυλικό",
     "lock.bio.touch":            "Άγγιξε τον αισθητήρα δακτυλικού…",
     "lock.bio.prompt":           "Ξεκλείδωμα orOS",
+    "lock.till.hint":            "Αυτή η συσκευή είναι ταμείο. Μόνο ο ιδιοκτήτης ανοίγει το υπόλοιπο orOS.",
+    "lock.till.back":            "Πίσω στο ταμείο",
+    "till.owner":                "Ιδιοκτήτης: άνοιγμα orOS",
     "lock.bio.err.nonePc":       "Ο υπολογιστής δεν έχει πια το κλειδί του, οπότε αυτός ο τρόπος ξεκλειδώματος απενεργοποιήθηκε. Ενεργοποίησέ τον ξανά στις Ρυθμίσεις › Κλείδωμα οθόνης.",
   }
 };

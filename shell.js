@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.00.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.01.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -9221,6 +9221,7 @@
     // Match on e.code (PHYSICAL key) — e.key lies under the Greek
     // layout (physical P arrives as "π"), e.code is "KeyP" always.
     if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return false;
+    if (TILL) return false;   // TILL-1: no shell shortcuts on a till-only device
     // Χ5: focused editable target → the shortcut yields (AltGr
     // keyboards emit Ctrl+Alt natively; a typed character must never
     // trigger an OS action). Covers shell AND forwarded iframe
@@ -12074,7 +12075,21 @@
   // Back, which returns to the single app. Everything else (sync,
   // notifications, files, dialogs) is the shell as always.
   var SOLO = (window.orosSolo && window.orosSolo.has && window.orosSolo.has(window.orosSolo.id)) ? window.orosSolo.id : "";
+  // TILL-1 (Stock fair till F3): a till-only device runs this shell as
+  // a single app of Stock's till. Every other app, the desktop and the
+  // command bar wait behind the owner's screen-lock PIN (lock.js till).
+  var TILL = !SOLO && !!(window.orosLock && window.orosLock.till && window.orosLock.till.active());
+  if (TILL) { SOLO = "stock"; document.body.classList.add("till-mode"); }
   if (SOLO) document.body.classList.add("solo-mode");
+  // The owner typed the PIN, the owner left, or the till was turned
+  // on / off: this tab starts again in the other mode.
+  if (window.orosLock && window.orosLock.till) {
+    var tillWas = TILL;
+    window.orosLock.onChange(function () {
+      if (window.orosSolo && window.orosSolo.id) return;
+      if (window.orosLock.till.active() !== tillWas) { tillWas = !tillWas; location.reload(); }
+    });
+  }
 
   function soloAppObj() {
     for (var i = 0; i < state.apps.length; i++) {
@@ -12091,6 +12106,7 @@
       soloPackAsked = state.lang;
       I.ensure(state.lang, "solo", function () { if (SOLO) soloPaint(); });
     }
+    if (TILL) return window.t("app.stock");
     return window.orosSolo.nameOf(SOLO, state.lang);
   }
 
@@ -12138,13 +12154,13 @@
     var menu = document.createElement("div");
     menu.id = "solo-menu";
     menu.setAttribute("role", "menu");
-    [
+    (TILL ? [["till.owner", function () { window.orosLock.till.ask(); }]] : [
       ["solo.sync", function () { window.__orosOpenAt("settings", { section: "sync" }); }],
       ["solo.settings", function () { openAppById("settings"); }],
       ["solo.help", function () { openHelp(); }],
       ["solo.full", function () { window.open("/", "_blank", "noopener"); }]
     ].concat(window.orosLock && window.orosLock.isOn()
-      ? [["menu.lock", function () { window.orosLock.lock(); }]] : []).forEach(function (it) {
+      ? [["menu.lock", function () { window.orosLock.lock(); }]] : [])).forEach(function (it) {
       var b = document.createElement("button");
       b.type = "button";
       b.setAttribute("role", "menuitem");
@@ -12207,7 +12223,7 @@
   // Icon badge (Badging API, through the host page): To-Do counts the
   // open tasks due today or overdue. Others show none.
   function soloBadgeTick() {
-    var h = window.orosSolo.host(), kind = window.orosSolo.APPS[SOLO].badge;
+    var h = window.orosSolo.host(), kind = (window.orosSolo.APPS[SOLO] || {}).badge;
     if (!h || kind !== "due") return;
     var n = 0;
     try {
@@ -12649,6 +12665,8 @@
       if (first) lateWhen(function () { var o = late.open; late.open = null; if (o) openApp(o[0], o[1]); });
       return;
     }
+    // TILL-1: on a till-only device anything but Stock needs the owner.
+    if (TILL && app && app.id !== "stock") { window.orosLock.till.ask(); return; }
     if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
     var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;

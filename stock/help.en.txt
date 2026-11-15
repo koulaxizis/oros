@@ -51,7 +51,7 @@ Discounts: the `%` button on a line gives that line a percentage or an amount of
 
 After a sale the receipt can also go to the customer without paper: `Share PDF` (or `PDF` on a computer) makes an 80 mm PDF, and `QR code` shows the receipt's text as a code the customer scans with the phone camera. Both are made on this device; nothing is sent anywhere.
 
-`Receipt settings` holds the receipt's header (shop name, address, VAT number) and footer, the paper width and the `Register code`: two characters at the start of the receipt numbers (like AB-261014-001), so two tills never print the same number. `Largest discount on this device` caps the discounts this device may give (for a helper's phone at a stand); empty means no limit. These settings stay on each device.
+`Receipt settings` holds the receipt's header (shop name, address, VAT number) and footer, the paper width and the `Register code`: two characters at the start of the receipt numbers (like AB-261014-001), so two tills never print the same number. `Largest discount on this device (%)` caps the discounts this device may give (for a helper's phone at a stand); empty means no limit. These settings stay on each device.
 
 `Z report` shows a day's sales: how many, net, VAT per rate, by payment method and price list, the best sellers and every receipt (reprint or `Void` from there; a voided sale's products go back into stock). `Close the day` keeps the day's totals as a numbered Z; sales made after it show apart. `Print Z report` prints it on the roll.
 
@@ -61,11 +61,19 @@ Every sale is also an ordinary `Sale` movement, so stock, reports and sync work 
 `Events` in the till keeps a fair, a book launch or a market: its `Name`, the days (`From`, `To`), the `Stand's warehouse` (pick one, or let Stock make a new warehouse with the event's name), a `Price list` and the `Cash float per day`. Then:
 1. `Pack for the stand`: type how many of each product you take; one transfer moves them from the main warehouse to the stand.
 2. At the stand, pick the event at the top of the till: it uses the stand's warehouse and the event's price list, and every sale counts for the event. Two phones at the same stand can sell at once, even offline; they meet when they sync.
-3. At the end of each day open `Z report`: the `Cash float` is filled in from the event; type the `Cash counted` (or `Count…` note by note and coin by coin) to see what the drawer should hold and any difference, then `Close the day`.
+3. At the end of each day open `Z report`: the `Cash float` is filled in from the event; type the `Cash counted` (or `Count…` note by note and coin by coin) to see what the drawer should hold and any difference, then `Close the day`. `Add to Budget` then opens one income entry for the day's total in [Budget](app:budget), filled in for you to save.
 4. `Report` shows the whole event, all days together: sales, net, VAT, discounts, by payment, per day, and per title what went to the stand, what sold, what came back and what is left. Print it on the roll or open it in Spreadsheet.
 5. `Bring back` moves everything still at the stand back to the main warehouse in one transfer.
 
 Devices that still run an older orOS sell without events and see their sales without the event; update every phone you take to the stand.
+
+#### A helper's phone (till only)
+A helper can sell on their own phone without seeing the rest of orOS. On that phone, sign in to your sync, turn on [Settings › Screen lock](app:settings) with a PIN only you know, then in the till open `Receipt settings` and choose `Make this device a till`. Set `Largest discount on this device (%)` there too.
+- From then on orOS on that phone opens straight into the till, with no PIN. The desktop, every other app, help, notifications and the quick settings are hidden.
+- A void, `Receipt settings`, `Events`, `Price lists` and a discount over the limit ask for your PIN. `Add to Budget` is not offered on the till.
+- `Owner: open orOS` in the top bar shows the lock screen: your PIN opens the whole orOS; `Back to the till` returns. Locking orOS, leaving the phone idle or starting orOS again goes back to the till. Fingerprint unlock is not offered on the till, because the fingerprints on the phone are the helper's.
+- To stop: open orOS with your PIN, then `Receipt settings` › `Stop till-only mode`. Turning the screen lock off stops it too.
+- The phone still holds your synced data, kept from the screen but not from someone who can read its storage. Give it only to someone you trust.
 
 ### Stock count
 In a `Stock count` you type what you `Counted`. Stock saves the difference from what it expected, so a sale on another device at the same moment still counts.
