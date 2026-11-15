@@ -316,9 +316,26 @@
     });
   }
 
+  // GATE-FILES F3: a change Claude left while orOS was closed meets a
+  // file that changed since. a = files_write args; cur = { st, v }.
+  // → true when the text must go to a conflict copy instead.
+  function writeConflict(a, cur) {
+    var st = cur && cur.st;
+    if (!isObj(a) || (st && st.dir)) return false;
+    if (a.mode === "replace") return !st || ver(a.if_version) !== cur.v;
+    return !!st;
+  }
+  // "/…/Invoice.txt" → "/…/Invoice (Claude 2026-11-14 0530).txt"; n > 1 adds " n".
+  function conflictName(p, now, n) {
+    var d = new Date(now), z = function (x) { return (x < 10 ? "0" : "") + x; };
+    var tag = " (Claude " + d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()) + " " + z(d.getHours()) + z(d.getMinutes()) + (n > 1 ? " " + n : "") + ")";
+    var b = baseName(p), i = b.lastIndexOf(".");
+    return parentOf(p) + "/" + (i > 0 ? b.slice(0, i) + tag + b.slice(i) : b + tag);
+  }
+
   var api = { ROOT: ROOT, TRASH: TRASH, FOLDERS_MAX: FOLDERS_MAX, LIST_MAX: LIST_MAX, DEPTH_MAX: DEPTH_MAX, READ_MAX: READ_MAX, WRITE_BYTES: WRITE_BYTES, PATHS_MAX: PATHS_MAX,
               normPath: normPath, cleanFolders: cleanFolders, secret: secret, reach: reach, kindOf: kindOf, validName: validName, ver: ver, show: show,
-              under: under, page: page, listOut: listOut, planWrite: planWrite, planMove: planMove, planDelete: planDelete, run: run, undo: undo };
+              under: under, page: page, listOut: listOut, planWrite: planWrite, writeConflict: writeConflict, conflictName: conflictName, planMove: planMove, planDelete: planDelete, run: run, undo: undo };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosClaudeFiles = api;
 })(typeof window !== "undefined" ? window : this);
