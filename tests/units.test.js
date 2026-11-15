@@ -352,18 +352,46 @@ test("search provider: ready answers and favourites, read-only", async () => {
   assert.ok(!/setItem|innerHTML/.test(read("units/search.js")));
 });
 
-test("wiring: app, palette, sync, deep link, help", () => {
-  const js = read("units/units.js"), html = read("units/index.html");
-  assert.ok(js.includes("inheritPalette") && js.includes("watchPalette"));            // guard G3
-  assert.ok(js.includes('api.registerSlice("units", sliceGet, sliceSet, STORAGE_KEY, C.mergeData)'));
-  assert.equal((js.match(/window\.__orosOpenAt = /g) || []).length, 1);
-  assert.ok(js.includes('__orosTakeTarget("units")'));
-  assert.ok(html.indexOf("core.js") < html.indexOf("units.js"));
+test("Calculator › Convert wiring (merge 5): slice at boot, lazy view, alias, search", () => {
+  const js = read("units/view.js"), calc = read("calculator/calculator.js"), html = read("calculator/index.html");
+  // the slice "units" is the Calculator's from its boot, with the Unit Converter's merge
+  assert.ok(calc.includes('sync.registerSlice("units", function () {') && calc.includes("}, U.DATA_KEY, U.mergeData);"));
+  assert.ok(!js.includes("registerSlice") && !js.includes("__orosTakeTarget") && !/window\.__orosOpenAt\s*=(?!=)/.test(js));
+  assert.ok(js.includes("window.UnitsView = {"));
+  ["../units/view.js", "../units/view.css"].forEach((f) => assert.ok(calc.includes('"' + f + '"'), f));
+  assert.ok(calc.includes('ensure(lang(), "units"'));
+  assert.ok(!html.includes("units/view.js?v=") && html.includes('id="conv"') && html.includes('data-mode="conv"') && html.includes('<option value="conv"'));
+  assert.ok(/var MODES = \["std", "sci", "graph", "prog", "fin", "conv"\]/.test(calc));
   assert.ok(!/\beval\(|new Function/.test(js + read("units/core.js")));
-  // every data-i18n key exists in both languages
-  const keys = [...html.matchAll(/data-i18n="([^"]+)"/g)].map((m) => m[1]);
+  // every data-uc key of the template exists in both languages
+  const keys = [...js.matchAll(/data-uc=\\"([^"\\]+)\\"/g)].map((m) => m[1]);
+  assert.ok(keys.length >= 15);
   const en = js.slice(js.indexOf("en: {"), js.indexOf("el: {")), el = js.slice(js.indexOf("el: {"), js.indexOf("function t("));
   keys.forEach((k) => { assert.ok(en.includes(`"${k}"`), `en ${k}`); assert.ok(el.includes(`"${k}"`), `el ${k}`); });
-  for (const f of ["help.en.txt", "help.el.txt", "search.js"]) assert.ok(fs.existsSync(path.join(__dirname, "..", "units", f)));
-  for (const f of ["units/core.js", "units/units.js", "units/search.js"]) assert.ok(!/[\u2028\u2029\ufeff]/.test(read(f)), f);
+  // every id of the view is uc- prefixed (the Calculator has its own ids)
+  [...js.matchAll(/ (?:id|for|aria-controls|aria-labelledby)=\\"([^"\\]+)\\"/g)].forEach((m) => assert.ok(m[1].startsWith("uc-"), m[1]));
+  const css = read("units/view.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  css.split("}").forEach((blk) => {
+    const sel = blk.split("{")[0].trim();
+    if (!sel || sel.startsWith("@")) return;
+    sel.split(",").forEach((one) => assert.ok(/^\.uc\b/.test(one.trim()), "unscoped: " + one));
+  });
+  for (const f of ["units.js", "units.css", "help.en.txt", "help.el.txt"]) assert.ok(!fs.existsSync(path.join(__dirname, "..", "units", f)), f);
+  assert.ok(read("units/index.html").includes('"../?open=units"'));
+  const apps = JSON.parse(read("apps.json"));
+  assert.ok(!apps.apps.some((a) => a.id === "units"));
+  assert.equal(apps.apps.find((a) => a.id === "calculator").search, "search.js");
+  assert.deepEqual(apps.aliases.find((a) => a.id === "units"), { id: "units", name: "Unit Converter", to: "calculator", target: { mode: "conv" } });
+  for (const f of ["units/core.js", "units/view.js", "units/search.js", "calculator/search.js"]) assert.ok(!/[\u2028\u2029\ufeff]/.test(read(f)), f);
+});
+
+test("Calculator search provider: the Unit Converter's answers under the Calculator, opened through the old id", async () => {
+  const P = require("../calculator/search.js");
+  const U = require("../units/search.js");
+  assert.equal(P.id, "calculator");
+  const ctx = { q: "10 km to mi", lang: "en", readJSON: () => null };
+  assert.deepEqual(await P.search(ctx), await U.search(ctx));
+  const opened = [];
+  P.open({ cat: "length", from: "km", to: "mi" }, { __orosOpenAt: (id, t) => opened.push([id, t]) });
+  assert.deepEqual(opened, [["units", { cat: "length", from: "km", to: "mi" }]]);
 });

@@ -1,6 +1,83 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.93.00
+- **See what your forms got back.** In [Forms](app:forms), `Answers` opens on a summary with a chart for each question; `Show only` keeps one kind of answer, and `Open in Spreadsheet` or `Download CSV` takes them with you. Each answer can go to Contacts or the CRM in one press, a form made from a Base table sends its answers back there, the Assistant drafts forms and tells you how they add up, and a form can be a quiz with right answers, points and scores.
+
+## Version 6.92.00
+- **Lay out diagrams in Whiteboard.** Select shapes joined by arrows and press `Lay out as a diagram`: a tree for org charts or a flow for processes, top to bottom or left to right (`More` › `Lay out the board…` for everything). `Align and space` lines objects up by an edge or centre and spaces them evenly. One Undo puts it back.
+
+## Version 6.91.00
+- **Kanban plans leave the Timeline.** `Export timeline (PDF)` prints the Gantt chart with milestones, arrows and the critical path. Start dates show in [Calendar](app:calendar) and Today, the Assistant can set start dates, milestones and dependencies, and start dates come along when you import from Trello or Jira. See [Kanban](app:kanban).
+
+## Version 6.90.00
+- **Podcast episodes carry their chapters and cover.** The MP3 that Studio makes for an episode now holds its title, show, number, date, language, show notes, cover and the chapters from your markers, so podcast apps and players show them even when they play the file directly. Every MP3 from Studio uses the same up-to-date tags (ID3v2.4). See [Studio](app:studio).
+
+## Version 6.89.00
+- **Glossary and checks for book translations in Writer.** Keep the terms of a book in a glossary: when a sentence has one, its translation shows under it and Alt+G puts it in. `Add a term…` takes the selected words, and terms can be marked as never to be used. As you type, Writer warns about a missing or forbidden term, numbers, formatting marks, spaces, end punctuation and a sentence translated two ways; `Check the translation…` lists every warning. Warnings never stop you. Glossaries import and export as CSV and TBX. See [Writer](app:writer).
+
+## Version 6.88.00
+- **Transfer can send your own picture as the background.** `Background picture…` on the send card puts one of your pictures behind the files on the other person's screen. It is made smaller on your device and saved again without camera details such as the place, then sent encrypted with the files. The matching shapes that show you are connected move to a small circle next to the title.
+
+## Version 6.87.00
+- **Translate from Mail, Reader, Notes and Montage.** A Translate button under a message, above an article, at the end of the Notes formatting bar and in Montage's `Subtitles` translates on the device, as in Text Tools. In Notes you replace the text or add the translation below it; in Montage every subtitle is translated at once and keeps its timing, with Undo. The Assistant can also open a translation on the device for you.
+
+## Version 6.86.00
+- **Base: link records between tables.** A `Link to records` field links a record to records of another table, for example a book to its authors, and the other table shows the same links from its side. `Lookup`, `Rollup` and `Count of links` fields show, add up or count what the links point to, and `Formula` fields work out a value from the other fields, such as `{Price} * {Copies}`, with the Spreadsheet's functions.
+
+## Version 6.85.00
+- **Studio: publish your podcast on GitHub Pages.** In `Publish as podcast`, write your GitHub repository and paste a token of yours, and Studio puts the whole site there itself; GitHub Pages serves it for free. Publishing again sends only what changed and never drops an episode that is already online. The token stays on this device only.
+
+## Version 6.84.00
+- **Publishing: a release plan for music, and links to the other apps.** `Make the plan` on a single, EP or album dates every step back from the release day: master, artwork, metadata and codes, upload to the distributor, editorial pitch, pre-save and posts, first week. A track's `Lyrics` opens its song in Lyric Sync, and the MP3 copy from there now carries the track's ISRC. `In Music` finds the track in Music, `Item in Stock` puts a CD, vinyl or cassette edition into Stock with its barcode, and `Release kit in Atelier` makes the store cover (3000 × 3000), a post, a story and a banner.
+
+## Version 6.83.00
+- **Atelier and Layout: combine shapes and outline strokes.** Pick two or more shapes and choose Unite, Subtract front, Intersect or Exclude overlap: you get one shape with points you can edit, looking like the shape at the back. Outline stroke turns a stroke (dashes and arrow heads too) into a filled shape.
+
+## Version 6.82.00
+- **Font collections.** In Settings › Fonts › Collections, group the fonts of a project, such as a book or a series of covers, from your own fonts and the free ones, and download a collection's free fonts for offline use. Layout's Fonts dialog and Atelier's font panel list the document's collection first. Each font can also keep a note, such as where you bought it. Collections and notes sync to all your devices.
+- **Your computer's fonts in orOS.** Settings › Fonts › On this device (Chrome and Edge on a computer) lists the fonts installed on this computer, with a sample, their Greek and polytonic letters and what their licence says. Copy one into orOS, after a confirmation, to use it in Layout and Atelier on all your devices; a font whose licence forbids embedding is never copied.
+- **Writer fonts.** Choose a font for text and one for headings in Writer's Page settings, from your font collections and the fonts on your orOS disk; they show on screen, in print and in the PDF.
+
+## Version 6.81.00
+- **Stock's till now follows you to a fair.** Make an event with its dates, the stand's warehouse, a price list and a cash float. Pack books for the stand in one step and bring back what is left at the end. Every sale is tagged with the event, and the event report shows what sold each day, per title, and what is left at the stand. When you close the day you can count the cash drawer by notes and coins, and the till shows how much it is over or short.
+
+## Version 6.80.00
+- **Claude changes its folders with orOS closed.** Claude can now also write, move and delete files in its folders while every orOS is closed: the change waits, sealed, and is made the next time orOS opens. If a file changed meanwhile, the new text is saved next to it as a copy with Claude and the date in its name, and nothing is moved or deleted. Deleting still asks you on the device first, and waits until you answer. A link from Claude to a file now opens a page with a Download button, so a link preview can't use it up. See [Settings](app:settings).
+
+## Version 6.79.00
+- **Guests answer by themselves.** In the Calendar, an event's `Guests…` now makes invitation links: every guest gets their own link to answer Coming, Maybe or Not coming (with plus-ones and a note) in any browser, and sees their QR ticket when they come. An open sign-up link fills the places and the waiting list for you. Answers come back encrypted, by themselves. See [Calendar](app:calendar).
+
+## Version 6.78.00
+- **Claude reads its folders with orOS closed.** An open orOS now keeps a sealed copy of Claude's folders in your Dropbox (up to 250 MB unless you change it, kept 7 days), so Claude can list and read them even when every orOS is closed, and can give you a link to one file that works once, for 15 minutes. Changes still wait for an open orOS. `Delete the copy now` in Settings › orOS Gate removes it; nothing is copied during Sensitive work. Dropbox may ask you to sign in again once for this. See [Settings](app:settings).
+
+## Version 6.77.00
+- **Keep a folder on all your devices.** In Files › orOS Drive, `Keep on all my devices` keeps a folder downloaded on every device where you use orOS with sync, not only this one, so it works offline everywhere and orOS Drive mirrors all of it. Turn it off the same way. See [Files](app:files).
+
+## Version 6.76.00
+- **Fixed-layout e-books from Layout.** An EPUB edition now has a `Layout` choice (`Export` › `Editions` › `Edit editions…`): `Fixed: pages as in print, text as text` keeps every page exactly as designed, for picture books, comics, cookbooks and art books, with the text as real text readers can search and have read aloud; `Fixed: pages as pictures` puts each page in as one picture. Facing pages open side by side, and every page is in the book's page list. Library now opens fixed-layout EPUBs too, each page scaled to the screen.
+
+## Version 6.75.00
+- **Setlists, PDF and print in Lyric Sync.** Put songs in a set for a gig or a rehearsal, each in its own key, and play the whole set on the stage, one song after the other. Make a PDF or print a song or a set with the chords above the words, in Greek too, and send a dated set to Calendar. See [Lyric Sync](app:lyricsync).
+
+## Version 6.74.00
+- **Documents can now be searched by their text.** Files › Documents reads the words of a PDF, and with your OK recognises the text of scans and photos on this device (Greek and English). Search finds a document by any word in it, `From the text:` suggests its type, date, amount and expiry, and in Scanner & PDF `Also add it to Documents` files a new scan straight away. See [Files](app:files).
+
+## Version 6.73.00
+- **Unit Converter is now part of the Calculator.** Open the `Convert` mode in the Calculator for every unit, currency and cooking conversion, with your favourites and recent ones kept. Old links and shortcuts to Unit Converter open that mode.
+
+## Version 6.72.00
+- **Signed PDFs come back on their own.** When you ask someone to sign a PDF in Scanner & PDF, the signed copy now comes back to your orOS by itself: no need to paste the reply link any more. Requests that wait have a `Remind` button that writes a short reminder for your email app. If the automatic way cannot be used, the signer still gets a reply link to send you, as before. See [Scanner & PDF](app:scanpdf).
+
+## Version 6.71.00
+- **Claude's folders.** In Settings › Connected services › orOS Gate you can now choose `Claude's folders`: folders of the orOS disk (for example the ones orOS Drive mirrors from your computer) that Claude may list and read, and with `May change` on Files also write, move and rename text files in. Every change can be undone, a replaced file goes to the Trash first, and deleting always asks you on the device. Key and secret files are never shown. The Assistant gets the same folders. See [Settings](app:settings).
+
+## Version 6.70.01
+- **Banks in the installed orOS.** Budget's banks and PayPal now update in the installed orOS, orOS Portable and orOS USB too: with Update now, when you open Budget and at the times you set. Connecting a bank or renewing its access still happens at useoros.online in a browser, because the bank sends you back there.
+
+## Version 6.70.00
+- **Photos in Files.** Files has a new **Photos** place: every picture and video on your disk in one timeline by the date it was taken, with a full-screen viewer. Make **albums** without moving any file (they sync to your other devices), see your photos on a **map** from the place they were taken, and find **duplicates** and near-duplicates so you can keep the best one and send the rest to the Trash. Photos that are only in the cloud download when you look at them. See [Files](app:files).
+
 ## Version 6.69.00
 - **SOS: erase everywhere.** If you think someone got into your orOS, Settings › System › `SOS: erase everywhere` closes the cloud and erases orOS on every device that syncs with your passphrase, closes your shared links, sign-in link, notifications, orOS Gate, webhook and households, and then shows what you still have to do (Dropbox password and connected apps, deleted files, passwords). Type SOS and your passphrase; you have 10 seconds to cancel. In Sensitive work mode the shield gives you the SOS button directly. After a **Factory reset** your other devices now stop and ask whether to erase themselves too or keep their data, instead of filling the cloud again. See [Settings](app:settings).
 

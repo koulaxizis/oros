@@ -1673,17 +1673,33 @@
       "a block ending in {.center}, {.right} or {.justify} gets that alignment; made when the user presses Open. To bring a file the user attached into Writer use open_file instead) · " +
       "mind_map (title = the central idea, outline: one idea per line, two spaces per level; opens Mind map's Paste a list box) · " +
       "text_file (title = the file name with its extension such as notes.txt, script.py, config.json, index.html, text: the whole file exactly as it should be, " +
-      "code or plain text, every space and line kept; lang?: the language when the name does not tell; opens as a new tab in Pad, which never runs it; the user saves it where they want). " +
+      "code or plain text, every space and line kept; lang?: the language when the name does not tell; opens as a new tab in Pad, which never runs it; the user saves it where they want) · " +
+      "form (title, desc?, quiz?, questions: a survey, sign-up, order form or quiz for Forms, each question {label, type?, options?, required?, answer? and points? for a quiz}; made in Forms when the user presses Open, not shared until they publish it). " +
       "Give only what the user said or plainly meant; leave the rest out.",
     params: {
       type: "object",
       properties: {
         kind: { type: "string", "enum": ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
                                          "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
-                                         "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file"] },
+                                         "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file", "form"] },
         title: { type: "string", description: "The entry's title or name (event, note, sheet, presentation, bookmark, card, habit, plant, media, place, car service or reminder, pet record, shared expense)." },
         text: { type: "string", description: "note: the note's text (plain text). post: the post's text, hashtags included. wiki_article, document: the whole text (Markdown). text_file: the whole file, as it is." },
         lang: { type: "string", "enum": PAD_LANGS, description: "text_file: the language for colours, only when the file name does not tell (default: from the name)." },
+        questions: { type: "array", description: "form: the questions in order, up to 100.",
+                     items: { type: "object", properties: {
+                       label: { type: "string", description: "The question as the person reads it." },
+                       type: { type: "string", "enum": ["text", "para", "email", "phone", "number", "date", "time", "choice", "multi", "select", "scale", "stars", "yesno", "matrix", "info", "page"],
+                               description: "text (short answer, default), para (long answer), choice (one of options), multi (checkboxes), select (drop-down), scale (low..high), stars, yesno, matrix (rows × options), info (a text block, no answer), page (a page break)." },
+                       options: { type: "array", items: { type: "string" }, description: "choice, multi, select, matrix: the options (matrix: the columns)." },
+                       rows: { type: "array", items: { type: "string" }, description: "matrix: the rows." },
+                       required: { type: "boolean" },
+                       low: { type: "integer", description: "scale: 0 or 1 (default 1)." },
+                       high: { type: "integer", description: "scale: up to 10 (default 5); stars: 3-10 (default 5)." },
+                       answer: { description: "form with quiz: the right answer: an option's text (choice, select), the options' texts (multi, an array), yes or no, a number, or accepted texts (text, an array)." },
+                       points: { type: "integer", description: "form with quiz: points for a right answer, 1-100 (default 1)." } },
+                     required: ["label"] } },
+        desc: { type: "string", description: "form: the line under the title." },
+        quiz: { type: "boolean", description: "form: a quiz that scores the answers (give each question its answer)." },
         cards: { type: "array", description: "flashcards: up to 500 cards.",
                  items: { type: "object", properties: { front: { type: "string" }, back: { type: "string" },
                                                          both: { type: "boolean", description: "Also the reverse card (back → front)." },
@@ -1779,6 +1795,7 @@
       "each has; with label (a label's name, or \"none\" for events without a label) and/or month it lists " +
       "those events, any date, with their label, time, place and note, and a ref for change_item. " +
       "crm with partner answers 'what is open with X?' for one partner. " +
+      "forms (every form: questions, shared and open or not, how many answers and how many new, with a ref; with form one form's results: counts, shares and averages per question, never what people wrote) " +
       "automations lists every rule in words (with a ref; on or off) and this device's recent runs: when, which rule, whether it was a time or something that happened, and what came of it (notice shown, notices off, skipped because an app is missing, opened); use it for 'why did this run?' and to suggest a better rule with propose_rule. " +
       "The user sees the summary first and may hold it back.",
     params: {
@@ -1795,6 +1812,7 @@
         status: { type: "string", "enum": ["want", "now", "done", "drop", "reading", "finished", "unread"], description: "shelf: want, now (in progress), done, drop. library: reading, finished, unread." },
         board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board)." },
         days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." },
+        form: { type: "string", description: "forms: one form's title: its results (how many answered each question, counts, shares and averages); never the people's written answers or contact details." },
         partner: { type: "string", description: "crm: a customer's, supplier's, shop's or author's name: everything open with them (owed both ways, consignment stock, orders, unbilled hours, royalties, contracts, next follow-up)." }
       },
       required: ["app"]
@@ -1843,7 +1861,7 @@
       "phone, email, website, address = fill when empty, replace with old_phone… / address_replace / note / note_add / roles / rs_beneficiary; bank " +
       "details or a bio go in note_add; a deal, update: title / amount / date = expected close / stage / probability / reason / note, " +
       "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start) · " +
-      "kanban (reschedule: date = due, update: title / date / note / labels, move: column and/or board (to another board: board, column optional, default its first), delete) · " +
+      "kanban (reschedule: date = due, update: title / date / note / labels / plan_start / milestone / depends_on, move: column and/or board (to another board: board, column optional, default its first), delete) · " +
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
       "plants (complete = watered today, update: title / note) · " +
@@ -1902,6 +1920,9 @@
         author: { type: "string", description: "library: the book's author." },
         how: { type: "string", "enum": ["bank", "cash", "card", "iris", "paypal", "other"], description: "invoices: how it was paid." },
         end_date: { type: "string", description: "travel: the trip's last day YYYY-MM-DD." },
+        plan_start: { type: "string", description: "kanban: the card's planned first day on the Timeline (Gantt) YYYY-MM-DD, at most its due date; \"\" clears it." },
+        milestone: { type: "boolean", description: "kanban: true makes the card a milestone (one day, its due date), false a normal card." },
+        depends_on: { type: "array", items: { type: "string" }, description: "kanban: the whole new list of cards on the same board that must finish before this one starts, by exact title (at most 20; [] clears it)." },
         next: { type: "string", description: "petcare: next dose or recheck YYYY-MM-DD." },
         servings: { type: "integer", description: "meals: how many servings the recipe makes." },
         km: { type: "integer", description: "garage: what the odometer shows now (km)." },
@@ -2066,7 +2087,7 @@
     ["series_no", ["publish"], { type: "string", description: "publish: its number in the series." }],
     ["language", ["publish"], { type: "string", description: "publish: the book's language, e.g. Greek." }],
     ["blurb", ["publish"], { type: "string", description: "publish: the back-cover text (up to 4000 characters)." }],
-    ["release_plan", ["publish"], { type: "boolean", description: "publish with date: true adds the release plan counted back from the release date, false leaves it out (default: a plan for a book still to come, none for one released or out of print)." }],
+    ["release_plan", ["publish"], { type: "boolean", description: "publish with date: true adds the release plan counted back from the release date, false leaves it out (default: a plan for a book or music release still to come, none for one released or out of print; a music release gets its own steps: master, artwork, metadata, upload, pitch, pre-save, first week)." }],
     ["release_type", ["publish"], { type: "string", "enum": ["single", "ep", "album", "compilation"], description: "publish: makes the title a music release of this type (leave out for a book). A release has tracks and editions, never formats." }],
     ["record_label", ["publish"], { type: "string", description: "publish music release: the record label." }],
     ["genre", ["publish"], { type: "string", description: "publish music release: the genre." }],
@@ -2146,6 +2167,8 @@
     ["folder", ["bookmarks"], { type: "string", description: "bookmarks: an existing folder's name (default Unsorted)." }],
     ["board", ["kanban"], { type: "string", description: "kanban: an existing board's name; required when there are several boards. To move existing cards use change_item move, never add them again." }],
     ["column", ["kanban"], { type: "string", description: "kanban: an existing column's name (default the first)." }],
+    ["plan_start", ["kanban"], { type: "string", description: "kanban: the card's planned first day on the Timeline (Gantt) YYYY-MM-DD, at most its due date (date)." }],
+    ["milestone", ["kanban"], { type: "boolean", description: "kanban: true makes the card a milestone (one day, its due date)." }],
     ["label", ["calendar"], { type: "string", description: "calendar: the name of one of the user's labels." }],
     ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals", "shelf", "flashcards"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals, shelf, flashcards: tags, any)." }],
     ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "crm_contract", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare", "publish", "invoices", "quote", "split"], { type: "string", description: "A note (Publishing 4000, only for the user, Invoices and Quote 2000, printed on the document, Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],
@@ -2237,7 +2260,7 @@
     }
   };
   // AS-DO (wave A6): one thing done in an app on the user's press.
-  var DO_KINDS = ["timer", "alarm", "open", "play", "directions"];
+  var DO_KINDS = ["timer", "alarm", "open", "play", "directions", "translate"];
   function doTool(kinds) {
     var k = DO_KINDS.filter(function (x) { return kinds.indexOf(x) >= 0; });
     return {
@@ -2246,7 +2269,8 @@
         "timer (minutes and/or seconds, label?: starts a countdown in Time) · alarm (at HH:MM, label?, daily?: fills Time's alarm form; the user presses Add) · " +
         "open (ref: an item from search_data or create_items, or app: an app's id; with app layout, page shows that page of the open document) · " +
         "play (ref: a Music track, a Radio station or a Podcasts episode found with search_data; a followed Music artist plays its artist radio) · " +
-        "directions (to: an address or place name, or lat+lon; mode car|bike|foot: the route from the user's location in Maps). " +
+        "directions (to: an address or place name, or lat+lon; mode car|bike|foot: the route from the user's location in Maps) · " +
+        "translate (text, into: a language code such as de, from?: opens Text Tools › Translate with the text and the languages set, translated on the device by Mozilla's models; for when the user wants it translated on the device or kept off any AI). " +
         "Nothing happens before the press, so say it is ready, never that it is done. One action per call.",
       params: {
         type: "object",
@@ -2262,7 +2286,10 @@
           page: { type: "number", description: "open with app layout: the page of the open document to show (1 = first)." },
           to: { type: "string", description: "directions: an address or a place's name." },
           lat: { type: "number" }, lon: { type: "number" },
-          mode: { type: "string", "enum": ["car", "bike", "foot"] }
+          mode: { type: "string", "enum": ["car", "bike", "foot"] },
+          text: { type: "string", description: "translate: the text (up to 20000 characters)." },
+          into: { type: "string", description: "translate: the language to translate into, a code (en, el, de, fr …)." },
+          from: { type: "string", description: "translate: the text's language code; leave it out to detect it." }
         },
         required: ["kind"]
       }
@@ -2296,6 +2323,88 @@
         last: { type: "boolean", description: "Your latest change that can still be undone." },
         ids: { type: "array", items: { type: "string" }, description: "Up to 20 ids from change_history." }
       }
+    }
+  };
+  // GATE-FILES F1 (2026-11-13): files on the orOS disk, only inside
+  // the folders the owner marks for Claude (Settings › Connected
+  // services › orOS Gate › Claude's folders; assistant/claudefiles.js).
+  var FILES_WHERE = " Only inside the owner's folders for Claude (files_list without path lists them); names that look like keys or secrets are never shown.";
+  var TOOL_FILES_LIST = {
+    name: "files_list",
+    description: "List a folder on the orOS disk: subfolders first, then files with kind (text, document, pdf, image, media, other), size and modified time; " +
+      "on_device false = a file of an orOS Drive folder that is in the cloud only (files_read still reads it)." + FILES_WHERE +
+      " Without path: the owner's folders for Claude.",
+    params: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "A folder, e.g. \"Drive/ckdesktop/Τιμολόγια/2026\" (the /internal/ in front may be left out)." },
+        depth: { type: "integer", minimum: 1, maximum: 3, description: "1 (default) = this folder; 2 or 3 also lists inside its subfolders (paths relative to path)." },
+        offset: { type: "integer", minimum: 0, description: "200 entries a page: next_offset of the last answer." }
+      }
+    }
+  };
+  var TOOL_FILES_READ = {
+    name: "files_read",
+    description: "Read one file on the orOS disk as text: text files as they are; Word, LibreOffice, spreadsheets, slides and e-books by their text; PDFs by their text layer (a scan is read with OCR, the first pages). " +
+      "100,000 characters a call: pass next_offset as offset for the rest. Also returns version: pass it as if_version to files_write, files_move or files_delete. " +
+      "Pictures, audio and video give their size and type only." + FILES_WHERE,
+    params: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The file, e.g. \"Drive/ckdesktop/Χειρόγραφα/Νέο.docx\"." },
+        offset: { type: "integer", minimum: 0, description: "First character (0 = the start)." },
+        length: { type: "integer", minimum: 1, maximum: 100000, description: "Characters to return (at most 100,000)." }
+      },
+      required: ["path"]
+    }
+  };
+  var TOOL_FILES_WRITE = {
+    name: "files_write",
+    description: "Write a text file on the orOS disk (Markdown, CSV, JSON, plain text…; at most 1 MB). mode create (default) makes a new file and never overwrites one that is there; " +
+      "mode replace changes a file and needs if_version (from files_read or files_list): the old content goes to Files' Trash, so it can be undone. Missing folders are made. " +
+      "The user may be asked first. The owner is notified of the change and can undo it." + FILES_WHERE,
+    params: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The file, e.g. \"Drive/ckdesktop/Instagram/Αποφθέγματα/2026-11-14.md\"." },
+        text: { type: "string", description: "The whole content of the file." },
+        mode: { type: "string", enum: ["create", "replace"], description: "create (default) or replace." },
+        if_version: { type: "string", description: "replace: the version the file had when read." }
+      },
+      required: ["path", "text"]
+    }
+  };
+  var TOOL_FILES_MOVE = {
+    name: "files_move",
+    description: "Move or rename one file or folder on the orOS disk; nothing is ever overwritten (a taken name is refused). A file needs if_version (from files_read or files_list). " +
+      "The user may be asked first. The owner is notified of the change and can undo it." + FILES_WHERE,
+    params: {
+      type: "object",
+      properties: {
+        from: { type: "string", description: "The file or folder now." },
+        to: { type: "string", description: "Its new full path (folders are made as needed)." },
+        if_version: { type: "string", description: "A file's version when read." }
+      },
+      required: ["from", "to"]
+    }
+  };
+  var TOOL_FILES_DELETE = {
+    name: "files_delete",
+    description: "Delete files or folders on the orOS disk (at most 50): they go to Files' Trash, restorable for 30 days. Every file needs its version (from files_read or files_list). " +
+      "Deleting is always confirmed by the owner on the device first; nothing is deleted without it." + FILES_WHERE,
+    params: {
+      type: "object",
+      properties: {
+        paths: { type: "array", minItems: 1, maxItems: 50, items: {
+          type: "object",
+          properties: {
+            path: { type: "string" },
+            if_version: { type: "string", description: "A file's version when read (not needed for a folder)." }
+          },
+          required: ["path"]
+        } }
+      },
+      required: ["paths"]
     }
   };
   var TOOL_LINK = {
@@ -3252,7 +3361,9 @@
   // recipes: the installed apps with automations, creates: the app ids
   // create_items may add to, links: CRM and Contacts are both readable,
   // openFile: Writer is installed, for open_file; rebuild, house: Layout
-  // is installed, for rebuild_in_layout and the house style tools)
+  // is installed, for rebuild_in_layout and the house style tools;
+  // files: the user picked folders for Claude, "write" when it may
+  // change them too, for the files_* tools)
   function toolsFor(opts) {
     opts = opts || {};
     var out = [];
@@ -3268,6 +3379,8 @@
     if (opts.data && opts.partnerLinks) out.push(TOOL_LINK_ITEMS);
     if (opts.actions && opts.actions.length) out.push(doTool(opts.actions));
     if (opts.history) out.push(TOOL_HISTORY, TOOL_UNDO);
+    if (opts.files) out.push(TOOL_FILES_LIST, TOOL_FILES_READ);
+    if (opts.files === "write") out.push(TOOL_FILES_WRITE, TOOL_FILES_MOVE, TOOL_FILES_DELETE);
     if (opts.data && opts.lines) opts.lines.forEach(function (id) { if (TOOL_LINE[id]) out.push(TOOL_LINE[id]); });
     if (opts.kbCols) out.push(TOOL_KB_COLS);
     if (opts.data && opts.edits && Object.keys(opts.edits).length) out.push(readAppTool(Object.keys(opts.edits)), editTool(opts.edits));
@@ -3291,7 +3404,8 @@
   // do_action too; the app opens on the owner's screen and does it there.
   var GATE_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                     "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule",
+                    "files_list", "files_read", "files_write", "files_move", "files_delete"];
   // GATE-PAR P3 (2026-11-08): the Assistant's tools that hand work to an
   // app's own window. Through the gate the app opens on the owner's
   // screen with it at once (Layout does its work and reports; a form is
@@ -3357,9 +3471,9 @@
       if (GATE_OPEN.indexOf(x.name) >= 0) x.description = (GATE_OPEN_HEAD[x.name] || openSay(x.description)) + GATE_OPEN_SAY;
       if (x.name === "edit_in_app") x.description = x.description.split("\n")[0] + GATE_EDIT_GUIDE;
       walk(x.params);
-      var ro = /^(search_data|read_item|app_summary|read_in_app|change_history)$/.test(x.name);
+      var ro = /^(search_data|read_item|app_summary|read_in_app|change_history|files_list|files_read)$/.test(x.name);
       return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
-               annotations: { readOnlyHint: ro, destructiveHint: /^(change_item|undo_change|edit_in_app)$/.test(x.name) } };
+               annotations: { readOnlyHint: ro, destructiveHint: /^(change_item|undo_change|edit_in_app|files_write|files_move|files_delete)$/.test(x.name) } };
     });
   }
 
@@ -3677,6 +3791,7 @@
     // AS-DO, AS-HIST (wave A6)
     if (!opts.builtin && opts.actions && opts.actions.length) {
       lines.push("When the user asks you to do something now (\"countdown 25 minutes\", \"wake me at 7\", \"play my jazz station\", \"open the invoice\", \"how do I get to Anna's\"), call do_action. " +
+        "To translate on the device without any AI (\"translate this on my phone\", \"keep it private\"), call do_action translate; otherwise translate yourself. " +
         "For play and open, find the item first with search_data (music, radio, podcasts or the item's app). For directions to a person or customer, read their address from Contacts or CRM and give it as to. " +
         "The user presses the card's button; never say it is started, set or playing.");
     }
@@ -3740,11 +3855,14 @@
     flashcards: "flashcards", wiki_article: "wiki", document: "writer", mind_map: "mindmap",
     // Pad wave 4: a text or code file opens as a new, unsaved tab in Pad
     // (__orosOpenAt("pad", { newText })); the user saves it.
-    text_file: "pad"
+    text_file: "pad",
+    // FORMS-4: a new form in Forms (forms/links.js fromDraft), made
+    // there when the user presses Open; nothing is published.
+    form: "forms"
   };
   var ENTRY_ORDER = ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
                      "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
-                     "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file"];
+                     "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file", "form"];
   // The receivers' own caps (flashcards/make.js, wiki/core.js MAX_TEXT,
   // writer.js NEWDOC_MAX, mindmap.js paste box): longer is refused.
   var A4_MAX = { cards: 500, field: 20000, wiki: 200000, doc: 500000, map: 20000, pad: 500000 };
@@ -3993,6 +4111,43 @@
       if (kind === "document") ls3 = ls3.map(function (x) { return mdPlain(x); }).filter(Boolean);
       view.list = ls3.slice(0, 8);
       if (ls3.length > 8) view.more = ls3.length - 8;
+      return out;
+    }
+    if (kind === "form") {
+      // The same limits as Forms (engine.js LIM, links.js MAX_DRAFT);
+      // links.js fromDraft maps the types again in the app.
+      var FQT = { text: 1, para: 1, email: 1, phone: 1, number: 1, date: 1, time: 1, choice: 1, multi: 1, select: 1, scale: 1, stars: 1, yesno: 1, matrix: 1, info: 1, page: 1 };
+      var rawQs = Array.isArray(args.questions) ? args.questions : [];
+      if (rawQs.length > 100) return bad("form: at most 100 questions.");
+      var strs = function (a, n) { return (Array.isArray(a) ? a : []).map(function (x) { return line(x, 200); }).filter(Boolean).slice(0, n); };
+      var dq = [];
+      rawQs.forEach(function (q) {
+        if (typeof q === "string") q = { label: q };
+        if (!q || typeof q !== "object") return;
+        var ty = typeof q.type === "string" && FQT[q.type] ? q.type : "text";
+        var lb = line(q.label, 500);
+        if (!lb && ty !== "page") return;
+        var o = { label: lb, type: ty };
+        if (q.required === true) o.required = true;
+        if (/^(choice|multi|select|matrix)$/.test(ty)) o.options = strs(q.options, 50);
+        if (ty === "matrix") o.rows = strs(q.rows, 30);
+        if (ty === "scale" && q.low === 0) o.low = 0;
+        if ((ty === "scale" || ty === "stars") && typeof q.high === "number") o.high = q.high;
+        if (args.quiz === true && q.answer !== undefined && q.answer !== null) {
+          o.answer = Array.isArray(q.answer) ? strs(q.answer, 50) : typeof q.answer === "number" ? q.answer : line(String(q.answer), 200);
+          if (typeof q.points === "number") o.points = Math.max(1, Math.min(100, Math.round(q.points)));
+        }
+        dq.push(o);
+      });
+      if (!dq.length) return bad("form needs questions.");
+      var dr = { title: title.slice(0, 200), questions: dq };
+      if (args.quiz === true) dr.quiz = true;
+      var fdesc = para(args.desc, 2000);
+      if (fdesc) dr.desc = fdesc;
+      out.call = { fn: "openAt", args: [app, { draft: dr }] };
+      view.title = title;
+      view.list = dq.filter(function (x) { return x.label; }).slice(0, 8).map(function (x) { return x.label; });
+      if (dq.length > 8) view.more = dq.length - 8;
       return out;
     }
     if (kind === "text_file") {
@@ -4359,6 +4514,23 @@
         if (args.daily === true) view.fields.push(["daily", "yes"]);
       }
       if (lb) view.title = lb;
+      return out;
+    }
+    if (kind === "translate") {
+      if (!has("texttools")) return bad("The Text Tools app is not installed.");
+      out.app = "texttools";
+      var src = typeof args.text === "string" ? args.text.replace(/\r\n?/g, "\n") : "";
+      if (!src.trim()) return bad("translate needs text.");
+      if (src.length > 20000) return bad("translate takes at most 20000 characters at once.");
+      var into = typeof args.into === "string" ? args.into.trim().toLowerCase() : "";
+      var frm = args.from == null || args.from === "" ? "auto" : String(args.from).trim().toLowerCase();
+      if (!/^[a-z]{2,3}$/.test(into)) return bad("translate needs into: a language code such as de.");
+      if (frm !== "auto" && !/^[a-z]{2,3}$/.test(frm)) return bad("from is a language code such as en, or left out.");
+      if (frm === into) return bad("from and into are the same language.");
+      out.call = { fn: "openAt", args: ["texttools", { group: "translate", text: src, tr: { from: frm, to: into } }] };
+      view.title = line(src.split("\n")[0], 80);
+      if (frm !== "auto") view.fields.push(["from", frm]);
+      view.fields.push(["into", into]);
       return out;
     }
     if (kind === "directions") {
