@@ -11805,3 +11805,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** studio/encode.js, tests/studio-id3.test.js (new), Bible STUDIO-AB.
 - **Tests:** new `tests/studio-id3.test.js` (frames, syncsafe sizes, UTF-8, lists, cover, CHAP/CTOC, limits, bad values, the old tag, ffprobe); a podcast episode built from `StudioPodcast.id3Tags` read back by ffprobe with its tags and three chapters; full suite.
 - **Next:** A2 books, room tone, FLAC 24-bit; A3 check and delivery; A4a AAC encoder; A4 M4B.
+
+### 2026-11-15 — Kanban 6.91.00 — Gantt wave G3: the plan outside the Timeline (KB-GANTT, #1033)
+- **Changes:** Timeline `Export timeline (PDF)` (pages by date range, bars, milestones, arrows, critical path); start dates in Calendar ("Starts: {t}", start and due marks only, no span) and Today (`tdy.start`); Assistant and Gate read and change `plan_start`, `milestone`, `depends_on` (snapshot group `g`, undo, loop check); Trello and Jira start dates import into `start`.
+- **Files:** kanban/core.js 1.1.0, kanban/today.js 1.1.0, kanban/kanban.js, kanban/import.js, assistant/edits.js, additems.js, core.js, assistant.js, gate/gate.js, relay/gate.js, help EN/EL/DE (kanban, calendar), i18n.
+- **Tests:** new `tests/kanban-gantt-g3.test.js`, `tests/kanban-import.test.js` updated; full suite. Not tested: a real phone, real Claude via Gate.
+- **Next:** Gantt waves complete.
