@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.04.00
+- **Base: bring in Airtable and Excel, keep a base as a file.** `Import` takes several files at once: CSV, Excel and ODS files become the tables of one base, and Airtable's columns that name records of another table become real links. Base menu › `Save as orOS file (.orosbase)` keeps a whole base, with its tables, views and links, for a copy or another device; opening it adds what is missing and never deletes. In Spreadsheet, `Send to an app` › Base turns the selected cells into a new table.
+
 ## Version 7.03.00
 - **Publishing: your distributor's sales report becomes royalty statements.** In Royalties, `Import sales report…` reads the report you download from DistroKid (Bank › See Excel version) as it is, and any other CSV, TSV or spreadsheet after you choose its columns once. Each line finds its track by ISRC, else its release by UPC/EAN. Tracks with master ownership pay their owners, the others the release's royalty terms. One statement per person and currency, nothing converted; lines that match nothing are listed, and you can link one to a track. The file stays on your device and no formula in it ever runs.
 
