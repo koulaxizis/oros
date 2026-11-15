@@ -46,6 +46,10 @@ async function samples() {
   const own = B.novel();
   Object.assign(own.pstyles.find((p) => p.id === "ps-pcap"), { i: 0, ext: { fam: "uf_0123456789abcdef" } });
   out["good-own-font"] = (await B.epub(M.normDoc(own))).bytes;
+  // fixed layout (E3): text over the page picture, and page pictures
+  out["good-fixed"] = (await B.epub(B.novel(), { prof: { fx: 1 } })).bytes;
+  out["good-fixed-pictures"] = (await B.epub(B.novel(), { prof: { fx: 2 }, cover: { data: B.png(200, 300, [200, 210, 220]), type: "image/png", w: 200, h: 300 } })).bytes;
+  out["bad-fixed-viewport"] = await rezip(out["good-fixed"], (f) => swap(f, "EPUB/pages/p0002.xhtml", (s) => s.replace(/<meta name="viewport"[^>]*\/>/, "")));
   const base = out["good-novel"];
   out["bad-mimetype"] = await rezip(base, (f) => f.push(f.shift()));
   out["bad-missing-file"] = await rezip(base, (f) => f.splice(f.findIndex((x) => x.name === "EPUB/images/it-pic.png"), 1));

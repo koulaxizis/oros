@@ -215,7 +215,8 @@
       "icon": "forms",
       "url": "forms/",
       "type": "internal",
-      "today": "today.js"
+      "today": "today.js",
+      "search": "search.js"
     },
     {
       "id": "base",
@@ -376,15 +377,6 @@
       "type": "internal",
       "search": "search.js",
       "today": ["core.js", "today.js"]
-    },
-    {
-      "id": "signature",
-      "name": "Email Signature",
-      "category": "Business",
-      "icon": "signature",
-      "url": "signature/",
-      "type": "internal",
-      "search": "search.js"
     },
     {
       "id": "certificates",
@@ -1297,6 +1289,12 @@
       "name": "Unit Converter",
       "to": "calculator",
       "target": { "mode": "conv" }
+    },
+    {
+      "id": "signature",
+      "name": "Email Signature",
+      "to": "mail",
+      "target": { "view": "signatures" }
     }
   ]
 }

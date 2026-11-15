@@ -7,11 +7,12 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=transfer" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Transfer · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=6.74.00">
-  <link rel="stylesheet" href="app.css?v=6.74.00">
+  <link rel="stylesheet" href="../fonts.css?v=6.96.00">
+  <link rel="stylesheet" href="app.css?v=6.96.00">
 </head>
 <body data-page="app">
   <div id="art" class="art" aria-hidden="true"></div>
+  <img id="photo" class="photo" alt="" hidden>
   <div class="shade" aria-hidden="true"></div>
 
   <header id="toolbar">
@@ -42,6 +43,12 @@
           <ul id="chosen" class="files"></ul>
           <label class="field"><span data-i18n="meta.title">Title (optional)</span><input id="meta-title" type="text" maxlength="80" autocomplete="off"></label>
           <label class="field"><span data-i18n="meta.msg">Message (optional)</span><textarea id="meta-msg" rows="2" maxlength="500"></textarea></label>
+          <div class="bg-row">
+            <button type="button" id="bg-pick" class="chip" data-i18n="bg.pick">Background picture…</button>
+            <button type="button" id="bg-clear" class="chip" hidden data-i18n="bg.clear">No picture</button>
+            <input id="bg-file" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic" hidden>
+          </div>
+          <p id="bg-hint" class="hint" data-i18n="bg.hint">The other person sees it behind the files. It is made smaller on this device and sent without camera details such as the place.</p>
         </div>
         <p id="chosen-empty" class="foot-note" data-i18n="send.intro">Straight from browser to browser, end-to-end encrypted. No size limit from us.</p>
         <div class="bar stack">
@@ -148,14 +155,14 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=6.74.00" data-app="transfer"></script>
-  <script src="../qr/qr-encode.js?v=6.74.00"></script>
-  <script src="art.js?v=6.74.00"></script>
-  <script src="core.js?v=6.74.00"></script>
-  <script src="cloud.js?v=6.74.00"></script>
-  <script src="engine.js?v=6.74.00"></script>
-  <script src="store.js?v=6.74.00"></script>
-  <script src="app.js?v=6.74.00"></script>
+  <script src="../i18n.js?v=6.96.00" data-app="transfer"></script>
+  <script src="../qr/qr-encode.js?v=6.96.00"></script>
+  <script src="art.js?v=6.96.00"></script>
+  <script src="core.js?v=6.96.00"></script>
+  <script src="cloud.js?v=6.96.00"></script>
+  <script src="engine.js?v=6.96.00"></script>
+  <script src="store.js?v=6.96.00"></script>
+  <script src="app.js?v=6.96.00"></script>
 
 </body>
 </html>

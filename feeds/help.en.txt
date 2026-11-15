@@ -18,6 +18,9 @@ Moving from another reader? Use `Import from another reader (OPML)`, or `Import 
 ### Summarise
 The sparkle button (`Summarise`) above an article asks for a short summary: one sentence and a few key points, in the language orOS is in. It uses the AI you set up in the [Assistant](app:assistant): your own key (Claude, ChatGPT, Gemini…), a server on your computer, or the browser's built-in model. Only that article's title and text go to that provider, straight from this device; orOS has no AI key of its own. Without the Assistant set up, the button says how to do it. `Copy` copies the summary; the summary is not kept.
 
+### Translate
+The translate button above an article opens `Translate` with the article's title and text. It translates on this device with Mozilla's models, the same as [Text Tools](app:texttools) › Translate: the first time for two languages it says how big the download is, and after that it works offline. `From` finds the language by itself; `To` remembers your last choice. `Copy` copies the translation; it is not kept.
+
 ## Newsletters from Mail
 `Newsletters from Mail` (in `Add a feed`, in `Settings` and on the first screen) shows a folder of the [Mail](app:mail) app as a feed, for example one where a Mail rule puts your newsletters. Its messages become articles: star them, tag them, search them, mark them read here. Pictures are off until you allow them for that feed, so senders cannot tell you opened a message. `Open in Mail` opens the message in Mail.
 

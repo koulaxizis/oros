@@ -324,3 +324,83 @@ test("wave 4 store: the box is a fixed part of an open item; merges keep it; a t
   assert.equal(rv.items[base.id].b, undefined);
   assert.equal(S.boxesToPoll(withBox, 11 * DAY).length, 0, "an expired request is not asked about");
 });
+
+// ---------- wave 4b: several signers ----------
+test("wave 4b: fields per signer; each request carries its own fields and the others' names", () => {
+  assert.equal(C.cleanOv({ t: "field", k: "sig", s: 3 }).s, 3);
+  assert.equal(C.cleanOv({ t: "field", k: "sig", s: 1 }).s, undefined, "signer 1 is the default");
+  assert.equal(C.cleanOv({ t: "field", k: "sig", s: 9 }).s, undefined, "at most MAX_SIGNERS");
+  const g0 = { W: 600, H: 800, R: 0 };
+  const ov = [{ t: "field", k: "sig", id: "a", cx: 0.3, cy: 0.9, A: 0, w: 0.3, h: 0.08 },
+              { t: "field", k: "sig", id: "b", cx: 0.7, cy: 0.9, A: 0, w: 0.3, h: 0.08, s: 2 },
+              { t: "field", k: "date", id: "c", cx: 0.7, cy: 0.95, A: 0, w: 0.2, h: 0.04, s: 2 }];
+  const fields = S.fieldsOf([{ ov, g: g0 }]);
+  assert.deepEqual(fields.map((f) => [f.id, f.s]), [["f1", undefined], ["f2", 2], ["f3", 2]]);
+  assert.equal(S.signerCount(fields), 2);
+  const parts = S.splitFields(fields);
+  assert.deepEqual(parts.map((p) => p.map((f) => f.id)), [["f1"], ["f2", "f3"]]);
+  const r2 = S.cleanRequest(request({ fields: parts[1], og: ["Maria", " ", "x".repeat(200), "A", "B", "C"] }));
+  assert.deepEqual(r2.fields.map((f) => f.id), ["f2", "f3"]);
+  assert.equal(r2.og.length, 4, "at most MAX_SIGNERS - 1 other names");
+  assert.equal(r2.og[1].length, 120);
+  assert.equal(S.cleanRequest(request()).og, undefined, "one signer: no list of others");
+});
+
+test("wave 4b: one row per document; the PDF signed by all has every signature, one certificate, every record", async () => {
+  const G = "G".repeat(22), J = (x) => JSON.stringify(x);
+  const q1 = request({ h: "c".repeat(64), to: "Maria", fields: [request().fields[0]], og: ["Nikos"] });
+  const q2 = request({ h: "c".repeat(64), to: "Nikos", fields: [Object.assign({}, request().fields[1], { k: "sig", s: 2 })], og: ["Maria"] });
+  let s = S.addItem(null, item(I1, { q: q1, g: { id: G, i: 0, n: 2 } }));
+  s = S.addItem(s, item(I2, { q: q2, g: { id: G, i: 1, n: 2 } }));
+  s = S.addItem(s, item(I3, { a: 500 }));
+  assert.equal(S.readStore({ v: 1, items: { [I1]: item(I1, { g: { id: G, i: 2, n: 2 } }) } }).items[I1].g, undefined, "place inside the group");
+  let rows = S.rows(s, 5000);
+  assert.deepEqual(rows.map((r) => r.g || r.it.id), [G, I3]);
+  assert.deepEqual(rows[0].items.map((i) => i.id), [I1, I2]);
+  assert.equal(rows[0].status, "waiting");
+  s = S.setGot(s, I2, { at: 3000, st: "signed", nm: "Nikos", rh: "1".repeat(64), ap: "/internal/PDF/Signatures/Answers/Contract - Nikos.json" });
+  assert.equal(S.rows(s, 5000)[0].status, "waiting", "one of two signed");
+  assert.equal(s.items[I2].got.ap, "/internal/PDF/Signatures/Answers/Contract - Nikos.json");
+  const d = S.setGot(s, I1, { at: 3500, st: "declined", nm: "Maria", why: "No" });
+  assert.equal(S.rows(d, 5000)[0].status, "declined");
+  s = S.setGot(s, I1, { at: 3500, st: "signed", nm: "Maria", rh: "2".repeat(64) });
+  assert.equal(S.rows(s, 5000)[0].status, "signed");
+  // the PDF signed by all goes on every item of the group; merges keep the earlier one
+  const all = S.setAll(s, G, { at: 4000, hf: "f".repeat(64), pf: "/internal/PDF/Signatures/Contract (signed).pdf" });
+  assert.equal(all.items[I1].all.hf, "f".repeat(64)); assert.equal(all.items[I2].all.at, 4000);
+  assert.equal(all.items[I3].all, undefined);
+  const later = S.setAll(s, G, { at: 4100, hf: "e".repeat(64) });
+  for (const [x, y] of [[all, later], [s, all]]) assert.equal(J(S.merge(x, y)), J(S.merge(y, x)));
+  assert.equal(S.merge(all, later).items[I1].all.at, 4000, "the earlier one wins");
+  assert.equal(J(S.merge(S.merge(s, all), later)), J(S.merge(s, S.merge(all, later))));
+  // an older orOS drops g and og: the fuller item wins and keeps them
+  const old = JSON.parse(J(all));
+  delete old.items[I1].g; delete old.items[I1].all; delete old.items[I1].q.og;
+  assert.deepEqual(S.merge(old, all).items[I1].g, { id: G, i: 0, n: 2 });
+
+  // the PDF: both replies on the original, one certificate, both records
+  const bytes = await pdfOf([[595.28, 841.89], [595.28, 841.89]]);
+  const h = await S.sha256(bytes);
+  const a = S.cleanRequest(request({ h, to: "Maria", fields: [request().fields[0]], og: ["Nikos"] }));
+  const b = S.cleanRequest(request({ h, to: "Nikos", fields: [{ id: "f2", pg: 1, fx: 0.3, fy: 0.85, w: 0.3, h: 0.06, k: "sig", req: true, s: 2 }], og: ["Maria"] }));
+  const rep = (rq, nm, at) => ({ v: 1, rq, h, st: "signed", nm, at, op: at - 9000, ca: at - 2000, tz: "Europe/Athens", ua: "x", lang: "el" });
+  const ra = S.cleanReply(Object.assign(rep(I1, "Maria", 1.7e12), { vals: { f1: SIG } }), a);
+  const rb = S.cleanReply(Object.assign(rep(I2, "Nikos", 1.7e12 + 5000), { vals: { f2: SIG } }), b);
+  const geoms = OPS.pageGeoms(L, (await OPS.load(L, bytes)).doc);
+  const parts = [{ q: a, reply: ra }, { q: b, reply: rb }];
+  const items = S.stampAll(parts, geoms);
+  assert.deepEqual(items.map((i) => [i.pg, i.ov.length]), [[1, 2]], "both signatures on page 2, in one pass");
+  const outs = [await S.record(I1, a, ra, {}), await S.record(I2, b, rb, {})];
+  assert.deepEqual(outs[0].rec.request.others, ["Nikos"]);
+  const cert = S.certAll(outs);
+  assert.ok(cert.rows.some((r) => r[0] === "Signer 2 of 2 · Υπογράφων 2 από 2"));
+  assert.equal(cert.rows.filter((r) => r[0] === "Document · Έγγραφο").length, 1, "the document once");
+  const rec = S.recordAll(outs);
+  assert.deepEqual(rec.rec.signers.map((x) => x.reply.name), ["Maria", "Nikos"]);
+  const meta = { font: FONT, cert, attach: { name: "signing-record.json", bytes: new TextEncoder().encode(rec.json), at: rb.at } };
+  const x = await OPS.stamp(L, bytes, items, meta), y = await OPS.stamp(L, bytes, items, meta);
+  assert.equal(Buffer.compare(Buffer.from(x), Buffer.from(y)), 0, "the same answers make the same PDF");
+  assert.equal((await L.PDFDocument.load(x)).getPageCount(), 3);
+  // a signer's own copy still has only their own signature and a certificate naming the others
+  assert.ok(S.cert(outs[1]).rows.some((r) => r[0] === "Also asked to sign · Ζητήθηκε υπογραφή και από" && r[1] === "Maria"));
+});

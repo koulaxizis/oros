@@ -175,7 +175,7 @@
       "lbl.feed.cycle": "Cycle",
       "lbl.feed.mood": "Mood",
       "lbl.feed.habits": "Habits",
-      "lbl.feed.kanban": "Kanban",
+      "lbl.feed.kanban": "Kanban", "feed.kb.start": "Starts: {t}",
       "lbl.feed.todo": "To-Do",
       "lbl.feed.fitness": "Workouts",
       "feed.cycle.period": "Period",
@@ -430,7 +430,7 @@
       "lbl.feed.cycle": "Κύκλος",
       "lbl.feed.mood": "Διάθεση",
       "lbl.feed.habits": "Συνήθειες",
-      "lbl.feed.kanban": "Kanban",
+      "lbl.feed.kanban": "Kanban", "feed.kb.start": "Ξεκινά: {t}",
       "lbl.feed.todo": "Εργασίες",
       "lbl.feed.fitness": "Προπόνηση",
       "feed.cycle.period": "Περίοδος",
@@ -999,6 +999,30 @@
       "gu.door.ask": "{name} is on the list as “{s}”. Let in?",
       "gu.door.let": "Let in",
       "gu.door.skip": "Not now",
+      "gu.rv": "Invitation links (RSVP)",
+      "gu.rv.none": "Each guest gets their own link to answer Coming, Maybe or Not coming. Answers come back here by themselves, encrypted.",
+      "gu.rv.make": "Make invitation links",
+      "gu.rv.made": "Invitation links are ready",
+      "gu.rv.check": "Check answers",
+      "gu.rv.last": "Links are on. Last checked {time}.",
+      "gu.rv.never": "Links are on. No answers checked yet.",
+      "gu.rv.got": "{n} new answers",
+      "gu.rv.nothing": "No new answers",
+      "gu.rv.stop": "Stop the links",
+      "gu.rv.stop.sure": "Tap again to stop",
+      "gu.rv.stopped": "The links don't work any more",
+      "gu.rv.ms": "Places one answer may take (with plus-ones)",
+      "gu.rv.op": "Open sign-up link: anyone with it can sign up",
+      "gu.rv.copy": "Copy the sign-up link",
+      "gu.rv.copied": "Link copied",
+      "gu.rv.share": "Share…",
+      "gu.rv.msg.open": "Sign up for “{t}”, {when}: {link}",
+      "gu.rv.msg": "Hi {name}, you're invited to “{t}”, {when}. Please answer here: {link}",
+      "gu.rv.send": "Send {name} the invitation:",
+      "gu.rv.err": "The invitation links could not be updated. Try again later.",
+      "gu.rv.err.net": "No connection. The links need the internet.",
+      "gu.rv.err.full": "The invitation service is full right now. Try again later.",
+      "gu.inv": "Invitation…",
     },
     el: {
       "gu.btn": "Καλεσμένοι…",
@@ -1112,6 +1136,30 @@
       "gu.door.ask": "Ο/Η {name} είναι στη λίστα ως «{s}». Να μπει;",
       "gu.door.let": "Να μπει",
       "gu.door.skip": "Όχι τώρα",
+      "gu.rv": "Links πρόσκλησης (RSVP)",
+      "gu.rv.none": "Κάθε καλεσμένος παίρνει δικό του link για να απαντήσει Έρχομαι, Ίσως ή Δεν έρχομαι. Οι απαντήσεις έρχονται εδώ μόνες τους, κρυπτογραφημένες.",
+      "gu.rv.make": "Φτιάξε links πρόσκλησης",
+      "gu.rv.made": "Τα links πρόσκλησης είναι έτοιμα",
+      "gu.rv.check": "Έλεγχος απαντήσεων",
+      "gu.rv.last": "Τα links λειτουργούν. Τελευταίος έλεγχος {time}.",
+      "gu.rv.never": "Τα links λειτουργούν. Δεν έγινε ακόμα έλεγχος απαντήσεων.",
+      "gu.rv.got": "{n} νέες απαντήσεις",
+      "gu.rv.nothing": "Καμία νέα απάντηση",
+      "gu.rv.stop": "Σταμάτα τα links",
+      "gu.rv.stop.sure": "Πάτα ξανά για διακοπή",
+      "gu.rv.stopped": "Τα links δεν λειτουργούν πια",
+      "gu.rv.ms": "Θέσεις ανά απάντηση (μαζί με τους συνοδούς)",
+      "gu.rv.op": "Ανοιχτό link εγγραφής: όποιος το έχει μπορεί να γραφτεί",
+      "gu.rv.copy": "Αντιγραφή link εγγραφής",
+      "gu.rv.copied": "Το link αντιγράφηκε",
+      "gu.rv.share": "Κοινοποίηση…",
+      "gu.rv.msg.open": "Εγγραφή για «{t}», {when}: {link}",
+      "gu.rv.msg": "Γεια σου {name}, είσαι καλεσμένος/η στο «{t}», {when}. Απάντησε εδώ: {link}",
+      "gu.rv.send": "Στείλε την πρόσκληση στον/στην {name}:",
+      "gu.rv.err": "Τα links πρόσκλησης δεν ενημερώθηκαν. Δοκίμασε ξανά αργότερα.",
+      "gu.rv.err.net": "Δεν υπάρχει σύνδεση. Τα links θέλουν internet.",
+      "gu.rv.err.full": "Η υπηρεσία προσκλήσεων είναι γεμάτη αυτή τη στιγμή. Δοκίμασε ξανά αργότερα.",
+      "gu.inv": "Πρόσκληση…",
     }
   });
   // A pack language (German, …): STR[LANG] = English + the pack, and
@@ -2268,12 +2316,17 @@ function transientNote(title, body) {
     if (!KC) return [];
     // kanban/core.js: archived boards skipped (#6); every column,
     // the last one included, shows on the Calendar.
-    return KC.dueCards(data, dateStr, dateStr).map(function (x) {
-      var bd = x.board, col = x.col, card = x.card;
+    // Gantt G3: a planned start (card.start) shows a "starts" mark on
+    // its day; the span in between stays on the Kanban Timeline.
+    var starts = typeof KC.startCards === "function" ? KC.startCards(data, dateStr, dateStr) : [];
+    var due = KC.dueCards(data, dateStr, dateStr);
+    return due.concat(starts).map(function (x, i) {
+      var bd = x.board, col = x.col, card = x.card, st = i >= due.length;
+      var text = (card.text || "").slice(0, 60);
       return {
-        id: "kb-" + card.id + "-" + dateStr,   // per-render key, never stored
+        id: "kb-" + card.id + "-" + dateStr + (st ? "-s" : ""),   // per-render key, never stored
         title: (col.name || "").slice(0, 24) + " · " +
-               (card.text || "").slice(0, 60),
+               (st ? t("feed.kb.start").replace("{t}", text) : text),
         labelId: "lbl-feed-kanban",
         start: null,                           // all-day event
         note: (card.notes || "").slice(0, 500),
@@ -5476,6 +5529,30 @@ function transientNote(title, body) {
     if (e.start) s += ", " + e.start + (e.end ? "\u2013" + e.end : "");
     if (e.location) s += " · " + e.location;
     return s;
+  }
+  // The event for the RSVP page (wave E2): times in ms (UTC), all-day
+  // days as UTC midnights (the page shows them as dates).
+  function guestsEvInfo(e) {
+    var o = { t: e.title || t("ev.untitled"), loc: e.location || "", d: e.note || "" };
+    var p = e.date.split("-").map(Number);
+    if (!e.start) {
+      var q = (e.dateEnd || e.date).split("-").map(Number);
+      o.s = Date.UTC(p[0], p[1] - 1, p[2]);
+      o.e = Date.UTC(q[0], q[1] - 1, q[2]) + 86400000;
+      o.ad = 1;
+      return o;
+    }
+    o.s = OCC.startTs(e, e.date);
+    var hm = function (x) { var a = x.split(":"); return (+a[0]) * 60 + (+a[1]); };
+    var days = 0;
+    if (e.dateEnd) {
+      var q2 = e.dateEnd.split("-").map(Number);
+      days = Math.round((Date.UTC(q2[0], q2[1] - 1, q2[2]) - Date.UTC(p[0], p[1] - 1, p[2])) / 86400000);
+    }
+    var mins = days * 1440 + (e.end ? hm(e.end) - hm(e.start) : 60);
+    o.e = o.s + Math.max(0, mins) * 60000;
+    if (e.tz) o.tz = e.tz;
+    return o;
   }
   if ($("ev-guests")) {
     $("ev-guests").addEventListener("click", function () {
@@ -8845,7 +8922,8 @@ function transientNote(title, body) {
       guestsUi = window.OrosCalGuestsUI.init({
         t: t, loc: loc, note: transientNote, findEvent: findEvent, canHave: guestsCan,
         whenText: guestsWhen, shellOpenAt: shellOpenAt, mailReady: mailReady,
-        dialogHost: dialogHost, contacts: contactsRaw, ctName: ctName
+        dialogHost: dialogHost, contacts: contactsRaw, ctName: ctName, evInfo: guestsEvInfo,
+        lang: function () { return LANG; }
       });
       var guGone = {}, guHave = {};
       state.events.forEach(function (e) { guHave[e.id] = 1; });

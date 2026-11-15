@@ -189,3 +189,17 @@ test("delete: to Files' Trash, every file with its version; undo restores", asyn
   assert.equal(fs.files.get(INV + "/old/x.txt").text, "x");
   assert.equal([...fs.files.keys()].filter((k) => k.startsWith("/internal/.trash/")).length, 0);
 });
+
+test("F3: a change left while orOS was closed meets a changed file: conflict copy name", () => {
+  const st = { size: 3 };
+  assert.equal(F.writeConflict({ mode: "create" }, { st: null }), false, "still free: written as asked");
+  assert.equal(F.writeConflict({ mode: "create" }, { st, v: "aaaaaaaaaaaaaaaa" }), true, "made meanwhile");
+  assert.equal(F.writeConflict({ mode: "replace", if_version: "AAAAAAAAAAAAAAAA" }, { st, v: "aaaaaaaaaaaaaaaa" }), false, "unchanged");
+  assert.equal(F.writeConflict({ mode: "replace", if_version: "aaaaaaaaaaaaaaaa" }, { st, v: "bbbbbbbbbbbbbbbb" }), true, "changed meanwhile");
+  assert.equal(F.writeConflict({ mode: "replace", if_version: "aaaaaaaaaaaaaaaa" }, { st: null }), true, "removed meanwhile");
+  assert.equal(F.writeConflict({ mode: "replace" }, { st: { dir: true } }), false, "a folder is an error, not a conflict");
+  const now = new Date(2026, 10, 14, 5, 7).getTime();
+  assert.equal(F.conflictName("/internal/Drive/pc/Inv/notes.txt", now, 1), "/internal/Drive/pc/Inv/notes (Claude 2026-11-14 0507).txt");
+  assert.equal(F.conflictName("/internal/Drive/pc/Inv/README", now, 3), "/internal/Drive/pc/Inv/README (Claude 2026-11-14 0507 3)");
+  assert.equal(F.validName("notes (Claude 2026-11-14 0507).txt"), "");
+});

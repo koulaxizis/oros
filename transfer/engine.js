@@ -1,5 +1,5 @@
 /* ============================================================
-   orOS Transfer — engine.js, v1.2.0 (1.2.0, D1: the sender's title and message in the first manifest part)
+   orOS Transfer — engine.js, v1.3.0 (1.2.0, D1: the sender's title and message in the first manifest part; 1.3.0, D3: the sender's background picture before the list)
    One transfer between two browsers: the sender, who has the files,
    and the receiver, who opened the link or typed the code.
 
@@ -39,6 +39,8 @@
      role: "sender"|"receiver", code, relay?, dev,
      WebSocket?, RTCPeerConnection?, iceServers?,
      files (sender: manifest from core.buildManifest),
+     meta? {t, m} (sender: title and message), bg? Uint8Array (sender: a JPEG/PNG/WebP picture, ≤ core.BG_MAX),
+     onBg({ bytes, type }) (receiver: the picture arrived whole, before the offer),
      read(i, start, end) → Promise<Uint8Array> (sender),
      onState(phase, info), onProgress({ bytes, total, file })
    }).start(), .accept(sink) (receiver), .decline(), .cancel(), .mode()
@@ -66,6 +68,8 @@
   var RELAY_PIECE = 8192;           // "~" + base64(12 + 12 + 8192 + 16) ≈ 11,000 characters < 16 KB frame
   var RELAY_GAP_MS = 30;            // one piece frame per 30 ms at most
   var RELAY_MAN = 9000;
+  var BG_PART = 24000, RELAY_BG_PART = 6000;   // raw bytes of the picture per sealed message (relay: < 16 KB frame)
+  var BG_PARTS_MAX = 400;
 
   function wsUrl(relay, room) { return String(relay).replace(/^http(s?):/, "ws$1:").replace(/\/+$/, "") + "/rt/" + room; }
   function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
@@ -329,9 +333,39 @@
     files.forEach(function (f) { total += f.s; });
     function pieceSize() { return mode === "relay" ? RELAY_PIECE : CORE.PIECE; }
     function wake() { var w = ackWaiters; ackWaiters = []; w.forEach(function (f) { f(); }); w = bufWaiters; bufWaiters = []; w.forEach(function (f) { f(); }); }
+    var bg = role === "sender" && o.bg && CORE.picType(o.bg) ? o.bg : null;
+    // D3: the picture goes first, in sealed parts, so the receiver sees it
+    // with the list. The hash is in part 0; a picture that does not arrive
+    // whole is left out on the other side and the transfer goes on.
+    function sendBg() {
+      if (!bg || ended) return Promise.resolve();
+      var size = mode === "relay" ? RELAY_BG_PART : BG_PART, n = Math.ceil(bg.length / size);
+      var h = new CORE.Sha256(); h.update(bg);
+      var hx = h.hex(), q = Promise.resolve(), last = 0;
+      for (var i = 0; i < n; i++) {
+        (function (i) {
+          q = q.then(function () {
+            if (ended) return null;
+            var wait = mode === "relay" ? last + RELAY_GAP_MS - Date.now() : 0;
+            return (wait > 0 ? delay(wait) : Promise.resolve()).then(roomInBuffer).then(function () {
+              if (ended) return null;
+              var m = { t: "bg", i: i, n: n, s: bg.length, d: CORE.b64(bg.subarray(i * size, Math.min(bg.length, (i + 1) * size))) };
+              if (i === 0) m.h = hx;
+              last = Date.now();
+              return send(m);
+            });
+          });
+        })(i);
+      }
+      return q;
+    }
     function offerFiles() {
       if (ended) return null;
       set("offered", { mode: mode });
+      return sendBg().then(offerList);
+    }
+    function offerList() {
+      if (ended) return null;
       var parts = CORE.splitManifest(files, (mode === "relay" ? RELAY_MAN : 30000) - (meta ? 1200 : 0));   // room for the title and message
       var q = Promise.resolve();
       parts.forEach(function (p, i) {
@@ -449,6 +483,7 @@
         return null;
       }
       // receiver
+      if (m.t === "bg") { onBgPart(m); return null; }
       if (m.t === "man" && !offer) {
         if (!(m.n >= 1 && m.n <= 5000) || !(m.i >= 0 && m.i < m.n) || !Array.isArray(m.files)) { refuse(); return null; }
         manN = m.n;
@@ -469,7 +504,31 @@
       } else if (m.t === "x") fail("cancelled");
       return null;
     }
+    // D3: the picture, in order, before the list; anything odd drops the picture only.
+    var bgParts = [], bgGot = 0, bgLen = 0, bgN = 0, bgS = 0, bgH = "", bgOver = false;
+    function onBgPart(m) {
+      if (bgOver || offer) return;
+      var d = null;
+      try { d = typeof m.d === "string" ? CORE.unb64(m.d) : null; } catch (e) { d = null; }
+      if (m.i === 0) {
+        bgN = m.n; bgS = m.s; bgH = typeof m.h === "string" ? m.h : "";
+        if (!(bgN >= 1 && bgN <= BG_PARTS_MAX) || !(bgS >= 12 && bgS <= CORE.BG_MAX) || !/^[0-9a-f]{64}$/.test(bgH)) { bgOver = true; return; }
+      }
+      if (!d || m.i !== bgGot || !bgN || m.n !== bgN || m.s !== bgS || bgLen + d.length > bgS) { bgOver = true; return; }
+      bgParts.push(d); bgGot++; bgLen += d.length;
+      if (bgGot < bgN) return;
+      bgOver = true;
+      if (bgLen !== bgS) return;
+      var all = new Uint8Array(bgS), at = 0;
+      bgParts.forEach(function (p) { all.set(p, at); at += p.length; });
+      bgParts = [];
+      var h = new CORE.Sha256(); h.update(all);
+      var type = CORE.picType(all);
+      if (h.hex() !== bgH || !type) return;
+      if (o.onBg) { try { o.onBg({ bytes: all, type: type }); } catch (e) {} }
+    }
     function refuse() { send({ t: "no" }); fail("bad"); }
+    this.__bgPart = onBgPart;                 // tests only: feed the picture handler directly
     function ioErr(e) { var er = new Error("io"); er.code = "io"; er.cause = e; throw er; }
     function receivingNow() { return (self.phase === "receiving" || self.phase === "reconnecting") && !!sink; }
     function startFile(i) {

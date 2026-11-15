@@ -255,20 +255,53 @@ test("search provider: one hit per live signature, opens by id", () => {
   assert.deepEqual(P.keys, [C.DATA_KEY]);
 });
 
-test("wiring: palette guards, sync slice, deep link, help pages, scripts", () => {
-  const js = read("signature/signature.js"), html = read("signature/index.html");
-  assert.ok(js.includes("function inheritPalette") && js.includes("function watchPalette"));
-  assert.ok(js.includes('api.registerSlice("signature", sliceGet, sliceSet, C.DATA_KEY, C.merge)'));
-  assert.ok(js.includes("window.__orosOpenAt = openTarget;"));
-  assert.ok(js.includes('__orosTakeTarget("signature")'));
-  ["../designkit/assets.js", "../qr/qr-encode.js", "core.js", "signature.js"].forEach((f) => assert.ok(html.includes('src="' + f + "?v="), f));
-  assert.ok(/<iframe id="pv"[^>]*sandbox="allow-same-origin"/.test(html), "the preview runs no script");
-  ["en", "el"].forEach((l) => assert.ok(fs.existsSync(path.join(ROOT, "signature/help." + l + ".txt"))));
+test("merge 6: Mail's search finds signatures, also with no mail account", async () => {
+  const M = require(path.join(ROOT, "mail/search.js"));
+  const d = C.merge({ sigs: [sample()] });
+  const hits = await M.search({ lang: "en", readJSON: (k) => (k === C.DATA_KEY ? d : null) });
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].id, "sig:" + ID);
+  assert.equal(hits[0].title, "Work");
+  assert.deepEqual(hits[0].target, { view: "signatures", id: ID });
+  assert.deepEqual(M.keys, ["oros-mail-data", C.DATA_KEY]);
+  assert.deepEqual(await M.search({ lang: "en", readJSON: () => null }), []);
+});
+
+test("wiring (merge 6): Mail hosts the view, sync slice, deep link, help, scripts", () => {
+  const js = read("signature/view.js"), mail = read("mail/mail.js"), html = read("mail/index.html");
+  // the palette is Mail's (mail.js inheritPalette / watchPalette); the view sets none
+  assert.ok(!js.includes("function inheritPalette") && mail.includes("function inheritPalette") && mail.includes("function watchPalette"));
+  // the slice "signature" is registered by Mail at its boot, unchanged (key, merge)
+  assert.ok(mail.includes('api.registerSlice("signature", function () {'));
+  assert.ok(mail.includes("}, S.DATA_KEY, S.merge);"));
+  assert.ok(mail.indexOf("registerSignatureSlice();") > mail.indexOf("function boot()"));
+  assert.ok(js.includes("suppress = true;") && js.includes("if (suppress) return;"), "R6: a pull never marks dirty");
+  assert.ok(js.includes("window.SignatureView = {"));
+  assert.ok(!js.includes("__orosTakeTarget"), "Mail takes the target");
+  assert.ok(html.indexOf('src="../signature/core.js?v=') < html.indexOf('src="mail.js?v='));
+  ["../designkit/assets.js", "../qr/qr-encode.js", "../signature/view.js"].forEach((f) => assert.ok(mail.includes('"' + f + '"'), f));
+  assert.ok(mail.includes('css.href = sigAsset("../signature/view.css");'));
+  assert.ok(mail.includes('["signature", "recordpkg", "designkit"].map(sigPack)'), "the view's language packs");
+  assert.ok(/<iframe id=\\"sg-pv\\"[^>]*sandbox=\\"allow-same-origin\\"/.test(js), "the preview runs no script");
+  // BR-MAIL-SIG through Mail's own dialog; Mail's keys stay off while it shows
+  assert.ok(mail.includes("window.SignatureView.mount(host, { useInMail: signatureDialog, onBack: hideSigs });"));
+  assert.ok(js.includes('$("mail-btn").hidden = typeof opts.useInMail !== "function";'));
+  assert.ok(mail.includes("if (sigsOn) return;                  // Email signatures has its own keys"));
+  assert.ok(js.includes("if (!shown()) return;"));
+  // old page forwards; old help is in Mail's
+  assert.ok(read("signature/index.html").includes('"../?open=signature"'));
+  ["signature/signature.js", "signature/signature.css", "signature/help.en.txt", "signature/help.el.txt"].forEach((f) =>
+    assert.ok(!fs.existsSync(path.join(ROOT, f)), f + " is gone"));
+  assert.ok(read("mail/help.en.txt").includes("## Email signatures"));
+  assert.ok(read("mail/help.el.txt").includes("## Υπογραφές email"));
+  // naming: email words only
+  assert.ok(js.includes('"app.name": "Email signatures"') && js.includes('"app.name": "Υπογραφές email"'));
   // every string key exists in both languages
   const block = js.slice(js.indexOf("var STRINGS = {"), js.indexOf("function t(k, vars)"));
   const en = block.slice(0, block.indexOf("\n    el: {")), el = block.slice(block.indexOf("\n    el: {"));
   const keys = (s) => (s.match(/"([a-zA-Z.]+)":/g) || []).map((k) => k.slice(1, -2)).sort();
   assert.deepEqual(keys(el), keys(en));
+  ["sigs.open", "sigs.loading", "sigs.loadFail"].forEach((k) => assert.equal(mail.split('"' + k + '":').length - 1, 2, k + " in EN and EL"));
 });
 
 test("Mail: BR-MAIL-SIG receiver asks for the account and cleans the HTML", () => {
