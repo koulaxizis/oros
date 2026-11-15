@@ -4054,6 +4054,29 @@
       host.appendChild(mtc);
     }
 
+    // Clipboard history (cliphist.js, CLIP-1): off by default, this device only.
+    if (s.clip) {
+      var chc = card(t("ch.title"), "clip");
+      if (s.clip.strict) {
+        chc.appendChild(el("p", "hint", t("ch.strict")));
+      } else {
+        chc.appendChild(row(t("ch.on"), switchBtn(!!s.clip.on, "clip", function (v) { set("clip", v); }, t("ch.on")),
+          { hint: t("ch.hint") }));
+        if (s.clip.on) {
+          chc.appendChild(row(t("ch.keep"), segmented([
+            { value: "hour", label: t("ch.keep.hour") },
+            { value: "day", label: t("ch.keep.day") },
+            { value: "week", label: t("ch.keep.week") }
+          ], s.clip.keep, "clipKeep", function (v) { set("clipKeep", v); }, t("ch.keep"))));
+          chc.appendChild(el("p", "hint", t("ch.count", { n: s.clip.n })));
+          chc.appendChild(actions(
+            button(t("ch.open"), "ch.open", function () { act("clip.open"); }),
+            s.clip.n ? button(t("ch.clear"), "ch.clear", function () { act("clip.clear"); }) : null));
+        }
+      }
+      host.appendChild(chc);
+    }
+
     // This computer's files: orOS Portable and the desktop apps only
     // (shell computerFiles(); orOS USB always shows them).
     if (s.pcfiles) {

@@ -416,6 +416,7 @@
     if (window.orosOsk) window.orosOsk.refresh();   // on-screen keyboard labels
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
+    if (window.orosClip) window.orosClip.refresh();         // clipboard history
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
     // known) must relabel them too, or screen readers hear English.
@@ -5086,6 +5087,7 @@
   }
   appFrames().forEach(extWireFrame);
   appFrames().forEach(a11yWireFrame);
+  if (window.orosClip) appFrames().forEach(window.orosClip.wire);   // CLIP-1
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -9272,8 +9274,10 @@
     { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
     { key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
     { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
-    { key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } }
+    { key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } },
+    { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } }
   ];
+
 
   // Public contract consumed by iframe apps (same-origin, so this
   // is reachable — Contract Β). Returns true when the combo matched,
@@ -11750,6 +11754,8 @@
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
+      // Clipboard history (cliphist.js, CLIP-1): this device only.
+      clip: window.orosClip ? window.orosClip.snapshot() : null,
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
       pcfiles: state.pcFiles && !state.pcFiles.fixed ? { on: state.pcFiles.state === "on" } : null,
@@ -11793,6 +11799,8 @@
       case "pcfiles":
         if (typeof window.__orosPcFilesSet === "function") window.__orosPcFilesSet(!!value);
         return;
+      case "clip":       if (window.orosClip) window.orosClip.setOn(!!value); return;
+      case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
@@ -11867,6 +11875,8 @@
       case "sync.link.open":    if (arg && typeof arg.code === "string") linkOpen(arg.code.slice(0, 40)); return;
       case "sync.link.session": if (state.linkIn && state.linkIn.phase !== "done") linkInSet({ session: !!(arg && arg.on) }); return;
       case "sync.link.close":   state.linkIn = null; settingsNotify(); return;
+      case "clip.clear":      if (window.orosClip) window.orosClip.clear(); return;   // CLIP-1
+      case "clip.open":       if (window.orosClip) window.orosClip.open(); return;
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -12480,6 +12490,7 @@
     cmdWireFrame(f);
     extWireFrame(f);
     a11yWireFrame(f);
+    if (window.orosClip) window.orosClip.wire(f);   // CLIP-1
     return f;
   }
   function mtDrop(el) {
@@ -15152,6 +15163,16 @@
       a11y: { get: a11ySnapshot, set: a11ySetUser },
       media: qsMedia
     });
+  }
+  // Clipboard history (cliphist.js, CLIP-1): what is copied inside orOS
+  // apps, opt-in, this device only. A single app gets it too.
+  if (window.orosClip) {
+    window.orosClip.attach({
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      settings: function (section) { if (window.orosSettings) window.orosSettings.open(section); },
+      toast: function (kind, msg) { scToast(kind, msg); }
+    });
+    window.orosClip.onChange(settingsNotify);
   }
   // Desktop widgets (widgets.js, a shell component like launcher.js):
   // clock, calendar, Today, weather, playing, sync on the desktop. A
