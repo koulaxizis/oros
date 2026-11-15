@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.89.00
+- **Glossary and checks for book translations in Writer.** Keep the terms of a book in a glossary: when a sentence has one, its translation shows under it and Alt+G puts it in. `Add a term…` takes the selected words, and terms can be marked as never to be used. As you type, Writer warns about a missing or forbidden term, numbers, formatting marks, spaces, end punctuation and a sentence translated two ways; `Check the translation…` lists every warning. Warnings never stop you. Glossaries import and export as CSV and TBX. See [Writer](app:writer).
+
 ## Version 6.88.00
 - **Transfer can send your own picture as the background.** `Background picture…` on the send card puts one of your pictures behind the files on the other person's screen. It is made smaller on your device and saved again without camera details such as the place, then sent encrypted with the files. The matching shapes that show you are connected move to a small circle next to the title.
 
