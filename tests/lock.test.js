@@ -268,3 +268,22 @@ test("sensitive work: every checkup item has its words in EN, EL and DE and a re
   const go = ss.slice(ss.indexOf("var AUDIT_GO"), ss.indexOf("function secAudit"));
   for (const m of go.matchAll(/: "([a-z]+)"/g)) assert.ok(C.isSection(m[1]), "section " + m[1]);
 });
+
+test("sensitive work: widgets and reminders handed to Android carry no titles while the mode is on", () => {
+  const ph = read("phone.js");
+  assert.match(ph, /function strictVeil\(\)/);
+  const rem = ph.slice(ph.indexOf("function pushReminders"), ph.indexOf("function pushReminders") + 2500);
+  assert.ok(rem.indexOf("veilReminders(items)") > 0 && rem.indexOf("veilReminders(items)") < rem.indexOf('t: "reminders"'), "veiled before it is sent");
+  for (const fn of ["function pushToday", "function pushAgenda"]) {
+    const body = ph.slice(ph.indexOf(fn), ph.indexOf(fn) + 1600);
+    assert.ok(body.indexOf("strictVeil()") > 0 && body.indexOf("strictVeil()") < body.indexOf(".then("), fn + " checks before reading any rows");
+  }
+  const vm = require("vm");
+  const src = ph.slice(ph.indexOf("function veilReminders"), ph.indexOf("function veilReminders") + 400);
+  const ctx = { tx: (k, fb) => fb };
+  vm.runInNewContext(src.slice(0, src.indexOf("\n  }\n") + 4) + ";this.v = veilReminders;", ctx);
+  const out = ctx.v([{ id: "a", at: 5, kind: "note", ns: "calendar", title: "Meet source at 9", body: "Café X", link: "calendar:1" }]);
+  assert.equal(out[0].title, "Reminder");
+  assert.equal(JSON.stringify(out).indexOf("source"), -1);
+  assert.equal(out[0].link, "calendar:1");
+});

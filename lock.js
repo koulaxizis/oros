@@ -1361,6 +1361,9 @@
       if (prov === "webdav") out.push({ id: "davRelay", state: dc && dc.relay === true ? "advice" : "ok" });
     }
     out.push({ id: "push", state: P && P.enabled() ? "advice" : "ok" });
+    var ph = root.orosPhone, phOn = false;
+    try { phOn = !!(ph && typeof ph.available === "function" && ph.available() && (ph.enabled("contacts") || ph.enabled("calendar"))); } catch (e) {}
+    try { if (ph && typeof ph.available === "function" && ph.available()) out.push({ id: "auditPhone", state: phOn ? "advice" : "ok" }); } catch (e) {}
     out.push({ id: "backup", state: backupPlain() ? "advice" : "ok" });
     var gate = false;
     try { gate = !!(root.orosGate && typeof root.orosGate.state === "function" && root.orosGate.state().on); } catch (e) {}

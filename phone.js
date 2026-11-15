@@ -116,6 +116,19 @@
 
   /* ---------- pure helpers ---------- */
   function pad(n) { return (n < 10 ? "0" : "") + n; }
+  // Sensitive work (STRICT-7): while lock.js's mode is on, what Android
+  // shows outside orOS (home-screen widgets, reminders on the lock
+  // screen) carries no titles. The app window itself is Chrome's (TWA),
+  // so screenshots cannot be blocked from here.
+  function strictVeil() {
+    try { var S = root && root.orosStrict; return !!(S && typeof S.level === "function" && S.level()); } catch (e) { return false; }
+  }
+  function veilReminders(items) {
+    var title = tx("phone.veil.rem", "Reminder"), body = tx("phone.veil.body", "Open orOS to see it.");
+    return items.map(function (r) {
+      return { id: r.id, at: r.at, kind: r.kind, ns: r.ns, title: title, body: body, link: r.link };
+    });
+  }
   function str(v, max) { return (typeof v === "string" ? v : "").slice(0, max); }
   // Words of reminders and workout kinds: the shell's table
   // (translations.js "rem.*" / "ph.*", German from the shell pack);
@@ -1167,7 +1180,18 @@
     try { return !(root && root.document && root.document.querySelector("template[data-oros-late]")); } catch (e) { return true; }
   }
   if (root && typeof root.addEventListener === "function") root.addEventListener("oros:late-ready", function () { pushAll(false); });
-  function pushAll(force) { push("contacts", force); push("calendar", force); pushReminders(force); pushToday(force); pushAgenda(force); pushHealth(force); }
+  // The mode turned on or off: send the widgets and reminders again.
+  var veilHooked = false;
+  function hookVeil() {
+    if (veilHooked) return;
+    var S = root && root.orosStrict;
+    if (!S || typeof S.onChange !== "function") return;
+    veilHooked = true;
+    var was = strictVeil();
+    try { S.onChange(function () { var now = strictVeil(); if (now !== was) { was = now; pushReminders(true); pushToday(true); pushAgenda(true); } }); } catch (e) {}
+  }
+  function pushAll(force) {
+    hookVeil(); push("contacts", force); push("calendar", force); pushReminders(force); pushToday(force); pushAgenda(force); pushHealth(force); }
 
   // Health Connect (v5): the last 30 days of Water and Workouts, sent
   // when they changed and every 15 minutes while orOS is on screen;
@@ -1248,6 +1272,11 @@
     if (!T || typeof T.build !== "function") return;
     if (!force && now - todayAt < 60000) return;
     todayAt = now;
+    if (strictVeil()) {
+      var vd = { day: ymdLocal(now), info: tx("phone.veil.widget", "Hidden while Sensitive work is on"), rows: [] }, vk = fnv(JSON.stringify(vd));
+      if (force || lastSent.today !== vk) { if (send({ t: "today", seq: ++seq, data: vd })) lastSent.today = vk; }
+      return;
+    }
     todayBusy = true;
     T.build().then(function (sum) {
       todayBusy = false;
@@ -1271,6 +1300,13 @@
     agendaAt = now;
     agendaBusy = true;
     var wantCal = appState.wcal > 0, wantTodo = appState.wtodo > 0;
+    if (strictVeil()) {
+      agendaBusy = false;
+      var va = { cal: wantCal ? [{ d: ymdLocal(now), tm: "", t: tx("phone.veil.widget", "Hidden while Sensitive work is on"), s: "", o: "" }] : null,
+                 todo: wantTodo ? [] : null }, vk = fnv(JSON.stringify(va));
+      if (force || lastSent.agenda !== vk) { if (send({ t: "agenda", seq: ++seq, cal: va.cal, todo: va.todo })) lastSent.agenda = vk; }
+      return;
+    }
     function rows(on, id, days) { return on ? T.agenda(id, days).then(null, function () { return []; }) : Promise.resolve(null); }
     Promise.all([rows(wantCal, "calendar", CAL_DAYS), rows(wantTodo, "todo", TODO_DAYS)]).then(function (r) {
       agendaBusy = false;
@@ -1388,7 +1424,8 @@
              localStorage.getItem("oros-health-data")].join("\n");
     } catch (e) { return; }
     // Water rows depend on the hour too: recheck every 5 minutes.
-    var key = fnv(raw) + ":" + raw.length + ":" + Math.floor(now / 300000) + ":" + zone();
+    var veil = strictVeil();
+    var key = fnv(raw) + ":" + raw.length + ":" + Math.floor(now / 300000) + ":" + zone() + (veil ? ":v" : "");
     if (!force && lastSent.reminders === key) return;
     var shown = {};
     try {
@@ -1398,6 +1435,7 @@
     var items = reminderRows(reminderSource(), now).concat(calendarReminders(now))
       .filter(function (r) { return !shown[r.id]; })
       .sort(function (a, b) { return a.at - b.at; }).slice(0, 100);
+    if (veil) items = veilReminders(items);
     if (!send({ t: "reminders", seq: ++seq, items: items })) return;
     lastSent.reminders = key;
     // Settings shows the next one, so a missing reminder can be told apart from a muted one.
