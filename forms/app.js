@@ -20,7 +20,7 @@
 (function () {
   "use strict";
 
-  var E = window.OrosFormsEngine, C = window.OrosFormsCore, R = window.OrosFormsRender;
+  var E = window.OrosFormsEngine, C = window.OrosFormsCore, R = window.OrosFormsRender, S = window.OrosFormsShare;
   var STORAGE_KEY = C.STORAGE_KEY;
 
   // ---------- 1. Strings + helpers ----------
@@ -42,7 +42,7 @@
       "empty.title": "No forms yet",
       "empty.text": "Make a survey, a sign-up sheet or an order form. Start from scratch or from a template.",
       "list.meta": "{n} questions · changed {d}", "list.meta1": "1 question · changed {d}",
-      "list.pages": "{n} pages",
+      "list.pages": "{n} pages", "list.open": "open", "list.closed": "closed", "list.new": "{n} new",
       "ed.title": "Form title", "ed.desc": "Description (optional)", "ed.add": "Add question",
       "ed.empty": "No questions yet. Add the first one.",
       "ed.label": "Question", "ed.labelInfo": "Title", "ed.labelPage": "Page title",
@@ -83,7 +83,52 @@
       "set.note": "Note at the top (for example how you use the answers)",
       "set.prog": "Show a progress bar on forms with pages",
       "set.share": "Sharing",
-      "set.shareSoon": "Sharing a form with a link, a QR code or on your website comes in the next update of Forms. For now you can build, preview and duplicate forms.",
+      "set.back": "Page to link to after sending (optional)",
+      "set.backHint": "An https address, shown as a button on the thank-you message. People are never sent there on their own.",
+      "set.backBad": "Use an https:// address, or leave it empty.",
+      "set.once": "One answer per browser",
+      "set.onceHint": "The page remembers in the browser that it was answered. It stops a second answer by mistake, not someone who wants to cheat.",
+      "tab.share": "Share", "tab.resp": "Answers", "tab.respN": "Answers ({n})",
+      "sh.intro": "Publish the form to get a link, a QR code and code for your website. People fill it in at useoros.online without an account.",
+      "sh.privacy": "The questions are encrypted with a key that lives only in the link, and every answer is encrypted in the person's browser for this form. The orOS relay can read neither. Answers wait there until this device picks them up, at most 30 days.",
+      "sh.warn": "Never ask for passwords, PINs or card numbers in a form. The page shows everyone this warning, and anyone can report a form; a form several people report is closed.",
+      "sh.publish": "Publish", "sh.working": "Please wait…",
+      "sh.open": "Open: taking answers", "sh.closed": "Closed: not taking answers",
+      "sh.reported": "Closed after reports from several people. Look at your questions, then open it again if all is well.",
+      "sh.closesAt": "Closes on {d}",
+      "sh.link": "Link", "sh.copy": "Copy", "sh.copied": "Copied",
+      "sh.qr": "QR code", "sh.qrSave": "Save QR code",
+      "sh.embed": "Code for your website", "sh.embedHint": "Paste it into a page of your site. The form shows in a frame.",
+      "sh.changed": "You changed the form after publishing it. People still see the published version.",
+      "sh.update": "Publish changes", "sh.updated": "Changes published",
+      "sh.closeNow": "Close the form", "sh.openNow": "Open the form", "sh.closeAt": "Close automatically on",
+      "sh.closeAtHint": "Empty: stays open until you close it. A closed form is deleted from the relay 30 days after it closes.",
+      "sh.here": "This device picks up the answers: when you open Forms and every few minutes while orOS is open.",
+      "sh.elsewhere": "Another device picks up the answers.", "sh.collectHere": "Pick up on this device",
+      "sh.check": "Check for answers", "sh.last": "Last checked: {t}", "sh.never": "Not checked yet on this device.",
+      "sh.none": "No new answers.", "sh.got": "New answers: {n}", "sh.bad": "{n} could not be opened and were removed.",
+      "sh.push": "Tell me on this device even when orOS is closed",
+      "sh.pushHint": "A notification that says only “New answer in a form”. Turn on notifications with orOS closed in Settings › Notifications first.",
+      "sh.pushOff": "Turn on “Notifications with orOS closed” in Settings › Notifications first.",
+      "sh.stop": "Stop sharing",
+      "sh.stopAsk": "Stop sharing this form? The link stops working and answers still waiting at the relay are deleted. Answers already here stay.",
+      "sh.stopYes": "Stop sharing", "sh.stopped": "Sharing stopped",
+      "sh.published": "Form published",
+      "sh.err.offline": "You're offline.",
+      "sh.err.network": "Couldn't reach the orOS relay. Try again later.",
+      "sh.err.nostore": "The orOS relay doesn't take forms right now. Try again later.",
+      "sh.err.gone": "The relay no longer knows this form. Stop sharing it and publish it again.",
+      "sh.err.full": "There is no room right now (storage is full). Try again later.",
+      "sh.err.big": "This form is too large to publish. Make it shorter.",
+      "sh.err.crypto": "This browser can't make the encryption keys.",
+      "sh.err.other": "Something went wrong. Try again later.",
+      "an.none": "No answers yet.", "an.noneShared": "No answers yet. Share the link to collect some.",
+      "an.count": "{n} answers", "an.count1": "1 answer", "an.new": "new", "an.wait": "On the waiting list",
+      "an.empty": "(no answer)", "an.yes": "Yes", "an.no": "No", "an.other": "Other: {x}",
+      "an.more": "Show {n} more",
+      "an.soon": "Charts, filters and export to Spreadsheet and CSV come in the next update.",
+      "n.title": "New answers: {x}", "n.body1": "1 new answer", "n.body": "{n} new answers",
+      "push.title": "Forms", "push.body": "New answer in a form",
       "new.title": "New form", "new.blank": "Blank form", "new.blankText": "Start from nothing.",
       "toast.deleted": "Form deleted", "toast.itemDeleted": "Question deleted", "toast.dup": "Form duplicated",
       "toast.full": "Could not save: storage is full", "toast.cap": "A form holds at most {n} items",
@@ -123,7 +168,7 @@
       "empty.title": "Καμία φόρμα ακόμα",
       "empty.text": "Φτιάξε μια έρευνα, μια λίστα εγγραφών ή μια φόρμα παραγγελίας. Ξεκίνα από το μηδέν ή από ένα πρότυπο.",
       "list.meta": "{n} ερωτήσεις · αλλαγή {d}", "list.meta1": "1 ερώτηση · αλλαγή {d}",
-      "list.pages": "{n} σελίδες",
+      "list.pages": "{n} σελίδες", "list.open": "ανοιχτή", "list.closed": "κλειστή", "list.new": "{n} νέες",
       "ed.title": "Τίτλος φόρμας", "ed.desc": "Περιγραφή (προαιρετικά)", "ed.add": "Προσθήκη ερώτησης",
       "ed.empty": "Καμία ερώτηση ακόμα. Πρόσθεσε την πρώτη.",
       "ed.label": "Ερώτηση", "ed.labelInfo": "Τίτλος", "ed.labelPage": "Τίτλος σελίδας",
@@ -164,7 +209,52 @@
       "set.note": "Σημείωση στην κορυφή (για παράδειγμα πώς χρησιμοποιείς τις απαντήσεις)",
       "set.prog": "Μπάρα προόδου στις φόρμες με σελίδες",
       "set.share": "Κοινή χρήση",
-      "set.shareSoon": "Η κοινή χρήση μιας φόρμας με σύνδεσμο, κωδικό QR ή στον ιστότοπό σου έρχεται στην επόμενη ενημέρωση των Φορμών. Προς το παρόν μπορείς να φτιάχνεις φόρμες, να τις βλέπεις σε προεπισκόπηση και να τις αντιγράφεις.",
+      "set.back": "Σελίδα για σύνδεσμο μετά την αποστολή (προαιρετικά)",
+      "set.backHint": "Μια διεύθυνση https, που εμφανίζεται ως κουμπί στο μήνυμα ευχαριστίας. Κανείς δεν μεταφέρεται εκεί αυτόματα.",
+      "set.backBad": "Γράψε μια διεύθυνση https:// ή άφησέ το κενό.",
+      "set.once": "Μία απάντηση ανά browser",
+      "set.onceHint": "Η σελίδα θυμάται στον browser ότι απαντήθηκε. Σταματά μια δεύτερη απάντηση από λάθος, όχι όποιον θέλει να κλέψει.",
+      "tab.share": "Κοινοποίηση", "tab.resp": "Απαντήσεις", "tab.respN": "Απαντήσεις ({n})",
+      "sh.intro": "Δημοσίευσε τη φόρμα για να πάρεις σύνδεσμο, κωδικό QR και κώδικα για τον ιστότοπό σου. Οι άλλοι τη συμπληρώνουν στο useoros.online χωρίς λογαριασμό.",
+      "sh.privacy": "Οι ερωτήσεις κρυπτογραφούνται με κλειδί που υπάρχει μόνο στον σύνδεσμο, και κάθε απάντηση κρυπτογραφείται στον browser του ατόμου για αυτή τη φόρμα. Το relay του orOS δεν μπορεί να διαβάσει τίποτα από τα δύο. Οι απαντήσεις περιμένουν εκεί μέχρι να τις παραλάβει αυτή η συσκευή, το πολύ 30 μέρες.",
+      "sh.warn": "Μη ζητάς ποτέ κωδικούς, PIN ή αριθμούς καρτών σε φόρμα. Η σελίδα δείχνει σε όλους αυτή την προειδοποίηση και ο καθένας μπορεί να αναφέρει μια φόρμα· μια φόρμα που αναφέρουν αρκετοί κλείνει.",
+      "sh.publish": "Δημοσίευση", "sh.working": "Μια στιγμή…",
+      "sh.open": "Ανοιχτή: δέχεται απαντήσεις", "sh.closed": "Κλειστή: δεν δέχεται απαντήσεις",
+      "sh.reported": "Έκλεισε μετά από αναφορές αρκετών ατόμων. Δες τις ερωτήσεις σου και άνοιξέ τη ξανά αν όλα είναι εντάξει.",
+      "sh.closesAt": "Κλείνει στις {d}",
+      "sh.link": "Σύνδεσμος", "sh.copy": "Αντιγραφή", "sh.copied": "Αντιγράφηκε",
+      "sh.qr": "Κωδικός QR", "sh.qrSave": "Αποθήκευση κωδικού QR",
+      "sh.embed": "Κώδικας για τον ιστότοπό σου", "sh.embedHint": "Επικόλλησέ τον σε μια σελίδα του ιστότοπού σου. Η φόρμα εμφανίζεται σε πλαίσιο.",
+      "sh.changed": "Άλλαξες τη φόρμα μετά τη δημοσίευση. Οι άλλοι βλέπουν ακόμα τη δημοσιευμένη μορφή.",
+      "sh.update": "Δημοσίευση αλλαγών", "sh.updated": "Οι αλλαγές δημοσιεύτηκαν",
+      "sh.closeNow": "Κλείσιμο της φόρμας", "sh.openNow": "Άνοιγμα της φόρμας", "sh.closeAt": "Αυτόματο κλείσιμο στις",
+      "sh.closeAtHint": "Κενό: μένει ανοιχτή μέχρι να την κλείσεις. Μια κλειστή φόρμα διαγράφεται από το relay 30 μέρες μετά το κλείσιμο.",
+      "sh.here": "Αυτή η συσκευή παραλαμβάνει τις απαντήσεις: όταν ανοίγεις τις Φόρμες και κάθε λίγα λεπτά όσο το orOS είναι ανοιχτό.",
+      "sh.elsewhere": "Τις απαντήσεις τις παραλαμβάνει άλλη συσκευή.", "sh.collectHere": "Παραλαβή σε αυτή τη συσκευή",
+      "sh.check": "Έλεγχος για απαντήσεις", "sh.last": "Τελευταίος έλεγχος: {t}", "sh.never": "Δεν έχει γίνει έλεγχος σε αυτή τη συσκευή.",
+      "sh.none": "Καμία νέα απάντηση.", "sh.got": "Νέες απαντήσεις: {n}", "sh.bad": "{n} δεν άνοιξαν και αφαιρέθηκαν.",
+      "sh.push": "Ειδοποίησέ με σε αυτή τη συσκευή και με το orOS κλειστό",
+      "sh.pushHint": "Μια ειδοποίηση που λέει μόνο «Νέα απάντηση σε φόρμα». Άνοιξε πρώτα τις ειδοποιήσεις με το orOS κλειστό στις Ρυθμίσεις › Ειδοποιήσεις.",
+      "sh.pushOff": "Άνοιξε πρώτα τις «Ειδοποιήσεις με το orOS κλειστό» στις Ρυθμίσεις › Ειδοποιήσεις.",
+      "sh.stop": "Τέλος κοινοποίησης",
+      "sh.stopAsk": "Τέλος κοινοποίησης για αυτή τη φόρμα; Ο σύνδεσμος σταματά να λειτουργεί και όσες απαντήσεις περιμένουν στο relay διαγράφονται. Όσες απαντήσεις είναι ήδη εδώ μένουν.",
+      "sh.stopYes": "Τέλος κοινοποίησης", "sh.stopped": "Η κοινοποίηση σταμάτησε",
+      "sh.published": "Η φόρμα δημοσιεύτηκε",
+      "sh.err.offline": "Είσαι εκτός σύνδεσης.",
+      "sh.err.network": "Δεν ήταν δυνατή η σύνδεση με το relay του orOS. Δοκίμασε αργότερα.",
+      "sh.err.nostore": "Το relay του orOS δεν δέχεται φόρμες αυτή τη στιγμή. Δοκίμασε αργότερα.",
+      "sh.err.gone": "Το relay δεν γνωρίζει πια αυτή τη φόρμα. Σταμάτησε την κοινοποίηση και δημοσίευσέ τη ξανά.",
+      "sh.err.full": "Δεν υπάρχει χώρος αυτή τη στιγμή (ο χώρος γέμισε). Δοκίμασε αργότερα.",
+      "sh.err.big": "Η φόρμα είναι πολύ μεγάλη για δημοσίευση. Κάν' τη μικρότερη.",
+      "sh.err.crypto": "Αυτός ο browser δεν μπορεί να φτιάξει τα κλειδιά κρυπτογράφησης.",
+      "sh.err.other": "Κάτι πήγε στραβά. Δοκίμασε αργότερα.",
+      "an.none": "Καμία απάντηση ακόμα.", "an.noneShared": "Καμία απάντηση ακόμα. Μοιράσου τον σύνδεσμο για να μαζέψεις.",
+      "an.count": "{n} απαντήσεις", "an.count1": "1 απάντηση", "an.new": "νέα", "an.wait": "Στη λίστα αναμονής",
+      "an.empty": "(χωρίς απάντηση)", "an.yes": "Ναι", "an.no": "Όχι", "an.other": "Άλλο: {x}",
+      "an.more": "Εμφάνιση {n} ακόμα",
+      "an.soon": "Γραφήματα, φίλτρα και εξαγωγή σε Spreadsheet και CSV έρχονται στην επόμενη ενημέρωση.",
+      "n.title": "Νέες απαντήσεις: {x}", "n.body1": "1 νέα απάντηση", "n.body": "{n} νέες απαντήσεις",
+      "push.title": "Φόρμες", "push.body": "Νέα απάντηση σε φόρμα",
       "new.title": "Νέα φόρμα", "new.blank": "Κενή φόρμα", "new.blankText": "Ξεκίνα από το μηδέν.",
       "toast.deleted": "Η φόρμα διαγράφηκε", "toast.itemDeleted": "Η ερώτηση διαγράφηκε", "toast.dup": "Έγινε αντίγραφο της φόρμας",
       "toast.full": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.cap": "Μια φόρμα χωράει το πολύ {n} στοιχεία",
@@ -248,6 +338,27 @@
   var openId = "";         // which item card is open in the editor
   var saveTimer = 0;
 
+  var ans = { ver: 1, rs: [], seen: {} };   // the answers slice (core.js normAnswers)
+
+  function loadAns() {
+    var raw = null;
+    try { raw = localStorage.getItem(C.ANS_KEY); } catch (e) {}
+    if (!raw) return;
+    try { ans = C.normAnswers(JSON.parse(raw)); }
+    catch (e) { try { localStorage.setItem(C.ANS_KEY + "-broken", raw); } catch (x) {} }
+  }
+  function persistAns() {
+    try { localStorage.setItem(C.ANS_KEY, JSON.stringify(ans)); }
+    catch (e) { toast(t("toast.full")); return false; }
+    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    return true;
+  }
+  // Answers of forms deleted here or elsewhere go too (same everywhere).
+  function pruneAns() {
+    var r = C.dropOrphans(ans, data);
+    if (r.changed) { ans = r.data; persistAns(); }
+  }
+
   function load() {
     var raw = null;
     try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
@@ -294,6 +405,20 @@
     };
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("forms", sliceGet, sliceSet, STORAGE_KEY, C.merge);
+    api.registerSlice("forms-answers", function () { return C.normAnswers(ans); }, ansSet, C.ANS_KEY, C.mergeAnswers);
+  }
+  function ansSet(incoming) {
+    if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.rs)) return;
+    var before = JSON.stringify(ans);
+    window.__orosSyncApi._suppress = true;      // R6
+    try {
+      ans = C.mergeAnswers(ans, incoming);
+      localStorage.setItem(C.ANS_KEY, JSON.stringify(ans));
+    } catch (e) {
+    } finally { window.__orosSyncApi._suppress = false; }
+    if (JSON.stringify(ans) === before) return;
+    if (cur) { respTab(); if (!$("pane-resp").hidden) renderResp(); }
+    else renderList();
   }
   function sliceGet() { commit(); return C.normalize(data); }
   function sliceSet(incoming) {
@@ -307,6 +432,7 @@
     } catch (e) {
     } finally { window.__orosSyncApi._suppress = false; }
     if (JSON.stringify(data) === before) return;
+    pruneAns();
     if (cur) {
       var rec = C.find(data, cur.id);
       if (!rec || rec.del) { closeForm(true); return; }
@@ -317,6 +443,7 @@
         var a = document.activeElement;
         var typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && $("edit-view").contains(a);
         if (!typing) { cur = JSON.parse(JSON.stringify(rec)); renderForm(); }
+        else if (JSON.stringify(rec.x || null) !== JSON.stringify(cur.x || null)) { cur.x = rec.x; if (!$("pane-share").hidden) renderShare(); }
       }
     } else renderList();
   }
@@ -337,7 +464,12 @@
       var np = 1 + f.qs.filter(function (x) { return x.t === "page"; }).length;
       var meta = t(asked === 1 ? "list.meta1" : "list.meta", { n: asked, d: fmtDay(f.m) });
       if (np > 1) meta += " · " + t("list.pages", { n: np });
+      if (f.x) meta += " · " + t(f.x.open && !(f.x.close && f.x.close <= Date.now()) ? "list.open" : "list.closed");
+      var got = C.answersOf(ans, f.id).length;
+      if (got) meta += " · " + t(got === 1 ? "an.count1" : "an.count", { n: got });
       b.appendChild(el("span", "meta", meta));
+      var un = C.unread(ans, f.id);
+      if (un) b.appendChild(el("span", "badge", t("list.new", { n: un })));
       b.addEventListener("click", function () { openForm(f.id); });
       li.appendChild(b);
       ul.appendChild(li);
@@ -387,6 +519,10 @@
     $("s-thanks").value = cur.set.thanks || "";
     $("s-note").value = cur.set.note || "";
     $("s-prog").checked = !!cur.set.prog;
+    if (document.activeElement !== $("s-back")) $("s-back").value = cur.set.back || backDraft || "";
+    $("s-once").checked = !!cur.set.once;
+    respTab();
+    if (!$("pane-share").hidden) renderShare();
     renderItems();
     if (!$("pane-prev").hidden) renderPreview();
   }
@@ -842,9 +978,10 @@
     if (preview) preview.destroy();
     preview = R.mount($("preview"), cur, { t: t, preview: true });
   }
+  var TABS = ["edit", "prev", "set", "share", "resp"];
   function setTab(name) {
     commit();
-    ["edit", "prev", "set"].forEach(function (k) {
+    TABS.forEach(function (k) {
       var on = k === name;
       $("tab-" + k).classList.toggle("on", on);
       $("tab-" + k).setAttribute("aria-selected", on ? "true" : "false");
@@ -853,6 +990,8 @@
     });
     if (name === "prev") renderPreview();
     else if (preview) { preview.destroy(); preview = null; }
+    if (name === "share") renderShare();
+    if (name === "resp") { renderResp(); seeAnswers(); }
   }
 
   function setField(k, v) { cur.set[k] = v; changed(false); }
@@ -881,16 +1020,351 @@
     data = res.data;
     persist();
     closeForm(true);
+    // A published form closes at the relay now and goes for good once
+    // Undo is no longer offered.
+    var old = res.old;
+    if (old.x) S.setState(old, { open: 0 })["catch"](function () {});
     toast(t("toast.deleted"), t("btn.undo"), function () {
-      data = C.restore(data, res.old, Date.now());
+      data = C.restore(data, old, Date.now());
       persist();
       openForm(id);
+      if (old.x && old.x.open) S.setState(old, { open: 1 })["catch"](function () {});
+    }, function () {
+      if (old.x) S.unpublish(old)["catch"](function () {});
+      pruneAns();
     });
   }
   function idsOfForms() {
     var m = {};
     (data.forms || []).forEach(function (r) { m[r.id] = 1; });
     return m;
+  }
+
+  // ---------- 6b. Share + answers (W2, share.js) ----------
+  var backDraft = "";          // an address being typed that isn't valid yet
+  var AUTO_MS = 3 * 60000;     // a quiet check at most this often per form
+  var shareBusy = false;
+
+  function shErr(e) {
+    var c = e && e.code;
+    if (c === "timeout" || c === "relay") c = "network";
+    return t(["offline", "network", "nostore", "gone", "full", "big", "crypto"].indexOf(c) >= 0 ? "sh.err." + c : "sh.err.other");
+  }
+  function mine(rec) { return !!(rec && rec.x && (!rec.x.dev || rec.x.dev === S.dev())); }
+  function isOpen(x) { return !!x && x.open === 1 && !(x.close && x.close <= Date.now()); }
+  function fmtTime(ms) {
+    try { return new Date(ms).toLocaleString(locale(), { dateStyle: "medium", timeStyle: "short" }); }
+    catch (e) { return new Date(ms).toISOString(); }
+  }
+  // The record's x changed (publish, open/close, pick-up device).
+  function commitX(id, x) {
+    if (cur && cur.id === id) {
+      if (x) cur.x = x; else delete cur.x;
+      commit();
+      return;
+    }
+    var rec = C.find(data, id);
+    if (!rec || rec.del) return;
+    var copy = JSON.parse(JSON.stringify(rec));
+    if (x) copy.x = x; else delete copy.x;
+    var res = C.put(data, copy, Date.now());
+    if (res.changed) { data = res.data; persist(); }
+  }
+  function withBusy(btn, p) {
+    shareBusy = true;
+    var label = btn ? btn.textContent : "";
+    if (btn) { btn.disabled = true; btn.textContent = t("sh.working"); }
+    return p.then(function (v) { shareBusy = false; return v; }, function (e) {
+      shareBusy = false;
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+      toast(shErr(e));
+      throw e;
+    });
+  }
+
+  function publish(btn) {
+    if (!cur || shareBusy) return;
+    commit();
+    var id = cur.id, first = !cur.x;
+    withBusy(btn, S.publish(cur, LANG, Date.now())).then(function (x) {
+      commitX(id, x);
+      toast(t(first ? "sh.published" : "sh.updated"));
+      renderShare();
+    }, function () {});
+  }
+  function setOpen(open, btn) {
+    if (!cur || !cur.x || shareBusy) return;
+    var id = cur.id, st = { open: open ? 1 : 0 };
+    // Opening a form whose closing time has passed clears that time.
+    if (open && cur.x.close && cur.x.close <= Date.now()) st.close = 0;
+    withBusy(btn, S.setState(cur, st)).then(function (x) { commitX(id, x); renderShare(); renderList(); }, function () {});
+  }
+  function setCloseAt(ms) {
+    if (!cur || !cur.x || shareBusy) return;
+    var id = cur.id;
+    withBusy(null, S.setState(cur, { close: ms })).then(function (x) { commitX(id, x); renderShare(); }, function () { renderShare(); });
+  }
+  function stopSharing() {
+    if (!cur || !cur.x || shareBusy) return;
+    var id = cur.id;
+    withBusy(null, S.unpublish(cur)).then(function () {
+      commitX(id, null);
+      toast(t("sh.stopped"));
+      renderShare();
+      renderList();
+    }, function () {});
+  }
+
+  // Pick up one form's answers here. quiet: no toast unless something came.
+  function collectOne(rec, quiet) {
+    var id = rec.id, title = rec.title || t("f.untitled");
+    return S.collect(rec, function (rows) {
+      var r = C.addAnswers(ans, id, rows);
+      if (!r.added) return 0;
+      ans = r.data;
+      return persistAns() ? r.added : false;
+    }).then(function (tally) {
+      var now = C.find(data, id);
+      if (now && now.x) {
+        var x = Object.assign({}, now.x), ch = false;
+        if (tally.open !== x.open && !(tally.open === 0 && x.close && x.close <= Date.now())) { x.open = tally.open ? 1 : 0; ch = true; }
+        if (!!tally.rep !== !!x.rep) { if (tally.rep) x.rep = 1; else delete x.rep; ch = true; }
+        if (ch) commitX(id, x);
+      }
+      if (tally.added) announce(id, title, tally.added);
+      else if (!quiet) toast(t("sh.none") + (tally.bad ? " " + t("sh.bad", { n: tally.bad }) : ""));
+      if (cur && cur.id === id) { respTab(); if (!$("pane-resp").hidden) { renderResp(); seeAnswers(); } if (!$("pane-share").hidden) renderShare(); }
+      else renderList();
+      return tally;
+    }, function (e) {
+      if (!quiet) toast(shErr(e));
+      if (e && e.code === "gone" && cur && cur.id === id && !$("pane-share").hidden) renderShare();
+      throw e;
+    });
+  }
+  // New answers: a toast while Forms is in front, else an orOS notice.
+  function announce(id, title, n) {
+    var looking = !document.hidden && (typeof document.hasFocus !== "function" || document.hasFocus());
+    if (looking) { toast(t("sh.got", { n: n })); return; }
+    try {
+      var N = window.parent && window.parent !== window ? window.parent.orosNotifs : null;
+      var last = C.answersOf(ans, id)[0];
+      if (N && typeof N.emit === "function") {
+        N.emit({ ns: "forms", key: "a:" + id + ":" + (last ? last.id : n), type: "reminder",
+                 title: t("n.title", { x: title }), body: t(n === 1 ? "n.body1" : "n.body", { n: n }),
+                 deepLink: "system:open:forms", ttlDays: 7 });
+      } else toast(t("sh.got", { n: n }));
+    } catch (e) { toast(t("sh.got", { n: n })); }
+  }
+  var autoBusy = false;
+  function autoCollect() {
+    if (autoBusy || (typeof navigator !== "undefined" && navigator.onLine === false)) return;
+    var due = C.live(data).filter(function (r) { return r.x && r.x.dev === S.dev() && Date.now() - S.lastCheck(r.id) >= AUTO_MS; });
+    if (!due.length) return;
+    autoBusy = true;
+    due.reduce(function (p, r) {
+      return p.then(function () { return collectOne(r, true)["catch"](function () {}); });
+    }, Promise.resolve()).then(function () { autoBusy = false; });
+  }
+
+  function respTab() {
+    if (!cur) return;
+    var n = C.answersOf(ans, cur.id).length, un = C.unread(ans, cur.id);
+    var b = $("tab-resp");
+    b.textContent = n ? t("tab.respN", { n: n }) : t("tab.resp");
+    b.classList.toggle("has-new", un > 0);
+  }
+  function seeAnswers() {
+    if (!cur) return;
+    var r = C.markSeen(ans, cur.id, Date.now());
+    if (r.changed) { ans = r.data; persistAns(); respTab(); }
+  }
+
+  function copyText(text, btn) {
+    var done = function () { if (btn) { var l = btn.textContent; btn.textContent = t("sh.copied"); setTimeout(function () { btn.textContent = l; }, 1500); } };
+    try {
+      navigator.clipboard.writeText(text).then(done, function () { toast(t("sh.err.other")); });
+    } catch (e) { toast(t("sh.err.other")); }
+  }
+  function roField(labelText, value, rows) {
+    var lab = el("label", "fld");
+    lab.appendChild(el("span", "", labelText));
+    var inp = rows ? el("textarea") : el("input");
+    if (rows) inp.rows = rows; else inp.type = "text";
+    inp.readOnly = true;
+    inp.value = value;
+    inp.className = "mono";
+    inp.addEventListener("focus", function () { try { inp.select(); } catch (e) {} });
+    lab.appendChild(inp);
+    return lab;
+  }
+  function chip(text, cls, fn) {
+    var b = el("button", "chip" + (cls ? " " + cls : ""), text);
+    b.type = "button";
+    b.addEventListener("click", function () { fn(b); });
+    return b;
+  }
+  function localInput(ms) {
+    if (!ms) return "";
+    var d = new Date(ms), p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  function renderShare() {
+    var pane = $("pane-share");
+    if (!cur) return;
+    pane.textContent = "";
+    var x = cur.x;
+    if (!x) {
+      var c0 = el("div", "card");
+      c0.appendChild(el("p", "", t("sh.intro")));
+      c0.appendChild(el("p", "hint", t("sh.privacy")));
+      c0.appendChild(el("p", "hint warn", t("sh.warn")));
+      var bar0 = el("div", "bar end");
+      bar0.appendChild(chip(t("sh.publish"), "pri", publish));
+      c0.appendChild(bar0);
+      pane.appendChild(c0);
+      return;
+    }
+    var open = isOpen(x);
+    // state
+    var c1 = el("div", "card");
+    var st = el("p", "state " + (open ? "on" : "off"), t(open ? "sh.open" : "sh.closed"));
+    c1.appendChild(st);
+    if (x.rep && !open) c1.appendChild(el("p", "hint warn", t("sh.reported")));
+    if (open && x.close) c1.appendChild(el("p", "hint", t("sh.closesAt", { d: fmtTime(x.close) })));
+    if (C.fingerprint(cur) !== x.pubH) {
+      c1.appendChild(el("p", "hint warn", t("sh.changed")));
+      var bu = el("div", "bar end");
+      bu.appendChild(chip(t("sh.update"), "pri", publish));
+      c1.appendChild(bu);
+    }
+    var b1 = el("div", "bar end");
+    b1.appendChild(chip(t(open ? "sh.closeNow" : "sh.openNow"), open ? "" : "pri", function (b) { setOpen(!open, b); }));
+    c1.appendChild(b1);
+    var ca = el("label", "fld");
+    ca.appendChild(el("span", "", t("sh.closeAt")));
+    var dt = el("input");
+    dt.type = "datetime-local";
+    dt.value = localInput(x.close);
+    dt.addEventListener("change", function () {
+      var v = dt.value ? new Date(dt.value).getTime() : 0;
+      if (dt.value && !(v > 0)) return;
+      setCloseAt(v || 0);
+    });
+    ca.appendChild(dt);
+    c1.appendChild(ca);
+    c1.appendChild(el("p", "hint", t("sh.closeAtHint")));
+    pane.appendChild(c1);
+
+    // link, QR, embed
+    var url = S.link(x);
+    var c2 = el("div", "card");
+    c2.appendChild(roField(t("sh.link"), url));
+    var b2 = el("div", "bar end");
+    b2.appendChild(chip(t("sh.copy"), "pri", function (b) { copyText(url, b); }));
+    c2.appendChild(b2);
+    var qr = el("div", "qr-box");
+    c2.appendChild(el("h2", "sub", t("sh.qr")));
+    c2.appendChild(qr);
+    S.qrUrl(url).then(function (src) {
+      var img = el("img");
+      img.alt = t("sh.qr");
+      img.src = src;
+      qr.appendChild(img);
+      var a = el("a", "chip", t("sh.qrSave"));
+      a.href = src;
+      a.download = (cur && cur.title ? cur.title.replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 60) : "form") + " QR.svg";
+      qr.appendChild(a);
+    }, function () { qr.hidden = true; });
+    var code = S.embed(x, cur.title || t("f.untitled"));
+    c2.appendChild(roField(t("sh.embed"), code, 3));
+    c2.appendChild(el("p", "hint", t("sh.embedHint")));
+    var b3 = el("div", "bar end");
+    b3.appendChild(chip(t("sh.copy"), "", function (b) { copyText(code, b); }));
+    c2.appendChild(b3);
+    pane.appendChild(c2);
+
+    // who picks up, push
+    var c3 = el("div", "card");
+    var here = mine(cur);
+    c3.appendChild(el("p", "", t(here ? "sh.here" : "sh.elsewhere")));
+    var b4 = el("div", "bar end");
+    if (here) {
+      var last = S.lastCheck(cur.id);
+      c3.appendChild(el("p", "hint", last ? t("sh.last", { t: fmtTime(last) }) : t("sh.never")));
+      b4.appendChild(chip(t("sh.check"), "pri", function (b) {
+        var rec = cur;
+        if (rec.x && !rec.x.dev) { var x2 = Object.assign({}, rec.x, { dev: S.dev() }); commitX(rec.id, x2); }
+        withBusy(b, collectOne(cur, false)).then(function () {}, function () {});
+      }));
+      var pl = el("label", "opt");
+      var pc = el("input");
+      pc.type = "checkbox";
+      pc.checked = S.pushed(cur.id);
+      pl.appendChild(pc);
+      pl.appendChild(el("span", "", " " + t("sh.push")));
+      c3.appendChild(pl);
+      var ph = el("p", "hint", t("sh.pushHint"));
+      c3.appendChild(ph);
+      pc.addEventListener("change", function () {
+        var on = pc.checked, rec = cur;
+        if (on && !S.pushReady()) { pc.checked = false; ph.textContent = t("sh.pushOff"); ph.classList.add("warn"); return; }
+        pc.disabled = true;
+        S.pushOn(rec, on, { title: t("push.title"), body: t("push.body") }).then(function () { pc.disabled = false; }, function (e) {
+          pc.disabled = false;
+          pc.checked = !on;
+          if (e && e.code === "pushoff") { ph.textContent = t("sh.pushOff"); ph.classList.add("warn"); } else toast(shErr(e));
+        });
+      });
+    } else {
+      b4.appendChild(chip(t("sh.collectHere"), "", function () {
+        commitX(cur.id, Object.assign({}, cur.x, { dev: S.dev() }));
+        renderShare();
+        collectOne(cur, false)["catch"](function () {});
+      }));
+    }
+    c3.appendChild(b4);
+    pane.appendChild(c3);
+
+    var b5 = el("div", "bar end");
+    b5.appendChild(chip(t("sh.stop"), "danger", function () { openDlg($("stop-dlg")); }));
+    pane.appendChild(b5);
+  }
+
+  var respShown = 50;
+  function renderResp() {
+    var pane = $("pane-resp");
+    if (!cur) return;
+    pane.textContent = "";
+    var list = C.answersOf(ans, cur.id);
+    var seen = (ans.seen && ans.seen[cur.id]) || 0;
+    var head = el("div", "card");
+    head.appendChild(el("p", "state", list.length ? t(list.length === 1 ? "an.count1" : "an.count", { n: list.length }) : t(cur.x ? "an.noneShared" : "an.none")));
+    if (list.length) head.appendChild(el("p", "hint", t("an.soon")));
+    pane.appendChild(head);
+    var words = { yes: t("an.yes"), no: t("an.no"), other: function (v) { return t("an.other", { x: v }); } };
+    list.slice(0, respShown).forEach(function (r) {
+      var card = el("article", "card answer");
+      var top = el("div", "ans-top");
+      top.appendChild(el("span", "when", fmtTime(r.at)));
+      if (r.at > seen) top.appendChild(el("span", "badge", t("an.new")));
+      if (r.w) top.appendChild(el("span", "badge dim", t("an.wait")));
+      card.appendChild(top);
+      var dl = el("dl", "ans");
+      C.answerLines(cur, r.a, words).forEach(function (ln) {
+        dl.appendChild(el("dt", "", ln.label || t("ed.untitled")));
+        var dd = el("dd", ln.text ? "" : "dim", ln.text || t("an.empty"));
+        dl.appendChild(dd);
+      });
+      card.appendChild(dl);
+      pane.appendChild(card);
+    });
+    if (list.length > respShown) {
+      var more = el("div", "bar end");
+      more.appendChild(chip(t("an.more", { n: Math.min(50, list.length - respShown) }), "", function () { respShown += 50; renderResp(); }));
+      pane.appendChild(more);
+    }
   }
 
   // ---------- 7. Dialogs ----------
@@ -1006,9 +1480,11 @@
   }
 
   // ---------- 8. Toast, palette, wiring, boot ----------
-  var toastTimer = 0, toastAct = null;
-  function toast(text, action, fn) {
+  var toastTimer = 0, toastAct = null, toastExpire = null;
+  function toast(text, action, fn, onExpire) {
     clearTimeout(toastTimer);
+    if (toastExpire) { var ex = toastExpire; toastExpire = null; ex(); }
+    toastExpire = onExpire || null;
     $("toast-text").textContent = text;
     var b = $("toast-btn");
     b.hidden = !action;
@@ -1016,7 +1492,11 @@
     toastAct = fn || null;
     $("toast").classList.add("show");
     $("live").textContent = text;
-    toastTimer = setTimeout(function () { $("toast").classList.remove("show"); toastAct = null; }, action ? 8000 : 3000);
+    toastTimer = setTimeout(function () {
+      $("toast").classList.remove("show");
+      toastAct = null;
+      if (toastExpire) { var ex = toastExpire; toastExpire = null; ex(); }
+    }, action ? 8000 : 3000);
   }
 
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
@@ -1056,12 +1536,12 @@
     $("back-btn").addEventListener("click", function () { closeForm(); });
     $("search").addEventListener("input", renderList);
     $("add-btn").addEventListener("click", function () { openDlg($("type-dlg")); });
-    ["edit", "prev", "set"].forEach(function (k) {
+    TABS.forEach(function (k) {
       $("tab-" + k).addEventListener("click", function () { setTab(k); });
     });
     $("tabs").addEventListener("keydown", function (ev) {
       if (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft") return;
-      var order = ["edit", "prev", "set"], at = 0;
+      var order = TABS, at = 0;
       order.forEach(function (k, j) { if ($("tab-" + k).classList.contains("on")) at = j; });
       var nx = order[(at + (ev.key === "ArrowRight" ? 1 : order.length - 1)) % order.length];
       setTab(nx);
@@ -1072,11 +1552,22 @@
     $("s-thanks").addEventListener("input", function () { if (cur) setField("thanks", $("s-thanks").value); });
     $("s-note").addEventListener("input", function () { if (cur) setField("note", $("s-note").value); });
     $("s-prog").addEventListener("change", function () { if (cur) setField("prog", $("s-prog").checked ? 1 : 0); });
+    $("s-back").addEventListener("input", function () {
+      if (!cur) return;
+      var v = $("s-back").value.trim(), ok = !v || E.validBack(v);
+      $("s-back-hint").textContent = t(ok ? "set.backHint" : "set.backBad");
+      $("s-back-hint").classList.toggle("bad", !ok);
+      backDraft = ok ? "" : $("s-back").value;
+      if (ok) { if (v) cur.set.back = v; else delete cur.set.back; changed(false); }
+    });
+    $("s-once").addEventListener("change", function () { if (!cur) return; if ($("s-once").checked) cur.set.once = 1; else delete cur.set.once; changed(false); });
+    $("stop-yes").addEventListener("click", function () { closeDlg($("stop-dlg")); stopSharing(); });
     $("dup-btn").addEventListener("click", dupForm);
     $("del-btn").addEventListener("click", delForm);
     $("toast-btn").addEventListener("click", function () {
       var fn = toastAct;
       toastAct = null;
+      toastExpire = null;
       $("toast").classList.remove("show");
       if (fn) fn();
     });
@@ -1102,6 +1593,8 @@
 
   function boot() {
     load();
+    loadAns();
+    pruneAns();
     applyI18n();
     buildNewDialog();
     buildTypeDialog();
@@ -1111,6 +1604,10 @@
     watchPalette();
     renderList();
     window.__orosOpenAt = openTarget;
+    setTimeout(autoCollect, 1500);
+    setInterval(autoCollect, 60000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) autoCollect(); });
+    window.addEventListener("online", autoCollect);
     try {
       if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function") {
         var pending = window.parent.__orosTakeTarget("forms");

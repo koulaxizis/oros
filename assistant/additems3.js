@@ -823,8 +823,6 @@
     var rt = String(x.release_type);
     if (!has(PB_MT, rt)) return { err: w + "release_type must be single, ep, album or compilation." };
     if (Array.isArray(x.formats) && x.formats.length) return { err: w + "a music release has editions, not formats; give editions." };
-    if (x.release_plan === true) return { err: w + "release_plan is for books for now; leave it out for a music release." };
-    o.plan = false;
     o.fmts = [];
     o.mt = { k: PB_MT[rt] };
     var mx = [["record_label", "lbl", 120, "a label's name"], ["genre", "gen", 60, "a genre"], ["p_line", "pl", 200, "the \u2117 line"], ["c_line", "cl", 200, "the \u00a9 line"]];
@@ -1104,7 +1102,10 @@
                     return r;
                   }),
                   blurb: o.blurb, notes: o.notes };
-      if (o.plan) row.plan = C.makePlan(o.rel, [], function () { return newIdIn(now, taken); });
+      // a music release gets its own steps, named in the app's language when Publishing's feed is loaded
+      var PF = root.OrosPublishFeed, lg = root.document && root.document.documentElement && root.document.documentElement.lang;
+      if (o.plan) row.plan = C.makePlan(o.rel, [], function () { return newIdIn(now, taken); },
+        o.mt ? { music: true, name: PF && lg ? function (k) { return PF.stage(k, "", lg); } : null } : null);
       if (o.mt) row.mt = clone(o.mt);
       d = C.put(d, "titles", row, s);
       (o.trk || []).forEach(function (x, n) {

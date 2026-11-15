@@ -57,6 +57,16 @@ After a sale the receipt can also go to the customer without paper: `Share PDF` 
 
 Every sale is also an ordinary `Sale` movement, so stock, reports and sync work as with any sale. Two tills selling at the same time never lose a sale.
 
+#### Fairs, launches and markets
+`Events` in the till keeps a fair, a book launch or a market: its `Name`, the days (`From`, `To`), the `Stand's warehouse` (pick one, or let Stock make a new warehouse with the event's name), a `Price list` and the `Cash float per day`. Then:
+1. `Pack for the stand`: type how many of each product you take; one transfer moves them from the main warehouse to the stand.
+2. At the stand, pick the event at the top of the till: it uses the stand's warehouse and the event's price list, and every sale counts for the event. Two phones at the same stand can sell at once, even offline; they meet when they sync.
+3. At the end of each day open `Z report`: the `Cash float` is filled in from the event; type the `Cash counted` (or `Count…` note by note and coin by coin) to see what the drawer should hold and any difference, then `Close the day`.
+4. `Report` shows the whole event, all days together: sales, net, VAT, discounts, by payment, per day, and per title what went to the stand, what sold, what came back and what is left. Print it on the roll or open it in Spreadsheet.
+5. `Bring back` moves everything still at the stand back to the main warehouse in one transfer.
+
+Devices that still run an older orOS sell without events and see their sales without the event; update every phone you take to the stand.
+
 ### Stock count
 In a `Stock count` you type what you `Counted`. Stock saves the difference from what it expected, so a sale on another device at the same moment still counts.
 

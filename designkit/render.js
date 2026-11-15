@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — render.js (v1.1.0)
+// orOS designkit — render.js (v1.2.0)
 // Lays out every story of a document (threads, master pages, page
 // numbers, text wrap) and draws pages on a canvas: the editor view,
 // thumbnails and image exports all go through drawPage(), and the
@@ -448,8 +448,12 @@
         drawItem(ctx, doc, it, { lines: function (id) { var f = mframes[id]; return f && f.lines; }, getImage: opts.getImage, preview: true });
       });
     }
+    // opts.skipText(item) true: the frame is drawn without its text
+    // (a fixed-layout EPUB puts that text over the picture as text)
+    var skip = typeof opts.skipText === "function" ? opts.skipText : null;
     M.itemsOn(doc, page.id).forEach(function (it) {
-      drawItem(ctx, doc, it, { lines: function (id) { var f = L.frames[id]; return f && f.lines; }, getImage: opts.getImage, preview: opts.preview, missing: opts.missing });
+      var bare = skip && it.t === "text" && skip(it);
+      drawItem(ctx, doc, it, { lines: function (id) { var f = !bare && L.frames[id]; return f && f.lines; }, getImage: opts.getImage, preview: opts.preview, missing: opts.missing });
     });
   }
 
@@ -473,7 +477,7 @@
     ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.setTransform(scale, 0, 0, scale, b * scale, b * scale);
     if (!opts.bleed) { ctx.beginPath(); ctx.rect(0, 0, s.w, s.h); ctx.clip(); }
-    drawPage(ctx, doc, page, L, { getImage: opts.getImage, preview: true });
+    drawPage(ctx, doc, page, L, { getImage: opts.getImage, preview: true, skipText: opts.skipText });
     return cv;
   }
 
