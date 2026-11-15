@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 6.92.00
+- **Lay out diagrams in Whiteboard.** Select shapes joined by arrows and press `Lay out as a diagram`: a tree for org charts or a flow for processes, top to bottom or left to right (`More` › `Lay out the board…` for everything). `Align and space` lines objects up by an edge or centre and spaces them evenly. One Undo puts it back.
+
 ## Version 6.91.00
 - **Kanban plans leave the Timeline.** `Export timeline (PDF)` prints the Gantt chart with milestones, arrows and the critical path. Start dates show in [Calendar](app:calendar) and Today, the Assistant can set start dates, milestones and dependencies, and start dates come along when you import from Trello or Jira. See [Kanban](app:kanban).
 

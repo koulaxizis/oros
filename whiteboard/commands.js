@@ -61,6 +61,8 @@
     style: { kind: "doc", args: sel(plus(plus(LOOK, LINE), { sw: n(1, 40) })) },
     move: { kind: "doc", args: sel(plus(POS, { dx: n(-50000, 50000), dy: n(-50000, 50000), order: oneOf(["", "front", "back"]) })) },
     arrange: { kind: "doc", args: sel({ n: i(1, 50), gap: n(0, 2000), x: POS.x, y: POS.y }) },
+    layout: { kind: "doc", args: sel({ kind: oneOf([""].concat(C.LAYOUT_KINDS)), dir: oneOf(C.LAYOUT_DIRS), gap: n(0, 2000) }) },
+    align: { kind: "doc", args: sel({ edge: oneOf([""].concat(C.ALIGN_EDGES)), dist: oneOf([""].concat(C.SPREAD_DIRS)) }) },
     add: { kind: "doc", args: plus(plus({ what: { t: "enum", v: ["note", "text", "shape", "frame"], def: "note" }, text: { t: "str", max: 5000 } }, POS), LOOK) },
     connect: { kind: "doc", args: plus({ from: { t: "str", max: 200, req: 1 }, to: { t: "str", max: 200, req: 1 }, text: { t: "str", max: 120 }, c: { t: "color" } }, LINE) },
     remove: { kind: "doc", args: sel({}) },
@@ -80,6 +82,8 @@
     "style: for the picked objects c (colour), shape (shapes: a basic one " + C.SHAPES.join("|") + ", or a diagram symbol " + C.SYM_IDS.join("|") + "), fill " + C.FILLS.join("|") + " (shapes), size (8-200, font size of free text), ends " + C.HEADS.join("|") + " (arrow heads), dash on|off (dashed arrows), route " + C.ROUTES.join("|") + " (an arrow's line: elbow goes in right angles around the shapes in between), starthead / endhead " + C.HEAD_STYLES.join("|") + " (the head at the start / end of an arrow: tri = UML inherits, dia = made of, odia = has), sw (1-40, pen width)",
     "move: the picked objects go by dx, dy, or to x, y (the first picked one; the others keep their place next to it); w, h resize notes, texts, shapes, pictures, frames and drawings; order front|back brings them to the front or sends them back",
     "arrange: lay the picked notes, shapes, texts and pictures out in a grid of n columns (default: about square) with gap pixels between them (default 24), starting at x, y (default: where the first one is)",
+    "layout: lay the picked notes, texts and shapes (default: all of them on the board) out along the arrows that join them, as a diagram: kind tree (each under the one its arrow comes from, parents centred over their children: org charts, hierarchies) or flow (in layers by the longest way in, fewer crossings: flowcharts, processes) or \"\" (tree when each has at most one arrow coming in); dir v (top to bottom, default) or h (left to right); gap pixels between neighbours (default 40); frames, pictures and drawings stay put",
+    "align: line the picked objects up by their edge l|c|r|t|m|b (left, centre, right, top, middle, bottom of the box round all of them), or spread them evenly with dist h|v (across | down: the same gap between each two, at least 3 objects)",
     "add: a new object (what note|text|shape|frame) with text (a frame's name), at x, y (default: to the right of everything on the board), size w, h (a diagram symbol has its own default size), colour c, shape, fill, size (free text); a UML class or interface gets its compartments from text: the name, then a line of -- before the attributes and another before the methods",
     "connect: an arrow from the object `from` to the object `to` (an id, or words of its text), with text (its label), c, ends, dash, route, starthead, endhead",
     "remove: delete the picked objects (needs ids, what, has or frame)",
@@ -115,6 +119,8 @@
     if (st.op === "remove" && !picks(st)) return { err: "remove: pick the objects with ids, what, has or frame" };
     if (st.op === "move" && !given(st.dx) && !given(st.dy) && !given(st.x) && !given(st.y) && !given(st.w) && !given(st.h) && !st.order) return { err: "move: give dx, dy, x, y, w, h or order" };
     if (st.op === "style" && !st.c && !st.shape && !st.fill && !given(st.size) && !st.ends && !st.dash && !st.route && !st.starthead && !st.endhead && !given(st.sw)) return { err: "style: give c, shape, fill, size, ends, dash, route, starthead, endhead or sw" };
+    if (st.op === "align" && !st.edge && !st.dist) return { err: "align: give edge or dist" };
+    if (st.op === "align" && !picks(st)) return { err: "align: pick the objects with ids, what, has or frame" };
     if (st.op === "add" && st.what !== "shape" && !given(st.text)) return { err: "add: a " + st.what + " needs text" };
     return { step: st };
   }
@@ -344,6 +350,14 @@
           var nx = x0 + (k % cols) * (cw + gap), ny = ys[Math.floor(k / cols)];
           rows[o.id] = C.moved(o, Math.round((nx - o.x) * 100) / 100, Math.round((ny - o.y) * 100) / 100);
         });
+        break;
+      }
+      case "layout":
+      case "align": {
+        var ids2 = picked.map(function (o) { return o.id; });
+        var moved = st.op === "layout" ? C.layout(list(w), ids2, { kind: st.kind, dir: st.dir, gap: given(st.gap) ? st.gap : undefined })
+          : C.align(list(w), ids2, st.edge, st.dist);
+        Object.keys(moved).forEach(function (id) { rows[id] = moved[id]; });
         break;
       }
     }
