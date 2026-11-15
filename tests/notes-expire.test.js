@@ -81,7 +81,9 @@ test("notes: a conflict copy of a self-deleting page deletes itself too", () => 
 
 test("notes and the shell sweep: wiring", () => {
   assert.match(NS, /sweepExpired\(\);\s+\/\/ STRICT-5/);
-  assert.match(read("notes/index.html"), /<script src="expire\.js\?v=[^"]+"><\/script>\s*<script src="notes\.js/);
+  assert.doesNotMatch(read("notes/index.html"), /expire\.js/, "loaded on first need (first-open budget)");
+  assert.match(NS, /sc\.src = "expire\.js";/);
+  assert.match(NS, /if \(!anyExp\(\)\) return;/);
   const sh = read("shell.js");
   assert.match(sh, /function notesExpireSweep\(\)/);
   assert.match(sh, /if \(osResetting \|\| appLive\("notes"\)\) return;/);

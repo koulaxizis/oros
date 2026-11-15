@@ -1590,9 +1590,28 @@
   }
 
   // ---------- STRICT-5: pages that delete themselves (expire.js) ----------
-  function expApi() { return window.orosNotesExpire || null; }
+  // expire.js is loaded on first need (first-open budget): when a page
+  // carries `exp`, or when the menu is opened.
+  var expLoading = null;
+  function expApi(then) {
+    if (window.orosNotesExpire) return window.orosNotesExpire;
+    if (then) {
+      if (!expLoading) {
+        expLoading = [];
+        var sc = document.createElement("script");
+        sc.src = "expire.js";
+        sc.onload = function () { var q = expLoading; expLoading = null; q.forEach(function (f) { try { f(); } catch (e) {} }); };
+        sc.onerror = function () { expLoading = null; };
+        document.head.appendChild(sc);
+      }
+      expLoading.push(then);
+    }
+    return null;
+  }
+  function anyExp() { return state.pages.some(function (p) { return expValid(p.exp); }); }
   function sweepExpired() {
-    var E = expApi();
+    if (!anyExp()) return;
+    var E = expApi(sweepExpired);
     if (!E) return;
     var ids = E.dueIds(state.pages, Date.now());
     ids.forEach(function (id) { if (pageById(id)) doDeletePage(id, true); });
@@ -1609,7 +1628,7 @@
     notifyTransient(t(ms ? "exp.set" : "exp.off"));
   }
   function openExpMenu(page, x, y) {
-    var E = expApi();
+    var E = expApi(function () { openExpMenu(page, x, y); });
     if (!E) return;
     closeMenus();
     var menu = document.createElement("div");
@@ -1637,8 +1656,8 @@
   }
   function renderExp(page) {
     var old = document.getElementById("page-exp");
-    var E = expApi();
-    if (!page || !expValid(page.exp) || !E) { if (old) old.remove(); return; }
+    var E = page && expValid(page.exp) ? expApi(function () { renderExp(pageById(prefs.current)); }) : null;
+    if (!page || !expValid(page.exp) || !E) { if (old && !(page && expValid(page.exp) && expLoading)) old.remove(); return; }
     var l = E.left(page.exp, Date.now());
     var txt = t("exp.left." + l.unit).replace("{n}", l.n);
     if (old && old.textContent === txt) return;
