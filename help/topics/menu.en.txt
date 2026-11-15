@@ -27,6 +27,16 @@ If nothing matches, you'll see `No matching apps`.
 
 You can also search from your browser's address bar. Add a site search (custom search engine) in your browser settings with your orOS address followed by `?search=%s`; orOS then opens with your words already in this box.
 
+## Overview
+[[Ctrl+Alt+Shift+E]] opens the overview: one screen with everything you need to find your way.
+
+- **Search** at the top. Start typing and you go straight to the menu's search, with the same results: apps, commands and your data.
+- **Open apps**: the app in front and, with multitasking on, the ones waiting in the background. Click one to go back to it, or × to close it. On wide screens you can also put one beside the app in front.
+- **Recent files**: the last files you opened, saved or downloaded in [Files](app:files) on this device. Click one to open it in Files. During sensitive work they stay hidden.
+- **System**: how many of this device's places for open apps are in use, how much storage orOS uses, and whether sync is up to date or has files waiting. `Details in Settings › Device` opens the full picture.
+
+[[Esc]] closes it. In `Settings › System › Overview` you can also open it by pushing the mouse into the top-left corner, or with the Super (Windows) key alone; both are off at first and apply to this device only.
+
 ## Commands
 Type what you want to do, in English or Greek, and the first row of the search shows the action. Press [[Enter]] or tap it. Nothing is saved yet: the app opens with the form filled in, and you check it and press `Save`.
 - `dentist tomorrow 10`, `meeting Friday 3pm at the office`: a new event in [Calendar](app:calendar). A line with a day and a time is enough.

@@ -82,6 +82,9 @@ What it doesn't do: the password keeps others away from your orOS on the screen,
 ### Multitasking
 `System` also has `Multitasking`, for this device only: on by default on computers, off on phones and tablets. With `Keep apps open when you leave them` on, an app you leave (with the menu button, the menu or a link from another app) stays open in the background and comes back exactly as you left it, half-typed text included. Music, Radio and Podcasts play on as always. How many stay open depends on your device's memory (the card says how many); heavy apps such as Atelier, Maps and Photo Lab count as two, and when there is no room the app you used longest ago closes. Mail, Calendar, Passwords, Settings and apps that use the camera or microphone close when you leave them, as before. Changing the language closes the ones in the background. Turning the switch off closes them all at once.
 
+### Overview
+`System` also has `Overview`, for this device only. [[Ctrl+Alt+Shift+E]] always opens the overview (search, open apps, recent files and how the system is doing); here you can add two more ways: `Open it by pushing the mouse into the top-left corner` and `Open it by pressing the Super (Windows) key alone`. Both are off at first. The Super key suits orOS USB and Linux computers where the system does not use it; on Windows it also opens Start. See [The menu](help:t/menu#overview).
+
 ### This computer
 In orOS Portable and in the orOS apps for Windows and Linux, `System` has `This computer`, for this computer only: `Show this computer's files in orOS` adds This computer to [Files](help:a/files) (your home folder and the computer's disks) and lets every app open and save there. orOS Portable asks once on each computer; the orOS apps have it on from the start. Nothing on the computer is synced. On the orOS USB stick the files always show, so the switch is not there.
 
@@ -91,6 +94,7 @@ On a screen at least 1024 pixels wide you can put two apps side by side. In the 
 
 ### Device
 `Device` (it used to be the Device Info app) shows what orOS sees about this device. It only reads; it changes nothing and sends nothing. The cards fill in by themselves when you open the section; tap or click a card's title to fold or unfold it. The circular arrow (`Refresh`, or [[R]]) reads everything again, and so does coming back to orOS.
+- `Running now`: the apps open at this moment (in front, beside, or how long ago you left them) and how many of this device's places for open apps each takes, plus the device's memory and, in Chromium browsers, roughly how much orOS uses. `Close` closes one app, the same as × in Open apps; it is the only thing in this section that changes anything. The `Sync` card also shows files waiting to upload, the last file sync and apps waiting to merge. The [overview](help:t/menu#overview) shows a short version.
 - `Storage`: how much space orOS uses, split into `App data (local storage)`, `Databases (Files, wallpaper)` and `Offline copies and caches`, with a bar against the usual browser limit. A warning appears when local storage is almost full.
 - `Space per app`: local storage per app, biggest first. Tap or click an app to open it. `Show all` lists every app.
 - `Battery`: level, whether it's charging, and the time to full or empty. Safari and Firefox never give battery information. Brave always fakes a full, charging battery, so orOS shows no number there; when another browser reports exactly "100% and charging" before anything changes, orOS warns that it may be a placeholder.
