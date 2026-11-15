@@ -322,6 +322,12 @@
                 isbn: /^\d{13}$/.test(r.isbn || "") ? r.isbn : "", q: num(r.q, -1e7, 1e7, 3),
                 base: oneOf(r.base, ROY_BASES, "list"), u: num(r.u, 0, 1e9, 2), b: cents(r.b),
                 pct: num(r.pct, 0, 100, 2), e: cents(r.e) };
+      // a row from a distributor's report (wave M4): what came in, fixed,
+      // and the track's ISRC or the release's UPC/EAN
+      if (typeof r.fb === "number" && isFinite(r.fb)) o.fb = Math.max(-1e11, Math.min(1e11, Math.round(r.fb)));
+      var ri = parseIsrc(typeof r.isrc === "string" ? r.isrc : ""), ru = parseUpc(typeof r.upc === "string" ? r.upc : "");
+      if (ri.ok) o.isrc = ri.isrc;
+      if (ru.ok) o.upc = ru.upc;
       return o.t ? o : null;
     }).filter(Boolean);
     var rec = (Array.isArray(raw.rec) ? raw.rec : []).slice(0, MAX_STMT_ROWS).map(function (r) {

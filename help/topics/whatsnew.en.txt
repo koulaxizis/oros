@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.03.00
+- **Publishing: your distributor's sales report becomes royalty statements.** In Royalties, `Import sales report…` reads the report you download from DistroKid (Bank › See Excel version) as it is, and any other CSV, TSV or spreadsheet after you choose its columns once. Each line finds its track by ISRC, else its release by UPC/EAN. Tracks with master ownership pay their owners, the others the release's royalty terms. One statement per person and currency, nothing converted; lines that match nothing are listed, and you can link one to a track. The file stays on your device and no formula in it ever runs.
+
 ## Version 7.02.00
 - **Your font for all of orOS.** On a font's page in Settings › Fonts, `Use for orOS` makes it the font of the menus, buttons and apps on this device, instead of Nunito, for example a font that is easier for you to read. Letters it does not have stay in Nunito, and documents keep their own fonts. Accessibility shows the font in use and takes you back to Nunito.
 - **Where a font is used.** `Find where it's used` on a font's page lists the Layout, Atelier and Writer documents that use it, each with Open, and it looks by itself before you remove a font.
