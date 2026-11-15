@@ -913,6 +913,7 @@
       });
       body.appendChild(s);
     }
+    if (AX.tpOf(it) && ED.vec && ED.vec.tpSet) { body.appendChild(tpSection(it)); return; }
     var s2 = sec(t("fx.curve"));
     s2.appendChild(slider(t("fx.curve"), -100, 100, 1, it.ax.cv || 0, function (v) {
       edit(function (x) {
@@ -1029,7 +1030,7 @@
           var n = AT.parseLen(v);
           if (n === null || n < 1) return;
           edit(function (x) {
-            if (x.ax.k === "text" && !x.ax.cv) { x.w = n; return; }
+            if (x.ax.k === "text" && !AX.isCurved(x)) { x.w = n; return; }
             if (x.ax.k === "icon" || x.ax.k === "text") { var k = n / x.w; x.h *= k; if (x.ax.k === "text") x.ax.size *= k; }
             x.w = n;
             ED.coverClamp(x);
@@ -1096,6 +1097,10 @@
       if (k !== "shape") bar.appendChild(sep());
       bar.appendChild(tool("ops", PEs("pe.ops"), opsMenu));
     }
+    if (ED.vec && ED.vec.canTextPath && ED.vec.canTextPath(list)) {
+      bar.appendChild(sep());
+      bar.appendChild(tool("textpath", PEs("pe.textPath"), function () { ED.vec.textPath(); }));
+    }
     bar.appendChild(sep());
     bar.appendChild(tool("position", t("ctx.position"), function () { openView("position"); }, view === "position"));
     bar.appendChild(tool("op", t("ctx.op"), opacityPop));
@@ -1113,6 +1118,16 @@
     AT.menu(anchor, ["union", "subtract", "intersect", "exclude"].map(function (kind) {
       return { label: PEs("pe." + kind), fn: function () { ED.vec.combine(kind); } };
     }));
+  }
+  // text on a path (wave V3): where it starts, which side, release
+  function tpSection(it) {
+    var tp = AX.tpOf(it), s = sec(PEs("pe.textPath"));
+    s.appendChild(slider(PEs("pe.tpStart"), 0, 100, 0.5, tp.o, function (v) { ED.vec.tpSet(it.id, { o: v }); }, function (v) { return Math.round(v) + "%"; }));
+    var row = el("div", "dlg-actions");
+    row.appendChild(btn("btn", PEs("pe.tpFlip"), function () { ED.vec.tpSet(it.id, { s: tp.s === -1 ? 1 : -1 }); }));
+    row.appendChild(btn("btn", PEs("pe.tpOff"), function () { ED.vec.tpOff(it.id); }));
+    s.appendChild(row);
+    return s;
   }
   function outlineBtn(m, it, close) {
     if (!ED.vec || !ED.vec.canOutline || !ED.vec.canOutline(it)) return;
@@ -1225,7 +1240,7 @@
     inp.type = "text"; inp.inputMode = "decimal"; inp.value = String(Math.round(a.size * 10) / 10);
     inp.setAttribute("aria-label", t("ctx.size")); inp.title = t("ctx.size");
     var plus = AT.iconBtn("plus", t("ctx.size"), "ctx-btn sm");
-    function setSize(v) { if (v > 0) edit(function (x) { x.ax.size = Math.min(2000, Math.max(2, v)); if (x.ax.cv) x.w = AX.curveLayout(M.normItem(x)).w; }); }
+    function setSize(v) { if (v > 0) edit(function (x) { x.ax.size = Math.min(2000, Math.max(2, v)); if (x.ax.cv && !AX.tpOf(x)) x.w = AX.curveLayout(M.normItem(x)).w; }); }
     minus.addEventListener("click", function () { setSize(Math.round(a.size / 1.1)); });
     plus.addEventListener("click", function () { setSize(Math.round(a.size * 1.1)); });
     inp.addEventListener("change", function () { var v = parseFloat(inp.value.replace(",", ".")); inp.blur(); setSize(v); });
@@ -1242,10 +1257,11 @@
     bar.appendChild(tool("spacing", t("ctx.spacing"), function (b) {
       AT.popover(b, function (m) {
         m.appendChild(slider(t("ctx.lh"), 70, 300, 5, a.lh || 120, function (v) { edit(function (x) { x.ax.lh = v; }); }, function (v) { return (v / 100).toFixed(2); }));
-        m.appendChild(slider(t("ctx.tr"), -200, 1000, 10, a.tr || 0, function (v) { edit(function (x) { x.ax.tr = v; if (x.ax.cv) x.w = AX.curveLayout(M.normItem(x)).w; }); }));
+        m.appendChild(slider(t("ctx.tr"), -200, 1000, 10, a.tr || 0, function (v) { edit(function (x) { x.ax.tr = v; if (x.ax.cv && !AX.tpOf(x)) x.w = AX.curveLayout(M.normItem(x)).w; }); }));
       });
     }));
     bar.appendChild(btn("ctx-txt" + (view === "effects" ? " on" : ""), t("ctx.effects"), function () { openView("effects"); }));
+    if (AX.tpOf(it)) bar.appendChild(tool("textpath", PEs("pe.textPath"), function () { openView("effects"); }, view === "effects"));
     bar.appendChild(tool("edit", t("ctx.edit"), function () { ED.enterText(it.id); }));
     if (AT.ai) bar.appendChild(tool("ai", t("ai.menu"), function (b) { AT.ai.textMenu(b, it); }));
   }

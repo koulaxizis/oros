@@ -1277,6 +1277,7 @@
     if (items.length === 1 && items[0].t === "img") list.push({ label: items[0].a ? t("props.replace") : t("props.place"), fn: function () { LY.io.placeImage(items[0].id); } });
     if (items.length === 1 && ED.vec && ED.vec.canEdit(items[0])) list.push({ label: window.orosDK.pathedit.str("pe.edit"), fn: function () { ED.vec.edit(items[0].id); } });
     if (items.length === 1 && ED.vec && ED.vec.canOutline(items[0])) list.push({ label: window.orosDK.pathedit.str("pe.outline"), fn: function () { ED.vec.outline(items[0].id); } });
+    if (ED.vec && ED.vec.canTextPath && ED.vec.canTextPath(items)) list.push({ label: window.orosDK.pathedit.str("pe.textPath"), fn: function () { ED.vec.textPath(); } });
     if (ED.vec && ED.vec.canCombine(items)) ["union", "subtract", "intersect", "exclude"].forEach(function (k) {
       list.push({ label: window.orosDK.pathedit.str("pe." + k), fn: function () { ED.vec.combine(k); } });
     });

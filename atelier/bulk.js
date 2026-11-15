@@ -108,7 +108,7 @@
       if (ax.k !== "text" || !/\{[^{}\n]{1,40}\}/.test(ax.tx || "")) return;
       var h0 = it.h, size0 = ax.size;
       ax.tx = fillText(ax.tx, vals);
-      if (!textH || ax.cv) return;
+      if (!textH || ax.cv || (it.ext && it.ext.tp)) return;
       var h = textH(it);
       if (h > h0 + 0.5 && size0) {
         var min = size0 * MIN_FIT;

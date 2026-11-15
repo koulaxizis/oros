@@ -12,6 +12,10 @@
 // Wave V2 (designkit/boolean.js): .canCombine(items), .combine(kind)
 // makes one path of the picked shapes (the back one's look and place);
 // .canOutline(it), .outline(id) turns a stroke into a filled path.
+// Wave V3 (text on a path, LY-TP in designkit/render.js):
+// .canTextPath(items), .textPath() lays the picked text frame's line
+// along the picked shape's or line's outline (the frame takes the
+// outline's box, the shape stays); .tpSet(id, { o, s }), .tpOff(id).
 // editor.js hands it the pointer, keys and the overlay while active.
 // ============================================================
 (function () {
@@ -245,6 +249,80 @@
       if (made) { var mid = made.id; setTimeout(function () { ED.select([mid]); }, 0); LY.toast(PE.str("pe.outline")); }
     });
   }
+  // ---------- Wave V3: text on a path ----------
+  var EXT_ROOM = 8000;
+  function pairOf(items) {
+    if (!items || items.length !== 2 || items[0].pg !== items[1].pg) return null;
+    var tx = items[0].t === "text" ? items[0] : items[1].t === "text" ? items[1] : null;
+    var sh = tx === items[0] ? items[1] : items[0];
+    if (!tx || tx.lock || !editable(sh)) return null;
+    return { text: tx, path: sh };
+  }
+  function canTextPath(items) { return !!pairOf(items); }
+  function topOf(cmds, w) {
+    var wk = V.walker(cmds);
+    if (!wk) return 0;
+    var best = 0, by = Infinity, bx = Infinity;
+    for (var i = 0; i < 400; i++) {
+      var q = wk.at(wk.len * i / 400), dx = Math.abs(q[0] - w / 2);
+      if (q[1] < by - 0.5 || (q[1] < by + 0.5 && dx < bx)) { by = Math.min(by, q[1]); bx = dx; best = i / 4; }
+    }
+    return best;
+  }
+  function setTp(it, v) {
+    var x = {};
+    if (it.ext) Object.keys(it.ext).forEach(function (k) { if (k !== "tp") x[k] = it.ext[k]; });
+    if (v && v.d) {
+      var tp = { d: v.d, o: Math.round(Math.max(0, Math.min(100, +v.o || 0)) * 100) / 100 };
+      if (v.s === -1) tp.s = -1;
+      x.tp = tp;
+    }
+    if (Object.keys(x).length) it.ext = x; else delete it.ext;
+  }
+  function textPath() {
+    var pr = pairOf(ED.selItems());
+    if (!pr) { LY.toast(PE.str("pe.tpNeed")); return; }
+    if (S) S.cancel();
+    var ef = editFrame(pr.path), paths = ef.cmds ? V.fromCmds(ef.cmds) : [];
+    if (!paths.length) { LY.toast(PE.str("pe.opFail")); return; }
+    var r = V.reframe(ef.fr, [paths[0]]), cmds = V.scaled(r.unit, r.w, r.h), wk = V.walker(cmds);
+    if (!wk) { LY.toast(PE.str("pe.opFail")); return; }
+    var tid = pr.text.id, ok = false;
+    LY.op(function (doc, now) {
+      var it = M.find(doc.items, tid);
+      if (!it) return false;
+      var rest = {};
+      if (it.ext) Object.keys(it.ext).forEach(function (k) { if (k !== "tp") rest[k] = it.ext[k]; });
+      var dd = V.pack(r.unit, EXT_ROOM - JSON.stringify(rest).length - 40);
+      if (!dd) return false;
+      it.x = r.x; it.y = r.y; it.w = r.w; it.h = r.h; it.rot = r.rot;
+      setTp(it, { d: dd, o: wk.closed ? topOf(cmds, r.w) : 0, s: 1 });
+      M.touch(it, now);
+      ok = true;
+    });
+    if (ok) { setTimeout(function () { ED.select([tid]); }, 0); LY.toast(PE.str("pe.textPath")); }
+    else LY.toast(PE.str("pe.tooBig"));
+  }
+  function tpSet(id, v) {
+    LY.op(function (doc, now) {
+      var it = M.find(doc.items, id), tp = it && it.ext && it.ext.tp;
+      if (!tp) return false;
+      setTp(it, { d: tp.d, o: v.o !== undefined ? v.o : tp.o, s: v.s !== undefined ? v.s : tp.s });
+      M.touch(it, now);
+    });
+  }
+  function tpOff(id) {
+    LY.op(function (doc, now) {
+      var it = M.find(doc.items, id);
+      if (!it || !it.ext || !it.ext.tp) return false;
+      setTp(it, null);
+      M.touch(it, now);
+    });
+  }
+  VEC.canTextPath = canTextPath;
+  VEC.textPath = textPath;
+  VEC.tpSet = tpSet;
+  VEC.tpOff = tpOff;
   VEC.canCombine = canCombine;
   VEC.combine = combine;
   VEC.canOutline = canOutline;

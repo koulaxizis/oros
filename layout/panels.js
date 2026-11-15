@@ -239,6 +239,7 @@
     s2.appendChild(check(t("props.dash"), common(items, "dash"), function (v) { editSel(function (it) { it.dash = v; }); }));
     var VC = LY.ed.vec, PEs = window.orosDK.pathedit.str;
     if (VC && one && VC.canOutline(one)) { var ro = row(); ro.appendChild(btn(PEs("pe.outline"), function () { VC.outline(one.id); }, "small")); s2.appendChild(ro); }
+    if (VC && VC.canTextPath && VC.canTextPath(items)) { var rt = row(); rt.appendChild(btn(PEs("pe.textPath"), function () { VC.textPath(); }, "small")); s2.appendChild(rt); }
     if (VC && VC.canCombine(items)) {
       s2.appendChild(el("span", "fld-lbl", PEs("pe.ops")));
       var rc = row();
@@ -395,6 +396,15 @@
     s.appendChild(el("span", "fld-lbl", t("props.va")));
     s.appendChild(seg([["t", t("props.va.t")], ["c", t("props.va.c")], ["b", t("props.va.b")]], it.va, function (v) { editSel(function (x) { if (x.t !== "text") return false; x.va = v; }); }));
     if (ch.length > 1) s.appendChild(el("p", "hint", t("props.chain", { i: i + 1, n: ch.length })));
+    var tp = it.ext && it.ext.tp, VC = LY.ed.vec, PEs = window.orosDK.pathedit.str;
+    if (tp && VC && VC.tpSet) {                     // text on a path (wave V3)
+      s.appendChild(el("span", "fld-lbl", PEs("pe.textPath")));
+      s.appendChild(field(PEs("pe.tpStart") + " (%)", numInput(tp.o || 0, function (v) { VC.tpSet(it.id, { o: v }); }, { unit: "raw", min: 0, max: 100, step: 1 })));
+      var rp = row();
+      rp.appendChild(btn(PEs("pe.tpFlip"), function () { VC.tpSet(it.id, { s: tp.s === -1 ? 1 : -1 }); }, "small"));
+      rp.appendChild(btn(PEs("pe.tpOff"), function () { VC.tpOff(it.id); }, "small"));
+      s.appendChild(rp);
+    }
     var isMaster = !!M.find(doc.masters, it.pg);
     if (!isMaster) {
       var r = el("div", "pn-col");

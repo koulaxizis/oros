@@ -247,7 +247,7 @@
   function textSvg(it) {
     var ax = it.ax, size = ax.size || AX.TEXT_DEF.size, key = AX.fontKeyOf(ax);
     var passes = FX.textPasses(ax.tfx, size, ax.fc || "#000000");
-    var curve = ax.cv ? AX.curveLayout(it) : null, lay = curve ? null : AX.textLayout(it);
+    var curve = AX.isCurved(it) ? AX.curveLayout(it) : null, lay = curve ? null : AX.textLayout(it);
     var asc = T.ascent(key, size), desc = T.descent(key, size);
     var readable = -1;
     passes.forEach(function (p, i) { if (p.mode !== "box" && !(p.blur > 0)) readable = i; });

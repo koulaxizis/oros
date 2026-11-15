@@ -42,7 +42,10 @@
       "pe.ops": "Combine shapes", "pe.union": "Unite", "pe.subtract": "Subtract front",
       "pe.intersect": "Intersect", "pe.exclude": "Exclude overlap", "pe.outline": "Outline stroke",
       "pe.opNone": "Nothing is left of these shapes.", "pe.opFail": "These shapes could not be combined.",
-      "pe.opLoad": "The shape tools could not load. Try again when you are online."
+      "pe.opLoad": "The shape tools could not load. Try again when you are online.",
+      "pe.textPath": "Text on path", "pe.tpStart": "Start along the path", "pe.tpFlip": "Flip side",
+      "pe.tpOff": "Release from path", "pe.tpNeed": "Pick one text and one shape or line.",
+      "pe.tpOver": "Part of the text does not fit on the path."
     },
     el: {
       "pe.pen": "Πένα", "pe.edit": "Επεξεργασία σημείων", "pe.done": "Τέλος", "pe.cancel": "Ακύρωση",
@@ -57,7 +60,10 @@
       "pe.ops": "Συνδυασμός σχημάτων", "pe.union": "Συνένωση", "pe.subtract": "Αφαίρεση μπροστινών",
       "pe.intersect": "Τομή", "pe.exclude": "Αποκλεισμός επικάλυψης", "pe.outline": "Πινελιά σε σχήμα",
       "pe.opNone": "Δεν μένει τίποτα από αυτά τα σχήματα.", "pe.opFail": "Αυτά τα σχήματα δεν μπόρεσαν να συνδυαστούν.",
-      "pe.opLoad": "Τα εργαλεία σχημάτων δεν φόρτωσαν. Δοκίμασε ξανά όταν έχεις σύνδεση."
+      "pe.opLoad": "Τα εργαλεία σχημάτων δεν φόρτωσαν. Δοκίμασε ξανά όταν έχεις σύνδεση.",
+      "pe.textPath": "Κείμενο σε διαδρομή", "pe.tpStart": "Αρχή πάνω στη διαδρομή", "pe.tpFlip": "Αλλαγή πλευράς",
+      "pe.tpOff": "Αποδέσμευση από τη διαδρομή", "pe.tpNeed": "Διάλεξε ένα κείμενο και ένα σχήμα ή μια γραμμή.",
+      "pe.tpOver": "Μέρος του κειμένου δεν χωράει στη διαδρομή."
     }
   };
   function table() {
@@ -77,6 +83,7 @@
     intersect: '<rect x="3" y="3" width="12" height="12" rx="1" stroke-dasharray="2 2"/><circle cx="15" cy="15" r="6" stroke-dasharray="2 2"/><path d="M15 9a6 6 0 0 0-5.7 6H15z" fill="currentColor"/>',
     exclude: '<rect x="3" y="3" width="12" height="12" rx="1"/><circle cx="15" cy="15" r="6"/><path d="M9.5 15H15V9.5" stroke-width="3" opacity=".35"/>',
     outline: '<path d="M4 18L18 4"/><path d="M7 21l14-14-3-3L4 18z"/>',
+    textpath: '<path d="M3 19c4-10 14-10 18 0" stroke-dasharray="2 2"/><path d="M7 11l-1-4h6M9 7v6M14 6l2 6 2-6"/>',
     corner: '<path d="M5 19L12 5l7 14"/><rect x="10" y="3" width="4" height="4"/>',
     smooth: '<path d="M4 18c3-12 13-12 16 0"/><path d="M5 7h14"/><circle cx="12" cy="7" r="2"/>',
     sym: '<path d="M4 18c3-12 13-12 16 0"/><path d="M6 7h12"/><circle cx="6" cy="7" r="1.5"/><circle cx="18" cy="7" r="1.5"/><circle cx="12" cy="7" r="2"/>',

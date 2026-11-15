@@ -579,6 +579,7 @@
     pen: '<path d="M12 19l7-7 3 3-7 7z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/><path d="M2 2l7.6 7.6"/><circle cx="11" cy="11" r="2"/>',
     ops: '<rect x="3" y="3" width="12" height="12" rx="1"/><circle cx="15" cy="15" r="6"/>',
     outline: '<path d="M7 21l14-14-3-3L4 18z"/><path d="M4 18l3 3"/>',
+    textpath: '<path d="M3 19c4-10 14-10 18 0" stroke-dasharray="2 2"/><path d="M7 11l-1-4h6M9 7v6M14 6l2 6 2-6"/>',
     nodes: '<path d="M4 18C6 8 18 8 20 18"/><rect x="2" y="16" width="4" height="4"/><rect x="18" y="16" width="4" height="4"/><path d="M12 10.5V5M8 5h8"/><circle cx="8" cy="5" r="1.5"/><circle cx="16" cy="5" r="1.5"/>',
     crop: '<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M2 6h14a2 2 0 0 1 2 2v14"/>',
     flip: '<path d="M12 3v18"/><path d="M8 7L3 17h5z"/><path d="M16 7l5 10h-5z"/>',

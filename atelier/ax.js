@@ -64,6 +64,13 @@
 // Since CL-1 (photo collage, atelier/collage.js):
 //   ext.clg  on a photo { i }: box i of the page's collage; on a page
 //            background { l, g, r }: grid id, spacing and corners
+// Since wave V3 (text on a path, atelier/vector.js):
+//   ext.tp   on a text item { d, o, s }: the text runs along the
+//            outline d (unit path text in the box, as ext.pth, chunks
+//            of ≤ 4000 chars), one line; o 0..100 = the anchor along
+//            it (%), s -1 = the other side (omitted when 1). The box
+//            is the outline's box, so moving and resizing carry the
+//            outline. Older copies draw the text straight in the box.
 // Defaults are omitted, keys come in one fixed order: the record is
 // canonical (R26), so equal designs give equal JSON on every device.
 // Pure: no DOM. Exposes window.AtelierAX (browser) or module.exports.
@@ -71,14 +78,14 @@
 (function (root) {
   "use strict";
 
-  var M, T, FX, MEDIA, CL, OB;
+  var M, T, FX, MEDIA, CL, OB, VEC;
   if (typeof module !== "undefined" && module.exports) {
-    M = require("../designkit/model.js"); T = require("../designkit/text.js");
+    M = require("../designkit/model.js"); T = require("../designkit/text.js"); VEC = require("../designkit/vector.js");
     FX = require("../designkit/fx.js"); MEDIA = require("../designkit/media.js");
     CL = require("./clips.js"); OB = require("./objects.js");
   } else {
     M = root.orosDK.model; T = root.orosDK.text; FX = root.orosDK.fx; MEDIA = root.orosDK.media;
-    CL = root.AtelierClips; OB = root.AtelierObjects;
+    CL = root.AtelierClips; OB = root.AtelierObjects; VEC = root.orosDK.vector;
   }
 
   var KINDS = ["text", "shape", "icon", "photo", "line", "table", "chart"];
@@ -466,8 +473,10 @@
     return { lines: lines, h: Math.max(lead * 0.5, h) };
   }
 
-  // Curved text: one line along an arc (fx.curveGlyphs). Glyphs are
-  // centred on the box; returns { glyphs:[{ch, x, y, rot}], w, h, key,
+  // Curved text: one line along an arc (fx.curveGlyphs), or along the
+  // item's own outline (ext.tp, wave V3). Arc glyphs are centred on
+  // the box, path glyphs sit where the outline puts them (the box is
+  // the outline's, glyphs past an open end are left out); returns { glyphs:[{ch, x, y, rot}], w, h, key,
   // size } with x/y relative to the box centre (y = baseline).
   function curveLayout(it) {
     var ax = it.ax || {};
@@ -480,6 +489,16 @@
       list.push({ x: x, w: w, ch: ch });
       x += w;
     });
+    var tp = tpOf(it);
+    if (tp) {
+      var bw = Math.max(0.01, it.w || 0), bh = Math.max(0.01, it.h || 0);
+      var on = VEC && VEC.alongPath(VEC.scaled(tp.unit, bw, bh), list, { o: tp.o, al: ax.al || TEXT_DEF.al, s: tp.s });
+      var gl = [];
+      (on || []).forEach(function (p, i) {
+        if (!p.hide) gl.push({ ch: list[i].ch, w: list[i].w, x: p.x - bw / 2, y: p.y - bh / 2, rot: Math.round(p.rot * 10000) / 10000 });
+      });
+      return { glyphs: gl, w: bw, h: bh, key: key, size: size, tp: 1, over: gl.length < list.length };
+    }
     var pos = FX.curveGlyphs(list, ax.cv || 0);
     var asc = T.ascent(key, size), desc = T.descent(key, size);
     var x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -498,6 +517,7 @@
 
   // Height a text box needs (straight text) or its whole box (curved).
   function textHeight(it) {
+    if (tpOf(it)) return Math.max(1, it.h || 1);
     if (it.ax && it.ax.cv) return Math.max(1, Math.round(curveLayout(it).h * 100) / 100);
     return Math.max(1, Math.round(textLayout(it).h * 100) / 100);
   }
@@ -719,6 +739,29 @@
     if (!Array.isArray(v) || !v.length || !v.every(function (c) { return typeof c === "string"; })) return null;
     return M.parsePath(v.join(""));
   }
+  // Text on a path (ext.tp, wave V3): { unit, o, s } or null, checked
+  // on the way out like the shape outline. isCurved: the text is laid
+  // out as glyphs (curveLayout) rather than lines.
+  function tpOf(it) {
+    var v = it && it.ax && it.ax.k === "text" && it.ext && it.ext.tp;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+    var unit = pthOf({ ext: { pth: v.d } });
+    if (!unit || !unit.length) return null;
+    var o = typeof v.o === "number" && isFinite(v.o) ? Math.max(0, Math.min(100, v.o)) : 0;
+    return { unit: unit, o: o, s: v.s === -1 ? -1 : 1 };
+  }
+  function isCurved(it) { return !!(it && it.ax && it.ax.k === "text" && (it.ax.cv || tpOf(it))); }
+  // Sets (v = { d, o, s }) or removes (v = null) the path, in place.
+  function setTp(it, v) {
+    var x = {};
+    if (it.ext) Object.keys(it.ext).forEach(function (k) { if (k !== "tp") x[k] = it.ext[k]; });
+    if (v && v.d) {
+      var t = { d: v.d, o: Math.round(Math.max(0, Math.min(100, +v.o || 0)) * 100) / 100 };
+      if (v.s === -1) t.s = -1;
+      x.tp = t;
+    }
+    if (Object.keys(x).length) it.ext = x; else delete it.ext;
+  }
   // The outline a shape item draws, in its box (pt): ext.pth when it
   // has one, else the library shape. Every renderer uses this.
   function shapeCmds(it) {
@@ -733,7 +776,7 @@
   }
 
   var api = {
-    normLink: normLink, linkOf: linkOf, setLink: setLink, pthOf: pthOf, shapeCmds: shapeCmds,
+    normLink: normLink, linkOf: linkOf, setLink: setLink, pthOf: pthOf, shapeCmds: shapeCmds, tpOf: tpOf, isCurved: isCurved, setTp: setTp,
     KINDS: KINDS, BASE: BASE, TEXT_DEF: TEXT_DEF, RD_DEF: RD_DEF, MAX_TX: MAX_TX, HEADS: HEADS,
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,
     nextZ: nextZ, textStyle: textStyle, textLayout: textLayout, curveLayout: curveLayout, textHeight: textHeight,

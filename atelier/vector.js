@@ -11,6 +11,10 @@
 // makes one shape of the picked ones (the back one's look and place);
 // .canOutline(it), .outline(id) turns a stroke (a line's too, with its
 // heads) into a filled shape.
+// Wave V3 (text on a path, ext.tp in ax.js): .canTextPath(list),
+// .textPath() puts the picked text on the picked shape's or line's
+// outline (the text takes the outline's box; the shape stays);
+// .tpSet(id, { o, s }) moves / flips it, .tpOff(id) frees the text.
 // editor.js hands it the pointer, keys and painting while active.
 // ============================================================
 (function () {
@@ -277,6 +281,99 @@
       else AT.toast(PE.str("pe.tooBig"));
     });
   }
+  // ---------- Wave V3: text on a path ----------
+  function pathItem(it) {
+    if (!it || it.lock || !it.ax || it.ax.bg) return false;
+    return it.ax.k === "shape" || (it.ax.k === "line" && Math.hypot(it.w, it.h) > 1);
+  }
+  function pairOf(list) {
+    if (!list || list.length !== 2 || list[0].pg !== list[1].pg) return null;
+    var tx = list[0].ax.k === "text" ? list[0] : list[1].ax.k === "text" ? list[1] : null;
+    var sh = tx === list[0] ? list[1] : list[0];
+    if (!tx || tx.lock || !(tx.ax.tx || "").trim() || !pathItem(sh)) return null;
+    return { text: tx, path: sh };
+  }
+  function canTextPath(list) { return !!pairOf(list); }
+  // the outline the text follows, in a box of its own (rotation kept)
+  function outlineOf(sh) {
+    var fr, cmds;
+    if (sh.ax.k === "line") { fr = { x: sh.x, y: sh.y, w: sh.w, h: sh.h, rot: 0 }; cmds = [["M", 0, 0], ["L", sh.w, sh.h]]; }
+    else { fr = { x: sh.x, y: sh.y, w: sh.w, h: sh.h, rot: sh.rot || 0 }; cmds = AX.shapeCmds(sh); }
+    var paths = V.fromCmds(cmds);
+    if (!paths.length) return null;
+    return V.reframe(fr, [paths[0]]);
+  }
+  // the anchor (%) of a closed outline: its top, nearest the middle
+  function topOf(cmds, w) {
+    var wk = V.walker(cmds);
+    if (!wk) return 0;
+    var best = 0, by = Infinity, bx = Infinity;
+    for (var i = 0; i < 400; i++) {
+      var q = wk.at(wk.len * i / 400), dx = Math.abs(q[0] - w / 2);
+      if (q[1] < by - 0.5 || (q[1] < by + 0.5 && dx < bx)) { by = Math.min(by, q[1]); bx = dx; best = i / 4; }
+    }
+    return best;
+  }
+  function textPath() {
+    var pr = pairOf(ED.selItems());
+    if (!pr) { AT.toast(PE.str("pe.tpNeed")); return; }
+    if (S) S.cancel();
+    var r = outlineOf(pr.path);
+    if (!r) { AT.toast(PE.str("pe.opFail")); return; }
+    var cmds = V.scaled(r.unit, r.w, r.h), wk = V.walker(cmds);
+    if (!wk) { AT.toast(PE.str("pe.opFail")); return; }
+    var closed = wk.closed, tid = pr.text.id, over = false;
+    AT.op(function (d, nw) {
+      var it = M.find(d.items, tid);
+      if (!it) return false;
+      var rest = {};
+      if (it.ext) Object.keys(it.ext).forEach(function (k) { if (k !== "tp") rest[k] = it.ext[k]; });
+      var dd = V.pack(r.unit, EXT_ROOM - JSON.stringify(rest).length - 40);
+      if (!dd) return false;
+      var ax = it.ax;
+      delete ax.cv;
+      var al = closed ? "c" : (ax.al === "r" ? "r" : ax.al === "c" ? "c" : "l");
+      if (al !== AX.TEXT_DEF.al) ax.al = al; else delete ax.al;
+      // text longer than the outline: smaller, down to a third
+      var tw = 0;
+      AX.curveLayout({ ax: ax, ext: rest, w: it.w, h: it.h }).glyphs.forEach(function (g) { tw += g.w; });
+      var room = wk.len * (closed ? 0.98 : 1);
+      if (tw > room && ax.size) {
+        var k = Math.max(1 / 3, room / tw);
+        ax.size = Math.max(2, Math.floor(ax.size * k * 10) / 10);
+        over = k <= 1 / 3;
+      }
+      it.x = r.x; it.y = r.y; it.w = r.w; it.h = r.h; it.rot = r.rot;
+      AX.setTp(it, { d: dd, o: closed ? topOf(cmds, r.w) : al === "r" ? 100 : al === "c" ? 50 : 0, s: 1 });
+      M.touch(it, nw);
+    });
+    ED.select([tid]);
+    AT.toast(over ? PE.str("pe.tpOver") : PE.str("pe.textPath"), t("btn.undo"), AT.undo);
+  }
+  function tpSet(id, v) {
+    AT.editItems([id], function (it) {
+      var tp = it.ext && it.ext.tp;
+      if (!tp) return;
+      AX.setTp(it, { d: tp.d, o: v.o !== undefined ? v.o : tp.o, s: v.s !== undefined ? v.s : tp.s });
+    });
+  }
+  function tpOff(id) {
+    AT.op(function (d, nw) {
+      var it = M.find(d.items, id);
+      if (!it || !AX.tpOf(it)) return false;
+      var cx = it.x + it.w / 2, cy = it.y + it.h / 2;
+      AX.setTp(it, null);
+      var w = Math.max(10, Math.min(d.setup.w, AX.textWidth(it.ax, it)));
+      it.w = w;
+      var h = AX.textHeight(M.normItem(it) || it);
+      it.h = h; it.x = cx - w / 2; it.y = cy - h / 2;
+      M.touch(it, nw);
+    });
+  }
+  VEC.canTextPath = canTextPath;
+  VEC.textPath = textPath;
+  VEC.tpSet = tpSet;
+  VEC.tpOff = tpOff;
   VEC.canCombine = canCombine;
   VEC.combine = combine;
   VEC.canOutline = canOutline;
