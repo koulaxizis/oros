@@ -7,7 +7,10 @@
 //     bases:  [{ id, m, name, color }],
 //     tables: [{ id, m, base, name, ord, pf }],          pf = primary field id
 //     fields: [{ id, m, tb, name, type, ord, opt }],
-//     views:  [{ id, m, tb, name, kind, ord, cfg }],      kind grid | cards
+//     views:  [{ id, m, tb, name, kind, ord, cfg }],      kind grid | cards | kanban | calendar
+//             (B3a; an unknown kind of a newer orOS is kept, shown as grid);
+//             cfg.by: the single-choice field a kanban stacks by, the
+//             date field a calendar lays out
 //     recs:   [{ id, t, c, m, v: { fid: value }, fm: { fid: ms } }],
 //     links:  [{ id, m, f, a, b }],                       wave B2
 //     tombs:  { id: deletedAt } }
@@ -65,7 +68,7 @@
   var NOSTORE = { auto: 1, ctime: 1, mtime: 1, lookup: 1, rollup: 1, count: 1, formula: 1, link: 1 };
   var ROLL_FNS = ["SUM", "AVG", "MIN", "MAX", "COUNT", "COUNTA", "CONCAT", "AND", "OR"];
   var COLORS = ["gray", "red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "brown"];
-  var VIEW_KINDS = { grid: 1, cards: 1 };
+  var VIEW_KINDS = { grid: 1, cards: 1, kanban: 1, calendar: 1 };
 
   // ---------- small helpers ----------
   function str(v, max) { return typeof v === "string" ? v.slice(0, max) : ""; }
@@ -234,11 +237,12 @@
     out.hidden = ids(c.hidden).sort();
     out.order = ids(c.order);
     if (typeof c.q === "string" && c.q) out.q = line(c.q, 200);
+    if (okId(c.by)) out.by = c.by;
     return out;
   }
   function cleanView(r) {
     if (!isObj(r) || !okId(r.id) || !okId(r.tb)) return null;
-    return { id: r.id, m: ms(r.m), tb: r.tb, name: line(r.name, MAX_NAME), kind: VIEW_KINDS[r.kind] ? r.kind : "grid",
+    return { id: r.id, m: ms(r.m), tb: r.tb, name: line(r.name, MAX_NAME), kind: typeof r.kind === "string" && /^[a-z]{1,16}$/.test(r.kind) ? r.kind : "grid",
       ord: int(r.ord, 0, 1e9, 0), cfg: cleanCfg(r.cfg) };
   }
   // A record before it meets its fields: values kept as plain JSON,
@@ -283,11 +287,19 @@
     return { id: id, m: ms(r.m), f: r.f, a: r.a, b: r.b };
   }
 
-  function newerRow(a, b) {   // true when b beats a
+  function newerRow(a, b, k) {   // true when b beats a
     if (!a) return true;
     if (b.m !== a.m) return b.m > a.m;
+    if (k === "views") {
+      // a device before 7.05.00 (B3a) reads a kanban or calendar view as
+      // a grid without cfg.by, at the same time stamp: the copy it could
+      // not have stripped wins the tie, so its sync never undoes them
+      var ra = richView(a), rb = richView(b);
+      if (ra !== rb) return rb > ra;
+    }
     return canon(b) > canon(a);
   }
+  function richView(v) { return (v.kind !== "grid" && v.kind !== "cards") || (v.cfg && v.cfg.by) ? 1 : 0; }
 
   function mergeRec(a, b) {
     if (!a) return b;
@@ -321,7 +333,7 @@
       Object.keys(CLEAN).forEach(function (k) {
         (Array.isArray(d[k]) ? d[k] : []).forEach(function (raw) {
           var r = CLEAN[k](raw);
-          if (r && newerRow(maps[k][r.id], r)) maps[k][r.id] = r;
+          if (r && newerRow(maps[k][r.id], r, k)) maps[k][r.id] = r;
         });
       });
       (Array.isArray(d.recs) ? d.recs : []).forEach(function (raw) {
@@ -971,6 +983,69 @@
     if (kind === "stamp" && typeof v === "number") return localYmd(v);
     if (kind === "date" && typeof v === "string") return v.slice(0, 10);
     return canon(v);
+  }
+
+  // ---------- kanban and calendar (B3a) ----------
+  // The field a kanban stacks by: cfg.by when it is a single choice of
+  // this table, else the first single-choice field. → field | null
+  function stackField(ix, view) {
+    var fs = ix.tbFields[view.tb] || [];
+    var f = ix.fields[view.cfg && view.cfg.by];
+    if (f && f.tb === view.tb && f.type === "select") return f;
+    for (var i = 0; i < fs.length; i++) if (fs[i].type === "select") return fs[i];
+    return null;
+  }
+  // Kanban columns: "no value" first, then each choice in its order, with
+  // the view's records (filtered and sorted) in each. A value whose
+  // choice is gone counts as no value.
+  function stacks(ix, view, recs) {
+    var f = stackField(ix, view);
+    if (!f) return null;
+    var cols = [{ id: "", name: "", c: "", recs: [] }], at = { "": 0 };
+    ((f.opt && f.opt.ch) || []).forEach(function (o) { at[o.id] = cols.length; cols.push({ id: o.id, name: o.n, c: o.c, recs: [] }); });
+    recs.forEach(function (r) {
+      var v = value(ix, r, f);
+      cols[has(at, v) ? at[v] : 0].recs.push(r);
+    });
+    return { f: f, cols: cols };
+  }
+  // The date field a calendar lays out: cfg.by when its values are days
+  // (date, created, changed, a formula shown as a date), else the first one.
+  function dateField(ix, view) {
+    var fs = ix.tbFields[view.tb] || [];
+    function ok(f) { var k = f && f.tb === view.tb ? kindOf(ix, f) : ""; return k === "date" || k === "stamp"; }
+    var f = ix.fields[view.cfg && view.cfg.by];
+    if (ok(f)) return f;
+    for (var i = 0; i < fs.length; i++) if (ok(fs[i])) return fs[i];
+    return null;
+  }
+  // One month: weeks (Monday first) of { day "YYYY-MM-DD", inMonth, recs },
+  // plus the records without a day. month = "YYYY-MM".
+  function monthGrid(ix, view, recs, month) {
+    var f = dateField(ix, view);
+    if (!f) return null;
+    var m = /^(\d{4})-(\d{2})$/.exec(month || "");
+    var y = m ? +m[1] : 2000, mo = m ? +m[2] - 1 : 0;
+    var first = new Date(y, mo, 1), lead = (first.getDay() + 6) % 7;
+    var start = new Date(y, mo, 1 - lead);
+    var byDay = {}, none = 0, kind = kindOf(ix, f);
+    recs.forEach(function (r) {
+      var d = dayOf(kind, value(ix, r, f));
+      if (!d) { none++; return; }
+      (byDay[d] = byDay[d] || []).push(r);
+    });
+    var weeks = [];
+    for (var w = 0; w < 6; w++) {
+      var row = [];
+      for (var k = 0; k < 7; k++) {
+        var dt = new Date(start.getFullYear(), start.getMonth(), start.getDate() + w * 7 + k);
+        var key = dt.getFullYear() + "-" + pad(dt.getMonth() + 1) + "-" + pad(dt.getDate());
+        row.push({ day: key, inMonth: dt.getMonth() === mo, recs: byDay[key] || [] });
+      }
+      if (w >= 4 && !row.some(function (c) { return c.inMonth; })) break;
+      weeks.push(row);
+    }
+    return { f: f, weeks: weeks, none: none, editable: f.type === "date" };
   }
 
   // [{ depth, key, f, rec (first), count, recs? }] rows for the screen:
@@ -1753,7 +1828,7 @@
     empty: empty, normalize: normalize, merge: merge, serialize: serialize, canon: canon,
     index: index, primary: primary, value: value, text: text, optOf: optOf, cleanVal: cleanVal, cleanOpt: cleanOpt,
     opsFor: opsFor, needsValue: needsValue, query: query, layout: layout, groupKey: groupKey,
-    visibleFields: visibleFields, orderedFields: orderedFields, summary: summary, compare: compare,
+    VIEW_KINDS: VIEW_KINDS, visibleFields: visibleFields, stackField: stackField, stacks: stacks, dateField: dateField, monthGrid: monthGrid, orderedFields: orderedFields, summary: summary, compare: compare,
     uid: uid, fid: fid, oid: oid, putRow: putRow, addBase: addBase, addTable: addTable, addField: addField,
     remove: remove, restore: restore, rowsUnder: rowsUnder, setValues: setValues, addRecord: addRecord,
     convert: convert, parseNum: parseNum, parseDate: parseDate, parseCsv: parseCsv, guessType: guessType,

@@ -1,5 +1,5 @@
 # Datenbank
-Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den Katalog deiner Bücher, eine Sammlung, die Gäste einer Veranstaltung, die Aufgaben eines Projekts. Jede Datenbank hat Tabellen, jede Tabelle hat Felder mit festem Typ, und dieselben Einträge siehst du als Raster oder als Karten.
+Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den Katalog deiner Bücher, eine Sammlung, die Gäste einer Veranstaltung, die Aufgaben eines Projekts. Jede Datenbank hat Tabellen, jede Tabelle hat Felder mit festem Typ, und dieselben Einträge siehst du als Raster, als Karten, als Kanban-Board oder als Kalender.
 
 ## Erste Schritte
 - Drück `Neue Datenbank` und wähle eine Vorlage, oder fang mit einer leeren Datenbank an.
@@ -36,6 +36,8 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 - `Felder` wählt, welche Felder diese Ansicht zeigt und in welcher Reihenfolge. Ein ausgeblendetes Feld bleibt in der Tabelle und in anderen Ansichten.
 - Das Suchfeld sucht nur in den gezeigten Feldern dieser Ansicht.
 - Ein neuer Eintrag in einer gefilterten Ansicht übernimmt die Werte der „ist“-Bedingungen, damit er in der Ansicht bleibt.
+- Eine Kanban-Ansicht ordnet die Einträge in Spalten nach einem Einfachauswahl-Feld (`Spalten nach`). Ziehe eine Karte in eine andere Spalte, um ihren Wert zu ändern; auf dem Handy halte die Karte zuerst kurz gedrückt. Mit der Tastatur fokussiere eine Karte und drücke Alt + ← oder →. Das `+` oben in einer Spalte fügt einen Eintrag mit diesem Wert hinzu.
+- Eine Kalenderansicht legt die Einträge nach einem Datumsfeld auf einen Monat (`Datumsfeld`); Erstellungs- und Änderungszeiten gehen auch. Tippe auf einen Tag für seine Einträge und um dort einen neuen hinzuzufügen. Der angezeigte Monat bleibt nur auf diesem Gerät.
 
 ## Import
 - Wähle mehrere Dateien auf einmal für eine Datenbank mit mehreren Tabellen, wie die CSV-Dateien, die Airtable exportiert (eine pro Tabelle). Auch jedes Blatt einer Arbeitsmappe wird eine Tabelle.

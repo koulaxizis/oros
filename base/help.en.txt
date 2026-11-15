@@ -1,5 +1,5 @@
 # Base
-Base keeps records with structure, like a small database: a catalogue of your books, a collection, the guests of an event, the tasks of a project. Each base holds tables, each table has fields of a fixed type, and you see the same records as a grid or as cards.
+Base keeps records with structure, like a small database: a catalogue of your books, a collection, the guests of an event, the tasks of a project. Each base holds tables, each table has fields of a fixed type, and you see the same records as a grid, cards, a kanban board or a calendar.
 
 ## Getting started
 - Press `New base` and pick a template, or start with a blank base.
@@ -36,6 +36,8 @@ Base keeps records with structure, like a small database: a catalogue of your bo
 - `Fields` chooses which fields this view shows and in what order. A hidden field stays in the table and in other views.
 - The search box looks in the shown fields of this view only.
 - A new record added in a filtered view takes the values of the "is" conditions, so it stays in the view.
+- A kanban view puts the records in columns by a single-choice field (`Columns by`). Drag a card to another column to change its value; on a phone, hold the card a moment first. With a keyboard, focus a card and press Alt + ← or →. The `+` at the top of a column adds a record with that value.
+- A calendar view lays the records out on a month by a date field (`Date field`); created and changed times work too. Tap a day for its records and to add a new one on that day. The month you look at is kept on this device only.
 
 ## Import
 - Pick several files at once to make one base with several tables, like the CSV files Airtable exports (one per table). Each sheet of a workbook becomes a table too.

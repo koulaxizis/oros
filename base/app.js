@@ -92,6 +92,14 @@
       "menu.delBase": "Delete base",
       "view": "View", "view.new": "New view…", "view.kind": "Show records as", "view.name": "View name",
       "kind.grid": "Grid (rows and columns)", "kind.cards": "Cards",
+      "kind.kanban": "Kanban (columns by a choice)", "kind.calendar": "Calendar (by a date)",
+      "kb.by": "Columns by", "kb.none": "No value", "kb.need": "A kanban view needs a single-choice field.",
+      "kb.addField": "Add a single-choice field", "kb.moved": "Moved to {x}", "kb.add": "New record in {x}",
+      "kb.hint": "Drag a card to another column, or focus it and press Alt + ← / →.",
+      "cal.by": "Date field", "cal.need": "A calendar view needs a date field.", "cal.addField": "Add a date field",
+      "cal.today": "Today", "cal.prev": "Previous month", "cal.next": "Next month", "cal.more": "+{n} more",
+      "cal.noDate": "{n} records without a date in this view", "cal.noDate1": "1 record without a date in this view",
+      "cal.add": "New record on this day",
       "search": "Search in this view", "count": "{n} records", "count1": "1 record", "countOf": "{n} of {all} records",
       "filter": "Filter", "filterN": "Filter ({n})", "sort": "Sort", "sortN": "Sort ({n})", "group": "Group", "groupN": "Group ({n})",
       "f.empty": "(empty)", "f.untitled": "Untitled", 
@@ -229,6 +237,14 @@
       "menu.delBase": "Διαγραφή βάσης",
       "view": "Προβολή", "view.new": "Νέα προβολή…", "view.kind": "Εμφάνιση εγγραφών ως", "view.name": "Όνομα προβολής",
       "kind.grid": "Πλέγμα (γραμμές και στήλες)", "kind.cards": "Κάρτες",
+      "kind.kanban": "Kanban (στήλες ανά επιλογή)", "kind.calendar": "Ημερολόγιο (ανά ημερομηνία)",
+      "kb.by": "Στήλες ανά", "kb.none": "Χωρίς τιμή", "kb.need": "Μια προβολή Kanban χρειάζεται πεδίο μίας επιλογής.",
+      "kb.addField": "Προσθήκη πεδίου μίας επιλογής", "kb.moved": "Μετακινήθηκε στο «{x}»", "kb.add": "Νέα εγγραφή στο «{x}»",
+      "kb.hint": "Σύρε μια κάρτα σε άλλη στήλη ή εστίασε σε αυτή και πάτα Alt + ← / →.",
+      "cal.by": "Πεδίο ημερομηνίας", "cal.need": "Μια προβολή ημερολογίου χρειάζεται πεδίο ημερομηνίας.", "cal.addField": "Προσθήκη πεδίου ημερομηνίας",
+      "cal.today": "Σήμερα", "cal.prev": "Προηγούμενος μήνας", "cal.next": "Επόμενος μήνας", "cal.more": "+{n} ακόμα",
+      "cal.noDate": "{n} εγγραφές χωρίς ημερομηνία σε αυτή την προβολή", "cal.noDate1": "1 εγγραφή χωρίς ημερομηνία σε αυτή την προβολή",
+      "cal.add": "Νέα εγγραφή αυτή τη μέρα",
       "search": "Αναζήτηση σε αυτή την προβολή", "count": "{n} εγγραφές", "count1": "1 εγγραφή", "countOf": "{n} από {all} εγγραφές",
       "filter": "Φίλτρο", "filterN": "Φίλτρο ({n})", "sort": "Ταξινόμηση", "sortN": "Ταξινόμηση ({n})", "group": "Ομάδες", "groupN": "Ομάδες ({n})",
       "f.empty": "(κενό)", "f.untitled": "Χωρίς όνομα", 
@@ -672,6 +688,8 @@
     var all = (ix.tbRecs[cur.table] || []).length;
     $("count").textContent = shown.length === all ? plural(all, "count1", "count") : t("countOf", { n: fmtNum(shown.length), all: fmtNum(all) });
     if (v.kind === "cards") renderCards(v);
+    else if (v.kind === "kanban") renderKanban(v);
+    else if (v.kind === "calendar") renderCalendar(v);
     else renderGrid(v);
   }
 
@@ -811,7 +829,7 @@
     var name = input("text", t("v.newName", { n: views.length + 1 }));
     d.body.appendChild(fld(t("view.name"), name));
     var kind = el("select");
-    ["grid", "cards"].forEach(function (k) { var o = el("option", null, t("kind." + k)); o.value = k; kind.appendChild(o); });
+    ["grid", "cards", "kanban", "calendar"].forEach(function (k) { var o = el("option", null, t("kind." + k)); o.value = k; kind.appendChild(o); });
     d.body.appendChild(fld(t("view.kind"), kind));
     d.foot(btn("chip", t("btn.cancel"), function () { d.close(); }),
       btn("chip pri", t("btn.create"), function () {
@@ -1464,6 +1482,250 @@
     box.scrollTop = keep;
   }
 
+  // ---------- 6b. Kanban and calendar (B3a) ----------
+  // One small card (the cards view's look): title + a few fields.
+  function miniCard(rec, fields, skip) {
+    var pf = fields[0];
+    var card = btn("card-rec mini", null, function () { if (!dragged) openRecord(rec.id); });
+    var title = pf ? C.text(ix, rec, pf, fmt()) : "";
+    card.appendChild(el("span", "c-title" + (title ? "" : " dim"), title || t("f.untitled")));
+    var dl = el("span", "c-fields");
+    fields.slice(1).filter(function (f) { return f.id !== skip; }).slice(0, 3).forEach(function (f) {
+      var n = valueNode(rec, f, true);
+      if (!n) return;
+      var line = el("span", "c-line");
+      line.appendChild(el("span", "c-label", f.name));
+      line.appendChild(n);
+      dl.appendChild(line);
+    });
+    if (dl.childNodes.length) card.appendChild(dl);
+    return card;
+  }
+  // "Columns by" / "Date field": the view's field, changed for everyone
+  function byBar(v, label, list, curF) {
+    var bar = el("div", "by-bar");
+    var s = el("select");
+    s.setAttribute("aria-label", label);
+    list.forEach(function (f) { var o = el("option", null, f.name || t("f.untitled")); o.value = f.id; s.appendChild(o); });
+    s.value = curF ? curF.id : "";
+    s.addEventListener("change", function () { setCfg({ by: s.value }); });
+    bar.appendChild(el("span", "dim", label));
+    bar.appendChild(s);
+    return bar;
+  }
+  function needField(box, msg, label, type) {
+    var w = el("div", "cards");
+    w.appendChild(el("p", "hint", msg));
+    w.appendChild(btn("chip pri", label, function () { fieldDialog(null, type); }));
+    box.appendChild(w);
+  }
+  var dragged = false;
+  function moveTo(rec, F, choiceId, name) {
+    var patch = {};
+    patch[F.id] = choiceId || null;
+    if (save(C.setValues(data, rec.id, patch, Date.now()))) toast(t("kb.moved", { x: name || t("kb.none") }));
+  }
+  function renderKanban(v) {
+    gridState = null;
+    var box = $("content"), keepX = box.scrollLeft;
+    box.textContent = "";
+    box.className = "content kanban-host";
+    var st = C.stacks(ix, v, shown);
+    if (!st) { needField(box, t("kb.need"), t("kb.addField"), "select"); return; }
+    var fields = C.visibleFields(ix, v);
+    var sel1 = (ix.tbFields[v.tb] || []).filter(function (f) { return f.type === "select"; });
+    box.appendChild(byBar(v, t("kb.by"), sel1, st.f));
+    var board = el("div", "kanban");
+    board.setAttribute("aria-label", t("kb.hint"));
+    var cols = st.cols.filter(function (c, i) { return i > 0 || c.recs.length; });
+    cols.forEach(function (c, ci) {
+      var col = el("section", "kb-col col-" + (c.c || "gray"));
+      col.dataset.choice = c.id;
+      var head = el("div", "kb-head");
+      head.appendChild(el("span", c.id ? "pill" : "dim", c.id ? c.name : t("kb.none")));
+      head.appendChild(el("span", "g-gcount", fmtNum(c.recs.length)));
+      head.appendChild(iconBtn(ICON.plus, t("kb.add", { x: c.id ? c.name : t("kb.none") }), "kb-add", function () {
+        var vals = {};
+        if (c.id) vals[st.f.id] = c.id;
+        newRecord(vals, true);
+      }));
+      col.appendChild(head);
+      var list = el("ul", "kb-list");
+      c.recs.slice(0, 300).forEach(function (rec) {
+        var li = el("li");
+        var card = miniCard(rec, fields, st.f.id);
+        card.addEventListener("keydown", function (e) {
+          if (!e.altKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+          e.preventDefault();
+          var to = cols[ci + (e.key === "ArrowLeft" ? -1 : 1)];
+          if (!to) return;
+          moveTo(rec, st.f, to.id, to.name);
+          var again = document.querySelector('.kb-col[data-choice="' + cssId(to.id) + '"] [data-rec="' + cssId(rec.id) + '"]');
+          if (again) again.focus();
+        });
+        card.dataset.rec = rec.id;
+        dragCard(card, rec, st.f);
+        li.appendChild(card);
+        list.appendChild(li);
+      });
+      if (c.recs.length > 300) list.appendChild(el("li", "dim", t("cal.more", { n: fmtNum(c.recs.length - 300) })));
+      col.appendChild(list);
+      board.appendChild(col);
+    });
+    box.appendChild(board);
+    box.scrollLeft = keepX;
+  }
+  // Drag with a pointer (mouse at once, touch after a long press, so a
+  // swipe still scrolls the board).
+  function dragCard(card, rec, F) {
+    card.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0) return;
+      var x0 = e.clientX, y0 = e.clientY, ghost = null, timer = 0, ready = e.pointerType !== "touch", over = null;
+      dragged = false;
+      if (!ready) timer = setTimeout(function () { ready = true; start(e.clientX, e.clientY); }, 350);
+      function start(x, y) {
+        if (ghost) return;
+        dragged = true;
+        ghost = card.cloneNode(true);
+        ghost.className += " kb-ghost";
+        ghost.style.width = card.offsetWidth + "px";
+        document.body.appendChild(ghost);
+        card.classList.add("kb-from");
+        place(x, y);
+      }
+      function place(x, y) {
+        ghost.style.transform = "translate(" + (x - 20) + "px," + (y - 16) + "px)";
+        ghost.style.visibility = "hidden";
+        var under = document.elementFromPoint(x, y);
+        ghost.style.visibility = "";
+        var col = under && under.closest ? under.closest(".kb-col") : null;
+        if (over && over !== col) over.classList.remove("kb-over");
+        over = col;
+        if (col) col.classList.add("kb-over");
+      }
+      function moveH(ev) {
+        if (!ready) { if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 10) end(); return; }
+        if (!ghost && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 8) return;
+        ev.preventDefault();
+        if (!ghost) start(ev.clientX, ev.clientY);
+        place(ev.clientX, ev.clientY);
+      }
+      function end() {
+        clearTimeout(timer);
+        document.removeEventListener("pointermove", moveH);
+        document.removeEventListener("pointerup", up);
+        document.removeEventListener("pointercancel", end);
+        if (over) over.classList.remove("kb-over");
+        if (ghost) { ghost.remove(); card.classList.remove("kb-from"); }
+        ghost = null;
+        setTimeout(function () { dragged = false; }, 0);
+      }
+      function up() {
+        var to = ghost && over ? over.dataset.choice : null;
+        end();
+        if (to === null || to === undefined) return;
+        var cur0 = C.value(ix, rec, F);
+        if ((cur0 || "") === to || (!to && !(F.opt.ch || []).some(function (o) { return o.id === cur0; }))) return;
+        var ch = (F.opt.ch || []).filter(function (o) { return o.id === to; })[0];
+        moveTo(rec, F, to, ch ? ch.n : "");
+      }
+      document.addEventListener("pointermove", moveH, { passive: false });
+      document.addEventListener("pointerup", up);
+      document.addEventListener("pointercancel", end);
+    });
+  }
+
+  function monthOf(v) {
+    var m = prefs.at["m:" + v.id];
+    return typeof m === "string" && /^\d{4}-\d{2}$/.test(m) ? m : today().slice(0, 7);
+  }
+  function shiftMonth(v, n) {
+    var p = monthOf(v).split("-"), d = new Date(+p[0], +p[1] - 1 + n, 1);
+    prefs.at["m:" + v.id] = d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1);
+    savePrefs();
+    renderContent();
+  }
+  function renderCalendar(v) {
+    gridState = null;
+    var box = $("content");
+    box.textContent = "";
+    box.className = "content cal-host";
+    var mg = C.monthGrid(ix, v, shown, monthOf(v));
+    if (!mg) { needField(box, t("cal.need"), t("cal.addField"), "date"); return; }
+    var fields = C.visibleFields(ix, v);
+    var dates = (ix.tbFields[v.tb] || []).filter(function (f) { var k = C.kindOf(ix, f); return k === "date" || k === "stamp"; });
+    var wrap = el("div", "cal");
+    var top = el("div", "cal-top");
+    top.appendChild(byBar(v, t("cal.by"), dates, mg.f));
+    var nav = el("div", "cal-nav");
+    nav.appendChild(iconBtn(ICON.left, t("cal.prev"), "cal-prev", function () { shiftMonth(v, -1); }));
+    var p = monthOf(v).split("-");
+    var title = new Date(+p[0], +p[1] - 1, 1).toLocaleDateString(locale(), { month: "long", year: "numeric" });
+    nav.appendChild(el("h2", "cal-title", title));
+    nav.appendChild(iconBtn(ICON.right, t("cal.next"), "cal-next", function () { shiftMonth(v, 1); }));
+    nav.appendChild(btn("chip small", t("cal.today"), function () { delete prefs.at["m:" + v.id]; savePrefs(); renderContent(); }));
+    top.appendChild(nav);
+    wrap.appendChild(top);
+    var grid = el("div", "cal-grid");
+    grid.setAttribute("role", "grid");
+    var head = el("div", "cal-row cal-wd");
+    for (var k = 0; k < 7; k++) {
+      var wd = new Date(2024, 0, 1 + k).toLocaleDateString(locale(), { weekday: "short" });   // 2024-01-01 was a Monday
+      head.appendChild(el("span", null, wd));
+    }
+    grid.appendChild(head);
+    var now = today(), narrow = window.innerWidth < 600;
+    mg.weeks.forEach(function (week) {
+      var row = el("div", "cal-row");
+      row.setAttribute("role", "row");
+      week.forEach(function (c) {
+        var cell = el("div", "cal-day" + (c.inMonth ? "" : " out") + (c.day === now ? " now" : ""));
+        cell.setAttribute("role", "gridcell");
+        // the whole day is the touch target (the number and the events are its buttons)
+        cell.addEventListener("click", function (e) { if (e.target === cell) dayList(v, c, fields, mg); });
+        var dayBtn = btn("cal-num", String(+c.day.slice(8)), function () { dayList(v, c, fields, mg); });
+        dayBtn.setAttribute("aria-label", new Date(+c.day.slice(0, 4), +c.day.slice(5, 7) - 1, +c.day.slice(8)).toLocaleDateString(locale(), { weekday: "long", day: "numeric", month: "long" }) +
+          (c.recs.length ? " · " + plural(c.recs.length, "count1", "count") : ""));
+        cell.appendChild(dayBtn);
+        var max = narrow ? 0 : 3;
+        c.recs.slice(0, max).forEach(function (rec) {
+          var pf = fields[0], nm = pf ? C.text(ix, rec, pf, fmt()) : "";
+          cell.appendChild(btn("cal-ev", nm || t("f.untitled"), function () { openRecord(rec.id); }));
+        });
+        if (c.recs.length > max) {
+          var more = btn("cal-more", narrow ? fmtNum(c.recs.length) : t("cal.more", { n: fmtNum(c.recs.length - max) }), function () { dayList(v, c, fields, mg); });
+          cell.appendChild(more);
+        }
+        row.appendChild(cell);
+      });
+      grid.appendChild(row);
+    });
+    wrap.appendChild(grid);
+    if (mg.none) wrap.appendChild(el("p", "hint", mg.none === 1 ? t("cal.noDate1") : t("cal.noDate", { n: fmtNum(mg.none) })));
+    box.appendChild(wrap);
+  }
+  // The records of one day, and "New record on this day" when the field takes a date.
+  function dayList(v, c, fields, mg) {
+    var d = dialog(new Date(+c.day.slice(0, 4), +c.day.slice(5, 7) - 1, +c.day.slice(8)).toLocaleDateString(locale(), { weekday: "long", day: "numeric", month: "long", year: "numeric" }));
+    var list = el("ul", "kb-list");
+    c.recs.forEach(function (rec) {
+      var li = el("li");
+      li.appendChild(miniCard(rec, fields, mg.f.id));
+      list.appendChild(li);
+    });
+    if (c.recs.length) d.body.appendChild(list);
+    else d.body.appendChild(el("p", "hint", t("cards.none")));
+    var foot = [btn("chip", t("btn.close"), function () { d.close(); })];
+    if (mg.editable) foot.push(btn("chip pri", t("cal.add"), function () {
+      d.close();
+      var vals = {};
+      vals[mg.f.id] = c.day;
+      newRecord(vals, true);
+    }));
+    d.foot.apply(null, foot);
+    d.open();
+  }
+
   // ---------- 7. Record dialog ----------
   var recDlg = null;       // { id, d, focus }
   function openRecord(id, focusField) {
@@ -1712,7 +1974,7 @@
   }
 
   // ---------- 8. Field dialog ----------
-  function fieldDialog(f) {
+  function fieldDialog(f, preset) {
     var tb = curTable();
     if (!tb) return;
     var list = ix.tbFields[tb.id] || [];
@@ -1723,7 +1985,7 @@
     var type = el("select");
     C.TYPES.forEach(function (k) { var o = el("option", null, t("type." + k)); o.value = k; type.appendChild(o); });
     if (f && C.TYPES.indexOf(f.type) < 0) { var o2 = el("option", null, t("type.other")); o2.value = f.type; type.appendChild(o2); }
-    type.value = f ? f.type : "text";
+    type.value = f ? f.type : (preset && C.TYPES.indexOf(preset) >= 0 ? preset : "text");
     var pf = C.primary(ix, tb.id);
     if (f && pf && pf.id === f.id) {
       // the primary field names records: keep it a kind of text
