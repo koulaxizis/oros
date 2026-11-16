@@ -12400,3 +12400,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** quote/core.js, invoices/invoices.js, invoices/invoices.css, invoices/index.html, help EN/EL/DE, i18n/de, Bible.
 - **Tests:** new `tests/billing-k4.test.js`; full suite; Playwright Chromium (Overview with quotes).
 - **Next:** none; app merge 7 (Billing) is complete with K1-K4 (7.32.00, 7.36.00, 7.38.00, 7.39.00).
+
+### 2026-11-16 — 7.39.01 — Billing: the quote's currency field fits a phone screen (BILL-NARROW)
+
+- **What:** in Billing's Quotes tab the currency select ("EUR · Euro" and the other names) kept the width of its widest option and ran 36px past a 360px screen (found while taking F-Droid screenshots after app merge 7). `.qv .meta-row select` now has `min-width: 0; max-width: 100%; text-overflow: ellipsis`, so it shrinks to its row.
+- **Files:** quote/view.css, tests/billing-narrow.test.js (new), Bible.
+- **Tests:** new `tests/billing-narrow.test.js`; full suite; Playwright Chromium at 320, 360 and 1280 px (no element of the Quotes view past the viewport).
