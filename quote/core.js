@@ -2,7 +2,7 @@
 // orOS Quote — shared core (v1.3.0)
 // Which quotes need a follow-up, one copy for the shell's due
 // reminder (shell.js quoteCheckTick) and the Today summary
-// (quote/today.js). Pure: no DOM, no storage, never writes.
+// (invoices/today.js, Billing merge 7). Pure: no DOM, no storage, never writes.
 //   dueQuotes(data, untilYmd) → the quotes that are "sent" or
 //     "accepted" and have a due date on or before untilYmd, earliest
 //     first (ties by id). Drafts, rejected and expired quotes, and

@@ -10,8 +10,13 @@ const read = (p) => fs.readFileSync(path.join(__dirname, "..", p), "utf8");
 
 test("every app Claude may change registers slice <id> with key oros-<id>-data (montage: oros-montage)", () => {
   const ids = [...new Set(G.ACT.concat(G.DOCS, Object.keys(G.WRITES)))];
+  // APP-ALIAS: an app folded into another one (Quote → Billing, app
+  // merge 7) keeps its slice and key; its host registers the slice.
+  const aliases = JSON.parse(read("apps.json")).aliases || [];
   ids.forEach((id) => {
-    const src = fs.readdirSync(path.join(__dirname, "..", id)).filter((f) => f.endsWith(".js")).map((f) => read(id + "/" + f)).join("\n");
+    const al = aliases.find((a) => a.id === id);
+    const dirs = al ? [id, al.to] : [id];
+    const src = dirs.map((d) => fs.readdirSync(path.join(__dirname, "..", d)).filter((f) => f.endsWith(".js")).map((f) => read(d + "/" + f)).join("\n")).join("\n");
     const key = id === "montage" ? "oros-montage" : "oros-" + id + "-data";
     assert.ok(src.indexOf('"' + key + '"') >= 0 || src.indexOf("'" + key + "'") >= 0, id + ": its key " + key);
     assert.ok(new RegExp("registerSlice\\(\\s*['\"]" + id + "['\"]").test(src) || /registerSlice\(\s*APP_ID/.test(src) && src.indexOf('APP_ID = "' + id + '"') >= 0, id + ": slice name");

@@ -57,10 +57,11 @@ h2 {
 /* ---------- Top bar ---------- */
 #ct-top {
   display: flex;
+  flex-wrap: wrap;   /* many buttons: wrap at every width, never a page wider than the screen */
   align-items: center;
   gap: 8px;
 }
-#ct-top h2 { flex: 1; min-width: 0; }
+#ct-top h2 { order: -1; flex-basis: 100%; min-width: 0; }   /* title on its own line, buttons below */
 
 .nav-mini {
   border: 1px solid var(--border);
@@ -692,8 +693,6 @@ dialog h3 {
 
 /* ---------- Mobile tightening ---------- */
 @media (max-width: 720px) {
-  #ct-top { flex-wrap: wrap; }
-  #ct-top h2 { order: -1; flex-basis: 100%; }
   .ct-row { padding: 8px 10px; gap: 10px; }
   .ct-tags { display: none; }   /* dots hidden on phones: name+sub is king */
   dialog { padding: 14px 14px; }
