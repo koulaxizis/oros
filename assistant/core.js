@@ -1611,7 +1611,8 @@
       "title, a short text, a date and a ref. The user sees every result first and may share " +
       "only some of them, or none. Use short keyword queries (1-3 words), in the language the " +
       "data is probably written in; search again with other words if nothing comes back. Each result shows " +
-      "its labels; with label it returns only items with that label, or with none.",
+      "its labels; with label it returns only items with that label, or with none. " +
+      "search_data in Files also finds Documents: type, date, sender, tags, amount, expiry and keep-until dates, the file and the first 300 characters of the text. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never appear.",
     params: {
       type: "object",
       properties: {
@@ -1797,6 +1798,7 @@
       "crm with partner answers 'what is open with X?' for one partner. " +
       "forms (every form: questions, shared and open or not, how many answers and how many new, with a ref; with form one form's results: counts, shares and averages per question, never what people wrote) " +
       "studio lists the podcast shows made in Studio (feed address, how many episodes, how many have their episode file) and every episode with its show, number, date and whether its file is made; with show only that show. Read only: publishing is always the user's own tap in Studio. " +
+      "base (Base, the user's own databases: every base with its tables, each table's fields with their type and choices and how many records; with table that table's records with every field and a ref; use it before create_items base) " +
       "automations lists every rule in words (with a ref; on or off) and this device's recent runs: when, which rule, whether it was a time or something that happened, and what came of it (notice shown, notices off, skipped because an app is missing, opened); use it for 'why did this run?' and to suggest a better rule with propose_rule. " +
       "The user sees the summary first and may hold it back.",
     params: {
@@ -1813,6 +1815,8 @@
         status: { type: "string", "enum": ["want", "now", "done", "drop", "reading", "finished", "unread"], description: "shelf: want, now (in progress), done, drop. library: reading, finished, unread." },
         board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board)." },
         show: { type: "string", description: "studio: one podcast show's title: only its episodes." },
+        table: { type: "string", description: "base: one table's name: list its records with every field and a ref (leave out for the bases, tables and fields)." },
+        base: { type: "string", description: "base, with table: the base's name, when several bases have a table of that name." },
         days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." },
         form: { type: "string", description: "forms: one form's title: its results (how many answered each question, counts, shares and averages); never the people's written answers or contact details." },
         partner: { type: "string", description: "crm: a customer's, supplier's, shop's or author's name: everything open with them (owed both ways, consignment stock, orders, unbilled hours, royalties, contracts, next follow-up)." }
@@ -2068,7 +2072,9 @@
     // AS-ADD9 (GATE-PAR P4 wave 2)
     wiki: "wiki = a new article in Wiki (an article already there is changed with change_item)",
     flashcards: "flashcards = a new note (card) in Flashcards: front and back, or cloze text with {{c1::gaps}}",
-    split: "split = a shared expense in one of the user's Split groups, split equally"
+    split: "split = a shared expense in one of the user's Split groups, split equally",
+    // BASE-1 B4b (assistant/additems3.js)
+    base: "base = a record (row) in a table of Base, the user's own databases: fields by the names app_summary base lists (a choice label not there yet becomes a new choice)"
   };
   // [field, apps it is for, schema]
   var CR_FIELDS = [
@@ -2176,6 +2182,12 @@
     ["category", ["budget", "split"], { type: "string", description: "budget: groceries, eating-out, bills, home, transport, health, fun, clothes, gift, salary, freelance, other, or the name of one of the user's own categories. split: food, groceries, stay, transport, bills, fun or other." }],
     ["text", ["notes", "stickies", "wiki"], { type: "string", description: "notes: the page's text (Markdown). stickies: the note (up to 1000 characters, line breaks kept). wiki: the article in Wiki's Markdown, [[Other article]] links allowed (200000 characters)." }],
     ["wiki", ["wiki"], { type: "string", description: "wiki: the wiki's name (may be left out when the user has one)." }],
+    ["base", ["base"], { type: "string", description: "base: the base's name (may be left out when the user has one)." }],
+    ["table", ["base"], { type: "string", description: "base: the table's name in that base (may be left out when the base has one)." }],
+    ["fields", ["base"], { type: "array", description: "base: the record's values, one entry per field (app_summary base gives the fields and their types). Formula, lookup, rollup, count, autonumber, link and attachment fields are refused.",
+               items: { type: "object", properties: { name: { type: "string", description: "The field's name in Base." },
+                                                      value: { type: "string", description: "The value as text: a number like 12.5, a date as YYYY-MM-DD (YYYY-MM-DDTHH:MM when the field has a time), true or false for a checkbox, a choice's label." },
+                                                      choices: { type: "array", items: { type: "string" }, description: "A several-choices field: the labels, instead of value." } }, required: ["name"] } }],
     ["front", ["flashcards"], { type: "string", description: "flashcards: the question side (20000 characters; Flashcards' Markdown)." }],
     ["back", ["flashcards"], { type: "string", description: "flashcards: the answer side; with cloze, the extra shown after the answer." }],
     ["cloze", ["flashcards"], { type: "string", description: "flashcards: instead of front, a text with gaps like {{c1::Athens}} is the capital (one card per gap number)." }],
@@ -2500,18 +2512,19 @@
   // where they check and save it; nothing is saved by this call.
   // Passwords is never a source or a target (AUTO-4).
   var RULE_WHEN = ["day", "month", "year", "once", "open", "notice", "event"];
-  var RULE_DO = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "file", "print", "track"];
+  var RULE_DO = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "file", "print", "track", "pause", "sound"];
   var TOOL_RULE = {
     name: "propose_rule",
     description: "Write an automation rule for the Automations app: when something happens, do some steps. " +
       "when.type: day (every day, or only on weekdays; at HH:MM), month (day_of_month 1-31, -1 = last day; at), year (date MM-DD; at), " +
       "once (date YYYY-MM-DD; at), open (when orOS opens), notice (a notice arrives from app, any app when app is empty; word = only when it has this word), " +
-      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends, webhook.in = the incoming webhook set up in Automations gets a message, bridge.pdf / bridge.photo / bridge.file = a new PDF, photo or other file lands in a folder Bridge watches on the computer; timesheet.start / timesheet.stop = a Timesheet timer starts / stops; word optional, matched in the file name for bridge.*). " +
+      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends, webhook.in = the incoming webhook set up in Automations gets a message, bridge.pdf / bridge.photo / bridge.file = a new PDF, photo or other file lands in a folder Bridge watches on the computer; timesheet.start / timesheet.stop = a Timesheet timer starts / stops; event.soon = minutes_before (1-120) an event of the day starts; goal.sales = today's till sales in Stock reach goal; goal.spent = this month's spending in Budget passes goal (goal in money units, required for goal.*); base.add / base.change = a record is added / a field changes in Base, text 'Base › Table · Title · Field: value'; word optional, matched in the file name for bridge.* and in the text for base.*, not used for event.soon or goal.*). " +
       "For notice and event rules only_days and from/to (HH:MM) limit when it runs. " +
       "Steps (do): notify (text: the notice), todo (items, list = a new list name, optional), event (title, days_later, start HH:MM: a Calendar event), " +
       "note (title, text), mail (subject, body, to: a draft), budget (amount in euros, income true for money in, note), open (app id), timer (minutes, label), ask (text: a question for the Assistant), " +
       "file (to: scanpdf, files or invoices: hand the new file to that app) and print (print the new file on the computer), both only after a bridge.* event. " +
       "track (a Timesheet timer: title = what is worked on, project = one of the user's project names, optional; or stop true = stop the running timer). " +
+      "pause (pause everything playing in orOS: music, podcasts, radio, Sound Mixer) and sound (a short chime): both happen by themselves, no fields. " +
       "Texts may use {date}, {weekday}, {month}, {year}, and {text} = the notice or event's words. " +
       "The user sees the rule on a card and opens it in Automations, where they check and save it; nothing is saved or run by this call, so never say it is set. " +
       "Passwords can never be used.",
@@ -2526,7 +2539,9 @@
           day_of_month: { type: "number" },
           date: { type: "string" },
           app: { type: "string", description: "notice: the app id the notice comes from." },
-          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done", "webhook.in", "bridge.pdf", "bridge.photo", "bridge.file", "timesheet.start", "timesheet.stop"] },
+          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done", "webhook.in", "bridge.pdf", "bridge.photo", "bridge.file", "timesheet.start", "timesheet.stop", "event.soon", "goal.sales", "goal.spent", "base.add", "base.change"] },
+          minutes_before: { type: "number", description: "event.soon: 1-120, default 10." },
+          goal: { type: "number", description: "goal.sales / goal.spent: the amount in money units (euros)." },
           word: { type: "string" },
           only_days: { type: "array", items: { type: "number" } },
           from: { type: "string" },
@@ -4944,7 +4959,9 @@
     var mentions = [wn.app].concat(steps.map(function (x) { return x && x.app; }));
     if (mentions.some(function (a) { return typeof a === "string" && AC.BLOCKED_APPS[a.toLowerCase()]; })) return { ok: false, err: "Passwords can never be used in a rule." };
     var when = { t: wn.type, at: wn.at, wd: wn.weekdays, md: wn.day_of_month, date: wn.date, app: wn.app || "", ev: wn.event, word: wn.word };
-    if (!AC.cleanWhen(when)) return { ok: false, err: "when is not valid (check type, at, date, day_of_month, app or event)." };
+    if (wn.event === "event.soon" && wn.minutes_before !== undefined) when.min = wn.minutes_before;
+    if (AC.GOALS && AC.GOALS[wn.event]) when.amount = typeof wn.goal === "number" && wn.goal > 0 ? Math.round(wn.goal * 100) : 0;
+    if (!AC.cleanWhen(when)) return { ok: false, err: "when is not valid (check type, at, date, day_of_month, app, event, or goal for goal.*)." };
     if (when.t === "notice" && when.app && has && !has(when.app)) return { ok: false, err: "the app " + when.app + " is not installed." };
     if (!steps.length) return { ok: false, err: "give at least one step." };
     if (steps.length > AC.MAX_ACTIONS) return { ok: false, err: "at most " + AC.MAX_ACTIONS + " steps." };
