@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Target="master1.xml"/><Relationship Id="rId2" Target="master2.xml"/><Relationship Id="rId3" Target="master3.xml"/>
+  <Relationship Id="rId4" Target="master4.xml"/><Relationship Id="rId5" Target="master5.xml"/><Relationship Id="rId6" Target="master6.xml"/><Relationship Id="rId7" Target="master7.xml"/>
+</Relationships>

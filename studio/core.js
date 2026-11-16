@@ -52,7 +52,9 @@
   "use strict";
 
   var DATA_VER     = 1;
-  var MAX_PROJECTS = 50;
+  var MAX_PROJECTS = 50;             // songs: projects outside a book
+  var MAX_CHAPTERS = 200;            // projects inside books (wave A2)
+  var MAX_BOOKS    = 40;
   var MAX_TRACKS   = 8;
   var MAX_CLIPS    = 500;          // per project
   var MAX_NAME     = 40;
@@ -169,12 +171,13 @@
   }
   function keySet(list) { var o = {}; list.forEach(function (k) { o[k] = 1; }); return o; }
   var KNOWN = {
-    projects: keySet(["id", "m", "name", "bpm", "sig", "vol", "loop", "fx"]),
+    projects: keySet(["id", "m", "name", "bpm", "sig", "vol", "loop", "fx", "bk", "kind"]),
+    books: keySet(["id", "m", "name", "ch", "open", "close", "spec", "pub", "meta", "rt", "sample"]),
     tracks: keySet(["id", "m", "p", "name", "color", "vol", "pan", "mute", "solo", "ord", "fx", "inst", "smp", "auto", "br", "lv"]),
     sources: keySet(["id", "m", "p", "name", "path", "dur", "ch", "lic"]),
     clips: keySet(["id", "m", "p", "t", "s", "at", "off", "len", "gain", "fi", "fo", "name", "n"])
   };
-  var TOP_KEYS = keySet(["ver", "projects", "tracks", "sources", "clips", "tombs"]);
+  var TOP_KEYS = keySet(["ver", "projects", "tracks", "sources", "clips", "tombs", "books"]);
   // A row of a list this version does not know, or null.
   function normXRow(x) {
     if (!isPlain(x) || typeof x.id !== "string" || !ANY_ID_RE.test(x.id) || !okM(x.m)) return null;
@@ -344,7 +347,7 @@
     var lp = x.loop && typeof x.loop === "object" ? x.loop : {};
     var a = num(lp.a, 0, MAX_SEC, 0, 4), b = num(lp.b, 0, MAX_SEC, 0, 4);
     if (b < a) { var tmp = a; a = b; b = tmp; }
-    return keepExtras({
+    var o = {
       id: x.id, m: x.m,
       name: clipLine(x.name, MAX_NAME),
       bpm: num(x.bpm, MIN_BPM, MAX_BPM, DEFAULT.bpm, 2),
@@ -352,8 +355,72 @@
       vol: num(x.vol, VOL_MIN, VOL_MAX, 0, 1),
       loop: { on: !!(x.loop && x.loop.on === true && b - a >= MIN_LEN), a: a, b: b },
       fx: normFx(x.fx)
-    }, x, KNOWN.projects);
+    };
+    // bk + kind (wave A2): the project is a part of a book; songs have neither
+    if (okBookId(x.bk) && BOOK_KINDS.indexOf(x.kind) >= 0) { o.bk = x.bk; o.kind = x.kind; }
+    return keepExtras(o, x, KNOWN.projects);
   }
+  // ---------- Books (Studio wave A2) ----------
+  // { id, m, name, ch: [chapter project ids in order], open?, close?: the
+  //   opening and closing credits projects, spec: "acx" | "storytel",
+  //   pub?: { t, e } the Publishing title and its audiobook edition,
+  //   meta?: { author, narrator, year, lang } when there is no Publishing,
+  //   rt?: { path, dur, floor } the book's room tone on the disk,
+  //   sample?: { p, a, b } the retail sample (project, seconds) }
+  // A chapter that is gone (tombstone, other device) simply drops out of ch.
+  var BOOK_KINDS = ["chapter", "open", "close"];
+  var BOOK_SPECS = ["acx", "storytel"];
+  var BOOK_ID_RE = /^b[a-z0-9]{6,20}$/;
+  var PUB_ID_RE  = /^[A-Za-z0-9_-]{1,40}$/;
+  function okBookId(id) { return typeof id === "string" && BOOK_ID_RE.test(id); }
+  function normBook(x) {
+    if (!x || typeof x !== "object" || !okBookId(x.id) || !okM(x.m)) return null;
+    var seen = {}, ch = [];
+    (Array.isArray(x.ch) ? x.ch : []).forEach(function (id) {
+      if (ch.length < MAX_CHAPTERS && okId(id, "p") && !seen[id]) { seen[id] = 1; ch.push(id); }
+    });
+    var o = { id: x.id, m: x.m, name: clipLine(x.name, 120), ch: ch, spec: BOOK_SPECS.indexOf(x.spec) >= 0 ? x.spec : "acx" };
+    if (okId(x.open, "p") && !seen[x.open]) o.open = x.open;
+    if (okId(x.close, "p") && !seen[x.close] && x.close !== o.open) o.close = x.close;
+    if (x.pub && typeof x.pub === "object" && typeof x.pub.t === "string" && PUB_ID_RE.test(x.pub.t)) {
+      o.pub = { t: x.pub.t };
+      if (typeof x.pub.e === "string" && PUB_ID_RE.test(x.pub.e)) o.pub.e = x.pub.e;
+    }
+    if (x.meta && typeof x.meta === "object") {
+      var mt = {};
+      ["author", "narrator"].forEach(function (k) { var v = clipLine(x.meta[k], 120); if (v) mt[k] = v; });
+      if (isInt(x.meta.year) && x.meta.year >= 1000 && x.meta.year <= 9999) mt.year = x.meta.year;
+      if (typeof x.meta.lang === "string" && /^[a-z]{2,3}$/.test(x.meta.lang)) mt.lang = x.meta.lang;
+      if (Object.keys(mt).length) o.meta = mt;
+    }
+    if (x.rt && typeof x.rt === "object" && typeof x.rt.path === "string" && PATH_RE.test(x.rt.path) && x.rt.path.indexOf("/..") < 0) {
+      o.rt = { path: x.rt.path, dur: num(x.rt.dur, 0, 120, 0, 3) };
+      if (isNum(x.rt.floor) && x.rt.floor >= -200 && x.rt.floor <= 0) o.rt.floor = round(x.rt.floor, 1);
+    }
+    if (x.sample && typeof x.sample === "object" && okId(x.sample.p, "p")) {
+      var a = num(x.sample.a, 0, MAX_SEC, 0, 3), b = num(x.sample.b, 0, MAX_SEC, 0, 3);
+      if (b > a) o.sample = { p: x.sample.p, a: a, b: b };
+    }
+    return keepExtras(o, x, KNOWN.books);
+  }
+  // the parts of a book in playing order: [{ p (project), kind }]
+  function bookParts(dat, bk) {
+    var out = [], have = function (id) { var p = find(dat, "projects", id); return p && p.bk === bk.id ? p : null; };
+    if (bk.open && have(bk.open)) out.push({ p: have(bk.open), kind: "open" });
+    bk.ch.forEach(function (id) { var p = have(id); if (p) out.push({ p: p, kind: "chapter" }); });
+    // a chapter of this book that ch does not list (its delete was undone, or
+    // two devices added chapters at once) still shows, after the others
+    var listed = {};
+    out.forEach(function (x) { listed[x.p.id] = 1; });
+    dat.projects.filter(function (p) { return p.bk === bk.id && p.kind === "chapter" && !listed[p.id]; })
+      .sort(function (x, y) { return cmpStr(x.id, y.id); })
+      .forEach(function (p) { out.push({ p: p, kind: "chapter" }); });
+    if (bk.close && have(bk.close)) out.push({ p: have(bk.close), kind: "close" });
+    return out;
+  }
+  function books(dat) { return Array.isArray(dat.books) ? dat.books : []; }
+  function songCount(dat) { return dat.projects.filter(function (p) { return !p.bk; }).length; }
+  function chapterCount(dat) { return dat.projects.filter(function (p) { return !!p.bk; }).length; }
   function normTrack(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "t") || !okM(x.m) || !okId(x.p, "p")) return null;
     var t = {
@@ -531,6 +598,19 @@
         out[key].push(best[id]);
       });
     });
+    // books (wave A2): written only when there is one, so older data keeps its bytes
+    var bb = {};
+    [a.books, b.books].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (raw) {
+        var x = normBook(raw);
+        if (!x) return;
+        var cur = bb[x.id];
+        if (!cur || x.m > cur.m || (x.m === cur.m && tieWins(x, cur))) bb[x.id] = x;
+      });
+    });
+    var bl = Object.keys(bb).sort(cmpStr).filter(function (id) { return !(id in tombs && tombs[id] >= bb[id].m); }).slice(0, MAX_BOOKS);
+    if (bl.length) out.books = bl.map(function (id) { return bb[id]; });
     Object.keys(tombs).sort(cmpStr).forEach(function (id) { out.tombs[id] = tombs[id]; });
     // a newer Studio's data version and its lists or records (wave A0)
     [a.ver, b.ver].forEach(function (v) { if (isInt(v) && v > out.ver && v <= MAX_VER) out.ver = v; });
@@ -849,7 +929,9 @@
   }
 
   var api = {
-    DATA_VER: DATA_VER, MAX_PROJECTS: MAX_PROJECTS, MAX_TRACKS: MAX_TRACKS, MAX_CLIPS: MAX_CLIPS,
+    DATA_VER: DATA_VER, MAX_PROJECTS: MAX_PROJECTS, MAX_CHAPTERS: MAX_CHAPTERS, MAX_BOOKS: MAX_BOOKS,
+    normBook: normBook, bookParts: bookParts, books: books, songCount: songCount, chapterCount: chapterCount,
+    okBookId: okBookId, BOOK_SPECS: BOOK_SPECS, BOOK_KINDS: BOOK_KINDS, MAX_TRACKS: MAX_TRACKS, MAX_CLIPS: MAX_CLIPS,
     MAX_NAME: MAX_NAME, MIN_BPM: MIN_BPM, MAX_BPM: MAX_BPM, SIGS: SIGS, MAX_SEC: MAX_SEC, MIN_LEN: MIN_LEN,
     VOL_MIN: VOL_MIN, VOL_MAX: VOL_MAX, GAIN_MIN: GAIN_MIN, GAIN_MAX: GAIN_MAX, COLORS: COLORS,
     ID_RE: ID_RE, ANY_ID_RE: ANY_ID_RE, DEFAULT: DEFAULT, LISTS: LISTS,

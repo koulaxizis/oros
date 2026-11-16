@@ -135,6 +135,15 @@
       "doc.remind.title": "Reminders of dates",
       "doc.remind.text":  "orOS reminds you 30 days and 7 days before a document expires, on the day it expires, and when its keep-until date has passed. Nothing is ever deleted. Remind me from:",
       "doc.remind.never": "Never on this device",
+      "doc.ln.title":     "Linked to",
+      "doc.ln.add":       "Link to…",
+      "doc.ln.rm":        "Remove the link to {name}",
+      "doc.ln.pick":      "Link to an item of another app",
+      "doc.ln.app":       "App",
+      "doc.ln.search":    "Search",
+      "doc.ln.none":      "Nothing found",
+      "doc.ln.full":      "A document has at most 30 links",
+      "doc.ln.gone":      "That app is not on this device",
       "doc.inbox":        "{n} added from Scanner & PDF",
       "doc.inboxOne":     "Added from Scanner & PDF",
       "doc.lostFile":    "The file is not on this disk any more. If it was moved, Find moved files looks for it.",
@@ -299,6 +308,15 @@
       "doc.remind.title": "Υπενθυμίσεις ημερομηνιών",
       "doc.remind.text":  "Το orOS σού θυμίζει 30 και 7 μέρες πριν λήξει ένα έγγραφο, την ημέρα που λήγει, και όταν περάσει η ημερομηνία «Κράτα έως». Τίποτα δεν διαγράφεται ποτέ. Θύμισέ μου από τις:",
       "doc.remind.never": "Ποτέ σε αυτή τη συσκευή",
+      "doc.ln.title":     "Συνδέεται με",
+      "doc.ln.add":       "Σύνδεση με…",
+      "doc.ln.rm":        "Αφαίρεση της σύνδεσης με {name}",
+      "doc.ln.pick":      "Σύνδεση με εγγραφή άλλης εφαρμογής",
+      "doc.ln.app":       "Εφαρμογή",
+      "doc.ln.search":    "Αναζήτηση",
+      "doc.ln.none":      "Δεν βρέθηκε τίποτα",
+      "doc.ln.full":      "Ένα έγγραφο έχει έως 30 συνδέσεις",
+      "doc.ln.gone":      "Αυτή η εφαρμογή δεν υπάρχει σε αυτή τη συσκευή",
       "doc.inbox":        "Προστέθηκαν {n} από το Scanner & PDF",
       "doc.inboxOne":     "Προστέθηκε από το Scanner & PDF",
       "doc.lostFile":    "Το αρχείο δεν είναι πια στον δίσκο. Αν μετακινήθηκε, η «Εύρεση αρχείων που μετακινήθηκαν» το ψάχνει.",
@@ -1022,6 +1040,90 @@
     }, 0);
   }
 
+  // ---------- links to other apps (W4) ----------
+  // The item list comes from the shell's universal search (the apps'
+  // own read-only search.js providers), so a link names exactly what
+  // the search opens: { a: app id, r: its target, t: its title }.
+  var LINK_APPS = ["budget", "invoices", "garage", "health", "crm"];
+  function shell() { try { return window.parent && window.parent !== window ? window.parent : null; } catch (e) { return null; } }
+  function installed() {
+    var p = shell(), list = [];
+    try { list = p && typeof p.orosAssistInstalled === "function" ? p.orosAssistInstalled() : []; } catch (e) { list = []; }
+    return Array.isArray(list) ? list : [];
+  }
+  function linkApps() {
+    var p = shell();
+    if (!p || typeof p.orosAssistSearch !== "function") return [];
+    var have = {};
+    installed().forEach(function (a) { if (a && a.id) have[a.id] = a.name || a.id; });
+    return LINK_APPS.filter(function (id) { return have[id]; }).map(function (id) { return { id: id, name: have[id] }; });
+  }
+  function appName(id) {
+    var hit = installed().filter(function (a) { return a && a.id === id; })[0];
+    return hit && hit.name ? hit.name : id;
+  }
+  function openLink(l) {
+    var p = shell();
+    if (!p || !installed().some(function (a) { return a && a.id === l.a; })) { toast(t("doc.ln.gone")); return; }
+    try { if (typeof p.orosAssistOpen === "function") p.orosAssistOpen(l.a, l.r); } catch (e) {}
+  }
+  function pickLink() {
+    return new Promise(function (resolve) {
+      var apps = linkApps(), done = false;
+      if (!apps.length) { resolve(null); return; }
+      var d = modal("doc-pick");
+      d.appendChild(el("h3", "", t("doc.ln.pick")));
+      var sel = el("select");
+      sel.setAttribute("aria-label", t("doc.ln.app"));
+      apps.forEach(function (a) { sel.appendChild(new Option(a.name, a.id)); });
+      var last = lsGet("oros-files-docs-linkapp");
+      if (last && apps.some(function (a) { return a.id === last; })) sel.value = last;
+      var q = input("search", "", { placeholder: t("doc.ln.search"), "aria-label": t("doc.ln.search") });
+      var bar = el("div", "doc-pick-bar");
+      bar.appendChild(sel);
+      bar.appendChild(q);
+      d.appendChild(bar);
+      var ul = el("ul", "doc-pick-list");
+      ul.setAttribute("aria-live", "polite");
+      d.appendChild(ul);
+      var row = el("menu", "dlg-row");
+      row.appendChild(textBtn("", t("doc.cancel"), function () { finish(null); }));
+      d.appendChild(row);
+      d.addEventListener("cancel", function () { finish(null); });
+      function finish(v) { if (done) return; done = true; if (d.open) d.close(); resolve(v); }
+      var token = 0;
+      function run() {
+        var my = ++token, app = sel.value, text = q.value.trim(), p = shell();
+        lsSet("oros-files-docs-linkapp", app);
+        var ask = text.length >= 2 ? p.orosAssistSearch(text, [app]) : p.orosAssistSearch("", [app], { all: true });
+        Promise.resolve(ask).then(function (groups) {
+          if (my !== token || !d.open) return;
+          var hits = [];
+          (groups || []).forEach(function (g) { if (g && g.id === app) hits = hits.concat(g.hits || []); });
+          if (text.length < 2) hits.sort(function (a, b) { return (b.when || 0) - (a.when || 0); });
+          ul.innerHTML = "";
+          hits.slice(0, 40).forEach(function (h) {
+            if (!h || typeof h.title !== "string") return;
+            var li = el("li");
+            var b = textBtn("doc-pick-hit", h.title, function () {
+              finish({ a: app, r: h.target === undefined ? null : h.target, t: h.title.slice(0, 200) });
+            });
+            if (h.text) b.appendChild(el("small", "", String(h.text).slice(0, 120)));
+            li.appendChild(b);
+            ul.appendChild(li);
+          });
+          if (!ul.children.length) ul.appendChild(el("li", "doc-hint", t("doc.ln.none")));
+        }, function () { if (my === token) { ul.innerHTML = ""; ul.appendChild(el("li", "doc-hint", t("doc.ln.none"))); } });
+      }
+      var timer = 0;
+      q.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(run, 200); });
+      sel.addEventListener("change", run);
+      d.showModal();
+      q.focus();
+      run();
+    });
+  }
+
   // ---------- reminders of dates (W3) ----------
   // The hour lives in the device-local oros-files-docs-prefs that the
   // shell reminder reads (files/docs-due.js readPrefs: default 09:00).
@@ -1224,6 +1326,40 @@
     fNote.value = d.no || "";
     form.appendChild(field(t("doc.f.note"), fNote, "wide"));
 
+    // Links (W4): items of Budget, Invoices, Garage, Health, CRM. Those
+    // apps show the document back (files/docs-links.js); a link to an
+    // app this version does not offer is kept as it is.
+    var links = (d.ln || []).slice();
+    var lnRow = el("div", "doc-field wide doc-links");
+    lnRow.appendChild(el("span", "doc-lbl", t("doc.ln.title")));
+    var lnList = el("ul", "doc-ln-list");
+    lnRow.appendChild(lnList);
+    var bLink = textBtn("doc-ln-add", t("doc.ln.add"), function () {
+      if (links.length >= 30) { toast(t("doc.ln.full")); return; }
+      pickLink().then(function (l) {
+        if (!l) return;
+        var k = l.a + ":" + JSON.stringify(l.r);
+        if (!links.some(function (x) { return x.a + ":" + JSON.stringify(x.r) === k; })) links.push(l);
+        paintLinks();
+      });
+    });
+    bLink.hidden = !linkApps().length;
+    lnRow.appendChild(bLink);
+    function paintLinks() {
+      lnList.innerHTML = "";
+      links.forEach(function (l, i) {
+        var li = el("li", "doc-ln");
+        var name = appName(l.a) + " \u00b7 " + (l.t || "\u2026");
+        li.appendChild(textBtn("doc-ln-open", name, function () { dlg.close(); openLink(l); }));
+        li.appendChild(iconBtn("doc-tag-x", ICON.x, t("doc.ln.rm", { name: l.t || appName(l.a) }), function () { links.splice(i, 1); paintLinks(); }));
+        lnList.appendChild(li);
+      });
+      lnList.hidden = !links.length;
+      lnRow.hidden = !links.length && bLink.hidden;
+    }
+    paintLinks();
+    form.appendChild(lnRow);
+
     var fileRow = el("div", "doc-field wide doc-file");
     fileRow.appendChild(el("span", "doc-lbl", t("doc.f.file")));
     var pathLine = el("span", "doc-path", d.p.slice(CORE.ROOT.length + 1));
@@ -1348,6 +1484,7 @@
       next.ex = fEx.value || undefined;
       next.kp = fForever.checked ? CORE.FOREVER : (fKeep.value || undefined);
       next.no = fNote.value.trim() || undefined;
+      next.ln = links;
       st = CORE.putDoc(st, next, now);
       if (commit(st)) toast(t("doc.saved"));
       dlg.close();

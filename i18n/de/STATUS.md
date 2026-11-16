@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 45732 of 46224 (98%)
-- Help pages: 157 of 157 (100%)
+- Strings: 45946 of 46442 (98%)
+- Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -12,14 +12,14 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1919 / 1921 |
+| assistant | 99% | 1922 / 1926 |
 | atelier | 100% | 1408 / 1408 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 261 / 261 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
-| base | 99% | 313 / 314 |
+| base | 99% | 321 / 322 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
@@ -46,7 +46,7 @@ text is still written in the code. They switch over wave by wave
 | designkit | 100% | 203 / 203 |
 | device | 100% | 122 / 122 |
 | diary | 100% | 236 / 236 |
-| dice | 100% | 52 / 52 |
+| dice | 100% | 57 / 57 |
 | discover | English for now | 3 / 3 |
 | dots | 100% | 55 / 55 |
 | enrichui | 100% | 28 / 28 |
@@ -54,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 98% | 761 / 774 |
+| files | 98% | 770 / 785 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -113,7 +113,7 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 332 / 332 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 96% | 653 / 677 |
+| publish | 96% | 693 / 717 |
 | qr | 100% | 248 / 248 |
 | quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |
@@ -146,7 +146,7 @@ text is still written in the code. They switch over wave by wave
 | stickies | 100% | 124 / 124 |
 | stock | 99% | 804 / 809 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 776 / 776 |
+| studio | 100% | 894 / 894 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 60 / 60 |
@@ -157,7 +157,7 @@ text is still written in the code. They switch over wave by wave
 | today | 100% | 155 / 155 |
 | todo | 100% | 271 / 271 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 127 / 127 |
+| transfer | 100% | 130 / 130 |
 | travel | 100% | 555 / 555 |
 | typewriter | 100% | 46 / 46 |
 | typing | 94% | 170 / 180 |
@@ -168,11 +168,11 @@ text is still written in the code. They switch over wave by wave
 | weather | 100% | 190 / 190 |
 | whack | 100% | 51 / 51 |
 | wheel | 100% | 107 / 107 |
-| whiteboard | 100% | 284 / 284 |
+| whiteboard | 100% | 302 / 302 |
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
-| writer | 100% | 531 / 531 |
+| writer | 100% | 541 / 541 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
 

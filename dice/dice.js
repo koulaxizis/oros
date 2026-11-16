@@ -1,5 +1,13 @@
 // ============================================================
-// orOS Dice & Coin — App logic
+// orOS Chance (dice/) — Dice & coin tab + Wheel tab
+// Since the 2026-11-13 merge 8 this app is "Chance" / «Τύχη»: the
+// Dice & Coin app plus the Wheel of Fate (APP-ALIAS, old id "wheel"
+// → { tab: "wheel" }). The Wheel tab loads wheel/view.js, view.css
+// and the "wheel" pack on first open (section 13); this page
+// registers the slice "wheel" at boot. Deep link __orosOpenAt("dice",
+// { tab: "dice" | "wheel" }). The last tab is device-local
+// (oros-dice-tab).
+// Dice & Coin — App logic
 // New in v0.4 (merge-aware sync):
 //   - history entries carry id + ts + mtime, merged by union-by-id,
 //     LWW by ts with lexicographic JSON tie-break (R5), sorted
@@ -98,7 +106,12 @@
       "export.done":       "History exported",
       "export.filename":   "oros-dice-history.txt",
       "export.header":     "orOS Dice & Coin — History",
-      "export.exported":   "Exported: {time}"
+      "export.exported":   "Exported: {time}",
+      "tab.dice":          "Dice & coin",
+      "tab.wheel":         "Wheel",
+      "tabs.aria":         "Chance",
+      "wheel.loading":     "Opening the wheel…",
+      "wheel.loadFail":    "The wheel could not open. Check the connection and try again."
     },
     el: {
       "aria.sfx": "Ήχος",
@@ -152,7 +165,12 @@
       "export.done":       "Το ιστορικό εξήχθη",
       "export.filename":   "oros-dice-history.txt",
       "export.header":     "orOS Ζάρια & Κέρμα — Ιστορικό",
-      "export.exported":   "Εξήχθη: {time}"
+      "export.exported":   "Εξήχθη: {time}",
+      "tab.dice":          "Ζάρια & κέρμα",
+      "tab.wheel":         "Τροχός",
+      "tabs.aria":         "Τύχη",
+      "wheel.loading":     "Άνοιγμα του τροχού…",
+      "wheel.loadFail":    "Ο τροχός δεν άνοιξε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "dice", LANG);
@@ -737,6 +755,7 @@
   function wireKeyboard() {
     // Scoped app shortcuts (Space=roll, C=coin) — ignore inputs, ignore modifiers
     document.addEventListener("keydown", function (e) {
+      if (chTab === "wheel") return;   // the Wheel tab has its own keys
       var tag = (document.activeElement && document.activeElement.tagName) || "";
       if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;   // never steal OS combos
@@ -1348,6 +1367,115 @@
     paintStaticAria();
   }
 
+  // ---------- 13. Chance tabs: Dice & coin | Wheel (merge 8) ----------
+  // The Wheel of Fate folded in (APP-ALIAS "wheel" → { tab: "wheel" }).
+  // Its code stays in wheel/: view.js + view.css + the "wheel" pack
+  // load the first time the tab opens; the slice "wheel" is registered
+  // here at boot (the stored copy until the view is built).
+  var TAB_KEY = "oros-dice-tab";
+  var chTab = "dice", wheelLoad = null;
+  function chAsset(src) {
+    var v = window.orosI18n && window.orosI18n.ver;
+    return src + (v ? "?v=" + encodeURIComponent(v) : "");
+  }
+  function loadWheel() {
+    if (window.WheelView) return Promise.resolve();
+    if (wheelLoad) return wheelLoad;
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = chAsset("../wheel/view.css");
+    document.head.appendChild(css);
+    wheelLoad = new Promise(function (resolve) {
+      if (window.orosI18n && typeof window.orosI18n.ensure === "function") window.orosI18n.ensure(LANG, "wheel", resolve);
+      else resolve();
+    }).then(function () {
+      return new Promise(function (resolve, reject) {
+        var sc = document.createElement("script");
+        sc.src = chAsset("../wheel/view.js");
+        sc.onload = resolve; sc.onerror = reject;
+        document.head.appendChild(sc);
+      });
+    });
+    wheelLoad.catch(function () { wheelLoad = null; });
+    return wheelLoad;
+  }
+  function showWheel() {
+    var host = $("wheel-host");
+    if (window.WheelView) { window.WheelView.mount(host); return; }
+    var w = host.querySelector(".ch-wait");
+    if (!w) {
+      w = document.createElement("p");
+      w.className = "ch-wait";
+      w.setAttribute("role", "status");
+      host.appendChild(w);
+    }
+    w.textContent = t("wheel.loading");
+    loadWheel().then(function () {
+      var w2 = host.querySelector(".ch-wait");
+      if (w2) w2.parentNode.removeChild(w2);
+      if (chTab === "wheel") showWheel();
+    }, function () {
+      var w3 = host.querySelector(".ch-wait");
+      if (w3) w3.textContent = t("wheel.loadFail");
+    });
+  }
+  function setTab(k, focus) {
+    k = k === "wheel" ? "wheel" : "dice";
+    if (chTab === "wheel" && k !== "wheel" && window.WheelView) window.WheelView.flush();
+    chTab = k;
+    var wheel = k === "wheel";
+    $("cht-dice").setAttribute("aria-selected", wheel ? "false" : "true");
+    $("cht-dice").tabIndex = wheel ? -1 : 0;
+    $("cht-wheel").setAttribute("aria-selected", wheel ? "true" : "false");
+    $("cht-wheel").tabIndex = wheel ? 0 : -1;
+    $("dice-pane").hidden = wheel;
+    $("wheel-host").hidden = !wheel;
+    try { localStorage.setItem(TAB_KEY, k); } catch (e) {}
+    if (wheel) showWheel();
+    if (focus) $(wheel ? "cht-wheel" : "cht-dice").focus();
+  }
+  function wireTabs() {
+    $("ch-tabs").setAttribute("aria-label", t("tabs.aria"));
+    $("cht-dice").addEventListener("click", function () { setTab("dice"); });
+    $("cht-wheel").addEventListener("click", function () { setTab("wheel"); });
+    $("ch-tabs").addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+      e.preventDefault();
+      e.stopPropagation();
+      var k = e.key === "Home" ? "dice" : (e.key === "End" ? "wheel" : (chTab === "wheel" ? "dice" : "wheel"));
+      setTab(k, true);
+    });
+  }
+  // The slice "wheel" (oros-wheel-data), the Wheel of Fate's own,
+  // unchanged: saved wheels LWW + tombstones (wheel/core.js, loaded
+  // with this page). Before the view is built the stored copy is the slice.
+  function registerWheelSlice() {
+    var WC = window.WheelCore, api = null;
+    if (!WC) return;
+    try { api = (window.parent && window.parent.orosSync) || window.orosSync || null; } catch (e) { api = null; }
+    if (!api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("wheel", function () {
+      var v = window.WheelView && window.WheelView.sliceGet();
+      if (v) return v;
+      var raw = null;
+      try { raw = JSON.parse(localStorage.getItem(WC.DATA_KEY) || "null"); } catch (e) { raw = null; }
+      return raw && typeof raw === "object" ? WC.mergeWheel(raw, raw) : null;
+    }, function (incoming) {
+      if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.wheels)) return;
+      if (window.WheelView && window.WheelView.sliceGet()) { window.WheelView.sliceSet(incoming); return; }
+      try { localStorage.setItem(WC.DATA_KEY, JSON.stringify(WC.mergeWheel(incoming, incoming))); } catch (e) {}
+    }, WC.DATA_KEY, WC.mergeWheel);
+  }
+  // Deep link: { tab: "dice" | "wheel" } (the alias "wheel" sends
+  // { tab: "wheel" }); anything else opens the app as it was.
+  function openTarget(target) {
+    if (!target || typeof target !== "object") return false;
+    if (target.tab !== "wheel" && target.tab !== "dice") return false;
+    setTab(target.tab);
+    return true;
+  }
+  window.__orosOpenAt = openTarget;
+
   // ---------- Boot ----------
   load();
   applyI18n();
@@ -1356,5 +1484,20 @@
   wire();
   paintSfxBtn();
   registerSync();
+  registerWheelSlice();
+  wireTabs();
+  (function () {
+    var pending = null;
+    try {
+      if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function") {
+        pending = window.parent.__orosTakeTarget("dice");
+      }
+    } catch (e) {}
+    if (!openTarget(pending)) {
+      var last = "dice";
+      try { last = localStorage.getItem(TAB_KEY) === "wheel" ? "wheel" : "dice"; } catch (e) {}
+      setTab(last);
+    }
+  })();
   scheduleRender();
 })();
