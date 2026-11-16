@@ -1,6 +1,38 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.30.00
+- **Machine suggestions for book translation.** In Writer's translation editor, `⋯` › `Machine suggestions: off…` turns on drafts for each segment from the same on-device translator as Text Tools (Alt+0 to use it), and `Fill empty segments…` drafts the rest for you to check. Off until you turn it on.
+
+## Version 7.29.00
+- **Base grows up.** Send Forms answers into a table and make a public form from a table, see date fields in the Calendar (a switch per field), let the Assistant and Claude read your bases and add records, let Automations follow new records and changed fields, and leave comments on records.
+
+## Version 7.28.01
+- **Suggested VPNs on the Start page.** Under the VPN extension link, a quiet row names a few well-known VPNs with a free plan (Proton VPN, Windscribe, hide.me, TunnelBear) and PIA (paid only). Each opens the provider's own site. You choose and sign in with your own account.
+
+## Version 7.28.00
+- **Pickers in orOS colours.** Every list you choose from, every date, time and colour field now opens in the colours of your orOS instead of the browser's grey boxes: a sheet from the bottom on phones, a panel under the field on a computer, with search in long lists, a calendar that starts on Monday, and a colour picker with your own colours. Questions such as "Make a new address?" are orOS windows too. Same on the site, the installed app, Portable, orOS USB and the Android app.
+
+## Version 7.27.00
+- **Who helps with your data.** In [Settings](app:settings), choose who may use your orOS data: both the Assistant and Claude, the Assistant only (Claude's access through orOS Gate turns off on all your devices), or Claude only (the Assistant hides, and its shortcuts open Claude with your question copied, ready to paste).
+
+## Version 7.26.01
+- **Shared links that arrive damaged.** A song, list or note someone sent you now opens even when a chat app added a space, a line break or a full stop to its link. If part of the link went missing on the way, the page says so plainly and shows how much arrived, so the sender can send it again.
+
+## Version 7.26.00
+- **Automations follow your day and your figures.** New "When": some minutes before an event of your day, when today's till sales reach an amount, when this month's spending passes one. Two new steps happen by themselves: `Pause sounds` and `Play a sound`. Try the ready-made `Quiet before a meeting`. See [Automations](app:automations).
+- **Looks for the top bar.** In `Settings › Appearance › Top bar`, `Look of the bar`: Glass, Midnight or Solid float the bar as a rounded strip; Classic stays as it was.
+- **The smart bar on the Windows desktop** (with the next orOS for Windows): the tray icon's menu gets `Smart bar on the desktop`, the same bar at the top of the screen, even with the orOS window closed.
+
+## Version 7.25.00
+- **The Assistant and orOS Gate find your documents.** When you let them read Files, they see each document's details (type, date, sender, tags, amount, dates, file) and the first 300 characters of its text, nothing more. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never reach them. Documents also show up in the menu search. See [Files](app:files).
+
+## Version 7.24.00
+- **Prompter and Publishing link to other apps.** In Prompter, `On the typewriter` opens a new Typewriter page that starts with the prompt. In Publishing, `Is it public domain?` checks a title in the Public Domain Calculator.
+
+## Version 7.23.00
+- **Check and deliver an audiobook from Studio.** In a book, `Check all` measures every chapter against ACX (Audible) or Storytel and shows which pass and what to fix. `Normalise all` brings every part to the loudness ACX wants, with its peaks held safe, and can be taken out again; noise is only pointed out, never changed for you. `Export the book` makes one MP3 per chapter with the title, author, narrator, ISBN and cover from Publishing, plus the large cover and a report. See [Studio](app:studio).
+
 ## Version 7.22.00
 - **Book translations meet Publishing and Calendar.** In a Writer translation, `Publishing title…` links it to a title in Publishing: its progress shows in that title's release plan, and you can add yourself as the translator there in one step. `Deadline and goal…` sets a due date and how many words a day you want to translate (or lets orOS work it out); a line under the progress bar shows the days left and today's words, and Calendar can remind you every morning until the deadline. See [Writer](app:writer).
 

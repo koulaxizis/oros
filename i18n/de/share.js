@@ -53,7 +53,6 @@ orosPack("de", "share", {
  "copyFailShort": "Kopieren fehlgeschlagen",
  "copyText": "Text kopieren",
  "crypto": "Dieser Browser kann gesperrte Links nicht öffnen.",
- "cut": "Nur die ersten {n} Fotos passen (höchstens 25 MB oder 200 Fotos).",
  "dl.cal": "Zum Kalender hinzufügen (.ics)",
  "dl.contact": "Herunterladen (.vcf)",
  "dl.event": "Zum Kalender hinzufügen (.ics)",
@@ -216,6 +215,9 @@ orosPack("de", "share", {
  "songs1": "1 Song",
  "trsOwn": "Manche Songs kamen nur mit ihrem Namen: Such sie in Musik oder anderswo.",
  "addHint.tracks": "Öffnet Musik: alle abspielen oder als deine Playlist behalten.",
+ "cutLink": "Dieser Link kam gekürzt an: Ein Teil ging unterwegs verloren. Bitte die Person, ihn noch einmal zu schicken (der kurze Link, ein QR-Code oder die Datei kommen vollständig an).",
+ "cutLinkInfo": "Für die Person, die ihn geschickt hat: {n} Zeichen kamen an, am Ende „{e}“.",
+ "cut": "Nur die ersten {n} Fotos passen (höchstens 25 MB oder 200 Fotos).",
  "dl.tracks": "Herunterladen (.m3u)",
  "trsHint": "Tippe auf einen Song, um ihn hier abzuspielen; der nächste folgt.",
  "trsPlay": "{t} abspielen"

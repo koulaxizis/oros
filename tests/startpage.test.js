@@ -79,6 +79,10 @@ test("VPN guide link: Live USB or Portable guide, Greek half for Greek", () => {
   assert.equal(SP.vpnGuide(null, "el"), "https://github.com/koulaxizis/oros-portable/blob/main/PRIVATE-BROWSING.md#ιδιωτική-περιήγηση-με-το-oros-portable");
   assert.ok(/data-oros-sys-platform/.test(read("startpage/startpage.js")));
   assert.ok(/id="vpn-link"/.test(read("startpage/index.html")));
+  // suggested providers: https only, PIA marked paid, built with textContent
+  assert.deepEqual(SP.VPN_PICKS.map((v) => v.name), ["Proton VPN", "Windscribe", "hide.me", "TunnelBear", "PIA"]);
+  assert.ok(SP.VPN_PICKS.every((v) => /^https:\/\//.test(v.url)));
+  assert.deepEqual(SP.VPN_PICKS.filter((v) => v.paid).map((v) => v.name), ["PIA"]);
 });
 
 // ---------- ME v1 in shell.js ----------

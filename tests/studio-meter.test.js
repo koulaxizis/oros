@@ -148,3 +148,16 @@ test("A1: platform targets and the gain an audiobook needs", () => {
   assert.equal(h.limit, true);                                             // the limiter must catch the peaks
   assert.equal(h.noisy, true);                                             // the noise rises above -60
 });
+
+test("A3: where the loudest sample and the first clipped one are, for 'go there'", () => {
+  const sr = 48000, x = new Float32Array(sr * 3);
+  for (let i = 0; i < x.length; i++) x[i] = 0.1 * Math.sin(i / 10);
+  x[sr * 2 + 100] = 0.5; x[sr + 7] = 1; x[sr + 9] = -1;
+  const rep = M.analyse([x], sr);
+  assert.equal(rep.clip, 2);
+  assert.ok(Math.abs(rep.clipAt - (sr + 7) / sr) < 1e-9);
+  assert.ok(Math.abs(rep.peakAt - (sr + 7) / sr) < 1e-9);
+  const rows = M.check(rep, "acx");
+  assert.equal(rows.find((r) => r.k === "clip").at, rep.clipAt);
+  assert.equal(M.check(M.analyse([new Float32Array(sr).fill(0.1)], sr), "acx").find((r) => r.k === "clip").at, undefined);
+});

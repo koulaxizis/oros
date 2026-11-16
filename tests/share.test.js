@@ -91,7 +91,7 @@ test("link codec: compressed round trip, uncompressed form, normalized on the wa
 test("hostile links: garbage, wrong shape, bombs and oversize codes are refused", async () => {
   assert.deepEqual(await K.decode(""), { error: "bad" });
   assert.deepEqual(await K.decode("1.@@@"), { error: "bad" });
-  assert.deepEqual(await K.decode("1." + b64u(new Uint8Array([1, 2, 3]))), { error: "bad" });
+  assert.deepEqual(await K.decode("1." + b64u(new Uint8Array([1, 2, 3]))), { error: "cut" });
   assert.deepEqual(await K.decode("0." + b64u(new TextEncoder().encode('{"v":2,"k":"note","d":{"t":"x"}}'))), { error: "bad" });
   assert.deepEqual(await K.decode("0." + b64u(new TextEncoder().encode('{"v":1,"k":"html","d":{}}'))), { error: "bad" });
   const bomb = await deflate(JSON.stringify({ v: 1, k: "note", d: { t: "x", x: "a".repeat(K.MAX_JSON * 2) } }));

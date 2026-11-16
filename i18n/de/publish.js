@@ -383,6 +383,7 @@ orosPack("de", "publish", {
  "rc.fuSubj": "„{title}“",
  "rc.fuBody": "Liebe/r {name},\n\nich hoffe, „{title}“ ist gut angekommen. Wenn Sie schon zum Lesen gekommen sind, würden wir uns sehr über Ihre Meinung freuen und Ihre Rezension gern teilen, falls Sie eine schreiben.\n\nMit freundlichen Grüßen\n{imprint}",
  "kit.btn": "Release-Paket in Atelier",
+ "pd.btn": "Ist es gemeinfrei?",
  "kit.lineOn": "Erscheint am {d}",
  "kit.lineMus": "Erscheint am {d} · jetzt pre-saven",
  "kit.lineNow": "Jetzt erschienen",
