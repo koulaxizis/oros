@@ -12,7 +12,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
-const P = require(path.join(ROOT, "pickers.js"));
+const P = require(path.join(ROOT, "pickers-ui.js"));
 
 test("fold drops case and accents, Greek final sigma too", () => {
   assert.equal(P.fold("Ελλάδα"), "ελλαδα");
@@ -105,11 +105,12 @@ test("pickers.css keeps the browser list shut only under html.opk-on, and lets d
     assert.match(sel, /:not\(\[data-native\]\)/);
   }
   assert.match(css, /html\.opk-on \[data-native\] select \{ pointer-events: auto; \}/);
-  for (const v of ["--panel-bg", "--text", "--accent", "--border"]) assert.ok(css.includes("var(" + v), v);
+  const ui = fs.readFileSync(path.join(ROOT, "pickers-ui.css"), "utf8");
+  for (const v of ["--panel-bg", "--text", "--accent", "--border"]) assert.ok(ui.includes("var(" + v), v);
 });
 
 test("pickers.js writes no page data as HTML", () => {
-  const js = fs.readFileSync(path.join(ROOT, "pickers.js"), "utf8");
+  const js = fs.readFileSync(path.join(ROOT, "pickers-ui.js"), "utf8");
   const html = [...js.matchAll(/\.innerHTML\s*=\s*([^;]+);/g)].map((m) => m[1].trim());
   for (const h of html) assert.match(h, /^('<svg [^']*'|svg)$/, "innerHTML only for fixed icons: " + h);
   // iconBtn(…, svg) is only ever called with the ICON_ constants, which are literal SVG
@@ -234,8 +235,22 @@ test("no app calls the browser's alert / confirm / prompt (R14: OrosPick.ask)", 
 });
 
 test("OrosPick.ask is exported and sign.html (its only user outside the stamp) loads pickers.js", () => {
-  const js = fs.readFileSync(path.join(ROOT, "pickers.js"), "utf8");
+  const js = fs.readFileSync(path.join(ROOT, "pickers-ui.js"), "utf8");
   assert.match(js, /open: openAny, ask: ask,/);
+  const loader = fs.readFileSync(path.join(ROOT, "pickers.js"), "utf8");
+  assert.match(loader, /ask: function \(o\)/);
   const sign = fs.readFileSync(path.join(ROOT, "scanpdf/sign.html"), "utf8");
   assert.match(sign, /<script src="\.\.\/pickers\.js\?v=[^"]+" defer><\/script>/);
+});
+
+// ---------- the loader stays small (first-open budget, .github/qa/budget.json) ----------
+test("pickers.js only loads pickers-ui.js / .css on first use and stays small", () => {
+  const js = fs.readFileSync(path.join(ROOT, "pickers.js"), "utf8");
+  const css = fs.readFileSync(path.join(ROOT, "pickers.css"), "utf8");
+  assert.ok(js.length < 8000, "pickers.js is " + js.length + " bytes");
+  assert.ok(css.length < 1200, "pickers.css is " + css.length + " bytes");
+  assert.match(js, /"pickers-ui\.js" \+ query/);
+  assert.match(js, /link\("pickers-ui\.css", one\)/);
+  assert.ok(!/pickers-ui/.test(js.split("function load()")[0].replace(/\/\/.*$/gm, "")), "nothing of the UI before load()");
+  for (const f of ["pickers-ui.js", "pickers-ui.css"]) assert.ok(fs.existsSync(path.join(ROOT, f)), f);
 });
