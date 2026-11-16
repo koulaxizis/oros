@@ -321,6 +321,7 @@
    "files": [
     "files/computer.js",
     "files/docs-due.js",
+    "files/docs-links.js",
     "files/docs.js",
     "files/drive.js",
     "files/dropbox-callback.js",

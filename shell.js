@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.10.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.23.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -415,6 +415,9 @@
     if (window.orosOsk) window.orosOsk.refresh();   // on-screen keyboard labels
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
+    if (window.orosClip) window.orosClip.refresh();         // clipboard history
+    if (window.orosEmoji) window.orosEmoji.refresh();       // emoji picker
+    if (window.orosSmartBar) window.orosSmartBar.refresh(); // smart top bar chips
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
     // known) must relabel them too, or screen readers hear English.
@@ -1666,12 +1669,22 @@
     var left = bar && bar.querySelector(".bar-left");
     var right = bar && bar.querySelector(".bar-right");
     if (!left || !right) return;
-    for (var lvl = 0; ; lvl++) {
-      applyBarFit(lvl);
+    // Smart bar (smartbar.js): its chips give way after the tight level
+    // and before the weekday, the date or the language go.
+    var SB = window.orosSmartBar && window.orosSmartBar.fitDrop ? window.orosSmartBar : null;
+    if (SB) SB.fitReset();
+    function fits() {
       var cs = getComputedStyle(bar);
       var avail = bar.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      var need = left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4;
-      if (need <= avail || lvl >= (document.getElementById("qs-btn") ? BAR_FIT_MAX : 6)) return;
+      return left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4 <= avail;
+    }
+    // The first chip stays until the last level: the person asked for it.
+    var max = document.getElementById("qs-btn") ? BAR_FIT_MAX : 6;
+    for (var lvl = 0; ; lvl++) {
+      applyBarFit(lvl);
+      if (fits()) return;
+      if (lvl === 2 && SB) { while (SB.fitDrop(1)) { if (fits()) return; } }
+      if (lvl >= max) { if (SB) { while (SB.fitDrop(0)) { if (fits()) return; } } return; }
     }
   }
 
@@ -1776,6 +1789,7 @@
     tickSafe("mixerTrayTick", mixerTrayTick); // Sound Mixer: playing-with-app-closed chip (cheap, 1/s)
     tickSafe("wpDailyTick", wpDailyTick);     // Wallpaper "a new picture every day" (checks once a minute)
     tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
+    if (window.orosSmartBar) tickSafe("smartbarTick", window.orosSmartBar.tick); // Smart bar chips (cheap, 1/s)
   }
 
   // SH-Q2: one engine's failure is logged once (not 1/s) and never
@@ -4737,13 +4751,12 @@
   // One line of words → one action in an app, on the device, no AI
   // (commands/core.js). Two ways in: the first row of the menu search
   // (Enter runs it) and a small bar over any app (commands/bar.js):
-  // Ctrl+K, and Ctrl+Alt+Shift+K everywhere (SC_DEFS). Notes and Wiki
-  // keep their own Ctrl+K (their search). Both files load on first use,
+  // Ctrl+Alt+Shift+K everywhere (SC_DEFS id "cmdbar"; plain Ctrl+K
+  // retired 2026-11-15). Both files load on first use,
   // with the engines they borrow (Calendar quick add, Calculator, Unit
   // Converter, "Send to an app"); a missing engine only drops its kind.
   // The last commands run are a device-local list (CMD_HIST_KEY, never
   // synced) that the bar shows while its field is empty.
-  var CMD_OWN_CTRLK = { notes: true, wiki: true };
   var CMD_HIST_KEY = "oros-cmd-history", CMD_HIST_MAX = 12;
   var cmdLoad = null;
   function cmdModule() {
@@ -4817,7 +4830,8 @@
     if (U) { try { rates = U.storedRates(JSON.parse(localStorage.getItem(U.RATES_KEY))); } catch (e) { rates = null; } }
     return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick, lang: langBase(),
                         calc: window.CalcCore, units: U, rates: rates, send: window.OrosSendCore,
-                        lockOn: !!(window.orosLock && window.orosLock.isOn()), pw: window.PwCore });
+                        lockOn: !!(window.orosLock && window.orosLock.isOn()), pw: window.PwCore,
+                        clipOn: !!(window.orosClip && window.orosClip.isOn()) });
   }
   function cmdHistory() {
     try {
@@ -4859,6 +4873,7 @@
     var N = window.orosNotifs;
     if (name === "theme") { setThemeUser(value); notifySys("dim", text); return; }
     if (name === "lock") { if (window.orosLock && window.orosLock.isOn()) window.orosLock.lock(); return; }
+    if (name === "clip") { if (window.orosClip) window.orosClip.open(); return; }   // CLIP-1 W2
     if (!N || typeof N.setSetting !== "function") return;
     if (name === "notifs") {
       if (!value) notifySys("dim", text);
@@ -5033,29 +5048,15 @@
     quickWant = null;
     if (w) quickLaunch(w);
   }
-  // Ctrl+K (Cmd+K on a Mac), from the desktop or from inside an app.
-  function cmdIsCtrlK(e) {
-    return (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.code === "KeyK";
-  }
-  document.addEventListener("keydown", function (e) {
-    if (!cmdIsCtrlK(e) || e.defaultPrevented) return;
-    if (window.orosCmdBar && window.orosCmdBar.isOpen()) return;
-    e.preventDefault();
-    openCmdBar();
-  });
-  // Every app frame gets the listener (one today, more with M2).
+  // The command bar opens only with Ctrl+Alt+Shift+K (SC_DEFS id
+  // "cmdbar"): plain Ctrl+K was retired on 2026-11-15 (Chris: every
+  // orOS shortcut is Ctrl+Alt+Shift+<key>). Every app frame still gets
+  // the strict mode's panic key (Escape three times).
   function cmdWireFrame(frame) {
     frame.addEventListener("load", function () {
       var w;
       try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
-      w.addEventListener("keydown", function (e) {
-        strictPanicKey(e);
-        if (!cmdIsCtrlK(e)) return;
-        if (state.running && CMD_OWN_CTRLK[state.running.id]) return;   // the app's own Ctrl+K
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        openCmdBar();
-      }, true);
+      w.addEventListener("keydown", function (e) { strictPanicKey(e); }, true);
     });
   }
   appFrames().forEach(cmdWireFrame);
@@ -5085,6 +5086,7 @@
   }
   appFrames().forEach(extWireFrame);
   appFrames().forEach(a11yWireFrame);
+  if (window.orosClip) appFrames().forEach(window.orosClip.wire);   // CLIP-1
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -5828,7 +5830,35 @@
   //     sorted by id), so a converged state produces no phantom push.
   var SHELL_STAMPS_KEY = "oros-shell-stamps";   // { <field>: { t: ms, v: json } } — travels as `sm`
   var ALARM_TOMBS_KEY  = "oros-alarm-tombs";    // { <alarmId>: { t: ms, x: ms|0 } } — travels as `alarmTombs`
-  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "icons"];
+  // Default apps per file type (DEF-APPS D1): fileopen.js keeps them in
+  // localStorage "oros-file-open" { ver: 1, map: { ".txt": "pad" | "ask" } }.
+  // The synced field is the map alone, canonical by its shape only
+  // (sorted types, at most 300), never by the app list of this version,
+  // so every device makes the same string (R26). fileopen.js drops what
+  // its own table does not know when it reads it.
+  var FOPEN_KEY = "oros-file-open";
+  function fopenCanon(v) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    var out = {};
+    Object.keys(v).filter(function (k) {
+      return /^\.[a-z0-9]{1,24}$/.test(k) && typeof v[k] === "string" && /^(ask|[a-z][a-z0-9]{0,23})$/.test(v[k]);
+    }).sort().slice(0, 300).forEach(function (k) { out[k] = v[k]; });
+    return out;
+  }
+  function fopenRead() {
+    try {
+      var p = JSON.parse(localStorage.getItem(FOPEN_KEY) || "null");
+      return fopenCanon(p && p.map) || {};
+    } catch (e) { return {}; }
+  }
+  function fopenWrite(map) {
+    try {
+      if (Object.keys(map).length) localStorage.setItem(FOPEN_KEY, JSON.stringify({ ver: 1, map: map }));
+      else localStorage.removeItem(FOPEN_KEY);
+    } catch (e) {}
+  }
+
+  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "icons", "fopen", "keys"];
   var TOMB_GRACE_MS = 24 * 60 * 60 * 1000;      // a once-alarm tombstone outlives its alarm by a day (clock skew)
 
   function shellDefault(name) {
@@ -5842,6 +5872,8 @@
       case "wpart":        return null;
       case "wpland":       return null;
       case "icons":        return "classic";
+      case "fopen":        return {};
+      case "keys":         return {};
       default:             return { on: false, auto: false, lat: null, lon: null, label: "" };   // weather
     }
   }
@@ -5865,6 +5897,8 @@
         var wl = wplandCanon(v);
         return wl ? wl : undefined;
       case "icons":        return iconsCanon(v);
+      case "fopen":        return fopenCanon(v);
+      case "keys":         return keysCanon(v);
       default:
         if (!v || typeof v !== "object") return undefined;
         return {
@@ -5887,7 +5921,8 @@
       lang: state.lang, theme: state.theme, skin: state.skin,
       wallpaper: state.wallpaper, syncInterval: syncInterval,
       autoexport: state.autoexport, weather: wxRead(),
-      wpart: state.wpart, wpland: state.wpland, icons: state.icons
+      wpart: state.wpart, wpland: state.wpland, icons: state.icons,
+      fopen: fopenRead(), keys: keysRead()
     };
     var out = {};
     for (var i = 0; i < SHELL_FIELDS.length; i++) {
@@ -6084,6 +6119,8 @@
       wpart:        vals.wpart,   // "Mine" wallpaper recipe (Wallpaper Generator)
       wpland:       vals.wpland,  // "Living land" { style, seed, motion } (wallpaper/land.js)
       icons:        vals.icons,   // icon pack (ICONPACK-1)
+      fopen:        vals.fopen,   // default apps per file type (DEF-APPS D1)
+      keys:         vals.keys,    // the person's own shortcut keys (DEF-APPS D2)
       ver:          2,
       sm:           sm,
       alarmTombs:   tombs
@@ -6144,6 +6181,16 @@
     if (data.wpland !== undefined && shellCanon("wpland", data.wpland) !== undefined) {
       state.wpland = shellCanon("wpland", data.wpland);
       wpLandWrite(state.wpland);
+    }
+    // Default apps (DEF-APPS D1): pulled, written for fileopen.js only
+    // (no push from a pull).
+    if (data.fopen !== undefined && fopenCanon(data.fopen) !== undefined) {
+      fopenWrite(fopenCanon(data.fopen));
+    }
+    // Shortcut keys (DEF-APPS D2): pulled, applied (and mirrored for
+    // orOS USB), never a push.
+    if (data.keys !== undefined && keysCanon(data.keys) !== undefined) {
+      keysWrite(keysCanon(data.keys));
     }
     if (iconsCanon(data.icons)) {     // pulled: apply only (no push from a pull)
       state.icons = iconsCanon(data.icons);
@@ -6343,6 +6390,7 @@
   }
   window.orosMe = { name: meName };
 
+  var fopenHooked = false;
   function registerShellSlice() {
     if (window.orosSync) {
       // SH-D1: stamps first (first-run migration + parked-legacy
@@ -6351,6 +6399,12 @@
       // is assembled from several keys and the shell is always live.
       try { shellStampsRefresh(); } catch (e) {}
       window.orosSync.registerSlice("shell", shellSliceGet, shellSliceSet, null, shellMerge);
+    }
+    // DEF-APPS D1: a default app picked in Settings or with "Always"
+    // in the chooser is a local change of the field "fopen".
+    if (!fopenHooked && window.orosFileOpen && typeof window.orosFileOpen.onChange === "function") {
+      fopenHooked = true;
+      window.orosFileOpen.onChange(noteLocalChange);
     }
   }
 
@@ -8253,6 +8307,12 @@
     {
       k: "cr.g.data",
       items: [
+        { name: "Unicode CLDR annotations 49.0.0", url: "https://cldr.unicode.org/",
+          by: "Unicode, Inc.", lic: "Unicode License V3",
+          k: "cr.cldr-emoji" },
+        { name: "unicode-emoji-json 0.9.0", url: "https://github.com/muan/unicode-emoji-json",
+          by: "Mu-An Chiou", lic: "MIT",
+          k: "cr.unicode-emoji-json" },
         { name: "FSRS-6 (ts-fsrs 5.4.2)", url: "https://github.com/open-spaced-repetition/ts-fsrs",
           by: "Open Spaced Repetition", lic: "MIT",
           k: "cr.fsrs-ts" },
@@ -8596,6 +8656,9 @@
         { name: "Tor button's Go modules (ProtonMail go-crypto, CIRCL, golang.org/x/crypto, ulikunitz/xz)", url: "https://github.com/ProtonMail/go-crypto",
           by: "The Go Authors, Proton AG, Cloudflare, Ulrich Kunitz", lic: "BSD-3-Clause",
           k: "cr.tor-modules" },
+        { name: "chromium-web-store", url: "https://github.com/NeverDecaf/chromium-web-store",
+          by: "NeverDecaf and contributors", lic: "MIT",
+          k: "cr.webstore" },
         { name: "Ollama (with llama.cpp and ggml)", url: "https://github.com/ollama/ollama",
           by: "Ollama, Georgi Gerganov & contributors", lic: "MIT",
           k: "cr.ollama" },
@@ -8707,14 +8770,11 @@
   function showInfoModal() {
     if (scInfoClose) { scInfoClose(); return; }   // open → close (clean toggle)
 
-    var mac = /Mac|iPhone|iPad/i.test(navigator.platform || "");
-    var comboPrefix = mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+";
-
-    var rows = "";
-    SC_DEFS.forEach(function (def) {
-      rows += '<div class="sc-row"><span class="sc-key">' + comboPrefix +
-              def.key.toUpperCase() + '</span><span>' +
-              escapeHtml(window.t(def.label)) + '</span></div>';
+    var rows = "", usbHere = scUsbHere();
+    scTable().forEach(function (x) {
+      if (!x.code || (x.def.usb && !usbHere)) return;   // off, or another device's
+      rows += '<div class="sc-row"><span class="sc-key">' + escapeHtml(scCombo(x.code)) +
+              '</span><span>' + escapeHtml(window.t(x.def.label)) + '</span></div>';
     });
 
     var ov = document.createElement("div");
@@ -9251,28 +9311,157 @@
   }
 
   // THE table. Order = documentation order. Adding a shortcut =
-  // adding one entry here (handler + i18n key) — nothing else.
+  // adding one entry here (stable id + default key + handler + i18n
+  // key) — nothing else. Every orOS shortcut is Ctrl+Alt+Shift+<key>
+  // (R12, Chris 2026-11-15: one combo for all, no plain Ctrl, no Win).
+  // id: stable forever (the person's own key is stored under it);
+  // key: the default letter; code: a default that is not a letter
+  // (e.code, e.g. "Period"); usb: handled by the orOS USB System
+  // extension, never by the shell (listed and changeable only on orOS
+  // USB; its key is mirrored on <html> as data-oros-sc-<id>).
   var SC_DEFS = [
-    { key: "p", label: "sc.desc.push",      fn: scForcePush },
-    { key: "o", label: "sc.desc.pull",      fn: scForcePull },
-    { key: "s", label: "sc.desc.snapshot",  fn: scBackupNow },
-    { key: "x", label: "sc.desc.export",    fn: scExportDb },
-    { key: "i", label: "sc.desc.info",      fn: showInfoModal },
-    { key: "u", label: "sc.desc.updates",   fn: scCheckUpdates },
-    { key: "l", label: "sc.desc.lang",      fn: scToggleLang },
-    { key: "r", label: "sc.desc.reconnect", fn: scReconnect },
-    { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } },
-    { key: "f", label: "sc.desc.search",    fn: openMenuSearch },
-    { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } },
-    { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle },
-    { key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } },
-    { key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } },
-    { key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
-    { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
-    { key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
-    { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
-    { key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } }
+    { id: "push",       key: "p", label: "sc.desc.push",      fn: scForcePush },
+    { id: "pull",       key: "o", label: "sc.desc.pull",      fn: scForcePull },
+    { id: "snapshot",   key: "s", label: "sc.desc.snapshot",  fn: scBackupNow },
+    { id: "export",     key: "x", label: "sc.desc.export",    fn: scExportDb },
+    { id: "info",       key: "i", label: "sc.desc.info",      fn: showInfoModal },
+    { id: "updates",    key: "u", label: "sc.desc.updates",   fn: scCheckUpdates },
+    { id: "lang",       key: "l", label: "sc.desc.lang",      fn: scToggleLang },
+    { id: "reconnect",  key: "r", label: "sc.desc.reconnect", fn: scReconnect },
+    { id: "calculator", key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } },
+    { id: "search",     key: "f", label: "sc.desc.search",    fn: openMenuSearch },
+    { id: "help",       key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } },
+    { id: "timer",      key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle },
+    { id: "assistant",  key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } },
+    { id: "today",      key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } },
+    { id: "stickies",   key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
+    { id: "cmdbar",     key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
+    { id: "switcher",   key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
+    { id: "overview",   key: "e", label: "sc.desc.overview",   fn: function() { ovOpen(); } },
+    { id: "quickask",   key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
+    { id: "qs",         key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } },
+    { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } },
+    { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } },
+    { id: "screen", key: "b", label: "sc.desc.screen", fn: function() { scrMove(); } },
+    // orOS USB only (oros-usb System extension, PrtSc also takes a shot).
+    { id: "usb-shot",    key: "g", label: "sc.desc.usbshot",    usb: true },
+    { id: "usb-reader",  key: "j", label: "sc.desc.usbreader",  usb: true },
+    { id: "usb-display", key: "d", label: "sc.desc.usbdisplay", usb: true }
   ];
+
+
+  // ----- the person's own keys (SC-EDIT, DEF-APPS D2) -----
+  // localStorage "oros-shortcuts" = { <id>: "KeyB" | "Digit3" | "" (off) },
+  // only the ones that differ from the default. Synced in the shell
+  // slice (field "keys", whole map, last writer wins). Canonical by
+  // shape only (R26): an id this version does not know is kept.
+  var SC_KEYS_KEY = "oros-shortcuts";
+  var SC_CODE_RE = /^(Key[A-Z]|Digit[0-9]|Period|Comma|Slash|Semicolon|Minus|Equal|BracketLeft|BracketRight|Quote|Backquote|Backslash)$/;
+  function keysCanon(v) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    var out = {};
+    Object.keys(v).filter(function (k) {
+      return /^[a-z][a-z0-9-]{0,23}$/.test(k) && typeof v[k] === "string" && (v[k] === "" || SC_CODE_RE.test(v[k]));
+    }).sort().slice(0, 64).forEach(function (k) { out[k] = v[k]; });
+    return out;
+  }
+  function keysRead() {
+    try { return keysCanon(JSON.parse(localStorage.getItem(SC_KEYS_KEY) || "null")) || {}; }
+    catch (e) { return {}; }
+  }
+  function keysWrite(map) {
+    try {
+      if (Object.keys(map).length) localStorage.setItem(SC_KEYS_KEY, JSON.stringify(map));
+      else localStorage.removeItem(SC_KEYS_KEY);
+    } catch (e) {}
+    scMirror();
+  }
+  function scDefault(def) { return def.code || ("Key" + def.key.toUpperCase()); }
+  function scUsbHere() { return !!(state.pcFiles && state.pcFiles.fixed); }
+  // The table as it is now: [{ def, code }], code "" = off. Two entries
+  // on one key (maps from two versions met in sync) cannot both fire:
+  // the first in table order keeps it, the later one is off.
+  function scTable(map) {
+    map = map || keysRead();
+    var used = {};
+    return SC_DEFS.map(function (def) {
+      var c = Object.prototype.hasOwnProperty.call(map, def.id) ? map[def.id] : scDefault(def);
+      if (c && used[c]) c = "";
+      if (c) used[c] = true;
+      return { def: def, code: c };
+    });
+  }
+  function scCodeOf(id) {
+    var r = scTable().filter(function (x) { return x.def.id === id; })[0];
+    return r ? r.code : "";
+  }
+  var SC_KEY_LABEL = { Period: ".", Comma: ",", Slash: "/", Semicolon: ";", Minus: "-", Equal: "=",
+                       BracketLeft: "[", BracketRight: "]", Quote: "'", Backquote: "`", Backslash: "\\" };
+  function scKeyLabel(code) {
+    if (/^Key[A-Z]$/.test(code)) return code.charAt(3);
+    if (/^Digit[0-9]$/.test(code)) return code.charAt(5);
+    return SC_KEY_LABEL[code] || code;
+  }
+  function scPrefix() { return /Mac|iPhone|iPad/i.test(navigator.platform || "") ? "⌃⌥⇧" : "Ctrl+Alt+Shift+"; }
+  function scCombo(code) { return code ? scPrefix() + scKeyLabel(code) : ""; }
+  // The orOS USB System extension runs in an isolated world: it reads
+  // its keys from <html data-oros-sc-usb-shot="KeyG"> ("" = off).
+  function scMirror() {
+    try {
+      var root = document.documentElement;
+      scTable().forEach(function (x) { if (x.def.usb) root.setAttribute("data-oros-sc-" + x.def.id, x.code); });
+    } catch (e) {}
+  }
+  // Settings › System › Keyboard shortcuts. code "" = off. A key that
+  // another shortcut uses is refused unless swap: then that one takes
+  // this one's key (or goes off when this one had none). Returns
+  // true when something changed.
+  function scSetKey(id, code, swap) {
+    var def = SC_DEFS.filter(function (d) { return d.id === id; })[0];
+    if (!def || typeof code !== "string" || (code !== "" && !SC_CODE_RE.test(code))) return false;
+    var map = keysRead(), tab = scTable(map);
+    var mine = tab.filter(function (x) { return x.def.id === id; })[0].code;
+    if (mine === code) return false;
+    var other = code ? tab.filter(function (x) { return x.code === code && x.def.id !== id; })[0] : null;
+    if (other && !swap) return false;
+    function put(d, c) {
+      if (c === scDefault(d)) delete map[d.id];
+      else map[d.id] = c;
+    }
+    put(def, code);
+    if (other) put(other.def, mine);
+    keysWrite(keysCanon(map));
+    noteLocalChange();
+    settingsNotify();
+    return true;
+  }
+  function scResetAll() {
+    if (!Object.keys(keysRead()).length) return;
+    keysWrite({});
+    noteLocalChange();
+    settingsNotify();
+  }
+  // Strings that name a default combo (the Help button's tooltip, the
+  // tour…) show the person's key instead: window.t rewrites
+  // "Ctrl+Alt+Shift+H" when Help moved to another key.
+  function scRewrite(str) {
+    if (typeof str !== "string" || str.indexOf("Ctrl+Alt+Shift+") === -1) return str;
+    var map = keysRead();
+    if (!Object.keys(map).length) return str;
+    var byDefault = {};
+    scTable(map).forEach(function (x) { if (!x.def.usb && x.code) byDefault[scKeyLabel(scDefault(x.def))] = scKeyLabel(x.code); });
+    return str.replace(/Ctrl\+Alt\+Shift\+([A-Z0-9.])(?![A-Za-z0-9])/g, function (m, k) {
+      return Object.prototype.hasOwnProperty.call(byDefault, k) ? "Ctrl+Alt+Shift+" + byDefault[k] : m;
+    });
+  }
+  (function () {
+    var tBase = window.t;
+    if (typeof tBase !== "function" || tBase.scWrapped) return;
+    var tw = function (key) { return scRewrite(tBase.apply(this, arguments)); };
+    tw.scWrapped = true;
+    window.t = tw;
+  })();
+  scMirror();
 
   // Public contract consumed by iframe apps (same-origin, so this
   // is reachable — Contract Β). Returns true when the combo matched,
@@ -9294,18 +9483,19 @@
           tgt.isContentEditable) return false;
     }
     var code = e.code || "";
-    if (code.indexOf("Key") !== 0) return false;   // letters only
-    var letter = code.charAt(code.length - 1).toUpperCase();
-    for (var i = 0; i < SC_DEFS.length; i++) {
-      if (SC_DEFS[i].key.toUpperCase() === letter) {
+    if (!SC_CODE_RE.test(code)) return false;   // letters, digits, a few marks
+    var tab = scTable();
+    for (var i = 0; i < tab.length; i++) {
+      if (tab[i].code === code && !tab[i].def.usb && tab[i].def.fn) {
         if (e.preventDefault) e.preventDefault();
-        SC_DEFS[i].fn();
+        tab[i].def.fn();
         return true;
       }
     }
     return false;
   }
-  window.orosShortcuts = { handle: handleShortcutEvent };
+  // code(id): the e.code that fires a shortcut now ("" = off).
+  window.orosShortcuts = { handle: handleShortcutEvent, code: scCodeOf, combo: function (id) { return scCombo(scCodeOf(id)); } };
   
     // ---------- 9d. Weather widget (v0.18.0) ----------
   // Provider: Open-Meteo (no API key, no cookies). Settings travel
@@ -11651,7 +11841,6 @@
       folder = localStorage.getItem(FS_FOLDER_NAME_KEY);
       lapsed = !!localStorage.getItem(FS_LAPSED_KEY);
     } catch (e) {}
-    var mac = /Mac|iPhone|iPad/i.test(navigator.platform || "");
     return {
       version: APP_VERSION,
       lang: state.lang,
@@ -11746,9 +11935,14 @@
       tips: SOLO ? null : { on: !!tipsRead().on },
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
+      night: window.orosNight ? window.orosNight.snapshot() : null,   // NIGHT-1, this device
+      smartbar: !SOLO && window.orosSmartBar && window.orosSmartBar.snapshot ? window.orosSmartBar.snapshot() : null,
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
+      // Clipboard history (cliphist.js, CLIP-1): this device only.
+      clip: window.orosClip ? window.orosClip.snapshot() : null,
+      overview: ovSnapshot(),       // OV-1: hot corner, this device only
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
       pcfiles: state.pcFiles && !state.pcFiles.fixed ? { on: state.pcFiles.state === "on" } : null,
@@ -11758,10 +11952,13 @@
       a11y: a11ySnapshot(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
-      shortcuts: SC_DEFS.map(function (d) {
-        return { combo: (mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+") + d.key.toUpperCase(),
-                 label: window.t(d.label) };
-      })
+      // SC-EDIT (DEF-APPS D2): id, the key now ("" = off), its default.
+      shortcuts: scTable().filter(function (x) { return !x.def.usb || scUsbHere(); }).map(function (x) {
+        return { id: x.def.id, code: x.code, def: scDefault(x.def),
+                 combo: scCombo(x.code), defCombo: scCombo(scDefault(x.def)),
+                 key: x.code ? scKeyLabel(x.code) : "", label: window.t(x.def.label) };
+      }),
+      shortcutsPrefix: scPrefix()
     };
   }
 
@@ -11773,6 +11970,11 @@
       case "theme":      setThemeUser(value); return;
       case "skin":       setSkinUser(value); return;
       case "icons":      setIconsUser(value); settingsNotify(); return;
+      // SC-EDIT (DEF-APPS D2): { id, code, swap } / reset to the defaults.
+      case "shortcut":
+        if (value && typeof value === "object") scSetKey(String(value.id || ""), value.code, !!value.swap);
+        return;
+      case "shortcutsReset": scResetAll(); return;
       case "wallpaper":
         if (value === "custom" && !wpPic() && !(state.wpart && wpArt())) { openAppById("wallpaper"); return; }
         setWallpaperUser(value);
@@ -11789,9 +11991,14 @@
       case "multitask":
         if (!SOLO) { mtSetUser(!!value); settingsNotify(); }
         return;
+      case "overview:corner":
+        if (!SOLO) { ovSetPref(OV_CORNER_KEY, !!value); settingsNotify(); }
+        return;
       case "pcfiles":
         if (typeof window.__orosPcFilesSet === "function") window.__orosPcFilesSet(!!value);
         return;
+      case "clip":       if (window.orosClip) window.orosClip.setOn(!!value); return;
+      case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
@@ -11817,8 +12024,20 @@
       if (SS) SS.set(name.slice(9), value);
       return;
     }
+    if (/^night:/.test(name)) {          // nightlight.js: "night:<on|sched|from|to|warmth>"
+      if (window.orosNight) window.orosNight.set(name.slice(6), value);
+      return;
+    }
     if (/^widgets:/.test(name)) {        // widgets.js: "widgets:<kind>" on/off
       if (window.orosWidgets) window.orosWidgets.set(name.slice(8), !!value);
+      return;
+    }
+    if (/^smartbar:/.test(name)) {       // smartbar.js: "smartbar:<kind>" on/off
+      if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
+      return;
+    }
+    if (/^smartbar-move:/.test(name)) {  // smartbar.js: "smartbar-move:<kind>", value -1 (left) / 1 (right)
+      if (window.orosSmartBar) window.orosSmartBar.move(name.slice(14), Number(value) < 0 ? -1 : 1);
       return;
     }
     if (/^osk:/.test(name)) {
@@ -11866,6 +12085,8 @@
       case "sync.link.open":    if (arg && typeof arg.code === "string") linkOpen(arg.code.slice(0, 40)); return;
       case "sync.link.session": if (state.linkIn && state.linkIn.phase !== "done") linkInSet({ session: !!(arg && arg.on) }); return;
       case "sync.link.close":   state.linkIn = null; settingsNotify(); return;
+      case "clip.clear":      if (window.orosClip) window.orosClip.clear(); return;   // CLIP-1
+      case "clip.open":       if (window.orosClip) window.orosClip.open(); return;
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -12479,6 +12700,7 @@
     cmdWireFrame(f);
     extWireFrame(f);
     a11yWireFrame(f);
+    if (window.orosClip) window.orosClip.wire(f);   // CLIP-1
     return f;
   }
   function mtDrop(el) {
@@ -12729,6 +12951,7 @@
     }
     // TILL-1: on a till-only device anything but Stock needs the owner.
     if (TILL && app && app.id !== "stock") { window.orosLock.till.ask(); return; }
+    if (typeof scrWins !== "undefined" && scrElsewhere(app)) return;   // SS1: it lives on the other screen
     if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
     var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;
@@ -13067,6 +13290,8 @@
     });
     if (window.orosLauncher) window.orosLauncher.refresh();
     if (mtSw) mtSwRender();
+    if (ov) ovRenderApps();     // 10e overview
+    monChanged();               // 10e window.orosMonitor listeners
   }
   mtOnChange = mtPaint;
 
@@ -13122,6 +13347,8 @@
       row.appendChild(go);
       var sb = mtSwSplitBtn(it);
       if (sb) row.appendChild(sb);
+      var scb = mtSwScreenBtn(it);   // SS1
+      if (scb) row.appendChild(scb);
       row.appendChild(x);
       mtSwSwipe(row, it.app.id);
       box.appendChild(row);
@@ -13317,6 +13544,606 @@
     btn.addEventListener("click", function (e) { e.stopPropagation(); mtSwitcher(); });
     left.appendChild(btn);
   })();
+
+  // ---------- 10e. Overview and system monitor (OV-1) ----------
+  // GNOME-like Activities overview (gap list 2026-11-15, items 7 + 9):
+  // one screen with the search field, the open apps of 10b/10c and the
+  // recent files of Files, plus a small "System" strip (memory places,
+  // storage, sync). It is a union of what exists, never a second
+  // system: typing hands the text to the menu search (same results,
+  // commands and data hits), the app cards are the switcher's list
+  // (mtOpenList / mtClose / mtSideOpen) and the recent files are Files'
+  // own device-local journal ("oros-files-recents"), opened in Files.
+  // Opens with Ctrl+Alt+Shift+E (SC_DEFS "e"); this device may also
+  // open it from the top-left hot corner ("oros-ov-corner" = "1"), off
+  // by default (a corner can surprise). No Super key: one combo for all.
+  // Never while the screen is locked, in a single app (SOLO) or on a
+  // till. Recent file names stay hidden during sensitive work.
+  // window.orosMonitor is the read model Settings › Device uses too.
+  var OV_CORNER_KEY = "oros-ov-corner";
+  var OV_RECENTS_KEY = "oros-files-recents";   // = files.js RECENTS_KEY
+  var OV_RECENTS_MAX = 8;
+  var ov = null;            // { el, onKey, back } while the overview is open
+
+  function ovPref(key) {
+    try { return localStorage.getItem(key) === "1"; } catch (e) { return false; }
+  }
+  function ovSetPref(key, on) {
+    try {
+      if (on) localStorage.setItem(key, "1");
+      else localStorage.removeItem(key);
+    } catch (e) {}
+  }
+  function ovAllowed() {
+    if (SOLO || TILL) return false;
+    try { if (window.orosLock && window.orosLock.isLocked && window.orosLock.isLocked()) return false; } catch (e) {}
+    return true;
+  }
+
+  // Files' recents journal → up to `max` valid entries, newest first.
+  // Pure (tests): only paths under /internal, never "..", never Trash.
+  function ovRecentsFrom(raw, max) {
+    var list;
+    try { list = JSON.parse(raw); } catch (e) { return []; }
+    if (!Array.isArray(list)) return [];
+    var out = [], seen = {};
+    for (var i = 0; i < list.length && out.length < max; i++) {
+      var e = list[i];
+      if (!e || typeof e.p !== "string" || e.p.length > 1024) continue;
+      var p = e.p.replace(/\/+$/, "");
+      if (p.indexOf("/internal/") !== 0 || /(^|\/)\.\.?(\/|$)/.test(p) || p.indexOf("/internal/.trash") === 0) continue;
+      if (seen[p]) continue;
+      seen[p] = 1;
+      var cut = p.lastIndexOf("/");
+      out.push({ path: p, name: p.slice(cut + 1), dir: p.slice(0, cut) || "/internal",
+                 at: typeof e.at === "number" && isFinite(e.at) ? e.at : 0 });
+    }
+    return out;
+  }
+  // One line for the sync tile. Pure (tests): s = snapshot().sync.
+  // → { key, n, level } with level "" | "busy" | "warn".
+  function ovSyncState(s) {
+    if (!s || !s.connected) return { key: "ov.sys.sync.off", n: 0, level: "" };
+    var f = s.files || null, q = f && f.queued > 0 ? f.queued : 0;
+    if (f && f.lastError) return { key: "ov.sys.sync.err", n: q, level: "warn" };
+    if (f && f.busy) return { key: "ov.sys.sync.busy", n: q, level: "busy" };
+    if (q) return { key: "ov.sys.sync.files", n: q, level: "busy" };
+    if (s.dirty) return { key: "ov.sys.sync.dirty", n: 0, level: "busy" };
+    if (s.deferred > 0) return { key: "ov.sys.sync.merge", n: s.deferred, level: "busy" };
+    return { key: "ov.sys.sync.ok", n: 0, level: "" };
+  }
+  // Places taken by the open apps (front, beside, background).
+  function ovPlaces(apps) {
+    var used = 0;
+    (apps || []).forEach(function (a) { used += a.weight || 1; });
+    return used;
+  }
+
+  // ---- window.orosMonitor: what is open and how this device is doing ----
+  var monListeners = [];
+  function monChanged() {
+    (monListeners || []).slice().forEach(function (fn) { try { fn(); } catch (e) {} });
+  }
+  function monSync() {
+    var S = window.orosSync, V = window.orosVault, out = { connected: false, provider: null, dirty: false, deferred: 0, files: null };
+    try { out.connected = !!(S && S.isConnected && S.isConnected()); } catch (e) {}
+    try { out.provider = S && S.getProvider ? S.getProvider() : null; } catch (e) {}
+    try { out.dirty = !!(S && S.isDirty && S.isDirty()); } catch (e) {}
+    try { out.deferred = S && S.getDeferred ? S.getDeferred().length : 0; } catch (e) {}
+    try {
+      var st = V && V.status ? V.status() : null;
+      if (st && st.usable) {
+        out.files = { queued: st.queued || 0, busy: !!st.busy, lastOkAt: st.lastOkAt || 0,
+                      lastError: st.lastError ? String(st.lastError).slice(0, 120) : null };
+      }
+    } catch (e) {}
+    return out;
+  }
+  function monSnapshot() {
+    var apps = (SOLO ? [] : mtOpenList()).map(function (it) {
+      return { id: it.app.id, name: mtLabel(it.app), front: !!it.front, side: !!it.side,
+               at: it.at || 0, weight: mtWeight(it.app.id), stays: mtKeepable(it.app) };
+    });
+    var heap = null;
+    try {
+      var pm = performance && performance.memory;
+      if (pm && pm.usedJSHeapSize > 0) heap = { used: pm.usedJSHeapSize, limit: pm.jsHeapSizeLimit || 0 };
+    } catch (e) {}
+    var snap = {
+      multitask: !SOLO && mtActive(),
+      apps: apps,
+      places: { used: ovPlaces(apps), total: mtSlotsHere() },
+      memory: { device: typeof navigator.deviceMemory === "number" ? navigator.deviceMemory : null, heap: heap },
+      storage: null,
+      sync: monSync()
+    };
+    var st = navigator.storage;
+    if (!st || typeof st.estimate !== "function") return Promise.resolve(snap);
+    return st.estimate().then(function (e) {
+      if (e && typeof e.usage === "number") snap.storage = { usage: e.usage, quota: e.quota || 0 };
+      return snap;
+    }, function () { return snap; });
+  }
+  window.orosMonitor = {
+    snapshot: monSnapshot,        // → Promise<{ multitask, apps[], places, memory, storage, sync }>
+    close: function (id) {        // closes one open app (as the switcher's ×)
+      if (SOLO || typeof id !== "string") return false;
+      for (var i = 0; i < mtOpenList().length; i++) {
+        if (mtOpenList()[i].app.id === id) { mtClose(id); return true; }
+      }
+      return false;
+    },
+    // fn() on every change of the open apps and of the sync state;
+    // returns an unsubscribe function (an app frame must call it).
+    onChange: function (fn) {
+      if (typeof fn !== "function") return function () {};
+      monListeners.push(fn);
+      return function () {
+        var i = monListeners.indexOf(fn);
+        if (i !== -1) monListeners.splice(i, 1);
+      };
+    },
+    syncState: ovSyncState
+  };
+  if (window.orosSync && window.orosSync.onAutoSync) {
+    window.orosSync.onAutoSync(function (kind) { if (kind !== "start") { monChanged(); if (ov) ovRenderSys(); } });
+  }
+  if (window.orosVault && window.orosVault.onStatus) {
+    window.orosVault.onStatus(function () { monChanged(); if (ov) ovRenderSys(); });
+  }
+
+  // ---- The overview screen ----
+  function ovBytes(n) {
+    if (!(n >= 0)) return "";
+    var u = ["B", "KB", "MB", "GB", "TB"], i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    var d = (i === 0 || n >= 10) ? 0 : 1;
+    try { return n.toLocaleString(shLoc(), { maximumFractionDigits: d }) + " " + u[i]; }
+    catch (e) { return n.toFixed(d) + " " + u[i]; }
+  }
+  function ovClose() {
+    if (!ov) return;
+    var o = ov;
+    ov = null;
+    o.el.remove();
+    document.removeEventListener("keydown", o.onKey, true);
+    if (o.back && o.back.focus && document.contains(o.back)) { try { o.back.focus(); } catch (e) {} }
+  }
+  function ovSection(cls, titleKey) {
+    var s = document.createElement("section");
+    s.className = "ov-sec " + cls;
+    var h = document.createElement("h3");
+    h.className = "ov-h";
+    h.textContent = window.t(titleKey);
+    s.appendChild(h);
+    var body = document.createElement("div");
+    body.className = "ov-body";
+    s.appendChild(body);
+    return s;
+  }
+  function ovRenderApps() {
+    if (!ov) return;
+    var body = ov.el.querySelector(".ov-apps .ov-body");
+    var focusId = document.activeElement && document.activeElement.closest &&
+      document.activeElement.closest(".ov-app") ? document.activeElement.closest(".ov-app").getAttribute("data-app") : null;
+    body.textContent = "";
+    var on = mtActive(), list = mtOpenList();
+    var n = ov.el.querySelector(".ov-apps .ov-n");
+    if (!n) {
+      n = document.createElement("span");
+      n.className = "ov-n";
+      ov.el.querySelector(".ov-apps .ov-h").appendChild(n);
+    }
+    n.textContent = list.length ? String(list.length) : "";
+    n.hidden = !list.length;
+    if (!list.length) {
+      var em = document.createElement("p");
+      em.className = "ov-empty";
+      em.textContent = window.t(on ? "ov.apps.none" : "mt.sw.off");
+      body.appendChild(em);
+    }
+    var grid = document.createElement("div");
+    grid.className = "ov-grid";
+    grid.setAttribute("role", "list");
+    list.forEach(function (it) {
+      var card = document.createElement("div");
+      card.className = "ov-app" + (it.front ? " ov-front" : "");
+      card.setAttribute("role", "listitem");
+      card.setAttribute("data-app", it.app.id);
+      var go = document.createElement("button");
+      go.type = "button";
+      go.className = "ov-go";
+      go.innerHTML = '<span class="app-ico" data-cat="' + iconCat(it.app) + '" data-hue="' + iconHue(it.app) + '">' + (ICONS[it.app.icon] || "") + '</span>' +
+        '<span class="ov-name"></span><span class="ov-when"></span>';
+      go.querySelector(".ov-name").textContent = mtLabel(it.app);
+      go.querySelector(".ov-when").textContent = it.front ? window.t("mt.sw.now") : it.side ? window.t("mt.sw.beside") : mtAgo(it.at);
+      if (it.front) go.setAttribute("aria-current", "true");
+      go.addEventListener("click", function () {
+        ovClose();
+        if (state.running && state.running.id === it.app.id) return;
+        if (it.side) { mtSideFocus(); return; }
+        openApp(it.app);
+      });
+      card.appendChild(go);
+      var tools = document.createElement("div");
+      tools.className = "ov-tools";
+      var sb = mtSwSplitBtn(it);
+      if (sb) {
+        sb.addEventListener("click", function () { ovClose(); }, true);
+        tools.appendChild(sb);
+      }
+      var x = document.createElement("button");
+      x.type = "button";
+      x.className = "mt-sw-x ov-x";
+      x.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      var xl = window.t("mt.sw.close").replace("{app}", mtLabel(it.app));
+      x.setAttribute("aria-label", xl);
+      x.title = xl;
+      x.addEventListener("click", function () { mtClose(it.app.id); });
+      tools.appendChild(x);
+      card.appendChild(tools);
+      grid.appendChild(card);
+    });
+    if (list.length) body.appendChild(grid);
+    if (!on) {
+      if (list.length) {
+        var off = document.createElement("p");
+        off.className = "ov-empty ov-off";
+        off.textContent = window.t("mt.sw.off");
+        body.appendChild(off);
+      }
+      var set = document.createElement("button");
+      set.type = "button";
+      set.className = "ov-link";
+      set.textContent = window.t("mt.sw.settings");
+      set.addEventListener("click", function () {
+        ovClose();
+        if (window.orosSettings) window.orosSettings.open("system");
+      });
+      body.appendChild(set);
+    }
+    if (focusId) {
+      var want = body.querySelector('.ov-app[data-app="' + focusId + '"] .ov-go');
+      if (want) want.focus();
+    }
+  }
+  function ovRenderFiles() {
+    var body = ov.el.querySelector(".ov-files .ov-body");
+    body.textContent = "";
+    function note(key) {
+      var p = document.createElement("p");
+      p.className = "ov-empty";
+      p.textContent = window.t(key);
+      body.appendChild(p);
+    }
+    if (strictLevelNow()) { note("ov.files.hidden"); return; }
+    var raw = null;
+    try { raw = localStorage.getItem(OV_RECENTS_KEY); } catch (e) {}
+    var list = ovRecentsFrom(raw, OV_RECENTS_MAX);
+    if (!list.length) note("ov.files.none");
+    var ul = document.createElement("div");
+    ul.className = "ov-flist";
+    ul.setAttribute("role", "list");
+    list.forEach(function (f) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ov-file";
+      b.setAttribute("role", "listitem");
+      b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>' +
+        '<span class="ov-fname"></span><span class="ov-fwhere"></span>';
+      b.querySelector(".ov-fname").textContent = f.name;
+      var where = f.dir === "/internal" ? window.t("ov.files.root") : f.dir.slice(f.dir.lastIndexOf("/") + 1);
+      b.querySelector(".ov-fwhere").textContent = where + (f.at ? " · " + mtAgo(f.at) : "");
+      b.title = f.path.replace(/^\/internal/, "");
+      b.addEventListener("click", function () {
+        ovClose();
+        window.__orosOpenAt("files", { path: f.path });
+      });
+      ul.appendChild(b);
+    });
+    if (list.length) body.appendChild(ul);
+    var all = document.createElement("button");
+    all.type = "button";
+    all.className = "ov-link";
+    all.textContent = window.t("ov.files.all");
+    all.addEventListener("click", function () {
+      ovClose();
+      window.__orosOpenAt("files", { view: "recent" });
+    });
+    body.appendChild(all);
+  }
+  function ovTile(label, value, pct, level) {
+    var d = document.createElement("div");
+    d.className = "ov-tile" + (level ? " ov-" + level : "");
+    var l = document.createElement("span");
+    l.className = "ov-tl";
+    l.textContent = label;
+    var v = document.createElement("span");
+    v.className = "ov-tv";
+    v.textContent = value;
+    d.appendChild(l);
+    d.appendChild(v);
+    if (typeof pct === "number" && isFinite(pct)) {
+      var bar = document.createElement("span");
+      bar.className = "ov-bar";
+      var f = document.createElement("span");
+      f.style.width = Math.max(2, Math.min(100, pct)).toFixed(1) + "%";
+      bar.appendChild(f);
+      d.appendChild(bar);
+    }
+    return d;
+  }
+  var ovSysToken = 0;
+  function ovRenderSys() {
+    if (!ov) return;
+    var token = ++ovSysToken;
+    monSnapshot().then(function (s) {
+      if (!ov || token !== ovSysToken) return;
+      var body = ov.el.querySelector(".ov-sys .ov-body");
+      body.textContent = "";
+      var row = document.createElement("div");
+      row.className = "ov-tiles";
+      // Memory: the places multitasking keeps for open apps; with it
+      // off, only what the browser says about the device.
+      if (s.multitask) {
+        var memVal = window.t("ov.sys.places").replace("{n}", s.places.used).replace("{m}", s.places.total);
+        row.appendChild(ovTile(window.t("ov.sys.mem"), memVal, s.places.total ? s.places.used / s.places.total * 100 : null,
+          s.places.used > s.places.total ? "warn" : ""));
+      } else {
+        row.appendChild(ovTile(window.t("ov.sys.mem"), s.memory.device ?
+          window.t("ov.sys.memGB").replace("{n}", s.memory.device) : window.t("ov.sys.na")));
+      }
+      if (s.storage && s.storage.quota) {
+        var pct = s.storage.usage / s.storage.quota * 100;
+        row.appendChild(ovTile(window.t("ov.sys.disk"),
+          window.t("ov.sys.of").replace("{a}", ovBytes(s.storage.usage)).replace("{b}", ovBytes(s.storage.quota)), pct, pct > 85 ? "warn" : ""));
+      } else {
+        row.appendChild(ovTile(window.t("ov.sys.disk"), window.t("ov.sys.na")));
+      }
+      var sy = ovSyncState(s.sync);
+      row.appendChild(ovTile(window.t("ov.sys.sync"), window.t(sy.key).replace("{n}", sy.n), null, sy.level));
+      body.appendChild(row);
+      var more = document.createElement("button");
+      more.type = "button";
+      more.className = "ov-link";
+      more.textContent = window.t("ov.sys.more");
+      more.addEventListener("click", function () {
+        ovClose();
+        if (window.orosSettings) window.orosSettings.open("device");
+      });
+      body.appendChild(more);
+    });
+  }
+  // Typing hands over to the menu search: same field, same results.
+  function ovToMenu(text) {
+    ovClose();
+    openMenuSearch();
+    var inp = document.querySelector("#app-menu .menu-search input");
+    if (!inp) return;
+    inp.value = text;
+    try { inp.setSelectionRange(text.length, text.length); } catch (e) {}
+    inp.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  function ovOpen() {
+    if (ov) { ovClose(); return; }
+    if (!ovAllowed()) return;
+    closeMenu();
+    closeNotifPanel();
+    if (mtSw) mtSwClose();
+    var el = document.createElement("div");
+    el.id = "oros-ov";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "true");
+    el.setAttribute("aria-labelledby", "ov-title");
+    el.innerHTML =
+      '<div class="ov-box">' +
+        '<div class="ov-top"><h2 id="ov-title" class="ov-title"></h2>' +
+          '<div class="ov-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>' +
+          '<input type="search" autocomplete="off" spellcheck="false"></div>' +
+          '<button type="button" class="ov-done"></button></div>' +
+        '<div class="ov-cols"></div>' +
+      '</div>';
+    el.querySelector(".ov-title").textContent = window.t("ov.title");
+    var inp = el.querySelector(".ov-search input");
+    inp.placeholder = window.t("menu.search");
+    inp.setAttribute("aria-label", inp.placeholder);
+    var done = el.querySelector(".ov-done");
+    done.textContent = window.t("mt.sw.done");
+    done.addEventListener("click", ovClose);
+    var cols = el.querySelector(".ov-cols");
+    cols.appendChild(ovSection("ov-apps", "mt.sw.title"));
+    var side = document.createElement("div");
+    side.className = "ov-side";
+    if (hasApp("files")) side.appendChild(ovSection("ov-files", "ov.files.title"));
+    side.appendChild(ovSection("ov-sys", "ov.sys.title"));
+    cols.appendChild(side);
+    inp.addEventListener("input", function () { if (inp.value) ovToMenu(inp.value); });
+    el.addEventListener("click", function (e) { if (e.target === el) ovClose(); });
+    function onKey(e) {
+      if (!ov) return;
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); ovClose(); return; }
+      if (e.key === "Tab") {        // focus stays inside the overview
+        var f = Array.prototype.slice.call(el.querySelectorAll("button, input")).filter(function (b) { return !b.disabled && b.offsetParent !== null; });
+        if (!f.length) return;
+        var i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+        return;
+      }
+      var a = document.activeElement;
+      if (a === inp) return;
+      // Start typing anywhere: the letter goes to the search field.
+      if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && e.key !== " ") {
+        inp.focus();
+        return;
+      }
+      var cards = Array.prototype.slice.call(el.querySelectorAll(".ov-go, .ov-file"));
+      var j = cards.indexOf(a);
+      if (j >= 0 && (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowLeft")) {
+        e.preventDefault();
+        var fw = e.key === "ArrowDown" || e.key === "ArrowRight";
+        cards[(j + (fw ? 1 : cards.length - 1)) % cards.length].focus();
+      } else if ((e.key === "Delete" || e.key === "Backspace") && a.classList.contains("ov-go")) {
+        e.preventDefault();
+        mtClose(a.closest(".ov-app").getAttribute("data-app"));
+      }
+    }
+    document.body.appendChild(el);
+    document.addEventListener("keydown", onKey, true);
+    ov = { el: el, onKey: onKey, back: document.activeElement };
+    ovRenderApps();
+    if (hasApp("files")) ovRenderFiles();
+    ovRenderSys();
+    // The app left last has the focus (shortcut + Enter = back to it),
+    // else the search field.
+    var list = mtOpenList(), want = null;
+    if (list.length > 1 && list[0].front) want = el.querySelector('.ov-app[data-app="' + list[1].app.id + '"] .ov-go');
+    (want || inp).focus();
+  }
+
+  // Hot corner (opt-in): the pointer pushed into the top-left corner.
+  // Re-arms once it has left the corner area; never with a button held.
+  (function () {
+    if (SOLO) return;
+    var armed = true;
+    document.addEventListener("pointermove", function (e) {
+      if (e.pointerType !== "mouse") return;
+      if (e.clientX > 40 || e.clientY > 40) { armed = true; return; }
+      if (!armed || e.buttons || e.clientX > 1 || e.clientY > 1) return;
+      if (!ovPref(OV_CORNER_KEY) || ov) return;
+      armed = false;
+      ovOpen();
+    }, { passive: true });
+  })();
+  function ovSnapshot() {
+    if (SOLO) return null;
+    return { corner: ovPref(OV_CORNER_KEY) };
+  }
+
+  // ---------- 10g. The other screen (SS1, 2026-11-15) ----------
+  // With two screens set to Extend, an app moves to the other screen:
+  // a new orOS window opens there with that app ("/?open=<id>", the
+  // launch link, so the same shell, sync and lock run in it) and the
+  // app closes here. Never two live copies of one app (the same reason
+  // as MT-S1: an older copy in memory would undo the other's saves):
+  // opening it here again while its window lives brings that window to
+  // the front, and a click on the note brings the app back here. The
+  // other window moves an app back the same way (its opener is this
+  // window). screens.js knows the screens; without the Window
+  // Management API (Firefox, Safari, phones) nothing here shows.
+  var scrWins = {};          // app id -> the window it moved to (this session)
+  function scrAvailable() {
+    return !SOLO && !TILL && !!(window.orosScreens && window.orosScreens.available(window));
+  }
+  function scrAppOf(id) {
+    for (var i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === id && state.apps[i].type === "internal") return state.apps[i];
+    }
+    return null;
+  }
+  function scrWin(id) {
+    var w = scrWins[id];
+    if (!w) return null;
+    var gone = true;
+    try { gone = w.closed; } catch (e) {}
+    if (gone) { delete scrWins[id]; return null; }
+    return w;
+  }
+  // The app in front (or `id`) goes to the other screen.
+  function scrMove(id) {
+    if (SOLO || TILL) return;
+    var app = id ? scrAppOf(id) : (state.running && state.running.type === "internal" ? state.running : null);
+    if (!app) { scToast("info", window.t("scr.noapp")); return; }
+    if (!scrAvailable()) { scToast("info", window.t("scr.none")); return; }
+    var name = mtLabel(app);
+    // A window of this orOS that opened us: the app goes back there.
+    var op = scrOpener();
+    if (op) {
+      try { op.__orosScreenTake(app.id); } catch (e) { op = null; }
+      if (op) { scrLeave(app.id); return; }
+    }
+    var old = scrWin(app.id);
+    if (old) { try { old.focus(); } catch (e) {} scrLeave(app.id); return; }
+    var url = location.pathname + "?open=" + encodeURIComponent(app.id);
+    var w = window.orosScreens.open(url, "oros-screen-" + app.id, window);
+    if (!w) { scToast("err", window.t("scr.blocked")); return; }
+    scrWins[app.id] = w;
+    scrLeave(app.id);
+    scToast("ok", window.t("scr.moved").replace("{app}", name));
+  }
+  // The app closes here (front, beside or in the background).
+  function scrLeave(id) {
+    if (mtSw) mtSwClose();
+    if (appLive(id) || (state.running && state.running.id === id)) mtClose(id);
+    // A window opened only for apps on the other screen closes with its last one.
+    if (scrOpener() && !state.running && !mtList().length) {
+      setTimeout(function () { try { window.close(); } catch (e) {} }, 300);
+    }
+  }
+  // The orOS window that opened this one, when it is on this origin.
+  function scrOpener() {
+    var op = null;
+    try {
+      op = window.opener;
+      if (!op || op.closed || typeof op.__orosScreenTake !== "function") return null;
+    } catch (e) { return null; }
+    return op;
+  }
+  // Called by the other window: open `id` here and come to the front.
+  window.__orosScreenTake = function (id) {
+    var app = scrAppOf(String(id || ""));
+    if (!app) return false;
+    delete scrWins[app.id];
+    try { window.focus(); } catch (e) {}
+    openApp(app);
+    scToast("ok", window.t("scr.back").replace("{app}", mtLabel(app)));
+    return true;
+  };
+  // Called by the other window: close `id` there (it comes back to its opener).
+  window.__orosScreenDrop = function (id) {
+    if (!scrAppOf(String(id || ""))) return false;
+    scrLeave(String(id));
+    return true;
+  };
+  // openApp asks first: is this app open in a window on the other
+  // screen? Then that window comes to the front instead.
+  function scrElsewhere(app) {
+    if (!app || app.type !== "internal") return false;
+    var w = scrWin(app.id);
+    if (!w) return false;
+    var live = false;
+    try { live = typeof w.__orosAppLiveHere === "function" && w.__orosAppLiveHere(app.id); } catch (e) { live = false; }
+    if (!live) { delete scrWins[app.id]; return false; }
+    try { w.focus(); } catch (e) {}
+    closeMenu();
+    scToast("info", window.t("scr.there").replace("{app}", mtLabel(app)), function () {
+      var t = document.getElementById("sc-toast");
+      if (t) t.remove();
+      try { w.__orosScreenDrop(app.id); } catch (e) {}
+      delete scrWins[app.id];
+      openApp(app);
+    });
+    return true;
+  }
+  window.__orosAppLiveHere = function (id) {
+    return !!(state.running && state.running.id === id) || appLive(id);
+  };
+  // The switcher row button.
+  function mtSwScreenBtn(it) {
+    if (!scrAvailable()) return null;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "mt-sw-split mt-sw-screen";
+    b.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="2" y="5" width="12" height="9" rx="1.5"/><rect x="10" y="10" width="12" height="9" rx="1.5"/><path d="M5 18h3"/></svg>';
+    var l = window.t("scr.move").replace("{app}", mtLabel(it.app));
+    b.setAttribute("aria-label", l);
+    b.title = l;
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      scrMove(it.app.id);
+    });
+    return b;
+  }
 
   // ---------- 11. Menu open/close ----------
   // The bell's panel never sees a menu-button click (the button stops
@@ -15152,6 +15979,64 @@
       media: qsMedia
     });
   }
+  // Clipboard history (cliphist.js, CLIP-1): what is copied inside orOS
+  // apps, opt-in, this device only. A single app gets it too.
+  if (window.orosClip) {
+    window.orosClip.attach({
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      settings: function (section) { if (window.orosSettings) window.orosSettings.open(section); },
+      toast: function (kind, msg) { scToast(kind, msg); }
+    });
+    window.orosClip.onChange(settingsNotify);
+  }
+  // Emoji picker (emoji.js, CLIP-1 W3): Ctrl+Alt+Shift+. and Quick settings.
+  // Not a start-up script (the quality gate's boot budget): this stand-in
+  // answers as window.orosEmoji until the first open, which loads emoji.js
+  // (precached), attaches it and opens it; emoji.js then replaces it.
+  (function () {
+    var emoHost = {
+      lang: function () { return state.lang; },
+      version: function () { return APP_VERSION; },
+      toast: function (kind, msg) { scToast(kind, msg); }
+    };
+    var emoLoading = null;
+    function emoLoad() {
+      var real = window.orosEmoji;
+      if (real && real !== emoStub) return Promise.resolve(real);
+      if (!emoLoading) emoLoading = new Promise(function (res, rej) {
+        var sc = document.createElement("script");
+        sc.src = "emoji.js?v=" + encodeURIComponent(APP_VERSION);
+        sc.onload = function () {
+          var api = window.orosEmoji;
+          if (api && api !== emoStub && api.attach) { api.attach(emoHost); res(api); }
+          else { emoLoading = null; window.orosEmoji = emoStub; rej(new Error("emoji.js")); }
+        };
+        sc.onerror = function () { emoLoading = null; sc.remove(); rej(new Error("emoji.js")); };
+        document.head.appendChild(sc);
+      });
+      return emoLoading;
+    }
+    function emoThen(fn) {
+      emoLoad().then(fn, function () { scToast("error", window.t("emo.fail")); });
+    }
+    var emoStub = {
+      lazy: true,
+      open: function () { emoThen(function (api) { api.open(); }); },
+      toggle: function () { emoThen(function (api) { api.toggle(); }); },
+      close: function () {},
+      isOpen: function () { return false; },
+      refresh: function () {}
+    };
+    if (!window.orosEmoji) window.orosEmoji = emoStub;
+    else window.orosEmoji.attach(emoHost);
+  })();
+  // Night Light (nightlight.js, a shell component like qsettings.js):
+  // the warm filter over the whole shell. Sunset and sunrise come from
+  // the top-bar weather's place (wxLoc). A single app gets it too.
+  if (window.orosNight) {
+    window.orosNight.attach({ loc: wxLoc });
+    window.orosNight.onChange(function () { settingsNotify(); });
+  }
   // Desktop widgets (widgets.js, a shell component like launcher.js):
   // clock, calendar, Today, weather, playing, sync on the desktop. A
   // single app has no desktop, so it gets none.
@@ -15179,6 +16064,21 @@
       toast: function (msg) { scToast("err", msg); },
       changed: function () { settingsNotify(); wxFetch(false); },
       start: { facts: startFacts, go: startGo }
+    });
+  }
+  // Smart top bar (smartbar.js): live chips (next event, focus, tasks,
+  // water, spent, till) the person switches on in Settings › Appearance.
+  // A single app keeps its plain bar.
+  if (window.orosSmartBar && !SOLO) {
+    window.orosSmartBar.attach({
+      lang: function () { return state.lang; },
+      strict: function () { return !!strictLevelNow(); },
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      open: function (id) { openAppById(id); },
+      version: function () { return APP_VERSION; },
+      toast: function (msg) { scToast("err", msg); },
+      changed: function () { settingsNotify(); },
+      fit: function () { queueFitBar(); }
     });
   }
   loadApps();

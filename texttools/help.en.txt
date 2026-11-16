@@ -7,7 +7,7 @@ Text Tools cleans up and rearranges plain text and simple tables: sort lines, ch
 3. Set its options. The `Result` box follows as you type.
 4. `Copy` the result, `Save` it as a file, or press `Use as text` to move it up into the `Text` box and work on it again.
 
-You can also open a .txt, .csv or .tsv file with Text Tools straight from your computer's `Open with` menu or from `Share` on Android, when orOS is installed. Writer, Notes, Mind Map and Spreadsheet open those files too, so orOS asks which app you want; tick the `Always` box to stop asking. [Settings](app:settings) › `Opening files` changes that choice.
+You can also open a .txt, .csv or .tsv file with Text Tools straight from your computer's `Open with` menu or from `Share` on Android, when orOS is installed. Writer, Notes, Mind Map and Spreadsheet open those files too, so orOS asks which app you want; tick the `Always` box to stop asking. [Settings](app:settings) › `Default apps` changes that choice.
 
 Under the text you see how many characters, words and lines it has. Tap or click that line for more: sentences, paragraphs, reading time and the most used words.
 

@@ -2750,6 +2750,8 @@
       if (offer) localToast(t("learn.ask"), null, offer);
     });
     dlg.appendChild(form);
+    // Files › Documents linked to this entry (DOCS-1 W4, read-only)
+    if (x && window.OrosDocsLinks) window.OrosDocsLinks.attach(form, "budget", function (r) { return r && r.tx === x.id; });
     document.body.appendChild(dlg);
     dlg.showModal();
     if (!x) (pre ? ok : amt).focus();

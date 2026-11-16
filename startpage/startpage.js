@@ -5,7 +5,8 @@
  *  (useoros.online/startpage/). Clock and greeting, a search field
  *  (DuckDuckGo, a web address, or "oros <words>" for orOS's own
  *  search), the favourites of Bookmarks with a link to the app, a Tor
- *  button where the computer has Tor Browser, and a link to orOS.
+ *  button where the computer has Tor Browser, a link to the VPN extension
+ *  guide, and a link to orOS.
  *
  *  Reads only, never writes storage:
  *    oros-lang, oros-theme              shell keys (language, theme)
@@ -29,7 +30,8 @@
       qHint: "Start with “oros ” to search inside orOS",
       favs: "Favourites", all: "All bookmarks", none: "Star a bookmark in Bookmarks and it shows here.",
       locked: "With the screen lock on, your favourites stay inside orOS.",
-      tor: "New Tor window", torHint: "opens Tor Browser", oros: "Open orOS"
+      tor: "New Tor window", torHint: "opens Tor Browser", oros: "Open orOS",
+      vpn: "VPN extension", vpnHint: "how to add one"
     },
     el: {
       title: "Αρχική", morning: "Καλημέρα", afternoon: "Καλό απόγευμα", evening: "Καλησπέρα",
@@ -37,7 +39,8 @@
       qHint: "Ξεκίνα με «oros » για αναζήτηση μέσα στο orOS",
       favs: "Αγαπημένες", all: "Όλοι οι σελιδοδείκτες", none: "Βάλε αστέρι σε έναν σελιδοδείκτη στους Σελιδοδείκτες και θα εμφανιστεί εδώ.",
       locked: "Με το κλείδωμα οθόνης ενεργό, οι αγαπημένες σου μένουν μέσα στο orOS.",
-      tor: "Νέο παράθυρο Tor", torHint: "ανοίγει τον Tor Browser", oros: "Άνοιγμα orOS"
+      tor: "Νέο παράθυρο Tor", torHint: "ανοίγει τον Tor Browser", oros: "Άνοιγμα orOS",
+      vpn: "Πρόσθετο VPN", vpnHint: "πώς το βάζεις"
     },
     de: {
       title: "Start", morning: "Guten Morgen", afternoon: "Guten Tag", evening: "Guten Abend",
@@ -45,7 +48,8 @@
       qHint: "Mit „oros “ beginnen, um in orOS zu suchen",
       favs: "Favoriten", all: "Alle Lesezeichen", none: "Markiere ein Lesezeichen in Lesezeichen mit einem Stern, dann erscheint es hier.",
       locked: "Mit aktiver Bildschirmsperre bleiben deine Favoriten in orOS.",
-      tor: "Neues Tor-Fenster", torHint: "öffnet den Tor Browser", oros: "orOS öffnen"
+      tor: "Neues Tor-Fenster", torHint: "öffnet den Tor Browser", oros: "orOS öffnen",
+      vpn: "VPN-Erweiterung", vpnHint: "so fügst du eine hinzu"
     }
   };
   var LOCALE = { en: "en-GB", el: "el-GR", de: "de-DE" };
@@ -116,10 +120,24 @@
     return "hsl(" + (h % 360) + ", 42%, 34%)";
   }
 
-  var api = { target: target, favourites: favourites, greeting: greeting, STR: STR };
+  // VPN extension guide: the Live USB's or orOS Portable's (whose lite
+  // section also covers any other browser). The System extension marks
+  // the page data-oros-sys-platform; English and German readers get the
+  // English half, Greek readers the Greek one.
+  var GUIDE = {
+    usb: ["https://github.com/koulaxizis/oros-usb/blob/main/PRIVATE-BROWSING.md", "#ιδιωτική-περιήγηση-στο-oros-usb"], // i18n-inline-ok: the guide's GitHub heading anchor
+    portable: ["https://github.com/koulaxizis/oros-portable/blob/main/PRIVATE-BROWSING.md", "#ιδιωτική-περιήγηση-με-το-oros-portable"] // i18n-inline-ok: the guide's GitHub heading anchor
+  };
+  function vpnGuide(platform, l) {
+    var g = GUIDE[platform === "usb" ? "usb" : "portable"];
+    return g[0] + (l === "el" ? g[1] : "");
+  }
+
+  var api = { target: target, favourites: favourites, greeting: greeting, vpnGuide: vpnGuide, STR: STR };
   if (typeof module !== "undefined" && module.exports) { module.exports = api; return; }
 
   var SVG_SEARCH = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+  var SVG_SHIELD = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/></svg>';
   var SVG_TOR = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>';
 
   var locked = !!read("oros-lock");
@@ -164,6 +182,11 @@
   function paintTor() {
     var b = $("tor-btn");
     b.hidden = document.documentElement.getAttribute("data-oros-sys-tor") !== "1";
+    paintVpn();
+  }
+
+  function paintVpn() {
+    $("vpn-link").href = vpnGuide(document.documentElement.getAttribute("data-oros-sys-platform"), lang);
   }
 
   function theme() {
@@ -192,6 +215,15 @@
     tb.appendChild(tl);
     tb.appendChild(th);
     tb.addEventListener("click", function () { document.dispatchEvent(new CustomEvent("oros-sys-tor")); });
+    var vl = $("vpn-link");
+    vl.innerHTML = SVG_SHIELD;                               // static icon
+    var vt = document.createElement("span");
+    vt.textContent = t("vpn");
+    var vh = document.createElement("span");
+    vh.className = "act-hint";
+    vh.textContent = t("vpnHint");
+    vl.appendChild(vt);
+    vl.appendChild(vh);
 
     $("find").addEventListener("submit", function (e) {
       e.preventDefault();
@@ -203,7 +235,7 @@
     paintFavs();
     paintTor();
     setInterval(paintClock, 15000);
-    new MutationObserver(paintTor).observe(document.documentElement, { attributes: true, attributeFilter: ["data-oros-sys-tor"] });
+    new MutationObserver(paintTor).observe(document.documentElement, { attributes: true, attributeFilter: ["data-oros-sys-tor", "data-oros-sys-platform"] });
     // Bookmarks, the name or the theme changed in orOS (another tab).
     window.addEventListener("storage", function (e) {
       if (e.key === "oros-lock") locked = !!read("oros-lock");

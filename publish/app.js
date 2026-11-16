@@ -116,6 +116,7 @@
       "chk.title": "Check a code", "chk.ph": "Paste or type any ISBN, ISRC, UPC or EAN",
       "chk.ok": "Valid. ISBN-13 {thirteen}{ten}", "chk.ten": " · ISBN-10 {ten}",
       "chk.uses": "In use: {list}", "chk.free": "Not used by any of your titles.",
+      "plan.tr": "Translations (Writer, as this device saw them)", "plan.trRow": "{from} → {to} · {p}% · {d} of {w} words", "plan.trDue": "deadline {d}", "plan.trOpen": "Open",
       "plan.title": "Release plan", "plan.none": "Set the release date, then make the plan: orOS dates every step back from it (manuscript, editing, proofs, cover, ISBN, printer, presentation).",
       "plan.make": "Make the plan", "plan.redate": "Re-date from the release date", "plan.redateHint": "Open steps get new dates from the release date; done steps keep theirs.",
       "plan.add": "+ Step", "plan.addName": "Name of the step", "plan.todo": "Send to To-Do", "plan.del": "Remove step",
@@ -477,6 +478,7 @@
       "chk.title": "Έλεγχος κωδικού", "chk.ph": "Επικόλλησε ή γράψε οποιοδήποτε ISBN, ISRC, UPC ή EAN",
       "chk.ok": "Σωστό. ISBN-13 {thirteen}{ten}", "chk.ten": " · ISBN-10 {ten}",
       "chk.uses": "Σε χρήση: {list}", "chk.free": "Δεν το έχει κανένας από τους τίτλους σου.",
+      "plan.tr": "Μεταφράσεις (Writer, όπως τις είδε αυτή η συσκευή)", "plan.trRow": "{from} → {to} · {p}% · {d} από {w} λέξεις", "plan.trDue": "προθεσμία {d}", "plan.trOpen": "Άνοιγμα",
       "plan.title": "Πορεία έκδοσης", "plan.none": "Βάλε ημερομηνία κυκλοφορίας και φτιάξε την πορεία: το orOS βάζει ημερομηνίες σε κάθε βήμα μετρώντας ανάποδα (χειρόγραφο, επιμέλεια, διορθώσεις, εξώφυλλο, ISBN, τυπογραφείο, παρουσίαση).",
       "plan.make": "Φτιάξε την πορεία", "plan.redate": "Νέες ημερομηνίες από την κυκλοφορία", "plan.redateHint": "Τα ανοιχτά βήματα παίρνουν νέες ημερομηνίες από την κυκλοφορία· όσα έγιναν κρατούν τις δικές τους.",
       "plan.add": "+ Βήμα", "plan.addName": "Όνομα βήματος", "plan.todo": "Στείλε στο To-Do", "plan.del": "Αφαίρεση βήματος",
@@ -1351,13 +1353,14 @@
     gp.className = "gaps" + (g.length ? "" : " none");
     gp.textContent = g.length ? t("gaps", { list: g.map(function (k) { return t("gap." + k); }).join(", ") }) : t("gaps.none");
   }
-  function addPersonDialog() {
+  function addPersonDialog(pre) {
     var tt = currentTitle();
     if (!tt) return;
+    pre = pre || {};
     var dlg = el("dialog");
     dlg.appendChild(el("h3", "", t("ppl.add").replace(/^\+\s*/, "")));
-    var r = select(C.ROLES.map(function (x) { return [x, roleName(x, C.isMusic(tt))]; }), tt.ppl.some(function (p) { return p.r === "a"; }) ? "t" : "a");
-    var n = input("text", "", { maxlength: "120" });
+    var r = select(C.ROLES.map(function (x) { return [x, roleName(x, C.isMusic(tt))]; }), pre.r || (tt.ppl.some(function (p) { return p.r === "a"; }) ? "t" : "a"));
+    var n = input("text", pre.n || "", { maxlength: "120" });
     dlg.appendChild(field(t("ppl.role"), r));
     dlg.appendChild(field(t("ppl.name"), n));
     var acts = el("div", "acts");
@@ -2357,11 +2360,44 @@
     writeTitle({ plan: C.sortPlan(plan) });
     renderPlan();
   }
+  // Writer translations linked to this title (WR-CAT proposal 1): Writer's
+  // own per-device summary oros-writer-tr-sum, id → [pct, words, name,
+  // from, to, source doc, done words, when, title id, deadline, goal].
+  // Read only; a row opens the project in Writer.
+  var TR_SUM = "oros-writer-tr-sum";
+  function linkedTranslations(id) {
+    var o = null;
+    try { o = JSON.parse(localStorage.getItem(TR_SUM) || "null"); } catch (e) { o = null; }
+    if (!o || typeof o !== "object") return [];
+    return Object.keys(o).filter(function (k) {
+      var r = o[k];
+      return /^tr[a-z0-9]{6,30}$/.test(k) && Array.isArray(r) && r[8] === id;
+    }).map(function (k) { return { id: k, r: o[k] }; });
+  }
+  function renderTranslations(box, tt) {
+    var list = linkedTranslations(tt.id);
+    if (!list.length) return;
+    var wrap = el("div", "plan-tr");
+    wrap.appendChild(el("h4", "", t("plan.tr")));
+    var ul = el("ul", "plan-list");
+    list.forEach(function (x) {
+      var r = x.r, li = el("li", "step");
+      var bits = String(r[2] || "").slice(0, 200) + " · " + t("plan.trRow", { from: String(r[3] || "").toUpperCase(), to: String(r[4] || "").toUpperCase(),
+        p: (Number(r[0]) || 0).toLocaleString(LOCALE), d: (Math.floor(Number(r[6]) || 0)).toLocaleString(LOCALE), w: (Math.floor(Number(r[1]) || 0)).toLocaleString(LOCALE) });
+      if (C.okYmd(r[9])) bits += " · " + t("plan.trDue", { d: fmtDate(r[9]) });
+      li.appendChild(el("span", "step-name", bits));
+      li.appendChild(button(t("plan.trOpen"), "btn small", function () { openAt("writer", { translate: x.id }); }));
+      ul.appendChild(li);
+    });
+    wrap.appendChild(ul);
+    box.appendChild(wrap);
+  }
   function renderPlan() {
     var box = $("ed-plan"), tt = currentTitle();
     if (!box || !tt) return;
     box.textContent = "";
     box.appendChild(el("h3", "", t("plan.title")));
+    renderTranslations(box, tt);
     var plan = tt.plan || [];
     if (!plan.length) {
       box.appendChild(el("p", "muted", t(C.isMusic(tt) ? "plan.noneMus" : "plan.none")));
@@ -4492,7 +4528,15 @@
       toast(t("ep.marked"));
       return;
     }
-    if (typeof target.title === "string" && C.find(data, "titles", target.title)) { openTitle(target.title); return; }
+    if (typeof target.title === "string" && C.find(data, "titles", target.title)) {
+      openTitle(target.title);
+      // Writer's "Add the translator" (WR-CAT proposal 1): the dialog filled in, nothing saved before Add
+      var ap = target.addPerson;
+      if (ap && typeof ap === "object" && currentTitle().ppl.length < C.MAX_PPL) {
+        addPersonDialog({ r: C.ROLES.indexOf(ap.r) >= 0 ? ap.r : "", n: typeof ap.n === "string" ? ap.n.replace(/\s+/g, " ").trim().slice(0, 120) : "" });
+      }
+      return;
+    }
     if (TABS.indexOf(target.view) > 0) { setView({ name: target.view, id: "" }); render(); return; }
     // the Calendar's "Post" row (wave P12)
     if (typeof target.post === "string") {

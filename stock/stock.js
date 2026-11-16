@@ -122,6 +122,8 @@
       "sups.none": "No suppliers yet.", "sups.items": "{n} products", "sups.items1": "1 product",
       "ed.newItem": "New product", "ed.editItem": "Edit product",
       "ed.name": "Name", "ed.sku": "SKU", "ed.bc": "Barcode", "ed.cat": "Category", "ed.unit": "Unit",
+      "ed.od": "On demand (made to order, no stock count)", "ed.odHint": "Never runs out: no count, minimum, reorder or stock value, and the shop's quantity is neither read nor sent. Sales are still recorded.",
+      "od.q": "On demand",
       "ed.min": "Minimum", "ed.rq": "Reorder qty", "ed.sup": "Supplier", "ed.ssku": "Supplier's code",
       "ed.cost": "Purchase price ({c})", "ed.price": "Sale price ({c})", "ed.vat": "VAT %", "ed.loc": "Location",
       "ed.note": "Note", "ed.open": "Opening quantity", "ed.openHint": "Saved as a stock count dated today.",
@@ -294,6 +296,8 @@
       "sups.none": "Κανένας προμηθευτής ακόμα.", "sups.items": "{n} προϊόντα", "sups.items1": "1 προϊόν",
       "ed.newItem": "Νέο προϊόν", "ed.editItem": "Επεξεργασία προϊόντος",
       "ed.name": "Όνομα", "ed.sku": "SKU", "ed.bc": "Barcode", "ed.cat": "Κατηγορία", "ed.unit": "Μονάδα",
+      "ed.od": "Κατά παραγγελία (χωρίς μέτρηση αποθέματος)", "ed.odHint": "Δεν εξαντλείται ποτέ: χωρίς ποσότητα, ελάχιστο, παραγγελία ή αξία αποθήκης, και η ποσότητα του καταστήματος ούτε διαβάζεται ούτε στέλνεται. Οι πωλήσεις καταγράφονται κανονικά.",
+      "od.q": "Κατά παραγγελία",
       "ed.min": "Ελάχιστο", "ed.rq": "Ποσότητα παραγγελίας", "ed.sup": "Προμηθευτής", "ed.ssku": "Κωδικός προμηθευτή",
       "ed.cost": "Τιμή αγοράς ({c})", "ed.price": "Τιμή πώλησης ({c})", "ed.vat": "ΦΠΑ %", "ed.loc": "Θέση",
       "ed.note": "Σημείωση", "ed.open": "Αρχική ποσότητα", "ed.openHint": "Καταχωρείται ως απογραφή με σημερινή ημερομηνία.",
@@ -813,7 +817,7 @@
       var it = r.item;
       if (prefs.f === "arch" ? !it.arch : it.arch) return false;
       if (prefs.f === "low" && !r.low) return false;
-      if (prefs.f === "out" && qOf(r) > 0) return false;
+      if (prefs.f === "out" && (qOf(r) > 0 || r.od)) return false;
       if (prefs.f === "exp" && !soon[it.id]) return false;
       if (prefs.cat === "-" && it.cat && byId("cats", it.cat)) return false;
       if (prefs.cat && prefs.cat !== "-" && it.cat !== prefs.cat) return false;
@@ -822,7 +826,7 @@
     list.sort(function (a, b) {
       var x = a.item, y = b.item;
       if (prefs.sort === "sku") return (x.sku ? 0 : 1) - (y.sku ? 0 : 1) || x.sku.localeCompare(y.sku, LOCALE, { numeric: true }) || x.name.localeCompare(y.name, LOCALE);
-      if (prefs.sort === "qty") return (qOf(a) - qOf(b)) || x.name.localeCompare(y.name, LOCALE);
+      if (prefs.sort === "qty") return ((a.od ? 1 : 0) - (b.od ? 1 : 0)) || (qOf(a) - qOf(b)) || x.name.localeCompare(y.name, LOCALE);
       if (prefs.sort === "value") return (b.value - a.value) || x.name.localeCompare(y.name, LOCALE);
       return x.name.localeCompare(y.name, LOCALE) || cmpStr(x.id, y.id);
     });
@@ -833,7 +837,7 @@
     if (list.length > MAX_SHOWN) ul.appendChild(el("li", "muted pad", t("items.more", { n: MAX_SHOWN, all: list.length })));
   }
   function itemRow(r, q) {
-    var it = r.item, out = q <= 0;
+    var it = r.item, out = !r.od && q <= 0;
     var li = el("li");
     var b = el("button", "row row-btn" + (out ? " lvl-out" : (r.low ? " lvl-low" : "")));
     b.type = "button";
@@ -845,7 +849,7 @@
     if (it.arch) sub.appendChild(el("span", "badge", t("badge.arch")));
     if (sub.childNodes.length) body.appendChild(sub);
     b.appendChild(body);
-    var val = el("span", "r-val" + (out ? " bad" : (r.low ? " warn" : "")), fmtQ(q, it));
+    var val = el("span", "r-val" + (out ? " bad" : (r.low ? " warn" : "")) + (r.od ? " od" : ""), r.od ? t("od.q") : fmtQ(q, it));
     if (it.price) val.appendChild(el("small", "", money(it.price)));
     b.appendChild(val);
     b.addEventListener("click", function () { itemSheet(it.id); });
@@ -887,7 +891,7 @@
     head.appendChild(hb);
     var big = el("div", "sheet-q" + (r.out ? " bad" : (r.low ? " warn" : "")));
     big.appendChild(el("div", "tile-lbl", t("sheet.onHand")));
-    big.appendChild(el("div", "sheet-qv", fmtQ(r.q, it)));
+    big.appendChild(el("div", "sheet-qv", r.od ? t("od.q") : fmtQ(r.q, it)));
     head.appendChild(big);
     dlg.appendChild(head);
     var ph = photoBox(it, dlg);
@@ -895,7 +899,7 @@
     if (it.arch) dlg.appendChild(el("p", "hint warn", t("badge.arch")));
 
     var acts = el("div", "quick");
-    [["in", t("act.in")], ["out", t("act.out")], ["count", t("act.count")]].forEach(function (a) {
+    [["in", t("act.in")], ["out", t("act.out")], ["count", t("act.count")]].filter(function (a) { return !(r.od && a[0] === "count"); }).forEach(function (a) {
       var b = el("button", "txt-btn", a[1]);
       b.type = "button";
       b.addEventListener("click", function () { dlg.close(); moveEditor(a[0], [{ i: it.id }]); });
@@ -2048,7 +2052,7 @@
         return ln;
       });
       if (!force) {
-        var neg = lines.filter(function (l) { var q0 = ctrQ(l.i); return q0 + l.q < 0 && q0 + l.q < q0; })[0];
+        var neg = lines.filter(function (l) { if (C.isOd(byId("items", l.i))) return false; var q0 = ctrQ(l.i); return q0 + l.q < 0 && q0 + l.q < q0; })[0];
         if (neg) {
           var nit = byId("items", neg.i), after = ctrQ(neg.i) + neg.q;
           if (data.settings.neg === 0) { msg.textContent = t("mv.neg", { n: nit.name, q: fmtQ(after, nit) }) + " " + t("mv.negBlocked"); msg.hidden = false; return; }
@@ -2459,20 +2463,36 @@
     r2.appendChild(field(t("ed.unit"), unit, "st-unit"));
     dlg.appendChild(r2);
 
+    var odRow = checkRow(t("ed.od"), C.isOd(x));
+    odRow.id = "st-od";
+    var odIn = odRow.querySelector("input");
+    dlg.appendChild(odRow);
+    var odHint = el("p", "hint", t("ed.odHint"));
+    dlg.appendChild(odHint);
     var r3 = el("div", "fld-row");
     var min = numInput(x.min ? qtyStr(x.min, x) : "");
     var rq = numInput(x.rq ? qtyStr(x.rq, x) : "");
     r3.appendChild(field(t("ed.min"), min, "st-min"));
     r3.appendChild(field(t("ed.rq"), rq, "st-rq"));
     dlg.appendChild(r3);
-    dlg.appendChild(el("p", "hint", t("ed.minHint")));
+    var minHint = el("p", "hint", t("ed.minHint"));
+    dlg.appendChild(minHint);
 
-    var open = null;
+    var open = null, openBox = [];
     if (isNew) {
       open = numInput(preset && preset.open ? qtyStr(preset.open, x) : "");
-      dlg.appendChild(field(t("ed.open"), open, "st-open"));
-      dlg.appendChild(el("p", "hint", t("ed.openHint")));
+      openBox.push(field(t("ed.open"), open, "st-open"));
+      openBox.push(el("p", "hint", t("ed.openHint")));
+      openBox.forEach(function (n) { dlg.appendChild(n); });
     }
+    // ST-OD: an on-demand item has no count, so no minimum or opening
+    function paintOd() {
+      var on = odIn.checked;
+      [r3, minHint].concat(openBox).forEach(function (n) { n.hidden = on; });
+      odHint.hidden = !on;
+    }
+    odIn.addEventListener("change", paintOd);
+    paintOd();
 
     var r4 = el("div", "fld-row three");
     var cost = numInput(centsStr(x.cost));
@@ -2505,9 +2525,10 @@
       var nm = C.cleanText(name.value, C.NAME_LEN, false);
       if (!nm) { err.textContent = t("ed.needName"); err.hidden = false; name.focus(); return; }
       var probe = { unit: unit.value };
-      var vMin = min.value.trim() ? readQty(min, probe) : 0;
-      var vRq = rq.value.trim() ? readQty(rq, probe) : 0;
-      var vOpen = open && open.value.trim() ? readQty(open, probe) : 0;
+      var od = odIn.checked;
+      var vMin = !od && min.value.trim() ? readQty(min, probe) : 0;
+      var vRq = !od && rq.value.trim() ? readQty(rq, probe) : 0;
+      var vOpen = !od && open && open.value.trim() ? readQty(open, probe) : 0;
       var vCost = readCents(cost), vPrice = readCents(price);
       if (vMin === null || vRq === null || vOpen === null || vCost === null || vPrice === null) {
         err.textContent = t("ed.badNum"); err.hidden = false; return;
@@ -2515,7 +2536,7 @@
       var row = C.normItem({
         id: x.id, m: x.m || 0, name: nm, sku: sku.value, bc: bc.value, cat: cat.value, unit: unit.value,
         min: vMin, rq: vRq, sup: sup.value, ssku: ssku.value, cost: vCost, price: vPrice,
-        vat: Number(vat.value), loc: loc.value, note: note.value, arch: x.arch
+        vat: Number(vat.value), loc: loc.value, note: note.value, arch: x.arch, od: od ? 1 : 0
       });
       if (!row) { err.textContent = t("ed.badNum"); err.hidden = false; return; }
       var res = upsert("items", row);
@@ -2863,7 +2884,7 @@
       if (!forceNeg) {
         var after = Object.create(null);
         out.forEach(function (l) { after[l.i] = (after[l.i] === undefined ? baseQ(l.i) : after[l.i]) + (k === "xfer" ? -l.q : l.q); });
-        var neg = Object.keys(after).filter(function (id) { return after[id] < 0 && after[id] < baseQ(id); })[0];
+        var neg = Object.keys(after).filter(function (id) { return !C.isOd(byId("items", id)) && after[id] < 0 && after[id] < baseQ(id); })[0];
         if (neg) {
           var nit = byId("items", neg);
           if (data.settings.neg === 0) { fail(t("mv.neg", { n: nit.name, q: fmtQ(after[neg], nit) }) + " " + t("mv.negBlocked")); return; }

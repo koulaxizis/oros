@@ -225,7 +225,8 @@
     if (it.t === "line") return [{ id: "p0", x: it.x, y: it.y }, { id: "p1", x: it.x + it.w, y: it.y + it.h }];
     var k = it.ax.k, out = [];
     var list = [["nw", -1, -1], ["ne", 1, -1], ["se", 1, 1], ["sw", -1, 1]];
-    if (k === "text") { if (!it.ax.cv) list.push(["e", 1, 0], ["w", -1, 0]); }
+    if (k === "text" && AX.tpOf(it)) list.push(["n", 0, -1], ["e", 1, 0], ["s", 0, 1], ["w", -1, 0]);
+    else if (k === "text") { if (!it.ax.cv) list.push(["e", 1, 0], ["w", -1, 0]); }
     else if (k !== "icon") list.push(["n", 0, -1], ["e", 1, 0], ["s", 0, 1], ["w", -1, 0]);
     var cx = it.x + it.w / 2, cy = it.y + it.h / 2, a = (it.rot || 0) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
     function at(lx, ly) { return { x: cx + lx * c - ly * s, y: cy + lx * s + ly * c }; }
@@ -626,7 +627,7 @@
         var c2 = rotate(x0 + nw / 2 - s.w / 2, y0b + th / 2 - s.h / 2, a);
         it.h = th;
         it.x = s.x + s.w / 2 + c2.x - nw / 2; it.y = s.y + s.h / 2 + c2.y - th / 2;
-        if (it.ax.cv) { it.w = AX.curveLayout(M.normItem(it)).w; }
+        if (it.ax.cv && !AX.tpOf(it)) { it.w = AX.curveLayout(M.normItem(it)).w; }
       }
       if (s.ax.k === "photo" && s.fit === "custom") {
         if (corner) { it.isc = s.isc * k; it.ix = s.ix * k; it.iy = s.iy * k; }
@@ -797,7 +798,7 @@
       AX.editRuns(it, it.ax.tx || "", v);
       it.ax.tx = v;
       // a new text box grows with what is typed (up to the page)
-      if (growId === id && !it.ax.cv) {
+      if (growId === id && !AX.isCurved(it)) {
         var nw = Math.min(d.setup.w * 0.9, Math.max(it.w, AX.textWidth(it.ax, it)));
         if (nw > it.w) { it.x -= (nw - it.w) / 2; it.w = nw; }
       }
@@ -815,7 +816,7 @@
       var key = AX.fontKeyOf(ax, it), size = ax.size || 48;
       var p = toScreen(it.x, it.y);
       ta.style.left = p.x + "px"; ta.style.top = p.y + "px";
-      var w = ax.cv ? Math.max(it.w, AX.textWidth(ax, it)) : it.w;
+      var w = AX.isCurved(it) ? Math.max(it.w, AX.textWidth(ax, it)) : it.w;
       ta.style.width = (w * z + 2) + "px";
       ta.style.height = Math.max(it.h, size * (ax.lh || 120) / 100) * z + "px";
       ta.style.transform = it.rot ? "rotate(" + it.rot + "deg)" : "";
