@@ -3,8 +3,11 @@
 // spin geometry (the wheel stops on the drawn winner).
 // Run: node --test tests/
 //
-// The app is a browser IIFE with no exports, so the constants and
-// sections 2–4 are cut out of the source and evaluated on their own.
+// Since merge 8 (APP-ALIAS "wheel" → Chance, tab "wheel") the model
+// and the merge are wheel/core.js (WheelCore); the view (wheel/view.js)
+// is a browser IIFE with no exports, so its constants and sections
+// 2–4 are cut out of the source and evaluated on their own, on top
+// of the real core.
 
 "use strict";
 
@@ -14,20 +17,20 @@ const fs = require("fs");
 const path = require("path");
 const { webcrypto } = require("crypto");
 
-const src = fs.readFileSync(path.join(__dirname, "..", "wheel/wheel.js"), "utf8");
+const src = fs.readFileSync(path.join(__dirname, "..", "wheel/view.js"), "utf8");
+const CORE = require(path.join(__dirname, "..", "wheel/core.js"));
 function block(from, to) {
   const i = src.indexOf(from), j = src.indexOf(to, i);
   if (i < 0 || j < 0) throw new Error("missing block " + from);
   return src.slice(i, j);
 }
 function build(lang) {
-  return new Function("crypto",
+  return new Function("crypto", "window",
     "var LANG = " + JSON.stringify(lang) + ";\n" +
     block("  var STORAGE_KEY", "  // ---------- 1.") +
-    block("  function cmpStr(", "  function newId(") +
     block("  // ---------- 2. Wheel model", "  // ---------- 5. Storage") +
     "\nreturn { MIN_OPTS, MAX_OPTS, OPT_LEN, TAU, COLORS, SET_IDS, SETS, normOpt, normOpts, setOpts, segColor, inkFor," +
-    " normSaved, mergeWheel, randInt, pointerIndex, spinTarget, easeOut, normW, weightsOf, pickWeighted, segEdges, MAX_W };")(webcrypto);
+    " normSaved, mergeWheel, randInt, pointerIndex, spinTarget, easeOut, normW, weightsOf, pickWeighted, segEdges, MAX_W };")(webcrypto, { WheelCore: CORE });
 }
 const W = build("en");
 const WEL = build("el");
@@ -177,9 +180,38 @@ test("weighted wheel: slices in proportion, pointer and spin agree, draw follows
 });
 
 test("weights wiring: editor button, draft and saved wheels, sync", () => {
-  const css = fs.readFileSync(path.join(__dirname, "..", "wheel/wheel.css"), "utf8");
+  const css = fs.readFileSync(path.join(__dirname, "..", "wheel/view.css"), "utf8");
   assert.ok(src.includes('el("button", "mini wt")') && css.includes(".mini.wt.on"));
   assert.ok(src.includes("spinWin = pickWeighted(spinWts);"));
   assert.ok(src.includes("prefs.dw = curW();") && src.includes("wts = copyMap(openNow.w);"));
   assert.ok(src.includes("opts: curOpts(), w: curW() });"));
+});
+
+test("merge 8: core and view agree on the limits; Chance hosts the view, slice, deep link, help", () => {
+  const W = build("en");
+  ["MIN_OPTS", "MAX_OPTS", "OPT_LEN", "MAX_W"].forEach((k) => assert.equal(W[k], CORE[k], k));
+  assert.ok(src.includes("    NAME_LEN    = 40") || src.includes("var NAME_LEN    = 40"));
+  assert.equal(CORE.NAME_LEN, 40);
+  const read = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+  const dice = read("dice/dice.js"), html = read("dice/index.html");
+  assert.ok(html.indexOf('src="../wheel/core.js?v=') >= 0 && html.indexOf('src="../wheel/core.js?v=') < html.indexOf('src="dice.js?v='));
+  assert.ok(html.includes('id="cht-wheel"') && html.includes('id="wheel-host"') && html.includes('id="dice-pane"'));
+  assert.ok(dice.includes('api.registerSlice("wheel", function () {') && dice.includes("}, WC.DATA_KEY, WC.mergeWheel);"));
+  assert.ok(dice.includes('css.href = chAsset("../wheel/view.css");') && dice.includes('sc.src = chAsset("../wheel/view.js");'));
+  assert.ok(dice.includes('window.orosI18n.ensure(LANG, "wheel", resolve)'));
+  assert.ok(dice.includes("window.__orosOpenAt = openTarget;") && dice.includes('__orosTakeTarget("dice")'));
+  assert.ok(dice.includes('if (chTab === "wheel") return;   // the Wheel tab has its own keys'));
+  assert.ok(src.includes("if (!shown()) return;") && src.includes("window.WheelView = {"));
+  assert.ok(src.includes("suppress = true;") && src.includes("if (suppress) return;"), "R6: a pull never marks dirty");
+  assert.ok(!src.includes("function inheritPalette") && !src.includes("registerSlice"));
+  assert.ok(!/data-i18n=/.test(src), "the view's text uses data-wh");
+  const reg = JSON.parse(read("apps.json"));
+  assert.ok(!reg.apps.some((a) => a.id === "wheel"));
+  assert.equal(reg.apps.find((a) => a.id === "dice").name, "Chance");
+  assert.deepEqual(reg.aliases.find((a) => a.id === "wheel"), { id: "wheel", name: "Wheel of Fate", to: "dice", target: { tab: "wheel" } });
+  assert.ok(read("wheel/index.html").includes('"../?open=wheel"'));
+  ["wheel/wheel.js", "wheel/wheel.css", "wheel/help.en.txt", "wheel/help.el.txt"].forEach((f) =>
+    assert.ok(!fs.existsSync(path.join(__dirname, "..", f)), f + " is gone"));
+  assert.ok(read("dice/help.en.txt").startsWith("# Chance") && read("dice/help.en.txt").includes("## Wheel"));
+  assert.ok(read("dice/help.el.txt").startsWith("# Τύχη") && read("dice/help.el.txt").includes("## Τροχός"));
 });

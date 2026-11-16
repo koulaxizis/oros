@@ -609,7 +609,17 @@ const STRINGS = {
     'qa.lead': 'Space at the start or the end',
     'qa.punct': 'The ending punctuation differs ({a} / {b})',
     'qa.same': 'The same as the source: not translated?',
-    'qa.cons': 'Translated differently in segment {a}'
+    'qa.cons': 'Translated differently in segment {a}',
+    'cat.docxOut': 'Save as Word (.docx)…',
+    'cat.xlfOut12': 'Export XLIFF 1.2…',
+    'cat.xlfOut20': 'Export XLIFF 2.0…',
+    'cat.xlfIn': 'Import XLIFF…',
+    'cat.xlfRead': '{n} translations read, {m} skipped',
+    'cat.xlfBad': 'This is not an XLIFF file.',
+    'cat.xlfAsk': 'Replace {n} translations you already have with the ones in the file?',
+    'cat.xlfReplace': 'Replace',
+    'cat.noOrig': 'The original Word file of this project is missing.',
+    'cat.origChanged': 'The original Word file is not the one this project was made from.'
   },
   el: {
     'app.name': 'Writer',
@@ -1120,7 +1130,17 @@ const STRINGS = {
     'qa.lead': 'Κενό στην αρχή ή στο τέλος',
     'qa.punct': 'Διαφέρει η στίξη στο τέλος ({a} / {b})',
     'qa.same': 'Ίδιο με το πρωτότυπο: δεν μεταφράστηκε;',
-    'qa.cons': 'Μεταφράστηκε αλλιώς στο τμήμα {a}'
+    'qa.cons': 'Μεταφράστηκε αλλιώς στο τμήμα {a}',
+    'cat.docxOut': 'Αποθήκευση ως Word (.docx)…',
+    'cat.xlfOut12': 'Εξαγωγή XLIFF 1.2…',
+    'cat.xlfOut20': 'Εξαγωγή XLIFF 2.0…',
+    'cat.xlfIn': 'Εισαγωγή XLIFF…',
+    'cat.xlfRead': 'Διαβάστηκαν {n} μεταφράσεις, παραλείφθηκαν {m}',
+    'cat.xlfBad': 'Αυτό δεν είναι αρχείο XLIFF.',
+    'cat.xlfAsk': 'Να μπουν οι μεταφράσεις του αρχείου στη θέση {n} μεταφράσεων που έχεις ήδη;',
+    'cat.xlfReplace': 'Αντικατάσταση',
+    'cat.noOrig': 'Λείπει το αρχικό αρχείο Word αυτού του έργου.',
+    'cat.origChanged': 'Το αρχικό αρχείο Word δεν είναι αυτό από το οποίο φτιάχτηκε το έργο.'
   }
 };
 
@@ -2756,7 +2776,14 @@ window.WriterCatHost = {
     return ioApplyImport(res, 'new');
   }),
   writeDoc: catWriteDoc, activateTab: activateTab,
-  saveText: (text, name, mime) => downloadBlob(text, name, mime)
+  saveText: (text, name, mime) => downloadBlob(text, name, mime),
+  // T4: the Word package of a project, unzipped, zipped, read as a document
+  readZip: buf => WriterIO.readZip(buf),
+  zip: files => window.OrosBundle._zip(files.map(f => ({ name: f.name, data: f.data, deflate: true }))),
+  parseDocx: buf => WriterIO.parseZipBuf(buf instanceof Uint8Array ? buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) : buf, 'docx').then(p => {
+    const prep = WriterIO.prepareImport(p);
+    return { title: p.title || '', html: prep.html, footnotes: prep.footnotes, header: p.header || '', footer: p.footer || '' };
+  })
 };
 let catP = null;
 function catFailed(e) { console.warn('[writer] translation load failed:', e); showToast(t('cat.err')); }
@@ -2771,7 +2798,7 @@ function catLoad() {
       document.head.appendChild(s);
     });
     catP = (window.WriterCore ? Promise.resolve() : load('core.js'))
-      .then(() => load('catcore.js')).then(() => load('cattm.js')).then(() => load('catqa.js')).then(() => load('catstore.js')).then(() => load('cat.js')).then(() => {
+      .then(() => load('catcore.js')).then(() => load('cattm.js')).then(() => load('catqa.js')).then(() => load('catdocx.js')).then(() => load('catxlf.js')).then(() => load('catstore.js')).then(() => load('cat.js')).then(() => {
         if (!window.WriterCat) throw new Error('cat');
         return window.WriterCat;
       });

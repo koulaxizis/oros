@@ -153,3 +153,40 @@ test("wiring: shell reminder, deep link, Calendar feed, Files, Automations", () 
   assert.ok(tp && tp.rule.when.t === "notice" && tp.rule.when.app === "files" && tp.rule.when.word === "expire");
   assert.ok(A.cleanWhen(tp.rule.when), "a valid notice rule");
 });
+
+// DOCS-1 wave 4: links to other apps and their read-only side.
+test("linked documents for an item: newest first, tombstones hide, other apps ignored", () => {
+  const L = require("../files/docs-links.js");
+  const raw = slice([
+    doc("d-a", { t: "Fuel receipt", d: "2026-10-01", ln: [{ a: "budget", r: { tx: "t1" }, t: "Fuel" }] }),
+    doc("d-b", { t: "", p: "/internal/x/bill.pdf", d: "2026-11-01", ln: [{ a: "budget", r: { tx: "t1" } }, { a: "crm", r: { cust: "c1" } }] }),
+    doc("d-c", { ln: [{ a: "budget", r: { tx: "t2" } }] }),
+    doc("d-d", { ln: [{ a: "budget", r: { tx: "t1" } }] }),
+    doc("d-e", { ln: [{ a: "garage", r: "v1" }] })
+  ], { tombs: { "d-d": 20 } });
+  assert.deepStrictEqual(L.linked(raw, "budget", (r) => r && r.tx === "t1"), [{ id: "d-b", title: "bill.pdf" }, { id: "d-a", title: "Fuel receipt" }]);
+  assert.deepStrictEqual(L.linked(raw, "garage", (r) => r === "v1").map((x) => x.id), ["d-e"]);
+  assert.deepStrictEqual(L.linked(raw, "crm", () => { throw new Error("x"); }), [], "a test that throws matches nothing");
+  assert.deepStrictEqual(L.linked(null, "budget", () => true), []);
+});
+
+test("wiring: the five apps show their documents, Files makes the links", () => {
+  for (const [app, file, re] of [
+    ["budget", "budget/budget.js", /OrosDocsLinks\.attach\(form, "budget", function \(r\) \{ return r && r\.tx === x\.id; \}\)/],
+    ["invoices", "invoices/invoices.js", /OrosDocsLinks\.attach\(body, "invoices", function \(r\) \{ return r && r\.invoice === d\.id; \}\)/],
+    ["garage", "garage/garage.js", /OrosDocsLinks\.attach\(form, "garage", function \(x\) \{ return x === v\.id; \}\)/],
+    ["health", "health/health.js", /OrosDocsLinks\.attach\(form, "health"/],
+    ["crm", "crm/crm.js", /OrosDocsLinks\.attach\(pane, "crm", function \(r\) \{ return r && r\.cust === c\.id; \}\)/]
+  ]) {
+    assert.match(read(file), re, app);
+    assert.match(read(app + "/index.html"), /<script src="\.\.\/files\/docs-links\.js\?v=[^"]+"><\/script>\s*<script src="[a-z]+\.js\?v=/, app + " loads it before the app");
+  }
+  const h = read("health/health.js");
+  assert.match(h, /docsFor = a \? \{ appt: a\.id \} : null;/);
+  assert.match(h, /docsFor = d \? \{ doc: d\.id \} : null;/);
+  const v = read("files/docs.js");
+  assert.match(v, /var LINK_APPS = \["budget", "invoices", "garage", "health", "crm"\];/);
+  assert.match(v, /orosAssistSearch\(text, \[app\]\)/, "the items come from the apps' own search providers");
+  assert.match(v, /next\.ln = links;/);
+  assert.ok(!/innerHTML\s*=\s*[^"]/.test(read("files/docs-links.js")), "docs-links draws with textContent only");
+});
