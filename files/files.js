@@ -5870,6 +5870,11 @@
       if (cmp()) cmp().openAt(t.computer);
       return;
     }
+    // The shell's overview (OV-1) "All recent files": { view: "recent" }.
+    if (t && t.view === "recent") {
+      if (isAvailable()) openView("recent");
+      return;
+    }
     if (!t || typeof t.path !== "string" || !isAvailable()) return;
     var p = t.path.replace(/\/+$/, "");
     if (p.indexOf(ROOT + "/") !== 0 || p.indexOf("/../") !== -1 || /\/\.\.?$/.test(p)) return;

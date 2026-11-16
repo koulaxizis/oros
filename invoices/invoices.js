@@ -1802,6 +1802,8 @@
     mc.appendChild(mf);
     if (d.kind !== "ext") mc.appendChild(fileField(d, true));
     body.appendChild(mc);
+    // Files › Documents linked to this invoice (DOCS-1 W4, read-only)
+    if (window.OrosDocsLinks) window.OrosDocsLinks.attach(body, "invoices", function (r) { return r && r.invoice === d.id; });
   }
   // The document as a sheet of paper (same content as the PDF).
   function paperOf(d) {

@@ -27,6 +27,16 @@ Passt nichts, siehst du `Keine passenden Apps`.
 
 Du kannst auch über die Adressleiste deines Browsers suchen. Füge in den Browser-Einstellungen eine Website-Suche (eigene Suchmaschine) hinzu, mit deiner orOS-Adresse gefolgt von `?search=%s`; orOS öffnet sich dann mit deinen Wörtern schon in diesem Feld.
 
+## Übersicht
+[[Ctrl+Alt+Shift+E]] öffnet die Übersicht: ein Bildschirm mit allem, was du brauchst, um dich zurechtzufinden.
+
+- **Suche** oben. Fang an zu tippen, und du landest direkt in der Menüsuche, mit denselben Ergebnissen: Apps, Befehle und deine Daten.
+- **Offene Apps**: die App im Vordergrund und, mit eingeschaltetem Multitasking, die im Hintergrund. Klicke eine an, um zu ihr zurückzukehren, oder × zum Schließen. Auf breiten Bildschirmen kannst du eine auch neben die App im Vordergrund setzen.
+- **Zuletzt verwendete Dateien**: die letzten Dateien, die du auf diesem Gerät in [Dateien](app:files) geöffnet, gespeichert oder heruntergeladen hast. Klicke eine an, um sie in Dateien zu öffnen. Während sensibler Arbeit bleiben sie ausgeblendet.
+- **System**: wie viele Plätze dieses Geräts für offene Apps belegt sind, wie viel Speicherplatz orOS nutzt und ob die Synchronisierung aktuell ist oder Dateien warten. `Details unter Einstellungen › Gerät` zeigt das ganze Bild.
+
+[[Esc]] schließt sie. Unter `Einstellungen › System › Übersicht` kannst du sie auch öffnen, indem du die Maus in die linke obere Ecke schiebst, oder mit der Super-Taste (Windows-Taste) allein; beides ist anfangs aus und gilt nur für dieses Gerät.
+
 ## Befehle
 Tippe auf Englisch oder Griechisch, was du tun willst, und die erste Zeile der Suche zeigt die Aktion. Drücke [[Enter]] oder tippe darauf. Noch wird nichts gespeichert: Die App öffnet sich mit ausgefülltem Formular, du prüfst es und drückst `Speichern`.
 - `dentist tomorrow 10`, `meeting Friday 3pm at the office`: ein neuer Termin in [Kalender](app:calendar). Eine Zeile mit Tag und Uhrzeit reicht.

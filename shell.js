@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.03.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.19.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -218,7 +218,6 @@
     garage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .6-1.4L5 9.5l1.6-3.6A2 2 0 0 1 8.4 4.7h7.2a2 2 0 0 1 1.8 1.2L19 9.5l1.9 1.9a2 2 0 0 1 .6 1.4V16a1 1 0 0 1-1 1H19"/><path d="M5 9.5h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
     petcare: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="9.5" r="1.8"/><circle cx="8.5" cy="5" r="1.8"/><circle cx="13.5" cy="5" r="1.8"/><path d="M11 10.5c-2.8 0-5 3.3-5 5.6 0 1.6 1.2 2.4 2.7 2.4.9 0 1.5-.5 2.3-.5"/><path d="M18 12v8M14 16h8"/></svg>',
-    wheel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8.5"/><path d="M12 4.5v17M3.5 13h17M6 7l12 12M18 7L6 19"/><path d="M10 1.5h4L12 4.5z" fill="currentColor"/></svg>',
     oracle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M12 2v1.5M5 4.5l1 1M19 4.5l-1 1"/></svg>',
     slides: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="12" rx="1"/><path d="M8 11v-2M12 11V7M16 11v-3M12 15v3M8 21l4-3 4 3"/></svg>',
     baby: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4M9.5 5h5M10 5v2.5L8 10v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V10l-2-2.5V5"/><path d="M8 14h3M8 17h3"/></svg>',
@@ -416,6 +415,9 @@
     if (window.orosOsk) window.orosOsk.refresh();   // on-screen keyboard labels
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
+    if (window.orosClip) window.orosClip.refresh();         // clipboard history
+    if (window.orosEmoji) window.orosEmoji.refresh();       // emoji picker
+    if (window.orosSmartBar) window.orosSmartBar.refresh(); // smart top bar chips
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
     // known) must relabel them too, or screen readers hear English.
@@ -1667,12 +1669,22 @@
     var left = bar && bar.querySelector(".bar-left");
     var right = bar && bar.querySelector(".bar-right");
     if (!left || !right) return;
-    for (var lvl = 0; ; lvl++) {
-      applyBarFit(lvl);
+    // Smart bar (smartbar.js): its chips give way after the tight level
+    // and before the weekday, the date or the language go.
+    var SB = window.orosSmartBar && window.orosSmartBar.fitDrop ? window.orosSmartBar : null;
+    if (SB) SB.fitReset();
+    function fits() {
       var cs = getComputedStyle(bar);
       var avail = bar.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      var need = left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4;
-      if (need <= avail || lvl >= (document.getElementById("qs-btn") ? BAR_FIT_MAX : 6)) return;
+      return left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4 <= avail;
+    }
+    // The first chip stays until the last level: the person asked for it.
+    var max = document.getElementById("qs-btn") ? BAR_FIT_MAX : 6;
+    for (var lvl = 0; ; lvl++) {
+      applyBarFit(lvl);
+      if (fits()) return;
+      if (lvl === 2 && SB) { while (SB.fitDrop(1)) { if (fits()) return; } }
+      if (lvl >= max) { if (SB) { while (SB.fitDrop(0)) { if (fits()) return; } } return; }
     }
   }
 
@@ -1777,6 +1789,7 @@
     tickSafe("mixerTrayTick", mixerTrayTick); // Sound Mixer: playing-with-app-closed chip (cheap, 1/s)
     tickSafe("wpDailyTick", wpDailyTick);     // Wallpaper "a new picture every day" (checks once a minute)
     tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
+    if (window.orosSmartBar) tickSafe("smartbarTick", window.orosSmartBar.tick); // Smart bar chips (cheap, 1/s)
   }
 
   // SH-Q2: one engine's failure is logged once (not 1/s) and never
@@ -4818,7 +4831,8 @@
     if (U) { try { rates = U.storedRates(JSON.parse(localStorage.getItem(U.RATES_KEY))); } catch (e) { rates = null; } }
     return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick, lang: langBase(),
                         calc: window.CalcCore, units: U, rates: rates, send: window.OrosSendCore,
-                        lockOn: !!(window.orosLock && window.orosLock.isOn()), pw: window.PwCore });
+                        lockOn: !!(window.orosLock && window.orosLock.isOn()), pw: window.PwCore,
+                        clipOn: !!(window.orosClip && window.orosClip.isOn()) });
   }
   function cmdHistory() {
     try {
@@ -4860,6 +4874,7 @@
     var N = window.orosNotifs;
     if (name === "theme") { setThemeUser(value); notifySys("dim", text); return; }
     if (name === "lock") { if (window.orosLock && window.orosLock.isOn()) window.orosLock.lock(); return; }
+    if (name === "clip") { if (window.orosClip) window.orosClip.open(); return; }   // CLIP-1 W2
     if (!N || typeof N.setSetting !== "function") return;
     if (name === "notifs") {
       if (!value) notifySys("dim", text);
@@ -5086,6 +5101,7 @@
   }
   appFrames().forEach(extWireFrame);
   appFrames().forEach(a11yWireFrame);
+  if (window.orosClip) appFrames().forEach(window.orosClip.wire);   // CLIP-1
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -8254,6 +8270,12 @@
     {
       k: "cr.g.data",
       items: [
+        { name: "Unicode CLDR annotations 49.0.0", url: "https://cldr.unicode.org/",
+          by: "Unicode, Inc.", lic: "Unicode License V3",
+          k: "cr.cldr-emoji" },
+        { name: "unicode-emoji-json 0.9.0", url: "https://github.com/muan/unicode-emoji-json",
+          by: "Mu-An Chiou", lic: "MIT",
+          k: "cr.unicode-emoji-json" },
         { name: "FSRS-6 (ts-fsrs 5.4.2)", url: "https://github.com/open-spaced-repetition/ts-fsrs",
           by: "Open Spaced Repetition", lic: "MIT",
           k: "cr.fsrs-ts" },
@@ -8597,6 +8619,9 @@
         { name: "Tor button's Go modules (ProtonMail go-crypto, CIRCL, golang.org/x/crypto, ulikunitz/xz)", url: "https://github.com/ProtonMail/go-crypto",
           by: "The Go Authors, Proton AG, Cloudflare, Ulrich Kunitz", lic: "BSD-3-Clause",
           k: "cr.tor-modules" },
+        { name: "chromium-web-store", url: "https://github.com/NeverDecaf/chromium-web-store",
+          by: "NeverDecaf and contributors", lic: "MIT",
+          k: "cr.webstore" },
         { name: "Ollama (with llama.cpp and ggml)", url: "https://github.com/ollama/ollama",
           by: "Ollama, Georgi Gerganov & contributors", lic: "MIT",
           k: "cr.ollama" },
@@ -8714,7 +8739,7 @@
     var rows = "";
     SC_DEFS.forEach(function (def) {
       rows += '<div class="sc-row"><span class="sc-key">' + comboPrefix +
-              def.key.toUpperCase() + '</span><span>' +
+              escapeHtml(scLabel(def)) + '</span><span>' +
               escapeHtml(window.t(def.label)) + '</span></div>';
     });
 
@@ -9271,10 +9296,19 @@
     { key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
     { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
     { key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
+    { key: "e", label: "sc.desc.overview",   fn: function() { ovOpen(); }, id: "overview" },
     { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
     { key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } },
+    { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } },
+    { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } },
     { id: "screen", key: "b", label: "sc.desc.screen", fn: function() { scrMove(); } }
   ];
+  // The key an SC_DEFS entry answers to (e.code) and how it is shown:
+  // a letter ("v" → KeyV, "V") or a non-letter default ("Period", ".").
+  var SC_CODE_LABEL = { Period: "." };
+  function scCode(def) { return def.code || ("Key" + def.key.toUpperCase()); }
+  function scLabel(def) { return def.code ? (SC_CODE_LABEL[def.code] || def.code) : def.key.toUpperCase(); }
+
 
   // Public contract consumed by iframe apps (same-origin, so this
   // is reachable — Contract Β). Returns true when the combo matched,
@@ -9296,10 +9330,9 @@
           tgt.isContentEditable) return false;
     }
     var code = e.code || "";
-    if (code.indexOf("Key") !== 0) return false;   // letters only
-    var letter = code.charAt(code.length - 1).toUpperCase();
+    if (code.indexOf("Key") !== 0 && code !== "Period") return false;   // letters, and "." (emoji, CLIP-1 W3)
     for (var i = 0; i < SC_DEFS.length; i++) {
-      if (SC_DEFS[i].key.toUpperCase() === letter) {
+      if (scCode(SC_DEFS[i]) === code) {
         if (e.preventDefault) e.preventDefault();
         SC_DEFS[i].fn();
         return true;
@@ -11748,9 +11781,14 @@
       tips: SOLO ? null : { on: !!tipsRead().on },
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
+      night: window.orosNight ? window.orosNight.snapshot() : null,   // NIGHT-1, this device
+      smartbar: !SOLO && window.orosSmartBar && window.orosSmartBar.snapshot ? window.orosSmartBar.snapshot() : null,
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
+      // Clipboard history (cliphist.js, CLIP-1): this device only.
+      clip: window.orosClip ? window.orosClip.snapshot() : null,
+      overview: ovSnapshot(),       // OV-1: hot corner / Super key, this device only
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
       pcfiles: state.pcFiles && !state.pcFiles.fixed ? { on: state.pcFiles.state === "on" } : null,
@@ -11761,7 +11799,7 @@
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       shortcuts: SC_DEFS.map(function (d) {
-        return { combo: (mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+") + d.key.toUpperCase(),
+        return { combo: (mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+") + scLabel(d),
                  label: window.t(d.label) };
       })
     };
@@ -11791,9 +11829,17 @@
       case "multitask":
         if (!SOLO) { mtSetUser(!!value); settingsNotify(); }
         return;
+      case "overview:corner":
+        if (!SOLO) { ovSetPref(OV_CORNER_KEY, !!value); settingsNotify(); }
+        return;
+      case "overview:super":
+        if (!SOLO) { ovSetPref(OV_SUPER_KEY, !!value); settingsNotify(); }
+        return;
       case "pcfiles":
         if (typeof window.__orosPcFilesSet === "function") window.__orosPcFilesSet(!!value);
         return;
+      case "clip":       if (window.orosClip) window.orosClip.setOn(!!value); return;
+      case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
@@ -11819,8 +11865,20 @@
       if (SS) SS.set(name.slice(9), value);
       return;
     }
+    if (/^night:/.test(name)) {          // nightlight.js: "night:<on|sched|from|to|warmth>"
+      if (window.orosNight) window.orosNight.set(name.slice(6), value);
+      return;
+    }
     if (/^widgets:/.test(name)) {        // widgets.js: "widgets:<kind>" on/off
       if (window.orosWidgets) window.orosWidgets.set(name.slice(8), !!value);
+      return;
+    }
+    if (/^smartbar:/.test(name)) {       // smartbar.js: "smartbar:<kind>" on/off
+      if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
+      return;
+    }
+    if (/^smartbar-move:/.test(name)) {  // smartbar.js: "smartbar-move:<kind>", value -1 (left) / 1 (right)
+      if (window.orosSmartBar) window.orosSmartBar.move(name.slice(14), Number(value) < 0 ? -1 : 1);
       return;
     }
     if (/^osk:/.test(name)) {
@@ -11868,6 +11926,8 @@
       case "sync.link.open":    if (arg && typeof arg.code === "string") linkOpen(arg.code.slice(0, 40)); return;
       case "sync.link.session": if (state.linkIn && state.linkIn.phase !== "done") linkInSet({ session: !!(arg && arg.on) }); return;
       case "sync.link.close":   state.linkIn = null; settingsNotify(); return;
+      case "clip.clear":      if (window.orosClip) window.orosClip.clear(); return;   // CLIP-1
+      case "clip.open":       if (window.orosClip) window.orosClip.open(); return;
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -12481,6 +12541,8 @@
     cmdWireFrame(f);
     extWireFrame(f);
     a11yWireFrame(f);
+    ovWireFrame(f);
+    if (window.orosClip) window.orosClip.wire(f);   // CLIP-1
     return f;
   }
   function mtDrop(el) {
@@ -13070,6 +13132,8 @@
     });
     if (window.orosLauncher) window.orosLauncher.refresh();
     if (mtSw) mtSwRender();
+    if (ov) ovRenderApps();     // 10e overview
+    monChanged();               // 10e window.orosMonitor listeners
   }
   mtOnChange = mtPaint;
 
@@ -13322,6 +13386,513 @@
     btn.addEventListener("click", function (e) { e.stopPropagation(); mtSwitcher(); });
     left.appendChild(btn);
   })();
+
+  // ---------- 10e. Overview and system monitor (OV-1) ----------
+  // GNOME-like Activities overview (gap list 2026-11-15, items 7 + 9):
+  // one screen with the search field, the open apps of 10b/10c and the
+  // recent files of Files, plus a small "System" strip (memory places,
+  // storage, sync). It is a union of what exists, never a second
+  // system: typing hands the text to the menu search (same results,
+  // commands and data hits), the app cards are the switcher's list
+  // (mtOpenList / mtClose / mtSideOpen) and the recent files are Files'
+  // own device-local journal ("oros-files-recents"), opened in Files.
+  // Opens with Ctrl+Alt+Shift+E (SC_DEFS "e"); this device may also
+  // open it from the top-left hot corner ("oros-ov-corner" = "1") and
+  // with the Super key pressed alone ("oros-ov-super" = "1"), both off
+  // by default (Windows opens Start on Super; a corner can surprise).
+  // Never while the screen is locked, in a single app (SOLO) or on a
+  // till. Recent file names stay hidden during sensitive work.
+  // window.orosMonitor is the read model Settings › Device uses too.
+  var OV_CORNER_KEY = "oros-ov-corner";
+  var OV_SUPER_KEY = "oros-ov-super";
+  var OV_RECENTS_KEY = "oros-files-recents";   // = files.js RECENTS_KEY
+  var OV_RECENTS_MAX = 8;
+  var ov = null;            // { el, onKey, back } while the overview is open
+
+  function ovPref(key) {
+    try { return localStorage.getItem(key) === "1"; } catch (e) { return false; }
+  }
+  function ovSetPref(key, on) {
+    try {
+      if (on) localStorage.setItem(key, "1");
+      else localStorage.removeItem(key);
+    } catch (e) {}
+  }
+  function ovAllowed() {
+    if (SOLO || TILL) return false;
+    try { if (window.orosLock && window.orosLock.isLocked && window.orosLock.isLocked()) return false; } catch (e) {}
+    return true;
+  }
+
+  // Files' recents journal → up to `max` valid entries, newest first.
+  // Pure (tests): only paths under /internal, never "..", never Trash.
+  function ovRecentsFrom(raw, max) {
+    var list;
+    try { list = JSON.parse(raw); } catch (e) { return []; }
+    if (!Array.isArray(list)) return [];
+    var out = [], seen = {};
+    for (var i = 0; i < list.length && out.length < max; i++) {
+      var e = list[i];
+      if (!e || typeof e.p !== "string" || e.p.length > 1024) continue;
+      var p = e.p.replace(/\/+$/, "");
+      if (p.indexOf("/internal/") !== 0 || /(^|\/)\.\.?(\/|$)/.test(p) || p.indexOf("/internal/.trash") === 0) continue;
+      if (seen[p]) continue;
+      seen[p] = 1;
+      var cut = p.lastIndexOf("/");
+      out.push({ path: p, name: p.slice(cut + 1), dir: p.slice(0, cut) || "/internal",
+                 at: typeof e.at === "number" && isFinite(e.at) ? e.at : 0 });
+    }
+    return out;
+  }
+  // One line for the sync tile. Pure (tests): s = snapshot().sync.
+  // → { key, n, level } with level "" | "busy" | "warn".
+  function ovSyncState(s) {
+    if (!s || !s.connected) return { key: "ov.sys.sync.off", n: 0, level: "" };
+    var f = s.files || null, q = f && f.queued > 0 ? f.queued : 0;
+    if (f && f.lastError) return { key: "ov.sys.sync.err", n: q, level: "warn" };
+    if (f && f.busy) return { key: "ov.sys.sync.busy", n: q, level: "busy" };
+    if (q) return { key: "ov.sys.sync.files", n: q, level: "busy" };
+    if (s.dirty) return { key: "ov.sys.sync.dirty", n: 0, level: "busy" };
+    if (s.deferred > 0) return { key: "ov.sys.sync.merge", n: s.deferred, level: "busy" };
+    return { key: "ov.sys.sync.ok", n: 0, level: "" };
+  }
+  // Places taken by the open apps (front, beside, background).
+  function ovPlaces(apps) {
+    var used = 0;
+    (apps || []).forEach(function (a) { used += a.weight || 1; });
+    return used;
+  }
+
+  // ---- window.orosMonitor: what is open and how this device is doing ----
+  var monListeners = [];
+  function monChanged() {
+    (monListeners || []).slice().forEach(function (fn) { try { fn(); } catch (e) {} });
+  }
+  function monSync() {
+    var S = window.orosSync, V = window.orosVault, out = { connected: false, provider: null, dirty: false, deferred: 0, files: null };
+    try { out.connected = !!(S && S.isConnected && S.isConnected()); } catch (e) {}
+    try { out.provider = S && S.getProvider ? S.getProvider() : null; } catch (e) {}
+    try { out.dirty = !!(S && S.isDirty && S.isDirty()); } catch (e) {}
+    try { out.deferred = S && S.getDeferred ? S.getDeferred().length : 0; } catch (e) {}
+    try {
+      var st = V && V.status ? V.status() : null;
+      if (st && st.usable) {
+        out.files = { queued: st.queued || 0, busy: !!st.busy, lastOkAt: st.lastOkAt || 0,
+                      lastError: st.lastError ? String(st.lastError).slice(0, 120) : null };
+      }
+    } catch (e) {}
+    return out;
+  }
+  function monSnapshot() {
+    var apps = (SOLO ? [] : mtOpenList()).map(function (it) {
+      return { id: it.app.id, name: mtLabel(it.app), front: !!it.front, side: !!it.side,
+               at: it.at || 0, weight: mtWeight(it.app.id), stays: mtKeepable(it.app) };
+    });
+    var heap = null;
+    try {
+      var pm = performance && performance.memory;
+      if (pm && pm.usedJSHeapSize > 0) heap = { used: pm.usedJSHeapSize, limit: pm.jsHeapSizeLimit || 0 };
+    } catch (e) {}
+    var snap = {
+      multitask: !SOLO && mtActive(),
+      apps: apps,
+      places: { used: ovPlaces(apps), total: mtSlotsHere() },
+      memory: { device: typeof navigator.deviceMemory === "number" ? navigator.deviceMemory : null, heap: heap },
+      storage: null,
+      sync: monSync()
+    };
+    var st = navigator.storage;
+    if (!st || typeof st.estimate !== "function") return Promise.resolve(snap);
+    return st.estimate().then(function (e) {
+      if (e && typeof e.usage === "number") snap.storage = { usage: e.usage, quota: e.quota || 0 };
+      return snap;
+    }, function () { return snap; });
+  }
+  window.orosMonitor = {
+    snapshot: monSnapshot,        // → Promise<{ multitask, apps[], places, memory, storage, sync }>
+    close: function (id) {        // closes one open app (as the switcher's ×)
+      if (SOLO || typeof id !== "string") return false;
+      for (var i = 0; i < mtOpenList().length; i++) {
+        if (mtOpenList()[i].app.id === id) { mtClose(id); return true; }
+      }
+      return false;
+    },
+    // fn() on every change of the open apps and of the sync state;
+    // returns an unsubscribe function (an app frame must call it).
+    onChange: function (fn) {
+      if (typeof fn !== "function") return function () {};
+      monListeners.push(fn);
+      return function () {
+        var i = monListeners.indexOf(fn);
+        if (i !== -1) monListeners.splice(i, 1);
+      };
+    },
+    syncState: ovSyncState
+  };
+  if (window.orosSync && window.orosSync.onAutoSync) {
+    window.orosSync.onAutoSync(function (kind) { if (kind !== "start") { monChanged(); if (ov) ovRenderSys(); } });
+  }
+  if (window.orosVault && window.orosVault.onStatus) {
+    window.orosVault.onStatus(function () { monChanged(); if (ov) ovRenderSys(); });
+  }
+
+  // ---- The overview screen ----
+  function ovBytes(n) {
+    if (!(n >= 0)) return "";
+    var u = ["B", "KB", "MB", "GB", "TB"], i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    var d = (i === 0 || n >= 10) ? 0 : 1;
+    try { return n.toLocaleString(shLoc(), { maximumFractionDigits: d }) + " " + u[i]; }
+    catch (e) { return n.toFixed(d) + " " + u[i]; }
+  }
+  function ovClose() {
+    if (!ov) return;
+    var o = ov;
+    ov = null;
+    o.el.remove();
+    document.removeEventListener("keydown", o.onKey, true);
+    if (o.back && o.back.focus && document.contains(o.back)) { try { o.back.focus(); } catch (e) {} }
+  }
+  function ovSection(cls, titleKey) {
+    var s = document.createElement("section");
+    s.className = "ov-sec " + cls;
+    var h = document.createElement("h3");
+    h.className = "ov-h";
+    h.textContent = window.t(titleKey);
+    s.appendChild(h);
+    var body = document.createElement("div");
+    body.className = "ov-body";
+    s.appendChild(body);
+    return s;
+  }
+  function ovRenderApps() {
+    if (!ov) return;
+    var body = ov.el.querySelector(".ov-apps .ov-body");
+    var focusId = document.activeElement && document.activeElement.closest &&
+      document.activeElement.closest(".ov-app") ? document.activeElement.closest(".ov-app").getAttribute("data-app") : null;
+    body.textContent = "";
+    var on = mtActive(), list = mtOpenList();
+    var n = ov.el.querySelector(".ov-apps .ov-n");
+    if (!n) {
+      n = document.createElement("span");
+      n.className = "ov-n";
+      ov.el.querySelector(".ov-apps .ov-h").appendChild(n);
+    }
+    n.textContent = list.length ? String(list.length) : "";
+    n.hidden = !list.length;
+    if (!list.length) {
+      var em = document.createElement("p");
+      em.className = "ov-empty";
+      em.textContent = window.t(on ? "ov.apps.none" : "mt.sw.off");
+      body.appendChild(em);
+    }
+    var grid = document.createElement("div");
+    grid.className = "ov-grid";
+    grid.setAttribute("role", "list");
+    list.forEach(function (it) {
+      var card = document.createElement("div");
+      card.className = "ov-app" + (it.front ? " ov-front" : "");
+      card.setAttribute("role", "listitem");
+      card.setAttribute("data-app", it.app.id);
+      var go = document.createElement("button");
+      go.type = "button";
+      go.className = "ov-go";
+      go.innerHTML = '<span class="app-ico" data-cat="' + iconCat(it.app) + '" data-hue="' + iconHue(it.app) + '">' + (ICONS[it.app.icon] || "") + '</span>' +
+        '<span class="ov-name"></span><span class="ov-when"></span>';
+      go.querySelector(".ov-name").textContent = mtLabel(it.app);
+      go.querySelector(".ov-when").textContent = it.front ? window.t("mt.sw.now") : it.side ? window.t("mt.sw.beside") : mtAgo(it.at);
+      if (it.front) go.setAttribute("aria-current", "true");
+      go.addEventListener("click", function () {
+        ovClose();
+        if (state.running && state.running.id === it.app.id) return;
+        if (it.side) { mtSideFocus(); return; }
+        openApp(it.app);
+      });
+      card.appendChild(go);
+      var tools = document.createElement("div");
+      tools.className = "ov-tools";
+      var sb = mtSwSplitBtn(it);
+      if (sb) {
+        sb.addEventListener("click", function () { ovClose(); }, true);
+        tools.appendChild(sb);
+      }
+      var x = document.createElement("button");
+      x.type = "button";
+      x.className = "mt-sw-x ov-x";
+      x.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      var xl = window.t("mt.sw.close").replace("{app}", mtLabel(it.app));
+      x.setAttribute("aria-label", xl);
+      x.title = xl;
+      x.addEventListener("click", function () { mtClose(it.app.id); });
+      tools.appendChild(x);
+      card.appendChild(tools);
+      grid.appendChild(card);
+    });
+    if (list.length) body.appendChild(grid);
+    if (!on) {
+      if (list.length) {
+        var off = document.createElement("p");
+        off.className = "ov-empty ov-off";
+        off.textContent = window.t("mt.sw.off");
+        body.appendChild(off);
+      }
+      var set = document.createElement("button");
+      set.type = "button";
+      set.className = "ov-link";
+      set.textContent = window.t("mt.sw.settings");
+      set.addEventListener("click", function () {
+        ovClose();
+        if (window.orosSettings) window.orosSettings.open("system");
+      });
+      body.appendChild(set);
+    }
+    if (focusId) {
+      var want = body.querySelector('.ov-app[data-app="' + focusId + '"] .ov-go');
+      if (want) want.focus();
+    }
+  }
+  function ovRenderFiles() {
+    var body = ov.el.querySelector(".ov-files .ov-body");
+    body.textContent = "";
+    function note(key) {
+      var p = document.createElement("p");
+      p.className = "ov-empty";
+      p.textContent = window.t(key);
+      body.appendChild(p);
+    }
+    if (strictLevelNow()) { note("ov.files.hidden"); return; }
+    var raw = null;
+    try { raw = localStorage.getItem(OV_RECENTS_KEY); } catch (e) {}
+    var list = ovRecentsFrom(raw, OV_RECENTS_MAX);
+    if (!list.length) note("ov.files.none");
+    var ul = document.createElement("div");
+    ul.className = "ov-flist";
+    ul.setAttribute("role", "list");
+    list.forEach(function (f) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ov-file";
+      b.setAttribute("role", "listitem");
+      b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>' +
+        '<span class="ov-fname"></span><span class="ov-fwhere"></span>';
+      b.querySelector(".ov-fname").textContent = f.name;
+      var where = f.dir === "/internal" ? window.t("ov.files.root") : f.dir.slice(f.dir.lastIndexOf("/") + 1);
+      b.querySelector(".ov-fwhere").textContent = where + (f.at ? " · " + mtAgo(f.at) : "");
+      b.title = f.path.replace(/^\/internal/, "");
+      b.addEventListener("click", function () {
+        ovClose();
+        window.__orosOpenAt("files", { path: f.path });
+      });
+      ul.appendChild(b);
+    });
+    if (list.length) body.appendChild(ul);
+    var all = document.createElement("button");
+    all.type = "button";
+    all.className = "ov-link";
+    all.textContent = window.t("ov.files.all");
+    all.addEventListener("click", function () {
+      ovClose();
+      window.__orosOpenAt("files", { view: "recent" });
+    });
+    body.appendChild(all);
+  }
+  function ovTile(label, value, pct, level) {
+    var d = document.createElement("div");
+    d.className = "ov-tile" + (level ? " ov-" + level : "");
+    var l = document.createElement("span");
+    l.className = "ov-tl";
+    l.textContent = label;
+    var v = document.createElement("span");
+    v.className = "ov-tv";
+    v.textContent = value;
+    d.appendChild(l);
+    d.appendChild(v);
+    if (typeof pct === "number" && isFinite(pct)) {
+      var bar = document.createElement("span");
+      bar.className = "ov-bar";
+      var f = document.createElement("span");
+      f.style.width = Math.max(2, Math.min(100, pct)).toFixed(1) + "%";
+      bar.appendChild(f);
+      d.appendChild(bar);
+    }
+    return d;
+  }
+  var ovSysToken = 0;
+  function ovRenderSys() {
+    if (!ov) return;
+    var token = ++ovSysToken;
+    monSnapshot().then(function (s) {
+      if (!ov || token !== ovSysToken) return;
+      var body = ov.el.querySelector(".ov-sys .ov-body");
+      body.textContent = "";
+      var row = document.createElement("div");
+      row.className = "ov-tiles";
+      // Memory: the places multitasking keeps for open apps; with it
+      // off, only what the browser says about the device.
+      if (s.multitask) {
+        var memVal = window.t("ov.sys.places").replace("{n}", s.places.used).replace("{m}", s.places.total);
+        row.appendChild(ovTile(window.t("ov.sys.mem"), memVal, s.places.total ? s.places.used / s.places.total * 100 : null,
+          s.places.used > s.places.total ? "warn" : ""));
+      } else {
+        row.appendChild(ovTile(window.t("ov.sys.mem"), s.memory.device ?
+          window.t("ov.sys.memGB").replace("{n}", s.memory.device) : window.t("ov.sys.na")));
+      }
+      if (s.storage && s.storage.quota) {
+        var pct = s.storage.usage / s.storage.quota * 100;
+        row.appendChild(ovTile(window.t("ov.sys.disk"),
+          window.t("ov.sys.of").replace("{a}", ovBytes(s.storage.usage)).replace("{b}", ovBytes(s.storage.quota)), pct, pct > 85 ? "warn" : ""));
+      } else {
+        row.appendChild(ovTile(window.t("ov.sys.disk"), window.t("ov.sys.na")));
+      }
+      var sy = ovSyncState(s.sync);
+      row.appendChild(ovTile(window.t("ov.sys.sync"), window.t(sy.key).replace("{n}", sy.n), null, sy.level));
+      body.appendChild(row);
+      var more = document.createElement("button");
+      more.type = "button";
+      more.className = "ov-link";
+      more.textContent = window.t("ov.sys.more");
+      more.addEventListener("click", function () {
+        ovClose();
+        if (window.orosSettings) window.orosSettings.open("device");
+      });
+      body.appendChild(more);
+    });
+  }
+  // Typing hands over to the menu search: same field, same results.
+  function ovToMenu(text) {
+    ovClose();
+    openMenuSearch();
+    var inp = document.querySelector("#app-menu .menu-search input");
+    if (!inp) return;
+    inp.value = text;
+    try { inp.setSelectionRange(text.length, text.length); } catch (e) {}
+    inp.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  function ovOpen() {
+    if (ov) { ovClose(); return; }
+    if (!ovAllowed()) return;
+    closeMenu();
+    closeNotifPanel();
+    if (mtSw) mtSwClose();
+    var el = document.createElement("div");
+    el.id = "oros-ov";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "true");
+    el.setAttribute("aria-labelledby", "ov-title");
+    el.innerHTML =
+      '<div class="ov-box">' +
+        '<div class="ov-top"><h2 id="ov-title" class="ov-title"></h2>' +
+          '<div class="ov-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>' +
+          '<input type="search" autocomplete="off" spellcheck="false"></div>' +
+          '<button type="button" class="ov-done"></button></div>' +
+        '<div class="ov-cols"></div>' +
+      '</div>';
+    el.querySelector(".ov-title").textContent = window.t("ov.title");
+    var inp = el.querySelector(".ov-search input");
+    inp.placeholder = window.t("menu.search");
+    inp.setAttribute("aria-label", inp.placeholder);
+    var done = el.querySelector(".ov-done");
+    done.textContent = window.t("mt.sw.done");
+    done.addEventListener("click", ovClose);
+    var cols = el.querySelector(".ov-cols");
+    cols.appendChild(ovSection("ov-apps", "mt.sw.title"));
+    var side = document.createElement("div");
+    side.className = "ov-side";
+    if (hasApp("files")) side.appendChild(ovSection("ov-files", "ov.files.title"));
+    side.appendChild(ovSection("ov-sys", "ov.sys.title"));
+    cols.appendChild(side);
+    inp.addEventListener("input", function () { if (inp.value) ovToMenu(inp.value); });
+    el.addEventListener("click", function (e) { if (e.target === el) ovClose(); });
+    function onKey(e) {
+      if (!ov) return;
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); ovClose(); return; }
+      if (e.key === "Tab") {        // focus stays inside the overview
+        var f = Array.prototype.slice.call(el.querySelectorAll("button, input")).filter(function (b) { return !b.disabled && b.offsetParent !== null; });
+        if (!f.length) return;
+        var i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+        return;
+      }
+      var a = document.activeElement;
+      if (a === inp) return;
+      // Start typing anywhere: the letter goes to the search field.
+      if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && e.key !== " ") {
+        inp.focus();
+        return;
+      }
+      var cards = Array.prototype.slice.call(el.querySelectorAll(".ov-go, .ov-file"));
+      var j = cards.indexOf(a);
+      if (j >= 0 && (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowLeft")) {
+        e.preventDefault();
+        var fw = e.key === "ArrowDown" || e.key === "ArrowRight";
+        cards[(j + (fw ? 1 : cards.length - 1)) % cards.length].focus();
+      } else if ((e.key === "Delete" || e.key === "Backspace") && a.classList.contains("ov-go")) {
+        e.preventDefault();
+        mtClose(a.closest(".ov-app").getAttribute("data-app"));
+      }
+    }
+    document.body.appendChild(el);
+    document.addEventListener("keydown", onKey, true);
+    ov = { el: el, onKey: onKey, back: document.activeElement };
+    ovRenderApps();
+    if (hasApp("files")) ovRenderFiles();
+    ovRenderSys();
+    // The app left last has the focus (shortcut + Enter = back to it),
+    // else the search field.
+    var list = mtOpenList(), want = null;
+    if (list.length > 1 && list[0].front) want = el.querySelector('.ov-app[data-app="' + list[1].app.id + '"] .ov-go');
+    (want || inp).focus();
+  }
+
+  // Hot corner (opt-in): the pointer pushed into the top-left corner.
+  // Re-arms once it has left the corner area; never with a button held.
+  (function () {
+    if (SOLO) return;
+    var armed = true;
+    document.addEventListener("pointermove", function (e) {
+      if (e.pointerType !== "mouse") return;
+      if (e.clientX > 40 || e.clientY > 40) { armed = true; return; }
+      if (!armed || e.buttons || e.clientX > 1 || e.clientY > 1) return;
+      if (!ovPref(OV_CORNER_KEY) || ov) return;
+      armed = false;
+      ovOpen();
+    }, { passive: true });
+  })();
+  // Super alone (opt-in): Super pressed and let go with no other key,
+  // in the shell or inside an app frame (same origin).
+  var ovSuper = { at: 0, clean: false };
+  function ovSuperKey(e) {
+    var meta = e.key === "Meta" || e.key === "OS" || e.key === "Super";
+    if (e.type === "keydown") {
+      if (meta) { if (!e.repeat) { ovSuper.at = Date.now(); ovSuper.clean = true; } }
+      else ovSuper.clean = false;
+      return;
+    }
+    if (!meta || !ovSuper.clean) return;
+    ovSuper.clean = false;
+    if (Date.now() - ovSuper.at > 800 || !ovPref(OV_SUPER_KEY)) return;
+    ovOpen();
+  }
+  function ovWireFrame(frame) {
+    frame.addEventListener("load", function () {
+      var w;
+      try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
+      w.addEventListener("keydown", ovSuperKey, true);
+      w.addEventListener("keyup", ovSuperKey, true);
+      w.addEventListener("pointerdown", function () { ovSuper.clean = false; }, true);
+    });
+  }
+  if (!SOLO) {
+    document.addEventListener("keydown", ovSuperKey, true);
+    document.addEventListener("keyup", ovSuperKey, true);
+    document.addEventListener("pointerdown", function () { ovSuper.clean = false; }, true);
+    appFrames().forEach(ovWireFrame);
+  }
+  function ovSnapshot() {
+    if (SOLO) return null;
+    return { corner: ovPref(OV_CORNER_KEY), superKey: ovPref(OV_SUPER_KEY) };
+  }
 
   // ---------- 10g. The other screen (SS1, 2026-11-15) ----------
   // With two screens set to Extend, an app moves to the other screen:
@@ -15282,6 +15853,64 @@
       media: qsMedia
     });
   }
+  // Clipboard history (cliphist.js, CLIP-1): what is copied inside orOS
+  // apps, opt-in, this device only. A single app gets it too.
+  if (window.orosClip) {
+    window.orosClip.attach({
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      settings: function (section) { if (window.orosSettings) window.orosSettings.open(section); },
+      toast: function (kind, msg) { scToast(kind, msg); }
+    });
+    window.orosClip.onChange(settingsNotify);
+  }
+  // Emoji picker (emoji.js, CLIP-1 W3): Ctrl+Alt+Shift+. and Quick settings.
+  // Not a start-up script (the quality gate's boot budget): this stand-in
+  // answers as window.orosEmoji until the first open, which loads emoji.js
+  // (precached), attaches it and opens it; emoji.js then replaces it.
+  (function () {
+    var emoHost = {
+      lang: function () { return state.lang; },
+      version: function () { return APP_VERSION; },
+      toast: function (kind, msg) { scToast(kind, msg); }
+    };
+    var emoLoading = null;
+    function emoLoad() {
+      var real = window.orosEmoji;
+      if (real && real !== emoStub) return Promise.resolve(real);
+      if (!emoLoading) emoLoading = new Promise(function (res, rej) {
+        var sc = document.createElement("script");
+        sc.src = "emoji.js?v=" + encodeURIComponent(APP_VERSION);
+        sc.onload = function () {
+          var api = window.orosEmoji;
+          if (api && api !== emoStub && api.attach) { api.attach(emoHost); res(api); }
+          else { emoLoading = null; window.orosEmoji = emoStub; rej(new Error("emoji.js")); }
+        };
+        sc.onerror = function () { emoLoading = null; sc.remove(); rej(new Error("emoji.js")); };
+        document.head.appendChild(sc);
+      });
+      return emoLoading;
+    }
+    function emoThen(fn) {
+      emoLoad().then(fn, function () { scToast("error", window.t("emo.fail")); });
+    }
+    var emoStub = {
+      lazy: true,
+      open: function () { emoThen(function (api) { api.open(); }); },
+      toggle: function () { emoThen(function (api) { api.toggle(); }); },
+      close: function () {},
+      isOpen: function () { return false; },
+      refresh: function () {}
+    };
+    if (!window.orosEmoji) window.orosEmoji = emoStub;
+    else window.orosEmoji.attach(emoHost);
+  })();
+  // Night Light (nightlight.js, a shell component like qsettings.js):
+  // the warm filter over the whole shell. Sunset and sunrise come from
+  // the top-bar weather's place (wxLoc). A single app gets it too.
+  if (window.orosNight) {
+    window.orosNight.attach({ loc: wxLoc });
+    window.orosNight.onChange(function () { settingsNotify(); });
+  }
   // Desktop widgets (widgets.js, a shell component like launcher.js):
   // clock, calendar, Today, weather, playing, sync on the desktop. A
   // single app has no desktop, so it gets none.
@@ -15309,6 +15938,21 @@
       toast: function (msg) { scToast("err", msg); },
       changed: function () { settingsNotify(); wxFetch(false); },
       start: { facts: startFacts, go: startGo }
+    });
+  }
+  // Smart top bar (smartbar.js): live chips (next event, focus, tasks,
+  // water, spent, till) the person switches on in Settings › Appearance.
+  // A single app keeps its plain bar.
+  if (window.orosSmartBar && !SOLO) {
+    window.orosSmartBar.attach({
+      lang: function () { return state.lang; },
+      strict: function () { return !!strictLevelNow(); },
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      open: function (id) { openAppById(id); },
+      version: function () { return APP_VERSION; },
+      toast: function (msg) { scToast("err", msg); },
+      changed: function () { settingsNotify(); },
+      fit: function () { queueFitBar(); }
     });
   }
   loadApps();

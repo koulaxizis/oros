@@ -25,6 +25,7 @@
 //   5. Battery
 //   6. Network
 //   7. Sync
+//   7b. Running now (OV-2: open apps, places, memory)
 //   8. Screen
 //   9. orOS & browser
 //  10. Features
@@ -92,6 +93,28 @@
       "n.state": "Connection", "n.online": "Online", "n.offline": "Offline",
       "n.type": "Type", "n.speed": "Estimated speed", "n.rtt": "Latency",
       "n.save": "Data saver", "n.na": "The browser does not share connection details. orOS runs no speed test.",
+      "c.running": "Running now",
+      "r.front": "In front",
+      "r.beside": "Beside",
+      "r.left": "Left {t}",
+      "r.place1": "1 place",
+      "r.placeN": "{n} places",
+      "r.close": "Close",
+      "r.closeLabel": "Close {app}",
+      "r.closeOthers": "Close the others",
+      "r.only": "Only Settings is open right now.",
+      "r.off": "Multitasking is off on this device, so only the app in front stays open.",
+      "r.places": "Places for open apps",
+      "r.placesVal": "{n} of {m}",
+      "r.mem": "Memory of this device",
+      "r.memGB": "About {n} GB",
+      "r.heap": "Memory orOS uses now (approximate)",
+      "r.hint": "Heavy apps (Atelier, Maps, Photo Lab and others) take two places. When there is no room, the app you used longest ago closes. Closing an app here works like × in Open apps.",
+      "r.na": "Open Settings inside orOS to see the open apps.",
+      "y.files": "Files waiting to upload",
+      "y.filesLast": "Last file sync",
+      "y.filesErr": "Last file sync problem",
+      "y.merge": "Apps waiting to merge",
       "y.connected": "Connected to a cloud", "y.unlocked": "Unlocked on this device",
       "y.pending": "Changes waiting to upload", "y.every": "Automatic sync",
       "y.everyN": "every {n} min", "y.off": "Off",
@@ -158,6 +181,28 @@
       "n.state": "Σύνδεση", "n.online": "Συνδεδεμένη", "n.offline": "Χωρίς σύνδεση",
       "n.type": "Τύπος", "n.speed": "Εκτιμώμενη ταχύτητα", "n.rtt": "Καθυστέρηση",
       "n.save": "Εξοικονόμηση δεδομένων", "n.na": "Ο browser δεν δίνει στοιχεία σύνδεσης. Το orOS δεν κάνει τεστ ταχύτητας.",
+      "c.running": "Ανοιχτά τώρα",
+      "r.front": "Μπροστά",
+      "r.beside": "Δίπλα",
+      "r.left": "Έφυγες {t}",
+      "r.place1": "1 θέση",
+      "r.placeN": "{n} θέσεις",
+      "r.close": "Κλείσιμο",
+      "r.closeLabel": "Κλείσιμο: {app}",
+      "r.closeOthers": "Κλείσιμο των άλλων",
+      "r.only": "Αυτή τη στιγμή είναι ανοιχτές μόνο οι Ρυθμίσεις.",
+      "r.off": "Η πολυεργασία είναι κλειστή σε αυτή τη συσκευή, οπότε μένει ανοιχτή μόνο η εφαρμογή που βλέπεις.",
+      "r.places": "Θέσεις για ανοιχτές εφαρμογές",
+      "r.placesVal": "{n} από {m}",
+      "r.mem": "Μνήμη της συσκευής",
+      "r.memGB": "Περίπου {n} GB",
+      "r.heap": "Μνήμη που χρησιμοποιεί τώρα το orOS (περίπου)",
+      "r.hint": "Οι βαριές εφαρμογές (Atelier, Χάρτες, Εργαστήριο εικόνας και άλλες) πιάνουν δύο θέσεις. Όταν δεν χωράει άλλη, κλείνει αυτή που χρησιμοποίησες πιο παλιά. Το κλείσιμο εδώ κάνει ό,τι το × στις Ανοιχτές εφαρμογές.",
+      "r.na": "Άνοιξε τις Ρυθμίσεις μέσα στο orOS για να δεις τις ανοιχτές εφαρμογές.",
+      "y.files": "Αρχεία που περιμένουν να ανέβουν",
+      "y.filesLast": "Τελευταίος συγχρονισμός αρχείων",
+      "y.filesErr": "Τελευταίο πρόβλημα συγχρονισμού αρχείων",
+      "y.merge": "Εφαρμογές που περιμένουν συγχώνευση",
       "y.connected": "Σύνδεση με cloud", "y.unlocked": "Ξεκλείδωτο σε αυτή τη συσκευή",
       "y.pending": "Αλλαγές που περιμένουν upload", "y.every": "Αυτόματος συγχρονισμός",
       "y.everyN": "κάθε {n} λεπτά", "y.off": "Ανενεργός",
@@ -547,6 +592,16 @@
       try { every = s.getIntervalMinutes ? s.getIntervalMinutes() : 0; } catch (e) { /* ignore */ }
       rows.push([t("y.unlocked"), yn(unlocked), unlocked ? "ok" : "warn-t"]);
       rows.push([t("y.pending"), yn(dirty), dirty ? "warn-t" : ""]);
+      // OV-2: the file queue of Vault Drive and the apps waiting to merge.
+      var vs = null, deferred = 0;
+      try { var pw = parentWin(); vs = pw && pw.orosVault && pw.orosVault.status ? pw.orosVault.status() : null; } catch (e) { /* standalone */ }
+      try { deferred = s.getDeferred ? s.getDeferred().length : 0; } catch (e) { /* ignore */ }
+      if (vs && vs.usable) {
+        rows.push([t("y.files"), num(vs.queued || 0), vs.queued ? "warn-t" : ""]);
+        rows.push([t("y.filesLast"), when(vs.lastOkAt || 0)]);
+        if (vs.lastError) rows.push([t("y.filesErr"), String(vs.lastError).slice(0, 120), "warn-t"]);
+      }
+      if (deferred) rows.push([t("y.merge"), num(deferred), "warn-t"]);
       rows.push([t("y.every"), every > 0 ? t("y.everyN", { n: every }) : t("y.off")]);
       rows.push([t("y.backup"), when(parseInt(lsGet("oros-sync-last-backup") || "0", 10))]);
     }
@@ -570,6 +625,71 @@
     }
     fill("b-sync", nodes);
     report.sync = rows;
+  }
+
+  // ---------- 7b. Running now (OV-2) ----------
+  // The open apps and the places they take, from the shell's
+  // window.orosMonitor (shell.js 10e); Close works like × in the
+  // shell's Open apps. Repaints on every change while on screen.
+  function monApi() {
+    var p = parentWin();
+    try { return p && p.orosMonitor && typeof p.orosMonitor.snapshot === "function" ? p.orosMonitor : null; }
+    catch (e) { return null; }
+  }
+  function agoText(at) {
+    var sec = Math.max(0, Math.round((Date.now() - at) / 1000));
+    var m = Math.round(sec / 60), h = Math.round(sec / 3600);
+    try {
+      var rtf = new Intl.RelativeTimeFormat(LOCALE, { numeric: "auto" });
+      return sec < 60 ? rtf.format(0, "minute") : m < 60 ? rtf.format(-m, "minute") : rtf.format(-h, "hour");
+    } catch (e) { return m < 60 ? m + " min" : h + " h"; }
+  }
+  var runToken = 0;
+  function renderRunning() {
+    var M = monApi();
+    if (!M) { fill("b-running", [el("p", "note", t("r.na"))]); report.running = null; return Promise.resolve(); }
+    var token = ++runToken;
+    return M.snapshot().then(function (snap) {
+      if (token !== runToken) return;
+      var nodes = [], rows = [];
+      var list = el("ul", "dv-run");
+      snap.apps.forEach(function (a) {
+        var li = el("li");
+        var txt = el("div", "dv-run-txt");
+        txt.appendChild(el("span", "dv-run-name", a.name));
+        var state = a.front ? t("r.front") : a.side ? t("r.beside") : t("r.left", { t: agoText(a.at) });
+        var places = a.weight > 1 ? t("r.placeN", { n: a.weight }) : t("r.place1");
+        txt.appendChild(el("span", "dv-run-sub", state + " · " + places));
+        li.appendChild(txt);
+        rows.push([a.name, state + " · " + places]);
+        if (a.id !== "settings") {
+          var b = el("button", "btn dv-small dv-run-x", t("r.close"));
+          b.type = "button";
+          b.setAttribute("aria-label", t("r.closeLabel", { app: a.name }));
+          b.addEventListener("click", function () { M.close(a.id); });
+          li.appendChild(b);
+        }
+        list.appendChild(li);
+      });
+      var others = snap.apps.filter(function (a) { return a.id !== "settings"; });
+      if (!others.length) nodes.push(el("p", "note", t(snap.multitask ? "r.only" : "r.off")));
+      else nodes.push(list);
+      if (others.length > 1) {
+        var all = el("button", "btn dv-small", t("r.closeOthers"));
+        all.type = "button";
+        all.addEventListener("click", function () { others.forEach(function (a) { M.close(a.id); }); });
+        nodes.push(all);
+      }
+      var kv = [];
+      if (snap.multitask) kv.push([t("r.places"), t("r.placesVal", { n: snap.places.used, m: snap.places.total }),
+                                   snap.places.used > snap.places.total ? "warn-t" : ""]);
+      kv.push([t("r.mem"), snap.memory.device ? t("r.memGB", { n: num(snap.memory.device, 1) }) : t("unknown")]);
+      if (snap.memory.heap) kv.push([t("r.heap"), bytes(snap.memory.heap.used)]);
+      nodes.push(kvTable(kv));
+      if (snap.multitask) nodes.push(el("p", "hint", t("r.hint")));
+      fill("b-running", nodes);
+      report.running = rows.concat(kv);
+    }, function () { /* the shell went away */ });
   }
 
   // ---------- 8. Screen ----------
@@ -743,8 +863,8 @@
   }
 
   // ---------- 11. Report + toast ----------
-  var ORDER = ["storage", "apps", "battery", "network", "sync", "screen", "system", "features"];
-  var TITLES = { storage: "c.storage", apps: "c.apps", battery: "c.battery", network: "c.network",
+  var ORDER = ["running", "storage", "apps", "battery", "network", "sync", "screen", "system", "features"];
+  var TITLES = { running: "c.running", storage: "c.storage", apps: "c.apps", battery: "c.battery", network: "c.network",
                  sync: "c.sync", screen: "c.screen", system: "c.system", features: "c.features" };
   function reportText() {
     return C.buildReport(t("r.header", { date: when(Date.now()) }),
@@ -788,7 +908,7 @@
   }
 
   // ---------- 12. Mount ----------
-  var CARDS = ["storage", "apps", "battery", "network", "sync", "screen", "system", "features"];
+  var CARDS = ["running", "storage", "apps", "battery", "network", "sync", "screen", "system", "features"];
   // The refresh icon, built as SVG nodes (no HTML strings in this file).
   function refreshIcon() {
     var NS = "http://www.w3.org/2000/svg";
@@ -811,6 +931,7 @@
     refreshing = true;
     renderNetwork();
     renderSync();
+    renderRunning();
     renderScreen();
     renderBattery();
     var cn = (window.caches && typeof caches.keys === "function") ?
@@ -881,8 +1002,17 @@
     }
     window.addEventListener("resize", onResize);
     try { if (parentWin()) parentWin().addEventListener("resize", onResize); } catch (e) { /* ignore */ }
+    // OV-2: open apps and sync change → repaint while on screen.
+    var M = monApi(), monOff = null, monTimer = null;
+    if (M && typeof M.onChange === "function") {
+      monOff = M.onChange(function () {
+        clearTimeout(monTimer);
+        monTimer = setTimeout(function () { if (shown()) { renderRunning(); renderSync(); } }, 120);
+      });
+    }
     window.addEventListener("pagehide", function () {
       try { if (parentWin()) parentWin().removeEventListener("resize", onResize); } catch (e) { /* ignore */ }
+      if (monOff) { monOff(); monOff = null; }
     });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "visible" && shown()) refresh();
@@ -911,6 +1041,7 @@
       wire();
       renderNetwork();
       renderSync();
+      renderRunning();
       renderScreen();
       loadApps().then(function () {
         return Promise.all([initBattery(), refresh()]);
@@ -919,6 +1050,7 @@
     }
     if (root.parentNode !== host) host.appendChild(root);
     renderSync();       // the sync state may have changed while away
+    renderRunning();
     return root;
   }
 
