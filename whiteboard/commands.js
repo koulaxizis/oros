@@ -32,6 +32,7 @@
   var node = typeof module !== "undefined" && module.exports;
   var R = node ? require("../recipes/core.js") : root.orosRecipes;
   var C = node ? require("./core.js") : root.WhiteboardCore;
+  var D = node ? require("./diagram.js") : root.WhiteboardDiagram;      // DG4: Mermaid
   if (!R || !C) return;
 
   var WHAT = [""].concat(C.KINDS);
@@ -64,6 +65,7 @@
     layout: { kind: "doc", args: sel({ kind: oneOf([""].concat(C.LAYOUT_KINDS)), dir: oneOf(C.LAYOUT_DIRS), gap: n(0, 2000) }) },
     align: { kind: "doc", args: sel({ edge: oneOf([""].concat(C.ALIGN_EDGES)), dist: oneOf([""].concat(C.SPREAD_DIRS)) }) },
     add: { kind: "doc", args: plus(plus({ what: { t: "enum", v: ["note", "text", "shape", "frame"], def: "note" }, text: { t: "str", max: 5000 } }, POS), LOOK) },
+    mermaid: { kind: "doc", args: { text: { t: "str", max: 20000, req: 1 }, x: POS.x, y: POS.y } },
     connect: { kind: "doc", args: plus({ from: { t: "str", max: 200, req: 1 }, to: { t: "str", max: 200, req: 1 }, text: { t: "str", max: 120 }, c: { t: "color" } }, LINE) },
     remove: { kind: "doc", args: sel({}) },
     rename: { kind: "doc", args: { title: { t: "str", max: 120, req: 1 } } }
@@ -85,6 +87,7 @@
     "layout: lay the picked notes, texts and shapes (default: all of them on the board) out along the arrows that join them, as a diagram: kind tree (each under the one its arrow comes from, parents centred over their children: org charts, hierarchies) or flow (in layers by the longest way in, fewer crossings: flowcharts, processes) or \"\" (tree when each has at most one arrow coming in); dir v (top to bottom, default) or h (left to right); gap pixels between neighbours (default 40); frames, pictures and drawings stay put",
     "align: line the picked objects up by their edge l|c|r|t|m|b (left, centre, right, top, middle, bottom of the box round all of them), or spread them evenly with dist h|v (across | down: the same gap between each two, at least 3 objects)",
     "add: a new object (what note|text|shape|frame) with text (a frame's name), at x, y (default: to the right of everything on the board), size w, h (a diagram symbol has its own default size), colour c, shape, fill, size (free text); a UML class or interface gets its compartments from text: the name, then a line of -- before the attributes and another before the methods",
+    "mermaid: draw a Mermaid flowchart (text starting graph TD|LR or flowchart TD|LR: boxes A[..] A(..) A([..]) A{..} A[(..)] A((..)) A{{..}} A[/../], links --> --- -.-> ==> with labels -->|yes| or -- yes -->, A & B --> C, subgraph .. end) as shapes and arrows laid out as a flow, at x, y (default: to the right of everything)",
     "connect: an arrow from the object `from` to the object `to` (an id, or words of its text), with text (its label), c, ends, dash, route, starthead, endhead",
     "remove: delete the picked objects (needs ids, what, has or frame)",
     "rename: the board's name becomes `title`"
@@ -119,6 +122,7 @@
     if (st.op === "remove" && !picks(st)) return { err: "remove: pick the objects with ids, what, has or frame" };
     if (st.op === "move" && !given(st.dx) && !given(st.dy) && !given(st.x) && !given(st.y) && !given(st.w) && !given(st.h) && !st.order) return { err: "move: give dx, dy, x, y, w, h or order" };
     if (st.op === "style" && !st.c && !st.shape && !st.fill && !given(st.size) && !st.ends && !st.dash && !st.route && !st.starthead && !st.endhead && !given(st.sw)) return { err: "style: give c, shape, fill, size, ends, dash, route, starthead, endhead or sw" };
+    if (st.op === "mermaid") { var mr = D ? D.readMermaid(st.text, function () { return "x"; }) : { err: "mermaid: not available here" }; if (mr.err) return { err: mr.err }; }
     if (st.op === "align" && !st.edge && !st.dist) return { err: "align: give edge or dist" };
     if (st.op === "align" && !picks(st)) return { err: "align: pick the objects with ids, what, has or frame" };
     if (st.op === "add" && st.what !== "shape" && !given(st.text)) return { err: "add: a " + st.what + " needs text" };
@@ -274,6 +278,24 @@
         if (st.what === "text") o.fs = given(st.size) ? st.size : 24;
         if (st.what === "shape") { setShape(o, st.shape || "rect"); o.f = st.fill || "soft"; }
         rows[o.id] = fitText(o);
+        put(w, rows, now);
+        return done();
+      }
+      case "mermaid": {
+        var res = D ? D.readMermaid(st.text, fresh) : { err: "none" };
+        if (res.err) { note(env, "mermaid"); return 0; }
+        if (!room(w, res.objs.length, env)) return 0;
+        var have = C.bounds(list(w), null, 0), x0 = given(st.x) ? st.x : have ? have.x + have.w + 80 : 0, y0 = given(st.y) ? st.y : have ? have.y : 0;
+        var zt = C.zTop(w.data, w.bid), zb = C.zBottom(w.data, w.bid) - 1, made = res.objs.map(function (o) {
+          var c = C.moved(o, x0, y0);
+          c.b = w.bid; c.z = c.k === "frame" ? zb-- : zt + o.z;
+          return c;
+        }), mi = C.index(made);
+        made.forEach(function (o) {
+          if (o.k === "arrow") { var en = C.ends(o, mi); o.ax = r1(en.a.x); o.ay = r1(en.a.y); o.bx = r1(en.b.x); o.by = r1(en.b.y); }
+          rows[o.id] = o;
+        });
+        if (res.cut) note(env, "mermaidCut");
         put(w, rows, now);
         return done();
       }

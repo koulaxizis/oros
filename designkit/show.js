@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — show.js (slide show player, v1.2.0)
+// orOS designkit — show.js (slide show player, v1.3.0)
 // Plays a sequence of slides full screen: keyboard, clicker, touch,
 // transitions, black/white screen, jump to a number, laser pointer,
 // speaker notes, presenter view on a second window and rehearsal
@@ -43,6 +43,11 @@
 //   step, black screen, end), e.g. for a remote control.
 //   tools: [{ text, label, fn }] (optional): extra buttons on the bar
 //   and in the presenter view.
+//   screens (optional, v1.3, second screen SS2): the shell's
+//   window.orosScreens. With presenter, the audience window opens on
+//   the other screen at its full size (when the screens are known),
+//   or moves there as soon as they are (the first time after the
+//   browser's "manage windows on all your displays" permission).
 //   The controller also has black(), white(), first(), refresh()
 //   (drop the cached pictures and draw again).
 //   start() must run inside a user gesture (full screen and the
@@ -58,6 +63,7 @@
       slideOf: "Slide {n} of {t}", elapsed: "Elapsed", pause: "Pause", resume: "Resume", reset: "Reset",
       black: "Black screen", nextUp: "Next", lastSlide: "End of show", clock: "Time",
       fsHint: "Click here for full screen. Move this window to the projector first.",
+      fsHintPlaced: "Click here for full screen.",
       popupBlocked: "The second window was blocked, so the show runs here. Allow pop-ups for the presenter view.",
       help: "Help", helpTitle: "Keys",
       // the Keys table: help.k<n> (keys) and help.d<n> (what they do)
@@ -78,6 +84,7 @@
       slideOf: "Διαφάνεια {n} από {t}", elapsed: "Χρόνος", pause: "Παύση", resume: "Συνέχεια", reset: "Μηδενισμός",
       black: "Μαύρη οθόνη", nextUp: "Επόμενη", lastSlide: "Τέλος προβολής", clock: "Ώρα",
       fsHint: "Κάνε κλικ εδώ για πλήρη οθόνη. Πρώτα μετακίνησε αυτό το παράθυρο στον προβολέα.",
+      fsHintPlaced: "Κάνε κλικ εδώ για πλήρη οθόνη.",
       popupBlocked: "Το δεύτερο παράθυρο μπλοκαρίστηκε, οπότε η προβολή γίνεται εδώ. Επίτρεψε τα αναδυόμενα παράθυρα για το presenter view.",
       help: "Βοήθεια", helpTitle: "Πλήκτρα",
       // the Keys table: help.k<n> (keys) and help.d<n> (what they do)
@@ -436,8 +443,16 @@
     doc.body.appendChild(root0);
 
     var pop = null, audDoc = doc, audRoot = root0, popupFailed = false;
+    // Second screen (SS2): straight onto the other screen when the
+    // screens are known, else moved there once they are.
+    var scr = opts.presenter && opts.screens && typeof opts.screens.other === "function" ? opts.screens : null;
+    var popFeat = "popup=yes,width=1024,height=600", popOn = null;
+    if (scr) {
+      try { popOn = scr.known && scr.known() ? scr.pickOther(scr.known()) : null; } catch (e) { popOn = null; }
+      if (popOn) popFeat = scr.features(popOn);
+    }
     if (opts.presenter) {
-      try { pop = win.open("", "oros-show-" + Date.now().toString(36), "popup=yes,width=1024,height=600"); } catch (e) { pop = null; }
+      try { pop = win.open("", "oros-show-" + Date.now().toString(36), popFeat); } catch (e) { pop = null; }
       if (pop && pop.document) {
         audDoc = pop.document;
         audDoc.title = (opts.title && opts.title(nav.index())) || T.end;
@@ -460,7 +475,16 @@
     // full screen there (a click in the other window cannot).
     if (pop) {
       var fs = el(audDoc, "div", "oshow-fs");
-      fs.appendChild(el(audDoc, "span", "", T.fsHint));
+      var fsText = el(audDoc, "span", "", popOn ? T.fsHintPlaced : T.fsHint);
+      fs.appendChild(fsText);
+      if (scr && !popOn) {
+        try {
+          scr.other(win).then(function (s) {
+            if (!s || !pop || pop.closed) return;
+            if (scr.place(pop, s)) fsText.textContent = T.fsHintPlaced;
+          }, function () {});
+        } catch (e) {}
+      }
       audRoot.appendChild(fs);
       fs.addEventListener("click", function (e) {
         e.stopPropagation();

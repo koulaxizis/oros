@@ -431,6 +431,8 @@
     var standOwn = !!ev.w;
     Object.keys(titles).forEach(function (k) {
       var x = titles[k];
+      var it = x.i !== OTHER ? byId(data && data.items, x.i) : null;
+      if (it && it.od === 1) { x.od = 1; return; }   // ST-OD: made to order, nothing is left
       if (standOwn && x.i !== OTHER) x.left = (whq && whq[x.i] && whq[x.i][ev.w]) || 0;
     });
     sum.byVat = Object.keys(rates).map(Number).sort(function (a, b) { return b - a; }).map(function (r) { return rates[r]; });

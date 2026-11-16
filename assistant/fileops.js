@@ -29,7 +29,7 @@
   var MAX = 50;
   // Top-level folders that apps keep their own data in, by a fixed
   // path (their files are found by path, so moving them breaks the app).
-  var APP_ROOTS = ["Drive", "Assets", "Assistant", "Atelier", "Books", "Budget", "CRM", "Diary", "Flashcards", "Garage", "Health",
+  var APP_ROOTS = ["Drive", "Assets", "Assistant", "Atelier", "Base", "Books", "Budget", "CRM", "Diary", "Flashcards", "Garage", "Health",
     "Invoices", "Kanban", "Layout", "Mail", "Maps", "Newsletter", "Notes", "Passwords", "Photo Lab", "Publishing", "Radio", "Rescue",
     "Stock", "Storage", "Studio", "Whiteboard", "Wiki"];
   // Top-level folders apps save into: what is inside may change, the

@@ -1,6 +1,60 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.21.00
+- **Base: more ways to see a table.** New views: kanban (cards in columns by a choice field, drag them across), calendar (records on a month by a date field), gallery (cards with a picture) and a form for typing records one after another. A new Attachments field keeps photos and files with a record on the orOS disk. Print a view, or save it as a PDF.
+
+## Version 7.20.00
+- **Default apps.** Settings › Default apps: pick the app for .txt, .md, .csv, .pptx and .opml files. Your picks follow you to every device, and Files opens those files there.
+- **Change your shortcuts.** Settings › System › Keyboard shortcuts: change the key of any orOS shortcut or turn it off, with Reset all to go back. Every orOS shortcut is now Ctrl+Alt+Shift + a key. Plain Ctrl+K no longer opens the command bar: use Ctrl+Alt+Shift+K. Shortcuts inside apps stay as they were.
+
+## Version 7.19.00
+- **Second screen.** With two screens set to Extend (on Windows: Win+P), Ctrl+Alt+Shift+B or the two-screens button in Open apps moves an app to the other screen, and the same keys bring it back. Slides puts the audience on the other screen and keeps the speaker view on yours. Settings › Device › Screen shows your screens. Works in Chrome, Edge and the orOS apps.
+
+## Version 7.18.00
+- **Clipboard history and emoji.** Clipboard history (Settings › System, off until you turn it on): orOS keeps the text you copy inside its apps on this device; Ctrl+Alt+Shift+V or Clipboard in Quick settings brings it back, with pins, search and Paste into the field you were in. Never Passwords, nothing in Sensitive work. New emoji picker: Ctrl+Alt+Shift+. or Emoji in Quick settings, search in English, Greek or German. See [Privacy](help:t/privacy).
+
+## Version 7.17.01
+- **VPN extension on the Start page.** The Internet window's Start page now links a guide to adding a VPN browser extension with your own account. With the next releases of orOS Portable and orOS USB, the Internet window can install extensions from the Chrome Web Store, and extensions you add can no longer read orOS's own pages (on Portable, on Windows).
+
+## Version 7.17.00
+- **Night Light.** A warmer screen in the evening, with less blue light. Turn it on in Settings › Appearance › Night Light and choose when: from sunset to sunrise (worked out offline for the place of the top-bar weather), your own hours, or always, and how warm. It fades in and out over 20 minutes. The new Night Light button in Quick settings turns it on now or off until the next evening. On orOS USB the screen's own colours change, once its next release is out. See [Appearance](help:t/appearance).
+
+## Version 7.16.00
+- **Overview: everything on one screen.** Ctrl+Alt+Shift+E shows the search field, your open apps, your recent files and a small System strip (memory, storage, sync). Start typing to search; click an app to go back to it or × to close it. In Settings › System › Overview you can also open it from the top-left corner or with the Super key alone (both off at first). See [The menu](help:t/menu#overview).
+- **See what is running.** Settings › Device has a new Running now card: every open app, the places it takes, Close, Close the others, and the device's memory. The Sync card now also shows files waiting to upload and the last file sync.
+
+## Version 7.15.00
+- **Text on a path, SVG and text to outlines in Atelier and Layout.** Pick a text and a shape or line and choose `Text on path`: the text runs along the outline, and you can move it, flip it or release it. Both apps now save SVG files of a page or of what you picked, with texts kept as text, and `Copy as SVG` pastes into Inkscape, Affinity or Figma. Atelier opens an SVG as editable shapes or as a picture. `Text to outlines` turns a title or a logo into shapes whose points you can edit, and automations and the Assistant can do it too. See [Atelier](app:atelier) and [Layout](app:layout).
+
+## Version 7.14.00
+- **Claude, and Claude desktop.** `Settings` › `Connected services` has a new `Claude` card. `Open Claude in a window` opens claude.ai, where you use your own Claude account. On a computer, `Get Claude desktop` opens Anthropic's download page (Windows, macOS, and a beta for Ubuntu and Debian). On orOS USB and orOS Portable, once their next release is out, the card installs, opens and removes Claude desktop for you, downloaded from Anthropic and checked against Anthropic's signature. orOS never carries the app itself. A connector you add on claude.ai, such as orOS Gate, works in Claude desktop too. See [Settings](app:settings).
+
+## Version 7.13.00
+- **Smart top bar.** The top bar can now show live items next to the clock: your next event with a countdown, the focus timer, today's tasks, water, what you spent this month and today's till sales. Each one shows only when it has something to say, and a tap opens its app. Turn them on and set their order in `Settings`, under `Appearance`, in `Top bar`; this stays on this device. See [Appearance](help:t/appearance).
+
+## Version 7.12.01
+- **Play on free music pages.** On a free music page in Music (a genre such as World, a mood or a shelf), Play and Shuffle no longer say that a song is not on this device while the songs are still loading. They now start the songs as soon as they arrive. A genre page with no songs plays an album from the Internet Archive, and a page with nothing at all says so. See [Music](app:music).
+
+## Version 7.12.00
+- **Products made to order in Stock.** In a product's editor, turn on `On demand (made to order, no stock count)`. Such a product has no count: it never runs out, never shows as low and has no stock value, and the list and the till say `On demand`. The till sells it without the below-zero warning. Your WooCommerce shop's quantity is never read into it or sent back, so you set this in Stock yourself. Its sales still count in your sales reports.
+
+## Version 7.11.00
+- **Link documents to the items they belong to.** In Files › Documents, `Link to…` links a document to an entry in Budget, an invoice, a vehicle or renewal in Garage, a record in Health or a customer in CRM. Tap the link to open that item; the item in turn shows its `Documents`, and a tap there brings you back. A document linked to Health is private, like medical ones. See [Files](app:files).
+
+## Version 7.10.00
+- **Dice & Coin and Wheel of Fate are now one app, Chance.** It has two tabs, `Dice & coin` and `Wheel`. Your saved wheels are kept, and old links and shortcuts to Wheel of Fate open the Wheel tab.
+
+## Version 7.09.00
+- **Transfer takes the background picture from the orOS disk too.** Next to `Background picture…`, `Picture from the orOS disk` opens your disk with only folders and pictures. Tap one and it becomes the background, made smaller on your device and without camera details, as before.
+
+## Version 7.08.00
+- **draw.io and Mermaid in Whiteboard.** `More` › `Open a draw.io or Visio file…` opens .drawio files (compressed too) from draw.io and diagrams.net, each page as a new board with flowchart, UML and network shapes, lanes as frames and joined lines. `Export` › `draw.io` saves a board for draw.io. `More` › `Draw from Mermaid text…` draws a Mermaid flowchart, and the Assistant can too.
+- **Visio files in Whiteboard.** The same `More` › `Open a draw.io or Visio file…` opens .vsdx files: each page a board, flowchart, org chart, UML and network shapes by their names, with text, colours and connectors. Other Visio shapes come in as rectangles with their text.
+
+## Version 7.07.00
+- **Record audiobooks in Studio.** `Projects` › `Books` holds books of chapters: each chapter is an ordinary Studio project, with opening and closing credits, and a new book starts with a `Voice` track and NULL effects for speech. Link a book to its title in Publishing for the author, narrator and ISBN, and choose ACX (Audible) or Storytel. Takes in a book are saved as lossless 24-bit FLAC, about half the size of a WAV. Record the quiet room once as room tone, and `Fill the gaps` puts it wherever the voice stops, so no digital silence is left. See [Studio](app:studio).
+
 ## Version 7.06.00
 - **Book translations go back into the Word file, and out as XLIFF.** A translation started from a Word file can now be saved with `Save as Word (.docx)…`: the translated text goes into a copy of your original file, and its pictures, tables, styles, headers and footers stay exactly as they were. To work with a translator who uses another tool (Trados, memoQ, OmegaT…), use `Export XLIFF 1.2…` or `Export XLIFF 2.0…`, and `Import XLIFF…` to read their work back. See [Writer](app:writer).
 

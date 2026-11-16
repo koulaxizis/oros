@@ -727,18 +727,10 @@
     },
     {
       "id": "dice",
-      "name": "Dice & Coin",
+      "name": "Chance",
       "category": "Fun",
       "icon": "dice",
       "url": "dice/",
-      "type": "internal"
-    },
-    {
-      "id": "wheel",
-      "name": "Wheel of Fate",
-      "category": "Fun",
-      "icon": "wheel",
-      "url": "wheel/",
       "type": "internal"
     },
     {
@@ -1296,6 +1288,12 @@
       "name": "Email Signature",
       "to": "mail",
       "target": { "view": "signatures" }
+    },
+    {
+      "id": "wheel",
+      "name": "Wheel of Fate",
+      "to": "dice",
+      "target": { "tab": "wheel" }
     }
   ]
 }
