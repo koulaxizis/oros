@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.25.00
+- **The Assistant and orOS Gate find your documents.** When you let them read Files, they see each document's details (type, date, sender, tags, amount, dates, file) and the first 300 characters of its text, nothing more. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never reach them. Documents also show up in the menu search. See [Files](app:files).
+
 ## Version 7.24.00
 - **Prompter and Publishing link to other apps.** In Prompter, `On the typewriter` opens a new Typewriter page that starts with the prompt. In Publishing, `Is it public domain?` checks a title in the Public Domain Calculator.
 
