@@ -12313,3 +12313,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** quote/view.js, quote/view.css (new, precached); quote/quote.js, quote/quote.css, quote/today.js, quote help EN/EL removed; quote/index.html forwards; invoices/ (index.html, invoices.js, invoices.css, help EN/EL), apps.json, shell.js, i18n/de, sw.js, Bible.
 - **Tests:** `tests/app-alias.test.js`, `tests/today-wave2.test.js` updated; full suite; Playwright Chromium in the real shell at 360 and 1280 px in Greek (Quotes tab, client link, search through the shell).
 - **Next:** K2 quote → invoice and the shared client picker, K3 settings and profile, K4 Overview pipeline.
+
+### 2026-11-16 — 7.32.01 — Contacts top bar wraps on desktop (CT-WRAP, #1079)
+
+- **What:** found by the weekly live-site check (2026-11-16, approved by Chris the same day). `#ct-top` wrapped only inside the 720px query, so at 1280px the Contacts page grew to 1748px (EN) / 2082px (EL) and CardDAV, duplicates, enrich and scan sat off-screen. `flex-wrap: wrap` and the title on its own line (`order: -1; flex-basis: 100%`) now apply at every width; 360px is unchanged.
+- **Files:** contacts/contacts.css, shell.js, help/topics/whatsnew EN/EL, Bible.
+- **Tests:** full suite; Playwright Chromium with `?standalone`, EN and EL at 360, 900, 1280 and 1920 px: page width equals the viewport, no top-bar button past the right edge.
