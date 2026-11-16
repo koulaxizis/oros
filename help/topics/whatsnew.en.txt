@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.12.01
+- **Play on free music pages.** On a free music page in Music (a genre such as World, a mood or a shelf), Play and Shuffle no longer say that a song is not on this device while the songs are still loading. They now start the songs as soon as they arrive. A genre page with no songs plays an album from the Internet Archive, and a page with nothing at all says so. See [Music](app:music).
+
 ## Version 7.12.00
 - **Products made to order in Stock.** In a product's editor, turn on `On demand (made to order, no stock count)`. Such a product has no count: it never runs out, never shows as low and has no stock value, and the list and the till say `On demand`. The till sells it without the below-zero warning. Your WooCommerce shop's quantity is never read into it or sent back, so you set this in Stock yourself. Its sales still count in your sales reports.
 
