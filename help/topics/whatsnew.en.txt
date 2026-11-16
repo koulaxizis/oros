@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.40.00
+- **Four more apps install on their own:** orOS Transfer, Scanner & PDF, Stock and Forms, each with its own icon and window, also as Android apps. Invoices is now **orOS Billing**.
+- **New users see every app:** each app is now in at least one starting profile, and help and settings name the merged apps by their new home (Billing › Quotes, Calculator › Convert, Weather › Sky tonight).
+
 ## Version 7.39.01
 - **Billing:** the quote's currency field no longer runs off narrow phone screens.
 
