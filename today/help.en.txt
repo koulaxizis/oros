@@ -76,7 +76,7 @@ A row shows in one place only: with the `To-dos` widget on the screen, To-Do tas
 - [Mood](app:mood) (off until you switch it on): a check-in row while you haven't logged a mood today.
 - [Minimalism](app:minimalism): a row while today's proposal is neither done nor skipped. Its text stays in the app.
 - [Family Tree](app:familytree): death anniversaries of today and the next three days.
-- [Moon & Sky](app:sky): main moon phases, equinoxes and solstices, meteor shower peaks and eclipses; today's as top lines.
+- Weather's [Sky tonight](app:sky): main moon phases, equinoxes and solstices, meteor shower peaks and eclipses; today's as top lines.
 - The screen pet's birthday comes with the Calendar, unless you turned off the pet's Calendar feed on this device.
 - [Game Center](app:gamecenter): a top line with how many of today's game challenges are done.
 - [Mail](app:mail): only the number of unread messages in each account's Inbox, never a sender or a subject. Mail rows have no Assistant button; inside Mail you can still ask about one message.
@@ -100,7 +100,7 @@ When the Assistant reads an app (and Claude through orOS Gate), it gets the same
 Open them with the gear button:
 - `Daily summary` turns the daily notice on or off. The Today tab works either way.
 - `From` is the start time, from 00:00 to 12:00.
-- `Quiet the morning reminders the summary covers`: once the summary has come, the separate reminders of Plant Care, Chore Wheel, Pet Health Book, Garage, To-Do, Quote, Minimalism, name days and the weather briefing stay quiet. Reminders at a set time, such as alarms or medicine doses, still ring.
+- `Quiet the morning reminders the summary covers`: once the summary has come, the separate reminders of Plant Care, Chore Wheel, Pet Health Book, Garage, To-Do, Billing's quotes, Minimalism, name days and the weather briefing stay quiet. Reminders at a set time, such as alarms or medicine doses, still ring.
 - `Apps in the summary`: choose which apps take part. Apps marked `sensitive` show only when you want them: Health, Baby and Budget are on, Cycle and Mood are off until you switch them on.
 
 ## Sync and backup

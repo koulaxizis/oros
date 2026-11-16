@@ -44,7 +44,7 @@ orOS selbst läuft auf deinem Gerät, aber manche Apps brauchen das Internet fü
 - [Fernsehen](app:television): iptv-org, eine von der Community gepflegte Kanalliste. Die Kanäle spielen von ihren eigenen Servern.
 - [Atelier](app:atelier): Openverse, Wikimedia Commons, Iconify und Fontsource für freie Fotos, Symbole und Schriften; Pixabay und Pexels nur mit deinem eigenen Schlüssel.
 - [Medienregal](app:shelf): Open Library und MusicBrainz, nur wenn du auf `Details online suchen` tippst. Gesendet werden nur der Titel und die Urheberin oder der Urheber, die du eingetippt hast. Details und Bilder können auch von Wikidata und Wikimedia Commons kommen; Filme und Serien von TMDB nur mit deinem eigenen Schlüssel.
-- [Einheitenrechner](app:units): Frankfurter für die Wechselkurse der Europäischen Zentralbank, nur wenn du `Währung` öffnest oder auf `Kurse aktualisieren` tippst.
+- [Rechner › Umrechnen](app:units): Frankfurter für die Wechselkurse der Europäischen Zentralbank, nur wenn du `Währung` öffnest oder auf `Kurse aktualisieren` tippst.
 - [Budget](app:budget): dieselben Frankfurter-Kurse, nur wenn ein Konto oder ein Eintrag in einer anderen Währung ist (höchstens alle 6 Stunden). Über dein Geld wird nichts gesendet.
 - [Gemeinfreiheits-Rechner](app:pubdomain): Wikidata für Autorinnen, Autoren und ihre Werke.
 - [Reader](app:feeds) und [Podcasts](app:podcasts): die Websites, deren Feeds du hinzufügst.
@@ -64,7 +64,7 @@ orOS selbst läuft auf deinem Gerät, aber manche Apps brauchen das Internet fü
 
 Manche Apps können auch mit Konten arbeiten, die du schon anderswo hast, aber erst, nachdem du sie in [Einstellungen](app:settings) › `Verbundene Dienste` verbunden hast:
 - [Bestand](app:stock): dein eigener WooCommerce-Shop.
-- [Rechnungen](app:invoices): dein Konto bei timologisi.online, um Belege an myDATA zu senden.
+- [Abrechnung](app:invoices): dein Konto bei timologisi.online, um Belege an myDATA zu senden.
 - [Newsletter](app:newsletter): dein Konto bei MailerLite, Mailchimp oder Brevo, um Abonnenten zu synchronisieren.
 - [CRM](app:crm): dein Konto bei HubSpot, Pipedrive, Invoice Ninja oder Odoo, gelesen, um Kunden und Deals zu übernehmen; der Revenue Splitter deines WooCommerce-Shops, gelesen auf der Karte eines Partners und nie gespeichert.
 - [Budget](app:budget): dein Konto bei Stripe oder Invoice Ninja, gelesen, um Zahlungen zu übernehmen.

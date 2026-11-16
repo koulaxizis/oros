@@ -8,7 +8,7 @@ orosPack("de", "calculator", {
  "calc.err.args": "Falsche Anzahl an Werten für {x}. Trenne sie mit ;",
  "calc.err.big": "Die Zahl ist zu groß.",
  "calc.err.char": "Unbekanntes Zeichen: {x}",
- "calc.err.dens": "Tassen in Gramm braucht eine Zutat: Nimm dafür den Einheitenrechner.",
+ "calc.err.dens": "Tassen in Gramm braucht eine Zutat: wähle sie unter Umrechnen › Kochen.",
  "calc.err.digit": "{x} ist in diesem Zahlensystem keine Ziffer.",
  "calc.err.div0": "Durch null teilen geht nicht.",
  "calc.err.domain": "Für diesen Wert nicht definiert.",

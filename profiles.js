@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — profiles.js (first-run "What will you do with orOS?", v1.0.0)
+// orOS — profiles.js (first-run "What will you do with orOS?", v1.1.0)
 // ------------------------------------------------------------
 // A shell component, like launcher.js: it runs IN the shell document.
 // New users only (shell.js decides when) see one screen before the
@@ -17,6 +17,9 @@
 //   • Settings › Menu › "Choose a profile" opens the same screen over
 //     the current menu; there Save writes real choices (setMenuHidden).
 // Apps released later have no item, so they appear in the menu.
+// Every app of apps.json is in BASE or in at least one profile
+// (tests/profiles.test.js), so a new app never stays hidden for a new
+// user who picks a profile.
 // No storage of its own, nothing synced, text only through textContent.
 // Pure logic (profile lists, picking) is unit-tested in node
 // (tests/profiles.test.js).
@@ -24,7 +27,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
 
   // ---------- 1. Model (pure) ----------
   // Always ticked by a profile: the system, and what everybody uses.
@@ -33,18 +36,24 @@
 
   var PROFILES = {
     home: ["budget", "meals", "chores", "water", "habits", "health", "plants", "petcare", "garage",
-           "travel", "split", "radio", "music", "podcasts", "maps", "feeds"],
+           "travel", "split", "radio", "music", "podcasts", "maps", "feeds",
+           // 7.40.00 (APP-LISTS L1): personal and everyday apps that had no profile
+           "household", "minimalism", "stickies", "bookmarks", "transfer", "television", "shelf",
+           "mood", "diary", "zen", "fitness", "cycle", "baby", "familytree", "together"],
     work: ["writer", "spreadsheet", "slides", "kanban", "mail", "timesheet", "invoices", "crm",
-           "stock", "newsletter", "certificates", "converter", "storage"],
+           "stock", "newsletter", "certificates", "converter", "storage",
+           "forms", "base", "scanpdf", "publish", "transfer", "whiteboard", "pad", "automations"],
     school: ["writer", "spreadsheet", "slides", "wiki", "mindmap", "texttools", "library",
-             "museum", "maps", "habits", "pubdomain", "qr"],
+             "museum", "maps", "habits", "pubdomain", "qr",
+             "flashcards", "typing", "whiteboard", "forms", "base", "scanpdf"],
     create: ["atelier", "photolab", "pixel", "mockups", "layout", "writer", "slides", "prompter",
-             "studio", "montage", "mixer", "wallpaper", "labels", "typewriter"],
+             "studio", "montage", "mixer", "wallpaper", "labels", "typewriter",
+             "characters", "names", "capture", "aura", "lyricsync", "ringtones", "publish"],
     games: ["gamecenter", "memory", "connect4", "dots", "tictactoe", "simon", "slider", "lightsout",
             "whack", "snake", "g2048", "wordle", "spot", "hexagon", "chess", "sudoku", "tetris",
             "minesweeper", "mahjong", "gomoku", "bubble", "checkers", "mastermind", "battleship", "rps",
             "hangman", "flow", "nonogram", "breakout", "reversi", "mancala", "pong", "backgammon",
-            "wordsearch", "solitaire", "jigsaw", "crossword", "xeri", "realm", "banner", "fieldwarden", "roots", "crypt", "wayfarers", "petworld", "dice", "scores"]
+            "wordsearch", "solitaire", "jigsaw", "crossword", "xeri", "realm", "banner", "fieldwarden", "roots", "crypt", "wayfarers", "petworld", "dice", "scores", "oracle", "netizen"]
   };
   var ORDER = ["home", "work", "school", "create", "games"];
 

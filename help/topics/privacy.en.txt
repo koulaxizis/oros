@@ -44,7 +44,7 @@ orOS itself runs from your device, but some apps need the internet for what they
 - [Television](app:television): iptv-org, a community list of channels. The channels play from their own servers.
 - [Atelier](app:atelier): Openverse, Wikimedia Commons, Iconify and Fontsource for free photos, icons and fonts; Pixabay and Pexels only with your own key.
 - [Media Shelf](app:shelf): Open Library and MusicBrainz, only when you tap `Find details online`. Only the title and creator you typed are sent. Details and pictures can also come from Wikidata and Wikimedia Commons; films and series from TMDB only with your own key.
-- [Unit Converter](app:units): Frankfurter, for the European Central Bank's currency rates, only when you open `Currency` or tap `Update rates`.
+- [Calculator › Convert](app:units): Frankfurter, for the European Central Bank's currency rates, only when you open `Currency` or tap `Update rates`.
 - [Budget](app:budget): the same Frankfurter rates, only when an account or an entry is in another currency (at most every 6 hours). Nothing about your money is sent.
 - [Public Domain](app:pubdomain): Wikidata, for authors and their works.
 - [Reader](app:feeds) and [Podcasts](app:podcasts): the sites whose feeds you add.
@@ -64,7 +64,7 @@ orOS itself runs from your device, but some apps need the internet for what they
 
 Some apps can also work with accounts you already have elsewhere, but only after you connect them in [Settings](app:settings) › `Connected services`:
 - [Stock](app:stock): your own WooCommerce shop.
-- [Invoices](app:invoices): your timologisi.online account, to send documents to myDATA.
+- [Billing](app:invoices): your timologisi.online account, to send documents to myDATA.
 - [Newsletter](app:newsletter): your MailerLite, Mailchimp or Brevo account, to sync subscribers.
 - [CRM](app:crm): your HubSpot, Pipedrive, Invoice Ninja or Odoo account, read to bring customers and deals in; your WooCommerce shop's Revenue Splitter, read on a partner's card and never stored.
 - [Budget](app:budget): your Stripe or Invoice Ninja account, read to bring payments in.

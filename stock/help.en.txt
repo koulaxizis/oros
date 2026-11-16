@@ -99,7 +99,7 @@ Reorder, minimums and the total value stay for the whole business. A warehouse t
 A shop that sells your goods and pays you for what sold (a bookshop, a gallery, a deli) is a warehouse with consignment on. In Settings › `Warehouses`, add the shop and choose `Consignment…` next to it: the shop's discount %, a reminder every few months and, if different, the name to invoice.
 - Send stock there with `New` › `Transfer`: it is still yours, only somewhere else.
 - When the shop tells you what is left, open the `Consignment` tile on the Products tab and choose `Settle…`. Type what is still on the shelf; the rest is recorded as sold at each product's sale price.
-- After `Record`, `Make the invoice` opens Invoices with the shop as client and the lines at its discount. The lines carry no product code, so Invoices doesn't take the stock out a second time.
+- After `Record`, `Make the invoice` opens Billing with the shop as client and the lines at its discount. The lines carry no product code, so Billing doesn't take the stock out a second time.
 - Tick `Bring what is left back` to end the consignment: the rest moves back to the main warehouse.
 - The tile turns yellow when a settlement is due, and [Today](app:today) reminds you. Void the sale movement to undo a settlement.
 
@@ -147,7 +147,7 @@ If a WooCommerce shop is connected, `Send to the shop` then sets the new prices 
 Connect your WooCommerce shop once in Settings › [Connected services](app:settings), then open `Shop (WooCommerce)` from `New` or from Settings here.
 - `Products`: `Get products from the shop` reads every product and variation. `Import into Stock` adds the new ones and updates name, SKU, sale price and category of those you already have (matched by the shop product, then SKU, then name). Tick the box under it to also set the quantities here to the shop's, as one stock count.
 - `Quantities that differ` lists the products whose stock the shop manages and whose quantity is different here. `Send to shop` sets the shop's quantity to yours; `Take the shop's` counts yours at the shop's.
-- `Orders`: the shop's orders of the last 30 days. For each one: `Record the sale` opens a sale with its lines (it shows `Sale recorded` once saved, so you don't record it twice), `Invoice` opens a new invoice in [Invoices](app:invoices), `Customer in CRM` logs it on the customer in [CRM](app:crm), `Add to Budget` logs the income in [Budget](app:budget), and `Mark completed` completes the order in the shop.
+- `Orders`: the shop's orders of the last 30 days. For each one: `Record the sale` opens a sale with its lines (it shows `Sale recorded` once saved, so you don't record it twice), `Invoice` opens a new invoice in [Billing](app:invoices), `Customer in CRM` logs it on the customer in [CRM](app:crm), `Add to Budget` logs the income in [Budget](app:budget), and `Mark completed` completes the order in the shop.
 
 Nothing is sent to the shop without a button, and nothing is saved here or in another app until you save it there.
 
@@ -170,7 +170,7 @@ Products, movements, suppliers, categories, units and settings sync between your
 ## Tips
 - Set a `Location` such as "Shelf B3": it shows in the list and in search.
 - Archive products you no longer sell: their history stays.
-- From a product: `New quote` starts a quote in [Quote](app:quote) with that product and its sale price (in Stock's currency). `Quote from products` in `New` takes several.
+- From a product: `New quote` starts a quote in [Billing's Quotes](app:quote) with that product and its sale price (in Stock's currency). `Quote from products` in `New` takes several.
 - Open a receipt or a sale and choose `Add to Budget` to log its total in [Budget](app:budget).
 - Units with decimals (kg, L, m) take quantities like 2,5; you can add your own units in Settings.
 

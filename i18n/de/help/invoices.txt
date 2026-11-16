@@ -113,7 +113,7 @@ Tippe auf **+** neben `Positionen`, um eine Zeile mit `Code/SKU`, `Beschreibung`
 
 Unter den Positionen siehst du `Zwischensumme`, `USt.` und `Gesamt`. `Rabatt (%)` zieht einen Rabatt vom ganzen Angebot ab. Änderst du dort `USt. (%)`, gilt derselbe Satz für jede Zeile, und neue Zeilen übernehmen ihn auch.
 
-`Summe anzeigen in` zeigt die Summe zusätzlich in einer anderen Währung, zum Tageskurs der Europäischen Zentralbank (dieselben Kurse wie im [Einheitenrechner](app:units)). Das ist nur eine Orientierung für dich: Angebot, PDF und E-Mail bleiben in der Währung des Angebots. Die Auswahl bleibt auf diesem Gerät.
+`Summe anzeigen in` zeigt die Summe zusätzlich in einer anderen Währung, zum Tageskurs der Europäischen Zentralbank (dieselben Kurse wie im Modus [Umrechnen](app:units) des Rechners). Das ist nur eine Orientierung für dich: Angebot, PDF und E-Mail bleiben in der Währung des Angebots. Die Auswahl bleibt auf diesem Gerät.
 
 ### Raten
 Lege unter `Raten` eine `Anzahl` fest und tippe auf `Erzeugen`, um die Summe gleichmäßig aufzuteilen. Danach kannst du jedes Datum und jeden `Betrag` ändern; eine Zeile darunter sagt dir, ob die Summe zum Gesamtbetrag passt.

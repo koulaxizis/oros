@@ -5,7 +5,7 @@
 [useoros.online/download](https://useoros.online/download/).
 
 orOS is a desktop in a web page: a menu, a taskbar, notifications, a
-universal search (`Ctrl+K`) and 132 apps, from notes, calendar, writer,
+universal search (`Ctrl+K`) and 140 apps, from notes, calendar, writer,
 spreadsheet and mail to maps, music, a DAW, business tools and 37 games.
 It installs as an app (PWA), works offline, and keeps your data on your
 device. If you want your data on more than one device, it syncs through your
@@ -66,25 +66,32 @@ through an app store.
 
 ## Apps
 
-All 132 apps, by menu category:
+All 140 apps, by menu category:
 
 | Category | Apps |
 |---|---|
-| Accessories | Weather, Time, Moon & Sky, Files, Calculator, Text Tools, Unit Converter, Sticky Notes, Case Converter |
-| Office | To-Do, Kanban, Mind Map, Whiteboard, Notes, Wiki, Calendar, Contacts, Storage, Spreadsheet, Writer, Layout, Slides, Public Domain Calculator, QR Generator, orOS Converter, Scanner & PDF |
-| Lifestyle | Minimalism, Split, Travel, Chore Wheel, Meal Planner |
-| Learning | Flashcards |
-| Business | Quote, Timesheet, CRM, Stock, Invoices, Newsletter, Email Signature, Certificates |
+| Accessories | Weather, Time, Files, Calculator, Text Tools, Sticky Notes, Pad |
+| Office | To-Do, Kanban, Mind Map, Whiteboard, Notes, Wiki, Calendar, Contacts, Storage, Forms, Base, Spreadsheet, Writer, Layout, Slides, Public Domain Calculator, QR Generator, orOS Converter, Scanner & PDF |
+| Lifestyle | Minimalism, Split, Travel, Chore Wheel, Household, Meal Planner |
+| Learning | Flashcards, Typing Tutor |
+| Business | Timesheet, CRM, Stock, Billing, Newsletter, Certificates, Publishing |
 | Creativity | Prompter, Typewriter, Label Maker, Characters, Name Generator, Atelier, Mockups |
-| Image | Photo Lab, Screen Capture, Pixel Avatar, Wallpaper Generator, Tree Sketcher, Aura Painter |
-| Personal | Mood, One-Sentence Diary, Habits, Micro-Zen, Health, Budget, Water, Workouts, Cycle, Pet Health Book, Baby, Family Tree, Garage, Plant Care, Media Shelf, Library |
-| Internet | Bookmarks, Maps, Reader, One-Minute Museum, Mail |
-| Fun | Dice & Coin, Wheel of Fate, Oracle, Netizen ID, Pet World, Score Keeper |
-| Sound | Radio, Podcasts, Music, Sound Mixer, Ringtone Composer, Studio |
+| Image | Photo Lab, Screen Capture, Pixel Avatar, Wallpaper Generator, Aura Painter |
+| Personal | Mood, One-Sentence Diary, Habits, Micro-Zen, Health, Budget, Water, Workouts, Cycle, Pet Health Book, Baby, Family Tree, Together, Garage, Plant Care, Media Shelf, Library |
+| Internet | Bookmarks, Maps, Reader, One-Minute Museum, Mail, Transfer |
+| Fun | Chance, Oracle, Netizen ID, Pet World, Score Keeper |
+| Sound | Radio, Podcasts, Music, Sound Mixer, Ringtone Composer, Studio, Lyric Sync |
 | Video | Television, Montage |
-| Games | Memory, Connect 4, Dots & Boxes, Tic-Tac-Toe, Simon Says, Number Slider, Lights Out, Whack-a-Mole, Snake, 2048, Wordle, Spot the Difference, Hexagon Puzzle, Chess, Sudoku, Tetris, Minesweeper, Mahjong, Gomoku, Bubble Shooter, Checkers, Mastermind, Battleship, Rock Paper Scissors, Hangman, Flow Free, Nonogram, Breakout, Reversi, Mancala, Pong, Backgammon, Word Search, Solitaire, Jigsaw, Crossword, Xeri, Game Center |
+| Games | Memory, Connect 4, Dots & Boxes, Tic-Tac-Toe, Simon Says, Number Slider, Lights Out, Whack-a-Mole, Snake, 2048, Wordle, Spot the Difference, Hexagon Puzzle, Chess, Sudoku, Tetris, Minesweeper, Mahjong, Gomoku, Bubble Shooter, Checkers, Mastermind, Battleship, Rock Paper Scissors, Hangman, Flow Free, Nonogram, Breakout, Reversi, Mancala, Pong, Backgammon, Word Search, Solitaire, Jigsaw, Crossword, Xeri, Realm, Crypt, Banner, Fieldwarden, Roots, Wayfarers, Game Center |
 | Security | Passwords |
-| System | Device Info, Assistant, Help, Today, Settings |
+| System | Assistant, Help, Automations, Today, Settings |
+
+Some former apps now live inside another one, and their old links,
+shortcuts and data still work: Case Converter (Text Tools), Tree Sketcher
+(Wallpaper Generator), Device Info (Settings › Device), Moon & Sky
+(Weather › Sky tonight), Unit Converter (Calculator › Convert), Email
+Signature (Mail › Email signatures), Wheel of Fate (Chance) and Quote
+(Billing › Quotes).
 
 Apps talk to each other (send a note to Writer, a contact to Mail, an
 invoice to Budget), open files by type, and share one encrypted disk in
