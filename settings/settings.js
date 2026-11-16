@@ -4149,6 +4149,16 @@
       host.appendChild(mtc);
     }
 
+    // Overview (OV-1): hot corner and Super key, this device only, off by default.
+    if (s.overview) {
+      var ovc = card(t("ov.title"), "overview");
+      ovc.appendChild(el("p", "hint", t("ov.hint")));
+      ovc.appendChild(row(t("ov.corner"), switchBtn(!!s.overview.corner, "overview:corner", function (v) { set("overview:corner", v); }, t("ov.corner"))));
+      ovc.appendChild(row(t("ov.super"), switchBtn(!!s.overview.superKey, "overview:super", function (v) { set("overview:super", v); }, t("ov.super")),
+        { hint: t("ov.superHint") }));
+      host.appendChild(ovc);
+    }
+
     // This computer's files: orOS Portable and the desktop apps only
     // (shell computerFiles(); orOS USB always shows them).
     if (s.pcfiles) {

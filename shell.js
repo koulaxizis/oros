@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.15.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.16.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -9282,6 +9282,7 @@
     { key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
     { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
     { key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
+    { key: "e", label: "sc.desc.overview",   fn: function() { ovOpen(); }, id: "overview" },
     { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
     { key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } }
   ];
@@ -11762,6 +11763,7 @@
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
+      overview: ovSnapshot(),       // OV-1: hot corner / Super key, this device only
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
       pcfiles: state.pcFiles && !state.pcFiles.fixed ? { on: state.pcFiles.state === "on" } : null,
@@ -11801,6 +11803,12 @@
       case "autoexport":   setAutoexportUser(value); return;
       case "multitask":
         if (!SOLO) { mtSetUser(!!value); settingsNotify(); }
+        return;
+      case "overview:corner":
+        if (!SOLO) { ovSetPref(OV_CORNER_KEY, !!value); settingsNotify(); }
+        return;
+      case "overview:super":
+        if (!SOLO) { ovSetPref(OV_SUPER_KEY, !!value); settingsNotify(); }
         return;
       case "pcfiles":
         if (typeof window.__orosPcFilesSet === "function") window.__orosPcFilesSet(!!value);
@@ -12500,6 +12508,7 @@
     cmdWireFrame(f);
     extWireFrame(f);
     a11yWireFrame(f);
+    ovWireFrame(f);
     return f;
   }
   function mtDrop(el) {
@@ -13088,6 +13097,8 @@
     });
     if (window.orosLauncher) window.orosLauncher.refresh();
     if (mtSw) mtSwRender();
+    if (ov) ovRenderApps();     // 10e overview
+    monChanged();               // 10e window.orosMonitor listeners
   }
   mtOnChange = mtPaint;
 
@@ -13338,6 +13349,513 @@
     btn.addEventListener("click", function (e) { e.stopPropagation(); mtSwitcher(); });
     left.appendChild(btn);
   })();
+
+  // ---------- 10e. Overview and system monitor (OV-1) ----------
+  // GNOME-like Activities overview (gap list 2026-11-15, items 7 + 9):
+  // one screen with the search field, the open apps of 10b/10c and the
+  // recent files of Files, plus a small "System" strip (memory places,
+  // storage, sync). It is a union of what exists, never a second
+  // system: typing hands the text to the menu search (same results,
+  // commands and data hits), the app cards are the switcher's list
+  // (mtOpenList / mtClose / mtSideOpen) and the recent files are Files'
+  // own device-local journal ("oros-files-recents"), opened in Files.
+  // Opens with Ctrl+Alt+Shift+E (SC_DEFS "e"); this device may also
+  // open it from the top-left hot corner ("oros-ov-corner" = "1") and
+  // with the Super key pressed alone ("oros-ov-super" = "1"), both off
+  // by default (Windows opens Start on Super; a corner can surprise).
+  // Never while the screen is locked, in a single app (SOLO) or on a
+  // till. Recent file names stay hidden during sensitive work.
+  // window.orosMonitor is the read model Settings › Device uses too.
+  var OV_CORNER_KEY = "oros-ov-corner";
+  var OV_SUPER_KEY = "oros-ov-super";
+  var OV_RECENTS_KEY = "oros-files-recents";   // = files.js RECENTS_KEY
+  var OV_RECENTS_MAX = 8;
+  var ov = null;            // { el, onKey, back } while the overview is open
+
+  function ovPref(key) {
+    try { return localStorage.getItem(key) === "1"; } catch (e) { return false; }
+  }
+  function ovSetPref(key, on) {
+    try {
+      if (on) localStorage.setItem(key, "1");
+      else localStorage.removeItem(key);
+    } catch (e) {}
+  }
+  function ovAllowed() {
+    if (SOLO || TILL) return false;
+    try { if (window.orosLock && window.orosLock.isLocked && window.orosLock.isLocked()) return false; } catch (e) {}
+    return true;
+  }
+
+  // Files' recents journal → up to `max` valid entries, newest first.
+  // Pure (tests): only paths under /internal, never "..", never Trash.
+  function ovRecentsFrom(raw, max) {
+    var list;
+    try { list = JSON.parse(raw); } catch (e) { return []; }
+    if (!Array.isArray(list)) return [];
+    var out = [], seen = {};
+    for (var i = 0; i < list.length && out.length < max; i++) {
+      var e = list[i];
+      if (!e || typeof e.p !== "string" || e.p.length > 1024) continue;
+      var p = e.p.replace(/\/+$/, "");
+      if (p.indexOf("/internal/") !== 0 || /(^|\/)\.\.?(\/|$)/.test(p) || p.indexOf("/internal/.trash") === 0) continue;
+      if (seen[p]) continue;
+      seen[p] = 1;
+      var cut = p.lastIndexOf("/");
+      out.push({ path: p, name: p.slice(cut + 1), dir: p.slice(0, cut) || "/internal",
+                 at: typeof e.at === "number" && isFinite(e.at) ? e.at : 0 });
+    }
+    return out;
+  }
+  // One line for the sync tile. Pure (tests): s = snapshot().sync.
+  // → { key, n, level } with level "" | "busy" | "warn".
+  function ovSyncState(s) {
+    if (!s || !s.connected) return { key: "ov.sys.sync.off", n: 0, level: "" };
+    var f = s.files || null, q = f && f.queued > 0 ? f.queued : 0;
+    if (f && f.lastError) return { key: "ov.sys.sync.err", n: q, level: "warn" };
+    if (f && f.busy) return { key: "ov.sys.sync.busy", n: q, level: "busy" };
+    if (q) return { key: "ov.sys.sync.files", n: q, level: "busy" };
+    if (s.dirty) return { key: "ov.sys.sync.dirty", n: 0, level: "busy" };
+    if (s.deferred > 0) return { key: "ov.sys.sync.merge", n: s.deferred, level: "busy" };
+    return { key: "ov.sys.sync.ok", n: 0, level: "" };
+  }
+  // Places taken by the open apps (front, beside, background).
+  function ovPlaces(apps) {
+    var used = 0;
+    (apps || []).forEach(function (a) { used += a.weight || 1; });
+    return used;
+  }
+
+  // ---- window.orosMonitor: what is open and how this device is doing ----
+  var monListeners = [];
+  function monChanged() {
+    (monListeners || []).slice().forEach(function (fn) { try { fn(); } catch (e) {} });
+  }
+  function monSync() {
+    var S = window.orosSync, V = window.orosVault, out = { connected: false, provider: null, dirty: false, deferred: 0, files: null };
+    try { out.connected = !!(S && S.isConnected && S.isConnected()); } catch (e) {}
+    try { out.provider = S && S.getProvider ? S.getProvider() : null; } catch (e) {}
+    try { out.dirty = !!(S && S.isDirty && S.isDirty()); } catch (e) {}
+    try { out.deferred = S && S.getDeferred ? S.getDeferred().length : 0; } catch (e) {}
+    try {
+      var st = V && V.status ? V.status() : null;
+      if (st && st.usable) {
+        out.files = { queued: st.queued || 0, busy: !!st.busy, lastOkAt: st.lastOkAt || 0,
+                      lastError: st.lastError ? String(st.lastError).slice(0, 120) : null };
+      }
+    } catch (e) {}
+    return out;
+  }
+  function monSnapshot() {
+    var apps = (SOLO ? [] : mtOpenList()).map(function (it) {
+      return { id: it.app.id, name: mtLabel(it.app), front: !!it.front, side: !!it.side,
+               at: it.at || 0, weight: mtWeight(it.app.id), stays: mtKeepable(it.app) };
+    });
+    var heap = null;
+    try {
+      var pm = performance && performance.memory;
+      if (pm && pm.usedJSHeapSize > 0) heap = { used: pm.usedJSHeapSize, limit: pm.jsHeapSizeLimit || 0 };
+    } catch (e) {}
+    var snap = {
+      multitask: !SOLO && mtActive(),
+      apps: apps,
+      places: { used: ovPlaces(apps), total: mtSlotsHere() },
+      memory: { device: typeof navigator.deviceMemory === "number" ? navigator.deviceMemory : null, heap: heap },
+      storage: null,
+      sync: monSync()
+    };
+    var st = navigator.storage;
+    if (!st || typeof st.estimate !== "function") return Promise.resolve(snap);
+    return st.estimate().then(function (e) {
+      if (e && typeof e.usage === "number") snap.storage = { usage: e.usage, quota: e.quota || 0 };
+      return snap;
+    }, function () { return snap; });
+  }
+  window.orosMonitor = {
+    snapshot: monSnapshot,        // → Promise<{ multitask, apps[], places, memory, storage, sync }>
+    close: function (id) {        // closes one open app (as the switcher's ×)
+      if (SOLO || typeof id !== "string") return false;
+      for (var i = 0; i < mtOpenList().length; i++) {
+        if (mtOpenList()[i].app.id === id) { mtClose(id); return true; }
+      }
+      return false;
+    },
+    // fn() on every change of the open apps and of the sync state;
+    // returns an unsubscribe function (an app frame must call it).
+    onChange: function (fn) {
+      if (typeof fn !== "function") return function () {};
+      monListeners.push(fn);
+      return function () {
+        var i = monListeners.indexOf(fn);
+        if (i !== -1) monListeners.splice(i, 1);
+      };
+    },
+    syncState: ovSyncState
+  };
+  if (window.orosSync && window.orosSync.onAutoSync) {
+    window.orosSync.onAutoSync(function (kind) { if (kind !== "start") { monChanged(); if (ov) ovRenderSys(); } });
+  }
+  if (window.orosVault && window.orosVault.onStatus) {
+    window.orosVault.onStatus(function () { monChanged(); if (ov) ovRenderSys(); });
+  }
+
+  // ---- The overview screen ----
+  function ovBytes(n) {
+    if (!(n >= 0)) return "";
+    var u = ["B", "KB", "MB", "GB", "TB"], i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    var d = (i === 0 || n >= 10) ? 0 : 1;
+    try { return n.toLocaleString(shLoc(), { maximumFractionDigits: d }) + " " + u[i]; }
+    catch (e) { return n.toFixed(d) + " " + u[i]; }
+  }
+  function ovClose() {
+    if (!ov) return;
+    var o = ov;
+    ov = null;
+    o.el.remove();
+    document.removeEventListener("keydown", o.onKey, true);
+    if (o.back && o.back.focus && document.contains(o.back)) { try { o.back.focus(); } catch (e) {} }
+  }
+  function ovSection(cls, titleKey) {
+    var s = document.createElement("section");
+    s.className = "ov-sec " + cls;
+    var h = document.createElement("h3");
+    h.className = "ov-h";
+    h.textContent = window.t(titleKey);
+    s.appendChild(h);
+    var body = document.createElement("div");
+    body.className = "ov-body";
+    s.appendChild(body);
+    return s;
+  }
+  function ovRenderApps() {
+    if (!ov) return;
+    var body = ov.el.querySelector(".ov-apps .ov-body");
+    var focusId = document.activeElement && document.activeElement.closest &&
+      document.activeElement.closest(".ov-app") ? document.activeElement.closest(".ov-app").getAttribute("data-app") : null;
+    body.textContent = "";
+    var on = mtActive(), list = mtOpenList();
+    var n = ov.el.querySelector(".ov-apps .ov-n");
+    if (!n) {
+      n = document.createElement("span");
+      n.className = "ov-n";
+      ov.el.querySelector(".ov-apps .ov-h").appendChild(n);
+    }
+    n.textContent = list.length ? String(list.length) : "";
+    n.hidden = !list.length;
+    if (!list.length) {
+      var em = document.createElement("p");
+      em.className = "ov-empty";
+      em.textContent = window.t(on ? "ov.apps.none" : "mt.sw.off");
+      body.appendChild(em);
+    }
+    var grid = document.createElement("div");
+    grid.className = "ov-grid";
+    grid.setAttribute("role", "list");
+    list.forEach(function (it) {
+      var card = document.createElement("div");
+      card.className = "ov-app" + (it.front ? " ov-front" : "");
+      card.setAttribute("role", "listitem");
+      card.setAttribute("data-app", it.app.id);
+      var go = document.createElement("button");
+      go.type = "button";
+      go.className = "ov-go";
+      go.innerHTML = '<span class="app-ico" data-cat="' + iconCat(it.app) + '" data-hue="' + iconHue(it.app) + '">' + (ICONS[it.app.icon] || "") + '</span>' +
+        '<span class="ov-name"></span><span class="ov-when"></span>';
+      go.querySelector(".ov-name").textContent = mtLabel(it.app);
+      go.querySelector(".ov-when").textContent = it.front ? window.t("mt.sw.now") : it.side ? window.t("mt.sw.beside") : mtAgo(it.at);
+      if (it.front) go.setAttribute("aria-current", "true");
+      go.addEventListener("click", function () {
+        ovClose();
+        if (state.running && state.running.id === it.app.id) return;
+        if (it.side) { mtSideFocus(); return; }
+        openApp(it.app);
+      });
+      card.appendChild(go);
+      var tools = document.createElement("div");
+      tools.className = "ov-tools";
+      var sb = mtSwSplitBtn(it);
+      if (sb) {
+        sb.addEventListener("click", function () { ovClose(); }, true);
+        tools.appendChild(sb);
+      }
+      var x = document.createElement("button");
+      x.type = "button";
+      x.className = "mt-sw-x ov-x";
+      x.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      var xl = window.t("mt.sw.close").replace("{app}", mtLabel(it.app));
+      x.setAttribute("aria-label", xl);
+      x.title = xl;
+      x.addEventListener("click", function () { mtClose(it.app.id); });
+      tools.appendChild(x);
+      card.appendChild(tools);
+      grid.appendChild(card);
+    });
+    if (list.length) body.appendChild(grid);
+    if (!on) {
+      if (list.length) {
+        var off = document.createElement("p");
+        off.className = "ov-empty ov-off";
+        off.textContent = window.t("mt.sw.off");
+        body.appendChild(off);
+      }
+      var set = document.createElement("button");
+      set.type = "button";
+      set.className = "ov-link";
+      set.textContent = window.t("mt.sw.settings");
+      set.addEventListener("click", function () {
+        ovClose();
+        if (window.orosSettings) window.orosSettings.open("system");
+      });
+      body.appendChild(set);
+    }
+    if (focusId) {
+      var want = body.querySelector('.ov-app[data-app="' + focusId + '"] .ov-go');
+      if (want) want.focus();
+    }
+  }
+  function ovRenderFiles() {
+    var body = ov.el.querySelector(".ov-files .ov-body");
+    body.textContent = "";
+    function note(key) {
+      var p = document.createElement("p");
+      p.className = "ov-empty";
+      p.textContent = window.t(key);
+      body.appendChild(p);
+    }
+    if (strictLevelNow()) { note("ov.files.hidden"); return; }
+    var raw = null;
+    try { raw = localStorage.getItem(OV_RECENTS_KEY); } catch (e) {}
+    var list = ovRecentsFrom(raw, OV_RECENTS_MAX);
+    if (!list.length) note("ov.files.none");
+    var ul = document.createElement("div");
+    ul.className = "ov-flist";
+    ul.setAttribute("role", "list");
+    list.forEach(function (f) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ov-file";
+      b.setAttribute("role", "listitem");
+      b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>' +
+        '<span class="ov-fname"></span><span class="ov-fwhere"></span>';
+      b.querySelector(".ov-fname").textContent = f.name;
+      var where = f.dir === "/internal" ? window.t("ov.files.root") : f.dir.slice(f.dir.lastIndexOf("/") + 1);
+      b.querySelector(".ov-fwhere").textContent = where + (f.at ? " · " + mtAgo(f.at) : "");
+      b.title = f.path.replace(/^\/internal/, "");
+      b.addEventListener("click", function () {
+        ovClose();
+        window.__orosOpenAt("files", { path: f.path });
+      });
+      ul.appendChild(b);
+    });
+    if (list.length) body.appendChild(ul);
+    var all = document.createElement("button");
+    all.type = "button";
+    all.className = "ov-link";
+    all.textContent = window.t("ov.files.all");
+    all.addEventListener("click", function () {
+      ovClose();
+      window.__orosOpenAt("files", { view: "recent" });
+    });
+    body.appendChild(all);
+  }
+  function ovTile(label, value, pct, level) {
+    var d = document.createElement("div");
+    d.className = "ov-tile" + (level ? " ov-" + level : "");
+    var l = document.createElement("span");
+    l.className = "ov-tl";
+    l.textContent = label;
+    var v = document.createElement("span");
+    v.className = "ov-tv";
+    v.textContent = value;
+    d.appendChild(l);
+    d.appendChild(v);
+    if (typeof pct === "number" && isFinite(pct)) {
+      var bar = document.createElement("span");
+      bar.className = "ov-bar";
+      var f = document.createElement("span");
+      f.style.width = Math.max(2, Math.min(100, pct)).toFixed(1) + "%";
+      bar.appendChild(f);
+      d.appendChild(bar);
+    }
+    return d;
+  }
+  var ovSysToken = 0;
+  function ovRenderSys() {
+    if (!ov) return;
+    var token = ++ovSysToken;
+    monSnapshot().then(function (s) {
+      if (!ov || token !== ovSysToken) return;
+      var body = ov.el.querySelector(".ov-sys .ov-body");
+      body.textContent = "";
+      var row = document.createElement("div");
+      row.className = "ov-tiles";
+      // Memory: the places multitasking keeps for open apps; with it
+      // off, only what the browser says about the device.
+      if (s.multitask) {
+        var memVal = window.t("ov.sys.places").replace("{n}", s.places.used).replace("{m}", s.places.total);
+        row.appendChild(ovTile(window.t("ov.sys.mem"), memVal, s.places.total ? s.places.used / s.places.total * 100 : null,
+          s.places.used > s.places.total ? "warn" : ""));
+      } else {
+        row.appendChild(ovTile(window.t("ov.sys.mem"), s.memory.device ?
+          window.t("ov.sys.memGB").replace("{n}", s.memory.device) : window.t("ov.sys.na")));
+      }
+      if (s.storage && s.storage.quota) {
+        var pct = s.storage.usage / s.storage.quota * 100;
+        row.appendChild(ovTile(window.t("ov.sys.disk"),
+          window.t("ov.sys.of").replace("{a}", ovBytes(s.storage.usage)).replace("{b}", ovBytes(s.storage.quota)), pct, pct > 85 ? "warn" : ""));
+      } else {
+        row.appendChild(ovTile(window.t("ov.sys.disk"), window.t("ov.sys.na")));
+      }
+      var sy = ovSyncState(s.sync);
+      row.appendChild(ovTile(window.t("ov.sys.sync"), window.t(sy.key).replace("{n}", sy.n), null, sy.level));
+      body.appendChild(row);
+      var more = document.createElement("button");
+      more.type = "button";
+      more.className = "ov-link";
+      more.textContent = window.t("ov.sys.more");
+      more.addEventListener("click", function () {
+        ovClose();
+        if (window.orosSettings) window.orosSettings.open("device");
+      });
+      body.appendChild(more);
+    });
+  }
+  // Typing hands over to the menu search: same field, same results.
+  function ovToMenu(text) {
+    ovClose();
+    openMenuSearch();
+    var inp = document.querySelector("#app-menu .menu-search input");
+    if (!inp) return;
+    inp.value = text;
+    try { inp.setSelectionRange(text.length, text.length); } catch (e) {}
+    inp.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  function ovOpen() {
+    if (ov) { ovClose(); return; }
+    if (!ovAllowed()) return;
+    closeMenu();
+    closeNotifPanel();
+    if (mtSw) mtSwClose();
+    var el = document.createElement("div");
+    el.id = "oros-ov";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "true");
+    el.setAttribute("aria-labelledby", "ov-title");
+    el.innerHTML =
+      '<div class="ov-box">' +
+        '<div class="ov-top"><h2 id="ov-title" class="ov-title"></h2>' +
+          '<div class="ov-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>' +
+          '<input type="search" autocomplete="off" spellcheck="false"></div>' +
+          '<button type="button" class="ov-done"></button></div>' +
+        '<div class="ov-cols"></div>' +
+      '</div>';
+    el.querySelector(".ov-title").textContent = window.t("ov.title");
+    var inp = el.querySelector(".ov-search input");
+    inp.placeholder = window.t("menu.search");
+    inp.setAttribute("aria-label", inp.placeholder);
+    var done = el.querySelector(".ov-done");
+    done.textContent = window.t("mt.sw.done");
+    done.addEventListener("click", ovClose);
+    var cols = el.querySelector(".ov-cols");
+    cols.appendChild(ovSection("ov-apps", "mt.sw.title"));
+    var side = document.createElement("div");
+    side.className = "ov-side";
+    if (hasApp("files")) side.appendChild(ovSection("ov-files", "ov.files.title"));
+    side.appendChild(ovSection("ov-sys", "ov.sys.title"));
+    cols.appendChild(side);
+    inp.addEventListener("input", function () { if (inp.value) ovToMenu(inp.value); });
+    el.addEventListener("click", function (e) { if (e.target === el) ovClose(); });
+    function onKey(e) {
+      if (!ov) return;
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); ovClose(); return; }
+      if (e.key === "Tab") {        // focus stays inside the overview
+        var f = Array.prototype.slice.call(el.querySelectorAll("button, input")).filter(function (b) { return !b.disabled && b.offsetParent !== null; });
+        if (!f.length) return;
+        var i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+        return;
+      }
+      var a = document.activeElement;
+      if (a === inp) return;
+      // Start typing anywhere: the letter goes to the search field.
+      if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && e.key !== " ") {
+        inp.focus();
+        return;
+      }
+      var cards = Array.prototype.slice.call(el.querySelectorAll(".ov-go, .ov-file"));
+      var j = cards.indexOf(a);
+      if (j >= 0 && (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowLeft")) {
+        e.preventDefault();
+        var fw = e.key === "ArrowDown" || e.key === "ArrowRight";
+        cards[(j + (fw ? 1 : cards.length - 1)) % cards.length].focus();
+      } else if ((e.key === "Delete" || e.key === "Backspace") && a.classList.contains("ov-go")) {
+        e.preventDefault();
+        mtClose(a.closest(".ov-app").getAttribute("data-app"));
+      }
+    }
+    document.body.appendChild(el);
+    document.addEventListener("keydown", onKey, true);
+    ov = { el: el, onKey: onKey, back: document.activeElement };
+    ovRenderApps();
+    if (hasApp("files")) ovRenderFiles();
+    ovRenderSys();
+    // The app left last has the focus (shortcut + Enter = back to it),
+    // else the search field.
+    var list = mtOpenList(), want = null;
+    if (list.length > 1 && list[0].front) want = el.querySelector('.ov-app[data-app="' + list[1].app.id + '"] .ov-go');
+    (want || inp).focus();
+  }
+
+  // Hot corner (opt-in): the pointer pushed into the top-left corner.
+  // Re-arms once it has left the corner area; never with a button held.
+  (function () {
+    if (SOLO) return;
+    var armed = true;
+    document.addEventListener("pointermove", function (e) {
+      if (e.pointerType !== "mouse") return;
+      if (e.clientX > 40 || e.clientY > 40) { armed = true; return; }
+      if (!armed || e.buttons || e.clientX > 1 || e.clientY > 1) return;
+      if (!ovPref(OV_CORNER_KEY) || ov) return;
+      armed = false;
+      ovOpen();
+    }, { passive: true });
+  })();
+  // Super alone (opt-in): Super pressed and let go with no other key,
+  // in the shell or inside an app frame (same origin).
+  var ovSuper = { at: 0, clean: false };
+  function ovSuperKey(e) {
+    var meta = e.key === "Meta" || e.key === "OS" || e.key === "Super";
+    if (e.type === "keydown") {
+      if (meta) { if (!e.repeat) { ovSuper.at = Date.now(); ovSuper.clean = true; } }
+      else ovSuper.clean = false;
+      return;
+    }
+    if (!meta || !ovSuper.clean) return;
+    ovSuper.clean = false;
+    if (Date.now() - ovSuper.at > 800 || !ovPref(OV_SUPER_KEY)) return;
+    ovOpen();
+  }
+  function ovWireFrame(frame) {
+    frame.addEventListener("load", function () {
+      var w;
+      try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
+      w.addEventListener("keydown", ovSuperKey, true);
+      w.addEventListener("keyup", ovSuperKey, true);
+      w.addEventListener("pointerdown", function () { ovSuper.clean = false; }, true);
+    });
+  }
+  if (!SOLO) {
+    document.addEventListener("keydown", ovSuperKey, true);
+    document.addEventListener("keyup", ovSuperKey, true);
+    document.addEventListener("pointerdown", function () { ovSuper.clean = false; }, true);
+    appFrames().forEach(ovWireFrame);
+  }
+  function ovSnapshot() {
+    if (SOLO) return null;
+    return { corner: ovPref(OV_CORNER_KEY), superKey: ovPref(OV_SUPER_KEY) };
+  }
 
   // ---------- 11. Menu open/close ----------
   // The bell's panel never sees a menu-button click (the button stops
