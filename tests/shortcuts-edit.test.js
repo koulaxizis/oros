@@ -119,8 +119,8 @@ test("two entries on one key after a sync: the first in table order keeps it", (
 
 test("reset all, USB mirror on <html>, tooltips follow a moved key", () => {
   const w = world(true);
-  w.scSetKey("usb-shot", "KeyB");
-  assert.equal(w.attrs["data-oros-sc-usb-shot"], "KeyB");
+  w.scSetKey("usb-shot", "KeyZ");   // Z is free (B is the other screen since 7.19.00)
+  assert.equal(w.attrs["data-oros-sc-usb-shot"], "KeyZ");
   assert.equal(w.attrs["data-oros-sc-usb-reader"], "KeyJ");
   w.scSetKey("usb-display", "");
   assert.equal(w.attrs["data-oros-sc-usb-display"], "");
