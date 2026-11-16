@@ -19,6 +19,10 @@
 //     (catdocx.js): Build document and Save as Word write the
 //     translation into the original package; XLIFF 1.2 / 2.0 out and
 //     back in (catxlf.js).
+//   - (T5) machine suggestions (catmt.js, the shared OrosTranslate
+//     engine of Text Tools), off by default, per device: offered under
+//     the open segment (Alt+0 takes it), or filling empty segments as
+//     drafts.
 // Everything shown from a project goes through textContent (the
 // segments are data). Writes go through catstore (own files only).
 // window.WriterCatHost (writer.js) is what it may use of Writer.
@@ -28,11 +32,11 @@
   "use strict";
 
   var H = window.WriterCatHost, C = window.WriterCatCore, S = window.WriterCatStore, TM = window.WriterCatTM, QA = window.WriterCatQA;
-  var D = window.WriterCatDocx, X = window.WriterCatXlf;
-  if (!H || !C || !S || !TM || !QA || !D || !X) return;
+  var D = window.WriterCatDocx, X = window.WriterCatXlf, MTM = window.WriterCatMT;
+  if (!H || !C || !S || !TM || !QA || !D || !X || !MTM) return;
   var t = H.t;
 
-  var DEV_KEY = "oros-writer-tr-dev", SUM_KEY = "oros-writer-tr-sum";
+  var DEV_KEY = "oros-writer-tr-dev", SUM_KEY = "oros-writer-tr-sum", MT_KEY = "oros-writer-tr-mt";
   var SAVE_MS = 1200, POLL_MS = 15000, TM_POLL = 4;     // memories: every 4th poll
 
   // ---------- device + store ----------
@@ -327,8 +331,9 @@
         { label: t("qa.report"), action: qaReport },
         { label: t("gl.add"), action: function () { addTerm(selectedSource()); } },
         { label: t("gl.manage"), action: manageGlossaries },
-        null
-      ].concat(V.src.fmt === "docx" ? [{ label: t("cat.docxOut"), action: saveDocx }] : [], [
+        null,
+        { label: mtOn() ? t("mt.menuOn") : t("mt.menuOff"), action: mtDialog }
+      ].concat(mtOn() ? [{ label: t("mt.fill"), action: fillMt }] : [], [null]).concat(V.src.fmt === "docx" ? [{ label: t("cat.docxOut"), action: saveDocx }] : [], [
         { label: t("cat.xlfOut12"), action: function () { saveXliff("1.2"); } },
         { label: t("cat.xlfOut20"), action: function () { saveXliff("2.0"); } },
         { label: t("cat.xlfIn"), action: importXliff },
@@ -511,7 +516,11 @@
     box.appendChild(qbox);
     var mbox = el("div", "cat-tm");
     box.appendChild(mbox);
+    var xbox = el("div", "cat-tm cat-mt");
+    box.appendChild(xbox);
     tg.appendChild(box);
+    V.mtBox = xbox;
+    V.mtCur = null;
     V.ta = ta;
     V.tagsBox = tagsBox;
     V.tmBox = mbox;
@@ -521,6 +530,7 @@
     showTerms(i);
     showProblems(i);
     showMatches(i);
+    showMt(i);
     grow(ta);
     if (!noScroll) r.scrollIntoView({ block: "nearest" });
     else r.scrollIntoView({ block: "center" });
@@ -532,6 +542,8 @@
     V.cur = -1;
     V.ta = null;
     V.tmBox = null;
+    V.mtBox = null;
+    V.mtCur = null;
     V.glBox = null;
     V.qaBox = null;
     V.matches = [];
@@ -591,6 +603,7 @@
       if (k === "K") { e.preventDefault(); concord(selectedSource()); return; }
       if (k === "G") { e.preventDefault(); nextTerm(); return; }
       if (k === "N") { e.preventDefault(); addTerm(selectedSource()); return; }
+      if (e.code === "Digit0" && V.mtCur) { e.preventDefault(); useMt(); return; }
       var dg = /^Digit([1-3])$/.exec(e.code || "");
       if (dg && V.matches && V.matches[+dg[1] - 1]) { e.preventDefault(); useMatch(V.matches[+dg[1] - 1]); return; }
     }
@@ -1420,6 +1433,157 @@
     }).catch(docxFailed);
   }
 
+  // ---------- T5: machine suggestions ----------
+  function mtOn() { try { return localStorage.getItem(MT_KEY) === "1"; } catch (e) { return false; } }
+  function setMt(on) { try { if (on) localStorage.setItem(MT_KEY, "1"); else localStorage.removeItem(MT_KEY); } catch (e) {} }
+  function base(l) { return String(l || "").split("-")[0].toLowerCase(); }
+  function pairName(view) { return langName(view.p.from) + " → " + langName(view.p.to); }
+  // the engine and this project's controller (loaded on first use)
+  function mtCtl(view) {
+    if (view.mt) return view.mt;
+    view.mt = H.mtEngine().then(function (eng) { return { eng: eng, ctl: new MTM.Ctl(eng, base(view.p.from), base(view.p.to)) }; });
+    view.mt.catch(function () { view.mt = null; });
+    return view.mt;
+  }
+  function mtErr(e) {
+    var c = e && e.code;
+    if (c === "download" || c === "quota" || c === "unsupported" || c === "hash") return t("mt.err." + c);
+    return fmt("mt.err", { code: String(c || "engine").slice(0, 20) });
+  }
+  function showMt(i) {
+    if (!V || V.cur !== i || !V.mtBox || !mtOn()) return;
+    var view = V, box = V.mtBox;
+    box.textContent = "";
+    box.appendChild(el("div", "cat-muted", t("mt.loading")));
+    mtCtl(view).then(function (m) {
+      return m.ctl.suggest(view.src, view.rows, i, view.gl && view.gl.terms);
+    }).then(function (r) {
+      if (V !== view || V.cur !== i || V.mtBox !== box) return;
+      box.textContent = "";
+      if (!r.text.trim()) return;
+      V.mtCur = r;
+      var it = el("div", "cat-tm-item");
+      var head = el("div", "cat-tm-head");
+      head.appendChild(el("span", "cat-tm-score cat-mt-tag", r.engine === "ai" ? (r.via ? fmt("mt.ai", { via: r.via }) : t("mt.aiPlain")) : t("mt.dev")));
+      it.appendChild(head);
+      var tgt = el("div", "cat-tm-tgt");
+      tgt.setAttribute("lang", view.p.to || "");
+      paint(tgt, r.text, i);
+      it.appendChild(tgt);
+      if (!r.tagsOk) it.appendChild(el("div", "cat-muted", t("mt.tags")));
+      var use = btn("fb-btn cat-tm-use", t("mt.use"), useMt, t("mt.useT"));
+      use.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      it.appendChild(use);
+      box.appendChild(it);
+    }).catch(function (e) {
+      if (V !== view || V.cur !== i || V.mtBox !== box) return;
+      box.textContent = "";
+      if (e && e.code === "not-installed") {
+        box.appendChild(el("span", "cat-muted", t("mt.needDl") + " "));
+        box.appendChild(btn("fb-btn", t("mt.dl"), mtDialog));
+      } else if (e && (e.code === "pair" || e.code === "ai-off" || e.code === "ai-none")) {
+        box.appendChild(el("div", "cat-muted", fmt("mt.none", { pair: pairName(view) })));
+      } else box.appendChild(el("div", "cat-muted", e && e.message === "engine-load" ? t("mt.noEngine") : mtErr(e)));
+    });
+  }
+  function useMt() {
+    if (!V || V.cur < 0 || !V.ta || !V.mtCur) return;
+    V.ta.value = V.mtCur.text;
+    changed(V.cur, V.mtCur.text, null);
+    grow(V.ta);
+    tagHints();
+    qaSoon(V.cur);
+    V.ta.focus();
+  }
+  function mtDialog() {
+    if (!V) return;
+    var view = V, closed = false, dlg;
+    var f = el("div", "cat-form");
+    f.appendChild(el("p", "cat-hint", t("mt.intro")));
+    var line = el("p", "", t("mt.loading"));
+    line.setAttribute("aria-live", "polite");
+    f.appendChild(line);
+    var acts = el("div", "cat-gl-acts");
+    f.appendChild(acts);
+    dlg = H.openDialog(t("mt.title"), "", [{ class: "fb-btn", label: t("cat.close"), onClick: function () { closed = true; dlg.close(); } }]);
+    dlg.classList.add("cat-dlg");
+    dlg.querySelector(".w-dialog-body").appendChild(f);
+    dlg.addEventListener("close", function () { closed = true; });
+    function done(on) {
+      setMt(on);
+      dlg.close();
+      if (V === view) { if (on) showMt(V.cur); else if (V.mtBox) { V.mtBox.textContent = ""; V.mtCur = null; } }
+      H.toast(on ? t("mt.isOn") : t("mt.isOff"));
+    }
+    if (mtOn()) acts.appendChild(btn("fb-btn", t("mt.turnOff"), function () { done(false); }));
+    mtCtl(view).then(function (m) {
+      return m.ctl.status().then(function (st) { return { m: m, st: st }; });
+    }).then(function (x) {
+      var st = x.st, pair = pairName(view);
+      if (!st.legs) {
+        line.textContent = fmt("mt.none", { pair: pair }) + (st.ai ? " " + t("mt.aiNote") : "");
+        if (st.ai && !mtOn()) acts.appendChild(btn("fb-btn primary", t("mt.turnOn"), function () { done(true); }));
+        return;
+      }
+      if (st.ok) {
+        line.textContent = fmt("mt.ready", { pair: pair });
+        if (!mtOn()) acts.appendChild(btn("fb-btn primary", t("mt.turnOn"), function () { done(true); }));
+        return;
+      }
+      line.textContent = fmt("mt.need", { pair: pair, mb: num(st.mb) });
+      var go = btn("fb-btn primary", t("mt.dl"), function () {
+        go.disabled = true;
+        line.textContent = fmt("mt.dling", { p: 0 });
+        x.m.eng.install(base(view.p.from), base(view.p.to), {
+          progress: function (p) { line.textContent = fmt("mt.dling", { p: num(Math.floor((p || 0) * 100)) }); },
+          cancelled: function () { return closed; }
+        }).then(function () { if (!closed) done(true); else setMt(true); }, function (e) {
+          go.disabled = false;
+          if (!closed) line.textContent = e && e.code === "cancelled" ? fmt("mt.need", { pair: pair, mb: num(st.mb) }) : mtErr(e);
+        });
+      });
+      acts.appendChild(go);
+    }).catch(function () { line.textContent = t("mt.noEngine"); });
+  }
+  function fillMt() {
+    if (!V) return;
+    var view = V;
+    mtCtl(view).then(function (m) {
+      var n = m.ctl.count(view.src, view.rows);
+      if (!n) { H.toast(t("mt.noEmpty")); return; }
+      return H.wConfirm(fmt("mt.fillAsk", { n: num(n) }), { ok: t("mt.fillGo") }).then(function (yes) {
+        if (!yes || V !== view) return;
+        var stop = false, dlg = H.openDialog(t("mt.title"), "", [{ class: "fb-btn", label: t("mt.stop"), onClick: function () { stop = true; dlg.close(); } }]);
+        dlg.classList.add("cat-dlg");
+        var line = el("p", "", fmt("mt.filling", { d: num(0), n: num(n) }));
+        line.setAttribute("aria-live", "polite");
+        dlg.querySelector(".w-dialog-body").appendChild(line);
+        dlg.addEventListener("close", function () { stop = true; });
+        return m.ctl.fill(view.src, view.rows, {
+          terms: view.gl && view.gl.terms,
+          progress: function (d, total) { line.textContent = fmt("mt.filling", { d: num(d), n: num(total) }); },
+          cancelled: function () { return stop || view.mtStop || V !== view; }
+        }).then(function (out) {
+          dlg.close();
+          if (V !== view) return;
+          var k = 0;
+          Object.keys(out).forEach(function (i) {
+            i = +i;
+            var r = rowOf(i);
+            if (r && (r[0].trim() || r[1] >= C.ST_DONE)) return;      // typed in meanwhile
+            if (V.cur === i && V.ta) { if (V.ta.value.trim()) return; V.ta.value = out[i]; grow(V.ta); tagHints(); }
+            changed(i, out[i], C.ST_DRAFT);
+            k++;
+          });
+          H.toast(fmt("mt.filled", { n: num(k) }));
+        }, function (e) {
+          dlg.close();
+          if (!(e && e.code === "cancelled")) H.toast(mtErr(e));
+        });
+      });
+    }).catch(function () { H.toast(t("mt.noEngine")); });
+  }
+
   // ---------- Proposals 1-2: Publishing title, deadline and goal ----------
   function dayText(ymd) {
     var p = ymd.split("-");
@@ -1647,6 +1811,7 @@
     flushNow();
     flushTm(view);
     clearInterval(view.poll);
+    view.mtStop = true;
     document.removeEventListener("visibilitychange", onVis);
     window.removeEventListener("pagehide", flushNow);
     view.root.remove();

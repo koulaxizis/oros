@@ -2328,6 +2328,7 @@ var PRECACHE_URLS = [
   "writer/catqa.js",
   "writer/catdocx.js",
   "writer/catxlf.js",
+  "writer/catmt.js",
   "writer/cat.js",
   "writer/fonts.js",
   "vendor/jspdf.umd.min.js",

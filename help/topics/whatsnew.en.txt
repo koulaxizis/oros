@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.30.00
+- **Machine suggestions for book translation.** In Writer's translation editor, `⋯` › `Machine suggestions: off…` turns on drafts for each segment from the same on-device translator as Text Tools (Alt+0 to use it), and `Fill empty segments…` drafts the rest for you to check. Off until you turn it on.
+
 ## Version 7.29.00
 - **Base grows up.** Send Forms answers into a table and make a public form from a table, see date fields in the Calendar (a switch per field), let the Assistant and Claude read your bases and add records, let Automations follow new records and changed fields, and leave comments on records.
 
