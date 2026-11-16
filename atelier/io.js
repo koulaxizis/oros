@@ -226,6 +226,55 @@
     }).then(function (ok) { return ok ? { web: 1 } : false; });
   }
 
+  // SVG (VEC-4, webout.svgFile): a page or some of its elements as one
+  // SVG file; pictures drawn as for the web page, embedded.
+  function svgOf(doc, pg, ids) {
+    var WB = window.AtelierWeb, pics = {}, chain = Promise.resolve();
+    var plan = WB.plan(doc, [pg]).filter(function (p) { return !ids || ids.indexOf(p.id) >= 0; });
+    plan.filter(WB.needsPicture).forEach(function (p) {
+      var it = M.find(doc.items, p.id);
+      if (!it) return;
+      chain = chain.then(function () { return pictureOf(doc, it, p, WEB_DPI); }).then(function (pic) { pics[p.id] = pic; });
+    });
+    return chain.then(function () { return WB.svgFile(doc, pg, { ids: ids }, { plan: plan, pictures: pics }); });
+  }
+  function exportSvg(doc, pages) {
+    var ok = true, c2 = Promise.resolve();
+    pages.forEach(function (pg, i) {
+      c2 = c2.then(function () { return svgOf(doc, pg.id, null); }).then(function (r) {
+        if (!r) return;
+        return saveBlob(new Blob([r.svg], { type: "image/svg+xml" }), fileName(doc, ".svg", pages.length > 1 ? i + 1 : 0), "image/svg+xml", "SVG", ".svg")
+          .then(function (x) { ok = ok && x; });
+      });
+    });
+    return c2.then(function () { return ok; });
+  }
+  // The picked elements: "copy" to the clipboard (as SVG and as text),
+  // "save" as a file.
+  function svgSelection(mode) {
+    var doc = AT.doc, ids = ED.sel.slice();
+    if (!doc || !ids.length) return;
+    ED.exitText();
+    prepare(doc, WEB_DPI / 72).then(function () { return svgOf(doc, ED.pg, ids); }).then(function (r) {
+      if (!r) { AT.toast(t("svg.none")); return; }
+      if (mode === "save") {
+        return saveBlob(new Blob([r.svg], { type: "image/svg+xml" }), fileName(doc, ".svg"), "image/svg+xml", "SVG", ".svg")
+          .then(function (ok) { if (ok) AT.toast(t("exp.done")); });
+      }
+      var cb = navigator.clipboard, done = function () { AT.toast(t("svg.copied")); };
+      if (!cb) { AT.toast(t("svg.noClip")); return; }
+      var plain = function () { return cb.writeText(r.svg).then(done); };
+      if (typeof ClipboardItem === "function" && cb.write && ClipboardItem.supports && ClipboardItem.supports("image/svg+xml")) {
+        return cb.write([new ClipboardItem({ "image/svg+xml": new Blob([r.svg], { type: "image/svg+xml" }), "text/plain": new Blob([r.svg], { type: "text/plain" }) })])
+          .then(done, plain);
+      }
+      return plain();
+    }).then(null, function (e) {
+      try { console.error("[orOS] atelier: svg failed", e); } catch (x) {}
+      AT.toast(t("svg.noClip"));
+    });
+  }
+
   // Every page of a design as files, not saved (automations, recipes.js):
   // o = { fmt png|jpg|pdf, scale, dpi } → [{ name, blob }]
   function renderFiles(doc, o) {
@@ -273,12 +322,14 @@
     }
     var pages = M.pagesInOrder(doc);
     if (o.pages === "cur") pages = pages.filter(function (p) { return p.id === ED.pg; });
-    var chain = prepare(doc, o.type === "pdf" ? o.dpi / 72 : o.type === "pptx" ? 3 : o.type === "web" ? WEB_DPI / 72 : safeScale(doc, o.scale || 1));
+    var chain = prepare(doc, o.type === "pdf" ? o.dpi / 72 : o.type === "pptx" ? 3 : o.type === "web" || o.type === "svg" ? WEB_DPI / 72 : safeScale(doc, o.scale || 1));
     var mime = o.type === "png" ? "image/png" : "image/jpeg";
     if (o.type === "pptx") {
       chain = chain.then(function () { return exportPptx(doc, pages); });
     } else if (o.type === "web") {
       chain = chain.then(function () { return exportWeb(doc, pages); });
+    } else if (o.type === "svg") {
+      chain = chain.then(function () { return exportSvg(doc, pages); });
     } else if (o.type === "pdf" && !o.flat && window.AtelierPDF) {
       chain = chain.then(loadJsPDF).then(function (J) { return exportPdf(doc, pages, o.dpi, J); });
     } else if (o.type === "pdf") {
@@ -335,7 +386,7 @@
     var print = AT.isPrint(doc), multi = doc.pages.length > 1;
     var st = { type: print ? "pdf" : "png", scale: 1, dpi: 300, transparent: false, pages: "all", side: 720, flat: false };
     var film = { video: 1, gif: 1 };
-    var types = ["png", "jpg", "pdf"].concat(window.AtelierPPTXOut ? ["pptx"] : [], window.AtelierWeb && window.AtelierZip ? ["web"] : [], AT.motion && AT.motion.canVideo() ? ["video"] : [], AT.motion ? ["gif"] : []);
+    var types = ["png", "jpg", "pdf"].concat(window.AtelierPPTXOut ? ["pptx"] : [], window.AtelierWeb && window.AtelierZip ? ["web"] : [], window.AtelierWeb ? ["svg"] : [], AT.motion && AT.motion.canVideo() ? ["video"] : [], AT.motion ? ["gif"] : []);
     AT.openDialog(t("exp.title"), function (body, close) {
       function render() {
         body.innerHTML = "";
@@ -356,7 +407,7 @@
         }
         body.appendChild(el("p", "hint", t("exp." + st.type + "Hint", { s: secs })));
         var opts = el("div", "pn-col");
-        if (st.type !== "pptx" && st.type !== "web") body.appendChild(el("div", "fld-lbl", st.type === "pdf" && window.AtelierPDF ? t("exp.pdfPics") : t("exp.size")));
+        if (st.type !== "pptx" && st.type !== "web" && st.type !== "svg") body.appendChild(el("div", "fld-lbl", st.type === "pdf" && window.AtelierPDF ? t("exp.pdfPics") : t("exp.size")));
         function radio(name, label, on, fn) {
           var l = el("label", "chk");
           var r = el("input"); r.type = "radio"; r.name = name; r.checked = on;
@@ -371,7 +422,7 @@
             var fs = AT.motion.filmSize(doc, d);
             radio("side", fs.w + " × " + fs.h + " px", st.side === d, function () { st.side = d; });
           });
-        } else if (st.type === "pptx" || st.type === "web") {
+        } else if (st.type === "pptx" || st.type === "web" || st.type === "svg") {
           // one size: the design's own (scaled as a whole only past PowerPoint's limits;
           // a web page fits the screen it is shown on)
         } else if (print || st.type === "pdf") {
@@ -642,8 +693,117 @@
     });
   }
 
-  // A picture (PNG, JPG, WebP, SVG…): a new design of its size
+  // ---------- SVG as shapes (VEC-4) ----------
+  // Layout's reader (layout/sla.js + layout/svgin.js) and svgin.js load
+  // on the first SVG opened as shapes (precached, not in the page).
+  var svgReading = null;
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = src;
+      sc.onload = res; sc.onerror = function () { rej(new Error("load")); };
+      document.head.appendChild(sc);
+    });
+  }
+  function svgReader() {
+    if (window.LY_SVGIN && window.AtelierSvgIn) return Promise.resolve();
+    if (!svgReading) {
+      svgReading = (window.LY_SLA ? Promise.resolve() : loadScript("../layout/sla.js"))
+        .then(function () { return window.LY_SVGIN ? null : loadScript("../layout/svgin.js"); })
+        .then(function () { return window.AtelierSvgIn ? null : loadScript("svgin.js"); })
+        .then(null, function (e) { svgReading = null; throw e; });
+    }
+    return svgReading;
+  }
+  function isSvg(f) { return /\.svg$/i.test(String(f && f.name || "")) || (f && f.type) === "image/svg+xml"; }
+  // "shapes" | "pic" | null (closed)
+  function askSvg() {
+    return new Promise(function (resolve) {
+      var done = false;
+      function pick(v) { if (!done) { done = true; resolve(v); } }
+      AT.openDialog(t("imp.svgAs"), function (body, close) {
+        [["shapes", "imp.svgShapes", "imp.svgShapesHint"], ["pic", "imp.svgPic", "imp.svgPicHint"]].forEach(function (o, i) {
+          var b = el("button", "btn block two" + (i ? "" : " primary"));
+          b.type = "button";
+          b.appendChild(el("span", "", t(o[1])));
+          b.appendChild(el("span", "hint", t(o[2])));
+          b.addEventListener("click", function () { pick(o[0]); close(); });
+          body.appendChild(b);
+        });
+        var act = el("div", "dlg-actions"), cc = el("button", "btn", t("btn.cancel"));
+        cc.type = "button";
+        cc.addEventListener("click", function () { pick(null); close(); });
+        act.appendChild(cc);
+        body.appendChild(act);
+      });
+      var d = $("dlg");
+      if (d) d.addEventListener("close", function () { pick(null); }, { once: true });
+    });
+  }
+  // The file read as shapes: { page (parse()), name } or null.
+  function readSvg(f) {
+    return svgReader().then(function () { return f.text(); }).then(function (txt) {
+      var pg = window.LY_SVGIN.parse(txt);
+      return pg && (pg.items.length || pg.pieces.length) ? pg : null;
+    });
+  }
+  // Specs into a design's page, pictures stored first; one undo step.
+  function placeSpecs(doc, pgId, res, nw) {
+    var chain = Promise.resolve(), assets = {};
+    res.images.forEach(function (im) {
+      chain = chain.then(function () {
+        var blob = window.LY_SVGIN.imageBlob(im);
+        if (!blob) return;
+        var ext = (im.mime.split("/")[1] || "png").replace("jpeg", "jpg").replace("svg+xml", "svg");
+        return A.importFile(new File([blob], (im.name || "svg-image") + "." + ext, { type: blob.type })).then(function (r) {
+          AT.noteUpload(r.id); assets[im.i] = r;
+        }, function () {});
+      });
+    });
+    return chain.then(function () {
+      var made = [];
+      function add(d, now) {
+        res.specs.forEach(function (sp, i) {
+          if (sp.k === "photo") {
+            var r = assets[i];
+            if (!r) return;
+            sp.a = r.id; sp.iw = r.w; sp.ih = r.h; sp.nm = r.name || "";
+          }
+          var it = AX.addItem(d, pgId, sp, now);
+          if (it) made.push(it.id);
+        });
+      }
+      if (doc) add(doc, nw);
+      else AT.op(function (d, now) { add(d, now); if (!made.length) return false; });
+      return made;
+    });
+  }
+
+  // A picture (PNG, JPG, WebP, SVG…): a new design of its size; an SVG
+  // may come in as editable shapes instead (asked; shapes when many)
   function importImageFile(f) {
+    if (isSvg(f)) {
+      return (batching ? Promise.resolve("shapes") : askSvg()).then(function (how) {
+        if (!how) return;
+        if (how === "pic") return importPicture(f);
+        return readSvg(f).then(function (pg) {
+          if (!pg) { say(t("imp.svgFail")); return importPicture(f); }
+          var nw = AT.now();
+          var d = AX.newDesign({ name: String(f.name || "").replace(/\.[a-z0-9]+$/i, "").slice(0, 120), w: Math.round(pg.w), h: Math.round(pg.h), unit: "px" }, nw);
+          var page = M.pagesInOrder(d)[0];
+          var res = window.AtelierSvgIn.toSpecs(pg, { x: 0, y: 0, w: d.setup.w, h: d.setup.h }, { bg: true });
+          var back = AX.background(d, page.id);
+          if (res.bg && back) back.ax.fc = res.bg;
+          return placeSpecs(d, page.id, res, nw).then(function () {
+            AT.addDoc(M.normDoc(d), batching);
+            say(res.skipped + res.linked ? t("imp.partial", { n: res.skipped + res.linked }) : t("imp.done"));
+          });
+        }, function () { say(t("imp.svgFail")); return importPicture(f); });
+      });
+    }
+    return importPicture(f);
+  }
+  function importPicture(f) {
     return A.importFile(f).then(function (res) {
       AT.noteUpload(res.id);
       var nw = AT.now();
@@ -850,24 +1010,49 @@
     var s = AT.doc.setup, k = Math.min(s.w * 0.6 / res.w, s.h * 0.6 / res.h);
     ED.add({ k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", w: res.w * k, h: res.h * k, fit: "fill" });
   }
+  // An SVG put on the open page as shapes, in the middle, at most 60%
+  // of the page; picked afterwards.
+  function placeSvgShapes(f) {
+    return readSvg(f).then(function (pg) {
+      if (!pg || !AT.doc) return false;
+      var st = AT.doc.setup, k = Math.min(st.w * 0.6 / pg.w, st.h * 0.6 / pg.h, 1);
+      var w = pg.w * k, h = pg.h * k;
+      var res = window.AtelierSvgIn.toSpecs(pg, { x: (st.w - w) / 2, y: (st.h - h) / 2, w: w, h: h });
+      return placeSpecs(null, ED.pg, res).then(function (ids) {
+        if (!ids.length) return false;
+        ED.select(ids);
+        AT.toast(res.skipped + res.linked ? t("imp.svgSome", { n: ids.length, m: res.skipped + res.linked }) : t("imp.svgAdded", { n: ids.length }), t("btn.undo"), AT.undo);
+        return true;
+      });
+    }).then(null, function () { return false; });
+  }
   function uploadImage(replaceId) {
     pickFile("image/*").then(function (f) {
       if (!f) return;
-      return A.importFile(f).then(function (res) {
-        AT.noteUpload(res.id);
-        if (replaceId && ED.find(replaceId)) {
-          AT.editItems([replaceId], function (it) {
-            it.a = res.id; it.nm = res.name; it.iw = res.w; it.ih = res.h;
-            it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1;
-            delete it.ax.cr;
-            ["vid", "vs", "ve", "mu", "vol", "nl"].forEach(function (k) { delete it.ax[k]; });   // a picture now
-          });
-        } else placePhoto(res);
-        AT.toast(t("img.added"));
-        if (AT.renderDrawer) AT.renderDrawer();
-      }, function (e) {
-        AT.toast(e && e.message === "nofs" ? t("img.nofs") : t("img.fail"));
-      });
+      if (!replaceId && isSvg(f)) {
+        return askSvg().then(function (how) {
+          if (how === "shapes") return placeSvgShapes(f).then(function (ok) { if (!ok) { AT.toast(t("imp.svgFail")); return placeAsPicture(f); } });
+          if (how === "pic") return placeAsPicture(f);
+        });
+      }
+      return placeAsPicture(f, replaceId);
+    });
+  }
+  function placeAsPicture(f, replaceId) {
+    return A.importFile(f).then(function (res) {
+      AT.noteUpload(res.id);
+      if (replaceId && ED.find(replaceId)) {
+        AT.editItems([replaceId], function (it) {
+          it.a = res.id; it.nm = res.name; it.iw = res.w; it.ih = res.h;
+          it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1;
+          delete it.ax.cr;
+          ["vid", "vs", "ve", "mu", "vol", "nl"].forEach(function (k) { delete it.ax[k]; });   // a picture now
+        });
+      } else placePhoto(res);
+      AT.toast(t("img.added"));
+      if (AT.renderDrawer) AT.renderDrawer();
+    }, function (e) {
+      AT.toast(e && e.message === "nofs" ? t("img.nofs") : t("img.fail"));
     });
   }
 
@@ -1115,7 +1300,7 @@
   AT.io = {
     exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, importDisk: importDisk, importMany: importMany, openFile: openFile, importPptx: importPptxFile, uploadImage: uploadImage,
     placePhoto: placePhoto, pickFile: pickFile, saveBlob: saveBlob, exportDialog: exportDialog, resizeTo: resizeTo,
-    renderFiles: renderFiles, relaid: relaid,
+    renderFiles: renderFiles, relaid: relaid, svgOf: svgOf, svgSelection: svgSelection,
     sendTo: sendTo, canSend: canSend
   };
 })();

@@ -79,6 +79,7 @@
       "del.q": "Delete “{t}” from this device? The file goes from Files › Music (and from your other devices with Vault Drive).",
       "del.many": "Delete these {n} songs from this device?",
       "missing": "Not on this device", "missing.toast": "This song is not on this device. Add its file to Files › Music.",
+      "play.none": "There are no songs to play here yet.", "play.wait": "The songs are still loading. They start as soon as they arrive.",
       "now.from": "Playing from", "now.lib": "Your library", "q.now": "Now playing", "q.up": "Next up", "q.next": "Next from: {n}",
       "q.clear": "Clear", "q.empty": "Nothing else in the queue.", "q.remove": "Remove from queue",
       "toast.added": "Added to “{n}”.", "toast.queued": "Added to the queue.", "toast.next": "Plays next.",
@@ -247,6 +248,7 @@
       "del.q": "Να διαγραφεί το «{t}» από αυτή τη συσκευή; Το αρχείο φεύγει από τα Αρχεία › Music (και από τις άλλες συσκευές σου με το Vault Drive).",
       "del.many": "Να διαγραφούν αυτά τα {n} τραγούδια από αυτή τη συσκευή;",
       "missing": "Δεν υπάρχει σε αυτή τη συσκευή", "missing.toast": "Αυτό το τραγούδι δεν υπάρχει σε αυτή τη συσκευή. Πρόσθεσε το αρχείο του στα Αρχεία › Music.",
+      "play.none": "Δεν υπάρχουν ακόμη τραγούδια για να παίξουν εδώ.", "play.wait": "Τα τραγούδια φορτώνουν ακόμη. Ξεκινούν μόλις έρθουν.",
       "now.from": "Παίζει από", "now.lib": "Η βιβλιοθήκη σου", "q.now": "Παίζει τώρα", "q.up": "Στη σειρά", "q.next": "Επόμενα από: {n}",
       "q.clear": "Καθαρισμός", "q.empty": "Δεν υπάρχει τίποτα άλλο στην ουρά.", "q.remove": "Αφαίρεση από την ουρά",
       "toast.added": "Προστέθηκε στη λίστα «{n}».", "toast.queued": "Προστέθηκε στην ουρά.", "toast.next": "Παίζει αμέσως μετά.",
@@ -588,9 +590,11 @@
       if (r && r.extra) f.extra = r.extra;
       renderKeepScroll();
       if (f.more && f.auto && f.list.length < f.auto && feeds[key] === f) feedMore(key);
+      playPending();
     }, function (e) {
       f.busy = false; f.err = (e && e.code) || "net";
       renderKeepScroll();
+      playPending();
     });
   }
   function fIa(o) { return function (page) { return O.iaSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.albums, more: r.more }; }); }; }
@@ -2148,6 +2152,9 @@
       if (i === idx) map = items.length;
       items.push(C.itemOf(r));
     });
+    // An empty list is not a missing song (MU-EMPTY1): a free music page
+    // whose songs have not arrived (or came back empty) says so.
+    if (!rows.length) { showToast(t("play.none")); return; }
     if (!items.length) { showToast(t("missing.toast")); return; }
     if (idx >= 0 && map < 0) { showToast(t("missing.toast")); return; }
     // The Shuffle button turns shuffle on; Play and a tapped row keep the current setting.
@@ -2614,18 +2621,51 @@
     if (list) m.appendChild(playBar(list, src, extra));
     else if (extra && extra.length) { var bar = el("div", "play-bar"); extra.forEach(function (x) { bar.appendChild(x); }); m.appendChild(bar); }
   }
+  // list = rows, or a live list of a free music page (liveFeeds): Play
+  // and Shuffle then take the songs that are there when tapped, wait for
+  // the ones still loading, or play its first album (MU-EMPTY1).
   function playBar(list, src, extra) {
     var bar = el("div", "play-bar");
     var playing = isPlayingFrom(src);
+    var go = function (shf) { if (list && list.live) playLive(list, src, shf); else playRows(list, -1, src, shf); };
     var pb = button(playing ? t("pause") : t("play"), "big-play", function () {
       if (playing) { H.toggle(); return; }
-      playRows(list, -1, src, false);
+      go(false);
     }, playing && H.getState().playing ? I.pause : I.play);
     pb.setAttribute("data-src", JSON.stringify(src));
     bar.appendChild(pb);
-    bar.appendChild(button(t("shuffle"), "icon-btn", function () { playRows(list, -1, src, true); }, I.shuffle));
+    bar.appendChild(button(t("shuffle"), "icon-btn", function () { go(true); }, I.shuffle));
     if (extra) extra.forEach(function (x) { bar.appendChild(x); });
     return bar;
+  }
+  // The songs of these feeds as one live list; alt(shf) plays something
+  // else when they have none (true when it did).
+  function liveFeeds(keys, alt) {
+    var fs = function () { return keys.map(function (k) { return feeds[k]; }).filter(Boolean); };
+    return {
+      live: 1,
+      get: function () { return fs().reduce(function (a, f) { return a.concat(f.list); }, []); },
+      busy: function () { return fs().some(function (f) { return f.busy; }); },
+      alt: alt || null
+    };
+  }
+  var pendingPlay = null;
+  function playLive(L, src, shf) {
+    pendingPlay = null;
+    var list = L.get();
+    if (list.length) { playRows(list, -1, src, shf); return; }
+    if (L.busy()) { pendingPlay = { L: L, src: src, shf: shf, until: Date.now() + 30000 }; showToast(t("play.wait")); return; }
+    if (!(L.alt && L.alt(shf))) showToast(t("play.none"));
+  }
+  // A Play tapped while the songs were loading starts when they arrive,
+  // if the page is still open (and not after 30 s).
+  function playPending() {
+    var p = pendingPlay;
+    if (!p) return;
+    if (Date.now() > p.until || !view || view.kind !== p.src.kind || view.id !== p.src.id) { pendingPlay = null; return; }
+    var list = p.L.get();
+    if (list.length) { pendingPlay = null; playRows(list, -1, p.src, p.shf); return; }
+    if (!p.L.busy()) { pendingPlay = null; if (!(p.L.alt && p.L.alt(p.shf))) showToast(t("play.none")); }
   }
   function isPlayingFrom(src) {
     if (!H) return false;
@@ -2722,7 +2762,7 @@
       k = "b|" + b.id;
       f = feed(k, b.src === "ia" ? fIa(b.ia) : b.src === "cc" ? fCc(b.cc) : b.src === "jm" ? fJm(b.jm) : fOv(b.ov));
       var cardsOnly = b.src === "ia" || (b.jm && (b.jm.albums || b.jm.radios));
-      pageHead(m, cover("", b.id, "big", I.globe), t("kind.free"), name, el("div", "ph-sub dim", srcName(b.src)), cardsOnly ? null : f.list, src);
+      pageHead(m, cover("", b.id, "big", I.globe), t("kind.free"), name, el("div", "ph-sub dim", srcName(b.src)), cardsOnly ? null : liveFeeds([k]), src);
       if (cardsOnly) { var g = el("div", "grid"); f.list.forEach(function (a) { g.appendChild(b.jm && b.jm.radios ? radioCard(a) : oAlbumCard(a)); }); m.appendChild(g); }
       else m.appendChild(rowList(f.list, { src: src }));
       feedStatus(m, k, srcName(b.src));
@@ -2734,7 +2774,17 @@
       var ki = "g|ia|" + gg.id, ko = "g|ov|" + gg.id, kc = "g|cc|" + gg.id, kj = "g|jm|" + gg.id;
       var fj = feed(kj, fJm({ tags: gg.id, order: "popularity_month" }));
       var fi = feed(ki, fIa({ subject: word })), fo = feed(ko, fOv({ q: word })), fc = feed(kc, fCc({ tags: gg.id === "hiphop" ? "hip_hop" : gg.id }));
-      var songs = fj.list.concat(fo.list, fc.list);
+      // No songs from Jamendo, Openverse or ccMixter: Play takes an album
+      // of Internet Archive (a random one with Shuffle).
+      var songs = liveFeeds([kj, ko, kc], function (shf) {
+        var al = feeds[ki] ? feeds[ki].list : [];
+        if (!al.length) return false;
+        var a = al[shf ? Math.floor(Math.random() * al.length) : 0];
+        albumOf("ia", a.id).then(function (r) {
+          if (r.tracks.length) playRows(r.tracks, -1, { kind: "ia", id: a.id, n: r.album.n }, shf); else showToast(t("play.none"));
+        }, function (e) { showToast(errText(e && e.code, srcName("ia"))); });
+        return true;
+      });
       pageHead(m, cover("", gg.id, "big", I.globe), t("kind.free"), gn, el("div", "ph-sub dim", t("home.freeSub")), songs, src);
       m.appendChild(el("h2", "sub-h", t("o.albums", { s: srcName("ia") })));
       var ci = el("div", "cards");
@@ -2753,7 +2803,7 @@
       src = { kind: "omood", id: mo.id, n: mn };
       k = "m|jm|" + mo.id;
       f = feed(k, typeof O.jmMoodQueries === "function" ? fJmTry(O.jmMoodQueries(mo.id)) : fJm({ mood: mo.id, order: "popularity_month" }));
-      pageHead(m, cover("", "mood" + mo.id, "big", I.globe), t("kind.mood"), mn, el("div", "ph-sub dim", srcName("jm")), f.list, src);
+      pageHead(m, cover("", "mood" + mo.id, "big", I.globe), t("kind.mood"), mn, el("div", "ph-sub dim", srcName("jm")), liveFeeds([k]), src);
       m.appendChild(rowList(f.list, { src: src }));
       if (!f.busy && !f.list.length && playingQueue(m, src)) return;
       feedStatus(m, k, srcName("jm"));

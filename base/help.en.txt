@@ -1,5 +1,5 @@
 # Base
-Base keeps records with structure, like a small database: a catalogue of your books, a collection, the guests of an event, the tasks of a project. Each base holds tables, each table has fields of a fixed type, and you see the same records as a grid or as cards.
+Base keeps records with structure, like a small database: a catalogue of your books, a collection, the guests of an event, the tasks of a project. Each base holds tables, each table has fields of a fixed type, and you see the same records as a grid, cards, a gallery, a kanban board, a calendar or a form.
 
 ## Getting started
 - Press `New base` and pick a template, or start with a blank base.
@@ -8,8 +8,9 @@ Base keeps records with structure, like a small database: a catalogue of your bo
 
 ## Fields
 - Tap a column header to edit the field, sort by it, move it, hide it in this view or delete it. The `+` at the end of the header row adds a field.
-- Types: short and long text, number, currency, percent, date (with or without a time), checkbox, single choice, multiple choice, rating, email, web address, phone, links to records, and those Base fills in by itself: autonumber, created time, last changed time, lookups, rollups, counts and formulas.
+- Types: short and long text, number, currency, percent, date (with or without a time), checkbox, single choice, multiple choice, rating, email, web address, phone, attachments, links to records, and those Base fills in by itself: autonumber, created time, last changed time, lookups, rollups, counts and formulas.
 - Changing a field's type converts its values. Values that do not fit are emptied, and Base tells you how many before it changes anything. `Undo` brings them back.
+- An attachment field holds up to 20 files per record: photos, PDFs and other files up to 10 MB. They are kept on the orOS disk (Files › Base › Attachments) and reach your other devices with the disk (Sync › Drive). Photos are made smaller and lose their location data. Open a record to add, open, save or remove them.
 - The first field names each record. Choose another one in the table menu (`⋯` › Field that names records).
 
 ## Links between tables
@@ -36,6 +37,10 @@ Base keeps records with structure, like a small database: a catalogue of your bo
 - `Fields` chooses which fields this view shows and in what order. A hidden field stays in the table and in other views.
 - The search box looks in the shown fields of this view only.
 - A new record added in a filtered view takes the values of the "is" conditions, so it stays in the view.
+- A kanban view puts the records in columns by a single-choice field (`Columns by`). Drag a card to another column to change its value; on a phone, hold the card a moment first. With a keyboard, focus a card and press Alt + ← or →. The `+` at the top of a column adds a record with that value.
+- A gallery view shows the records as cards with a cover: the first photo of an attachment field (`Cover from`).
+- A form view shows the fields of the view as a form. `Add record` saves one record and empties the form for the next. Links, attachments and computed fields are filled in the record afterwards.
+- A calendar view lays the records out on a month by a date field (`Date field`); created and changed times work too. Tap a day for its records and to add a new one on that day. The month you look at is kept on this device only.
 
 ## Import
 - Pick several files at once to make one base with several tables, like the CSV files Airtable exports (one per table). Each sheet of a workbook becomes a table too.
@@ -45,8 +50,9 @@ Base keeps records with structure, like a small database: a catalogue of your bo
 
 ## Export
 - Table menu (`⋯`) › Export this view as CSV saves the records and fields you see, in that order.
+- Table menu (`⋯`) › Print or save as PDF prints the view as a table (the records and fields you see, up to 5,000 records); the browser's print dialog also saves a PDF.
 - Open this view in Spreadsheet sends them to [Spreadsheet](app:spreadsheet) as a new sheet (up to 499 records).
-- Base menu (`⋯`) › Save as orOS file (.orosbase) saves the whole base, with its tables, views and links, as one file for a copy or another device. Opening it adds what is missing and never deletes; records already here stay as they are unless you tick `Update with newer versions`. The file also holds a CSV of each table (in `preview/`) and is not encrypted.
+- Base menu (`⋯`) › Save as orOS file (.orosbase) saves the whole base, with its tables, views and links, as one file for a copy or another device (attachments go by name; the files stay on the orOS disk). Opening it adds what is missing and never deletes; records already here stay as they are unless you tick `Update with newer versions`. The file also holds a CSV of each table (in `preview/`) and is not encrypted.
 
 ## Your data
 - Everything stays on this device and is saved as you go. With orOS sync on in [Settings](app:settings), your bases follow you to your other devices, encrypted.

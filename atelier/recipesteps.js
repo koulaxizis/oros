@@ -12,6 +12,9 @@
 //   size   text sizes × pct %
 //   filter the photo filter of every photo ("none" removes it)
 //   center text boxes (or every element) centred across the page
+//   outlines texts (in font `from`, "" = any) become shapes with their
+//          letters' outlines (vector wave V5, AX.outlineText)
+//   topath library shapes get their outline as their own (ext.pth)
 //   cutout remove the background of every photo (on the device)
 //   resize sizes [{ w, h, u px|mm, p preset id }]: copies = new
 //          designs in each size (the next steps work on the copies),
@@ -44,11 +47,13 @@
     size: { kind: "doc", args: { pct: { t: "num", lo: 10, hi: 1000, def: 100, req: 1 } } },
     filter: { kind: "doc", args: { flt: { t: "enum", v: FILTER_IDS, def: "none" } } },
     center: { kind: "doc", args: { what: { t: "enum", v: ["text", "all"], def: "text" } } },
+    outlines: { kind: "doc", args: { from: { t: "font" } } },
+    topath: { kind: "doc", args: {} },
     cutout: { kind: "async", args: {} },
     resize: { kind: "async", args: { sizes: { t: "list", of: SIZE, min: 1, max: 12 }, copies: { t: "bool", def: 1 } } },
     export: { kind: "out", args: { fmt: { t: "enum", v: ["png", "jpg", "pdf"], def: "png" }, scale: { t: "enum", v: [1, 2, 3], def: 1 }, dpi: { t: "enum", v: [150, 300], def: 300 } } }
   };
-  var ORDER = ["text", "color", "font", "size", "filter", "center", "cutout", "resize", "export"];
+  var ORDER = ["text", "color", "font", "size", "filter", "center", "outlines", "topath", "cutout", "resize", "export"];
 
   // ---------- 1. Applying a step ----------
   function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
@@ -68,6 +73,12 @@
     var nw = ctx.now || Date.now(), n = 0;
     var th = ctx.textHeight || function (it) { return AX.textHeight(M.normItem(it) || it); };
     var W = doc.setup.w, rx = st.op === "text" ? finder(st) : null;
+    if (st.op === "outlines") {                 // vector wave V5: the texts become letter outlines
+      doc.items.filter(function (it) {
+        return it.ax && it.ax.k === "text" && !it.lock && (it.ax.tx || "").trim() && (!st.from || AX.fontOf(it) === st.from);
+      }).forEach(function (it) { var r = AX.outlineText(doc, it, nw); if (r && r.ids.length) n++; });
+      return n;
+    }
     doc.items.forEach(function (it) {
       var ax = it.ax;
       if (!ax) return;                       // a kind this copy does not know (axu)
@@ -98,6 +109,9 @@
           break;
         case "center":
           if (!ax.bg && !it.lock && (st.what === "all" || k === "text")) it.x = Math.round((W - it.w) / 2 * 100) / 100;
+          break;
+        case "topath":
+          if (k === "shape" && !it.lock) AX.shapeToPath(it);
           break;
       }
       if (k === "text" && JSON.stringify(it) !== before) it.h = th(it);

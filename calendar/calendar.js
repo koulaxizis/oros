@@ -7178,6 +7178,9 @@ function transientNote(title, body) {
     }, 60);
   }
   window.__calNewEvent = __orosCalendarNew;
+  // the shell's live path (__orosOpenCalendarNew with Calendar already
+  // open) calls this name; without it the form never opened there
+  window.__orosCalendarNew = __orosCalendarNew;
 
 
   /* ---------- 7h. Wave 8: subscribed calendars (ICS by address) ----------

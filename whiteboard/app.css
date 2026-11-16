@@ -418,3 +418,18 @@ dialog input[type="text"] {
 }
 @media (prefers-reduced-motion: reduce) { #toast { transition: none; } .timer.up.flash { animation: none; } }
 @media print { #toolbar, .bar, .hint { display: none; } }
+
+/* Mermaid text (DG4) */
+.mmd-text {
+  display: block;
+  width: 100%;
+  min-height: 180px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg, transparent);
+  color: var(--text);
+  font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  resize: vertical;
+}
