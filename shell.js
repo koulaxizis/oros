@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.18.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.19.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -9300,7 +9300,8 @@
     { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
     { key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } },
     { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } },
-    { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } }
+    { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } },
+    { id: "screen", key: "b", label: "sc.desc.screen", fn: function() { scrMove(); } }
   ];
   // The key an SC_DEFS entry answers to (e.code) and how it is shown:
   // a letter ("v" → KeyV, "V") or a non-letter default ("Period", ".").
@@ -12792,6 +12793,7 @@
     }
     // TILL-1: on a till-only device anything but Stock needs the owner.
     if (TILL && app && app.id !== "stock") { window.orosLock.till.ask(); return; }
+    if (typeof scrWins !== "undefined" && scrElsewhere(app)) return;   // SS1: it lives on the other screen
     if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
     var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;
@@ -13187,6 +13189,8 @@
       row.appendChild(go);
       var sb = mtSwSplitBtn(it);
       if (sb) row.appendChild(sb);
+      var scb = mtSwScreenBtn(it);   // SS1
+      if (scb) row.appendChild(scb);
       row.appendChild(x);
       mtSwSwipe(row, it.app.id);
       box.appendChild(row);
@@ -13888,6 +13892,131 @@
   function ovSnapshot() {
     if (SOLO) return null;
     return { corner: ovPref(OV_CORNER_KEY), superKey: ovPref(OV_SUPER_KEY) };
+  }
+
+  // ---------- 10g. The other screen (SS1, 2026-11-15) ----------
+  // With two screens set to Extend, an app moves to the other screen:
+  // a new orOS window opens there with that app ("/?open=<id>", the
+  // launch link, so the same shell, sync and lock run in it) and the
+  // app closes here. Never two live copies of one app (the same reason
+  // as MT-S1: an older copy in memory would undo the other's saves):
+  // opening it here again while its window lives brings that window to
+  // the front, and a click on the note brings the app back here. The
+  // other window moves an app back the same way (its opener is this
+  // window). screens.js knows the screens; without the Window
+  // Management API (Firefox, Safari, phones) nothing here shows.
+  var scrWins = {};          // app id -> the window it moved to (this session)
+  function scrAvailable() {
+    return !SOLO && !TILL && !!(window.orosScreens && window.orosScreens.available(window));
+  }
+  function scrAppOf(id) {
+    for (var i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === id && state.apps[i].type === "internal") return state.apps[i];
+    }
+    return null;
+  }
+  function scrWin(id) {
+    var w = scrWins[id];
+    if (!w) return null;
+    var gone = true;
+    try { gone = w.closed; } catch (e) {}
+    if (gone) { delete scrWins[id]; return null; }
+    return w;
+  }
+  // The app in front (or `id`) goes to the other screen.
+  function scrMove(id) {
+    if (SOLO || TILL) return;
+    var app = id ? scrAppOf(id) : (state.running && state.running.type === "internal" ? state.running : null);
+    if (!app) { scToast("info", window.t("scr.noapp")); return; }
+    if (!scrAvailable()) { scToast("info", window.t("scr.none")); return; }
+    var name = mtLabel(app);
+    // A window of this orOS that opened us: the app goes back there.
+    var op = scrOpener();
+    if (op) {
+      try { op.__orosScreenTake(app.id); } catch (e) { op = null; }
+      if (op) { scrLeave(app.id); return; }
+    }
+    var old = scrWin(app.id);
+    if (old) { try { old.focus(); } catch (e) {} scrLeave(app.id); return; }
+    var url = location.pathname + "?open=" + encodeURIComponent(app.id);
+    var w = window.orosScreens.open(url, "oros-screen-" + app.id, window);
+    if (!w) { scToast("err", window.t("scr.blocked")); return; }
+    scrWins[app.id] = w;
+    scrLeave(app.id);
+    scToast("ok", window.t("scr.moved").replace("{app}", name));
+  }
+  // The app closes here (front, beside or in the background).
+  function scrLeave(id) {
+    if (mtSw) mtSwClose();
+    if (appLive(id) || (state.running && state.running.id === id)) mtClose(id);
+    // A window opened only for apps on the other screen closes with its last one.
+    if (scrOpener() && !state.running && !mtList().length) {
+      setTimeout(function () { try { window.close(); } catch (e) {} }, 300);
+    }
+  }
+  // The orOS window that opened this one, when it is on this origin.
+  function scrOpener() {
+    var op = null;
+    try {
+      op = window.opener;
+      if (!op || op.closed || typeof op.__orosScreenTake !== "function") return null;
+    } catch (e) { return null; }
+    return op;
+  }
+  // Called by the other window: open `id` here and come to the front.
+  window.__orosScreenTake = function (id) {
+    var app = scrAppOf(String(id || ""));
+    if (!app) return false;
+    delete scrWins[app.id];
+    try { window.focus(); } catch (e) {}
+    openApp(app);
+    scToast("ok", window.t("scr.back").replace("{app}", mtLabel(app)));
+    return true;
+  };
+  // Called by the other window: close `id` there (it comes back to its opener).
+  window.__orosScreenDrop = function (id) {
+    if (!scrAppOf(String(id || ""))) return false;
+    scrLeave(String(id));
+    return true;
+  };
+  // openApp asks first: is this app open in a window on the other
+  // screen? Then that window comes to the front instead.
+  function scrElsewhere(app) {
+    if (!app || app.type !== "internal") return false;
+    var w = scrWin(app.id);
+    if (!w) return false;
+    var live = false;
+    try { live = typeof w.__orosAppLiveHere === "function" && w.__orosAppLiveHere(app.id); } catch (e) { live = false; }
+    if (!live) { delete scrWins[app.id]; return false; }
+    try { w.focus(); } catch (e) {}
+    closeMenu();
+    scToast("info", window.t("scr.there").replace("{app}", mtLabel(app)), function () {
+      var t = document.getElementById("sc-toast");
+      if (t) t.remove();
+      try { w.__orosScreenDrop(app.id); } catch (e) {}
+      delete scrWins[app.id];
+      openApp(app);
+    });
+    return true;
+  }
+  window.__orosAppLiveHere = function (id) {
+    return !!(state.running && state.running.id === id) || appLive(id);
+  };
+  // The switcher row button.
+  function mtSwScreenBtn(it) {
+    if (!scrAvailable()) return null;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "mt-sw-split mt-sw-screen";
+    b.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="2" y="5" width="12" height="9" rx="1.5"/><rect x="10" y="10" width="12" height="9" rx="1.5"/><path d="M5 18h3"/></svg>';
+    var l = window.t("scr.move").replace("{app}", mtLabel(it.app));
+    b.setAttribute("aria-label", l);
+    b.title = l;
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      scrMove(it.app.id);
+    });
+    return b;
   }
 
   // ---------- 11. Menu open/close ----------

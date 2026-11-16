@@ -2023,6 +2023,7 @@ var PRECACHE_URLS = [
   "household/",
   "household/index.html",
   "household/app.css",
+  "device/screens.js",
   "household/core.js",
   "household/crypto.js",
   "household/folder.js",

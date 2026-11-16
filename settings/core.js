@@ -1417,7 +1417,7 @@
       "w.dv-apps": "device info space size apps biggest",
       "w.dv-battery": "device info battery charge level",
       "w.dv-network": "device info network connection online offline speed",
-      "w.dv-screen": "device info screen resolution window pixel ratio touch",
+      "w.dv-screen": "device info screen resolution window pixel ratio touch screens monitor second screen projector extend duplicate",
       "w.dv-features": "device info browser features permissions notifications location missing",
       "w.dv-report": "device info report problem copy support"
     },
@@ -2681,7 +2681,7 @@
       "w.dv-apps": "πληροφορίες συσκευής χώρος μέγεθος εφαρμογές",
       "w.dv-battery": "πληροφορίες συσκευής μπαταρία φόρτιση",
       "w.dv-network": "πληροφορίες συσκευής δίκτυο σύνδεση ίντερνετ ταχύτητα",
-      "w.dv-screen": "πληροφορίες συσκευής οθόνη ανάλυση παράθυρο αφή",
+      "w.dv-screen": "πληροφορίες συσκευής οθόνη ανάλυση παράθυρο αφή οθόνες δεύτερη οθόνη προβολέας επέκταση διπλότυπο",
       "w.dv-features": "πληροφορίες συσκευής δυνατότητες browser άδειες ειδοποιήσεις τοποθεσία",
       "w.dv-report": "πληροφορίες συσκευής αναφορά πρόβλημα αντιγραφή"
     }

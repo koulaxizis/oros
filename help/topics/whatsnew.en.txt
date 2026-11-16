@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.19.00
+- **Second screen.** With two screens set to Extend (on Windows: Win+P), Ctrl+Alt+Shift+B or the two-screens button in Open apps moves an app to the other screen, and the same keys bring it back. Slides puts the audience on the other screen and keeps the speaker view on yours. Settings › Device › Screen shows your screens. Works in Chrome, Edge and the orOS apps.
+
 ## Version 7.18.00
 - **Clipboard history and emoji.** Clipboard history (Settings › System, off until you turn it on): orOS keeps the text you copy inside its apps on this device; Ctrl+Alt+Shift+V or Clipboard in Quick settings brings it back, with pins, search and Paste into the field you were in. Never Passwords, nothing in Sensitive work. New emoji picker: Ctrl+Alt+Shift+. or Emoji in Quick settings, search in English, Greek or German. See [Privacy](help:t/privacy).
 

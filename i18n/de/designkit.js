@@ -27,6 +27,7 @@ orosPack("de", "designkit", {
  "flt.vivid": "Lebendig",
  "flt.warm": "Warm",
  "fsHint": "Hier klicken für Vollbild. Schiebe dieses Fenster vorher auf den Beamer.",
+ "fsHintPlaced": "Hier klicken für Vollbild.",
  "help": "Hilfe",
  "help.d1": "Weiter",
  "help.d2": "Zurück",

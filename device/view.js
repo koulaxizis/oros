@@ -128,6 +128,11 @@
       "d.color": "Colour depth", "d.bits": "{n}-bit", "d.touch": "Touch",
       "d.points": "yes, {n} points", "d.dark": "System dark mode", "d.motion": "Reduce motion",
       "d.mode": "Running as", "d.installed": "Installed app", "d.tab": "Browser tab",
+      "d.screens": "Screens", "d.scrOne": "One (or the screens show the same picture)", "d.scrMany": "More than one, extended",
+      "d.scrNo": "This browser cannot place windows on another screen (Chrome, Edge and the orOS apps can).",
+      "d.scrAsk": "Use the other screen", "d.scrDenied": "orOS may not place windows on other screens. Allow \u201cWindow management\u201d in the site settings of this browser.",
+      "d.scrHere": "this one", "d.scrMain": "main",
+      "d.scrHint": "Duplicate or extend is chosen by the system: on Windows press Win+P, on the orOS Live USB press Ctrl+Alt+Shift+D. With Extend, Ctrl+Alt+Shift+B or Open apps moves an app to the other screen, and Slides puts the audience there by itself.",
       "o.version": "orOS version", "o.cache": "Offline copy", "o.apps": "Apps",
       "o.lang": "Language", "o.langName": "English", "o.theme": "Theme", "o.dark": "Dark", "o.light": "Light",
       "o.browser": "Browser (approx.)", "o.os": "System (approx.)", "o.cores": "CPU cores",
@@ -211,6 +216,11 @@
       "d.color": "Βάθος χρώματος", "d.bits": "{n}-bit", "d.touch": "Αφή",
       "d.points": "ναι, {n} σημεία", "d.dark": "Σκούρο θέμα συστήματος", "d.motion": "Λιγότερη κίνηση",
       "d.mode": "Τρέχει ως", "d.installed": "Εγκατεστημένη εφαρμογή", "d.tab": "Καρτέλα browser",
+      "d.screens": "Οθόνες", "d.scrOne": "Μία (ή οι οθόνες δείχνουν την ίδια εικόνα)", "d.scrMany": "Περισσότερες από μία, σε επέκταση",
+      "d.scrNo": "Αυτός ο browser δεν μπορεί να βάλει παράθυρα σε άλλη οθόνη (μπορούν ο Chrome, ο Edge και οι εφαρμογές orOS).",
+      "d.scrAsk": "Χρήση της άλλης οθόνης", "d.scrDenied": "Το orOS δεν επιτρέπεται να βάζει παράθυρα σε άλλες οθόνες. Επίτρεψε τη «Διαχείριση παραθύρων» στις ρυθμίσεις ιστότοπου του browser.",
+      "d.scrHere": "αυτή", "d.scrMain": "κύρια",
+      "d.scrHint": "Το αν οι οθόνες δείχνουν το ίδιο (διπλότυπο) ή επεκτείνονται το διαλέγει το σύστημα: στα Windows πάτα Win+P, στο orOS Live USB πάτα Ctrl+Alt+Shift+D. Σε επέκταση, το Ctrl+Alt+Shift+B ή οι Ανοιχτές εφαρμογές μετακινούν μια εφαρμογή στην άλλη οθόνη, και τα Slides βάζουν μόνα τους το κοινό εκεί.",
       "o.version": "Έκδοση orOS", "o.cache": "Offline αντίγραφο", "o.apps": "Εφαρμογές",
       "o.lang": "Γλώσσα", "o.langName": "Ελληνικά", "o.theme": "Θέμα", "o.dark": "Σκούρο", "o.light": "Φωτεινό",
       "o.browser": "Browser (περίπου)", "o.os": "Σύστημα (περίπου)", "o.cores": "Πυρήνες CPU",
@@ -709,6 +719,46 @@
     ];
     fill("b-screen", [kvTable(rows)]);
     report.screen = rows;
+    renderScreens(p, rows);
+  }
+  // SS3: the screens (screens.js in the shell, Window Management API).
+  function renderScreens(p, rows) {
+    var S = null;
+    try { S = p.orosScreens || null; } catch (e) { S = null; }
+    var hint = el("p", "hint", t("d.scrHint"));
+    if (!S || !S.supported(p)) {
+      // phones and tablets: nothing to say about a second screen
+      if (mq("(hover: hover) and (pointer: fine)", p)) fill("b-screen", [kvTable(rows), el("p", "hint", t("d.scrNo")), hint]);
+      return;
+    }
+    var ext = false;
+    try { ext = !!(p.screen && p.screen.isExtended); } catch (e) {}
+    var base = rows.concat([[t("d.screens"), ext ? t("d.scrMany") : t("d.scrOne")]]);
+    fill("b-screen", [kvTable(base), hint]);
+    report.screen = base;
+    if (!ext) return;
+    S.permission(p).then(function (st) {
+      if (st === "granted") {
+        S.list(p).then(function (list) {
+          var more = list.map(function (x, i) {
+            var tags = [];
+            if (x.current) tags.push(t("d.scrHere"));
+            if (x.primary) tags.push(t("d.scrMain"));
+            return [(x.label || t("d.screen") + " " + (i + 1)), num(x.w) + " × " + num(x.h) + (tags.length ? " (" + tags.join(", ") + ")" : "")];
+          });
+          fill("b-screen", [kvTable(base.concat(more)), hint]);
+          report.screen = base.concat(more);
+        });
+        return;
+      }
+      if (st === "denied") { fill("b-screen", [kvTable(base), el("p", "hint", t("d.scrDenied")), hint]); return; }
+      var ask = el("button", "btn dv-small", t("d.scrAsk"));
+      ask.type = "button";
+      ask.addEventListener("click", function () {
+        S.details(p).then(function () { renderScreen(); });
+      });
+      fill("b-screen", [kvTable(base), ask, hint]);
+    });
   }
 
   // ---------- 9. orOS & browser ----------
