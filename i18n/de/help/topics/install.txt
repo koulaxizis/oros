@@ -48,7 +48,7 @@ Mit orOS, installiert aus Chrome oder Edge unter Windows, Linux oder Mac, ersche
 
 Die Datei wird als neues Element importiert, oder über die eigene Vorschau der App; orOS schreibt nie in die Originaldatei zurück. Wenn mehr als eine App einen Typ öffnen kann, fragt orOS, welche, und `Immer diese App verwenden` merkt sich deine Wahl auf diesem Gerät. Es öffnet sich immer eine Datei auf einmal.
 
-In den [Einstellungen](app:settings) unter `Dateien öffnen` siehst du die Liste, wählst die App für gemeinsame Typen und findest, wie du orOS unter Windows, Linux oder Mac zum Standard für einen Typ machst. Das kannst nur du tun, in den Einstellungen deines Systems.
+In den [Einstellungen](app:settings) unter `Standard-Apps` siehst du die Liste, wählst die App für gemeinsame Typen (deine Wahl gilt auf all deinen Geräten) und findest, wie du orOS unter Windows, Linux oder Mac zum Standard für einen Typ machst. Das kannst nur du tun, in den Einstellungen deines Systems.
 
 Auf Android, mit orOS aus Chrome installiert, nimm `Teilen` › orOS in Dateien, Gmail oder einer beliebigen App: Die Datei öffnet sich in der passenden orOS-App. orOS kann auf Android noch nicht der Standard zum Öffnen von Dateien sein.
 

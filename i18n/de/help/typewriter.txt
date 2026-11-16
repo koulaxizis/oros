@@ -16,6 +16,7 @@ Die Schreibmaschinen-Schaltfläche oben schaltet den Modus aus. Dann funktionier
 
 ## Seiten
 - `Neue Seite` beginnt ein frisches Blatt. Es wird gespeichert, sobald du etwas tippst.
+- `Auf der Schreibmaschine` bei einem Impuls in [Schreibimpulse](app:prompter) öffnet ein frisches Blatt mit dem Impuls in der ersten Zeile. Auch dieses wird gespeichert, sobald du etwas tippst.
 - Tippe oder klicke auf eine Seite in der Liste, um sie zu öffnen, und auf das × daneben, um sie zu löschen; `Rückgängig` holt sie zurück.
 - Unter `Diese Seite` kannst du der Seite einen `Titel` und ein `Wortziel` geben. Mit einem Ziel füllt sich beim Schreiben ein dünner Balken unter der oberen Leiste.
 

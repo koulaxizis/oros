@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — fonts.js (v1.5.0)
+// orOS designkit — fonts.js (v1.6.0)
 // Font families a Layout document names besides the built-in Noto
 // ones. Owner: Layout.
 //   - "fs_<id>": a Fontsource family (open licences, mostly SIL OFL),
@@ -34,6 +34,8 @@
 // 1.5.0 (FM-7) adds overview(): the families the person can use, with
 // letters, kind, licence and collections, for the Assistant and orOS
 // Gate (list_fonts), from what the caller read.
+// 1.6.0 (vector wave V5) adds outliner() and outlineGlyphs(): TrueType
+// glyph outlines as path commands, for text to outlines.
 // Exposes orosDK.fonts (browser) or module.exports (Node: the pure
 // parts).
 // ============================================================
@@ -1206,6 +1208,220 @@
     return res;
   }
 
+  // ---------- 10. Glyph outlines (1.6.0, vector wave V5) ----------
+  // TrueType outlines (glyf / loca, simple and composite glyphs) as
+  // designkit path commands in font units (y up), quadratic curves as
+  // the cubics they are. PostScript-outline (CFF) files have none here:
+  // outliner() is null for them. Pure; the parsed faces are kept per
+  // file buffer.
+  var OUT_CACHE = typeof WeakMap === "function" ? new WeakMap() : null;
+  function outliner(buf) {
+    if (!buf || !buf.byteLength) return null;
+    if (OUT_CACHE && OUT_CACHE.has(buf)) return OUT_CACHE.get(buf);
+    var r = null;
+    try {
+      var dv = new DataView(buf), tb = tables(dv);
+      if (tb.glyf && tb.loca && tb.head && tb.maxp) {
+        var lf = dv.getInt16(tb.head.off + 50), ng = dv.getUint16(tb.maxp.off + 4), memo = {};
+        r = {
+          upm: dv.getUint16(tb.head.off + 18) || 1000,
+          glyph: function (gid) {
+            if (!(gid >= 0 && gid < ng)) return [];
+            if (!memo[gid]) { try { memo[gid] = glyphOut(dv, tb, lf, ng, gid, 0); } catch (e) { memo[gid] = []; } }
+            return memo[gid];
+          }
+        };
+      }
+    } catch (e) { r = null; }
+    if (OUT_CACHE) OUT_CACHE.set(buf, r);
+    return r;
+  }
+  function locaAt(dv, tb, lf, i) {
+    return lf ? dv.getUint32(tb.loca.off + i * 4) : dv.getUint16(tb.loca.off + i * 2) * 2;
+  }
+  function glyphOut(dv, tb, lf, ng, gid, depth) {
+    var a = locaAt(dv, tb, lf, gid), b = locaAt(dv, tb, lf, gid + 1);
+    if (b <= a || a >= tb.glyf.len) return [];
+    var o = tb.glyf.off + a, nc = dv.getInt16(o);
+    if (nc >= 0) return simpleGlyph(dv, o, nc);
+    if (depth > 4) return [];
+    var out = [], p = o + 10, more = true;
+    while (more) {
+      var fl = dv.getUint16(p), sub = dv.getUint16(p + 2), dx, dy;
+      p += 4;
+      if (fl & 1) { dx = dv.getInt16(p); dy = dv.getInt16(p + 2); p += 4; }
+      else { dx = dv.getInt8(p); dy = dv.getInt8(p + 1); p += 2; }
+      if (!(fl & 2)) { dx = 0; dy = 0; }                 // anchored by point numbers: not supported, kept at 0
+      var xa = 1, xb = 0, xc = 0, xd = 1;
+      if (fl & 8) { xa = xd = dv.getInt16(p) / 16384; p += 2; }
+      else if (fl & 0x40) { xa = dv.getInt16(p) / 16384; xd = dv.getInt16(p + 2) / 16384; p += 4; }
+      else if (fl & 0x80) { xa = dv.getInt16(p) / 16384; xb = dv.getInt16(p + 2) / 16384; xc = dv.getInt16(p + 4) / 16384; xd = dv.getInt16(p + 6) / 16384; p += 8; }
+      if (sub < ng) glyphOut(dv, tb, lf, ng, sub, depth + 1).forEach(function (c) {
+        var n = [c[0]];
+        for (var i = 1; i < c.length; i += 2) n.push(xa * c[i] + xc * c[i + 1] + dx, xb * c[i] + xd * c[i + 1] + dy);
+        out.push(n);
+      });
+      more = !!(fl & 0x20);
+    }
+    return out;
+  }
+  function simpleGlyph(dv, o, nc) {
+    if (!nc) return [];
+    var ends = [], p = o + 10;
+    for (var i = 0; i < nc; i++) { ends.push(dv.getUint16(p)); p += 2; }
+    var n = ends[nc - 1] + 1;
+    p += 2 + dv.getUint16(p);
+    var fl = new Uint8Array(n);
+    for (var k = 0; k < n;) {
+      var f = dv.getUint8(p++);
+      fl[k++] = f;
+      if (f & 8) { var rep = dv.getUint8(p++); while (rep-- > 0 && k < n) fl[k++] = f; }
+    }
+    var xs = new Array(n), ys = new Array(n), v = 0, j;
+    for (j = 0; j < n; j++) {
+      if (fl[j] & 2) { var dx = dv.getUint8(p++); v += fl[j] & 16 ? dx : -dx; }
+      else if (!(fl[j] & 16)) { v += dv.getInt16(p); p += 2; }
+      xs[j] = v;
+    }
+    v = 0;
+    for (j = 0; j < n; j++) {
+      if (fl[j] & 4) { var dy = dv.getUint8(p++); v += fl[j] & 32 ? dy : -dy; }
+      else if (!(fl[j] & 32)) { v += dv.getInt16(p); p += 2; }
+      ys[j] = v;
+    }
+    var out = [], s = 0;
+    ends.forEach(function (e) {
+      var pts = [];
+      for (var q = s; q <= e; q++) pts.push({ x: xs[q], y: ys[q], on: !!(fl[q] & 1) });
+      s = e + 1;
+      contour(pts, out);
+    });
+    return out;
+  }
+  // one closed contour of on / off curve points → M (L | C)* Z
+  function contour(pts, out) {
+    var m = pts.length, st = 0;
+    if (m < 2) return;
+    while (st < m && !pts[st].on) st++;
+    var start, seq = [];
+    if (st < m) { start = pts[st]; for (var i = 1; i <= m; i++) seq.push(pts[(st + i) % m]); }
+    else { start = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2, on: true }; seq = pts.slice(1).concat([pts[0], start]); }
+    out.push(["M", start.x, start.y]);
+    var cur = start, ctl = null;
+    function quad(c, e) {
+      out.push(["C", cur.x + 2 / 3 * (c.x - cur.x), cur.y + 2 / 3 * (c.y - cur.y), e.x + 2 / 3 * (c.x - e.x), e.y + 2 / 3 * (c.y - e.y), e.x, e.y]);
+      cur = e;
+    }
+    seq.forEach(function (pt, k) {
+      if (pt.on) {
+        if (ctl) quad(ctl, pt);
+        else if (k < seq.length - 1) { out.push(["L", pt.x, pt.y]); cur = pt; }
+        ctl = null;
+      } else {
+        if (ctl) quad(ctl, { x: (ctl.x + pt.x) / 2, y: (ctl.y + pt.y) / 2 });
+        ctl = pt;
+      }
+    });
+    out.push(["Z"]);
+  }
+  // The face that draws a character, as text.js metrics() picks it: the
+  // key, its regular, an extra family's stand-in, Noto Sans.
+  function faceOf(key, cp) {
+    var p = key.split("-"), f = T.FAMILIES[p[0]];
+    var keys = [key, p[0] + "-r"];
+    if (f && f.urls) keys.push((f.fallback || "sans") + "-" + p[1]);
+    keys.push("sans-r");
+    for (var i = 0; i < keys.length; i++) {
+      var parts = T.faceParts(keys[i]);
+      for (var j = 0; j < parts.length; j++) {
+        var gid = parts[j].map[cp];
+        if (gid !== undefined) return { part: parts[j], gid: gid };
+      }
+    }
+    return null;
+  }
+  // Glyphs at their places → outlines in the same space (y down).
+  // glyphs: [{ key, ch, size, x, y (baseline start), rot (radians,
+  // about x/y) }] → { cmds, missing (characters with no outline: no
+  // face, or a PostScript-outline face) }. White space draws nothing.
+  function outlineGlyphs(glyphs) {
+    var out = [], missing = 0;
+    (glyphs || []).forEach(function (g) {
+      var ch = String(g.ch || "");
+      if (!ch || /^\s+$/.test(ch)) return;
+      var fc = faceOf(g.key, ch.codePointAt(0));
+      var ol = fc && fc.part.bytes ? outliner(partBuf(fc.part)) : null;
+      if (!ol) { missing++; return; }
+      var k = g.size / ol.upm, c = Math.cos(g.rot || 0), s = Math.sin(g.rot || 0);
+      ol.glyph(fc.gid).forEach(function (cmd) {
+        var n = [cmd[0]];
+        for (var i = 1; i < cmd.length; i += 2) {
+          var x = cmd[i] * k, y = -cmd[i + 1] * k;
+          n.push(g.x + x * c - y * s, g.y + x * s + y * c);
+        }
+        out.push(n);
+      });
+    });
+    return { cmds: out, missing: missing };
+  }
+  // Laid-out lines (designkit/text.js runs: t, x, y, key, size, track,
+  // kern, u; on a path g = [{ ch, w, x, y, rot }]) → glyphs where the
+  // canvas draws them (render.js drawLines) and underlines as boxes.
+  // → { glyphs, boxes: [[x, y, w, h]] }
+  function runGlyphs(lines) {
+    var glyphs = [], boxes = [];
+    (lines || []).forEach(function (ln) {
+      (ln.runs || []).forEach(function (r) {
+        if (!r.t) return;
+        if (r.g) {
+          r.g.forEach(function (g) {
+            var c = Math.cos(g.rot || 0), s = Math.sin(g.rot || 0);
+            glyphs.push({ key: r.key, ch: g.ch, size: r.size, x: g.x - c * g.w / 2, y: g.y - s * g.w / 2, rot: g.rot || 0 });
+          });
+          return;
+        }
+        var x = r.x, prev = "";
+        Array.from(r.t).forEach(function (ch) {
+          if (r.kern && prev) x += T.kernPair(r.key, prev, ch, r.size);
+          glyphs.push({ key: r.key, ch: ch, size: r.size, x: x, y: r.y, rot: 0 });
+          x += T.measure(r.key, ch, r.size, r.track || 0);
+          prev = ch;
+        });
+        if (r.u) boxes.push([r.x, r.y + r.size * 0.12, r.w, Math.max(0.3, r.size * 0.05)]);
+      });
+    });
+    return { glyphs: glyphs, boxes: boxes };
+  }
+  // Laid-out lines → outlines by line and colour (run.color as laid
+  // out): { parts: [{ line, color, cmds }], missing }, in the lines'
+  // space. Underlines are wound as the glyphs are (nonzero).
+  function outlineLines(lines) {
+    var parts = [], missing = 0;
+    (lines || []).forEach(function (ln, li) {
+      var by = {};
+      (ln.runs || []).forEach(function (r) {
+        var rg = runGlyphs([{ runs: [r] }]), o = outlineGlyphs(rg.glyphs), c = r.color || "";
+        missing += o.missing;
+        rg.boxes.forEach(function (b) {
+          o.cmds.push(["M", b[0], b[1]], ["L", b[0], b[1] + b[3]], ["L", b[0] + b[2], b[1] + b[3]], ["L", b[0] + b[2], b[1]], ["Z"]);
+        });
+        if (!o.cmds.length) return;
+        if (!by[c]) { by[c] = { line: li, color: c, cmds: [] }; parts.push(by[c]); }
+        by[c].cmds = by[c].cmds.concat(o.cmds);
+      });
+    });
+    return { parts: parts, missing: missing };
+  }
+  // one buffer per face part, so the outliner's cache holds
+  var PART_BUF = typeof WeakMap === "function" ? new WeakMap() : null;
+  function partBuf(part) {
+    var key = part.map;
+    if (PART_BUF && PART_BUF.has(key)) return PART_BUF.get(key);
+    var b = part.cff ? null : part.bytes().buffer;
+    if (PART_BUF) PART_BUF.set(key, b);
+    return b;
+  }
+
   var api = {
     FOLDER: FOLDER, FILE_RE: FILE_RE, MAX: MAX,
     isFam: isFam, fsIdOf: fsIdOf, ufIdOf: ufIdOf, squash: squash, info: info, check: check,
@@ -1227,7 +1443,9 @@
     // 1.4.0
     uses: uses,
     // 1.5.0
-    overview: overview
+    overview: overview,
+    // 1.6.0
+    outliner: outliner, outlineGlyphs: outlineGlyphs, runGlyphs: runGlyphs, outlineLines: outlineLines
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.fonts = api; }

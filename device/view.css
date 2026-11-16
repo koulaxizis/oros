@@ -108,3 +108,14 @@
 @media (prefers-reduced-motion: reduce) {
   .dv-card > summary::after { transition: none; }
 }
+
+/* OV-2 Running now: one row per open app, Close on the right. */
+.dv .dv-run { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.dv .dv-run li {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.dv .dv-run-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dv .dv-run-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dv .dv-run-sub { font-size: 12.5px; color: var(--text-dim); }
+.dv .dv-run-x { margin-top: 0; flex: 0 0 auto; }

@@ -81,6 +81,13 @@
   }
 
   // ---------- Show ----------
+  // The shell's second-screen helper (screens.js), when Slides runs in orOS.
+  function screens() {
+    try {
+      var s = window.parent && window.parent !== window && window.parent.orosScreens;
+      return s && typeof s.available === "function" ? s : null;
+    } catch (e) { return null; }
+  }
   function present(opts) {
     opts = opts || {};
     if (!SL.deck) return;
@@ -99,13 +106,18 @@
       return ms;
     }
     if (SL.showCtl && !SL.showCtl.state().closed) SL.showCtl.close();
+    // Second screen (SS2): with two screens set to Extend, Present puts
+    // the audience on the other screen and the speaker view here, the
+    // way presentation programs do. "Present" on one screen is as before.
+    var scr = screens();
     SL.showCtl = S.start({
       count: list.length,
       aspect: C.widthOf(d.as) / C.H,
       hidden: list.map(function (s) { return s.hid; }),
       startAt: Math.max(0, Math.min(list.length - 1, opts.from || 0)),
       lang: SL.LANG_BASE,
-      presenter: !!opts.presenter,
+      presenter: !!opts.presenter || !!(scr && scr.available(window)),
+      screens: scr,
       renderSlide: function (i, canvas, w, h, t, step) {
         if (t === undefined) SL.renderFrame(list[i].id, canvas, canvas.width, { step: step || 0 });
         else SL.renderFrame(list[i].id, canvas, canvas.width, { step: step || 0, t: since(i, t, step), still: still });

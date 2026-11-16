@@ -1,5 +1,5 @@
 # Datenbank
-Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den Katalog deiner Bücher, eine Sammlung, die Gäste einer Veranstaltung, die Aufgaben eines Projekts. Jede Datenbank hat Tabellen, jede Tabelle hat Felder mit festem Typ, und dieselben Einträge siehst du als Raster oder als Karten.
+Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den Katalog deiner Bücher, eine Sammlung, die Gäste einer Veranstaltung, die Aufgaben eines Projekts. Jede Datenbank hat Tabellen, jede Tabelle hat Felder mit festem Typ, und dieselben Einträge siehst du als Raster, als Karten, als Galerie, als Kanban-Board, als Kalender oder als Formular.
 
 ## Erste Schritte
 - Drück `Neue Datenbank` und wähle eine Vorlage, oder fang mit einer leeren Datenbank an.
@@ -8,8 +8,9 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 
 ## Felder
 - Tippe auf einen Spaltenkopf, um das Feld zu bearbeiten, danach zu sortieren, es zu verschieben, in dieser Ansicht auszublenden oder zu löschen. Das `+` am Ende der Kopfzeile fügt ein Feld hinzu.
-- Typen: kurzer und langer Text, Zahl, Betrag, Prozent, Datum (mit oder ohne Uhrzeit), Häkchen, Einfachauswahl, Mehrfachauswahl, Bewertung, E-Mail, Webadresse, Telefon, verknüpfte Einträge, und die, die die Datenbank selbst ausfüllt: laufende Nummer, Erstellt am, Zuletzt geändert am, Nachschlagen, Zusammenfassungen, Anzahl Verknüpfungen und Formeln.
+- Typen: kurzer und langer Text, Zahl, Betrag, Prozent, Datum (mit oder ohne Uhrzeit), Häkchen, Einfachauswahl, Mehrfachauswahl, Bewertung, E-Mail, Webadresse, Telefon, Anhänge, verknüpfte Einträge, und die, die die Datenbank selbst ausfüllt: laufende Nummer, Erstellt am, Zuletzt geändert am, Nachschlagen, Zusammenfassungen, Anzahl Verknüpfungen und Formeln.
 - Wenn du den Typ eines Felds änderst, werden seine Werte umgewandelt. Werte, die nicht passen, werden geleert, und die Datenbank sagt dir vorher, wie viele es sind. `Rückgängig` holt sie zurück.
+- Ein Anhangfeld hält bis zu 20 Dateien pro Eintrag: Fotos, PDFs und andere Dateien bis 10 MB. Sie liegen auf der orOS-Festplatte (Dateien › Base › Attachments) und kommen mit der Festplatte auf deine anderen Geräte (Sync › Drive). Fotos werden verkleinert und verlieren ihre Standortdaten. Öffne einen Eintrag, um sie hinzuzufügen, zu öffnen, zu speichern oder zu entfernen.
 - Das erste Feld benennt jeden Eintrag. Ein anderes wählst du im Tabellenmenü (`⋯` › Feld, das die Einträge benennt).
 
 ## Verknüpfungen zwischen Tabellen
@@ -36,6 +37,10 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 - `Felder` wählt, welche Felder diese Ansicht zeigt und in welcher Reihenfolge. Ein ausgeblendetes Feld bleibt in der Tabelle und in anderen Ansichten.
 - Das Suchfeld sucht nur in den gezeigten Feldern dieser Ansicht.
 - Ein neuer Eintrag in einer gefilterten Ansicht übernimmt die Werte der „ist“-Bedingungen, damit er in der Ansicht bleibt.
+- Eine Kanban-Ansicht ordnet die Einträge in Spalten nach einem Einfachauswahl-Feld (`Spalten nach`). Ziehe eine Karte in eine andere Spalte, um ihren Wert zu ändern; auf dem Handy halte die Karte zuerst kurz gedrückt. Mit der Tastatur fokussiere eine Karte und drücke Alt + ← oder →. Das `+` oben in einer Spalte fügt einen Eintrag mit diesem Wert hinzu.
+- Eine Galerieansicht zeigt die Einträge als Karten mit Titelbild: dem ersten Foto eines Anhangfelds (`Titelbild aus`).
+- Eine Formularansicht zeigt die Felder der Ansicht als Formular. `Eintrag hinzufügen` speichert einen Eintrag und leert das Formular für den nächsten. Verknüpfungen, Anhänge und berechnete Felder werden danach im Eintrag ausgefüllt.
+- Eine Kalenderansicht legt die Einträge nach einem Datumsfeld auf einen Monat (`Datumsfeld`); Erstellungs- und Änderungszeiten gehen auch. Tippe auf einen Tag für seine Einträge und um dort einen neuen hinzuzufügen. Der angezeigte Monat bleibt nur auf diesem Gerät.
 
 ## Import
 - Wähle mehrere Dateien auf einmal für eine Datenbank mit mehreren Tabellen, wie die CSV-Dateien, die Airtable exportiert (eine pro Tabelle). Auch jedes Blatt einer Arbeitsmappe wird eine Tabelle.
@@ -46,7 +51,8 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 ## Export
 - Tabellenmenü (`⋯`) › Diese Ansicht als CSV exportieren speichert die Einträge und Felder, die du siehst, in dieser Reihenfolge.
 - Diese Ansicht in Tabelle öffnen schickt sie an [Tabelle](app:spreadsheet) als neues Blatt (bis zu 499 Einträge).
-- Datenbankmenü (`⋯`) › Als orOS-Datei speichern (.orosbase) speichert die ganze Datenbank mit Tabellen, Ansichten und Verknüpfungen als eine Datei, als Kopie oder für ein anderes Gerät. Beim Öffnen kommt hinzu, was fehlt, und nichts wird gelöscht; Einträge, die schon da sind, bleiben, wie sie sind, außer du hakst `Mit neueren Versionen aktualisieren` an. Die Datei enthält auch eine CSV jeder Tabelle (in `preview/`) und ist nicht verschlüsselt.
+- Tabellenmenü (`⋯`) › Drucken oder als PDF speichern druckt die Ansicht als Tabelle (die Einträge und Felder, die du siehst, bis 5.000 Einträge); der Druckdialog des Browsers speichert auch ein PDF.
+- Datenbankmenü (`⋯`) › Als orOS-Datei speichern (.orosbase) speichert die ganze Datenbank mit Tabellen, Ansichten und Verknüpfungen als eine Datei, als Kopie oder für ein anderes Gerät (Anhänge gehen mit ihrem Namen; die Dateien bleiben auf der orOS-Festplatte). Beim Öffnen kommt hinzu, was fehlt, und nichts wird gelöscht; Einträge, die schon da sind, bleiben, wie sie sind, außer du hakst `Mit neueren Versionen aktualisieren` an. Die Datei enthält auch eine CSV jeder Tabelle (in `preview/`) und ist nicht verschlüsselt.
 
 ## Deine Daten
 - Alles bleibt auf diesem Gerät und wird laufend gespeichert. Mit dem orOS-Sync in den [Einstellungen](app:settings) folgen dir deine Datenbanken verschlüsselt auf deine anderen Geräte.
