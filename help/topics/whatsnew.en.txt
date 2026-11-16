@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.32.01
+- **Contacts fits on wide screens.** The row of buttons at the top now wraps onto more lines, so every button is on screen without scrolling sideways.
+
 ## Version 7.32.00
 - **Quote is now part of Billing (the new name of Invoices).** Your quotes are in its Quotes tab, and old links and shortcuts to Quote open it there.
 
