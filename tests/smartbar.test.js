@@ -139,7 +139,10 @@ test("shell strings for every chip in EN, EL and DE", () => {
   const tr = read("translations.js"), de = read("i18n/de/shell.js");
   const keys = M.KINDS.map((k) => "sb.k." + k).concat(["sb.event.now", "sb.event.in", "sb.event.short", "sb.event.hidden", "sb.event.tip",
     "sb.focus.work", "sb.focus.break", "sb.focus.tip", "sb.tasks.one", "sb.tasks.n", "sb.tasks.tip", "sb.water.tip",
-    "sb.budget.label", "sb.budget.tip", "sb.sales.label", "sb.sales.tip", "sb.savefail", "sb.more.tip", "sb.more.title"]);
+    "sb.budget.label", "sb.budget.tip", "sb.sales.label", "sb.sales.tip", "sb.savefail", "sb.more.tip", "sb.more.title",
+    "sb.habits.label", "sb.plants.label", "sb.chores.label", "sb.kanban.label", "sb.invoices.label", "sb.list.tip", "sb.list.more",
+    "sb.invoices.tip", "sb.trip.today", "sb.trip.tomorrow", "sb.trip.in", "sb.trip.tip", "sb.timer.tip",
+    "sb.habits.one", "sb.plants.one", "sb.chores.one", "sb.kanban.one", "sb.invoices.one"]);
   keys.forEach((k) => {
     assert.strictEqual(tr.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
@@ -197,10 +200,45 @@ test("fold: chips that do not fit, and every chip on a phone, go behind one butt
   // the panel draws chip text through textContent only and closes on Escape and outside taps
   const fill = src.slice(src.indexOf("function fillPop"), src.indexOf("function onPopKey"));
   assert.deepStrictEqual(fill.match(/innerHTML = [^;]+;/g), ["innerHTML = IC[k];"], "only fixed icons go through innerHTML");
-  assert.match(fill, /v\.textContent = c\.v\.textContent/);
+  assert.match(fill, /v\.textContent = val;/);
   assert.match(src, /e\.key === "Escape" && pop/);
   assert.match(src, /addEventListener\("touchstart", onPopDown, true\)/);
   // behind the lock nothing unfolds; the desktop bar window has no room for a panel
   assert.match(src, /if \(lk\) \{ closePop\(\); return; \}/);
   assert.match(src, /html\.barwin \.sb-chip\.sb-more \{ display: none !important; \}/);
+});
+
+test("SB5 agendaCard: counts, the next trip, today's lines and the running timer", () => {
+  const T = "2026-11-16";
+  const rows = [
+    { app: "x", id: "a", title: "Water the fern", kind: "task", due: "2026-11-15" },
+    { app: "x", id: "b", title: "Feed", kind: "task", due: T },
+    { app: "x", id: "c", title: "Later", kind: "task", due: "2026-11-18" },
+    { app: "x", id: "d", title: "Note", kind: "info", due: T },
+    { app: "x", id: "e", title: "Starts", kind: "event", due: T }
+  ];
+  assert.deepStrictEqual(M.agendaCard("plants", rows, T), { n: 2, first: rows[0] });
+  assert.strictEqual(M.agendaCard("kanban", rows, T).n, 3);                 // + the card that starts today
+  assert.deepStrictEqual(M.agendaCard("invoices", rows, T), { n: 1, first: rows[0] });   // late only
+  assert.strictEqual(M.agendaCard("invoices", [{ title: "Rec", kind: "task", due: null }], T), null);
+  assert.strictEqual(M.agendaCard("habits", [], T), null);
+  const trips = [
+    { title: "Lisbon day 2", kind: "event", due: "2026-11-20", target: { trip: "t1", tab: "plan" } },
+    { title: "Lisbon", kind: "event", due: "2026-11-19", target: { trip: "t1", tab: "" } },
+    { title: "Rome", kind: "event", due: "2026-12-01", target: { trip: "t2", tab: "" } }
+  ];
+  const tr = M.agendaCard("trip", trips, T);
+  assert.strictEqual(tr.days, 3);
+  assert.strictEqual(tr.row.title, "Lisbon");
+  assert.strictEqual(M.agendaCard("meal", rows, T).row.title, "Note");
+  assert.strictEqual(M.agendaCard("timer", rows, T), null);                 // only the "run" line
+  assert.strictEqual(M.agendaCard("timer", [{ id: "run", title: "Since 09:00", kind: "info" }], T).row.id, "run");
+  assert.strictEqual(M.agendaCard("plants", rows, "bad"), null);
+  assert.strictEqual(M.dayGap("2026-03-28", "2026-03-30"), 2);              // DST-safe
+  // every new card names a real app and is a known kind
+  Object.keys(M.AGENDA).forEach((k) => {
+    assert.ok(M.KINDS.includes(k), k);
+    assert.ok(fs.existsSync(path.join(ROOT, M.AGENDA[k][0], "today.js")), M.AGENDA[k][0] + " has a Today provider");
+  });
+  assert.ok(M.MONEY.invoices, "invoices hide under Sensitive work");
 });

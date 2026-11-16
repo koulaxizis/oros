@@ -45,8 +45,14 @@ The top bar can show a few live items next to the clock. Tick them in `Settings`
 - `Water today`: what you drank against your goal in [Water](app:water).
 - `Spent this month`: this month's expenses in [Budget](app:budget).
 - `Till sales today`: today's sales at the till in [Stock](app:stock).
+- `Habits left today`, `Plants to look after`, `Chores for today` and `Kanban cards due`: how many are for today or late in [Habits](app:habits), [Plant Care](app:plants), [Chore Wheel](app:chores) and [Kanban](app:kanban).
+- `Timesheet timer`: the time on the [Timesheet](app:timesheet) timer while it runs, and its project.
+- `Overdue invoices`: how many invoices and bills in [Invoices](app:invoices) are past their day and unpaid.
+- `Next trip`: in how many days your next trip in [Travel](app:travel) starts (up to a month ahead).
+- `Today's meals`: today's meals from your plan in [Meal Planner](app:meals).
+- `The book you are reading`: the book open in [Library](app:library) and how far you are.
 
-Each item shows only when it has something to say, and a tap opens its app. On a phone they all sit behind one button with a small stack of cards and their number: tap it and they unfold under the bar, each with its full text. On a wider screen they stay in the bar; when it is full, the last ones move into the same button (it then reads `+2` and so on). Tap an item in the list to open its app; `Esc` or a tap elsewhere folds it again. While `Sensitive work` is on, the money items and the names of events are hidden. Events of apps kept out of search (Health, Cycle, One-Sentence Diary and the like) never appear in the bar.
+Each item shows only when it has something to say, and a tap opens its app. On a phone they all sit behind one button with a small stack of cards and their number: tap it and they unfold under the bar, each with its full text. On a wider screen they stay in the bar; when it is full, the last ones move into the same button (it then reads `+2` and so on). Tap an item in the list to open its app; `Esc` or a tap elsewhere folds it again. While `Sensitive work` is on, the money items (and overdue invoices), meals, the book and the names of events and trips are hidden. Events of apps kept out of search (Health, Cycle, One-Sentence Diary and the like) never appear in the bar.
 
 The same figures can start a rule in [Automations](app:automations): a few minutes before an event (for example, pause the music), or when the till sales or the month's spending reach an amount (a chime and a notice).
 
