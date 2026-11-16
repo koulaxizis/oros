@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.22.00
+- **Book translations meet Publishing and Calendar.** In a Writer translation, `Publishing title…` links it to a title in Publishing: its progress shows in that title's release plan, and you can add yourself as the translator there in one step. `Deadline and goal…` sets a due date and how many words a day you want to translate (or lets orOS work it out); a line under the progress bar shows the days left and today's words, and Calendar can remind you every morning until the deadline. See [Writer](app:writer).
+
 ## Version 7.21.00
 - **Base: more ways to see a table.** New views: kanban (cards in columns by a choice field, drag them across), calendar (records on a month by a date field), gallery (cards with a picture) and a form for typing records one after another. A new Attachments field keeps photos and files with a record on the orOS disk. Print a view, or save it as a PDF.
 
