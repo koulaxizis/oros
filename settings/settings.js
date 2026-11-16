@@ -495,6 +495,12 @@
       });
       cb2.appendChild(sl);
       cb2.appendChild(el("p", "hint", t("sb.money")));
+      if (s.smartbar.looks) {
+        var lsel = select(s.smartbar.looks.map(function (v) { return { value: v, label: t("sb.look." + (v || "classic")) }; }),
+          s.smartbar.look || "", "smartbar-look", function (v) { set("smartbar-look", v); });
+        cb2.appendChild(row(t("sb.look"), lsel, { forId: lsel.id }));
+        cb2.appendChild(el("p", "hint", t("sb.look.hint")));
+      }
       host.appendChild(cb2);
     }
 
@@ -1040,7 +1046,7 @@
     var c = card(t("gt.title"), "gate");
     c.appendChild(row(t("gt.switch"), switchBtn(st.on, "gt.switch", function (v) {
       gateNote = ""; gateInfo = null;
-      (v ? G.enable() : G.disable()).then(function () { render(); }, function (e) { gateNote = e && e.code === "norelay" ? "gt.relay.need" : "gt.fail"; render(); });
+      (v ? G.enable() : G.disable()).then(function () { render(); }, function (e) { gateNote = e && e.code === "norelay" ? "gt.relay.need" : e && e.code === "helper" ? "gt.helper" : "gt.fail"; render(); });
     }, t("gt.switch")), { hint: t("gt.hint") }));
     if (gateNote) c.appendChild(el("div", "hint", t(gateNote)));
     // Own relay (5.82.00): the gate can run on the owner's own Worker.
@@ -1407,6 +1413,32 @@
   function claudeAsk(what) {
     var d = claudeDoc();
     try { d.dispatchEvent(new d.defaultView.CustomEvent("oros-claude", { detail: what })); } catch (e) {}
+  }
+  // HELPER-1: who helps with the data, the Assistant, Claude (through
+  // orOS Gate) or both. Synced; gate/gate.js keeps it and acts on it.
+  var helperAsk = "";
+  function secHelper(host) {
+    var G = gateApi();
+    if (!G || typeof G.helper !== "function") return;
+    if (!gateOff) gateOff = G.onChange(function () { render(); });
+    var cur = G.helper();
+    var c = card(t("hp.title"), "helper");
+    c.appendChild(el("p", "hint", t("hp.hint")));
+    c.appendChild(segmented(C.HELPER_OPTS.map(function (v) { return { value: v, label: t("hp." + v) }; }), helperAsk || cur, "hp", function (v) {
+      if (v === "assistant" && G.state().on) { helperAsk = v; render(); return; }
+      helperAsk = "";
+      if (!G.setHelper(v)) gateNote = "gt.fail";
+      render();
+    }, t("hp.title")));
+    if (helperAsk === "assistant") {
+      c.appendChild(el("p", "msg msg-dim", t("hp.sure")));
+      c.appendChild(actions(
+        button(t("hp.sure.yes"), "hp.sure.yes", function () { helperAsk = ""; if (!G.setHelper("assistant")) gateNote = "gt.fail"; render(); }, "primary"),
+        button(t("hp.sure.no"), "hp.sure.no", function () { helperAsk = ""; render(); })));
+    } else {
+      c.appendChild(el("p", "hint", t("hp.now." + cur)));
+    }
+    host.appendChild(c);
   }
   function secClaude(host) {
     var d = claudeDoc(), de = d && d.documentElement;
@@ -3774,6 +3806,7 @@
   }
   function secServices(host) {
     secPhoneHealth(host);
+    secHelper(host);
     secClaude(host);
     secGate(host);
     var Lk = links();

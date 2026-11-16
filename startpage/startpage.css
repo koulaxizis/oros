@@ -50,6 +50,9 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 .act.tor { background: var(--tor-bg); border-color: var(--tor-border); color: var(--tor-text); }
 .act-hint { color: var(--dim); font-size: 12px; }
 .act.tor .act-hint { color: var(--tor-dim); }
+.picks { margin: 14px 0 0; text-align: center; color: var(--dim); font-size: 12px; line-height: 1.6; }
+.picks a { color: var(--dim); text-decoration: underline; text-decoration-color: var(--border); }
+.picks a:hover { color: var(--link); }
 #oros-link::before { content: ""; width: 16px; height: 16px; border-radius: 4px; background: var(--gold); }
 
 @media (max-width: 600px) {
