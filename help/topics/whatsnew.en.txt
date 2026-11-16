@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.08.00
+- **draw.io and Mermaid in Whiteboard.** `More` › `Open a draw.io or Visio file…` opens .drawio files (compressed too) from draw.io and diagrams.net, each page as a new board with flowchart, UML and network shapes, lanes as frames and joined lines. `Export` › `draw.io` saves a board for draw.io. `More` › `Draw from Mermaid text…` draws a Mermaid flowchart, and the Assistant can too.
+- **Visio files in Whiteboard.** The same `More` › `Open a draw.io or Visio file…` opens .vsdx files: each page a board, flowchart, org chart, UML and network shapes by their names, with text, colours and connectors. Other Visio shapes come in as rectangles with their text.
+
 ## Version 7.07.00
 - **Record audiobooks in Studio.** `Projects` › `Books` holds books of chapters: each chapter is an ordinary Studio project, with opening and closing credits, and a new book starts with a `Voice` track and NULL effects for speech. Link a book to its title in Publishing for the author, narrator and ISBN, and choose ACX (Audible) or Storytel. Takes in a book are saved as lossless 24-bit FLAC, about half the size of a WAV. Record the quiet room once as room tone, and `Fill the gaps` puts it wherever the voice stops, so no digital silence is left. See [Studio](app:studio).
 

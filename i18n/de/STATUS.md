@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 45780 of 46272 (98%)
+- Strings: 45929 of 46423 (98%)
 - Help pages: 157 of 157 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1919 / 1921 |
+| assistant | 99% | 1922 / 1926 |
 | atelier | 100% | 1408 / 1408 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 261 / 261 |
@@ -146,7 +146,7 @@ text is still written in the code. They switch over wave by wave
 | stickies | 100% | 124 / 124 |
 | stock | 99% | 804 / 809 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 776 / 776 |
+| studio | 100% | 894 / 894 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 60 / 60 |
@@ -168,11 +168,11 @@ text is still written in the code. They switch over wave by wave
 | weather | 100% | 190 / 190 |
 | whack | 100% | 51 / 51 |
 | wheel | 100% | 107 / 107 |
-| whiteboard | 100% | 284 / 284 |
+| whiteboard | 100% | 302 / 302 |
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
-| writer | 100% | 531 / 531 |
+| writer | 100% | 541 / 541 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
 
