@@ -1273,8 +1273,6 @@
       "ov.title": "Overview",
       "ov.hint": "Ctrl+Alt+Shift+E shows the search, your open apps, your recent files and how the system is doing on one screen. Two more ways to open it, on this device only:",
       "ov.corner": "Open it by pushing the mouse into the top-left corner",
-      "ov.super": "Open it by pressing the Super (Windows) key alone",
-      "ov.superHint": "For orOS USB and Linux computers where the system does not use the key. On Windows it also opens Start.",
 
       // Search settings (FIND below): the words that also find each one
       "find": "Search settings",
@@ -1401,7 +1399,7 @@
       "w.wallgen": "make wallpaper generator create",
       "w.shortcuts": "keys keyboard hotkeys ctrl change remap rebind",
       "w.multitask": "windows keep open background switch apps",
-      "w.overview": "overview activities hot corner super key windows key recent files system monitor",
+      "w.overview": "overview activities hot corner recent files system monitor",
       "w.pcfiles": "this computer files disks drives home folder windows linux",
       "w.sos": "sos emergency hacked stolen lost breach compromised panic remote wipe erase everywhere",
       "w.reset": "erase delete everything factory wipe",
@@ -2532,8 +2530,6 @@
       "ov.title": "Επισκόπηση",
       "ov.hint": "Το Ctrl+Alt+Shift+E δείχνει σε μία οθόνη την αναζήτηση, τις ανοιχτές εφαρμογές, τα πρόσφατα αρχεία και πώς πάει το σύστημα. Δύο ακόμα τρόποι να ανοίγει, μόνο σε αυτή τη συσκευή:",
       "ov.corner": "Άνοιγμα όταν σπρώχνεις το ποντίκι στην πάνω αριστερή γωνία",
-      "ov.super": "Άνοιγμα με σκέτο το πλήκτρο Super (Windows)",
-      "ov.superHint": "Για το orOS USB και υπολογιστές Linux όπου το σύστημα δεν χρησιμοποιεί το πλήκτρο. Στα Windows ανοίγει και το Έναρξη.",
 
       "find": "Αναζήτηση ρυθμίσεων",
       "find.clear": "Καθαρισμός αναζήτησης",
@@ -2659,7 +2655,7 @@
       "w.wallgen": "δημιουργία ταπετσαρίας φόντο",
       "w.shortcuts": "πλήκτρα συντομεύσεις πληκτρολόγιο ctrl αλλαγή",
       "w.multitask": "πολυεργασία παράθυρα ανοιχτές παρασκήνιο",
-      "w.overview": "επισκόπηση δραστηριότητες γωνία πλήκτρο super windows πρόσφατα αρχεία παρακολούθηση συστήματος",
+      "w.overview": "επισκόπηση δραστηριότητες γωνία πρόσφατα αρχεία παρακολούθηση συστήματος",
       "w.pcfiles": "αυτός ο υπολογιστής αρχεία δίσκοι προσωπικός φάκελος windows linux",
       "w.sos": "sos έκτακτη ανάγκη παραβίαση χάκερ κλοπή χαμένο κλεμμένο πανικός απομακρυσμένο σβήσιμο παντού",
       "w.reset": "διαγραφή σβήσιμο όλα εργοστασιακή",

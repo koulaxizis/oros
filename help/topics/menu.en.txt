@@ -35,7 +35,7 @@ You can also search from your browser's address bar. Add a site search (custom s
 - **Recent files**: the last files you opened, saved or downloaded in [Files](app:files) on this device. Click one to open it in Files. During sensitive work they stay hidden.
 - **System**: how many of this device's places for open apps are in use, how much storage orOS uses, and whether sync is up to date or has files waiting. `Details in Settings › Device` opens the full picture.
 
-[[Esc]] closes it. In `Settings › System › Overview` you can also open it by pushing the mouse into the top-left corner, or with the Super (Windows) key alone; both are off at first and apply to this device only.
+[[Esc]] closes it. In `Settings › System › Overview` you can also open it by pushing the mouse into the top-left corner; it is off at first and applies to this device only.
 
 ## Commands
 Type what you want to do, in English or Greek, and the first row of the search shows the action. Press [[Enter]] or tap it. Nothing is saved yet: the app opens with the form filled in, and you check it and press `Save`.

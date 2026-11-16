@@ -11925,7 +11925,7 @@
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
-      overview: ovSnapshot(),       // OV-1: hot corner / Super key, this device only
+      overview: ovSnapshot(),       // OV-1: hot corner, this device only
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
       pcfiles: state.pcFiles && !state.pcFiles.fixed ? { on: state.pcFiles.state === "on" } : null,
@@ -11976,9 +11976,6 @@
         return;
       case "overview:corner":
         if (!SOLO) { ovSetPref(OV_CORNER_KEY, !!value); settingsNotify(); }
-        return;
-      case "overview:super":
-        if (!SOLO) { ovSetPref(OV_SUPER_KEY, !!value); settingsNotify(); }
         return;
       case "pcfiles":
         if (typeof window.__orosPcFilesSet === "function") window.__orosPcFilesSet(!!value);
@@ -12682,7 +12679,6 @@
     cmdWireFrame(f);
     extWireFrame(f);
     a11yWireFrame(f);
-    ovWireFrame(f);
     return f;
   }
   function mtDrop(el) {
@@ -13534,14 +13530,12 @@
   // (mtOpenList / mtClose / mtSideOpen) and the recent files are Files'
   // own device-local journal ("oros-files-recents"), opened in Files.
   // Opens with Ctrl+Alt+Shift+E (SC_DEFS "e"); this device may also
-  // open it from the top-left hot corner ("oros-ov-corner" = "1") and
-  // with the Super key pressed alone ("oros-ov-super" = "1"), both off
-  // by default (Windows opens Start on Super; a corner can surprise).
+  // open it from the top-left hot corner ("oros-ov-corner" = "1"), off
+  // by default (a corner can surprise). No Super key: one combo for all.
   // Never while the screen is locked, in a single app (SOLO) or on a
   // till. Recent file names stay hidden during sensitive work.
   // window.orosMonitor is the read model Settings › Device uses too.
   var OV_CORNER_KEY = "oros-ov-corner";
-  var OV_SUPER_KEY = "oros-ov-super";
   var OV_RECENTS_KEY = "oros-files-recents";   // = files.js RECENTS_KEY
   var OV_RECENTS_MAX = 8;
   var ov = null;            // { el, onKey, back } while the overview is open
@@ -13996,39 +13990,9 @@
       ovOpen();
     }, { passive: true });
   })();
-  // Super alone (opt-in): Super pressed and let go with no other key,
-  // in the shell or inside an app frame (same origin).
-  var ovSuper = { at: 0, clean: false };
-  function ovSuperKey(e) {
-    var meta = e.key === "Meta" || e.key === "OS" || e.key === "Super";
-    if (e.type === "keydown") {
-      if (meta) { if (!e.repeat) { ovSuper.at = Date.now(); ovSuper.clean = true; } }
-      else ovSuper.clean = false;
-      return;
-    }
-    if (!meta || !ovSuper.clean) return;
-    ovSuper.clean = false;
-    if (Date.now() - ovSuper.at > 800 || !ovPref(OV_SUPER_KEY)) return;
-    ovOpen();
-  }
-  function ovWireFrame(frame) {
-    frame.addEventListener("load", function () {
-      var w;
-      try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
-      w.addEventListener("keydown", ovSuperKey, true);
-      w.addEventListener("keyup", ovSuperKey, true);
-      w.addEventListener("pointerdown", function () { ovSuper.clean = false; }, true);
-    });
-  }
-  if (!SOLO) {
-    document.addEventListener("keydown", ovSuperKey, true);
-    document.addEventListener("keyup", ovSuperKey, true);
-    document.addEventListener("pointerdown", function () { ovSuper.clean = false; }, true);
-    appFrames().forEach(ovWireFrame);
-  }
   function ovSnapshot() {
     if (SOLO) return null;
-    return { corner: ovPref(OV_CORNER_KEY), superKey: ovPref(OV_SUPER_KEY) };
+    return { corner: ovPref(OV_CORNER_KEY) };
   }
 
   // ---------- 11. Menu open/close ----------
