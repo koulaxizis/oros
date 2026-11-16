@@ -168,7 +168,8 @@ button:disabled { cursor: default; opacity: 0.4; }
 .wide-btn svg { width: 16px; height: 16px; }
 .wide-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 
-input, select, textarea {
+/* the Quotes tab (.qv, quote/view.css) keeps its own field look */
+input:where(:not(.qv *)), select:where(:not(.qv *)), textarea:where(:not(.qv *)) {
   min-width: 0;
   width: 100%;
   min-height: 38px;
@@ -179,7 +180,7 @@ input, select, textarea {
   border-radius: 8px;
   outline: none;
 }
-input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+input:where(:not(.qv *)):focus, select:where(:not(.qv *)):focus, textarea:where(:not(.qv *)):focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
 /* ---------- 3. Layout ---------- */
 #main {
@@ -199,7 +200,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   padding: 16px 20px 40px;
 }
 
-textarea { resize: vertical; line-height: 1.4; display: block; }
+textarea:where(:not(.qv *)) { resize: vertical; line-height: 1.4; display: block; }
 input.bad, textarea.bad { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(224, 108, 117, 0.18); }
 .new-btn {
   min-height: 38px;
@@ -728,3 +729,15 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
 .md-errs:empty { display: none; }
 .md-err-list { margin: 4px 0 8px; padding-left: 18px; font-size: 13px; color: var(--danger); overflow-wrap: anywhere; }
 .md-err-list li { margin: 2px 0; }
+
+/* ---------- Quotes tab (app merge 7): quote/view.js lives here ---------- */
+.qhost {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+.qhost .qt-wait { padding: 24px 16px; color: var(--text-dim); text-align: center; }
+.qhost[hidden] { display: none; }

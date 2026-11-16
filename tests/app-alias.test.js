@@ -25,8 +25,29 @@ test("aliases: well formed, never an app themselves, pointing at an internal app
     assert.ok(INTERNAL.has(a.to), a.id + " → " + a.to + " is not an internal app");
     assert.equal(typeof a.name, "string", a.id + " keeps its old English name (menu search)");
     if (a.target !== undefined) assert.ok(a.target && typeof a.target === "object" && !Array.isArray(a.target), a.id + " target");
-    assert.deepEqual(Object.keys(a).filter((k) => !["id", "name", "to", "target"].includes(k)), [], a.id + " has only known keys");
+    assert.deepEqual(Object.keys(a).filter((k) => !["id", "name", "to", "target", "search", "searchOff"].includes(k)), [], a.id + " has only known keys");
+    // merge 7: an alias may keep its own search provider in its old folder
+    if (a.search !== undefined) {
+      assert.match(a.search, /^[a-z0-9_-]+\.js$/, a.id + " search file");
+      assert.ok(fs.existsSync(path.join(ROOT, a.id, a.search)), a.id + "/" + a.search + " exists");
+    }
   }
+});
+
+test("an alias with its own search stays searchable, for the Assistant and the Gate too (merge 7)", () => {
+  const sh = read("shell.js");
+  assert.match(sh, /if \(typeof x\.search === "string" && \/\^\[a-z0-9_-\]\+\\\.js\$\/\.test\(x\.search\)\) \{/);
+  // searchApps(): a pseudo app in the old folder, while its host is installed
+  assert.match(sh, /list\.push\(\{ id: al\.id, name: al\.name, type: "internal", url: al\.id \+ "\/", search: al\.search,/);
+  // its own switch (on unless searchOff), as when it was an app
+  assert.match(sh, /return !!\(al && typeof al\.search === "string" && al\.searchOff !== true\);/);
+  // the Assistant's entry cards keep the old id while the host is there
+  assert.match(sh, /if \(!hasApp\(al\.to\)\) return;\n\s+var k = "app\." \+ al\.id/);
+  const q = ALIASES.find((a) => a.id === "quote");
+  assert.equal(q.search, "search.js");
+  assert.notEqual(q.searchOff, true, "Quote's search was on by default and stays so");
+  // Billing's own provider does not add quote hits (no double rows)
+  assert.doesNotMatch(read("invoices/search.js"), /oros-quote-data/);
 });
 
 test("aliases: the old name stays translated (menu search, command bar) in EN and EL", () => {

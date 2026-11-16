@@ -423,6 +423,16 @@
               k: typeof e.k === "number" && e.k >= 0 ? Math.floor(e.k) : 0, dv: String(e.dv || "").slice(0, 40) };
     if (isObj(e.x)) o.x = e.x;
     if (typeof e.done === "number" && e.done > 0) o.done = Math.floor(e.done);
+    // PEND-1: a queued change keeps its queue id (q) and, for create_items,
+    // the items it made by index (p: { "<i>": { app, target, title, id } }),
+    // so a p- ref finds its item on any device.
+    if (typeof e.q === "string" && /^[A-Za-z0-9_-]{16}$/.test(e.q)) o.q = e.q;
+    if (isObj(e.p)) {
+      var pm = {};
+      Object.keys(e.p).slice(0, 50).forEach(function (k) { var r = e.p[k]; if (/^\d{1,2}$/.test(k) && isObj(r) && typeof r.app === "string") pm[k] = r; });
+      if (Object.keys(pm).length) o.p = pm;
+    }
+    if (typeof e.at === "number" && e.at > 0) o.at = Math.floor(e.at);
     return o;
   }
   function chgMerge(a, b) {
@@ -435,12 +445,15 @@
       var m = JSON.stringify(o) >= JSON.stringify(e) ? clone(o) : clone(e);
       if (o.done || e.done) m.done = Math.max(o.done || 0, e.done || 0);
       if (!m.x && (o.x || e.x)) m.x = clone(o.x || e.x);
+      if (!m.q && (o.q || e.q)) m.q = o.q || e.q;
+      if (!m.p && (o.p || e.p)) m.p = clone(o.p || e.p);
+      if (!m.at && (o.at || e.at)) m.at = o.at || e.at;
       by[e.id] = m;
     });
     var list = Object.keys(by).map(function (k) { return by[k]; })
       .sort(function (x, y) { return x.t - y.t || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0); });
     if (list.length > CHG_MAX) list = list.slice(list.length - CHG_MAX);
-    list.forEach(function (e, i) { if (i < list.length - UNDO_MAX || e.done) delete e.x; });
+    list.forEach(function (e, i) { if (i < list.length - UNDO_MAX || e.done) delete e.x; if (i < list.length - UNDO_MAX) delete e.p; });
     return list;
   }
 
@@ -1555,8 +1568,8 @@
   // Assistant's own tools, run in a hidden Assistant frame
   // (assistant.js GATE). = the Assistant's create / change apps, less
   // NEVER, the apps with their own tools above (Budget, Kanban) and
-  // Files (tests/gate-act.test.js).
-  var ACT = ["bookmarks", "calendar", "chores", "contacts", "crm", "feeds", "flashcards", "garage", "habits", "invoices",
+  // Files (tests/gate-act.test.js). Base: BASE-1 B4b.
+  var ACT = ["base", "bookmarks", "calendar", "chores", "contacts", "crm", "feeds", "flashcards", "garage", "habits", "invoices",
              "library", "meals", "music", "notes", "petcare", "plants", "podcasts", "publish", "quote", "shelf", "split", "stickies", "stock",
              "timesheet", "todo", "travel", "wiki"];
   // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): the documents the
@@ -1688,18 +1701,125 @@
     return typeof dl === "number" && isFinite(dl) && typeof off === "number" && isFinite(off) && now - off > dl - 2000;
   }
 
+  // ---- PEND-1 (Chris 2026-11-16, cards «Ναι, και τα δύο»): queued changes ----
+  // e2: a change Claude asked for while orOS was closed is applied with
+  // the time Claude asked (at), not the time it runs. The time is kept
+  // within the box's 7 days and never after now.
+  var AT_SPAN = 8 * 86400000;
+  function queuedAt(t, now) {
+    return typeof t === "number" && isFinite(t) && t > now - AT_SPAN ? Math.min(Math.floor(t), now) : 0;
+  }
+  // e2: the change would overwrite something that was itself changed at
+  // or after at (by the owner or another device). b = the app's data
+  // before, a = after (never written yet). An object is touched when one
+  // of its own fields differs (a field that is an unstamped object or
+  // list counts as its own) or it is removed; its stamp (m, mtime,
+  // modified, om; with a per-field fm, the changed fields' fm, else the
+  // stamp) at or after at makes the change late. A container whose only
+  // change is a new stamped child (an add) or a touched stamped child is
+  // not touched itself, so an add never waits for an older edit.
+  var STAMP_KEYS = ["m", "mtime", "modified", "om"];
+  function lateIn(b, a, at) {
+    if (!(typeof at === "number" && at > 0)) return false;
+    var hit = false;
+    var isO = function (v) { return !!v && typeof v === "object" && !Array.isArray(v); };
+    var stamped = function (o) { return isO(o) && (isO(o.fm) || STAMP_KEYS.some(function (k) { return typeof o[k] === "number"; })); };
+    var same = function (x, y) { try { return JSON.stringify(x) === JSON.stringify(y); } catch (e) { return false; } };
+    var objList = function (v) { return Array.isArray(v) && v.length > 0 && v.every(isO); };
+    var own = function (o, keys) {
+      if (isO(o.fm) && keys) { keys.forEach(function (k) { var s = typeof o.fm[k] === "number" ? o.fm[k] : STAMP_KEYS.reduce(function (m, sk) { return typeof o[sk] === "number" ? Math.max(m, o[sk]) : m; }, 0); if (s >= at) hit = true; }); return; }
+      STAMP_KEYS.forEach(function (k) { if (typeof o[k] === "number" && o[k] >= at) hit = true; });
+      if (isO(o.fm)) Object.keys(o.fm).forEach(function (k) { if (typeof o.fm[k] === "number" && o.fm[k] >= at) hit = true; });
+    };
+    // → true when x's change is not covered by a stamped object at or below x
+    function walk(x, y, depth) {
+      if (hit || same(x, y)) return false;
+      if (depth > 8) return true;
+      if (Array.isArray(x)) {
+        if (!Array.isArray(y)) return true;
+        var byId = {}, used = {}, loose = false;
+        y.slice(0, 5000).forEach(function (v, i) { if (isO(v) && typeof v.id === "string") byId[v.id] = i; });
+        x.slice(0, 5000).forEach(function (v, i) {
+          var j = isO(v) && typeof v.id === "string" ? (byId[v.id] !== undefined ? byId[v.id] : -1) : i;
+          if (j >= 0) used[j] = 1;
+          var w = j >= 0 ? y[j] : undefined;
+          if (isO(v) && w === undefined) { if (stamped(v)) own(v); else loose = true; return; }
+          if (isO(v) && isO(w)) { if (walk(v, w, depth + 1)) loose = true; return; }
+          if (!same(v, w)) loose = true;
+        });
+        y.slice(0, 5000).forEach(function (v, j) { if (!used[j] && !stamped(v)) loose = true; });   // a new stamped child is an add
+        return loose;
+      }
+      if (!isO(x)) return true;
+      if (!isO(y)) { if (stamped(x)) { own(x); return false; } return true; }
+      var keys = {}, changed = [];
+      Object.keys(x).concat(Object.keys(y)).forEach(function (k) { keys[k] = 1; });
+      Object.keys(keys).forEach(function (k) {
+        if (k === "fm" || STAMP_KEYS.indexOf(k) >= 0 || same(x[k], y[k])) return;
+        var deep = (isO(x[k]) && isO(y[k])) || (objList(x[k]) && Array.isArray(y[k]));
+        if (deep ? walk(x[k], y[k], depth + 1) : true) changed.push(k);
+      });
+      if (!changed.length) return false;
+      if (!stamped(x)) return true;
+      own(x, changed);
+      return false;
+    }
+    walk(b, a, 0);
+    return hit;
+  }
+  // a: the p- refs (p-<queue id>.<item>) in a change's arguments, the
+  // same places relay/gate.js refsIn looks.
+  var P_REF = /^p-[A-Za-z0-9_-]{16}\.\d{1,2}$/;
+  var REF_KEYS = ["ref", "customer", "contact", "item", "deal", "trip"];
+  function mapRefs(a, fn) {
+    if (!isObj(a)) return a;
+    var o = clone(a);
+    var one = function (v) { if (typeof v !== "string") return v; var r = v.replace(/^oros:/, "").trim(); return P_REF.test(r) ? fn(r) : v; };
+    var obj = function (x) { if (!isObj(x)) return x; REF_KEYS.forEach(function (k) { if (x[k] !== undefined) x[k] = one(x[k]); }); return x; };
+    obj(o);
+    ["refs", "items"].forEach(function (k) { if (Array.isArray(o[k])) o[k] = o[k].map(function (v) { return typeof v === "string" ? one(v) : obj(v); }); });
+    ["changes", "links"].forEach(function (k) { if (Array.isArray(o[k])) o[k] = o[k].map(obj); });
+    return o;
+  }
+  function pRefsIn(a) {
+    var out = [];
+    mapRefs(a, function (r) { if (out.indexOf(r) < 0) out.push(r); return r; });
+    return out;
+  }
+
   // The relay orOS uses (Mail › relay, a self-hosted one), else orOS's own.
   function relayOf(mail) {
     var u = isObj(mail) && isObj(mail.relay) && typeof mail.relay.url === "string" ? mail.relay.url.trim().replace(/\/+$/, "") : "";
     return /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(u) ? u : RELAY;
   }
 
-  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
+  // HELPER-1 (7.16.00, Chris 16/11): who helps with the owner's data,
+  // synced (slice "aihelper", localStorage "oros-ai-helper" { v, m }):
+  //   "both"      the Assistant and Claude (through orOS Gate), the default;
+  //   "assistant" the Assistant only: the Gate is off on every device and
+  //               cannot be turned on;
+  //   "claude"    Claude only: the Assistant leaves the menu and every way
+  //               into it opens Claude (desktop or claude.ai) instead.
+  var HELPERS = ["both", "assistant", "claude"];
+  function helperClean(o) {
+    var v = isObj(o) && HELPERS.indexOf(o.v) >= 0 ? o.v : "both";
+    var m = isObj(o) && typeof o.m === "number" && isFinite(o.m) && o.m > 0 ? o.m : 0;
+    return { v: v, m: m };
+  }
+  // The later choice wins; on a tie a fixed order, so two devices agree.
+  function helperMerge(a, b) {
+    a = helperClean(a); b = helperClean(b);
+    if (a.m !== b.m) return a.m > b.m ? a : b;
+    return HELPERS.indexOf(a.v) >= HELPERS.indexOf(b.v) ? a : b;
+  }
+
+  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
                WRITES: WRITES, ACT: ACT, DOCS: DOCS, QUEUED: QUEUED, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_OPEN: ACT_OPEN, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
-               pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
+               pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE,
+               queuedAt: queuedAt, lateIn: lateIn, mapRefs: mapRefs, pRefsIn: pRefsIn, P_REF: P_REF };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
   if (!root || !root.document) return;
   root.orosGateCore = core;
@@ -1813,6 +1933,7 @@
   function connect() {
     var p = pref();
     if (!p.on || !p.id || !p.tok || ws) return;
+    if (helperRead().v === "assistant") { helperApply(); return; }   // HELPER-1: the Gate goes off here
     if (isObj(p.lv) && p.lv.kanban === "write") kanbanModel().then(null, function () {});   // Undo needs it at hand
     clearTimeout(retryTimer);
     setWs("connecting");
@@ -1907,13 +2028,17 @@
   // packet encrypted here; the relay wakes it after a change, at most
   // once per 15 minutes. The details and Undo stay in Claude's changes.
   var PUSH_TXT = { en: "Claude changed something in orOS", el: "Ο Claude έκανε αλλαγές στο orOS", de: "Claude hat etwas in orOS geändert" };
+  // PEND-1 (e3, Chris 2026-11-16 «Ναι, μία φορά τη μέρα»): the second
+  // packet, sent by the box when a change has waited 6 hours (once a day).
+  var PUSH_WAIT = { en: "Claude's changes are waiting: open orOS to apply them", el: "Αλλαγές του Claude περιμένουν: άνοιξε το orOS για να εφαρμοστούν", de: "Änderungen von Claude warten: Öffne orOS, um sie anzuwenden" };
+  var PUSH_V = 2;                                     // 2: the box also has the "waiting" packet
   var pushBusy = false;
   function pushReg() {
     var P = root.orosPush, p = pref();
     if (pushBusy || !p.on || !p.id || !p.tok || !P || typeof P.wakeToken !== "function") return;
     var want = P.enabled && P.enabled() ? P.deviceId() : "";
     var pp = isObj(p.pp) ? p.pp : null;
-    if (want ? pp && pp.pid === want && pp.g === p.id : !pp) return;
+    if (want ? pp && pp.pid === want && pp.g === p.id && pp.v === PUSH_V : !pp) return;
     var lang = "en";
     try { lang = String(root.orosI18n && root.orosI18n.lang ? root.orosI18n.lang() : "en").slice(0, 2); } catch (e) {}
     pushBusy = true;
@@ -1933,7 +2058,9 @@
     }
     Promise.resolve(pp && pp.pid === want && pp.wt ? pp.wt : P.wakeToken()).then(function (wt) {
       return P.wakePacket("gate:changes", "orOS Gate", PUSH_TXT[lang] || PUSH_TXT.en, "gate:changes", "gate").then(function (ct) {
-        return devCall({ act: "ping", id: p.id, tok: p.tok, pid: want, wt: wt, ct: ct }).then(function () { done({ pid: want, wt: wt, g: p.id }); });
+        return P.wakePacket("gate:waiting", "orOS Gate", PUSH_WAIT[lang] || PUSH_WAIT.en, "gate:changes", "gate").then(function (cw) {
+          return devCall({ act: "ping", id: p.id, tok: p.tok, pid: want, wt: wt, ct: ct, cw: cw }).then(function () { done({ pid: want, wt: wt, g: p.id, v: PUSH_V }); });
+        });
       });
     }).catch(function () { pushBusy = false; });
   }
@@ -2197,8 +2324,10 @@
             if (FILE_WRITE.indexOf(x.n) >= 0) { files = true; if (x.n === "files_write") x.a = Object.assign({}, isObj(x.a) ? x.a : {}, { __q: 1 }); }
             cqBusy[it.id] = 1;
             askLast = "";
-            return run(x.n, x.a).then(function (res) {
+            var at = queuedAt(x.t, Date.now());       // PEND-1 (e2): the time Claude asked
+            return run(x.n, x.a, { at: at }).then(function (res) {
               delete cqBusy[it.id];
+              if (res && res.ok && res.u) chgTag(res.u, it.id, at, res.made);   // PEND-1: q, p (items by index), at
               if (x.n === "files_delete" && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
               delete cqHeld[it.id];
               var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
@@ -2218,6 +2347,35 @@
   }
   function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
   function dirty() { try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {} }
+  // ---- HELPER-1: who helps with the data (synced) ----
+  var HELPER_KEY = "oros-ai-helper", helperBusy = false;
+  function helperRead() { return helperClean(readJSON(HELPER_KEY)); }
+  function helperTell() {
+    changed();
+    try { root.dispatchEvent(new CustomEvent("oros-ai-helper", { detail: helperRead().v })); } catch (e) {}
+  }
+  // "Assistant only" turns the Gate off on this device (its box at the
+  // relay and its closed copy go too, as with the owner's own switch).
+  function helperApply() {
+    if (helperBusy || helperRead().v !== "assistant" || !pref().on) return;
+    helperBusy = true;
+    api.disable().then(function () { helperBusy = false; }, function () { helperBusy = false; });
+  }
+  function helperSlice(n) {
+    var S = root.orosSync;
+    if (S && typeof S.registerSlice === "function") {
+      S.registerSlice("aihelper", function () { var raw = null; try { raw = localStorage.getItem(HELPER_KEY); } catch (e) {} return raw ? helperRead() : null; },
+        function (data) {
+          if (!isObj(data)) return;
+          var before = helperRead().v, next = helperMerge(helperRead(), data);
+          if (!writeJSON(HELPER_KEY, next)) return;
+          if (next.v !== before) { helperTell(); helperApply(); }
+        }, HELPER_KEY, helperMerge);
+      return;
+    }
+    if (n < 40) setTimeout(function () { helperSlice(n + 1); }, 500);
+  }
+  function helperOff() { var e = new Error("helper"); e.code = "helper"; return Promise.reject(e); }
   // This device has the gate: give the owner's other devices its seat.
   function makeSeat() {
     var p = pref(), cur = seatRead();
@@ -2241,6 +2399,7 @@
   function sit(force) {
     var p = pref(), seat = seatRead();
     if (sitBusy || p.on || !seat || (!force && (p.out || p.sf === seat.m))) return Promise.resolve(false);
+    if (helperRead().v === "assistant") return Promise.resolve(false);   // HELPER-1
     if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked() && !force) return Promise.resolve(false);
     sitBusy = true;
     var tok = randomB64u(32);
@@ -2362,7 +2521,9 @@
   }
 
   // One call from Claude → { ok, c (text), a (apps), k (items) }.
-  function run(name, args) {
+  // opt (PEND-1): { at: the time Claude asked, for a queued change }.
+  function run(name, args, opt) {
+    opt = isObj(opt) ? opt : {};
     if (root.orosLock && typeof root.orosLock.isLocked === "function" && root.orosLock.isLocked()) {
       return Promise.resolve({ ok: false, c: "orOS is locked on the owner's device. Ask the owner to unlock it." });
     }
@@ -2404,8 +2565,17 @@
           return { ok: false, c: "orOS could not start its tools on the device; try again in a moment." };
         }
         var now = Date.now();
-        return F.run(name, args).then(function (r) {
+        // PEND-1: p- refs (items a queued create_items made) → this device's refs
+        var prs = pRefsIn(args), pm = {}, miss = [];
+        if (prs.length) {
+          if (typeof F.ref !== "function") return { ok: false, c: "This device's orOS is too old for refs of items added while orOS was closed; use search_data." };
+          prs.forEach(function (r) { var rec = pFind(r), loc = rec ? F.ref(rec) : ""; if (loc) pm[r] = loc; else miss.push(r); });
+          if (miss.length) return { ok: false, c: "No item for " + miss.slice(0, 5).join(", ") + ": its add was not applied (refused, cancelled or still waiting). Find the item with search_data. Nothing was changed." };
+          args = mapRefs(args, function (r) { return pm[r]; });
+        }
+        return F.run(name, args, opt.at ? { at: opt.at } : undefined).then(function (r) {
           var out = { ok: !!r.ok, c: r.c || "", a: Array.isArray(r.a) ? r.a : [], k: r.k || 0 };
+          if (r.ok && Array.isArray(r.made) && r.made.length) out.made = r.made;
           // One record per change (5.78.00 remember): synced, notified, in
           // the daily email; x = the Assistant's change id and its undo
           // data, so Undo works from any device (actUndo).
@@ -2468,9 +2638,9 @@
       return Promise.resolve({ ok: true, a: [line], k: k, c: JSON.stringify(dd) });
     }
     var op = { budget_add: "add", budget_change: "change", budget_delete: "delete", budget_areas: "areas", budget_categories: "cats", budget_transfer: "xfer", budget_balances: "bal" }[name];
-    if (op) return change(op, args, p, names);
+    if (op) return change(op, args, p, names, opt.at);
     var kop = { kanban_add_cards: "add_cards", kanban_move_cards: "move_cards", kanban_change_card: "change_card", kanban_add_columns: "add_columns" }[name];
-    if (kop) return kanbanChange(kop, args, p, names);
+    if (kop) return kanbanChange(kop, args, p, names, opt.at);
     return Promise.resolve({ ok: false, c: "Unknown tool." });
     }
   }
@@ -2543,7 +2713,9 @@
         .map(function (x) { return { id: x.id, prefix: String(x.prefix || ""), kind: x.kind }; });
     } catch (e) { return null; }
   }
-  function change(op, args, p, names) {
+  // PEND-1 (e2): the words of a queued change that came too late.
+  var LATE_TXT = "The owner changed this after you asked for the change (orOS was closed then); their change stays and yours was not applied.";
+  function change(op, args, p, names, at) {
     var now = Date.now();
     if (!canWrite(p.lv, p.hold, "budget", now)) {
       return Promise.resolve({ ok: false, c: closedMsg(p, "budget", names.budget || "Budget") });
@@ -2552,8 +2724,10 @@
     var asked = n > ASK_OVER && n <= 100 ? askDelete(n) : Promise.resolve(true);
     return asked.then(function (yes) {
       if (!yes) return { ok: false, c: "The owner did not confirm deleting " + n + " entries on the device; nothing was deleted." };
-      var r = budgetWrite(op, readStore("oros-budget-data"), args, Date.now(), newTxId, op === "areas" ? invSeries() : undefined, root.OrosBudgetLoans || null);
+      var bd = readStore("oros-budget-data");
+      var r = budgetWrite(op, bd, args, at || Date.now(), newTxId, op === "areas" ? invSeries() : undefined, root.OrosBudgetLoans || null);
       if (!r.ok) return { ok: false, c: r.err };
+      if (at && lateIn(bd, r.data, at)) return { ok: false, late: 1, c: LATE_TXT };
       if (!writeJSON("oros-budget-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
       var uid = remember("budget", { cats: "budget_categories", xfer: "budget_transfer", bal: "budget_balances" }[op] || "budget_" + op, r.undo, now, r.ids.length);
@@ -2589,14 +2763,38 @@
     if (writeJSON(CHG_KEY, cl)) dirty();
     return uid;
   }
-  function kanbanChange(op, args, p, names) {
+  // PEND-1: a queued change's record gets its queue id, the time Claude
+  // asked and, for create_items, the items it made by index (synced, so
+  // a p- ref finds its item from any device: pFind).
+  function chgTag(uid, qid, at, made) {
+    var l = chgList(), e = null;
+    l.forEach(function (x) { if (x.id === uid) e = x; });
+    if (!e) return;
+    var o = Object.assign({}, e, { q: qid });
+    if (at) o.at = at;
+    if (Array.isArray(made) && made.length) {
+      var pm = {};
+      made.slice(0, 50).forEach(function (m) { if (isObj(m) && typeof m.i === "number" && m.i >= 0 && m.i < 100 && isObj(m.rec)) pm[String(m.i)] = m.rec; });
+      if (Object.keys(pm).length) o.p = pm;
+    }
+    if (writeJSON(CHG_KEY, chgMerge(l.filter(function (x) { return x.id !== uid; }), [o]))) dirty();
+  }
+  function pFind(ref) {
+    var m = /^p-([A-Za-z0-9_-]{16})\.(\d{1,2})$/.exec(String(ref || "")), hit = null;
+    if (!m) return null;
+    chgList().forEach(function (e) { if (e.q === m[1] && isObj(e.p) && isObj(e.p[m[2]])) hit = e.p[m[2]]; });
+    return hit;
+  }
+  function kanbanChange(op, args, p, names, at) {
     var now = Date.now();
     if (!canWrite(p.lv, p.hold, "kanban", now)) {
       return Promise.resolve({ ok: false, c: closedMsg(p, "kanban", names.kanban || "Kanban") });
     }
     return kanbanModel().then(function (M) {
-      var r = kanbanWrite(M, op, readStore("oros-kanban-data"), args, Date.now(), kbId);
+      var kd = readStore("oros-kanban-data");
+      var r = kanbanWrite(M, op, kd, args, at || Date.now(), kbId);
       if (!r.ok) return { ok: false, c: r.err };
+      if (at && lateIn(kd, r.data, at)) return { ok: false, late: 1, c: LATE_TXT };
       if (!writeJSON("oros-kanban-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
       var uid = remember("kanban", "kanban_" + op, r.undo, now, r.ids.length);
@@ -3118,8 +3316,20 @@
       changed();
       return { ok: true, n: r.n, kept: r.kept };
     },
+    // HELPER-1: "both" | "assistant" | "claude" (synced).
+    helper: function () { return helperRead().v; },
+    setHelper: function (v) {
+      if (HELPERS.indexOf(v) < 0) return false;
+      var cur = helperRead();
+      if (!writeJSON(HELPER_KEY, { v: v, m: Math.max(Date.now(), cur.m + 1) })) return false;
+      dirty();
+      helperTell();
+      helperApply();
+      return true;
+    },
     enable: function () {
       var p = pref();
+      if (helperRead().v === "assistant") return helperOff();
       if (p.on && p.id && p.tok) { connect(); return Promise.resolve(); }
       // A gate of this owner already exists (its seat came through sync): sit in it.
       return sit(true).then(function (done) {
@@ -3149,6 +3359,7 @@
     join: function (code) {
       var p = pref(), jc = String(code || "").toUpperCase().replace(/[\s-]+/g, "");
       if (p.on && p.id && p.tok) return Promise.reject(new Error("on"));
+      if (helperRead().v === "assistant") return helperOff();
       if (!/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/.test(jc)) { var e = new Error("gate"); e.code = "nojoin"; return Promise.reject(e); }
       var tok = randomB64u(32), base = relayNow();
       return sha256hex(tok).then(function (th) { return devCall({ act: "join", jc: jc, th: th }, base); }).then(function (d) {
@@ -3279,7 +3490,8 @@
     return modal(title, body, note, noLabel, yesLabel, onNo, onYes).wrap;
   }
   function consent(ask) {
-    var m = modal(tr("gate.ask.title"), tr("gate.ask.body"), pref().on ? tr("gate.ask.on") : tr("gate.ask.off"), tr("gate.ask.deny"), tr("gate.ask.allow"),
+    var note = helperRead().v === "assistant" ? tr("gate.ask.helper") : pref().on ? tr("gate.ask.on") : tr("gate.ask.off");
+    var m = modal(tr("gate.ask.title"), tr("gate.ask.body"), note, tr("gate.ask.deny"), tr("gate.ask.allow"),
       function () { m.wrap.remove(); back(ask, "error=access_denied"); },
       function () {
         m.yes.disabled = true; m.no.disabled = true; m.err.hidden = true;
@@ -3319,6 +3531,8 @@
       whenUnlocked(function () { setTimeout(function () { openJ(0); }, 600); });
     }
     connect();
+    helperSlice(0);
+    helperApply();
     seatSlice(0);
     chgSlice(0);
     digSlice(0);

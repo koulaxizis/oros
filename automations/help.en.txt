@@ -15,7 +15,7 @@ Automations lets orOS do things for you at the right moment. A rule says when so
 ## When something happens
 A rule can also follow what happens instead of a time:
 - `When an app posts a notice`: a notice from one app (for example Mail or Calendar) or from any app. With `Only when it says`, only notices with that word count (capitals and accents do not matter).
-- `When something happens`: you finish a task in To-Do, tick a habit, reach your water goal, finish a workout, or start or stop a timer in [Timesheet](app:timesheet).
+- `When something happens`: you finish a task in To-Do, tick a habit, reach your water goal, finish a workout, or start or stop a timer in [Timesheet](app:timesheet), or a record is added or a field changes in [Base](app:base). For Base, the words to look for are in “Base › Table · Record · Field: value”, so `Status: Done` follows records that become Done.
 - `Only on these days and hours` keeps it to, say, weekdays from 9:00 to 17:00.
 
 In its texts, `{text}` becomes what the notice or the event said: the task, the habit, the workout or the notice's text. Such a rule runs once for each thing that happens, at most 20 times a day, and only on the device where it happened. Notices from Passwords never start a rule, and nothing of Passwords is ever read.

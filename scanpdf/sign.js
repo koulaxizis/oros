@@ -354,12 +354,15 @@
     textDialog(f);
   }
   function textDialog(f) {
-    var v = vals[f.id];
-    var ans = window.prompt(t("sg.textH") + ": " + label(f), typeof v === "string" ? v : "");
-    if (ans === null) return;
-    ans = ans.trim();
-    if (ans) vals[f.id] = ans.slice(0, f.k === "date" ? 40 : 200); else delete vals[f.id];
-    paint(f);
+    var v = vals[f.id], max = f.k === "date" ? 40 : 200;
+    // themed question (R14, PICK-1 T4); sign.html loads ../pickers.js
+    if (!window.OrosPick || !window.OrosPick.ask) { state(t("sg.bad"), true); return; }
+    window.OrosPick.ask({ title: t("sg.textH"), text: label(f), value: typeof v === "string" ? v : "", max: max }).then(function (ans) {
+      if (ans === null) return;
+      ans = ans.trim();
+      if (ans) vals[f.id] = ans.slice(0, max); else delete vals[f.id];
+      paint(f);
+    });
   }
 
   // ---------- signature pad ----------

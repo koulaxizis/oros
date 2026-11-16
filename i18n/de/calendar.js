@@ -213,6 +213,7 @@ orosPack("de", "calendar", {
  "lbl.feed.habits": "Gewohnheiten",
  "lbl.feed.hol": "Feiertage",
  "lbl.feed.docs": "Dokumente",
+ "lbl.feed.base": "Datenbank",
  "lbl.feed.inv": "Rechnungen",
  "lbl.feed.kanban": "Kanban",
  "feed.kb.start": "Beginnt: {t}",

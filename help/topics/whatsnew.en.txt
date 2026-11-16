@@ -1,6 +1,30 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.33.00
+- **Claude's changes with orOS closed look made at once.** When every orOS is closed, what Claude adds or changes through orOS Gate still waits, sealed, until a device opens orOS, but Claude now sees it as made: a new contact or item shows up in its searches marked as waiting, Claude can change it straight away or call it off. When orOS opens, each change is made with the time Claude asked, so your own later edit wins, and if you changed the same item after Claude asked, your version stays. When changes have waited more than 6 hours, you get one notification a day. See [Settings](app:settings).
+
+## Version 7.32.01
+- **Contacts fits on wide screens.** The row of buttons at the top now wraps onto more lines, so every button is on screen without scrolling sideways.
+
+## Version 7.32.00
+- **Quote is now part of Billing (the new name of Invoices).** Your quotes are in its Quotes tab, and old links and shortcuts to Quote open it there.
+
+## Version 7.30.00
+- **Machine suggestions for book translation.** In Writer's translation editor, `⋯` › `Machine suggestions: off…` turns on drafts for each segment from the same on-device translator as Text Tools (Alt+0 to use it), and `Fill empty segments…` drafts the rest for you to check. Off until you turn it on.
+
+## Version 7.29.00
+- **Base grows up.** Send Forms answers into a table and make a public form from a table, see date fields in the Calendar (a switch per field), let the Assistant and Claude read your bases and add records, let Automations follow new records and changed fields, and leave comments on records.
+
+## Version 7.28.01
+- **Suggested VPNs on the Start page.** Under the VPN extension link, a quiet row names a few well-known VPNs with a free plan (Proton VPN, Windscribe, hide.me, TunnelBear) and PIA (paid only). Each opens the provider's own site. You choose and sign in with your own account.
+
+## Version 7.28.00
+- **Pickers in orOS colours.** Every list you choose from, every date, time and colour field now opens in the colours of your orOS instead of the browser's grey boxes: a sheet from the bottom on phones, a panel under the field on a computer, with search in long lists, a calendar that starts on Monday, and a colour picker with your own colours. Questions such as "Make a new address?" are orOS windows too. Same on the site, the installed app, Portable, orOS USB and the Android app.
+
+## Version 7.27.00
+- **Who helps with your data.** In [Settings](app:settings), choose who may use your orOS data: both the Assistant and Claude, the Assistant only (Claude's access through orOS Gate turns off on all your devices), or Claude only (the Assistant hides, and its shortcuts open Claude with your question copied, ready to paste).
+
 ## Version 7.26.01
 - **Shared links that arrive damaged.** A song, list or note someone sent you now opens even when a chat app added a space, a line break or a full stop to its link. If part of the link went missing on the way, the page says so plainly and shows how much arrived, so the sender can send it again.
 

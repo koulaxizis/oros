@@ -807,8 +807,8 @@
    "files": [
     "quote/accept.js",
     "quote/package.js",
-    "quote/quote.js",
-    "quote/search.js"
+    "quote/search.js",
+    "quote/view.js"
    ]
   },
   {

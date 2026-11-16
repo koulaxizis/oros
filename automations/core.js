@@ -56,6 +56,12 @@
   // stopEntry; key timesheet:<entry>:s|e, text "project · description").
   EVENTS.push("timesheet.start", "timesheet.stop");
   EVENT_APP["timesheet.start"] = EVENT_APP["timesheet.stop"] = "timesheet";
+  // Base B5 (BASE-1): a record is added / a field of a record changes
+  // in the Base app on this device (base/core.js events; key
+  // base:<rec>:a | base:<rec>:<field>:<stamp>, text "Base › Table ·
+  // Title" and, for a change, " · Field: value").
+  EVENTS.push("base.add", "base.change");
+  EVENT_APP["base.add"] = EVENT_APP["base.change"] = "base";
   // Smart top bar SB2: what the shell watches itself (automations/host.js
   // soonTick): an event of today's summary starts in N minutes (when.min,
   // 1-120, default 10), today's till sales reach / this month's spending
@@ -524,6 +530,7 @@
       "ev.todo.done": "When I finish a task", "ev.habits.done": "When I tick a habit",
       "ev.water.goal": "When I reach my water goal", "ev.fitness.done": "When I finish a workout",
       "ev.timesheet.start": "When I start a Timesheet timer", "ev.timesheet.stop": "When I stop a Timesheet timer",
+      "ev.base.add": "When a record is added in Base", "ev.base.change": "When a field changes in Base",
       "ev.webhook.in": "When a webhook arrives",
       "ev.bridge.pdf": "When a new PDF lands in a folder on my computer",
       "ev.bridge.photo": "When a new photo lands in a folder on my computer",
@@ -577,6 +584,7 @@
       "ev.todo.done": "Όταν τελειώνω μια εργασία", "ev.habits.done": "Όταν τσεκάρω μια συνήθεια",
       "ev.water.goal": "Όταν φτάνω τον στόχο για νερό", "ev.fitness.done": "Όταν τελειώνω μια προπόνηση",
       "ev.timesheet.start": "Όταν ξεκινώ χρονόμετρο στο Timesheet", "ev.timesheet.stop": "Όταν σταματώ χρονόμετρο στο Timesheet",
+      "ev.base.add": "Όταν μπαίνει εγγραφή στη Βάση", "ev.base.change": "Όταν αλλάζει πεδίο στη Βάση",
       "ev.webhook.in": "Όταν έρχεται webhook",
       "ev.bridge.pdf": "Όταν μπαίνει νέο PDF σε φάκελο του υπολογιστή μου",
       "ev.bridge.photo": "Όταν μπαίνει νέα φωτογραφία σε φάκελο του υπολογιστή μου",

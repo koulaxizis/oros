@@ -859,8 +859,11 @@
     $("wh-start").addEventListener("click", function () { hookDo(function (H) { return H.on(); }); });
     $("wh-off").addEventListener("click", function () { hookDo(function (H) { return H.off(); }); });
     $("wh-rot").addEventListener("click", function () {
-      if (!window.confirm(t("wh.rotAsk"))) return;
-      hookDo(function (H) { return H.rotate(); });
+      // themed question (R14, PICK-1 T4): pickers.js is on every page
+      if (!window.OrosPick || !window.OrosPick.ask) { toast(t("wh.err")); return; }
+      window.OrosPick.ask({ text: t("wh.rotAsk"), danger: true }).then(function (yes) {
+        if (yes) hookDo(function (H) { return H.rotate(); });
+      });
     });
     $("wh-copy").addEventListener("click", function () {
       var v = $("wh-url").value;

@@ -268,6 +268,8 @@ orosPack("de", "automations", {
  "ev.fitness.done": "Wenn ich ein Training beende",
  "ev.timesheet.start": "Wenn ich einen Timesheet-Timer starte",
  "ev.timesheet.stop": "Wenn ich einen Timesheet-Timer stoppe",
+ "ev.base.add": "Wenn in der Datenbank ein Eintrag hinzukommt",
+ "ev.base.change": "Wenn sich in der Datenbank ein Feld ändert",
  "tpl.mail-todo": "Dringende E-Mail in To-Do",
  "tpl.mail-todo.word": "dringend",
  "tpl.mail-todo.item": "{text}",

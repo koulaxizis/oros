@@ -167,22 +167,28 @@ test("quote: hostile content is cut down", () => {
 });
 
 test("quote: wiring (scripts, buttons, Open with, help, file types)", () => {
-  const html = read("quote/index.html");
-  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "quote.js?v="].forEach((s) =>
+  // App merge 7: the Quotes tab of Billing. Billing's page loads
+  // bundle.js, recordpkg.js and quote/core.js; the tab loads
+  // package.js before view.js (QT_JS in invoices.js).
+  const html = read("invoices/index.html");
+  ["../bundle.js?v=", "../recordpkg.js?v=", "../quote/core.js?v="].forEach((s) =>
     assert.ok(html.includes('src="' + s), s));
-  assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
-  assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="quote.js'));
-  ["ofile-btn", "dlg-ofile", "of-save", "of-open", "of-copy", "of-folder"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
-  const js = read("quote/quote.js");
+  const host = read("invoices/invoices.js");
+  const qt = /var QT_JS = (\[[^\]]*\])/.exec(host);
+  assert.ok(qt, "QT_JS");
+  const list = JSON.parse(qt[1]);
+  assert.ok(list.indexOf("../quote/package.js") >= 0 && list.indexOf("../quote/package.js") < list.indexOf("../quote/view.js"));
+  const js = read("quote/view.js");
+  ["ofile-btn", "dlg-ofile", "of-save", "of-open", "of-copy", "of-folder"].forEach((id) => assert.ok(js.includes('id=\\"qv-' + id + '\\"'), id));
   assert.match(js, /RP\.ui\(QPK\.DESC,/);
   assert.match(js, /RP\.ui\(QPK\.asCopy\(/);
-  assert.match(js, /if \(tg && tg\.openFile\) \{ if \(recFile\) recFile\.openTarget\(tg\.openFile\); return; \}/);
+  assert.match(js, /if \(tg && tg\.openFile\) \{ if \(recFile\) recFile\.openTarget\(tg\.openFile\); return true; \}/);
   assert.match(js, /__orosTakeFile\(/);
-  assert.equal((js.match(/window\.__orosOpenAt\s*=/g) || []).length, 1);
-  assert.match(js, /__orosTakeTarget\("quote"\)/);
+  assert.equal((js.match(/window\.__orosOpenAt\s*=/g) || []).length, 0, "the view has no receiver of its own");
+  assert.match(host, /tg\.tab === "quotes"\) \{ openQuotes\(tg\); return; \}/);
   ["file.save", "file.open", "file.copy", "file.folder", "file.title", "file.hint", "file.copyHint", "undo"].forEach((k) =>
     assert.equal((js.match(new RegExp('"' + k.replace(".", "\\.") + '":', "g")) || []).length, 2, k));   // EN and EL
-  for (const f of ["quote/help.en.txt", "quote/help.el.txt"]) assert.ok(read(f).includes(".orosquote"), f);
+  for (const f of ["invoices/help.en.txt", "invoices/help.el.txt"]) assert.ok(read(f).includes(".orosquote"), f);
   assert.deepEqual(F.appsFor(".orosquote"), ["quote"]);
   assert.deepEqual(B.TYPES[".orosquote"], { app: "quote", mime: "application/x-oros-quote" });
 });
