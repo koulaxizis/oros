@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.17.01
+- **VPN extension on the Start page.** The Internet window's Start page now links a guide to adding a VPN browser extension with your own account. With the next releases of orOS Portable and orOS USB, the Internet window can install extensions from the Chrome Web Store, and extensions you add can no longer read orOS's own pages (on Portable, on Windows).
+
 ## Version 7.17.00
 - **Night Light.** A warmer screen in the evening, with less blue light. Turn it on in Settings › Appearance › Night Light and choose when: from sunset to sunrise (worked out offline for the place of the top-bar weather), your own hours, or always, and how warm. It fades in and out over 20 minutes. The new Night Light button in Quick settings turns it on now or off until the next evening. On orOS USB the screen's own colours change, once its next release is out. See [Appearance](help:t/appearance).
 

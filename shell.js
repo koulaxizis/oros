@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.17.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.17.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -8608,6 +8608,9 @@
         { name: "Tor button's Go modules (ProtonMail go-crypto, CIRCL, golang.org/x/crypto, ulikunitz/xz)", url: "https://github.com/ProtonMail/go-crypto",
           by: "The Go Authors, Proton AG, Cloudflare, Ulrich Kunitz", lic: "BSD-3-Clause",
           k: "cr.tor-modules" },
+        { name: "chromium-web-store", url: "https://github.com/NeverDecaf/chromium-web-store",
+          by: "NeverDecaf and contributors", lic: "MIT",
+          k: "cr.webstore" },
         { name: "Ollama (with llama.cpp and ggml)", url: "https://github.com/ollama/ollama",
           by: "Ollama, Georgi Gerganov & contributors", lic: "MIT",
           k: "cr.ollama" },
