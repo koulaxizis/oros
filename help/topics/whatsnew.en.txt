@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.39.01
+- **Billing:** the quote's currency field no longer runs off narrow phone screens.
+
 ## Version 7.39.00
 - **Billing: see how your quotes turn into money.** The Overview shows quotes sent, accepted, invoiced and paid each month, and what is still waiting.
 

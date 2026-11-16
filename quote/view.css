@@ -308,6 +308,9 @@
   background-size: 10px;
   cursor: pointer;
 }
+/* A long currency name ("EUR · Euro …") must not push the field past
+   a narrow screen: the select may shrink below its widest option. */
+.qv .meta-row select { min-width: 0; max-width: 100%; text-overflow: ellipsis; }
 .qv .meta-row select:hover { background-color: var(--panel-bg); }
 .qv .meta-row select:focus-visible {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
