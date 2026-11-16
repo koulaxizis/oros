@@ -154,6 +154,8 @@
       "deleted": "Deleted", "deleted.rec": "Record deleted", "cleared": "Cleared", "pasted": "Pasted into {n} cells",
       "dup.done": "Duplicated", "copyOf": "{x} (copy)",
       "rec.title": "Record", "rec.created": "Created {x}", "rec.modified": "Changed {x}", "rec.dup": "Duplicate",
+      "cm.title": "Comments", "cm.none": "No comments yet.", "cm.ph": "Write a comment (Ctrl+Enter adds it)", "cm.add": "Add comment",
+      "cm.del": "Delete comment", "cm.deleted": "Comment deleted", "cm.full": "Base keeps 20,000 comments; delete some first.",
       "rec.expand": "Open record", "rec.prev": "Previous record", "rec.next": "Next record",
       "rec.computed": "Filled in by Base",
       "fld.new": "New field", "fld.edit": "Edit field", "fld.name": "Field name", "fld.type": "Type", "fld.desc": "Description (optional)",
@@ -344,6 +346,8 @@
       "deleted": "Διαγράφηκε", "deleted.rec": "Η εγγραφή διαγράφηκε", "cleared": "Καθαρίστηκε", "pasted": "Επικολλήθηκε σε {n} κελιά",
       "dup.done": "Έγινε αντίγραφο", "copyOf": "{x} (αντίγραφο)",
       "rec.title": "Εγγραφή", "rec.created": "Δημιουργήθηκε {x}", "rec.modified": "Άλλαξε {x}", "rec.dup": "Αντίγραφο",
+      "cm.title": "Σχόλια", "cm.none": "Κανένα σχόλιο ακόμη.", "cm.ph": "Γράψε σχόλιο (το Ctrl+Enter το προσθέτει)", "cm.add": "Προσθήκη σχολίου",
+      "cm.del": "Διαγραφή σχολίου", "cm.deleted": "Το σχόλιο διαγράφηκε", "cm.full": "Η Βάση κρατά 20.000 σχόλια· σβήσε μερικά πρώτα.",
       "rec.expand": "Άνοιγμα εγγραφής", "rec.prev": "Προηγούμενη εγγραφή", "rec.next": "Επόμενη εγγραφή",
       "rec.computed": "Το συμπληρώνει η Βάση",
       "fld.new": "Νέο πεδίο", "fld.edit": "Επεξεργασία πεδίου", "fld.name": "Όνομα πεδίου", "fld.type": "Τύπος", "fld.desc": "Περιγραφή (προαιρετικά)",
@@ -486,6 +490,7 @@
 
   // ---------- 2. Storage + sync slice ----------
   var data = C.empty();
+  var notes = C.notesEmpty();   // B5b: comments on records (slice base-notes)
   var ix = C.index(data);
   var prefs = { at: {}, w: {}, col: {} };
 
@@ -498,6 +503,8 @@
     catch (e) { data = C.empty(); }
     ix = C.index(data);
     noteFiles();
+    try { notes = C.normNotes(JSON.parse(localStorage.getItem(C.NOTES_KEY) || "null")); }
+    catch (e) { notes = C.notesEmpty(); }
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (p && typeof p === "object") {
@@ -556,11 +563,30 @@
     render();
     refreshOpenRecord();
   }
+  // B5b: comments, their own slice (base/core.js "Comments on records").
+  function saveNotes(next) {
+    var before = notes;
+    notes = next;
+    try { localStorage.setItem(C.NOTES_KEY, JSON.stringify(notes)); }
+    catch (e) { notes = before; toast(t("full")); return false; }
+    var api = syncApi();
+    if (api && typeof api.markDirty === "function") api.markDirty();
+    return true;
+  }
+  function notesSet(incoming) {
+    var merged = C.mergeNotes(notes, incoming);
+    if (JSON.stringify(merged) === JSON.stringify(notes)) return;
+    notes = merged;
+    try { localStorage.setItem(C.NOTES_KEY, JSON.stringify(notes)); } catch (e) {}   // R6: no markDirty for a pull
+    refreshOpenRecord();
+  }
   function registerSync() {
     var api = syncApi();
     if (!api || typeof api.registerSlice !== "function") return;
     try { api.registerSlice(APP_ID, sliceGet, sliceSet, STORAGE_KEY, C.merge); }   // 5 args, always
     catch (e) { /* engine busy: the next boot registers again */ }
+    try { api.registerSlice("base-notes", function () { return C.normNotes(notes); }, notesSet, C.NOTES_KEY, C.mergeNotes); }
+    catch (e) { /* the same */ }
   }
 
   function roomFor(n) {
@@ -2289,6 +2315,7 @@
       t("rec.created", { x: C.text(ix, rec, { id: "c", type: "ctime", opt: {} }, fmt()) }) + " · " +
       t("rec.modified", { x: C.text(ix, rec, { id: "m", type: "mtime", opt: {} }, fmt()) }));
     d.body.appendChild(meta);
+    d.body.appendChild(commentsBox(rec));
     var idx = shown.map(function (r) { return r.id; }).indexOf(rec.id);
     var prev = iconBtn(ICON.left, t("rec.prev"), "", function () { if (idx > 0) { recDlg.id = shown[idx - 1].id; fillRecord(); } });
     var next = iconBtn(ICON.right, t("rec.next"), "", function () { if (idx >= 0 && idx < shown.length - 1) { recDlg.id = shown[idx + 1].id; fillRecord(); } });
@@ -2310,6 +2337,50 @@
       btn("chip pri", t("btn.done"), function () { d.close(); }));
     void tb;
     void focusField;
+  }
+  // B5b: the record's comments, oldest first; add, delete with Undo.
+  function commentsBox(rec) {
+    var box = el("section", "rec-notes");
+    box.setAttribute("aria-label", t("cm.title"));
+    box.appendChild(el("h3", "rec-notes-h", t("cm.title")));
+    var list = C.notesOf(notes, rec.id);
+    if (!list.length) box.appendChild(el("p", "hint", t("cm.none")));
+    list.forEach(function (n) {
+      var row = el("div", "rec-note");
+      var head = el("div", "rec-note-head");
+      head.appendChild(el("span", "hint", C.fmtStamp(n.c, locale())));
+      head.appendChild(iconBtn(ICON.x, t("cm.del"), "rec-note-del", function () {
+        var keep = { id: n.id, r: n.r, c: n.c, m: n.m, x: n.x };
+        if (!saveNotes(C.delNote(notes, n.id, Date.now()))) return;
+        fillRecord();
+        toast(t("cm.deleted"), function () { if (saveNotes(C.undelNote(notes, keep, Date.now())) && recDlg) fillRecord(); });
+      }));
+      row.appendChild(head);
+      row.appendChild(el("p", "rec-note-x", n.x));
+      box.appendChild(row);
+    });
+    var ta = el("textarea", "rec-note-in");
+    ta.rows = 2;
+    ta.maxLength = C.MAX_NOTE;
+    ta.placeholder = t("cm.ph");
+    ta.setAttribute("aria-label", t("cm.ph"));
+    function add() {
+      var r = C.addNote(notes, rec.id, ta.value, Date.now());
+      if (r.full) { toast(t("cm.full")); return; }
+      if (!r.id) { ta.focus(); return; }
+      if (!saveNotes(r.data)) return;
+      fillRecord();
+      var again = recDlg && recDlg.d.body.querySelector(".rec-note-in");
+      if (again) again.focus();
+    }
+    ta.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); add(); }
+    });
+    var row2 = el("div", "rec-note-add");
+    row2.appendChild(ta);
+    row2.appendChild(btn("chip", t("cm.add"), add));
+    box.appendChild(row2);
+    return box;
   }
   function recEditor(rec, f) {
     var v = C.value(ix, rec, f);

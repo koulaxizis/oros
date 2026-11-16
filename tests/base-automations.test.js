@@ -79,3 +79,31 @@ test("Automations: base.add and base.change are BR-EV events of Base, EN/EL/DE, 
   const src = read("assistant/core.js");
   assert.match(src, /"timesheet\.stop", "base\.add", "base\.change"\] \}/);
 });
+
+test("comments (B5b): their own slice, merge both ways, delete and Undo", () => {
+  assert.equal(C.NOTES_KEY, "oros-base-notes");
+  let n = C.addNote(null, "r1", "  First\nline two ", 100, "n1").data;
+  n = C.addNote(n, "r1", "Second", 200, "n2").data;
+  n = C.addNote(n, "r2", "Other record", 150, "n3").data;
+  assert.deepEqual(C.notesOf(n, "r1").map((x) => x.id), ["n1", "n2"]);
+  assert.equal(C.notesOf(n, "r1")[0].x, "  First\nline two ", "text kept as written (para)");
+  assert.equal(C.addNote(n, "r1", "   ", 300).id, null, "an empty comment is not added");
+  assert.equal(C.addNote(n, "r1", "x".repeat(5000), 300).data.cs.find((c) => c.r === "r1" && c.x.length === 4000) !== undefined, true);
+  const del = C.delNote(n, "n1", 400);
+  assert.deepEqual(C.notesOf(del, "r1").map((x) => x.id), ["n2"]);
+  assert.equal(del.cs.find((c) => c.id === "n1").x, undefined, "a deleted comment keeps no text");
+  // merge is the same both ways, a delete beats the older copy
+  assert.deepEqual(C.mergeNotes(n, del), C.mergeNotes(del, n));
+  assert.deepEqual(C.notesOf(C.mergeNotes(n, del), "r1").map((x) => x.id), ["n2"]);
+  // Undo brings it back, newer than the delete, on every device
+  const back = C.undelNote(del, n.cs.find((c) => c.id === "n1"), 450);
+  assert.deepEqual(C.notesOf(C.mergeNotes(del, back), "r1").map((x) => x.id), ["n1", "n2"]);
+  // junk is dropped, never invented
+  assert.deepEqual(C.normNotes({ cs: [{ id: "a" }, { id: "b<", r: "r1", m: 1, x: "y" }, null, { id: "c", r: "r1", m: 5, x: "" }] }).cs, []);
+  // the tables' slice never holds comments: a device before B5b keeps them
+  assert.equal(JSON.stringify(C.normalize(Object.assign(seed(), { cs: n.cs }))).indexOf("Second"), -1);
+  const app = read("base/app.js");
+  assert.match(app, /registerSlice\("base-notes", function \(\) \{ return C\.normNotes\(notes\); \}, notesSet, C\.NOTES_KEY, C\.mergeNotes\)/);
+  assert.match(app, /el\("p", "rec-note-x", n\.x\)/, "text only through textContent");
+  for (const k of ["cm.title", "cm.add", "cm.del", "cm.deleted", "cm.none", "cm.ph", "cm.full"]) assert.match(read("i18n/de/base.js"), new RegExp('"' + k.replace(".", "\\.") + '"'), k);
+});

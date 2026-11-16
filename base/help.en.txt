@@ -30,6 +30,7 @@ Base keeps records with structure, like a small database: a catalogue of your bo
 - In the grid, tap a cell to select it and tap it again (or press Enter) to edit. Arrow keys and Tab move, Delete empties a cell, Esc cancels.
 - Paste a block copied from a spreadsheet into the selected cell: it fills the cells to the right and below, and adds records when it needs more rows.
 - The expand button at the start of a row, or Shift+Enter, opens the whole record. There you can also duplicate or delete it.
+- Under its fields, a record has `Comments`: write a note and press `Add comment` (or Ctrl+Enter). Comments sync with your other devices; the × deletes one, with Undo.
 
 ## Views
 - Each table starts with a grid view and a card view. Make more in the view list (`New view…`), each with its own filters, sorting, groups and fields.

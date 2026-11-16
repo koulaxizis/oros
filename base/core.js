@@ -1977,6 +1977,78 @@
     return rows;
   }
 
+  // ---------- Comments on records (B5b, BASE-1) ----------
+  // A synced slice of its own, "base-notes" (localStorage
+  // oros-base-notes): { ver: 1, cs: [{ id, r: record id, c: created,
+  // m, x: text } | { id, r, c, m, del: 1 }] }. Kept apart from
+  // oros-base-data so a device that does not know comments yet never
+  // drops them when it rewrites its tables (unknown row kinds go there).
+  // Per comment the newer m wins (a tie: deleted, then the larger
+  // JSON); a deleted comment stays as a tombstone row (no text).
+  var NOTES_KEY = "oros-base-notes", MAX_NOTE = 4000, MAX_NOTES = 20000;
+  function notesEmpty() { return { ver: VER, cs: [] }; }
+  function cleanNote(x) {
+    if (!isObj(x) || !okId(x.id) || !okId(x.r)) return null;
+    var m = ms(x.m), c = ms(x.c) || m;
+    if (!m) return null;
+    if (x.del === 1) return { id: x.id, r: x.r, c: c, m: m, del: 1 };
+    var tx = para(x.x, MAX_NOTE);
+    return tx.trim() ? { id: x.id, r: x.r, c: c, m: m, x: tx } : null;
+  }
+  function noteWins(a, b) {   // true when b beats a
+    if (b.m !== a.m) return b.m > a.m;
+    if (!!b.del !== !!a.del) return !!b.del;
+    return JSON.stringify(b) > JSON.stringify(a);
+  }
+  function mergeNotes(a, b) {
+    var map = {};
+    [a, b].forEach(function (d) {
+      (isObj(d) && Array.isArray(d.cs) ? d.cs : []).forEach(function (raw) {
+        var n = cleanNote(raw);
+        if (n && (!has(map, n.id) || noteWins(map[n.id], n))) map[n.id] = n;
+      });
+    });
+    var out = notesEmpty();
+    out.cs = Object.keys(map).sort().map(function (id) { return map[id]; });
+    if (out.cs.length > MAX_NOTES) {   // the oldest tombstones go first, never a live comment
+      var dead = out.cs.filter(function (n) { return n.del; }).sort(function (x, y) { return x.m - y.m; });
+      var drop = {};
+      dead.slice(0, out.cs.length - MAX_NOTES).forEach(function (n) { drop[n.id] = 1; });
+      out.cs = out.cs.filter(function (n) { return !drop[n.id]; });
+    }
+    return out;
+  }
+  function normNotes(d) { return mergeNotes(d, null); }
+  // the live comments of a record, oldest first
+  function notesOf(n, recId) {
+    return (isObj(n) && Array.isArray(n.cs) ? n.cs : []).filter(function (x) { return x.r === recId && !x.del; })
+      .sort(function (a, b) { return a.c - b.c || byId(a, b); });
+  }
+  function addNote(n, recId, text, now, id) {
+    var out = normNotes(n);
+    var x = para(text, MAX_NOTE);
+    if (!okId(recId) || !x.trim()) return { data: out, id: null };
+    if (out.cs.filter(function (c) { return !c.del; }).length >= MAX_NOTES) return { data: out, id: null, full: true };
+    var nid = id || uid(now);
+    out.cs.push({ id: nid, r: recId, c: now, m: now, x: x });
+    return { data: normNotes(out), id: nid };
+  }
+  function delNote(n, id, now) {
+    var out = normNotes(n);
+    out.cs = out.cs.map(function (c) { return c.id === id ? { id: c.id, r: c.r, c: c.c, m: Math.max(now, c.m + 1), del: 1 } : c; });
+    return normNotes(out);
+  }
+  // Undo of a delete: the comment comes back with a newer m.
+  function undelNote(n, row, now) {
+    var out = normNotes(n), x = cleanNote(row);
+    if (!x || x.del) return out;
+    out.cs = out.cs.filter(function (c) { return c.id !== x.id; });
+    var cur = (isObj(n) && Array.isArray(n.cs) ? n.cs : []).filter(function (c) { return c && c.id === x.id; })[0];
+    x.m = Math.max(now, cur ? ms(cur.m) + 1 : 0, x.m + 1);
+    out.cs.push(x);
+    return normNotes(out);
+  }
+
   // ---------- Automations events (B5, BASE-1) ----------
   // What one local save did, as Automations events (automations/core.js
   // EVENTS base.add / base.change): a record that is new (not a record
@@ -2031,7 +2103,8 @@
     opsFor: opsFor, needsValue: needsValue, query: query, layout: layout, groupKey: groupKey,
     ATT_DIR: ATT_DIR, FILE_RE: FILE_RE, MAX_ATT: MAX_ATT, attPath: attPath, usedFiles: usedFiles, cleanFiles: cleanFiles,
     coverField: coverField, coverOf: coverOf,
-    FORM_KEY: FORM_KEY, FORM_BATCH: FORM_BATCH, keyId: keyId, addFromForms: addFromForms, formSpec: formSpec, inputVal: formVal, events: events,
+    FORM_KEY: FORM_KEY, FORM_BATCH: FORM_BATCH, keyId: keyId, addFromForms: addFromForms, formSpec: formSpec, inputVal: formVal, events: events, fmtStamp: fmtStamp,
+    NOTES_KEY: NOTES_KEY, MAX_NOTE: MAX_NOTE, notesEmpty: notesEmpty, mergeNotes: mergeNotes, normNotes: normNotes, notesOf: notesOf, addNote: addNote, delNote: delNote, undelNote: undelNote,
     VIEW_KINDS: VIEW_KINDS, visibleFields: visibleFields, stackField: stackField, stacks: stacks, dateField: dateField, monthGrid: monthGrid, orderedFields: orderedFields, summary: summary, compare: compare,
     uid: uid, fid: fid, oid: oid, putRow: putRow, addBase: addBase, addTable: addTable, addField: addField,
     remove: remove, restore: restore, rowsUnder: rowsUnder, setValues: setValues, addRecord: addRecord,

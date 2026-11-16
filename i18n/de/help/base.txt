@@ -30,6 +30,7 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 - Im Raster tippst du auf eine Zelle, um sie auszuwählen, und noch einmal (oder Enter), um sie zu bearbeiten. Pfeiltasten und Tab bewegen, Entf leert eine Zelle, Esc bricht ab.
 - Füge einen Block aus einer Tabellenkalkulation in die ausgewählte Zelle ein: Er füllt die Zellen rechts und darunter und legt Einträge an, wenn mehr Zeilen nötig sind.
 - Der Knopf am Anfang einer Zeile, oder Umschalt+Enter, öffnet den ganzen Eintrag. Dort kannst du ihn auch duplizieren oder löschen.
+- Unter seinen Feldern hat ein Eintrag `Kommentare`: Schreib eine Notiz und tippe auf `Kommentar hinzufügen` (oder Strg+Enter). Kommentare werden mit deinen anderen Geräten synchronisiert; das × löscht einen, mit Rückgängig.
 
 ## Ansichten
 - Jede Tabelle beginnt mit einer Rasteransicht und einer Kartenansicht. Weitere legst du in der Ansichtsliste an (`Neue Ansicht…`), jede mit eigenen Filtern, Sortierung, Gruppen und Feldern.
