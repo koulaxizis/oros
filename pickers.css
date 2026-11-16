@@ -1,9 +1,10 @@
 /* orOS pickers.css (PICK-1): keeps the browser's pickers shut; pickers.js
-   opens the orOS ones (pickers-ui.css holds their look). */
-html.opk-on select:not([multiple]):not([size]):not([disabled]):not([data-native]),
-html.opk-on select[size="1"]:not([multiple]):not([disabled]):not([data-native]),
-html.opk-on select[size="0"]:not([multiple]):not([disabled]):not([data-native]) { pointer-events: none; }
-html.opk-on [data-native] select { pointer-events: auto; }
-html.opk-on input:is([type="date"], [type="time"], [type="datetime-local"]):not([disabled]):not([readonly]):not([data-native]) { pointer-events: none; }
-html.opk-on input[type="color"]:not([disabled]):not([readonly]):not([data-native]) { pointer-events: none; }
-html.opk-on [data-native] input { pointer-events: auto; }
+   links it only where it can open the orOS ones (pickers-ui.css holds
+   their look). No class on <html>: games watch its attributes. */
+:root select:not([multiple]):not([size]):not([disabled]):not([data-native]),
+:root select[size="1"]:not([multiple]):not([disabled]):not([data-native]),
+:root select[size="0"]:not([multiple]):not([disabled]):not([data-native]) { pointer-events: none; }
+:root [data-native] select { pointer-events: auto; }
+:root input:is([type="date"], [type="time"], [type="datetime-local"]):not([disabled]):not([readonly]):not([data-native]) { pointer-events: none; }
+:root input[type="color"]:not([disabled]):not([readonly]):not([data-native]) { pointer-events: none; }
+:root [data-native] input { pointer-events: auto; }

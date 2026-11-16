@@ -95,16 +95,18 @@ test("the app-kit template and check-app carry the line", () => {
   assert.ok(chk.includes('"pickers"'));
 });
 
-test("pickers.css keeps the browser list shut only under html.opk-on, and lets data-native through", () => {
+test("pickers.css keeps the browser list shut, lets data-native through, and pickers.js never marks <html>", () => {
   const css = fs.readFileSync(path.join(ROOT, "pickers.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   const rule = css.match(/([^{}]+)\{\s*pointer-events:\s*none;\s*\}/);
   assert.ok(rule, "pointer-events rule");
   for (const sel of rule[1].split(",")) {
-    assert.match(sel.trim(), /^html\.opk-on select/);
+    assert.match(sel.trim(), /^:root select/);
     assert.match(sel, /:not\(\[multiple\]\)/);
     assert.match(sel, /:not\(\[data-native\]\)/);
   }
-  assert.match(css, /html\.opk-on \[data-native\] select \{ pointer-events: auto; \}/);
+  assert.match(css, /:root \[data-native\] select \{ pointer-events: auto; \}/);
+  const loader = fs.readFileSync(path.join(ROOT, "pickers.js"), "utf8");
+  assert.ok(!/documentElement\.(classList|setAttribute)/.test(loader), "a class on <html> loops apps that observe it (Realm ?standalone)");
   const ui = fs.readFileSync(path.join(ROOT, "pickers-ui.css"), "utf8");
   for (const v of ["--panel-bg", "--text", "--accent", "--border"]) assert.ok(ui.includes("var(" + v), v);
 });
@@ -176,8 +178,8 @@ test("timeSteps follows the step attribute", () => {
 
 test("pickers.css also keeps date and time fields to the orOS calendar", () => {
   const css = fs.readFileSync(path.join(ROOT, "pickers.css"), "utf8");
-  assert.match(css, /html\.opk-on input:is\(\[type="date"\], \[type="time"\], \[type="datetime-local"\]\):not\(\[disabled\]\):not\(\[readonly\]\):not\(\[data-native\]\) \{ pointer-events: none; \}/);
-  assert.match(css, /html\.opk-on \[data-native\] input \{ pointer-events: auto; \}/);
+  assert.match(css, /:root input:is\(\[type="date"\], \[type="time"\], \[type="datetime-local"\]\):not\(\[disabled\]\):not\(\[readonly\]\):not\(\[data-native\]\) \{ pointer-events: none; \}/);
+  assert.match(css, /:root \[data-native\] input \{ pointer-events: auto; \}/);
 });
 
 test("month and weekday names come from Intl in the three languages", () => {
@@ -205,7 +207,7 @@ test("colour helpers: codes, RGB and HSV round trips", () => {
 
 test("pickers.css keeps colour fields to the orOS picker", () => {
   const css = fs.readFileSync(path.join(ROOT, "pickers.css"), "utf8");
-  assert.match(css, /html\.opk-on input\[type="color"\]:not\(\[disabled\]\):not\(\[readonly\]\):not\(\[data-native\]\) \{ pointer-events: none; \}/);
+  assert.match(css, /:root input\[type="color"\]:not\(\[disabled\]\):not\(\[readonly\]\):not\(\[data-native\]\) \{ pointer-events: none; \}/);
 });
 
 // ---------- T4: no native questions (R14) ----------

@@ -29,6 +29,7 @@
     var m = /^(.*\/)pickers\.js(\?[^#]*)?/.exec(me.src);
     if (m) { base = m[1]; query = m[2] || ""; }
   }
+  var shut = null;   // the pickers.css <link>: its presence keeps the browser's pickers shut
   function link(name, cb) {
     var l = doc.createElement("link");
     l.rel = "stylesheet";
@@ -36,11 +37,11 @@
     l.setAttribute("data-opk", name);
     if (cb) { l.onload = cb; l.onerror = cb; }
     (doc.head || doc.documentElement).appendChild(l);
+    return l;
   }
-  if (base && supported) {
-    link("pickers.css");
-    doc.documentElement.classList.add("opk-on");
-  }
+  // No class or attribute on <html>: apps and games observe its
+  // attributes (Realm's watchPalette looped on one in ?standalone).
+  if (base && supported) shut = link("pickers.css");
 
   var loading = null;
   function ui() { return win.OrosPickUI || null; }
@@ -63,7 +64,7 @@
   // Offline with an old cache, or a blocked file: the browser's own
   // picker is better than a field that does nothing (R28).
   function giveBack() {
-    doc.documentElement.classList.remove("opk-on");
+    if (shut) { shut.disabled = true; if (shut.parentNode) shut.parentNode.removeChild(shut); }
     supported = false;
   }
   function openField(n) {
