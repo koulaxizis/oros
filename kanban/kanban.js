@@ -298,6 +298,9 @@
       "deps.shift":       "Move the next ones too",
       "deps.shifted":     "The next cards were moved",
       "tl.cp":            "Critical path",
+      "tl.pdf":           "Export timeline (PDF)",
+      "tl.pdf.page":      "Page {n} of {m}",
+      "tl.pdf.fail":      "The PDF could not be made. Try again.",
       "card.start":       "Start",
       "card.ms":          "Milestone",
       "card.ms.long":     "Milestone (a diamond on the due date)",
@@ -570,6 +573,9 @@
       "deps.shift":       "Μετακίνησε και τις επόμενες",
       "deps.shifted":     "Οι επόμενες κάρτες μετακινήθηκαν",
       "tl.cp":            "Κρίσιμη διαδρομή",
+      "tl.pdf":           "Εξαγωγή χρονοδιαγράμματος (PDF)",
+      "tl.pdf.page":      "Σελίδα {n} από {m}",
+      "tl.pdf.fail":      "Το PDF δεν φτιάχτηκε. Δοκίμασε ξανά.",
       "card.start":       "Έναρξη",
       "card.ms":          "Ορόσημο",
       "card.ms.long":     "Ορόσημο (ρόμβος στην προθεσμία)",
@@ -4576,7 +4582,7 @@
           if (lblMap[lid]) cardLabels.push(lblMap[lid]);
         });
         var subtasks = (checkByCard[c.id] || []).slice();
-        cards.push({
+        var nc = {
           id: "imp-t-" + c.id,
           text: c.name || "",
           notes: c.desc || "",
@@ -4586,7 +4592,11 @@
           info: importInfo(c),
           mtime: Date.now(),
           pos: cards.length
-        });
+        };
+        // Gantt G3: Trello's start date → the plan start (at most the due day)
+        var st = importIsoDate(c.start);
+        if (st && (!nc.due || st <= nc.due)) nc.start = st;
+        cards.push(nc);
       });
       columns.push({
         id: "imp-t-" + list.id,
@@ -5128,6 +5138,7 @@
       var wdOn = T.boardWorkdays(board);
       item((wdOn ? "\u2713 " : "") + t("tl.wd"), "mp.wd", function () { setWorkdays(board.id, !wdOn); });
       item((vw.cp ? "\u2713 " : "") + t("tl.cp"), "mp.cp", function () { setView(board.id, { cp: !vw.cp }); renderAll(); });
+      item(t("tl.pdf"), "mp.pdf", exportGanttPdf);
     }
     var sep = document.createElement("hr");
     sep.className = "dropdown-sep";
@@ -5509,6 +5520,177 @@
     if (c.cover && /^#[0-9a-fA-F]{6}$/.test(c.cover)) return c.cover;
     var lb = (c.labels || []).map(labelById).filter(Boolean)[0];
     return lb ? (lb.color || FALLBACK_COLOR) : "var(--accent)";
+  }
+  // G3: the Timeline as a PDF (A4 landscape, as many pages as the rows
+  // need). Drawn on a canvas page by page (the system font has Greek),
+  // each page placed as a picture; jsPDF is loaded only on first use,
+  // like Whiteboard. Arrows join bars on the same page.
+  var pdfLib = null;
+  function loadPdf() {
+    if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+    if (pdfLib) return pdfLib;
+    pdfLib = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = "../vendor/jspdf.umd.min.js";
+      s.onload = function () { if (window.jspdf && window.jspdf.jsPDF) resolve(window.jspdf.jsPDF); else reject(new Error("jspdf")); };
+      s.onerror = function () { pdfLib = null; reject(new Error("jspdf")); };
+      document.head.appendChild(s);
+    });
+    return pdfLib;
+  }
+  function cssColor(c, probe) {
+    if (!/^var\(/.test(c)) return c;
+    probe.style.color = c;
+    return getComputedStyle(probe).color || "#5b6cff";
+  }
+  // Rows of the PDF in screen order: group headings ({ head }) and cards.
+  function tlPlanRows(board, vw) {
+    var rows = boardRows(board), dated = [];
+    rows.forEach(function (r) { var sp = T.planSpan(r.card); if (sp) { r.span = sp; dated.push(r); } });
+    dated.sort(function (a, b) {
+      return a.span.from < b.span.from ? -1 : a.span.from > b.span.from ? 1 :
+             a.span.to < b.span.to ? -1 : a.span.to > b.span.to ? 1 : (a.colIdx - b.colIdx) || (a.idx - b.idx);
+    });
+    var out = [];
+    tlGroups(dated, vw.grp, board).forEach(function (g) {
+      if (g.name !== null) out.push({ head: g.name + " (" + g.rows.length + ")" });
+      g.rows.forEach(function (r) { out.push(r); });
+    });
+    return { rows: out, dated: dated };
+  }
+  var PDF_W = 842, PDF_H = 595, PDF_K = 2, PDF_M = 28, PDF_NAME = 170, PDF_ROW = 17, PDF_TOP = 64, PDF_FOOT = 22;
+  function ganttPages(board) {
+    var vw = viewOf(board.id), wd = T.boardWorkdays(board), today = todayYmd();
+    var plan = tlPlanRows(board, vw);
+    if (!plan.dated.length) return null;
+    var ends = [];
+    plan.dated.forEach(function (r) { ends.push(r.span.from, r.span.to); });
+    var rg = T.timelineRange(ends, today);
+    var crit = vw.cp ? T.criticalPath(board, wd).ids : {};
+    var lastIdx = board.columns.length - 1;
+    var per = Math.max(1, Math.floor((PDF_H - PDF_TOP - PDF_FOOT - PDF_M) / PDF_ROW));
+    var pages = [];
+    for (var i = 0; i < plan.rows.length; i += per) pages.push(plan.rows.slice(i, i + per));
+    var probe = document.createElement("span");
+    document.body.appendChild(probe);
+    var font = getComputedStyle(document.body).fontFamily || "sans-serif";
+    var trackX = PDF_M + PDF_NAME, trackW = PDF_W - PDF_M - trackX, dayW = trackW / rg.days;
+    var out = pages.map(function (list, pi) {
+      var cv = document.createElement("canvas");
+      cv.width = PDF_W * PDF_K; cv.height = PDF_H * PDF_K;
+      var g = cv.getContext("2d");
+      g.scale(PDF_K, PDF_K);
+      g.fillStyle = "#ffffff"; g.fillRect(0, 0, PDF_W, PDF_H);
+      function txt(s, x, y, size, color, weight, maxW, align) {
+        g.font = (weight || "400") + " " + size + "px " + font;
+        g.fillStyle = color || "#1d1d1f";
+        g.textAlign = align || "left";
+        s = String(s);
+        if (maxW && g.measureText(s).width > maxW) {
+          while (s.length > 1 && g.measureText(s + "…").width > maxW) s = s.slice(0, -1);
+          s += "…";
+        }
+        g.fillText(s, x, y);
+      }
+      var x0 = function (ymd) { return trackX + T.daysBetween(rg.from, ymd) * dayW; };
+      // title and range
+      txt(board.name || "Kanban", PDF_M, PDF_M + 6, 15, "#1d1d1f", "600", PDF_W - 2 * PDF_M - 160);
+      txt(fmtDay(rg.from) + " – " + fmtDay(T.addDays(rg.from, rg.days - 1)) + (wd ? "  ·  " + t("tl.wd") : "") + (vw.cp ? "  ·  " + t("tl.cp") : ""),
+          PDF_W - PDF_M, PDF_M + 6, 9, "#6e6e73", "400", 0, "right");
+      var gridTop = PDF_TOP, gridBot = gridTop + list.length * PDF_ROW;
+      // weekends
+      if (dayW >= 2.5) {
+        g.fillStyle = "#f2f2f5";
+        for (var d = 0; d < rg.days; d++) if (T.isWeekend(T.addDays(rg.from, d))) g.fillRect(trackX + d * dayW, gridTop - 14, dayW, gridBot - gridTop + 14);
+      }
+      // axis: days, weeks (Mondays) or months, whatever fits
+      g.strokeStyle = "#d8d8de"; g.lineWidth = 0.5;
+      for (var a = 0; a < rg.days; a++) {
+        var day = T.addDays(rg.from, a), dt = new Date(day + "T12:00:00"), lab = null;
+        if (dayW >= 13) lab = String(dt.getDate());
+        else if (dayW * 7 >= 30) { if (dt.getDay() === 1) lab = dt.toLocaleDateString(loc(), { day: "numeric", month: "short" }); }
+        else if (dt.getDate() === 1 || a === 0) lab = dt.toLocaleDateString(loc(), { month: "short", year: "2-digit" });
+        if (dt.getDate() === 1 || a === 0) txt(dt.toLocaleDateString(loc(), { month: "long", year: "numeric" }), trackX + a * dayW + 2, gridTop - 20, 8, "#6e6e73", "600", 0);
+        if (lab !== null) {
+          txt(lab, trackX + a * dayW + (dayW >= 13 ? dayW / 2 : 2), gridTop - 5, 7, "#6e6e73", "400", 0, dayW >= 13 ? "center" : "left");
+          g.beginPath(); g.moveTo(trackX + a * dayW, gridTop); g.lineTo(trackX + a * dayW, gridBot); g.stroke();
+        }
+      }
+      // today
+      var ti = T.daysBetween(rg.from, today);
+      if (ti >= 0 && ti < rg.days) {
+        g.strokeStyle = "#e5484d"; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(trackX + (ti + 0.5) * dayW, gridTop - 14); g.lineTo(trackX + (ti + 0.5) * dayW, gridBot); g.stroke();
+      }
+      // rows
+      var at = {};
+      list.forEach(function (r, ri) {
+        var y = gridTop + ri * PDF_ROW;
+        g.strokeStyle = "#ececf0"; g.lineWidth = 0.5;
+        g.beginPath(); g.moveTo(PDF_M, y + PDF_ROW); g.lineTo(PDF_W - PDF_M, y + PDF_ROW); g.stroke();
+        if (r.head) { txt(r.head, PDF_M, y + 12, 9, "#1d1d1f", "600", PDF_NAME + trackW); return; }
+        var c = r.card, sp = r.span, color = cssColor(tlColor(c), probe), done = r.colIdx === lastIdx && lastIdx > 0;
+        txt(c.text, PDF_M, y + 12, 8.5, done ? "#8e8e93" : "#1d1d1f", "400", PDF_NAME - 8);
+        var bx = x0(sp.from), bw = Math.max(dayW, (T.daysBetween(sp.from, sp.to) + 1) * dayW), by = y + 3, bh = PDF_ROW - 6;
+        g.globalAlpha = done ? 0.45 : 1;
+        if (sp.ms) {
+          var cx = bx + dayW / 2, cy = y + PDF_ROW / 2, s = 5.5;
+          g.fillStyle = color;
+          g.beginPath(); g.moveTo(cx, cy - s); g.lineTo(cx + s, cy); g.lineTo(cx, cy + s); g.lineTo(cx - s, cy); g.closePath(); g.fill();
+          if (crit[c.id]) { g.strokeStyle = "#e5484d"; g.lineWidth = 1.2; g.stroke(); }
+          at[c.id] = { l: cx - s, r: cx + s, y: cy };
+        } else {
+          g.fillStyle = color;
+          g.beginPath(); if (g.roundRect) g.roundRect(bx, by, bw, bh, 2.5); else g.rect(bx, by, bw, bh); g.fill();
+          var pr = T.progressOf(c);
+          if (pr !== null && pr > 0) { g.fillStyle = "rgba(0,0,0,.22)"; g.fillRect(bx, by + bh - 2.5, bw * pr, 2.5); }
+          if (crit[c.id]) { g.strokeStyle = "#e5484d"; g.lineWidth = 1.2; g.beginPath(); if (g.roundRect) g.roundRect(bx, by, bw, bh, 2.5); else g.rect(bx, by, bw, bh); g.stroke(); }
+          at[c.id] = { l: bx, r: bx + bw, y: y + PDF_ROW / 2 };
+        }
+        g.globalAlpha = 1;
+      });
+      // arrows between bars on this page
+      var bad = {};
+      T.brokenDeps(board, wd).forEach(function (x) { bad[x.from + ">" + x.to] = 1; });
+      list.forEach(function (r) {
+        if (r.head) return;
+        (r.card.deps || []).forEach(function (pid) {
+          var a1 = at[pid], b1 = at[r.card.id];
+          if (!a1 || !b1) return;
+          var red = bad[pid + ">" + r.card.id] || (crit[pid] && crit[r.card.id]);
+          g.strokeStyle = red ? "#e5484d" : "#8e8e93"; g.fillStyle = g.strokeStyle; g.lineWidth = 0.8;
+          var mx = Math.max(a1.r + 4, Math.min(b1.l - 4, a1.r + 8));
+          g.beginPath(); g.moveTo(a1.r, a1.y); g.lineTo(mx, a1.y); g.lineTo(mx, b1.y); g.lineTo(b1.l - 1, b1.y); g.stroke();
+          g.beginPath(); g.moveTo(b1.l, b1.y); g.lineTo(b1.l - 4, b1.y - 2.5); g.lineTo(b1.l - 4, b1.y + 2.5); g.closePath(); g.fill();
+        });
+      });
+      txt("orOS Kanban  ·  " + fmtDay(today), PDF_M, PDF_H - PDF_M + 10, 7, "#8e8e93");
+      if (pages.length > 1) txt(t("tl.pdf.page", { n: pi + 1, m: pages.length }), PDF_W - PDF_M, PDF_H - PDF_M + 10, 7, "#8e8e93", "400", 0, "right");
+      return cv;
+    });
+    probe.remove();
+    return out;
+  }
+  function fmtDay(ymd) {
+    try { return new Date(ymd + "T12:00:00").toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" }); }
+    catch (e) { return ymd; }
+  }
+  function exportGanttPdf() {
+    var board = currentBoard();
+    if (!board) return;
+    var pages = ganttPages(board);
+    if (!pages) { notifyTransient(t("tl.empty")); return; }
+    loadPdf().then(function (JsPDF) {
+      var doc = new JsPDF({ orientation: "landscape", unit: "pt", format: [PDF_W, PDF_H], compress: true });
+      doc.setProperties({ title: board.name || "Kanban", creator: "orOS Kanban" });
+      pages.forEach(function (cv, i) {
+        if (i) doc.addPage([PDF_W, PDF_H], "landscape");
+        doc.addImage(cv.toDataURL("image/png"), "PNG", 0, 0, PDF_W, PDF_H, undefined, "FAST");
+      });
+      return saveBytes(doc.output("arraybuffer"), "orOS-kanban-" + slug(board.name) + "-" + todayYmd() + ".pdf", "application/pdf", ".pdf");
+    }).then(function (ok) {
+      if (ok) notifyTransient(t("export.done"));
+    }, function (e) { console.error("[orOS] kanban: PDF failed", e); notifyTransient(t("tl.pdf.fail")); });
   }
   // G2: dependency arrows, from the end of the first bar to the start of
   // the next, red when the next one starts too early. Drawn after

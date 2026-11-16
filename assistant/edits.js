@@ -92,13 +92,13 @@
                  website: 1, old_website: 1, address: 1, address_replace: 1, note: 1, note_add: 1, roles: 1, rs_beneficiary: 1 },
     crm_deal:  { title: 1, amount: 1, date: 1, note: 1, stage: 1, probability: 1, reason: 1 },
     crm_fup:   { title: 1, date: 1, start: 1 },
-    kanban:    { title: 1, date: 1, note: 1, label: 1, labels: 1 },
+    kanban:    { title: 1, date: 1, note: 1, label: 1, labels: 1, plan_start: 1, milestone: 1, depends_on: 1 },
     shelf:     { title: 1, note: 1, status: 1 },
     habits:    { title: 1 },
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "deck", "kind", "roles", "rs", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "sub", "translator", "illustrator", "editor", "credits", "series", "release", "lang", "format", "royalty", "kw", "servings", "km", "next", "paid", "owed", "songs", "front", "back", "blurb", "bio", "note", "text"];
+  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "deck", "kind", "roles", "rs", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "plan", "ms", "deps", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "sub", "translator", "illustrator", "editor", "credits", "series", "release", "lang", "format", "royalty", "kw", "servings", "km", "next", "paid", "owed", "songs", "front", "back", "blurb", "bio", "note", "text"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -206,6 +206,20 @@
       var ed = realDate(args.end_date);
       if (!ed) return bad("end_date must be a real date as YYYY-MM-DD.");
       set.end_date = ed;
+    }
+    // KB-GANTT G3: a Kanban card's plan (start day, milestone, the cards it waits for).
+    if (has(args, "plan_start") && typeof args.plan_start === "string") {
+      var ps = args.plan_start.trim() === "" ? "" : realDate(args.plan_start);
+      if (ps === "" && args.plan_start.trim() !== "") return bad("plan_start must be a real date as YYYY-MM-DD, or \"\" to clear it.");
+      set.plan_start = ps;
+    }
+    if (has(args, "milestone") && args.milestone !== null && args.milestone !== undefined) {
+      if (typeof args.milestone !== "boolean") return bad("milestone must be true or false.");
+      set.milestone = args.milestone;
+    }
+    if (has(args, "depends_on") && args.depends_on !== null && args.depends_on !== undefined) {
+      if (!Array.isArray(args.depends_on) || args.depends_on.length > 20) return bad("depends_on must be a list of at most 20 card titles ([] clears it).");
+      set.depends_on = args.depends_on.map(function (x) { return line(typeof x === "string" ? x : "", 500); }).filter(Boolean);
     }
     if (has(args, "next") && args.next !== null && args.next !== undefined && args.next !== "") {
       var nx = realDate(args.next);
@@ -1371,7 +1385,7 @@
   // mtime > ts); the column order stamp col.om; the stored copy is the
   // canonical form (canonState: CARD/COL/BOARD key order, pos numbered,
   // fm and tombstone keys sorted). A Kanban card has no done flag.
-  var KB_GROUPS = ["a", "c", "d", "k", "l", "n", "p", "s", "t", "x"];
+  var KB_GROUPS = ["a", "c", "d", "g", "k", "l", "n", "p", "s", "t", "x"];
   var KB_CARD_KEYS = ["id", "text", "notes", "due", "labels", "subtasks", "info", "mtime", "pos"];
   var KB_COL_KEYS = ["id", "name", "mtime", "om", "pos", "cards"];
   var KB_BOARD_KEYS = ["id", "name", "archived", "color", "mtime", "om", "pos", "deleted", "labels", "columns"];
@@ -1454,6 +1468,11 @@
       subtasks: subs.length ? subs.filter(function (x) { return x.completed; }).length + "/" + subs.length : "",
       note: typeof c.notes === "string" ? c.notes : ""
     };
+    // KB-GANTT: the plan, only on cards that have one
+    if (realDate(c.start)) v.plan = realDate(c.start);
+    if (c.ms) v.ms = "\u25c6";
+    var dn = kbDepNames(b, c);
+    if (dn) v.deps = dn;
     if (pos) v.position = (col.cards.indexOf(c) + 1) + "/" + col.cards.length;
     if (pos === "board") v.board = kbName(b.name);
     return v;
@@ -1493,7 +1512,41 @@
   }
   function kbRaw(h) {
     return { text: h.card.text, notes: h.card.notes, due: h.card.due === undefined ? null : h.card.due, col: h.col.id,
-             labels: clone(kbArr(h.card.labels)), subtasks: clone(kbArr(h.card.subtasks)) };
+             labels: clone(kbArr(h.card.labels)), subtasks: clone(kbArr(h.card.subtasks)), plan: kbPlanOf(h.card) };
+  }
+  // KB-GANTT: plan fields (model.js planOf; group g).
+  function kbPlanOf(c) {
+    return { start: realDate(c.start) || null, ms: !!c.ms, deps: kbArr(c.deps).filter(function (x) { return typeof x === "string"; }) };
+  }
+  function kbSetPlan(c, p) {
+    if (p.start) c.start = p.start; else delete c.start;
+    if (p.ms) c.ms = 1; else delete c.ms;
+    if (p.deps && p.deps.length) c.deps = p.deps.slice(); else delete c.deps;
+  }
+  function kbAllCards(b) {
+    var out = [];
+    kbArr(b.columns).forEach(function (col) { if (isObj(col)) kbArr(col.cards).forEach(function (c) { if (isObj(c) && typeof c.id === "string") out.push(c); }); });
+    return out;
+  }
+  function kbDepNames(b, c) {
+    var deps = kbArr(c.deps);
+    if (!deps.length) return "";
+    var all = kbAllCards(b);
+    return deps.map(function (id) { var x = all.filter(function (y) { return y.id === id; })[0]; return x ? kbName(x.text) : ""; }).filter(Boolean).join(", ");
+  }
+  // Would `card` waiting for `pred` close a loop? (pred already waits, at
+  // some depth, for card.)
+  function kbLoop(all, cardId, predId) {
+    var by = {}, seen = {}, stack = [predId];
+    all.forEach(function (x) { by[x.id] = x; });
+    while (stack.length) {
+      var id = stack.pop();
+      if (id === cardId) return true;
+      if (seen[id] || !by[id]) continue;
+      seen[id] = 1;
+      kbArr(by[id].deps).forEach(function (p) { stack.push(p); });
+    }
+    return false;
   }
 
   function kanbanChange(d, target, ch, now) {
@@ -1549,7 +1602,7 @@
                undo: { t: "set", app: "kanban", target: { board: b.id, card: card.id }, index: idx, prev: pv0, next: nxt } };
     }
     var s = ch.set;
-    if (s.start || s.end) return bad("A Kanban card has a due date only, no start or end time.");
+    if (s.start || s.end) return bad("A Kanban card has no start or end time; its planned first day is plan_start.");
     var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.kanban[k]; });
     if (notOk.length) return bad("A Kanban card has no " + notOk.join(", ") + ".");
     var groups = [], next = {};
@@ -1562,6 +1615,28 @@
       var nl = newLabelIds(bl, kbArr(card.labels), s, "The board " + kbName(b.name), "Kanban (the board's labels)");
       if (nl.err) return bad(nl.err);
       if (JSON.stringify(nl.ids) !== JSON.stringify(kbArr(card.labels))) { card.labels = nl.ids; groups.push("l"); next.labels = clone(nl.ids); }
+    }
+    if (has(s, "plan_start") || has(s, "milestone") || has(s, "depends_on")) {
+      var p0 = kbPlanOf(card), np = clone(p0);
+      if (has(s, "plan_start")) np.start = s.plan_start || null;
+      if (has(s, "milestone")) np.ms = s.milestone;
+      var dueNow = has(next, "due") ? next.due : realDate(card.due);
+      if (np.start && dueNow && np.start > dueNow && !np.ms) return bad("plan_start " + np.start + " is after the card's due date " + dueNow + ".");
+      if (has(s, "depends_on")) {
+        var all = kbAllCards(b), ids = [];
+        for (var di = 0; di < s.depends_on.length; di++) {
+          var want2 = foldName(s.depends_on[di]);
+          var hit = all.filter(function (x) { return x.id === s.depends_on[di]; });
+          if (!hit.length) hit = all.filter(function (x) { return foldName(x.text) === want2; });
+          if (!hit.length) return bad("The board " + kbName(b.name) + " has no card called " + s.depends_on[di] + ".");
+          if (hit.length > 1) return bad("More than one card on " + kbName(b.name) + " is called " + s.depends_on[di] + "; set that dependency in Kanban.");
+          if (hit[0].id === card.id) return bad("A card cannot wait for itself.");
+          if (kbLoop(all, card.id, hit[0].id)) return bad(kbName(hit[0].text) + " already waits for this card; that would make a loop.");
+          if (ids.indexOf(hit[0].id) < 0) ids.push(hit[0].id);
+        }
+        np.deps = ids;
+      }
+      if (JSON.stringify(np) !== JSON.stringify(p0)) { kbSetPlan(card, np); groups.push("g"); next.plan = np; }
     }
     if (!groups.length) return bad("Nothing would change: the card already looks like that.");
     kbStamp(card, groups, now);
@@ -1686,7 +1761,7 @@
     if (!h) return bad("That card is no longer in Kanban.");
     var cur = kbRaw(h), nx = isObj(u.next) ? u.next : {}, pv = isObj(u.prev) ? u.prev : {};
     cur.subtasks = kbNoM(cur.subtasks);
-    var keys = Object.keys(nx).filter(function (k) { return ["text", "notes", "due", "col", "labels", "subtasks"].indexOf(k) >= 0; });
+    var keys = Object.keys(nx).filter(function (k) { return ["text", "notes", "due", "col", "labels", "subtasks", "plan"].indexOf(k) >= 0; });
     for (var i = 0; i < keys.length; i++) {
       if (JSON.stringify(cur[keys[i]] === undefined ? null : cur[keys[i]]) !== JSON.stringify(nx[keys[i]])) return bad("The card changed since; nothing was undone.");
     }
@@ -1706,6 +1781,7 @@
     if (has(nx, "due")) { h.card.due = typeof pv.due === "string" && pv.due ? pv.due : null; groups.push("d"); }
     if (has(nx, "labels")) { h.card.labels = clone(kbArr(pv.labels)); groups.push("l"); }
     if (has(nx, "subtasks")) groups.push("s");
+    if (has(nx, "plan")) { kbSetPlan(h.card, isObj(pv.plan) ? pv.plan : { start: null, ms: false, deps: [] }); groups.push("g"); }
     if (!groups.length) return bad("bad undo");
     var st = kbStamp(h.card, groups, now);
     // subtasks merge per item on its m: the put-back items carry the new stamp

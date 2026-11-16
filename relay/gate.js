@@ -123,7 +123,7 @@ export const TOOLS = [
   },
   {
     name: "app_summary",
-    description: "Worked out on the device. budget: one month's income, expenses, per category; stock: one month's units and amounts sold, per product and place; kanban: every open board with its columns and card counts, late and due today, and the cards with column, due date, labels and subtasks done (with board, only that board, every column with its id). " +
+    description: "Worked out on the device. budget: one month's income, expenses, per category; stock: one month's units and amounts sold, per product and place; kanban: every open board with its columns and card counts, late and due today, and the cards with column, due date, labels and subtasks done (with board, only that board, every column with its id); studio: the podcast shows (feed address, episodes, how many have their file) and every episode with show, number, date and whether its file is made (with show, only that show; read only, publishing is always the owner's own tap in Studio). " +
       "The other apps list_apps marks with app_summary (GATE-ACT): todo (open, late, due today per list; with list every task with a ref), calendar (labels; with month or label the events with a ref), notes (notebooks and pages with refs), bookmarks, contacts (no phone or e-mail), shelf, library, timesheet (hours per project of a month), crm (with partner: everything open with them), and for the rest what is late, today and in the next days.",
     inputSchema: {
       type: "object",
@@ -131,6 +131,7 @@ export const TOOLS = [
         app: { type: "string", description: "The app id (from list_apps)." },
         month: { type: "string", description: "budget, stock, timesheet: YYYY-MM (this month when left out). calendar: that month's events." },
         board: { type: "string", description: "kanban: only this board's cards (its name), with every column of that board in order and its id." },
+        show: { type: "string", description: "studio: only this podcast show (its title)." },
         label: { type: "string", description: "calendar, contacts: only this label (\"none\": without one)." },
         list: { type: "string", description: "todo: one list's name." },
         notebook: { type: "string", description: "notes: one notebook's name." },
@@ -369,6 +370,8 @@ export const TOOLS = [
             text: { type: "string", description: "The card's title, at most 500 characters." },
             notes: { type: "string", description: "At most 5000 characters." },
             due: { type: "string", description: "YYYY-MM-DD." },
+            start: { type: "string", description: "The planned first day on the Timeline (Gantt), YYYY-MM-DD, at most the due date." },
+            milestone: { type: "boolean", description: "true: a milestone (one day, its due date)." },
             labels: { type: "array", items: { type: "string" }, description: "Label names of this board." },
             position: { type: "string", enum: ["top", "bottom"], description: "Where in the column (bottom when left out)." }
           },
@@ -406,7 +409,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_change_card",
-    description: "Changes one card's text, notes, due date (\"\" clears it) or labels (the full new list of label names; [] clears them), adds subtasks at the end (add_subtasks) and ticks, unticks or rewords subtasks by id or exact text (change_subtasks); subtasks are never removed here. Read the whole card (notes, subtasks with ids and [x] when done) with read_item on its ref from search_data. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices.",
+    description: "Changes one card's text, notes, due date (\"\" clears it), plan (start, milestone, depends_on: the Timeline's Gantt) or labels (the full new list of label names; [] clears them), adds subtasks at the end (add_subtasks) and ticks, unticks or rewords subtasks by id or exact text (change_subtasks); subtasks are never removed here. Read the whole card (notes, subtasks with ids and [x] when done) with read_item on its ref from search_data. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices.",
     inputSchema: {
       type: "object",
       properties: {
@@ -415,6 +418,9 @@ export const TOOLS = [
         text: { type: "string" },
         notes: { type: "string" },
         due: { type: "string", description: "YYYY-MM-DD, or \"\" to clear." },
+        start: { type: "string", description: "The planned first day on the Timeline (Gantt), YYYY-MM-DD at most the due date, or \"\" to clear." },
+        milestone: { type: "boolean", description: "true makes it a milestone (one day, its due date), false a normal card." },
+        depends_on: { type: "array", maxItems: 20, items: { type: "string" }, description: "The whole new list of cards (ids, or exact text) on this board that must finish before this one starts; [] clears it. Loops are refused." },
         labels: { type: "array", items: { type: "string" } },
         add_subtasks: { type: "array", minItems: 1, maxItems: 30, items: { type: "string" }, description: "New subtasks, added unticked at the end (at most 500 characters each; a card holds at most 100)." },
         change_subtasks: { type: "array", minItems: 1, maxItems: 100, items: {

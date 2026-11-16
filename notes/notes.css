@@ -1098,3 +1098,11 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
 
 /* EMPTY-1: the friendly empty screen over the editor */
 #page-body.ek-on > #page-text, #page-body.ek-on > #page-preview { display: none; }
+
+/* STRICT-5: pages that delete themselves */
+#page-exp {
+  flex: 0 0 auto; font-size: 0.78em; padding: 2px 8px; border-radius: 999px;
+  background: var(--accent-soft, rgba(255, 255, 255, 0.08)); color: var(--warn, #e0a030); white-space: nowrap;
+}
+#node-menu .node-menu-title { padding: 8px 12px 2px; font-weight: 600; }
+#node-menu .exp-hint { margin: 0; padding: 0 12px 6px; font-size: 0.82em; opacity: 0.8; max-width: 260px; }

@@ -78,3 +78,6 @@
 .fm .fm-colrow { cursor: default; }
 .fm .fm-colrow:hover { border-color: var(--border); }
 .fm .fm-colacts { margin: 0; }
+.fm .fm-userow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 48px; padding: 6px 0; border-top: 1px solid var(--border); }
+.fm .fm-userow:first-of-type { border-top: 0; }
+.fm .fm-usename { flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; font-weight: 600; }

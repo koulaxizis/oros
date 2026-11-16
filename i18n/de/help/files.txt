@@ -28,6 +28,15 @@ Links stehen die Ordner, rechts der Inhalt des aktuellen Ordners. Auf dem Handy 
 - `Zu Favoriten hinzufügen` heftet einen Ordner oder eine Datei oben im Baum an. Tippe dort auf den Stern daneben, oder wähle `Aus Favoriten entfernen`, um sie wieder zu lösen.
 - Favoriten folgen einer Umbenennung oder Verschiebung in Dateien und werden mit deinen anderen Geräten synchronisiert. Ein Favorit, der ein Gerät noch nicht erreicht hat, erscheint blass.
 
+### Versteckte Angaben entfernen
+- `Versteckte Angaben entfernen` (im Menü) legt neben jedem ausgewählten Foto (JPEG, PNG, WebP), PDF oder Word-, Excel-, PowerPoint- oder OpenDocument-Datei eine saubere Kopie „Name (clean).ext“ an. Das Original bleibt, wie es ist.
+- Es entfernt, was die Datei darüber verrät, wer sie gemacht hat, wo, wann und womit: GPS-Standort und Kameraangaben aus Fotos; Autor, Programm, Daten und frühere gespeicherte Fassungen aus PDFs; Autor, letzten Bearbeiter, Daten, Firma, Vorlage, benutzerdefinierte Eigenschaften und Word-Bearbeitungssitzungs-Codes aus Office-Dateien. Bild und Text bleiben Byte für Byte gleich; ein gedrehtes Foto behält nur seine Ausrichtung.
+- Kommentare und nachverfolgte Änderungen werden nicht entfernt, weil du sie siehst und selbst entscheidest: Der Bericht sagt, wenn eine Datei sie noch hat. Lies auch den Inhalt selbst, siehe [Sensible Arbeit und Quellen](help:t/sensitive).
+
+### Dateien, die sich selbst löschen
+- `Selbst löschen…` (im Menü, eine Datei) stellt ein, dass eine Datei in 1 Stunde, 1 Tag, 7 Tagen oder 30 Tagen verschwindet. Eine Sanduhr neben dem Namen zeigt es an; `Behalten` nimmt es zurück. Es folgt der Datei, wenn du sie in Dateien verschiebst oder umbenennst, auch in den Papierkorb.
+- Ist es so weit, wird die Datei auf jedem Gerät endgültig gelöscht, sobald orOS dort zum ersten Mal läuft, auch wenn Dateien geschlossen ist. Eine vorher gesendete, heruntergeladene oder gesicherte Kopie bleibt, wo sie ist. Verschlüsselte Teile in deiner Cloud entfernt nur `Unbenutzte Dateien in der Cloud`.
+
 ### ZIP-Dateien
 - `Als ZIP komprimieren` packt die ausgewählten Dateien und Ordner in eine .zip daneben, benannt nach dem Element (oder "Archiv.zip" bei mehreren). Text und andere Dateien werden komprimiert, wo der Browser es kann; Fotos, Videos und andere schon komprimierte Dateien werden so gespeichert, wie sie sind.
 - Öffne eine .zip, um zu sehen, was drin ist. `Entpacken` (oder `Hier entpacken` im Menü) packt sie in einen neuen Ordner daneben aus. Eine Datei überschreibt nie etwas: vergebene Namen bekommen " (1)".
@@ -107,6 +116,7 @@ Die orOS-Disk ist der verschlüsselte Ort: Mit eingeschalteter orOS-Synchronisie
 - `Aus dem Text:` schlägt eine Art, das Datum, einen Betrag, ein Ablaufdatum und einen Absender vor, den du schon hast. `Ausfüllen` füllt nur leere Felder (und ein Datum, das nur die Zeit der Datei war).
 - `⋯` › `Text aller Dokumente lesen` liest die noch nicht gelesenen nacheinander; derselbe Eintrag hält es an. `Text neuer Dokumente lesen` (an oder aus für dieses Gerät) liest jedes neue Dokument von selbst.
 - In Scanner & PDF macht Speichern `In Dateien` mit `Auch zu Dokumenten hinzufügen` das PDF zu einem Dokument, sobald Files das nächste Mal läuft.
+- Erinnerungen: orOS sagt dir 30 und 7 Tage bevor ein Dokument abläuft, am Tag des Ablaufs und wenn sein Datum `Aufbewahren bis` vorbei ist Bescheid, ab 09:00 auf diesem Gerät (`⋯` › `Erinnerungen an Daten` stellt die Uhrzeit ein oder schaltet sie aus). Dieselben Daten stehen in [Heute](app:today) und als `Dokumente` im [Kalender](app:calendar); ein privates Dokument (medizinisch, Ausweis oder mit Gesundheit, Zyklus oder Baby verknüpft) zeigt dort nur seinen Typ. Es wird nie etwas gelöscht: Du entscheidest, was weg kann. In [Automationen](app:automations) macht die fertige Regel `Ablaufendes Dokument in To-Do` aus jeder Erinnerung eine Aufgabe.
 - `⋯` › `Arten, Schlagwörter und Absender` benennt sie um oder löscht sie und fügt eigene Arten mit eigenem Vorschlag hinzu. Eine Art kann privat sein: Ihre Dokumente sieht weder der Assistant noch Claude. Medizinische Dokumente und Ausweise sind von Anfang an privat.
 - `Aus Dokumenten entfernen` vergisst nur die Angaben; die Datei bleibt. Wer eine Datei in Files verschiebt oder umbenennt, behält ihr Dokument. Hat eine andere App oder ein anderes Gerät sie verschoben, findet `⋯` › `Verschobene Dateien finden` sie über ihren Inhalt wieder.
 - `⋯` › `Dokumente exportieren (.zip)` speichert die gezeigten Dokumente mit ihren Dateien, einer `documents.json` und einer `documents.csv` für Tabellen. `Archiv importieren (.zip)` holt so ein Archiv zurück, auf jedem Gerät: Die Dateien kommen nach `Documents` › `Importiert` (Datum).

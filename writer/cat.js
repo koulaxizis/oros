@@ -15,6 +15,10 @@
 //   - (T3) glossaries: terms marked in the source, put in with a tap or
 //     Alt+G, checks (terms, forbidden words, numbers, tags, spaces,
 //     punctuation, untranslated, inconsistent), CSV and TBX in and out.
+//   - (T4) a project made from a .docx is cut from the Word paragraphs
+//     (catdocx.js): Build document and Save as Word write the
+//     translation into the original package; XLIFF 1.2 / 2.0 out and
+//     back in (catxlf.js).
 // Everything shown from a project goes through textContent (the
 // segments are data). Writes go through catstore (own files only).
 // window.WriterCatHost (writer.js) is what it may use of Writer.
@@ -24,7 +28,8 @@
   "use strict";
 
   var H = window.WriterCatHost, C = window.WriterCatCore, S = window.WriterCatStore, TM = window.WriterCatTM, QA = window.WriterCatQA;
-  if (!H || !C || !S || !TM || !QA) return;
+  var D = window.WriterCatDocx, X = window.WriterCatXlf;
+  if (!H || !C || !S || !TM || !QA || !D || !X) return;
   var t = H.t;
 
   var DEV_KEY = "oros-writer-tr-dev", SUM_KEY = "oros-writer-tr-sum";
@@ -208,15 +213,24 @@
       if (!d) { H.toast(t("cat.pickSrc")); return; }
       if (from.value === to.value) { H.toast(t("cat.sameLang")); return; }
       H.flushSave();
-      var data = C.extract({ html: d.html, title: d.title, header: d.header, footer: d.footer, footnotes: d.footnotes }, from.value);
-      if (!data.segs.length) { H.toast(t("cat.empty")); return; }
-      data.page = { pageSize: d.pageSize, margins: d.margins };
       busy = true;
-      st.create({ name: name.value.trim() || name.placeholder, from: from.value, to: to.value, src: d.id, data: data,
-        orig: file, origName: file ? file.name : "" }).then(function (p) {
-        dlg.close();
-        openProject(p.id);
-      }, function (e) { busy = false; failed(e); });
+      // T4: a Word file is cut from its own paragraphs, so the translation
+      // can go back into it; anything else (or a Word file that cannot)
+      // from Writer's import
+      var lang = from.value, isDocx = file && d === fileDoc && /\.docx$/i.test(file.name);
+      (isDocx ? file.arrayBuffer().then(H.readZip).then(function (ents) { return D.extract(ents, lang); }).catch(function (e) {
+        console.warn("[writer] translation: Word paragraphs", e);
+        return null;
+      }) : Promise.resolve(null)).then(function (dx) {
+        var data = dx || C.extract({ html: d.html, title: d.title, header: d.header, footer: d.footer, footnotes: d.footnotes }, lang);
+        if (!data.segs.length) { busy = false; H.toast(t("cat.empty")); return; }
+        data.page = { pageSize: d.pageSize, margins: d.margins };
+        return st.create({ name: name.value.trim() || name.placeholder, from: lang, to: to.value, src: d.id, data: data,
+          orig: file, origName: file ? file.name : "" }).then(function (p) {
+          dlg.close();
+          openProject(p.id);
+        });
+      }).catch(function (e) { busy = false; failed(e); });
     }
   }
 
@@ -306,9 +320,14 @@
         { label: t("qa.report"), action: qaReport },
         { label: t("gl.add"), action: function () { addTerm(selectedSource()); } },
         { label: t("gl.manage"), action: manageGlossaries },
+        null
+      ].concat(V.src.fmt === "docx" ? [{ label: t("cat.docxOut"), action: saveDocx }] : [], [
+        { label: t("cat.xlfOut12"), action: function () { saveXliff("1.2"); } },
+        { label: t("cat.xlfOut20"), action: function () { saveXliff("2.0"); } },
+        { label: t("cat.xlfIn"), action: importXliff },
         null,
         { label: t("cat.del"), action: delProject }
-      ]);
+      ]));
     }, t("cat.more"));
     more.setAttribute("aria-haspopup", "menu");
     tools.appendChild(more);
@@ -1370,7 +1389,8 @@
     if (V.ta) { var old = rowOf(V.cur); if (!old || old[0] !== V.ta.value) changed(V.cur, V.ta.value, null); }
     var view = V;
     flushNow().then(function () {
-      var out = C.build(view.src, view.rows);
+      return view.src.fmt === "docx" ? docxBytes(view).then(H.parseDocx) : C.build(view.src, view.rows);
+    }).then(function (out) {
       var st = C.stats(view.src, view.rows);
       var left = st.segs - st.done;
       var doc = view.meta.out ? H.getDoc(view.meta.out) : null;
@@ -1389,6 +1409,74 @@
       if (doc && !doc.del) {
         H.wConfirm(fmt("cat.updateAsk", { name: doc.title || H.untitled(doc) }), { ok: t("cat.update") }).then(function (yes) { if (yes) go(true); });
       } else go(false);
+    }).catch(docxFailed);
+  }
+
+  // ---------- T4: Word and XLIFF ----------
+  // the original package with the translation in it → Promise<Uint8Array>
+  function docxBytes(view) {
+    return getStore().original(view.id, "docx").then(function (blob) {
+      if (!blob) throw code("noorig");
+      return blob.arrayBuffer();
+    }, function () { throw code("noorig"); }).then(H.readZip).then(function (ents) {
+      return H.zip(D.build(view.src, view.rows, ents, { from: view.p.from, to: view.p.to }));
+    });
+  }
+  function code(c) { var e = new Error(c); e.code = c; return e; }
+  function docxFailed(e) {
+    if (e && e.code === "noorig") H.toast(t("cat.noOrig"));
+    else if (e && e.code === "changed") H.toast(t("cat.origChanged"));
+    else failed(e);
+  }
+  function saveDocx() {
+    if (!V) return;
+    if (V.ta) { var old = rowOf(V.cur); if (!old || old[0] !== V.ta.value) changed(V.cur, V.ta.value, null); }
+    var view = V;
+    flushNow().then(function () { return docxBytes(view); }).then(function (b) {
+      return H.saveText(b, D.outName(view.p.file || view.p.name, view.p.to),
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    }).catch(docxFailed);
+  }
+  function baseName(view) { return String(view.nameEl.textContent || view.p.name || "translation").replace(/[\\/:*?"<>|]+/g, "_").slice(0, 120); }
+  function saveXliff(v) {
+    if (!V) return;
+    if (V.ta) { var old = rowOf(V.cur); if (!old || old[0] !== V.ta.value) changed(V.cur, V.ta.value, null); }
+    var view = V;
+    flushNow().then(function () {
+      var x = X.xliff(view.src, view.rows, { from: view.p.from, to: view.p.to, file: view.p.file || view.p.name, version: v });
+      return H.saveText(x, baseName(view) + (v === "2.0" ? ".xlf" : ".xliff"), "application/xliff+xml");
+    }).catch(failed);
+  }
+  function importXliff() {
+    if (!V) return;
+    var view = V;
+    H.openFile(".xlf,.xliff,.xml,.sdlxliff,.mqxliff").then(function (f) {
+      if (!f) return;
+      if (f.size > X.MAX_FILE) { H.toast(t("tm.tooBig")); return; }
+      return f.text().then(function (text) {
+        if (V !== view) return;
+        var r = X.parseXliff(text, view.src);
+        if (r.err) { H.toast(t("cat.xlfBad")); return; }
+        var ch = [], over = 0;
+        Object.keys(r.rows).forEach(function (k) {
+          var i = +k, nr = r.rows[k], old = rowOf(i);
+          if (old && old[0] === nr[0] && old[1] === nr[1]) return;
+          if (old && old[0].trim() && old[0] !== nr[0]) over++;
+          ch.push(i);
+        });
+        var apply = function () {
+          if (V !== view) return;
+          if (view.ta && ch.indexOf(view.cur) >= 0) leaveRow();
+          ch.forEach(function (i) {
+            var nr = r.rows[i];
+            changed(i, nr[0], nr[1]);
+            if (nr[1] >= C.ST_DONE && nr[0].trim()) remember(i, nr[0]);
+          });
+          H.toast(fmt("cat.xlfRead", { n: num(ch.length), m: num(r.skipped) }));
+        };
+        if (!over) { apply(); return; }
+        return H.wConfirm(fmt("cat.xlfAsk", { n: num(over) }), { ok: t("cat.xlfReplace") }).then(function (yes) { if (yes) apply(); });
+      });
     }).catch(failed);
   }
 

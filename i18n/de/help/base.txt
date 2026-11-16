@@ -3,7 +3,7 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 
 ## Erste Schritte
 - Drück `Neue Datenbank` und wähle eine Vorlage, oder fang mit einer leeren Datenbank an.
-- `CSV importieren` macht aus einer CSV-Datei eine neue Datenbank mit einer Tabelle. Die Datenbank errät den Typ jeder Spalte (Zahl, Datum, Auswahl, E-Mail…); prüfe sie in den Spaltenköpfen.
+- `Importieren` macht aus Dateien eine neue Datenbank: CSV-, Excel- (.xlsx, .xls) und OpenDocument-Dateien (.ods) oder eine orOS-Datenbankdatei (.orosbase). Die Datenbank errät den Typ jeder Spalte (Zahl, Datum, Auswahl, E-Mail…); prüfe sie in den Spaltenköpfen.
 - Eine Datenbank kann viele Tabellen haben. Mit dem `+` neben den Tabellennamen fügst du eine hinzu.
 
 ## Felder
@@ -37,9 +37,16 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 - Das Suchfeld sucht nur in den gezeigten Feldern dieser Ansicht.
 - Ein neuer Eintrag in einer gefilterten Ansicht übernimmt die Werte der „ist“-Bedingungen, damit er in der Ansicht bleibt.
 
+## Import
+- Wähle mehrere Dateien auf einmal für eine Datenbank mit mehreren Tabellen, wie die CSV-Dateien, die Airtable exportiert (eine pro Tabelle). Auch jedes Blatt einer Arbeitsmappe wird eine Tabelle.
+- Eine Spalte, deren Zellen Namen von Einträgen einer anderen Tabelle desselben Imports sind, wird eine Verknüpfung der beiden Tabellen. Haben beide Tabellen so eine Spalte, werden sie die zwei Seiten derselben Verknüpfung. Anhänge aus Airtable kommen als Text mit ihren Webadressen.
+- Datenbankmenü (`⋯`) › Tabellen importieren fügt die Tabellen stattdessen der offenen Datenbank hinzu.
+- In [Tabelle](app:spreadsheet) übernimmt An eine App senden › Datenbank die ausgewählten Zellen (oder das ganze Blatt) als neue Tabelle. Du wählst die Datenbank, bevor etwas hinzugefügt wird.
+
 ## Export
 - Tabellenmenü (`⋯`) › Diese Ansicht als CSV exportieren speichert die Einträge und Felder, die du siehst, in dieser Reihenfolge.
 - Diese Ansicht in Tabelle öffnen schickt sie an [Tabelle](app:spreadsheet) als neues Blatt (bis zu 499 Einträge).
+- Datenbankmenü (`⋯`) › Als orOS-Datei speichern (.orosbase) speichert die ganze Datenbank mit Tabellen, Ansichten und Verknüpfungen als eine Datei, als Kopie oder für ein anderes Gerät. Beim Öffnen kommt hinzu, was fehlt, und nichts wird gelöscht; Einträge, die schon da sind, bleiben, wie sie sind, außer du hakst `Mit neueren Versionen aktualisieren` an. Die Datei enthält auch eine CSV jeder Tabelle (in `preview/`) und ist nicht verschlüsselt.
 
 ## Deine Daten
 - Alles bleibt auf diesem Gerät und wird laufend gespeichert. Mit dem orOS-Sync in den [Einstellungen](app:settings) folgen dir deine Datenbanken verschlüsselt auf deine anderen Geräte.
