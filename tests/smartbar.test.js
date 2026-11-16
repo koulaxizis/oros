@@ -116,7 +116,7 @@ test("shell wiring: loaded after widgets.js, attached outside a single app, fit 
   assert.match(sh, /tickSafe\("smartbarTick"/);
   const src = read("smartbar.js");
   // chip text goes in through textContent only; innerHTML is for the fixed icons
-  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = IC[kind];"]);
+  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = IC[kind];", "innerHTML = IC.more;", "innerHTML = IC[k];"]);
   assert.match(src, /if \(strict\(\)\) return null;[\s\S]*if \(strict\(\)\) return null;/);
 });
 
@@ -139,7 +139,7 @@ test("shell strings for every chip in EN, EL and DE", () => {
   const tr = read("translations.js"), de = read("i18n/de/shell.js");
   const keys = M.KINDS.map((k) => "sb.k." + k).concat(["sb.event.now", "sb.event.in", "sb.event.short", "sb.event.hidden", "sb.event.tip",
     "sb.focus.work", "sb.focus.break", "sb.focus.tip", "sb.tasks.one", "sb.tasks.n", "sb.tasks.tip", "sb.water.tip",
-    "sb.budget.label", "sb.budget.tip", "sb.sales.label", "sb.sales.tip", "sb.savefail"]);
+    "sb.budget.label", "sb.budget.tip", "sb.sales.label", "sb.sales.tip", "sb.savefail", "sb.more.tip", "sb.more.title"]);
   keys.forEach((k) => {
     assert.strictEqual(tr.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
@@ -185,4 +185,22 @@ test("SB4 bar window: only the bar, its title kept, apps open in the main window
   assert.match(css, /html\.barwin body > \*:not\(#oros-bar\) \{ display: none !important; \}/);
   // behind the screen lock the chips go (no lock screen over the bar window)
   assert.match(src, /var lk = locked\(\);\s+if \(box\.hidden !== lk\)/);
+});
+
+test("fold: chips that do not fit, and every chip on a phone, go behind one button that unfolds them", () => {
+  const src = read("smartbar.js");
+  assert.match(src, /var FOLD_W = 600;/);
+  assert.match(src, /function folded\(\) \{ return \(root\.innerWidth \|\| 0\) <= FOLD_W; \}/);
+  // fitDrop never folds the button itself, and the button stays last in the row
+  assert.match(src, /!el\.hidden && !\(more && el === more\.el\)/);
+  assert.match(src, /box\.appendChild\(more\.el\);\s+\/\/ always last/);
+  // the panel draws chip text through textContent only and closes on Escape and outside taps
+  const fill = src.slice(src.indexOf("function fillPop"), src.indexOf("function onPopKey"));
+  assert.deepStrictEqual(fill.match(/innerHTML = [^;]+;/g), ["innerHTML = IC[k];"], "only fixed icons go through innerHTML");
+  assert.match(fill, /v\.textContent = c\.v\.textContent/);
+  assert.match(src, /e\.key === "Escape" && pop/);
+  assert.match(src, /addEventListener\("touchstart", onPopDown, true\)/);
+  // behind the lock nothing unfolds; the desktop bar window has no room for a panel
+  assert.match(src, /if \(lk\) \{ closePop\(\); return; \}/);
+  assert.match(src, /html\.barwin \.sb-chip\.sb-more \{ display: none !important; \}/);
 });

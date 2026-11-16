@@ -1264,6 +1264,8 @@ orosPack("de", "shell", {
  "sb.budget.tip": "Ausgaben diesen Monat: {a}, Einträge: {n} · {app}",
  "sb.sales.label": "heute",
  "sb.sales.tip": "Kassenumsatz heute: {a}, Belege: {n} · {app}",
+ "sb.more.tip": "Smarte Karten außerhalb der Leiste: {n} (anzeigen)",
+ "sb.more.title": "Smarte Karten",
  "sb.savefail": "Die obere Leiste konnte auf diesem Gerät nicht gespeichert werden: Der Speicher ist voll.",
  "wg.clock": "Uhr",
  "wg.calendar": "Kalender",

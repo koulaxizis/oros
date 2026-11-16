@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — smartbar.js (smart top bar, v1.0.0)
+// orOS — smartbar.js (smart top bar, v1.2.0)
 // ------------------------------------------------------------
 // A shell component, like widgets.js: it runs IN the shell document
 // and keeps its own device-local storage. shell.js calls attach() once
@@ -22,8 +22,12 @@
 //   A chip with nothing to say stays hidden. Money chips and event
 //   titles are hidden while Sensitive work is on.
 //   A click opens the place the chip comes from.
-//   Fit: the shell's fitBar() asks fitDrop() to hide the last chips
+//   Fit: the shell's fitBar() asks fitDrop() to fold the last chips
 //   before it hides the weekday or the date, so the bar never scrolls.
+//   Folded chips are not lost: one button (#sb-more, "+N") at the end
+//   of the row unfolds them all in a panel under the bar. On a phone
+//   (≤ 600 px) every chip folds into that button; on a wide screen the
+//   chips stay in the bar and only the ones that do not fit fold.
 //
 // Device-local (oros-smartbar, never synced: screens differ):
 //   { v:1, list:["event","focus",…] }   order = list order
@@ -35,11 +39,12 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales"];
   var MONEY = { budget: 1, sales: 1 };
   var LOOKS = ["", "glass", "midnight", "solid"];   // SB3: "" = the classic bar
+  var FOLD_W = 600;                         // ≤ this width: every chip folds into the button
   var SOON_MIN = 60;                       // countdown from this many minutes before
   var TODAY_MS = 120000;                   // the summary is rebuilt at most every 2 min
   var HM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -159,7 +164,7 @@
 
   // ---------- 2. Shell side ----------
   var doc = document;
-  var host = null, box = null, chips = {};
+  var host = null, box = null, chips = {}, more = null, pop = null;
   var todayCache = null, todayAt = 0, todayBusy = false, posLoad = 0;
 
   function t(k) { return typeof root.t === "function" ? root.t(k) : k; }
@@ -189,6 +194,7 @@
     tasks: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12l3 3 5-6"/></svg>',
     water: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
     budget: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M16 12.5h2M3 10h18"/></svg>',
+    more: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="14" height="12" rx="2.5"/><path d="M7 4.5h11.5A2.5 2.5 0 0 1 21 7v9.5"/></svg>',
     sales: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.5 11h-13z"/><path d="M8.5 9V7a3.5 3.5 0 0 1 7 0v2"/></svg>'
   };
 
@@ -207,6 +213,26 @@
     "#oros-bar.bar-tight .sb-chip { padding: 0 5px; }",
     "@media (max-width: 760px) { .sb-chip .sb-l { display: none; } }",
     "body.solo-mode #sb-row, body.till-mode #sb-row { display: none !important; }",
+    // The fold button and its panel (the chips that are not in the bar).
+    ".sb-chip.sb-more { gap: 3px; padding: 0 6px; }",
+    ".sb-chip.sb-more .sb-v { font-size: 11.5px; }",
+    "#oros-bar.bar-tight .sb-chip.sb-more { padding: 0 3px; gap: 2px; min-width: 32px; justify-content: center; }",
+    ".sb-chip.sb-more[aria-expanded=\"true\"] { background: var(--accent-soft); }",
+    "html.barwin .sb-chip.sb-more { display: none !important; }",
+    "#sb-pop { position: fixed; z-index: 1200; top: calc(46px + env(safe-area-inset-top, 0px)); right: 8px; width: 340px;",
+    "  max-height: calc(100dvh - 60px - env(safe-area-inset-top, 0px)); overflow: auto; box-sizing: border-box; padding: 8px;",
+    "  background: var(--panel-bg, var(--bar-bg)); color: var(--text); border: 1px solid var(--border); border-radius: 18px;",
+    "  box-shadow: 0 10px 34px var(--shadow, rgba(0,0,0,.4)); font-size: 14px; }",
+    ".sb-card { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 6px 12px; box-sizing: border-box;",
+    "  border: none; border-radius: 12px; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }",
+    ".sb-card + .sb-card { margin-top: 2px; }",
+    ".sb-card:hover, .sb-card:focus-visible { background: var(--accent-soft); outline: none; }",
+    ".sb-card svg { flex: none; color: var(--accent); width: 18px; height: 18px; }",
+    ".sb-card .sb-ct { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }",
+    ".sb-card b { font-size: 14px; font-variant-numeric: tabular-nums; }",
+    ".sb-card small { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }",
+    ".sb-card.sb-soon b { color: var(--accent); }",
+    "@media (max-width: 480px) { #sb-pop { left: 6px; right: 6px; width: auto; } }",
     // SB3 looks: the bar floats as a rounded pill inside its own 40 px
     // (nothing below moves). Never under high contrast.
     "html[data-oros-bar]:not([data-oros-contrast=\"high\"]) #oros-bar { background: transparent; border-bottom-color: transparent; box-shadow: none;",
@@ -250,13 +276,100 @@
     return { el: b, v: v, l: l, key: "", go: null };
   }
 
+  // ---------- The fold button and its panel ----------
+  function folded() { return (root.innerWidth || 0) <= FOLD_W; }
+  function makeMore() {
+    var b = doc.createElement("button");
+    b.type = "button";
+    b.className = "sb-chip sb-more";
+    b.innerHTML = IC.more;
+    var v = doc.createElement("span"); v.className = "sb-v";
+    b.appendChild(v);
+    b.hidden = true;
+    b.setAttribute("aria-haspopup", "dialog");
+    b.setAttribute("aria-expanded", "false");
+    b.addEventListener("click", function (e) { e.stopPropagation(); if (pop) closePop(true); else openPop(); });
+    return { el: b, v: v };
+  }
+  // The chips the bar has no room for, that have something to say.
+  function foldedKinds() {
+    return Object.keys(chips).filter(function (k) { var c = chips[k]; return c.key !== "" && c.el.hasAttribute("data-sb-drop"); })
+      .sort(function (a, b) { return list().indexOf(a) - list().indexOf(b); });
+  }
+  function paintMore() {
+    if (!more) return;
+    var ks = locked() ? [] : foldedKinds(), n = ks.length;
+    var all = n && n === Object.keys(chips).filter(function (k) { return chips[k].key !== ""; }).length;
+    var txt = n ? (all ? String(n) : "+" + n) : "";
+    if (more.v.textContent !== txt) more.v.textContent = txt;
+    var tip = t("sb.more.tip").replace("{n}", n);
+    if (more.el.title !== tip) { more.el.title = tip; more.el.setAttribute("aria-label", tip); }
+    if (more.el.hidden !== !n) more.el.hidden = !n;
+    if (!n) closePop();
+    else if (pop) fillPop(ks);
+  }
+  function fillPop(ks) {
+    var sig = ks.map(function (k) { return k + "\u0001" + chips[k].key; }).join("\u0002");
+    if (pop.getAttribute("data-sig") === sig) return;
+    pop.setAttribute("data-sig", sig);
+    var had = doc.activeElement && pop.contains(doc.activeElement) ? doc.activeElement.getAttribute("data-sb") : null;
+    while (pop.firstChild) pop.removeChild(pop.firstChild);
+    ks.forEach(function (k) {
+      var c = chips[k], b = doc.createElement("button");
+      b.type = "button";
+      b.className = "sb-card" + (/\bsb-soon\b|\bsb-now\b/.test(c.el.className) ? " sb-soon" : "");
+      b.setAttribute("data-sb", k);
+      b.innerHTML = IC[k];
+      var box2 = doc.createElement("span"); box2.className = "sb-ct";
+      var v = doc.createElement("b"); v.textContent = c.v.textContent;      // textContent: never HTML
+      var l = doc.createElement("small"); l.textContent = c.el.title || c.l.textContent;
+      box2.appendChild(v); box2.appendChild(l); b.appendChild(box2);
+      b.addEventListener("click", function (e) { e.stopPropagation(); closePop(); go(k); });
+      pop.appendChild(b);
+    });
+    var f = had && pop.querySelector('[data-sb="' + had + '"]');
+    if (f) f.focus();
+  }
+  function onPopKey(e) { if (e.key === "Escape" && pop) { e.preventDefault(); closePop(true); } }
+  function onPopDown(e) {
+    if (!pop || pop.contains(e.target) || (more && more.el.contains(e.target))) return;
+    closePop();
+  }
+  function openPop() {
+    if (pop || !more) return;
+    var ks = foldedKinds();
+    if (!ks.length) return;
+    pop = doc.createElement("div");
+    pop.id = "sb-pop";
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-label", t("sb.more.title"));
+    doc.body.appendChild(pop);
+    more.el.setAttribute("aria-expanded", "true");
+    doc.addEventListener("keydown", onPopKey, true);
+    doc.addEventListener("mousedown", onPopDown, true);
+    doc.addEventListener("touchstart", onPopDown, true);
+    fillPop(ks);
+    var first = pop.querySelector(".sb-card");
+    if (first) first.focus();
+  }
+  function closePop(focusBtn) {
+    if (!pop) return;
+    pop.remove();
+    pop = null;
+    doc.removeEventListener("keydown", onPopKey, true);
+    doc.removeEventListener("mousedown", onPopDown, true);
+    doc.removeEventListener("touchstart", onPopDown, true);
+    if (more) { more.el.setAttribute("aria-expanded", "false"); if (focusBtn) more.el.focus(); }
+  }
+
   function render() {
     if (!host) return;
     var bar = doc.querySelector("#oros-bar .bar-right");
     if (!bar) return;
     var l = list();
     if (!l.length) {
-      if (box) { box.remove(); box = null; chips = {}; }
+      closePop();
+      if (box) { box.remove(); box = null; chips = {}; more = null; }
       call(function () { host.fit(); });
       return;
     }
@@ -264,13 +377,16 @@
       box = doc.createElement("div");
       box.id = "sb-row";
       bar.insertBefore(box, bar.firstChild);
+      more = makeMore();
     }
     Object.keys(chips).forEach(function (k) { if (l.indexOf(k) === -1) { chips[k].el.remove(); delete chips[k]; } });
     l.forEach(function (k) {
       if (!chips[k]) chips[k] = makeChip(k);
       box.appendChild(chips[k].el);                    // list order
       chips[k].key = "";
+      if (folded()) chips[k].el.setAttribute("data-sb-drop", "1");
     });
+    box.appendChild(more.el);                          // always last
     paint(true);
   }
 
@@ -385,7 +501,7 @@
     // lock screen over it).
     var lk = locked();
     if (box.hidden !== lk) { box.hidden = lk; force = true; call(function () { host.fit(); }); }
-    if (lk) return;
+    if (lk) { closePop(); return; }
     refreshToday(false);
     var now = Date.now(), changed = false;
     Object.keys(chips).forEach(function (k) {
@@ -402,6 +518,7 @@
       if (c.el.title !== s.tip) { c.el.title = s.tip; c.el.setAttribute("aria-label", s.tip); }
       if (c.el.hidden && !c.el.hasAttribute("data-sb-drop")) { c.el.hidden = false; changed = true; }
     });
+    paintMore();
     if (changed) call(function () { host.fit(); });
   }
 
@@ -448,28 +565,34 @@
       save(step(list(), kind, dir));
     },
     // fitBar(): show every chip again before measuring …
+    // On a phone every chip folds into the button at once.
     fitReset: function () {
+      var f = folded();
       Object.keys(chips).forEach(function (k) {
         var c = chips[k];
+        if (f) { c.el.setAttribute("data-sb-drop", "1"); c.el.hidden = true; return; }
         c.el.removeAttribute("data-sb-drop");
         c.el.hidden = c.key === "";
       });
+      paintMore();
     },
-    // … then hide the last shown chip, one at a time, while the bar does
+    // … then fold the last shown chip, one at a time, while the bar does
     // not fit. keep = how many shown chips it leaves (the shell keeps the
     // first one until its last fit level). false = nothing left to hide.
     fitDrop: function (keep) {
       if (!box) return false;
-      var shown = Array.prototype.filter.call(box.children, function (el) { return !el.hidden; });
+      var shown = Array.prototype.filter.call(box.children, function (el) { return !el.hidden && !(more && el === more.el); });
       if (shown.length <= Math.max(0, keep || 0)) return false;
       var last = shown[shown.length - 1];
       last.hidden = true;
       last.setAttribute("data-sb-drop", "1");
+      paintMore();
       return true;
     },
     refresh: function () {
       if (!host) return;
       todayAt = 0;
+      closePop();
       Object.keys(chips).forEach(function (k) { chips[k].key = ""; });
       render();
     }
