@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.29.00
+- **Base grows up.** Send Forms answers into a table and make a public form from a table, see date fields in the Calendar (a switch per field), let the Assistant and Claude read your bases and add records, let Automations follow new records and changed fields, and leave comments on records.
+
 ## Version 7.28.01
 - **Suggested VPNs on the Start page.** Under the VPN extension link, a quiet row names a few well-known VPNs with a free plan (Proton VPN, Windscribe, hide.me, TunnelBear) and PIA (paid only). Each opens the provider's own site. You choose and sign in with your own account.
 

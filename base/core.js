@@ -125,6 +125,7 @@
       if (type === "currency") out.sym = line(o.sym, 6) || "€";
     } else if (type === "date") {
       if (o.time === true) out.time = true;
+      if (o.cal === true) out.cal = true;          // B4: shown in the Calendar app
     } else if (type === "rating") {
       out.max = int(o.max, 3, 10, 5);
     } else if (type === "select" || type === "multi") {
@@ -329,6 +330,11 @@
       // not have stripped wins the tie, so its sync never undoes them
       var ra = richView(a), rb = richView(b);
       if (ra !== rb) return rb > ra;
+    }
+    // a device before B4 drops "Show in Calendar" from a date field
+    if (k === "fields") {
+      var ca = a.opt && a.opt.cal ? 1 : 0, cb = b.opt && b.opt.cal ? 1 : 0;
+      if (ca !== cb) return cb > ca;
     }
     return canon(b) > canon(a);
   }
@@ -1619,6 +1625,111 @@
     }
   }
 
+  // ---------- Forms bridge (B4, Bible BASE-1 "Forms contract") ----------
+  // Forms → __orosOpenAt("base", { addRecords: { base, table, from: "forms",
+  //   rows: [{ key: "frm:<formId>:<answerId>", values: { fieldId: v } }] } }).
+  // A key becomes one record id (keyId), so an answer sent again, or a
+  // record deleted here, is never written a second time. Values: text
+  // as strings, numbers, "YYYY-MM-DD", yes/no as booleans, a single
+  // choice as its label, several as labels (a label not there yet,
+  // like an "Other" answer, becomes a new choice). A field that is gone,
+  // computed, a link or attachments, or a value that does not fit, is
+  // reported in skipped. → { data, table, rows: [{ key, ok, dup?, why?,
+  // skipped }], added, dup, failed } | { error }
+  var FORM_KEY = /^frm:[A-Za-z0-9_-]{1,40}:[a-z0-9]{16}\.[0-9]{1,16}$/;
+  var FORM_BATCH = 500;
+  function fnv(s, seed) {
+    var h = seed >>> 0;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h;
+  }
+  function keyId(key) { return "k" + fnv(key, 2166136261).toString(36) + fnv(key, 3735928559).toString(36) + (key.length % 36).toString(36); }
+  function formVal(f, v, now) {
+    switch (f.type) {
+      case "text": case "long": case "email": case "phone": case "url":
+        return typeof v === "string" ? cleanVal(f, v) : undefined;
+      case "number": case "currency": case "percent": case "rating":
+        return typeof v === "number" || typeof v === "string" ? cleanVal(f, typeof v === "string" ? parseNum(v) : v) : undefined;
+      case "date":
+        return typeof v === "string" ? cleanVal(f, v) : undefined;
+      case "check":
+        return v === true ? true : v === false ? null : undefined;       // null: "no", not stored, not skipped
+      case "select":
+        if (typeof v !== "string" || !v.trim()) return undefined;
+        return choiceFor(f, v, now) || undefined;
+      case "multi":
+        if (!Array.isArray(v)) return undefined;
+        var ids = v.filter(function (x) { return typeof x === "string" && x.trim(); }).map(function (x) { return choiceFor(f, x, now); }).filter(Boolean);
+        return ids.length ? cleanVal(f, ids) : undefined;
+      default:
+        return undefined;
+    }
+  }
+  // the id of a choice by its label; a new label becomes a new choice
+  function choiceFor(f, label, now) {
+    var id = choiceId(f, label);
+    if (id) return id;
+    var ch = f.opt.ch = f.opt.ch || [];
+    if (ch.length >= MAX_OPTS) return "";
+    // the same label gets the same id on every device that receives it
+    id = "o" + fnv(fold(label.trim()), 2166136261).toString(36);
+    if (ch.some(function (c) { return c.id === id; })) return id;
+    ch.push({ id: id, n: line(label.trim(), MAX_NAME), c: COLORS[ch.length % COLORS.length] });
+    bump(f, now);
+    return id;
+  }
+  function addFromForms(d, ar, now) {
+    if (!isObj(ar)) return { error: "bad" };
+    var out = clone(normalize(d));
+    var ix = index(out);
+    var tb = okId(ar.table) ? ix.tables[ar.table] : null;
+    if (!tb || tb.base !== ar.base) return { error: "table" };
+    var fieldsById = {};
+    out.fields.forEach(function (f) { fieldsById[f.id] = f; });
+    var have = {};
+    out.recs.forEach(function (r) { have[r.id] = 1; });
+    var room = MAX_RECS - out.recs.length, rows = [], added = 0, dup = 0, failed = 0, n = 0;
+    (Array.isArray(ar.rows) ? ar.rows : []).slice(0, FORM_BATCH).forEach(function (row) {
+      var key = isObj(row) && typeof row.key === "string" ? row.key : "";
+      if (!FORM_KEY.test(key)) { rows.push({ key: key.slice(0, 80), ok: false, why: "key", skipped: [] }); failed++; return; }
+      var rid = keyId(key);
+      if (have[rid] || has(out.tombs, rid)) { rows.push({ key: key, ok: true, dup: true, skipped: [] }); dup++; return; }
+      if (room <= 0) { rows.push({ key: key, ok: false, why: "full", skipped: [] }); failed++; return; }
+      var at = now + n++;
+      var r = { id: rid, t: tb.id, c: at, m: at, v: {}, fm: {} }, skipped = [];
+      var vals = isObj(row.values) ? row.values : {};
+      Object.keys(vals).slice(0, MAX_FIELDS).forEach(function (k) {
+        var f = fieldsById[k];
+        if (!f || f.tb !== tb.id || NOSTORE[f.type] || f.type === "file") { skipped.push(String(k).slice(0, 40)); return; }
+        var nv = formVal(f, vals[k], now);
+        if (nv === null) return;
+        if (nv === undefined) { skipped.push(k); return; }
+        r.v[k] = nv; r.fm[k] = at;
+      });
+      out.recs.push(r);
+      have[rid] = 1;
+      room--; added++;
+      rows.push({ key: key, ok: true, skipped: skipped });
+    });
+    return { data: normalize(out), table: tb.id, rows: rows, added: added, dup: dup, failed: failed };
+  }
+  // What Forms needs to make a public form of a table (fromTable):
+  // the fields a question can ask, in the table's order.
+  var FORM_TYPES = { text: 1, long: 1, email: 1, url: 1, phone: 1, number: 1, currency: 1, percent: 1, rating: 1, date: 1, check: 1, select: 1, multi: 1 };
+  function formSpec(ix, tbId) {
+    var tb = ix.tables[tbId];
+    if (!tb) return null;
+    var fields = [];
+    (ix.tbFields[tbId] || []).forEach(function (f) {
+      if (!FORM_TYPES[f.type]) return;
+      var x = { id: f.id, name: f.name, type: f.type };
+      if (f.type === "select" || f.type === "multi") x.opts = { ch: (f.opt.ch || []).map(function (c) { return { id: c.id, n: c.n }; }) };
+      if (f.type === "rating") x.opts = { max: f.opt.max || 5 };
+      fields.push(x);
+    });
+    return { base: tb.base, table: tb.id, name: tb.name, fields: fields };
+  }
+
   // Import rows (first = headings) as a new table of a base.
   // Returns { data, table, count, skipped }.
   function importRows(d, baseId, name, rows, now, names) {
@@ -1866,6 +1977,118 @@
     return rows;
   }
 
+  // ---------- Comments on records (B5b, BASE-1) ----------
+  // A synced slice of its own, "base-notes" (localStorage
+  // oros-base-notes): { ver: 1, cs: [{ id, r: record id, c: created,
+  // m, x: text } | { id, r, c, m, del: 1 }] }. Kept apart from
+  // oros-base-data so a device that does not know comments yet never
+  // drops them when it rewrites its tables (unknown row kinds go there).
+  // Per comment the newer m wins (a tie: deleted, then the larger
+  // JSON); a deleted comment stays as a tombstone row (no text).
+  var NOTES_KEY = "oros-base-notes", MAX_NOTE = 4000, MAX_NOTES = 20000;
+  function notesEmpty() { return { ver: VER, cs: [] }; }
+  function cleanNote(x) {
+    if (!isObj(x) || !okId(x.id) || !okId(x.r)) return null;
+    var m = ms(x.m), c = ms(x.c) || m;
+    if (!m) return null;
+    if (x.del === 1) return { id: x.id, r: x.r, c: c, m: m, del: 1 };
+    var tx = para(x.x, MAX_NOTE);
+    return tx.trim() ? { id: x.id, r: x.r, c: c, m: m, x: tx } : null;
+  }
+  function noteWins(a, b) {   // true when b beats a
+    if (b.m !== a.m) return b.m > a.m;
+    if (!!b.del !== !!a.del) return !!b.del;
+    return JSON.stringify(b) > JSON.stringify(a);
+  }
+  function mergeNotes(a, b) {
+    var map = {};
+    [a, b].forEach(function (d) {
+      (isObj(d) && Array.isArray(d.cs) ? d.cs : []).forEach(function (raw) {
+        var n = cleanNote(raw);
+        if (n && (!has(map, n.id) || noteWins(map[n.id], n))) map[n.id] = n;
+      });
+    });
+    var out = notesEmpty();
+    out.cs = Object.keys(map).sort().map(function (id) { return map[id]; });
+    if (out.cs.length > MAX_NOTES) {   // the oldest tombstones go first, never a live comment
+      var dead = out.cs.filter(function (n) { return n.del; }).sort(function (x, y) { return x.m - y.m; });
+      var drop = {};
+      dead.slice(0, out.cs.length - MAX_NOTES).forEach(function (n) { drop[n.id] = 1; });
+      out.cs = out.cs.filter(function (n) { return !drop[n.id]; });
+    }
+    return out;
+  }
+  function normNotes(d) { return mergeNotes(d, null); }
+  // the live comments of a record, oldest first
+  function notesOf(n, recId) {
+    return (isObj(n) && Array.isArray(n.cs) ? n.cs : []).filter(function (x) { return x.r === recId && !x.del; })
+      .sort(function (a, b) { return a.c - b.c || byId(a, b); });
+  }
+  function addNote(n, recId, text, now, id) {
+    var out = normNotes(n);
+    var x = para(text, MAX_NOTE);
+    if (!okId(recId) || !x.trim()) return { data: out, id: null };
+    if (out.cs.filter(function (c) { return !c.del; }).length >= MAX_NOTES) return { data: out, id: null, full: true };
+    var nid = id || uid(now);
+    out.cs.push({ id: nid, r: recId, c: now, m: now, x: x });
+    return { data: normNotes(out), id: nid };
+  }
+  function delNote(n, id, now) {
+    var out = normNotes(n);
+    out.cs = out.cs.map(function (c) { return c.id === id ? { id: c.id, r: c.r, c: c.c, m: Math.max(now, c.m + 1), del: 1 } : c; });
+    return normNotes(out);
+  }
+  // Undo of a delete: the comment comes back with a newer m.
+  function undelNote(n, row, now) {
+    var out = normNotes(n), x = cleanNote(row);
+    if (!x || x.del) return out;
+    out.cs = out.cs.filter(function (c) { return c.id !== x.id; });
+    var cur = (isObj(n) && Array.isArray(n.cs) ? n.cs : []).filter(function (c) { return c && c.id === x.id; })[0];
+    x.m = Math.max(now, cur ? ms(cur.m) + 1 : 0, x.m + 1);
+    out.cs.push(x);
+    return normNotes(out);
+  }
+
+  // ---------- Automations events (B5, BASE-1) ----------
+  // What one local save did, as Automations events (automations/core.js
+  // EVENTS base.add / base.change): a record that is new (not a record
+  // brought back by Undo, not one of a table made in the same save, as
+  // an import does) and each stored field whose value got a new time
+  // (not when the field itself changed in the same save, as a type
+  // change does). At most max (default 20) per save. → [{ ev, key, text }]
+  function events(before, after, max) {
+    max = typeof max === "number" ? max : 20;
+    var out = [];
+    if (!isObj(before) || !isObj(after)) return out;
+    var A = index(after), B = index(before);
+    var tombs = isObj(before.tombs) ? before.tombs : {};
+    function head(r) {
+      var tb = A.tables[r.t], b = tb ? A.bases[tb.base] : null, pf = primary(A, r.t), title = "";
+      try { title = pf ? text(A, r, pf) : ""; } catch (e) { title = ""; }
+      return line((b ? b.name + " › " : "") + (tb ? tb.name : "") + (title ? " · " + title : ""), 200);
+    }
+    for (var i = 0; i < after.recs.length && out.length < max; i++) {
+      var r = after.recs[i], old = B.recs[r.id];
+      if (!B.tables[r.t]) continue;
+      if (!old) {
+        if (has(tombs, r.id)) continue;
+        out.push({ ev: "base.add", key: "base:" + r.id + ":a", text: head(r) });
+        continue;
+      }
+      var fids = Object.keys(r.fm).sort();
+      for (var j = 0; j < fids.length && out.length < max; j++) {
+        var fid = fids[j], f = A.fields[fid], fb = B.fields[fid];
+        if (!f || !fb || NOSTORE[f.type] || f.m !== fb.m) continue;
+        if ((old.fm[fid] || 0) >= r.fm[fid]) continue;
+        var v = "";
+        try { v = text(A, r, f); } catch (e) { v = ""; }
+        out.push({ ev: "base.change", key: "base:" + r.id + ":" + fid + ":" + r.fm[fid],
+                   text: line(head(r) + " · " + f.name + ": " + v, 300) });
+      }
+    }
+    return out;
+  }
+
   // Characters the slice takes in localStorage (the space meter).
   function size(d) { return serialize(d).length; }
 
@@ -1880,6 +2103,8 @@
     opsFor: opsFor, needsValue: needsValue, query: query, layout: layout, groupKey: groupKey,
     ATT_DIR: ATT_DIR, FILE_RE: FILE_RE, MAX_ATT: MAX_ATT, attPath: attPath, usedFiles: usedFiles, cleanFiles: cleanFiles,
     coverField: coverField, coverOf: coverOf,
+    FORM_KEY: FORM_KEY, FORM_BATCH: FORM_BATCH, keyId: keyId, addFromForms: addFromForms, formSpec: formSpec, inputVal: formVal, events: events, fmtStamp: fmtStamp,
+    NOTES_KEY: NOTES_KEY, MAX_NOTE: MAX_NOTE, notesEmpty: notesEmpty, mergeNotes: mergeNotes, normNotes: normNotes, notesOf: notesOf, addNote: addNote, delNote: delNote, undelNote: undelNote,
     VIEW_KINDS: VIEW_KINDS, visibleFields: visibleFields, stackField: stackField, stacks: stacks, dateField: dateField, monthGrid: monthGrid, orderedFields: orderedFields, summary: summary, compare: compare,
     uid: uid, fid: fid, oid: oid, putRow: putRow, addBase: addBase, addTable: addTable, addField: addField,
     remove: remove, restore: restore, rowsUnder: rowsUnder, setValues: setValues, addRecord: addRecord,

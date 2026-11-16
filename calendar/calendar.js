@@ -191,6 +191,7 @@
       "lbl.feed.budget": "Budget", "feed.budLoan": "{n}: installment", "feed.budCard": "{n}: card payment due",
       "lbl.feed.shelf": "Media Shelf", "lbl.feed.publish": "Publishing",
       "lbl.feed.docs": "Documents",
+      "lbl.feed.base": "Base",
       "lbl.feed.inv": "Invoices", "feed.inv.due": "{n} due · {a}",
       "feed.garage.exp": "{vehicle}: {what} expires",
       "feed.garage.expired": "{vehicle}: {what} expired",
@@ -446,6 +447,7 @@
       "lbl.feed.budget": "Προϋπολογισμός", "feed.budLoan": "{n}: δόση", "feed.budCard": "{n}: λήξη πληρωμής κάρτας",
       "lbl.feed.shelf": "Το ράφι μου", "lbl.feed.publish": "Εκδόσεις",
       "lbl.feed.docs": "Έγγραφα",
+      "lbl.feed.base": "Βάση",
       "lbl.feed.inv": "Τιμολόγια", "feed.inv.due": "Λήγει το {n} · {a}",
       "feed.garage.exp": "{vehicle}: λήγει {what}",
       "feed.garage.expired": "{vehicle}: έληξε {what}",
@@ -1310,6 +1312,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-publish", color: "#b5835a" },  // bronze — Publishing release dates + release-plan steps
     { id: "lbl-feed-inv",    color: "#e5a54b" },   // ochre — Invoices: unpaid documents on their due date
     { id: "lbl-feed-docs",   color: "#a0a8b8" },   // paper grey — Files Documents: expiry + keep-until dates
+    { id: "lbl-feed-base",   color: "#6fa8dc" },   // steel blue — Base: date fields with "Show in Calendar" on
     { id: "lbl-feed-baby",   color: "#f4a3c8" },   // soft pink — Baby milestones, health, monthly age
     { id: "lbl-feed-together", color: "#ef5d8a" }, // rose — Together anniversaries, milestones, moments
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
@@ -1345,6 +1348,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-publish") return t("lbl.feed.publish");
     if (l.id === "lbl-feed-inv") return t("lbl.feed.inv");
     if (l.id === "lbl-feed-docs") return t("lbl.feed.docs");
+    if (l.id === "lbl-feed-base") return t("lbl.feed.base");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     if (l.id === "lbl-feed-nameday") return t("lbl.feed.nameday");
@@ -3172,6 +3176,40 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Base read-only feed (base/feed.js, loaded by index.html): records
+  // of the date fields that have "Show in Calendar" on (off by default,
+  // per field). Title "<record> · <field>"; timed fields at their time.
+  // Never stored; micro-cached ~1s. Click → the record in Base.
+  var baseFeedCache = { when: 0, days: null };
+  function baseFeedDays() {
+    var now = Date.now(), F = window.OrosBaseFeed;
+    if (!F) return null;
+    if (now - baseFeedCache.when > 1000) {
+      baseFeedCache.days = null;
+      try {
+        var d = JSON.parse(localStorage.getItem(F.KEY));
+        if (d && typeof d === "object") baseFeedCache.days = F.byDay(d);
+      } catch (e) { baseFeedCache.days = null; }
+      baseFeedCache.when = now;
+    }
+    return baseFeedCache.days;
+  }
+  function baseFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-base")) return [];
+    var days = baseFeedDays();
+    if (!days || !days[dateStr]) return [];
+    return days[dateStr].map(function (r) {
+      return {
+        id: "bas-" + r.rec + "-" + dateStr + "-" + r.field.length,   // per-render key, never stored
+        title: (r.title || r.tname) + " · " + r.field,
+        labelId: "lbl-feed-base",
+        start: r.time,                                    // null = all-day
+        _feed: true,
+        _openAt: { app: "base", target: { base: r.base, table: r.table, rec: r.rec } }
+      };
+    });
+  }
+
   // Travel read-only feed (travel/core.js, loaded by index.html: the
   // same reading as the shell reminder). Each trip shows on every day
   // of its dates (all-day, "Rome · day 2/5"); itinerary entries that
@@ -3580,6 +3618,7 @@ function transientNote(title, body) {
     .concat(petcareFeedOn(dateStr))
     .concat(garageFeedOn(dateStr))
     .concat(docsFeedOn(dateStr))
+    .concat(baseFeedOn(dateStr))
     .concat(travelFeedOn(dateStr))
     .concat(mealsFeedOn(dateStr))
     .concat(budgetFeedOn(dateStr))

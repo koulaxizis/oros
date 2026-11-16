@@ -277,6 +277,16 @@ dialog.rec { width: min(640px, calc(100vw - 32px)); }
 .rec-label { font-size: 14px; color: var(--text-dim); font-weight: 700; }
 .rec-ro { min-height: 40px; display: flex; align-items: center; padding: 0 2px; }
 .rec-meta { font-size: 13px; }
+/* B5b: comments on a record */
+.rec-notes { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.rec-notes-h { font-size: 14px; font-weight: 700; }
+.rec-note { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; }
+.rec-note-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rec-note-x { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.rec-note-add { display: flex; gap: 8px; align-items: flex-end; }
+.rec-note-in { flex: 1; min-width: 0; resize: vertical; min-height: 44px; font: inherit; }
+.rec-note-add .chip { min-height: 44px; }
+@media (max-width: 600px) { .rec-note-add { flex-direction: column; align-items: stretch; } }
 .rate { display: flex; gap: 2px; }
 .star { width: 40px; height: 40px; border: 0; background: none; font-size: 26px; line-height: 1; color: var(--border); cursor: pointer; }
 .star.on { color: var(--accent); }

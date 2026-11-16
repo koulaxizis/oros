@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 46341 of 46850 (98%)
+- Strings: 46416 of 46927 (98%)
 - Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
@@ -12,21 +12,21 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1922 / 1926 |
+| assistant | 99% | 1926 / 1930 |
 | atelier | 100% | 1429 / 1429 |
 | aura | 100% | 84 / 84 |
-| automations | 100% | 261 / 261 |
+| automations | 100% | 283 / 283 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
-| base | 99% | 368 / 369 |
+| base | 99% | 392 / 393 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
 | bubble | 100% | 54 / 54 |
 | budget | 90% | 1065 / 1182 |
 | calculator | 100% | 170 / 170 |
-| calendar | 90% | 577 / 636 |
+| calendar | 90% | 578 / 637 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
@@ -127,10 +127,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 545 / 545 |
 | scores | 100% | 147 / 147 |
-| settings | 99% | 1661 / 1676 |
-| share | 100% | 220 / 220 |
+| settings | 99% | 1680 / 1695 |
+| share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1341 / 1346 |
+| shell | 99% | 1344 / 1349 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 375 / 375 |
@@ -142,7 +142,7 @@ text is still written in the code. They switch over wave by wave
 | split | 100% | 356 / 356 |
 | spot | 100% | 55 / 55 |
 | spreadsheet | 82% | 409 / 495 |
-| startpage | English for now | 0 / 16 |
+| startpage | English for now | 0 / 18 |
 | stickies | 100% | 124 / 124 |
 | stock | 99% | 808 / 813 |
 | storage | 100% | 179 / 179 |
