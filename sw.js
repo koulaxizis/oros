@@ -2281,6 +2281,7 @@ var PRECACHE_URLS = [
   "studio/meter.worklet.js",
   "studio/flac.js",
   "studio/aac.js",
+  "studio/mp4.js",
   "studio/podcast.js",
   "studio/ghpages.js",
   "studio/davpub.js",
