@@ -41,6 +41,7 @@
       "meta.title": "Title (optional)", "meta.msg": "Message (optional)",
       "btn.share": "Share…",
       "bg.pick": "Background picture…", "bg.clear": "No picture",
+      "bg.fromDisk": "Picture from the orOS disk", "bg.diskHead": "Choose a picture", "bg.use": "Use {n} as the background",
       "bg.hint": "The other person sees it behind the files. It is made smaller on this device and sent without camera details such as the place.",
       "bg.busy": "Making the picture smaller…",
       "bg.bad": "This picture could not be opened. Choose a JPEG, PNG or WebP picture.",
@@ -144,6 +145,7 @@
       "meta.title": "Τίτλος (προαιρετικό)", "meta.msg": "Μήνυμα (προαιρετικό)",
       "btn.share": "Κοινοποίηση…",
       "bg.pick": "Εικόνα φόντου…", "bg.clear": "Χωρίς εικόνα",
+      "bg.fromDisk": "Εικόνα από τον δίσκο orOS", "bg.diskHead": "Διάλεξε εικόνα", "bg.use": "Χρήση του {n} ως φόντο",
       "bg.hint": "Ο άλλος τη βλέπει πίσω από τα αρχεία. Μικραίνει σε αυτή τη συσκευή και φεύγει χωρίς στοιχεία κάμερας, όπως το μέρος.",
       "bg.busy": "Η εικόνα μικραίνει…",
       "bg.bad": "Αυτή η εικόνα δεν άνοιξε. Διάλεξε μια εικόνα JPEG, PNG ή WebP.",
@@ -481,15 +483,17 @@
     list.textContent = "";
     show("disk-empty", false);
     if (!fs) { show("open-disk", false); return; }
-    var at = cwd;
+    var at = cwd, pic = diskMode === "pic";
+    $("disk-h").textContent = t(pic ? "bg.diskHead" : "disk.root");
     Promise.resolve(fs.ready && fs.ready()).then(function () { return fs.ls(at); }).then(function (entries) {
       if (at !== cwd) return;
-      entries = (entries || []).filter(function (e) { return !hiddenName(e.name) && !(at === ROOT && e.name === "Drive"); });
+      entries = (entries || []).filter(function (e) { return !hiddenName(e.name) && !(at === ROOT && e.name === "Drive") && (!pic || e.dir || PIC_EXT.test(e.name)); });
       entries.sort(function (a, b) { return (b.dir - a.dir) || a.name.localeCompare(b.name); });
       list.textContent = "";
       show("disk-empty", !entries.length);
       entries.forEach(function (e) {
         var path = at + "/" + e.name, key = "d:" + path;
+        if (pic) { list.appendChild(picRow(e, path)); return; }
         var li = el("li", e.dir ? "dir" : "");
         var box = el("input");
         box.type = "checkbox";
@@ -610,13 +614,43 @@
     return b;
   }
   // The orOS disk in a sheet (a centred <dialog>, R32)
-  function openDisk() {
+  function openDisk(mode) {
     var d = $("disk-sheet");
-    if (!FS()) { addLocal(); return; }
+    if (!FS()) { if (mode === "pic") $("bg-file").click(); else addLocal(); return; }
+    diskMode = mode === "pic" ? "pic" : "files";
     renderDisk();
     try { d.showModal(); } catch (e) { d.setAttribute("open", ""); }
   }
-  function closeDisk() { var d = $("disk-sheet"); try { d.close(); } catch (e) { d.removeAttribute("open"); } }
+  function closeDisk() {
+    var d = $("disk-sheet");
+    try { d.close(); } catch (e) { d.removeAttribute("open"); }
+    if (diskMode === "pic") { diskMode = "files"; renderDisk(); }
+  }
+  // The background picture from the orOS disk: folders to open, pictures to tap (one).
+  var diskMode = "files", PIC_EXT = /\.(jpe?g|png|webp|avif|gif|heic|heif)$/i;
+  function picRow(e, path) {
+    var li = el("li", e.dir ? "dir" : "");
+    var b = el("button", "name link", e.name);
+    b.type = "button";
+    if (e.dir) {
+      b.setAttribute("aria-label", t("disk.open", { n: e.name }));
+      b.addEventListener("click", function () { go(path); });
+    } else {
+      b.setAttribute("aria-label", t("bg.use", { n: e.name }));
+      b.addEventListener("click", function () {
+        var fs = FS();
+        closeDisk();
+        if (!fs) return;
+        Promise.resolve(fs.read(path)).then(function (blob) {
+          if (!blob) throw new Error("bg");
+          pickBg(blob);
+        }).catch(function () { toast(t("bg.bad")); });
+      });
+    }
+    li.appendChild(badge(e.name, !!e.dir));
+    li.appendChild(b);
+    return li;
+  }
   function metaNow() {
     var ti = $("meta-title"), ms = $("meta-msg");
     return C.cleanMeta({ t: ti ? ti.value : "", m: ms ? ms.value : "" });
@@ -1166,6 +1200,8 @@
       $("add-local").addEventListener("click", addLocal);
       $("add-big").addEventListener("click", function () { if (FS()) openDisk(); else addLocal(); });
       $("bg-pick").addEventListener("click", function () { $("bg-file").click(); });
+      $("bg-disk").addEventListener("click", function () { openDisk("pic"); });
+      show("bg-disk", !!FS());
       $("bg-file").addEventListener("change", function () { var f = this.files && this.files[0]; if (f) pickBg(f); });
       $("bg-clear").addEventListener("click", clearBg);
       $("open-disk").addEventListener("click", openDisk);

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Studio — podcast (v1.1.0; P1 of "Publish as podcast", P2 keepItems)
+// orOS Studio — podcast (v1.2.0; P1 of "Publish as podcast", P2 keepItems, P3 transcripts)
 // Pure logic, no DOM, no Web Audio: a show and its episodes, chapter
 // markers, the RSS feed (RSS 2.0 + Apple's itunes: tags + Podcasting
 // 2.0's podcast: tags), the chapters file, a small web page for the
@@ -28,7 +28,8 @@
 
   var LIM = {
     title: 120, author: 120, showDesc: 4000, epDesc: 1500, url: 500, email: 120,
-    markers: 50, mark: 40, epNo: 9999, season: 99, dur: 3600, bytes: 2147483647
+    markers: 50, mark: 40, epNo: 9999, season: 99, dur: 3600, bytes: 2147483647,
+    cues: 3000, cue: 500, vtt: 400000
   };
   var SHOW_RE  = /^h[a-z0-9]{6,20}$/;
   var MARK_RE  = /^k[a-z0-9]{6,20}$/;
@@ -248,6 +249,8 @@
   }
   function showDir(showId) { return DIR + "/" + showId; }
   function epPath(showId, sl) { return showDir(showId) + "/" + sl + ".mp3"; }
+  // the episode's transcript (WebVTT) beside its MP3; no synced field: it is there or not
+  function trPath(showId, sl) { return showDir(showId) + "/" + sl + ".vtt"; }
   function coverPath(showId, ext) { return showDir(showId) + "/cover." + (ext === "png" ? "png" : "jpg"); }
 
   // ---------- 4. UUIDv5 (RFC 9562) over SHA-1 ----------
@@ -340,7 +343,8 @@
     var out = { feed: "feed.xml", page: "index.html", style: "style.css", cover: coverName(show), eps: [] };
     eps.forEach(function (e) {
       if (!e.ep.file) return;
-      out.eps.push({ pid: e.p.id, audio: "episodes/" + e.ep.slug + ".mp3", chapters: chapters(e.mk, e.ep.dur).length ? "chapters/" + e.ep.slug + ".json" : "" });
+      out.eps.push({ pid: e.p.id, audio: "episodes/" + e.ep.slug + ".mp3", chapters: chapters(e.mk, e.ep.dur).length ? "chapters/" + e.ep.slug + ".json" : "",
+        transcript: e.tr ? "transcripts/" + e.ep.slug + ".vtt" : "" });
     });
     return out;
   }
@@ -405,6 +409,7 @@
       if (ep.se) x.push("      <itunes:season>" + ep.se + "</itunes:season>");
       x.push("      <itunes:explicit>" + (ep.explicit ? "true" : "false") + "</itunes:explicit>");
       if (fe.chapters) x.push('      <podcast:chapters url="' + esc(base + fe.chapters) + '" type="application/json+chapters"/>');
+      if (fe.transcript) x.push('      <podcast:transcript url="' + esc(base + fe.transcript) + '" type="text/vtt" language="' + esc(show.lang) + '"/>');
       x.push("    </item>");
     });
     // episodes the published feed has and this device does not (made or
@@ -460,6 +465,7 @@
       x.push("<h2>" + esc(epTitle(e, words.untitled)) + "</h2>");
       x.push('<p class="meta">' + esc([kind, isoDate(ep.date), fmtDur(ep.dur)].filter(Boolean).join(" · ")) + "</p>");
       x.push('<audio controls preload="none" src="' + fe.audio + '"></audio>');
+      if (fe.transcript) x.push('<p class="tr"><a href="' + fe.transcript + '">' + esc(words.transcript || "Transcript") + "</a></p>");
       if (ep.desc) x.push(paras(ep.desc));
       x.push("</article>");
     });
@@ -566,6 +572,68 @@
   }
   function textBytes(s) { return new Uint8Array(utf8(s)); }
 
+  // ---------- 11. Transcripts (P3): Whisper's cues, edited by the person ----------
+  // cues: [{ start, end (s), text one line }] in time order
+  function normCues(list, dur) {
+    var out = [], max = isNum(dur) && dur > 0 ? dur : LIM.dur;
+    (Array.isArray(list) ? list : []).forEach(function (c) {
+      if (!c || !isNum(c.start) || out.length >= LIM.cues) return;
+      var tx = line(String(c.text || "").replace(/-->/g, "→"), LIM.cue);
+      var a = round(clamp(c.start, 0, max), 3), b = round(clamp(isNum(c.end) ? c.end : a, a, max), 3);
+      if (tx && a < max) out.push({ start: a, end: b, text: tx });
+    });
+    out.sort(function (x, y) { return x.start - y.start; });
+    return out;
+  }
+  function vttTime(sec) {
+    var ms = Math.round(sec * 1000), p = function (n, w) { n = String(n); while (n.length < w) n = "0" + n; return n; };
+    return p(Math.floor(ms / 3600000), 2) + ":" + p(Math.floor(ms / 60000) % 60, 2) + ":" + p(Math.floor(ms / 1000) % 60, 2) + "." + p(ms % 1000, 3);
+  }
+  function vttEsc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function vtt(cues) {
+    var x = ["WEBVTT", ""];
+    normCues(cues).forEach(function (c, i) {
+      x.push(String(i + 1), vttTime(c.start) + " --> " + vttTime(Math.max(c.end, c.start + 0.001)), vttEsc(c.text), "");
+    });
+    return x.join("\n");
+  }
+  function parseVtt(text) {
+    var out = [];
+    if (typeof text !== "string" || text.length > LIM.vtt || !/^\uFEFF?WEBVTT/.test(text)) return out;
+    var ts = function (s) {
+      var m = /^(?:(\d{1,2}):)?(\d{2}):(\d{2})\.(\d{3})$/.exec(s.trim());
+      return m ? (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]) + (+m[4]) / 1000 : NaN;
+    };
+    text.replace(/\r/g, "").split(/\n{2,}/).forEach(function (blk) {
+      var lines = blk.split("\n"), i = lines.findIndex(function (l) { return l.indexOf("-->") >= 0; });
+      if (i < 0) return;
+      var t = lines[i].split("-->"), a = ts(t[0]), b = ts(String(t[1] || "").trim().split(/\s+/)[0]);
+      var tx = lines.slice(i + 1).join(" ").replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+      if (isNum(a) && isNum(b)) out.push({ start: a, end: b, text: tx });
+    });
+    return normCues(out);
+  }
+  // the editor's text: one cue a line, "[m:ss.s] words"; a line without a time joins the one before
+  function stamp(sec) {
+    var t = Math.round(sec * 10) / 10, m = Math.floor(t / 60), s = (t - m * 60).toFixed(1);
+    return "[" + m + ":" + (s.length < 4 ? "0" : "") + s + "]";
+  }
+  function editText(cues) { return normCues(cues).map(function (c) { return stamp(c.start) + " " + c.text; }).join("\n"); }
+  function fromEdit(text, dur) {
+    var list = [];
+    String(text || "").replace(/\r/g, "").split("\n").forEach(function (l) {
+      var m = /^\s*\[(?:(\d+):)?(\d{1,3}):(\d{1,2}(?:\.\d+)?)\]\s?(.*)$/.exec(l);
+      if (m) { list.push({ start: (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]), text: m[4].trim() }); return; }
+      if (list.length && l.trim()) list[list.length - 1].text += " " + l.trim();
+    });
+    list.sort(function (a, b) { return a.start - b.start; });
+    var max = isNum(dur) && dur > 0 ? dur : LIM.dur;
+    list.forEach(function (c, i) { c.end = i + 1 < list.length ? list[i + 1].start : max; });
+    return normCues(list, max);
+  }
+  // Whisper's language from the show's ("pt-BR" → "pt")
+  function asrLang(lang) { var c = String(lang || "").slice(0, 2).toLowerCase(); return /^[a-z]{2}$/.test(c) ? c : "auto"; }
+
   // ---------- 10. Republishing: keep what the published feed has (P2) ----------
   // The feed online may hold episodes this device does not have (made on
   // another device, or their project deleted here). Publishing again must
@@ -600,7 +668,8 @@
     sha1: sha1, uuidV5: uuidV5, feedGuid: feedGuid, epGuid: epGuid, feedUrl: feedUrl, siteUrl: siteUrl,
     problems: problems, coverOk: coverOk, files: files, feedXml: feedXml, rfc822: rfc822, pageHtml: pageHtml, fmtDur: fmtDur,
     id3Tags: id3Tags, crc32: crc32, zipParts: zipParts, textBytes: textBytes, utf8: utf8,
-    keepItems: keepItems, guidsOf: guidsOf
+    keepItems: keepItems, guidsOf: guidsOf,
+    trPath: trPath, normCues: normCues, vtt: vtt, parseVtt: parseVtt, editText: editText, fromEdit: fromEdit, asrLang: asrLang
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.StudioPodcast = api;

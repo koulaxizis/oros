@@ -170,3 +170,18 @@ test("a bundle round trip with media (bundle.js write → read)", async () => {
   assert.equal(back.media[ka].blob.size, wav.length);
   await assert.rejects(B.read(bytes, { mime: "application/x-oros-doc" }), /wrongtype/);
 });
+
+test("a chapter of a book (wave A2) stays one only where that book is", () => {
+  const d = sample();
+  d.projects = d.projects.map((p) => p.id === "pabcdef1" ? Object.assign({}, p, { bk: "bbook0001", kind: "chapter", m: p.m + 1 }) : p);
+  const data = C.mergeStudio(d, d);
+  const c = P.build(data, "pabcdef1", keys, {}).content;
+  assert.equal(c.project.bk, "bbook0001"); assert.equal(c.project.kind, "chapter");
+  const there = P.parse(JSON.parse(JSON.stringify(c)), { newId, now: 1000, hasBook: (id) => id === "bbook0001" });
+  assert.equal(there.project.bk, "bbook0001"); assert.equal(there.project.kind, "chapter");
+  const elsewhere = P.parse(JSON.parse(JSON.stringify(c)), { newId, now: 1000, hasBook: () => false });
+  assert.equal(elsewhere.project.bk, undefined); assert.equal(elsewhere.project.kind, undefined);
+  assert.equal(P.parse(JSON.parse(JSON.stringify(c)), { newId, now: 1000 }).project.bk, undefined);
+  const song = P.build(sample(), "pabcdef1", keys, {}).content;
+  assert.equal("bk" in song.project, false, "a song's package keeps its bytes");
+});
