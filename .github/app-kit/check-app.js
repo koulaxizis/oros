@@ -164,6 +164,11 @@ function checkApp(root, id) {
   else if (styles.indexOf("../fonts.css") >= 0) pass("fonts", "links ../fonts.css");
   else err("fonts", "the page asks for \"Nunito\" but does not link ../fonts.css (add <link rel=\"stylesheet\" href=\"../fonts.css\"> before its own stylesheet)");
 
+  // 4c. Themed pickers (PICK-1): ../pickers.js gives every <select> the
+  // orOS list instead of the browser's grey one.
+  if (scripts.indexOf("../pickers.js") >= 0) pass("pickers", "loads ../pickers.js");
+  else err("pickers", "the page does not load ../pickers.js (add <script src=\"../pickers.js\" defer></script> as the last line of <body>)");
+
   // 5. Help (R38)
   const hen = id + "/help.en.txt", hel = id + "/help.el.txt";
   if (!exists(root, hen) || !exists(root, hel)) err("R38", "help.en.txt and help.el.txt are both needed");

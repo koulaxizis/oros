@@ -30,6 +30,8 @@
 //            never issued
 //   quote    quote.js applyQuotePrefill + commitSave: a new quote in
 //            status draft (AS-ADD8), through OrosQuoteCore.canonState
+//   base     a record of a table in Base, values by field name
+//            (BASE-1 B4b), through OrosBaseCore.inputVal / addRecord
 // A vehicle or a pet is named (its name, or a plate); with only one,
 // it may be left out. Only the user's own book, garage and garden are
 // written (a household's shared copy is changed in the app). A text
@@ -1785,6 +1787,170 @@
     return { ok: true, data: d };
   }
 
+  // ---------- 13. Base: new records (BASE-1 B4b, GATE-PAR) ----------
+  // A record in a table of Base, its values by field NAME, through
+  // base/core.js: inputVal (the Forms bridge's own conversion: text,
+  // numbers, "YYYY-MM-DD", yes / no, a choice by its label; a label not
+  // there yet becomes a new choice, as an "Other" answer from Forms
+  // does) and addRecord. A field Base works out (formula, lookup,
+  // rollup, count, autonumber, created / modified), a link and an
+  // attachments field are refused by name, never dropped. The base and
+  // the table are named, or the only one. A record whose primary field
+  // reads the same as one already in the table starts unticked. Undo
+  // deletes the new records unless one was changed in Base since.
+  function baseCore() {
+    if (root.OrosBaseCore) return root.OrosBaseCore;
+    if (NODE) { try { return require("../base/core.js"); } catch (e) { return null; } }
+    return null;
+  }
+  // fields: [{ name, value, choices }] (an array: Gemini refuses an
+  // object whose keys are not in the schema). value = text, a number
+  // or true / false; choices = the labels of a "several choices" field.
+  var BS_VALS = 60;
+  function normBaseRec(x, w) {
+    if (!baseCore()) return { err: "Base is not available right now." };
+    var b = text1(x, "base", 120, w, "a base's name");
+    if (b.err) return b;
+    var t = text1(x, "table", 120, w, "a table's name");
+    if (t.err) return t;
+    var list = x.fields;
+    if (!Array.isArray(list) || !list.length) return { err: w + "fields (the record's values: [{ name: a field's name in Base, value }]) is required." };
+    if (list.length > BS_VALS) return { err: w + "fields has " + list.length + " entries; give at most " + BS_VALS + "." };
+    var vals = {}, seen = {}, sig = [];
+    for (var i = 0; i < list.length; i++) {
+      var y = list[i], at = w + "fields[" + i + "]";
+      if (!isObj(y) || typeof y.name !== "string") return { err: at + ".name (a field's name in Base) is required." };
+      var n = one(y.name);
+      if (!n || n.length > 120) return { err: at + ".name must be 1 to 120 characters." };
+      if (has(seen, fold(n))) return { err: w + "fields names " + n + " twice." };
+      seen[fold(n)] = 1;
+      var v = y.value;
+      if (Array.isArray(y.choices) && y.choices.length) {
+        if (y.choices.length > 200 || !y.choices.every(function (c) { return typeof c === "string" && c.length <= 120; })) return { err: at + ".choices must be up to 200 labels of up to 120 characters." };
+        v = y.choices.slice();
+      } else if (v === null || v === undefined || v === "") continue;
+      else if (typeof v === "string") { if (v.length > 50000) return { err: at + ".value has more than 50000 characters." }; v = v.replace(/\r\n?/g, "\n"); }
+      else if (!(typeof v === "number" && isFinite(v)) && typeof v !== "boolean") return { err: at + ".value must be text, a number or true / false." };
+      vals[n] = v;
+      sig.push(fold(n) + "=" + JSON.stringify(v));
+    }
+    if (!sig.length) return { err: w + "fields has no value; give at least one." };
+    return { o: { base: b.v, table: t.v, values: vals }, key: fold(b.v) + "|" + fold(t.v) + "|" + sig.sort().join("|") };
+  }
+  function bsData(C, d) {
+    return d == null ? null : isObj(d) && Array.isArray(d.bases) && Array.isArray(d.recs) ? C.normalize(d) : null;
+  }
+  function bsPick(list, name, what, of) {
+    if (!list.length) return { err: of + " has no " + what + " yet. Ask the user to make one in Base." };
+    var names = list.map(function (x) { return x.name; }).join(", ");
+    if (!name) return list.length === 1 ? { v: list[0] } : { err: of + " has several " + what + "s (" + names + "); give " + what + "." };
+    var hit = list.filter(function (x) { return fold(x.name) === fold(name); });
+    return hit.length ? { v: hit[0] } : { err: what + " " + name + " is not in " + of + ": " + names + "." };
+  }
+  // → { b, tb, vals: { fieldId: value }, title, dup, fresh: [field names with a new choice] } | { err }
+  function bsResolve(C, d, ix, o, now) {
+    var bases = d.bases.slice().sort(function (a, b) { return (a.ord || 0) - (b.ord || 0) || cmpStr(a.id, b.id); });
+    var b = bsPick(bases, o.base, "base", "Base");
+    if (b.err) return b;
+    var tb = bsPick(ix.baseTables[b.v.id] || [], o.table, "table", "the base " + b.v.name);
+    if (tb.err) return tb;
+    var fs = ix.tbFields[tb.v.id] || [], byName = {};
+    fs.forEach(function (f) { if (!has(byName, fold(f.name))) byName[fold(f.name)] = f; });
+    var vals = {}, fresh = [], list = fs.map(function (f) { return f.name; }).join(", ");
+    var ks = Object.keys(o.values);
+    for (var i = 0; i < ks.length; i++) {
+      var f = byName[fold(ks[i])], v = o.values[ks[i]];
+      if (!f) return { err: "the table " + tb.v.name + " has no field " + ks[i] + ". Its fields: " + list + "." };
+      if (C.NOSTORE[f.type]) return { err: f.name + " is " + (f.type === "link" ? "a link to other records; link them in Base" : "worked out by Base (" + f.type + "); leave it out") + "." };
+      if (f.type === "file") return { err: f.name + " holds attachments; the user adds files in Base. Leave it out." };
+      if (f.type === "multi" && typeof v === "string") v = [v];
+      if (f.type === "select" && Array.isArray(v)) v = v.length === 1 ? v[0] : null;
+      if (f.type === "check" && typeof v === "string") v = /^(true|yes|ja|ναι|x|1)$/i.test(v.trim()) ? true : /^(false|no|nein|όχι|οχι|0)$/i.test(v.trim()) ? false : null;
+      if ((f.type === "text" || f.type === "long" || f.type === "email" || f.type === "phone" || f.type === "url") && typeof v === "number") v = String(v);
+      var before = f.opt && f.opt.ch ? f.opt.ch.length : 0;
+      var cv = C.inputVal(f, v, now);
+      if (cv === undefined) return { err: "values." + ks[i] + " does not fit the field " + f.name + " (" + f.type + ")" +
+        (f.type === "date" ? ": give YYYY-MM-DD" + (f.opt && f.opt.time ? " or YYYY-MM-DDTHH:MM" : "") :
+         f.type === "check" ? ": give true or false" :
+         f.type === "rating" ? ": give 1 to " + ((f.opt && f.opt.max) || 5) :
+         f.type === "select" || f.type === "multi" ? ": give a choice's label (" + (f.opt.ch || []).map(function (c) { return c.n; }).slice(0, 30).join(", ") + ")" : "") + "." };
+      if (f.opt && f.opt.ch && f.opt.ch.length > before) fresh.push(f.name);
+      if (cv !== null) vals[f.id] = cv;
+    }
+    var pf = C.primary(ix, tb.v.id), title = "", dup = null;
+    if (pf && has(vals, pf.id)) {
+      title = C.text(ix, { id: "", t: tb.v.id, c: now, m: now, v: vals, fm: {} }, pf);
+      var want = fold(title.trim());
+      (ix.tbRecs[tb.v.id] || []).forEach(function (r) {
+        if (dup || !want) return;
+        var s = C.text(ix, r, pf);
+        if (fold(s.trim()) === want) dup = { id: r.id, title: s, target: { base: b.v.id, table: tb.v.id, rec: r.id } };
+      });
+    }
+    return { b: b.v, tb: tb.v, vals: vals, title: title, dup: dup, fresh: fresh };
+  }
+  function bsShow(C, ix, tb, vals) {
+    var out = [];
+    (ix.tbFields[tb.id] || []).forEach(function (f) {
+      if (!has(vals, f.id)) return;
+      var s = C.text(ix, { id: "", t: tb.id, c: 0, m: 0, v: vals, fm: {} }, f);
+      if (s) out.push(f.name + ": " + preview(s, 120));
+    });
+    return out.join(" · ");
+  }
+  function bsPlan(d, items) {
+    var C = baseCore();
+    if (!C) return bad("Base is not available right now.");
+    d = bsData(C, d);
+    if (!d) return notOpened("Base");
+    if (d.recs.length + items.length > C.MAX_RECS) return bad("Base keeps " + C.MAX_RECS + " records and has " + d.recs.length + "; add fewer.");
+    var now = Date.now(), rows = [];
+    for (var i = 0; i < items.length; i++) {
+      var ix = C.index(d);
+      var r = bsResolve(C, d, ix, items[i], now);   // a new choice goes into d (this copy only), so the next item sees it
+      if (r.err) return bad("items[" + i + "]: " + r.err);
+      var f = [];
+      f.push(["table", (d.bases.length > 1 || (ix.baseTables[r.b.id] || []).length > 1 ? r.b.name + " › " : "") + r.tb.name]);
+      var sh = bsShow(C, ix, r.tb, r.vals);
+      if (sh) f.push(["values", preview(sh, 400)]);
+      var row = { title: r.title || "—", fields: f, dup: r.dup };
+      rows.push(row);
+    }
+    return { ok: true, rows: rows };
+  }
+  function bsApply(d, items, now, skip) {
+    var C = baseCore();
+    if (!C) return bad("Base is not available right now.");
+    d = bsData(C, d);
+    if (!d) return notOpened("Base");
+    var made = [], undo = { app: "base", t: "new", items: [] };
+    for (var i = 0; i < items.length; i++) {
+      if (skip && skip[i]) continue;
+      if (d.recs.length >= C.MAX_RECS) return bad("Base keeps " + C.MAX_RECS + " records; nothing was added.");
+      var at = stampAfter(now + i, 0);
+      var r = bsResolve(C, d, C.index(d), items[i], at);
+      if (r.err) return bad("items[" + i + "]: " + r.err);
+      var res = C.addRecord(d, r.tb.id, r.vals, at, C.uid(at));
+      d = res.data;
+      var rec = C.index(d).recs[res.id];
+      made.push({ i: i, id: res.id, title: r.title || r.tb.name, target: { base: r.b.id, table: r.tb.id, rec: res.id } });
+      undo.items.push({ id: res.id, m: rec ? rec.m : at });
+    }
+    return { ok: true, data: d, made: made, undo: undo };
+  }
+  function bsUndo(d, u, now) {
+    var C = baseCore();
+    if (!C || !isObj(d) || !Array.isArray(d.recs)) return bad("Base has no records.");
+    d = C.normalize(d);
+    var ix = C.index(d);
+    for (var i = 0; i < u.items.length; i++) {
+      var r = ix.recs[u.items[i].id];
+      if (r && r.m !== u.items[i].m) return bad("A new record was changed in Base since; nothing was undone (delete it in Base).");
+    }
+    u.items.forEach(function (it) { if (ix.recs[it.id]) d = C.remove(d, it.id, stampAfter(now, it.m)); });
+    return { ok: true, data: d };
+  }
+
   A.extend({
     habits: { key: "oros-habits-data", name: "Habits", norm: normHabit, plan: hbPlan, apply: hbApply, undo: hbUndo },
     fitness: { key: "oros-fitness-data", name: "Workouts", norm: normWorkout, plan: ftPlan, apply: ftApply, undo: ftUndo },
@@ -1797,7 +1963,8 @@
     quote: { key: "oros-quote-data", name: "Quote", norm: normQuote, plan: qtPlan, apply: qtApply, undo: qtUndo },
     wiki: { key: "oros-wiki-data", name: "Wiki", norm: normWikiArt, plan: wkPlan, apply: wkApply, undo: wkUndo },
     flashcards: { key: "disk:flashcards", name: "Flashcards", norm: normCard, plan: fcPlan, apply: fcApply, undo: fcUndo },
-    split: { key: "oros-split-data", name: "Split", norm: normSplit, plan: spPlan, apply: spApply, undo: spUndo }
+    split: { key: "oros-split-data", name: "Split", norm: normSplit, plan: spPlan, apply: spApply, undo: spUndo },
+    base: { key: "oros-base-data", name: "Base", norm: normBaseRec, plan: bsPlan, apply: bsApply, undo: bsUndo }
   });
   var api = { CORES: CORES, FT_ACT: FT_ACT, PC_KIND: PC_KIND, SH_TYPES: SH_TYPES, PB_ST: PB_ST, PB_FMT: PB_FMT };
   if (NODE) module.exports = api;

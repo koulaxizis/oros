@@ -2292,6 +2292,8 @@ button.cat-tag { cursor: pointer; }
 .cat-tm-tgt { grid-column: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.45; }
 .cat-tm-use { grid-column: 2; grid-row: 1 / span 2; }
 .cat-tm-score { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; padding: 0 5px; border-radius: 4px; border: 1px solid currentColor; }
+.cat-mt-tag { font-weight: 600; opacity: .85; }
+.cat-mt { border-top: 1px dashed var(--border); padding-top: 6px; }
 .cat-tm-s100 { color: var(--ok, var(--accent)); }
 .cat-tm-s90 { color: var(--accent); }
 .cat-tm-s70 { color: var(--warn, var(--text-dim)); }

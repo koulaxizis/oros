@@ -61,7 +61,7 @@ test("every app in the table exists and takes a file through its deep link", () 
     todo: ["todo/todo.js", "recordpkg.js"], habits: ["habits/habits.js"], water: ["water/water.js"], chores: ["chores/chores.js"],
     scores: ["scores/scores.js"], cycle: ["cycle/cycle.js"], mood: ["mood/mood.js"], bookmarks: ["bookmarks/bookmarks.js"],
     meals: ["meals/meals.js"], stickies: ["stickies/stickies.js"], budget: ["budget/budget.js"], invoices: ["invoices/invoices.js"],
-    crm: ["crm/crm.js"], timesheet: ["timesheet/timesheet.js"], quote: ["quote/quote.js"], split: ["split/split.js"],
+    crm: ["crm/crm.js"], timesheet: ["timesheet/timesheet.js"], quote: ["quote/view.js", "invoices/invoices.js"], split: ["split/split.js"],
     stock: ["stock/stock.js"], diary: ["diary/diary.js"], health: ["health/health.js"], fitness: ["fitness/fitness.js"],
     baby: ["baby/baby.js"], petcare: ["petcare/petcare.js"], plants: ["plants/plants.js"], garage: ["garage/garage.js"],
     shelf: ["shelf/shelf.js"], signature: ["signature/view.js", "mail/mail.js"], newsletter: ["newsletter/newsletter.js"], storage: ["storage/storage.js"],

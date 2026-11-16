@@ -160,9 +160,13 @@ test("a quote edited after sending: the stored fingerprint no longer matches it"
 });
 
 test("wiring: scripts loaded, any currency accepted by the shell bridge, no innerHTML with data on the page", () => {
-  const html = fs.readFileSync(path.join(ROOT, "quote/index.html"), "utf8");
-  ["core.js", "accept-core.js", "../units/core.js"].forEach((f) => assert.ok(html.indexOf('src="' + f) > 0, f));
-  assert.ok(html.indexOf('src="core.js') < html.indexOf('src="quote.js'));
+  // App merge 7: Billing's page loads quote/core.js, the Quotes tab
+  // accept-core.js and ../units/core.js before view.js (QT_JS).
+  const html = fs.readFileSync(path.join(ROOT, "invoices/index.html"), "utf8");
+  assert.ok(html.indexOf('src="../quote/core.js') > 0, "core.js");
+  const host = fs.readFileSync(path.join(ROOT, "invoices/invoices.js"), "utf8");
+  const list = JSON.parse(/var QT_JS = (\[[^\]]*\])/.exec(host)[1]);
+  ["../quote/accept-core.js", "../units/core.js"].forEach((f) => assert.ok(list.indexOf(f) >= 0 && list.indexOf(f) < list.indexOf("../quote/view.js"), f));
   const page = fs.readFileSync(path.join(ROOT, "quote/accept.html"), "utf8");
   assert.ok(page.indexOf("accept-core.js") > 0 && page.indexOf("accept.js") > 0);
   const js = fs.readFileSync(path.join(ROOT, "quote/accept.js"), "utf8");
@@ -170,7 +174,7 @@ test("wiring: scripts loaded, any currency accepted by the shell bridge, no inne
   assert.ok(/inheritPalette/.test(js) && /watchPalette/.test(js));
   const shell = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
   assert.ok(shell.indexOf('/^[A-Z]{3}$/.test(p.cur)) q.cur = p.cur;') > 0);
-  const qjs = fs.readFileSync(path.join(ROOT, "quote/quote.js"), "utf8");
+  const qjs = fs.readFileSync(path.join(ROOT, "quote/view.js"), "utf8");
   assert.equal(/q\.currency !== "USD"/.test(qjs), false, "old EUR/USD-only migrate is gone");
   assert.ok(/attach = \[\{ name: fname \|\| "quote\.pdf", type: "application\/pdf", b64: b64 \}\]/.test(qjs));
 });

@@ -318,16 +318,6 @@
       "type": "internal"
     },
     {
-      "id": "quote",
-      "name": "Quote",
-      "category": "Business",
-      "icon": "quote",
-      "url": "quote/",
-      "search": "search.js",
-      "type": "internal",
-      "today": "today.js"
-    },
-    {
       "id": "timesheet",
       "name": "Timesheet",
       "category": "Business",
@@ -360,7 +350,7 @@
     },
     {
       "id": "invoices",
-      "name": "Invoices",
+      "name": "Billing",
       "category": "Business",
       "icon": "invoices",
       "url": "invoices/",
@@ -1294,6 +1284,13 @@
       "name": "Wheel of Fate",
       "to": "dice",
       "target": { "tab": "wheel" }
+    },
+    {
+      "id": "quote",
+      "name": "Quote",
+      "to": "invoices",
+      "target": { "tab": "quotes" },
+      "search": "search.js"
     }
   ]
 }

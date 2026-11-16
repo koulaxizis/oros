@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.25.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.33.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -162,7 +162,6 @@
     diary: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8.5h6"/></svg>',
     clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>',
     calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
-    quote: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10.7 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/><path d="M16.2 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/></svg>',
     timesheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>',
     invoices: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h14v20l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 7h6"/><path d="M9 11h6"/><path d="M13 15h2"/></svg>',
     newsletter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6"/><path d="M8 16h4"/></svg>',
@@ -3697,7 +3696,15 @@
       if (ids[x.id] || seen[x.id] || typeof x.to !== "string" || !ids[x.to]) return;
       var tg = (x.target && typeof x.target === "object" && !Array.isArray(x.target)) ? x.target : null;
       seen[x.id] = true;
-      out.push({ id: x.id, name: typeof x.name === "string" ? x.name : x.id, to: x.to, target: tg });
+      var al = { id: x.id, name: typeof x.name === "string" ? x.name : x.id, to: x.to, target: tg };
+      // An alias may keep its own search (merge 7: Quote's search.js in
+      // its old folder): it stays one searchable "app" for the menu, the
+      // Assistant and the Gate, with its own switch, as before.
+      if (typeof x.search === "string" && /^[a-z0-9_-]+\.js$/.test(x.search)) {
+        al.search = x.search;
+        if (x.searchOff === true) al.searchOff = true;
+      }
+      out.push(al);
     });
     return out;
   }
@@ -4046,9 +4053,18 @@
     return p;
   }
   function searchApps() {
-    return state.apps.filter(function (a) {
+    var list = state.apps.filter(function (a) {
       return a && a.type === "internal" && typeof a.search === "string";
     });
+    (state.aliases || []).forEach(function (al) {
+      if (typeof al.search !== "string") return;
+      var host = null;
+      for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === al.to) host = state.apps[i];
+      if (!host) return;
+      list.push({ id: al.id, name: al.name, type: "internal", url: al.id + "/", search: al.search,
+                  icon: host.icon, searchOff: al.searchOff === true, alias: al.to });
+    });
+    return list;
   }
   function searchEnabled(id) {
     var p = searchPrefs();
@@ -4057,7 +4073,8 @@
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === id) return state.apps[i].searchOff !== true;
     }
-    return false;
+    var al = appAlias(id);
+    return !!(al && typeof al.search === "string" && al.searchOff !== true);
   }
   function setSearchEnabled(id, on) {
     var p = searchPrefs();
@@ -4082,6 +4099,10 @@
     appId = String(appId || "");
     var al = appAlias(appId);    // APP-ALIAS: the old id opens its new home
     if (al) { appId = al.to; target = aliasTarget(al, target); }
+    if (appId === "assistant" && aiHelper() === "claude") {   // HELPER-1
+      claudeInstead(target && typeof target === "object" && typeof target.ask === "string" ? target.ask : "");
+      return;
+    }
     var app = null;
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === appId) { app = state.apps[i]; break; }
@@ -4729,18 +4750,53 @@
   // Installed apps (id + shown name): the assistant offers an entry
   // card only for an app that is there (Part VI, AS-E).
   window.orosAssistInstalled = function () {
-    return state.apps.filter(function (a) { return a && a.type !== "external"; }).map(function (a) {
+    var list = state.apps.filter(function (a) { return a && a.type !== "external"; }).map(function (a) {
       var k = "app." + a.id, v = window.t(k);
       return { id: a.id, name: v === k ? (a.name || a.id) : v };
     });
+    // An app folded into another one (APP-ALIAS) keeps its id for the
+    // Assistant's entry cards while its host is there.
+    (state.aliases || []).forEach(function (al) {
+      if (!hasApp(al.to)) return;
+      var k = "app." + al.id, v = window.t(k);
+      list.push({ id: al.id, name: v === k ? al.name : v });
+    });
+    return list;
   };
   function hasApp(id) {
     for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id) return true;
     return false;
   }
+  // HELPER-1 (Settings › Connected services, synced through gate/gate.js):
+  // "both" | "assistant" | "claude". With "claude" the Assistant leaves
+  // the menu and every way into it opens Claude instead.
+  function aiHelper() {
+    try {
+      var o = JSON.parse(localStorage.getItem("oros-ai-helper") || "null");
+      return o && (o.v === "assistant" || o.v === "claude") ? o.v : "both";
+    } catch (e) { return "both"; }
+  }
+  // Claude in place of the Assistant: Claude desktop when the System
+  // extension has it here, else claude.ai in a window. A question goes
+  // to the clipboard (never into an address, which browsers keep), and
+  // a short note says so; nothing is sent until the person sends it.
+  function claudeInstead(q) {
+    var text = typeof q === "string" ? q.trim().slice(0, 2000) : "";
+    closeMenu();
+    if (text && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      navigator.clipboard.writeText(text).then(function () { scToast("ok", window.t("helper.copied")); }, function () {});
+    }
+    if (document.documentElement.getAttribute("data-oros-sys-claude") === "ready") {
+      try { document.dispatchEvent(new CustomEvent("oros-claude", { detail: "open" })); return; } catch (e) {}
+    }
+    window.open("https://claude.ai/new", "_blank", "noopener");
+  }
+  window.orosAiHelper = { mode: aiHelper, claude: claudeInstead };
+  window.addEventListener("oros-ai-helper", function () { try { renderMenu(); } catch (e) {} });
   // Ctrl+Alt+Shift+A and the menu search's "Ask the Assistant" row.
   function openAssistant(q) {
     if (!hasApp("assistant")) return;
+    if (aiHelper() === "claude") { claudeInstead(q); return; }
     if (typeof q === "string" && q.trim()) {
       closeMenu();
       window.__orosOpenAt("assistant", { ask: q.trim().slice(0, 2000) });
@@ -5037,6 +5093,68 @@
   }
   quickWant = quickTakeHash();
   if (quickWant && quickWant.win) quickPlace();
+
+  // SB4: "#bar-win" is the desktop launcher's bar window (oros-portable,
+  // Windows): only the top bar shows, its title stays "orOS bar" (the
+  // launcher finds the window by it), and every app it would open opens
+  // in the main orOS window instead: through the "oros-barwin" channel
+  // when one is open, else the launcher opens it (/__oros-open).
+  var BARWIN = false, barCh = null;
+  (function () {
+    var h = "";
+    try { h = String(window.location.hash || ""); } catch (e) { return; }
+    if (h !== "#bar-win" || window.top !== window) return;
+    BARWIN = true;
+    try { window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search); } catch (e) {}
+    document.documentElement.classList.add("barwin");
+    document.title = "orOS bar";
+  })();
+  try { barCh = typeof BroadcastChannel === "function" ? new BroadcastChannel("oros-barwin") : null; } catch (e) { barCh = null; }
+  var BAR_APP_RE = /^[a-z0-9-]{1,40}$/;
+  // In the bar window: hand the app over. → true (always handled there).
+  function barwinOpen(id) {
+    id = BAR_APP_RE.test(String(id || "")) ? String(id) : "";
+    var asked = Date.now(), got = false;
+    if (barCh) {
+      var off = function (ev) {
+        var d = ev && ev.data;
+        if (d && d.t === "ok" && d.at === asked) { got = true; barCh.removeEventListener("message", off); }
+      };
+      barCh.addEventListener("message", off);
+      barCh.postMessage({ t: "open", id: id, at: asked });
+      setTimeout(function () {
+        barCh.removeEventListener("message", off);
+        if (!got) barwinLauncher(id);
+      }, 700);
+    } else barwinLauncher(id);
+    return true;
+  }
+  function barwinLauncher(id) {
+    try {
+      fetch("/__oros-open" + (id ? "?app=" + encodeURIComponent(id) : ""), { method: "POST", headers: { "X-Oros-Bar": "1" } })
+        .catch(function () {});
+    } catch (e) {}
+  }
+  // In a main window: open what the bar asks, and come to the front.
+  if (barCh) barCh.addEventListener("message", function (ev) {
+    var d = ev && ev.data;
+    if (BARWIN || SOLO || !d || d.t !== "open" || typeof d.at !== "number") return;
+    if (d.id && !BAR_APP_RE.test(String(d.id))) return;
+    barCh.postMessage({ t: "ok", at: d.at });
+    try { window.focus(); } catch (e) {}
+    if (d.id) openAppById(String(d.id));
+  });
+  if (BARWIN) {
+    // The menu button, the clock and the date: their app (or orOS
+    // itself) in the main window; nothing opens in the bar.
+    document.addEventListener("click", function (e) {
+      var tgt = e.target && e.target.closest ? e.target.closest("#btn-menu, #bar-time, #bar-date") : null;
+      if (!tgt) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      barwinOpen(tgt.id === "bar-time" ? "time" : tgt.id === "bar-date" ? "calendar" : "");
+    }, true);
+  }
   window.addEventListener("hashchange", function () {
     var w = quickTakeHash();
     if (!w) return;
@@ -5366,7 +5484,7 @@
       var b = document.createElement("button");
       b.type = "button";
       b.className = "menu-hit-more menu-ask";
-      b.textContent = window.t("search.ask").replace("{q}", q.length > 60 ? q.slice(0, 59) + "…" : q);
+      b.textContent = window.t(aiHelper() === "claude" ? "search.askClaude" : "search.ask").replace("{q}", q.length > 60 ? q.slice(0, 59) + "…" : q);
       b.addEventListener("click", function () { openAssistant(q); });
       host.appendChild(b);
     }
@@ -5523,7 +5641,9 @@
       var hideOk = !!(L && typeof L.menuHidden === "function");
       var hiddenCount = 0;
       var cats = {}, catRaw = {}, catAll = {};
+      var claudeOnly = aiHelper() === "claude";   // HELPER-1: no Assistant in the menu, not even in a search
       state.apps.forEach(function (app) {
+        if (claudeOnly && app.id === "assistant") return;
         if (hideOk && L.menuHidden(app.id)) {
           hiddenCount++;
           if (!q) return;
@@ -9338,7 +9458,7 @@
     { id: "cmdbar",     key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
     { id: "switcher",   key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
     { id: "overview",   key: "e", label: "sc.desc.overview",   fn: function() { ovOpen(); } },
-    { id: "quickask",   key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
+    { id: "quickask",   key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick && aiHelper() !== "claude") window.orosQuick.mini(); else openAssistant(); } },
     { id: "qs",         key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } },
     { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } },
     { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } },
@@ -10983,7 +11103,7 @@
     var list = QC.dueQuotes(raw, horizon);
     var due = list.length, earliestId = due ? list[0].id : null;
     if (due === 0) return;
-    if (todayAbsorbs("quote")) return;                  // said in today's summary
+    if (todayAbsorbs("invoices")) return;               // said in today's summary (Billing, merge 7)
 
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent
@@ -12036,6 +12156,10 @@
       if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
       return;
     }
+    if (name === "smartbar-look") {      // smartbar.js SB3: "", glass, midnight, solid
+      if (window.orosSmartBar && window.orosSmartBar.setLook) window.orosSmartBar.setLook(String(value || ""));
+      return;
+    }
     if (/^smartbar-move:/.test(name)) {  // smartbar.js: "smartbar-move:<kind>", value -1 (left) / 1 (right)
       if (window.orosSmartBar) window.orosSmartBar.move(name.slice(14), Number(value) < 0 ? -1 : 1);
       return;
@@ -12313,6 +12437,7 @@
       var want = on ? DISC_ICON : discIcon;
       if (icon.getAttribute("href") !== want) icon.setAttribute("href", want);
     }
+    if (BARWIN) return;                          // SB4: the launcher finds the bar window by its title
     var title = window.t("strict.disc.title");
     if (on && document.title !== title) document.title = title;
     if (on && !discObs && typeof MutationObserver === "function") {
@@ -12952,6 +13077,7 @@
     // TILL-1: on a till-only device anything but Stock needs the owner.
     if (TILL && app && app.id !== "stock") { window.orosLock.till.ask(); return; }
     if (typeof scrWins !== "undefined" && scrElsewhere(app)) return;   // SS1: it lives on the other screen
+    if (app && app.id === "assistant" && aiHelper() === "claude") { claudeInstead(""); return; }   // HELPER-1 (desktop, Dock, links)
     if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
     var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;
@@ -14275,6 +14401,7 @@
   // stale apps.json, fall back to the menu instead of dying silently.
   function openAppById(id) {
     if (appAlias(id)) { window.__orosOpenAt(id, null); return; }   // APP-ALIAS
+    if (BARWIN && barwinOpen(id)) return;            // SB4: the bar window opens nothing itself
     if (state.running && state.running.id === id) return;   // already there
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === id) { openApp(state.apps[i]); return; }
@@ -15196,25 +15323,12 @@
     openAppById("habits");
   };
 
-  // Wave 13 — Quote deep-link bridge (pattern: Todo/Time).
-  // Payload = quote id. App ανοιχτό → live push στο iframe· κλειστό
-  // → staging στο sessionStorage + άνοιγμα app (receiver στο EOF
-  // του quote.js καταναλώνει one-shot).
+  // Wave 13 — Quote deep-link bridge. Since app merge 7 the quotes
+  // are Billing's Quotes tab (APP-ALIAS "quote" → invoices { tab:
+  // "quotes" }): the quote id goes there as a deep link.
   window.__orosOpenQuote = function (quoteId) {
     if (typeof quoteId !== "string" || !quoteId) return;
-    if (appLive("quote")) {
-      appShow("quote");
-      var f = appFrameOf("quote");
-      try {
-        if (f && f.contentWindow &&
-            typeof f.contentWindow.__orosQuoteOpen === "function") {
-          f.contentWindow.__orosQuoteOpen(quoteId);
-          return;
-        }
-      } catch (e) {}
-    }
-    try { sessionStorage.setItem("oros-quote-open", quoteId); } catch (e) {}
-    openAppById("quote");
+    window.__orosOpenAt("quote", { quote: quoteId });
   };
 
   // Minimalism deep-link bridge (Wave 2 — pattern: Quote/Todo).
@@ -15609,10 +15723,10 @@
   // BR-W8-6). Strict validation here (false = rejected, nothing opens):
   // 1-50 lines, d text <= 200, q quantity 0 < q <= 100000, p unit price
   // 0 <= p <= 10000000 (2 decimals each); cur any ISO code (AAA); client <= 80 and
-  // notes <= 500 chars. Only a fresh plain copy crosses over. Quote
-  // running → live push to __orosQuoteNew; otherwise sessionStorage
-  // "oros-quote-new" (device-local, one-shot, read and removed by
-  // quote.js at boot) and open it.
+  // notes <= 500 chars. Only a fresh plain copy crosses over. Since app
+  // merge 7 it goes to Billing's Quotes tab as a deep link (the old id
+  // "quote" is an alias: { tab: "quotes", quoteNew }); false when
+  // Billing is not installed.
   window.__orosOpenQuoteNew = function (p) {
     if (!p || typeof p !== "object" || !Array.isArray(p.items)) return false;
     if (!p.items.length || p.items.length > 50) return false;
@@ -15633,24 +15747,8 @@
     else if (p.cur !== undefined) return false;
     if (typeof p.client === "string") q.client = txt(p.client, 80).trim();
     if (typeof p.notes === "string") q.notes = txt(p.notes, 500);
-    var has = false;
-    for (var k = 0; k < state.apps.length; k++) if (state.apps[k].id === "quote") has = true;
-    if (!has) return false;
-    if (appLive("quote")) {
-      appShow("quote");
-      var f = appFrameOf("quote");
-      try {
-        if (f && f.contentWindow &&
-            typeof f.contentWindow.__orosQuoteNew === "function") {
-          f.contentWindow.__orosQuoteNew(q);
-          return true;
-        }
-      } catch (e) {}
-    }
-    try {
-      sessionStorage.setItem("oros-quote-new", JSON.stringify(q));
-    } catch (e) {}
-    openAppById("quote");
+    if (!aliasHost("quote")) return false;
+    window.__orosOpenAt("quote", { quoteNew: q });
     return true;
   };
 
@@ -15857,6 +15955,13 @@
     }
     return out;
   }
+  // SB2: the Automations step "Pause sounds" (automations/host.js).
+  // Pauses every player that is playing; nothing else.
+  window.__orosPauseAll = function () {
+    var n = 0;
+    qsMedia().forEach(function (m) { if (m.playing) { try { m.toggle(); n++; } catch (e) {} } });
+    return n;
+  };
 
   // START-1: what First steps (widgets.js) ticks, read from the real
   // state: a Notes page, a To-Do task, a wallpaper or icon pack other

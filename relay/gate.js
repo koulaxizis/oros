@@ -548,7 +548,7 @@ export function refsIn(a) {
 // (gate/gate.js pmap). Nothing here needs a key the relay did not have
 // already: the queue is opened in memory with the call's K, as the copy is.
 export const P_REF_RE = /^p-[A-Za-z0-9_-]{16}\.\d{1,2}$/;
-export const PEND_ITEMS = 50;
+export const PEND_ITEMS = 50;                  // p- refs per create_items (= its own limit or less)
 // at most this many waiting entries in one answer (the newest)
 export const PEND_NOTE = 50;
 // PEND-1: the small sealed header of a queue row (q:… h), all a closed
@@ -567,7 +567,7 @@ export function pendHead(n, a, t) {
     h.a.refs = refsIn(o).slice(0, 20);
   }
   return h;
-}                  // p- refs per create_items (= its own limit or less)
+}
 // The app a waiting change belongs to (refs: from the copy's index or a p- ref).
 export function pendApp(n, a, byRef) {
   const o = a && typeof a === "object" ? a : {};
