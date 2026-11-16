@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.16.00
+- **Overview: everything on one screen.** Ctrl+Alt+Shift+E shows the search field, your open apps, your recent files and a small System strip (memory, storage, sync). Start typing to search; click an app to go back to it or × to close it. In Settings › System › Overview you can also open it from the top-left corner or with the Super key alone (both off at first). See [The menu](help:t/menu#overview).
+- **See what is running.** Settings › Device has a new Running now card: every open app, the places it takes, Close, Close the others, and the device's memory. The Sync card now also shows files waiting to upload and the last file sync.
+
 ## Version 7.15.00
 - **Text on a path, SVG and text to outlines in Atelier and Layout.** Pick a text and a shape or line and choose `Text on path`: the text runs along the outline, and you can move it, flip it or release it. Both apps now save SVG files of a page or of what you picked, with texts kept as text, and `Copy as SVG` pastes into Inkscape, Affinity or Figma. Atelier opens an SVG as editable shapes or as a picture. `Text to outlines` turns a title or a logo into shapes whose points you can edit, and automations and the Assistant can do it too. See [Atelier](app:atelier) and [Layout](app:layout).
 
