@@ -12231,3 +12231,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** share/kinds.js (`codeFromHash`, `inflateJs`, `decode` error `cut`), share/view.js, i18n/de/share.js, .github/qa/share-links.js, .github/workflows/quality.yml, whatsnew EN/EL, shell.js/sw.js version, Bible BR-SHARE-CUT.
 - **Tests:** tests/share-cut.test.js, tests/share.test.js; full `node --test tests/*.test.js`; CI `share-links` (Chromium + Firefox). Not tested on a real Android phone or chat app.
 
+
+### 2026-11-16 — 7.27.00 — Who helps with the owner's data: Both / Assistant only / Claude only (HELPER-1, #1072)
+
+- **What:** Chris asked (2026-11-16) for a choice between the Assistant, Claude, or both once Claude desktop is installed from orOS. Settings › Services "Who helps with your data" (synced slice `aihelper`, localStorage `oros-ai-helper` {v, m}; later m wins). Assistant only turns orOS Gate off on every device and refuses enable/join/sit (code `helper`). Claude only hides the Assistant from the menu; the Assistant's ways in (menu, search ask row, Ctrl+Alt+Shift+Q, quick window, `__orosOpenAt("assistant")`) open Claude desktop through the System extension or claude.ai, with the question copied to the clipboard (never put in a URL). Never-apps stay the same on both sides (PARITY).
+- **Files:** gate/gate.js (HELPERS, helperMerge, helperSlice, api.helper/setHelper, guards), shell.js (aiHelper, claudeInstead, menu/search/shortcut, APP_VERSION), quickmenu.js, settings/settings.js + core.js, translations.js, i18n/de, help EN/EL/DE, whatsnew EN/EL, sw.js (version), Bible Part IX "Who helps with the owner's data".
+- **Tests:** tests/ai-helper.test.js; full `node --test tests/*.test.js`. Not tested on a real device with Claude desktop installed.
