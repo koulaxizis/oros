@@ -12189,3 +12189,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** studio/studio.js, studio/meter.js, studio/index.html, studio/studio.css, help EN/EL, i18n/de (studio.js), tests/studio-meter.test.js, Bible STUDIO-AB.
 - **Tests:** spec cases in `tests/studio-meter.test.js`; full suite; Playwright Chromium in the real shell (Greek, normalised to -20.0 dBFS RMS, MP3s and cover read back by ffprobe, an empty part left out).
 - **Next:** A4a AAC encoder; A4 M4B with chapters and the length to Publishing.
+
+### 2026-11-16 — 7.24.00 — Prompter "On the typewriter" and Publishing "Is it public domain?" (merge audit items 10 and 13)
+
+- **What:** two buttons from the app-merge audit, both "only a button" (Chris 2026-11-13; the apps stay separate). Prompter's card has "On the typewriter" after Use: `__orosOpenAt("typewriter", { newPage: { text } })` opens a fresh, unsaved Typewriter sheet whose first line is the prompt (stored once something is typed). Publishing has "Is it public domain?" on a title, which opens the Public Domain Calculator with that title.
+- **Files:** prompter/, typewriter/, publish/, help EN/EL/DE, i18n, Bible bridge notes, tests/pubdomain-link.test.js, shell.js (APP_VERSION).
+- **Tests:** full `node --test tests/*.test.js`.

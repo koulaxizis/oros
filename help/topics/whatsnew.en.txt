@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.24.00
+- **Prompter and Publishing link to other apps.** In Prompter, `On the typewriter` opens a new Typewriter page that starts with the prompt. In Publishing, `Is it public domain?` checks a title in the Public Domain Calculator.
+
 ## Version 7.23.00
 - **Check and deliver an audiobook from Studio.** In a book, `Check all` measures every chapter against ACX (Audible) or Storytel and shows which pass and what to fix. `Normalise all` brings every part to the loudness ACX wants, with its peaks held safe, and can be taken out again; noise is only pointed out, never changed for you. `Export the book` makes one MP3 per chapter with the title, author, narrator, ISBN and cover from Publishing, plus the large cover and a report. See [Studio](app:studio).
 
