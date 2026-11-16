@@ -8,6 +8,7 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
 const M = require("../smartbar.js");
+const A = require("../smartbar-apps.js");
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 
 test("prefs: unknown and repeated kinds are dropped, absent means no chip", () => {
@@ -116,7 +117,7 @@ test("shell wiring: loaded after widgets.js, attached outside a single app, fit 
   assert.match(sh, /tickSafe\("smartbarTick"/);
   const src = read("smartbar.js");
   // chip text goes in through textContent only; innerHTML is for the fixed icons
-  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = IC[kind];", "innerHTML = IC.more;", "innerHTML = IC[k];"]);
+  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(kind);", "innerHTML = IC.more;", "innerHTML = icon(k);"]);
   assert.match(src, /if \(strict\(\)\) return null;[\s\S]*if \(strict\(\)\) return null;/);
 });
 
@@ -199,7 +200,7 @@ test("fold: chips that do not fit, and every chip on a phone, go behind one butt
   assert.match(src, /box\.appendChild\(more\.el\);\s+\/\/ always last/);
   // the panel draws chip text through textContent only and closes on Escape and outside taps
   const fill = src.slice(src.indexOf("function fillPop"), src.indexOf("function onPopKey"));
-  assert.deepStrictEqual(fill.match(/innerHTML = [^;]+;/g), ["innerHTML = IC[k];"], "only fixed icons go through innerHTML");
+  assert.deepStrictEqual(fill.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(k);"], "only fixed icons go through innerHTML");
   assert.match(fill, /v\.textContent = val;/);
   assert.match(src, /e\.key === "Escape" && pop/);
   assert.match(src, /addEventListener\("touchstart", onPopDown, true\)/);
@@ -217,28 +218,29 @@ test("SB5 agendaCard: counts, the next trip, today's lines and the running timer
     { app: "x", id: "d", title: "Note", kind: "info", due: T },
     { app: "x", id: "e", title: "Starts", kind: "event", due: T }
   ];
-  assert.deepStrictEqual(M.agendaCard("plants", rows, T), { n: 2, first: rows[0] });
-  assert.strictEqual(M.agendaCard("kanban", rows, T).n, 3);                 // + the card that starts today
-  assert.deepStrictEqual(M.agendaCard("invoices", rows, T), { n: 1, first: rows[0] });   // late only
-  assert.strictEqual(M.agendaCard("invoices", [{ title: "Rec", kind: "task", due: null }], T), null);
-  assert.strictEqual(M.agendaCard("habits", [], T), null);
+  assert.deepStrictEqual(A.agendaCard("plants", rows, T), { n: 2, first: rows[0] });
+  assert.strictEqual(A.agendaCard("kanban", rows, T).n, 3);                 // + the card that starts today
+  assert.deepStrictEqual(A.agendaCard("invoices", rows, T), { n: 1, first: rows[0] });   // late only
+  assert.strictEqual(A.agendaCard("invoices", [{ title: "Rec", kind: "task", due: null }], T), null);
+  assert.strictEqual(A.agendaCard("habits", [], T), null);
   const trips = [
     { title: "Lisbon day 2", kind: "event", due: "2026-11-20", target: { trip: "t1", tab: "plan" } },
     { title: "Lisbon", kind: "event", due: "2026-11-19", target: { trip: "t1", tab: "" } },
     { title: "Rome", kind: "event", due: "2026-12-01", target: { trip: "t2", tab: "" } }
   ];
-  const tr = M.agendaCard("trip", trips, T);
+  const tr = A.agendaCard("trip", trips, T);
   assert.strictEqual(tr.days, 3);
   assert.strictEqual(tr.row.title, "Lisbon");
-  assert.strictEqual(M.agendaCard("meal", rows, T).row.title, "Note");
-  assert.strictEqual(M.agendaCard("timer", rows, T), null);                 // only the "run" line
-  assert.strictEqual(M.agendaCard("timer", [{ id: "run", title: "Since 09:00", kind: "info" }], T).row.id, "run");
-  assert.strictEqual(M.agendaCard("plants", rows, "bad"), null);
-  assert.strictEqual(M.dayGap("2026-03-28", "2026-03-30"), 2);              // DST-safe
+  assert.strictEqual(A.agendaCard("meal", rows, T).row.title, "Note");
+  assert.strictEqual(A.agendaCard("timer", rows, T), null);                 // only the "run" line
+  assert.strictEqual(A.agendaCard("timer", [{ id: "run", title: "Since 09:00", kind: "info" }], T).row.id, "run");
+  assert.strictEqual(A.agendaCard("plants", rows, "bad"), null);
+  assert.strictEqual(A.dayGap("2026-03-28", "2026-03-30"), 2);              // DST-safe
   // every new card names a real app and is a known kind
-  Object.keys(M.AGENDA).forEach((k) => {
+  Object.keys(A.AGENDA).forEach((k) => {
     assert.ok(M.KINDS.includes(k), k);
-    assert.ok(fs.existsSync(path.join(ROOT, M.AGENDA[k][0], "today.js")), M.AGENDA[k][0] + " has a Today provider");
+    assert.ok(fs.existsSync(path.join(ROOT, A.AGENDA[k][0], "today.js")), A.AGENDA[k][0] + " has a Today provider");
   });
   assert.ok(M.MONEY.invoices, "invoices hide under Sensitive work");
+  assert.deepStrictEqual(Object.keys(M.APPS).sort(), A.KINDS.slice().sort(), "smartbar.js knows which kinds load smartbar-apps.js");
 });

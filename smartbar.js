@@ -44,12 +44,9 @@
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
                "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading"];
   var MONEY = { budget: 1, sales: 1, invoices: 1 };
-  // SB5: cards read from another app's own Today provider
-  // (orosToday.agenda(app, days): the same clean rows as the summary,
-  // whatever Today's own on/off says, since the person ticked the card).
-  var AGENDA = { habits: ["habits", 1], plants: ["plants", 1], chores: ["chores", 1], timer: ["timesheet", 1],
-                 invoices: ["invoices", 1], trip: ["travel", 31], kanban: ["kanban", 1], meal: ["meals", 1],
-                 reading: ["library", 1] };
+  // SB5: the cards of other apps live in smartbar-apps.js, loaded the
+  // first time one of them is ticked (start-up stays as it was).
+  var APPS = { habits: 1, plants: 1, chores: 1, timer: 1, invoices: 1, trip: 1, kanban: 1, meal: 1, reading: 1 };
   var LOOKS = ["", "glass", "midnight", "solid"];   // SB3: "" = the classic bar
   var FOLD_W = 600;                         // ≤ this width: every chip folds into the button
   var SOON_MIN = 60;                       // countdown from this many minutes before
@@ -161,55 +158,11 @@
     }
   }
   function ymdOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
-  function dayGap(a, b) {               // whole days from YYYY-MM-DD a to b
-    var pa = a.split("-"), pb = b.split("-");
-    return Math.round((Date.UTC(+pb[0], +pb[1] - 1, +pb[2]) - Date.UTC(+pa[0], +pa[1] - 1, +pa[2])) / 86400000);
-  }
-  var YMD = /^\d{4}-\d{2}-\d{2}$/;
-  // SB5: one app's agenda rows (today/agg.js cleanRow) → what its card says.
-  //   habits / plants / chores / kanban: { n, first } of the tasks due
-  //     today or late (kanban: also cards that start today);
-  //   invoices: { n, first } of the late tasks (unpaid invoices and bills
-  //     past their day; recurring reminders without a day are left out);
-  //   trip: { days, row } of the next trip day (a departure, or a trip
-  //     running today), up to the horizon;
-  //   meal / reading / timer: { row } of the first info line of today
-  //     (timer: the "run" line only, a timer that runs now).
-  //   → null when there is nothing to say.
-  function agendaCard(kind, rows, today) {
-    if (!Array.isArray(rows) || !YMD.test(today || "")) return null;
-    var ok = rows.filter(function (r) { return r && typeof r === "object" && typeof r.title === "string" && r.title; });
-    function due(r) { return YMD.test(r.due || "") ? r.due : today; }
-    if (kind === "habits" || kind === "plants" || kind === "chores" || kind === "kanban" || kind === "invoices") {
-      var late = kind === "invoices";
-      var hit = ok.filter(function (r) {
-        if (r.kind === "info") return false;
-        if (late) return r.kind === "task" && YMD.test(r.due || "") && r.due < today;
-        if (r.kind === "task") return due(r) <= today;
-        return kind === "kanban" && r.kind === "event" && due(r) === today;
-      });
-      return hit.length ? { n: hit.length, first: hit[0] } : null;
-    }
-    if (kind === "trip") {
-      var best = null;
-      ok.forEach(function (r) {
-        if (r.kind !== "event" || !r.target || r.target.tab !== "" || !YMD.test(r.due || "") || r.due < today) return;
-        if (!best || r.due < best.due) best = r;
-      });
-      return best ? { days: dayGap(today, best.due), row: best } : null;
-    }
-    if (kind === "meal" || kind === "reading" || kind === "timer") {
-      var line = ok.filter(function (r) { return r.kind === "info" && due(r) === today && (kind !== "timer" || r.id === "run"); })[0];
-      return line ? { row: line } : null;
-    }
-    return null;
-  }
 
   var model = { VER: VER, KEY: KEY, KINDS: KINDS, MONEY: MONEY, SOON_MIN: SOON_MIN,
                 norm: norm, parse: parse, listOf: listOf, toggle: toggle, step: step, mins: mins,
                 nextEvent: nextEvent, taskCount: taskCount, focusOf: focusOf, clock: clock,
-                monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf,
-                AGENDA: AGENDA, agendaCard: agendaCard, dayGap: dayGap };
+                monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf, APPS: APPS };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -217,8 +170,7 @@
   var doc = document;
   var host = null, box = null, chips = {}, more = null, pop = null;
   var todayCache = null, todayAt = 0, todayBusy = false, posLoad = 0;
-  var ag = {};                       // SB5: app → { rows, at, busy }
-  var tsRaw = null, tsRun = null;    // the Timesheet timer, parsed only when its data changes
+  var apps = null, appsLoad = 0;     // SB5: smartbar-apps.js, once loaded
 
   function t(k) { return typeof root.t === "function" ? root.t(k) : k; }
   function call(fn) { try { return fn(); } catch (e) { return undefined; } }
@@ -247,15 +199,6 @@
     tasks: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12l3 3 5-6"/></svg>',
     water: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
     budget: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M16 12.5h2M3 10h18"/></svg>',
-    habits: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l4 4L20 5"/><path d="M4 20h16"/></svg>',
-    plants: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12c0-4 3-7 8-7 0 5-3 8-8 7z"/><path d="M12 14c0-3-2.5-5.5-7-5.5 0 4 2.5 6 7 5.5z"/></svg>',
-    chores: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l6-6"/><path d="M14.5 3.5l6 6-6 6-6-6z"/></svg>',
-    timer: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4h3M9 2.5h6"/><path d="M19 5l1.5 1.5"/></svg>',
-    invoices: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
-    trip: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 13.5l19-7-7 19-2.5-8z"/></svg>',
-    kanban: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M9.5 4v16M15 4v16"/></svg>',
-    meal: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 21V3c-2 1.5-3 4-3 7v3h3"/></svg>',
-    reading: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5c3-1.5 6-1.5 9 .5 3-2 6-2 9-.5V19c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5z"/><path d="M12 6v13.5"/></svg>',
     more: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="14" height="12" rx="2.5"/><path d="M7 4.5h11.5A2.5 2.5 0 0 1 21 7v9.5"/></svg>',
     sales: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.5 11h-13z"/><path d="M8.5 9V7a3.5 3.5 0 0 1 7 0v2"/></svg>'
   };
@@ -330,13 +273,13 @@
     b.type = "button";
     b.className = "sb-chip";
     b.setAttribute("data-sb", kind);
-    b.innerHTML = IC[kind];
+    b.innerHTML = icon(kind);                          // fixed markup, never data
     var v = doc.createElement("span"); v.className = "sb-v";
     var l = doc.createElement("span"); l.className = "sb-l";
     b.appendChild(v); b.appendChild(l);
     b.hidden = true;
     b.addEventListener("click", function (e) { e.stopPropagation(); go(kind); });
-    return { el: b, v: v, l: l, key: "", go: null };
+    return { el: b, v: v, l: l, key: "", go: null, icon: icon(kind) ? 1 : 0 };
   }
 
   // ---------- The fold button and its panel ----------
@@ -382,7 +325,7 @@
       b.type = "button";
       b.className = "sb-card" + (/\bsb-soon\b|\bsb-now\b/.test(c.el.className) ? " sb-soon" : "");
       b.setAttribute("data-sb", k);
-      b.innerHTML = IC[k];
+      b.innerHTML = icon(k);
       var box2 = doc.createElement("span"); box2.className = "sb-ct";
       var val = c.v.textContent + (c.l.textContent && !c.l.hidden ? " " + c.l.textContent : "");
       var tip = c.el.title || "";
@@ -526,91 +469,46 @@
       var a = money(rep.g, cur, loc());
       return { v: a, l: t("sb.sales.label"), tip: t("sb.sales.tip").replace("{a}", a).replace("{n}", rep.n).replace("{app}", appName("stock")),
                go: function () { host.open("stock"); } };
-    },
-    habits: function (now) { return countCard("habits", now); },
-    plants: function (now) { return countCard("plants", now); },
-    chores: function (now) { return countCard("chores", now); },
-    kanban: function (now) { return countCard("kanban", now); },
-    invoices: function (now) { return strict() ? null : countCard("invoices", now); },
-    trip: function (now) {
-      var c = cardOf("trip", now);
-      if (!c) return null;
-      var when = c.days <= 0 ? t("sb.trip.today") : (c.days === 1 ? t("sb.trip.tomorrow") : t("sb.trip.in").replace("{n}", c.days));
-      var name = strict() ? t("sb.event.hidden") : c.row.title;
-      return { v: when, l: name, cls: c.days <= 0 ? "sb-now" : (c.days === 1 ? "sb-soon" : ""),
-               tip: t("sb.trip.tip").replace("{t}", name).replace("{w}", when).replace("{app}", appName("travel")), go: opener("trip", c.row) };
-    },
-    meal: function (now) { return strict() ? null : lineCard("meal", now); },
-    reading: function (now) { return strict() ? null : lineCard("reading", now); },
-    timer: function (now) {
-      var c = cardOf("timer", now), run = c ? timerRun() : null;
-      if (!c || (root.orosTimesheetCore && !run)) return null;   // stopped since the last read
-      var left = run ? clock(Math.max(0, now - run.s)) : c.row.title;
-      var p = c.row.text || "";
-      return { v: left, l: p, cls: "sb-soon",
-               tip: t("sb.timer.tip").replace("{r}", left).replace("{p}", p || "—").replace("{app}", appName("timesheet")), go: opener("timer", c.row) };
     }
   };
 
-  // ---------- SB5: cards from other apps' Today providers ----------
-  function cardOf(kind, now) {
-    var a = AGENDA[kind], c = ag[a[0]];
-    refreshAgenda(a[0], a[1], false);
-    if (!c) return null;
-    return call(function () { return agendaCard(kind, c.rows, ymdOf(new Date(now))); }) || null;
-  }
-  function opener(kind, row) {
-    var app = AGENDA[kind][0];
-    return function () {
-      if (row && row.target && root.orosToday && root.orosToday.open) root.orosToday.open(app, row.target);
-      else host.open(app);
+  Object.keys(APPS).forEach(function (k) {
+    STATE[k] = function (now) {
+      if (!apps) { loadApps(); return null; }
+      return apps.state(k, now);
     };
-  }
-  function countCard(kind, now) {
-    var c = cardOf(kind, now);
-    if (!c) return null;
-    var app = AGENDA[kind][0], first = kind === "invoices" ? "" : c.first.title;
-    var more = c.n > 1 ? t("sb.list.more").replace("{n}", c.n - 1) : "";
-    var tip = (first ? t("sb.list.tip").replace("{t}", first).replace("{more}", more) : t("sb.invoices.tip").replace("{n}", c.n)) + " · " + appName(app);
-    return { v: String(c.n), l: t("sb." + kind + (c.n === 1 ? ".one" : ".label")), cls: kind === "invoices" ? "sb-soon" : "",
-             tip: tip, go: opener(kind, c.n === 1 ? c.first : null) };
-  }
-  function lineCard(kind, now) {
-    var c = cardOf(kind, now);
-    if (!c) return null;
-    var app = AGENDA[kind][0];
-    return { v: c.row.title, l: "", cls: "sb-txt", tip: c.row.title + (c.row.text ? " · " + c.row.text : "") + " · " + appName(app),
-             go: opener(kind, c.row) };
-  }
-  // The running Timesheet entry, from its own core (loaded with its
-  // provider), parsed again only when the stored text changes.
-  function timerRun() {
-    var C = root.orosTimesheetCore;
-    if (!C) return null;
-    var raw = null;
-    try { raw = localStorage.getItem(C.STORAGE_KEY); } catch (e) {}
-    if (raw !== tsRaw) {
-      tsRaw = raw;
-      tsRun = call(function () { var d = raw ? C.parse(raw) : null; return d ? C.running(d)[0] || null : null; }) || null;
-    }
-    return tsRun && typeof tsRun.s === "number" ? tsRun : null;
-  }
-  function wantsAgenda(app) {
-    return Object.keys(chips).some(function (k) { return AGENDA[k] && AGENDA[k][0] === app; });
-  }
-  function refreshAgenda(app, days, force) {
-    var c = ag[app], now = Date.now();
-    if (!(root.orosToday && root.orosToday.agenda) || !wantsAgenda(app)) return;
-    if (c && (c.busy || (!force && now - c.at < TODAY_MS))) return;
-    c = ag[app] = c || { rows: null, at: 0, busy: false };
-    c.busy = true;
-    root.orosToday.agenda(app, days).then(function (rows) {
-      c.busy = false; c.at = Date.now(); c.rows = Array.isArray(rows) ? rows : [];
-      Object.keys(chips).forEach(function (k) { if (AGENDA[k] && AGENDA[k][0] === app) chips[k].key = ""; });
+  });
+  // The other apps' cards: their own file, loaded once from the precache.
+  function loadApps() {
+    if (appsLoad || apps) return;
+    appsLoad = 1;
+    var s = doc.createElement("script");
+    s.src = "smartbar-apps.js?v=" + (call(function () { return host.version(); }) || "");
+    s.onload = function () {
+      apps = call(function () {
+        return root.orosSmartBarApps.make({
+          t: t, call: call, strict: strict, appName: appName, clock: clock, ymdOf: ymdOf, ttl: TODAY_MS,
+          host: function () { return host; },
+          kinds: function () { return Object.keys(chips); },
+          repaint: function (kinds) { kinds.forEach(function (k) { if (chips[k]) chips[k].key = ""; }); paint(true); }
+        });
+      }) || null;
+      if (!apps) { appsLoad = 0; return; }
+      Object.keys(chips).forEach(function (k) { if (APPS[k] && !chips[k].icon) setIcon(chips[k], k); });
       paint(true);
-    }, function () { c.busy = false; c.at = Date.now(); });
+    };
+    s.onerror = function () { appsLoad = 0; };
+    doc.head.appendChild(s);
   }
-  function agendaStale() { Object.keys(ag).forEach(function (a) { ag[a].at = 0; }); }
+  function icon(kind) { return IC[kind] || (apps && apps.icon(kind)) || ""; }
+  function setIcon(c, kind) {
+    var svg = icon(kind);
+    if (!svg) return;
+    var old = c.el.querySelector("svg");
+    if (old) old.remove();
+    c.el.insertAdjacentHTML("afterbegin", svg);   // fixed markup, never data
+    c.icon = 1;
+  }
 
   // Stock's till rules come from its own file, loaded once from the
   // precache the first time the Till chip is on (like the QR encoder).
@@ -677,7 +575,7 @@
     injectCss();
     applyLook();
     render();
-    if (root.orosToday && root.orosToday.onChange) root.orosToday.onChange(function () { todayAt = 0; agendaStale(); refreshToday(true); paint(false); });
+    if (root.orosToday && root.orosToday.onChange) root.orosToday.onChange(function () { todayAt = 0; if (apps) apps.stale(); refreshToday(true); paint(false); });
   }
 
   root.orosSmartBar = {
@@ -741,7 +639,7 @@
     refresh: function () {
       if (!host) return;
       todayAt = 0;
-      agendaStale();
+      if (apps) apps.stale();
       closePop();
       Object.keys(chips).forEach(function (k) { chips[k].key = ""; });
       render();
