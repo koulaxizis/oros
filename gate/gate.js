@@ -1694,7 +1694,27 @@
     return /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(u) ? u : RELAY;
   }
 
-  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
+  // HELPER-1 (7.16.00, Chris 16/11): who helps with the owner's data,
+  // synced (slice "aihelper", localStorage "oros-ai-helper" { v, m }):
+  //   "both"      the Assistant and Claude (through orOS Gate), the default;
+  //   "assistant" the Assistant only: the Gate is off on every device and
+  //               cannot be turned on;
+  //   "claude"    Claude only: the Assistant leaves the menu and every way
+  //               into it opens Claude (desktop or claude.ai) instead.
+  var HELPERS = ["both", "assistant", "claude"];
+  function helperClean(o) {
+    var v = isObj(o) && HELPERS.indexOf(o.v) >= 0 ? o.v : "both";
+    var m = isObj(o) && typeof o.m === "number" && isFinite(o.m) && o.m > 0 ? o.m : 0;
+    return { v: v, m: m };
+  }
+  // The later choice wins; on a tie a fixed order, so two devices agree.
+  function helperMerge(a, b) {
+    a = helperClean(a); b = helperClean(b);
+    if (a.m !== b.m) return a.m > b.m ? a : b;
+    return HELPERS.indexOf(a.v) >= HELPERS.indexOf(b.v) ? a : b;
+  }
+
+  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
@@ -1813,6 +1833,7 @@
   function connect() {
     var p = pref();
     if (!p.on || !p.id || !p.tok || ws) return;
+    if (helperRead().v === "assistant") { helperApply(); return; }   // HELPER-1: the Gate goes off here
     if (isObj(p.lv) && p.lv.kanban === "write") kanbanModel().then(null, function () {});   // Undo needs it at hand
     clearTimeout(retryTimer);
     setWs("connecting");
@@ -2218,6 +2239,35 @@
   }
   function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
   function dirty() { try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {} }
+  // ---- HELPER-1: who helps with the data (synced) ----
+  var HELPER_KEY = "oros-ai-helper", helperBusy = false;
+  function helperRead() { return helperClean(readJSON(HELPER_KEY)); }
+  function helperTell() {
+    changed();
+    try { root.dispatchEvent(new CustomEvent("oros-ai-helper", { detail: helperRead().v })); } catch (e) {}
+  }
+  // "Assistant only" turns the Gate off on this device (its box at the
+  // relay and its closed copy go too, as with the owner's own switch).
+  function helperApply() {
+    if (helperBusy || helperRead().v !== "assistant" || !pref().on) return;
+    helperBusy = true;
+    api.disable().then(function () { helperBusy = false; }, function () { helperBusy = false; });
+  }
+  function helperSlice(n) {
+    var S = root.orosSync;
+    if (S && typeof S.registerSlice === "function") {
+      S.registerSlice("aihelper", function () { var raw = null; try { raw = localStorage.getItem(HELPER_KEY); } catch (e) {} return raw ? helperRead() : null; },
+        function (data) {
+          if (!isObj(data)) return;
+          var before = helperRead().v, next = helperMerge(helperRead(), data);
+          if (!writeJSON(HELPER_KEY, next)) return;
+          if (next.v !== before) { helperTell(); helperApply(); }
+        }, HELPER_KEY, helperMerge);
+      return;
+    }
+    if (n < 40) setTimeout(function () { helperSlice(n + 1); }, 500);
+  }
+  function helperOff() { var e = new Error("helper"); e.code = "helper"; return Promise.reject(e); }
   // This device has the gate: give the owner's other devices its seat.
   function makeSeat() {
     var p = pref(), cur = seatRead();
@@ -2241,6 +2291,7 @@
   function sit(force) {
     var p = pref(), seat = seatRead();
     if (sitBusy || p.on || !seat || (!force && (p.out || p.sf === seat.m))) return Promise.resolve(false);
+    if (helperRead().v === "assistant") return Promise.resolve(false);   // HELPER-1
     if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked() && !force) return Promise.resolve(false);
     sitBusy = true;
     var tok = randomB64u(32);
@@ -3118,8 +3169,20 @@
       changed();
       return { ok: true, n: r.n, kept: r.kept };
     },
+    // HELPER-1: "both" | "assistant" | "claude" (synced).
+    helper: function () { return helperRead().v; },
+    setHelper: function (v) {
+      if (HELPERS.indexOf(v) < 0) return false;
+      var cur = helperRead();
+      if (!writeJSON(HELPER_KEY, { v: v, m: Math.max(Date.now(), cur.m + 1) })) return false;
+      dirty();
+      helperTell();
+      helperApply();
+      return true;
+    },
     enable: function () {
       var p = pref();
+      if (helperRead().v === "assistant") return helperOff();
       if (p.on && p.id && p.tok) { connect(); return Promise.resolve(); }
       // A gate of this owner already exists (its seat came through sync): sit in it.
       return sit(true).then(function (done) {
@@ -3149,6 +3212,7 @@
     join: function (code) {
       var p = pref(), jc = String(code || "").toUpperCase().replace(/[\s-]+/g, "");
       if (p.on && p.id && p.tok) return Promise.reject(new Error("on"));
+      if (helperRead().v === "assistant") return helperOff();
       if (!/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/.test(jc)) { var e = new Error("gate"); e.code = "nojoin"; return Promise.reject(e); }
       var tok = randomB64u(32), base = relayNow();
       return sha256hex(tok).then(function (th) { return devCall({ act: "join", jc: jc, th: th }, base); }).then(function (d) {
@@ -3279,7 +3343,8 @@
     return modal(title, body, note, noLabel, yesLabel, onNo, onYes).wrap;
   }
   function consent(ask) {
-    var m = modal(tr("gate.ask.title"), tr("gate.ask.body"), pref().on ? tr("gate.ask.on") : tr("gate.ask.off"), tr("gate.ask.deny"), tr("gate.ask.allow"),
+    var note = helperRead().v === "assistant" ? tr("gate.ask.helper") : pref().on ? tr("gate.ask.on") : tr("gate.ask.off");
+    var m = modal(tr("gate.ask.title"), tr("gate.ask.body"), note, tr("gate.ask.deny"), tr("gate.ask.allow"),
       function () { m.wrap.remove(); back(ask, "error=access_denied"); },
       function () {
         m.yes.disabled = true; m.no.disabled = true; m.err.hidden = true;
@@ -3319,6 +3384,8 @@
       whenUnlocked(function () { setTimeout(function () { openJ(0); }, 600); });
     }
     connect();
+    helperSlice(0);
+    helperApply();
     seatSlice(0);
     chgSlice(0);
     digSlice(0);

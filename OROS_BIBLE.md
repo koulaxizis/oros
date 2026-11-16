@@ -4403,6 +4403,15 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 - **C2 (oros-usb #30):** `oros-system claude --fetch` reads Anthropic's apt repository like apt (InRelease signature against the key pinned by fingerprint `31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE`, then `Packages` and the `.deb` by signed SHA-256), unpacks it into `~/.local/share/oros-claude` (per user, persistence required), and the System extension sets the attributes above; the same extension serves orOS Portable once its launcher offers `caps.claude` (C3).
 - Tests `tests/settings-claude.test.js`.
 
+### Who helps with the owner's data (2026-11-16, HELPER-1)
+
+- **Request (Christos 2026-11-16, card «Ρύθμιση με 3 επιλογές»):** with Claude desktop installed, the person chooses who works with their orOS data: the Assistant, Claude, or both. Built on orOS Gate; no new connector (rule 38), and the Gate and Assistant keep their shared rules (PARITY): same never-apps, same per-app switches.
+- **Storage:** `oros-ai-helper` = `{ v: "both" | "assistant" | "claude", m }`, synced as slice `aihelper` (registered by `gate/gate.js`; `helperMerge`: later `m` wins, a tie takes the later value in `HELPERS` order so every device agrees). Missing or unknown = `both`. Settings scope `all`.
+- **`assistant` (Assistant only):** each device turns its Gate off (`api.disable()`: the box at the relay and the closed copy go, as with the owner's switch) when the value arrives, at start and before any connection. `enable`, `join` and `sit` refuse (`e.code = "helper"`, Settings note `gt.helper`); Claude's sign-in page shows `gate.ask.helper`. Choosing it in Settings while the Gate is on asks first (`hp.sure`). The connector stays in the Claude account until the person removes it there.
+- **`claude` (Claude only):** the shell leaves the Assistant out of the menu (even in a search) and sends every way in to `claudeInstead` (`window.orosAiHelper.claude`): `__orosOpenAt("assistant", …)`, `openApp` (desktop, Dock, links), `openAssistant` ([[Ctrl+Alt+Shift+A]], the menu search's ask row, now `search.askClaude`), [[Ctrl+Alt+Shift+Q]] and the quick menu's mini window. `claudeInstead` copies a question to the clipboard (never into an address, which browsers keep) and opens Claude desktop through the event `oros-claude` `open` when `data-oros-sys-claude` is `ready`, else `https://claude.ai/new` (`noopener`). Nothing is sent until the person sends it. The Gate's hidden Assistant frame (`assistant/index.html?gate=1`) is not an app opening and keeps working, because the Gate's tools run on it.
+- **`both`:** as before 7.16.00.
+- Settings › Connected services › `Who helps with your data` (`secHelper`, above `Claude`; FIND row `helper`). Help EN/EL/DE in "Claude and Claude desktop". Tests `tests/ai-helper.test.js`.
+
 ## Part X — Open items, audit queue, lessons
 
 ### Open decisions (Christos)
@@ -12222,3 +12231,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** share/kinds.js (`codeFromHash`, `inflateJs`, `decode` error `cut`), share/view.js, i18n/de/share.js, .github/qa/share-links.js, .github/workflows/quality.yml, whatsnew EN/EL, shell.js/sw.js version, Bible BR-SHARE-CUT.
 - **Tests:** tests/share-cut.test.js, tests/share.test.js; full `node --test tests/*.test.js`; CI `share-links` (Chromium + Firefox). Not tested on a real Android phone or chat app.
 
+
+### 2026-11-16 — 7.27.00 — Who helps with the owner's data: Both / Assistant only / Claude only (HELPER-1, #1072)
+
+- **What:** Chris asked (2026-11-16) for a choice between the Assistant, Claude, or both once Claude desktop is installed from orOS. Settings › Services "Who helps with your data" (synced slice `aihelper`, localStorage `oros-ai-helper` {v, m}; later m wins). Assistant only turns orOS Gate off on every device and refuses enable/join/sit (code `helper`). Claude only hides the Assistant from the menu; the Assistant's ways in (menu, search ask row, Ctrl+Alt+Shift+Q, quick window, `__orosOpenAt("assistant")`) open Claude desktop through the System extension or claude.ai, with the question copied to the clipboard (never put in a URL). Never-apps stay the same on both sides (PARITY).
+- **Files:** gate/gate.js (HELPERS, helperMerge, helperSlice, api.helper/setHelper, guards), shell.js (aiHelper, claudeInstead, menu/search/shortcut, APP_VERSION), quickmenu.js, settings/settings.js + core.js, translations.js, i18n/de, help EN/EL/DE, whatsnew EN/EL, sw.js (version), Bible Part IX "Who helps with the owner's data".
+- **Tests:** tests/ai-helper.test.js; full `node --test tests/*.test.js`. Not tested on a real device with Claude desktop installed.
