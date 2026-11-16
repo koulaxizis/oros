@@ -13,6 +13,17 @@ The button at the right end of the top bar (the network and power symbols) opens
 
 On a narrow screen, when the top bar is full, the language button moves into Quick settings.
 
+## Night Light
+Night Light makes the screen warmer in the evening, with less blue light, which is easier on the eyes and on sleep. Turn it on in `Settings`, under `Appearance`, with `Warm screen at night`, then choose `When`:
+
+- `Sunset to sunrise`: from this evening's sunset to the next sunrise where you are. orOS works the times out itself, without the internet, from the place of the top-bar weather (the first city of the [Weather](app:weather) app). Without a city it runs from 20:00 to 07:00.
+- `Set hours`: from and to the hours you pick, in half hours.
+- `Always`: warm all the time.
+
+`Warmth` sets how warm it gets. The screen turns warm slowly, over 20 minutes, and goes back the same way. In Quick settings, the `Night Light` button turns it on now (until the next morning or the end of your hours) or off until the next evening; its arrow opens the settings. It is set on this device only.
+
+On orOS USB the computer changes the screen's own colours, so the Internet window and Tor Browser turn warm too. In a browser or orOS Portable, orOS tints its own window: a video in full screen inside an app shows its own colours.
+
 ## Desktop widgets
 Cards on the desktop that show your day at a glance: `Clock`, `Calendar` (a month; tap a day to open it in the Calendar), `Today` (what is late and what is due today, from the [Today](app:today) summary; tap a line to open it), `Weather` (the place of the top-bar weather), `Playing` (Play / Pause for music, podcasts, radio or the Sound Mixer) and `Sync` (its state and Sync now).
 
