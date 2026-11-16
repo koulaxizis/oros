@@ -15,6 +15,7 @@ The country list and the rules are stored in the app, so working out the answer 
 ## Look up an author or a work
 
 - Pick a person to see when everything they wrote or made is free. Pick a work (a novel, a film, a song) to see when that work is free. For a work, the app finds its creators and the last one to die counts.
+- In [Publishing](app:publish), `Is it public domain?` on a title opens this app with its author already searched.
 - Search in Greek or in English. Results show the Wikidata description, which helps you tell people with the same name apart.
 - Your last 10 lookups appear under `Recent`. Tap one to look it up again, or tap `Clear` to forget them.
 

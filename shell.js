@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.22.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.26.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -5068,6 +5068,68 @@
   }
   quickWant = quickTakeHash();
   if (quickWant && quickWant.win) quickPlace();
+
+  // SB4: "#bar-win" is the desktop launcher's bar window (oros-portable,
+  // Windows): only the top bar shows, its title stays "orOS bar" (the
+  // launcher finds the window by it), and every app it would open opens
+  // in the main orOS window instead: through the "oros-barwin" channel
+  // when one is open, else the launcher opens it (/__oros-open).
+  var BARWIN = false, barCh = null;
+  (function () {
+    var h = "";
+    try { h = String(window.location.hash || ""); } catch (e) { return; }
+    if (h !== "#bar-win" || window.top !== window) return;
+    BARWIN = true;
+    try { window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search); } catch (e) {}
+    document.documentElement.classList.add("barwin");
+    document.title = "orOS bar";
+  })();
+  try { barCh = typeof BroadcastChannel === "function" ? new BroadcastChannel("oros-barwin") : null; } catch (e) { barCh = null; }
+  var BAR_APP_RE = /^[a-z0-9-]{1,40}$/;
+  // In the bar window: hand the app over. → true (always handled there).
+  function barwinOpen(id) {
+    id = BAR_APP_RE.test(String(id || "")) ? String(id) : "";
+    var asked = Date.now(), got = false;
+    if (barCh) {
+      var off = function (ev) {
+        var d = ev && ev.data;
+        if (d && d.t === "ok" && d.at === asked) { got = true; barCh.removeEventListener("message", off); }
+      };
+      barCh.addEventListener("message", off);
+      barCh.postMessage({ t: "open", id: id, at: asked });
+      setTimeout(function () {
+        barCh.removeEventListener("message", off);
+        if (!got) barwinLauncher(id);
+      }, 700);
+    } else barwinLauncher(id);
+    return true;
+  }
+  function barwinLauncher(id) {
+    try {
+      fetch("/__oros-open" + (id ? "?app=" + encodeURIComponent(id) : ""), { method: "POST", headers: { "X-Oros-Bar": "1" } })
+        .catch(function () {});
+    } catch (e) {}
+  }
+  // In a main window: open what the bar asks, and come to the front.
+  if (barCh) barCh.addEventListener("message", function (ev) {
+    var d = ev && ev.data;
+    if (BARWIN || SOLO || !d || d.t !== "open" || typeof d.at !== "number") return;
+    if (d.id && !BAR_APP_RE.test(String(d.id))) return;
+    barCh.postMessage({ t: "ok", at: d.at });
+    try { window.focus(); } catch (e) {}
+    if (d.id) openAppById(String(d.id));
+  });
+  if (BARWIN) {
+    // The menu button, the clock and the date: their app (or orOS
+    // itself) in the main window; nothing opens in the bar.
+    document.addEventListener("click", function (e) {
+      var tgt = e.target && e.target.closest ? e.target.closest("#btn-menu, #bar-time, #bar-date") : null;
+      if (!tgt) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      barwinOpen(tgt.id === "bar-time" ? "time" : tgt.id === "bar-date" ? "calendar" : "");
+    }, true);
+  }
   window.addEventListener("hashchange", function () {
     var w = quickTakeHash();
     if (!w) return;
@@ -12069,6 +12131,10 @@
       if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
       return;
     }
+    if (name === "smartbar-look") {      // smartbar.js SB3: "", glass, midnight, solid
+      if (window.orosSmartBar && window.orosSmartBar.setLook) window.orosSmartBar.setLook(String(value || ""));
+      return;
+    }
     if (/^smartbar-move:/.test(name)) {  // smartbar.js: "smartbar-move:<kind>", value -1 (left) / 1 (right)
       if (window.orosSmartBar) window.orosSmartBar.move(name.slice(14), Number(value) < 0 ? -1 : 1);
       return;
@@ -12346,6 +12412,7 @@
       var want = on ? DISC_ICON : discIcon;
       if (icon.getAttribute("href") !== want) icon.setAttribute("href", want);
     }
+    if (BARWIN) return;                          // SB4: the launcher finds the bar window by its title
     var title = window.t("strict.disc.title");
     if (on && document.title !== title) document.title = title;
     if (on && !discObs && typeof MutationObserver === "function") {
@@ -14309,6 +14376,7 @@
   // stale apps.json, fall back to the menu instead of dying silently.
   function openAppById(id) {
     if (appAlias(id)) { window.__orosOpenAt(id, null); return; }   // APP-ALIAS
+    if (BARWIN && barwinOpen(id)) return;            // SB4: the bar window opens nothing itself
     if (state.running && state.running.id === id) return;   // already there
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === id) { openApp(state.apps[i]); return; }
@@ -15891,6 +15959,13 @@
     }
     return out;
   }
+  // SB2: the Automations step "Pause sounds" (automations/host.js).
+  // Pauses every player that is playing; nothing else.
+  window.__orosPauseAll = function () {
+    var n = 0;
+    qsMedia().forEach(function (m) { if (m.playing) { try { m.toggle(); n++; } catch (e) {} } });
+    return n;
+  };
 
   // START-1: what First steps (widgets.js) ticks, read from the real
   // state: a Notes page, a To-Do task, a wallpaper or icon pack other

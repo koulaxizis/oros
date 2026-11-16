@@ -35,10 +35,11 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales"];
   var MONEY = { budget: 1, sales: 1 };
+  var LOOKS = ["", "glass", "midnight", "solid"];   // SB3: "" = the classic bar
   var SOON_MIN = 60;                       // countdown from this many minutes before
   var TODAY_MS = 120000;                   // the summary is rebuilt at most every 2 min
   var HM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -48,8 +49,11 @@
     if (!v || typeof v !== "object" || !Array.isArray(v.list)) return null;
     var out = [];
     v.list.forEach(function (k) { if (KINDS.indexOf(k) !== -1 && out.indexOf(k) === -1) out.push(k); });
-    return { v: 1, list: out };
+    var o = { v: 1, list: out };
+    if (typeof v.look === "string" && v.look && LOOKS.indexOf(v.look) !== -1) o.look = v.look;
+    return o;
   }
+  function lookOf(stored) { return stored && stored.look || ""; }
   function parse(raw) {
     try { return norm(JSON.parse(raw)); } catch (e) { return null; }
   }
@@ -149,7 +153,7 @@
   var model = { VER: VER, KEY: KEY, KINDS: KINDS, MONEY: MONEY, SOON_MIN: SOON_MIN,
                 norm: norm, parse: parse, listOf: listOf, toggle: toggle, step: step, mins: mins,
                 nextEvent: nextEvent, taskCount: taskCount, focusOf: focusOf, clock: clock,
-                monthSpent: monthSpent, money: money, ymdOf: ymdOf };
+                monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -166,9 +170,13 @@
   function strict() { return !!call(function () { return host.strict(); }); }
   function stored() { try { return parse(localStorage.getItem(KEY)); } catch (e) { return null; } }
   function list() { return listOf(stored()); }
-  function save(l) {
-    try { localStorage.setItem(KEY, JSON.stringify({ v: 1, list: l })); }
+  function save(l, look) {
+    var o = { v: 1, list: l };
+    var lk = look === undefined ? lookOf(stored()) : look;
+    if (lk) o.look = lk;
+    try { localStorage.setItem(KEY, JSON.stringify(o)); }
     catch (e) { call(function () { host.toast(t("sb.savefail")); }); }
+    applyLook();
     render();
     call(function () { host.changed(); });
   }
@@ -198,8 +206,27 @@
     ".sb-chip.sb-now { background: var(--accent-soft); }",
     "#oros-bar.bar-tight .sb-chip { padding: 0 5px; }",
     "@media (max-width: 760px) { .sb-chip .sb-l { display: none; } }",
-    "body.solo-mode #sb-row, body.till-mode #sb-row { display: none !important; }"
+    "body.solo-mode #sb-row, body.till-mode #sb-row { display: none !important; }",
+    // SB3 looks: the bar floats as a rounded pill inside its own 40 px
+    // (nothing below moves). Never under high contrast.
+    "html[data-oros-bar]:not([data-oros-contrast=\"high\"]) #oros-bar { background: transparent; border-bottom-color: transparent; box-shadow: none;",
+    "  backdrop-filter: none; -webkit-backdrop-filter: none; }",
+    "html[data-oros-bar]:not([data-oros-contrast=\"high\"]) #oros-bar::before { content: \"\"; position: absolute; z-index: -1; pointer-events: none;",
+    "  left: 4px; right: 4px; top: calc(env(safe-area-inset-top, 0px) + 3px); bottom: 3px; border-radius: 14px; border: 1px solid var(--border); }",
+    "html[data-oros-bar=\"glass\"]:not([data-oros-contrast=\"high\"]) #oros-bar::before { background: color-mix(in srgb, var(--bar-bg) 58%, transparent);",
+    "  backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);",
+    "  border-color: color-mix(in srgb, var(--text) 16%, transparent); box-shadow: 0 6px 20px var(--shadow), inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent); }",
+    "html[data-oros-bar=\"midnight\"]:not([data-oros-contrast=\"high\"]) #oros-bar { --text: #e9edf5; --text-dim: #a3adbd; --accent-soft: rgba(255, 255, 255, 0.09); color: #e9edf5; }",
+    "html[data-oros-bar=\"midnight\"]:not([data-oros-contrast=\"high\"]) #oros-bar::before { background: rgba(10, 13, 20, 0.94);",
+    "  border-color: rgba(255, 255, 255, 0.08); box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35); }",
+    "html[data-oros-bar=\"solid\"]:not([data-oros-contrast=\"high\"]) #oros-bar::before { background: var(--panel-bg); box-shadow: 0 2px 10px var(--shadow); }",
+    "@media (prefers-reduced-transparency: reduce) { html[data-oros-bar=\"glass\"] #oros-bar::before { background: var(--panel-bg); backdrop-filter: none; -webkit-backdrop-filter: none; } }"
   ].join("\n");
+
+  function applyLook() {
+    var lk = lookOf(stored()), h = doc.documentElement;
+    if (lk) h.setAttribute("data-oros-bar", lk); else h.removeAttribute("data-oros-bar");
+  }
 
   function injectCss() {
     if (doc.getElementById("sb-css")) return;
@@ -351,8 +378,14 @@
   // Paint every chip whose text changed. A chip the fit hid
   // (data-sb-drop) stays hidden until the shell fits the bar again; the
   // bar's ResizeObserver runs that fit whenever a chip changes width.
+  function locked() { return !!call(function () { return root.orosLock.isLocked(); }); }
   function paint(force) {
     if (!host || !box) return;
+    // Behind the screen lock the chips go (the desktop bar window has no
+    // lock screen over it).
+    var lk = locked();
+    if (box.hidden !== lk) { box.hidden = lk; force = true; call(function () { host.fit(); }); }
+    if (lk) return;
     refreshToday(false);
     var now = Date.now(), changed = false;
     Object.keys(chips).forEach(function (k) {
@@ -376,6 +409,7 @@
     if (host || !h) return;
     host = h;
     injectCss();
+    applyLook();
     render();
     if (root.orosToday && root.orosToday.onChange) root.orosToday.onChange(function () { todayAt = 0; refreshToday(true); });
   }
@@ -397,7 +431,12 @@
         if (ib === -1) return -1;
         return ia - ib;
       });
-      return { list: names };
+      return { list: names, look: lookOf(stored()), looks: LOOKS.slice() };
+    },
+    // SB3: "" (classic), glass, midnight, solid; device-local like the chips
+    setLook: function (look) {
+      if (!host || LOOKS.indexOf(look) === -1) return;
+      save(list(), look);
     },
     wants: function (kind) { return !!host && list().indexOf(kind) !== -1; },
     set: function (kind, on) {
@@ -435,4 +474,6 @@
       render();
     }
   };
+  // A chosen look shows from the first paint, before the shell attaches.
+  if (lookOf(stored())) { injectCss(); applyLook(); }
 })(typeof window !== "undefined" ? window : globalThis);

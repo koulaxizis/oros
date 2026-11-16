@@ -12,6 +12,8 @@ orosPack("de", "prompter", {
  "btn.unfavorite": "Nicht merken",
  "btn.use": "Nutzen",
  "btn.useTitle": "Diesen Impuls als neues Dokument im Texteditor öffnen",
+ "btn.typewriter": "Auf der Schreibmaschine",
+ "btn.typewriterTitle": "Auf der Schreibmaschine schreiben: eine neue Seite, die mit diesem Impuls beginnt",
  "by.cat": "Nach Kategorie",
  "cat.all": "Alle",
  "cat.aphorism": "Aphorismus",
