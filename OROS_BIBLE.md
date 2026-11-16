@@ -12393,3 +12393,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** quote/view.js, invoices/invoices.js, invoices/index.html, help EN/EL/DE, i18n/de, Bible.
 - **Tests:** new `tests/billing-k3.test.js`; full suite; Playwright Chromium (Settings card, PDF rendered with pdftoppm).
 - **Next:** K4 Overview pipeline (last wave of merge 7).
+
+### 2026-11-16 — 7.39.00 — Billing: the quotes' way to money on the Overview (app merge 7, wave K4, #1086)
+
+- **What:** wave K4, the last wave of merge 7 (plan approved by Chris 2026-11-15, K4 included). Billing's Overview shows a quotes pipeline under the legend for the chosen period: sent → accepted → invoiced → paid by month, the acceptance rate, what is accepted but not invoiced, and what is invoiced but unpaid (`renderQuotePipeline`; hidden with no quotes). `quote/core.js` 1.4.0 adds the pure `pipeline(raw, from, to, cur, invoicedOf)` in cents; `quoteInvoiced` in `invoices/invoices.js` links a quote to its invoices.
+- **Files:** quote/core.js, invoices/invoices.js, invoices/invoices.css, invoices/index.html, help EN/EL/DE, i18n/de, Bible.
+- **Tests:** new `tests/billing-k4.test.js`; full suite; Playwright Chromium (Overview with quotes).
+- **Next:** none; app merge 7 (Billing) is complete with K1-K4 (7.32.00, 7.36.00, 7.38.00, 7.39.00).
