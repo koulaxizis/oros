@@ -38,11 +38,13 @@ test("10e sits after the switcher and before the menu section", () => {
 });
 
 test("Ctrl+Alt+Shift+E opens the overview (SC_DEFS, stable id)", () => {
-  assert.match(SHELL, /\{ key: "e", label: "sc\.desc\.overview",\s+fn: function\(\) \{ ovOpen\(\); \}, id: "overview" \}/);
+  assert.match(SHELL, /\{ id: "overview",\s+key: "e", label: "sc\.desc\.overview",\s+fn: function\(\) \{ ovOpen\(\); \} \}/);
   const defs = SHELL.slice(SHELL.indexOf("var SC_DEFS = ["), SHELL.indexOf("];", SHELL.indexOf("var SC_DEFS = [")));
   const keys = [...defs.matchAll(/key:\s*"([a-z])"/g)].map((m) => m[1]);
   assert.equal(keys.filter((k) => k === "e").length, 1, "one shortcut per letter");
-  assert.ok(!keys.includes("v"), "V belongs to the clipboard history");
+  // V belongs to the clipboard history (CLIP-1), once, under its own id.
+  assert.equal(keys.filter((k) => k === "v").length, 1, "one shortcut per letter");
+  assert.match(defs, /\{ id: "clip", key: "v",/, "V belongs to the clipboard history");
 });
 
 test("recent files: Files' journal, only real disk paths, newest first, capped", () => {
@@ -88,16 +90,14 @@ test("places: heavy apps count twice", () => {
   assert.equal(p(null), 0);
 });
 
-test("never while locked, in a single app or on a till; corner and Super off by default", () => {
+test("never while locked, in a single app or on a till; corner off by default, no Super key", () => {
   assert.match(SEC, /function ovAllowed\(\) \{\s+if \(SOLO \|\| TILL\) return false;[\s\S]{0,200}isLocked\(\)\) return false;/);
   assert.match(SEC, /function ovOpen\(\) \{[\s\S]{0,120}if \(!ovAllowed\(\)\) return;/);
   assert.match(SEC, /function ovPref\(key\) \{\s+try \{ return localStorage\.getItem\(key\) === "1"; \}/);
   assert.match(SEC, /if \(!ovPref\(OV_CORNER_KEY\) \|\| ov\) return;/);
-  assert.match(SEC, /!ovPref\(OV_SUPER_KEY\)\) return;/);
-  // Super with another key (Meta+V, Meta+Period of the clipboard thread) never opens it.
-  assert.match(SEC, /else ovSuper\.clean = false;/);
-  // every new app frame is wired for the Super key
-  assert.match(SHELL, /a11yWireFrame\(f\);\s+ovWireFrame\(f\);\s+return f;/);
+  // no Super key (Chris 2026-11-16: one Ctrl+Alt+Shift combo for all)
+  assert.doesNotMatch(SHELL, /oros-ov-super|ovWireFrame|overview:super/);
+  assert.match(SHELL, /a11yWireFrame\(f\);\s+(?:if \(window\.orosClip\) window\.orosClip\.wire\(f\);[^\n]*\s+)?return f;/);
 });
 
 test("recent file names: text only, hidden during sensitive work", () => {
@@ -130,9 +130,8 @@ test("Settings: Overview card (device only) and Running now in Device", () => {
   assert.match(core, /\["overview", "system", "ov\.corner", "ov\.title", null, "overview"\]/);
   assert.match(core, /\["dv-running", "device", "dv\.running"\]/);
   assert.match(set, /switchBtn\(!!s\.overview\.corner, "overview:corner"/);
-  assert.match(set, /switchBtn\(!!s\.overview\.superKey, "overview:super"/);
+  assert.doesNotMatch(set, /superKey/);
   assert.match(SHELL, /case "overview:corner":/);
-  assert.match(SHELL, /case "overview:super":/);
   const dv = read("device/view.js");
   assert.match(dv, /var CARDS = \["running", /);
   assert.match(dv, /monOff = M\.onChange\(/);

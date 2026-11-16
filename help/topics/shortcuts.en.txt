@@ -17,11 +17,17 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - [[Ctrl+Alt+Shift+A]]: `Open the Assistant`
 - [[Ctrl+Alt+Shift+Y]]: `Open Today, the summary of your day`
 - [[Ctrl+Alt+Shift+N]]: `New sticky note`
-- [[Ctrl+Alt+Shift+K]]: `Command bar (also Ctrl+K)`
+- [[Ctrl+Alt+Shift+K]]: `Command bar`
 - [[Ctrl+Alt+Shift+W]]: `Switch between open apps (multitasking)`
 - [[Ctrl+Alt+Shift+E]]: `Overview: search, open apps, recent files`
 - [[Ctrl+Alt+Shift+Q]]: `Ask the Assistant in a small window`
 - [[Ctrl+Alt+Shift+M]]: `Quick settings`
+- [[Ctrl+Alt+Shift+V]]: `Clipboard history`
+- [[Ctrl+Alt+Shift+.]]: `Emoji`
+- [[Ctrl+Alt+Shift+B]]: `Move the app to the other screen`
+- [[Ctrl+Alt+Shift+G]]: `Take a screenshot (orOS USB)`
+- [[Ctrl+Alt+Shift+J]]: `Screen reader on / off (orOS USB)`
+- [[Ctrl+Alt+Shift+D]]: `Switch screens: extend, duplicate or one only (orOS USB)`
 
 ## What each one does
 ### Sync and backup
@@ -37,10 +43,16 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - **Open Calculator** opens [Calculator](app:calculator).
 - **Start / stop the Timesheet timer** opens [Timesheet](app:timesheet) and starts the timer, or stops the one that is running. While a timer runs, the top bar shows how long it has been going; click it to open Timesheet.
 - **New sticky note** puts a new [sticky note](app:stickies) on the desktop, ready for you to type. On a phone, or from inside an app, it opens the note in a window.
-- **Command bar** opens a small bar over the screen where you type a command such as `dentist tomorrow 10` or `buy milk`. [[Ctrl+K]] does the same, except in Notes and Wiki, where [[Ctrl+K]] is their own search. See [The menu](help:t/menu#commands).
+- **Command bar** opens a small bar over the screen where you type a command such as `dentist tomorrow 10` or `buy milk`. Press the shortcut again to close it. See [The menu](help:t/menu#commands).
 - **Switch between open apps** lists the apps that are open with [multitasking](help:a/settings) on: the one in front and the ones waiting in the background. The app you left last is already selected, so the shortcut and then [[Enter]] takes you straight back to it. With multitasking off, it tells you where to turn it on.
+- **Clipboard history** shows what you copied in orOS apps, when you turned it on in Settings. See [Privacy](help:t/privacy).
+- **Emoji** opens the emoji picker: search in English, Greek or German, or pick from a group. The emoji goes into the text field you were last in, in the app on screen, and the picker stays open for more ([[Esc]] closes it); with no such field it is copied. `Emoji` in Quick settings opens it too.
 - **Overview** shows on one screen the search field, your open apps, your recent files and a small System strip (memory, storage, sync). Start typing to search: the text goes to the menu search. See [The menu](help:t/menu#overview).
+- **Move the app to the other screen** works when two screens are set to Extend (on Windows: Win+P; on the Live USB: [[Ctrl+Alt+Shift+D]]). The app in front opens in a new orOS window on the other screen and closes here, so it is never open twice. The same keys in that window bring it back. Opening the app here again while it is on the other screen brings that window forward; click the note to bring the app back. The button with two screens in `Open apps` does the same for any open app. The first time, the browser asks to let orOS manage windows on all your displays. Chrome, Edge and the orOS apps can do this; other browsers, phones and tablets cannot.
 - **Help for the open app** opens Help at the page of the app you are using. On the desktop, it opens Help's start page.
+
+## Change a shortcut
+In [Settings](app:settings) › `System` › `Keyboard shortcuts`, `Change` next to a shortcut waits for its new key: press a letter or a digit (without [[Ctrl]], [[Alt]] or [[Shift]]; [[Esc]] cancels). The three keys [[Ctrl+Alt+Shift]] always stay the same. If another shortcut already has that key, orOS tells you which one, and `Swap` gives it the old key of the one you are changing. `Off` turns a shortcut off, so the app you are in can use that key for itself. `Default` brings back one shortcut's own key, and `Reset all to the defaults` brings back all of them. Your keys follow you to all your devices, and the About window and the tooltips show them.
 
 ## Mac and keyboard layouts
 On a Mac, use [[Control+Option+Shift]] plus the letter. [[Cmd]] works in place of [[Control]] too. The About window shows the keys as ⌃⌥⇧.

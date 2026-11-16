@@ -796,7 +796,8 @@
   }
   // WR-CAT T2: the book translations this device has worked on, from
   // Writer's own summary (localStorage oros-writer-tr-sum: id → [pct,
-  // words, name, from, to, source doc, done words, when]); those made
+  // words, name, from, to, source doc, done words, when, Publishing
+  // title id, deadline, words a day]); those made
   // from docId first. Read with Writer's read permission, never written.
   function translations(sum, docId) {
     var out = [];
@@ -810,6 +811,10 @@
       if (docId && r[5] === docId) e.of_this_document = true;
       var at = Number(r[7]);
       if (at > 0) e.last_worked = new Date(at).toISOString().slice(0, 10);
+      // proposals 1-2: linked to a Publishing title, deadline, words a day
+      if (typeof r[8] === "string" && r[8]) e.publishing_title = true;
+      if (typeof r[9] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r[9])) e.deadline = r[9];
+      if (Number(r[10]) > 0) e.words_a_day_goal = Math.min(100000, Math.floor(Number(r[10])));
       out.push(e);
     });
     out.sort(function (a, b) { return (b.of_this_document ? 1 : 0) - (a.of_this_document ? 1 : 0) || String(b.last_worked || "").localeCompare(String(a.last_worked || "")); });

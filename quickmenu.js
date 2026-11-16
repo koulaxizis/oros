@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, selected text, from outside, v1.3.1)
+// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, selected text, from outside, v1.3.2)
 // ------------------------------------------------------------
 // A shell component, like launcher.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -47,6 +47,8 @@
 //   • 1.3.1: "Open in the Assistant" names the conversation
 //     ({ chat: id }), since the full Assistant now always opens on a
 //     new one (AS-FRESH).
+//   • 1.3.2: the selection menu's Copy also goes into the clipboard
+//     history (cliphist.js note(), only while it is on; CLIP-1).
 //
 // Data (synced, slice "quickmenu", key oros-quick-menu):
 //   { ver:1, items:[{ id, k, n, p, app, send, o, d, m }] }
@@ -68,7 +70,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.3.1";
+  var VER = "1.3.2";
   var DATA_KEY = "oros-quick-menu";
   var MAX_ITEMS = 200;          // stored, tombstones included
   var MAX_SHOWN = 24;           // in the menu
@@ -809,6 +811,11 @@
   function mini(target) {
     if (!host || !hasAssistant()) return;
     closeMenu(false);
+    var H = root.orosAiHelper;                // HELPER-1: "Claude only" opens Claude instead
+    if (H && typeof H.mode === "function" && H.mode() === "claude") {
+      H.claude(target && typeof target.ask === "string" ? target.ask : "");
+      return;
+    }
     if (panel) {
       var api = miniApi(), w = miniWin();
       if (api && w && typeof w.__orosOpenAt === "function") {
@@ -913,7 +920,7 @@
       editable = !!(n && n.isContentEditable);
     }
     if (!text || !/\S/.test(text) || !rect) return null;
-    return { text: text, editable: editable, rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } };
+    return { text: text, editable: editable, app: frameApp(w), rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } };
   }
 
   function copyText(text) {
@@ -941,7 +948,10 @@
     var c = cleanSel(s.text);
     if (!c.text) return;
     showMenu(x, y, false, tr("sel.title"), function (item, sep) {
-      item(tr("sel.copy"), IC_COPY, function () { copyText(c.text); });
+      item(tr("sel.copy"), IC_COPY, function () {
+        copyText(c.text);
+        if (root.orosClip) root.orosClip.note(c.text, s.app || "");   // clipboard history (cliphist.js)
+      });
       sep();
       if (!hasAssistant()) return;
       SEL_ACTS.forEach(function (k) {

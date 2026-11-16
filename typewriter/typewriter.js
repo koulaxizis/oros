@@ -202,6 +202,7 @@
     if (cur) return cur;
     if (data.pages.length >= MAX_PAGES) { showToast(t("toast.pagesFull", { n: MAX_PAGES })); return null; }
     cur = newPageObj();
+    cur.text = committed;   // a sheet opened with a prompt keeps it (deep link newPage)
     data.pages.push(cur);
     prefs.cur = cur.id; savePrefs();
     return cur;
@@ -228,6 +229,25 @@
     openPage(null);
     ta.focus();
   }
+  // Deep link { newPage: { text } } (Prompter's "On the typewriter"):
+  // a fresh sheet whose first line is that text and the carriage on the
+  // next line. Nothing is stored until something is typed (ensurePage).
+  var NEWPAGE_MAX = 8000;
+  function openTarget(tg) {
+    if (!tg || typeof tg !== "object" || !tg.newPage || typeof tg.newPage.text !== "string") return;
+    var txt = C.cleanText(tg.newPage.text.replace(/\r\n?/g, "\n").trim().slice(0, NEWPAGE_MAX));
+    if (!txt) return;
+    openPage(null);
+    committed = txt + "\n";
+    ta.value = committed;
+    inkCache = [];
+    renderPaper();
+    caretToEnd();
+    centerCaret(true);
+    try { ta.focus({ preventScroll: true }); } catch (e) { ta.focus(); }
+  }
+  window.__orosOpenAt = openTarget;
+
   function deletePage(id) {
     var p = C.findPage(data, id);
     if (!p) return;
@@ -858,6 +878,13 @@
     var start = (prefs.cur && C.findPage(data, prefs.cur)) || C.newestFirst(data.pages)[0] || null;
     setPanel(!phone() && prefs.panel);
     openPage(start);
+    var pending = null;
+    try {
+      if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function") {
+        pending = window.parent.__orosTakeTarget("typewriter");
+      }
+    } catch (e) {}
+    if (pending) openTarget(pending);
     setTimeout(function () { try { ta.focus({ preventScroll: true }); } catch (e) { ta.focus(); } centerCaret(true); }, 60);
   }
 

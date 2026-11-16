@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Studio · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=7.17.01">
-  <link rel="stylesheet" href="studio.css?v=7.17.01">
+  <link rel="stylesheet" href="../fonts.css?v=7.28.00">
+  <link rel="stylesheet" href="studio.css?v=7.28.00">
 
 </head>
 <body>
@@ -196,6 +196,23 @@
     <div class="dlg-actions spread">
       <button type="button" id="book-rt-use" class="chip" data-i18n="bk.rtUse">Use the selected clip as room tone</button>
       <button type="button" id="book-fill" class="chip"></button>
+    </div>
+    <h3 data-i18n="bk.deliver">Check and deliver</h3>
+    <p id="book-check-state" class="hint" aria-live="polite"></p>
+    <div class="dlg-actions spread">
+      <button type="button" id="book-check" class="chip" data-i18n="bk.check">Check all</button>
+      <button type="button" id="book-norm" class="chip" data-i18n="bk.norm">Normalise all</button>
+      <button type="button" id="book-unnorm" class="chip" data-i18n="bk.unnorm" hidden>Remove normalising</button>
+    </div>
+    <p class="hint small" data-i18n="bk.normHint"></p>
+    <p id="book-sample-state" class="hint small"></p>
+    <div class="dlg-actions spread">
+      <button type="button" id="book-sample" class="chip" data-i18n="bk.sample">Use this chapter's loop as the retail sample</button>
+    </div>
+    <label class="field" for="book-kbps" data-i18n="bk.kbps">MP3 for the book</label>
+    <select id="book-kbps"></select>
+    <div class="dlg-actions spread">
+      <button type="button" id="book-export" class="chip primary" data-i18n="bk.export">Export the book</button>
     </div>
     <div class="dlg-actions">
       <button type="button" id="book-del" class="chip danger" data-i18n="bk.del">Delete book</button>
@@ -897,33 +914,34 @@
   </dialog>
 
   <!-- effects runtime (NULL JSFX) and the Effects dialog; before core.js -->
-  <script src="../i18n.js?v=7.17.01" data-app="studio"></script>
-  <script src="nullfx/runtime/eel-rt.js?v=7.17.01"></script>
-  <script src="nullfx/runtime/null-fx.js?v=7.17.01"></script>
-  <script src="nullfx/runtime/null-gfx.js?v=7.17.01"></script>
-  <script src="nullfx/runtime/null-node.js?v=7.17.01"></script>
-  <script src="../qr/qr-encode.js?v=7.17.01"></script>
-  <script src="remote.js?v=7.17.01"></script>
-  <script src="fx.js?v=7.17.01"></script>
-  <script src="encode.js?v=7.17.01"></script>
-  <script src="meter.js?v=7.17.01"></script>
-  <script src="podcast.js?v=7.17.01"></script>
-  <script src="ghpages.js?v=7.17.01"></script>
-  <script src="podcastui.js?v=7.17.01"></script>
-  <script src="midi.js?v=7.17.01"></script>
-  <script src="sfz.js?v=7.17.01"></script>
-  <script src="sounds.js?v=7.17.01"></script>
-  <script src="notes.js?v=7.17.01"></script>
-  <script src="loops.js?v=7.17.01"></script>
-  <script src="roll.js?v=7.17.01"></script>
+  <script src="../i18n.js?v=7.28.00" data-app="studio"></script>
+  <script src="nullfx/runtime/eel-rt.js?v=7.28.00"></script>
+  <script src="nullfx/runtime/null-fx.js?v=7.28.00"></script>
+  <script src="nullfx/runtime/null-gfx.js?v=7.28.00"></script>
+  <script src="nullfx/runtime/null-node.js?v=7.28.00"></script>
+  <script src="../qr/qr-encode.js?v=7.28.00"></script>
+  <script src="remote.js?v=7.28.00"></script>
+  <script src="fx.js?v=7.28.00"></script>
+  <script src="encode.js?v=7.28.00"></script>
+  <script src="meter.js?v=7.28.00"></script>
+  <script src="podcast.js?v=7.28.00"></script>
+  <script src="ghpages.js?v=7.28.00"></script>
+  <script src="podcastui.js?v=7.28.00"></script>
+  <script src="midi.js?v=7.28.00"></script>
+  <script src="sfz.js?v=7.28.00"></script>
+  <script src="sounds.js?v=7.28.00"></script>
+  <script src="notes.js?v=7.28.00"></script>
+  <script src="loops.js?v=7.28.00"></script>
+  <script src="roll.js?v=7.28.00"></script>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="core.js?v=7.17.01"></script>
-  <script src="../bundle.js?v=7.17.01"></script>
-  <script src="package.js?v=7.17.01"></script>
-  <script src="studio.js?v=7.17.01"></script>
+  <script src="core.js?v=7.28.00"></script>
+  <script src="../bundle.js?v=7.28.00"></script>
+  <script src="package.js?v=7.28.00"></script>
+  <script src="studio.js?v=7.28.00"></script>
 
+  <script src="../pickers.js?v=7.28.00" defer></script>
 </body>
 </html>

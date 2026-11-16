@@ -112,6 +112,31 @@ jobs:
       - name: Check every app this PR adds
         run: node .github/app-kit/check-app.js --added-since origin/${{ github.base_ref }} --no-browser
 
+  # "Send to someone" links in Chromium AND Firefox (BR-SHARE-CUT): a
+  # song link that opened for the sender showed "damaged" in Firefox for
+  # Android. The share page opens page-made and relay-made links, with
+  # and without DecompressionStream, tolerates what chat apps add, and
+  # says "cut short" for a link that lost its end (.github/qa/share-links.js).
+  share-links:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      LANG: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Install Playwright with Chromium and Firefox (CI only)
+        run: |
+          npm install --prefix .github/qa --no-audit --no-fund
+          .github/qa/node_modules/.bin/playwright install --with-deps chromium firefox || {
+            echo "::warning::apt step failed; installing the browsers without system packages"
+            .github/qa/node_modules/.bin/playwright install chromium firefox
+          }
+      - name: Share links in both engines
+        run: node .github/qa/share-links.js --out qa-share-links.json
+
   # CalDAV / CardDAV wave 6: davkit.js, davsync.js and the Calendar, To-Do
   # and Contacts mappers against a real DAV server (Radicale, any user,
   # storage in a temporary folder): discovery and the probe, then round

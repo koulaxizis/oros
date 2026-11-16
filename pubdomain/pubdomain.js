@@ -1036,6 +1036,31 @@
     wireKeyboard();
   }
 
+  // Deep link { author?, title?, died?, pub? } (Publishing's "Is it public
+  // domain?"). With a death year: the manual form, one author, shown at
+  // once (works offline). Otherwise the lookup searches the author, or
+  // the title when there is no author; the person picks the result.
+  // Nothing is stored: the form is the device's own, recents only on a pick.
+  function openTarget(tg) {
+    if (!tg || typeof tg !== "object") return;
+    var author = clip(tg.author, 120), title = clip(tg.title, 120);
+    var died = intOrNull(tg.died), pub = intOrNull(tg.pub);
+    if (died !== null) {
+      manual.kind = "one";
+      manual.authors = [{ y: String(died), alive: false }];
+      manual.pub = pub !== null ? String(pub) : "";
+      $("pub").value = manual.pub;
+      if (prefs.manual) { buildAuthors(); manualChanged(); } else toggleManual(true);
+      return;
+    }
+    var q = author || title;
+    if (q.length < 2) return;
+    $("q").value = q;
+    onQuery();
+    try { $("q").focus({ preventScroll: true }); } catch (e) { $("q").focus(); }
+  }
+  window.__orosOpenAt = openTarget;
+
   function boot() {
     loadPrefs();
     applyI18n();
@@ -1047,6 +1072,13 @@
     renderRecents();
     toggleManual(prefs.manual);
     render();
+    var pending = null;
+    try {
+      if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function") {
+        pending = window.parent.__orosTakeTarget("pubdomain");
+      }
+    } catch (e) {}
+    if (pending) openTarget(pending);
   }
 
   boot();
