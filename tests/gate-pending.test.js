@@ -25,7 +25,7 @@ test("relay: pending adds get p- refs by item, changes know every app they touch
   assert.deepEqual(p.changes.map((c) => [c.id, c.app, c.apps]), [[Q("b"), "contacts", ["contacts"]], [Q("c"), "crm", ["crm", "contacts"]], [Q("d"), "budget", ["budget"]]]);
   const note = JSON.parse(R.pendNote(p, ["contacts"]).split("\n").pop());
   assert.equal(note.waiting_added.length, 2);
-  assert.deepEqual(note.waiting_changes.map((x) => x.change_id), [Q("b"), Q("c")]);
+  assert.deepEqual(note.waiting_changes.map((x) => x.change_id), [Q("c"), Q("b")], "newest first");
   assert.equal(R.pendNote(p, ["notes"]), "", "nothing for an app without waiting changes");
   assert.equal(R.pendNote(R.pendingOf([], ix), null), "");
   assert.deepEqual(R.refsIn({ ref: "p-" + Q("a") + ".3", item: "p-bad.1", items: ["r4"] }), ["p-" + Q("a") + ".3", "r4"]);
@@ -45,6 +45,33 @@ test("relay: cancel takes back what names a cancelled add; last = the newest; un
   const x = R.cancelPlan(p, { ids: ["zz", Q("c")] });
   assert.deepEqual(x.other, ["zz"]);
   assert.deepEqual(x.ids.sort(), [Q("c"), Q("e")].sort());
+  // a row handed to a device a moment ago (nb ahead) is not cancelled, nor taken along
+  const p2 = R.pendingOf(rows.map((r) => (r.id === Q("e") ? Object.assign({ nb: 1000 }, r) : r)), []);
+  assert.deepEqual(R.cancelPlan(p2, { ids: [Q("a")] }, 500).ids.sort(), [Q("a"), Q("b")].sort());
+  assert.deepEqual(R.cancelPlan(p2, { ids: [Q("e")] }, 500).busy, [Q("e")]);
+  assert.deepEqual(R.cancelPlan(p2, { last: true }, 500).ids, [Q("c")]);
+  assert.deepEqual(R.cancelPlan(p2, { ids: [Q("e")] }, 2000).ids, [Q("e")], "its late window passed");
+});
+
+test("relay: one answer lists at most 50 waiting entries, newest first; the sealed header is small", () => {
+  const rows = [];
+  for (let i = 0; i < 50; i++) rows.push({ id: (String(i).padStart(2, "0") + "x".repeat(14)), n: "create_items", a: { app: "todo", items: Array.from({ length: 50 }, (_, j) => ({ title: "task " + i + "." + j, note: "y".repeat(500) })) }, t: 1000 + i });
+  const p = R.pendingOf(rows, []);
+  const note = JSON.parse(R.pendNote(p, null).split("\n").pop());
+  assert.equal(note.waiting_added.length, 50);
+  assert.equal(note.more, 2450);
+  assert.match(note.waiting_added[0].title, /^task 49\./);
+  const h = R.pendHead("create_items", rows[0].a, 5);
+  assert.ok(JSON.stringify(h).length <= 2048);
+  assert.equal(h.a.ni, 50);
+  const ph = R.pendingOf([{ id: rows[0].id, n: h.n, a: h.a, t: h.t }], []);
+  assert.ok(ph.byRef["p-" + rows[0].id + ".49"], "every item keeps its p- ref, also past the header's titles");
+  assert.ok(ph.creates.length < 50 && ph.creates.length > 5);
+  const hc = R.pendHead("change_item", { ref: "r4", note_add: "z".repeat(60000) }, 5);
+  assert.deepEqual(hc.a.refs, ["r4"]);
+  assert.ok(JSON.stringify(hc).length < 200);
+  const s = JSON.parse(R.closedSearch({ ans: { __index: "[]" } }, { query: "task" }, "x", p).c.split("\n").pop());
+  assert.equal(s.results.length, 50);
 });
 
 test("relay: the daily reminder is due 6 h after the oldest waiting change, then a day after the last", () => {

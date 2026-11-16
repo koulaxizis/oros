@@ -548,7 +548,26 @@ export function refsIn(a) {
 // (gate/gate.js pmap). Nothing here needs a key the relay did not have
 // already: the queue is opened in memory with the call's K, as the copy is.
 export const P_REF_RE = /^p-[A-Za-z0-9_-]{16}\.\d{1,2}$/;
-export const PEND_ITEMS = 50;                  // p- refs per create_items (= its own limit or less)
+export const PEND_ITEMS = 50;
+// at most this many waiting entries in one answer (the newest)
+export const PEND_NOTE = 50;
+// PEND-1: the small sealed header of a queue row (q:… h), all a closed
+// answer needs: the tool, the time, the app, the refs it names and, for
+// an add, each item's words (≤ 2 KB; ni = how many items it adds).
+export function pendHead(n, a, t) {
+  const o = a && typeof a === "object" ? a : {}, h = { n, t, a: {} };
+  if (typeof o.app === "string") h.a.app = o.app.slice(0, 40);
+  if (Array.isArray(o.apps)) h.a.apps = o.apps.slice(0, 10).map((x) => String(x).slice(0, 40));
+  if (n === "create_items") {
+    const items = Array.isArray(o.items) ? o.items.slice(0, PEND_ITEMS) : [];
+    h.a.ni = items.length;
+    h.a.items = items.map((it) => ({ title: itemTitle(it).slice(0, 80), w: itemWords(it).slice(0, 80) }));
+    while (h.a.items.length && JSON.stringify(h).length > 2048) h.a.items.pop();
+  } else {
+    h.a.refs = refsIn(o).slice(0, 20);
+  }
+  return h;
+}                  // p- refs per create_items (= its own limit or less)
 // The app a waiting change belongs to (refs: from the copy's index or a p- ref).
 export function pendApp(n, a, byRef) {
   const o = a && typeof a === "object" ? a : {};
@@ -572,7 +591,7 @@ function itemWords(it) {
   return foldTxt(out.join(" ")).slice(0, 4000);
 }
 // rows = the opened queue [{ id, n, a, t }], ix = the copy's index (or null)
-// → { creates: [{ ref, id, app, title, item, t }], changes: [{ id, tool, app, apps (every app it touches), refs, args, t }], byRef }
+// → { creates: [{ ref, id, app, title, item, t }], changes: [{ id, tool, app, apps (every app it touches), refs, t }], byRef }
 export function pendingOf(rows, ix) {
   const byRef = {};
   (Array.isArray(ix) ? ix : []).forEach((it) => { byRef[it.r] = it.a; });
@@ -582,25 +601,32 @@ export function pendingOf(rows, ix) {
     const app = pendApp(q.n, q.a, byRef);
     if (q.n === "create_items") {
       const items = q.a && Array.isArray(q.a.items) ? q.a.items.slice(0, PEND_ITEMS) : [];
-      items.forEach((it, i) => { const ref = "p-" + q.id + "." + i; byRef[ref] = app; creates.push({ ref, id: q.id, app, title: itemTitle(it), item: it, t: q.t }); });
+      const n = Math.min(PEND_ITEMS, Math.max(items.length, q.a && typeof q.a.ni === "number" ? q.a.ni : 0));
+      for (let i = 0; i < n; i++) {
+        const ref = "p-" + q.id + "." + i, it = items[i];
+        byRef[ref] = app;
+        if (it) creates.push({ ref, id: q.id, app, title: itemTitle(it), item: it, t: q.t });
+      }
       return;
     }
-    const args = {};
-    Object.keys(q.a && typeof q.a === "object" ? q.a : {}).forEach((k) => { args[k] = q.a[k]; });
     const refs = refsIn(q.a), apps = [app].concat(refs.map((r) => byRef[r])).filter((x, i, l) => x && l.indexOf(x) === i);
-    changes.push({ id: q.id, tool: q.n, app: app, apps: apps, refs: refs, args: args, t: q.t });
+    changes.push({ id: q.id, tool: q.n, app: app, apps: apps, refs: refs, t: q.t });
   });
-  return { creates, changes, byRef };
+  const busy = (Array.isArray(rows) ? rows : []).filter((q) => q && typeof q.nb === "number" && q.nb > 0).map((q) => ({ id: q.id, nb: q.nb }));
+  return { creates, changes, byRef, busy };
 }
 // The words every closed answer about these apps carries: what waits.
 export function pendNote(pend, apps) {
   if (!pend || (!pend.creates.length && !pend.changes.length)) return "";
   const want = (x) => !apps || apps.indexOf(x) >= 0;
-  const added = pend.creates.filter((c) => want(c.app)).map((c) => ({ ref: c.ref, app: c.app, title: c.title, pending: true, asked: new Date(c.t).toISOString(), change_id: c.id }));
-  const changed = pend.changes.filter((c) => c.apps.some(want)).map((c) => ({ change_id: c.id, tool: c.tool, app: c.app || undefined, refs: c.refs.length ? c.refs : undefined, asked: new Date(c.t).toISOString(), pending: true }));
-  if (!added.length && !changed.length) return "";
+  // ≤ PEND_NOTE entries in all, newest first; more = how many were left out
+  const all = pend.creates.filter((c) => want(c.app)).map((c) => ({ t: c.t, k: 0, o: { ref: c.ref, app: c.app, title: c.title, pending: true, asked: new Date(c.t).toISOString(), change_id: c.id } }))
+    .concat(pend.changes.filter((c) => c.apps.some(want)).map((c) => ({ t: c.t, k: 1, o: { change_id: c.id, tool: c.tool, app: c.app || undefined, refs: c.refs.length ? c.refs.slice(0, 10) : undefined, asked: new Date(c.t).toISOString(), pending: true } })));
+  if (!all.length) return "";
+  const keep = all.slice().sort((x, y) => y.t - x.t).slice(0, PEND_NOTE);
+  const added = keep.filter((x) => x.k === 0).map((x) => x.o), changed = keep.filter((x) => x.k === 1).map((x) => x.o);
   return "\n[Waiting until orOS opens on one of the owner's devices; shown as done, not applied yet. undo_change with a change_id cancels it before then]\n" +
-    JSON.stringify({ waiting_added: added.length ? added : undefined, waiting_changes: changed.length ? changed : undefined });
+    JSON.stringify({ waiting_added: added.length ? added : undefined, waiting_changes: changed.length ? changed : undefined, more: all.length > keep.length ? all.length - keep.length : undefined });
 }
 // PEND-1 (e3): when the "changes are waiting" reminder is due, or 0.
 // q = the box's queue rows; m.qn = when it last went out.
@@ -613,12 +639,15 @@ export function nudgeAt(q, m) {
 // undo_change with orOS closed: a waiting change is taken out of the
 // queue (with every waiting change that names an item it was to add).
 // → { ids to delete, asked (the ids it knew), other (ids it did not) }
-export function cancelPlan(pend, args) {
+// A row handed to a device that may still answer late (nb > now) is not
+// waiting any more: it is left alone (it may be applied).
+export function cancelPlan(pend, args, now) {
   const a = args && typeof args === "object" ? args : {};
-  const all = pend.creates.map((c) => c.id).concat(pend.changes.map((c) => c.id)).filter((x, i, l) => l.indexOf(x) === i);
+  const busy = (pend.busy || []).filter((b) => b.nb > (now || 0)).map((b) => b.id);
+  const all = pend.creates.map((c) => c.id).concat(pend.changes.map((c) => c.id)).filter((x, i, l) => l.indexOf(x) === i && busy.indexOf(x) < 0);
   let want = Array.isArray(a.ids) ? a.ids.map(String).slice(0, 20) : [];
   if (a.last === true && !want.length) {
-    const newest = pend.creates.map((c) => ({ id: c.id, t: c.t })).concat(pend.changes.map((c) => ({ id: c.id, t: c.t }))).sort((x, y) => y.t - x.t)[0];
+    const newest = pend.creates.map((c) => ({ id: c.id, t: c.t })).concat(pend.changes.map((c) => ({ id: c.id, t: c.t }))).filter((x) => busy.indexOf(x.id) < 0).sort((x, y) => y.t - x.t)[0];
     if (newest) want = [newest.id];
   }
   const asked = want.filter((x) => all.indexOf(x) >= 0), other = want.filter((x) => all.indexOf(x) < 0);
@@ -627,11 +656,11 @@ export function cancelPlan(pend, args) {
   while (grew) {
     grew = false;
     pend.changes.forEach((c) => {
-      if (out.indexOf(c.id) >= 0) return;
+      if (out.indexOf(c.id) >= 0 || busy.indexOf(c.id) >= 0) return;
       if (c.refs.some((r) => P_REF_RE.test(r) && out.indexOf(r.slice(2, 18)) >= 0)) { out.push(c.id); grew = true; }
     });
   }
-  return { ids: out, asked: asked, other: other };
+  return { ids: out, asked: asked, other: other.filter((x) => busy.indexOf(x) < 0), busy: other.filter((x) => busy.indexOf(x) >= 0) };
 }
 export function hasDelete(a) {
   const o = a && typeof a === "object" ? a : {};
@@ -707,14 +736,15 @@ export function closedSearch(cp, args, when, pend) {
   // PEND-1: what Claude added while orOS was closed, and the waiting changes to an item found
   if (pend) {
     results.forEach((r) => {
-      const w = pend.changes.filter((c) => c.refs.indexOf(r.ref) >= 0).map((c) => ({ change_id: c.id, tool: c.tool }));
+      const w = pend.changes.filter((c) => c.refs.indexOf(r.ref) >= 0).slice(0, 10).map((c) => ({ change_id: c.id, tool: c.tool }));
       if (w.length) r.waiting_changes = w;
     });
-    if (!lab) pend.creates.forEach((c) => {
+    // the newest PEND_NOTE adds only (oldest of them first, so the newest ends on top)
+    if (!lab) pend.creates.slice().sort((x, y) => y.t - x.t).slice(0, PEND_NOTE).reverse().forEach((c) => {
       if (apps && apps.indexOf(c.app) < 0) return;
-      if (!words.every((w) => itemWords(c.item).indexOf(w) >= 0)) return;
+      const iw = itemWords(c.item); if (!words.every((w) => iw.indexOf(w) >= 0)) return;
       const r = { ref: c.ref, app: c.app, title: c.title, pending: "added while orOS was closed; applied when it opens", change_id: c.id };
-      const w = pend.changes.filter((x) => x.refs.indexOf(c.ref) >= 0).map((x) => ({ change_id: x.id, tool: x.tool }));
+      const w = pend.changes.filter((x) => x.refs.indexOf(c.ref) >= 0).slice(0, 10).map((x) => ({ change_id: x.id, tool: x.tool }));
       if (w.length) r.waiting_changes = w;
       results.unshift(r);
     });
@@ -1894,8 +1924,9 @@ export class GateBox {
     }
     const when = new Date(cp.at).toISOString();
     // PEND-1: the waiting changes, shown in the answers as made (pending)
-    const pend = await this.pending(kRaw, cp);
-    const withPend = (r, apps) => (r && r.ok && typeof r.c === "string" ? { ok: true, c: r.c + pendNote(pend, apps) } : r);
+    let pendP = null;
+    const getPend = () => pendP || (pendP = this.pending(kRaw, cp));
+    const withPend = async (r, apps) => (r && r.ok && typeof r.c === "string" ? { ok: true, c: r.c + pendNote(await getPend(), apps) } : r);
     const appsOf = (n, a) => {
       const o = a && typeof a === "object" ? a : {};
       if (n === "change_history") return null;
@@ -1905,9 +1936,9 @@ export class GateBox {
       return m && ["budget", "kanban", "invoices", "stock", "publish", "files"].indexOf(m[1]) >= 0 ? [m[1]] : null;
     };
     // 5.96.00: search over the copy's index (every allowed item with its ref)
-    if (name === "search_data") return closedSearch(cp, args, when, pend);
+    if (name === "search_data") return closedSearch(cp, args, when, await getPend());
     // PEND-1: undo_change takes a waiting change back out of the queue
-    if (name === "undo_change") return await this.cancelQueued(pend, args);
+    if (name === "undo_change") return await this.cancelQueued(await getPend(), args, Date.now());
     // 6.05.02 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με
     // κλειστό το orOS»): budget_lines from the copy's lines, by its days
     if (name === "budget_lines" && typeof cp.ans.__bgl === "string") return withPend(closedLines(cp, args, when), ["budget"]);
@@ -1944,7 +1975,7 @@ export class GateBox {
         const ix = indexOf(cp), refs = refsIn(args);
         if (!ix) return { ok: false, c: name + " needs orOS open: the copy of " + when + " has no item refs yet. Ask the owner to open orOS once." };
         if (!refs.length) return { ok: false, c: name + " needs the refs of items (from search_data). Nothing was changed." };
-        const byRef = pend.byRef;              // the copy's refs and the p- refs of waiting adds
+        const byRef = (await getPend()).byRef;              // the copy's refs and the p- refs of waiting adds
         const miss = refs.filter((r) => !byRef[r]);
         if (miss.length) return { ok: false, c: "Unknown ref " + miss.slice(0, 5).join(", ") + " in the copy of " + when + " and the waiting changes. Use refs from search_data while orOS is closed. Nothing was changed." };
         const no = refs.map((r) => byRef[r]).filter((a, i, l) => l.indexOf(a) === i && !(cp.lv && cp.lv[a] === "write"));
@@ -1963,20 +1994,23 @@ export class GateBox {
     if (kRaw) {
       const q = await this.st.list({ prefix: "q:" });
       for (const [k, v] of q) {
-        try { const x = JSON.parse(await openText(kRaw, v.c)); if (x && typeof x.n === "string") rows.push({ id: k.slice(2), n: x.n, a: x.a, t: typeof x.t === "number" ? x.t : v.t, s: typeof v.s === "number" ? v.s : 0 }); } catch (e) {}
+        // the small header h (PEND-1); a row from before it: the whole row
+        try { const x = JSON.parse(await openText(kRaw, typeof v.h === "string" ? v.h : v.c)); if (x && typeof x.n === "string") rows.push({ id: k.slice(2), n: x.n, a: x.a, t: typeof x.t === "number" ? x.t : v.t, s: typeof v.s === "number" ? v.s : 0, nb: typeof v.nb === "number" ? v.nb : 0 }); } catch (e) {}
       }
     }
     return pendingOf(rows, indexOf(cp));
   }
-  async cancelQueued(pend, args) {
-    const pl = cancelPlan(pend, args);
+  async cancelQueued(pend, args, now) {
+    const pl = cancelPlan(pend, args, now);
     if (!pl.asked.length) {
+      if (pl.busy.length) return { ok: false, c: "orOS is closed: " + pl.busy.slice(0, 5).join(", ") + " went to a device a moment ago and may still be applied there; it can't be cancelled now. Ask again in a few minutes (then undo_change with orOS open). Nothing was changed." };
       return { ok: false, c: pl.other.length ? "orOS is closed: " + pl.other.slice(0, 5).join(", ") + " are changes already made on the owner's devices; undoing them needs orOS open. Nothing was changed."
                                              : "Nothing is waiting that undo_change could cancel. Give ids (change_id from change_history or the answer that queued it)." };
     }
     await this.st.delete(pl.ids.map((x) => "q:" + x));
     const out = { cancelled: pl.ids.length, ids: pl.ids, note: "These changes were waiting for orOS to open and are taken back; they will not be applied." + (pl.ids.length > pl.asked.length ? " Changes to items they were to add are taken back with them." : "") };
     if (pl.other.length) out.not_waiting = pl.other.slice(0, 20);
+    if (pl.busy.length) out.on_a_device_now = pl.busy.slice(0, 20);
     return { ok: true, c: JSON.stringify(out) };
   }
   async queueChange(name, args, kRaw, now, qidWant, note) {
@@ -1987,7 +2021,7 @@ export class GateBox {
     const m = await this.meta();
     const seq = m ? (m.qs || 0) + 1 : 0;
     if (m) { m.qs = seq; await this.st.put("meta", m); }
-    const row = { c: await sealText(kRaw, JSON.stringify({ n: name, a: args, t: now })), t: now, s: seq };
+    const row = { c: await sealText(kRaw, JSON.stringify({ n: name, a: args, t: now })), h: await sealText(kRaw, JSON.stringify(pendHead(name, args, now))), t: now, s: seq };
     // 6.01.02: a call that timed out may still finish on the device that
     // got it; no other device gets it for lateMs (its late answer ends it).
     if (qid === qidWant) row.nb = now + GATE_LIMITS.lateMs;
