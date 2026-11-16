@@ -21,6 +21,11 @@ On a computer other people use, turn on `Screen lock` in [Settings](app:settings
 
 On an Android phone (the orOS app or orOS Passwords) the lock can also open with your fingerprint or face, and on a computer with orOS Portable, the orOS app or orOS USB with Windows Hello or a fingerprint; your PIN still works and is asked every 14 days.
 
+### Clipboard history
+`Clipboard history` in [Settings](app:settings) (System) is off until you turn it on, on each device. Then orOS keeps the text you copy or cut inside its apps (up to 30 copies, for 1 hour, 1 day or 7 days), and [[Ctrl+Alt+Shift+V]] or `Clipboard` in Quick settings shows them; a tap copies one again. It only sees copies made in orOS apps, never what you copy in other programs. It never keeps anything from Passwords or Settings, password fields or 2FA links, and nothing while the screen is locked or [Sensitive work](help:t/sensitive) is on (turning that on also forgets the list). The list stays on this device: it never syncs and is not in backups. Pictures are not kept. Turning it off forgets everything.
+
+In the list, the pin keeps a copy until you unpin it (up to 10; `Clear all` leaves them), the search box finds a copy by its words, and the paste button puts a copy straight into the text field you were last in, in the app on screen. Typing `clipboard` in the command bar opens the list too.
+
 ## Encrypted sync
 Sync is optional and uses your own Dropbox account. orOS only works in its own app folder there.
 

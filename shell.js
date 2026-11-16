@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.17.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.18.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -415,6 +415,8 @@
     if (window.orosOsk) window.orosOsk.refresh();   // on-screen keyboard labels
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
+    if (window.orosClip) window.orosClip.refresh();         // clipboard history
+    if (window.orosEmoji) window.orosEmoji.refresh();       // emoji picker
     if (window.orosSmartBar) window.orosSmartBar.refresh(); // smart top bar chips
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
@@ -4828,7 +4830,8 @@
     if (U) { try { rates = U.storedRates(JSON.parse(localStorage.getItem(U.RATES_KEY))); } catch (e) { rates = null; } }
     return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick, lang: langBase(),
                         calc: window.CalcCore, units: U, rates: rates, send: window.OrosSendCore,
-                        lockOn: !!(window.orosLock && window.orosLock.isOn()), pw: window.PwCore });
+                        lockOn: !!(window.orosLock && window.orosLock.isOn()), pw: window.PwCore,
+                        clipOn: !!(window.orosClip && window.orosClip.isOn()) });
   }
   function cmdHistory() {
     try {
@@ -4870,6 +4873,7 @@
     var N = window.orosNotifs;
     if (name === "theme") { setThemeUser(value); notifySys("dim", text); return; }
     if (name === "lock") { if (window.orosLock && window.orosLock.isOn()) window.orosLock.lock(); return; }
+    if (name === "clip") { if (window.orosClip) window.orosClip.open(); return; }   // CLIP-1 W2
     if (!N || typeof N.setSetting !== "function") return;
     if (name === "notifs") {
       if (!value) notifySys("dim", text);
@@ -5082,6 +5086,7 @@
   }
   appFrames().forEach(extWireFrame);
   appFrames().forEach(a11yWireFrame);
+  if (window.orosClip) appFrames().forEach(window.orosClip.wire);   // CLIP-1
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -8302,6 +8307,12 @@
     {
       k: "cr.g.data",
       items: [
+        { name: "Unicode CLDR annotations 49.0.0", url: "https://cldr.unicode.org/",
+          by: "Unicode, Inc.", lic: "Unicode License V3",
+          k: "cr.cldr-emoji" },
+        { name: "unicode-emoji-json 0.9.0", url: "https://github.com/muan/unicode-emoji-json",
+          by: "Mu-An Chiou", lic: "MIT",
+          k: "cr.unicode-emoji-json" },
         { name: "FSRS-6 (ts-fsrs 5.4.2)", url: "https://github.com/open-spaced-repetition/ts-fsrs",
           by: "Open Spaced Repetition", lic: "MIT",
           k: "cr.fsrs-ts" },
@@ -9329,11 +9340,14 @@
     { id: "overview",   key: "e", label: "sc.desc.overview",   fn: function() { ovOpen(); } },
     { id: "quickask",   key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
     { id: "qs",         key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } },
+    { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } },
+    { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } },
     // orOS USB only (oros-usb System extension, PrtSc also takes a shot).
     { id: "usb-shot",    key: "g", label: "sc.desc.usbshot",    usb: true },
     { id: "usb-reader",  key: "j", label: "sc.desc.usbreader",  usb: true },
     { id: "usb-display", key: "d", label: "sc.desc.usbdisplay", usb: true }
   ];
+
 
   // ----- the person's own keys (SC-EDIT, DEF-APPS D2) -----
   // localStorage "oros-shortcuts" = { <id>: "KeyB" | "Digit3" | "" (off) },
@@ -11925,6 +11939,8 @@
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
+      // Clipboard history (cliphist.js, CLIP-1): this device only.
+      clip: window.orosClip ? window.orosClip.snapshot() : null,
       overview: ovSnapshot(),       // OV-1: hot corner, this device only
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
@@ -11980,6 +11996,8 @@
       case "pcfiles":
         if (typeof window.__orosPcFilesSet === "function") window.__orosPcFilesSet(!!value);
         return;
+      case "clip":       if (window.orosClip) window.orosClip.setOn(!!value); return;
+      case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
@@ -12066,6 +12084,8 @@
       case "sync.link.open":    if (arg && typeof arg.code === "string") linkOpen(arg.code.slice(0, 40)); return;
       case "sync.link.session": if (state.linkIn && state.linkIn.phase !== "done") linkInSet({ session: !!(arg && arg.on) }); return;
       case "sync.link.close":   state.linkIn = null; settingsNotify(); return;
+      case "clip.clear":      if (window.orosClip) window.orosClip.clear(); return;   // CLIP-1
+      case "clip.open":       if (window.orosClip) window.orosClip.open(); return;
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -12679,6 +12699,7 @@
     cmdWireFrame(f);
     extWireFrame(f);
     a11yWireFrame(f);
+    if (window.orosClip) window.orosClip.wire(f);   // CLIP-1
     return f;
   }
   function mtDrop(el) {
@@ -15829,6 +15850,57 @@
       media: qsMedia
     });
   }
+  // Clipboard history (cliphist.js, CLIP-1): what is copied inside orOS
+  // apps, opt-in, this device only. A single app gets it too.
+  if (window.orosClip) {
+    window.orosClip.attach({
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      settings: function (section) { if (window.orosSettings) window.orosSettings.open(section); },
+      toast: function (kind, msg) { scToast(kind, msg); }
+    });
+    window.orosClip.onChange(settingsNotify);
+  }
+  // Emoji picker (emoji.js, CLIP-1 W3): Ctrl+Alt+Shift+. and Quick settings.
+  // Not a start-up script (the quality gate's boot budget): this stand-in
+  // answers as window.orosEmoji until the first open, which loads emoji.js
+  // (precached), attaches it and opens it; emoji.js then replaces it.
+  (function () {
+    var emoHost = {
+      lang: function () { return state.lang; },
+      version: function () { return APP_VERSION; },
+      toast: function (kind, msg) { scToast(kind, msg); }
+    };
+    var emoLoading = null;
+    function emoLoad() {
+      var real = window.orosEmoji;
+      if (real && real !== emoStub) return Promise.resolve(real);
+      if (!emoLoading) emoLoading = new Promise(function (res, rej) {
+        var sc = document.createElement("script");
+        sc.src = "emoji.js?v=" + encodeURIComponent(APP_VERSION);
+        sc.onload = function () {
+          var api = window.orosEmoji;
+          if (api && api !== emoStub && api.attach) { api.attach(emoHost); res(api); }
+          else { emoLoading = null; window.orosEmoji = emoStub; rej(new Error("emoji.js")); }
+        };
+        sc.onerror = function () { emoLoading = null; sc.remove(); rej(new Error("emoji.js")); };
+        document.head.appendChild(sc);
+      });
+      return emoLoading;
+    }
+    function emoThen(fn) {
+      emoLoad().then(fn, function () { scToast("error", window.t("emo.fail")); });
+    }
+    var emoStub = {
+      lazy: true,
+      open: function () { emoThen(function (api) { api.open(); }); },
+      toggle: function () { emoThen(function (api) { api.toggle(); }); },
+      close: function () {},
+      isOpen: function () { return false; },
+      refresh: function () {}
+    };
+    if (!window.orosEmoji) window.orosEmoji = emoStub;
+    else window.orosEmoji.attach(emoHost);
+  })();
   // Night Light (nightlight.js, a shell component like qsettings.js):
   // the warm filter over the whole shell. Sunset and sunrise come from
   // the top-bar weather's place (wxLoc). A single app gets it too.

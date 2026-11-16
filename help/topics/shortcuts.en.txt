@@ -22,6 +22,8 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - [[Ctrl+Alt+Shift+E]]: `Overview: search, open apps, recent files`
 - [[Ctrl+Alt+Shift+Q]]: `Ask the Assistant in a small window`
 - [[Ctrl+Alt+Shift+M]]: `Quick settings`
+- [[Ctrl+Alt+Shift+V]]: `Clipboard history`
+- [[Ctrl+Alt+Shift+.]]: `Emoji`
 - [[Ctrl+Alt+Shift+G]]: `Take a screenshot (orOS USB)`
 - [[Ctrl+Alt+Shift+J]]: `Screen reader on / off (orOS USB)`
 - [[Ctrl+Alt+Shift+D]]: `Switch screens: extend, duplicate or one only (orOS USB)`
@@ -42,6 +44,8 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - **New sticky note** puts a new [sticky note](app:stickies) on the desktop, ready for you to type. On a phone, or from inside an app, it opens the note in a window.
 - **Command bar** opens a small bar over the screen where you type a command such as `dentist tomorrow 10` or `buy milk`. Press the shortcut again to close it. See [The menu](help:t/menu#commands).
 - **Switch between open apps** lists the apps that are open with [multitasking](help:a/settings) on: the one in front and the ones waiting in the background. The app you left last is already selected, so the shortcut and then [[Enter]] takes you straight back to it. With multitasking off, it tells you where to turn it on.
+- **Clipboard history** shows what you copied in orOS apps, when you turned it on in Settings. See [Privacy](help:t/privacy).
+- **Emoji** opens the emoji picker: search in English, Greek or German, or pick from a group. The emoji goes into the text field you were last in, in the app on screen, and the picker stays open for more ([[Esc]] closes it); with no such field it is copied. `Emoji` in Quick settings opens it too.
 - **Overview** shows on one screen the search field, your open apps, your recent files and a small System strip (memory, storage, sync). Start typing to search: the text goes to the menu search. See [The menu](help:t/menu#overview).
 - **Help for the open app** opens Help at the page of the app you are using. On the desktop, it opens Help's start page.
 

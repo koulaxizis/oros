@@ -42,7 +42,9 @@ test("Ctrl+Alt+Shift+E opens the overview (SC_DEFS, stable id)", () => {
   const defs = SHELL.slice(SHELL.indexOf("var SC_DEFS = ["), SHELL.indexOf("];", SHELL.indexOf("var SC_DEFS = [")));
   const keys = [...defs.matchAll(/key:\s*"([a-z])"/g)].map((m) => m[1]);
   assert.equal(keys.filter((k) => k === "e").length, 1, "one shortcut per letter");
-  assert.ok(!keys.includes("v"), "V belongs to the clipboard history");
+  // V belongs to the clipboard history (CLIP-1), once, under its own id.
+  assert.equal(keys.filter((k) => k === "v").length, 1, "one shortcut per letter");
+  assert.match(defs, /\{ id: "clip", key: "v",/, "V belongs to the clipboard history");
 });
 
 test("recent files: Files' journal, only real disk paths, newest first, capped", () => {
@@ -95,7 +97,7 @@ test("never while locked, in a single app or on a till; corner off by default, n
   assert.match(SEC, /if \(!ovPref\(OV_CORNER_KEY\) \|\| ov\) return;/);
   // no Super key (Chris 2026-11-16: one Ctrl+Alt+Shift combo for all)
   assert.doesNotMatch(SHELL, /oros-ov-super|ovWireFrame|overview:super/);
-  assert.match(SHELL, /a11yWireFrame\(f\);\s+return f;/);
+  assert.match(SHELL, /a11yWireFrame\(f\);\s+(?:if \(window\.orosClip\) window\.orosClip\.wire\(f\);[^\n]*\s+)?return f;/);
 });
 
 test("recent file names: text only, hidden during sensitive work", () => {
