@@ -12196,3 +12196,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **What:** two buttons from the app-merge audit, both "only a button" (Chris 2026-11-13; the apps stay separate). Prompter's card has "On the typewriter" after Use: `__orosOpenAt("typewriter", { newPage: { text } })` opens a fresh, unsaved Typewriter sheet whose first line is the prompt (stored once something is typed). Publishing has "Is it public domain?" on a title, which opens the Public Domain Calculator with that title.
 - **Files:** prompter/, typewriter/, publish/, help EN/EL/DE, i18n, Bible bridge notes, tests/pubdomain-link.test.js, shell.js (APP_VERSION).
 - **Tests:** full `node --test tests/*.test.js`.
+
+### 2026-11-16 — 7.25.00 — Documents in Files, wave 5: the Assistant and orOS Gate see documents (DOCS-1, #1069)
+
+- **What:** Chris's card 3 (2026-11-15, «Στοιχεία + απόσπασμα»): every document that is not private is a universal-search hit (`OrosDocsDue.searchHits`): its details and the first 300 characters of its text, cut before any caller sees it. The Assistant and Gate both search through `orosAssistSearch`, so they see the same; Gate's closed copy gets them through the all-items mode. Private documents (medical, ID, own `pv` types, linked to Health, Cycle, Baby) are left out and their text is never read for search. Last wave of DOCS-1.
+- **Files:** files/docs-due.js 1.1.0, files/search.js 1.1.0, gate/gate.js (`DOCS_NOTE` in list_apps), assistant/core.js (search_data description), shell.js (APP_VERSION), sw.js (version), help EN/EL/DE, i18n, Bible (Parts II, IX).
+- **Tests:** tests/files-docs-ai.test.js; full `node --test tests/*.test.js`.
