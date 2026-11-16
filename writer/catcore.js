@@ -509,7 +509,7 @@
   }
   // meta files (name, translated document) → one meta: newer wins per field
   function mergeMeta(list) {
-    var out = { name: "", nm: 0, out: "", om: 0, tm: "", tmm: 0, gl: "", glm: 0 };
+    var out = { name: "", nm: 0, out: "", om: 0, tm: "", tmm: 0, gl: "", glm: 0, pub: "", pm: 0, due: "", dm: 0, goal: 0, gm: 0 };
     (list || []).forEach(function (m) {
       if (!m || typeof m !== "object") return;
       if (typeof m.name === "string" && Number(m.nm) > 0 && (m.nm > out.nm || (m.nm === out.nm && m.name > out.name))) { out.name = m.name.slice(0, 200); out.nm = m.nm; }
@@ -518,8 +518,35 @@
       if (typeof m.tm === "string" && Number(m.tmm) > 0 && (m.tmm > out.tmm || (m.tmm === out.tmm && m.tm > out.tm))) { out.tm = m.tm.slice(0, 40); out.tmm = m.tmm; }
       // T3: the glossary new terms go into
       if (typeof m.gl === "string" && Number(m.glm) > 0 && (m.glm > out.glm || (m.glm === out.glm && m.gl > out.gl))) { out.gl = m.gl.slice(0, 40); out.glm = m.glm; }
+      // the Publishing title (proposal 1), the deadline and words a day (proposal 2)
+      if (typeof m.pub === "string" && Number(m.pm) > 0 && (m.pm > out.pm || (m.pm === out.pm && m.pub > out.pub))) { out.pub = m.pub.slice(0, 80); out.pm = m.pm; }
+      if (typeof m.due === "string" && (m.due === "" || YMD_RX.test(m.due)) && Number(m.dm) > 0 && (m.dm > out.dm || (m.dm === out.dm && m.due > out.due))) { out.due = m.due; out.dm = m.dm; }
+      var g = Math.floor(Number(m.goal));
+      if (g >= 0 && g <= 100000 && Number(m.gm) > 0 && (m.gm > out.gm || (m.gm === out.gm && g > out.goal))) { out.goal = g; out.gm = m.gm; }
     });
     return out;
+  }
+
+  // ---------- 7b. Deadline and words a day (proposal 2) ----------
+  var YMD_RX = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+  function ymdOf(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function dayNo(ymd) { var p = ymd.split("-"); return Math.round(Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000); }
+  // → null (no deadline) | { due, days (left, today counts), left (words),
+  //   perDay (the goal, else what is needed), today (words confirmed
+  //   today, on any device), late (days past the deadline), done }
+  function goalInfo(src, rows, meta, now) {
+    meta = meta || {};
+    if (!meta.due || !YMD_RX.test(meta.due)) return null;
+    var d = new Date(now), today = ymdOf(d), start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    var st = stats(src, rows), left = st.words - st.doneWords, todayW = 0;
+    src.segs.forEach(function (sg, i) {
+      var r = rows && rows[i];
+      if (r && r[1] >= ST_DONE && r[2] >= start) todayW += sg.w;
+    });
+    var diff = dayNo(meta.due) - dayNo(today), days = diff >= 0 ? diff + 1 : 0;
+    var need = days ? Math.ceil((left + todayW) / days) : left;
+    return { due: meta.due, days: days, left: left, perDay: meta.goal > 0 ? meta.goal : need, need: need,
+      today: todayW, late: diff < 0 && left > 0 ? -diff : 0, done: left <= 0 };
   }
 
   // ---------- 8. Building the translated document ----------
@@ -654,7 +681,7 @@
     checkTags: checkTags, mergeRows: mergeRows, readRowsFile: readRowsFile, rowsFile: rowsFile, chunkOf: chunkOf,
     rowsName: rowsName, metaName: metaName, mergeMeta: mergeMeta, stats: stats, chapters: chapters,
     plainText: plainText, repeats: repeats, readSrc: readSrc, readProject: readProject, newId: newId, cleanRow: cleanRow,
-    sentences: sentences, cutRun: cutRun, segText: segText, countWords: Core.countWords, WORD_RX: WORD_RX, TAG_RX: TAG_RX
+    sentences: sentences, goalInfo: goalInfo, ymdOf: ymdOf, YMD_RX: YMD_RX, cutRun: cutRun, segText: segText, countWords: Core.countWords, WORD_RX: WORD_RX, TAG_RX: TAG_RX
   };
   if (node) module.exports = api;
   else root.WriterCatCore = api;

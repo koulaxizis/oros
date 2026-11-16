@@ -23,6 +23,8 @@
       empty: "This page opens things people send with orOS. The link you opened has nothing in it, or it was cut short.",
       emptyFile: "Got it as a file? Open it here.",
       bad: "This link is damaged or incomplete. Ask for it again, or for the file.",
+      cutLink: "This link reached you cut short: part of it went missing on the way. Ask the sender to send it again (the short link, a QR code or the file travel whole).",
+      cutLinkInfo: "For the sender: {n} characters arrived, ending in “{e}”.",
       big: "This is too big to open.",
       crypto: "This browser cannot open locked links.",
       lockedMsg: "This is locked with a password.", pass: "Password", unlock: "Open", wrong: "Wrong password.",
@@ -69,6 +71,8 @@
       empty: "Εδώ ανοίγουν όσα στέλνει κανείς με το orOS. Ο σύνδεσμος που άνοιξες δεν έχει τίποτα μέσα ή κόπηκε.",
       emptyFile: "Το έλαβες ως αρχείο; Άνοιξέ το εδώ.",
       bad: "Ο σύνδεσμος είναι χαλασμένος ή κομμένος. Ζήτα τον ξανά ή ζήτα το αρχείο.",
+      cutLink: "Ο σύνδεσμος έφτασε κομμένος: ένα κομμάτι του χάθηκε στη διαδρομή. Ζήτα από αυτόν που τον έστειλε να τον ξαναστείλει (ο σύντομος σύνδεσμος, ένας κωδικός QR ή το αρχείο φτάνουν ολόκληρα).",
+      cutLinkInfo: "Για αυτόν που τον έστειλε: έφτασαν {n} χαρακτήρες, με τέλος «{e}».",
       big: "Είναι πολύ μεγάλο για να ανοίξει.",
       crypto: "Αυτός ο browser δεν ανοίγει κλειδωμένους συνδέσμους.",
       lockedMsg: "Είναι κλειδωμένο με κωδικό.", pass: "Κωδικός", unlock: "Άνοιγμα", wrong: "Λάθος κωδικός.",
@@ -845,6 +849,14 @@
     K.decode(code, password).then(function (r) {
       if (r.env) { render(r.env); return; }
       if (r.error === "pass") { askPass(code, !!password); return; }
+      if (r.error === "cut") {
+        // How much arrived and how it ends, so the sender can compare it
+        // with the link they sent (nothing of the item can be read from it).
+        var c = stateMsg("cutLink", true);
+        c.appendChild(el("p", "hint", t("cutLinkInfo").replace("{n}", String(code.length)).replace("{e}", "…" + code.slice(-6))));
+        fileOffer(c);
+        return;
+      }
       stateMsg(r.error === "big" ? "big" : (r.error === "crypto" ? "crypto" : "bad"), true);
       if (r.error === "bad") fileOffer($("card"));
     });

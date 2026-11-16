@@ -909,3 +909,5 @@ dialog input[type="email"], dialog input[type="number"], dialog input[type="date
 #book-own input, #book-dlg select { width: 100%; }
 #tr-text { width: 100%; box-sizing: border-box; min-height: 12em; font: inherit; font-size: 14px; line-height: 1.45; resize: vertical; }
 #tr-status { overflow-wrap: anywhere; }
+.row-desc.ok { color: #2ec27e; } .row-desc.bad { color: var(--danger); }
+.ld-checks .link-btn { margin-left: auto; flex: none; }

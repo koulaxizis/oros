@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 46043 of 46539 (98%)
+- Strings: 46341 of 46850 (98%)
 - Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
@@ -19,7 +19,7 @@ text is still written in the code. They switch over wave by wave
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
-| base | 99% | 321 / 322 |
+| base | 99% | 368 / 369 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
@@ -35,7 +35,7 @@ text is still written in the code. They switch over wave by wave
 | checkers | 100% | 73 / 73 |
 | chess | 100% | 406 / 406 |
 | chores | 100% | 207 / 207 |
-| commands | English for now | 81 / 81 |
+| commands | English for now | 82 / 82 |
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 341 / 341 |
 | converter | 100% | 68 / 68 |
@@ -43,8 +43,8 @@ text is still written in the code. They switch over wave by wave
 | crossword | 100% | 171 / 171 |
 | crypt | 100% | 291 / 291 |
 | cycle | 100% | 203 / 203 |
-| designkit | 100% | 213 / 213 |
-| device | 100% | 122 / 122 |
+| designkit | 100% | 214 / 214 |
+| device | 100% | 153 / 153 |
 | diary | 100% | 236 / 236 |
 | dice | 100% | 57 / 57 |
 | discover | English for now | 3 / 3 |
@@ -54,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 98% | 770 / 785 |
+| files | 96% | 770 / 796 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -111,9 +111,9 @@ text is still written in the code. They switch over wave by wave
 | plants | 100% | 236 / 236 |
 | podcasts | 100% | 348 / 348 |
 | pong | 100% | 65 / 65 |
-| prompter | 100% | 332 / 332 |
+| prompter | 100% | 334 / 334 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 96% | 693 / 717 |
+| publish | 96% | 698 / 722 |
 | qr | 100% | 248 / 248 |
 | quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |
@@ -127,10 +127,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 545 / 545 |
 | scores | 100% | 147 / 147 |
-| settings | 99% | 1610 / 1625 |
+| settings | 99% | 1661 / 1676 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1238 / 1243 |
+| shell | 99% | 1341 / 1346 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 375 / 375 |
@@ -142,11 +142,11 @@ text is still written in the code. They switch over wave by wave
 | split | 100% | 356 / 356 |
 | spot | 100% | 55 / 55 |
 | spreadsheet | 82% | 409 / 495 |
-| startpage | English for now | 0 / 14 |
+| startpage | English for now | 0 / 16 |
 | stickies | 100% | 124 / 124 |
 | stock | 99% | 808 / 813 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 894 / 894 |
+| studio | 100% | 926 / 926 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 60 / 60 |
@@ -172,7 +172,7 @@ text is still written in the code. They switch over wave by wave
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
-| writer | 100% | 541 / 541 |
+| writer | 100% | 566 / 566 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
 

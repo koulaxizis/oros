@@ -921,8 +921,18 @@
     } catch (e) { return id; }
   }
   // Only what the preview cannot show well opens in an app on a double
-  // click / tap: text, pictures and zips keep the preview.
+  // click / tap: text, pictures and zips keep the preview, unless the
+  // person picked a default app for that type (Settings › Default apps,
+  // DEF-APPS D1): then it opens there too.
+  function chosenApp(name) {
+    var o = fileOpenApi(), m = /\.([a-z0-9]{1,24})$/i.exec(String(name || ""));
+    if (!o || !m || typeof o.choice !== "function") return "";
+    var c = "";
+    try { c = o.choice("." + m[1].toLowerCase()) || ""; } catch (e) { c = ""; }
+    return c && c !== "ask" && appsForFile(name).indexOf(c) !== -1 ? c : "";
+  }
   function opensInApp(name) {
+    if (appsForFile(name).length && chosenApp(name)) return true;
     return !isTextExt(name) && !isImageExt(name) && CORE.extOf(name) !== "zip" && appsForFile(name).length > 0;
   }
   function openInApp(path, ask) {

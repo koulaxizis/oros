@@ -619,7 +619,32 @@ const STRINGS = {
     'cat.xlfAsk': 'Replace {n} translations you already have with the ones in the file?',
     'cat.xlfReplace': 'Replace',
     'cat.noOrig': 'The original Word file of this project is missing.',
-    'cat.origChanged': 'The original Word file is not the one this project was made from.'
+    'cat.origChanged': 'The original Word file is not the one this project was made from.',
+    'cat.pub': 'Publishing title…',
+    'cat.pubTitle': 'Title in Publishing',
+    'cat.pubNo': 'None',
+    'cat.pubGone': 'A title this device does not have',
+    'cat.pubNone': 'No titles in Publishing yet. Make one there first.',
+    'cat.pubWho': 'Translator',
+    'cat.pubWhoPh': 'Name, to add to the title\'s people',
+    'cat.pubHint': 'The title shows this translation\'s progress in its release plan. With a name, Publishing opens to add the translator to the title.',
+    'cat.pubLinked': 'Linked to the title',
+    'cat.pubOpen': 'Open in Publishing',
+    'cat.due': 'Deadline and goal…',
+    'cat.dueDate': 'Deadline',
+    'cat.dueGoal': 'Words a day',
+    'cat.dueNeed': 'To finish on time: {w} words a day for {n} days. Leave the box empty to follow that.',
+    'cat.dueHint': 'Choose the day the translation is due.',
+    'cat.dueCal': 'Deadline in Calendar',
+    'cat.dueDaily': 'Daily reminder in Calendar',
+    'cat.dueFirst': 'Choose the deadline first',
+    'cat.duePast': 'The deadline has passed',
+    'cat.calDue': 'Translation due: {name}',
+    'cat.calDaily': 'Translate {w} words: {name}',
+    'cat.calNote': 'Book translation in Writer, due {d}.',
+    'cat.goalOn': 'Due {d} · {n} days · {w} words a day · today {t}',
+    'cat.goalLate': '{n} days past the deadline ({d}) · {w} words left',
+    'cat.goalDone': 'All translated · deadline {d}'
   },
   el: {
     'app.name': 'Writer',
@@ -1140,7 +1165,32 @@ const STRINGS = {
     'cat.xlfAsk': 'Να μπουν οι μεταφράσεις του αρχείου στη θέση {n} μεταφράσεων που έχεις ήδη;',
     'cat.xlfReplace': 'Αντικατάσταση',
     'cat.noOrig': 'Λείπει το αρχικό αρχείο Word αυτού του έργου.',
-    'cat.origChanged': 'Το αρχικό αρχείο Word δεν είναι αυτό από το οποίο φτιάχτηκε το έργο.'
+    'cat.origChanged': 'Το αρχικό αρχείο Word δεν είναι αυτό από το οποίο φτιάχτηκε το έργο.',
+    'cat.pub': 'Τίτλος στις Εκδόσεις…',
+    'cat.pubTitle': 'Τίτλος στις Εκδόσεις',
+    'cat.pubNo': 'Κανένας',
+    'cat.pubGone': 'Τίτλος που δεν έχει αυτή η συσκευή',
+    'cat.pubNone': 'Δεν υπάρχουν ακόμα τίτλοι στις Εκδόσεις. Φτιάξε πρώτα έναν εκεί.',
+    'cat.pubWho': 'Μεταφραστής',
+    'cat.pubWhoPh': 'Όνομα, για να μπει στα πρόσωπα του τίτλου',
+    'cat.pubHint': 'Ο τίτλος δείχνει την πρόοδο αυτής της μετάφρασης στην πορεία έκδοσης. Με όνομα, ανοίγουν οι Εκδόσεις για να μπει ο μεταφραστής στον τίτλο.',
+    'cat.pubLinked': 'Συνδέθηκε με τον τίτλο',
+    'cat.pubOpen': 'Άνοιγμα στις Εκδόσεις',
+    'cat.due': 'Προθεσμία και στόχος…',
+    'cat.dueDate': 'Προθεσμία',
+    'cat.dueGoal': 'Λέξεις τη μέρα',
+    'cat.dueNeed': 'Για να τελειώσεις στην ώρα σου: {w} λέξεις τη μέρα για {n} μέρες. Άφησε το πεδίο κενό για να ακολουθεί αυτό.',
+    'cat.dueHint': 'Διάλεξε την ημέρα που πρέπει να είναι έτοιμη η μετάφραση.',
+    'cat.dueCal': 'Προθεσμία στο Ημερολόγιο',
+    'cat.dueDaily': 'Καθημερινή υπενθύμιση στο Ημερολόγιο',
+    'cat.dueFirst': 'Διάλεξε πρώτα την προθεσμία',
+    'cat.duePast': 'Η προθεσμία έχει περάσει',
+    'cat.calDue': 'Παράδοση μετάφρασης: {name}',
+    'cat.calDaily': 'Μετάφραση {w} λέξεων: {name}',
+    'cat.calNote': 'Μετάφραση βιβλίου στον Writer, παράδοση {d}.',
+    'cat.goalOn': 'Παράδοση {d} · {n} μέρες · {w} λέξεις τη μέρα · σήμερα {t}',
+    'cat.goalLate': '{n} μέρες μετά την προθεσμία ({d}) · απομένουν {w} λέξεις',
+    'cat.goalDone': 'Όλα μεταφρασμένα · προθεσμία {d}'
   }
 };
 
@@ -2780,6 +2830,18 @@ window.WriterCatHost = {
   // T4: the Word package of a project, unzipped, zipped, read as a document
   readZip: buf => WriterIO.readZip(buf),
   zip: files => window.OrosBundle._zip(files.map(f => ({ name: f.name, data: f.data, deflate: true }))),
+  // proposals 1-2: Publishing's titles (read only), a Publishing or Calendar form filled in
+  openAt: (app, target) => { try { window.parent.__orosOpenAt(app, target); return true; } catch (e) { return false; } },
+  calendarNew: p => { try { window.parent.__orosOpenCalendarNew(p); return true; } catch (e) { return false; } },
+  publishTitles: () => {
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem('oros-publish-data') || 'null'); } catch (e) { d = null; }
+    const tombs = d && d.tombs && typeof d.tombs === 'object' ? d.tombs : {};
+    return (d && Array.isArray(d.titles) ? d.titles : [])
+      .filter(x => x && typeof x.id === 'string' && typeof x.t === 'string' && x.t.trim() && !(Number(tombs[x.id]) >= Number(x.m || 0)))
+      .map(x => ({ id: x.id.slice(0, 80), t: x.t.replace(/\s+/g, ' ').trim().slice(0, 200), lang: typeof x.lang === 'string' ? x.lang.slice(0, 40) : '' }))
+      .sort((a, b) => a.t.localeCompare(b.t));
+  },
   parseDocx: buf => WriterIO.parseZipBuf(buf instanceof Uint8Array ? buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) : buf, 'docx').then(p => {
     const prep = WriterIO.prepareImport(p);
     return { title: p.title || '', html: prep.html, footnotes: prep.footnotes, header: p.header || '', footer: p.footer || '' };
