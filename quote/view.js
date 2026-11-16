@@ -75,6 +75,7 @@
       "status.rejected":      "Rejected",
       "status.expired":       "Expired",
       "client.new":            "New client",
+      "client.fromBilling":    "From Billing's clients",
       "client.edit_btn":       "Edit client",
       "client.select":         "Select client",
       "client.none":          "No client",
@@ -126,6 +127,8 @@
       "actions.save_template":"Save as Template",
       "actions.duplicate":    "Duplicate",
       "actions.invoice":      "Make invoice",
+      "invoiced.label":       "Invoiced: {n}",
+      "invoiced.draft":       "draft",
       "invoice.note":         "From quote {n}",
       "actions.delete":       "Delete",
       "actions.export_pdf":   "Export PDF",
@@ -231,6 +234,7 @@
       "status.rejected":      "Απορρίφθηκε",
       "status.expired":       "Έληξε",
       "client.new":            "Νέος πελάτης",
+      "client.fromBilling":    "Από τους πελάτες των τιμολογίων",
       "client.edit_btn":       "Επεξεργασία πελάτη",
       "client.select":         "Επιλογή πελάτη",
       "client.none":          "Χωρίς πελάτη",
@@ -282,6 +286,8 @@
       "actions.save_template":"Αποθήκευση ως Πρότυπο",
       "actions.duplicate":    "Αντιγραφή",
       "actions.invoice":      "Έκδοση τιμολογίου",
+      "invoiced.label":       "Τιμολογήθηκε: {n}",
+      "invoiced.draft":       "πρόχειρο",
       "invoice.note":         "Από την προσφορά {n}",
       "actions.delete":       "Διαγραφή",
       "actions.export_pdf":   "Εξαγωγή PDF",
@@ -777,13 +783,42 @@
       return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
     } catch (e) { return null; }
   }
+  // Billing (app merge 7, K2): the host's own hook opens the new
+  // invoice on the same screen (Billing's Invoices tab).
+  function newInvoiceHook() { return typeof opts.newInvoice === "function" ? opts.newInvoice : null; }
   function syncInvoiceBtn() {
     var b = $("invoice-quote");
-    if (b) b.hidden = !(cur && cur.status === "accepted" && invoicesOpener());
+    if (b) b.hidden = !(cur && cur.status === "accepted" && (newInvoiceHook() || invoicesOpener()));
+    syncInvoiced(b);
+  }
+  // K2: the invoices Billing made from this quote (their src
+  // "quote:<id>"), worked out each time from Billing's slice, never
+  // stored here; each opens in the Invoices tab.
+  function syncInvoiced(b) {
+    var box = $("invoiced");
+    if (!box && b && b.parentNode) {
+      box = document.createElement("span");
+      box.id = "qv-invoiced";
+      box.className = "q-invoiced";
+      b.parentNode.insertBefore(box, b);
+    }
+    if (!box) return;
+    box.textContent = "";
+    var list = [];
+    try { list = cur && typeof opts.invoicesFor === "function" ? opts.invoicesFor(cur.id) || [] : []; } catch (e) { list = []; }
+    box.hidden = !list.length;
+    list.slice(0, 5).forEach(function (x) {
+      var a = document.createElement("button");
+      a.type = "button";
+      a.className = "linkish";
+      a.textContent = t("invoiced.label").replace("{n}", x.num || t("invoiced.draft"));
+      a.addEventListener("click", function () { if (typeof opts.openInvoice === "function") opts.openInvoice(x.id); });
+      box.appendChild(a);
+    });
   }
   function sendToInvoices() {
-    var p = invoicesOpener();
-    if (!p || !cur) return;
+    var hook = newInvoiceHook(), p = hook ? null : invoicesOpener();
+    if ((!hook && !p) || !cur) return;
     var c = cur.clientId ? clientById(cur.clientId) : null;
     var items = (cur.items || []).filter(function (it) {
       return (it.desc || "").trim() && (it.qty || 0) > 0;
@@ -804,6 +839,7 @@
       if (c.email) payload.email = c.email;
       if (c.phone) payload.phone = c.phone;
     }
+    if (hook) { writeShelterNow(); hook(payload); return; }
     p.__orosOpenAt("invoices", { "new": payload });
   }
 
@@ -1181,6 +1217,35 @@
       pop.appendChild(item);
     });
 
+    // Billing (app merge 7, K2): the two client lists stay apart; the
+    // picker also offers Billing's clients this list lacks, and picking
+    // one opens New client filled in (nothing is saved until Save).
+    var others = otherClients();
+    if (others.length) {
+      var oh = document.createElement("div");
+      oh.className = "dropdown-head";
+      oh.textContent = t("client.fromBilling");
+      pop.appendChild(oh);
+      others.forEach(function (o) {
+        var item = document.createElement("button");
+        item.type = "button";
+        item.className = "dropdown-item other";
+        var nm = document.createElement("span");
+        nm.className = "dropdown-name";
+        nm.textContent = o.name;
+        item.appendChild(nm);
+        var meta = document.createElement("span");
+        meta.className = "dropdown-meta";
+        meta.textContent = o.taxId || o.email || o.phone || "";
+        item.appendChild(meta);
+        item.addEventListener("click", function () {
+          closeClientDropdown();
+          openClientDialog(null, o);
+        });
+        pop.appendChild(item);
+      });
+    }
+
     var sep = document.createElement("hr");
     sep.className = "dropdown-sep";
     pop.appendChild(sep);
@@ -1204,6 +1269,24 @@
     }, 0);
   }
 
+  function foldName(x) {
+    return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+  function otherClients() {
+    var list = [];
+    try { list = typeof opts.otherClients === "function" ? opts.otherClients() || [] : []; } catch (e) { list = []; }
+    var tax = {}, names = {};
+    state.clients.forEach(function (c) {
+      if (c.taxId) tax[String(c.taxId).replace(/\s+/g, "").toUpperCase()] = true;
+      names[foldName(c.name)] = true;
+    });
+    return list.filter(function (o) {
+      if (!o || typeof o.name !== "string" || !o.name.trim()) return false;
+      var tx = String(o.taxId || "").replace(/\s+/g, "").toUpperCase();
+      return !(tx && tax[tx]) && !names[foldName(o.name)];
+    }).slice(0, 200);
+  }
+
   function closeClientDropdown() {
     var pop = $("client-dropdown");
     if (pop) pop.hidden = true;
@@ -1216,16 +1299,18 @@
     if (host && !host.contains(e.target)) closeClientDropdown();
   }
 
-  function openClientDialog(clientId) {
-    var c = clientId ? clientById(clientId) : null;
+  function openClientDialog(clientId, fill) {
+    var c = clientId ? clientById(clientId) : (fill ? { name: String(fill.name || "").slice(0, 200),
+      email: String(fill.email || "").slice(0, 200), phone: String(fill.phone || "").slice(0, 60),
+      address: String(fill.address || "").slice(0, 500), taxId: String(fill.taxId || "").slice(0, 40) } : null);
     editingClientId = clientId;
     $("c-name").value = c ? c.name : "";
     $("c-email").value = c ? c.email : "";
     $("c-phone").value = c ? c.phone : "";
     $("c-address").value = c ? c.address : "";
     $("c-taxid").value = c ? c.taxId : "";
-    $("client-delete").hidden = !c;
-    clientSnapshot = c ? clientFingerprint(c) : null;
+    $("client-delete").hidden = !clientId;
+    clientSnapshot = clientId && c ? clientFingerprint(c) : null;
     $("dlg-client").showModal();
     setTimeout(function () { $("c-name").focus(); }, 50);
   }
@@ -3129,6 +3214,7 @@
     if (root) {
       if (root.parentNode !== host) host.appendChild(root);
       scheduleRender();
+      syncInvoiceBtn();      // K2: an invoice made meanwhile shows its link
       return;
     }
     root = document.createElement("div");
