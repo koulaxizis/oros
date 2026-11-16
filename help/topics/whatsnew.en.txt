@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.18.00
+- **Clipboard history and emoji.** Clipboard history (Settings › System, off until you turn it on): orOS keeps the text you copy inside its apps on this device; Ctrl+Alt+Shift+V or Clipboard in Quick settings brings it back, with pins, search and Paste into the field you were in. Never Passwords, nothing in Sensitive work. New emoji picker: Ctrl+Alt+Shift+. or Emoji in Quick settings, search in English, Greek or German. See [Privacy](help:t/privacy).
+
 ## Version 7.17.01
 - **VPN extension on the Start page.** The Internet window's Start page now links a guide to adding a VPN browser extension with your own account. With the next releases of orOS Portable and orOS USB, the Internet window can install extensions from the Chrome Web Store, and extensions you add can no longer read orOS's own pages (on Portable, on Windows).
 

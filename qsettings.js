@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — qsettings.js (Quick settings, GNOME style, v1.0.0)
+// orOS — qsettings.js (Quick settings, GNOME style, v1.1.0)
 // ------------------------------------------------------------
 // A shell component, like osk.js and quickmenu.js: it runs IN the
 // shell document. shell.js calls attach() once at boot (also in a
@@ -24,7 +24,10 @@
 //                 now / off until the next evening, › = Settings),
 //                 Do Not Disturb (› = for one hour, until
 //                 tomorrow morning, until I turn it off), Large text,
-//                 High contrast, On-screen keyboard (not on phones);
+//                 High contrast, On-screen keyboard (not on phones),
+//                 Clipboard (1.1.0, only while the clipboard history
+//                 of cliphist.js is on: opens its panel), Emoji (1.1.0,
+//                 emoji.js: the emoji picker);
 //       playing   one row per sound that plays in the shell (Music,
 //                 Podcasts, Radio, Sound Mixer) with Play / Pause.
 //     Every switch goes through the shell's own setter (theme,
@@ -209,6 +212,8 @@
   var SV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
   var IC = {
     gate: SV + '<path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/></svg>',
+    emoji: SV + '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>',
+    clip: SV + '<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg>',
     net: SV + '<path d="M2 8.5a15 15 0 0 1 20 0"/><path d="M5 12a10.5 10.5 0 0 1 14 0"/><path d="M8.5 15.5a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg>',
     netOff: SV + '<path d="M2 8.5a15 15 0 0 1 20 0" opacity=".35"/><path d="M5 12a10.5 10.5 0 0 1 14 0" opacity=".35"/><path d="M8.5 15.5a5.5 5.5 0 0 1 7 0" opacity=".35"/><path d="M3 3l18 18"/></svg>',
     power: SV + '<path d="M12 3v9"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg>',
@@ -451,7 +456,12 @@
       call(function () { root.orosGate.setPause(g.hold ? 0 : 60); });
       paint();
     }, function () { setSub(sub === "gate" ? "" : "gate"); }, t("qs.gate.more"));
-    [parts.net, parts.sync, parts.dark, parts.night, parts.dnd, parts.gate, parts.big, parts.contrast, parts.osk].forEach(function (p) { grid.appendChild(p.box); });
+    // Clipboard history (cliphist.js): shown only while it is on; one
+    // press opens its panel.
+    parts.clip = pill(IC.clip, then(function () { call(function () { root.orosClip.open(); }); }), null);
+    // Emoji picker (emoji.js): writes into the field you were in.
+    parts.emoji = pill(IC.emoji, then(function () { call(function () { root.orosEmoji.open(); }); }), null);
+    [parts.net, parts.sync, parts.dark, parts.night, parts.dnd, parts.gate, parts.big, parts.contrast, parts.osk, parts.clip, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
     panel.appendChild(grid);
 
     parts.dndMenu = el("div", "qs-menu");
@@ -580,6 +590,17 @@
     var oskOk = !!(O && call(function () { return O.snapshot && O.snapshot(); }));
     parts.osk.box.hidden = !oskOk;
     if (oskOk) setPill(parts.osk, t("qs.osk"), "", O.isOpen(), true);
+
+    var C = root.orosClip;
+    var clipOn = !!(C && call(function () { return C.isOn(); }));
+    parts.clip.box.hidden = !clipOn;
+    if (clipOn) {
+      var cn = call(function () { return C.snapshot().n; }) || 0;
+      setPill(parts.clip, t("qs.clip"), t("qs.clip.n").replace("{n}", String(cn)), false, false);
+    }
+
+    parts.emoji.box.hidden = !root.orosEmoji;
+    if (root.orosEmoji) setPill(parts.emoji, t("qs.emoji"), "", false, false);
 
     paintMedia();
   }
