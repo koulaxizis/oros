@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Invoices — Today provider (v1.2.0)
+// orOS Billing (Invoices) — Today provider (v1.3.0)
 // Loaded by the shell (today/host.js) through apps.json "today"
 // (after invoices/core.js). Read-only: reads oros-invoices-data,
 // never writes. Which documents are due is invoices/core.js
@@ -10,6 +10,11 @@
 // whose recurring draft is ready give one line each. Opens the
 // document (generic deep link { invoice }) or Invoices itself.
 // 1.2.0 (BR-TODAY-15): a tip on a document past its due day.
+// 1.3.0 (app merge 7): the quotes are Billing's Quotes tab, so the
+// rows the Quote app gave (quote/today.js: sent or accepted quotes
+// whose due day passed or comes within the summary's days, from
+// quote/core.js dueQuotes, which the shell page loads) come from here,
+// read-only from oros-quote-data, and open { tab: "quotes", quote }.
 // ============================================================
 (function (root) {
   "use strict";
@@ -29,14 +34,32 @@
     } catch (e) { return (cents / 100).toFixed(2) + " " + cur; }
   }
 
+  // The Quotes tab's rows (was quote/today.js).
+  function quoteRows(ctx) {
+    var Q = root.OrosQuoteCore, raw = null;
+    try { raw = JSON.parse(ctx.readRaw("oros-quote-data")); } catch (e) { raw = null; }
+    if (!Q || !raw) return [];
+    return Q.dueQuotes(raw, ctx.addDays(ctx.today, ctx.horizon)).map(function (q) {
+      var who = Q.clientName(raw, q);
+      return {
+        id: "q-" + q.id,
+        due: q.dueDate,
+        title: (typeof q.num === "string" && q.num ? q.num : q.id) + (who ? " · " + who : ""),
+        kind: "task",
+        target: { tab: "quotes", quote: q.id }
+      };
+    });
+  }
+
   var PROVIDER = {
     id: "invoices",
-    keys: ["oros-invoices-data"],
+    keys: ["oros-invoices-data", "oros-quote-data"],
     collect: function (ctx) {
       var C = root.OrosInvoicesCore;
       if (!C) return [];
       var data = C.parse(ctx.readRaw(C.STORAGE_KEY));
-      if (!data) return [];
+      var quotes = quoteRows(ctx);
+      if (!data) return quotes;
       var I = i18n();
       if (I && ctx.lang && !W[ctx.lang]) I.table(W, "invoices", ctx.lang);
       var w = W[ctx.lang] || W.en, out = [];
@@ -68,7 +91,7 @@
         out.push({ id: "rec-" + x.tpl.id, due: null, kind: "task",
                    title: w.rec.replace("{n}", x.tpl.name), target: { recurring: 1 } });
       });
-      return out;
+      return out.concat(quotes);
     }
   };
 
