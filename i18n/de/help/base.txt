@@ -30,6 +30,7 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 - Im Raster tippst du auf eine Zelle, um sie auszuwählen, und noch einmal (oder Enter), um sie zu bearbeiten. Pfeiltasten und Tab bewegen, Entf leert eine Zelle, Esc bricht ab.
 - Füge einen Block aus einer Tabellenkalkulation in die ausgewählte Zelle ein: Er füllt die Zellen rechts und darunter und legt Einträge an, wenn mehr Zeilen nötig sind.
 - Der Knopf am Anfang einer Zeile, oder Umschalt+Enter, öffnet den ganzen Eintrag. Dort kannst du ihn auch duplizieren oder löschen.
+- Unter seinen Feldern hat ein Eintrag `Kommentare`: Schreib eine Notiz und tippe auf `Kommentar hinzufügen` (oder Strg+Enter). Kommentare werden mit deinen anderen Geräten synchronisiert; das × löscht einen, mit Rückgängig.
 
 ## Ansichten
 - Jede Tabelle beginnt mit einer Rasteransicht und einer Kartenansicht. Weitere legst du in der Ansichtsliste an (`Neue Ansicht…`), jede mit eigenen Filtern, Sortierung, Gruppen und Feldern.
@@ -62,3 +63,9 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 
 ## Von überall finden
 - Das Suchfeld im Menü findet deine Datenbanken und Einträge. Wählst du einen Eintrag, öffnet er sich in seiner Tabelle.
+
+## Formulare und Kalender
+- Tabellenmenü (`⋯`) › Öffentliches Formular öffnet [Formulare](app:forms) mit einer Frage für jedes Feld, das ein Formular fragen kann. In Formulare schreibt `An Base senden` jede Antwort als Eintrag dieser Tabelle. Eine erneut gesendete Antwort, oder eine, deren Eintrag du hier gelöscht hast, kommt nie zweimal dazu; eine unter „Andere“ getippte Auswahl wird eine neue Auswahl. Die Datenbank sagt dir dann, wie viele Einträge hinzukamen und welche Antworten nicht passten.
+- Ein Datumsfeld kann seine Einträge im [Kalender](app:calendar) zeigen: bearbeite das Feld und hake `Im Kalender zeigen` an (anfangs aus). Sie erscheinen unter dem Label Datenbank; tippst du einen an, öffnet sich der Eintrag hier.
+- Der [Assistent](app:assistant) und Claude über orOS Gate können deine Datenbanken lesen (Tabellen, Felder, die Einträge einer Tabelle) und Einträge hinzufügen, sobald du ihnen die Datenbank erlaubst. Du siehst die Einträge, bevor sie hinzukommen, und kannst sie rückgängig machen. Sie füllen Felder über ihre Namen; Felder, die die Datenbank berechnet, Verknüpfungen und Anhänge füllst du selbst.
+- [Automationen](app:automations) können der Datenbank folgen: `Wenn in der Datenbank ein Eintrag hinzukommt` und `Wenn sich in der Datenbank ein Feld ändert`, mit einem Wort wie dem Namen einer Tabelle oder `Status: Erledigt` (ein angehaktes Kästchen heißt `Bezahlt: true`). Es zählen nur deine eigenen Änderungen hier (auch Antworten, die du aus Formulare übernimmst), bis zu 20 pro Speichern; Importe, Löschungen, Rückgängig und Änderungen von deinen anderen Geräten nicht.

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Files — docs-due.js (v1.0.0): Documents' dates, pure.
+// orOS Files — docs-due.js (v1.1.0): Documents' dates, pure.
 // ------------------------------------------------------------
 // DOCS-1 wave 3. One reading of the Documents slice (oros-files-docs,
 // files/docs-core.js) for everything that tells the person about a
@@ -20,6 +20,10 @@
 //                        never its title (lock screens, Today shares).
 //   feedRows(raw)        Calendar: one all-day row per expiry date and
 //                        per keep-until date.
+//   searchHits(raw, lang, snips)  W5: one universal-search hit per
+//                        document that is not private: its details and
+//                        the first 300 characters of its text (what the
+//                        Assistant and orOS Gate see; Chris 2026-11-15).
 //   readPrefs(o)         device-local oros-files-docs-prefs:
 //                        { remind: hour 0-23, -1 = off; default 9 }.
 // Reads only; never writes the slice. Nothing here deletes a file:
@@ -45,7 +49,12 @@
       ex0: "{t} expires today", exPast: "{t} expired {n} days ago", exPast1: "{t} expired yesterday",
       kp: "{t}: kept long enough (until {d})",
       feedEx: "{t} expires", feedKp: "{t}: keep until",
-      doc: "A document", "ty-medical": "A medical document", "ty-id": "An ID or passport", pv: "A private document"
+      doc: "A document", "ty-medical": "A medical document", "ty-id": "An ID or passport", pv: "A private document",
+      sDoc: "Document", sTags: "Tags", sFrom: "From", sAmt: "Amount", sEx: "Expires", sKp: "Keep until",
+      sForever: "for ever", sNote: "Note", sFile: "File", sText: "Text",
+      ty: { "ty-receipt": "Receipt", "ty-invoice": "Invoice", "ty-bill": "Bill", "ty-contract": "Contract",
+            "ty-warranty": "Warranty", "ty-insurance": "Insurance", "ty-tax": "Tax", "ty-bank": "Bank",
+            "ty-vehicle": "Vehicle", "ty-cert": "Certificate", "ty-other": "Other" }
     },
     el: {
       exIn: "{t}: λήγει σε {n} μέρες", ex1: "{t}: λήγει αύριο",
@@ -53,14 +62,24 @@
       kp: "{t}: φυλάχτηκε αρκετά (έως {d})",
       feedEx: "{t}: λήξη", feedKp: "{t}: κράτα έως",
       doc: "Ένα έγγραφο", "ty-medical": "Ένα ιατρικό έγγραφο",
-      "ty-id": "Μια ταυτότητα ή διαβατήριο", pv: "Ένα ιδιωτικό έγγραφο"
+      "ty-id": "Μια ταυτότητα ή διαβατήριο", pv: "Ένα ιδιωτικό έγγραφο",
+      sDoc: "Έγγραφο", sTags: "Ετικέτες", sFrom: "Από", sAmt: "Ποσό", sEx: "Λήγει", sKp: "Κράτα έως",
+      sForever: "για πάντα", sNote: "Σημείωση", sFile: "Αρχείο", sText: "Κείμενο",
+      ty: { "ty-receipt": "Απόδειξη", "ty-invoice": "Τιμολόγιο", "ty-bill": "Λογαριασμός", "ty-contract": "Σύμβαση",
+            "ty-warranty": "Εγγύηση", "ty-insurance": "Ασφάλιση", "ty-tax": "Φορολογικό", "ty-bank": "Τράπεζα",
+            "ty-vehicle": "Όχημα", "ty-cert": "Πιστοποιητικό", "ty-other": "Άλλο" }
     },
     de: {
       exIn: "{t} läuft in {n} Tagen ab", ex1: "{t} läuft morgen ab",
       ex0: "{t} läuft heute ab", exPast: "{t} ist vor {n} Tagen abgelaufen", exPast1: "{t} ist gestern abgelaufen",
       kp: "{t}: lange genug aufbewahrt (bis {d})",
       feedEx: "{t} läuft ab", feedKp: "{t}: aufbewahren bis",
-      doc: "Ein Dokument", "ty-medical": "Ein medizinisches Dokument", "ty-id": "Ein Ausweis oder Pass", pv: "Ein privates Dokument"
+      doc: "Ein Dokument", "ty-medical": "Ein medizinisches Dokument", "ty-id": "Ein Ausweis oder Pass", pv: "Ein privates Dokument",
+      sDoc: "Dokument", sTags: "Schlagwörter", sFrom: "Von", sAmt: "Betrag", sEx: "Läuft ab", sKp: "Aufbewahren bis",
+      sForever: "für immer", sNote: "Notiz", sFile: "Datei", sText: "Text",
+      ty: { "ty-receipt": "Beleg", "ty-invoice": "Rechnung", "ty-bill": "Abrechnung", "ty-contract": "Vertrag",
+            "ty-warranty": "Garantie", "ty-insurance": "Versicherung", "ty-tax": "Steuer", "ty-bank": "Bank",
+            "ty-vehicle": "Fahrzeug", "ty-cert": "Bescheinigung", "ty-other": "Sonstiges" }
     }
   };
 
@@ -170,6 +189,68 @@
     return out;
   }
 
+  // W5 (card 3, Chris 2026-11-15 «Στοιχεία + απόσπασμα»): what the
+  // universal search, and so the Assistant and orOS Gate, see of a
+  // document: its details and the first SNIPPET characters of its
+  // text. A private document is left out whole (not even its type).
+  var SNIPPET = 300;
+  function snippet(text) {
+    var s = String(text == null ? "" : text).replace(/\s+/g, " ").trim();
+    return s.length > SNIPPET ? s.slice(0, SNIPPET - 1) + "…" : s;
+  }
+  function label(n, lang) {
+    if (typeof n === "string") return n;
+    if (!isObj(n)) return "";
+    var b = String(lang || "en").slice(0, 2);
+    return n[b] || n.en || n.el || "";
+  }
+  function liveRow(raw, list, id) {
+    var rows = isObj(raw) && Array.isArray(raw[list]) ? raw[list] : [], tombs = isObj(raw.tombs) ? raw.tombs : {};
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (isObj(r) && r.id === id) { var tb = Number(tombs[id]); return isFinite(tb) && tb >= Number(r.m) ? null : r; }
+    }
+    return null;
+  }
+  function typeName(raw, id, lang) {
+    if (typeof id !== "string" || !id) return "";
+    var own = liveRow(raw, "types", id), n = own ? label(own.n, lang) : "";
+    return n || (table(lang).ty || {})[id] || S.en.ty[id] || "";
+  }
+  // snips(id) → the document's text (or ""), read by the caller.
+  function searchHits(raw, lang, snips) {
+    var T = table(lang), out = [];
+    docs(raw).forEach(function (d) {
+      if (isPrivate(raw, d)) return;
+      var head = [T.sDoc], ty = typeName(raw, d.ty, lang);
+      if (ty) head.push(ty);
+      if (okDate(d.d)) head.push(d.d);
+      var co = typeof d.co === "string" ? liveRow(raw, "corr", d.co) : null, con = co ? label(co.n, lang) : "";
+      var lines = [head.join(" · ")];
+      if (con) lines.push(T.sFrom + ": " + con);
+      var tags = (Array.isArray(d.tg) ? d.tg : []).map(function (id) { var g = liveRow(raw, "tags", id); return g ? label(g.n, lang) : ""; })
+        .filter(Boolean);
+      if (tags.length) lines.push(T.sTags + ": " + tags.join(", "));
+      if (typeof d.amt === "number" && isFinite(d.amt)) lines.push(T.sAmt + ": " + d.amt + (typeof d.cur === "string" && d.cur ? " " + d.cur : ""));
+      var dates = [];
+      if (okDate(d.ex)) dates.push(T.sEx + ": " + d.ex);
+      if (okDate(d.kp)) dates.push(T.sKp + ": " + d.kp);
+      else if (d.kp === "forever") dates.push(T.sKp + ": " + T.sForever);
+      if (dates.length) lines.push(dates.join(" · "));
+      var p = typeof d.p === "string" ? d.p : "";
+      if (p) lines.push(T.sFile + ": " + (p.indexOf("/internal/") === 0 ? p.slice(9) : p));
+      var no = typeof d.no === "string" ? snippet(d.no) : "";
+      if (no) lines.push(T.sNote + ": " + no);
+      var tx = typeof snips === "function" ? snippet(snips(d.id) || "") : "";
+      if (tx) lines.push(T.sText + ": " + tx);
+      out.push({
+        id: "doc:" + d.id, title: nameOf(raw, d, lang), text: lines.join("\n"),
+        when: okDate(d.d) ? utc(d.d) : (Number(d.m) || 0), target: { doc: d.id }
+      });
+    });
+    return out;
+  }
+
   function readPrefs(o) {
     var r = isObj(o) ? Number(o.remind) : 9;
     if (!isFinite(r) || Math.floor(r) !== r || r < -1 || r > 23) r = 9;
@@ -177,11 +258,12 @@
   }
 
   var API = {
-    VERSION: "1.0.0",
+    VERSION: "1.1.0",
     KEY: KEY, PREFS_KEY: PREFS_KEY, NOTIFIED_KEY: NOTIFIED_KEY, STEPS: STEPS.slice(),
     docs: docs, isPrivate: isPrivate, nameOf: nameOf,
     alerts: alerts, toNotify: toNotify, nextNotified: nextNotified, alertLine: alertLine,
-    feedRows: feedRows, readPrefs: readPrefs, dayDiff: dayDiff
+    feedRows: feedRows, readPrefs: readPrefs, dayDiff: dayDiff,
+    SNIPPET: SNIPPET, snippet: snippet, searchHits: searchHits
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosDocsDue = API;

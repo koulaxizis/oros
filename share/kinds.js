@@ -26,9 +26,17 @@
 //   encode(env, password?)         → Promise<code>  ("1.…", "0.…", "p1.…")
 //   decode(code, password?)        → Promise<{ env } | { error }>
 //                                    error: "bad" | "big" | "pass" (wrong or
-//                                    missing password) | "crypto"
+//                                    missing password) | "crypto" | "cut"
+//                                    (the link was cut short on its way)
 //   isLocked(code)                 → true for a password link
-//   codeFromHash(hash)             → the code in "#…", or ""
+//   codeFromHash(hash)             → the code in "#…", or "" (tolerant:
+//                                    percent-encoding, spaces or line
+//                                    breaks a chat app put in, and
+//                                    punctuation after the link are left out)
+//   inflateJs(bytes, max)          → the plain-JS inflate used when the
+//                                    browser's DecompressionStream is
+//                                    missing or refuses a link (throws
+//                                    "cut" | "big" | "bad")
 //   summary(env, lang)             → one line ("List "Shop" · 12 items")
 //   shareLine(env, lang)           → the line beside a link in a chat or post
 //   text(env, lang, helpers?)      → plain text of the item
@@ -486,6 +494,9 @@
   }
   function unb64u(s) {
     var b = s.replace(/-/g, "+").replace(/_/g, "/");
+    // One character past a full group cannot happen in base64: the
+    // link was cut there. Drop it; the inflate below then says "cut".
+    if (b.length % 4 === 1) b = b.slice(0, -1);
     while (b.length % 4) b += "=";
     var bin = atob(b), out = new Uint8Array(bin.length);
     for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
@@ -518,6 +529,131 @@
     }
     return step();
   }
+  // A small inflate (raw deflate, RFC 1951) in plain JS, after zlib's
+  // puff.c. The receiving page uses it when the browser has no
+  // DecompressionStream, or when the browser's own refuses a link
+  // (an engine quirk, or bytes after the end that some engines reject),
+  // and to tell a link that was cut short ("cut": the bytes ran out
+  // before the last block ended) from one that is damaged ("bad").
+  // Output stops past max ("big").
+  var LBASE = [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258];
+  var LEXT = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0];
+  var DBASE = [1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577];
+  var DEXT = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13];
+  var CLORD = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
+  function huff(lens, n) {
+    var c = new Uint16Array(16), off = new Uint16Array(16), sym = new Uint16Array(n), i;
+    for (i = 0; i < n; i++) c[lens[i]]++;
+    c[0] = 0;
+    for (i = 1; i < 16; i++) off[i] = off[i - 1] + c[i - 1];
+    for (i = 0; i < n; i++) if (lens[i]) sym[off[lens[i]]++] = i;
+    return { c: c, s: sym };
+  }
+  var FIXED = null;
+  function fixedTables() {
+    if (FIXED) return FIXED;
+    var l = new Uint8Array(288), d = new Uint8Array(30), i;
+    for (i = 0; i < 288; i++) l[i] = i < 144 ? 8 : i < 256 ? 9 : i < 280 ? 7 : 8;
+    for (i = 0; i < 30; i++) d[i] = 5;
+    FIXED = { l: huff(l, 288), d: huff(d, 30) };
+    return FIXED;
+  }
+  function inflateJs(src, max) {
+    max = max || MAX_JSON;
+    var pos = 0, buf = 0, nb = 0, op = 0;
+    var out = new Uint8Array(Math.min(max, Math.max(1024, src.length * 4)));
+    function bits(n) {
+      while (nb < n) {
+        if (pos >= src.length) throw new Error("cut");
+        buf |= src[pos++] << nb;
+        nb += 8;
+      }
+      var v = buf & ((1 << n) - 1);
+      buf >>>= n;
+      nb -= n;
+      return v;
+    }
+    function room(n) {
+      if (op + n <= out.length) return;
+      if (op + n > max) throw new Error("big");
+      var size = out.length;
+      while (size < op + n) size *= 2;
+      var o = new Uint8Array(Math.min(max, size));
+      o.set(out.subarray(0, op));
+      out = o;
+    }
+    function sym(h) {
+      var code = 0, first = 0, index = 0;
+      for (var len = 1; len < 16; len++) {
+        code |= bits(1);
+        var cnt = h.c[len];
+        if (code - cnt < first) return h.s[index + (code - first)];
+        index += cnt;
+        first = (first + cnt) << 1;
+        code <<= 1;
+      }
+      throw new Error("bad");
+    }
+    function codes(lh, dh) {
+      for (;;) {
+        var s = sym(lh);
+        if (s < 256) { room(1); out[op++] = s; continue; }
+        if (s === 256) return;
+        s -= 257;
+        if (s >= 29) throw new Error("bad");
+        var len = LBASE[s] + bits(LEXT[s]);
+        var ds = sym(dh);
+        if (ds >= 30) throw new Error("bad");
+        var dist = DBASE[ds] + bits(DEXT[ds]);
+        if (dist > op) throw new Error("bad");
+        room(len);
+        for (var k = 0; k < len; k++, op++) out[op] = out[op - dist];
+      }
+    }
+    function dynamic() {
+      var nlen = bits(5) + 257, ndist = bits(5) + 1, ncode = bits(4) + 4, i;
+      if (nlen > 286 || ndist > 30) throw new Error("bad");
+      var cl = new Uint8Array(19);
+      for (i = 0; i < ncode; i++) cl[CLORD[i]] = bits(3);
+      var ch = huff(cl, 19), lens = new Uint8Array(nlen + ndist);
+      for (i = 0; i < nlen + ndist;) {
+        var s = sym(ch);
+        if (s < 16) { lens[i++] = s; continue; }
+        var v = 0, rep;
+        if (s === 16) {
+          if (!i) throw new Error("bad");
+          v = lens[i - 1];
+          rep = 3 + bits(2);
+        } else rep = s === 17 ? 3 + bits(3) : 11 + bits(7);
+        if (i + rep > nlen + ndist) throw new Error("bad");
+        while (rep--) lens[i++] = v;
+      }
+      if (!lens[256]) throw new Error("bad");
+      codes(huff(lens.subarray(0, nlen), nlen), huff(lens.subarray(nlen), ndist));
+    }
+    var last;
+    do {
+      last = bits(1);
+      var type = bits(2);
+      if (type === 0) {
+        buf = 0; nb = 0;                       // a stored block starts on a byte
+        if (pos + 4 > src.length) throw new Error("cut");
+        var n = src[pos] | (src[pos + 1] << 8), nn = src[pos + 2] | (src[pos + 3] << 8);
+        pos += 4;
+        if (n !== (~nn & 0xffff)) throw new Error("bad");
+        if (pos + n > src.length) throw new Error("cut");
+        room(n);
+        out.set(src.subarray(pos, pos + n), op);
+        op += n; pos += n;
+      } else if (type === 1) {
+        var f = fixedTables();
+        codes(f.l, f.d);
+      } else if (type === 2) dynamic();
+      else throw new Error("bad");
+    } while (!last);
+    return out.slice(0, op);
+  }
+
   function subtle() {
     var c = (typeof crypto !== "undefined" && crypto) || (root && root.crypto);
     return c && c.subtle ? c : null;
@@ -562,10 +698,19 @@
     });
   }
   function isLocked(code) { return /^p1\./.test(String(code || "")); }
+  // Chat apps and mail programs pass links on in odd shapes: the "#"
+  // part percent-encoded, a space, line break or invisible hyphen put
+  // in where a long link wraps, a full stop or bracket after it. None
+  // of those characters can be part of a code, so they are left out.
   function codeFromHash(h) {
     h = String(h || "");
     if (h.charAt(0) === "#") h = h.slice(1);
-    return /^(0|1|p1)\.[A-Za-z0-9_-]+$/.test(h) ? h : "";
+    if (h.indexOf("%") >= 0) {
+      try { h = decodeURIComponent(h); } catch (e) { /* a stray "%": the code before it still counts */ }
+    }
+    h = h.replace(/[\s\u00a0\u00ad\u200b-\u200d\u2060\ufeff]+/g, "");
+    var m = /^(?:0|1|p1)\.[A-Za-z0-9_-]+/.exec(h);
+    return m ? m[0] : "";
   }
   function fromJsonBytes(bytes) {
     if (bytes.length > MAX_JSON) return { error: "big" };
@@ -574,11 +719,19 @@
     var env = unpack(o);
     return env ? { env: env } : { error: "bad" };
   }
+  // The plain-JS inflate: a result, or the reason it stopped.
+  function openedJs(bytes) {
+    try { return fromJsonBytes(inflateJs(bytes, MAX_JSON)); } catch (e) {
+      var m = e && e.message;
+      return { error: m === "big" || m === "cut" ? m : "bad" };
+    }
+  }
   function opened(z, bytes) {
     if (!z) return Promise.resolve(fromJsonBytes(bytes));
-    if (!hasZip()) return Promise.resolve({ error: "bad" });
+    if (!hasZip()) return Promise.resolve(openedJs(bytes));
     return inflate(bytes).then(fromJsonBytes, function (e) {
-      return { error: e && e.message === "big" ? "big" : "bad" };
+      if (e && e.message === "big") return { error: "big" };
+      return openedJs(bytes);
     });
   }
   function decode(code, password) {
@@ -1015,7 +1168,7 @@
 
   var api = {
     VER: VER, KINDS: KINDS, RELAY_ONLY: RELAY_ONLY, photoType: photoType, MAX_LINK: MAX_LINK, MAX_JSON: MAX_JSON, ITER: ITER,
-    norm: norm, pack: pack, encode: encode, decode: decode, isLocked: isLocked, codeFromHash: codeFromHash,
+    norm: norm, pack: pack, encode: encode, decode: decode, isLocked: isLocked, codeFromHash: codeFromHash, inflateJs: inflateJs,
     normTrack: normTrack, summary: summary, shareLine: shareLine, trackSource: trackSource, fmtLen: fmtLen, title: titleOf, text: text, file: file, target: target,
     whenText: whenText, repeatText: repeatText, addrText: addrText, contactName: contactName,
     vcard: vcard, ics: ics, calIcs: calIcs, calRange: calRange, fmtDate: fmtDate, netscape: netscape, strings: L, resetPacks: resetPacks, locale: locOf,

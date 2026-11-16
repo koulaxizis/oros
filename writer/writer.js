@@ -644,7 +644,42 @@ const STRINGS = {
     'cat.calNote': 'Book translation in Writer, due {d}.',
     'cat.goalOn': 'Due {d} · {n} days · {w} words a day · today {t}',
     'cat.goalLate': '{n} days past the deadline ({d}) · {w} words left',
-    'cat.goalDone': 'All translated · deadline {d}'
+    'cat.goalDone': 'All translated · deadline {d}',
+    'mt.menuOff': 'Machine suggestions: off…',
+    'mt.menuOn': 'Machine suggestions: on…',
+    'mt.title': 'Machine suggestions',
+    'mt.intro': 'A machine suggestion appears under the open segment. It is never put in by itself: you take it with “Use” or Alt+0. Translation runs on this device, or through your own AI key if you turned that on in Text Tools.',
+    'mt.need': '{pair}: the translation model is not on this device yet ({mb} MB, downloaded once).',
+    'mt.ready': '{pair}: the translation model is on this device.',
+    'mt.none': 'There is no model on the device for {pair}.',
+    'mt.aiNote': 'Your AI from Text Tools can translate it.',
+    'mt.dl': 'Download',
+    'mt.dling': 'Downloading… {p}%',
+    'mt.turnOn': 'Turn on',
+    'mt.turnOff': 'Turn off',
+    'mt.isOn': 'Machine suggestions on',
+    'mt.isOff': 'Machine suggestions off',
+    'mt.noEngine': 'The translation engine could not be loaded.',
+    'mt.loading': 'Machine suggestion…',
+    'mt.dev': 'Machine · on device',
+    'mt.ai': 'AI · {via}',
+    'mt.aiPlain': 'AI',
+    'mt.use': 'Use',
+    'mt.useT': 'Use this suggestion (Alt+0)',
+    'mt.tags': 'Some formatting marks did not come back; they go at the end.',
+    'mt.needDl': 'The model is not downloaded.',
+    'mt.fill': 'Fill empty segments…',
+    'mt.fillAsk': 'Fill {n} empty segments with machine drafts? They stay drafts until you check them.',
+    'mt.fillGo': 'Fill',
+    'mt.filling': 'Translating {d} of {n}…',
+    'mt.filled': '{n} drafts filled',
+    'mt.stop': 'Stop',
+    'mt.noEmpty': 'No empty segments to fill.',
+    'mt.err': 'Machine translation failed ({code}).',
+    'mt.err.download': 'The download failed. Check the connection and try again.',
+    'mt.err.quota': 'There is not enough space on this device for the model.',
+    'mt.err.unsupported': 'This browser cannot run the translation model.',
+    'mt.err.hash': 'The downloaded model did not check out; nothing was kept.'
   },
   el: {
     'app.name': 'Writer',
@@ -1190,7 +1225,42 @@ const STRINGS = {
     'cat.calNote': 'Μετάφραση βιβλίου στον Writer, παράδοση {d}.',
     'cat.goalOn': 'Παράδοση {d} · {n} μέρες · {w} λέξεις τη μέρα · σήμερα {t}',
     'cat.goalLate': '{n} μέρες μετά την προθεσμία ({d}) · απομένουν {w} λέξεις',
-    'cat.goalDone': 'Όλα μεταφρασμένα · προθεσμία {d}'
+    'cat.goalDone': 'Όλα μεταφρασμένα · προθεσμία {d}',
+    'mt.menuOff': 'Μηχανικές προτάσεις: ανενεργές…',
+    'mt.menuOn': 'Μηχανικές προτάσεις: ενεργές…',
+    'mt.title': 'Μηχανικές προτάσεις',
+    'mt.intro': 'Η μηχανική πρόταση εμφανίζεται κάτω από το ανοιχτό τμήμα. Δεν μπαίνει ποτέ μόνη της: την παίρνεις με «Χρήση» ή Alt+0. Η μετάφραση γίνεται στη συσκευή ή με το δικό σου κλειδί AI, αν το άνοιξες στα Εργαλεία κειμένου.',
+    'mt.need': '{pair}: το μοντέλο μετάφρασης δεν είναι ακόμη στη συσκευή ({mb} MB, κατεβαίνει μία φορά).',
+    'mt.ready': '{pair}: το μοντέλο μετάφρασης είναι στη συσκευή.',
+    'mt.none': 'Δεν υπάρχει μοντέλο στη συσκευή για {pair}.',
+    'mt.aiNote': 'Το AI σου από τα Εργαλεία κειμένου μπορεί να το μεταφράσει.',
+    'mt.dl': 'Λήψη',
+    'mt.dling': 'Λήψη… {p}%',
+    'mt.turnOn': 'Ενεργοποίηση',
+    'mt.turnOff': 'Απενεργοποίηση',
+    'mt.isOn': 'Μηχανικές προτάσεις ενεργές',
+    'mt.isOff': 'Μηχανικές προτάσεις ανενεργές',
+    'mt.noEngine': 'Η μηχανή μετάφρασης δεν φόρτωσε.',
+    'mt.loading': 'Μηχανική πρόταση…',
+    'mt.dev': 'Μηχανή · στη συσκευή',
+    'mt.ai': 'AI · {via}',
+    'mt.aiPlain': 'AI',
+    'mt.use': 'Χρήση',
+    'mt.useT': 'Χρήση αυτής της πρότασης (Alt+0)',
+    'mt.tags': 'Κάποια σημάδια μορφοποίησης δεν γύρισαν· μπαίνουν στο τέλος.',
+    'mt.needDl': 'Το μοντέλο δεν έχει κατέβει.',
+    'mt.fill': 'Συμπλήρωση κενών τμημάτων…',
+    'mt.fillAsk': 'Να συμπληρωθούν {n} κενά τμήματα με μηχανικά προσχέδια; Μένουν προσχέδια μέχρι να τα ελέγξεις.',
+    'mt.fillGo': 'Συμπλήρωση',
+    'mt.filling': 'Μετάφραση {d} από {n}…',
+    'mt.filled': 'Συμπληρώθηκαν {n} προσχέδια',
+    'mt.stop': 'Διακοπή',
+    'mt.noEmpty': 'Δεν υπάρχουν κενά τμήματα.',
+    'mt.err': 'Η μηχανική μετάφραση απέτυχε ({code}).',
+    'mt.err.download': 'Η λήψη απέτυχε. Έλεγξε τη σύνδεση και ξαναδοκίμασε.',
+    'mt.err.quota': 'Δεν υπάρχει αρκετός χώρος στη συσκευή για το μοντέλο.',
+    'mt.err.unsupported': 'Αυτός ο browser δεν μπορεί να τρέξει το μοντέλο μετάφρασης.',
+    'mt.err.hash': 'Το μοντέλο που κατέβηκε δεν πέρασε τον έλεγχο· δεν κρατήθηκε τίποτα.'
   }
 };
 
@@ -2830,6 +2900,22 @@ window.WriterCatHost = {
   // T4: the Word package of a project, unzipped, zipped, read as a document
   readZip: buf => WriterIO.readZip(buf),
   zip: files => window.OrosBundle._zip(files.map(f => ({ name: f.name, data: f.data, deflate: true }))),
+  // T5: the translation engine shared with Text Tools (translate/engine.js), loaded on first use
+  mtEngine: () => {
+    if (window.OrosTranslate) return Promise.resolve(window.OrosTranslate);
+    if (!catMtP) {
+      const v = (document.querySelector('script[src*="writer.js?v="]') || {}).src || '', m = v.match(/[?&]v=([^&#]+)/);
+      catMtP = new Promise((ok, fail) => {
+        const s = document.createElement('script');
+        s.src = '../translate/engine.js' + (m ? '?v=' + m[1] : '');
+        s.onload = () => window.OrosTranslate ? ok(window.OrosTranslate) : fail(new Error('engine-load'));
+        s.onerror = () => fail(new Error('engine-load'));
+        document.head.appendChild(s);
+      });
+      catMtP.catch(() => { catMtP = null; });
+    }
+    return catMtP;
+  },
   // proposals 1-2: Publishing's titles (read only), a Publishing or Calendar form filled in
   openAt: (app, target) => { try { window.parent.__orosOpenAt(app, target); return true; } catch (e) { return false; } },
   calendarNew: p => { try { window.parent.__orosOpenCalendarNew(p); return true; } catch (e) { return false; } },
@@ -2847,7 +2933,7 @@ window.WriterCatHost = {
     return { title: p.title || '', html: prep.html, footnotes: prep.footnotes, header: p.header || '', footer: p.footer || '' };
   })
 };
-let catP = null;
+let catP = null, catMtP = null;
 function catFailed(e) { console.warn('[writer] translation load failed:', e); showToast(t('cat.err')); }
 function catLoad() {
   if (window.WriterCat) return Promise.resolve(window.WriterCat);
@@ -2860,7 +2946,7 @@ function catLoad() {
       document.head.appendChild(s);
     });
     catP = (window.WriterCore ? Promise.resolve() : load('core.js'))
-      .then(() => load('catcore.js')).then(() => load('cattm.js')).then(() => load('catqa.js')).then(() => load('catdocx.js')).then(() => load('catxlf.js')).then(() => load('catstore.js')).then(() => load('cat.js')).then(() => {
+      .then(() => load('catcore.js')).then(() => load('cattm.js')).then(() => load('catqa.js')).then(() => load('catdocx.js')).then(() => load('catxlf.js')).then(() => load('catmt.js')).then(() => load('catstore.js')).then(() => load('cat.js')).then(() => {
         if (!window.WriterCat) throw new Error('cat');
         return window.WriterCat;
       });
