@@ -620,7 +620,7 @@ orosPack("de", "stock", {
  "cons.title": "Kommission",
  "cons.tile": "Kommission",
  "cons.link": "Kommission…",
- "cons.hint": "Läden, die deine Waren verkaufen und dich für das Verkaufte bezahlen. Schicke Bestand mit einer Umlagerung; wenn der Laden meldet, was übrig ist, rechne ab: die Differenz wird als verkauft gebucht und Rechnungen öffnet sich mit den Zeilen zum Rabatt des Ladens.",
+ "cons.hint": "Läden, die deine Waren verkaufen und dich für das Verkaufte bezahlen. Schicke Bestand mit einer Umlagerung; wenn der Laden meldet, was übrig ist, rechne ab: die Differenz wird als verkauft gebucht und die Abrechnung öffnet sich mit den Zeilen zum Rabatt des Ladens.",
  "cons.none": "Noch keine Kommissionsläden. Lege den Laden unter Einstellungen › Lager als Lager an und wähle daneben Kommission….",
  "cons.on": "Dieses Lager ist ein Laden, der auf Kommission verkauft",
  "cons.disc": "Rabatt des Ladens (%)",

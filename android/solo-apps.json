@@ -35,6 +35,10 @@
     "invoices": "online.useoros.invoices",
     "crm": "online.useoros.crm",
     "timesheet": "online.useoros.timesheet",
-    "music": "online.useoros.music"
+    "music": "online.useoros.music",
+    "transfer": "online.useoros.transfer",
+    "scanpdf": "online.useoros.scanner",
+    "stock": "online.useoros.stock",
+    "forms": "online.useoros.forms"
   }
 }

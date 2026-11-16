@@ -113,7 +113,7 @@ Press **+** next to `Line Items` to add a row with `Code/SKU`, `Description`, `Q
 
 Below the items you see `Subtotal`, `VAT` and `Total`. `Discount (%)` takes a discount off the whole quote. Changing `VAT (%)` there sets the same rate on every line, and new lines take it too.
 
-`Show the total in` adds the total in another currency, at the day's European Central Bank rate (the same rates as the [Unit Converter](app:units)). It's only a guide for you: the quote, the PDF and the email stay in the quote's own currency. The choice stays on this device.
+`Show the total in` adds the total in another currency, at the day's European Central Bank rate (the same rates as the Calculator's [Convert](app:units) mode). It's only a guide for you: the quote, the PDF and the email stay in the quote's own currency. The choice stays on this device.
 
 ### Instalments
 Under `Instalments`, set a `Count` and press `Generate` to split the total evenly. You can then change each date and `Amount`; a line underneath tells you whether the sum matches the total.

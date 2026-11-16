@@ -1,0 +1,58 @@
+{
+  "name": "orOS Scanner & PDF",
+  "short_name": "Scanner & PDF",
+  "description": "orOS Scanner & PDF: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/scanpdf/solo.html",
+  "start_url": "/scanpdf/solo.html",
+  "scope": "/scanpdf/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/scanpdf.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/scanpdf-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/scanpdf-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/scanpdf-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Signature requests",
+      "short_name": "Signature requests",
+      "url": "/scanpdf/solo.html?do=sign",
+      "icons": [
+        {
+          "src": "/icons/solo/scanpdf-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

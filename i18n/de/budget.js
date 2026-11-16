@@ -61,7 +61,7 @@ orosPack("de", "budget", {
  "ar.del": "Bereich löschen",
  "ar.full": "Bis zu 12 Bereiche",
  "ar.hint": "Ein Bereich ist ein Teil deines Lebens oder deiner Arbeit, zu dem Einträge gehören: ein Verlag, ein zweiter Job, Privates. Seine Wörter legen eine Bankzeile beim Import eines Kontoauszugs hinein (zum Beispiel: viva, stripe, box now; das längste gefundene Wort gewinnt). Eine Zeile, zu der kein Wort passt, wartet unter Ohne Bereich in den Einträgen, bis du einen wählst; deine Wahl bleibt.",
- "ar.iv": "Invoices-Serien, deren Zahlungen hierher kommen",
+ "ar.iv": "Abrechnungs-Serien, deren Zahlungen hierher kommen",
  "ar.keep": "Einträge eines gelöschten Bereichs bleiben, ohne Bereich.",
  "ar.kind.inv": "Rechnungen",
  "ar.kind.rcpt": "Quittungen",

@@ -99,7 +99,7 @@ Nachbestellen, Mindestmengen und der Gesamtwert gelten für das ganze Geschäft.
 Ein Laden, der deine Waren verkauft und dich für das Verkaufte bezahlt (eine Buchhandlung, eine Galerie, ein Feinkostladen), ist ein Lager mit eingeschalteter Kommission. Lege den Laden unter Einstellungen › `Lager` an und wähle daneben `Kommission…`: den Rabatt des Ladens, eine Erinnerung alle paar Monate und, falls abweichend, den Namen für die Rechnung.
 - Schicke Bestand mit `Neu` › `Umlagerung` dorthin: er gehört weiter dir, nur an einem anderen Ort.
 - Wenn der Laden meldet, was übrig ist, öffne die Kachel `Kommission` im Tab Produkte und wähle `Abrechnen…`. Gib ein, was noch im Regal steht; der Rest wird zum Verkaufspreis des Produkts als verkauft gebucht.
-- Nach `Buchen` öffnet `Rechnung erstellen` die Rechnungen mit dem Laden als Kunde und den Zeilen zu seinem Rabatt. Die Zeilen tragen keinen Produktcode, damit Rechnungen den Bestand nicht ein zweites Mal abbucht.
+- Nach `Buchen` öffnet `Rechnung erstellen` die Abrechnung mit dem Laden als Kunde und den Zeilen zu seinem Rabatt. Die Zeilen tragen keinen Produktcode, damit die Abrechnung den Bestand nicht ein zweites Mal abbucht.
 - Hake `Den Rest zurück … holen` an, um die Kommission zu beenden: der Rest geht ins Hauptlager zurück.
 - Die Kachel wird gelb, wenn eine Abrechnung fällig ist, und [Heute](app:today) erinnert dich daran. Storniere die Verkaufsbewegung, um eine Abrechnung rückgängig zu machen.
 
@@ -147,7 +147,7 @@ Ist ein WooCommerce-Shop verbunden, setzt `An den Shop senden` danach die neuen 
 Verbinde deinen WooCommerce-Shop einmal unter Einstellungen › [Verbundene Dienste](app:settings), dann öffne `Shop (WooCommerce)` über `Neu` oder hier in den Einstellungen.
 - `Produkte`: `Produkte aus dem Shop holen` liest jedes Produkt und jede Variante. `In Bestand importieren` fügt die neuen hinzu und aktualisiert Name, SKU, Verkaufspreis und Kategorie der vorhandenen (zugeordnet über das Shop-Produkt, dann SKU, dann Name). Hake das Kästchen darunter an, um auch die Mengen hier auf die des Shops zu setzen, als eine Inventur.
 - `Abweichende Mengen` listet die Produkte, deren Bestand der Shop verwaltet und deren Menge hier anders ist. `An den Shop senden` setzt die Menge im Shop auf deine; `Die des Shops übernehmen` zählt deine auf die des Shops.
-- `Bestellungen`: die Bestellungen des Shops der letzten 30 Tage. Für jede: `Verkauf erfassen` öffnet einen Verkauf mit ihren Zeilen (danach steht dort `Verkauf erfasst`, damit du ihn nicht doppelt erfasst), `Rechnung` öffnet eine neue Rechnung in [Rechnungen](app:invoices), `Kunde im CRM` vermerkt sie beim Kunden in [CRM](app:crm), `Zu Budget hinzufügen` trägt die Einnahme in [Budget](app:budget) ein, und `Als erledigt markieren` schließt die Bestellung im Shop ab.
+- `Bestellungen`: die Bestellungen des Shops der letzten 30 Tage. Für jede: `Verkauf erfassen` öffnet einen Verkauf mit ihren Zeilen (danach steht dort `Verkauf erfasst`, damit du ihn nicht doppelt erfasst), `Rechnung` öffnet eine neue Rechnung in der [Abrechnung](app:invoices), `Kunde im CRM` vermerkt sie beim Kunden in [CRM](app:crm), `Zu Budget hinzufügen` trägt die Einnahme in [Budget](app:budget) ein, und `Als erledigt markieren` schließt die Bestellung im Shop ab.
 
 Ohne Tastendruck wird nichts an den Shop gesendet, und nichts wird hier oder in einer anderen App gespeichert, bevor du es dort speicherst.
 
@@ -170,7 +170,7 @@ Produkte, Bewegungen, Lieferanten, Kategorien, Einheiten und Einstellungen werde
 ## Tipps
 - Lege einen `Lagerplatz` wie „Regal B3“ fest: Er erscheint in der Liste und in der Suche.
 - Archiviere Produkte, die du nicht mehr verkaufst: Ihr Verlauf bleibt.
-- Aus einem Produkt: `Neues Angebot` startet ein Angebot in [Angebot](app:quote) mit diesem Produkt und seinem Verkaufspreis (in der Währung von Bestand). `Angebot aus Produkten` unter `Neu` nimmt mehrere.
+- Aus einem Produkt: `Neues Angebot` startet ein Angebot in den [Angeboten der Abrechnung](app:quote) mit diesem Produkt und seinem Verkaufspreis (in der Währung von Bestand). `Angebot aus Produkten` unter `Neu` nimmt mehrere.
 - Öffne einen Eingang oder einen Verkauf und wähle `Zu Budget hinzufügen`, um seine Summe in [Budget](app:budget) einzutragen.
 - Einheiten mit Dezimalstellen (kg, l, m) nehmen Mengen wie 2,5; eigene Einheiten kannst du in den Einstellungen anlegen.
 

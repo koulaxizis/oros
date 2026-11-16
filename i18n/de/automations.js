@@ -54,7 +54,7 @@ orosPack("de", "automations", {
  "x.fileHint": "Die Datei öffnet sich dort, und nichts wird gespeichert, bevor du speicherst.",
  "btn.pc": "Computer-Ordner",
  "pc.title": "Ordner auf diesem Computer",
- "pc.hint": "Mit orOS Bridge auf diesem Computer kann ein neues PDF oder Foto in einem Ordner deiner Wahl eine Regel starten: es in Scan PDF, Dateien oder Rechnungen öffnen oder drucken. Die Ordner wählst nur du, an diesem Computer.",
+ "pc.hint": "Mit orOS Bridge auf diesem Computer kann ein neues PDF oder Foto in einem Ordner deiner Wahl eine Regel starten: es in Scan PDF, Dateien oder der Abrechnung öffnen oder drucken. Die Ordner wählst nur du, an diesem Computer.",
  "pc.on": "Ordner auf diesem Computer beobachten",
  "pc.st.off": "Auf diesem Gerät aus.",
  "pc.st.nobridge": "orOS Bridge läuft auf diesem Computer nicht. Starte es oder lade es unten herunter.",

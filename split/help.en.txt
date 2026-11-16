@@ -21,7 +21,7 @@ Under `Split`, pick who shares it (`Everyone` or tap names) and how:
 A line under the split tells you what's `Left to share` or `Too much by`, and says `Adds up` when it's right. With `Amounts`, `Share the rest equally` splits what is left between everyone whose field is still empty (type 0 for anyone left out). Odd cents always go by the same fixed rule, so every phone shows the same numbers. Add an optional `Note`, then `Save`. Tap or click an expense to edit or delete it; an `Undo` button stays for a few seconds after a delete.
 
 ## Other currencies
-Next to `Amount`, pick the `Currency paid in`, for example dollars on a trip to New York. Split fills in the `Exchange rate` from the European Central Bank (the same rates as [Unit Converter](app:units)) and shows the amount in the group's currency. You can type a different rate, for example the one on your card statement; `Use the ECB rate` puts the official one back.
+Next to `Amount`, pick the `Currency paid in`, for example dollars on a trip to New York. Split fills in the `Exchange rate` from the European Central Bank (the same rates as the Calculator's [Convert](app:units) mode) and shows the amount in the group's currency. You can type a different rate, for example the one on your card statement; `Use the ECB rate` puts the official one back.
 
 Payers' amounts, exact amounts and receipt items are typed in the currency you picked. The expense is saved with its original amount, currency and rate, so balances never change when rates move later. Offline, the last rates on this device are used; if there are none yet, type the rate.
 
