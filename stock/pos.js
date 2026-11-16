@@ -27,7 +27,7 @@
       "pos.title": "Point of sale", pl: "Price list", retail: "Retail", wh: "Warehouse",
       zrep: "Z report", lists: "Price lists", setup: "Receipt settings", close: "Close",
       ph: "Scan or search a product", all: "All", "pos.none": "No products match.", more: "Showing {n} of {t}. Type to narrow.",
-      left: "{q} left", noPrice: "no price",
+      left: "{q} left", noPrice: "no price", odLeft: "On demand",
       cart: "Sale", empty: "Tap a product or scan a barcode.", unknown: "No product with the code \"{c}\".",
       net: "Net", vat: "VAT", total: "Total",
       pay: "Payment", cash: "Cash", card: "Card", other: "Other",
@@ -90,7 +90,7 @@
       "pos.title": "Σημείο πώλησης (POS)", pl: "Τιμοκατάλογος", retail: "Λιανική", wh: "Αποθήκη",
       zrep: "Αναφορά Ζ", lists: "Τιμοκατάλογοι", setup: "Ρυθμίσεις απόδειξης", close: "Κλείσιμο",
       ph: "Σάρωση ή αναζήτηση προϊόντος", all: "Όλα", "pos.none": "Κανένα προϊόν δεν ταιριάζει.", more: "Φαίνονται {n} από {t}. Γράψε για να περιορίσεις.",
-      left: "απομένουν {q}", noPrice: "χωρίς τιμή",
+      left: "απομένουν {q}", noPrice: "χωρίς τιμή", odLeft: "Κατά παραγγελία",
       cart: "Πώληση", empty: "Πάτα ένα προϊόν ή σάρωσε barcode.", unknown: "Δεν υπάρχει προϊόν με κωδικό «{c}».",
       net: "Καθαρή αξία", vat: "ΦΠΑ", total: "Σύνολο",
       pay: "Πληρωμή", cash: "Μετρητά", card: "Κάρτα", other: "Άλλο",
@@ -481,7 +481,8 @@
         var p = priceFor(it);
         b.appendChild(el("span", "pos-pp", p ? api.money(gross(p, it.vat)) : t("noPrice")));
         var q = qLeft(it.id);
-        b.appendChild(el("span", "pos-pq" + (q <= 0 ? " bad" : ""), t("left", { q: api.fmtQ(q, it) })));
+        if (api.core.isOd(it)) b.appendChild(el("span", "pos-pq od", t("odLeft")));   // ST-OD: never runs out
+        else b.appendChild(el("span", "pos-pq" + (q <= 0 ? " bad" : ""), t("left", { q: api.fmtQ(q, it) })));
         b.addEventListener("click", function () { add(it, 1000); });
         grid.appendChild(b);
       });
@@ -610,7 +611,7 @@
       if (!cart.length) return;
       var lines = cartLines();
       if (!force) {
-        var neg = lines.filter(function (l) { if (l.i === P.OTHER) return false; var q0 = qLeft(l.i); return q0 - l.q < 0 && q0 - l.q < q0; })[0];
+        var neg = lines.filter(function (l) { if (l.i === P.OTHER || api.core.isOd(byItem(l.i))) return false; var q0 = qLeft(l.i); return q0 - l.q < 0 && q0 - l.q < q0; })[0];
         if (neg) {
           var nit = byItem(neg.i), after = qLeft(neg.i) - neg.q;
           if (D().settings.neg === 0) { msg.textContent = t("neg", { n: nit.name, q: api.fmtQ(after, nit) }) + " " + t("negBlocked"); msg.hidden = false; return; }
@@ -845,7 +846,7 @@
     function paint() {
       list.innerHTML = "";
       var w = api.core.fold(q.value.trim()).split(" ").filter(Boolean);
-      api.byName(D().items.filter(function (it) { return !it.arch && api.matchItem(it, w); })).slice(0, 80).forEach(function (it) {
+      api.byName(D().items.filter(function (it) { return !it.arch && !api.core.isOd(it) && api.matchItem(it, w); })).slice(0, 80).forEach(function (it) {
         var r = el("div", "pos-plp-row");
         var bd = el("span", "r-body");
         bd.appendChild(el("span", "r-name", it.name));
@@ -951,7 +952,7 @@
         var it = (x.i !== P.OTHER && byItem(x.i)) || { unit: "pcs" };
         var tr = el("tr");
         [x.n, x.taken ? api.fmtQ(x.taken, it) : "", x.sold ? api.fmtQ(x.sold, it) : "", x.back ? api.fmtQ(x.back, it) : "",
-         x.i === P.OTHER || !ev.w ? "" : api.fmtQ(x.left, it), x.g ? m(x.g) : ""].forEach(function (v) { tr.appendChild(el("td", "", v)); });
+         x.i === P.OTHER || !ev.w ? "" : (x.od ? t("odLeft") : api.fmtQ(x.left, it)), x.g ? m(x.g) : ""].forEach(function (v) { tr.appendChild(el("td", "", v)); });
         tb.appendChild(tr);
       });
       var wrap = el("div", "pos-evtabw");
@@ -962,7 +963,7 @@
     function sheetRows() {
       var head = [t("evName"), t("repTaken"), t("repSold"), t("repBackC"), t("repLeft"), t("total")];
       return [head].concat(rep.titles.map(function (x) {
-        return [x.n, x.taken / 1000, x.sold / 1000, x.back / 1000, x.i === P.OTHER ? "" : x.left / 1000, x.g / 100];
+        return [x.n, x.taken / 1000, x.sold / 1000, x.back / 1000, x.i === P.OTHER || x.od ? "" : x.left / 1000, x.g / 100];
       }));
     }
     var acts = el("div", "dlg-actions wrap");
@@ -987,7 +988,7 @@
     rep.titles.forEach(function (x) {
       var it = (x.i !== P.OTHER && byItem(x.i)) || { unit: "pcs" };
       rows.push({ k: "item", l: x.n, r: m(x.g) });
-      rows.push({ k: "sub", l: t("repSold") + " " + api.fmtQ(x.sold, it, true) + (ev.w && x.i !== P.OTHER ? " · " + t("repLeft") + " " + api.fmtQ(x.left, it, true) : ""), r: "" });
+      rows.push({ k: "sub", l: t("repSold") + " " + api.fmtQ(x.sold, it, true) + (ev.w && x.i !== P.OTHER && !x.od ? " · " + t("repLeft") + " " + api.fmtQ(x.left, it, true) : ""), r: "" });
     });
     rows.push({ k: "foot", l: t("notFiscal"), r: "" });
     return rows;
