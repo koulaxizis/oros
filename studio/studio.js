@@ -4557,17 +4557,36 @@
   // on a track of its own wherever the voice stops, so no digital silence
   // is left (ACX rejects it). Publishing is only read (its titles, people
   // and ISBN); the book keeps the link, never a copy.
-  var FL = window.StudioFlac;
+  // flac.js loads on the first take in a book, so songs never pay for it
+  var flacP = null;
+  function flacLoad() {
+    if (window.StudioFlac) return Promise.resolve(window.StudioFlac);
+    if (!flacP) {
+      flacP = new Promise(function (ok, fail) {
+        var s = document.createElement("script");
+        s.src = "flac.js?v=" + VER;
+        s.onload = function () { if (window.StudioFlac) ok(window.StudioFlac); else fail(new Error("flac")); };
+        s.onerror = function () { fail(new Error("flac.js")); };
+        document.head.appendChild(s);
+      });
+      flacP.catch(function () { flacP = null; });
+    }
+    return flacP;
+  }
   var RT_NAME = "roomtone";        // the name of a chapter's room tone source (and its file)
   var bookOpen = "", projTab = "songs", rtBufs = {};
   function findBook(id) { return C.books(data).filter(function (b) { return b.id === id; })[0] || null; }
   function putBook(b) { var x = C.normBook(Object.assign({}, b)); if (x) { put("books", x); save(); } }
   // a take as FLAC for a book, else WAV as always
   function takeBlob(chans, rate) {
-    if (!proj || !proj.bk || !FL) return Promise.resolve({ blob: new Blob([C.wavBytes(chans, rate, 24)], { type: "audio/wav" }), ext: "wav" });
-    return flacBlob(chans, rate, function (x) { busy(t("bk.flac", { n: Math.floor(x * 100) })); }).then(function (blob) { return { blob: blob, ext: "flac" }; });
+    var wav = function () { return { blob: new Blob([C.wavBytes(chans, rate, 24)], { type: "audio/wav" }), ext: "wav" }; };
+    if (!proj || !proj.bk) return Promise.resolve(wav());
+    // a take is never lost: if flac.js cannot load (offline before it was cached), it is kept as WAV
+    return flacLoad().then(function (FL) {
+      return flacBlob(FL, chans, rate, function (x) { busy(t("bk.flac", { n: Math.floor(x * 100) })); }).then(function (blob) { return { blob: blob, ext: "flac" }; });
+    }, wav);
   }
-  function flacBlob(chans, rate, pct) {
+  function flacBlob(FL, chans, rate, pct) {
     return new Promise(function (res, rej) {
       var enc;
       try { enc = new FL.Encoder(chans, rate, 24); } catch (e) { rej(e); return; }
@@ -4765,7 +4784,9 @@
     var rep = SM ? SM.analyse([mono], sr) : null, floor = rep && isFinite(rep.rms) ? rep.rms : null;
     var path = C.sourcePath(C.newId("r", Math.random), RT_NAME + " " + (b.name || ""), "flac"), old = b.rt && b.rt.path;
     busy(t("bk.flac", { n: 0 }));
-    flacBlob([mono], sr, function (x) { busy(t("bk.flac", { n: Math.floor(x * 100) })); }).then(function (blob) {
+    flacLoad().then(function (FL) {
+      return flacBlob(FL, [mono], sr, function (x) { busy(t("bk.flac", { n: Math.floor(x * 100) })); });
+    }).then(function (blob) {
       return Promise.resolve(fs.writeBlob(path, blob));
     }).then(function () {
       busy(null);
