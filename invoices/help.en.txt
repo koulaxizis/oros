@@ -93,7 +93,7 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 - More than one business? In `Settings`, `Add a business profile` keeps another set of details, logo, bank lines, terms and footer. Pick the business on each document (`Business`, shown once there are two). Link a numbering series to a profile (`Profile`, next to each series) so each business keeps its own numbers. Templates and copies keep their business.
 
 ## Quotes
-Everything in this section was the Quote app. Old links and shortcuts to Quote open this tab.
+Everything in this section was the Quote app. Old links and shortcuts to Quote open this tab. `Settings` (the gear) is one page for both: its `Quotes` part opens the payment terms texts and the quote templates.
 Quote helps you write price quotes for your clients: line items with discounts and VAT, payment terms, instalments, and a PDF you can send.
 
 ### Getting started
@@ -125,7 +125,7 @@ Tap or click a payment preset (`Bank Transfer`, `PayPal`, `IRIS`, `Cash`) to add
 The `Quotes` tab lists all your quotes. Search by number, client, item, notes or payment terms, and use the funnel to filter by status. Tap or click a quote to open it.
 
 While a quote is open, the buttons at the top let you:
-- `Export PDF`: save the quote as an A4 PDF.
+- `Export PDF`: save the quote as an A4 PDF. Your business details from `Settings` › `Your business` are printed at its top right.
 - `Send via email`: when you have an account in [Mail](app:mail), a new message opens there with the client's address, the quote number, due date and total filled in, and the PDF already attached. Without a Mail account, your own email program opens instead, and you attach the PDF yourself.
 
 ### Acceptance by link

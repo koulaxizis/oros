@@ -158,6 +158,7 @@
       "confirm.template_del": "Delete this template?",
       "template.name_ph":     "Template name",
       "pdf.header_client":    "Quote for",
+      "pdf.taxid":            "VAT no. {v}",
 
       "app.title_short":      "Quote",
       "paypresets.edit":      "Edit payment presets",
@@ -317,6 +318,7 @@
       "confirm.template_del": "Διαγραφή αυτού του προτύπου;",
       "template.name_ph":     "Όνομα προτύπου",
       "pdf.header_client":    "Προσφορά για",
+      "pdf.taxid":            "ΑΦΜ {v}",
 
       "app.title_short":      "Προσφορά",
       "paypresets.edit":      "Επεξεργασία presets πληρωμής",
@@ -1757,6 +1759,24 @@
     var M = 16, W = 210, y = M;
     var FONT = greekOK ? "NotoSans" : "helvetica";   // ρητό — ποτέ setFont(undefined,…)
 
+    // K3: your business, from Billing's profile, top right
+    var me = null, meEnd = 0;
+    try { me = typeof opts.profile === "function" ? opts.profile() : null; } catch (e) { me = null; }
+    if (me && me.name) {
+      var ry = M;
+      doc.setFontSize(11);
+      doc.setFont(FONT, "bold");
+      doc.text(pdfTruncate(me.name, 48), W - M, ry, { align: "right" }); ry += 5;
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(9);
+      [String(me.addr || "").split("\n")[0],
+       [me.afm ? t("pdf.taxid").replace("{v}", me.afm) : "", me.doy].filter(Boolean).join(" · "),
+       [me.email, me.phone].filter(Boolean).join(" · "), me.web].forEach(function (line) {
+        if (line) { doc.text(pdfTruncate(line, 60), W - M, ry, { align: "right" }); ry += 4; }
+      });
+      meEnd = ry;
+    }
+
     // Header
     doc.setFontSize(18);
     doc.text(t("app.title_short") || "Quote", M, y); y += 7;
@@ -1773,6 +1793,7 @@
       "   " + t("offer.due_date") + ": " + (cur.dueDate ? fmtDate(cur.dueDate) : "—"), M, y);
     y += 8;
 
+    if (meEnd && y < meEnd + 4) y = meEnd + 4;   // never under the sender block
     // Items table
     var cols = [M, M + 30, M + 95, M + 125, M + 150];
     doc.setFont(undefined, "bold");
@@ -2915,6 +2936,9 @@
     if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return true; }
     if (tg && tg.quoteNew && typeof tg.quoteNew === "object") { quoteNew(tg.quoteNew); return true; }
     if (tg && typeof tg.acc === "string") return recordAnswer(tg.acc);
+    // K3: Billing's one settings page opens the tab's own settings
+    if (tg && tg.settings === "pay") { openPayPresetsDialog(); return true; }
+    if (tg && tg.settings === "tpl") { openTemplateLibrary(); return true; }
     var id = typeof tg === "string" ? tg : (tg && typeof tg.quote === "string" ? tg.quote : "");
     if (id && quoteById(id)) { quoteOpen(id); return true; }
     return false;
