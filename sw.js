@@ -228,6 +228,7 @@ var PRECACHE_URLS = [
   "./osk.js",
   "./qsettings.js",
   "./widgets.js",
+  "./smartbar.js",
   "./fileopen.js",
   "./phone.js",
   "./webpush.js",
