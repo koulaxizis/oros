@@ -522,10 +522,25 @@
     if (!persist()) { data = before; ix = C.index(data); render(); return false; }
     noteFiles();
     sweepLater();
+    emitEvents(before, next);
     var api = syncApi();
     if (api && typeof api.markDirty === "function") api.markDirty();
     if (!(opts && opts.quiet)) render();
     return true;
+  }
+  // B5: what the person's save did, for Automations' rules
+  // (automations/host.js orosEvents: base.add, base.change). A pull
+  // from sync (sliceSet) never comes here: the device that made the
+  // change ran it.
+  function emitEvents(before, after) {
+    var ev = null;
+    try { ev = window.parent && window.parent !== window ? window.parent.orosEvents : null; } catch (e) { ev = null; }
+    if (!ev || typeof ev.emit !== "function") return;
+    setTimeout(function () {
+      var list = [];
+      try { list = C.events(before, after); } catch (e) { list = []; }
+      list.forEach(function (x) { try { ev.emit(x.ev, x.key, x.text); } catch (e) {} });
+    }, 0);
   }
   function sliceGet() { return C.normalize(data); }
   function sliceSet(incoming) {

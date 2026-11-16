@@ -1977,6 +1977,46 @@
     return rows;
   }
 
+  // ---------- Automations events (B5, BASE-1) ----------
+  // What one local save did, as Automations events (automations/core.js
+  // EVENTS base.add / base.change): a record that is new (not a record
+  // brought back by Undo, not one of a table made in the same save, as
+  // an import does) and each stored field whose value got a new time
+  // (not when the field itself changed in the same save, as a type
+  // change does). At most max (default 20) per save. → [{ ev, key, text }]
+  function events(before, after, max) {
+    max = typeof max === "number" ? max : 20;
+    var out = [];
+    if (!isObj(before) || !isObj(after)) return out;
+    var A = index(after), B = index(before);
+    var tombs = isObj(before.tombs) ? before.tombs : {};
+    function head(r) {
+      var tb = A.tables[r.t], b = tb ? A.bases[tb.base] : null, pf = primary(A, r.t), title = "";
+      try { title = pf ? text(A, r, pf) : ""; } catch (e) { title = ""; }
+      return line((b ? b.name + " › " : "") + (tb ? tb.name : "") + (title ? " · " + title : ""), 200);
+    }
+    for (var i = 0; i < after.recs.length && out.length < max; i++) {
+      var r = after.recs[i], old = B.recs[r.id];
+      if (!B.tables[r.t]) continue;
+      if (!old) {
+        if (has(tombs, r.id)) continue;
+        out.push({ ev: "base.add", key: "base:" + r.id + ":a", text: head(r) });
+        continue;
+      }
+      var fids = Object.keys(r.fm).sort();
+      for (var j = 0; j < fids.length && out.length < max; j++) {
+        var fid = fids[j], f = A.fields[fid], fb = B.fields[fid];
+        if (!f || !fb || NOSTORE[f.type] || f.m !== fb.m) continue;
+        if ((old.fm[fid] || 0) >= r.fm[fid]) continue;
+        var v = "";
+        try { v = text(A, r, f); } catch (e) { v = ""; }
+        out.push({ ev: "base.change", key: "base:" + r.id + ":" + fid + ":" + r.fm[fid],
+                   text: line(head(r) + " · " + f.name + ": " + v, 300) });
+      }
+    }
+    return out;
+  }
+
   // Characters the slice takes in localStorage (the space meter).
   function size(d) { return serialize(d).length; }
 
@@ -1991,7 +2031,7 @@
     opsFor: opsFor, needsValue: needsValue, query: query, layout: layout, groupKey: groupKey,
     ATT_DIR: ATT_DIR, FILE_RE: FILE_RE, MAX_ATT: MAX_ATT, attPath: attPath, usedFiles: usedFiles, cleanFiles: cleanFiles,
     coverField: coverField, coverOf: coverOf,
-    FORM_KEY: FORM_KEY, FORM_BATCH: FORM_BATCH, keyId: keyId, addFromForms: addFromForms, formSpec: formSpec, inputVal: formVal,
+    FORM_KEY: FORM_KEY, FORM_BATCH: FORM_BATCH, keyId: keyId, addFromForms: addFromForms, formSpec: formSpec, inputVal: formVal, events: events,
     VIEW_KINDS: VIEW_KINDS, visibleFields: visibleFields, stackField: stackField, stacks: stacks, dateField: dateField, monthGrid: monthGrid, orderedFields: orderedFields, summary: summary, compare: compare,
     uid: uid, fid: fid, oid: oid, putRow: putRow, addBase: addBase, addTable: addTable, addField: addField,
     remove: remove, restore: restore, rowsUnder: rowsUnder, setValues: setValues, addRecord: addRecord,

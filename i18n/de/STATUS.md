@@ -12,15 +12,10 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-<<<<<<< HEAD
 | assistant | 99% | 1922 / 1926 |
 | atelier | 100% | 1429 / 1429 |
-=======
-| assistant | 99% | 1923 / 1925 |
-| atelier | 100% | 1408 / 1408 |
->>>>>>> 48bbb431 (Base: the Assistant and orOS Gate read Base and add records, wave B4b (BASE-1))
 | aura | 100% | 84 / 84 |
-| automations | 100% | 261 / 261 |
+| automations | 100% | 263 / 263 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
