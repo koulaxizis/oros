@@ -22,6 +22,12 @@ In ihren Texten wird `{text}` zu dem, was die Mitteilung oder das Ereignis sagte
 
 Der Schritt `Timesheet-Timer` startet in [Timesheet](app:timesheet) einen Timer mit dem Titel, den du angibst (und dem Projekt dieses Namens, falls vorhanden), oder stoppt den laufenden Timer. Ein Start stoppt nie einen Timer, der schon läuft. Wie jeder Schritt läuft er, wenn du auf die Mitteilung der Regel tippst.
 
+### Vor einem Termin, und Ziele
+- `{n} Min. vor einem Termin meines Tages`: etwas mit Uhrzeit in [Heute](app:today) (dein Kalender und die anderen Apps, die Heute eine Uhrzeit geben) beginnt gleich. Die Minuten stellst du ein, von 1 bis 120. Einträge von Apps, die nicht in der Suche erscheinen (Gesundheit, Zyklus und ähnliche), zählen nie, und solange `Sensible Arbeit` an ist, bleibt `{text}` leer statt des Terminnamens.
+- `Wenn der heutige Kassenumsatz … erreicht`: der Tagesumsatz an der Kasse in [Bestand](app:stock) erreicht den Betrag, den du einstellst. `Wenn die Ausgaben dieses Monats … übersteigen`: die Ausgaben dieses Monats in [Budget](app:budget) übersteigen ihn. Das läuft einmal am Tag (Umsatz) oder einmal im Monat (Ausgaben).
+
+Zwei Schritte geschehen von selbst, ohne Tippen: `Wiedergabe pausieren` hält an, was in orOS läuft (Musik, Podcasts, Radio, Soundmixer), und `Einen Ton spielen` spielt einen kurzen Klang (nie bei „Nicht stören“). Sie geschehen auf jedem Gerät, auf dem die Regel läuft, auch wenn ein anderes Gerät die Mitteilung schon gezeigt hat. Die fertigen Regeln `Ruhe vor einem Termin` und `Umsatzziel erreicht` zeigen beides.
+
 ## Ordner auf deinem Computer
 Läuft [orOS Bridge](https://github.com/koulaxizis/oros-bridge/releases/latest) (kostenlos, Windows und Linux) auf deinem Computer, kann eine Regel einem Ordner dort folgen, zum Beispiel dem Ordner, in den dein Scanner speichert, oder deinen Downloads.
 - Drücke `Computer-Ordner`, hake `Ordner auf diesem Computer beobachten` an und verbinde dich mit dem Code, den Bridge zeigt. Dann öffnet `Ordner hinzufügen…` die Ordnerauswahl auf dem Computer; nur du wählst die Ordner, und `Nicht mehr beobachten` gibt einen frei.

@@ -64,7 +64,7 @@
       "x.amount": "Amount", "x.note": "Note", "x.app": "App", "x.min": "Minutes", "x.label": "Label",
       "x.question": "Question",
       "err.name": "Give the rule a name.", "err.acts": "Add at least one step and fill it in.",
-      "err.date": "Pick a date.", "err.full": "This device is out of storage space. The change was not saved.",
+      "err.date": "Pick a date.", "err.amount": "Enter the amount.", "err.min": "Minutes: from 1 to {n}.", "err.full": "This device is out of storage space. The change was not saved.",
       "saved": "Saved", "deleted": "Deleted", "undo": "Undo", "on": "On", "off": "Off",
       "next": "Next: {when}", "never": "Will not run again", "needs": "Needs {app}, which is not installed here",
       "run.notice": "Notice: {text}", "run.at": "Run of {when}", "run.none": "This rule has no other step.",
@@ -73,6 +73,8 @@
       "conf.del": "Delete this rule?",
       "a.file": "Open the file in an app", "a.print": "Print the file",
       "x.fileTo": "Open in", "x.printHint": "It prints on the computer the file arrived on, with that computer's printer.",
+      "a.pause": "Pause sounds", "ev.soonPick": "Some minutes before an event of my day", "a.sound": "Play a sound", "f.min": "Minutes before", "f.amount": "Amount",
+      "h.local": "Happens by itself on every device the rule runs on, without a tap.", "btn.now": "Try it", "run.local": "{step}: done by itself",
       "x.fileHint": "The file opens there and nothing is saved until you save it.",
       "btn.pc": "Computer folders", "pc.title": "Folders on this computer",
       "pc.hint": "With orOS Bridge on this computer, a new PDF or photo in a folder you choose can start a rule: open it in Scan PDF, Files or Invoices, or print it. Only you choose the folders, on this computer.",
@@ -134,7 +136,7 @@
       "x.amount": "Ποσό", "x.note": "Σημείωση", "x.app": "Εφαρμογή", "x.min": "Λεπτά", "x.label": "Ετικέτα",
       "x.question": "Ερώτηση",
       "err.name": "Δώσε ένα όνομα στον κανόνα.", "err.acts": "Πρόσθεσε τουλάχιστον ένα βήμα και συμπλήρωσέ το.",
-      "err.date": "Διάλεξε ημερομηνία.", "err.full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε.",
+      "err.date": "Διάλεξε ημερομηνία.", "err.amount": "Γράψε το ποσό.", "err.min": "Λεπτά: από 1 έως {n}.", "err.full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε.",
       "saved": "Αποθηκεύτηκε", "deleted": "Διαγράφηκε", "undo": "Αναίρεση", "on": "Ενεργός", "off": "Ανενεργός",
       "next": "Επόμενη: {when}", "never": "Δεν θα ξανατρέξει", "needs": "Χρειάζεται το {app}, που δεν είναι εγκατεστημένο εδώ",
       "run.notice": "Ειδοποίηση: {text}", "run.at": "Εκτέλεση της {when}", "run.none": "Αυτός ο κανόνας δεν έχει άλλο βήμα.",
@@ -143,6 +145,8 @@
       "conf.del": "Διαγραφή αυτού του κανόνα;",
       "a.file": "Άνοιγμα του αρχείου σε εφαρμογή", "a.print": "Εκτύπωση του αρχείου",
       "x.fileTo": "Άνοιγμα στο", "x.printHint": "Εκτυπώνεται στον υπολογιστή όπου ήρθε το αρχείο, με τον εκτυπωτή του.",
+      "a.pause": "Παύση ήχων", "ev.soonPick": "Λίγα λεπτά πριν από ένα ραντεβού της ημέρας μου", "a.sound": "Ένας ήχος", "f.min": "Λεπτά πριν", "f.amount": "Ποσό",
+      "h.local": "Γίνεται μόνο του σε κάθε συσκευή όπου τρέχει ο κανόνας, χωρίς πάτημα.", "btn.now": "Δοκιμή", "run.local": "{step}: έγινε μόνο του",
       "x.fileHint": "Το αρχείο ανοίγει εκεί και δεν αποθηκεύεται τίποτα πριν το αποθηκεύσεις εσύ.",
       "btn.pc": "Φάκελοι υπολογιστή", "pc.title": "Φάκελοι σε αυτόν τον υπολογιστή",
       "pc.hint": "Με το orOS Bridge σε αυτόν τον υπολογιστή, ένα νέο PDF ή μια νέα φωτογραφία σε φάκελο που διαλέγεις μπορεί να ξεκινήσει έναν κανόνα: να ανοίξει στο Scan PDF, στα Αρχεία ή στα Τιμολόγια, ή να εκτυπωθεί. Τους φακέλους τους διαλέγεις μόνο εσύ, σε αυτόν τον υπολογιστή.",
@@ -364,7 +368,7 @@
     for (var i = 1; i <= 31; i++) md.appendChild(new Option(String(i), String(i)));
     md.appendChild(new Option(t("md.last"), "-1"));
     var ev = $("f-ev");
-    C.EVENTS.forEach(function (n) { ev.appendChild(new Option(C.whenText({ t: "event", ev: n }, BASE), n)); });
+    C.EVENTS.forEach(function (n) { ev.appendChild(new Option(n === "event.soon" ? t("ev.soonPick") : C.whenText({ t: "event", ev: n }, BASE), n)); });
     var iw = $("if-wd");
     WD_ORDER.forEach(function (n) {
       var lab = el("label", "wdbox");
@@ -408,7 +412,10 @@
     $("f-at").required = k !== "open" && !sig;
     $("napp-row").hidden = k !== "notice";
     $("ev-row").hidden = k !== "event";
-    $("word-row").hidden = !sig;
+    var ev = k === "event" ? $("f-ev").value : "";
+    $("min-row").hidden = ev !== "event.soon";
+    $("amount-row").hidden = !C.GOALS[ev];
+    $("word-row").hidden = !sig || ev === "event.soon" || !!C.GOALS[ev];
     $("if-box").hidden = !sig;
     $("ed-text").hidden = !sig;
     fillAddSelect();
@@ -433,6 +440,8 @@
     fillNoticeApps(w.t === "notice" ? w.app || "" : "");
     if (w.t === "event") $("f-ev").value = w.ev;
     $("f-word").value = w.word || "";
+    $("f-min").value = String(w.min || 10);
+    $("f-amount").value = w.amount ? (w.amount / 100).toFixed(2).replace(/\.00$/, "") : "";
     var cond = src["if"] || {};
     [].forEach.call($("if-wd").querySelectorAll("input"), function (cb) {
       cb.checked = Array.isArray(cond.wd) && cond.wd.indexOf(+cb.value) >= 0;
@@ -548,6 +557,8 @@
         li.appendChild(el("p", "hint", t("x.fileHint")));
       } else if (a.a === "print") {
         li.appendChild(el("p", "hint", t("x.printHint")));
+      } else if (C.LOCAL[a.a]) {
+        li.appendChild(el("p", "hint", t("h.local")));
       } else if (C.OUT[a.a]) {
         outFields(li, a);
       }
@@ -614,7 +625,12 @@
     else if (k === "year") when = { t: "year", at: at, date: String($("f-date").value).slice(5) };
     else if (k === "once") when = { t: "once", at: at, date: $("f-date").value };
     else if (k === "notice") when = { t: "notice", app: $("f-napp").value, word: $("f-word").value.trim() };
-    else if (k === "event") when = { t: "event", ev: $("f-ev").value, word: $("f-word").value.trim() };
+    else if (k === "event") {
+      var ev = $("f-ev").value;
+      when = { t: "event", ev: ev, word: ev === "event.soon" || C.GOALS[ev] ? "" : $("f-word").value.trim() };
+      if (ev === "event.soon") when.min = Math.floor(+$("f-min").value) || 0;
+      if (C.GOALS[ev]) when.amount = Math.round(parseFloat(String($("f-amount").value).replace(",", ".")) * 100) || 0;
+    }
     else when = { t: "open" };
     var r = { name: $("f-name").value.trim(), on: $("f-on").checked, when: when };
     if (k === "notice" || k === "event") {
@@ -628,6 +644,8 @@
   function check(r) {
     if (!r.name) return t("err.name");
     if ((r.when.t === "year" || r.when.t === "once") && !C.cleanWhen(r.when)) return t("err.date");
+    if (r.when.t === "event" && C.GOALS[r.when.ev] && !(r.when.amount > 0)) return t("err.amount");
+    if (r.when.t === "event" && r.when.ev === "event.soon" && !(r.when.min >= 1 && r.when.min <= C.SOON_MAX)) return t("err.min", { n: C.SOON_MAX });
     var bad = r["do"].some(function (a) { return !C.cleanAction(a); });
     if (!r["do"].length || bad) return t("err.acts");
     var fileWhen = r.when.t === "event" && C.bridgeEvent(r.when.ev);
@@ -674,6 +692,17 @@
     rule["do"].forEach(function (a) {
       var li = el("li", "act");
       if (a.a === "notify") { li.appendChild(el("span", "", t("run.notice", { text: C.fill(a.text, at, BASE, h && h.said ? h.said(key) : "") }))); ul.appendChild(li); return; }
+      if (C.LOCAL[a.a] && rule.id !== "try") { li.appendChild(el("span", "", t("run.local", { step: t("a." + a.a) }))); ul.appendChild(li); return; }
+      if (C.LOCAL[a.a]) {
+        li.appendChild(el("span", "grow", t("a." + a.a)));
+        var lb = el("button", "chip pri", t("btn.now"));
+        lb.type = "button";
+        lb.disabled = !h;
+        lb.addEventListener("click", function () { if (h) h.runAction(a, at, "", key); });
+        li.appendChild(lb);
+        ul.appendChild(li);
+        return;
+      }
       var app = C.needs(a);
       li.appendChild(el("span", "grow", C.actText(a, BASE, appName)));
       var b = el("button", "chip pri", a.a === "print" ? t("a.print") : t("btn.do", { app: appName(app) }));
@@ -830,8 +859,11 @@
     $("wh-start").addEventListener("click", function () { hookDo(function (H) { return H.on(); }); });
     $("wh-off").addEventListener("click", function () { hookDo(function (H) { return H.off(); }); });
     $("wh-rot").addEventListener("click", function () {
-      if (!window.confirm(t("wh.rotAsk"))) return;
-      hookDo(function (H) { return H.rotate(); });
+      // themed question (R14, PICK-1 T4): pickers.js is on every page
+      if (!window.OrosPick || !window.OrosPick.ask) { toast(t("wh.err")); return; }
+      window.OrosPick.ask({ text: t("wh.rotAsk"), danger: true }).then(function (yes) {
+        if (yes) hookDo(function (H) { return H.rotate(); });
+      });
     });
     $("wh-copy").addEventListener("click", function () {
       var v = $("wh-url").value;
@@ -850,7 +882,7 @@
     $("tpl-btn").addEventListener("click", showTemplates);
     $("empty-tpl").addEventListener("click", showTemplates);
     $("f-when").addEventListener("change", showWhen);
-    $("f-ev").addEventListener("change", fillAddSelect);
+    $("f-ev").addEventListener("change", showWhen);
     wirePc();
     $("add-act").addEventListener("click", function () {
       if (editing.acts.length >= C.MAX_ACTIONS) return;

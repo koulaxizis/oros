@@ -210,7 +210,7 @@ test("Assistant / orOS Gate read: Writer's translations summary (WriterCommands.
   const W = require("../writer/commands.js");
   const sum = {
     traaaaaa1: [45.5, 1000, "Book · EL", "en", "el", "d1", 455, Date.UTC(2026, 10, 13)],
-    trbbbbbb2: [100, 20, "Other", "en", "de", "d2", 20, Date.UTC(2026, 10, 14)],
+    trbbbbbb2: [100, 20, "Other", "en", "de", "d2", 20, Date.UTC(2026, 10, 14), "ti1", "2026-12-20", 400],
     trcccccc3: [10, 20],                     // a T1 summary: no name, not listed
     bad: [1, 1, "x", "en", "el", "d1", 1, 1]
   };
@@ -220,5 +220,8 @@ test("Assistant / orOS Gate read: Writer's translations summary (WriterCommands.
   assert.equal(r[0].percent_done, 45.5);
   assert.equal(r[0].words_done, 455);
   assert.equal(r[1].last_worked, "2026-11-14");
+  // proposals 1-2
+  assert.deepEqual([r[1].publishing_title, r[1].deadline, r[1].words_a_day_goal], [true, "2026-12-20", 400]);
+  assert.equal(r[0].deadline, undefined);
   assert.deepEqual(W.translations(null, "d1"), []);
 });

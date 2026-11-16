@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.21.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.29.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -4082,6 +4082,10 @@
     appId = String(appId || "");
     var al = appAlias(appId);    // APP-ALIAS: the old id opens its new home
     if (al) { appId = al.to; target = aliasTarget(al, target); }
+    if (appId === "assistant" && aiHelper() === "claude") {   // HELPER-1
+      claudeInstead(target && typeof target === "object" && typeof target.ask === "string" ? target.ask : "");
+      return;
+    }
     var app = null;
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === appId) { app = state.apps[i]; break; }
@@ -4738,9 +4742,36 @@
     for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id) return true;
     return false;
   }
+  // HELPER-1 (Settings › Connected services, synced through gate/gate.js):
+  // "both" | "assistant" | "claude". With "claude" the Assistant leaves
+  // the menu and every way into it opens Claude instead.
+  function aiHelper() {
+    try {
+      var o = JSON.parse(localStorage.getItem("oros-ai-helper") || "null");
+      return o && (o.v === "assistant" || o.v === "claude") ? o.v : "both";
+    } catch (e) { return "both"; }
+  }
+  // Claude in place of the Assistant: Claude desktop when the System
+  // extension has it here, else claude.ai in a window. A question goes
+  // to the clipboard (never into an address, which browsers keep), and
+  // a short note says so; nothing is sent until the person sends it.
+  function claudeInstead(q) {
+    var text = typeof q === "string" ? q.trim().slice(0, 2000) : "";
+    closeMenu();
+    if (text && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      navigator.clipboard.writeText(text).then(function () { scToast("ok", window.t("helper.copied")); }, function () {});
+    }
+    if (document.documentElement.getAttribute("data-oros-sys-claude") === "ready") {
+      try { document.dispatchEvent(new CustomEvent("oros-claude", { detail: "open" })); return; } catch (e) {}
+    }
+    window.open("https://claude.ai/new", "_blank", "noopener");
+  }
+  window.orosAiHelper = { mode: aiHelper, claude: claudeInstead };
+  window.addEventListener("oros-ai-helper", function () { try { renderMenu(); } catch (e) {} });
   // Ctrl+Alt+Shift+A and the menu search's "Ask the Assistant" row.
   function openAssistant(q) {
     if (!hasApp("assistant")) return;
+    if (aiHelper() === "claude") { claudeInstead(q); return; }
     if (typeof q === "string" && q.trim()) {
       closeMenu();
       window.__orosOpenAt("assistant", { ask: q.trim().slice(0, 2000) });
@@ -5037,6 +5068,68 @@
   }
   quickWant = quickTakeHash();
   if (quickWant && quickWant.win) quickPlace();
+
+  // SB4: "#bar-win" is the desktop launcher's bar window (oros-portable,
+  // Windows): only the top bar shows, its title stays "orOS bar" (the
+  // launcher finds the window by it), and every app it would open opens
+  // in the main orOS window instead: through the "oros-barwin" channel
+  // when one is open, else the launcher opens it (/__oros-open).
+  var BARWIN = false, barCh = null;
+  (function () {
+    var h = "";
+    try { h = String(window.location.hash || ""); } catch (e) { return; }
+    if (h !== "#bar-win" || window.top !== window) return;
+    BARWIN = true;
+    try { window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search); } catch (e) {}
+    document.documentElement.classList.add("barwin");
+    document.title = "orOS bar";
+  })();
+  try { barCh = typeof BroadcastChannel === "function" ? new BroadcastChannel("oros-barwin") : null; } catch (e) { barCh = null; }
+  var BAR_APP_RE = /^[a-z0-9-]{1,40}$/;
+  // In the bar window: hand the app over. → true (always handled there).
+  function barwinOpen(id) {
+    id = BAR_APP_RE.test(String(id || "")) ? String(id) : "";
+    var asked = Date.now(), got = false;
+    if (barCh) {
+      var off = function (ev) {
+        var d = ev && ev.data;
+        if (d && d.t === "ok" && d.at === asked) { got = true; barCh.removeEventListener("message", off); }
+      };
+      barCh.addEventListener("message", off);
+      barCh.postMessage({ t: "open", id: id, at: asked });
+      setTimeout(function () {
+        barCh.removeEventListener("message", off);
+        if (!got) barwinLauncher(id);
+      }, 700);
+    } else barwinLauncher(id);
+    return true;
+  }
+  function barwinLauncher(id) {
+    try {
+      fetch("/__oros-open" + (id ? "?app=" + encodeURIComponent(id) : ""), { method: "POST", headers: { "X-Oros-Bar": "1" } })
+        .catch(function () {});
+    } catch (e) {}
+  }
+  // In a main window: open what the bar asks, and come to the front.
+  if (barCh) barCh.addEventListener("message", function (ev) {
+    var d = ev && ev.data;
+    if (BARWIN || SOLO || !d || d.t !== "open" || typeof d.at !== "number") return;
+    if (d.id && !BAR_APP_RE.test(String(d.id))) return;
+    barCh.postMessage({ t: "ok", at: d.at });
+    try { window.focus(); } catch (e) {}
+    if (d.id) openAppById(String(d.id));
+  });
+  if (BARWIN) {
+    // The menu button, the clock and the date: their app (or orOS
+    // itself) in the main window; nothing opens in the bar.
+    document.addEventListener("click", function (e) {
+      var tgt = e.target && e.target.closest ? e.target.closest("#btn-menu, #bar-time, #bar-date") : null;
+      if (!tgt) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      barwinOpen(tgt.id === "bar-time" ? "time" : tgt.id === "bar-date" ? "calendar" : "");
+    }, true);
+  }
   window.addEventListener("hashchange", function () {
     var w = quickTakeHash();
     if (!w) return;
@@ -5366,7 +5459,7 @@
       var b = document.createElement("button");
       b.type = "button";
       b.className = "menu-hit-more menu-ask";
-      b.textContent = window.t("search.ask").replace("{q}", q.length > 60 ? q.slice(0, 59) + "…" : q);
+      b.textContent = window.t(aiHelper() === "claude" ? "search.askClaude" : "search.ask").replace("{q}", q.length > 60 ? q.slice(0, 59) + "…" : q);
       b.addEventListener("click", function () { openAssistant(q); });
       host.appendChild(b);
     }
@@ -5523,7 +5616,9 @@
       var hideOk = !!(L && typeof L.menuHidden === "function");
       var hiddenCount = 0;
       var cats = {}, catRaw = {}, catAll = {};
+      var claudeOnly = aiHelper() === "claude";   // HELPER-1: no Assistant in the menu, not even in a search
       state.apps.forEach(function (app) {
+        if (claudeOnly && app.id === "assistant") return;
         if (hideOk && L.menuHidden(app.id)) {
           hiddenCount++;
           if (!q) return;
@@ -9338,7 +9433,7 @@
     { id: "cmdbar",     key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
     { id: "switcher",   key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
     { id: "overview",   key: "e", label: "sc.desc.overview",   fn: function() { ovOpen(); } },
-    { id: "quickask",   key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
+    { id: "quickask",   key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick && aiHelper() !== "claude") window.orosQuick.mini(); else openAssistant(); } },
     { id: "qs",         key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } },
     { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } },
     { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } },
@@ -12036,6 +12131,10 @@
       if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
       return;
     }
+    if (name === "smartbar-look") {      // smartbar.js SB3: "", glass, midnight, solid
+      if (window.orosSmartBar && window.orosSmartBar.setLook) window.orosSmartBar.setLook(String(value || ""));
+      return;
+    }
     if (/^smartbar-move:/.test(name)) {  // smartbar.js: "smartbar-move:<kind>", value -1 (left) / 1 (right)
       if (window.orosSmartBar) window.orosSmartBar.move(name.slice(14), Number(value) < 0 ? -1 : 1);
       return;
@@ -12313,6 +12412,7 @@
       var want = on ? DISC_ICON : discIcon;
       if (icon.getAttribute("href") !== want) icon.setAttribute("href", want);
     }
+    if (BARWIN) return;                          // SB4: the launcher finds the bar window by its title
     var title = window.t("strict.disc.title");
     if (on && document.title !== title) document.title = title;
     if (on && !discObs && typeof MutationObserver === "function") {
@@ -12952,6 +13052,7 @@
     // TILL-1: on a till-only device anything but Stock needs the owner.
     if (TILL && app && app.id !== "stock") { window.orosLock.till.ask(); return; }
     if (typeof scrWins !== "undefined" && scrElsewhere(app)) return;   // SS1: it lives on the other screen
+    if (app && app.id === "assistant" && aiHelper() === "claude") { claudeInstead(""); return; }   // HELPER-1 (desktop, Dock, links)
     if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
     var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;
@@ -14275,6 +14376,7 @@
   // stale apps.json, fall back to the menu instead of dying silently.
   function openAppById(id) {
     if (appAlias(id)) { window.__orosOpenAt(id, null); return; }   // APP-ALIAS
+    if (BARWIN && barwinOpen(id)) return;            // SB4: the bar window opens nothing itself
     if (state.running && state.running.id === id) return;   // already there
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === id) { openApp(state.apps[i]); return; }
@@ -15857,6 +15959,13 @@
     }
     return out;
   }
+  // SB2: the Automations step "Pause sounds" (automations/host.js).
+  // Pauses every player that is playing; nothing else.
+  window.__orosPauseAll = function () {
+    var n = 0;
+    qsMedia().forEach(function (m) { if (m.playing) { try { m.toggle(); n++; } catch (e) {} } });
+    return n;
+  };
 
   // START-1: what First steps (widgets.js) ticks, read from the real
   // state: a Notes page, a To-Do task, a wallpaper or icon pack other

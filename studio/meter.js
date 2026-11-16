@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Studio — loudness and level meter (studio/meter.js, v1.0.0)
+// orOS Studio — loudness and level meter (studio/meter.js, v1.1.0)
 // Pure code, no DOM, no Web Audio: the same numbers in the live master
 // meter (meter.worklet.js), in "Measure the song / a file", in the
 // reference comparison and in the audiobook checks (ACX, Storytel).
@@ -222,7 +222,8 @@
     this.acc = 0; this.cnt = 0;
     this.total = 0; this.frames = 0;
     this.dc = new Float64Array(this.ch);
-    this.clip = 0;
+    this.clip = 0; this.clipAt = -1;
+    this.pk = 0; this.pkAt = 0;
     this.zrun = 0; this.zmax = 0;
   }
   Levels.prototype.push = function (chans, n, off) {
@@ -236,7 +237,9 @@
         e += v * v;
         this.dc[c] += v;
         if (v !== 0) zero = false;
-        if (v >= CLIP || v <= -CLIP) this.clip++;
+        var av = v < 0 ? -v : v;
+        if (av > this.pk) { this.pk = av; this.pkAt = this.frames + i; }
+        if (av >= CLIP) { if (this.clip === 0) this.clipAt = this.frames + i; this.clip++; }
       }
       e /= ch;
       this.acc += e; this.total += e;
@@ -272,7 +275,8 @@
     return {
       dur: this.frames / sr, rms: rms, floor: floorDb,
       head: head * this.bn / sr, tail: tail * this.bn / sr, voice: head < nb,
-      zero: this.zmax / sr, dc: db(dc), clip: this.clip
+      zero: this.zmax / sr, dc: db(dc), clip: this.clip,
+      peakAt: this.pkAt / sr, clipAt: this.clipAt < 0 ? -1 : this.clipAt / sr
     };
   };
 
@@ -296,7 +300,7 @@
       srate: this.sr, ch: this.chans.length, dur: b.dur,
       i: a.i, lra: a.lra, mmax: a.mmax, smax: a.smax, tp: db(a.tp), sp: db(a.sp),
       rms: b.rms, floor: b.floor, head: b.head, tail: b.tail, voice: b.voice,
-      zero: b.zero, dc: b.dc, clip: b.clip
+      zero: b.zero, dc: b.dc, clip: b.clip, peakAt: b.peakAt, clipAt: b.clipAt
     };
   };
   // chans: Float32Array (or Float64Array) per channel → the full report
@@ -340,13 +344,13 @@
     var pk = isFinite(rep.tp) ? Math.max(rep.tp, rep.sp) : rep.sp;
     var out = [
       { k: "rms", v: rep.rms, lo: s.rms[0], hi: s.rms[1], ok: rep.rms >= s.rms[0] && rep.rms <= s.rms[1] },
-      { k: "peak", v: pk, hi: s.peak, ok: !(pk > s.peak) },
+      { k: "peak", v: pk, hi: s.peak, ok: !(pk > s.peak), at: rep.peakAt },
       { k: "floor", v: rep.floor, hi: s.floor, ok: rep.floor <= s.floor },
       { k: "head", v: rep.head, lo: s.head[0], hi: s.head[1], ok: rep.head >= s.head[0] - 0.005 && rep.head <= s.head[1] + 0.005 },
       { k: "tail", v: rep.tail, lo: s.tail[0], hi: s.tail[1], ok: rep.tail >= s.tail[0] - 0.005 && rep.tail <= s.tail[1] + 0.005 },
       { k: "zero", v: rep.zero, hi: s.zero, ok: rep.zero <= s.zero },
       { k: "dur", v: rep.dur, hi: s.maxDur, ok: rep.dur <= s.maxDur },
-      { k: "clip", v: rep.clip, hi: 0, ok: rep.clip === 0 }
+      { k: "clip", v: rep.clip, hi: 0, ok: rep.clip === 0, at: rep.clipAt >= 0 ? rep.clipAt : undefined }
     ];
     return out;
   }
@@ -362,7 +366,7 @@
   }
 
   var api = {
-    VERSION: "1.0.0", Meter: Meter, Levels: Levels, Analysis: Analysis, analyse: analyse, check: check, gainFor: gainFor,
+    VERSION: "1.1.0", Meter: Meter, Levels: Levels, Analysis: Analysis, analyse: analyse, check: check, gainFor: gainFor,
     platform: platform, PLATFORMS: PLATFORMS, SPECS: SPECS, lufs: lufs, db: db, kweights: kweights, NB: NB
   };
   root.StudioMeter = api;

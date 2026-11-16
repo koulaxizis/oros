@@ -164,3 +164,23 @@ test("Send to Writer: Typewriter sends the kept text, Writer makes a new documen
   open({ newDoc: { title: "x" } });
   assert.equal(made.length, 2, "empty or missing text makes nothing");
 });
+
+test("Prompter → Typewriter: { newPage: { text } } receiver and the button (merge audit item 10)", () => {
+  const tw = fs.readFileSync(path.join(__dirname, "..", "typewriter/typewriter.js"), "utf8");
+  const pr = fs.readFileSync(path.join(__dirname, "..", "prompter/prompter.js"), "utf8");
+  assert.match(tw, /window\.__orosOpenAt = openTarget;/);
+  assert.match(tw, /__orosTakeTarget\("typewriter"\)/);
+  assert.match(tw, /tg\.newPage\.text/);
+  assert.match(tw, /cur\.text = committed;/, "a sheet opened with a prompt keeps it once something is typed");
+  assert.match(pr, /__orosOpenAt\("typewriter", \{ newPage: \{ text: text \} \}\)/);
+  for (const k of ["btn.typewriter", "btn.typewriterTitle"]) {
+    assert.ok(pr.split('"' + k + '":').length === 3, k + " EN + EL");
+    assert.ok(fs.readFileSync(path.join(__dirname, "..", "i18n/de/prompter.js"), "utf8").includes('"' + k + '":'), k + " DE");
+  }
+  for (const f of ["prompter/help.en.txt", "prompter/help.el.txt", "i18n/de/help/prompter.txt"]) {
+    assert.ok(fs.readFileSync(path.join(__dirname, "..", f), "utf8").includes("(app:typewriter)"), f);
+  }
+  for (const f of ["typewriter/help.en.txt", "typewriter/help.el.txt", "i18n/de/help/typewriter.txt"]) {
+    assert.ok(fs.readFileSync(path.join(__dirname, "..", f), "utf8").includes("(app:prompter)"), f);
+  }
+});

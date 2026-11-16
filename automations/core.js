@@ -62,9 +62,23 @@
   // Title" and, for a change, " · Field: value").
   EVENTS.push("base.add", "base.change");
   EVENT_APP["base.add"] = EVENT_APP["base.change"] = "base";
+  // Smart top bar SB2: what the shell watches itself (automations/host.js
+  // soonTick): an event of today's summary starts in N minutes (when.min,
+  // 1-120, default 10), today's till sales reach / this month's spending
+  // passes an amount (when.amount, cents). The signal carries the number
+  // (sig.n: minutes left, or the cents now).
+  EVENTS.push("event.soon", "goal.sales", "goal.spent");
+  EVENT_APP["event.soon"] = "today"; EVENT_APP["goal.sales"] = "stock"; EVENT_APP["goal.spent"] = "budget";
+  var GOALS = { "goal.sales": true, "goal.spent": true };
+  var SOON_MIN = 10, SOON_MAX = 120;
   var WORD_MAX = 60;
   var SIG_KEY_MAX = 200;
-  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "file", "print", "track"];
+  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "file", "print", "track", "pause", "sound"];
+  // SB2: steps this device does by itself, with no tap and no data
+  // written anywhere: pause what plays in orOS (music, podcasts, radio,
+  // Sound Mixer) and a short chime. Every device the rule runs on does
+  // them once per run.
+  var LOCAL = { pause: true, sound: true };
   var FILE_ACTS = { file: true, print: true };
   // Wave A5: steps that leave the device by themselves (AUTO-2 "each
   // address is confirmed once"): push = ntfy or Gotify, hook = a JSON
@@ -115,6 +129,12 @@
     if (w.t === "event") {
       if (EVENTS.indexOf(w.ev) < 0) return null;
       var ew = { t: "event", ev: w.ev };
+      if (w.ev === "event.soon") ew.min = int(w.min, 1, SOON_MAX) || SOON_MIN;
+      if (GOALS[w.ev]) {
+        var amt = int(w.amount, 1, 100000000000);
+        if (amt === null) return null;
+        ew.amount = amt;
+      }
       var eword = line(w.word, WORD_MAX);
       if (eword) ew.word = eword;
       return ew;
@@ -202,6 +222,7 @@
     }
     if (a === "file") return FILE_TO.indexOf(x.to) >= 0 ? { a: a, to: x.to } : null;
     if (a === "print") return { a: a };
+    if (LOCAL[a]) return { a: a };
     if (OUT[a]) {
       var url = cleanUrl(x.url);
       if (!url) return null;
@@ -315,6 +336,8 @@
       if (sig.name === "automations" || BLOCKED_APPS[sig.name]) return null;
       if (w0.app && w0.app !== sig.name) return null;
     } else if (w0.ev !== sig.name) return null;
+    else if (w0.ev === "event.soon" && !(typeof sig.n === "number" && sig.n >= 0 && sig.n <= (w0.min || SOON_MIN))) return null;
+    else if (GOALS[w0.ev] && !(typeof sig.n === "number" && sig.n >= w0.amount)) return null;
     if (w0.word && fold(sig.text).indexOf(fold(w0.word)) < 0) return null;
     if (!inWindow(rule["if"], now)) return null;
     return rule.id + "@s" + hash(sig.kind + "|" + sig.name + "|" + sig.key.slice(0, SIG_KEY_MAX));
@@ -512,6 +535,7 @@
       "ev.bridge.pdf": "When a new PDF lands in a folder on my computer",
       "ev.bridge.photo": "When a new photo lands in a folder on my computer",
       "ev.bridge.file": "When any new file lands in a folder on my computer",
+      "ev.event.soon": "{n} min before an event of my day", "ev.goal.sales": "When today's till sales reach {amount}", "ev.goal.spent": "When this month's spending passes {amount}", "amt.some": "an amount", "act.pause": "pause what is playing", "act.sound": "play a chime", "tpl.meeting-quiet": "Quiet before a meeting", "tpl.meeting-quiet.text": "Starting soon: {text}", "tpl.sales-goal": "Sales goal reached", "tpl.sales-goal.text": "Today's sales reached your goal: {text}",
       "act.file": "open the file in {app}", "act.print": "print the file",
       "file.none": "This step needs a file that orOS Bridge reported on this computer.",
       "file.off": "orOS Bridge is not running on this computer, or this file is on another computer.",
@@ -565,6 +589,7 @@
       "ev.bridge.pdf": "Όταν μπαίνει νέο PDF σε φάκελο του υπολογιστή μου",
       "ev.bridge.photo": "Όταν μπαίνει νέα φωτογραφία σε φάκελο του υπολογιστή μου",
       "ev.bridge.file": "Όταν μπαίνει οποιοδήποτε νέο αρχείο σε φάκελο του υπολογιστή μου",
+      "ev.event.soon": "{n} λεπτά πριν από ένα ραντεβού της ημέρας μου", "ev.goal.sales": "Όταν οι σημερινές πωλήσεις του ταμείου φτάσουν το ποσό {amount}", "ev.goal.spent": "Όταν τα έξοδα του μήνα ξεπεράσουν το ποσό {amount}", "amt.some": "που ορίζεις", "act.pause": "παύση ό,τι παίζει", "act.sound": "ένας ήχος", "tpl.meeting-quiet": "Ησυχία πριν από ραντεβού", "tpl.meeting-quiet.text": "Ξεκινά σε λίγο: {text}", "tpl.sales-goal": "Ο στόχος πωλήσεων επιτεύχθηκε", "tpl.sales-goal.text": "Οι σημερινές πωλήσεις έφτασαν τον στόχο σου: {text}",
       "act.file": "άνοιγμα του αρχείου στο {app}", "act.print": "εκτύπωση του αρχείου",
       "file.none": "Αυτό το βήμα χρειάζεται ένα αρχείο που ανέφερε το orOS Bridge σε αυτόν τον υπολογιστή.",
       "file.off": "Το orOS Bridge δεν τρέχει σε αυτόν τον υπολογιστή ή το αρχείο είναι σε άλλον υπολογιστή.",
@@ -610,7 +635,7 @@
   // dates), `from` the source label the receiver shows.
   function call(action, at, lang, from, said) {
     var a = cleanAction(action);
-    if (!a || a.a === "notify" || OUT[a.a]) return null;
+    if (!a || a.a === "notify" || OUT[a.a] || LOCAL[a.a]) return null;
     var f = function (s) { return fill(s, at, lang, said); };
     if (a.a === "todo") {
       var add = { from: from, items: a.items.map(function (s) { return { text: f(s).slice(0, LINE_MAX) }; }) };
@@ -669,7 +694,11 @@
       var nt = when.app ? sub(w(lang, "when.noticeApp"), { app: appName ? appName(when.app) : when.app }) : w(lang, "when.notice");
       return nt + (when.word ? sub(w(lang, "when.word"), { word: when.word }) : "");
     }
-    if (when.t === "event") return w(lang, "ev." + when.ev) + (when.word ? sub(w(lang, "when.word"), { word: when.word }) : "");
+    if (when.t === "event") {
+      var et = sub(w(lang, "ev." + when.ev), { n: when.min || SOON_MIN,
+        amount: when.amount ? amountText(when.amount, lang) : w(lang, "amt.some") });
+      return et + (when.word ? sub(w(lang, "when.word"), { word: when.word }) : "");
+    }
     if (when.t === "day") {
       if (!when.wd.length) return w(lang, "when.day") + at;
       var order = [1, 2, 3, 4, 5, 6, 0].filter(function (n) { return when.wd.indexOf(n) >= 0; });
@@ -679,6 +708,13 @@
     if (when.t === "year") { var p = MD_RE.exec(when.date); return sub(w(lang, "when.year"), { date: +p[2] + "/" + +p[1] }) + at; }
     var q = YMD_RE.exec(when.date);
     return sub(w(lang, "when.once"), { date: +q[3] + "/" + +q[2] + "/" + q[1] }) + at;
+  }
+  // An amount in cents, as a plain number in the person's language (the
+  // rule does not know the currency; Budget and Stock keep their own).
+  function amountText(cents, lang) {
+    var v = cents / 100, loc = lang === "el" ? "el-GR" : lang === "de" ? "de-DE" : "en-GB";
+    try { return new Intl.NumberFormat(loc, { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }).format(v); }
+    catch (e) { return String(v); }
   }
   function actText(a, lang, appName) {
     if (a.a === "todo") return sub(w(lang, "act.todo"), { n: a.items.length });
@@ -694,14 +730,14 @@
     var parts = [], rest = [];
     rule["do"].forEach(function (a) {
       if (a.a === "notify") parts.push(fill(a.text, at, lang, said));
-      else if (OUT[a.a]) parts.push(actText(a, lang, appName));
+      else if (OUT[a.a] || LOCAL[a.a]) parts.push(actText(a, lang, appName));
       else rest.push(actText(a, lang, appName));
     });
     if (rest.length) parts.push(sub(w(lang, "notice.tap"), { what: rest.join(", ") }));
     return { title: rule.name || whenText(rule.when, lang), body: parts.join("\n").slice(0, 500) };
   }
   function pending(rule) {
-    return (rule && rule["do"] || []).filter(function (a) { return a.a !== "notify" && !OUT[a.a]; });
+    return (rule && rule["do"] || []).filter(function (a) { return a.a !== "notify" && !OUT[a.a] && !LOCAL[a.a]; });
   }
 
   // ---------- Ready-made rules (templates) ----------
@@ -739,7 +775,12 @@
     { id: "scan-in", when: { t: "event", ev: "bridge.pdf" },
       "do": [{ a: "notify", text: "@tpl.scan-in.text" }, { a: "file", to: "scanpdf" }] },
     { id: "photo-in", when: { t: "event", ev: "bridge.photo" },
-      "do": [{ a: "notify", text: "@tpl.photo-in.text" }, { a: "file", to: "files" }] }
+      "do": [{ a: "notify", text: "@tpl.photo-in.text" }, { a: "file", to: "files" }] },
+    // SB2: the smart top bar's little automations
+    { id: "meeting-quiet", when: { t: "event", ev: "event.soon", min: 5 },
+      "do": [{ a: "pause" }, { a: "notify", text: "@tpl.meeting-quiet.text" }] },
+    { id: "sales-goal", when: { t: "event", ev: "goal.sales", amount: 50000 },
+      "do": [{ a: "sound" }, { a: "notify", text: "@tpl.sales-goal.text" }] }
   ];
   function pick(v, lang, k) {
     if (typeof v !== "string" || v.charAt(0) !== "@") return v;
@@ -774,6 +815,7 @@
     lastAt: lastAt, nextAt: nextAt, due: due, fill: fill, call: call, needs: needs, runnable: runnable,
     whenText: whenText, actText: actText, notice: notice, pending: pending,
     OUT: OUT, cleanUrl: cleanUrl, hostOf: hostOf, outbound: outbound, outSteps: outSteps,
+    LOCAL: LOCAL, GOALS: GOALS, SOON_MIN: SOON_MIN, SOON_MAX: SOON_MAX, amountText: amountText,
     EVENTS: EVENTS.slice(), EVENT_APP: EVENT_APP, bridgeEvent: bridgeEvent, FILE_TO: FILE_TO.slice(), FILE_ACTS: FILE_ACTS, cleanIf: cleanIf, inWindow: inWindow, matches: matches, fold: fold,
     templates: templates, fromTemplate: fromTemplate, ymdOf: ymdOf, from: from, STRINGS: STRINGS
   };
