@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 45500 of 45992 (98%)
-- Help pages: 157 of 157 (100%)
+- Strings: 45946 of 46442 (98%)
+- Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -12,14 +12,14 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1899 / 1901 |
+| assistant | 99% | 1922 / 1926 |
 | atelier | 100% | 1408 / 1408 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 261 / 261 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
-| base | 99% | 313 / 314 |
+| base | 99% | 321 / 322 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
@@ -46,7 +46,7 @@ text is still written in the code. They switch over wave by wave
 | designkit | 100% | 203 / 203 |
 | device | 100% | 122 / 122 |
 | diary | 100% | 236 / 236 |
-| dice | 100% | 52 / 52 |
+| dice | 100% | 57 / 57 |
 | discover | English for now | 3 / 3 |
 | dots | 100% | 55 / 55 |
 | enrichui | 100% | 28 / 28 |
@@ -54,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 98% | 720 / 733 |
+| files | 98% | 770 / 785 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -74,11 +74,11 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | 100% | 90 / 90 |
 | kanban | 99% | 355 / 358 |
 | labels | 100% | 88 / 88 |
-| layout | 99% | 1087 / 1095 |
+| layout | 99% | 1088 / 1096 |
 | library | 100% | 327 / 327 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
-| lyricsync | 100% | 289 / 289 |
+| lyricsync | 100% | 299 / 299 |
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 502 / 502 |
 | mancala | 100% | 61 / 61 |
@@ -99,7 +99,7 @@ text is still written in the code. They switch over wave by wave
 | netizen | 98% | 172 / 175 |
 | newsletter | 99% | 1003 / 1008 |
 | nonogram | 100% | 70 / 70 |
-| notes | 99% | 277 / 278 |
+| notes | 99% | 292 / 293 |
 | oracle | 100% | 38 / 38 |
 | pad | 100% | 307 / 307 |
 | passwords | 99% | 467 / 468 |
@@ -113,7 +113,7 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 332 / 332 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 96% | 653 / 677 |
+| publish | 96% | 693 / 717 |
 | qr | 100% | 248 / 248 |
 | quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |
@@ -127,10 +127,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 545 / 545 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1462 / 1477 |
+| settings | 99% | 1580 / 1595 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1208 / 1213 |
+| shell | 99% | 1215 / 1220 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 375 / 375 |
@@ -144,9 +144,9 @@ text is still written in the code. They switch over wave by wave
 | spreadsheet | 82% | 409 / 495 |
 | startpage | English for now | 0 / 14 |
 | stickies | 100% | 124 / 124 |
-| stock | 99% | 784 / 789 |
+| stock | 99% | 804 / 809 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 776 / 776 |
+| studio | 100% | 894 / 894 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 60 / 60 |
@@ -157,7 +157,7 @@ text is still written in the code. They switch over wave by wave
 | today | 100% | 155 / 155 |
 | todo | 100% | 271 / 271 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 127 / 127 |
+| transfer | 100% | 130 / 130 |
 | travel | 100% | 555 / 555 |
 | typewriter | 100% | 46 / 46 |
 | typing | 94% | 170 / 180 |
@@ -168,11 +168,11 @@ text is still written in the code. They switch over wave by wave
 | weather | 100% | 190 / 190 |
 | whack | 100% | 51 / 51 |
 | wheel | 100% | 107 / 107 |
-| whiteboard | 100% | 284 / 284 |
+| whiteboard | 100% | 302 / 302 |
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
-| writer | 100% | 531 / 531 |
+| writer | 100% | 541 / 541 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
 

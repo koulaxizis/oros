@@ -16,7 +16,7 @@ test.before(async () => { R = await import("../relay/gate.js"); });
 function assistantTools() {
   return C.toolsFor({ data: 1, summary: 1, entries: 1, openFile: 1, rebuild: 1, house: 1, epub: 1, changes: 1, creates: ["todo"], links: 1,
                       partnerLinks: 1, actions: ["timer"], history: 1, edits: { writer: 1 }, recipes: ["layout"], newsletter: 1,
-                      cover: 1, rules: 1, web: 1, lines: ["budget", "invoices", "stock", "publish"], kbCols: 1, files: "write" });
+                      cover: 1, rules: 1, web: 1, lines: ["budget", "invoices", "stock", "publish"], kbCols: 1, files: "write", fonts: 1 });
 }
 
 // A tool on one side only: { twin: [tools on the other side that do the
@@ -99,4 +99,23 @@ test("the relay takes the device's whole tool list", () => {
   assert.deepEqual(R.cleanDevTools(t).map((x) => x.name), t.map((x) => x.name).filter((n) => !own.has(n)), "none dropped (the relay keeps its own search_data, app_summary, read_item)");
   t.forEach((x) => assert.ok(x.description.length <= 8000, x.name + ": the relay cuts descriptions at 8000"));
   assert.ok(C.GATE_TOOLS.length <= R.DEV_TOOLS_MAX, "DEV_TOOLS_MAX holds every gate tool");
+});
+
+// FM-7: the families of Settings › Fonts, read only, on both sides.
+test("list_fonts: the Assistant's and the gate's, read only, the same filters", () => {
+  const G = require("../gate/gate.js");
+  const a = assistantTools().find((t) => t.name === "list_fonts");
+  assert.ok(a, "the Assistant has list_fonts");
+  assert.ok(C.GATE_TOOLS.indexOf("list_fonts") >= 0 && G.ACT_TOOLS.indexOf("list_fonts") >= 0, "the gate has list_fonts");
+  assert.equal(G.ACT_WRITE.indexOf("list_fonts"), -1);
+  assert.equal(G.ACT_OPEN.indexOf("list_fonts"), -1, "it opens no app");
+  assert.deepEqual(G.ACT_OPEN, C.GATE_OPEN, "the tools that open an app are the same on both sides");
+  const g = C.gateTools([a])[0];
+  assert.equal(g.annotations.readOnlyHint, true);
+  assert.deepEqual(Object.keys(g.inputSchema.properties).sort(), ["collection", "kind", "letters", "query", "source"]);
+  assert.deepEqual(g.inputSchema.properties.letters["enum"], ["greek", "polytonic"]);
+  // offered through the gate once the owner lets Claude read some app
+  const src = require("fs").readFileSync(require("path").join(__dirname, "../assistant/assistant.js"), "utf8");
+  assert.match(src, /summary: summaryIds\(ga\.read\)\.length > 0, fonts: ga\.read\.length > 0,/);
+  assert.match(src, /if \(call\.name === "list_fonts"\) return listFonts\(call\.args\);/);
 });

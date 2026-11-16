@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.01.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.11.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -218,7 +218,6 @@
     garage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .6-1.4L5 9.5l1.6-3.6A2 2 0 0 1 8.4 4.7h7.2a2 2 0 0 1 1.8 1.2L19 9.5l1.9 1.9a2 2 0 0 1 .6 1.4V16a1 1 0 0 1-1 1H19"/><path d="M5 9.5h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
     petcare: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="9.5" r="1.8"/><circle cx="8.5" cy="5" r="1.8"/><circle cx="13.5" cy="5" r="1.8"/><path d="M11 10.5c-2.8 0-5 3.3-5 5.6 0 1.6 1.2 2.4 2.7 2.4.9 0 1.5-.5 2.3-.5"/><path d="M18 12v8M14 16h8"/></svg>',
-    wheel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8.5"/><path d="M12 4.5v17M3.5 13h17M6 7l12 12M18 7L6 19"/><path d="M10 1.5h4L12 4.5z" fill="currentColor"/></svg>',
     oracle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M12 2v1.5M5 4.5l1 1M19 4.5l-1 1"/></svg>',
     slides: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="12" rx="1"/><path d="M8 11v-2M12 11V7M16 11v-3M12 15v3M8 21l4-3 4 3"/></svg>',
     baby: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4M9.5 5h5M10 5v2.5L8 10v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V10l-2-2.5V5"/><path d="M8 14h3M8 17h3"/></svg>',
@@ -1064,6 +1063,7 @@
     try { w = f.contentWindow; d = f.contentDocument; } catch (e) { return; }   // not same-origin
     if (!w || !d || !d.documentElement) return;
     a11yMark(d);
+    if (window.orosUiFont) window.orosUiFont.frame(d);   // FM-5
     var r = d.documentElement, z = a11yZoom();
     if (r.hasAttribute("data-oros-zoom")) { r.style.removeProperty("zoom"); r.removeAttribute("data-oros-zoom"); }
     if (z === 1) return;
@@ -1109,8 +1109,69 @@
     return {
       size: a11y.size, sizes: A11Y_SIZES.slice(), contrast: a11y.contrast, focus: a11y.focus,
       high: a11yHigh(), forced: a11yMq("(forced-colors: active)"),
-      capped: a11yZoom() < a11y.size / 100
+      capped: a11yZoom() < a11y.size / 100,
+      font: uifGet()                                       // FM-5: null = Nunito
     };
+  }
+  // ---------- The font of orOS (FM-5, uifont.js) ----------
+  // A family of the person's (Settings › Fonts) instead of Nunito, on
+  // this device only (like the text size). uifont.js and the designkit
+  // font files load only while one is set.
+  var UIF_KEY = "oros-uifont";
+  var UIF_FILE = /^[0-9a-f]{64}\.ttf$/;
+  function uifClean(v) {
+    if (!v || typeof v !== "object" || typeof v.id !== "string" || !/^(fs_[a-z0-9_]{1,60}|uf_[0-9a-f]{16})$/.test(v.id)) return null;
+    var o = { id: v.id, name: String(v.name || v.id).replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 60) || v.id,
+              fb: v.fb === "serif" || v.fb === "mono" ? v.fb : "sans" };
+    if (o.id.indexOf("uf_") === 0) {
+      ["r", "b", "i", "bi"].forEach(function (k) { if (UIF_FILE.test(v[k] || "")) o[k] = v[k]; });
+      if (!o.r) return null;
+    }
+    return o;
+  }
+  function uifGet() {
+    var v = null;
+    try { v = JSON.parse(localStorage.getItem(UIF_KEY) || "null"); } catch (e) {}
+    return uifClean(v);
+  }
+  var uifP = null;
+  function uifLoad() {
+    if (window.orosUiFont) return Promise.resolve(window.orosUiFont);
+    if (!uifP) {
+      var one = function (src) {
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = src + "?v=" + APP_VERSION;
+          s.onload = ok;
+          s.onerror = function () { s.remove(); fail(new Error(src)); };
+          document.head.appendChild(s);
+        });
+      };
+      var dk = window.orosDK || {};
+      uifP = (dk.text ? Promise.resolve() : one("designkit/text.js"))
+        .then(function () { return (window.orosDK || {}).fonts ? null : one("designkit/fonts.js"); })
+        .then(function () { return one("uifont.js"); })
+        .then(function () { if (!window.orosUiFont) throw new Error("uifont"); return window.orosUiFont; });
+      uifP.catch(function () { uifP = null; });
+    }
+    return uifP;
+  }
+  function uifApply() {
+    var e = uifGet();
+    if (!e && !window.orosUiFont) return;
+    uifLoad().then(function (U) {
+      U.set(e, [document].concat(window.__orosAppDocs ? window.__orosAppDocs() : []));
+    }, function () {});
+  }
+  function uifSetUser(v) {
+    var e = v ? uifClean(v) : null;
+    if (v && !e) return;
+    try {
+      if (e) localStorage.setItem(UIF_KEY, JSON.stringify(e));
+      else localStorage.removeItem(UIF_KEY);
+    } catch (x) { scToast("err", window.t("a11y.savefail")); return; }
+    uifApply();
+    settingsNotify();
   }
   // The system's own contrast switch and a resize (the 320 px cap)
   // apply at once.
@@ -11734,6 +11795,7 @@
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
+      case "uiFont":       uifSetUser(value); return;
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;
       case "tips":         tipsSetUser(!!value); return;
@@ -14893,6 +14955,7 @@
   applyIcons();
   a11yApply();
   a11yWatch();
+  uifApply();
   applyLang();
   langKeepOffline();
   // Seasonal decorations (seasonal.js, a shell component like pet.js):

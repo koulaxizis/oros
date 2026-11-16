@@ -59,6 +59,13 @@ The `Royalties` tab lists everyone with terms. `New statement…` takes a period
 
 The advance is recouped first: what earlier statements earned on the same terms is taken off it, and only the rest is payable. An issued statement is a record that doesn't change when terms or sales do. From it: `Print or PDF`, `E-mail` (Mail opens with the text), `Add to Budget` (an expense you confirm there), `Mark paid`, or `Void` (it stays in the list, crossed out, and no longer counts towards the advance).
 
+### A distributor's sales report (music)
+For music releases, `Import sales report…` in the `Royalties` tab reads the report you download from your distributor. DistroKid's (Bank › See Excel version) is recognised as it is; for any other CSV, TSV or spreadsheet (.xlsx, .ods) you choose once which column is the month, the ISRC, the UPC/EAN, the units, the earnings and the currency, and this device remembers it for the next report with the same columns. The file is read as data only: no formula or macro runs, and it stays on your device.
+- Each line is matched by its ISRC to a track, else by its UPC/EAN to a release. Lines that match nothing are listed: link one to a track and its ISRC is kept on that track for next time.
+- A track with shares under `Master ownership` pays each owner their share of what it earned; any other track, and a release sold as a whole, pays the release's royalty terms that cover all formats.
+- One statement is drafted per person and currency; nothing is converted. Advances are in your publisher currency, so a statement in another currency doesn't recoup them. A statement for months already on an earlier one is marked and left unticked.
+- Issued statements are records like any other: print, e-mail, Budget, paid, void.
+
 ## Cost & result
 What each book cost and what it brought in, read from your WooCommerce shop: Production Ledger (a Noxpress plugin) keeps the sales and the costs, Revenue Splitter who gets a share. Connect the shop once in [Settings](app:settings) › Connected services (a read key is enough); nothing is written to the shop and nothing of these figures is kept in orOS: each reading shows the shop as it is now. All amounts are without VAT.
 

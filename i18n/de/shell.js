@@ -48,7 +48,7 @@ orosPack("de", "shell", {
  "app.cycle": "Zyklus",
  "app.device": "Geräteinfo",
  "app.diary": "Ein-Satz-Tagebuch",
- "app.dice": "Würfel & Münze",
+ "app.dice": "Zufall",
  "app.dots": "Käsekästchen",
  "app.familytree": "Stammbaum",
  "app.lyricsync": "Liedtext-Sync",

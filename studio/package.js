@@ -8,7 +8,8 @@
 //     keys = { src: { sourceId: mediaKey }, fx: { diskPath: mediaKey } }
 //     o    = { fxName(id), instName(id), words {…} } for tracks.txt
 //     content = { kind: "oros-studio-package", ver: 1,
-//       project { id, name, bpm, sig, vol, loop { on, a, b }, fx },
+//       project { id, name, bpm, sig, vol, loop { on, a, b }, fx, bk?, kind? },
+//         (bk, kind: a chapter of a book; kept on import only where that book is)
 //       tracks  [{ id, name, color, vol, pan, mute, solo, ord, fx,
 //                  inst?, auto? }],
 //       sources [{ id, name, dur, ch, media, lic? }],
@@ -109,6 +110,7 @@
         return x;
       })
     };
+    if (p.bk) { content.project.bk = p.bk; content.project.kind = p.kind; }   // a chapter of a book (wave A2)
     return { content: content, tracksTxt: tracksTxt(content, o) };
   }
 
@@ -191,7 +193,10 @@
 
     var P = content.project;
     var pfx = unpackFx(P.fx, {});
-    var project = C.normProject({ id: pid, m: now, name: str(P.name, 200) || str(o.title, 200), bpm: P.bpm, sig: P.sig, vol: P.vol, loop: P.loop, fx: pfx });
+    // a chapter (Studio wave A2) stays one only where its book is; elsewhere it opens as a song
+    var inBook = typeof o.hasBook === "function" && C.okBookId(P.bk) && o.hasBook(P.bk);
+    var project = C.normProject({ id: pid, m: now, name: str(P.name, 200) || str(o.title, 200), bpm: P.bpm, sig: P.sig, vol: P.vol, loop: P.loop, fx: pfx,
+                                  bk: inBook ? P.bk : undefined, kind: inBook ? P.kind : undefined });
     if (!project) throw new Error("notpackage");
 
     var tracks = [];
