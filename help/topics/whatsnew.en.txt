@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.28.01
+- **Suggested VPNs on the Start page.** Under the VPN extension link, a quiet row names a few well-known VPNs with a free plan (Proton VPN, Windscribe, hide.me, TunnelBear) and PIA (paid only). Each opens the provider's own site. You choose and sign in with your own account.
+
 ## Version 7.28.00
 - **Pickers in orOS colours.** Every list you choose from, every date, time and colour field now opens in the colours of your orOS instead of the browser's grey boxes: a sheet from the bottom on phones, a panel under the field on a computer, with search in long lists, a calendar that starts on Monday, and a colour picker with your own colours. Questions such as "Make a new address?" are orOS windows too. Same on the site, the installed app, Portable, orOS USB and the Android app.
 
