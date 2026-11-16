@@ -340,6 +340,8 @@
     ], s.theme, "theme", function (v) { set("theme", v); }, t("a.theme")));
     host.appendChild(c1);
 
+    if (s.night) secNight(host, s.night);
+
     var c2 = card(t("a.skin"), "skin");
     var sw = el("div", "swatches");
     sw.setAttribute("role", "radiogroup");
@@ -502,6 +504,61 @@
         { scope: "pet", hint: t("a.pet.hint") }));
       host.appendChild(c4);
     }
+  }
+
+  // Night Light (nightlight.js through the shell, NIGHT-1): on/off,
+  // when (sunset to sunrise for the Weather app's place, own hours,
+  // always) and the warmth. Stays on this device.
+  function nlTime(ms) {
+    var d = new Date(ms), h = d.getHours(), m = d.getMinutes();
+    return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+  }
+  function secNight(host, n) {
+    var c = card(t("nl.title"), "night");
+    c.appendChild(row(t("nl.on"), switchBtn(n.on, "night:on", function (v) { set("night:on", v); }, t("nl.on")),
+      { hint: t("nl.hint") }));
+    if (n.on) {
+      c.appendChild(segRow(t("nl.when"), segmented(["sun", "times", "always"].map(function (k) {
+        return { value: k, label: t("nl.sched." + k) };
+      }), n.sched, "night:sched", function (v) { set("night:sched", v); }, t("nl.when")), { stack: true }));
+      if (n.sched === "sun") {
+        var sunTxt;
+        if (!n.sun) sunTxt = t("nl.sun.none", { from: n.fallback.from, to: n.fallback.to });
+        else if (n.sun.polar) sunTxt = t(n.sun.polar === "day" ? "nl.sun.polarday" : "nl.sun.polarnight");
+        else sunTxt = t(n.sun.place ? "nl.sun.at" : "nl.sun.here", { place: n.sun.place, set: nlTime(n.sun.set), rise: nlTime(n.sun.rise) });
+        c.appendChild(el("p", "hint", sunTxt));
+      }
+      if (n.sched === "times") {
+        var hours = (n.hours || []).map(function (h) { return { value: h, label: h }; });
+        var pr = el("div", "pair");
+        var fl = el("label", "pair-label", t("n.from"));
+        fl.htmlFor = "f-night:from";
+        pr.appendChild(fl);
+        pr.appendChild(select(hours, n.from, "night:from", function (v) { set("night:from", v); }));
+        var tl = el("label", "pair-label", t("n.to"));
+        tl.htmlFor = "f-night:to";
+        pr.appendChild(tl);
+        pr.appendChild(select(hours, n.to, "night:to", function (v) { set("night:to", v); }));
+        c.appendChild(pr);
+      }
+      var wr = el("div", "range");
+      var w = el("input");
+      w.type = "range"; w.min = "0"; w.max = "100"; w.step = "5";
+      w.id = "f-night:warmth";
+      w.setAttribute("data-k", "night:warmth");
+      w.value = String(n.warmth);
+      var wv = el("span", "range-val", n.warmth + "%");
+      w.addEventListener("input", function () { wv.textContent = w.value + "%"; });
+      w.addEventListener("change", function () { set("night:warmth", Number(w.value)); });
+      wr.appendChild(w);
+      wr.appendChild(wv);
+      c.appendChild(row(t("nl.warmth"), wr, { forId: "f-night:warmth" }));
+      var now = n.active ? (n.until ? t("nl.now.until", { t: nlTime(n.until) }) : t("nl.now.on"))
+        : (n.until ? t("nl.now.next", { t: nlTime(n.until) }) : "");
+      if (now) c.appendChild(el("p", "hint", now));
+      if (n.gamma) c.appendChild(el("p", "hint", t("nl.gamma")));
+    }
+    host.appendChild(c);
   }
 
   // ---------- 4a. Section: Accessibility ----------
@@ -4174,6 +4231,39 @@
         { hint: t("mt.hint", { n: s.multitask.slots }) }));
       if (s.multitask.on && s.multitask.open) mtc.appendChild(el("p", "hint", t("mt.open", { n: s.multitask.open })));
       host.appendChild(mtc);
+    }
+
+    // Clipboard history (cliphist.js, CLIP-1): off by default, this device only.
+    if (s.clip) {
+      var chc = card(t("ch.title"), "clip");
+      if (s.clip.strict) {
+        chc.appendChild(el("p", "hint", t("ch.strict")));
+      } else {
+        chc.appendChild(row(t("ch.on"), switchBtn(!!s.clip.on, "clip", function (v) { set("clip", v); }, t("ch.on")),
+          { hint: t("ch.hint") }));
+        if (s.clip.on) {
+          chc.appendChild(row(t("ch.keep"), segmented([
+            { value: "hour", label: t("ch.keep.hour") },
+            { value: "day", label: t("ch.keep.day") },
+            { value: "week", label: t("ch.keep.week") }
+          ], s.clip.keep, "clipKeep", function (v) { set("clipKeep", v); }, t("ch.keep"))));
+          chc.appendChild(el("p", "hint", t("ch.count", { n: s.clip.n })));
+          chc.appendChild(actions(
+            button(t("ch.open"), "ch.open", function () { act("clip.open"); }),
+            s.clip.n ? button(t("ch.clear"), "ch.clear", function () { act("clip.clear"); }) : null));
+        }
+      }
+      host.appendChild(chc);
+    }
+
+    // Overview (OV-1): hot corner and Super key, this device only, off by default.
+    if (s.overview) {
+      var ovc = card(t("ov.title"), "overview");
+      ovc.appendChild(el("p", "hint", t("ov.hint")));
+      ovc.appendChild(row(t("ov.corner"), switchBtn(!!s.overview.corner, "overview:corner", function (v) { set("overview:corner", v); }, t("ov.corner"))));
+      ovc.appendChild(row(t("ov.super"), switchBtn(!!s.overview.superKey, "overview:super", function (v) { set("overview:super", v); }, t("ov.super")),
+        { hint: t("ov.superHint") }));
+      host.appendChild(ovc);
     }
 
     // This computer's files: orOS Portable and the desktop apps only

@@ -19,8 +19,11 @@ orOS hat eine Reihe von Tastenkürzeln, die überall funktionieren: auf dem Desk
 - [[Ctrl+Alt+Shift+N]]: `Neue Haftnotiz`
 - [[Ctrl+Alt+Shift+K]]: `Befehlsleiste (auch Ctrl+K)`
 - [[Ctrl+Alt+Shift+W]]: `Zwischen offenen Apps wechseln (Multitasking)`
+- [[Ctrl+Alt+Shift+E]]: `Übersicht: Suche, offene Apps, zuletzt verwendete Dateien`
 - [[Ctrl+Alt+Shift+Q]]: `Den Assistenten in einem kleinen Fenster fragen`
 - [[Ctrl+Alt+Shift+M]]: `Schnelleinstellungen`
+- [[Ctrl+Alt+Shift+V]]: `Zwischenablage-Verlauf`
+- [[Ctrl+Alt+Shift+.]]: `Emoji`
 
 ## Was jedes Kürzel macht
 ### Synchronisierung und Sicherung
@@ -38,6 +41,9 @@ orOS hat eine Reihe von Tastenkürzeln, die überall funktionieren: auf dem Desk
 - **Neue Haftnotiz** legt eine neue [Haftnotiz](app:stickies) auf den Desktop, bereit zum Tippen. Auf einem Handy oder aus einer App heraus öffnet sie die Notiz in einem Fenster.
 - **Befehlsleiste** öffnet eine kleine Leiste über dem Bildschirm, in die du einen Befehl wie `dentist tomorrow 10` oder `buy milk` tippst. [[Ctrl+K]] macht dasselbe, außer in Notizen und Wiki, wo [[Ctrl+K]] deren eigene Suche ist. Siehe [Das Menü](help:t/menu#commands).
 - **Zwischen offenen Apps wechseln** zeigt die Apps, die mit eingeschaltetem [Multitasking](help:a/settings) offen sind: die im Vordergrund und die im Hintergrund. Die zuletzt verlassene App ist schon ausgewählt, also bringt dich die Tastenkombination und dann [[Enter]] direkt zu ihr zurück. Ist Multitasking aus, sagt sie dir, wo du es einschaltest.
+- **Zwischenablage-Verlauf** zeigt, was du in orOS-Apps kopiert hast, wenn du ihn in den Einstellungen eingeschaltet hast. Siehe [Datenschutz](help:t/privacy).
+- **Emoji** öffnet die Emoji-Auswahl: Suche auf Deutsch, Englisch oder Griechisch, oder wähle aus einer Gruppe. Das Emoji kommt in das Textfeld, in dem du zuletzt warst, in der App auf dem Bildschirm, und die Auswahl bleibt für weitere offen ([[Esc]] schließt sie); ohne ein solches Feld wird es kopiert. `Emoji` in den Schnelleinstellungen öffnet sie ebenfalls.
+- **Übersicht** zeigt auf einem Bildschirm das Suchfeld, deine offenen Apps, zuletzt verwendete Dateien und einen kleinen System-Streifen (Speicher, Speicherplatz, Synchronisierung). Fang an zu tippen, um zu suchen: Der Text geht in die Menüsuche. Siehe [Das Menü](help:t/menu#overview).
 - **Hilfe zur offenen App** öffnet die Hilfe auf der Seite der App, die du gerade nutzt. Auf dem Desktop öffnet sie die Startseite der Hilfe.
 
 ## Mac und Tastaturbelegungen
