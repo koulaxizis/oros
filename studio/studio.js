@@ -240,7 +240,7 @@
       "ld.t.ebu": "Broadcast, EBU R128 (-23 LUFS)", "ld.t.acx": "Audiobook: ACX (Audible)", "ld.t.storytel": "Audiobook: Storytel",
       "ld.v.down": "{p} will play it {n} dB quieter.", "ld.v.up": "{p} will play it {n} dB louder.", "ld.v.same": "{p} will play it as it is.",
       "ld.v.peak": "The true peak is above {n} dBTP: it may distort after the service encodes it.", "ld.v.none": "Play the song or measure it to see how {p} will play it.",
-      "ld.v.spec": "Measure the song to check it against {p}.", "ld.v.specOk": "Everything {p} checks passes.", "ld.v.specBad": "{n} of the checks for {p} do not pass yet.",
+      "ld.v.spec": "Measure the song to check it against {p}.", "ld.v.specOk": "Everything {p} checks passes.", "ld.v.specBad": "{n} of the checks for {p} do not pass yet.", "ld.v.specBad1": "1 of the checks for {p} does not pass yet.",
       "ld.c.rms": "RMS {v} dBFS (needs {lo} to {hi})", "ld.c.peak": "Peak {v} dB (at most {hi})", "ld.c.floor": "Noise floor {v} dBFS (at most {hi})",
       "ld.c.head": "Room tone at the start {v} s ({lo} to {hi} s)", "ld.c.tail": "Room tone at the end {v} s ({lo} to {hi} s)",
       "ld.c.zero": "Digital silence {v} s (use room tone instead)", "ld.c.dur": "Length {v} min (at most {hi} min)", "ld.c.clip": "Clipped samples: {v}",
@@ -249,6 +249,7 @@
       "ld.ref": "Reference track", "ld.refHint": "Compare with a song you like: its numbers stand next to yours, and it plays at your song's loudness so you hear only the difference in sound.",
       "ld.refPick": "Choose a reference…", "ld.refPlay": "Play it at the song's loudness", "ld.refStop": "Stop the reference", "ld.refDrop": "Remove",
       "ld.refNoMatch": "Measure the song first, so the reference can play at its loudness.", "ld.refGain": "The reference plays {n} dB {dir}.", "ld.louder": "louder", "ld.quieter": "quieter",
+      "bk.deliver": "Check and deliver", "bk.check": "Check all", "bk.checking": "Checking {i} of {n}: {name}…", "bk.norm": "Normalise all", "bk.norming": "Normalising {i} of {n}: {name}…", "bk.normDone": "Every part is at RMS -20 dBFS, its peaks held at -3.5 dB", "bk.normHint": "Normalising adds a gain and the NULL Limiter (true peak, -3.5 dB) at the end of each part's master chain. The recordings stay as they are, and Remove normalising takes both out again.", "bk.unnorm": "Remove normalising", "bk.sample": "Use this chapter's loop as the retail sample", "bk.sampleSet": "Retail sample: {name}, {a} to {b}", "bk.sampleNone": "No retail sample yet: set a loop of 1 to 5 minutes in a chapter and press the button.", "bk.sampleBad": "Set a loop of 1 to 5 minutes in a chapter of this book first.", "bk.kbps": "MP3 for the book", "bk.kbpsN": "{n} kbit/s CBR, mono, 44.1 kHz", "bk.export": "Export the book", "bk.exporting": "Exporting {i} of {n}: {name}…", "bk.exported": "{n} files are in {path} on the orOS disk, with report.txt.", "bk.exportDone": "The book is exported", "bk.emptyPart": "{name} is empty: it was left out.", "bk.noCover": "No cover: link the book to a Publishing title with a cover.", "bk.missing": "Some sounds of “{name}” are not on this device yet.", "bk.fullFx": "The master chain of “{name}” is full.", "bk.failPart": "“{name}” could not be mixed.", "bk.st.ok": "{spec}: passes", "bk.st.bad": "{spec}: {n} checks do not pass", "bk.st.bad1": "{spec}: 1 check does not pass", "bk.st.old": "changed since the check", "bk.sumOk": "Every part passes {spec}.", "bk.sumBad": "{n} parts do not pass {spec} yet. Open one and its Loudness window shows what to fix.", "bk.sumBad1": "1 part does not pass {spec} yet. Open it and its Loudness window shows what to fix.", "ld.go": "Go there",
       "bk.view": "Show", "bk.songs": "Songs", "bk.books": "Books", "bk.new": "New book", "bk.all": "All books", "bk.empty": "No books yet. A book is a row of chapters, each one a project of its own, with opening and closing credits.", "bk.nameAsk": "Name of the book", "bk.rename": "Rename", "bk.desc": "{n} chapters · {t} · {spec}", "bk.pub": "Title in Publishing", "bk.pubNone": "None (fill in below)", "bk.pubInfo": "Author: {a} · Narrator: {n} · Audiobook ISBN: {isbn}", "bk.pubMissing": "That title is no longer in Publishing.", "bk.author": "Author", "bk.narrator": "Narrator", "bk.spec": "Requirements", "bk.spec.acx": "ACX (Audible)", "bk.spec.storytel": "Storytel", "bk.parts": "Chapters", "bk.open": "Opening credits", "bk.close": "Closing credits", "bk.chapterN": "Chapter {n}", "bk.addCh": "New chapter", "bk.partDesc": "{k} · {t}", "bk.k.open": "Opening", "bk.k.close": "Closing", "bk.k.chapter": "Chapter {n}", "bk.up": "Move up", "bk.down": "Move down", "bk.delCh": "Delete", "bk.openPart": "Open", "bk.rt": "Room tone", "bk.rtHint": "Record about 30 seconds of the quiet room with the same microphone and settings, select that clip and press the button below. Gaps between takes are then filled with it, because ACX rejects digital silence.", "bk.rtUse": "Use the selected clip as room tone", "bk.rtNone": "No room tone yet.", "bk.rtOk": "Room tone {d} s, noise floor {f} dBFS: the room is quiet enough.", "bk.rtBad": "Room tone {d} s, noise floor {f} dBFS: above -60 dBFS, so the recordings will be too noisy. Quieten the room, or try NULL Noise Reduction or Gate.", "bk.rtShort": "Select an audio clip of at least 5 seconds first.", "bk.rtSaved": "Room tone saved", "bk.fill": "Fill the gaps in “{name}”", "bk.fillNone": "Fill the gaps of a chapter", "bk.filled": "{n} gaps filled with room tone", "bk.noGaps": "There are no gaps to fill", "bk.notChapter": "Open a chapter of this book first.", "bk.needRt": "Choose the room tone first.", "bk.rtTrack": "Room tone", "bk.voice": "Voice", "bk.del": "Delete book", "bk.deleted": "Book deleted", "bk.maxBooks": "You have {n} books, more do not fit", "bk.maxCh": "Books hold up to {n} chapters together", "bk.flac": "Saving the take (FLAC)… {n}%", "bk.sub": "{book} · {part}", "bk.fail": "That did not work",
       "btn.toMusic": "Add to Music", "btn.toLyrics": "Sync lyrics", "toast.toMusic": "Added to Music", "toast.toMusicFail": "Could not add it to Music",
       "btn.ringtone": "Make a ringtone", "toast.ringNoNotes": "Ringtone Composer needs notes: add an instrument track.",
@@ -478,7 +479,7 @@
       "ld.t.ebu": "Εκπομπή, EBU R128 (-23 LUFS)", "ld.t.acx": "Ηχητικό βιβλίο: ACX (Audible)", "ld.t.storytel": "Ηχητικό βιβλίο: Storytel",
       "ld.v.down": "Το {p} θα το παίξει {n} dB πιο σιγά.", "ld.v.up": "Το {p} θα το παίξει {n} dB πιο δυνατά.", "ld.v.same": "Το {p} θα το παίξει όπως είναι.",
       "ld.v.peak": "Η πραγματική κορυφή περνά τα {n} dBTP: μπορεί να παραμορφωθεί όταν το κωδικοποιήσει η υπηρεσία.", "ld.v.none": "Παίξε ή μέτρησε το τραγούδι για να δεις πώς θα το παίξει το {p}.",
-      "ld.v.spec": "Μέτρησε το τραγούδι για να το ελέγξεις με τις απαιτήσεις του {p}.", "ld.v.specOk": "Όλοι οι έλεγχοι του {p} περνούν.", "ld.v.specBad": "{n} από τους ελέγχους του {p} δεν περνούν ακόμη.",
+      "ld.v.spec": "Μέτρησε το τραγούδι για να το ελέγξεις με τις απαιτήσεις του {p}.", "ld.v.specOk": "Όλοι οι έλεγχοι του {p} περνούν.", "ld.v.specBad": "{n} από τους ελέγχους του {p} δεν περνούν ακόμη.", "ld.v.specBad1": "1 από τους ελέγχους του {p} δεν περνά ακόμη.",
       "ld.c.rms": "RMS {v} dBFS (χρειάζεται {lo} έως {hi})", "ld.c.peak": "Κορυφή {v} dB (το πολύ {hi})", "ld.c.floor": "Θόρυβος βάθους {v} dBFS (το πολύ {hi})",
       "ld.c.head": "Room tone στην αρχή {v} s ({lo} έως {hi} s)", "ld.c.tail": "Room tone στο τέλος {v} s ({lo} έως {hi} s)",
       "ld.c.zero": "Ψηφιακή σιωπή {v} s (βάλε room tone στη θέση της)", "ld.c.dur": "Διάρκεια {v} λεπτά (το πολύ {hi})", "ld.c.clip": "Δείγματα με clipping: {v}",
@@ -487,6 +488,7 @@
       "ld.ref": "Κομμάτι αναφοράς", "ld.refHint": "Σύγκρινε με ένα τραγούδι που σου αρέσει: οι τιμές του μπαίνουν δίπλα στις δικές σου και παίζει στην ένταση του τραγουδιού σου, ώστε να ακούς μόνο τη διαφορά στον ήχο.",
       "ld.refPick": "Επιλογή αναφοράς…", "ld.refPlay": "Παίξε το στην ένταση του τραγουδιού", "ld.refStop": "Σταμάτα την αναφορά", "ld.refDrop": "Αφαίρεση",
       "ld.refNoMatch": "Μέτρησε πρώτα το τραγούδι, για να παίξει η αναφορά στην ένταση του.", "ld.refGain": "Η αναφορά παίζει {n} dB {dir}.", "ld.louder": "πιο δυνατά", "ld.quieter": "πιο σιγά",
+      "bk.deliver": "Έλεγχος και παράδοση", "bk.check": "Έλεγχος όλων", "bk.checking": "Έλεγχος {i} από {n}: {name}…", "bk.norm": "Κανονικοποίηση όλων", "bk.norming": "Κανονικοποίηση {i} από {n}: {name}…", "bk.normDone": "Όλα τα μέρη είναι σε RMS -20 dBFS, με τις κορυφές κρατημένες στα -3,5 dB", "bk.normHint": "Η κανονικοποίηση βάζει ένα κέρδος και τον NULL Limiter (true peak, -3,5 dB) στο τέλος της αλυσίδας master κάθε μέρους. Οι ηχογραφήσεις μένουν όπως είναι, και η Αφαίρεση κανονικοποίησης τα βγάζει πάλι.", "bk.unnorm": "Αφαίρεση κανονικοποίησης", "bk.sample": "Το loop αυτού του κεφαλαίου ως δείγμα", "bk.sampleSet": "Δείγμα: {name}, {a} έως {b}", "bk.sampleNone": "Δεν υπάρχει ακόμη δείγμα: βάλε ένα loop 1 έως 5 λεπτών σε ένα κεφάλαιο και πάτα το κουμπί.", "bk.sampleBad": "Βάλε πρώτα ένα loop 1 έως 5 λεπτών σε ένα κεφάλαιο αυτού του βιβλίου.", "bk.kbps": "MP3 για το βιβλίο", "bk.kbpsN": "{n} kbit/s CBR, mono, 44,1 kHz", "bk.export": "Εξαγωγή βιβλίου", "bk.exporting": "Εξαγωγή {i} από {n}: {name}…", "bk.exported": "{n} αρχεία είναι στο {path} στον δίσκο του orOS, μαζί με το report.txt.", "bk.exportDone": "Το βιβλίο εξήχθη", "bk.emptyPart": "Το {name} είναι άδειο: έμεινε έξω.", "bk.noCover": "Χωρίς εξώφυλλο: σύνδεσε το βιβλίο με έναν τίτλο του Publishing που έχει εξώφυλλο.", "bk.missing": "Κάποιοι ήχοι του «{name}» δεν είναι ακόμη σε αυτή τη συσκευή.", "bk.fullFx": "Η αλυσίδα master του «{name}» είναι γεμάτη.", "bk.failPart": "Η μίξη του «{name}» δεν έγινε.", "bk.st.ok": "{spec}: περνά", "bk.st.bad": "{spec}: {n} έλεγχοι δεν περνούν", "bk.st.bad1": "{spec}: 1 έλεγχος δεν περνά", "bk.st.old": "άλλαξε μετά τον έλεγχο", "bk.sumOk": "Όλα τα μέρη περνούν το {spec}.", "bk.sumBad": "{n} μέρη δεν περνούν ακόμη το {spec}. Άνοιξε ένα και το παράθυρο Ένταση δείχνει τι να διορθώσεις.", "bk.sumBad1": "1 μέρος δεν περνά ακόμη το {spec}. Άνοιξέ το και το παράθυρο Ένταση δείχνει τι να διορθώσεις.", "ld.go": "Πήγαινε εκεί",
       "bk.view": "Εμφάνιση", "bk.songs": "Τραγούδια", "bk.books": "Βιβλία", "bk.new": "Νέο βιβλίο", "bk.all": "Όλα τα βιβλία", "bk.empty": "Δεν υπάρχουν ακόμη βιβλία. Ένα βιβλίο είναι μια σειρά κεφαλαίων, το καθένα δικό του έργο, με εισαγωγή και κλείσιμο.", "bk.nameAsk": "Όνομα του βιβλίου", "bk.rename": "Μετονομασία", "bk.desc": "{n} κεφάλαια · {t} · {spec}", "bk.pub": "Τίτλος στο Publishing", "bk.pubNone": "Κανένας (συμπλήρωσε παρακάτω)", "bk.pubInfo": "Συγγραφέας: {a} · Αφηγητής: {n} · ISBN ηχητικού βιβλίου: {isbn}", "bk.pubMissing": "Αυτός ο τίτλος δεν υπάρχει πια στο Publishing.", "bk.author": "Συγγραφέας", "bk.narrator": "Αφηγητής", "bk.spec": "Προδιαγραφές", "bk.spec.acx": "ACX (Audible)", "bk.spec.storytel": "Storytel", "bk.parts": "Κεφάλαια", "bk.open": "Εισαγωγή", "bk.close": "Κλείσιμο", "bk.chapterN": "Κεφάλαιο {n}", "bk.addCh": "Νέο κεφάλαιο", "bk.partDesc": "{k} · {t}", "bk.k.open": "Εισαγωγή", "bk.k.close": "Κλείσιμο", "bk.k.chapter": "Κεφάλαιο {n}", "bk.up": "Πάνω", "bk.down": "Κάτω", "bk.delCh": "Διαγραφή", "bk.openPart": "Άνοιγμα", "bk.rt": "Room tone", "bk.rtHint": "Ηχογράφησε περίπου 30 δευτερόλεπτα το ήσυχο δωμάτιο με το ίδιο μικρόφωνο και τις ίδιες ρυθμίσεις, επίλεξε εκείνο το clip και πάτα το κουμπί από κάτω. Τα κενά ανάμεσα στις λήψεις γεμίζουν μετά με αυτό, γιατί η ACX απορρίπτει την ψηφιακή σιωπή.", "bk.rtUse": "Το επιλεγμένο clip ως room tone", "bk.rtNone": "Δεν υπάρχει ακόμη room tone.", "bk.rtOk": "Room tone {d} s, θόρυβος βάθους {f} dBFS: το δωμάτιο είναι αρκετά ήσυχο.", "bk.rtBad": "Room tone {d} s, θόρυβος βάθους {f} dBFS: πάνω από -60 dBFS, άρα οι ηχογραφήσεις θα έχουν πολύ θόρυβο. Κάνε πιο ήσυχο το δωμάτιο ή δοκίμασε το NULL Noise Reduction ή το Gate.", "bk.rtShort": "Επίλεξε πρώτα ένα clip ήχου τουλάχιστον 5 δευτερολέπτων.", "bk.rtSaved": "Το room tone αποθηκεύτηκε", "bk.fill": "Γέμισμα κενών στο «{name}»", "bk.fillNone": "Γέμισμα κενών ενός κεφαλαίου", "bk.filled": "{n} κενά γέμισαν με room tone", "bk.noGaps": "Δεν υπάρχουν κενά για γέμισμα", "bk.notChapter": "Άνοιξε πρώτα ένα κεφάλαιο αυτού του βιβλίου.", "bk.needRt": "Διάλεξε πρώτα το room tone.", "bk.rtTrack": "Room tone", "bk.voice": "Φωνή", "bk.del": "Διαγραφή βιβλίου", "bk.deleted": "Το βιβλίο διαγράφηκε", "bk.maxBooks": "Έχεις {n} βιβλία, δεν χωράνε άλλα", "bk.maxCh": "Τα βιβλία χωράνε έως {n} κεφάλαια συνολικά", "bk.flac": "Αποθήκευση λήψης (FLAC)… {n}%", "bk.sub": "{book} · {part}", "bk.fail": "Αυτό δεν έγινε",
       "btn.toMusic": "Στη Μουσική", "btn.toLyrics": "Συγχρονισμός στίχων", "toast.toMusic": "Μπήκε στη Μουσική", "toast.toMusicFail": "Δεν μπόρεσε να μπει στη Μουσική",
       "btn.ringtone": "Κάνε το ήχο κλήσης", "toast.ringNoNotes": "Ο Ήχος κλήσης χρειάζεται νότες: πρόσθεσε ένα κανάλι οργάνου.",
@@ -709,7 +711,8 @@
       lpG: typeof p.lpG === "string" && /^[a-z]{0,12}$/.test(p.lpG) ? p.lpG : "",
       lpK: p.lpK === "drums" || p.lpK === "bass" || p.lpK === "keys" ? p.lpK : "",
       lpT: p.lpT === "slow" || p.lpT === "mid" || p.lpT === "fast" ? p.lpT : "",
-      ldT: typeof p.ldT === "string" && /^[a-z]{1,12}$/.test(p.ldT) ? p.ldT : ""
+      ldT: typeof p.ldT === "string" && /^[a-z]{1,12}$/.test(p.ldT) ? p.ldT : "",
+      bkKbps: [192, 256, 320].indexOf(p.bkKbps) >= 0 ? p.bkKbps : 192
     };
   }
   // { trackId: value } kept for at most 64 tracks
@@ -4374,7 +4377,11 @@
   }
   function ldOk(v, lo) { return typeof v === "number" && isFinite(v) && v > (lo == null ? -70 : lo); }
   function ldNum(v, d, lo) { return ldOk(v, lo) ? numTxt(v, d) : "–"; }
-  function ldTarget() { return LD_TARGETS.indexOf(prefs.ldT) >= 0 ? prefs.ldT : "spotify"; }
+  function ldTarget() {
+    var s = $("loud-dlg").open ? $("ld-target").value : "";
+    if (LD_TARGETS.indexOf(s) >= 0) return s;
+    return LD_TARGETS.indexOf(prefs.ldT) >= 0 ? prefs.ldT : "spotify";
+  }
   function ldName(id) {
     if (SM.SPECS[id]) return SM.SPECS[id].name;
     var p = SM.PLATFORMS.filter(function (x) { return x.id === id; })[0];
@@ -4395,6 +4402,7 @@
     mk.setAttribute("aria-hidden", "true");
     li.appendChild(mk); li.appendChild(el("span", "", text));
     ul.appendChild(li);
+    return li;
   }
   // what the chosen target says about the measured song (or file), else the live numbers
   function ldVerdict() {
@@ -4406,16 +4414,23 @@
       rows.forEach(function (c) {
         if (!c.ok) bad++;
         var v = c.k === "dur" ? numTxt(c.v / 60, 1) : c.k === "clip" ? String(c.v) : ldNum(c.v, c.k === "head" || c.k === "tail" || c.k === "zero" ? 2 : 1, -Infinity);
-        ldLine(ul, c.ok ? "ok" : "bad", t("ld.c." + c.k, { v: v, lo: c.lo == null ? "" : numTxt(c.lo, 1), hi: c.k === "dur" ? numTxt(c.hi / 60, 0) : numTxt(c.hi, c.k === "clip" ? 0 : 1) }));
+        var li = ldLine(ul, c.ok ? "ok" : "bad", t("ld.c." + c.k, { v: v, lo: c.lo == null ? "" : numTxt(c.lo, 1), hi: c.k === "dur" ? numTxt(c.hi / 60, 0) : numTxt(c.hi, c.k === "clip" ? 0 : 1) }));
+        if (!c.ok && typeof c.at === "number" && c.at >= 0 && proj && ld.curPid === proj.id) {     // go to the problem (wave A3)
+          var go = el("button", "link-btn", t("ld.go")), at = (ld.curFrom || 0) + c.at;
+          go.type = "button";
+          go.addEventListener("click", function () { if (playing) pause(); playhead = Math.max(0, at - 1); closeLoudness(); renderPlayhead(); followPlayhead(playhead); });
+          li.appendChild(go);
+        }
       });
-      var g = SM.gainFor(ld.cur, id);
+      // a book part is brought to -20 dBFS by Normalise all, so the hint names the same target
+      var to = proj && proj.bk ? NORM_TO : (s.rms[0] + s.rms[1]) / 2, g = SM.gainFor(ld.cur, id, to);
       if (g && !rows[0].ok) {
-        ldLine(ul, "", t("ld.c.gain", { to: numTxt((s.rms[0] + s.rms[1]) / 2, 1), g: (g.gain > 0 ? "+" : "") + numTxt(g.gain, 1) }));
+        ldLine(ul, "", t("ld.c.gain", { to: numTxt(to, 1), g: (g.gain > 0 ? "+" : "") + numTxt(g.gain, 1) }));
         if (g.limit) ldLine(ul, "warn", t("ld.c.limit", { hi: numTxt(s.peak, 1) }));
         if (g.noisy) ldLine(ul, "warn", t("ld.c.noisy", { f: numTxt(g.floor, 1) }));
       }
       ul.hidden = false;
-      out.textContent = bad ? t("ld.v.specBad", { n: bad, p: name }) : t("ld.v.specOk", { p: name });
+      out.textContent = bad ? t(bad === 1 ? "ld.v.specBad1" : "ld.v.specBad", { n: bad, p: name }) : t("ld.v.specOk", { p: name });
       return;
     }
     var rep = ld.cur || (ld.live && ldOk(ld.live.i) ? { i: ld.live.i, tp: ld.live.tp > 0 ? SM.db(ld.live.tp) : -Infinity } : null);
@@ -4481,7 +4496,7 @@
     $("ld-status").textContent = t("ld.mixing");
     var pid = proj.id, name = t("ld.colSong");
     renderMix(r, 48000).then(function (chans) {
-      ldAnalyse(chans, 48000, function (rep) { ldFinish(rep, function (x) { if (proj && proj.id === pid) { ld.cur = x; ld.curName = name; ld.curPid = pid; } }); });
+      ldAnalyse(chans, 48000, function (rep) { ldFinish(rep, function (x) { if (proj && proj.id === pid) { ld.cur = x; ld.curName = name; ld.curPid = pid; ld.curFrom = r.a; } }); });
     }, function () { ldFinish(null); });
   }
   function ldDecodeFile(f, done) {
@@ -4541,6 +4556,12 @@
     if (!sel.options.length) LD_TARGETS.forEach(function (id) { var o = el("option", "", t("ld.t." + id)); o.value = id; sel.appendChild(o); });
     sel.value = ldTarget();
     if (ld.curPid && (!proj || proj.id !== ld.curPid)) { ld.cur = null; ld.curPid = ""; }   // another song is open now
+    var bkOf = proj && proj.bk ? findBook(proj.bk) : null;
+    if (bkOf) {                                   // a chapter: its book's spec, and the book check when it is still true
+      sel.value = bkOf.spec;
+      var fr = freshCheck(proj.id);
+      if (fr && !ld.cur) { ld.cur = fr; ld.curPid = proj.id; ld.curName = proj.name || t("proj.untitled"); ld.curFrom = 0; }
+    }
     $("ld-status").textContent = "";
     showDlg("loud-dlg");
     ldShowLive();
@@ -4734,7 +4755,9 @@
       open.type = "button";
       var k = x.kind === "chapter" ? t("bk.k.chapter", { n: ++n }) : t("bk.k." + x.kind);
       open.appendChild(el("span", "row-title", p.name || k));
-      open.appendChild(el("span", "row-desc", t("bk.partDesc", { k: k, t: partLen(p.id) })));
+      var ck = freshCheck(p.id), st = !ck ? (bookChecks[p.id] ? t("bk.st.old") : "") : SM.check(ck, b.spec).filter(function (c) { return !c.ok; }).length;
+      var stTxt = typeof st === "number" ? (st ? t(st === 1 ? "bk.st.bad1" : "bk.st.bad", { spec: t("bk.spec." + b.spec), n: st }) : t("bk.st.ok", { spec: t("bk.spec." + b.spec) })) : st;
+      open.appendChild(el("span", "row-desc" + (typeof st === "number" ? (st ? " bad" : " ok") : ""), t("bk.partDesc", { k: k, t: partLen(p.id) }) + (stTxt ? " · " + stTxt : "")));
       if (proj && proj.id === p.id) open.setAttribute("aria-current", "true");
       setLabel(open, t("bk.openPart") + ": " + (p.name || k));
       open.addEventListener("click", function () { hideDlg("book-dlg"); openProject(C.find(data, "projects", p.id)); });
@@ -4761,6 +4784,15 @@
     var here = proj && proj.bk === b.id, fill = $("book-fill");
     fill.textContent = here ? t("bk.fill", { name: proj.name || t("proj.untitled") }) : t("bk.fillNone");
     fill.disabled = !here || !b.rt;
+    // delivery (wave A3)
+    $("book-unnorm").hidden = !bookNormed(b);
+    var kb = $("book-kbps");
+    if (!kb.options.length) [192, 256, 320].forEach(function (n) { var o = el("option", "", t("bk.kbpsN", { n: n })); o.value = String(n); kb.appendChild(o); });
+    kb.value = String([192, 256, 320].indexOf(prefs.bkKbps) >= 0 ? prefs.bkKbps : 192);
+    var sp = b.sample ? C.find(data, "projects", b.sample.p) : null;
+    $("book-sample-state").textContent = sp ? t("bk.sampleSet", { name: sp.name || t("proj.untitled"), a: C.fmtTime(b.sample.a).replace(/\.\d+$/, ""), b: C.fmtTime(b.sample.b).replace(/\.\d+$/, "") }) : t("bk.sampleNone");
+    $("book-sample").disabled = !here;
+    bookBtns(bookBusy);
   }
   function bookField(fn) {
     var b = findBook(bookOpen);
@@ -4889,6 +4921,235 @@
       renderAll();
       openBook(b.id);
     });
+  }
+
+  // ---------- 9d. Check, normalise and deliver a book (Studio wave A3) ----------
+  // Every part is mixed as the export would (offline, the whole project,
+  // effects and master), measured by meter.js and checked against the
+  // book's spec. Normalising adds two NULL effects at the end of a part's
+  // master chain, a gain (channel_utility) that brings the RMS to -20 dBFS
+  // and a true-peak limiter at -3.5 dB, so the takes never change and one
+  // click takes them out again. Delivery writes MP3 (CBR, mono, 44.1 kHz,
+  // full ID3) per part, the retail sample, a 2400 px cover and a report to
+  // /internal/Studio/Books/<book>/, and checks each MP3 again after encoding.
+  var NORM_TO = -20, NORM_CEIL = -3.5, BOOK_RATE = 44100, BOOKS_DIR = "/internal/Studio/Books";
+  var bookChecks = {};             // project id → { rep, sig } (this device only, never synced)
+  var bookBusy = false;
+  function projSig(pid) {
+    return JSON.stringify({ project: C.find(data, "projects", pid), tracks: C.ofProject(data, "tracks", pid),
+      sources: C.ofProject(data, "sources", pid), clips: C.ofProject(data, "clips", pid) }, function (k, v) { return k === "m" ? undefined : v; });
+  }
+  function freshCheck(pid) { var c = bookChecks[pid]; return c && c.sig === projSig(pid) ? c.rep : null; }
+  function isNormFx(x) { return /^fnorm/.test(x.u); }
+  // open a part and wait for its audio
+  function openPart(pid) {
+    if (!proj || proj.id !== pid) openProject(C.find(data, "projects", pid));
+    return loadProjectAudio().then(function () { return proj && proj.id === pid; });
+  }
+  // the open part as heard, whole (a loop does not cut it): [L, R] or null when empty
+  function mixPart(rate) {
+    var clips = projClips(), r = C.exportRange(Object.assign({}, proj, { loop: { on: false, a: 0, b: 0 } }), clips);
+    if (r.b - r.a < C.MIN_LEN) return Promise.resolve(null);
+    if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) return Promise.reject(new Error("missing"));
+    return renderMix(r, rate);
+  }
+  function analyseP(chans, rate) {
+    return new Promise(function (res, rej) {
+      var A;
+      try { A = new SM.Analysis(chans, rate); } catch (e) { rej(e); return; }
+      var step = function () {
+        try { if (A.step(rate * 4)) { res(A.result()); return; } } catch (e) { rej(e); return; }
+        setTimeout(step, 0);
+      };
+      step();
+    });
+  }
+  function monoOf(chans) {
+    if (chans.length < 2) return chans[0];
+    var a = chans[0], b = chans[1], m = new Float32Array(a.length);
+    for (var i = 0; i < a.length; i++) m[i] = (a[i] + b[i]) * 0.5;
+    return m;
+  }
+  function checkPart(pid) {
+    return mixPart(BOOK_RATE).then(function (chans) {
+      if (!chans) { delete bookChecks[pid]; return null; }
+      return analyseP([monoOf(chans)], BOOK_RATE).then(function (rep) { bookChecks[pid] = { rep: rep, sig: projSig(pid) }; return rep; });
+    });
+  }
+  // fn(part, i, n) → Promise, one part after another; the project that was open comes back
+  function eachPart(b, label, fn) {
+    if (bookBusy) return Promise.resolve();
+    var parts = C.bookParts(data, b), back = proj ? proj.id : "", i = 0, problems = [];
+    bookBusy = true; bookBtns(true);
+    var next = function () {
+      if (i >= parts.length) return Promise.resolve();
+      var x = parts[i], name = x.p.name || t("proj.untitled");
+      $("book-check-state").textContent = t(label, { i: i + 1, n: parts.length, name: name });
+      busy(t(label, { i: i + 1, n: parts.length, name: name }));
+      return openPart(x.p.id).then(function (ok) { return ok ? fn(x, i, parts.length) : null; }).then(null, function (e) {
+        problems.push(t(e && e.message === "missing" ? "bk.missing" : e && e.message === "fullfx" ? "bk.fullFx" : "bk.failPart", { name: name }));
+      }).then(function () { i++; return next(); });
+    };
+    return next().then(function () {
+      bookBusy = false; bookBtns(false); busy(null);
+      if (back && C.find(data, "projects", back) && (!proj || proj.id !== back)) openProject(C.find(data, "projects", back));
+      renderBook();
+      if (problems.length) $("book-check-state").textContent = problems.join(" ");
+      return problems;
+    });
+  }
+  function bookBtns(on) { ["book-check", "book-norm", "book-unnorm", "book-export", "book-addch", "book-fill", "book-rt-use", "book-del"].forEach(function (id) { if ($(id)) $(id).disabled = on; }); }
+  function checkBook() {
+    var b = findBook(bookOpen);
+    if (b) eachPart(b, "bk.checking", function (x) { return checkPart(x.p.id); }).then(function (pr) { if (!pr || !pr.length) bookSummary(b); });
+  }
+  function bookSummary(b) {
+    var bad = 0, done = 0;
+    C.bookParts(data, b).forEach(function (x) {
+      var rep = freshCheck(x.p.id);
+      if (!rep) return;
+      done++;
+      if (SM.check(rep, b.spec).some(function (c) { return !c.ok; })) bad++;
+    });
+    $("book-check-state").textContent = !done ? "" : bad ? t(bad === 1 ? "bk.sumBad1" : "bk.sumBad", { n: bad, spec: t("bk.spec." + b.spec) }) : t("bk.sumOk", { spec: t("bk.spec." + b.spec) });
+  }
+  function normFx(g) {
+    var gin = clamp(Math.round(g * 10) / 10, -12, 18), gout = clamp(Math.round((g - gin) * 10) / 10, -12, 12);
+    return [{ u: C.newId("fnormg", Math.random), id: "channel_utility", on: true, s: { "2": gin, "6": 0, "12": gout } },
+            // threshold = ceiling: the NULL Limiter drives by ceiling - threshold, so 0 dB drive here
+            { u: C.newId("fnorml", Math.random), id: "limiter", on: true, s: { "1": 0, "2": NORM_CEIL, "3": NORM_CEIL, "4": 200, "5": 2, "6": 1 } }];
+  }
+  function normaliseBook() {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    eachPart(b, "bk.norming", function (x) {
+      var pid = x.p.id;
+      setProject({ fx: proj.fx.filter(function (f) { return !isNormFx(f); }) });
+      return mixPart(BOOK_RATE).then(function (chans) {
+        if (!chans) return null;
+        return analyseP([monoOf(chans)], BOOK_RATE).then(function (rep) {
+          var g = SM.gainFor(rep, b.spec, NORM_TO);
+          if (!g || !isFinite(g.gain)) return null;
+          if (proj.fx.length + 2 > C.MAX_FX) throw new Error("fullfx");
+          setProject({ fx: proj.fx.concat(normFx(g.gain)) });
+          return checkPart(pid);
+        });
+      });
+    }).then(function (pr) { if (!pr || !pr.length) { bookSummary(b); showToast(t("bk.normDone")); } });
+  }
+  function unnormaliseBook() {
+    var b = findBook(bookOpen);
+    if (!b || bookBusy) return;
+    C.bookParts(data, b).forEach(function (x) {
+      var p = C.find(data, "projects", x.p.id);
+      if (p.fx.some(isNormFx)) put("projects", Object.assign({}, p, { fx: p.fx.filter(function (f) { return !isNormFx(f); }) }));
+    });
+    save(); renderAll(); renderBook();
+  }
+  function bookNormed(b) { return C.bookParts(data, b).some(function (x) { return x.p.fx.some(isNormFx); }); }
+  function setSample() {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    if (!proj || proj.bk !== b.id || !proj.loop.on || proj.loop.b - proj.loop.a < 60 || proj.loop.b - proj.loop.a > 300) { showToast(t("bk.sampleBad")); return; }
+    bookField(function (x) { x.sample = { p: proj.id, a: proj.loop.a, b: proj.loop.b }; });
+  }
+  // ---- what Publishing (or the book itself) says about the book ----
+  var LANG3 = { el: "ell", en: "eng", de: "deu", fr: "fra", es: "spa", it: "ita" };
+  function bookMeta(b) {
+    var ti = b.pub ? pubData().filter(function (x) { return x.id === b.pub.t; })[0] : null, mt = b.meta || {};
+    var ed = ti ? abEdition(ti, b.pub.e) : null;
+    var year = ti && /^\d{4}/.test(ti.rel || "") ? ti.rel.slice(0, 4) : mt.year ? String(mt.year) : "";
+    var lang = ti && LANG3[String(ti.lang || "").slice(0, 2)] || (mt.lang && (LANG3[mt.lang] || (mt.lang.length === 3 ? mt.lang : ""))) || "";
+    return { title: (ti && ti.t) || b.name, author: ti ? people(ti, "a") : mt.author || "", narrator: ti ? people(ti, "n") : mt.narrator || "",
+             isbn: (ed && ed.isbn) || "", year: year, lang: lang, cov: ti && ti.cov ? "/internal/Publishing/Covers/" + ti.cov : "" };
+  }
+  // the cover as a square JPEG of `size` px (the picture fits inside, white around it)
+  function coverJpeg(path, size) {
+    var fs = fsApi();
+    if (!path || !fs || typeof createImageBitmap !== "function") return Promise.resolve(null);
+    return Promise.resolve(fs.readBlob(path)).then(function (blob) { return blob ? createImageBitmap(blob) : null; }).then(function (img) {
+      if (!img) return null;
+      var cv = document.createElement("canvas"); cv.width = cv.height = size;
+      var g = cv.getContext("2d"), k = Math.min(size / img.width, size / img.height), w = img.width * k, h = img.height * k;
+      g.fillStyle = "#fff"; g.fillRect(0, 0, size, size);
+      g.imageSmoothingQuality = "high";
+      g.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+      return new Promise(function (res) { cv.toBlob(function (bl) { res(bl); }, "image/jpeg", 0.9); });
+    }).then(function (bl) { return bl ? bl.arrayBuffer().then(function (ab) { return new Uint8Array(ab); }) : null; }, function () { return null; });
+  }
+  function encodeMp3(mono, kbps, tags) {
+    return new Promise(function (res, rej) {
+      var enc;
+      try { enc = new E.Mp3Encoder([mono], BOOK_RATE, kbps, { title: tags.title, tags: tags }); } catch (e) { rej(e); return; }
+      var step = function () {
+        try { if (enc.step(80)) { res(enc.bytes()); return; } } catch (e) { rej(e); return; }
+        setTimeout(step, 0);
+      };
+      step();
+    });
+  }
+  function reportLine(name, rep, spec) {
+    var rows = SM.check(rep, spec), bad = rows.filter(function (c) { return !c.ok; });
+    return name + "  " + C.fmtTime(rep.dur).replace(/\.\d+$/, "") + "  RMS " + numTxt(rep.rms, 1) + " dBFS  " + t("ld.r.tp") + " " + numTxt(rep.tp, 1) +
+      "  " + t("ld.r.floor") + " " + (isFinite(rep.floor) ? numTxt(rep.floor, 1) : "–") + "  " +
+      (bad.length ? t(bad.length === 1 ? "bk.st.bad1" : "bk.st.bad", { spec: t("bk.spec." + spec), n: bad.length }) + ": " + bad.map(function (c) { return t("ld.c." + c.k, { v: c.k === "dur" ? numTxt(c.v / 60, 1) : c.k === "clip" ? String(c.v) : numTxt(c.v, 1), lo: c.lo == null ? "" : numTxt(c.lo, 1), hi: c.k === "dur" ? numTxt(c.hi / 60, 0) : numTxt(c.hi, 1) }); }).join("; ")
+        : t("bk.st.ok", { spec: t("bk.spec." + spec) }));
+  }
+  function exportBook() {
+    var b = findBook(bookOpen), fs = fsApi();
+    if (!b) return;
+    if (!fs) { showToast(t("toast.noDisk")); return; }
+    var back = proj ? proj.id : "";
+    var meta = bookMeta(b), kbps = [192, 256, 320].indexOf(prefs.bkKbps) >= 0 ? prefs.bkKbps : 192;
+    var dir = BOOKS_DIR + "/" + C.fileName(b.name || meta.title, "x").replace(/\.x$/, ""), lines = [], apic = null, wrote = 0;
+    var mk = function (p) { return Promise.resolve(fs.mkdir ? fs.mkdir(p) : null).then(null, function () {}); };
+    var put2 = function (name, bytes, type) { return Promise.resolve(fs.writeBlob(dir + "/" + name, new Blob([bytes], { type: type }))).then(function () { wrote++; }); };
+    var pad = function (n) { return n < 10 ? "0" + n : String(n); };
+    var tagsFor = function (title, track) {
+      var tg = { title: title, album: meta.title, artist: meta.author, albumArtist: meta.author, composer: meta.narrator, genre: "Audiobook",
+                 date: meta.year, lang: meta.lang, tool: "orOS Studio" };
+      if (track) tg.track = track;
+      if (meta.isbn) tg.txxx = [{ desc: "ISBN", value: meta.isbn }];
+      if (apic) tg.cover = { mime: "image/jpeg", bytes: apic, type: 3 };
+      return tg;
+    };
+    lines.push(meta.title + (meta.author ? " · " + meta.author : "") + (meta.narrator ? " · " + t("bk.narrator") + ": " + meta.narrator : ""));
+    lines.push(t("bk.spec") + ": " + t("bk.spec." + b.spec) + " · MP3 " + kbps + " kbit/s CBR, mono, 44.1 kHz");
+    lines.push("");
+    mk(BOOKS_DIR).then(function () { return mk(dir); }).then(function () {
+      return coverJpeg(meta.cov, 1400).then(function (c) { apic = c; });
+    }).then(function () {
+      return eachPart(b, "bk.exporting", function (x, i, n) {
+        var name = C.fileName(pad(i + 1) + " " + (x.p.name || t("proj.untitled")), "mp3");
+        return mixPart(BOOK_RATE).then(function (chans) {
+          if (!chans) { lines.push(t("bk.emptyPart", { name: x.p.name })); return null; }
+          return encodeMp3(monoOf(chans), kbps, tagsFor(x.p.name || name, (i + 1) + "/" + n)).then(function (bytes) {
+            return put2(name, bytes, "audio/mpeg").then(function () { return decode(bytes.slice().buffer); });
+          }).then(function (buf) {
+            return analyseP([buf.getChannelData(0)], buf.sampleRate);        // the file as it will be heard
+          }).then(function (rep) { lines.push(reportLine(name, rep, b.spec)); });
+        });
+      });
+    }).then(function () {
+      var s = b.sample;
+      if (!s || !C.find(data, "projects", s.p)) return null;
+      return openPart(s.p).then(function (ok) {
+        if (!ok) return null;
+        var clips = projClips();
+        if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > s.a && c.at < s.b && !buffers[c.s]; })) return null;
+        return renderMix({ a: s.a, b: s.b }, BOOK_RATE).then(function (chans) {
+          return encodeMp3(monoOf(chans), kbps, tagsFor(meta.title + " (sample)", ""));
+        }).then(function (bytes) { lines.push("retail-sample.mp3  " + C.fmtTime(s.b - s.a).replace(/\.\d+$/, "")); return put2("retail-sample.mp3", bytes, "audio/mpeg"); });
+      });
+    }).then(function () {
+      return coverJpeg(meta.cov, 2400).then(function (c) { if (c) { lines.push("cover.jpg  2400 × 2400"); return put2("cover.jpg", c, "image/jpeg"); } lines.push(t("bk.noCover")); });
+    }).then(function () {
+      return put2("report.txt", new TextEncoder().encode(lines.join("\n") + "\n"), "text/plain");
+    }).then(function () {
+      if (back && C.find(data, "projects", back) && (!proj || proj.id !== back)) openProject(C.find(data, "projects", back));
+      $("book-check-state").textContent = t("bk.exported", { n: wrote, path: dir });
+      showToast(t("bk.exportDone"));
+    }, function () { bookBusy = false; bookBtns(false); busy(null); showToast(t("bk.fail")); });
   }
 
   // ---------- 10. Dialogs ----------
@@ -5476,6 +5737,12 @@
     $("book-rt-use").addEventListener("click", useRoomTone);
     $("book-fill").addEventListener("click", fillGaps);
     $("book-del").addEventListener("click", deleteBook);
+    $("book-check").addEventListener("click", checkBook);
+    $("book-norm").addEventListener("click", normaliseBook);
+    $("book-unnorm").addEventListener("click", unnormaliseBook);
+    $("book-export").addEventListener("click", exportBook);
+    $("book-sample").addEventListener("click", setSample);
+    $("book-kbps").addEventListener("change", function () { prefs.bkKbps = +this.value; savePrefs(); });
     $("export-loud").addEventListener("click", function () { hideDlg("export-dlg"); openLoudness(); });
     $("loud-close").addEventListener("click", closeLoudness);
     $("loud-dlg").addEventListener("close", function () { ldRefStop(); ld.job++; ldBusy(false); });

@@ -388,6 +388,13 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
 .check span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .check input { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--accent); }
 
+/* Smart top bar: a tick per chip, arrows for the order of those shown */
+.sb-list { display: flex; flex-direction: column; gap: 2px; }
+.sb-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.sb-line .check { flex: 1 1 0; }
+.sb-mv { min-width: 44px; min-height: 40px; padding: 0 10px; }
+.sb-mv:disabled { opacity: .35; cursor: default; }
+
 /* Menu apps: count, find field, one heading per category */
 .m-count { color: var(--text-dim); font-size: 13px; margin: 2px 0 8px; font-variant-numeric: tabular-nums; }
 .m-find {
@@ -561,6 +568,9 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
 .keys dd { color: var(--text); min-width: 0; }
 .keys.info dt { font-family: inherit; color: var(--text-dim); white-space: normal; }
 .keys.info dd { overflow-wrap: anywhere; }
+/* Keyboard shortcuts (SC-EDIT): the row waiting for its new key */
+.row.sc-editing { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+.row.sc-editing > .hint { color: var(--text); }
 
 /* Connected services: the service picker */
 .svc-search {

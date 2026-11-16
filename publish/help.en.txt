@@ -32,6 +32,7 @@ With a release date set, `Make the plan` dates every step back from it: manuscri
 - The release date and every open step show in [Calendar](app:calendar) under the `Publishing` chip.
 - `Send to To-Do` adds the open steps to a new list named after the book, each with its date.
 - When you make a new title with a release date, tick `Make the release plan from the release date` and the plan is there from the start. The Assistant can set it up too: "new book Night Sea by Ann Writer, out on 15 March".
+- A book translation in Writer linked to the title (Writer › the translation's `⋯` › `Publishing title…`) shows above the plan: languages, how far it is, its deadline, and `Open` to go to it. It shows what this device last saw. Linking with the translator's name opens the title's `+ Person` filled in as Translator; nothing is added before you press Add.
 
 ### Review copies and reviews
 In a title, `Review copies and reviews` keeps who got the book: name, outlet, e-mail and the day it went out (names you used before are offered again, with their outlet and address). Three weeks later with no review the copy is marked `follow up`; `Follow up by e-mail` opens Mail with a short, kind note and keeps the day. When a review comes, set the status to `Reviewed` and add its link and a quote: the two newest quotes go into the Newsletter blocks of the title, and `Copy the quotes` puts them all on the clipboard for the shop page or a post.
@@ -42,6 +43,7 @@ Under `Send to other apps` pick a format (when the title has more than one), the
 - `Item in Stock` opens a new product in [Stock](app:stock) with the name, the ISBN as SKU and barcode, and the price. If Stock already has it, its sheet opens instead.
 - `Block in Newsletter` adds the title, subtitle, author and back-cover text to a [Newsletter](app:newsletter) draft you pick, with a button to the book when it is in your shop.
 - `Press release in Writer` opens a new [Writer](app:writer) document with a press release built from the title, the texts, the formats and your publisher name. Read it and edit it before you send it.
+- `Is it public domain?` opens the [Public Domain Calculator](app:pubdomain) and looks up the title's first author (or the title, if it has no author), so you can check whether a work you want to publish is free. Pick the right person in the results.
 - `Release kit in Atelier` makes five designs in [Atelier](app:atelier), in a folder named after the book: an Instagram post, a story, a site banner, a bookmark and an A3 poster, each with the cover, title, author, release line, price and your publisher name (and the newest review quote on the bookmark and the poster). Atelier asks first; every design stays editable.
 
 Nothing is saved in the other app until you save it there.

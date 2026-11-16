@@ -340,6 +340,8 @@
     ], s.theme, "theme", function (v) { set("theme", v); }, t("a.theme")));
     host.appendChild(c1);
 
+    if (s.night) secNight(host, s.night);
+
     var c2 = card(t("a.skin"), "skin");
     var sw = el("div", "swatches");
     sw.setAttribute("role", "radiogroup");
@@ -462,12 +464,101 @@
       host.appendChild(cw);
     }
 
+    // Smart top bar (smartbar.js through the shell; none in a single app)
+    if (s.smartbar) {
+      var cb2 = card(t("sb.title"), "smartbar");
+      cb2.appendChild(el("p", "hint", t("sb.hint")));
+      var sl = el("div", "sb-list");
+      var onIds = s.smartbar.list.filter(function (w) { return w.on; }).map(function (w) { return w.id; });
+      s.smartbar.list.forEach(function (w) {
+        var line = el("div", "sb-line");
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = !!w.on;
+        cb.setAttribute("data-k", "smartbar:" + w.id);
+        cb.addEventListener("change", function () { set("smartbar:" + w.id, cb.checked); });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, w.name));
+        line.appendChild(lab);
+        if (w.on) {
+          var at = onIds.indexOf(w.id);
+          [[-1, "sb.left", "\u2190"], [1, "sb.right", "\u2192"]].forEach(function (m) {
+            var mb = button(m[2], "smartbar-move:" + w.id + ":" + m[0], function () { set("smartbar-move:" + w.id, m[0]); }, "sb-mv");
+            mb.setAttribute("aria-label", t(m[1]).replace("{w}", w.name));
+            mb.title = t(m[1]).replace("{w}", w.name);
+            mb.disabled = m[0] < 0 ? at === 0 : at === onIds.length - 1;
+            line.appendChild(mb);
+          });
+        }
+        sl.appendChild(line);
+      });
+      cb2.appendChild(sl);
+      cb2.appendChild(el("p", "hint", t("sb.money")));
+      host.appendChild(cb2);
+    }
+
     if (s.pet.available) {
       var c4 = card(null);
       c4.appendChild(row(t("a.pet"), switchBtn(s.pet.on, "pet", function (v) { set("pet", v); }, t("a.pet")),
         { scope: "pet", hint: t("a.pet.hint") }));
       host.appendChild(c4);
     }
+  }
+
+  // Night Light (nightlight.js through the shell, NIGHT-1): on/off,
+  // when (sunset to sunrise for the Weather app's place, own hours,
+  // always) and the warmth. Stays on this device.
+  function nlTime(ms) {
+    var d = new Date(ms), h = d.getHours(), m = d.getMinutes();
+    return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+  }
+  function secNight(host, n) {
+    var c = card(t("nl.title"), "night");
+    c.appendChild(row(t("nl.on"), switchBtn(n.on, "night:on", function (v) { set("night:on", v); }, t("nl.on")),
+      { hint: t("nl.hint") }));
+    if (n.on) {
+      c.appendChild(segRow(t("nl.when"), segmented(["sun", "times", "always"].map(function (k) {
+        return { value: k, label: t("nl.sched." + k) };
+      }), n.sched, "night:sched", function (v) { set("night:sched", v); }, t("nl.when")), { stack: true }));
+      if (n.sched === "sun") {
+        var sunTxt;
+        if (!n.sun) sunTxt = t("nl.sun.none", { from: n.fallback.from, to: n.fallback.to });
+        else if (n.sun.polar) sunTxt = t(n.sun.polar === "day" ? "nl.sun.polarday" : "nl.sun.polarnight");
+        else sunTxt = t(n.sun.place ? "nl.sun.at" : "nl.sun.here", { place: n.sun.place, set: nlTime(n.sun.set), rise: nlTime(n.sun.rise) });
+        c.appendChild(el("p", "hint", sunTxt));
+      }
+      if (n.sched === "times") {
+        var hours = (n.hours || []).map(function (h) { return { value: h, label: h }; });
+        var pr = el("div", "pair");
+        var fl = el("label", "pair-label", t("n.from"));
+        fl.htmlFor = "f-night:from";
+        pr.appendChild(fl);
+        pr.appendChild(select(hours, n.from, "night:from", function (v) { set("night:from", v); }));
+        var tl = el("label", "pair-label", t("n.to"));
+        tl.htmlFor = "f-night:to";
+        pr.appendChild(tl);
+        pr.appendChild(select(hours, n.to, "night:to", function (v) { set("night:to", v); }));
+        c.appendChild(pr);
+      }
+      var wr = el("div", "range");
+      var w = el("input");
+      w.type = "range"; w.min = "0"; w.max = "100"; w.step = "5";
+      w.id = "f-night:warmth";
+      w.setAttribute("data-k", "night:warmth");
+      w.value = String(n.warmth);
+      var wv = el("span", "range-val", n.warmth + "%");
+      w.addEventListener("input", function () { wv.textContent = w.value + "%"; });
+      w.addEventListener("change", function () { set("night:warmth", Number(w.value)); });
+      wr.appendChild(w);
+      wr.appendChild(wv);
+      c.appendChild(row(t("nl.warmth"), wr, { forId: "f-night:warmth" }));
+      var now = n.active ? (n.until ? t("nl.now.until", { t: nlTime(n.until) }) : t("nl.now.on"))
+        : (n.until ? t("nl.now.next", { t: nlTime(n.until) }) : "");
+      if (now) c.appendChild(el("p", "hint", now));
+      if (n.gamma) c.appendChild(el("p", "hint", t("nl.gamma")));
+    }
+    host.appendChild(c);
   }
 
   // ---------- 4a. Section: Accessibility ----------
@@ -1300,6 +1391,66 @@
         if (log.length) c.appendChild(actions(button(t("gt.log.clear"), "gt.log.clear", function () { G.clearLog(); })));
       }
     }
+    host.appendChild(c);
+  }
+
+  // CLAUDE-1: Claude in a window, and Claude desktop. On orOS USB and
+  // orOS Portable the System extension installs it (C.claudeDesk reads
+  // its data-oros-sys-claude attributes on the shell's page; the event
+  // "oros-claude" asks it to "install", "open" or "remove"); elsewhere
+  // a computer gets Anthropic's download page.
+  var claudeWatch = false;
+  function claudeDoc() {
+    var p = parentWin();
+    try { return p ? p.document : null; } catch (e) { return null; }
+  }
+  function claudeAsk(what) {
+    var d = claudeDoc();
+    try { d.dispatchEvent(new d.defaultView.CustomEvent("oros-claude", { detail: what })); } catch (e) {}
+  }
+  function secClaude(host) {
+    var d = claudeDoc(), de = d && d.documentElement;
+    if (de && !claudeWatch && typeof MutationObserver === "function") {
+      claudeWatch = true;
+      try {
+        new MutationObserver(function () { render(); })
+          .observe(de, { attributes: true, attributeFilter: ["data-oros-sys-claude", "data-oros-sys-claude-why"] });
+      } catch (e) {}
+    }
+    var info = C.claudeDesk(de ? de.getAttribute("data-oros-sys-claude") : null,
+      de ? de.getAttribute("data-oros-sys-claude-why") : null, navigator.userAgent, !!phone());
+    var c = card(t("cl.title"));
+    c.appendChild(el("p", "hint", t("cl.hint")));
+    c.appendChild(actions(button(t("cl.web"), "cl.web", function () {
+      window.open(C.CLAUDE_WEB, "_blank", "noopener");
+    }, info.kind === "sys" && info.state === "ready" ? null : "primary")));
+    if (info.kind === "phone") {
+      c.appendChild(el("p", "hint", t("cl.phone")));
+    } else {
+      c.appendChild(el("h4", "sub", t("cl.desk")));
+      if (info.kind === "sys") {
+        if (info.state === "ready") {
+          c.appendChild(el("p", "hint", t("cl.sys.ready")));
+          c.appendChild(actions(
+            button(t("cl.sys.open"), "cl.sys.open", function () { claudeAsk("open"); }, "primary"),
+            confirmBtn(t("cl.sys.remove"), t("cl.sys.remove.sure"), "cl.sys.remove", function () { claudeAsk("remove"); })));
+        } else if (info.state === "busy") {
+          c.appendChild(el("p", "msg msg-dim", t("cl.sys.busy")));
+        } else {
+          if (info.state === "none") c.appendChild(el("p", "hint", t("cl.sys.none")));
+          if (info.why) c.appendChild(el("p", info.why === "fail" || info.why === "net" ? "msg msg-err" : "hint", t("cl.why." + info.why)));
+          if (info.state === "none") c.appendChild(actions(button(t("cl.sys.install"), "cl.sys.install", function () { claudeAsk("install"); })));
+        }
+      } else {
+        c.appendChild(el("p", "hint", t("cl.get." + info.os)));
+        var a = el("a", "btn", t("cl.get"));
+        a.href = C.CLAUDE_DL;
+        a.target = "_blank";
+        a.rel = "noopener";
+        c.appendChild(actions(a));
+      }
+    }
+    c.appendChild(el("p", "hint", t("cl.gate")));
     host.appendChild(c);
   }
 
@@ -3433,16 +3584,41 @@
     host.appendChild(c2);
   }
 
+  // DEF-APPS D1: the choices first (synced, "All devices"), then which
+  // app opens what, then the system's "Open with".
   function secFiles(host) {
     var F = fileOpen();
-    var c1 = card(t("f.status"), "files");
     if (!F) {
-      c1.appendChild(el("p", "hint", t("f.none")));
-      host.appendChild(c1);
+      var c0 = card(t("f.status"), "files");
+      c0.appendChild(el("p", "hint", t("f.none")));
+      host.appendChild(c0);
       return;
     }
-    c1.appendChild(el("p", "hint", !F.supported() ? t("f.unsupported") : F.installed() ? t("f.ready") : t("f.install")));
-    host.appendChild(c1);
+
+    var gs = F.groups ? F.groups() : F.shared().map(function (ext) { return { exts: [ext], apps: F.appsFor(ext) }; });
+    if (gs.length) {
+      var c3 = card(t("f.choose"), "fopen");
+      c3.appendChild(el("p", "hint", t("f.choose.hint")));
+      gs.forEach(function (g) {
+        var opts = [{ value: "", label: t("f.ask") }].concat(g.apps.map(function (id) {
+          return { value: id, label: appName(id) };
+        }));
+        var cur = F.choice(g.exts[0]);
+        var key = "file:" + g.exts[0].slice(1);
+        c3.appendChild(row(g.exts.join("  "), select(opts, cur === "ask" ? "" : cur, key, function (v) {
+          if (F.setChoices) F.setChoices(g.exts, v);
+          else g.exts.forEach(function (x) { F.setChoice(x, v); });
+          render();
+        }), { forId: "f-" + key }));
+      });
+      if (F.resetAll && F.count && F.count() > 0) {
+        c3.appendChild(actions(button(t("f.reset"), "f.reset", function () {
+          F.resetAll();
+          render();
+        })));
+      }
+      host.appendChild(c3);
+    }
 
     var c2 = card(t("f.apps"));
     F.handlers().forEach(function (h) {
@@ -3450,23 +3626,9 @@
     });
     host.appendChild(c2);
 
-    var sh = F.shared();
-    if (sh.length) {
-      var c3 = card(t("f.choose"), "files");
-      c3.appendChild(el("p", "hint", t("f.choose.hint")));
-      sh.forEach(function (ext) {
-        var opts = [{ value: "", label: t("f.ask") }].concat(F.appsFor(ext).map(function (id) {
-          return { value: id, label: appName(id) };
-        }));
-        var cur = F.choice(ext);
-        var key = "file:" + ext.slice(1);
-        c3.appendChild(row(ext, select(opts, cur === "ask" ? "" : cur, key, function (v) {
-          F.setChoice(ext, v);
-          render();
-        }), { forId: "f-" + key }));
-      });
-      host.appendChild(c3);
-    }
+    var c1 = card(t("f.status"), "files");
+    c1.appendChild(el("p", "hint", !F.supported() ? t("f.unsupported") : F.installed() ? t("f.ready") : t("f.install")));
+    host.appendChild(c1);
 
     var c4 = card(t("f.how"));
     c4.appendChild(el("p", "hint", t("f.how.hint")));
@@ -3612,6 +3774,7 @@
   }
   function secServices(host) {
     secPhoneHealth(host);
+    secClaude(host);
     secGate(host);
     var Lk = links();
     if (!Lk) { host.appendChild(el("p", "hint card-note", t("v.unsupported"))); return; }
@@ -4034,16 +4197,7 @@
     if (has.wallpaper) c2.appendChild(linkRow(t("x.wallgen"), "x.wallgen", function () { act("openApp", "wallpaper"); }));
     host.appendChild(c2);
 
-    if (s.shortcuts && s.shortcuts.length) {
-      var c3 = card(t("x.shortcuts"));
-      var dl = el("dl", "keys");
-      s.shortcuts.forEach(function (k) {
-        dl.appendChild(el("dt", null, k.combo));
-        dl.appendChild(el("dd", null, k.label));
-      });
-      c3.appendChild(dl);
-      host.appendChild(c3);
-    }
+    if (s.shortcuts && s.shortcuts.length) secShortcuts(host, s);
 
     // Multitasking: on by default on computers, off on phones, this device only.
     if (s.multitask) {
@@ -4052,6 +4206,37 @@
         { hint: t("mt.hint", { n: s.multitask.slots }) }));
       if (s.multitask.on && s.multitask.open) mtc.appendChild(el("p", "hint", t("mt.open", { n: s.multitask.open })));
       host.appendChild(mtc);
+    }
+
+    // Clipboard history (cliphist.js, CLIP-1): off by default, this device only.
+    if (s.clip) {
+      var chc = card(t("ch.title"), "clip");
+      if (s.clip.strict) {
+        chc.appendChild(el("p", "hint", t("ch.strict")));
+      } else {
+        chc.appendChild(row(t("ch.on"), switchBtn(!!s.clip.on, "clip", function (v) { set("clip", v); }, t("ch.on")),
+          { hint: t("ch.hint") }));
+        if (s.clip.on) {
+          chc.appendChild(row(t("ch.keep"), segmented([
+            { value: "hour", label: t("ch.keep.hour") },
+            { value: "day", label: t("ch.keep.day") },
+            { value: "week", label: t("ch.keep.week") }
+          ], s.clip.keep, "clipKeep", function (v) { set("clipKeep", v); }, t("ch.keep"))));
+          chc.appendChild(el("p", "hint", t("ch.count", { n: s.clip.n })));
+          chc.appendChild(actions(
+            button(t("ch.open"), "ch.open", function () { act("clip.open"); }),
+            s.clip.n ? button(t("ch.clear"), "ch.clear", function () { act("clip.clear"); }) : null));
+        }
+      }
+      host.appendChild(chc);
+    }
+
+    // Overview (OV-1): hot corner, this device only, off by default (no Super key: one combo for all, Chris 2026-11-16).
+    if (s.overview) {
+      var ovc = card(t("ov.title"), "overview");
+      ovc.appendChild(el("p", "hint", t("ov.hint")));
+      ovc.appendChild(row(t("ov.corner"), switchBtn(!!s.overview.corner, "overview:corner", function (v) { set("overview:corner", v); }, t("ov.corner"))));
+      host.appendChild(ovc);
     }
 
     // This computer's files: orOS Portable and the desktop apps only
@@ -4509,8 +4694,95 @@
     nav.appendChild(list);
   }
 
+  // ---------- 10b. Keyboard shortcuts (SC-EDIT, DEF-APPS D2) ----------
+  // Every orOS shortcut is Ctrl+Alt+Shift + a key; here the person picks
+  // the key (a letter or a digit) or turns one off. A key another
+  // shortcut has asks first: Swap gives that one this one's key.
+  // The keys follow the person to every device (shell field "keys").
+  var scEdit = { id: null, conflict: null };
+  function scKeyName(code) { return /^Key[A-Z]$/.test(code) ? code.charAt(3) : /^Digit[0-9]$/.test(code) ? code.charAt(5) : code; }
+  function secShortcuts(host, s) {
+    var c3 = card(t("x.shortcuts"), "keys");
+    c3.appendChild(el("p", "hint", t("sc.hint", { p: s.shortcutsPrefix || "Ctrl+Alt+Shift+" })));
+    var changed = false;
+    s.shortcuts.forEach(function (k) {
+      if (k.code !== k.def) changed = true;
+      var editing = scEdit.id === k.id;
+      var hint = editing ? (scEdit.conflict
+        ? t("sc.taken", { combo: scEdit.conflict.combo, name: scEdit.conflict.label })
+        : t("sc.press")) : (k.code ? k.combo : t("sc.off"));
+      var box = el("div", "actions sc-ctl");
+      if (editing && scEdit.conflict) {
+        box.appendChild(button(t("sc.swap"), "sc.swap:" + k.id, function () {
+          var c = scEdit.conflict;
+          scEdit = { id: null, conflict: null };
+          set("shortcut", { id: k.id, code: c.code, swap: true });
+        }, "primary"));
+      }
+      if (editing) {
+        box.appendChild(button(t("sc.cancel"), "sc.cancel:" + k.id, function () {
+          scEdit = { id: null, conflict: null };
+          render();
+        }));
+      } else {
+        box.appendChild(button(t("sc.change"), "sc.change:" + k.id, function () {
+          scEdit = { id: k.id, conflict: null };
+          render();
+        }));
+        if (k.code) box.appendChild(button(t("sc.turnoff"), "sc.off:" + k.id, function () {
+          set("shortcut", { id: k.id, code: "" });
+        }));
+        if (k.code !== k.def) {
+          var d = button(t("sc.default"), "sc.default:" + k.id, function () {
+            set("shortcut", { id: k.id, code: k.def, swap: true });
+          });
+          d.title = k.defCombo;
+          box.appendChild(d);
+        }
+      }
+      var r = row(k.label, box, { hint: hint, stack: true });
+      r.setAttribute("data-sc", k.id);
+      if (editing) r.classList.add("sc-editing");
+      c3.appendChild(r);
+    });
+    if (changed) {
+      c3.appendChild(actions(button(t("sc.resetAll"), "sc.resetAll", function () {
+        scEdit = { id: null, conflict: null };
+        set("shortcutsReset", true);
+      })));
+    }
+    host.appendChild(c3);
+  }
+  // While a row waits for its key: a letter or a digit, alone (no
+  // Ctrl/Alt/Cmd), takes it; Escape cancels. Nothing else reaches the
+  // page or the shell meanwhile.
+  function scCapture(e) {
+    if (!scEdit.id || scEdit.conflict) return;
+    if (e.key === "Escape") {
+      e.preventDefault(); e.stopPropagation();
+      scEdit = { id: null, conflict: null };
+      render();
+      return;
+    }
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    var code = e.code || "";
+    if (!/^(Key[A-Z]|Digit[0-9])$/.test(code)) return;
+    e.preventDefault(); e.stopPropagation();
+    var st = snap(), id = scEdit.id;
+    var list = (st && st.shortcuts) || [];
+    var other = list.filter(function (k) { return k.code === code && k.id !== id; })[0];
+    if (other) {
+      scEdit = { id: id, conflict: { code: code, combo: (st.shortcutsPrefix || "Ctrl+Alt+Shift+") + scKeyName(code), label: other.label } };
+      render();
+      return;
+    }
+    scEdit = { id: null, conflict: null };
+    set("shortcut", { id: id, code: code });
+  }
+
   // ---------- 11. Keyboard (Contract Β) + palette ----------
   function wireKeyboard() {
+    document.addEventListener("keydown", scCapture, true);
     document.addEventListener("keydown", function (e) {
       if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
       var p = parentWin();

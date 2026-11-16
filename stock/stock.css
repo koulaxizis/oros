@@ -645,3 +645,6 @@ body.till-only > :not(dialog):not(#toast) { visibility: hidden; }
 .pos-tillset { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 10px; }
 .pos-tillset .pos-tillis { font-weight: 600; }
 #st-pos-own-in { width: 100%; font-size: 1.2em; letter-spacing: .2em; }
+
+/* ST-OD: on-demand items (made to order, never out) */
+.pos-pq.od, .r-val.od { color: var(--accent); }

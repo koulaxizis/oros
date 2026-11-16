@@ -48,7 +48,7 @@
     "Atelier", "Studio", "Music", "Books", "Flashcards", "Publishing", "CRM",
     "Budget", "Stock", "Garage", "Health", "Diary", "Mail", "Assistant",
     "Kanban", "Wiki", "Whiteboard", "Rescue", "Code", "PDF", "Converted",
-    "Storage", "Maps", "Radio", "Notes"];
+    "Storage", "Maps", "Radio", "Notes", "Base"];
 
   function kindOf(name) {
     var n = String(name || "");

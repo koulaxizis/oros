@@ -57,7 +57,7 @@ Links stehen die Ordner, rechts der Inhalt des aktuellen Ordners. Auf dem Handy 
 - Tippe auf `Bearbeiten`, um eine Textdatei zu ändern, und auf `Speichern`, um sie auf die Disk zu schreiben. Markdown-Dateien zeigen neben dem Editor eine Live-Vorschau. Schließt du mit ungespeicherten Änderungen, wirst du erst gewarnt; schließ noch einmal, um sie zu verwerfen.
 
 ## Eine Datei in einer anderen App öffnen
-- Eine Datei, die die Vorschau nicht zeigen kann (ein Word- oder orOS-Dokument, eine Tabelle, ein Lied, ein Video, ein E-Book…), öffnet sich direkt in der orOS-App, die sie liest, wenn du doppelt darauf klickst, oder auf einem Touchscreen zweimal tippst. Text, Bilder und ZIP-Dateien öffnen sich weiter in der Vorschau.
+- Eine Datei, die die Vorschau nicht zeigen kann (ein Word- oder orOS-Dokument, eine Tabelle, ein Lied, ein Video, ein E-Book…), öffnet sich direkt in der orOS-App, die sie liest, wenn du doppelt darauf klickst, oder auf einem Touchscreen zweimal tippst. Text, Bilder und ZIP-Dateien öffnen sich weiter in der Vorschau, außer du hast für diesen Typ in [Einstellungen](app:settings) › `Standard-Apps` eine App gewählt (zum Beispiel Pad für .txt): dann öffnen sie sich dort.
 - Die Vorschau hat `In … öffnen` (eine App liest die Datei) oder `Öffnen mit…` (mehrere tun es: wähle eine aus, und hake `Immer diese App verwenden` an, damit die Frage beim nächsten Mal wegfällt). Auch per Rechtsklick auf eine Datei oder über `Weitere Aktionen` gibt es `Öffnen mit…`.
 - Lieder spielen in [Musik](app:music). Ein Lied außerhalb des Ordners `Musik` wird zuerst dorthin kopiert, damit Musik es behält.
 - `An eine App senden…` im selben Menü hängt die ausgewählten Dateien (bis zu 10) an eine neue Nachricht in [Mail](app:mail) an.
