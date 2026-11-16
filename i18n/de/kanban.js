@@ -1,4 +1,8 @@
 orosPack("de", "kanban", {
+ "tdy.start": "Beginnt heute",
+ "tl.pdf": "Zeitleiste exportieren (PDF)",
+ "tl.pdf.page": "Seite {n} von {m}",
+ "tl.pdf.fail": "Das PDF konnte nicht erstellt werden. Versuche es erneut.",
  "card.track": "Zeit erfassen",
  "card.tsSpent": "Erfasste Zeit: {t}",
  "srch.labels": "Labels: ",

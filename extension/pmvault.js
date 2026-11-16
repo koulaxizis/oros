@@ -30,6 +30,7 @@
   var PV = root.PmVault, PC = root.PmCore;
   var COPY = "pmCopy", KEY = "pmKey", REMEMBER = "pmRemember";
   var SLICE_KEY = "oros-passwords-vault";
+  var ERASED_KEY = "oros-erased";
   var LOCK_CHOICES = [1, 5, 15, 30, 60];
 
   function lockMinutes() {
@@ -64,16 +65,43 @@
       });
     });
   }
+  /* SOS-1 S2: an orOS that was erased by SOS (or by a device obeying
+     one) keeps "oros-erased" {at, kind} (shell.js ERASED_KEY). A copy
+     taken before that moment is forgotten, with the key, before the
+     tab's slice (if any) is read, so nothing of the old vault comes
+     back through a merge. erasedText: the marker's text or null. */
+  function obeyErased(erasedText) {
+    var at = 0;
+    try {
+      var e = JSON.parse(erasedText || "null");
+      at = e && typeof e.at === "number" && isFinite(e.at) ? e.at : 0;
+    } catch (x) { at = 0; }
+    if (!at) return Promise.resolve(false);
+    return api.storage.local.get(COPY).then(function (g) {
+      var c = g && g[COPY];
+      if (!c || !(c.at < at)) return false;
+      return forget().then(function () { return true; });
+    });
+  }
+  function absorbTab(raw, erasedText) {
+    return obeyErased(erasedText).then(function () { return absorbText(raw); });
+  }
+  /* What an orOS tab hands over: the slice and the erase marker. Runs
+     in the page (scripting.executeScript). */
+  function readTab(k, e) {
+    function get(n) { try { return localStorage.getItem(n); } catch (x) { return null; } }
+    return { raw: get(k), erased: get(e) };
+  }
   /* Read the slice from one orOS tab. Needs the host permission for
      that tab's origin; refused → false. */
   function refreshFromTab(tabId) {
     return api.scripting.executeScript({
       target: { tabId: tabId },
-      func: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
-      args: [SLICE_KEY]
+      func: readTab,
+      args: [SLICE_KEY, ERASED_KEY]
     }).then(function (res) {
-      var raw = res && res[0] ? res[0].result : null;
-      return absorbText(raw);
+      var r = res && res[0] && res[0].result && typeof res[0].result === "object" ? res[0].result : {};
+      return absorbTab(typeof r.raw === "string" ? r.raw : null, typeof r.erased === "string" ? r.erased : null);
     }, function () { return false; });
   }
   function isOrosTab(tab, base) {
@@ -227,7 +255,7 @@
 
   return {
     SLICE_KEY: SLICE_KEY, LOCK_CHOICES: LOCK_CHOICES,
-    getCopy: getCopy, absorbText: absorbText, refreshFromTab: refreshFromTab, refreshAll: refreshAll, isOrosTab: isOrosTab,
+    getCopy: getCopy, absorbText: absorbText, absorbTab: absorbTab, ERASED_KEY: ERASED_KEY, refreshFromTab: refreshFromTab, refreshAll: refreshAll, isOrosTab: isOrosTab,
     forget: forget, lock: lock, lockAll: lockAll, isRemembered: isRemembered, keyState: keyState, unlock: unlock, open: open, lockMinutes: lockMinutes
   };
 });

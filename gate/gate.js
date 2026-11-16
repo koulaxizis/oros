@@ -42,7 +42,7 @@
   // the device only while orOS is open and Claude asks.
   var SENSITIVE = ["baby", "cycle", "diary", "fitness", "health", "mail", "mood"];
   function sensitive(id) { return SENSITIVE.indexOf(id) >= 0; }
-  var SUMMARY = { budget: 1, stock: 1, kanban: 1 };
+  var SUMMARY = { budget: 1, stock: 1, kanban: 1, studio: 1 };   // studio: STUDIO-POD P4, read only
   // App-specific line tools (wave 2: Invoices, Stock, Publishing).
   var LINES = { budget: "budget_lines", invoices: "invoice_list", stock: "stock_items", publish: "publish_titles" };
   var PAGE = 500, TEXT_MAX = 1500, HITS_MAX = 60, SPAN_DAYS = 400;
@@ -1259,7 +1259,57 @@
   }
   function kbSnap(card, col, at) {
     return { col: col.id, at: at, t: card.text || "", n: card.notes || "", d: card.due || null,
-             l: Array.isArray(card.labels) ? card.labels.slice() : [] };
+             l: Array.isArray(card.labels) ? card.labels.slice() : [], g: kbPlan(card) };
+  }
+  // KB-GANTT (G3): the plan fields, group g (model.js planOf).
+  function kbPlan(c) {
+    return { start: typeof c.start === "string" && YMD.test(c.start) ? c.start : null, ms: !!c.ms,
+             deps: Array.isArray(c.deps) ? c.deps.filter(function (x) { return typeof x === "string"; }) : [] };
+  }
+  function kbSetPlan(c, p) {
+    if (p.start) c.start = p.start; else delete c.start;
+    if (p.ms) c.ms = 1; else delete c.ms;
+    if (p.deps && p.deps.length) c.deps = p.deps.slice(); else delete c.deps;
+  }
+  function kbAll(b) {
+    var out = [];
+    kbCols(b).forEach(function (col) { (Array.isArray(col.cards) ? col.cards : []).forEach(function (c) { if (isObj(c) && typeof c.id === "string") out.push(c); }); });
+    return out;
+  }
+  function kbLoop(all, cardId, predId) {
+    var by = {}, seen = {}, stack = [predId];
+    all.forEach(function (x) { by[x.id] = x; });
+    while (stack.length) {
+      var id = stack.pop();
+      if (id === cardId) return true;
+      if (seen[id] || !by[id]) continue;
+      seen[id] = 1;
+      (Array.isArray(by[id].deps) ? by[id].deps : []).forEach(function (p) { stack.push(p); });
+    }
+    return false;
+  }
+  // start / milestone / depends_on of a call → the new plan, or { err }.
+  function kbPlanArgs(b, card, a, due) {
+    var np = kbPlan(card), v;
+    if (a.start !== undefined) { v = kbDue(a.start); if (v.err) return { err: "start must be YYYY-MM-DD, or \"\" to clear it." }; np.start = v.d; }
+    if (a.milestone !== undefined) { if (typeof a.milestone !== "boolean") return { err: "milestone must be true or false." }; np.ms = a.milestone; }
+    if (np.start && due && np.start > due && !np.ms) return { err: "start " + np.start + " is after the due date " + due + "." };
+    if (a.depends_on !== undefined) {
+      if (!Array.isArray(a.depends_on) || a.depends_on.length > 20) return { err: "depends_on must be a list of at most 20 card ids ([] clears it)." };
+      var all = kbAll(b), ids = [];
+      for (var i = 0; i < a.depends_on.length; i++) {
+        var key = String(a.depends_on[i] == null ? "" : a.depends_on[i]).trim();
+        var hit = all.filter(function (x) { return x.id === key; });
+        if (!hit.length) hit = all.filter(function (x) { return String(x.text || "").trim().toLowerCase() === key.toLowerCase(); });
+        if (!hit.length) return { err: "depends_on: no card " + JSON.stringify(key) + " on " + (b.name || "this board") + "." };
+        if (hit.length > 1) return { err: "depends_on: more than one card reads " + JSON.stringify(key) + "; use its id." };
+        if (hit[0].id === card.id) return { err: "depends_on: a card cannot wait for itself." };
+        if (kbLoop(all, card.id, hit[0].id)) return { err: "depends_on: " + JSON.stringify(hit[0].text || hit[0].id) + " already waits for this card; that would make a loop." };
+        if (ids.indexOf(hit[0].id) < 0) ids.push(hit[0].id);
+      }
+      np.deps = ids;
+    }
+    return { p: np };
   }
   function kbPlace(col, card, top) {
     if (!Array.isArray(col.cards)) col.cards = [];
@@ -1315,6 +1365,11 @@
         var lb = a.labels === undefined ? { ids: [] } : kbLabels(b, a.labels);
         if (lb.err) return { ok: false, err: tag + lb.err };
         var card = { id: newId(), text: tx.s, notes: nt.s, due: du.d, labels: lb.ids, subtasks: [], info: [], mtime: now, pos: 0, fm: M.freshFm(now) };
+        if (a.start !== undefined || a.milestone !== undefined) {
+          var pa = kbPlanArgs(b, card, { start: a.start, milestone: a.milestone }, du.d);
+          if (pa.err) return { ok: false, err: tag + pa.err };
+          kbSetPlan(card, pa.p);
+        }
         kbPlace(fc.x, card, a.position === "top");
         if (touched.indexOf(fc.x) < 0) touched.push(fc.x);
         undo.cards[card.id] = { b: null, a: now };
@@ -1357,6 +1412,10 @@
       if (args.text !== undefined) { v = kbText(args.text, KB_TEXT, "text"); if (v.err) return { ok: false, err: v.err }; if (v.s !== (c0.text || "")) { c0.text = v.s; groups.push("t"); } }
       if (args.notes !== undefined) { v = kbText(args.notes, KB_NOTES, "notes"); if (v.err) return { ok: false, err: v.err }; if (v.s !== (c0.notes || "")) { c0.notes = v.s; groups.push("n"); } }
       if (args.due !== undefined) { v = kbDue(args.due); if (v.err) return { ok: false, err: v.err }; if (v.d !== (c0.due || null)) { c0.due = v.d; groups.push("d"); } }
+      if (args.start !== undefined || args.milestone !== undefined || args.depends_on !== undefined) {
+        v = kbPlanArgs(b, c0, args, c0.due || null); if (v.err) return { ok: false, err: v.err };
+        if (JSON.stringify(v.p) !== JSON.stringify(kbPlan(c0))) { kbSetPlan(c0, v.p); groups.push("g"); }
+      }
       if (args.labels !== undefined) {
         v = kbLabels(b, args.labels); if (v.err) return { ok: false, err: v.err };
         var old = Array.isArray(c0.labels) ? c0.labels : [];
@@ -1440,6 +1499,7 @@
         if (e.g.indexOf("n") >= 0) { card.notes = s.n; groups.push("n"); }
         if (e.g.indexOf("d") >= 0) { card.due = s.d; groups.push("d"); }
         if (e.g.indexOf("l") >= 0) { card.labels = s.l.slice(); groups.push("l"); }
+        if (e.g.indexOf("g") >= 0 && isObj(s.g)) { kbSetPlan(card, s.g); groups.push("g"); }
         if (e.g.indexOf("s") >= 0 && Array.isArray(card.subtasks)) {
           var gone = Array.isArray(e.sa) ? e.sa : [], was = isObj(e.sc) ? e.sc : {};
           card.subtasks = card.subtasks.filter(function (x) {
@@ -1514,13 +1574,13 @@
                 "change_item", "link_items", "link_contact",
                 // GATE-FILES F3: checked against the closed copy's index; deletes wait for the owner's yes here
                 "files_write", "files_move", "files_delete"];
-  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
+  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"].concat(FILE_READ, FILE_WRITE);
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub"].concat(FILE_READ, FILE_WRITE);
   // GATE-PAR P3: tools that open an app on the owner's screen with the
   // work (= core.js GATE_OPEN); like do_action they need an app Claude
   // may change, no pause, and the frame checks the target app.
-  var ACT_OPEN = ACT_TOOLS.slice(12, 22);
+  var ACT_OPEN = ACT_TOOLS.slice(13, 24);
   var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"].concat(FILE_WRITE);
   var DOC_WRITE = ["edit_in_app", "undo_change"];
   function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"); }
@@ -2035,7 +2095,8 @@
     ok.forEach(function (id) {
       if (SUMMARY[id]) {
         calls.push(["app_summary", { app: id }]);
-        if (id !== "kanban") { calls.push(["app_summary", { app: id, month: month }]); calls.push(["app_summary", { app: id, month: prev }]); }
+        if (id === "studio") { /* no month: one summary of every show */ }
+        else if (id !== "kanban") { calls.push(["app_summary", { app: id, month: month }]); calls.push(["app_summary", { app: id, month: prev }]); }
         // each board by its name too (5.96.00: «δουλεύεις και σε κλειστό orOS»)
         else {
           var kb = readStore("oros-kanban-data"), seen = {};
@@ -2327,7 +2388,7 @@
         return { ok: true, c: JSON.stringify(list), quiet: 1 };
       });
     }
-    var budgetish = name === "app_summary" && (args.app === "budget" || args.app === "stock" || args.app === "kanban");
+    var budgetish = name === "app_summary" && (args.app === "budget" || args.app === "stock" || args.app === "kanban" || args.app === "studio");
     if (ACT_TOOLS.indexOf(name) >= 0 && !budgetish) {
       if ((ACT_WRITE.indexOf(name) >= 0 || name === "do_action" || ACT_OPEN.indexOf(name) >= 0) && !ok.some(function (a) { return p.lv[a.id] === "write" && actable(a.id); })) {
         return Promise.resolve({ ok: false, c: "The owner lets Claude change none of these apps (orOS › Settings › Connected services › orOS Gate: «Claude may also change …» per app)." });
@@ -2373,14 +2434,15 @@
     }
     if (name === "app_summary") {
       var app = String(args.app || "");
-      if (!SUMMARY[app]) return Promise.resolve({ ok: false, c: "app must be budget, stock or kanban." });
+      if (!SUMMARY[app]) return Promise.resolve({ ok: false, c: "app must be budget, stock, kanban or studio." });
       if (okIds.indexOf(app) < 0) return Promise.resolve({ ok: false, c: "The owner does not let Claude read " + app + "." });
       return summary().then(function (S) {
-        var n = S.normArgs({ app: app, month: args.month, board: args.board }, localDay());
+        var n = S.normArgs({ app: app, month: args.month, board: args.board, show: args.show }, localDay());
         if (!n.ok) return { ok: false, c: n.err };
         var lang = (root.orosLang || "en").slice(0, 2);
         var out = app === "budget" ? S.budgetMonth(readStore("oros-budget-data"), n.month, lang)
                 : app === "stock" ? S.stockMonth(readStore("oros-stock-data"), n.month, lang)
+                : app === "studio" ? S.studioShows(readStore("oros-studio-data"), { show: n.show })
                 : S.kanbanBoards(readStore("oros-kanban-data"), { board: n.board, today: localDay() });
         if (out && out.ok === false) return { ok: false, c: out.err };
         return { ok: true, a: [app], k: out && out.items ? out.items.length : 1, c: JSON.stringify(out) };

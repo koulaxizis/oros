@@ -232,3 +232,32 @@ test("pmvault: 'Remember on this device' keeps the vault key only wrapped by a n
   assert.equal(await V.open(), null);
   delete global.chrome;
 });
+
+test("pmvault: an orOS erased by SOS (oros-erased) makes the add-on forget an older copy before it reads again (SOS-1 S2)", async () => {
+  const fb = fakeBrowser();
+  global.chrome = fb.api;
+  const factory = require(path.join(DIR, "pmvault.js"));
+  const V = factory({ PmVault: PV, PmCore: PC });
+  const e1 = entry({ title: "Bank", user: "m", pw: "pw-1", urls: ["https://bank.example"] });
+  assert.equal(await V.absorbText(JSON.stringify(await makeVault("master pass 1", [e1]))), true);
+  await V.unlock("master pass 1");
+  const before = (await V.getCopy()).at;
+  // no marker or a broken one: nothing changes
+  assert.equal(await V.absorbTab(null, null), true);
+  assert.equal(await V.absorbTab(null, "{bad"), true);
+  assert.equal(await V.absorbTab(null, JSON.stringify({ at: before - 1000, kind: "sos" })), true, "an older SOS keeps a newer copy");
+  // erased after the copy was taken: copy and key go, the tab's empty orOS gives nothing back
+  assert.equal(await V.absorbTab(null, JSON.stringify({ at: before + 1, kind: "sos" })), false);
+  assert.equal(await V.getCopy(), null);
+  assert.equal(fb.areas.session.pmKey, undefined);
+  // a new vault made after the SOS is read and kept, the old marker no longer matters
+  const e2 = entry({ title: "New", user: "n", pw: "pw-2", urls: ["https://new.example"] });
+  const fresh = JSON.stringify(await makeVault("master pass 3", [e2]));
+  assert.equal(await V.absorbTab(fresh, JSON.stringify({ at: before + 1, kind: "sos" })), true);
+  assert.equal(await V.absorbTab(fresh, JSON.stringify({ at: before + 1, kind: "sos" })), true);
+  assert.ok(PV.primaryKid((await V.getCopy()).slice));
+  await assert.rejects(V.unlock("master pass 1"));
+  await V.unlock("master pass 3");
+  assert.deepEqual((await V.open()).entries.map((e) => e.title), ["New"]);
+  delete global.chrome;
+});

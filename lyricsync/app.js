@@ -35,7 +35,7 @@
   var STORAGE_KEY = "oros-lyricsync-data";
   var DEVICE_KEY = "oros-lyricsync-device";
   var C = window.LyricsyncCore, F = window.LyricsyncFormats, ID3 = window.LyricsyncId3, H = window.LyricsyncChords;
-  var S = window.LyricsyncSets, P = window.LyricsyncSheetPdf;
+  var S = window.LyricsyncSets, P = window.LyricsyncSheetPdf, D = window.LyricsyncDiagrams;
   var SETS_KEY = "oros-songbook-data";   // Songbook S3: sets, synced as slice "songbook"
   var MAX_AUDIO = 400 * 1024 * 1024, MAX_TEXT_FILE = 4 * 1024 * 1024, MAX_UNDO = 300;
   var LYRIC_ACCEPT = ".lrc,.elrc,.srt,.vtt,.ttml,.dfxp,.xml,.ass,.ssa,.json,.txt,.cho,.chopro,.chordpro,.crd";
@@ -146,6 +146,7 @@
       "ex.cho": "ChordPro", "ex.choD": "Words and chords for songbook apps such as OnSong, SongbookPro and ChordPro.",
       "ex.chtxt": "Chords over the words", "ex.chtxtD": "Plain text with each chord over its syllable, to print or send.",
       "lt.songs": "Songs", "lt.sets": "Sets", "set.intro": "A set is the songs of a gig or a rehearsal, in order, each in the key you play it there.", "set.empty": "No sets yet. Press New set.", "set.new": "New set", "set.untitled": "Untitled set", "set.count": "{n} songs", "set.back": "Back to the sets", "set.name": "Name", "set.date": "Date", "set.note": "Notes", "set.export": "Export", "set.cal": "Add to Calendar", "set.del": "Delete set", "set.delAsk": "Delete the set “{name}”? Its songs stay.", "set.deleted": "Set deleted", "set.none": "No songs in this set yet.", "set.pick": "Song to add", "set.add": "Add song", "set.keyHere": "Key here", "set.ownKey": "its own", "set.itemNote": "Note for this song", "set.up": "Move up", "set.down": "Move down", "set.remove": "Take out of the set", "set.imported": "{n} songs added, with a set of them", "set.calNo": "Calendar opens only inside orOS.", "setx.bundle": "ChordPro, all songs", "setx.bundleD": "Every song of the set in one file, in the key of this set.", "setx.list": "Song list", "setx.listD": "The set as a numbered list, to print or send.", "sg.prev": "Previous song", "sg.next": "Next song", "sg.nextUp": "Next: {name}", "pdf.btn": "PDF", "pdf.title": "PDF and print", "pdf.page": "Paper", "pdf.cols": "Columns", "pdf.size": "Font size", "pdf.print": "Print", "pdf.save": "Save PDF", "pdf.whatSong": "“{name}”, chords in bold above the words.", "pdf.whatSet": "“{name}”: a page with the list, then {n} songs, each on a new page.", "pdf.making": "Making the PDF…", "pdf.fail": "The PDF could not be made. Try again.", "ex.pdf": "PDF", "ex.pdfD": "The song sheet to print, with chords above the words.",
+      "dg.label": "Diagrams", "dg.off": "None", "dg.guitar": "Guitar", "dg.ukulele": "Ukulele", "dg.piano": "Piano", "dg.lefty": "Left-handed", "dg.of": "{c} on {i}", "dg.notes": "Notes: {n}", "dg.pdfOff": "Pick Guitar, Ukulele or Piano under Diagrams first.", "pdf.dg": "Chord diagrams on top of each song",
       "sg.open": "Stage", "sg.close": "Close the stage", "sg.play": "Start scrolling", "sg.pause": "Pause", "sg.up": "Back a screen", "sg.down": "Next screen",
       "sg.smaller": "Smaller", "sg.bigger": "Bigger", "sg.slower": "Slower", "sg.faster": "Faster", "sg.follow": "Follows the song",
       "sg.speed": "Speed {n}%", "sg.show": "Show", "sg.both": "Words and chords", "sg.words": "Words only", "sg.chords": "Chords only", "sg.cin": "Count-in",
@@ -253,6 +254,7 @@
       "ex.cho": "ChordPro", "ex.choD": "Στίχοι και ακόρντα για εφαρμογές τραγουδιών όπως OnSong, SongbookPro και ChordPro.",
       "ex.chtxt": "Ακόρντα πάνω από τους στίχους", "ex.chtxtD": "Απλό κείμενο με κάθε ακόρντο πάνω από τη συλλαβή του, για εκτύπωση ή αποστολή.",
       "lt.songs": "Τραγούδια", "lt.sets": "Λίστες", "set.intro": "Μια λίστα είναι τα τραγούδια μιας συναυλίας ή μιας πρόβας, με τη σειρά, το καθένα στον τόνο που το παίζεις εκεί.", "set.empty": "Δεν υπάρχουν λίστες ακόμα. Πάτησε Νέα λίστα.", "set.new": "Νέα λίστα", "set.untitled": "Λίστα χωρίς όνομα", "set.count": "{n} τραγούδια", "set.back": "Πίσω στις λίστες", "set.name": "Όνομα", "set.date": "Ημερομηνία", "set.note": "Σημειώσεις", "set.export": "Εξαγωγή", "set.cal": "Στο Ημερολόγιο", "set.del": "Διαγραφή λίστας", "set.delAsk": "Να διαγραφεί η λίστα «{name}»; Τα τραγούδια της μένουν.", "set.deleted": "Η λίστα διαγράφηκε", "set.none": "Δεν υπάρχουν ακόμα τραγούδια σε αυτή τη λίστα.", "set.pick": "Τραγούδι για προσθήκη", "set.add": "Προσθήκη τραγουδιού", "set.keyHere": "Τόνος εδώ", "set.ownKey": "ο δικός του", "set.itemNote": "Σημείωση για αυτό το τραγούδι", "set.up": "Πιο πάνω", "set.down": "Πιο κάτω", "set.remove": "Βγάλ’ το από τη λίστα", "set.imported": "Προστέθηκαν {n} τραγούδια, μαζί με μια λίστα τους", "set.calNo": "Το Ημερολόγιο ανοίγει μόνο μέσα στο orOS.", "setx.bundle": "ChordPro, όλα τα τραγούδια", "setx.bundleD": "Όλα τα τραγούδια της λίστας σε ένα αρχείο, στον τόνο αυτής της λίστας.", "setx.list": "Κατάλογος τραγουδιών", "setx.listD": "Η λίστα με αριθμούς, για εκτύπωση ή αποστολή.", "sg.prev": "Προηγούμενο τραγούδι", "sg.next": "Επόμενο τραγούδι", "sg.nextUp": "Επόμενο: {name}", "pdf.btn": "PDF", "pdf.title": "PDF και εκτύπωση", "pdf.page": "Χαρτί", "pdf.cols": "Στήλες", "pdf.size": "Μέγεθος γραμμάτων", "pdf.print": "Εκτύπωση", "pdf.save": "Αποθήκευση PDF", "pdf.whatSong": "«{name}», με τα ακόρντα έντονα πάνω από τους στίχους.", "pdf.whatSet": "«{name}»: μια σελίδα με τον κατάλογο και μετά {n} τραγούδια, το καθένα σε νέα σελίδα.", "pdf.making": "Φτιάχνεται το PDF…", "pdf.fail": "Το PDF δεν έγινε. Δοκίμασε ξανά.", "ex.pdf": "PDF", "ex.pdfD": "Το φύλλο του τραγουδιού για εκτύπωση, με τα ακόρντα πάνω από τους στίχους.",
+      "dg.label": "Διαγράμματα", "dg.off": "Κανένα", "dg.guitar": "Κιθάρα", "dg.ukulele": "Γιουκαλίλι", "dg.piano": "Πιάνο", "dg.lefty": "Αριστερόχειρας", "dg.of": "{c} σε {i}", "dg.notes": "Νότες: {n}", "dg.pdfOff": "Διάλεξε πρώτα Κιθάρα, Γιουκαλίλι ή Πιάνο στα Διαγράμματα.", "pdf.dg": "Διαγράμματα ακόρντων πάνω σε κάθε τραγούδι",
       "sg.open": "Σκηνή", "sg.close": "Κλείσιμο σκηνής", "sg.play": "Έναρξη κύλισης", "sg.pause": "Παύση", "sg.up": "Μια οθόνη πίσω", "sg.down": "Επόμενη οθόνη",
       "sg.smaller": "Μικρότερα", "sg.bigger": "Μεγαλύτερα", "sg.slower": "Πιο αργά", "sg.faster": "Πιο γρήγορα", "sg.follow": "Ακολουθεί το τραγούδι",
       "sg.speed": "Ταχύτητα {n}%", "sg.show": "Εμφάνιση", "sg.both": "Στίχοι και ακόρντα", "sg.words": "Μόνο στίχοι", "sg.chords": "Μόνο ακόρντα", "sg.cin": "Μέτρημα",
@@ -290,7 +292,7 @@
 
   // ---------- 2. Data: local first, then sync ----------
   var data = C.empty();
-  var dev = { mode: "tap", speed: 1, lat: 0, span: 8, ch: 0, sol: 0, sfs: 28, sshow: "both", ssp: 1, cin: 0, lt: "songs", pp: "a4", pc: 1, ps: 11, pshow: "both" };
+  var dev = { mode: "tap", speed: 1, lat: 0, span: 8, ch: 0, sol: 0, sfs: 28, sshow: "both", ssp: 1, cin: 0, lt: "songs", pp: "a4", pc: 1, ps: 11, pshow: "both", dg: "", lh: 0, pdg: 0 };
 
   function syncApi() {
     try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
@@ -317,6 +319,9 @@
       if (d.pc === 2) dev.pc = 2;
       if ([9, 10, 11, 12, 14, 16, 18].indexOf(d.ps) >= 0) dev.ps = d.ps;
       if (d.pshow === "words" || d.pshow === "chords") dev.pshow = d.pshow;
+      if (d.dg === "guitar" || d.dg === "ukulele" || d.dg === "piano") dev.dg = d.dg;
+      if (d.lh === 1) dev.lh = 1;
+      if (d.pdg === 1) dev.pdg = 1;
     } catch (e) { /* defaults */ }
   }
   function saveDev() { try { localStorage.setItem(DEVICE_KEY, JSON.stringify(dev)); } catch (e) { /* not kept */ } }
@@ -781,6 +786,9 @@
     fillSelect($("ch-ts"), [""].concat(TIMES), function (v) { return v || t("ch.none"); }, cur.ts || "");
     if (document.activeElement !== $("ch-bpm")) $("ch-bpm").value = cur.bpm ? String(cur.bpm) : "";
     $("ch-names").value = dev.sol ? "1" : "0";
+    $("ch-dg").value = dev.dg;
+    $("ch-lh").checked = !!dev.lh;
+    $("ch-lh").parentNode.hidden = !dev.dg || dev.dg === "piano";
     renderSheet();
   }
   function infoText(song) {
@@ -798,6 +806,7 @@
     $("sheet-info").textContent = infoText();
     $("sheet-info").hidden = !$("sheet-info").textContent;
     buildSheet($("sheet"), openPicker);
+    renderDgStrip($("dg-strip"), cur);
   }
   // Draws the song into box; onWord(i, a) makes each word a button (the
   // Lyrics tab), none draws it for reading (the stage). → the line
@@ -831,7 +840,9 @@
           cell.type = "button";
           cell.addEventListener("click", function () { onWord(i, c.a); });
         }
-        cell.appendChild(el("span", "sh-ch" + (c.ch.length ? "" : " sh-empty"), c.ch.map(function (x) { return H.show(x, dev.sol); }).join(" ") || "\u00a0"));
+        var chs = el("span", "sh-ch" + (c.ch.length ? "" : " sh-empty"), c.ch.map(function (x) { return H.show(x, dev.sol); }).join(" ") || "\u00a0");
+        if (c.ch.length) chs.dataset.c = c.ch[c.ch.length - 1];
+        cell.appendChild(chs);
         cell.appendChild(el("span", "sh-tx", l.t.slice(c.a, c.b) || "\u00a0"));
         line.appendChild(cell);
       });
@@ -915,7 +926,9 @@
     var body = $("sg-sheet");
     body.className = "sheet stage-sheet show-" + dev.sshow;
     body.style.fontSize = dev.sfs + "px";
-    stg.lines = buildSheet(body, null, stageView());
+    var v = stageView();
+    stg.lines = buildSheet(body, null, v);
+    renderDgStrip($("sg-strip"), v);
   }
   function renderStageBar() {
     if (!stg) return;
@@ -1057,6 +1070,7 @@
       b.addEventListener("click", function () { $("cd-in").value = ch; putChord(); });
       box.appendChild(b);
     });
+    renderPickDg();
     $("chord-dlg").showModal();
     $("cd-in").focus();
   }
@@ -1311,6 +1325,9 @@
     pdfFor = what;
     $("pdf-what").textContent = what.cover ? t("pdf.whatSet", { name: what.title, n: what.songs.length }) : t("pdf.whatSong", { name: what.title });
     $("pdf-page").value = dev.pp; $("pdf-cols").value = String(dev.pc); $("pdf-size").value = String(dev.ps); $("pdf-show").value = dev.pshow;
+    $("pdf-dg").checked = !!(dev.pdg && dev.dg);
+    $("pdf-dg").disabled = !dev.dg;
+    $("pdf-dg").parentNode.title = dev.dg ? "" : t("dg.pdfOff");
     $("pdf-status").textContent = "";
     $("pdf-dlg").showModal();
   }
@@ -1319,10 +1336,13 @@
     dev.pc = $("pdf-cols").value === "2" ? 2 : 1;
     dev.ps = +$("pdf-size").value || 11;
     dev.pshow = ["both", "words", "chords"].indexOf($("pdf-show").value) >= 0 ? $("pdf-show").value : "both";
+    if (dev.dg) dev.pdg = $("pdf-dg").checked ? 1 : 0;
     saveDev();
+    var inst = dev.dg, lefty = !!dev.lh;
     var words = { untitled: t("list.untitled") };
     ["v", "c", "b"].forEach(function (k) { words["sec." + k] = t("sec." + k); });
-    return { page: dev.pp, cols: dev.pc, size: dev.ps, show: dev.pshow, solfege: !!dev.sol, words: words, cover: pdfFor.cover, title: pdfFor.title };
+    return { page: dev.pp, cols: dev.pc, size: dev.ps, show: dev.pshow, solfege: !!dev.sol, words: words, cover: pdfFor.cover, title: pdfFor.title,
+      diagram: inst && dev.pdg && dev.pshow !== "words" ? function (ch) { return D.draw(D.shape(inst, ch), lefty); } : null, allChords: H.allChords, chordsOf: D.chordsOf };
   }
   function makePdf() {
     if (!pdfFor) return Promise.resolve(null);
@@ -1457,6 +1477,85 @@
       "UID:" + st.id + "@lyricsync.oros", "DTSTAMP:" + d + "T120000Z", "DTSTART;VALUE=DATE:" + d, "DTEND;VALUE=DATE:" + end,
       "SUMMARY:" + icsText(st.name || t("set.untitled")), "DESCRIPTION:" + icsText(list.slice(0, 4000)), "END:VEVENT", "END:VCALENDAR"].join("\r\n") + "\r\n";
     if (!shellOpen("calendar", { importIcs: { name: setFileName(st, ".ics"), text: ics } })) toast(t("set.calNo"));
+  }
+
+  // ---------- 8e. Chord diagrams (Songbook S4) ----------
+  // Guitar, ukulele or piano, chosen on this device (diagrams.js finds
+  // each shape; nothing is downloaded). A strip of the song's chords on
+  // top of the sheet and the stage; a tap on a chord on stage shows it big.
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function svgOf(chord, big) {
+    var d = D.draw(D.shape(dev.dg, chord), !!dev.lh);
+    if (!d) return null;
+    var pad = 4, sc = big ? 3 : 1;
+    var svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", (-pad) + " " + (-pad) + " " + (d.w + 2 * pad) + " " + (d.h + 2 * pad));
+    svg.setAttribute("width", String(Math.round((d.w + 2 * pad) * sc)));
+    svg.setAttribute("height", String(Math.round((d.h + 2 * pad) * sc)));
+    svg.setAttribute("class", "dg-svg dg-" + dev.dg);
+    svg.setAttribute("aria-hidden", "true");
+    d.items.forEach(function (it) {
+      var n;
+      if (it.k === "line") {
+        n = document.createElementNS(SVGNS, "line");
+        n.setAttribute("x1", it.x1); n.setAttribute("y1", it.y1); n.setAttribute("x2", it.x2); n.setAttribute("y2", it.y2);
+        n.setAttribute("stroke-width", it.sw);
+        n.setAttribute("class", "dg-ln");
+      } else if (it.k === "dot") {
+        n = document.createElementNS(SVGNS, "circle");
+        n.setAttribute("cx", it.x); n.setAttribute("cy", it.y); n.setAttribute("r", it.r);
+        n.setAttribute("class", it.fill ? "dg-dot" + (it.bass ? " dg-bass" : "") : "dg-open");
+      } else if (it.k === "box") {
+        n = document.createElementNS(SVGNS, "rect");
+        n.setAttribute("x", it.x); n.setAttribute("y", it.y); n.setAttribute("width", it.w); n.setAttribute("height", it.h);
+        if (it.rx) n.setAttribute("rx", it.rx);
+        n.setAttribute("class", dev.dg === "piano" ? (it.fill ? "dg-bk" : "dg-wk") : "dg-dot");
+      } else {
+        n = document.createElementNS(SVGNS, "text");
+        n.setAttribute("x", it.x); n.setAttribute("y", it.y);
+        n.setAttribute("font-size", it.size);
+        n.setAttribute("text-anchor", it.anchor || "start");
+        n.setAttribute("class", "dg-tx");
+        n.textContent = it.t;
+      }
+      svg.appendChild(n);
+    });
+    return svg;
+  }
+  function dgCard(chord, big) {
+    var box = el(big ? "div" : "figure", "dg-card");
+    var svg = svgOf(chord, big);
+    if (!svg) return null;
+    box.appendChild(svg);
+    if (!big) box.appendChild(el("figcaption", "dg-name", H.show(chord, dev.sol)));
+    box.setAttribute("role", "img");
+    box.setAttribute("aria-label", t("dg.of", { c: H.show(chord, dev.sol), i: t("dg." + dev.dg) }));
+    return box;
+  }
+  function renderDgStrip(box, song) {
+    box.textContent = "";
+    var list = dev.dg ? D.chordsOf(H.allChords(song)) : [];
+    list.slice(0, 24).forEach(function (ch) { var c = dgCard(ch, false); if (c) box.appendChild(c); });
+    box.hidden = !box.childNodes.length;
+  }
+  function showDiagram(chord) {
+    if (!dev.dg || !D.shape(dev.dg, chord)) return false;
+    $("dg-title").textContent = H.show(chord, dev.sol);
+    var big = $("dg-big");
+    big.textContent = "";
+    big.appendChild(dgCard(chord, true));
+    var N = D.notes(chord), names = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+    $("dg-notes").textContent = N ? t("dg.notes", { n: N.need.concat(N.opt).map(function (x) { return H.show(names[x], dev.sol); }).join(" · ") }) : "";
+    $("dg-dlg").showModal();
+    return true;
+  }
+  // The chord picker shows the shape of what is typed.
+  function renderPickDg() {
+    var box = $("cd-dg"), v = H.norm($("cd-in").value);
+    box.textContent = "";
+    if (!dev.dg || !v) return;
+    var c = dgCard(v, false);
+    if (c) box.appendChild(c);
   }
 
   // ---------- 9. Sync screen ----------
@@ -2173,6 +2272,10 @@
       setSheet({ bpm: v ? +v : undefined });
     });
     $("ch-names").addEventListener("change", function () { dev.sol = $("ch-names").value === "1" ? 1 : 0; saveDev(); if (cur) renderChords(); });
+    $("ch-dg").addEventListener("change", function () { var v = $("ch-dg").value; dev.dg = v === "guitar" || v === "ukulele" || v === "piano" ? v : ""; saveDev(); if (cur) renderChords(); });
+    $("ch-lh").addEventListener("change", function () { dev.lh = $("ch-lh").checked ? 1 : 0; saveDev(); if (cur) renderChords(); });
+    $("cd-in").addEventListener("input", renderPickDg);
+    $("dg-close").addEventListener("click", function () { $("dg-dlg").close(); });
     $("ch-tr").addEventListener("click", openTranspose);
     // Songbook S2: stage
     $("stage-btn").addEventListener("click", openStage);
@@ -2189,7 +2292,16 @@
     $("sg-cin").addEventListener("click", function () { dev.cin = dev.cin ? 0 : 1; saveDev(); renderStageBar(); });
     // A tap on the words plays or pauses; a scroll by hand moves the
     // steady scrolling with it.
-    $("sg-body").addEventListener("click", function (e) { if (e.target.closest("button")) return; stagePlay(); });
+    $("sg-body").addEventListener("click", function (e) {
+      if (e.target.closest("button")) return;
+      // S4: a tap on a chord shows its diagram (when diagrams are on).
+      var ch = e.target.closest(".sh-ch");
+      if (ch && stg && dev.dg) {
+        var name = ch.dataset.c;
+        if (name && showDiagram(name)) return;
+      }
+      stagePlay();
+    });
     $("sg-body").addEventListener("scroll", function () { if (stg && !stg.run) stg.pos = $("sg-body").scrollTop; });
     $("stage2").addEventListener("keydown", function (e) {
       if (!stg) return;

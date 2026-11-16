@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.89.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.05.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -166,7 +166,6 @@
     timesheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>',
     invoices: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h14v20l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 7h6"/><path d="M9 11h6"/><path d="M13 15h2"/></svg>',
     newsletter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6"/><path d="M8 16h4"/></svg>',
-    signature: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c2.5-6 4.5-9 6-9 2 0-1.5 8 .5 8 1.5 0 2.5-4 4-4 1.2 0 .8 3 2.3 3 1 0 2-1 3.2-2"/><path d="M3 21h18"/></svg>',
     certificates: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/></svg>',
     publish: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/><path d="M16 4v6l2-1.5 2 1.5V4"/></svg>',
     wiki: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M7 9l1.6 6L10.5 10 12 15l1.5-5 1.9 5L17 9"/></svg>',
@@ -1065,6 +1064,7 @@
     try { w = f.contentWindow; d = f.contentDocument; } catch (e) { return; }   // not same-origin
     if (!w || !d || !d.documentElement) return;
     a11yMark(d);
+    if (window.orosUiFont) window.orosUiFont.frame(d);   // FM-5
     var r = d.documentElement, z = a11yZoom();
     if (r.hasAttribute("data-oros-zoom")) { r.style.removeProperty("zoom"); r.removeAttribute("data-oros-zoom"); }
     if (z === 1) return;
@@ -1110,8 +1110,69 @@
     return {
       size: a11y.size, sizes: A11Y_SIZES.slice(), contrast: a11y.contrast, focus: a11y.focus,
       high: a11yHigh(), forced: a11yMq("(forced-colors: active)"),
-      capped: a11yZoom() < a11y.size / 100
+      capped: a11yZoom() < a11y.size / 100,
+      font: uifGet()                                       // FM-5: null = Nunito
     };
+  }
+  // ---------- The font of orOS (FM-5, uifont.js) ----------
+  // A family of the person's (Settings › Fonts) instead of Nunito, on
+  // this device only (like the text size). uifont.js and the designkit
+  // font files load only while one is set.
+  var UIF_KEY = "oros-uifont";
+  var UIF_FILE = /^[0-9a-f]{64}\.ttf$/;
+  function uifClean(v) {
+    if (!v || typeof v !== "object" || typeof v.id !== "string" || !/^(fs_[a-z0-9_]{1,60}|uf_[0-9a-f]{16})$/.test(v.id)) return null;
+    var o = { id: v.id, name: String(v.name || v.id).replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 60) || v.id,
+              fb: v.fb === "serif" || v.fb === "mono" ? v.fb : "sans" };
+    if (o.id.indexOf("uf_") === 0) {
+      ["r", "b", "i", "bi"].forEach(function (k) { if (UIF_FILE.test(v[k] || "")) o[k] = v[k]; });
+      if (!o.r) return null;
+    }
+    return o;
+  }
+  function uifGet() {
+    var v = null;
+    try { v = JSON.parse(localStorage.getItem(UIF_KEY) || "null"); } catch (e) {}
+    return uifClean(v);
+  }
+  var uifP = null;
+  function uifLoad() {
+    if (window.orosUiFont) return Promise.resolve(window.orosUiFont);
+    if (!uifP) {
+      var one = function (src) {
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = src + "?v=" + APP_VERSION;
+          s.onload = ok;
+          s.onerror = function () { s.remove(); fail(new Error(src)); };
+          document.head.appendChild(s);
+        });
+      };
+      var dk = window.orosDK || {};
+      uifP = (dk.text ? Promise.resolve() : one("designkit/text.js"))
+        .then(function () { return (window.orosDK || {}).fonts ? null : one("designkit/fonts.js"); })
+        .then(function () { return one("uifont.js"); })
+        .then(function () { if (!window.orosUiFont) throw new Error("uifont"); return window.orosUiFont; });
+      uifP.catch(function () { uifP = null; });
+    }
+    return uifP;
+  }
+  function uifApply() {
+    var e = uifGet();
+    if (!e && !window.orosUiFont) return;
+    uifLoad().then(function (U) {
+      U.set(e, [document].concat(window.__orosAppDocs ? window.__orosAppDocs() : []));
+    }, function () {});
+  }
+  function uifSetUser(v) {
+    var e = v ? uifClean(v) : null;
+    if (v && !e) return;
+    try {
+      if (e) localStorage.setItem(UIF_KEY, JSON.stringify(e));
+      else localStorage.removeItem(UIF_KEY);
+    } catch (x) { scToast("err", window.t("a11y.savefail")); return; }
+    uifApply();
+    settingsNotify();
   }
   // The system's own contrast switch and a resize (the 320 px cap)
   // apply at once.
@@ -1688,6 +1749,7 @@
       tickSafe("keepCheckTick", keepCheckTickThrottled);   // Contacts: keep in touch, "reach out" (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("storageCheckTick", storageCheckTickThrottled); // Storage: warranty ends + return-by dates (60s throttle)
+      tickSafe("docsCheckTick", docsCheckTickThrottled);   // Files Documents: expiry + keep-until dates (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
@@ -2476,6 +2538,60 @@
     if (now - storageLastTick < 60000) return;
     storageLastTick = now;
     storageCheckTick();
+  }
+
+  // Files › Documents (DOCS-1 W3) — expiry dates 30 days, 7 days and on
+  // the day (up to 7 days late after orOS was closed), and keep-until
+  // dates that passed (a note only: nothing is deleted). Reads
+  // "oros-files-docs" directly (works with Files CLOSED) through
+  // files/docs-due.js (loaded by index.html, the SAME file Files, Today
+  // and Calendar use). On by default at 09:00; the hour lives in the
+  // device-local "oros-files-docs-prefs" (remind 0-23, -1 = off).
+  // Each alert is announced once per step: device-local
+  // "oros-files-docs-notified" = { alertKey: lowest step announced },
+  // pruned to alerts that still exist. One grouped notice at most per
+  // tick, ns "files" (so the Files toggle and Automations "a notice
+  // from Files" apply). A private document shows its type only.
+  function docsCheckTick() {
+    var D = window.OrosDocsDue;
+    if (!D) return;                                     // stale bundle — silent
+    var raw, prefs, notified;
+    try {
+      prefs = D.readPrefs(JSON.parse(localStorage.getItem(D.PREFS_KEY)));
+      if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+      raw = JSON.parse(localStorage.getItem(D.KEY));
+      notified = JSON.parse(localStorage.getItem(D.NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.docs) || !raw.docs.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    if (todayAbsorbs("files")) return;                  // said in today's summary
+    var today = sysYmd();
+    var all = D.alerts(raw, today);
+    var fresh = D.toNotify(all, notified);
+    try { localStorage.setItem(D.NOTIFIED_KEY, JSON.stringify(D.nextNotified(all, fresh, notified))); } catch (e) {}
+    if (!fresh.length) return;
+    var lang = state.lang === "el" ? "el" : state.lang === "de" ? "de" : "en";
+    var lines = fresh.slice(0, 3).map(function (a) { return D.alertLine(a, raw, lang); });
+    if (fresh.length > 3) lines.push(tr("n.andmore", { n: fresh.length - 3 }));
+    var title = window.t("app.files");
+    if (title === "app.files") title = "Files";        // missing-key fallback
+    N.emit({
+      ns: "files",
+      key: "docs-" + today + "-" + garageHash(fresh.map(function (a) { return a.key + ":" + a.step; }).join("|")),
+      type: "reminder",
+      title: title,
+      body: lines.join(" \u00b7 "),
+      deepLink: "files:" + (fresh.length > 1 ? "soon" : "doc:" + fresh[0].id)
+    });
+  }
+
+  var docsLastTick = 0;
+  function docsCheckTickThrottled() {
+    var now = Date.now();
+    if (now - docsLastTick < 60000) return;
+    docsLastTick = now;
+    docsCheckTick();
   }
 
   // Travel — the evening before departure ("Rome tomorrow · 6 items
@@ -4934,6 +5050,7 @@
       var w;
       try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
       w.addEventListener("keydown", function (e) {
+        strictPanicKey(e);
         if (!cmdIsCtrlK(e)) return;
         if (state.running && CMD_OWN_CTRLK[state.running.id]) return;   // the app's own Ctrl+K
         e.preventDefault();
@@ -8792,7 +8909,7 @@
   function scFactoryReset(btn, deviceOnly, sosPass) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
-    var follow = deviceOnly === "follow", sos = deviceOnly === "sos";
+    var follow = deviceOnly === "follow", sos = deviceOnly === "sos", travel = deviceOnly === "travel";
     var S = window.orosSync;
 
     function capped(p, ms) {
@@ -8804,7 +8921,10 @@
 
     // Cloud wipe (15s cap — a hanging network can never freeze the
     // reset; wipeEverything suspends the engine synchronously at call).
-    var cloud = follow ? Promise.resolve(S && typeof S.suspendEngine === "function" ? S.suspendEngine() : null)
+    // Travel (STRICT-3): the last push like "Reset this device", then this
+    // device's own relay boxes close; the cloud stays.
+    var cloud = travel ? lockLastPush().then(function () { return capped(sosRelay(false), 5000); })
+      : follow ? Promise.resolve(S && typeof S.suspendEngine === "function" ? S.suspendEngine() : null)
       : sos ? capped(sosRelay(true), 8000).then(function () {
           return (S && typeof S.sosEverywhere === "function") ? capped(S.sosEverywhere(sosPass), 15000) : null;
         })
@@ -8827,6 +8947,7 @@
         }
         for (var j = 0; j < doomed.length; j++) storage.removeItem(doomed[j]);
       }
+      wipePhoneCopies(sos || follow);
       try { sweep(sessionStorage); } catch (e) {}   // PKCE verifier
       sweep(localStorage);
 
@@ -8837,6 +8958,7 @@
       // IDB connection is open yet, so deleteDatabase() lands cleanly.
       localStorage.setItem("oros-reset-db", "1");
       if (sos) localStorage.setItem(SOS_AFTER_KEY, String(Date.now()));   // SOS-1: the what-now list, once
+      if (sos || follow) { try { localStorage.setItem(ERASED_KEY, JSON.stringify({ at: Date.now(), kind: sos ? "sos" : "follow" })); } catch (e) {} }
       location.reload();
     });
   }
@@ -8866,6 +8988,7 @@
     if (window.orosPairLink && typeof window.orosPairLink.cancelAll === "function") job(function () { return window.orosPairLink.cancelAll(); });
     if (all) {
       job(sosRevokeShares);
+      job(sosDropCrmForm);
       if (HH && typeof HH.list === "function" && typeof HH.leave === "function") job(function () {
         return Promise.all(HH.list().map(function (h) { return HH.leave(h.box).catch(function () {}); }));
       });
@@ -8888,6 +9011,46 @@
     }));
   }
   var SOS_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = share/relay.js RELAY
+  // SOS-1 S2: the CRM web form (crm/webform.js turnOff, op "crmf"
+  // "drop") stops taking messages and the relay drops the ones waiting.
+  // The form's relay is the Mail relay when one is set (webform.js
+  // relayOf), so the same address is used here.
+  function sosDropCrmForm() {
+    var d = null, m = null;
+    try { d = JSON.parse(localStorage.getItem("oros-crm-data") || "null"); } catch (e) {}
+    var w = d && d.wf;
+    if (!w || w.off || typeof w.k !== "string" || typeof w.sec !== "string") return null;
+    try { m = JSON.parse(localStorage.getItem("oros-mail-data") || "null"); } catch (e) {}
+    var u = m && m.relay && typeof m.relay.url === "string" ? m.relay.url.trim().replace(/\/+$/, "") : "";
+    if (!/^https:\/\/[^\s]+$/.test(u)) u = SOS_RELAY;
+    return fetch(u + "/v1", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ op: "crmf", act: "drop", k: w.k, sec: w.sec }), credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
+    }).catch(function () {});
+  }
+  // SOS-1 S2: the copies the orOS Android app (or orOS Passwords) keeps
+  // outside the page (phone.js, BR-PHONE): the sealed autofill lists and
+  // their Keystore keys, every fingerprint / face secret (Passwords and
+  // the screen lock), and with full = true (SOS and its follow-up) also
+  // what orOS wrote into the phone's contacts, calendar, reminders and
+  // Health Connect. Messages to the app go out at once (postMessage),
+  // before the reload.
+  function wipePhoneCopies(full) {
+    var P = window.orosPhone;
+    if (!P) return;
+    try { if (typeof P.afClear === "function") P.afClear(); } catch (e) {}
+    try {
+      var b = P.bio, info = b && typeof b.info === "function" ? b.info() : null;
+      (info && info.kids || []).forEach(function (kid) { try { b.clear(kid); } catch (e) {} });
+    } catch (e) {}
+    if (!full || typeof P.setEnabled !== "function") return;
+    ["contacts", "calendar", "reminders", "health"].forEach(function (k) { try { P.setEnabled(k, false); } catch (e) {} });
+  }
+  // SOS-1 S2: "oros-erased" { at, kind } is written after the sweep of an
+  // SOS or of its follow-up and stays (the next reset sweeps it). The
+  // orOS browser add-on reads it with the Passwords copy and forgets a
+  // copy it took before that moment (extension/pmvault.js).
+  var ERASED_KEY = "oros-erased";
 
   // Settings › System › SOS: the typed passphrase is checked first
   // (nothing is touched on a wrong one), then 10 s to cancel.
@@ -9120,6 +9283,7 @@
     // Match on e.code (PHYSICAL key) — e.key lies under the Greek
     // layout (physical P arrives as "π"), e.code is "KeyP" always.
     if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return false;
+    if (TILL) return false;   // TILL-1: no shell shortcuts on a till-only device
     // Χ5: focused editable target → the shortcut yields (AltGr
     // keyboards emit Ctrl+Alt natively; a typed character must never
     // trigger an OS action). Covers shell AND forwarded iframe
@@ -11314,6 +11478,72 @@
     } catch (e) { return null; }
   };
 
+  // ---------- 9k. Things that delete themselves (STRICT-5) ----------
+  // Self-deleting Notes pages (STRICT-5, notes/expire.js): while Notes
+  // is closed the shell deletes a page whose time has come, in the
+  // stored data, as Notes' Delete would (tomb + sub-pages up); sync
+  // carries the tombs. Notes open does it itself.
+  var notesExpLoad = null;
+  function notesExpireSweep() {
+    if (osResetting || appLive("notes")) return;
+    var raw = null;
+    try { raw = localStorage.getItem("oros-notes-data"); } catch (e) { return; }
+    if (!raw || raw.indexOf('"exp":') === -1) return;
+    if (!notesExpLoad) notesExpLoad = new Promise(function (res, rej) {
+      if (window.orosNotesExpire) { res(); return; }
+      var sc = document.createElement("script");
+      sc.src = "notes/expire.js";
+      sc.onload = res;
+      sc.onerror = function () { notesExpLoad = null; rej(new Error("load")); };
+      document.head.appendChild(sc);
+    });
+    notesExpLoad.then(function () {
+      var E = window.orosNotesExpire;
+      if (!E || appLive("notes")) return;
+      var now = Date.now(), cur, data;
+      try { cur = localStorage.getItem("oros-notes-data"); data = JSON.parse(cur); } catch (e) { return; }
+      if (!data || !E.dueIds(data.pages, now).length) return;
+      var gone = E.expire(data, now);
+      if (!gone.length) return;
+      try { localStorage.setItem("oros-notes-data", JSON.stringify(data)); } catch (e) { return; }
+      try { if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty(); } catch (e) {}
+    }).catch(function () {});
+  }
+  // Self-deleting files (STRICT-5, slice "files-exp", files-core.js
+  // expSet): with Files closed the shell deletes a due file for good
+  // (orosFS reports it to the disk sync) and stores the tomb.
+  var filesExpBusy = false;
+  function filesExpireSweep() {
+    if (osResetting || filesExpBusy || appLive("files")) return;
+    var FS = window.orosFS, st = null, now = Date.now();
+    if (!FS || typeof FS.rm !== "function") return;
+    try { st = JSON.parse(localStorage.getItem("oros-files-exp") || "null"); } catch (e) { return; }
+    var items = st && Array.isArray(st.items) ? st.items : [];
+    var due = items.filter(function (f) { return f && !f.del && typeof f.p === "string" && typeof f.e === "number" && f.e <= now; });
+    if (!due.length) return;
+    filesExpBusy = true;
+    due.reduce(function (ch, f) {
+      return ch.then(function () {
+        return Promise.resolve(FS.stat(f.p)).then(function (s2) {
+          return s2 && !s2.dir ? FS.rm(f.p) : null;
+        }, function () { return null; });
+      }).then(function () {
+        f.e = undefined; delete f.e;
+        f.del = true;
+        f.m = Math.max(Math.floor(Date.now()), (f.m || 0) + 1);
+      }, function () {});
+    }, Promise.resolve()).then(function () {
+      if (appLive("files")) { filesExpBusy = false; return; }   // Files opened meanwhile: it re-reads and sweeps itself
+      try { localStorage.setItem("oros-files-exp", JSON.stringify(st)); } catch (e) {}
+      try { if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty(); } catch (e) {}
+      filesExpBusy = false;
+    });
+  }
+  function expireSweeps() { notesExpireSweep(); filesExpireSweep(); }
+  setTimeout(expireSweeps, 8000);
+  setInterval(expireSweeps, 300000);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") expireSweeps(); });
+
   // ---------- 9j. Settings app bridge (window.orosSettings) ----------
   // The Settings app (settings/, System) is a plain iframe app: it
   // never writes storage and registers no slice. Every value comes
@@ -11566,6 +11796,7 @@
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
+      case "uiFont":       uifSetUser(value); return;
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;
       case "tips":         tipsSetUser(!!value); return;
@@ -11744,6 +11975,9 @@
   if (window.orosLock && typeof window.orosLock.setHooks === "function") {
     window.orosLock.setHooks({
       reset: lockDeviceReset,
+      duress: strictDuress,
+      deadman: function () { strictDuress(false); },
+      travel: strictTravel,
       recovered: function () {
         window.orosSettings.open("lock");
         scToast("ok", window.t("lock.recovered"));
@@ -11791,7 +12025,88 @@
     var title = window.t(lv === "hard" ? "strict.badge.hard" : "strict.badge.on");
     if (b.title !== title) { b.title = title; b.setAttribute("aria-label", title); }
   }
-  function strictUpdate() { strictBadge(); strictTellSW(); }
+  // Duress PIN typed on the lock screen (STRICT-2): a silent wipe.
+  // cloud false: this device only, nothing is sent (the SOS "follow"
+  // wipe: backup folder and this device's relay boxes go too).
+  // cloud true: every relay box of the person's data, then the cloud
+  // (reset signal + wipe + revoke, the factory reset), then this device.
+  // No what-now list after the reload: it opens like a new orOS.
+  function strictDuress(cloud) {
+    if (osResetting) return;
+    osResetting = true;
+    var btn = { disabled: false, textContent: "" };
+    if (!cloud) { scFactoryReset(btn, "follow"); return; }
+    Promise.race([sosRelay(true), new Promise(function (r) { setTimeout(r, 8000); })])
+      .catch(function () {}).then(function () { scFactoryReset(btn, false); });
+  }
+  // Travel mode (STRICT-3): only when the sync passphrase is proven and
+  // nothing is left unsent (settings, Files queue), then this device
+  // is erased like "Reset this device" (backup folder files too).
+  function strictTravel(pass) {
+    var S = window.orosSync, V = window.orosVault;
+    if (osResetting) return Promise.resolve({ ok: false, code: "busy" });
+    if (!S || !S.isConnected() || !S.hasPassphrase()) return Promise.resolve({ ok: false, code: "nosync" });
+    function capped(p, ms) {
+      return Promise.race([Promise.resolve(p).catch(function () { return null; }),
+        new Promise(function (r) { setTimeout(r, ms); })]);
+    }
+    return Promise.resolve().then(function () { return S.checkPassphrase(pass); }).then(function (r) {
+      if (r !== true) return { ok: false, code: r === false ? "wrong" : "cantcheck" };
+      return capped(S.isDirty() ? S.push() : null, 30000).then(function () {
+        var q = V && typeof V.queueLength === "function" ? V.queueLength() : 0;
+        return capped(q && typeof V.sync === "function" ? V.sync("travel") : null, 60000);
+      }).then(function () {
+        var q = V && typeof V.queueLength === "function" ? V.queueLength() : 0;
+        if (S.isDirty() || q) return { ok: false, code: "unsynced" };
+        if (osResetting) return { ok: false, code: "busy" };
+        osResetting = true;
+        setTimeout(function () { scFactoryReset({ disabled: false, textContent: "" }, "travel"); }, 0);
+        return { ok: true };
+      });
+    }, function () { return { ok: false, code: "cantcheck" }; });
+  }
+  // Panic lock (STRICT-2): Escape three times within 1.5 s locks at once.
+  // Keys typed inside an app frame never reach this document, so
+  // cmdWireFrame passes them on too.
+  var strictEsc = [];
+  function strictPanicKey(e) {
+    if (e.key !== "Escape" || !strictLevelNow() || !window.orosLock || !window.orosLock.isOn()) return;
+    var now = Date.now();
+    strictEsc = (strictEsc || []).filter(function (t) { return now - t < 1500; });
+    strictEsc.push(now);
+    if (strictEsc.length >= 3) { strictEsc = []; window.orosLock.lock(); }
+  }
+  document.addEventListener("keydown", strictPanicKey, true);
+  // Discreet title and icon (STRICT-2): the tab says "Notes" with a
+  // plain page icon while the mode is on and the switch is set.
+  var DISC_ICON = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="6" y="3" width="20" height="26" rx="3" fill="#e8e8e8" stroke="#888" stroke-width="2"/><path d="M11 11h10M11 16h10M11 21h6" stroke="#888" stroke-width="2"/></svg>');
+  var discIcon = null, discObs = null;
+  function strictDiscreetOn() {
+    var S = window.orosStrict;
+    try { return !!(strictLevelNow() && S && typeof S.discreet === "function" && S.discreet()); } catch (e) { return false; }
+  }
+  function strictDiscreet() {
+    var on = strictDiscreetOn();
+    var icon = document.querySelector('link[rel="icon"]');
+    if (icon) {
+      if (discIcon === null) discIcon = icon.getAttribute("href");
+      var want = on ? DISC_ICON : discIcon;
+      if (icon.getAttribute("href") !== want) icon.setAttribute("href", want);
+    }
+    var title = window.t("strict.disc.title");
+    if (on && document.title !== title) document.title = title;
+    if (on && !discObs && typeof MutationObserver === "function") {
+      var el = document.querySelector("title");
+      if (el) {
+        discObs = new MutationObserver(function () {
+          if (strictDiscreetOn() && document.title !== window.t("strict.disc.title")) document.title = window.t("strict.disc.title");
+        });
+        discObs.observe(el, { childList: true, characterData: true, subtree: true });
+      }
+    }
+    if (!on && discObs) { discObs.disconnect(); discObs = null; if (document.title === title) document.title = "orOS"; }
+  }
+  function strictUpdate() { strictBadge(); strictTellSW(); strictDiscreet(); }
   if (window.orosStrict && typeof window.orosStrict.onChange === "function") {
     window.orosStrict.onChange(strictUpdate);
     strictUpdate();
@@ -11823,7 +12138,21 @@
   // Back, which returns to the single app. Everything else (sync,
   // notifications, files, dialogs) is the shell as always.
   var SOLO = (window.orosSolo && window.orosSolo.has && window.orosSolo.has(window.orosSolo.id)) ? window.orosSolo.id : "";
+  // TILL-1 (Stock fair till F3): a till-only device runs this shell as
+  // a single app of Stock's till. Every other app, the desktop and the
+  // command bar wait behind the owner's screen-lock PIN (lock.js till).
+  var TILL = !SOLO && !!(window.orosLock && window.orosLock.till && window.orosLock.till.active());
+  if (TILL) { SOLO = "stock"; document.body.classList.add("till-mode"); }
   if (SOLO) document.body.classList.add("solo-mode");
+  // The owner typed the PIN, the owner left, or the till was turned
+  // on / off: this tab starts again in the other mode.
+  if (window.orosLock && window.orosLock.till) {
+    var tillWas = TILL;
+    window.orosLock.onChange(function () {
+      if (window.orosSolo && window.orosSolo.id) return;
+      if (window.orosLock.till.active() !== tillWas) { tillWas = !tillWas; location.reload(); }
+    });
+  }
 
   function soloAppObj() {
     for (var i = 0; i < state.apps.length; i++) {
@@ -11840,6 +12169,7 @@
       soloPackAsked = state.lang;
       I.ensure(state.lang, "solo", function () { if (SOLO) soloPaint(); });
     }
+    if (TILL) return window.t("app.stock");
     return window.orosSolo.nameOf(SOLO, state.lang);
   }
 
@@ -11887,13 +12217,13 @@
     var menu = document.createElement("div");
     menu.id = "solo-menu";
     menu.setAttribute("role", "menu");
-    [
+    (TILL ? [["till.owner", function () { window.orosLock.till.ask(); }]] : [
       ["solo.sync", function () { window.__orosOpenAt("settings", { section: "sync" }); }],
       ["solo.settings", function () { openAppById("settings"); }],
       ["solo.help", function () { openHelp(); }],
       ["solo.full", function () { window.open("/", "_blank", "noopener"); }]
     ].concat(window.orosLock && window.orosLock.isOn()
-      ? [["menu.lock", function () { window.orosLock.lock(); }]] : []).forEach(function (it) {
+      ? [["menu.lock", function () { window.orosLock.lock(); }]] : [])).forEach(function (it) {
       var b = document.createElement("button");
       b.type = "button";
       b.setAttribute("role", "menuitem");
@@ -11956,7 +12286,7 @@
   // Icon badge (Badging API, through the host page): To-Do counts the
   // open tasks due today or overdue. Others show none.
   function soloBadgeTick() {
-    var h = window.orosSolo.host(), kind = window.orosSolo.APPS[SOLO].badge;
+    var h = window.orosSolo.host(), kind = (window.orosSolo.APPS[SOLO] || {}).badge;
     if (!h || kind !== "due") return;
     var n = 0;
     try {
@@ -12398,6 +12728,8 @@
       if (first) lateWhen(function () { var o = late.open; late.open = null; if (o) openApp(o[0], o[1]); });
       return;
     }
+    // TILL-1: on a till-only device anything but Stock needs the owner.
+    if (TILL && app && app.id !== "stock") { window.orosLock.till.ask(); return; }
     if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
     var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;
@@ -14624,6 +14956,7 @@
   applyIcons();
   a11yApply();
   a11yWatch();
+  uifApply();
   applyLang();
   langKeepOffline();
   // Seasonal decorations (seasonal.js, a shell component like pet.js):
