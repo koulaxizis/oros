@@ -8,6 +8,7 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
 const M = require("../smartbar.js");
+const A = require("../smartbar-apps.js");
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 
 test("prefs: unknown and repeated kinds are dropped, absent means no chip", () => {
@@ -116,7 +117,7 @@ test("shell wiring: loaded after widgets.js, attached outside a single app, fit 
   assert.match(sh, /tickSafe\("smartbarTick"/);
   const src = read("smartbar.js");
   // chip text goes in through textContent only; innerHTML is for the fixed icons
-  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = IC[kind];"]);
+  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(kind);", "innerHTML = IC.more;", "innerHTML = icon(k);"]);
   assert.match(src, /if \(strict\(\)\) return null;[\s\S]*if \(strict\(\)\) return null;/);
 });
 
@@ -139,7 +140,10 @@ test("shell strings for every chip in EN, EL and DE", () => {
   const tr = read("translations.js"), de = read("i18n/de/shell.js");
   const keys = M.KINDS.map((k) => "sb.k." + k).concat(["sb.event.now", "sb.event.in", "sb.event.short", "sb.event.hidden", "sb.event.tip",
     "sb.focus.work", "sb.focus.break", "sb.focus.tip", "sb.tasks.one", "sb.tasks.n", "sb.tasks.tip", "sb.water.tip",
-    "sb.budget.label", "sb.budget.tip", "sb.sales.label", "sb.sales.tip", "sb.savefail"]);
+    "sb.budget.label", "sb.budget.tip", "sb.sales.label", "sb.sales.tip", "sb.savefail", "sb.more.tip", "sb.more.title",
+    "sb.habits.label", "sb.plants.label", "sb.chores.label", "sb.kanban.label", "sb.invoices.label", "sb.list.tip", "sb.list.more",
+    "sb.invoices.tip", "sb.trip.today", "sb.trip.tomorrow", "sb.trip.in", "sb.trip.tip", "sb.timer.tip",
+    "sb.habits.one", "sb.plants.one", "sb.chores.one", "sb.kanban.one", "sb.invoices.one"]);
   keys.forEach((k) => {
     assert.strictEqual(tr.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
@@ -185,4 +189,58 @@ test("SB4 bar window: only the bar, its title kept, apps open in the main window
   assert.match(css, /html\.barwin body > \*:not\(#oros-bar\) \{ display: none !important; \}/);
   // behind the screen lock the chips go (no lock screen over the bar window)
   assert.match(src, /var lk = locked\(\);\s+if \(box\.hidden !== lk\)/);
+});
+
+test("fold: chips that do not fit, and every chip on a phone, go behind one button that unfolds them", () => {
+  const src = read("smartbar.js");
+  assert.match(src, /var FOLD_W = 600;/);
+  assert.match(src, /function folded\(\) \{ return \(root\.innerWidth \|\| 0\) <= FOLD_W; \}/);
+  // fitDrop never folds the button itself, and the button stays last in the row
+  assert.match(src, /!el\.hidden && !\(more && el === more\.el\)/);
+  assert.match(src, /box\.appendChild\(more\.el\);\s+\/\/ always last/);
+  // the panel draws chip text through textContent only and closes on Escape and outside taps
+  const fill = src.slice(src.indexOf("function fillPop"), src.indexOf("function onPopKey"));
+  assert.deepStrictEqual(fill.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(k);"], "only fixed icons go through innerHTML");
+  assert.match(fill, /v\.textContent = val;/);
+  assert.match(src, /e\.key === "Escape" && pop/);
+  assert.match(src, /addEventListener\("touchstart", onPopDown, true\)/);
+  // behind the lock nothing unfolds; the desktop bar window has no room for a panel
+  assert.match(src, /if \(lk\) \{ closePop\(\); return; \}/);
+  assert.match(src, /html\.barwin \.sb-chip\.sb-more \{ display: none !important; \}/);
+});
+
+test("SB5 agendaCard: counts, the next trip, today's lines and the running timer", () => {
+  const T = "2026-11-16";
+  const rows = [
+    { app: "x", id: "a", title: "Water the fern", kind: "task", due: "2026-11-15" },
+    { app: "x", id: "b", title: "Feed", kind: "task", due: T },
+    { app: "x", id: "c", title: "Later", kind: "task", due: "2026-11-18" },
+    { app: "x", id: "d", title: "Note", kind: "info", due: T },
+    { app: "x", id: "e", title: "Starts", kind: "event", due: T }
+  ];
+  assert.deepStrictEqual(A.agendaCard("plants", rows, T), { n: 2, first: rows[0] });
+  assert.strictEqual(A.agendaCard("kanban", rows, T).n, 3);                 // + the card that starts today
+  assert.deepStrictEqual(A.agendaCard("invoices", rows, T), { n: 1, first: rows[0] });   // late only
+  assert.strictEqual(A.agendaCard("invoices", [{ title: "Rec", kind: "task", due: null }], T), null);
+  assert.strictEqual(A.agendaCard("habits", [], T), null);
+  const trips = [
+    { title: "Lisbon day 2", kind: "event", due: "2026-11-20", target: { trip: "t1", tab: "plan" } },
+    { title: "Lisbon", kind: "event", due: "2026-11-19", target: { trip: "t1", tab: "" } },
+    { title: "Rome", kind: "event", due: "2026-12-01", target: { trip: "t2", tab: "" } }
+  ];
+  const tr = A.agendaCard("trip", trips, T);
+  assert.strictEqual(tr.days, 3);
+  assert.strictEqual(tr.row.title, "Lisbon");
+  assert.strictEqual(A.agendaCard("meal", rows, T).row.title, "Note");
+  assert.strictEqual(A.agendaCard("timer", rows, T), null);                 // only the "run" line
+  assert.strictEqual(A.agendaCard("timer", [{ id: "run", title: "Since 09:00", kind: "info" }], T).row.id, "run");
+  assert.strictEqual(A.agendaCard("plants", rows, "bad"), null);
+  assert.strictEqual(A.dayGap("2026-03-28", "2026-03-30"), 2);              // DST-safe
+  // every new card names a real app and is a known kind
+  Object.keys(A.AGENDA).forEach((k) => {
+    assert.ok(M.KINDS.includes(k), k);
+    assert.ok(fs.existsSync(path.join(ROOT, A.AGENDA[k][0], "today.js")), A.AGENDA[k][0] + " has a Today provider");
+  });
+  assert.ok(M.MONEY.invoices, "invoices hide under Sensitive work");
+  assert.deepStrictEqual(Object.keys(M.APPS).sort(), A.KINDS.slice().sort(), "smartbar.js knows which kinds load smartbar-apps.js");
 });

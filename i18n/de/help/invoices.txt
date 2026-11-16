@@ -81,7 +81,7 @@ Lege unter `Kunden` einen `Neuer Kunde` mit Name, Beruf, ΑΦΜ, ΔΟΥ, Adresse
 ## Budget, Angebot, Zeiterfassung und CRM
 - Jede Zahlung, die du erfasst, kommt von selbst als freiberufliche Einnahme in [Budget](app:budget) (mit ihrem Partner und der Rechnungsnummer): Die Zahlung zeigt `Im Budget (automatisch)`. Sie erscheint, sobald Budget das nächste Mal auf einem Gerät öffnet, auf dem du auch Rechnungen nutzt. Änderst du hier Betrag oder Datum, folgt Budget; löschst du die Zahlung, verschwindet auch die Einnahme. Was du in Budget änderst oder löschst, bleibt so, wie du es hinterlassen hast. Ausschalten unter `Einstellungen` › `Zahlungen kommen von selbst ins Budget`; vorher erfasste Zahlungen bleiben, wie sie waren.
 - Wenn diese Einstellung aus ist (und bei älteren Zahlungen), öffnet neben jeder Zahlung `Zu Budget hinzufügen` [Budget](app:budget) mit der Zahlung als freiberufliche Einnahme; prüfe und speichere sie dort. Die Taste erscheint, wenn die Zahlung in der Währung von Budget ist, und merkt sich, dass du sie gesendet hast.
-- `Rechnung erstellen` bei einem angenommenen [Angebot](app:quote) und `Rechnung erstellen` in einem Bericht der [Zeiterfassung](app:timesheet) öffnen hier eine neue Rechnung mit Kunde und Positionen.
+- `Rechnung erstellen` bei einem angenommenen Angebot im Tab `Angebote` und `Rechnung erstellen` in einem Bericht der [Zeiterfassung](app:timesheet) öffnen hier eine neue Rechnung mit Kunde und Positionen.
 - Unter `Kunden` holt `Aus CRM` Kunden aus [CRM](app:crm); jeder bleibt verknüpft, sodass CRM seine Rechnungen zeigen kann.
 - Bei einer ausgestellten Rechnung oder Quittung, deren Positionen einen Produktcode haben, öffnet `Aus dem Bestand nehmen` einen Verkauf in [Bestand](app:stock) mit diesen Produkten und Preisen; eine Gutschrift bietet `Zurück in den Bestand` für eine Rückgabe. In Bestand ändert sich nichts, bis du dort speicherst. Die Taste erscheint erst, wenn du Bestand nutzt.
 
@@ -104,7 +104,7 @@ Bis du auf `Speichern` tippst, ist ein neues Angebot ein Entwurf, der nur auf di
 Ein Angebot kann auch in einer anderen App beginnen: `Angebot erstellen` in einem Bericht der [Zeiterfassung](app:timesheet) füllt ein neues Angebot für dich aus. Prüfe es und tippe auf `Speichern`.
 
 ### Kunden
-Tippe oder klicke auf `Kunde wählen`, um einen Kunden auszuwählen, oder auf das **+** daneben, um einen hinzuzufügen. `Kundendaten` enthält `Name`, `E-Mail`, `Telefon`, `Adresse` und `Steuer-Nr. / USt-IdNr.`. Der Stift bearbeitet den gewählten Kunden; `Löschen` in diesem Fenster entfernt den Kunden nach einer Bestätigung.
+Tippe oder klicke auf `Kunde wählen`, um einen Kunden auszuwählen, oder auf das **+** daneben, um einen hinzuzufügen. `Kundendaten` enthält `Name`, `E-Mail`, `Telefon`, `Adresse` und `Steuer-Nr. / USt-IdNr.`. Der Stift bearbeitet den gewählten Kunden; `Löschen` in diesem Fenster entfernt den Kunden nach einer Bestätigung. Angebote und Rechnungen haben eigene Kundenlisten: Die Liste zeigt unter `Aus den Kunden der Rechnungen` auch die Rechnungskunden, die deine Angebote noch nicht haben; wählst du einen, öffnet sich `Kundendaten` ausgefüllt (hinzugefügt wird er erst beim Speichern). Die Liste `Kunde` im Rechnungseditor macht dasselbe mit den Kunden der Angebote.
 
 ### Positionen und Summen
 Tippe auf **+** neben `Positionen`, um eine Zeile mit `Code/SKU`, `Beschreibung`, `Menge`, `Einzelpreis`, `Rabatt %` und `USt. %` hinzuzufügen. Beträge kannst du mit Komma oder Punkt eingeben.
@@ -119,7 +119,7 @@ Lege unter `Raten` eine `Anzahl` fest und tippe auf `Erzeugen`, um die Summe gle
 ### Zahlungsbedingungen, Notizen und Vorlagen
 Tippe oder klicke auf eine Zahlungsvorlage (`Banküberweisung`, `PayPal`, `IRIS`, `Bar`), um ihren Text zu den `Zahlungsbedingungen` hinzuzufügen. Mit dem Stift änderst du die Texte der Vorlagen, zum Beispiel um deine IBAN einzutragen. Nutze `Notizen` für alle anderen Bedingungen.
 
-`Als Vorlage speichern` legt Positionen, Rabatt, Zahlungsbedingungen, Notizen und Raten unter einem Namen ab. Die Schaltfläche `Vorlagenbibliothek` öffnet deine Vorlagen, wo du mit `Verwenden` von einer ausgehst. `Duplizieren` erstellt eine Kopie mit neuer Nummer und dem Status `Entwurf`. Bei einem als `Angenommen` markierten Angebot öffnet `Rechnung erstellen` eine neue Rechnung in [Rechnungen](app:invoices) mit demselben Kunden und denselben Positionen; prüfe sie dort und stelle sie aus.
+`Als Vorlage speichern` legt Positionen, Rabatt, Zahlungsbedingungen, Notizen und Raten unter einem Namen ab. Die Schaltfläche `Vorlagenbibliothek` öffnet deine Vorlagen, wo du mit `Verwenden` von einer ausgehst. `Duplizieren` erstellt eine Kopie mit neuer Nummer und dem Status `Entwurf`. Bei einem als `Angenommen` markierten Angebot öffnet `Rechnung erstellen` gleich hier, im Tab `Rechnungen`, eine neue Rechnung mit demselben Kunden und denselben Positionen; prüfe sie und stelle sie aus. Gespeichert wird erst mit `Entwurf speichern` oder `Ausstellen`.
 
 ### Deine Angebote, PDF und E-Mail
 Der Tab `Angebote` listet alle deine Angebote auf. Suche nach Nummer, Kunde, Position, Notizen oder Zahlungsbedingungen, und filtere mit dem Trichter nach Status. Tippe oder klicke auf ein Angebot, um es zu öffnen.
