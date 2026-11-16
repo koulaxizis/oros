@@ -6382,6 +6382,8 @@
       return S.formsSummary(readStore("oros-forms-data"), readStore("oros-forms-answers"), a, a.form ? window.OrosFormsResults : null, W);
     });
     if (a.app === "crm" && a.partner) return crmPartnerSummary(a.partner, today);
+    // STUDIO-POD P4: the podcast shows and episodes, read only (never a publish)
+    if (a.app === "studio") return Promise.resolve(S.studioShows(readStore("oros-studio-data"), { show: a.show }));
     // CRM 1.10 (CTR-ALL): every contract, then what Today lists for CRM
     if (a.app === "crm" && !a.brief) {
       return crmCores().then(function (ok) {

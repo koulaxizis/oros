@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.05.00
+- **Studio: transcripts for podcast episodes, and publishing on your own Nextcloud.** Each episode has `Transcript`: when you ask, the speech becomes text on your device (nothing is sent anywhere), you correct it, and it goes on the site and into the feed for podcast apps. `Publish on Nextcloud or WebDAV` puts the show's site into a folder on your own server; podcast apps read it through the folder's public link. The Assistant and orOS Gate can now tell you about your shows and episodes (they never publish).
+
 ## Version 7.04.00
 - **Base: bring in Airtable and Excel, keep a base as a file.** `Import` takes several files at once: CSV, Excel and ODS files become the tables of one base, and Airtable's columns that name records of another table become real links. Base menu › `Save as orOS file (.orosbase)` keeps a whole base, with its tables, views and links, for a copy or another device; opening it adds what is missing and never deletes. In Spreadsheet, `Send to an app` › Base turns the selected cells into a new table.
 
