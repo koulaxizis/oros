@@ -206,3 +206,36 @@ test("pickers.css keeps colour fields to the orOS picker", () => {
   const css = fs.readFileSync(path.join(ROOT, "pickers.css"), "utf8");
   assert.match(css, /html\.opk-on input\[type="color"\]:not\(\[disabled\]\):not\(\[readonly\]\):not\(\[data-native\]\) \{ pointer-events: none; \}/);
 });
+
+// ---------- T4: no native questions (R14) ----------
+test("no app calls the browser's alert / confirm / prompt (R14: OrosPick.ask)", () => {
+  const SKIP = new Set(["vendor", "tests", "docs", "node_modules", "fonts", "icons", "android", "extension"]);
+  const bad = [];
+  const walk = (dir) => {
+    for (const d of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
+      if (d.name.startsWith(".")) continue;
+      const rel = dir ? dir + "/" + d.name : d.name;
+      if (d.isDirectory()) { if (!SKIP.has(d.name)) walk(rel); continue; }
+      if (!/\.js$/.test(d.name)) continue;
+      const src = fs.readFileSync(path.join(ROOT, rel), "utf8");
+      // local helpers named confirm/prompt (recordpkg.js, cast.js) are fine
+      const own = new Set([...src.matchAll(/function\s+(alert|confirm|prompt)\s*\(/g)].map((m) => m[1]));
+      src.split("\n").forEach((line, i) => {
+        const code = line.replace(/\/\*.*?\*\//g, "").replace(/\/\/.*$/, "");
+        for (const m of code.matchAll(/(^|[^.\w$])(window\.)?(alert|confirm|prompt)\s*\(/g)) {
+          if (!m[2] && own.has(m[3])) continue;
+          bad.push(rel + ":" + (i + 1) + " " + line.trim().slice(0, 80));
+        }
+      });
+    }
+  };
+  walk("");
+  assert.deepEqual(bad, []);
+});
+
+test("OrosPick.ask is exported and sign.html (its only user outside the stamp) loads pickers.js", () => {
+  const js = fs.readFileSync(path.join(ROOT, "pickers.js"), "utf8");
+  assert.match(js, /open: openAny, ask: ask,/);
+  const sign = fs.readFileSync(path.join(ROOT, "scanpdf/sign.html"), "utf8");
+  assert.match(sign, /<script src="\.\.\/pickers\.js\?v=[^"]+" defer><\/script>/);
+});

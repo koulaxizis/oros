@@ -58,7 +58,7 @@
 })(typeof window !== "undefined" ? window : this, function (win) {
   "use strict";
 
-  var VERSION = "1.2.0";
+  var VERSION = "1.3.0";
   var SEARCH_FROM = 13;   // a search field from this many rows on
 
   var STR = {
@@ -66,17 +66,17 @@
       date: "Date", time: "Time", today: "Today", now: "Now", clear: "Clear", done: "Done",
       prev: "Previous month", next: "Next month", prevY: "Earlier years", nextY: "Later years",
       pickYear: "Choose month and year", hours: "Hours", minutes: "Minutes", seconds: "Seconds",
-      colour: "Colour", hex: "Colour code", hue: "Hue", shade: "Saturation and brightness", eyedrop: "Pick from the screen", swatches: "Colours", cancel: "Cancel" },
+      colour: "Colour", hex: "Colour code", hue: "Hue", shade: "Saturation and brightness", eyedrop: "Pick from the screen", swatches: "Colours", cancel: "Cancel", ok: "OK" },
     el: { search: "Αναζήτηση", none: "Δεν βρέθηκε τίποτα", close: "Κλείσιμο", list: "Επιλογές",
       date: "Ημερομηνία", time: "Ώρα", today: "Σήμερα", now: "Τώρα", clear: "Καθαρισμός", done: "Τέλος",
       prev: "Προηγούμενος μήνας", next: "Επόμενος μήνας", prevY: "Προηγούμενα έτη", nextY: "Επόμενα έτη",
       pickYear: "Επιλογή μήνα και έτους", hours: "Ώρες", minutes: "Λεπτά", seconds: "Δευτερόλεπτα",
-      colour: "Χρώμα", hex: "Κωδικός χρώματος", hue: "Απόχρωση", shade: "Κορεσμός και φωτεινότητα", eyedrop: "Επιλογή από την οθόνη", swatches: "Χρώματα", cancel: "Άκυρο" },
+      colour: "Χρώμα", hex: "Κωδικός χρώματος", hue: "Απόχρωση", shade: "Κορεσμός και φωτεινότητα", eyedrop: "Επιλογή από την οθόνη", swatches: "Χρώματα", cancel: "Άκυρο", ok: "Εντάξει" },
     de: { search: "Suchen", none: "Keine Treffer", close: "Schließen", list: "Optionen",
       date: "Datum", time: "Uhrzeit", today: "Heute", now: "Jetzt", clear: "Löschen", done: "Fertig",
       prev: "Vorheriger Monat", next: "Nächster Monat", prevY: "Frühere Jahre", nextY: "Spätere Jahre",
       pickYear: "Monat und Jahr wählen", hours: "Stunden", minutes: "Minuten", seconds: "Sekunden",
-      colour: "Farbe", hex: "Farbcode", hue: "Farbton", shade: "Sättigung und Helligkeit", eyedrop: "Vom Bildschirm wählen", swatches: "Farben", cancel: "Abbrechen" }
+      colour: "Farbe", hex: "Farbcode", hue: "Farbton", shade: "Sättigung und Helligkeit", eyedrop: "Vom Bildschirm wählen", swatches: "Farben", cancel: "Abbrechen", ok: "OK" }
   };
 
   // ---------- pure helpers ----------
@@ -506,6 +506,7 @@
     if (!cur) return;
     var c = cur;
     cur = null;
+    if (c.cancelAsk) { var f = c.cancelAsk; c.cancelAsk = null; setTimeout(f, 0); }
     win.removeEventListener("resize", onResize);
     try { c.dlg.close(); } catch (e) {}
     if (c.dlg.parentNode) c.dlg.parentNode.removeChild(c.dlg);
@@ -1127,6 +1128,76 @@
     return true;
   }
 
+  // ---------- questions (T4, R14) ----------
+  // OrosPick.ask({ text, title?, value?, ok?, cancel?, danger?, input?,
+  // max? }) → Promise: true / false for a yes-no question, the typed
+  // text / null when `input` (or `value`) is given. The themed twin of
+  // confirm() and prompt(), which R14 bans: centred (R32), Esc and a tap
+  // outside answer "no", Enter answers "yes". Texts are set with
+  // textContent only.
+  function ask(o) {
+    o = o || {};
+    return new Promise(function (resolve) {
+      if (!supported) { resolve(o.input || o.value != null ? null : false); return; }
+      if (cur) close(false);
+      var S = strings(lang()), withInput = !!o.input || o.value != null;
+      var dlg = el("dialog", "opk opk-ask");
+      dlg.setAttribute("role", "alertdialog");
+      dlg.style.fontFamily = pageFont(doc.body || doc.documentElement);
+      var theme = doc.documentElement.getAttribute("data-theme");
+      if (theme === "light" || theme === "dark") dlg.style.colorScheme = theme;
+      var id = "opk" + (++uid);
+      var body = el("div", "opk-body");
+      if (o.title) { var h = el("h2", "opk-ask-h", String(o.title)); h.id = id + "-h"; body.appendChild(h); dlg.setAttribute("aria-labelledby", h.id); }
+      var p = el("p", "opk-ask-t", String(o.text || ""));
+      p.id = id + "-t";
+      body.appendChild(p);
+      if (o.title) dlg.setAttribute("aria-describedby", p.id); else dlg.setAttribute("aria-labelledby", p.id);
+      var field = null;
+      if (withInput) {
+        field = el("input", "opk-hex opk-ask-in");
+        field.type = "text";
+        field.value = o.value == null ? "" : String(o.value);
+        if (o.max) field.maxLength = o.max;
+        field.setAttribute("aria-labelledby", p.id);
+        field.setAttribute("autocomplete", "off");
+        body.appendChild(field);
+      }
+      dlg.appendChild(body);
+      var foot = el("div", "opk-foot");
+      foot.appendChild(el("span", "opk-gap"));
+      var no = el("button", "opk-btn opk-ghost", o.cancel || S.cancel);
+      no.type = "button";
+      var yes = el("button", "opk-btn opk-main" + (o.danger ? " opk-danger" : ""), o.ok || S.ok);
+      yes.type = "button";
+      foot.appendChild(no); foot.appendChild(yes);
+      dlg.appendChild(foot);
+      var done = false;
+      function answer(v) {
+        if (done) return;
+        done = true;
+        close(true);
+        resolve(v);
+      }
+      no.addEventListener("click", function () { answer(withInput ? null : false); });
+      yes.addEventListener("click", function () { answer(withInput ? field.value : true); });
+      dlg.addEventListener("cancel", function (e) { e.preventDefault(); answer(withInput ? null : false); });
+      dlg.addEventListener("click", function (e) { if (e.target === dlg) answer(withInput ? null : false); });
+      dlg.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && e.target !== no) { e.preventDefault(); yes.click(); }
+      });
+      ["input", "change", "keyup", "keypress"].forEach(function (t) {
+        dlg.addEventListener(t, function (e) { e.stopPropagation(); });
+      });
+      var back = doc.activeElement;
+      (doc.body || doc.documentElement).appendChild(dlg);
+      cur = { sel: back && back.focus ? back : (doc.body || doc.documentElement), dlg: dlg, sheet: true, kind: "ask",
+        cancelAsk: function () { answer(withInput ? null : false); } };
+      dlg.showModal();
+      if (field) { field.focus(); field.select(); } else (o.danger ? no : yes).focus();
+    });
+  }
+
   // ---------- opening ----------
   var FIELDS = 'select, input[type="date"], input[type="time"], input[type="datetime-local"], input[type="color"]';
   function openAny(n) { return n.tagName === "SELECT" ? open(n) : n.type === "color" ? openColour(n) : openDate(n); }
@@ -1195,7 +1266,7 @@
     win.addEventListener("keydown", onSelKey, true);
   }
 
-  return { VERSION: VERSION, open: openAny, close: function () { close(true); },
+  return { VERSION: VERSION, open: openAny, ask: ask, close: function () { close(true); },
     isOpen: function () { return !!cur; }, eligible: eligibleAny,
     fold: fold, matches: matches, nextIndex: nextIndex, jumpIndex: jumpIndex,
     strings: strings, STR: STR, parseDate: parseDate, parseTime: parseTime,

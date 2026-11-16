@@ -236,6 +236,19 @@ dialog.opk-colour.opk-sheet { max-height: min(92vh, 720px); }
 .opk-chip:focus-visible { outline: 2px solid var(--opk-acc); outline-offset: 2px; }
 @media (forced-colors: active) { .opk-chip, .opk-sv, .opk-hue { forced-color-adjust: none; } }
 
+/* ---------- questions (T4): centred (R32) ---------- */
+dialog.opk-ask {
+  inset: 0; margin: auto; width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 32px);
+  border-radius: 16px; height: fit-content;
+}
+dialog.opk-ask::backdrop { background: rgba(0, 0, 0, .45); }
+.opk-ask .opk-body { padding: 18px 18px 6px; gap: 10px; }
+.opk-ask-h { margin: 0; font-size: 18px; font-weight: 800; }
+.opk-ask-t { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--opk-fg); }
+.opk-ask-in { width: 100%; box-sizing: border-box; text-transform: none; }
+.opk-ask .opk-foot { border-top: 0; padding: 12px 14px 14px; }
+.opk-main.opk-danger { background: var(--danger, #e06c75); color: #fff; }
+
 /* Forced colours (Windows high contrast): system colours, a visible row */
 @media (forced-colors: active) {
   .opk-opt.opk-act { outline: 2px solid Highlight; }
