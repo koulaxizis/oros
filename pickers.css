@@ -11,6 +11,11 @@ html.opk-on select:not([multiple]):not([size]):not([disabled]):not([data-native]
 html.opk-on select[size="1"]:not([multiple]):not([disabled]):not([data-native]),
 html.opk-on select[size="0"]:not([multiple]):not([disabled]):not([data-native]) { pointer-events: none; }
 html.opk-on [data-native] select { pointer-events: auto; }
+/* Date and time fields (T2): typing in them stays the browser's (Tab
+   in), a click or tap opens the orOS calendar / clock. */
+html.opk-on input:is([type="date"], [type="time"], [type="datetime-local"]):not([disabled]):not([readonly]):not([data-native]) { pointer-events: none; }
+html.opk-on input[type="color"]:not([disabled]):not([readonly]):not([data-native]) { pointer-events: none; }
+html.opk-on [data-native] input { pointer-events: auto; }
 
 dialog.opk {
   --opk-bg: var(--panel-bg, var(--bg, Canvas));
@@ -145,9 +150,97 @@ dialog.opk-sheet::backdrop { background: rgba(0, 0, 0, .45); }
 .opk-opt[aria-disabled="true"]:hover { background: transparent; }
 .opk-none:not([hidden]) { display: block; margin: 0; padding: 16px; color: var(--opk-dim); text-align: center; }
 
+/* ---------- date and time (T2) ---------- */
+dialog.opk-date.opk-drop { width: 320px; }
+dialog.opk-date.opk-sheet { max-height: min(92vh, 720px); }
+.opk-sheet .opk-days .opk-day { aspect-ratio: auto; min-height: 40px; height: 40px; }
+.opk-sheet .opk-cal + .opk-time .opk-col { height: 132px; }
+.opk-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px 4px; }
+.opk-nav { display: flex; align-items: center; gap: 4px; }
+.opk-arrow, .opk-ym {
+  border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; border-radius: 10px;
+}
+.opk-arrow { flex: none; width: 40px; height: 40px; display: grid; place-items: center; color: var(--opk-dim); }
+.opk-ym { flex: 1; min-width: 0; height: 40px; font-weight: 700; font-size: 16px; text-transform: capitalize; }
+.opk-arrow:hover, .opk-ym:hover, .opk-arrow:focus-visible, .opk-ym:focus-visible { background: var(--opk-soft); color: var(--opk-fg); outline: none; }
+.opk-grid.opk-days { display: flex; flex-direction: column; gap: 2px; }
+.opk-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.opk-wday { text-align: center; font-size: 12px; font-weight: 700; color: var(--opk-dim); padding: 4px 0; text-transform: capitalize; }
+.opk-day, .opk-big {
+  border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer;
+  border-radius: 999px; aspect-ratio: 1 / 1; min-height: 36px; display: grid; place-items: center; padding: 0;
+  font-variant-numeric: tabular-nums;
+}
+.opk-sheet .opk-day { min-height: 42px; font-size: 16px; }
+.opk-day.opk-out { color: var(--opk-dim); opacity: .6; }
+.opk-day.opk-today, .opk-big.opk-today { box-shadow: inset 0 0 0 1.5px var(--opk-acc); }
+.opk-day:hover, .opk-big:hover, .opk-day:focus-visible, .opk-big:focus-visible { background: var(--opk-soft); outline: none; }
+.opk-day.opk-on, .opk-big.opk-on { background: var(--opk-acc); color: var(--accent-ink, var(--opk-bg)); font-weight: 700; }
+.opk-day:disabled, .opk-big:disabled { opacity: .3; cursor: default; background: transparent; }
+.opk-grid.opk-years, .opk-grid.opk-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px 0; }
+.opk-big { aspect-ratio: auto; min-height: 44px; border-radius: 12px; text-transform: capitalize; }
+.opk-time { display: flex; justify-content: center; align-items: stretch; gap: 6px; padding: 4px 0; }
+.opk-cal + .opk-time { border-top: 1px solid var(--opk-line); padding-top: 8px; }
+.opk-col {
+  width: 64px; height: 176px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+  border-radius: 12px; background: color-mix(in srgb, var(--opk-fg) 5%, transparent); outline: none; padding: 2px;
+}
+.opk-col::-webkit-scrollbar { display: none; }
+.opk-col:focus-visible { box-shadow: inset 0 0 0 2px var(--opk-acc); }
+.opk-cell { height: 40px; display: grid; place-items: center; border-radius: 10px; cursor: pointer; font-size: 17px; font-variant-numeric: tabular-nums; user-select: none; -webkit-user-select: none; }
+@media (hover: hover) { .opk-cell:hover { background: var(--opk-soft); } }
+.opk-cell.opk-on { background: var(--opk-acc); color: var(--accent-ink, var(--opk-bg)); font-weight: 700; }
+.opk-colon { align-self: center; font-size: 20px; font-weight: 700; color: var(--opk-dim); }
+.opk-foot { flex: none; display: flex; align-items: center; gap: 6px; padding: 8px 10px 10px; border-top: 1px solid var(--opk-line); }
+.opk-gap { flex: 1; }
+.opk-btn { border: 0; font: inherit; font-weight: 700; cursor: pointer; border-radius: 10px; padding: 0 14px; min-height: 40px; }
+.opk-ghost { background: transparent; color: var(--opk-acc); }
+.opk-ghost:hover, .opk-ghost:focus-visible { background: var(--opk-soft); outline: none; }
+.opk-main { background: var(--opk-acc); color: var(--accent-ink, var(--opk-bg)); min-width: 88px; }
+.opk-main:focus-visible { outline: 2px solid var(--opk-fg); outline-offset: 2px; }
+
+/* ---------- colour (T3) ---------- */
+dialog.opk-colour.opk-drop { width: 296px; }
+dialog.opk-colour.opk-sheet { max-height: min(92vh, 720px); }
+.opk-colour .opk-body { gap: 12px; padding: 12px; }
+.opk-sv {
+  position: relative; flex: none; height: 168px; border-radius: 12px; cursor: crosshair; touch-action: none; outline: none;
+  background-image: linear-gradient(to top, #000, rgba(0, 0, 0, 0)), linear-gradient(to right, #fff, rgba(255, 255, 255, 0));
+}
+.opk-sheet .opk-sv { height: 200px; }
+.opk-kb .opk-sv:focus-visible { box-shadow: 0 0 0 2px var(--opk-bg), 0 0 0 4px var(--opk-acc); }
+.opk-sv-dot, .opk-hue-knob {
+  position: absolute; width: 20px; height: 20px; border-radius: 50%; transform: translate(-50%, -50%);
+  border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .45), 0 2px 6px rgba(0, 0, 0, .35); pointer-events: none; box-sizing: border-box;
+}
+.opk-hue {
+  position: relative; flex: none; height: 18px; border-radius: 999px; cursor: pointer; touch-action: none; outline: none; margin: 0 10px;
+  background: linear-gradient(to right, #f00, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00);
+}
+.opk-kb .opk-hue:focus-visible { box-shadow: 0 0 0 2px var(--opk-bg), 0 0 0 4px var(--opk-acc); }
+.opk-hue-knob { top: 50%; width: 24px; height: 24px; }
+.opk-crow { display: flex; align-items: center; gap: 8px; }
+.opk-hex {
+  flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--opk-line); border-radius: 10px; background: transparent;
+  color: inherit; font: inherit; font-variant-numeric: tabular-nums; text-transform: lowercase;
+}
+.opk-hex:focus { outline: 2px solid var(--opk-acc); outline-offset: -1px; border-color: transparent; }
+.opk-hex[aria-invalid="true"] { border-color: var(--danger, #e06c75); }
+.opk-swatches { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.opk-chip {
+  width: 100%; aspect-ratio: 1 / 1; min-height: 28px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--opk-fg) 22%, transparent);
+}
+.opk-chip.opk-now { flex: none; width: 36px; height: 36px; min-height: 0; aspect-ratio: auto; border-radius: 10px; }
+.opk-chip[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--opk-bg), 0 0 0 4px var(--opk-acc); }
+.opk-chip:focus-visible { outline: 2px solid var(--opk-acc); outline-offset: 2px; }
+@media (forced-colors: active) { .opk-chip, .opk-sv, .opk-hue { forced-color-adjust: none; } }
+
 /* Forced colours (Windows high contrast): system colours, a visible row */
 @media (forced-colors: active) {
   .opk-opt.opk-act { outline: 2px solid Highlight; }
   .opk-tick { color: Highlight; }
+  .opk-day.opk-on, .opk-big.opk-on, .opk-cell.opk-on { outline: 2px solid Highlight; }
+  .opk-day.opk-today { outline: 1px dashed CanvasText; }
 }
 dialog.opk [hidden] { display: none !important; }
