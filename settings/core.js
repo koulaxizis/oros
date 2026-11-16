@@ -21,7 +21,7 @@
     theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    multitask: "device", pcfiles: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", backupenc: "device", caldav: "device", gate: "device"
+    multitask: "device", pcfiles: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", backupenc: "device", caldav: "device", gate: "device"
   };
 
   // Search settings: one row per setting, in page order.
@@ -48,6 +48,7 @@
     ["xmas", "appearance", "z.xmas", "z.title", "z.on", "seasonal"],
     ["easter", "appearance", "z.easter", "z.title", "z.on", "seasonal"],
     ["widgets", "appearance", "g.title", null, null, "widgets"],
+    ["smartbar", "appearance", "sb.title", null, null, "smartbar"],
     ["dock", "appearance", "k.on", "k.dock", null, "dock"],
     ["dock-size", "appearance", "k.size", "k.dock", "k.on", "dock"],
     ["dock-style", "appearance", "k.style", "k.dock", "k.on", "dock"],
@@ -1331,8 +1332,14 @@
       "w.lang": "english greek german deutsch",
       "w.osk": "virtual keyboard touch typing",
       "w.widgets": "widgets clock calendar today weather desktop cards",
+      "w.smartbar": "top bar taskbar status chips countdown focus pomodoro tasks water spent till sales smart",
       "g.title": "Desktop widgets",
       "g.hint": "Cards on the desktop, on this device only. To change their order, drag a card by its title, or right-click it (long press on a touch screen).",
+      "sb.title": "Top bar",
+      "sb.hint": "Live items in the top bar, on this device only: the next event with a countdown, the focus timer, today's tasks, water, what you spent this month and today's till sales. Each one shows only when it has something to say; tap it to open its app. When the bar is full, the last ones give way.",
+      "sb.money": "Spent and till sales are hidden while Sensitive work is on, and so are event names. Events of apps kept out of search (Health, Cycle, One-Sentence Diary…) never show.",
+      "sb.left": "Move {w} left",
+      "sb.right": "Move {w} right",
       "w.osk-layouts": "keyboard languages greek english",
       "w.translate": "translation language help contribute",
       "w.menusearch": "search find apps data",
@@ -2549,8 +2556,14 @@
       "w.lang": "αγγλικά ελληνικά γερμανικά english",
       "w.osk": "εικονικό πληκτρολόγιο οθόνης αφή",
       "w.widgets": "widgets γραφικά στοιχεία ρολόι ημερολόγιο σήμερα καιρός επιφάνεια κάρτες",
+      "w.smartbar": "πάνω γραμμή γραμμή εργασιών αντίστροφη μέτρηση συγκέντρωση pomodoro εργασίες νερό έξοδα ταμείο πωλήσεις έξυπνη",
       "g.title": "Widgets επιφάνειας εργασίας",
       "g.hint": "Κάρτες στην επιφάνεια εργασίας, μόνο σε αυτή τη συσκευή. Για να αλλάξεις τη σειρά τους, σύρε μια κάρτα από τον τίτλο της ή κάνε δεξί κλικ πάνω της (παρατεταμένο πάτημα σε οθόνη αφής).",
+      "sb.title": "Πάνω γραμμή",
+      "sb.hint": "Ζωντανά στοιχεία στην πάνω γραμμή, μόνο σε αυτή τη συσκευή: το επόμενο ραντεβού με αντίστροφη μέτρηση, το χρονόμετρο συγκέντρωσης, οι εργασίες της ημέρας, το νερό, τα έξοδα του μήνα και οι πωλήσεις του ταμείου σήμερα. Το καθένα φαίνεται μόνο όταν έχει κάτι να δείξει· πάτησέ το για να ανοίξει η εφαρμογή του. Όταν η γραμμή γεμίσει, τα τελευταία κάνουν χώρο.",
+      "sb.money": "Τα έξοδα και οι πωλήσεις κρύβονται όσο είναι ανοιχτή η Ευαίσθητη δουλειά, όπως και τα ονόματα των ραντεβού. Ραντεβού από εφαρμογές που μένουν έξω από την αναζήτηση (Υγεία, Κύκλος, Ημερολόγιο μιας πρότασης…) δεν φαίνονται ποτέ.",
+      "sb.left": "Μετακίνηση του {w} αριστερά",
+      "sb.right": "Μετακίνηση του {w} δεξιά",
       "w.osk-layouts": "πληκτρολόγιο διατάξεις γλώσσες",
       "w.translate": "μετάφραση γλώσσα βοήθεια",
       "w.menusearch": "αναζήτηση εύρεση εφαρμογές δεδομένα",

@@ -132,7 +132,8 @@ test("wiring: settings, recording path, every string in EN/EL/DE and the help", 
   assert.match(js, /if \(ioOn\(\) && !keysOpen\(\)\) \{/);
   assert.match(js, /if \(recording && ioRec\) \{ stopIoRec\(\); return; \}/);
   assert.match(js, /renderMix\(r, rate\)\.then\(function \(chans\) \{ done\(chans\); \}, fail\);/, "the export uses the same mix");
-  assert.match(js, /C\.wavBytes\(g, r\.sr, 24\)/);
+  assert.match(js, /takeBlob\(g, r\.sr\)/);                                   // a song take: 24-bit WAV, a book take: 24-bit FLAC (A2)
+  assert.match(js, /new Blob\(\[C\.wavBytes\(chans, rate, 24\)\]/);
   // prefs.io stays on this device: normalized, never in the synced data
   assert.match(js, /io: normIo\(p\.io\),/);
   const keys = Array.from(new Set(js.match(/"io\.[a-zA-Z]+"/g)));

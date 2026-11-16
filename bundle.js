@@ -109,7 +109,8 @@
     ".orossignature": { app: "signature", mime: "application/x-oros-signature" },
     ".orosnewsletter": { app: "newsletter", mime: "application/x-oros-newsletter" },
     ".orosinventory": { app: "storage", mime: "application/x-oros-inventory" },
-    ".oroscards": { app: "flashcards", mime: "application/x-oros-cards" }
+    ".oroscards": { app: "flashcards", mime: "application/x-oros-cards" },
+    ".orosbase": { app: "base", mime: "application/x-oros-base" }
   };
 
   var LIM = {

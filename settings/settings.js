@@ -462,6 +462,40 @@
       host.appendChild(cw);
     }
 
+    // Smart top bar (smartbar.js through the shell; none in a single app)
+    if (s.smartbar) {
+      var cb2 = card(t("sb.title"), "smartbar");
+      cb2.appendChild(el("p", "hint", t("sb.hint")));
+      var sl = el("div", "sb-list");
+      var onIds = s.smartbar.list.filter(function (w) { return w.on; }).map(function (w) { return w.id; });
+      s.smartbar.list.forEach(function (w) {
+        var line = el("div", "sb-line");
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = !!w.on;
+        cb.setAttribute("data-k", "smartbar:" + w.id);
+        cb.addEventListener("change", function () { set("smartbar:" + w.id, cb.checked); });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, w.name));
+        line.appendChild(lab);
+        if (w.on) {
+          var at = onIds.indexOf(w.id);
+          [[-1, "sb.left", "\u2190"], [1, "sb.right", "\u2192"]].forEach(function (m) {
+            var mb = button(m[2], "smartbar-move:" + w.id + ":" + m[0], function () { set("smartbar-move:" + w.id, m[0]); }, "sb-mv");
+            mb.setAttribute("aria-label", t(m[1]).replace("{w}", w.name));
+            mb.title = t(m[1]).replace("{w}", w.name);
+            mb.disabled = m[0] < 0 ? at === 0 : at === onIds.length - 1;
+            line.appendChild(mb);
+          });
+        }
+        sl.appendChild(line);
+      });
+      cb2.appendChild(sl);
+      cb2.appendChild(el("p", "hint", t("sb.money")));
+      host.appendChild(cb2);
+    }
+
     if (s.pet.available) {
       var c4 = card(null);
       c4.appendChild(row(t("a.pet"), switchBtn(s.pet.on, "pet", function (v) { set("pet", v); }, t("a.pet")),
