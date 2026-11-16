@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.36.00
+- **Billing: turn an accepted quote into an invoice in one step.** The invoice opens filled in, and the quote and invoice link to each other. Clients from quotes and invoices can be picked in both.
+
 ## Version 7.35.00
 - **Audiobooks as one M4B with chapters.** In a Studio book, `One M4B with chapters` makes a single audiobook file, with a chapter for each part and the title, author, narrator and cover, ready for Apple Books and audiobook players. Choose 64, 96 or 128 kbit/s. `Write the length to Publishing` then puts its length into the audiobook edition of the title, after you say yes there. See [Studio](app:studio).
 

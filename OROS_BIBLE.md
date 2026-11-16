@@ -12362,3 +12362,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** studio/mp4.js (new, precached), studio/aac.js, studio/studio.js, studio/commands.js, studio/index.html, publish/app.js, help EN/EL, i18n/de (studio.js, publish.js), tests/studio-mp4.test.js (new), tests/studio-aac.test.js, tests/studio-commands.test.js, Bible STUDIO-AB.
 - **Tests:** new `tests/studio-mp4.test.js` (boxes, both chapter kinds, tags, cleaning, ffprobe); Stream cases; the audiobook outline; full suite; Playwright Chromium in the real shell (M4B through the lazy loader read by ffprobe with chapters, tags, cover and exact length; Publishing's dialog writes the length only after yes).
 - **Next:** none in this plan. Not tested yet: Apple Books and Android players, a real hour-long book; no AAC short blocks.
+
+### 2026-11-16 — 7.36.00 — Billing: accepted quote to invoice on the same screen, shared client picker (app merge 7, wave K2, #1083)
+
+- **What:** wave K2 of merge 7 (plan approved by Chris 2026-11-15). "Send to Invoices" on an accepted quote opens a new Billing invoice in the same window, filled from the quote (client, lines, notes), through `quoteToInvoice`; the quote shows "Invoiced: N" links to its invoices and the invoice viewer has "From quote N" back. The quote's client dropdown lists Billing's clients under "From Billing's clients" (deduplicated by folded name and tax number), and Billing's new-invoice client list has a group of quote clients (`q:<id>`); each list keeps its own data and a pick from the other list is copied.
+- **Files:** quote/view.js, quote/view.css, invoices/invoices.js, invoices/invoices.css, help EN/EL/DE, i18n/de, Bible.
+- **Tests:** new `tests/billing-k2.test.js`; full suite; Playwright Chromium (dropdown, quote → invoice, Invoiced link).
+- **Next:** K3 shared settings and profile, K4 Overview pipeline.
