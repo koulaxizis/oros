@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.09.00
+- **Transfer takes the background picture from the orOS disk too.** Next to `Background picture…`, `Picture from the orOS disk` opens your disk with only folders and pictures. Tap one and it becomes the background, made smaller on your device and without camera details, as before.
+
 ## Version 7.08.00
 - **draw.io and Mermaid in Whiteboard.** `More` › `Open a draw.io or Visio file…` opens .drawio files (compressed too) from draw.io and diagrams.net, each page as a new board with flowchart, UML and network shapes, lanes as frames and joined lines. `Export` › `draw.io` saves a board for draw.io. `More` › `Draw from Mermaid text…` draws a Mermaid flowchart, and the Assistant can too.
 - **Visio files in Whiteboard.** The same `More` › `Open a draw.io or Visio file…` opens .vsdx files: each page a board, flowchart, org chart, UML and network shapes by their names, with text, colours and connectors. Other Visio shapes come in as rectangles with their text.
