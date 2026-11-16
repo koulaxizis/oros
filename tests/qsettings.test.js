@@ -70,7 +70,7 @@ test("wiring: page, precache, shell attach, shortcut, bar fit", () => {
   const sh = read("shell.js");
   assert.match(sh, /window\.orosQS\.attach\(\{/);
   assert.match(sh, /if \(window\.orosQS\) window\.orosQS\.refresh\(\);/);
-  assert.match(sh, /\{ key: "m", label: "sc\.desc\.qs",/);
+  assert.match(sh, /\{ id: "qs",\s+key: "m", label: "sc\.desc\.qs",/);
   assert.match(sh, /bar\.classList\.toggle\("bar-nolang", lvl >= 7\);/);
   assert.match(read("style.css"), /#oros-bar\.bar-nolang #btn-lang \{ display: none; \}/);
 });

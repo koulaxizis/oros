@@ -70,8 +70,9 @@ test("grid keys", () => {
 test("wiring: Ctrl+Alt+Shift+. (code Period), page, Quick settings, field insert", () => {
   const shell = read("shell.js"), html = read("index.html");
   assert.match(shell, /\{ id: "emoji", code: "Period", label: "sc\.desc\.emoji"/);
-  assert.match(shell, /code\.indexOf\("Key"\) !== 0 && code !== "Period"/);
-  assert.match(shell, /if \(scCode\(SC_DEFS\[i\]\) === code\)/);
+  // SC-EDIT: the default key of an entry is its code ("Period"), matched through scTable
+  assert.match(shell, /SC_CODE_RE = \/\^\(Key\[A-Z\]\|Digit\[0-9\]\|Period\|/);
+  assert.match(shell, /function scDefault\(def\) \{ return def\.code \|\| \("Key" \+ def\.key\.toUpperCase\(\)\); \}/);
   // Not a start-up script: the shell's stand-in loads it on the first open.
   assert.ok(!html.includes("emoji.js"), "emoji.js is not a start-up script");
   assert.match(shell, /sc\.src = "emoji\.js\?v=" \+ encodeURIComponent\(APP_VERSION\)/);

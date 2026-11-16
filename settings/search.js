@@ -78,8 +78,8 @@
           "st.menusearch.words": "search find apps",
           "st.osk": "On-screen keyboard",
           "st.osk.words": "keyboard virtual touch type keys screen layout",
-          "st.files": "Opening files",
-          "st.files.words": "open with default app file type handler docx xlsx",
+          "st.files": "Default apps",
+          "st.files.words": "open with default apps always file type handler docx xlsx",
           "st.version": "Version and updates",
           "st.version.words": "update about install",
           "st.shortcuts": "Keyboard shortcuts",
@@ -128,8 +128,8 @@
           "st.menusearch.words": "αναζήτηση εύρεση εφαρμογές",
           "st.osk": "Πληκτρολόγιο οθόνης",
           "st.osk.words": "πληκτρολόγιο οθόνης αφή πληκτρολόγηση εικονικό διάταξη",
-          "st.files": "Άνοιγμα αρχείων",
-          "st.files.words": "άνοιγμα με προεπιλογή εφαρμογή τύπος αρχείου",
+          "st.files": "Προεπιλεγμένες εφαρμογές",
+          "st.files.words": "άνοιγμα με προεπιλογή προεπιλεγμένες εφαρμογές πάντα τύπος αρχείου",
           "st.version": "Έκδοση και ενημερώσεις",
           "st.version.words": "ενημέρωση σχετικά εγκατάσταση",
           "st.shortcuts": "Συντομεύσεις πληκτρολογίου",
@@ -147,9 +147,9 @@
 
   var SECTION_NAME = {
     en: { appearance: "Appearance", accessibility: "Accessibility", menu: "Menu", notifications: "Notifications", sync: "Sync", lock: "Screen lock",
-          backup: "Backups", language: "Language & search", files: "Opening files", system: "System" },
+          backup: "Backups", language: "Language & search", files: "Default apps", system: "System" },
     el: { appearance: "Εμφάνιση", accessibility: "Προσβασιμότητα", menu: "Μενού", notifications: "Ειδοποιήσεις", sync: "Συγχρονισμός", lock: "Κλείδωμα οθόνης",
-          backup: "Αντίγραφα ασφαλείας", language: "Γλώσσα και αναζήτηση", files: "Άνοιγμα αρχείων", system: "Σύστημα" }
+          backup: "Αντίγραφα ασφαλείας", language: "Γλώσσα και αναζήτηση", files: "Προεπιλεγμένες εφαρμογές", system: "Σύστημα" }
   };
 
   // The two tables in language code: en / el here, another from the

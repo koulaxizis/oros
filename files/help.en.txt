@@ -57,7 +57,7 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - Tap `Edit` to change a text file and `Save` to write it to the disk. Markdown files show a live preview next to the editor. Closing with unsaved changes warns you first; close again to discard them.
 
 ## Open a file in another app
-- A file the preview cannot show (a Word or orOS document, a spreadsheet, a song, a video, an e-book…) opens straight in the orOS app that reads it when you double-click it, or tap it twice on a touch screen. Text, pictures and ZIP files still open in the preview.
+- A file the preview cannot show (a Word or orOS document, a spreadsheet, a song, a video, an e-book…) opens straight in the orOS app that reads it when you double-click it, or tap it twice on a touch screen. Text, pictures and ZIP files still open in the preview, unless you picked an app for that type in [Settings](app:settings) › `Default apps` (for example Pad for .txt): then they open there.
 - The preview has `Open in …` (one app reads the file) or `Open with…` (several do: pick one, and tick `Always use this app` to skip the question next time). Right-click a file, or use `More actions`, for `Open with…` too.
 - Songs play in [Music](app:music). A song outside the `Music` folder is copied there first, so Music keeps it.
 - `Send to an app…` in the same menu attaches the selected files (up to 10) to a new message in [Mail](app:mail).
