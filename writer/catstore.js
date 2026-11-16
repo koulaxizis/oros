@@ -90,6 +90,12 @@
         .then(function () { own[id] = {}; return C.readProject(p); });
     };
 
+    // T4: the file the project was made from (a Blob), for the Word round trip
+    self.original = function (id, ext) {
+      if (!C.ID_RX.test(id) || !/^[a-z0-9]{1,8}$/.test(String(ext || ""))) return Promise.reject(new Error("id"));
+      return fs.read(dirOf(id) + "/original." + ext);
+    };
+
     // ---- open ----
     // → { p, src, rows, meta, sig } (rows merged over every device)
     self.open = function (id) {

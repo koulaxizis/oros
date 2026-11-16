@@ -235,7 +235,7 @@
     var name = cleanText(x.name, NAME_LEN, false);
     if (!name) return null;
     var unit = has(UNITS, x.unit) || ID_RE.test(String(x.unit || "")) ? String(x.unit) : "pcs";
-    return {
+    var o = {
       id: x.id, m: x.m, name: name,
       sku: cleanText(x.sku, SKU_LEN, false),
       bc: cleanText(x.bc, BC_LEN, false).replace(/\s+/g, ""),
@@ -247,7 +247,13 @@
       loc: cleanText(x.loc, LOC_LEN, false), note: cleanText(x.note, NOTE_LEN, true),
       arch: x.arch === 1 ? 1 : 0
     };
+    // ST-OD (data 1.10): made to order, no real count. Written only
+    // when on, so other items stay byte-identical.
+    if (x.od === 1) o.od = 1;
+    return o;
   }
+  // An on-demand item never runs out: no count, no minimum, no value.
+  function isOd(it) { return !!(it && it.od === 1); }
   function normCat(x) {
     if (!base(x)) return null;
     var name = cleanText(x.name, NAME_LEN, false);
@@ -727,6 +733,7 @@
     var q = qtyMap(data), avg = costMap(data);
     return ((data && data.items) || []).map(function (it) {
       var qq = q[it.id] || 0, a = avg[it.id] || 0;
+      if (isOd(it)) return { item: it, q: qq, avg: a, value: 0, low: false, out: false, od: true };
       return {
         item: it, q: qq, avg: a,
         value: qq > 0 ? Math.round(qq * a / 1000) : 0,
@@ -1687,7 +1694,7 @@
     normItem: normItem, normCat: normCat, normUnit: normUnit, normSup: normSup,
     normMove: normMove, normSettings: normSettings, merge: merge,
     unitDec: unitDec, qtyMap: qtyMap, costMap: costMap, stockRows: stockRows,
-    suggestQty: suggestQty, lowList: lowList, outRate: outRate, itemMoves: itemMoves,
+    isOd: isOd, suggestQty: suggestQty, lowList: lowList, outRate: outRate, itemMoves: itemMoves,
     hasMoves: hasMoves, findByCode: findByCode, toNotify: toNotify,
     csvCell: csvCell, parseCsv: parseCsv, headKey: headKey, importPlan: importPlan,
     csvProducts: csvProducts, csvMoves: csvMoves, readPrefs: readPrefs,

@@ -3088,7 +3088,12 @@
   }
   // The usual editor shell: a form with fields, Delete (when editing),
   // Cancel and Save; onSave returns an error text or "" when saved.
+  // Files › Documents linked to the record (DOCS-1 W4, read-only): the
+  // dialog that opens a saved record sets its search target first.
+  var docsFor = null;
   function recDialog(id, title, build, onSave, onDelete, delLabel, more) {
+    var lf = docsFor;
+    docsFor = null;
     var dlg = makeDialog(id, title);
     var form = el("form");
     form.method = "dialog";
@@ -3105,6 +3110,11 @@
     ok.type = "submit";
     acts.appendChild(ok);
     form.appendChild(acts);
+    if (lf && window.OrosDocsLinks) {
+      window.OrosDocsLinks.attach(form, "health", function (r) {
+        return !!r && typeof r === "object" && Object.keys(lf).every(function (k) { return r[k] === lf[k]; });
+      });
+    }
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       err.textContent = "";
@@ -3592,6 +3602,7 @@
   function apptDialog(id, copyOf) {
     var a = id ? findRow("ap", id) : null, f = {};
     if (id && !a) { showToast(t("feed.gone")); return; }
+    docsFor = a ? { appt: a.id } : null;
     var src = a || copyOf || null;
     var at0 = a ? a.at : (function () { var d = new Date(); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); return d.getTime(); })();
     recDialog("hl-ap", a ? apptTitle(a) : t("ap.new"), function (form) {
@@ -3662,6 +3673,7 @@
   function vaxDialog(id, again) {
     var x = id ? findRow("vx", id) : null, f = {};
     if (id && !x) { showToast(t("feed.gone")); return; }
+    docsFor = x && !again ? { vax: x.id } : null;
     var today = ymd(new Date());
     recDialog("hl-vx", x ? x.n : again ? again.n : t("vx.new"), function (form) {
       form.appendChild(datalist("hl-vx-list", data.vx.map(function (y) { return y.n; })));
@@ -3900,6 +3912,7 @@
   function docDialog(id) {
     var d = id ? findRow("dc", id) : null, f = {}, box = null;
     if (id && !d) { showToast(t("feed.gone")); return; }
+    docsFor = d ? { doc: d.id } : null;
     var rid = d ? d.id : "d" + newId();
     recDialog("hl-dc", d ? d.n : t("dc.new"), function (form, dlg) {
       dlg.classList.add("wide");

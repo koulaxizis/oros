@@ -440,6 +440,50 @@
     });
   }
 
+  // ---------- SVG (VEC-4, svgout.js loaded on first use) ----------
+  // A page or some of its items as one SVG; pictures cut to their
+  // frames at 150 ppi, embedded.
+  function svgOf(doc, page, ids) {
+    return script("svgout.js", "LY_SVGOUT").then(function (SO) {
+      var imgs = {}, chain = Promise.resolve();
+      imageItems(doc, [page.id]).forEach(function (it) {
+        if (ids && ids.indexOf(it.id) < 0) return;
+        chain = chain.then(function () { return cropImage(it, 150); }).then(function (im) { if (im) imgs[it.id] = im; }, function () {});
+      });
+      return chain.then(function () { return SO.build(doc, page, doc === LY.doc && ED.L ? ED.L : LY.R.computeLayout(doc), { ids: ids }, { images: imgs }); });
+    });
+  }
+  function exportSvg(page) {
+    var doc = LY.doc, order = M.pagesInOrder(doc), n = order.indexOf(page) + 1;
+    return svgOf(doc, page, null).then(function (r) {
+      if (!r) return false;
+      return saveBlob(new Blob([r.svg], { type: "image/svg+xml" }), fileName(doc, (order.length > 1 ? "-" + n : "") + ".svg"), "image/svg+xml", "SVG", ".svg");
+    });
+  }
+  // The picked items: "copy" (clipboard, as SVG and as text) or "save".
+  function svgSelection(mode) {
+    var doc = LY.doc, page = ED.curPage && ED.curPage(), ids = (ED.sel || []).slice();
+    if (!doc || !page || !ids.length) return;
+    LY.flushStory && LY.flushStory();
+    svgOf(doc, page, ids).then(function (r) {
+      if (!r) { LY.toast(t("svg.none")); return; }
+      if (mode === "save") {
+        return saveBlob(new Blob([r.svg], { type: "image/svg+xml" }), fileName(doc, ".svg"), "image/svg+xml", "SVG", ".svg")
+          .then(function (ok) { if (ok) LY.toast(t("exp.done")); });
+      }
+      var cb = navigator.clipboard, done = function () { LY.toast(t("svg.copied")); };
+      if (!cb) { LY.toast(t("svg.noClip")); return; }
+      var plain = function () { return cb.writeText(r.svg).then(done); };
+      if (typeof ClipboardItem === "function" && cb.write && ClipboardItem.supports && ClipboardItem.supports("image/svg+xml")) {
+        return cb.write([new ClipboardItem({ "image/svg+xml": new Blob([r.svg], { type: "image/svg+xml" }), "text/plain": new Blob([r.svg], { type: "text/plain" }) })]).then(done, plain);
+      }
+      return plain();
+    }).then(null, function (e) {
+      try { console.error("[orOS] layout: svg failed", e); } catch (x) {}
+      LY.toast(t("svg.noClip"));
+    });
+  }
+
   // ---------- PNG / JPG of one page ----------
   var IMG_MAX_PX = 16e6;
   function exportImage(opts) {
@@ -455,6 +499,17 @@
     var chain = Promise.resolve();
     imageItems(doc, [page.id]).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }); });
     var jpg = opts.fmt === "jpg", n = order.indexOf(page) + 1;
+    if (opts.fmt === "svg") {
+      chain.then(function () { return exportSvg(page); }).then(function (ok) {
+        exporting = false;
+        if (ok) LY.toast(t("exp.done"));
+      }, function (e) {
+        exporting = false;
+        try { console.error("[orOS] layout: svg export failed", e); } catch (x) {}
+        LY.toast(t("exp.fail"));
+      });
+      return;
+    }
     chain.then(function () {
       var cv = LY.R.renderPage(doc, page, ED.L, scale, { getImage: A.get, background: "#fff" });
       return toBlob(cv, jpg ? "image/jpeg" : "image/png", 0.92);
@@ -1329,7 +1384,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    exportPdf: exportPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName

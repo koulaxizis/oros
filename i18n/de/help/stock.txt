@@ -13,6 +13,8 @@ Der Tab `Produkte` zeigt, was du hast, mit dem gesamten `Bestandswert` und wie v
 
 Tippe oder klicke auf ein Produkt, um Menge, Durchschnittskosten, Wert, Preise und jede Bewegung zu sehen, die es je hatte. Von dort: `+ Eingang`, `− Verkauf`, `Zählen`, `Bearbeiten`, `Etikett erstellen`, `Archivieren`.
 
+Ein Produkt, das du auf Bestellung fertigst (Druck auf Bestellung, ein Einzelstück), kann unter `Bearbeiten` `Auf Bestellung (wird gefertigt, kein Bestand gezählt)` sein. Seine Menge zeigt dann `Auf Bestellung`: Es geht nie aus, ist nie knapp, hat kein Minimum, keine Nachbestellung und keinen Lagerwert, und die Menge des Shops wird weder hineingelesen noch gesendet. Kasse, Theke und Rechnungen verkaufen es ohne Prüfung unter null, es wird nicht für einen Stand gepackt, und seine Verkäufe zählen in jedem Bericht.
+
 > Ein Barcode-Scanner (USB oder Bluetooth) funktioniert im Suchfeld: Scanne einen Code und das Produkt öffnet sich. Bei einem unbekannten Code wird `Neues Produkt` mit ausgefüllter SKU angeboten.
 
 Auf dem Handy liest die 📷-Taste neben einem Such- oder Scanfeld Barcodes mit der Kamera (Chrome auf Android). In einem Eingang, einem Verkauf oder der Kasse bleibt sie offen, damit du ein Produkt nach dem anderen scannen kannst; tippe auf `Fertig`, wenn du durch bist. Wo die Taste nicht erscheint, kann der Browser keine Barcodes lesen, ein Scanner funktioniert aber trotzdem.

@@ -19,7 +19,8 @@
 //   - no JavaScript at all, a Content-Security-Policy that allows only
 //     the page's own files, no outside requests (no fonts, trackers
 //     or CDNs), credits of open-source pieces in the footer.
-// plan() says what goes how, build() writes the files.
+// plan() says what goes how, build() writes the files; svgFile()
+// writes one page or some elements as one standalone SVG (VEC-4).
 // Pure: no DOM. Exposes window.AtelierWeb (browser) or module.exports.
 // ============================================================
 (function (root) {
@@ -110,6 +111,12 @@
   }
   // The family list of a font key, as the canvas draws it: an extra
   // family falls back to its sans face (same variant).
+  // weight and style of a key ("serif-bi"), for programs that do not
+  // know the family names (an SVG opened elsewhere, the SVG reader)
+  function faceAt(key) {
+    var v = String(key || "").split("-")[1] || "r";
+    return (/b/.test(v) ? ' font-weight="bold"' : "") + (/i/.test(v) ? ' font-style="italic"' : "");
+  }
   function stack(key) {
     var p = key.split("-"), out = [fam(key)];
     if (AX.isExtraFont(p[0])) out.push(fam("sans-" + p[1]));
@@ -207,7 +214,7 @@
   // they differ from the element's).
   function tspan(r, key, size, dx, dy, tail) {
     var s = "<tspan" + at("x", n2(r.x + dx)) + at("y", n2(r.y + dy));
-    if (r.key && r.key !== key) s += at("font-family", stack(r.key));
+    if (r.key && r.key !== key) s += at("font-family", stack(r.key)) + (faceAt(r.key) || ' font-weight="normal" font-style="normal"');
     if (r.size && r.size !== size) s += at("font-size", n2(r.size));
     if (r.track) s += at("letter-spacing", n2(r.track * (r.size || size) / 1000));
     if (r.kern) {
@@ -247,7 +254,7 @@
   function textSvg(it) {
     var ax = it.ax, size = ax.size || AX.TEXT_DEF.size, key = AX.fontKeyOf(ax);
     var passes = FX.textPasses(ax.tfx, size, ax.fc || "#000000");
-    var curve = ax.cv ? AX.curveLayout(it) : null, lay = curve ? null : AX.textLayout(it);
+    var curve = AX.isCurved(it) ? AX.curveLayout(it) : null, lay = curve ? null : AX.textLayout(it);
     var asc = T.ascent(key, size), desc = T.descent(key, size);
     var readable = -1;
     passes.forEach(function (p, i) { if (p.mode !== "box" && !(p.blur > 0)) readable = i; });
@@ -267,7 +274,7 @@
         });
         return;
       }
-      var head = at("font-family", stack(key)) + at("font-size", n2(size)) + passPaint(p);
+      var head = at("font-family", stack(key)) + faceAt(key) + at("font-size", n2(size)) + passPaint(p);
       if (curve) {
         var g = "";
         curve.glyphs.forEach(function (gl) {
@@ -483,7 +490,73 @@
     return { files: files, pictures: np, fonts: nf };
   }
 
-  var api = { plan: plan, kindOf: kindOf, needsPicture: needsPicture, build: build, stack: stack, CSP: CSP };
+  // ---------- 5. One SVG file (wave VEC-4) ----------
+  // A page, or some of its elements, as one standalone SVG drawn like
+  // the web page: shapes as editable paths, texts as text in the
+  // design's fonts (embedded as @font-face data, opts.fonts false
+  // leaves them out), pictures embedded as data. opts: { ids (the
+  // elements; default the whole page with its background), fonts }.
+  // deps: { pictures (as build()), plan }. → { svg, w, h } or null.
+  function b64(bytes) {
+    if (typeof Buffer !== "undefined" && typeof window === "undefined") return Buffer.from(bytes).toString("base64");
+    var s = "", CH = 0x8000;
+    for (var i = 0; i < bytes.length; i += CH) s += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+    return btoa(s);
+  }
+  function boxOf(it) {
+    if (it.t === "line") {
+      var p = (it.sw || 1) * 3.2;
+      return { x0: Math.min(it.x, it.x + it.w) - p, y0: Math.min(it.y, it.y + it.h) - p, x1: Math.max(it.x, it.x + it.w) + p, y1: Math.max(it.y, it.y + it.h) + p };
+    }
+    var cx = it.x + it.w / 2, cy = it.y + it.h / 2, a = rad(it.rot || 0), c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a));
+    var pad = (it.sw > 0 ? it.sw / 2 : 0) + (it.ax && it.ax.k === "text" && AX.isCurved(it) ? (it.ax.size || AX.TEXT_DEF.size) : 0);
+    var hw = (it.w * c + it.h * s) / 2 + pad, hh = (it.w * s + it.h * c) / 2 + pad;
+    return { x0: cx - hw, y0: cy - hh, x1: cx + hw, y1: cy + hh };
+  }
+  function svgFile(doc, pg, opts, deps) {
+    opts = opts || {}; deps = deps || {};
+    var want = null;
+    if (opts.ids && opts.ids.length) { want = {}; opts.ids.forEach(function (id) { want[id] = 1; }); }
+    var items = pageItems(doc, pg).filter(function (it) { return !want || want[it.id]; });
+    if (!items.length) return null;
+    var PL = deps.plan || plan(doc, [pg]), how = {}, pics = deps.pictures || {};
+    PL.forEach(function (p) { how[p.id] = p.kind; });
+    var vb;
+    if (want) {
+      vb = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+      items.forEach(function (it) { var b = boxOf(it); vb.x0 = Math.min(vb.x0, b.x0); vb.y0 = Math.min(vb.y0, b.y0); vb.x1 = Math.max(vb.x1, b.x1); vb.y1 = Math.max(vb.y1, b.y1); });
+    } else vb = { x0: 0, y0: 0, x1: doc.setup.w, y1: doc.setup.h };
+    var W = Math.max(1, vb.x1 - vb.x0), H = Math.max(1, vb.y1 - vb.y0);
+    var P = Page(doc, 1), body = "", keys = {};
+    P.pageIds = [pg];
+    items.forEach(function (it) {
+      var k = how[it.id];
+      if (!k) return;
+      var pic = pics[it.id], file = pic && pic.data ? "data:image/" + (pic.fmt === "JPEG" ? "jpeg" : "png") + ";base64," + b64(pic.data) : null;
+      body += itemSvg(P, it, k, pic, file);
+      if (it.ax.k === "text" && (k === "text" || k === "textfx")) {
+        keys[AX.fontKeyOf(it.ax, it)] = 1;
+        if (AX.runsOf(it)) AX.textLayout(it).lines.forEach(function (ln) { ln.runs.forEach(function (r) { if (r.key) keys[r.key] = 1; }); });
+      } else if (it.ax.k === "table") { keys[AX.fontKeyOf({ font: it.ax.font })] = 1; keys[AX.fontKeyOf({ font: it.ax.font, b: 1 })] = 1; }
+    });
+    var css = [];
+    if (opts.fonts !== false) {
+      Object.keys(keys).forEach(function (key) { if (AX.isExtraFont(key.split("-")[0])) keys["sans-" + key.split("-")[1]] = 1; });
+      Object.keys(keys).sort().forEach(function (key) {
+        T.faceParts(key).forEach(function (p) {
+          css.push('@font-face{font-family:"' + fam(key) + '";src:url(data:font/ttf;base64,' + p.b64() + ') format("truetype")' + (p.range ? ";unicode-range:" + p.range : "") + "}");
+        });
+      });
+    }
+    css.push("text{white-space:pre;font-kerning:none;font-variant-ligatures:none}");
+    var svg = '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"' +
+      at("width", n2(W) + "pt") + at("height", n2(H) + "pt") + at("viewBox", n2(vb.x0) + " " + n2(vb.y0) + " " + n2(W) + " " + n2(H)) + ' xml:space="preserve">' +
+      "<style>" + css.join("\n") + "</style>" +
+      (P.defs.length ? "<defs>" + P.defs.join("") + "</defs>" : "") + body + "</svg>\n";
+    return { svg: svg, w: W, h: H };
+  }
+
+  var api = { plan: plan, kindOf: kindOf, needsPicture: needsPicture, build: build, svgFile: svgFile, stack: stack, CSP: CSP };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierWeb = api;
 })(typeof window !== "undefined" ? window : this);
