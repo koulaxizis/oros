@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.21.00
+- **Base: more ways to see a table.** New views: kanban (cards in columns by a choice field, drag them across), calendar (records on a month by a date field), gallery (cards with a picture) and a form for typing records one after another. A new Attachments field keeps photos and files with a record on the orOS disk. Print a view, or save it as a PDF.
+
 ## Version 7.20.00
 - **Default apps.** Settings › Default apps: pick the app for .txt, .md, .csv, .pptx and .opml files. Your picks follow you to every device, and Files opens those files there.
 - **Change your shortcuts.** Settings › System › Keyboard shortcuts: change the key of any orOS shortcut or turn it off, with Reset all to go back. Every orOS shortcut is now Ctrl+Alt+Shift + a key. Plain Ctrl+K no longer opens the command bar: use Ctrl+Alt+Shift+K. Shortcuts inside apps stay as they were.
