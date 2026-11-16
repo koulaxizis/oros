@@ -2500,18 +2500,19 @@
   // where they check and save it; nothing is saved by this call.
   // Passwords is never a source or a target (AUTO-4).
   var RULE_WHEN = ["day", "month", "year", "once", "open", "notice", "event"];
-  var RULE_DO = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "file", "print", "track"];
+  var RULE_DO = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "file", "print", "track", "pause", "sound"];
   var TOOL_RULE = {
     name: "propose_rule",
     description: "Write an automation rule for the Automations app: when something happens, do some steps. " +
       "when.type: day (every day, or only on weekdays; at HH:MM), month (day_of_month 1-31, -1 = last day; at), year (date MM-DD; at), " +
       "once (date YYYY-MM-DD; at), open (when orOS opens), notice (a notice arrives from app, any app when app is empty; word = only when it has this word), " +
-      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends, webhook.in = the incoming webhook set up in Automations gets a message, bridge.pdf / bridge.photo / bridge.file = a new PDF, photo or other file lands in a folder Bridge watches on the computer; timesheet.start / timesheet.stop = a Timesheet timer starts / stops; word optional, matched in the file name for bridge.*). " +
+      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends, webhook.in = the incoming webhook set up in Automations gets a message, bridge.pdf / bridge.photo / bridge.file = a new PDF, photo or other file lands in a folder Bridge watches on the computer; timesheet.start / timesheet.stop = a Timesheet timer starts / stops; event.soon = minutes_before (1-120) an event of the day starts; goal.sales = today's till sales in Stock reach goal; goal.spent = this month's spending in Budget passes goal (goal in money units, required for goal.*); word optional, matched in the file name for bridge.*, not used for event.soon or goal.*). " +
       "For notice and event rules only_days and from/to (HH:MM) limit when it runs. " +
       "Steps (do): notify (text: the notice), todo (items, list = a new list name, optional), event (title, days_later, start HH:MM: a Calendar event), " +
       "note (title, text), mail (subject, body, to: a draft), budget (amount in euros, income true for money in, note), open (app id), timer (minutes, label), ask (text: a question for the Assistant), " +
       "file (to: scanpdf, files or invoices: hand the new file to that app) and print (print the new file on the computer), both only after a bridge.* event. " +
       "track (a Timesheet timer: title = what is worked on, project = one of the user's project names, optional; or stop true = stop the running timer). " +
+      "pause (pause everything playing in orOS: music, podcasts, radio, Sound Mixer) and sound (a short chime): both happen by themselves, no fields. " +
       "Texts may use {date}, {weekday}, {month}, {year}, and {text} = the notice or event's words. " +
       "The user sees the rule on a card and opens it in Automations, where they check and save it; nothing is saved or run by this call, so never say it is set. " +
       "Passwords can never be used.",
@@ -2526,7 +2527,9 @@
           day_of_month: { type: "number" },
           date: { type: "string" },
           app: { type: "string", description: "notice: the app id the notice comes from." },
-          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done", "webhook.in", "bridge.pdf", "bridge.photo", "bridge.file", "timesheet.start", "timesheet.stop"] },
+          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done", "webhook.in", "bridge.pdf", "bridge.photo", "bridge.file", "timesheet.start", "timesheet.stop", "event.soon", "goal.sales", "goal.spent"] },
+          minutes_before: { type: "number", description: "event.soon: 1-120, default 10." },
+          goal: { type: "number", description: "goal.sales / goal.spent: the amount in money units (euros)." },
           word: { type: "string" },
           only_days: { type: "array", items: { type: "number" } },
           from: { type: "string" },
@@ -4944,7 +4947,9 @@
     var mentions = [wn.app].concat(steps.map(function (x) { return x && x.app; }));
     if (mentions.some(function (a) { return typeof a === "string" && AC.BLOCKED_APPS[a.toLowerCase()]; })) return { ok: false, err: "Passwords can never be used in a rule." };
     var when = { t: wn.type, at: wn.at, wd: wn.weekdays, md: wn.day_of_month, date: wn.date, app: wn.app || "", ev: wn.event, word: wn.word };
-    if (!AC.cleanWhen(when)) return { ok: false, err: "when is not valid (check type, at, date, day_of_month, app or event)." };
+    if (wn.event === "event.soon" && wn.minutes_before !== undefined) when.min = wn.minutes_before;
+    if (AC.GOALS && AC.GOALS[wn.event]) when.amount = typeof wn.goal === "number" && wn.goal > 0 ? Math.round(wn.goal * 100) : 0;
+    if (!AC.cleanWhen(when)) return { ok: false, err: "when is not valid (check type, at, date, day_of_month, app, event, or goal for goal.*)." };
     if (when.t === "notice" && when.app && has && !has(when.app)) return { ok: false, err: "the app " + when.app + " is not installed." };
     if (!steps.length) return { ok: false, err: "give at least one step." };
     if (steps.length > AC.MAX_ACTIONS) return { ok: false, err: "at most " + AC.MAX_ACTIONS + " steps." };

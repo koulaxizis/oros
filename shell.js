@@ -15051,6 +15051,13 @@
     }
     return out;
   }
+  // SB2: the Automations step "Pause sounds" (automations/host.js).
+  // Pauses every player that is playing; nothing else.
+  window.__orosPauseAll = function () {
+    var n = 0;
+    qsMedia().forEach(function (m) { if (m.playing) { try { m.toggle(); n++; } catch (e) {} } });
+    return n;
+  };
 
   // START-1: what First steps (widgets.js) ticks, read from the real
   // state: a Notes page, a To-Do task, a wallpaper or icon pack other
