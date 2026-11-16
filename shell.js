@@ -4080,6 +4080,10 @@
     appId = String(appId || "");
     var al = appAlias(appId);    // APP-ALIAS: the old id opens its new home
     if (al) { appId = al.to; target = aliasTarget(al, target); }
+    if (appId === "assistant" && aiHelper() === "claude") {   // HELPER-1
+      claudeInstead(target && typeof target === "object" && typeof target.ask === "string" ? target.ask : "");
+      return;
+    }
     var app = null;
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === appId) { app = state.apps[i]; break; }
@@ -4736,9 +4740,36 @@
     for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id) return true;
     return false;
   }
+  // HELPER-1 (Settings › Connected services, synced through gate/gate.js):
+  // "both" | "assistant" | "claude". With "claude" the Assistant leaves
+  // the menu and every way into it opens Claude instead.
+  function aiHelper() {
+    try {
+      var o = JSON.parse(localStorage.getItem("oros-ai-helper") || "null");
+      return o && (o.v === "assistant" || o.v === "claude") ? o.v : "both";
+    } catch (e) { return "both"; }
+  }
+  // Claude in place of the Assistant: Claude desktop when the System
+  // extension has it here, else claude.ai in a window. A question goes
+  // to the clipboard (never into an address, which browsers keep), and
+  // a short note says so; nothing is sent until the person sends it.
+  function claudeInstead(q) {
+    var text = typeof q === "string" ? q.trim().slice(0, 2000) : "";
+    closeMenu();
+    if (text && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      navigator.clipboard.writeText(text).then(function () { scToast("ok", window.t("helper.copied")); }, function () {});
+    }
+    if (document.documentElement.getAttribute("data-oros-sys-claude") === "ready") {
+      try { document.dispatchEvent(new CustomEvent("oros-claude", { detail: "open" })); return; } catch (e) {}
+    }
+    window.open("https://claude.ai/new", "_blank", "noopener");
+  }
+  window.orosAiHelper = { mode: aiHelper, claude: claudeInstead };
+  window.addEventListener("oros-ai-helper", function () { try { renderMenu(); } catch (e) {} });
   // Ctrl+Alt+Shift+A and the menu search's "Ask the Assistant" row.
   function openAssistant(q) {
     if (!hasApp("assistant")) return;
+    if (aiHelper() === "claude") { claudeInstead(q); return; }
     if (typeof q === "string" && q.trim()) {
       closeMenu();
       window.__orosOpenAt("assistant", { ask: q.trim().slice(0, 2000) });
@@ -5376,7 +5407,7 @@
       var b = document.createElement("button");
       b.type = "button";
       b.className = "menu-hit-more menu-ask";
-      b.textContent = window.t("search.ask").replace("{q}", q.length > 60 ? q.slice(0, 59) + "…" : q);
+      b.textContent = window.t(aiHelper() === "claude" ? "search.askClaude" : "search.ask").replace("{q}", q.length > 60 ? q.slice(0, 59) + "…" : q);
       b.addEventListener("click", function () { openAssistant(q); });
       host.appendChild(b);
     }
@@ -5533,7 +5564,9 @@
       var hideOk = !!(L && typeof L.menuHidden === "function");
       var hiddenCount = 0;
       var cats = {}, catRaw = {}, catAll = {};
+      var claudeOnly = aiHelper() === "claude";   // HELPER-1: no Assistant in the menu, not even in a search
       state.apps.forEach(function (app) {
+        if (claudeOnly && app.id === "assistant") return;
         if (hideOk && L.menuHidden(app.id)) {
           hiddenCount++;
           if (!q) return;
@@ -9282,7 +9315,7 @@
     { key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
     { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
     { key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
-    { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
+    { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick && aiHelper() !== "claude") window.orosQuick.mini(); else openAssistant(); } },
     { key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } }
   ];
 
@@ -12750,6 +12783,7 @@
     }
     // TILL-1: on a till-only device anything but Stock needs the owner.
     if (TILL && app && app.id !== "stock") { window.orosLock.till.ask(); return; }
+    if (app && app.id === "assistant" && aiHelper() === "claude") { claudeInstead(""); return; }   // HELPER-1 (desktop, Dock, links)
     if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
     var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;

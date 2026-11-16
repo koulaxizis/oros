@@ -809,6 +809,11 @@
   function mini(target) {
     if (!host || !hasAssistant()) return;
     closeMenu(false);
+    var H = root.orosAiHelper;                // HELPER-1: "Claude only" opens Claude instead
+    if (H && typeof H.mode === "function" && H.mode() === "claude") {
+      H.claude(target && typeof target.ask === "string" ? target.ask : "");
+      return;
+    }
     if (panel) {
       var api = miniApi(), w = miniWin();
       if (api && w && typeof w.__orosOpenAt === "function") {
