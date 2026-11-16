@@ -183,6 +183,19 @@
         ln.runs.forEach(function (run) {
           if (!run.t) return;
           if (!setColor(pdf, doc, run.color, "text")) pdf.setTextColor(0, 0, 0);
+          if (run.g) {                                // on a path (LY-TP): glyph by glyph, turned
+            run.g.forEach(function (gl) {
+              var pc = pieces({ t: gl.ch, key: run.key, size: run.size })[0], name = pc && fontOf(pdf, pc.f[0], pc.f[1]);
+              if (!name) return;
+              pdf.saveGraphicsState();
+              rotateAbout(pdf, gl.rot * 180 / Math.PI, x + gl.x, y + gl.y);
+              pdf.setFont(name, "normal");
+              pdf.setFontSize(run.size);
+              pdf.text(gl.ch, x + gl.x - gl.w / 2, y + gl.y, { baseline: "alphabetic" });
+              pdf.restoreGraphicsState();
+            });
+            return;
+          }
           var opt = { baseline: "alphabetic" }, dx = 0;
           if (run.track) opt.charSpace = run.track * run.size / 1000;
           pieces(run).forEach(function (pc) {

@@ -41,6 +41,8 @@ orosPack("de", "recipes", {
  "sh.op.atelier.size": "Textgröße ändern",
  "sh.op.atelier.filter": "Fotofilter",
  "sh.op.atelier.center": "Auf der Seite zentrieren",
+ "sh.op.atelier.outlines": "Text in Konturen",
+ "sh.op.atelier.topath": "Formen in bearbeitbare Konturen",
  "sh.op.atelier.cutout": "Fotohintergründe entfernen",
  "sh.op.atelier.resize": "Neue Größen",
  "sh.op.atelier.export": "Herunterladen",

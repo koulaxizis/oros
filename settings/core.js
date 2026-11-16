@@ -21,7 +21,7 @@
     theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    multitask: "device", pcfiles: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", backupenc: "device", caldav: "device", gate: "device"
+    multitask: "device", pcfiles: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", backupenc: "device", caldav: "device", gate: "device"
   };
 
   // Search settings: one row per setting, in page order.
@@ -48,6 +48,7 @@
     ["xmas", "appearance", "z.xmas", "z.title", "z.on", "seasonal"],
     ["easter", "appearance", "z.easter", "z.title", "z.on", "seasonal"],
     ["widgets", "appearance", "g.title", null, null, "widgets"],
+    ["smartbar", "appearance", "sb.title", null, null, "smartbar"],
     ["dock", "appearance", "k.on", "k.dock", null, "dock"],
     ["dock-size", "appearance", "k.size", "k.dock", "k.on", "dock"],
     ["dock-style", "appearance", "k.style", "k.dock", "k.on", "dock"],
@@ -115,6 +116,7 @@
     ["solo", "solo", "so.apps"],
     ["solo-updates", "solo", "so.upd"],
     ["services", "services", "v.add"],
+    ["claude", "services", "cl.web", "cl.title"],
     ["gate", "services", "gt.switch", "gt.title"],
     ["hc", "services", "v.hc", null, null, "phone"],
     ["version", "system", "x.version"],
@@ -290,6 +292,29 @@
       "n.phone.next": "Next: \u201c{title}\u201d at {when}",
       "n.phone.allow": "Allow",
       "n.phone.exact": "Android may ring them a few minutes late. Allow alarms for exact times.",
+      "cl.title": "Claude",
+      "cl.hint": "Claude is Anthropic's AI assistant. You use it with your own Claude account; orOS sends it nothing unless you turn on orOS Gate below.",
+      "cl.web": "Open Claude in a window",
+      "cl.desk": "Claude desktop",
+      "cl.get": "Get Claude desktop",
+      "cl.get.windows": "Anthropic's free app for Windows, from claude.com. Install it like any other program.",
+      "cl.get.mac": "Anthropic's free app for macOS, from claude.com.",
+      "cl.get.linux": "Anthropic's Linux app is a beta for Ubuntu 22.04 or newer and Debian 12 or newer. claude.com has the .deb file and Anthropic's apt repository, which keeps it up to date.",
+      "cl.get.other": "Anthropic's app is for Windows, macOS and Ubuntu or Debian: see claude.com.",
+      "cl.phone": "Phones and tablets have no desktop app: open Claude in a window, or get the Claude app from your phone's app store.",
+      "cl.sys.none": "Claude desktop is not on this computer. orOS downloads it from Anthropic only when you ask; then sign in there with your own Claude account.",
+      "cl.sys.install": "Install Claude desktop",
+      "cl.sys.busy": "Installing Claude desktop… you can keep working meanwhile.",
+      "cl.sys.ready": "Claude desktop is installed on this computer.",
+      "cl.sys.open": "Open Claude desktop",
+      "cl.sys.remove": "Remove Claude desktop",
+      "cl.sys.remove.sure": "Tap again to remove it",
+      "cl.why.persist": "This stick has no room to keep programs (no persistence partition), so Claude desktop would be gone at the next start. Open Claude in a window instead, or add persistence (Help › orOS USB).",
+      "cl.why.owner": "Only the owner of this computer can install or remove Claude desktop.",
+      "cl.why.os": "Anthropic's Claude desktop does not run on this system. Open Claude in a window instead.",
+      "cl.why.net": "No internet connection. Try again once you are online.",
+      "cl.why.fail": "The install did not finish. Try again; the problem report (Settings › System) has the details.",
+      "cl.gate": "orOS Gate works in Claude desktop too: a connector you add on claude.ai is there as well when you sign in with the same account.",
       "gt.title": "orOS Gate (Claude)",
       "gt.switch": "Let Claude read through this device",
       "gt.hint": "Off unless you turn it on, and only on this device. Claude (claude.ai) can then read the apps you allow below, only while orOS is open and unlocked here. It changes only the apps you set to «may change» below, and you are notified of every change (you can pause changes). Its questions and this device's answers pass through the orOS relay, which keeps none of them. What Claude reads goes to Anthropic like anything else you show Claude.",
@@ -1314,8 +1339,14 @@
       "w.lang": "english greek german deutsch",
       "w.osk": "virtual keyboard touch typing",
       "w.widgets": "widgets clock calendar today weather desktop cards",
+      "w.smartbar": "top bar taskbar status chips countdown focus pomodoro tasks water spent till sales smart",
       "g.title": "Desktop widgets",
       "g.hint": "Cards on the desktop, on this device only. To change their order, drag a card by its title, or right-click it (long press on a touch screen).",
+      "sb.title": "Top bar",
+      "sb.hint": "Live items in the top bar, on this device only: the next event with a countdown, the focus timer, today's tasks, water, what you spent this month and today's till sales. Each one shows only when it has something to say; tap it to open its app. When the bar is full, the last ones give way.",
+      "sb.money": "Spent and till sales are hidden while Sensitive work is on, and so are event names. Events of apps kept out of search (Health, Cycle, One-Sentence Diary…) never show.",
+      "sb.left": "Move {w} left",
+      "sb.right": "Move {w} right",
       "w.osk-layouts": "keyboard languages greek english",
       "w.translate": "translation language help contribute",
       "w.menusearch": "search find apps data",
@@ -1326,6 +1357,7 @@
       "w.solo-updates": "f-droid obtainium updates repository",
       "w.services": "woocommerce shopify api keys integrations connect",
       "w.gate": "claude ai mcp gate connector anthropic read access",
+      "w.claude": "claude anthropic ai assistant desktop app download install chat",
       "w.hc": "health steps sleep android",
       "w.version": "about number release",
       "w.updates": "update new version refresh",
@@ -1492,6 +1524,29 @@
       "n.phone.next": "Επόμενη: «{title}» στις {when}",
       "n.phone.allow": "Να επιτραπεί",
       "n.phone.exact": "Το Android μπορεί να τις χτυπήσει λίγα λεπτά αργότερα. Επίτρεψε τα ξυπνητήρια για ακριβή ώρα.",
+      "cl.title": "Claude",
+      "cl.hint": "Ο Claude είναι ο βοηθός τεχνητής νοημοσύνης της Anthropic. Τον χρησιμοποιείς με τον δικό σου λογαριασμό Claude· το orOS δεν του στέλνει τίποτα, εκτός αν ανοίξεις το orOS Gate παρακάτω.",
+      "cl.web": "Άνοιγμα του Claude σε παράθυρο",
+      "cl.desk": "Claude desktop",
+      "cl.get": "Λήψη του Claude desktop",
+      "cl.get.windows": "Η δωρεάν εφαρμογή της Anthropic για Windows, από το claude.com. Εγκαθίσταται όπως κάθε πρόγραμμα.",
+      "cl.get.mac": "Η δωρεάν εφαρμογή της Anthropic για macOS, από το claude.com.",
+      "cl.get.linux": "Η εφαρμογή της Anthropic για Linux είναι beta για Ubuntu 22.04 ή νεότερο και Debian 12 ή νεότερο. Στο claude.com υπάρχει το αρχείο .deb και το αποθετήριο apt της Anthropic, που την κρατά ενημερωμένη.",
+      "cl.get.other": "Η εφαρμογή της Anthropic είναι για Windows, macOS και Ubuntu ή Debian: δες το claude.com.",
+      "cl.phone": "Τα κινητά και τα tablet δεν έχουν εφαρμογή desktop: άνοιξε τον Claude σε παράθυρο ή πάρε την εφαρμογή Claude από το κατάστημα εφαρμογών του κινητού σου.",
+      "cl.sys.none": "Το Claude desktop δεν υπάρχει σε αυτόν τον υπολογιστή. Το orOS το κατεβάζει από την Anthropic μόνο όταν το ζητήσεις· μετά συνδέεσαι εκεί με τον δικό σου λογαριασμό Claude.",
+      "cl.sys.install": "Εγκατάσταση του Claude desktop",
+      "cl.sys.busy": "Εγκατάσταση του Claude desktop… μπορείς να συνεχίσεις τη δουλειά σου.",
+      "cl.sys.ready": "Το Claude desktop είναι εγκατεστημένο σε αυτόν τον υπολογιστή.",
+      "cl.sys.open": "Άνοιγμα του Claude desktop",
+      "cl.sys.remove": "Αφαίρεση του Claude desktop",
+      "cl.sys.remove.sure": "Πάτα ξανά για αφαίρεση",
+      "cl.why.persist": "Αυτό το stick δεν έχει χώρο για να κρατά προγράμματα (δεν έχει persistence), οπότε το Claude desktop θα χανόταν στην επόμενη εκκίνηση. Άνοιξε τον Claude σε παράθυρο ή πρόσθεσε persistence (Βοήθεια › orOS USB).",
+      "cl.why.owner": "Μόνο ο κάτοχος αυτού του υπολογιστή μπορεί να εγκαταστήσει ή να αφαιρέσει το Claude desktop.",
+      "cl.why.os": "Το Claude desktop της Anthropic δεν τρέχει σε αυτό το σύστημα. Άνοιξε τον Claude σε παράθυρο.",
+      "cl.why.net": "Δεν υπάρχει σύνδεση στο internet. Δοκίμασε ξανά όταν συνδεθείς.",
+      "cl.why.fail": "Η εγκατάσταση δεν ολοκληρώθηκε. Δοκίμασε ξανά· η αναφορά προβλήματος (Ρυθμίσεις › Σύστημα) έχει τις λεπτομέρειες.",
+      "cl.gate": "Το orOS Gate δουλεύει και στο Claude desktop: ένας connector που προσθέτεις στο claude.ai υπάρχει κι εκεί, όταν συνδέεσαι με τον ίδιο λογαριασμό.",
       "gt.title": "orOS Gate (Claude)",
       "gt.switch": "Ο Claude διαβάζει μέσω αυτής της συσκευής",
       "gt.hint": "Κλειστό, εκτός αν το ανοίξεις, και μόνο σε αυτή τη συσκευή. Ο Claude (claude.ai) διαβάζει τότε τις εφαρμογές που επιτρέπεις παρακάτω, μόνο όσο το orOS είναι ανοιχτό και ξεκλείδωτο εδώ. Αλλάζει μόνο τις εφαρμογές που βάζεις παρακάτω σε «μπορεί να αλλάζει», και σε ειδοποιεί για κάθε αλλαγή (μπορείς να βάλεις τις αλλαγές σε παύση). Οι ερωτήσεις του και οι απαντήσεις αυτής της συσκευής περνούν από το relay του orOS, που δεν κρατά καμία. Ό,τι διαβάζει ο Claude πηγαίνει στην Anthropic, όπως ό,τι άλλο δείχνεις στον Claude.",
@@ -2515,8 +2570,14 @@
       "w.lang": "αγγλικά ελληνικά γερμανικά english",
       "w.osk": "εικονικό πληκτρολόγιο οθόνης αφή",
       "w.widgets": "widgets γραφικά στοιχεία ρολόι ημερολόγιο σήμερα καιρός επιφάνεια κάρτες",
+      "w.smartbar": "πάνω γραμμή γραμμή εργασιών αντίστροφη μέτρηση συγκέντρωση pomodoro εργασίες νερό έξοδα ταμείο πωλήσεις έξυπνη",
       "g.title": "Widgets επιφάνειας εργασίας",
       "g.hint": "Κάρτες στην επιφάνεια εργασίας, μόνο σε αυτή τη συσκευή. Για να αλλάξεις τη σειρά τους, σύρε μια κάρτα από τον τίτλο της ή κάνε δεξί κλικ πάνω της (παρατεταμένο πάτημα σε οθόνη αφής).",
+      "sb.title": "Πάνω γραμμή",
+      "sb.hint": "Ζωντανά στοιχεία στην πάνω γραμμή, μόνο σε αυτή τη συσκευή: το επόμενο ραντεβού με αντίστροφη μέτρηση, το χρονόμετρο συγκέντρωσης, οι εργασίες της ημέρας, το νερό, τα έξοδα του μήνα και οι πωλήσεις του ταμείου σήμερα. Το καθένα φαίνεται μόνο όταν έχει κάτι να δείξει· πάτησέ το για να ανοίξει η εφαρμογή του. Όταν η γραμμή γεμίσει, τα τελευταία κάνουν χώρο.",
+      "sb.money": "Τα έξοδα και οι πωλήσεις κρύβονται όσο είναι ανοιχτή η Ευαίσθητη δουλειά, όπως και τα ονόματα των ραντεβού. Ραντεβού από εφαρμογές που μένουν έξω από την αναζήτηση (Υγεία, Κύκλος, Ημερολόγιο μιας πρότασης…) δεν φαίνονται ποτέ.",
+      "sb.left": "Μετακίνηση του {w} αριστερά",
+      "sb.right": "Μετακίνηση του {w} δεξιά",
       "w.osk-layouts": "πληκτρολόγιο διατάξεις γλώσσες",
       "w.translate": "μετάφραση γλώσσα βοήθεια",
       "w.menusearch": "αναζήτηση εύρεση εφαρμογές δεδομένα",
@@ -2527,6 +2588,7 @@
       "w.solo-updates": "f-droid obtainium ενημερώσεις αποθετήριο",
       "w.services": "woocommerce shopify api κλειδιά συνδέσεις υπηρεσίες",
       "w.gate": "claude ai mcp gate πύλη σύνδεση anthropic ανάγνωση πρόσβαση",
+      "w.claude": "claude anthropic τεχνητή νοημοσύνη βοηθός εφαρμογή desktop λήψη εγκατάσταση συνομιλία",
       "w.hc": "υγεία βήματα ύπνος android",
       "w.version": "έκδοση αριθμός",
       "w.updates": "ενημέρωση νέα έκδοση",
@@ -2714,6 +2776,31 @@
     return t(lang, m === 1 ? "y.interval.one" : "y.interval.min", { n: m });
   }
 
+  // CLAUDE-1: what the Claude card (Connected services) offers for
+  // Claude desktop. sys/why are the orOS USB / Portable System
+  // extension's attributes on the shell's page (data-oros-sys-claude:
+  // "none", "busy", "ready", "cannot"; data-oros-sys-claude-why:
+  // "persist", "owner", "os", "net", "fail"): then it installs, opens and
+  // removes it (event "oros-claude"). Elsewhere a computer gets
+  // Anthropic's download page and a phone only claude.ai: orOS never
+  // carries or mirrors the app (Anthropic's own, not free software).
+  var CLAUDE_WEB = "https://claude.ai/new";
+  var CLAUDE_DL = "https://claude.com/download";
+  var CLAUDE_STATES = ["none", "busy", "ready", "cannot"];
+  var CLAUDE_WHY = ["persist", "owner", "os", "net", "fail"];
+  function claudeDesk(sys, why, ua, isPhone) {
+    if (CLAUDE_STATES.indexOf(sys) !== -1) {
+      var w = CLAUDE_WHY.indexOf(why) !== -1 ? why : "";
+      if (sys === "cannot" && !w) w = "os";
+      return { kind: "sys", state: sys, why: sys === "ready" || sys === "busy" ? "" : w };
+    }
+    ua = String(ua || "");
+    if (isPhone || /Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return { kind: "phone" };
+    var os = /Windows/i.test(ua) ? "windows" : /Macintosh|Mac OS X/i.test(ua) ? "mac" :
+      /CrOS/i.test(ua) ? "other" : /Linux|X11/i.test(ua) ? "linux" : "other";
+    return { kind: "link", os: os };
+  }
+
   function syncState(sync) {
     if (!sync || !sync.available || !sync.connected) return "off";
     if (!sync.unlocked) return "locked";
@@ -2727,6 +2814,7 @@
     t: t, langOf: langOf, isSection: isSection, sectionOf: sectionOf, scopeOf: scopeOf,
     hourLabel: hourLabel, quietValue: quietValue, readQuiet: readQuiet,
     intervalLabel: intervalLabel, syncState: syncState, fold: fold, menuGroups: menuGroups, gateFilter: gateFilter, gateBulk: gateBulk,
+    claudeDesk: claudeDesk, CLAUDE_WEB: CLAUDE_WEB, CLAUDE_DL: CLAUDE_DL,
     findItem: findItem, findSettings: findSettings
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

@@ -1,12 +1,18 @@
 // ============================================================
-// orOS Wheel of Fate — App logic (v1.0.0)
-// A decision wheel: write the options, spin, let fate speak.
+// orOS Chance › Wheel (wheel/view.js) — was the Wheel of Fate app
+// (APP-ALIAS since the 2026-11-13 merge 8, old id "wheel"). A
+// decision wheel: write the options, spin, let fate speak.
 //   - 2–30 options, edited live (the wheel follows as you type)
 //   - the winner is drawn first (crypto, fair), the spin only
 //     lands there; ticks on every divider, confetti at the end
 //   - "Remove from the wheel" for one-by-one draws (Undo)
 //   - ready sets; your own wheels (synced); winners history
 //     per wheel (this device only)
+// Loaded by dice/dice.js (the Chance app) the first time its Wheel
+// tab opens, with wheel/view.css and the "wheel" language pack (this
+// folder keeps the pack name "wheel"). WheelView.mount(host) builds
+// it once. Chance registers the slice "wheel" at its boot and hands
+// it to sliceGet/sliceSet here once mounted.
 // Data:
 //   - synced slice "wheel" (oros-wheel-data): saved wheels LWW +
 //     tombstones (R5, R17, R26)
@@ -22,9 +28,9 @@
 //   7. Spin: animation, ticks, sound, result
 //   8. UI: options editor, sets, my wheels, history, toolbar
 //   9. Dialogs + toasts
-//  10. Keyboard (Contract Β)
-//  11. Sync slice + palette
-//  12. Wiring & boot
+//  10. Keyboard (only while the tab shows)
+//  11. Sync slice
+//  12. Template, mount
 // ============================================================
 (function () {
   "use strict";
@@ -123,41 +129,19 @@
     return s;
   }
 
-  function $(id) { return document.getElementById(id); }
-  function cmpStr(x, y) { return x < y ? -1 : (x > y ? 1 : 0); }
-  function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
-
+  var root = null;
+  function $(id) { return root ? root.querySelector("#wh-" + id) : null; }
+  function $$(sel) { return root ? root.querySelectorAll(sel) : []; }
+  // the tab is on screen (Chance hides it while the dice show)
+  function shown() { return !!root && root.isConnected && root.offsetParent !== null; }
   function newId() {
     var r = new Uint32Array(2);
     crypto.getRandomValues(r);
     return Date.now().toString(36) + r[0].toString(36) + r[1].toString(36).slice(0, 4);
   }
 
-  // BOOT MARKER
-  (function () {
-    var m = ((document.currentScript && document.currentScript.src) || "")
-      .match(/[?&]v=([^&#]+)/);
-    document.documentElement.lang = LANG;
-    console.log("wheel.js v" + (m ? m[1] : "?") + " boot");
-  })();
 
   // ---------- 2. Wheel model ----------
-  // One option: text, spaces collapsed, ≤ 50. Empty ones drop out.
-  function normOpt(s) {
-    return typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, OPT_LEN) : "";
-  }
-  function normOpts(list) {
-    var out = [];
-    (Array.isArray(list) ? list : []).forEach(function (s) {
-      var o = normOpt(s);
-      if (o && out.length < MAX_OPTS) out.push(o);
-    });
-    return out;
-  }
-  function normName(s) {
-    return typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, NAME_LEN) : "";
-  }
-
   var SET_IDS = ["yesno", "food", "days", "nums", "coin", "chores", "movie", "todo", "first"];
   // Ready-set options, one key per option ("seto.<set>.<n>", pack
   // "wheel"). Picking a set copies them into the draft; a saved wheel
@@ -213,76 +197,18 @@
     return L > 0.33 ? "#1b1b1b" : "#ffffff";
   }
 
-  // Weights: { option text: 2 | 3 } (×1 is the default and is not
-  // stored). Keyed by text, so moving, shuffling or deleting rows
-  // needs no bookkeeping; equal texts share their weight. Canonical:
-  // only texts on the wheel, in sorted order.
-  function normW(map, opts) {
-    var out = {}, m = map && typeof map === "object" ? map : {};
-    var seen = {};
-    (opts || []).slice().sort(cmpStr).forEach(function (o) {
-      if (seen[o]) return;
-      seen[o] = 1;
-      var v = Object.prototype.hasOwnProperty.call(m, o) ? m[o] : 1;
-      if (isInt(v) && v >= 2 && v <= MAX_W) out[o] = v;
-    });
-    return out;
-  }
   function weightsOf(opts, map) {
     var w = normW(map, opts);
     return opts.map(function (o) { return w[o] || 1; });
   }
-  function hasW(map) { return !!map && Object.keys(map).length > 0; }
-
-  // ---------- 3. Saved wheels ----------
-  // saved = { id, m (mtime, ms), name, opts[2..30], w? (weights) }
-  // data  = { ver: 1, wheels: [saved…] sorted by id, tombs: { id: deletedAt } }
-  var ID_RE = /^[a-z0-9]{6,40}$/;
-
-  function normSaved(x) {
-    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) ||
-        !isInt(x.m) || x.m < 0) return null;
-    var name = normName(x.name), opts = normOpts(x.opts);
-    if (!name || opts.length < MIN_OPTS) return null;
-    var out = { id: x.id, m: x.m, name: name, opts: opts };
-    var w = normW(x.w, opts);
-    if (hasW(w)) out.w = w;
-    return out;
-  }
-
-  // LWW per wheel (newer m wins; equal m: the larger canonical JSON),
-  // tombstones max-merged, delete wins ties, a newer edit resurrects
-  // (R17). Symmetric and canonical (R5, R26).
-  function mergeWheel(A, B) {
-    var a = A || {}, b = B || {};
-    var tombs = {};
-    [a.tombs, b.tombs].forEach(function (tm) {
-      if (!tm || typeof tm !== "object") return;
-      Object.keys(tm).forEach(function (id) {
-        if (!ID_RE.test(id) || !isInt(tm[id]) || tm[id] < 0) return;
-        if (!(id in tombs) || tm[id] > tombs[id]) tombs[id] = tm[id];
-      });
-    });
-    var best = {};
-    [a.wheels, b.wheels].forEach(function (list) {
-      if (!Array.isArray(list)) return;
-      list.forEach(function (raw) {
-        var x = normSaved(raw);
-        if (!x) return;
-        var cur = best[x.id];
-        if (!cur || x.m > cur.m ||
-            (x.m === cur.m && JSON.stringify(x) > JSON.stringify(cur))) best[x.id] = x;
-      });
-    });
-    var wheels = [];
-    Object.keys(best).sort(cmpStr).forEach(function (id) {
-      if (id in tombs && tombs[id] >= best[id].m) return;
-      wheels.push(best[id]);
-    });
-    var sortedTombs = {};
-    Object.keys(tombs).sort(cmpStr).forEach(function (id) { sortedTombs[id] = tombs[id]; });
-    return { ver: DATA_VER, wheels: wheels, tombs: sortedTombs };
-  }
+  // ---------- 3. Saved wheels (wheel/core.js) ----------
+  // The model and the slice merge live in wheel/core.js (WheelCore),
+  // which the Chance page loads at boot for the slice "wheel".
+  var WC = window.WheelCore;
+  var normOpt = WC.normOpt, normOpts = WC.normOpts, normName = WC.normName;
+  var normW = WC.normW, hasW = WC.hasW, normSaved = WC.normSaved, mergeWheel = WC.mergeWheel;
+  var cmpStr = WC.cmpStr, isInt = WC.isInt;
+  var ID_RE = /^[a-z0-9]{6,40}$/;                    // = core.js normSaved
 
   // ---------- 4. Fair draw + spin geometry ----------
   // Uniform integer in [0, n): rejection sampling, no modulo bias.
@@ -358,7 +284,7 @@
     } catch (e) {
       if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
     }
-    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    markDirty();
   }
 
   function loadPrefs() {
@@ -586,11 +512,11 @@
   }
 
   function setBusy(on) {
-    document.body.classList.toggle("spinning", on);
+    root.classList.toggle("spinning", on);
     var b = $("spin-btn");
     b.textContent = on ? t("spinning") : t("spin");
     b.disabled = on;
-    [].forEach.call(document.querySelectorAll("#panel input, #panel button, #tb-b button"), function (x) {
+    [].forEach.call($$("#wh-panel input, #wh-panel button, #wh-tb-b button"), function (x) {
       if (x.id === "sound-btn") return;
       x.disabled = on;
     });
@@ -749,7 +675,7 @@
       });
       inp.addEventListener("paste", function (e) { pasteLines(e, i); });
       inp.addEventListener("blur", function () {
-        if (!normOpt(rows[i]) && rows.length > 1 && !document.body.classList.contains("dragging")) {
+        if (!normOpt(rows[i]) && rows.length > 1 && !root.classList.contains("dragging")) {
           setTimeout(function () {
             if (i < rows.length && !normOpt(rows[i]) && document.activeElement !== inp) {
               rows.splice(i, 1); changed(); renderOpts();
@@ -763,7 +689,7 @@
           moveRow(i, i + (e.key === "ArrowUp" ? -1 : 1), true);
         } else if (e.key === "Enter") {
           e.preventDefault();
-          var nx = document.querySelector('.opt-in[data-i="' + (i + 1) + '"]');
+          var nx = root.querySelector('.opt-in[data-i="' + (i + 1) + '"]');
           (nx || $("add-in")).focus();
         }
       });
@@ -776,7 +702,7 @@
       host.appendChild(li);
     });
     if (focusIdx >= 0) {
-      var f = document.querySelector('.opt-in[data-i="' + Math.min(focusIdx, rows.length - 1) + '"]');
+      var f = root.querySelector('.opt-in[data-i="' + Math.min(focusIdx, rows.length - 1) + '"]');
       if (f) { f.focus(); try { f.setSelectionRange(caret, caret); } catch (e) {} }
     }
     renderCount();
@@ -798,7 +724,7 @@
     var w = ((wts[o] || 1) % MAX_W) + 1;
     if (w === 1) delete wts[o]; else wts[o] = w;
     changed();
-    [].forEach.call(document.querySelectorAll(".opt"), function (li) {
+    [].forEach.call($$(".opt"), function (li) {
       renderWeight(li, parseInt(li.getAttribute("data-i"), 10));
     });
     live(t("opt.weight", { n: i + 1, w: t("w." + w) }).split(".")[0]);
@@ -819,7 +745,7 @@
     $("add-in").disabled = full || spinning;
     $("add-in").placeholder = full ? t("opt.full", { max: MAX_OPTS }) : t("opt.add");
     $("spin-btn").disabled = spinning || n < MIN_OPTS;
-    [].forEach.call(document.querySelectorAll(".opt"), function (li) {
+    [].forEach.call($$(".opt"), function (li) {
       li.style.setProperty("--sw", segColorFor(parseInt(li.getAttribute("data-i"), 10)));
     });
   }
@@ -885,7 +811,7 @@
     changed();
     renderOpts();
     if (keepFocus) {
-      var f = document.querySelector('.opt-in[data-i="' + to + '"]');
+      var f = root.querySelector('.opt-in[data-i="' + to + '"]');
       if (f) f.focus();
     }
   }
@@ -896,9 +822,9 @@
       if (spinning) return;
       e.preventDefault();
       var from = parseInt(li.getAttribute("data-i"), 10), to = from;
-      var items = [].slice.call(document.querySelectorAll(".opt"));
+      var items = [].slice.call($$(".opt"));
       var y0 = e.clientY, h = li.getBoundingClientRect().height + 6;
-      document.body.classList.add("dragging");
+      root.classList.add("dragging");
       li.classList.add("drag");
       try { grip.setPointerCapture(e.pointerId); } catch (err) {}
       function move(ev) {
@@ -918,7 +844,7 @@
         grip.removeEventListener("pointermove", move);
         grip.removeEventListener("pointerup", up);
         grip.removeEventListener("pointercancel", up);
-        document.body.classList.remove("dragging");
+        root.classList.remove("dragging");
         items.forEach(function (it) { it.style.transform = ""; it.classList.remove("drag"); });
         if (to !== from) moveRow(from, to, false);
       }
@@ -967,7 +893,7 @@
   }
   function renderSets() {
     var mine = JSON.stringify(curOpts());
-    [].forEach.call(document.querySelectorAll("#sets .chip"), function (b) {
+    [].forEach.call($$("#wh-sets .chip"), function (b) {
       var on = !curSaved() && JSON.stringify(setOpts(b.getAttribute("data-s"))) === mine;
       b.classList.toggle("on", on);
       b.setAttribute("aria-pressed", on ? "true" : "false");
@@ -989,7 +915,7 @@
 
   function newWheel() {
     var was = openDraft(["", ""]);
-    var f = document.querySelector('.opt-in[data-i="0"]');
+    var f = root.querySelector('.opt-in[data-i="0"]');
     if (f) f.focus();
     if (!was.cur && normOpts(was.draft).length) {
       undoToast(t("toast.newWheel"), function () {
@@ -1188,7 +1114,7 @@
     if (stale) stale.remove();
     var dlg = document.createElement("dialog");
     dlg.id = id;
-    dlg.className = "mm-dlg";
+    dlg.className = "mm-dlg whv-dlg";
     dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
     dlg.addEventListener("close", function () {
       parkToast();
@@ -1237,7 +1163,7 @@
   }
   function parkToast() {
     var box = $("toast");
-    if (box && box.parentNode !== document.body) document.body.appendChild(box);
+    if (box && root && box.parentNode !== root) root.appendChild(box);
   }
 
   function live(msg) {
@@ -1249,17 +1175,10 @@
 
   // ---------- 10. Keyboard ----------
   function wireKeyboard() {
-    // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
+    // Space / Enter spin (not while typing, not on a button, not in a
+    // dialog, only while the Wheel tab shows); Contract B is the page's
     document.addEventListener("keydown", function (e) {
-      if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
-      var p = null;
-      try { p = window.parent; } catch (err) { return; }
-      if (!(p && p !== window && p.orosShortcuts &&
-            typeof p.orosShortcuts.handle === "function")) return;
-      if (p.orosShortcuts.handle(e)) e.stopPropagation();
-    }, true);
-    // Space / Enter spin (not while typing, not on a button, not in a dialog)
-    document.addEventListener("keydown", function (e) {
+      if (!shown()) return;
       if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
       var tg = e.target, tag = tg && tg.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON") return;
@@ -1281,51 +1200,18 @@
     cv.addEventListener("pointercancel", function () { down = null; });
   }
 
-  // ---------- 11. Sync slice + palette ----------
-  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                  "--accent", "--accent-hover", "--accent-soft", "--accent-ink",
-                  "--panel-bg", "--border", "--shadow", "--danger"];
-
-  function inheritPalette() {
-    try {
-      var pRoot = window.parent.document.documentElement;
-      document.documentElement.setAttribute("data-theme",
-        pRoot.getAttribute("data-theme") || "dark");
-      var cs = window.parent.getComputedStyle(pRoot);
-      PAL_VARS.forEach(function (v) {
-        var val = cs.getPropertyValue(v).trim();
-        if (val) document.documentElement.style.setProperty(v, val);
-      });
-    } catch (e) { /* standalone */ }
-    draw();
-  }
-
-  function watchPalette() {
-    try {
-      new MutationObserver(inheritPalette).observe(
-        window.parent.document.documentElement,
-        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
-      );
-    } catch (e) { /* standalone */ }
-  }
-
+  // ---------- 11. Sync slice ----------
+  // Chance registers the slice "wheel" (dice.js registerWheelSlice)
+  // and calls sliceGet/sliceSet here once the view is mounted.
+  var suppress = false;
   function syncApi() {
     try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
     catch (e) { return window.orosSync || null; }
   }
-
-  function registerSync() {
-    // LOCAL FIRST: load() has already run (boot order).
+  function markDirty() {
+    if (suppress) return;
     var api = syncApi();
-    window.__orosSyncApi = {
-      _suppress: false,
-      dirty: function () {
-        if (this._suppress) return;
-        if (api && typeof api.markDirty === "function") api.markDirty();
-      }
-    };
-    if (!api || typeof api.registerSlice !== "function") return;
-    api.registerSlice("wheel", sliceGet, sliceSet, STORAGE_KEY, mergeWheel);
+    if (api && typeof api.markDirty === "function") api.markDirty();
   }
 
   function sliceGet() {
@@ -1337,13 +1223,13 @@
     if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.wheels)) return;
     var before = JSON.stringify(data.wheels);
     var openWas = curSaved();
-    window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
+    suppress = true;                         // R6: a pull never marks dirty
     try {
       data = mergeWheel(incoming, incoming);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
     } finally {
-      window.__orosSyncApi._suppress = false;
+      suppress = false;
     }
     if (JSON.stringify(data.wheels) === before) return;   // no toast on merge (sync feedback = taskbar dot)
     var openNow = curSaved();
@@ -1366,10 +1252,10 @@
     renderHist();
   }
 
-  // ---------- 12. Wiring & boot ----------
   function applyI18n() {
-    [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
-      n.textContent = t(n.getAttribute("data-i18n"));
+    // data-wh, not data-i18n: the Chance page repaints its own data-i18n nodes
+    [].forEach.call($$("[data-wh]"), function (n) {
+      n.textContent = t(n.getAttribute("data-wh"));
     });
     $("spin-btn").textContent = t("spin");
     $("spin-btn").setAttribute("aria-label", t("spin.aria"));
@@ -1420,22 +1306,106 @@
     wireKeyboard();
   }
 
-  function boot() {
-    cv = $("cv");
-    g = cv.getContext("2d");
-    load();
-    loadPrefs();
-    loadHist();
-    loadCurrent();
-    applyI18n();
-    buildSets();
-    wire();
-    registerSync();
-    inheritPalette();
-    watchPalette();
-    renderAll();
+  // ---------- 12. Template, mount ----------
+  var TEMPLATE = [
+    "<header id=\"wh-toolbar\">",
+    "  <div class=\"tb-row\" id=\"wh-tb-a\">",
+    "    <span id=\"wh-wheel-name\" class=\"wheel-name\"></span>",
+    "  </div>",
+    "  <div class=\"tb-row\" id=\"wh-tb-b\">",
+    "    <button type=\"button\" class=\"icon-btn\" id=\"wh-sound-btn\" aria-pressed=\"true\"></button>",
+    "    <button type=\"button\" class=\"txt-btn\" id=\"wh-new-btn\"></button>",
+    "    <button type=\"button\" class=\"txt-btn\" id=\"wh-save-btn\"></button>",
+    "  </div>",
+    "</header>",
+    "",
+    "<main id=\"wh-main\">",
+    "  <!-- The wheel -->",
+    "  <section id=\"wh-stage\">",
+    "    <div id=\"wh-wheel-box\">",
+    "      <div id=\"wh-wheel-wrap\">",
+    "        <div id=\"wh-pointer\" aria-hidden=\"true\"></div>",
+    "        <canvas id=\"wh-cv\" aria-hidden=\"true\"></canvas>",
+    "        <button type=\"button\" id=\"wh-spin-btn\"></button>",
+    "      </div>",
+    "    </div>",
+    "  </section>",
+    "",
+    "  <!-- Options, sets, wheels, winners -->",
+    "  <div id=\"wh-panel\">",
+    "    <section class=\"sec\">",
+    "      <div class=\"sec-head\">",
+    "        <h2 data-wh=\"sec.opts\">Options</h2>",
+    "        <span id=\"wh-opt-count\" class=\"count\"></span>",
+    "        <span class=\"spacer\"></span>",
+    "        <button type=\"button\" class=\"mini\" id=\"wh-shuffle-btn\"></button>",
+    "      </div>",
+    "      <ol id=\"wh-opts\"></ol>",
+    "      <div class=\"add-row\">",
+    "        <input id=\"wh-add-in\" maxlength=\"50\" autocomplete=\"off\">",
+    "        <button type=\"button\" class=\"icon-btn\" id=\"wh-add-btn\"></button>",
+    "      </div>",
+    "      <p class=\"hint\" id=\"wh-opt-need\" data-wh=\"opt.need\" hidden>Add at least two options to spin.</p>",
+    "    </section>",
+    "",
+    "    <section class=\"sec\">",
+    "      <h2 data-wh=\"sec.sets\">Ready sets</h2>",
+    "      <div id=\"wh-sets\" class=\"chips\"></div>",
+    "    </section>",
+    "",
+    "    <section class=\"sec\">",
+    "      <h2 data-wh=\"sec.mine\">My wheels</h2>",
+    "      <div id=\"wh-mine\" class=\"chips\"></div>",
+    "      <p class=\"hint\" id=\"wh-mine-empty\" data-wh=\"mine.empty\">Save a wheel to keep it here.</p>",
+    "    </section>",
+    "",
+    "    <section class=\"sec\">",
+    "      <div class=\"sec-head\">",
+    "        <h2 data-wh=\"sec.hist\">Winners</h2>",
+    "        <span class=\"spacer\"></span>",
+    "        <button type=\"button\" class=\"link-btn\" id=\"wh-hist-clear\" hidden></button>",
+    "      </div>",
+    "      <ol id=\"wh-hist\"></ol>",
+    "      <p class=\"hint\" id=\"wh-hist-empty\" data-wh=\"hist.empty\">No winners yet.</p>",
+    "    </section>",
+    "  </div>",
+    "</main>",
+    "",
+    "<div id=\"wh-confetti\" aria-hidden=\"true\"></div>",
+    "<div id=\"wh-live\" class=\"sr-only\" aria-live=\"polite\"></div>",
+    "<div id=\"wh-toast\" role=\"status\"></div>"
+  ].join("\n");
+
+  // Build the view once in host (the Chance app's Wheel tab).
+  function mount(host) {
+    if (!root) {
+      root = document.createElement("div");
+      root.className = "whv";
+      root.innerHTML = TEMPLATE;                         // static markup
+      host.appendChild(root);
+      cv = $("cv");
+      g = cv.getContext("2d");
+      load();
+      loadPrefs();
+      loadHist();
+      loadCurrent();
+      applyI18n();
+      buildSets();
+      wire();
+      renderAll();
+      // the page's palette (Chance's inheritPalette) changed: repaint
+      try { new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["style", "data-theme"] }); }
+      catch (e) {}
+    } else if (root.parentNode !== host) host.appendChild(root);
     resize();
   }
-
-  boot();
+  // A synced change while the view is not built yet: nothing to
+  // repaint (sliceGet reads the stored copy through Chance).
+  window.WheelView = {
+    mount: mount,
+    shown: shown,
+    sliceGet: function () { return root ? sliceGet() : null; },
+    sliceSet: function (d) { if (root) sliceSet(d); },
+    flush: function () { if (root) { savePrefsNow(); storeSavedNow(); } }
+  };
 })();

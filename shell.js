@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.03.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.15.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -218,7 +218,6 @@
     garage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .6-1.4L5 9.5l1.6-3.6A2 2 0 0 1 8.4 4.7h7.2a2 2 0 0 1 1.8 1.2L19 9.5l1.9 1.9a2 2 0 0 1 .6 1.4V16a1 1 0 0 1-1 1H19"/><path d="M5 9.5h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
     petcare: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="9.5" r="1.8"/><circle cx="8.5" cy="5" r="1.8"/><circle cx="13.5" cy="5" r="1.8"/><path d="M11 10.5c-2.8 0-5 3.3-5 5.6 0 1.6 1.2 2.4 2.7 2.4.9 0 1.5-.5 2.3-.5"/><path d="M18 12v8M14 16h8"/></svg>',
-    wheel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8.5"/><path d="M12 4.5v17M3.5 13h17M6 7l12 12M18 7L6 19"/><path d="M10 1.5h4L12 4.5z" fill="currentColor"/></svg>',
     oracle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M12 2v1.5M5 4.5l1 1M19 4.5l-1 1"/></svg>',
     slides: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="12" rx="1"/><path d="M8 11v-2M12 11V7M16 11v-3M12 15v3M8 21l4-3 4 3"/></svg>',
     baby: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4M9.5 5h5M10 5v2.5L8 10v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V10l-2-2.5V5"/><path d="M8 14h3M8 17h3"/></svg>',
@@ -416,6 +415,7 @@
     if (window.orosOsk) window.orosOsk.refresh();   // on-screen keyboard labels
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
+    if (window.orosSmartBar) window.orosSmartBar.refresh(); // smart top bar chips
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
     // known) must relabel them too, or screen readers hear English.
@@ -1667,12 +1667,22 @@
     var left = bar && bar.querySelector(".bar-left");
     var right = bar && bar.querySelector(".bar-right");
     if (!left || !right) return;
-    for (var lvl = 0; ; lvl++) {
-      applyBarFit(lvl);
+    // Smart bar (smartbar.js): its chips give way after the tight level
+    // and before the weekday, the date or the language go.
+    var SB = window.orosSmartBar && window.orosSmartBar.fitDrop ? window.orosSmartBar : null;
+    if (SB) SB.fitReset();
+    function fits() {
       var cs = getComputedStyle(bar);
       var avail = bar.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      var need = left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4;
-      if (need <= avail || lvl >= (document.getElementById("qs-btn") ? BAR_FIT_MAX : 6)) return;
+      return left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4 <= avail;
+    }
+    // The first chip stays until the last level: the person asked for it.
+    var max = document.getElementById("qs-btn") ? BAR_FIT_MAX : 6;
+    for (var lvl = 0; ; lvl++) {
+      applyBarFit(lvl);
+      if (fits()) return;
+      if (lvl === 2 && SB) { while (SB.fitDrop(1)) { if (fits()) return; } }
+      if (lvl >= max) { if (SB) { while (SB.fitDrop(0)) { if (fits()) return; } } return; }
     }
   }
 
@@ -1777,6 +1787,7 @@
     tickSafe("mixerTrayTick", mixerTrayTick); // Sound Mixer: playing-with-app-closed chip (cheap, 1/s)
     tickSafe("wpDailyTick", wpDailyTick);     // Wallpaper "a new picture every day" (checks once a minute)
     tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
+    if (window.orosSmartBar) tickSafe("smartbarTick", window.orosSmartBar.tick); // Smart bar chips (cheap, 1/s)
   }
 
   // SH-Q2: one engine's failure is logged once (not 1/s) and never
@@ -11748,6 +11759,7 @@
       tips: SOLO ? null : { on: !!tipsRead().on },
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
+      smartbar: !SOLO && window.orosSmartBar && window.orosSmartBar.snapshot ? window.orosSmartBar.snapshot() : null,
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
@@ -11828,6 +11840,14 @@
     }
     if (/^widgets:/.test(name)) {        // widgets.js: "widgets:<kind>" on/off
       if (window.orosWidgets) window.orosWidgets.set(name.slice(8), !!value);
+      return;
+    }
+    if (/^smartbar:/.test(name)) {       // smartbar.js: "smartbar:<kind>" on/off
+      if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
+      return;
+    }
+    if (/^smartbar-move:/.test(name)) {  // smartbar.js: "smartbar-move:<kind>", value -1 (left) / 1 (right)
+      if (window.orosSmartBar) window.orosSmartBar.move(name.slice(14), Number(value) < 0 ? -1 : 1);
       return;
     }
     if (/^osk:/.test(name)) {
@@ -15698,6 +15718,21 @@
       toast: function (msg) { scToast("err", msg); },
       changed: function () { settingsNotify(); wxFetch(false); },
       start: { facts: startFacts, go: startGo }
+    });
+  }
+  // Smart top bar (smartbar.js): live chips (next event, focus, tasks,
+  // water, spent, till) the person switches on in Settings › Appearance.
+  // A single app keeps its plain bar.
+  if (window.orosSmartBar && !SOLO) {
+    window.orosSmartBar.attach({
+      lang: function () { return state.lang; },
+      strict: function () { return !!strictLevelNow(); },
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      open: function (id) { openAppById(id); },
+      version: function () { return APP_VERSION; },
+      toast: function (msg) { scToast("err", msg); },
+      changed: function () { settingsNotify(); },
+      fit: function () { queueFitBar(); }
     });
   }
   loadApps();

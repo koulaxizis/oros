@@ -608,10 +608,11 @@
   //                is real text over it in the book's fonts;
   //   mode "image" the picture is the whole page, the text lies on top
   //                invisible (search, selection, reading aloud).
-  // A rotated text frame stays in the picture (live() false).
+  // A rotated text frame, or one on a path (ext.tp), stays in the
+  // picture (live() false).
   //   buildFixed(doc, opts) → Promise<{ bytes, report }>
   //   opts as build() plus mode, backgrounds: { pageId: { data, type } }
-  function live(it) { return it && it.t === "text" && !it.hide && !it.rot; }
+  function live(it) { return it && it.t === "text" && !it.hide && !it.rot && !(it.ext && it.ext.tp); }
   function hex2(v) { return "#" + v.map(function (x) { return (x < 16 ? "0" : "") + x.toString(16); }).join(""); }
   function fxPage(doc, L, pg, ctx) {
     var out = [], lvCache = ctx.lvl;

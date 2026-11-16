@@ -462,6 +462,40 @@
       host.appendChild(cw);
     }
 
+    // Smart top bar (smartbar.js through the shell; none in a single app)
+    if (s.smartbar) {
+      var cb2 = card(t("sb.title"), "smartbar");
+      cb2.appendChild(el("p", "hint", t("sb.hint")));
+      var sl = el("div", "sb-list");
+      var onIds = s.smartbar.list.filter(function (w) { return w.on; }).map(function (w) { return w.id; });
+      s.smartbar.list.forEach(function (w) {
+        var line = el("div", "sb-line");
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = !!w.on;
+        cb.setAttribute("data-k", "smartbar:" + w.id);
+        cb.addEventListener("change", function () { set("smartbar:" + w.id, cb.checked); });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, w.name));
+        line.appendChild(lab);
+        if (w.on) {
+          var at = onIds.indexOf(w.id);
+          [[-1, "sb.left", "\u2190"], [1, "sb.right", "\u2192"]].forEach(function (m) {
+            var mb = button(m[2], "smartbar-move:" + w.id + ":" + m[0], function () { set("smartbar-move:" + w.id, m[0]); }, "sb-mv");
+            mb.setAttribute("aria-label", t(m[1]).replace("{w}", w.name));
+            mb.title = t(m[1]).replace("{w}", w.name);
+            mb.disabled = m[0] < 0 ? at === 0 : at === onIds.length - 1;
+            line.appendChild(mb);
+          });
+        }
+        sl.appendChild(line);
+      });
+      cb2.appendChild(sl);
+      cb2.appendChild(el("p", "hint", t("sb.money")));
+      host.appendChild(cb2);
+    }
+
     if (s.pet.available) {
       var c4 = card(null);
       c4.appendChild(row(t("a.pet"), switchBtn(s.pet.on, "pet", function (v) { set("pet", v); }, t("a.pet")),
@@ -1300,6 +1334,66 @@
         if (log.length) c.appendChild(actions(button(t("gt.log.clear"), "gt.log.clear", function () { G.clearLog(); })));
       }
     }
+    host.appendChild(c);
+  }
+
+  // CLAUDE-1: Claude in a window, and Claude desktop. On orOS USB and
+  // orOS Portable the System extension installs it (C.claudeDesk reads
+  // its data-oros-sys-claude attributes on the shell's page; the event
+  // "oros-claude" asks it to "install", "open" or "remove"); elsewhere
+  // a computer gets Anthropic's download page.
+  var claudeWatch = false;
+  function claudeDoc() {
+    var p = parentWin();
+    try { return p ? p.document : null; } catch (e) { return null; }
+  }
+  function claudeAsk(what) {
+    var d = claudeDoc();
+    try { d.dispatchEvent(new d.defaultView.CustomEvent("oros-claude", { detail: what })); } catch (e) {}
+  }
+  function secClaude(host) {
+    var d = claudeDoc(), de = d && d.documentElement;
+    if (de && !claudeWatch && typeof MutationObserver === "function") {
+      claudeWatch = true;
+      try {
+        new MutationObserver(function () { render(); })
+          .observe(de, { attributes: true, attributeFilter: ["data-oros-sys-claude", "data-oros-sys-claude-why"] });
+      } catch (e) {}
+    }
+    var info = C.claudeDesk(de ? de.getAttribute("data-oros-sys-claude") : null,
+      de ? de.getAttribute("data-oros-sys-claude-why") : null, navigator.userAgent, !!phone());
+    var c = card(t("cl.title"));
+    c.appendChild(el("p", "hint", t("cl.hint")));
+    c.appendChild(actions(button(t("cl.web"), "cl.web", function () {
+      window.open(C.CLAUDE_WEB, "_blank", "noopener");
+    }, info.kind === "sys" && info.state === "ready" ? null : "primary")));
+    if (info.kind === "phone") {
+      c.appendChild(el("p", "hint", t("cl.phone")));
+    } else {
+      c.appendChild(el("h4", "sub", t("cl.desk")));
+      if (info.kind === "sys") {
+        if (info.state === "ready") {
+          c.appendChild(el("p", "hint", t("cl.sys.ready")));
+          c.appendChild(actions(
+            button(t("cl.sys.open"), "cl.sys.open", function () { claudeAsk("open"); }, "primary"),
+            confirmBtn(t("cl.sys.remove"), t("cl.sys.remove.sure"), "cl.sys.remove", function () { claudeAsk("remove"); })));
+        } else if (info.state === "busy") {
+          c.appendChild(el("p", "msg msg-dim", t("cl.sys.busy")));
+        } else {
+          if (info.state === "none") c.appendChild(el("p", "hint", t("cl.sys.none")));
+          if (info.why) c.appendChild(el("p", info.why === "fail" || info.why === "net" ? "msg msg-err" : "hint", t("cl.why." + info.why)));
+          if (info.state === "none") c.appendChild(actions(button(t("cl.sys.install"), "cl.sys.install", function () { claudeAsk("install"); })));
+        }
+      } else {
+        c.appendChild(el("p", "hint", t("cl.get." + info.os)));
+        var a = el("a", "btn", t("cl.get"));
+        a.href = C.CLAUDE_DL;
+        a.target = "_blank";
+        a.rel = "noopener";
+        c.appendChild(actions(a));
+      }
+    }
+    c.appendChild(el("p", "hint", t("cl.gate")));
     host.appendChild(c);
   }
 
@@ -3612,6 +3706,7 @@
   }
   function secServices(host) {
     secPhoneHealth(host);
+    secClaude(host);
     secGate(host);
     var Lk = links();
     if (!Lk) { host.appendChild(el("p", "hint card-note", t("v.unsupported"))); return; }

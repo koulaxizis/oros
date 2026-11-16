@@ -137,7 +137,10 @@
       relaid: AT.io && AT.io.relaid, brand: brandKit(),
       // new texts the command leaves unstyled take My style (style.js)
       look: function (doc, role) { return AT.style ? AT.style.look(doc, role) : null; },
-      newDesign: function (o) { return AX.newDesign(o, AT.now()); }
+      newDesign: function (o) { return AX.newDesign(o, AT.now()); },
+      // vector wave V5: texts to outlines, library shapes to their own outline
+      textOutline: function (doc, it, nw) { var r = AX.outlineText(doc, it, nw); return !!(r && r.ids.length); },
+      toPath: function (doc, it) { return AX.shapeToPath(it); }
     };
   }
   function cutPhotos(doc, st) {

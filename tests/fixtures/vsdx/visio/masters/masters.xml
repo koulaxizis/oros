@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Masters xmlns="http://schemas.microsoft.com/office/visio/2012/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <Master ID="2" NameU="Process" Name="Process"><Rel r:id="rId1"/></Master>
+  <Master ID="3" NameU="Decision" Name="Decision"><Rel r:id="rId2"/></Master>
+  <Master ID="4" NameU="Dynamic connector" Name="Dynamic connector"><Rel r:id="rId3"/></Master>
+  <Master ID="5" NameU="Start/End" Name="Start/End"><Rel r:id="rId4"/></Master>
+  <Master ID="6" NameU="Swimlane (vertical)" Name="Swimlane (vertical)"><Rel r:id="rId5"/></Master>
+  <Master ID="7" NameU="Fancy 3D gizmo" Name="Fancy 3D gizmo"><Rel r:id="rId6"/></Master>
+  <Master ID="8" NameU="Server.12" Name="Server"><Rel r:id="rId7"/></Master>
+</Masters>

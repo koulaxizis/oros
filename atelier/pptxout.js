@@ -74,7 +74,7 @@
     if (!ax || it.hide) return "";
     if (ax.k === "text") {
       if (!ax.tx || !ax.tx.trim()) return "";
-      return ax.cv || (ax.tfx && NATIVE_FX.indexOf(ax.tfx.type) < 0) ? "raster" : "text";
+      return AX.isCurved(it) || (ax.tfx && NATIVE_FX.indexOf(ax.tfx.type) < 0) ? "raster" : "text";
     }
     if (ax.k === "shape") return ax.fc || ax.g || (ax.sc && it.sw > 0) ? "shape" : "";
     if (ax.k === "line") return "line";

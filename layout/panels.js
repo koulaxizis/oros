@@ -239,6 +239,8 @@
     s2.appendChild(check(t("props.dash"), common(items, "dash"), function (v) { editSel(function (it) { it.dash = v; }); }));
     var VC = LY.ed.vec, PEs = window.orosDK.pathedit.str;
     if (VC && one && VC.canOutline(one)) { var ro = row(); ro.appendChild(btn(PEs("pe.outline"), function () { VC.outline(one.id); }, "small")); s2.appendChild(ro); }
+    if (VC && VC.canTextPath && VC.canTextPath(items)) { var rt = row(); rt.appendChild(btn(PEs("pe.textPath"), function () { VC.textPath(); }, "small")); s2.appendChild(rt); }
+    if (VC && one && VC.canTextOutline && VC.canTextOutline(one)) { var rl = row(); rl.appendChild(btn(PEs("pe.toOutlines"), function () { VC.textOutline(one.id); }, "small")); s2.appendChild(rl); }
     if (VC && VC.canCombine(items)) {
       s2.appendChild(el("span", "fld-lbl", PEs("pe.ops")));
       var rc = row();
@@ -395,6 +397,15 @@
     s.appendChild(el("span", "fld-lbl", t("props.va")));
     s.appendChild(seg([["t", t("props.va.t")], ["c", t("props.va.c")], ["b", t("props.va.b")]], it.va, function (v) { editSel(function (x) { if (x.t !== "text") return false; x.va = v; }); }));
     if (ch.length > 1) s.appendChild(el("p", "hint", t("props.chain", { i: i + 1, n: ch.length })));
+    var tp = it.ext && it.ext.tp, VC = LY.ed.vec, PEs = window.orosDK.pathedit.str;
+    if (tp && VC && VC.tpSet) {                     // text on a path (wave V3)
+      s.appendChild(el("span", "fld-lbl", PEs("pe.textPath")));
+      s.appendChild(field(PEs("pe.tpStart") + " (%)", numInput(tp.o || 0, function (v) { VC.tpSet(it.id, { o: v }); }, { unit: "raw", min: 0, max: 100, step: 1 })));
+      var rp = row();
+      rp.appendChild(btn(PEs("pe.tpFlip"), function () { VC.tpSet(it.id, { s: tp.s === -1 ? 1 : -1 }); }, "small"));
+      rp.appendChild(btn(PEs("pe.tpOff"), function () { VC.tpOff(it.id); }, "small"));
+      s.appendChild(rp);
+    }
     var isMaster = !!M.find(doc.masters, it.pg);
     if (!isMaster) {
       var r = el("div", "pn-col");
@@ -1285,14 +1296,17 @@
       function drawImg() {
         dpiWrap.innerHTML = ""; fmtWrap.innerHTML = "";
         dpiWrap.appendChild(seg([["72", "72 dpi"], ["150", "150 dpi"], ["300", "300 dpi"]], String(imgPrefs.dpi), function (v) { imgPrefs.dpi = +v; drawImg(); }));
-        fmtWrap.appendChild(seg([["png", "PNG"], ["jpg", "JPG"]], imgPrefs.fmt, function (v) { imgPrefs.fmt = v; drawImg(); }));
+        fmtWrap.appendChild(seg([["png", "PNG"], ["jpg", "JPG"], ["svg", "SVG"]], imgPrefs.fmt, function (v) { imgPrefs.fmt = v; drawImg(); }));
+        if (resField) resField.hidden = imgPrefs.fmt === "svg";   // an SVG has no resolution
       }
       drawImg();
       var gi = el("div", "grid2");
       gi.appendChild(field(t("exp.page"), pgSel));
       gi.appendChild(field(t("exp.format"), fmtWrap));
       body.appendChild(gi);
-      body.appendChild(field(t("exp.res"), dpiWrap));
+      var resField = field(t("exp.res"), dpiWrap);
+      resField.hidden = imgPrefs.fmt === "svg";
+      body.appendChild(resField);
       body.appendChild(btn(t("exp.imgGo"), function () { close(); LY.io.exportImage(imgPrefs); }, "block"));
       body.appendChild(el("h3", "pn-h", t("exp.merge")));
       body.appendChild(el("p", "hint", t("exp.mergeNote")));
