@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.10.00
+- **Dice & Coin and Wheel of Fate are now one app, Chance.** It has two tabs, `Dice & coin` and `Wheel`. Your saved wheels are kept, and old links and shortcuts to Wheel of Fate open the Wheel tab.
+
 ## Version 7.09.00
 - **Transfer takes the background picture from the orOS disk too.** Next to `Background picture…`, `Picture from the orOS disk` opens your disk with only folders and pictures. Tap one and it becomes the background, made smaller on your device and without camera details, as before.
 
