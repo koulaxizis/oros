@@ -16,6 +16,7 @@ The typewriter button at the top turns the mode off. Then the page works like a 
 
 ## Pages
 - `New page` starts a fresh sheet. It is saved once you type something.
+- `On the typewriter` on a prompt in [Prompter](app:prompter) opens a fresh sheet with the prompt as its first line. It too is saved once you type something.
 - Tap or click a page in the list to open it, and the × next to it to delete it; `Undo` brings it back.
 - Under `This page` you can give the page a `Title` and a `Word goal`. With a goal, a thin bar under the top bar fills up as you write.
 
