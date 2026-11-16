@@ -77,7 +77,7 @@ dialog.doc-confirm, dialog.doc-name { width: min(420px, calc(100vw - 32px)); }
 .doc-edit h3, .doc-edit menu, .doc-field.wide { grid-column: 1 / -1; }
 .doc-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .doc-lbl { font-size: 12px; color: var(--text-dim, #aaa); }
-.doc-dlg input[type="text"], .doc-dlg input[type="date"], .doc-dlg input[type="number"],
+.doc-dlg input[type="text"], .doc-dlg input[type="search"], .doc-dlg input[type="date"], .doc-dlg input[type="number"],
 .doc-dlg select, .doc-dlg textarea {
   width: 100%; box-sizing: border-box; margin: 0;
   padding: 8px 10px; border-radius: 6px; font: inherit; font-size: 14px;
@@ -134,3 +134,16 @@ dialog.doc-confirm, dialog.doc-name { width: min(420px, calc(100vw - 32px)); }
 }
 /* The [hidden] attribute always wins (as at the end of files.css). */
 [hidden] { display: none !important; }
+
+/* Links to other apps (W4) */
+.doc-ln-list { list-style: none; margin: 0 0 6px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.doc-ln { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.doc-ln-open { flex: 1; min-width: 0; min-height: 40px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-ln-add { align-self: flex-start; min-height: 40px; }
+.doc-pick { width: min(560px, calc(100vw - 32px)); }
+.doc-pick-bar { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.doc-pick-bar select { flex: 0 1 auto; min-height: 40px; }
+.doc-pick-bar input { flex: 1 1 160px; min-width: 0; min-height: 40px; }
+.doc-pick-list { list-style: none; margin: 0; padding: 0; max-height: min(50vh, 420px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.doc-pick-hit { width: 100%; min-height: 44px; text-align: left; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.doc-pick-hit small { opacity: .7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }

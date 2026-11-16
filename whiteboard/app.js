@@ -93,6 +93,15 @@
       "lay.tree.v": "Tree, top to bottom", "lay.tree.h": "Tree, left to right", "lay.flow.v": "Flow, top to bottom", "lay.flow.h": "Flow, left to right",
       "al.l": "Align left edges", "al.c": "Align centres", "al.r": "Align right edges", "al.t": "Align top edges", "al.m": "Align middles", "al.b": "Align bottom edges",
       "sp.h": "Same space across", "sp.v": "Same space down", "lay.same": "Already in place.",
+      "m.drawio": "Open a draw.io or Visio file…", "m.mermaid": "Draw from Mermaid text…",
+      "dio.added": "{n} boards from the file.", "dio.added1": "The file is open as a new board.", "dio.simpl": "{n} shapes came in as plain shapes.",
+      "dio.skip": "{n} things were left out (pictures from the web, lines with no ends).", "dio.cut": "A page was cut at 2000 items.",
+      "dio.bad": "This is not a draw.io or Visio (.vsdx) file Whiteboard can read.", "dio.vsd": "Old Visio .vsd files cannot be opened. Save it as .vsdx in Visio first.", "dio.big": "This file is too big.",
+      "dio.old": "This browser cannot open compressed draw.io files. In draw.io, untick File › Properties › Compressed and save again.",
+      "mmd.title": "Draw from Mermaid text", "mmd.lbl": "Mermaid flowchart",
+      "mmd.hint": "Paste a flowchart, for example:\ngraph TD\n  A[Start] --> B{Paid?}\n  B -->|yes| C[Ship]\n  B -->|no| D[Remind]",
+      "mmd.draw": "Draw", "mmd.bad": "Only Mermaid flowcharts can be drawn: the text starts with graph TD or flowchart LR.",
+      "mmd.added": "{n} boxes drawn", "mmd.cut": "Cut at 500 boxes.",
       "lib.classTx": "Name\n--\n+ attribute: Type\n--\n+ method()", "lib.ifaceTx": "Name\n--\n+ method()",
       "lib.g.flow": "Flowchart", "lib.g.org": "Org chart", "lib.g.uml": "UML", "lib.g.basic": "Basic shapes", "lib.g.net": "Network and IT",
       "sym.process": "Process step", "sym.decision": "Decision", "sym.terminator": "Start or end", "sym.data": "Data (input or output)", "sym.document": "Document", "sym.documents": "Several documents", "sym.predefined": "Predefined process", "sym.manual-input": "Manual input", "sym.manual-op": "Manual operation", "sym.preparation": "Preparation", "sym.database": "Database", "sym.delay": "Delay", "sym.off-page": "Link to another page", "sym.connector": "Connector", "sym.merge": "Merge", "sym.person": "Person card", "sym.unit": "Team or department", "sym.class": "UML class", "sym.interface": "UML interface", "sym.actor": "Actor", "sym.usecase": "Use case", "sym.package": "Package", "sym.component": "Component", "sym.comment": "Comment", "sym.node": "Node (device)", "sym.start": "Start point", "sym.end": "End point", "sym.hexagon": "Hexagon", "sym.octagon": "Octagon", "sym.star": "Star", "sym.cross": "Cross", "sym.arrow-right": "Block arrow", "sym.arrow-both": "Double block arrow", "sym.cloud": "Cloud", "sym.callout": "Speech bubble", "sym.server": "Server", "sym.router": "Router", "sym.switch": "Network switch", "sym.firewall": "Firewall", "sym.internet": "Internet", "sym.laptop": "Laptop", "sym.desktop": "Desktop computer", "sym.phone": "Phone", "sym.tablet": "Tablet", "sym.db-server": "Database server", "sym.storage": "Storage", "sym.user": "User", "sym.printer": "Printer", "sym.wifi": "Wi-Fi access point",
@@ -182,6 +191,15 @@
       "lay.tree.v": "Δέντρο, από πάνω προς τα κάτω", "lay.tree.h": "Δέντρο, από αριστερά προς τα δεξιά", "lay.flow.v": "Ροή, από πάνω προς τα κάτω", "lay.flow.h": "Ροή, από αριστερά προς τα δεξιά",
       "al.l": "Στοίχιση αριστερών άκρων", "al.c": "Στοίχιση κέντρων", "al.r": "Στοίχιση δεξιών άκρων", "al.t": "Στοίχιση πάνω άκρων", "al.m": "Στοίχιση στη μέση", "al.b": "Στοίχιση κάτω άκρων",
       "sp.h": "Ίση απόσταση οριζόντια", "sp.v": "Ίση απόσταση κάθετα", "lay.same": "Είναι ήδη στη θέση τους.",
+      "m.drawio": "Άνοιγμα αρχείου draw.io ή Visio…", "m.mermaid": "Σχεδίαση από κείμενο Mermaid…",
+      "dio.added": "{n} πίνακες από το αρχείο.", "dio.added1": "Το αρχείο άνοιξε ως νέος πίνακας.", "dio.simpl": "{n} σχήματα μπήκαν ως απλά σχήματα.",
+      "dio.skip": "{n} στοιχεία έμειναν έξω (εικόνες από το διαδίκτυο, γραμμές χωρίς άκρες).", "dio.cut": "Μια σελίδα κόπηκε στα 2000 στοιχεία.",
+      "dio.bad": "Αυτό δεν είναι αρχείο draw.io ή Visio (.vsdx) που μπορεί να διαβάσει ο Πίνακας ιδεών.", "dio.vsd": "Τα παλιά αρχεία Visio .vsd δεν ανοίγουν. Αποθήκευσέ το πρώτα ως .vsdx στο Visio.", "dio.big": "Το αρχείο είναι πολύ μεγάλο.",
+      "dio.old": "Αυτός ο περιηγητής δεν ανοίγει συμπιεσμένα αρχεία draw.io. Στο draw.io, βγάλε το τικ από Αρχείο › Ιδιότητες › Συμπιεσμένο και αποθήκευσε ξανά.",
+      "mmd.title": "Σχεδίαση από κείμενο Mermaid", "mmd.lbl": "Διάγραμμα ροής Mermaid",
+      "mmd.hint": "Επικόλλησε ένα διάγραμμα ροής, για παράδειγμα:\ngraph TD\n  A[Αρχή] --> B{Πληρώθηκε;}\n  B -->|ναι| C[Αποστολή]\n  B -->|όχι| D[Υπενθύμιση]",
+      "mmd.draw": "Σχεδίαση", "mmd.bad": "Σχεδιάζονται μόνο διαγράμματα ροής Mermaid: το κείμενο αρχίζει με graph TD ή flowchart LR.",
+      "mmd.added": "Σχεδιάστηκαν {n} κουτιά", "mmd.cut": "Κόπηκε στα 500 κουτιά.",
       "lib.classTx": "Όνομα\n--\n+ ιδιότητα: Τύπος\n--\n+ μέθοδος()", "lib.ifaceTx": "Όνομα\n--\n+ μέθοδος()",
       "lib.g.flow": "Διάγραμμα ροής", "lib.g.org": "Οργανόγραμμα", "lib.g.uml": "UML", "lib.g.basic": "Βασικά σχήματα", "lib.g.net": "Δίκτυα και υποδομές",
       "sym.process": "Βήμα διαδικασίας", "sym.decision": "Απόφαση", "sym.terminator": "Αρχή ή τέλος", "sym.data": "Δεδομένα (είσοδος ή έξοδος)", "sym.document": "Έγγραφο", "sym.documents": "Πολλά έγγραφα", "sym.predefined": "Προκαθορισμένη διαδικασία", "sym.manual-input": "Χειροκίνητη εισαγωγή", "sym.manual-op": "Χειροκίνητη ενέργεια", "sym.preparation": "Προετοιμασία", "sym.database": "Βάση δεδομένων", "sym.delay": "Καθυστέρηση", "sym.off-page": "Σύνδεση με άλλη σελίδα", "sym.connector": "Σημείο σύνδεσης", "sym.merge": "Συγχώνευση", "sym.person": "Κάρτα προσώπου", "sym.unit": "Ομάδα ή τμήμα", "sym.class": "Κλάση UML", "sym.interface": "Διεπαφή UML", "sym.actor": "Χειριστής", "sym.usecase": "Περίπτωση χρήσης", "sym.package": "Πακέτο", "sym.component": "Στοιχείο λογισμικού", "sym.comment": "Σχόλιο", "sym.node": "Κόμβος (συσκευή)", "sym.start": "Σημείο έναρξης", "sym.end": "Σημείο τέλους", "sym.hexagon": "Εξάγωνο", "sym.octagon": "Οκτάγωνο", "sym.star": "Αστέρι", "sym.cross": "Σταυρός", "sym.arrow-right": "Βέλος-μπλοκ", "sym.arrow-both": "Διπλό βέλος-μπλοκ", "sym.cloud": "Σύννεφο", "sym.callout": "Συννεφάκι λόγου", "sym.server": "Διακομιστής", "sym.router": "Δρομολογητής", "sym.switch": "Μεταγωγέας δικτύου", "sym.firewall": "Τείχος προστασίας", "sym.internet": "Διαδίκτυο", "sym.laptop": "Φορητός υπολογιστής", "sym.desktop": "Επιτραπέζιος υπολογιστής", "sym.phone": "Κινητό", "sym.tablet": "Tablet", "sym.db-server": "Διακομιστής βάσης δεδομένων", "sym.storage": "Αποθηκευτικός χώρος", "sym.user": "Χρήστης", "sym.printer": "Εκτυπωτής", "sym.wifi": "Σημείο πρόσβασης Wi-Fi",
@@ -1512,7 +1530,8 @@
   var FMT = {
     png: { ext: ".png", mime: "image/png", desc: "PNG" },
     svg: { ext: ".svg", mime: "image/svg+xml", desc: "SVG" },
-    pdf: { ext: ".pdf", mime: "application/pdf", desc: "PDF" }
+    pdf: { ext: ".pdf", mime: "application/pdf", desc: "PDF" },
+    drawio: { ext: ".drawio", mime: "application/vnd.jgraph.mxfile", desc: "draw.io" }
   };
   function makeAccept(f) { var a = {}; a[f.mime] = [f.ext]; return a; }   // R37: no computed keys
   function fileBase(name) {
@@ -1593,6 +1612,12 @@
     var b = C.board(data, board), title = b ? b.name || t("board.untitled") : t("app.name");
     var list = exportList(what);
     if (what === "frame" && list[0] && list[0].k === "frame" && list[0].tx) title = list[0].tx;
+    if (fmt === "drawio") {
+      if (!list.length) { toast(t("exp.empty")); return Promise.resolve(null); }
+      return loadScript("diagram.js").then(function () {
+        return { blob: new Blob([window.WhiteboardDiagram.writeDrawio(list, title)], { type: FMT.drawio.mime }), name: fileBase(title) + FMT.drawio.ext };
+      });
+    }
     var r = exportSvg(list, fmt === "pdf" ? true : bg, title);
     if (!r) { toast(t("exp.empty")); return Promise.resolve(null); }
     var name = fileBase(title) + FMT[fmt].ext;
@@ -1646,14 +1671,14 @@
       fs.appendChild(s);
       return fs;
     }
-    dlg.appendChild(seg(t("exp.format"), [["png", "PNG"], ["svg", "SVG"], ["pdf", "PDF"]], prefs.fmt, function (v) { prefs.fmt = v; savePrefs(); }));
+    dlg.appendChild(seg(t("exp.format"), [["png", "PNG"], ["svg", "SVG"], ["pdf", "PDF"], ["drawio", "draw.io"]], prefs.fmt, function (v) { prefs.fmt = v; savePrefs(); }));
     var whats = [["all", t("exp.all")]];
     if (sel.length) whats.push(oneFrame ? ["frame", t("exp.frame")] : ["sel", t("exp.sel")]);
     if (whats.length > 1) dlg.appendChild(seg(t("exp.what"), whats, what, function (v) { what = v; }));
     else what = "all";
     var bgF = seg(t("exp.bg"), [["paper", t("exp.paper")], ["clear", t("exp.clear")]], prefs.bg, function (v) { prefs.bg = v; savePrefs(); });
     dlg.appendChild(bgF);
-    function sync() { bgF.hidden = prefs.fmt === "pdf"; }
+    function sync() { bgF.hidden = prefs.fmt === "pdf" || prefs.fmt === "drawio"; }
     sync();
     var acts = el("div", "dlg-actions wrap");
     acts.appendChild(textBtn("dlg-btn primary", t("exp.save"), function () {
@@ -1757,6 +1782,8 @@
     item(t("m.mind"), openMindmap);
     item(t("m.lib"), function () { openLibrary(false); });
     item(t("m.lay"), function () { pop($("more-btn"), layItems(null)); });
+    item(t("m.drawio"), openDrawio);
+    item(t("m.mermaid"), openMermaid);
     if (sendApi()) item(t("m.send"), function () { sendItems(K.items(objs())); });
     pop($("more-btn"), items);
   }
@@ -2057,6 +2084,77 @@
     ["brainstorm", "retro", "swot", "roadmap", "topic", "well", "better", "actions", "s", "w", "o", "t", "now", "next", "later", "time"]
       .forEach(function (k) { L[k] = t("tpl." + k); });
     insertObjs(K.template(kind, L, newId), t("tpl.added"));
+  }
+
+  // ---- draw.io files and Mermaid text (DG4, diagram.js) ----
+  // Raw deflate (draw.io's compressed pages) with the browser's own
+  // DecompressionStream; older browsers get dio.old.
+  function inflateRaw(bytes) {
+    if (typeof DecompressionStream !== "function") return Promise.reject(new Error("old"));
+    return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+  }
+  function openDrawio() {
+    var file;
+    localPickFile(".drawio,.xml,.svg,.vsdx,.vsd,application/xml,text/xml,image/svg+xml,application/vnd.ms-visio.drawing").then(function (f) {
+      if (!f) return null;
+      file = f;
+      if (/\.vsd$/i.test(f.name || "")) throw new Error("vsd");
+      var vsdx = /\.vsdx$/i.test(f.name || "");
+      return (vsdx ? loadScript("../designkit/zipin.js") : Promise.resolve()).then(function () { return loadScript("diagram.js"); }).then(function () {
+        var D = window.WhiteboardDiagram;
+        if (vsdx) return D.readVsdx(f, newId);
+        if (f.size > D.MAX_FILE) throw new Error("big");
+        return f.text().then(function (txt) { return D.readDrawio(txt, inflateRaw, newId); });
+      });
+    }).then(function (res) {
+      if (!res) return;
+      var d = data, now = Date.now(), first = "", base = String(file.name || "").replace(/\.(drawio|xml|svg|vsdx)$/i, "").replace(/\.drawio$/i, "");
+      res.pages.forEach(function (pg, i) {
+        var id = newId(), rows = {};
+        d = C.putBoard(d, id, (pg.name && res.pages.length > 1 ? (base ? base + " · " : "") + pg.name : base || pg.name || t("board.untitled")).slice(0, 120), now);
+        pg.objs.forEach(function (o) { o.b = id; rows[o.id] = o; });
+        d = C.apply(d, rows, now);
+        if (!i) first = id;
+      });
+      if (!save(d)) return;
+      openBoard(first);
+      var msg = res.pages.length > 1 ? t("dio.added", { n: res.pages.length }) : t("dio.added1");
+      if (res.simplified) msg += " " + t("dio.simpl", { n: res.simplified });
+      if (res.skipped) msg += " " + t("dio.skip", { n: res.skipped });
+      if (res.cut) msg += " " + t("dio.cut");
+      toast(msg);
+    }).catch(function (e) {
+      var m = e && e.message;
+      toast(t(m === "big" || m === "toobig" ? "dio.big" : m === "old" ? "dio.old" : m === "vsd" ? "dio.vsd" : "dio.bad"));
+      if (m !== "big" && m !== "toobig" && m !== "old" && m !== "vsd") console.warn("[orOS] whiteboard: draw.io", e);
+    });
+  }
+  function openMermaid() {
+    loadScript("diagram.js").then(function () {
+      var dlg = makeDialog("wb-mermaid", t("mmd.title"));
+      var form = el("form");
+      var lbl = el("label", "fld-lbl", t("mmd.lbl")), ta = el("textarea", "mmd-text");
+      ta.id = "wb-mmd-text"; lbl.htmlFor = ta.id;
+      ta.rows = 10; ta.spellcheck = false; ta.maxLength = window.WhiteboardDiagram.MAX_MERMAID;
+      ta.placeholder = t("mmd.hint");
+      ta.setAttribute("autocapitalize", "off");
+      form.appendChild(lbl); form.appendChild(ta);
+      var acts = el("div", "dlg-actions"), ok = textBtn("dlg-btn primary", t("mmd.draw"));
+      ok.type = "submit";
+      acts.appendChild(ok);
+      acts.appendChild(textBtn("dlg-btn", t("cancel"), function () { dlg.close(); }));
+      form.appendChild(acts);
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var res = window.WhiteboardDiagram.readMermaid(ta.value, newId);
+        if (res.err) { toast(t("mmd.bad")); ta.focus(); return; }
+        dlg.close();
+        insertObjs(res.objs, t("mmd.added", { n: res.nodes }) + (res.cut ? " " + t("mmd.cut") : ""));
+      });
+      dlg.appendChild(form);
+      showDialog(dlg);
+      ta.focus();
+    }).catch(function (e) { console.error("[orOS] whiteboard: diagram.js", e); toast(t("dio.bad")); });
   }
 
   // ---- Bring in a mind map (read only: oros-mindmap-data) ----
@@ -2407,7 +2505,7 @@
   function assistLoad() {
     if (window.WhiteboardAssist) return Promise.resolve(window.WhiteboardAssist);
     return (window.orosRecipes ? Promise.resolve() : loadScript("../recipes/core.js"))
-      .then(function () { return loadScript("commands.js"); }).then(function () { return loadScript("assist.js"); }).then(function () {
+      .then(function () { return loadScript("diagram.js"); }).then(function () { return loadScript("commands.js"); }).then(function () { return loadScript("assist.js"); }).then(function () {
         if (!window.WhiteboardAssist) throw new Error("assist");
         return window.WhiteboardAssist;
       });

@@ -13,6 +13,8 @@ The `Products` tab shows what you have, with the total `Stock value` and how man
 
 Tap or click a product to see its quantity, average cost, value, prices and every movement it ever had. From there: `+ Receive`, `− Sell`, `Count`, `Edit`, `Make a label`, `Archive`.
 
+A product you make to order (a print on demand, a custom piece) can be `On demand (made to order, no stock count)` in `Edit`. Its quantity then shows as `On demand`: it never runs out, is never low, has no minimum, reorder or stock value, and the shop's quantity is neither read into it nor sent from it. The till, the counter and invoices sell it with no below-zero check, it is not packed for a stand, and its sales still count in every report.
+
 > A barcode scanner (USB or Bluetooth) works in the search field: scan a code and the product opens. An unknown code offers `New product` with the SKU filled in.
 
 On a phone, the 📷 button next to a search or scan field reads barcodes with the camera (Chrome on Android). In a receipt, a sale or the counter it stays open, so you can scan one product after another; tap `Done` when you are finished. Where the button doesn't show, the browser can't read barcodes, but a scanner still works.

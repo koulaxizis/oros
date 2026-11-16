@@ -36,6 +36,9 @@
       "rc.bad": "Fill in the marked steps first.", "rc.empty": "Add at least one step.", "rc.saved": "Automation saved.",
       "rc.op.text": "Replace text", "rc.op.color": "Replace colour", "rc.op.font": "Change font", "rc.op.size": "Resize text",
       "rc.op.filter": "Photo filter", "rc.op.center": "Centre on the page", "rc.op.cutout": "Remove photo backgrounds",
+      "rc.op.outlines": "Text to outlines", "rc.op.topath": "Shapes to editable outlines", "rc.olFont": "Texts in",
+      "rc.olHint": "The texts become shapes with their letters' outlines, as for a logo. They can no longer be edited as text.",
+      "rc.tpHint": "Ready-made shapes (star, heart…) get their outline as their own, so their points can be edited.",
       "rc.op.resize": "New sizes", "rc.op.export": "Download",
       "rc.find": "Find", "rc.repl": "Replace with", "rc.cs": "Match case", "rc.word": "Whole words only",
       "rc.from": "From", "rc.to": "To", "rc.anyFont": "Any font", "rc.inDesign": "In this design:",
@@ -68,6 +71,9 @@
       "rc.bad": "Συμπλήρωσε πρώτα τα σημειωμένα βήματα.", "rc.empty": "Πρόσθεσε τουλάχιστον ένα βήμα.", "rc.saved": "Ο αυτοματισμός αποθηκεύτηκε.",
       "rc.op.text": "Αντικατάσταση κειμένου", "rc.op.color": "Αντικατάσταση χρώματος", "rc.op.font": "Αλλαγή γραμματοσειράς", "rc.op.size": "Μέγεθος κειμένου",
       "rc.op.filter": "Φίλτρο φωτογραφιών", "rc.op.center": "Κεντράρισμα στη σελίδα", "rc.op.cutout": "Αφαίρεση φόντου φωτογραφιών",
+      "rc.op.outlines": "Κείμενο σε περιγράμματα", "rc.op.topath": "Σχήματα σε επεξεργάσιμα περιγράμματα", "rc.olFont": "Κείμενα σε",
+      "rc.olHint": "Τα κείμενα γίνονται σχήματα με τα περιγράμματα των γραμμάτων τους, όπως για λογότυπο. Δεν αλλάζουν πια ως κείμενο.",
+      "rc.tpHint": "Τα έτοιμα σχήματα (αστέρι, καρδιά…) παίρνουν το περίγραμμά τους ως δικό τους, για να αλλάζουν τα σημεία τους.",
       "rc.op.resize": "Νέα μεγέθη", "rc.op.export": "Λήψη",
       "rc.find": "Εύρεση", "rc.repl": "Αντικατάσταση με", "rc.cs": "Ίδια πεζά/κεφαλαία", "rc.word": "Μόνο ολόκληρες λέξεις",
       "rc.from": "Από", "rc.to": "Σε", "rc.anyFont": "Οποιαδήποτε", "rc.inDesign": "Σε αυτό το σχέδιο:",
@@ -152,6 +158,7 @@
       case "size": return st.pct + "%";
       case "filter": return filterLbl(st.flt);
       case "center": return st.what === "all" ? t("rc.whatAll") : t("rc.whatText");
+      case "outlines": return st.from ? fontLbl(st.from) : t("rc.anyFont");
       case "resize": return st.sizes.map(sizeLbl).join(", ");
       case "export": return fmtLbl(st);
     }
@@ -255,6 +262,7 @@
       case "size": return { op: op, pct: 120 };
       case "filter": return { op: op, flt: "vivid" };
       case "center": return { op: op, what: "text" };
+      case "outlines": return { op: op, from: "" };
       case "resize": return { op: op, sizes: [{ w: 1080, h: 1080, u: "px", p: "ig-post" }], copies: 1 };
       case "export": return { op: op, fmt: "png", scale: 1, dpi: 300 };
     }
@@ -333,6 +341,13 @@
         break;
       case "center":
         box.appendChild(field(t("rc.what"), select([["text", t("rc.whatText")], ["all", t("rc.whatAll")]], st.what, function (v) { set("what", v); })));
+        break;
+      case "outlines":
+        box.appendChild(field(t("rc.olFont"), select([["", t("rc.anyFont")]].concat(fontList(st.from).map(function (f) { return [f, AX.fontName(f)]; })), st.from || "", function (v) { set("from", v); })));
+        box.appendChild(el("p", "hint", t("rc.olHint")));
+        break;
+      case "topath":
+        box.appendChild(el("p", "hint", t("rc.tpHint")));
         break;
       case "cutout":
         box.appendChild(el("p", "hint", t("rc.cutHint", { mb: CUT ? CUT.APPROX_MB : 16 })));
