@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.26.00
+- **Automations follow your day and your figures.** New "When": some minutes before an event of your day, when today's till sales reach an amount, when this month's spending passes one. Two new steps happen by themselves: `Pause sounds` and `Play a sound`. Try the ready-made `Quiet before a meeting`. See [Automations](app:automations).
+- **Looks for the top bar.** In `Settings › Appearance › Top bar`, `Look of the bar`: Glass, Midnight or Solid float the bar as a rounded strip; Classic stays as it was.
+- **The smart bar on the Windows desktop** (with the next orOS for Windows): the tray icon's menu gets `Smart bar on the desktop`, the same bar at the top of the screen, even with the orOS window closed.
+
 ## Version 7.25.00
 - **The Assistant and orOS Gate find your documents.** When you let them read Files, they see each document's details (type, date, sender, tags, amount, dates, file) and the first 300 characters of its text, nothing more. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never reach them. Documents also show up in the menu search. See [Files](app:files).
 
