@@ -1,6 +1,56 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.07.00
+- **Record audiobooks in Studio.** `Projects` › `Books` holds books of chapters: each chapter is an ordinary Studio project, with opening and closing credits, and a new book starts with a `Voice` track and NULL effects for speech. Link a book to its title in Publishing for the author, narrator and ISBN, and choose ACX (Audible) or Storytel. Takes in a book are saved as lossless 24-bit FLAC, about half the size of a WAV. Record the quiet room once as room tone, and `Fill the gaps` puts it wherever the voice stops, so no digital silence is left. See [Studio](app:studio).
+
+## Version 7.06.00
+- **Book translations go back into the Word file, and out as XLIFF.** A translation started from a Word file can now be saved with `Save as Word (.docx)…`: the translated text goes into a copy of your original file, and its pictures, tables, styles, headers and footers stay exactly as they were. To work with a translator who uses another tool (Trados, memoQ, OmegaT…), use `Export XLIFF 1.2…` or `Export XLIFF 2.0…`, and `Import XLIFF…` to read their work back. See [Writer](app:writer).
+
+## Version 7.05.00
+- **Studio: transcripts for podcast episodes, and publishing on your own Nextcloud.** Each episode has `Transcript`: when you ask, the speech becomes text on your device (nothing is sent anywhere), you correct it, and it goes on the site and into the feed for podcast apps. `Publish on Nextcloud or WebDAV` puts the show's site into a folder on your own server; podcast apps read it through the folder's public link. The Assistant and orOS Gate can now tell you about your shows and episodes (they never publish).
+
+## Version 7.04.00
+- **Base: bring in Airtable and Excel, keep a base as a file.** `Import` takes several files at once: CSV, Excel and ODS files become the tables of one base, and Airtable's columns that name records of another table become real links. Base menu › `Save as orOS file (.orosbase)` keeps a whole base, with its tables, views and links, for a copy or another device; opening it adds what is missing and never deletes. In Spreadsheet, `Send to an app` › Base turns the selected cells into a new table.
+
+## Version 7.03.00
+- **Publishing: your distributor's sales report becomes royalty statements.** In Royalties, `Import sales report…` reads the report you download from DistroKid (Bank › See Excel version) as it is, and any other CSV, TSV or spreadsheet after you choose its columns once. Each line finds its track by ISRC, else its release by UPC/EAN. Tracks with master ownership pay their owners, the others the release's royalty terms. One statement per person and currency, nothing converted; lines that match nothing are listed, and you can link one to a track. The file stays on your device and no formula in it ever runs.
+
+## Version 7.02.00
+- **Your font for all of orOS.** On a font's page in Settings › Fonts, `Use for orOS` makes it the font of the menus, buttons and apps on this device, instead of Nunito, for example a font that is easier for you to read. Letters it does not have stay in Nunito, and documents keep their own fonts. Accessibility shows the font in use and takes you back to Nunito.
+- **Where a font is used.** `Find where it's used` on a font's page lists the Layout, Atelier and Writer documents that use it, each with Open, and it looks by itself before you remove a font.
+- **The Assistant knows your fonts.** The Assistant, and Claude through orOS Gate, can read your fonts, with their Greek and polytonic letters, licence and collections, to suggest one for a book or a design. They only read the list.
+
+## Version 7.01.00
+- **A helper's phone that opens only Stock's till.** In the till's `Receipt settings`, under `Helper device (till only)`, tap `Make this device a till`. From then on the phone starts straight on the till with no PIN, so a helper at a stand can sell. Anything more needs your screen-lock PIN: another app, events, price lists, settings, voiding a closed day, undoing a sale and a discount over the limit. With Sensitive work at Hardcore the phone still asks for the PIN at every start.
+- **A closed day goes to Budget as one entry.** After `Close the day`, `Add to Budget` opens one income entry for the day's total, filled in for you to save.
+
+## Version 7.00.00
+- **Sensitive work, complete.** In [Settings](app:settings) › `Sensitive work`: a panic lock (Esc three times), a duress PIN that erases this device (and, if you choose, the cloud), a discreet tab, travel mode (everything leaves the device and stays in your encrypted cloud), a dead-man switch, a `Security checkup` card, and on Android widgets and reminders without titles. See [Sensitive work](help:t/sensitive).
+- **Remove hidden details** in [Files](app:files): a clean copy of a photo, PDF or Office file without GPS, author, dates or the program used.
+- **Pages and files that delete themselves**: `Delete itself…` in a page's menu in [Notes](app:notes) or a file's menu in Files, after 1 hour to 30 days, on every device.
+
+## Version 6.99.00
+- **Ask the Assistant for an e-book.** Say "make an EPUB of …" with the name of a Layout document or its title in Publishing (add "fixed layout" for a picture book or comic, or "mark it ready in Publishing"). The card `Make an EPUB · Layout` has Layout make and check the EPUB on this device, keep a copy in Layout/EPUB and show its report; the conversation gets only the numbers, never the book. Claude can do the same through orOS Gate.
+
+## Version 6.98.00
+- **Chord diagrams in Lyric Sync.** Every chord of a song now shows how to play it on guitar, ukulele or piano, left-handed too: under the sheet, in the chord picker, with a tap on the stage, and in the PDF. See [Lyric Sync](app:lyricsync).
+
+## Version 6.97.00
+- **Documents remind you of their dates.** In Files › Documents, orOS tells you 30 and 7 days before a document expires, on the day itself, and when its keep-until date has passed (from 09:00 on this device; `⋯` › `Reminders of dates` changes the hour or turns them off). The same dates show in Today and as `Documents` in Calendar; a private document shows only its type there. A ready rule in Automations turns each reminder into a To-Do. Nothing is ever deleted. See [Files](app:files).
+
+## Version 6.96.00
+- **Email Signature is now part of Mail.** Open `Email signatures` in Mail to make and keep your signatures, even with no mail account set up. Your signatures are kept, and old links and shortcuts to Email Signature open that view.
+
+## Version 6.95.00
+- **Several people sign one PDF.** In Scanner & PDF up to 5 people can sign the same document. In the editor choose a field and press `Signer 1` to give it to the next signer; each signer's fields have their own colour. `Ask to sign` gives each person their own link with only their fields. `Signature requests` shows the document once with everyone's state, and when the last one has signed orOS makes one PDF with all the signatures and a certificate for each signer, in Files › PDF › Signatures. See [Scanner & PDF](app:scanpdf).
+
+## Version 6.94.00
+- **SOS now also reaches the copies outside orOS.** After an SOS the orOS browser add-on forgets its copy of Passwords the next time an orOS tab opens in that browser (add-on 2.2.0), the orOS Android app clears its autofill copy and fingerprint secrets, the CRM web form stops taking messages, and orOS Drive on a computer erases its own copies once it can confirm the SOS with the vault key. Every factory reset now also clears the Android app's autofill copy. See [Settings](app:settings).
+
+## Version 6.93.00
+- **See what your forms got back.** In [Forms](app:forms), `Answers` opens on a summary with a chart for each question; `Show only` keeps one kind of answer, and `Open in Spreadsheet` or `Download CSV` takes them with you. Each answer can go to Contacts or the CRM in one press, a form made from a Base table sends its answers back there, the Assistant drafts forms and tells you how they add up, and a form can be a quiz with right answers, points and scores.
+
 ## Version 6.92.00
 - **Lay out diagrams in Whiteboard.** Select shapes joined by arrows and press `Lay out as a diagram`: a tree for org charts or a flow for processes, top to bottom or left to right (`More` › `Lay out the board…` for everything). `Align and space` lines objects up by an edge or centre and spaces them evenly. One Undo puts it back.
 

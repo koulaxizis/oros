@@ -312,6 +312,14 @@ label.check input { width: 20px; height: 20px; flex: 0 0 auto; }
 .roy-name { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
 .roy-row .fld { flex: 0 1 120px; }
 .roy-row input.bad { border-color: var(--danger); }
+/* distributor sales report (wave M4) */
+.dist-dlg h4 { margin: 14px 0 4px; }
+.dist-map summary { cursor: pointer; padding: 6px 0; }
+.dist-map .grid { margin-top: 6px; }
+.dist-un { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; border-bottom: 1px solid var(--border); padding: 6px 0; }
+.dist-un select { flex: 1 1 180px; min-width: 0; }
+.dist-st { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.dist-st input[type=checkbox] { width: 24px; height: 24px; flex: 0 0 auto; margin: 2px 0 0; }
 .roy-e { flex: 0 0 auto; font-weight: 600; white-space: nowrap; padding-bottom: 8px; }
 .roy-sum { display: flex; flex-direction: column; gap: 2px; margin: 8px 0; }
 .roy-text { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 13px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 40vh; overflow: auto; }

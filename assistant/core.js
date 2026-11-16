@@ -1673,17 +1673,33 @@
       "a block ending in {.center}, {.right} or {.justify} gets that alignment; made when the user presses Open. To bring a file the user attached into Writer use open_file instead) · " +
       "mind_map (title = the central idea, outline: one idea per line, two spaces per level; opens Mind map's Paste a list box) · " +
       "text_file (title = the file name with its extension such as notes.txt, script.py, config.json, index.html, text: the whole file exactly as it should be, " +
-      "code or plain text, every space and line kept; lang?: the language when the name does not tell; opens as a new tab in Pad, which never runs it; the user saves it where they want). " +
+      "code or plain text, every space and line kept; lang?: the language when the name does not tell; opens as a new tab in Pad, which never runs it; the user saves it where they want) · " +
+      "form (title, desc?, quiz?, questions: a survey, sign-up, order form or quiz for Forms, each question {label, type?, options?, required?, answer? and points? for a quiz}; made in Forms when the user presses Open, not shared until they publish it). " +
       "Give only what the user said or plainly meant; leave the rest out.",
     params: {
       type: "object",
       properties: {
         kind: { type: "string", "enum": ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
                                          "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
-                                         "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file"] },
+                                         "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file", "form"] },
         title: { type: "string", description: "The entry's title or name (event, note, sheet, presentation, bookmark, card, habit, plant, media, place, car service or reminder, pet record, shared expense)." },
         text: { type: "string", description: "note: the note's text (plain text). post: the post's text, hashtags included. wiki_article, document: the whole text (Markdown). text_file: the whole file, as it is." },
         lang: { type: "string", "enum": PAD_LANGS, description: "text_file: the language for colours, only when the file name does not tell (default: from the name)." },
+        questions: { type: "array", description: "form: the questions in order, up to 100.",
+                     items: { type: "object", properties: {
+                       label: { type: "string", description: "The question as the person reads it." },
+                       type: { type: "string", "enum": ["text", "para", "email", "phone", "number", "date", "time", "choice", "multi", "select", "scale", "stars", "yesno", "matrix", "info", "page"],
+                               description: "text (short answer, default), para (long answer), choice (one of options), multi (checkboxes), select (drop-down), scale (low..high), stars, yesno, matrix (rows × options), info (a text block, no answer), page (a page break)." },
+                       options: { type: "array", items: { type: "string" }, description: "choice, multi, select, matrix: the options (matrix: the columns)." },
+                       rows: { type: "array", items: { type: "string" }, description: "matrix: the rows." },
+                       required: { type: "boolean" },
+                       low: { type: "integer", description: "scale: 0 or 1 (default 1)." },
+                       high: { type: "integer", description: "scale: up to 10 (default 5); stars: 3-10 (default 5)." },
+                       answer: { description: "form with quiz: the right answer: an option's text (choice, select), the options' texts (multi, an array), yes or no, a number, or accepted texts (text, an array)." },
+                       points: { type: "integer", description: "form with quiz: points for a right answer, 1-100 (default 1)." } },
+                     required: ["label"] } },
+        desc: { type: "string", description: "form: the line under the title." },
+        quiz: { type: "boolean", description: "form: a quiz that scores the answers (give each question its answer)." },
         cards: { type: "array", description: "flashcards: up to 500 cards.",
                  items: { type: "object", properties: { front: { type: "string" }, back: { type: "string" },
                                                          both: { type: "boolean", description: "Also the reverse card (back → front)." },
@@ -1779,6 +1795,8 @@
       "each has; with label (a label's name, or \"none\" for events without a label) and/or month it lists " +
       "those events, any date, with their label, time, place and note, and a ref for change_item. " +
       "crm with partner answers 'what is open with X?' for one partner. " +
+      "forms (every form: questions, shared and open or not, how many answers and how many new, with a ref; with form one form's results: counts, shares and averages per question, never what people wrote) " +
+      "studio lists the podcast shows made in Studio (feed address, how many episodes, how many have their episode file) and every episode with its show, number, date and whether its file is made; with show only that show. Read only: publishing is always the user's own tap in Studio. " +
       "automations lists every rule in words (with a ref; on or off) and this device's recent runs: when, which rule, whether it was a time or something that happened, and what came of it (notice shown, notices off, skipped because an app is missing, opened); use it for 'why did this run?' and to suggest a better rule with propose_rule. " +
       "The user sees the summary first and may hold it back.",
     params: {
@@ -1794,7 +1812,9 @@
         kind: { type: "string", "enum": ["book", "film", "series", "album", "podcast", "game"], description: "shelf: only this kind (album = music)." },
         status: { type: "string", "enum": ["want", "now", "done", "drop", "reading", "finished", "unread"], description: "shelf: want, now (in progress), done, drop. library: reading, finished, unread." },
         board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board)." },
+        show: { type: "string", description: "studio: one podcast show's title: only its episodes." },
         days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." },
+        form: { type: "string", description: "forms: one form's title: its results (how many answered each question, counts, shares and averages); never the people's written answers or contact details." },
         partner: { type: "string", description: "crm: a customer's, supplier's, shop's or author's name: everything open with them (owed both ways, consignment stock, orders, unbilled hours, royalties, contracts, next follow-up)." }
       },
       required: ["app"]
@@ -1820,6 +1840,26 @@
                                                       upc: { type: "string", description: "UPC-A (12 digits) or EAN-13 (13 digits)." },
                                                       catalogue_no: { type: "string" }, price: { type: "number" },
                                                       distributor: { type: "string", description: "e.g. DistroKid, CD Baby." } } };
+  // FM-7 (Settings › Fonts): the families the user can use, read only;
+  // the same through orOS Gate (GATE-PAR). designkit/fonts.js overview().
+  var TOOL_FONTS = {
+    name: "list_fonts",
+    description: "The font families the user can use in orOS (Settings › Fonts): the fonts on the orOS disk and the free (Fontsource) " +
+      "families in their font collections, each with its kind (serif, sans, mono), how fully it covers Greek and polytonic Greek " +
+      "(full, most, some, few, none, unknown), its licence, its styles, the collections it is in and the user's note on it; " +
+      "and the font orOS itself draws in. Read only. Use it for questions like 'which of my fonts have polytonic Greek?' or before " +
+      "suggesting a font for a book or a design.",
+    params: {
+      type: "object",
+      properties: {
+        letters: { type: "string", "enum": ["greek", "polytonic"], description: "Only the families with all or nearly all of these letters." },
+        kind: { type: "string", "enum": ["serif", "sans", "mono"], description: "Only this kind." },
+        collection: { type: "string", description: "Only the families in this collection (its name)." },
+        source: { type: "string", "enum": ["disk", "free"], description: "disk: the user's own font files; free: Fontsource families from their collections." },
+        query: { type: "string", description: "Part of a family's name." }
+      }
+    }
+  };
   // Wave 48: changes to records the user already shared (assistant/
   // edits.js). The user sees a before → after card and presses Apply;
   // nothing changes before that.
@@ -3233,6 +3273,71 @@
     return o;
   }
 
+  // export_epub (AS-EPUB, Layout LY-EPUB E4): a Layout document (by its
+  // name, or the one linked to a Publishing title) as an EPUB 3 e-book,
+  // made and checked on the device. The user presses the card's button;
+  // Layout makes it, keeps a copy under /internal/Layout/EPUB/ and its
+  // report (numbers and check codes only, never the book's text) comes
+  // back into the result, as the house style tools.
+  var EP_LAYOUTS = ["reflowable", "fixed", "pictures"], EP_NAME = 120;
+  var TOOL_EPUB = {
+    name: "export_epub",
+    description: "Make an EPUB 3 e-book from a Layout document, with one of its EPUB editions (Export › Editions in Layout): chapters and contents from the headings, " +
+      "pictures with their descriptions, the fonts, the cover, and the ISBN, title, people and description of the linked Publishing title. layout reflowable is text " +
+      "that flows to the reader's screen (novels and most books); fixed keeps every page as in print with the text as real text (picture books, comics, cookbooks); " +
+      "pictures puts each page in as one picture (text not searchable). Layout makes it on the device, checks it against the rules e-book files break most often " +
+      "(not the official EPUBCheck) and keeps a copy on the orOS disk under /internal/Layout/EPUB/; you never get the book. The user gets a card and presses Make EPUB; " +
+      "the report (chapters or pages, headings, pictures and the pages of those without a description, fonts, the check's errors and warnings, ISBN, language, cover, the file's path) " +
+      "is added to this tool's result. Give the document's name or its Publishing title.",
+    params: {
+      type: "object",
+      properties: {
+        document: { type: "string", description: "The Layout document's name, as the user calls it." },
+        title: { type: "string", description: "The Publishing title whose linked Layout document to use (Document setup › Publishing title in Layout), instead of document." },
+        edition: { type: "string", description: "The name of the document's EPUB edition when it has more than one; left out: its first EPUB edition." },
+        layout: { type: "string", "enum": EP_LAYOUTS, description: "Override the edition's layout for this export; left out: as the edition says." },
+        mark_ready: { type: "boolean", description: "true when the user also wants it marked ready on the title's e-book format in Publishing (only done when the check finds no errors)." }
+      }
+    }
+  };
+  // args → { ok, doc, title, edition, layout, ready } | { ok: false, err }
+  function normEpub(args) {
+    var a = isObj(args) ? args : {};
+    var doc = hsStr(a.document, EP_NAME), title = hsStr(a.title, EP_NAME), ed = hsStr(a.edition, 60);
+    if (!doc && !title) return { ok: false, err: "Give the Layout document's name (document) or its Publishing title (title)." };
+    if (a.layout !== undefined && a.layout !== null && a.layout !== "" && EP_LAYOUTS.indexOf(a.layout) < 0) return { ok: false, err: "layout is reflowable, fixed or pictures." };
+    return { ok: true, doc: doc, title: doc ? "" : title, edition: ed, layout: EP_LAYOUTS.indexOf(a.layout) >= 0 ? a.layout : "", ready: a.mark_ready === true ? 1 : 0 };
+  }
+  var EP_CODE = /^[a-z][a-z0-9-]{0,19}$/, EP_PATH = /^\/internal\/Layout\/EPUB\/[^\/]{1,200}\.epub$/;
+  // Layout's report → what the model gets (numbers and codes only).
+  function epubReport(rep) {
+    if (!isObj(rep)) return null;
+    var n = function (v) { v = Math.floor(Number(v)); return isFinite(v) && v >= 0 ? v : 0; };
+    var codes = function (l) { return (Array.isArray(l) ? l : []).filter(function (c) { return typeof c === "string" && EP_CODE.test(c); }).slice(0, 50); };
+    if (rep.failed) return { failed: true, why: hsStr(rep.why, 20) || "failed" };
+    var o = {
+      document: hsStr(rep.doc, EP_NAME), edition: hsStr(rep.edition, 60), layout: EP_LAYOUTS.indexOf(rep.layout) >= 0 ? rep.layout : "reflowable",
+      path: typeof rep.path === "string" && EP_PATH.test(rep.path) ? rep.path : "", bytes: n(rep.bytes),
+      headings: n(rep.headings), pictures: n(rep.images),
+      picturesWithoutDescription: (Array.isArray(rep.noAlt) ? rep.noAlt : []).map(n).filter(Boolean).slice(0, 50),
+      errors: codes(rep.errors), warnings: codes(rep.warnings),
+      isbn: typeof rep.isbn === "string" && /^[0-9X]{10,13}$/.test(rep.isbn) ? rep.isbn : "",
+      language: typeof rep.lang === "string" && /^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8}){0,4}$/.test(rep.lang) ? rep.lang : "",
+      cover: rep.cover === "ok" || rep.cover === "small" ? rep.cover : "none",
+      linkedToPublishing: rep.publishing === 1
+    };
+    if (rep.isbnBad === 1) o.isbnWrongCheckDigit = true;
+    if (o.layout === "reflowable") o.chapters = n(rep.chapters);
+    o.pages = n(rep.pages);
+    if (rep.overset) o.paragraphsLeftOut = n(rep.overset);
+    if (rep.shapes) o.shapesLeftOut = n(rep.shapes);
+    if (rep.rotated) o.rotatedTextInPicture = n(rep.rotated);
+    if (rep.fontsMissing) o.fontsMissing = n(rep.fontsMissing);
+    if (rep.fontsObfuscated) o.fontsObfuscated = n(rep.fontsObfuscated);
+    if (/^(yes|errors|noFormat|noDisk)$/.test(rep.ready || "")) o.markedReady = rep.ready;
+    return o;
+  }
+
   // The tools phase 1 offered (searching only); kept for the tests.
   // AS-EDIT (wave AC1): change anything in an app's documents with a
   // fixed list of commands. cats: { app: its commands module (for
@@ -3344,17 +3449,21 @@
   // create_items may add to, links: CRM and Contacts are both readable,
   // openFile: Writer is installed, for open_file; rebuild, house: Layout
   // is installed, for rebuild_in_layout and the house style tools;
+  // epub: Layout is installed, for export_epub;
   // files: the user picked folders for Claude, "write" when it may
-  // change them too, for the files_* tools)
+  // change them too, for the files_* tools;
+  // fonts: list_fonts, FM-7)
   function toolsFor(opts) {
     opts = opts || {};
     var out = [];
     if (opts.data) out.push(TOOL_SEARCH, TOOL_APPS, TOOL_READ);
     if (opts.data && opts.summary) out.push(TOOL_SUMMARY);
+    if (opts.fonts) out.push(TOOL_FONTS);
     if (opts.entries) out.push(TOOL_ENTRY);
     if (opts.openFile) out.push(TOOL_OPEN_FILE);
     if (opts.rebuild) out.push(TOOL_REBUILD);
     if (opts.house) out.push(TOOL_HS_LEARN, TOOL_HS_BOOK, TOOL_HS_RULE);
+    if (opts.epub) out.push(TOOL_EPUB);
     if (opts.data && opts.changes) out.push(TOOL_CHANGE);
     if (opts.creates && opts.creates.length) out.push(createTool(opts.creates));
     if (opts.data && opts.links) out.push(TOOL_LINK);
@@ -3384,9 +3493,9 @@
   // user's consent is replaced (tests/gate-act.test.js keeps it so).
   // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): edit_in_app and
   // do_action too; the app opens on the owner's screen and does it there.
-  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
+  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                     "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule",
+                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub",
                     "files_list", "files_read", "files_write", "files_move", "files_delete"];
   // GATE-PAR P3 (2026-11-08): the Assistant's tools that hand work to an
   // app's own window. Through the gate the app opens on the owner's
@@ -3395,7 +3504,7 @@
   // Chris's card 13:39). Their sentences about cards and presses are
   // left out and GATE_OPEN_SAY is said instead.
   var GATE_OPEN = ["propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub"];
   var GATE_OPEN_HEAD = { newsletter_check: "When the owner says a newsletter issue is ready (or asks to send it), open Newsletter's pre-send check of the draft (missing pictures or links, sending account, the list); the owner sends it there." };
   var GATE_OPEN_SAY = " Through orOS Gate it opens at once on the owner's screen in that app (unless the owner paused Claude's changes): " +
     "Layout's own work (rebuild, house style, book) runs there and its report comes back; a new entry, document, recipe, cover or newsletter content " +
@@ -3453,7 +3562,7 @@
       if (GATE_OPEN.indexOf(x.name) >= 0) x.description = (GATE_OPEN_HEAD[x.name] || openSay(x.description)) + GATE_OPEN_SAY;
       if (x.name === "edit_in_app") x.description = x.description.split("\n")[0] + GATE_EDIT_GUIDE;
       walk(x.params);
-      var ro = /^(search_data|read_item|app_summary|read_in_app|change_history|files_list|files_read)$/.test(x.name);
+      var ro = /^(search_data|read_item|app_summary|list_fonts|read_in_app|change_history|files_list|files_read)$/.test(x.name);
       return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
                annotations: { readOnlyHint: ro, destructiveHint: /^(change_item|undo_change|edit_in_app|files_write|files_move|files_delete)$/.test(x.name) } };
     });
@@ -3731,6 +3840,7 @@
       if (opts.rebuild) lines.push("When the user wants a printed book, magazine or brochure back in Layout (from its print PDF, with or without its original pictures and texts), call rebuild_in_layout; a Scribus file (.sla) opens in Layout through rebuild_in_layout with sla, with its pictures and, when attached, its print PDF as pdf; an Affinity file (.af) goes in sources next to its print PDF. Never retype a printed document or rebuild it by hand with other tools. When its result has the report, say honestly what came out the same and what did not (lines in place, pictures from originals, fonts replaced, pages to check); afterwards, changes to the document go through propose_automation for Layout (styles by name, find and replace, margins, masters, export), and do_action open with app layout and page opens a page to check. Files marked as staying on the device can only be handed to an app: you cannot read them.");
       if (opts.openFile) lines.push("To bring a document the user attached into Writer as it is (its formatting, headings, alignment, lists, numbering and every word), call open_file with its name, one call per file. Never retype an attached document into propose_entry document: that loses its formatting and may change words. propose_entry document is for text you write yourself, in Markdown.");
     }
+    if (opts.epub) lines.push("When the user wants an e-book (EPUB) of a book they set in Layout, call export_epub with the document's name or its Publishing title; never make an EPUB by hand with other tools. Pick layout only when the user asks or the book is clearly a picture book or comic (fixed); otherwise the edition decides. When the report comes back, say honestly what came out: the check's errors (stores would refuse the file) and warnings, pictures without a description and their pages, fonts missing, no ISBN or a small cover, and where the file is; to fix a missing description or an ISBN, the user does it in Layout (Properties › Description) or Publishing, then exports again.");
     if (opts.house) lines.push("For books of a series in Layout: learn_house_style learns the series' house style from earlier books that are Layout documents (rebuild them first with rebuild_in_layout when the user has only print PDFs or Scribus files); layout_book lays out a new book from its manuscript in that house style; add_house_rule adds a rule of the user's own. Give layout_book the title; Layout fills the author, ISBN and year from the Publishing app's title of that name, so ask for them only when the user has no such title there. Before layout_book, ask the book's questions in one short message instead of laying it out at once: is everything as in the series, or does something differ (page size and margins, where chapters start, parts, chapter titles and first paragraphs, scene breaks, page numbers, contents, sections such as acknowledgements, dedication and motto, the type of each part, hyphenation and widows, and, when there are photos, where they go, their size, captions and black and white)? Ask only about what the material has; put only the answers that differ into layout_book (answers, margins, sections, typography…), never guess one, and pass attached photos that are not in the manuscript as photos. The card also offers the user every question in Layout. When a report comes back, say honestly what came out (pages, titles, titles that were guessed, quotes and dashes fixed, photos placed or left out, text that does not fit, pages to check); words are never changed, only quotes, dashes, ellipses and spaces.");
     var canChange = !opts.builtin && !opts.chatOnly && opts.apps && opts.apps.length && opts.changes && opts.changes.length;
     if (opts.files && canChange && opts.changes.some(function (a) { return /^(contacts|crm)$|\((contacts|crm)\)$/.test(a); })) {
@@ -3837,11 +3947,14 @@
     flashcards: "flashcards", wiki_article: "wiki", document: "writer", mind_map: "mindmap",
     // Pad wave 4: a text or code file opens as a new, unsaved tab in Pad
     // (__orosOpenAt("pad", { newText })); the user saves it.
-    text_file: "pad"
+    text_file: "pad",
+    // FORMS-4: a new form in Forms (forms/links.js fromDraft), made
+    // there when the user presses Open; nothing is published.
+    form: "forms"
   };
   var ENTRY_ORDER = ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
                      "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
-                     "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file"];
+                     "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file", "form"];
   // The receivers' own caps (flashcards/make.js, wiki/core.js MAX_TEXT,
   // writer.js NEWDOC_MAX, mindmap.js paste box): longer is refused.
   var A4_MAX = { cards: 500, field: 20000, wiki: 200000, doc: 500000, map: 20000, pad: 500000 };
@@ -4090,6 +4203,43 @@
       if (kind === "document") ls3 = ls3.map(function (x) { return mdPlain(x); }).filter(Boolean);
       view.list = ls3.slice(0, 8);
       if (ls3.length > 8) view.more = ls3.length - 8;
+      return out;
+    }
+    if (kind === "form") {
+      // The same limits as Forms (engine.js LIM, links.js MAX_DRAFT);
+      // links.js fromDraft maps the types again in the app.
+      var FQT = { text: 1, para: 1, email: 1, phone: 1, number: 1, date: 1, time: 1, choice: 1, multi: 1, select: 1, scale: 1, stars: 1, yesno: 1, matrix: 1, info: 1, page: 1 };
+      var rawQs = Array.isArray(args.questions) ? args.questions : [];
+      if (rawQs.length > 100) return bad("form: at most 100 questions.");
+      var strs = function (a, n) { return (Array.isArray(a) ? a : []).map(function (x) { return line(x, 200); }).filter(Boolean).slice(0, n); };
+      var dq = [];
+      rawQs.forEach(function (q) {
+        if (typeof q === "string") q = { label: q };
+        if (!q || typeof q !== "object") return;
+        var ty = typeof q.type === "string" && FQT[q.type] ? q.type : "text";
+        var lb = line(q.label, 500);
+        if (!lb && ty !== "page") return;
+        var o = { label: lb, type: ty };
+        if (q.required === true) o.required = true;
+        if (/^(choice|multi|select|matrix)$/.test(ty)) o.options = strs(q.options, 50);
+        if (ty === "matrix") o.rows = strs(q.rows, 30);
+        if (ty === "scale" && q.low === 0) o.low = 0;
+        if ((ty === "scale" || ty === "stars") && typeof q.high === "number") o.high = q.high;
+        if (args.quiz === true && q.answer !== undefined && q.answer !== null) {
+          o.answer = Array.isArray(q.answer) ? strs(q.answer, 50) : typeof q.answer === "number" ? q.answer : line(String(q.answer), 200);
+          if (typeof q.points === "number") o.points = Math.max(1, Math.min(100, Math.round(q.points)));
+        }
+        dq.push(o);
+      });
+      if (!dq.length) return bad("form needs questions.");
+      var dr = { title: title.slice(0, 200), questions: dq };
+      if (args.quiz === true) dr.quiz = true;
+      var fdesc = para(args.desc, 2000);
+      if (fdesc) dr.desc = fdesc;
+      out.call = { fn: "openAt", args: [app, { draft: dr }] };
+      view.title = title;
+      view.list = dq.filter(function (x) { return x.label; }).slice(0, 8).map(function (x) { return x.label; });
+      if (dq.length > 8) view.more = dq.length - 8;
       return out;
     }
     if (kind === "text_file") {
@@ -4871,7 +5021,7 @@ normEdit: normEdit, normReadApp: normReadApp, editTool: editTool, readAppTool: r
         normAutomation: normAutomation, normRule: normRule, TOOL_RULE: TOOL_RULE, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
     normCover: normCover, COVER_SIZES: COVER_SIZES,
     OPEN_FILE_APPS: OPEN_FILE_APPS, normOpenFile: normOpenFile, normRebuild: normRebuild, rebuildReport: rebuildReport, TOOL_REBUILD: TOOL_REBUILD,
-    normHouse: normHouse, houseReport: houseReport, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
+    normHouse: normHouse, houseReport: houseReport, normEpub: normEpub, epubReport: epubReport, EP_LAYOUTS: EP_LAYOUTS, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
     DEV_MAX: DEV_MAX, DEV_FILE: DEV_FILE, DEV_TOTAL: DEV_TOTAL, DEV_PHONE: DEV_PHONE, checkDev: checkDev
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

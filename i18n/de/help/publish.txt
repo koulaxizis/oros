@@ -56,6 +56,13 @@ Der Tab `Honorare` zeigt alle Berechtigten. `Neue Abrechnung…` nimmt einen Zei
 
 Zuerst wird der Vorschuss verrechnet: was frühere Abrechnungen mit denselben Bedingungen verdient haben, wird davon abgezogen, und nur der Rest ist zahlbar. Eine ausgestellte Abrechnung ist ein Beleg, der sich nicht ändert, wenn sich Bedingungen oder Verkäufe ändern. Von dort: `Drucken oder PDF`, `E-Mail` (Mail öffnet sich mit dem Text), `Ins Budget` (eine Ausgabe, die du dort bestätigst), `Als bezahlt markieren` oder `Stornieren` (sie bleibt durchgestrichen in der Liste und zählt nicht mehr für den Vorschuss).
 
+### Verkaufsbericht eines Vertriebs (Musik)
+Für Musikveröffentlichungen liest `Verkaufsbericht importieren…` im Tab `Honorare` den Bericht, den du bei deinem Vertrieb herunterlädst. Der von DistroKid (Bank › See Excel version) wird direkt erkannt; bei jeder anderen CSV-, TSV- oder Tabellendatei (.xlsx, .ods) wählst du einmal, welche Spalte Monat, ISRC, UPC/EAN, Stückzahl, Einnahmen und Währung ist, und dieses Gerät merkt es sich für den nächsten Bericht mit denselben Spalten. Die Datei wird nur als Daten gelesen: Keine Formel und kein Makro läuft, und sie bleibt auf deinem Gerät.
+- Jede Zeile wird per ISRC einem Titel zugeordnet, sonst per UPC/EAN einer Veröffentlichung. Zeilen ohne Treffer werden aufgelistet: Verknüpfe eine mit einem Titel, dann bleibt ihr ISRC beim Titel für das nächste Mal.
+- Ein Titel mit Anteilen unter `Rechte an der Aufnahme (Master)` zahlt jedem Inhaber seinen Anteil an den Einnahmen; jeder andere Titel und eine als Ganzes verkaufte Veröffentlichung zahlen die Honorarbedingungen der Veröffentlichung, die für alle Formate gelten.
+- Pro Person und Währung entsteht eine Abrechnung; nichts wird umgerechnet. Vorschüsse sind in deiner Verlagswährung, eine Abrechnung in anderer Währung verrechnet sie also nicht. Eine Abrechnung für Monate, die schon auf einer früheren stehen, wird markiert und nicht angehakt.
+- Ausgestellte Abrechnungen sind Belege wie alle anderen: drucken, E-Mail, Budget, bezahlt, stornieren.
+
 ## Einsendungen
 Manuskripte, die man dir schickt. `+ Einsendung` legt eine von Hand an; öffne in [Mail](app:mail) die Nachricht und wähle `Andere Apps` › `Manuskript-Einsendung in Verlag`, um sie mit Absender, Betreff und Text anzulegen.
 

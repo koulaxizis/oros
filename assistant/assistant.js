@@ -295,6 +295,23 @@
       "rb.slaLines": "{n} of {t} lines break as in the PDF ({p} %).",
       "hs.head.learn": "Learn a house style · {app}",
       "hs.head.book": "Lay out a book · {app}",
+      "ep.head": "Make an EPUB · {app}",
+      "ep.byTitle": "The document linked to the Publishing title {t}.",
+      "ep.lay.reflowable": "Reflowable text", "ep.lay.fixed": "Fixed layout, text as text", "ep.lay.pictures": "Fixed layout, pages as pictures",
+      "ep.edition": "Edition: {e}.", "ep.ready": "Then marked ready in Publishing if the check finds no errors.",
+      "ep.hint": "Layout makes the e-book on this device, checks it and keeps a copy in Layout/EPUB on the orOS disk. Nothing is sent to the AI service.",
+      "ep.go": "Make EPUB",
+      "ep.working": "{app} is making the EPUB on this device…",
+      "ep.failed": "{app} could not make the EPUB. Nothing was made.",
+      "ep.noDoc": "{app} found no such document.",
+      "ep.noEdition": "That document has no EPUB edition by that name.",
+      "ep.busy": "{app} was busy with something else. Try again.",
+      "ep.repSum": "{p} pages, {h} headings, {i} pictures, {kb} KB.",
+      "ep.repErr": "{n} errors: e-book stores would refuse it ({list}).",
+      "ep.repOk": "No errors, {n} warnings.",
+      "ep.repAlt": "Pictures without a description on pages {list}.",
+      "ep.repPath": "Saved as {path}.",
+      "ep.repReady": "Marked ready in Publishing.",
       "hs.head.rule": "Add a house rule · {app}",
       "hs.docs": "From: {list}.",
       "hs.in": "In the house style {h}.",
@@ -720,7 +737,7 @@
       "f.text": "Text", "f.paid": "Paid", "f.owed": "Still owed", "f.servings": "Servings", "f.author": "Author", "f.next": "Next date", "inv.paid": "Paid", "inv.partial": "Partly paid", "inv.unpaid": "Not paid", "inv.overdue": "Overdue",
       "cr.textLinkItems": "{name} asks to link these CRM partners with their records in other apps. Nothing changes until you press Link; the other apps stay as they are.",
       "f.lk": "Record", "f.moves": "Moves from", "f.unlink": "Link", "lk.unlinkYes": "Removed", "lkk.sup": "Stock supplier", "lkk.wh": "Consignment shop (Stock)", "lkk.tsc": "Timesheet client", "lkk.inv": "Invoices client", "lkk.pub": "Person on Publishing titles", "lkk.kb": "Kanban card", "lkk.nt": "Notes page", "lkk.ly": "Layout document", "lkk.at": "Atelier design",
-      "entry.flashcards": "Study cards · {app}", "entry.wiki_article": "New article · {app}", "entry.document": "New document · {app}", "entry.mind_map": "New mind map · {app}", "entry.text_file": "New file · {app}", "f.cards": "Cards", "f.project": "Project", "f.task": "Task", "f.trip": "Trip", "f.ingredients": "Ingredients", "f.steps": "Steps", "f.color": "Colour", "f.qty": "How many", "tv.k.flight": "Flight", "tv.k.train": "Train", "tv.k.bus": "Bus", "tv.k.ferry": "Ferry", "tv.k.car": "Car", "tv.k.rental": "Car rental", "tv.k.stay": "Stay", "tv.k.ticket": "Ticket", "tv.k.activity": "Activity", "tv.k.food": "Food", "tv.k.other": "Other", "tv.g.clothes": "Clothes", "tv.g.toilet": "Toiletries", "tv.g.health": "Health", "tv.g.tech": "Electronics", "tv.g.docs": "Documents", "tv.g.baby": "Baby", "tv.g.gear": "Gear", "tv.g.food": "Food", "tv.g.misc": "Other", "tv.g.before": "Before I leave", "sn.c.yellow": "Yellow", "sn.c.pink": "Pink", "sn.c.green": "Green", "sn.c.blue": "Blue", "sn.c.orange": "Orange", "sn.c.lilac": "Lilac",
+      "entry.flashcards": "Study cards · {app}", "entry.wiki_article": "New article · {app}", "entry.document": "New document · {app}", "entry.mind_map": "New mind map · {app}", "entry.form": "New form · {app}", "entry.text_file": "New file · {app}", "f.cards": "Cards", "f.project": "Project", "f.task": "Task", "f.trip": "Trip", "f.ingredients": "Ingredients", "f.steps": "Steps", "f.color": "Colour", "f.qty": "How many", "tv.k.flight": "Flight", "tv.k.train": "Train", "tv.k.bus": "Bus", "tv.k.ferry": "Ferry", "tv.k.car": "Car", "tv.k.rental": "Car rental", "tv.k.stay": "Stay", "tv.k.ticket": "Ticket", "tv.k.activity": "Activity", "tv.k.food": "Food", "tv.k.other": "Other", "tv.g.clothes": "Clothes", "tv.g.toilet": "Toiletries", "tv.g.health": "Health", "tv.g.tech": "Electronics", "tv.g.docs": "Documents", "tv.g.baby": "Baby", "tv.g.gear": "Gear", "tv.g.food": "Food", "tv.g.misc": "Other", "tv.g.before": "Before I leave", "sn.c.yellow": "Yellow", "sn.c.pink": "Pink", "sn.c.green": "Green", "sn.c.blue": "Blue", "sn.c.orange": "Orange", "sn.c.lilac": "Lilac",
       "cr.v.stg.new": "New", "cr.v.stg.contact": "Contacted", "cr.v.stg.proposal": "Proposal", "cr.v.stg.nego": "Negotiation", "cr.v.stg.won": "Won", "cr.v.stg.lost": "Lost",
       "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "f.rs": "Revenue Splitter", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
       "cr.rem.m": "{n} min before", "cr.rem.h": "{n} h before", "cr.rem.d": "{n} days before",
@@ -942,6 +959,23 @@
       "rb.slaLines": "{n} από {t} γραμμές σπάνε όπως στο PDF ({p} %).",
       "hs.head.learn": "Εκμάθηση ύφους έκδοσης · {app}",
       "hs.head.book": "Σελιδοποίηση βιβλίου · {app}",
+      "ep.head": "Δημιουργία EPUB · {app}",
+      "ep.byTitle": "Το έγγραφο που συνδέεται με τον τίτλο {t} των Εκδόσεων.",
+      "ep.lay.reflowable": "Κείμενο ελεύθερης ροής", "ep.lay.fixed": "Σταθερή διάταξη, κείμενο ως κείμενο", "ep.lay.pictures": "Σταθερή διάταξη, σελίδες ως εικόνες",
+      "ep.edition": "Έκδοση: {e}.", "ep.ready": "Μετά σημειώνεται έτοιμο στις Εκδόσεις, αν ο έλεγχος δεν βρει σφάλματα.",
+      "ep.hint": "Το Layout φτιάχνει το e-book σε αυτή τη συσκευή, το ελέγχει και κρατά αντίγραφο στο Layout/EPUB του δίσκου του orOS. Τίποτα δεν στέλνεται στην υπηρεσία AI.",
+      "ep.go": "Δημιουργία EPUB",
+      "ep.working": "Το {app} φτιάχνει το EPUB σε αυτή τη συσκευή…",
+      "ep.failed": "Το {app} δεν μπόρεσε να φτιάξει το EPUB. Δεν έγινε τίποτα.",
+      "ep.noDoc": "Το {app} δεν βρήκε τέτοιο έγγραφο.",
+      "ep.noEdition": "Το έγγραφο δεν έχει έκδοση EPUB με αυτό το όνομα.",
+      "ep.busy": "Το {app} ήταν απασχολημένο με κάτι άλλο. Δοκίμασε ξανά.",
+      "ep.repSum": "{p} σελίδες, {h} επικεφαλίδες, {i} εικόνες, {kb} KB.",
+      "ep.repErr": "{n} σφάλματα: τα καταστήματα e-book θα το απέρριπταν ({list}).",
+      "ep.repOk": "Κανένα σφάλμα, {n} προειδοποιήσεις.",
+      "ep.repAlt": "Εικόνες χωρίς περιγραφή στις σελίδες {list}.",
+      "ep.repPath": "Αποθηκεύτηκε ως {path}.",
+      "ep.repReady": "Σημειώθηκε έτοιμο στις Εκδόσεις.",
       "hs.head.rule": "Νέος κανόνας ύφους · {app}",
       "hs.docs": "Από: {list}.",
       "hs.in": "Στο ύφος έκδοσης {h}.",
@@ -1371,7 +1405,7 @@
       "f.text": "Κείμενο", "f.paid": "Πληρώθηκαν", "f.owed": "Υπόλοιπο", "f.servings": "Μερίδες", "f.author": "Συγγραφέας", "f.next": "Επόμενη ημερομηνία", "inv.paid": "Εξοφλημένο", "inv.partial": "Μερικώς πληρωμένο", "inv.unpaid": "Απλήρωτο", "inv.overdue": "Ληξιπρόθεσμο",
       "cr.textLinkItems": "Το {name} ζητά να συνδεθούν αυτοί οι συνεργάτες του CRM με τις εγγραφές τους σε άλλες εφαρμογές. Τίποτα δεν αλλάζει πριν πατήσεις Σύνδεση· οι άλλες εφαρμογές μένουν όπως είναι.",
       "f.lk": "Εγγραφή", "f.moves": "Μεταφέρεται από", "f.unlink": "Σύνδεση", "lk.unlinkYes": "Αφαιρείται", "lkk.sup": "Προμηθευτής (Απόθεμα)", "lkk.wh": "Κατάστημα παρακαταθήκης (Απόθεμα)", "lkk.tsc": "Πελάτης (Ώρες εργασίας)", "lkk.inv": "Πελάτης (Τιμολόγια)", "lkk.pub": "Πρόσωπο σε τίτλους (Εκδόσεις)", "lkk.kb": "Κάρτα Kanban", "lkk.nt": "Σελίδα στις Σημειώσεις", "lkk.ly": "Έγγραφο Σελιδοποίησης", "lkk.at": "Σχέδιο στο Atelier",
-      "entry.flashcards": "Κάρτες μελέτης · {app}", "entry.wiki_article": "Νέο άρθρο · {app}", "entry.document": "Νέο έγγραφο · {app}", "entry.mind_map": "Νέος νοητικός χάρτης · {app}", "entry.text_file": "Νέο αρχείο · {app}", "f.cards": "Κάρτες", "f.project": "Έργο", "f.task": "Εργασία", "f.trip": "Ταξίδι", "f.ingredients": "Υλικά", "f.steps": "Βήματα", "f.color": "Χρώμα", "f.qty": "Πόσα", "tv.k.flight": "Πτήση", "tv.k.train": "Τρένο", "tv.k.bus": "Λεωφορείο", "tv.k.ferry": "Πλοίο", "tv.k.car": "Αυτοκίνητο", "tv.k.rental": "Ενοικίαση αυτοκινήτου", "tv.k.stay": "Διαμονή", "tv.k.ticket": "Εισιτήριο", "tv.k.activity": "Δραστηριότητα", "tv.k.food": "Φαγητό", "tv.k.other": "Άλλο", "tv.g.clothes": "Ρούχα", "tv.g.toilet": "Είδη υγιεινής", "tv.g.health": "Υγεία", "tv.g.tech": "Ηλεκτρονικά", "tv.g.docs": "Έγγραφα", "tv.g.baby": "Μωρό", "tv.g.gear": "Εξοπλισμός", "tv.g.food": "Τρόφιμα", "tv.g.misc": "Διάφορα", "tv.g.before": "Πριν φύγω", "sn.c.yellow": "Κίτρινο", "sn.c.pink": "Ροζ", "sn.c.green": "Πράσινο", "sn.c.blue": "Μπλε", "sn.c.orange": "Πορτοκαλί", "sn.c.lilac": "Λιλά",
+      "entry.flashcards": "Κάρτες μελέτης · {app}", "entry.wiki_article": "Νέο άρθρο · {app}", "entry.document": "Νέο έγγραφο · {app}", "entry.mind_map": "Νέος νοητικός χάρτης · {app}", "entry.form": "Νέα φόρμα · {app}", "entry.text_file": "Νέο αρχείο · {app}", "f.cards": "Κάρτες", "f.project": "Έργο", "f.task": "Εργασία", "f.trip": "Ταξίδι", "f.ingredients": "Υλικά", "f.steps": "Βήματα", "f.color": "Χρώμα", "f.qty": "Πόσα", "tv.k.flight": "Πτήση", "tv.k.train": "Τρένο", "tv.k.bus": "Λεωφορείο", "tv.k.ferry": "Πλοίο", "tv.k.car": "Αυτοκίνητο", "tv.k.rental": "Ενοικίαση αυτοκινήτου", "tv.k.stay": "Διαμονή", "tv.k.ticket": "Εισιτήριο", "tv.k.activity": "Δραστηριότητα", "tv.k.food": "Φαγητό", "tv.k.other": "Άλλο", "tv.g.clothes": "Ρούχα", "tv.g.toilet": "Είδη υγιεινής", "tv.g.health": "Υγεία", "tv.g.tech": "Ηλεκτρονικά", "tv.g.docs": "Έγγραφα", "tv.g.baby": "Μωρό", "tv.g.gear": "Εξοπλισμός", "tv.g.food": "Τρόφιμα", "tv.g.misc": "Διάφορα", "tv.g.before": "Πριν φύγω", "sn.c.yellow": "Κίτρινο", "sn.c.pink": "Ροζ", "sn.c.green": "Πράσινο", "sn.c.blue": "Μπλε", "sn.c.orange": "Πορτοκαλί", "sn.c.lilac": "Λιλά",
       "cr.v.stg.new": "Νέα", "cr.v.stg.contact": "Επικοινωνία", "cr.v.stg.proposal": "Πρόταση", "cr.v.stg.nego": "Διαπραγμάτευση", "cr.v.stg.won": "Κερδήθηκε", "cr.v.stg.lost": "Χάθηκε",
       "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "f.rs": "Revenue Splitter", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
       "cr.rem.m": "{n} λεπτά πριν", "cr.rem.h": "{n} ώρες πριν", "cr.rem.d": "{n} ημέρες πριν",
@@ -3171,8 +3205,8 @@
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
-                                            recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn,
-                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps) });
+                                            recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn, epub: rbOn,
+                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps), fonts: !data.set.chat });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -3192,7 +3226,7 @@
       files: builtin ? "" : "pdf",
       openFile: fileOn,
       rebuild: rbOn,
-      house: rbOn,
+      house: rbOn, epub: rbOn,
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       page: wmode === "native",
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
@@ -3371,12 +3405,14 @@
       });
     }
     if (call.name === "app_summary") return appSummary(c, call.args, apps);
+    if (call.name === "list_fonts") return listFonts(call.args);
     if (LINE_APPS[call.name]) return lineTool(c, call.name, call.args, apps);
     if (call.name === "kanban_add_columns") return kanbanColumns(c, call.args, apps);
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
     if (call.name === "open_file") return Promise.resolve(proposeOpenFile(c, call.args));
     if (call.name === "rebuild_in_layout") return Promise.resolve(proposeRebuild(c, call.args));
     if (/^(learn_house_style|layout_book|add_house_rule)$/.test(call.name)) return Promise.resolve(proposeHouse(c, call.name, call.args));
+    if (call.name === "export_epub") return Promise.resolve(proposeEpub(c, call.args));
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
     if (call.name === "propose_rule") return Promise.resolve(proposeRule(call.args));
     if (call.name === "read_in_app") return readInApp(c, call.args, apps);
@@ -3677,6 +3713,36 @@
     return true;
   }
 
+  // export_epub (AS-EPUB, Layout LY-EPUB E4): checked now; the card's
+  // button hands it to Layout ({ epubOut }), which makes and checks the
+  // EPUB on the device and leaves its report under the card's key.
+  function proposeEpub(c, args) {
+    if (!installed().layout) return { content: "Error: Layout is not installed.", err: 1, ui: { k: "epubErr" } };
+    var e = C.normEpub(args);
+    if (!e.ok) return { content: "Error: " + e.err, err: 1, ui: { k: "epubErr" } };
+    var ui = { k: "epub", doc: e.doc, title: e.title, edition: e.edition, layout: e.layout, ready: e.ready, key: attId(), st: "" };
+    return { content: "Shown to the user as a card: making an EPUB of \u201c" + (e.doc || e.title) + "\u201d. Layout does it on the device when they press the button; nothing is made yet. The report will be added here when Layout is done.", ui: ui };
+  }
+  function runEpub(ui, c) {
+    var p = shell();
+    if (!p || typeof p.__orosOpenAt !== "function") return false;
+    var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", title: ui.title || "", edition: ui.edition || "", layout: ui.layout || "", ready: ui.ready === 1 ? 1 : 0 };
+    try { p.__orosOpenAt("layout", { epubOut: rq }); return true; } catch (e) { return false; }
+  }
+  function epubText(rep) {
+    return !rep || rep.failed ? "Layout could not make the EPUB. Nothing was made. Report: " + JSON.stringify(rep)
+      : "Layout made the EPUB on the device; its check report is open in Layout. Report: " + JSON.stringify(rep);
+  }
+  function takeEpub(r, c) {
+    var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
+    if (!rep || ui.st !== "opened") return false;
+    ui.rep = C.epubReport(rep);
+    ui.st = ui.rep && !ui.rep.failed ? "done" : "failed";
+    r.content = ui.st === "failed" ? "The user pressed the button, but " + epubText(ui.rep).charAt(0).toLowerCase() + epubText(ui.rep).slice(1) : epubText(ui.rep);
+    saveChat(c).then(function () { delete attRb[key]; }, function () {});
+    return true;
+  }
+
   // Only while this frame is alive: an app opened from a card may take
   // its place, and the report then waits for the next opening.
   function onRb() {
@@ -3684,7 +3750,7 @@
     if (!chat) return;
     var hit = false;
     chat.msgs.forEach(function (m) {
-      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)) || (r.ui.k === "edit" && takeEdited(r, chat)))) hit = true; });
+      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)) || (r.ui.k === "epub" && takeEpub(r, chat)) || (r.ui.k === "edit" && takeEdited(r, chat)))) hit = true; });
     });
     if (hit) renderMessages();
   }
@@ -3757,6 +3823,25 @@
       }
       return lazyP[id];
     }));
+  }
+  // FORMS-4: Forms' engine and results, for app_summary forms.
+  var formsP = null;
+  function formsMods() {
+    if (window.OrosFormsResults) return Promise.resolve();
+    if (!formsP) {
+      var v = (document.querySelector('script[src*="assistant.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+      formsP = ["../forms/engine.js", "../forms/quiz.js", "../forms/results.js"].reduce(function (p, f) {
+        return p.then(function () {
+          return new Promise(function (ok) {
+            var s = document.createElement("script");
+            s.src = f + (m ? "?v=" + m[1] : "");
+            s.onload = ok; s.onerror = ok;
+            document.head.appendChild(s);
+          });
+        });
+      }, Promise.resolve());
+    }
+    return formsP;
   }
   function editCats(apps) {
     var have = installed(), ok = {}, out = {};
@@ -6142,6 +6227,63 @@
     host.appendChild(card);
   }
 
+  // ---------- list_fonts (FM-7) ----------
+  // The families of Settings › Fonts: designkit/fonts.js (loaded the
+  // first time) reads the disk's font files and the collections;
+  // overview() does the rest. A file's letters and licence are kept
+  // per file name (the name is its hash, so they never change).
+  var fontsKit = null, fontFacts = {};
+  function fontsCore() {
+    if (window.orosDK && window.orosDK.fonts) return Promise.resolve(window.orosDK.fonts);
+    if (fontsKit) return fontsKit;
+    var chain = Promise.resolve();
+    ["../designkit/text.js", "../designkit/fonts.js"].forEach(function (src) {
+      chain = chain.then(function () {
+        return new Promise(function (resolve) {
+          var sc = document.createElement("script");
+          sc.src = src;
+          sc.onload = sc.onerror = function () { resolve(); };
+          document.head.appendChild(sc);
+        });
+      });
+    });
+    fontsKit = chain.then(function () { return (window.orosDK && window.orosDK.fonts) || null; });
+    fontsKit.then(function (F) { if (!F) fontsKit = null; });
+    return fontsKit;
+  }
+  function fontFact(F, file) {
+    if (fontFacts[file]) return Promise.resolve(fontFacts[file]);
+    return F.fetcher("asset:" + file).then(function (buf) {
+      var r = buf ? F.inspect(buf) : null;
+      if (!r) return null;
+      fontFacts[file] = { cov: { greek: F.level(r.cov.greek), poly: F.level(r.cov.poly) }, lic: r.lic.kind, embed: r.lic.embed };
+      return fontFacts[file];
+    }, function () { return null; });
+  }
+  function listFonts(args) {
+    return fontsCore().then(function (F) {
+      if (!F) return { content: "Error: the fonts could not be read on this device.", err: 1 };
+      var cols = F.cols.normalize(readStore(F.cols.KEY)), ui = readStore("oros-uifont");
+      var free = Object.keys(cols.mem).some(function (k) { return cols.mem[k].on && k.indexOf(":fs_") > 0; });
+      return Promise.all([
+        F.library({ all: true }).then(function (lib) {
+          var fams = F.families(lib);
+          return Promise.all(fams.map(function (e) {
+            return fontFact(F, e.r).then(function (x) {
+              return Object.assign({}, e, { cov: x ? x.cov : null, lic: x ? x.lic : null, embed: x ? x.embed : "" });
+            });
+          }));
+        }, function () { return []; }),
+        free ? F.catalog().then(null, function () { return []; }) : Promise.resolve([])
+      ]).then(function (got) {
+        var res = F.overview({ disk: got[0], cols: cols, catalog: got[1], ui: ui && typeof ui === "object" ? ui : null, lang: LANG }, args || {});
+        if (!res.ok) return { content: "Error: " + res.err, err: 1 };
+        delete res.ok;
+        return { content: JSON.stringify(res) };
+      });
+    });
+  }
+
   // ---------- app_summary (assistant/summary.js) ----------
   // Which readable apps have a summary: Budget, Timesheet and To-Do of
   // their own, any other app through its Today provider.
@@ -6234,7 +6376,14 @@
       return Promise.resolve(S.automationsRules(window.OrosAutoCore, readStore("oros-automations-data"), runs,
         { lang: LANG, appName: function (id) { return have[id] || id; } }));
     }
+    // FORMS-4: Forms' list, or one form's results (counts only).
+    if (a.app === "forms" && !a.brief) return formsMods().then(function () {
+      var W = { yes: "Yes", no: "No", other: function (x) { return "Other: " + x; }, otherName: "Other", time: "Time", wait: "Waiting list" };
+      return S.formsSummary(readStore("oros-forms-data"), readStore("oros-forms-answers"), a, a.form ? window.OrosFormsResults : null, W);
+    });
     if (a.app === "crm" && a.partner) return crmPartnerSummary(a.partner, today);
+    // STUDIO-POD P4: the podcast shows and episodes, read only (never a publish)
+    if (a.app === "studio") return Promise.resolve(S.studioShows(readStore("oros-studio-data"), { show: a.show }));
     // CRM 1.10 (CTR-ALL): every contract, then what Today lists for CRM
     if (a.app === "crm" && !a.brief) {
       return crmCores().then(function (ok) {
@@ -7173,6 +7322,8 @@
         if (ui.k === "rebuildErr") return;
         if (ui.k === "house") { drawHouse(host, r, c); return; }
         if (ui.k === "houseErr") return;
+        if (ui.k === "epub") { drawEpub(host, r, c); return; }
+        if (ui.k === "epubErr") return;
         if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
         if (ui.k === "recipeErr") return;
         if (ui.k === "rule") { drawRule(host, r, c); return; }
@@ -7543,6 +7694,53 @@
       };
       if (op === "book") acts.appendChild(button(t("hs.all"), "", function () { go(true); }));
       acts.appendChild(button(t("hs.go." + op), "primary", function () { go(false); }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+
+  // An export_epub card: what goes out, then Layout's report.
+  function drawEpub(host, r, c) {
+    var ui = r.ui, have = installed();
+    if (!have.layout) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: "Layout" }))); return; }
+    takeEpub(r, c);
+    var name = have.layout, card = el("section", "entry-card");
+    card.appendChild(el("h3", "entry-head", t("ep.head", { app: name })));
+    card.appendChild(el("p", "entry-title", ui.doc || ui.title || ""));
+    var bits = [];
+    if (!ui.doc && ui.title) bits.push(t("ep.byTitle", { t: ui.title }));
+    if (ui.edition) bits.push(t("ep.edition", { e: ui.edition }));
+    if (ui.layout) bits.push(t("ep.lay." + ui.layout) + ".");
+    if (ui.ready === 1) bits.push(t("ep.ready"));
+    if (bits.length) card.appendChild(el("p", "dlg-hint", bits.join(" ")));
+    var rp = ui.rep;
+    if (ui.st === "done" && rp) {
+      var ul = el("ul", "entry-list");
+      ul.appendChild(el("li", "", t("ep.repSum", { p: rp.pages, h: rp.headings, i: rp.pictures, kb: Math.max(1, Math.round(rp.bytes / 1024)) })));
+      ul.appendChild(el("li", "", rp.errors.length ? t("ep.repErr", { n: rp.errors.length, list: rp.errors.join(", ") }) : t("ep.repOk", { n: rp.warnings.length })));
+      if (rp.picturesWithoutDescription.length) ul.appendChild(el("li", "", t("ep.repAlt", { list: rp.picturesWithoutDescription.slice(0, 20).join(", ") })));
+      if (rp.path) ul.appendChild(el("li", "", t("ep.repPath", { path: rp.path })));
+      if (rp.markedReady === "yes") ul.appendChild(el("li", "", t("ep.repReady")));
+      card.appendChild(ul);
+    } else if (ui.st === "opened") {
+      card.appendChild(el("p", "entry-state", t("ep.working", { app: name })));
+    } else if (ui.st === "failed") {
+      var why = rp && /^(noDoc|noEdition|busy)$/.test(rp.why) ? "ep." + rp.why : "ep.failed";
+      card.appendChild(el("p", "entry-state err", t(why, { app: name })));
+    } else if (ui.st) {
+      card.appendChild(el("p", "entry-state", t("entry." + ui.st, { app: name })));
+    } else {
+      card.appendChild(el("p", "dlg-hint", t("ep.hint")));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () { ui.st = "dismissed"; saveChat(c); renderMessages(); }));
+      acts.appendChild(button(t("ep.go"), "primary", function () {
+        ui.st = "opened";
+        // Saved before Layout opens (it may take this frame's place).
+        saveChat(c).then(function () {
+          if (!runEpub(ui, c)) { ui.st = "failed"; r.content = "The request could not be handed to Layout. Nothing was made."; saveChat(c); }
+          renderMessages();
+        });
+      }));
       card.appendChild(acts);
     }
     host.appendChild(card);
@@ -9137,7 +9335,7 @@
     var wr = ga.write.filter(function (a) { return a.id !== "files"; });
     var on = wr.length > 0, rd = {}, have = installed();
     ga.read.forEach(function (a) { if (have[a.id]) rd[a.id] = 1; });
-    var tools = C.toolsFor({ data: ga.read.length > 0, summary: summaryIds(ga.read).length > 0,
+    var tools = C.toolsFor({ data: ga.read.length > 0, summary: summaryIds(ga.read).length > 0, fonts: ga.read.length > 0,
                              changes: chg.length > 0, creates: crIds,
                              links: crIds.indexOf("crm") >= 0 && crIds.indexOf("contacts") >= 0,
                              partnerLinks: partnerLinksOn(crIds, wr), history: ga.write.length > 0,
@@ -9146,7 +9344,7 @@
                              // GATE-PAR P3: work handed to an app's window (gatePress), once some app is at write
                              entries: on && entryKinds().length > 0, recipes: on ? recipeApps().filter(function (a) { return rd[a.id]; }).map(function (a) { return a.id; }) : [],
                              rules: on && rd.automations && !!window.OrosAutoCore, newsletter: on && rd.newsletter, cover: on && rd.layout,
-                             rebuild: on && rd.layout, house: on && rd.layout,
+                             rebuild: on && rd.layout, house: on && rd.layout, epub: on && rd.layout,
                              files: !cfRaw().length || !rd.files ? false : appOf(ga.write, "files") ? "write" : true });
     // edit_in_app only for the documents Claude may change
     var wc = editCats(ga.write), ed = Object.keys(wc).length ? C.toolsFor({ data: true, edits: wc }).filter(function (x) { return x.name === "edit_in_app"; }) : [];
@@ -9321,6 +9519,8 @@
       if (!cv.ok) return { ok: false, c: cv.err };
       app = "layout"; call = ["layout", { cover: JSON.parse(JSON.stringify(cv.cover)) }];
       note = "Layout's Book cover window is open on the owner's screen with these details, for the owner to create it there.";
+    } else if (ui.k === "epub") {
+      return gateEpub(ui, apps, Date.now() + 21000);
     } else if (ui.k === "rebuild" || ui.k === "house") {
       app = "layout";
       run = function () { return ui.k === "rebuild" ? runRebuild(ui, gateConv) : runHouse(ui, gateConv, false); };
@@ -9334,6 +9534,31 @@
     var done = run ? run() : runEntry({ call: { fn: "openAt", args: call } });
     if (!done) return { ok: false, c: "The app could not do it on the device." };
     return { ok: true, a: [app], k: 1, c: JSON.stringify({ done: "opened", app: app, note: note }) };
+  }
+  // export_epub through the gate: Layout opens on the owner's screen,
+  // makes the EPUB and its report is the answer (or, past the deadline,
+  // a note that it is still working; read_in_app reads it afterwards).
+  function gateEpub(ui, apps, deadline) {
+    var have = installed(), rd = {};
+    apps.forEach(function (x) { rd[x.id] = 1; });
+    if (!rd.layout) return Promise.resolve({ ok: false, c: "The owner does not let Claude use " + (have.layout || "Layout") + "." });
+    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk("layout") : "orOS Gate is not running.";
+    if (why) return Promise.resolve({ ok: false, c: why });
+    if (!runEpub(ui, gateConv)) return Promise.resolve({ ok: false, c: "The request could not be handed to Layout. Nothing was made." });
+    return new Promise(function (resolve) {
+      var key = ui.key;
+      var timer = setTimeout(function () {
+        delete gateWait[key];
+        resolve({ ok: true, a: ["layout"], k: 1, c: "Layout is open on the owner's screen and still making the EPUB; its report shows there. The file goes to /internal/Layout/EPUB/." });
+      }, Math.max(2000, deadline - Date.now()));
+      gateWait[key] = function (rep) {
+        clearTimeout(timer);
+        delete gateWait[key];
+        var r = C.epubReport(rep);
+        resolve(r && !r.failed ? { ok: true, a: ["layout"], k: 1, c: epubText(r) } : { ok: false, c: epubText(r) });
+      };
+      gateWatch();
+    });
   }
   // The undo data of a change in the history (JSON), or null.
   function gateMem(id) {

@@ -497,6 +497,17 @@
     c3.appendChild(row(t("ac.focus"), switchBtn(a.focus, "focusRing", function (v) { set("focusRing", v); }, t("ac.focus")),
       { scope: "a11y", hint: t("ac.focus.hint") }));
     host.appendChild(c3);
+
+    // FM-5: the font of orOS (chosen on a font's page in Fonts)
+    if ("font" in a) {
+      var c4 = card(t("ac.font"), "a11y");
+      var fr = row(a.font ? a.font.name : t("ac.font.nunito"), null, { hint: t("ac.font.hint") });
+      c4.appendChild(fr);
+      var fb = [button(t("ac.font.choose"), "ac.font.choose", function () { go("fonts", true); })];
+      if (a.font) fb.push(button(t("ac.font.back"), "ac.font.back", function () { set("uiFont", null); }));
+      c4.appendChild(actions.apply(null, fb));
+      host.appendChild(c4);
+    }
   }
 
   // Seasonal decorations (seasonal.js through the shell): a main
@@ -2281,7 +2292,7 @@
       var code = (r && r.code) || "crypto";
       lk.cur = "";
       if (code === "wait") lockMsg("err", "l.msg.wait", { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) });
-      else lockMsg("err", "l.msg." + (/^(wrong|pin|short|long|storage|busy|strict|strict-pass)$/.test(code) ? code : "crypto"));
+      else lockMsg("err", "l.msg." + (/^(wrong|pin|short|long|storage|busy|strict|strict-pass|duress)$/.test(code) ? code : "crypto"));
     }
     render();
   }
@@ -2508,7 +2519,8 @@
   // turning it off asks for the lock's PIN or passphrase and brings the
   // earlier lock times and push back. The typed secret stays in `sv.cur`
   // only until it is handed over.
-  var sv = { level: "on", off: false, cur: "", msg: null };
+  var sv = { level: "on", off: false, cur: "", msg: null, gateMsg: null, dz: false, dzCur: "", dzA: "", dzB: "", dzCloud: false, dzMsg: null,
+    tv: false, tvPass: "", tvMsg: null, dm: false, dmCur: "", dmDays: 7, dmMsg: null };
   var SV_ITEMS = ["lock", "lockPass", "lockTimes", "remember", "push", "bio", "davRelay", "backup", "passLen", "worker"];
 
   function strictApi() {
@@ -2551,6 +2563,41 @@
       ul.appendChild(li);
     });
     return { ul: ul, ready: res.ready };
+  }
+
+  // Security checkup (STRICT-6, orosStrict.audit): live, mode on or off.
+  var AUDIT_GO = { lock: "lock", lockPass: "lock", auditIdle: "lock", auditHidden: "lock", auditBio: "lock",
+    auditNoSync: "sync", remember: "sync", passLen: "sync", auditCloud: "sync", davRelay: "sync",
+    push: "notifications", backup: "backup" };
+  function secAudit(host, S) {
+    var res;
+    try { res = S.audit(); } catch (e) { return; }
+    if (!res || !Array.isArray(res.items)) return;
+    var ca = card(t("sv.audit"));
+    ca.setAttribute("data-k", "sv-audit");
+    ca.appendChild(el("p", "hint", t("sv.audit.text")));
+    ca.appendChild(el("p", "sv-audit-sum" + (res.advice ? " warn" : ""), res.advice ? t("sv.audit.n", { n: res.advice }) : t("sv.audit.none")));
+    var order = { advice: 0, check: 1, info: 2, ok: 3 };
+    var ul = el("ul", "sv-list");
+    res.items.slice().sort(function (x, y) { return order[x.state] - order[y.state]; }).forEach(function (it) {
+      var li = el("li", "sv-item sv-" + (it.state === "advice" ? "need" : it.state === "ok" ? "ok" : "advice"));
+      li.setAttribute("data-k", "sv-audit:" + it.id);
+      li.appendChild(el("span", "sv-text", t("sv.i." + it.id)));
+      li.appendChild(el("span", "sv-state", t("sv.st.a." + it.state)));
+      var to = AUDIT_GO[it.id];
+      if (to && it.state !== "ok") {
+        var b = el("button", "linkish", t("sv.goto." + to));
+        b.type = "button";
+        b.setAttribute("data-k", "sv-audit-go:" + it.id);
+        b.addEventListener("click", function () { go(to, true); });
+        li.appendChild(b);
+      }
+      var why = it.state !== "ok" && it.id.indexOf("audit") === 0 ? t("sv.why." + it.id) : "";
+      if (why && why !== "sv.why." + it.id) li.appendChild(el("span", "hint", why));
+      ul.appendChild(li);
+    });
+    ca.appendChild(ul);
+    host.appendChild(ca);
   }
 
   function secSensitive(host) {
@@ -2653,6 +2700,9 @@
     }
     if (sv.msg) c1.appendChild(el("p", "msg msg-" + sv.msg.kind, t(sv.msg.key, sv.msg.vars)));
     host.appendChild(c1);
+    if (typeof S.audit === "function") secAudit(host, S);
+
+    if (cur) secSensitiveMore(host, S, L, k);
 
     // SOS (window.orosSOS): only when this orOS has it.
     if (typeof S.sosAvailable === "function" && S.sosAvailable()) {
@@ -2662,10 +2712,211 @@
       host.appendChild(c2);
     }
 
+    // Claude's closed copy (Gate, GATE-FILES F2): while the mode is on
+    // this device stops refreshing it; here it can also be dropped now.
+    var G = gateApi(), gs = null;
+    try { gs = G && typeof G.dropCopy === "function" && typeof G.state === "function" ? G.state() : null; } catch (e) { gs = null; }
+    if (gs && gs.on) {
+      var cg = card(t("sv.gate"));
+      cg.appendChild(el("p", "hint", t(cur ? "sv.gate.on" : "sv.gate.off")));
+      cg.appendChild(actions(confirmBtn(t("sv.gate.drop"), t("sv.gate.confirm"), "sv-gate-drop", function () {
+        sv.gateMsg = { kind: "dim", key: "l.msg.working" };
+        render();
+        Promise.resolve().then(function () { return G.dropCopy(); }).then(function () {
+          sv.gateMsg = { kind: "ok", key: "sv.gate.done" };
+          render();
+        }, function (e) {
+          var code = e && (e.code || e.message);
+          sv.gateMsg = { kind: "err", key: "sv.gate.err." + (/^(gate-off|offline|locked)$/.test(code) ? code : "other") };
+          render();
+        });
+      }, "danger")));
+      if (sv.gateMsg) cg.appendChild(el("p", "msg msg-" + sv.gateMsg.kind, t(sv.gateMsg.key)));
+      host.appendChild(cg);
+    }
+
     var c3 = card(null);
     c3.appendChild(el("p", "hint", t("sv.honest")));
     c3.appendChild(actions(button(t("sv.help"), "sv-help", function () { openHelpTopic("sensitive"); })));
     host.appendChild(c3);
+  }
+
+  // Panic lock, duress PIN and the discreet tab (STRICT-2), while the
+  // mode is on. Typed secrets stay in `sv` only until handed over.
+  function svField(key, label, kind) {
+    var wrap = el("div", "dav-field");
+    var lab = el("label", "row-label", label);
+    lab.htmlFor = "f-sv-" + key;
+    wrap.appendChild(lab);
+    var inp = el("input");
+    inp.id = "f-sv-" + key;
+    inp.type = "password";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    inp.setAttribute("autocapitalize", "off");
+    if (kind === "pin") { inp.inputMode = "numeric"; inp.maxLength = 12; inp.setAttribute("pattern", "[0-9]*"); }
+    else inp.maxLength = 256;
+    inp.value = sv[key];
+    inp.setAttribute("data-k", "sv-" + key);
+    inp.addEventListener("input", function () { sv[key] = inp.value; });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+  function secSensitiveMore(host, S, L, k) {
+    var kind = k.kind || "pin";
+    var cp = card(t("sv.panic"));
+    cp.appendChild(el("p", "hint", t("sv.panic.text")));
+    cp.appendChild(actions(button(t("l.lockNow"), "sv-lock", function () { L.lock(); }, "primary")));
+    host.appendChild(cp);
+
+    if (S.duress && typeof S.duress.state === "function") {
+      var ds = S.duress.state();
+      var cd = card(t("sv.dz"));
+      cd.appendChild(el("p", "hint", t(kind === "pass" ? "sv.dz.textPass" : "sv.dz.text")));
+      var sr = row(t("sv.state"), null);
+      sr.appendChild(el("div", "version", t(!ds.on ? "sv.dz.off" : ds.cloud ? "sv.dz.onCloud" : "sv.dz.onDevice")));
+      cd.appendChild(sr);
+      if (sv.dz) {
+        var form = el("form", "pass dav-form");
+        form.setAttribute("autocomplete", "off");
+        form.appendChild(svField("dzCur", t("l.current." + kind), kind));
+        form.appendChild(svField("dzA", t(kind === "pass" ? "sv.dz.newPass" : "sv.dz.newPin"), kind));
+        form.appendChild(svField("dzB", t("l.again"), kind));
+        var cr = el("label", "sv-check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = sv.dzCloud;
+        cb.setAttribute("data-k", "sv-dz-cloud");
+        cb.addEventListener("change", function () { sv.dzCloud = cb.checked; render(); });
+        cr.appendChild(cb);
+        cr.appendChild(el("span", null, t("sv.dz.cloud")));
+        form.appendChild(cr);
+        form.appendChild(el("p", "hint" + (sv.dzCloud ? " warn" : ""), t(sv.dzCloud ? "sv.dz.cloud.warn" : "sv.dz.device")));
+        var go = el("button", "btn danger", t("sv.dz.save"));
+        go.type = "submit";
+        go.setAttribute("data-k", "sv-dz-go");
+        if (k.busy) go.disabled = true;
+        form.appendChild(actions(go, button(t("l.cancel"), "sv-dz-cancel", function () {
+          sv.dz = false; sv.dzCur = sv.dzA = sv.dzB = ""; sv.dzMsg = null; render();
+        })));
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (strictApi() !== S || L.snapshot().busy) return;
+          if (sv.dzA !== sv.dzB) { sv.dzB = ""; sv.dzMsg = { kind: "err", key: "l.msg.mismatch" }; render(); return; }
+          var cur2 = sv.dzCur, a = sv.dzA, cloud = sv.dzCloud;
+          sv.dzCur = sv.dzA = sv.dzB = "";
+          sv.dzMsg = { kind: "dim", key: "l.msg.working" };
+          render();
+          S.duress.set(cur2, a, cloud).then(function (r) {
+            if (r && r.ok) { sv.dz = false; sv.dzMsg = { kind: "ok", key: cloud ? "sv.dz.doneCloud" : "sv.dz.done" }; }
+            else if (r && r.code === "wait") sv.dzMsg = { kind: "err", key: "l.msg.wait", vars: { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) } };
+            else if (r && r.code === "same") sv.dzMsg = { kind: "err", key: "sv.dz.same" };
+            else sv.dzMsg = { kind: "err", key: "l.msg." + (/^(wrong|pin|short|long|storage|busy)$/.test(r && r.code) ? r.code : "crypto") };
+            render();
+          }, function () { sv.dzMsg = { kind: "err", key: "sv.msg.err" }; render(); });
+        });
+        cd.appendChild(form);
+      } else {
+        cd.appendChild(actions(
+          button(t(ds.on ? "sv.dz.change" : "sv.dz.set"), "sv-dz", function () {
+            sv.dz = true; sv.dzCloud = ds.cloud; sv.dzCur = sv.dzA = sv.dzB = ""; sv.dzMsg = null; render();
+            var f = $("f-sv-dzCur"); if (f) f.focus();
+          }, ds.on ? null : "primary"),
+          ds.on ? button(t("sv.dz.remove"), "sv-dz-rm", function () { S.duress.clear(); sv.dzMsg = { kind: "ok", key: "sv.dz.removed" }; render(); }) : null));
+      }
+      if (sv.dzMsg) cd.appendChild(el("p", "msg msg-" + sv.dzMsg.kind, t(sv.dzMsg.key, sv.dzMsg.vars)));
+      cd.appendChild(el("p", "hint", t("sv.dz.honest")));
+      host.appendChild(cd);
+    }
+
+    // Travel mode (STRICT-3): the sync passphrase, then two taps.
+    if (typeof S.travel === "function") {
+      var ct = card(t("sv.tv"));
+      ct.appendChild(el("p", "hint", t("sv.tv.text")));
+      if (sv.tv) {
+        var tf = el("form", "pass dav-form");
+        tf.setAttribute("autocomplete", "off");
+        tf.appendChild(svField("tvPass", t("sv.tv.pass"), "pass"));
+        tf.appendChild(el("p", "hint warn", t("sv.tv.warn")));
+        tf.appendChild(actions(
+          confirmBtn(t("sv.tv.go"), t("sv.tv.confirm"), "sv-tv-go", function () {
+            if (strictApi() !== S) return;
+            var pw = sv.tvPass;
+            sv.tvPass = "";
+            sv.tvMsg = { kind: "dim", key: "sv.tv.working" };
+            render();
+            S.travel(pw).then(function (r) {
+              if (r && r.ok) { sv.tvMsg = { kind: "ok", key: "sv.tv.done" }; render(); return; }
+              sv.tvMsg = { kind: "err", key: "sv.tv.err." + (/^(nosync|wrong|cantcheck|unsynced|busy)$/.test(r && r.code) ? r.code : "off") };
+              render();
+            }, function () { sv.tvMsg = { kind: "err", key: "sv.tv.err.unsynced" }; render(); });
+          }, "danger"),
+          button(t("l.cancel"), "sv-tv-cancel", function () { sv.tv = false; sv.tvPass = ""; sv.tvMsg = null; render(); })));
+        tf.addEventListener("submit", function (e) { e.preventDefault(); });
+        ct.appendChild(tf);
+      } else {
+        ct.appendChild(actions(button(t("sv.tv.start"), "sv-tv", function () {
+          sv.tv = true; sv.tvPass = ""; sv.tvMsg = null; render();
+          var f = $("f-sv-tvPass"); if (f) f.focus();
+        })));
+      }
+      if (sv.tvMsg) ct.appendChild(el("p", "msg msg-" + sv.tvMsg.kind, t(sv.tvMsg.key)));
+      ct.appendChild(el("p", "hint", t("sv.tv.back")));
+      host.appendChild(ct);
+    }
+
+    // Dead-man switch (STRICT-3): days without an unlock, then this
+    // device is erased the next time orOS runs. The lock's secret first.
+    if (S.deadman && typeof S.deadman.state === "function") {
+      var dst = S.deadman.state();
+      var cm = card(t("sv.dm"));
+      cm.appendChild(el("p", "hint", t("sv.dm.text")));
+      var mr = row(t("sv.state"), null);
+      mr.appendChild(el("div", "version", dst.on ? t("sv.dm.on", { n: dst.days }) : t("sv.dz.off")));
+      cm.appendChild(mr);
+      if (sv.dm) {
+        var mf = el("form", "pass dav-form");
+        mf.setAttribute("autocomplete", "off");
+        var opts = [{ value: 0, label: t("sv.dm.never") }].concat(S.deadman.days.map(function (n) { return { value: n, label: t("sv.dm.days", { n: n }) }; }));
+        var dr = row(t("sv.dm.after"), select(opts, sv.dmDays, "sv-dm-days", function (v) { sv.dmDays = Number(v) || 0; }));
+        mf.appendChild(dr);
+        mf.appendChild(svField("dmCur", t("l.current." + kind), kind));
+        var mg = el("button", "btn primary", t("sv.dm.save"));
+        mg.type = "submit";
+        mg.setAttribute("data-k", "sv-dm-go");
+        if (k.busy) mg.disabled = true;
+        mf.appendChild(actions(mg, button(t("l.cancel"), "sv-dm-cancel", function () { sv.dm = false; sv.dmCur = ""; sv.dmMsg = null; render(); })));
+        mf.addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (strictApi() !== S || L.snapshot().busy) return;
+          var cur3 = sv.dmCur, n = sv.dmDays;
+          sv.dmCur = "";
+          sv.dmMsg = { kind: "dim", key: "l.msg.working" };
+          render();
+          S.deadman.set(cur3, n).then(function (r) {
+            if (r && r.ok) { sv.dm = false; sv.dmMsg = { kind: "ok", key: n ? "sv.dm.done" : "sv.dm.offDone", vars: { n: n } }; }
+            else if (r && r.code === "wait") sv.dmMsg = { kind: "err", key: "l.msg.wait", vars: { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) } };
+            else sv.dmMsg = { kind: "err", key: "l.msg." + (/^(wrong|storage|busy)$/.test(r && r.code) ? r.code : "crypto") };
+            render();
+          }, function () { sv.dmMsg = { kind: "err", key: "sv.msg.err" }; render(); });
+        });
+        cm.appendChild(mf);
+      } else {
+        cm.appendChild(actions(button(t(dst.on ? "sv.dz.change" : "sv.dm.set"), "sv-dm", function () {
+          sv.dm = true; sv.dmDays = dst.on ? dst.days : 7; sv.dmCur = ""; sv.dmMsg = null; render();
+        }, dst.on ? null : "primary")));
+      }
+      if (sv.dmMsg) cm.appendChild(el("p", "msg msg-" + sv.dmMsg.kind, t(sv.dmMsg.key, sv.dmMsg.vars)));
+      cm.appendChild(el("p", "hint", t("sv.dm.honest")));
+      host.appendChild(cm);
+    }
+
+    if (typeof S.discreet === "function") {
+      var cx = card(t("sv.disc"));
+      cx.appendChild(row(t("sv.disc.switch"), switchBtn(S.discreet(), "sv-disc", function (v) { S.discreet(v); render(); }, t("sv.disc.switch")),
+        { hint: t("sv.disc.hint") }));
+      host.appendChild(cx);
+    }
   }
 
   // ---------- 6c. Section: Users ----------
@@ -3741,14 +3992,22 @@
     fmLoad.catch(function () { fmLoad = null; });
     return fmLoad;
   }
+  // FM-5: the font of orOS through the shell (older shells: none)
+  function fontsCtx() {
+    var s = snap(), ok = !!(s && s.a11y && "font" in s.a11y);
+    return { t: t, ui: ok ? {
+      get: function () { var x = snap(); return x && x.a11y ? x.a11y.font : null; },
+      set: function (v) { set("uiFont", v); }
+    } : null };
+  }
   function secFonts(host) {
-    if (window.SettingsFonts) { window.SettingsFonts.mount(host, { t: t }); return; }
+    if (window.SettingsFonts) { window.SettingsFonts.mount(host, fontsCtx()); return; }
     var wait = el("p", "hint", t("fm.loading"));
     host.appendChild(wait);
     loadFonts().then(function () {
       if (current !== "fonts" || !host.isConnected) return;
       if (wait.parentNode) wait.parentNode.removeChild(wait);
-      window.SettingsFonts.mount(host, { t: t });
+      window.SettingsFonts.mount(host, fontsCtx());
       if (lit && lit.row[1] === "fonts" && Date.now() < lit.until) lightUp(true);
     }, function () { wait.textContent = t("fm.loadFail"); });
   }

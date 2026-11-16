@@ -181,24 +181,31 @@ test("signature: hostile content is cut down; bad pictures dropped; stamps clamp
 });
 
 test("signature: wiring (scripts, buttons, Open with, Undo, media, help, file types)", () => {
-  const html = read("signature/index.html");
-  ["core.js?v=", "../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "signature.js?v="].forEach((s) =>
-    assert.ok(html.includes('src="' + s), s));
-  assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
-  assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="signature.js'));
-  ["osave-btn", "oopen-btn", "ofolder-btn", "oopen-first", "ofolder-first"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
-  const js = read("signature/signature.js");
+  // merge 6: Mail loads the view and its kit on the first open (mail.js SIG_JS, in order)
+  const mail = read("mail/mail.js");
+  const list = mail.slice(mail.indexOf("var SIG_JS = ["), mail.indexOf("];", mail.indexOf("var SIG_JS = [")));
+  const order = ["../bundle.js", "../recordpkg.js", "../signature/package.js", "../signature/view.js"].map((s) => list.indexOf('"' + s + '"'));
+  order.forEach((i, n) => assert.ok(i > 0, "loaded: " + n));
+  assert.deepEqual(order.slice().sort((x, y) => x - y), order, "bundle, recordpkg, package, view");
+  assert.ok(read("mail/index.html").includes('src="../signature/core.js?v='));
+  const js = read("signature/view.js");
+  ["osave-btn", "oopen-btn", "ofolder-btn", "oopen-first", "ofolder-first"].forEach((id) => assert.ok(js.includes('id=\\"sg-' + id + '\\"'), id));
   assert.match(js, /RP\.ui\(SPK\.DESC,/);
   assert.match(js, /if \(recFile\) recFile\.openTarget\(target\.openFile\);/);
-  ["openFile", "__orosTakeFile(", "window.__orosOpenAt =", '__orosTakeTarget("signature")', "deleteIds:", "C.remove(data, id, now)",
+  ["openFile", "__orosTakeFile(", "deleteIds:", "C.remove(data, id, now)",
    "files: function (state)", "media: function (read, res)", "AS.put(a, blob)"].forEach((s) => assert.ok(js.includes(s), s));
-  assert.equal(js.split("window.__orosOpenAt =").length, 2);
+  assert.ok(!js.includes("window.__orosOpenAt ="), "Mail is the receiver");
+  assert.ok(mail.includes('if (target.view === "signatures") { showSigs(target); return true; }'));
+  assert.ok(mail.includes("if (go && (go.id || go.openFile)) window.SignatureView.openAt(go);"));
   ["osave-btn", "oopen-btn", "ofolder-btn", "oopen-first", "ofolder-first"].forEach((id) => assert.ok(js.includes('"' + id + '"'), id));
   assert.ok(js.includes('"btn.osave": "orOS file (.orossignature)"'));
   assert.ok(js.includes('"btn.osave": "Αρχείο orOS (.orossignature)"'));
   assert.ok(js.includes('"btn.oopen": "Άνοιγμα αρχείου orOS…"'));
   assert.ok(js.includes('"btn.ofolder": "Αποσυμπιεσμένος φάκελος orOS…"'));
-  for (const f of ["signature/help.en.txt", "signature/help.el.txt"]) assert.ok(read(f).includes(".orossignature"), f);
+  for (const f of ["mail/help.en.txt", "mail/help.el.txt"]) assert.ok(read(f).includes(".orossignature"), f);
+  // the alias still takes the file: __orosOpenAt("signature", { openFile }) → Mail { view: "signatures", openFile }
   assert.deepEqual(F.appsFor(".orossignature"), ["signature"]);
   assert.deepEqual(B.TYPES[".orossignature"], { app: "signature", mime: "application/x-oros-signature" });
+  const al = JSON.parse(read("apps.json")).aliases.find((x) => x.id === "signature");
+  assert.deepEqual(al, { id: "signature", name: "Email Signature", to: "mail", target: { view: "signatures" } });
 });

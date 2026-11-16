@@ -197,7 +197,8 @@
   // ---------- 4. Cutting a run into segments ----------
   // Returns { lead, trail, segs: [{ toks, sep }] } where lead / trail /
   // sep are raw html (or plain text for plain blocks) and toks the
-  // segment's tokens.
+  // segment's tokens. plainMode may also be a function that writes a
+  // text piece outside the sentences (catdocx.js: a Word run, T4).
   function cutRun(toks, lang, plainMode) {
     // offsets
     var plain = "", pos = [];
@@ -241,7 +242,7 @@
           var w = place[i];
           if (typeof w === "number") segs[w].toks.push(p.t);
           else {
-            var raw = p.t.x !== undefined ? (plainMode ? p.t.x : encode(p.t.x)) : rawOf(p.t);
+            var raw = p.t.x !== undefined ? (typeof plainMode === "function" ? plainMode(p.t.x) : plainMode ? p.t.x : encode(p.t.x)) : rawOf(p.t);
             if (w === "L") lead += raw;
             else if (w === "T") trail += raw;
             else segs[+w.slice(1)].sep += raw;
@@ -589,14 +590,32 @@
   function readSrc(obj) {
     if (!obj || typeof obj !== "object" || obj.v !== VERSION || typeof obj.tpl !== "string" ||
         !Array.isArray(obj.blocks) || !Array.isArray(obj.segs) || obj.segs.length > MAX_SEGS) return null;
-    var blocks = [], ok = true;
+    var blocks = [], ok = true, docx = obj.fmt === "docx", parts = [];
+    // T4: a project made from a .docx keeps the Word paragraphs (catdocx.js)
+    if (docx) {
+      if (!Array.isArray(obj.parts) || !obj.parts.length || obj.parts.length > 400) return null;
+      obj.parts.forEach(function (p) {
+        if (!Array.isArray(p) || typeof p[0] !== "string" || !/^word\/[A-Za-z0-9_.-]{1,60}\.xml$/.test(p[0])) { ok = false; return; }
+        parts.push([p[0], Math.max(0, Math.floor(Number(p[1]) || 0)), String(p[2] || "").slice(0, 16)]);
+      });
+      if (!ok) return null;
+    }
     obj.blocks.forEach(function (b) {
       if (!b || typeof b !== "object" || ["h", "title", "hdr", "ftr", "fn"].indexOf(b.k) < 0 ||
           typeof b.lead !== "string" || typeof b.trail !== "string" || !Array.isArray(b.tags)) { ok = false; return; }
       var tags = b.tags.map(function (t) {
-        return Array.isArray(t) && (t[0] === "p" || t[0] === "v") && typeof t[1] === "string" ? [t[0], t[1], String(t[2] || ""), String(t[3] || "")] : ["v", "", "", ""];
+        if (!Array.isArray(t) || (t[0] !== "p" && t[0] !== "v") || typeof t[1] !== "string") return ["v", "", "", ""];
+        var nt = [t[0], t[1], String(t[2] || ""), String(t[3] || "")];
+        if (docx) nt.push(String(t[4] || ""));      // the run formatting for text inside
+        return nt;
       });
       var nb = { k: b.k, lead: b.lead, trail: b.trail, tags: tags };
+      if (docx) {
+        if (!Array.isArray(b.x) || !(b.x[0] >= 0 && b.x[0] < parts.length) || !(b.x[1] >= 0) ||
+            Math.floor(b.x[0]) !== b.x[0] || Math.floor(b.x[1]) !== b.x[1]) { ok = false; return; }
+        nb.x = [b.x[0], b.x[1]];
+        nb.base = String(b.base || "");
+      }
       if (HEAD["h" + b.h]) nb.h = b.h;
       if (b.k === "fn") nb.id = String(b.id || "").slice(0, 80);
       blocks.push(nb);
@@ -610,6 +629,7 @@
     });
     if (!ok) return null;
     var out = { v: VERSION, tpl: obj.tpl, blocks: blocks, segs: segs };
+    if (docx) { out.fmt = "docx"; out.parts = parts; }
     if (obj.page && typeof obj.page === "object") out.page = obj.page;
     return out;
   }
@@ -634,7 +654,7 @@
     checkTags: checkTags, mergeRows: mergeRows, readRowsFile: readRowsFile, rowsFile: rowsFile, chunkOf: chunkOf,
     rowsName: rowsName, metaName: metaName, mergeMeta: mergeMeta, stats: stats, chapters: chapters,
     plainText: plainText, repeats: repeats, readSrc: readSrc, readProject: readProject, newId: newId, cleanRow: cleanRow,
-    sentences: sentences
+    sentences: sentences, cutRun: cutRun, segText: segText, countWords: Core.countWords, WORD_RX: WORD_RX, TAG_RX: TAG_RX
   };
   if (node) module.exports = api;
   else root.WriterCatCore = api;

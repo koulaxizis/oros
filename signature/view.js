@@ -1,18 +1,30 @@
 // ============================================================
-// orOS Email Signature — App logic (v1.0.0)
-// Make an email signature once and use it in any mail app: Gmail,
-// Outlook, Thunderbird, Apple Mail, phones and orOS Mail.
+// orOS Mail › Email signatures (signature/view.js) — was the Email
+// Signature app (APP-ALIAS since the 2026-11-12 merge 6, old id
+// "signature"). Make an email signature once and use it in any mail
+// app: Gmail, Outlook, Thunderbird, Apple Mail, phones and orOS Mail.
 //   - your details, filled in by hand or from Invoices (business
 //     profile), Contacts (a card) and Atelier (brand kit)
 //   - six layouts, colours, email-safe fonts, logo + photo, social
 //     profiles, a button, a dated banner, a vCard QR code, legal text
 //   - live preview (light / dark mail app, phone width, short version)
 //   - Copy (rich text), Copy HTML code, Save .html / .txt, Use in
-//     orOS Mail (BR-MAIL-SIG), signatures for a team (CSV → .zip)
+//     orOS Mail (BR-MAIL-SIG: Mail's own signatureDialog, through the
+//     useInMail hook Mail passes to mount), signatures for a team
+//     (CSV → .zip)
 //   - checks (links, contrast, Gmail's size limit, pictures that a
 //     web mail app would drop) and the steps for each mail app
+// Loaded by mail/mail.js the first time Email signatures opens (with
+// signature/view.css and the "signature", "recordpkg" and
+// "designkit" language packs; this folder keeps the pack name
+// "signature"). It works with no Mail account. SignatureView.mount
+// (host, opts) builds it once; opts: { useInMail(sig), onBack() }.
+// Mail registers the slice "signature" at its boot and hands it to
+// sliceGet/sliceSet here once mounted.
 // Data: synced slice "signature" (oros-signature-data, core.js);
 // pictures on the orOS disk through designkit/assets.js (R30).
+// Deep link: __orosOpenAt("signature", { id } | { openFile }) goes to
+// Mail ({ view: "signatures" }) and on to openAt here.
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. State + storage
@@ -23,8 +35,8 @@
 //   7. Copy, save, orOS Mail
 //   8. Fill in from orOS apps
 //   9. Dialogs: more, team, pick, ask
-//  10. Sync slice, palette, deep link
-//  11. Wiring & boot
+//  10. Sync slice, deep link
+//  11. Template, wiring, mount
 // ============================================================
 (function () {
   "use strict";
@@ -44,7 +56,7 @@
 
   var STRINGS = {
     en: {
-      "app.name": "Email Signature",
+      "app.name": "Email signatures",
       "f.pick": "Signature", "btn.new": "New signature", "btn.more": "More",
       "tab.edit": "Edit", "tab.use": "Preview and use",
       "empty": "No signature yet. Make your first one: fill in your details, pick a look, and copy it into your mail.",
@@ -158,10 +170,10 @@
       "legal.env.t": "Please think of the environment before printing this email.",
       "legal.hours.t": "I may send emails outside working hours. Please do not feel you have to reply outside yours.",
       "aria.so.kind": "Kind of profile", "aria.so.del": "Remove this profile",
-      "standalone": "Open Email Signature inside orOS to keep pictures and sync."
+      "btn.back": "Back to mail"
     },
     el: {
-      "app.name": "Υπογραφή email",
+      "app.name": "Υπογραφές email",
       "f.pick": "Υπογραφή", "btn.new": "Νέα υπογραφή", "btn.more": "Περισσότερα",
       "tab.edit": "Επεξεργασία", "tab.use": "Προβολή και χρήση",
       "empty": "Δεν υπάρχει ακόμα υπογραφή. Φτιάξε την πρώτη: συμπλήρωσε τα στοιχεία σου, διάλεξε εμφάνιση και αντίγραψέ τη στο email σου.",
@@ -273,7 +285,7 @@
       "legal.env.t": "Σκεφτείτε το περιβάλλον πριν εκτυπώσετε αυτό το μήνυμα.",
       "legal.hours.t": "Μπορεί να στέλνω μηνύματα εκτός ωραρίου. Δεν χρειάζεται να απαντήσετε εκτός του δικού σας.",
       "aria.so.kind": "Είδος προφίλ", "aria.so.del": "Αφαίρεση αυτού του προφίλ",
-      "standalone": "Άνοιξε την Υπογραφή email μέσα από το orOS για εικόνες και sync."
+      "btn.back": "Πίσω στα μηνύματα"
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "signature", LANG);
@@ -285,7 +297,10 @@
   // Legal presets are written in the signature's language.
   function tIn(lang, k) { return (STRINGS[lang] && STRINGS[lang][k]) || STRINGS.en[k] || ""; }
 
-  function $(id) { return document.getElementById(id); }
+  var root = null, opts = {};
+  function $(id) { return root ? root.querySelector("#sg-" + id) : null; }
+  // the view is on screen (Mail hides it while the mail list shows)
+  function shown() { return !!root && root.isConnected && root.offsetParent !== null; }
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -312,6 +327,7 @@
   }
 
   var ICON = {
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
     more: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
@@ -334,7 +350,7 @@
   function storeData() {
     try { localStorage.setItem(C.DATA_KEY, JSON.stringify(data)); }
     catch (e) { toast(t("toast.saveFail")); return false; }
-    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    markDirty();
     return true;
   }
   function saveSoon() {
@@ -802,7 +818,7 @@
       });
       list.appendChild(li);
     });
-    $("mail-btn").hidden = !installed("mail");
+    $("mail-btn").hidden = typeof opts.useInMail !== "function";
     var kind = C.targetKind(prefs.target);
     $("copy-btn").classList.toggle("primary", kind !== "mail" && prefs.target !== "thunderbird");
     $("html-btn").classList.toggle("primary", prefs.target === "thunderbird");
@@ -886,13 +902,13 @@
     if (!built || !sig) return;
     saveFile(new Blob([built.text + "\n"], { type: "text/plain" }), stem() + ".txt", "text/plain", "txt");
   }
-  // BR-MAIL-SIG: orOS Mail asks which account and replaces its
-  // signature only after the person confirms.
+  // BR-MAIL-SIG: Mail's own signatureDialog asks which account and
+  // replaces its signature only after the person confirms (same
+  // 60 KB cap and rich.js clean() as before the merge).
   function useInMail() {
-    var s = shell();
-    if (!built || !sig || !s || typeof s.__orosOpenAt !== "function") return;
-    s.__orosOpenAt("mail", { signature: { html: built.mail.html, text: built.mail.text, name: C.label(sig, t("untitled")) } });
-    toast(t("toast.mailSent"));
+    if (!built || !sig || typeof opts.useInMail !== "function") return;
+    if (saveTimer) saveNow();
+    opts.useInMail({ html: built.mail.html, text: built.mail.text, name: C.label(sig, t("untitled")) });
   }
 
   // ---------- 8. Fill in from orOS apps ----------
@@ -1140,59 +1156,36 @@
     var edit = k !== "use";
     $("tab-edit").classList.toggle("on", edit); $("tab-edit").setAttribute("aria-selected", edit ? "true" : "false");
     $("tab-use").classList.toggle("on", !edit); $("tab-use").setAttribute("aria-selected", edit ? "false" : "true");
-    document.body.classList.toggle("show-use", !edit);
+    // narrow screens show one tab at a time: start the other at its top
+    if (root.classList.contains("show-use") === edit && $("main")) $("main").scrollTop = 0;
+    root.classList.toggle("show-use", !edit);
     if (!edit) renderSoon(0);
   }
 
-  // ---------- 10. Sync slice, palette, deep link ----------
-  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                  "--accent", "--accent-hover", "--accent-soft", "--accent-ink",
-                  "--panel-bg", "--border", "--shadow", "--danger"];
-  function inheritPalette() {
-    try {
-      var pRoot = window.parent.document.documentElement;
-      document.documentElement.setAttribute("data-theme", pRoot.getAttribute("data-theme") || "dark");
-      var cs = window.parent.getComputedStyle(pRoot);
-      PAL_VARS.forEach(function (v) {
-        var val = cs.getPropertyValue(v).trim();
-        if (val) document.documentElement.style.setProperty(v, val);
-      });
-    } catch (e) { /* standalone */ }
-  }
-  function watchPalette() {
-    try {
-      new MutationObserver(inheritPalette).observe(window.parent.document.documentElement,
-        { attributes: true, attributeFilter: ["data-skin", "data-theme"] });
-    } catch (e) { /* standalone */ }
-  }
+  // ---------- 10. Sync slice, deep link ----------
+  // Mail registers the slice "signature" (mail.js registerSignatureSlice)
+  // and calls sliceGet/sliceSet here once the view is mounted.
+  var suppress = false;
   function syncApi() {
     try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
     catch (e) { return window.orosSync || null; }
   }
-  function registerSync() {
-    // LOCAL FIRST: load() has already run (boot order).
+  function markDirty() {
+    if (suppress) return;
     var api = syncApi();
-    window.__orosSyncApi = {
-      _suppress: false,
-      dirty: function () {
-        if (this._suppress) return;
-        if (api && typeof api.markDirty === "function") api.markDirty();
-      }
-    };
-    if (!api || typeof api.registerSlice !== "function") return;
-    api.registerSlice("signature", sliceGet, sliceSet, C.DATA_KEY, C.merge);
+    if (api && typeof api.markDirty === "function") api.markDirty();
   }
   function sliceGet() { return C.merge(data, null); }     // canonical copy (R26)
   function sliceSet(incoming) {
     if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.sigs)) return;
     var before = JSON.stringify(data);
-    window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
+    suppress = true;                         // R6: a pull never marks dirty
     try {
       data = C.merge(incoming, null);
       localStorage.setItem(C.DATA_KEY, JSON.stringify(data));
     } catch (e) {
     } finally {
-      window.__orosSyncApi._suppress = false;
+      suppress = false;
     }
     if (JSON.stringify(data) === before) return;
     // the open signature: take the incoming copy unless an edit is
@@ -1281,7 +1274,7 @@
     toast: function (text, undo) { toast(text, undo ? t("btn.undo") : null, undo || null); }
   }) : null;
 
-  // Deep link (search hit): { id } opens that signature.
+  // Deep link (search hit, through Mail): { id } opens that signature.
   // "Open with" an .orossignature file (fileopen.js): { openFile: { token } },
   // the File taken once with window.parent.__orosTakeFile(token), then
   // the kit's dialog (false: boot still opens the last signature)
@@ -1297,16 +1290,14 @@
     select(target.id);
     return true;
   }
-  window.__orosOpenAt = openTarget;
 
-  // ---------- 11. Wiring & boot ----------
   function applyI18n() {
-    document.documentElement.lang = LANG;
-    [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) { n.textContent = t(n.getAttribute("data-i18n")); });
-    document.title = t("app.name") + " · orOS";
+    // data-sg, not data-i18n: Mail repaints its own data-i18n nodes
+    [].forEach.call(root.querySelectorAll("[data-sg]"), function (n) { n.textContent = t(n.getAttribute("data-sg")); });
+    $("back").innerHTML = ICON.back; setLabel($("back"), t("btn.back"));
     $("new-btn").innerHTML = ICON.plus; setLabel($("new-btn"), t("btn.new"));
     $("more-btn").innerHTML = ICON.more; setLabel($("more-btn"), t("btn.more"));
-    [].forEach.call(document.querySelectorAll(".dlg-close"), function (b) { b.innerHTML = ICON.close; setLabel(b, t("btn.close")); });
+    [].forEach.call(root.querySelectorAll(".dlg-close"), function (b) { b.innerHTML = ICON.close; setLabel(b, t("btn.close")); });
     $("f-nm").placeholder = t("ph.nm"); $("f-pron").placeholder = t("ph.pron"); $("f-web").placeholder = t("ph.web");
     $("pv").title = t("tab.use");
     $("tabs").setAttribute("aria-label", t("app.name"));
@@ -1328,7 +1319,7 @@
     $("tab-use").addEventListener("click", function () { showTab("use"); });
     $("tabs").addEventListener("keydown", function (e) {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      var use = !document.body.classList.contains("show-use");
+      var use = !root.classList.contains("show-use");
       showTab(use ? "use" : "edit");
       $(use ? "tab-use" : "tab-edit").focus();
     });
@@ -1351,7 +1342,7 @@
       focusTpl(k);
     });
     $("so-add").addEventListener("click", addSocial);
-    [].forEach.call(document.querySelectorAll("[data-legal]"), function (b) {
+    [].forEach.call(root.querySelectorAll("[data-legal]"), function (b) {
       b.addEventListener("click", function () {
         if (!sig) return;
         var add = tIn(sig.lang, "legal." + b.getAttribute("data-legal") + ".t"), cur = $("f-legal").value.trim();
@@ -1402,8 +1393,10 @@
     $("ask-no").addEventListener("click", hideDlg);
     $("ask-yes").addEventListener("click", function () { var f = askYes; askYes = null; hideDlg(); if (f) f(); });
     $("scrim").addEventListener("click", hideDlg);
-    [].forEach.call(document.querySelectorAll(".dlg-close"), function (b) { b.addEventListener("click", hideDlg); });
+    [].forEach.call(root.querySelectorAll(".dlg-close"), function (b) { b.addEventListener("click", hideDlg); });
+    $("back").addEventListener("click", function () { if (saveTimer) saveNow(); if (typeof opts.onBack === "function") opts.onBack(); });
     document.addEventListener("keydown", function (e) {
+      if (!shown()) return;
       if (e.key === "Escape" && openDlg) { e.preventDefault(); hideDlg(); return; }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "C" || e.key === "c") && sig && !openDlg) { e.preventDefault(); copyRich(); }
     });
@@ -1411,30 +1404,282 @@
     document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden" && saveTimer) saveNow(); });
   }
 
-  function boot() {
-    load();
-    applyI18n();
-    inheritPalette();
-    $("target").value = prefs.target;
-    $("pv-dark").checked = prefs.dark;
-    $("pv-phone").checked = prefs.phone;
-    wire();
-    registerSync();
-    watchPalette();
-    if (!shell()) toast(t("standalone"));
-    renderSteps();
-    showTab("edit");
-    var opened = false;
-    try {
-      var s = shell();
-      if (s && typeof s.__orosTakeTarget === "function") {
-        var pending = s.__orosTakeTarget("signature");
-        if (pending) opened = openTarget(pending);
-      }
-    } catch (e) {}
-    if (!opened) select(prefs.cur);
-    console.log("[orOS Signature] v" + C.VERSION + " ready");
-  }
+  // ---------- 11. Template, wiring, mount ----------
+  var TEMPLATE = [
+    "<header id=\"sg-toolbar\">",
+    "  <button type=\"button\" id=\"sg-back\" class=\"icon-btn\"></button>",
+    "  <div class=\"title\">",
+    "    <span id=\"sg-title-main\" class=\"title-main\" data-sg=\"app.name\">Email Signature</span>",
+    "    <span id=\"sg-title-sub\" class=\"title-sub\"></span>",
+    "  </div>",
+    "  <span class=\"spacer\"></span>",
+    "  <label for=\"sg-sig-sel\" class=\"sr-only\" data-sg=\"f.pick\">Signature</label>",
+    "  <select id=\"sg-sig-sel\"></select>",
+    "  <button type=\"button\" id=\"sg-new-btn\" class=\"icon-btn\"></button>",
+    "  <button type=\"button\" id=\"sg-more-btn\" class=\"icon-btn\" aria-haspopup=\"dialog\"></button>",
+    "</header>",
+    "",
+    "<nav id=\"sg-tabs\" role=\"tablist\">",
+    "  <button type=\"button\" role=\"tab\" id=\"sg-tab-edit\" aria-controls=\"sg-editor\" data-sg=\"tab.edit\">Edit</button>",
+    "  <button type=\"button\" role=\"tab\" id=\"sg-tab-use\" aria-controls=\"sg-out\" data-sg=\"tab.use\">Preview and use</button>",
+    "</nav>",
+    "",
+    "<main id=\"sg-main\">",
+    "  <div id=\"sg-layout\">",
+    "",
+    "    <!-- ========== Editor ========== -->",
+    "    <section id=\"sg-editor\" role=\"tabpanel\" aria-labelledby=\"sg-tab-edit\">",
+    "",
+    "      <div id=\"sg-empty-box\" class=\"card\" hidden>",
+    "        <p class=\"hint\" data-sg=\"empty\">No signature yet. Make your first one: fill in your details, pick a look, and copy it into your mail.</p>",
+    "        <button type=\"button\" id=\"sg-first-btn\" class=\"chip primary\" data-sg=\"btn.first\">Make a signature</button>",
+    "        <div id=\"sg-empty-open\" class=\"chips\" hidden>",
+    "          <button type=\"button\" id=\"sg-oopen-first\" class=\"chip small\" data-sg=\"btn.oopen\">Open orOS file…</button>",
+    "          <button type=\"button\" id=\"sg-ofolder-first\" class=\"chip small\" data-sg=\"btn.ofolder\">Unzipped orOS folder…</button>",
+    "        </div>",
+    "      </div>",
+    "",
+    "      <div id=\"sg-form\" hidden>",
+    "        <div id=\"sg-fill-row\" class=\"card\">",
+    "          <span class=\"lbl\" data-sg=\"sec.fill\">Fill in from orOS</span>",
+    "          <div class=\"chips\">",
+    "            <button type=\"button\" id=\"sg-fill-inv\" class=\"chip small\" data-sg=\"fill.inv\">Business profile (Invoices)</button>",
+    "            <button type=\"button\" id=\"sg-fill-ct\" class=\"chip small\" data-sg=\"fill.ct\">A contact</button>",
+    "            <button type=\"button\" id=\"sg-fill-brand\" class=\"chip small\" data-sg=\"fill.brand\">Brand kit (Atelier)</button>",
+    "          </div>",
+    "          <p id=\"sg-fill-none\" class=\"hint small\" data-sg=\"fill.none\" hidden>When you use Invoices, Contacts or Atelier, their details can fill this in with one tap.</p>",
+    "        </div>",
+    "",
+    "        <details class=\"sec\" open>",
+    "          <summary data-sg=\"sec.details\">Your details</summary>",
+    "          <div class=\"grid\">",
+    "            <label class=\"fld wide\"><span data-sg=\"f.nm\">Name of this signature</span><input id=\"sg-f-nm\" maxlength=\"60\" autocomplete=\"off\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.lang\">Language of the signature</span>",
+    "              <select id=\"sg-f-lang\"><option value=\"en\">English</option><option value=\"el\">Ελληνικά</option></select></label>",   // i18n-inline-ok: language names stay in their own language
+    "            <label class=\"fld\"><span data-sg=\"f.name\">Full name</span><input id=\"sg-f-name\" maxlength=\"80\" autocomplete=\"name\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.pron\">Pronouns</span><input id=\"sg-f-pron\" maxlength=\"30\" autocomplete=\"off\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.title\">Job title</span><input id=\"sg-f-title\" maxlength=\"80\" autocomplete=\"organization-title\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.dept\">Department</span><input id=\"sg-f-dept\" maxlength=\"80\" autocomplete=\"off\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.company\">Company</span><input id=\"sg-f-company\" maxlength=\"100\" autocomplete=\"organization\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.vat\">VAT number</span><input id=\"sg-f-vat\" maxlength=\"30\" autocomplete=\"off\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.phone\">Phone</span><input id=\"sg-f-phone\" type=\"tel\" maxlength=\"40\" autocomplete=\"tel\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.mobile\">Mobile</span><input id=\"sg-f-mobile\" type=\"tel\" maxlength=\"40\" autocomplete=\"off\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.email\">Email</span><input id=\"sg-f-email\" type=\"email\" maxlength=\"120\" autocomplete=\"email\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.web\">Website</span><input id=\"sg-f-web\" type=\"url\" maxlength=\"300\" autocomplete=\"url\" inputmode=\"url\"></label>",
+    "            <label class=\"fld wide\"><span data-sg=\"f.addr\">Address</span><textarea id=\"sg-f-addr\" rows=\"2\" maxlength=\"200\"></textarea></label>",
+    "            <label class=\"fld wide\"><span data-sg=\"f.line\">Short line (slogan, hours, a quote)</span><input id=\"sg-f-line\" maxlength=\"160\" autocomplete=\"off\"></label>",
+    "          </div>",
+    "        </details>",
+    "",
+    "        <details class=\"sec\" open>",
+    "          <summary data-sg=\"sec.look\">Look</summary>",
+    "          <span class=\"lbl\" id=\"sg-tpl-lbl\" data-sg=\"f.tpl\">Layout</span>",
+    "          <div id=\"sg-tpls\" class=\"tpls\" role=\"radiogroup\" aria-labelledby=\"sg-tpl-lbl\"></div>",
+    "          <div class=\"grid\">",
+    "            <label class=\"fld\"><span data-sg=\"f.acc\">Main colour</span><input id=\"sg-f-acc\" type=\"color\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.txt\">Text colour</span><input id=\"sg-f-txt\" type=\"color\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.font\">Font</span><select id=\"sg-f-font\"></select></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.size\">Text size</span>",
+    "              <span class=\"range\"><input id=\"sg-f-size\" type=\"range\" min=\"11\" max=\"16\" step=\"1\"><output id=\"sg-o-size\"></output></span></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.lab\">Before phone and email</span>",
+    "              <select id=\"sg-f-lab\">",
+    "                <option value=\"l\" data-sg=\"lab.l\">Letters (T, M, E)</option>",
+    "                <option value=\"w\" data-sg=\"lab.w\">Words (Phone, Email)</option>",
+    "                <option value=\"n\" data-sg=\"lab.n\">Nothing</option>",
+    "              </select></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.shape\">Photo shape</span>",
+    "              <select id=\"sg-f-shape\"><option value=\"square\" data-sg=\"shape.square\">Square</option><option value=\"round\" data-sg=\"shape.round\">Round</option></select></label>",
+    "          </div>",
+    "          <label class=\"check\"><input type=\"checkbox\" id=\"sg-f-div\"><span data-sg=\"f.div\">Divider line</span></label>",
+    "          <label class=\"check\"><input type=\"checkbox\" id=\"sg-f-icons\"><span data-sg=\"f.icons\">Social icons (instead of names)</span></label>",
+    "        </details>",
+    "",
+    "        <details class=\"sec\">",
+    "          <summary data-sg=\"sec.pics\">Logo and photo</summary>",
+    "          <p class=\"hint small\" data-sg=\"pics.hint\">Pictures stay on your orOS disk and are put inside the signature. Gmail and Outlook on the web drop pictures put inside a signature: for those, also give the address of the picture on your own website.</p>",
+    "          <div id=\"sg-pic-logo\" class=\"pic\"></div>",
+    "          <div id=\"sg-pic-photo\" class=\"pic\"></div>",
+    "        </details>",
+    "",
+    "        <details class=\"sec\">",
+    "          <summary data-sg=\"sec.social\">Social profiles and button</summary>",
+    "          <ul id=\"sg-so-list\" class=\"so-list\"></ul>",
+    "          <button type=\"button\" id=\"sg-so-add\" class=\"chip small\" data-sg=\"btn.addSocial\">Add a profile</button>",
+    "          <div class=\"grid\">",
+    "            <label class=\"fld\"><span data-sg=\"f.ctaT\">Button text</span><input id=\"sg-f-ctaT\" maxlength=\"40\" autocomplete=\"off\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.ctaU\">Button link (booking page, shop…)</span><input id=\"sg-f-ctaU\" type=\"url\" maxlength=\"1000\" inputmode=\"url\" autocomplete=\"off\"></label>",
+    "          </div>",
+    "        </details>",
+    "",
+    "        <details class=\"sec\">",
+    "          <summary data-sg=\"sec.banner\">Banner</summary>",
+    "          <p class=\"hint small\" data-sg=\"banner.hint\">A picture under the signature for an offer, an event or a new product. It shows only between the two dates (leave them empty for always).</p>",
+    "          <div id=\"sg-pic-ban\" class=\"pic\"></div>",
+    "          <div class=\"grid\">",
+    "            <label class=\"fld wide\"><span data-sg=\"f.banLink\">Banner link</span><input id=\"sg-f-banLink\" type=\"url\" maxlength=\"1000\" inputmode=\"url\" autocomplete=\"off\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.banFrom\">From</span><input id=\"sg-f-banFrom\" type=\"date\"></label>",
+    "            <label class=\"fld\"><span data-sg=\"f.banTo\">Until</span><input id=\"sg-f-banTo\" type=\"date\"></label>",
+    "          </div>",
+    "        </details>",
+    "",
+    "        <details class=\"sec\">",
+    "          <summary data-sg=\"sec.extra\">QR code and legal text</summary>",
+    "          <label class=\"check\"><input type=\"checkbox\" id=\"sg-f-qr\"><span data-sg=\"f.qr\">A QR code with my contact card (vCard)</span></label>",
+    "          <label class=\"fld wide\"><span data-sg=\"f.legal\">Legal text or disclaimer</span><textarea id=\"sg-f-legal\" rows=\"4\" maxlength=\"800\"></textarea></label>",
+    "          <span class=\"lbl\" data-sg=\"legal.presets\">Ready texts</span>",
+    "          <div class=\"chips\">",
+    "            <button type=\"button\" class=\"chip small\" data-legal=\"conf\" data-sg=\"legal.conf\">Confidential</button>",
+    "            <button type=\"button\" class=\"chip small\" data-legal=\"gdpr\" data-sg=\"legal.gdpr\">Personal data (GDPR)</button>",
+    "            <button type=\"button\" class=\"chip small\" data-legal=\"env\" data-sg=\"legal.env\">Think before you print</button>",
+    "            <button type=\"button\" class=\"chip small\" data-legal=\"hours\" data-sg=\"legal.hours\">Not urgent outside hours</button>",
+    "          </div>",
+    "        </details>",
+    "      </div>",
+    "    </section>",
+    "",
+    "    <!-- ========== Preview + use ========== -->",
+    "    <section id=\"sg-out\" role=\"tabpanel\" aria-labelledby=\"sg-tab-use\">",
+    "      <div class=\"card\" id=\"sg-out-card\">",
+    "        <div class=\"row\">",
+    "          <label for=\"sg-target\" class=\"lbl\" data-sg=\"f.target\">Where will you use it?</label>",
+    "          <select id=\"sg-target\">",
+    "            <option value=\"gmail\">Gmail</option>",
+    "            <option value=\"outlookweb\" data-sg=\"tg.outlookweb\">Outlook (new, web)</option>",
+    "            <option value=\"outlook\" data-sg=\"tg.outlook\">Outlook classic (Windows)</option>",
+    "            <option value=\"thunderbird\">Thunderbird</option>",
+    "            <option value=\"apple\" data-sg=\"tg.apple\">Apple Mail</option>",
+    "            <option value=\"oros\" data-sg=\"tg.oros\">orOS Mail</option>",
+    "            <option value=\"other\" data-sg=\"tg.other\">Another app or phone</option>",
+    "          </select>",
+    "        </div>",
+    "        <div class=\"opts\">",
+    "          <label class=\"check\"><input type=\"checkbox\" id=\"sg-pv-short\"><span data-sg=\"pv.short\">Short version (for replies)</span></label>",
+    "          <label class=\"check\"><input type=\"checkbox\" id=\"sg-pv-dark\"><span data-sg=\"pv.dark\">Dark mail app</span></label>",
+    "          <label class=\"check\"><input type=\"checkbox\" id=\"sg-pv-phone\"><span data-sg=\"pv.phone\">Phone width</span></label>",
+    "        </div>",
+    "        <div id=\"sg-pv-wrap\" class=\"pv-wrap\">",
+    "          <div id=\"sg-pv-mail\" class=\"pv-mail\">",
+    "            <div class=\"pv-head\"><span data-sg=\"pv.to\">To</span>: <span data-sg=\"pv.toWho\">a client</span></div>",
+    "            <iframe id=\"sg-pv\" title=\"Preview\" sandbox=\"allow-same-origin\" referrerpolicy=\"no-referrer\"></iframe>",
+    "          </div>",
+    "        </div>",
+    "        <div class=\"actions\">",
+    "          <button type=\"button\" id=\"sg-copy-btn\" class=\"chip primary\" data-sg=\"btn.copy\">Copy signature</button>",
+    "          <button type=\"button\" id=\"sg-mail-btn\" class=\"chip\" data-sg=\"btn.mail\" hidden>Use in orOS Mail</button>",
+    "          <button type=\"button\" id=\"sg-code-btn\" class=\"chip\" data-sg=\"btn.code\">Copy HTML code</button>",
+    "          <button type=\"button\" id=\"sg-html-btn\" class=\"chip\" data-sg=\"btn.html\">Save .html</button>",
+    "          <button type=\"button\" id=\"sg-txt-btn\" class=\"chip\" data-sg=\"btn.txt\">Save .txt</button>",
+    "        </div>",
+    "      </div>",
+    "",
+    "      <div class=\"card\">",
+    "        <span class=\"lbl\" data-sg=\"sec.check\">Check</span>",
+    "        <ul id=\"sg-checks\" class=\"checks\"></ul>",
+    "      </div>",
+    "",
+    "      <div class=\"card\">",
+    "        <span class=\"lbl\" id=\"sg-steps-title\" data-sg=\"sec.steps\">How to add it</span>",
+    "        <ol id=\"sg-steps\" class=\"steps\"></ol>",
+    "      </div>",
+    "    </section>",
+    "  </div>",
+    "</main>",
+    "",
+    "<!-- More -->",
+    "<div id=\"sg-scrim\" hidden></div>",
+    "<div id=\"sg-more\" class=\"dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"sg-more-title\" hidden>",
+    "  <div class=\"dlg-head\">",
+    "    <h2 id=\"sg-more-title\" data-sg=\"more.title\">Signatures</h2>",
+    "    <span class=\"spacer\"></span>",
+    "    <button type=\"button\" class=\"icon-btn dlg-close\"></button>",
+    "  </div>",
+    "  <div class=\"menu\">",
+    "    <button type=\"button\" id=\"sg-dup-btn\" class=\"menu-item\" data-sg=\"btn.dup\">Duplicate this signature</button>",
+    "    <button type=\"button\" id=\"sg-team-btn\" class=\"menu-item\" data-sg=\"btn.team\">Signatures for a team (CSV)…</button>",
+    "    <button type=\"button\" id=\"sg-osave-btn\" class=\"menu-item\" data-sg=\"btn.osave\" hidden>orOS file (.orossignature)</button>",
+    "    <button type=\"button\" id=\"sg-oopen-btn\" class=\"menu-item\" data-sg=\"btn.oopen\" hidden>Open orOS file…</button>",
+    "    <button type=\"button\" id=\"sg-ofolder-btn\" class=\"menu-item\" data-sg=\"btn.ofolder\" hidden>Unzipped orOS folder…</button>",
+    "    <button type=\"button\" id=\"sg-del-btn\" class=\"menu-item danger\" data-sg=\"btn.del\">Delete this signature</button>",
+    "  </div>",
+    "  <p class=\"hint small\" data-sg=\"more.hint\">Your signatures follow you to every device through orOS sync, encrypted. Their pictures travel with your orOS disk.</p>",
+    "</div>",
+    "",
+    "<!-- Team -->",
+    "<div id=\"sg-team\" class=\"dialog wide\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"sg-team-title\" hidden>",
+    "  <div class=\"dlg-head\">",
+    "    <h2 id=\"sg-team-title\" data-sg=\"team.title\">Signatures for a team</h2>",
+    "    <span class=\"spacer\"></span>",
+    "    <button type=\"button\" class=\"icon-btn dlg-close\"></button>",
+    "  </div>",
+    "  <p class=\"hint small\" data-sg=\"team.hint\">One signature per person, with the look, company details and pictures of the signature open now. Paste a table (CSV) with a header row: name, title, department, email, phone, mobile, pronouns, photo (an https address).</p>",
+    "  <label for=\"sg-team-csv\" class=\"sr-only\" data-sg=\"team.csv\">Table (CSV)</label>",
+    "  <textarea id=\"sg-team-csv\" rows=\"7\" spellcheck=\"false\"></textarea>",
+    "  <div class=\"actions\">",
+    "    <button type=\"button\" id=\"sg-team-open\" class=\"chip small\" data-sg=\"btn.openCsv\">Open a CSV file</button>",
+    "    <button type=\"button\" id=\"sg-team-sample\" class=\"chip small\" data-sg=\"btn.sample\">Save an example</button>",
+    "  </div>",
+    "  <p id=\"sg-team-info\" class=\"hint\" aria-live=\"polite\"></p>",
+    "  <div class=\"actions\">",
+    "    <button type=\"button\" id=\"sg-team-zip\" class=\"chip primary\" data-sg=\"btn.zip\" disabled>Save all as .zip</button>",
+    "  </div>",
+    "</div>",
+    "",
+    "<!-- Pick (contacts, profiles, brand logos) -->",
+    "<div id=\"sg-pick\" class=\"dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"sg-pick-title\" hidden>",
+    "  <div class=\"dlg-head\">",
+    "    <h2 id=\"sg-pick-title\"></h2>",
+    "    <span class=\"spacer\"></span>",
+    "    <button type=\"button\" class=\"icon-btn dlg-close\"></button>",
+    "  </div>",
+    "  <input type=\"search\" id=\"sg-pick-q\" autocomplete=\"off\">",
+    "  <ul id=\"sg-pick-list\" class=\"pick-list\"></ul>",
+    "</div>",
+    "",
+    "<!-- Confirm -->",
+    "<div id=\"sg-ask\" class=\"dialog\" role=\"alertdialog\" aria-modal=\"true\" aria-labelledby=\"sg-ask-text\" hidden>",
+    "  <p id=\"sg-ask-text\"></p>",
+    "  <div class=\"actions end\">",
+    "    <button type=\"button\" id=\"sg-ask-no\" class=\"chip\" data-sg=\"btn.cancel\">Cancel</button>",
+    "    <button type=\"button\" id=\"sg-ask-yes\" class=\"chip primary\"></button>",
+    "  </div>",
+    "</div>",
+    "",
+    "<div id=\"sg-toast\" role=\"status\"></div>",
+    "<input type=\"file\" id=\"sg-file-in\" accept=\"image/png,image/jpeg,image/gif,image/webp,image/svg+xml\" hidden>"
+  ].join("\n");
 
-  boot();
+  // Build the view once in host (Mail's Email signatures section).
+  function mount(host, o) {
+    opts = o || {};
+    if (!root) {
+      root = document.createElement("div");
+      root.className = "sgv";
+      root.innerHTML = TEMPLATE;                         // static markup
+      host.appendChild(root);
+      load();
+      applyI18n();
+      $("target").value = prefs.target;
+      $("pv-dark").checked = prefs.dark;
+      $("pv-phone").checked = prefs.phone;
+      wire();
+      renderSteps();
+      showTab("edit");
+      select(prefs.cur);
+      console.log("[orOS Signature] v" + C.VERSION + " ready");
+    } else {
+      if (root.parentNode !== host) host.appendChild(root);
+      renderSteps();
+      renderFill();
+      renderSoon(0);
+    }
+  }
+  // A synced change while the view is not built yet: nothing to
+  // repaint (sliceGet reads the stored copy through Mail).
+  window.SignatureView = {
+    mount: mount,
+    openAt: function (t) { return root ? openTarget(t) : false; },
+    sliceGet: function () { return root ? sliceGet() : null; },
+    sliceSet: function (d) { if (root) sliceSet(d); },
+    flush: function () { if (root && saveTimer) saveNow(); }
+  };
 })();

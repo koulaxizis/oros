@@ -50,12 +50,12 @@
 
   var STRINGS = {
     en: {
-      "app": "Base", "btn.newBase": "New base", "btn.importCsv": "Import CSV", "btn.fields": "Fields",
+      "app": "Base", "btn.newBase": "New base", "btn.importCsv": "Import", "btn.fields": "Fields",
       "btn.addRec": "New record", "btn.cancel": "Cancel", "btn.save": "Save", "btn.close": "Close", "btn.undo": "Undo",
       "btn.delete": "Delete", "btn.back": "All bases", "btn.more": "More", "btn.done": "Done",
       "btn.create": "Create", "btn.ok": "OK",
       "empty.title": "No bases yet",
-      "empty.text": "A base keeps records with structure: a catalogue, a collection, a project. Start from a template, from scratch or from a CSV file.",
+      "empty.text": "A base keeps records with structure: a catalogue, a collection, a project. Start from a template, from scratch or from a file (CSV, Excel, Airtable, orOS).",
       "space": "{n} of {max} records · {kb} KB on this device",
       "space.warn": "Base is nearly full: {n} of {max} records. Remove old records or export a base before adding many more.",
       "space.full": "Base holds at most {max} records on all your devices together. This one was not added.",
@@ -83,11 +83,12 @@
       "c.poetry": "Poetry", "c.novel": "Novel", "c.stories": "Short stories", "c.essay": "Essay",
       "v.grid": "Grid", "v.cards": "Cards", "v.newName": "View {n}",
       "tables": "Tables", "table.new": "New table", "table.name": "Table name", "table.defName": "Table {n}",
-      "table.fromCsv": "Import a CSV file as a table",
+      "table.fromCsv": "Import a file as a table (CSV, Excel, ODS)",
       "menu.renameTable": "Rename table", "menu.primary": "Field that names records", "menu.exportCsv": "Export this view as CSV",
       "menu.sheet": "Open this view in Spreadsheet", "menu.renameView": "Rename view", "menu.dupView": "Duplicate view",
       "menu.newView": "New view", "menu.delView": "Delete view", "menu.delTable": "Delete table",
-      "menu.renameBase": "Rename base", "menu.colorBase": "Colour", "menu.importTable": "Import CSV as a new table",
+      "menu.renameBase": "Rename base", "menu.colorBase": "Colour", "menu.importTable": "Import tables (CSV, Excel, ODS)",
+      "menu.saveFile": "Save as orOS file (.orosbase)",
       "menu.delBase": "Delete base",
       "view": "View", "view.new": "New view…", "view.kind": "Show records as", "view.name": "View name",
       "kind.grid": "Grid (rows and columns)", "kind.cards": "Cards",
@@ -171,8 +172,12 @@
       "sum.sum": "Sum {x}", "sum.filled": "{n} filled", "sum.checked": "{n} ticked",
       "imp.done": "Imported {n} records. Check each field's type in the column header.",
       "imp.skipped": "{n} rows were left out: Base holds at most {max} records.",
-      "imp.bad": "This file could not be read as CSV.", "imp.big": "This file is too big (at most 10 MB).",
+      "imp.bad": "This file could not be read.", "imp.big": "This file is too big (at most 10 MB).",
       "imp.empty": "This file has no rows.",
+      "imp.links": "{n} columns became links between tables.", "imp.link1": "1 column became a link between tables.",
+      "imp.lib": "The Excel reader is missing.",
+      "nt.title": "Add as a table", "nt.info": "“{x}”: {r} rows, {c} columns. The first row names the fields.",
+      "nt.base": "Into", "nt.add": "Add table",
       "exp.done": "Exported", "sheet.cap": "Only the first {n} records went to the Spreadsheet. Export a CSV for all of them.",
       "sheet.none": "This view has no records.", "sheet.off": "Open orOS to send this view to Spreadsheet.",
       "grid.add": "Add a field", "grid.addRow": "New record", "grid.label": "Records",
@@ -182,12 +187,12 @@
       "confirm": "Are you sure?", "notFound": "This record no longer exists.", "readOnly": "Base fills this in by itself."
     },
     el: {
-      "app": "Βάση", "btn.newBase": "Νέα βάση", "btn.importCsv": "Εισαγωγή CSV", "btn.fields": "Πεδία",
+      "app": "Βάση", "btn.newBase": "Νέα βάση", "btn.importCsv": "Εισαγωγή", "btn.fields": "Πεδία",
       "btn.addRec": "Νέα εγγραφή", "btn.cancel": "Άκυρο", "btn.save": "Αποθήκευση", "btn.close": "Κλείσιμο", "btn.undo": "Αναίρεση",
       "btn.delete": "Διαγραφή", "btn.back": "Όλες οι βάσεις", "btn.more": "Περισσότερα", "btn.done": "Έτοιμο",
       "btn.create": "Δημιουργία", "btn.ok": "Εντάξει",
       "empty.title": "Δεν υπάρχει ακόμα καμία βάση",
-      "empty.text": "Μια βάση κρατά εγγραφές με δομή: έναν κατάλογο, μια συλλογή, ένα έργο. Ξεκίνα από πρότυπο, από το μηδέν ή από ένα αρχείο CSV.",
+      "empty.text": "Μια βάση κρατά εγγραφές με δομή: έναν κατάλογο, μια συλλογή, ένα έργο. Ξεκίνα από πρότυπο, από το μηδέν ή από ένα αρχείο (CSV, Excel, Airtable, orOS).",
       "space": "{n} από {max} εγγραφές · {kb} KB σε αυτή τη συσκευή",
       "space.warn": "Η Βάση σχεδόν γέμισε: {n} από {max} εγγραφές. Σβήσε παλιές εγγραφές ή κάνε εξαγωγή μιας βάσης πριν προσθέσεις πολλές ακόμα.",
       "space.full": "Η Βάση κρατά το πολύ {max} εγγραφές σε όλες τις συσκευές σου μαζί. Αυτή δεν προστέθηκε.",
@@ -215,11 +220,12 @@
       "c.poetry": "Ποίηση", "c.novel": "Μυθιστόρημα", "c.stories": "Διηγήματα", "c.essay": "Δοκίμιο",
       "v.grid": "Πλέγμα", "v.cards": "Κάρτες", "v.newName": "Προβολή {n}",
       "tables": "Πίνακες", "table.new": "Νέος πίνακας", "table.name": "Όνομα πίνακα", "table.defName": "Πίνακας {n}",
-      "table.fromCsv": "Εισαγωγή αρχείου CSV ως πίνακα",
+      "table.fromCsv": "Εισαγωγή αρχείου ως πίνακα (CSV, Excel, ODS)",
       "menu.renameTable": "Μετονομασία πίνακα", "menu.primary": "Πεδίο που ονομάζει τις εγγραφές", "menu.exportCsv": "Εξαγωγή αυτής της προβολής σε CSV",
       "menu.sheet": "Άνοιγμα αυτής της προβολής στο Υπολογιστικό φύλλο", "menu.renameView": "Μετονομασία προβολής", "menu.dupView": "Αντίγραφο προβολής",
       "menu.newView": "Νέα προβολή", "menu.delView": "Διαγραφή προβολής", "menu.delTable": "Διαγραφή πίνακα",
-      "menu.renameBase": "Μετονομασία βάσης", "menu.colorBase": "Χρώμα", "menu.importTable": "Εισαγωγή CSV ως νέου πίνακα",
+      "menu.renameBase": "Μετονομασία βάσης", "menu.colorBase": "Χρώμα", "menu.importTable": "Εισαγωγή πινάκων (CSV, Excel, ODS)",
+      "menu.saveFile": "Αποθήκευση ως αρχείο orOS (.orosbase)",
       "menu.delBase": "Διαγραφή βάσης",
       "view": "Προβολή", "view.new": "Νέα προβολή…", "view.kind": "Εμφάνιση εγγραφών ως", "view.name": "Όνομα προβολής",
       "kind.grid": "Πλέγμα (γραμμές και στήλες)", "kind.cards": "Κάρτες",
@@ -303,8 +309,12 @@
       "sum.sum": "Σύνολο {x}", "sum.filled": "{n} συμπληρωμένα", "sum.checked": "{n} τσεκαρισμένα",
       "imp.done": "Μπήκαν {n} εγγραφές. Έλεγξε τον τύπο κάθε πεδίου στην κεφαλίδα της στήλης.",
       "imp.skipped": "{n} γραμμές έμειναν έξω: η Βάση κρατά το πολύ {max} εγγραφές.",
-      "imp.bad": "Αυτό το αρχείο δεν διαβάστηκε ως CSV.", "imp.big": "Το αρχείο είναι πολύ μεγάλο (έως 10 MB).",
+      "imp.bad": "Αυτό το αρχείο δεν διαβάστηκε.", "imp.big": "Το αρχείο είναι πολύ μεγάλο (έως 10 MB).",
       "imp.empty": "Το αρχείο δεν έχει γραμμές.",
+      "imp.links": "{n} στήλες έγιναν συνδέσεις πινάκων.", "imp.link1": "1 στήλη έγινε σύνδεση πινάκων.",
+      "imp.lib": "Λείπει το πρόγραμμα ανάγνωσης Excel.",
+      "nt.title": "Προσθήκη ως πίνακα", "nt.info": "«{x}»: {r} γραμμές, {c} στήλες. Η πρώτη γραμμή δίνει τα ονόματα των πεδίων.",
+      "nt.base": "Σε", "nt.add": "Προσθήκη πίνακα",
       "exp.done": "Η εξαγωγή έγινε", "sheet.cap": "Στο Υπολογιστικό φύλλο πήγαν μόνο οι πρώτες {n} εγγραφές. Για όλες, κάνε εξαγωγή σε CSV.",
       "sheet.none": "Αυτή η προβολή δεν έχει εγγραφές.", "sheet.off": "Άνοιξε το orOS για να στείλεις την προβολή στο Υπολογιστικό φύλλο.",
       "grid.add": "Προσθήκη πεδίου", "grid.addRow": "Νέα εγγραφή", "grid.label": "Εγγραφές",
@@ -755,6 +765,7 @@
         d.open();
       } },
       { label: t("menu.importTable"), fn: function () { importCsv(b.id); } },
+      { label: t("menu.saveFile"), fn: function () { saveBaseFile(b.id); } },
       { label: t("menu.delBase"), danger: true, fn: function () {
         confirmDlg(t("del.base", { x: b.name }), t("btn.delete"), function () { deleteRow(b.id); });
       } }
@@ -2221,48 +2232,185 @@
     try { return window.parent.orosDialog || null; } catch (e) { return null; }
   }
   // standalone (no shell) only: R33 allows a local fallback there
-  function localPickFile(accept) {
+  function localPickFiles(accept) {
     return new Promise(function (resolve) {
       var inp = document.createElement("input");
-      inp.type = "file";
+      inp.type = "file"; inp.multiple = true;
       if (accept) inp.accept = accept;
       inp.style.display = "none";
       inp.addEventListener("change", function () {
-        var f = inp.files && inp.files[0] ? inp.files[0] : null;
+        var f = inp.files ? [].slice.call(inp.files) : [];
         inp.remove();
-        resolve(f);
+        resolve(f.length ? f : null);
       });
       inp.addEventListener("cancel", function () { inp.remove(); resolve(null); });
       document.body.appendChild(inp);
       inp.click();
     });
   }
-  // baseId: add the table to that base; none = a new base named after the file
+  var IMPORT_ACCEPT = ".csv,.tsv,.txt,.xlsx,.xls,.ods,.orosbase,text/csv,text/plain,text/tab-separated-values," +
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel," +
+    "application/vnd.oasis.opendocument.spreadsheet,application/x-oros-base";
+  // baseId: add the tables to that base; none = a new base named after
+  // the first file. Several files at once (Airtable: one CSV a table):
+  // columns that name records of another of them become links.
   function importCsv(baseId) {
-    var host = dialogHost(), acc = ".csv,.tsv,.txt,text/csv,text/plain";
-    var pick = host && typeof host.openFile === "function" ? host.openFile(acc) : localPickFile(acc);
-    Promise.resolve(pick).then(function (file) {
-      if (!file) return;
-      return importFile(file, baseId);
+    var host = dialogHost();
+    var pick = host && typeof host.openFiles === "function" ? host.openFiles(IMPORT_ACCEPT)
+      : host && typeof host.openFile === "function" ? Promise.resolve(host.openFile(IMPORT_ACCEPT)).then(function (f) { return f ? [f] : null; })
+      : localPickFiles(IMPORT_ACCEPT);
+    Promise.resolve(pick).then(function (files) {
+      if (!files || !files.length) return;
+      return importFiles([].slice.call(files), baseId);
     }).catch(function () { toast(t("imp.bad")); });
   }
-  function importFile(file, baseId) {
-    if (file.size > CSV_MAX) { toast(t("imp.big")); return Promise.resolve(false); }
-    return file.text().then(function (text) {
-      var rows = C.parseCsv(text);
-      if (!rows.length) { toast(t("imp.empty")); return false; }
-      if (rows.length < 2 && !rows[0].length) { toast(t("imp.bad")); return false; }
-      var name = String(file.name || "").replace(/\.[^.]+$/, "").slice(0, 120) || t("table.defName", { n: 1 });
-      var now = Date.now(), d = data, bid = baseId;
-      if (!bid || !ix.bases[bid]) { bid = C.uid(now); d = C.addBase(d, name, now, bid); }
-      if (d.recs.length >= C.MAX_RECS) { toast(t("space.full", { max: fmtNum(C.MAX_RECS) })); return false; }
-      var r = C.importRows(d, bid, name, rows, now, tableNames());
-      if (!save(r.data)) return false;
-      openBase(bid, r.table);
-      toast(t("imp.done", { n: fmtNum(r.count) }) + (r.skipped ? " " + t("imp.skipped", { n: fmtNum(r.skipped), max: fmtNum(C.MAX_RECS) }) : ""));
-      return true;
+  function extOf(name) { var m = /\.([^.]+)$/.exec(String(name || "")); return m ? m[1].toLowerCase() : ""; }
+  // Airtable names its CSVs "<table>-<view>.csv"
+  function tableNameOf(file) {
+    return String(file.name || "").replace(/\.[^.]+$/, "").replace(/-(Grid view|Πλέγμα)$/i, "").slice(0, 120);
+  }
+  function importFiles(files, baseId) {
+    var bundles = files.filter(function (f) { return extOf(f.name) === "orosbase"; });
+    var rest = files.filter(function (f) { return extOf(f.name) !== "orosbase"; });
+    var chain = Promise.resolve();
+    bundles.forEach(function (f) { chain = chain.then(function () { return recFile ? recFile.openFile(f) : toast(t("imp.bad")); }); });
+    if (!rest.length) return chain;
+    return chain.then(function () { return readTables(rest); }).then(function (list) {
+      if (!list) return false;
+      if (!list.length) { toast(t("imp.empty")); return false; }
+      return addTables(list, baseId, tableNameOf(rest[0]) || list[0].name);
     });
   }
+  // files → [{ name, rows }] (null: told the person why)
+  function readTables(files) {
+    var out = [], chain = Promise.resolve(true);
+    files.forEach(function (file) {
+      chain = chain.then(function (ok) {
+        if (!ok) return false;
+        if (file.size > CSV_MAX) { toast(t("imp.big")); return false; }
+        var ext = extOf(file.name);
+        if (ext === "xlsx" || ext === "xls" || ext === "ods") {
+          return loadXlsx().then(function (X) {
+            if (!X) { toast(t("imp.lib")); return false; }
+            return file.arrayBuffer().then(function (buf) {
+              var wb = X.read(new Uint8Array(buf), { type: "array", cellNF: true, cellDates: false, cellFormula: false, cellHTML: false, bookVBA: false });
+              var sheets = wb.SheetNames || [];
+              sheets.forEach(function (sn) {
+                var rows = sheetRows(X, wb.Sheets[sn]);
+                if (!rows.length) return;
+                var nm = sheets.length === 1 ? tableNameOf(file) : String(sn).slice(0, 120);
+                out.push({ name: nm || String(sn), rows: rows });
+              });
+              return true;
+            });
+          });
+        }
+        return file.text().then(function (text) {
+          var rows = C.parseCsv(text);
+          if (rows.length) out.push({ name: tableNameOf(file) || t("table.defName", { n: out.length + 1 }), rows: rows });
+          return true;
+        });
+      });
+    });
+    return chain.then(function (ok) { return ok ? out : null; });
+  }
+  // One sheet as rows of text (C.sheetCell), empty rows and columns at
+  // the end left out, at most the record cap.
+  function sheetRows(X, ws) {
+    if (!ws || !ws["!ref"]) return [];
+    var rg = X.utils.decode_range(ws["!ref"]), rows = [], width = 0;
+    var lastR = Math.min(rg.e.r, rg.s.r + C.MAX_RECS), lastC = Math.min(rg.e.c, rg.s.c + C.MAX_FIELDS - 1);
+    for (var r = rg.s.r; r <= lastR; r++) {
+      var row = [], any = false;
+      for (var c = rg.s.c; c <= lastC; c++) {
+        var v = C.sheetCell(ws[X.utils.encode_cell({ r: r, c: c })], X.SSF);
+        if (v !== "") { any = true; width = Math.max(width, c - rg.s.c + 1); }
+        row.push(v);
+      }
+      rows.push(any ? row : null);
+    }
+    while (rows.length && !rows[rows.length - 1]) rows.pop();
+    return rows.filter(Boolean).map(function (row) { return row.slice(0, width); });
+  }
+  var xlsxP = null;
+  function loadXlsx() {
+    if (window.XLSX && window.XLSX.read) return Promise.resolve(window.XLSX);
+    if (xlsxP) return xlsxP;
+    xlsxP = new Promise(function (resolve) {
+      var sc = document.createElement("script");
+      sc.src = "../vendor/xlsx.full.min.js";
+      sc.onload = function () { resolve(window.XLSX && window.XLSX.read ? window.XLSX : null); };
+      sc.onerror = function () { xlsxP = null; resolve(null); };
+      document.head.appendChild(sc);
+    });
+    return xlsxP;
+  }
+  function addTables(list, baseId, newName) {
+    var now = Date.now(), d = data, bid = baseId;
+    if (!bid || !ix.bases[bid]) { bid = C.uid(now); d = C.addBase(d, newName || t("app"), now, bid); }
+    if (d.recs.length >= C.MAX_RECS) { toast(t("space.full", { max: fmtNum(C.MAX_RECS) })); return false; }
+    var names = tableNames();
+    names.table = t("table.defName", { n: "" }).trim();
+    var r = C.importTables(d, bid, list, now, names);
+    if (!r.tables.length) { toast(t("imp.empty")); return false; }
+    if (!save(r.data)) return false;
+    openBase(bid, r.tables[0]);
+    toast(t("imp.done", { n: fmtNum(r.count) }) + (r.links ? " " + (r.links === 1 ? t("imp.link1") : t("imp.links", { n: fmtNum(r.links) })) : "") +
+      (r.skipped ? " " + t("imp.skipped", { n: fmtNum(r.skipped), max: fmtNum(C.MAX_RECS) }) : ""));
+    return true;
+  }
+  // Send to an app (BR-SEND) / Spreadsheet: { newTable: { name, rows } }
+  // opens this dialog; nothing is saved before "Add table".
+  function newTableDialog(nt) {
+    if (!nt || !Array.isArray(nt.rows) || !nt.rows.length) return;
+    var rows = nt.rows.slice(0, C.MAX_RECS + 1).map(function (r) {
+      return Array.isArray(r) ? r.slice(0, C.MAX_FIELDS).map(function (c) { return typeof c === "number" && isFinite(c) ? String(c) : typeof c === "string" ? c.slice(0, 10000) : ""; }) : [];
+    });
+    var name = (typeof nt.name === "string" && nt.name.trim() ? nt.name.trim() : t("table.defName", { n: 1 })).slice(0, 120);
+    var cols = rows.reduce(function (m, r) { return Math.max(m, r.length); }, 0);
+    var d = dialog(t("nt.title"));
+    var p = el("p", "hint", t("nt.info", { x: name, r: fmtNum(Math.max(0, rows.length - 1)), c: fmtNum(cols) }));
+    d.body.appendChild(p);
+    var sel = document.createElement("select");
+    var o0 = document.createElement("option");
+    o0.value = ""; o0.textContent = t("btn.newBase");
+    sel.appendChild(o0);
+    data.bases.forEach(function (b) {
+      var o = document.createElement("option");
+      o.value = b.id; o.textContent = b.name || t("f.untitled");
+      sel.appendChild(o);
+    });
+    if (cur.base) sel.value = cur.base;
+    d.body.appendChild(fld(t("nt.base"), sel));
+    function ok() { d.close(); addTables([{ name: name, rows: rows }], sel.value, name); }
+    d.foot(btn("chip", t("btn.cancel"), function () { d.close(); }), btn("chip pri", t("nt.add"), ok));
+    d.open();
+  }
+
+  // ---------- .orosbase (package.js + recordpkg.js + bundle.js) ----------
+  var RP = window.OrosRecordPkg || null, BPK = window.OrosBasePackage || null;
+  var exportBase = "";
+  var recFile = RP && BPK && window.OrosBundle ? RP.ui(BPK.descFor(function () { return data; }), {
+    lang: function () { return LANG; },
+    get: function () { return exportBase ? C.onlyBase(data, exportBase) : C.normalize(data); },
+    title: function () { var b = ix.bases[exportBase]; return b ? b.name : t("app"); },
+    set: function (next, info) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.recs)) return;
+      var before = ix.bases;
+      if (!save(BPK.settle(next, data, info && info.addedIds))) return;
+      var added = data.bases.filter(function (b) { return !before[b.id]; });
+      if (added.length) openBase(added[0].id);
+    },
+    deleteIds: function (ids) { save(BPK.undo(data, ids, Date.now())); },
+    toast: function (msg, undo) { toast(msg, undo); },
+    notBundle: function (f) { return importFiles([f], ""); }
+  }) : null;
+  function saveBaseFile(id) {
+    if (!recFile) { toast(t("imp.bad")); return; }
+    exportBase = id;
+    try { recFile.save(); } finally { exportBase = ""; }
+  }
+
   // the ASCII part of a name for a file
   function slug(s) {
     var x = String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60);
@@ -2341,6 +2489,10 @@
   // target = { base, table?, view?, rec? }
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object") return;
+    // "Open with" an .orosbase file (fileopen.js)
+    if (target.openFile) { if (recFile) recFile.openTarget(target.openFile); return; }
+    var tg = target;
+    if (tg.newTable) { closeAllDialogs(); newTableDialog(tg.newTable); return; }
     var b = typeof target.base === "string" ? target.base : "";
     if (!ix.bases[b]) {
       if (typeof target.rec === "string" && ix.recs[target.rec]) {
@@ -2370,7 +2522,7 @@
     try {
       var p = window.parent;
       if (p && p !== window && typeof p.__orosTakeTarget === "function") {
-        var pending = p.__orosTakeTarget(APP_ID);
+        var pending = p.__orosTakeTarget("base");
         if (pending) { window.__orosOpenAt(pending); return true; }
       }
     } catch (e) { /* standalone */ }

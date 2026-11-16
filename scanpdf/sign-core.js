@@ -19,9 +19,12 @@
 //       + bx?: { id, k, w } the reply box (wave 4): its id, key and
 //         write token, so the signer's page puts the answer there and
 //         it comes back on its own (cleanBox; not part of cleanRequest)
+//         + og?: [names] the others asked to sign the same document
+//           (several signers, wave 4b)
 //   field = { id, pg (0-based page), fx, fy (centre, fractions of the
 //             page as it shows), w, h (fractions of the page as it
-//             shows), k (core FIELDS), req (must be filled) }
+//             shows), k (core FIELDS), req (must be filled), s?: the
+//             signer it is for, 2..MAX_SIGNERS (none: the first) }
 // Reply (envelope { v: 1, k: "signed", d }):
 //   d = { v: 1, rq: request id, h: SHA-256 of the PDF signed, st:
 //         "signed" | "declined", nm: the name the signer typed, why?,
@@ -35,11 +38,16 @@
 //            the PDF: the fields to put the answer back on), x:
 //            expires, c: link code, d?: revoke secret, p?: original in
 //            Files, b?: { id, k, r } the reply box (id, key, read
-//            token), got?: { at, st, nm, rh, hf?, pf?, why? }, rv?:
-//            { at }, gone?: at }
+//            token), got?: { at, st, nm, rh, hf?, pf?, ap?, why? },
+//            rv?: { at }, gone?: at, g?: { id, i, n } one of several
+//            signers of the same document (group id, 0-based place,
+//            how many), all?: { at, hf, pf? } the PDF signed by all of
+//            them (the same on every item of the group) }
+//   got.ap: the answer as JSON in Files (several signers: the PDF
+//   signed by all is made from the answers; their hash must be rh).
 //   merge: union by id; the fixed fields of an id are the same on
-//   every device (larger JSON wins a difference); got / rv / gone:
-//   the earlier one wins; a closed item drops its secrets (d, b), a
+//   every device (the longer JSON, then the larger, wins a difference); got / rv / gone /
+//   all: the earlier one wins; a closed item drops its secrets (d, b), a
 //   removed one keeps only { id, a, gone } (tombstone); at most
 //   MAX_ITEMS, newest first. Deterministic and associative (R26).
 // UMD: window.ScanPdfSign, or module.exports in Node.
@@ -50,12 +58,13 @@
   var NODE = typeof module !== "undefined" && module.exports;
   var C = NODE ? require("./core.js") : root.ScanPdfCore;
 
-  var VERSION = "1.1.0";
+  var VERSION = "1.2.0";
   var STORE_KEY = "oros-scanpdf-sign";
   var SLICE = "scanpdfSign";
   var KINDS = C.FIELDS;
   var MAX_FIELDS = 60;
   var MAX_ITEMS = 300;
+  var MAX_SIGNERS = 5;
   var MAX_SIG_URL = 280000;
   var LANGS = ["en", "el", "de"];
   var ID_RE = /^[A-Za-z0-9_-]{22}$/;
@@ -99,7 +108,26 @@
     if (w === null || h === null || fx === null || fy === null) return null;
     var id = str(f.id, 40);
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) return null;
-    return { id: id, pg: pg, fx: fx, fy: fy, w: w, h: h, k: KINDS.indexOf(f.k) !== -1 ? f.k : "sig", req: f.req !== false };
+    var o = { id: id, pg: pg, fx: fx, fy: fy, w: w, h: h, k: KINDS.indexOf(f.k) !== -1 ? f.k : "sig", req: f.req !== false };
+    var who = signerOf(f);
+    if (who > 1) o.s = who;
+    return o;
+  }
+  // The signer a field (or a page overlay) is for: 1..MAX_SIGNERS.
+  function signerOf(f) {
+    var n = f && Number(f.s);
+    return Number.isSafeInteger(n) && n >= 1 && n <= MAX_SIGNERS ? n : 1;
+  }
+  // How many signers the fields ask for (the highest signer named).
+  function signerCount(fields) {
+    return (fields || []).reduce(function (n, f) { return Math.max(n, signerOf(f)); }, 1);
+  }
+  // The fields of each signer: [[field]] (index 0 = signer 1).
+  function splitFields(fields) {
+    var n = signerCount(fields), out = [];
+    for (var i = 0; i < n; i++) out.push([]);
+    (fields || []).forEach(function (f) { out[signerOf(f) - 1].push(f); });
+    return out;
   }
   // The fields of the pages as they go into the PDF. list: [{ ov, g:
   // { W, H, R } }] in output order (the page list and each page's
@@ -118,7 +146,7 @@
         var id = "f" + (out.length + 1);
         while (seen[id]) id += "x";
         seen[id] = true;
-        out.push(cleanField({ id: id, pg: pg, fx: v.fx, fy: v.fy, w: bw / d[0], h: bh / d[1], k: o.k, req: o.req }, list.length));
+        out.push(cleanField({ id: id, pg: pg, fx: v.fx, fy: v.fy, w: bw / d[0], h: bh / d[1], k: o.k, req: o.req, s: o.s }, list.length));
       });
     });
     return out;
@@ -145,6 +173,8 @@
     if (te) r.te = te;
     if (msg) r.msg = msg;
     if (d.lk === 1) r.lk = 1;
+    var og = (Array.isArray(d.og) ? d.og : []).slice(0, 20).map(function (x) { return str(x, 120); }).filter(Boolean).slice(0, MAX_SIGNERS - 1);
+    if (og.length) r.og = og;
     return r;
   }
   function cleanSig(v) {
@@ -270,6 +300,7 @@
                    timeZone: reply.tz, browser: reply.ua, language: reply.lang, values: vals, reason: reply.why || "",
                    sha256: rh }
         };
+        if (req.og) rec.request.others = req.og;
         if (extra && extra.sent) rec.request.sent = iso(extra.sent);
         if (extra && extra.got) rec.received = iso(extra.got);
         return { rec: rec, rh: rh, json: canon(rec) };
@@ -283,7 +314,8 @@
     title: "Signature certificate · Πιστοποιητικό υπογραφής",
     doc: "Document · Έγγραφο", hash: "Original SHA-256 · Πρωτότυπο", pages: "Pages · Σελίδες",
     from: "Sent by · Αποστολέας", to: "Signer · Υπογράφων", typed: "Name typed · Όνομα που έγραψε",
-    how: "Identified by · Ταυτοποίηση", link: "the link sent to · ο σύνδεσμος προς", code: "and an access code · και κωδικός πρόσβασης",
+    how: "Identified by · Ταυτοποίηση", others: "Also asked to sign · Ζητήθηκε υπογραφή και από",
+    signer: "Signer {i} of {n} · Υπογράφων {i} από {n}", link: "the link sent to · ο σύνδεσμος προς", code: "and an access code · και κωδικός πρόσβασης",
     sent: "Sent · Στάλθηκε", opened: "Opened · Άνοιξε", consented: "Agreed to sign electronically · Συμφώνησε σε ηλεκτρονική υπογραφή",
     signed: "Signed · Υπογράφηκε", received: "Received · Παραλήφθηκε", tz: "Time zone · Ζώνη ώρας",
     browser: "Browser · Πρόγραμμα", record: "Record SHA-256 · Εγγραφή", fields: "Fields filled · Πεδία",
@@ -298,6 +330,12 @@
     var r = out.rec, q = r.request, p = r.reply, rows = [];
     rows.push([CERT.doc, q.document], [CERT.hash, q.sha256], [CERT.pages, String(q.pages)]);
     rows.push([CERT.from, q.from + (q.fromEmail ? " <" + q.fromEmail + ">" : "")]);
+    if (q.others && q.others.length) rows.push([CERT.others, q.others.join(", ")]);
+    signerRows(rows, r);
+    return { title: CERT.title, rows: rows, note: CERT.note };
+  }
+  function signerRows(rows, r) {
+    var q = r.request, p = r.reply;
     rows.push([CERT.to, q.to + (q.toEmail ? " <" + q.toEmail + ">" : "")], [CERT.typed, p.name]);
     rows.push([CERT.how, CERT.link + " " + (q.toEmail || q.to) + (q.accessCode ? ", " + CERT.code : "")]);
     if (q.sent) rows.push([CERT.sent, when(Date.parse(q.sent))]);
@@ -306,7 +344,34 @@
     if (r.received) rows.push([CERT.received, when(Date.parse(r.received))]);
     rows.push([CERT.fields, String(Object.keys(p.values).length) + " / " + q.fields.length]);
     rows.push([CERT.tz, p.timeZone || "—"], [CERT.browser, p.browser || "—"], [CERT.record, p.sha256]);
+  }
+  // The certificate of a PDF signed by several people: the document
+  // once, then each signer in turn. outs: record() results in signer
+  // order.
+  function certAll(outs) {
+    var q = outs[0].rec.request, rows = [];
+    rows.push([CERT.doc, q.document], [CERT.hash, q.sha256], [CERT.pages, String(q.pages)]);
+    rows.push([CERT.from, q.from + (q.fromEmail ? " <" + q.fromEmail + ">" : "")]);
+    outs.forEach(function (out, i) {
+      rows.push([CERT.signer.replace(/\{i\}/g, String(i + 1)).replace(/\{n\}/g, String(outs.length)), out.rec.request.to]);
+      signerRows(rows, out.rec);
+    });
     return { title: CERT.title, rows: rows, note: CERT.note };
+  }
+  // The record attached to that PDF: every signer's record.
+  function recordAll(outs) {
+    var rec = { kind: "orOS signing record", v: 1, type: "simple electronic signature (eIDAS art. 3(10))",
+                signers: outs.map(function (o) { return o.rec; }) };
+    return { rec: rec, json: canon(rec) };
+  }
+  // What the replies of all signers draw, page by page: [{ pg, ov }].
+  // parts: [{ q, reply }] in signer order.
+  function stampAll(parts, geoms) {
+    var by = {};
+    parts.forEach(function (p) {
+      stampItems(p.q, p.reply, geoms).forEach(function (s) { (by[s.pg] = by[s.pg] || []).push.apply(by[s.pg], s.ov); });
+    });
+    return Object.keys(by).map(Number).sort(function (a, b) { return a - b; }).map(function (pg) { return { pg: pg, ov: by[pg] }; });
   }
 
   // ---------- the list of requests (sync slice) ----------
@@ -317,9 +382,30 @@
     var o = { at: at, st: st, nm: str(g.nm, 120) };
     if (typeof g.rh === "string" && HEX_RE.test(g.rh)) o.rh = g.rh;
     if (typeof g.hf === "string" && HEX_RE.test(g.hf)) o.hf = g.hf;
-    if (typeof g.pf === "string" && g.pf.indexOf(C.ROOT + "/") === 0 && g.pf.indexOf("..") === -1) o.pf = g.pf.slice(0, 1000);
+    if (filePath(g.pf)) o.pf = g.pf;
+    if (filePath(g.ap)) o.ap = g.ap;
     var why = para(g.why, 500);
     if (why) o.why = why;
+    return o;
+  }
+  // A path in Files: under its root, with no "." or ".." part (a name
+  // may still have two dots in it, "Nikos K..json").
+  function filePath(p) {
+    return typeof p === "string" && p.length <= 1000 && p.indexOf(C.ROOT + "/") === 0 &&
+      p.split("/").every(function (x) { return x !== ".." && x !== "."; });
+  }
+  function cleanGroup(v) {
+    if (!v || typeof v !== "object" || typeof v.id !== "string" || !ID_RE.test(v.id)) return null;
+    var i = Number(v.i), n = Number(v.n);
+    if (!Number.isSafeInteger(i) || !Number.isSafeInteger(n) || n < 2 || n > MAX_SIGNERS || i < 0 || i >= n) return null;
+    return { id: v.id, i: i, n: n };
+  }
+  function cleanAll(v) {
+    if (!v || typeof v !== "object") return null;
+    var at = stamp(v.at);
+    if (!at || typeof v.hf !== "string" || !HEX_RE.test(v.hf)) return null;
+    var o = { at: at, hf: v.hf };
+    if (filePath(v.pf)) o.pf = v.pf;
     return o;
   }
   function cleanItem(id, it) {
@@ -331,7 +417,7 @@
     var q = cleanRequest(it.q);
     if (!q || typeof it.c !== "string" || !CODE_RE.test(it.c)) return null;
     var o = { id: id, a: a, q: q, x: stamp(it.x), c: it.c };
-    if (typeof it.p === "string" && it.p.indexOf(C.ROOT + "/") === 0 && it.p.indexOf("..") === -1) o.p = it.p.slice(0, 1000);
+    if (filePath(it.p)) o.p = it.p;
     var got = cleanGot(it.got);
     if (got) o.got = got;
     var rv = it.rv && stamp(it.rv.at);
@@ -339,6 +425,10 @@
     if (!got && !rv && typeof it.d === "string" && SECRET_RE.test(it.d)) o.d = it.d;
     var b = !got && !rv && cleanBox(it.b, "r");
     if (b) o.b = b;
+    var g = cleanGroup(it.g);
+    if (g) o.g = g;
+    var all = g && cleanAll(it.all);
+    if (all) o.all = all;
     return o;
   }
   function readStore(raw) {
@@ -370,12 +460,16 @@
     if (!y) return x;
     var gone = x.gone && y.gone ? Math.min(x.gone, y.gone) : (x.gone || y.gone);
     if (gone) return { id: x.id, a: Math.min(x.a, y.a), gone: gone };
-    var fx = fixed(x), fy = fixed(y), o = canon(fx) >= canon(fy) ? fx : fy;
+    // the longer JSON wins (an older orOS drops what it does not know,
+    // such as g, og and a field's s), then the larger one
+    var fx = fixed(x), fy = fixed(y), cx = canon(fx), cy = canon(fy);
+    var o = cx.length !== cy.length ? (cx.length > cy.length ? fx : fy) : cx >= cy ? fx : fy;
     var p = [x.p, y.p].filter(Boolean).sort().pop();
     if (p) o.p = p;
-    var got = earlier(x.got, y.got), rv = earlier(x.rv, y.rv);
+    var got = earlier(x.got, y.got), rv = earlier(x.rv, y.rv), all = earlier(x.all, y.all);
     if (got) o.got = got;
     if (rv) o.rv = rv;
+    if (all) o.all = all;
     if (!got && !rv) {
       var d = x.d || y.d;
       if (x.d && y.d && x.d !== y.d) d = x.d > y.d ? x.d : y.d;
@@ -388,7 +482,7 @@
   // The parts of an item that never change after it is sent.
   function fixed(it) {
     var o = Object.assign({}, it);
-    delete o.got; delete o.rv; delete o.d; delete o.p; delete o.b;
+    delete o.got; delete o.rv; delete o.d; delete o.p; delete o.b; delete o.all;
     return o;
   }
   function merge(a, b) {
@@ -429,6 +523,41 @@
     if (!it) return s;
     s.items[id] = { id: id, a: it.a, gone: at };
     return canonStore(s);
+  }
+  // The PDF signed by all signers of group gid: on each of its items.
+  function setAll(store, gid, all) {
+    var s = readStore(store);
+    Object.keys(s.items).forEach(function (id) {
+      var it = s.items[id];
+      if (!it.gone && it.g && it.g.id === gid) s.items[id] = mergeItem(it, Object.assign({}, it, { all: all }));
+    });
+    return canonStore(s);
+  }
+  // The rows of the list, newest first: { it } for one signer, or
+  // { g: group id, items: [item] in signer order, status } for
+  // several (one row for the document). Group status: "declined"
+  // when one declined, "signed" when all signed, "revoked" when taken
+  // back, "waiting" while one still can sign, else "expired".
+  function rows(store, now) {
+    var out = [], groups = {};
+    list(store, now).forEach(function (it) {
+      if (!it.g) { out.push({ it: it }); return; }
+      var r = groups[it.g.id];
+      if (!r) { r = groups[it.g.id] = { g: it.g.id, items: [], a: it.a }; out.push(r); }
+      r.items.push(it);
+    });
+    out.forEach(function (r) {
+      if (!r.g) return;
+      r.items.sort(function (x, y) { return x.g.i - y.g.i; });
+      var st = r.items.map(function (it) { return it.status; });
+      r.status = st.indexOf("declined") >= 0 ? "declined" : st.every(function (x) { return x === "signed"; }) && r.items.length === r.items[0].g.n ? "signed" :
+                 st.indexOf("revoked") >= 0 ? "revoked" : st.indexOf("waiting") >= 0 ? "waiting" : "expired";
+    });
+    return out;
+  }
+  // The items of group gid (live ones), in signer order.
+  function groupItems(store, gid) {
+    return list(store, 1).filter(function (it) { return it.g && it.g.id === gid; }).sort(function (x, y) { return x.g.i - y.g.i; });
   }
   // Waiting items with a reply box to ask the relay about (at most 50).
   function boxesToPoll(store, now) {
@@ -479,7 +608,9 @@
     cert: cert, iso: iso, readStore: readStore, merge: merge, canonStore: canonStore, addItem: addItem, setGot: setGot,
     setRevoked: setRevoked, remove: remove, status: status, list: list, signLink: signLink, replyLink: replyLink,
     replyCode: replyCode, requestCode: requestCode, signedName: signedName, sentName: sentName, email: email,
-    cleanBox: cleanBox, boxesToPoll: boxesToPoll
+    cleanBox: cleanBox, boxesToPoll: boxesToPoll, MAX_SIGNERS: MAX_SIGNERS, signerOf: signerOf, signerCount: signerCount,
+    splitFields: splitFields, certAll: certAll, recordAll: recordAll, stampAll: stampAll, setAll: setAll, rows: rows,
+    groupItems: groupItems
   };
   if (NODE) module.exports = api;
   else root.ScanPdfSign = api;

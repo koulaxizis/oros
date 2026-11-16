@@ -75,7 +75,16 @@
       repT: "Report: {n}", repDays: "Days", repTitles: "Titles", repTaken: "Taken", repSold: "Sold", repBackC: "Back", repLeft: "Left", repPrint: "Print", repSheet: "Open in Spreadsheet",
       repNone: "No sales at this event yet.",
       drFl: "Cash float", drCc: "Cash counted", drCount: "Count…", drExp: "Expected in the drawer: {e}", drDiff: "Difference: {d}", drOk: "The drawer is right.",
-      drCountT: "Count the cash", drTotal: "Total: {t}", drUse: "Use this total"
+      drCountT: "Count the cash", drTotal: "Total: {t}", drUse: "Use this total",
+      zBudget: "Add to Budget", zBudgetN: "Z #{n} · {d}",
+      ownT: "Owner's PIN", ownTPass: "Owner's passphrase", ownHint: "This device is a till. Ask the owner to type the screen-lock PIN.",
+      ownHintPass: "This device is a till. Ask the owner to type the screen-lock passphrase.", ownOk: "OK", ownWrong: "Wrong PIN or passphrase.",
+      ownWait: "Too many tries. Wait {s} seconds.", ownOff: "The screen lock is off on this device.", ownDisc: "Over this device's limit ({p}%). The owner can allow it.",
+      tillT: "Helper device (till only)", tillHint: "For a helper's phone at the stand: orOS opens straight into this till, with no PIN. Voids, settings, events, a discount over the limit and every other app need the owner's screen-lock PIN. The phone still holds your synced data behind the lock, so give it only to someone you trust.",
+      tillGo: "Make this device a till", tillStop: "Stop till-only mode", tillIs: "This device is a till-only device.",
+      tillNeedLock: "Turn on the screen lock first. Its PIN becomes the owner's PIN.", tillLock: "Screen lock settings",
+      tillQ: "From now on orOS on this device opens only the till. You get back in with the screen-lock PIN (Owner: open orOS). Go on?",
+      tillStopped: "This device is no longer a till."
     },
     el: {
       "pos.title": "Σημείο πώλησης (POS)", pl: "Τιμοκατάλογος", retail: "Λιανική", wh: "Αποθήκη",
@@ -129,7 +138,16 @@
       repT: "Αναφορά: {n}", repDays: "Ημέρες", repTitles: "Τίτλοι", repTaken: "Πήγαν", repSold: "Πουλήθηκαν", repBackC: "Γύρισαν", repLeft: "Έμειναν", repPrint: "Εκτύπωση", repSheet: "Άνοιγμα στο Υπολογιστικό φύλλο",
       repNone: "Καμία πώληση σε αυτή την εκδήλωση ακόμα.",
       drFl: "Αρχικό ποσό ταμείου", drCc: "Μετρητά που μετρήθηκαν", drCount: "Μέτρημα…", drExp: "Αναμενόμενα στο συρτάρι: {e}", drDiff: "Διαφορά: {d}", drOk: "Το ταμείο είναι σωστό.",
-      drCountT: "Μέτρημα μετρητών", drTotal: "Σύνολο: {t}", drUse: "Χρήση του συνόλου"
+      drCountT: "Μέτρημα μετρητών", drTotal: "Σύνολο: {t}", drUse: "Χρήση του συνόλου",
+      zBudget: "Στα Έσοδα & Έξοδα", zBudgetN: "Ζ #{n} · {d}",
+      ownT: "PIN ιδιοκτήτη", ownTPass: "Συνθηματικό ιδιοκτήτη", ownHint: "Αυτή η συσκευή είναι ταμείο. Ζήτα από τον ιδιοκτήτη να γράψει το PIN του κλειδώματος οθόνης.",
+      ownHintPass: "Αυτή η συσκευή είναι ταμείο. Ζήτα από τον ιδιοκτήτη να γράψει το συνθηματικό του κλειδώματος οθόνης.", ownOk: "OK", ownWrong: "Λάθος PIN ή συνθηματικό.",
+      ownWait: "Πολλές προσπάθειες. Περίμενε {s} δευτερόλεπτα.", ownOff: "Το κλείδωμα οθόνης είναι κλειστό σε αυτή τη συσκευή.", ownDisc: "Πάνω από το όριο της συσκευής ({p}%). Ο ιδιοκτήτης μπορεί να το επιτρέψει.",
+      tillT: "Συσκευή βοηθού (μόνο ταμείο)", tillHint: "Για το κινητό ενός βοηθού στον πάγκο: το orOS ανοίγει κατευθείαν σε αυτό το ταμείο, χωρίς PIN. Ακυρώσεις, ρυθμίσεις, εκδηλώσεις, έκπτωση πάνω από το όριο και κάθε άλλη εφαρμογή θέλουν το PIN του κλειδώματος οθόνης του ιδιοκτήτη. Το κινητό κρατά τα συγχρονισμένα δεδομένα σου πίσω από το κλείδωμα, οπότε δώσ' το μόνο σε άνθρωπο που εμπιστεύεσαι.",
+      tillGo: "Κάνε αυτή τη συσκευή ταμείο", tillStop: "Τέλος λειτουργίας μόνο ταμείου", tillIs: "Αυτή η συσκευή είναι μόνο ταμείο.",
+      tillNeedLock: "Άνοιξε πρώτα το κλείδωμα οθόνης. Το PIN του γίνεται το PIN του ιδιοκτήτη.", tillLock: "Ρυθμίσεις κλειδώματος οθόνης",
+      tillQ: "Από εδώ και πέρα το orOS σε αυτή τη συσκευή ανοίγει μόνο το ταμείο. Ξαναμπαίνεις με το PIN του κλειδώματος οθόνης (Ιδιοκτήτης: άνοιγμα orOS). Συνέχεια;",
+      tillStopped: "Η συσκευή δεν είναι πια ταμείο."
     }
   };
 
@@ -157,6 +175,51 @@
   function gross(p, vat) { return Math.round(p * (100 + (vat || 0)) / 100); }
   function hm(ms) { var d = new Date(ms), z = function (n) { return (n < 10 ? "0" : "") + n; }; return z(d.getHours()) + ":" + z(d.getMinutes()); }
   function prefs() { return api.posPrefs(); }
+  // F3 helper device (TILL-1): the till is all this device shows
+  function isTill() { return !!(api.till && api.till()); }
+  // fn runs at once, or on a till-only device after the owner's PIN
+  function owner(fn, why) {
+    if (!isTill()) { fn(); return; }
+    var pass = api.lockKind && api.lockKind() === "pass";
+    var dlg = api.makeDialog("st-pos-own", false);
+    dlg.appendChild(el("div", "dlg-title", t(pass ? "ownTPass" : "ownT")));
+    dlg.appendChild(el("p", "dlg-sub", why || t(pass ? "ownHintPass" : "ownHint")));
+    var inp = el("input");
+    inp.type = "password";
+    inp.autocomplete = "off";
+    inp.id = "st-pos-own-in";
+    if (!pass) inp.inputMode = "numeric";
+    inp.setAttribute("aria-label", t(pass ? "ownTPass" : "ownT"));
+    dlg.appendChild(inp);
+    var msg = el("p", "hint warn");
+    msg.setAttribute("role", "status");
+    msg.hidden = true;
+    dlg.appendChild(msg);
+    var acts = el("div", "dlg-actions");
+    var busy = false;
+    function go() {
+      if (busy) return;
+      var v = inp.value;
+      inp.value = "";
+      if (!v) { inp.focus(); return; }
+      busy = true;
+      api.ownerCheck(v).then(function (r) {
+        busy = false;
+        if (r && r.ok) { dlg.close(); fn(); return; }
+        msg.textContent = r && r.code === "wait" ? t("ownWait", { s: Math.ceil((r.wait || 0) / 1000) }) : (r && r.code === "off" ? t("ownOff") : t("ownWrong"));
+        msg.hidden = false;
+        inp.focus();
+      });
+    }
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); go(); } });
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    var okB = btn(t("ownOk"), "primary", go);
+    okB.id = "st-pos-own-ok";
+    acts.appendChild(okB);
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    inp.focus();
+  }
   function plLabel(id) {
     if (!id) return t("retail");
     var pl = (D().pls || []).filter(function (x) { return x.id === id; })[0];
@@ -231,13 +294,21 @@
       top.appendChild(whSel);
     }
     var tools = el("div", "pos-tools");
+    var till = isTill();
     tools.appendChild(btn(t("evBtn"), "", function () {
-      evDialog(function () { fillEv(); fillPl(); if (whSel) { /* a new stand warehouse shows on the next open */ } paint(); });
+      owner(function () { evDialog(function () { fillEv(); fillPl(); if (whSel) { /* a new stand warehouse shows on the next open */ } paint(); }); });
     }));
     tools.appendChild(btn(t("zrep"), "", function () { zDialog(api.todayYmd()); }));
-    tools.appendChild(btn(t("lists"), "", function () { plDialog(function () { fillPl(); paint(); }); }));
-    tools.appendChild(btn(t("setup"), "", setupDialog));
-    tools.appendChild(btn(t("close"), "", function () { dlg.close(); }));
+    tools.appendChild(btn(t("lists"), "", function () { owner(function () { plDialog(function () { fillPl(); paint(); }); }); }));
+    tools.appendChild(btn(t("setup"), "", function () { owner(setupDialog); }));
+    if (!till) tools.appendChild(btn(t("close"), "", function () { dlg.close(); }));
+    else {
+      // TILL-1: the till never closes; Esc and a tap outside do nothing
+      dlg.classList.add("pos-till");
+      dlg.addEventListener("cancel", function (e) { e.preventDefault(); });
+      dlg.addEventListener("click", function (e) { if (e.target === dlg) e.stopImmediatePropagation(); }, true);
+      dlg.addEventListener("close", function () { setTimeout(function () { if (isTill() && api.reopen) api.reopen(); }, 0); });
+    }
     top.appendChild(tools);
     dlg.appendChild(top);
 
@@ -534,6 +605,7 @@
       else { msg.textContent = t("unknown", { c: q }); msg.hidden = false; paintGrid(); }
     });
 
+    var capOk = false;
     function charge(force) {
       if (!cart.length) return;
       var lines = cartLines();
@@ -548,7 +620,10 @@
       }
       var tt = P.totals(lines);
       var cap = prefs().dmax, pc = P.discPct(lines);
-      if (cap && pc > cap) { msg.textContent = t("discMax", { p: cap, q: pc }); msg.hidden = false; return; }
+      if (cap && pc > cap && !capOk) {
+        if (isTill()) { owner(function () { capOk = true; charge(true); capOk = false; }, t("ownDisc", { p: pc })); return; }
+        msg.textContent = t("discMax", { p: cap, q: pc }); msg.hidden = false; return;
+      }
       var pays = null;
       if (payMode === "split") {
         pays = splitParts(tt.gross);
@@ -570,7 +645,7 @@
       reset();
       paint();
       api.actionToast(t("sold", { n: saved.no, t: api.money(tt.gross) }), t("receipt"), function () { receiptDialog(saved.id); },
-        function () { api.voidSale(saved.id); paint(); });
+        function () { owner(function () { api.voidSale(saved.id); paint(); }); });
       receiptDialog(saved.id);
       scan.focus();
     }
@@ -1185,8 +1260,18 @@
         paint();
       });
     });
+    // F3: one income entry per closed day (Chris 2026-11-13: one per day)
+    var budB = api.budgetReady && api.budgetReady() && !isTill() ? btn(t("zBudget"), "", function () {
+      var rep = P.zReport(D(), dIn.value);
+      if (!rep.z) return;
+      var evs = P.evsOn(D(), rep.d).filter(function (e) { return P.evSales(D(), e.id).some(function (s) { return s.d === rep.d && s.v !== 1; }); });
+      var note = t("zBudgetN", { n: rep.z.no, d: api.fmtDay(rep.d, true) }) + (evs.length ? " · " + evs.map(function (e) { return e.name; }).join(", ") : "");
+      api.sendBudgetZ(rep.z, note);
+    }) : null;
+    if (budB) budB.id = "st-pos-zbud";
     acts.appendChild(printB);
     acts.appendChild(closeB);
+    if (budB) acts.appendChild(budB);
     acts.appendChild(btn(t("close"), "", function () { dlg.close(); }));
     dlg.appendChild(acts);
     dIn.addEventListener("change", function () { if (api.core.isYmd(dIn.value)) { paint(); fillDrawer(); } });
@@ -1202,6 +1287,7 @@
       printB.disabled = !rep.n && !rep.voids;
       closeB.disabled = !rep.n;
       closeB.hidden = !!rep.z && !rep.after;
+      if (budB) budB.hidden = !rep.z || !(rep.z.g > 0);
       if (rep.z) {
         box.appendChild(el("p", "hint", t("zClosed", { t: hm(rep.z.at), n: rep.z.no, g: api.money(rep.z.g) })));
         if (rep.after) box.appendChild(el("p", "hint warn", t("zAfter", { n: rep.after })));
@@ -1241,7 +1327,7 @@
         var ra = el("span", "pos-sale-acts");
         ra.appendChild(btn(t("reprint"), "", function () { receiptDialog(s.id); }));
         if (s.v !== 1) ra.appendChild(btn(t("void"), "danger", function () {
-          api.confirm(t("voidQ", { n: s.no }), t("void"), true, function () { api.voidSale(s.id); api.toast(t("pos.voided")); paint(); });
+          owner(function () { api.confirm(t("voidQ", { n: s.no }), t("void"), true, function () { api.voidSale(s.id); api.toast(t("pos.voided")); paint(); }); });
         }));
         li.appendChild(ra);
         ul.appendChild(li);
@@ -1429,6 +1515,31 @@
     dmax.value = pp.dmax ? String(pp.dmax) : "";
     dlg.appendChild(api.field(t("stDmax"), dmax, "st-pos-dmax"));
     dlg.appendChild(el("p", "dlg-sub", t("stDmaxHint")));
+    // F3 helper device (TILL-1)
+    if (api.tillTurn) {
+      var tb = el("div", "pos-tillset");
+      tb.appendChild(el("div", "pos-h", t("tillT")));
+      tb.appendChild(el("p", "dlg-sub", t("tillHint")));
+      if (api.tillSet()) {
+        tb.appendChild(el("p", "dlg-sub pos-tillis", t("tillIs")));
+        var stopB = btn(t("tillStop"), "", function () {
+          dlg.close();
+          if (api.tillTurn(false)) api.toast(t("tillStopped"));
+        });
+        stopB.id = "st-pos-till-off";
+        tb.appendChild(stopB);
+      } else if (!api.lockKind()) {
+        tb.appendChild(el("p", "hint warn", t("tillNeedLock")));
+        if (api.openLockSettings) tb.appendChild(btn(t("tillLock"), "", function () { dlg.close(); api.openLockSettings(); }));
+      } else {
+        var goB = btn(t("tillGo"), "", function () {
+          api.confirm(t("tillQ"), t("tillGo"), false, function () { dlg.close(); api.tillTurn(true); });
+        });
+        goB.id = "st-pos-till-on";
+        tb.appendChild(goB);
+      }
+      dlg.appendChild(tb);
+    }
     var acts = el("div", "dlg-actions");
     acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
     acts.appendChild(btn(t("save"), "primary", function () {
