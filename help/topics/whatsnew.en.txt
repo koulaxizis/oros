@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.12.00
+- **Products made to order in Stock.** In a product's editor, turn on `On demand (made to order, no stock count)`. Such a product has no count: it never runs out, never shows as low and has no stock value, and the list and the till say `On demand`. The till sells it without the below-zero warning. Your WooCommerce shop's quantity is never read into it or sent back, so you set this in Stock yourself. Its sales still count in your sales reports.
+
 ## Version 7.11.00
 - **Link documents to the items they belong to.** In Files › Documents, `Link to…` links a document to an entry in Budget, an invoice, a vehicle or renewal in Garage, a record in Health or a customer in CRM. Tap the link to open that item; the item in turn shows its `Documents`, and a tap there brings you back. A document linked to Health is private, like medical ones. See [Files](app:files).
 
