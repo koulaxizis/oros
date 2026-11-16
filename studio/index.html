@@ -197,6 +197,23 @@
       <button type="button" id="book-rt-use" class="chip" data-i18n="bk.rtUse">Use the selected clip as room tone</button>
       <button type="button" id="book-fill" class="chip"></button>
     </div>
+    <h3 data-i18n="bk.deliver">Check and deliver</h3>
+    <p id="book-check-state" class="hint" aria-live="polite"></p>
+    <div class="dlg-actions spread">
+      <button type="button" id="book-check" class="chip" data-i18n="bk.check">Check all</button>
+      <button type="button" id="book-norm" class="chip" data-i18n="bk.norm">Normalise all</button>
+      <button type="button" id="book-unnorm" class="chip" data-i18n="bk.unnorm" hidden>Remove normalising</button>
+    </div>
+    <p class="hint small" data-i18n="bk.normHint"></p>
+    <p id="book-sample-state" class="hint small"></p>
+    <div class="dlg-actions spread">
+      <button type="button" id="book-sample" class="chip" data-i18n="bk.sample">Use this chapter's loop as the retail sample</button>
+    </div>
+    <label class="field" for="book-kbps" data-i18n="bk.kbps">MP3 for the book</label>
+    <select id="book-kbps"></select>
+    <div class="dlg-actions spread">
+      <button type="button" id="book-export" class="chip primary" data-i18n="bk.export">Export the book</button>
+    </div>
     <div class="dlg-actions">
       <button type="button" id="book-del" class="chip danger" data-i18n="bk.del">Delete book</button>
     </div>
