@@ -493,6 +493,12 @@
       });
       cb2.appendChild(sl);
       cb2.appendChild(el("p", "hint", t("sb.money")));
+      if (s.smartbar.looks) {
+        var lsel = select(s.smartbar.looks.map(function (v) { return { value: v, label: t("sb.look." + (v || "classic")) }; }),
+          s.smartbar.look || "", "smartbar-look", function (v) { set("smartbar-look", v); });
+        cb2.appendChild(row(t("sb.look"), lsel, { forId: lsel.id }));
+        cb2.appendChild(el("p", "hint", t("sb.look.hint")));
+      }
       host.appendChild(cb2);
     }
 

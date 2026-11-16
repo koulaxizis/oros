@@ -150,3 +150,24 @@ test("shell strings for every chip in EN, EL and DE", () => {
     assert.ok(keys.indexOf(k) !== -1 || k === "sb.k.", "string " + k + " is listed");
   });
 });
+
+test("SB3 looks: kept only when known, never under high contrast, wired to Settings", () => {
+  assert.deepStrictEqual(M.parse('{"v":1,"list":["event"],"look":"glass"}'), { v: 1, list: ["event"], look: "glass" });
+  assert.deepStrictEqual(M.parse('{"v":1,"list":[],"look":"neon"}'), { v: 1, list: [] });
+  assert.deepStrictEqual(M.parse('{"v":1,"list":[],"look":""}'), { v: 1, list: [] });
+  assert.strictEqual(M.lookOf(null), "");
+  assert.strictEqual(M.lookOf({ v: 1, list: [], look: "midnight" }), "midnight");
+  assert.deepStrictEqual(M.LOOKS, ["", "glass", "midnight", "solid"]);
+  const src = read("smartbar.js");
+  // every look rule is scoped away from high contrast
+  src.split("\n").filter((l) => /html\[data-oros-bar/.test(l) && !/prefers-reduced-transparency/.test(l))
+    .forEach((l) => assert.match(l, /:not\(\[data-oros-contrast=\\"high\\"\]\)/, l));
+  assert.match(src, /if \(lookOf\(stored\(\)\)\) \{ injectCss\(\); applyLook\(\); \}/);
+  assert.match(read("shell.js"), /name === "smartbar-look"\) \{[\s\S]{0,200}setLook\(String\(value \|\| ""\)\)/);
+  const set = read("settings/settings.js"), core = read("settings/core.js"), de = read("i18n/de/settings.js");
+  assert.match(set, /set\("smartbar-look", v\)/);
+  ["sb.look", "sb.look.classic", "sb.look.glass", "sb.look.midnight", "sb.look.solid", "sb.look.hint"].forEach((k) => {
+    assert.strictEqual(core.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
+    assert.ok(de.includes('"' + k + '":'), k + " in DE");
+  });
+});

@@ -392,7 +392,7 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
 .sb-list { display: flex; flex-direction: column; gap: 2px; }
 .sb-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .sb-line .check { flex: 1 1 0; }
-.sb-mv { min-width: 44px; min-height: 40px; padding: 0 10px; }
+.sb-line .btn.sb-mv { flex: 0 0 44px; width: 44px; min-width: 44px; min-height: 40px; padding: 0; }
 .sb-mv:disabled { opacity: .35; cursor: default; }
 
 /* Menu apps: count, find field, one heading per category */
