@@ -11987,3 +11987,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **What:** merge 8 of the app merges Chris approved (2026-11-13, «Ναι, μόνο Dice + Wheel»; Oracle stays its own app): Dice & Coin is renamed Chance / «Τύχη» and gets a second tab, Wheel, with everything Wheel of Fate had (saved wheels, weights, history), lazy loaded. The old id `wheel` is an alias to `dice` `{tab: "wheel"}`, so links, shortcuts and the menu search open that tab. The slice `wheel` and `oros-wheel-data` stay as they were; Chance registers the slice at boot. Wheel of Fate's help is a section of Chance's help (EN, EL, DE).
 - **Files:** apps.json (alias, Wheel of Fate removed from apps), dice/ (tabs, slice, help), wheel/view.js + view.css (lazy), wheel/core.js, wheel/index.html (forward), sw.js (old page files out, view files in), shell.js (APP_VERSION), i18n, Bible (Part III row, Part VIII aliases).
 - **Tests:** full `node --test tests/*.test.js`.
+
+### 2026-11-16 — 7.11.00 — Documents in Files, wave 4: links to Budget, Invoices, Garage, Health, CRM (DOCS-1, #1053)
+
+- **What:** the document dialog's `Linked to` list and `Link to…` picker (an app, then its items from the universal search), and a read-only `Documents` list in the linked item (Budget entry, Invoices viewer, Garage vehicle and renewal, Health appointment, vaccine and document, CRM customer) that opens the document in Files. A link to Health, Cycle or Baby keeps the document private.
+- **Files:** files/docs-links.js (new, loaded by five app pages), files/docs.js + docs.css, budget/, invoices/, garage/, health/, crm/ (index.html + attach points), sw.js (1 file), shell.js (APP_VERSION), help EN/EL/DE, i18n, Bible (Parts II, IX).
+- **Tests:** tests/files-docs-due.test.js (W4 part); full `node --test tests/*.test.js`.
