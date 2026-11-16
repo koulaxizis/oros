@@ -993,6 +993,7 @@
 
   // orOS Gate (gate.js, BR-GATE): Claude reads the apps set to Read,
   // through this device while orOS is open. Off by default, per device.
+  var gateHost = null, gateHostAsked = false, gateHostBusy = false;   // GATE-HOST: this computer's background Gate (orOS Portable / USB)
   var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateChgOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "", gateNoSync = false, gateSens = "", gateFind = "";
   // The join code as a QR (qr/qr-encode.js): an <svg> of dark squares on white.
   function gateQr(text) {
@@ -1303,6 +1304,31 @@
             })));
         }
         c.appendChild(fb);
+      }
+      // GATE-HOST (PEND-1 wave 2): an installed orOS Portable or orOS USB
+      // keeps the Gate open in the background while every window is closed.
+      if (G.host && typeof G.host.state === "function") {
+        if (!gateHostAsked) {
+          gateHostAsked = true;
+          G.host.state().then(function (h) { gateHost = h; if (h) render(); });
+        }
+        if (gateHost && gateHost.can) {
+          var strict = strictLevel();
+          var hl = el("div", "pair");
+          var usb = !gateHost.bg;                       // orOS USB: only the lock rule (its window never closes)
+          hl.appendChild(el("span", "pair-label", t(usb ? "gt.host.usb" : "gt.host")));
+          var hs = switchBtn(!!gateHost.on && !strict, "gt.host", function (v) {
+            if (gateHostBusy) return;
+            gateHostBusy = true;
+            G.host.set(v).then(function (h) { gateHostBusy = false; if (h) gateHost = h; else gateNote = "gt.fail"; render(); });
+          }, t(usb ? "gt.host.usb" : "gt.host"));
+          if (strict) hs.disabled = true;
+          hl.appendChild(hs);
+          c.appendChild(hl);
+          c.appendChild(el("div", "hint", usb
+            ? t("gt.host.usb.hint") + " " + (strict ? t("gt.host.strict") : gateHost.on ? t("gt.host.usb.on") : t("gt.host.usb.off"))
+            : t("gt.host.hint") + " " + (strict ? t("gt.host.strict") : gateHost.on ? (gateHost.running ? t("gt.host.running") : t("gt.host.waiting")) : t("gt.host.off"))));
+        }
       }
       var writers = G.apps().filter(function (a) { return a.write; }).map(function (a) { return a.name; });
       if (writers.length) {
