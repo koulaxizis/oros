@@ -12532,8 +12532,8 @@
     cmdWireFrame(f);
     extWireFrame(f);
     a11yWireFrame(f);
-    if (window.orosClip) window.orosClip.wire(f);   // CLIP-1
     ovWireFrame(f);
+    if (window.orosClip) window.orosClip.wire(f);   // CLIP-1
     return f;
   }
   function mtDrop(el) {
