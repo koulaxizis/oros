@@ -31,7 +31,7 @@
       favs: "Favourites", all: "All bookmarks", none: "Star a bookmark in Bookmarks and it shows here.",
       locked: "With the screen lock on, your favourites stay inside orOS.",
       tor: "New Tor window", torHint: "opens Tor Browser", oros: "Open orOS",
-      vpn: "VPN extension", vpnHint: "how to add one"
+      vpn: "VPN extension", vpnHint: "how to add one", picks: "Suggested VPNs:", paid: "paid only"
     },
     el: {
       title: "Αρχική", morning: "Καλημέρα", afternoon: "Καλό απόγευμα", evening: "Καλησπέρα",
@@ -40,7 +40,7 @@
       favs: "Αγαπημένες", all: "Όλοι οι σελιδοδείκτες", none: "Βάλε αστέρι σε έναν σελιδοδείκτη στους Σελιδοδείκτες και θα εμφανιστεί εδώ.",
       locked: "Με το κλείδωμα οθόνης ενεργό, οι αγαπημένες σου μένουν μέσα στο orOS.",
       tor: "Νέο παράθυρο Tor", torHint: "ανοίγει τον Tor Browser", oros: "Άνοιγμα orOS",
-      vpn: "Πρόσθετο VPN", vpnHint: "πώς το βάζεις"
+      vpn: "Πρόσθετο VPN", vpnHint: "πώς το βάζεις", picks: "Προτεινόμενα VPN:", paid: "μόνο επί πληρωμή"
     },
     de: {
       title: "Start", morning: "Guten Morgen", afternoon: "Guten Tag", evening: "Guten Abend",
@@ -49,7 +49,7 @@
       favs: "Favoriten", all: "Alle Lesezeichen", none: "Markiere ein Lesezeichen in Lesezeichen mit einem Stern, dann erscheint es hier.",
       locked: "Mit aktiver Bildschirmsperre bleiben deine Favoriten in orOS.",
       tor: "Neues Tor-Fenster", torHint: "öffnet den Tor Browser", oros: "orOS öffnen",
-      vpn: "VPN-Erweiterung", vpnHint: "so fügst du eine hinzu"
+      vpn: "VPN-Erweiterung", vpnHint: "so fügst du eine hinzu", picks: "Empfohlene VPNs:", paid: "nur kostenpflichtig"
     }
   };
   var LOCALE = { en: "en-GB", el: "el-GR", de: "de-DE" };
@@ -133,7 +133,19 @@
     return g[0] + (l === "el" ? g[1] : "");
   }
 
-  var api = { target: target, favourites: favourites, greeting: greeting, vpnGuide: vpnGuide, STR: STR };
+  // Suggested VPN providers (Chris 2026-11-16): a free plan and an
+  // independent no-logs audit; PIA has the audit but no free plan. Each
+  // user signs up with their own account; the links go to the providers'
+  // own sites, which link their genuine store pages.
+  var VPN_PICKS = [
+    { name: "Proton VPN", url: "https://protonvpn.com/" },
+    { name: "Windscribe", url: "https://windscribe.com/" },
+    { name: "hide.me", url: "https://hide.me/" },
+    { name: "TunnelBear", url: "https://www.tunnelbear.com/" },
+    { name: "PIA", url: "https://www.privateinternetaccess.com/", paid: true }
+  ];
+
+  var api = { target: target, favourites: favourites, greeting: greeting, vpnGuide: vpnGuide, VPN_PICKS: VPN_PICKS, STR: STR };
   if (typeof module !== "undefined" && module.exports) { module.exports = api; return; }
 
   var SVG_SEARCH = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
@@ -224,6 +236,17 @@
     vh.textContent = t("vpnHint");
     vl.appendChild(vt);
     vl.appendChild(vh);
+    var pk = $("vpn-picks");
+    pk.textContent = t("picks") + " ";
+    VPN_PICKS.forEach(function (v, i) {
+      if (i) pk.appendChild(document.createTextNode(" · "));
+      var a = document.createElement("a");
+      a.href = v.url;
+      a.rel = "noopener noreferrer";
+      a.textContent = v.name;
+      pk.appendChild(a);
+      if (v.paid) pk.appendChild(document.createTextNode(" (" + t("paid") + ")"));
+    });
 
     $("find").addEventListener("submit", function (e) {
       e.preventDefault();
