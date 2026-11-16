@@ -138,3 +138,12 @@ test("wiring: events, pack, bring back, report and drawer in the till; strings E
   });
   assert.deepEqual((js.match(/innerHTML\s*=\s*[^;]+;/g) || []).filter((x) => !/innerHTML\s*=\s*"";/.test(x)), []);
 });
+
+test("F3: a closed day goes to Budget as one income entry (BR-B1 prefill, only from the button)", () => {
+  const js = read("stock/pos.js"), st = read("stock/stock.js"), de = read("i18n/de/stock.js");
+  assert.match(st, /sendBudgetZ: function \(z, note\)/);
+  assert.match(st, /__orosOpenBudgetNew\(\{ k: "i", a: z\.g, d: z\.d, n: String\(note \|\| ""\)\.slice\(0, 140\), c: "i-other", src: "stock" \}\)/);
+  assert.match(js, /api\.sendBudgetZ\(rep\.z, note\)/);
+  assert.match(js, /budB\.hidden = !rep\.z \|\| !\(rep\.z\.g > 0\)/, "only for a closed day with sales");
+  ["zBudget", "zBudgetN"].forEach((key) => { assert.ok(js.indexOf(key + ": \"") >= 0); assert.ok(de.indexOf('"' + key + '":') >= 0); });
+});

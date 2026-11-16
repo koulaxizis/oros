@@ -130,6 +130,11 @@
       "doc.all.none":     "Every text is already read",
       "doc.auto.on":      "Read the text of new documents: on (this device)",
       "doc.auto.off":     "Read the text of new documents: off (this device)",
+      "doc.remind.at":    "Reminders of dates: from {h} (this device)",
+      "doc.remind.off":   "Reminders of dates: off (this device)",
+      "doc.remind.title": "Reminders of dates",
+      "doc.remind.text":  "orOS reminds you 30 days and 7 days before a document expires, on the day it expires, and when its keep-until date has passed. Nothing is ever deleted. Remind me from:",
+      "doc.remind.never": "Never on this device",
       "doc.inbox":        "{n} added from Scanner & PDF",
       "doc.inboxOne":     "Added from Scanner & PDF",
       "doc.lostFile":    "The file is not on this disk any more. If it was moved, Find moved files looks for it.",
@@ -289,6 +294,11 @@
       "doc.all.none":     "Όλα τα κείμενα έχουν ήδη διαβαστεί",
       "doc.auto.on":      "Ανάγνωση κειμένου νέων εγγράφων: ναι (αυτή η συσκευή)",
       "doc.auto.off":     "Ανάγνωση κειμένου νέων εγγράφων: όχι (αυτή η συσκευή)",
+      "doc.remind.at":    "Υπενθυμίσεις ημερομηνιών: από τις {h} (αυτή η συσκευή)",
+      "doc.remind.off":   "Υπενθυμίσεις ημερομηνιών: όχι (αυτή η συσκευή)",
+      "doc.remind.title": "Υπενθυμίσεις ημερομηνιών",
+      "doc.remind.text":  "Το orOS σού θυμίζει 30 και 7 μέρες πριν λήξει ένα έγγραφο, την ημέρα που λήγει, και όταν περάσει η ημερομηνία «Κράτα έως». Τίποτα δεν διαγράφεται ποτέ. Θύμισέ μου από τις:",
+      "doc.remind.never": "Ποτέ σε αυτή τη συσκευή",
       "doc.inbox":        "Προστέθηκαν {n} από το Scanner & PDF",
       "doc.inboxOne":     "Προστέθηκε από το Scanner & PDF",
       "doc.lostFile":    "Το αρχείο δεν είναι πια στον δίσκο. Αν μετακινήθηκε, η «Εύρεση αρχείων που μετακινήθηκαν» το ψάχνει.",
@@ -987,8 +997,9 @@
     m.setAttribute("role", "menu");
     [[qJob ? "doc.all.stop" : "doc.all.read", readAll],
      [autoRead() ? "doc.auto.on" : "doc.auto.off", function () { lsSet(AUTO_LS, autoRead() ? null : "1"); toast(t(autoRead() ? "doc.auto.on" : "doc.auto.off")); }],
+     [remindLabel(), openRemind, true],
      ["doc.export", exportDocs], ["doc.import", importArchive], ["doc.manage", openManage], ["doc.find", function () { relocate(false); }]].forEach(function (it) {
-      var b = textBtn("", t(it[0]), function () { close(); it[1](); });
+      var b = textBtn("", it[2] ? it[0] : t(it[0]), function () { close(); it[1](); });
       b.setAttribute("role", "menuitem");
       m.appendChild(b);
     });
@@ -1009,6 +1020,48 @@
       document.addEventListener("click", outside, true);
       document.addEventListener("keydown", key, true);
     }, 0);
+  }
+
+  // ---------- reminders of dates (W3) ----------
+  // The hour lives in the device-local oros-files-docs-prefs that the
+  // shell reminder reads (files/docs-due.js readPrefs: default 09:00).
+  function due() { return window.OrosDocsDue || null; }
+  function remindPrefs() {
+    var D = due(), o = null;
+    try { o = JSON.parse(lsGet(D ? D.PREFS_KEY : "oros-files-docs-prefs")); } catch (e) { o = null; }
+    return D ? D.readPrefs(o) : { remind: 9 };
+  }
+  function hh(h) { return (h < 10 ? "0" : "") + h + ":00"; }
+  function remindLabel() {
+    var r = remindPrefs().remind;
+    return r < 0 ? t("doc.remind.off") : t("doc.remind.at", { h: hh(r) });
+  }
+  function openRemind() {
+    var d = modal("doc-remind");
+    var f = el("form");
+    f.appendChild(el("h3", "", t("doc.remind.title")));
+    var lab = el("label", "", t("doc.remind.text"));
+    var sel = el("select");
+    sel.appendChild(new Option(t("doc.remind.never"), "-1"));
+    for (var h = 0; h < 24; h++) sel.appendChild(new Option(hh(h), String(h)));
+    sel.value = String(remindPrefs().remind);
+    lab.appendChild(sel);
+    f.appendChild(lab);
+    var row = el("menu", "dlg-row");
+    row.appendChild(textBtn("", t("doc.cancel"), function () { d.close(); }));
+    var ok = el("button", "primary", t("doc.save")); ok.type = "submit";
+    row.appendChild(ok);
+    f.appendChild(row);
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var D = due();
+      lsSet(D ? D.PREFS_KEY : "oros-files-docs-prefs", JSON.stringify({ remind: Number(sel.value) }));
+      d.close();
+      toast(remindLabel());
+    });
+    d.appendChild(f);
+    d.showModal();
+    sel.focus();
   }
 
   // ---------- dialogs (centered, R32; no native dialogs, R14) ----------
@@ -1659,6 +1712,8 @@
     add: add,
     carry: carry,
     open: function (id) { if (!active) enter(); openDoc(id); },
+    // Today, Calendar and the reminder (W3): one document, or a list.
+    show: function (flag) { q.flag = flag === "soon" || flag === "keep" ? flag : ""; if (!active) enter(); else paint(); },
     isDocument: function (p, h) { return CORE.isDocument(state, p, h); },
     t: t
   };

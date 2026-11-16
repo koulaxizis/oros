@@ -3,7 +3,7 @@ Base keeps records with structure, like a small database: a catalogue of your bo
 
 ## Getting started
 - Press `New base` and pick a template, or start with a blank base.
-- `Import CSV` turns a CSV file into a new base with one table. Base guesses the type of each column (number, date, choice, email…); check them in the column headers.
+- `Import` turns files into a new base: CSV, Excel (.xlsx, .xls) and OpenDocument (.ods) files, or an orOS base file (.orosbase). Base guesses the type of each column (number, date, choice, email…); check them in the column headers.
 - A base can hold many tables. Use the `+` next to the table names to add one.
 
 ## Fields
@@ -37,9 +37,16 @@ Base keeps records with structure, like a small database: a catalogue of your bo
 - The search box looks in the shown fields of this view only.
 - A new record added in a filtered view takes the values of the "is" conditions, so it stays in the view.
 
+## Import
+- Pick several files at once to make one base with several tables, like the CSV files Airtable exports (one per table). Each sheet of a workbook becomes a table too.
+- A column whose cells are the names of records in another table of the same import becomes a link between the two tables. When both tables have such a column, they become the two sides of one link. Airtable's attachments come in as text with their web addresses.
+- Base menu (`⋯`) › Import tables adds the tables to the open base instead.
+- In [Spreadsheet](app:spreadsheet), Send to an app › Base takes the selected cells (or the whole sheet) as a new table. You pick the base before anything is added.
+
 ## Export
 - Table menu (`⋯`) › Export this view as CSV saves the records and fields you see, in that order.
 - Open this view in Spreadsheet sends them to [Spreadsheet](app:spreadsheet) as a new sheet (up to 499 records).
+- Base menu (`⋯`) › Save as orOS file (.orosbase) saves the whole base, with its tables, views and links, as one file for a copy or another device. Opening it adds what is missing and never deletes; records already here stay as they are unless you tick `Update with newer versions`. The file also holds a CSV of each table (in `preview/`) and is not encrypted.
 
 ## Your data
 - Everything stays on this device and is saved as you go. With orOS sync on in [Settings](app:settings), your bases follow you to your other devices, encrypted.

@@ -27,6 +27,7 @@
       "icon": "files",
       "url": "files/",
       "search": "search.js",
+      "today": ["docs-due.js", "today.js"],
       "type": "internal"
     },
     {

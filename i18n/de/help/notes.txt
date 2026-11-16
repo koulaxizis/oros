@@ -22,6 +22,11 @@ Klicke mit rechts auf eine Seite im Baum, halte sie auf einem Touchscreen gedrü
 
 Am Computer kannst du eine Seite im Baum auch ziehen und auf einer anderen Seite ablegen, um sie zur Unterseite zu machen, oder auf einer freien Fläche, um sie auf die oberste Ebene zu verschieben.
 
+### Seiten, die sich selbst löschen
+- Im Menü einer Seite stellt `Selbst löschen…` ein, dass sie in 1 Stunde, 1 Tag, 7 Tagen oder 30 Tagen verschwindet. Der Editor zeigt die restliche Zeit; `Behalten (abbrechen)` nimmt es zurück.
+- Ist es so weit, wird die Seite auf jedem Gerät gelöscht, sobald orOS dort zum ersten Mal läuft, auch wenn Notizen geschlossen ist. Sie wartet nicht im Papierkorb. Ihre Unterseiten rücken eine Ebene hoch und bleiben.
+- Ein ausgeschaltetes Gerät behält die Seite, bis es eingeschaltet wird; ein vorher gemachter Export oder ein Backup behält eine Kopie. Siehe [Sensible Arbeit und Quellen](help:t/sensitive).
+
 ## Formatierung und Vorschau
 Seiten werden als reiner Text gespeichert, daher ändert sich an deinen Notizen nichts, wenn du die Ansicht wechselst. In der `Vorschau` wird dieses Markdown formatiert angezeigt:
 - `# Überschrift`, `## Kleinere Überschrift` (bis zu sechs Ebenen).
