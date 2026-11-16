@@ -72,9 +72,11 @@ test("wiring: Ctrl+Alt+Shift+. (code Period), page, Quick settings, field insert
   assert.match(shell, /\{ id: "emoji", code: "Period", label: "sc\.desc\.emoji"/);
   assert.match(shell, /code\.indexOf\("Key"\) !== 0 && code !== "Period"/);
   assert.match(shell, /if \(scCode\(SC_DEFS\[i\]\) === code\)/);
-  assert.match(shell, /window\.orosEmoji\.attach\(/);
-  assert.ok(html.indexOf('src="emoji.js') > html.indexOf('src="cliphist.js'));
-  assert.ok(html.indexOf('src="emoji.js') < html.indexOf('src="shell.js'));
+  // Not a start-up script: the shell's stand-in loads it on the first open.
+  assert.ok(!html.includes("emoji.js"), "emoji.js is not a start-up script");
+  assert.match(shell, /sc\.src = "emoji\.js\?v=" \+ encodeURIComponent\(APP_VERSION\)/);
+  assert.match(shell, /api\.attach\(emoHost\)/);
+  assert.match(shell, /if \(!window\.orosEmoji\) window\.orosEmoji = emoStub;/);
   assert.ok(!html.includes("emoji/data.js"), "the list loads on first open, not at boot");
   assert.match(read("qsettings.js"), /root\.orosEmoji\.open\(\)/);
   const clip = read("cliphist.js");

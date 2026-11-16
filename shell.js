@@ -15735,13 +15735,46 @@
     window.orosClip.onChange(settingsNotify);
   }
   // Emoji picker (emoji.js, CLIP-1 W3): Ctrl+Alt+Shift+. and Quick settings.
-  if (window.orosEmoji) {
-    window.orosEmoji.attach({
+  // Not a start-up script (the quality gate's boot budget): this stand-in
+  // answers as window.orosEmoji until the first open, which loads emoji.js
+  // (precached), attaches it and opens it; emoji.js then replaces it.
+  (function () {
+    var emoHost = {
       lang: function () { return state.lang; },
       version: function () { return APP_VERSION; },
       toast: function (kind, msg) { scToast(kind, msg); }
-    });
-  }
+    };
+    var emoLoading = null;
+    function emoLoad() {
+      var real = window.orosEmoji;
+      if (real && real !== emoStub) return Promise.resolve(real);
+      if (!emoLoading) emoLoading = new Promise(function (res, rej) {
+        var sc = document.createElement("script");
+        sc.src = "emoji.js?v=" + encodeURIComponent(APP_VERSION);
+        sc.onload = function () {
+          var api = window.orosEmoji;
+          if (api && api !== emoStub && api.attach) { api.attach(emoHost); res(api); }
+          else { emoLoading = null; window.orosEmoji = emoStub; rej(new Error("emoji.js")); }
+        };
+        sc.onerror = function () { emoLoading = null; sc.remove(); rej(new Error("emoji.js")); };
+        document.head.appendChild(sc);
+      });
+      return emoLoading;
+    }
+    function emoThen(fn) {
+      emoLoad().then(fn, function () { scToast("error", window.t("emo.fail")); });
+    }
+    var emoStub = {
+      lazy: true,
+      open: function () { emoThen(function (api) { api.open(); }); },
+      toggle: function () { emoThen(function (api) { api.toggle(); }); },
+      close: function () {},
+      isOpen: function () { return false; },
+      refresh: function () {}
+    };
+    if (!window.orosEmoji) window.orosEmoji = emoStub;
+    else window.orosEmoji.attach(emoHost);
+  })();
   // Night Light (nightlight.js, a shell component like qsettings.js):
   // the warm filter over the whole shell. Sunset and sunrise come from
   // the top-bar weather's place (wxLoc). A single app gets it too.
