@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.26.01
+- **Shared links that arrive damaged.** A song, list or note someone sent you now opens even when a chat app added a space, a line break or a full stop to its link. If part of the link went missing on the way, the page says so plainly and shows how much arrived, so the sender can send it again.
+
 ## Version 7.26.00
 - **Automations follow your day and your figures.** New "When": some minutes before an event of your day, when today's till sales reach an amount, when this month's spending passes one. Two new steps happen by themselves: `Pause sounds` and `Play a sound`. Try the ready-made `Quiet before a meeting`. See [Automations](app:automations).
 - **Looks for the top bar.** In `Settings › Appearance › Top bar`, `Look of the bar`: Glass, Midnight or Solid float the bar as a rounded strip; Classic stays as it was.
