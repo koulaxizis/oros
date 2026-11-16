@@ -2012,6 +2012,8 @@
       if (res) { save(); render(); showToast(t(res === "added" ? "toast.added" : "toast.saved")); }
     });
     dlg.appendChild(form);
+    // Files › Documents linked here (DOCS-1 W4, read-only)
+    if (v && window.OrosDocsLinks) window.OrosDocsLinks.attach(form, "garage", function (x) { return x === v.id; });
     showDialog(dlg);
     if (!v) grid.querySelector(".on").focus(); else name.focus();
   }
@@ -2528,6 +2530,8 @@
       if (res) { save(); render(); showToast(t(res === "added" ? "toast.added" : "toast.saved")); }
     });
     dlg.appendChild(form);
+    // Files › Documents linked here (DOCS-1 W4, read-only)
+    if (r && window.OrosDocsLinks) window.OrosDocsLinks.attach(form, "garage", function (x) { return x === r.id; });
     showDialog(dlg);
     kind.focus();
   }

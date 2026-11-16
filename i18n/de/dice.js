@@ -48,7 +48,12 @@ orosPack("de", "dice", {
  "stats.empty": "Noch keine Daten",
  "stats.fumbles": "Patzer",
  "stats.title": "Statistik",
+ "tab.dice": "Würfel & Münze",
+ "tab.wheel": "Rad",
+ "tabs.aria": "Zufall",
  "toast.cleared": "Verlauf geleert",
  "toast.copyfail": "Kopieren fehlgeschlagen",
- "toast.share": "In die Zwischenablage kopiert"
+ "toast.share": "In die Zwischenablage kopiert",
+ "wheel.loadFail": "Das Rad konnte nicht geöffnet werden. Prüfe die Verbindung und versuche es noch einmal.",
+ "wheel.loading": "Das Rad wird geöffnet…"
 });

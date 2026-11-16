@@ -122,6 +122,7 @@ test("every receiver's app code takes the target it is sent", () => {
     bookmarks: ["bookmarks/bookmarks.js", ["t.add"]],
     wiki: ["wiki/wiki.js", ["target.addArticle", "o.t", "o.x"]],
     spreadsheet: ["spreadsheet/spreadsheet.js", ["tg.newSheet", "p.rows", "p.sum"]],
+    base: ["base/app.js", ["tg.newTable", "nt.rows", "nt.name"]],
     texttools: ["texttools/texttools.js", ["tg.text"]],
     labels: ["labels/labels.js", ["target.text"]],
     slides: ["slides/app.js", ["tg.outline", "tg.title"]],

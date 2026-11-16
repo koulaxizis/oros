@@ -173,6 +173,7 @@
     { app: "newsletter", accept: { "application/x-oros-newsletter": [".orosnewsletter"] } },
     { app: "storage", accept: { "application/x-oros-inventory": [".orosinventory"] } },
     { app: "flashcards", accept: { "application/x-oros-cards": [".oroscards"] } },
+    { app: "base", accept: { "application/x-oros-base": [".orosbase"] } },
     // Pad (text and code editor): code and config types no other app
     // reads (Pad is their only app), plus .txt / .md as one more choice
     // after Writer, Mind Map, Notes and Text Tools (Writer stays the

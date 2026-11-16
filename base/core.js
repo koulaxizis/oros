@@ -1527,7 +1527,192 @@
       return r;
     });
     out.recs = out.recs.concat(recs);
-    return { data: normalize(out), table: t.id, count: recs.length, skipped: skipped };
+    return { data: normalize(out), table: t.id, count: recs.length, skipped: skipped,
+             fields: fields.map(function (f) { return f.id; }), recIds: recs.map(function (r) { return r.id; }) };
+  }
+
+  // ---------- several tables at once (Airtable's CSVs, a workbook) ----------
+  // The names in one link cell: commas outside "quotes" split it, and
+  // parts that only make a known name together are joined again
+  // ("Smith, J."). known: { fold(name): [recId…] }. → [key…] | null
+  function splitNames(s, known) {
+    s = String(s == null ? "" : s).trim();
+    if (!s) return [];
+    if (has(known, fold(s))) return [fold(s)];
+    var parts = [], cur = "", q = false;
+    for (var i = 0; i < s.length; i++) {
+      var c = s[i];
+      if (c === '"') q = !q;
+      else if (c === "," && !q) { parts.push(cur.trim()); cur = ""; }
+      else cur += c;
+    }
+    parts.push(cur.trim());
+    parts = parts.filter(Boolean);
+    var out = [];
+    for (var a = 0; a < parts.length;) {
+      var hit = 0, key = "";
+      for (var b = parts.length; b > a && !hit; b--) {
+        var k1 = fold(parts.slice(a, b).join(", ")), k2 = fold(parts.slice(a, b).join(","));
+        if (has(known, k1)) { hit = b; key = k1; } else if (has(known, k2)) { hit = b; key = k2; }
+      }
+      if (!hit) return null;
+      out.push(key);
+      a = hit;
+    }
+    return out;
+  }
+  // How well column j of table A names records of table B: 0 = not a
+  // link; > 1 when the heading also names B (Airtable names a link
+  // field after the table it links to).
+  function linkScore(A, B, j) {
+    var n = 0, ok = 0;
+    if (!B.size || B.numeric) return 0;
+    A.body.forEach(function (r) {
+      var v = String(r[j] == null ? "" : r[j]).trim();
+      if (!v) return;
+      n++;
+      var p = splitNames(v, B.known);
+      if (p && p.length) ok++;
+    });
+    if (!n) return 0;
+    var hn = fold(A.heads[j] || ""), bn = fold(B.name);
+    var named = hn === bn || (hn.length > 2 && bn.length > 2 && (hn.indexOf(bn) === 0 || bn.indexOf(hn) === 0));
+    var r = ok / n;
+    if (named && r >= 0.8) return 1 + r;
+    return r === 1 && n >= 2 ? r : 0;
+  }
+  // Import `list` [{ name, rows }] as tables of one base. A column whose
+  // cells are the primary names of another table of the same import
+  // becomes a link field (with the other side's column as its partner,
+  // when that table has one back). → { data, tables, count, skipped, links }
+  function importTables(d, baseId, list, now, names) {
+    var out = normalize(d), made = [], count = 0, skipped = 0;
+    (list || []).forEach(function (x, i) {
+      if (!x || !Array.isArray(x.rows) || !x.rows.length) return;
+      var r = importRows(out, baseId, line(x.name, MAX_NAME) || ((names && names.table) || "Table") + " " + (i + 1), x.rows, now, names);
+      out = r.data;
+      count += r.count; skipped += r.skipped;
+      var heads = x.rows[0] || [], body = x.rows.slice(1, 1 + r.recIds.length), known = {}, size = 0, numeric = true;
+      body.forEach(function (row, k) {
+        var key = fold(String(row[0] == null ? "" : row[0]).trim());
+        if (!key) return;
+        if (!has(known, key)) { known[key] = []; size++; if (parseNum(key) === null) numeric = false; }
+        known[key].push(r.recIds[k]);
+      });
+      made.push({ id: r.table, name: line(x.name, MAX_NAME), heads: heads, body: body, fields: r.fields, recIds: r.recIds, known: known, size: size, numeric: numeric });
+    });
+    // candidates: (A, column, B), best first
+    var cands = [];
+    made.forEach(function (A) {
+      for (var j = 1; j < A.fields.length; j++) {
+        var best = null, score = 0;
+        made.forEach(function (B) {
+          if (B === A) return;
+          var s = linkScore(A, B, j);
+          if (s > score) { score = s; best = B; }
+        });
+        if (best) cands.push({ A: A, j: j, B: best, s: score });
+      }
+    });
+    cands.sort(function (x, y) { return y.s - x.s; });
+    var used = {}, links = {}, nl = 0, nLinkFields = 0;
+    function dropValues(tb, fid0) {
+      out.recs.forEach(function (rec) {
+        if (rec.t !== tb.id || !has(rec.v, fid0)) return;
+        delete rec.v[fid0]; delete rec.fm[fid0];
+      });
+    }
+    function addLinks(F, tb, j, other, invId) {
+      tb.body.forEach(function (row, k) {
+        var keys = splitNames(row[j], other.known) || [];
+        keys.forEach(function (key) {
+          var a = tb.recIds[k], b = other.known[key][0];
+          var o = F < invId ? { f: F, a: a, b: b } : { f: invId, a: b, b: a };
+          var id = linkId(o.f, o.a, o.b);
+          if (has(links, id) || out.links.length + nl >= MAX_LINKS) return;
+          links[id] = { id: id, m: now + nl, f: o.f, a: o.a, b: o.b };   // the order of the cells
+          nl++;
+        });
+      });
+    }
+    cands.forEach(function (c) {
+      var fa = c.A.fields[c.j];
+      if (used[fa]) return;
+      var back = null;
+      cands.forEach(function (x) { if (!back && x.A === c.B && x.B === c.A && !used[x.A.fields[x.j]]) back = x; });
+      var fb = back ? back.A.fields[back.j] : fid();
+      used[fa] = 1;
+      if (back) used[fb] = 1;
+      var rowA = find(out.fields, fa);
+      dropValues(c.A, fa);
+      rowA.type = "link"; rowA.opt = { to: c.B.id, inv: fb };
+      if (back) {
+        var rowB = find(out.fields, fb);
+        dropValues(c.B, fb);
+        rowB.type = "link"; rowB.opt = { to: c.A.id, inv: fa };
+        rowB.m = now;
+      } else {
+        var taken = {};
+        out.fields.forEach(function (f) { if (f.tb === c.B.id) taken[fold(f.name)] = 1; });
+        var nm = c.A.name, n = 2;
+        while (has(taken, fold(nm))) nm = c.A.name + " " + n++;
+        out.fields.push({ id: fb, m: now, tb: c.B.id, name: nm, type: "link", ord: nextOrd(out.fields, "tb", c.B.id), opt: { to: c.A.id, inv: fa } });
+      }
+      rowA.m = now;
+      addLinks(fa, c.A, c.j, c.B, fb);
+      if (back) addLinks(fb, c.B, back.j, c.A, fa);
+      nLinkFields++;
+    });
+    Object.keys(links).forEach(function (k) { out.links.push(links[k]); });
+    return { data: normalize(out), tables: made.map(function (x) { return x.id; }), count: count, skipped: skipped, links: nLinkFields };
+  }
+
+  // One SheetJS cell as the text the importer reads: dates (by their
+  // number format, through SSF, so no time zone moves them) as
+  // YYYY-MM-DD[THH:MM], percents as "12.5%", money as shown, other
+  // numbers plain, errors empty.
+  function sheetCell(c, SSF) {
+    if (!c || c.v == null || c.t === "e" || c.t === "z") return "";
+    if (c.t === "b") return c.v ? "true" : "false";
+    if (c.t === "d" || c.v instanceof Date) {
+      var dt = c.v instanceof Date ? c.v : new Date(c.v);
+      if (isNaN(dt)) return String(c.w || "");
+      var ds = dt.getFullYear() + "-" + pad(dt.getMonth() + 1) + "-" + pad(dt.getDate());
+      return dt.getHours() || dt.getMinutes() ? ds + "T" + pad(dt.getHours()) + ":" + pad(dt.getMinutes()) : ds;
+    }
+    if (c.t === "n" && typeof c.v === "number" && isFinite(c.v)) {
+      var z = typeof c.z === "string" ? c.z : "";
+      if (z && SSF && typeof SSF.is_date === "function" && SSF.is_date(z)) {
+        var p = SSF.parse_date_code(c.v);
+        if (p && p.y) {
+          var s = p.y + "-" + pad(p.m) + "-" + pad(p.d);
+          if (c.v % 1 && /[hH]/.test(z)) s += "T" + pad(p.H) + ":" + pad(p.M);
+          if (c.v < 1 && /[hH]/.test(z)) return pad(p.H) + ":" + pad(p.M);
+          return s;
+        }
+      }
+      if (/%/.test(z)) return String(+(c.v * 100).toPrecision(12)) + "%";
+      if (/[€$£]/.test(c.w || "")) return String(c.w).trim();
+      var sym = /€|\[\$€/.exec(z) ? "€" : /£/.test(z) ? "£" : /"\$"|\[\$\$|^\$/.test(z) ? "$" : "";
+      if (sym) return sym + c.v.toFixed(2);
+      return String(+c.v.toPrecision(15));
+    }
+    return String(c.w != null && c.t !== "s" ? c.w : c.v);
+  }
+
+  // One base as a slice of its own (the .orosbase file): its tables,
+  // fields, views, records and links; no tombstones.
+  function onlyBase(d, baseId) {
+    var src = normalize(d), tb = {}, fl = {};
+    var out = { ver: src.ver, bases: [], tables: [], fields: [], views: [], recs: [], links: [], tombs: {} };
+    src.bases.forEach(function (b) { if (b.id === baseId) out.bases.push(b); });
+    if (!out.bases.length) return out;
+    src.tables.forEach(function (t) { if (t.base === baseId) { out.tables.push(t); tb[t.id] = 1; } });
+    src.fields.forEach(function (f) { if (tb[f.tb]) { out.fields.push(f); fl[f.id] = 1; } });
+    src.views.forEach(function (v) { if (tb[v.tb]) out.views.push(v); });
+    src.recs.forEach(function (r) { if (tb[r.t]) out.recs.push(r); });
+    (src.links || []).forEach(function (l) { if (fl[l.f]) out.links.push(l); });
+    return clone(out);
   }
 
   // CSV of a view's records and fields. Text that a spreadsheet would
@@ -1572,7 +1757,8 @@
     uid: uid, fid: fid, oid: oid, putRow: putRow, addBase: addBase, addTable: addTable, addField: addField,
     remove: remove, restore: restore, rowsUnder: rowsUnder, setValues: setValues, addRecord: addRecord,
     convert: convert, parseNum: parseNum, parseDate: parseDate, parseCsv: parseCsv, guessType: guessType,
-    fromText: fromText, importRows: importRows, toCsv: toCsv, toTable: toTable, csvCell: csvCell,
+    fromText: fromText, importRows: importRows, importTables: importTables, splitNames: splitNames,
+    sheetCell: sheetCell, onlyBase: onlyBase, toCsv: toCsv, toTable: toTable, csvCell: csvCell,
     localYmd: localYmd, fold: fold, size: size, isNumType: isNumType, isDateType: isDateType
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;

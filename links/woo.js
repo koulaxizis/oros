@@ -167,7 +167,8 @@
         else { clean.m = Math.max(now, cur.m + 1); res.items.push(clean); res.stats.updated++; }
       }
       res.links.push({ item: clean.id, pid: r.pid, vid: r.vid, sku: r.sku, name: r.name, q: r.q, managed: r.managed });
-      if (o.setQty && r.managed) {
+      // ST-OD: an on-demand item has no count; the shop's is never read
+      if (o.setQty && r.managed && clean.od !== 1) {
         // a count line's n is the counted quantity (≥ 0): a negative
         // shop quantity is counted as 0
         var have = q[clean.id] || 0, target = Math.max(0, r.q);
@@ -192,7 +193,7 @@
     ((data && data.items) || []).forEach(function (it) { items[it.id] = it; });
     var out = [];
     (links || []).forEach(function (l) {
-      if (!l.managed || !items[l.item]) return;
+      if (!l.managed || !items[l.item] || items[l.item].od === 1) return;   // ST-OD: never compared or sent
       var mine = q[l.item] || 0;
       if (mine !== l.q) out.push({ item: items[l.item], link: l, mine: mine, shop: l.q });
     });
