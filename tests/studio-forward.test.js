@@ -25,11 +25,11 @@ test("A0: old data keeps the very same bytes", () => {
 });
 
 test("A0: unknown fields ride along on every kind of row, after the known ones", () => {
-  const p = C.normProject(P("pproject1", 5, { kind: "chapter", bk: "bbook0001", zeta: [1, 2], alpha: { a: 1 } }));
-  assert.equal(p.kind, "chapter");
-  assert.equal(p.bk, "bbook0001");
+  const p = C.normProject(P("pproject1", 5, { ep: "chapter", sh: "hshow0001", zeta: [1, 2], alpha: { a: 1 } }));
+  assert.equal(p.ep, "chapter");
+  assert.equal(p.sh, "hshow0001");
   const keys = Object.keys(p);
-  assert.deepEqual(keys.slice(-4), ["alpha", "bk", "kind", "zeta"]);       // sorted, after the known fields
+  assert.deepEqual(keys.slice(-4), ["alpha", "ep", "sh", "zeta"]);       // sorted, after the known fields
   assert.equal(C.normTrack(T("ttrack01", 1, { vox: true })).vox, true);
   assert.equal(C.normSource(S("ssource1", 1, { codec: "flac" })).codec, "flac");
   assert.equal(C.normClip(K("cclip001", 1, { tone: 0.5 })).tone, 0.5);
@@ -66,30 +66,30 @@ test("A0: extras are bounded and hostile keys and values are refused", () => {
 });
 
 test("A0: an unknown list merges row by row, symmetric and idempotent, tombstones delete", () => {
-  const a = data({ books: [{ id: "bbook0001", m: 5, name: "One", ch: ["pproject1"] }, { id: "bbook0002", m: 1, name: "Old" }] });
-  const b = data({ books: [{ id: "bbook0001", m: 9, name: "One (newer)", ch: ["pproject1", "pproject2"] }, { id: "bbook0003", m: 2, name: "Three" }],
-                   tombs: { bbook0002: 3 } });
+  const a = data({ shows: [{ id: "hshow0001", m: 5, name: "One", ch: ["pproject1"] }, { id: "hshow0002", m: 1, name: "Old" }] });
+  const b = data({ shows: [{ id: "hshow0001", m: 9, name: "One (newer)", ch: ["pproject1", "pproject2"] }, { id: "hshow0003", m: 2, name: "Three" }],
+                   tombs: { hshow0002: 3 } });
   const ab = C.mergeStudio(a, b), ba = C.mergeStudio(b, a);
   assert.equal(J(ab), J(ba));
   assert.equal(J(C.mergeStudio(ab, ab)), J(ab));
-  assert.deepEqual(ab.books.map((x) => x.id), ["bbook0001", "bbook0003"]);
-  assert.equal(ab.books[0].name, "One (newer)");
-  assert.equal(ab.tombs.bbook0002, 3);                                    // a tombstone of an unknown kind of id is kept
-  const back = C.mergeStudio(ab, data({ books: [{ id: "bbook0002", m: 4, name: "Back" }] }));
-  assert.ok(back.books.some((x) => x.id === "bbook0002"));                // a newer edit comes back (R17)
-  assert.ok(!C.mergeStudio(data({ books: [] }), data()).books.length);
+  assert.deepEqual(ab.shows.map((x) => x.id), ["hshow0001", "hshow0003"]);
+  assert.equal(ab.shows[0].name, "One (newer)");
+  assert.equal(ab.tombs.hshow0002, 3);                                    // a tombstone of an unknown kind of id is kept
+  const back = C.mergeStudio(ab, data({ shows: [{ id: "hshow0002", m: 4, name: "Back" }] }));
+  assert.ok(back.shows.some((x) => x.id === "hshow0002"));                // a newer edit comes back (R17)
+  assert.ok(!C.mergeStudio(data({ shows: [] }), data()).shows.length);
 });
 
 test("A0: an older device's copy never drops a newer device's data", () => {
   // the newer device wrote a book, a chapter field and a show record; an
   // older copy of the same project without them meets it in a merge
-  const newer = data({ projects: [P("pproject1", 9, { bk: "bbook0001", kind: "chapter" })],
-                       books: [{ id: "bbook0001", m: 9, name: "Book" }],
+  const newer = data({ projects: [P("pproject1", 9, { sh: "hshow0001", ep: "chapter" })],
+                       shows: [{ id: "hshow0001", m: 9, name: "Book" }],
                        set: { m: 4, lang: "el" }, ver: 2 });
   const older = data({ projects: [P("pproject1", 9)] });
   const m = C.mergeStudio(older, newer);
-  assert.equal(m.projects[0].bk, "bbook0001");                            // same stamp: the copy with more data wins
-  assert.equal(m.books.length, 1);
+  assert.equal(m.projects[0].sh, "hshow0001");                            // same stamp: the copy with more data wins
+  assert.equal(m.shows.length, 1);
   assert.deepEqual(m.set, { m: 4, lang: "el" });
   assert.equal(m.ver, 2);
   assert.equal(J(C.mergeStudio(newer, older)), J(m));
@@ -99,11 +99,11 @@ test("A0: an older device's copy never drops a newer device's data", () => {
 
 test("A0: unknown rows and records are checked and bounded", () => {
   const rows = [];
-  for (let i = 0; i < 2100; i++) rows.push({ id: "b" + String(i).padStart(7, "0"), m: 1 });
-  rows.push({ id: "BAD", m: 1 }, { id: "bbook9999", m: -1 }, { id: "bbook9998" }, "x", null, { id: "bbook9997", m: 1, s: "a".repeat(17000) });
-  const m = C.mergeStudio(data({ books: rows }), data());
-  assert.equal(m.books.length, 2000);
-  assert.ok(m.books.every((x) => /^b\d{7}$/.test(x.id)));
+  for (let i = 0; i < 2100; i++) rows.push({ id: "h" + String(i).padStart(7, "0"), m: 1 });
+  rows.push({ id: "BAD", m: 1 }, { id: "hshow9999", m: -1 }, { id: "hshow9998" }, "x", null, { id: "hshow9997", m: 1, s: "a".repeat(17000) });
+  const m = C.mergeStudio(data({ shows: rows }), data());
+  assert.equal(m.shows.length, 2000);
+  assert.ok(m.shows.every((x) => /^h\d{7}$/.test(x.id)));
   const lists = {};
   for (let i = 0; i < 12; i++) lists["list" + String(i).padStart(2, "0")] = [{ id: "xrow00001", m: 1 }];
   const n = C.mergeStudio(data(lists), data());
@@ -118,10 +118,10 @@ test("A0: unknown rows and records are checked and bounded", () => {
 
 test("A0: data made in another window (the shell's sync) keeps its lists", () => {
   const vm = require("node:vm");
-  const other = vm.runInNewContext('JSON.parse(\'{"ver":1,"projects":[],"tracks":[],"sources":[],"clips":[],"tombs":{},"books":[{"id":"bbook0001","m":2,"meta":{"a":1}}],"set":{"m":1}}\')');
+  const other = vm.runInNewContext('JSON.parse(\'{"ver":1,"projects":[],"tracks":[],"sources":[],"clips":[],"tombs":{},"shows":[{"id":"hshow0001","m":2,"meta":{"a":1}}],"set":{"m":1}}\')');
   assert.notEqual(Object.getPrototypeOf(other), Object.prototype);
   const m = C.mergeStudio(other, other);
-  assert.equal(m.books.length, 1);
-  assert.deepEqual(m.books[0].meta, { a: 1 });
+  assert.equal(m.shows.length, 1);
+  assert.deepEqual(m.shows[0].meta, { a: 1 });
   assert.deepEqual(m.set, { m: 1 });
 });

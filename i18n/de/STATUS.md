@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 45810 of 46302 (98%)
-- Help pages: 157 of 157 (100%)
+- Strings: 46043 of 46539 (98%)
+- Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -12,14 +12,14 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1919 / 1921 |
+| assistant | 99% | 1922 / 1926 |
 | atelier | 100% | 1429 / 1429 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 261 / 261 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
-| base | 99% | 313 / 314 |
+| base | 99% | 321 / 322 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
@@ -46,7 +46,7 @@ text is still written in the code. They switch over wave by wave
 | designkit | 100% | 213 / 213 |
 | device | 100% | 122 / 122 |
 | diary | 100% | 236 / 236 |
-| dice | 100% | 52 / 52 |
+| dice | 100% | 57 / 57 |
 | discover | English for now | 3 / 3 |
 | dots | 100% | 55 / 55 |
 | enrichui | 100% | 28 / 28 |
@@ -54,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 98% | 761 / 774 |
+| files | 98% | 770 / 785 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -94,7 +94,7 @@ text is still written in the code. They switch over wave by wave
 | montage | 100% | 383 / 383 |
 | mood | 100% | 256 / 256 |
 | museum | 100% | 46 / 46 |
-| music | 99% | 538 / 539 |
+| music | 99% | 540 / 541 |
 | names | 100% | 40 / 40 |
 | netizen | 98% | 172 / 175 |
 | newsletter | 99% | 1003 / 1008 |
@@ -127,10 +127,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 545 / 545 |
 | scores | 100% | 147 / 147 |
-| settings | 99% | 1580 / 1595 |
+| settings | 99% | 1610 / 1625 |
 | share | 100% | 220 / 220 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1215 / 1220 |
+| shell | 99% | 1238 / 1243 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 375 / 375 |
@@ -144,9 +144,9 @@ text is still written in the code. They switch over wave by wave
 | spreadsheet | 82% | 409 / 495 |
 | startpage | English for now | 0 / 14 |
 | stickies | 100% | 124 / 124 |
-| stock | 99% | 804 / 809 |
+| stock | 99% | 808 / 813 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 776 / 776 |
+| studio | 100% | 894 / 894 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 60 / 60 |
@@ -157,7 +157,7 @@ text is still written in the code. They switch over wave by wave
 | today | 100% | 155 / 155 |
 | todo | 100% | 271 / 271 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 127 / 127 |
+| transfer | 100% | 130 / 130 |
 | travel | 100% | 555 / 555 |
 | typewriter | 100% | 46 / 46 |
 | typing | 94% | 170 / 180 |
@@ -168,11 +168,11 @@ text is still written in the code. They switch over wave by wave
 | weather | 100% | 190 / 190 |
 | whack | 100% | 51 / 51 |
 | wheel | 100% | 107 / 107 |
-| whiteboard | 100% | 284 / 284 |
+| whiteboard | 100% | 302 / 302 |
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
-| writer | 100% | 531 / 531 |
+| writer | 100% | 541 / 541 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
 
@@ -190,6 +190,7 @@ These show English until fixed (usually the English text changed).
 - de/help/settings.txt: links or key caps differ from settings/help.en.txt
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
 - de/help/whiteboard.txt: links or key caps differ from whiteboard/help.en.txt
+- de/help/topics/appearance.txt: links or key caps differ from help/topics/appearance.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
 - de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt
 - de/help/topics/sensitive.txt: links or key caps differ from help/topics/sensitive.en.txt

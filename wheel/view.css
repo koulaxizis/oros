@@ -1,0 +1,460 @@
+/* ============================================================
+   orOS Chance › Wheel (wheel/view.css) — was the Wheel of Fate
+   app's stylesheet (APP-ALIAS since the 2026-11-13 merge 8, old id
+   "wheel"). Loaded by dice/dice.js with wheel/view.js the first time
+   the Wheel tab opens. Every rule sits under .whv (ids "wh-…"), so
+   nothing reaches the dice tab; the colours are the page's palette
+   tokens. The view's dialogs (on the page body) carry the class
+   whv-dlg and its toast is #wh-toast (it moves into an open dialog).
+   Sections:
+     1. Reset + root
+     2. Toolbar
+     3. Layout (wheel | panel)
+     4. The wheel: pointer, hub button
+     5. Options editor
+     6. Chips (sets, my wheels) + winners
+     7. Dialogs + result — centered (R32)
+     8. Toast + screen-reader helper
+     9. Confetti
+    10. Mobile + touch adaptations
+    11. Reduced motion
+   ============================================================ */
+
+/* ---------- 1. Reset + root ---------- */
+
+.whv *, dialog.whv-dlg * { margin: 0; padding: 0; box-sizing: border-box; }
+
+.whv {
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.whv button, dialog.whv-dlg button, .whv select, dialog.whv-dlg select, .whv input, dialog.whv-dlg input {
+  font-family: inherit;
+  color: inherit;
+}
+.whv button, dialog.whv-dlg button, .whv select, dialog.whv-dlg select { cursor: pointer; }
+.whv button:disabled, dialog.whv-dlg button:disabled { cursor: default; opacity: 0.4; }
+
+.whv .spacer { flex: 1 1 0; min-width: 0; }
+
+/* ---------- 2. Toolbar ---------- */
+.whv #wh-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.whv .tb-row { display: contents; }
+.whv .wheel-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.whv .icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.whv .icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.whv .icon-btn svg { width: 18px; height: 18px; }
+
+.whv .txt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.whv .txt-btn svg { width: 16px; height: 16px; }
+.whv .txt-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+.whv input, dialog.whv-dlg input, .whv select, dialog.whv-dlg select {
+  min-width: 0;
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 10px;
+  font-size: 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+.whv input:focus, dialog.whv-dlg input:focus, .whv select:focus, dialog.whv-dlg select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.whv input[type="range"], dialog.whv-dlg input[type="range"] {
+  padding: 0;
+  min-height: 28px;
+  border: none;
+  background: transparent;
+  accent-color: var(--accent);
+}
+.whv input[type="range"]:focus, dialog.whv-dlg input[type="range"]:focus { box-shadow: none; }
+.whv input[type="range"]:focus-visible, dialog.whv-dlg input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.whv #wh-sound-btn.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+/* ---------- 3. Layout ---------- */
+.whv #wh-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr minmax(300px, 400px);
+}
+.whv #wh-panel {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 16px 32px;
+  border-left: 1px solid var(--border);
+  scrollbar-width: thin;
+}
+.whv #wh-panel::-webkit-scrollbar { width: 10px; }
+.whv #wh-panel::-webkit-scrollbar-track { background: transparent; }
+.whv #wh-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; border: 2px solid var(--bg); }
+.whv #wh-panel::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+.whv .sec { padding: 12px 0 16px; border-bottom: 1px solid var(--border); }
+.whv .sec:last-child { border-bottom: none; }
+.whv .sec h2 {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+.whv .sec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.whv .sec-head h2 { margin-bottom: 0; }
+.whv .count { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.whv .hint { font-size: 12px; color: var(--text-dim); line-height: 1.4; margin-top: 6px; }
+
+/* ---------- 4. The wheel ---------- */
+.whv #wh-stage {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  padding: 20px;
+  background: var(--bg-desktop);
+}
+.whv #wh-wheel-box {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 18px;
+}
+.whv #wh-wheel-wrap { position: relative; width: var(--wheel, 300px); height: var(--wheel, 300px); flex-shrink: 0; }
+.whv #wh-cv {
+  display: block;
+  border-radius: 50%;
+  box-shadow: 0 10px 30px var(--shadow);
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.whv.spinning #wh-cv { cursor: default; }
+.whv #wh-pointer {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  width: 30px;
+  height: 38px;
+  margin-left: -15px;
+  z-index: 2;
+  background: var(--accent);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  filter: drop-shadow(0 2px 3px var(--shadow));
+  transform-origin: 50% 0;
+}
+.whv #wh-pointer.hit { animation: wh-hit 0.12s ease-out; }
+@keyframes wh-hit { 0% { transform: rotate(0); } 40% { transform: rotate(-14deg); } 100% { transform: rotate(0); } }
+.whv #wh-spin-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--wheel, 300px) * 0.26);
+  height: calc(var(--wheel, 300px) * 0.26);
+  min-width: 64px;
+  min-height: 64px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 4px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--accent);
+  font-size: clamp(13px, calc(var(--wheel, 300px) * 0.05), 22px);
+  font-weight: 900;
+  box-shadow: 0 4px 14px var(--shadow);
+  transition: background 0.12s, color 0.12s;
+}
+.whv #wh-spin-btn:hover:not(:disabled) { background: var(--accent); color: var(--bg); }
+.whv #wh-spin-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.whv #wh-spin-btn:disabled { opacity: 1; color: var(--text-dim); cursor: default; }
+
+/* ---------- 5. Options editor ---------- */
+.whv #wh-opts { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.whv .opt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 8px;
+  border-left: 5px solid var(--sw, transparent);
+  border-radius: 6px;
+  background: var(--bg);
+  transition: transform 0.12s;
+}
+.whv .opt.drag { transition: none; z-index: 2; position: relative; box-shadow: 0 6px 18px var(--shadow); }
+.whv.dragging { cursor: grabbing; user-select: none; }
+.whv .grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 36px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: grab;
+  touch-action: none;
+  opacity: 0.7;
+}
+.whv .grip svg { width: 14px; height: 14px; }
+.whv .opt-in { flex: 1 1 auto; }
+.whv .add-row { display: flex; gap: 6px; margin-top: 8px; }
+.whv .add-row input { flex: 1 1 auto; }
+.whv .mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+}
+.whv .mini svg { width: 14px; height: 14px; }
+.whv .mini:hover:not(:disabled) { color: var(--accent); background: var(--accent-soft); }
+.whv .mini.danger:hover:not(:disabled) { color: var(--danger); }
+.whv .mini.wt { width: auto; min-width: 30px; padding: 0 6px; font: inherit; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; opacity: 0.55; }
+.whv .mini.wt.on { opacity: 1; color: var(--accent); background: var(--accent-soft); }
+.whv .mini.wt:disabled { opacity: 0.25; cursor: default; }
+.whv .link-btn {
+  min-height: 28px;
+  padding: 2px 8px;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+.whv .link-btn:hover { text-decoration: underline; }
+
+/* ---------- 6. Chips + winners ---------- */
+.whv .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.whv .chips:empty { display: none; }
+.whv .chip {
+  min-height: 36px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  font-size: 13px;
+  font-weight: 700;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.whv .chip:hover { border-color: var(--accent); color: var(--accent); }
+.whv .chip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.whv .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.whv .mine-row { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; }
+.whv .mine-chip { min-width: 0; }
+.whv #wh-hist { list-style: none; display: flex; flex-direction: column; }
+.whv #wh-hist li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 13px;
+}
+.whv #wh-hist li:first-child .h-w { color: var(--accent); }
+.whv .h-w { flex: 1 1 auto; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+.whv .h-t { color: var(--text-dim); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- 7. Dialogs + result (R32: margin auto, scroll inside) ---------- */
+dialog.whv-dlg {
+  margin: auto;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  width: min(360px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+  color: var(--text);
+  box-shadow: 0 10px 40px var(--shadow);
+}
+dialog.whv-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
+dialog.whv-dlg .dlg-title {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+dialog.whv-dlg .dlg-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+dialog.whv-dlg .dlg-actions { display: flex; gap: 8px; margin-top: 16px; }
+dialog.whv-dlg .dlg-btn {
+  flex: 1;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+}
+dialog.whv-dlg .dlg-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+dialog.whv-dlg.res-dlg { text-align: center; width: min(420px, calc(100vw - 32px)); }
+dialog.whv-dlg .res-win {
+  font-size: clamp(24px, 7vw, 40px);
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  margin: 6px 0 4px;
+}
+dialog.whv-dlg .res-actions { flex-wrap: wrap; }
+dialog.whv-dlg .res-actions .dlg-btn { flex: 1 1 120px; }
+dialog.whv-dlg .dlg-lbl { display: block; font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; }
+dialog.whv-dlg .dlg-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+dialog.whv-dlg .dlg-btn.primary:hover { background: var(--accent-hover); }
+
+/* ---------- 8. Toast + screen reader ---------- */
+#wh-toast {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  transform: translateY(-8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+#wh-toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+#wh-toast button {
+  min-height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 2px 6px;
+  pointer-events: auto;
+}
+.whv .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- 9. Confetti ---------- */
+.whv #wh-confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 1100; }
+.whv #wh-confetti i {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  animation: wh-fall linear forwards;
+}
+@keyframes wh-fall {
+  from { transform: translate(0, 0) rotate(0); opacity: 1; }
+  to { transform: translate(var(--dx), 105vh) rotate(var(--rz)); opacity: 0.9; }
+}
+
+/* ---------- 10. Mobile + touch ---------- */
+@media (max-width: 760px) {
+  .whv #wh-main { grid-template-columns: 1fr; grid-template-rows: minmax(240px, 46%) 1fr; }
+  .whv #wh-panel { border-left: none; border-top: 1px solid var(--border); padding-left: 10px; padding-right: 10px; }
+  .whv #wh-stage { padding: 10px; }
+}
+@media (max-width: 480px) {
+  .whv #wh-toolbar { padding-left: 8px; padding-right: 8px; gap: 6px; }
+  .whv input, dialog.whv-dlg input, .whv select, dialog.whv-dlg select { font-size: 16px; }   /* ≥16px: no iOS zoom */
+  dialog.whv-dlg { width: calc(100vw - 20px); padding: 14px; }
+  .whv #wh-new-btn span, .whv #wh-save-btn span { display: none; }
+}
+@media (pointer: coarse) {
+  .whv .icon-btn, .whv .txt-btn, dialog.whv-dlg .dlg-btn, .whv .chip, .whv input, dialog.whv-dlg input { min-height: 44px; }
+  .whv .icon-btn { width: 44px; }
+  .whv .mini { width: 44px; height: 44px; }
+  .whv .mini.wt { min-width: 44px; }
+  .whv .grip { width: 36px; height: 44px; }
+  .whv .link-btn { min-height: 44px; }
+  #wh-toast button { min-height: 44px; }
+}
+
+/* ---------- 11. Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .whv #wh-pointer.hit { animation: none; }
+  .whv .opt, .whv .icon-btn, .whv #wh-spin-btn { transition: none; }
+}
+
+.whv [hidden] { display: none !important; }
+

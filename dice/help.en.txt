@@ -1,5 +1,7 @@
-# Dice & Coin
+# Chance
 Roll any mix of dice for board games and role-playing games, or flip a coin. Every result goes into a history you can share, export and look at as statistics.
+
+Chance has two tabs: `Dice & coin` and `Wheel`. The Wheel was the Wheel of Fate app; old links and shortcuts to it open the Wheel tab. Chance opens on the tab you used last; [[←]] and [[→]] on the tabs switch between them.
 
 ## Getting started
 Set `Count` (1 to 30 dice), `Type` (d4, d6, d8, d10, d12, d20 or d100) and a `Modifier` (−99 to +99) that is added to the total. Then tap or click `Roll`. The result shows the `Total` and each die; dice that don't count toward the total are shown dimmed.
@@ -27,6 +29,50 @@ In the box with `2d20+5 · 4d6 dl · 8d6 kh`, type a roll in dice notation and p
 - `Export` saves the history as a text file.
 - `Share` copies the latest result to the clipboard as a short text card.
 - `Clear` deletes the whole history after you confirm.
+
+## Wheel
+Can't decide? Write your options on the wheel, spin it and let fate choose. Keep the wheels you use often, or start from a ready set.
+
+### Start a wheel
+A new wheel starts with two empty rows under `Options`. Type an option in each, or type in `Add an option…` and press [[Enter]] or the **+** button. The wheel updates as you type. You need at least two options to spin, and you can have up to 30, each up to 50 characters.
+
+Then tap or click `Spin!` in the middle of the wheel, tap or flick the wheel itself, or press [[Space]] or [[Enter]].
+
+### Spin and results
+The winner is drawn fairly at random before the wheel starts turning; the spin just lands on it. While the wheel turns you can't edit the options.
+
+When it stops, `The wheel has spoken` shows the winner, with confetti. From there:
+- `Spin again` spins once more.
+- `Remove from the wheel` takes the winner off, handy for drawing names one by one. An `Undo` button lets you put it back. It isn't offered when only two options are left.
+- `Close` goes back to the wheel.
+
+The pointer clicks as it passes each segment and plays a short tune at the end. The `Sound` button in the toolbar turns this off or on (on at first).
+
+### Edit the options
+- Paste several lines at once into the add box or into a row: each line becomes an option.
+- Drag an option by its grip to move it, or press [[Alt+Up]] or [[Alt+Down]] in its row.
+- The ✕ next to a row removes it. Empty rows disappear when you leave them.
+- `Shuffle options` mixes up the order.
+- The `×1` button next to a row sets the option's chance: tap it for `×2` (double) or `×3` (triple), and once more to go back to `×1`. A weighted option gets a wider slice of the wheel, so you can see its bigger chance. Weights are kept with saved wheels and sync with them.
+
+### Ready sets and your wheels
+`Ready sets` has wheels to start from: `Yes / No`, `What to eat`, `Days of the week`, `Numbers 1–10`, `Heads or tails`, `Chores`, `Movie night`, `What to do` and `Who goes first`. A set opens as a new, unsaved wheel, so your saved ones are never changed.
+
+`Save wheel` gives the open wheel a name and keeps it under `My wheels` (up to 40). Changes to a saved wheel are saved automatically as you type. Next to each saved wheel you can rename it, make a copy or delete it; a delete can be undone for a few seconds. `New wheel` starts an empty one.
+
+`Winners` lists the last 50 winners of the open wheel, with the time. `Clear` empties the list, with `Undo`.
+
+### Wheels on your devices
+Your saved wheels sync between your devices through [orOS sync](help:t/sync). The winners list, the unsaved wheel and the sound setting stay on this device. There's no import or export; the orOS [backup](help:t/backup) includes your wheels.
+
+### Wheel keys
+- [[Space]] or [[Enter]] spins the wheel (when you're not typing in a box).
+- [[Enter]] in the add box adds the option; in a row, it moves to the next row.
+- [[Alt+Up]] / [[Alt+Down]] moves the current option.
+
+### Wheel tips
+- To split chores fairly, spin, use `Remove from the wheel` and spin again until everyone has one.
+- If you reduce motion on your device, the spin is short and there's no confetti.
 
 ## Sync and backup
 Your history and presets sync between your devices through [orOS sync](help:t/sync), and clearing the history or deleting a preset carries over too. The sound setting stays on this device. Use `Export` for a readable copy of the history, or the orOS [backup](help:t/backup) for everything.

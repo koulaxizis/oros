@@ -3139,7 +3139,11 @@
     box.appendChild(st);
     var pane = el("div", "");
     box.appendChild(pane);
-    if (prefs.sub === "ov") renderOverview(pane, c);
+    if (prefs.sub === "ov") {
+      renderOverview(pane, c);
+      // Files › Documents linked to this customer (DOCS-1 W4, read-only)
+      if (window.OrosDocsLinks) window.OrosDocsLinks.attach(pane, "crm", function (r) { return r && r.cust === c.id; });
+    }
     else if (prefs.sub === "hist") renderHistory(pane, c, custActs);
     else if (prefs.sub === "deals") renderCustDeals(pane, c, custDeals);
     else if (prefs.sub === "docs") renderCustDocs(pane, c, docs);

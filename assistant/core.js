@@ -1796,6 +1796,7 @@
       "those events, any date, with their label, time, place and note, and a ref for change_item. " +
       "crm with partner answers 'what is open with X?' for one partner. " +
       "forms (every form: questions, shared and open or not, how many answers and how many new, with a ref; with form one form's results: counts, shares and averages per question, never what people wrote) " +
+      "studio lists the podcast shows made in Studio (feed address, how many episodes, how many have their episode file) and every episode with its show, number, date and whether its file is made; with show only that show. Read only: publishing is always the user's own tap in Studio. " +
       "automations lists every rule in words (with a ref; on or off) and this device's recent runs: when, which rule, whether it was a time or something that happened, and what came of it (notice shown, notices off, skipped because an app is missing, opened); use it for 'why did this run?' and to suggest a better rule with propose_rule. " +
       "The user sees the summary first and may hold it back.",
     params: {
@@ -1811,6 +1812,7 @@
         kind: { type: "string", "enum": ["book", "film", "series", "album", "podcast", "game"], description: "shelf: only this kind (album = music)." },
         status: { type: "string", "enum": ["want", "now", "done", "drop", "reading", "finished", "unread"], description: "shelf: want, now (in progress), done, drop. library: reading, finished, unread." },
         board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board)." },
+        show: { type: "string", description: "studio: one podcast show's title: only its episodes." },
         days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." },
         form: { type: "string", description: "forms: one form's title: its results (how many answered each question, counts, shares and averages); never the people's written answers or contact details." },
         partner: { type: "string", description: "crm: a customer's, supplier's, shop's or author's name: everything open with them (owed both ways, consignment stock, orders, unbilled hours, royalties, contracts, next follow-up)." }
