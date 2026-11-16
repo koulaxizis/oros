@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.38.00
+- **Billing: one settings page for quotes and invoices.** Your business details from Billing now also appear on the quotes' PDF.
+
 ## Version 7.37.00
 - **orOS Gate can stay open on your computer.** With the installed orOS Portable, Settings › orOS Gate › `Keep the Gate open on this computer while orOS is closed` (off by default) keeps orOS running in the background, without a window, while every orOS window there is closed: Claude gets live answers and its changes are made at once instead of waiting. On orOS USB the same place lets the Gate work behind the screen lock. Anything that needs you on screen still waits, every change still notifies you and can be undone, and Sensitive work turns it off. See [Settings](app:settings).
 
