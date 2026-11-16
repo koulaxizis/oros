@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Quote — shared core (v1.3.0)
+// orOS Quote — shared core (v1.4.0)
 // Which quotes need a follow-up, one copy for the shell's due
 // reminder (shell.js quoteCheckTick) and the Today summary
 // (invoices/today.js, Billing merge 7). Pure: no DOM, no storage, never writes.
@@ -312,7 +312,49 @@
   }
 
 
-  var api = { dueQuotes: dueQuotes, clientName: clientName, total: total, forClient: forClient,
+  // Billing's Overview (app merge 7, K4): the quotes of [from, to] (by
+  // their date, "YYYY-MM-DD") in one currency, month by month, through
+  // sent → accepted → invoiced → paid. Pure and never stored; Billing
+  // says per quote what its invoices are: invoicedOf(id) → null, or
+  // { paid: bool, open: cents still owed }. Amounts in cents.
+  //   → { months: [{ym, sent, accepted, invoiced, paid}], sent, accepted,
+  //       invoiced, paid, rate (accepted / sent, 0..1, null with none),
+  //       toInvoice (cents: accepted, no invoice yet), unpaid (cents
+  //       still owed on their invoices) }
+  function pipeline(raw, from, to, cur, invoicedOf) {
+    var out = { months: [], sent: 0, accepted: 0, invoiced: 0, paid: 0, rate: null, toInvoice: 0, unpaid: 0 };
+    if (!raw || typeof raw !== "object" || !Array.isArray(raw.quotes)) return out;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(from)) || !/^\d{4}-\d{2}-\d{2}$/.test(String(to)) || from > to) return out;
+    var gone = raw.deleted && typeof raw.deleted === "object" ? raw.deleted : {};
+    var by = {};
+    var y = +from.slice(0, 4), m = +from.slice(5, 7), endYm = to.slice(0, 7), guard = 0;
+    while (guard++ < 600) {
+      var ym = y + "-" + (m < 10 ? "0" : "") + m;
+      by[ym] = { ym: ym, sent: 0, accepted: 0, invoiced: 0, paid: 0 };
+      out.months.push(by[ym]);
+      if (ym >= endYm) break;
+      if (++m > 12) { m = 1; y++; }
+    }
+    raw.quotes.forEach(function (q) {
+      if (!q || typeof q !== "object" || typeof q.id !== "string" || gone[q.id] || q.del) return;
+      if (typeof q.date !== "string" || q.date < from || q.date > to) return;
+      if ((q.currency || "EUR") !== cur || q.status === "draft") return;
+      var row = by[q.date.slice(0, 7)];
+      if (!row) return;
+      row.sent++; out.sent++;
+      if (q.status !== "accepted") return;
+      row.accepted++; out.accepted++;
+      var inv = typeof invoicedOf === "function" ? invoicedOf(q.id) : null;
+      if (!inv) { out.toInvoice += Math.round(total(q) * 100); return; }
+      row.invoiced++; out.invoiced++;
+      if (inv.paid) { row.paid++; out.paid++; }
+      else out.unpaid += Math.max(0, Math.round(num(inv.open)));
+    });
+    out.rate = out.sent ? out.accepted / out.sent : null;
+    return out;
+  }
+
+  var api = { pipeline: pipeline, dueQuotes: dueQuotes, clientName: clientName, total: total, forClient: forClient,
               curOk: curOk, currencyList: currencyList, fmtMoney: fmtMoney, curDigits: curDigits, convert: convert,
               DATA_VER: QT_VER, canonObj: canonObj, canonState: canonState, pruneDeleted: pruneDeletedMap, merge: mergeQuoteStates };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
