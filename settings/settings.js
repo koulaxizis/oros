@@ -1337,6 +1337,66 @@
     host.appendChild(c);
   }
 
+  // CLAUDE-1: Claude in a window, and Claude desktop. On orOS USB and
+  // orOS Portable the System extension installs it (C.claudeDesk reads
+  // its data-oros-sys-claude attributes on the shell's page; the event
+  // "oros-claude" asks it to "install", "open" or "remove"); elsewhere
+  // a computer gets Anthropic's download page.
+  var claudeWatch = false;
+  function claudeDoc() {
+    var p = parentWin();
+    try { return p ? p.document : null; } catch (e) { return null; }
+  }
+  function claudeAsk(what) {
+    var d = claudeDoc();
+    try { d.dispatchEvent(new d.defaultView.CustomEvent("oros-claude", { detail: what })); } catch (e) {}
+  }
+  function secClaude(host) {
+    var d = claudeDoc(), de = d && d.documentElement;
+    if (de && !claudeWatch && typeof MutationObserver === "function") {
+      claudeWatch = true;
+      try {
+        new MutationObserver(function () { render(); })
+          .observe(de, { attributes: true, attributeFilter: ["data-oros-sys-claude", "data-oros-sys-claude-why"] });
+      } catch (e) {}
+    }
+    var info = C.claudeDesk(de ? de.getAttribute("data-oros-sys-claude") : null,
+      de ? de.getAttribute("data-oros-sys-claude-why") : null, navigator.userAgent, !!phone());
+    var c = card(t("cl.title"));
+    c.appendChild(el("p", "hint", t("cl.hint")));
+    c.appendChild(actions(button(t("cl.web"), "cl.web", function () {
+      window.open(C.CLAUDE_WEB, "_blank", "noopener");
+    }, info.kind === "sys" && info.state === "ready" ? null : "primary")));
+    if (info.kind === "phone") {
+      c.appendChild(el("p", "hint", t("cl.phone")));
+    } else {
+      c.appendChild(el("h4", "sub", t("cl.desk")));
+      if (info.kind === "sys") {
+        if (info.state === "ready") {
+          c.appendChild(el("p", "hint", t("cl.sys.ready")));
+          c.appendChild(actions(
+            button(t("cl.sys.open"), "cl.sys.open", function () { claudeAsk("open"); }, "primary"),
+            confirmBtn(t("cl.sys.remove"), t("cl.sys.remove.sure"), "cl.sys.remove", function () { claudeAsk("remove"); })));
+        } else if (info.state === "busy") {
+          c.appendChild(el("p", "msg msg-dim", t("cl.sys.busy")));
+        } else {
+          if (info.state === "none") c.appendChild(el("p", "hint", t("cl.sys.none")));
+          if (info.why) c.appendChild(el("p", info.why === "fail" || info.why === "net" ? "msg msg-err" : "hint", t("cl.why." + info.why)));
+          if (info.state === "none") c.appendChild(actions(button(t("cl.sys.install"), "cl.sys.install", function () { claudeAsk("install"); })));
+        }
+      } else {
+        c.appendChild(el("p", "hint", t("cl.get." + info.os)));
+        var a = el("a", "btn", t("cl.get"));
+        a.href = C.CLAUDE_DL;
+        a.target = "_blank";
+        a.rel = "noopener";
+        c.appendChild(actions(a));
+      }
+    }
+    c.appendChild(el("p", "hint", t("cl.gate")));
+    host.appendChild(c);
+  }
+
   // In the orOS Android app only (BR-PHONE v5): Health Connect.
   function secPhoneHealth(host) {
     var P = phone();
@@ -3646,6 +3706,7 @@
   }
   function secServices(host) {
     secPhoneHealth(host);
+    secClaude(host);
     secGate(host);
     var Lk = links();
     if (!Lk) { host.appendChild(el("p", "hint card-note", t("v.unsupported"))); return; }

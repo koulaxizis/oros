@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.14.00
+- **Claude, and Claude desktop.** `Settings` › `Connected services` has a new `Claude` card. `Open Claude in a window` opens claude.ai, where you use your own Claude account. On a computer, `Get Claude desktop` opens Anthropic's download page (Windows, macOS, and a beta for Ubuntu and Debian). On orOS USB and orOS Portable, once their next release is out, the card installs, opens and removes Claude desktop for you, downloaded from Anthropic and checked against Anthropic's signature. orOS never carries the app itself. A connector you add on claude.ai, such as orOS Gate, works in Claude desktop too. See [Settings](app:settings).
+
 ## Version 7.13.00
 - **Smart top bar.** The top bar can now show live items next to the clock: your next event with a countdown, the focus timer, today's tasks, water, what you spent this month and today's till sales. Each one shows only when it has something to say, and a tap opens its app. Turn them on and set their order in `Settings`, under `Appearance`, in `Top bar`; this stays on this device. See [Appearance](help:t/appearance).
 
