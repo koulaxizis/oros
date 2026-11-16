@@ -5171,7 +5171,28 @@
   // encoder into one stream (a chapter starts where its part starts), then written by
   // studio/mp4.js with both kinds of chapters, the tags and the cover.
   var bookLen = {};                // book id → seconds of the last export (this device, never synced)
-  var AAC = window.StudioAac, MP4 = window.StudioMp4;
+  // aac.js and mp4.js load on the first M4B export, so opening Studio never pays for them
+  var AAC = null, MP4 = null, m4bP = null;
+  function m4bLoad() {
+    if (window.StudioAac && window.StudioMp4) { AAC = window.StudioAac; MP4 = window.StudioMp4; return Promise.resolve(); }
+    if (!m4bP) {
+      var load = function (f, name) {
+        if (window[name]) return Promise.resolve();
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = f + "?v=" + VER;
+          s.onload = function () { if (window[name]) ok(); else fail(new Error(f)); };
+          s.onerror = function () { fail(new Error(f)); };
+          document.head.appendChild(s);
+        });
+      };
+      m4bP = load("aac.js", "StudioAac").then(function () { return load("mp4.js", "StudioMp4"); }).then(function () {
+        AAC = window.StudioAac; MP4 = window.StudioMp4;
+      });
+      m4bP.catch(function () { m4bP = null; });
+    }
+    return m4bP;
+  }
   function pushSlices(st, mono, done) {
     var at = 0, step = BOOK_RATE * 5;
     return new Promise(function (res, rej) {
@@ -5191,7 +5212,10 @@
     var b = findBook(bookOpen), fs = fsApi();
     if (!b || bookBusy) return;
     if (!fs) { showToast(t("toast.noDisk")); return; }
-    if (!AAC || !MP4) { showToast(t("bk.fail")); return; }
+    m4bLoad().then(function () { m4bRun(b, fs); }, function () { showToast(t("bk.fail")); });
+  }
+  function m4bRun(b, fs) {
+    if (!findBook(b.id) || bookBusy) return;
     var meta = bookMeta(b), kbps = prefs.bkAac, st = new AAC.Stream(1, BOOK_RATE, kbps), chapters = [], cover = null;
     var dir = BOOKS_DIR + "/" + C.fileName(b.name || meta.title, "x").replace(/\.x$/, ""), name = C.fileName(meta.title || b.name, "m4b");
     var mk = function (p) { return Promise.resolve(fs.mkdir ? fs.mkdir(p) : null).then(null, function () {}); };
