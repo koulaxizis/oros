@@ -1,6 +1,18 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.35.00
+- **Audiobooks as one M4B with chapters.** In a Studio book, `One M4B with chapters` makes a single audiobook file, with a chapter for each part and the title, author, narrator and cover, ready for Apple Books and audiobook players. Choose 64, 96 or 128 kbit/s. `Write the length to Publishing` then puts its length into the audiobook edition of the title, after you say yes there. See [Studio](app:studio).
+
+## Version 7.34.00
+- **Smart cards on your phone, and nine more.** On a phone the top bar's smart cards now sit behind one button with their number: tap it and they unfold under the bar. On a wider screen they stay in the bar, and the ones without room go behind the same button. New cards: habits, plants, chores and Kanban cards for today, the Timesheet timer, overdue invoices, your next trip, today's meals and the book you are reading. Turn them on in [Settings](app:settings) › Appearance › Top bar.
+
+## Version 7.33.00
+- **Claude's changes with orOS closed look made at once.** When every orOS is closed, what Claude adds or changes through orOS Gate still waits, sealed, until a device opens orOS, but Claude now sees it as made: a new contact or item shows up in its searches marked as waiting, Claude can change it straight away or call it off. When orOS opens, each change is made with the time Claude asked, so your own later edit wins, and if you changed the same item after Claude asked, your version stays. When changes have waited more than 6 hours, you get one notification a day. See [Settings](app:settings).
+
+## Version 7.32.01
+- **Contacts fits on wide screens.** The row of buttons at the top now wraps onto more lines, so every button is on screen without scrolling sideways.
+
 ## Version 7.32.00
 - **Quote is now part of Billing (the new name of Invoices).** Your quotes are in its Quotes tab, and old links and shortcuts to Quote open it there.
 

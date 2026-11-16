@@ -50,7 +50,7 @@
       "app.name": "Publishing",
       "tab.titles": "Titles", "tab.isbn": "Codes",
       "btn.new": "New title", "btn.settings": "Settings", "btn.back": "Titles", "btn.close": "Close",
-      "btn.cancel": "Cancel", "btn.save": "Save", "btn.add": "Add", "btn.del": "Delete", "btn.undo": "Undo",
+      "btn.cancel": "Cancel", "abdur.title": "Audiobook length from Studio", "abdur.set": "Set the length of the audiobook edition of “{t}” to {n} min?", "abdur.change": "Change the length of the audiobook edition of “{t}” from {old} to {n} min?", "abdur.yes": "Write the length", "abdur.done": "The audiobook lasts {n} min", "abdur.same": "The audiobook edition already says {n} min", "btn.save": "Save", "btn.add": "Add", "btn.del": "Delete", "btn.undo": "Undo",
       "btn.copy": "Copy", "btn.remove": "Remove",
       "q.ph": "Search titles, people, ISBN…", "q.label": "Search",
       "sort.rel": "Release date", "sort.t": "Title A–Z", "sort.m": "Last edited", "sort.label": "Sort",
@@ -412,7 +412,7 @@
       "app.name": "Εκδόσεις",
       "tab.titles": "Τίτλοι", "tab.isbn": "Κωδικοί",
       "btn.new": "Νέος τίτλος", "btn.settings": "Ρυθμίσεις", "btn.back": "Τίτλοι", "btn.close": "Κλείσιμο",
-      "btn.cancel": "Άκυρο", "btn.save": "Αποθήκευση", "btn.add": "Προσθήκη", "btn.del": "Διαγραφή", "btn.undo": "Αναίρεση",
+      "btn.cancel": "Άκυρο", "abdur.title": "Διάρκεια ηχητικού βιβλίου από το Studio", "abdur.set": "Να γραφτεί διάρκεια {n} λεπ. στην έκδοση ηχητικού βιβλίου του «{t}»;", "abdur.change": "Να αλλάξει η διάρκεια της έκδοσης ηχητικού βιβλίου του «{t}» από {old} σε {n} λεπ.;", "abdur.yes": "Γράψε τη διάρκεια", "abdur.done": "Το ηχητικό βιβλίο διαρκεί {n} λεπ.", "abdur.same": "Η έκδοση ηχητικού βιβλίου γράφει ήδη {n} λεπ.", "btn.save": "Αποθήκευση", "btn.add": "Προσθήκη", "btn.del": "Διαγραφή", "btn.undo": "Αναίρεση",
       "btn.copy": "Αντιγραφή", "btn.remove": "Αφαίρεση",
       "q.ph": "Αναζήτηση τίτλων, προσώπων, ISBN…", "q.label": "Αναζήτηση",
       "sort.rel": "Ημερομηνία κυκλοφορίας", "sort.t": "Τίτλος Α–Ω", "sort.m": "Τελευταία αλλαγή", "sort.label": "Ταξινόμηση",
@@ -4528,6 +4528,9 @@
       toast(t("ep.marked"));
       return;
     }
+    // Studio's "Write the length to Publishing" (Studio wave A4): the title opens and a
+    // dialog asks; only a yes writes the minutes into that audiobook edition
+    if (target.abDur && typeof target.abDur === "object") { abDurDialog(target.abDur); return; }
     if (typeof target.title === "string" && C.find(data, "titles", target.title)) {
       openTitle(target.title);
       // Writer's "Add the translator" (WR-CAT proposal 1): the dialog filled in, nothing saved before Add
@@ -4587,6 +4590,28 @@
         rel: C.okYmd(n.rel) ? n.rel : "", plan: n.plan === 1 });
     }
   };
+  function abDurDialog(o) {
+    var tt = typeof o.title === "string" ? C.find(data, "titles", o.title) : null;
+    var f = tt ? tt.fmts.filter(function (x) { return x.id === o.fmt && x.k === "ab"; })[0] : null;
+    var min = typeof o.min === "number" && isFinite(o.min) ? Math.round(o.min) : 0;
+    if (!f || min < 1 || min > 100000) return;
+    openTitle(tt.id);
+    if (f.dur === min) { toast(t("abdur.same", { n: min })); return; }
+    var dlg = el("dialog");
+    dlg.appendChild(el("h3", "", t("abdur.title")));
+    dlg.appendChild(el("p", "", t(f.dur ? "abdur.change" : "abdur.set", { t: tt.t, n: min, old: f.dur || 0 })));
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    acts.appendChild(button(t("abdur.yes"), "btn pri", function () {
+      dlg.close();
+      var cur = C.find(data, "titles", tt.id);
+      if (!cur || !cur.fmts.some(function (x) { return x.id === f.id; })) return;
+      commit(C.put(data, "titles", Object.assign({}, cur, { fmts: cur.fmts.map(function (x) { return x.id === f.id ? Object.assign({}, x, { dur: min }) : x; }) }), Date.now()));
+      toast(t("abdur.done", { n: min }));
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
   function takePending() {
     try {
       var p = window.parent;

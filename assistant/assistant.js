@@ -4946,7 +4946,7 @@
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
     var key = E.storageKey(app.id);
-    var pl = E.plan(app.id, readStore(key), r.target, ch, Date.now());
+    var pl = E.plan(app.id, readStore(key), r.target, ch, nowQ());
     if (!pl.ok) return Promise.resolve({ content: "Error: " + pl.err, err: 1, ui: { k: "chgErr", app: app.name } });
     var base = { k: "change", app: app.name, act: ch.action, title: pl.title, rows: pl.rows };
     pl.tick = !pl.del && E.canTick(app.id, pl.rows);
@@ -4957,7 +4957,8 @@
       }
       var left = ok.off && ok.off[0] && ok.off[0].length ? ok.off[0] : [];
       if (left.length) ch = E.without(app.id, ch, left);
-      var res = E.apply(app.id, readStore(key), r.target, ch, Date.now(), pl.before);
+      var d0 = readStore(key), res = E.apply(app.id, d0, r.target, ch, nowQ(), pl.before);
+      if (res.ok && gateLate(d0, res.data)) res = GATE_LATE;
       if (!res.ok) {
         base.st = "failed";
         base.msg = res.conflict ? t("chg.conflict") : res.err;
@@ -5028,7 +5029,7 @@
     }
     if (del && !MANY_DEL_APPS[app.id]) return Promise.resolve({ content: "Error: several items at once can be deleted in Kanban, To-Do, Calendar, Notes, Bookmarks and Contacts only; delete these one at a time with ref.", err: 1 });
     if (mv && !MANY_MOVE_APPS[app.id]) return Promise.resolve({ content: "Error: several items at once can be moved in Kanban, To-Do, Notes, Bookmarks and Calendar only.", err: 1 });
-    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
+    var key = E.storageKey(app.id), now = nowQ(), data = readStore(key), plans = [], bad = [], same = [];
     chs.forEach(function (x) {
       // Planned one after the other on the same data, as Apply writes them.
       var res = E.apply(app.id, data, x.target, x.ch, now, null);
@@ -5050,11 +5051,12 @@
         base.st = "declined";
         return { content: JSON.stringify({ refs: refs, applied: false, note: "The user did not apply the change. Nothing changed." }), ui: base };
       }
-      var d = readStore(key), undos = [], t2 = Date.now(), fail = null, notes = [];
+      var d = readStore(key), undos = [], t2 = nowQ(), fail = null, notes = [];
       plans.forEach(function (p) {
         if (fail) return;
         var res = E.apply(app.id, d, p.x.target, p.x.ch, t2, p.pl.before);
         if (!res.ok) { fail = res; return; }
+        if (gateLate(d, res.data)) { fail = GATE_LATE; return; }
         d = res.data;
         undos.push(res.undo);
         if (res.disk) p.disk = res.disk;
@@ -5124,7 +5126,7 @@
         ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
-    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], same = [];
+    var key = E.storageKey(app.id), now = nowQ(), data = readStore(key), plans = [], same = [];
     chs.forEach(function (x) {
       var res = E.apply(app.id, data, x.target, x.ch, now, null);
       if (!res.ok && /^Nothing would change/.test(res.err)) { same.push(x.ch.ref); return; }
@@ -5145,7 +5147,7 @@
         base.st = "declined";
         return { content: JSON.stringify({ refs: plans.map(function (p) { return p.x.ch.ref; }), applied: false, note: "The user did not apply the changes. Nothing changed." }), ui: base };
       }
-      var off = ok.off || {}, d = readStore(key), undos = [], t2 = Date.now(), fail = null, done = [], left = [], shown = [], disks = [];
+      var off = ok.off || {}, d = readStore(key), undos = [], t2 = nowQ(), fail = null, done = [], left = [], shown = [], disks = [];
       plans.forEach(function (p, i) {
         if (fail) return;
         var ch = off[i] && off[i].length ? E.without(app.id, p.x.ch, off[i]) : p.x.ch;
@@ -5153,6 +5155,7 @@
         if (!ch) return;
         var res = E.apply(app.id, d, p.x.target, ch, t2, p.pl.before);
         if (!res.ok) { fail = res; return; }
+        if (gateLate(d, res.data)) { fail = GATE_LATE; return; }
         d = res.data;
         undos.push(res.undo);
         if (res.disk) disks.push(res.disk);
@@ -5567,7 +5570,7 @@
           base.st = "declined";
           return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base };
         }
-        var res = M.apply(app.id, addRead(app.id, key), items, Date.now(), ok.skip, ctx);
+        var res = M.apply(app.id, addRead(app.id, key), items, nowQ(), ok.skip, ctx);
         if (!res.ok) {
           base.st = "failed";
           base.msg = res.err;
@@ -5596,6 +5599,7 @@
         base.st = "done";
         base.u = uid;
         base.added = res.made.map(function (m) { return m.i; });
+        base.made = res.made.map(function (m, j) { return { i: m.i, ref: added[j] ? added[j].ref : "" }; });   // PEND-1: item index → its ref
         return { content: JSON.stringify({ app: app.id, added: added, left_out: left,
           note: "The user added " + added.length + " record(s) to " + app.id + ". They can undo it." +
                 (left.length ? " Left out by the user: " + left.length + "; those marked already are there with that ref (use change_item to add what is new)." : "") }), ui: base };
@@ -5642,7 +5646,7 @@
           base.st = "declined";
           return { content: JSON.stringify({ linked: 0, note: "The user did not link them. Nothing changed." }), ui: base };
         }
-        var res = N.applyLinks(readStore(key), readStore(ctKey), Ls, Date.now(), ok.skip);
+        var res = N.applyLinks(readStore(key), readStore(ctKey), Ls, nowQ(), ok.skip);
         if (!res.ok) {
           base.st = "failed";
           base.msg = res.err;
@@ -9238,6 +9242,17 @@
 
   // ---------- GATE: Claude's tools through orOS Gate (GATE-ACT) ----------
   var gateConv = { id: "gate", refs: {}, refN: 0, msgs: [] };
+  // PEND-1 (e2, Chris 2026-11-16): a change Claude asked for while orOS
+  // was closed runs with the time Claude asked (gateAt, from the gate's
+  // queue), and is not applied over an item changed at or after that
+  // time (the gate's lateIn on the app's data before and after).
+  var gateAt = 0;
+  function nowQ() { return gateAt || Date.now(); }
+  var GATE_LATE = { ok: false, late: true, err: "The owner changed this item after you asked for the change (orOS was closed then); their change stays and yours was not applied." };
+  function gateLate(before, after) {
+    if (!gateAt) return false;
+    try { var g = shell() && shell().orosGateCore; return !!(g && typeof g.lateIn === "function" && g.lateIn(before, after, gateAt)); } catch (e) { return false; }
+  }
   var gateNote = "", gateCtx = null;
   // Gate refs on the device (5.96.00): { n, refs }, device-local, never
   // synced; the newest GATE_REFS_MAX stay. gateKeys: app|target → ref.
@@ -9399,7 +9414,11 @@
       else if (r.ui && r.ui.apps) used = [];
       var u = r.ui && r.ui.u ? r.ui.u : "";
       // x: the change's undo data, kept by the gate (synced) so Undo works on any device
-      return { ok: true, c: text, u: u, x: gateMem(u), ud: Array.isArray(r.ud) ? r.ud : undefined, a: used, k: r.ui && typeof r.ui.n === "number" ? r.ui.n : 0 };
+      var made = r.ui && Array.isArray(r.ui.made) ? r.ui.made.map(function (m) {
+        var rec = m && m.ref ? gateConv.refs[m.ref] : null;
+        return rec ? { i: m.i, rec: { app: rec.app, target: rec.target, title: String(rec.title || "").slice(0, 160), id: rec.id } } : null;
+      }).filter(Boolean) : undefined;
+      return { ok: true, c: text, u: u, x: gateMem(u), ud: Array.isArray(r.ud) ? r.ud : undefined, a: used, k: r.ui && typeof r.ui.n === "number" ? r.ui.n : 0, made: made };
     }, function () { return { ok: false, c: "The call failed on the device." }; });
   }
   // The results speak of "the user" pressing; through the gate nobody did.
@@ -9589,9 +9608,14 @@
     var have = installed(), lazy = Object.keys(EDIT_LAZY).filter(function (id) { return have[id]; });
     Promise.all([histLoad(), editLoadMods(lazy)]).then(function () {
       gateRefsLoad();
-      window.__asGate = { v: 1, run: function (n, a) {
-                            return gateRun(n, a).then(function (r) { if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; });
+      window.__asGate = { v: 1, run: function (n, a, opt) {
+                            gateAt = opt && typeof opt.at === "number" && opt.at > 0 ? opt.at : 0;
+                            var end = function (r) { gateAt = 0; return r; };
+                            return gateRun(n, a).then(function (r) { end(); if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; },
+                                                      function (e) { end(); throw e; });
                           }, tools: gateToolList, index: gateIndex, text: cfText,
+                          // PEND-1: the ref of an item another device made from a queued create_items
+                          ref: function (rec) { if (!rec || typeof rec !== "object" || typeof rec.app !== "string") return ""; gateRefsLoad(); var r = refFor(gateConv, { app: rec.app, target: rec.target, title: String(rec.title || ""), q: String(rec.title || ""), id: rec.id }); gateRefsSave(); return r; },
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };
       try { var g = gateShell(); if (g && typeof g.frameReady === "function") g.frameReady(); } catch (e) {}
     });
