@@ -2195,7 +2195,11 @@ body.cat-open { overflow: hidden; }
 .cat-title { display: flex; flex-direction: column; min-width: 0; flex: 1 1 160px; }
 .cat-name { font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cat-langs, .cat-prog-text, .cat-save, .cat-muted { color: var(--text-dim); font-size: 12px; }
-.cat-prog { display: flex; align-items: center; gap: 8px; flex: 1 1 200px; min-width: 0; }
+.cat-prog { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; flex: 1 1 200px; min-width: 0; }
+/* proposal 2: deadline and words a day; dialogs' hints */
+.cat-goal { flex: 1 1 100%; color: var(--text-dim); font-size: 12px; overflow-wrap: anywhere; }
+.cat-goal.cat-late { color: var(--danger, #c0392b); }
+.cat-hint { color: var(--text-dim); font-size: 12px; margin: 4px 0 8px; overflow-wrap: anywhere; }
 .cat-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--accent-soft); overflow: hidden; min-width: 60px; }
 .cat-bar-fill { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
 .cat-save { min-width: 60px; text-align: right; }

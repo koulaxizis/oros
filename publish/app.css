@@ -296,6 +296,9 @@ dialog .fld { margin-bottom: 10px; }
 .step.done .step-name { text-decoration: line-through; color: var(--text-dim); }
 .step.late .step-name { color: var(--danger); }
 .badge.late { color: var(--danger); border-color: var(--danger); }
+/* Writer translations of the title (WR-CAT proposal 1) */
+.plan-tr { margin: 0 0 12px; }
+.plan-tr h4 { font-size: 13px; font-weight: 600; color: var(--text-dim); margin: 0 0 6px; }
 label.check { display: flex; gap: 8px; align-items: center; margin: 4px 0 10px; font-size: 14px; }
 label.check input { width: 20px; height: 20px; flex: 0 0 auto; }
 
