@@ -61,7 +61,9 @@
   // percentages and what the Assistant / orOS Gate read (this device)
   function saveSum(id, st) {
     var o = sums();
-    o[id] = [st.pct, st.words, V ? V.nameEl.textContent : "", V ? V.p.from : "", V ? V.p.to : "", V ? V.p.src : "", st.doneWords, Date.now()];
+    // + (proposals 1-2) the Publishing title id, the deadline, words a day
+    o[id] = [st.pct, st.words, V ? V.nameEl.textContent : "", V ? V.p.from : "", V ? V.p.to : "", V ? V.p.src : "", st.doneWords, Date.now(),
+      V ? V.meta.pub || "" : "", V ? V.meta.due || "" : "", V ? V.meta.goal || 0 : 0];
     try { localStorage.setItem(SUM_KEY, JSON.stringify(o)); } catch (e) {}
   }
 
@@ -274,6 +276,9 @@
     V.progText = el("span", "cat-prog-text", "");
     prog.appendChild(V.bar);
     prog.appendChild(V.progText);
+    // proposal 2: the deadline and the words a day
+    V.goalEl = el("span", "cat-goal", "");
+    prog.appendChild(V.goalEl);
     head.appendChild(prog);
     V.saveEl = el("span", "cat-save", "");
     V.saveEl.setAttribute("aria-live", "polite");
@@ -311,6 +316,8 @@
     var more = btn("tb-btn cat-more", "⋯", function () {
       H.openMenu(more, [
         { label: t("cat.rename"), action: rename },
+        { label: t("cat.pub"), action: pubDialog },
+        { label: t("cat.due"), action: dueDialog },
         { label: t("cat.nextTodo"), action: function () { nextTodo(V.cur); } },
         null,
         { label: t("tm.concord"), action: function () { concord(""); } },
@@ -442,6 +449,7 @@
     V.barFill.style.width = s.pct + "%";
     V.bar.setAttribute("aria-valuenow", String(Math.round(s.pct)));
     V.progText.textContent = fmt("cat.prog", { p: num(s.pct), d: num(s.doneWords), w: num(s.words) });
+    showGoal();
     saveSum(V.id, s);
     if (V.chapSel) {
       var keep = V.chapSel.value;
@@ -1410,6 +1418,140 @@
         H.wConfirm(fmt("cat.updateAsk", { name: doc.title || H.untitled(doc) }), { ok: t("cat.update") }).then(function (yes) { if (yes) go(true); });
       } else go(false);
     }).catch(docxFailed);
+  }
+
+  // ---------- Proposals 1-2: Publishing title, deadline and goal ----------
+  function dayText(ymd) {
+    var p = ymd.split("-");
+    try { return new Date(+p[0], +p[1] - 1, +p[2], 12).toLocaleDateString(H.locale(), { day: "numeric", month: "short" }); } catch (e) { return ymd; }
+  }
+  function showGoal() {
+    if (!V || !V.goalEl) return;
+    var g = C.goalInfo(V.src, V.rows, V.meta, Date.now()), el2 = V.goalEl;
+    el2.classList.toggle("cat-late", !!(g && g.late));
+    if (!g) { el2.textContent = ""; el2.hidden = true; return; }
+    el2.hidden = false;
+    if (g.done) el2.textContent = fmt("cat.goalDone", { d: dayText(g.due) });
+    else if (g.late) el2.textContent = fmt("cat.goalLate", { n: num(g.late), d: dayText(g.due), w: num(g.left) });
+    else el2.textContent = fmt("cat.goalOn", { d: dayText(g.due), n: num(g.days), w: num(g.perDay), t: num(g.today) });
+  }
+  function pubDialog() {
+    if (!V) return;
+    var view = V, titles = H.publishTitles();
+    var f = el("div", "cat-form"), dlg;
+    function row(label, ctl) { var l = el("label", "cat-frow"); l.appendChild(el("span", "cat-flabel", label)); l.appendChild(ctl); f.appendChild(l); return l; }
+    if (!titles.length) f.appendChild(el("p", "cat-hint", t("cat.pubNone")));
+    var sel = el("select", "w-field");
+    var o0 = el("option", "", t("cat.pubNo"));
+    o0.value = "";
+    sel.appendChild(o0);
+    titles.forEach(function (x) { var o = el("option", "", x.t + (x.lang ? " · " + x.lang : "")); o.value = x.id; sel.appendChild(o); });
+    if (view.meta.pub && !titles.some(function (x) { return x.id === view.meta.pub; })) {
+      var ox = el("option", "", t("cat.pubGone"));
+      ox.value = view.meta.pub;
+      sel.appendChild(ox);
+    }
+    sel.value = view.meta.pub || "";
+    row(t("cat.pubTitle"), sel);
+    var who = el("input", "w-field");
+    who.type = "text";
+    who.maxLength = 120;
+    who.placeholder = t("cat.pubWhoPh");
+    row(t("cat.pubWho"), who);
+    f.appendChild(el("p", "cat-hint", t("cat.pubHint")));
+    dlg = H.openDialog(t("cat.pub").replace(/…$/, ""), "", [
+      { class: "fb-btn", label: t("wx.cancel"), onClick: function () { dlg.close(); } },
+      { class: "fb-btn primary", label: t("gl.save"), onClick: function () {
+        var id = sel.value, name = who.value.replace(/\s+/g, " ").trim();
+        dlg.close();
+        if (V !== view) return;
+        var go = id !== (view.meta.pub || "") ? getStore().saveMeta(view.id, { pub: id }) : Promise.resolve();
+        go.then(function () {
+          view.meta.pub = id;
+          if (V === view) progress();
+          // the translator into the title's people: Publishing's own dialog, filled in
+          if (id && name) H.openAt("publish", { title: id, addPerson: { r: "t", n: name } });
+          else if (id) H.toast(t("cat.pubLinked"));
+        }).catch(failed);
+      } }
+    ]);
+    dlg.classList.add("cat-dlg");
+    dlg.querySelector(".w-dialog-body").appendChild(f);
+    if (view.meta.pub) {
+      f.appendChild(btn("fb-btn", t("cat.pubOpen"), function () { dlg.close(); H.openAt("publish", { title: view.meta.pub }); }));
+    }
+  }
+  function dueDialog() {
+    if (!V) return;
+    var view = V, dlg;
+    var f = el("div", "cat-form");
+    function row(label, ctl) { var l = el("label", "cat-frow"); l.appendChild(el("span", "cat-flabel", label)); l.appendChild(ctl); f.appendChild(l); return l; }
+    var due = el("input", "w-field");
+    due.type = "date";
+    due.value = view.meta.due || "";
+    row(t("cat.dueDate"), due);
+    var goal = el("input", "w-field");
+    goal.type = "number";
+    goal.min = "0";
+    goal.max = "100000";
+    goal.step = "50";
+    goal.inputMode = "numeric";
+    goal.value = view.meta.goal ? String(view.meta.goal) : "";
+    row(t("cat.dueGoal"), goal);
+    var hint = el("p", "cat-hint", "");
+    f.appendChild(hint);
+    function need() {
+      var g = due.value && C.YMD_RX.test(due.value) ? C.goalInfo(view.src, view.rows, { due: due.value }, Date.now()) : null;
+      goal.placeholder = g && !g.done ? String(g.need) : "";
+      hint.textContent = g && !g.done && !g.late ? fmt("cat.dueNeed", { w: num(g.need), n: num(g.days) }) : t("cat.dueHint");
+    }
+    due.addEventListener("input", need);
+    need();
+    var cal = el("div", "cat-gl-acts");
+    cal.appendChild(btn("fb-btn", t("cat.dueCal"), function () { toCal(false); }));
+    cal.appendChild(btn("fb-btn", t("cat.dueDaily"), function () { toCal(true); }));
+    f.appendChild(cal);
+    function values() {
+      var d = due.value && C.YMD_RX.test(due.value) ? due.value : "";
+      var g = Math.floor(Number(goal.value) || 0);
+      return { due: d, goal: g >= 0 && g <= 100000 ? g : 0 };
+    }
+    function save() {
+      var v = values(), ch = {};
+      if (v.due !== (view.meta.due || "")) ch.due = v.due;
+      if (v.goal !== (view.meta.goal || 0)) ch.goal = v.goal;
+      if (!Object.keys(ch).length) return Promise.resolve(v);
+      return getStore().saveMeta(view.id, ch).then(function () {
+        view.meta.due = v.due;
+        view.meta.goal = v.goal;
+        if (V === view) progress();
+        return v;
+      });
+    }
+    // Calendar's New event form, filled in: nothing is saved there before Save
+    function toCal(daily) {
+      var v = values();
+      if (!v.due) { H.toast(t("cat.dueFirst")); due.focus(); return; }
+      save().then(function (v) {
+        var name = view.nameEl.textContent || view.p.name, g = C.goalInfo(view.src, view.rows, view.meta, Date.now());
+        var today = C.ymdOf(new Date());
+        dlg.close();
+        if (daily) {
+          if (v.due < today) { H.toast(t("cat.duePast")); return; }
+          H.calendarNew({ date: today, start: "09:00", end: "09:30", title: fmt("cat.calDaily", { w: num(g ? g.perDay : 0), name: name }).slice(0, 80),
+            note: fmt("cat.calNote", { d: dayText(v.due) }).slice(0, 500), recur: { freq: "D", until: v.due }, remindMin: 5 });
+        } else {
+          H.calendarNew({ date: v.due, allDay: true, title: fmt("cat.calDue", { name: name }).slice(0, 80),
+            note: fmt("cat.calNote", { d: dayText(v.due) }).slice(0, 500), remindMin: 1440 });
+        }
+      }).catch(failed);
+    }
+    dlg = H.openDialog(t("cat.due").replace(/…$/, ""), "", [
+      { class: "fb-btn", label: t("wx.cancel"), onClick: function () { dlg.close(); } },
+      { class: "fb-btn primary", label: t("gl.save"), onClick: function () { dlg.close(); save().catch(failed); } }
+    ]);
+    dlg.classList.add("cat-dlg");
+    dlg.querySelector(".w-dialog-body").appendChild(f);
   }
 
   // ---------- T4: Word and XLIFF ----------

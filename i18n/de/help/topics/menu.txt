@@ -35,7 +35,7 @@ Du kannst auch über die Adressleiste deines Browsers suchen. Füge in den Brows
 - **Zuletzt verwendete Dateien**: die letzten Dateien, die du auf diesem Gerät in [Dateien](app:files) geöffnet, gespeichert oder heruntergeladen hast. Klicke eine an, um sie in Dateien zu öffnen. Während sensibler Arbeit bleiben sie ausgeblendet.
 - **System**: wie viele Plätze dieses Geräts für offene Apps belegt sind, wie viel Speicherplatz orOS nutzt und ob die Synchronisierung aktuell ist oder Dateien warten. `Details unter Einstellungen › Gerät` zeigt das ganze Bild.
 
-[[Esc]] schließt sie. Unter `Einstellungen › System › Übersicht` kannst du sie auch öffnen, indem du die Maus in die linke obere Ecke schiebst, oder mit der Super-Taste (Windows-Taste) allein; beides ist anfangs aus und gilt nur für dieses Gerät.
+[[Esc]] schließt sie. Unter `Einstellungen › System › Übersicht` kannst du sie auch öffnen, indem du die Maus in die linke obere Ecke schiebst; das ist anfangs aus und gilt nur für dieses Gerät.
 
 ## Befehle
 Tippe auf Englisch oder Griechisch, was du tun willst, und die erste Zeile der Suche zeigt die Aktion. Drücke [[Enter]] oder tippe darauf. Noch wird nichts gespeichert: Die App öffnet sich mit ausgefülltem Formular, du prüfst es und drückst `Speichern`.
@@ -54,7 +54,7 @@ Tippe auf Englisch oder Griechisch, was du tun willst, und die erste Zeile der S
 
 Bevor du tippst, listet die Leiste deine letzten Befehle auf; tippe auf einen, um ihn noch einmal zu nutzen. Diese Liste bleibt nur auf diesem Gerät, und `Liste leeren` leert sie.
 
-Dieselben Befehle funktionieren in einer kleinen Leiste über jeder App: Drücke [[Ctrl+K]] (in Notizen und Wiki [[Ctrl+Alt+Shift+K]]). In der orOS-App für Android öffnet die Lupe der Startbildschirm-Widgets dieselbe Leiste. Alles, was kein Befehl ist, ist eine normale Suche, und wenn der [Assistent](app:assistant) installiert ist, fragt ihn die letzte Zeile. Befehle werden auf deinem Gerät verstanden; nichts wird irgendwohin gesendet.
+Dieselben Befehle funktionieren in einer kleinen Leiste über jeder App: Drücke [[Ctrl+Alt+Shift+K]]. In der orOS-App für Android öffnet die Lupe der Startbildschirm-Widgets dieselbe Leiste. Alles, was kein Befehl ist, ist eine normale Suche, und wenn der [Assistent](app:assistant) installiert ist, fragt ihn die letzte Zeile. Befehle werden auf deinem Gerät verstanden; nichts wird irgendwohin gesendet.
 
 ## Wählen, welche Apps das Menü zeigt
 Zu viele Apps? Blende die aus, die du nicht nutzt. Öffne [Einstellungen](app:settings) und wähle `Menü`:

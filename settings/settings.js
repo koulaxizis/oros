@@ -3610,16 +3610,41 @@
     host.appendChild(c2);
   }
 
+  // DEF-APPS D1: the choices first (synced, "All devices"), then which
+  // app opens what, then the system's "Open with".
   function secFiles(host) {
     var F = fileOpen();
-    var c1 = card(t("f.status"), "files");
     if (!F) {
-      c1.appendChild(el("p", "hint", t("f.none")));
-      host.appendChild(c1);
+      var c0 = card(t("f.status"), "files");
+      c0.appendChild(el("p", "hint", t("f.none")));
+      host.appendChild(c0);
       return;
     }
-    c1.appendChild(el("p", "hint", !F.supported() ? t("f.unsupported") : F.installed() ? t("f.ready") : t("f.install")));
-    host.appendChild(c1);
+
+    var gs = F.groups ? F.groups() : F.shared().map(function (ext) { return { exts: [ext], apps: F.appsFor(ext) }; });
+    if (gs.length) {
+      var c3 = card(t("f.choose"), "fopen");
+      c3.appendChild(el("p", "hint", t("f.choose.hint")));
+      gs.forEach(function (g) {
+        var opts = [{ value: "", label: t("f.ask") }].concat(g.apps.map(function (id) {
+          return { value: id, label: appName(id) };
+        }));
+        var cur = F.choice(g.exts[0]);
+        var key = "file:" + g.exts[0].slice(1);
+        c3.appendChild(row(g.exts.join("  "), select(opts, cur === "ask" ? "" : cur, key, function (v) {
+          if (F.setChoices) F.setChoices(g.exts, v);
+          else g.exts.forEach(function (x) { F.setChoice(x, v); });
+          render();
+        }), { forId: "f-" + key }));
+      });
+      if (F.resetAll && F.count && F.count() > 0) {
+        c3.appendChild(actions(button(t("f.reset"), "f.reset", function () {
+          F.resetAll();
+          render();
+        })));
+      }
+      host.appendChild(c3);
+    }
 
     var c2 = card(t("f.apps"));
     F.handlers().forEach(function (h) {
@@ -3627,23 +3652,9 @@
     });
     host.appendChild(c2);
 
-    var sh = F.shared();
-    if (sh.length) {
-      var c3 = card(t("f.choose"), "files");
-      c3.appendChild(el("p", "hint", t("f.choose.hint")));
-      sh.forEach(function (ext) {
-        var opts = [{ value: "", label: t("f.ask") }].concat(F.appsFor(ext).map(function (id) {
-          return { value: id, label: appName(id) };
-        }));
-        var cur = F.choice(ext);
-        var key = "file:" + ext.slice(1);
-        c3.appendChild(row(ext, select(opts, cur === "ask" ? "" : cur, key, function (v) {
-          F.setChoice(ext, v);
-          render();
-        }), { forId: "f-" + key }));
-      });
-      host.appendChild(c3);
-    }
+    var c1 = card(t("f.status"), "files");
+    c1.appendChild(el("p", "hint", !F.supported() ? t("f.unsupported") : F.installed() ? t("f.ready") : t("f.install")));
+    host.appendChild(c1);
 
     var c4 = card(t("f.how"));
     c4.appendChild(el("p", "hint", t("f.how.hint")));
@@ -4213,16 +4224,7 @@
     if (has.wallpaper) c2.appendChild(linkRow(t("x.wallgen"), "x.wallgen", function () { act("openApp", "wallpaper"); }));
     host.appendChild(c2);
 
-    if (s.shortcuts && s.shortcuts.length) {
-      var c3 = card(t("x.shortcuts"));
-      var dl = el("dl", "keys");
-      s.shortcuts.forEach(function (k) {
-        dl.appendChild(el("dt", null, k.combo));
-        dl.appendChild(el("dd", null, k.label));
-      });
-      c3.appendChild(dl);
-      host.appendChild(c3);
-    }
+    if (s.shortcuts && s.shortcuts.length) secShortcuts(host, s);
 
     // Multitasking: on by default on computers, off on phones, this device only.
     if (s.multitask) {
@@ -4256,13 +4258,11 @@
       host.appendChild(chc);
     }
 
-    // Overview (OV-1): hot corner and Super key, this device only, off by default.
+    // Overview (OV-1): hot corner, this device only, off by default (no Super key: one combo for all, Chris 2026-11-16).
     if (s.overview) {
       var ovc = card(t("ov.title"), "overview");
       ovc.appendChild(el("p", "hint", t("ov.hint")));
       ovc.appendChild(row(t("ov.corner"), switchBtn(!!s.overview.corner, "overview:corner", function (v) { set("overview:corner", v); }, t("ov.corner"))));
-      ovc.appendChild(row(t("ov.super"), switchBtn(!!s.overview.superKey, "overview:super", function (v) { set("overview:super", v); }, t("ov.super")),
-        { hint: t("ov.superHint") }));
       host.appendChild(ovc);
     }
 
@@ -4721,8 +4721,95 @@
     nav.appendChild(list);
   }
 
+  // ---------- 10b. Keyboard shortcuts (SC-EDIT, DEF-APPS D2) ----------
+  // Every orOS shortcut is Ctrl+Alt+Shift + a key; here the person picks
+  // the key (a letter or a digit) or turns one off. A key another
+  // shortcut has asks first: Swap gives that one this one's key.
+  // The keys follow the person to every device (shell field "keys").
+  var scEdit = { id: null, conflict: null };
+  function scKeyName(code) { return /^Key[A-Z]$/.test(code) ? code.charAt(3) : /^Digit[0-9]$/.test(code) ? code.charAt(5) : code; }
+  function secShortcuts(host, s) {
+    var c3 = card(t("x.shortcuts"), "keys");
+    c3.appendChild(el("p", "hint", t("sc.hint", { p: s.shortcutsPrefix || "Ctrl+Alt+Shift+" })));
+    var changed = false;
+    s.shortcuts.forEach(function (k) {
+      if (k.code !== k.def) changed = true;
+      var editing = scEdit.id === k.id;
+      var hint = editing ? (scEdit.conflict
+        ? t("sc.taken", { combo: scEdit.conflict.combo, name: scEdit.conflict.label })
+        : t("sc.press")) : (k.code ? k.combo : t("sc.off"));
+      var box = el("div", "actions sc-ctl");
+      if (editing && scEdit.conflict) {
+        box.appendChild(button(t("sc.swap"), "sc.swap:" + k.id, function () {
+          var c = scEdit.conflict;
+          scEdit = { id: null, conflict: null };
+          set("shortcut", { id: k.id, code: c.code, swap: true });
+        }, "primary"));
+      }
+      if (editing) {
+        box.appendChild(button(t("sc.cancel"), "sc.cancel:" + k.id, function () {
+          scEdit = { id: null, conflict: null };
+          render();
+        }));
+      } else {
+        box.appendChild(button(t("sc.change"), "sc.change:" + k.id, function () {
+          scEdit = { id: k.id, conflict: null };
+          render();
+        }));
+        if (k.code) box.appendChild(button(t("sc.turnoff"), "sc.off:" + k.id, function () {
+          set("shortcut", { id: k.id, code: "" });
+        }));
+        if (k.code !== k.def) {
+          var d = button(t("sc.default"), "sc.default:" + k.id, function () {
+            set("shortcut", { id: k.id, code: k.def, swap: true });
+          });
+          d.title = k.defCombo;
+          box.appendChild(d);
+        }
+      }
+      var r = row(k.label, box, { hint: hint, stack: true });
+      r.setAttribute("data-sc", k.id);
+      if (editing) r.classList.add("sc-editing");
+      c3.appendChild(r);
+    });
+    if (changed) {
+      c3.appendChild(actions(button(t("sc.resetAll"), "sc.resetAll", function () {
+        scEdit = { id: null, conflict: null };
+        set("shortcutsReset", true);
+      })));
+    }
+    host.appendChild(c3);
+  }
+  // While a row waits for its key: a letter or a digit, alone (no
+  // Ctrl/Alt/Cmd), takes it; Escape cancels. Nothing else reaches the
+  // page or the shell meanwhile.
+  function scCapture(e) {
+    if (!scEdit.id || scEdit.conflict) return;
+    if (e.key === "Escape") {
+      e.preventDefault(); e.stopPropagation();
+      scEdit = { id: null, conflict: null };
+      render();
+      return;
+    }
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    var code = e.code || "";
+    if (!/^(Key[A-Z]|Digit[0-9])$/.test(code)) return;
+    e.preventDefault(); e.stopPropagation();
+    var st = snap(), id = scEdit.id;
+    var list = (st && st.shortcuts) || [];
+    var other = list.filter(function (k) { return k.code === code && k.id !== id; })[0];
+    if (other) {
+      scEdit = { id: id, conflict: { code: code, combo: (st.shortcutsPrefix || "Ctrl+Alt+Shift+") + scKeyName(code), label: other.label } };
+      render();
+      return;
+    }
+    scEdit = { id: null, conflict: null };
+    set("shortcut", { id: id, code: code });
+  }
+
   // ---------- 11. Keyboard (Contract Β) + palette ----------
   function wireKeyboard() {
+    document.addEventListener("keydown", scCapture, true);
     document.addEventListener("keydown", function (e) {
       if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
       var p = parentWin();

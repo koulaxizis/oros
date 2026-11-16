@@ -1,6 +1,19 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.22.00
+- **Book translations meet Publishing and Calendar.** In a Writer translation, `Publishing title…` links it to a title in Publishing: its progress shows in that title's release plan, and you can add yourself as the translator there in one step. `Deadline and goal…` sets a due date and how many words a day you want to translate (or lets orOS work it out); a line under the progress bar shows the days left and today's words, and Calendar can remind you every morning until the deadline. See [Writer](app:writer).
+
+## Version 7.21.00
+- **Base: more ways to see a table.** New views: kanban (cards in columns by a choice field, drag them across), calendar (records on a month by a date field), gallery (cards with a picture) and a form for typing records one after another. A new Attachments field keeps photos and files with a record on the orOS disk. Print a view, or save it as a PDF.
+
+## Version 7.20.00
+- **Default apps.** Settings › Default apps: pick the app for .txt, .md, .csv, .pptx and .opml files. Your picks follow you to every device, and Files opens those files there.
+- **Change your shortcuts.** Settings › System › Keyboard shortcuts: change the key of any orOS shortcut or turn it off, with Reset all to go back. Every orOS shortcut is now Ctrl+Alt+Shift + a key. Plain Ctrl+K no longer opens the command bar: use Ctrl+Alt+Shift+K. Shortcuts inside apps stay as they were.
+
+## Version 7.19.00
+- **Second screen.** With two screens set to Extend (on Windows: Win+P), Ctrl+Alt+Shift+B or the two-screens button in Open apps moves an app to the other screen, and the same keys bring it back. Slides puts the audience on the other screen and keeps the speaker view on yours. Settings › Device › Screen shows your screens. Works in Chrome, Edge and the orOS apps.
+
 ## Version 7.18.00
 - **Clipboard history and emoji.** Clipboard history (Settings › System, off until you turn it on): orOS keeps the text you copy inside its apps on this device; Ctrl+Alt+Shift+V or Clipboard in Quick settings brings it back, with pins, search and Paste into the field you were in. Never Passwords, nothing in Sensitive work. New emoji picker: Ctrl+Alt+Shift+. or Emoji in Quick settings, search in English, Greek or German. See [Privacy](help:t/privacy).
 
