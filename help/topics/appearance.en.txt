@@ -41,6 +41,8 @@ The same figures can start a rule in [Automations](app:automations): a few minut
 
 Under `Look of the bar` you can float the bar as a rounded strip: `Glass` lets the colours behind it through, `Midnight` stays dark even in a light theme, `Solid` follows your theme. `Classic` is the bar as it always was. High contrast always keeps the classic bar.
 
+On Windows, with orOS installed, the tray icon's menu has `Smart bar on the desktop`: the same bar, with your chips and look, stays at the top of the screen even when the orOS window is closed, and a tap opens that app in orOS.
+
 ## Greeting at the start
 The first time you start orOS each day, a short greeting appears over the desktop: good morning, afternoon or evening (with your name, if you set one under `Your name`), the date and, when [Today](app:today) has something, how many things are due and late. Tap that line to open Today. The greeting goes by itself after a few seconds, or when you tap anywhere, press a key or open an app. It never shows over an app or on your very first day. Turn it off in `Settings`, under `Appearance`, with `Greet me when orOS starts`; this stays on this device.
 

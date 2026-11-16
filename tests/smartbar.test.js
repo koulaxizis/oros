@@ -171,3 +171,18 @@ test("SB3 looks: kept only when known, never under high contrast, wired to Setti
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
   });
 });
+
+test("SB4 bar window: only the bar, its title kept, apps open in the main window", () => {
+  const sh = read("shell.js"), css = read("style.css"), src = read("smartbar.js");
+  assert.match(sh, /if \(h !== "#bar-win" \|\| window\.top !== window\) return;/);
+  assert.match(sh, /document\.title = "orOS bar";/);
+  assert.match(sh, /if \(BARWIN && barwinOpen\(id\)\) return;/);
+  assert.match(sh, /if \(BARWIN\) return;\s+\/\/ SB4: the launcher finds the bar window by its title/);
+  // the main window answers only well-formed asks, never in the bar or a single app
+  assert.match(sh, /if \(BARWIN \|\| SOLO \|\| !d \|\| d\.t !== "open" \|\| typeof d\.at !== "number"\) return;/);
+  assert.match(sh, /if \(d\.id && !BAR_APP_RE\.test\(String\(d\.id\)\)\) return;/);
+  assert.match(sh, /fetch\("\/__oros-open"[^)]*\)[^;]*method: "POST", headers: \{ "X-Oros-Bar": "1" \}/);
+  assert.match(css, /html\.barwin body > \*:not\(#oros-bar\) \{ display: none !important; \}/);
+  // behind the screen lock the chips go (no lock screen over the bar window)
+  assert.match(src, /var lk = locked\(\);\s+if \(box\.hidden !== lk\)/);
+});

@@ -2026,6 +2026,13 @@ html[data-oros-contrast="high"] #oros-desktop { background: var(--bg-desktop) !i
 html[data-oros-contrast="high"] #wp-live,
 html[data-oros-contrast="high"] #wp-land { display: none !important; }
 html[data-oros-contrast="high"] #oros-bar { backdrop-filter: none; -webkit-backdrop-filter: none; }
+/* SB4: the desktop launcher's bar window (shell.js "#bar-win"): only the
+   top bar, with the menu button, the smart chips, the clock and the date. */
+html.barwin, html.barwin body { background: var(--bar-bg); }
+html.barwin body > *:not(#oros-bar) { display: none !important; }
+html.barwin #oros-bar { padding-top: 0; height: 40px; }
+html.barwin #oros-bar .bar-left > *:not(#btn-menu),
+html.barwin #oros-bar .bar-right > *:not(#sb-row):not(#bar-time):not(#bar-date) { display: none !important; }
 html[data-oros-contrast="high"] .menu-cat-count { background: transparent; color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
 
 html[data-oros-zoom] #oros-running > iframe { zoom: var(--oros-zoom, 1); }

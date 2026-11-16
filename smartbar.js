@@ -378,8 +378,14 @@
   // Paint every chip whose text changed. A chip the fit hid
   // (data-sb-drop) stays hidden until the shell fits the bar again; the
   // bar's ResizeObserver runs that fit whenever a chip changes width.
+  function locked() { return !!call(function () { return root.orosLock.isLocked(); }); }
   function paint(force) {
     if (!host || !box) return;
+    // Behind the screen lock the chips go (the desktop bar window has no
+    // lock screen over it).
+    var lk = locked();
+    if (box.hidden !== lk) { box.hidden = lk; force = true; call(function () { host.fit(); }); }
+    if (lk) return;
     refreshToday(false);
     var now = Date.now(), changed = false;
     Object.keys(chips).forEach(function (k) {
