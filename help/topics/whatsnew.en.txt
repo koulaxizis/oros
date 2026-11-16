@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.28.00
+- **Pickers in orOS colours.** Every list you choose from, every date, time and colour field now opens in the colours of your orOS instead of the browser's grey boxes: a sheet from the bottom on phones, a panel under the field on a computer, with search in long lists, a calendar that starts on Monday, and a colour picker with your own colours. Questions such as "Make a new address?" are orOS windows too. Same on the site, the installed app, Portable, orOS USB and the Android app.
+
 ## Version 7.27.00
 - **Who helps with your data.** In [Settings](app:settings), choose who may use your orOS data: both the Assistant and Claude, the Assistant only (Claude's access through orOS Gate turns off on all your devices), or Claude only (the Assistant hides, and its shortcuts open Claude with your question copied, ready to paste).
 
