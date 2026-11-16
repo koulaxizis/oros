@@ -186,6 +186,9 @@ A book is a row of chapters, and every chapter is an ordinary Studio project: tr
 - `Use this chapter's loop as the retail sample` takes a loop of 1 to 5 minutes as the sample that the stores play.
 - `Export the book` writes one MP3 per part (CBR, mono, 44.1 kHz, at the bit rate under `MP3 for the book`) with the title, author, narrator, ISBN, track number and cover, plus `retail-sample.mp3`, a 2400 × 2400 `cover.jpg` and `report.txt` with the measurements of every file, into `Studio/Books`, in a folder named after the book, in [Files](app:files). Each MP3 is measured again after encoding.
 - A chapter is mixed in one piece in memory, so very long chapters (over an hour) need a device with plenty of memory.
+- `One M4B with chapters` makes the whole book one audiobook file, the kind Apple Books, VLC and most Android players open: Studio's own AAC encoder (64, 96 or 128 kbit/s mono under `M4B for the book`), a chapter at the start of every part, the title, author, narrator, year and the cover. It lands next to the MP3s.
+- After an export, a book linked to a Publishing title shows `Write the length to Publishing`: Publishing opens that title and asks before it puts the minutes into the audiobook edition.
+- The Assistant (and Claude through orOS Gate) can read a book's parts: each is named "book · part" and says where it sits in the book.
 
 ## Sync and backup
 - Projects, tracks and clips, the notes of MIDI clips too, follow you to your other devices through orOS sync.

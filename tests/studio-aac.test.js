@@ -188,3 +188,14 @@ test("ffmpeg decodes the stream, where it is installed", (t) => {
   assert.ok(worst < 1e-4, "readers differ by " + worst);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test("a stream in pieces gives the very same frames as the whole input", () => {
+  const rate = 44100, x = signal(rate, 2.3, 260, 0.4), whole = A.encode([x], rate, 64);
+  const s = new A.Stream(1, rate, 64);
+  for (const [a, b] of [[0, 1], [1, 1500], [1500, 1500], [1500, 30000], [30000, x.length]]) s.push([x.subarray(a, b)]);
+  s.end();
+  assert.equal(s.n, x.length);
+  assert.equal(s.units().length, whole.units().length);
+  s.units().forEach((u, i) => assert.deepEqual(Array.from(u), Array.from(whole.units()[i]), "frame " + i));
+  assert.throws(() => s.push([x]), /ended/);
+});

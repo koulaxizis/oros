@@ -22,7 +22,9 @@
 // scale factor codebook, scale factor bands); tests/studio-aac.test.js
 // checks that every codebook is a complete prefix code.
 // Use: var enc = new StudioAac.Encoder(chans, rate, kbps);
-//      while (!enc.step(32)) …; enc.adts() or enc.units() + enc.asc()
+//      while (!enc.step(32)) …; enc.adts() or enc.units() + enc.asc();
+//      or a stream: var s = new StudioAac.Stream(1, 44100, 64);
+//      s.push([part]) for each piece, s.end(), then s.units().
 //      (chans: Float32Array per channel, -1..1).
 // Loaded by studio.js (window.StudioAac) and by the tests.
 // ============================================================
@@ -539,7 +541,7 @@
     var ri = RATES.indexOf(rate);
     if (ri < 3) throw new Error("rate");
     this.ri = ri; this.rate = rate; this.ch = chans.length; this.chans = chans;
-    this.n = chans[0].length;
+    this.n = chans[0].length; this.base = 0; this.open = false;
     this.kbps = Math.max(8 * this.ch, Math.min(160 * this.ch, Math.round(kbps) || 64 * this.ch));
     // bandwidth from the bit rate per channel
     var per = this.kbps / this.ch;
@@ -574,7 +576,7 @@
     return false;
   };
   Encoder.prototype.analyse = function () {
-    var a = (this.frame - 1) * FRAME, z = this.z, n = this.n, line = this.line;
+    var a = (this.frame - 1) * FRAME - this.base, z = this.z, n = this.n - this.base, line = this.line;
     for (var c = 0; c < this.ch; c++) {
       var src = this.chans[c], C = this.chs[c];
       for (var i = 0; i < N; i++) { var j = a + i; z[i] = j >= 0 && j < n ? src[j] : 0; }
@@ -640,6 +642,34 @@
     return this.sections(enc);
   };
   Encoder.prototype.units = function () { return this.out; };
+  // A stream: new StudioAac.Stream(channels, rate, kbps), then push([L, R?]) as the audio
+  // comes (any lengths; frames are encoded as soon as they are whole) and end() once.
+  // Only the last frame's samples are kept between pushes, so a whole book fits.
+  function Stream(ch, rate, kbps, opts) {
+    var empty = []; for (var c = 0; c < ch; c++) empty.push(new Float32Array(0));
+    Encoder.call(this, empty, rate, kbps, opts);
+    this.open = true; this.total = Infinity;
+  }
+  Stream.prototype = Object.create(Encoder.prototype);
+  Stream.prototype.constructor = Stream;
+  Stream.prototype.push = function (chans) {
+    if (!this.open) throw new Error("ended");
+    if (!chans || chans.length !== this.ch) throw new Error("channels");
+    var keep = Math.max(0, (this.frame - 1) * FRAME), add = chans[0].length;
+    for (var c = 0; c < this.ch; c++) {
+      var old = this.chans[c], from = keep - this.base, buf = new Float32Array(old.length - from + add);
+      buf.set(old.subarray(from)); buf.set(chans[c].subarray(0, add), old.length - from);
+      this.chans[c] = buf;
+    }
+    this.base = keep; this.n += add;
+    while ((this.frame + 1) * FRAME <= this.n) this.encodeFrame();
+  };
+  Stream.prototype.end = function () {
+    if (!this.open) return;
+    this.open = false; this.total = Math.ceil(this.n / FRAME) + 1;
+    while (this.frame < this.total) this.encodeFrame();
+    this.result = true;
+  };
   // AudioSpecificConfig: AAC LC, the rate index, the channel configuration, GASpecificConfig all zero
   Encoder.prototype.asc = function () {
     return new Uint8Array([(2 << 3) | (this.ri >> 1), ((this.ri & 1) << 7) | (this.ch << 3)]);
@@ -666,7 +696,7 @@
     return e;
   }
 
-  var api = { VERSION: "1.0.0", Encoder: Encoder, encode: encode, RATES: RATES, FRAME: FRAME,
+  var api = { VERSION: "1.0.0", Encoder: Encoder, Stream: Stream, encode: encode, RATES: RATES, FRAME: FRAME,
               _test: { BOOKS: BOOKS, SFC: SFC, SFB: SFB, swbOf: swbOf, Mdct: Mdct, BitWriter: BitWriter } };
   root.StudioAac = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
