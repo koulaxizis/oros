@@ -12379,3 +12379,8 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** quote/view.js, quote/view.css, invoices/invoices.js, invoices/invoices.css, help EN/EL/DE, i18n/de, Bible.
 - **Tests:** new `tests/billing-k2.test.js`; full suite; Playwright Chromium (dropdown, quote → invoice, Invoiced link).
 - **Next:** K3 shared settings and profile, K4 Overview pipeline.
+
+### 2026-11-16 — 7.37.00 — orOS Gate open on this computer while orOS is closed (GATE-HOST, PEND-1 wave 2, #1084)
+- **Why:** Chris 2026-11-16 card b «Ναι, μετά το a» (thread «Αλλαγές του Gate με κλειστό orOS», design doc https://claude.ai/artifact/MvAkoePvh1M7QVqCobck5a).
+- **What:** gate/gate.js HOST (`?gate-host=<nonce>` confirmed at the launcher's `/__oros/gate-host`, kinds `bg` headless and `lock` window), `locked()` and `away()`, `HOST_TXT`, yield/bye hand-over, `api.host`; Settings switch `gt.host` / `gt.host.usb` with hints EN/EL/DE; Settings help EN/EL. Launcher: oros-portable #39 (+ oros-usb #34 README) (`launcher/gatehost.go`). Part VI "GATE-HOST", Part IX decision.
+- **Tests:** tests/gate-host.test.js (new, real shell: bg and lock apply behind the lock, a window told bg and a page without a nonce wait); oros-portable go test (gatehost_test.go, gatehost_linux_test.go); full suite green.
