@@ -64,6 +64,13 @@
 // Since CL-1 (photo collage, atelier/collage.js):
 //   ext.clg  on a photo { i }: box i of the page's collage; on a page
 //            background { l, g, r }: grid id, spacing and corners
+// Since wave V3 (text on a path, atelier/vector.js):
+//   ext.tp   on a text item { d, o, s }: the text runs along the
+//            outline d (unit path text in the box, as ext.pth, chunks
+//            of ≤ 4000 chars), one line; o 0..100 = the anchor along
+//            it (%), s -1 = the other side (omitted when 1). The box
+//            is the outline's box, so moving and resizing carry the
+//            outline. Older copies draw the text straight in the box.
 // Defaults are omitted, keys come in one fixed order: the record is
 // canonical (R26), so equal designs give equal JSON on every device.
 // Pure: no DOM. Exposes window.AtelierAX (browser) or module.exports.
@@ -71,14 +78,14 @@
 (function (root) {
   "use strict";
 
-  var M, T, FX, MEDIA, CL, OB;
+  var M, T, FX, MEDIA, CL, OB, VEC;
   if (typeof module !== "undefined" && module.exports) {
-    M = require("../designkit/model.js"); T = require("../designkit/text.js");
+    M = require("../designkit/model.js"); T = require("../designkit/text.js"); VEC = require("../designkit/vector.js");
     FX = require("../designkit/fx.js"); MEDIA = require("../designkit/media.js");
     CL = require("./clips.js"); OB = require("./objects.js");
   } else {
     M = root.orosDK.model; T = root.orosDK.text; FX = root.orosDK.fx; MEDIA = root.orosDK.media;
-    CL = root.AtelierClips; OB = root.AtelierObjects;
+    CL = root.AtelierClips; OB = root.AtelierObjects; VEC = root.orosDK.vector;
   }
 
   var KINDS = ["text", "shape", "icon", "photo", "line", "table", "chart"];
@@ -466,8 +473,10 @@
     return { lines: lines, h: Math.max(lead * 0.5, h) };
   }
 
-  // Curved text: one line along an arc (fx.curveGlyphs). Glyphs are
-  // centred on the box; returns { glyphs:[{ch, x, y, rot}], w, h, key,
+  // Curved text: one line along an arc (fx.curveGlyphs), or along the
+  // item's own outline (ext.tp, wave V3). Arc glyphs are centred on
+  // the box, path glyphs sit where the outline puts them (the box is
+  // the outline's, glyphs past an open end are left out); returns { glyphs:[{ch, x, y, rot}], w, h, key,
   // size } with x/y relative to the box centre (y = baseline).
   function curveLayout(it) {
     var ax = it.ax || {};
@@ -480,6 +489,16 @@
       list.push({ x: x, w: w, ch: ch });
       x += w;
     });
+    var tp = tpOf(it);
+    if (tp) {
+      var bw = Math.max(0.01, it.w || 0), bh = Math.max(0.01, it.h || 0);
+      var on = VEC && VEC.alongPath(VEC.scaled(tp.unit, bw, bh), list, { o: tp.o, al: ax.al || TEXT_DEF.al, s: tp.s });
+      var gl = [];
+      (on || []).forEach(function (p, i) {
+        if (!p.hide) gl.push({ ch: list[i].ch, w: list[i].w, x: p.x - bw / 2, y: p.y - bh / 2, rot: Math.round(p.rot * 10000) / 10000 });
+      });
+      return { glyphs: gl, w: bw, h: bh, key: key, size: size, tp: 1, over: gl.length < list.length };
+    }
     var pos = FX.curveGlyphs(list, ax.cv || 0);
     var asc = T.ascent(key, size), desc = T.descent(key, size);
     var x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -498,6 +517,7 @@
 
   // Height a text box needs (straight text) or its whole box (curved).
   function textHeight(it) {
+    if (tpOf(it)) return Math.max(1, it.h || 1);
     if (it.ax && it.ax.cv) return Math.max(1, Math.round(curveLayout(it).h * 100) / 100);
     return Math.max(1, Math.round(textLayout(it).h * 100) / 100);
   }
@@ -719,6 +739,29 @@
     if (!Array.isArray(v) || !v.length || !v.every(function (c) { return typeof c === "string"; })) return null;
     return M.parsePath(v.join(""));
   }
+  // Text on a path (ext.tp, wave V3): { unit, o, s } or null, checked
+  // on the way out like the shape outline. isCurved: the text is laid
+  // out as glyphs (curveLayout) rather than lines.
+  function tpOf(it) {
+    var v = it && it.ax && it.ax.k === "text" && it.ext && it.ext.tp;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+    var unit = pthOf({ ext: { pth: v.d } });
+    if (!unit || !unit.length) return null;
+    var o = typeof v.o === "number" && isFinite(v.o) ? Math.max(0, Math.min(100, v.o)) : 0;
+    return { unit: unit, o: o, s: v.s === -1 ? -1 : 1 };
+  }
+  function isCurved(it) { return !!(it && it.ax && it.ax.k === "text" && (it.ax.cv || tpOf(it))); }
+  // Sets (v = { d, o, s }) or removes (v = null) the path, in place.
+  function setTp(it, v) {
+    var x = {};
+    if (it.ext) Object.keys(it.ext).forEach(function (k) { if (k !== "tp") x[k] = it.ext[k]; });
+    if (v && v.d) {
+      var t = { d: v.d, o: Math.round(Math.max(0, Math.min(100, +v.o || 0)) * 100) / 100 };
+      if (v.s === -1) t.s = -1;
+      x.tp = t;
+    }
+    if (Object.keys(x).length) it.ext = x; else delete it.ext;
+  }
   // The outline a shape item draws, in its box (pt): ext.pth when it
   // has one, else the library shape. Every renderer uses this.
   function shapeCmds(it) {
@@ -732,8 +775,122 @@
     return FX.shapePath(ax.shp || "rect", w, h, { round: ax.rd === undefined ? RD_DEF : ax.rd });
   }
 
+  // Text to outlines (vector wave V5): the glyphs of a text item as
+  // outlines in its box (frame space, y down), by line and word, each
+  // glyph its own command list (designkit/fonts.js outlineGlyphs);
+  // underlines are boxes at the end of their line. → { lines: [[[cmds
+  // of a glyph], …] (a word), …], missing } or null without fonts.js.
+  function fontsKit() {
+    if (typeof module !== "undefined" && module.exports) return require("../designkit/fonts.js");
+    return root.orosDK && root.orosDK.fonts;
+  }
+  function textOutlines(it) {
+    var F = fontsKit();
+    if (!F || !F.outlineGlyphs || !it || !it.ax || it.ax.k !== "text") return null;
+    var rows = [], boxes = [];
+    if (isCurved(it)) {
+      var cl = curveLayout(it), row = [];
+      cl.glyphs.forEach(function (g) {
+        var c = Math.cos(g.rot || 0), s = Math.sin(g.rot || 0);
+        row.push({ key: cl.key, ch: g.ch, size: cl.size, x: it.w / 2 + g.x - c * g.w / 2, y: it.h / 2 + g.y - s * g.w / 2, rot: g.rot || 0 });
+      });
+      rows.push({ glyphs: row, boxes: [] });
+    } else {
+      textLayout(it).lines.forEach(function (ln) {
+        var r = F.runGlyphs([ln]);
+        rows.push({ glyphs: r.glyphs, boxes: r.boxes });
+      });
+    }
+    var missing = 0, lines = [];
+    rows.forEach(function (row) {
+      var words = [], word = [];
+      row.glyphs.forEach(function (g) {
+        if (/^\s+$/.test(g.ch)) { if (word.length) words.push(word); word = []; return; }
+        var o = F.outlineGlyphs([g]);
+        missing += o.missing;
+        if (o.cmds.length) word.push(o.cmds);
+      });
+      if (word.length) words.push(word);
+      row.boxes.forEach(function (b) {
+        words.push([[["M", b[0], b[1]], ["L", b[0], b[1] + b[3]], ["L", b[0] + b[2], b[1] + b[3]], ["L", b[0] + b[2], b[1]], ["Z"]]]);   // turning as glyph outlines do (nonzero)
+      });
+      if (words.length) lines.push(words);
+    });
+    return { lines: lines, missing: missing };
+  }
+
+  // Text to outlines in a design (in place): the text item becomes
+  // shapes with its letters' outlines (ext.pth in the text's box and
+  // turn): one shape when the outline fits a record, else one per
+  // line, per word, per letter. Its colour or gradient, opacity and
+  // link go with it; the text goes. → { ids, lost (letters too big
+  // for a record), missing (no outline in the font) } or null.
+  var OL_ROOM = 8000;                // designkit normX keeps ≤ 8192 characters of ext
+  function outlineText(doc, it, nw) {
+    var res = textOutlines(it);
+    if (!res || !VEC) return null;
+    var ext = {};
+    if (it.ax.g && gradOf(it)) ext.gs = it.ext.gs;
+    if (it.ext && it.ext.lnk) ext.lnk = it.ext.lnk;
+    var room = OL_ROOM - JSON.stringify(ext).length - 12, fr = { x: it.x, y: it.y, w: it.w, h: it.h, rot: it.rot || 0 };
+    var list = [], lost = 0;
+    function flat(a) { return [].concat.apply([], a); }
+    function fit(cmds) {
+      if (!cmds.length) return true;
+      var paths = VEC.fromCmds(cmds);
+      if (!paths.length || VEC.count(paths) > VEC.MAX_NODES) return false;
+      var r = VEC.reframe(fr, paths), pk = VEC.pack(r.unit, room);
+      if (!pk) return false;
+      list.push({ r: r, p: pk });
+      return true;
+    }
+    var lineCmds = res.lines.map(function (ws) { return flat(ws.map(flat)); });
+    if (!fit(flat(lineCmds))) {
+      res.lines.forEach(function (ws, li) {
+        if (fit(lineCmds[li])) return;
+        ws.forEach(function (w) { if (!fit(flat(w))) w.forEach(function (g) { if (!fit(g)) lost++; }); });
+      });
+    }
+    var out = { ids: [], lost: lost, missing: res.missing };
+    if (!list.length) return out;
+    var up = null;
+    doc.items.forEach(function (x) { if (x.pg === it.pg && x.id !== it.id && x.z > it.z && (up === null || x.z < up)) up = x.z; });
+    var top = up === null ? it.z + 1 : up;
+    list.forEach(function (q, i) {
+      var spec = { k: "shape", shp: "rect", x: q.r.x, y: q.r.y, w: q.r.w, h: q.r.h, rot: q.r.rot, fc: it.ax.fc || "#000000", op: it.op,
+                   z: it.z + (top - it.z) * i / list.length, ext: { pth: q.p } };
+      Object.keys(ext).forEach(function (k) { spec.ext[k] = ext[k]; });
+      if (ext.gs || it.ax.g) spec.g = it.ax.g;
+      var sh = addItem(doc, it.pg, spec, nw);
+      if (sh) out.ids.push(sh.id);
+    });
+    if (out.ids.length) {
+      doc.items = doc.items.filter(function (x) { return x.id !== it.id; });
+      if (doc.tombs) doc.tombs[it.id] = nw;
+    }
+    return out;
+  }
+  // A library shape (star, heart, …) gets its outline as its own
+  // (ext.pth), so its points can be edited; true when it changed.
+  function shapeToPath(it) {
+    if (!VEC || !it || !it.ax || it.ax.k !== "shape" || it.ax.bg || pthOf(it)) return false;
+    var w = Math.max(0.01, it.w), h = Math.max(0.01, it.h);
+    var unit = shapeCmds(it).map(function (c) {
+      var o = [c[0]];
+      for (var i = 1; i < c.length; i += 2) o.push(c[i] / w, c[i + 1] / h);
+      return o;
+    });
+    var rest = {};
+    if (it.ext) Object.keys(it.ext).forEach(function (k) { if (k !== "pth" && k !== "bl") rest[k] = it.ext[k]; });
+    var pk = VEC.pack(unit, OL_ROOM - JSON.stringify(rest).length - 12);
+    if (!pk) return false;
+    rest.pth = pk;
+    it.ext = rest;
+    return true;
+  }
+
   var api = {
-    normLink: normLink, linkOf: linkOf, setLink: setLink, pthOf: pthOf, shapeCmds: shapeCmds,
+    normLink: normLink, linkOf: linkOf, setLink: setLink, pthOf: pthOf, shapeCmds: shapeCmds, tpOf: tpOf, isCurved: isCurved, setTp: setTp, textOutlines: textOutlines, outlineText: outlineText, shapeToPath: shapeToPath,
     KINDS: KINDS, BASE: BASE, TEXT_DEF: TEXT_DEF, RD_DEF: RD_DEF, MAX_TX: MAX_TX, HEADS: HEADS,
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,
     nextZ: nextZ, textStyle: textStyle, textLayout: textLayout, curveLayout: curveLayout, textHeight: textHeight,

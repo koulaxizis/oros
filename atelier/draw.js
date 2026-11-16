@@ -60,10 +60,10 @@
 
   // Text layout per (item size + text fields).
   function textLines(it) {
-    var key = T.generation() + "|" + it.w + "|" + JSON.stringify(it.ax) + (it.ext ? "|" + JSON.stringify(it.ext) : "");
+    var key = T.generation() + "|" + it.w + "|" + it.h + "|" + JSON.stringify(it.ax) + (it.ext ? "|" + JSON.stringify(it.ext) : "");
     var v = textCache.get(key);
     if (v) return v;
-    return textCache.set(key, it.ax.cv ? { curve: AX.curveLayout(it) } : AX.textLayout(it));
+    return textCache.set(key, AX.isCurved(it) ? { curve: AX.curveLayout(it) } : AX.textLayout(it));
   }
 
   // ---------- Fills ----------

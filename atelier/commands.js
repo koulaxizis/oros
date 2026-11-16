@@ -1,6 +1,6 @@
 // ============================================================
 // orOS Atelier — commands.js: what the Assistant may change in a
-// design (AS-EDIT, waves AC1 + AC2, v1.1.0)
+// design (AS-EDIT, waves AC1 + AC2, v1.2.0)
 // A fixed catalog of commands, in the step format of the automations
 // (recipes/core.js specs): the Assistant never writes code or raw
 // data, it sends { op, …fields } that check() accepts. The same file
@@ -32,6 +32,10 @@
 // from scratch (create, first command, designs "new"). Atelier runs
 // resize with copies, export and create itself (assist.js): copies
 // and new designs count as made, Undo removes them.
+// Vector wave V5 (1.2.0): outlines (texts to letter outlines) and
+// topath (a library shape's outline as its own); Atelier passes
+// env.textOutline(doc, it, now) and env.toPath(doc, it, now), the
+// Assistant's preview counts.
 // Pure: no DOM. Exposes window.AtelierCommands (browser) or module.exports.
 // ============================================================
 (function (root) {
@@ -90,6 +94,8 @@
     align: { kind: "doc", args: sel({ edge: oneOf(["", "l", "c", "r", "t", "m", "b"]), dist: oneOf(["", "h", "v"]), rel: oneOf(["sel", "page"]) }) },
     arrange: { kind: "doc", args: sel({ order: oneOf(["", "front", "back", "forward", "backward"]), lock: ONOFF, hide: ONOFF }) },
     remove: { kind: "doc", args: sel({}) },
+    outlines: { kind: "doc", args: sel({}) },
+    topath: { kind: "doc", args: sel({}) },
     pages: { kind: "doc", args: { n: { t: "int", lo: 1, hi: 100, def: 1, req: 1 }, at: oneOf(["end", "before", "after"]),
       page: { t: "int", lo: 0, hi: 9999, def: 0 }, dup: { t: "bool", def: 0 } } },
     delpages: { kind: "doc", args: { first: { t: "int", lo: 1, hi: 9999, def: 1, req: 1 }, last: { t: "int", lo: 0, hi: 9999, def: 0 } } },
@@ -127,6 +133,8 @@
     "align: edge l|c|r|t|m|b and/or dist h|v (spread out evenly), rel sel (against each other) | page",
     "arrange: order front|back|forward|backward, lock on|off, hide on|off",
     "remove: delete the picked elements (needs ids, what, has or pages)",
+    "outlines: the picked texts become shapes with their letters' outlines (for a logo; they can no longer be edited as text)",
+    "topath: the picked library shapes (star, heart…) get their outline as their own, so their points can be edited",
     "pages: add n pages (1-100) at the end, or before | after page `page` (1 = first); dup true = copies of that page (else blank, with its background colour)",
     "delpages: remove pages first..last (last 0 = only first) with everything on them; at least one page stays",
     "movepage: page `page` moves to position `dest`",
@@ -685,6 +693,15 @@
     var list = pick(doc, st);
     if (st.op === "cutout") {
       return list.filter(function (it) { return it.ax.k === "photo" && !it.ax.vid && it.a && !/-cutout\.png$/i.test(it.nm || ""); }).length;
+    }
+    if (st.op === "outlines" || st.op === "topath") {             // vector wave V5: Atelier hands the work in env
+      var ol = st.op === "outlines", fn = ol ? env.textOutline : env.toPath, done = 0;
+      list.forEach(function (it) {
+        if (!movable(it, st)) return;
+        if (ol ? it.ax.k !== "text" || !String(it.ax.tx || "").trim() : it.ax.k !== "shape" || (it.ext && it.ext.pth)) return;
+        done += fn ? (fn(doc, it, nw) ? 1 : 0) : 1;
+      });
+      return done;
     }
     if (st.op === "remove") {
       var gone = {};

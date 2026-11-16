@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.15.00
+- **Text on a path, SVG and text to outlines in Atelier and Layout.** Pick a text and a shape or line and choose `Text on path`: the text runs along the outline, and you can move it, flip it or release it. Both apps now save SVG files of a page or of what you picked, with texts kept as text, and `Copy as SVG` pastes into Inkscape, Affinity or Figma. Atelier opens an SVG as editable shapes or as a picture. `Text to outlines` turns a title or a logo into shapes whose points you can edit, and automations and the Assistant can do it too. See [Atelier](app:atelier) and [Layout](app:layout).
+
 ## Version 7.14.00
 - **Claude, and Claude desktop.** `Settings` › `Connected services` has a new `Claude` card. `Open Claude in a window` opens claude.ai, where you use your own Claude account. On a computer, `Get Claude desktop` opens Anthropic's download page (Windows, macOS, and a beta for Ubuntu and Debian). On orOS USB and orOS Portable, once their next release is out, the card installs, opens and removes Claude desktop for you, downloaded from Anthropic and checked against Anthropic's signature. orOS never carries the app itself. A connector you add on claude.ai, such as orOS Gate, works in Claude desktop too. See [Settings](app:settings).
 
