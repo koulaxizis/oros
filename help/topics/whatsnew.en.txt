@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.13.00
+- **Smart top bar.** The top bar can now show live items next to the clock: your next event with a countdown, the focus timer, today's tasks, water, what you spent this month and today's till sales. Each one shows only when it has something to say, and a tap opens its app. Turn them on and set their order in `Settings`, under `Appearance`, in `Top bar`; this stays on this device. See [Appearance](help:t/appearance).
+
 ## Version 7.12.01
 - **Play on free music pages.** On a free music page in Music (a genre such as World, a mood or a shelf), Play and Shuffle no longer say that a song is not on this device while the songs are still loading. They now start the songs as soon as they arrive. A genre page with no songs plays an album from the Internet Archive, and a page with nothing at all says so. See [Music](app:music).
 
