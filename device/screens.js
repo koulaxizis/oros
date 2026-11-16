@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — screens.js (second screen, wave SS1, v1.0.0)
+// orOS — device/screens.js (second screen, wave SS1, v1.0.0)
 // "Move to the other screen" for apps and the Slides audience window.
 //
 // Duplicate or extend is the operating system's choice (Windows: Win+P,

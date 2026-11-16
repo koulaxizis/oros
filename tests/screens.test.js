@@ -11,7 +11,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
-const S = require("../screens.js");
+const S = require("../device/screens.js");
 const SHELL = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
 
 function scr(o) {
