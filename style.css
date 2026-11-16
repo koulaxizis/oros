@@ -1860,6 +1860,12 @@ body.solo-mode #wx-chip,
 body.solo-mode #rx-tray-chip,
 body.solo-mode #mx-tray-chip,
 body.solo-mode #ts-tray-chip { display: none !important; }
+/* TILL-1 (Stock fair till F3): a till-only device also hides help, the
+   bell (other apps' notices) and the quick settings; the bar keeps the
+   till's name (its menu: the owner) and the sync dot. */
+body.till-mode #help-btn,
+body.till-mode #oros-taskbar-bell,
+body.till-mode #qs-btn { display: none !important; }
 #solo-menu {
   position: fixed; top: calc(46px + env(safe-area-inset-top, 0px)); left: 12px; z-index: 1460;
   width: min(260px, calc(100vw - 24px)); padding: 6px; display: flex; flex-direction: column; gap: 2px;

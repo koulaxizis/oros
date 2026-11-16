@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Studio · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=6.93.00">
-  <link rel="stylesheet" href="studio.css?v=6.93.00">
+  <link rel="stylesheet" href="../fonts.css?v=7.08.00">
+  <link rel="stylesheet" href="studio.css?v=7.08.00">
 
 </head>
 <body>
@@ -136,9 +136,21 @@
       <span class="spacer"></span>
       <button type="button" id="proj-close" class="icon-btn"></button>
     </div>
-    <button type="button" id="proj-new" class="chip primary" data-i18n="btn.newProject">New project</button>
-    <ul id="proj-list" class="list"></ul>
-    <p id="proj-empty" class="hint" data-i18n="proj.empty">No projects yet.</p>
+    <div class="proj-tabs" role="group" data-i18n-aria="bk.view">
+      <button type="button" id="proj-tab-songs" class="chip" aria-pressed="true" data-i18n="bk.songs">Songs</button>
+      <button type="button" id="proj-tab-books" class="chip" aria-pressed="false" data-i18n="bk.books">Books</button>
+    </div>
+    <div id="songs-pane">
+      <button type="button" id="proj-new" class="chip primary" data-i18n="btn.newProject">New project</button>
+      <ul id="proj-list" class="list"></ul>
+      <p id="proj-empty" class="hint" data-i18n="proj.empty">No projects yet.</p>
+    </div>
+    <!-- books (wave A2): a book is a row of chapters, each an ordinary project -->
+    <div id="books-pane" hidden>
+      <button type="button" id="book-new" class="chip primary" data-i18n="bk.new">New book</button>
+      <ul id="book-list" class="list"></ul>
+      <p id="book-empty" class="hint" data-i18n="bk.empty">No books yet.</p>
+    </div>
     <!-- the open project as one .orosstudio file (bundle.js, package.js) -->
     <section id="oros-sec" hidden>
       <h3 data-i18n="oros.sec">orOS file</h3>
@@ -149,6 +161,45 @@
         <button type="button" id="oros-folder" class="chip" data-i18n="oros.folder">Unzipped orOS folder…</button>
       </div>
     </section>
+  </dialog>
+
+  <!-- A book: its details, chapters and room tone (wave A2) -->
+  <dialog id="book-dlg" aria-labelledby="book-title">
+    <div class="dlg-head">
+      <h2 id="book-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" id="book-close" class="icon-btn"></button>
+    </div>
+    <div class="dlg-actions spread">
+      <button type="button" id="book-rename" class="chip" data-i18n="bk.rename">Rename</button>
+      <button type="button" id="book-back" class="chip" data-i18n="bk.all">All books</button>
+    </div>
+    <label class="field" for="book-pub" data-i18n="bk.pub">Title in Publishing</label>
+    <select id="book-pub"></select>
+    <p id="book-pub-info" class="hint small"></p>
+    <div id="book-own">
+      <label class="field" for="book-author" data-i18n="bk.author">Author</label>
+      <input type="text" id="book-author" maxlength="120" autocomplete="off">
+      <label class="field" for="book-narrator" data-i18n="bk.narrator">Narrator</label>
+      <input type="text" id="book-narrator" maxlength="120" autocomplete="off">
+    </div>
+    <label class="field" for="book-spec" data-i18n="bk.spec">Requirements</label>
+    <select id="book-spec"></select>
+    <h3 data-i18n="bk.parts">Chapters</h3>
+    <ul id="book-parts" class="list"></ul>
+    <div class="dlg-actions spread">
+      <button type="button" id="book-addch" class="chip primary" data-i18n="bk.addCh">New chapter</button>
+    </div>
+    <h3 data-i18n="bk.rt">Room tone</h3>
+    <p id="book-rt-state" class="hint" aria-live="polite"></p>
+    <p class="hint small" data-i18n="bk.rtHint"></p>
+    <div class="dlg-actions spread">
+      <button type="button" id="book-rt-use" class="chip" data-i18n="bk.rtUse">Use the selected clip as room tone</button>
+      <button type="button" id="book-fill" class="chip"></button>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" id="book-del" class="chip danger" data-i18n="bk.del">Delete book</button>
+    </div>
   </dialog>
 
   <!-- Name prompt (project or track) -->
@@ -506,6 +557,10 @@
           <span id="pod-ep-ch" class="hint small"></span>
           <button type="button" id="pod-ep-mk" class="chip" aria-haspopup="dialog" data-i18n="mk.btn">Markers</button>
         </div>
+        <div class="pod-ch">
+          <span id="pod-ep-tr-state" class="hint small"></span>
+          <button type="button" id="pod-ep-tr" class="chip" aria-haspopup="dialog" data-i18n="tr.btn">Transcript</button>
+        </div>
         <p id="pod-ep-file" class="hint small"></p>
         <p id="pod-ep-err" class="hint small" aria-live="polite"></p>
         <div class="dlg-actions">
@@ -548,6 +603,29 @@
           <button type="button" id="pod-gh-go" class="chip primary" data-i18n="pod.gh.go">Publish</button>
         </div>
       </div>
+      <div id="pod-dav-sec" class="pod-gh">
+        <h3 data-i18n="pod.dav.h">Publish on Nextcloud or WebDAV</h3>
+        <p class="hint small" data-i18n="pod.dav.hint"></p>
+        <label class="field" for="pod-dav-url" data-i18n="pod.dav.url">The show's folder (WebDAV address)</label>
+        <input id="pod-dav-url" type="url" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="500" placeholder="https://cloud.example.com/remote.php/dav/files/name/Podcast">
+        <label class="field" for="pod-dav-share" data-i18n="pod.dav.share">Public link of that folder</label>
+        <input id="pod-dav-share" type="url" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="500" placeholder="https://cloud.example.com/s/AbCdEf123">
+        <label class="field" for="pod-dav-user" data-i18n="pod.dav.user">User name</label>
+        <input id="pod-dav-user" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="200">
+        <div id="pod-dav-pass-row">
+          <label class="field" for="pod-dav-pass" data-i18n="pod.dav.pass">App password</label>
+          <input id="pod-dav-pass" type="password" autocomplete="off" spellcheck="false" maxlength="300">
+        </div>
+        <p id="pod-dav-pass-set" class="hint small" data-i18n="pod.dav.passSet">A password is saved on this device only.</p>
+        <label class="cb-line"><input type="checkbox" id="pod-dav-relay"> <span data-i18n="pod.dav.relay">Through the orOS relay</span></label>
+        <p class="hint small" data-i18n="pod.dav.relayHint"></p>
+        <p id="pod-dav-where" class="hint small"></p>
+        <p id="pod-dav-err" class="hint small" aria-live="polite"></p>
+        <div class="dlg-actions spread">
+          <button type="button" id="pod-dav-forget" class="chip" data-i18n="pod.dav.forget">Forget the password</button>
+          <button type="button" id="pod-dav-go" class="chip primary" data-i18n="pod.dav.go">Publish</button>
+        </div>
+      </div>
     </div>
   </dialog>
 
@@ -557,6 +635,22 @@
     <div class="dlg-actions">
       <button type="button" id="pod-ask-no" class="chip" data-i18n="btn.cancel">Cancel</button>
       <button type="button" id="pod-ask-yes" class="chip primary" data-i18n="btn.ok">OK</button>
+    </div>
+  </dialog>
+
+  <!-- An episode's transcript (P3): Whisper on this device, then edited -->
+  <dialog id="tr-dlg" class="wide" aria-labelledby="tr-h">
+    <h2 id="tr-h" data-i18n="tr.btn">Transcript</h2>
+    <p class="hint small" data-i18n="tr.hint"></p>
+    <p id="tr-status" class="hint small" aria-live="polite"></p>
+    <label class="field" for="tr-text" data-i18n="tr.text">Text (one line per cue: [minutes:seconds] words)</label>
+    <textarea id="tr-text" rows="12" spellcheck="true"></textarea>
+    <div class="dlg-actions spread">
+      <button type="button" id="tr-make" class="chip" data-i18n="tr.make">Make the transcript</button>
+      <button type="button" id="tr-stop" class="chip" data-i18n="btn.cancel" hidden>Cancel</button>
+      <button type="button" id="tr-del" class="chip danger" data-i18n="tr.del">Delete the transcript</button>
+      <button type="button" id="tr-close" class="chip" data-i18n="btn.close">Close</button>
+      <button type="button" id="tr-save" class="chip primary" data-i18n="tr.save">Save</button>
     </div>
   </dialog>
 
@@ -803,33 +897,33 @@
   </dialog>
 
   <!-- effects runtime (NULL JSFX) and the Effects dialog; before core.js -->
-  <script src="../i18n.js?v=6.93.00" data-app="studio"></script>
-  <script src="nullfx/runtime/eel-rt.js?v=6.93.00"></script>
-  <script src="nullfx/runtime/null-fx.js?v=6.93.00"></script>
-  <script src="nullfx/runtime/null-gfx.js?v=6.93.00"></script>
-  <script src="nullfx/runtime/null-node.js?v=6.93.00"></script>
-  <script src="../qr/qr-encode.js?v=6.93.00"></script>
-  <script src="remote.js?v=6.93.00"></script>
-  <script src="fx.js?v=6.93.00"></script>
-  <script src="encode.js?v=6.93.00"></script>
-  <script src="meter.js?v=6.93.00"></script>
-  <script src="podcast.js?v=6.93.00"></script>
-  <script src="ghpages.js?v=6.93.00"></script>
-  <script src="podcastui.js?v=6.93.00"></script>
-  <script src="midi.js?v=6.93.00"></script>
-  <script src="sfz.js?v=6.93.00"></script>
-  <script src="sounds.js?v=6.93.00"></script>
-  <script src="notes.js?v=6.93.00"></script>
-  <script src="loops.js?v=6.93.00"></script>
-  <script src="roll.js?v=6.93.00"></script>
+  <script src="../i18n.js?v=7.08.00" data-app="studio"></script>
+  <script src="nullfx/runtime/eel-rt.js?v=7.08.00"></script>
+  <script src="nullfx/runtime/null-fx.js?v=7.08.00"></script>
+  <script src="nullfx/runtime/null-gfx.js?v=7.08.00"></script>
+  <script src="nullfx/runtime/null-node.js?v=7.08.00"></script>
+  <script src="../qr/qr-encode.js?v=7.08.00"></script>
+  <script src="remote.js?v=7.08.00"></script>
+  <script src="fx.js?v=7.08.00"></script>
+  <script src="encode.js?v=7.08.00"></script>
+  <script src="meter.js?v=7.08.00"></script>
+  <script src="podcast.js?v=7.08.00"></script>
+  <script src="ghpages.js?v=7.08.00"></script>
+  <script src="podcastui.js?v=7.08.00"></script>
+  <script src="midi.js?v=7.08.00"></script>
+  <script src="sfz.js?v=7.08.00"></script>
+  <script src="sounds.js?v=7.08.00"></script>
+  <script src="notes.js?v=7.08.00"></script>
+  <script src="loops.js?v=7.08.00"></script>
+  <script src="roll.js?v=7.08.00"></script>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="core.js?v=6.93.00"></script>
-  <script src="../bundle.js?v=6.93.00"></script>
-  <script src="package.js?v=6.93.00"></script>
-  <script src="studio.js?v=6.93.00"></script>
+  <script src="core.js?v=7.08.00"></script>
+  <script src="../bundle.js?v=7.08.00"></script>
+  <script src="package.js?v=7.08.00"></script>
+  <script src="studio.js?v=7.08.00"></script>
 
 </body>
 </html>

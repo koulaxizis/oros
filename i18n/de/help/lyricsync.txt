@@ -89,6 +89,12 @@ Liedtext-Sync ist auch ein Songbook: Ein Lied kann Akkorde über dem Text haben,
 - `In den Kalender` trägt eine Setlist mit Datum als ganztägigen Termin in den Kalender ein; der Kalender zeigt ihn, bevor er ihn hinzufügt.
 - Setlists werden wie die Lieder mit deinen Geräten synchronisiert.
 
+## Griffbilder
+- Unter `Akkorde` zeigen `Griffbilder`, wie jeder Akkord des Liedes gespielt wird: auf Gitarre, Ukulele oder Klavier. Die Griffe kommen mit Liedtext-Sync und gehen ohne Verbindung; `Linkshänder` dreht die Gitarren- und Ukulele-Griffbilder um.
+- Die Akkorde des Liedes stehen als Leiste über dem Blatt und auf der Bühne. Auf der Bühne zeigt ein Tippen auf einen Akkord ihn groß mit seinen Tönen; bei der Akkordwahl siehst du den Griff des Akkords, den du tippst.
+- `PDF` kann die Griffbilder über jedes Lied setzen (`Griffbilder über jedem Lied`).
+- Jeder Griff wird aus dem Namen des Akkords errechnet: ein seltener Akkord bekommt einen spielbaren Griff, aber nicht immer den, den du kennst; die Töne unter dem großen Griffbild sagen, was er enthält.
+
 ## Deine Daten
 - Der Liedtext und seine Zeiten werden laufend gespeichert. Mit eingeschaltetem orOS-Sync in den [Einstellungen](app:settings) folgen sie dir verschlüsselt auf deine anderen Geräte.
 - Die Lieddatei bleibt nur auf dem Gerät, auf dem du sie gewählt hast. Auf einem anderen Gerät zeigt das Lied „Lieddatei nicht auf diesem Gerät“, bis du sie auch dort wählst. Ein Lied aus Musik wird aus deinem Musik-Ordner gelesen und ist damit auf jedem Gerät da, das die Datei hat (Vault Drive).

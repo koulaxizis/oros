@@ -334,6 +334,13 @@
         return { newSheet: { name: d.title, rows: rows } };
       }
     },
+    // Base: the table opens in "Add as a table" (which base, how many
+    // rows); nothing is saved before Add table (Base wave B2b).
+    base: {
+      kinds: ["table"],
+      ok: function (k, d) { return d.rows.length >= 2; },
+      build: function (k, d) { return { newTable: { name: d.name, rows: d.rows } }; }
+    },
     texttools: {
       kinds: ["text", "items", "table"],
       build: function (k, d) { return { text: asText(k, d).text }; }
@@ -472,7 +479,7 @@
     }
   };
   // The sheet's order: the everyday places first.
-  var ORDER = ["notes", "todo", "writer", "mail", "kanban", "slides", "bookmarks", "spreadsheet", "invoices", "wiki", "diary", "mindmap", "prompter",
+  var ORDER = ["notes", "todo", "writer", "mail", "kanban", "slides", "bookmarks", "spreadsheet", "base", "invoices", "wiki", "diary", "mindmap", "prompter",
     "flashcards", "typing", "layout", "assistant", "texttools", "labels"];
   // Shown before ORDER: they take an item only when it holds what they
   // need, so when they show they are the likely pick.

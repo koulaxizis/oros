@@ -27,6 +27,7 @@
       "icon": "files",
       "url": "files/",
       "search": "search.js",
+      "today": ["docs-due.js", "today.js"],
       "type": "internal"
     },
     {
@@ -377,15 +378,6 @@
       "type": "internal",
       "search": "search.js",
       "today": ["core.js", "today.js"]
-    },
-    {
-      "id": "signature",
-      "name": "Email Signature",
-      "category": "Business",
-      "icon": "signature",
-      "url": "signature/",
-      "type": "internal",
-      "search": "search.js"
     },
     {
       "id": "certificates",
@@ -1298,6 +1290,12 @@
       "name": "Unit Converter",
       "to": "calculator",
       "target": { "mode": "conv" }
+    },
+    {
+      "id": "signature",
+      "name": "Email Signature",
+      "to": "mail",
+      "target": { "view": "signatures" }
     }
   ]
 }

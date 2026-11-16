@@ -141,6 +141,20 @@
       "roy.mailSubj": "Royalty statement {from} – {to}", "roy.mailHi": "Hello {n},", "roy.mailBody": "Here is your royalty statement for {from} – {to}.",
       "roy.th.title": "Title", "roy.th.fmt": "Format", "roy.th.units": "Units", "roy.th.base": "Base", "roy.th.pct": "%", "roy.th.earned": "Earned",
       "roy.total": "Earned in the period", "roy.advance": "Advance",
+      "dist.btn": "📥 Import sales report…", "dist.hint": "A music distributor's sales report becomes royalty statements: DistroKid (Bank › See Excel version) is read as it is, any other CSV, TSV or spreadsheet (.xlsx, .ods) after you choose its columns. Lines are matched by ISRC to tracks, then by UPC/EAN to releases. Tracks with master shares pay their owners, the others pay the release's royalty terms.", "dist.title": "Sales report",
+      "dist.found": "{n} report", "dist.generic": "Choose which column is which.", "dist.cols": "Columns",
+      "dist.f.month": "Month", "dist.f.isrc": "ISRC", "dist.f.upc": "UPC/EAN",
+      "dist.f.qty": "Units or streams", "dist.f.amt": "Earnings", "dist.f.cur": "Currency column",
+      "dist.f.title": "Title", "dist.f.artist": "Artist", "dist.f.store": "Store",
+      "dist.cur": "Currency (when no column)", "dist.note": "Note on the statements", "dist.need": "Choose at least the month, the earnings, and the ISRC, UPC/EAN or title column.",
+      "dist.needCur": "Type the report's currency (3 letters, such as USD).", "dist.noLines": "No usable lines in this file.", "dist.period": "{from} – {to} · {n} lines",
+      "dist.bad": "{n} lines without a month, an amount or a code were left out.", "dist.sum": "{cur}: {a} matched · {b} not matched", "dist.unmatched": "Not matched",
+      "dist.unHint": "These codes are on no track or edition. Link a line to a track (its ISRC is then kept on the track), or add the codes to the release and import again.", "dist.link": "Link to track…", "dist.sts": "Statements",
+      "dist.noSt": "Nothing to pay: the matched tracks have no master shares, and their releases no royalty terms on all formats.", "dist.overlap": "There is already a statement for this person in these months.", "dist.noAdv": "Advances (in {cur}) are not recouped by a statement in another currency.",
+      "dist.issue": "Issue ticked statements", "dist.done": "{n} statements issued", "dist.err.big": "The file is larger than 20 MB.",
+      "dist.err.cols": "This file doesn't look like a table (CSV, TSV or spreadsheet).", "dist.err.empty": "The file has no lines.", "dist.err.rows": "The file has too many lines (over 200,000).",
+      "dist.err.type": "The file could not be read.", "dist.err.read": "The file could not be read.", "dist.row": "Sales",
+      "dist.qty": "{n} units",
       "tab.subs": "Submissions",
       "sub.add": "+ Submission", "sub.none": "No manuscripts yet. Add one here, or in Mail open the message and choose Other apps › Manuscript submission in Publishing.",
       "sub.n": "Name", "sub.email": "E-mail", "sub.t": "Working title", "sub.d": "Received", "sub.st": "Status", "sub.note": "Notes",
@@ -488,6 +502,20 @@
       "roy.mailSubj": "Εκκαθάριση δικαιωμάτων {from} – {to}", "roy.mailHi": "Καλησπέρα {n},", "roy.mailBody": "Σου στέλνω την εκκαθάριση δικαιωμάτων για {from} – {to}.",
       "roy.th.title": "Τίτλος", "roy.th.fmt": "Μορφή", "roy.th.units": "Τεμάχια", "roy.th.base": "Βάση", "roy.th.pct": "%", "roy.th.earned": "Δικαιώματα",
       "roy.total": "Δικαιώματα περιόδου", "roy.advance": "Προκαταβολή",
+      "dist.btn": "📥 Εισαγωγή αναφοράς πωλήσεων…", "dist.hint": "Η αναφορά πωλήσεων του διανομέα μουσικής γίνεται εκκαθαρίσεις δικαιωμάτων: του DistroKid (Bank › See Excel version) διαβάζεται όπως είναι, κάθε άλλο αρχείο CSV, TSV ή λογιστικό φύλλο (.xlsx, .ods) αφού διαλέξεις τις στήλες του. Οι γραμμές αντιστοιχίζονται με το ISRC στα κομμάτια και μετά με το UPC/EAN στις κυκλοφορίες. Τα κομμάτια με ποσοστά ηχογράφησης πληρώνουν τους δικαιούχους τους, τα υπόλοιπα τους όρους δικαιωμάτων της κυκλοφορίας.", "dist.title": "Αναφορά πωλήσεων",
+      "dist.found": "Αναφορά {n}", "dist.generic": "Διάλεξε ποια στήλη είναι ποια.", "dist.cols": "Στήλες",
+      "dist.f.month": "Μήνας", "dist.f.isrc": "ISRC", "dist.f.upc": "UPC/EAN",
+      "dist.f.qty": "Τεμάχια ή ακροάσεις", "dist.f.amt": "Έσοδα", "dist.f.cur": "Στήλη νομίσματος",
+      "dist.f.title": "Τίτλος", "dist.f.artist": "Καλλιτέχνης", "dist.f.store": "Κατάστημα",
+      "dist.cur": "Νόμισμα (όταν δεν υπάρχει στήλη)", "dist.note": "Σημείωση στις εκκαθαρίσεις", "dist.need": "Διάλεξε τουλάχιστον τον μήνα, τα έσοδα και τη στήλη ISRC, UPC/EAN ή τίτλου.",
+      "dist.needCur": "Γράψε το νόμισμα της αναφοράς (3 γράμματα, π.χ. USD).", "dist.noLines": "Δεν υπάρχουν χρήσιμες γραμμές σε αυτό το αρχείο.", "dist.period": "{from} – {to} · {n} γραμμές",
+      "dist.bad": "Παραλείφθηκαν {n} γραμμές χωρίς μήνα, ποσό ή κωδικό.", "dist.sum": "{cur}: {a} αντιστοιχίστηκαν · {b} χωρίς αντιστοίχιση", "dist.unmatched": "Χωρίς αντιστοίχιση",
+      "dist.unHint": "Αυτοί οι κωδικοί δεν υπάρχουν σε κανένα κομμάτι ή έκδοση. Σύνδεσε μια γραμμή με ένα κομμάτι (το ISRC της κρατιέται τότε στο κομμάτι) ή πρόσθεσε τους κωδικούς στην κυκλοφορία και κάνε ξανά εισαγωγή.", "dist.link": "Σύνδεση με κομμάτι…", "dist.sts": "Εκκαθαρίσεις",
+      "dist.noSt": "Δεν υπάρχει κάτι πληρωτέο: τα κομμάτια που βρέθηκαν δεν έχουν ποσοστά ηχογράφησης και οι κυκλοφορίες τους όρους δικαιωμάτων για όλες τις μορφές.", "dist.overlap": "Υπάρχει ήδη εκκαθάριση για αυτό το πρόσωπο σε αυτούς τους μήνες.", "dist.noAdv": "Οι προκαταβολές (σε {cur}) δεν συμψηφίζονται με εκκαθάριση σε άλλο νόμισμα.",
+      "dist.issue": "Έκδοση των επιλεγμένων", "dist.done": "Εκδόθηκαν {n} εκκαθαρίσεις", "dist.err.big": "Το αρχείο είναι μεγαλύτερο από 20 MB.",
+      "dist.err.cols": "Αυτό το αρχείο δεν μοιάζει με πίνακα (CSV, TSV ή λογιστικό φύλλο).", "dist.err.empty": "Το αρχείο δεν έχει γραμμές.", "dist.err.rows": "Το αρχείο έχει πάρα πολλές γραμμές (πάνω από 200.000).",
+      "dist.err.type": "Το αρχείο δεν διαβάστηκε.", "dist.err.read": "Το αρχείο δεν διαβάστηκε.", "dist.row": "Πωλήσεις",
+      "dist.qty": "{n} τεμάχια",
       "tab.subs": "Υποβολές",
       "sub.add": "+ Υποβολή", "sub.none": "Κανένα χειρόγραφο ακόμα. Πρόσθεσε ένα εδώ, ή στο Mail άνοιξε το μήνυμα και διάλεξε Άλλες εφαρμογές › Υποβολή χειρογράφου στις Εκδόσεις.",
       "sub.n": "Όνομα", "sub.email": "E-mail", "sub.t": "Τίτλος εργασίας", "sub.d": "Παραλαβή", "sub.st": "Κατάσταση", "sub.note": "Σημειώσεις",
@@ -834,6 +862,12 @@
       if (["rel", "t", "m"].indexOf(p.sort) >= 0) prefs.sort = p.sort;
       if (C.STATUS.indexOf(p.st) >= 0) prefs.st = p.st;
       if (p.kind === "book" || p.kind === "mus") prefs.kind = p.kind;
+      // a distributor report's columns, as chosen last time (wave M4)
+      if (p.dist && typeof p.dist.h === "string" && p.dist.h.length <= 2000 && p.dist.map && typeof p.dist.map === "object") {
+        var dm = {};
+        Object.keys(p.dist.map).slice(0, 20).forEach(function (k) { var v = p.dist.map[k]; if (/^[a-z]{2,8}$/.test(k) && Number.isInteger(v) && v >= -1 && v < 1000) dm[k] = v; });
+        prefs.dist = { h: p.dist.h, map: dm, cur: typeof p.dist.cur === "string" && /^[A-Z]{3}$/.test(p.dist.cur) ? p.dist.cur : "" };
+      }
     } catch (e) { /* defaults */ }
     view.name = prefs.tab === "titles" ? "list" : prefs.tab;
   }
@@ -2428,9 +2462,10 @@
     catch (e) { toast(t("send.noApp")); return false; }
   }
   function fmtLabel(tt, f) { return tt.fmts.length > 1 ? t("fmt." + f.k) : ""; }
-  function money(v) {
-    try { return new Intl.NumberFormat(LOCALE, { style: "currency", currency: data.set.cur }).format(v); }
-    catch (e) { return v + " " + data.set.cur; }
+  function money(v, cur) {
+    cur = cur || data.set.cur;
+    try { return new Intl.NumberFormat(LOCALE, { style: "currency", currency: cur }).format(v); }
+    catch (e) { return v + " " + cur; }
   }
   function shopAcct(f) {
     var Lk = links();
@@ -2993,7 +3028,13 @@
     try { var d = JSON.parse(localStorage.getItem(STOCK_KEY) || "null"); return d && typeof d === "object" ? d : null; }
     catch (e) { return null; }
   }
-  function cents(c) { return money((c || 0) / 100); }
+  function cents(c, cur) { return money((c || 0) / 100, cur); }
+  // A statement row's kind: a book format, or a track / release from a
+  // distributor's report (wave M4: k is empty, fb holds what came in).
+  function rowKind(r) {
+    if (r.k) return t("fmt." + r.k) + (r.isbn ? " · " + C.hyphen(r.isbn, data.blocks) : "");
+    return r.isrc ? "ISRC " + C.fmtIsrc(r.isrc) : r.upc ? "UPC/EAN " + r.upc : t("dist.row");
+  }
   function writeTerms(roy) {
     writeTitle({ roy: roy });
     renderTerms();
@@ -3142,6 +3183,12 @@
     var hd = el("div", "ed-head");
     hd.appendChild(el("h2", "", t("roy.people")));
     sec.appendChild(hd);
+    if (DI && (data.trk || []).length) {
+      var imp = el("div", "send-row");
+      imp.appendChild(button(t("dist.btn"), "btn small", importReport));
+      sec.appendChild(imp);
+      sec.appendChild(el("p", "muted small", t("dist.hint")));
+    }
     var ps = RY ? RY.people(data) : [];
     if (!ps.length) sec.appendChild(el("p", "muted", t("roy.peopleNone")));
     ps.forEach(function (p) {
@@ -3164,7 +3211,7 @@
       body.appendChild(el("div", "tname", stmtLabel(st)));
       body.appendChild(el("div", "tsub", st.v === 1 ? t("roy.void") : (st.paid ? t("roy.paidOn", { d: fmtDate(st.paid) }) : t("roy.unpaid"))));
       row.appendChild(body);
-      row.appendChild(el("span", "roy-amt", cents(st.due)));
+      row.appendChild(el("span", "roy-amt", cents(st.due, st.cur)));
       sec.appendChild(row);
     });
   }
@@ -3269,19 +3316,188 @@
     build();
   }
 
+  // ---------- 6d. A distributor's sales report (wave M4) ----------
+  // The person opens the report they downloaded (DistroKid, or any CSV
+  // with the columns chosen once, kept on this device); distro.js reads
+  // it as data only, matches ISRC → track, UPC/EAN → release, and drafts
+  // one statement per person and currency. Ticked drafts are issued like
+  // any statement (a record from then on).
+  var DI = window.OrosPublishDistro;
+  var DIST_FIELDS = ["month", "isrc", "upc", "qty", "amt", "cur", "title", "artist", "store"];
+  function headSig(h) { return h.map(function (x) { return String(x).toLowerCase(); }).join("|").slice(0, 2000); }
+  function importReport() {
+    if (!DI || !RY) return;
+    pickFile(".csv,.tsv,.txt,.xlsx,.xls,.ods,text/csv,text/tab-separated-values,text/plain").then(function (file) {
+      if (!file) return;
+      if (file.size > DI.MAX_BYTES) { toast(t("dist.err.big")); return; }
+      var name = String(file.name || "").slice(0, 120), resp = new Response(file);
+      var got = /\.(xlsx|xls|ods)$/i.test(name)
+        ? Promise.all([loadXlsx(), resp.arrayBuffer()]).then(function (r) {
+            if (!r[0]) throw new Error("xlsx");
+            var wb = r[0].read(new Uint8Array(r[1]), { type: "array", cellDates: true, cellFormula: false, cellHTML: false });
+            var ws = wb.Sheets[wb.SheetNames[0]];
+            return DI.sheetRows(ws ? r[0].utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" }) : []);
+          })
+        : resp.text().then(DI.parse);
+      return got.then(function (p) {
+        if (p.err) { toast(t("dist.err." + p.err)); return; }
+        reportDialog(p.rows, name);
+      });
+    }).catch(function () { toast(t("dist.err.read")); });
+  }
+  var xlsxP = null;
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    if (xlsxP) return xlsxP;
+    xlsxP = new Promise(function (resolve) {
+      var sc = document.createElement("script");
+      sc.src = "../vendor/xlsx.full.min.js";
+      sc.onload = function () { resolve(window.XLSX || null); };
+      sc.onerror = function () { xlsxP = null; resolve(null); };
+      document.head.appendChild(sc);
+    });
+    return xlsxP;
+  }
+  function reportDialog(rows, fname) {
+    var head = rows[0], g = DI.guess(head), sig = headSig(head);
+    var map = Object.assign({}, g.map), cur = g.cur || data.set.cur;
+    if (!g.preset && prefs.dist && prefs.dist.h === sig) { Object.assign(map, prefs.dist.map); cur = prefs.dist.cur || cur; }
+    var links = {}, pick = {}, m = null, sts = [];
+    var dlg = el("dialog", "roy-dlg dist-dlg");
+    dlg.appendChild(el("h3", "", t("dist.title")));
+    dlg.appendChild(el("p", "muted", (g.name ? t("dist.found", { n: g.name }) : t("dist.generic")) + (fname ? " · " + fname : "")));
+    var cols = [["-1", "—"]].concat(head.map(function (h, i) { return [String(i), h || "#" + (i + 1)]; }));
+    var box = el("details", "dist-map");
+    box.open = !g.preset;
+    box.appendChild(el("summary", "", t("dist.cols")));
+    var gr = el("div", "grid");
+    DIST_FIELDS.forEach(function (f) {
+      var sl = select(cols, String(map[f] >= 0 ? map[f] : -1));
+      sl.addEventListener("change", function () { map[f] = +sl.value; refresh(); });
+      gr.appendChild(field(t("dist.f." + f), sl));
+    });
+    var curIn = input("text", cur, { maxlength: "3", autocapitalize: "characters", spellcheck: "false" });
+    curIn.addEventListener("input", function () { cur = curIn.value.trim().toUpperCase(); refresh(); });
+    gr.appendChild(field(t("dist.cur"), curIn));
+    box.appendChild(gr);
+    dlg.appendChild(box);
+    var note = input("text", [g.name, fname].filter(Boolean).join(" · "), { maxlength: "200" });
+    dlg.appendChild(field(t("dist.note"), note));
+    var body = el("div", "roy-body");
+    body.setAttribute("aria-live", "polite");
+    dlg.appendChild(body);
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    var go = button(t("dist.issue"), "btn pri", issue);
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    // the tracks a line can be linked to: every track of a live release
+    var trackOpts = [["", t("dist.link")]];
+    data.titles.forEach(function (tt) {
+      C.tracksOf(data, tt.id).forEach(function (r) { trackOpts.push([r.id, tt.t + " · " + r.no + ". " + r.t + (r.isrc ? "" : " ·  —")]); });
+    });
+    function sKey(x) { return R_key(x.n) + "|" + x.cur; }
+    function R_key(n) { return RY.key(n); }
+    function chosen(x) { return pick[sKey(x)] !== undefined ? pick[sKey(x)] : !x.overlap; }
+    function refresh() {
+      body.textContent = "";
+      go.disabled = true;
+      sts = [];
+      m = null;
+      if (map.month < 0 || map.amt < 0 || (map.isrc < 0 && map.upc < 0 && map.title < 0)) { body.appendChild(el("p", "warnbox", t("dist.need"))); return; }
+      var okCur = /^[A-Z]{3}$/.test(cur);
+      if (map.cur < 0 && !okCur) { body.appendChild(el("p", "warnbox", t("dist.needCur"))); return; }
+      var r = DI.read(rows, map, { cur: okCur ? cur : "" });
+      if (!r.lines.length) { body.appendChild(el("p", "warnbox", t("dist.noLines"))); return; }
+      m = DI.match(data, r.lines, links);
+      body.appendChild(el("p", "", t("dist.period", { from: fmtDate(m.from), to: fmtDate(m.to), n: r.lines.length })));
+      if (r.bad) body.appendChild(el("p", "muted small", t("dist.bad", { n: r.bad })));
+      m.curs.forEach(function (c) {
+        function sum(list) { return list.filter(function (x) { return x.cur === c; }).reduce(function (a, x) { return a + x.amt; }, 0); }
+        body.appendChild(el("p", "muted", t("dist.sum", { cur: c, a: cents(sum(m.tracks) + sum(m.releases), c), b: cents(sum(m.unmatched), c) })));
+      });
+      if (m.unmatched.length) {
+        body.appendChild(el("h4", "", t("dist.unmatched") + " (" + m.unmatched.length + ")"));
+        body.appendChild(el("p", "muted small", t("dist.unHint")));
+        m.unmatched.slice(0, 30).forEach(function (x) {
+          var row = el("div", "dist-un");
+          var nm = el("div", "roy-name");
+          nm.appendChild(el("div", "", [x.title, x.artist].filter(Boolean).join(" · ") || "—"));
+          nm.appendChild(el("div", "muted small", (x.isrc ? "ISRC " + C.fmtIsrc(x.isrc) : x.upc ? "UPC/EAN " + x.upc : "") + " · " + cents(x.amt, x.cur)));
+          row.appendChild(nm);
+          var sl = select(trackOpts, links[x.key] || "");
+          sl.setAttribute("aria-label", t("dist.link") + " " + (x.title || x.key));
+          sl.addEventListener("change", function () { if (sl.value) links[x.key] = sl.value; else delete links[x.key]; refresh(); });
+          row.appendChild(sl);
+          body.appendChild(row);
+        });
+      }
+      sts = DI.statements(data, m, { note: note.value });
+      body.appendChild(el("h4", "", t("dist.sts")));
+      if (!sts.length) { body.appendChild(el("p", "muted", t("dist.noSt"))); return; }
+      sts.forEach(function (x) {
+        var w = el("label", "dist-st");
+        var cb = input("checkbox", "");
+        cb.checked = chosen(x);
+        cb.addEventListener("change", function () { pick[sKey(x)] = cb.checked; ready(); });
+        w.appendChild(cb);
+        var tx = el("span", "roy-name");
+        tx.appendChild(el("div", "", x.n + " · " + t("roy.due", { a: cents(x.due, x.cur) })));
+        tx.appendChild(el("div", "muted small", x.rows.map(function (rw) { return rw.t + " " + rw.pct + "%"; }).join(" · ")));
+        if (x.overlap) tx.appendChild(el("div", "warnbox small", t("dist.overlap")));
+        if (x.cur !== data.set.cur && x.rec.some(function (z) { var tm = (C.find(data, "titles", z.ti) || { roy: [] }).roy.filter(function (q) { return q.id === z.tr; })[0]; return tm && tm.adv > 0; }))
+          tx.appendChild(el("div", "muted small", t("dist.noAdv", { cur: data.set.cur })));
+        w.appendChild(tx);
+        body.appendChild(w);
+      });
+      ready();
+    }
+    function ready() { go.disabled = !sts.some(chosen); }
+    function issue() {
+      if (go.disabled || !m) return;
+      var d = data, now = Date.now(), n = 0, txt = note.value.trim().slice(0, 1000);
+      sts.forEach(function (x) {
+        if (!chosen(x)) return;
+        var row = Object.assign({}, x, { id: C.uid(), note: txt });
+        delete row.overlap;
+        d = C.put(d, "stmts", row, now);
+        n++;
+      });
+      DI.learn(d, m).forEach(function (x) {
+        var tr = C.find(d, "trk", x.id);
+        if (tr) d = C.put(d, "trk", Object.assign({}, tr, { isrc: x.isrc }), now);
+      });
+      if (!g.preset) {
+        var keep = {};
+        DIST_FIELDS.forEach(function (f) { keep[f] = map[f]; });
+        prefs.dist = { h: sig, map: keep, cur: /^[A-Z]{3}$/.test(cur) ? cur : "" };
+        savePrefs();
+      }
+      dlg.close();
+      commit(d);
+      toast(t("dist.done", { n: n }));
+    }
+    showDialog(dlg);
+    refresh();
+  }
+
   function stmtText(st) {
+    var cur = st.cur;
+    function c(v) { return cents(v, cur); }
     var out = [t("roy.mailHi", { n: st.n }), "", t("roy.mailBody", { from: fmtDate(st.from), to: fmtDate(st.to) }), ""];
     st.rows.forEach(function (r) {
-      out.push(r.t + " (" + t("fmt." + r.k) + "): " + r.q + " × " + cents(r.u) + " = " + cents(r.b) + " × " + r.pct + "% = " + cents(r.e));
+      if (typeof r.fb === "number") out.push(r.t + " (" + rowKind(r) + "): " + t("dist.qty", { n: r.q }) + " · " + c(r.b) + " × " + r.pct + "% = " + c(r.e));
+      else out.push(r.t + " (" + rowKind(r) + "): " + r.q + " × " + c(r.u) + " = " + c(r.b) + " × " + r.pct + "% = " + c(r.e));
     });
     out.push("");
-    out.push(t("roy.total") + ": " + cents(st.rows.reduce(function (a, r) { return a + r.e; }, 0)));
+    out.push(t("roy.total") + ": " + c(st.rows.reduce(function (a, r) { return a + r.e; }, 0)));
     st.rec.forEach(function (x) {
       if (!x.adv) return;
       var tt = C.find(data, "titles", x.ti);
-      out.push(t("roy.advance") + (tt ? " · " + tt.t : "") + ": " + t("roy.advRec", { a: cents(Math.min(x.left, x.e)) }) + " · " + t("roy.advLeft", { a: cents(Math.max(0, x.left - x.e)) }));
+      out.push(t("roy.advance") + (tt ? " · " + tt.t : "") + ": " + t("roy.advRec", { a: c(Math.min(x.left, x.e)) }) + " · " + t("roy.advLeft", { a: c(Math.max(0, x.left - x.e)) }));
     });
-    out.push(t("roy.due", { a: cents(st.due) }));
+    out.push(t("roy.due", { a: c(st.due) }));
+    if (st.note) { out.push(""); out.push(st.note); }
     if (data.set.imp) { out.push(""); out.push(data.set.imp); }
     return out.join("\n");
   }
@@ -3289,8 +3505,10 @@
     return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]; });
   }
   function stmtHtml(st) {
+    function cents(v) { return money((v || 0) / 100, st.cur); }
     var rows = st.rows.map(function (r) {
-      return "<tr><td>" + esc(r.t) + "</td><td>" + esc(t("fmt." + r.k)) + (r.isbn ? "<br><small>" + esc(C.hyphen(r.isbn, data.blocks)) + "</small>" : "") +
+      var kind = r.k ? esc(t("fmt." + r.k)) + (r.isbn ? "<br><small>" + esc(C.hyphen(r.isbn, data.blocks)) + "</small>" : "") : "<small>" + esc(rowKind(r)) + "</small>";
+      return "<tr><td>" + esc(r.t) + "</td><td>" + kind +
         "</td><td class=n>" + esc(String(r.q)) + "</td><td class=n>" + esc(cents(r.b)) + "</td><td class=n>" + esc(String(r.pct)) +
         "</td><td class=n>" + esc(cents(r.e)) + "</td></tr>";
     }).join("");
@@ -3310,7 +3528,8 @@
       "</th></tr></thead><tbody>" + rows + "</tbody></table>" +
       "<p>" + esc(t("roy.total") + ": " + cents(tot)) + "</p>" + adv +
       "<p class=due>" + esc(t("roy.due", { a: cents(st.due) })) + "</p>" +
-      (st.paid ? "<p>" + esc(t("roy.paidOn", { d: fmtDate(st.paid) })) + "</p>" : "") + "</body></html>";
+      (st.paid ? "<p>" + esc(t("roy.paidOn", { d: fmtDate(st.paid) })) + "</p>" : "") +
+      (st.note ? "<p><small>" + esc(st.note) + "</small></p>" : "") + "</body></html>";
   }
   function printHtml(html) {
     var old = $("roy-print");

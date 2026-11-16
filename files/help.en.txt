@@ -28,6 +28,15 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - `Add to Favourites` pins a folder or file to the top of the tree. Tap the star next to it there, or choose `Remove from Favourites`, to unpin it.
 - Favourites follow a rename or a move made in Files, and are synced to your other devices. A favourite that has not reached a device yet is shown faded.
 
+### Remove hidden details
+- `Remove hidden details` (in the menu) makes a clean copy, "name (clean).ext", next to each selected photo (JPEG, PNG, WebP), PDF, or Word, Excel, PowerPoint or OpenDocument file. The original stays as it is.
+- It removes what the file says about who made it, where, when and with what: GPS location and camera details from photos; author, program, dates and earlier saved versions from PDFs; author, last editor, dates, company, template, custom properties and Word's editing-session codes from office files. The picture and the text stay byte for byte; a turned photo keeps only its orientation.
+- Comments and tracked changes are not removed, because you can see and decide on them: the report says when a file still has them. Read the content itself too, see [Sensitive work and sources](help:t/sensitive).
+
+### Files that delete themselves
+- `Delete itself…` (in the menu, one file) sets a file to go in 1 hour, 1 day, 7 days or 30 days. An hourglass next to its name shows that it is set; `Keep it` takes it back. It follows the file when you move or rename it in Files, also into the Trash.
+- When the time comes, the file is deleted for good on every device the first time orOS runs there, also while Files is closed. A copy you sent, downloaded or backed up before stays where it is. Encrypted pieces in your cloud are removed only by `Unused files in the cloud`.
+
 ### ZIP files
 - `Compress to ZIP` packs the selected files and folders into one .zip next to them, named after the item (or "Archive.zip" for several). Text and other files are compressed where the browser can; photos, videos and other already compressed files are stored as they are.
 - Open a .zip to see what is inside. `Extract` (or `Extract here` in the menu) unpacks it into a new folder next to it. A file never overwrites anything: names that are taken get " (1)".
@@ -107,6 +116,7 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 - `From the text:` suggests a type, the document date, an amount, an expiry date and a sender you already have. `Fill in` fills only the fields that are empty (and a date that was only the file's own time).
 - `⋯` › `Read the text of all documents` reads the ones not read yet, one after another; the same item stops it. `Read the text of new documents` (on or off for this device) reads each new document by itself.
 - In Scanner & PDF, saving `In Files` with `Also add it to Documents` ticked makes the PDF a document the next time Files runs.
+- Reminders: orOS tells you 30 days and 7 days before a document expires, on the day it expires, and when its `Keep until` date has passed, from 09:00 on this device (`⋯` › `Reminders of dates` sets the hour or turns them off). The same dates show in [Today](app:today) and as `Documents` in [Calendar](app:calendar); a private document (medical, ID, or linked to Health, Cycle or Baby) shows only its type there. Nothing is ever deleted: you decide what to throw away. In [Automations](app:automations), the ready rule `Expiring document to To-Do` turns each reminder into a task.
 - `⋯` › `Types, tags and senders` renames or deletes them and adds your own types with their own suggestion. A type can be private: its documents are never shown to the Assistant or to Claude. Medical and ID documents are private from the start.
 - `Remove from Documents` forgets the details only; the file stays. Moving or renaming a file in Files keeps its document. If another app or device moved it, `⋯` › `Find moved files` finds it again by its content.
 - `⋯` › `Export documents (.zip)` saves the documents shown, with their files, a `documents.json` and a `documents.csv` for a spreadsheet. `Import an archive (.zip)` brings such an archive back, on any device: the files go to `Documents` › `Imported` (date).
