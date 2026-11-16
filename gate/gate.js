@@ -1933,6 +1933,7 @@
   function connect() {
     var p = pref();
     if (!p.on || !p.id || !p.tok || ws) return;
+    if (HOST.bg && !HOST.ok) return;                 // GATE-HOST: an unconfirmed or stopped background host stays off
     if (helperRead().v === "assistant") { helperApply(); return; }   // HELPER-1: the Gate goes off here
     if (isObj(p.lv) && p.lv.kanban === "write") kanbanModel().then(null, function () {});   // Undo needs it at hand
     clearTimeout(retryTimer);
@@ -2135,7 +2136,7 @@
   function digCheck() {
     var now = Date.now(), dg = digRead();
     if (digBusy || !digDue(dg, chgList(), now)) return;
-    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) return;
+    if (locked()) return;
     if (typeof navigator !== "undefined" && navigator.onLine === false) return;
     var accs = sendAccounts(), acc = accs.filter(function (a) { return a.id === dg.acct; })[0] || accs[0];
     if (!acc) return;                                 // Settings says a Mail account is needed
@@ -2216,7 +2217,7 @@
   function sendCopy() {
     var p = pref(), k = gateKey();
     if (copyBusy || !p.on || !k || !ws || ws.readyState !== 1) return;
-    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) return;
+    if (locked()) return;
     copyBusy = true;
     var ok = allowed(offered(), p.lv).map(function (a) { return a.id; }).filter(function (id) { return !sensitive(id); });
     var d = new Date(), month = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
@@ -2305,7 +2306,7 @@
     var o, k = gateKey();
     try { o = JSON.parse(text); } catch (e) { return; }
     if (!isObj(o) || !Array.isArray(o.cq) || !k || !pref().on) return;
-    whenUnlocked(function () {
+    whenOpen(function () {
       var done = [], files = false;
       o.cq.slice(0, 50).reduce(function (chain, it) {
         return chain.then(function () {
@@ -2320,7 +2321,7 @@
             // F3: a deletion waits for the owner's Delete on this device; hidden,
             // locked or unanswered, it stays queued (offered again when orOS is
             // on screen, and on the next connect). Writes keep a conflict copy.
-            if (x.n === "files_delete" && (document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()))) { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }
+            if (x.n === "files_delete" && (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()))) { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }
             if (FILE_WRITE.indexOf(x.n) >= 0) { files = true; if (x.n === "files_write") x.a = Object.assign({}, isObj(x.a) ? x.a : {}, { __q: 1 }); }
             cqBusy[it.id] = 1;
             askLast = "";
@@ -2466,7 +2467,7 @@
   // The relay asks a device whose orOS is on screen first (5.73.00):
   // a phone in the background loses its socket, a computer keeps it.
   function sendVis(sock) {
-    try { if (sock && sock.readyState === 1) sock.send(document.visibilityState === "hidden" ? "v0" : "v1"); } catch (e) {}
+    try { if (sock && sock.readyState === 1) sock.send((HOST.ok && HOST.kind === "bg") || document.visibilityState === "hidden" ? "v0" : "v1"); } catch (e) {}
   }
   try {
     document.addEventListener("visibilitychange", function () {
@@ -2524,9 +2525,10 @@
   // opt (PEND-1): { at: the time Claude asked, for a queued change }.
   function run(name, args, opt) {
     opt = isObj(opt) ? opt : {};
-    if (root.orosLock && typeof root.orosLock.isLocked === "function" && root.orosLock.isLocked()) {
+    if (locked()) {
       return Promise.resolve({ ok: false, c: "orOS is locked on the owner's device. Ask the owner to unlock it." });
     }
+    if (away() && (name === "edit_in_app" || name === "do_action" || ACT_OPEN.indexOf(name) >= 0)) return Promise.resolve({ ok: false, c: HOST_TXT });
     var p = pref();
     var all = offered(), ok = allowed(all, p.lv), names = appNames(all), okIds = ok.map(function (a) { return a.id; });
     args = isObj(args) ? args : {};
@@ -2807,7 +2809,7 @@
     return new Promise(function (ok) {
       var settled = false, wrap = null;
       function end(v) { if (settled) return; settled = true; if (wrap) wrap.remove(); ok(v); }
-      if (document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false); return; }
+      if (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false); return; }
       wrap = dialog(tr("gate.del.title"), tr("gate.del.body").replace("{n}", String(n)), "", tr("gate.del.no"), tr("gate.del.yes"),
         function () { end(false); }, function () { end(true); });
       setTimeout(function () { end(false); }, 20000);
@@ -2823,7 +2825,7 @@
     return new Promise(function (ok) {
       var settled = false, wrap = null, list = Array.isArray(names) ? names.map(String) : [];
       function end(v, how) { if (settled) return; settled = true; askLast = how; if (wrap) wrap.remove(); ok(v); }
-      if (!list.length || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
+      if (!list.length || away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
       var shown = list.slice(0, 10).join("\n") + (list.length > 10 ? "\n" + tr("gate.fdel.more").replace("{n}", String(list.length - 10)) : "");
       wrap = dialog(tr("gate.fdel.title"), tr("gate.fdel.body").replace("{n}", String(list.length)), shown, tr("gate.del.no"), tr("gate.fdel.yes"),
         function () { end(false, "no"); }, function () { end(true, "yes"); });
@@ -2906,6 +2908,78 @@
   function strictOn() {
     try { var S = root.orosStrict; return !!(S && typeof S.level === "function" && S.level()); } catch (e) { return false; }
   }
+  // GATE-HOST (PEND-1 wave 2, b; Chris 2026-11-16 «Ναι, μετά το a»): an
+  // installed orOS Portable / orOS USB can keep this profile's orOS open
+  // without a window while every orOS window is closed (the owner's
+  // opt-in on that computer, Settings › orOS Gate). The launcher starts
+  // its browser headless at /?gate-host=<nonce> and confirms the nonce at
+  // /__oros/gate-host, so no other page can claim to be it. Only there
+  // the Gate works over the screen lock (nobody is at the screen; the
+  // lock guards the screen, not the disk); dialogs, apps on screen and
+  // deletions that ask the owner stay for a screen. Never under
+  // Sensitive work: the host then turns itself off.
+  // Two kinds (the launcher says which): "bg", the headless browser above;
+  // "lock", an orOS window on orOS USB (which never closes), where the
+  // same opt-in only lets the Gate work behind the screen lock.
+  var HOST = { ok: false, n: "", kind: "", bg: false };
+  (function () {
+    var m = typeof location !== "undefined" ? /[?&]gate-host=([A-Za-z0-9_-]{16,64})(?:&|$)/.exec(location.search || "") : null;
+    if (m) HOST.n = m[1];
+    HOST.bg = !!(m && typeof navigator !== "undefined" && /HeadlessChrome/.test(navigator.userAgent || ""));
+  })();
+  function hostCheck() {
+    if (!HOST.n || typeof fetch !== "function") return Promise.resolve(false);
+    return fetch("/__oros/gate-host?n=" + encodeURIComponent(HOST.n), { cache: "no-store", credentials: "same-origin" }).then(function (r) {
+      return r.ok ? r.json() : null;
+    }).then(function (o) {
+      if (!isObj(o) || o.host !== true) return false;
+      if (strictOn()) { hostSet(false); return false; }
+      HOST.kind = o.kind === "lock" ? "lock" : "bg";
+      if (HOST.bg !== (HOST.kind === "bg")) return false;   // a window never acts as the background host
+      HOST.ok = true;
+      return true;
+    }, function () { return false; });
+  }
+  // → Promise of { can, on, running, tray } from this computer's orOS
+  // Portable / orOS USB, or null where it has none (a web browser).
+  function hostState() {
+    if (typeof fetch !== "function" || !/^http:\/\/(localhost|127\.0\.0\.1):47800$/.test(String(location.origin || ""))) return Promise.resolve(null);
+    return fetch("/__oros/gate-host", { cache: "no-store", credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (o) { return isObj(o) && typeof o.can === "boolean" ? o : null; }, function () { return null; });
+  }
+  function hostSet(on) {
+    if (typeof fetch !== "function") return Promise.resolve(null);
+    return fetch("/__oros/gate-host", { method: "POST", cache: "no-store", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-Oros-Gate": "1" }, body: JSON.stringify({ on: !!on }) })
+      .then(function (r) { return r.ok ? r.json() : null; }, function () { return null; })
+      .then(function (o) {
+        // Turned on in a window: the launcher hands it the lock-rule nonce.
+        if (on && isObj(o) && typeof o.win === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(o.win) && !HOST.ok && !HOST.bg) { HOST.n = o.win; hostCheck(); }
+        if (!on && !HOST.bg) HOST.ok = false;
+        return o;
+      });
+  }
+  function hostBye() {
+    HOST.ok = false;
+    drop();
+    setTimeout(function () {
+      fetch("/__oros/gate-host?n=" + encodeURIComponent(HOST.n) + "&bye=1", { cache: "no-store", credentials: "same-origin" }).then(null, function () {});
+    }, 6000);
+  }
+  // locked for the Gate: the screen lock, except on the host (above)
+  function locked() {
+    if (HOST.ok && !strictOn()) return false;
+    var L = root.orosLock;
+    return !!(L && typeof L.isLocked === "function" && L.isLocked());
+  }
+  // nobody at a screen: the background host, or a lock-rule window
+  // behind its screen lock. Dialogs and apps on screen wait for a person.
+  function away() {
+    if (!HOST.ok) return false;
+    if (HOST.kind === "bg") return true;
+    var L = root.orosLock;
+    return !!(L && typeof L.isLocked === "function" && L.isLocked());
+  }
+  var HOST_TXT = "orOS runs in the background or behind the screen lock on the owner's computer, with nobody at the screen: this needs orOS open and unlocked on a screen. Nothing was done.";
   function fcDrop() { var S = root.orosSync; return S && S.gateDrop && typeof S.gateDrop.available === "function" && S.gateDrop.available() ? S.gateDrop : null; }
   function fcState() { var o = readJSON(FC_KEY); return isObj(o) ? o : {}; }
   function fileCopySoon(ms) { clearTimeout(fcTimer); fcTimer = setTimeout(fileCopy, typeof ms === "number" ? ms : 60000); }
@@ -2957,7 +3031,7 @@
     var p = pref(), k = gateKey(), D = fcDrop();
     if (fcBusy) return Promise.resolve(false);
     if (!p.on || !k || !ws || ws.readyState !== 1 || !fcFilesOn(p) || strictOn() || !D) return Promise.resolve(false);
-    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) return Promise.resolve(false);
+    if (locked()) return Promise.resolve(false);
     if (!root.orosFS) return Promise.resolve(false);
     var fr = foldersRead();
     if (!fr.f.length) return Promise.resolve(false);
@@ -3106,8 +3180,8 @@
     };
     if (q.n === "_key") {                              // the relay wraps it for a token of Claude's; not logged
       var k = gateKey();
-      var locked = root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked();
-      try { sock.send(JSON.stringify({ r: q.q, ok: !!(p.on && k && !locked), c: p.on && k && !locked ? k : "" })); } catch (e) {}
+      var lk = locked();
+      try { sock.send(JSON.stringify({ r: q.q, ok: !!(p.on && k && !lk), c: p.on && k && !lk ? k : "" })); } catch (e) {}
       return;
     }
     if (!p.on) { done({ ok: false, c: "The gate is off." }); return; }
@@ -3135,7 +3209,7 @@
     writeOk: function (id) {
       var p = pref(), now = Date.now();
       if (!p.on) return "The gate is off.";
-      if (root.orosLock && typeof root.orosLock.isLocked === "function" && root.orosLock.isLocked()) return "orOS is locked on the owner's device.";
+      if (locked()) return "orOS is locked on the owner's device.";
       if (!id || !actable(id) || !isObj(p.lv) || p.lv[id] !== "write") return "The owner does not let Claude change " + (id || "this app") + " (orOS › Settings › Connected services › orOS Gate).";
       if (!canWrite(p.lv, p.hold, id, now)) return closedMsg(p, id, id);
       return "";
@@ -3144,7 +3218,8 @@
     actionOk: function (id) {
       var p = pref(), now = Date.now();
       if (!p.on) return "The gate is off.";
-      if (root.orosLock && typeof root.orosLock.isLocked === "function" && root.orosLock.isLocked()) return "orOS is locked on the owner's device.";
+      if (away()) return HOST_TXT;
+      if (locked()) return "orOS is locked on the owner's device.";
       if (!id || NEVER.indexOf(id) >= 0) return "Claude may never open " + (id || "this app") + ".";
       if (typeof p.hold === "number" && p.hold > now) return "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was done.";
       return "";
@@ -3415,6 +3490,8 @@
       });
     },
     reconnect: function () { if (!ws) { retry = 0; connect(); } },
+    // GATE-HOST: this computer's background Gate (orOS Portable / USB)
+    host: { state: function () { return hostState(); }, set: function (on) { return hostSet(on); }, active: function () { return HOST.ok; } },
     log: function () { var l = readJSON(LOG_KEY); return Array.isArray(l) ? l.slice().reverse() : []; },
     clearLog: function () { try { localStorage.removeItem(LOG_KEY); } catch (e) {} changed(); },
     onChange: function (fn) {
@@ -3508,12 +3585,46 @@
       });
   }
   // Never over the lock screen: the dialog waits until orOS is unlocked.
+  // The Gate's own work (the queue): also on the host, over the lock.
+  function whenOpen(fn) {
+    if (locked()) { setTimeout(function () { whenOpen(fn); }, 800); return; }
+    fn();
+  }
   function whenUnlocked(fn) {
     var L = root.orosLock;
     if (L && typeof L.isLocked === "function" && L.isLocked()) { setTimeout(function () { whenUnlocked(fn); }, 800); return; }
     fn();
   }
   function start() {
+    if (HOST.n && !HOST.bg) { hostCheck(); startOpen(); return; }   // a lock-rule window
+    if (HOST.n) {
+      hostCheck().then(function (ok) {
+        if (!ok || HOST.kind !== "bg") return;
+        if (!pref().on) return;                        // a computer without the Gate: nothing to do
+        connect();
+        chgSlice(0); digSlice(0); foldersSlice(0); seatSlice(0); helperSlice(0); helperApply();
+        setInterval(function () { copySoon(0); }, 30 * 60000);
+        setInterval(function () { fileCopySoon(0); }, 30 * 60000);
+        setInterval(function () { if (strictOn()) { hostSet(false); hostBye(); } }, 60000);
+        // A window wants this profile (or the owner turned it off): stop
+        // taking Claude's calls, give the browser time to write what changed,
+        // then say bye; the launcher ends this browser.
+        var yieldT = setInterval(function () {
+          if (!HOST.ok) return;
+          fetch("/__oros/gate-host?n=" + encodeURIComponent(HOST.n), { cache: "no-store", credentials: "same-origin" })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (h) { if (h && (h.yield || !h.host)) { clearInterval(yieldT); hostBye(); } }, function () {});
+        }, 2000);
+        clearInterval(digTimer);
+        digTimer = setInterval(digCheck, 10 * 60000);
+        setTimeout(function () { if (pref().on) makeSeat(); }, 3000);
+        root.addEventListener("online", function () { api.reconnect(); });
+      });
+      return;
+    }
+    startOpen();
+  }
+  function startOpen() {
     var ask = readAsk();
     if (/[?&]gate=/.test(location.search)) {
       try { history.replaceState(null, "", location.pathname + location.search.replace(/([?&])gate=[^&]*&?/, "$1").replace(/[?&]$/, "") + location.hash); } catch (e) {}
