@@ -1611,7 +1611,8 @@
       "title, a short text, a date and a ref. The user sees every result first and may share " +
       "only some of them, or none. Use short keyword queries (1-3 words), in the language the " +
       "data is probably written in; search again with other words if nothing comes back. Each result shows " +
-      "its labels; with label it returns only items with that label, or with none.",
+      "its labels; with label it returns only items with that label, or with none. " +
+      "search_data in Files also finds Documents: type, date, sender, tags, amount, expiry and keep-until dates, the file and the first 300 characters of the text. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never appear.",
     params: {
       type: "object",
       properties: {

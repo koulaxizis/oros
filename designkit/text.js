@@ -842,6 +842,7 @@
   // ---------- 8. Layout ----------
   // frames: ordered chain, each
   //   { id, w, h, cols, gut, inset, valign: "t"|"c"|"b", excl: [],
+  //     one (true: the frame holds one line, whatever its height),
   //     ctx: { pageLabel, pageCount, sec (the page's running head
   //     text, LY-RH) } }
   // story: { paras: [{ ps, runs: [...] }] }
@@ -868,7 +869,7 @@
       var ins = Math.max(0, f.inset || 0), gut = Math.max(0, f.gut || 0);
       var innerW = Math.max(1, f.w - 2 * ins);
       var cw = Math.max(1, (innerW - gut * (cols - 1)) / cols);
-      return { f: f, cols: cols, x0: ins + col * (cw + gut), x1: ins + col * (cw + gut) + cw, top: ins, bottom: Math.max(ins, f.h - ins) };
+      return { f: f, cols: cols, x0: ins + col * (cw + gut), x1: ins + col * (cw + gut) + cw, top: ins, bottom: f.one ? Infinity : Math.max(ins, f.h - ins) };
     }
     function nextCol() {
       col++;
@@ -1018,6 +1019,11 @@
     function placeLine(ti, toks, ps, li, firstLine, asc, desc, lead, bul, bulletW) {
       var guard = 0;
       while (guard++ < 4000) {
+        // a one-line frame (text on a path, LY-TP) takes one line
+        if (geom.f.one && !colTop) {
+          if (!nextCol()) return false;
+          continue;
+        }
         var base = colTop ? y + asc : y + lead;
         if (base + desc > geom.bottom + 0.01) {
           // a frame too short for even one line: still move on

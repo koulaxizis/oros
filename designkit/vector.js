@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — vector: editable outlines (v1.0.0, wave V1)
+// orOS designkit — vector: editable outlines (v1.1.0, waves V1, V3)
 // Shared by Atelier and Layout. Pure: no DOM, no clock.
 // An outline is a list of PATHS, each { closed, n: [nodes] }, and a
 // node is { x, y, ix, iy, ox, oy, k }: the point, its in and out
@@ -29,6 +29,17 @@
 //   text(cmds, digits), pack(unit, room) → string | [strings] | null
 //     (Atelier ext.pth: chunks of ≤ 4000 characters, ≤ room in all)
 //   count(paths) → number of nodes
+// Since wave V3 (text on a path, v1.1.0):
+//   walker(paths | cmds) → { len, closed, at(d) → [x, y, angle] } or
+//     null: the FIRST outline measured by arc length (angle = the
+//     direction of travel in radians)
+//   alongPath(paths | cmds, glyphs [{ w }], { o, al, s }) → [{ x, y,
+//     rot } | { hide: true }] or null: where each glyph's baseline
+//     centre goes. o 0..100 = the anchor, % of the length from the
+//     start; al l|c|r = the text starts at / centres on / ends at the
+//     anchor; s -1 = the other side (the outline walked backwards, the
+//     anchor point kept). Glyphs past the ends of an open outline are
+//     hidden; on a closed one the text wraps round.
 // ============================================================
 (function (root) {
   "use strict";
@@ -407,7 +418,53 @@
     return null;
   }
 
+  // ---------- 8. Along a path (wave V3) ----------
+  function walker(src) {
+    var paths = src && src.length && Array.isArray(src[0]) ? fromCmds(src) : src;
+    var p = paths && paths[0];
+    if (!p || p.n.length < 2) return null;
+    var pts = [], N = 24;
+    segsOf(p).forEach(function (s) {
+      var c = bez(p, s);
+      for (var k = 0; k <= N; k++) {
+        var q = at(c, k / N), last = pts[pts.length - 1];
+        if (!last || Math.hypot(q[0] - last[0], q[1] - last[1]) > 1e-9) pts.push(q);
+      }
+    });
+    if (pts.length < 2) return null;
+    var cum = [0];
+    for (var i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    var len = cum[cum.length - 1];
+    if (!(len > EPS)) return null;
+    function pointAt(d) {
+      d = Math.max(0, Math.min(len, d));
+      var lo = 0, hi = cum.length - 2;
+      while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (cum[mid] <= d) lo = mid; else hi = mid - 1; }
+      var a = pts[lo], b = pts[lo + 1], sl = cum[lo + 1] - cum[lo], t = sl > 0 ? (d - cum[lo]) / sl : 0;
+      return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, Math.atan2(b[1] - a[1], b[0] - a[0])];
+    }
+    return { len: len, closed: !!p.closed, at: pointAt };
+  }
+  function alongPath(src, glyphs, opt) {
+    var o = opt || {}, wk = walker(src);
+    if (!wk) return null;
+    var L = wk.len, total = 0, flip = o.s === -1;
+    (glyphs || []).forEach(function (g) { total += g.w || 0; });
+    var A = Math.max(0, Math.min(100, +o.o || 0)) / 100 * L;
+    if (flip) A = L - A;
+    var d0 = o.al === "r" ? A - total : o.al === "c" ? A - total / 2 : A, x = 0;
+    return (glyphs || []).map(function (g) {
+      var w = g.w || 0, d = d0 + x + w / 2;
+      x += w;
+      if (wk.closed) d = ((d % L) + L) % L;
+      else if (d < -EPS || d > L + EPS) return { hide: true };
+      var q = wk.at(flip ? L - d : d);
+      return { x: q[0], y: q[1], rot: flip ? q[2] + Math.PI : q[2] };
+    });
+  }
+
   var api = {
+    walker: walker, alongPath: alongPath,
     MAX_NODES: MAX_NODES, MIN_BOX: MIN_BOX,
     fromCmds: fromCmds, toCmds: toCmds, clone: clone, count: count, kindOf: kindOf,
     bounds: bounds, reframe: reframe, scaled: scaled,

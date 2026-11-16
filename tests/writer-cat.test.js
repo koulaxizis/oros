@@ -178,8 +178,23 @@ test("rows files: names, chunks, only the chunk's own rows are read", () => {
 
 test("mergeMeta: name and translated document, newer wins per field", () => {
   const m = C.mergeMeta([{ name: "A", nm: 5, out: "d1", om: 2 }, { name: "B", nm: 7 }, { out: "d2", om: 1 }, null, { name: 3, nm: 9 }]);
-  assert.deepEqual(m, { name: "B", nm: 7, out: "d1", om: 2, tm: "", tmm: 0, gl: "", glm: 0 });
+  assert.deepEqual(m, { name: "B", nm: 7, out: "d1", om: 2, tm: "", tmm: 0, gl: "", glm: 0, pub: "", pm: 0, due: "", dm: 0, goal: 0, gm: 0 });
   assert.equal(C.mergeMeta([{ tm: "tmaaaaaa1", tmm: 3 }, { tm: "tmbbbbbb2", tmm: 4 }]).tm, "tmbbbbbb2");
+  // proposals 1-2: a deadline taken off later wins, a bad date is ignored
+  const g = C.mergeMeta([{ pub: "t1", pm: 2, due: "2026-12-20", dm: 3, goal: 400, gm: 3 }, { due: "", dm: 5 }, { due: "2026-13-01", dm: 9 }, { goal: -3, gm: 9 }]);
+  assert.deepEqual([g.pub, g.due, g.dm, g.goal], ["t1", "", 5, 400]);
+});
+
+test("goalInfo: days left, words a day, today's words, late", () => {
+  const src = C.extract({ html: "<p>One two three four. Five six.</p><p>Seven eight nine ten.</p>" }, "en");
+  const now = new Date(2026, 10, 13, 15, 0).getTime(), morning = new Date(2026, 10, 13, 9, 0).getTime();
+  assert.equal(C.goalInfo(src, {}, {}, now), null);
+  const rows = { 0: ["Ένα δύο τρία τέσσερα.", 2, morning], 1: ["Πέντε έξι.", 2, morning - 86400000] };
+  assert.deepEqual(C.goalInfo(src, rows, { due: "2026-11-14" }, now),
+    { due: "2026-11-14", days: 2, left: 4, perDay: 4, need: 4, today: 4, late: 0, done: false });
+  assert.equal(C.goalInfo(src, rows, { due: "2026-11-14", goal: 100 }, now).perDay, 100);
+  assert.equal(C.goalInfo(src, rows, { due: "2026-11-10" }, now).late, 3);
+  assert.equal(C.goalInfo(src, rows, { due: "2026-11-13" }, now).days, 1);
 });
 
 test("stats and repeats", () => {

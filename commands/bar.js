@@ -2,7 +2,7 @@
 // orOS — commands/bar.js (command bar, shell side, v1.3.0)
 // Loaded by shell.js on first use (with commands/core.js and
 // calendar/quickadd.js), never at boot. A small bar in the middle of
-// the screen, over whatever is open (Ctrl+K, Ctrl+Alt+Shift+K):
+// the screen, over whatever is open (Ctrl+Alt+Shift+K):
 //   1. the command, when the line is one ("New event · Sun 18/10 ·
 //      10:00 · Dentist → Calendar"); Enter runs it;
 //   2. (1.2.0, Quick window) "Add task: «…»" when the line is no
@@ -288,9 +288,13 @@
         return;
       }
       if (e.key === "Tab") { e.preventDefault(); input.focus(); return; }
-      // Ctrl+K again closes; other shell shortcuts wait.
-      if ((e.ctrlKey || e.metaKey) && e.code === "KeyK") { e.preventDefault(); e.stopImmediatePropagation(); close(); return; }
-      if (e.ctrlKey && e.altKey && e.shiftKey) e.stopImmediatePropagation();
+      // Its own shortcut again (Ctrl+Alt+Shift+K, or the key the person
+      // gave it) closes; other shell shortcuts wait.
+      if ((e.ctrlKey || e.metaKey) && e.altKey && e.shiftKey) {
+        var S = window.orosShortcuts, own = S && typeof S.code === "function" ? S.code("cmdbar") : "KeyK";
+        if (own && e.code === own) { e.preventDefault(); e.stopImmediatePropagation(); close(); return; }
+        e.stopImmediatePropagation();
+      }
     }
 
     input.addEventListener("input", paint);

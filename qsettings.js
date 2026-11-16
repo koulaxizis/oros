@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — qsettings.js (Quick settings, GNOME style, v1.0.0)
+// orOS — qsettings.js (Quick settings, GNOME style, v1.1.0)
 // ------------------------------------------------------------
 // A shell component, like osk.js and quickmenu.js: it runs IN the
 // shell document. shell.js calls attach() once at boot (also in a
@@ -20,9 +20,14 @@
 //                 Wi-Fi and Bluetooth buttons (see "System part");
 //       buttons   GNOME's rounded toggles in two columns: Network
 //                 (status), Sync (tap = sync now, › = Settings),
-//                 Dark style, Do Not Disturb (› = for one hour, until
+//                 Dark style, Night Light (nightlight.js: tap = warm
+//                 now / off until the next evening, › = Settings),
+//                 Do Not Disturb (› = for one hour, until
 //                 tomorrow morning, until I turn it off), Large text,
-//                 High contrast, On-screen keyboard (not on phones);
+//                 High contrast, On-screen keyboard (not on phones),
+//                 Clipboard (1.1.0, only while the clipboard history
+//                 of cliphist.js is on: opens its panel), Emoji (1.1.0,
+//                 emoji.js: the emoji picker);
 //       playing   one row per sound that plays in the shell (Music,
 //                 Podcasts, Radio, Sound Mixer) with Play / Pause.
 //     Every switch goes through the shell's own setter (theme,
@@ -53,7 +58,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var HOUR = 3600000;
 
   // ---------- 1. Model (pure) ----------
@@ -110,11 +115,18 @@
     var L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
     return (L + 0.05) / 0.05 >= 1.05 / (L + 0.05) ? "#000" : "#fff";
   }
+  // The second line of the Night Light button: until when it holds
+  // ("" when off with nothing planned, or always on).
+  function nightSub(n, fmt, t) {
+    if (!n || !n.until) return "";
+    var k = n.active ? "qs.night.until" : "qs.night.from";
+    return t(k).replace("{t}", fmt(new Date(n.until)));
+  }
   // Large text: on from 130 % up to the largest; off = 100 %.
   function bigOn(size) { return size >= 130; }
 
   var model = { VER: VER, dndUntil: dndUntil, dndSub: dndSub, syncKey: syncKey,
-                batteryShown: batteryShown, batteryPct: batteryPct, batteryAttr: batteryAttr, bigOn: bigOn, onAccent: onAccent };
+                batteryShown: batteryShown, batteryPct: batteryPct, batteryAttr: batteryAttr, bigOn: bigOn, onAccent: onAccent, nightSub: nightSub };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -200,6 +212,8 @@
   var SV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
   var IC = {
     gate: SV + '<path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/></svg>',
+    emoji: SV + '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>',
+    clip: SV + '<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg>',
     net: SV + '<path d="M2 8.5a15 15 0 0 1 20 0"/><path d="M5 12a10.5 10.5 0 0 1 14 0"/><path d="M8.5 15.5a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg>',
     netOff: SV + '<path d="M2 8.5a15 15 0 0 1 20 0" opacity=".35"/><path d="M5 12a10.5 10.5 0 0 1 14 0" opacity=".35"/><path d="M8.5 15.5a5.5 5.5 0 0 1 7 0" opacity=".35"/><path d="M3 3l18 18"/></svg>',
     power: SV + '<path d="M12 3v9"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg>',
@@ -207,6 +221,7 @@
     lock: SV + '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
     sync: SV + '<path d="M21 12a9 9 0 0 1-15.4 6.4L3 16"/><path d="M3 21v-5h5"/><path d="M3 12A9 9 0 0 1 18.4 5.6L21 8"/><path d="M21 3v5h-5"/></svg>',
     moon: SV + '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+    night: SV + '<path d="M17 18a5 5 0 0 0-10 0"/><path d="M12 2v7"/><path d="M4.2 10.2l1.4 1.4"/><path d="M1 18h2"/><path d="M21 18h2"/><path d="M18.4 11.6l1.4-1.4"/><path d="M23 22H1"/><path d="M16 5l-4 4-4-4"/></svg>',
     bellOff: SV + '<path d="M13.7 21a2 2 0 0 1-3.4 0"/><path d="M18.6 13A17.9 17.9 0 0 1 18 8"/><path d="M6.3 6.3A6 6 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.3-5"/><path d="M3 3l18 18"/></svg>',
     text: SV + '<path d="M4 7V5h11v2"/><path d="M9.5 5v14"/><path d="M7 19h5"/><path d="M14 13v-1.5h7V13"/><path d="M17.5 11.5V19"/><path d="M16 19h3"/></svg>',
     contrast: SV + '<circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>',
@@ -408,6 +423,14 @@
       setTimeout(paint, 50);
     }, then(function () { host.settings("sync"); }), t("qs.sync.settings"));
     parts.dark = pill(IC.moon, function () { host.theme.set(host.theme.get() === "dark" ? "light" : "dark"); paint(); });
+    // Night Light (nightlight.js): tap = warm now / off until the next
+    // evening; the arrow = Settings › Appearance › Night Light.
+    parts.night = pill(IC.night, function () {
+      call(function () { root.orosNight.toggleNow(); });
+      paint();
+    }, then(function () {
+      call(function () { root.__orosOpenAt("settings", { section: "appearance", item: "night" }); });
+    }), t("qs.night.more"));
     parts.dnd = pill(IC.bellOff, function () {
       var d = dnd();
       setDnd(d && d.on ? false : "on");
@@ -433,7 +456,12 @@
       call(function () { root.orosGate.setPause(g.hold ? 0 : 60); });
       paint();
     }, function () { setSub(sub === "gate" ? "" : "gate"); }, t("qs.gate.more"));
-    [parts.net, parts.sync, parts.dark, parts.dnd, parts.gate, parts.big, parts.contrast, parts.osk].forEach(function (p) { grid.appendChild(p.box); });
+    // Clipboard history (cliphist.js): shown only while it is on; one
+    // press opens its panel.
+    parts.clip = pill(IC.clip, then(function () { call(function () { root.orosClip.open(); }); }), null);
+    // Emoji picker (emoji.js): writes into the field you were in.
+    parts.emoji = pill(IC.emoji, then(function () { call(function () { root.orosEmoji.open(); }); }), null);
+    [parts.net, parts.sync, parts.dark, parts.night, parts.dnd, parts.gate, parts.big, parts.contrast, parts.osk, parts.clip, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
     panel.appendChild(grid);
 
     parts.dndMenu = el("div", "qs-menu");
@@ -537,6 +565,10 @@
 
     setPill(parts.dark, t("qs.dark"), "", host.theme.get() === "dark", true);
 
+    var nl = call(function () { return root.orosNight ? root.orosNight.snapshot() : null; });
+    parts.night.box.hidden = !nl;
+    if (nl) setPill(parts.night, t("qs.night"), nightSub(nl, fmtTime, t), nl.active, true);
+
     var d = dnd();
     parts.dnd.box.hidden = !d;
     if (d) setPill(parts.dnd, t("qs.dnd"), dndSub(d, now, fmtTime, t), d.on, true);
@@ -558,6 +590,17 @@
     var oskOk = !!(O && call(function () { return O.snapshot && O.snapshot(); }));
     parts.osk.box.hidden = !oskOk;
     if (oskOk) setPill(parts.osk, t("qs.osk"), "", O.isOpen(), true);
+
+    var C = root.orosClip;
+    var clipOn = !!(C && call(function () { return C.isOn(); }));
+    parts.clip.box.hidden = !clipOn;
+    if (clipOn) {
+      var cn = call(function () { return C.snapshot().n; }) || 0;
+      setPill(parts.clip, t("qs.clip"), t("qs.clip.n").replace("{n}", String(cn)), false, false);
+    }
+
+    parts.emoji.box.hidden = !root.orosEmoji;
+    if (root.orosEmoji) setPill(parts.emoji, t("qs.emoji"), "", false, false);
 
     paintMedia();
   }

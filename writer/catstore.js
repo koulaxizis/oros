@@ -172,7 +172,7 @@
         });
       })).then(function () { return Object.keys(chunks).length; });
     };
-    // meta = { name?, out?, tm?, gl? } → this device's meta file (merged with what it had)
+    // meta = { name?, out?, tm?, gl?, pub?, due?, goal? } → this device's meta file (merged with what it had)
     self.saveMeta = function (id, meta) {
       var path = dirOf(id) + "/meta-" + dev + ".json";
       return readJson(fs, path).then(function (cur) {
@@ -185,6 +185,13 @@
         if (typeof meta.out === "string") { o.out = meta.out.slice(0, 80); o.om = Math.max(t, (m.om || 0) + 1); }
         if (typeof meta.tm === "string") { o.tm = meta.tm.slice(0, 40); o.tmm = Math.max(t, (m.tmm || 0) + 1); }
         if (typeof meta.gl === "string") { o.gl = meta.gl.slice(0, 40); o.glm = Math.max(t, (m.glm || 0) + 1); }
+        // proposals 1 and 2: the Publishing title, the deadline, words a day
+        if (m.pm) { o.pub = m.pub; o.pm = m.pm; }
+        if (m.dm) { o.due = m.due; o.dm = m.dm; }
+        if (m.gm) { o.goal = m.goal; o.gm = m.gm; }
+        if (typeof meta.pub === "string") { o.pub = meta.pub.slice(0, 80); o.pm = Math.max(t, (m.pm || 0) + 1); }
+        if (typeof meta.due === "string" && (meta.due === "" || C.YMD_RX.test(meta.due))) { o.due = meta.due; o.dm = Math.max(t, (m.dm || 0) + 1); }
+        if (typeof meta.goal === "number" && meta.goal >= 0 && meta.goal <= 100000) { o.goal = Math.floor(meta.goal); o.gm = Math.max(t, (m.gm || 0) + 1); }
         o.v = 1;
         return fs.writeText(path, JSON.stringify(o));
       });

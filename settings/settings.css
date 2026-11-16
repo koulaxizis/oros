@@ -568,6 +568,9 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
 .keys dd { color: var(--text); min-width: 0; }
 .keys.info dt { font-family: inherit; color: var(--text-dim); white-space: normal; }
 .keys.info dd { overflow-wrap: anywhere; }
+/* Keyboard shortcuts (SC-EDIT): the row waiting for its new key */
+.row.sc-editing { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+.row.sc-editing > .hint { color: var(--text); }
 
 /* Connected services: the service picker */
 .svc-search {

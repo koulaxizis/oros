@@ -70,7 +70,7 @@
   }
   function textRuns(it) {
     var ax = it.ax;
-    if (ax.cv) {
+    if (AX.isCurved(it)) {
       var cl = AX.curveLayout(it);
       return cl.glyphs.map(function (g) { return { t: g.ch, key: cl.key }; });
     }
@@ -240,7 +240,7 @@
     var ax = it.ax, size = ax.size || AX.TEXT_DEF.size;
     var passes = FX.textPasses(ax.tfx, size, ax.fc || "#000000").filter(function (p) { return !(p.blur > 0); });
     var key = AX.fontKeyOf(ax, it), asc = T.ascent(key, size), desc = T.descent(key, size);
-    var curve = ax.cv ? AX.curveLayout(it) : null, lay = curve ? null : AX.textLayout(it);
+    var curve = AX.isCurved(it) ? AX.curveLayout(it) : null, lay = curve ? null : AX.textLayout(it);
     passes.forEach(function (p) {
       pdf.saveGraphicsState();
       W.alpha(opacity * p.alpha);

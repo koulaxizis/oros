@@ -32,6 +32,7 @@ Mit einem Erscheinungstermin datiert `Plan anlegen` jeden Schritt von dort zurü
 - Der Erscheinungstermin und jeder offene Schritt erscheinen im [Kalender](app:calendar) unter dem Chip `Verlag`.
 - `An To-Do senden` legt die offenen Schritte in eine neue Liste mit dem Namen des Buchs, jeden mit seinem Datum.
 - Legst du einen neuen Titel mit Erscheinungstermin an, hake `Erscheinungsplan ab dem Erscheinungstermin anlegen` an, und der Plan ist von Anfang an da. Auch der Assistent kann ihn anlegen: „neues Buch Nachtmeer von Anna Autorin, erscheint am 15. März“.
+- Eine Buchübersetzung in Writer, die mit dem Titel verbunden ist (Writer › `⋯` der Übersetzung › `Titel im Verlag…`), steht über dem Plan: Sprachen, wie weit sie ist, ihre Frist und `Öffnen`, um hinzugehen. Sie zeigt, was dieses Gerät zuletzt sah. Verbindest du mit dem Namen der übersetzenden Person, öffnet sich `+ Person` des Titels mit der Rolle Übersetzer ausgefüllt; nichts wird hinzugefügt, bevor du Hinzufügen drückst.
 
 ### Rezensionsexemplare und Rezensionen
 Bei einem Titel hält `Rezensionsexemplare und Rezensionen` fest, wer das Buch bekam: Name, Medium, E-Mail und Versandtag (früher verwendete Namen werden mit Medium und Adresse wieder angeboten). Drei Wochen später ohne Rezension wird das Exemplar mit `nachfassen` markiert; `Per E-Mail nachfassen` öffnet Mail mit einer kurzen, freundlichen Nachricht und merkt sich den Tag. Kommt eine Rezension, setze den Status auf `Rezensiert` und füge Link und Zitat hinzu: die zwei neuesten Zitate kommen in die Newsletter-Blöcke des Titels, und `Zitate kopieren` legt alle in die Zwischenablage, für die Shopseite oder einen Beitrag.
@@ -42,6 +43,7 @@ Wähle unter `An andere Apps senden` eine Ausgabe (wenn der Titel mehrere hat), 
 - `Produkt in Stock` öffnet ein neues Produkt in [Stock](app:stock) mit Name, ISBN als SKU und Barcode und dem Preis. Hat Stock es schon, öffnet sich sein Blatt.
 - `Block im Newsletter` fügt Titel, Untertitel, Autor und Klappentext in einen [Newsletter](app:newsletter)-Entwurf deiner Wahl ein, mit einem Button zum Buch, wenn es in deinem Shop ist.
 - `Pressemitteilung in Writer` öffnet ein neues [Writer](app:writer)-Dokument mit einer Pressemitteilung aus Titel, Texten, Ausgaben und deinem Verlagsnamen. Lies und bearbeite sie, bevor du sie verschickst.
+- `Ist es gemeinfrei?` öffnet den [Gemeinfreiheits-Rechner](app:pubdomain) und sucht den ersten Autor des Titels (oder den Titel, wenn er keinen Autor hat), damit du prüfst, ob ein Werk, das du veröffentlichen willst, frei ist. Wähle in den Ergebnissen die richtige Person.
 - `Release-Paket in Atelier` erstellt fünf Designs in [Atelier](app:atelier), in einem Ordner mit dem Namen des Buchs: Instagram-Post, Story, Website-Banner, Lesezeichen und A3-Plakat, jeweils mit Cover, Titel, Autor, Erscheinungszeile, Preis und deinem Verlagsnamen (und dem neuesten Rezensionszitat auf Lesezeichen und Plakat). Atelier fragt vorher; jedes Design bleibt bearbeitbar.
 
 In der anderen App wird nichts gespeichert, bevor du es dort speicherst.
