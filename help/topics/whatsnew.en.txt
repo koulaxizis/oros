@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.43.00
+- **Claude can delete with orOS closed, and you still decide.** When Claude asks through orOS Gate to delete something while orOS is closed (or asleep in the background), the request now waits, encrypted, instead of failing. When you open orOS you see what would go (the app and the titles), once for the whole request, and nothing is deleted unless you press `Delete`. If you don't answer, it asks again later. Deletions can be undone in Settings › Connected services › orOS Gate.
+
 ## Version 7.42.00
 - **Share files to Transfer and Scanner & PDF:** installed as their own apps, orOS Transfer takes any files you share (up to ten) ready to send, and orOS Scanner & PDF opens PDFs and pictures from Share and Open with, as pages.
 - **New icon shortcuts:** `Send files` for orOS Transfer and `New form` for orOS Forms.
