@@ -19,6 +19,8 @@ The contact window has:
 
 `Share` on the card opens `Send to someone`: send the contact as a link that opens in any browser (they can save it to their phone or add it to their own orOS), or pick `Send as text` for plain text as before. Photo, labels and relations are not sent.
 
+`Send to an app…` on the card sends the contact as text (the same lines as `Send as text`) to another orOS app, such as [Notes](app:notes), [Mail](app:mail) or [Maps](app:maps) when it has an address. The other app only opens with it filled in.
+
 ## Keep in touch
 Each contact's card has a `Keep in touch` part. `Last contacted` shows when you were last in touch: the latest interaction you logged, or the day you pressed `Contacted today`.
 

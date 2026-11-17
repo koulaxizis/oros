@@ -1,4 +1,5 @@
 orosPack("de", "stickies", {
+ "btn.sendApp": "An eine App senden…",
  "app": "Haftnotizen öffnen",
  "app.name": "Haftnotizen",
  "appName": "Haftnotizen",

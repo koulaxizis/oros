@@ -39,6 +39,8 @@ On a computer you can drag an event onto another day in the `Month` view, or ont
 
 Tap or click a location to open it in [Maps](app:maps). Maps can also send a planned route to Calendar as a new event.
 
+`Send to an app…` in a saved event's window sends it as text (title, day and time, place, note) to another orOS app, such as [Notes](app:notes), [To-Do](app:todo) or [Mail](app:mail); for an event that repeats, the day you opened goes. The other app only opens with it filled in.
+
 ## Labels and feeds
 The chips above the calendar are your labels. You start with `Personal`, `Work` and `Family`. Tap or click a chip to hide or show those events. `＋ Manage labels` lets you add, rename, recolour and delete labels; a label still used by events can't be deleted. On a phone the chips are folded behind one `Labels & feeds` button that shows how many are on; tap it to open or close the list. Your device remembers whether you left it open.
 

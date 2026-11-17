@@ -1,4 +1,6 @@
 orosPack("de", "library", {
+ "hl.send": "An eine App senden…",
+ "export.sendApp": "An eine App senden…",
  "aa.fitPage": "Ganze Seite",
  "aa.fitWidth": "Breite anpassen",
  "aa.font": "Schrift",

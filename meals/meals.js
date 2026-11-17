@@ -85,7 +85,7 @@
       "wk.filled": "{n} gaps filled", "wk.filledNone": "No gaps to fill, or no recipes to fill them with",
       "wk.cleared": "Week cleared", "wk.empty": "Nothing to clear",
       "slot.b": "Breakfast", "slot.l": "Lunch", "slot.d": "Dinner", "slot.s": "Snack", "slot.x": "Extra",
-      "sh.from": "From today", "sh.copy": "Copy", "sh.share": "Share", "sh.todo": "To To-Do", "sh.todoNone": "Everything is ticked", "sh.uncheck": "Untick all",
+      "sh.from": "From today", "sh.copy": "Copy", "sh.share": "Share", "sh.todo": "To To-Do", "sh.sendApp": "Send to an app…", "sh.todoNone": "Everything is ticked", "sh.uncheck": "Untick all",
       "sh.add": "Add an item…", "sh.count": "{n} items · {d} ticked", "sh.empty": "Nothing to buy. Plan some meals in the Week tab.",
       "sh.excluded": "Left out, you always have them:", "sh.restore": "Put {name} back on the list",
       "sh.title": "Shopping list {week}", "sh.more": "Options for {name}", "sh.aisle": "Aisle",
@@ -230,7 +230,7 @@
       "wk.filled": "Γέμισαν {n} κενά", "wk.filledNone": "Δεν υπάρχουν κενά, ή συνταγές για να τα γεμίσουν",
       "wk.cleared": "Η εβδομάδα καθάρισε", "wk.empty": "Δεν υπάρχει κάτι να καθαρίσει",
       "slot.b": "Πρωινό", "slot.l": "Μεσημεριανό", "slot.d": "Βραδινό", "slot.s": "Σνακ", "slot.x": "Άλλο",
-      "sh.from": "Από σήμερα", "sh.copy": "Αντιγραφή", "sh.share": "Μοίρασμα", "sh.todo": "Στο To-Do", "sh.todoNone": "Είναι όλα τσεκαρισμένα", "sh.uncheck": "Ξετσέκαρε όλα",
+      "sh.from": "Από σήμερα", "sh.copy": "Αντιγραφή", "sh.share": "Μοίρασμα", "sh.todo": "Στο To-Do", "sh.sendApp": "Στείλε σε εφαρμογή…", "sh.todoNone": "Είναι όλα τσεκαρισμένα", "sh.uncheck": "Ξετσέκαρε όλα",
       "sh.add": "Πρόσθεσε είδος…", "sh.count": "{n} είδη · {d} τα πήρα", "sh.empty": "Τίποτα για ψώνια. Βάλε γεύματα στην Εβδομάδα.",
       "sh.excluded": "Δεν μπήκαν, τα έχεις πάντα:", "sh.restore": "Βάλε ξανά στη λίστα: {name}",
       "sh.title": "Λίστα για ψώνια {week}", "sh.more": "Επιλογές για: {name}", "sh.aisle": "Τμήμα",
@@ -1191,6 +1191,26 @@
     });
     if (!items.length) { showToast(t("sh.todoNone")); return; }
     p.__orosOpenAt("todo", { addItems: { list: "tdl-groceries", from: t("app.name"), items: items.slice(0, 200) } });
+  }
+
+  // "Send to an app" (shell send/, BR-SEND): what is still to buy (all
+  // of it when everything is ticked) as items; a prefill only.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function sendShop() {
+    var api = sendApi();
+    if (!api) return;
+    var all = shopList().items;
+    if (!all.length) { showToast(t("toast.nothing")); return; }
+    var open = all.filter(function (it) { return !it.done; });
+    var items = (open.length ? open : all).slice(0, 200).map(function (it) {
+      var o = { text: (it.qty ? it.qty + " " : "") + it.name };
+      if (it.from.length) o.note = t("sh.from.recipes", { list: it.from.join(", ") });
+      return o;
+    });
+    api.open({ kind: "items", data: { title: shopTitle(), items: items } });
   }
 
   // "Open in Spreadsheet" (Bible BR-S1): the week on screen (one row
@@ -3710,6 +3730,7 @@
     $("sh-copy").textContent = t("sh.copy");
     $("sh-share").textContent = t("sh.share");
     $("sh-todo").textContent = t("sh.todo");
+    $("sh-send").textContent = t("sh.sendApp");
     $("sh-sheet").textContent = t("sheet.open");
     $("sh-bud").textContent = t("bud.btn");
     $("sh-uncheck").textContent = t("sh.uncheck");
@@ -3750,6 +3771,8 @@
     $("sh-share").addEventListener("click", function () { shareText(shopTitle(), shopAsText()); });
     $("sh-todo").hidden = !shellOpenAt();
     $("sh-todo").addEventListener("click", sendToTodo);
+    $("sh-send").hidden = !sendApi();
+    $("sh-send").addEventListener("click", sendShop);
     $("sh-sheet").hidden = !shellOpenAt();
     $("sh-sheet").addEventListener("click", shopToSheet);
     $("sh-bud").hidden = !budgetBridge();

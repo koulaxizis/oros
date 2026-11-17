@@ -19,6 +19,8 @@ Das Kontaktfenster hat:
 
 `Teilen` auf der Karte öffnet `An jemanden senden`: Sende den Kontakt als Link, der sich in jedem Browser öffnet (die Person kann ihn auf ihrem Telefon speichern oder zu ihrem eigenen orOS hinzufügen), oder wähle `Als Text senden` für einfachen Text wie bisher. Foto, Labels und Beziehungen werden nicht gesendet.
 
+`An eine App senden…` auf der Karte schickt den Kontakt als Text (dieselben Zeilen wie `Als Text senden`) an eine andere orOS-App, etwa [Notizen](app:notes), [Mail](app:mail) oder [Karten](app:maps), wenn er eine Adresse hat. Die andere App öffnet sich nur damit ausgefüllt.
+
 ## In Kontakt bleiben
 Die Karte jedes Kontakts hat einen Bereich `In Kontakt bleiben`. `Letzter Kontakt` zeigt, wann ihr zuletzt Kontakt hattet: der letzte Eintrag, den du notiert hast, oder der Tag, an dem du auf `Heute kontaktiert` getippt hast.
 

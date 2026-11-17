@@ -130,6 +130,7 @@
       "ev.logTime": "Log time",
       "ev.mail": "Email",
       "ev.share": "Send…",
+      "ev.sendApp": "Send to an app…",
       "ev.delete.confirm": "Delete this event?",
       "ev.none": "No events",
       "ev.untitled": "(untitled)",
@@ -386,6 +387,7 @@
       "ev.logTime": "Καταγραφή χρόνου",
       "ev.mail": "Email",
       "ev.share": "Αποστολή…",
+      "ev.sendApp": "Στείλε σε εφαρμογή…",
       "ev.delete.confirm": "Να διαγραφεί αυτό το συμβάν;",
       "ev.none": "Κανένα συμβάν",
       "ev.untitled": "(χωρίς τίτλο)",
@@ -5555,6 +5557,37 @@ function transientNote(title, body) {
     });
   }
 
+  // "Send to an app" (shell send/, BR-SEND): the SAVED event (this
+  // occurrence of a series) as text; Send to someone rides along.
+  var dlgSend = null;
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function sendFromEvent(ev, ymd) {
+    var lc = loc();
+    var when = new Date(dparse(ymd)).toLocaleDateString(lc, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    if (ev.start) when += ", " + ev.start + (ev.end ? "\u2013" + ev.end : "");
+    if (ev.dateEnd && ev.dateEnd > ymd) {
+      when += " \u2013 " + new Date(dparse(ev.dateEnd)).toLocaleDateString(lc, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    }
+    var title = String(ev.title || t("ev.untitled"));
+    var lines = [title, when];
+    if (ev.location) lines.push(ev.location);
+    if (ev.note) lines.push("", ev.note);
+    return { title: title.slice(0, 200), text: lines.join("\n") };
+  }
+  if ($("ev-send")) {
+    $("ev-send").addEventListener("click", function () {
+      var api = sendApi(), d = dlgSend, sh = dlgShare;
+      if (!api || !d) return;
+      $("ev-dlg").close();     // unsaved edits are left behind, like Cancel
+      var arg = { kind: "text", data: d };
+      if (sh && shareApi()) arg.share = { kind: "event", data: sh };
+      api.open(arg);
+    });
+  }
+
   // Events with guests (wave E1): the guest list of a SAVED, one-off
   // event of the person's own calendar (not a repeating one, not a
   // household calendar). calendar/guestsui.js owns the window.
@@ -5672,6 +5705,10 @@ function transientNote(title, body) {
     dlgShare = existing && shareApi() ? sharePayload(existing, occ) : null;
     var shareBtn = $("ev-share");
     if (shareBtn) shareBtn.hidden = !dlgShare;
+    dlgSend = existing && sendApi()
+      ? sendFromEvent(localView(existing, occ), occ ? OCC.instance(existing, occ).date : OCC.instance(existing, existing.date).date) : null;
+    var sendBtn = $("ev-send");
+    if (sendBtn) sendBtn.hidden = !dlgSend;
     var guBtn = $("ev-guests");
     if (guBtn) {
       guBtn.hidden = !(guestsUi && existing && mode !== "occ" && guestsCan(existing));

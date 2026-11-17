@@ -66,6 +66,8 @@ Your own views: open the funnel button and choose `New saved filter…`. Give it
 
 `Hide completed` hides ticked tasks in this view. `Clear completed` deletes all ticked tasks in the open list. After a delete or clear, an `Undo` button appears for a few seconds.
 
+The button with four squares beside it (`Send the list to an app…`) sends the open list to another orOS app, such as [Kanban](app:kanban) or [Notes](app:notes): the tasks still to do, or every task when all are done, with their notes and subtasks. In the `Task` window, `Send to an app…` sends just that task. The other app only opens with them filled in; nothing changes here.
+
 ## Labels, search and filter
 In a task, open `Add / manage labels` to create labels with a name and colour, and tap a label to attach it. Tap a label chip in the task to remove it.
 

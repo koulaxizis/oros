@@ -6,6 +6,8 @@ Forms makes surveys, sign-up sheets and order forms: questions of many kinds, pa
 - Give the form a title and, if you like, a description. They show at the top of the form.
 - Every change is saved as you type, and syncs to your other devices like the rest of orOS.
 
+`Send to an app…` in another orOS app can send a list or a text here: a new form opens with one short-answer question for each item or line (up to 100). Change the questions as you like; nothing is shared until you share it.
+
 ## Questions
 - `Add question` opens the list of kinds. The new one goes after the question that is open, or at the end.
 - Kinds: `Short answer`, `Paragraph`, `E-mail`, `Phone`, `Number`, `Date`, `Time`, `One choice`, `Checkboxes`, `Drop-down`, `Linear scale` (for example 1 to 5, or 0 to 10 with a label at each end), `Rating` (stars), `Yes / No` and `Grid` (rows and columns, one or more answers per row).
@@ -53,6 +55,7 @@ Forms makes surveys, sign-up sheets and order forms: questions of many kinds, pa
 - Under each answer in `Each answer`, `Add to Contacts` and `Add to CRM` open a new contact or customer with the name, e-mail and phone from that answer filled in. Nothing is saved until you press Save there. The name comes from a question whose label says "name" (or the first short answer).
 - The Assistant can draft a form for you ("make a sign-up form for the fair with name, e-mail and day"). Its card shows the questions; `Open` makes the form here, and it is not shared until you publish it. The Assistant can also tell you how many answered and how the answers add up, never what people wrote or their contact details.
 - The menu search finds your forms by title, description and questions.
+- `Send to an app…` sends the same table (the answers your filter shows, the newest 499) to another orOS app, such as [Writer](app:writer), [Mail](app:mail) or [Flashcards](app:flashcards). The other app only opens with it filled in.
 
 ## Quiz
 - In `Settings`, `This is a quiz: score the answers` gives every question with one right answer (one choice, drop-down, checkboxes, yes/no, number, short answer) a `Correct answer` box and `Points` (1 by default). Short answers accept up to 10 answers, one per line, compared without capitals, accents or extra spaces. Checkboxes count as right only with exactly the right boxes ticked.

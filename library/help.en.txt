@@ -46,6 +46,8 @@ Select some text and pick one of four colours to highlight it. From the same bar
 
 `Notes and highlights` lists them all, with filters, and `Export notes` saves them as Markdown text to the disk, as a download or to the clipboard. The file starts with the title, the author, how many highlights and notes there are and the date, then lists each highlight as a quote under its chapter, with its place in the book and your note below it, ready for Obsidian or any Markdown app. From the same window, `Send to Notes` makes a page of your highlights and notes in [Notes](app:notes), in the same Markdown.
 
+`Send to an app…` (the button with four squares) on the selection bar, on a highlight and in `Notes and highlights` sends the passage as text, in quotes with the book, the author, its place and your note, to another orOS app, such as [Notes](app:notes), [Writer](app:writer) or [Flashcards](app:flashcards). In `Export notes`, `Send to an app…` sends all of the book's highlights and notes.
+
 ### Import highlights from another reader
 `More` › `Import highlights…` adds the highlights, notes and bookmarks you made in another reader to the same books in your library:
 - **Kindle**: connect the Kindle to a computer and take `My Clippings.txt` from its `documents` folder.
