@@ -1310,6 +1310,8 @@
     if (target && Array.isArray(target.openFiles)) { takeHanded(target.openFiles); return; }
     if (target && target.openFile && typeof target.openFile === "object") { takeHanded([target.openFile]); return; }
     if (target && target.tab === "send") { if ($("tab-send")) tab("send"); return; }
+    // AS-SUM8: search hits and the Assistant's refs open the History tab
+    if (target && target.tab === "hist") { if ($("tab-hist")) tab("hist"); return; }
     var c = target && typeof target.receive === "string" ? C.normCode(target.receive) : "";
     var link = target && X && X.okLink(target.link) ? target.link : "";
     if (!c) return;

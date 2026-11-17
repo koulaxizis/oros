@@ -1105,7 +1105,8 @@
   {
    "app": "transfer",
    "files": [
-    "transfer/app.js"
+    "transfer/app.js",
+    "transfer/search.js"
    ]
   },
   {

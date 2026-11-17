@@ -6427,6 +6427,34 @@
         return S.baseTables(window.OrosBaseCore || null, readStore("oros-base-data"), a);
       });
     }
+    // AS-SUM8 (2026-11-17): eight more apps read whole, with their own
+    // cores (the shell's, else the app's folder); read only. The Today
+    // apps among them add what Today lists (coming), as AS-STRUCT does.
+    var SUM8 = { meals: ["OrosMealsCore", "../meals/core.js"], travel: ["OrosTravelCore", "../travel/core.js"],
+                 plants: ["OrosPlantsCore", "../plants/core.js"], garage: ["OrosGarageCore", "../garage/core.js"],
+                 habits: ["OrosHabitsCore", "../habits/core.js"] }[a.app];
+    if (SUM8 && !a.brief) {
+      return coreOf(SUM8[0], SUM8[1]).then(function (X) {
+        var o = { today: today, lang: LANG, now: Date.now() }, st;
+        if (a.app === "meals") st = S.mealsPlan(X, readStore("oros-meals-data"), o);
+        else if (a.app === "travel") st = S.travelTrips(X, readStore("oros-travel-data"), o);
+        else if (a.app === "plants") { o.hemi = X ? X.readPrefs(readStore("oros-plants-prefs")).hemi : "n"; st = S.plantsList(X, readStore("oros-plants-data"), o); }
+        else if (a.app === "garage") { o.prefs = readStore("oros-garage-prefs"); st = S.garageVehicles(X, readStore("oros-garage-data"), o); }
+        else st = S.habitsList(X, readStore("oros-habits-data"), o);
+        if (st.ok === false || !ag) return st;
+        return agendaRows(a.app, a.days).then(function (rows) {
+          var g = S.agenda(a.app, rows, today, a.days);
+          if (g.items && g.items.length) {
+            st.from = g.from; st.to = g.to;
+            st.coming = g.items.map(function (it) { var x = {}; Object.keys(it).forEach(function (k) { if (k !== "target") x[k] = it[k]; }); return x; });
+          }
+          return st;
+        }, function () { return st; });
+      });
+    }
+    if (a.app === "scanpdf") return Promise.resolve(S.scanpdfSigns(readStore("oros-scanpdf-sign"), { now: Date.now() }));
+    if (a.app === "transfer") return Promise.resolve(S.transferHistory(readStore("oros-transfer-data")));
+    if (a.app === "whiteboard") return Promise.resolve(S.whiteboardBoards(readStore("oros-whiteboard-data"), { board: a.board }));
     if (a.app === "todo" && a.list && !a.brief) return Promise.resolve(S.todoList(readStore("oros-todo-data"), { list: a.list, today: today }));
     var STRUCT = { notes: ["oros-notes-data", "notesBooks"], bookmarks: ["oros-bookmarks-data", "bookmarksFolders"],
                    contacts: ["oros-contacts-data", "contactsLabels"], shelf: ["oros-shelf-data", "shelfItems"],

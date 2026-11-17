@@ -128,5 +128,10 @@ orosPack("de", "transfer", {
  "err.io": "Eine Datei konnte nicht gelesen oder geschrieben werden (Speicher voll?). Die Übertragung wurde gestoppt.",
  "err.mem": "Dieser Browser hält Übertragungen im Speicher, bis zu {s}. Nutze für diese einen anderen Browser.",
  "into.oros": "Stattdessen in mein orOS empfangen",
- "full": "Auf diesem Gerät ist kein Speicherplatz mehr frei."
+ "full": "Auf diesem Gerät ist kein Speicherplatz mehr frei.",
+ "sx.sent": "Gesendet",
+ "sx.recv": "Empfangen",
+ "sx.files": "{n} Dateien",
+ "sx.file": "1 Datei",
+ "sx.some": "Dateien"
 });
