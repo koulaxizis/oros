@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — qsettings.js (Quick settings, GNOME style, v1.1.0)
+// orOS — qsettings.js (Quick settings, GNOME style, v1.2.0)
 // ------------------------------------------------------------
 // A shell component, like osk.js and quickmenu.js: it runs IN the
 // shell document. shell.js calls attach() once at boot (also in a
@@ -27,7 +27,9 @@
 //                 High contrast, On-screen keyboard (not on phones),
 //                 Clipboard (1.1.0, only while the clipboard history
 //                 of cliphist.js is on: opens its panel), Emoji (1.1.0,
-//                 emoji.js: the emoji picker);
+//                 emoji.js: the emoji picker), Colour filter (1.2.0,
+//                 a11yfx.js: tap = off / the last filter, › = Settings
+//                 › Accessibility);
 //       playing   one row per sound that plays in the shell (Music,
 //                 Podcasts, Radio, Sound Mixer) with Play / Pause.
 //     Every switch goes through the shell's own setter (theme,
@@ -58,7 +60,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var HOUR = 3600000;
 
   // ---------- 1. Model (pure) ----------
@@ -225,6 +227,7 @@
     bellOff: SV + '<path d="M13.7 21a2 2 0 0 1-3.4 0"/><path d="M18.6 13A17.9 17.9 0 0 1 18 8"/><path d="M6.3 6.3A6 6 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.3-5"/><path d="M3 3l18 18"/></svg>',
     text: SV + '<path d="M4 7V5h11v2"/><path d="M9.5 5v14"/><path d="M7 19h5"/><path d="M14 13v-1.5h7V13"/><path d="M17.5 11.5V19"/><path d="M16 19h3"/></svg>',
     contrast: SV + '<circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>',
+    filter: SV + '<circle cx="9" cy="9" r="5.5"/><circle cx="15" cy="9" r="5.5"/><circle cx="12" cy="14.5" r="5.5"/></svg>',
     keys: SV + '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>',
     more: SV + '<path d="M9 6l6 6-6 6"/></svg>',
     restart: SV + '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
@@ -441,6 +444,13 @@
     parts.contrast = pill(IC.contrast, function () {
       host.a11y.set("contrast", host.a11y.get().high ? "off" : "on"); paint();
     });
+    // Colour filter (a11yfx.js, 1.2.0): tap = off / the last filter
+    // chosen; the arrow = Settings › Accessibility.
+    parts.filter = pill(IC.filter, function () {
+      host.a11y.set("colourFilter", "toggle"); paint();
+    }, then(function () {
+      call(function () { root.__orosOpenAt("settings", { section: "accessibility", item: "colourfilter" }); });
+    }), t("qs.filter.more"));
     parts.osk = pill(IC.keys, function () {
       var O = root.orosOsk;
       if (!O) return;
@@ -461,7 +471,7 @@
     parts.clip = pill(IC.clip, then(function () { call(function () { root.orosClip.open(); }); }), null);
     // Emoji picker (emoji.js): writes into the field you were in.
     parts.emoji = pill(IC.emoji, then(function () { call(function () { root.orosEmoji.open(); }); }), null);
-    [parts.net, parts.sync, parts.dark, parts.night, parts.dnd, parts.gate, parts.big, parts.contrast, parts.osk, parts.clip, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
+    [parts.net, parts.sync, parts.dark, parts.night, parts.dnd, parts.gate, parts.big, parts.contrast, parts.filter, parts.osk, parts.clip, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
     panel.appendChild(grid);
 
     parts.dndMenu = el("div", "qs-menu");
@@ -585,6 +595,8 @@
     var a = host.a11y.get();
     setPill(parts.big, t("qs.big"), "", bigOn(a.size), true);
     setPill(parts.contrast, t("qs.contrast"), "", a.high, true);
+    parts.filter.box.hidden = !a.fx;
+    if (a.fx) setPill(parts.filter, t("qs.filter"), t("qs.filter." + (a.filter !== "off" ? a.filter : a.last)), a.filter !== "off", true);
 
     var O = root.orosOsk;
     var oskOk = !!(O && call(function () { return O.snapshot && O.snapshot(); }));
