@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 46569 of 47080 (98%)
+- Strings: 46636 of 47147 (98%)
 - Help pages: 155 of 155 (100%)
 - Shown in the language list: yes
 
@@ -15,11 +15,11 @@ text is still written in the code. They switch over wave by wave
 | assistant | 99% | 1926 / 1930 |
 | atelier | 100% | 1429 / 1429 |
 | aura | 100% | 84 / 84 |
-| automations | 100% | 283 / 283 |
+| automations | 100% | 322 / 322 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
-| base | 99% | 395 / 396 |
+| base | 99% | 401 / 402 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
@@ -125,7 +125,7 @@ text is still written in the code. They switch over wave by wave
 | ringtones | 100% | 107 / 107 |
 | roots | 100% | 226 / 226 |
 | rps | 100% | 60 / 60 |
-| scanpdf | 100% | 545 / 545 |
+| scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
 | settings | 99% | 1690 / 1705 |
 | share | 100% | 222 / 222 |
@@ -157,7 +157,7 @@ text is still written in the code. They switch over wave by wave
 | today | 100% | 155 / 155 |
 | todo | 100% | 273 / 273 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 130 / 130 |
+| transfer | 100% | 139 / 139 |
 | travel | 100% | 558 / 558 |
 | typewriter | 100% | 46 / 46 |
 | typing | 94% | 170 / 180 |
@@ -184,10 +184,15 @@ These show English until fixed (usually the English text changed).
 - de/budget: unknown key cy.guess
 - de/passwords: af.apps must keep the same HTML tags as English
 - de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
+- de/help/automations.txt: links or key caps differ from automations/help.en.txt
+- de/help/base.txt: links or key caps differ from base/help.en.txt
 - de/help/budget.txt: links or key caps differ from budget/help.en.txt
 - de/help/publish.txt: links or key caps differ from publish/help.en.txt
+- de/help/scanpdf.txt: links or key caps differ from scanpdf/help.en.txt
 - de/help/settings.txt: links or key caps differ from settings/help.en.txt
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
+- de/help/today.txt: links or key caps differ from today/help.en.txt
+- de/help/transfer.txt: links or key caps differ from transfer/help.en.txt
 - de/help/whiteboard.txt: links or key caps differ from whiteboard/help.en.txt
 - de/help/topics/appearance.txt: links or key caps differ from help/topics/appearance.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt

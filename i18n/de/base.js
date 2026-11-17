@@ -399,5 +399,6 @@ orosPack("de", "base", {
  "view": "Ansicht",
  "view.kind": "Einträge zeigen als",
  "view.name": "Name der Ansicht",
- "view.new": "Neue Ansicht…"
+ "view.new": "Neue Ansicht…",
+ "td.rec": "Datenbank-Eintrag"
 });

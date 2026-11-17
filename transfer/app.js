@@ -853,11 +853,13 @@
       show("send-cancel", false); show("cloud-del", true); show("send-again", true);
       busy = false; stayAwake(false);
       record({ dir: "sent", files: manifest, dev: "", mode: "cloud", end: "done" });
+      keepLink(r.id, r.exp, manifest);
       cloudSend = null;
       setTimeout(function () { if (job.id && !job.gone) drop.remove(job.id).catch(function () {}); }, Math.max(0, r.exp - Date.now() + 10 * 60000));
       $("cloud-del").onclick = function () {
         drop.remove(job.id).then(function () {
           job.gone = true;
+          forgetLink(job.id);
           st.textContent = t("cloud.deleted"); st.className = "status";
           $("share-link").value = ""; $("share-qr").textContent = ""; $("share-keep").textContent = "";
           shareNative("", null);
@@ -1093,6 +1095,24 @@
     var api = syncApi();
     if (!suppress && api && typeof api.markDirty === "function") try { api.markDirty(); } catch (e) {}
   }
+  // Device-local list of links waiting in this device's Dropbox, for
+  // Today ("Signing link ends" style rows; core.js cleanLinks).
+  function keepLink(id, exp, files) {
+    if (PAGE !== "app") return;
+    try {
+      var item = C.historyItem({ dir: "sent", files: files || [] });
+      var cur = JSON.parse(localStorage.getItem(C.LINKS_KEY) || "null");
+      localStorage.setItem(C.LINKS_KEY, JSON.stringify(C.addLink(cur, { id: id, exp: exp, what: item ? item.what : "", n: item ? item.n : 0 })));
+    } catch (e) {}
+  }
+  function forgetLink(id) {
+    try {
+      var cur = JSON.parse(localStorage.getItem(C.LINKS_KEY) || "null");
+      var next = C.dropLink(cur, id);
+      if (next.items.length) localStorage.setItem(C.LINKS_KEY, JSON.stringify(next));
+      else localStorage.removeItem(C.LINKS_KEY);
+    } catch (e) {}
+  }
   function record(o) {
     if (PAGE !== "app") return;
     var item = C.historyItem(o);
@@ -1316,6 +1336,7 @@
     if (target && Array.isArray(target.openFiles)) { takeHanded(target.openFiles); return; }
     if (target && target.openFile && typeof target.openFile === "object") { takeHanded([target.openFile]); return; }
     if (target && target.tab === "send") { if ($("tab-send")) tab("send"); return; }
+    if (target && target.tab === "hist") { if ($("tab-hist")) tab("hist"); return; }
     var c = target && typeof target.receive === "string" ? C.normCode(target.receive) : "";
     var link = target && X && X.okLink(target.link) ? target.link : "";
     if (!c) return;
