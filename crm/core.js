@@ -1201,6 +1201,37 @@
     return null;
   }
 
+  // BR-EV-2: an Automations "Log it in CRM" step opens
+  // __orosOpenAt("crm", { autoLog: { text, k?, who?, from? } }) → the
+  // New history entry form prefilled (saved only by the person), or
+  // null. autoLogCust picks its customer: the name in who (unique),
+  // else the customer an address in the text belongs to, else the one
+  // customer whose name (3+ letters) the text names, longest first.
+  function autoLog(x) {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return null;
+    var text = cleanText(x.text, 2000, true);
+    if (!text) return null;
+    return { text: text, k: ACT_KINDS.indexOf(x.k) >= 0 ? x.k : "note", who: cleanText(x.who, 120) };
+  }
+  function autoLogCust(data, n, emailOf) {
+    if (!n || !data || !Array.isArray(data.cust) || !data.cust.length) return null;
+    var hits = function (want) {
+      var f = fold(want).trim(), found = data.cust.filter(function (c) { return fold(c.name).trim() === f; });
+      return found.length === 1 ? found[0] : null;
+    };
+    if (n.who) { var w = hits(n.who); if (w) return w; }
+    var m = /[^\s@<>"(),;:]{1,64}@[^\s@<>"(),;:]{1,190}\.[a-z]{2,}/i.exec(n.text);
+    if (m) { var e = custByEmail(data, m[0].toLowerCase(), emailOf); if (e) return e; }
+    var txt = fold(n.text), best = null, tie = false;
+    data.cust.forEach(function (c) {
+      var nm = fold(c.name).trim();
+      if (nm.length < 3 || txt.indexOf(nm) < 0) return;
+      if (!best || nm.length > fold(best.name).trim().length) { best = c; tie = false; }
+      else if (nm.length === fold(best.name).trim().length) tie = true;
+    });
+    return best && !tie ? best : null;
+  }
+
   // What CRM hands Invoices (BR-CRM-INV 1) and Quote (BR-Q1). Both
   // apps only prefill a draft; nothing is saved before their Save.
   // Prices go in currency units (cents / 100). A deal is one line:
@@ -1494,7 +1525,7 @@
     stages: stages, stageOf: stageOf, normStg: normStg,
     dealProb: dealProb, isOpen: isOpen, openDeals: openDeals, pipeline: pipeline,
     agenda: agenda, dueNow: dueNow, forgotten: forgotten, dashboard: dashboard,
-    customersForBilling: customersForBilling, invoicePrefill: invoicePrefill, quotePrefill: quotePrefill, csvCell: csvCell, csvRows: csvRows, parseCsv: parseCsv, csvImport: csvImport, mailLog: mailLog, custByEmail: custByEmail,
+    customersForBilling: customersForBilling, invoicePrefill: invoicePrefill, quotePrefill: quotePrefill, csvCell: csvCell, csvRows: csvRows, parseCsv: parseCsv, csvImport: csvImport, mailLog: mailLog, custByEmail: custByEmail, autoLog: autoLog, autoLogCust: autoLogCust,
     backup: backup, restore: restore,
     reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact,
     ROLES: ROLES, LINK_KINDS: LINK_KINDS, normRoles: normRoles, normLinks: normLinks, pubKey: pubKey,

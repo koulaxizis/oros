@@ -233,6 +233,8 @@
       "imp.lib": "The Excel reader is missing.",
       "nt.title": "Add as a table", "nt.info": "“{x}”: {r} rows, {c} columns. The first row names the fields.",
       "nt.base": "Into", "nt.add": "Add table",
+      "ar.title": "New record from Automations", "ar.table": "Table", "ar.text": "Name of the record", "ar.add": "Add record",
+      "ar.none": "Make a table first: there is nowhere to add the record.",
       "exp.done": "Exported", "sheet.cap": "Only the first {n} records went to the Spreadsheet. Export a CSV for all of them.",
       "sheet.none": "This view has no records.", "sheet.off": "Open orOS to send this view to Spreadsheet.",
       "grid.add": "Add a field", "grid.addRow": "New record", "grid.label": "Records",
@@ -425,6 +427,8 @@
       "imp.lib": "Λείπει το πρόγραμμα ανάγνωσης Excel.",
       "nt.title": "Προσθήκη ως πίνακα", "nt.info": "«{x}»: {r} γραμμές, {c} στήλες. Η πρώτη γραμμή δίνει τα ονόματα των πεδίων.",
       "nt.base": "Σε", "nt.add": "Προσθήκη πίνακα",
+      "ar.title": "Νέα εγγραφή από τους Αυτοματισμούς", "ar.table": "Πίνακας", "ar.text": "Όνομα της εγγραφής", "ar.add": "Προσθήκη εγγραφής",
+      "ar.none": "Φτιάξε πρώτα έναν πίνακα: δεν υπάρχει πού να μπει η εγγραφή.",
       "exp.done": "Η εξαγωγή έγινε", "sheet.cap": "Στο Υπολογιστικό φύλλο πήγαν μόνο οι πρώτες {n} εγγραφές. Για όλες, κάνε εξαγωγή σε CSV.",
       "sheet.none": "Αυτή η προβολή δεν έχει εγγραφές.", "sheet.off": "Άνοιξε το orOS για να στείλεις την προβολή στο Υπολογιστικό φύλλο.",
       "grid.add": "Προσθήκη πεδίου", "grid.addRow": "Νέα εγγραφή", "grid.label": "Εγγραφές",
@@ -3346,6 +3350,59 @@
     d.open();
   }
 
+  // ---------- 10c. Automations "Add a record to Base" (BR-EV-2) ----------
+  // { newRecord: { text, table? } }: a dialog with the table (matched
+  // by "Table" or "Base › Table" name when exactly one does, else the
+  // open one) and the record's name prefilled; nothing is written
+  // before Add (AUTO-2). The name goes into the primary field, or the
+  // table's first text field when the primary field is not text.
+  function autoRecord(x) {
+    if (!x || typeof x !== "object") return;
+    var text = typeof x.text === "string" ? x.text.replace(/[\r\n\t]+/g, " ").trim().slice(0, 200) : "";
+    var tbs = Object.keys(ix.tables).map(function (id) { return ix.tables[id]; }).filter(function (tb) { return ix.bases[tb.base]; });
+    if (!tbs.length) { toast(t("ar.none")); return; }
+    var label = function (tb) { return (ix.bases[tb.base].name || t("f.untitled")) + " \u203a " + (tb.name || t("f.untitled")); };
+    tbs.sort(function (a, b) { return label(a).localeCompare(label(b), LANG); });
+    var want = C.fold(typeof x.table === "string" ? x.table.trim() : ""), pick = null;
+    if (want) {
+      var m = tbs.filter(function (tb) { return C.fold(tb.name).trim() === want || C.fold(label(tb)).trim() === want; });
+      if (m.length === 1) pick = m[0];
+    }
+    if (!pick) pick = curTable() || tbs[0];
+    var d = dialog(t("ar.title"));
+    var s = document.createElement("select");
+    tbs.forEach(function (tb) {
+      var o = document.createElement("option");
+      o.value = tb.id; o.textContent = label(tb);
+      s.appendChild(o);
+    });
+    s.value = pick.id;
+    var inp = document.createElement("input");
+    inp.type = "text"; inp.maxLength = 200; inp.value = text;
+    d.body.appendChild(fld(t("ar.table"), s));
+    d.body.appendChild(fld(t("ar.text"), inp));
+    function nameField(tbId) {
+      var pf = C.primary(ix, tbId);
+      if (pf && (pf.type === "text" || pf.type === "long")) return pf;
+      var list = (ix.tbFields[tbId] || []).filter(function (f) { return f.type === "text" || f.type === "long"; });
+      return list[0] || null;
+    }
+    function ok() {
+      var tb = ix.tables[s.value];
+      if (!tb || !roomFor(1)) return;
+      var f = nameField(tb.id), vals = {}, v = inp.value.trim();
+      if (f && v) vals[f.id] = v;
+      var r = C.addRecord(data, tb.id, vals, Date.now());
+      if (!save(r.data)) return;
+      d.close();
+      openBase(tb.base, tb.id, "");
+      openRecord(r.id);
+    }
+    d.foot(btn("chip", t("btn.cancel"), function () { d.close(); }), btn("chip pri", t("ar.add"), ok));
+    d.open();
+    inp.focus();
+  }
+
   // ---------- 11. Toast, palette, deep link, boot ----------
   var toastTimer = 0, toastUndo = null;
   function toast(msg, undo) {
@@ -3390,6 +3447,7 @@
     var tg = target;
     if (tg.newTable) { closeAllDialogs(); newTableDialog(tg.newTable); return; }
     if (tg.addRecords) { closeAllDialogs(); takeForms(tg.addRecords); return; }
+    if (tg.newRecord) { closeAllDialogs(); autoRecord(tg.newRecord); return; }
     var b = typeof target.base === "string" ? target.base : "";
     if (!ix.bases[b]) {
       if (typeof target.rec === "string" && ix.recs[target.rec]) {

@@ -1173,13 +1173,18 @@
 
   // Pick up one form's answers here. quiet: no toast unless something came.
   function collectOne(rec, quiet) {
-    var id = rec.id, title = rec.title || t("f.untitled");
+    var id = rec.id, title = rec.title || t("f.untitled"), fresh = [];
     return S.collect(rec, function (rows) {
+      var had = {};
+      C.answersOf(ans, id).forEach(function (x) { had[x.id] = 1; });
       var r = C.addAnswers(ans, id, rows);
       if (!r.added) return 0;
       ans = r.data;
-      return persistAns() ? r.added : false;
+      if (!persistAns()) return false;
+      fresh = fresh.concat(C.answersOf(ans, id).filter(function (x) { return !had[x.id]; }).map(function (x) { return x.id; }));
+      return r.added;
     }).then(function (tally) {
+      if (fresh.length) answerEvents(id, title, fresh);
       var now = C.find(data, id);
       if (now && now.x) {
         var x = Object.assign({}, now.x), ch = false;
@@ -1197,6 +1202,18 @@
       if (e && e.code === "gone" && cur && cur.id === id && !$("pane-share").hidden) renderShare();
       throw e;
     });
+  }
+  // BR-EV-2: each answer picked up HERE is an Automations signal
+  // (forms.answer, key forms:<form>:<answer>, the form's title), at
+  // most 20 per pick-up. Answers that came from another device by sync
+  // are not: that device picked them up.
+  function answerEvents(fid, title, ids) {
+    var ev = null;
+    try { ev = window.parent && window.parent !== window ? window.parent.orosEvents : null; } catch (e) { ev = null; }
+    if (!ev || typeof ev.emit !== "function") return;
+    setTimeout(function () {
+      ids.slice(0, 20).forEach(function (aid) { try { ev.emit("forms.answer", "forms:" + fid + ":" + aid, title); } catch (e) {} });
+    }, 0);
   }
   // New answers: a toast while Forms is in front, else an orOS notice.
   function announce(id, title, n) {
