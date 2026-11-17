@@ -65,8 +65,11 @@ def wait_for(pred, what, seconds=120):
             return root, got
         time.sleep(2)
     path = shot("timeout")
+    seen = "\n".join(texts(dump()))
+    log = adb("logcat", "-d", "-v", "brief", "AndroidRuntime:E", "System.err:W", "PackageInstaller:*", "*:S", check=False)
     with open(path + ".txt", "w") as f:
-        f.write("\n".join(texts(dump())))
+        f.write(seen + "\n\n" + log)
+    print("--- screen texts ---\n" + seen + "\n--- logcat ---\n" + log[-6000:])
     raise SystemExit(f"timed out waiting for {what}")
 
 
