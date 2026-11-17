@@ -3808,7 +3808,6 @@
         deliverShare();
         gameResumeStart();
         greetStart();
-        zoomWire();   // ZOOM-1: remember what opened an app
         safeStart();
         if (SOLO) soloStart();
         // Files from the system's "Open with" (fileopen.js) wait for the app list.
@@ -13256,6 +13255,8 @@
       zoom.from = zoomUsable(r) ? { r: zoomBox(r), at: Date.now() } : null;
     }, true);
   }
+  zoomWire();   // at load: remember what opens an app
+
   // Open: the running view grows from the source to its own place.
   function zoomOpen(app) {
     var f = zoom.from;
