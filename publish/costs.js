@@ -60,6 +60,21 @@
 //   royEst(title, pids, rep, z)  → { lines, a } royalties from terms, or null
 //   titleReport(rep, recs, rs, title, pids, set) → a title's whole picture
 //   overviewRep(pub, acct, rep, sku) → { rows, other, general, total }
+//
+// Production Ledger 1.3+ (wave P16, «Ανάλυση τίτλου») also answers
+// GET /wc/v3/pl/analysis: per product, copies by sales channel and by
+// delivery method, free copies (Revenue Splitter's register) with their
+// recipients, consignments per bookstore and promotion cost per
+// material; with the material price list (dated versions) and the
+// promotion package. Amounts there are euros (2 decimals), turned into
+// cents here. The same data the «Title analysis» tab on the site shows;
+// orOS writes back only through the ledger's own typed routes
+// (POST /pl/rates, /pl/promo-apply, /pl/event-sale): one copy, on the site.
+//   CHANNELS, DELIVERIES         the keys, in the ledger's order
+//   anaReq(from, to)             → a /pl/analysis request (every title)
+//   okAna(j)                     → is j an analysis answer
+//   anaSum(ana, pids)            → the title's analysis, its products summed
+//   rateBody(o), promoBody(pid, day, dry), saleBody(o) → checked bodies, or null
 // ============================================================
 (function (root) {
   "use strict";
@@ -392,11 +407,171 @@
     return { rows: out, other: other, general: gen, total: titles + other.net - gen };
   }
 
+  // ---------- Title analysis (Production Ledger 1.3+, wave P16) ----------
+  var CHANNELS = ["full", "discount", "bundle", "free_order", "import", "event", "trade", "consignment", "author_buy", "free"];
+  var DELIVERIES = ["allover", "boxnow", "warehouse", "grafo", "pickup_other", "hand", "none", "other"];
+  var SOLD = ["full", "discount", "bundle", "import", "event", "trade", "consignment", "author_buy"];
+  var KEY_RE = /^[a-z0-9_]{1,40}$/;
+  function eur(v) { return typeof v === "number" && isFinite(v) && Math.abs(v) <= MAX_CENTS / 100 ? Math.round(v * 100) : 0; }
+  function qn(v) { return typeof v === "number" && Math.floor(v) === v && v >= 0 && v < 1e7 ? v : 0; }
+  function anaReq(from, to) {
+    var q = [];
+    if (DAY_RE.test(from || "")) q.push("from=" + from);
+    if (DAY_RE.test(to || "")) q.push("to=" + to);
+    return { m: "GET", path: "/pl/analysis" + (q.length ? "?" + q.join("&") : "") };
+  }
+  function okAna(j) {
+    return !!j && typeof j === "object" && j.source === "production-ledger" && Array.isArray(j.titles) &&
+           DAY_RE.test(j.from || "") && DAY_RE.test(j.to || "");
+  }
+  // A title's analysis: every one of its products summed. Promotion
+  // lines by material (item key); free copies and consignments listed.
+  function anaSum(ana, pids) {
+    var ch = {}, dl = {}, promo = {}, free = [], stores = {}, events = {};
+    CHANNELS.forEach(function (k) { ch[k] = { q: 0, a: 0 }; });
+    DELIVERIES.forEach(function (k) { dl[k] = 0; });
+    var rows = 0, stock = null, orders = 0;
+    (ana && Array.isArray(ana.titles) ? ana.titles : []).forEach(function (r) {
+      if (!r || !pids[r.product_id]) return;
+      rows++;
+      orders += qn(r.orders);
+      if (typeof r.stock === "number" && isFinite(r.stock)) stock = (stock || 0) + Math.floor(r.stock);
+      (Array.isArray(r.channels) ? r.channels : []).forEach(function (c) {
+        if (!c || !ch[c.key]) return;
+        ch[c.key].q += qn(c.qty);
+        ch[c.key].a += eur(c.net);
+      });
+      (Array.isArray(r.delivery) ? r.delivery : []).forEach(function (d) {
+        if (d && has(dl, d.key)) dl[d.key] += qn(d.qty);
+      });
+      (Array.isArray(r.events) ? r.events : []).forEach(function (e) {
+        var n = txt(e && e.name, 120);
+        if (n) events[n] = (events[n] || 0) + qn(e.qty);
+      });
+      (Array.isArray(r.free_list) ? r.free_list : []).forEach(function (f) {
+        if (!f) return;
+        free.push({ d: DAY_RE.test(f.date || "") ? f.date : "", type: txt(f.type, 20), q: qn(f.qty),
+                    to: txt(f.recipient, 120), kind: txt(f.kind, 20), ben: txt(f.ben, 120) });
+      });
+      (Array.isArray(r.stores) ? r.stores : []).forEach(function (s) {
+        var n = txt(s && s.name, 120) || "?";
+        var x = stores[n] || (stores[n] = { n: n, given: 0, sold: 0, ret: 0, shelf: 0, owed: 0 });
+        x.given += qn(s.given); x.sold += qn(s.sold); x.ret += qn(s.returned); x.shelf += qn(s.shelf); x.owed += eur(s.owed);
+      });
+      var pr = r.promo && Array.isArray(r.promo.lines) ? r.promo.lines : [];
+      pr.forEach(function (l) {
+        var k = l && typeof l.item === "string" && (KEY_RE.test(l.item) || l.item === "_other") ? l.item : "";
+        if (!k) return;
+        var x = promo[k] || (promo[k] = { item: k, label: txt(l.label, 80) || k, q: 0, net: 0, vat: 0 });
+        x.q += qn(l.qty); x.net += eur(l.net); x.vat += eur(l.vat);
+      });
+    });
+    var sold = 0, rev = 0;
+    SOLD.forEach(function (k) { sold += ch[k].q; rev += ch[k].a; });
+    var promoList = Object.keys(promo).map(function (k) { return promo[k]; })
+      .sort(function (a, b) { return a.item === "_other" ? 1 : b.item === "_other" ? -1 : b.net - a.net; });
+    free.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+    return {
+      any: rows > 0, from: ana ? ana.from : "", to: ana ? ana.to : "", stock: stock, orders: orders,
+      sold: sold, rev: rev, free: ch.free.q + ch.free_order.q,
+      channels: CHANNELS.map(function (k) { return { key: k, q: ch[k].q, a: ch[k].a }; }).filter(function (c) { return c.q || c.a; }),
+      delivery: DELIVERIES.map(function (k) { return { key: k, q: dl[k] }; }).filter(function (d) { return d.q; }),
+      events: Object.keys(events).sort().map(function (n) { return { n: n, q: events[n] }; }),
+      freeList: free,
+      stores: Object.keys(stores).sort().map(function (n) { return stores[n]; }),
+      promo: promoList,
+      promoNet: promoList.reduce(function (s, l) { return s + l.net; }, 0),
+      promoVat: promoList.reduce(function (s, l) { return s + l.vat; }, 0)
+    };
+  }
+  // The price list as the ledger sends it, cents (net) per version.
+  function rates(ana) {
+    var r = ana && ana.rates && Array.isArray(ana.rates.items) ? ana.rates.items : [];
+    return r.filter(function (it) { return it && KEY_RE.test(it.key || ""); }).map(function (it) {
+      return {
+        key: it.key, label: txt(it.label, 80) || it.key, inPkg: qn(it.in_pkg),
+        cur: typeof it.current === "number" ? it.current : null,
+        vers: (Array.isArray(it.versions) ? it.versions : []).filter(function (v) { return v && DAY_RE.test(v.from || ""); }).map(function (v) {
+          return { from: v.from, net: typeof v.net === "number" ? v.net : 0, rate: typeof v.vat_rate === "number" ? v.vat_rate : 0,
+                   gross: typeof v.gross === "number" ? v.gross : 0, sup: txt(v.supplier, 120), inv: txt(v.invoice, 60),
+                   note: txt(v.note, 300), chg: typeof v.change === "number" ? v.change : null };
+        })
+      };
+    });
+  }
+  function pkg(ana) {
+    var p = ana && ana.rates && ana.rates.package;
+    if (!p || typeof p !== "object") return null;
+    return { day: DAY_RE.test(p.day || "") ? p.day : "", net: eur(p.net), vat: eur(p.vat), gross: eur(p.gross),
+             missing: Array.isArray(p.missing) ? p.missing.filter(function (k) { return typeof k === "string"; }) : [],
+             lines: (Array.isArray(p.lines) ? p.lines : []).map(function (l) {
+               return { item: txt(l && l.item, 40), label: txt(l && l.label, 80), q: qn(l && l.qty), net: eur(l && l.net), vat: eur(l && l.vat) };
+             }) };
+  }
+
+  // ---------- Bodies for the ledger's typed POST routes ----------
+  // Each the same shape links/core.js ALLOW.woo accepts; null = refused here first.
+  function money4(v) {
+    var n = typeof v === "string" ? Number(v.replace(",", ".")) : v;
+    return typeof n === "number" && isFinite(n) && n >= 0 && n < 1e6 ? Math.round(n * 10000) / 10000 : null;
+  }
+  function money2(v) {
+    var n = typeof v === "string" ? Number(v.replace(",", ".")) : v;
+    return typeof n === "number" && isFinite(n) && n >= 0 && n < 1e7 ? (Math.round(n * 100) / 100).toFixed(2) : null;
+  }
+  // A new price (a dated version) of a material, or a new material.
+  function rateBody(o) {
+    o = o || {};
+    var key = typeof o.key === "string" ? o.key.trim() : "";
+    var net = money4(o.net), noRate = o.rate === undefined || o.rate === null || o.rate === "";
+    var rate = noRate ? "" : money2(o.rate);
+    if (!KEY_RE.test(key) || !DAY_RE.test(o.from || "") || net === null || rate === null || +rate > 100) return null;
+    var b = { key: key, from: o.from, net: String(net) };
+    if (!noRate) b.vat_rate = rate;   // left out: the site's 24 %
+    [["label", 80], ["supplier", 120], ["invoice", 60], ["note", 200]].forEach(function (f) {
+      var v = txt(o[f[0]], f[1]);
+      if (v) b[f[0]] = v;
+    });
+    return b;
+  }
+  function promoBody(p, day, dry) {
+    if (!pid(p) || !DAY_RE.test(day || "")) return null;
+    return { product_id: p, date: day, dry_run: !!dry };
+  }
+  // A sale at an event: 1–50 lines; price is the unit price incl. VAT
+  // (left out = the shop's price).
+  function saleBody(o) {
+    o = o || {};
+    var ev = txt(o.event, 120);
+    if (!DAY_RE.test(o.date || "") || !ev || (o.payment !== "cash" && o.payment !== "card")) return null;
+    var lines = Array.isArray(o.lines) ? o.lines : [];
+    if (!lines.length || lines.length > 50) return null;
+    var out = [];
+    for (var i = 0; i < lines.length; i++) {
+      var l = lines[i] || {}, q = l.qty;
+      if (!pid(l.product_id) || typeof q !== "number" || Math.floor(q) !== q || q < 1 || q > 999) return null;
+      var x = { product_id: l.product_id, qty: q };
+      if (l.price !== undefined && l.price !== "" && l.price !== null) {
+        var pr = money2(l.price);
+        if (pr === null) return null;
+        x.price = pr;
+      }
+      out.push(x);
+    }
+    var b = { date: o.date, event: ev, payment: o.payment, lines: out, dry_run: !!o.dry_run };
+    var note = txt(o.note, 300);
+    if (note) b.note = note;
+    return b;
+  }
+  function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+
   var api = {
     CATS: CATS, recReq: recReq, rsReq: rsReq, repReq: repReq, okEnv: okEnv, okRep: okRep, read: read,
     pidsOf: pidsOf, unknownPids: unknownPids, skuMap: skuMap,
     isOwn: isOwn, forTitle: forTitle, overview: overview,
-    repSum: repSum, royEst: royEst, titleReport: titleReport, overviewRep: overviewRep
+    repSum: repSum, royEst: royEst, titleReport: titleReport, overviewRep: overviewRep,
+    CHANNELS: CHANNELS, DELIVERIES: DELIVERIES, anaReq: anaReq, okAna: okAna, anaSum: anaSum, rates: rates, pkg: pkg,
+    rateBody: rateBody, promoBody: promoBody, saleBody: saleBody
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.OrosPublishCosts = api;
