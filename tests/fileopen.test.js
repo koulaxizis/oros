@@ -66,7 +66,7 @@ test("every app in the table exists and takes a file through its deep link", () 
     baby: ["baby/baby.js"], petcare: ["petcare/petcare.js"], plants: ["plants/plants.js"], garage: ["garage/garage.js"],
     shelf: ["shelf/shelf.js"], signature: ["signature/view.js", "mail/mail.js"], newsletter: ["newsletter/newsletter.js"], storage: ["storage/storage.js"],
     flashcards: ["flashcards/app.js"], lyricsync: ["lyricsync/app.js"], pad: ["pad/app.js"],
-    base: ["base/app.js", "recordpkg.js"]
+    base: ["base/app.js", "recordpkg.js"], whiteboard: ["whiteboard/app.js"]
   };
   // Phase 4b: the record apps' bundle types are registered ahead of
   // their waves. An app listed here has no "Open with" receiver for its
@@ -87,7 +87,7 @@ test("every app in the table exists and takes a file through its deep link", () 
     assert.match(src, /openFile/, h.app);
     assert.match(src, /__orosTakeFile\(/, h.app);
     assert.match(src, /window\.__orosOpenAt\s*=/, h.app);
-    assert.match(src, /__orosTakeTarget\(\s*["']/, h.app);
+    assert.match(src, /__orosTakeTarget\(\s*(["']|APP_ID\b)/, h.app);
   });
 });
 

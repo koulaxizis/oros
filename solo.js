@@ -188,17 +188,29 @@
     // first waves and are used on a phone: Transfer (send and receive
     // files; its receive links open the single app), Scanner & PDF
     // (scan with the camera, signature requests), Stock (the fair till)
-    // and Forms (answers come in on the go). No shares: none of them
-    // turns a shared text into something useful.
-    transfer: {},
+    // and Forms (answers come in on the go). No text shares: none of
+    // them turns a shared text into something useful.
+    // Wave 2 of the files gap review (2026-11-17): Transfer takes ANY
+    // shared file (anyFile: share target "*/*", up to 10 files,
+    // fileopen.js deliverAll → { openFiles }) and its shortcut opens the
+    // Send tab; Scanner & PDF opens PDFs and pictures (fileopen.js
+    // INSIDE "solo" types, so orOS's own "Open with" is unchanged);
+    // Forms gets "New form" (the template picker, nothing saved).
+    transfer: {
+      shortcuts: [{ do: "send", target: { tab: "send" } }],
+      anyFile: true
+    },
     scanpdf: {
-      shortcuts: [{ do: "sign", target: { signList: true } }]
+      shortcuts: [{ do: "sign", target: { signList: true } }],
+      many: true
     },
     stock: {
       shortcuts: [{ do: "reorder", target: { view: "reorder" } },
                   { do: "reports", target: { view: "reports" } }]
     },
-    forms: {},
+    forms: {
+      shortcuts: [{ do: "new", target: { newForm: true } }]
+    },
     // Wave 6: every game in one app (Game Center is its home; a game
     // opened from it gets Back). files: other apps whose file types
     // this app's icon also opens (fileopen.js still routes them).
@@ -295,12 +307,14 @@
           "sc.timesheet.timer": "Start or stop the timer",
           "sc.timesheet.entry": "New time entry",
           "name.transfer": "orOS Transfer",
+          "sc.transfer.send": "Send files",
           "name.scanpdf": "orOS Scanner & PDF",
           "sc.scanpdf.sign": "Signature requests",
           "name.stock": "orOS Stock",
           "sc.stock.reorder": "To reorder",
           "sc.stock.reports": "Sales reports",
           "name.forms": "orOS Forms",
+          "sc.forms.new": "New form",
           "name.gamecenter": "orOS Games",
           "sc.gamecenter.wordle": "Today's Wordle",
           "sc.gamecenter.crossword": "Today's crossword",
@@ -394,12 +408,14 @@
           "sc.timesheet.timer": "Έναρξη ή διακοπή χρονομέτρου",
           "sc.timesheet.entry": "Νέα καταχώριση",
           "name.transfer": "orOS Μεταφορά",
+          "sc.transfer.send": "Αποστολή αρχείων",
           "name.scanpdf": "orOS Σαρωτής & PDF",
           "sc.scanpdf.sign": "Αιτήματα υπογραφής",
           "name.stock": "orOS Απόθεμα",
           "sc.stock.reorder": "Για παραγγελία",
           "sc.stock.reports": "Αναφορές πωλήσεων",
           "name.forms": "orOS Φόρμες",
+          "sc.forms.new": "Νέα φόρμα",
           "name.gamecenter": "orOS Παιχνίδια",
           "sc.gamecenter.wordle": "Το σημερινό Wordle",
           "sc.gamecenter.crossword": "Το σημερινό σταυρόλεξο",
@@ -688,6 +704,7 @@
     }
     // An app with nothing a shared text or file could become gets no
     // share target.
+    if (a.anyFile) exts = ["*/*"];
     if (!a.share && !exts.length) return m;
     var share = {
       action: page + "?share-target",

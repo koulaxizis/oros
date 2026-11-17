@@ -140,6 +140,8 @@ The first time, the text recognition engine (Tesseract, about 7 MB with Greek an
 PDFs you save into Files › PDF can be found in the orOS search by their name and by the text read from them. Choosing one opens it here. The list stays on this device (up to 100 PDFs) and is never synced; a PDF you delete or move in Files drops out. `Forget them` in `Options` empties it.
 
 ## From Files
+With orOS or orOS Scanner & PDF installed, a PDF or picture also opens here from your system: `Open with` › orOS Scanner & PDF on Windows and Linux, or `Share` › orOS Scanner & PDF on Android (up to ten files at once). In the whole orOS, PDFs still open in Library unless you pick Scanner & PDF.
+
 In Files, select one or more PDFs, or several pictures, and choose `Open in Scanner & PDF` in the menu or in the selection bar. The app opens with their pages, in the order of the selection.
 
 ## Keyboard shortcuts

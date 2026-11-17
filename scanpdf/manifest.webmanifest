@@ -54,5 +54,66 @@
         }
       ]
     }
-  ]
+  ],
+  "file_handlers": [
+    {
+      "action": "/scanpdf/solo.html?file-open=scanpdf",
+      "accept": {
+        "application/pdf": [
+          ".pdf"
+        ],
+        "image/jpeg": [
+          ".jpg",
+          ".jpeg"
+        ],
+        "image/png": [
+          ".png"
+        ],
+        "image/webp": [
+          ".webp"
+        ],
+        "image/gif": [
+          ".gif"
+        ],
+        "image/bmp": [
+          ".bmp"
+        ],
+        "image/avif": [
+          ".avif"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/scanpdf/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/pdf",
+            ".pdf",
+            "image/jpeg",
+            ".jpg",
+            ".jpeg",
+            "image/png",
+            ".png",
+            "image/webp",
+            ".webp",
+            "image/gif",
+            ".gif",
+            "image/bmp",
+            ".bmp",
+            "image/avif",
+            ".avif"
+          ]
+        }
+      ]
+    }
+  }
 }

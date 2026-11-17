@@ -2094,8 +2094,13 @@
     return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
   }
   function openDrawio() {
+    readDiagram(localPickFile(".drawio,.xml,.svg,.vsdx,.vsd,application/xml,text/xml,image/svg+xml,application/vnd.ms-visio.drawing"));
+  }
+  // A picked file, or one handed over by the shell ("Open with", Files,
+  // the single app: { openFile: { token } }), becomes new boards.
+  function readDiagram(picked) {
     var file;
-    localPickFile(".drawio,.xml,.svg,.vsdx,.vsd,application/xml,text/xml,image/svg+xml,application/vnd.ms-visio.drawing").then(function (f) {
+    Promise.resolve(picked).then(function (f) {
       if (!f) return null;
       file = f;
       if (/\.vsd$/i.test(f.name || "")) throw new Error("vsd");
@@ -2455,6 +2460,15 @@
   // { edit } / { editUndo }: the Assistant's changes (assist.js).
   window.__orosOpenAt = function (target) {
     if (target && (target.edit || target.editUndo)) { assistRun(target); return; }
+    // { openFile: { token } }: a .drawio / .vsdx from "Open with" or
+    // Files (fileopen.js HANDLERS, wave 2 of the files gap review).
+    if (target && target.openFile && typeof target.openFile.token === "string") {
+      if (editing || document.querySelector("dialog[open]")) return;
+      var f = null;
+      try { var p = window.parent; if (p && p !== window && typeof p.__orosTakeFile === "function") f = p.__orosTakeFile(target.openFile.token); } catch (e) { f = null; }
+      if (f) readDiagram(f); else toast(t("dio.bad"));
+      return;
+    }
     if (!target || typeof target.board !== "string" || !C.board(data, target.board)) return;
     if (editing || document.querySelector("dialog[open]")) return;
     if (target.board !== board) openBoard(target.board);

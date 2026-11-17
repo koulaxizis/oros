@@ -295,10 +295,13 @@ test("orOS Music: liked and shuffle shortcuts, audio links shared in, songs open
 test("wave 8 (APP-LISTS L4): Transfer, Scanner & PDF, Stock and Forms; no shares, shortcuts reach their receivers", () => {
   ["transfer", "scanpdf", "stock", "forms"].forEach((id) => {
     assert.ok(S.ids().includes(id), id);
-    assert.ok(!S.APPS[id].share, id + " takes no shares");
+    assert.ok(!S.APPS[id].share, id + " takes no shared text");
     const st = S.manifestFor(id, F.table(), BASE).share_target;
     // Stock still takes a shared .orosstock file (its own file type), never text
     if (id === "stock") assert.deepEqual(st.params.files[0].accept, ["application/x-oros-stock", ".orosstock"]);
+    // Gap review proposal 2: Transfer takes any shared file, Scanner & PDF PDFs and pictures
+    else if (id === "transfer") assert.deepEqual(st.params.files[0].accept, ["*/*"]);
+    else if (id === "scanpdf") assert.ok(st.params.files[0].accept.includes(".pdf") && st.params.files[0].accept.includes("image/jpeg"));
     else assert.equal(st, undefined, id);
   });
   assert.equal(S.nameOf("transfer", "el"), "orOS Μεταφορά");
@@ -311,6 +314,18 @@ test("wave 8 (APP-LISTS L4): Transfer, Scanner & PDF, Stock and Forms; no shares
   assert.match(read("scanpdf/scanpdf.js"), /if \(target\.signList\)/);
   assert.match(read("stock/stock.js"), /if \(target\.view === "reorder"\)/);
   assert.match(read("stock/stock.js"), /if \(target\.view === "reports"\)/);
+  // Gap review proposal 2 (SOLO-1): shortcuts and "Open with"
+  assert.deepEqual(S.shortcut("transfer", "send").target, { tab: "send" });
+  assert.deepEqual(S.shortcut("forms", "new").target, { newForm: true });
+  const sp = S.manifestFor("scanpdf", F.table(), BASE).file_handlers[0].accept;
+  assert.deepEqual(sp["application/pdf"], [".pdf"]);
+  assert.deepEqual(sp["image/png"], [".png"]);
+  assert.equal(S.manifestFor("transfer", F.table(), BASE).file_handlers, undefined);
+  assert.ok(F.soloTakes("scanpdf", ".PDF") && F.soloTakes("scanpdf", ".jpg") && !F.soloTakes("scanpdf", ".txt"));
+  assert.match(read("transfer/app.js"), /target\.tab === "send"/);
+  assert.match(read("transfer/app.js"), /target\.openFiles/);
+  assert.match(read("scanpdf/scanpdf.js"), /target\.openFiles/);
+  assert.match(read("forms/app.js"), /\.newForm === true/);
   // Stock's .orosstock files open with the Stock app, not the whole orOS
   assert.ok(S.manifestFor("stock", F.table(), BASE).file_handlers[0].accept["application/x-oros-stock"]);
 });

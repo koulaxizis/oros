@@ -1858,6 +1858,9 @@
   // from it and opens it.
   function openTarget(tg) {
     if (tg && typeof tg.form === "string") { openForm(tg.form, tg.tab); return; }
+    // { newForm: true }: the icon shortcut "New form" (single app): the
+    // template picker, nothing is made before a pick.
+    if (tg && tg.newForm === true) { openDlg($("new-dlg")); return; }
     // W4b: { fromTable } (Base's "Public form", Bible BASE-1): a form
     // whose questions are the table's fields; its answers go back there.
     var fromT = !!(tg && tg.fromTable);

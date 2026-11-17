@@ -12,6 +12,7 @@ Transfer sendet große Dateien und ganze Ordner von der orOS-Disk oder von diese
 - Ein Link ist für eine Person und eine Übertragung. `Noch etwas senden` beginnt eine neue mit einem neuen Code.
 - Mit orOS-Sync über Dropbox funktioniert `Über meine Dropbox senden`, ohne dass die Seite offen bleibt. Siehe „Über deine Dropbox“ unten.
 - Wähle in Dateien Dateien oder Ordner und dann `Mit Transfer senden…`: Transfer öffnet sich mit ihnen in der Liste.
+- Mit installiertem orOS Transfer auf Android legt `Teilen` › orOS Transfer beliebige Dateien (bis zu zehn) auf die Sendeliste. Drücke lange auf das Symbol der App für `Dateien senden`.
 
 ## Empfangen
 - Öffne den Link, den du bekommen hast, oder öffne `Empfangen` und gib den Code ein. Die Seite des Absenders muss offen sein.

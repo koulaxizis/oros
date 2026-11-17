@@ -4514,6 +4514,18 @@
       var files = target.files.filter(function (f) { return f && typeof f.name === "string" && typeof f.size === "number"; });
       if (files.length) addFiles(files);
     }
+    // { openFiles: [{ token }] }: several PDFs or pictures shared with
+    // the single app at once (fileopen.js deliverAll).
+    if (Array.isArray(target.openFiles)) {
+      var got = [];
+      target.openFiles.slice(0, 10).forEach(function (o) {
+        try {
+          var pw = parentWin(), ff = o && typeof o.token === "string" && pw && typeof pw.__orosTakeFile === "function" ? pw.__orosTakeFile(o.token.slice(0, 200)) : null;
+          if (ff) got.push(ff);
+        } catch (e) {}
+      });
+      if (got.length) addFiles(got);
+    }
     var tg = C.parseTarget(target);
     if (tg.token) {
       try {
