@@ -3807,6 +3807,7 @@
         searchFromLaunchParam();
         deliverShare();
         gameResumeStart();
+        appsResumeStart();   // RS-1
         greetStart();
         safeStart();
         if (SOLO) soloStart();
@@ -4037,6 +4038,93 @@
         openApp(app);
         gameLastNote(app, true);
       });
+    });
+  }
+
+  // RS-1 (reopen after a restart, Chris 2026-11-17: "Όλες οι ανοιχτές,
+  // έως 6", on by default): GR-1 for every app. APPS_LAST (device-local
+  // oros-apps-last, continue.js lastRecord) names the app in front and,
+  // with multitasking on, the other open apps (the one left last
+  // first); written on every open/leave/close (mtChanged). The next
+  // start reopens them (at most 6): the others first, hidden, then the
+  // front one at its own last item here (orosContinue.lastOwn, through
+  // __orosOpenAt). Games stay with GR-1 (a game record there = RS-1
+  // waits); Passwords, Sensitive work, SOLO and the switch in Settings ›
+  // System (orosContinue prefs().reopen) write and reopen nothing. Same
+  // guards as GR-1: never over a launch link, a share, a file or the
+  // tour, and `a: 1` until the front app stayed 15 s, so an app that
+  // takes orOS down as it opens is not reopened again.
+  var APPS_LAST = "oros-apps-last";
+  var appsSettle = null;
+  var appsResuming = false;
+  var appsBooted = false;      // nothing is written before the start has read the record
+  function appsReopenable(id) {
+    if (id === "passwords") return false;
+    for (var i = 0; i < state.apps.length; i++) {
+      var a = state.apps[i];
+      if (a.id === id) return a.type === "internal" && a.category !== "Games";
+    }
+    return false;
+  }
+  function appsLastOn() {
+    var C = window.orosContinue;
+    return !SOLO && !!C && C.prefs().reopen && strictLevelNow() === null;
+  }
+  function appsLastNote(auto) {
+    if (appsResuming || !appsBooted) return;
+    var C = window.orosContinue;
+    if (!C) return;
+    if (!appsLastOn()) { try { localStorage.removeItem(APPS_LAST); } catch (e) {} return; }
+    if (appsSettle && !auto) { clearTimeout(appsSettle); appsSettle = null; }
+    var front = state.running && appsReopenable(state.running.id) ? state.running.id : null;
+    var others = [];
+    try {
+      mtOpenList().forEach(function (r) { if (!r.front && r.app && appsReopenable(r.app.id)) others.push(r.app.id); });
+    } catch (e) {}
+    var rec = C.core.lastRecord(front, others, Date.now(), auto);
+    try {
+      if (!rec.f && !rec.o.length) localStorage.removeItem(APPS_LAST);
+      else localStorage.setItem(APPS_LAST, JSON.stringify(rec));
+    } catch (e) {}
+    if (auto && rec.f) {
+      appsSettle = setTimeout(function () {
+        appsSettle = null;
+        if (state.running && state.running.id === rec.f) appsLastNote(false);
+      }, C.core.SETTLE_MS);
+    }
+  }
+  function appsResumeStart() {
+    var C = window.orosContinue;
+    if (SOLO || !C) return;
+    var booted = function () { appsBooted = true; appsLastNote(false); };
+    var rec = null;
+    try { rec = JSON.parse(localStorage.getItem(APPS_LAST) || "null"); } catch (e) {}
+    if (!rec) { booted(); return; }
+    if (rec.a || !appsLastOn()) { try { localStorage.removeItem(APPS_LAST); } catch (e) {} booted(); return; }
+    if (gameLastRead()) { lateWhen(booted); return; }   // GR-1 reopens its game
+    lateWhen(function () {
+      var tour = false;
+      try { tour = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) {}
+      if (state.running || late.open || tour) { booted(); return; }   // a link, a share, a file, a tap
+      var plan = C.core.reopenPlan(rec, { allow: appsReopenable, multitask: mtActive() });
+      if (!plan) { booted(); return; }
+      var byId = function (id) {
+        for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id) return state.apps[i];
+        return null;
+      };
+      appsResuming = true;
+      try {
+        plan.back.slice().reverse().forEach(function (id) { var a = byId(id); if (a) openApp(a); });
+        if (plan.front) {
+          var last = C.lastOwn(plan.front);
+          if (last && last.target !== null) window.__orosOpenAt(plan.front, last.target);
+          else { var f = byId(plan.front); if (f) openApp(f); }
+        } else if (state.running) {
+          returnToDesktop();                   // the open apps wait hidden, as they were
+        }
+      } finally { appsResuming = false; }
+      appsBooted = true;
+      appsLastNote(true);
     });
   }
 
@@ -10360,6 +10448,14 @@
   function initSyncIntegration() {
     registerShellSlice();
     registerMeSlice();
+    // CONT-1 (continue.js): the "continue" slice, lazy flush
+    if (window.orosContinue) {
+      window.orosContinue.init({
+        sync: window.orosSync,
+        apps: function () { return state.apps; },
+        strict: strictLevelNow
+      });
+    }
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
     legacyLsMove();             // SY-Q2: retired snapshots out of localStorage
     registerRadioProxySlice();
@@ -12163,6 +12259,7 @@
       // Clipboard history (cliphist.js, CLIP-1): this device only.
       clip: window.orosClip ? window.orosClip.snapshot() : null,
       overview: ovSnapshot(),       // OV-1: hot corner, this device only
+      cont: contSnapshot(),         // CONT-1 + RS-1: this device's switches, its name, the devices seen
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
       pcfiles: state.pcFiles && !state.pcFiles.fixed ? { on: state.pcFiles.state === "on" } : null,
@@ -12211,6 +12308,10 @@
       case "multitask":
         if (!SOLO) { mtSetUser(!!value); settingsNotify(); }
         return;
+      case "cont:on":     if (!SOLO && window.orosContinue) { window.orosContinue.setPref("cont", !!value); settingsNotify(); } return;
+      case "cont:reopen": if (!SOLO && window.orosContinue) { window.orosContinue.setPref("reopen", !!value); appsLastNote(false); settingsNotify(); } return;
+      case "cont:name":   if (window.orosContinue) { window.orosContinue.setName(String(value || "")); settingsNotify(); } return;
+      case "cont:forget": if (window.orosContinue) { window.orosContinue.forget(String(value || "")); settingsNotify(); } return;
       case "overview:corner":
         if (!SOLO) { ovSetPref(OV_CORNER_KEY, !!value); settingsNotify(); }
         return;
@@ -12842,6 +12943,7 @@
   var mtNoKeep = false;      // the switcher closes the app in front
   function mtChanged() {
     if (typeof mtOnChange === "function") { try { mtOnChange(); } catch (e) {} }
+    if (typeof appsLastNote === "function") appsLastNote(false);   // RS-1: what is open, for the next start (absent in the section-10 test sandbox)
   }
 
   // Out of the experiment (Chris 2026-10-27, after the load tests in
@@ -13157,6 +13259,17 @@
     } catch (e) {}
     if (!on) mtDropAll();
     else mtChanged();
+  }
+  // CONT-1 + RS-1 (continue.js): Settings › System card.
+  function contSnapshot() {
+    var C = window.orosContinue;
+    if (SOLO || !C) return null;
+    var p = C.prefs();
+    return {
+      on: p.cont, reopen: p.reopen, name: C.deviceName(), kind: C.kind(), max: C.core.NAME_MAX,
+      strict: strictLevelNow() !== null,
+      devices: C.devices().map(function (d) { return { id: d.id, name: d.name, kind: d.kind, at: d.at, self: d.id === C.deviceId() }; })
+    };
   }
   function mtSnapshot() {
     if (SOLO) return null;
