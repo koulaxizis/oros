@@ -1,0 +1,455 @@
+// ============================================================
+// orOS — vizkit.js: light that moves with the sound (MU-VIZ,
+// Chris 2026-11-17, option B: Music first, then Radio and Podcasts).
+// ------------------------------------------------------------
+// One shared look for the "Now playing" screens of the sound apps.
+// The app owns the button, the canvas and the words around it; the
+// kit only draws:
+//
+//   <script src="../vizkit.js"></script>      (or loaded on first use)
+//   var v = OrosViz.create(canvas, {
+//     source:  function () { return { live, f, w } | null },  // f = byte
+//              // frequency bins, w = byte time-domain samples (an
+//              // AnalyserNode's arrays; any realm), live = real sound
+//     playing: function () { return bool },
+//     colors:  function () { return { a: "#rrggbb", bg: "#rrggbb" } },
+//     style:   "glow" | "rings" | "bars" | "wave",
+//     area:    function () { return { x, y, w, h } },  // optional: the
+//              // free space in canvas CSS pixels the light centres on
+//     onState: function (reason) {}  // "", "reduced", "battery", "slow"
+//   });
+//   v.setStyle(id); v.wake(); v.destroy();
+//
+// No sound data (a stream from a site that does not allow reading
+// it): the light breathes on its own, slowly, and source().live is
+// false so the app can say why.
+//
+// Rules (the live wallpaper rules of seasonal.js / land.js):
+//   - at most 30 frames a second, nothing while the tab is hidden,
+//     paused and quiet = the loop stops (wake() starts it again);
+//   - reduced motion (watched live), a low battery (< 20 %, not
+//     charging) or a slow device (mean frame gap > 55 ms over 90
+//     frames: still for the session) leave one still picture;
+//   - canvas at devicePixelRatio <= 1.25 and <= 1.8 M pixels;
+//   - no flashes: levels rise over ~3 frames and fall over ~12, the
+//     brightest layer stays under 0.85 alpha, no white frames, no
+//     strobing colour changes (photosensitivity).
+// Nothing is stored, nothing is sent. The pure part (bands, smoothing,
+// colours, still reasons, labels) runs in Node: tests/vizkit.test.js.
+// ============================================================
+(function (root) {
+  "use strict";
+
+  var VER = "1.0.0";
+  var STYLES = ["glow", "rings", "bars", "wave"];
+  var FPS_GAP = 1000 / 30;
+  var SLOW_MS = 55, SLOW_N = 90;
+  var slowSeen = false;       // a slow device stays still for the session (this page)
+
+  var STR = {
+    en: {
+      btn: "Light show", on: "Light show on", off: "Light show off",
+      style: "Light: {s}", next: "Next light style",
+      glow: "Glow", rings: "Rings", bars: "Bars", wave: "Wave",
+      immersive: "Light only", back: "Show the controls",
+      calm: "This source does not let orOS listen to the sound, so the light moves on its own.",
+      reduced: "Reduced motion is on, so the light stays still.",
+      battery: "The battery is low, so the light stays still.",
+      slow: "This device is busy, so the light stays still."
+    },
+    el: {
+      btn: "Φωτορυθμικό", on: "Φωτορυθμικό ενεργό", off: "Φωτορυθμικό ανενεργό",
+      style: "Φως: {s}", next: "Επόμενο στυλ φωτός",
+      glow: "Λάμψη", rings: "Κύκλοι", bars: "Στήλες", wave: "Κύμα",
+      immersive: "Μόνο το φως", back: "Εμφάνιση χειριστηρίων",
+      calm: "Αυτή η πηγή δεν αφήνει το orOS να ακούσει τον ήχο, γι' αυτό το φως κινείται μόνο του.",
+      reduced: "Οι μειωμένες κινήσεις είναι ενεργές, γι' αυτό το φως μένει ακίνητο.",
+      battery: "Η μπαταρία είναι χαμηλή, γι' αυτό το φως μένει ακίνητο.",
+      slow: "Η συσκευή είναι φορτωμένη, γι' αυτό το φως μένει ακίνητο."
+    },
+    de: {
+      btn: "Lichtshow", on: "Lichtshow an", off: "Lichtshow aus",
+      style: "Licht: {s}", next: "Nächster Lichtstil",
+      glow: "Leuchten", rings: "Ringe", bars: "Balken", wave: "Welle",
+      immersive: "Nur das Licht", back: "Steuerung zeigen",
+      calm: "Diese Quelle lässt orOS den Ton nicht hören, darum bewegt sich das Licht von selbst.",
+      reduced: "Reduzierte Bewegung ist an, darum bleibt das Licht still.",
+      battery: "Der Akku ist schwach, darum bleibt das Licht still.",
+      slow: "Dieses Gerät ist ausgelastet, darum bleibt das Licht still."
+    }
+  };
+
+  // ---------- Pure part ----------
+  function lang2(l) { l = String(l || "").slice(0, 2).toLowerCase(); return STR[l] ? l : "en"; }
+  function label(key, l, vars) {
+    var s = STR[lang2(l)][key];
+    if (s == null) s = STR.en[key];
+    if (s == null) return key;
+    if (vars) Object.keys(vars).forEach(function (n) { s = s.split("{" + n + "}").join(String(vars[n])); });
+    return s;
+  }
+  function normStyle(s) { return STYLES.indexOf(s) >= 0 ? s : STYLES[0]; }
+  function nextStyle(s) { return STYLES[(STYLES.indexOf(normStyle(s)) + 1) % STYLES.length]; }
+
+  // Byte frequency bins → { lo, mid, hi, all } in 0..1. The bins cover
+  // 0 .. rate / 2; bass < 250 Hz, mids < 2 kHz, the rest highs (to 10 kHz).
+  function bands(f, rate) {
+    var n = f && f.length ? f.length : 0;
+    if (!n) return { lo: 0, mid: 0, hi: 0, all: 0 };
+    var hz = (rate > 0 ? rate : 48000) / 2 / n;
+    var edge = [20, 250, 2000, 10000], out = [0, 0, 0], tot = 0, cnt = 0;
+    for (var b = 0; b < 3; b++) {
+      var i0 = Math.max(0, Math.floor(edge[b] / hz)), i1 = Math.min(n, Math.max(i0 + 1, Math.ceil(edge[b + 1] / hz)));
+      var s = 0;
+      for (var i = i0; i < i1; i++) s += f[i];
+      out[b] = i1 > i0 ? s / (i1 - i0) / 255 : 0;
+      tot += s; cnt += i1 - i0;
+    }
+    return { lo: out[0], mid: out[1], hi: out[2], all: cnt ? tot / cnt / 255 : 0 };
+  }
+  // One step of a level towards its target: quick up, slow down.
+  function smooth(prev, next, up, down) {
+    prev = +prev || 0; next = +next || 0;
+    return prev + (next - prev) * (next > prev ? (up == null ? 0.35 : up) : (down == null ? 0.08 : down));
+  }
+  // Auto gain: a quiet song (or a low volume) still moves the light.
+  // → { peak, v } with v in 0..1.
+  function gain(peak, x) {
+    peak = Math.max((+peak || 0) * 0.996, +x || 0);
+    var v = (+x || 0) / Math.max(peak, 0.12);
+    return { peak: peak, v: Math.max(0, Math.min(1, v)) };
+  }
+  // The light on its own (no sound data): slow, soft, never still.
+  function idle(t) {
+    t = (+t || 0) / 1000;
+    return {
+      lo: 0.32 + 0.14 * Math.sin(t * 0.9) * Math.sin(t * 0.37 + 1),
+      mid: 0.26 + 0.1 * Math.sin(t * 0.61 + 2),
+      hi: 0.18 + 0.08 * Math.sin(t * 1.3 + 4)
+    };
+  }
+  // Why the light must stay still, "" when it may move.
+  function stillReason(o) {
+    o = o || {};
+    if (o.reduced) return "reduced";
+    if (o.battery && o.battery.level != null && !o.battery.charging && o.battery.level < 0.2) return "battery";
+    if (o.slow) return "slow";
+    return "";
+  }
+  // Mean frame gap over the last SLOW_N frames above SLOW_MS?
+  function isSlow(gaps) {
+    if (!gaps || gaps.length < SLOW_N) return false;
+    var s = 0, n = 0;
+    for (var i = gaps.length - SLOW_N; i < gaps.length; i++) { s += gaps[i]; n++; }
+    return s / n > SLOW_MS;
+  }
+  function hex(c) {
+    var m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(c || "").trim());
+    if (!m) return null;
+    var h = m[1];
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+  // "rgb(1, 2, 3)" / "#abc" / "#aabbcc" → [r, g, b] or null.
+  function rgb(c) {
+    var m = /^rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i.exec(String(c || "").trim());
+    if (m) return [+m[1], +m[2], +m[3]].map(function (x) { return Math.max(0, Math.min(255, x)); });
+    return hex(c);
+  }
+  function toHsl(c) {
+    var r = c[0] / 255, g = c[1] / 255, b = c[2] / 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, h = 0, s = 0;
+    if (mx !== mn) {
+      var d = mx - mn;
+      s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+      h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      h *= 60;
+    }
+    return [h, s, l];
+  }
+  // Three colours of the light from the app's accent: the accent and
+  // two neighbours on the colour wheel, saturated and bright enough to
+  // glow on a dark screen. → ["hsl(...)", ...] (hue, sat %, light %).
+  function palette(accent) {
+    var c = rgb(accent) || [167, 139, 250];
+    var hsl = toHsl(c), h = hsl[0], s = Math.max(0.55, hsl[1]), l = Math.min(0.7, Math.max(0.55, hsl[2]));
+    return [0, 42, -48].map(function (dh) {
+      return [Math.round(((h + dh) % 360 + 360) % 360), Math.round(s * 100), Math.round(l * 100)];
+    });
+  }
+  function hsla(p, a) { return "hsla(" + p[0] + "," + p[1] + "%," + p[2] + "%," + Math.max(0, Math.min(0.85, a)).toFixed(3) + ")"; }
+  // Canvas size for a box: devicePixelRatio <= 1.25 and <= 1.8 M pixels.
+  function fit(w, h, dpr) {
+    var r = Math.min(1.25, Math.max(1, +dpr || 1));
+    var px = w * h * r * r;
+    if (px > 1.8e6) r = Math.sqrt(1.8e6 / Math.max(1, w * h));
+    return { w: Math.max(1, Math.round(w * r)), h: Math.max(1, Math.round(h * r)), r: r };
+  }
+  // Byte bins → n bar heights in 0..1 on a log frequency scale
+  // (40 Hz .. 12 kHz), so bass does not fill half the bars.
+  function bars(f, n, rate) {
+    var len = f && f.length ? f.length : 0, out = [];
+    var hz = (rate > 0 ? rate : 48000) / 2 / Math.max(1, len);
+    for (var i = 0; i < n; i++) {
+      if (!len) { out.push(0); continue; }
+      var a = 40 * Math.pow(300, i / n), b = 40 * Math.pow(300, (i + 1) / n);
+      var i0 = Math.min(len - 1, Math.floor(a / hz)), i1 = Math.min(len, Math.max(i0 + 1, Math.ceil(b / hz)));
+      var s = 0;
+      for (var k = i0; k < i1; k++) s = Math.max(s, f[k]);
+      out.push(s / 255);
+    }
+    return out;
+  }
+
+  // ---------- Drawing ----------
+  // Each style draws around the box B {x, y, w, h} (the app's free
+  // space: the cover's place, or the whole canvas) on a canvas W × H.
+  function drawGlow(g, B, lv, t, pal) {
+    var W = B.W, H = B.H, m = Math.max(Math.min(B.w, B.h), Math.min(W, H) * 0.7), cx = B.x + B.w / 2, cy = B.y + B.h / 2;
+    var spots = [
+      { p: pal[0], v: lv.lo, x: Math.sin(t * 0.00021) * 0.22, y: Math.cos(t * 0.00017) * 0.16, r: 0.42 },
+      { p: pal[1], v: lv.mid, x: Math.cos(t * 0.00013 + 2) * 0.28, y: Math.sin(t * 0.00019 + 1) * 0.2, r: 0.34 },
+      { p: pal[2], v: lv.hi, x: Math.sin(t * 0.00016 + 4) * 0.26, y: Math.cos(t * 0.00023 + 3) * 0.22, r: 0.3 }
+    ];
+    g.globalCompositeOperation = "lighter";
+    spots.forEach(function (s) {
+      var x = cx + s.x * Math.max(B.w, W * 0.6), y = cy + s.y * Math.max(B.h, H * 0.5), r = m * (s.r + s.v * 0.32);
+      var gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, hsla(s.p, 0.25 + s.v * 0.55));
+      gr.addColorStop(0.55, hsla(s.p, 0.08 + s.v * 0.2));
+      gr.addColorStop(1, hsla(s.p, 0));
+      g.fillStyle = gr;
+      g.fillRect(0, 0, W, H);
+    });
+    g.globalCompositeOperation = "source-over";
+  }
+  function drawRings(g, B, lv, t, pal, st) {
+    var W = B.W, H = B.H, m = Math.min(B.w, B.h) * 1.15, cx = B.x + B.w / 2, cy = B.y + B.h / 2;
+    // A new ring when the bass rises, at most one every 160 ms, up to 9.
+    st.rings = st.rings || [];
+    if (lv.lo > (st.lastLo || 0) + 0.06 && lv.lo > 0.3 && t - (st.ringAt || 0) > 160 && st.rings.length < 9) {
+      st.rings.push({ at: t, v: lv.lo, p: st.rings.length % 3 });
+      st.ringAt = t;
+    }
+    st.lastLo = lv.lo;
+    var core = g.createRadialGradient(cx, cy, 0, cx, cy, m * (0.16 + lv.lo * 0.2));
+    core.addColorStop(0, hsla(pal[0], 0.3 + lv.lo * 0.45));
+    core.addColorStop(1, hsla(pal[0], 0));
+    g.fillStyle = core;
+    g.fillRect(0, 0, W, H);
+    g.lineCap = "round";
+    st.rings = st.rings.filter(function (r) {
+      var age = (t - r.at) / 2600;
+      if (age >= 1 || age < 0) return false;
+      g.strokeStyle = hsla(pal[r.p], (1 - age) * (0.25 + r.v * 0.5));
+      g.lineWidth = Math.max(1, m * 0.012 * (1 - age) + m * 0.004);
+      g.beginPath();
+      g.arc(cx, cy, m * (0.14 + age * 0.62), 0, Math.PI * 2);
+      g.stroke();
+      return true;
+    });
+    // A slow ring that always turns, wider with the mids and highs.
+    g.strokeStyle = hsla(pal[1], 0.2 + lv.mid * 0.4);
+    g.lineWidth = Math.max(1, m * 0.006);
+    g.setLineDash([m * 0.02, m * 0.03]);
+    g.lineDashOffset = -t * 0.01;
+    g.beginPath();
+    g.arc(cx, cy, m * (0.3 + lv.hi * 0.08), 0, Math.PI * 2);
+    g.stroke();
+    g.setLineDash([]);
+  }
+  function drawBars(g, B, lv, t, pal, st, src) {
+    var W = B.w, n = W < 520 * B.r ? 28 : 44;
+    var hs = src && src.live && src.f ? bars(src.f, n, src.rate) : null;
+    st.bars = st.bars || [];
+    var gap = W / n, bw = Math.max(2, gap * 0.56), base = B.y + B.h * 0.78, maxH = B.h * 0.7;
+    var grad = g.createLinearGradient(0, base - maxH, 0, base);
+    grad.addColorStop(0, hsla(pal[1], 0.8));
+    grad.addColorStop(1, hsla(pal[0], 0.7));
+    var refl = g.createLinearGradient(0, base, 0, base + maxH * 0.45);
+    refl.addColorStop(0, hsla(pal[0], 0.22));
+    refl.addColorStop(1, hsla(pal[0], 0));
+    for (var i = 0; i < n; i++) {
+      var target = hs ? gain(st["pk" + i], hs[i]).v * 0.35 + hs[i] * 0.55
+        : (i < n / 3 ? lv.lo : i < 2 * n / 3 ? lv.mid : lv.hi) * (0.55 + 0.45 * Math.sin(t * 0.0012 + i * 0.7) * Math.sin(t * 0.0005 + i));
+      if (hs) st["pk" + i] = Math.max((st["pk" + i] || 0) * 0.996, hs[i]);
+      st.bars[i] = smooth(st.bars[i], Math.max(0, target));
+      var h = Math.max(bw, st.bars[i] * maxH), x = B.x + i * gap + (gap - bw) / 2;
+      g.fillStyle = grad;
+      round(g, x, base - h, bw, h, bw / 2);
+      g.fillStyle = refl;
+      round(g, x, base + 2, bw, h * 0.45, bw / 2);
+    }
+  }
+  function drawWave(g, B, lv, t, pal, st, src) {
+    var W = B.W, H = B.h, mid = B.y + B.h / 2;
+    var w = src && src.live && src.w ? src.w : null;
+    var layers = [[pal[0], lv.lo, 0.0011, 0], [pal[1], lv.mid, 0.0017, 2], [pal[2], lv.hi, 0.0023, 4]];
+    g.lineCap = "round"; g.lineJoin = "round";
+    layers.forEach(function (L, li) {
+      var amp = H * (0.05 + L[1] * 0.2);
+      g.strokeStyle = hsla(L[0], 0.35 + L[1] * 0.45);
+      g.lineWidth = Math.max(1.5, Math.min(W, B.h) * (0.008 - li * 0.0015));
+      g.beginPath();
+      var steps = 64;
+      for (var i = 0; i <= steps; i++) {
+        var x = i / steps * W;
+        var y = Math.sin(i / steps * Math.PI * (2 + li) + t * L[2] + L[3]) * amp;
+        if (w && li === 0) {
+          // The real waveform, smoothed over a few samples, on the first line.
+          var k = Math.floor(i / steps * (w.length - 4)), s = 0;
+          for (var j = 0; j < 4; j++) s += w[k + j] - 128;
+          y = y * 0.4 + (s / 4 / 128) * H * 0.32;
+        }
+        y *= Math.sin(i / steps * Math.PI);      // calm at the edges
+        if (i) g.lineTo(x, mid + y); else g.moveTo(x, mid + y);
+      }
+      g.stroke();
+    });
+  }
+  function round(g, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+    g.fill();
+  }
+  var DRAW = { glow: drawGlow, rings: drawRings, bars: drawBars, wave: drawWave };
+
+  // ---------- The live part ----------
+  function create(canvas, opts) {
+    opts = opts || {};
+    var win = (canvas && canvas.ownerDocument && canvas.ownerDocument.defaultView) || root;
+    var g = null;
+    try { g = canvas.getContext("2d"); } catch (e) { g = null; }
+    var style = normStyle(opts.style);
+    var lv = { lo: 0, mid: 0, hi: 0 }, pk = { lo: 0, mid: 0, hi: 0 };
+    var st = {}, raf = 0, last = 0, prevT = 0, gaps = [], quiet = 0, dead = false;
+    var reason = "", battery = null, mq = null, pal = palette("");
+    var bat = null;
+
+    function reduced() { return !!(mq && mq.matches); }
+    function setReason() {
+      var r = stillReason({ reduced: reduced(), battery: battery, slow: slowSeen });
+      if (r !== reason) {
+        reason = r;
+        try { if (opts.onState) opts.onState(reason); } catch (e) {}
+      }
+      return reason;
+    }
+    function colours() {
+      var c = null;
+      try { c = opts.colors ? opts.colors() : null; } catch (e) { c = null; }
+      pal = palette(c && c.a);
+      return c || {};
+    }
+    function size() {
+      var w = canvas.clientWidth || 300, h = canvas.clientHeight || 300;
+      var f = fit(w, h, win.devicePixelRatio);
+      if (canvas.width !== f.w || canvas.height !== f.h) { canvas.width = f.w; canvas.height = f.h; }
+      return f;
+    }
+    function frame(t, still) {
+      if (!g) return;
+      var f = size(), W = f.w, H = f.h;
+      var c = colours();
+      var src = null;
+      try { src = opts.source ? opts.source() : null; } catch (e) { src = null; }
+      var playing = false;
+      try { playing = !!(opts.playing && opts.playing()); } catch (e) {}
+      var target;
+      if (still) target = { lo: 0.4, mid: 0.32, hi: 0.24 };
+      else if (src && src.live && src.f) {
+        var b = bands(src.f, src.rate);
+        var a1 = gain(pk.lo, b.lo), a2 = gain(pk.mid, b.mid), a3 = gain(pk.hi, b.hi);
+        pk.lo = a1.peak; pk.mid = a2.peak; pk.hi = a3.peak;
+        target = { lo: a1.v, mid: a2.v, hi: a3.v };
+      } else if (playing) target = idle(t);
+      else target = { lo: 0, mid: 0, hi: 0 };
+      if (still) lv = target;
+      else { lv.lo = smooth(lv.lo, target.lo); lv.mid = smooth(lv.mid, target.mid); lv.hi = smooth(lv.hi, target.hi); }
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = "source-over";
+      g.fillStyle = (c && c.bg) || "#0b0b10";
+      g.fillRect(0, 0, W, H);
+      var a = null;
+      try { a = opts.area ? opts.area() : null; } catch (e) { a = null; }
+      var B = a && a.w > 40 && a.h > 40 ? { x: a.x * f.r, y: a.y * f.r, w: a.w * f.r, h: a.h * f.r } : { x: 0, y: 0, w: W, h: H };
+      B.W = W; B.H = H; B.r = f.r;
+      try { DRAW[style](g, B, lv, still ? 0 : t, pal, st, still ? null : src); } catch (e) {}
+      quiet = !playing && lv.lo + lv.mid + lv.hi < 0.03 ? quiet + 1 : 0;
+    }
+    function loop(t) {
+      raf = 0;
+      if (dead) return;
+      var doc = canvas.ownerDocument;
+      if (doc && doc.hidden) return;                   // visibilitychange wakes it
+      if (prevT) { gaps.push(t - prevT); if (gaps.length > SLOW_N) gaps.shift(); }
+      prevT = t;
+      if (!slowSeen && isSlow(gaps)) slowSeen = true;
+      if (setReason()) { frame(t, true); prevT = 0; return; }
+      if (t - last >= FPS_GAP - 2) { last = t; frame(t, false); }
+      if (quiet > 30) { prevT = 0; return; }         // paused and dark: rest
+      raf = win.requestAnimationFrame(loop);
+    }
+    function wake() {
+      if (dead || raf) return;
+      quiet = 0;
+      prevT = 0;
+      if (setReason()) { frame(0, true); return; }
+      raf = win.requestAnimationFrame(loop);
+    }
+    function onVis() { if (!canvas.ownerDocument.hidden) wake(); }
+    function onMq() { reason = "-"; if (!setReason()) wake(); else frame(0, true); }
+    try {
+      mq = win.matchMedia ? win.matchMedia("(prefers-reduced-motion: reduce)") : null;
+      if (mq) { if (mq.addEventListener) mq.addEventListener("change", onMq); else if (mq.addListener) mq.addListener(onMq); }
+    } catch (e) { mq = null; }
+    try { canvas.ownerDocument.addEventListener("visibilitychange", onVis); } catch (e) {}
+    function readBattery(b) {
+      bat = b;
+      battery = { level: b.level, charging: b.charging };
+      // Brave and the spec default say 1 + charging: unknown, never low.
+      if (battery.level === 1 && battery.charging) battery = null;
+    }
+    function onBat() { if (bat) { readBattery(bat); if (setReason()) frame(0, true); else wake(); } }
+    try {
+      var nav = win.navigator;
+      if (nav && typeof nav.getBattery === "function") nav.getBattery().then(function (b) {
+        if (dead) return;
+        readBattery(b);
+        b.addEventListener("levelchange", onBat);
+        b.addEventListener("chargingchange", onBat);
+        onBat();
+      }, function () {});
+    } catch (e) {}
+
+    setReason();
+    wake();
+    return {
+      setStyle: function (s) { style = normStyle(s); st = {}; if (reason) frame(0, true); else wake(); },
+      style: function () { return style; },
+      wake: wake,
+      reason: function () { return reason; },
+      destroy: function () {
+        dead = true;
+        if (raf) { try { win.cancelAnimationFrame(raf); } catch (e) {} raf = 0; }
+        try { canvas.ownerDocument.removeEventListener("visibilitychange", onVis); } catch (e) {}
+        try { if (mq) { if (mq.removeEventListener) mq.removeEventListener("change", onMq); else if (mq.removeListener) mq.removeListener(onMq); } } catch (e) {}
+        try { if (bat) { bat.removeEventListener("levelchange", onBat); bat.removeEventListener("chargingchange", onBat); } } catch (e) {}
+      }
+    };
+  }
+
+  var api = {
+    v: VER, STYLES: STYLES, create: create, label: label, normStyle: normStyle, nextStyle: nextStyle,
+    bands: bands, smooth: smooth, gain: gain, idle: idle, stillReason: stillReason, isSlow: isSlow,
+    rgb: rgb, palette: palette, fit: fit, bars: bars, STR: STR
+  };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.OrosViz = api;
+})(typeof window !== "undefined" ? window : this);
