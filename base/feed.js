@@ -5,7 +5,7 @@
 // Calendar" on (field opt.cal === true; off by default, Chris
 // 2026-11-13). Pure and read-only: it reads the stored slice
 // (oros-base-data), never writes, and never loads base/core.js.
-//   byDay(d) → { "YYYY-MM-DD": [{ rec, base, table, title, field, time }] }
+//   byDay(d) → { "YYYY-MM-DD": [{ rec, base, table, title, fid, field, tname, time }] }
 //     title = the record's primary field text (a text-like field), else "";
 //     time  = "HH:MM" when the field keeps a time, else null.
 //     At most MAX rows in all (newest days first are not preferred:
@@ -45,7 +45,7 @@
         var m = typeof r.v[f.id] === "string" ? DAY_RE.exec(r.v[f.id]) : null;
         if (!m || n >= MAX) return;
         n++;
-        (out[m[1]] = out[m[1]] || []).push({ rec: r.id, base: tb.base, table: tb.id, title: title, field: str(f.name, 80), tname: str(tb.name, 80), time: f.opt.time && m[2] ? m[2] : null });
+        (out[m[1]] = out[m[1]] || []).push({ rec: r.id, base: tb.base, table: tb.id, title: title, fid: f.id, field: str(f.name, 80), tname: str(tb.name, 80), time: f.opt.time && m[2] ? m[2] : null });
       });
       return false;
     });

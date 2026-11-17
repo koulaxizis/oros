@@ -91,6 +91,7 @@ When the answer comes as a link, open it, or paste it in `Signature requests` (t
 The signed PDF ends with a certificate page (in English and Greek): the document and its SHA-256 fingerprint, who sent it and to whom, the name the signer typed, how they were identified (the link, and the access code), when it was opened, agreed and signed, their time zone and browser. The full record is attached inside the PDF as `signing-record.json`. `Check a signed PDF` tells whether a PDF is one of your signed copies, unchanged, or the original you sent.
 This is a simple electronic signature under the EU eIDAS rules: it counts as evidence and cannot be refused just for being electronic, but it is not an advanced or qualified signature. Where the law asks for a qualified signature (some contracts, public services), use a qualified provider. Times come from each person's device.
 The answer stays on the orOS server for 30 days; open it before then. A PDF can be up to 24 MB to send.
+[Today](app:today) shows how many requests still wait, each one answered in the last 24 hours, and a signing link that ends in the next three days.
 
 ## Page numbers, watermark and details
 The `Options` button at the bottom sets what goes on every page of the PDFs you save or split:

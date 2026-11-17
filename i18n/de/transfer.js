@@ -128,5 +128,14 @@ orosPack("de", "transfer", {
  "err.io": "Eine Datei konnte nicht gelesen oder geschrieben werden (Speicher voll?). Die Übertragung wurde gestoppt.",
  "err.mem": "Dieser Browser hält Übertragungen im Speicher, bis zu {s}. Nutze für diese einen anderen Browser.",
  "into.oros": "Stattdessen in mein orOS empfangen",
- "full": "Auf diesem Gerät ist kein Speicherplatz mehr frei."
+ "full": "Auf diesem Gerät ist kein Speicherplatz mehr frei.",
+ "td.recv": "Empfangen: {what}",
+ "td.recvAny": "Eine Übertragung ist angekommen",
+ "td.files1": "1 Datei",
+ "td.files": "{n} Dateien",
+ "td.from": "von {dev}",
+ "td.bad": "{n} kamen nicht vollständig an",
+ "td.ends": "Übertragungslink endet: {what}",
+ "td.endsAny": "Ein Übertragungslink endet",
+ "td.tipEnds": "Danach werden die Dateien aus deiner Dropbox gelöscht und der Link funktioniert nicht mehr."
 });
