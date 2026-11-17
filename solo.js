@@ -211,6 +211,19 @@
     forms: {
       shortcuts: [{ do: "new", target: { newForm: true } }]
     },
+    // Wave 9 (gap review proposal 10, 2026-11-17): Library (books,
+    // comics and PDFs open with it through fileopen.js: .epub .pdf .fb2
+    // .cbz .cbr .oroslibrary) and Base (.orosbase). Their own file types
+    // come from the fileopen.js table; no text shares (a shared text is
+    // no book and no base).
+    library: {
+      shortcuts: [{ do: "resume", target: { resume: true } },
+                  { do: "free", target: { catalog: true } }]
+    },
+    base: {
+      shortcuts: [{ do: "new", target: { newBase: true } },
+                  { do: "last", target: { lastBase: true } }]
+    },
     // Wave 6: every game in one app (Game Center is its home; a game
     // opened from it gets Back). files: other apps whose file types
     // this app's icon also opens (fileopen.js still routes them).
@@ -315,6 +328,12 @@
           "sc.stock.reports": "Sales reports",
           "name.forms": "orOS Forms",
           "sc.forms.new": "New form",
+          "name.library": "orOS Library",
+          "sc.library.resume": "Continue reading",
+          "sc.library.free": "Free books",
+          "name.base": "orOS Base",
+          "sc.base.new": "New base",
+          "sc.base.last": "Last base",
           "name.gamecenter": "orOS Games",
           "sc.gamecenter.wordle": "Today's Wordle",
           "sc.gamecenter.crossword": "Today's crossword",
@@ -416,6 +435,12 @@
           "sc.stock.reports": "Αναφορές πωλήσεων",
           "name.forms": "orOS Φόρμες",
           "sc.forms.new": "Νέα φόρμα",
+          "name.library": "orOS Βιβλιοθήκη",
+          "sc.library.resume": "Συνέχεια ανάγνωσης",
+          "sc.library.free": "Δωρεάν βιβλία",
+          "name.base": "orOS Βάση",
+          "sc.base.new": "Νέα βάση",
+          "sc.base.last": "Τελευταία βάση",
           "name.gamecenter": "orOS Παιχνίδια",
           "sc.gamecenter.wordle": "Το σημερινό Wordle",
           "sc.gamecenter.crossword": "Το σημερινό σταυρόλεξο",
