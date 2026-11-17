@@ -4943,6 +4943,21 @@
     return true;
   }
 
+  // BR-EV-2: an Automations step (C.autoLog cleans it): the New history
+  // entry form prefilled with its customer guessed (the person can
+  // change it); nothing is saved before Save.
+  function autoLogTo(raw) {
+    var n = C.autoLog(raw);
+    if (!n) return false;
+    if (needCustomer()) return true;
+    var c = C.autoLogCust(data, n, function (p) { return personView(p).email; });
+    var cid = c ? c.id : (C.byId(data.cust, prefs.sel) ? prefs.sel : data.cust[0].id);
+    prefs.sel = cid; prefs.sub = "hist"; savePrefs();
+    setTab("cust");
+    logEditor(null, cid, { k: n.k, at: Date.now(), text: n.text });
+    return true;
+  }
+
   // Assistant entry card (BR-W8-6): the New customer form prefilled
   // (C.asNewCust clamps it); nothing is saved before Save. An email a
   // customer already has → that customer instead.
@@ -5092,6 +5107,7 @@
       return true;
     }
     if (x.log) return mailToLog(x.log);
+    if (x.autoLog) return autoLogTo(x.autoLog);
     if (x.asNew) return asNewCust(x.asNew);
     // Single app icon shortcut: an empty New customer form.
     if (x.newCust) { setTab("cust"); custEditor(null, {}); return true; }

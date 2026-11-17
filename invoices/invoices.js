@@ -579,9 +579,24 @@
   function addPayment(docId, amt, date, how, note) {
     var p = { id: C.newId(), doc: docId, date: date, amt: amt, how: how, note: note || "", m: stamp(0) };
     if (autoBudget()) p.ab = 1;   // BR-B3: Budget turns it into income by itself
+    var was = C.status(data, findDoc(docId));
     data.pays.push(p);
     saveNow();
+    paidEvent(docId, was, p.id);
     return p;
+  }
+  // BR-EV-2: a payment made HERE that settles a document is an
+  // Automations signal (invoices.paid, key invoices:<doc>:paid:<payment>,
+  // text "number · client · total"). A payment pulled from another
+  // device is not: that device made it.
+  function paidEvent(docId, was, payId) {
+    var d = findDoc(docId);
+    if (!d || was === "paid" || C.status(data, d) !== "paid") return;
+    var ev = null;
+    try { ev = window.parent && window.parent !== window ? window.parent.orosEvents : null; } catch (e) { ev = null; }
+    if (!ev || typeof ev.emit !== "function") return;
+    var said = [d.num || kindName(d.kind), C.partyName(data, d), money(C.totals(d).pay, d.cur)].filter(Boolean).join(" \u00b7 ");
+    setTimeout(function () { try { ev.emit("invoices.paid", "invoices:" + d.id + ":paid:" + payId, said); } catch (e) {} }, 0);
   }
   function deletePayment(p) {
     replaceIn(data.pays, tombOf(p));
@@ -2219,8 +2234,10 @@
         var x = JSON.parse(JSON.stringify(p));
         x.amt = amt; x.date = dt.value; x.how = how.value; x.note = C.cleanText(note.value, 120);
         x.m = stamp(x.m);
+        var was = C.status(data, d);
         replaceIn(data.pays, x);
         saveNow();
+        paidEvent(d.id, was, x.id);
       } else addPayment(d.id, amt, dt.value, how.value, C.cleanText(note.value, 120));
       dlg.close();
       if (!p) showToast(t("toast.payAdded", { a: money(amt, d.cur) }));

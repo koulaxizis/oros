@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.45.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.46.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -2120,10 +2120,12 @@
     if (!raw || !Array.isArray(raw.items) || !raw.items.length) return;
     var data = Core.merge(raw, raw);
     var low = Core.lowList(data);
+    var baseline = localStorage.getItem(STOCK_NOTIFIED_KEY) === null;
     var st = Core.toNotify(low.map(function (r) { return r.item.id; }), notified);
     if (JSON.stringify(st.next) !== JSON.stringify(notified)) {
       try { localStorage.setItem(STOCK_NOTIFIED_KEY, JSON.stringify(st.next)); } catch (e) {}
     }
+    if (!baseline) stockLowEvents(data, low, st.fresh);
     if (!prefs.notify || !st.fresh.length) return;
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
@@ -2140,6 +2142,26 @@
       title: title,
       body: tr("n.stock.body", { names: shown }),
       deepLink: st.fresh.length === 1 ? "stock:" + st.fresh[0] : "stock:reorder"
+    });
+  }
+
+  // BR-EV-2: each product that ENTERS the low list is an Automations
+  // signal (stock.low), whatever the notice switch says. The key names
+  // the last movement of that product, so every device that sees the
+  // same stock names the same run (AUTO-3); the first look on a device
+  // (no notified map yet) is a baseline and gives none.
+  function stockLowEvents(data, low, fresh) {
+    var E = window.orosEvents;
+    if (!fresh.length || !(E && typeof E.emit === "function")) return;
+    var rows = {};
+    low.forEach(function (r) { rows[r.item.id] = r; });
+    fresh.slice(0, 20).forEach(function (id) {
+      var r = rows[id], last = "";
+      if (!r) return;
+      (data.moves || []).forEach(function (m) {
+        if (m && m.v !== 1 && m.id > last && Array.isArray(m.lines) && m.lines.some(function (l) { return l && l.i === id; })) last = m.id;
+      });
+      try { E.emit("stock.low", "stock:" + id + ":" + last, r.item.name + " \u00b7 " + Math.max(0, r.q) / 1000); } catch (e) {}
     });
   }
 

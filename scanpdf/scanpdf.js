@@ -4308,6 +4308,7 @@
   // Received: kept in the list, the request taken off the relay.
   function finish(it, got, notSaved) {
     saveSign(SG.setGot(loadSign(), it.id, got));
+    if (got.st === "signed") signedEvent(it, got);
     if (it.d) RL.revoke(it.id, it.d).then(null, function () {});
     dropBox(it);
     var nm = got.nm || it.q.to;
@@ -4317,6 +4318,17 @@
     } else showToast(got.st === "declined" ? t("rq.gotDeclined", { nm: nm }) :
               notSaved ? t("rq.gotNotSaved", { nm: nm }) : t("rq.gotSigned", { nm: nm, dir: shortDir(signDir()) }));
     if (listOpen) renderList(); else if (!quietTake) listDialog();
+  }
+  // BR-EV-2: an answer opened HERE that signs a request is an
+  // Automations signal (scanpdf.signed, key scanpdf:<request>, text
+  // "document · signer"); the other devices see the request closed by
+  // sync, not as a signal.
+  function signedEvent(it, got) {
+    var ev = null;
+    try { ev = window.parent && window.parent !== window ? window.parent.orosEvents : null; } catch (e) { ev = null; }
+    if (!ev || typeof ev.emit !== "function") return;
+    var said = [it.q && it.q.n, got.nm || (it.q && it.q.to)].filter(Boolean).join(" \u00b7 ");
+    setTimeout(function () { try { ev.emit("scanpdf.signed", "scanpdf:" + it.id, said); } catch (e) {} }, 0);
   }
   // The original as sent: from Files, else from the request link while
   // it is still there; it must hash to what the request says.
