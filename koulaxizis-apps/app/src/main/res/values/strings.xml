@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Koulaxizis Apps</string>
+    <string name="refresh">Check for updates</string>
+    <string name="checking">Checking the repositories…</string>
+    <string name="repos_from">Repositories updated %1$s</string>
+    <string name="no_list">No list yet. Connect to the internet and check again.</string>
+    <string name="more_apps">More apps</string>
+    <string name="install">Install</string>
+    <string name="update">Update</string>
+    <string name="open">Open</string>
+    <string name="why">Why?</string>
+    <string name="working">Working…</string>
+    <string name="version_size">%1$s · %2$s</string>
+    <string name="version_beta">%1$s beta · %2$s</string>
+    <string name="installed_version">you have %1$s</string>
+    <string name="other_key">signed with another key</string>
+    <string name="other_key_long">The copy on this phone is signed with a different key (for example a test build or one from another source), so Android will not let it be updated from here. To switch, uninstall it first and install it again here; an app that syncs gets its data back after you sign in.</string>
+    <string name="allow_title">Allow installing apps</string>
+    <string name="allow_text">Android asks once: allow Koulaxizis Apps to install apps. After that, Android still asks you before each new app is installed.</string>
+    <string name="allow_open">Open settings</string>
+    <string name="install_failed">%1$s was not installed: %2$s</string>
+    <string name="err_network">could not reach the repository. The last list on this phone is shown.</string>
+    <string name="err_signature">the signature did not match our key, so nothing was used from it.</string>
+    <string name="err_hash">the file did not match the repository list, so it was not used.</string>
+    <string name="err_older">the repository answered with an older list than before, so it was not used.</string>
+    <string name="err_format">the repository list could not be read.</string>
+    <string name="err_empty">No apps for this phone yet.</string>
+</resources>
