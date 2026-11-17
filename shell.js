@@ -3808,6 +3808,7 @@
         deliverShare();
         gameResumeStart();
         greetStart();
+        zoomWire();   // ZOOM-1: remember what opened an app
         safeStart();
         if (SOLO) soloStart();
         // Files from the system's "Open with" (fileopen.js) wait for the app list.
@@ -12153,6 +12154,7 @@
       me: { name: meName(), max: ME_MAX },
       greet: SOLO ? null : { on: greetOn() },
       tips: SOLO ? null : { on: !!tipsRead().on },
+      zoom: SOLO ? null : { on: zoomOn() },   // ZOOM-1 (this device)
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
       night: window.orosNight ? window.orosNight.snapshot() : null,   // NIGHT-1, this device
@@ -12226,6 +12228,7 @@
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;
       case "tips":         tipsSetUser(!!value); return;
+      case "zoom":         zoomSetUser(!!value); return;   // ZOOM-1
       case "wpland:new":   wpLandNewShape(); settingsNotify(); return;
       case "wpland:style":
         if (WP_LAND_STYLES.indexOf(value) >= 0) { wpLandNewShape({ style: value }); settingsNotify(); }
@@ -13163,6 +13166,168 @@
     return { on: mtOn(), slots: mtSlotsHere(), open: mt.hidden.length };
   }
 
+  // ---------- 10z. App zoom (ZOOM-1) ----------
+  // An app grows out of what it was opened from (a desktop shortcut, a
+  // Dock icon, a menu or search row) and, when it closes, a panel the
+  // size of the app shrinks back into its Dock icon, its desktop
+  // shortcut or the Dock, wherever the Dock sits (only rectangles are
+  // read, never a side). On by default; Settings › Appearance turns it
+  // off on this device (oros-zoom = "0", device-local, never synced).
+  // Never with reduced motion, on a low battery (where the browser
+  // tells: not charging and under 20 %, as seasonal.js), in a
+  // single-app window, side by side, or with the tab hidden. Transform
+  // and opacity only (Web Animations API, 240 ms open / 200 ms close);
+  // nothing waits for it and no state depends on it: openApp and
+  // returnToDesktop do their work first, the motion is drawn after.
+  var ZOOM_KEY = "oros-zoom", ZOOM_OPEN_MS = 240, ZOOM_CLOSE_MS = 200;
+  var zoom = { from: null, anim: null, ghost: null, lowBat: false, batAsked: false, wired: false };
+  function zoomOn() {
+    try { return localStorage.getItem(ZOOM_KEY) !== "0"; } catch (e) { return true; }
+  }
+  function zoomSetUser(on) {
+    try {
+      if (on) localStorage.removeItem(ZOOM_KEY);
+      else localStorage.setItem(ZOOM_KEY, "0");
+    } catch (e) {}
+    if (!on) zoomStop();
+    settingsNotify();
+  }
+  function zoomReduced() {
+    try { return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) { return false; }
+  }
+  function zoomBattery() {
+    if (zoom.batAsked) return;
+    zoom.batAsked = true;
+    var nav = window.navigator || {};
+    if (typeof nav.getBattery !== "function") return;
+    try {
+      nav.getBattery().then(function (b) {
+        function chk() { zoom.lowBat = !b.charging && b.level < 0.2; }
+        b.addEventListener("levelchange", chk);
+        b.addEventListener("chargingchange", chk);
+        chk();
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  function zoomCan() {
+    zoomBattery();
+    if (SOLO || !zoomOn() || zoom.lowBat || document.hidden || zoomReduced()) return false;
+    if (mt.side) return false;                                   // side by side: two frames, no zoom
+    return typeof Element !== "undefined" && typeof Element.prototype.animate === "function";
+  }
+  function zoomStop() {
+    if (zoom.anim) { try { zoom.anim.cancel(); } catch (e) {} zoom.anim = null; }
+    if (zoom.ghost) { zoom.ghost.remove(); zoom.ghost = null; }
+  }
+  function zoomBox(r) { return { left: r.left, top: r.top, width: r.width, height: r.height }; }
+  // A rectangle worth growing from or shrinking into: on screen, small.
+  function zoomUsable(r) {
+    if (!r || !(r.width > 0) || !(r.height > 0)) return false;
+    var vw = window.innerWidth || 0, vh = window.innerHeight || 0;
+    if (r.left + r.width <= 0 || r.top + r.height <= 0 || r.left >= vw || r.top >= vh) return false;
+    return r.width * r.height < vw * vh * 0.35;
+  }
+  function zoomVisible(el) {
+    if (!el || !el.isConnected) return null;
+    var cs = window.getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden" || +cs.opacity === 0) return null;
+    var r = el.getBoundingClientRect();
+    return zoomUsable(r) ? zoomBox(r) : null;
+  }
+  // The app's own icon: the Dock first, then the desktop.
+  function zoomIcon(id) {
+    if (!id || !/^[a-z0-9_-]+$/i.test(id)) return null;
+    var dock = document.getElementById("ld-dock");
+    if (dock && dock.classList.contains("ld-hidden")) dock = null;
+    var sel = '[data-app="' + id + '"]';
+    return (dock && zoomVisible(dock.querySelector(sel))) ||
+           zoomVisible(document.querySelector("#ld-desk " + sel));
+  }
+  // Remember what was clicked or tapped (a click also comes from Enter
+  // or Space on a focused button), as a rectangle: a menu row is gone
+  // by the time the app opens.
+  function zoomWire() {
+    if (zoom.wired || SOLO) return;
+    zoom.wired = true;
+    document.addEventListener("click", function (e) {
+      var t = e.target && e.target.closest ? e.target.closest("[data-app], button, a, [role=button], [role=option], [role=menuitem], li") : null;
+      if (!t || t.closest("#oros-running")) { zoom.from = null; return; }
+      var r = t.getBoundingClientRect();
+      zoom.from = zoomUsable(r) ? { r: zoomBox(r), at: Date.now() } : null;
+    }, true);
+  }
+  // Open: the running view grows from the source to its own place.
+  function zoomOpen(app) {
+    var f = zoom.from;
+    zoom.from = null;
+    zoomStop();
+    if (!zoomCan()) return;
+    var run = document.getElementById("oros-running");
+    if (!run) return;
+    var to = run.getBoundingClientRect();
+    if (!(to.width > 0) || !(to.height > 0)) return;
+    var src = (f && Date.now() - f.at < 1500) ? f.r : zoomIcon(app && app.id);
+    var start;
+    if (src) {
+      start = "translate(" + (src.left - to.left) + "px," + (src.top - to.top) + "px) scale(" +
+        Math.max(0.02, src.width / to.width) + "," + Math.max(0.02, src.height / to.height) + ")";
+    } else {
+      start = "translate(" + (to.width * 0.04) + "px," + (to.height * 0.04) + "px) scale(0.92)";   // nothing to grow from: a short lift
+    }
+    try {
+      zoom.anim = run.animate([
+        { transformOrigin: "0 0", transform: start, opacity: 0, borderRadius: "18px" },
+        { transformOrigin: "0 0", opacity: 1, offset: 0.45 },
+        { transformOrigin: "0 0", transform: "none", opacity: 1, borderRadius: "0px" }
+      ], { duration: ZOOM_OPEN_MS, easing: "cubic-bezier(.2,.8,.2,1)" });
+      var a = zoom.anim;
+      a.onfinish = a.oncancel = function () { if (zoom.anim === a) zoom.anim = null; };
+    } catch (e) { zoom.anim = null; }
+  }
+  // Close: the app is gone already; a panel of its size shrinks into
+  // its icon, else into the Dock (or its edge strip), else downwards.
+  function zoomRect() {
+    var run = document.getElementById("oros-running");
+    if (!run || !run.classList.contains("active")) return null;
+    var r = run.getBoundingClientRect();
+    return (r.width > 0 && r.height > 0) ? zoomBox(r) : null;
+  }
+  function zoomClose(app, from) {
+    zoomStop();
+    zoom.from = null;
+    if (!from || !zoomCan()) return;
+    var dock = document.getElementById("ld-dock"), bar = dock && !dock.classList.contains("ld-hidden") ? (dock.querySelector(".ld-bar") || dock) : null;
+    var to = zoomIcon(app && app.id) || zoomVisible(bar) || zoomVisible(document.getElementById("ld-edge"));
+    if (!to) {
+      var vw = window.innerWidth || from.width, vh = window.innerHeight || from.height;
+      to = { left: vw / 2 - 24, top: vh - 56, width: 48, height: 48 };
+    }
+    var g = document.createElement("div");
+    g.id = "oros-zoom";
+    g.setAttribute("aria-hidden", "true");
+    g.style.left = from.left + "px";
+    g.style.top = from.top + "px";
+    g.style.width = from.width + "px";
+    g.style.height = from.height + "px";
+    document.body.appendChild(g);
+    zoom.ghost = g;
+    var end = "translate(" + (to.left - from.left) + "px," + (to.top - from.top) + "px) scale(" +
+      Math.max(0.02, to.width / from.width) + "," + Math.max(0.02, to.height / from.height) + ")";
+    try {
+      var a = g.animate([
+        { transform: "none", opacity: 0.95, borderRadius: "0px" },
+        { opacity: 0.85, offset: 0.6 },
+        { transform: end, opacity: 0, borderRadius: "40px" }
+      ], { duration: ZOOM_CLOSE_MS, easing: "cubic-bezier(.4,0,.6,1)" });
+      zoom.anim = a;
+      a.onfinish = a.oncancel = function () {
+        if (zoom.anim === a) zoom.anim = null;
+        if (zoom.ghost === g) zoom.ghost = null;
+        g.remove();
+      };
+    } catch (e) { g.remove(); zoom.ghost = null; }
+  }
+
   function openApp(app, at) {
     if (app && app._alias) { window.__orosOpenAt(app._alias, null); return; }   // APP-ALIAS menu search row
     // BOOT-L1: an app opened before the late bundle is in (a launch
@@ -13223,11 +13388,13 @@
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations pause under an app
     if (window.orosWxDesk) window.orosWxDesk.refresh();       // WX-DESK-1: weather pauses too
     wpLandRefresh();
+    zoomOpen(app);   // ZOOM-1: drawn after the work is done
   }
 
   function returnToDesktop() {
     if (SOLO && soloHome()) return;   // a single app has no desktop
     var prev = state.running;
+    var zoomFromRect = prev && !mt.side ? zoomRect() : null;   // ZOOM-1: the app's place, before it goes
     mtSideEnd(true);   // home ends side by side; the side app waits behind
     state.running = null;
     gameLastNote(null, false);   // GR-1
@@ -13247,6 +13414,7 @@
     wpLandRefresh();   // the desktop may have changed while hidden
     tourMaybe();   // a first-run tour put off by a launch-param app
     tipEnd();
+    zoomClose(prev, zoomFromRect);   // ZOOM-1: shrinks into its icon or the Dock
   }
 
   // ---------- 10e. CalDAV / CardDAV background pass (CalDAV wave 6) ----------

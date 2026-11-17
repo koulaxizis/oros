@@ -18,7 +18,7 @@
   // (its key cannot travel) stay on the device.
   // The menu's app list rides in the launcher's "menu" slice.
   var SCOPE = {
-    theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device",
+    theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device", zoom: "device",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
     fopen: "all", keys: "all", multitask: "device", pcfiles: "device", clip: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", night: "device", backupenc: "device", caldav: "device", gate: "device", helper: "all"
@@ -59,6 +59,7 @@
     ["dock-magnify", "appearance", "k.magnify", "k.dock", "k.on", "dock"],
     ["dock-autohide", "appearance", "k.autohide", "k.dock", "k.on", "dock"],
     ["dock-over", "appearance", "k.over", "k.dock", "k.on", "dock"],
+    ["zoom", "appearance", "a.zoom"],
     ["pet", "appearance", "a.pet"],
     ["fm-mine", "fonts", "fm.mine"],
     ["fm-install", "fonts", "fm.install", "fm.mine"],
@@ -250,6 +251,7 @@
       "a.tips": "Show a tip the first time I open an app", "a.tips.hint": "One short line from the app's guide, once per app. Turning it on again shows every app's tip again. Only on this device.",
       "a.greet": "Greet me when orOS starts", "a.greet.hint": "Once a day, at the first start: good morning, the date and what Today holds. Only on this device.",
       "a.me.hint": "Only for greetings: at the start, in Today and on the Start page. It stays on your devices (synced encrypted) and never goes to the Assistant or anywhere else. Leave it empty for none.",
+      "a.zoom": "Animate apps opening and closing", "a.zoom.hint": "An app grows out of its icon and shrinks back into it or into the Dock. Not with reduced motion or on a low battery. Only on this device.",
       "a.pet": "Screen pet",
       "a.pet.hint": "A tiny companion on your desktop. Feed it, pet it, let it sleep.",
       "z.title": "Seasonal decorations", "z.on": "Decorate the desktop in season",
@@ -1320,6 +1322,7 @@
       "w.icons": "icons icon pack tiles look",
       "w.greet": "greeting good morning welcome start hello",
       "w.tips": "tips tip hints first open guide help",
+      "w.zoom": "animation motion open close zoom window genie effect",
       "w.wallpaper": "background desktop picture image",
       "w.fm-mine": "fonts font manager typeface typography greek polytonic coverage licence license specimen",
       "w.fm-install": "add install font file ttf otf woff woff2 upload",
@@ -1545,6 +1548,7 @@
       "a.tips": "Συμβουλή την πρώτη φορά που ανοίγω μια εφαρμογή", "a.tips.hint": "Μία σύντομη γραμμή από τον οδηγό της εφαρμογής, μία φορά για κάθε εφαρμογή. Αν το ξανανοίξεις, ξαναβγαίνουν όλες. Μόνο σε αυτή τη συσκευή.",
       "a.greet": "Χαιρετισμός στην εκκίνηση", "a.greet.hint": "Μία φορά τη μέρα, στο πρώτο άνοιγμα: καλημέρα, η ημερομηνία και ό,τι έχει το Σήμερα. Μόνο σε αυτή τη συσκευή.",
       "a.me.hint": "Μόνο για τον χαιρετισμό: στην εκκίνηση, στο Σήμερα και στην Αρχική σελίδα. Μένει στις συσκευές σου (συγχρονίζεται κρυπτογραφημένο) και δεν πηγαίνει ποτέ στον Βοηθό ή αλλού. Άφησέ το κενό αν δεν θέλεις.",
+      "a.zoom": "Κίνηση στο άνοιγμα και κλείσιμο εφαρμογών", "a.zoom.hint": "Η εφαρμογή βγαίνει από το εικονίδιό της και ξαναμπαίνει σε αυτό ή στο Dock. Όχι με μειωμένη κίνηση ή χαμηλή μπαταρία. Μόνο σε αυτή τη συσκευή.",
       "a.pet": "Συντροφάκι",
       "a.pet.hint": "Ένας μικρός σύντροφος στην επιφάνεια εργασίας. Τάισέ το, χάιδεψέ το, άφησέ το να κοιμηθεί.",
       "z.title": "Θεματική διακόσμηση", "z.on": "Διακόσμηση του desktop στις γιορτές",
@@ -2614,6 +2618,7 @@
       "w.icons": "εικονίδια πακέτο εικονιδίων όψη",
       "w.greet": "χαιρετισμός καλημέρα καλωσόρισμα εκκίνηση γεια",
       "w.tips": "συμβουλές συμβουλή υποδείξεις πρώτο άνοιγμα οδηγός βοήθεια",
+      "w.zoom": "κίνηση animation άνοιγμα κλείσιμο εφέ παράθυρο ζουμ",
       "w.wallpaper": "φόντο επιφάνεια εργασίας εικόνα",
       "w.fm-mine": "γραμματοσειρές γραμματοσειρά τυπογραφία φόντ ελληνικά πολυτονικά κάλυψη άδεια δείγμα",
       "w.fm-install": "προσθήκη εγκατάσταση αρχείο γραμματοσειράς ttf otf woff woff2",

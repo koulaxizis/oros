@@ -504,6 +504,14 @@
       host.appendChild(cb2);
     }
 
+    // ZOOM-1: apps grow out of their icon and shrink back (this device)
+    if (s.zoom) {
+      var cz = card(null);
+      cz.appendChild(row(t("a.zoom"), switchBtn(!!s.zoom.on, "zoom", function (v) { set("zoom", v); }, t("a.zoom")),
+        { scope: "zoom", hint: t("a.zoom.hint") }));
+      host.appendChild(cz);
+    }
+
     if (s.pet.available) {
       var c4 = card(null);
       c4.appendChild(row(t("a.pet"), switchBtn(s.pet.on, "pet", function (v) { set("pet", v); }, t("a.pet")),
