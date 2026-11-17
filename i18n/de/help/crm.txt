@@ -22,6 +22,8 @@ Eine Wiedervorlage hat einen Tag, eine optionale Uhrzeit und das, was zu tun ist
 
 Offene Wiedervorlagen erscheinen auch in [Heute](app:today), wo das Häkchen sie in CRM erledigt, und im [Kalender](app:calendar) unter `Kunden`, zusammen mit dem erwarteten Abschlusstag offener Deals. Ein Kontakt, der Person eines Kunden ist, bekommt in [Kontakte](app:contacts) eine Taste `Kunde:`.
 
+`An eine App senden…` in einer anderen orOS-App kann einen Text hierher schicken: Ein neuer Verlaufseintrag der Art `Notiz` öffnet sich damit, für den hier offenen Kunden (oder wähle einen anderen). Nichts wird gespeichert, bevor du `Speichern` drückst.
+
 ## Pipeline
 Ein Deal hat einen Titel, einen Wert, eine Phase (`Neu`, `Kontaktiert`, `Angebot`, `Verhandlung`, `Gewonnen`, `Verloren`), eine Chance in Prozent und einen erwarteten Abschlusstag. Auf einem breiten Bildschirm ziehst du eine Karte in eine andere Spalte. Auf dem Telefon wählst du oben eine Phase und verschiebst einen Deal mit seiner Taste `⋯`. Die Summen zeigen den Wert und den gewichteten Wert (Wert × Chance).
 

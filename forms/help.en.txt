@@ -6,6 +6,8 @@ Forms makes surveys, sign-up sheets and order forms: questions of many kinds, pa
 - Give the form a title and, if you like, a description. They show at the top of the form.
 - Every change is saved as you type, and syncs to your other devices like the rest of orOS.
 
+`Send to an app…` in another orOS app can send a list or a text here: a new form opens with one short-answer question for each item or line (up to 100). Change the questions as you like; nothing is shared until you share it.
+
 ## Questions
 - `Add question` opens the list of kinds. The new one goes after the question that is open, or at the end.
 - Kinds: `Short answer`, `Paragraph`, `E-mail`, `Phone`, `Number`, `Date`, `Time`, `One choice`, `Checkboxes`, `Drop-down`, `Linear scale` (for example 1 to 5, or 0 to 10 with a label at each end), `Rating` (stars), `Yes / No` and `Grid` (rows and columns, one or more answers per row).

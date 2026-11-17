@@ -115,7 +115,7 @@
       "from.url": "From Bookmarks", "from.vcard": "From Contacts", "from.event": "From Calendar",
       "pick.search": "Search…", "pick.none": "Nothing here yet.", "pick.noMatch": "No matches.",
       "pick.title.url": "Pick a bookmark", "pick.title.vcard": "Pick a contact", "pick.title.event": "Pick an event",
-      "pick.allDay": "all day", "pick.filled": "Filled in from {app}",
+      "pick.allDay": "all day", "pick.filled": "Filled in from {app}", "pick.sent": "A new code from what you sent: check it, then save",
       "app.bookmarks": "Bookmarks", "app.contacts": "Contacts", "app.calendar": "Calendar",
       "mine.empty": "Save a code to keep it here.",
       "mine.rename": "Rename {name}", "mine.copy": "Copy {name}", "mine.del": "Delete {name}",
@@ -213,7 +213,7 @@
       "from.url": "Από Σελιδοδείκτες", "from.vcard": "Από Επαφές", "from.event": "Από Ημερολόγιο",
       "pick.search": "Αναζήτηση…", "pick.none": "Δεν υπάρχει τίποτα ακόμα.", "pick.noMatch": "Κανένα αποτέλεσμα.",
       "pick.title.url": "Διάλεξε σελιδοδείκτη", "pick.title.vcard": "Διάλεξε επαφή", "pick.title.event": "Διάλεξε συμβάν",
-      "pick.allDay": "ολοήμερο", "pick.filled": "Συμπληρώθηκε από: {app}",
+      "pick.allDay": "ολοήμερο", "pick.filled": "Συμπληρώθηκε από: {app}", "pick.sent": "Νέος κωδικός από ό,τι έστειλες: έλεγξέ τον και αποθήκευσέ τον",
       "app.bookmarks": "Σελιδοδείκτες", "app.contacts": "Επαφές", "app.calendar": "Ημερολόγιο",
       "mine.empty": "Αποθήκευσε ένα QR για να το κρατήσεις εδώ.",
       "mine.rename": "Μετονομασία: {name}", "mine.copy": "Αντίγραφο: {name}", "mine.del": "Διαγραφή: {name}",
@@ -1324,7 +1324,35 @@
   // app (BR-W8-6). `date` (YYYY-MM-DD) picks one occurrence of a
   // repeating event. Unknown source or id → a toast, nothing changes.
   var TARGET_TYPE = { bookmarks: "url", contacts: "vcard", calendar: "event" };
+  // "Send to an app" (BR-SEND): { make: { type: "text" | "url", fields } }
+  // from any app; the same NEW unsaved code as above.
+  function newDraft(ty, fields, label) {
+    storeSavedNow();
+    var was = { cur: prefs.cur, draft: clone(prefs.draft), work: clone(work) };
+    var f = {};
+    f[ty] = P.normFields(ty, fields);
+    prefs.cur = null;
+    prefs.draft = { type: ty, fields: f, st: clone(work.st) };
+    work = clone(prefs.draft);
+    savePrefs();
+    renderAll();
+    undoToast(label, function () {
+      prefs.cur = was.cur;
+      prefs.draft = was.draft;
+      loadCurrent();
+      if (!was.cur) work = was.work;
+      savePrefs();
+      renderAll();
+    });
+  }
   function openTarget(tg) {
+    var mk = tg && tg.make;
+    if (mk && typeof mk === "object" && (mk.type === "text" || mk.type === "url") && mk.fields && typeof mk.fields === "object") {
+      if (mk.type === "url" && !/^https?:\/\//i.test(String(mk.fields.url || ""))) return;
+      [].forEach.call(document.querySelectorAll("dialog[open]"), function (d) { d.close(); });
+      newDraft(mk.type, mk.fields, t("pick.sent"));
+      return;
+    }
     var ty = tg && typeof tg.from === "string" && TARGET_TYPE.hasOwnProperty(tg.from) ? TARGET_TYPE[tg.from] : null;
     if (!ty || typeof tg.id !== "string") return;
     var row = null;
@@ -1336,23 +1364,7 @@
       fields.date = tg.date;
       if (fields.dateEnd && fields.dateEnd <= tg.date) fields.dateEnd = "";
     }
-    storeSavedNow();
-    var was = { cur: prefs.cur, draft: clone(prefs.draft), work: clone(work) };
-    var f = {};
-    f[ty] = P.normFields(ty, fields);
-    prefs.cur = null;
-    prefs.draft = { type: ty, fields: f, st: clone(work.st) };
-    work = clone(prefs.draft);
-    savePrefs();
-    renderAll();
-    undoToast(t("pick.filled", { app: t("app." + tg.from) }), function () {
-      prefs.cur = was.cur;
-      prefs.draft = was.draft;
-      loadCurrent();
-      if (!was.cur) work = was.work;
-      savePrefs();
-      renderAll();
-    });
+    newDraft(ty, fields, t("pick.filled", { app: t("app." + tg.from) }));
   }
   window.__orosOpenAt = openTarget;
 

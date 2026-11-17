@@ -49,6 +49,8 @@ Base keeps records with structure, like a small database: a catalogue of your bo
 - Base menu (`⋯`) › Import tables adds the tables to the open base instead.
 - In [Spreadsheet](app:spreadsheet), Send to an app › Base takes the selected cells (or the whole sheet) as a new table. You pick the base before anything is added.
 
+A list sent from another orOS app with `Send to an app…` (such as a To-Do list or a shopping list) opens in the same `Add as a table` window: one record per item, with a Name field and, when the items have notes, a Notes field.
+
 ## Export
 - Table menu (`⋯`) › Export this view as CSV saves the records and fields you see, in that order.
 - Table menu (`⋯`) › Print or save as PDF prints the view as a table (the records and fields you see, up to 5,000 records); the browser's print dialog also saves a PDF.

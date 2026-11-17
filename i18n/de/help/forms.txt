@@ -6,6 +6,8 @@ Formulare erstellt Umfragen, Anmeldelisten und Bestellformulare: Fragen vieler A
 - Gib dem Formular einen Titel und, wenn du magst, eine Beschreibung. Beides steht oben im Formular.
 - Jede Änderung wird beim Tippen gespeichert und wie der Rest von orOS mit deinen anderen Geräten synchronisiert.
 
+`An eine App senden…` in einer anderen orOS-App kann eine Liste oder einen Text hierher schicken: Ein neues Formular öffnet sich mit einer Kurzantwort-Frage pro Eintrag oder Zeile (bis 100). Ändere die Fragen nach Belieben; nichts wird geteilt, bevor du es teilst.
+
 ## Fragen
 - `Frage hinzufügen` öffnet die Liste der Arten. Die neue Frage kommt nach der geöffneten Frage oder ans Ende.
 - Arten: `Kurzantwort`, `Absatz`, `E-Mail`, `Telefon`, `Zahl`, `Datum`, `Uhrzeit`, `Eine Auswahl`, `Kontrollkästchen`, `Drop-down`, `Lineare Skala` (zum Beispiel 1 bis 5 oder 0 bis 10 mit einer Beschriftung an jedem Ende), `Bewertung` (Sterne), `Ja / Nein` und `Raster` (Zeilen und Spalten, eine oder mehrere Antworten pro Zeile).

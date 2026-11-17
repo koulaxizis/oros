@@ -5073,6 +5073,14 @@
     if (x && typeof x === "object" && x.openFile) { if (recFile) recFile.openTarget(x.openFile); return !!recFile; }
     if (!x || typeof x !== "object" || document.querySelector("dialog[open]")) return false;
     var id = function (v) { return typeof v === "string" && C.ID_RE.test(v) ? v : ""; };
+    // "Send to an app" (BR-SEND): { logNote: { text ≤ 2000 } } opens a
+    // new history entry of kind Note with that text; the customer is
+    // picked in the window (the open one first); nothing is saved
+    // before Save.
+    if (x.logNote && typeof x.logNote === "object" && typeof x.logNote.text === "string" && x.logNote.text.trim()) {
+      logEditor(null, prefs.sel || "", { k: "note", text: x.logNote.text.slice(0, 2000) });
+      return true;
+    }
     // Today's "Done" tick: the same code as the Agenda's tick (Undo,
     // "Log it"); a follow-up already done or gone only shows a note.
     if (x.done && typeof x.done === "object") {
