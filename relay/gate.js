@@ -1683,7 +1683,8 @@ export class GateBox {
   async webSocketMessage(ws, msg) {
     if (msg === "ping") { const a = attOf(ws); a.lt = Date.now(); setAtt(ws, a); try { ws.send("pong"); } catch (e) {} return; }
     if (msg === "v0" || msg === "v1") {             // the device's screen: shown or hidden
-      const a = attOf(ws); a.v = msg === "v1" ? 1 : 0; a.vt = a.lt = Date.now(); setAtt(ws, a);
+      const a = attOf(ws), was = a.v; a.v = msg === "v1" ? 1 : 0; a.vt = a.lt = Date.now(); setAtt(ws, a);
+      if (a.v && !was) await this.sendHeld([ws]);    // 7.48.00: deletions waiting for a screen
       return;
     }
     if (typeof msg !== "string" || msg.length > GATE_LIMITS.replyBytes) {
@@ -1696,13 +1697,26 @@ export class GateBox {
     if (o && typeof o.snap === "string" && o.r === undefined) { await this.putCopy(ws, o.snap); return; }
     if (o && typeof o.fidx === "string" && o.r === undefined) { await this.putFileIndex(ws, o.fidx); return; }
     if (o && o.fdrop === 1 && o.r === undefined) { await this.dropFromDevice(ws); return; }
-    if (o && Array.isArray(o.cqa) && o.r === undefined) { await this.queueDone(ws, o.cqa); return; }
+    if (o && Array.isArray(o.cqa) && o.r === undefined) {
+      await this.queueDone(ws, o.cqa);
+      if (Array.isArray(o.cqh) && o.cqh.length) await this.markHeld(ws, o.cqh);
+      return;
+    }
     if (!o || typeof o.r !== "string") return;
     const w = this.wait.get(o.r);
     // 6.01.02: a late answer. The box gave up on it and queued the change
     // under the same id; the device decided it after all (done, or refused:
     // app off, paused), so it waits no more. Only "late" (never started) keeps it.
-    if (!w) { if (!(o.ok === false && o.c === "late") && /^[A-Za-z0-9_-]{16}$/.test(o.r)) await this.st.delete("q:" + o.r); return; }
+    // 7.48.00: a late __held (nobody at that screen) keeps it too, now for a device on screen.
+    if (!w) {
+      if (o.ok === false && o.c === "__held" && /^[A-Za-z0-9_-]{16}$/.test(o.r)) {
+        const row = await this.st.get("q:" + o.r);
+        if (row) { row.hd = 1; delete row.nb; await this.st.put("q:" + o.r, row); await this.sendHeld(this.sockets().filter((s) => s !== ws)); }
+        return;
+      }
+      if (!(o.ok === false && o.c === "late") && /^[A-Za-z0-9_-]{16}$/.test(o.r)) await this.st.delete("q:" + o.r);
+      return;
+    }
     this.wait.delete(o.r);
     clearTimeout(w.timer);
     w.done(o);
@@ -1913,6 +1927,30 @@ export class GateBox {
     const keys = ids.filter((x) => typeof x === "string" && /^[A-Za-z0-9_-]{8,24}$/.test(x)).slice(0, GATE_LIMITS.queue).map((x) => "q:" + x);
     if (keys.length) await this.st.delete(keys);
   }
+  // 7.48.00 (Chris 2026-11-17 «Η ερώτηση δεν εμφανίστηκε ποτέ»): a
+  // deletion that a device could not ask about (nobody at its screen: the
+  // background host, a hidden window, the lock) is marked hd and offered
+  // to the devices on screen now and to each one that comes on screen.
+  // Only these rows go twice (a deletion runs only after a Delete there).
+  async markHeld(ws, ids) {
+    const m = await this.meta();
+    if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    let n = 0;
+    for (const id of ids.filter((x) => typeof x === "string" && /^[A-Za-z0-9_-]{8,24}$/.test(x)).slice(0, GATE_LIMITS.queue)) {
+      const row = await this.st.get("q:" + id);
+      if (row && !row.hd) { row.hd = 1; await this.st.put("q:" + id, row); n++; }
+    }
+    if (n) await this.sendHeld(this.sockets().filter((s) => s !== ws));
+  }
+  async sendHeld(socks) {
+    const on = (socks || this.sockets()).filter((s) => attOf(s).v);
+    if (!on.length) return;
+    const q = await this.st.list({ prefix: "q:" }), hd = new Map();
+    q.forEach((v, k) => { if (v && v.hd) hd.set(k, v); });
+    const items = queueFor(hd, Date.now());
+    if (!items.length) return;
+    for (const s of on) { try { s.send(JSON.stringify({ cq: items })); } catch (e) {} }
+  }
   // A call while no device is open: reads from the copy, changes wait
   // in the queue (since 6.05.02 Budget deletions and transfers too;
   // deleting other apps' items by ref still waits for an open device).
@@ -2017,7 +2055,7 @@ export class GateBox {
     if (pl.busy.length) out.on_a_device_now = pl.busy.slice(0, 20);
     return { ok: true, c: JSON.stringify(out) };
   }
-  async queueChange(name, args, kRaw, now, qidWant, note) {
+  async queueChange(name, args, kRaw, now, qidWant, note, hd) {
     const q = await this.st.list({ prefix: "q:" });
     if (q.size >= GATE_LIMITS.queue) return { ok: false, c: "Too many changes are waiting for orOS to open (" + GATE_LIMITS.queue + "). Ask the owner to open orOS." };
     const qid = typeof qidWant === "string" && /^[A-Za-z0-9_-]{16}$/.test(qidWant) ? qidWant : rand43().slice(0, 16);
@@ -2029,6 +2067,7 @@ export class GateBox {
     // 6.01.02: a call that timed out may still finish on the device that
     // got it; no other device gets it for lateMs (its late answer ends it).
     if (qid === qidWant) row.nb = now + GATE_LIMITS.lateMs;
+    if (hd) row.hd = 1;                           // 7.48.00: a deletion waiting for a screen
     await this.st.put("q:" + qid, row);
     const out = { queued: true, pending: true, change_id: qid, note };
     if (name === "create_items" && args && Array.isArray(args.items)) {
@@ -2158,6 +2197,16 @@ export class GateBox {
       // request is not lost.
       const late = await this.closedCall(p.name, args, await this.unwrapK(tok), Date.now(), ans.rid);
       ans = { ok: late.ok, e: late.ok ? undefined : "timeout", c: typeof late.c === "string" ? late.c.split("orOS is closed").join("orOS did not answer in time (asleep in the background or busy)") : late.c };
+    }
+    else if (!ans.ok && ans.c === "__held") {
+      // 7.48.00: the device that got this deletion had nobody at its screen
+      // (the background host, a hidden window) or no answer in 20 s. It is
+      // not refused: it waits like a closed-orOS deletion, for the owner's
+      // Delete on a device on screen (offered now, and when one comes on screen).
+      const kRaw = await this.unwrapK(tok);
+      ans = kRaw ? await this.queueChange(p.name, args, kRaw, Date.now(), null, "Nobody answered on the owner's screen, so this deletion waits, encrypted, for the owner's Delete on a device where orOS is on screen (one question for the whole call). Nothing is deleted without it. Tell the owner to look at orOS and confirm. undo_change with change_id cancels it.", 1)
+                 : { ok: false, c: "Nobody answered on the owner's screen and the deletion could not be kept for later. Nothing was deleted. Ask the owner to have orOS on screen and try once more." };
+      if (ans.ok) await this.sendHeld();
     }
     else if (ans.ok && !(await this.st.get("kw:" + await sha256hex(tok)))) {
       const kRaw = await this.keyFromDevice();          // a link made before 5.80.00: wrap the key for it now
