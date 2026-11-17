@@ -106,10 +106,13 @@ def main():
 
     def loaded(root):
         t = texts(root)
-        return all(h in t for h in ("orOS", "NULL JSFX")) and any(x.startswith("Repositories updated") for x in t)
+        return "orOS" in t and "orOS Drive" in t and any(x.startswith("Repositories updated") for x in t)
 
-    wait_for(loaded, "the orOS and NULL JSFX lists")
+    wait_for(loaded, "the verified orOS list")
     shot("list-top")
+    # The other projects are further down the one list (a small screen).
+    scroll_to("NULL JSFX")
+    scroll_to("Remote for DAWs")
     root, _ = scroll_to("Noxpress")
     shot("list-noxpress")
     for name in ("Site Bridge", "Live Operator"):
@@ -126,7 +129,7 @@ def main():
     if row is None:
         raise SystemExit("no row for Remote for Mixers")
     button = [k for k in row.iter("node") if k.get("class") == "android.widget.Button"][0]
-    if button.get("text") != "Install":
+    if button.get("text", "").lower() != "install":  # Material buttons show it in capitals
         raise SystemExit(f"button says {button.get('text')!r}, expected Install")
     adb("shell", "input", "tap", *map(str, center(button)))
     shot("install-tapped")
