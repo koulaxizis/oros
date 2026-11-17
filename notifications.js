@@ -660,6 +660,12 @@
     // Sticky Notes — "stickies:<noteId>": a ring opens the desktop
     // with that note in front (its editor on a phone).
     stickies: function (id) { if (typeof window.__orosOpenStickies === 'function') window.__orosOpenStickies(String(id)); },
+    // Kanban — "kanban:<board>/<column>/<card>": the due-cards reminder
+    // opens its earliest card.
+    kanban:   function (p) {
+      var k = String(p).split('/');
+      if (k.length === 3 && typeof window.__orosOpenKanbanCard === 'function') window.__orosOpenKanbanCard(k[0], k[1], k[2]);
+    },
     // Maps — "maps:park": the parking reminder shows the parked car.
     maps:     function (what) {
       if (what === 'park' && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('maps', { park: true });

@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.42.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.43.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -1756,6 +1756,7 @@
       tickSafe("mealsCheckTick", mealsCheckTickThrottled); // Meal Planner: pantry best-before reminder (60s throttle)
       tickSafe("budgetCheckTick", budgetCheckTickThrottled); // Budget: subscription charge reminders (60s throttle)
       tickSafe("crmCheckTick", crmCheckTickThrottled);     // CRM: follow-up reminders (60s throttle)
+      tickSafe("kanbanCheckTick", kanbanCheckTickThrottled); // Kanban: cards due or overdue, from 09:00 (60s throttle)
       tickSafe("contactCrmSync", contactCrmSyncThrottled); // CT-CRM: linked contacts ↔ CRM customers (60s throttle)
       tickSafe("keepCheckTick", keepCheckTickThrottled);   // Contacts: keep in touch, "reach out" (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
@@ -2308,6 +2309,46 @@
     if (JSON.stringify(r.next) !== JSON.stringify(seen)) {
       try { localStorage.setItem(CRM_NOTIFIED_KEY, JSON.stringify(r.next)); } catch (e) {}
     }
+  }
+
+  // Kanban — cards due today or overdue (BR-PHONE v12, gap review
+  // proposal 3). Reads "oros-kanban-data" directly (works with the app
+  // CLOSED) through kanban/core.js dueCards (the Calendar feed and
+  // Today use it too), without each board's last ("Done") column and
+  // archived boards. From 09:00 on, once a day, again when the count
+  // grows; key "due-<ymd>-<n>" is the phone's and Web Push's row id
+  // (phone.js kanbanDue), so the phone's ring and this notice are one.
+  // Said in today's summary → silent. Click → the earliest card.
+  var KANBAN_HOUR = 9;
+  function kanbanCheckTick() {
+    var KC = window.OrosKanbanCore, P = window.orosPhone;
+    if (!KC || !P || typeof P.kanbanDue !== "function") return;   // stale bundle — silent
+    if (new Date().getHours() < KANBAN_HOUR) return;
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem("oros-kanban-data")); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.boards) || !raw.boards.length) return;
+    var today = sysYmd(), s = P.kanbanDue(KC, raw, today);
+    if (!s.count) return;
+    if (todayAbsorbs("kanban")) return;                 // said in today's summary
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var title = window.t("app.kanban");
+    if (title === "app.kanban") title = "Kanban";       // missing-key fallback
+    N.emit({
+      ns: "kanban",
+      key: "due-" + today + "-" + s.count,
+      type: "due",
+      title: title,
+      body: trn("rem.kanban", s.count),
+      deepLink: s.link
+    });
+  }
+  var kanbanLastTick = 0;
+  function kanbanCheckTickThrottled() {
+    var now = Date.now();
+    if (now - kanbanLastTick < 60000) return;
+    kanbanLastTick = now;
+    kanbanCheckTick();
   }
 
   var crmLastTick = 0;

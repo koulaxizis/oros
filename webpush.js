@@ -10,7 +10,8 @@
 //
 // Rows: the same reminders, keys and links the shell engines use
 // (phone.js reminderRows: Clock alarms and timers, Water, To-Do,
-// Habits, Health) plus Calendar reminders (calendarRows). sw.js shows
+// Habits, Health, Plants, Pet care, Garage, Chores, CRM, Billing,
+// Kanban, Sticky Notes) plus Calendar reminders (calendarRows). sw.js shows
 // them with tag = dedupKey, and not at all while an orOS window is on
 // screen (the in-app engine rings then).
 //
