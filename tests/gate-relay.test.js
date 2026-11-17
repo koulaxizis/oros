@@ -245,9 +245,9 @@ test("mcp: 401 with resource metadata, then initialize and tools/list", async ()
   const list = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 2, method: "tools/list" })).json();
   assert.deepEqual(list.result.tools.map((x) => x.name), ["list_apps", "search_data", "app_summary", "budget_lines",
     "invoice_list", "stock_items", "publish_titles", "budget_add", "budget_change", "budget_areas", "budget_categories", "budget_transfer", "budget_balances", "budget_delete",
-    "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"]);
+    "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "files_link"]);
   const ro = list.result.tools.filter((x) => x.annotations.readOnlyHint).map((x) => x.name);
-  assert.equal(ro.length, 7, "only the budget_* and kanban_* writers are not read-only");
+  assert.equal(ro.length, 8, "only the budget_* and kanban_* writers are not read-only (+ files_link, GATE-FILES F2)");
   assert.equal(list.result.tools.find((x) => x.name === "budget_delete").annotations.destructiveHint, true);
   const unk = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 3, method: "resources/list" })).json();
   assert.equal(unk.error.code, -32601);
@@ -621,11 +621,18 @@ test("orOS closed, full work (5.96.00): search over the copy's index, a board by
   assert.equal(r.isError, false);
   assert.match(r.content[0].text, /"queued":true/);
   assert.match((await tc("change_item", { ref: "r3", action: "update", text_add: "x" })).content[0].text, /"queued":true/);
-  assert.match((await tc("change_item", { ref: "r3", action: "delete" })).content[0].text, /Deleting waits/);
-  assert.match((await tc("link_items", { links: [{ customer: "r1", item: "r2" }], unlink: true })).content[0].text, /Deleting waits/);
+  // 7.43.00 (Chris 2026-11-11): deletions wait too, for the owner's Delete on the device
+  const del = (await tc("change_item", { ref: "r3", action: "delete" })).content[0].text;
+  assert.match(del, /"queued":true|this deletion waits/);
+  assert.match(del, /nothing is deleted without their Delete/);
+  assert.match((await tc("link_items", { links: [{ customer: "r1", item: "r2" }], unlink: true })).content[0].text, /waits/);
+  assert.equal(G.isDeletion("change_item", { refs: ["r116155"], action: "delete" }), true);
+  assert.equal(G.isDeletion("budget_delete", { ids: ["a"] }), true);
+  assert.equal(G.isDeletion("link_items", { unlink: true }), false, "an unlink deletes no item");
+  assert.deepEqual(G.refsIn({ refs: ["r116155", "r110954"] }), ["r116155", "r110954"], "refs of 6 digits");
   assert.match((await tc("link_contact", { links: [{ customer: "r1", contact: "r4" }] })).content[0].text, /may not change contacts/);
   assert.match((await tc("change_item", { ref: "r99", action: "update" })).content[0].text, /Unknown ref r99/);
-  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 4);
   assert.deepEqual(G.refsIn({ ref: "oros:r1", refs: ["r2", "x"], changes: [{ ref: "r3" }], links: [{ customer: "r4", item: "r5" }] }), ["r1", "r2", "r3", "r4", "r5"]);
 });
 
@@ -717,4 +724,80 @@ test("a device asleep in the background (6.01.02): skipped at once, a change tha
     await b.box.webSocketMessage(sock, "v1");
     assert.equal(b.box.awake(Date.now()).length, 1);
   } finally { G.GATE_LIMITS.callMs = was; }
+});
+
+test("orOS closed, waiting changes shown as made (PEND-1): p- refs, search, summaries, history, cancel, order, daily reminder", async () => {
+  const w = world();
+  const woke = [];
+  w.env.PUSH = { idFromName: (n) => n, get: (id) => ({ fetch: async (u, o) => { woke.push(Object.assign({ pid: id }, JSON.parse(o.body))); return new Response('{"ok":true}'); } }) };
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const sock = { sent: [], closed: false, __g: { th: hex(TOK), v: 1, at: 1 }, send(x) { this.sent.push(x); const q = JSON.parse(x); if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1); }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const obj = { type: "object", properties: {} };
+  await b.st.storage.put("devtools", ["create_items", "change_item", "link_contact", "undo_change", "change_history"].map((n) => ({ name: n, description: n, inputSchema: obj, annotations: { readOnlyHint: n === "change_history", destructiveHint: false } })));
+  const index = [{ r: "r1", a: "contacts", t: "Άννα Παππά" }, { r: "r2", a: "crm", t: "Εκδόσεις Χ" }];
+  const copy = { at: 1e12, lv: { contacts: "write", crm: "write", todo: "read" }, hold: 0,
+                 ans: { __index: JSON.stringify(index), 'app_summary {"app":"contacts"}': '{"contacts":2}', 'app_summary {"app":"todo"}': '{"todo":0}', "change_history {}": '{"changes":[]}' } };
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, JSON.stringify(copy)) }));
+  sock.closed = true;
+  const tc = async (name, args) => (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } })).json()).result;
+  const body = (r) => JSON.parse(r.content[0].text);
+  // the contact of 16/11: a ref at once
+  let r = await tc("create_items", { app: "contacts", items: [{ first: "Νίκος", last: "Δημητρίου", phone: "6900000000" }, { name: "Μαρία" }] });
+  assert.equal(r.isError, false);
+  const made = body(r);
+  assert.equal(made.pending, true);
+  assert.match(made.change_id, /^[A-Za-z0-9_-]{16}$/);
+  assert.deepEqual(made.refs.map((x) => x.ref), ["p-" + made.change_id + ".0", "p-" + made.change_id + ".1"]);
+  assert.equal(made.refs[0].title, "Νίκος Δημητρίου");
+  // search finds it, marked pending; words in any field
+  let s = JSON.parse((await tc("search_data", { query: "δημητριου" })).content[0].text.split("\n").slice(1).join("\n"));
+  assert.equal(s.results.length, 1);
+  assert.equal(s.results[0].ref, made.refs[0].ref);
+  assert.match(s.results[0].pending, /added while orOS was closed/);
+  assert.equal(JSON.parse((await tc("search_data", { query: "6900000000" })).content[0].text.split("\n")[1]).results.length, 1, "phone matches");
+  assert.equal(JSON.parse((await tc("search_data", { query: "δημητριου", apps: ["crm"] })).content[0].text.split("\n")[1]).note, "Nothing found.");
+  // a change to the new item and a link to it wait too, after the add
+  r = await tc("change_item", { ref: made.refs[0].ref, action: "update", note: "από την έκθεση" });
+  assert.equal(r.isError, false);
+  const ch = body(r);
+  r = await tc("link_contact", { links: [{ customer: "r2", contact: made.refs[1].ref }] });
+  assert.equal(r.isError, false);
+  const ln = body(r);
+  assert.match((await tc("change_item", { ref: "p-" + "A".repeat(16) + ".0", action: "update" })).content[0].text, /Unknown ref p-A{16}\.0/);
+  // the summaries and the history say what waits
+  const sum = (await tc("app_summary", { app: "contacts" })).content[0].text;
+  assert.match(sum, /\{"contacts":2\}\n\[Waiting until orOS opens/);
+  const wt = JSON.parse(sum.split("\n").pop());
+  assert.deepEqual(wt.waiting_added.map((x) => x.ref), made.refs.map((x) => x.ref));
+  assert.deepEqual(wt.waiting_changes.map((x) => x.change_id), [ch.change_id, ln.change_id]);
+  assert.doesNotMatch((await tc("app_summary", { app: "todo" })).content[0].text, /Waiting/, "another app's summary has none");
+  assert.match((await tc("change_history", {})).content[0].text, /waiting_added/);
+  // the queue goes to a device in the order asked
+  const q = await b.st.storage.list({ prefix: "q:" });
+  assert.deepEqual(G.queueFor(q, Date.now()).map((x) => x.id), [made.change_id, ch.change_id, ln.change_id]);
+  // undo_change cancels the add and everything that names its items
+  r = await tc("undo_change", { ids: [made.change_id] });
+  assert.equal(r.isError, false);
+  assert.deepEqual(body(r).ids.sort(), [made.change_id, ch.change_id, ln.change_id].sort());
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 0);
+  assert.match((await tc("undo_change", { ids: ["abcd1234"] })).content[0].text, /needs orOS open/);
+  // e3: a change waiting 6 hours wakes the devices with their "waiting" packet, once a day
+  const CT = "c".repeat(30), CW = "w".repeat(30), PID = "PiD0123456789_-abcdefg".slice(0, 22);
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: PID, wt: "W".repeat(43), ct: CT, cw: CW })).status, 200);
+  assert.equal((await dev(w, { act: "ping", tok: TOK, pid: PID, wt: "W".repeat(43), ct: CT, cw: "bad!" })).status, 400);
+  await tc("create_items", { app: "contacts", items: [{ name: "Γιώργος" }] });
+  const [qk] = [...(await b.st.storage.list({ prefix: "q:" })).keys()];
+  const row = await b.st.storage.get(qk);
+  row.t = Date.now() - 7 * 3600000; await b.st.storage.put(qk, row);
+  const m = await b.st.storage.get("meta"); m.last = Date.now(); m.seen = Date.now(); await b.st.storage.put("meta", m);
+  assert.deepEqual(woke.map((x) => x.ct), [CT], "the change itself: the usual packet");
+  await b.box.alarm();
+  assert.deepEqual(woke.map((x) => x.ct), [CT, CW], "then the waiting packet");
+  assert.ok(b.st.alarm > Date.now() + 23 * 3600000, "the next reminder is a day later");
+  await b.box.alarm();
+  assert.equal(woke.length, 2, "not twice the same day");
 });

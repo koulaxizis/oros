@@ -1,0 +1,69 @@
+# Forms
+Forms makes surveys, sign-up sheets and order forms: questions of many kinds, pages, questions that show only for some answers, and jumps between pages. Share a form with a link, a QR code or on your website; people fill it in without an account, and the answers come to this device encrypted.
+
+## Make a form
+- Press `New form`. Pick `Blank form`, or a template: contact form, event sign-up, feedback, order form, satisfaction survey or course sign-up. A template is only a start: change anything in it.
+- Give the form a title and, if you like, a description. They show at the top of the form.
+- Every change is saved as you type, and syncs to your other devices like the rest of orOS.
+
+`Send to an app…` in another orOS app can send a list or a text here: a new form opens with one short-answer question for each item or line (up to 100). Change the questions as you like; nothing is shared until you share it.
+
+## Questions
+- `Add question` opens the list of kinds. The new one goes after the question that is open, or at the end.
+- Kinds: `Short answer`, `Paragraph`, `E-mail`, `Phone`, `Number`, `Date`, `Time`, `One choice`, `Checkboxes`, `Drop-down`, `Linear scale` (for example 1 to 5, or 0 to 10 with a label at each end), `Rating` (stars), `Yes / No` and `Grid` (rows and columns, one or more answers per row).
+- `Text block` adds a title and text between questions. `Page break` starts a new page.
+- Tap a question to open it: write the question and an optional help text, change its kind, tick `Required`, and set its limits (characters, smallest and largest number, earliest and latest date, how many checkboxes). For choices, write each answer; Enter adds the next one. `Add “Other” with a text box` lets people write their own answer.
+- The buttons under an open question move it up or down, duplicate it or delete it. A deleted question can come back with `Undo` for a few seconds. `Done` closes it; so does Esc.
+
+## Show only for some answers
+- `Show only if…` shows a question, a text block or a page's questions only when an earlier answer matches: for example "Delivery address" only when "How do you want it?" is "Delivery".
+- What you can ask for depends on the earlier question: is or is not one of its answers, includes (checkboxes), is more or less than (numbers, scales, stars, dates), is answered or is not answered.
+- A question that is hidden never counts as answered, so questions that depend on it stay hidden too. A required question is only required while it shows.
+
+## Pages and jumps
+- With page breaks, people go through the form one page at a time, with `Back` and `Next`. Each page is checked before they can go on.
+- On a page break, `After this page, go to…` sends everyone to another page, or straight to `Submit the form`.
+- On `One choice`, `Drop-down` and `Yes / No`, `Go to a page by answer` sends people to a page by what they chose: for example "No" on "Will you come?" goes straight to the end. When a page has more than one such question, the last answered one decides.
+- Jumps only go forward, so every way through a form has an end.
+
+## Preview
+- `Preview` shows the form exactly as people will see it, with pages, jumps, hidden questions and every check. Fill it in to try it: nothing you answer there is kept, and `Fill in again` starts over.
+
+## Settings
+- `Message after submitting` is what people read when they are done. Empty means "Thank you. Your answers have been recorded."
+- `Note at the top` shows in a box under the description, for example to say what the answers are for.
+- `Show a progress bar on forms with pages` shows how far along people are.
+- `Page to link to after sending` puts a button on the thank-you message, for example back to your shop. It must be an https address. Nobody is sent there on their own.
+- `One answer per browser`: the page remembers in that browser that the form was answered and doesn't take a second answer from it. It stops mistakes, not someone who wants to cheat (another browser can still answer).
+- `Duplicate form` makes a copy to change. `Delete form` removes it on all your devices; `Undo` brings it back for a few seconds.
+
+## Share
+- `Share` › `Publish` gives the form a link (useoros.online/forms/f/…), a QR code and code to put the form on your website. People fill it in in any browser, without an account.
+- The questions are encrypted with a key that is only in the link (after the #, which browsers never send), and every answer is encrypted in the person's browser for this form. The orOS relay keeps them in between and can read neither.
+- After you change the form, `Publish changes` puts the new version online. Until then people see the published one.
+- `Close the form` stops new answers; `Open the form` takes them again. `Close automatically on` closes it at a date and time. A closed form is removed from the relay 30 days after it closes, and one that no device has checked for 90 days too.
+- Every page shows a warning: the form was made by someone who uses orOS, not by orOS, and nobody should enter passwords or card numbers. Anyone can report a form; when several people report it on the same day, it closes until you open it again.
+- `Stop sharing` turns the link off for good and deletes answers still waiting at the relay. The answers already on your devices stay.
+
+## Answers
+- One device picks up the answers: the one that published the form, or the one where you press `Pick up on this device`. It checks when you open Forms and every few minutes while Forms is open; `Check for answers` checks now. With Forms closed, orOS checks every 10 minutes while it is open and shows a notice when answers wait; Today shows them too.
+- `Tell me on this device even when orOS is closed` sends a notification that only says "New answer in a form", at most every 15 minutes. It needs `Notifications with orOS closed` on in Settings › Notifications.
+- Answers wait at the relay for at most 30 days. Once picked up they are deleted there and kept here, and they sync to your other devices.
+- `Answers` opens on `Summary`: a chart for each question with how many people picked each answer and their share (with checkboxes the shares can add up to more than 100%), the average for scales, stars and numbers, the texts people wrote (newest first) and a table of counts for grids. `Each answer` shows the answers one by one, newest first. A dot on the tab means new ones you haven't looked at.
+- `Show only` keeps the answers with one choice, for example only "Yes" or only "Delivery"; the summary, the list and the export then cover just those.
+- `Open in Spreadsheet` makes a new sheet with one row per answer and one column per question (a grid gets a column per row); `Download CSV` saves the same table as a file that Excel and LibreOffice open. Only the newest 499 answers fit in one sheet.
+- Under each answer in `Each answer`, `Add to Contacts` and `Add to CRM` open a new contact or customer with the name, e-mail and phone from that answer filled in. Nothing is saved until you press Save there. The name comes from a question whose label says "name" (or the first short answer).
+- The Assistant can draft a form for you ("make a sign-up form for the fair with name, e-mail and day"). Its card shows the questions; `Open` makes the form here, and it is not shared until you publish it. The Assistant can also tell you how many answered and how the answers add up, never what people wrote or their contact details.
+- The menu search finds your forms by title, description and questions.
+- `Send to an app…` sends the same table (the answers your filter shows, the newest 499) to another orOS app, such as [Writer](app:writer), [Mail](app:mail) or [Flashcards](app:flashcards). The other app only opens with it filled in.
+
+## Quiz
+- In `Settings`, `This is a quiz: score the answers` gives every question with one right answer (one choice, drop-down, checkboxes, yes/no, number, short answer) a `Correct answer` box and `Points` (1 by default). Short answers accept up to 10 answers, one per line, compared without capitals, accents or extra spaces. Checkboxes count as right only with exactly the right boxes ticked.
+- `Answers` then shows the average score, the right option with a ✓ and how many got each question right; each answer shows its score, and the export gets a `Score` column. Only the questions a person was asked count.
+- `Show people their score after sending` shows them their score on the thank-you page, and `Also show which answers were right` adds a right / not right line per question. With it on, the right answers travel inside the form's page, so someone who knows how could read them first. Leave it off for a test that counts: the form's page then gets no right answers at all, and only you see the scores.
+- The Assistant can draft a quiz too ("make a 10-question quiz on European capitals").
+
+## Base
+- In Base, a table's `Public form` opens Forms with a new form: one question for each field a form can ask (text, long text, e-mail, link, phone, number, money, percent, rating, date, checkbox, one or several choices). Formulas, links, lookups, attachments and automatic fields are left out. Check the questions, then share the form as usual.
+- In `Answers`, `Send to Base` adds the answers to that table, oldest first, up to 500 a time. Base writes each answer once, so pressing it again never makes copies; this device remembers what it sent and sends only the new ones. Base lists any answer or field that did not fit.
+- Questions you add later are not sent: only the questions made from the table's fields have a column there.

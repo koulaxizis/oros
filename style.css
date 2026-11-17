@@ -632,6 +632,13 @@ body {
   transition: opacity 0.6s ease;
 }
 @media (prefers-reduced-motion: reduce) { #wp-land canvas { transition: none; } }
+/* Light of the day (LIGHT-1): the tint over the land, under the gentle motion layer */
+#wp-land .wp-land-light {
+  position: absolute; inset: 0; z-index: 1;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+#wp-land canvas.wp-land-fx { z-index: 2; }
 
 /* ---------- 5. Applications menu ---------- */
 #app-menu {
@@ -1342,6 +1349,103 @@ body {
 }
 @media (prefers-reduced-motion: reduce) { .mt-sw-row { transition: none; } }
 
+/* Overview (OV-1, shell.js 10e): search, open apps, recent files and a
+   small System strip over the dimmed desktop. One column on phones. */
+#oros-ov {
+  position: fixed; inset: 0; z-index: 1300;
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: max(16px, 6dvh) 16px 16px; overflow-y: auto;
+}
+.ov-box {
+  width: min(960px, 100%); display: flex; flex-direction: column; gap: 14px;
+  background: var(--panel-bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 16px 48px var(--shadow); padding: 14px 16px 16px;
+}
+.ov-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ov-title { margin: 0; font-size: 16px; font-weight: 800; }
+.ov-search {
+  flex: 1 1 260px; min-width: 0; display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--border); border-radius: 10px; padding: 0 10px;
+  background: var(--bg); color: var(--text-dim);
+}
+.ov-search:focus-within { border-color: var(--accent); }
+.ov-search input {
+  flex: 1; min-width: 0; min-height: 40px; border: none; background: transparent;
+  color: var(--text); font: inherit; font-size: 15px; outline: none;
+}
+.ov-done, .ov-link {
+  min-height: 36px; padding: 6px 12px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 13px;
+  background: transparent; color: var(--text); border: 1px solid var(--border);
+}
+.ov-link { align-self: flex-start; margin-top: 8px; }
+.ov-done:hover, .ov-link:hover, .ov-done:focus-visible, .ov-link:focus-visible { background: var(--accent-soft); }
+.ov-cols { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; align-items: start; }
+.ov-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.ov-sec { min-width: 0; display: flex; flex-direction: column; }
+.ov-h {
+  margin: 0 0 8px; font-size: 12px; font-weight: 800; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--text-dim); display: flex; align-items: center; gap: 6px;
+}
+.ov-n {
+  font-size: 11px; color: var(--accent); background: var(--accent-soft);
+  border-radius: 6px; padding: 0 6px; letter-spacing: 0;
+}
+.ov-n[hidden] { display: none; }
+.ov-body { display: flex; flex-direction: column; min-width: 0; }
+.ov-empty { margin: 2px 0 0; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.ov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.ov-app {
+  display: flex; flex-direction: column; min-width: 0;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--bg);
+}
+.ov-front { border-color: var(--accent); }
+.ov-go {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-height: 88px;
+  background: transparent; border: none; color: var(--text); font: inherit;
+  text-align: left; padding: 12px 12px 4px; border-radius: 11px 11px 0 0; cursor: pointer;
+}
+.ov-go:hover, .ov-go:focus-visible { background: var(--accent-soft); }
+.ov-go .app-ico { display: inline-flex; color: var(--accent); transform: scale(1.4); transform-origin: left center; margin-bottom: 4px; }
+.ov-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 700; }
+.ov-when { font-size: 12px; color: var(--text-dim); }
+.ov-tools { display: flex; justify-content: flex-end; gap: 2px; padding: 0 4px 4px; }
+.ov-tools .mt-sw-split, .ov-tools .ov-x { width: 40px; height: 40px; }
+.ov-flist { display: flex; flex-direction: column; gap: 2px; }
+.ov-file {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr); column-gap: 8px; align-items: center;
+  min-height: 44px; padding: 4px 8px; border: none; border-radius: 8px; background: transparent;
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.ov-file svg { grid-row: span 2; color: var(--text-dim); }
+.ov-file:hover, .ov-file:focus-visible { background: var(--accent-soft); }
+.ov-fname { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-fwhere { font-size: 11.5px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-tiles { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.ov-tile {
+  display: flex; flex-direction: column; gap: 3px; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--bg);
+}
+.ov-tl { font-size: 11.5px; color: var(--text-dim); }
+.ov-tv { font-size: 13.5px; font-weight: 600; }
+.ov-busy .ov-tv { color: var(--accent); }
+.ov-warn { border-color: #d98a00; }
+.ov-bar { display: block; height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; }
+.ov-bar > span { display: block; height: 100%; background: var(--accent); }
+.ov-warn .ov-bar > span { background: #d98a00; }
+@media (max-width: 720px) {
+  .ov-cols { grid-template-columns: minmax(0, 1fr); }
+  .ov-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+}
+@media (max-width: 600px) {
+  #oros-ov { padding: 0; align-items: stretch; }
+  .ov-box { border-radius: 0; border: none; min-height: 100%; padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .ov-title { display: none; }
+}
+@media (prefers-reduced-transparency: reduce) { #oros-ov { -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
 /* Multitasking wave M4 — two apps side by side (>= 1024 px, shell.js
    10b/10c). Frames never move in the DOM; the grid order places them. */
 #mt-divider { display: none; }
@@ -1648,6 +1752,17 @@ html[data-oros-contrast="high"] #oros-greet { background: var(--panel-bg, var(--
 #ts-tray-chip:hover { background: var(--accent-soft); }
 #ts-tray-chip svg { display: block; flex-shrink: 0; pointer-events: none; }
 #oros-bar.bar-tight #ts-tray-chip { padding: 0 5px; }
+/* Sensitive work: shield in the bar while the mode is on */
+#strict-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 44px; min-height: 44px; padding: 0 6px;
+  background: transparent; border: none; border-radius: 6px;
+  color: var(--accent); cursor: pointer;
+}
+#strict-badge:hover { background: var(--accent-soft); }
+#strict-badge.strict-hard { color: var(--danger); }
+#strict-badge svg { display: block; pointer-events: none; }
+#oros-bar.bar-tight #strict-badge { min-width: 34px; padding: 0 3px; }
 /* Timesheet Wave 46: time away noticed → a dot on the chip; the timer menu */
 #ts-tray-chip.ts-away { position: relative; }
 #ts-tray-chip.ts-away::after {
@@ -1842,6 +1957,12 @@ body.solo-mode #wx-chip,
 body.solo-mode #rx-tray-chip,
 body.solo-mode #mx-tray-chip,
 body.solo-mode #ts-tray-chip { display: none !important; }
+/* TILL-1 (Stock fair till F3): a till-only device also hides help, the
+   bell (other apps' notices) and the quick settings; the bar keeps the
+   till's name (its menu: the owner) and the sync dot. */
+body.till-mode #help-btn,
+body.till-mode #oros-taskbar-bell,
+body.till-mode #qs-btn { display: none !important; }
 #solo-menu {
   position: fixed; top: calc(46px + env(safe-area-inset-top, 0px)); left: 12px; z-index: 1460;
   width: min(260px, calc(100vw - 24px)); padding: 6px; display: flex; flex-direction: column; gap: 2px;
@@ -1925,6 +2046,8 @@ dialog#oros-lock::backdrop { background: var(--bg-desktop, var(--bg)); }
 #oros-lock .lk-title { margin: 0; font-size: 20px; font-weight: 600; }
 #oros-lock .lk-sub { margin: 0; font-size: 17px; font-weight: 600; }
 #oros-lock .lk-view, #oros-lock .lk-rec, #oros-lock .lk-reset { display: flex; flex-direction: column; gap: 10px; }
+#oros-lock .lk-bio { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+#oros-lock .lk-bio:empty { display: none; }
 #oros-lock .lk-reset { margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
 #oros-lock .lk-label { font-size: 14px; color: var(--text-dim); }
 #oros-lock .lk-input {
@@ -2000,6 +2123,13 @@ html[data-oros-contrast="high"] #oros-desktop { background: var(--bg-desktop) !i
 html[data-oros-contrast="high"] #wp-live,
 html[data-oros-contrast="high"] #wp-land { display: none !important; }
 html[data-oros-contrast="high"] #oros-bar { backdrop-filter: none; -webkit-backdrop-filter: none; }
+/* SB4: the desktop launcher's bar window (shell.js "#bar-win"): only the
+   top bar, with the menu button, the smart chips, the clock and the date. */
+html.barwin, html.barwin body { background: var(--bar-bg); }
+html.barwin body > *:not(#oros-bar) { display: none !important; }
+html.barwin #oros-bar { padding-top: 0; height: 40px; }
+html.barwin #oros-bar .bar-left > *:not(#btn-menu),
+html.barwin #oros-bar .bar-right > *:not(#sb-row):not(#bar-time):not(#bar-date) { display: none !important; }
 html[data-oros-contrast="high"] .menu-cat-count { background: transparent; color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
 
 html[data-oros-zoom] #oros-running > iframe { zoom: var(--oros-zoom, 1); }

@@ -46,6 +46,10 @@
       "kept":       "Kept on this device",
       "keptToast":  "This folder will be downloaded and kept on this device",
       "unkeep":     "Stop keeping on this device",
+      "all":        "Keep on all my devices",
+      "unall":      "Stop keeping on all my devices",
+      "allToast":   "This folder will be downloaded and kept on every device where you use orOS; changes go both ways with your computer",
+      "allKept":    "Kept on all your devices",
       "free":       "Free up space",
       "freed":      "{n} files are now in the cloud only",
       "freedOne":   "1 file is now in the cloud only",
@@ -88,6 +92,10 @@
       "kept":       "Μένει σε αυτή τη συσκευή",
       "keptToast":  "Ο φάκελος θα κατέβει και θα μείνει σε αυτή τη συσκευή",
       "unkeep":     "Να μη μένει σε αυτή τη συσκευή",
+      "all":        "Κράτησέ το σε όλες τις συσκευές μου",
+      "unall":      "Να μη μένει σε όλες τις συσκευές μου",
+      "allToast":   "Ο φάκελος θα κατέβει και θα μένει σε κάθε συσκευή όπου χρησιμοποιείς το orOS· οι αλλαγές πάνε και προς τις δύο μεριές με τον υπολογιστή σου",
+      "allKept":    "Μένει σε όλες τις συσκευές σου",
       "free":       "Απελευθέρωση χώρου",
       "freed":      "{n} αρχεία είναι πλέον μόνο στο cloud",
       "freedOne":   "1 αρχείο είναι πλέον μόνο στο cloud",
@@ -129,6 +137,7 @@
     file:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
     up:     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
     refresh:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"/></svg>',
+    all:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M6 18h6"/><rect x="17" y="8" width="5" height="12" rx="1"/></svg>',
     pin:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
     phone:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>',
     trash:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
@@ -203,6 +212,9 @@
     var keep = btn("tool", ICON.pin, t("keep"), toggleKeep);
     keep.id = "drv-keep";
     bar.appendChild(keep);
+    var all = btn("tool", ICON.all, t("all"), toggleAll);
+    all.id = "drv-all";
+    bar.appendChild(all);
     var free = btn("tool", ICON.free, t("free"), freeSpace);
     free.id = "drv-free";
     bar.appendChild(free);
@@ -291,6 +303,16 @@
     keep.title = kept ? t("unkeep") : t("keep");
     keep.setAttribute("aria-label", keep.title);
     keep.setAttribute("aria-pressed", kept ? "true" : "false");
+    // DRIVE-ALL: kept on every device; the device's own switch then shows it kept
+    var allB = $("drv-all"), canAll = inFolder && typeof v.isKeptOfflineAll === "function";
+    var allOn = canAll && v.isKeptOfflineAll(cwd);
+    allB.hidden = !canAll;
+    allB.classList.toggle("on", !!allOn);
+    allB.title = allOn ? t("unall") : t("all");
+    allB.setAttribute("aria-label", allB.title);
+    allB.setAttribute("aria-pressed", allOn ? "true" : "false");
+    if (allOn) { keep.disabled = true; keep.title = t("allKept"); keep.setAttribute("aria-label", keep.title); }
+    else keep.disabled = false;
     $("drv-free").hidden = !inFolder || !!kept;
   }
 
@@ -426,6 +448,14 @@
     if (!v || cwd === root) return;
     var on = !v.isKeptOffline(cwd);
     if (v.setKeptOffline(cwd, on) && on) toast(t("keptToast"));
+    paintBar();
+  }
+
+  function toggleAll() {
+    var v = vault();
+    if (!v || cwd === root || typeof v.setKeptOfflineAll !== "function") return;
+    var on = !v.isKeptOfflineAll(cwd);
+    if (v.setKeptOfflineAll(cwd, on) && on) toast(t("allToast"));
     paintBar();
   }
 

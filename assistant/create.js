@@ -204,7 +204,7 @@
     // contact: a Contacts ref (search_data, or create_items' result);
     // assistant.js turns it into person { c, n } before plan().
     var cr = x.contact === undefined || x.contact === null ? "" : String(x.contact).replace(/^oros:/, "").trim();
-    if (cr && !/^r\d{1,5}$/.test(cr)) return { err: where + "contact must be the ref of a contact (e.g. r4) from search_data or create_items." };
+    if (cr && !/^r\d{1,9}$/.test(cr)) return { err: where + "contact must be the ref of a contact (e.g. r4) from search_data or create_items." };
     o.contact = cr;
     o.role = line(x.role, 60);
     return { o: o };

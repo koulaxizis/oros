@@ -1,13 +1,20 @@
 // ============================================================
-// orOS Files — universal search provider (v1.0.0)
+// orOS Files — universal search provider (v1.1.0)
 // Loaded by the shell on the first menu search (apps.json
 // "search"). Read-only: lists the local disk through the shell's
 // window.orosFS (ls only; file contents are never read). One hit
 // per file or folder: its name, the folder it is in as text.
 // The listing is walked at most every 10 s and capped (depth 12,
 // 3,000 entries) so a big disk cannot stall the search. Files'
-// Trash (/internal/.trash) is never listed.
+// Trash (/internal/.trash) and Documents' texts (/internal/.docs) are never listed.
 // Opens through the generic deep link: target { path, dir }.
+// W5 (Documents, DOCS-1; card 3, Chris 2026-11-15): one more hit per
+// document that is not private (files/docs-due.js searchHits): its
+// details and the first 300 characters of its text, so the Assistant
+// and orOS Gate (both search through this) see the same. The texts
+// are read in the background, at most 4 at a time, and kept in memory
+// by the time they were read; a search never waits for them.
+// Opens the document in Files: target { doc }.
 // ============================================================
 (function (root) {
   "use strict";
@@ -23,7 +30,7 @@
         var subs = [];
         (Array.isArray(list) ? list : []).forEach(function (e) {
           if (!e || typeof e.name !== "string" || out.length >= MAX_ENTRIES) return;
-          if (path === ROOT && e.name === ".trash") return;      // Files' Trash stays out
+          if (path === ROOT && (e.name === ".trash" || e.name === ".docs")) return;   // Files' Trash and Documents' text stay out
 
           var p = path + "/" + e.name;
           out.push({ path: p, name: e.name, dir: !!e.dir, parent: path });
@@ -47,14 +54,53 @@
     return walking;
   }
 
+  // ---------- W5: Documents ----------
+  var TEXT_DIR = ROOT + "/.docs/text", READ_MAX = 2000, WALK_WAIT = 800;
+  var snips = {}, warming = false;      // id → { at, s }
+  function txAt(d) { return d && d.x && d.x.tx && typeof d.x.tx.at === "number" ? d.x.tx.at : 0; }
+  function warm(fs, D, raw) {
+    if (warming || !fs || typeof fs.readText !== "function") return;
+    var live = D.docs(raw), want = live.filter(function (d) {
+      var at = txAt(d);
+      return at && !D.isPrivate(raw, d) && (!snips[d.id] || snips[d.id].at !== at);
+    });
+    var keep = {};
+    live.forEach(function (d) { if (snips[d.id]) keep[d.id] = snips[d.id]; });
+    snips = keep;
+    if (!want.length) return;
+    warming = true;
+    var i = 0;
+    function next() {
+      if (i >= want.length) return Promise.resolve();
+      var d = want[i++], at = txAt(d);
+      return Promise.resolve(fs.readText(TEXT_DIR + "/" + d.id + ".txt")).then(function (t) {
+        snips[d.id] = { at: at, s: D.snippet(String(t || "").slice(0, READ_MAX)) };
+      }, function () { snips[d.id] = { at: at, s: "" }; }).then(next);
+    }
+    Promise.all([next(), next(), next(), next()]).then(function () { warming = false; }, function () { warming = false; });
+  }
+  function docHits(ctx, fs) {
+    var D = root.OrosDocsDue, raw = D ? ctx.readJSON(D.KEY) : null;
+    if (!D || typeof D.searchHits !== "function" || !raw) return [];
+    warm(fs, D, raw);
+    return D.searchHits(raw, ctx.code || ctx.lang, function (id) { return snips[id] ? snips[id].s : ""; });
+  }
+
   var PROVIDER = {
     id: "files",
-    keys: [],
+    keys: ["oros-files-docs"],
     search: function (ctx) {
-      var fs = root.orosFS;
-      if (!fs || typeof fs.ls !== "function") return [];
-      return listing(fs).then(function (l) {
-        return l.map(function (e) {
+      var fs = root.orosFS, docs = [];
+      try { docs = docHits(ctx, fs); } catch (e) { docs = []; }
+      // Every item, no query (the Assistant's label filter, orOS Gate's
+      // copy for when orOS is closed): the documents only, at once.
+      if (!fs || typeof fs.ls !== "function" || !ctx.words || !ctx.words.length) return docs;
+      // A big disk's first walk may outlast the search: the documents
+      // are answered anyway (search.js skips a provider after 1 s).
+      var slow = new Promise(function (r) { setTimeout(function () { r(null); }, WALK_WAIT); });
+      return Promise.race([listing(fs), slow]).then(function (l) {
+        if (!l) return docs;
+        return docs.concat(l.map(function (e) {
           var where = e.parent === ROOT ? "/" : e.parent.slice(ROOT.length);
           return {
             id: e.path,
@@ -62,7 +108,7 @@
             text: where,
             target: { path: e.path, dir: e.dir }
           };
-        });
+        }));
       });
     }
   };
@@ -70,6 +116,7 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = PROVIDER;
     module.exports._walk = walk;
+    module.exports._reset = function () { snips = {}; warming = false; walked = null; walkedAt = 0; walking = null; };
   }
   if (root && root.document) {
     var list = root.orosSearchProviders = root.orosSearchProviders || [];

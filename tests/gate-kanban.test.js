@@ -125,3 +125,63 @@ test("undo: puts back moves, edits, new cards and empty new columns; keeps what 
   assert.deepEqual([u4.n, u4.kept], [1, 1], "a column that got a card stays");
   assert.deepEqual(u4.data.boards[0].columns.map((c) => c.name), ["Αναμονή", "Επιμέλεια", "Σελιδοποίηση", "B"]);
 });
+
+// KB-SUB (Chris 2026-11-12): subtasks through kanban_change_card.
+test("subtasks: add at the end, tick or reword by id or text, undo takes back only those", () => {
+  const raw = data();
+  col(raw, "c1").cards[1].subtasks = [{ id: "s0", text: "ISBN", completed: false, m: T0 }];
+  const r = G.kanbanWrite(M, "change_card", raw, { board: "b1", card: "k2",
+    add_subtasks: ["Νόμιμη κατάθεση", " Βιβλιοθήκη  της Βουλής "], change_subtasks: [{ subtask: "ISBN", done: true }] }, NOW, nid);
+  assert.equal(r.ok, true, r.err);
+  const k = col(r.data, "c1").cards[1];
+  assert.deepEqual(k.subtasks.map((s) => [s.text, s.completed]), [["ISBN", true], ["Νόμιμη κατάθεση", false], ["Βιβλιοθήκη της Βουλής", false]]);
+  assert.ok(k.subtasks.every((s) => s.m === k.mtime));
+  assert.equal(k.fm.s, k.mtime);
+  assert.equal(k.notes, "n", "other fields stay");
+  assert.equal(r.ids.length, 3);
+  assert.match(r.text, /Added 2 subtasks.*Changed 1 subtask/);
+  // reword by id
+  const r2 = G.kanbanWrite(M, "change_card", r.data, { board: "b1", card: "k2", change_subtasks: [{ subtask: r.ids[1], text: "Κατάθεση" }] }, NOW + 5, nid);
+  assert.equal(r2.ok, true, r2.err);
+  assert.equal(col(r2.data, "c1").cards[1].subtasks[1].text, "Κατάθεση");
+  // undo the second, then the first: back to one unticked subtask, the added ones tombstoned
+  const u2 = G.kanbanUndo(M, r2.data, r2.undo, NOW + 10);
+  assert.equal(u2.n, 1);
+  assert.equal(col(u2.data, "c1").cards[1].subtasks[1].text, "Νόμιμη κατάθεση");
+  const u1 = G.kanbanUndo(M, u2.data, r.undo, NOW + 20);
+  assert.equal(u1.n, 0, "the card changed after the first change: kept");
+  const u = G.kanbanUndo(M, r.data, r.undo, NOW + 20);
+  assert.equal(u.n, 1);
+  const k0 = col(u.data, "c1").cards[1];
+  assert.deepEqual(k0.subtasks.map((s) => [s.id, s.completed]), [["s0", false]]);
+  assert.ok(u.data.boards[0].deleted["k2/" + r.ids[1]] > 0);
+  assert.equal(k0.subtasks[0].m, k0.mtime);
+  // merging the undone copy with the changed one keeps the undo
+  const mg = M.mergeKanbanStates(r.data, u.data, NOW + 30);
+  assert.deepEqual(col(mg, "c1").cards[1].subtasks.map((s) => [s.id, s.completed]), [["s0", false]]);
+});
+
+test("subtasks: refused without changing anything", () => {
+  const raw = data();
+  col(raw, "c1").cards[1].subtasks = [{ id: "s0", text: "Ίδιο", completed: false }, { id: "s1", text: "Ίδιο", completed: false }];
+  const bad = [
+    [{ add_subtasks: [] }, /add_subtasks must hold/],
+    [{ add_subtasks: [""] }, /Subtask 1/],
+    [{ add_subtasks: Array(31).fill("x") }, /add_subtasks must hold/],
+    [{ change_subtasks: [{ subtask: "Ίδιο", done: true }] }, /more than one subtask/],
+    [{ change_subtasks: [{ subtask: "nope", done: true }] }, /no subtask/],
+    [{ change_subtasks: [{ subtask: "s0" }] }, /give done, text or both/],
+    [{ change_subtasks: [{ subtask: "s0", done: "yes" }] }, /done must be/],
+    [{ change_subtasks: [{ subtask: "s0", done: true }, { subtask: "s0", done: false }] }, /twice/],
+    [{ change_subtasks: [{ subtask: "s0", done: false }] }, /Nothing to change/],
+    [{ add_subtasks: ["ok"], change_subtasks: [{ subtask: "nope", done: true }] }, /no subtask/]
+  ];
+  for (const [a, re] of bad) {
+    const r = G.kanbanWrite(M, "change_card", raw, Object.assign({ board: "b1", card: "k2" }, a), NOW, nid);
+    assert.equal(r.ok, false, JSON.stringify(a));
+    assert.match(r.err, re);
+  }
+  col(raw, "c1").cards[1].subtasks = Array.from({ length: 99 }, (_, i) => ({ id: "x" + i, text: "t" + i, completed: false }));
+  const full = G.kanbanWrite(M, "change_card", raw, { board: "b1", card: "k2", add_subtasks: ["a", "b"] }, NOW, nid);
+  assert.match(full.err, /at most 100 subtasks/);
+});

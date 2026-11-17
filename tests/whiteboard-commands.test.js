@@ -74,9 +74,9 @@ test("the guide names every command and field; the tool declares every field wit
 test("check: unknown commands, fields and values go back to the model; removals need a pick", () => {
   assert.match(CMD.check([]).err, /empty/);
   assert.match(CMD.check([{ op: "zap" }]).err, /unknown command "zap"/);
-  assert.match(CMD.check([{ op: "style", shape: "star" }]).err, /shape "star" is not allowed/);
+  assert.match(CMD.check([{ op: "style", shape: "blob" }]).err, /shape "blob" is not allowed/);
   assert.match(CMD.check([{ op: "style", track: 2 }]).err, /track is not a field of style/);
-  assert.match(CMD.check([{ op: "style" }]).err, /give c, shape, fill, size, ends, dash or sw/);
+  assert.match(CMD.check([{ op: "style" }]).err, /give c, shape, fill, size, ends, dash, route, starthead, endhead or sw/);
   assert.match(CMD.check([{ op: "move" }]).err, /give dx, dy, x, y, w, h or order/);
   assert.match(CMD.check([{ op: "remove" }]).err, /pick the objects/);
   assert.match(CMD.check([{ op: "add", what: "note" }]).err, /a note needs text/);
@@ -247,14 +247,14 @@ test("wiring: Whiteboard loads the catalog on the first request and writes throu
 test("wiring: the Assistant reads Whiteboard, and the card speaks of objects in EN, EL and DE", () => {
   assert.ok(!read("assistant/index.html").includes("../whiteboard/"), "loaded on first use");
   const as = read("assistant/assistant.js");
-  assert.match(as, /whiteboard: \["\.\.\/whiteboard\/core\.js", "\.\.\/whiteboard\/commands\.js"\]/);
+  assert.match(as, /whiteboard: \["\.\.\/whiteboard\/core\.js", "\.\.\/whiteboard\/diagram\.js", "\.\.\/whiteboard\/commands\.js"\]/, "diagram.js before commands.js (DG4 mermaid)");
   assert.match(as, /whiteboard: \{ mod: "WhiteboardCommands", data: "oros-whiteboard-data", prefs: "oros-whiteboard-prefs", open: "board", view: 1 \}/);
   assert.equal(C.EDIT_APP.whiteboard.noun, "board");
   assert.equal(JSON.parse(read("apps.json")).apps.find((a) => a.id === "whiteboard").search, "search.js", "so the Assistant can be allowed to read Whiteboard");
   const de = read("i18n/de/assistant.js");
   const has = (k) => (as.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length === 2;
   const keys = ["ed.will.whiteboard", "ed.did.whiteboard", "ed.sureDel.whiteboard"];
-  ["full", "noEnd", "noFrame"].forEach((n) => keys.push("ed.note." + n));
+  ["full", "noEnd", "noFrame", "mermaid", "mermaidCut"].forEach((n) => keys.push("ed.note." + n));
   CMD.ORDER.forEach((op) => keys.push(has("ed.op." + op + ".whiteboard") ? "ed.op." + op + ".whiteboard" : "ed.op." + op));
   CMD.ORDER.forEach((op) => Object.keys(CMD.CATALOG[op].args).forEach((k) => {
     if (op === "add" && k === "what") return;     // the kind of a new object reads without a label

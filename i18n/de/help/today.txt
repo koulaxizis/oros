@@ -76,7 +76,7 @@ Eine Zeile erscheint nur an einer Stelle: Ist das Widget `Aufgaben` auf dem Bild
 - [Stimmung](app:mood) (aus, bis du es einschaltest): eine Zeile zum Eintragen, solange du heute keine Stimmung erfasst hast.
 - [Minimalismus](app:minimalism): eine Zeile, solange der heutige Vorschlag weder erledigt noch übersprungen ist. Sein Text bleibt in der App.
 - [Stammbaum](app:familytree): Todestage von heute und den nächsten drei Tagen.
-- [Mond & Himmel](app:sky): die Hauptmondphasen, Tagundnachtgleichen und Sonnenwenden, Höhepunkte von Meteorströmen und Finsternisse; die heutigen als Zeilen oben.
+- [Der Himmel heute Nacht](app:sky) im Wetter: die Hauptmondphasen, Tagundnachtgleichen und Sonnenwenden, Höhepunkte von Meteorströmen und Finsternisse; die heutigen als Zeilen oben.
 - Der Geburtstag des Bildschirm-Haustiers kommt mit dem Kalender, außer du hast den Kalender-Feed des Haustiers auf diesem Gerät ausgeschaltet.
 - [Spielecenter](app:gamecenter): eine Zeile oben, wie viele der heutigen Spiel-Herausforderungen geschafft sind.
 - [Mail](app:mail): nur die Zahl der ungelesenen Nachrichten im Posteingang jedes Kontos, nie ein Absender oder Betreff. Mail-Zeilen haben keinen Assistenten-Button; in Mail selbst kannst du trotzdem zu einer Nachricht fragen.
@@ -100,7 +100,7 @@ Wenn der Assistent eine App liest (und Claude über orOS Gate), bekommt er diese
 Öffne sie mit dem Zahnrad:
 - `Tägliche Übersicht` schaltet die tägliche Benachrichtigung ein oder aus. Der Tab Heute funktioniert so oder so.
 - `Ab` ist die Startzeit, von 00:00 bis 12:00.
-- `Morgendliche Erinnerungen stummschalten, die die Übersicht abdeckt`: Sobald die Übersicht da ist, bleiben die einzelnen Erinnerungen von Pflanzenpflege, Hausarbeitsrad, Tier-Gesundheitspass, Garage, Aufgaben, Angebot, Minimalismus, Namenstagen und dem Wetterbriefing still. Erinnerungen zu einer festen Uhrzeit, etwa Wecker oder Medikamente, klingeln weiterhin.
+- `Morgendliche Erinnerungen stummschalten, die die Übersicht abdeckt`: Sobald die Übersicht da ist, bleiben die einzelnen Erinnerungen von Pflanzenpflege, Hausarbeitsrad, Tier-Gesundheitspass, Garage, Aufgaben, Angebote der Abrechnung, Minimalismus, Namenstagen und dem Wetterbriefing still. Erinnerungen zu einer festen Uhrzeit, etwa Wecker oder Medikamente, klingeln weiterhin.
 - `Apps in der Übersicht`: Wähle, welche Apps mitmachen. Als `sensibel` markierte Apps erscheinen nur, wenn du es willst: Gesundheit, Baby und Budget sind an, Zyklus und Stimmung sind aus, bis du sie einschaltest.
 
 ## Synchronisierung und Sicherung

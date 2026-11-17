@@ -43,7 +43,7 @@
           if (!c || typeof c.id !== "string") return;
           arr(c.cards).forEach(function (k) {
             if (!k || typeof k.id !== "string") return;
-            var sub = arr(k.subtasks).map(function (s) { return s ? str(s.text) : ""; });
+            var sub = arr(k.subtasks).map(function (s) { return s && str(s.text) ? (s.completed ? "[x] " : "[ ] ") + str(s.text) : ""; });
             var info = arr(k.info).map(function (x) {
               return x ? [str(x.label), str(x.value)].filter(Boolean).join(": ") : "";
             });

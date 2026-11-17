@@ -21,21 +21,13 @@
       "today": ["stage-core.js", "today.js"]
     },
     {
-      "id": "sky",
-      "name": "Moon & Sky",
-      "category": "Accessories",
-      "icon": "sky",
-      "url": "sky/",
-      "type": "internal",
-      "today": ["core.js", "today.js"]
-    },
-    {
       "id": "files",
       "name": "Files",
       "category": "Accessories",
       "icon": "files",
       "url": "files/",
       "search": "search.js",
+      "today": ["docs-due.js", "today.js"],
       "type": "internal"
     },
     {
@@ -44,6 +36,7 @@
       "category": "Accessories",
       "icon": "calculator",
       "url": "calculator/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -55,15 +48,6 @@
       "type": "internal"
     },
     {
-      "id": "units",
-      "name": "Unit Converter",
-      "category": "Accessories",
-      "icon": "units",
-      "url": "units/",
-      "search": "search.js",
-      "type": "internal"
-    },
-    {
       "id": "stickies",
       "name": "Sticky Notes",
       "category": "Accessories",
@@ -71,14 +55,6 @@
       "url": "stickies/",
       "search": "search.js",
       "today": "today.js",
-      "type": "internal"
-    },
-    {
-      "id": "textcase",
-      "name": "Case Converter",
-      "category": "Accessories",
-      "icon": "textcase",
-      "url": "textcase/",
       "type": "internal"
     },
     {
@@ -234,6 +210,26 @@
       "type": "internal"
     },
     {
+      "id": "forms",
+      "name": "Forms",
+      "category": "Office",
+      "icon": "forms",
+      "url": "forms/",
+      "type": "internal",
+      "today": "today.js",
+      "search": "search.js"
+    },
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "Office",
+      "icon": "base",
+      "url": "base/",
+      "type": "internal",
+      "today": ["feed.js", "today.js"],
+      "search": "search.js"
+    },
+    {
       "id": "spreadsheet",
       "name": "Spreadsheet",
       "category": "Office",
@@ -300,7 +296,8 @@
       "icon": "scanpdf",
       "url": "scanpdf/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": ["core.js", "sign-core.js", "today.js"]
     },
     {
       "id": "flashcards",
@@ -321,16 +318,6 @@
       "search": "search.js",
       "today": ["due.js", "today.js"],
       "type": "internal"
-    },
-    {
-      "id": "quote",
-      "name": "Quote",
-      "category": "Business",
-      "icon": "quote",
-      "url": "quote/",
-      "search": "search.js",
-      "type": "internal",
-      "today": "today.js"
     },
     {
       "id": "timesheet",
@@ -365,7 +352,7 @@
     },
     {
       "id": "invoices",
-      "name": "Invoices",
+      "name": "Billing",
       "category": "Business",
       "icon": "invoices",
       "url": "invoices/",
@@ -383,15 +370,6 @@
       "type": "internal",
       "search": "search.js",
       "today": ["core.js", "today.js"]
-    },
-    {
-      "id": "signature",
-      "name": "Email Signature",
-      "category": "Business",
-      "icon": "signature",
-      "url": "signature/",
-      "type": "internal",
-      "search": "search.js"
     },
     {
       "id": "certificates",
@@ -503,14 +481,6 @@
       "category": "Image",
       "icon": "wallpaper",
       "url": "wallpaper/",
-      "type": "internal"
-    },
-    {
-      "id": "trees",
-      "name": "Tree Sketcher",
-      "category": "Image",
-      "icon": "trees",
-      "url": "trees/",
       "type": "internal"
     },
     {
@@ -740,19 +710,20 @@
       "today": "today.js"
     },
     {
+      "id": "transfer",
+      "name": "Transfer",
+      "category": "Internet",
+      "icon": "transfer",
+      "url": "transfer/",
+      "type": "internal",
+      "today": ["core.js", "today.js"]
+    },
+    {
       "id": "dice",
-      "name": "Dice & Coin",
+      "name": "Chance",
       "category": "Fun",
       "icon": "dice",
       "url": "dice/",
-      "type": "internal"
-    },
-    {
-      "id": "wheel",
-      "name": "Wheel of Fate",
-      "category": "Fun",
-      "icon": "wheel",
-      "url": "wheel/",
       "type": "internal"
     },
     {
@@ -847,6 +818,7 @@
       "category": "Sound",
       "icon": "lyricsync",
       "url": "lyricsync/",
+      "words": "songbook chords setlist",
       "search": "search.js",
       "type": "internal"
     },
@@ -1230,14 +1202,6 @@
       "type": "internal"
     },
     {
-      "id": "device",
-      "name": "Device Info",
-      "category": "System",
-      "icon": "device",
-      "url": "device/",
-      "type": "internal"
-    },
-    {
       "id": "assistant",
       "name": "Assistant",
       "category": "System",
@@ -1278,6 +1242,57 @@
       "icon": "settings",
       "url": "settings/",
       "type": "internal",
+      "search": "search.js"
+    }
+  ],
+  "aliases": [
+    {
+      "id": "textcase",
+      "name": "Case Converter",
+      "to": "texttools",
+      "target": { "group": "case" }
+    },
+    {
+      "id": "trees",
+      "name": "Tree Sketcher",
+      "to": "wallpaper",
+      "target": { "style": "tree" }
+    },
+    {
+      "id": "device",
+      "name": "Device Info",
+      "to": "settings",
+      "target": { "section": "device" }
+    },
+    {
+      "id": "sky",
+      "name": "Moon & Sky",
+      "to": "weather",
+      "target": { "sky": true }
+    },
+    {
+      "id": "units",
+      "name": "Unit Converter",
+      "to": "calculator",
+      "target": { "mode": "conv" }
+    },
+    {
+      "id": "signature",
+      "name": "Email Signature",
+      "to": "mail",
+      "target": { "view": "signatures" }
+    },
+    {
+      "id": "wheel",
+      "name": "Wheel of Fate",
+      "to": "dice",
+      "target": { "tab": "wheel" }
+    },
+    {
+      "id": "quote",
+      "name": "Quote",
+      "to": "invoices",
+      "target": { "tab": "quotes" },
       "search": "search.js"
     }
   ]

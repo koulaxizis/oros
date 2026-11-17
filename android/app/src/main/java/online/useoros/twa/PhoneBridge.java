@@ -590,7 +590,7 @@ public class PhoneBridge {
                     if (!BIO) return;
                     String op = m.optString("op"), kid = m.optString("kid");
                     if ("want".equals(op)) {
-                        BioVault.announce(m.optString("act"), kid, m.optString("n"));
+                        BioVault.announce(m.optString("act"), kid, m.optString("n"), m.optString("use"));
                         diag("fingerprint request " + m.optString("act"));
                     } else if ("clear".equals(op)) {
                         BioVault.clear(app, kid);

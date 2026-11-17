@@ -42,7 +42,7 @@
   // the device only while orOS is open and Claude asks.
   var SENSITIVE = ["baby", "cycle", "diary", "fitness", "health", "mail", "mood"];
   function sensitive(id) { return SENSITIVE.indexOf(id) >= 0; }
-  var SUMMARY = { budget: 1, stock: 1, kanban: 1 };
+  var SUMMARY = { budget: 1, stock: 1, kanban: 1, studio: 1 };   // studio: STUDIO-POD P4, read only
   // App-specific line tools (wave 2: Invoices, Stock, Publishing).
   var LINES = { budget: "budget_lines", invoices: "invoice_list", stock: "stock_items", publish: "publish_titles" };
   var PAGE = 500, TEXT_MAX = 1500, HITS_MAX = 60, SPAN_DAYS = 400;
@@ -284,9 +284,19 @@
   var TITLE_ST = { idea: "idea", prod: "in production", out: "published", oop: "out of print" };
   var ROLES = { a: "author", t: "translator", i: "illustrator", e: "editor", c: "cover", n: "narrator", o: "other" };
   var FMTS = { pb: "paperback", hb: "hardback", eb: "ebook", ab: "audiobook", ot: "other" };
+  // wave M1: music releases (title.mt, lists trk and med)
+  var MTS = { single: "single", ep: "ep", album: "album", comp: "compilation" };
+  var MEDS = { dig: "digital", cd: "cd", vin: "vinyl", cas: "cassette", ot: "other" };
+  var CRS = { art: "artist", feat: "featured", comp: "composer", lyr: "lyricist", arr: "arranger", prod: "producer", mix: "mixing", mast: "mastering", eng: "engineer", mus: "musician", o: "other" };
+  function isrcOut(c) { return typeof c === "string" && /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/.test(c) ? c.slice(0, 2) + "-" + c.slice(2, 5) + "-" + c.slice(5, 7) + "-" + c.slice(7) : ""; }
   function publishTitles(raw, args) {
     if (!isObj(args)) return { ok: false, err: "The arguments must be an object." };
     var d = isObj(raw) ? raw : {}, tombs = isObj(d.tombs) ? d.tombs : {};
+    function live(r) { return isObj(r) && typeof r.id === "string" && typeof r.ti === "string" && !(typeof tombs[r.id] === "number" && tombs[r.id] >= (Number(r.m) || 0)); }
+    var trks = {}, meds = {};
+    (Array.isArray(d.trk) ? d.trk : []).filter(live).forEach(function (r) { (trks[r.ti] = trks[r.ti] || []).push(r); });
+    (Array.isArray(d.med) ? d.med : []).filter(live).forEach(function (r) { (meds[r.ti] = meds[r.ti] || []).push(r); });
+    Object.keys(trks).forEach(function (k) { trks[k].sort(function (a, b) { return (a.disc || 1) - (b.disc || 1) || (a.no || 0) - (b.no || 0) || (a.id < b.id ? -1 : 1); }); });
     var st = args.status ? String(args.status) : "";
     var stKey = "";
     Object.keys(TITLE_ST).forEach(function (k) { if (k === st || TITLE_ST[k] === st) stKey = k; });
@@ -296,7 +306,8 @@
       if (!isObj(x) || typeof x.id !== "string" || (typeof tombs[x.id] === "number" && tombs[x.id] >= (Number(x.m) || 0))) return false;
       if (stKey && x.st !== stKey) return false;
       if (q) {
-        var hay = [x.t, x.sub, x.ser].concat((x.ppl || []).map(function (p) { return p && p.n; }), (x.fmts || []).map(function (f) { return f && f.isbn; }));
+        var hay = [x.t, x.sub, x.ser].concat((x.ppl || []).map(function (p) { return p && p.n; }), (x.fmts || []).map(function (f) { return f && f.isbn; }),
+          (trks[x.id] || []).map(function (r) { return [r.t, r.isrc, isrcOut(r.isrc)].join(" "); }), (meds[x.id] || []).map(function (r) { return r.upc; }));
         if (hay.map(fold).join(" ").indexOf(q) < 0) return false;
       }
       return true;
@@ -319,6 +330,37 @@
           return r;
         });
         if (fm.length) o.formats = fm;
+        if (isObj(x.mt)) {
+          o.type = MTS[x.mt.k] || "single";
+          put(o, "label", x.mt.lbl); put(o, "genre", x.mt.gen); put(o, "p_line", x.mt.pl); put(o, "c_line", x.mt.cl);
+          var tr = (trks[x.id] || []).map(function (r) {
+            var t = { no: r.no || 1, title: String(r.t || "") };
+            if ((r.disc || 1) > 1) t.disc = r.disc;
+            put(t, "version", r.ver); put(t, "artist", r.art); put(t, "isrc", isrcOut(r.isrc)); put(t, "language", r.lang);
+            if (r.dur) t.length = Math.floor(r.dur / 60) + ":" + (r.dur % 60 < 10 ? "0" : "") + (r.dur % 60);
+            if (r.ex === 1) t.explicit = true;
+            // PB-MUS M2: who made it and who owns what (the change_item names)
+            var cr = (Array.isArray(r.cr) ? r.cr : []).filter(isObj).map(function (c) { var y = { role: CRS[c.r] || "other", name: String(c.n || "") }; put(y, "instrument", c.ins); return y; });
+            if (cr.length) t.credits = cr;
+            [["sw", "writers"], ["sm", "masters"]].forEach(function (k) {
+              var l = (Array.isArray(r[k[0]]) ? r[k[0]] : []).filter(isObj).map(function (x) {
+                var y = { name: String(x.n || ""), share: typeof x.pct === "number" && isFinite(x.pct) ? x.pct : 0 };
+                put(y, "society", x.soc); put(y, "ipi", x.ipi);
+                return y;
+              });
+              if (l.length) t[k[1]] = l;
+            });
+            return t;
+          });
+          if (tr.length) o.tracks = tr;
+          var ed = (meds[x.id] || []).map(function (r) {
+            var e = { edition: MEDS[r.k] || "other" };
+            put(e, "upc", r.upc); put(e, "catalogue_no", r.cat); put(e, "distributor", r.dist); put(e, "note", r.note);
+            if (typeof r.price === "number" && r.price > 0) e.price = (Math.round(r.price * 100) / 100).toFixed(2);
+            return e;
+          });
+          if (ed.length) o.editions = ed;
+        }
         if (x.blurb) o.blurb = String(x.blurb).slice(0, TEXT_MAX);
         if (x.notes) o.notes = String(x.notes).slice(0, TEXT_MAX);
         if (x.kw) o.keywords = x.kw;
@@ -331,6 +373,9 @@
     return { ok: true, data: data };
   }
 
+  // DOCS-1 W5: what search_data finds in Files' Documents (files/docs-due.js
+  // searchHits); kept word for word in assistant/core.js search_data.
+  var DOCS_NOTE = "search_data in Files also finds Documents: type, date, sender, tags, amount, expiry and keep-until dates, the file and the first 300 characters of the text. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never appear.";
   // search_data: groups from orosAssistSearch → items for Claude.
   function packHits(groups, names) {
     var out = [];
@@ -360,6 +405,7 @@
     if (SUMMARY[id] || ACT.indexOf(id) >= 0) t.push("app_summary");
     if (DOCS.indexOf(id) >= 0) t.push("read_in_app");
     if (LINES[id]) t.push(LINES[id]);
+    if (id === "files") t = t.concat(FILE_READ);
     return t;
   }
   function pushLog(list, entry) {
@@ -377,6 +423,16 @@
               k: typeof e.k === "number" && e.k >= 0 ? Math.floor(e.k) : 0, dv: String(e.dv || "").slice(0, 40) };
     if (isObj(e.x)) o.x = e.x;
     if (typeof e.done === "number" && e.done > 0) o.done = Math.floor(e.done);
+    // PEND-1: a queued change keeps its queue id (q) and, for create_items,
+    // the items it made by index (p: { "<i>": { app, target, title, id } }),
+    // so a p- ref finds its item on any device.
+    if (typeof e.q === "string" && /^[A-Za-z0-9_-]{16}$/.test(e.q)) o.q = e.q;
+    if (isObj(e.p)) {
+      var pm = {};
+      Object.keys(e.p).slice(0, 50).forEach(function (k) { var r = e.p[k]; if (/^\d{1,2}$/.test(k) && isObj(r) && typeof r.app === "string") pm[k] = r; });
+      if (Object.keys(pm).length) o.p = pm;
+    }
+    if (typeof e.at === "number" && e.at > 0) o.at = Math.floor(e.at);
     return o;
   }
   function chgMerge(a, b) {
@@ -389,12 +445,15 @@
       var m = JSON.stringify(o) >= JSON.stringify(e) ? clone(o) : clone(e);
       if (o.done || e.done) m.done = Math.max(o.done || 0, e.done || 0);
       if (!m.x && (o.x || e.x)) m.x = clone(o.x || e.x);
+      if (!m.q && (o.q || e.q)) m.q = o.q || e.q;
+      if (!m.p && (o.p || e.p)) m.p = clone(o.p || e.p);
+      if (!m.at && (o.at || e.at)) m.at = o.at || e.at;
       by[e.id] = m;
     });
     var list = Object.keys(by).map(function (k) { return by[k]; })
       .sort(function (x, y) { return x.t - y.t || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0); });
     if (list.length > CHG_MAX) list = list.slice(list.length - CHG_MAX);
-    list.forEach(function (e, i) { if (i < list.length - UNDO_MAX || e.done) delete e.x; });
+    list.forEach(function (e, i) { if (i < list.length - UNDO_MAX || e.done) delete e.x; if (i < list.length - UNDO_MAX) delete e.p; });
     return list;
   }
 
@@ -1160,7 +1219,7 @@
   // an edit stamps only the groups it changes, and the column (or board)
   // whose order changed gets om = now, so the next merge keeps this order.
   // All or none per call. → { ok, data (canonical), undo, ids, text } | { ok:false, err }
-  var KB_TEXT = 500, KB_NOTES = 5000, KB_ADD = 50, KB_MOVE = 100, KB_COLS = 20;
+  var KB_TEXT = 500, KB_NOTES = 5000, KB_ADD = 50, KB_MOVE = 100, KB_COLS = 20; var KB_SUBS = 30, KB_SUBS_MAX = 100;
   function kbBoards(d) {
     var gone = isObj(d.boardDeleted) ? d.boardDeleted : {};
     return (Array.isArray(d.boards) ? d.boards : []).filter(function (b) {
@@ -1216,7 +1275,57 @@
   }
   function kbSnap(card, col, at) {
     return { col: col.id, at: at, t: card.text || "", n: card.notes || "", d: card.due || null,
-             l: Array.isArray(card.labels) ? card.labels.slice() : [] };
+             l: Array.isArray(card.labels) ? card.labels.slice() : [], g: kbPlan(card) };
+  }
+  // KB-GANTT (G3): the plan fields, group g (model.js planOf).
+  function kbPlan(c) {
+    return { start: typeof c.start === "string" && YMD.test(c.start) ? c.start : null, ms: !!c.ms,
+             deps: Array.isArray(c.deps) ? c.deps.filter(function (x) { return typeof x === "string"; }) : [] };
+  }
+  function kbSetPlan(c, p) {
+    if (p.start) c.start = p.start; else delete c.start;
+    if (p.ms) c.ms = 1; else delete c.ms;
+    if (p.deps && p.deps.length) c.deps = p.deps.slice(); else delete c.deps;
+  }
+  function kbAll(b) {
+    var out = [];
+    kbCols(b).forEach(function (col) { (Array.isArray(col.cards) ? col.cards : []).forEach(function (c) { if (isObj(c) && typeof c.id === "string") out.push(c); }); });
+    return out;
+  }
+  function kbLoop(all, cardId, predId) {
+    var by = {}, seen = {}, stack = [predId];
+    all.forEach(function (x) { by[x.id] = x; });
+    while (stack.length) {
+      var id = stack.pop();
+      if (id === cardId) return true;
+      if (seen[id] || !by[id]) continue;
+      seen[id] = 1;
+      (Array.isArray(by[id].deps) ? by[id].deps : []).forEach(function (p) { stack.push(p); });
+    }
+    return false;
+  }
+  // start / milestone / depends_on of a call → the new plan, or { err }.
+  function kbPlanArgs(b, card, a, due) {
+    var np = kbPlan(card), v;
+    if (a.start !== undefined) { v = kbDue(a.start); if (v.err) return { err: "start must be YYYY-MM-DD, or \"\" to clear it." }; np.start = v.d; }
+    if (a.milestone !== undefined) { if (typeof a.milestone !== "boolean") return { err: "milestone must be true or false." }; np.ms = a.milestone; }
+    if (np.start && due && np.start > due && !np.ms) return { err: "start " + np.start + " is after the due date " + due + "." };
+    if (a.depends_on !== undefined) {
+      if (!Array.isArray(a.depends_on) || a.depends_on.length > 20) return { err: "depends_on must be a list of at most 20 card ids ([] clears it)." };
+      var all = kbAll(b), ids = [];
+      for (var i = 0; i < a.depends_on.length; i++) {
+        var key = String(a.depends_on[i] == null ? "" : a.depends_on[i]).trim();
+        var hit = all.filter(function (x) { return x.id === key; });
+        if (!hit.length) hit = all.filter(function (x) { return String(x.text || "").trim().toLowerCase() === key.toLowerCase(); });
+        if (!hit.length) return { err: "depends_on: no card " + JSON.stringify(key) + " on " + (b.name || "this board") + "." };
+        if (hit.length > 1) return { err: "depends_on: more than one card reads " + JSON.stringify(key) + "; use its id." };
+        if (hit[0].id === card.id) return { err: "depends_on: a card cannot wait for itself." };
+        if (kbLoop(all, card.id, hit[0].id)) return { err: "depends_on: " + JSON.stringify(hit[0].text || hit[0].id) + " already waits for this card; that would make a loop." };
+        if (ids.indexOf(hit[0].id) < 0) ids.push(hit[0].id);
+      }
+      np.deps = ids;
+    }
+    return { p: np };
   }
   function kbPlace(col, card, top) {
     if (!Array.isArray(col.cards)) col.cards = [];
@@ -1272,6 +1381,11 @@
         var lb = a.labels === undefined ? { ids: [] } : kbLabels(b, a.labels);
         if (lb.err) return { ok: false, err: tag + lb.err };
         var card = { id: newId(), text: tx.s, notes: nt.s, due: du.d, labels: lb.ids, subtasks: [], info: [], mtime: now, pos: 0, fm: M.freshFm(now) };
+        if (a.start !== undefined || a.milestone !== undefined) {
+          var pa = kbPlanArgs(b, card, { start: a.start, milestone: a.milestone }, du.d);
+          if (pa.err) return { ok: false, err: tag + pa.err };
+          kbSetPlan(card, pa.p);
+        }
         kbPlace(fc.x, card, a.position === "top");
         if (touched.indexOf(fc.x) < 0) touched.push(fc.x);
         undo.cards[card.id] = { b: null, a: now };
@@ -1314,15 +1428,65 @@
       if (args.text !== undefined) { v = kbText(args.text, KB_TEXT, "text"); if (v.err) return { ok: false, err: v.err }; if (v.s !== (c0.text || "")) { c0.text = v.s; groups.push("t"); } }
       if (args.notes !== undefined) { v = kbText(args.notes, KB_NOTES, "notes"); if (v.err) return { ok: false, err: v.err }; if (v.s !== (c0.notes || "")) { c0.notes = v.s; groups.push("n"); } }
       if (args.due !== undefined) { v = kbDue(args.due); if (v.err) return { ok: false, err: v.err }; if (v.d !== (c0.due || null)) { c0.due = v.d; groups.push("d"); } }
+      if (args.start !== undefined || args.milestone !== undefined || args.depends_on !== undefined) {
+        v = kbPlanArgs(b, c0, args, c0.due || null); if (v.err) return { ok: false, err: v.err };
+        if (JSON.stringify(v.p) !== JSON.stringify(kbPlan(c0))) { kbSetPlan(c0, v.p); groups.push("g"); }
+      }
       if (args.labels !== undefined) {
         v = kbLabels(b, args.labels); if (v.err) return { ok: false, err: v.err };
         var old = Array.isArray(c0.labels) ? c0.labels : [];
         if (JSON.stringify(v.ids) !== JSON.stringify(old)) { c0.labels = v.ids; groups.push("l"); }
       }
+      // Subtasks (KB-SUB): add new ones at the end, tick, untick or reword them by id
+      // or exact text. Never removed here; undo takes back only these.
+      var sa = [], sc = {};
+      if (args.add_subtasks !== undefined || args.change_subtasks !== undefined) {
+        if (!Array.isArray(c0.subtasks)) c0.subtasks = [];
+        var subs = c0.subtasks, addS = args.add_subtasks, chk = args.change_subtasks;
+        if (addS !== undefined) {
+          if (!Array.isArray(addS) || !addS.length || addS.length > KB_SUBS) return { ok: false, err: "add_subtasks must hold 1 to " + KB_SUBS + " texts." };
+          if (subs.length + addS.length > KB_SUBS_MAX) return { ok: false, err: "A card holds at most " + KB_SUBS_MAX + " subtasks; it has " + subs.length + "." };
+          for (i = 0; i < addS.length; i++) {
+            v = kbText(addS[i], KB_TEXT, "text");
+            if (v.err) return { ok: false, err: "Subtask " + (i + 1) + ": " + v.err };
+          }
+        }
+        if (chk !== undefined) {
+          if (!Array.isArray(chk) || !chk.length || chk.length > KB_SUBS_MAX) return { ok: false, err: "change_subtasks must hold 1 to " + KB_SUBS_MAX + " entries." };
+          for (i = 0; i < chk.length; i++) {
+            var ce = isObj(chk[i]) ? chk[i] : {}, key = String(ce.subtask == null ? "" : ce.subtask).trim(), ct = "change_subtasks " + (i + 1) + ": ";
+            if (!key) return { ok: false, err: ct + "subtask (its id or exact text) is missing." };
+            if (ce.done !== undefined && typeof ce.done !== "boolean") return { ok: false, err: ct + "done must be true or false." };
+            var nt2 = ce.text === undefined ? null : kbText(ce.text, KB_TEXT, "text");
+            if (nt2 && nt2.err) return { ok: false, err: ct + nt2.err };
+            if (ce.done === undefined && !nt2) return { ok: false, err: ct + "give done, text or both." };
+            var byId = subs.filter(function (x) { return isObj(x) && x.id === key; });
+            var byTx = byId.length ? byId : subs.filter(function (x) { return isObj(x) && String(x.text || "").trim() === key; });
+            if (!byTx.length) return { ok: false, err: ct + "no subtask " + JSON.stringify(key) + " on this card." };
+            if (byTx.length > 1) return { ok: false, err: ct + "more than one subtask reads " + JSON.stringify(key) + "; use its id." };
+            var st0 = byTx[0];
+            if (sc[st0.id] !== undefined) return { ok: false, err: ct + "the subtask is named twice in one call." };
+            var was0 = { c: !!st0.completed, t: String(st0.text || "") }, moved = false;
+            if (ce.done !== undefined && !!st0.completed !== ce.done) { st0.completed = ce.done; moved = true; }
+            if (nt2 && nt2.s !== was0.t) { st0.text = nt2.s; moved = true; }
+            if (moved) { sc[st0.id] = was0; st0.m = now; }
+          }
+        }
+        if (addS !== undefined) addS.forEach(function (t) {
+          var ns = { id: newId(), text: kbText(t, KB_TEXT, "text").s, completed: false, m: now };
+          subs.push(ns); sa.push(ns.id);
+        });
+        if (sa.length || Object.keys(sc).length) groups.push("s");
+      }
       if (!groups.length) return { ok: false, err: "Nothing to change: the card already looks like this." };
       M.stampCard(c0, groups, now);
+      if (groups.indexOf("s") >= 0) c0.subtasks.forEach(function (x) { if (isObj(x) && (sa.indexOf(x.id) >= 0 || sc[x.id] !== undefined)) x.m = c0.mtime; });
       undo.cards[c0.id] = { b: snap, a: c0.mtime, g: groups };
-      return { ok: true, data: M.canonState(d, now), undo: undo, ids: [c0.id], text: "Changed the card." };
+      if (sa.length) undo.cards[c0.id].sa = sa;
+      if (Object.keys(sc).length) undo.cards[c0.id].sc = sc;
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: [c0.id].concat(sa),
+               text: "Changed the card." + (sa.length ? " Added " + sa.length + " subtask" + (sa.length === 1 ? "" : "s") + "." : "") +
+                     (Object.keys(sc).length ? " Changed " + Object.keys(sc).length + " subtask" + (Object.keys(sc).length === 1 ? "" : "s") + "." : "") };
     }
     return { ok: false, err: "unknown change" };
   }
@@ -1351,6 +1515,16 @@
         if (e.g.indexOf("n") >= 0) { card.notes = s.n; groups.push("n"); }
         if (e.g.indexOf("d") >= 0) { card.due = s.d; groups.push("d"); }
         if (e.g.indexOf("l") >= 0) { card.labels = s.l.slice(); groups.push("l"); }
+        if (e.g.indexOf("g") >= 0 && isObj(s.g)) { kbSetPlan(card, s.g); groups.push("g"); }
+        if (e.g.indexOf("s") >= 0 && Array.isArray(card.subtasks)) {
+          var gone = Array.isArray(e.sa) ? e.sa : [], was = isObj(e.sc) ? e.sc : {};
+          card.subtasks = card.subtasks.filter(function (x) {
+            if (isObj(x) && gone.indexOf(x.id) >= 0) { b.deleted[M.itemTomb(card.id, x.id)] = Math.max(now, (card.mtime || 0) + 1); return false; }
+            return true;
+          });
+          card.subtasks.forEach(function (x) { if (isObj(x) && isObj(was[x.id])) { x.completed = was[x.id].c; x.text = was[x.id].t; x.touch = 1; } });
+          groups.push("s");
+        }
       } else {                                              // a move: back to its column and place
         var home = kbCols(b).filter(function (c) { return c.id === s.col; })[0];
         if (!home) { kept++; return; }
@@ -1361,6 +1535,7 @@
         oms.push(at.col, home);
       }
       M.stampCard(card, groups, now);
+      if (Array.isArray(card.subtasks)) card.subtasks.forEach(function (x) { if (isObj(x) && x.touch) { delete x.touch; x.m = card.mtime; } });
       n++;
     });
     Object.keys(u.cols).forEach(function (id) {
@@ -1393,32 +1568,39 @@
   // Assistant's own tools, run in a hidden Assistant frame
   // (assistant.js GATE). = the Assistant's create / change apps, less
   // NEVER, the apps with their own tools above (Budget, Kanban) and
-  // Files (tests/gate-act.test.js).
-  var ACT = ["bookmarks", "calendar", "chores", "contacts", "crm", "feeds", "flashcards", "garage", "habits", "invoices",
+  // Files (tests/gate-act.test.js). Base: BASE-1 B4b.
+  var ACT = ["base", "bookmarks", "calendar", "chores", "contacts", "crm", "feeds", "flashcards", "garage", "habits", "invoices",
              "library", "meals", "music", "notes", "petcare", "plants", "podcasts", "publish", "quote", "shelf", "split", "stickies", "stock",
              "timesheet", "todo", "travel", "wiki"];
   // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): the documents the
   // Assistant changes with edit_in_app (assistant.js EDIT_SRC). The app
   // opens on the owner's screen and applies the commands there.
   var DOCS = ["atelier", "layout", "mindmap", "montage", "photolab", "slides", "spreadsheet", "studio", "whiteboard", "writer"];
+  // GATE-FILES F1 (2026-11-13, Chris «Προχώρα, όλα τα κύματα»): Files
+  // joins the gate with its own tools (assistant/claudefiles.js), only
+  // inside Claude's folders (FILES_KEY, synced). Files stays outside
+  // ACT: change_item on files is not offered through the gate.
+  var FILE_READ = ["files_list", "files_read"], FILE_WRITE = ["files_write", "files_move", "files_delete"];
   // The changes the relay may queue while orOS is closed (relay/gate.js
   // closedCall): its own change tools less budget_delete and
   // budget_transfer (it deletes entries too), and
   // create_items. applyQueue runs nothing else (defence in depth).
   var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "budget_delete", "budget_transfer", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
-                "change_item", "link_items", "link_contact"];
-  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
+                "change_item", "link_items", "link_contact",
+                // GATE-FILES F3: checked against the closed copy's index; deletes wait for the owner's yes here
+                "files_write", "files_move", "files_delete"];
+  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub"].concat(FILE_READ, FILE_WRITE);
   // GATE-PAR P3: tools that open an app on the owner's screen with the
   // work (= core.js GATE_OPEN); like do_action they need an app Claude
   // may change, no pause, and the frame checks the target app.
-  var ACT_OPEN = ACT_TOOLS.slice(12);
-  var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"];
+  var ACT_OPEN = ACT_TOOLS.slice(13, 24);
+  var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"].concat(FILE_WRITE);
   var DOC_WRITE = ["edit_in_app", "undo_change"];
-  function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0); }
-  function actable(id) { return ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0; }
+  function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"); }
+  function actable(id) { return ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"; }
   // One rule, orOS open or closed (Chris 08/11, 5.78.00): Claude may
   // change an app set to "write", unless the owner paused changes
   // (hold = paused until, ms). Every change is notified and undoable.
@@ -1483,21 +1665,21 @@
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
                    kanban_add_columns: "added Kanban columns",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
-                   link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}" } },
+                   link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}", files_write: "wrote files", files_move: "moved files", files_delete: "deleted files" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
           tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά", budget_balances: "συμφώνησε τα υπόλοιπα λογαριασμών του Budget",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
                    kanban_add_columns: "πρόσθεσε στήλες στο Kanban",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
-                   link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})" } },
+                   link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})", files_write: "έγραψε αρχεία", files_move: "μετακίνησε αρχεία", files_delete: "έσβησε αρχεία" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
           tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt", budget_balances: "die Kontostände im Budget abgeglichen",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
                    kanban_add_columns: "Kanban-Spalten hinzugefügt",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
-                   link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})" } }
+                   link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})", files_write: "Dateien geschrieben", files_move: "Dateien verschoben", files_delete: "Dateien gelöscht" } }
   };
   function fill(s, o) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return o[k] !== undefined ? o[k] : m; }); }
   // → { subject, text } in the owner's language (en, el, de).
@@ -1519,18 +1701,157 @@
     return typeof dl === "number" && isFinite(dl) && typeof off === "number" && isFinite(off) && now - off > dl - 2000;
   }
 
+  // ---- PEND-1 (Chris 2026-11-16, cards «Ναι, και τα δύο»): queued changes ----
+  // e2: a change Claude asked for while orOS was closed is applied with
+  // the time Claude asked (at), not the time it runs. The time is kept
+  // within the box's 7 days and never after now.
+  var AT_SPAN = 8 * 86400000;
+  function queuedAt(t, now) {
+    return typeof t === "number" && isFinite(t) && t > now - AT_SPAN ? Math.min(Math.floor(t), now) : 0;
+  }
+  // e2: the change would overwrite something that was itself changed at
+  // or after at (by the owner or another device). b = the app's data
+  // before, a = after (never written yet). An object is touched when one
+  // of its own fields differs (a field that is an unstamped object or
+  // list counts as its own) or it is removed; its stamp (m, mtime,
+  // modified, om; with a per-field fm, the changed fields' fm, else the
+  // stamp) at or after at makes the change late. A container whose only
+  // change is a new stamped child (an add) or a touched stamped child is
+  // not touched itself, so an add never waits for an older edit.
+  var STAMP_KEYS = ["m", "mtime", "modified", "om"];
+  function lateIn(b, a, at) {
+    if (!(typeof at === "number" && at > 0)) return false;
+    var hit = false;
+    var isO = function (v) { return !!v && typeof v === "object" && !Array.isArray(v); };
+    var stamped = function (o) { return isO(o) && (isO(o.fm) || STAMP_KEYS.some(function (k) { return typeof o[k] === "number"; })); };
+    var same = function (x, y) { try { return JSON.stringify(x) === JSON.stringify(y); } catch (e) { return false; } };
+    var objList = function (v) { return Array.isArray(v) && v.length > 0 && v.every(isO); };
+    var own = function (o, keys) {
+      if (isO(o.fm) && keys) { keys.forEach(function (k) { var s = typeof o.fm[k] === "number" ? o.fm[k] : STAMP_KEYS.reduce(function (m, sk) { return typeof o[sk] === "number" ? Math.max(m, o[sk]) : m; }, 0); if (s >= at) hit = true; }); return; }
+      STAMP_KEYS.forEach(function (k) { if (typeof o[k] === "number" && o[k] >= at) hit = true; });
+      if (isO(o.fm)) Object.keys(o.fm).forEach(function (k) { if (typeof o.fm[k] === "number" && o.fm[k] >= at) hit = true; });
+    };
+    // → true when x's change is not covered by a stamped object at or below x
+    function walk(x, y, depth) {
+      if (hit || same(x, y)) return false;
+      if (depth > 8) return true;
+      if (Array.isArray(x)) {
+        if (!Array.isArray(y)) return true;
+        var byId = {}, used = {}, loose = false;
+        y.slice(0, 5000).forEach(function (v, i) { if (isO(v) && typeof v.id === "string") byId[v.id] = i; });
+        x.slice(0, 5000).forEach(function (v, i) {
+          var j = isO(v) && typeof v.id === "string" ? (byId[v.id] !== undefined ? byId[v.id] : -1) : i;
+          if (j >= 0) used[j] = 1;
+          var w = j >= 0 ? y[j] : undefined;
+          if (isO(v) && w === undefined) { if (stamped(v)) own(v); else loose = true; return; }
+          if (isO(v) && isO(w)) { if (walk(v, w, depth + 1)) loose = true; return; }
+          if (!same(v, w)) loose = true;
+        });
+        y.slice(0, 5000).forEach(function (v, j) { if (!used[j] && !stamped(v)) loose = true; });   // a new stamped child is an add
+        return loose;
+      }
+      if (!isO(x)) return true;
+      if (!isO(y)) { if (stamped(x)) { own(x); return false; } return true; }
+      var keys = {}, changed = [];
+      Object.keys(x).concat(Object.keys(y)).forEach(function (k) { keys[k] = 1; });
+      Object.keys(keys).forEach(function (k) {
+        if (k === "fm" || STAMP_KEYS.indexOf(k) >= 0 || same(x[k], y[k])) return;
+        var deep = (isO(x[k]) && isO(y[k])) || (objList(x[k]) && Array.isArray(y[k]));
+        if (deep ? walk(x[k], y[k], depth + 1) : true) changed.push(k);
+      });
+      if (!changed.length) return false;
+      if (!stamped(x)) return true;
+      own(x, changed);
+      return false;
+    }
+    walk(b, a, 0);
+    return hit;
+  }
+  // a: the p- refs (p-<queue id>.<item>) in a change's arguments, the
+  // same places relay/gate.js refsIn looks.
+  var P_REF = /^p-[A-Za-z0-9_-]{16}\.\d{1,2}$/;
+  var REF_KEYS = ["ref", "customer", "contact", "item", "deal", "trip"];
+  function mapRefs(a, fn) {
+    if (!isObj(a)) return a;
+    var o = clone(a);
+    var one = function (v) { if (typeof v !== "string") return v; var r = v.replace(/^oros:/, "").trim(); return P_REF.test(r) ? fn(r) : v; };
+    var obj = function (x) { if (!isObj(x)) return x; REF_KEYS.forEach(function (k) { if (x[k] !== undefined) x[k] = one(x[k]); }); return x; };
+    obj(o);
+    ["refs", "items"].forEach(function (k) { if (Array.isArray(o[k])) o[k] = o[k].map(function (v) { return typeof v === "string" ? one(v) : obj(v); }); });
+    ["changes", "links"].forEach(function (k) { if (Array.isArray(o[k])) o[k] = o[k].map(obj); });
+    return o;
+  }
+  function pRefsIn(a) {
+    var out = [];
+    mapRefs(a, function (r) { if (out.indexOf(r) < 0) out.push(r); return r; });
+    return out;
+  }
+
   // The relay orOS uses (Mail › relay, a self-hosted one), else orOS's own.
   function relayOf(mail) {
     var u = isObj(mail) && isObj(mail.relay) && typeof mail.relay.url === "string" ? mail.relay.url.trim().replace(/\/+$/, "") : "";
     return /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(u) ? u : RELAY;
   }
 
-  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
+  // HELPER-1 (7.16.00, Chris 16/11): who helps with the owner's data,
+  // synced (slice "aihelper", localStorage "oros-ai-helper" { v, m }):
+  //   "both"      the Assistant and Claude (through orOS Gate), the default;
+  //   "assistant" the Assistant only: the Gate is off on every device and
+  //               cannot be turned on;
+  //   "claude"    Claude only: the Assistant leaves the menu and every way
+  //               into it opens Claude (desktop or claude.ai) instead.
+  var HELPERS = ["both", "assistant", "claude"];
+  function helperClean(o) {
+    var v = isObj(o) && HELPERS.indexOf(o.v) >= 0 ? o.v : "both";
+    var m = isObj(o) && typeof o.m === "number" && isFinite(o.m) && o.m > 0 ? o.m : 0;
+    return { v: v, m: m };
+  }
+  // The later choice wins; on a tie a fixed order, so two devices agree.
+  function helperMerge(a, b) {
+    a = helperClean(a); b = helperClean(b);
+    if (a.m !== b.m) return a.m > b.m ? a : b;
+    return HELPERS.indexOf(a.v) >= HELPERS.indexOf(b.v) ? a : b;
+  }
+
+  // 7.44.00: how many items a queued call deletes (0: none). change_item
+  // delete by ref (1), by refs (each), or changes with action delete;
+  // budget_delete its ids. An unlink deletes no item; files_delete has
+  // its own question (askFiles).
+  function delCount(name, a) {
+    if (!isObj(a)) return 0;
+    if (name === "budget_delete") return Array.isArray(a.ids) ? Math.max(1, a.ids.length) : 1;
+    if (name !== "change_item") return 0;
+    if (Array.isArray(a.changes)) return a.changes.filter(function (c) { return isObj(c) && c.action === "delete"; }).length;
+    if (a.action !== "delete") return 0;
+    return Array.isArray(a.refs) ? Math.max(1, refsOf(a).length) : 1;
+  }
+  function refsOf(a) {
+    var out = [];
+    function add(v) { v = String(v == null ? "" : v).replace(/^oros:/, "").trim(); if ((/^r\d{1,9}$/.test(v) || /^p-[A-Za-z0-9_-]{16}\.\d{1,2}$/.test(v)) && out.indexOf(v) < 0) out.push(v); }
+    if (!isObj(a)) return out;
+    if (Array.isArray(a.refs)) a.refs.forEach(add); else add(a.ref);
+    if (Array.isArray(a.changes)) a.changes.forEach(function (c) { if (isObj(c) && c.action === "delete") add(c.ref); });
+    return out;
+  }
+  // The question's words: the app(s) and up to 10 titles, one per line,
+  // from the Assistant frame's peek ([{ a: app name, t: title }]).
+  function delWhat(name, items, n, more) {
+    if (name === "budget_delete") return { app: "Budget", list: "" };
+    var l = Array.isArray(items) ? items.filter(function (x) { return isObj(x) && typeof x.t === "string"; }) : [];
+    var apps = [];
+    l.forEach(function (x) { var a = String(x.a || ""); if (a && apps.indexOf(a) < 0) apps.push(a); });
+    var shown = l.slice(0, 10), list = shown.map(function (x) { return x.t.slice(0, 100); }).join("\n");
+    if (n > shown.length && shown.length) list += "\n" + String(more || "+{n}").replace("{n}", String(n - shown.length));
+    return { app: apps.join(", "), list: list };
+  }
+
+  var core = { delCount: delCount, refsOf: refsOf, delWhat: delWhat, NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
                WRITES: WRITES, ACT: ACT, DOCS: DOCS, QUEUED: QUEUED, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_OPEN: ACT_OPEN, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
-               pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
+               pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE,
+               queuedAt: queuedAt, lateIn: lateIn, mapRefs: mapRefs, pRefsIn: pRefsIn, P_REF: P_REF };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
   if (!root || !root.document) return;
   root.orosGateCore = core;
@@ -1644,6 +1965,8 @@
   function connect() {
     var p = pref();
     if (!p.on || !p.id || !p.tok || ws) return;
+    if (HOST.bg && !HOST.ok) return;                 // GATE-HOST: an unconfirmed or stopped background host stays off
+    if (helperRead().v === "assistant") { helperApply(); return; }   // HELPER-1: the Gate goes off here
     if (isObj(p.lv) && p.lv.kanban === "write") kanbanModel().then(null, function () {});   // Undo needs it at hand
     clearTimeout(retryTimer);
     setWs("connecting");
@@ -1661,6 +1984,7 @@
       else sendBase(sock);
       pushReg();
       copySoon(4000);
+      fileCopySoon(60000);
       clearInterval(pingTimer);
       pingAt = Date.now();
       pingTimer = setInterval(function () {
@@ -1677,6 +2001,7 @@
       if (ev.data.indexOf('{"lv"') === 0) { onLv(ev.data); return; }
       if (ev.data.indexOf('{"cq"') === 0) { applyQueue(sock, ev.data); return; }
       if (ev.data.indexOf('{"snapok"') === 0) return;
+      if (ev.data.indexOf('{"fidxok"') === 0) { fileCopyAck(); return; }
       onCall(sock, ev.data);
     };
     sock.onclose = function (ev) {
@@ -1711,6 +2036,7 @@
   }
   function ranAdd(id) { var l = ranList(); l.push({ id: id, t: Date.now() }); writeJSON(RAN_KEY, l.slice(-RAN_MAX)); }
   function ranHas(id) { return ranList().some(function (e) { return e.id === id; }); }
+  function ranDrop(id) { writeJSON(RAN_KEY, ranList().filter(function (e) { return e.id !== id; })); }
   function chgList() {
     var l = readJSON(CHG_KEY);
     if (!Array.isArray(l)) {                          // before 5.78.00: this device's own undo list
@@ -1735,13 +2061,17 @@
   // packet encrypted here; the relay wakes it after a change, at most
   // once per 15 minutes. The details and Undo stay in Claude's changes.
   var PUSH_TXT = { en: "Claude changed something in orOS", el: "Ο Claude έκανε αλλαγές στο orOS", de: "Claude hat etwas in orOS geändert" };
+  // PEND-1 (e3, Chris 2026-11-16 «Ναι, μία φορά τη μέρα»): the second
+  // packet, sent by the box when a change has waited 6 hours (once a day).
+  var PUSH_WAIT = { en: "Claude's changes are waiting: open orOS to apply them", el: "Αλλαγές του Claude περιμένουν: άνοιξε το orOS για να εφαρμοστούν", de: "Änderungen von Claude warten: Öffne orOS, um sie anzuwenden" };
+  var PUSH_V = 2;                                     // 2: the box also has the "waiting" packet
   var pushBusy = false;
   function pushReg() {
     var P = root.orosPush, p = pref();
     if (pushBusy || !p.on || !p.id || !p.tok || !P || typeof P.wakeToken !== "function") return;
     var want = P.enabled && P.enabled() ? P.deviceId() : "";
     var pp = isObj(p.pp) ? p.pp : null;
-    if (want ? pp && pp.pid === want && pp.g === p.id : !pp) return;
+    if (want ? pp && pp.pid === want && pp.g === p.id && pp.v === PUSH_V : !pp) return;
     var lang = "en";
     try { lang = String(root.orosI18n && root.orosI18n.lang ? root.orosI18n.lang() : "en").slice(0, 2); } catch (e) {}
     pushBusy = true;
@@ -1761,7 +2091,9 @@
     }
     Promise.resolve(pp && pp.pid === want && pp.wt ? pp.wt : P.wakeToken()).then(function (wt) {
       return P.wakePacket("gate:changes", "orOS Gate", PUSH_TXT[lang] || PUSH_TXT.en, "gate:changes", "gate").then(function (ct) {
-        return devCall({ act: "ping", id: p.id, tok: p.tok, pid: want, wt: wt, ct: ct }).then(function () { done({ pid: want, wt: wt, g: p.id }); });
+        return P.wakePacket("gate:waiting", "orOS Gate", PUSH_WAIT[lang] || PUSH_WAIT.en, "gate:changes", "gate").then(function (cw) {
+          return devCall({ act: "ping", id: p.id, tok: p.tok, pid: want, wt: wt, ct: ct, cw: cw }).then(function () { done({ pid: want, wt: wt, g: p.id, v: PUSH_V }); });
+        });
       });
     }).catch(function () { pushBusy = false; });
   }
@@ -1836,7 +2168,7 @@
   function digCheck() {
     var now = Date.now(), dg = digRead();
     if (digBusy || !digDue(dg, chgList(), now)) return;
-    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) return;
+    if (locked()) return;
     if (typeof navigator !== "undefined" && navigator.onLine === false) return;
     var accs = sendAccounts(), acc = accs.filter(function (a) { return a.id === dg.acct; })[0] || accs[0];
     if (!acc) return;                                 // Settings says a Mail account is needed
@@ -1917,7 +2249,7 @@
   function sendCopy() {
     var p = pref(), k = gateKey();
     if (copyBusy || !p.on || !k || !ws || ws.readyState !== 1) return;
-    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) return;
+    if (locked()) return;
     copyBusy = true;
     var ok = allowed(offered(), p.lv).map(function (a) { return a.id; }).filter(function (id) { return !sensitive(id); });
     var d = new Date(), month = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
@@ -1926,7 +2258,8 @@
     ok.forEach(function (id) {
       if (SUMMARY[id]) {
         calls.push(["app_summary", { app: id }]);
-        if (id !== "kanban") { calls.push(["app_summary", { app: id, month: month }]); calls.push(["app_summary", { app: id, month: prev }]); }
+        if (id === "studio") { /* no month: one summary of every show */ }
+        else if (id !== "kanban") { calls.push(["app_summary", { app: id, month: month }]); calls.push(["app_summary", { app: id, month: prev }]); }
         // each board by its name too (5.96.00: «δουλεύεις και σε κλειστό orOS»)
         else {
           var kb = readStore("oros-kanban-data"), seen = {};
@@ -1994,38 +2327,104 @@
   // Changes Claude left while orOS was closed: applied here, in order,
   // with the same rules as a live call (the switches and a pause as they
   // are now), then the box is told which ones are done.
+  // F3: queued deletions waiting for the owner (id → queue item).
+  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 }, DECL = { ok: false, c: "declined" };
+  function heldAgain() {
+    var ids = Object.keys(cqHeld);
+    if (!ids.length || !ws || ws.readyState !== 1 || document.visibilityState !== "visible") return;
+    applyQueue(ws, JSON.stringify({ cq: ids.map(function (id) { return cqHeld[id]; }) }));
+  }
   function applyQueue(sock, text) {
     var o, k = gateKey();
     try { o = JSON.parse(text); } catch (e) { return; }
     if (!isObj(o) || !Array.isArray(o.cq) || !k || !pref().on) return;
-    whenUnlocked(function () {
-      var done = [];
+    whenOpen(function () {
+      var done = [], files = false;
       o.cq.slice(0, 50).reduce(function (chain, it) {
         return chain.then(function () {
           if (!isObj(it) || typeof it.id !== "string") return;
           if (ranHas(it.id)) { done.push(it.id); return; }   // done live already (answered late), or sent twice (6.01.02)
+          if (cqBusy[it.id]) return BUSY;                     // F3: its dialog is open now
           ranAdd(it.id);
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
             if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
-            if (x.n === "change_item" && isObj(x.a) && (x.a.action === "delete" || (Array.isArray(x.a.changes) && x.a.changes.some(function (ch) { return isObj(ch) && ch.action === "delete"; })))) return { ok: false, c: "refused" };
-            return run(x.n, x.a).then(function (res) {
+            // 7.44.00 (Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με
+            // το orOS κλειστό»): a deletion of items (change_item delete, budget_delete)
+            // waits like files_delete: always asked here (askQueued, one question per
+            // call, whatever its size); hidden, locked or unanswered, it stays queued.
+            var nDel = core.delCount(x.n, x.a);
+            if (nDel && (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()))) { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }
+            // F3: a deletion waits for the owner's Delete on this device; hidden,
+            // locked or unanswered, it stays queued (offered again when orOS is
+            // on screen, and on the next connect). Writes keep a conflict copy.
+            if (x.n === "files_delete" && (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()))) { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }
+            if (FILE_WRITE.indexOf(x.n) >= 0) { files = true; if (x.n === "files_write") x.a = Object.assign({}, isObj(x.a) ? x.a : {}, { __q: 1 }); }
+            cqBusy[it.id] = 1;
+            askLast = "";
+            var at = queuedAt(x.t, Date.now());       // PEND-1 (e2): the time Claude asked
+            return (nDel ? askQueued(x, nDel) : Promise.resolve("yes")).then(function (how) {
+              if (how === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // nobody answered: asked again later
+              if (how === "no") {                       // Keep: dropped, logged, nothing deleted
+                delete cqBusy[it.id]; delete cqHeld[it.id];
+                writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), { t: Date.now(), n: String(x.n).slice(0, 20), a: [], k: 0, ok: 0, q: 1 }));
+                return DECL;
+              }
+              preYes = nDel;                            // the owner just said Delete to these: no second question
+              askLast = "";
+              return run(x.n, x.a, { at: at }).then(function (res) { preYes = 0; return res; }, function (e) { preYes = 0; throw e; });
+            }).then(function (res) {
+              if (res === DECL) return res;
+              delete cqBusy[it.id];
+              if (res && res.ok && res.u) chgTag(res.u, it.id, at, res.made);   // PEND-1: q, p (items by index), at
+              if (x.n === "files_delete" && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
+              delete cqHeld[it.id];
               var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
               if (res.u) entry.u = res.u;
               writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
               return res;
             });
-          }).then(function () { done.push(it.id); }, function () { done.push(it.id); });   // never in a loop
+          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e !== HELD) done.push(it.id); });   // never in a loop
         });
       }, Promise.resolve()).then(function () {
         try { if (sock.readyState === 1) sock.send(JSON.stringify({ cqa: done })); } catch (e) {}
         changed();
         copySoon(2000);
+        if (files) fileCopySoon(60000);
       });
     });
   }
   function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
   function dirty() { try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {} }
+  // ---- HELPER-1: who helps with the data (synced) ----
+  var HELPER_KEY = "oros-ai-helper", helperBusy = false;
+  function helperRead() { return helperClean(readJSON(HELPER_KEY)); }
+  function helperTell() {
+    changed();
+    try { root.dispatchEvent(new CustomEvent("oros-ai-helper", { detail: helperRead().v })); } catch (e) {}
+  }
+  // "Assistant only" turns the Gate off on this device (its box at the
+  // relay and its closed copy go too, as with the owner's own switch).
+  function helperApply() {
+    if (helperBusy || helperRead().v !== "assistant" || !pref().on) return;
+    helperBusy = true;
+    api.disable().then(function () { helperBusy = false; }, function () { helperBusy = false; });
+  }
+  function helperSlice(n) {
+    var S = root.orosSync;
+    if (S && typeof S.registerSlice === "function") {
+      S.registerSlice("aihelper", function () { var raw = null; try { raw = localStorage.getItem(HELPER_KEY); } catch (e) {} return raw ? helperRead() : null; },
+        function (data) {
+          if (!isObj(data)) return;
+          var before = helperRead().v, next = helperMerge(helperRead(), data);
+          if (!writeJSON(HELPER_KEY, next)) return;
+          if (next.v !== before) { helperTell(); helperApply(); }
+        }, HELPER_KEY, helperMerge);
+      return;
+    }
+    if (n < 40) setTimeout(function () { helperSlice(n + 1); }, 500);
+  }
+  function helperOff() { var e = new Error("helper"); e.code = "helper"; return Promise.reject(e); }
   // This device has the gate: give the owner's other devices its seat.
   function makeSeat() {
     var p = pref(), cur = seatRead();
@@ -2049,6 +2448,7 @@
   function sit(force) {
     var p = pref(), seat = seatRead();
     if (sitBusy || p.on || !seat || (!force && (p.out || p.sf === seat.m))) return Promise.resolve(false);
+    if (helperRead().v === "assistant") return Promise.resolve(false);   // HELPER-1
     if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked() && !force) return Promise.resolve(false);
     sitBusy = true;
     var tok = randomB64u(32);
@@ -2115,7 +2515,7 @@
   // The relay asks a device whose orOS is on screen first (5.73.00):
   // a phone in the background loses its socket, a computer keeps it.
   function sendVis(sock) {
-    try { if (sock && sock.readyState === 1) sock.send(document.visibilityState === "hidden" ? "v0" : "v1"); } catch (e) {}
+    try { if (sock && sock.readyState === 1) sock.send((HOST.ok && HOST.kind === "bg") || document.visibilityState === "hidden" ? "v0" : "v1"); } catch (e) {}
   }
   try {
     document.addEventListener("visibilitychange", function () {
@@ -2123,7 +2523,7 @@
       if (hidden) hidAt = Date.now();
       else if (hidAt && Date.now() - hidAt > SLEPT_MS && pref().on) { hidAt = 0; renew(); return; }   // 6.01.02
       else hidAt = 0;
-      if (ws) { sendVis(ws); return; }
+      if (ws) { sendVis(ws); if (!hidden) setTimeout(heldAgain, 1500); return; }
       if (!hidden && pref().on && wsState !== "gone") { retry = 0; clearTimeout(retryTimer); connect(); }
     });
     // Page Lifecycle: a frozen page that runs again (Chrome, Android).
@@ -2170,10 +2570,13 @@
   }
 
   // One call from Claude → { ok, c (text), a (apps), k (items) }.
-  function run(name, args) {
-    if (root.orosLock && typeof root.orosLock.isLocked === "function" && root.orosLock.isLocked()) {
+  // opt (PEND-1): { at: the time Claude asked, for a queued change }.
+  function run(name, args, opt) {
+    opt = isObj(opt) ? opt : {};
+    if (locked()) {
       return Promise.resolve({ ok: false, c: "orOS is locked on the owner's device. Ask the owner to unlock it." });
     }
+    if (away() && (name === "edit_in_app" || name === "do_action" || ACT_OPEN.indexOf(name) >= 0)) return Promise.resolve({ ok: false, c: HOST_TXT });
     var p = pref();
     var all = offered(), ok = allowed(all, p.lv), names = appNames(all), okIds = ok.map(function (a) { return a.id; });
     args = isObj(args) ? args : {};
@@ -2181,9 +2584,12 @@
       return Promise.resolve({ ok: true, a: [], k: ok.length, c: JSON.stringify({
         apps: ok.map(function (a) {
           var o = { id: a.id, name: a.name, tools: toolsOf(a.id) };
+          // DOCS-1 W5 (Chris 2026-11-15): the same words as the Assistant's search_data.
+          if (a.id === "files") o.documents = DOCS_NOTE;
           if (sensitive(a.id)) o.sensitive = "Personal app the owner allowed after a warning: read only, only while orOS is open (never in the closed copy). Read only what the owner's request needs.";
           if (p.lv[a.id] === "write" && writable(a.id)) {
-            o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : DOCS.indexOf(a.id) >= 0 ? DOC_WRITE.slice() : ACT_WRITE.filter(function (n) { return n !== "edit_in_app"; });
+            o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : DOCS.indexOf(a.id) >= 0 ? DOC_WRITE.slice() : a.id === "files" ? FILE_WRITE.concat("undo_change")
+              : ACT_WRITE.filter(function (n) { return n !== "edit_in_app" && FILE_WRITE.indexOf(n) < 0; });
             o.changes = canWrite(p.lv, p.hold, a.id, Date.now()) ? "allowed (the owner is notified of each change)" : "paused by the owner until " + new Date(p.hold).toISOString();
           }
           return o;
@@ -2198,7 +2604,7 @@
         return { ok: true, c: JSON.stringify(list), quiet: 1 };
       });
     }
-    var budgetish = name === "app_summary" && (args.app === "budget" || args.app === "stock" || args.app === "kanban");
+    var budgetish = name === "app_summary" && (args.app === "budget" || args.app === "stock" || args.app === "kanban" || args.app === "studio");
     if (ACT_TOOLS.indexOf(name) >= 0 && !budgetish) {
       if ((ACT_WRITE.indexOf(name) >= 0 || name === "do_action" || ACT_OPEN.indexOf(name) >= 0) && !ok.some(function (a) { return p.lv[a.id] === "write" && actable(a.id); })) {
         return Promise.resolve({ ok: false, c: "The owner lets Claude change none of these apps (orOS › Settings › Connected services › orOS Gate: «Claude may also change …» per app)." });
@@ -2209,8 +2615,17 @@
           return { ok: false, c: "orOS could not start its tools on the device; try again in a moment." };
         }
         var now = Date.now();
-        return F.run(name, args).then(function (r) {
+        // PEND-1: p- refs (items a queued create_items made) → this device's refs
+        var prs = pRefsIn(args), pm = {}, miss = [];
+        if (prs.length) {
+          if (typeof F.ref !== "function") return { ok: false, c: "This device's orOS is too old for refs of items added while orOS was closed; use search_data." };
+          prs.forEach(function (r) { var rec = pFind(r), loc = rec ? F.ref(rec) : ""; if (loc) pm[r] = loc; else miss.push(r); });
+          if (miss.length) return { ok: false, c: "No item for " + miss.slice(0, 5).join(", ") + ": its add was not applied (refused, cancelled or still waiting). Find the item with search_data. Nothing was changed." };
+          args = mapRefs(args, function (r) { return pm[r]; });
+        }
+        return F.run(name, args, opt.at ? { at: opt.at } : undefined).then(function (r) {
           var out = { ok: !!r.ok, c: r.c || "", a: Array.isArray(r.a) ? r.a : [], k: r.k || 0 };
+          if (r.ok && Array.isArray(r.made) && r.made.length) out.made = r.made;
           // One record per change (5.78.00 remember): synced, notified, in
           // the daily email; x = the Assistant's change id and its undo
           // data, so Undo works from any device (actUndo).
@@ -2244,14 +2659,15 @@
     }
     if (name === "app_summary") {
       var app = String(args.app || "");
-      if (!SUMMARY[app]) return Promise.resolve({ ok: false, c: "app must be budget, stock or kanban." });
+      if (!SUMMARY[app]) return Promise.resolve({ ok: false, c: "app must be budget, stock, kanban or studio." });
       if (okIds.indexOf(app) < 0) return Promise.resolve({ ok: false, c: "The owner does not let Claude read " + app + "." });
       return summary().then(function (S) {
-        var n = S.normArgs({ app: app, month: args.month, board: args.board }, localDay());
+        var n = S.normArgs({ app: app, month: args.month, board: args.board, show: args.show }, localDay());
         if (!n.ok) return { ok: false, c: n.err };
         var lang = (root.orosLang || "en").slice(0, 2);
         var out = app === "budget" ? S.budgetMonth(readStore("oros-budget-data"), n.month, lang)
                 : app === "stock" ? S.stockMonth(readStore("oros-stock-data"), n.month, lang)
+                : app === "studio" ? S.studioShows(readStore("oros-studio-data"), { show: n.show })
                 : S.kanbanBoards(readStore("oros-kanban-data"), { board: n.board, today: localDay() });
         if (out && out.ok === false) return { ok: false, c: out.err };
         return { ok: true, a: [app], k: out && out.items ? out.items.length : 1, c: JSON.stringify(out) };
@@ -2272,9 +2688,9 @@
       return Promise.resolve({ ok: true, a: [line], k: k, c: JSON.stringify(dd) });
     }
     var op = { budget_add: "add", budget_change: "change", budget_delete: "delete", budget_areas: "areas", budget_categories: "cats", budget_transfer: "xfer", budget_balances: "bal" }[name];
-    if (op) return change(op, args, p, names);
+    if (op) return change(op, args, p, names, opt.at);
     var kop = { kanban_add_cards: "add_cards", kanban_move_cards: "move_cards", kanban_change_card: "change_card", kanban_add_columns: "add_columns" }[name];
-    if (kop) return kanbanChange(kop, args, p, names);
+    if (kop) return kanbanChange(kop, args, p, names, opt.at);
     return Promise.resolve({ ok: false, c: "Unknown tool." });
     }
   }
@@ -2347,7 +2763,9 @@
         .map(function (x) { return { id: x.id, prefix: String(x.prefix || ""), kind: x.kind }; });
     } catch (e) { return null; }
   }
-  function change(op, args, p, names) {
+  // PEND-1 (e2): the words of a queued change that came too late.
+  var LATE_TXT = "The owner changed this after you asked for the change (orOS was closed then); their change stays and yours was not applied.";
+  function change(op, args, p, names, at) {
     var now = Date.now();
     if (!canWrite(p.lv, p.hold, "budget", now)) {
       return Promise.resolve({ ok: false, c: closedMsg(p, "budget", names.budget || "Budget") });
@@ -2356,8 +2774,10 @@
     var asked = n > ASK_OVER && n <= 100 ? askDelete(n) : Promise.resolve(true);
     return asked.then(function (yes) {
       if (!yes) return { ok: false, c: "The owner did not confirm deleting " + n + " entries on the device; nothing was deleted." };
-      var r = budgetWrite(op, readStore("oros-budget-data"), args, Date.now(), newTxId, op === "areas" ? invSeries() : undefined, root.OrosBudgetLoans || null);
+      var bd = readStore("oros-budget-data");
+      var r = budgetWrite(op, bd, args, at || Date.now(), newTxId, op === "areas" ? invSeries() : undefined, root.OrosBudgetLoans || null);
       if (!r.ok) return { ok: false, c: r.err };
+      if (at && lateIn(bd, r.data, at)) return { ok: false, late: 1, c: LATE_TXT };
       if (!writeJSON("oros-budget-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
       var uid = remember("budget", { cats: "budget_categories", xfer: "budget_transfer", bal: "budget_balances" }[op] || "budget_" + op, r.undo, now, r.ids.length);
@@ -2393,14 +2813,38 @@
     if (writeJSON(CHG_KEY, cl)) dirty();
     return uid;
   }
-  function kanbanChange(op, args, p, names) {
+  // PEND-1: a queued change's record gets its queue id, the time Claude
+  // asked and, for create_items, the items it made by index (synced, so
+  // a p- ref finds its item from any device: pFind).
+  function chgTag(uid, qid, at, made) {
+    var l = chgList(), e = null;
+    l.forEach(function (x) { if (x.id === uid) e = x; });
+    if (!e) return;
+    var o = Object.assign({}, e, { q: qid });
+    if (at) o.at = at;
+    if (Array.isArray(made) && made.length) {
+      var pm = {};
+      made.slice(0, 50).forEach(function (m) { if (isObj(m) && typeof m.i === "number" && m.i >= 0 && m.i < 100 && isObj(m.rec)) pm[String(m.i)] = m.rec; });
+      if (Object.keys(pm).length) o.p = pm;
+    }
+    if (writeJSON(CHG_KEY, chgMerge(l.filter(function (x) { return x.id !== uid; }), [o]))) dirty();
+  }
+  function pFind(ref) {
+    var m = /^p-([A-Za-z0-9_-]{16})\.(\d{1,2})$/.exec(String(ref || "")), hit = null;
+    if (!m) return null;
+    chgList().forEach(function (e) { if (e.q === m[1] && isObj(e.p) && isObj(e.p[m[2]])) hit = e.p[m[2]]; });
+    return hit;
+  }
+  function kanbanChange(op, args, p, names, at) {
     var now = Date.now();
     if (!canWrite(p.lv, p.hold, "kanban", now)) {
       return Promise.resolve({ ok: false, c: closedMsg(p, "kanban", names.kanban || "Kanban") });
     }
     return kanbanModel().then(function (M) {
-      var r = kanbanWrite(M, op, readStore("oros-kanban-data"), args, Date.now(), kbId);
+      var kd = readStore("oros-kanban-data");
+      var r = kanbanWrite(M, op, kd, args, at || Date.now(), kbId);
       if (!r.ok) return { ok: false, c: r.err };
+      if (at && lateIn(kd, r.data, at)) return { ok: false, late: 1, c: LATE_TXT };
       if (!writeJSON("oros-kanban-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
       var uid = remember("kanban", "kanban_" + op, r.undo, now, r.ids.length);
@@ -2410,14 +2854,381 @@
   // More than ASK_OVER deletions: the owner says yes on the device
   // within 20 s (the relay waits 25 s for the answer).
   function askDelete(n) {
+    if (preYes && n <= preYes) { preYes = 0; return Promise.resolve(true); }   // 7.44.00: a queued deletion the owner confirmed a moment ago
     return new Promise(function (ok) {
       var settled = false, wrap = null;
       function end(v) { if (settled) return; settled = true; if (wrap) wrap.remove(); ok(v); }
-      if (document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false); return; }
+      if (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false); return; }
       wrap = dialog(tr("gate.del.title"), tr("gate.del.body").replace("{n}", String(n)), "", tr("gate.del.no"), tr("gate.del.yes"),
         function () { end(false); }, function () { end(true); });
       setTimeout(function () { end(false); }, 20000);
     });
+  }
+
+  // GATE-FILES: deleting files is always asked here, naming them (at
+  // most 10 shown); no answer within 20 s, or orOS hidden or locked = no.
+  // F3: askLast tells a queued deletion "no" (Keep) from "none" (nobody
+  // answered, or orOS hidden or locked: the deletion keeps waiting).
+  var askLast = "";
+  // 7.44.00: a queued deletion of items: what goes (the app, up to 10
+  // titles from the frame's peek), Delete or Keep. → Promise<"yes" |
+  // "no" | "none"> (none: no answer in 60 s, or orOS hidden or locked;
+  // it stays queued and heldAgain asks again when orOS is on screen).
+  var preYes = 0;
+  function askQueued(x, n) {
+    var what = x.n === "change_item" ? actFrame().then(function (F) { return F && typeof F.peek === "function" ? F.peek(core.refsOf(x.a)) : []; }, function () { return []; }) : Promise.resolve([]);
+    return what.then(function (items) {
+      return new Promise(function (ok) {
+        var settled = false, wrap = null, w = core.delWhat(x.n, items, n, tr("gate.fdel.more"));
+        function end(v) { if (settled) return; settled = true; askLast = v; if (wrap) wrap.remove(); ok(v); }
+        if (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end("none"); return; }
+        var body = tr("gate.qdel.body").replace("{n}", String(n)).replace("{app}", w.app || "orOS");
+        wrap = dialog(tr("gate.qdel.title"), body, w.list, tr("gate.del.no"), tr("gate.del.yes"),
+          function () { end("no"); }, function () { end("yes"); });
+        setTimeout(function () { end("none"); }, 60000);
+      });
+    });
+  }
+  function askFiles(names) {
+    return new Promise(function (ok) {
+      var settled = false, wrap = null, list = Array.isArray(names) ? names.map(String) : [];
+      function end(v, how) { if (settled) return; settled = true; askLast = how; if (wrap) wrap.remove(); ok(v); }
+      if (!list.length || away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
+      var shown = list.slice(0, 10).join("\n") + (list.length > 10 ? "\n" + tr("gate.fdel.more").replace("{n}", String(list.length - 10)) : "");
+      wrap = dialog(tr("gate.fdel.title"), tr("gate.fdel.body").replace("{n}", String(list.length)), shown, tr("gate.del.no"), tr("gate.fdel.yes"),
+        function () { end(false, "no"); }, function () { end(true, "yes"); });
+      setTimeout(function () { end(false, "none"); }, 20000);
+    });
+  }
+  // Claude's folders (synced slice "gatefiles"): { ver, m, f: [path] };
+  // the newer m wins whole, a tie goes to the larger JSON (R5).
+  var FILES_KEY = "oros-gate-files";
+  // Kept as written (setFolders cleans with claudefiles.js); a pulled
+  // list is held to plain disk paths here and cleaned again before use.
+  function foldersClean(x) {
+    if (!isObj(x) || typeof x.m !== "number" || !Array.isArray(x.f)) return { ver: 1, m: 0, f: [] };
+    var f = x.f.filter(function (p, i, l) {
+      return typeof p === "string" && p.length <= 1024 && p.indexOf("/internal/") === 0 && !/(^|\/)\.|[\u0000-\u001f]/.test(p.slice(10)) && l.indexOf(p) === i;
+    }).slice(0, 50).sort();
+    var out = { ver: 1, m: Math.floor(x.m), f: f };
+    if (typeof x.q === "number" && isFinite(x.q) && x.q >= 52428800) out.q = Math.min(Math.floor(x.q), 1e12);   // F2: the closed copy's quota (bytes)
+    return out;
+  }
+  var cfP = null;
+  function claudeFiles() {
+    if (root.OrosClaudeFiles) return Promise.resolve(root.OrosClaudeFiles);
+    if (!cfP) {
+      cfP = new Promise(function (ok, no) {
+        var s = document.createElement("script");
+        var v = root.orosTodayEnv && root.orosTodayEnv.version ? "?v=" + encodeURIComponent(root.orosTodayEnv.version) : "";
+        s.src = "assistant/claudefiles.js" + v;
+        s.onload = function () { root.OrosClaudeFiles ? ok(root.OrosClaudeFiles) : no(new Error("claudefiles")); };
+        s.onerror = function () { cfP = null; no(new Error("claudefiles")); };
+        document.head.appendChild(s);
+      });
+    }
+    return cfP;
+  }
+  function foldersRead() { return foldersClean(readJSON(FILES_KEY)); }
+  function foldersMerge(a, b) {
+    var A = foldersClean(a), B = foldersClean(b);
+    if (A.m !== B.m) return A.m > B.m ? A : B;
+    return JSON.stringify(A) >= JSON.stringify(B) ? A : B;
+  }
+  function foldersSlice(n) {
+    var S = root.orosSync;
+    if (S && typeof S.registerSlice === "function") {
+      S.registerSlice("gatefiles", function () { var raw = null; try { raw = localStorage.getItem(FILES_KEY); } catch (e) {} return raw ? foldersRead() : null; },
+        function (data) {
+          var v = foldersClean(data), cur = foldersRead();
+          if (JSON.stringify(v) === JSON.stringify(cur)) return;
+          writeJSON(FILES_KEY, v);                         // pulled: never markDirty
+          changed();
+        }, FILES_KEY, foldersMerge);
+      return;
+    }
+    if (n < 40) setTimeout(function () { foldersSlice(n + 1); }, 500);
+  }
+
+  // ---- GATE-FILES F2: the closed copy of Claude's folders ----
+  // gate/filecopy.js seals; sync.js gateDrop stores the pieces in
+  // Dropbox (/gate/<gate id>/) behind shared links; the sealed index
+  // goes to the gate box ({ fidx }), which reads it only during a call.
+  // Never while Sensitive work is on (window.orosStrict, PR #1010) or
+  // the device is locked; one run at a time; unchanged files are not
+  // read again (FC_KEY keeps size, time and hash per path).
+  var FC_KEY = "oros-gate-fcopy", FIDX_MAX = 880000, fcBusy = false, fcTimer = null, fcErr = "";
+  var fcModP = null;
+  function fcMod() {
+    if (root.OrosGateFileCopy) return Promise.resolve(root.OrosGateFileCopy);
+    if (!fcModP) {
+      fcModP = new Promise(function (ok, no) {
+        var s = document.createElement("script");
+        var v = root.orosTodayEnv && root.orosTodayEnv.version ? "?v=" + encodeURIComponent(root.orosTodayEnv.version) : "";
+        s.src = "gate/filecopy.js" + v;
+        s.onload = function () { root.OrosGateFileCopy ? ok(root.OrosGateFileCopy) : no(new Error("filecopy")); };
+        s.onerror = function () { fcModP = null; no(new Error("filecopy")); };
+        document.head.appendChild(s);
+      });
+    }
+    return fcModP;
+  }
+  function strictOn() {
+    try { var S = root.orosStrict; return !!(S && typeof S.level === "function" && S.level()); } catch (e) { return false; }
+  }
+  // GATE-HOST (PEND-1 wave 2, b; Chris 2026-11-16 «Ναι, μετά το a»): an
+  // installed orOS Portable / orOS USB can keep this profile's orOS open
+  // without a window while every orOS window is closed (the owner's
+  // opt-in on that computer, Settings › orOS Gate). The launcher starts
+  // its browser headless at /?gate-host=<nonce> and confirms the nonce at
+  // /__oros/gate-host, so no other page can claim to be it. Only there
+  // the Gate works over the screen lock (nobody is at the screen; the
+  // lock guards the screen, not the disk); dialogs, apps on screen and
+  // deletions that ask the owner stay for a screen. Never under
+  // Sensitive work: the host then turns itself off.
+  // Two kinds (the launcher says which): "bg", the headless browser above;
+  // "lock", an orOS window on orOS USB (which never closes), where the
+  // same opt-in only lets the Gate work behind the screen lock.
+  var HOST = { ok: false, n: "", kind: "", bg: false };
+  (function () {
+    var m = typeof location !== "undefined" ? /[?&]gate-host=([A-Za-z0-9_-]{16,64})(?:&|$)/.exec(location.search || "") : null;
+    if (m) HOST.n = m[1];
+    HOST.bg = !!(m && typeof navigator !== "undefined" && /HeadlessChrome/.test(navigator.userAgent || ""));
+  })();
+  function hostCheck() {
+    if (!HOST.n || typeof fetch !== "function") return Promise.resolve(false);
+    return fetch("/__oros/gate-host?n=" + encodeURIComponent(HOST.n), { cache: "no-store", credentials: "same-origin" }).then(function (r) {
+      return r.ok ? r.json() : null;
+    }).then(function (o) {
+      if (!isObj(o) || o.host !== true) return false;
+      if (strictOn()) { hostSet(false); return false; }
+      HOST.kind = o.kind === "lock" ? "lock" : "bg";
+      if (HOST.bg !== (HOST.kind === "bg")) return false;   // a window never acts as the background host
+      HOST.ok = true;
+      return true;
+    }, function () { return false; });
+  }
+  // → Promise of { can, on, running, tray } from this computer's orOS
+  // Portable / orOS USB, or null where it has none (a web browser).
+  function hostState() {
+    if (typeof fetch !== "function" || !/^http:\/\/(localhost|127\.0\.0\.1):47800$/.test(String(location.origin || ""))) return Promise.resolve(null);
+    return fetch("/__oros/gate-host", { cache: "no-store", credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (o) { return isObj(o) && typeof o.can === "boolean" ? o : null; }, function () { return null; });
+  }
+  function hostSet(on) {
+    if (typeof fetch !== "function") return Promise.resolve(null);
+    return fetch("/__oros/gate-host", { method: "POST", cache: "no-store", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-Oros-Gate": "1" }, body: JSON.stringify({ on: !!on }) })
+      .then(function (r) { return r.ok ? r.json() : null; }, function () { return null; })
+      .then(function (o) {
+        // Turned on in a window: the launcher hands it the lock-rule nonce.
+        if (on && isObj(o) && typeof o.win === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(o.win) && !HOST.ok && !HOST.bg) { HOST.n = o.win; hostCheck(); }
+        if (!on && !HOST.bg) HOST.ok = false;
+        return o;
+      });
+  }
+  function hostBye() {
+    HOST.ok = false;
+    drop();
+    setTimeout(function () {
+      fetch("/__oros/gate-host?n=" + encodeURIComponent(HOST.n) + "&bye=1", { cache: "no-store", credentials: "same-origin" }).then(null, function () {});
+    }, 6000);
+  }
+  // locked for the Gate: the screen lock, except on the host (above)
+  function locked() {
+    if (HOST.ok && !strictOn()) return false;
+    var L = root.orosLock;
+    return !!(L && typeof L.isLocked === "function" && L.isLocked());
+  }
+  // nobody at a screen: the background host, or a lock-rule window
+  // behind its screen lock. Dialogs and apps on screen wait for a person.
+  function away() {
+    if (!HOST.ok) return false;
+    if (HOST.kind === "bg") return true;
+    var L = root.orosLock;
+    return !!(L && typeof L.isLocked === "function" && L.isLocked());
+  }
+  var HOST_TXT = "orOS runs in the background or behind the screen lock on the owner's computer, with nobody at the screen: this needs orOS open and unlocked on a screen. Nothing was done.";
+  function fcDrop() { var S = root.orosSync; return S && S.gateDrop && typeof S.gateDrop.available === "function" && S.gateDrop.available() ? S.gateDrop : null; }
+  function fcState() { var o = readJSON(FC_KEY); return isObj(o) ? o : {}; }
+  function fileCopySoon(ms) { clearTimeout(fcTimer); fcTimer = setTimeout(fileCopy, typeof ms === "number" ? ms : 60000); }
+  function fcFilesOn(p) { return isObj(p.lv) && (p.lv.files === "read" || p.lv.files === "write"); }
+  // Every file under the folders: [{ p, s, m, cloud: { h } | null }]
+  function fcWalk(CF, folders) {
+    var FS = root.orosFS, V = root.orosVault, rows = [], seen = {};
+    function go(dir, d) {
+      if (rows.length >= 3000 || d > 12) return Promise.resolve();
+      return Promise.resolve().then(function () { return FS.ls(dir); }).catch(function () { return []; }).then(function (list) {
+        return (list || []).reduce(function (pr, e) {
+          return pr.then(function () {
+            if (!e || !e.name || e.name.charAt(0) === ".") return;
+            var p = dir + "/" + e.name;
+            if (CF.secret(p)) return;
+            if (e.dir) return go(p, d + 1);
+            return Promise.resolve().then(function () { return FS.stat(p); }).catch(function () { return null; }).then(function (st) {
+              if (!st || st.dir || seen[p]) return;
+              seen[p] = 1;
+              rows.push({ p: p, s: st.size || 0, m: st.mtime || 0, cloud: null });
+            });
+          });
+        }, Promise.resolve());
+      });
+    }
+    return folders.reduce(function (pr, f) { return pr.then(function () { return go(f, 0); }); }, Promise.resolve()).then(function () {
+      if (V && typeof V.remoteOnly === "function") {
+        folders.forEach(function (f) {
+          var l = [];
+          try { l = V.remoteOnly(f) || []; } catch (e) { l = []; }
+          l.forEach(function (e) {
+            if (!e || typeof e.path !== "string" || seen[e.path] || CF.secret(e.path) || /\/\./.test(e.path.slice(f.length))) return;
+            seen[e.path] = 1;
+            rows.push({ p: e.path, s: e.s || 0, m: e.m || 0, cloud: { h: String(e.h || "") } });
+          });
+        });
+      }
+      return rows;
+    });
+  }
+  function fcBytes(r) {
+    if (r.cloud) return root.orosVault.peek(r.p).then(function (b) { return new Uint8Array(b); });
+    return Promise.resolve(root.orosFS.read(r.p)).then(function (b) { return b && typeof b.arrayBuffer === "function" ? b.arrayBuffer() : b; }).then(function (b) { return new Uint8Array(b); });
+  }
+  // The version files_* tools give (assistant.js cfVer): sha256[0:16]; a
+  // file over 32 MB that was not read, from its size and time.
+  function fcMetaVer(FC, r) { return FC.sha256(new TextEncoder().encode("size:" + r.s + ":" + (r.m || 0))).then(function (h) { return h.slice(0, 16); }); }
+  function fileCopy() {
+    var p = pref(), k = gateKey(), D = fcDrop();
+    if (fcBusy) return Promise.resolve(false);
+    if (!p.on || !k || !ws || ws.readyState !== 1 || !fcFilesOn(p) || strictOn() || !D) return Promise.resolve(false);
+    if (locked()) return Promise.resolve(false);
+    if (!root.orosFS) return Promise.resolve(false);
+    var fr = foldersRead();
+    if (!fr.f.length) return Promise.resolve(false);
+    fcBusy = true;
+    fcErr = "";
+    var kRaw = keyBytes(k), gid = p.id, st = fcState(), cache = isObj(st.c) ? st.c : {}, FC, CF;
+    var have = {}, names = {}, newCache = {}, files = [], rows;
+    var known = {}, spaceOk = true, put = 0;
+    return Promise.all([fcMod(), claudeFiles()]).then(function (m) {
+      FC = m[0]; CF = m[1];
+      known = FC.known(st.idx);
+      return fcWalk(CF, CF.cleanFolders(fr.f));
+    }).then(function (r) {
+      rows = r;
+      // hashes: cloud entries carry theirs; unchanged files keep theirs
+      return rows.reduce(function (pr, x) {
+        return pr.then(function () {
+          x.kind = CF.kindOf(x.p.slice(x.p.lastIndexOf("/") + 1));
+          var c = cache[x.p];
+          if (x.cloud && /^[0-9a-f]{64}$/.test(x.cloud.h)) x.h = x.cloud.h;
+          else if (isObj(c) && c.s === x.s && c.m === x.m && typeof c.h === "string") x.h = c.h;
+          else if (FC.wants(x).c) return fcBytes(x).then(function (b) { return FC.sha256(b); }).then(function (h) { x.h = h; }, function () { x.h = ""; });
+        }).then(function () {
+          if (x.h) newCache[x.p] = { s: x.s, m: x.m, h: x.h };
+        });
+      }, Promise.resolve());
+    }).then(function () {
+      return D.list(gid).then(function (l) { l.forEach(function (e) { have[e.name] = e; }); }, function () {});
+    }).then(function () {
+      return D.space().then(function (sp) { if (sp && sp.allocated && (sp.allocated - sp.used) < sp.allocated * 0.1) spaceOk = false; });
+    }).then(function () {
+      var pl = FC.plan(rows.filter(function (x) { return !FC.wants(x).c || x.h; }).map(function (x) { return { p: x.p, s: x.s, kind: x.kind }; }), FC.quotaOf(fr.q));
+      // one part ("c" / "t") of one file: its links, uploading only what is
+      // new. n = its piece count when known (content), else from the bytes.
+      function reuse(x, tag, n) {
+        var old = known[x.h + "|" + tag];
+        if (!old || (n && old.length !== n)) return Promise.resolve(null);
+        return Promise.all(old.map(function (_, i) { return FC.pieceName(kRaw, x.h, tag, i); })).then(function (nms) {
+          if (!nms.every(function (nm) { return have[nm]; })) return null;
+          nms.forEach(function (nm) { names[nm] = 1; });
+          return old;
+        });
+      }
+      function part(x, tag, n, getBytes) {
+        return reuse(x, tag, n).then(function (old) {
+          if (old) return old;
+          return getBytes().then(function (bytes) {
+            if (!bytes) return null;
+            var cnt = FC.count(bytes.length), links = [], chain = Promise.resolve();
+            for (var i = 0; i < cnt; i++) (function (i) {
+              chain = chain.then(function () { return FC.pieceName(kRaw, x.h, tag, i); }).then(function (nm) {
+                names[nm] = 1;
+                var up = have[nm] ? Promise.resolve() : !spaceOk ? Promise.reject(new Error("space")) :
+                  FC.seal(kRaw, x.h, tag, i, bytes.slice(i * FC.PIECE, (i + 1) * FC.PIECE)).then(function (b) { put += b.length; return D.put(gid + "/" + nm, b); });
+                return up.then(function () { have[nm] = { name: nm }; return D.share(gid + "/" + nm); }).then(function (u) { links[i] = u; });
+              });
+            })(i);
+            return chain.then(function () { return links; });
+          });
+        });
+      }
+      return rows.reduce(function (pr, x) {
+        return pr.then(function () {
+          var e = { p: x.p, s: x.s, m: x.m, k: x.kind };
+          files.push(e);
+          var t = pl.take[x.p];
+          var vP = x.h && !(x.s > 33554432 && !x.cloud) ? Promise.resolve(x.h.slice(0, 16)) : fcMetaVer(FC, x);
+          return vP.then(function (v) {
+            e.v = v;
+            if (!t) { e.x = pl.out[x.p] || "none"; return; }
+            e.h = x.h;
+            return part(x, "c", FC.count(x.s), function () { return fcBytes(x); }).then(function (c) {
+              e.c = c;
+              if (!t.t) return;
+              return part(x, "t", 0, function () {
+                return actFrame().then(function (F) {
+                  if (!F || typeof F.text !== "function") return null;
+                  return F.text(x.p).then(function (r) { return r && r.ok && r.text ? FC.textBytes(r.text) : null; });
+                });
+              }).then(function (tl) { if (tl) e.t = tl; });
+            }).catch(function (err) {
+              delete e.c; delete e.t; delete e.h;
+              e.x = err && err.message === "space" ? "space" : "err";
+              if (err && /dropbox-scope/.test(err.message || "")) fcErr = "scope";
+              if (err && /dropbox-full/.test(err.message || "")) { fcErr = "full"; spaceOk = false; }
+            });
+          });
+        });
+      }, Promise.resolve()).then(function () { return pl; });
+    }).then(function (pl) {
+      var pp = pref();
+      var idx = { v: 1, at: Date.now(), f: CF.cleanFolders(fr.f), q: FC.quotaOf(fr.q), used: pl.used, files: files,
+                  w: isObj(pp.lv) && pp.lv.files === "write" ? 1 : 0 };   // F3: the relay checks closed changes against these
+      if (typeof pp.hold === "number" && pp.hold > Date.now()) idx.hold = pp.hold;
+      var text = JSON.stringify(idx);
+      while (utf8Len(text) > FIDX_MAX && idx.files.length) { idx.files.pop(); idx.cut = 1; text = JSON.stringify(idx); }
+      return seal(k, text).then(function (sealed) {
+        if (!ws || ws.readyState !== 1) throw new Error("offline");
+        ws.send(JSON.stringify({ fidx: sealed }));
+        writeJSON(FC_KEY, { at: idx.at, c: newCache, idx: { files: files.map(function (e) { return { h: e.h, c: e.c, t: e.t }; }).filter(function (e) { return e.h; }) }, n: Object.keys(names), up: put, used: pl.used, err: fcErr });
+        changed();
+      });
+    }).then(function () { fcBusy = false; return true; }, function () { fcBusy = false; return false; });
+  }
+  // The box kept the new index: pieces no index names any more go, once
+  // they are a day old (another device may still name them for a while).
+  function fileCopyAck() {
+    var p = pref(), D = fcDrop(), st = fcState();
+    if (!D || !p.id || !Array.isArray(st.n)) return;
+    var keep = {};
+    st.n.forEach(function (n) { keep[n] = 1; });
+    D.list(p.id).then(function (l) {
+      var old = l.filter(function (e) { return !keep[e.name] && e.at && Date.now() - e.at > 86400000; }).slice(0, 200);
+      return old.reduce(function (pr, e) { return pr.then(function () { return D.remove(p.id + "/" + e.name).catch(function () {}); }); }, Promise.resolve());
+    }).catch(function () {});
+  }
+  // Sensitive work (and the owner) can drop Claude's closed copy at once:
+  // the box forgets the copy and the file index, and the pieces leave Dropbox.
+  function dropCopyNow() {
+    var p = pref();
+    if (!p.on || !p.id) { var e1 = new Error("gate-off"); e1.code = "gate-off"; return Promise.reject(e1); }
+    if (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()) { var e2 = new Error("locked"); e2.code = "locked"; return Promise.reject(e2); }
+    if (!ws || ws.readyState !== 1) { var e3 = new Error("offline"); e3.code = "offline"; return Promise.reject(e3); }
+    ws.send(JSON.stringify({ fdrop: 1 }));
+    copyLast = "";
+    try { localStorage.removeItem(FC_KEY); } catch (e) {}
+    var D = fcDrop();
+    changed();
+    return (D ? D.remove(p.id).catch(function () {}) : Promise.resolve()).then(function () { return { ok: true }; });
   }
 
   function onCall(sock, text) {
@@ -2437,8 +3248,8 @@
     };
     if (q.n === "_key") {                              // the relay wraps it for a token of Claude's; not logged
       var k = gateKey();
-      var locked = root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked();
-      try { sock.send(JSON.stringify({ r: q.q, ok: !!(p.on && k && !locked), c: p.on && k && !locked ? k : "" })); } catch (e) {}
+      var lk = locked();
+      try { sock.send(JSON.stringify({ r: q.q, ok: !!(p.on && k && !lk), c: p.on && k && !lk ? k : "" })); } catch (e) {}
       return;
     }
     if (!p.on) { done({ ok: false, c: "The gate is off." }); return; }
@@ -2455,7 +3266,7 @@
   var api = {
     // For the hidden Assistant frame (assistant.js GATE).
     frameReady: function () { if (actReady) actReady(); },
-    act: ACT.concat(DOCS),
+    act: ACT.concat(DOCS, ["files"]),
     levels: function () {
       var p = pref(), out = {};
       if (!p.on || !isObj(p.lv)) return out;
@@ -2466,7 +3277,7 @@
     writeOk: function (id) {
       var p = pref(), now = Date.now();
       if (!p.on) return "The gate is off.";
-      if (root.orosLock && typeof root.orosLock.isLocked === "function" && root.orosLock.isLocked()) return "orOS is locked on the owner's device.";
+      if (locked()) return "orOS is locked on the owner's device.";
       if (!id || !actable(id) || !isObj(p.lv) || p.lv[id] !== "write") return "The owner does not let Claude change " + (id || "this app") + " (orOS › Settings › Connected services › orOS Gate).";
       if (!canWrite(p.lv, p.hold, id, now)) return closedMsg(p, id, id);
       return "";
@@ -2475,12 +3286,43 @@
     actionOk: function (id) {
       var p = pref(), now = Date.now();
       if (!p.on) return "The gate is off.";
-      if (root.orosLock && typeof root.orosLock.isLocked === "function" && root.orosLock.isLocked()) return "orOS is locked on the owner's device.";
+      if (away()) return HOST_TXT;
+      if (locked()) return "orOS is locked on the owner's device.";
       if (!id || NEVER.indexOf(id) >= 0) return "Claude may never open " + (id || "this app") + ".";
       if (typeof p.hold === "number" && p.hold > now) return "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was done.";
       return "";
     },
     askDelete: function (n) { return askDelete(n); },
+    // GATE-FILES: every delete of files is asked on the device, with the names.
+    askFiles: function (names) { return askFiles(names); },
+    // F2: drop Claude's closed copy now (Sensitive work, Settings) → Promise<{ ok }>;
+    // rejects with e.code "gate-off" | "offline" | "locked"
+    dropCopy: function () { return dropCopyNow(); },
+    // F2: the closed copy of the files: { at, used, quota, up, err } (err "scope": sign in to Dropbox again)
+    fileCopyInfo: function () { var st = fcState(); return { at: st.at || 0, used: st.used || 0, quota: (foldersRead().q || 262144000), up: st.up || 0, err: st.err || "" }; },
+    setQuota: function (bytes) {
+      var cur = foldersRead(), q = Math.floor(+bytes || 0);
+      if (!(q >= 52428800)) return false;
+      var next = { ver: 1, m: stampAfter(Date.now(), cur.m), f: cur.f, q: q };
+      if (!writeJSON(FILES_KEY, next)) return false;
+      dirty(); changed(); fileCopySoon(5000);
+      return true;
+    },
+    refreshFileCopy: function () { return fileCopy(); },
+    // Claude's folders on the orOS disk (synced): [path]
+    folders: function () { return foldersRead().f.slice(); },
+    // → Promise<[path] saved> (cleaned: valid, no secrets, none inside another)
+    setFolders: function (list) {
+      return claudeFiles().then(function (CF) {
+        var cur = foldersRead(), f = CF.cleanFolders(list);
+        if (JSON.stringify(f) === JSON.stringify(cur.f)) return f;
+        var next = { ver: 1, m: stampAfter(Date.now(), cur.m), f: f };
+        if (cur.q) next.q = cur.q;
+        if (!writeJSON(FILES_KEY, next)) throw new Error("save");
+        dirty(); changed(); fileCopySoon(5000);
+        return f;
+      });
+    },
     relayUrl: function () { return relay() + "/mcp"; },
     // The relay this gate runs on, and which kind: own | mail | shared.
     relayInfo: function () {
@@ -2617,8 +3459,20 @@
       changed();
       return { ok: true, n: r.n, kept: r.kept };
     },
+    // HELPER-1: "both" | "assistant" | "claude" (synced).
+    helper: function () { return helperRead().v; },
+    setHelper: function (v) {
+      if (HELPERS.indexOf(v) < 0) return false;
+      var cur = helperRead();
+      if (!writeJSON(HELPER_KEY, { v: v, m: Math.max(Date.now(), cur.m + 1) })) return false;
+      dirty();
+      helperTell();
+      helperApply();
+      return true;
+    },
     enable: function () {
       var p = pref();
+      if (helperRead().v === "assistant") return helperOff();
       if (p.on && p.id && p.tok) { connect(); return Promise.resolve(); }
       // A gate of this owner already exists (its seat came through sync): sit in it.
       return sit(true).then(function (done) {
@@ -2648,6 +3502,7 @@
     join: function (code) {
       var p = pref(), jc = String(code || "").toUpperCase().replace(/[\s-]+/g, "");
       if (p.on && p.id && p.tok) return Promise.reject(new Error("on"));
+      if (helperRead().v === "assistant") return helperOff();
       if (!/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/.test(jc)) { var e = new Error("gate"); e.code = "nojoin"; return Promise.reject(e); }
       var tok = randomB64u(32), base = relayNow();
       return sha256hex(tok).then(function (th) { return devCall({ act: "join", jc: jc, th: th }, base); }).then(function (d) {
@@ -2665,6 +3520,8 @@
     disable: function () {
       var p = pref();
       actDrop();
+      if (p.id && fcDrop()) fcDrop().remove(p.id).catch(function () {});   // F2: the closed copy's pieces
+      try { localStorage.removeItem(FC_KEY); } catch (e) {}
       var gone = p.id && p.tok ? devCall({ act: "del", id: p.id, tok: p.tok }).catch(function () {}) : Promise.resolve();
       drop();
       return gone.then(function () {
@@ -2701,6 +3558,8 @@
       });
     },
     reconnect: function () { if (!ws) { retry = 0; connect(); } },
+    // GATE-HOST: this computer's background Gate (orOS Portable / USB)
+    host: { state: function () { return hostState(); }, set: function (on) { return hostSet(on); }, active: function () { return HOST.ok; } },
     log: function () { var l = readJSON(LOG_KEY); return Array.isArray(l) ? l.slice().reverse() : []; },
     clearLog: function () { try { localStorage.removeItem(LOG_KEY); } catch (e) {} changed(); },
     onChange: function (fn) {
@@ -2744,7 +3603,7 @@
     box.appendChild(h); box.appendChild(pTxt);
     if (note) {
       var nt = document.createElement("p");
-      nt.style.cssText = "margin:0 0 16px;line-height:1.45;opacity:.8;font-size:.92rem";
+      nt.style.cssText = "margin:0 0 16px;line-height:1.45;opacity:.8;font-size:.92rem;white-space:pre-line;overflow-wrap:anywhere;max-height:40vh;overflow:auto";
       nt.textContent = note;
       box.appendChild(nt);
     }
@@ -2776,7 +3635,8 @@
     return modal(title, body, note, noLabel, yesLabel, onNo, onYes).wrap;
   }
   function consent(ask) {
-    var m = modal(tr("gate.ask.title"), tr("gate.ask.body"), pref().on ? tr("gate.ask.on") : tr("gate.ask.off"), tr("gate.ask.deny"), tr("gate.ask.allow"),
+    var note = helperRead().v === "assistant" ? tr("gate.ask.helper") : pref().on ? tr("gate.ask.on") : tr("gate.ask.off");
+    var m = modal(tr("gate.ask.title"), tr("gate.ask.body"), note, tr("gate.ask.deny"), tr("gate.ask.allow"),
       function () { m.wrap.remove(); back(ask, "error=access_denied"); },
       function () {
         m.yes.disabled = true; m.no.disabled = true; m.err.hidden = true;
@@ -2793,12 +3653,46 @@
       });
   }
   // Never over the lock screen: the dialog waits until orOS is unlocked.
+  // The Gate's own work (the queue): also on the host, over the lock.
+  function whenOpen(fn) {
+    if (locked()) { setTimeout(function () { whenOpen(fn); }, 800); return; }
+    fn();
+  }
   function whenUnlocked(fn) {
     var L = root.orosLock;
     if (L && typeof L.isLocked === "function" && L.isLocked()) { setTimeout(function () { whenUnlocked(fn); }, 800); return; }
     fn();
   }
   function start() {
+    if (HOST.n && !HOST.bg) { hostCheck(); startOpen(); return; }   // a lock-rule window
+    if (HOST.n) {
+      hostCheck().then(function (ok) {
+        if (!ok || HOST.kind !== "bg") return;
+        if (!pref().on) return;                        // a computer without the Gate: nothing to do
+        connect();
+        chgSlice(0); digSlice(0); foldersSlice(0); seatSlice(0); helperSlice(0); helperApply();
+        setInterval(function () { copySoon(0); }, 30 * 60000);
+        setInterval(function () { fileCopySoon(0); }, 30 * 60000);
+        setInterval(function () { if (strictOn()) { hostSet(false); hostBye(); } }, 60000);
+        // A window wants this profile (or the owner turned it off): stop
+        // taking Claude's calls, give the browser time to write what changed,
+        // then say bye; the launcher ends this browser.
+        var yieldT = setInterval(function () {
+          if (!HOST.ok) return;
+          fetch("/__oros/gate-host?n=" + encodeURIComponent(HOST.n), { cache: "no-store", credentials: "same-origin" })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (h) { if (h && (h.yield || !h.host)) { clearInterval(yieldT); hostBye(); } }, function () {});
+        }, 2000);
+        clearInterval(digTimer);
+        digTimer = setInterval(digCheck, 10 * 60000);
+        setTimeout(function () { if (pref().on) makeSeat(); }, 3000);
+        root.addEventListener("online", function () { api.reconnect(); });
+      });
+      return;
+    }
+    startOpen();
+  }
+  function startOpen() {
     var ask = readAsk();
     if (/[?&]gate=/.test(location.search)) {
       try { history.replaceState(null, "", location.pathname + location.search.replace(/([?&])gate=[^&]*&?/, "$1").replace(/[?&]$/, "") + location.hash); } catch (e) {}
@@ -2816,10 +3710,14 @@
       whenUnlocked(function () { setTimeout(function () { openJ(0); }, 600); });
     }
     connect();
+    helperSlice(0);
+    helperApply();
     seatSlice(0);
     chgSlice(0);
     digSlice(0);
+    foldersSlice(0);
     setInterval(function () { copySoon(0); }, 30 * 60000);
+    setInterval(function () { fileCopySoon(0); }, 30 * 60000);
     // SY-AD (5.96.00): data Claude wrote before this version for an app
     // never opened on this device (Publishing, CRM…) reaches sync now.
     setTimeout(adoptWritten, 8000);

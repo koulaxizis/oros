@@ -9,7 +9,7 @@
 //   - holds the one table of types → apps (HANDLERS). The manifest
 //     mirrors it (tests/fileopen.test.js keeps the two equal).
 //   - picks the app: the person's choice for that type (Settings →
-//     Opening files, this device only), else the only app, else an
+//     Default apps, synced), else the only app, else an
 //     "Open with" chooser (types more than one app reads).
 //   - hands the File to the app through the generic deep link:
 //     __orosOpenAt(app, { openFile: { token, name, size } }). A File
@@ -22,8 +22,10 @@
 //     their .oroscal / .oroscontacts bundles go as Files (textExt).
 //   - never reads, stores or runs the file itself. Nothing is written
 //     back to the original file.
-// Device-local preference: localStorage "oros-file-open" (oros-
-// prefix, so the factory reset sweeps it; never synced).
+// Preference: localStorage "oros-file-open" (oros- prefix, so the
+// factory reset sweeps it). Since DEF-APPS D1 the shell syncs its map
+// to every device (shell slice field "fopen"); this file only reads
+// and writes the key and tells the shell when the person changed it.
 // Shared by the shell (window.orosFileOpen) and node tests.
 // ============================================================
 (function (root) {
@@ -173,6 +175,7 @@
     { app: "newsletter", accept: { "application/x-oros-newsletter": [".orosnewsletter"] } },
     { app: "storage", accept: { "application/x-oros-inventory": [".orosinventory"] } },
     { app: "flashcards", accept: { "application/x-oros-cards": [".oroscards"] } },
+    { app: "base", accept: { "application/x-oros-base": [".orosbase"] } },
     // Pad (text and code editor): code and config types no other app
     // reads (Pad is their only app), plus .txt / .md as one more choice
     // after Writer, Mind Map, Notes and Text Tools (Writer stays the
@@ -204,12 +207,20 @@
       "text/x-dart": [".dart"],
       "text/x-r": [".r"],
       "text/x-jsfx": [".jsfx", ".eel"] } },
+    // Whiteboard (wave 2 of the files gap review): draw.io and Visio
+    // files open as new boards (the same reader as its "Open a draw.io
+    // or Visio file…", whiteboard/diagram.js). .vsd stays out (Visio's
+    // old binary format, which it cannot read).
+    { app: "whiteboard", accept: {
+      "application/vnd.jgraph.mxfile": [".drawio"],
+      "application/vnd.ms-visio.drawing": [".vsdx"] } },
     { app: "lyricsync", accept: {
       "application/x-lrc": [".lrc"],
       "application/x-subrip": [".srt"],
       "text/vtt": [".vtt"],
       "application/ttml+xml": [".ttml"],
-      "text/x-ssa": [".ass", ".ssa"] } }
+      "text/x-ssa": [".ass", ".ssa"],
+      "application/x-chordpro": [".cho", ".chopro", ".chordpro", ".crd"] } }
   ];
   var TEXT_MAX = 5 * 1024 * 1024;
 
@@ -227,7 +238,16 @@
               "audio/wav": [".wav", ".wave"], "audio/x-wav": [".wav"], "audio/webm": [".weba"] } },
     // Web and data files stay out of the system's "Open with" (BR-FO-2);
     // inside orOS, Files can open them in Pad (as text, never run).
-    { app: "pad", path: "openPath", exts: [".js", ".mjs", ".cjs", ".json", ".jsonc", ".webmanifest", ".html", ".htm", ".xhtml", ".vue", ".svelte"] }
+    { app: "pad", path: "openPath", exts: [".js", ".mjs", ".cjs", ".json", ".jsonc", ".webmanifest", ".html", ".htm", ".xhtml", ".vue", ".svelte"] },
+    // Scanner & PDF (wave 2 of the files gap review): PDFs and pictures
+    // become pages. Not in orOS's own manifest (Library keeps .pdf,
+    // Photo Lab the pictures). Inside orOS, Files offers it for a PDF
+    // (Open with…, next to Library); pictures keep going straight to
+    // Photo Lab. The single app "orOS Scanner & PDF" opens all its
+    // solo types itself.
+    { app: "scanpdf", exts: [".pdf"],
+      solo: { "application/pdf": [".pdf"], "image/jpeg": [".jpg", ".jpeg"], "image/png": [".png"], "image/webp": [".webp"],
+              "image/gif": [".gif"], "image/bmp": [".bmp"], "image/avif": [".avif"] } }
   ];
 
   var STRINGS = {
@@ -308,7 +328,10 @@
     ext = String(ext || "").toLowerCase();
     if (!solo || !ext) return false;
     if (appsFor(ext).indexOf(solo) !== -1) return true;
-    return INSIDE.some(function (h) { return h.app === solo && h.solo && h.exts.indexOf(ext) !== -1; });
+    return INSIDE.some(function (h) {
+      if (h.app !== solo || !h.solo) return false;
+      return Object.keys(h.solo).some(function (m) { return h.solo[m].indexOf(ext) !== -1; });
+    });
   }
   // Same as choose(), with insideFor(): { app } | { ask } | null.
   function chooseInside(name, prefs) {
@@ -350,6 +373,22 @@
     if (p) return { app: p, ext: ext };
     if (apps.length === 1) return { app: apps[0], ext: ext };
     return { ask: apps, ext: ext };
+  }
+
+  // Settings › Default apps: the types with a choice, one row per set
+  // of types that the same apps open (".md" and ".markdown" share a
+  // row), in table order: [{ exts: [".md", ".markdown"], apps: [...] }].
+  function groups() {
+    var out = [], byKey = {};
+    shared().forEach(function (ext) {
+      var k = APPS_BY_EXT[ext].join(",");
+      if (!Object.prototype.hasOwnProperty.call(byKey, k)) {
+        byKey[k] = { exts: [], apps: APPS_BY_EXT[ext].slice() };
+        out.push(byKey[k]);
+      }
+      byKey[k].exts.push(ext);
+    });
+    return out;
   }
 
   // The current choice for a type, for Settings: an app id, "ask", or
@@ -427,7 +466,7 @@
 
   var api = {
     HANDLERS: HANDLERS, MAX_BYTES: MAX_BYTES, PREF_KEY: PREF_KEY, STRINGS: STRINGS,
-    extOf: extOf, appsFor: appsFor, extensions: extensions, shared: shared,
+    extOf: extOf, appsFor: appsFor, extensions: extensions, shared: shared, groups: groups,
     normPrefs: normPrefs, choose: choose, choiceFor: choiceFor, setChoice: setChoice,
     INSIDE: INSIDE, insideFor: insideFor, chooseInside: chooseInside,
     manifestHandlers: manifestHandlers, shareTarget: shareTarget, shareAccept: shareAccept,
@@ -467,8 +506,13 @@
     try { return normPrefs(JSON.parse(w.localStorage.getItem(PREF_KEY) || "null")); }
     catch (e) { return normPrefs(null); }
   }
+  // DEF-APPS (D1): the choices sync to every device in the shell slice
+  // (field "fopen"). A choice the person makes here tells the shell
+  // (onChange → noteLocalChange); a pulled one (setAll) never does.
+  var changeFns = [];
   function savePrefs(p) {
     try { w.localStorage.setItem(PREF_KEY, JSON.stringify(normPrefs(p))); } catch (e) {}
+    changeFns.forEach(function (fn) { try { fn(); } catch (e) {} });
   }
 
   // One-shot File handover. A token lives until taken or 10 minutes.
@@ -604,6 +648,27 @@
     var s = w.orosSolo;
     return s && typeof s.id === "string" ? s.id : "";
   }
+  // A single app that takes several files at once (solo.js
+  // APPS[id].anyFile: orOS Transfer, every type; .many: orOS Scanner &
+  // PDF, its own types; wave 2 of the files gap review): the shared or
+  // opened files go to it together, up to MANY, as { openFiles:
+  // [{ token, name, size }] } (one-shot tokens, BR-FO-4).
+  var MANY = 10;
+  function soloSpec() {
+    var s = w.orosSolo, id = soloApp();
+    return id && s && s.APPS && s.APPS[id] ? s.APPS[id] : null;
+  }
+  function soloAny() { var a = soloSpec(); return !!(a && (a.anyFile || a.many)); }
+  function deliverAll(files) {
+    var app = soloApp(), list = [], a = soloSpec() || {};
+    files.slice(0, MANY).forEach(function (f) {
+      if (!a.anyFile && !soloTakes(app, extOf(f.name))) { notice(T("unknown")); return; }
+      if (f.size > maxFor(app)) { notice(T("big")); return; }
+      var own = ownFile(f);
+      list.push({ token: hold(own), name: String(own.name || "").slice(0, 255), size: own.size || 0 });
+    });
+    if (list.length && typeof w.__orosOpenAt === "function") w.__orosOpenAt(app, { openFiles: list });
+  }
   function deliver(file) {
     if (!file) return;
     var solo = soloApp(), ext = extOf(file.name);
@@ -619,13 +684,22 @@
   function take(files) {
     files = (files || []).filter(Boolean);
     if (!files.length) return;
+    if (soloAny()) {
+      if (files.length > MANY) notice(T("more"));
+      queue.push(files.slice(0, MANY));
+      flush();
+      return;
+    }
     if (files.length > 1) notice(T("more"));
     queue.push(files[0]);
     flush();
   }
   function flush() {
     if (!isReady) return;
-    while (queue.length) deliver(queue.shift());
+    while (queue.length) {
+      var q = queue.shift();
+      if (Array.isArray(q)) deliverAll(q); else deliver(q);
+    }
   }
 
   // The action URL (?file-open=…) and a shared file (?share-files=…)
@@ -647,20 +721,31 @@
   // is emptied after every read so nothing lingers.
   if (shareId === "big") notice(T("big"));
   else if (shareId && w.caches && typeof w.caches.open === "function") {
+    var any = soloAny();
+    var asFile = function (r) {
+      if (!r) return null;
+      var name = "";
+      try { name = decodeURIComponent(r.headers.get("X-Name") || ""); } catch (e) { name = ""; }
+      return r.blob().then(function (b) { return new w.File([b], name.slice(0, 255) || "file", { type: b.type || "" }); });
+    };
     w.caches.open(SHARE_INBOX).then(function (c) {
       return c.match("/__share/" + shareId).then(function (r) {
         if (!r) return null;
-        var name = "";
-        try { name = decodeURIComponent(r.headers.get("X-Name") || ""); } catch (e) { name = ""; }
         var more = r.headers.get("X-More") === "1";
-        return r.blob().then(function (b) {
-          if (more) notice(T("more"));
-          return new w.File([b], name.slice(0, 255) || "file", { type: b.type || "" });
+        return asFile(r).then(function (first) {
+          if (!more) return [first];
+          if (!any) { notice(T("more")); return [first]; }
+          // SHARE-MANY: the single Transfer takes the others too.
+          var rest = [];
+          for (var i = 1; i < MANY; i++) rest.push(c.match("/__share/" + shareId + "/" + i).then(asFile, function () { return null; }));
+          return Promise.all(rest).then(function (fs) { return [first].concat(fs.filter(Boolean)); });
         });
       });
-    }).then(function (f) {
+    }).then(function (fs) {
       try { w.caches.delete(SHARE_INBOX); } catch (e) {}
-      if (f) { queue.push(f); flush(); }
+      if (!fs || !fs.length) return;
+      if (any) queue.push(fs); else queue.push(fs[0]);
+      flush();
     }, function () {});
   }
 
@@ -668,11 +753,14 @@
     w.launchQueue.setConsumer(function (params) {
       var handles = params && params.files ? Array.prototype.slice.call(params.files) : [];
       if (!handles.length) return;
-      Promise.all(handles.slice(0, 1).map(function (fh) {
+      var n = soloAny() ? MANY : 1;
+      Promise.all(handles.slice(0, n).map(function (fh) {
         return fh && typeof fh.getFile === "function" ? fh.getFile().then(null, function () { return null; }) : null;
       })).then(function (files) {
-        if (handles.length > 1) notice(T("more"));
-        queue.push.apply(queue, files.filter(Boolean));
+        if (handles.length > n) notice(T("more"));
+        files = files.filter(Boolean);
+        if (n > 1) { if (files.length) queue.push(files); }
+        else queue.push.apply(queue, files);
         flush();
       });
     });
@@ -724,7 +812,7 @@
     hand: function (file) {
       return file && typeof file.size === "number" ? hold(ownFile(file)) : "";
     },
-    // Settings → Opening files.
+    // Settings → Default apps.
     supported: function () { return "launchQueue" in w; },
     installed: function () {
       try { return w.matchMedia("(display-mode: standalone)").matches || w.matchMedia("(display-mode: window-controls-overlay)").matches; }
@@ -732,12 +820,26 @@
     },
     handlers: function () { return HANDLERS.map(function (h) { return { app: h.app, exts: extsOf(h) }; }); },
     shared: shared,
+    groups: groups,
     appsFor: appsFor,
     choice: function (ext) { return choiceFor(ext, loadPrefs()); },
     setChoice: function (ext, value) {
       if (value && value !== "ask" && appsFor(ext).indexOf(value) === -1) return;
       savePrefs(setChoice(loadPrefs(), ext, value));
-    }
+    },
+    // Settings › Default apps: one choice for several types at once
+    // (a row of groups()), and Reset all (every type asks again).
+    setChoices: function (exts, value) {
+      var p = loadPrefs();
+      (exts || []).forEach(function (ext) {
+        if (!value || value === "ask" || appsFor(ext).indexOf(value) !== -1) p = setChoice(p, ext, value);
+      });
+      savePrefs(p);
+    },
+    resetAll: function () { savePrefs(normPrefs(null)); },
+    count: function () { return Object.keys(loadPrefs().map).length; },
+    // The shell (sync): told after every choice made on this device.
+    onChange: function (fn) { if (typeof fn === "function") changeFns.push(fn); }
   };
   function extsOf(h) {
     var out = [];

@@ -1,4 +1,5 @@
 orosPack("de", "diary", {
+ "btn.sendApp": "An eine App senden…",
  "app.name": "Ein-Satz-Tagebuch",
  "aria.day": "{date}: {text}",
  "aria.dayEmpty": "{date}: keine Zeile",

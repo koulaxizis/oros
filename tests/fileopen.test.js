@@ -44,7 +44,10 @@ test("no SVG, sound, mkv, html, json or zip are taken over", () => {
 });
 
 test("every app in the table exists and takes a file through its deep link", () => {
-  const apps = JSON.parse(read("apps.json")).apps.map((a) => a.id);
+  // APP-ALIAS: an old id folded into another app still takes its file
+  // (the shell forwards __orosOpenAt to the host with the alias target)
+  const reg = JSON.parse(read("apps.json"));
+  const apps = reg.apps.map((a) => a.id).concat((reg.aliases || []).map((a) => a.id));
   const files = {
     writer: ["writer/writer.js"], spreadsheet: ["spreadsheet/spreadsheet.js"],
     atelier: ["atelier/core.js"], slides: ["slides/app.js"], layout: ["layout/layout.js"],
@@ -58,11 +61,12 @@ test("every app in the table exists and takes a file through its deep link", () 
     todo: ["todo/todo.js", "recordpkg.js"], habits: ["habits/habits.js"], water: ["water/water.js"], chores: ["chores/chores.js"],
     scores: ["scores/scores.js"], cycle: ["cycle/cycle.js"], mood: ["mood/mood.js"], bookmarks: ["bookmarks/bookmarks.js"],
     meals: ["meals/meals.js"], stickies: ["stickies/stickies.js"], budget: ["budget/budget.js"], invoices: ["invoices/invoices.js"],
-    crm: ["crm/crm.js"], timesheet: ["timesheet/timesheet.js"], quote: ["quote/quote.js"], split: ["split/split.js"],
+    crm: ["crm/crm.js"], timesheet: ["timesheet/timesheet.js"], quote: ["quote/view.js", "invoices/invoices.js"], split: ["split/split.js"],
     stock: ["stock/stock.js"], diary: ["diary/diary.js"], health: ["health/health.js"], fitness: ["fitness/fitness.js"],
     baby: ["baby/baby.js"], petcare: ["petcare/petcare.js"], plants: ["plants/plants.js"], garage: ["garage/garage.js"],
-    shelf: ["shelf/shelf.js"], signature: ["signature/signature.js"], newsletter: ["newsletter/newsletter.js"], storage: ["storage/storage.js"],
-    flashcards: ["flashcards/app.js"], lyricsync: ["lyricsync/app.js"], pad: ["pad/app.js"]
+    shelf: ["shelf/shelf.js"], signature: ["signature/view.js", "mail/mail.js"], newsletter: ["newsletter/newsletter.js"], storage: ["storage/storage.js"],
+    flashcards: ["flashcards/app.js"], lyricsync: ["lyricsync/app.js"], pad: ["pad/app.js"],
+    base: ["base/app.js", "recordpkg.js"], whiteboard: ["whiteboard/app.js"]
   };
   // Phase 4b: the record apps' bundle types are registered ahead of
   // their waves. An app listed here has no "Open with" receiver for its
@@ -83,7 +87,7 @@ test("every app in the table exists and takes a file through its deep link", () 
     assert.match(src, /openFile/, h.app);
     assert.match(src, /__orosTakeFile\(/, h.app);
     assert.match(src, /window\.__orosOpenAt\s*=/, h.app);
-    assert.match(src, /__orosTakeTarget\(\s*["']/, h.app);
+    assert.match(src, /__orosTakeTarget\(\s*(["']|APP_ID\b)/, h.app);
   });
 });
 

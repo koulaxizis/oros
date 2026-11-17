@@ -13,6 +13,17 @@ Die Schaltfläche am rechten Ende der oberen Leiste (die Symbole für Netzwerk u
 
 Auf einem schmalen Bildschirm, wenn die obere Leiste voll ist, wandert die Sprachschaltfläche in die Schnelleinstellungen.
 
+## Nachtlicht
+Das Nachtlicht macht den Bildschirm am Abend wärmer, mit weniger blauem Licht, das ist angenehmer für die Augen und den Schlaf. Du schaltest es in den `Einstellungen` unter `Darstellung` mit `Warmer Bildschirm nachts` ein und wählst `Wann`:
+
+- `Sonnenuntergang bis Sonnenaufgang`: vom heutigen Sonnenuntergang bis zum nächsten Sonnenaufgang dort, wo du bist. orOS berechnet die Zeiten selbst, ohne Internet, für den Ort des Wetters in der oberen Leiste (die erste Stadt der [Wetter](app:weather)-App). Ohne Stadt gilt 20:00 bis 07:00.
+- `Eigene Zeiten`: von und bis zu den Uhrzeiten, die du wählst, in halben Stunden.
+- `Immer`: die ganze Zeit warm.
+
+`Wärme` legt fest, wie warm er wird. Der Bildschirm wird langsam warm, über 20 Minuten, und kehrt genauso zurück. In den Schnelleinstellungen schaltet die Taste `Nachtlicht` es jetzt ein (bis zum nächsten Morgen oder dem Ende deiner Zeiten) oder bis zum nächsten Abend aus; ihr Pfeil öffnet die Einstellungen. Es gilt nur auf diesem Gerät.
+
+Auf orOS USB ändert der Computer die Farben des Bildschirms selbst, also werden auch das Internet-Fenster und der Tor Browser warm. In einem Browser oder in orOS Portable färbt orOS sein eigenes Fenster: ein Video im Vollbild in einer App zeigt seine eigenen Farben.
+
 ## Desktop-Widgets
 Karten auf dem Desktop, die deinen Tag auf einen Blick zeigen: `Uhr`, `Kalender` (ein Monat; tippe auf einen Tag, um ihn im Kalender zu öffnen), `Heute` (was überfällig und was heute fällig ist, aus der Zusammenfassung [Heute](app:today); tippe auf eine Zeile, um sie zu öffnen), `Wetter` (der Ort des Wetters in der oberen Leiste), `Wird abgespielt` (Wiedergabe / Pause für Musik, Podcasts, Radio oder den Sound Mixer) und `Synchronisierung` (ihr Zustand und Jetzt synchronisieren).
 
@@ -33,7 +44,7 @@ Wenn du orOS an einem Tag zum ersten Mal startest, erscheint kurz eine Begrüßu
 Wenn du neu bei orOS bist, erscheint beim ersten Öffnen jeder App ein kurzer Tipp aus ihrer Anleitung: auf einem Computer unten am Bildschirm, auf einem Handy unter der oberen Leiste. `Mehr in der Hilfe` öffnet die ganze Anleitung der App, `×` schließt ihn, und er geht auch, sobald du die App benutzt. Jede App zeigt ihren Tipp einmal. `Beim ersten Öffnen einer App einen Tipp zeigen` in den `Einstellungen` unter `Darstellung` schaltet die Tipps ein oder aus; schaltest du sie wieder ein, erscheint der Tipp jeder App noch einmal. Das bleibt auf diesem Gerät. Spiele haben stattdessen ihre eigene Einführung beim ersten Spiel.
 
 ### Ein Beispiel in einer leeren App
-Wenn Aufgaben, Kanban, Lesezeichen, Rechnungen, Kontakte, Budget, Notizen oder der Essensplaner noch leer sind, hat ihr leerer Bildschirm auch `Zeig mir ein Beispiel`. Es zeigt ein paar erfundene Einträge, damit du siehst, wie die App im Einsatz aussieht. Das Beispiel ist nur zum Ansehen: Nichts wird gespeichert, nichts wird synchronisiert, und deine Daten bleiben unberührt. `Mit eigenem beginnen` schließt es und beginnt deinen ersten Eintrag; `Schließen` schließt es nur.
+Wenn Aufgaben, Kanban, Lesezeichen, Abrechnung, Kontakte, Budget, Notizen oder der Essensplaner noch leer sind, hat ihr leerer Bildschirm auch `Zeig mir ein Beispiel`. Es zeigt ein paar erfundene Einträge, damit du siehst, wie die App im Einsatz aussieht. Das Beispiel ist nur zum Ansehen: Nichts wird gespeichert, nichts wird synchronisiert, und deine Daten bleiben unberührt. `Mit eigenem beginnen` schließt es und beginnt deinen ersten Eintrag; `Schließen` schließt es nur.
 
 Aufgaben und Kanban bieten außerdem ein paar fertige Listen unter `Oder beginne mit einer Vorlage:`. In Aufgaben macht `Packliste` oder `Umzug` eine neue Liste, in der die Aufgaben schon stehen; in Kanban macht `Reise`, `Umzug` oder `Persönlich` ein Board mit seinen Spalten und ein paar Karten. Das sind echte Einträge, die du ändern oder löschen kannst, und `Rückgängig` nimmt sie zurück.
 
@@ -71,14 +82,18 @@ Die erste Kachel, `Eigenes`, ist ein Hintergrundbild, das du selbst machst.
 Jedes Gerät zeichnet dein Hintergrundbild passend für seinen eigenen Bildschirm, also bleibt es auf dem Handy wie auf einem großen Monitor scharf.
 
 ### Symbolpakete
-Unter Einstellungen › Darstellung › `Symbole` änderst du, wie App-Symbole auf dem Desktop, im Dock, im Menü und in der Suche aussehen. `Klassisch` ist das orOS-Aussehen. `Bunt` gibt jeder Menükategorie ihre eigene Farbe, `Farbmix` gibt den Symbolen verschiedene Farben (auf dem Desktop und im Dock folgen sie ihrem Platz, so unterscheiden sich Nachbarn immer), `Regenbogen` setzt jedes Symbol auf eine dunkle Kachel mit einem Rand in Regenbogenfarben und zeichnet es in hellen Farben, die durch das ganze Spektrum laufen, `Glas` macht durchscheinende, matte Kacheln, `Fein` lässt die Kacheln weg und zeigt eine feine Linie, `Papier` setzt ein dunkles Symbol auf eine cremefarbene Karte, und `Rund` nutzt Kreise in deiner Systemfarbe. Das gewählte Paket ist auf all deinen Geräten gleich. Hoher Kontrast zeigt immer `Klassisch`.
+Unter Einstellungen › Darstellung › `Symbole` änderst du, wie App-Symbole auf dem Desktop, im Dock, im Menü und in der Suche aussehen. `Klassisch` ist das orOS-Aussehen. `Bunt` gibt jeder Menükategorie ihre eigene Farbe, `Farbmix` gibt den Symbolen verschiedene Farben (auf dem Desktop und im Dock folgen sie ihrem Platz, so unterscheiden sich Nachbarn immer), `Regenbogen` setzt jedes Symbol auf eine dunkle Kachel mit einem Rand in Regenbogenfarben und zeichnet es in hellen Farben, die durch das ganze Spektrum laufen, `Glas` macht durchscheinende, matte Kacheln, `Fein` lässt die Kacheln weg und zeigt eine feine Linie, `Papier` setzt ein dunkles Symbol auf eine cremefarbene Karte, und `Rund` nutzt Kreise in deiner Systemfarbe. Das gewählte Paket ist auf all deinen Geräten gleich. Hoher Kontrast zeigt immer `Klassisch`. Mit `Selbst mischen` baust du dein eigenes Paket: wähle eine `Form` (`Quadrat`, `Abgerundet` oder `Kreis`), eine `Füllung` (`Akzent`, `Farbmix`, `Nach Kategorie`, `Dunkel`, `Hell` oder `Umriss`) und die `Linien` des Symbols (`Dünn`, `Normal` oder `Kräftig`); die Vorschau zeigt deine Mischung.
 
 ### Lebendige Landschaft
 `Lebendige Landschaft` (die zweite Kachel) zeichnet eine kleine Landschaft um das, was auf deinem Desktop liegt: Verknüpfungen, Widgets und Haftnotizen stehen auf Inseln, die Lücken dazwischen werden Wasser. Fügst du eine Verknüpfung hinzu oder entfernst sie, verschiebst eine Haftnotiz oder änderst deine Widgets, formt sich das Land neu und blendet sanft ein. Die Farben folgen deinem Skin und deinem hellen oder dunklen Design.
 - Unter den Hintergrundbildern wählst du bei `Stil` zwischen `Inseln` (vor allem Wasser), `Hügel` (Wiesen, die zu Terrassen ansteigen, mit einem Fluss) und `Garten` (Rasen mit Blumen, Hecken und Teichen); `Neue Form` zeichnet eine andere Landschaft. Deine Wahl und ihre Form folgen dir auf deine anderen Geräte; jedes Gerät zeichnet das Land für seinen eigenen Bildschirm.
 - Das Land steht still: Es ändert sich nur, wenn sich dein Desktop ändert, und kostet beim Arbeiten keinen Akku. Mit reduzierter Bewegung ändert es sich ohne Überblenden.
 - `Sanfte Bewegung` (anfangs aus) fügt Glitzern auf dem Wasser und einen ziehenden Wolkenschatten hinzu. Sie hält an, solange eine App offen ist, bei reduzierter Bewegung, bei schwachem Akku (unter 20 % und nicht am Laden) und auf zu langsamen Geräten.
+- `Licht des Tages` (anfangs an) färbt die Landschaft nach der Uhrzeit dieses Geräts: tiefes Blau in der Nacht, Rosa im Morgengrauen, klar am Tag und golden am Abend, langsam über den Tag. Es wird einmal über die Landschaft gelegt und kostet keinen Akku.
 - Hoher Kontrast zeigt den schlichten Desktop.
+
+### Wetter auf dem Desktop
+Einstellungen › Hintergrund › `Wetter auf dem Desktop` (anfangs aus, nur auf diesem Gerät) zeigt das Wetter über jedem Hintergrund: Sonne oder Sterne bei klarem Himmel, ein paar Wolken, bedeckt, Nebel, sanften Regen, Schnee oder ein Gewitter mit stärkerem Regen unter dunkleren Wolken (nie ein Blitz). Es folgt dem Wetter deiner Stadt in [Wetter](app:weather), wie die obere Leiste. Ohne Wetter oder mit Wetter, das älter als drei Stunden ist, zeigt es nichts. Es hält an, solange eine App offen ist, und steht still bei reduzierter Bewegung, schwachem Akku (unter 20 % und nicht am Laden) und auf zu langsamen Geräten. Hoher Kontrast blendet es aus.
 
 ## Saisonale Deko
 Zu manchen Zeiten im Jahr schmückt sich dein Desktop von selbst: Schnee, eine Lichterkette und ein Baum zu Weihnachten, goldene Funken und ein Granatapfel zu Neujahr (mit Feuerwerk von 23:55 bis 00:10 an Silvester), Kürbisse, Fledermäuse und ein Spinnennetz zu Halloween.

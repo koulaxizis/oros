@@ -3,6 +3,8 @@ orOS ist dafür gebaut, dass deine Daten dir gehören. Es gibt keine Konten, kei
 
 Die vollständige Datenschutzerklärung steht im Web: [useoros.online/privacy.html](https://useoros.online/privacy.html).
 
+Arbeitest du an etwas Sensiblem oder mit Quellen? Lies [Sensible Arbeit und Quellen](help:t/sensitive).
+
 ## Deine Daten bleiben in deinem Browser
 Alles, was du in orOS erstellst, wird in diesem Browser auf diesem Gerät gespeichert. Es gibt keinen orOS-Server, der es sammelt. orOS nutzt keine Cookies und keinerlei Tracking oder Analyse.
 
@@ -16,6 +18,13 @@ In der Android-App von orOS können [Kontakte](app:contacts) und [Kalender](app:
 
 ### Bildschirmsperre
 Auf einem Computer, den auch andere nutzen, schalte in den [Einstellungen](app:settings) die `Bildschirmsperre` ein: orOS fragt dann beim Start und nach der gewählten Leerlaufzeit nach einer PIN oder einem Kennwort. Sie hält andere vom Bildschirm fern; deine Daten auf dem Gerät verschlüsselt sie nicht, wer also den Datenträger lesen oder die Entwicklertools des Browsers öffnen kann, kommt trotzdem an sie heran.
+
+Auf einem Android-Handy (orOS-App oder orOS Passwords) öffnet sich die Sperre auch mit Fingerabdruck oder Gesicht, und auf einem Computer mit orOS Portable, der orOS-App oder orOS USB mit Windows Hello oder einem Fingerabdruck; deine PIN funktioniert weiter und wird alle 14 Tage abgefragt.
+
+### Zwischenablage-Verlauf
+Der `Zwischenablage-Verlauf` in den [Einstellungen](app:settings) (System) ist aus, bis du ihn einschaltest, auf jedem Gerät. Dann behält orOS den Text, den du in seinen Apps kopierst oder ausschneidest (bis zu 30 Kopien, für 1 Stunde, 1 Tag oder 7 Tage), und [[Ctrl+Alt+Shift+V]] oder `Zwischenablage` in den Schnelleinstellungen zeigt sie; ein Tippen kopiert eine erneut. Er sieht nur Kopien aus orOS-Apps, nie, was du in anderen Programmen kopierst. Er behält nie etwas aus Passwörter oder Einstellungen, aus Passwortfeldern oder 2FA-Links und nichts, solange der Bildschirm gesperrt oder [Sensible Arbeit](help:t/sensitive) an ist (das Einschalten vergisst auch die Liste). Die Liste bleibt auf diesem Gerät: Sie wird nie synchronisiert und ist in keiner Sicherung. Bilder werden nicht behalten. Ausschalten vergisst alles.
+
+In der Liste behält die Stecknadel eine Kopie, bis du sie löst (bis zu 10; `Alle löschen` lässt sie stehen), die Suche findet eine Kopie über ihre Wörter, und der Einfügen-Knopf setzt eine Kopie direkt in das Textfeld, in dem du zuletzt warst, in der App auf dem Bildschirm. `Zwischenablage` in der Befehlsleiste öffnet die Liste ebenfalls.
 
 ## Verschlüsselte Synchronisierung
 Die Synchronisierung ist freiwillig und nutzt dein eigenes Dropbox-Konto. orOS arbeitet dort nur in seinem eigenen App-Ordner.
@@ -35,13 +44,14 @@ orOS selbst läuft auf deinem Gerät, aber manche Apps brauchen das Internet fü
 - [Fernsehen](app:television): iptv-org, eine von der Community gepflegte Kanalliste. Die Kanäle spielen von ihren eigenen Servern.
 - [Atelier](app:atelier): Openverse, Wikimedia Commons, Iconify und Fontsource für freie Fotos, Symbole und Schriften; Pixabay und Pexels nur mit deinem eigenen Schlüssel.
 - [Medienregal](app:shelf): Open Library und MusicBrainz, nur wenn du auf `Details online suchen` tippst. Gesendet werden nur der Titel und die Urheberin oder der Urheber, die du eingetippt hast. Details und Bilder können auch von Wikidata und Wikimedia Commons kommen; Filme und Serien von TMDB nur mit deinem eigenen Schlüssel.
-- [Einheitenrechner](app:units): Frankfurter für die Wechselkurse der Europäischen Zentralbank, nur wenn du `Währung` öffnest oder auf `Kurse aktualisieren` tippst.
+- [Rechner › Umrechnen](app:units): Frankfurter für die Wechselkurse der Europäischen Zentralbank, nur wenn du `Währung` öffnest oder auf `Kurse aktualisieren` tippst.
 - [Budget](app:budget): dieselben Frankfurter-Kurse, nur wenn ein Konto oder ein Eintrag in einer anderen Währung ist (höchstens alle 6 Stunden). Über dein Geld wird nichts gesendet.
 - [Gemeinfreiheits-Rechner](app:pubdomain): Wikidata für Autorinnen, Autoren und ihre Werke.
 - [Reader](app:feeds) und [Podcasts](app:podcasts): die Websites, deren Feeds du hinzufügst.
 - [Essensplaner](app:meals): die Rezeptseiten, deren Adressen du einfügst, und Open Food Facts, wenn du ein Lebensmittel suchst oder einen Barcode für die Nährwerte scannst.
 - [Training](app:fitness): wger für Übungsbilder, nur wenn du die Details einer Übung öffnest.
 - [Montage](app:montage): Hugging Face, einmal, um das Sprachmodell für `Untertitel erstellen` herunterzuladen, nur wenn du darauf drückst. Dein Ton verlässt das Gerät nie.
+- [Textwerkzeuge](app:texttools): GitHub Pages (die eigene Kopie der Übersetzungsmodelle von Mozilla), einmal pro Sprachrichtung, nur wenn du auf die Schaltfläche `Übersetzen` tippst, die den Download nennt. Dein Text verlässt das Gerät nie, außer du schaltest `Wo kein Modell passt, die KI des Assistenten nutzen` ein: Dann gehen die Richtungen ohne Modell an den KI-Dienst, den du im Assistenten eingerichtet hast, nur wenn du auf `Mit der KI übersetzen` tippst.
 - [Podcasts](app:podcasts): gpodder.net oder deine eigene Nextcloud, nur wenn du sie zur Synchronisierung verbindest.
 - [Mail](app:mail): dein eigener Mail-Anbieter, über das orOS-Relay, das deine Mails nur durchreicht und nichts behält.
 - [Wiki](app:wiki): Wikipedia, nur wenn du `Mit Wikipedia beginnen` nutzt; gesendet wird nur der Titel, den du eintippst.
@@ -54,7 +64,7 @@ orOS selbst läuft auf deinem Gerät, aber manche Apps brauchen das Internet fü
 
 Manche Apps können auch mit Konten arbeiten, die du schon anderswo hast, aber erst, nachdem du sie in [Einstellungen](app:settings) › `Verbundene Dienste` verbunden hast:
 - [Bestand](app:stock): dein eigener WooCommerce-Shop.
-- [Rechnungen](app:invoices): dein Konto bei timologisi.online, um Belege an myDATA zu senden.
+- [Abrechnung](app:invoices): dein Konto bei timologisi.online, um Belege an myDATA zu senden.
 - [Newsletter](app:newsletter): dein Konto bei MailerLite, Mailchimp oder Brevo, um Abonnenten zu synchronisieren.
 - [CRM](app:crm): dein Konto bei HubSpot, Pipedrive, Invoice Ninja oder Odoo, gelesen, um Kunden und Deals zu übernehmen; der Revenue Splitter deines WooCommerce-Shops, gelesen auf der Karte eines Partners und nie gespeichert.
 - [Budget](app:budget): dein Konto bei Stripe oder Invoice Ninja, gelesen, um Zahlungen zu übernehmen.

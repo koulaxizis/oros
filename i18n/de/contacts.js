@@ -1,4 +1,5 @@
 orosPack("de", "contacts", {
+ "ct.sendApp": "An eine App senden…",
  "tdy.tipGift1": "Morgen: wenn du etwas schenken willst, ist heute der Tag, es zu besorgen.",
  "tdy.tipGiftN": "In {n} Tagen: es bleibt noch Zeit, ein Geschenk auszusuchen.",
  "tdy.tipToday": "Heute: eine kurze Nachricht oder ein Anruf bedeutet viel.",

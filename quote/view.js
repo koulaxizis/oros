@@ -1,0 +1,3316 @@
+// ============================================================
+// orOS Billing › Quotes (quote/view.js): was the Quote app (APP-ALIAS
+// since app merge 7, old id "quote" → invoices { tab: "quotes" }).
+// Loaded by invoices/invoices.js the first time the Quotes tab opens,
+// with quote/view.css and the "quote" language pack; quote/core.js and
+// accept-core.js load with Billing's page (the slice, Today, search).
+// QuoteView.mount(host) builds it once. Billing registers the slice
+// "quote" (oros-quote-data, unchanged) at its boot and hands it to
+// sliceGet / sliceSet here once mounted. Every id is "qv-<id>", the
+// text attributes are data-qv / data-qv-title / data-qv-ph, and the
+// styles live under .qv (view.css), so nothing touches Billing's page.
+// Everything below is the Quote app as it was (v0.1.0 notes kept).
+// ------------------------------------------------------------
+// orOS Quote — App logic (v0.1.0)
+// -------------------------------------------------------------
+// Πρώτη έκδοση: sync-first native ήπια μεταφοράς της beta
+// "Offer" εφαρμογής (clean-room rewrite — τα beta αρχεία
+// χρησιμοποιήθηκαν μόνο ως λειτουργική αναφορά).
+//
+// ΑΡΧΙΤΕΚΤΟΝΙΚΗ (ίδια φιλοσοφία με kanban v0.6.0):
+//   state = {
+//     ver: 1, om: <σειρά λιστών>, deleted: { id: ts },
+//     activeQuoteId: <string>,          // DEVICE-LOCAL — δεν ταξιδεύει
+//     quotes:   [ offer ],               // whole-offer LWW, items μέσα
+//     clients:  [ client ],
+//     templates:[ template ]
+//   }
+//   - Ύφεση ενός tombstone map για ΟΛΟΥΣ τους τύπους οντοτήτων
+//   - Computed totals: ΠΟΤΕ δεν αποθηκεύονται (pure functions) —
+//     κανένα sync merge δεν μπορεί να δημιουργήσει αριθμητική
+//     αντίφαση. Μόνο inputs (qty, price, disc, vat) αποθηκεύονται.
+//   - Αρίθμηση OFF-YYYY-NNN: recovery-based scan στο max —
+//     κανένας synced counter.
+//
+// Ενότητες:
+//   1. Σταθερές, i18n, helpers
+//   2. Μοντέλο δεδομένων, αποθήκευση, migration
+//   3. Merge engine (cross-device)
+//   4. Υπολογισμοί (pure functions)
+//   5. Editor (create tab)
+//   6. Line items + δόσεις UI
+//   7. Clients (dropdown + dialog με edit mode)
+// ============================================================
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "oros-quote-data";
+  var DRAFT_KEY   = "oros-quote-draft";   // device-local draft shelter — ΠΟΤΕ synced
+  var PREFS_KEY   = "oros-quote-prefs";   // QT-11: device-local (activeQuoteId) — ΠΟΤΕ synced
+  var RESCUE_KEY  = "oros-quote-data-broken";   // QT-13: αντίγραφο μη αναγνώσιμων δεδομένων
+  var DATA_VER = 1;
+  var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;   // 30 ημέρες
+
+  // PDF font — lazy fetch στο export (το jspdf φορτώνει με <script> στο HTML)
+  var VENDOR_FONT_PATH  = "../vendor/NotoSans-Regular.ttf";
+
+  var STATUSES = ["draft", "sent", "accepted", "rejected", "expired"];
+
+  // ---------- 1. Σταθερές, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+
+  var STRINGS = {
+    en: {
+      "tab.create":            "Create",
+      "tab.list":              "Quotes",
+      "search.ph":             "Search…",
+      "search.clear":          "Clear search",
+      "filter.status":         "Filter by status",
+
+      "status.draft":         "Draft",
+      "status.sent":          "Sent",
+      "status.accepted":      "Accepted",
+      "status.rejected":      "Rejected",
+      "status.expired":       "Expired",
+      "client.new":            "New client",
+      "client.fromBilling":    "From Billing's clients",
+      "client.edit_btn":       "Edit client",
+      "client.select":         "Select client",
+      "client.none":          "No client",
+      "client.edit":          "Client Details",
+      "client.name":          "Name",
+      "client.email":         "Email",
+      "client.phone":         "Phone",
+      "client.address":       "Address",
+      "client.tax_id":        "Tax ID / VAT",
+      "client.delete":        "Delete",
+      "client.none_listed":   "No clients yet — create one below.",
+      "offer.number":         "Quote #",
+      "offer.regenerate":     "Regenerate number",
+      "offer.date":           "Date",
+      "offer.due_date":       "Due",
+      "offer.status":         "Status",
+      "offer.currency":       "Currency",
+      "offer.notes":          "Notes",
+      "items.title":          "Line Items",
+      "items.add":            "Add item",
+      "items.desc":           "Description",
+      "items.code":           "Code/SKU",
+      "items.qty":            "Qty",
+      "items.unit_price":     "Unit Price",
+      "items.disc":           "Disc %",
+      "items.vat":            "VAT %",
+      "items.del":            "Remove",
+      "items.empty":          "No items — add your first line item.",
+      "totals.subtotal":      "Subtotal",
+      "totals.discount":      "Discount (%)",
+      "totals.vat":           "VAT",
+      "totals.vat_bulk":      "VAT (%)",
+      "totals.total":         "Total",
+      "inst.title":           "Instalments",
+      "inst.count":           "Count",
+      "inst.generate":        "Generate",
+
+      "inst.amount":          "Amount",
+      "inst.sum":            "Sum:",
+      "inst.mismatch":        "does not match total",
+      "inst.match":          "matches total",
+      "payment.title":        "Payment Terms",
+      "payment.bank":         "Bank Transfer",
+      "payment.paypal":       "PayPal",
+      "payment.iris":         "IRIS",
+      "payment.cash":         "Cash",
+      "payment.ph":           "e.g., 50% upfront, 50% on delivery…",
+      "actions.save":         "Save",
+      "actions.save_template":"Save as Template",
+      "actions.duplicate":    "Duplicate",
+      "actions.invoice":      "Make invoice",
+      "actions.send_app":     "Send the lines to an app…",
+      "items.amount":         "Amount",
+      "invoiced.label":       "Invoiced: {n}",
+      "invoiced.draft":       "draft",
+      "invoice.note":         "From quote {n}",
+      "actions.delete":       "Delete",
+      "actions.export_pdf":   "Export PDF",
+      "actions.send":         "Send via email",
+      "send.subject":         "Quote",
+      "list.empty_title":     "No quotes yet",
+      "list.empty_hint":      "Create your first quote in the Create tab.",
+      "list.no_match":        "No quotes match the current search/filters.",
+
+      "templates.manage":     "Template Library",
+      "templates.use":        "Use",
+      "templates.empty":      "No templates saved yet.",
+      "save":                 "Save",
+      "close":                "Close",
+      "cancel":               "Cancel",
+      "toast.quota":          "Storage is full: changes are not saved on this device",
+      "toast.saved":          "Quote saved",
+      "toast.deleted":        "Quote deleted",
+      "toast.duplicated":     "Duplicated — save to persist",
+      "toast.template_saved": "Template saved",
+      "toast.template_used":  "Template loaded",
+      "toast.client_saved":   "Client saved",
+      "toast.client_deleted": "Client deleted",
+      "toast.exported":       "Export ready",
+      "confirm.delete":       "Delete this quote?",
+      "confirm.client_del":   "Delete this client?",
+      "confirm.template_del": "Delete this template?",
+      "template.name_ph":     "Template name",
+      "pdf.header_client":    "Quote for",
+      "pdf.taxid":            "VAT no. {v}",
+
+      "app.title_short":      "Quote",
+      "paypresets.edit":      "Edit payment presets",
+      "paypresets.hint":      "Click a preset to insert its text into the offer. Click the pencil to customize.",
+      "paypresets.title":     "Payment Presets",
+      "toast.paypresets_saved": "Payment presets saved",
+      "toast.sync_replaced":   "This quote was deleted on another device",
+      "toast.draft_restored":  "Unsaved draft restored",
+      "toast.prefilled":       "New quote filled in. Check it and press Save.",
+      "confirm.replace_draft": "Replace the unsaved draft with the new quote?",
+      "prefill.replace":       "Replace",
+      "notes.ph":             "Additional terms, conditions…",
+      "toast.mail_nopdf":     "The PDF couldn't be attached: export it and attach it by hand.",
+      "conv.label":           "Show the total in",
+      "conv.pick":            "Other currency…",
+      "conv.ecb":             "ECB rate of {d}",
+      "conv.loading":         "Getting today's rates…",
+      "conv.offline":         "No rates: you're offline. They come back with a connection.",
+      "conv.norate":          "No ECB rate for this currency.",
+      "acc.send":             "Send for acceptance",
+      "acc.record":           "Record acceptance",
+      "acc.save_first":       "Save the quote first.",
+      "acc.send_title":       "Send for acceptance",
+      "acc.send_text":        "Your client gets a link that opens the quote in any browser, with an Accept button. The quote travels inside the link: it isn't stored on any server. When they accept, they send you back an answer link.",
+      "acc.from":             "Your name or business (shown to the client)",
+      "acc.from_email":       "Your email (for the answer, optional)",
+      "acc.make":             "Make the link",
+      "acc.link":             "Acceptance link",
+      "acc.copy":             "Copy link",
+      "acc.copied":           "Link copied",
+      "acc.share":            "Share…",
+      "acc.email":            "Email with PDF",
+      "acc.mail_line":        "You can see the quote and accept it here:",
+      "acc.link_hint":        "Anyone with this link can see the quote. If you change the quote, make a new link: an answer to an older one won't count.",
+      "acc.renewed":          "The quote changed since the last link, so this is a new link. An answer to the old link won't count.",
+      "acc.resend_note":      "This quote was sent for acceptance before. If nothing changed, you get the same link again.",
+      "acc.too_big":          "This quote is too long for a link. Send the PDF instead.",
+      "acc.no_crypto":        "This browser can't make acceptance links.",
+      "acc.rec_title":        "Record acceptance",
+      "acc.rec_text":         "Paste the answer your client sent you (the link or the code).",
+      "acc.paste_ph":         "https://…/quote/#acc=a1.…",
+      "acc.check":            "Check",
+      "acc.bad_code":         "That isn't a quote answer, or it was cut short.",
+      "acc.no_quote":         "This answer is for a quote that isn't in your Quote app.",
+      "acc.who":              "{n} accepted quote {q} on {d}.",
+      "acc.v_tampered":       "✗ This doesn't match the quote you sent: the link was changed before it was accepted. Don't count it; send the quote again.",
+      "acc.v_stale":          "This answer is for an older link of this quote: you made a new link since. Ask the client to accept the latest one.",
+      "acc.v_none":           "This quote was never sent for acceptance from here.",
+      "acc.already":          "Already recorded.",
+      "acc.edited":           "You changed the quote after sending it. The client accepted the version you sent.",
+      "acc.mark":             "Mark as accepted",
+      "acc.marked":           "Quote marked as accepted",
+      "acc.to_invoice":       "Make an invoice from this quote now?",
+      "acc.info":             "Accepted by {n} on {d} (by link)",
+      "file.title":           "Save and open",
+      "file.save":            "orOS file (.orosquote)",
+      "file.open":            "Open orOS file…",
+      "file.copy":            "Open as copy…",
+      "file.folder":          "Unzipped orOS folder…",
+      "file.hint":            "Every quote, client and template in one file. Opening one adds only what this device lacks. The file is not encrypted.",
+      "file.copyHint":        "“Open as copy” adds the file's quotes and templates as new ones (new numbers, as drafts), even ones you already have.",
+      "undo":                 "Undo"
+    },
+    el: {
+      "tab.create":            "Δημιουργία",
+      "tab.list":              "Προσφορές",
+      "search.ph":             "Αναζήτηση…",
+      "search.clear":          "Καθαρισμός αναζήτησης",
+      "filter.status":         "Φίλτρο κατά κατάσταση",
+
+      "status.draft":         "Πρόχειρη",
+      "status.sent":          "Απεστάλη",
+      "status.accepted":      "Αποδεκτή",
+      "status.rejected":      "Απορρίφθηκε",
+      "status.expired":       "Έληξε",
+      "client.new":            "Νέος πελάτης",
+      "client.fromBilling":    "Από τους πελάτες των τιμολογίων",
+      "client.edit_btn":       "Επεξεργασία πελάτη",
+      "client.select":         "Επιλογή πελάτη",
+      "client.none":          "Χωρίς πελάτη",
+      "client.edit":          "Στοιχεία πελάτη",
+      "client.name":          "Όνομα",
+      "client.email":         "Email",
+      "client.phone":         "Τηλέφωνο",
+      "client.address":       "Διεύθυνση",
+      "client.tax_id":        "ΑΦΜ / ΦΠΑ",
+      "client.delete":        "Διαγραφή",
+      "client.none_listed":   "Δεν υπάρχουν πελάτες — δημιουργία παρακάτω.",
+      "offer.number":         "Αρ. Προσφοράς",
+      "offer.regenerate":     "Ανανέωση αριθμού",
+      "offer.date":           "Ημερομηνία",
+      "offer.due_date":       "Προθεσμία",
+      "offer.status":         "Κατάσταση",
+      "offer.currency":       "Νόμισμα",
+      "offer.notes":          "Σημειώσεις",
+      "items.title":          "Στοιχεία",
+      "items.add":            "Προσθήκη",
+      "items.desc":           "Περιγραφή",
+      "items.code":           "Κωδικός/SKU",
+      "items.qty":            "Ποσότητα",
+      "items.unit_price":     "Τιμή Μονάδας",
+      "items.disc":           "Έκδ %",
+      "items.vat":            "ΦΠΑ %",
+      "items.del":            "Αφαίρεση",
+      "items.empty":          "Δεν υπάρχουν στοιχεία — πρόσθεσε την πρώτη γραμμή.",
+      "totals.subtotal":      "Υποσύνολο",
+      "totals.discount":      "Έκπτωση (%)",
+      "totals.vat":           "ΦΠΑ",
+      "totals.vat_bulk":      "ΦΠΑ (%)",
+      "totals.total":         "Σύνολο",
+      "inst.title":           "Δόσεις",
+      "inst.count":           "Πλήθος",
+      "inst.generate":        "Δημιουργία",
+
+      "inst.amount":          "Ποσό",
+      "inst.sum":            "Σύνολο δόσεων:",
+      "inst.mismatch":        "δεν αντιστοιχεί στο σύνολο",
+      "inst.match":          "αντιστοιχεί στο σύνολο",
+      "payment.title":        "Όροι Πληρωμής",
+      "payment.bank":         "Τραπεζική μεταφορά",
+      "payment.paypal":       "PayPal",
+      "payment.iris":         "IRIS",
+      "payment.cash":         "Μετρητά",
+      "payment.ph":           "π.χ., 50% προκαταβολή, 50% κατά την παράδοση…",
+      "actions.save":         "Αποθήκευση",
+      "actions.save_template":"Αποθήκευση ως Πρότυπο",
+      "actions.duplicate":    "Αντιγραφή",
+      "actions.invoice":      "Έκδοση τιμολογίου",
+      "actions.send_app":     "Στείλε τις γραμμές σε εφαρμογή…",
+      "items.amount":         "Ποσό",
+      "invoiced.label":       "Τιμολογήθηκε: {n}",
+      "invoiced.draft":       "πρόχειρο",
+      "invoice.note":         "Από την προσφορά {n}",
+      "actions.delete":       "Διαγραφή",
+      "actions.export_pdf":   "Εξαγωγή PDF",
+      "actions.send":         "Αποστολή μέσω email",
+      "send.subject":         "Προσφορά",
+      "list.empty_title":     "Δεν υπάρχουν προσφορές",
+      "list.empty_hint":      "Δημιούργησε την πρώτη σου προσφορά στη καρτέλα Δημιουργία.",
+      "list.no_match":        "Καμία προσφορά δεν ταιριάζει με την αναζήτηση/φίλτρα.",
+
+      "templates.manage":     "Βιβλιοθήκη Προτύπων",
+      "templates.use":        "Χρήση",
+      "templates.empty":      "Δεν υπάρχουν αποθηκευμένα πρότυπα.",
+      "save":                 "Αποθήκευση",
+      "close":                "Κλείσιμο",
+      "cancel":               "Άκυρο",
+      "toast.quota":          "Ο χώρος αποθήκευσης γέμισε: οι αλλαγές δεν αποθηκεύονται σε αυτή τη συσκευή",
+      "toast.saved":          "Η προσφορά αποθηκεύτηκε",
+      "toast.deleted":        "Η προσφορά διαγράφηκε",
+      "toast.duplicated":     "Αντιγράφηκε — αποθήκευσε για οριστικοποίηση",
+      "toast.template_saved": "Το πρότυπο αποθηκεύτηκε",
+      "toast.template_used":  "Το πρότυπο φορτώθηκε",
+      "toast.client_saved":   "Ο πελάτης αποθηκεύτηκε",
+      "toast.client_deleted": "Ο πελάτης διαγράφηκε",
+      "toast.exported":       "Έτοιμο για εξαγωγή",
+      "confirm.delete":       "Διαγραφή αυτής της προσφοράς;",
+      "confirm.client_del":   "Διαγραφή αυτού του πελάτη;",
+      "confirm.template_del": "Διαγραφή αυτού του προτύπου;",
+      "template.name_ph":     "Όνομα προτύπου",
+      "pdf.header_client":    "Προσφορά για",
+      "pdf.taxid":            "ΑΦΜ {v}",
+
+      "app.title_short":      "Προσφορά",
+      "paypresets.edit":      "Επεξεργασία presets πληρωμής",
+      "paypresets.hint":      "Πάτησε ένα preset για να εισαχθεί το κείμενό του στην προσφορά. Με το μολύβι το προσαρμόζεις.",
+      "paypresets.title":     "Presets Πληρωμής",
+      "toast.paypresets_saved": "Τα presets πληρωμής αποθηκεύτηκαν",
+      "toast.sync_replaced":   "Αυτή η προσφορά διαγράφηκε σε άλλη συσκευή",
+      "toast.draft_restored":  "Το μη αποθηκευμένο πρόχειρο ανακτήθηκε",
+      "toast.prefilled":       "Η νέα προσφορά συμπληρώθηκε. Έλεγξέ τη και πάτησε Αποθήκευση.",
+      "confirm.replace_draft": "Να αντικατασταθεί το μη αποθηκευμένο πρόχειρο από τη νέα προσφορά;",
+      "prefill.replace":       "Αντικατάσταση",
+      "notes.ph":             "Επιπλέον όροι, προϋποθέσεις…",
+      "toast.mail_nopdf":     "Το PDF δεν μπόρεσε να επισυναφθεί: κάνε εξαγωγή και επισύναψέ το μόνος σου.",
+      "conv.label":           "Το σύνολο σε",
+      "conv.pick":            "Άλλο νόμισμα…",
+      "conv.ecb":             "ισοτιμία ΕΚΤ της {d}",
+      "conv.loading":         "Λήψη των σημερινών ισοτιμιών…",
+      "conv.offline":         "Δεν υπάρχουν ισοτιμίες: είσαι εκτός σύνδεσης. Θα έρθουν με τη σύνδεση.",
+      "conv.norate":          "Η ΕΚΤ δεν δίνει ισοτιμία για αυτό το νόμισμα.",
+      "acc.send":             "Αποστολή για αποδοχή",
+      "acc.record":           "Καταχώριση αποδοχής",
+      "acc.save_first":       "Αποθήκευσε πρώτα την προσφορά.",
+      "acc.send_title":       "Αποστολή για αποδοχή",
+      "acc.send_text":        "Ο πελάτης σου παίρνει έναν σύνδεσμο που ανοίγει την προσφορά σε οποιονδήποτε browser, με κουμπί Αποδοχή. Η προσφορά ταξιδεύει μέσα στον σύνδεσμο: δεν αποθηκεύεται σε κανέναν server. Όταν την αποδεχτεί, σου στέλνει πίσω έναν σύνδεσμο απάντησης.",
+      "acc.from":             "Το όνομά σου ή η επιχείρησή σου (το βλέπει ο πελάτης)",
+      "acc.from_email":       "Το email σου (για την απάντηση, προαιρετικό)",
+      "acc.make":             "Δημιουργία συνδέσμου",
+      "acc.link":             "Σύνδεσμος αποδοχής",
+      "acc.copy":             "Αντιγραφή συνδέσμου",
+      "acc.copied":           "Ο σύνδεσμος αντιγράφηκε",
+      "acc.share":            "Κοινοποίηση…",
+      "acc.email":            "Email με το PDF",
+      "acc.mail_line":        "Μπορείτε να δείτε την προσφορά και να την αποδεχτείτε εδώ:",
+      "acc.link_hint":        "Όποιος έχει τον σύνδεσμο βλέπει την προσφορά. Αν αλλάξεις την προσφορά, φτιάξε νέο σύνδεσμο: η απάντηση σε παλιότερο δεν θα μετράει.",
+      "acc.renewed":          "Η προσφορά άλλαξε από τον προηγούμενο σύνδεσμο, οπότε αυτός είναι νέος. Η απάντηση στον παλιό δεν θα μετράει.",
+      "acc.resend_note":      "Η προσφορά έχει σταλεί ξανά για αποδοχή. Αν δεν άλλαξε τίποτα, παίρνεις τον ίδιο σύνδεσμο.",
+      "acc.too_big":          "Η προσφορά είναι πολύ μεγάλη για σύνδεσμο. Στείλε καλύτερα το PDF.",
+      "acc.no_crypto":        "Αυτός ο browser δεν μπορεί να φτιάξει συνδέσμους αποδοχής.",
+      "acc.rec_title":        "Καταχώριση αποδοχής",
+      "acc.rec_text":         "Επικόλλησε την απάντηση που σου έστειλε ο πελάτης (τον σύνδεσμο ή τον κωδικό).",
+      "acc.paste_ph":         "https://…/quote/#acc=a1.…",
+      "acc.check":            "Έλεγχος",
+      "acc.bad_code":         "Αυτό δεν είναι απάντηση σε προσφορά ή είναι κομμένο.",
+      "acc.no_quote":         "Αυτή η απάντηση αφορά προσφορά που δεν υπάρχει στην εφαρμογή Προσφορά σου.",
+      "acc.who":              "{n}: αποδοχή της προσφοράς {q} στις {d}.",
+      "acc.v_tampered":       "✗ Δεν ταιριάζει με την προσφορά που έστειλες: ο σύνδεσμος άλλαξε πριν την αποδοχή. Μην τη μετρήσεις· στείλε ξανά την προσφορά.",
+      "acc.v_stale":          "Η απάντηση αφορά παλιότερο σύνδεσμο αυτής της προσφοράς: έφτιαξες νέο στο μεταξύ. Ζήτα από τον πελάτη να αποδεχτεί τον τελευταίο.",
+      "acc.v_none":           "Αυτή η προσφορά δεν στάλθηκε ποτέ για αποδοχή από εδώ.",
+      "acc.already":          "Έχει ήδη καταχωριστεί.",
+      "acc.edited":           "Άλλαξες την προσφορά αφού την έστειλες. Ο πελάτης αποδέχτηκε την έκδοση που έστειλες.",
+      "acc.mark":             "Σήμανση ως αποδεκτή",
+      "acc.marked":           "Η προσφορά σημειώθηκε ως αποδεκτή",
+      "acc.to_invoice":       "Να εκδοθεί τώρα τιμολόγιο από αυτή την προσφορά;",
+      "acc.info":             "Αποδεκτή από {n} στις {d} (με σύνδεσμο)",
+      "file.title":           "Αποθήκευση και άνοιγμα",
+      "file.save":            "Αρχείο orOS (.orosquote)",
+      "file.open":            "Άνοιγμα αρχείου orOS…",
+      "file.copy":            "Άνοιγμα ως αντίγραφο…",
+      "file.folder":          "Αποσυμπιεσμένος φάκελος orOS…",
+      "file.hint":            "Όλες οι προσφορές, οι πελάτες και τα πρότυπα σε ένα αρχείο. Το άνοιγμα προσθέτει μόνο όσα λείπουν από αυτή τη συσκευή. Το αρχείο δεν είναι κρυπτογραφημένο.",
+      "file.copyHint":        "Το «Άνοιγμα ως αντίγραφο» προσθέτει τις προσφορές και τα πρότυπα του αρχείου ως νέα (νέοι αριθμοί, ως πρόχειρες), ακόμη κι αυτά που έχεις ήδη.",
+      "undo":                 "Αναίρεση"
+    }
+  };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "quote", LANG);
+
+  function t(key) {
+    var p = STRINGS[LANG] || STRINGS.en;
+    return p[key] !== undefined ? p[key] :
+      (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
+  }
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+  // The view lives inside Billing's page: every id is "qv-<id>" and
+  // every lookup goes through the view's own root.
+  var root = null, opts = {}, LATE = [];
+  function $(id) { return document.getElementById("qv-" + id); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>\x22\x27]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // ---------- 2. Μοντέλο δεδομένων, αποθήκευση, migration ----------
+  var state = null;
+  var renderQueued = false;
+  var cur = null;          // τρέχουσα προσφορά στο editor (draft ή reference σε state.quotes)
+  var curIsDraft = true;   // true → δεν έχει μπει ακόμα στο state.quotes
+
+  function touch(ent) { if (ent) ent.mtime = Date.now(); }
+
+  // Decimal parsing: δέχεται "1.234,50", "1,234.50", "1234.5", "1.5"
+  function parseNum(s) {
+    if (typeof s === "number") return isFinite(s) ? s : 0;
+    var v = String(s == null ? "" : s).trim();
+    if (!v) return 0;
+    v = v.replace(/\s+/g, "");
+    if (v.indexOf(",") !== -1 && v.indexOf(".") !== -1) {
+      // και τα δύο separators: το τελευταίο είναι decimal
+      v = v.lastIndexOf(",") > v.lastIndexOf(".")
+        ? v.replace(/\./g, "").replace(",", ".")
+        : v.replace(/,/g, "");
+    } else if (v.indexOf(",") !== -1) {
+      v = v.replace(",", ".");
+    }
+    var n = parseFloat(v);
+    return isFinite(n) ? n : 0;
+  }
+
+  function round2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+
+  // Wave 46: any ISO currency, formatted with its own decimals and
+  // symbol (OrosQuoteCore.fmtMoney, Intl), e.g. "€12.00", "12,00 €",
+  // "¥1,200", "CHF 12.00".
+  var QC = window.OrosQuoteCore || null;
+  function curOk(c) { return typeof c === "string" && /^[A-Z]{3}$/.test(c); }
+  function money(n, currency) {
+    if (QC) return QC.fmtMoney(n, currency, LANG);
+    var s = Math.abs(n).toFixed(2);
+    if (LANG !== "en") s = s.replace(".", ",");
+    return (n < 0 ? "-" : "") + s + " " + (curOk(currency) ? currency : "EUR");
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    var p = iso.split("-");
+    if (p.length !== 3) return iso;
+    if (LANG === "el") return p[2] + "/" + p[1] + "/" + p[0];
+    if (LANG === "en") return p[1] + "/" + p[2] + "/" + p[0];
+    try {
+      return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(LOC, { day: "2-digit", month: "2-digit", year: "numeric" });
+    } catch (e) { return p[2] + "/" + p[1] + "/" + p[0]; }
+  }
+
+  function newItemObj() {
+    return { id: uid(), code: "", desc: "", qty: 1, price: 0,
+             disc: 0, vat: 24 };
+  }
+
+  function newQuoteObj() {
+    var today = new Date();
+    var m = today.getMonth() + 1, d = today.getDate();
+    return {
+      id: uid(),
+      num: nextNumber(),
+      clientId: null,
+      status: "draft",
+      date: today.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (d < 10 ? "0" : "") + d,
+      dueDate: "",
+      currency: "EUR",
+      items: [],
+      gDisc: 0,
+      payment: "",
+      notes: "",
+      instalments: [],
+      mtime: 0,
+      pos: 0
+    };
+  }
+
+  // Recovery-based αρίθμηση: scan στο max του OFF-YYYY-NNN τρέχοντος έτους.
+  function nextNumber() {
+    var year = new Date().getFullYear();
+    var re = /^OFF-(\d{4})-(\d+)$/;
+    var max = 0;
+    (state && state.quotes || []).forEach(function (q) {
+      var m = re.exec(q.num || "");
+      if (m && parseInt(m[1], 10) === year) {
+        var n = parseInt(m[2], 10);
+        if (n > max) max = n;
+      }
+    });
+    return "OFF-" + year + "-" + ("000" + (max + 1)).slice(-3);
+  }
+
+  function newClientObj(name) {
+    return { id: uid(), name: name || "", email: "", phone: "",
+             address: "", taxId: "", mtime: 0, pos: state ? state.clients.length : 0 };
+  }
+
+  // --- Synced payment presets (per-user, LWW, deterministic ids) ---
+  var PAY_METHODS = ["bank", "paypal", "iris", "cash"];
+  var PM_DEFAULTS = {
+    en: {
+      bank:  "Bank transfer\nIBAN: \nBeneficiary: ",
+      paypal: "PayPal: ",
+      iris:  "IRIS payments: ",
+      cash:  "Cash on delivery"
+    },
+    el: {
+      bank:  "Τραπεζική μεταφορά\nIBAN: \nΔικαιούχος: ",
+      paypal: "PayPal: ",
+      iris:  "Πληρωμές μέσω IRIS: ",
+      cash:  "Μετρητά κατά την παράδοση"
+    }
+  };
+  if (window.orosI18n) window.orosI18n.table(PM_DEFAULTS, "quote", LANG);
+
+  function seedPayMethods() {
+    var texts = PM_DEFAULTS[LANG] || PM_DEFAULTS.en;
+    state.payMethods = PAY_METHODS.map(function (m, i) {
+      return { id: "pm-" + m, method: m, text: texts[m] || "",
+               mtime: 0, pos: i };
+    });
+  }
+
+  function payMethodBy(method) {
+    for (var i = 0; i < (state.payMethods || []).length; i++)
+      if (state.payMethods[i].method === method) return state.payMethods[i];
+    return null;
+  }
+
+  function migrate(data) {
+    if (!data || typeof data !== "object") return null;
+    if (!Array.isArray(data.quotes) || !Array.isArray(data.clients) ||
+        !Array.isArray(data.templates)) return null;
+    if (typeof data.om !== "number") data.om = 0;
+    if (!data.deleted || typeof data.deleted !== "object") data.deleted = {};
+
+    if (!Array.isArray(data.payMethods) || data.payMethods.length === 0) {
+      var texts = PM_DEFAULTS[LANG] || PM_DEFAULTS.en;
+      data.payMethods = PAY_METHODS.map(function (m, i) {
+        return { id: "pm-" + m, method: m, text: texts[m] || "",
+                 mtime: 0, pos: i };
+      });
+    }
+    data.payMethods.forEach(function (pm) {
+      if (!pm.id) pm.id = "pm-" + (pm.method || "x");
+      if (PAY_METHODS.indexOf(pm.method) === -1) pm.method = "bank";
+      if (typeof pm.text !== "string") pm.text = "";
+      if (typeof pm.mtime !== "number") pm.mtime = 0;
+      if (typeof pm.pos !== "number") pm.pos = 0;
+    });
+
+    var fixOffer = function (q) {
+      if (!q.id) q.id = uid();
+      if (typeof q.num !== "string") q.num = "";
+      if (typeof q.status !== "string" || STATUSES.indexOf(q.status) === -1) q.status = "draft";
+      if (typeof q.date !== "string") q.date = "";
+      if (typeof q.dueDate !== "string") q.dueDate = "";
+      if (!curOk(q.currency)) q.currency = "EUR";
+      if (!Array.isArray(q.items)) q.items = [];
+      q.items.forEach(function (it) {
+        if (!it.id) it.id = uid();
+        if (typeof it.code !== "string") it.code = "";
+        if (typeof it.desc !== "string") it.desc = "";
+        if (typeof it.qty !== "number") it.qty = parseNum(it.qty) || 1;
+        if (typeof it.price !== "number") it.price = parseNum(it.price);
+        if (typeof it.disc !== "number") it.disc = parseNum(it.disc);
+        if (typeof it.vat !== "number") it.vat = parseNum(it.vat);
+        // #3: αφαιρούμε το πεδίο note — δεν το διατηρούμε
+      });
+      if (typeof q.gDisc !== "number") q.gDisc = parseNum(q.gDisc);
+      if (typeof q.payment !== "string") q.payment = "";
+      if (typeof q.notes !== "string") q.notes = "";
+      if (!Array.isArray(q.instalments)) q.instalments = [];
+      q.instalments.forEach(function (ins) {
+        if (!ins.id) ins.id = uid();
+        if (typeof ins.date !== "string") ins.date = "";
+        if (typeof ins.amount !== "number") ins.amount = parseNum(ins.amount);
+      });
+      if (typeof q.mtime !== "number") q.mtime = 0;
+      if (typeof q.pos !== "number") q.pos = 0;
+    };
+    var fixClient = function (c) {
+      if (!c.id) c.id = uid();
+      ["name", "email", "phone", "address", "taxId"].forEach(function (f) {
+        if (typeof c[f] !== "string") c[f] = "";
+      });
+      if (typeof c.mtime !== "number") c.mtime = 0;
+      if (typeof c.pos !== "number") c.pos = 0;
+    };
+    var fixTemplate = function (tp) {
+      if (!tp.id) tp.id = uid();
+      if (typeof tp.name !== "string") tp.name = "";
+      fixOffer.call(null, tp);
+      tp.mtime = typeof tp.mtime === "number" ? tp.mtime : 0;
+    };
+
+    data.quotes.forEach(fixOffer);
+    data.clients.forEach(fixClient);
+    data.templates.forEach(fixTemplate);
+    data.ver = DATA_VER;
+    return data;
+  }
+
+  var pruneDeletedMap = QC.pruneDeleted;   // quote/core.js (Q-1)
+
+  function readPrefs() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
+      return (p && typeof p === "object") ? p : {};
+    } catch (e) { return {}; }
+  }
+
+  function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { raw = null; }
+    if (raw) {
+      var data = null;
+      try { data = migrate(JSON.parse(raw)); } catch (e) { data = null; }
+      if (data) {
+        // QT-11: το activeQuoteId ζει στο prefs key· τα παλιά
+        // δεδομένα το είχαν μέσα στο blob (fallback, additive).
+        var prefs = readPrefs();
+        if (typeof prefs.activeQuoteId === "string" || prefs.activeQuoteId === null)
+          data.activeQuoteId = prefs.activeQuoteId;
+        if (data.activeQuoteId === undefined) data.activeQuoteId = null;
+        state = data;
+        writeStore();             // μία φορά σε κανονική μορφή (χωρίς dirty)
+        return;
+      }
+      // QT-13: μη αναγνώσιμα δεδομένα — κρατάμε αντίγραφο πριν το
+      // fresh start, ώστε να μη χαθούν οριστικά.
+      try { localStorage.setItem(RESCUE_KEY, raw); } catch (e) {}
+    }
+    // QT-15 (A67 Q3): το fresh state δεν κερδίζει ποτέ τη σειρά άλλης
+    // συσκευής — om 0, όπως κάθε seed.
+    state = { ver: DATA_VER, om: 0, deleted: {},
+          activeQuoteId: null, quotes: [], clients: [], templates: [],
+          payMethods: [] };
+    seedPayMethods();
+    writeStore();
+  }
+
+  // QT-11: ο δίσκος κρατά ΑΚΡΙΒΩΣ ό,τι δίνει ο getter (κανονική μορφή)
+  // + το device-local activeQuoteId σε δικό του key. Έτσι και το
+  // closed-app proxy του sync.js βλέπει το ίδιο payload με την app.
+  var quotaWarned = false;
+  function writeStore() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(canonState(state)));
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ activeQuoteId: state.activeQuoteId || null }));
+      quotaWarned = false;
+    } catch (e) {
+      // R30: ένα μήνυμα ανά αποτυχία, όχι σιωπή.
+      if (!quotaWarned) { quotaWarned = true; notifyTransient(t("toast.quota")); }
+    }
+  }
+
+  function save() {
+    writeStore();
+    markDirty();
+  }
+
+  function scheduleRender() {
+    if (renderQueued) return;
+    renderQueued = true;
+    requestAnimationFrame(function () {
+      renderQueued = false;
+      renderAll();
+    });
+  }
+
+  function quoteById(id) {
+    for (var i = 0; i < state.quotes.length; i++)
+      if (state.quotes[i].id === id) return state.quotes[i];
+    return null;
+  }
+  function clientById(id) {
+    for (var i = 0; i < state.clients.length; i++)
+      if (state.clients[i].id === id) return state.clients[i];
+    return null;
+  }
+
+  // ---------- 3. Merge engine (cross-device) ----------
+  // QT-11 canonical form and the merge live in quote/core.js (1.3,
+  // GATE-PAR P4), so the Assistant writes a new quote exactly as this
+  // app does (OrosQuoteCore.canonState / merge, one copy).
+  var canonObj = QC.canonObj, canonState = QC.canonState, mergeQuoteStates = QC.merge;
+
+  // ---------- 4. Υπολογισμοί (pure functions) ----------
+  function itemNet(it, gDisc) {
+    var gross = (it.qty || 0) * (it.price || 0);
+    var d = 1 - (it.disc || 0) / 100;
+    var g = 1 - (gDisc || 0) / 100;
+    return gross * d * g;
+  }
+
+  function calcTotals(offer) {
+    var subtotal = 0, vat = 0;
+    var g = offer.gDisc || 0;
+    (offer.items || []).forEach(function (it) {
+      var gross = (it.qty || 0) * (it.price || 0) *
+                  (1 - (it.disc || 0) / 100);
+      subtotal += gross;
+      vat += itemNet(it, g) * ((it.vat || 0) / 100);
+    });
+    subtotal = round2(subtotal);
+    vat = round2(vat);
+    var net = round2(subtotal * (1 - g / 100));
+    return {
+      subtotal: subtotal,
+      discAmount: round2(subtotal - net),
+      vat: vat,
+      net: net,
+      total: round2(net + vat)
+    };
+  }
+
+  function splitEvenly(total, n) {
+    var out = [];
+    var base = round2(Math.floor(total * 100 / n) / 100);
+    var assigned = round2(base * n);
+    var rem = round2(total - assigned);
+    for (var i = 0; i < n; i++) out.push(i === 0 ? round2(base + rem) : base);
+    return out;
+  }
+
+  // ---------- 5. Editor (create tab) ----------
+  var activeTab = "create";
+
+  function newDraft() {
+    clearShelter();                     // το νέο draft αντικαθιστά κάθε παλιό
+    cur = newQuoteObj();
+    cur.items.push(newItemObj());      // μία κενή γραμμή για αρχή
+    curIsDraft = true;
+    loadOfferIntoEditor();
+  }
+
+  function openQuote(id) {
+    var q = quoteById(id);
+    if (!q) return;
+    cur = q;
+    curIsDraft = false;
+    state.activeQuoteId = id;
+    // Quiet persist: device-local τιμή — δεν ταξιδεύει στο cloud,
+    // άρα ΔΕΝ κάνουμε dirty/push, μόνο τοπική επιβίωση σε reload.
+    writeStore();
+    loadOfferIntoEditor();
+    switchTab("create");
+  }
+
+  function loadOfferIntoEditor() {
+    if (!cur) return;
+    $("q-number").value = cur.num;
+    $("q-date").value = cur.date || "";
+    $("q-due").value = cur.dueDate || "";
+    $("q-status").value = cur.status;
+    fillCurrencySelect(cur.currency);
+    $("global-discount").value = cur.gDisc || 0;
+    $("global-vat").value =
+      (cur.items && cur.items.length ? cur.items[0].vat : 24);
+    $("q-payment").value = cur.payment || "";
+    $("q-notes").value = cur.notes || "";
+    renderClientDisplay();
+    renderItems();
+    renderInstalments();
+    recalcTotals();
+    syncInvoiceBtn();
+    syncAcceptUi();
+  }
+
+  // Invoices wave 2 — "Make invoice" on an accepted quote: Invoices
+  // opens a NEW invoice prefilled with the client and the lines
+  // (BR-INV-NEW, generic deep link { new }); nothing is written until
+  // the user saves or issues there. The quote itself is not changed.
+  function invoicesOpener() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  // Billing (app merge 7, K2): the host's own hook opens the new
+  // invoice on the same screen (Billing's Invoices tab).
+  function newInvoiceHook() { return typeof opts.newInvoice === "function" ? opts.newInvoice : null; }
+  // "Send to an app" (shell send/, BR-SEND): the quote's lines as a
+  // table, then subtotal, VAT and total; a prefill only.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function linesTable(q) {
+    var items = (q.items || []).filter(function (it) { return String(it.desc || "").trim() || it.price; }).slice(0, 495);
+    var code = items.some(function (it) { return it.code; });
+    var head = [t("items.desc"), t("items.qty"), t("items.unit_price"), t("items.disc"), t("items.vat"), t("items.amount")];
+    if (code) head.unshift(t("items.code"));
+    var rows = [head];
+    items.forEach(function (it) {
+      var r = [String(it.desc || ""), it.qty || 0, it.price || 0, it.disc || 0, it.vat || 0,
+               round2((it.qty || 0) * (it.price || 0) * (1 - (it.disc || 0) / 100))];
+      if (code) r.unshift(String(it.code || ""));
+      rows.push(r);
+    });
+    var tt = calcTotals(q);
+    [[t("totals.subtotal"), tt.subtotal], [t("totals.vat"), tt.vat], [t("totals.total"), tt.total]].forEach(function (f) {
+      var r = [f[0], "", "", "", "", f[1]];
+      if (code) r.unshift("");
+      rows.push(r);
+    });
+    return { rows: rows, n: items.length };
+  }
+  function sendLines() {
+    var api = sendApi();
+    if (!api || !cur) return;
+    var tb = linesTable(cur);
+    if (!tb.n) { showToast(t("items.empty")); return; }
+    api.open({ kind: "table", data: { name: String(cur.num || t("tab.create")).slice(0, 100), rows: tb.rows } });
+  }
+  function syncInvoiceBtn() {
+    var sb = $("send-app");
+    if (sb) sb.hidden = !(cur && sendApi());
+    var b = $("invoice-quote");
+    if (b) b.hidden = !(cur && cur.status === "accepted" && (newInvoiceHook() || invoicesOpener()));
+    syncInvoiced(b);
+  }
+  // K2: the invoices Billing made from this quote (their src
+  // "quote:<id>"), worked out each time from Billing's slice, never
+  // stored here; each opens in the Invoices tab.
+  function syncInvoiced(b) {
+    var box = $("invoiced");
+    if (!box && b && b.parentNode) {
+      box = document.createElement("span");
+      box.id = "qv-invoiced";
+      box.className = "q-invoiced";
+      b.parentNode.insertBefore(box, b);
+    }
+    if (!box) return;
+    box.textContent = "";
+    var list = [];
+    try { list = cur && typeof opts.invoicesFor === "function" ? opts.invoicesFor(cur.id) || [] : []; } catch (e) { list = []; }
+    box.hidden = !list.length;
+    list.slice(0, 5).forEach(function (x) {
+      var a = document.createElement("button");
+      a.type = "button";
+      a.className = "linkish";
+      a.textContent = t("invoiced.label").replace("{n}", x.num || t("invoiced.draft"));
+      a.addEventListener("click", function () { if (typeof opts.openInvoice === "function") opts.openInvoice(x.id); });
+      box.appendChild(a);
+    });
+  }
+  function sendToInvoices() {
+    var hook = newInvoiceHook(), p = hook ? null : invoicesOpener();
+    if ((!hook && !p) || !cur) return;
+    var c = cur.clientId ? clientById(cur.clientId) : null;
+    var items = (cur.items || []).filter(function (it) {
+      return (it.desc || "").trim() && (it.qty || 0) > 0;
+    }).slice(0, 50).map(function (it) {
+      var row = { d: String(it.desc).trim().slice(0, 200), q: it.qty, p: it.price || 0 };
+      if (typeof it.vat === "number") row.vat = it.vat;
+      if (it.disc > 0) row.disc = it.disc;
+      if (it.code) row.code = String(it.code).slice(0, 30);
+      return row;
+    });
+    var payload = { cur: cur.currency || "EUR", items: items, ref: { app: "quote", id: cur.id },
+                    notes: cur.num ? t("invoice.note").replace("{n}", String(cur.num).slice(0, 60)) : "" };
+    if (cur.gDisc > 0) payload.gDisc = cur.gDisc;
+    if (c) {
+      payload.name = c.name || "";
+      if (c.taxId) payload.afm = c.taxId;
+      if (c.address) payload.addr = c.address;
+      if (c.email) payload.email = c.email;
+      if (c.phone) payload.phone = c.phone;
+    }
+    if (hook) { writeShelterNow(); hook(payload); return; }
+    p.__orosOpenAt("invoices", { "new": payload });
+  }
+
+  // --- Draft shelter (Option A): device-local, never synced ---
+  // Debounced write on every draft edit; cleared on save/new/template/
+  // duplicate; restored at boot BEFORE the activeQuoteId check —
+  // unsaved work outranks last-viewed. Opening another quote mid-
+  // session loses the draft in-memory, but the shelter resurrects
+  // it on next reload.
+  var draftShelterTimer = null;
+
+  function scheduleShelterWrite() {
+    if (!curIsDraft || !cur) return;
+    clearTimeout(draftShelterTimer);
+    draftShelterTimer = setTimeout(writeShelterNow, 800);
+  }
+  function writeShelterNow() {
+    if (!curIsDraft || !cur) return;
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(cur)); } catch (e) {}
+  }
+  // Q-2: κλείσιμο καρτέλας/PWA flush — το debounce των 800ms δεν
+  // προλαβαίνει πάντα το τελευταίο keystroke burst.
+  window.addEventListener("pagehide", writeShelterNow);
+  function clearShelter() {
+    clearTimeout(draftShelterTimer);
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  }
+  function restoreDraftShelter() {
+    var raw = null;
+    try { raw = localStorage.getItem(DRAFT_KEY); } catch (e) {}
+    if (!raw) return false;
+    var d = null;
+    try { d = JSON.parse(raw); } catch (e) { d = null; }
+    if (!d || typeof d !== "object" || !Array.isArray(d.items)) {
+      clearShelter();
+      return false;
+    }
+    // Q-3: minimal shape guards — το shelter draft δεν περνά από
+    // migrate(), άρα συμπληρώνουμε ό,τι μπορεί να λείπει σε
+    // legacy/corrupt drafts (boot TypeError prevention).
+    if (!Array.isArray(d.instalments)) d.instalments = [];
+    if (!curOk(d.currency)) d.currency = "EUR";
+    if (typeof d.gDisc !== "number") d.gDisc = 0;
+    if (typeof d.payment !== "string") d.payment = "";
+    if (typeof d.notes !== "string") d.notes = "";
+    cur = d;
+    curIsDraft = true;
+    loadOfferIntoEditor();
+    return true;
+  }
+
+  function editCommitted() {
+    if (!curIsDraft) { touch(cur); save(); }
+    else scheduleShelterWrite();   // unsaved draft → debounce to shelter
+    scheduleRender();
+  }
+
+  function renderClientDisplay() {
+    var c = cur && cur.clientId ? clientById(cur.clientId) : null;
+    var disp = $("client-name-display");
+    disp.textContent = c ? c.name : t("client.none");
+    // #10: toggle .has-client για σωστή χρωματική ένδειξη
+    var sel = $("client-selector");
+    if (sel) {
+      sel.classList.toggle("has-client", !!c);
+    }
+    // #1: δείχνουμε το κουμπί edit μόνο όταν υπάρχει επιλεγμένος πελάτης
+    var editBtn = $("client-edit");
+    if (editBtn) editBtn.hidden = !c;
+  }
+
+  // --- Payment presets: render + εισαγωγή ---
+  function renderPaymentPresets() {
+    var host = $("payment-presets");
+    if (!host) return;
+    host.innerHTML = "";
+    (state.payMethods || []).forEach(function (pm) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "preset-btn" + (pm.text.trim() ? "" : " empty");
+      b.textContent = t("payment." + pm.method);
+      b.title = pm.text.trim() ? t("payment." + pm.method) : t("paypresets.edit");
+      b.addEventListener("click", function () {
+        if (!pm.text.trim()) { openPayPresetsDialog(pm.method); return; }
+        var field = $("q-payment");
+        field.value = field.value ? field.value + "\n" + pm.text : pm.text;
+        cur.payment = field.value;
+        editCommitted();
+      });
+      host.appendChild(b);
+    });
+  }
+
+  var payEditBuffer = null;
+
+  function openPayPresetsDialog(focusMethod) {
+    var host = $("paypresets-list");
+    host.innerHTML = "";
+    payEditBuffer = {};
+
+    (state.payMethods || []).forEach(function (pm) {
+      var lb = document.createElement("label");
+      lb.textContent = t("payment." + pm.method);
+      host.appendChild(lb);
+
+      var ta = document.createElement("textarea");
+      ta.rows = 2;
+      ta.value = pm.text;
+      ta.autocomplete = "off";
+      ta.addEventListener("input", function () {
+        payEditBuffer[pm.method] = ta.value;
+      });
+      host.appendChild(ta);
+
+      if (focusMethod && pm.method === focusMethod) {
+        setTimeout(function () { ta.focus(); }, 50);
+      }
+    });
+
+    $("dlg-paypresets").showModal();
+  }
+
+  LATE.push(function () { $("dlg-paypresets").addEventListener("close", function () {
+    if (!payEditBuffer) return;
+    var changed = false;
+    Object.keys(payEditBuffer).forEach(function (method) {
+      var pm = payMethodBy(method);
+      if (!pm || pm.text === payEditBuffer[method]) return;
+      pm.text = payEditBuffer[method];
+      touch(pm);
+      changed = true;
+    });
+    payEditBuffer = null;
+
+    if (changed) {
+      state.om = Date.now();
+      save(); renderPaymentPresets();
+      notifyTransient(t("toast.paypresets_saved"));
+    }
+  }); });
+
+  function recalcTotals() {
+    var tt = calcTotals(cur || { items: [], gDisc: 0 });
+    $("subtotal-val").textContent = money(tt.subtotal, cur ? cur.currency : "EUR");
+    var vatEl = $("vat-val");
+    if (vatEl) vatEl.textContent = money(tt.vat, cur ? cur.currency : "EUR");
+    $("grand-total-val").textContent = money(tt.total, cur ? cur.currency : "EUR");
+    updateInstalmentSum();
+    renderConversion();
+  }
+
+  // ---------- 6. Line items + δόσεις UI ----------
+  function renderItems() {
+    var host = $("items-container");
+    var head = $("items-head");
+    host.innerHTML = "";
+    // #6: κρύβουμε το header όταν δεν υπάρχουν items (print.css το κρύβει anyway)
+    if (head) head.hidden = !cur.items.length;
+
+    if (!cur.items.length) {
+      var e = document.createElement("div");
+      e.className = "items-empty";
+      e.textContent = t("items.empty");
+      host.appendChild(e);
+      return;
+    }
+    cur.items.forEach(function (it) {
+      host.appendChild(makeItemRow(it));
+    });
+  }
+
+  function makeItemRow(it) {
+    var row = document.createElement("div");
+    row.className = "item-row";
+    row.dataset.itemId = it.id;
+
+    var mk = function (cls, ph, val, onInput, type, extra) {
+      var inp = document.createElement("input");
+      inp.type = type || "text";
+      inp.className = cls;
+      if (ph) inp.placeholder = ph;
+      if (val != null) inp.value = val;
+      inp.autocomplete = "off";
+      if (extra) for (var k in extra) inp.setAttribute(k, extra[k]);
+      inp.addEventListener("input", function () { onInput(inp); });
+      row.appendChild(inp);
+      return inp;
+    };
+
+    mk("i-code", t("items.code"), it.code,
+       function (i) { it.code = i.value; editCommitted(); });
+    mk("i-desc", t("items.desc"), it.desc,
+       function (i) { it.desc = i.value; editCommitted(); }, "text",
+       { "data-qv-ph": "items.desc" });
+
+    mk("i-qty", t("items.qty"), it.qty, function (i) {
+      it.qty = parseNum(i.value); recalcTotals(); editCommitted();
+    }, "number", { step: "any", min: "0", inputmode: "decimal" });
+
+    mk("i-price", t("items.unit_price"), it.price, function (i) {
+      it.price = parseNum(i.value); recalcTotals(); editCommitted();
+    }, "number", { step: "any", min: "0", inputmode: "decimal" });
+
+    mk("i-disc", t("items.disc"), it.disc, function (i) {
+      it.disc = parseNum(i.value); recalcTotals(); editCommitted();
+    }, "number", { step: "any", min: "0", max: "100", inputmode: "decimal" });
+
+    mk("i-vat", t("items.vat"), it.vat, function (i) {
+      it.vat = parseNum(i.value); recalcTotals(); editCommitted();
+    }, "number", { step: "any", min: "0", max: "100", inputmode: "decimal" });
+
+    var del = document.createElement("button");
+    del.type = "button";
+    del.className = "i-del";
+    del.title = t("items.del");
+    del.innerHTML =
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    del.addEventListener("click", function () {
+      cur.items = cur.items.filter(function (x) { return x !== it; });
+      renderItems(); recalcTotals(); editCommitted();
+    });
+    row.appendChild(del);
+
+    return row;
+  }
+
+  function addItem() {
+    var it = newItemObj();
+    it.vat = parseNum($("global-vat").value);   // υιοθετεί το global VAT field
+    cur.items.push(it);
+    renderItems();
+    var rows = $("items-container").querySelectorAll(".item-row");
+    var last = rows[rows.length - 1];
+    if (last) last.querySelector(".i-desc").focus();
+    editCommitted();
+  }
+
+  // --- Δόσεις ---
+  function buildInstalmentSection() {
+    var host = document.createElement("div");
+    host.className = "instalments-section";
+    host.id = "qv-instalments-section";
+    host.innerHTML =
+      '<label data-qv="inst.title">' + esc(t("inst.title")) + '</label>' +
+      '<div class="inst-gen-row">' +
+      '<span data-qv="inst.count">' + esc(t("inst.count")) + '</span>' +
+      '<input id="qv-inst-count" type="number" min="1" max="24" step="1" value="2">' +
+      '<button type="button" id="qv-inst-generate" data-qv="inst.generate">' +
+        esc(t("inst.generate")) + '</button>' +
+      '</div>' +
+      '<div id="qv-inst-list"></div>' +
+      '<div id="qv-inst-sum" class="inst-sum"></div>';
+
+    var pay = root.querySelector(".payment-section");
+    if (pay) pay.parentNode.insertBefore(host, pay);
+    else $("tab-create").appendChild(host);
+
+    $("inst-generate").addEventListener("click", function () {
+      var n = parseInt($("inst-count").value, 10);
+      if (!(n > 0)) return;
+      var tt = calcTotals(cur);
+      var parts = splitEvenly(tt.total, n);
+      cur.instalments = parts.map(function (amt, i) {
+        return { id: uid(), date: "", amount: amt };
+      });
+      renderInstalments(); editCommitted();
+    });
+  }
+
+  function renderInstalments() {
+    var host = $("inst-list");
+    if (!host) return;
+    host.innerHTML = "";
+    (cur.instalments || []).forEach(function (ins) {
+      var row = document.createElement("div");
+      row.className = "inst-row";
+      row.dataset.insId = ins.id;
+
+      var dt = document.createElement("input");
+      dt.type = "date";
+      dt.className = "in-date";
+      dt.value = ins.date || "";
+      dt.addEventListener("input", function () {
+        ins.date = dt.value; editCommitted();
+      });
+      row.appendChild(dt);
+
+      var am = document.createElement("input");
+      am.type = "number";
+      am.className = "in-amt";
+      am.step = "any"; am.min = "0"; am.inputMode = "decimal";
+      am.placeholder = t("inst.amount");
+      am.value = ins.amount;
+      am.addEventListener("input", function () {
+        ins.amount = parseNum(am.value); updateInstalmentSum(); editCommitted();
+      });
+      row.appendChild(am);
+
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "i-del";
+      del.title = t("items.del");
+      del.innerHTML =
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      del.addEventListener("click", function () {
+        cur.instalments = cur.instalments.filter(function (x) { return x !== ins; });
+        renderInstalments(); updateInstalmentSum(); editCommitted();
+      });
+      row.appendChild(del);
+
+      host.appendChild(row);
+    });
+    updateInstalmentSum();
+  }
+
+  function updateInstalmentSum() {
+    var el = $("inst-sum");
+    if (!el || !cur) return;
+    // Q-3: το shelter draft παρακάμπτει το migrate() — το
+    // instalments μπορεί να λείπει σε legacy/corrupt drafts.
+    var inst = Array.isArray(cur.instalments) ? cur.instalments : [];
+    var sum = 0;
+    inst.forEach(function (i) { sum += (i.amount || 0); });
+    var tt = calcTotals(cur);
+    var ok = Math.abs(round2(sum) - tt.total) < 0.005 && inst.length > 0;
+    el.textContent = t("inst.sum") + " " + money(round2(sum), cur.currency) +
+      (inst.length === 0 ? "" :
+        (ok ? " — " + t("inst.match") : " — " + t("inst.mismatch")));
+    el.className = "inst-sum" + (inst.length && !ok ? " mismatch" : "");
+  }
+
+  // ---------- 7. Clients (dropdown + dialog με edit mode) ----------
+  var clientDropdownOpen = false;
+  var editingClientId = null;
+  var clientSnapshot = null;
+
+  function clientFingerprint(c) {
+    return JSON.stringify([c.name, c.email, c.phone, c.address, c.taxId]);
+  }
+
+  function toggleClientDropdown() {
+    if (clientDropdownOpen) { closeClientDropdown(); return; }
+    var host = root.querySelector(".offer-client");
+    if (!host) return;
+    var pop = $("client-dropdown");
+    if (!pop) return;
+
+    pop.innerHTML = "";
+
+    if (!state.clients.length) {
+      var e = document.createElement("div");
+      e.className = "cl-empty";
+      e.textContent = t("client.none_listed");
+      pop.appendChild(e);
+    }
+
+    state.clients.forEach(function (c) {
+      var item = document.createElement("button");
+      item.type = "button";
+      item.className = "dropdown-item" +
+        (cur && cur.clientId === c.id ? " active" : "");
+      var nm = document.createElement("span");
+      nm.className = "dropdown-name";
+      nm.textContent = c.name;
+      item.appendChild(nm);
+      var meta = document.createElement("span");
+      meta.className = "dropdown-meta";
+      meta.textContent = c.email || c.phone || "";
+      item.appendChild(meta);
+      item.addEventListener("click", function () {
+        cur.clientId = c.id;
+        closeClientDropdown();
+        renderClientDisplay(); editCommitted();
+      });
+      pop.appendChild(item);
+    });
+
+    // Billing (app merge 7, K2): the two client lists stay apart; the
+    // picker also offers Billing's clients this list lacks, and picking
+    // one opens New client filled in (nothing is saved until Save).
+    var others = otherClients();
+    if (others.length) {
+      var oh = document.createElement("div");
+      oh.className = "dropdown-head";
+      oh.textContent = t("client.fromBilling");
+      pop.appendChild(oh);
+      others.forEach(function (o) {
+        var item = document.createElement("button");
+        item.type = "button";
+        item.className = "dropdown-item other";
+        var nm = document.createElement("span");
+        nm.className = "dropdown-name";
+        nm.textContent = o.name;
+        item.appendChild(nm);
+        var meta = document.createElement("span");
+        meta.className = "dropdown-meta";
+        meta.textContent = o.taxId || o.email || o.phone || "";
+        item.appendChild(meta);
+        item.addEventListener("click", function () {
+          closeClientDropdown();
+          openClientDialog(null, o);
+        });
+        pop.appendChild(item);
+      });
+    }
+
+    var sep = document.createElement("hr");
+    sep.className = "dropdown-sep";
+    pop.appendChild(sep);
+
+    var addNew = document.createElement("button");
+    addNew.type = "button";
+    addNew.className = "dropdown-item row-item";
+    addNew.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> ' +
+      esc(t("client.new"));
+    addNew.addEventListener("click", function () {
+      closeClientDropdown();
+      openClientDialog(null);
+    });
+    pop.appendChild(addNew);
+
+    pop.hidden = false;
+    clientDropdownOpen = true;
+    setTimeout(function () {
+      document.addEventListener("click", clientOutsideHandler);
+    }, 0);
+  }
+
+  function foldName(x) {
+    return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+  function otherClients() {
+    var list = [];
+    try { list = typeof opts.otherClients === "function" ? opts.otherClients() || [] : []; } catch (e) { list = []; }
+    var tax = {}, names = {};
+    state.clients.forEach(function (c) {
+      if (c.taxId) tax[String(c.taxId).replace(/\s+/g, "").toUpperCase()] = true;
+      names[foldName(c.name)] = true;
+    });
+    return list.filter(function (o) {
+      if (!o || typeof o.name !== "string" || !o.name.trim()) return false;
+      var tx = String(o.taxId || "").replace(/\s+/g, "").toUpperCase();
+      return !(tx && tax[tx]) && !names[foldName(o.name)];
+    }).slice(0, 200);
+  }
+
+  function closeClientDropdown() {
+    var pop = $("client-dropdown");
+    if (pop) pop.hidden = true;
+    clientDropdownOpen = false;
+    document.removeEventListener("click", clientOutsideHandler);
+  }
+
+  function clientOutsideHandler(e) {
+    var host = root.querySelector(".offer-client");
+    if (host && !host.contains(e.target)) closeClientDropdown();
+  }
+
+  function openClientDialog(clientId, fill) {
+    var c = clientId ? clientById(clientId) : (fill ? { name: String(fill.name || "").slice(0, 200),
+      email: String(fill.email || "").slice(0, 200), phone: String(fill.phone || "").slice(0, 60),
+      address: String(fill.address || "").slice(0, 500), taxId: String(fill.taxId || "").slice(0, 40) } : null);
+    editingClientId = clientId;
+    $("c-name").value = c ? c.name : "";
+    $("c-email").value = c ? c.email : "";
+    $("c-phone").value = c ? c.phone : "";
+    $("c-address").value = c ? c.address : "";
+    $("c-taxid").value = c ? c.taxId : "";
+    $("client-delete").hidden = !clientId;
+    clientSnapshot = clientId && c ? clientFingerprint(c) : null;
+    $("dlg-client").showModal();
+    setTimeout(function () { $("c-name").focus(); }, 50);
+  }
+
+  // #1: edit button κλικ → ανοίγει το dialog με τρέχοντα πελάτη
+  LATE.push(function () { $("client-edit").addEventListener("click", function () {
+    closeClientDropdown();
+    openClientDialog(cur ? cur.clientId : null);
+  }); });
+
+  LATE.push(function () { $("client-form").addEventListener("submit", function () {
+    var name = $("c-name").value.trim();
+    if (!name) return;
+
+    if (editingClientId) {
+      var c = clientById(editingClientId);
+      if (!c) return;
+      c.name = name;
+      c.email = $("c-email").value.trim();
+      c.phone = $("c-phone").value.trim();
+      c.address = $("c-address").value;
+      c.taxId = $("c-taxid").value.trim();
+      if (clientSnapshot !== null &&
+          clientFingerprint(c) === clientSnapshot) return;
+      touch(c);
+    } else {
+      var nc = newClientObj(name);
+      nc.email = $("c-email").value.trim();
+      nc.phone = $("c-phone").value.trim();
+      nc.address = $("c-address").value;
+      nc.taxId = $("c-taxid").value.trim();
+      touch(nc);
+      state.clients.push(nc);
+      if (cur) cur.clientId = nc.id;
+    }
+    state.om = Date.now();
+    save(); scheduleRender();
+    renderClientDisplay();
+    notifyTransient(t("toast.client_saved"));
+  }); });
+
+  LATE.push(function () { $("dlg-client").addEventListener("close", function () {
+    editingClientId = null;
+    clientSnapshot = null;
+  }); });
+
+  // QT-12 (R14): θεματικά dialogs αντί για native confirm()/prompt().
+  // Esc/Άκυρο = τίποτα· στα καταστροφικά το focus ξεκινά στο Άκυρο,
+  // ώστε ένα Enter να μη διαγράφει.
+  function askDialog(opts) {
+    var stale = $("quote-confirm");
+    if (stale) stale.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = "qv-quote-confirm";
+    dlg.className = "q-confirm";
+    var form = document.createElement("form");
+    form.method = "dialog";
+    var msg = document.createElement("p");
+    msg.className = "qc-msg";
+    msg.textContent = opts.text;
+    form.appendChild(msg);
+    var inp = null;
+    if (typeof opts.input === "string") {
+      inp = document.createElement("input");
+      inp.type = "text";
+      inp.autocomplete = "off";
+      inp.value = opts.input;
+      form.appendChild(inp);
+    }
+    var menu = document.createElement("menu");
+    var no = document.createElement("button");
+    no.type = "button";
+    no.textContent = t("cancel");
+    no.addEventListener("click", function () { dlg.close(); });
+    menu.appendChild(no);
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    menu.appendChild(sp);
+    var yes = document.createElement("button");
+    yes.type = "submit";
+    yes.className = "qc-yes" + (opts.danger ? " danger" : "");
+    yes.textContent = opts.yes;
+    menu.appendChild(yes);
+    form.appendChild(menu);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var val = inp ? inp.value : true;
+      dlg.close();
+      opts.onYes(val);
+    });
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    dlg.appendChild(form);
+    root.appendChild(dlg);
+    dlg.showModal();
+    if (inp) { inp.focus(); inp.select(); } else { no.focus(); }
+  }
+
+  function deleteClientFromDialog() {
+    if (!editingClientId) return;
+    var cid = editingClientId;
+    askDialog({ text: t("confirm.client_del"), yes: t("client.delete"), danger: true,
+                onYes: function () { deleteClientNow(cid); } });
+  }
+
+  function deleteClientNow(id) {
+    if (!clientById(id)) { if ($("dlg-client").open) $("dlg-client").close(); return; }
+    state.deleted[id] = Date.now();
+    state.clients = state.clients.filter(function (c) { return c.id !== id; });
+    state.om = Date.now();
+    if (cur && cur.clientId === id) {
+      cur.clientId = null;                        // καθαρισμός, όχι μόνο οπτικό fix
+      renderClientDisplay();
+      editCommitted();
+    }
+    save(); scheduleRender();
+    notifyTransient(t("toast.client_deleted"));
+    if ($("dlg-client").open) $("dlg-client").close();
+  }
+  
+    // ---------- 8. Templates ----------
+  function saveCurrentAsTemplate() {
+    var src = cur;
+    var cl = src.clientId ? clientById(src.clientId) : null;
+    askDialog({ text: t("template.name_ph"), input: (cl ? cl.name + " — " : ""),
+                yes: t("save"),
+                onYes: function (name) { saveTemplateFrom(src, name); } });
+  }
+
+  function saveTemplateFrom(cur, name) {
+    if (!name || !name.trim()) return;
+    var tp = {
+      id: uid(),
+      name: name.trim(),
+      items: JSON.parse(JSON.stringify(cur.items || [])),
+      gDisc: cur.gDisc || 0,
+      payment: cur.payment || "",
+      notes: cur.notes || "",
+      currency: cur.currency || "EUR",
+      instalments: JSON.parse(JSON.stringify(cur.instalments || [])),
+      mtime: 0,
+      pos: state.templates.length
+    };
+    tp.items.forEach(function (it) { it.id = uid(); });
+    tp.instalments.forEach(function (ins) { ins.id = uid(); });
+    touch(tp);
+    state.templates.push(tp);
+    state.om = Date.now();
+    save();
+    notifyTransient(t("toast.template_saved"));
+  }
+
+  function openTemplateLibrary() {
+    renderTemplateGrid();
+    $("dlg-templates").showModal();
+  }
+
+  function renderTemplateGrid() {
+    var grid = $("template-grid");
+    grid.innerHTML = "";
+    if (!state.templates.length) {
+      var e = document.createElement("div");
+      e.className = "tpl-empty";
+      e.textContent = t("templates.empty");
+      grid.appendChild(e);
+      return;
+    }
+    state.templates.forEach(function (tp) {
+      var row = document.createElement("div");
+      row.className = "tpl-row";
+
+      var info = document.createElement("div");
+      info.className = "tpl-info";
+      var nm = document.createElement("div");
+      nm.className = "tpl-name";
+      nm.textContent = tp.name;
+      info.appendChild(nm);
+      var meta = document.createElement("div");
+      meta.className = "tpl-meta";
+      var tt = calcTotals({ items: tp.items, gDisc: tp.gDisc });
+      meta.textContent = tp.items.length + " " + t("items.title") +
+                          " · " + money(tt.total, tp.currency);
+      info.appendChild(meta);
+      row.appendChild(info);
+
+      var use = document.createElement("button");
+      use.type = "button";
+      use.className = "tpl-use";
+      use.textContent = t("templates.use");
+      use.addEventListener("click", function () {
+        applyTemplate(tp);
+        $("dlg-templates").close();
+      });
+      row.appendChild(use);
+
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "tpl-del";
+      del.title = t("items.del");
+      del.innerHTML =
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      del.addEventListener("click", function () {
+        // #2: δικό του μήνυμα — όχι το "delete this quote?"
+        var tid = tp.id;
+        askDialog({ text: t("confirm.template_del"), yes: t("client.delete"), danger: true,
+                    onYes: function () {
+          state.deleted[tid] = Date.now();
+          state.templates = state.templates.filter(function (x) { return x.id !== tid; });
+          state.om = Date.now();
+          save(); renderTemplateGrid();
+        } });
+      });
+      row.appendChild(del);
+
+      grid.appendChild(row);
+    });
+  }
+
+  function applyTemplate(tp) {
+    clearShelter();                     // το template draft αντικαθιστά το προηγούμενο
+    cur = newQuoteObj();
+    cur.currency = tp.currency || "EUR";
+    cur.items = JSON.parse(JSON.stringify(tp.items || []));
+    cur.items.forEach(function (it) { it.id = uid(); });
+    cur.gDisc = tp.gDisc || 0;
+    cur.payment = tp.payment || "";
+    cur.notes = tp.notes || "";
+    cur.instalments = JSON.parse(JSON.stringify(tp.instalments || []));
+    cur.instalments.forEach(function (ins) { ins.id = uid(); });
+    curIsDraft = true;
+    loadOfferIntoEditor();
+    switchTab("create");
+    notifyTransient(t("toast.template_used"));
+  }
+
+  // ---------- 9. Λίστα προσφορών (list tab) ----------
+  var searchQuery = "";
+  var activeFilters = [];
+
+  function quoteMatchesView(q) {
+    if (activeFilters.length && activeFilters.indexOf(q.status) === -1) return false;
+    if (searchQuery) {
+      var hay = [q.num, q.notes, q.payment];
+      (q.items || []).forEach(function (it) {
+        hay.push(it.desc || "", it.code || "");
+      });
+      var c = clientById(q.clientId);
+      if (c) hay.push(c.name, c.email);
+      var s = hay.join(" ").toLowerCase();
+      return s.indexOf(searchQuery) !== -1;
+    }
+    return true;
+  }
+
+  function renderQuoteList() {
+    var host = $("quote-list-container");
+    if (!host) return;
+    host.innerHTML = "";
+
+    var list = state.quotes.filter(quoteMatchesView);
+
+    if (state.quotes.length === 0) {
+      $("list-empty").hidden = false;
+      return;
+    }
+    $("list-empty").hidden = true;
+
+    if (list.length === 0) {
+      var nm = document.createElement("div");
+      nm.className = "list-no-match";
+      nm.textContent = t("list.no_match");
+      host.appendChild(nm);
+      return;
+    }
+
+    list.sort(function (a, b) { return (b.mtime || 0) - (a.mtime || 0); });
+
+    list.forEach(function (q) {
+      host.appendChild(makeQuoteRow(q));
+    });
+  }
+
+  function makeQuoteRow(q) {
+    var c = q.clientId ? clientById(q.clientId) : null;
+    var tt = calcTotals(q);
+
+    var row = document.createElement("button");
+    row.type = "button";
+    row.className = "q-row st-" + q.status;
+
+    var num = document.createElement("span");
+    num.className = "q-num";
+    num.textContent = q.num || "—";
+    row.appendChild(num);
+
+    var who = document.createElement("span");
+    who.className = "q-client";
+    who.textContent = c ? c.name : t("client.none");
+    row.appendChild(who);
+
+    var date = document.createElement("span");
+    date.className = "q-date";
+    date.textContent = fmtDate(q.date);
+    row.appendChild(date);
+
+    var tot = document.createElement("span");
+    tot.className = "q-total";
+    tot.textContent = money(tt.total, q.currency);
+    row.appendChild(tot);
+
+    var st = document.createElement("span");
+    st.className = "q-status";
+    st.textContent = t("status." + q.status);
+    row.appendChild(st);
+
+    row.addEventListener("click", function () { openQuote(q.id); });
+    return row;
+  }
+
+  // --- Status filter popover ---
+  function renderStatusPop() {
+    var pop = $("status-pop");
+    pop.innerHTML = "";
+    STATUSES.forEach(function (st) {
+      var item = document.createElement("div");
+      item.className = "fl-item";
+
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = activeFilters.indexOf(st) !== -1;
+      cb.addEventListener("change", function () {
+        var at = activeFilters.indexOf(st);
+        if (cb.checked && at === -1) activeFilters.push(st);
+        if (!cb.checked && at !== -1) activeFilters.splice(at, 1);
+        updateFilterBtn();
+        scheduleRender();
+      });
+      item.appendChild(cb);
+
+      var name = document.createElement("span");
+      name.className = "fl-name";
+      name.textContent = t("status." + st);
+      item.appendChild(name);
+
+      pop.appendChild(item);
+    });
+  }
+
+  function updateFilterBtn() {
+    var btn = $("status-filter");
+    var badge = $("filter-count");
+    if (!btn || !badge) return;
+    if (activeFilters.length > 0) {
+      btn.classList.add("has-filters");
+      badge.textContent = String(activeFilters.length);
+      badge.hidden = false;
+    } else {
+      btn.classList.remove("has-filters");
+      badge.hidden = true;
+    }
+  }
+
+  // ---------- 10. Export (PDF / print) + send ----------
+  var fontLoadAttempted = false;
+  var notoFontBase64 = null;
+
+  function fetchFontBase64(cb) {
+    if (notoFontBase64 !== null || fontLoadAttempted) { cb(notoFontBase64); return; }
+    fontLoadAttempted = true;
+    fetch(VENDOR_FONT_PATH).then(function (r) {
+      if (!r.ok) throw 0;
+      return r.arrayBuffer();
+    }).then(function (buf) {
+      var bytes = new Uint8Array(buf);
+      var bin = "";
+      for (var i = 0; i < bytes.length; i += 8192)
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+      notoFontBase64 = btoa(bin);
+      cb(notoFontBase64);
+    }).catch(function () {
+      fontLoadAttempted = false;   // επιτρέπει retry στο επόμενο export
+      cb(null);
+    });
+  }
+
+  // #4: ανίχνευση ελληνικών χαρακτήρων σε ΟΛΟ το περιεχόμενο —
+  // όχι μόνο στο LANG. Έτσι EN interface + Έλληνας πελάτης
+  // δεν παράγει garbled PDF, πέφτει στο print fallback.
+  function hasGreekText() {
+    var c = cur.clientId ? clientById(cur.clientId) : null;
+    var blob = [
+      cur.notes, cur.payment, cur.num,
+      c ? c.name : "", c ? c.address : "", c ? c.taxId : ""
+    ].join(" ") || "";
+    (cur.items || []).forEach(function (it) {
+      blob += " " + (it.desc || "") + " " + (it.code || "");
+    });
+    return /[\u0370-\u03FF\u1F00-\u1FFF]/.test(blob);
+  }
+
+  // #5: περικοπή περιγραφής με ένδειξη «…»
+  function pdfTruncate(s, max) {
+    s = String(s || "");
+    return s.length > max ? s.slice(0, max - 1) + "…" : s;
+  }
+
+  // Wave 46: onBlob given → the PDF is handed back as a Blob (for the
+  // Mail attachment) instead of being saved; onBlob(null) when it
+  // can't be made (no jsPDF, or Greek text without the font).
+  function exportPdf(onBlob) {
+    if (!cur) return;
+    var cb = typeof onBlob === "function" ? onBlob : null;
+    var JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if (!JsPDF) { if (cb) cb(null); else printFallback(); return; }
+    fetchFontBase64(function (b64) { buildPdf(JsPDF, b64, cb); });
+  }
+
+  function buildPdf(JsPDF, b64, onBlob) {
+    var doc = new JsPDF({ unit: "mm", format: "a4" });
+    var greekOK = false;
+    if (b64) {
+      try {
+        doc.addFileToVFS("NotoSans-Regular.ttf", b64);
+        doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+        doc.addFont("NotoSans-Regular.ttf", "NotoSans", "bold");
+        doc.setFont("NotoSans");
+        greekOK = true;
+      } catch (e) { greekOK = false; }
+    }
+    // #4: print fallback όταν υπάρχουν ελληνικά ΟΠΟΥΔΗΠΟΤΕ — στο
+    // περιεχόμενο (οποιαδήποτε γλώσσα interface) Η στις ετικέτες
+    // του interface (LANG === "el"): χωρίς ελληνική γραμματοσειρά
+    // garμπαλιάρουν τα headers του πίνακα κι αν τα data είναι λατινικά.
+    if (!greekOK && (LANG === "el" || hasGreekText())) { if (onBlob) onBlob(null); else printFallback(); return; }
+    // Wave 46: the standard PDF font has no glyph for most currency
+    // symbols (₹, ₺, zł…): without Noto Sans the amounts use the code.
+    function money(n, c) {
+      var s = QC ? QC.fmtMoney(n, c, LANG) : String(n);
+      if (!greekOK && /[^\u0000-ÿ€]/.test(s) && QC) s = QC.fmtMoney(n, c, LANG, true);
+      return s.replace(/ /g, " ");
+    }
+
+    var c = cur.clientId ? clientById(cur.clientId) : null;
+    var tt = calcTotals(cur);
+    var M = 16, W = 210, y = M;
+    var FONT = greekOK ? "NotoSans" : "helvetica";   // ρητό — ποτέ setFont(undefined,…)
+
+    // K3: your business, from Billing's profile, top right
+    var me = null, meEnd = 0;
+    try { me = typeof opts.profile === "function" ? opts.profile() : null; } catch (e) { me = null; }
+    if (me && me.name) {
+      var ry = M;
+      doc.setFontSize(11);
+      doc.setFont(FONT, "bold");
+      doc.text(pdfTruncate(me.name, 48), W - M, ry, { align: "right" }); ry += 5;
+      doc.setFont(FONT, "normal");
+      doc.setFontSize(9);
+      [String(me.addr || "").split("\n")[0],
+       [me.afm ? t("pdf.taxid").replace("{v}", me.afm) : "", me.doy].filter(Boolean).join(" · "),
+       [me.email, me.phone].filter(Boolean).join(" · "), me.web].forEach(function (line) {
+        if (line) { doc.text(pdfTruncate(line, 60), W - M, ry, { align: "right" }); ry += 4; }
+      });
+      meEnd = ry;
+    }
+
+    // Header
+    doc.setFontSize(18);
+    doc.text(t("app.title_short") || "Quote", M, y); y += 7;
+    doc.setFontSize(10);
+    doc.text("# " + (cur.num || ""), M, y); y += 5;
+    if (c) {
+      doc.text(t("pdf.header_client") + ":", M, y); y += 5;
+      doc.text(c.name, M, y); y += 4;
+      if (c.address) { doc.text(c.address.split("\n")[0], M, y); y += 4; }
+      if (c.taxId) { doc.text(c.taxId, M, y); y += 4; }
+    }
+    y += 2;
+    doc.text(t("offer.date") + ": " + fmtDate(cur.date) +
+      "   " + t("offer.due_date") + ": " + (cur.dueDate ? fmtDate(cur.dueDate) : "—"), M, y);
+    y += 8;
+
+    if (meEnd && y < meEnd + 4) y = meEnd + 4;   // never under the sender block
+    // Items table
+    var cols = [M, M + 30, M + 95, M + 125, M + 150];
+    doc.setFont(undefined, "bold");
+    doc.text(t("items.code"), cols[0], y);
+    doc.text(t("items.desc"), cols[1], y);
+    doc.text(t("items.qty"), cols[2], y);
+    doc.text(t("items.unit_price"), cols[3], y);
+    doc.text(t("items.disc"), cols[4], y);
+    // #5: header Total right-aligned στο W-M — 1:1 με τις τιμές,
+    // μηδενική επικάλυψη με μεγάλα ποσά
+    doc.text(t("totals.total"), W - M, y, { align: "right" });
+    doc.setFont(undefined, "normal");
+    y += 2;
+    doc.setDrawColor(160);
+    doc.line(M, y, W - M, y);
+    y += 5;
+
+    cur.items.forEach(function (it) {
+      if (y > 270) { doc.addPage(); y = M; }
+      doc.text(String(it.code || ""), cols[0], y);
+      // #5: περικοπή desc με «…» αντί για κρύο κόψιμο
+      doc.text(pdfTruncate(it.desc, 42), cols[1], y);
+      doc.text(String(it.qty || 0), cols[2], y);
+      doc.text(String(it.price || 0), cols[3], y);
+      doc.text(String(it.disc || 0) + "%", cols[4], y);
+      doc.text(money(itemNet(it, cur.gDisc) * (1 + (it.vat || 0) / 100), cur.currency), W - M, y, { align: "right" });
+      y += 5.5;
+    });
+
+    y += 3;
+    doc.line(M, y, W - M, y);
+    y += 6;
+
+    doc.text(t("totals.subtotal") + ": " + money(tt.subtotal, cur.currency), W - M - 60, y); y += 5;
+    if (tt.discAmount) {
+      doc.text(t("totals.discount") + ": -" + money(tt.discAmount, cur.currency), W - M - 60, y); y += 5;
+    }
+    doc.text(t("totals.vat") + ": " + money(tt.vat, cur.currency), W - M - 60, y); y += 5;
+    doc.setFont(undefined, "bold");
+    doc.text(t("totals.total") + ": " + money(tt.total, cur.currency), W - M - 60, y);
+    doc.setFont(undefined, "normal");
+    y += 10;
+
+    // Instalments
+    if (cur.instalments && cur.instalments.length) {
+      // Q-10: pagination — κανένα block δεν τρέχει εκτός σελίδας
+      if (y > 250) { doc.addPage(); y = M; }
+      doc.setFont(undefined, "bold");
+      doc.text(t("inst.title"), M, y); y += 5;
+      doc.setFont(undefined, "normal");
+      cur.instalments.forEach(function (ins) {
+        if (y > 280) { doc.addPage(); y = M; }
+        doc.text(fmtDate(ins.date) + "  —  " + money(ins.amount, cur.currency), M, y);
+        y += 5;
+      });
+      y += 4;
+    }
+
+    // Payment + notes
+    if (cur.payment) {
+      if (y > 250) { doc.addPage(); y = M; }
+      doc.setFont(undefined, "bold");
+      doc.text(t("payment.title"), M, y); y += 5;
+      doc.setFont(undefined, "normal");
+      // Q-10: γραμμή-γραμμή με page breaks — το array-print του
+      // splitTextToSize τρέχει εκτός σελίδας σε μεγάλα κείμενα
+      var plines = doc.splitTextToSize(cur.payment, W - 2 * M);
+      for (var pi = 0; pi < plines.length; pi++) {
+        if (y > 282) { doc.addPage(); y = M; }
+        doc.text(plines[pi], M, y); y += 5;
+      }
+      y += 3;
+    }
+    if (cur.notes) {
+      if (y > 250) { doc.addPage(); y = M; }
+      doc.setFont(undefined, "bold");
+      doc.text(t("offer.notes"), M, y); y += 5;
+      doc.setFont(undefined, "normal");
+      // Q-10: ίδιο pattern με το payment block
+      var nlines = doc.splitTextToSize(cur.notes, W - 2 * M);
+      for (var ni = 0; ni < nlines.length; ni++) {
+        if (y > 282) { doc.addPage(); y = M; }
+        doc.text(nlines[ni], M, y); y += 5;
+      }
+    }
+
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Made with orOS | useoros.online", W / 2, 287, { align: "center" });
+    doc.setTextColor(0);
+
+    // Native save via orosDialog; jsPDF's own doc.save() (which
+    // does an ad-hoc anchor-download) is retired — same rule
+    // as every other orOS app (see cycle.js / mood.js).
+    var fname = (cur.num || "quote") + ".pdf";
+    var done = function () { notifyTransient(t("toast.exported")); };
+    var pdfBlob = doc.output("blob");
+    if (onBlob) { onBlob(pdfBlob, fname); return; }
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.saveFile === "function") {
+      dlg.saveFile({
+        blob: pdfBlob,
+        filename: fname,
+        mime: "application/pdf",
+        types: [{ description: "PDF",
+                  accept: { "application/pdf": [".pdf"] } }]
+      }).then(function (r) { if (r && r.ok) done(); });
+      return;                   // cancel (ok=false) = silent exit
+    }
+    // Standalone fallback — classic download (no shell present).
+    var url = URL.createObjectURL(pdfBlob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    done();
+  }
+
+  function printFallback() {
+    var c = cur.clientId ? clientById(cur.clientId) : null;
+    var tt = calcTotals(cur);
+    var rows = cur.items.map(function (it) {
+      return "<tr><td>" + esc(it.code || "") + "</td><td>" + esc(it.desc || "") +
+        "</td><td>" + esc(it.qty || 0) + "</td><td>" + esc(it.price || 0) +
+        "</td><td>" + esc(it.disc || 0) + "%</td><td>" +
+        esc(money(itemNet(it, cur.gDisc) * (1 + (it.vat || 0) / 100), cur.currency)) +
+        "</td></tr>";
+    }).join("");
+
+    var fr = document.createElement("iframe");
+    fr.style.cssText = "position:fixed;width:0;height:0;border:0;";
+    document.body.appendChild(fr);
+    fr.contentDocument.write(
+      '<html><head><meta charset="utf-8"><style>' +
+      "body{font-family:sans-serif;margin:24px;color:#111}" +
+      "table{width:100%;border-collapse:collapse;font-size:12px}" +
+      "td,th{border-bottom:1px solid #999;padding:4px 6px;text-align:left}" +
+      "h1{font-size:20px} .tot{text-align:right;margin-top:12px}" +
+      "</style></head><body>" +
+      "<h1>" + esc(t("app.title_short") || "Quote") + " #" + esc(cur.num || "") + "</h1>" +
+      (c ? "<p>" + esc(c.name) +
+        (c.taxId ? " · " + esc(c.taxId) : "") +
+        (c.address ? "<br>" + esc(c.address.replace(/\n/g, ", ")) : "") + "</p>" : "") +
+      "<p>" + esc(t("offer.date")) + ": " + esc(fmtDate(cur.date)) +
+      " · " + esc(t("offer.due_date")) + ": " + esc(fmtDate(cur.dueDate) || "—") + "</p>" +
+      "<table><thead><tr><th>" + esc(t("items.code")) + "</th><th>" + esc(t("items.desc")) +
+      "</th><th>" + esc(t("items.qty")) + "</th><th>" + esc(t("items.unit_price")) +
+      "</th><th>" + esc(t("items.disc")) + "</th><th>" + esc(t("totals.total")) +
+      "</th></tr></thead><tbody>" + rows + "</tbody></table>" +
+      '<div class="tot"><p>' + esc(t("totals.subtotal")) + ": " + esc(money(tt.subtotal, cur.currency)) + "</p>" +
+      "<p>" + esc(t("totals.vat")) + ": " + esc(money(tt.vat, cur.currency)) + "</p>" +
+      "<p><strong>" + esc(t("totals.total")) + ": " + esc(money(tt.total, cur.currency)) + "</strong></p></div>" +
+      (cur.payment ? "<p><strong>" + esc(t("payment.title")) + ":</strong><br>" + esc(cur.payment) + "</p>" : "") +
+      (cur.notes ? "<p><strong>" + esc(t("offer.notes")) + ":</strong><br>" + esc(cur.notes) + "</p>" : "") +
+      '<div style="margin-top:24px;padding-top:8px;border-top:1px solid #ccc;font-size:11px;color:#777;text-align:center;">Made with orOS | useoros.online</div>' +
+      "</body></html>");
+    fr.contentDocument.close();
+    setTimeout(function () {
+      fr.contentWindow.focus();
+      fr.contentWindow.print();
+      setTimeout(function () { fr.remove(); }, 1000);
+    }, 150);
+  }
+
+  // Wave 46: with orOS Mail set up on this device the message opens in
+  // Mail with the quote's PDF already attached (Mail's compose deep
+  // link, `attach: [{ name, type, b64 }]`, the same bridge Invoices
+  // uses); otherwise the email program opens (mailto:) without it.
+  // extra: a text line added to the body (the acceptance link).
+  function sendEmail(extra) {
+    if (!cur) return;
+    var c = cur.clientId ? clientById(cur.clientId) : null;
+    var tt = calcTotals(cur);
+    var subject = t("send.subject") + " " + (cur.num || "");
+    var body =
+      (c ? c.name + ",\n\n" : "") +
+      t("send.subject") + " " + (cur.num || "") + " — " +
+      t("offer.due_date") + ": " + (cur.dueDate ? fmtDate(cur.dueDate) : "—") + "\n" +
+      t("totals.total") + ": " + money(tt.total, cur.currency) + "\n\n" +
+      (typeof extra === "string" && extra ? extra + "\n\n" : "") +
+      (cur.payment || "");
+    var shell = mailShell();
+    if (shell) {
+      var compose = { to: c && c.email ? c.email : "", subject: subject.slice(0, 300), body: body.slice(0, 20000) };
+      exportPdf(function (blob, fname) {
+        if (!blob) {
+          shell.__orosOpenAt("mail", { compose: compose });
+          notifyTransient(t("toast.mail_nopdf"));
+          return;
+        }
+        blobToB64(blob, function (b64) {
+          if (b64) compose.attach = [{ name: fname || "quote.pdf", type: "application/pdf", b64: b64 }];
+          shell.__orosOpenAt("mail", { compose: compose });
+          if (!b64) notifyTransient(t("toast.mail_nopdf"));
+        });
+      });
+      return;
+    }
+    var href = "mailto:" + (c && c.email ? c.email : "") +
+      "?subject=" + encodeURIComponent(subject) +
+      "&body=" + encodeURIComponent(body);
+    window.open(href, "_self");
+  }
+  // orOS Mail with an account on this device → the shell, else null.
+  function mailShell() {
+    var shell = null;
+    try { shell = window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) {}
+    if (!shell) return null;
+    try {
+      var m = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
+      return m && Array.isArray(m.accounts) && m.accounts.length ? shell : null;
+    } catch (e) { return null; }
+  }
+  function blobToB64(blob, cb) {
+    var r = new FileReader();
+    r.onload = function () {
+      var s = String(r.result || ""), i = s.indexOf(",");
+      cb(i >= 0 ? s.slice(i + 1) : "");
+    };
+    r.onerror = function () { cb(""); };
+    try { r.readAsDataURL(blob); } catch (e) { cb(""); }
+  }
+
+  // ---------- 11. Toast ----------
+  var toastTimer = null;
+
+  // action { label, fn }: an optional button (Undo of an opened file)
+  function showToast(text, action) {
+    var el = $("toast");
+    if (!el) return;
+    el.textContent = text;
+    if (action && typeof action.fn === "function") {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "toast-act";
+      btn.textContent = action.label;
+      btn.addEventListener("click", function () {
+        el.classList.remove("show");
+        action.fn();
+      });
+      el.appendChild(btn);
+    }
+    el.classList.toggle("has-act", !!action);
+    el.classList.remove("show");
+    void el.offsetWidth;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, action ? 8000 : 3500);
+  }
+
+  function notifyTransient(text) {
+    try {
+      var n = (window.parent && window.parent.orosNotifs) || window.orosNotifs;
+      if (n && typeof n.transient === "function") {
+        n.transient({ ns: "quote", title: text });
+        return;
+      }
+    } catch (e) { /* cross-origin / stale bundle */ }
+    showToast(text);
+  }
+  // A message with an Undo button: the shell's transient toast with an
+  // action, else the app's own toast.
+  function notifyUndo(text, fn) {
+    var act = { label: t("undo"), fn: fn };
+    try {
+      var n = (window.parent && window.parent.orosNotifs) || window.orosNotifs;
+      if (n && typeof n.transient === "function" && n.transient({ ns: "quote", title: text, action: act })) return;
+    } catch (e) { /* cross-origin / stale bundle */ }
+    showToast(text, act);
+  }
+
+  // orosDialog lives in the parent shell (same-origin iframe).
+  // Standalone PWA mode -> null -> caller uses local fallback.
+  function dialogHost() {
+    try {
+      return window.orosDialog || window.parent.orosDialog || null;
+    } catch (e) { return null; }
+  }
+
+  // ---------- 12. Sync slice ----------
+  // Billing registers the slice "quote" at its boot (invoices.js,
+  // OrosQuoteCore); while the view is built it reads and writes it
+  // through sliceGet / sliceSet below. A local edit marks it dirty.
+  function markDirty() {
+    try {
+      var api = window.parent && window.parent !== window ? window.parent.orosSync : null;
+      if (api && typeof api.markDirty === "function") api.markDirty();
+    } catch (e) { /* standalone */ }
+  }
+
+  function sliceGet() {
+    // QT-11: κανονική μορφή (χωρίς το device-local activeQuoteId,
+    // tombstones κλαδεμένα) — byte-ίδια με την έξοδο της merge.
+    return canonState(state);
+  }
+
+  // Q1 (QT-14): ένα pull δεν επιτρέπεται να πετάξει το focus/caret
+  // του χρήστη. Αν η ανοιχτή προσφορά ΔΕΝ άλλαξε, κρατάμε το ίδιο
+  // αντικείμενο (οι handlers των γραμμών μένουν δεμένοι)· αν άλλαξε,
+  // ξαναζωγραφίζουμε και επαναφέρουμε focus + επιλογή.
+  function quoteSig(q) {
+    var c = canonObj(q || {});
+    delete c.pos;
+    return JSON.stringify(c);
+  }
+
+  function captureFocus() {
+    var el = document.activeElement;
+    if (!el || el === document.body || !el.closest) return null;
+    var f = { sel: null, s: null, e: null };
+    try { f.s = el.selectionStart; f.e = el.selectionEnd; } catch (e) {}
+    var cls = (el.className || "").split(" ")[0];
+    var esc1 = function (v) {
+      return (window.CSS && CSS.escape) ? CSS.escape(v) : v;
+    };
+    var row = el.closest(".item-row, .inst-row");
+    if (row && row.dataset.itemId && cls)
+      f.sel = '.item-row[data-item-id="' + esc1(row.dataset.itemId) + '"] .' + cls;
+    else if (row && row.dataset.insId && cls)
+      f.sel = '.inst-row[data-ins-id="' + esc1(row.dataset.insId) + '"] .' + cls;
+    else if (el.id)
+      f.sel = "#" + esc1(el.id);
+    return f.sel ? f : null;
+  }
+
+  function restoreFocus(f) {
+    if (!f) return;
+    var el = root.querySelector(f.sel);
+    if (!el) return;
+    try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+    if (f.s !== null && f.s !== undefined) {
+      try { el.setSelectionRange(f.s, f.e); } catch (e) { /* number inputs */ }
+    }
+  }
+
+  function sliceSet(data, info) {
+    data = migrate(JSON.parse(JSON.stringify(data || null)));
+    if (!data) return;
+
+    var focus = captureFocus();
+    data.activeQuoteId = state.activeQuoteId || null;
+    if (data.activeQuoteId &&
+        !quoteByIdIn(data.quotes, data.activeQuoteId)) {
+      data.activeQuoteId = data.quotes.length > 0 ? data.quotes[0].id : null;
+    }
+    state = data;
+    writeStore();                 // χωρίς dirty: είναι το αποτέλεσμα του sync
+
+    if (!curIsDraft && cur) {
+      var idx = -1;
+      for (var i = 0; i < state.quotes.length; i++)
+        if (state.quotes[i].id === cur.id) { idx = i; break; }
+      if (idx >= 0) {
+        var live = state.quotes[idx];
+        if (quoteSig(live) === quoteSig(cur)) {
+          cur.pos = live.pos;
+          state.quotes[idx] = cur;          // ίδιο αντικείμενο — τίποτα δεν ξαναχτίζεται
+        } else {
+          cur = live;
+          loadOfferIntoEditor();
+          restoreFocus(focus);
+        }
+      } else {
+        newDraft();
+        notifyTransient(t("toast.sync_replaced"));
+      }
+    }
+    scheduleRender();
+  }
+
+  function quoteByIdIn(arr, id) {
+    for (var i = 0; i < (arr || []).length; i++)
+      if (arr[i].id === id) return arr[i];
+    return null;
+  }
+
+  // ---------- 13. Wiring & boot ----------
+  function applyI18n() {
+    var n = root.querySelectorAll("[data-qv]");
+    for (var i = 0; i < n.length; i++)
+      n[i].textContent = t(n[i].getAttribute("data-qv"));
+    var ti = root.querySelectorAll("[data-qv-title]");
+    for (var j = 0; j < ti.length; j++) {
+      ti[j].setAttribute("title", t(ti[j].getAttribute("data-qv-title")));
+      ti[j].setAttribute("aria-label", ti[j].getAttribute("title"));
+    }
+    var ph = root.querySelectorAll("[data-qv-ph]");
+    for (var k = 0; k < ph.length; k++)
+      ph[k].setAttribute("placeholder", t(ph[k].getAttribute("data-qv-ph")));
+  }
+
+  function switchTab(tab) {
+    activeTab = tab;
+    var tabs = root.querySelectorAll("#qv-quote-tabs .tab");
+    for (var i = 0; i < tabs.length; i++)
+      tabs[i].classList.toggle("active", tabs[i].dataset.tab === tab);
+    $("tab-create").classList.toggle("active", tab === "create");
+    $("tab-list").classList.toggle("active", tab === "list");
+
+    var isList = tab === "list";
+    $("search-wrap").hidden = !isList;
+    $("filters").hidden = !isList;
+    $("client-new").hidden = isList;
+    $("export-btn").hidden = isList;
+    $("send-btn").hidden = isList;
+    $("ofile-btn").hidden = !isList || !recFile;
+
+    if (isList) { renderQuoteList(); updateFilterBtn(); }
+  }
+
+  function renderAll() {
+    renderPaymentPresets();
+    if (activeTab === "list") { renderQuoteList(); updateFilterBtn(); }
+  }
+
+  function commitSave() {
+    if (curIsDraft) {
+      cur.pos = state.quotes.length;
+      state.quotes.push(cur);
+      state.om = Date.now();
+      curIsDraft = false;
+      state.activeQuoteId = cur.id;
+      clearShelter();                   // το draft υιοθετήθηκε — το shelter αδειάζει
+    }
+    touch(cur);
+    state.om = Date.now();
+    save();
+    notifyTransient(t("toast.saved"));
+  }
+
+  function duplicateCurrent() {
+    var copy = JSON.parse(JSON.stringify(cur));
+    copy.id = uid();
+    copy.num = nextNumber();
+    copy.status = "draft";
+    copy.mtime = 0;
+    copy.pos = state.quotes.length;
+    copy.items.forEach(function (it) { it.id = uid(); });
+    copy.instalments.forEach(function (ins) { ins.id = uid(); });
+    state.quotes.push(copy);
+    state.om = Date.now();
+    touch(copy);
+    state.activeQuoteId = copy.id;
+    cur = copy;
+    curIsDraft = false;
+    clearShelter();               // το αντίγραφο έγινε committed — το draft εγκαταλείφθηκε
+    save();
+    loadOfferIntoEditor();
+    renderQuoteList();
+    notifyTransient(t("toast.duplicated"));
+  }
+
+  function deleteCurrent() {
+    if (curIsDraft) { newDraft(); return; }
+    var qid = cur.id;
+    askDialog({ text: t("confirm.delete"), yes: t("client.delete"), danger: true,
+                onYes: function () { deleteQuoteNow(qid); } });
+  }
+
+  function deleteQuoteNow(id) {
+    state.deleted[id] = Date.now();
+    state.quotes = state.quotes.filter(function (q) { return q.id !== id; });
+    state.om = Date.now();
+    if (state.activeQuoteId === id) state.activeQuoteId = null;
+    save();
+    if (!curIsDraft && cur && cur.id === id) newDraft();
+    renderQuoteList();
+    notifyTransient(t("toast.deleted"));
+  }
+
+  // .orosquote (OBF-4e): every quote, client and template as one orOS
+  // file (../recordpkg.js + package.js). Opening ADDS what this device
+  // lacks, with its ids; a record already here (or deleted here) is
+  // kept as it is unless "Update with newer versions" is ticked. The
+  // result goes through sliceSet (migrate, the open editor kept or
+  // reloaded) and save() (sync dirty); Undo deletes the added records
+  // the app's own way (tombstones). "Open as copy" (recCopy) adds the
+  // file's quotes and templates under fresh ids, each quote a draft
+  // with the next free number: quotes work like templates. Preview:
+  // quotes.md. The payment presets and the "Accept by link" token stay
+  // on the device (package.js strip).
+  var RP = window.OrosRecordPkg || null, QPK = window.OrosQuotePackage || null;
+  function recLocal() {
+    var s = JSON.parse(JSON.stringify(state));
+    delete s.activeQuoteId;
+    return s;
+  }
+  function recHooks() {
+    return {
+      lang: function () { return LANG === "el" ? "el" : "en"; },
+      get: recLocal,
+      title: function () { return "Quote"; },
+      set: function (next) {
+        if (!next || !Array.isArray(next.quotes)) return;
+        sliceSet(next);
+        state.om = Date.now();
+        save();
+        renderAll();
+      },
+      deleteIds: function (ids) {
+        var ts = Date.now(), gone = {};
+        ids.forEach(function (id) { gone[id] = 1; });
+        var dropCur = !curIsDraft && cur && gone[cur.id];
+        ["quotes", "clients", "templates"].forEach(function (k) {
+          state[k] = state[k].filter(function (x) {
+            if (!gone[x.id]) return true;
+            state.deleted[x.id] = Math.max(state.deleted[x.id] || 0, ts, (x.mtime || 0) + 1);
+            return false;
+          });
+        });
+        if (state.activeQuoteId && gone[state.activeQuoteId]) state.activeQuoteId = null;
+        if (cur && cur.clientId && gone[cur.clientId] && !dropCur) {
+          cur.clientId = null;
+          renderClientDisplay();
+          if (!curIsDraft) touch(cur);
+        }
+        state.om = ts;
+        save();
+        if (dropCur) newDraft();
+        scheduleRender();
+        notifyTransient(RP.str(LANG === "el" ? "el" : "en", "undone"));
+      },
+      toast: function (text, undo) { if (undo) notifyUndo(text, undo); else notifyTransient(text); }
+    };
+  }
+  var recFile = RP && QPK && window.OrosBundle ? RP.ui(QPK.DESC, recHooks()) : null;
+  var recCopy = recFile ? RP.ui(QPK.asCopy(recLocal, uid), recHooks()) : null;
+  function openFileDialog() {
+    var dlg = $("dlg-ofile");
+    if (!dlg || !recFile) return;
+    dlg.showModal();
+  }
+
+  function wire() {
+    if (recFile) {
+      $("ofile-btn").hidden = activeTab !== "list";
+      $("ofile-btn").addEventListener("click", openFileDialog);
+      [["of-save", function () { recFile.save(); }],
+       ["of-open", function () { recFile.open(); }],
+       ["of-copy", function () { recCopy.open(); }],
+       ["of-folder", function () { recFile.openFolder(); }]].forEach(function (b) {
+        $(b[0]).addEventListener("click", function () { $("dlg-ofile").close(); b[1](); });
+      });
+      $("ofile-close").addEventListener("click", function () { $("dlg-ofile").close(); });
+    }
+    root.querySelectorAll("#qv-quote-tabs .tab").forEach(function (b) {
+      b.addEventListener("click", function () { switchTab(b.dataset.tab); });
+    });
+
+    // --- Search (list tab) ---
+    $("search").addEventListener("input", function () {
+      searchQuery = this.value.trim().toLowerCase();
+      $("search-clear").hidden = !searchQuery;
+      scheduleRender();
+    });
+    $("search-clear").addEventListener("click", function () {
+      $("search").value = "";
+      searchQuery = "";
+      $("search-clear").hidden = true;
+      scheduleRender();
+      $("search").focus();
+    });
+
+    // --- Status filter popover ---
+    $("status-filter").addEventListener("click", function (e) {
+      e.stopPropagation();
+      var pop = $("status-pop");
+      pop.hidden = !pop.hidden;
+      if (!pop.hidden) renderStatusPop();
+    });
+    document.addEventListener("click", function (e) {
+      var pop = $("status-pop");
+      if (pop && !pop.hidden && !e.target.closest("#qv-filters")) pop.hidden = true;
+    });
+
+    // --- Editor: meta fields ---
+    $("q-date").addEventListener("input", function () {
+      cur.date = this.value; editCommitted();
+    });
+    $("q-due").addEventListener("input", function () {
+      cur.dueDate = this.value; editCommitted();
+    });
+    $("q-status").addEventListener("change", function () {
+      cur.status = this.value; editCommitted(); syncInvoiceBtn();
+    });
+    $("q-currency").addEventListener("change", function () {
+      if (!curOk(this.value)) return;
+      cur.currency = this.value;
+      recalcTotals(); editCommitted();
+    });
+    $("conv-to").addEventListener("change", function () {
+      localPrefs.convTo = curOk(this.value) ? this.value : "";
+      saveLocalPrefs();
+      renderConversion(true);
+    });
+    $("accept-link").addEventListener("click", sendForAcceptance);
+    $("accept-record").addEventListener("click", function () { recordAcceptance(""); });
+    $("regenerate-num").addEventListener("click", function () {
+      cur.num = nextNumber();
+      $("q-number").value = cur.num;
+      editCommitted();
+    });
+    $("global-discount").addEventListener("input", function () {
+      cur.gDisc = parseNum(this.value);
+      recalcTotals(); editCommitted();
+    });
+    $("global-vat").addEventListener("input", function () {
+      var v = parseNum(this.value);
+      cur.items.forEach(function (it) { it.vat = v; });
+      renderItems(); recalcTotals(); editCommitted();
+    });
+    $("q-payment").addEventListener("input", function () {
+      cur.payment = this.value; editCommitted();
+    });
+    $("q-notes").addEventListener("input", function () {
+      cur.notes = this.value; editCommitted();
+    });
+
+    // Payment presets
+    $("paypresets-edit").addEventListener("click", function () {
+      openPayPresetsDialog(null);
+    });
+    $("paypresets-close").addEventListener("click", function () {
+      $("dlg-paypresets").close();
+    });
+
+    // --- Items ---
+    $("item-add").addEventListener("click", addItem);
+
+    // --- Client selector ---
+    $("client-selector").addEventListener("click", toggleClientDropdown);
+    $("client-selector").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleClientDropdown();
+      }
+    });
+    $("client-select-new").addEventListener("click", function () {
+      closeClientDropdown();
+      openClientDialog(null);
+    });
+    $("client-new").addEventListener("click", function () {
+      openClientDialog(null);
+    });
+    $("client-delete").addEventListener("click", deleteClientFromDialog);
+
+    // --- Editor actions ---
+    $("save-quote").addEventListener("click", commitSave);
+    $("save-template").addEventListener("click", saveCurrentAsTemplate);
+    $("open-templates").addEventListener("click", openTemplateLibrary);
+    $("duplicate-quote").addEventListener("click", duplicateCurrent);
+    $("invoice-quote").addEventListener("click", sendToInvoices);
+    if ($("send-app")) $("send-app").addEventListener("click", sendLines);
+    $("delete-quote").addEventListener("click", deleteCurrent);
+    $("export-btn").addEventListener("click", function () { exportPdf(); });
+    $("send-btn").addEventListener("click", function () { sendEmail(); });
+
+    // --- Templates dialog ---
+    $("templates-close").addEventListener("click", function () {
+      $("dlg-templates").close();
+    });
+
+    // --- Keyboard: Alt+N = νέα προσφορά ---
+    document.addEventListener("keydown", function (e) {
+      if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey &&
+          (e.key === "n" || e.key === "N")) {
+        // Q-9: yield σε editable targets και ανοιχτά modals —
+        // δεν hijack την πληκτρολόγηση (macOS dead keys κ.λπ.).
+        var tgt = e.target;
+        var editable = tgt && (tgt.tagName === "INPUT" ||
+          tgt.tagName === "TEXTAREA" || tgt.tagName === "SELECT" ||
+          tgt.isContentEditable);
+        if (editable) return;
+        if (document.querySelector("dialog[open]")) return;
+        if (!root || root.offsetParent === null) return;   // the Quotes tab is not in front
+        e.preventDefault();
+        newDraft();
+        switchTab("create");
+      }
+    });
+  }
+
+  // ---------- 14. Wave 46: currencies, conversion, accept by link ----------
+  // Device-local (never synced): the currency to show totals in, and
+  // the sender name / email put on acceptance links.
+  var LOCAL_KEY = "oros-quote-local";
+  var localPrefs = (function () {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null"); } catch (e) {}
+    p = p && typeof p === "object" ? p : {};
+    return {
+      convTo: curOk(p.convTo) ? p.convTo : "",
+      from: typeof p.from === "string" ? p.from.slice(0, 120) : "",
+      fromEmail: typeof p.fromEmail === "string" ? p.fromEmail.slice(0, 120) : ""
+    };
+  })();
+  function saveLocalPrefs() {
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(localPrefs)); } catch (e) {}
+  }
+
+  var curNames = null;
+  function curName(code) {
+    try {
+      if (curNames === null) curNames = typeof Intl !== "undefined" && Intl.DisplayNames ? new Intl.DisplayNames([LANG], { type: "currency" }) : false;
+      var n = curNames ? curNames.of(code) : "";
+      return n && n !== code ? n.charAt(0).toUpperCase() + n.slice(1) : "";
+    } catch (e) { return ""; }
+  }
+  var curList = null;
+  function fillCurrencySelect(value) {
+    var sel = $("q-currency");
+    if (!curList) curList = QC ? QC.currencyList() : ["EUR", "USD"];
+    var want = curOk(value) ? value : "EUR";
+    if (sel.options.length !== curList.length + (curList.indexOf(want) < 0 ? 1 : 0) || sel.dataset.extra !== want) {
+      sel.innerHTML = "";
+      var list = curList.indexOf(want) < 0 ? [want].concat(curList) : curList;
+      list.forEach(function (code) {
+        var o = document.createElement("option");
+        o.value = code;
+        var nm = curName(code);
+        o.textContent = code + (nm ? " · " + nm : "");
+        sel.appendChild(o);
+      });
+      sel.dataset.extra = want;
+    }
+    sel.value = want;
+  }
+
+  // ECB rates from the Unit Converter's cache and its one fetcher
+  // (UnitsCore.fetchLatest / crossRate). Display only: the quote keeps
+  // its own currency and amounts.
+  var UC = window.UnitsCore && typeof window.UnitsCore.fetchLatest === "function" ? window.UnitsCore : null;
+  var fx = null, fxBusy = false, fxFailed = false;
+  function readFx() {
+    if (!UC) return null;
+    try { fx = UC.storedRates(JSON.parse(localStorage.getItem(UC.RATES_KEY) || "null")); } catch (e) { fx = null; }
+    return fx;
+  }
+  function fetchFx() {
+    if (!UC || fxBusy || (typeof navigator !== "undefined" && navigator.onLine === false)) return;
+    fxBusy = true;
+    UC.fetchLatest(function (u, o) { return fetch(u, o); }, Date.now()).then(function (r) {
+      fxBusy = false; fxFailed = false; fx = r;
+      try { localStorage.setItem(UC.RATES_KEY, JSON.stringify(r)); } catch (e) {}
+      renderConversion();
+    }, function () { fxBusy = false; fxFailed = true; renderConversion(); });
+  }
+  function renderConversion(userPicked) {
+    var row = $("conv-row");
+    if (!row) return;
+    if (!UC || !cur) { row.hidden = true; return; }
+    row.hidden = false;
+    if (!fx) readFx();
+    var sel = $("conv-to"), to = localPrefs.convTo;
+    var codes = ["EUR"].concat(fx ? Object.keys(fx.rates) : (UC.CURRENCY_ORDER || []).slice(1));
+    var sig = codes.join(",") + "|" + cur.currency;
+    if (sel.dataset.sig !== sig) {
+      sel.innerHTML = "";
+      var o0 = document.createElement("option");
+      o0.value = "";
+      o0.textContent = t("conv.pick");
+      sel.appendChild(o0);
+      codes.filter(function (c) { return c !== cur.currency; }).forEach(function (c) {
+        var o = document.createElement("option");
+        o.value = c;
+        o.textContent = c;
+        sel.appendChild(o);
+      });
+      sel.dataset.sig = sig;
+    }
+    sel.value = to && to !== cur.currency ? to : "";
+    var out = $("conv-val");
+    if (!sel.value) { out.textContent = ""; return; }
+    if ((!fx || UC.ratesStale(fx, Date.now())) && (userPicked || !fx)) fetchFx();
+    var rate = fx ? UC.crossRate(fx, cur.currency, sel.value) : null;
+    if (rate === null) {
+      out.textContent = fxBusy ? t("conv.loading") : t(fxFailed ? "conv.offline" : "conv.norate");
+      return;
+    }
+    var v = QC ? QC.convert(calcTotals(cur).total, rate, sel.value) : null;
+    out.textContent = v === null ? "" : "≈ " + money(v, sel.value) + " · " + t("conv.ecb").replace("{d}", fmtDate(fx.date));
+  }
+
+  // --- Accept by link (OrosQuoteAccept, accept-core.js) ---
+  var A = window.OrosQuoteAccept || null;
+  function acceptBase() {
+    // quote/accept.html, next to this file (the page is Billing's).
+    return new URL("../quote/accept.html", location.href).href;
+  }
+  function syncAcceptUi() {
+    var send = $("accept-link"), rec = $("accept-record"), info = $("acc-info");
+    if (!send) return;
+    var saved = !!cur && !curIsDraft;
+    send.hidden = !A || !saved;
+    rec.hidden = !A || !saved || !cur.share || cur.status === "accepted";
+    var acc = saved && cur.acc && typeof cur.acc === "object" ? cur.acc : null;
+    info.hidden = !acc;
+    if (acc) {
+      info.textContent = t("acc.info").replace("{n}", String(acc.n || "")).replace("{d}", fmtDateTime(acc.at));
+    }
+  }
+  function fmtDateTime(ms) {
+    if (typeof ms !== "number" || !isFinite(ms)) return "—";
+    var d = new Date(ms), p = function (n) { return (n < 10 ? "0" : "") + n; };
+    var ymd = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+    return fmtDate(ymd) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+  // The sender's name: what this device used last, else the Invoices
+  // business profile's name and email (read-only), else empty.
+  function defaultFrom() {
+    var f = { f: localPrefs.from, fe: localPrefs.fromEmail };
+    if (!f.f && !f.fe) {
+      try {
+        var inv = JSON.parse(localStorage.getItem("oros-invoices-data") || "null");
+        var pr = inv && inv.prof && typeof inv.prof === "object" ? inv.prof : null;
+        if (pr) { f.f = typeof pr.name === "string" ? pr.name.slice(0, 120) : ""; f.fe = typeof pr.email === "string" ? pr.email.slice(0, 120) : ""; }
+      } catch (e) {}
+    }
+    return f;
+  }
+  function panelDialog(id, title) {
+    var stale = $(id);
+    if (stale) stale.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = "qv-" + id;
+    dlg.className = "q-confirm q-panel";
+    var h = document.createElement("h3");
+    h.textContent = title;
+    dlg.appendChild(h);
+    var body = document.createElement("div");
+    body.className = "qp-body";
+    dlg.appendChild(body);
+    var menu = document.createElement("menu");
+    dlg.appendChild(menu);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    root.appendChild(dlg);
+    return { dlg: dlg, body: body, menu: menu };
+  }
+  function mkBtn(label, cls, fn) {
+    var b = document.createElement("button");
+    b.type = "button";
+    if (cls) b.className = cls;
+    b.textContent = label;
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function mkP(text, cls) {
+    var p = document.createElement("p");
+    p.className = cls || "qc-msg";
+    p.textContent = text;
+    return p;
+  }
+  function mkField(label, value, type) {
+    var lab = document.createElement("label");
+    lab.className = "qp-field";
+    var s = document.createElement("span");
+    s.textContent = label;
+    lab.appendChild(s);
+    var inp = document.createElement("input");
+    inp.type = type || "text";
+    inp.autocomplete = "off";
+    inp.maxLength = 120;
+    inp.value = value || "";
+    lab.appendChild(inp);
+    return { wrap: lab, input: inp };
+  }
+
+  function sendForAcceptance() {
+    if (!A || !cur || curIsDraft) { notifyTransient(t("acc.save_first")); return; }
+    var q = cur, client = q.clientId ? clientById(q.clientId) : null;
+    var d = panelDialog("dlg-accept-send", t("acc.send_title"));
+    d.body.appendChild(mkP(t("acc.send_text")));
+    var df = defaultFrom();
+    var fFrom = mkField(t("acc.from"), q.share && q.share.f !== undefined ? q.share.f : df.f);
+    var fMail = mkField(t("acc.from_email"), q.share && q.share.fe !== undefined ? q.share.fe : df.fe, "email");
+    d.body.appendChild(fFrom.wrap);
+    d.body.appendChild(fMail.wrap);
+    var warn = mkP("", "qc-msg qp-warn");
+    warn.hidden = true;
+    d.body.appendChild(warn);
+    var out = document.createElement("div");
+    out.className = "qp-out";
+    out.hidden = true;
+    d.body.appendChild(out);
+    d.menu.appendChild(mkBtn(t("close"), "", function () { d.dlg.close(); }));
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    d.menu.appendChild(sp);
+    var make = mkBtn(t("acc.make"), "qc-yes", function () {
+      var from = { f: fFrom.input.value.trim().slice(0, 120), fe: fMail.input.value.trim().slice(0, 120) };
+      localPrefs.from = from.f; localPrefs.fromEmail = from.fe;
+      saveLocalPrefs();
+      make.disabled = true;
+      buildAcceptLink(q, client, from).then(function (res) {
+        make.disabled = false;
+        if (!res) { warn.textContent = t("acc.too_big"); warn.hidden = false; return; }
+        if (res.renewed) { warn.textContent = t("acc.renewed"); warn.hidden = false; }
+        showAcceptLink(out, res.link, q, d.dlg);
+        if (q === cur) { loadOfferIntoEditor(); }
+      }, function () {
+        make.disabled = false;
+        warn.textContent = t("acc.no_crypto");
+        warn.hidden = false;
+      });
+    });
+    d.menu.appendChild(make);
+    if (q.share) { warn.textContent = t("acc.resend_note"); warn.hidden = false; }
+    d.dlg.showModal();
+    fFrom.input.focus();
+  }
+  // Same quote, same sender and nothing changed since the last link →
+  // the same token and link (an answer to it still counts). Anything
+  // changed → a new token: an answer to an older link no longer counts.
+  function buildAcceptLink(q, client, from) {
+    var prev = q.share && typeof q.share.tok === "string" ? q.share : null;
+    var reuse = prev ? A.snapshot(q, client, { tok: prev.tok, f: from.f, fe: from.fe }) : null;
+    var check = reuse ? A.digest(reuse) : Promise.resolve("");
+    return check.then(function (h0) {
+      var snap, renewed = false;
+      if (reuse && prev.h === h0) snap = reuse;
+      else {
+        snap = A.snapshot(q, client, { tok: A.newToken(), f: from.f, fe: from.fe });
+        renewed = !!prev;
+      }
+      if (!snap) return null;
+      return A.digest(snap).then(function (h) {
+        return A.encodeOffer(snap).then(function (code) {
+          if (code.length > A.MAX_CODE) return null;
+          if (!prev || prev.tok !== snap.tok || prev.h !== h || prev.f !== snap.f || prev.fe !== snap.fe) {
+            q.share = { tok: snap.tok, h: h, at: Date.now(), f: snap.f, fe: snap.fe };
+            if (q.status === "draft") q.status = "sent";
+            touch(q);
+            save();
+          }
+          return { link: acceptBase() + "#" + code, renewed: renewed };
+        });
+      });
+    });
+  }
+  function showAcceptLink(box, link, q, dlg) {
+    box.innerHTML = "";
+    box.hidden = false;
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.readOnly = true;
+    inp.value = link;
+    inp.className = "qp-link";
+    inp.setAttribute("aria-label", t("acc.link"));
+    box.appendChild(inp);
+    var row = document.createElement("div");
+    row.className = "qp-acts";
+    row.appendChild(mkBtn(t("acc.copy"), "", function () {
+      var ok = function () { notifyTransient(t("acc.copied")); };
+      try {
+        navigator.clipboard.writeText(link).then(ok, function () { inp.select(); document.execCommand("copy"); ok(); });
+      } catch (e) { inp.select(); try { document.execCommand("copy"); ok(); } catch (e2) {} }
+    }));
+    if (typeof navigator.share === "function") {
+      row.appendChild(mkBtn(t("acc.share"), "", function () {
+        navigator.share({ title: t("send.subject") + " " + (q.num || ""), url: link }).catch(function () {});
+      }));
+    }
+    row.appendChild(mkBtn(t("acc.email"), "", function () {
+      if (dlg) dlg.close();
+      if (cur !== q) openQuote(q.id);
+      sendEmail(t("acc.mail_line") + "\n" + link);
+    }));
+    box.appendChild(row);
+    box.appendChild(mkP(t("acc.link_hint"), "qc-msg qp-hint"));
+    inp.focus();
+    inp.select();
+  }
+
+  // An answer (link or code) → check it, then the user marks it.
+  function recordAcceptance(text) {
+    if (!A) return;
+    var d = panelDialog("dlg-accept-rec", t("acc.rec_title"));
+    var ta = document.createElement("textarea");
+    ta.rows = 3;
+    ta.className = "qp-paste";
+    ta.placeholder = t("acc.paste_ph");
+    ta.setAttribute("aria-label", t("acc.paste_ph"));
+    ta.value = text || "";
+    d.body.appendChild(mkP(t("acc.rec_text")));
+    d.body.appendChild(ta);
+    var res = document.createElement("div");
+    res.className = "qp-out";
+    d.body.appendChild(res);
+    d.menu.appendChild(mkBtn(t("close"), "", function () { d.dlg.close(); }));
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    d.menu.appendChild(sp);
+    var check = mkBtn(t("acc.check"), "qc-yes", function () { run(); });
+    d.menu.appendChild(check);
+    function run() {
+      res.innerHTML = "";
+      var r = A.readReply(ta.value);
+      if (!r) { res.appendChild(mkP(t("acc.bad_code"), "qc-msg qp-bad")); return; }
+      var q = quoteById(r.i);
+      if (!q) { res.appendChild(mkP(t("acc.no_quote"), "qc-msg qp-bad")); return; }
+      var v = A.verify(q, r);
+      var who = t("acc.who").replace("{n}", r.n).replace("{q}", q.num || "").replace("{d}", fmtDateTime(r.at));
+      if (v !== "ok") {
+        res.appendChild(mkP(who, "qc-msg"));
+        res.appendChild(mkP(t("acc.v_" + v), "qc-msg qp-bad"));
+        return;
+      }
+      res.appendChild(mkP("✓ " + who, "qc-msg qp-good"));
+      if (r.m) res.appendChild(mkP("“" + r.m + "”", "qc-msg qp-note"));
+      if (q.status === "accepted" && q.acc && q.acc.h === r.h) {
+        res.appendChild(mkP(t("acc.already"), "qc-msg"));
+        return;
+      }
+      var client = q.clientId ? clientById(q.clientId) : null;
+      var nowSnap = A.snapshot(q, client, null);
+      (nowSnap ? A.digest(nowSnap) : Promise.resolve("")).then(function (h) {
+        if (h !== q.share.h) res.appendChild(mkP(t("acc.edited"), "qc-msg qp-warn"));
+      }, function () {});
+      var mark = mkBtn(t("acc.mark"), "qc-yes", function () {
+        q.status = "accepted";
+        q.acc = { n: r.n, at: r.at, h: r.h };
+        if (r.m) q.acc.m = r.m;
+        touch(q);
+        save();
+        if (cur && cur.id === q.id) loadOfferIntoEditor(); else openQuote(q.id);
+        scheduleRender();
+        notifyTransient(t("acc.marked"));
+        d.dlg.close();
+        if (invoicesOpener()) {
+          askDialog({ text: t("acc.to_invoice"), yes: t("actions.invoice"), onYes: function () { sendToInvoices(); } });
+        }
+      });
+      var row = document.createElement("div");
+      row.className = "qp-acts";
+      row.appendChild(mark);
+      res.appendChild(row);
+    }
+    d.dlg.showModal();
+    if (text) run(); else ta.focus();
+  }
+  // "…/quote/#acc=a1.…" (the client's answer link opened in this
+  // browser): quote/index.html hands the fragment to Billing, which
+  // passes it here once the view is built.
+  function recordAnswer(h) {
+    h = String(h || "");
+    if (!/^#?acc=/.test(h)) return false;
+    var code = h.replace(/^#?acc=/, "");
+    if (!A || !A.readReply("#acc=" + code)) return false;
+    setTimeout(function () { recordAcceptance(code); }, 150);
+    return true;
+  }
+
+  function boot() {
+    LATE.forEach(function (f) { f(); });
+    applyI18n();
+    load();
+    buildInstalmentSection();
+    wire();
+    renderPaymentPresets();
+
+    if (restoreDraftShelter()) {
+      notifyTransient(t("toast.draft_restored"));
+    } else if (state.activeQuoteId && quoteById(state.activeQuoteId)) {
+      openQuote(state.activeQuoteId);
+    } else {
+      newDraft();
+    }
+    switchTab("create");
+    scheduleRender();
+  }
+
+  // Wave 13 — deep-link receiver. Contract: __orosOpenQuote(id)
+  // in the shell pushes here for a running app; the sessionStorage
+  // staging key 'oros-quote-open' covers cold boots.
+  function quoteOpen(quoteId) {
+    if (!quoteId) return;
+    try { openQuote(quoteId); switchTab("create"); } catch (e) {}
+  }
+  // BR-Q1 — "Create quote" receiver (Timesheet → Quote). The shell
+  // validated the payload ({items:[{d, q, p}], cur?, client?, notes?});
+  // it becomes a NEW unsaved draft (shelter only, nothing synced) that
+  // the user saves. An unsaved draft with content is replaced only
+  // after a confirm. A client is matched by name; an unknown one opens
+  // the New client dialog with the name filled in (saved only by the
+  // user).
+  function quoteNew(p) {
+    if (!p || !Array.isArray(p.items) || !p.items.length) return;
+    var hasContent = curIsDraft && cur && (cur.clientId || (cur.notes || "").trim() ||
+      (cur.items || []).some(function (it) { return (it.desc || "").trim() || it.price; }));
+    if (hasContent) {
+      askDialog({ text: t("confirm.replace_draft"), yes: t("prefill.replace"),
+                  onYes: function () { applyQuotePrefill(p); } });
+      return;
+    }
+    applyQuotePrefill(p);
+  }
+  function applyQuotePrefill(p) {
+    newDraft();
+    if (curOk(p.cur)) cur.currency = p.cur;
+    var vat = cur.items.length ? cur.items[0].vat : 24;
+    cur.items = p.items.map(function (x) {
+      var it = newItemObj();
+      it.desc = typeof x.d === "string" ? x.d : "";
+      it.qty = typeof x.q === "number" ? x.q : 1;
+      it.price = typeof x.p === "number" ? x.p : 0;
+      it.vat = vat;
+      return it;
+    });
+    if (typeof p.notes === "string") cur.notes = p.notes;
+    var wanted = typeof p.client === "string" ? p.client.trim() : "", match = null;
+    if (wanted) {
+      var low = wanted.toLocaleLowerCase();
+      state.clients.forEach(function (c) {
+        if (!match && String(c.name || "").trim().toLocaleLowerCase() === low) match = c;
+      });
+      if (match) cur.clientId = match.id;
+    }
+    loadOfferIntoEditor();
+    switchTab("create");
+    writeShelterNow();
+    scheduleRender();
+    notifyTransient(t("toast.prefilled"));
+    if (wanted && !match) {
+      openClientDialog(null);
+      $("c-name").value = wanted;
+    }
+  }
+
+  // Deep link, from Billing's receiver (the shell's __orosOpenAt with
+  // the old id "quote" goes to Billing { tab: "quotes", ... }):
+  //   { openFile: { token } }  "Open with" an .orosquote file
+  //                            (fileopen.js), the File taken once with
+  //                            window.parent.__orosTakeFile(token)
+  //   "<quote id>" | { quote } opens that quote
+  //   { quoteNew: {...} }      BR-Q1 prefill (see quoteNew)
+  //   { acc: "a1.…" }          a client's answer link
+  function openTarget(tg) {
+    if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return true; }
+    if (tg && tg.quoteNew && typeof tg.quoteNew === "object") { quoteNew(tg.quoteNew); return true; }
+    if (tg && typeof tg.acc === "string") return recordAnswer(tg.acc);
+    // K3: Billing's one settings page opens the tab's own settings
+    if (tg && tg.settings === "pay") { openPayPresetsDialog(); return true; }
+    if (tg && tg.settings === "tpl") { openTemplateLibrary(); return true; }
+    var id = typeof tg === "string" ? tg : (tg && typeof tg.quote === "string" ? tg.quote : "");
+    if (id && quoteById(id)) { quoteOpen(id); return true; }
+    return false;
+  }
+
+  var TEMPLATE = [
+    "  <!-- Quote bar: tabs + search + new client + export -->",
+    "  <header id=\"qv-quotebar\">",
+    "    <nav id=\"qv-quote-tabs\">",
+    "      <button type=\"button\" class=\"tab active\" data-tab=\"create\"",
+    "              data-qv=\"tab.create\">Create</button>",
+    "      <button type=\"button\" class=\"tab\" data-tab=\"list\"",
+    "              data-qv=\"tab.list\">Quotes</button>",
+    "    </nav>",
+    "",
+    "    <div id=\"qv-search-wrap\" hidden>",
+    "      <input id=\"qv-search\" type=\"search\" autocomplete=\"off\" spellcheck=\"false\"",
+    "             placeholder=\"Search…\" data-qv-ph=\"search.ph\">",
+    "      <button type=\"button\" id=\"qv-search-clear\" hidden aria-label=\"Clear search\"",
+    "              data-qv-title=\"search.clear\" title=\"Clear\">",
+    "        <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg>",
+    "      </button>",
+    "    </div>",
+    "",
+    "    <div id=\"qv-filters\" hidden>",
+    "      <button type=\"button\" id=\"qv-status-filter\" aria-label=\"Filter by status\"",
+    "              data-qv-title=\"filter.status\" title=\"Filter by status\">",
+    "        <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"><polygon points=\"22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3\"/></svg>",
+    "        <span id=\"qv-filter-count\" hidden>0</span>",
+    "      </button>",
+    "      <div id=\"qv-status-pop\" hidden></div>",
+    "    </div>",
+    "",
+    "    <button id=\"qv-client-new\" type=\"button\" aria-label=\"New client\"",
+    "            data-qv-title=\"client.new\" title=\"New client\" hidden>",
+    "      <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><line x1=\"19\" y1=\"8\" x2=\"19\" y2=\"14\"/><line x1=\"22\" y1=\"11\" x2=\"16\" y2=\"11\"/></svg>",
+    "    </button>",
+    "",
+    "    <button id=\"qv-export-btn\" type=\"button\" aria-label=\"Export PDF\"",
+    "            data-qv-title=\"actions.export_pdf\" title=\"Export PDF\" hidden>",
+    "      <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/></svg>",
+    "    </button>",
+    "",
+    "    <!-- .orosquote: save / open every quote as one orOS file (../recordpkg.js, package.js) -->",
+    "    <button id=\"qv-ofile-btn\" type=\"button\" aria-label=\"Save and open\"",
+    "            data-qv-title=\"file.title\" title=\"Save and open\" hidden>",
+    "      <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z\"/></svg>",
+    "    </button>",
+    "",
+    "    <button id=\"qv-send-btn\" type=\"button\" aria-label=\"Send quote\"",
+    "            data-qv-title=\"actions.send\" title=\"Send via email\" hidden>",
+    "      <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z\"/><polyline points=\"22,6 12,13 2,6\"/></svg>",
+    "    </button>",
+    "  </header>",
+    "",
+    "  <!-- CREATE TAB: Full offer editor -->",
+    "  <section id=\"qv-tab-create\" class=\"tab-pane active\">",
+    "    <div id=\"qv-offer-editor\">",
+    "      <!-- Offer header -->",
+    "      <div class=\"offer-meta\">",
+    "        <div class=\"meta-row\">",
+    "          <label data-qv=\"offer.number\">Quote #</label>",
+    "          <input id=\"qv-q-number\" type=\"text\" readonly>",
+    "          <button id=\"qv-regenerate-num\" type=\"button\" title=\"Regenerate number\"",
+    "                  data-qv-title=\"offer.regenerate\">",
+    "            <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"23 4 23 10 17 10\"/><path d=\"M20.49 15a9 9 0 1 1-2.12-9.36L23 10\"/></svg>",
+    "          </button>",
+    "        </div>",
+    "",
+    "        <div class=\"meta-row\">",
+    "          <label data-qv=\"offer.date\">Date</label>",
+    "          <input id=\"qv-q-date\" type=\"date\">",
+    "          <label data-qv=\"offer.due_date\">Due</label>",
+    "          <input id=\"qv-q-due\" type=\"date\">",
+    "        </div>",
+    "",
+    "        <div class=\"meta-row status-row\">",
+    "          <label data-qv=\"offer.status\">Status</label>",
+    "          <select id=\"qv-q-status\">",
+    "            <option value=\"draft\" data-qv=\"status.draft\">Draft</option>",
+    "            <option value=\"sent\" data-qv=\"status.sent\">Sent</option>",
+    "            <option value=\"accepted\" data-qv=\"status.accepted\">Accepted</option>",
+    "            <option value=\"rejected\" data-qv=\"status.rejected\">Rejected</option>",
+    "            <option value=\"expired\" data-qv=\"status.expired\">Expired</option>",
+    "          </select>",
+    "        </div>",
+    "",
+    "        <div class=\"meta-row currency-row\">",
+    "          <label data-qv=\"offer.currency\">Currency</label>",
+    "          <select id=\"qv-q-currency\">",
+    "            <option value=\"EUR\">EUR</option>",
+    "            <option value=\"USD\">USD</option>",
+    "          </select>",
+    "        </div>",
+    "        <p id=\"qv-acc-info\" class=\"acc-info\" hidden></p>",
+    "      </div>",
+    "",
+    "      <!-- Client selection -->",
+    "      <div class=\"offer-client\">",
+    "        <label data-qv=\"client.select\">Select client</label>",
+    "        <div id=\"qv-client-selector\" class=\"dropdown-trigger\" role=\"button\" tabindex=\"0\">",
+    "          <span id=\"qv-client-name-display\">No client</span>",
+    "          <svg width=\"10\" height=\"10\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M6 9l6 6 6-6\"/></svg>",
+    "        </div>",
+    "        <button id=\"qv-client-edit\" type=\"button\" title=\"Edit client\" hidden",
+    "                data-qv-title=\"client.edit_btn\">",
+    "          <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg>",
+    "        </button>",
+    "        <button id=\"qv-client-select-new\" type=\"button\" title=\"New client\"",
+    "                data-qv-title=\"client.new\">",
+    "          <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg>",
+    "        </button>",
+    "        <div id=\"qv-client-dropdown\" class=\"dropdown-pop\" hidden></div>",
+    "      </div>",
+    "",
+    "      <!-- Line items -->",
+    "      <div class=\"items-section\">",
+    "        <div class=\"section-header\">",
+    "          <h3 data-qv=\"items.title\">Line Items</h3>",
+    "          <button id=\"qv-item-add\" type=\"button\" title=\"Add item\"",
+    "                  data-qv-title=\"items.add\">",
+    "            <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"><path d=\"M12 5v14M5 12h14\"/></svg>",
+    "          </button>",
+    "        </div>",
+    "",
+    "        <div class=\"items-head\" id=\"qv-items-head\">",
+    "          <span data-qv=\"items.code\">Code/SKU</span>",
+    "          <span data-qv=\"items.desc\">Description</span>",
+    "          <span data-qv=\"items.qty\">Qty</span>",
+    "          <span data-qv=\"items.unit_price\">Unit Price</span>",
+    "          <span data-qv=\"items.disc\">Disc %</span>",
+    "          <span data-qv=\"items.vat\">VAT %</span>",
+    "          <span></span>",
+    "        </div>",
+    "",
+    "        <div id=\"qv-items-container\"></div>",
+    "",
+    "        <div class=\"totals-section\">",
+    "          <div class=\"total-row\">",
+    "            <span data-qv=\"totals.subtotal\">Subtotal</span>",
+    "            <span id=\"qv-subtotal-val\">0.00</span>",
+    "          </div>",
+    "          <div class=\"total-row discount-row\">",
+    "            <label data-qv=\"totals.discount\">Discount (%)</label>",
+    "            <input id=\"qv-global-discount\" type=\"number\" min=\"0\" max=\"100\" step=\"0.1\" value=\"0\">",
+    "          </div>",
+    "          <div class=\"total-row vat-row\">",
+    "            <label data-qv=\"totals.vat_bulk\">VAT (%)</label>",
+    "            <input id=\"qv-global-vat\" type=\"number\" min=\"0\" max=\"100\" step=\"0.1\" value=\"24\">",
+    "          </div>",
+    "          <div class=\"total-row\">",
+    "            <span data-qv=\"totals.vat\">VAT</span>",
+    "            <span id=\"qv-vat-val\">0.00</span>",
+    "          </div>",
+    "          <div class=\"total-row grand\">",
+    "            <span data-qv=\"totals.total\">Total</span>",
+    "            <span id=\"qv-grand-total-val\">0.00</span>",
+    "          </div>",
+    "          <div class=\"total-row conv-row\" id=\"qv-conv-row\" hidden>",
+    "            <select id=\"qv-conv-to\" aria-label=\"Show the total in\" data-qv-title=\"conv.label\"></select>",
+    "            <span id=\"qv-conv-val\" aria-live=\"polite\"></span>",
+    "          </div>",
+    "        </div>",
+    "      </div>",
+    "",
+    "      <!-- Payment terms -->",
+    "      <div class=\"payment-section\">",
+    "        <label data-qv=\"payment.title\">Payment Terms</label>",
+    "        <div class=\"presets\">",
+    "          <div id=\"qv-payment-presets\" class=\"preset-btns\"></div>",
+    "          <button id=\"qv-paypresets-edit\" type=\"button\" class=\"presets-edit\"",
+    "                  title=\"Edit payment presets\" data-qv-title=\"paypresets.edit\">",
+    "            <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z\"/></svg>",
+    "          </button>",
+    "        </div>",
+    "        <small class=\"presets-hint\" data-qv=\"paypresets.hint\"></small>",
+    "        <textarea id=\"qv-q-payment\" rows=\"3\" placeholder=\"e.g., 50% upfront, 50% on delivery…\"",
+    "                  data-qv-ph=\"payment.ph\"></textarea>",
+    "      </div>",
+    "",
+    "      <!-- Notes -->",
+    "      <div class=\"notes-section\">",
+    "        <label data-qv=\"offer.notes\">Notes</label>",
+    "        <textarea id=\"qv-q-notes\" rows=\"4\" placeholder=\"Additional terms, conditions…\"",
+    "                  data-qv-ph=\"notes.ph\"></textarea>",
+    "      </div>",
+    "",
+    "      <!-- Actions -->",
+    "      <div class=\"offer-actions\">",
+    "        <button id=\"qv-save-quote\" type=\"button\" class=\"primary\"",
+    "                data-qv=\"actions.save\">Save</button>",
+    "        <button id=\"qv-save-template\" type=\"button\" class=\"ghost\"",
+    "                data-qv=\"actions.save_template\">Save as Template</button>",
+    "        <button id=\"qv-duplicate-quote\" type=\"button\" class=\"ghost\"",
+    "                data-qv=\"actions.duplicate\">Duplicate</button>",
+    "        <button id=\"qv-send-app\" type=\"button\" class=\"ghost\" hidden",
+    "                data-qv=\"actions.send_app\">Send the lines to an app…</button>",
+    "        <button id=\"qv-invoice-quote\" type=\"button\" class=\"ghost\" hidden",
+    "                data-qv=\"actions.invoice\">Make invoice</button>",
+    "        <button id=\"qv-accept-link\" type=\"button\" class=\"ghost\" hidden",
+    "                data-qv=\"acc.send\">Send for acceptance</button>",
+    "        <button id=\"qv-accept-record\" type=\"button\" class=\"ghost\" hidden",
+    "                data-qv=\"acc.record\">Record acceptance</button>",
+    "        <button id=\"qv-open-templates\" type=\"button\" class=\"ghost\"",
+    "                data-qv=\"templates.manage\">Templates</button>",
+    "        <button id=\"qv-delete-quote\" type=\"button\" class=\"danger\"",
+    "                data-qv=\"actions.delete\">Delete</button>",
+    "      </div>",
+    "    </div>",
+    "  </section>",
+    "",
+    "  <!-- LIST TAB: Quotes table/list with filters -->",
+    "  <section id=\"qv-tab-list\" class=\"tab-pane\">",
+    "    <div id=\"qv-quote-list-container\"></div>",
+    "    <div id=\"qv-list-empty\" hidden>",
+    "      <span data-qv=\"list.empty_title\">No quotes yet</span>",
+    "      <small data-qv=\"list.empty_hint\">Create your first quote in the Create tab.</small>",
+    "    </div>",
+    "  </section>",
+    "",
+    "  <!-- CLIENT DIALOG -->",
+    "  <dialog id=\"qv-dlg-client\">",
+    "    <form method=\"dialog\" id=\"qv-client-form\" autocomplete=\"off\">",
+    "      <h3 data-qv=\"client.edit\">Client Details</h3>",
+    "",
+    "      <label data-qv=\"client.name\">Name</label>",
+    "      <input id=\"qv-c-name\" type=\"text\" required>",
+    "",
+    "      <label data-qv=\"client.email\">Email</label>",
+    "      <input id=\"qv-c-email\" type=\"email\">",
+    "",
+    "      <label data-qv=\"client.phone\">Phone</label>",
+    "      <input id=\"qv-c-phone\" type=\"tel\">",
+    "",
+    "      <label data-qv=\"client.address\">Address</label>",
+    "      <textarea id=\"qv-c-address\" rows=\"3\"></textarea>",
+    "",
+    "      <label data-qv=\"client.tax_id\">Tax ID / VAT</label>",
+    "      <input id=\"qv-c-taxid\" type=\"text\">",
+    "",
+    "      <menu>",
+    "        <button id=\"qv-client-delete\" type=\"button\" class=\"danger\"",
+    "                data-qv=\"client.delete\">Delete</button>",
+    "        <span class=\"spacer\"></span>",
+    "        <button type=\"submit\" data-qv=\"save\">Save</button>",
+    "      </menu>",
+    "    </form>",
+    "  </dialog>",
+    "",
+    "  <!-- TEMPLATE LIBRARY DIALOG -->",
+    "  <dialog id=\"qv-dlg-templates\">",
+    "    <h3 data-qv=\"templates.manage\">Template Library</h3>",
+    "    <div id=\"qv-template-grid\"></div>",
+    "    <menu>",
+    "      <span class=\"spacer\"></span>",
+    "      <button type=\"button\" id=\"qv-templates-close\" data-qv=\"close\">Close</button>",
+    "    </menu>",
+    "  </dialog>",
+    "",
+    "  <!-- PAYMENT PRESETS DIALOG (synced, per-user editable) -->",
+    "  <dialog id=\"qv-dlg-paypresets\">",
+    "    <h3 data-qv=\"paypresets.title\">Payment Presets</h3>",
+    "    <div id=\"qv-paypresets-list\"></div>",
+    "    <menu>",
+    "      <span class=\"spacer\"></span>",
+    "      <button type=\"button\" id=\"qv-paypresets-close\" data-qv=\"close\">Close</button>",
+    "    </menu>",
+    "  </dialog>",
+    "",
+    "  <!-- .orosquote FILE DIALOG -->",
+    "  <dialog id=\"qv-dlg-ofile\">",
+    "    <h3 data-qv=\"file.title\">Save and open</h3>",
+    "    <p class=\"ofile-hint\" data-qv=\"file.hint\"></p>",
+    "    <div class=\"ofile-btns\">",
+    "      <button type=\"button\" id=\"qv-of-save\" data-qv=\"file.save\">orOS file (.orosquote)</button>",
+    "      <button type=\"button\" id=\"qv-of-open\" data-qv=\"file.open\">Open orOS file…</button>",
+    "      <button type=\"button\" id=\"qv-of-copy\" data-qv=\"file.copy\">Open as copy…</button>",
+    "      <button type=\"button\" id=\"qv-of-folder\" data-qv=\"file.folder\">Unzipped orOS folder…</button>",
+    "    </div>",
+    "    <p class=\"ofile-hint\" data-qv=\"file.copyHint\"></p>",
+    "    <menu>",
+    "      <span class=\"spacer\"></span>",
+    "      <button type=\"button\" id=\"qv-ofile-close\" data-qv=\"close\">Close</button>",
+    "    </menu>",
+    "  </dialog>",
+    "",
+    "  <!-- TOAST -->",
+    "  <div id=\"qv-toast\" role=\"status\"></div>",
+    "",
+    "  "
+  ].join("\n");
+
+  // Build the view once in host (Billing's Quotes tab). The device-local
+  // one-shot keys of BR-Q1 and the Wave 13 deep link (sessionStorage
+  // "oros-quote-new" / "oros-quote-open", written by older shells) are
+  // taken once here.
+  function mount(host, o) {
+    opts = o || {};
+    if (root) {
+      if (root.parentNode !== host) host.appendChild(root);
+      scheduleRender();
+      syncInvoiceBtn();      // K2: an invoice made meanwhile shows its link
+      return;
+    }
+    root = document.createElement("div");
+    root.className = "qv";
+    root.innerHTML = TEMPLATE;                         // static markup
+    host.appendChild(root);
+    boot();
+    try {
+      var stagedNew = sessionStorage.getItem("oros-quote-new");
+      if (stagedNew) {
+        sessionStorage.removeItem("oros-quote-new");
+        var pn = null;
+        try { pn = JSON.parse(stagedNew); } catch (e2) { pn = null; }
+        if (pn) quoteNew(pn);
+      }
+    } catch (e) {}
+    try {
+      var staged = sessionStorage.getItem("oros-quote-open");
+      if (staged) {
+        sessionStorage.removeItem("oros-quote-open");
+        quoteOpen(staged);
+      }
+    } catch (e) {}
+  }
+
+  window.QuoteView = {
+    mount: mount,
+    openAt: function (tg) { return root ? openTarget(tg) : false; },
+    sliceGet: function () { return root ? sliceGet() : null; },
+    sliceSet: function (d) { if (root) sliceSet(d); },
+    flush: function () { if (root) writeShelterNow(); }
+  };
+})();

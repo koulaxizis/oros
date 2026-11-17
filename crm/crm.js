@@ -84,7 +84,7 @@
       "last.never": "no contact yet", "last.today": "contacted today", "last.yday": "contacted yesterday",
       "last.days": "contacted {n} days ago", "last.date": "contacted {d}",
       "next": "next: {d}",
-      "act.call": "Call", "act.mail": "Email", "act.map": "Map", "act.log": "Log contact", "act.fup": "Follow-up", "act.deal": "Deal",
+      "act.call": "Call", "act.mail": "Email", "act.map": "Map", "act.log": "Log contact", "act.fup": "Follow-up", "act.deal": "Deal", "act.sendApp": "Send to an app…",
       "k.call": "Call", "k.mail": "Email", "k.meet": "Meeting", "k.msg": "Message", "k.note": "Note",
       "sec.info": "Details", "sec.people": "People", "sec.notes": "Notes",
       "sec.ctdiff": "Different in Contacts",
@@ -97,9 +97,9 @@
       "sec.links": "In other apps", "links.add": "+ Link",
       "sec.items": "Cards, notes and files", "it.kb": "Kanban card", "it.nt": "Notes page", "it.ly": "Layout document", "it.at": "Atelier design",
       "links.none": "Not linked yet to a supplier, a consignment shop, a client or a title in another app.",
-      "lk.sup": "Stock · supplier", "lk.wh": "Stock · consignment shop", "lk.tsc": "Work hours · client", "lk.inv": "Invoices · client",
+      "lk.sup": "Stock · supplier", "lk.wh": "Stock · consignment shop", "lk.tsc": "Work hours · client", "lk.inv": "Billing · client",
       "lk.pub": "Publishing · titles: {n}", "lk.gone": "No longer there", "lk.auto": "set in Publishing", "lk.unlink": "Unlink",
-      "lk.title": "Link {name}", "lk.hint": "Records of Stock, Work hours, Invoices and Publishing. Linking changes nothing in those apps.",
+      "lk.title": "Link {name}", "lk.hint": "Records of Stock, Work hours, Billing and Publishing. Linking changes nothing in those apps.",
       "lk.q": "Search", "lk.empty": "Nothing to link: no suppliers, consignment shops, clients or Publishing people on this device yet.",
       "lk.why.afm": "same VAT no.", "lk.why.email": "same email", "lk.why.name": "same name", "lk.owner": "linked to {name}",
       "lk.link": "Link", "lk.done": "Linked: {name}", "lk.undone": "Unlinked: {name}",
@@ -182,14 +182,14 @@
       "cx.mailS": "Our contract for «{b}»", "cx.mailB": "Hello {name},\n\nour contract for «{b}»{f} ends on {d}. Shall we renew it?\n\n", "cx.mailBEnded": "Hello {name},\n\nour contract for «{b}»{f} ended on {d}. Shall we renew it?\n\n",
       "cx.taskT": "Contract «{b}»{f}: decision by {d}",
       "cx.toast.renew": "Renewed until {d}", "cx.toast.post": "Decision put off to {d}", "cx.toast.end": "Ended by agreement", "cx.toast.reopen": "The contract runs again", "cx.toast.note": "Note kept",
-      "cx.portal": "Send to the shop…", "cx.portalT": "Send the end days to the shop", "cx.portalHint": "The shop's Revenue Splitter (1.14 or later) shows each creator their own contracts in the Author Portal. Only names, titles, formats, days and states are sent: never a note, a value or a file. The shop's list is replaced by this one.",
-      "cx.portalShop": "Shop", "cx.portalSend": "Send {n}", "cx.portalOk": "Sent to the shop: {n} contracts", "cx.portalSkip": "Sent: {n}, not taken: {s}", "cx.portalNone": "Add your shop in Settings › Connected services first.", "cx.portalOld": "{shop}: its Revenue Splitter does not take contracts yet (1.14 or later is needed).",
+      "cx.portal": "Send to the shop…", "cx.portalT": "Send the end days to the shop", "cx.portalHint": "The shop's Revenue Splitter (1.14.2 or later) shows each creator their own contracts in the Author Portal. Only names, titles, formats, days and states are sent: never a note, a value or a file. The shop's list is replaced by this one.",
+      "cx.portalShop": "Shop", "cx.portalSend": "Send {n}", "cx.portalOk": "Sent to the shop: {n} contracts", "cx.portalSkip": "Sent: {n}, not taken: {s}", "cx.portalNone": "Add your shop in Settings › Connected services first.", "cx.portalOld": "{shop}: its Revenue Splitter does not take contracts yet (1.14.2 or later is needed).",
       "rc.none": "No contract to send to this shop: link a partner to a Revenue Splitter beneficiary on their card (Overview › Revenue Splitter), and give the contract a start day.",
       "rc.n": "Contracts for this shop: {n}",
       "rc.left.nolink": "Not sent, the partner is not linked to Revenue Splitter: {t}",
       "rc.left.nofrom": "Not sent, it has no start day: {t}",
-      "rc.wkOn": "{shop} has a write key: every change is sent on its own.",
-      "rc.wkOff": "{shop} has no write key: tap Send after changes. Sending needs a key with Read/Write permission (Settings › Connected services).",
+      "rc.wkOn": "{shop} has a contracts key: every change is sent on its own.",
+      "rc.wkOff": "{shop} has no contracts key on this device yet. Make one in WordPress (Noxpress › RS Συμφωνητικά) and add it in Settings › Connected services › Contracts key.",
       "rc.sending": "Sending…",
       "rc.done": "Sent at {time}: the shop saved {n}.",
       "rc.skipped": "The shop did not take these (check the beneficiary's name on the partner's card):",
@@ -202,7 +202,9 @@
       "rc.why.bad_state": "bad state",
       "rc.why.bad_renewed": "bad renewal days",
       "rc.why.bad_item": "not readable",
-      "rc.err.auth": "{shop} refused to save the contracts. Sending needs a key with Read/Write permission: add a write key in Settings › Connected services.",
+      "rc.err.auth": "{shop} refused the contracts key. Make a new one in WordPress (Noxpress › RS Συμφωνητικά) and replace it in Settings › Connected services.",
+      "rc.err.rskey": "{shop} has no contracts key on this device. Make one in WordPress (Noxpress › RS Συμφωνητικά) and add it in Settings › Connected services › Contracts key.",
+      "rc.err.busy": "{shop} asked to wait a little (too many tries). Try again in a few minutes.",
       "rc.err.offline": "You are offline. Try again when you are connected.",
       "rc.err.keys": "The keys of {shop} are not on this device (Settings › Connected services).",
       "rc.err.other": "Could not reach {shop}. Try again later.",
@@ -214,11 +216,75 @@
       "rq.act": "Asked in the Author Portal to talk about a renewal of «{t}».",
       "rq.untitled": "a contract",
       "rq.toast": "Renewal requests from the Author Portal: {n} (in Agenda)",
-      "rq.noWrite": "{shop} refused to mark the renewal requests as read: it needs a key with Read/Write permission (Settings › Connected services).",
+      "rq.noWrite": "{shop} refused the contracts key, so the renewal requests could not be marked as read. Replace the key in Settings › Connected services.",
+      "pf.fupBio": "Update the creator page: {n}",
+      "pf.fupCopies": "Author copies: {q} × «{t}»",
+      "pf.actBio": "Asked in the Author Portal for a new text on their page:",
+      "pf.actCopies": "Asked in the Author Portal for {q} author copies of «{t}».",
+      "pf.links": "Links:",
+      "pf.photo": "A photo came with the request.",
+      "pf.photoFile": "Photo {d}", "pf.photoAlt": "The creator's new photo", "pf.photoBig": "The photo is too large for the orOS relay and the shop could not be reached directly. Open the request on the site.", "pf.photoBad": "The photo is not a JPEG, PNG or WebP picture, so orOS did not open it.", "pf.photoNone": "The photo could not be read right now.", "pf.photoSave": "Save to the partner's folder", "pf.photoSaved": "Saved in the partner's folder.",
+      "pf.note": "Note:",
+      "pf.toast": "Creator requests from the Author Portal: {n} (in Agenda)",
+      "pf.left": "Creator requests for a beneficiary no partner here is linked to:",
+      "pf.noWrite": "{shop} refused the contracts key, so the creator requests could not be marked. Replace the key in Settings › Connected services.",
+      "pf.dlgT": "Answer the creator",
+      "pf.dlgHint": "The creator reads this in the Author Portal. If you close this window, «Done» goes with the reply shown.",
+      "pf.result": "Result",
+      "pf.done": "Done",
+      "pf.declined": "Declined",
+      "pf.reply": "Reply (up to 500 characters)",
+      "pf.later": "Later",
+      "pf.send": "Send",
+      "pf.defBio": "Your page has been updated. Thank you!",
+      "pf.defCopies": "Your author copies are on their way.",
+      "pf.ansDone": "Answer in the Author Portal (done):",
+      "pf.ansDecl": "Answer in the Author Portal (declined):",
+      "pf.view": "See the request",
+      "pf.viewT": "Request from the Author Portal",
+      "pf.loading": "Reading the request from the shop…",
+      "pf.gone": "The request could not be read from the shop (no connection, no contracts key, or Revenue Splitter before 1.18).",
+      "pf.new": "New text",
+      "pf.was": "Text on the page now",
+      "pf.copy": "Copy",
+      "pf.copied": "Copied",
+      "pf.closed.done": "Closed as done",
+      "pf.closed.declined": "Closed as declined",
+      "pf.bioFile": "Page text request {d}.txt",
+      "pd.open": "Production stage…",
+      "pd.title": "Production stage in the Author Portal",
+      "pd.hint": "Revenue Splitter (1.18.0 or later) shows each creator the stage of their work. Only the cards you tick go, with their phase, the release day from Publishing and the text after a line «For the creator:» in the card's notes. Nothing else from the card.",
+      "pd.board": "Kanban board",
+      "pd.off": "Off",
+      "pd.offHint": "Pick the board whose columns are the production stages.",
+      "pd.noBoard": "That board is not on this device (renamed or archived?).",
+      "pd.n": "{n} rows go to the shop ({c} cards ticked).",
+      "pd.phase": "Phase {n}",
+      "pd.noPhase": "no phase yet",
+      "pd.inherit": "Like the column before",
+      "pd.map": "Columns and phases",
+      "pd.ph1": "Evaluation and agreement",
+      "pd.ph2": "Editing",
+      "pd.ph3": "Illustration and cover",
+      "pd.ph4": "Typesetting",
+      "pd.ph5": "Proofs and final check",
+      "pd.ph6": "Production and printing",
+      "pd.ph7": "Release",
+      "pd.left": "Ticked cards that do not go:",
+      "pd.why.noben": "no creator linked (link the card in the partner's «Cards, notes and files», or the title's author in Publishing, and the partner to Revenue Splitter)",
+      "pd.why.badid": "the card's id cannot be sent",
+      "pd.why.notitle": "the card has no title",
+      "pd.why.old": "released more than 30 days ago",
+      "pd.why.max": "over 500 rows",
+      "pd.send": "Send now ({n})",
+      "pd.done": "The shop saved {n} rows at {time}.",
+      "pd.old": "{shop} does not take the production stage yet: Revenue Splitter 1.18.0 or later is needed.",
+      "pd.autoSkip": "{shop} skipped {n} production rows (CRM › Contracts › Production stage…).",
+      "pd.autoFail": "The production stage could not be sent to {shop}.",
       "cx.set": "Contracts", "cx.lbl": "Calendar label for the end days", "cx.lbl.own": "CRM (its own chip)", "cx.kb": "Kanban board for contract cards", "cx.kbPh": "The board that is open",
       "toast.ctrDel": "Contract deleted", "toast.noDisk": "The orOS disk is not available here.", "toast.fileSaved": "Saved in Files: {p}", "toast.fileBig": "Up to 20 MB per file.",
       "act.inv": "Invoice", "act.quote": "Quote",
-      "docs.inv": "Invoices", "docs.quote": "Quotes", "docs.allInv": "All in Invoices",
+      "docs.inv": "Invoices", "docs.quote": "Quotes", "docs.allInv": "All in Billing",
       "docs.invNone": "No invoices yet. Invoices you issue with the Invoice button show up here.",
       "docs.quoteNone": "No quotes yet. Quotes for a client with this name or VAT ID show up here.",
       "docs.tot": "Invoiced {i} · paid {p}", "docs.open": "unpaid {v}", "docs.overdue": "overdue {v}",
@@ -227,8 +293,8 @@
       "is.partial": "Partly paid", "is.overdue": "Overdue", "is.unpaid": "Unpaid",
       "qs.draft": "Draft", "qs.sent": "Sent", "qs.accepted": "Accepted", "qs.rejected": "Rejected", "qs.expired": "Expired",
       "deal.inv": "Invoice this deal", "deal.quote": "Quote for this deal",
-      "toast.noInv": "The Invoices app is not available.", "toast.noQuote": "The Quote app is not available.",
-      "toast.quoteCur": "Quote works in EUR or USD. Change the currency in CRM settings, or create the quote in Quote.",
+      "toast.noInv": "The Billing app is not available.", "toast.noQuote": "Billing's Quotes are not available.",
+      "toast.quoteCur": "Quote works in EUR or USD. Change the currency in CRM settings, or create the quote in Billing's Quotes.",
       "set.import": "Import customers (CSV)",
       "en.all": "Update customers from online sources", "en.one": "Update online",
       "en.empty": "No customer has an e-mail address, phone or website to look up.",
@@ -333,7 +399,7 @@
       "last.never": "καμία επαφή ακόμη", "last.today": "επαφή σήμερα", "last.yday": "επαφή χθες",
       "last.days": "επαφή πριν από {n} μέρες", "last.date": "επαφή {d}",
       "next": "επόμενο: {d}",
-      "act.call": "Κλήση", "act.mail": "Email", "act.map": "Χάρτης", "act.log": "Καταγραφή", "act.fup": "Follow-up", "act.deal": "Ευκαιρία",
+      "act.call": "Κλήση", "act.mail": "Email", "act.map": "Χάρτης", "act.log": "Καταγραφή", "act.fup": "Follow-up", "act.deal": "Ευκαιρία", "act.sendApp": "Στείλε σε εφαρμογή…",
       "k.call": "Κλήση", "k.mail": "Email", "k.meet": "Συνάντηση", "k.msg": "Μήνυμα", "k.note": "Σημείωση",
       "sec.info": "Στοιχεία", "sec.people": "Άνθρωποι", "sec.notes": "Σημειώσεις",
       "sec.ctdiff": "Διαφορές με τις Επαφές",
@@ -346,9 +412,9 @@
       "sec.links": "Σε άλλες εφαρμογές", "links.add": "+ Σύνδεση",
       "sec.items": "Κάρτες, σημειώσεις και αρχεία", "it.kb": "Κάρτα Kanban", "it.nt": "Σελίδα στις Σημειώσεις", "it.ly": "Έγγραφο Σελιδοποίησης", "it.at": "Σχέδιο στο Atelier",
       "links.none": "Δεν έχει συνδεθεί ακόμη με προμηθευτή, κατάστημα παρακαταθήκης, πελάτη ή τίτλο άλλης εφαρμογής.",
-      "lk.sup": "Απόθεμα · προμηθευτής", "lk.wh": "Απόθεμα · κατάστημα παρακαταθήκης", "lk.tsc": "Ώρες εργασίας · πελάτης", "lk.inv": "Τιμολόγια · πελάτης",
+      "lk.sup": "Απόθεμα · προμηθευτής", "lk.wh": "Απόθεμα · κατάστημα παρακαταθήκης", "lk.tsc": "Ώρες εργασίας · πελάτης", "lk.inv": "Τιμολόγηση · πελάτης",
       "lk.pub": "Εκδόσεις · τίτλοι: {n}", "lk.gone": "Δεν υπάρχει πια", "lk.auto": "από τις Εκδόσεις", "lk.unlink": "Αποσύνδεση",
-      "lk.title": "Σύνδεση: {name}", "lk.hint": "Εγγραφές από Απόθεμα, Ώρες εργασίας, Τιμολόγια και Εκδόσεις. Η σύνδεση δεν αλλάζει τίποτα σε αυτές τις εφαρμογές.",
+      "lk.title": "Σύνδεση: {name}", "lk.hint": "Εγγραφές από Απόθεμα, Ώρες εργασίας, Τιμολόγηση και Εκδόσεις. Η σύνδεση δεν αλλάζει τίποτα σε αυτές τις εφαρμογές.",
       "lk.q": "Αναζήτηση", "lk.empty": "Δεν υπάρχει κάτι για σύνδεση: ακόμη κανένας προμηθευτής, κατάστημα, πελάτης ή άνθρωπος των Εκδόσεων σε αυτή τη συσκευή.",
       "lk.why.afm": "ίδιο ΑΦΜ", "lk.why.email": "ίδιο email", "lk.why.name": "ίδιο όνομα", "lk.owner": "συνδεδεμένο με {name}",
       "lk.link": "Σύνδεση", "lk.done": "Συνδέθηκε: {name}", "lk.undone": "Αποσυνδέθηκε: {name}",
@@ -431,14 +497,14 @@
       "cx.mailS": "Το συμφωνητικό μας για «{b}»", "cx.mailB": "Γεια σου {name},\n\nτο συμφωνητικό μας για «{b}»{f} λήγει στις {d}. Θέλεις να το ανανεώσουμε;\n\n", "cx.mailBEnded": "Γεια σου {name},\n\nτο συμφωνητικό μας για «{b}»{f} έληξε στις {d}. Θέλεις να το ανανεώσουμε;\n\n",
       "cx.taskT": "Συμφωνητικό «{b}»{f}: απόφαση έως {d}",
       "cx.toast.renew": "Ανανεώθηκε έως {d}", "cx.toast.post": "Η απόφαση μετατέθηκε στις {d}", "cx.toast.end": "Το συμφωνητικό λύθηκε", "cx.toast.reopen": "Το συμφωνητικό ισχύει ξανά", "cx.toast.note": "Η σημείωση κρατήθηκε",
-      "cx.portal": "Αποστολή στο site…", "cx.portalT": "Αποστολή των λήξεων στο site", "cx.portalHint": "Το Revenue Splitter του site (1.14 ή νεότερο) δείχνει σε κάθε δημιουργό τα δικά του συμφωνητικά στο Author Portal. Στέλνονται μόνο ονόματα, τίτλοι, μορφές, ημερομηνίες και καταστάσεις, ποτέ σημειώσεις, αξίες ή αρχεία. Η λίστα του site αντικαθίσταται από αυτή.",
-      "cx.portalShop": "Κατάστημα", "cx.portalSend": "Αποστολή {n}", "cx.portalOk": "Στάλθηκαν στο site: {n} συμφωνητικά", "cx.portalSkip": "Στάλθηκαν: {n}, δεν έγιναν δεκτά: {s}", "cx.portalNone": "Πρόσθεσε πρώτα το κατάστημά σου στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.", "cx.portalOld": "{shop}: το Revenue Splitter του δεν δέχεται ακόμη συμφωνητικά (χρειάζεται 1.14 ή νεότερο).",
+      "cx.portal": "Αποστολή στο site…", "cx.portalT": "Αποστολή των λήξεων στο site", "cx.portalHint": "Το Revenue Splitter του site (1.14.2 ή νεότερο) δείχνει σε κάθε δημιουργό τα δικά του συμφωνητικά στο Author Portal. Στέλνονται μόνο ονόματα, τίτλοι, μορφές, ημερομηνίες και καταστάσεις, ποτέ σημειώσεις, αξίες ή αρχεία. Η λίστα του site αντικαθίσταται από αυτή.",
+      "cx.portalShop": "Κατάστημα", "cx.portalSend": "Αποστολή {n}", "cx.portalOk": "Στάλθηκαν στο site: {n} συμφωνητικά", "cx.portalSkip": "Στάλθηκαν: {n}, δεν έγιναν δεκτά: {s}", "cx.portalNone": "Πρόσθεσε πρώτα το κατάστημά σου στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.", "cx.portalOld": "{shop}: το Revenue Splitter του δεν δέχεται ακόμη συμφωνητικά (χρειάζεται 1.14.2 ή νεότερο).",
       "rc.none": "Κανένα συμφωνητικό για αυτό το site: σύνδεσε έναν συνεργάτη με δικαιούχο του Revenue Splitter στην καρτέλα του (Σύνοψη › Revenue Splitter) και δώσε στο συμφωνητικό ημέρα έναρξης.",
       "rc.n": "Συμφωνητικά για αυτό το site: {n}",
       "rc.left.nolink": "Δεν στέλνεται, ο συνεργάτης δεν είναι συνδεδεμένος με το Revenue Splitter: {t}",
       "rc.left.nofrom": "Δεν στέλνεται, δεν έχει ημέρα έναρξης: {t}",
-      "rc.wkOn": "Το {shop} έχει κλειδί εγγραφής: κάθε αλλαγή στέλνεται μόνη της.",
-      "rc.wkOff": "Το {shop} δεν έχει κλειδί εγγραφής: πάτα Αποστολή μετά από αλλαγές. Η αποστολή θέλει κλειδί με δικαιώματα Ανάγνωση/Εγγραφή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
+      "rc.wkOn": "Το {shop} έχει κλειδί συμφωνητικών: κάθε αλλαγή στέλνεται μόνη της.",
+      "rc.wkOff": "Το {shop} δεν έχει ακόμη κλειδί συμφωνητικών σε αυτή τη συσκευή. Φτιάξ' το στο WordPress (Noxpress › RS Συμφωνητικά) και πρόσθεσέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες › Κλειδί συμφωνητικών.",
       "rc.sending": "Αποστολή…",
       "rc.done": "Στάλθηκαν στις {time}: το site αποθήκευσε {n}.",
       "rc.skipped": "Το site δεν δέχτηκε αυτά (έλεγξε το όνομα του δικαιούχου στην καρτέλα του συνεργάτη):",
@@ -451,7 +517,9 @@
       "rc.why.bad_state": "λάθος κατάσταση",
       "rc.why.bad_renewed": "λάθος ημέρες ανανέωσης",
       "rc.why.bad_item": "δεν διαβάζεται",
-      "rc.err.auth": "Το {shop} αρνήθηκε να αποθηκεύσει τα συμφωνητικά. Η αποστολή θέλει κλειδί με δικαιώματα Ανάγνωση/Εγγραφή: πρόσθεσε κλειδί εγγραφής στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "rc.err.auth": "Το {shop} δεν δέχτηκε το κλειδί συμφωνητικών. Φτιάξε νέο στο WordPress (Noxpress › RS Συμφωνητικά) και άλλαξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "rc.err.rskey": "Το {shop} δεν έχει κλειδί συμφωνητικών σε αυτή τη συσκευή. Φτιάξ' το στο WordPress (Noxpress › RS Συμφωνητικά) και πρόσθεσέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες › Κλειδί συμφωνητικών.",
+      "rc.err.busy": "Το {shop} ζήτησε να περιμένουμε λίγο (πολλές προσπάθειες). Δοκίμασε ξανά σε λίγα λεπτά.",
       "rc.err.offline": "Είσαι εκτός σύνδεσης. Δοκίμασε ξανά όταν συνδεθείς.",
       "rc.err.keys": "Τα κλειδιά του {shop} δεν είναι σε αυτή τη συσκευή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
       "rc.err.other": "Δεν βρέθηκε το {shop}. Δοκίμασε ξανά αργότερα.",
@@ -463,11 +531,75 @@
       "rq.act": "Ζήτησε από το Author Portal να συζητήσουμε ανανέωση για «{t}».",
       "rq.untitled": "ένα συμφωνητικό",
       "rq.toast": "Αιτήματα ανανέωσης από το Author Portal: {n} (στην Ατζέντα)",
-      "rq.noWrite": "Το {shop} αρνήθηκε να σημειώσει τα αιτήματα ανανέωσης ως διαβασμένα: χρειάζεται κλειδί με δικαιώματα Ανάγνωση/Εγγραφή (Ρυθμίσεις › Συνδεδεμένες υπηρεσίες).",
+      "rq.noWrite": "Το {shop} δεν δέχτηκε το κλειδί συμφωνητικών, οπότε τα αιτήματα ανανέωσης δεν σημειώθηκαν ως διαβασμένα. Άλλαξε το κλειδί στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "pf.fupBio": "Αλλαγή σελίδας δημιουργού: {n}",
+      "pf.fupCopies": "Αντίτυπα συγγραφέα: {q} × «{t}»",
+      "pf.actBio": "Ζητήθηκε από το Author Portal νέο κείμενο για τη σελίδα:",
+      "pf.actCopies": "Ζητήθηκαν από το Author Portal {q} αντίτυπα συγγραφέα του «{t}».",
+      "pf.links": "Σύνδεσμοι:",
+      "pf.photo": "Το αίτημα έχει και φωτογραφία.",
+      "pf.photoFile": "Φωτογραφία {d}", "pf.photoAlt": "Η νέα φωτογραφία του δημιουργού", "pf.photoBig": "Η φωτογραφία είναι πολύ μεγάλη για τον αναμεταδότη του orOS και το site δεν απάντησε απευθείας. Άνοιξε το αίτημα στο site.", "pf.photoBad": "Η φωτογραφία δεν είναι εικόνα JPEG, PNG ή WebP, οπότε το orOS δεν την άνοιξε.", "pf.photoNone": "Η φωτογραφία δεν διαβάστηκε αυτή τη στιγμή.", "pf.photoSave": "Αποθήκευση στον φάκελο του συνεργάτη", "pf.photoSaved": "Αποθηκεύτηκε στον φάκελο του συνεργάτη.",
+      "pf.note": "Σημείωση:",
+      "pf.toast": "Αιτήματα δημιουργών από το Author Portal: {n} (στην Ατζέντα)",
+      "pf.left": "Αιτήματα δημιουργών για δικαιούχο που δεν είναι συνδεδεμένος με κανέναν συνεργάτη εδώ:",
+      "pf.noWrite": "Το {shop} δεν δέχτηκε το κλειδί συμφωνητικών, οπότε τα αιτήματα δημιουργών δεν σημειώθηκαν. Άλλαξε το κλειδί στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "pf.dlgT": "Απάντηση στον δημιουργό",
+      "pf.dlgHint": "Ο δημιουργός τη διαβάζει στο Author Portal. Αν κλείσεις το παράθυρο, στέλνεται «Έγινε» με την απάντηση που βλέπεις.",
+      "pf.result": "Αποτέλεσμα",
+      "pf.done": "Έγινε",
+      "pf.declined": "Απορρίφθηκε",
+      "pf.reply": "Απάντηση (έως 500 χαρακτήρες)",
+      "pf.later": "Αργότερα",
+      "pf.send": "Αποστολή",
+      "pf.defBio": "Η σελίδα σου ενημερώθηκε. Ευχαριστούμε!",
+      "pf.defCopies": "Τα αντίτυπά σου ετοιμάζονται και έρχονται.",
+      "pf.ansDone": "Απάντηση στο Author Portal (έγινε):",
+      "pf.ansDecl": "Απάντηση στο Author Portal (απορρίφθηκε):",
+      "pf.view": "Δες το αίτημα",
+      "pf.viewT": "Αίτημα από το Author Portal",
+      "pf.loading": "Διαβάζω το αίτημα από το κατάστημα…",
+      "pf.gone": "Το αίτημα δεν διαβάστηκε από το κατάστημα (χωρίς σύνδεση, χωρίς κλειδί συμφωνητικών ή Revenue Splitter πριν το 1.18).",
+      "pf.new": "Νέο κείμενο",
+      "pf.was": "Κείμενο της σελίδας τώρα",
+      "pf.copy": "Αντιγραφή",
+      "pf.copied": "Αντιγράφηκε",
+      "pf.closed.done": "Έκλεισε ως «έγινε»",
+      "pf.closed.declined": "Έκλεισε ως «απορρίφθηκε»",
+      "pf.bioFile": "Αίτημα κειμένου σελίδας {d}.txt",
+      "pd.open": "Στάδιο παραγωγής…",
+      "pd.title": "Στάδιο παραγωγής στο Author Portal",
+      "pd.hint": "Το Revenue Splitter (1.18.0 ή νεότερο) δείχνει σε κάθε δημιουργό σε ποιο στάδιο είναι το έργο του. Στέλνονται μόνο οι κάρτες που τσεκάρεις, με τη φάση τους, την ημερομηνία κυκλοφορίας από το Publishing και το κείμενο μετά τη γραμμή «Για τον δημιουργό:» στην περιγραφή της κάρτας. Τίποτε άλλο από την κάρτα.",
+      "pd.board": "Πίνακας Kanban",
+      "pd.off": "Ανενεργό",
+      "pd.offHint": "Διάλεξε τον πίνακα του οποίου οι στήλες είναι τα στάδια παραγωγής.",
+      "pd.noBoard": "Αυτός ο πίνακας δεν υπάρχει σε αυτή τη συσκευή (μετονομάστηκε ή αρχειοθετήθηκε;).",
+      "pd.n": "{n} γραμμές πηγαίνουν στο site ({c} κάρτες τσεκαρισμένες).",
+      "pd.phase": "Φάση {n}",
+      "pd.noPhase": "χωρίς φάση ακόμα",
+      "pd.inherit": "Όπως η προηγούμενη στήλη",
+      "pd.map": "Στήλες και φάσεις",
+      "pd.ph1": "Αξιολόγηση και συμφωνία",
+      "pd.ph2": "Επιμέλεια",
+      "pd.ph3": "Εικονογράφηση και εξώφυλλο",
+      "pd.ph4": "Σελιδοποίηση",
+      "pd.ph5": "Διορθώσεις και τελικός έλεγχος",
+      "pd.ph6": "Παραγωγή και τύπωμα",
+      "pd.ph7": "Κυκλοφορία",
+      "pd.left": "Τσεκαρισμένες κάρτες που δεν στέλνονται:",
+      "pd.why.noben": "δεν έχει συνδεδεμένο δημιουργό (σύνδεσε την κάρτα στα «Κάρτες, σημειώσεις και αρχεία» του συνεργάτη ή τον συγγραφέα του τίτλου στο Publishing, και τον συνεργάτη με το Revenue Splitter)",
+      "pd.why.badid": "το id της κάρτας δεν μπορεί να σταλεί",
+      "pd.why.notitle": "η κάρτα δεν έχει τίτλο",
+      "pd.why.old": "κυκλοφόρησε πριν από πάνω από 30 ημέρες",
+      "pd.why.max": "πάνω από 500 γραμμές",
+      "pd.send": "Αποστολή τώρα ({n})",
+      "pd.done": "Το site αποθήκευσε {n} γραμμές στις {time}.",
+      "pd.old": "Το {shop} δεν δέχεται ακόμα το στάδιο παραγωγής: χρειάζεται Revenue Splitter 1.18.0 ή νεότερο.",
+      "pd.autoSkip": "Το {shop} παρέλειψε {n} γραμμές παραγωγής (CRM › Λήξεις › Στάδιο παραγωγής…).",
+      "pd.autoFail": "Το στάδιο παραγωγής δεν στάλθηκε στο {shop}.",
       "cx.set": "Συμφωνητικά", "cx.lbl": "Ετικέτα Ημερολογίου για τις λήξεις", "cx.lbl.own": "CRM (δική του ετικέτα)", "cx.kb": "Πίνακας Kanban για κάρτες συμφωνητικών", "cx.kbPh": "Ο πίνακας που είναι ανοιχτός",
       "toast.ctrDel": "Το συμφωνητικό διαγράφηκε", "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "toast.fileSaved": "Αποθηκεύτηκε στα Αρχεία: {p}", "toast.fileBig": "Έως 20 MB ανά αρχείο.",
       "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
-      "docs.inv": "Τιμολόγια", "docs.quote": "Προσφορές", "docs.allInv": "Όλα στα Τιμολόγια",
+      "docs.inv": "Τιμολόγια", "docs.quote": "Προσφορές", "docs.allInv": "Όλα στην Τιμολόγηση",
       "docs.invNone": "Δεν υπάρχουν τιμολόγια ακόμη. Όσα εκδίδεις με το κουμπί Τιμολόγιο εμφανίζονται εδώ.",
       "docs.quoteNone": "Δεν υπάρχουν προσφορές ακόμη. Εδώ εμφανίζονται οι προσφορές σε πελάτη με αυτό το όνομα ή ΑΦΜ.",
       "docs.tot": "Τιμολογήθηκαν {i} · εισπράχθηκαν {p}", "docs.open": "ανεξόφλητα {v}", "docs.overdue": "ληξιπρόθεσμα {v}",
@@ -476,7 +608,7 @@
       "is.partial": "Μερικώς εξοφλημένο", "is.overdue": "Ληξιπρόθεσμο", "is.unpaid": "Ανεξόφλητο",
       "qs.draft": "Πρόχειρη", "qs.sent": "Απεστάλη", "qs.accepted": "Αποδεκτή", "qs.rejected": "Απορρίφθηκε", "qs.expired": "Έληξε",
       "deal.inv": "Τιμολόγηση της ευκαιρίας", "deal.quote": "Προσφορά για την ευκαιρία",
-      "toast.noInv": "Η εφαρμογή Τιμολόγια δεν είναι διαθέσιμη.", "toast.noQuote": "Η εφαρμογή Προσφορές δεν είναι διαθέσιμη.",
+      "toast.noInv": "Η εφαρμογή Τιμολόγηση δεν είναι διαθέσιμη.", "toast.noQuote": "Οι Προσφορές της Τιμολόγησης δεν είναι διαθέσιμες.",
       "toast.quoteCur": "Οι Προσφορές δουλεύουν σε EUR ή USD. Άλλαξε το νόμισμα στις ρυθμίσεις του CRM ή φτιάξε την προσφορά στις Προσφορές.",
       "set.import": "Εισαγωγή πελατών (CSV)",
       "en.all": "Ενημέρωση πελατών από online πηγές", "en.one": "Ενημέρωση online",
@@ -837,6 +969,8 @@
     var cur = C.byId(data.fups, f.id);
     if (!cur || cur.done) return;
     upsert("fups", Object.assign({}, cur, { done: todayYmd() }));
+    // RS-PF: a creator's request asks what to answer them
+    if (window.OrosCrmRs && window.OrosCrmRs.pfKind(cur.id) === "fup") { pfAnswer(cur.id); return; }
     actionToast(t("toast.done", { text: cur.text }), t("toast.logIt"), function () {
       logEditor(null, cur.cust, { text: cur.text, deal: cur.deal || "" });
     }, function () {
@@ -1680,6 +1814,12 @@
     row.appendChild(m);
     return row;
   }
+  function prodBtn() {
+    var pr = el("button", "link-btn", t("pd.open"));
+    pr.type = "button";
+    pr.addEventListener("click", prodDialog);
+    return pr;
+  }
   // The Contracts tab: every contract, those that need a decision first
   function renderCtrs() {
     var box = $("view-ctr");
@@ -1689,6 +1829,12 @@
       var e = el("div", "empty");
       e.appendChild(el("p", "", t("cx.emptyAll")));
       box.appendChild(e);
+      // The production stage needs no contract: keep its button reachable
+      if (shops().length && window.OrosCrmProd) {
+        var ec = el("div", "chips");
+        ec.appendChild(prodBtn());
+        box.appendChild(ec);
+      }
       return;
     }
     var chips = el("div", "chips");
@@ -1706,6 +1852,7 @@
       send.type = "button";
       send.addEventListener("click", portalDialog);
       chips.appendChild(send);
+      if (window.OrosCrmProd) chips.appendChild(prodBtn());
     }
     box.appendChild(chips);
     var list = prefs.cf === "all" ? all : C.ctrAll(data, today, prefs.cf);
@@ -1957,10 +2104,11 @@
     (data.rsl || []).forEach(function (r) { if (r.n && C.byId(data.cust, r.id)) ids[r.a || first] = 1; });
     return list.filter(function (a) { return ids[a.id]; });
   }
-  function hasWriteKey(shop) {
+  // RS-CTR: the contracts routes take only the shop's contracts key
+  function hasRsKey(shop) {
     var L = shopLinks();
-    if (!L || typeof L.hasWriteKeys !== "function") return Promise.resolve(false);
-    return Promise.resolve(L.hasWriteKeys(shop.id)).catch(function () { return false; });
+    if (!L || typeof L.hasRsKey !== "function") return Promise.resolve(false);
+    return Promise.resolve(L.hasRsKey(shop.id)).catch(function () { return false; });
   }
   function shopPlan(shop) { return C.portalPlan(data, todayYmd(), shop.id, firstShop()); }
   function pushCtr(shop) {
@@ -1985,10 +2133,10 @@
   function rcErrText(code, shop) {
     var name = shop.name || shop.site;
     if (code === "old") return t("cx.portalOld", { shop: name });
-    if (code === "auth" || code === "offline" || code === "keys" || code === "big") return t("rc.err." + code, { shop: name });
+    if (code === "auth" || code === "offline" || code === "keys" || code === "big" || code === "rskey" || code === "busy") return t("rc.err." + code, { shop: name });
     return t("rc.err.other", { shop: name });
   }
-  // after every commit: a shop with a write key gets its list again
+  // after every commit: a shop with a contracts key gets its list again
   // when it differs from what this page last sent there
   function ctrChanged() {
     if (!window.OrosCrmRs || !shopLinks()) return;
@@ -1997,7 +2145,7 @@
       rsShops().reduce(function (p, shop) {
         return p.then(function () {
           if (rcSent[shop.id] === JSON.stringify(shopPlan(shop).body.contracts)) return false;
-          return hasWriteKey(shop);
+          return hasRsKey(shop);
         }).then(function (wk) {
           if (!wk) return;
           return pushCtr(shop).then(function (r) {
@@ -2035,7 +2183,7 @@
       x.left.forEach(function (l) { line(t("rc.left." + l.why, { t: ctrLabel(l.id) }), "late"); });
       var wkLine = el("p", "hint", "");
       body.appendChild(wkLine);
-      hasWriteKey(shop).then(function (wk) {
+      hasRsKey(shop).then(function (wk) {
         if (wkLine.isConnected) wkLine.textContent = t(wk ? "rc.wkOn" : "rc.wkOff", { shop: shop.name || shop.site });
       });
       var last = rcLast[shop.id];
@@ -2053,6 +2201,12 @@
         left.slice(0, 20).forEach(function (q) { line([q.ben, q.title].filter(Boolean).join(" · ")); });
       }
       if (rqNoWrite[shop.id]) line(t("rq.noWrite", { shop: shop.name || shop.site }), "late");
+      var pl = pfLeft[shop.id] || [];
+      if (pl.length) {
+        line(t("pf.left"), "late");
+        pl.slice(0, 20).forEach(function (q) { line([q.ben, q.type === "copies" ? q.title : ""].filter(Boolean).join(" · ")); });
+      }
+      if (pfNoWrite[shop.id]) line(t("pf.noWrite", { shop: shop.name || shop.site }), "late");
       if (send) send.textContent = t("cx.portalSend", { n: x.body.contracts.length });
     }
     if (shopSel) shopSel.addEventListener("change", function () { shop = rsShop({ a: shopSel.value }, list); draw(); });
@@ -2086,11 +2240,22 @@
     rqAt = Date.now();
     list.reduce(function (p, shop) {
       return p.then(function () { return pullShop(shop); }).catch(function () {});
-    }, Promise.resolve()).then(function () { rqBusy = false; });
+    }, Promise.resolve()).then(function () { rqBusy = false; prodChanged(true); });
   }
   function pullShop(shop) {
     var RS = window.OrosCrmRs, L = shopLinks();
-    return Promise.resolve(L.call(shop.id, [RS.REQ_RQ_NEW, RS.REQ_RQ_OROS])).then(function (res) {
+    return hasRsKey(shop).then(function (k) {
+      // no contracts key: nothing to pull. RS-PF (1.18.0): the creator
+      // requests come in the same call (an older shop answers them 404)
+      return k ? L.call(shop.id, [RS.REQ_RQ_NEW, RS.REQ_RQ_OROS, RS.REQ_PF_NEW, RS.REQ_PF_OROS]) : null;
+    }).then(function (res) {
+      if (!res) return;
+      return pullContracts(shop, res).then(function () { return pullProfile(shop, res.slice(2)); });
+    });
+  }
+  function pullContracts(shop, res) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    return Promise.resolve().then(function () {
       var fresh = res && res[0] && !L.statusCode(res[0]) ? RS.parseRequests(res[0].data) : null;
       var taken = res && res[1] && !L.statusCode(res[1]) ? RS.parseRequests(res[1].data) : null;
       if (!fresh && !taken) return;              // an older Revenue Splitter: nothing to pull
@@ -2114,6 +2279,108 @@
       return markRequests(shop, marks);
     });
   }
+  // RS-PF: the Author Portal's page and author-copy requests. Each new one
+  // becomes a follow-up for today and a note on the partner's card,
+  // committed BEFORE the shop is told ("oros"); the page text also goes
+  // to the partner's folder when the orOS disk is there. A taken request
+  // whose answer is in CRM (pfOutcome) is closed with the reply.
+  var pfLeft = {}, pfNoWrite = {};
+  function pfDefReply(q) { return t(q && q.type === "copies" ? "pf.defCopies" : "pf.defBio"); }
+  function pfWords() {
+    return { bio: t("pf.actBio"), copies: t("pf.actCopies"), links: t("pf.links"), photo: t("pf.photo"), note: t("pf.note") };
+  }
+  function pfFupText(q, cust) {
+    return q.type === "copies" ? t("pf.fupCopies", { q: q.qty || 0, t: q.title || ("#" + (q.pid || 0)) }) : t("pf.fupBio", { n: C.custName(cust) });
+  }
+  function pullProfile(shop, res) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    var fresh = res && res[0] && !L.statusCode(res[0]) ? RS.parsePfRequests(res[0].data) : null;
+    var taken = res && res[1] && !L.statusCode(res[1]) ? RS.parsePfRequests(res[1].data) : null;
+    if (!fresh && !taken) return Promise.resolve();   // Revenue Splitter before 1.18.0
+    var marks = [], files = [];
+    if (fresh) {
+      var x = RS.pfImportPlan(data, shop.id, firstShop(), fresh), added = 0, today = todayYmd(), words = pfWords();
+      x.plan.forEach(function (it) {
+        if (it.have) return;
+        putRow("fups", { id: it.ids.fup, cust: it.cust.id, d: today, text: C.cleanText(pfFupText(it.req, it.cust), 300) });
+        putRow("acts", { id: it.ids.act, cust: it.cust.id, k: "note", at: it.req.at || Date.now(), who: it.req.ben,
+                         text: C.cleanText(RS.pfActText(it.req, words), 2000, true) });
+        if (it.req.type === "bio") files.push(it);
+        added++;
+      });
+      if (added && !commit()) return Promise.resolve();   // nothing is marked: the next pull tries again
+      if (added) showToast(t("pf.toast", { n: added }));
+      x.plan.forEach(function (it) { marks.push({ id: it.req.id, state: "oros" }); });
+      pfLeft[shop.id] = x.left;
+    }
+    if (taken) marks = marks.concat(RS.pfCloseList(data, shop.id, taken, pfDefReply));
+    return pfFiles(files, shop).then(function () { return markProfile(shop, marks); });
+  }
+  // the page text of each new bio request as a text file in the partner's
+  // folder (best effort: without the orOS disk the note and "See the
+  // request" still have it)
+  // RS-PF W2: the creator's photo → { blob, type } | { err } (never throws)
+  function pfPhoto(shop, id) {
+    var RS = window.OrosCrmRs, L = shopLinks(), r = RS && RS.reqPfPhoto ? RS.reqPfPhoto(id) : null;
+    if (!L || !r) return Promise.resolve({ err: "none" });
+    return Promise.resolve(L.call(shop.id, [r])).then(function (res) {
+      var x = res && res[0];
+      if (x && x.blob && /^image\/(jpeg|png|webp)$/.test(x.type)) return { blob: x.blob, type: x.type };
+      return { err: x && (x.err === "photo-big" || x.err === "big") ? "big" : (x && x.err === "photo-type" ? "bad" : "none") };
+    }, function (e) { return { err: e && e.code === "big" ? "big" : "none" }; });
+  }
+  var PHOTO_EXT = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp" };
+  function pfSavePhoto(fs, cust, at, ph) {
+    var dir = folderOf(cust), day = C.ymdOf ? C.ymdOf(at || Date.now()) : todayYmd();
+    return Promise.resolve(fs.stat(dir)).catch(function () { return null; }).then(function (st) {
+      return st ? null : Promise.resolve(fs.mkdir("/internal/CRM")).catch(function () {}).then(function () { return fs.mkdir(dir); });
+    }).then(function () {
+      return freePath(fs, dir, fileName({ name: t("pf.photoFile", { d: day }) }) + PHOTO_EXT[ph.type]);
+    }).then(function (path) { return fs.write(path, ph.blob); });
+  }
+  function pfFiles(list, shop) {
+    var fs = diskApi();
+    if (!fs || !list.length) return Promise.resolve();
+    return list.reduce(function (p, it) {
+      return p.then(function () {
+        var q = it.req, dir = folderOf(it.cust), day = C.ymdOf ? C.ymdOf(q.at || Date.now()) : todayYmd();
+        var body = [t("pf.fupBio", { n: C.custName(it.cust) }), "", t("pf.new") + ":", q.bio || "", "", t("pf.was") + ":", q.was || ""];
+        if (q.links && q.links.length) body.push("", t("pf.links"), q.links.join("\n"));
+        if (q.note) body.push("", t("pf.note") + " " + q.note);
+        return Promise.resolve(fs.stat(dir)).catch(function () { return null; }).then(function (st) {
+          return st ? null : Promise.resolve(fs.mkdir("/internal/CRM")).catch(function () {}).then(function () { return fs.mkdir(dir); });
+        }).then(function () {
+          return freePath(fs, dir, fileName({ name: t("pf.bioFile", { d: day }) }));
+        }).then(function (path) {
+          return fs.write(path, new Blob([body.join("\n") + "\n"], { type: "text/plain" }));
+        }).then(function () {
+          // the photo too, when it came and can be read (best effort)
+          if (!q.photo || !shop) return;
+          return pfPhoto(shop, q.id).then(function (ph) { if (ph.blob) return pfSavePhoto(fs, it.cust, q.at, ph); });
+        });
+      }).catch(function () {});
+    }, Promise.resolve());
+  }
+  function markProfile(shop, marks) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    if (!marks.length || pfNoWrite[shop.id]) return Promise.resolve();
+    var chunks = [];
+    for (var i = 0; i < marks.length; i += 10) chunks.push(marks.slice(i, i + 10));
+    return chunks.reduce(function (p, ch) {
+      return p.then(function (go) {
+        if (!go) return false;
+        return Promise.resolve(L.call(shop.id, ch.map(function (m) { return RS.reqPfMark(m.id, m.state, m.reply); }))).then(function (res) {
+          // 409: already closed on the site, 404: gone there (both: nothing more to send)
+          if ((res || []).some(function (r) { return L.statusCode(r) === "auth"; })) {
+            pfNoWrite[shop.id] = true;
+            showToast(t("pf.noWrite", { shop: shop.name || shop.site }));
+            return false;
+          }
+          return true;
+        });
+      });
+    }, Promise.resolve(true));
+  }
   function markRequests(shop, marks) {
     var RS = window.OrosCrmRs, L = shopLinks();
     if (!marks.length || rqNoWrite[shop.id]) return Promise.resolve();
@@ -2132,6 +2399,305 @@
         });
       });
     }, Promise.resolve(true));
+  }
+  // ----- Production stage in the Author Portal (RS-PROD, Revenue Splitter 1.18.0) -----
+  // The chosen cards of a Kanban board (Settings: cset.pb board name,
+  // cset.pm column → phase over the built-in map, cset.pc the cards), with
+  // their phase, the release day from Publishing and the note for the
+  // creator (crm/prod.js). The whole list goes to every shop with a
+  // contracts key and linked partners when it differs from the one this
+  // device sent last (on boot, every ten minutes, a few seconds after the
+  // board, Publishing or the choice changes), and by "Send now".
+  var KANBAN_KEY = "oros-kanban-data", PD_SENT_KEY = "oros-crm-prod-sent", PD_WAIT = 4000;
+  var pdTimer = null, pdLast = {}, pdErr = {};
+  function kanbanData() { return readForeign(KANBAN_KEY, function (raw) { return JSON.parse(raw); }); }
+  function pdSent() { try { var j = JSON.parse(localStorage.getItem(PD_SENT_KEY) || "{}"); return j && typeof j === "object" ? j : {}; } catch (e) { return {}; } }
+  function pdSaveSent(shopId, json) {
+    var all = pdSent();
+    all[shopId] = json;
+    try { localStorage.setItem(PD_SENT_KEY, JSON.stringify(all)); } catch (e) {}
+  }
+  function pdPlan(shop) {
+    var P = window.OrosCrmProd, cs = data.cset || {};
+    var pub = null;
+    try { pub = JSON.parse(localStorage.getItem(PUB_KEY) || "null"); } catch (e) { pub = null; }
+    return P.plan({ kanban: kanbanData(), crm: data, publish: pub, board: cs.pb || "", map: cs.pm || null, chosen: cs.pc || [],
+                    shopId: shop ? shop.id : "", firstShopId: firstShop(), today: todayYmd() });
+  }
+  function pushProd(shop) {
+    var P = window.OrosCrmProd, L = shopLinks();
+    if (!P || !L) return Promise.reject(rsErr("other"));
+    var x = pdPlan(shop), sent = JSON.stringify(x.body.works);
+    return Promise.resolve(L.call(shop.id, [P.req(x.body)])).then(function (res) {
+      var r = res && res[0], code = L.statusCode(r);
+      if (code) throw rsErr(code === "notfound" ? "old" : code);
+      var got = P.parseSaved(r.data);
+      if (!got) throw rsErr("old");
+      var out = { saved: got.saved, skipped: got.skipped, n: x.body.works.length, at: Date.now() };
+      pdLast[shop.id] = out;
+      delete pdErr[shop.id];
+      pdSaveSent(shop.id, sent);
+      return out;
+    }).catch(function (e) {
+      pdErr[shop.id] = (e && e.code) || "other";
+      throw e;
+    });
+  }
+  // on its own: only with a board set, a contracts key, and a list that
+  // differs from the last one this device sent there
+  function prodChanged(now) {
+    if (!window.OrosCrmProd || !shopLinks() || !(data.cset && data.cset.pb)) return;
+    clearTimeout(pdTimer);
+    pdTimer = setTimeout(function () {
+      var sent = pdSent();
+      rsShops().reduce(function (p, shop) {
+        return p.then(function () {
+          if (sent[shop.id] === JSON.stringify(pdPlan(shop).body.works)) return false;
+          return hasRsKey(shop);
+        }).then(function (k) {
+          if (!k) return;
+          return pushProd(shop).then(function (r) {
+            if (r.skipped.length) showToast(t("pd.autoSkip", { shop: shop.name || shop.site, n: r.skipped.length }));
+          }, function (e) {
+            if (!(e && (e.code === "offline" || e.code === "old"))) showToast(t("pd.autoFail", { shop: shop.name || shop.site }));
+          });
+        });
+      }, Promise.resolve()).catch(function () {});
+    }, now ? 0 : PD_WAIT);
+  }
+  function pdSaveSet(patch) {
+    var cur = data.cset || {}, next = C.normCset(Object.assign({}, cur, patch, { m: 1 }));
+    var was = C.normCset(Object.assign({}, cur, { m: 1 }));
+    if (was && JSON.stringify(next) === JSON.stringify(was)) return;
+    next.m = stamp(data.cset || null);
+    data.cset = next;
+    commit();
+    prodChanged();
+  }
+  function prodDialog() {
+    var P = window.OrosCrmProd;
+    if (!P) return;
+    var dlg = makeDialog("crm-prod", true);
+    dlg.appendChild(el("h2", "dlg-title", t("pd.title")));
+    dlg.appendChild(el("p", "hint", t("pd.hint")));
+    var kb = kanbanData(), boards = (kb && Array.isArray(kb.boards) ? kb.boards : []).filter(function (b) { return b && !b.archived && !/^tpl-/.test(b.id || ""); });
+    var cs = data.cset || {};
+    var opts = [["", t("pd.off")]].concat(boards.map(function (b) { return [String(b.name || ""), String(b.name || "").slice(0, 60)]; }));
+    if (cs.pb && !boards.some(function (b) { return b.name === cs.pb; })) opts.push([cs.pb, cs.pb]);
+    var boardSel = field(dlg, t("pd.board"), selectEl(opts, cs.pb || ""));
+    var body = el("div", "");
+    dlg.appendChild(body);
+    var send = null;
+    function shopOf() { return rsShops()[0] || shops()[0] || null; }
+    function draw() {
+      body.innerHTML = "";
+      cs = data.cset || {};
+      var board = P.boardByName(kanbanData(), cs.pb || "");
+      if (!board) { body.appendChild(el("p", "hint", t(cs.pb ? "pd.noBoard" : "pd.offHint"))); if (send) send.disabled = true; return; }
+      var phases = P.columnPhases(board, cs.pm || null), chosen = {};
+      (cs.pc || []).forEach(function (id) { chosen[id] = 1; });
+      var shop = shopOf(), x = shop ? pdPlan(shop) : null;
+      body.appendChild(el("p", "hint", t("pd.n", { n: x ? x.body.works.length : 0, c: (cs.pc || []).length })));
+      // the cards, column by column, with a tick each
+      var list = el("div", "pd-list");
+      (board.columns || []).forEach(function (col, ci) {
+        var cards = Array.isArray(col && col.cards) ? col.cards : [];
+        if (!cards.length) return;
+        var ph = phases[ci] ? phases[ci].phase : 0;
+        list.appendChild(el("h3", "dlg-lbl", String(col.name || "") + " · " + (ph ? t("pd.phase", { n: ph }) : t("pd.noPhase"))));
+        cards.forEach(function (card) {
+          if (!card || typeof card.id !== "string") return;
+          var row = el("label", "check-row");
+          var cb = el("input");
+          cb.type = "checkbox";
+          cb.checked = !!chosen[card.id];
+          cb.disabled = !ph;
+          cb.addEventListener("change", function () {
+            var pc = (data.cset && data.cset.pc ? data.cset.pc : []).filter(function (id) { return id !== card.id; });
+            if (cb.checked) pc.push(card.id);
+            pdSaveSet({ pc: pc });
+            draw();
+          });
+          row.appendChild(cb);
+          row.appendChild(el("span", "", String(card.text || "").slice(0, 120)));
+          list.appendChild(row);
+        });
+      });
+      body.appendChild(list);
+      if (x && x.left.length) {
+        body.appendChild(el("p", "hint late", t("pd.left")));
+        x.left.slice(0, 30).forEach(function (l) { body.appendChild(el("p", "hint late", (l.t || l.card) + " · " + t("pd.why." + l.why))); });
+      }
+      // the column → phase table
+      var det = el("details", "");
+      det.appendChild(el("summary", "", t("pd.map")));
+      var seen = {};
+      phases.forEach(function (c) {
+        var k = P.fold(c.name);
+        if (!k || seen[k]) return;
+        seen[k] = 1;
+        var sel = selectEl([["-1", t("pd.inherit")]].concat([1, 2, 3, 4, 5, 6, 7].map(function (n) { return [String(n), t("pd.phase", { n: n }) + " · " + t("pd.ph" + n)]; })),
+                           String(c.own >= 1 ? c.own : -1));
+        sel.addEventListener("change", function () {
+          var pm = Object.assign({}, (data.cset && data.cset.pm) || {});
+          var v = +sel.value, def = P.DEFAULT_MAP[k];
+          if ((v === -1 && def === undefined) || v === def) delete pm[k];
+          else pm[k] = v === -1 ? 0 : v;
+          pdSaveSet({ pm: pm });
+          draw();
+        });
+        field(det, c.name, sel);
+      });
+      body.appendChild(det);
+      if (shop) {
+        var last = pdLast[shop.id];
+        if (pdErr[shop.id]) body.appendChild(el("p", "hint late", pdErr[shop.id] === "old" ? t("pd.old", { shop: shop.name || shop.site }) : rcErrText(pdErr[shop.id], shop)));
+        else if (last) {
+          body.appendChild(el("p", "hint", t("pd.done", { n: last.saved, time: new Date(last.at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", hour12: false }) })));
+          last.skipped.forEach(function (k) { body.appendChild(el("p", "hint late", k.id + " · " + k.why)); });
+        }
+      }
+      if (send) { send.disabled = !shop || !x; send.textContent = t("pd.send", { n: x ? x.body.works.length : 0 }); }
+    }
+    boardSel.addEventListener("change", function () { pdSaveSet({ pb: boardSel.value }); draw(); });
+    var acts = el("div", "dlg-actions"), busy = false;
+    acts.appendChild(button(t("ed.close"), "", function () { dlg.close(); }));
+    send = button(t("pd.send", { n: 0 }), "primary", function () {
+      var shop = shopOf();
+      if (busy || !shop) return;
+      busy = true;
+      send.disabled = true;
+      send.textContent = t("rc.sending");
+      hasRsKey(shop).then(function (k) {
+        if (!k) { pdErr[shop.id] = "rskey"; return; }
+        return pushProd(shop).catch(function () {});
+      }).then(function () { busy = false; if (dlg.isConnected) draw(); });
+    });
+    acts.appendChild(send);
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    draw();
+  }
+  // RS-PF: the answer the creator reads in the Author Portal. Kept as a
+  // CRM note (ids from the follow-up's id), sent on the next pull.
+  function pfAnswered(ids) { return !!(C.byId(data.acts, ids.done) || C.byId(data.acts, ids.decl)); }
+  function pfAnswer(fupId) {
+    var RS = window.OrosCrmRs, ids = RS && RS.pfIdsOf(fupId), f = C.byId(data.fups, fupId);
+    if (!ids || !f || pfAnswered(ids)) return;
+    var dlg = makeDialog("crm-pf-answer");
+    dlg.appendChild(el("h2", "dlg-title", t("pf.dlgT")));
+    dlg.appendChild(el("p", "hint", f.text));
+    var st = seg([["done", t("pf.done")], ["declined", t("pf.declined")]], "done");
+    dlg.appendChild(el("span", "dlg-lbl", t("pf.result")));
+    dlg.appendChild(st);
+    var reply = field(dlg, t("pf.reply"), area(t(ids.type === "copies" ? "pf.defCopies" : "pf.defBio"), 500));
+    reply.rows = 4;
+    dlg.appendChild(el("p", "hint", t("pf.dlgHint")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("pf.later"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("pf.send"), "primary", function () {
+      var done = st.value() === "done", r = RS.pfReply(reply.value);
+      dlg.close();
+      var head = t(done ? "pf.ansDone" : "pf.ansDecl");
+      putRow("acts", { id: done ? ids.done : ids.decl, cust: f.cust, k: "note", at: Date.now(),
+                       text: C.cleanText(head + (r ? "\n" + r : ""), 2000, true) });
+      if (commit()) render();
+    }));
+    dlg.appendChild(acts);
+    // closed without Send: the follow-up is done, so "done" goes with the
+    // default reply on the pull right after
+    dlg.addEventListener("close", function () { setTimeout(function () { pullRequests(true); }, 500); });
+    showDialog(dlg);
+    reply.focus();
+  }
+  // RS-PF: the request itself, read from the shop (the whole page text,
+  // the text on the page now, links, the copies asked for)
+  function pfView(fupId) {
+    var RS = window.OrosCrmRs, L = shopLinks();
+    if (!RS || !L) return;
+    var dlg = makeDialog("crm-pf-view", true);
+    dlg.appendChild(el("h2", "dlg-title", t("pf.viewT")));
+    var body = el("div", "");
+    body.appendChild(el("p", "hint", t("pf.loading")));
+    dlg.appendChild(body);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    function copyBtn(get) {
+      return button(t("pf.copy"), "", function () {
+        try { navigator.clipboard.writeText(get()).then(function () { showToast(t("pf.copied")); }, function () {}); } catch (e) {}
+      });
+    }
+    function textBlock(label, value) {
+      var a = field(body, label, area(value || "", 5000));
+      a.readOnly = true;
+      a.rows = 8;
+      body.appendChild(copyBtn(function () { return a.value; }));
+    }
+    // the photo only ever as a blob URL in an <img> (JPEG, PNG, WebP by its bytes)
+    var photoUrl = "";
+    dlg.addEventListener("close", function () { if (photoUrl) { try { URL.revokeObjectURL(photoUrl); } catch (e) {} photoUrl = ""; } });
+    function photoBlock(q) {
+      var box = el("div", "");
+      box.appendChild(el("p", "hint", t("pf.photo")));
+      body.appendChild(box);
+      if (!foundShop) return;
+      pfPhoto(foundShop, q.id).then(function (ph) {
+        if (!dlg.isConnected) return;
+        if (!ph.blob) { box.appendChild(el("p", "hint late", t(ph.err === "big" ? "pf.photoBig" : ph.err === "bad" ? "pf.photoBad" : "pf.photoNone"))); return; }
+        photoUrl = URL.createObjectURL(ph.blob);
+        var img = el("img", "pf-photo");
+        img.src = photoUrl;
+        img.alt = t("pf.photoAlt");
+        box.appendChild(img);
+        var fs = diskApi(), f = foundFup && C.byId(data.fups, foundFup), cust = f && C.byId(data.cust, f.cust);
+        if (fs && cust) {
+          box.appendChild(button(t("pf.photoSave"), "", function () {
+            pfSavePhoto(fs, cust, q.at, ph).then(function () { showToast(t("pf.photoSaved")); }, function () { showToast(t("pf.photoNone")); });
+          }));
+        }
+      });
+    }
+    function show(q) {
+      body.innerHTML = "";
+      if (!q) { body.appendChild(el("p", "hint late", t("pf.gone"))); return; }
+      if (q.ben) body.appendChild(el("p", "hint", q.ben + (q.at ? " · " + new Date(q.at).toLocaleDateString(LOCALE) : "")));
+      if (q.type === "bio") {
+        textBlock(t("pf.new"), q.bio);
+        textBlock(t("pf.was"), q.was);
+        if (q.links && q.links.length) {
+          body.appendChild(el("span", "dlg-lbl", t("pf.links")));
+          q.links.forEach(function (u) {
+            var a = el("a", "", u);
+            a.href = u;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            var p = el("p", "");
+            p.appendChild(a);
+            body.appendChild(p);
+          });
+        }
+        if (q.photo) photoBlock(q);
+      } else {
+        body.appendChild(el("p", "", t("pf.actCopies", { q: q.qty || 0, t: q.title || ("#" + (q.pid || 0)) })));
+      }
+      if (q.note) body.appendChild(el("p", "hint", t("pf.note") + " " + q.note));
+      if (q.state === "done" || q.state === "declined") body.appendChild(el("p", "hint", t("pf.closed." + q.state) + (q.reply ? ": " + q.reply : "")));
+    }
+    var found = null, foundShop = null, foundFup = fupId;
+    rsShops().reduce(function (p, shop) {
+      return p.then(function () {
+        if (found) return;
+        return hasRsKey(shop).then(function (k) {
+          if (!k) return;
+          return Promise.resolve(L.call(shop.id, [RS.REQ_PF_ALL])).then(function (res) {
+            var list = res && res[0] && !L.statusCode(res[0]) ? RS.parsePfRequests(res[0].data) : null;
+            (list || []).some(function (q) { if (RS.pfIds(shop.id, q).fup === fupId) { found = q; foundShop = shop; return true; } return false; });
+          });
+        });
+      }).catch(function () {});
+    }, Promise.resolve()).then(function () { if (dlg.isConnected) show(found); });
   }
   // Calendar's own labels, read only (oros-calendar-data), for Settings
   function calLabels() {
@@ -2414,6 +2980,34 @@
   }
 
   // ---------- 6. Customer page ----------
+  // "Send to an app" (shell send/, BR-SEND): the customer's card as
+  // text (facts, people, notes); a prefill for the other app.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function custText(c) {
+    var L = [c.name];
+    var sub = [t("kind." + c.kind), hasRoles(c) ? rolesText(c) : "", c.alias || ""].filter(Boolean).join(" · ");
+    if (sub) L.push(sub);
+    [["afm", c.afm], ["doy", c.doy], ["job", c.job], ["addr", c.addr], ["country", c.country],
+     ["phone", c.phone], ["email", c.email], ["web", c.web]].forEach(function (f) {
+      if (f[1]) L.push(t("fact." + f[0]) + ": " + f[1]);
+    });
+    var ppl = (c.people || []).map(function (p) {
+      var v = personView(p);
+      return "- " + [v.name + (p.role ? " (" + p.role + ")" : ""), v.phone, v.email].filter(Boolean).join(" · ");
+    });
+    if (ppl.length) L.push("", t("sec.people"), ppl.join("\n"));
+    if (c.note) L.push("", t("sec.notes"), c.note);
+    return L.join("\n");
+  }
+  function sendCustomer(c) {
+    var api = sendApi();
+    if (!api || !c) return;
+    api.open({ kind: "text", data: { title: c.name, text: custText(c) } });
+  }
+
   function renderDetail() {
     var box = $("cust-detail");
     box.innerHTML = "";
@@ -2465,6 +3059,7 @@
     if (canInvoice()) acts.appendChild(txtBtn("doc", t("act.inv"), function () { newInvoice(c, null); }));
     if (canQuote()) acts.appendChild(txtBtn("doc", t("act.quote"), function () { newQuote(c, null); }));
     if (c.email || c.phone || c.web) acts.appendChild(txtBtn("", t("en.one"), function () { enrichOpen([c]); }));
+    if (sendApi()) acts.appendChild(txtBtn("", t("act.sendApp"), function () { sendCustomer(c); }));
     box.appendChild(acts);
 
     // details
@@ -2592,7 +3187,11 @@
     box.appendChild(st);
     var pane = el("div", "");
     box.appendChild(pane);
-    if (prefs.sub === "ov") renderOverview(pane, c);
+    if (prefs.sub === "ov") {
+      renderOverview(pane, c);
+      // Files › Documents linked to this customer (DOCS-1 W4, read-only)
+      if (window.OrosDocsLinks) window.OrosDocsLinks.attach(pane, "crm", function (r) { return r && r.cust === c.id; });
+    }
     else if (prefs.sub === "hist") renderHistory(pane, c, custActs);
     else if (prefs.sub === "deals") renderCustDeals(pane, c, custDeals);
     else if (prefs.sub === "docs") renderCustDocs(pane, c, docs);
@@ -3157,6 +3756,7 @@
     item("clock", t("ag.snooze1"), function () { snooze(f, 1); });
     item("clock", t("ag.snooze7"), function () { snooze(f, 7); });
     item("edit", t("ag.edit"), function () { fupEditor(f, f.cust); });
+    if (window.OrosCrmRs && window.OrosCrmRs.pfKind(f.id) === "fup") item("note", t("pf.view"), function () { pfView(f.id); });
     if (c) item("users", c.name, function () { selectCust(c.id); });
     if (canTodo()) item("todo", t("ag.todo"), function () { sendToTodo(f); });
     dlg.appendChild(list);
@@ -3843,6 +4443,13 @@
       doneRow.appendChild(done); doneRow.appendChild(el("span", "", t("ed.fupDone")));
       dlg.appendChild(doneRow);
     }
+    if (f && window.OrosCrmRs && window.OrosCrmRs.pfKind(f.id) === "fup") {
+      var pv = el("button", "link-btn", t("pf.view"));
+      pv.type = "button";
+      pv.style.marginTop = "8px";
+      pv.addEventListener("click", function () { pfView(f.id); });
+      dlg.appendChild(pv);
+    }
     if (f && canTodo()) {
       var td = el("button", "link-btn", t("ag.todo"));
       td.type = "button";
@@ -3860,12 +4467,14 @@
       });
       if (!r.t) delete r.t;
       if (!r.deal) delete r.deal;
+      var nowDone = false;
       if (done) {
-        if (done.checked && !r.done) r.done = todayYmd();
+        if (done.checked && !r.done) { r.done = todayYmd(); nowDone = true; }
         if (!done.checked) delete r.done;
       }
       dlg.close();
       upsert("fups", r);
+      if (nowDone && window.OrosCrmRs && window.OrosCrmRs.pfKind(r.id) === "fup") pfAnswer(r.id);
     }
     actions(dlg, save, f ? function () { dlg.close(); removeRow("fups", f.id); } : null);
     showDialog(dlg);
@@ -4391,6 +5000,21 @@
     return true;
   }
 
+  // BR-EV-2: an Automations step (C.autoLog cleans it): the New history
+  // entry form prefilled with its customer guessed (the person can
+  // change it); nothing is saved before Save.
+  function autoLogTo(raw) {
+    var n = C.autoLog(raw);
+    if (!n) return false;
+    if (needCustomer()) return true;
+    var c = C.autoLogCust(data, n, function (p) { return personView(p).email; });
+    var cid = c ? c.id : (C.byId(data.cust, prefs.sel) ? prefs.sel : data.cust[0].id);
+    prefs.sel = cid; prefs.sub = "hist"; savePrefs();
+    setTab("cust");
+    logEditor(null, cid, { k: n.k, at: Date.now(), text: n.text });
+    return true;
+  }
+
   // Assistant entry card (BR-W8-6): the New customer form prefilled
   // (C.asNewCust clamps it); nothing is saved before Save. An email a
   // customer already has → that customer instead.
@@ -4521,6 +5145,14 @@
     if (x && typeof x === "object" && x.openFile) { if (recFile) recFile.openTarget(x.openFile); return !!recFile; }
     if (!x || typeof x !== "object" || document.querySelector("dialog[open]")) return false;
     var id = function (v) { return typeof v === "string" && C.ID_RE.test(v) ? v : ""; };
+    // "Send to an app" (BR-SEND): { logNote: { text ≤ 2000 } } opens a
+    // new history entry of kind Note with that text; the customer is
+    // picked in the window (the open one first); nothing is saved
+    // before Save.
+    if (x.logNote && typeof x.logNote === "object" && typeof x.logNote.text === "string" && x.logNote.text.trim()) {
+      logEditor(null, prefs.sel || "", { k: "note", text: x.logNote.text.slice(0, 2000) });
+      return true;
+    }
     // Today's "Done" tick: the same code as the Agenda's tick (Undo,
     // "Log it"); a follow-up already done or gone only shows a note.
     if (x.done && typeof x.done === "object") {
@@ -4532,11 +5164,14 @@
       return true;
     }
     if (x.log) return mailToLog(x.log);
+    if (x.autoLog) return autoLogTo(x.autoLog);
     if (x.asNew) return asNewCust(x.asNew);
     // Single app icon shortcut: an empty New customer form.
     if (x.newCust) { setTab("cust"); custEditor(null, {}); return true; }
     // 1.10: { ctr } a contract's quick actions (Publishing, Calendar,
     // Today, Kanban, search), { ctrs: filter } the Contracts tab
+    // RS-PROD: { prod: 1 } the Production stage window (Kanban's chip)
+    if (x.prod) { setTab("ctr"); prodDialog(); return true; }
     if (x.ctrs !== undefined) {
       if (CTR_FILTERS.indexOf(x.ctrs) >= 0) prefs.cf = x.ctrs;
       savePrefs();
@@ -4765,6 +5400,7 @@
     });
     // Contacts edited in another frame/tab: people lines are live
     window.addEventListener("storage", function (e) {
+      if (e.key === KANBAN_KEY || e.key === PUB_KEY) prodChanged();   // RS-PROD: the board or a release day changed
       if (document.querySelector("dialog[open]")) return;
       if ([CONTACTS_KEY, INV_KEY, QUOTE_KEY, STOCK_KEY, TS_KEY, PUB_KEY].indexOf(e.key) >= 0 && prefs.tab === "cust") renderDetail();
       else if (e.key === INV_KEY && prefs.tab === "dash") renderDash();

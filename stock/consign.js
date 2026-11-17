@@ -21,7 +21,7 @@
   var STR = {
     en: {
       "cons.title": "Consignment", "cons.tile": "Consignment", "cons.link": "Consignment…",
-      "cons.hint": "Shops that sell your goods and pay you for what sold. Send stock with a Transfer; when the shop tells you what is left, settle: the difference is recorded as sold and Invoices opens with the lines at the shop's discount.",
+      "cons.hint": "Shops that sell your goods and pay you for what sold. Send stock with a Transfer; when the shop tells you what is left, settle: the difference is recorded as sold and Billing opens with the lines at the shop's discount.",
       "cons.none": "No consignment shops yet. In Settings › Warehouses, add the shop as a warehouse and choose Consignment… next to it.",
       "cons.on": "This warehouse is a shop that sells on consignment",
       "cons.disc": "Shop's discount (%)", "cons.every": "Remind me to settle every (months, 0 = never)",

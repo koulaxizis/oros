@@ -47,6 +47,8 @@
       size: { kind: "doc", args: { pct: { t: "num", lo: 10, hi: 1000, def: 100, req: 1 } } },
       filter: { kind: "doc", args: { flt: { t: "enum", v: FILTERS, def: "none" } } },
       center: { kind: "doc", args: { what: { t: "enum", v: ["text", "all"], def: "text" } } },
+      outlines: { kind: "doc", args: { from: { t: "font" } } },
+      topath: { kind: "doc", args: {} },
       cutout: { kind: "async", args: {} },
       resize: { kind: "async", args: { sizes: { t: "list", min: 1, max: 12, of: { t: "obj", f: {
         w: { t: "num", lo: 1, hi: 20000, req: 1 }, h: { t: "num", lo: 1, hi: 20000, req: 1 },
@@ -98,6 +100,8 @@
       size: "text sizes × pct % (10-1000)",
       filter: "the photo filter of every photo: flt one of " + FILTERS.join("|") + " (none removes it)",
       center: "centre on the page: what text (text boxes) | all (every element)",
+      outlines: "texts in font `from` (\"\" = any font) become shapes with their letters' outlines, as for a logo (no longer editable as text)",
+      topath: "ready-made shapes (star, heart…) get their outline as their own, so their points can be edited (no fields)",
       cutout: "remove the background of every photo, on the device (no fields)",
       resize: "sizes: [{ w, h, u px|mm }] (1-12); copies true = a new design in each size (the next steps work on the copies), false = this design takes the first size",
       export: "download every page: fmt png|jpg (scale 1|2|3) or pdf (dpi 150|300)"
@@ -267,6 +271,7 @@
       "sh.app.atelier": "Atelier", "sh.app.layout": "Layout", "sh.app.photolab": "Photo Lab",
       "sh.op.atelier.text": "Replace text", "sh.op.atelier.color": "Replace colour", "sh.op.atelier.font": "Change font",
       "sh.op.atelier.size": "Resize text", "sh.op.atelier.filter": "Photo filter", "sh.op.atelier.center": "Centre on the page",
+      "sh.op.atelier.outlines": "Text to outlines", "sh.op.atelier.topath": "Shapes to editable outlines",
       "sh.op.atelier.cutout": "Remove photo backgrounds", "sh.op.atelier.resize": "New sizes", "sh.op.atelier.export": "Download",
       "sh.op.layout.text": "Find and replace text", "sh.op.layout.pstyle": "Paragraph style", "sh.op.layout.style": "Change a style", "sh.op.layout.master": "Master on pages",
       "sh.op.layout.margins": "Page margins", "sh.op.layout.preflight": "Preflight check", "sh.op.layout.export": "Export PDF",
@@ -314,6 +319,7 @@
       "sh.app.atelier": "Ατελιέ", "sh.app.layout": "Σελιδοποίηση", "sh.app.photolab": "Εργαστήριο εικόνας",
       "sh.op.atelier.text": "Αντικατάσταση κειμένου", "sh.op.atelier.color": "Αντικατάσταση χρώματος", "sh.op.atelier.font": "Αλλαγή γραμματοσειράς",
       "sh.op.atelier.size": "Μέγεθος κειμένου", "sh.op.atelier.filter": "Φίλτρο φωτογραφιών", "sh.op.atelier.center": "Κεντράρισμα στη σελίδα",
+      "sh.op.atelier.outlines": "Κείμενο σε περιγράμματα", "sh.op.atelier.topath": "Σχήματα σε επεξεργάσιμα περιγράμματα",
       "sh.op.atelier.cutout": "Αφαίρεση φόντου φωτογραφιών", "sh.op.atelier.resize": "Νέα μεγέθη", "sh.op.atelier.export": "Λήψη",
       "sh.op.layout.text": "Εύρεση και αντικατάσταση κειμένου", "sh.op.layout.pstyle": "Στυλ παραγράφου", "sh.op.layout.style": "Αλλαγή στυλ", "sh.op.layout.master": "Master στις σελίδες",
       "sh.op.layout.margins": "Περιθώρια σελίδας", "sh.op.layout.preflight": "Έλεγχος preflight", "sh.op.layout.export": "Εξαγωγή PDF",
@@ -393,6 +399,7 @@
       case "atelier.size": d = st.pct + "%"; break;
       case "atelier.filter": d = u("sh.flt." + st.flt); break;
       case "atelier.center": d = st.what === "all" ? u("sh.whatAll") : u("sh.whatText"); break;
+      case "atelier.outlines": d = fontName(st.from); break;
       case "atelier.resize": d = st.sizes.map(sizeText).join(", ") + " · " + (st.copies ? u("sh.copies") : u("sh.inPlace")); break;
       case "atelier.export": d = st.fmt === "pdf" ? "PDF " + st.dpi + " dpi" : st.fmt.toUpperCase() + " ×" + st.scale; break;
       case "layout.pstyle": d = (st.from || u("sh.anyStyle")) + " → " + st.to; break;

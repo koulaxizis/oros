@@ -101,6 +101,15 @@
     }
     return done;
   }
+  // BR-EV-2 (Automations kanban.done): a "done" column is one whose
+  // arrival rule ticks all subtasks; a board with no such column
+  // counts its last column (of two or more) as done.
+  function isDoneCol(board, colId) {
+    var cols = arr(board && board.columns);
+    var ticked = cols.filter(function (c) { return c && c.auto && c.auto.done; });
+    if (ticked.length) return ticked.some(function (c) { return c.id === colId; });
+    return cols.length > 1 && cols[cols.length - 1].id === colId;
+  }
   function hasRules(col) {
     var a = col && col.auto;
     return !!(a && (a.done || a.today || a.top || a.label));
@@ -225,12 +234,199 @@
     return { from: from, to: to, days: daysBetween(from, to) + 1 };
   }
 
+  // ---------- Gantt (wave G1): spans, workdays, progress ----------
+  function isWeekend(ymd) {
+    var d = parseYmd(ymd);
+    return !!d && (d.getDay() === 0 || d.getDay() === 6);
+  }
+  // The same day when it is a workday, else the next one in direction dir.
+  function nextWorkday(ymd, dir) {
+    var d = ymd, n = 0;
+    while (d && isWeekend(d) && n++ < 3) d = addDays(d, dir < 0 ? -1 : 1);
+    return d;
+  }
+  // Days a span covers, both ends included (workdays only when wd).
+  function spanDays(from, to, wd) {
+    var n = daysBetween(from, to);
+    if (n < 0) { var x = from; from = to; to = x; n = -n; }
+    if (!wd) return n + 1;
+    var c = 0;
+    for (var i = 0; i <= n && i < 4000; i++) if (!isWeekend(addDays(from, i))) c++;
+    return c;
+  }
+  // A card's bar: from..to (YYYY-MM-DD), or null without any date. A
+  // milestone sits on its due date (else its start); a start after the
+  // due date is shown the other way round, never lost.
+  function planSpan(card) {
+    if (!card) return null;
+    var s = YMD.test(card.start || "") ? card.start : null;
+    var d = YMD.test(card.due || "") ? card.due : null;
+    if (!s && !d) return null;
+    var ms = card.ms === 1 || card.ms === true;
+    if (ms) { var at = d || s; return { from: at, to: at, ms: true }; }
+    s = s || d; d = d || s;
+    return s <= d ? { from: s, to: d, ms: false } : { from: d, to: s, ms: false };
+  }
+  // Move a span by delta days. With workdays the start lands on a
+  // workday (in the direction of the move) and the span keeps its
+  // number of workdays, so a week-long job stays a working week.
+  function shiftSpan(from, to, delta, wd) {
+    if (!wd) return { from: addDays(from, delta), to: addDays(to, delta) };
+    var len = Math.max(1, spanDays(from, to, true));
+    var f = nextWorkday(addDays(from, delta), delta < 0 ? -1 : 1);
+    var e = f, k = 1, guard = 0;
+    while (k < len && guard++ < 4000) { e = addDays(e, 1); if (!isWeekend(e)) k++; }
+    return { from: f, to: e };
+  }
+  // Share of done subtasks (0..1), null without subtasks.
+  function progressOf(card) {
+    var subs = arr(card && card.subtasks).filter(function (x) { return x && typeof x === "object"; });
+    if (!subs.length) return null;
+    return subs.filter(function (x) { return x.completed; }).length / subs.length;
+  }
+  // The board's "Only workdays" switch rides on its columns (gw: 1): the
+  // board header keeps no unknown keys in older merges, a column does.
+  function boardWorkdays(board) {
+    return arr(board && board.columns).some(function (c) { return c && c.gw === 1; });
+  }
+
+  // ---------- Gantt (wave G2): finish-to-start dependencies ----------
+  // card.deps = ids of the cards it waits for (same board). Ids of cards
+  // that no longer exist are ignored, never an error.
+  function cardIndex(board) {
+    var m = {};
+    arr(board && board.columns).forEach(function (col, ci) {
+      arr(col && col.cards).forEach(function (c) { if (c && typeof c.id === "string") m[c.id] = { card: c, col: col, colIdx: ci }; });
+    });
+    return m;
+  }
+  function predsOf(card, idx) {
+    return arr(card && card.deps).filter(function (id) { return typeof id === "string" && idx[id] && id !== card.id; });
+  }
+  // Would "card waits for pred" close a loop? True when pred already
+  // waits (directly or through others) for card.
+  function wouldCycle(board, cardId, predId) {
+    if (cardId === predId) return true;
+    var idx = cardIndex(board), seen = {}, stack = [predId], n = 0;
+    while (stack.length && n++ < 20000) {
+      var id = stack.pop();
+      if (id === cardId) return true;
+      if (seen[id] || !idx[id]) continue;
+      seen[id] = true;
+      predsOf(idx[id].card, idx).forEach(function (p) { stack.push(p); });
+    }
+    return false;
+  }
+  // The first day a successor may start after pred ends.
+  function dayAfter(to, wd) {
+    var d = addDays(to, 1);
+    return wd ? nextWorkday(d, 1) : d;
+  }
+  // Dependencies that are not kept: the successor starts on or before
+  // the day its predecessor ends. → [{ from: predId, to: succId }]
+  function brokenDeps(board, wd) {
+    var idx = cardIndex(board), out = [];
+    Object.keys(idx).forEach(function (id) {
+      var c = idx[id].card, sp = planSpan(c);
+      if (!sp) return;
+      predsOf(c, idx).forEach(function (p) {
+        var ps = planSpan(idx[p].card);
+        if (ps && sp.from < dayAfter(ps.to, wd)) out.push({ from: p, to: id });
+      });
+    });
+    return out;
+  }
+  // Every card after the given one (transitively), pushed later just
+  // enough to keep each dependency; never pulled earlier. Each keeps its
+  // length (in workdays with wd). → [{ id, from, to }] in a safe order.
+  function shiftAfter(board, cardId, wd) {
+    var idx = cardIndex(board);
+    var succ = {};
+    Object.keys(idx).forEach(function (id) {
+      predsOf(idx[id].card, idx).forEach(function (p) { (succ[p] = succ[p] || []).push(id); });
+    });
+    // the cards reached from cardId
+    var reach = {}, stack = (succ[cardId] || []).slice(), n = 0;
+    while (stack.length && n++ < 20000) {
+      var id = stack.pop();
+      if (reach[id]) continue;
+      reach[id] = true;
+      (succ[id] || []).forEach(function (x) { stack.push(x); });
+    }
+    // topological order over the reached cards (Kahn; a loop is cut)
+    var spans = {};
+    Object.keys(idx).forEach(function (id) { var sp = planSpan(idx[id].card); if (sp) spans[id] = { from: sp.from, to: sp.to }; });
+    var order = [], indeg = {};
+    Object.keys(reach).forEach(function (id) {
+      indeg[id] = predsOf(idx[id].card, idx).filter(function (p) { return reach[p]; }).length;
+    });
+    var q = Object.keys(indeg).filter(function (id) { return !indeg[id]; }).sort();
+    while (q.length) {
+      var x = q.shift();
+      order.push(x);
+      (succ[x] || []).forEach(function (y) { if (reach[y] && --indeg[y] === 0) q.push(y); });
+    }
+    var out = [];
+    order.forEach(function (id) {
+      var sp = spans[id];
+      if (!sp) return;
+      var need = null;
+      predsOf(idx[id].card, idx).forEach(function (p) {
+        if (!spans[p]) return;
+        var d = dayAfter(spans[p].to, wd);
+        if (!need || d > need) need = d;
+      });
+      if (!need || sp.from >= need) return;
+      var moved = shiftSpan(sp.from, sp.to, daysBetween(sp.from, need), wd);
+      if (moved.from < need) moved = shiftSpan(moved.from, moved.to, daysBetween(moved.from, need), wd);
+      spans[id] = moved;
+      out.push({ id: id, from: moved.from, to: moved.to });
+    });
+    return out;
+  }
+  // Critical path: the cards with no slack before the end of the plan
+  // (the latest due date among the dated cards). Slack = days a card
+  // could end later without moving the end, through its successors.
+  // → { ids: { id: true }, end }
+  function criticalPath(board, wd) {
+    var idx = cardIndex(board), spans = {}, succ = {};
+    Object.keys(idx).forEach(function (id) { var sp = planSpan(idx[id].card); if (sp) spans[id] = sp; });
+    var ids = Object.keys(spans);
+    if (!ids.length) return { ids: {}, end: null };
+    var end = ids.reduce(function (m, id) { return spans[id].to > m ? spans[id].to : m; }, spans[ids[0]].to);
+    ids.forEach(function (id) {
+      predsOf(idx[id].card, idx).forEach(function (p) { if (spans[p]) (succ[p] = succ[p] || []).push(id); });
+    });
+    // latest finish, memoised; a loop counts as no constraint
+    var lf = {}, busy = {};
+    function latest(id) {
+      if (lf[id] !== undefined) return lf[id];
+      if (busy[id]) return end;
+      busy[id] = true;
+      var v = end;
+      (succ[id] || []).forEach(function (s) {
+        // the successor's latest start, minus one day
+        var ls = addDays(latest(s), -(daysBetween(spans[s].from, spans[s].to)));
+        var cand = addDays(ls, -1);
+        if (wd) cand = nextWorkday(cand, -1);
+        if (cand < v) v = cand;
+      });
+      busy[id] = false;
+      lf[id] = v;
+      return v;
+    }
+    var crit = {};
+    ids.forEach(function (id) { if (latest(id) <= spans[id].to) crit[id] = true; });
+    return { ids: crit, end: end };
+  }
+
   // ---------- normalise + re-id (export import, templates, built-ins) ----------
   // src: a board-shaped object from anywhere (our export, a template).
   // opts: { uid, now, name, keepDue, keepAtt, untick, id, archived }
   // fileMap (out): old file name → new file name, for attachments.
   function rebuild(src, opts, fileMap) {
     var uid = opts.uid, now = opts.now;
+    var cardMap = {}, withDeps = [];
     var lblMap = {}, labels = [];
     arr(src && src.labels).slice(0, 200).forEach(function (l) {
       if (!l || typeof l !== "object") return;
@@ -248,6 +444,7 @@
       var nc = { id: uid(), name: str(col.name, MAX.name).trim() || "—", mtime: now, om: now, pos: columns.length, cards: [] };
       var wip = Math.floor(+col.wip);
       if (wip > 0 && wip < 1000) nc.wip = wip;
+      if (col.gw === 1) nc.gw = 1;
       var au = col.auto && typeof col.auto === "object" ? col.auto : null;
       if (au) {
         var na = {};
@@ -274,6 +471,11 @@
         };
         var lane = str(c.lane, MAX.lane).trim();
         if (lane) card.lane = lane;
+        // Gantt (G1): start with the due date, milestone; deps are re-mapped below
+        if (opts.keepDue && YMD.test(c.start || "")) card.start = c.start;
+        if (c.ms === 1 || c.ms === true) card.ms = 1;
+        if (typeof c.id === "string") cardMap[c.id] = card.id;
+        if (Array.isArray(c.deps) && c.deps.length) withDeps.push({ card: card, deps: c.deps });
         var attMap = {};
         if (opts.keepAtt) {
           var att = [];
@@ -296,6 +498,10 @@
         nc.cards.push(card);
       });
       columns.push(nc);
+    });
+    withDeps.forEach(function (w) {
+      var d = M.cleanDeps(w.deps.map(function (id) { return cardMap[id]; }), w.card.id);
+      if (d.length) w.card.deps = d;
     });
     var board = {
       id: opts.id || uid(),
@@ -352,7 +558,9 @@
           subs.length ? subs.filter(function (s) { return s && s.completed; }).length + "/" + subs.length : "",
           c.lane || "",
           arr(c.info).map(function (f) { return [str(f.label), str(f.value)].filter(Boolean).join(": "); }).filter(Boolean).join("; "),
-          arr(c.att).map(function (x) { return x.name; }).join("; ")
+          arr(c.att).map(function (x) { return x.name; }).join("; "),
+          YMD.test(c.start || "") ? c.start : "",
+          c.ms ? "1" : ""
         ].map(csvCell).join(","));
       });
     });
@@ -730,8 +938,11 @@
   var api = {
     ATT_DIR: ATT_DIR, FILE_RE: FILE_RE, ymdOf: ymdOf, addDays: addDays, dueEndMs: dueEndMs, daysBetween: daysBetween,
     attPath: attPath, findCard: findCard,
-    applyArrival: applyArrival, hasRules: hasRules, overdueLabel: overdueLabel, applyOverdue: applyOverdue,
-    laneKey: laneKey, lanes: lanes, setLane: setLane, sortRows: sortRows, timelineRange: timelineRange,
+    applyArrival: applyArrival, isDoneCol: isDoneCol, hasRules: hasRules, overdueLabel: overdueLabel, applyOverdue: applyOverdue,
+    laneKey: laneKey, lanes: lanes,
+    isWeekend: isWeekend, nextWorkday: nextWorkday, spanDays: spanDays, planSpan: planSpan, shiftSpan: shiftSpan,
+    progressOf: progressOf, boardWorkdays: boardWorkdays,
+    wouldCycle: wouldCycle, brokenDeps: brokenDeps, shiftAfter: shiftAfter, criticalPath: criticalPath, dayAfter: dayAfter, setLane: setLane, sortRows: sortRows, timelineRange: timelineRange,
     rebuild: rebuild, counter: counter, exportBoard: exportBoard, isExport: isExport, parseExport: parseExport,
     boardCsv: boardCsv, csvCell: csvCell, packBoard: packBoard, isPackage: isPackage, parsePackage: parsePackage, boardMd: boardMd,
     PKG_KIND: PKG_KIND, templateFromBoard: templateFromBoard, boardFromTemplate: boardFromTemplate,

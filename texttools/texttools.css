@@ -154,7 +154,7 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 #groups { order: 2; }
 #tools { order: 3; }
 #chain-sec { order: 4; }
-#opts-sec { order: 5; }
+#opts-sec, #tr-sec { order: 5; }
 #out-pane { order: 6; }
 #main .pane, #main .sec, #groups, #tools { flex-shrink: 0; }
 
@@ -250,6 +250,20 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 .other-head .opt-lbl { margin-bottom: 0; }
 #opts textarea#other { height: 22vh; height: 22dvh; min-height: 120px; }
 
+/* Translate (on the device) */
+.tr-langs { display: flex; align-items: flex-end; gap: 6px; margin-top: 8px; }
+.tr-langs .opt { flex: 1 1 0; min-width: 0; }
+.tr-langs select { width: 100%; }
+.tr-swap { flex: 0 0 auto; margin-bottom: 1px; }
+.tr-swap svg { transform: rotate(90deg); }
+.tr-info:empty { display: none; }
+.tr-go { width: 100%; justify-content: center; margin-top: 10px; }
+.tr-list { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 8px; }
+.tr-list-h { font-size: 12px; font-weight: 700; color: var(--text-dim); margin: 0 0 4px; }
+.tr-row { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 13.5px; }
+.tr-row-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.link-btn.danger { color: var(--danger); }
+
 /* ---------- 6. Text panes ---------- */
 .pane { display: flex; flex-direction: column; gap: 6px; min-height: 0; min-width: 0; }
 .pane-head { flex-wrap: wrap; }
@@ -332,6 +346,17 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-btn.primary:hover { background: var(--accent-hover); }
 .send-list { display: flex; flex-direction: column; gap: 8px; }
 .send-list .dlg-btn { text-align: left; }
+
+/* Letters & accents: My words */
+.words-btn { margin-top: 10px; }
+.words-add { margin-top: 10px; }
+.words-line { display: flex; gap: 8px; margin-top: 4px; }
+.words-line input { flex: 1; min-width: 0; min-height: 40px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+.words-line .dlg-btn { flex: 0 0 auto; }
+.words-count { margin-top: 12px; }
+.words-list { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; max-height: 40vh; overflow-y: auto; }
+.words-list .word { display: inline-flex; align-items: center; gap: 2px; padding: 2px 2px 2px 10px; border: 1px solid var(--border); border-radius: 999px; font-size: 14px; max-width: 100%; }
+.words-list .word-text { overflow-wrap: anywhere; }
 
 .stats-list {
   display: grid;
@@ -446,3 +471,6 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 
 [hidden] { display: none !important; }
+.tr-ai { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; font-size: 13.5px; line-height: 1.4; cursor: pointer; }
+.tr-ai input { margin: 2px 0 0; width: 18px; height: 18px; flex: none; }
+.tr-ai + .hint { margin-top: 4px; }

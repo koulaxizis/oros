@@ -122,6 +122,8 @@
       "sups.none": "No suppliers yet.", "sups.items": "{n} products", "sups.items1": "1 product",
       "ed.newItem": "New product", "ed.editItem": "Edit product",
       "ed.name": "Name", "ed.sku": "SKU", "ed.bc": "Barcode", "ed.cat": "Category", "ed.unit": "Unit",
+      "ed.od": "On demand (made to order, no stock count)", "ed.odHint": "Never runs out: no count, minimum, reorder or stock value, and the shop's quantity is neither read nor sent. Sales are still recorded.",
+      "od.q": "On demand",
       "ed.min": "Minimum", "ed.rq": "Reorder qty", "ed.sup": "Supplier", "ed.ssku": "Supplier's code",
       "ed.cost": "Purchase price ({c})", "ed.price": "Sale price ({c})", "ed.vat": "VAT %", "ed.loc": "Location",
       "ed.note": "Note", "ed.open": "Opening quantity", "ed.openHint": "Saved as a stock count dated today.",
@@ -195,7 +197,7 @@
       "po.mailSubject": "Order {no}", "po.mailHi": "Hello,", "po.mailAsk": "Please send us:", "po.mailBye": "Thank you.",
       "br.todo": "To-Do", "br.mail": "E-mail", "br.budget": "Add to Budget", "br.quote": "New quote",
       "br.sheet": "Open in Spreadsheet", "br.todoList": "Order · {s}",
-      "br.quoteCur": "Quote works in EUR or USD; Stock is set to {c}.", "br.quoteTitle": "New quote from products",
+      "br.quoteCur": "Quotes work in EUR or USD; Stock is set to {c}.", "br.quoteTitle": "New quote from products",
       "br.quoteGo": "Create quote", "br.sent": "Sent to {a}",
       "rep.range": "Period", "rep.value": "Stock value", "rep.sales": "Sales", "rep.buys": "Purchases", "rep.losses": "Losses",
       "rep.byCat": "Value by category", "rep.top": "Most sold", "rep.dead": "Not sold for 90 days",
@@ -294,6 +296,8 @@
       "sups.none": "Κανένας προμηθευτής ακόμα.", "sups.items": "{n} προϊόντα", "sups.items1": "1 προϊόν",
       "ed.newItem": "Νέο προϊόν", "ed.editItem": "Επεξεργασία προϊόντος",
       "ed.name": "Όνομα", "ed.sku": "SKU", "ed.bc": "Barcode", "ed.cat": "Κατηγορία", "ed.unit": "Μονάδα",
+      "ed.od": "Κατά παραγγελία (χωρίς μέτρηση αποθέματος)", "ed.odHint": "Δεν εξαντλείται ποτέ: χωρίς ποσότητα, ελάχιστο, παραγγελία ή αξία αποθήκης, και η ποσότητα του καταστήματος ούτε διαβάζεται ούτε στέλνεται. Οι πωλήσεις καταγράφονται κανονικά.",
+      "od.q": "Κατά παραγγελία",
       "ed.min": "Ελάχιστο", "ed.rq": "Ποσότητα παραγγελίας", "ed.sup": "Προμηθευτής", "ed.ssku": "Κωδικός προμηθευτή",
       "ed.cost": "Τιμή αγοράς ({c})", "ed.price": "Τιμή πώλησης ({c})", "ed.vat": "ΦΠΑ %", "ed.loc": "Θέση",
       "ed.note": "Σημείωση", "ed.open": "Αρχική ποσότητα", "ed.openHint": "Καταχωρείται ως απογραφή με σημερινή ημερομηνία.",
@@ -367,7 +371,7 @@
       "po.mailSubject": "Παραγγελία {no}", "po.mailHi": "Καλησπέρα σας,", "po.mailAsk": "Παρακαλούμε να μας στείλετε:", "po.mailBye": "Ευχαριστούμε.",
       "br.todo": "To-Do", "br.mail": "E-mail", "br.budget": "Στα Έσοδα & Έξοδα", "br.quote": "Νέα προσφορά",
       "br.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο", "br.todoList": "Παραγγελία · {s}",
-      "br.quoteCur": "Η Προσφορά δουλεύει σε EUR ή USD· το Απόθεμα είναι σε {c}.", "br.quoteTitle": "Νέα προσφορά από προϊόντα",
+      "br.quoteCur": "Οι Προσφορές δουλεύουν σε EUR ή USD· το Απόθεμα είναι σε {c}.", "br.quoteTitle": "Νέα προσφορά από προϊόντα",
       "br.quoteGo": "Δημιουργία προσφοράς", "br.sent": "Στάλθηκε: {a}",
       "rep.range": "Διάστημα", "rep.value": "Αξία αποθήκης", "rep.sales": "Πωλήσεις", "rep.buys": "Αγορές", "rep.losses": "Φθορές",
       "rep.byCat": "Αξία ανά κατηγορία", "rep.top": "Πιο πολλές πωλήσεις", "rep.dead": "Χωρίς πώληση 90 μέρες",
@@ -607,7 +611,11 @@
       head: typeof x.head === "string" ? x.head.slice(0, 300) : "",
       foot: typeof x.foot === "string" ? x.foot.slice(0, 200) : "",
       paper: x.paper === 80 ? 80 : 58,
-      dev: typeof x.dev === "string" && /^[A-Z2-9]{2}$/.test(x.dev) ? x.dev : ""
+      dev: typeof x.dev === "string" && /^[A-Z2-9]{2}$/.test(x.dev) ? x.dev : "",
+      // F1: the largest discount (%) this device may give; 0 = no limit
+      dmax: typeof x.dmax === "number" && x.dmax >= 1 && x.dmax <= 99 ? Math.floor(x.dmax) : 0,
+      // F2: the event this till sells at ("" = none)
+      ev: typeof x.ev === "string" && /^[a-z0-9]{6,40}$/.test(x.ev) ? x.ev : ""
     };
   }
   var prefsTimer = null;
@@ -809,7 +817,7 @@
       var it = r.item;
       if (prefs.f === "arch" ? !it.arch : it.arch) return false;
       if (prefs.f === "low" && !r.low) return false;
-      if (prefs.f === "out" && qOf(r) > 0) return false;
+      if (prefs.f === "out" && (qOf(r) > 0 || r.od)) return false;
       if (prefs.f === "exp" && !soon[it.id]) return false;
       if (prefs.cat === "-" && it.cat && byId("cats", it.cat)) return false;
       if (prefs.cat && prefs.cat !== "-" && it.cat !== prefs.cat) return false;
@@ -818,7 +826,7 @@
     list.sort(function (a, b) {
       var x = a.item, y = b.item;
       if (prefs.sort === "sku") return (x.sku ? 0 : 1) - (y.sku ? 0 : 1) || x.sku.localeCompare(y.sku, LOCALE, { numeric: true }) || x.name.localeCompare(y.name, LOCALE);
-      if (prefs.sort === "qty") return (qOf(a) - qOf(b)) || x.name.localeCompare(y.name, LOCALE);
+      if (prefs.sort === "qty") return ((a.od ? 1 : 0) - (b.od ? 1 : 0)) || (qOf(a) - qOf(b)) || x.name.localeCompare(y.name, LOCALE);
       if (prefs.sort === "value") return (b.value - a.value) || x.name.localeCompare(y.name, LOCALE);
       return x.name.localeCompare(y.name, LOCALE) || cmpStr(x.id, y.id);
     });
@@ -829,7 +837,7 @@
     if (list.length > MAX_SHOWN) ul.appendChild(el("li", "muted pad", t("items.more", { n: MAX_SHOWN, all: list.length })));
   }
   function itemRow(r, q) {
-    var it = r.item, out = q <= 0;
+    var it = r.item, out = !r.od && q <= 0;
     var li = el("li");
     var b = el("button", "row row-btn" + (out ? " lvl-out" : (r.low ? " lvl-low" : "")));
     b.type = "button";
@@ -841,7 +849,7 @@
     if (it.arch) sub.appendChild(el("span", "badge", t("badge.arch")));
     if (sub.childNodes.length) body.appendChild(sub);
     b.appendChild(body);
-    var val = el("span", "r-val" + (out ? " bad" : (r.low ? " warn" : "")), fmtQ(q, it));
+    var val = el("span", "r-val" + (out ? " bad" : (r.low ? " warn" : "")) + (r.od ? " od" : ""), r.od ? t("od.q") : fmtQ(q, it));
     if (it.price) val.appendChild(el("small", "", money(it.price)));
     b.appendChild(val);
     b.addEventListener("click", function () { itemSheet(it.id); });
@@ -883,7 +891,7 @@
     head.appendChild(hb);
     var big = el("div", "sheet-q" + (r.out ? " bad" : (r.low ? " warn" : "")));
     big.appendChild(el("div", "tile-lbl", t("sheet.onHand")));
-    big.appendChild(el("div", "sheet-qv", fmtQ(r.q, it)));
+    big.appendChild(el("div", "sheet-qv", r.od ? t("od.q") : fmtQ(r.q, it)));
     head.appendChild(big);
     dlg.appendChild(head);
     var ph = photoBox(it, dlg);
@@ -891,7 +899,7 @@
     if (it.arch) dlg.appendChild(el("p", "hint warn", t("badge.arch")));
 
     var acts = el("div", "quick");
-    [["in", t("act.in")], ["out", t("act.out")], ["count", t("act.count")]].forEach(function (a) {
+    [["in", t("act.in")], ["out", t("act.out")], ["count", t("act.count")]].filter(function (a) { return !(r.od && a[0] === "count"); }).forEach(function (a) {
       var b = el("button", "txt-btn", a[1]);
       b.type = "button";
       b.addEventListener("click", function () { dlg.close(); moveEditor(a[0], [{ i: it.id }]); });
@@ -1668,6 +1676,13 @@
   function shellWin() {
     try { return window.parent && window.parent !== window ? window.parent : null; } catch (e) { return null; }
   }
+  // TILL-1: the shell's screen lock knows whether this device is a
+  // till-only device (lock.js orosLock.till) and checks the owner's PIN.
+  function lockApi() {
+    var p = shellWin();
+    try { return p && p.orosLock && p.orosLock.till ? p.orosLock : null; } catch (e) { return null; }
+  }
+  function tillActive() { var L = lockApi(); try { return !!(L && L.till.active()); } catch (e) { return false; } }
   function openAtFn() {
     var p = shellWin();
     try { return p && typeof p.__orosOpenAt === "function" ? p : null; } catch (e) { return null; }
@@ -2037,7 +2052,7 @@
         return ln;
       });
       if (!force) {
-        var neg = lines.filter(function (l) { var q0 = ctrQ(l.i); return q0 + l.q < 0 && q0 + l.q < q0; })[0];
+        var neg = lines.filter(function (l) { if (C.isOd(byId("items", l.i))) return false; var q0 = ctrQ(l.i); return q0 + l.q < 0 && q0 + l.q < q0; })[0];
         if (neg) {
           var nit = byId("items", neg.i), after = ctrQ(neg.i) + neg.q;
           if (data.settings.neg === 0) { msg.textContent = t("mv.neg", { n: nit.name, q: fmtQ(after, nit) }) + " " + t("mv.negBlocked"); msg.hidden = false; return; }
@@ -2448,20 +2463,36 @@
     r2.appendChild(field(t("ed.unit"), unit, "st-unit"));
     dlg.appendChild(r2);
 
+    var odRow = checkRow(t("ed.od"), C.isOd(x));
+    odRow.id = "st-od";
+    var odIn = odRow.querySelector("input");
+    dlg.appendChild(odRow);
+    var odHint = el("p", "hint", t("ed.odHint"));
+    dlg.appendChild(odHint);
     var r3 = el("div", "fld-row");
     var min = numInput(x.min ? qtyStr(x.min, x) : "");
     var rq = numInput(x.rq ? qtyStr(x.rq, x) : "");
     r3.appendChild(field(t("ed.min"), min, "st-min"));
     r3.appendChild(field(t("ed.rq"), rq, "st-rq"));
     dlg.appendChild(r3);
-    dlg.appendChild(el("p", "hint", t("ed.minHint")));
+    var minHint = el("p", "hint", t("ed.minHint"));
+    dlg.appendChild(minHint);
 
-    var open = null;
+    var open = null, openBox = [];
     if (isNew) {
       open = numInput(preset && preset.open ? qtyStr(preset.open, x) : "");
-      dlg.appendChild(field(t("ed.open"), open, "st-open"));
-      dlg.appendChild(el("p", "hint", t("ed.openHint")));
+      openBox.push(field(t("ed.open"), open, "st-open"));
+      openBox.push(el("p", "hint", t("ed.openHint")));
+      openBox.forEach(function (n) { dlg.appendChild(n); });
     }
+    // ST-OD: an on-demand item has no count, so no minimum or opening
+    function paintOd() {
+      var on = odIn.checked;
+      [r3, minHint].concat(openBox).forEach(function (n) { n.hidden = on; });
+      odHint.hidden = !on;
+    }
+    odIn.addEventListener("change", paintOd);
+    paintOd();
 
     var r4 = el("div", "fld-row three");
     var cost = numInput(centsStr(x.cost));
@@ -2494,9 +2525,10 @@
       var nm = C.cleanText(name.value, C.NAME_LEN, false);
       if (!nm) { err.textContent = t("ed.needName"); err.hidden = false; name.focus(); return; }
       var probe = { unit: unit.value };
-      var vMin = min.value.trim() ? readQty(min, probe) : 0;
-      var vRq = rq.value.trim() ? readQty(rq, probe) : 0;
-      var vOpen = open && open.value.trim() ? readQty(open, probe) : 0;
+      var od = odIn.checked;
+      var vMin = !od && min.value.trim() ? readQty(min, probe) : 0;
+      var vRq = !od && rq.value.trim() ? readQty(rq, probe) : 0;
+      var vOpen = !od && open && open.value.trim() ? readQty(open, probe) : 0;
       var vCost = readCents(cost), vPrice = readCents(price);
       if (vMin === null || vRq === null || vOpen === null || vCost === null || vPrice === null) {
         err.textContent = t("ed.badNum"); err.hidden = false; return;
@@ -2504,7 +2536,7 @@
       var row = C.normItem({
         id: x.id, m: x.m || 0, name: nm, sku: sku.value, bc: bc.value, cat: cat.value, unit: unit.value,
         min: vMin, rq: vRq, sup: sup.value, ssku: ssku.value, cost: vCost, price: vPrice,
-        vat: Number(vat.value), loc: loc.value, note: note.value, arch: x.arch
+        vat: Number(vat.value), loc: loc.value, note: note.value, arch: x.arch, od: od ? 1 : 0
       });
       if (!row) { err.textContent = t("ed.badNum"); err.hidden = false; return; }
       var res = upsert("items", row);
@@ -2852,7 +2884,7 @@
       if (!forceNeg) {
         var after = Object.create(null);
         out.forEach(function (l) { after[l.i] = (after[l.i] === undefined ? baseQ(l.i) : after[l.i]) + (k === "xfer" ? -l.q : l.q); });
-        var neg = Object.keys(after).filter(function (id) { return after[id] < 0 && after[id] < baseQ(id); })[0];
+        var neg = Object.keys(after).filter(function (id) { return !C.isOd(byId("items", id)) && after[id] < 0 && after[id] < baseQ(id); })[0];
         if (neg) {
           var nit = byId("items", neg);
           if (data.settings.neg === 0) { fail(t("mv.neg", { n: nit.name, q: fmtQ(after[neg], nit) }) + " " + t("mv.negBlocked")); return; }
@@ -3396,6 +3428,26 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 40000);
     showToast(t("toast.exported"));
   }
+  // F1: a built file (the receipt's PDF) through the shell's save
+  // dialog, else a download
+  function saveBlob(blob, filename, mime, desc, ext) {
+    var host = dialogHost();
+    if (host && typeof host.saveFile === "function") {
+      var types = [{ description: desc, accept: {} }];
+      types[0].accept[mime] = [ext];
+      host.saveFile({ blob: blob, filename: filename, mime: mime, types: types })
+        .then(function (r) { if (r && r.ok) showToast(t("toast.exported")); });
+      return;
+    }
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 40000);
+    showToast(t("toast.exported"));
+  }
   function csvText(head, rows) {
     var sep = LANG === "el" ? ";" : ",";
     var lines = [head.map(C.csvCell).join(sep)];
@@ -3810,7 +3862,21 @@
       setWh: function (w) { if (prefs.wh !== w) { prefs.wh = w; savePrefs(); } },
       decOf: decOf, fmtQ: fmtQ, fmtDay: fmtDay, qtyStr: qtyStr, readQty: readQty, readCents: readCents, centsStr: centsStr,
       money: money, esc: esc, printHtml: printHtml, todayYmd: todayYmd, newId: newId,
+      vatRates: C.VAT_RATES, defVat: function () { return data.settings.vat; }, saveBlob: saveBlob,
       posPrefs: posPrefs,
+      // F3 helper device (TILL-1): till = the till is all this device
+      // shows; owner(secret) checks the owner's screen-lock PIN.
+      till: tillActive,
+      reopen: openPos,
+      lockKind: function () { var L = lockApi(); try { return L && L.isOn() ? L.snapshot().kind : ""; } catch (e) { return ""; } },
+      tillSet: function () { var L = lockApi(); try { return !!(L && L.till.set()); } catch (e) { return false; } },
+      tillTurn: function (on) { var L = lockApi(); try { return !!(L && L.till.turn(!!on)); } catch (e) { return false; } },
+      ownerCheck: function (secret) {
+        var L = lockApi();
+        if (!L) return Promise.resolve({ ok: false, code: "off" });
+        return L.till.check(secret).then(null, function () { return { ok: false, code: "wrong" }; });
+      },
+      openLockSettings: openAtFn() ? function () { openAtFn().__orosOpenAt("settings", { section: "lock" }); } : null,
       setPosPref: function (k, v) { posPrefs()[k] = v; prefs.pos = readPos(prefs.pos); savePrefs(); },
       addSale: posAddSale, voidSale: posVoidSale,
       putPl: function (row) {
@@ -3826,6 +3892,52 @@
         save();
         render();
       },
+      // F2: events, the stand's warehouse and its transfers
+      putEv: function (row) {
+        if (!Array.isArray(data.evs)) data.evs = [];
+        var x = C.normEv(Object.assign({}, row, { m: row.m || 0 }));
+        if (!x) return false;
+        if (upsert("evs", x)) { save(); render(); }
+        return true;
+      },
+      delEv: function (id) {
+        var cur = byId("evs", id);
+        if (!cur) return;
+        data.tombs[id] = Math.max(Date.now(), cur.m);
+        data.evs = data.evs.filter(function (x) { return x.id !== id; });
+        if (prefs.pos.ev === id) { prefs.pos.ev = ""; savePrefs(); }
+        save();
+        render();
+      },
+      newWh: function (name) {
+        var id = newId();
+        data.whs.push({ id: id, m: Date.now(), name: String(name).slice(0, 80), arch: 0 });
+        save();
+        render();
+        return id;
+      },
+      whName: whLabel,
+      whList: function () { return [["", mainWh()]].concat(extraWhs(false).map(function (w) { return [w.id, w.name]; })); },
+      whQty: function () { return whAll(); },
+      addMove: function (mv) {
+        if (data.close && mv.d <= data.close.d) { showToast(t("cl.locked", { d: fmtDay(data.close.d, true) })); return null; }
+        var x = C.normMove(mv);
+        if (!x) return null;
+        data.moves.push(x);
+        save();
+        render();
+        return x;
+      },
+      // F3: a closed day → one income entry in Budget (BR-B1 prefill)
+      budgetReady: budgetReady,
+      sendBudgetZ: function (z, note) {
+        var p = shellWin();
+        if (!budgetReady() || !z || !(z.g > 0)) return false;
+        var ok = p.__orosOpenBudgetNew({ k: "i", a: z.g, d: z.d, n: String(note || "").slice(0, 140), c: "i-other", src: "stock" });
+        if (ok === false) showToast(t("ed.badNum"));
+        return ok !== false;
+      },
+      openSheet: openAtFn() ? function (name, rows, sum) { openAtFn().__orosOpenAt("spreadsheet", { newSheet: { name: name, rows: rows, sum: sum } }); } : null,
       putZ: function (row) {
         if (!Array.isArray(data.zs)) data.zs = [];
         var cur = byId("zs", row.id);
@@ -3843,7 +3955,7 @@
     if (!s) return null;
     if (!Array.isArray(data.sales)) data.sales = [];
     data.sales.push(s);
-    data.moves.push(move);
+    if (move) data.moves.push(move);
     save();
     render();
     return byId("sales", s.id);
@@ -4328,7 +4440,9 @@
     inheritPalette();
     watchPalette();
     render();
-    takeStaged();
+    // TILL-1: a till-only device shows the till and nothing else
+    if (tillActive()) { document.body.classList.add("till-only"); openPos(); }
+    else takeStaged();
     autoShop();
   }
   // ST-AUTO: the shop's new paid orders become sales here (stock/shop.js auto)

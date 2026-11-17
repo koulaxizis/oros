@@ -15,6 +15,20 @@
 //     blob, never applied), and the lock turns off. Last resort:
 //     reset THIS device (shell hook: unsynced changes are sent first
 //     when sync can, then the local wipe; the cloud stays).
+//   - Fingerprint or face (LK-BIO, 2026-11-12): on Android (the orOS
+//     app and the single app "orOS Passwords") the lock also opens
+//     with strong biometrics, through the same native path as
+//     Passwords (BR-PHONE pw-bio, phone.js orosPhone.bio, use "lock").
+//     The app keeps a 32-byte secret D sealed by a per-use Keystore
+//     key; this page keeps, in device-local "oros-lock-bio", a random
+//     token wrapped with D (AES-256-GCM, AAD oros-lock/1/bio/<kid>).
+//     Only D from the app opens it. The PIN / passphrase stays the
+//     root: it is asked every 14 days, and a new fingerprint ends it.
+//   - Sensitive work (STRICT, 2026-11-13, section 1b and 6,
+//     window.orosStrict): a device-local mode, "on" or "hard", in
+//     "oros-strict". It keeps the lock on and within its limits,
+//     Hardcore takes a passphrase only and no biometrics; sync.js,
+//     webpush.js, feeds/fetch.js and sw.js read the same key.
 //   - Honest limit: it keeps people away from the screen. Anyone who
 //     can read the disk, or open the browser's developer tools, gets
 //     past it; the data on the device is not encrypted by it.
@@ -45,6 +59,16 @@
   var WAIT_BASE = 30 * 1000, WAIT_MAX = 15 * 60 * 1000;
   var PIN_RE = /^[0-9]{4,12}$/;
   var PASS_MIN = 6, SECRET_MAX = 256;
+  var BIO_KEY = "oros-lock-bio";     // localStorage, device-local, never synced
+  var BIO_DAYS = 14;
+  var DAY = 86400000;
+  var BIO_KID = /^[0-9a-f]{24}$/;
+  var B64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
+  // Till-only device (TILL-1, Stock fair till F3): device-local
+  // "oros-till" = {v:1, on:1}; sessionStorage "oros-till-owner" = "1"
+  // while the owner has typed the PIN in this tab.
+  var TILL_KEY = "oros-till";
+  var OWNER_KEY = "oros-till-owner";
 
   function norm(s) {
     s = String(s == null ? "" : s);
@@ -74,6 +98,12 @@
              hidden: c.hidden === true };
   }
 
+  function parseTill(raw) {
+    try {
+      var o = typeof raw === "string" ? JSON.parse(raw) : raw;
+      return !!(o && typeof o === "object" && o.v === 1 && o.on === 1);
+    } catch (e) { return false; }
+  }
   function parseTries(raw) {
     var v;
     try { v = JSON.parse(raw || "null"); } catch (e) { v = null; }
@@ -114,11 +144,105 @@
     return d === 0;
   }
 
+  // The fingerprint record → a clean one, or null. iv: 12 bytes,
+  // ct: a 32-byte token + the 16-byte tag (base64 64 characters).
+  function parseBio(raw) {
+    var r;
+    try { r = typeof raw === "string" ? JSON.parse(raw) : raw; } catch (e) { return null; }
+    if (!r || typeof r !== "object" || r.v !== 1) return null;
+    if (typeof r.kid !== "string" || !BIO_KID.test(r.kid)) return null;
+    if (typeof r.iv !== "string" || r.iv.length !== 16 || !B64_RE.test(r.iv)) return null;
+    if (typeof r.ct !== "string" || r.ct.length !== 64 || !B64_RE.test(r.ct)) return null;
+    if (typeof r.at !== "number" || !isFinite(r.at) || r.at <= 0) return null;
+    return { v: 1, kid: r.kid, iv: r.iv, ct: r.ct, at: r.at };
+  }
+
+  // May the fingerprint open it now? "none" (no record), "days" (the
+  // PIN / passphrase was last typed more than 14 days ago, or the clock
+  // says it was typed in the future), "ok".
+  function bioDue(rec, now) {
+    if (!rec) return "none";
+    if (rec.at > now + DAY || now - rec.at > BIO_DAYS * DAY) return "days";
+    return "ok";
+  }
+
+  // ---------- 1b. Sensitive work (STRICT, 2026-11-13) ----------
+  // A device-local mode (Settings › Sensitive work) that tightens the
+  // lock and switches off what can leak. Two levels: "on" (normal) and
+  // "hard" (Hardcore: no conveniences, nothing leaves except to the
+  // sync cloud). Record in "oros-strict": { v:1, level, at, prev }
+  // where prev = the lock's idle / hidden and the push switch before it
+  // was turned on (restored when it is turned off).
+  var STRICT_KEY = "oros-strict";
+  var STRICT_CAPS = {
+    on:   { idle: 2, hidden: true, pass: false, bio: true,  grace: true,  relay: false, links: true  },
+    hard: { idle: 1, hidden: true, pass: true,  bio: false, grace: false, relay: false, links: false }
+  };
+  function parseStrict(raw) {
+    var s;
+    try { s = typeof raw === "string" ? JSON.parse(raw) : raw; } catch (e) { return null; }
+    if (!s || typeof s !== "object" || s.v !== 1) return null;
+    if (s.level !== "on" && s.level !== "hard") return null;
+    var p = (s.prev && typeof s.prev === "object") ? s.prev : {};
+    return { v: 1, level: s.level, at: typeof s.at === "number" && isFinite(s.at) ? s.at : 0,
+             prev: { idle: IDLES.indexOf(p.idle) !== -1 ? p.idle : DEFAULT_IDLE,
+                     hidden: p.hidden === true, push: p.push === true } };
+  }
+  function strictCaps(level) { return STRICT_CAPS[level] || null; }
+  // The lock config with the level's limits applied (a new object), or
+  // the same object when it already keeps them.
+  function clampCfg(c, level) {
+    var k = strictCaps(level);
+    if (!c || !k) return c;
+    var idle = (c.idle === 0 || c.idle > k.idle) ? k.idle : c.idle;
+    if (idle === c.idle && c.hidden === k.hidden) return c;
+    var out = {};
+    for (var f in c) if (Object.prototype.hasOwnProperty.call(c, f)) out[f] = c[f];
+    out.idle = idle;
+    out.hidden = k.hidden;
+    return out;
+  }
+  // Would this lock option loosen the level's limits?
+  function loosens(level, name, value) {
+    var k = strictCaps(level);
+    if (!k) return false;
+    if (name === "idle") return Number(value) === 0 || Number(value) > k.idle;
+    if (name === "hidden") return !value;
+    return false;
+  }
+
+  // Duress secret (STRICT-2, oros-lock-duress): read defensively, an odd
+  // record is no duress secret; cloud wipe only when it says true.
+  function parseDuress(raw) {
+    var d;
+    try { d = JSON.parse(raw || "null"); } catch (e) { return null; }
+    if (!d || d.v !== 1 || (d.kind !== "pin" && d.kind !== "pass") || typeof d.salt !== "string" || typeof d.hash !== "string" || !d.hash) return null;
+    if (typeof d.i !== "number" || d.i < ITER_MIN || d.i > ITER_MAX) return null;
+    return { v: 1, kind: d.kind, salt: d.salt, hash: d.hash, i: d.i, cloud: d.cloud === true };
+  }
+
+  // Dead-man switch (STRICT-3, oros-strict-dms): {v:1, days, alive}.
+  // alive = the last real unlock; a record from a clock far ahead is
+  // not due (a wrong clock must not wipe), the next unlock resets it.
+  var DMS_DAYS = [1, 3, 7, 14, 30];
+  function parseDms(raw) {
+    var d;
+    try { d = JSON.parse(raw || "null"); } catch (e) { return null; }
+    if (!d || d.v !== 1 || DMS_DAYS.indexOf(d.days) === -1 || typeof d.alive !== "number" || !isFinite(d.alive) || d.alive <= 0) return null;
+    return { v: 1, days: d.days, alive: d.alive };
+  }
+  function dmsDue(d, now) {
+    return !!d && now - d.alive > d.days * 86400000;
+  }
+
   var Core = {
-    KEY: KEY, TRIES_KEY: TRIES_KEY, SEEN_KEY: SEEN_KEY, ITER: ITER, IDLES: IDLES,
+    BIO_KEY: BIO_KEY, BIO_DAYS: BIO_DAYS, parseBio: parseBio, bioDue: bioDue,
+    KEY: KEY, TILL_KEY: TILL_KEY, TRIES_KEY: TRIES_KEY, SEEN_KEY: SEEN_KEY, ITER: ITER, IDLES: IDLES,
     DEFAULT_IDLE: DEFAULT_IDLE, FREE_TRIES: FREE_TRIES, WAIT_MAX: WAIT_MAX, GRACE_MAX: GRACE_MAX,
-    norm: norm, secretProblem: secretProblem, parseCfg: parseCfg, parseTries: parseTries,
-    afterFail: afterFail, waitLeft: waitLeft, stillOpen: stillOpen, sameText: sameText
+    norm: norm, secretProblem: secretProblem, parseCfg: parseCfg, parseTries: parseTries, parseTill: parseTill,
+    afterFail: afterFail, waitLeft: waitLeft, stillOpen: stillOpen, sameText: sameText,
+    STRICT_KEY: STRICT_KEY, parseStrict: parseStrict, strictCaps: strictCaps, clampCfg: clampCfg, loosens: loosens,
+    parseDuress: parseDuress, DMS_DAYS: DMS_DAYS, parseDms: parseDms, dmsDue: dmsDue
   };
 
   // ---------- 2. Crypto ----------
@@ -161,6 +285,37 @@
   Core.makeCfg = makeCfg;
   Core.matches = matches;
 
+  function bioAad(kid) { return new root.TextEncoder().encode("oros-lock/1/bio/" + kid); }
+  function bioKey(d, use) {
+    return subtle().importKey("raw", d, { name: "AES-GCM" }, false, [use]);
+  }
+  // A new record: a random token wrapped with the app's secret D.
+  function bioWrap(kid, d, now) {
+    if (!subtle() || !BIO_KID.test(String(kid)) || !d || d.length !== 32) return Promise.reject(new Error("bio-failed"));
+    var iv = new Uint8Array(12), tok = new Uint8Array(32);
+    root.crypto.getRandomValues(iv);
+    root.crypto.getRandomValues(tok);
+    return bioKey(d, "encrypt").then(function (k) {
+      return subtle().encrypt({ name: "AES-GCM", iv: iv, additionalData: bioAad(kid) }, k, tok);
+    }).then(function (ct) {
+      tok.fill(0);
+      return { v: 1, kid: kid, iv: b64(iv), ct: b64(ct), at: now };
+    });
+  }
+  // Does D open this record? (AES-GCM's tag: a wrong D, kid or a
+  // changed record answers false.)
+  function bioOpens(rec, d) {
+    if (!subtle() || !rec || !d || d.length !== 32) return Promise.resolve(false);
+    var iv, ct;
+    try { iv = unb64(rec.iv); ct = unb64(rec.ct); } catch (e) { return Promise.resolve(false); }
+    return bioKey(d, "decrypt").then(function (k) {
+      return subtle().decrypt({ name: "AES-GCM", iv: iv, additionalData: bioAad(rec.kid) }, k, ct);
+    }).then(function (tok) { new Uint8Array(tok).fill(0); return true; }, function () { return false; });
+  }
+  Core.bioWrap = bioWrap;
+  Core.bioOpens = bioOpens;
+  Core.unb64 = function (s) { return unb64(s); };
+
   if (typeof module !== "undefined" && module.exports) module.exports = Core;
   if (!root || !root.document || root.orosLock) return;
 
@@ -171,12 +326,67 @@
   var busy = false;
   var lastActive = Date.now();
   var listeners = [];
-  var hooks = { reset: null, recovered: null };
+  var hooks = { reset: null, recovered: null, duress: null, deadman: null, travel: null };
   var bc = null;
 
   function load() {
     try { cfg = parseCfg(root.localStorage.getItem(KEY)); } catch (e) { cfg = null; }
+    // Sensitive work: the lock keeps the level's limits, whatever an
+    // older copy of orOS or another tab wrote.
+    var lv = strictLevel();
+    if (cfg && lv !== "off") {
+      var c2 = clampCfg(cfg, lv);
+      if (c2 !== cfg) { try { root.localStorage.setItem(KEY, JSON.stringify(c2)); } catch (e) {} cfg = parseCfg(JSON.stringify(c2)); }
+    }
     return cfg;
+  }
+  function strictRec() {
+    try { return parseStrict(root.localStorage.getItem(STRICT_KEY)); } catch (e) { return null; }
+  }
+  // "off" | "on" | "hard"
+  function strictLevel() { var r = strictRec(); return r ? r.level : "off"; }
+  // Duress PIN (STRICT-2): a second PIN / passphrase of the lock's kind,
+  // only while Sensitive work is on. Typed on the lock screen it wipes
+  // (shell hook duress(cloud)): this device only, or also the cloud.
+  // Device-local "oros-lock-duress" = { v:1, kind, salt, hash, i, cloud }.
+  var DURESS_KEY = "oros-lock-duress";
+  var DMS_KEY = "oros-strict-dms";
+  function dmsRec() {
+    try { return parseDms(root.localStorage.getItem(DMS_KEY)); } catch (e) { return null; }
+  }
+  function dmsWrite(d) {
+    try {
+      if (d) root.localStorage.setItem(DMS_KEY, JSON.stringify(d));
+      else root.localStorage.removeItem(DMS_KEY);
+      return true;
+    } catch (e) { return false; }
+  }
+  // Live only while the mode and the lock are on.
+  function dmsLive() {
+    return (strictRec() && load()) ? dmsRec() : null;
+  }
+  var dmsFired = false;
+  function dmsCheck() {
+    if (dmsFired || resetting || typeof hooks.deadman !== "function") return;
+    if (!dmsDue(dmsLive(), Date.now())) return;
+    dmsFired = true;
+    resetting = true;
+    try { hooks.deadman(); } catch (e) {}
+  }
+  function duressRec() {
+    try { return parseDuress(root.localStorage.getItem(DURESS_KEY)); } catch (e) { return null; }
+  }
+  function duressWrite(d) {
+    try {
+      if (d) root.localStorage.setItem(DURESS_KEY, JSON.stringify(d));
+      else root.localStorage.removeItem(DURESS_KEY);
+      return true;
+    } catch (e) { return false; }
+  }
+  // Live only with the mode on and the lock of the same kind.
+  function duressLive() {
+    var d = duressRec(), c = cfg || load();
+    return (d && c && d.kind === c.kind && strictRec()) ? d : null;
   }
   function save(c) {
     try {
@@ -204,6 +414,26 @@
   function clearSeen() {
     try { root.sessionStorage.removeItem(SEEN_KEY); } catch (e) {}
   }
+
+  // Till-only device. Never inside a single app (?solo=): there the
+  // lock asks the PIN as always. The till needs the lock: without a
+  // PIN there is no owner to tell apart from the helper.
+  var IN_SOLO = (function () { try { return /[?&]solo=/.test(root.location.search); } catch (e) { return false; } })();
+  function tillSet() {
+    try { return !IN_SOLO && parseTill(root.localStorage.getItem(TILL_KEY)); } catch (e) { return false; }
+  }
+  function tillOn() { return !!(cfg && tillSet()); }
+  function isOwner() {
+    try { return root.sessionStorage.getItem(OWNER_KEY) === "1"; } catch (e) { return false; }
+  }
+  function setOwner(on) {
+    try {
+      if (on) root.sessionStorage.setItem(OWNER_KEY, "1");
+      else root.sessionStorage.removeItem(OWNER_KEY);
+    } catch (e) {}
+  }
+  // The till is in front: only Stock's till shows, nothing locks.
+  function tillActive() { return tillOn() && !isOwner(); }
 
   function emit() {
     listeners.slice().forEach(function (fn) {
@@ -238,6 +468,172 @@
       } catch (e) { /* another origin */ }
     }
   }
+
+  // ----- Fingerprint or face (LK-BIO) -----
+  // The computer (wave 2): orOS Portable, the desktop apps and orOS USB.
+  // Their System extension marks the page with data-oros-sys-bio and
+  // passes the DOM event "oros-bio" {n, op, kid, text} to the native host
+  // (Windows Hello or fprintd); "oros-bio-done" {n, ok, …} answers. Same
+  // shape as orosPhone.bio, so the rest of this file uses either.
+  var desk = (function () {
+    var info = null, waits = {}, subs = [];
+    function fire() { subs.slice().forEach(function (fn) { try { fn(); } catch (e) {} }); }
+    function on() {
+      try { return doc.documentElement.getAttribute("data-oros-sys-bio") === "1"; } catch (e) { return false; }
+    }
+    function nonce() {
+      var b = new Uint8Array(16), s = "";
+      root.crypto.getRandomValues(b);
+      for (var i = 0; i < b.length; i++) s += (b[i] < 16 ? "0" : "") + b[i].toString(16);
+      return s;
+    }
+    doc.addEventListener("oros-bio-done", function (ev) {
+      var r = null;
+      try { r = JSON.parse(String(ev.detail)); } catch (e) { return; }
+      var w = r && typeof r.n === "string" ? waits[r.n] : null;
+      if (!w) return;
+      delete waits[r.n];
+      clearTimeout(w.timer);
+      w.done(r);
+    });
+    function ask(op, kid, text) {
+      return new Promise(function (done) {
+        if (!on()) { done({ ok: false, error: "unavailable" }); return; }
+        var n = nonce();
+        waits[n] = { done: done, timer: setTimeout(function () {
+          if (waits[n]) { delete waits[n]; done({ ok: false, error: "timeout" }); }
+        }, op === "seal" || op === "open" ? 150000 : 15000) };
+        try {
+          doc.dispatchEvent(new root.CustomEvent("oros-bio", { detail: JSON.stringify({ n: n, op: op, kid: kid || "", text: text || "" }) }));
+        } catch (e) { delete waits[n]; done({ ok: false, error: "unavailable" }); }
+      });
+    }
+    function refresh() {
+      if (!on()) return false;
+      ask("state").then(function (r) {
+        if (!r.ok) return;
+        info = { can: /^(ok|none|no-hw)$/.test(r.can) ? r.can : "no-hw",
+                 kind: r.kind === "hello" ? "hello" : "finger",
+                 kids: (Array.isArray(r.kids) ? r.kids : []).filter(function (k) { return BIO_KID.test(String(k)); }).slice(0, 16) };
+        fire();
+      });
+      return true;
+    }
+    function secret(op, kid) {
+      return ask(op, kid, t("lock.bio.prompt")).then(function (r) {
+        refresh();
+        if (r.ok && typeof r.d === "string" && /^[A-Za-z0-9+/]{43}=$/.test(r.d)) return r.d;
+        var c = /^[a-z-]{1,20}$/.test(String(r.error)) ? r.error : "failed";
+        throw new Error("bio-" + (c === "no-hw" ? "unavailable" : c));
+      });
+    }
+    // The extension sets its mark after the page loads.
+    try {
+      new root.MutationObserver(function () { if (on() && !info) refresh(); fire(); })
+        .observe(doc.documentElement, { attributes: true, attributeFilter: ["data-oros-sys-bio"] });
+    } catch (e) {}
+    return {
+      available: on,
+      info: function () { return info; },
+      refresh: refresh,
+      seal: function (kid) { return secret("seal", kid); },
+      open: function (kid) { return secret("open", kid); },
+      clear: function (kid) { if (!BIO_KID.test(String(kid))) return false; ask("clear", kid).then(refresh); return true; },
+      onChange: function (fn) {
+        subs.push(fn);
+        return function () { var i = subs.indexOf(fn); if (i !== -1) subs.splice(i, 1); };
+      }
+    };
+  })();
+  var deskSource = { bio: desk, onChange: desk.onChange, desk: true };
+
+  // The phone: phone.js (orosPhone.bio), in this window; it loads after
+  // this file, so it is looked up when needed. A computer with the System
+  // extension uses desk.
+  function phone() {
+    var p = root.orosPhone;
+    try {
+      if (p && p.bio && typeof p.bio.available === "function" && typeof p.bio.open === "function" && p.bio.available()) return p;
+    } catch (e) {}
+    if (desk.available()) return deskSource;
+    try { return (p && p.bio && typeof p.bio.available === "function" && typeof p.bio.open === "function") ? p : null; }
+    catch (e) { return null; }
+  }
+  // "phone", "hello" (Windows Hello) or "finger" (fprintd).
+  function bioKind() {
+    var p = phone();
+    if (!p || !p.desk) return "phone";
+    var i = desk.info();
+    return i ? i.kind : "finger";
+  }
+  function bioLinked() { var p = phone(); try { return !!(p && p.bio.available()); } catch (e) { return false; } }
+  function bioInfo() { var p = phone(); try { return p ? p.bio.info() : null; } catch (e) { return null; } }
+  function bioRec() {
+    try { return parseBio(root.localStorage.getItem(BIO_KEY)); } catch (e) { return null; }
+  }
+  function bioStore(r) {
+    try {
+      if (r) root.localStorage.setItem(BIO_KEY, JSON.stringify(r));
+      else root.localStorage.removeItem(BIO_KEY);
+      return true;
+    } catch (e) { return false; }
+  }
+  // Ends fingerprint unlock here: the record and the app's secret.
+  function bioForget() {
+    var r = bioRec(), p = phone();
+    bioStore(null);
+    if (r && p) { try { p.bio.clear(r.kid); } catch (e) {} }
+  }
+  // The PIN / passphrase was typed: the 14 days count from now.
+  function bioTyped() {
+    var r = bioRec();
+    if (r) { r.at = Date.now(); bioStore(r); }
+  }
+  // The app holds the secret, and the 14 days have not run out.
+  function bioReady() {
+    if (strictLevel() === "hard") return false;     // Hardcore: the PIN / passphrase only
+    var r = bioRec(), info = bioInfo();
+    return !!(cfg && r && !tillActive() && bioLinked() && info && info.can === "ok" &&
+              info.kids.indexOf(r.kid) >= 0 && bioDue(r, Date.now()) === "ok");
+  }
+  function bioKid() {
+    var b = new Uint8Array(12), s = "";
+    root.crypto.getRandomValues(b);
+    for (var i = 0; i < b.length; i++) s += (b[i] < 16 ? "0" : "") + b[i].toString(16);
+    return s;
+  }
+  // "invalidated" (a new fingerprint), "none" (the app lost its
+  // secret), "wrong" (the secret does not open the record) end it.
+  function bioCode(e) {
+    var c = String((e && e.message) || "").replace(/^bio-/, "");
+    return /^(cancel|lockout|invalidated|none|wrong|timeout|unavailable)$/.test(c) ? c : "failed";
+  }
+  // The phone's answers repaint the lock screen and Settings; only a
+  // change of what it says about fingerprints counts.
+  var bioSeen = "", bioOff = null, bioTries = 0;
+  function bioChanged() {
+    var now = JSON.stringify([bioLinked(), bioInfo()]);
+    if (now === bioSeen) return;
+    bioSeen = now;
+    if (ui && !ui.bioBusy) fillBio();
+    emit();
+  }
+  desk.onChange(bioChanged);
+  function bioWatch() {
+    if (bioOff) return;
+    var p = root.orosPhone;
+    if (!p || typeof p.onChange !== "function") return;
+    bioOff = p.onChange(bioChanged);
+    bioSeen = JSON.stringify([bioLinked(), bioInfo()]);
+    // The port may have come before this watch: the lock screen asks now.
+    if (ui && !ui.bioBusy) fillBio();
+  }
+  // phone.js loads after this file and the app's port comes later:
+  // look for it for a while after boot.
+  var bioTimer = setInterval(function () {
+    bioWatch();
+    if (bioOff || ++bioTries > 60) { clearInterval(bioTimer); bioTimer = null; }
+  }, 500);
 
   function idleDue() {
     return !!(cfg && cfg.idle && Date.now() - lastActive >= cfg.idle * 60000);
@@ -340,7 +736,7 @@
 
   function focusField() {
     if (!ui) return;
-    var f = view === "forgot" ? (ui.recInput || ui.rbtn) : ui.input;
+    var f = view === "forgot" ? (ui.recInput || ui.rbtn) : (ui.bioBtn && !ui.bioBtn.disabled ? ui.bioBtn : ui.input);
     if (f && !f.disabled) { try { f.focus(); } catch (e) {} }
   }
 
@@ -405,6 +801,8 @@
     var main = node("form", "lk-view");
     main.setAttribute("autocomplete", "off");
     var kind = cfg ? cfg.kind : "pin";
+    var bioBox = node("div", "lk-bio");
+    main.appendChild(bioBox);
     var lab = node("label", "lk-label", t(kind === "pin" ? "lock.enterPin" : "lock.enterPass"));
     lab.htmlFor = "oros-lock-input";
     main.appendChild(lab);
@@ -420,6 +818,14 @@
     var forgot = node("button", "lk-link", t(kind === "pin" ? "lock.forgotPin" : "lock.forgotPass"));
     forgot.type = "button";
     main.appendChild(forgot);
+    if (tillActive()) {
+      // TILL-1: the helper's way back; only the owner's PIN goes on.
+      main.insertBefore(node("p", "lk-hint", t("lock.till.hint")), lab);
+      var back = node("button", "lk-btn lk-till-back", t("lock.till.back"));
+      back.type = "button";
+      back.addEventListener("click", function () { if (!busy) unlock(); });
+      main.appendChild(back);
+    }
     box.appendChild(main);
 
     // Forgot view: filled when it opens (sync.js loads after this file).
@@ -441,7 +847,8 @@
       if (locked && ui && !ui.restacking) { try { dlg.showModal(); } catch (e) {} focusField(); }
     });
     return { dlg: dlg, time: time, date: date, main: main, input: input, msg: msg, fv: fv,
-             kind: kind, recInput: null, recMsg: null, rbtn: null, modal: false, restacking: false };
+             kind: kind, recInput: null, recMsg: null, rbtn: null, modal: false, restacking: false,
+             bioBox: bioBox, bioBtn: null, bioBusy: false, bioAsked: false };
   }
 
   // The sync passphrase (when this device is connected), else only
@@ -524,6 +931,12 @@
 
   function lock(reason) {
     if (locked || !cfg) return false;
+    if (tillOn()) {
+      // The owner leaves (idle, hidden, Lock now): back to the till.
+      if (!tillActive()) { setOwner(false); emit(); return false; }
+      // The till itself never locks; only the owner's own ask does.
+      if (reason !== "owner") return false;
+    }
     if (!doc.body) {
       doc.addEventListener("DOMContentLoaded", function () { lock(reason); });
       return false;
@@ -543,6 +956,8 @@
     guardStart();
     paintClock();
     clockTimer = setInterval(paintClock, 15000);
+    bioWatch();
+    fillBio();
     show("main");
     if (reason === "now" && bc) { try { bc.postMessage("lock"); } catch (e) {} }
     emit();
@@ -564,6 +979,8 @@
     }
     lastActive = Date.now();
     markSeen();
+    var dm = dmsRec();
+    if (dm) { dm.alive = lastActive; dmsWrite(dm); }   // a real unlock keeps the dead-man switch away
     emit();
   }
 
@@ -574,6 +991,72 @@
     if (!on) focusField();
   }
 
+  // The fingerprint button above the PIN, or why the PIN is asked.
+  function fillBio() {
+    if (!ui) return;
+    var box = ui.bioBox, had = !!ui.bioBtn;
+    box.textContent = "";
+    ui.bioBtn = null;
+    var r = bioRec();
+    if (!r || !bioLinked() || tillActive()) return;   // TILL-1: the helper's finger is not the owner's
+    if (bioDue(r, Date.now()) === "days") {
+      box.appendChild(node("p", "lk-hint", t(ui.kind === "pass" ? "lock.bio.daysPass" : "lock.bio.days")));
+      return;
+    }
+    if (!bioInfo() && !ui.bioAsked) {
+      ui.bioAsked = true;
+      try { phone().bio.refresh(); } catch (e) {}
+    }
+    if (!bioReady()) return;
+    var k = bioKind();
+    var b = node("button", "lk-btn lk-primary lk-bio-btn", t(k === "hello" ? "lock.bio.unlockHello" : k === "finger" ? "lock.bio.unlockFinger" : "lock.bio.unlock"));
+    b.type = "button";
+    b.addEventListener("click", tryBio);
+    box.appendChild(b);
+    ui.bioBtn = b;
+    if (!had && view === "main" && !busy) focusField();
+  }
+
+  // Must run inside the tap: the app's prompt opens from an intent
+  // link, which Chrome follows only on a user gesture.
+  function tryBio() {
+    if (busy || !ui || ui.bioBusy || !bioReady()) return;
+    var r = bioRec(), p = phone(), b = ui.bioBtn;
+    ui.bioBusy = true;
+    if (b) b.disabled = true;
+    say(ui.msg, bioKind() === "finger" ? "lock.bio.touch" : null, "dim");
+    var asked;
+    try { asked = p.bio.open(r.kid, "lock"); } catch (e) { asked = Promise.reject(e); }
+    asked.then(function (d64) {
+      var d;
+      try { d = unb64(d64); } catch (e) { throw new Error("bio-wrong"); }
+      return bioOpens(r, d).then(function (ok) {
+        d.fill(0);
+        if (!ok) throw new Error("bio-wrong");
+      });
+    }).then(function () {
+      if (!ui) return;
+      ui.bioBusy = false;
+      clearTries();
+      unlock();
+    }, function (e) {
+      if (!ui) return;
+      ui.bioBusy = false;
+      var c = bioCode(e);
+      if (c === "invalidated" || c === "none" || c === "wrong") {
+        bioForget();
+        say(ui.msg, c === "invalidated" ? "lock.bio.err.invalidated" : bioKind() === "phone" ? "lock.bio.err.none" : "lock.bio.err.nonePc", "err");
+      } else if (c === "cancel") {
+        say(ui.msg, null);
+      } else {
+        say(ui.msg, c === "lockout" ? "lock.bio.err.lockout" : c === "timeout" ? "lock.bio.err.timeout" : "lock.bio.err.failed", "err");
+      }
+      fillBio();
+      if (ui.bioBtn) ui.bioBtn.disabled = false;
+      if (c !== "cancel") { try { ui.input.focus(); } catch (x) {} }
+    });
+  }
+
   function tryUnlock(secret) {
     if (busy || !ui) return;
     if (waitMs()) { sayWait(ui.msg); return; }
@@ -582,8 +1065,21 @@
     setBusy(true);
     say(ui.msg, "lock.msg.checking", "dim");
     matches(cfg, secret).then(function (ok) {
+      if (ok) return ok;
+      var d = duressLive();
+      if (!d || typeof hooks.duress !== "function") return false;
+      return matches(d, secret).then(function (hit) { return hit ? "duress" : false; });
+    }).then(function (ok) {
+      if (ok === "duress") {
+        // Looks like any other unlock while the wipe runs; the reload
+        // then opens a fresh orOS.
+        var d = duressRec();
+        resetting = true;
+        try { hooks.duress(!!(d && d.cloud)); } catch (e) {}
+        return;
+      }
       setBusy(false);
-      if (ok) { clearTries(); unlock(); return; }
+      if (ok) { clearTries(); bioTyped(); if (tillActive()) setOwner(true); unlock(); return; }
       failOnce();
       if (!ui) return;
       if (waitMs()) sayWait(ui.msg);
@@ -607,6 +1103,7 @@
       if (r === true) {
         clearTries();
         save(null);
+        bioForget();
         unlock();
         if (hooks.recovered) { try { hooks.recovered(); } catch (e) {} }
         return;
@@ -699,9 +1196,11 @@
     enable: function (kind, secret) {
       var g = guard(kind, secret);
       if (g !== "ok") return Promise.resolve({ ok: false, code: g });
+      if (kind !== "pass" && strictLevel() === "hard") return Promise.resolve({ ok: false, code: "strict-pass" });
       if (load()) return Promise.resolve({ ok: false, code: "on" });
       return run(makeCfg(kind, secret, null).then(function (c) {
         if (!save(c)) return { ok: false, code: "storage" };
+        if (bioRec()) bioForget();         // a leftover from a lock turned off elsewhere
         lastActive = Date.now();
         markSeen();
         return { ok: true };
@@ -711,20 +1210,31 @@
     change: function (current, kind, secret) {
       var g = guard(kind, secret);
       if (g !== "ok") return Promise.resolve({ ok: false, code: g });
+      if (kind !== "pass" && strictCaps(strictLevel()) && strictCaps(strictLevel()).pass) return Promise.resolve({ ok: false, code: "strict-pass" });
       return run(checkCurrent(current).then(function (r) {
         if (!r.ok) return r;
-        var prev = cfg;
-        return makeCfg(kind, secret, prev).then(function (c) {
-          return save(c) ? { ok: true } : { ok: false, code: "storage" };
+        bioTyped();
+        var prev = cfg, d = duressRec();
+        var same = d && d.kind === kind ? matches(d, secret) : Promise.resolve(false);
+        return same.then(function (hit) {
+          if (hit) return { ok: false, code: "duress" };
+          return makeCfg(kind, secret, prev).then(function (c) {
+            if (!save(c)) return { ok: false, code: "storage" };
+            if (d && d.kind !== kind) duressWrite(null);     // the duress secret must be of the lock's kind
+            return { ok: true };
+          });
         });
       }));
     },
     // Turn the lock off: the current one first.
     disable: function (current) {
       if (busy) return Promise.resolve({ ok: false, code: "busy" });
+      if (strictLevel() !== "off") return Promise.resolve({ ok: false, code: "strict" });
       return run(checkCurrent(current).then(function (r) {
         if (!r.ok) return r;
-        return save(null) ? { ok: true } : { ok: false, code: "storage" };
+        if (!save(null)) return { ok: false, code: "storage" };
+        bioForget();
+        return { ok: true };
       }));
     },
     // "idle" (minutes, one of IDLES) or "hidden" (bool). No PIN asked:
@@ -732,6 +1242,7 @@
     option: function (name, value) {
       var c = load();
       if (!c) return false;
+      if (loosens(strictLevel(), name, value)) return false;     // Sensitive work keeps its limits
       if (name === "idle" && IDLES.indexOf(Number(value)) !== -1) c.idle = Number(value);
       else if (name === "hidden") c.hidden = !!value;
       else return false;
@@ -741,6 +1252,105 @@
       return ok;
     },
     lock: function () { return lock("now"); },
+    // Fingerprint or face on this phone (LK-BIO): Settings › Screen lock.
+    bio: {
+      // linked: the orOS app's bridge answers; can: what the phone says
+      // (ok | none | no-hw | no-lock | old, null = not yet); on: this
+      // page's record and the app's secret are both here; due: "ok" or
+      // "days" (the PIN is asked first); at: the PIN last typed.
+      state: function () {
+        var r = bioRec(), info = bioInfo();
+        return { linked: bioLinked(), can: info ? info.can : null,
+                 on: !!(r && info && info.kids.indexOf(r.kid) >= 0), rec: !!r,
+                 due: r ? bioDue(r, Date.now()) : "none", at: r ? r.at : 0, days: BIO_DAYS, kind: bioKind() };
+      },
+      refresh: function () { var p = phone(); try { return !!(p && p.bio.refresh()); } catch (e) { return false; } },
+      // Turn on with the current PIN / passphrase. Must run inside the
+      // tap: the phone's prompt opens first (it needs the gesture), then
+      // the PIN is checked; a wrong one throws the new secret away.
+      // { ok, code }: off | busy | wait | wrong | unavailable | cancel |
+      // lockout | invalidated | timeout | failed | storage.
+      enable: function (current) {
+        if (!load()) return Promise.resolve({ ok: false, code: "off" });
+        if (strictLevel() === "hard") return Promise.resolve({ ok: false, code: "strict" });
+        if (busy) return Promise.resolve({ ok: false, code: "busy" });
+        if (waitMs()) return Promise.resolve({ ok: false, code: "wait", wait: waitMs() });
+        if (!current) return Promise.resolve({ ok: false, code: "wrong" });
+        var p = phone(), info = bioInfo();
+        if (!p || !bioLinked() || !info || info.can !== "ok") return Promise.resolve({ ok: false, code: "unavailable" });
+        var kid = bioKid(), asked;
+        try { asked = p.bio.seal(kid, "lock"); } catch (e) { asked = Promise.reject(e); }
+        busy = true;
+        emit();
+        return asked.then(function (d64) {
+          var d = unb64(d64);
+          return checkCurrent(current).then(function (r) {
+            if (!r.ok) { d.fill(0); try { p.bio.clear(kid); } catch (e) {} return r; }
+            return bioWrap(kid, d, Date.now()).then(function (rec) {
+              d.fill(0);
+              var old = bioRec();
+              if (!bioStore(rec)) { try { p.bio.clear(kid); } catch (e) {} return { ok: false, code: "storage" }; }
+              if (old && old.kid !== kid) { try { p.bio.clear(old.kid); } catch (e) {} }
+              return { ok: true };
+            });
+          });
+        }).then(null, function (e) {
+          return { ok: false, code: bioCode(e) === "wrong" ? "failed" : bioCode(e) };
+        }).then(function (r) {
+          busy = false;
+          try { p.bio.refresh(); } catch (e) {}
+          emit();
+          return r;
+        });
+      },
+      // Turn off: no PIN asked (it only takes a way in away).
+      disable: function () { bioForget(); var p = phone(); try { if (p) p.bio.refresh(); } catch (e) {} emit(); return true; }
+    },
+    // Till-only device (TILL-1). Stock's till asks the owner's PIN for
+    // a void, the settings or a discount over the device's limit.
+    till: {
+      on: function () { return tillOn(); },
+      set: function () { return tillSet(); },
+      active: function () { return tillActive(); },
+      owner: function () { return isOwner(); },
+      // on = true: this device becomes a till (the lock must be on);
+      // the tab goes to the till at once. false: it stops.
+      turn: function (on) {
+        if (IN_SOLO) return false;
+        if (on && !load()) return false;
+        try {
+          if (on) root.localStorage.setItem(TILL_KEY, JSON.stringify({ v: 1, on: 1 }));
+          else root.localStorage.removeItem(TILL_KEY);
+        } catch (e) { return false; }
+        setOwner(false);
+        emit();
+        return true;
+      },
+      // The owner's PIN / passphrase: { ok, code: wrong | wait, wait }.
+      // Counts as a try, like the lock screen. The duress secret
+      // (STRICT-2) works here too: it looks like the owner's PIN while
+      // the wipe runs, as on the lock screen.
+      check: function (secret) {
+        if (!load()) return Promise.resolve({ ok: false, code: "off" });
+        if (busy) return Promise.resolve({ ok: false, code: "busy" });
+        if (waitMs()) return Promise.resolve({ ok: false, code: "wait", wait: waitMs() });
+        var s = String(secret || "");
+        var d = duressLive();
+        if (!d || typeof hooks.duress !== "function") return checkCurrent(s);
+        return matches(cfg, s).then(function (ok) {
+          if (ok) { clearTries(); return { ok: true }; }
+          return matches(d, s).then(function (hit) {
+            if (!hit) return checkCurrent(s);
+            var r = duressRec();
+            resetting = true;
+            try { hooks.duress(!!(r && r.cloud)); } catch (e) {}
+            return { ok: true };
+          });
+        });
+      },
+      // The till's "Owner" button: the lock screen, with a way back.
+      ask: function () { return lock("owner"); }
+    },
     onChange: function (fn) {
       if (typeof fn !== "function") return function () {};
       listeners.push(fn);
@@ -754,9 +1364,254 @@
     setHooks: function (h) {
       if (h && typeof h.reset === "function") hooks.reset = h.reset;
       if (h && typeof h.recovered === "function") hooks.recovered = h.recovered;
+      if (h && typeof h.duress === "function") hooks.duress = h.duress;
+      if (h && typeof h.travel === "function") hooks.travel = h.travel;
+      if (h && typeof h.deadman === "function") { hooks.deadman = h.deadman; dmsCheck(); }
     }
   };
   root.orosLock = api;
+
+  // ---------- 6. Sensitive work: window.orosStrict ----------
+  // The mode itself; the shell paints the badge and passes the level to
+  // the service worker (Hardcore blocks every other address there), and
+  // sync.js, webpush.js and feeds/fetch.js read "oros-strict" to refuse
+  // a remembered passphrase, push and the relay. Never synced.
+  function strictWrite(rec) {
+    try {
+      if (rec) root.localStorage.setItem(STRICT_KEY, JSON.stringify(rec));
+      else root.localStorage.removeItem(STRICT_KEY);
+      return true;
+    } catch (e) { return false; }
+  }
+  function sync() { return root.orosSync || null; }
+  function pushApi() { var p = root.orosPush; return (p && typeof p.enabled === "function") ? p : null; }
+  function sosApi() { var x = root.orosSOS; return (x && typeof x.open === "function") ? x : null; }
+  function davConf() {
+    try { var c = JSON.parse(root.localStorage.getItem("oros-dav-conf") || "null"); return (c && typeof c.url === "string") ? c : null; }
+    catch (e) { return null; }
+  }
+  function backupPlain() {
+    try {
+      var ae = JSON.parse(root.localStorage.getItem("oros-autoexport") || "null");
+      var on = ae === "daily" || ae === "weekly" || ae === "monthly";
+      return on && root.localStorage.getItem("oros-backup-enc") !== "1";
+    } catch (e) { return false; }
+  }
+  // What turning a level on needs and what it changes, for Settings:
+  // [{ id, state }]; state "need" (blocks it), "fix" (it changes this),
+  // "advice" (worth doing) or "ok".
+  function strictCheck(level) {
+    var k = strictCaps(level), S = sync(), P = pushApi(), out = [];
+    if (!k) return { ready: false, items: out };
+    var c = load();
+    out.push({ id: "lock", state: c ? "ok" : "need" });
+    if (k.pass) out.push({ id: "lockPass", state: !c || c.kind === "pass" ? (c ? "ok" : "need") : "need" });
+    if (c) out.push({ id: "lockTimes", state: clampCfg(c, level) === c ? "ok" : "fix" });
+    var vault = false;
+    try { vault = !!(S && S.hasDeviceVault()); } catch (e) {}
+    out.push({ id: "remember", state: vault ? "fix" : "ok" });
+    out.push({ id: "push", state: P && P.enabled() ? "fix" : "ok" });
+    if (!k.bio) out.push({ id: "bio", state: bioRec() ? "fix" : "ok" });
+    var dc = davConf(), prov = "";
+    try { prov = S ? S.getProvider() : ""; } catch (e) {}
+    if (level === "hard") out.push({ id: "davRelay", state: prov === "webdav" && dc && dc.relay === true ? "need" : "ok" });
+    out.push({ id: "backup", state: backupPlain() ? (level === "hard" ? "need" : "advice") : "ok" });
+    var short = false;
+    try { short = !!(S && typeof S.passShort === "function" && S.passShort()); } catch (e) {}
+    out.push({ id: "passLen", state: short ? "advice" : "ok" });
+    if (level === "hard") {
+      var sw = false;
+      try { sw = !!(root.navigator.serviceWorker && root.navigator.serviceWorker.controller); } catch (e) {}
+      out.push({ id: "worker", state: sw ? "ok" : "need" });
+    }
+    return { ready: out.every(function (i) { return i.state !== "need"; }), items: out };
+  }
+  // Security checkup (STRICT-6): this device's weak points, live, mode
+  // on or off. state: ok | advice (worth changing) | info (good to
+  // know) | check (orOS cannot see it: the person checks).
+  function strictAudit() {
+    var S = sync(), P = pushApi(), c = load(), out = [];
+    out.push({ id: "lock", state: c ? "ok" : "advice" });
+    if (c) {
+      out.push({ id: "lockPass", state: c.kind === "pass" ? "ok" : "advice" });
+      out.push({ id: "auditIdle", state: c.idle > 0 && c.idle <= 5 ? "ok" : "advice" });
+      out.push({ id: "auditHidden", state: c.hidden ? "ok" : "advice" });
+      out.push({ id: "auditBio", state: bioRec() ? "advice" : "ok" });
+    }
+    var vault = false, prov = "", short = false;
+    try { vault = !!(S && S.hasDeviceVault()); } catch (e) {}
+    try { prov = S && (typeof S.isConnected !== "function" || S.isConnected()) ? S.getProvider() : ""; } catch (e) {}
+    try { short = !!(S && typeof S.passShort === "function" && S.passShort()); } catch (e) {}
+    out.push({ id: "auditNoSync", state: prov ? "ok" : "info" });
+    if (prov) {
+      out.push({ id: "remember", state: vault ? "advice" : "ok" });
+      out.push({ id: "passLen", state: short ? "advice" : "ok" });
+      out.push({ id: "auditCloud", state: prov === "webdav" ? "ok" : "advice" });
+      var dc = davConf();
+      if (prov === "webdav") out.push({ id: "davRelay", state: dc && dc.relay === true ? "advice" : "ok" });
+    }
+    out.push({ id: "push", state: P && P.enabled() ? "advice" : "ok" });
+    var ph = root.orosPhone, phOn = false;
+    try { phOn = !!(ph && typeof ph.available === "function" && ph.available() && (ph.enabled("contacts") || ph.enabled("calendar"))); } catch (e) {}
+    try { if (ph && typeof ph.available === "function" && ph.available()) out.push({ id: "auditPhone", state: phOn ? "advice" : "ok" }); } catch (e) {}
+    out.push({ id: "backup", state: backupPlain() ? "advice" : "ok" });
+    var gate = false;
+    try { gate = !!(root.orosGate && typeof root.orosGate.state === "function" && root.orosGate.state().on); } catch (e) {}
+    out.push({ id: "auditGate", state: gate ? "info" : "ok" });
+    out.push({ id: "auditMode", state: strictRec() ? "ok" : "info" });
+    out.push({ id: "auditExt", state: "check" });
+    return { items: out, advice: out.filter(function (i) { return i.state === "advice"; }).length };
+  }
+  // The addresses Hardcore still lets through: the sync cloud only.
+  function strictHosts() {
+    var S = sync(), prov = "", hosts = [];
+    try { prov = S ? S.getProvider() : ""; } catch (e) {}
+    if (prov === "dropbox") hosts.push("api.dropboxapi.com", "content.dropboxapi.com");
+    var dc = davConf();
+    if (prov === "webdav" && dc && dc.relay !== true) {
+      try { hosts.push(new URL(dc.url).host); } catch (e) {}
+    }
+    return hosts;
+  }
+  var strictApi = {
+    v: 1,
+    // null when off, else "on" or "hard" (other code reads it too:
+    // gate/gate.js stops Claude's closed copy while it is not null).
+    level: function () { var r = strictRec(); return r ? r.level : null; },
+    caps: function (level) { var k = strictCaps(level || strictLevel()); return k ? JSON.parse(JSON.stringify(k)) : null; },
+    check: strictCheck,
+    audit: strictAudit,
+    hosts: strictHosts,
+    // Turn a level on, or go from "on" to "hard". → { ok, code }
+    // code: need (strictCheck not ready), lower (hard → on needs off first),
+    // storage.
+    enable: function (level) {
+      if (!strictCaps(level)) return Promise.resolve({ ok: false, code: "level" });
+      var cur = strictRec();
+      if (cur && cur.level === level) return Promise.resolve({ ok: true });
+      if (cur && cur.level === "hard") return Promise.resolve({ ok: false, code: "lower" });
+      if (!strictCheck(level).ready) return Promise.resolve({ ok: false, code: "need" });
+      var c = load(), P = pushApi(), S = sync();
+      var prev = cur ? cur.prev : { idle: c ? c.idle : DEFAULT_IDLE, hidden: c ? c.hidden : false, push: !!(P && P.enabled()) };
+      if (!strictWrite({ v: 1, level: level, at: Date.now(), prev: prev })) return Promise.resolve({ ok: false, code: "storage" });
+      load();                                          // the lock takes the limits now
+      lastActive = Date.now();
+      var jobs = [];
+      try { if (S && typeof S.forgetSealed === "function") jobs.push(S.forgetSealed()); } catch (e) {}
+      try { if (P && P.enabled()) jobs.push(P.disable()); } catch (e) {}
+      emit();
+      return Promise.all(jobs.map(function (j) { return Promise.resolve(j).catch(function () {}); }))
+        .then(function () { emit(); return { ok: true }; });
+    },
+    // Turn it off: the lock's PIN / passphrase first (when there is a
+    // lock). The lock times and push come back as they were.
+    disable: function (current) {
+      var cur = strictRec();
+      if (!cur) return Promise.resolve({ ok: true });
+      if (busy) return Promise.resolve({ ok: false, code: "busy" });
+      return run(checkCurrent(current).then(function (r) {
+        if (!r.ok) return r;
+        if (!strictWrite(null)) return { ok: false, code: "storage" };
+        duressWrite(null);                               // the duress secret lives only in the mode
+        dmsWrite(null);                                  // and so does the dead-man switch
+        try { root.localStorage.removeItem("oros-strict-disc"); } catch (e) {}
+        var c = load();
+        if (c) { c.idle = cur.prev.idle; c.hidden = cur.prev.hidden; save(c); }
+        lastActive = Date.now();
+        var P = pushApi(), back = Promise.resolve(false);
+        if (cur.prev.push && P && typeof P.enable === "function") {
+          back = Promise.resolve().then(function () { return P.enable(); }).then(function () { return true; }, function () { return false; });
+        }
+        return back.then(function (pushed) { return { ok: true, push: cur.prev.push ? (pushed ? "on" : "failed") : "" }; });
+      }));
+    },
+    // The SOS card (window.orosSOS, Settings › System), when this
+    // orOS has it. Never starts anything by itself.
+    // Duress PIN / passphrase (STRICT-2). state() → { on, cloud, kind }.
+    // set(current, secret, cloud): the lock's secret first; the new one
+    // has the lock's kind and must differ from it. → { ok, code }
+    // code: off (no mode / no lock), wrong, wait, pin, short, long,
+    // same, storage, busy.
+    duress: {
+      state: function () { var d = duressLive(); return { on: !!d, cloud: !!(d && d.cloud), kind: d ? d.kind : null }; },
+      set: function (current, secret, cloud) {
+        var c = load();
+        if (!strictRec() || !c) return Promise.resolve({ ok: false, code: "off" });
+        if (busy) return Promise.resolve({ ok: false, code: "busy" });
+        var why = secretProblem(c.kind, secret);
+        if (why !== "ok") return Promise.resolve({ ok: false, code: why });
+        return run(checkCurrent(current).then(function (r) {
+          if (!r.ok) return r;
+          return matches(c, secret).then(function (same) {
+            if (same) return { ok: false, code: "same" };
+            return makeCfg(c.kind, secret, null).then(function (n) {
+              var rec = { v: 1, kind: n.kind, salt: n.salt, hash: n.hash, i: n.i, cloud: cloud === true };
+              return duressWrite(rec) ? { ok: true } : { ok: false, code: "storage" };
+            });
+          });
+        }));
+      },
+      // Also wipe the cloud (or not): the lock's secret first.
+      cloud: function (current, on) {
+        var d = duressLive();
+        if (!d) return Promise.resolve({ ok: false, code: "off" });
+        if (busy) return Promise.resolve({ ok: false, code: "busy" });
+        return run(checkCurrent(current).then(function (r) {
+          if (!r.ok) return r;
+          d.cloud = on === true;
+          return duressWrite(d) ? { ok: true } : { ok: false, code: "storage" };
+        }));
+      },
+      // Remove it (no secret asked: it only takes a wipe away).
+      clear: function () { duressWrite(null); emit(); return true; }
+    },
+    // Dead-man switch (STRICT-3): if this device is not unlocked for
+    // `days`, the next time orOS runs (start, or the lock screen left
+    // open) it erases this device. state() → { on, days, alive, need }
+    // (need: the mode and the lock must be on). set(current, days):
+    // days one of DMS_DAYS, 0 = off; the lock's secret first.
+    // → { ok, code } code: off, days, wrong, wait, storage, busy.
+    deadman: {
+      days: DMS_DAYS.slice(),
+      state: function () {
+        var d = dmsLive();
+        return { on: !!d, days: d ? d.days : 0, alive: d ? d.alive : 0, need: !(strictRec() && load()) };
+      },
+      set: function (current, days) {
+        days = Number(days) || 0;
+        if (!strictRec() || !load()) return Promise.resolve({ ok: false, code: "off" });
+        if (days && DMS_DAYS.indexOf(days) === -1) return Promise.resolve({ ok: false, code: "days" });
+        if (busy) return Promise.resolve({ ok: false, code: "busy" });
+        return run(checkCurrent(current).then(function (r) {
+          if (!r.ok) return r;
+          var ok = dmsWrite(days ? { v: 1, days: days, alive: Date.now() } : null);
+          emit();
+          return ok ? { ok: true } : { ok: false, code: "storage" };
+        }));
+      }
+    },
+    // Travel mode (STRICT-3): everything leaves this device and stays
+    // encrypted in the cloud; sync and the passphrase bring it back.
+    // The shell does the work (hooks.travel). → { ok, code } code: off,
+    // nosync, wrong, cantcheck, unsynced, busy.
+    travel: function (pass) {
+      if (!strictRec()) return Promise.resolve({ ok: false, code: "off" });
+      if (typeof hooks.travel !== "function") return Promise.resolve({ ok: false, code: "off" });
+      return Promise.resolve().then(function () { return hooks.travel(String(pass || "")); })
+        .then(function (r) { return r || { ok: false, code: "off" }; }, function () { return { ok: false, code: "unsynced" }; });
+    },
+    // Discreet title and icon (STRICT-2), device-local "oros-strict-disc".
+    discreet: function (on) {
+      if (on === undefined) { try { return root.localStorage.getItem("oros-strict-disc") === "1"; } catch (e) { return false; } }
+      try { if (on) root.localStorage.setItem("oros-strict-disc", "1"); else root.localStorage.removeItem("oros-strict-disc"); } catch (e) { return false; }
+      emit();
+      return true;
+    },
+    sosAvailable: function () { return !!sosApi(); },
+    sos: function () { var x = sosApi(); try { return x ? x.open() === true : false; } catch (e) { return false; } },
+    onChange: function (fn) { return api.onChange(fn); }
+  };
+  root.orosStrict = strictApi;
 
   // Other tabs of orOS: "Lock now" locks them too; a lock turned off
   // (or changed) there is read again here.
@@ -767,7 +1622,7 @@
     }
   } catch (e) { bc = null; }
   root.addEventListener("storage", function (e) {
-    if (e.key !== KEY && e.key !== null) return;
+    if (e.key !== KEY && e.key !== BIO_KEY && e.key !== STRICT_KEY && e.key !== TILL_KEY && e.key !== null) return;
     load();
     if (!cfg && locked) unlock();
     emit();
@@ -785,13 +1640,16 @@
   });
   root.addEventListener("pagehide", markSeen);
   setInterval(tick, 5000);
+  setInterval(dmsCheck, 60000);     // a lock screen left open for days
 
   // Start: locked, unless this same tab was open a moment ago (an
   // update reload, a return from the Dropbox sign-in).
   if (load()) {
     var seen = 0;
     try { seen = Number(root.sessionStorage.getItem(SEEN_KEY)) || 0; } catch (e) {}
-    if (stillOpen(cfg, seen, Date.now())) lastActive = seen;
+    // Hardcore: every start asks, even a reload a moment later.
+    if (strictLevel() !== "hard" && stillOpen(cfg, seen, Date.now())) lastActive = seen;
+    else if (tillOn() && strictLevel() !== "hard") setOwner(false);   // TILL-1: a fresh start opens on the till, no PIN; Hardcore still asks
     else lock("start");
   }
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

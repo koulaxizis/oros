@@ -61,6 +61,7 @@ orosPack("de", "commands", {
  "set.dark": "Dunkles Design",
  "set.light": "Helles Design",
  "set.lock": "orOS jetzt sperren",
+ "set.clip": "Zwischenablage-Verlauf",
  "set.notifs.note": "Nichts erscheint oder wird gespeichert, bis du sie wieder einschaltest",
  "set.notifs.off": "Benachrichtigungen aus",
  "set.notifs.on": "Benachrichtigungen an",

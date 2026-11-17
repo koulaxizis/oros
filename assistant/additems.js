@@ -108,7 +108,7 @@
   var TD_KEYS = ["id", "text", "done", "due", "notes", "labels", "info", "recurrence", "mtime", "om", "pos"];
   var TD_LIST_KEYS = ["id", "name", "mtime", "om", "pos", "recurrence", "lastReset", "nextReset", "items", "fm"];
   // kanban/model.js
-  var KB_GROUPS = ["a", "c", "d", "k", "l", "n", "p", "s", "t", "x"];
+  var KB_GROUPS = ["a", "c", "d", "g", "k", "l", "n", "p", "s", "t", "x"];
   var KB_CARD_KEYS = ["id", "text", "notes", "due", "labels", "subtasks", "info", "mtime", "pos"];
   var KB_COL_KEYS = ["id", "name", "mtime", "om", "pos", "cards"];
   var KB_BOARD_KEYS = ["id", "name", "archived", "color", "mtime", "om", "pos", "deleted", "labels", "columns"];
@@ -346,18 +346,27 @@
     r = names(x, "subtasks", LIM.kbSubs, LIM.kbSub, w, "a card");
     if (r.err) return r;
     o.subtasks = r.v;
+    // KB-GANTT G3: the plan's first day and the milestone switch
+    r = dateOf(x, "plan_start", w);
+    if (r.err) return r;
+    if (r.v && o.due && r.v > o.due) return { err: w + "plan_start is after the due date." };
+    if (r.v) o.start = r.v;
+    if (x.milestone !== undefined && x.milestone !== null) {
+      if (typeof x.milestone !== "boolean") return { err: w + "milestone must be true or false." };
+      if (x.milestone) o.ms = 1;
+    }
     return { o: o, key: fold(o.board) + "|" + fold(o.title) };
   }
   // CRM records: customer = a CRM customer's ref (assistant.js turns it
   // into o.cust before plan()), deal = a deal's ref (→ o.deal).
   function crmRefs(x, w, o, dealOk) {
     var cu = one(typeof x.customer === "string" ? x.customer : "").replace(/^oros:/, "");
-    if (!/^r\d{1,5}$/.test(cu)) return w + "customer must be the ref of a CRM customer (e.g. r4) from search_data or create_items.";
+    if (!/^r\d{1,9}$/.test(cu)) return w + "customer must be the ref of a CRM customer (e.g. r4) from search_data or create_items.";
     o.customer = cu;
     o.deal = "";
     if (dealOk && has(x, "deal") && x.deal) {
       var dl = one(String(x.deal)).replace(/^oros:/, "");
-      if (!/^r\d{1,5}$/.test(dl)) return w + "deal must be the ref of a CRM deal from search_data or create_items.";
+      if (!/^r\d{1,9}$/.test(dl)) return w + "deal must be the ref of a CRM deal from search_data or create_items.";
       o.deal = dl;
     }
     return "";
@@ -1074,6 +1083,8 @@
       var card = { id: uid(now, taken), text: o.title, notes: o.note, due: o.due || null, labels: x.labelIds.slice(),
                    subtasks: o.subtasks.map(function (t) { return { id: uid(now, taken), text: t, completed: false, m: s }; }),
                    info: [], mtime: s, pos: 0, fm: fm };
+      if (o.start) card.start = o.start;
+      if (o.ms) card.ms = 1;
       var k = x.b.id + "|" + x.col.id;
       if (!add[k]) add[k] = { b: x.b, col: x.col, cards: [] };
       add[k].cards.push(card);

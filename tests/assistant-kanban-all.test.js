@@ -28,7 +28,7 @@ function kb() {
       { id: "kb-seed-main", name: "My board", mtime: 1, om: 0, deleted: {}, labels: [{ id: "l1", name: "Urgent" }],
         columns: [
           { id: "c1", name: "To do", pos: 0, cards: [
-            { id: "k1", text: "Write intro", due: "2026-11-01", labels: ["l1"], subtasks: [{ text: "a", done: true }, { text: "b" }] },
+            { id: "k1", text: "Write intro", due: "2026-11-01", labels: ["l1"], subtasks: [{ text: "a", done: true }, { text: "b" }, { text: "c", completed: true }] },
             { id: "k2", text: "Call printer", due: TODAY }
           ] },
           { id: "c2", name: "Done", pos: 1, cards: [{ id: "k3", text: "Old thing", due: "2026-10-01" }] }
@@ -77,7 +77,7 @@ test("the cards of all boards come with board › column, due, labels, subtasks 
   assert.equal(k1.date, "2026-11-01");
   assert.equal(k1.late, true);
   assert.deepEqual(k1.labels, ["Urgent"]);
-  assert.equal(k1.subtasks, "1/2");
+  assert.equal(k1.subtasks, "2/3");
   assert.deepEqual(k1.target, { board: "kb-seed-main", col: "c1", card: "k1" });
   assert.deepEqual(s.items[4].target, { board: "b2", col: "c4", card: "k5" });
   assert.equal(s.listed, 6);

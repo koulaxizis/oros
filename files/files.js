@@ -72,6 +72,7 @@
   var ROOT_RECENTS = 10;         // shown on the main folder
   var SEARCH_PAGE = 100;         // results per "Show more"
   var FAVS_KEY = "oros-files-favs";   // synced slice "files" (Favourites)
+  var EXPS_KEY = "oros-files-exp";    // synced slice "files-exp" (self-deleting files, STRICT-5)
   var SWEEP_KEY = "oros-files-trash-swept";
   var CORE = window.OrosFilesCore;
   var TRASH = CORE.TRASH;
@@ -207,6 +208,7 @@
       "menu.moveTo":   "Move to…",
       "menu.copyTo":  "Copy to…",
       "menu.toDropbox": "Send to Dropbox…",
+      "menu.toDocs":    "Add to Documents",
       "menu.toComputer": "Send to This computer…",
       "menu.copyName": "Copy name",
       "menu.copyPath": "Copy path",
@@ -217,6 +219,9 @@
       "tree.recent":   "Recent",
       "tree.favs":     "Favourites",
       "tree.trash":    "Trash",
+      "tree.docs":     "Documents",
+      "tree.photos":   "Photos",
+      "tree.photosFail": "Photos could not be opened. Check the connection and try again.",
       "fav.add":       "Add to Favourites",
       "fav.remove":    "Remove from Favourites",
       "fav.added":     "Added to Favourites",
@@ -253,6 +258,48 @@
       "menu.extract":  "Extract here",
       "menu.convert":  "Convert to orOS",
       "menu.pdfTools": "Open in Scanner & PDF",
+      "menu.transfer": "Send with Transfer…",
+      "menu.clean": "Remove hidden details",
+      "exp.menu": "Delete itself…",
+      "exp.title": "Delete this file by itself",
+      "exp.hint": "On every device, the first time orOS runs after this time. It is deleted for good, not put in the Trash.",
+      "exp.in.1h": "In 1 hour",
+      "exp.in.1d": "In 1 day",
+      "exp.in.7d": "In 7 days",
+      "exp.in.30d": "In 30 days",
+      "exp.keep": "Keep it",
+      "exp.set": "This file will delete itself",
+      "exp.off": "This file stays",
+      "exp.gone1": "A self-deleting file was deleted",
+      "exp.goneN": "{n} self-deleting files were deleted",
+      "exp.left.d": "Deletes itself in {n} d",
+      "exp.left.h": "Deletes itself in {n} h",
+      "exp.left.m": "Deletes itself in {n} min",
+      "clean.title": "Hidden details removed",
+      "clean.working": "Removing hidden details… {n} of {t}",
+      "clean.saved": "Saved as “{name}”. The original is unchanged.",
+      "clean.none": "“{name}”: nothing hidden was found.",
+      "clean.fail": "“{name}” could not be cleaned.",
+      "clean.encrypted": "“{name}” is password-protected; remove the password first.",
+      "clean.big": "“{name}” is too large to clean here (over {mb} MB).",
+      "clean.r.gps": "Location (GPS)",
+      "clean.r.camera": "Camera and photo details (EXIF)",
+      "clean.r.xmp": "Editing details (XMP)",
+      "clean.r.iptc": "Captions and credits (IPTC)",
+      "clean.r.comment": "A hidden comment",
+      "clean.r.text": "Description, keywords, notes",
+      "clean.r.time": "Time of the last change",
+      "clean.r.people": "Author and last editor",
+      "clean.r.dates": "Creation and change dates",
+      "clean.r.app": "Program, company, template, printer",
+      "clean.r.custom": "Custom properties",
+      "clean.r.rsid": "Word editing-session codes",
+      "clean.r.history": "Earlier saved versions inside the file",
+      "clean.w.comments": "It still has comments, with their authors’ names. Remove them in the program you write with.",
+      "clean.w.tracked": "It still has tracked changes, with names and times. Accept or reject them in the program you write with.",
+      "clean.w.annots": "It still has notes or highlights, which can carry a name. Remove them in a PDF editor.",
+      "clean.check": "Hidden details are only part of it. Read the content too: names, faces, places, what is visible in pictures, and words only one person would use.",
+      "clean.ok": "Close",
       "zip.archive":   "Archive",
       "zip.working":   "Compressing… {n} of {t}",
       "zip.done":      "Created \"{name}\"",
@@ -275,7 +322,7 @@
       "sel.count":     "{n} selected",
       "sel.one":       "1 selected",
       "sel.none":      "Tap items to select them",
-      "err.reserved":  "This name is reserved for the Trash.",
+      "err.reserved":  "This name is reserved for orOS (the Trash and Documents).",
       "name.newFolder": "New folder",
       "name.newFile":   "New file.txt",
 	  "act.import": "Import files",
@@ -439,6 +486,7 @@
       "menu.moveTo":   "Μετακίνηση σε…",
       "menu.copyTo":   "Αντιγραφή σε…",
       "menu.toDropbox": "Αποστολή στο Dropbox…",
+      "menu.toDocs":    "Προσθήκη στα Έγγραφα",
       "menu.toComputer": "Αποστολή σε αυτόν τον υπολογιστή…",
       "menu.copyName": "Αντιγραφή ονόματος",
       "menu.copyPath": "Αντιγραφή διαδρομής",
@@ -449,6 +497,9 @@
       "tree.recent":   "Πρόσφατα",
       "tree.favs":     "Αγαπημένα",
       "tree.trash":    "Κάδος",
+      "tree.docs":     "Έγγραφα",
+      "tree.photos":   "Φωτογραφίες",
+      "tree.photosFail": "Οι Φωτογραφίες δεν άνοιξαν. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "fav.add":       "Προσθήκη στα Αγαπημένα",
       "fav.remove":    "Αφαίρεση από τα Αγαπημένα",
       "fav.added":     "Προστέθηκε στα Αγαπημένα",
@@ -485,6 +536,48 @@
       "menu.extract":  "Αποσυμπίεση εδώ",
       "menu.convert":  "Μετατροπή σε orOS",
       "menu.pdfTools": "Άνοιγμα στο Σαρωτής & PDF",
+      "menu.transfer": "Αποστολή με Μεταφορά…",
+      "menu.clean": "Αφαίρεση κρυφών στοιχείων",
+      "exp.menu": "Αυτοκαταστροφή…",
+      "exp.title": "Το αρχείο να σβηστεί μόνο του",
+      "exp.hint": "Σε κάθε συσκευή, την πρώτη φορά που τρέχει το orOS μετά από αυτή την ώρα. Σβήνεται οριστικά, δεν μπαίνει στον Κάδο.",
+      "exp.in.1h": "Σε 1 ώρα",
+      "exp.in.1d": "Σε 1 μέρα",
+      "exp.in.7d": "Σε 7 μέρες",
+      "exp.in.30d": "Σε 30 μέρες",
+      "exp.keep": "Να μείνει",
+      "exp.set": "Το αρχείο θα σβηστεί μόνο του",
+      "exp.off": "Το αρχείο μένει",
+      "exp.gone1": "Ένα αρχείο αυτοκαταστροφής σβήστηκε",
+      "exp.goneN": "Σβήστηκαν {n} αρχεία αυτοκαταστροφής",
+      "exp.left.d": "Σβήνεται σε {n} μ.",
+      "exp.left.h": "Σβήνεται σε {n} ώ.",
+      "exp.left.m": "Σβήνεται σε {n} λεπ.",
+      "clean.title": "Τα κρυφά στοιχεία αφαιρέθηκαν",
+      "clean.working": "Αφαιρώ κρυφά στοιχεία… {n} από {t}",
+      "clean.saved": "Αποθηκεύτηκε ως «{name}». Το αρχικό δεν άλλαξε.",
+      "clean.none": "«{name}»: δεν βρέθηκε τίποτα κρυφό.",
+      "clean.fail": "Το «{name}» δεν καθαρίστηκε.",
+      "clean.encrypted": "Το «{name}» έχει κωδικό· αφαίρεσέ τον πρώτα.",
+      "clean.big": "Το «{name}» είναι πολύ μεγάλο για καθαρισμό εδώ (πάνω από {mb} MB).",
+      "clean.r.gps": "Τοποθεσία (GPS)",
+      "clean.r.camera": "Στοιχεία κάμερας και φωτογραφίας (EXIF)",
+      "clean.r.xmp": "Στοιχεία επεξεργασίας (XMP)",
+      "clean.r.iptc": "Λεζάντες και credits (IPTC)",
+      "clean.r.comment": "Ένα κρυφό σχόλιο",
+      "clean.r.text": "Περιγραφή, λέξεις-κλειδιά, σημειώσεις",
+      "clean.r.time": "Ώρα τελευταίας αλλαγής",
+      "clean.r.people": "Συντάκτης και τελευταίος που το άλλαξε",
+      "clean.r.dates": "Ημερομηνίες δημιουργίας και αλλαγής",
+      "clean.r.app": "Πρόγραμμα, εταιρεία, πρότυπο, εκτυπωτής",
+      "clean.r.custom": "Προσαρμοσμένες ιδιότητες",
+      "clean.r.rsid": "Κωδικοί συνεδριών επεξεργασίας του Word",
+      "clean.r.history": "Παλαιότερες αποθηκευμένες εκδοχές μέσα στο αρχείο",
+      "clean.w.comments": "Έχει ακόμη σχόλια, με τα ονόματα όσων τα έγραψαν. Αφαίρεσέ τα στο πρόγραμμα όπου γράφεις.",
+      "clean.w.tracked": "Έχει ακόμη παρακολούθηση αλλαγών, με ονόματα και ώρες. Αποδέξου ή απόρριψέ τες στο πρόγραμμα όπου γράφεις.",
+      "clean.w.annots": "Έχει ακόμη σημειώσεις ή επισημάνσεις, που μπορεί να έχουν όνομα. Αφαίρεσέ τες σε πρόγραμμα PDF.",
+      "clean.check": "Τα κρυφά στοιχεία είναι μόνο ένα μέρος. Διάβασε και το περιεχόμενο: ονόματα, πρόσωπα, μέρη, ό,τι φαίνεται στις εικόνες, και λέξεις που θα χρησιμοποιούσε μόνο ένας άνθρωπος.",
+      "clean.ok": "Κλείσιμο",
       "zip.archive":   "Συμπιεσμένο",
       "zip.working":   "Συμπίεση… {n} από {t}",
       "zip.done":      "Δημιουργήθηκε το «{name}»",
@@ -507,7 +600,7 @@
       "sel.count":     "{n} επιλεγμένα",
       "sel.one":       "1 επιλεγμένο",
       "sel.none":      "Πάτα στοιχεία για να τα επιλέξεις",
-      "err.reserved":  "Αυτό το όνομα είναι δεσμευμένο για τον Κάδο.",
+      "err.reserved":  "Αυτό το όνομα είναι δεσμευμένο για το orOS (Κάδος και Έγγραφα).",
       "name.newFolder": "Νέος φάκελος",
       "name.newFile":   "Νέο αρχείο.txt",
 	  "act.import": "Εισαγωγή αρχείων",
@@ -600,6 +693,8 @@
 
   var MORE_SVG =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+  var DOCS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>';
+  var PHOTO_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
   var TRASH_SVG =
     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
   var CLOCK_SVG =
@@ -616,6 +711,8 @@
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg>';
   var PDFTOOLS_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>';
+  var TRANSFER_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-4-4"/><path d="M20 16H6l4 4"/></svg>';
   var UNZIP_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><path d="M12 10v6M9 13l3 3 3-3"/></svg>';
   var GRID_SVG =
@@ -824,8 +921,18 @@
     } catch (e) { return id; }
   }
   // Only what the preview cannot show well opens in an app on a double
-  // click / tap: text, pictures and zips keep the preview.
+  // click / tap: text, pictures and zips keep the preview, unless the
+  // person picked a default app for that type (Settings › Default apps,
+  // DEF-APPS D1): then it opens there too.
+  function chosenApp(name) {
+    var o = fileOpenApi(), m = /\.([a-z0-9]{1,24})$/i.exec(String(name || ""));
+    if (!o || !m || typeof o.choice !== "function") return "";
+    var c = "";
+    try { c = o.choice("." + m[1].toLowerCase()) || ""; } catch (e) { c = ""; }
+    return c && c !== "ask" && appsForFile(name).indexOf(c) !== -1 ? c : "";
+  }
   function opensInApp(name) {
+    if (appsForFile(name).length && chosenApp(name)) return true;
     return !isTextExt(name) && !isImageExt(name) && CORE.extOf(name) !== "zip" && appsForFile(name).length > 0;
   }
   function openInApp(path, ask) {
@@ -919,6 +1026,141 @@
     if (!paths.length) return;
     try { window.parent.__orosOpenAt("scanpdf", { paths: paths }); } catch (e) {}
   }
+  // "Remove hidden details" (STRICT-4, files/clean-core.js): a clean copy
+  // "<name> (clean).<ext>" next to each selected photo, PDF or office
+  // file; the original is never changed. A short report says what went
+  // and what is still inside (comments, tracked changes).
+  var CLEAN_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>';
+  var CLEAN_MAX_MB = 200, cleanBusy = false;
+  function cleanPaths() {
+    var dirs = {};
+    lastEntries.forEach(function (e) { if (e.dir) dirs[entryPath(e)] = true; });
+    var C = window.orosClean;
+    return selectionPaths().filter(function (p) {
+      var n = baseName(p);
+      return !dirs[p] && !CORE.isTrashPath(p) && (C ? C.canClean(n) : /\.(jpe?g|png|webp|pdf|docx|docm|dotx|xlsx|xlsm|pptx|pptm|odt|ods|odp|odg)$/i.test(n));
+    });
+  }
+  function cleanScript(src, test) {
+    if (test()) return Promise.resolve();
+    return new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = src;
+      sc.onload = function () { if (test()) res(); else rej(new Error("load")); };
+      sc.onerror = function () { rej(new Error("load")); };
+      document.head.appendChild(sc);
+    });
+  }
+  function cleanOne(path, io) {
+    var C = window.orosClean, name = baseName(path);
+    return io.stat(path).then(function (st) {
+      if (st && st.size > CLEAN_MAX_MB * 1048576) return { name: name, err: "big" };
+      return io.read(path).then(function (blob) { return blob.arrayBuffer(); }).then(function (buf) {
+        var b = new Uint8Array(buf), kind = C.kindOf(name, b);
+        var job;
+        if (kind === "jpeg" || kind === "png" || kind === "webp") job = Promise.resolve().then(function () { return C.cleanImage(kind, b); });
+        else if (kind === "pdf") job = cleanScript("../vendor/pdf-lib/pdf-lib.min.js", function () { return !!window.PDFLib; })
+          .then(function () { return C.cleanPdf(b, window.PDFLib); });
+        else if (kind === "ooxml" || kind === "odf") job = C.cleanZip(kind, b, { Zip: window.AtelierZip, build: CORE.zipBuild, crc32: CORE.crc32,
+          deflate: deflateOk() ? deflate : null });
+        else return { name: name, err: "fail" };
+        return job.then(function (r) {
+          if (!r.removed.length) return { name: name, removed: [], warn: r.warn };
+          var parent = io.parent(path);
+          return io.list(parent).then(function (list) {
+            var out = uniqueName(C.cleanName(name), list.map(function (e) { return e.name; }));
+            var dst = join(parent, out);
+            return io.write(dst, new Blob([r.bytes])).then(function () {
+              io.done(dst);
+              return { name: name, out: out, removed: r.removed, warn: r.warn };
+            });
+          });
+        });
+      });
+    }).catch(function (e) {
+      return { name: name, err: e && e.message === "encrypted" ? "encrypted" : "fail" };
+    });
+  }
+  function cleanSelection() {
+    var paths = cleanPaths(), io = DISK_IO;
+    if (!paths.length) return;
+    if (cleanBusy) { transientNote(t("zip.busy")); return; }
+    cleanBusy = true;
+    var results = [];
+    setJob(tfmt("clean.working", { n: 0, t: paths.length }));
+    cleanScript("clean-core.js", function () { return !!window.orosClean; }).then(function () {
+      return paths.reduce(function (ch, p, i) {
+        return ch.then(function () { return cleanOne(p, io); }).then(function (r) {
+          results.push(r);
+          setJob(tfmt("clean.working", { n: i + 1, t: paths.length }));
+        });
+      }, Promise.resolve());
+    }).then(function () { cleanReport(results); }, function () { transientNote(t("toast.opFail")); })
+      .then(function () { cleanBusy = false; setJob(""); io.refresh(); });
+  }
+  function cleanReport(results) {
+    var old = document.getElementById("dlg-clean");
+    if (old) old.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = "dlg-clean";
+    var h = document.createElement("h3");
+    h.textContent = t("clean.title");
+    dlg.appendChild(h);
+    results.forEach(function (r) {
+      var box = document.createElement("div");
+      box.className = "clean-file";
+      var p = document.createElement("p");
+      if (r.err) p.textContent = tfmt(r.err === "encrypted" ? "clean.encrypted" : r.err === "big" ? "clean.big" : "clean.fail", { name: r.name, mb: CLEAN_MAX_MB });
+      else if (!r.removed.length) p.textContent = tfmt("clean.none", { name: r.name });
+      else p.textContent = tfmt("clean.saved", { name: r.out });
+      box.appendChild(p);
+      if (r.removed && r.removed.length) {
+        var ul = document.createElement("ul");
+        r.removed.forEach(function (k) { var li = document.createElement("li"); li.textContent = t("clean.r." + k); ul.appendChild(li); });
+        box.appendChild(ul);
+      }
+      (r.warn || []).forEach(function (k) {
+        var w = document.createElement("p");
+        w.className = "hint clean-warn";
+        w.textContent = t("clean.w." + k);
+        box.appendChild(w);
+      });
+      dlg.appendChild(box);
+    });
+    var hint = document.createElement("p");
+    hint.className = "clean-note";
+    hint.textContent = t("clean.check");
+    dlg.appendChild(hint);
+    var menu = document.createElement("menu");
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    var ok = document.createElement("button");
+    ok.type = "button";
+    ok.setAttribute("data-k", "clean-ok");
+    ok.textContent = t("clean.ok");
+    ok.addEventListener("click", function () { dlg.close(); dlg.remove(); });
+    menu.appendChild(sp);
+    menu.appendChild(ok);
+    dlg.appendChild(menu);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  // "Send with Transfer…": the selected files and folders go to the
+  // Transfer app's list (TRANSFER-1 wave 2), only when it is installed.
+  function transferPaths() {
+    var env = null;
+    try { env = window.parent && window.parent !== window ? window.parent.orosTodayEnv : null; } catch (e) {}
+    if (!env || typeof env.apps !== "function" ||
+        !env.apps().some(function (a) { return a && a.id === "transfer"; })) return [];
+    return selectionPaths().filter(function (p) { return !CORE.isTrashPath(p); });
+  }
+  function sendWithTransfer() {
+    var paths = transferPaths();
+    if (!paths.length) return;
+    try { window.parent.__orosOpenAt("transfer", { send: paths }); } catch (e) {}
+  }
   // Rows of the Recent and Trash views carry their own full path.
   function entryPath(e) { return e.path || join(cwd, e.name); }
 
@@ -937,8 +1179,10 @@
     return !!(fs && typeof fs.ls === "function");
   }
 
-  // raw === true keeps the hidden Trash folder (/internal/.trash);
-  // every view, chooser and search of this app leaves it out.
+  // raw === true keeps the hidden folders at the root: the Trash
+  // (/internal/.trash) and the text Documents reads (/internal/.docs);
+  // every view, chooser and search of this app leaves them out.
+  var HIDDEN_ROOT = [".trash", ".docs"];
   function fsList(path, raw) {
     // Opened on its own (?standalone) there is no orOS file system: a
     // rejected promise, never a TypeError, so callers show their fallback.
@@ -946,7 +1190,7 @@
     return FS().ls(path).then(function (list) {
       var dirs = [], files = [];
       (list || []).forEach(function (e) {
-        if (!raw && path === ROOT && e.name === ".trash") return;
+        if (!raw && path === ROOT && HIDDEN_ROOT.indexOf(e.name) !== -1) return;
         (e.dir ? dirs : files).push(e);
       });
       var byName = function (a, b) { return a.name < b.name ? -1 : 1; };
@@ -1019,12 +1263,7 @@
   }
 
   function navigate(path) {
-    var d = dbx();
-    if (d && d.isActive()) d.leave();
-    var dv = drv();
-    if (dv && dv.isActive()) dv.leave();
-    var pc = cmp();
-    if (pc && pc.isActive()) pc.leave();
+    leavePlaces(null);
     view = "files";
     cwd = path;
     if (selectMode) setSelectMode(false);
@@ -1073,6 +1312,10 @@
     host.innerHTML = "";
     host.appendChild(makeQuickSection());
     host.appendChild(makeTreeNode(ROOT, t("tree.root"), 0, token));
+    var ph = photos();
+    host.appendChild(ph ? ph.treeNode() : photosStubNode());
+    var dc = docs();
+    host.appendChild(dc ? dc.treeNode() : docsStandIn());
     var dv = drv();
     if (dv) host.appendChild(dv.treeNode());
     var pc = cmp();
@@ -1101,10 +1344,100 @@
     var c = window.OrosFilesComputer;
     return (c && typeof c.treeNode === "function") ? c : null;
   }
-  // Another place (Dropbox, orOS Drive, This computer) is shown instead of the disk.
+  // The Documents archive (files/docs.js, docs-core.js): a place of
+  // its own over files of the disk, details synced in "files-docs".
+  function docs() {
+    var d = window.OrosFilesDocs;
+    return (d && typeof d.treeNode === "function") ? d : null;
+  }
+  // The Photos timeline (files/photos.js, photos-core.js): every photo
+  // and video of the disk by the day it was taken; device-local only.
+  function photos() {
+    var p = window.OrosFilesPhotos;
+    return (p && typeof p.treeNode === "function") ? p : null;
+  }
+  // Places shown instead of the disk. Each module has treeNode(),
+  // isActive() and leave(); a new place (Photos, …) adds its global
+  // name here and calls ctx.onEnter (= leavePlaces(itself)) on enter.
+  var PLACE_GLOBALS = ["OrosFilesDropbox", "OrosFilesDrive", "OrosFilesComputer", "OrosFilesDocs", "OrosFilesPhotos"];
+  function places() {
+    var out = [];
+    PLACE_GLOBALS.forEach(function (g) {
+      var p = window[g];
+      if (p && typeof p.isActive === "function" && typeof p.leave === "function") out.push(p);
+    });
+    return out;
+  }
+  function leavePlaces(except) {
+    places().forEach(function (p) { if (p !== except && p.isActive()) p.leave(); });
+  }
   function placeActive() {
-    var dv = drv(), pc = cmp();
-    return dbxActive() || !!(dv && dv.isActive()) || !!(pc && pc.isActive());
+    return places().some(function (p) { return p.isActive(); });
+  }
+  // Album items keyed by path follow a move (albums-core carry); the
+  // Photos scripts load for it only where albums are stored.
+  function photosCarry(from, to) {
+    var ph = photos();
+    if (ph && typeof ph.carry === "function") { ph.carry(from, to); return; }
+    var has = false;
+    try { var raw = JSON.parse(localStorage.getItem("oros-files-albums") || "null"); has = !!(raw && raw.albums && raw.albums.length); } catch (e) {}
+    if (has) loadPhotos().then(function (p) { if (p && p.carry) p.carry(from, to); }, function () {});
+  }
+  function docsCarry(from, to) {
+    var dc = docs();
+    if (dc && typeof dc.carry === "function") dc.carry(from, to);
+    else if (docsStored()) loadDocs(function (d) { if (d && d.carry) d.carry(from, to); });
+  }
+
+  // Documents loads on demand (first-open budget, .github/qa/budget.json):
+  // at boot only where it was open last time or holds documents, else
+  // when its node or "Add to Documents" is first used.
+  var DOCS_SCRIPTS = ["docs-core.js", "docs-text.js", "docs-due.js", "docs.js"];   // docs.js loads docs-read.js itself
+  var docsWaiters = null;
+  function docsStored() {
+    try {
+      var v = localStorage.getItem("oros-files-docs-view");
+      if (v && JSON.parse(v).on) return true;
+      if (localStorage.getItem("oros-files-docs-inbox")) return true;      // Scanner & PDF left some
+      var raw = localStorage.getItem("oros-files-docs");
+      return !!(raw && JSON.parse(raw).docs && JSON.parse(raw).docs.length);
+    } catch (e) { return false; }
+  }
+  function loadDocs(cb) {
+    if (docs()) { if (cb) cb(docs()); return; }
+    if (docsWaiters) { if (cb) docsWaiters.push(cb); return; }
+    docsWaiters = cb ? [cb] : [];
+    var i = 0;
+    if (!document.getElementById("docs-css")) {
+      var css = document.createElement("link");
+      css.id = "docs-css";
+      css.rel = "stylesheet";
+      css.href = "docs.css?v=" + encodeURIComponent(SCRIPT_V);
+      css.onload = css.onerror = function () { next(); };    // styled before the first paint
+      document.head.appendChild(css);
+    } else setTimeout(next, 0);
+    function done(ok) {
+      var list = docsWaiters;
+      docsWaiters = null;
+      if (ok && docs()) { initDocs(); renderTree(); }
+      list.forEach(function (f) { try { f(docs()); } catch (e) {} });
+    }
+    function next() {
+      if (i >= DOCS_SCRIPTS.length) return done(true);
+      var sc = document.createElement("script");
+      sc.src = DOCS_SCRIPTS[i++] + "?v=" + encodeURIComponent(SCRIPT_V);
+      sc.onload = next;
+      sc.onerror = function () { done(false); };
+      document.body.appendChild(sc);
+    }
+  }
+  function docsStandIn() {
+    var wrap = document.createElement("div");
+    wrap.className = "dbx-tree doc-tree";
+    wrap.appendChild(makeSpecialNode("docs", t("tree.docs"), DOCS_SVG, function () {
+      loadDocs(function (d) { if (d) d.enter(); else transientNote(t("toast.opFail")); });
+    }));
+    return wrap;
   }
 
   function initDrive() {
@@ -1114,10 +1447,7 @@
       toast: transientNote,
       closeDrawer: closeTreeDrawer,
       onEnter: function () {
-        var d = dbx();
-        if (d && d.isActive()) d.leave();
-        var pc = cmp();
-        if (pc && pc.isActive()) pc.leave();
+        leavePlaces(drv());
         view = "files"; setSelectMode(false); clearSelection();
       },
       afterEnter: renderTree,
@@ -1153,10 +1483,7 @@
       toast: transientNote,
       closeDrawer: closeTreeDrawer,
       onEnter: function () {
-        var d = dbx();
-        if (d && d.isActive()) d.leave();
-        var dv = drv();
-        if (dv && dv.isActive()) dv.leave();
+        leavePlaces(cmp());
         view = "files"; setSelectMode(false); clearSelection();
       },
       afterEnter: renderTree,
@@ -1181,10 +1508,7 @@
       dialogHost: dialogHost,
       closeDrawer: closeTreeDrawer,
       onEnter: function () {
-        var dv = drv();
-        if (dv && dv.isActive()) dv.leave();
-        var pc = cmp();
-        if (pc && pc.isActive()) pc.leave();
+        leavePlaces(dbx());
         view = "files"; setSelectMode(false); clearSelection(); renderTree();
       },
       fmtKB: fmtKB,
@@ -1197,6 +1521,130 @@
       isTextExt: isTextExt,
       mimeFor: function (name) { return isTextExt(name) ? "text/plain" : mimeForExt(extOf(name)); }
     });
+  }
+
+  function initDocs() {
+    var dc = docs();
+    if (!dc) return;
+    dc.init({
+      toast: transientNote,
+      undoToast: undoToast,
+      closeDrawer: closeTreeDrawer,
+      onEnter: function () {
+        leavePlaces(docs());
+        view = "files"; setSelectMode(false); clearSelection();
+      },
+      afterEnter: renderTree,
+      fs: FS,
+      vault: vaultApi,
+      dialogHost: dialogHost,
+      uniqueName: uniqueName,
+      preview: function (p) { recentsTouch(p); openPreview(p); },
+      openFile: openFileAt,
+      setJob: setJob,
+      zip: { crc32: CORE.crc32, build: CORE.zipBuild },
+      zipSafePath: CORE.zipSafePath,
+      onChange: renderTree,
+      onDiskChanged: function () { forceStorageRecalc(); markDirty(); },
+      pdfOpen: pdfOpen,
+      ver: SCRIPT_V
+    });
+  }
+
+  // photos.css, photos-core.js, albums-core.js and photos.js load the first time the
+  // place opens, or at boot when Photos was open last time, so a plain
+  // Files open stays inside its first-open budget (.github/qa). Until
+  // then the tree shows this stand-in node with the same look.
+  var PHOTOS_VIEW_KEY = "oros-files-photos-view";
+  var PHOTOS_SCRIPTS = ["photos-core.js", "albums-core.js", "photos.js"];
+  var photosLoading = null;
+  function photosWasOpen() {
+    try { var v = JSON.parse(localStorage.getItem(PHOTOS_VIEW_KEY) || "null"); return !!(v && v.on); }
+    catch (e) { return false; }
+  }
+  function loadPhotos() {
+    if (photos()) return Promise.resolve(photos());
+    if (!photosLoading) {
+      var ver = "?v=" + encodeURIComponent(SCRIPT_V);
+      var css = document.getElementById("photos-css") ? Promise.resolve() : new Promise(function (res) {
+        var l = document.createElement("link");
+        l.id = "photos-css";
+        l.rel = "stylesheet";
+        l.href = "photos.css" + ver;
+        l.onload = l.onerror = function () { res(); };   // styled before the first paint
+        document.head.appendChild(l);
+      });
+      photosLoading = PHOTOS_SCRIPTS.reduce(function (p, src) {
+        return p.then(function () {
+          return new Promise(function (res, rej) {
+            var sc = document.createElement("script");
+            sc.src = src + ver;
+            sc.onload = res;
+            sc.onerror = function () { sc.remove(); rej(new Error(src)); };
+            document.head.appendChild(sc);
+          });
+        });
+      }, css).then(function () {
+        if (!photos()) throw new Error("photos");
+        initPhotos();
+        renderTree();
+        return photos();
+      });
+      photosLoading.then(null, function () {
+        photosLoading = null;
+        transientNote(t("tree.photosFail"));
+      });
+    }
+    return photosLoading;
+  }
+  function photosStubNode() {
+    var wrap = document.createElement("div");
+    wrap.className = "dbx-tree ph-tree";
+    var node = makeSpecialNode("photos", t("tree.photos"), PHOTO_SVG, openPhotos);
+    node.classList.remove("special", "selected");
+    wrap.appendChild(node);
+    return wrap;
+  }
+  function openPhotos() {
+    loadPhotos().then(function (ph) { if (ph && !ph.isActive()) ph.enter(); }, function () {});
+  }
+
+  function initPhotos() {
+    var ph = photos();
+    if (!ph) return;
+    ph.init({
+      toast: transientNote,
+      closeDrawer: closeTreeDrawer,
+      onEnter: function () {
+        leavePlaces(photos());
+        view = "files"; setSelectMode(false); clearSelection();
+      },
+      afterEnter: renderTree,
+      fs: FS,
+      vault: vaultApi,
+      docs: docs,
+      share: shareApi,
+      openFile: openFileAt,
+      pickFolder: pickFolderDialog,
+      ver: SCRIPT_V,
+      trash: function (p) {
+        return moveToTrash(p).then(function () { favDropPath(p); markDirty(); });
+      },
+      onDiskChanged: forceStorageRecalc
+    });
+  }
+
+  // Files' menu › Add to Documents: the selected files (not folders).
+  function addToDocs() {
+    if (view === "trash") return;
+    var dc = docs();
+    if (!dc) { loadDocs(function (d) { if (d) addToDocs(); }); return; }
+    var paths = selectionPaths().filter(function (p) {
+      var e = null;
+      lastEntries.forEach(function (x) { if (entryPath(x) === p) e = x; });
+      return !(e && e.dir);
+    });
+    if (paths.length) dc.add(paths);
   }
 
   function makeTreeNode(path, label, depth, token) {
@@ -1455,6 +1903,16 @@
         name.textContent = e.name;
       }
       li.title = e.name;
+      var ex = !e.dir ? CORE.expOf(exps, path) : 0;
+      if (ex) {
+        var xb = document.createElement("span");
+        xb.className = "exp-badge";
+        xb.textContent = "\u23F3";
+        xb.title = expLeftText(ex);
+        xb.setAttribute("aria-label", xb.title);
+        name.appendChild(xb);
+        li.title = e.name + " \u2014 " + xb.title;
+      }
       li.appendChild(name);
 
       // Size / modified columns — filled by fillStats() (FL-12).
@@ -1724,7 +2182,7 @@
     var name = raw.trim();
     if (!name) return { ok: false, err: t("err.required") };
     if (BAD_CHARS.test(name)) return { ok: false, err: t("err.chars") };
-    if (dialogDir === ROOT && name === ".trash") return { ok: false, err: t("err.reserved") };
+    if (dialogDir === ROOT && HIDDEN_ROOT.indexOf(name) !== -1) return { ok: false, err: t("err.reserved") };
     if (name === "." || name === "..") return { ok: false, err: t("err.required") };
     for (var i = 0; i < existingNames.length; i++) {
       if (existingNames[i] === name) return { ok: false, err: t("err.exists") };
@@ -2341,7 +2799,7 @@
 
   function sanitizeFileName(name) {
     var n = name.replace(/[\/\\:*?"<>|]/g, "_");
-    return n === ".trash" ? "_trash" : n;
+    return HIDDEN_ROOT.indexOf(n) !== -1 ? "_" + n.slice(1) : n;
   }
 
   // #22 FIX: no dead base64 computation — Blob flows straight into
@@ -3298,6 +3756,9 @@
         selectionPaths().some(function (x) { return isImageExt(baseName(x)); }))) {
       ctxMenu.appendChild(mkItem(APP_SVG, "menu.sendAlbum", sendAlbum));
     }
+    if (!p.dir) {
+      ctxMenu.appendChild(mkItem(DOCS_SVG, "menu.toDocs", addToDocs));
+    }
     if (dbx() && dbx().exportFrom) {
       ctxMenu.appendChild(mkItem(dbx().icon || "", "menu.toDropbox", function () {
         sendToDropbox();
@@ -3319,6 +3780,15 @@
     }
     if (pdfToolPaths().length) {
       ctxMenu.appendChild(mkItem(PDFTOOLS_SVG, "menu.pdfTools", openPdfTools));
+    }
+    if (view !== "trash" && transferPaths().length) {
+      ctxMenu.appendChild(mkItem(TRANSFER_SVG, "menu.transfer", sendWithTransfer));
+    }
+    if (view !== "trash" && cleanPaths().length) {
+      ctxMenu.appendChild(mkItem(CLEAN_SVG, "menu.clean", cleanSelection));
+    }
+    if (view !== "trash" && !many && !p.dir && !CORE.isTrashPath(p.path)) {
+      ctxMenu.appendChild(mkItem(CLOCK_SVG, "exp.menu", function () { expDialog(p); }));
     }
     ctxMenu.appendChild(hr());
     ctxMenu.appendChild(mkItem("", "menu.copyName", function () {
@@ -4017,12 +4487,7 @@
   }
 
   function openView(kind) {
-    var d = dbx();
-    if (d && d.isActive()) d.leave();
-    var dv = drv();
-    if (dv && dv.isActive()) dv.leave();
-    var pc = cmp();
-    if (pc && pc.isActive()) pc.leave();
+    leavePlaces(null);
     if (searchQuery !== null) {
       if (searchDebounce) { clearTimeout(searchDebounce); searchDebounce = null; }
       searchQuery = null; searchDir = null; search = null;
@@ -4065,7 +4530,7 @@
     transientNote(t(on ? "fav.added" : "fav.removed"));
     renderSelBar();
   }
-  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); }
+  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); expCommit(CORE.expMove(exps, from, to, Date.now())); docsCarry(from, to); photosCarry(from, to); }
   function favDropPath(p) { favCommit(CORE.favDrop(favs, p, Date.now())); }
 
   function registerFavSync() {
@@ -4081,6 +4546,120 @@
       try { localStorage.setItem(FAVS_KEY, JSON.stringify(favs)); } catch (e) {}
       renderTree();
     }, FAVS_KEY, CORE.mergeFavs);
+  }
+
+  // ===== Self-deleting files (STRICT-5): synced slice "files-exp" =====
+  // A file may delete itself at a set time: here while Files is open
+  // (every minute), by the shell while it is closed. Deleted for good
+  // (no Trash); the disk sync carries the deletion to other devices.
+  var exps = CORE.normExps(null), expBusy = false;
+  function expLoad() {
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(EXPS_KEY)); } catch (e) { raw = null; }
+    exps = CORE.normExps(raw);
+  }
+  function expCommit(next) {
+    if (JSON.stringify(next) === JSON.stringify(exps)) return false;
+    exps = next;
+    try { localStorage.setItem(EXPS_KEY, JSON.stringify(exps)); } catch (e) { transientNote(t("toast.opFail")); }
+    var api = syncApi();
+    if (api && typeof api.markDirty === "function") api.markDirty();
+    return true;
+  }
+  function registerExpSync() {
+    var api = syncApi();
+    if (!api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("files-exp", function () {
+      return CORE.normExps(exps);
+    }, function (incoming) {
+      var next = CORE.normExps(incoming);
+      if (JSON.stringify(next) === JSON.stringify(exps)) return;
+      exps = next;
+      try { localStorage.setItem(EXPS_KEY, JSON.stringify(exps)); } catch (e) {}
+      expSweep();
+      refresh();
+    }, EXPS_KEY, CORE.mergeExps);
+  }
+  function expSweep() {
+    if (expBusy || !isAvailable()) return;
+    var due = CORE.expDue(exps, Date.now());
+    if (!due.length) return;
+    expBusy = true;
+    var n = 0;
+    due.reduce(function (ch, p) {
+      return ch.then(function () {
+        return FS().stat(p).then(function (st) {
+          if (!st || st.dir) return null;
+          return FS().rm(p).then(function () { n++; favDropPath(p); });
+        }, function () { return null; });
+      }).then(function () { expCommit(CORE.expSet(exps, p, 0, Date.now())); }, function () {});
+    }, Promise.resolve()).then(function () {
+      expBusy = false;
+      if (n) { transientNote(n === 1 ? t("exp.gone1") : tfmt("exp.goneN", { n: n })); forceStorageRecalc(); markDirty(); refresh(); }
+    });
+  }
+  function expDialog(p) {
+    var old = document.getElementById("dlg-exp");
+    if (old) old.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = "dlg-exp";
+    var h = document.createElement("h3");
+    h.textContent = t("exp.title");
+    dlg.appendChild(h);
+    var nm = document.createElement("p");
+    nm.textContent = p.name;
+    dlg.appendChild(nm);
+    var hint = document.createElement("p");
+    hint.className = "clean-note";
+    hint.textContent = t("exp.hint");
+    dlg.appendChild(hint);
+    var HOUR = 3600000, cur = CORE.expOf(exps, p.path);
+    var opts = [["1h", HOUR], ["1d", 24 * HOUR], ["7d", 7 * 24 * HOUR], ["30d", 30 * 24 * HOUR]];
+    var box = document.createElement("div");
+    box.className = "exp-opts";
+    opts.forEach(function (o) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("data-k", "exp-" + o[0]);
+      b.textContent = t("exp.in." + o[0]);
+      b.addEventListener("click", function () {
+        expCommit(CORE.expSet(exps, p.path, Date.now() + o[1], Date.now()));
+        transientNote(t("exp.set"));
+        dlg.close(); dlg.remove(); refresh();
+      });
+      box.appendChild(b);
+    });
+    dlg.appendChild(box);
+    var menu = document.createElement("menu");
+    if (cur) {
+      var keep = document.createElement("button");
+      keep.type = "button";
+      keep.setAttribute("data-k", "exp-off");
+      keep.textContent = t("exp.keep");
+      keep.addEventListener("click", function () {
+        expCommit(CORE.expSet(exps, p.path, 0, Date.now()));
+        transientNote(t("exp.off"));
+        dlg.close(); dlg.remove(); refresh();
+      });
+      menu.appendChild(keep);
+    }
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    menu.appendChild(sp);
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = t("dlg.cancel");
+    cancel.addEventListener("click", function () { dlg.close(); dlg.remove(); });
+    menu.appendChild(cancel);
+    dlg.appendChild(menu);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function expLeftText(e) {
+    var ms = Math.max(0, e - Date.now()), H = 3600000;
+    if (ms >= 24 * H) return tfmt("exp.left.d", { n: Math.floor(ms / (24 * H)) });
+    if (ms >= H) return tfmt("exp.left.h", { n: Math.floor(ms / H) });
+    return tfmt("exp.left.m", { n: Math.ceil(ms / 60000) });
   }
 
   // ===== Tree: Recent + Favourites on top, Trash under the disk =====
@@ -4101,7 +4680,7 @@
     return sec;
   }
 
-  function makeSpecialNode(kind, label, svg) {
+  function makeSpecialNode(kind, label, svg, onGo) {
     var node = document.createElement("div");
     node.className = "tnode special" + (view === kind && !placeActive() ? " selected" : "");
     node.style.paddingLeft = "6px";
@@ -4119,7 +4698,7 @@
     nm.className = "tname";
     nm.textContent = label;
     node.appendChild(nm);
-    function go() { closeTreeDrawer(); openView(kind); }
+    function go() { closeTreeDrawer(); if (onGo) onGo(); else openView(kind); }
     node.addEventListener("click", go);
     node.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
@@ -4233,6 +4812,9 @@
       // The record first: when the move fails it is taken back.
       return fs.writeText(CORE.trashMetaPath(id), JSON.stringify(meta)).then(function () {
         return fs.mv(path, CORE.trashItemDir(id) + "/" + baseName(path));
+      }).then(function (r) {
+        expCommit(CORE.expMove(exps, path, CORE.trashItemDir(id) + "/" + baseName(path), Date.now()));   // it still deletes itself in the Trash
+        return r;
       }).catch(function (e) {
         return fs.rm(CORE.trashMetaPath(id)).catch(function () {}).then(function () { throw e; });
       });
@@ -4353,7 +4935,7 @@
         }).then(function (list) {
           var names = list.map(function (e) { return e.name; });
           var name = uniqueName(item.name, names);
-          if (parent === ROOT && name === ".trash") name = uniqueName("_trash", names);
+          if (parent === ROOT && HIDDEN_ROOT.indexOf(name) !== -1) name = uniqueName("_" + name.slice(1), names);
           var op = item.made ? FS().mkdir(join(parent, name)) : FS().mv(p, join(parent, name));
           return op.then(function () {
             done++;
@@ -4688,6 +5270,7 @@
     bar.appendChild(selBtn("sb-zip", ZIP_SVG, "menu.zip", function () { zipCreate(selectionPaths()); }));
     bar.appendChild(selBtn("sb-conv", CONVERT_SVG, "menu.convert", convertSelection));
     bar.appendChild(selBtn("sb-pdf", PDFTOOLS_SVG, "menu.pdfTools", openPdfTools));
+    bar.appendChild(selBtn("sb-xfer", TRANSFER_SVG, "menu.transfer", sendWithTransfer));
     bar.appendChild(selBtn("sb-move", MV_SVG, "menu.moveTo", function () { openPickerDialog("move"); }));
     bar.appendChild(selBtn("sb-copy", CP_SVG, "menu.copyTo", function () { openPickerDialog("copy"); }));
     if (dbx() && dbx().exportFrom) {
@@ -4724,6 +5307,8 @@
     show("sb-conv", conv, conv);
     var pdft = !trash && n > 0 && pdfToolPaths().length > 0;
     show("sb-pdf", pdft, pdft);
+    var xfer = !trash && n > 0 && transferPaths().length > 0;
+    show("sb-xfer", xfer, xfer);
     show("sb-move", !trash, n > 0);
     show("sb-copy", !trash, n > 0);
     show("sb-dbx", !trash, n > 0);
@@ -5194,6 +5779,7 @@
   function boot() {
     loadPrefs();
     favLoad();
+    expLoad();
     applyI18n();
     ensureTreeToggle();
     ensureToolbarExtras();
@@ -5218,6 +5804,9 @@
     renderSyncPill();
     watchVault();
     registerFavSync();
+    registerExpSync();
+    setTimeout(expSweep, 1500);
+    setInterval(expSweep, 60000);
     cwd = prefs.last && prefs.last.indexOf(ROOT) === 0 && !CORE.isTrashPath(prefs.last) ? prefs.last : ROOT;
     clearSelection();
 
@@ -5236,6 +5825,12 @@
     initDropbox();
     initDrive();
     initComputer();
+    if (docsStored()) loadDocs();
+    // Scanner & PDF › Save › "Also add it to Documents" while Files is open.
+    window.addEventListener("storage", function (e) {
+      if (e.key === "oros-files-docs-inbox" && e.newValue && !docs()) loadDocs();
+    });
+    if (photosWasOpen()) loadPhotos();
 
     // Multitasking (MT-S2): Files left open in the background lists the
     // folder again when it comes back; another app may have saved there.
@@ -5264,6 +5859,17 @@
     // Automations (item 25): { importFile: { token, name } }, a file from a
     // folder orOS Bridge watches. Added to the open folder only after Add.
     if (t && t.importFile && typeof t.importFile.token === "string") { takeIncoming(t.importFile.token); return; }
+    // Documents (DOCS-1 W3: reminder, Today, Calendar): { doc: id } opens
+    // one document, { docs: "soon" | "keep" } the list.
+    if (t && (typeof t.doc === "string" || typeof t.docs === "string")) {
+      if (!isAvailable()) return;
+      loadDocs(function (D) {
+        if (!D) return;
+        if (typeof t.doc === "string" && /^d-[0-9a-z_-]{1,41}$/.test(t.doc)) D.open(t.doc);
+        else D.show(t.docs);
+      });
+      return;
+    }
     // Single app (solo.js) icon shortcut { newFolder: true }.
     if (t && t.newFolder === true) {
       if (isAvailable() && !document.querySelector("dialog[open]")) openNameDialog("folder");
@@ -5272,6 +5878,11 @@
     // System › Disks "Open" (orOS USB): { computer: "/disks/<name>" | "/home/…" }.
     if (t && typeof t.computer === "string") {
       if (cmp()) cmp().openAt(t.computer);
+      return;
+    }
+    // The shell's overview (OV-1) "All recent files": { view: "recent" }.
+    if (t && t.view === "recent") {
+      if (isAvailable()) openView("recent");
       return;
     }
     if (!t || typeof t.path !== "string" || !isAvailable()) return;

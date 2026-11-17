@@ -39,8 +39,8 @@ test("gate tools: only the gate's set, no card or press in any text", () => {
   const creates = ["todo", "calendar", "notes", "bookmarks", "contacts", "crm", "crm_activity", "crm_followup", "crm_deal", "crm_contract",
                    "timesheet", "meals", "stickies", "habits", "plants", "petcare", "garage", "travel_plan", "travel_pack"];
   const full = C.toolsFor({ data: true, summary: true, entries: true, changes: true, creates, links: true, partnerLinks: true,
-                            history: true, actions: ["timer"], web: true, rebuild: true, house: true, recipes: ["layout"], newsletter: true, cover: true, rules: true,
-                            edits: { writer: { CATALOG: [] }, slides: { CATALOG: [] } } });
+                            history: true, actions: ["timer"], web: true, rebuild: true, house: true, epub: true, recipes: ["layout"], newsletter: true, cover: true, rules: true,
+                            edits: { writer: { CATALOG: [] }, slides: { CATALOG: [] } }, files: "write", fonts: true });
   const g = C.gateTools(full);
   assert.deepEqual(g.map((t) => t.name).sort(), C.GATE_TOOLS.slice().sort());
   assert.deepEqual(C.GATE_TOOLS, G.ACT_TOOLS, "gate.js and core.js name the same tools");
@@ -49,7 +49,7 @@ test("gate tools: only the gate's set, no card or press in any text", () => {
   assert.deepEqual(bad, []);
   g.forEach((t) => {
     assert.equal(t.inputSchema.type, "object", t.name);
-    assert.equal(t.annotations.readOnlyHint, ["search_data", "read_item", "app_summary", "read_in_app", "change_history"].indexOf(t.name) >= 0, t.name);
+    assert.equal(t.annotations.readOnlyHint, ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "change_history", "files_list", "files_read"].indexOf(t.name) >= 0, t.name);
   });
   assert.match(g.find((t) => t.name === "change_item").description, /paused/);
   assert.match(g.find((t) => t.name === "create_items").description, /paused/);
@@ -119,8 +119,35 @@ test("closed orOS: the device runs only the changes the relay may queue", () => 
   // 6.05.02 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με κλειστό το orOS»):
   // every relay change waits, budget_delete and budget_transfer too
   const relayWrites = R.TOOLS.filter((t) => !(t.annotations && t.annotations.readOnlyHint === true)).map((t) => t.name);
-  assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED).sort(), "5.96.00: changes and links by ref too");
+  assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED, Object.keys(R.FILE_CHANGE)).sort(), "5.96.00: changes and links by ref too; F3: Claude's folders");
   assert.ok(G.QUEUED.indexOf("budget_delete") >= 0 && G.QUEUED.indexOf("budget_transfer") >= 0);
   const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
   assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) return \{ ok: false/, "applyQueue checks the list");
+});
+
+test("closed orOS: a queued deletion of items is asked on the device first, one question per call (7.44.00)", () => {
+  // Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με το orOS κλειστό»: 73 Calendar events in one change_item
+  assert.equal(G.delCount("change_item", { ref: "r116155", action: "delete" }), 1);
+  assert.equal(G.delCount("change_item", { refs: ["r116155", "oros:r110954", "r116155"], action: "delete" }), 2, "refs counted once each");
+  assert.equal(G.delCount("change_item", { changes: [{ ref: "r1", action: "delete" }, { ref: "r2", action: "update" }] }), 1);
+  assert.equal(G.delCount("change_item", { ref: "r1", action: "update" }), 0);
+  assert.equal(G.delCount("budget_delete", { ids: ["a", "b", "c"] }), 3, "Budget deletions too, even 3 (live asks over 5)");
+  assert.equal(G.delCount("link_items", { links: [{ customer: "r1", item: "r2" }], unlink: true }), 0, "an unlink deletes no item");
+  assert.equal(G.delCount("files_delete", { paths: ["/internal/x"] }), 0, "files keep their own question");
+  assert.deepEqual(G.refsOf({ refs: ["r1", "x", "oros:r2", "p-ABCDEFGHIJKLMNOP.3"] }), ["r1", "r2", "p-ABCDEFGHIJKLMNOP.3"]);
+  const items = []; for (let i = 0; i < 12; i++) items.push({ a: "Calendar", t: "Λήξη " + i });
+  const w = G.delWhat("change_item", items, 73, "and {n} more");
+  assert.equal(w.app, "Calendar");
+  assert.equal(w.list.split("\n").length, 11, "10 titles and one line for the rest");
+  assert.match(w.list, /and 63 more$/);
+  assert.deepEqual(G.delWhat("budget_delete", [], 2), { app: "Budget", list: "" });
+  const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
+  const aq = src.slice(src.indexOf("function applyQueue("), src.indexOf("function seatRead("));
+  assert.doesNotMatch(aq, /action === "delete"[^\n]*refused/, "deletions are no longer refused");
+  assert.match(aq, /nDel \? askQueued\(x, nDel\)/, "every queued deletion is asked");
+  assert.match(aq, /how === "none"\) \{ ranDrop\(it\.id\); cqHeld\[it\.id\] = it; throw HELD; \}/, "no answer: it stays queued");
+  assert.match(aq, /if \(nDel && \(away\(\) \|\| document\.visibilityState !== "visible"/, "hidden or locked: held, never asked off screen");
+  const ak = src.slice(src.indexOf("function askQueued("), src.indexOf("function askFiles("));
+  assert.match(ak, /setTimeout\(function \(\) \{ end\("none"\); \}/, "a timeout never says yes");
+  assert.match(src, /if \(preYes && n <= preYes\) \{ preYes = 0;/, "the one Delete covers the frame's own question over 5");
 });

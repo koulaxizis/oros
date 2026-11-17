@@ -59,6 +59,8 @@
       "btn.use":             "Use",
       "btn.copy":            "Copy",
       "btn.useTitle":        "Open this prompt in Writer as a new document",
+      "btn.typewriter":      "On the typewriter",
+      "btn.typewriterTitle": "Write on the typewriter: a new page that starts with this prompt",
       "btn.toggle":          "Variation",
       "btn.favorite":        "Star",
       "btn.unfavorite":      "Unstar",
@@ -137,6 +139,8 @@
       "btn.use":             "Χρήση",
       "btn.copy":            "Αντιγραφή",
       "btn.useTitle":        "Άνοιγμα του θέματος στον Κειμενογράφο ως νέο έγγραφο",
+      "btn.typewriter":      "Στη γραφομηχανή",
+      "btn.typewriterTitle": "Γράψε στη γραφομηχανή: μια νέα σελίδα που ξεκινά με αυτό το θέμα",
       "btn.toggle":          "Παραλλαγή",
       "btn.favorite":         "Αγαπημένο",
       "btn.unfavorite":      "Αφαίρεση",
@@ -1367,6 +1371,18 @@
     try{ sh.__orosOpenAt("writer", { newDoc: { title: catLabel(p.cat), text: text } }); }
     catch(e){ copyText(text); }
   }
+  // "On the typewriter": a new Typewriter page whose first line is the
+  // prompt (Typewriter's deep link { newPage: { text } }); Typewriter
+  // saves nothing until something is typed. Shown only inside the shell.
+  function shellWin(){
+    try{ if(window.parent!==window && typeof window.parent.__orosOpenAt==="function") return window.parent; }catch(e){}
+    return null;
+  }
+  function useInTypewriter(text){
+    var sh=shellWin();
+    if(!sh) return;
+    try{ sh.__orosOpenAt("typewriter", { newPage: { text: text } }); }catch(e){}
+  }
   function copyText(text){
     if(navigator.clipboard){ navigator.clipboard.writeText(text).then(function(){ notifyTransient(t("saved.toast")); }); }
     else { var ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); notifyTransient(t("saved.toast")); }catch(e){} document.body.removeChild(ta);}
@@ -1796,6 +1812,17 @@ document.body.appendChild(loader);
         useInWriter(p, pText(p)+(showVar? "\n\n"+varText : ""));
       });
       acts.appendChild(useBtn);
+
+      if(shellWin()){
+        var twBtn=document.createElement("button");
+        twBtn.type="button";
+        twBtn.textContent=t("btn.typewriter");
+        twBtn.title=t("btn.typewriterTitle");
+        twBtn.addEventListener("click", function(){
+          useInTypewriter(pText(p)+(showVar? "\n\n"+varText : ""));
+        });
+        acts.appendChild(twBtn);
+      }
 
       var copyBtn=document.createElement("button");
       copyBtn.type="button";

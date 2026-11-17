@@ -6,6 +6,8 @@
 // never markup: the app shows it with textContent).
 //   toLrc(project) · toElrc · toSrt · toVtt · toTtml · toAss · toJson · toText
 //   parse(fileName, text) → { kind, name, ar, al, lg, lines: [{ t, s, e, p }] }
+//     (Songbook S1: ChordPro and chord sheets give c/k/x/q on lines and
+//     key, capo, bpm, ts, xo on the song; JSON keeps them too)
 //     (s/e in ms or null; throws Error("format") when nothing fits)
 // Times come from LyricsyncCore.timed(): every exported line has an
 // end, and no line overlaps the next.
@@ -14,6 +16,7 @@
   "use strict";
 
   var C = typeof module !== "undefined" && module.exports ? require("./core.js") : root.LyricsyncCore;
+  var H = typeof module !== "undefined" && module.exports ? require("./chords.js") : root.LyricsyncChords;
   var CREDIT = "orOS Lyric Sync";
   var MAX_IN = 4 * 1024 * 1024;          // characters of an imported file
 
@@ -139,8 +142,14 @@
         if (l.p) o.verse = true;
         if (l.v) o.singer = l.v;
         if (l.w) o.words = l.w.slice();
+        if (l.c) o.chords = l.c.map(function (x) { return [x[0], x[1]]; });
+        if (l.k) o.section = l.k;
+        if (l.x) o.rows = l.x.map(function (r) { return Object.assign({}, r); });
+        if (l.q) o.gap = true;
         return o;
-      })
+      }),
+      key: p.key || undefined, capo: p.capo || undefined, tempo: p.bpm || undefined, time: p.ts || undefined,
+      after: p.xo ? p.xo.map(function (r) { return Object.assign({}, r); }) : undefined
     }, null, 2) + "\n";
   }
 
@@ -342,15 +351,26 @@
     var d = JSON.parse(text);
     if (!d || d.format !== "oros-lyrics" || !Array.isArray(d.lines)) throw new Error("format");
     var num = function (v) { return typeof v === "number" && isFinite(v) && v >= 0 ? Math.round(v) : null; };
+    var rows = function (v) { return Array.isArray(v) ? v.map(C.cleanRow).filter(Boolean) : null; };
     return {
-      kind: "json", name: clean(d.title || ""), ar: clean(d.artist || ""), al: clean(d.album || ""), lg: clean(d.language || "").slice(0, 20),
+      kind: "json", key: typeof d.key === "string" ? d.key : "", capo: d.capo, bpm: d.tempo, ts: d.time, xo: rows(d.after),
+      name: clean(d.title || ""), ar: clean(d.artist || ""), al: clean(d.album || ""), lg: clean(d.language || "").slice(0, 20),
       dur: num(d.duration) || 0, vn: Array.isArray(d.singers) ? d.singers.filter(function (x) { return typeof x === "string"; }).slice(0, 4) : [],
       lines: d.lines.filter(function (l) { return l && typeof l.text === "string" && clean(l.text); }).map(function (l) {
         var s = num(l.start), e = num(l.end);
         return { t: clean(l.text), s: s, e: s !== null && e !== null && e > s ? e : null, p: l.verse ? 1 : 0,
-                 w: Array.isArray(l.words) ? l.words.map(function (x) { return x === null ? null : num(x); }) : null, v: l.singer };
+                 w: Array.isArray(l.words) ? l.words.map(function (x) { return x === null ? null : num(x); }) : null, v: l.singer,
+                 c: Array.isArray(l.chords) ? l.chords : null, k: l.section, x: rows(l.rows), q: l.gap ? 1 : 0 };
       })
     };
+  }
+
+  // ChordPro and chord sheets (chords.js): untimed lines with chords.
+  function parseChords(text) {
+    var r = H.parseSheet(text, {});
+    var m = r.meta;
+    return { kind: "chordpro", name: m.name || "", ar: m.ar || "", al: m.al || "", lg: "", key: m.key || "", capo: m.capo, bpm: m.bpm, ts: m.ts,
+             xo: r.xo, lines: r.lines.map(function (l) { return Object.assign({ s: null, e: null }, l); }) };
   }
 
   function parseText(text) {
@@ -366,6 +386,7 @@
     if (ext === "ttml" || ext === "dfxp" || ext === "xml") return "ttml";
     if (ext === "json") return "json";
     if (ext === "ass" || ext === "ssa") return "ass";
+    if (ext === "cho" || ext === "chopro" || ext === "chordpro" || ext === "crd") return "chordpro";
     var head = text.slice(0, 2000);
     if (/^\uFEFF?WEBVTT/.test(head)) return "vtt";
     if (/<tt[\s>]/i.test(head)) return "ttml";
@@ -373,6 +394,7 @@
     if (/^\[Script Info\]/m.test(head) && /^\[Events\]|^Dialogue:/m.test(text)) return "ass";
     if (/^\s*\d+\s*\n\s*\d{1,2}:\d{2}:\d{2}[,.]\d{1,3}\s*-->/m.test(head.replace(/\r/g, ""))) return "srt";
     if (/^\s*\[\d{1,3}:\d{1,2}([.:]\d{1,3})?\]/m.test(head)) return "lrc";
+    if (H && (/^\s*\{\s*(?:title|t|subtitle|st|artist|key|start_of_chorus|soc|start_of_verse|sov|c|comment)\s*[:}]/im.test(head) || H.hasInline(text) || H.hasChordLines(text))) return "chordpro";
     return "txt";
   }
 
@@ -384,11 +406,16 @@
     else if (k === "ttml") r = parseTtml(text);
     else if (k === "json") r = parseJson(text);
     else if (k === "ass") r = parseAss(text);
+    else if (k === "chordpro") r = parseChords(text);
     else r = parseText(text);
     r.lines = r.lines.slice(0, C.MAX_LINES).map(function (l) {
       var o = { t: l.t.slice(0, C.MAX_LINE), s: l.s, e: l.e, p: l.p ? 1 : 0 };
       if (l.w && l.t.length <= C.MAX_LINE) o.w = l.w;
       if (l.v === 2 || l.v === 3 || l.v === 4) o.v = l.v;
+      if (l.c && l.t.length <= C.MAX_LINE) o.c = l.c;   // checked again by core.js
+      if (l.k) o.k = l.k;
+      if (l.x && l.x.length) o.x = l.x;
+      if (l.q) o.q = 1;
       return o;
     });
     if (r.vn) r.vn = r.vn.map(function (x) { return clean(x || "").slice(0, 60); });
@@ -404,6 +431,8 @@
     ttml: { ext: ".ttml", mime: "application/ttml+xml", fn: toTtml },
     ass:  { ext: ".ass",  mime: "text/x-ssa", fn: toAss },
     json: { ext: ".json", mime: "application/json", fn: toJson },
+    cho:  { ext: ".cho",  mime: "application/x-chordpro", fn: function (p) { return H.toChordPro(p); }, chords: true },
+    chtxt: { ext: ".txt", mime: "text/plain", fn: function (p, o) { return H.toChordsText(p, o); }, chords: true },
     txt:  { ext: ".txt",  mime: "text/plain", fn: toText }
   };
 

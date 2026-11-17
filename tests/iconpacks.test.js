@@ -36,10 +36,11 @@ function contrast(a, b) {
   return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
 }
 
-test("eight packs, Classic first and the default", () => {
-  assert.deepEqual(PACKS, ["classic", "colourful", "mix", "rainbow", "glass", "thin", "paper", "round"]);
+test("nine packs, Classic first and the default", () => {
+  assert.deepEqual(PACKS, ["classic", "colourful", "mix", "rainbow", "glass", "thin", "paper", "round", "own"]);
   assert.match(cut(SHELL, "shellDefault"), /case "icons":\s+return "classic";/);
-  const canon = new Function("var ICON_PACKS = " + JSON.stringify(PACKS) + ";\n" + cut(SHELL, "iconsCanon") + "\nreturn iconsCanon;")();
+  const canon = new Function(SHELL.match(/var ICON_OWN = [^\n]+\n/)[0] + SHELL.match(/var ICON_OWN_DEFAULT = [^\n]+\n/)[0] +
+    "var ICON_PACKS = " + JSON.stringify(PACKS) + ";\n" + cut(SHELL, "iconsOwn") + "\n" + cut(SHELL, "iconsCanon") + "\nreturn iconsCanon;")();
   assert.equal(canon("paper"), "paper");
   assert.equal(canon("neon"), undefined);
   assert.equal(canon(null), undefined);
@@ -83,7 +84,7 @@ test("shell: the synced field icons, applied, set from Settings, pulled without 
   assert.doesNotMatch(set.slice(set.indexOf("iconsCanon(data.icons)"), set.indexOf("iconsCanon(data.icons)") + 200), /noteLocalChange|markDirty/);
   assert.match(set, /applyIcons\(\);/);
   assert.match(cut(SHELL, "setIconsUser"), /noteLocalChange\(\);/);
-  assert.match(cut(SHELL, "applyIcons"), /setAttribute\("data-oros-icons", state\.icons\)/);
+  assert.match(cut(SHELL, "applyIcons"), /setAttribute\("data-oros-icons", iconsPack\(state\.icons\)\)/);
   assert.match(cut(SHELL, "settingsSet"), /case "icons":\s+setIconsUser\(value\);/);
   assert.match(read("device/core.js"), /keyOwner/);
 });
@@ -100,7 +101,7 @@ test("surfaces carry their category; the stylesheet loads in the shell and Setti
 test("Settings card, search and strings in EN, EL and DE", () => {
   const ss = read("settings/settings.js");
   assert.match(ss, /if \(s\.icons\) secIcons\(host, s\.icons\);/);
-  assert.match(cut(ss, "secIcons"), /set\("icons", id\)/);
+  assert.match(cut(ss, "secIcons"), /set\("icons", own \? ownId\(own\) : id\)/);
   const core = read("settings/core.js"), de = read("i18n/de/settings.js");
   for (const k of ["a.icons", "a.icons.hint"].concat(PACKS.map((p) => "a.icons." + p))) {
     assert.equal((core.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " EN + EL");
@@ -159,4 +160,38 @@ test("glass carries its own tint and ink, so the glyph reads on a light wallpape
   assert.match(block, /rgba\(255, 255, 255, 0\.04\)\), var\(--gl-tint\);/);
   assert.match(CSS, /html\[data-theme="light"\]\[data-oros-icons="glass"\]:not\(\[data-oros-contrast="high"\]\), html\[data-theme="light"\] \.ip-prev\[data-pack="glass"\]\) \.ld-tile \{\n  --gl-tint: rgba\(255, 255, 255, 0\.55\); --gl-ink: #1a1a1a;/);
   assert.match(CSS, /\.ip-prev\[data-pack="glass"\]\) \.ld-tile svg \{\n  filter: drop-shadow\(0 0 1\.5px var\(--gl-halo\)\);/);
+});
+
+// ICONPACK-3 (Chris 2026-11-11 20:04): "Mix your own" = shape, fill, lines.
+test("mix your own: value, canon, attributes, rules and Settings", () => {
+  const fn = new Function(SHELL.match(/var ICON_OWN = [^\n]+\n/)[0] + SHELL.match(/var ICON_OWN_DEFAULT = [^\n]+\n/)[0] +
+    "var ICON_PACKS = " + JSON.stringify(PACKS) + ";\n" + cut(SHELL, "iconsOwn") + "\n" + cut(SHELL, "iconsCanon") + "\n" + cut(SHELL, "iconsPack") +
+    "\nreturn { canon: iconsCanon, own: iconsOwn, pack: iconsPack, OWN: ICON_OWN };")();
+  assert.equal(fn.canon("own"), "own.circle.hue.normal");
+  assert.equal(fn.canon("own.square.frame.bold"), "own.square.frame.bold");
+  for (const bad of ["own.hex.hue.normal", "own.circle.neon.normal", "own.circle.hue", "own.circle.hue.normal.x", "Own.circle.hue.normal"]) {
+    assert.equal(fn.canon(bad), undefined, bad);
+  }
+  assert.deepEqual(fn.own("own.round.dark.thin"), { shape: "round", fill: "dark", line: "thin" });
+  assert.equal(fn.pack("own.round.dark.thin"), "own");
+  assert.equal(fn.pack("paper"), "paper");
+  // every choice has a rule, guarded, for the tile and the preview
+  for (const k of ["shape", "fill"]) for (const v of fn.OWN[k]) {
+    assert.ok(CSS.includes('html[data-oros-icons="own"]:not([data-oros-contrast="high"])[data-ic-' + k + '="' + v + '"], .ip-prev[data-pack="own"][data-ic-' + k + '="' + v + '"]) .ld-tile'), k + " " + v);
+  }
+  for (const v of ["thin", "bold"]) assert.ok(CSS.includes('[data-ic-line="' + v + '"]) :is(.ld-tile, .app-ico) svg *'), "line " + v);
+  assert.match(cut(SHELL, "applyIcons"), /setAttribute\("data-ic-" \+ k, own\[k\]\)/);
+  assert.match(cut(SHELL, "shellSliceSet"), /state\.icons = iconsCanon\(data\.icons\);/);
+  const ss = read("settings/settings.js");
+  assert.match(cut(ss, "secIcons"), /set\("icons", ownId\(next\)\)/);
+  const core = read("settings/core.js"), de = read("i18n/de/settings.js");
+  const keys = ["a.icons.own.shape", "a.icons.own.fill", "a.icons.own.line"];
+  for (const k of ["shape", "fill", "line"]) for (const v of fn.OWN[k]) keys.push("a.icons.own." + k + "." + v);
+  for (const k of keys) {
+    assert.equal((core.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " EN + EL");
+    assert.ok(de.includes('"' + k + '":'), k + " DE");
+  }
+  assert.match(read("help/topics/appearance.en.txt"), /`Mix your own`/);
+  assert.match(read("help/topics/appearance.el.txt"), /`Φτιάξε το δικό σου`/);
+  assert.match(read("i18n/de/help/topics/appearance.txt"), /`Selbst mischen`/);
 });

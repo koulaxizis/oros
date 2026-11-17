@@ -1,0 +1,76 @@
+# Base
+Base keeps records with structure, like a small database: a catalogue of your books, a collection, the guests of an event, the tasks of a project. Each base holds tables, each table has fields of a fixed type, and you see the same records as a grid, cards, a gallery, a kanban board, a calendar or a form.
+
+## Getting started
+- Press `New base` and pick a template, or start with a blank base.
+- `Import` turns files into a new base: CSV, Excel (.xlsx, .xls) and OpenDocument (.ods) files, or an orOS base file (.orosbase). Base guesses the type of each column (number, date, choice, email…); check them in the column headers.
+- A base can hold many tables. Use the `+` next to the table names to add one.
+
+## Fields
+- Tap a column header to edit the field, sort by it, move it, hide it in this view or delete it. The `+` at the end of the header row adds a field.
+- Types: short and long text, number, currency, percent, date (with or without a time), checkbox, single choice, multiple choice, rating, email, web address, phone, attachments, links to records, and those Base fills in by itself: autonumber, created time, last changed time, lookups, rollups, counts and formulas.
+- Changing a field's type converts its values. Values that do not fit are emptied, and Base tells you how many before it changes anything. `Undo` brings them back.
+- An attachment field holds up to 20 files per record: photos, PDFs and other files up to 10 MB. They are kept on the orOS disk (Files › Base › Attachments) and reach your other devices with the disk (Sync › Drive). Photos are made smaller and lose their location data. Open a record to add, open, save or remove them.
+- The first field names each record. Choose another one in the table menu (`⋯` › Field that names records).
+
+## Links between tables
+- A `Link to records` field links a record to records of another table of the same base, for example a book to its authors. The other table gets a field of its own that shows the same links from its side; tick `Only one record` for one link per record.
+- Tap a link cell (or press Enter) to pick records. Search, tap to link or unlink, or make a new record with the name you typed. In the open record, tap a linked record's name to open it.
+- Paste names copied from a spreadsheet into a link column: Base links the records with those names and tells you which it did not find.
+- `Lookup` shows a field of the linked records, `Rollup` sums them up (sum, average, smallest, largest, counts, all as text, all or any ticked), `Count of links` counts them. Base keeps them up to date by itself.
+- When two devices add different links to the same record, both are kept. Deleting a link field also deletes its other side; `Undo` brings both back with their links.
+
+## Formulas
+- A `Formula` field calculates a value from the other fields of the record. Write field names in braces: `{Price} * {Copies}`, `IF({Pages} > 300, "long", "short")`, `{Out} + 30` with `Show the result as a date`.
+- The functions are the [Spreadsheet](app:spreadsheet)'s (IF, ROUND, SUM, CONCATENATE, TODAY, YEAR…), written in English, with a dot for decimals. `Insert a field` adds a name at the cursor and the line below shows the result for the first record.
+- Renaming a field keeps formulas working. A formula that reads itself shows `#CYC!`, a division by zero `#DIV/0!`; cell references like A1 are not part of a Base formula.
+
+## Records
+- `New record` adds a record and opens it. In the grid, `New record` under the last row adds one in place.
+- In the grid, tap a cell to select it and tap it again (or press Enter) to edit. Arrow keys and Tab move, Delete empties a cell, Esc cancels.
+- Paste a block copied from a spreadsheet into the selected cell: it fills the cells to the right and below, and adds records when it needs more rows.
+- The expand button at the start of a row, or Shift+Enter, opens the whole record. There you can also duplicate or delete it.
+- Under its fields, a record has `Comments`: write a note and press `Add comment` (or Ctrl+Enter). Comments sync with your other devices; the × deletes one, with Undo.
+
+## Views
+- Each table starts with a grid view and a card view. Make more in the view list (`New view…`), each with its own filters, sorting, groups and fields.
+- `Filter` shows only the records that match all (or any) of your conditions. `Sort` orders them by up to five fields, `Group` puts them under headings by up to three fields; tap a heading to fold it.
+- `Fields` chooses which fields this view shows and in what order. A hidden field stays in the table and in other views.
+- The search box looks in the shown fields of this view only.
+- A new record added in a filtered view takes the values of the "is" conditions, so it stays in the view.
+- A kanban view puts the records in columns by a single-choice field (`Columns by`). Drag a card to another column to change its value; on a phone, hold the card a moment first. With a keyboard, focus a card and press Alt + ← or →. The `+` at the top of a column adds a record with that value.
+- A gallery view shows the records as cards with a cover: the first photo of an attachment field (`Cover from`).
+- A form view shows the fields of the view as a form. `Add record` saves one record and empties the form for the next. Links, attachments and computed fields are filled in the record afterwards.
+- A calendar view lays the records out on a month by a date field (`Date field`); created and changed times work too. Tap a day for its records and to add a new one on that day. The month you look at is kept on this device only.
+
+## Import
+- Pick several files at once to make one base with several tables, like the CSV files Airtable exports (one per table). Each sheet of a workbook becomes a table too.
+- A column whose cells are the names of records in another table of the same import becomes a link between the two tables. When both tables have such a column, they become the two sides of one link. Airtable's attachments come in as text with their web addresses.
+- Base menu (`⋯`) › Import tables adds the tables to the open base instead.
+- In [Spreadsheet](app:spreadsheet), Send to an app › Base takes the selected cells (or the whole sheet) as a new table. You pick the base before anything is added.
+
+A list sent from another orOS app with `Send to an app…` (such as a To-Do list or a shopping list) opens in the same `Add as a table` window: one record per item, with a Name field and, when the items have notes, a Notes field.
+
+## Export
+- Table menu (`⋯`) › Export this view as CSV saves the records and fields you see, in that order.
+- Table menu (`⋯`) › Print or save as PDF prints the view as a table (the records and fields you see, up to 5,000 records); the browser's print dialog also saves a PDF.
+- Open this view in Spreadsheet sends them to [Spreadsheet](app:spreadsheet) as a new sheet (up to 499 records).
+- Base menu (`⋯`) › Save as orOS file (.orosbase) saves the whole base, with its tables, views and links, as one file for a copy or another device (attachments go by name; the files stay on the orOS disk). Opening it adds what is missing and never deletes; records already here stay as they are unless you tick `Update with newer versions`. The file also holds a CSV of each table (in `preview/`) and is not encrypted.
+
+The view's menu has `Send as a table to an app…` and `Send as a list to an app…`: the records on screen (after the view's filter and your search, up to 499 as a table and 200 as a list) go to another orOS app, a table to [Spreadsheet](app:spreadsheet), [Writer](app:writer) or [Mail](app:mail), a list (the primary field as the item, the other fields as its note) to [To-Do](app:todo) or [Kanban](app:kanban). `Send to an app…` in a record's window sends that record as text. The other app only opens with them filled in.
+
+## Your data
+- Everything stays on this device and is saved as you go. With orOS sync on in [Settings](app:settings), your bases follow you to your other devices, encrypted.
+- When two devices change different fields of the same record, both changes are kept.
+- Base holds up to 20,000 records on all your devices together; the home screen shows how many you have.
+- Deleting a base, table, field, view or record shows `Undo` for a few seconds.
+
+## Find it from anywhere
+- The menu's search box finds your bases and records. Choosing a record opens it in its table.
+
+## Forms and Calendar
+- Table menu (`⋯`) › Make a public form opens [Forms](app:forms) with a question for each field a form can ask. In Forms, `Send to Base` writes each answer as a record of this table. An answer sent again, or one whose record you deleted here, is never added twice; a choice someone typed under "Other" becomes a new choice. Base then tells you how many records were added and which answers did not fit.
+- A date field can show its records in [Calendar](app:calendar): edit the field and tick `Show in Calendar` (off at first). They appear under the Base chip; tapping one opens the record here.
+- The same switch puts those records in [Today](app:today), today and the next three days.
+- The [Assistant](app:assistant) and Claude through orOS Gate can read your bases (tables, fields, a table's records) and add records, once you allow Base for them. You see the records before they are added and can undo them. They fill fields by their names; fields Base works out, links and attachments stay yours to fill.
+- [Automations](app:automations) can follow Base: `When a record is added in Base` and `When a field changes in Base`, with a word such as a table's name or `Status: Done` (a ticked checkbox reads `Paid: true`). Only your own edits here count (also answers you take in from Forms), up to 20 per save; imports, deletes, Undo and changes that arrive from your other devices do not.

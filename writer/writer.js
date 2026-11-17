@@ -219,6 +219,12 @@ const STRINGS = {
     'page.sizes.letter': 'Letter',
     'page.sizes.legal': 'Legal',
     'page.sizes.full-width': 'Full width',
+    'page.fontBody': 'Font for text',
+    'page.fontHead': 'Font for headings',
+    'page.fontDefault': 'Writer\'s font',
+    'page.fontMine': 'On this device',
+    'page.fontLoading': 'Loading fonts…',
+    'page.fontHint': 'From your collections in Settings › Fonts and the font files on this device. Used on screen, in print and in the PDF.',
     'toc.title': 'Contents',
     'toc.insert': 'Insert inline',
     'toc.empty': 'No headings — start with a heading style.',
@@ -465,7 +471,215 @@ const STRINGS = {
     'mm.busy': 'Creating {i} of {n}…',
     'mm.done': 'Mail merge done: {n} records',
     'mm.capped': 'Only the first {n} records are used.',
-    'mm.docTitle': '{title} (mail merge)'
+    'mm.docTitle': '{title} (mail merge)',
+    'cat.translate': 'Translate this document…',
+    'cat.list': 'Translations',
+    'cat.close': 'Close',
+    'cat.new': 'New translation',
+    'cat.noDisk': 'Translations need the orOS disk. Open Writer inside orOS.',
+    'cat.err': 'Something went wrong with the translation. Please try again.',
+    'cat.loading': 'Loading…',
+    'cat.none': 'No translations yet. Start one from a document.',
+    'cat.untitled': 'Untitled translation',
+    'cat.pct': '{p}% done',
+    'cat.delAsk': 'Move “{name}” to the Trash? You can put it back from Files for 30 days.',
+    'cat.del': 'Delete',
+    'cat.deleted': 'Moved to the Trash',
+    'cat.create': 'Create',
+    'cat.source': 'Document to translate',
+    'cat.fromFile': 'From a file…',
+    'cat.from': 'From',
+    'cat.to': 'Into',
+    'cat.name': 'Name',
+    'cat.pickSrc': 'Choose a document to translate.',
+    'cat.sameLang': 'Choose two different languages.',
+    'cat.empty': 'This document has no text to translate.',
+    'cat.noSrc': 'This translation’s source is missing. It may still be syncing from another device.',
+    'cat.gone': 'This translation is no longer here.',
+    'cat.back': 'Back to the document',
+    'cat.search': 'Search source and translation',
+    'cat.filter': 'Show',
+    'cat.f.all': 'All segments',
+    'cat.f.todo': 'Not done yet',
+    'cat.f.draft': 'Drafts',
+    'cat.f.done': 'Done',
+    'cat.f.rev': 'Reviewed',
+    'cat.f.tags': 'Formatting to check',
+    'cat.chapter': 'Go to chapter',
+    'cat.build': 'Build document',
+    'cat.rename': 'Rename',
+    'cat.nextTodo': 'Next untranslated',
+    'cat.more': 'More',
+    'cat.keys': 'Ctrl+Enter confirm and next · Ctrl+Shift+Enter reviewed · Alt+↑/↓ move · Alt+S copy source · Alt+T next tag',
+    'cat.s0': 'Not translated',
+    'cat.s1': 'Draft',
+    'cat.s2': 'Done',
+    'cat.s3': 'Reviewed',
+    'cat.joined': 'Joined to the segment before',
+    'cat.prog': '{p}% · {d} of {w} words',
+    'cat.segN': 'Translation of segment {n}',
+    'cat.copySrc': 'Copy source',
+    'cat.copySrcT': 'Put the source text here (Alt+S)',
+    'cat.repeat': 'Same as {n}',
+    'cat.join': 'Join',
+    'cat.joinT': 'Leave this segment empty: its meaning is in the translation of the one before',
+    'cat.reviewed': 'Reviewed',
+    'cat.reviewedT': 'Mark as reviewed and go on (Ctrl+Shift+Enter)',
+    'cat.confirm': 'Confirm',
+    'cat.confirmT': 'Mark as done and go on (Ctrl+Enter)',
+    'cat.tagMiss': 'Formatting {n} ({name}) is missing: tap to put it in',
+    'cat.tagIns': 'Put formatting {n} ({name}) in',
+    'cat.tagOrder': 'Check the order of the formatting marks',
+    'cat.allDone': 'Every segment is translated.',
+    'cat.emptyOk': 'Write the translation first, or use Join.',
+    'cat.saving': 'Saving…',
+    'cat.saved': 'Saved',
+    'cat.notSaved': 'Not saved yet, trying again',
+    'cat.builtLeft': 'Document built. {n} segments are still in the source language.',
+    'cat.built': 'Document built.',
+    'cat.updateAsk': 'Update “{name}” with this translation? Its current text goes into Version History.',
+    'cat.update': 'Update',
+    'tm.concord': 'Search the memory…',
+    'tm.fill100': 'Fill 100% matches',
+    'tm.manage': 'Translation memories…',
+    'tm.repeated': 'Also filled where the same sentence comes again ({n}).',
+    'tm.loading': 'Reading the translation memory…',
+    'tm.auto': 'Filled from the memory (100%), as a draft.',
+    'tm.use': 'Use',
+    'tm.useT': 'Use this translation (Alt+{n})',
+    'tm.default': 'My translations',
+    'tm.filled': '{n} segments filled from the memory as drafts.',
+    'tm.filledNone': 'No 100% matches for the empty segments.',
+    'tm.concordQ': 'Word or phrase',
+    'tm.concordNone': 'Not in the memory yet.',
+    'tm.insert': 'Insert',
+    'tm.new': 'New memory',
+    'tm.pairNote': 'Matches come from every memory, for {from} → {to}. Confirmed segments are saved in the one you choose.',
+    'tm.none': 'No memories yet. The first confirmed segment makes one.',
+    'tm.untitled': 'Untitled memory',
+    'tm.count': '{n} units',
+    'tm.writes': 'this project saves here',
+    'tm.import': 'Import TMX…',
+    'tm.export': 'Export TMX',
+    'tm.delAsk': 'Move the memory “{name}” to the Trash? You can put it back from Files for 30 days.',
+    'tm.tooBig': 'This file is too big (more than 64 MB).',
+    'tm.badTmx': 'This is not a TMX file.',
+    'tm.imported': '{n} units imported, {s} skipped.',
+    'tm.emptyMem': 'This memory is empty.',
+    'cat.f.qa': 'Problems to check',
+    'gl.add': 'Add a term…',
+    'gl.edit': 'Change term',
+    'gl.manage': 'Glossaries…',
+    'gl.default': 'My glossary',
+    'gl.bad': 'This file could not be read as a glossary (CSV or TBX).',
+    'gl.count': '{n} terms',
+    'gl.delAsk': 'Move the glossary “{name}” to the Trash? You can put it back from Files for 30 days.',
+    'gl.empty': 'This glossary has no terms for this language pair.',
+    'gl.exportCsv': 'Export CSV',
+    'gl.exportTbx': 'Export TBX',
+    'gl.forb': 'Do not use (separate with ;)',
+    'gl.import': 'Import CSV or TBX…',
+    'gl.imported': '{n} terms imported, {s} skipped.',
+    'gl.insT': 'Put in “{t}” (Alt+G)',
+    'gl.needTerm': 'Write the term first.',
+    'gl.new': 'New glossary',
+    'gl.noTerms': 'No terms.',
+    'gl.none': 'No glossaries yet. The first term you add makes one.',
+    'gl.not': 'not: {w}',
+    'gl.note': 'Note',
+    'gl.pairNote': 'Terms come from every glossary, for {from} → {to}. New terms go into the one you choose.',
+    'gl.save': 'Save',
+    'gl.saved': 'Term saved',
+    'gl.search': 'Search terms',
+    'gl.term': 'Term ({l})',
+    'gl.terms': 'Terms…',
+    'gl.tgt': 'Translation ({l})',
+    'gl.tooBig': 'This file is too big (more than 32 MB).',
+    'gl.untitled': 'Untitled glossary',
+    'gl.writes': 'new terms go here',
+    'qa.report': 'Check the translation…',
+    'qa.clean': 'No problems found.',
+    'qa.count': '{n} things to check in {s} segments.',
+    'qa.go': 'Go',
+    'qa.term': 'The term “{a}” should be “{b}”',
+    'qa.forb': '“{a}” is not to be used (use “{b}”)',
+    'qa.num': 'Numbers differ (source: {a})',
+    'qa.tag': 'Formatting marks to check',
+    'qa.space': 'Double space',
+    'qa.lead': 'Space at the start or the end',
+    'qa.punct': 'The ending punctuation differs ({a} / {b})',
+    'qa.same': 'The same as the source: not translated?',
+    'qa.cons': 'Translated differently in segment {a}',
+    'cat.docxOut': 'Save as Word (.docx)…',
+    'cat.xlfOut12': 'Export XLIFF 1.2…',
+    'cat.xlfOut20': 'Export XLIFF 2.0…',
+    'cat.xlfIn': 'Import XLIFF…',
+    'cat.xlfRead': '{n} translations read, {m} skipped',
+    'cat.xlfBad': 'This is not an XLIFF file.',
+    'cat.xlfAsk': 'Replace {n} translations you already have with the ones in the file?',
+    'cat.xlfReplace': 'Replace',
+    'cat.noOrig': 'The original Word file of this project is missing.',
+    'cat.origChanged': 'The original Word file is not the one this project was made from.',
+    'cat.pub': 'Publishing title…',
+    'cat.pubTitle': 'Title in Publishing',
+    'cat.pubNo': 'None',
+    'cat.pubGone': 'A title this device does not have',
+    'cat.pubNone': 'No titles in Publishing yet. Make one there first.',
+    'cat.pubWho': 'Translator',
+    'cat.pubWhoPh': 'Name, to add to the title\'s people',
+    'cat.pubHint': 'The title shows this translation\'s progress in its release plan. With a name, Publishing opens to add the translator to the title.',
+    'cat.pubLinked': 'Linked to the title',
+    'cat.pubOpen': 'Open in Publishing',
+    'cat.due': 'Deadline and goal…',
+    'cat.dueDate': 'Deadline',
+    'cat.dueGoal': 'Words a day',
+    'cat.dueNeed': 'To finish on time: {w} words a day for {n} days. Leave the box empty to follow that.',
+    'cat.dueHint': 'Choose the day the translation is due.',
+    'cat.dueCal': 'Deadline in Calendar',
+    'cat.dueDaily': 'Daily reminder in Calendar',
+    'cat.dueFirst': 'Choose the deadline first',
+    'cat.duePast': 'The deadline has passed',
+    'cat.calDue': 'Translation due: {name}',
+    'cat.calDaily': 'Translate {w} words: {name}',
+    'cat.calNote': 'Book translation in Writer, due {d}.',
+    'cat.goalOn': 'Due {d} · {n} days · {w} words a day · today {t}',
+    'cat.goalLate': '{n} days past the deadline ({d}) · {w} words left',
+    'cat.goalDone': 'All translated · deadline {d}',
+    'mt.menuOff': 'Machine suggestions: off…',
+    'mt.menuOn': 'Machine suggestions: on…',
+    'mt.title': 'Machine suggestions',
+    'mt.intro': 'A machine suggestion appears under the open segment. It is never put in by itself: you take it with “Use” or Alt+0. Translation runs on this device, or through your own AI key if you turned that on in Text Tools.',
+    'mt.need': '{pair}: the translation model is not on this device yet ({mb} MB, downloaded once).',
+    'mt.ready': '{pair}: the translation model is on this device.',
+    'mt.none': 'There is no model on the device for {pair}.',
+    'mt.aiNote': 'Your AI from Text Tools can translate it.',
+    'mt.dl': 'Download',
+    'mt.dling': 'Downloading… {p}%',
+    'mt.turnOn': 'Turn on',
+    'mt.turnOff': 'Turn off',
+    'mt.isOn': 'Machine suggestions on',
+    'mt.isOff': 'Machine suggestions off',
+    'mt.noEngine': 'The translation engine could not be loaded.',
+    'mt.loading': 'Machine suggestion…',
+    'mt.dev': 'Machine · on device',
+    'mt.ai': 'AI · {via}',
+    'mt.aiPlain': 'AI',
+    'mt.use': 'Use',
+    'mt.useT': 'Use this suggestion (Alt+0)',
+    'mt.tags': 'Some formatting marks did not come back; they go at the end.',
+    'mt.needDl': 'The model is not downloaded.',
+    'mt.fill': 'Fill empty segments…',
+    'mt.fillAsk': 'Fill {n} empty segments with machine drafts? They stay drafts until you check them.',
+    'mt.fillGo': 'Fill',
+    'mt.filling': 'Translating {d} of {n}…',
+    'mt.filled': '{n} drafts filled',
+    'mt.stop': 'Stop',
+    'mt.noEmpty': 'No empty segments to fill.',
+    'mt.err': 'Machine translation failed ({code}).',
+    'mt.err.download': 'The download failed. Check the connection and try again.',
+    'mt.err.quota': 'There is not enough space on this device for the model.',
+    'mt.err.unsupported': 'This browser cannot run the translation model.',
+    'mt.err.hash': 'The downloaded model did not check out; nothing was kept.'
   },
   el: {
     'app.name': 'Writer',
@@ -586,6 +800,12 @@ const STRINGS = {
     'page.sizes.letter': 'Letter',
     'page.sizes.legal': 'Legal',
     'page.sizes.full-width': 'Πλήρες πλάτος',
+    'page.fontBody': 'Γραμματοσειρά κειμένου',
+    'page.fontHead': 'Γραμματοσειρά επικεφαλίδων',
+    'page.fontDefault': 'Η γραμματοσειρά του Writer',
+    'page.fontMine': 'Σε αυτή τη συσκευή',
+    'page.fontLoading': 'Φόρτωση γραμματοσειρών…',
+    'page.fontHint': 'Από τις συλλογές σας στις Ρυθμίσεις › Γραμματοσειρές και τα αρχεία γραμματοσειρών αυτής της συσκευής. Ισχύει στην οθόνη, στην εκτύπωση και στο PDF.',
     'toc.title': 'Περιεχόμενα',
     'toc.insert': 'Εισαγωγή inline',
     'toc.empty': 'Καμία επικεφαλίδα — ξεκίνα με style heading.',
@@ -832,7 +1052,215 @@ const STRINGS = {
     'mm.busy': 'Δημιουργία {i} από {n}…',
     'mm.done': 'Η συγχώνευση ολοκληρώθηκε: {n} εγγραφές',
     'mm.capped': 'Χρησιμοποιούνται μόνο οι πρώτες {n} εγγραφές.',
-    'mm.docTitle': '{title} (συγχώνευση)'
+    'mm.docTitle': '{title} (συγχώνευση)',
+    'cat.translate': 'Μετάφραση αυτού του εγγράφου…',
+    'cat.list': 'Μεταφράσεις',
+    'cat.close': 'Κλείσιμο',
+    'cat.new': 'Νέα μετάφραση',
+    'cat.noDisk': 'Οι μεταφράσεις χρειάζονται τον δίσκο του orOS. Άνοιξε τον Writer μέσα στο orOS.',
+    'cat.err': 'Κάτι πήγε στραβά με τη μετάφραση. Δοκίμασε ξανά.',
+    'cat.loading': 'Φόρτωση…',
+    'cat.none': 'Δεν υπάρχουν ακόμη μεταφράσεις. Ξεκίνα μία από ένα έγγραφο.',
+    'cat.untitled': 'Μετάφραση χωρίς τίτλο',
+    'cat.pct': '{p}% έτοιμη',
+    'cat.delAsk': 'Μεταφορά της «{name}» στον Κάδο; Μπορείς να την επαναφέρεις από τα Αρχεία για 30 ημέρες.',
+    'cat.del': 'Διαγραφή',
+    'cat.deleted': 'Μεταφέρθηκε στον Κάδο',
+    'cat.create': 'Δημιουργία',
+    'cat.source': 'Έγγραφο προς μετάφραση',
+    'cat.fromFile': 'Από αρχείο…',
+    'cat.from': 'Από',
+    'cat.to': 'Σε',
+    'cat.name': 'Όνομα',
+    'cat.pickSrc': 'Διάλεξε ένα έγγραφο για μετάφραση.',
+    'cat.sameLang': 'Διάλεξε δύο διαφορετικές γλώσσες.',
+    'cat.empty': 'Αυτό το έγγραφο δεν έχει κείμενο για μετάφραση.',
+    'cat.noSrc': 'Λείπει το πρωτότυπο αυτής της μετάφρασης. Ίσως συγχρονίζεται ακόμη από άλλη συσκευή.',
+    'cat.gone': 'Αυτή η μετάφραση δεν υπάρχει πια.',
+    'cat.back': 'Πίσω στο έγγραφο',
+    'cat.search': 'Αναζήτηση σε πρωτότυπο και μετάφραση',
+    'cat.filter': 'Εμφάνιση',
+    'cat.f.all': 'Όλα τα τμήματα',
+    'cat.f.todo': 'Δεν έχουν τελειώσει',
+    'cat.f.draft': 'Πρόχειρα',
+    'cat.f.done': 'Έτοιμα',
+    'cat.f.rev': 'Ελεγμένα',
+    'cat.f.tags': 'Μορφοποίηση για έλεγχο',
+    'cat.chapter': 'Μετάβαση σε κεφάλαιο',
+    'cat.build': 'Δημιουργία εγγράφου',
+    'cat.rename': 'Μετονομασία',
+    'cat.nextTodo': 'Επόμενο αμετάφραστο',
+    'cat.more': 'Περισσότερα',
+    'cat.keys': 'Ctrl+Enter επιβεβαίωση και επόμενο · Ctrl+Shift+Enter ελεγμένο · Alt+↑/↓ μετακίνηση · Alt+S αντιγραφή πρωτοτύπου · Alt+T επόμενη ετικέτα',
+    'cat.s0': 'Αμετάφραστο',
+    'cat.s1': 'Πρόχειρο',
+    'cat.s2': 'Έτοιμο',
+    'cat.s3': 'Ελεγμένο',
+    'cat.joined': 'Ενώθηκε με το προηγούμενο τμήμα',
+    'cat.prog': '{p}% · {d} από {w} λέξεις',
+    'cat.segN': 'Μετάφραση τμήματος {n}',
+    'cat.copySrc': 'Αντιγραφή πρωτοτύπου',
+    'cat.copySrcT': 'Βάλε εδώ το κείμενο του πρωτοτύπου (Alt+S)',
+    'cat.repeat': 'Ίδιο με το {n}',
+    'cat.join': 'Ένωση',
+    'cat.joinT': 'Άφησε κενό αυτό το τμήμα: το νόημά του είναι στη μετάφραση του προηγούμενου',
+    'cat.reviewed': 'Ελέγχθηκε',
+    'cat.reviewedT': 'Σήμανση ως ελεγμένο και συνέχεια (Ctrl+Shift+Enter)',
+    'cat.confirm': 'Επιβεβαίωση',
+    'cat.confirmT': 'Σήμανση ως έτοιμο και συνέχεια (Ctrl+Enter)',
+    'cat.tagMiss': 'Λείπει η μορφοποίηση {n} ({name}): πάτησε για να μπει',
+    'cat.tagIns': 'Βάλε τη μορφοποίηση {n} ({name})',
+    'cat.tagOrder': 'Έλεγξε τη σειρά των σημαδιών μορφοποίησης',
+    'cat.allDone': 'Όλα τα τμήματα έχουν μεταφραστεί.',
+    'cat.emptyOk': 'Γράψε πρώτα τη μετάφραση ή χρησιμοποίησε την Ένωση.',
+    'cat.saving': 'Αποθήκευση…',
+    'cat.saved': 'Αποθηκεύτηκε',
+    'cat.notSaved': 'Δεν αποθηκεύτηκε ακόμη, νέα προσπάθεια',
+    'cat.builtLeft': 'Το έγγραφο δημιουργήθηκε. {n} τμήματα είναι ακόμη στη γλώσσα του πρωτοτύπου.',
+    'cat.built': 'Το έγγραφο δημιουργήθηκε.',
+    'cat.updateAsk': 'Ενημέρωση του «{name}» με αυτή τη μετάφραση; Το τωρινό κείμενό του πηγαίνει στο Ιστορικό εκδόσεων.',
+    'cat.update': 'Ενημέρωση',
+    'tm.concord': 'Αναζήτηση στη μνήμη…',
+    'tm.fill100': 'Συμπλήρωση των 100%',
+    'tm.manage': 'Μεταφραστικές μνήμες…',
+    'tm.repeated': 'Συμπληρώθηκε και όπου ξαναβγαίνει η ίδια πρόταση ({n}).',
+    'tm.loading': 'Ανάγνωση της μεταφραστικής μνήμης…',
+    'tm.auto': 'Συμπληρώθηκε από τη μνήμη (100%), ως πρόχειρο.',
+    'tm.use': 'Χρήση',
+    'tm.useT': 'Χρήση αυτής της μετάφρασης (Alt+{n})',
+    'tm.default': 'Οι μεταφράσεις μου',
+    'tm.filled': '{n} τμήματα συμπληρώθηκαν από τη μνήμη ως πρόχειρα.',
+    'tm.filledNone': 'Δεν υπάρχουν αντιστοιχίες 100% για τα κενά τμήματα.',
+    'tm.concordQ': 'Λέξη ή φράση',
+    'tm.concordNone': 'Δεν υπάρχει ακόμη στη μνήμη.',
+    'tm.insert': 'Εισαγωγή',
+    'tm.new': 'Νέα μνήμη',
+    'tm.pairNote': 'Οι προτάσεις έρχονται από όλες τις μνήμες, για {from} → {to}. Τα επιβεβαιωμένα τμήματα αποθηκεύονται σε αυτή που διαλέγεις.',
+    'tm.none': 'Δεν υπάρχουν ακόμη μνήμες. Το πρώτο επιβεβαιωμένο τμήμα φτιάχνει μία.',
+    'tm.untitled': 'Μνήμη χωρίς όνομα',
+    'tm.count': '{n} μονάδες',
+    'tm.writes': 'εδώ αποθηκεύει αυτό το έργο',
+    'tm.import': 'Εισαγωγή TMX…',
+    'tm.export': 'Εξαγωγή TMX',
+    'tm.delAsk': 'Μεταφορά της μνήμης «{name}» στον Κάδο; Μπορείς να την επαναφέρεις από τα Αρχεία για 30 ημέρες.',
+    'tm.tooBig': 'Το αρχείο είναι πολύ μεγάλο (πάνω από 64 MB).',
+    'tm.badTmx': 'Αυτό δεν είναι αρχείο TMX.',
+    'tm.imported': 'Εισήχθησαν {n} μονάδες, παραλείφθηκαν {s}.',
+    'tm.emptyMem': 'Αυτή η μνήμη είναι κενή.',
+    'cat.f.qa': 'Προβλήματα για έλεγχο',
+    'gl.add': 'Προσθήκη όρου…',
+    'gl.edit': 'Αλλαγή όρου',
+    'gl.manage': 'Γλωσσάρια…',
+    'gl.default': 'Το γλωσσάρι μου',
+    'gl.bad': 'Αυτό το αρχείο δεν διαβάστηκε ως γλωσσάρι (CSV ή TBX).',
+    'gl.count': '{n} όροι',
+    'gl.delAsk': 'Μεταφορά του γλωσσαρίου «{name}» στον Κάδο; Μπορείς να το επαναφέρεις από τα Αρχεία για 30 ημέρες.',
+    'gl.empty': 'Αυτό το γλωσσάρι δεν έχει όρους για αυτό το ζεύγος γλωσσών.',
+    'gl.exportCsv': 'Εξαγωγή CSV',
+    'gl.exportTbx': 'Εξαγωγή TBX',
+    'gl.forb': 'Να μη χρησιμοποιείται (χώρισε με ;)',
+    'gl.import': 'Εισαγωγή CSV ή TBX…',
+    'gl.imported': 'Εισήχθησαν {n} όροι, παραλείφθηκαν {s}.',
+    'gl.insT': 'Βάλε «{t}» (Alt+G)',
+    'gl.needTerm': 'Γράψε πρώτα τον όρο.',
+    'gl.new': 'Νέο γλωσσάρι',
+    'gl.noTerms': 'Δεν υπάρχουν όροι.',
+    'gl.none': 'Δεν υπάρχουν ακόμη γλωσσάρια. Ο πρώτος όρος που προσθέτεις φτιάχνει ένα.',
+    'gl.not': 'όχι: {w}',
+    'gl.note': 'Σημείωση',
+    'gl.pairNote': 'Οι όροι έρχονται από όλα τα γλωσσάρια, για {from} → {to}. Οι νέοι όροι μπαίνουν σε αυτό που διαλέγεις.',
+    'gl.save': 'Αποθήκευση',
+    'gl.saved': 'Ο όρος αποθηκεύτηκε',
+    'gl.search': 'Αναζήτηση όρων',
+    'gl.term': 'Όρος ({l})',
+    'gl.terms': 'Όροι…',
+    'gl.tgt': 'Απόδοση ({l})',
+    'gl.tooBig': 'Το αρχείο είναι πολύ μεγάλο (πάνω από 32 MB).',
+    'gl.untitled': 'Γλωσσάρι χωρίς όνομα',
+    'gl.writes': 'εδώ μπαίνουν οι νέοι όροι',
+    'qa.report': 'Έλεγχος της μετάφρασης…',
+    'qa.clean': 'Δεν βρέθηκαν προβλήματα.',
+    'qa.count': '{n} σημεία για έλεγχο σε {s} τμήματα.',
+    'qa.go': 'Μετάβαση',
+    'qa.term': 'Ο όρος «{a}» αποδίδεται «{b}»',
+    'qa.forb': 'Το «{a}» δεν χρησιμοποιείται (βάλε «{b}»)',
+    'qa.num': 'Οι αριθμοί διαφέρουν (πρωτότυπο: {a})',
+    'qa.tag': 'Σημάδια μορφοποίησης για έλεγχο',
+    'qa.space': 'Διπλό κενό',
+    'qa.lead': 'Κενό στην αρχή ή στο τέλος',
+    'qa.punct': 'Διαφέρει η στίξη στο τέλος ({a} / {b})',
+    'qa.same': 'Ίδιο με το πρωτότυπο: δεν μεταφράστηκε;',
+    'qa.cons': 'Μεταφράστηκε αλλιώς στο τμήμα {a}',
+    'cat.docxOut': 'Αποθήκευση ως Word (.docx)…',
+    'cat.xlfOut12': 'Εξαγωγή XLIFF 1.2…',
+    'cat.xlfOut20': 'Εξαγωγή XLIFF 2.0…',
+    'cat.xlfIn': 'Εισαγωγή XLIFF…',
+    'cat.xlfRead': 'Διαβάστηκαν {n} μεταφράσεις, παραλείφθηκαν {m}',
+    'cat.xlfBad': 'Αυτό δεν είναι αρχείο XLIFF.',
+    'cat.xlfAsk': 'Να μπουν οι μεταφράσεις του αρχείου στη θέση {n} μεταφράσεων που έχεις ήδη;',
+    'cat.xlfReplace': 'Αντικατάσταση',
+    'cat.noOrig': 'Λείπει το αρχικό αρχείο Word αυτού του έργου.',
+    'cat.origChanged': 'Το αρχικό αρχείο Word δεν είναι αυτό από το οποίο φτιάχτηκε το έργο.',
+    'cat.pub': 'Τίτλος στις Εκδόσεις…',
+    'cat.pubTitle': 'Τίτλος στις Εκδόσεις',
+    'cat.pubNo': 'Κανένας',
+    'cat.pubGone': 'Τίτλος που δεν έχει αυτή η συσκευή',
+    'cat.pubNone': 'Δεν υπάρχουν ακόμα τίτλοι στις Εκδόσεις. Φτιάξε πρώτα έναν εκεί.',
+    'cat.pubWho': 'Μεταφραστής',
+    'cat.pubWhoPh': 'Όνομα, για να μπει στα πρόσωπα του τίτλου',
+    'cat.pubHint': 'Ο τίτλος δείχνει την πρόοδο αυτής της μετάφρασης στην πορεία έκδοσης. Με όνομα, ανοίγουν οι Εκδόσεις για να μπει ο μεταφραστής στον τίτλο.',
+    'cat.pubLinked': 'Συνδέθηκε με τον τίτλο',
+    'cat.pubOpen': 'Άνοιγμα στις Εκδόσεις',
+    'cat.due': 'Προθεσμία και στόχος…',
+    'cat.dueDate': 'Προθεσμία',
+    'cat.dueGoal': 'Λέξεις τη μέρα',
+    'cat.dueNeed': 'Για να τελειώσεις στην ώρα σου: {w} λέξεις τη μέρα για {n} μέρες. Άφησε το πεδίο κενό για να ακολουθεί αυτό.',
+    'cat.dueHint': 'Διάλεξε την ημέρα που πρέπει να είναι έτοιμη η μετάφραση.',
+    'cat.dueCal': 'Προθεσμία στο Ημερολόγιο',
+    'cat.dueDaily': 'Καθημερινή υπενθύμιση στο Ημερολόγιο',
+    'cat.dueFirst': 'Διάλεξε πρώτα την προθεσμία',
+    'cat.duePast': 'Η προθεσμία έχει περάσει',
+    'cat.calDue': 'Παράδοση μετάφρασης: {name}',
+    'cat.calDaily': 'Μετάφραση {w} λέξεων: {name}',
+    'cat.calNote': 'Μετάφραση βιβλίου στον Writer, παράδοση {d}.',
+    'cat.goalOn': 'Παράδοση {d} · {n} μέρες · {w} λέξεις τη μέρα · σήμερα {t}',
+    'cat.goalLate': '{n} μέρες μετά την προθεσμία ({d}) · απομένουν {w} λέξεις',
+    'cat.goalDone': 'Όλα μεταφρασμένα · προθεσμία {d}',
+    'mt.menuOff': 'Μηχανικές προτάσεις: ανενεργές…',
+    'mt.menuOn': 'Μηχανικές προτάσεις: ενεργές…',
+    'mt.title': 'Μηχανικές προτάσεις',
+    'mt.intro': 'Η μηχανική πρόταση εμφανίζεται κάτω από το ανοιχτό τμήμα. Δεν μπαίνει ποτέ μόνη της: την παίρνεις με «Χρήση» ή Alt+0. Η μετάφραση γίνεται στη συσκευή ή με το δικό σου κλειδί AI, αν το άνοιξες στα Εργαλεία κειμένου.',
+    'mt.need': '{pair}: το μοντέλο μετάφρασης δεν είναι ακόμη στη συσκευή ({mb} MB, κατεβαίνει μία φορά).',
+    'mt.ready': '{pair}: το μοντέλο μετάφρασης είναι στη συσκευή.',
+    'mt.none': 'Δεν υπάρχει μοντέλο στη συσκευή για {pair}.',
+    'mt.aiNote': 'Το AI σου από τα Εργαλεία κειμένου μπορεί να το μεταφράσει.',
+    'mt.dl': 'Λήψη',
+    'mt.dling': 'Λήψη… {p}%',
+    'mt.turnOn': 'Ενεργοποίηση',
+    'mt.turnOff': 'Απενεργοποίηση',
+    'mt.isOn': 'Μηχανικές προτάσεις ενεργές',
+    'mt.isOff': 'Μηχανικές προτάσεις ανενεργές',
+    'mt.noEngine': 'Η μηχανή μετάφρασης δεν φόρτωσε.',
+    'mt.loading': 'Μηχανική πρόταση…',
+    'mt.dev': 'Μηχανή · στη συσκευή',
+    'mt.ai': 'AI · {via}',
+    'mt.aiPlain': 'AI',
+    'mt.use': 'Χρήση',
+    'mt.useT': 'Χρήση αυτής της πρότασης (Alt+0)',
+    'mt.tags': 'Κάποια σημάδια μορφοποίησης δεν γύρισαν· μπαίνουν στο τέλος.',
+    'mt.needDl': 'Το μοντέλο δεν έχει κατέβει.',
+    'mt.fill': 'Συμπλήρωση κενών τμημάτων…',
+    'mt.fillAsk': 'Να συμπληρωθούν {n} κενά τμήματα με μηχανικά προσχέδια; Μένουν προσχέδια μέχρι να τα ελέγξεις.',
+    'mt.fillGo': 'Συμπλήρωση',
+    'mt.filling': 'Μετάφραση {d} από {n}…',
+    'mt.filled': 'Συμπληρώθηκαν {n} προσχέδια',
+    'mt.stop': 'Διακοπή',
+    'mt.noEmpty': 'Δεν υπάρχουν κενά τμήματα.',
+    'mt.err': 'Η μηχανική μετάφραση απέτυχε ({code}).',
+    'mt.err.download': 'Η λήψη απέτυχε. Έλεγξε τη σύνδεση και ξαναδοκίμασε.',
+    'mt.err.quota': 'Δεν υπάρχει αρκετός χώρος στη συσκευή για το μοντέλο.',
+    'mt.err.unsupported': 'Αυτός ο browser δεν μπορεί να τρέξει το μοντέλο μετάφρασης.',
+    'mt.err.hash': 'Το μοντέλο που κατέβηκε δεν πέρασε τον έλεγχο· δεν κρατήθηκε τίποτα.'
   }
 };
 
@@ -1935,6 +2363,7 @@ function renderEditor() {
   viewAfterChange();
   tcSync(true);                    // Track changes of this doc (wave 22)
   spellAfterRender();              // fresh spelling marks for this doc
+  wfAfterRender();                 // the document's own fonts (FM-4)
   // Adopt the browser's serialization WITHOUT touching mtime, so a later
   // unrelated flush never sees a "change" that is only formatting noise.
   if (doc) {
@@ -2368,6 +2797,8 @@ function openSearchTarget(t) {
     if (f) ioOpenFile(f);
     return;
   }
+  if (t && typeof t.translate === 'string') { catLoad().then(c => c.openProject(t.translate), catFailed); return; }
+  if (t && t.translations === true) { catLoad().then(c => c.openManager(), catFailed); return; }
   if (t && typeof t.doc === 'string') activateTab(t.doc);
 }
 function takeOpenFile(o) {
@@ -2408,6 +2839,120 @@ function assistLoad() {
     assistP.catch(() => { assistP = null; });
   }
   return assistP;
+}
+
+// WR-CAT (book translation): the screens are cat.js (with catcore.js, catqa.js,
+// cattm.js and catstore.js), loaded on first use; this is what they may use of
+// Writer. Projects live on the orOS disk (/internal/Writer/Translations),
+// never in the Writer slice.
+function catFs() {
+  try {
+    const p = window.parent;
+    if (p && p !== window && p.orosFS && typeof p.orosFS.writeText === 'function') return p.orosFS;
+    if (window.orosFS && typeof window.orosFS.writeText === 'function') return window.orosFS;
+  } catch (e) {}
+  return null;
+}
+// The built translation: a new document, or the earlier one replaced
+// (its current text goes into Version History first).
+function catWriteDoc(doc, o) {
+  const html = WriterIO.sanitizeHtml(String(o.html || ''));
+  const fns = (Array.isArray(o.footnotes) ? o.footnotes : [])
+    .filter(f => f && typeof f.id === 'string')
+    .map(f => ({ id: f.id, text: String(f.text || '') }));
+  const title = String(o.title || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  if (doc && !doc.del) {
+    takeManualSnapshot(doc);
+    clearTimeout(saveTimer);
+    dirty = false;
+  } else {
+    doc = createDoc({ title: title, html: '', silent: true });
+  }
+  doc.html = html;
+  doc.footnotes = fns;
+  doc.header = String(o.header || '').slice(0, 2000);
+  doc.footer = String(o.footer || '').slice(0, 2000);
+  if (title) doc.title = title;
+  const pg = o.page || {};
+  if (typeof pg.pageSize === 'string' && PAPER_SIZES[pg.pageSize]) doc.pageSize = pg.pageSize;
+  if (pg.margins) doc.margins = cleanMargins(pg.margins);
+  const lang = String(o.lang || '').split('-')[0];
+  doc.lang = cleanLang(lang) || 'none';   // no dictionary for it: no false spelling marks
+  stampDoc(doc);
+  renderTabs();
+  if (doc.id === state.activeTab) renderEditor();
+  scheduleSave();
+  return doc;
+}
+window.WriterCatHost = {
+  t: t, toast: showToast, openDialog: openDialog, wConfirm: wConfirm, wPrompt: wPrompt, openMenu: openMenu,
+  docs: () => state.docs.filter(d => !d.del), getDoc: getDoc, activeDoc: activeDoc, flushSave: flushSave,
+  untitled: tabLabel, lang: () => window.orosLang || 'en',
+  locale: () => (window.orosLang === 'el' ? 'el-GR' : window.orosLang === 'de' ? 'de-DE' : 'en-US'),
+  fs: catFs,
+  openFile: accept => { const h = dialogHost(); return h ? h.openFile(accept) : localPickFile(accept); },
+  importFileAsDoc: file => ioParseFile(file).then(res => {
+    if (!res || res.kind === 'db') throw new Error('not a document');
+    return ioApplyImport(res, 'new');
+  }),
+  writeDoc: catWriteDoc, activateTab: activateTab,
+  saveText: (text, name, mime) => downloadBlob(text, name, mime),
+  // T4: the Word package of a project, unzipped, zipped, read as a document
+  readZip: buf => WriterIO.readZip(buf),
+  zip: files => window.OrosBundle._zip(files.map(f => ({ name: f.name, data: f.data, deflate: true }))),
+  // T5: the translation engine shared with Text Tools (translate/engine.js), loaded on first use
+  mtEngine: () => {
+    if (window.OrosTranslate) return Promise.resolve(window.OrosTranslate);
+    if (!catMtP) {
+      const v = (document.querySelector('script[src*="writer.js?v="]') || {}).src || '', m = v.match(/[?&]v=([^&#]+)/);
+      catMtP = new Promise((ok, fail) => {
+        const s = document.createElement('script');
+        s.src = '../translate/engine.js' + (m ? '?v=' + m[1] : '');
+        s.onload = () => window.OrosTranslate ? ok(window.OrosTranslate) : fail(new Error('engine-load'));
+        s.onerror = () => fail(new Error('engine-load'));
+        document.head.appendChild(s);
+      });
+      catMtP.catch(() => { catMtP = null; });
+    }
+    return catMtP;
+  },
+  // proposals 1-2: Publishing's titles (read only), a Publishing or Calendar form filled in
+  openAt: (app, target) => { try { window.parent.__orosOpenAt(app, target); return true; } catch (e) { return false; } },
+  calendarNew: p => { try { window.parent.__orosOpenCalendarNew(p); return true; } catch (e) { return false; } },
+  publishTitles: () => {
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem('oros-publish-data') || 'null'); } catch (e) { d = null; }
+    const tombs = d && d.tombs && typeof d.tombs === 'object' ? d.tombs : {};
+    return (d && Array.isArray(d.titles) ? d.titles : [])
+      .filter(x => x && typeof x.id === 'string' && typeof x.t === 'string' && x.t.trim() && !(Number(tombs[x.id]) >= Number(x.m || 0)))
+      .map(x => ({ id: x.id.slice(0, 80), t: x.t.replace(/\s+/g, ' ').trim().slice(0, 200), lang: typeof x.lang === 'string' ? x.lang.slice(0, 40) : '' }))
+      .sort((a, b) => a.t.localeCompare(b.t));
+  },
+  parseDocx: buf => WriterIO.parseZipBuf(buf instanceof Uint8Array ? buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) : buf, 'docx').then(p => {
+    const prep = WriterIO.prepareImport(p);
+    return { title: p.title || '', html: prep.html, footnotes: prep.footnotes, header: p.header || '', footer: p.footer || '' };
+  })
+};
+let catP = null, catMtP = null;
+function catFailed(e) { console.warn('[writer] translation load failed:', e); showToast(t('cat.err')); }
+function catLoad() {
+  if (window.WriterCat) return Promise.resolve(window.WriterCat);
+  if (!catP) {
+    const v = (document.querySelector('script[src*="writer.js?v="]') || {}).src || '', m = v.match(/[?&]v=([^&#]+)/);
+    const load = f => new Promise((ok, fail) => {
+      const s = document.createElement('script');
+      s.src = f + (m ? '?v=' + m[1] : '');
+      s.onload = ok; s.onerror = () => fail(new Error(f));
+      document.head.appendChild(s);
+    });
+    catP = (window.WriterCore ? Promise.resolve() : load('core.js'))
+      .then(() => load('catcore.js')).then(() => load('cattm.js')).then(() => load('catqa.js')).then(() => load('catdocx.js')).then(() => load('catxlf.js')).then(() => load('catmt.js')).then(() => load('catstore.js')).then(() => load('cat.js')).then(() => {
+        if (!window.WriterCat) throw new Error('cat');
+        return window.WriterCat;
+      });
+    catP.catch(() => { catP = null; });
+  }
+  return catP;
 }
 
 function boot() {
@@ -4883,6 +5428,104 @@ function renderMetaTags(tags) {
   });
 }
 
+/* ----- A DOCUMENT'S OWN FONTS (FM-4) -----
+   writer/fonts.js (with designkit/text.js and designkit/fonts.js)
+   loads only for a document that names fonts in the "fonts" slice,
+   or when Page settings opens. The check is a look at the stored
+   slice (or the sync mailbox, when no app of this device has taken
+   the slice yet), so a document without fonts costs nothing. */
+const WF_KEYS = ['oros-fonts-data', 'oros-remote-carry'];
+window.WriterFontsHost = {
+  t: t, activeId: () => state.activeTab,
+  onChange: () => { if (pageDlg && pageDlg.open) { const d = activeDoc(); if (d) wfFillSelects(d); } }
+};
+let wfP = null;
+function wfLoad() {
+  if (window.WriterFonts) return Promise.resolve(window.WriterFonts);
+  if (!wfP) {
+    const v = (document.querySelector('script[src*="writer.js?v="]') || {}).src || '', m = v.match(/[?&]v=([^&#]+)/);
+    const load = f => new Promise((ok, fail) => {
+      const s = document.createElement('script');
+      s.src = f + (m ? '?v=' + m[1] : '');
+      s.onload = ok; s.onerror = () => { s.remove(); fail(new Error(f)); };
+      document.head.appendChild(s);
+    });
+    const dk = window.orosDK || {};
+    wfP = (dk.text ? Promise.resolve() : load('../designkit/text.js'))
+      .then(() => ((window.orosDK || {}).fonts ? null : load('../designkit/fonts.js')))
+      .then(() => load('fonts.js')).then(() => {
+        if (!window.WriterFonts) throw new Error('fonts');
+        return window.WriterFonts;
+      });
+    wfP.catch(() => { wfP = null; });
+  }
+  return wfP;
+}
+function wfHas(id) {
+  if (!id) return false;
+  const k = '"writer:' + id + '"';
+  return WF_KEYS.some(name => {
+    try { const raw = localStorage.getItem(name); return !!raw && raw.indexOf(k) >= 0; } catch (e) { return false; }
+  });
+}
+function wfAfterRender() {
+  const d = activeDoc(), id = d ? d.id : null;
+  if (window.WriterFonts) { window.WriterFonts.apply(id); return; }
+  if (wfHas(id)) wfLoad().then(W => W.apply(state.activeTab)).catch(() => {});
+}
+// The two selects of Page settings: Writer's font, each collection,
+// then the families on this device; a family the document names that
+// is in none of them stays listed.
+function wfFillSelects(doc) {
+  const sels = { body: document.getElementById('page-font-body'), head: document.getElementById('page-font-head') };
+  if (!sels.body || !sels.head) return;
+  wfLoad().then(W => W.choices(window.orosLang).then(groups => {
+    if (!document.body.contains(sels.body)) return;
+    const cur = W.get(doc.id), byId = {};
+    ['body', 'head'].forEach(role => {
+      const sel = sels[role], have = {};
+      sel.textContent = '';
+      const def = document.createElement('option');
+      def.value = ''; def.textContent = t('page.fontDefault');
+      sel.appendChild(def);
+      groups.forEach(g => {
+        const og = document.createElement('optgroup');
+        og.label = g.name;
+        g.fams.forEach(f => {
+          byId[f.id] = f;
+          const o = document.createElement('option');
+          o.value = f.id; o.textContent = f.name;
+          if (!have[f.id]) have[f.id] = o;
+          og.appendChild(o);
+        });
+        sel.appendChild(og);
+      });
+      const c = cur[role];
+      if (c && !have[c.id]) {
+        byId[c.id] = c;
+        const o = document.createElement('option');
+        o.value = c.id; o.textContent = c.name;
+        sel.insertBefore(o, def.nextSibling);
+        have[c.id] = o;
+      }
+      if (c) have[c.id].selected = true; else def.selected = true;
+      sel.onchange = () => {
+        W.set(doc.id, role, sel.value ? byId[sel.value] : null);
+      };
+    });
+  })).catch(() => {
+    ['body', 'head'].forEach(role => {
+      const sel = sels[role];
+      if (!sel) return;
+      sel.textContent = '';
+      const o = document.createElement('option');
+      o.value = ''; o.textContent = t('page.fontDefault');
+      sel.appendChild(o);
+      sel.disabled = true;
+    });
+  });
+}
+
 /* ----- PAGE SETTINGS ----- */
 const PAPER_SIZES = {
   'full-width': { w: 'auto', h: 'auto', label: 'page.sizes.full-width' },
@@ -4937,6 +5580,13 @@ function openPageSettings() {
       <label>${t('page.footer')}</label>
       <input type="text" class="w-field full" id="page-footer" placeholder="${t('page.headFootNote')}" value="${escAttr(doc.footer || '')}">
 
+      <label class="full page-font-label" for="page-font-body">${t('page.fontBody')}</label>
+      <select class="w-field full" id="page-font-body"><option value="">${t('page.fontLoading')}</option></select>
+
+      <label class="full page-font-label" for="page-font-head">${t('page.fontHead')}</label>
+      <select class="w-field full" id="page-font-head"><option value="">${t('page.fontLoading')}</option></select>
+      <p class="full page-font-hint">${t('page.fontHint')}</p>
+
       <div class="full paper-preview">
         <div class="paper-preview-inner" id="preview-paper">
           <div class="paper-margin-box" style="--pv-m:${Math.min(doc.margins.top,30)}px;"></div>
@@ -4973,6 +5623,8 @@ function openPageSettings() {
     doc.footer = e.target.value;
     markDoc(doc, 'p');
   });
+
+  wfFillSelects(doc);
 
   function updatePreview() {
     const pm = document.getElementById('preview-paper');
@@ -6668,9 +7320,10 @@ function ioBuildPdf(doc, html) {
   return ioLoadScript(IO_VENDOR_JSPDF)
     .then(() => Promise.all([
       ioPdfFonts(),
-      Promise.all(imgEls.map(im => ioPdfImage(im.getAttribute('src')).then(v => imgData.set(im, v))))
+      Promise.all(imgEls.map(im => ioPdfImage(im.getAttribute('src')).then(v => imgData.set(im, v)))),
+      (window.WriterFonts || wfHas(doc.id)) ? wfLoad().then(W => W.pdf(doc.id)).catch(() => null) : null
     ]))
-    .then(([fonts]) => {
+    .then(([fonts, , wf]) => {
       const JsPDF = window.jspdf.jsPDF;
       const pg = ioPageSizeMm(doc);
       const pdf = new JsPDF({ unit: 'mm', format: [pg.w, pg.h], compress: true });
@@ -6693,6 +7346,29 @@ function ioBuildPdf(doc, html) {
       if (fonts.mono) {
         try { pdf.addFileToVFS('NotoSansMono.ttf', fonts.mono); pdf.addFont('NotoSansMono.ttf', 'notomono', 'normal'); have.mono = true; } catch (e) { have.mono = false; }
       }
+      // The document's own fonts (FM-4): every TrueType file of a face
+      // is a font of its own ("wf0", "wf1"…); a word goes to the first
+      // file that has all its letters, else to Noto as before.
+      const wfam = { body: null, head: null };
+      let wfn = 0;
+      if (wf) ['body', 'head'].forEach(role => {
+        const src = wf[role];
+        if (!src) return;
+        if (role === 'head' && src === wf.body) { wfam.head = wfam.body; return; }
+        const reg = {};
+        Object.keys(src).forEach(st => {
+          const list = [];
+          src[st].forEach(part => {
+            const name = 'wf' + (wfn++), file = name + '.ttf';
+            try {
+              pdf.addFileToVFS(file, part.b64); pdf.addFont(file, name, 'normal'); pdf.setFont(name, 'normal');
+              list.push({ name: name, map: part.map });
+            } catch (e) { /* a file jsPDF cannot read: Noto stands in */ }
+          });
+          if (list.length) reg[st] = list;
+        });
+        if (reg.normal) wfam[role] = reg;
+      });
       pdf.setFont('noto', 'normal');
 
       const cmaps = {};
@@ -6730,9 +7406,31 @@ function ioBuildPdf(doc, html) {
 
       const styleOf = r => (r.b && r.i) ? 'bolditalic' : r.b ? 'bold' : r.i ? 'italic' : 'normal';
 
+      function wfPick(r, text) {
+        if (r.mono) return null;
+        const R = r.h ? (wfam.head || wfam.body) : wfam.body;
+        if (!R) return null;
+        const st = styleOf(r);
+        let list = R[st], synth = false;
+        if (!list && st === 'bolditalic' && R.bold) list = R.bold;
+        else if (!list && st === 'bolditalic' && R.italic) { list = R.italic; synth = true; }
+        if (!list) { list = R.normal; synth = !!r.b; }
+        for (const f of list) {
+          let ok = true;
+          for (const ch of text) {
+            const cp = ch.codePointAt(0);
+            if (cp > 32 && !f.map[cp]) { ok = false; break; }
+          }
+          if (ok) return { name: f.name, synth: synth };
+        }
+        return null;
+      }
+
       // Sets the font for one word; returns { size, synth }.
       function useFont(r, fs, text) {
         const size = (r.sup || r.sub) ? fs * 0.68 : fs;
+        const w = wfPick(r, text);
+        if (w) { pdf.setFont(w.name, 'normal'); pdf.setFontSize(size); return { size: size, synth: w.synth }; }
         let fam = 'noto', st = styleOf(r), synth = false;
         if (r.mono && have.mono && covers('notomono', 'normal', text)) { fam = 'notomono'; st = 'normal'; }
         else if (st !== 'normal' && !(have[st] && covers('noto', st, text))) { synth = !!r.b; st = 'normal'; }
@@ -6939,7 +7637,7 @@ function ioBuildPdf(doc, html) {
               const fsz = { H1: 22, H2: 17, H3: 14, H4: 12.5, H5: 11.5, H6: 11 }[ch.nodeName];
               if (y > MT + 0.01) y += fsz * PT * 0.55;
               need(fsz * PT * 1.3 + 11 * PT * 1.5 * 2);   // keep with the next lines
-              writeRuns(runsOf(ch, { b: true }), { x: ctx.x, w: ctx.w, fs: fsz, color: '#000000', align: align, lhK: 1.3, after: fsz * PT * 0.3 });
+              writeRuns(runsOf(ch, { b: true, h: true }), { x: ctx.x, w: ctx.w, fs: fsz, color: '#000000', align: align, lhK: 1.3, after: fsz * PT * 0.3 });
               break;
             }
             case 'BLOCKQUOTE': {
@@ -7147,7 +7845,7 @@ function ioApplyImport(parsed, mode) {
     renderEditor();
     scheduleSave();
     showToast(t('io.imported'));
-    return;
+    return doc;
   }
 
   flushSave();
@@ -8021,7 +8719,10 @@ function openReviewMenu(anchor) {
     { label: t('rv.track'), checked: !!(doc && doc.track), disabled: !doc, action: tcToggle },
     { label: t('rv.changes'), disabled: !doc, action: () => tcTogglePanel(true) },
     null,
-    { label: t('rv.merge'), disabled: !doc, action: openMailMerge }
+    { label: t('rv.merge'), disabled: !doc, action: openMailMerge },
+    null,
+    { label: t('cat.translate'), disabled: !doc, action: () => { const id = doc && doc.id; catLoad().then(c => c.newProject(id), catFailed); } },
+    { label: t('cat.list'), action: () => catLoad().then(c => c.openManager(), catFailed) }
   ]);
 }
 

@@ -26,6 +26,12 @@ test("every profile id is a real app, no duplicates, sensible size", () => {
   }
 });
 
+test("every app is in BASE or in at least one profile (APP-LISTS L1)", () => {
+  const listed = new Set([...P.BASE, ...Object.values(P.PROFILES).flat()]);
+  const missing = IDS.filter((id) => !listed.has(id));
+  assert.deepEqual(missing, [], "add these apps to a profile in profiles.js: " + missing.join(", "));
+});
+
 test("pick: no profile = everything, in app order; profiles unite", () => {
   assert.deepEqual(P.pick([], IDS), IDS);
   assert.deepEqual(P.pick(null, IDS), IDS);

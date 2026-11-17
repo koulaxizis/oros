@@ -1,4 +1,6 @@
-# Invoices
+# Billing
+Billing keeps your quotes and your invoices in one app. The `Quotes` tab holds the quotes you used to write in Quote (they are all here, nothing moved); the other tabs are your invoices, received invoices, clients and dashboard. Billing opens on the tab you used last.
+
 Invoices makes invoices, receipts, proformas and credit notes with VAT and automatic numbering, as PDF. It tracks who has paid and who still owes, shows your revenue, and keeps your clients. Invoices you issue elsewhere (for example in myDATA) can be recorded here too, so all payments are in one place.
 
 >! orOS does not send anything to ΑΑΔΕ / myDATA. Greek business-to-business invoices that must be issued electronically are issued in myDATA or with your provider; record them here with `New` › `Record an invoice issued elsewhere`. Your accountant has the final word on what you must issue.
@@ -46,6 +48,8 @@ The `Received` tab keeps the invoices your suppliers send you, so you see what y
 ## PDF, sending and sharing
 `PDF` saves the document as a PDF with your logo and details; `Share PDF` hands it to another app where your device allows it. `Email` opens a new message in [Mail](app:mail) (or your email app) with the subject and text filled in. In Mail the PDF is already attached (a recorded invoice brings its official PDF) and a copy stays on the orOS disk under Invoices; in another email app, attach the PDF you saved. `Mark as sent` notes the date you sent it.
 
+`Send the lines to an app…` on an invoice, and the same button under a quote in `Quotes`, sends the lines as a table (description, quantity, unit price, discount, VAT and amount, then net, VAT and total) to another orOS app, such as [Spreadsheet](app:spreadsheet), [Writer](app:writer) or [Mail](app:mail). The other app only opens with it filled in; the document doesn't change.
+
 ### Pay online
 Put your own payment link in `Settings` › `Pay online link`: a Stripe Payment Link (https://buy.stripe.com/…, made in your Stripe dashboard) or any other https payment page. Every invoice or proforma that still has something to pay then shows `Pay online` on its PDF, as a link and a QR code, and the email gets a line with the link. With a Stripe link, the invoice number goes along as the payment's reference and the client's email is filled in on the payment page. orOS never asks for a payment key and never sees the payment: when the money arrives, record it with `Mark as paid` or `Add payment` as usual. Each business profile can have its own link.
 
@@ -68,6 +72,8 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 ## Dashboard
 `Dashboard` shows, for a `Period`, how much you `Invoiced` and `Collected`, what is `Outstanding` and `Overdue`, a bar per month, your top clients and the VAT per rate. Choose the `Currency` when you invoice in more than one. `Export documents (CSV)` and `Export payments (CSV)` save them for a spreadsheet or your accountant. Inside orOS, `Open in Spreadsheet` opens the documents of the period straight in a new sheet in [Spreadsheet](app:spreadsheet), with net, VAT and total as numbers and their totals at the bottom when the period has a single currency.
 
+The `Quotes` part of the Dashboard follows your quotes of the same period and currency to the money: how many you sent and how many were accepted, invoiced and paid, month by month, the share accepted, what is accepted but not yet invoiced, and what their invoices still owe. It is worked out each time you look; nothing is stored. A quote counts as invoiced once an invoice made from it with `Make invoice` is issued.
+
 ### The month for your accountant
 `Pack for the accountant…` on the Dashboard makes one ZIP for a month (last month is picked): `summary.txt` with the month's totals, the documents' and payments' CSV, a PDF of every document issued here and, from the other apps on this device, [Budget](app:budget) entries with their receipt files, [Stock](app:stock) purchases and sales, and the month's orders of your WooCommerce shop (read when you make the pack; Settings › [Connected services](app:settings)). Untick what you don't want. The ZIP is saved in [Files](app:files) under Invoices/Accountant; then `E-mail to the accountant` opens [Mail](app:mail) with a message to the address you typed (kept on this device), the summary as text and the ZIP attached. Nothing is sent until you send it from Mail. A pack over 7 MB is too big for one e-mail: share it from Files instead.
 
@@ -79,7 +85,7 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 ## Budget, Quote, Timesheet and CRM
 - Every payment you record goes to [Budget](app:budget) by itself as freelance income (with its partner and the invoice number): the payment shows `In Budget (automatic)`. It appears the next time Budget opens on a device where you also use Invoices. Change the amount or date here and Budget follows; delete the payment and its income goes too. What you change or delete in Budget stays as you left it. Turn it off in `Settings` › `Payments go to Budget by themselves`; payments recorded before stay as they were.
 - With that setting off (and for older payments), next to each payment, `Add to Budget` opens [Budget](app:budget) with the payment filled in as freelance income; check it and save it there. It shows when the payment is in Budget's currency, and remembers that you sent it.
-- `Make invoice` on an accepted [Quote](app:quote), and `Create invoice` in a [Timesheet](app:timesheet) report, open a new invoice here with the client and the lines filled in.
+- `Make invoice` on an accepted quote in the `Quotes` tab, and `Create invoice` in a [Timesheet](app:timesheet) report, open a new invoice here with the client and the lines filled in.
 - On `Clients`, `From CRM` brings in customers from [CRM](app:crm); each one stays linked, so CRM can show its invoices.
 - On an issued invoice or receipt whose lines have a product code, `Take out of stock` opens a sale in [Stock](app:stock) with those products and prices; a credit note offers `Back into stock` for a customer return. Nothing changes in Stock until you save there. The button shows only once you use Stock.
 
@@ -89,6 +95,74 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 - When the client is a business (it has a VAT number) in another EU country, the editor offers the reverse charge: `Services, 0 % VAT` or `Goods, 0 % VAT` set every line to 0 % VAT and add the standard note to the VAT exemption. Check it with your accountant; nothing is applied unless you tap it.
 - A PDF in euros shows a payment QR code (EPC / SEPA, the one banking apps scan) with your first IBAN, the amount still owed and the document number. Turn it off in `Settings` (Defaults).
 - More than one business? In `Settings`, `Add a business profile` keeps another set of details, logo, bank lines, terms and footer. Pick the business on each document (`Business`, shown once there are two). Link a numbering series to a profile (`Profile`, next to each series) so each business keeps its own numbers. Templates and copies keep their business.
+
+## Quotes
+Everything in this section was the Quote app. Old links and shortcuts to Quote open this tab. `Settings` (the gear) is one page for both: its `Quotes` part opens the payment terms texts and the quote templates.
+Quote helps you write price quotes for your clients: line items with discounts and VAT, payment terms, instalments, and a PDF you can send.
+
+### Getting started
+The `Create` tab is a blank quote. It gets a number like OFF-2026-001 automatically; the round arrow next to `Quote #` gives it the next free number again. Fill in `Date`, `Due`, `Status` and `Currency`, then press `Save`. Any currency works: the common ones are at the top of the list, and amounts are shown the way that currency writes them (no decimals for yen, for example).
+
+Until you press `Save`, a new quote is a draft kept only on this device. If you close the app, it's restored next time. After the first save, every change is saved as you type.
+
+A quote can also start in another app: `Create quote` in a [Timesheet](app:timesheet) report fills in a new quote for you. Check it and press `Save`.
+
+### Clients
+Tap or click `Select client` to pick a client, or the **+** next to it to add one. `Client Details` holds `Name`, `Email`, `Phone`, `Address` and `Tax ID / VAT`. The pencil edits the chosen client; `Delete` in that window removes the client after you confirm. Quotes and invoices keep their own client lists: the list also shows, under `From Billing's clients`, the invoice clients your quotes don't have yet, and choosing one opens `Client Details` filled in (it is added only when you save). The invoice editor's `Client` list does the same with the quotes' clients.
+
+### Line items and totals
+Press **+** next to `Line Items` to add a row with `Code/SKU`, `Description`, `Qty`, `Unit Price`, `Disc %` and `VAT %`. You can type amounts with a comma or a dot.
+
+Below the items you see `Subtotal`, `VAT` and `Total`. `Discount (%)` takes a discount off the whole quote. Changing `VAT (%)` there sets the same rate on every line, and new lines take it too.
+
+`Show the total in` adds the total in another currency, at the day's European Central Bank rate (the same rates as the Calculator's [Convert](app:units) mode). It's only a guide for you: the quote, the PDF and the email stay in the quote's own currency. The choice stays on this device.
+
+### Instalments
+Under `Instalments`, set a `Count` and press `Generate` to split the total evenly. You can then change each date and `Amount`; a line underneath tells you whether the sum matches the total.
+
+### Payment terms, notes and templates
+Tap or click a payment preset (`Bank Transfer`, `PayPal`, `IRIS`, `Cash`) to add its text to `Payment Terms`. The pencil lets you change the preset texts, for example to add your IBAN. Use `Notes` for any other terms.
+
+`Save as Template` stores the items, discount, payment terms, notes and instalments under a name. The `Template Library` button opens your templates, where `Use` starts from one. `Duplicate` makes a copy with a new number and the status `Draft`. On a quote marked `Accepted`, `Make invoice` opens a new invoice right here, in the `Invoices` tab, with the same client and items; check it and issue it. Nothing is saved until you press `Save draft` or `Issue`.
+
+### Your quotes, PDF and email
+The `Quotes` tab lists all your quotes. Search by number, client, item, notes or payment terms, and use the funnel to filter by status. Tap or click a quote to open it.
+
+While a quote is open, the buttons at the top let you:
+- `Export PDF`: save the quote as an A4 PDF. Your business details from `Settings` › `Your business` are printed at its top right.
+- `Send via email`: when you have an account in [Mail](app:mail), a new message opens there with the client's address, the quote number, due date and total filled in, and the PDF already attached. Without a Mail account, your own email program opens instead, and you attach the PDF yourself.
+
+### Acceptance by link
+Your client can accept a quote online, without an account and without anything stored on a server.
+
+1. Save the quote and press `Send for acceptance`. Add your name or business and, if you like, your email for the answer, then `Make the link`.
+2. Send the link: `Copy link`, `Share…`, or `Email with PDF` (the message includes both the PDF and the link).
+3. Your client opens the link in any browser, sees the quote, types their name and presses `Accept`. They get an answer link to send back to you.
+4. Open the answer link, or press `Record acceptance` and paste it. orOS checks it against the quote you sent and offers `Mark as accepted`, then `Make invoice`.
+
+The whole quote travels inside the link (after the `#`, which browsers never send to a server). Each link carries a random code and a fingerprint (SHA-256) of the quote; the answer must carry both back. So an answer counts only for the exact version you sent: if someone changed the link's contents, or you changed the quote and made a new link, orOS tells you and doesn't count it.
+
+### Sync and backup
+Quotes, clients, templates and payment presets sync between your devices through [orOS sync](help:t/sync). An unsaved draft and the quote you had open stay on this device. The orOS [backup](help:t/backup) keeps a copy of everything.
+
+### Save and open an orOS file
+In the `Quotes` tab, the folder button opens `Save and open`. `orOS file (.orosquote)` saves every quote (with its lines and instalments), client and template as one `.orosquote` file, for example to move them to another device without sync or to give a colleague your quotes. The file is a plain ZIP: unzipped it holds the data as `content.json` plus `preview/quotes.md` (every quote and template as text, with totals). The payment presets and the acceptance-link codes stay on this device and are not in the file. It is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A quote already here is kept as it is, and one you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let quotes that were changed later in the file replace your copy. `Undo` in the message removes what was added.
+
+`Open as copy…` adds the file's quotes and templates as new ones, even ones you already have: each quote gets a new number and starts as a `Draft`. Use it when a file is a set of quotes to start from. Clients come in as usual (only the ones you don't have). `Undo` removes the copies.
+
+### Keyboard shortcuts
+- [[Alt+N]] starts a new quote (when you're not typing in a field).
+
+### Tips
+- orOS reminds you when a quote marked `Sent` or `Accepted` is due within two days or overdue; tapping the reminder opens the quote. See [Notifications](help:t/notifications).
+- Keep the status up to date: change it to `Rejected` or `Expired` and the reminders stop.
+
+### Limits
+- The total in another currency is for information only and needs a connection to get the day's rates (the last ones stay for offline use).
+- The PDF is attached automatically only in [Mail](app:mail); with another email program, attach it by hand. Very large quotes may also be too long for an acceptance link: send the PDF instead.
+- Acceptance by link is not a signature: it proves that the answer matches the quote you sent, not who typed the name. Anyone who has the link can see the quote. For a binding agreement, ask for a signed copy.
 
 ## Settings
 The gear button opens `Settings`: your business details and logo, the defaults for new documents (currency, VAT %, payment days, withholding, PDF language, payment terms, footer), the numbering series, and your templates.

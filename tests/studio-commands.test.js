@@ -308,3 +308,20 @@ test("search: Studio's projects are found by name and track names, and open as a
   assert.match(read("studio/studio.js"), /if \(typeof tg\.project === "string"\)/);
   assert.ok(read("sw.js").includes('"studio/search.js"'));
 });
+
+test("audiobook parts: named with their book, the outline carries the book (Studio wave A4)", () => {
+  const P = (id, kind, name, fx) => ({ id, m: 5, name, bpm: 120, sig: 4, vol: 0, loop: { on: false, a: 0, b: 0 }, fx: fx || [], bk: "bbooktest01", kind });
+  const dat = S.mergeStudio(S.emptyData(), { ver: 1, projects: [P("popentest01", "open", "Opening"), P("pchaptest01", "chapter", "Κεφάλαιο 1",
+      [{ u: "fnormgabcdef", id: "channel_utility", on: true, s: { 2: 3 } }]), P("pclosetest1", "close", "Closing"),
+      { id: "psongtest01", m: 5, name: "Song", bpm: 120, sig: 4, vol: 0, loop: { on: false, a: 0, b: 0 }, fx: [] }],
+    tracks: [], sources: [], clips: [], tombs: {},
+    books: [{ id: "bbooktest01", m: 5, name: "My book", ch: ["pchaptest01"], open: "popentest01", close: "pclosetest1", spec: "acx", pub: { t: "tbook1" } }] });
+  const v = CMD.view(dat);
+  assert.deepEqual(v.docs.map((d) => d.name).sort(), ["My book · Closing", "My book · Opening", "My book · Κεφάλαιο 1", "Song"]);
+  const t = CMD.targets(v, null, "", "named", "My book · Κεφάλαιο 1");
+  assert.equal(t.ok, true); assert.equal(t.docs[0].id, "pchaptest01");
+  const o = CMD.outline(v.docs.find((d) => d.id === "pchaptest01"));
+  assert.deepEqual(o.book, { name: "My book", part: "chapter", n: 2, of: 3, chapters: 1, spec: "acx", parts: ["Opening", "Κεφάλαιο 1", "Closing"], roomTone: false, publishingTitle: "tbook1", normalised: true });
+  assert.equal(CMD.outline(v.docs.find((d) => d.id === "psongtest01")).book, undefined);
+  assert.match(CMD.GUIDE, /audiobook/);
+});

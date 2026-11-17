@@ -64,6 +64,13 @@
    ]
   },
   {
+   "app": "base",
+   "files": [
+    "base/app.js",
+    "base/today.js"
+   ]
+  },
+  {
    "app": "battleship",
    "files": [
     "battleship/battleship.js"
@@ -119,6 +126,7 @@
    "files": [
     "calendar/calendar.js",
     "calendar/package.js",
+    "calendar/rsvp.js",
     "calendar/search.js",
     "calendar/today.js"
    ]
@@ -241,6 +249,7 @@
     "designkit/fx.js",
     "designkit/media.js",
     "designkit/model.js",
+    "designkit/pathedit.js",
     "designkit/show.js",
     "designkit/templates.js"
    ]
@@ -248,7 +257,7 @@
   {
    "app": "device",
    "files": [
-    "device/device.js"
+    "device/view.js"
    ]
   },
   {
@@ -312,11 +321,15 @@
    "app": "files",
    "files": [
     "files/computer.js",
+    "files/docs-due.js",
+    "files/docs-links.js",
+    "files/docs.js",
     "files/drive.js",
     "files/dropbox-callback.js",
     "files/dropbox.js",
     "files/files.js",
-    "files/gmedia.js"
+    "files/gmedia.js",
+    "files/photos.js"
    ]
   },
   {
@@ -340,6 +353,18 @@
    "app": "flow",
    "files": [
     "flow/flow.js"
+   ]
+  },
+  {
+   "app": "forms",
+   "files": [
+    "forms/app.js",
+    "forms/f/fill.js",
+    "forms/host.js",
+    "forms/pub.js",
+    "forms/render.js",
+    "forms/search.js",
+    "forms/today.js"
    ]
   },
   {
@@ -445,6 +470,7 @@
    "files": [
     "kanban/kanban.js",
     "kanban/search.js",
+    "kanban/today.js",
     "kanban/tools.js"
    ]
   },
@@ -679,7 +705,8 @@
   {
    "app": "pad",
    "files": [
-    "pad/app.js"
+    "pad/app.js",
+    "pad/devui.js"
    ]
   },
   {
@@ -781,8 +808,8 @@
    "files": [
     "quote/accept.js",
     "quote/package.js",
-    "quote/quote.js",
-    "quote/search.js"
+    "quote/search.js",
+    "quote/view.js"
    ]
   },
   {
@@ -845,7 +872,10 @@
   {
    "app": "scanpdf",
    "files": [
-    "scanpdf/scanpdf.js"
+    "scanpdf/scanpdf.js",
+    "scanpdf/search.js",
+    "scanpdf/sign.js",
+    "scanpdf/today.js"
    ]
   },
   {
@@ -859,6 +889,7 @@
    "app": "settings",
    "files": [
     "settings/core.js",
+    "settings/fonts.js",
     "settings/search.js"
    ]
   },
@@ -891,7 +922,7 @@
     "signature/core.js",
     "signature/package.js",
     "signature/search.js",
-    "signature/signature.js"
+    "signature/view.js"
    ]
   },
   {
@@ -904,8 +935,8 @@
    "app": "sky",
    "files": [
     "sky/core.js",
-    "sky/sky.js",
-    "sky/stars.js"
+    "sky/stars.js",
+    "sky/view.js"
    ]
   },
   {
@@ -1013,12 +1044,6 @@
    ]
   },
   {
-   "app": "textcase",
-   "files": [
-    "textcase/textcase.js"
-   ]
-  },
-  {
    "app": "texttools",
    "files": [
     "texttools/texttools.js"
@@ -1080,6 +1105,13 @@
    ]
   },
   {
+   "app": "transfer",
+   "files": [
+    "transfer/app.js",
+    "transfer/today.js"
+   ]
+  },
+  {
    "app": "travel",
    "files": [
     "travel/booking.js",
@@ -1087,12 +1119,6 @@
     "travel/search.js",
     "travel/today.js",
     "travel/travel.js"
-   ]
-  },
-  {
-   "app": "trees",
-   "files": [
-    "trees/trees.js"
    ]
   },
   {
@@ -1113,7 +1139,7 @@
    "app": "units",
    "files": [
     "units/core.js",
-    "units/units.js"
+    "units/view.js"
    ]
   },
   {
@@ -1153,7 +1179,7 @@
   {
    "app": "wheel",
    "files": [
-    "wheel/wheel.js"
+    "wheel/view.js"
    ]
   },
   {

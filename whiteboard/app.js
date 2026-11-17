@@ -46,7 +46,7 @@
       "tool.frame": "Frame (F)",
       "btn.undo": "Undo (Ctrl+Z)", "btn.redo": "Redo (Ctrl+Y)", "btn.pic": "Add a picture", "btn.export": "Export",
       "btn.zoomIn": "Zoom in", "btn.zoomOut": "Zoom out", "btn.zoom100": "Zoom to 100%", "btn.fit": "Show everything",
-      "ctx.color": "Colour", "ctx.shape": "Shape", "ctx.fill": "Fill", "ctx.head": "Arrow heads", "ctx.dash": "Dashed line",
+      "ctx.color": "Colour", "ctx.shape": "Shape", "ctx.fill": "Fill", "ctx.dash": "Dashed line",
       "ctx.smaller": "Smaller text", "ctx.bigger": "Bigger text", "ctx.width": "Line width", "ctx.edit": "Edit text",
       "ctx.front": "Bring to front", "ctx.back": "Send to back", "ctx.dup": "Duplicate (Ctrl+D)", "ctx.del": "Delete",
       "ctx.exportFrame": "Export this frame",
@@ -54,7 +54,10 @@
       "c.blue": "Blue", "c.teal": "Teal", "c.green": "Green", "c.gray": "Grey", "c.ink": "Black",
       "shp.rect": "Rectangle", "shp.round": "Rounded rectangle", "shp.ellipse": "Ellipse", "shp.diamond": "Diamond",
       "shp.tri": "Triangle", "f.none": "No fill", "f.soft": "Light fill", "f.solid": "Full colour",
-      "hd.end": "One head", "hd.both": "Two heads", "hd.none": "No head",
+      "ctx.route": "Line shape", "rt.line": "Straight", "rt.elbow": "Right angles, around shapes", "rt.curve": "Curved",
+      "ctx.headA": "Start of the arrow", "ctx.headB": "End of the arrow",
+      "hs.arrow": "Arrow", "hs.open": "Open arrow", "hs.tri": "Hollow triangle (UML: inherits)", "hs.dia": "Filled diamond (UML: made of)",
+      "hs.odia": "Hollow diamond (UML: has)", "hs.dot": "Dot", "hs.none": "Nothing",
       "w.thin": "Thin", "w.mid": "Medium", "w.thick": "Thick", "w.marker": "Marker",
       "k.note": "Sticky note", "k.text": "Text", "k.shape": "Shape", "k.arrow": "Arrow", "k.pen": "Pen line",
       "k.image": "Picture", "k.frame": "Frame",
@@ -74,6 +77,7 @@
       "toast.picBudget": "The pictures on your boards have reached their limit. Remove a picture first.",
       "toast.undo": "Undo", "toast.deleted": "Deleted", "toast.nothingUndo": "Nothing to undo", "toast.nothingRedo": "Nothing to redo",
       "toast.limit": "This board is full (2000 items). Start a new board.",
+      "send.note1": "Added 1 sticky note.", "send.notes": "Added {n} sticky notes.",
       "as.done": "The Assistant changed {n} things on {d} boards.", "as.done1": "The Assistant changed {n} things on the board.",
       "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
       "as.undone": "The Assistant's change was undone.", "as.changed": "The board was changed since, so the Assistant's change was not undone.",
@@ -82,7 +86,26 @@
       "drop": "Drop pictures here",
       "btn.more": "More",
       "m.vote": "Dot voting…", "m.results": "Voting results…", "m.timer": "Timer…", "m.tpl": "Templates…",
-      "m.mind": "Bring in a mind map…", "m.send": "Send the notes to an app…",
+      "m.mind": "Bring in a mind map…", "m.send": "Send the notes to an app…", "m.lib": "Diagram shapes… (L)",
+      "lib.title": "Diagram shapes", "lib.search": "Search the shapes", "lib.none": "No shape has that name.",
+      "lib.how": "Tap a shape to put it in the middle of the screen.", "lib.howChange": "Tap a shape: the selected shapes become it.",
+      "lib.added": "{name} added", "ctx.lib": "More shapes (L)",
+      "m.lay": "Lay out the board…", "ctx.lay": "Lay out as a diagram", "ctx.align": "Align and space",
+      "lay.tree.v": "Tree, top to bottom", "lay.tree.h": "Tree, left to right", "lay.flow.v": "Flow, top to bottom", "lay.flow.h": "Flow, left to right",
+      "al.l": "Align left edges", "al.c": "Align centres", "al.r": "Align right edges", "al.t": "Align top edges", "al.m": "Align middles", "al.b": "Align bottom edges",
+      "sp.h": "Same space across", "sp.v": "Same space down", "lay.same": "Already in place.",
+      "m.drawio": "Open a draw.io or Visio file…", "m.mermaid": "Draw from Mermaid text…",
+      "dio.added": "{n} boards from the file.", "dio.added1": "The file is open as a new board.", "dio.simpl": "{n} shapes came in as plain shapes.",
+      "dio.skip": "{n} things were left out (pictures from the web, lines with no ends).", "dio.cut": "A page was cut at 2000 items.",
+      "dio.bad": "This is not a draw.io or Visio (.vsdx) file Whiteboard can read.", "dio.vsd": "Old Visio .vsd files cannot be opened. Save it as .vsdx in Visio first.", "dio.big": "This file is too big.",
+      "dio.old": "This browser cannot open compressed draw.io files. In draw.io, untick File › Properties › Compressed and save again.",
+      "mmd.title": "Draw from Mermaid text", "mmd.lbl": "Mermaid flowchart",
+      "mmd.hint": "Paste a flowchart, for example:\ngraph TD\n  A[Start] --> B{Paid?}\n  B -->|yes| C[Ship]\n  B -->|no| D[Remind]",
+      "mmd.draw": "Draw", "mmd.bad": "Only Mermaid flowcharts can be drawn: the text starts with graph TD or flowchart LR.",
+      "mmd.added": "{n} boxes drawn", "mmd.cut": "Cut at 500 boxes.",
+      "lib.classTx": "Name\n--\n+ attribute: Type\n--\n+ method()", "lib.ifaceTx": "Name\n--\n+ method()",
+      "lib.g.flow": "Flowchart", "lib.g.org": "Org chart", "lib.g.uml": "UML", "lib.g.basic": "Basic shapes", "lib.g.net": "Network and IT",
+      "sym.process": "Process step", "sym.decision": "Decision", "sym.terminator": "Start or end", "sym.data": "Data (input or output)", "sym.document": "Document", "sym.documents": "Several documents", "sym.predefined": "Predefined process", "sym.manual-input": "Manual input", "sym.manual-op": "Manual operation", "sym.preparation": "Preparation", "sym.database": "Database", "sym.delay": "Delay", "sym.off-page": "Link to another page", "sym.connector": "Connector", "sym.merge": "Merge", "sym.person": "Person card", "sym.unit": "Team or department", "sym.class": "UML class", "sym.interface": "UML interface", "sym.actor": "Actor", "sym.usecase": "Use case", "sym.package": "Package", "sym.component": "Component", "sym.comment": "Comment", "sym.node": "Node (device)", "sym.start": "Start point", "sym.end": "End point", "sym.hexagon": "Hexagon", "sym.octagon": "Octagon", "sym.star": "Star", "sym.cross": "Cross", "sym.arrow-right": "Block arrow", "sym.arrow-both": "Double block arrow", "sym.cloud": "Cloud", "sym.callout": "Speech bubble", "sym.server": "Server", "sym.router": "Router", "sym.switch": "Network switch", "sym.firewall": "Firewall", "sym.internet": "Internet", "sym.laptop": "Laptop", "sym.desktop": "Desktop computer", "sym.phone": "Phone", "sym.tablet": "Tablet", "sym.db-server": "Database server", "sym.storage": "Storage", "sym.user": "User", "sym.printer": "Printer", "sym.wifi": "Wi-Fi access point",
       "ctx.send": "Send to an app…", "ctx.atelier": "Open in Atelier",
       "vote.title": "Dot voting", "vote.per": "Dots for each person",
       "vote.how": "Tap a note, shape, text or picture to put one of your dots on it; tap your dot again to take it back. When you are done, hand over the device and tap Next person: they get dots of another colour.",
@@ -122,7 +145,7 @@
       "tool.frame": "Πλαίσιο (F)",
       "btn.undo": "Αναίρεση (Ctrl+Z)", "btn.redo": "Επανάληψη (Ctrl+Y)", "btn.pic": "Προσθήκη εικόνας", "btn.export": "Εξαγωγή",
       "btn.zoomIn": "Μεγέθυνση", "btn.zoomOut": "Σμίκρυνση", "btn.zoom100": "Ζουμ στο 100%", "btn.fit": "Δείξε τα όλα",
-      "ctx.color": "Χρώμα", "ctx.shape": "Σχήμα", "ctx.fill": "Γέμισμα", "ctx.head": "Αιχμές βέλους", "ctx.dash": "Διακεκομμένη γραμμή",
+      "ctx.color": "Χρώμα", "ctx.shape": "Σχήμα", "ctx.fill": "Γέμισμα", "ctx.dash": "Διακεκομμένη γραμμή",
       "ctx.smaller": "Μικρότερο κείμενο", "ctx.bigger": "Μεγαλύτερο κείμενο", "ctx.width": "Πάχος γραμμής", "ctx.edit": "Επεξεργασία κειμένου",
       "ctx.front": "Μπροστά απ' όλα", "ctx.back": "Πίσω απ' όλα", "ctx.dup": "Διπλότυπο (Ctrl+D)", "ctx.del": "Διαγραφή",
       "ctx.exportFrame": "Εξαγωγή αυτού του πλαισίου",
@@ -130,7 +153,10 @@
       "c.blue": "Μπλε", "c.teal": "Γαλαζοπράσινο", "c.green": "Πράσινο", "c.gray": "Γκρι", "c.ink": "Μαύρο",
       "shp.rect": "Ορθογώνιο", "shp.round": "Στρογγυλεμένο ορθογώνιο", "shp.ellipse": "Έλλειψη", "shp.diamond": "Ρόμβος",
       "shp.tri": "Τρίγωνο", "f.none": "Χωρίς γέμισμα", "f.soft": "Απαλό γέμισμα", "f.solid": "Γεμάτο χρώμα",
-      "hd.end": "Μία αιχμή", "hd.both": "Δύο αιχμές", "hd.none": "Χωρίς αιχμή",
+      "ctx.route": "Μορφή γραμμής", "rt.line": "Ευθεία", "rt.elbow": "Σε ορθές γωνίες, γύρω από τα σχήματα", "rt.curve": "Καμπύλη",
+      "ctx.headA": "Αρχή του βέλους", "ctx.headB": "Τέλος του βέλους",
+      "hs.arrow": "Βέλος", "hs.open": "Ανοιχτό βέλος", "hs.tri": "Κενό τρίγωνο (UML: κληρονομεί)", "hs.dia": "Γεμάτος ρόμβος (UML: αποτελείται από)",
+      "hs.odia": "Κενός ρόμβος (UML: έχει)", "hs.dot": "Τελεία", "hs.none": "Τίποτα",
       "w.thin": "Λεπτό", "w.mid": "Μεσαίο", "w.thick": "Χοντρό", "w.marker": "Μαρκαδόρος",
       "k.note": "Αυτοκόλλητο", "k.text": "Κείμενο", "k.shape": "Σχήμα", "k.arrow": "Βέλος", "k.pen": "Γραμμή μολυβιού",
       "k.image": "Εικόνα", "k.frame": "Πλαίσιο",
@@ -150,6 +176,7 @@
       "toast.picBudget": "Οι εικόνες στους πίνακές σου έφτασαν το όριο. Αφαίρεσε πρώτα μια εικόνα.",
       "toast.undo": "Αναίρεση", "toast.deleted": "Διαγράφηκε", "toast.nothingUndo": "Δεν υπάρχει κάτι για αναίρεση", "toast.nothingRedo": "Δεν υπάρχει κάτι για επανάληψη",
       "toast.limit": "Ο πίνακας γέμισε (2000 στοιχεία). Ξεκίνα νέο πίνακα.",
+      "send.note1": "Προστέθηκε 1 αυτοκόλλητο.", "send.notes": "Προστέθηκαν {n} αυτοκόλλητα.",
       "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} πίνακες.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στον πίνακα.",
       "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
       "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Ο πίνακας άλλαξε στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
@@ -158,7 +185,26 @@
       "drop": "Άφησε εδώ τις εικόνες",
       "btn.more": "Περισσότερα",
       "m.vote": "Ψηφοφορία με κουκκίδες…", "m.results": "Αποτελέσματα ψηφοφορίας…", "m.timer": "Χρονόμετρο…", "m.tpl": "Πρότυπα…",
-      "m.mind": "Εισαγωγή νοητικού χάρτη…", "m.send": "Αποστολή των σημειώσεων σε εφαρμογή…",
+      "m.mind": "Εισαγωγή νοητικού χάρτη…", "m.send": "Αποστολή των σημειώσεων σε εφαρμογή…", "m.lib": "Σχήματα διαγραμμάτων… (L)",
+      "lib.title": "Σχήματα διαγραμμάτων", "lib.search": "Αναζήτηση σχημάτων", "lib.none": "Κανένα σχήμα δεν έχει αυτό το όνομα.",
+      "lib.how": "Άγγιξε ένα σχήμα για να μπει στη μέση της οθόνης.", "lib.howChange": "Άγγιξε ένα σχήμα: τα επιλεγμένα σχήματα γίνονται αυτό.",
+      "lib.added": "Προστέθηκε: {name}", "ctx.lib": "Περισσότερα σχήματα (L)",
+      "m.lay": "Τακτοποίηση πίνακα…", "ctx.lay": "Τακτοποίηση ως διάγραμμα", "ctx.align": "Στοίχιση και ίσες αποστάσεις",
+      "lay.tree.v": "Δέντρο, από πάνω προς τα κάτω", "lay.tree.h": "Δέντρο, από αριστερά προς τα δεξιά", "lay.flow.v": "Ροή, από πάνω προς τα κάτω", "lay.flow.h": "Ροή, από αριστερά προς τα δεξιά",
+      "al.l": "Στοίχιση αριστερών άκρων", "al.c": "Στοίχιση κέντρων", "al.r": "Στοίχιση δεξιών άκρων", "al.t": "Στοίχιση πάνω άκρων", "al.m": "Στοίχιση στη μέση", "al.b": "Στοίχιση κάτω άκρων",
+      "sp.h": "Ίση απόσταση οριζόντια", "sp.v": "Ίση απόσταση κάθετα", "lay.same": "Είναι ήδη στη θέση τους.",
+      "m.drawio": "Άνοιγμα αρχείου draw.io ή Visio…", "m.mermaid": "Σχεδίαση από κείμενο Mermaid…",
+      "dio.added": "{n} πίνακες από το αρχείο.", "dio.added1": "Το αρχείο άνοιξε ως νέος πίνακας.", "dio.simpl": "{n} σχήματα μπήκαν ως απλά σχήματα.",
+      "dio.skip": "{n} στοιχεία έμειναν έξω (εικόνες από το διαδίκτυο, γραμμές χωρίς άκρες).", "dio.cut": "Μια σελίδα κόπηκε στα 2000 στοιχεία.",
+      "dio.bad": "Αυτό δεν είναι αρχείο draw.io ή Visio (.vsdx) που μπορεί να διαβάσει ο Πίνακας ιδεών.", "dio.vsd": "Τα παλιά αρχεία Visio .vsd δεν ανοίγουν. Αποθήκευσέ το πρώτα ως .vsdx στο Visio.", "dio.big": "Το αρχείο είναι πολύ μεγάλο.",
+      "dio.old": "Αυτός ο περιηγητής δεν ανοίγει συμπιεσμένα αρχεία draw.io. Στο draw.io, βγάλε το τικ από Αρχείο › Ιδιότητες › Συμπιεσμένο και αποθήκευσε ξανά.",
+      "mmd.title": "Σχεδίαση από κείμενο Mermaid", "mmd.lbl": "Διάγραμμα ροής Mermaid",
+      "mmd.hint": "Επικόλλησε ένα διάγραμμα ροής, για παράδειγμα:\ngraph TD\n  A[Αρχή] --> B{Πληρώθηκε;}\n  B -->|ναι| C[Αποστολή]\n  B -->|όχι| D[Υπενθύμιση]",
+      "mmd.draw": "Σχεδίαση", "mmd.bad": "Σχεδιάζονται μόνο διαγράμματα ροής Mermaid: το κείμενο αρχίζει με graph TD ή flowchart LR.",
+      "mmd.added": "Σχεδιάστηκαν {n} κουτιά", "mmd.cut": "Κόπηκε στα 500 κουτιά.",
+      "lib.classTx": "Όνομα\n--\n+ ιδιότητα: Τύπος\n--\n+ μέθοδος()", "lib.ifaceTx": "Όνομα\n--\n+ μέθοδος()",
+      "lib.g.flow": "Διάγραμμα ροής", "lib.g.org": "Οργανόγραμμα", "lib.g.uml": "UML", "lib.g.basic": "Βασικά σχήματα", "lib.g.net": "Δίκτυα και υποδομές",
+      "sym.process": "Βήμα διαδικασίας", "sym.decision": "Απόφαση", "sym.terminator": "Αρχή ή τέλος", "sym.data": "Δεδομένα (είσοδος ή έξοδος)", "sym.document": "Έγγραφο", "sym.documents": "Πολλά έγγραφα", "sym.predefined": "Προκαθορισμένη διαδικασία", "sym.manual-input": "Χειροκίνητη εισαγωγή", "sym.manual-op": "Χειροκίνητη ενέργεια", "sym.preparation": "Προετοιμασία", "sym.database": "Βάση δεδομένων", "sym.delay": "Καθυστέρηση", "sym.off-page": "Σύνδεση με άλλη σελίδα", "sym.connector": "Σημείο σύνδεσης", "sym.merge": "Συγχώνευση", "sym.person": "Κάρτα προσώπου", "sym.unit": "Ομάδα ή τμήμα", "sym.class": "Κλάση UML", "sym.interface": "Διεπαφή UML", "sym.actor": "Χειριστής", "sym.usecase": "Περίπτωση χρήσης", "sym.package": "Πακέτο", "sym.component": "Στοιχείο λογισμικού", "sym.comment": "Σχόλιο", "sym.node": "Κόμβος (συσκευή)", "sym.start": "Σημείο έναρξης", "sym.end": "Σημείο τέλους", "sym.hexagon": "Εξάγωνο", "sym.octagon": "Οκτάγωνο", "sym.star": "Αστέρι", "sym.cross": "Σταυρός", "sym.arrow-right": "Βέλος-μπλοκ", "sym.arrow-both": "Διπλό βέλος-μπλοκ", "sym.cloud": "Σύννεφο", "sym.callout": "Συννεφάκι λόγου", "sym.server": "Διακομιστής", "sym.router": "Δρομολογητής", "sym.switch": "Μεταγωγέας δικτύου", "sym.firewall": "Τείχος προστασίας", "sym.internet": "Διαδίκτυο", "sym.laptop": "Φορητός υπολογιστής", "sym.desktop": "Επιτραπέζιος υπολογιστής", "sym.phone": "Κινητό", "sym.tablet": "Tablet", "sym.db-server": "Διακομιστής βάσης δεδομένων", "sym.storage": "Αποθηκευτικός χώρος", "sym.user": "Χρήστης", "sym.printer": "Εκτυπωτής", "sym.wifi": "Σημείο πρόσβασης Wi-Fi",
       "ctx.send": "Αποστολή σε εφαρμογή…", "ctx.atelier": "Άνοιγμα στο Atelier",
       "vote.title": "Ψηφοφορία με κουκκίδες", "vote.per": "Κουκκίδες για κάθε άτομο",
       "vote.how": "Πάτησε ένα αυτοκόλλητο, σχήμα, κείμενο ή εικόνα για να βάλεις μια κουκκίδα σου· πάτησε ξανά την κουκκίδα σου για να την πάρεις πίσω. Όταν τελειώσεις, δώσε τη συσκευή στον επόμενο και πάτησε Επόμενο άτομο: παίρνει κουκκίδες άλλου χρώματος.",
@@ -205,7 +251,7 @@
 
   // ---------- 2. Data: local first, then sync ----------
   var data = C.empty();
-  var prefs = { board: "", views: {}, tool: "select", note: "yellow", shape: "rect", line: "ink", pen: "ink", sw: 3, bg: "paper", fmt: "png",
+  var prefs = { board: "", views: {}, tool: "select", note: "yellow", shape: "rect", line: "ink", route: "line", pen: "ink", sw: 3, bg: "paper", fmt: "png",
     votes: 5, timer: { end: 0, left: 0, dur: 0 } };
 
   function syncApi() {
@@ -223,6 +269,7 @@
       });
     } catch (e) { /* defaults */ }
     if (["select", "hand", "pen"].indexOf(prefs.tool) < 0) prefs.tool = "select";
+    if (C.ROUTES.indexOf(prefs.route) < 0) prefs.route = "line";
     prefs.votes = Math.max(1, Math.min(K.MAX_VOTES, Math.round(+prefs.votes) || 5));
     var tm = prefs.timer || {};
     function msOk(v) { return typeof v === "number" && isFinite(v) && v >= 0 ? v : 0; }
@@ -336,9 +383,16 @@
     s_ellipse: ic('<ellipse cx="12" cy="12" rx="9" ry="6"/>'),
     s_diamond: ic('<path d="M12 3l9 9-9 9-9-9z"/>'),
     s_tri: ic('<path d="M12 4l9 16H3z"/>'),
-    h_end: ic('<path d="M4 12h16M14 6l6 6-6 6"/>'),
-    h_both: ic('<path d="M4 12h16M14 6l6 6-6 6M10 6l-6 6 6 6"/>'),
-    h_none: ic('<path d="M4 12h16"/>'),
+    r_line: ic('<path d="M4 19L20 5"/>'),
+    r_elbow: ic('<path d="M4 19h8V5h8"/>'),
+    r_curve: ic('<path d="M4 19C12 19 12 5 20 5"/>'),
+    hs_arrow: ic('<path d="M3 12h13"/><path d="M14 7l7 5-7 5z" fill="currentColor"/>'),
+    hs_open: ic('<path d="M3 12h18M14 6l7 6-7 6"/>'),
+    hs_tri: ic('<path d="M3 12h11"/><path d="M14 6l7 6-7 6z"/>'),
+    hs_dia: ic('<path d="M3 12h9"/><path d="M12 12l4.5-4 4.5 4-4.5 4z" fill="currentColor"/>'),
+    hs_odia: ic('<path d="M3 12h9"/><path d="M12 12l4.5-4 4.5 4-4.5 4z"/>'),
+    hs_dot: ic('<path d="M3 12h13"/><circle cx="18" cy="12" r="3" fill="currentColor"/>'),
+    hs_none: ic('<path d="M3 12h18"/>'),
     f_none: ic('<rect x="4" y="5" width="16" height="14" rx="2"/>'),
     f_soft: ic('<rect x="4" y="5" width="16" height="14" rx="2" fill="currentColor" fill-opacity=".3"/>'),
     f_solid: ic('<rect x="4" y="5" width="16" height="14" rx="2" fill="currentColor"/>'),
@@ -352,7 +406,19 @@
     pause: ic('<path d="M9 5v14M15 5v14"/>'),
     play: ic('<path d="M7 5l12 7-12 7z"/>'),
     close: ic('<path d="M6 6l12 12M18 6L6 18"/>'),
-    next: ic('<path d="M5 12h14M13 6l6 6-6 6"/>')
+    next: ic('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+    lib: ic('<rect x="3" y="3" width="8" height="6" rx="1"/><path d="M17 2.5l4.5 4.5-4.5 4.5-4.5-4.5z"/><circle cx="7" cy="17" r="4"/><path d="M13.5 13.5h7v7h-7z"/>'),
+    search: ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>'),
+    lay: ic('<rect x="9" y="3" width="6" height="4" rx="1"/><rect x="3" y="17" width="6" height="4" rx="1"/><rect x="15" y="17" width="6" height="4" rx="1"/><path d="M12 7v5M6 17v-5h12v5"/>'),
+    align: ic('<path d="M4 3v18"/><rect x="7" y="6" width="12" height="4" rx="1"/><rect x="7" y="14" width="7" height="4" rx="1"/>'),
+    al_l: ic('<path d="M4 3v18"/><rect x="7" y="6" width="12" height="4" rx="1"/><rect x="7" y="14" width="7" height="4" rx="1"/>'),
+    al_c: ic('<path d="M12 3v18"/><rect x="5" y="6" width="14" height="4" rx="1"/><rect x="8" y="14" width="8" height="4" rx="1"/>'),
+    al_r: ic('<path d="M20 3v18"/><rect x="5" y="6" width="12" height="4" rx="1"/><rect x="10" y="14" width="7" height="4" rx="1"/>'),
+    al_t: ic('<path d="M3 4h18"/><rect x="6" y="7" width="4" height="12" rx="1"/><rect x="14" y="7" width="4" height="7" rx="1"/>'),
+    al_m: ic('<path d="M3 12h18"/><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="8" width="4" height="8" rx="1"/>'),
+    al_b: ic('<path d="M3 20h18"/><rect x="6" y="5" width="4" height="12" rx="1"/><rect x="14" y="10" width="4" height="7" rx="1"/>'),
+    sp_h: ic('<path d="M3 4v16M21 4v16"/><rect x="9" y="8" width="6" height="8" rx="1"/>'),
+    sp_v: ic('<path d="M4 3h16M4 21h16"/><rect x="8" y="9" width="8" height="6" rx="1"/>')
   };
   function iconBtn(cls, icon, lbl, fn) {
     var b = el("button", cls);
@@ -588,7 +654,7 @@
             ui.appendChild(sv("circle", { cx: p[1].x, cy: p[1].y, r: hs, "class": "hd", "data-h": p[0], "stroke-width": 1.5 * px }));
           });
         } else {
-          ui.appendChild(sv("path", { d: "M" + e.a.x + " " + e.a.y + "L" + e.b.x + " " + e.b.y, "class": "sel", "stroke-width": 6 * px }));
+          ui.appendChild(sv("path", { d: C.routeD(C.route(o, m)), "class": "sel", "stroke-width": 6 * px, fill: "none" }));
         }
         return;
       }
@@ -726,7 +792,8 @@
     }
     if (tool === "arrow") {
       var from = objAtPoint(e.clientX, e.clientY, "");
-      gesture = Object.assign(start, { type: "create", kind: "arrow", id: newId(), from: from });
+      gesture = Object.assign(start, { type: "create", kind: "arrow", id: newId(), from: from,
+        port: from && prefs.route !== "line" ? C.portAt(objById(from), start.w) : "" });
       return;
     }
     if (tool === "pen") {
@@ -815,7 +882,7 @@
   function shapeFrom(g, w) {
     if (g.kind === "arrow") {
       return { id: g.id, b: board || "-", k: "arrow", ax: r1(g.w.x), ay: r1(g.w.y), bx: r1(w.x), by: r1(w.y),
-        ao: g.from || "", bo: "", hd: "end", c: prefs.line, z: zTop() };
+        ao: g.from || "", bo: "", hd: "end", c: prefs.line, z: zTop(), rt: prefs.route, ap: g.port || "" };
     }
     var x = Math.min(g.w.x, w.x), y = Math.min(g.w.y, w.y), ww = Math.max(16, Math.abs(w.x - g.w.x)), hh = Math.max(16, Math.abs(w.y - g.w.y));
     if (g.kind === "frame") return { id: g.id, b: board || "-", k: "frame", x: r1(x), y: r1(y), w: r1(ww), h: r1(hh), tx: "", c: "gray", z: 0 };
@@ -846,6 +913,7 @@
       draft = {};
       if (g.moved && ar) {
         if (g.target) { if (g.end === "a") ar.ao = g.target; else ar.bo = g.target; }
+        setPort(ar, g.end, g.target, w);
         rows[g.id] = keepEnds(ar);
         commit(rows);
       }
@@ -857,6 +925,7 @@
       if (g.kind === "arrow") {
         if (!g.moved || !o) { toast(t("hint.arrow")); render(); return; }
         if (g.target) o.bo = g.target;
+        setPort(o, "b", g.target, w);
         rows[g.id] = keepEnds(o);
         if (commit(rows)) { sel = [g.id]; setTool("select"); }
       } else {
@@ -889,6 +958,15 @@
       }
     }
     render();
+  }
+
+  // The side an elbow or curved line leaves or reaches its object at:
+  // where its end was let go, when that is near a side (else chosen by
+  // itself). Straight lines keep aiming at the middle.
+  function setPort(ar, end, target, w) {
+    var key = end === "a" ? "ap" : "bp", o = target && objById(target);
+    var side = o && ar.rt && ar.rt !== "line" ? C.portAt(o, w) : "";
+    if (side) ar[key] = side; else delete ar[key];
   }
 
   // An arrow stuck to an object also keeps where it last pointed, so
@@ -944,7 +1022,7 @@
   function placeEditor() {
     var o = editing.obj, ed = $("editor"), s = view.s, st = ed.style, x, y, w, h, fs;
     if (o.k === "arrow") {
-      var e = C.ends(o, C.index(objs())), mx = (e.a.x + e.b.x) / 2, my = (e.a.y + e.b.y) / 2;
+      var lp = C.labelAt(o, C.index(objs())), mx = lp.x, my = lp.y;
       w = 200; h = 34; fs = 14; x = mx - 100; y = my - 17;
     } else if (o.k === "frame") { x = o.x; y = o.y - 30; w = Math.max(160, o.w); h = 28; fs = 14; }
     else if (o.k === "text") { x = o.x; y = o.y; w = o.w; h = Math.max(o.fs * C.LH, C.textHeight(Object.assign({}, o, { tx: ed.value }), measure)) + 4; fs = o.fs; }
@@ -1076,7 +1154,10 @@
       } else if (tool === "shape") {
         shapeBtn(prefs.shape, function (s) { prefs.shape = s; savePrefs(); render(); });
         colorBtn(function (c) { prefs.line = c; savePrefs(); render(); });
-      } else if (tool === "text" || tool === "arrow") colorBtn(function (c) { prefs.line = c; savePrefs(); render(); });
+      } else if (tool === "arrow") {
+        routeBtn(prefs.route, function (r) { prefs.route = r; savePrefs(); render(); });
+        colorBtn(function (c) { prefs.line = c; savePrefs(); render(); });
+      } else if (tool === "text") colorBtn(function (c) { prefs.line = c; savePrefs(); render(); });
       bar.hidden = !bar.childNodes.length;
       return;
     }
@@ -1091,7 +1172,7 @@
     }
     if (kinds.shape) {
       var s0 = list.filter(function (o) { return o.k === "shape"; })[0];
-      shapeBtn(s0.shp, function (s) { prefs.shape = s; savePrefs(); each(["shape"], function (o) { o.shp = s; }); });
+      shapeBtn(s0.shp, function (s) { prefs.shape = s; savePrefs(); each(["shape"], function (o) { o.shp = s; delete o.sym; }); }, true);
       var fb = add(iconBtn("icon-btn", "f_" + s0.f, t("ctx.fill"), function () {
         pop(fb, C.FILLS.map(function (f) { return choice("f_" + f, t("f." + f), function () { each(["shape"], function (o) { o.f = f; }); }); }));
       }));
@@ -1099,10 +1180,27 @@
     }
     if (kinds.arrow) {
       var a0 = list.filter(function (o) { return o.k === "arrow"; })[0];
-      var hb = add(iconBtn("icon-btn", "h_" + a0.hd, t("ctx.head"), function () {
-        pop(hb, C.HEADS.map(function (h) { return choice("h_" + h, t("hd." + h), function () { each(["arrow"], function (o) { o.hd = h; }); }); }));
-      }));
-      hb.setAttribute("aria-haspopup", "menu");
+      routeBtn(a0.rt || "line", function (r) {
+        prefs.route = r; savePrefs();
+        each(["arrow"], function (o) { if (r === "line") { delete o.rt; delete o.ap; delete o.bp; } else o.rt = r; });
+      });
+      var h0 = C.headsOf(a0);
+      ["a", "b"].forEach(function (end) {
+        var hb = add(iconBtn("icon-btn" + (end === "a" ? " flip" : ""), "hs_" + h0[end], t(end === "a" ? "ctx.headA" : "ctx.headB"), function () {
+          pop(hb, C.HEAD_STYLES.map(function (h) {
+            var c = choice("hs_" + h, t("hs." + h), function () {
+              each(["arrow"], function (o) {
+                var hz = C.headsOf(o);
+                hz[end] = h;
+                o.ha = hz.a; o.hb = hz.b; o.hd = C.hdFor(hz.a, hz.b);
+              });
+            });
+            if (end === "a") c.classList.add("flip");
+            return c;
+          }));
+        }));
+        hb.setAttribute("aria-haspopup", "menu");
+      });
       var db = add(iconBtn("icon-btn", "dash", t("ctx.dash"), function () {
         var on = !a0.ds;
         each(["arrow"], function (o) { o.ds = on; });
@@ -1113,6 +1211,19 @@
     if (kinds.text) {
       add(iconBtn("icon-btn", "small", t("ctx.smaller"), function () { textSize(-1); }));
       add(iconBtn("icon-btn", "big", t("ctx.bigger"), function () { textSize(1); }));
+    }
+    var placeable = list.filter(function (o) { return o.k !== "arrow"; });
+    if (placeable.length >= 2) {
+      if (placeable.some(function (o) { return o.k === "note" || o.k === "text" || o.k === "shape"; })) {
+        var lb = add(iconBtn("icon-btn", "lay", t("ctx.lay"), function () { pop(lb, layItems(sel.slice())); }));
+        lb.setAttribute("aria-haspopup", "menu");
+      }
+      var ab = add(iconBtn("icon-btn", "align", t("ctx.align"), function () {
+        var items = C.ALIGN_EDGES.map(function (e) { return choice("al_" + e, t("al." + e), function () { placeAll(C.align(objs(), sel, e, "")); }); });
+        if (placeable.length >= 3) C.SPREAD_DIRS.forEach(function (d) { items.push(choice("sp_" + d, t("sp." + d), function () { placeAll(C.align(objs(), sel, "", d)); })); });
+        pop(ab, items);
+      }));
+      ab.setAttribute("aria-haspopup", "menu");
     }
     if (list.length === 1 && editable(list[0])) add(iconBtn("icon-btn", "edit", t("ctx.edit"), function () { startEdit(list[0].id); }));
     add(el("span", "sep"));
@@ -1127,9 +1238,35 @@
     add(iconBtn("icon-btn del", "trash", t("ctx.del"), removeSel));
     bar.hidden = false;
   }
-  function shapeBtn(cur0, fn) {
+  // Auto layout and alignment (DG3): one undo step; ids null = the
+  // whole board.
+  function layItems(ids) {
+    return ["tree.v", "tree.h", "flow.v", "flow.h"].map(function (k) {
+      var b = textBtn("pop-txt", t("lay." + k), function () {
+        closePop();
+        var p = k.split(".");
+        placeAll(C.layout(objs(), ids, { kind: p[0], dir: p[1] }));
+      });
+      b.setAttribute("role", "menuitem");
+      return b;
+    });
+  }
+  function placeAll(rows) {
+    if (!Object.keys(rows).length) { toast(t("lay.same")); return; }
+    commit(rows);
+  }
+  function routeBtn(cur0, fn) {
+    var b = iconBtn("icon-btn", "r_" + cur0, t("ctx.route"), function () {
+      pop(b, C.ROUTES.map(function (r) { return choice("r_" + r, t("rt." + r), function () { fn(r); }); }));
+    });
+    b.setAttribute("aria-haspopup", "menu");
+    $("ctx").appendChild(b);
+  }
+  function shapeBtn(cur0, fn, change) {
     var b = iconBtn("icon-btn", "s_" + cur0, t("ctx.shape"), function () {
-      pop(b, C.SHAPES.map(function (s) { return choice("s_" + s, t("shp." + s), function () { fn(s); }); }));
+      var items = C.SHAPES.map(function (s) { return choice("s_" + s, t("shp." + s), function () { fn(s); }); });
+      items.push(choice("lib", t("ctx.lib"), function () { openLibrary(change); }));
+      pop(b, items);
     });
     b.setAttribute("aria-haspopup", "menu");
     $("ctx").appendChild(b);
@@ -1206,7 +1343,7 @@
     if (!sel.length) { say(t("live.none")); return; }
     if (sel.length > 1) { say(t("live.selN", { n: sel.length })); return; }
     var o = objById(sel[0]);
-    if (o) say(t("live.sel", { kind: t("k." + o.k), text: C.words(o).slice(0, 120) }));
+    if (o) say(t("live.sel", { kind: kindName(o), text: C.words(o).slice(0, 120) }));
   }
 
   // ---------- 12. Pictures ----------
@@ -1395,7 +1532,8 @@
   var FMT = {
     png: { ext: ".png", mime: "image/png", desc: "PNG" },
     svg: { ext: ".svg", mime: "image/svg+xml", desc: "SVG" },
-    pdf: { ext: ".pdf", mime: "application/pdf", desc: "PDF" }
+    pdf: { ext: ".pdf", mime: "application/pdf", desc: "PDF" },
+    drawio: { ext: ".drawio", mime: "application/vnd.jgraph.mxfile", desc: "draw.io" }
   };
   function makeAccept(f) { var a = {}; a[f.mime] = [f.ext]; return a; }   // R37: no computed keys
   function fileBase(name) {
@@ -1476,6 +1614,12 @@
     var b = C.board(data, board), title = b ? b.name || t("board.untitled") : t("app.name");
     var list = exportList(what);
     if (what === "frame" && list[0] && list[0].k === "frame" && list[0].tx) title = list[0].tx;
+    if (fmt === "drawio") {
+      if (!list.length) { toast(t("exp.empty")); return Promise.resolve(null); }
+      return loadScript("diagram.js").then(function () {
+        return { blob: new Blob([window.WhiteboardDiagram.writeDrawio(list, title)], { type: FMT.drawio.mime }), name: fileBase(title) + FMT.drawio.ext };
+      });
+    }
     var r = exportSvg(list, fmt === "pdf" ? true : bg, title);
     if (!r) { toast(t("exp.empty")); return Promise.resolve(null); }
     var name = fileBase(title) + FMT[fmt].ext;
@@ -1529,14 +1673,14 @@
       fs.appendChild(s);
       return fs;
     }
-    dlg.appendChild(seg(t("exp.format"), [["png", "PNG"], ["svg", "SVG"], ["pdf", "PDF"]], prefs.fmt, function (v) { prefs.fmt = v; savePrefs(); }));
+    dlg.appendChild(seg(t("exp.format"), [["png", "PNG"], ["svg", "SVG"], ["pdf", "PDF"], ["drawio", "draw.io"]], prefs.fmt, function (v) { prefs.fmt = v; savePrefs(); }));
     var whats = [["all", t("exp.all")]];
     if (sel.length) whats.push(oneFrame ? ["frame", t("exp.frame")] : ["sel", t("exp.sel")]);
     if (whats.length > 1) dlg.appendChild(seg(t("exp.what"), whats, what, function (v) { what = v; }));
     else what = "all";
     var bgF = seg(t("exp.bg"), [["paper", t("exp.paper")], ["clear", t("exp.clear")]], prefs.bg, function (v) { prefs.bg = v; savePrefs(); });
     dlg.appendChild(bgF);
-    function sync() { bgF.hidden = prefs.fmt === "pdf"; }
+    function sync() { bgF.hidden = prefs.fmt === "pdf" || prefs.fmt === "drawio"; }
     sync();
     var acts = el("div", "dlg-actions wrap");
     acts.appendChild(textBtn("dlg-btn primary", t("exp.save"), function () {
@@ -1638,6 +1782,10 @@
     if (objs().some(K.isDot)) item(t("m.results"), openResults);
     item(t("m.timer"), openTimer);
     item(t("m.mind"), openMindmap);
+    item(t("m.lib"), function () { openLibrary(false); });
+    item(t("m.lay"), function () { pop($("more-btn"), layItems(null)); });
+    item(t("m.drawio"), openDrawio);
+    item(t("m.mermaid"), openMermaid);
     if (sendApi()) item(t("m.send"), function () { sendItems(K.items(objs())); });
     pop($("more-btn"), items);
   }
@@ -1832,6 +1980,92 @@
     });
   }
 
+  // ---- Diagram shapes (wave DG1): the symbol library ----
+  // change: the picked symbol goes to the selected shapes; else a new
+  // shape of it is put in the middle of the screen.
+  function kindName(o) { return C.symOf(o) ? t("sym." + o.sym) : t("k." + o.k); }
+  function foldName(s) { return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+  function symTile(id, fn) {
+    var s = C.SYMS[id], name = t("sym." + id);
+    var b = textBtn("lib-tile", "", fn);
+    b.setAttribute("aria-label", name);
+    b.title = name;
+    var sample = { id: "pv", b: "-", k: "shape", shp: s[1], sym: id, f: "soft", c: "blue", x: 0, y: 0, w: s[2], h: s[3], z: 0,
+      tx: id === "class" || id === "interface" ? "\n--\n\n--\n" : "" };
+    var sv = document.createElementNS(SVGNS, "svg");
+    sv.setAttribute("viewBox", "-4 -4 " + (s[2] + 8) + " " + (s[3] + 8));
+    sv.setAttribute("aria-hidden", "true");
+    C.scene([sample], { measure: measure }).forEach(function (nd) { sv.appendChild(build(nd)); });
+    b.appendChild(sv);
+    b.appendChild(el("span", "lib-name", name));
+    return b;
+  }
+  function openLibrary(change) {
+    var dlg = makeDialog("wb-lib", t("lib.title"));
+    dlg.classList.add("wb-lib");
+    dlg.appendChild(el("p", "dlg-sub", t(change ? "lib.howChange" : "lib.how")));
+    var q = el("input", "lib-q");
+    q.type = "search";
+    q.id = "wb-lib-q";
+    q.setAttribute("aria-label", t("lib.search"));
+    q.placeholder = t("lib.search");
+    q.autocomplete = "off";
+    dlg.appendChild(q);
+    var box = el("div", "lib-box"), none = el("p", "dlg-sub", t("lib.none"));
+    none.hidden = true;
+    var tiles = [];
+    C.SYM_GROUPS.forEach(function (g) {
+      var sec = el("section", "lib-g"), h = el("h3", "lib-gh", t("lib.g." + g)), grid = el("div", "lib-grid");
+      h.id = "wb-lib-" + g;
+      sec.setAttribute("aria-labelledby", h.id);
+      sec.appendChild(h);
+      C.SYM_IDS.filter(function (id) { return C.SYMS[id][0] === g; }).forEach(function (id) {
+        var tile = symTile(id, function () { dlg.close(); if (change) setSym(id); else addSym(id); });
+        tiles.push({ el: tile, sec: sec, key: foldName([t("sym." + id), STR.en["sym." + id], id, t("lib.g." + g), STR.en["lib.g." + g]].join(" ")) });
+        grid.appendChild(tile);
+      });
+      sec.appendChild(grid);
+      box.appendChild(sec);
+    });
+    box.appendChild(none);
+    dlg.appendChild(box);
+    q.addEventListener("input", function () {
+      var words = foldName(q.value).split(/\s+/).filter(Boolean), shown = 0, secs = [];
+      tiles.forEach(function (x) {
+        var on = words.every(function (w) { return x.key.indexOf(w) >= 0; });
+        x.el.hidden = !on;
+        if (on) { shown++; if (secs.indexOf(x.sec) < 0) secs.push(x.sec); }
+      });
+      tiles.forEach(function (x) { x.sec.hidden = secs.indexOf(x.sec) < 0; });
+      none.hidden = shown > 0;
+    });
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(textBtn("dlg-btn", t("close"), function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    // A phone keeps its keyboard down until the search is tapped: the
+    // dialog opens with the first shape focused instead.
+    if (isTouch && tiles.length) tiles[0].el.autofocus = true;
+    showDialog(dlg);
+  }
+  // A new shape of the symbol, in the middle of the screen, selected.
+  function addSym(id) {
+    var s = C.SYMS[id], r = stageRect(), c = toWorld(r.left + r.width / 2, r.top + r.height / 2), oid = newId(), rows = {};
+    var tx = id === "class" ? t("lib.classTx") : id === "interface" ? t("lib.ifaceTx") : "";
+    rows[oid] = { id: oid, b: board || "-", k: "shape", shp: s[1], sym: id, f: "soft", c: prefs.line === "ink" ? "blue" : prefs.line,
+      x: r1(c.x - s[2] / 2), y: r1(c.y - s[3] / 2), w: s[2], h: s[3], tx: tx, z: zTop() };
+    if (voting) stopVote();
+    setTool("select");
+    if (!commit(rows)) return;
+    sel = [oid];
+    say(t("lib.added", { name: t("sym." + id) }));
+    render();
+  }
+  function setSym(id) {
+    var s = C.SYMS[id];
+    each(["shape"], function (o) { o.sym = id; o.shp = s[1]; });
+    render();
+  }
+
   // ---- Templates ----
   function openTemplates() {
     var dlg = makeDialog("wb-tpl", t("tpl.title"));
@@ -1852,6 +2086,82 @@
     ["brainstorm", "retro", "swot", "roadmap", "topic", "well", "better", "actions", "s", "w", "o", "t", "now", "next", "later", "time"]
       .forEach(function (k) { L[k] = t("tpl." + k); });
     insertObjs(K.template(kind, L, newId), t("tpl.added"));
+  }
+
+  // ---- draw.io files and Mermaid text (DG4, diagram.js) ----
+  // Raw deflate (draw.io's compressed pages) with the browser's own
+  // DecompressionStream; older browsers get dio.old.
+  function inflateRaw(bytes) {
+    if (typeof DecompressionStream !== "function") return Promise.reject(new Error("old"));
+    return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+  }
+  function openDrawio() {
+    readDiagram(localPickFile(".drawio,.xml,.svg,.vsdx,.vsd,application/xml,text/xml,image/svg+xml,application/vnd.ms-visio.drawing"));
+  }
+  // A picked file, or one handed over by the shell ("Open with", Files,
+  // the single app: { openFile: { token } }), becomes new boards.
+  function readDiagram(picked) {
+    var file;
+    Promise.resolve(picked).then(function (f) {
+      if (!f) return null;
+      file = f;
+      if (/\.vsd$/i.test(f.name || "")) throw new Error("vsd");
+      var vsdx = /\.vsdx$/i.test(f.name || "");
+      return (vsdx ? loadScript("../designkit/zipin.js") : Promise.resolve()).then(function () { return loadScript("diagram.js"); }).then(function () {
+        var D = window.WhiteboardDiagram;
+        if (vsdx) return D.readVsdx(f, newId);
+        if (f.size > D.MAX_FILE) throw new Error("big");
+        return f.text().then(function (txt) { return D.readDrawio(txt, inflateRaw, newId); });
+      });
+    }).then(function (res) {
+      if (!res) return;
+      var d = data, now = Date.now(), first = "", base = String(file.name || "").replace(/\.(drawio|xml|svg|vsdx)$/i, "").replace(/\.drawio$/i, "");
+      res.pages.forEach(function (pg, i) {
+        var id = newId(), rows = {};
+        d = C.putBoard(d, id, (pg.name && res.pages.length > 1 ? (base ? base + " · " : "") + pg.name : base || pg.name || t("board.untitled")).slice(0, 120), now);
+        pg.objs.forEach(function (o) { o.b = id; rows[o.id] = o; });
+        d = C.apply(d, rows, now);
+        if (!i) first = id;
+      });
+      if (!save(d)) return;
+      openBoard(first);
+      var msg = res.pages.length > 1 ? t("dio.added", { n: res.pages.length }) : t("dio.added1");
+      if (res.simplified) msg += " " + t("dio.simpl", { n: res.simplified });
+      if (res.skipped) msg += " " + t("dio.skip", { n: res.skipped });
+      if (res.cut) msg += " " + t("dio.cut");
+      toast(msg);
+    }).catch(function (e) {
+      var m = e && e.message;
+      toast(t(m === "big" || m === "toobig" ? "dio.big" : m === "old" ? "dio.old" : m === "vsd" ? "dio.vsd" : "dio.bad"));
+      if (m !== "big" && m !== "toobig" && m !== "old" && m !== "vsd") console.warn("[orOS] whiteboard: draw.io", e);
+    });
+  }
+  function openMermaid() {
+    loadScript("diagram.js").then(function () {
+      var dlg = makeDialog("wb-mermaid", t("mmd.title"));
+      var form = el("form");
+      var lbl = el("label", "fld-lbl", t("mmd.lbl")), ta = el("textarea", "mmd-text");
+      ta.id = "wb-mmd-text"; lbl.htmlFor = ta.id;
+      ta.rows = 10; ta.spellcheck = false; ta.maxLength = window.WhiteboardDiagram.MAX_MERMAID;
+      ta.placeholder = t("mmd.hint");
+      ta.setAttribute("autocapitalize", "off");
+      form.appendChild(lbl); form.appendChild(ta);
+      var acts = el("div", "dlg-actions"), ok = textBtn("dlg-btn primary", t("mmd.draw"));
+      ok.type = "submit";
+      acts.appendChild(ok);
+      acts.appendChild(textBtn("dlg-btn", t("cancel"), function () { dlg.close(); }));
+      form.appendChild(acts);
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var res = window.WhiteboardDiagram.readMermaid(ta.value, newId);
+        if (res.err) { toast(t("mmd.bad")); ta.focus(); return; }
+        dlg.close();
+        insertObjs(res.objs, t("mmd.added", { n: res.nodes }) + (res.cut ? " " + t("mmd.cut") : ""));
+      });
+      dlg.appendChild(form);
+      showDialog(dlg);
+      ta.focus();
+    }).catch(function (e) { console.error("[orOS] whiteboard: diagram.js", e); toast(t("dio.bad")); });
   }
 
   // ---- Bring in a mind map (read only: oros-mindmap-data) ----
@@ -2064,6 +2374,7 @@
       if (e.code === "Digit0") { zoomAt(1 / view.s); return; }
       if (e.code === "Digit1") { fit(); return; }
       if (e.code === "KeyI") { pickPicture(); return; }
+      if (e.code === "KeyL") { openLibrary(sel.some(function (id) { var o = objById(id); return o && o.k === "shape"; })); return; }
       if (KEY_TOOLS[e.code]) { if (voting) stopVote(); setTool(KEY_TOOLS[e.code]); }
     });
     document.addEventListener("keyup", function (e) { if (e.code === "Space") spaceDown = false; });
@@ -2151,6 +2462,19 @@
   // { edit } / { editUndo }: the Assistant's changes (assist.js).
   window.__orosOpenAt = function (target) {
     if (target && (target.edit || target.editUndo)) { assistRun(target); return; }
+    // { openFile: { token } }: a .drawio / .vsdx from "Open with" or
+    // Files (fileopen.js HANDLERS, wave 2 of the files gap review).
+    if (target && target.openFile && typeof target.openFile.token === "string") {
+      if (editing || document.querySelector("dialog[open]")) return;
+      var f = null;
+      try { var p = window.parent; if (p && p !== window && typeof p.__orosTakeFile === "function") f = p.__orosTakeFile(target.openFile.token); } catch (e) { f = null; }
+      if (f) readDiagram(f); else toast(t("dio.bad"));
+      return;
+    }
+    // "Send to an app" (BR-SEND): { addNotes: { notes: [{ tx }] ≤ 50 } }:
+    // sticky notes in a grid at the middle of the open board's view,
+    // selected, one step of Undo (the toast offers it too).
+    if (target && target.addNotes && Array.isArray(target.addNotes.notes)) { addNotes(target.addNotes.notes); return; }
     if (!target || typeof target.board !== "string" || !C.board(data, target.board)) return;
     if (editing || document.querySelector("dialog[open]")) return;
     if (target.board !== board) openBoard(target.board);
@@ -2160,6 +2484,27 @@
       setTimeout(function () { reveal(target.obj, true); announce(); render(); }, 0);
     }
   };
+
+  function addNotes(list) {
+    var notes = list.filter(function (n) { return n && typeof n.tx === "string" && n.tx.trim(); }).slice(0, 50);
+    if (!notes.length) return;
+    endEdit(true);
+    if (!ensureBoard()) return;
+    var r = stageRect(), mid = toWorld(r.left + r.width / 2, r.top + r.height / 2);
+    var cols = Math.min(5, Math.ceil(Math.sqrt(notes.length))), gap = 220;
+    var rows = Math.ceil(notes.length / cols), rows2 = {}, ids = [], z = zTop();
+    notes.forEach(function (n, i) {
+      var id = newId(), cx = i % cols, cy = Math.floor(i / cols);
+      rows2[id] = { id: id, b: board, k: "note", x: r1(mid.x - cols * gap / 2 + cx * gap + 10), y: r1(mid.y - rows * gap / 2 + cy * gap + 10),
+        w: 200, h: 200, tx: n.tx.replace(/\r\n?/g, "\n").slice(0, C.MAX_TEXT), c: prefs.note, z: z + i };
+      ids.push(id);
+    });
+    if (!commit(rows2)) return;
+    setTool("select");
+    sel = ids;
+    render();
+    toast(t(ids.length === 1 ? "send.note1" : "send.notes").replace("{n}", String(ids.length)), undo);
+  }
 
   // The Assistant's changes (AS-EDIT, assist.js), loaded on the first
   // request with commands.js.
@@ -2201,7 +2546,7 @@
   function assistLoad() {
     if (window.WhiteboardAssist) return Promise.resolve(window.WhiteboardAssist);
     return (window.orosRecipes ? Promise.resolve() : loadScript("../recipes/core.js"))
-      .then(function () { return loadScript("commands.js"); }).then(function () { return loadScript("assist.js"); }).then(function () {
+      .then(function () { return loadScript("diagram.js"); }).then(function () { return loadScript("commands.js"); }).then(function () { return loadScript("assist.js"); }).then(function () {
         if (!window.WhiteboardAssist) throw new Error("assist");
         return window.WhiteboardAssist;
       });

@@ -1,0 +1,2118 @@
+// ============================================================
+// orOS Base — data model (base/core.js). Pure: no DOM, no storage.
+// Loaded by index.html before app.js, and by Node in the tests.
+//
+// Slice "base", localStorage "oros-base-data":
+//   { ver: 1,
+//     bases:  [{ id, m, name, color }],
+//     tables: [{ id, m, base, name, ord, pf }],          pf = primary field id
+//     fields: [{ id, m, tb, name, type, ord, opt }],
+//     views:  [{ id, m, tb, name, kind, ord, cfg }],      kind grid | cards | kanban | calendar
+//             (B3a; an unknown kind of a newer orOS is kept, shown as grid);
+//             cfg.by: the single-choice field a kanban stacks by, the
+//             date field a calendar lays out
+//     recs:   [{ id, t, c, m, v: { fid: value }, fm: { fid: ms } }],
+//     links:  [{ id, m, f, a, b }],                       wave B2
+//     tombs:  { id: deletedAt } }
+//
+// Links (wave B2): a link field F in table A pairs with a field F' in
+// table B (opt.inv both ways; a table linked to itself uses one field).
+// Each link is its own row, stored once under the smaller of F / F'
+// (a = a record of that field's table, b = the other side), with an id
+// computed from (f, a, b) (R16): the same link made on two devices is
+// one row, two devices adding different links to one record keep both,
+// and the other side is read from the same rows, never stored twice.
+//
+// Sync rules (OROS_BIBLE.md Part I R5, R16, R17, R26, R27):
+//   - bases, tables, fields, views: the newer m wins the whole row, an
+//     equal m goes to the larger canonical JSON;
+//   - records merge PER FIELD: each value carries its own time in fm,
+//     so two devices that change different fields of one record keep
+//     both changes; the same field → the newer time, then the larger
+//     JSON. rec.m = the newest field time, rec.c = the earliest
+//     creation time (both sides agree);
+//   - a tombstone at least as new as the row deletes it; a newer edit
+//     brings it back. A deleted base, table or field takes its tables,
+//     fields, views, records and values with it inside the merge;
+//   - nothing in the slice moves by itself: autonumber, created and
+//     modified times are computed from c and m, lookups, rollups,
+//     counts and formulas from the records, never stored;
+//   - a link whose field or record is deleted goes with it; a link to
+//     a record or field this copy has not seen yet is kept;
+//   - no uid() or Date.now() inside the merge; output sorted by id.
+// ============================================================
+(function (root) {
+  "use strict";
+
+  var VER = 1;
+  var STORAGE_KEY = "oros-base-data";
+  var MAX_RECS = 20000;            // all bases together (plan §6.1)
+  var MAX_FIELDS = 200;            // per table
+  var MAX_TABLES = 100;            // per base
+  var MAX_OPTS = 200;              // choices of a select field
+  var MAX_NAME = 120;
+  var MAX_TEXT = 2000;
+  var MAX_LONG = 50000;
+  var MAX_ID = 40;
+  var MAX_LINKS = 100000;          // all bases together
+  var MAX_EXPR = 4000;             // characters of a formula
+
+  // Field types of wave B1. A type this code does not know (a newer
+  // device) is kept with its options and values exactly as they came.
+  var TYPES = ["text", "long", "number", "currency", "percent", "date", "check",
+    "select", "multi", "rating", "email", "url", "phone", "auto", "ctime", "mtime",
+    "link", "lookup", "rollup", "count", "formula", "file"];
+  // shown, never typed in
+  var COMPUTED = { auto: 1, ctime: 1, mtime: 1, lookup: 1, rollup: 1, count: 1, formula: 1 };
+  // no value in rec.v (links live in their own rows)
+  var NOSTORE = { auto: 1, ctime: 1, mtime: 1, lookup: 1, rollup: 1, count: 1, formula: 1, link: 1 };
+  var ROLL_FNS = ["SUM", "AVG", "MIN", "MAX", "COUNT", "COUNTA", "CONCAT", "AND", "OR"];
+  // Attachments (B3b): the record keeps names, the files live on the
+  // orOS disk (they travel with Vault Drive, never with the slice)
+  var ATT_DIR = "/internal/Base/Attachments/";
+  var FILE_RE = /^[a-z0-9][a-z0-9-]{0,79}\.[a-z0-9]{1,8}$/;
+  var MAX_ATT = 20;
+  var COLORS = ["gray", "red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "brown"];
+  var VIEW_KINDS = { grid: 1, cards: 1, kanban: 1, calendar: 1, gallery: 1, form: 1 };
+
+  // ---------- small helpers ----------
+  function str(v, max) { return typeof v === "string" ? v.slice(0, max) : ""; }
+  // one line: no control or bidi-override characters
+  function line(v, max) {
+    return str(v, max * 2).replace(/[\u0000-\u001f\u007f‪-‮⁦-⁩]/g, " ").slice(0, max);
+  }
+  function para(v, max) {
+    return str(v, max * 2).replace(/\r\n?/g, "\n")
+      .replace(/[\u0000-\u0009\u000b-\u001f\u007f‪-‮⁦-⁩]/g, " ").slice(0, max);
+  }
+  function ms(v) { return typeof v === "number" && isFinite(v) && v > 0 ? Math.floor(v) : 0; }
+  function okId(v) { return typeof v === "string" && v.length > 0 && v.length <= MAX_ID && /^[A-Za-z0-9_-]+$/.test(v); }
+  function num(v) { return typeof v === "number" && isFinite(v) ? v : null; }
+  function int(v, lo, hi, dflt) {
+    var n = typeof v === "number" && isFinite(v) ? Math.round(v) : dflt;
+    return Math.max(lo, Math.min(hi, n));
+  }
+  function byId(a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; }
+  function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  function isObj(o) { return !!o && typeof o === "object" && !Array.isArray(o); }
+
+  // Canonical JSON: object keys sorted, so the tie-break is the same
+  // on every device whatever order the keys arrived in.
+  function canon(v) {
+    if (Array.isArray(v)) return "[" + v.map(canon).join(",") + "]";
+    if (isObj(v)) {
+      return "{" + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ":" + canon(v[k]); }).join(",") + "}";
+    }
+    return JSON.stringify(v === undefined ? null : v);
+  }
+  // a plain JSON copy (data from another device, a file), at most `cap` characters
+  function plain(v, cap) {
+    try {
+      var s = JSON.stringify(v);
+      if (typeof s !== "string" || s.length > cap) return null;
+      return JSON.parse(s);
+    } catch (e) { return null; }
+  }
+
+  function empty() { return { ver: VER, bases: [], tables: [], fields: [], views: [], recs: [], links: [], tombs: {} }; }
+
+  // ---------- options of a field ----------
+  function cleanOpt(type, raw) {
+    var o = isObj(raw) ? raw : {};
+    var out = {};
+    if (type === "number" || type === "currency" || type === "percent") {
+      out.dec = int(o.dec, 0, 8, type === "currency" ? 2 : 0);
+      if (type === "currency") out.sym = line(o.sym, 6) || "€";
+    } else if (type === "date") {
+      if (o.time === true) out.time = true;
+      if (o.cal === true) out.cal = true;          // B4: shown in the Calendar app
+    } else if (type === "rating") {
+      out.max = int(o.max, 3, 10, 5);
+    } else if (type === "select" || type === "multi") {
+      var seen = {}, list = [];
+      (Array.isArray(o.ch) ? o.ch : []).forEach(function (c) {
+        if (!isObj(c) || !okId(c.id) || seen[c.id] || list.length >= MAX_OPTS) return;
+        seen[c.id] = 1;
+        list.push({ id: c.id, n: line(c.n, MAX_NAME), c: COLORS.indexOf(c.c) >= 0 ? c.c : "gray" });
+      });
+      out.ch = list;
+    } else if (type === "link") {
+      out.to = okId(o.to) ? o.to : "";
+      out.inv = okId(o.inv) ? o.inv : "";
+      if (o.one === true) out.one = true;
+    } else if (type === "lookup" || type === "rollup" || type === "count") {
+      out.via = okId(o.via) ? o.via : "";
+      if (type !== "count") out.f = okId(o.f) ? o.f : "";
+      if (type === "rollup") {
+        out.fn = ROLL_FNS.indexOf(o.fn) >= 0 ? o.fn : "SUM";
+        if (typeof o.dec === "number") out.dec = int(o.dec, 0, 8, 0);
+      }
+    } else if (type === "formula") {
+      out.expr = para(o.expr, MAX_EXPR);
+      if (typeof o.dec === "number") out.dec = int(o.dec, 0, 8, 0);
+      if (o.as === "date") out.as = "date";
+    } else if (TYPES.indexOf(type) < 0) {
+      return plain(raw, 20000) || {};   // a newer type: kept verbatim
+    }
+    if (typeof o.desc === "string" && o.desc) out.desc = para(o.desc, 1000);
+    return out;
+  }
+
+  // ---------- one value, by field type ----------
+  var DATE_RE = /^\d{4}-\d{2}-\d{2}$/, DT_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+  function okDate(s) {
+    if (!DATE_RE.test(s.slice(0, 10))) return false;
+    var d = new Date(s.slice(0, 10) + "T00:00:00Z");
+    return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s.slice(0, 10) &&
+      (s.length === 10 || (DT_RE.test(s) && +s.slice(11, 13) < 24 && +s.slice(14, 16) < 60));
+  }
+  // undefined = no value (the key is left out). A value that does not
+  // fit its field's type is dropped, never "repaired" into another.
+  function cleanVal(field, v) {
+    var type = field ? field.type : "";
+    if (v === null || v === undefined || v === "") return undefined;
+    if (NOSTORE[type]) return undefined;           // computed or a link: never in rec.v
+    switch (type) {
+      case "text": case "email": case "phone":
+        var s = line(v, MAX_TEXT).trim(); return s || undefined;
+      case "url":
+        var u = line(v, MAX_TEXT).trim(); return u || undefined;
+      case "long":
+        var p = para(v, MAX_LONG); return p.trim() ? p : undefined;
+      case "number": case "currency": case "percent":
+        var n = num(v); return n === null ? undefined : n;
+      case "rating":
+        var r = num(v); if (r === null) return undefined;
+        r = Math.round(r); var mx = field.opt && field.opt.max || 5;
+        return r >= 1 && r <= mx ? r : undefined;
+      case "date":
+        if (typeof v !== "string" || !okDate(v)) return undefined;
+        return field.opt && field.opt.time ? v : v.slice(0, 10);
+      case "check":
+        return v === true ? true : undefined;
+      case "select":
+        return okId(v) ? v : undefined;
+      case "file":
+        return cleanFiles(v);
+      case "multi":
+        if (!Array.isArray(v)) return undefined;
+        var seen = {}, out = [];
+        v.forEach(function (x) { if (okId(x) && !seen[x]) { seen[x] = 1; out.push(x); } });
+        out.sort();
+        return out.length ? out.slice(0, MAX_OPTS) : undefined;
+      default:
+        return plain(v, MAX_LONG) === null ? undefined : plain(v, MAX_LONG);   // newer type or unknown field
+    }
+  }
+
+  // [{ id, name, file, kind img|pdf|file, size }], in the order added
+  function cleanFiles(v) {
+    if (!Array.isArray(v)) return undefined;
+    var seen = {}, out = [];
+    v.forEach(function (x) {
+      if (!isObj(x) || !okId(x.id) || seen[x.id] || !FILE_RE.test(x.file || "") || out.length >= MAX_ATT) return;
+      seen[x.id] = 1;
+      out.push({ id: x.id, name: line(x.name, MAX_NAME) || x.file, file: x.file,
+        kind: x.kind === "img" || x.kind === "pdf" ? x.kind : "file", size: int(x.size, 0, 1e10, 0) });
+    });
+    return out.length ? out : undefined;
+  }
+  function attPath(file) { return FILE_RE.test(file || "") ? ATT_DIR + file : null; }
+  // every attachment file a live record still names → { file: 1 }
+  function usedFiles(d) {
+    var used = {}, files = {};
+    ((d && d.fields) || []).forEach(function (f) { if (f.type === "file") files[f.id] = 1; });
+    if (!Object.keys(files).length) return used;
+    ((d && d.recs) || []).forEach(function (r) {
+      Object.keys(r.v || {}).forEach(function (k) {
+        if (files[k] && Array.isArray(r.v[k])) r.v[k].forEach(function (x) { if (x && x.file) used[x.file] = 1; });
+      });
+    });
+    return used;
+  }
+
+  // ---------- rows ----------
+  function cleanBase(r) {
+    if (!isObj(r) || !okId(r.id)) return null;
+    return { id: r.id, m: ms(r.m), name: line(r.name, MAX_NAME), color: COLORS.indexOf(r.color) >= 0 ? r.color : "blue" };
+  }
+  function cleanTable(r) {
+    if (!isObj(r) || !okId(r.id) || !okId(r.base)) return null;
+    return { id: r.id, m: ms(r.m), base: r.base, name: line(r.name, MAX_NAME), ord: int(r.ord, 0, 1e9, 0), pf: okId(r.pf) ? r.pf : "" };
+  }
+  function cleanField(r) {
+    if (!isObj(r) || !okId(r.id) || !okId(r.tb)) return null;
+    var type = typeof r.type === "string" && /^[a-z]{1,16}$/.test(r.type) ? r.type : "text";
+    return { id: r.id, m: ms(r.m), tb: r.tb, name: line(r.name, MAX_NAME), type: type, ord: int(r.ord, 0, 1e9, 0), opt: cleanOpt(type, r.opt) };
+  }
+  var OPS = { eq: 1, ne: 1, gt: 1, lt: 1, gte: 1, lte: 1, has: 1, hasnot: 1, empty: 1, nempty: 1,
+    before: 1, after: 1, today: 1, past: 1, future: 1, any: 1, none: 1, checked: 1, unchecked: 1 };
+  function cleanCfg(c) {
+    c = isObj(c) ? c : {};
+    var out = { conj: c.conj === "or" ? "or" : "and", filters: [], sorts: [], groups: [], hidden: [], order: [] };
+    (Array.isArray(c.filters) ? c.filters : []).slice(0, 30).forEach(function (f) {
+      if (!isObj(f) || !okId(f.f) || !OPS[f.op]) return;
+      var x = { f: f.f, op: f.op };
+      var v = plain(f.v, 4000);
+      if (v !== null && v !== undefined && v !== "") x.v = v;
+      out.filters.push(x);
+    });
+    var seen = {};
+    (Array.isArray(c.sorts) ? c.sorts : []).forEach(function (s) {
+      if (!isObj(s) || !okId(s.f) || seen[s.f] || out.sorts.length >= 5) return;
+      seen[s.f] = 1; out.sorts.push({ f: s.f, d: s.d === -1 ? -1 : 1 });
+    });
+    seen = {};
+    (Array.isArray(c.groups) ? c.groups : []).forEach(function (s) {
+      if (!isObj(s) || !okId(s.f) || seen[s.f] || out.groups.length >= 3) return;
+      seen[s.f] = 1; out.groups.push({ f: s.f, d: s.d === -1 ? -1 : 1 });
+    });
+    function ids(a) { var s = {}, o = []; (Array.isArray(a) ? a : []).forEach(function (x) { if (okId(x) && !s[x]) { s[x] = 1; o.push(x); } }); return o.slice(0, MAX_FIELDS); }
+    out.hidden = ids(c.hidden).sort();
+    out.order = ids(c.order);
+    if (typeof c.q === "string" && c.q) out.q = line(c.q, 200);
+    if (okId(c.by)) out.by = c.by;
+    return out;
+  }
+  function cleanView(r) {
+    if (!isObj(r) || !okId(r.id) || !okId(r.tb)) return null;
+    return { id: r.id, m: ms(r.m), tb: r.tb, name: line(r.name, MAX_NAME), kind: typeof r.kind === "string" && /^[a-z]{1,16}$/.test(r.kind) ? r.kind : "grid",
+      ord: int(r.ord, 0, 1e9, 0), cfg: cleanCfg(r.cfg) };
+  }
+  // A record before it meets its fields: values kept as plain JSON,
+  // each with its own time. Values are typed against the fields after
+  // the merge (finish()), so a record that arrives before its field
+  // definition loses nothing.
+  function cleanRec(r) {
+    if (!isObj(r) || !okId(r.id) || !okId(r.t)) return null;
+    var out = { id: r.id, t: r.t, c: ms(r.c), m: 0, v: {}, fm: {} };
+    var v = isObj(r.v) ? r.v : {}, fm = isObj(r.fm) ? r.fm : {};
+    Object.keys(fm).forEach(function (fid) {
+      if (!okId(fid)) return;
+      var t = ms(fm[fid]);
+      if (!t) return;
+      out.fm[fid] = t;
+      if (has(v, fid)) {
+        var val = plain(v[fid], MAX_LONG);
+        if (val !== null && val !== undefined && val !== "") out.v[fid] = val;
+      }
+    });
+    var mm = ms(r.m);
+    Object.keys(out.fm).forEach(function (k) { if (out.fm[k] > mm) mm = out.fm[k]; });
+    out.m = Math.max(mm, out.c);
+    if (!out.c) out.c = out.m;
+    return out;
+  }
+
+  // FNV-1a, two seeds: the id of the link (f, a, b), the same everywhere
+  function hash32(s, h) {
+    h = h >>> 0;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h;
+  }
+  function linkId(f, a, b) {
+    var s = f + "|" + a + "|" + b;
+    return "l" + hash32(s, 2166136261).toString(36) + hash32(s, 0x9747b28c).toString(36);
+  }
+  function cleanLink(r) {
+    if (!isObj(r) || !okId(r.f) || !okId(r.a) || !okId(r.b)) return null;
+    var id = linkId(r.f, r.a, r.b);
+    if (r.id !== id) return null;           // the id must be the link's own (R16)
+    return { id: id, m: ms(r.m), f: r.f, a: r.a, b: r.b };
+  }
+
+  function newerRow(a, b, k) {   // true when b beats a
+    if (!a) return true;
+    if (b.m !== a.m) return b.m > a.m;
+    if (k === "views") {
+      // a device on 7.04.00 or older (before B3a) reads a kanban or calendar view as
+      // a grid without cfg.by, at the same time stamp: the copy it could
+      // not have stripped wins the tie, so its sync never undoes them
+      var ra = richView(a), rb = richView(b);
+      if (ra !== rb) return rb > ra;
+    }
+    // a device before B4 drops "Show in Calendar" from a date field
+    if (k === "fields") {
+      var ca = a.opt && a.opt.cal ? 1 : 0, cb = b.opt && b.opt.cal ? 1 : 0;
+      if (ca !== cb) return cb > ca;
+    }
+    return canon(b) > canon(a);
+  }
+  function richView(v) { return (v.kind !== "grid" && v.kind !== "cards") || (v.cfg && v.cfg.by) ? 1 : 0; }
+
+  function mergeRec(a, b) {
+    if (!a) return b;
+    var out = { id: a.id, t: a.t, c: 0, m: 0, v: {}, fm: {} };
+    // a record never changes table; should two copies disagree, the
+    // smaller id wins on both devices
+    if (b.t !== a.t) out.t = a.t < b.t ? a.t : b.t;
+    var c1 = a.c || b.c, c2 = b.c || a.c;
+    out.c = Math.min(c1, c2);
+    var keys = {};
+    Object.keys(a.fm).forEach(function (k) { keys[k] = 1; });
+    Object.keys(b.fm).forEach(function (k) { keys[k] = 1; });
+    Object.keys(keys).forEach(function (k) {
+      var ta = a.fm[k] || 0, tb = b.fm[k] || 0, src;
+      if (ta !== tb) src = ta > tb ? a : b;
+      else src = canon(has(b.v, k) ? b.v[k] : null) > canon(has(a.v, k) ? a.v[k] : null) ? b : a;
+      out.fm[k] = Math.max(ta, tb);
+      if (has(src.v, k)) out.v[k] = src.v[k];
+    });
+    out.m = Math.max(a.m, b.m);
+    return out;
+  }
+
+  // ---------- merge / normalize ----------
+  function mergeAll(list) {
+    var maps = { bases: {}, tables: {}, fields: {}, views: {}, links: {} };
+    var CLEAN = { bases: cleanBase, tables: cleanTable, fields: cleanField, views: cleanView, links: cleanLink };
+    var recs = {}, tombs = {};
+    list.forEach(function (d) {
+      if (!isObj(d)) return;
+      Object.keys(CLEAN).forEach(function (k) {
+        (Array.isArray(d[k]) ? d[k] : []).forEach(function (raw) {
+          var r = CLEAN[k](raw);
+          if (r && newerRow(maps[k][r.id], r, k)) maps[k][r.id] = r;
+        });
+      });
+      (Array.isArray(d.recs) ? d.recs : []).forEach(function (raw) {
+        var r = cleanRec(raw);
+        if (r) recs[r.id] = mergeRec(recs[r.id], r);
+      });
+      var t = isObj(d.tombs) ? d.tombs : {};
+      Object.keys(t).forEach(function (id) {
+        var at = ms(t[id]);
+        if (at && okId(id) && at > (tombs[id] || 0)) tombs[id] = at;
+      });
+    });
+    return finish(maps, recs, tombs);
+  }
+
+  function finish(maps, recs, tombs) {
+    function alive(map) {
+      var o = {};
+      Object.keys(map).forEach(function (id) { if (!(tombs[id] >= map[id].m)) o[id] = map[id]; });
+      return o;
+    }
+    var bases = alive(maps.bases);
+    var tables = alive(maps.tables);
+    Object.keys(tables).forEach(function (id) { if (!bases[tables[id].base]) delete tables[id]; });
+    var fields = alive(maps.fields);
+    Object.keys(fields).forEach(function (id) { if (!tables[fields[id].tb]) delete fields[id]; });
+    var views = alive(maps.views);
+    Object.keys(views).forEach(function (id) { if (!tables[views[id].tb]) delete views[id]; });
+
+    var outRecs = [];
+    Object.keys(recs).sort().forEach(function (id) {
+      var r = recs[id];
+      if (!tables[r.t]) return;
+      if (tombs[id] >= r.m) return;
+      var o = { id: r.id, t: r.t, c: r.c, m: r.m, v: {}, fm: {} };
+      Object.keys(r.fm).sort().forEach(function (fid) {
+        var f = fields[fid];
+        if (!f) {
+          // a deleted field takes its values; a field this copy has not
+          // seen yet (arrives later) keeps them
+          if (tombs[fid]) return;
+          o.fm[fid] = r.fm[fid];
+          if (has(r.v, fid)) o.v[fid] = r.v[fid];
+          return;
+        }
+        if (f.tb !== r.t) return;
+        o.fm[fid] = r.fm[fid];
+        if (has(r.v, fid)) {
+          var cv = cleanVal(f, r.v[fid]);
+          if (cv !== undefined) o.v[fid] = cv;
+        }
+      });
+      outRecs.push(o);
+    });
+
+    // a link goes with a deleted field or record; one whose field or
+    // record this copy has never seen (it arrives later) stays
+    var liveRec = {};
+    outRecs.forEach(function (r) { liveRec[r.id] = 1; });
+    var links = alive(maps.links);
+    Object.keys(links).forEach(function (id) {
+      var L = links[id];
+      function gone(x, live, known) { return !live[x] && (has(known, x) || has(tombs, x)); }
+      if (gone(L.f, fields, maps.fields) || gone(L.a, liveRec, recs) || gone(L.b, liveRec, recs) ||
+          (fields[L.f] && fields[L.f].type !== "link")) delete links[id];
+    });
+
+    var out = empty();
+    function sorted(map) { return Object.keys(map).sort().map(function (id) { return map[id]; }); }
+    out.bases = sorted(bases);
+    out.tables = sorted(tables);
+    out.fields = sorted(fields);
+    out.views = sorted(views);
+    out.recs = outRecs;
+    out.links = sorted(links);
+    Object.keys(tombs).sort().forEach(function (id) { out.tombs[id] = tombs[id]; });
+    return out;
+  }
+
+  function normalize(d) { return mergeAll([d]); }
+  function merge(local, remote) { return mergeAll([local, remote]); }
+  function serialize(d) { return JSON.stringify(normalize(d)); }
+
+  // ---------- reading ----------
+  function index(d) {
+    var ix = { bases: {}, tables: {}, fields: {}, views: {}, recs: {}, tbFields: {}, tbViews: {}, tbRecs: {}, baseTables: {} };
+    d.bases.forEach(function (b) { ix.bases[b.id] = b; ix.baseTables[b.id] = []; });
+    d.tables.forEach(function (t) {
+      ix.tables[t.id] = t; ix.tbFields[t.id] = []; ix.tbViews[t.id] = []; ix.tbRecs[t.id] = [];
+      if (ix.baseTables[t.base]) ix.baseTables[t.base].push(t);
+    });
+    d.fields.forEach(function (f) { ix.fields[f.id] = f; if (ix.tbFields[f.tb]) ix.tbFields[f.tb].push(f); });
+    d.views.forEach(function (v) { ix.views[v.id] = v; if (ix.tbViews[v.tb]) ix.tbViews[v.tb].push(v); });
+    d.recs.forEach(function (r) { ix.recs[r.id] = r; if (ix.tbRecs[r.t]) ix.tbRecs[r.t].push(r); });
+    function byOrd(a, b) { return a.ord - b.ord || byId(a, b); }
+    Object.keys(ix.baseTables).forEach(function (k) { ix.baseTables[k].sort(byOrd); });
+    Object.keys(ix.tbFields).forEach(function (k) { ix.tbFields[k].sort(byOrd); });
+    Object.keys(ix.tbViews).forEach(function (k) { ix.tbViews[k].sort(byOrd); });
+    // autonumber: order of creation, the same on every device
+    Object.keys(ix.tbRecs).forEach(function (k) {
+      ix.tbRecs[k].sort(function (a, b) { return a.c - b.c || byId(a, b); });
+    });
+    ix.auto = {};
+    Object.keys(ix.tbRecs).forEach(function (k) { ix.tbRecs[k].forEach(function (r, i) { ix.auto[r.id] = i + 1; }); });
+    // links, both ways: ix.lk[fieldId][recId] = [linked record ids], oldest link first
+    ix.lk = {};
+    function push(fid, from, to) {
+      var m = ix.lk[fid] || (ix.lk[fid] = {});
+      var l = m[from] || (m[from] = []);
+      if (l.indexOf(to) < 0) l.push(to);
+    }
+    (d.links || []).slice().sort(function (a, b) { return a.m - b.m || byId(a, b); }).forEach(function (L) {
+      var F = ix.fields[L.f], ra = ix.recs[L.a], rb = ix.recs[L.b];
+      if (!F || F.type !== "link" || !ra || !rb || ra.t !== F.tb || rb.t !== F.opt.to) return;
+      push(F.id, L.a, L.b);
+      var inv = F.opt.inv ? ix.fields[F.opt.inv] : null;
+      if (inv && inv.id === F.id) { if (L.a !== L.b) push(F.id, L.b, L.a); }
+      else if (inv && inv.type === "link" && inv.tb === F.opt.to && inv.opt.to === F.tb) push(inv.id, L.b, L.a);
+    });
+    ix.memo = {}; ix.busy = {}; ix.kinds = {}; ix.fx = null; ix.src = {};
+    return ix;
+  }
+
+  // The primary field: the table's pf when it is a live field there,
+  // else its first field.
+  function primary(ix, tbId) {
+    var t = ix.tables[tbId], list = ix.tbFields[tbId] || [];
+    if (t && t.pf && ix.fields[t.pf] && ix.fields[t.pf].tb === tbId) return ix.fields[t.pf];
+    return list[0] || null;
+  }
+
+  // The value of a field on a record, computed fields included.
+  // link: [record ids]; lookup: [values] (flat); count: number;
+  // rollup, formula: number | string | boolean (an error is "#…!").
+  function value(ix, rec, f) {
+    if (!f) return undefined;
+    if (f.type === "auto") return ix.auto[rec.id];
+    if (f.type === "ctime") return rec.c;
+    if (f.type === "mtime") return rec.m;
+    if (f.type === "link") { var l = linked(ix, rec, f.id); return l.length ? l.slice() : undefined; }
+    if (f.type === "count") return linked(ix, rec, f.opt.via).length;
+    if (f.type === "lookup" || f.type === "rollup" || f.type === "formula") return computed(ix, rec, f);
+    return has(rec.v, f.id) ? rec.v[f.id] : undefined;
+  }
+
+  // ---------- links, lookups, rollups, formulas (wave B2) ----------
+  var CYC = "#CYC!";
+  function isErr(v) { return typeof v === "string" && /^#(DIV\/0!|N\/A|NAME\?|NUM!|REF!|VALUE!|CYC!|ERROR!|NULL!)$/.test(v); }
+  // the records linked to rec through a link field of its own table
+  function linked(ix, rec, viaId) {
+    var L = ix.fields[viaId];
+    if (!L || L.type !== "link" || L.tb !== rec.t) return [];
+    return (ix.lk[L.id] && ix.lk[L.id][rec.id]) || [];
+  }
+  // the field a lookup / rollup reads, when it is still where it should be
+  function target(ix, f) {
+    var L = ix.fields[f.opt.via], T = ix.fields[f.opt.f];
+    if (!L || L.type !== "link" || L.tb !== f.tb || !T || T.tb !== L.opt.to) return null;
+    return T;
+  }
+  function computed(ix, rec, f) {
+    var key = rec.id + "|" + f.id;
+    if (has(ix.memo, key)) return ix.memo[key];
+    if (ix.busy[key]) return CYC;          // reads itself, through links or formulas
+    ix.busy[key] = 1;
+    var out;
+    try {
+      out = f.type === "formula" ? formulaVal(ix, rec, f) : f.type === "lookup" ? lookupVal(ix, rec, f) : rollupVal(ix, rec, f);
+    } finally { delete ix.busy[key]; }
+    ix.memo[key] = out;
+    return out;
+  }
+  function lookupVal(ix, rec, f) {
+    var T = target(ix, f);
+    if (!T) return undefined;
+    var out = [];
+    linked(ix, rec, f.opt.via).forEach(function (id) {
+      var v = value(ix, ix.recs[id], T);
+      if (v === undefined || v === null || v === "") return;
+      if (Array.isArray(v)) v.forEach(function (x) { out.push(x); }); else out.push(v);
+    });
+    return out.length ? out : undefined;
+  }
+  function rollupVal(ix, rec, f) {
+    var T = target(ix, f);
+    if (!T) return undefined;
+    var fn = f.opt.fn, vals = [], texts = [], isCheck = kindOf(ix, T) === "check";
+    linked(ix, rec, f.opt.via).forEach(function (id) {
+      var r = ix.recs[id], v = value(ix, r, T);
+      if (isCheck && (fn === "AND" || fn === "OR")) { vals.push(v === true); return; }   // unticked is false
+      if (v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length)) return;
+      vals.push(v);
+      if (fn === "CONCAT") { var s = text(ix, r, T); if (s) texts.push(s); }
+    });
+    if (fn === "COUNTA") return vals.length;
+    if (fn === "CONCAT") return texts.length ? texts.join(", ") : undefined;
+    if (fn === "AND") return vals.length ? vals.every(truthy) : undefined;
+    if (fn === "OR") return vals.length ? vals.some(truthy) : undefined;
+    var flat = [];
+    vals.forEach(function (v) { (Array.isArray(v) ? v : [v]).forEach(function (x) { flat.push(x); }); });
+    for (var i = 0; i < flat.length; i++) if (isErr(flat[i])) return flat[i];
+    var k = kindOf(ix, T);
+    if ((fn === "MIN" || fn === "MAX") && (k === "date" || k === "stamp")) {
+      var best;
+      flat.forEach(function (x) { if (best === undefined || (fn === "MIN" ? x < best : x > best)) best = x; });
+      return best;
+    }
+    var nums = flat.filter(function (x) { return typeof x === "number" && isFinite(x); });
+    if (fn === "COUNT") return nums.length;
+    if (fn === "SUM") return +nums.reduce(function (a, b) { return a + b; }, 0).toFixed(10);
+    if (!nums.length) return undefined;
+    if (fn === "AVG") return +(nums.reduce(function (a, b) { return a + b; }, 0) / nums.length).toFixed(10);
+    if (fn === "MIN") return Math.min.apply(null, nums);
+    if (fn === "MAX") return Math.max.apply(null, nums);
+    return undefined;
+  }
+  function truthy(v) { return !(v === false || v === 0 || v === "" || v === null || v === undefined || isErr(v)); }
+
+  // What a field's values are, for filters, sorting, groups and totals:
+  // num | date (YYYY-MM-DD…) | stamp (ms) | check | select | multi | list | text
+  function kindOf(ix, f) {
+    if (!f) return "text";
+    var t = f.type;
+    if (isNumType(t) || t === "count") return "num";
+    if (t === "date") return "date";
+    if (t === "ctime" || t === "mtime") return "stamp";
+    if (t === "check" || t === "select" || t === "multi") return t;
+    if (t === "link" || t === "lookup") return "list";
+    if (t === "rollup") {
+      var fn = f.opt.fn;
+      if (fn === "CONCAT") return "text";
+      if (fn === "AND" || fn === "OR") return "check";
+      if (fn === "MIN" || fn === "MAX") {
+        var T = has(ix.kinds, f.id + ">") ? null : target(ix, f);
+        if (T) {
+          ix.kinds[f.id + ">"] = 1;               // a rollup of a rollup of itself
+          var k = kindOf(ix, T);
+          delete ix.kinds[f.id + ">"];
+          if (k === "date" || k === "stamp") return k;
+        }
+      }
+      return "num";
+    }
+    if (t === "formula") {
+      if (f.opt.as === "date") return "date";
+      if (has(ix.kinds, f.id)) return ix.kinds[f.id];
+      ix.kinds[f.id] = "text";                    // while sampling (a formula of itself)
+      var list = ix.tbRecs[f.tb] || [], seen = 0, nums = 0, bools = 0;
+      for (var i = 0; i < list.length && seen < 30; i++) {
+        var v = computed(ix, list[i], f);
+        if (v === undefined || v === null || v === "" || isErr(v)) continue;
+        seen++;
+        if (typeof v === "number") nums++; else if (typeof v === "boolean") bools++;
+      }
+      var kind = seen && nums === seen ? "num" : seen && bools === seen ? "check" : "text";
+      ix.kinds[f.id] = kind;
+      return kind;
+    }
+    return "text";
+  }
+  function isNumField(ix, f) { return kindOf(ix, f) === "num"; }
+
+  // ---- formulas: {Field} names, the Spreadsheet's engine (OrosSheetFx) ----
+  function fxLib() {
+    if (root && root.OrosSheetFx) return root.OrosSheetFx;
+    if (typeof module !== "undefined" && typeof require === "function") {
+      try { return require("../spreadsheet/functions.js"); } catch (e) {}
+    }
+    return null;
+  }
+  // Walks a formula's text and hands every {…} outside "strings" to fn
+  // (with \} and \\ unescaped); fn returns the replacement, or null for
+  // a name that does not exist. Returns { text } or { bad: name }.
+  function braces(src, fn) {
+    var out = "", i = 0, inStr = false;
+    while (i < src.length) {
+      var c = src[i];
+      if (inStr) {
+        out += c;
+        if (c === '"') { if (src[i + 1] === '"') { out += '"'; i++; } else inStr = false; }
+        i++; continue;
+      }
+      if (c === '"') { inStr = true; out += c; i++; continue; }
+      if (c !== "{") { out += c; i++; continue; }
+      var name = "", j = i + 1, closed = false;
+      for (; j < src.length; j++) {
+        var x = src[j];
+        if (x === "\\" && j + 1 < src.length) { name += src[++j]; continue; }
+        if (x === "}") { closed = true; break; }
+        name += x;
+      }
+      if (!closed) return { bad: name };
+      var rep = fn(name);
+      if (rep === null) return { bad: name };
+      out += rep;
+      i = j + 1;
+    }
+    return { text: out };
+  }
+  // the formula as people read it: {Field name}
+  function exprNames(ix, tbId, expr) {
+    var r = braces(expr || "", function (id) {
+      var f = ix.fields[id];
+      return f && f.tb === tbId ? "{" + f.name.replace(/[\\}]/g, "\\$&") + "}" : "{" + id + "}";
+    });
+    return r.text !== undefined ? r.text : expr || "";
+  }
+  // the formula as it is stored: {fieldId}; { expr } or { bad: name }
+  function exprIds(ix, tbId, src) {
+    var list = ix.tbFields[tbId] || [];
+    var r = braces(String(src || ""), function (name) {
+      var n = fold(name.trim());
+      for (var i = 0; i < list.length; i++) if (fold(list[i].name.trim()) === n) return "{" + list[i].id + "}";
+      if (ix.fields[name] && ix.fields[name].tb === tbId) return "{" + name + "}";
+      return null;
+    });
+    return r.bad !== undefined ? { bad: r.bad } : { expr: r.text.slice(0, MAX_EXPR) };
+  }
+  // stored formula → the engine's own text: field k of the table is A(k+1)
+  // of a one-column sheet whose id is the record's id
+  function fxSource(ix, f) {
+    if (has(ix.src, f.id)) return ix.src[f.id];
+    var lib = fxLib(), list = ix.tbFields[f.tb] || [], pos = {};
+    list.forEach(function (g, k) { pos[g.id] = k; });
+    var src = String(f.opt.expr || "").trim();
+    var out = null;
+    if (lib && src) {
+      if (src.charAt(0) === "=") src = src.slice(1);
+      // cell references typed by hand are not part of a Base formula
+      var probe = braces(src, function () { return "0"; });
+      var refs = false;
+      try { lib.tokenize("=" + (probe.text || "")).forEach(function (tk) { if (tk.t === lib.T.REF) refs = true; }); } catch (e) {}
+      var r = refs || probe.bad !== undefined ? null : braces(src, function (id) { return has(pos, id) ? "A" + (pos[id] + 1) : null; });
+      out = r && r.text !== undefined ? "=" + r.text : "#REF!";
+    }
+    ix.src[f.id] = out;
+    return out;
+  }
+  // a value as a cell of the engine's sheet
+  function cellOf(ix, rec, g) {
+    if (g.type === "formula") { var s = fxSource(ix, g); return s && s.charAt(0) === "=" ? s : s || ""; }
+    var v = value(ix, rec, g);
+    if (v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length)) return "";
+    var lib = fxLib(), k = kindOf(ix, g);
+    if (typeof v === "boolean") return v ? "TRUE" : "FALSE";
+    if (isErr(v)) return v;
+    if (k === "date" && typeof v === "string") {
+      var s2 = lib.serialOf(+v.slice(0, 4), +v.slice(5, 7), +v.slice(8, 10));
+      if (v.length > 10) s2 += (+v.slice(11, 13) * 60 + +v.slice(14, 16)) / 1440;
+      return String(s2);
+    }
+    if (k === "stamp" && typeof v === "number") {
+      var dt = new Date(v);
+      return String(lib.serialOf(dt.getFullYear(), dt.getMonth() + 1, dt.getDate()) + (dt.getHours() * 60 + dt.getMinutes()) / 1440);
+    }
+    if (typeof v === "number" && k === "num") return String(v);
+    var str2 = text(ix, rec, g);
+    return '="' + str2.replace(/"/g, '""') + '"';
+  }
+  function engine(ix) {
+    if (ix.fx) return ix.fx;
+    var lib = fxLib();
+    if (!lib) return null;
+    ix.fx = lib.engine({
+      raw: function (sid, r, c) {
+        var rec = ix.recs[sid];
+        if (c !== 0 || !rec) return "";
+        var g = (ix.tbFields[rec.t] || [])[r];
+        return g ? cellOf(ix, rec, g) : "";
+      },
+      sheetId: function () { return undefined; },
+      lang: "en",
+      now: Date.now
+    });
+    return ix.fx;
+  }
+  function formulaVal(ix, rec, f) {
+    var src = fxSource(ix, f);
+    if (!src) return undefined;
+    if (src.charAt(0) !== "=") return src;          // "#REF!"
+    var fx = engine(ix);
+    if (!fx) return undefined;
+    var pos = (ix.tbFields[f.tb] || []).indexOf(f);
+    var v = pos >= 0 ? fx.value(rec.id, pos, 0) : fx.formula(rec.id, src);
+    if (v === null || v === undefined || v === "") return undefined;
+    if (typeof v === "number" && !isFinite(v)) return "#NUM!";
+    if (f.opt.as === "date" && typeof v === "number") {
+      var lib = fxLib();
+      var p = lib.partsOf(v);
+      var out = p.y + "-" + pad(p.m) + "-" + pad(p.d);
+      return v % 1 ? out + "T" + pad(p.hh) + ":" + pad(p.mi) : out;
+    }
+    return v;
+  }
+
+  function optOf(f, id) {
+    var ch = f.opt && f.opt.ch || [];
+    for (var i = 0; i < ch.length; i++) if (ch[i].id === id) return ch[i];
+    return null;
+  }
+
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function localYmd(t) { var d = new Date(t); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function localYmdHm(t) { var d = new Date(t); return localYmd(t) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+
+  // Plain text of a value: search, CSV, sorting of text, cards.
+  // o = { lang, locale } — only for numbers and dates in the screen;
+  // without o the output is the stable machine form (CSV).
+  function text(ix, rec, f, o) {
+    var v = value(ix, rec, f);
+    if (v === undefined || v === null) return "";
+    if (f.type === "link") {
+      var pf = primary(ix, f.opt.to);
+      return v.map(function (id) { var r = ix.recs[id]; return r && pf && pf.type !== "link" ? text(ix, r, pf, o) || "…" : "…"; }).join(", ");
+    }
+    if (f.type === "lookup") {
+      var T = target(ix, f), parts = [];
+      if (!T) return "";
+      linked(ix, rec, f.opt.via).forEach(function (id) { var s0 = text(ix, ix.recs[id], T, o); if (s0) parts.push(s0); });
+      return parts.join(", ");
+    }
+    return show(ix, f, v, o);
+  }
+  // How a number looks: dec places (null = as it is, up to 10)
+  function numText(v, dec, o) {
+    if (typeof v !== "number") return String(v);
+    if (o && o.locale) {
+      try { return v.toLocaleString(o.locale, dec === null ? { maximumFractionDigits: 10 } : { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
+      catch (e) { /* fall through */ }
+    }
+    return String(dec === null ? +v.toFixed(10) : +v.toFixed(dec));
+  }
+  // The text of a value v of field f (also for footer totals).
+  function show(ix, f, v, o) {
+    if (v === undefined || v === null) return "";
+    if (isErr(v)) return v;
+    switch (f.type) {
+      case "number": case "currency": case "percent":
+        var dec = f.opt && typeof f.opt.dec === "number" ? f.opt.dec : 0;
+        var s = numText(v, dec, o);
+        if (f.type === "currency" && o) return s + " " + (f.opt.sym || "");
+        if (f.type === "percent" && o) return s + "%";
+        return s;
+      case "count": return numText(v, 0, o);
+      case "rollup":
+        var k = kindOf(ix, f);
+        if (k === "check") return v === true ? (o ? "✓" : "true") : v === false ? (o ? "" : "false") : String(v);
+        if (k === "date" && typeof v === "string") return o && o.locale ? fmtDate(v, o.locale) : v;
+        if (k === "stamp" && typeof v === "number") return o && o.locale ? fmtStamp(v, o.locale) : localYmdHm(v);
+        if (typeof v !== "number") return String(v);
+        var T = target(ix, f), fn = f.opt.fn;
+        if (T && (T.type === "number" || T.type === "currency" || T.type === "percent") && fn !== "COUNT" && fn !== "COUNTA") {
+          var d2 = typeof f.opt.dec === "number" ? f.opt.dec : typeof T.opt.dec === "number" ? T.opt.dec : 0;
+          return show(ix, Object.assign({}, T, { opt: Object.assign({}, T.opt, { dec: d2 }) }), v, o);
+        }
+        return numText(v, typeof f.opt.dec === "number" ? f.opt.dec : fn === "AVG" ? null : 0, o);
+      case "formula":
+        if (typeof v === "boolean") return v ? (o ? "✓" : "true") : (o ? "" : "false");
+        if (typeof v === "number") return numText(v, typeof f.opt.dec === "number" ? f.opt.dec : null, o);
+        if (f.opt.as === "date" && typeof v === "string" && DATE_RE.test(v.slice(0, 10))) return o && o.locale ? fmtDate(v, o.locale) : v;
+        return String(v);
+      case "check": return v === true ? (o ? "✓" : "true") : "";
+      case "file": return Array.isArray(v) ? v.map(function (x) { return x && x.name || ""; }).filter(Boolean).join(", ") : "";
+      case "select": var c = optOf(f, v); return c ? c.n : "";
+      case "multi": return v.map(function (id) { var c = optOf(f, id); return c ? c.n : ""; }).filter(Boolean).join(", ");
+      case "rating": return o ? new Array(v + 1).join("★") : String(v);
+      case "auto": return String(v);
+      case "ctime": case "mtime":
+        return o && o.locale ? fmtStamp(v, o.locale) : localYmdHm(v);
+      case "date":
+        return o && o.locale ? fmtDate(v, o.locale) : v;
+      default:
+        return typeof v === "string" ? v : typeof v === "number" || typeof v === "boolean" ? String(v) : JSON.stringify(v);
+    }
+  }
+  function fmtDate(v, locale) {
+    try {
+      var d = new Date(v.slice(0, 10) + "T12:00:00Z");
+      var s = d.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+      return v.length > 10 ? s + " " + v.slice(11, 16) : s;
+    } catch (e) { return v.replace("T", " "); }
+  }
+  function fmtStamp(t, locale) {
+    try { return new Date(t).toLocaleString(locale, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
+    catch (e) { return localYmdHm(t).replace("T", " "); }
+  }
+
+  // ---------- filters, sorting, groups ----------
+  function isNumType(t) { return t === "number" || t === "currency" || t === "percent" || t === "rating" || t === "auto"; }
+  function isDateType(t) { return t === "date" || t === "ctime" || t === "mtime"; }
+  function dayOf(kind, v) {   // a comparable "YYYY-MM-DD" in local time, or ""
+    if (v === undefined || v === null || isErr(v)) return "";
+    if (kind === "date") return typeof v === "string" ? v.slice(0, 10) : "";
+    return typeof v === "number" ? localYmd(v) : "";
+  }
+  function fold(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+
+  // Which operators each kind of field offers (the app's filter menu).
+  // The kind of a field (kindOf) or a B1 type name.
+  var KIND_TYPE = { num: "number", date: "date", stamp: "ctime", list: "text" };
+  function opsFor(type) {
+    if (KIND_TYPE[type]) type = KIND_TYPE[type];
+    if (isNumType(type)) return ["eq", "ne", "gt", "lt", "gte", "lte", "empty", "nempty"];
+    if (isDateType(type)) return ["eq", "before", "after", "today", "past", "future", "empty", "nempty"];
+    if (type === "check") return ["checked", "unchecked"];
+    if (type === "select") return ["eq", "ne", "any", "none", "empty", "nempty"];
+    if (type === "multi") return ["has", "hasnot", "empty", "nempty"];
+    return ["has", "hasnot", "eq", "ne", "empty", "nempty"];
+  }
+  function needsValue(op) { return !(op === "empty" || op === "nempty" || op === "today" || op === "past" || op === "future" || op === "checked" || op === "unchecked"); }
+
+  // one condition; today = "YYYY-MM-DD" (the app passes the local day)
+  function test1(ix, rec, f, c, today) {
+    var v = value(ix, rec, f), kind = kindOf(ix, f);
+    var isEmpty = v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length);
+    if (c.op === "empty") return isEmpty;
+    if (c.op === "nempty") return !isEmpty;
+    if (kind === "check") return c.op === "checked" ? v === true : v !== true;
+    var w = c.v;
+    if (needsValue(c.op) && (w === undefined || w === null || w === "" || (Array.isArray(w) && !w.length))) return true;   // unfinished filter: no effect
+    if (kind === "num") {
+      var b = typeof w === "number" ? w : parseFloat(String(w).replace(",", "."));
+      if (!isFinite(b)) return true;
+      if (isEmpty) return c.op === "ne";
+      switch (c.op) {
+        case "eq": return v === b; case "ne": return v !== b;
+        case "gt": return v > b; case "lt": return v < b;
+        case "gte": return v >= b; case "lte": return v <= b;
+      }
+      return true;
+    }
+    if (kind === "date" || kind === "stamp") {
+      var d = dayOf(kind, v);
+      if (c.op === "today") return d === today;
+      if (c.op === "past") return !!d && d < today;
+      if (c.op === "future") return !!d && d > today;
+      var x = String(w).slice(0, 10);
+      if (!d) return false;
+      if (c.op === "eq") return d === x;
+      if (c.op === "before") return d < x;
+      if (c.op === "after") return d > x;
+      return true;
+    }
+    if (f.type === "select") {
+      var list = Array.isArray(w) ? w : [w];
+      if (c.op === "eq") return v === w;
+      if (c.op === "ne") return v !== w;
+      if (c.op === "any") return list.indexOf(v) >= 0;
+      if (c.op === "none") return list.indexOf(v) < 0;
+      return true;
+    }
+    if (f.type === "multi") {
+      var arr = Array.isArray(v) ? v : [];
+      if (c.op === "has") return arr.indexOf(w) >= 0;
+      if (c.op === "hasnot") return arr.indexOf(w) < 0;
+      return true;
+    }
+    var hay = fold(text(ix, rec, f)), needle = fold(w);
+    if (c.op === "has") return hay.indexOf(needle) >= 0;
+    if (c.op === "hasnot") return hay.indexOf(needle) < 0;
+    if (c.op === "eq") return hay === needle;
+    if (c.op === "ne") return hay !== needle;
+    return true;
+  }
+
+  function cmpVals(f, a, b, kind) {   // undefined (empty) goes last in both directions: handled by caller
+    if (kind === "num" || kind === "stamp") {
+      if (typeof a === "number" && typeof b === "number") return a - b;
+      return (typeof a === "number" ? 0 : 1) - (typeof b === "number" ? 0 : 1);   // errors after numbers
+    }
+    if (kind === "check") return (a === true ? 1 : 0) - (b === true ? 1 : 0);
+    if (f.type === "select") {
+      var ch = f.opt.ch || [], ia = -1, ib = -1;
+      for (var i = 0; i < ch.length; i++) { if (ch[i].id === a) ia = i; if (ch[i].id === b) ib = i; }
+      return ia - ib;
+    }
+    return 0;
+  }
+  var COLL = null;
+  function collator() {
+    if (!COLL) { try { COLL = new Intl.Collator(undefined, { sensitivity: "base", numeric: true }); } catch (e) { COLL = { compare: function (a, b) { return a < b ? -1 : a > b ? 1 : 0; } }; } }
+    return COLL;
+  }
+  function compare(ix, f, ra, rb) {
+    var a = value(ix, ra, f), b = value(ix, rb, f);
+    var ea = a === undefined || (Array.isArray(a) && !a.length), eb = b === undefined || (Array.isArray(b) && !b.length);
+    if (ea || eb) return ea === eb ? 0 : ea ? 1 : -1;
+    var kind = kindOf(ix, f);
+    var r = cmpVals(f, a, b, kind);
+    if (r || kind === "num" || kind === "stamp" || kind === "check" || f.type === "select") return r;
+    if (kind === "date") return a < b ? -1 : a > b ? 1 : 0;
+    return collator().compare(text(ix, ra, f), text(ix, rb, f));
+  }
+
+  // The records a view shows, in its order: [rec]. opt = { today, q }
+  // q (the view's search box) matches any shown field's text.
+  function query(ix, view, opt) {
+    opt = opt || {};
+    var cfg = view.cfg, tb = view.tb;
+    var recs = (ix.tbRecs[tb] || []).slice();
+    var conds = cfg.filters.filter(function (c) { return ix.fields[c.f] && ix.fields[c.f].tb === tb; });
+    if (conds.length) {
+      recs = recs.filter(function (r) {
+        if (cfg.conj === "or") {
+          for (var i = 0; i < conds.length; i++) if (test1(ix, r, ix.fields[conds[i].f], conds[i], opt.today || "")) return true;
+          return false;
+        }
+        for (var j = 0; j < conds.length; j++) if (!test1(ix, r, ix.fields[conds[j].f], conds[j], opt.today || "")) return false;
+        return true;
+      });
+    }
+    var q = fold(opt.q || "").trim();
+    if (q) {
+      var shown = visibleFields(ix, view);
+      var words = q.split(/\s+/);
+      recs = recs.filter(function (r) {
+        var hay = shown.map(function (f) { return fold(text(ix, r, f, opt.fmt)); }).join(" \u0001 ");
+        return words.every(function (w) { return hay.indexOf(w) >= 0; });
+      });
+    }
+    var keys = cfg.groups.concat(cfg.sorts).filter(function (s) { return ix.fields[s.f] && ix.fields[s.f].tb === tb; });
+    if (keys.length) {
+      recs.sort(function (ra, rb) {
+        for (var i = 0; i < keys.length; i++) {
+          var f = ix.fields[keys[i].f];
+          var r = compare(ix, f, ra, rb);
+          if (r) {
+            var a = value(ix, ra, f), b = value(ix, rb, f);
+            var ea = a === undefined, eb = b === undefined;
+            if (ea || eb) return r;          // empty values last, both directions
+            return r * keys[i].d;
+          }
+        }
+        return ra.c - rb.c || byId(ra, rb);
+      });
+    }
+    return recs;
+  }
+
+  // Group header key of a record for a group field: [key, label] where
+  // label is plain text ("" = empty).
+  function groupKey(ix, rec, f) {
+    var v = value(ix, rec, f);
+    if (v === undefined || (Array.isArray(v) && !v.length)) return "\u0000";
+    if (f.type === "multi") return v.join(",");
+    if (f.type === "link" || f.type === "lookup" || f.type === "file") return canon(text(ix, rec, f));
+    var kind = kindOf(ix, f);
+    if (kind === "stamp" && typeof v === "number") return localYmd(v);
+    if (kind === "date" && typeof v === "string") return v.slice(0, 10);
+    return canon(v);
+  }
+
+  // ---------- kanban and calendar (B3a) ----------
+  // The field a kanban stacks by: cfg.by when it is a single choice of
+  // this table, else the first single-choice field. → field | null
+  function stackField(ix, view) {
+    var fs = ix.tbFields[view.tb] || [];
+    var f = ix.fields[view.cfg && view.cfg.by];
+    if (f && f.tb === view.tb && f.type === "select") return f;
+    for (var i = 0; i < fs.length; i++) if (fs[i].type === "select") return fs[i];
+    return null;
+  }
+  // Kanban columns: "no value" first, then each choice in its order, with
+  // the view's records (filtered and sorted) in each. A value whose
+  // choice is gone counts as no value.
+  function stacks(ix, view, recs) {
+    var f = stackField(ix, view);
+    if (!f) return null;
+    var cols = [{ id: "", name: "", c: "", recs: [] }], at = { "": 0 };
+    ((f.opt && f.opt.ch) || []).forEach(function (o) { at[o.id] = cols.length; cols.push({ id: o.id, name: o.n, c: o.c, recs: [] }); });
+    recs.forEach(function (r) {
+      var v = value(ix, r, f);
+      cols[has(at, v) ? at[v] : 0].recs.push(r);
+    });
+    return { f: f, cols: cols };
+  }
+  // The date field a calendar lays out: cfg.by when its values are days
+  // (date, created, changed, a formula shown as a date), else the first one.
+  function dateField(ix, view) {
+    var fs = ix.tbFields[view.tb] || [];
+    function ok(f) { var k = f && f.tb === view.tb ? kindOf(ix, f) : ""; return k === "date" || k === "stamp"; }
+    var f = ix.fields[view.cfg && view.cfg.by];
+    if (ok(f)) return f;
+    for (var i = 0; i < fs.length; i++) if (ok(fs[i])) return fs[i];
+    return null;
+  }
+  // One month: weeks (Monday first) of { day "YYYY-MM-DD", inMonth, recs },
+  // plus the records without a day. month = "YYYY-MM".
+  function monthGrid(ix, view, recs, month) {
+    var f = dateField(ix, view);
+    if (!f) return null;
+    var m = /^(\d{4})-(\d{2})$/.exec(month || "");
+    var y = m ? +m[1] : 2000, mo = m ? +m[2] - 1 : 0;
+    var first = new Date(y, mo, 1), lead = (first.getDay() + 6) % 7;
+    var start = new Date(y, mo, 1 - lead);
+    var byDay = {}, none = 0, kind = kindOf(ix, f);
+    recs.forEach(function (r) {
+      var d = dayOf(kind, value(ix, r, f));
+      if (!d) { none++; return; }
+      (byDay[d] = byDay[d] || []).push(r);
+    });
+    var weeks = [];
+    for (var w = 0; w < 6; w++) {
+      var row = [];
+      for (var k = 0; k < 7; k++) {
+        var dt = new Date(start.getFullYear(), start.getMonth(), start.getDate() + w * 7 + k);
+        var key = dt.getFullYear() + "-" + pad(dt.getMonth() + 1) + "-" + pad(dt.getDate());
+        row.push({ day: key, inMonth: dt.getMonth() === mo, recs: byDay[key] || [] });
+      }
+      if (w >= 4 && !row.some(function (c) { return c.inMonth; })) break;
+      weeks.push(row);
+    }
+    return { f: f, weeks: weeks, none: none, editable: f.type === "date" };
+  }
+  // Gallery (B3b): the attachment field whose first photo is a card's
+  // cover: cfg.by when it is one of this table, else the first. → field | null
+  function coverField(ix, view) {
+    var fs = ix.tbFields[view.tb] || [];
+    var f = ix.fields[view.cfg && view.cfg.by];
+    if (f && f.tb === view.tb && f.type === "file") return f;
+    for (var i = 0; i < fs.length; i++) if (fs[i].type === "file") return fs[i];
+    return null;
+  }
+  // the first photo of a record in that field → { id, name, file, … } | null
+  function coverOf(ix, rec, f) {
+    var v = f ? value(ix, rec, f) : null;
+    if (!Array.isArray(v)) return null;
+    for (var i = 0; i < v.length; i++) if (v[i] && v[i].kind === "img") return v[i];
+    return null;
+  }
+
+  // [{ depth, key, f, rec (first), count, recs? }] rows for the screen:
+  // group headers and records interleaved; collapsed = { path: 1 }
+  function layout(ix, view, recs, collapsed) {
+    var gs = view.cfg.groups.filter(function (g) { return ix.fields[g.f] && ix.fields[g.f].tb === view.tb; });
+    var rows = [];
+    if (!gs.length) { recs.forEach(function (r) { rows.push({ rec: r }); }); return rows; }
+    collapsed = collapsed || {};
+    (function walk(list, depth, path) {
+      if (depth >= gs.length) { list.forEach(function (r) { rows.push({ rec: r, depth: depth }); }); return; }
+      var f = ix.fields[gs[depth].f], order = [], by = {};
+      list.forEach(function (r) {
+        var k = groupKey(ix, r, f);
+        if (!by[k]) { by[k] = []; order.push(k); }
+        by[k].push(r);
+      });
+      order.forEach(function (k) {
+        var p = path + "/" + k;
+        rows.push({ group: true, depth: depth, f: f, key: k, path: p, first: by[k][0], count: by[k].length, recs: by[k] });
+        if (!collapsed[p]) walk(by[k], depth + 1, p);
+      });
+    })(recs, 0, "");
+    return rows;
+  }
+
+  // The fields a view shows, in its order: the view's own order first,
+  // then the table's order; the primary field always first and shown.
+  function visibleFields(ix, view) {
+    var list = (ix.tbFields[view.tb] || []).slice();
+    var pf = primary(ix, view.tb);
+    var pos = {};
+    view.cfg.order.forEach(function (id, i) { pos[id] = i; });
+    list.sort(function (a, b) {
+      if (pf && a.id === pf.id) return -1;
+      if (pf && b.id === pf.id) return 1;
+      var pa = has(pos, a.id) ? pos[a.id] : 1e6 + a.ord, pb = has(pos, b.id) ? pos[b.id] : 1e6 + b.ord;
+      return pa - pb || byId(a, b);
+    });
+    var hid = {};
+    view.cfg.hidden.forEach(function (id) { hid[id] = 1; });
+    return list.filter(function (f) { return (pf && f.id === pf.id) || !hid[f.id]; });
+  }
+  function orderedFields(ix, view) {   // all fields in the view's order (the Fields menu)
+    var vis = visibleFields(ix, view), seen = {};
+    vis.forEach(function (f) { seen[f.id] = 1; });
+    var hidden = (ix.tbFields[view.tb] || []).filter(function (f) { return !seen[f.id]; });
+    var pos = {};
+    view.cfg.order.forEach(function (id, i) { pos[id] = i; });
+    var all = vis.concat(hidden);
+    var pf = primary(ix, view.tb);
+    all.sort(function (a, b) {
+      if (pf && a.id === pf.id) return -1;
+      if (pf && b.id === pf.id) return 1;
+      var pa = has(pos, a.id) ? pos[a.id] : 1e6 + a.ord, pb = has(pos, b.id) ? pos[b.id] : 1e6 + b.ord;
+      return pa - pb || byId(a, b);
+    });
+    return all;
+  }
+
+  // Footer numbers of a field over some records.
+  function summary(ix, recs, f) {
+    var n = 0, filled = 0, sum = 0, min = null, max = null, checked = 0;
+    var numeric = kindOf(ix, f) === "num" && f.type !== "auto";
+    recs.forEach(function (r) {
+      var v = value(ix, r, f);
+      n++;
+      if (v === undefined || (Array.isArray(v) && !v.length)) return;
+      filled++;
+      if (v === true) checked++;
+      if (typeof v === "number" && numeric) {
+        sum += v;
+        if (min === null || v < min) min = v;
+        if (max === null || v > max) max = v;
+      }
+    });
+    var out = { count: n, filled: filled, empty: n - filled };
+    if (numeric) {
+      out.sum = +sum.toFixed(10); out.min = min; out.max = max;
+      out.avg = filled ? +(sum / filled).toFixed(10) : null;
+    }
+    if (kindOf(ix, f) === "check") out.checked = checked;
+    return out;
+  }
+
+  // ---------- edits (the app passes the clock in; never inside merge) ----------
+  var SEQ = 0;
+  function uid(now) {
+    SEQ = (SEQ + 1) % 1296;
+    return (now || Date.now()).toString(36) + SEQ.toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+  function fid() { return "f" + Math.random().toString(36).slice(2, 9); }
+  function oid() { return "o" + Math.random().toString(36).slice(2, 8); }
+
+  function clone(d) { return JSON.parse(JSON.stringify(d)); }
+  function find(arr, id) { for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
+  function bump(row, now) { row.m = Math.max(now, (row.m || 0) + 1); }
+  function nextOrd(arr, key, val) {
+    var o = -1;
+    arr.forEach(function (x) { if (x[key] === val && x.ord > o) o = x.ord; });
+    return o + 1;
+  }
+
+  // a change to one row: patch is copied in, the row's m moves only if
+  // something really changed (R27)
+  function putRow(d, kind, row, now) {
+    var out = clone(d);
+    var CLEAN = { bases: cleanBase, tables: cleanTable, fields: cleanField, views: cleanView };
+    var clean = CLEAN[kind](row);
+    if (!clean) return out;
+    var cur = find(out[kind], clean.id);
+    if (cur) {
+      var a = JSON.stringify(Object.assign({}, cur, { m: 0 })), b = JSON.stringify(Object.assign({}, clean, { m: 0 }));
+      if (a === b) return out;
+      var at = out[kind].indexOf(cur);
+      clean.m = Math.max(now, cur.m + 1);
+      out[kind][at] = clean;
+    } else {
+      clean.m = now;
+      out[kind].push(clean);
+    }
+    if (out.tombs[clean.id]) delete out.tombs[clean.id];
+    return normalize(out);
+  }
+
+  function addBase(d, name, now, id) {
+    return putRow(d, "bases", { id: id || uid(now), name: name, color: "blue" }, now);
+  }
+  // A new table with a primary "Name" field and two views (grid, cards).
+  // names = { field, grid, cards } in the app's language.
+  function addTable(d, baseId, name, now, names, ids) {
+    ids = ids || {};
+    var out = normalize(d);
+    var t = { id: ids.t || uid(now), base: baseId, name: name, ord: nextOrd(out.tables, "base", baseId), pf: "" };
+    var f = { id: ids.f || fid(), tb: t.id, name: names && names.field || "Name", type: "text", ord: 0, opt: {} };
+    t.pf = f.id;
+    out = putRow(out, "tables", t, now);
+    out = putRow(out, "fields", f, now);
+    out = putRow(out, "views", { id: ids.v1 || uid(now), tb: t.id, name: names && names.grid || "Grid", kind: "grid", ord: 0, cfg: {} }, now);
+    out = putRow(out, "views", { id: ids.v2 || uid(now), tb: t.id, name: names && names.cards || "Cards", kind: "cards", ord: 1, cfg: {} }, now);
+    return out;
+  }
+  function addField(d, tbId, name, type, opt, now, id) {
+    var out = normalize(d);
+    return putRow(out, "fields", { id: id || fid(), tb: tbId, name: name, type: type, ord: nextOrd(out.fields, "tb", tbId), opt: opt || {} }, now);
+  }
+
+  // Delete with a tombstone; Undo = restore the rows with a fresh m.
+  // A link field goes with its other side, a table with the link fields
+  // of other tables that point at it.
+  var KINDS = ["bases", "tables", "fields", "views", "recs", "links"];
+  function partners(d, id) {
+    var ids = [id];
+    (d.fields || []).forEach(function (f) {
+      if (f.type !== "link") return;
+      if (f.id === id && f.opt.inv && f.opt.inv !== id) ids.push(f.opt.inv);
+      else if (f.opt.to === id && f.tb !== id) ids.push(f.id);
+    });
+    return ids;
+  }
+  function remove(d, id, now) {
+    var out = clone(d);
+    if (!out.links) out.links = [];
+    partners(out, id).forEach(function (x) {
+      var row = null;
+      KINDS.forEach(function (k) { row = row || find(out[k], x); });
+      var at = Math.max(now, row ? row.m : 0);
+      out.tombs[x] = Math.max(out.tombs[x] || 0, at);
+    });
+    return normalize(out);
+  }
+
+  // Values: patch = { fid: value | null } (null clears). Only fields
+  // whose stored value really changes get a new time (R27).
+  function setValues(d, recId, patch, now) {
+    var out = clone(d);
+    var ix = index(out);
+    var r = find(out.recs, recId);
+    if (!r) return out;
+    var changed = false;
+    Object.keys(patch).forEach(function (k) {
+      var f = ix.fields[k];
+      if (!f || f.tb !== r.t || NOSTORE[f.type]) return;
+      var nv = cleanVal(f, patch[k]);
+      // a value that does not fit is ignored; only null, "" or false clear
+      var clears = patch[k] === null || patch[k] === "" || patch[k] === false || (Array.isArray(patch[k]) && !patch[k].length);
+      if (nv === undefined && !clears) return;
+      var cur = has(r.v, k) ? r.v[k] : undefined;
+      if (canon(cur === undefined ? null : cur) === canon(nv === undefined ? null : nv)) return;
+      if (nv === undefined) delete r.v[k]; else r.v[k] = nv;
+      r.fm[k] = Math.max(now, (r.fm[k] || 0) + 1, r.m + 1);
+      changed = true;
+    });
+    if (!changed) return out;
+    var mm = 0;
+    Object.keys(r.fm).forEach(function (k) { if (r.fm[k] > mm) mm = r.fm[k]; });
+    r.m = Math.max(mm, r.m);
+    return normalize(out);
+  }
+
+  function addRecord(d, tbId, vals, now, id) {
+    var out = clone(d);
+    var rid = id || uid(now);
+    if (find(out.recs, rid)) return { data: normalize(out), id: rid };
+    var ix = index(out);
+    var r = { id: rid, t: tbId, c: now, m: now, v: {}, fm: {} };
+    Object.keys(vals || {}).forEach(function (k) {
+      var f = ix.fields[k];
+      if (!f || f.tb !== tbId || NOSTORE[f.type]) return;
+      var nv = cleanVal(f, vals[k]);
+      if (nv === undefined) return;
+      r.v[k] = nv; r.fm[k] = now;
+    });
+    if (out.tombs[rid]) delete out.tombs[rid];
+    out.recs.push(r);
+    return { data: normalize(out), id: rid };
+  }
+
+  // Undo of a delete: the rows come back with a fresh m, newer than the
+  // tombstone, so the undo also wins on every other device.
+  function restore(d, rows, now) {
+    var out = clone(d);
+    if (!out.links) out.links = [];
+    (rows || []).forEach(function (x) {
+      var kind = x.kind, row = clone(x.row);
+      delete out.tombs[row.id];
+      if (kind === "recs") {
+        row.m = Math.max(now, row.m + 1);
+        Object.keys(row.fm).forEach(function (k) { row.fm[k] = Math.max(row.fm[k], now); });
+        var cur = find(out.recs, row.id);
+        if (cur) out.recs.splice(out.recs.indexOf(cur), 1);
+        out.recs.push(row);
+      } else {
+        row.m = Math.max(now, row.m + 1);
+        var c2 = find(out[kind], row.id);
+        if (c2) out[kind].splice(out[kind].indexOf(c2), 1);
+        out[kind].push(row);
+      }
+    });
+    return normalize(out);
+  }
+
+  // Everything that goes away with a base / table / field / record (for Undo).
+  function rowsUnder(d, id) {
+    var rows = [], seen = {}, ix = index(d);
+    function push(kind, row) { if (row && !seen[row.id]) { seen[row.id] = 1; rows.push({ kind: kind, row: clone(row) }); } }
+    function linksOf(test) { (d.links || []).forEach(function (L) { if (test(L)) push("links", L); }); }
+    var walked = {};
+    (function walk(id) {
+      if (walked[id]) return;
+      walked[id] = 1;
+      if (ix.bases[id]) {
+        push("bases", ix.bases[id]);
+        (ix.baseTables[id] || []).forEach(function (t) { walk(t.id); });
+      } else if (ix.tables[id]) {
+        push("tables", ix.tables[id]);
+        (ix.tbFields[id] || []).forEach(function (f) { walk(f.id); });
+        (ix.tbViews[id] || []).forEach(function (v) { push("views", v); });
+        var mine = {};
+        (ix.tbRecs[id] || []).forEach(function (r) { push("recs", r); mine[r.id] = 1; });
+        linksOf(function (L) { return mine[L.a] || mine[L.b]; });
+        d.fields.forEach(function (f) { if (f.type === "link" && f.opt.to === id) walk(f.id); });
+      } else if (ix.fields[id]) {
+        var f = ix.fields[id];
+        push("fields", f);
+        (ix.tbRecs[f.tb] || []).forEach(function (r) { if (has(r.fm, id)) push("recs", r); });
+        if (f.type === "link") {
+          linksOf(function (L) { return L.f === id || L.f === f.opt.inv; });
+          if (f.opt.inv && f.opt.inv !== id && ix.fields[f.opt.inv]) walk(f.opt.inv);
+        }
+      } else if (ix.views[id]) push("views", ix.views[id]);
+      else if (ix.recs[id]) {
+        push("recs", ix.recs[id]);
+        linksOf(function (L) { return L.a === id || L.b === id; });
+      }
+    })(id);
+    return rows;
+  }
+
+  // ---------- links (wave B2) ----------
+  // A link field and its other side. Linking a table to itself makes one
+  // field. names: { inv } = the other side's name. Returns the data.
+  function addLinkField(d, tbId, name, toTb, now, invName, ids, one) {
+    var out = normalize(d);
+    ids = ids || {};
+    var a = ids.a || fid(), b = toTb === tbId ? a : ids.b || fid();
+    var opt = { to: toTb, inv: b };
+    if (one) opt.one = true;
+    out = putRow(out, "fields", { id: a, tb: tbId, name: name, type: "link", ord: nextOrd(out.fields, "tb", tbId), opt: opt }, now);
+    if (b !== a) out = putRow(out, "fields", { id: b, tb: toTb, name: invName || name, type: "link", ord: nextOrd(out.fields, "tb", toTb), opt: { to: tbId, inv: a } }, now);
+    return out;
+  }
+  // How "rec a links to rec b through field F" is stored (see the top).
+  function orient(ix, F, a, b) {
+    var inv = F.opt.inv && ix.fields[F.opt.inv] ? F.opt.inv : "";
+    if (inv === F.id) return a < b ? { f: F.id, a: a, b: b } : { f: F.id, a: b, b: a };
+    if (inv && inv < F.id) return { f: inv, a: b, b: a };
+    return { f: F.id, a: a, b: b };
+  }
+  // The records rec links to through field F become `targets` (in that
+  // order for new ones). A field with opt.one keeps only the first.
+  // Only links that really come or go change (R27).
+  function setLinks(d, fieldId, recId, targets, now) {
+    var out = normalize(d), ix = index(out);
+    var F = ix.fields[fieldId], r = ix.recs[recId];
+    if (!F || F.type !== "link" || !r || r.t !== F.tb) return out;
+    var want = [], seen = {};
+    (targets || []).forEach(function (id) {
+      var x = ix.recs[id];
+      if (!x || x.t !== F.opt.to || seen[id] || (F.opt.inv === F.id && id === recId)) return;
+      seen[id] = 1; want.push(id);
+    });
+    if (F.opt.one) want = want.slice(0, 1);
+    var cur = (ix.lk[F.id] && ix.lk[F.id][recId]) || [];
+    var changed = false;
+    cur.forEach(function (id) {
+      if (seen[id] && want.indexOf(id) >= 0) return;
+      var o = orient(ix, F, recId, id), lid = linkId(o.f, o.a, o.b);
+      var row = find(out.links, lid);
+      out.tombs[lid] = Math.max(out.tombs[lid] || 0, now, row ? row.m : 0);
+      changed = true;
+    });
+    want.forEach(function (id, k) {
+      if (cur.indexOf(id) >= 0) return;
+      if (out.links.length >= MAX_LINKS) return;
+      var o = orient(ix, F, recId, id), lid = linkId(o.f, o.a, o.b);
+      var row = find(out.links, lid);
+      if (row) out.links.splice(out.links.indexOf(row), 1);
+      var m = Math.max(now + k, (out.tombs[lid] || 0) + 1, row ? row.m + 1 : 0);
+      delete out.tombs[lid];
+      out.links.push({ id: lid, m: m, f: o.f, a: o.a, b: o.b });
+      changed = true;
+    });
+    return changed ? normalize(out) : out;
+  }
+  // The links of one record, copied to another (Duplicate).
+  function copyLinks(d, fromId, toId, now) {
+    var out = normalize(d), ix = index(out);
+    var r = ix.recs[fromId];
+    if (!r || !ix.recs[toId]) return out;
+    (ix.tbFields[r.t] || []).forEach(function (F) {
+      if (F.type !== "link") return;
+      var l = (ix.lk[F.id] && ix.lk[F.id][fromId]) || [];
+      if (l.length) out = setLinks(out, F.id, toId, l, now);
+    });
+    return out;
+  }
+
+  // Change a field's type: every stored value is converted (the text
+  // form is the bridge between types) and written with a new time;
+  // values that do not fit become empty. Returns { data, lost }.
+  function convert(d, fieldId, type, opt, now) {
+    var out = normalize(d);
+    var ix = index(out);
+    var f = ix.fields[fieldId];
+    if (!f) return { data: out, lost: 0 };
+    var nf = cleanField(Object.assign({}, f, { type: type, opt: opt || {} }));
+    var lost = 0, patches = [];
+    // choices for text → select / multi: one per distinct text
+    if ((type === "select" || type === "multi") && f.type !== "select" && f.type !== "multi") {
+      var names = {}, ch = (nf.opt.ch || []).slice();
+      ch.forEach(function (c) { names[fold(c.n)] = c.id; });
+      (ix.tbRecs[f.tb] || []).forEach(function (r) {
+        var s = text(ix, r, f);
+        (type === "multi" ? s.split(/\s*[,;]\s*/) : [s]).forEach(function (p) {
+          p = p.trim();
+          if (p && !has(names, fold(p)) && ch.length < MAX_OPTS) {
+            var id = oid(); names[fold(p)] = id; ch.push({ id: id, n: line(p, MAX_NAME), c: COLORS[ch.length % COLORS.length] });
+          }
+        });
+      });
+      nf.opt.ch = ch;
+    }
+    (ix.tbRecs[f.tb] || []).forEach(function (r) {
+      if (!has(r.v, f.id)) return;
+      var nv = convertVal(ix, r, f, nf);
+      if (nv === undefined) lost++;
+      patches.push([r.id, nv]);
+    });
+    out = putRow(out, "fields", nf, now);
+    patches.forEach(function (p) {
+      var o = {}; o[fieldId] = p[1] === undefined ? null : p[1];
+      out = setValues(out, p[0], o, now);
+    });
+    return { data: out, lost: lost };
+  }
+  function convertVal(ix, r, from, to) {
+    var v = r.v[from.id];
+    if (from.type === to.type) return cleanVal(to, v);
+    var s = text(ix, r, from);
+    if (to.type === "number" || to.type === "currency" || to.type === "percent" || to.type === "rating") {
+      var n = typeof v === "number" ? v : v === true ? 1 : parseNum(s);
+      return n === null ? undefined : cleanVal(to, n);
+    }
+    if (to.type === "check") return v === true || /^(1|true|yes|ναι|ja|x|✓)$/i.test(s.trim()) ? true : undefined;
+    if (to.type === "date") return cleanVal(to, parseDate(s));
+    if (to.type === "select") {
+      var id = choiceId(to, s); return id || undefined;
+    }
+    if (to.type === "multi") {
+      var ids = s.split(/\s*[,;]\s*/).map(function (p) { return choiceId(to, p); }).filter(Boolean);
+      return cleanVal(to, ids);
+    }
+    if (to.type === "long") return cleanVal(to, s);
+    return cleanVal(to, s.replace(/\n+/g, " "));
+  }
+  function choiceId(f, name) {
+    var n = fold(String(name).trim());
+    if (!n) return "";
+    var ch = f.opt.ch || [];
+    for (var i = 0; i < ch.length; i++) if (fold(ch[i].n) === n) return ch[i].id;
+    return "";
+  }
+  // "1.234,5" / "1,234.5" / "12,5" / "€ 12" / "12%" → number
+  function parseNum(s) {
+    s = String(s || "").replace(/[\s €$£%]/g, "");
+    if (!s) return null;
+    if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, "").replace(",", ".");
+    else if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, "");
+    else s = s.replace(",", ".");
+    if (!/^-?(\d+\.?\d*|\.\d+)(e-?\d+)?$/i.test(s)) return null;
+    var n = parseFloat(s);
+    return isFinite(n) ? n : null;
+  }
+  // "2026-11-13", "13/11/2026", "13.11.2026", "2026-11-13 09:30" → ISO (day first, like Europe)
+  function parseDate(s) {
+    s = String(s || "").trim();
+    var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{2}))?/);
+    if (!m) {
+      var e = s.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})(?:[ ,]+(\d{1,2}):(\d{2}))?/);
+      if (!e) return "";
+      m = [e[0], e[3], e[2], e[1], e[4], e[5]];
+    }
+    var out = m[1] + "-" + pad(+m[2]) + "-" + pad(+m[3]);
+    if (m[4] !== undefined) out += "T" + pad(+m[4]) + ":" + m[5];
+    return okDate(out) ? out : "";
+  }
+
+  // ---------- CSV ----------
+  // RFC 4180 with the delimiter found in the first lines (, ; tab).
+  function parseCsv(textIn) {
+    var s = String(textIn || "").replace(/^﻿/, "");
+    var head = s.slice(0, 4000), counts = { ",": 0, ";": 0, "\t": 0 }, inQ = false;
+    for (var i = 0; i < head.length; i++) {
+      var ch = head[i];
+      if (ch === '"') inQ = !inQ;
+      else if (!inQ && has(counts, ch)) counts[ch]++;
+      else if (!inQ && ch === "\n") break;
+    }
+    var delim = ",";
+    if (counts[";"] > counts[delim]) delim = ";";
+    if (counts["\t"] > counts[delim]) delim = "\t";
+    var rows = [], row = [], cell = "", q = false;
+    for (var j = 0; j < s.length; j++) {
+      var c = s[j];
+      if (q) {
+        if (c === '"') { if (s[j + 1] === '"') { cell += '"'; j++; } else q = false; }
+        else cell += c;
+      } else if (c === '"' && cell === "") q = true;
+      else if (c === delim) { row.push(cell); cell = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && s[j + 1] === "\n") j++;
+        row.push(cell); rows.push(row); row = []; cell = "";
+      } else cell += c;
+    }
+    if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+    return rows.filter(function (r) { return r.some(function (x) { return x.trim() !== ""; }); });
+  }
+
+  // A type for a column of text values.
+  function guessType(vals) {
+    var list = vals.map(function (v) { return String(v || "").trim(); }).filter(Boolean);
+    if (!list.length) return { type: "text", opt: {} };
+    function all(fn) { return list.every(fn); }
+    if (all(function (v) { return /^(true|false|yes|no|ναι|όχι|ja|nein|x|✓|checked)$/i.test(v); }) &&
+        list.some(function (v) { return /^(true|yes|ναι|ja|x|✓|checked)$/i.test(v); })) return { type: "check", opt: {} };
+    if (all(function (v) { return /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(v); })) return { type: "email", opt: {} };
+    if (all(function (v) { return /^https?:\/\/\S+$/i.test(v); })) return { type: "url", opt: {} };
+    if (all(function (v) { return parseDate(v) !== ""; })) {
+      return { type: "date", opt: list.some(function (v) { return parseDate(v).length > 10; }) ? { time: true } : {} };
+    }
+    if (all(function (v) { return /[€$£]/.test(v) && parseNum(v) !== null; })) {
+      return { type: "currency", opt: { dec: 2, sym: /\$/.test(list[0]) ? "$" : /£/.test(list[0]) ? "£" : "€" } };
+    }
+    if (all(function (v) { return /%\s*$/.test(v) && parseNum(v) !== null; })) return { type: "percent", opt: { dec: decs(list) } };
+    if (all(function (v) { return parseNum(v) !== null && !/^0\d/.test(v.replace(/^-/, "")); })) return { type: "number", opt: { dec: decs(list) } };
+    if (all(function (v) { return /^\+?[\d\s()\-.]{7,20}$/.test(v) && /\d{6}/.test(v.replace(/\D/g, "")); })) return { type: "phone", opt: {} };
+    if (list.some(function (v) { return v.length > 200 || /\n/.test(v); })) return { type: "long", opt: {} };
+    var distinct = {}, n = 0;
+    list.forEach(function (v) { if (!has(distinct, fold(v))) { distinct[fold(v)] = v; n++; } });
+    if (list.length >= 4 && n <= 12 && n <= list.length / 2) {
+      var ch = [], k = 0;
+      Object.keys(distinct).forEach(function (key) { ch.push({ id: "o" + (k + 1).toString(36) + Math.random().toString(36).slice(2, 6), n: line(distinct[key], MAX_NAME), c: COLORS[k++ % COLORS.length] }); });
+      return { type: "select", opt: { ch: ch } };
+    }
+    return { type: "text", opt: {} };
+  }
+  function decs(list) {
+    var d = 0;
+    list.forEach(function (v) {
+      var n = parseNum(v);
+      if (n === null) return;
+      var s = String(n), p = s.indexOf(".");
+      if (p >= 0) d = Math.max(d, Math.min(8, s.length - p - 1));
+    });
+    return d;
+  }
+
+  // The stored value of one CSV cell for a field (import).
+  function fromText(f, s) {
+    s = String(s == null ? "" : s).trim();
+    if (!s) return undefined;
+    switch (f.type) {
+      case "number": case "currency": case "percent": var n = parseNum(s); return n === null ? undefined : n;
+      case "rating": var r = parseNum(s); if (r === null) { var stars = (s.match(/★/g) || []).length; r = stars || null; } return r === null ? undefined : cleanVal(f, r);
+      case "check": return /^(true|yes|ναι|ja|x|✓|checked|1)$/i.test(s) ? true : undefined;
+      case "date": return cleanVal(f, parseDate(s));
+      case "select": return choiceId(f, s) || undefined;
+      case "multi": return cleanVal(f, s.split(/\s*[,;]\s*/).map(function (p) { return choiceId(f, p); }).filter(Boolean));
+      default: return cleanVal(f, s);
+    }
+  }
+
+  // ---------- Forms bridge (B4, Bible BASE-1 "Forms contract") ----------
+  // Forms → __orosOpenAt("base", { addRecords: { base, table, from: "forms",
+  //   rows: [{ key: "frm:<formId>:<answerId>", values: { fieldId: v } }] } }).
+  // A key becomes one record id (keyId), so an answer sent again, or a
+  // record deleted here, is never written a second time. Values: text
+  // as strings, numbers, "YYYY-MM-DD", yes/no as booleans, a single
+  // choice as its label, several as labels (a label not there yet,
+  // like an "Other" answer, becomes a new choice). A field that is gone,
+  // computed, a link or attachments, or a value that does not fit, is
+  // reported in skipped. → { data, table, rows: [{ key, ok, dup?, why?,
+  // skipped }], added, dup, failed } | { error }
+  var FORM_KEY = /^frm:[A-Za-z0-9_-]{1,40}:[a-z0-9]{16}\.[0-9]{1,16}$/;
+  var FORM_BATCH = 500;
+  function fnv(s, seed) {
+    var h = seed >>> 0;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h;
+  }
+  function keyId(key) { return "k" + fnv(key, 2166136261).toString(36) + fnv(key, 3735928559).toString(36) + (key.length % 36).toString(36); }
+  function formVal(f, v, now) {
+    switch (f.type) {
+      case "text": case "long": case "email": case "phone": case "url":
+        return typeof v === "string" ? cleanVal(f, v) : undefined;
+      case "number": case "currency": case "percent": case "rating":
+        return typeof v === "number" || typeof v === "string" ? cleanVal(f, typeof v === "string" ? parseNum(v) : v) : undefined;
+      case "date":
+        return typeof v === "string" ? cleanVal(f, v) : undefined;
+      case "check":
+        return v === true ? true : v === false ? null : undefined;       // null: "no", not stored, not skipped
+      case "select":
+        if (typeof v !== "string" || !v.trim()) return undefined;
+        return choiceFor(f, v, now) || undefined;
+      case "multi":
+        if (!Array.isArray(v)) return undefined;
+        var ids = v.filter(function (x) { return typeof x === "string" && x.trim(); }).map(function (x) { return choiceFor(f, x, now); }).filter(Boolean);
+        return ids.length ? cleanVal(f, ids) : undefined;
+      default:
+        return undefined;
+    }
+  }
+  // the id of a choice by its label; a new label becomes a new choice
+  function choiceFor(f, label, now) {
+    var id = choiceId(f, label);
+    if (id) return id;
+    var ch = f.opt.ch = f.opt.ch || [];
+    if (ch.length >= MAX_OPTS) return "";
+    // the same label gets the same id on every device that receives it
+    id = "o" + fnv(fold(label.trim()), 2166136261).toString(36);
+    if (ch.some(function (c) { return c.id === id; })) return id;
+    ch.push({ id: id, n: line(label.trim(), MAX_NAME), c: COLORS[ch.length % COLORS.length] });
+    bump(f, now);
+    return id;
+  }
+  function addFromForms(d, ar, now) {
+    if (!isObj(ar)) return { error: "bad" };
+    var out = clone(normalize(d));
+    var ix = index(out);
+    var tb = okId(ar.table) ? ix.tables[ar.table] : null;
+    if (!tb || tb.base !== ar.base) return { error: "table" };
+    var fieldsById = {};
+    out.fields.forEach(function (f) { fieldsById[f.id] = f; });
+    var have = {};
+    out.recs.forEach(function (r) { have[r.id] = 1; });
+    var room = MAX_RECS - out.recs.length, rows = [], added = 0, dup = 0, failed = 0, n = 0;
+    (Array.isArray(ar.rows) ? ar.rows : []).slice(0, FORM_BATCH).forEach(function (row) {
+      var key = isObj(row) && typeof row.key === "string" ? row.key : "";
+      if (!FORM_KEY.test(key)) { rows.push({ key: key.slice(0, 80), ok: false, why: "key", skipped: [] }); failed++; return; }
+      var rid = keyId(key);
+      if (have[rid] || has(out.tombs, rid)) { rows.push({ key: key, ok: true, dup: true, skipped: [] }); dup++; return; }
+      if (room <= 0) { rows.push({ key: key, ok: false, why: "full", skipped: [] }); failed++; return; }
+      var at = now + n++;
+      var r = { id: rid, t: tb.id, c: at, m: at, v: {}, fm: {} }, skipped = [];
+      var vals = isObj(row.values) ? row.values : {};
+      Object.keys(vals).slice(0, MAX_FIELDS).forEach(function (k) {
+        var f = fieldsById[k];
+        if (!f || f.tb !== tb.id || NOSTORE[f.type] || f.type === "file") { skipped.push(String(k).slice(0, 40)); return; }
+        var nv = formVal(f, vals[k], now);
+        if (nv === null) return;
+        if (nv === undefined) { skipped.push(k); return; }
+        r.v[k] = nv; r.fm[k] = at;
+      });
+      out.recs.push(r);
+      have[rid] = 1;
+      room--; added++;
+      rows.push({ key: key, ok: true, skipped: skipped });
+    });
+    return { data: normalize(out), table: tb.id, rows: rows, added: added, dup: dup, failed: failed };
+  }
+  // What Forms needs to make a public form of a table (fromTable):
+  // the fields a question can ask, in the table's order.
+  var FORM_TYPES = { text: 1, long: 1, email: 1, url: 1, phone: 1, number: 1, currency: 1, percent: 1, rating: 1, date: 1, check: 1, select: 1, multi: 1 };
+  function formSpec(ix, tbId) {
+    var tb = ix.tables[tbId];
+    if (!tb) return null;
+    var fields = [];
+    (ix.tbFields[tbId] || []).forEach(function (f) {
+      if (!FORM_TYPES[f.type]) return;
+      var x = { id: f.id, name: f.name, type: f.type };
+      if (f.type === "select" || f.type === "multi") x.opts = { ch: (f.opt.ch || []).map(function (c) { return { id: c.id, n: c.n }; }) };
+      if (f.type === "rating") x.opts = { max: f.opt.max || 5 };
+      fields.push(x);
+    });
+    return { base: tb.base, table: tb.id, name: tb.name, fields: fields };
+  }
+
+  // Import rows (first = headings) as a new table of a base.
+  // Returns { data, table, count, skipped }.
+  function importRows(d, baseId, name, rows, now, names) {
+    var out = normalize(d);
+    rows = rows || [];
+    var heads = (rows[0] || []).map(function (h, i) { return line(h, MAX_NAME).trim() || ((names && names.column || "Field") + " " + (i + 1)); });
+    var body = rows.slice(1);
+    var width = heads.length;
+    var room = MAX_RECS - out.recs.length;
+    var skipped = Math.max(0, body.length - room);
+    body = body.slice(0, Math.max(0, room));
+    var t = { id: uid(now), base: baseId, name: name, ord: nextOrd(out.tables, "base", baseId), pf: "" };
+    var fields = heads.slice(0, MAX_FIELDS).map(function (h, i) {
+      var g = guessType(body.map(function (r) { return r[i]; }));
+      if (i === 0 && g.type !== "text") g = { type: "text", opt: {} };   // the primary field names the record
+      return { id: "f" + i.toString(36) + Math.random().toString(36).slice(2, 7), tb: t.id, name: h, type: g.type, ord: i, opt: g.opt };
+    });
+    t.pf = fields.length ? fields[0].id : "";
+    out = putRow(out, "tables", t, now);
+    fields.forEach(function (f) { out = putRow(out, "fields", f, now); });
+    var ix = index(out);
+    out = putRow(out, "views", { id: uid(now), tb: t.id, name: names && names.grid || "Grid", kind: "grid", ord: 0, cfg: {} }, now);
+    out = putRow(out, "views", { id: uid(now), tb: t.id, name: names && names.cards || "Cards", kind: "cards", ord: 1, cfg: {} }, now);
+    var recs = body.map(function (row, k) {
+      var r = { id: uid(now) + k.toString(36), t: t.id, c: now + k, m: now + k, v: {}, fm: {} };
+      fields.forEach(function (f, i) {
+        if (i >= width) return;
+        var val = fromText(ix.fields[f.id], row[i]);
+        if (val !== undefined) { r.v[f.id] = val; r.fm[f.id] = now + k; }
+      });
+      return r;
+    });
+    out.recs = out.recs.concat(recs);
+    return { data: normalize(out), table: t.id, count: recs.length, skipped: skipped,
+             fields: fields.map(function (f) { return f.id; }), recIds: recs.map(function (r) { return r.id; }) };
+  }
+
+  // ---------- several tables at once (Airtable's CSVs, a workbook) ----------
+  // The names in one link cell: commas outside "quotes" split it, and
+  // parts that only make a known name together are joined again
+  // ("Smith, J."). known: { fold(name): [recId…] }. → [key…] | null
+  function splitNames(s, known) {
+    s = String(s == null ? "" : s).trim();
+    if (!s) return [];
+    if (has(known, fold(s))) return [fold(s)];
+    var parts = [], cur = "", q = false;
+    for (var i = 0; i < s.length; i++) {
+      var c = s[i];
+      if (c === '"') q = !q;
+      else if (c === "," && !q) { parts.push(cur.trim()); cur = ""; }
+      else cur += c;
+    }
+    parts.push(cur.trim());
+    parts = parts.filter(Boolean);
+    var out = [];
+    for (var a = 0; a < parts.length;) {
+      var hit = 0, key = "";
+      for (var b = parts.length; b > a && !hit; b--) {
+        var k1 = fold(parts.slice(a, b).join(", ")), k2 = fold(parts.slice(a, b).join(","));
+        if (has(known, k1)) { hit = b; key = k1; } else if (has(known, k2)) { hit = b; key = k2; }
+      }
+      if (!hit) return null;
+      out.push(key);
+      a = hit;
+    }
+    return out;
+  }
+  // How well column j of table A names records of table B: 0 = not a
+  // link; > 1 when the heading also names B (Airtable names a link
+  // field after the table it links to).
+  function linkScore(A, B, j) {
+    var n = 0, ok = 0;
+    if (!B.size || B.numeric) return 0;
+    A.body.forEach(function (r) {
+      var v = String(r[j] == null ? "" : r[j]).trim();
+      if (!v) return;
+      n++;
+      var p = splitNames(v, B.known);
+      if (p && p.length) ok++;
+    });
+    if (!n) return 0;
+    var hn = fold(A.heads[j] || ""), bn = fold(B.name);
+    var named = hn === bn || (hn.length > 2 && bn.length > 2 && (hn.indexOf(bn) === 0 || bn.indexOf(hn) === 0));
+    var r = ok / n;
+    if (named && r >= 0.8) return 1 + r;
+    return r === 1 && n >= 2 ? r : 0;
+  }
+  // Import `list` [{ name, rows }] as tables of one base. A column whose
+  // cells are the primary names of another table of the same import
+  // becomes a link field (with the other side's column as its partner,
+  // when that table has one back). → { data, tables, count, skipped, links }
+  function importTables(d, baseId, list, now, names) {
+    var out = normalize(d), made = [], count = 0, skipped = 0;
+    (list || []).forEach(function (x, i) {
+      if (!x || !Array.isArray(x.rows) || !x.rows.length) return;
+      var r = importRows(out, baseId, line(x.name, MAX_NAME) || ((names && names.table) || "Table") + " " + (i + 1), x.rows, now, names);
+      out = r.data;
+      count += r.count; skipped += r.skipped;
+      var heads = x.rows[0] || [], body = x.rows.slice(1, 1 + r.recIds.length), known = {}, size = 0, numeric = true;
+      body.forEach(function (row, k) {
+        var key = fold(String(row[0] == null ? "" : row[0]).trim());
+        if (!key) return;
+        if (!has(known, key)) { known[key] = []; size++; if (parseNum(key) === null) numeric = false; }
+        known[key].push(r.recIds[k]);
+      });
+      made.push({ id: r.table, name: line(x.name, MAX_NAME), heads: heads, body: body, fields: r.fields, recIds: r.recIds, known: known, size: size, numeric: numeric });
+    });
+    // candidates: (A, column, B), best first
+    var cands = [];
+    made.forEach(function (A) {
+      for (var j = 1; j < A.fields.length; j++) {
+        var best = null, score = 0;
+        made.forEach(function (B) {
+          if (B === A) return;
+          var s = linkScore(A, B, j);
+          if (s > score) { score = s; best = B; }
+        });
+        if (best) cands.push({ A: A, j: j, B: best, s: score });
+      }
+    });
+    cands.sort(function (x, y) { return y.s - x.s; });
+    var used = {}, links = {}, nl = 0, nLinkFields = 0;
+    function dropValues(tb, fid0) {
+      out.recs.forEach(function (rec) {
+        if (rec.t !== tb.id || !has(rec.v, fid0)) return;
+        delete rec.v[fid0]; delete rec.fm[fid0];
+      });
+    }
+    function addLinks(F, tb, j, other, invId) {
+      tb.body.forEach(function (row, k) {
+        var keys = splitNames(row[j], other.known) || [];
+        keys.forEach(function (key) {
+          var a = tb.recIds[k], b = other.known[key][0];
+          var o = F < invId ? { f: F, a: a, b: b } : { f: invId, a: b, b: a };
+          var id = linkId(o.f, o.a, o.b);
+          if (has(links, id) || out.links.length + nl >= MAX_LINKS) return;
+          links[id] = { id: id, m: now + nl, f: o.f, a: o.a, b: o.b };   // the order of the cells
+          nl++;
+        });
+      });
+    }
+    cands.forEach(function (c) {
+      var fa = c.A.fields[c.j];
+      if (used[fa]) return;
+      var back = null;
+      cands.forEach(function (x) { if (!back && x.A === c.B && x.B === c.A && !used[x.A.fields[x.j]]) back = x; });
+      var fb = back ? back.A.fields[back.j] : fid();
+      used[fa] = 1;
+      if (back) used[fb] = 1;
+      var rowA = find(out.fields, fa);
+      dropValues(c.A, fa);
+      rowA.type = "link"; rowA.opt = { to: c.B.id, inv: fb };
+      if (back) {
+        var rowB = find(out.fields, fb);
+        dropValues(c.B, fb);
+        rowB.type = "link"; rowB.opt = { to: c.A.id, inv: fa };
+        rowB.m = now;
+      } else {
+        var taken = {};
+        out.fields.forEach(function (f) { if (f.tb === c.B.id) taken[fold(f.name)] = 1; });
+        var nm = c.A.name, n = 2;
+        while (has(taken, fold(nm))) nm = c.A.name + " " + n++;
+        out.fields.push({ id: fb, m: now, tb: c.B.id, name: nm, type: "link", ord: nextOrd(out.fields, "tb", c.B.id), opt: { to: c.A.id, inv: fa } });
+      }
+      rowA.m = now;
+      addLinks(fa, c.A, c.j, c.B, fb);
+      if (back) addLinks(fb, c.B, back.j, c.A, fa);
+      nLinkFields++;
+    });
+    Object.keys(links).forEach(function (k) { out.links.push(links[k]); });
+    return { data: normalize(out), tables: made.map(function (x) { return x.id; }), count: count, skipped: skipped, links: nLinkFields };
+  }
+
+  // One SheetJS cell as the text the importer reads: dates (by their
+  // number format, through SSF, so no time zone moves them) as
+  // YYYY-MM-DD[THH:MM], percents as "12.5%", money as shown, other
+  // numbers plain, errors empty.
+  function sheetCell(c, SSF) {
+    if (!c || c.v == null || c.t === "e" || c.t === "z") return "";
+    if (c.t === "b") return c.v ? "true" : "false";
+    if (c.t === "d" || c.v instanceof Date) {
+      var dt = c.v instanceof Date ? c.v : new Date(c.v);
+      if (isNaN(dt)) return String(c.w || "");
+      var ds = dt.getFullYear() + "-" + pad(dt.getMonth() + 1) + "-" + pad(dt.getDate());
+      return dt.getHours() || dt.getMinutes() ? ds + "T" + pad(dt.getHours()) + ":" + pad(dt.getMinutes()) : ds;
+    }
+    if (c.t === "n" && typeof c.v === "number" && isFinite(c.v)) {
+      var z = typeof c.z === "string" ? c.z : "";
+      if (z && SSF && typeof SSF.is_date === "function" && SSF.is_date(z)) {
+        var p = SSF.parse_date_code(c.v);
+        if (p && p.y) {
+          var s = p.y + "-" + pad(p.m) + "-" + pad(p.d);
+          if (c.v % 1 && /[hH]/.test(z)) s += "T" + pad(p.H) + ":" + pad(p.M);
+          if (c.v < 1 && /[hH]/.test(z)) return pad(p.H) + ":" + pad(p.M);
+          return s;
+        }
+      }
+      if (/%/.test(z)) return String(+(c.v * 100).toPrecision(12)) + "%";
+      if (/[€$£]/.test(c.w || "")) return String(c.w).trim();
+      var sym = /€|\[\$€/.exec(z) ? "€" : /£/.test(z) ? "£" : /"\$"|\[\$\$|^\$/.test(z) ? "$" : "";
+      if (sym) return sym + c.v.toFixed(2);
+      return String(+c.v.toPrecision(15));
+    }
+    return String(c.w != null && c.t !== "s" ? c.w : c.v);
+  }
+
+  // One base as a slice of its own (the .orosbase file): its tables,
+  // fields, views, records and links; no tombstones.
+  function onlyBase(d, baseId) {
+    var src = normalize(d), tb = {}, fl = {};
+    var out = { ver: src.ver, bases: [], tables: [], fields: [], views: [], recs: [], links: [], tombs: {} };
+    src.bases.forEach(function (b) { if (b.id === baseId) out.bases.push(b); });
+    if (!out.bases.length) return out;
+    src.tables.forEach(function (t) { if (t.base === baseId) { out.tables.push(t); tb[t.id] = 1; } });
+    src.fields.forEach(function (f) { if (tb[f.tb]) { out.fields.push(f); fl[f.id] = 1; } });
+    src.views.forEach(function (v) { if (tb[v.tb]) out.views.push(v); });
+    src.recs.forEach(function (r) { if (tb[r.t]) out.recs.push(r); });
+    (src.links || []).forEach(function (l) { if (fl[l.f]) out.links.push(l); });
+    return clone(out);
+  }
+
+  // CSV of a view's records and fields. Text that a spreadsheet would
+  // run as a formula (= + - @ at the start) gets a leading apostrophe.
+  function csvCell(s) {
+    s = String(s == null ? "" : s);
+    if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = "'" + s;
+    return /[",;\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function toCsv(ix, fields, recs) {
+    var lines = [fields.map(function (f) { return csvCell(f.name); }).join(",")];
+    recs.forEach(function (r) { lines.push(fields.map(function (f) { return csvCell(text(ix, r, f)); }).join(",")); });
+    return "﻿" + lines.join("\r\n") + "\r\n";
+  }
+  // Rows for BR-S1 (Open in Spreadsheet): numbers as numbers, dates as text.
+  function toTable(ix, fields, recs) {
+    var rows = [fields.map(function (f) { return f.name; })];
+    recs.forEach(function (r) {
+      rows.push(fields.map(function (f) {
+        var v = value(ix, r, f);
+        if (v === undefined) return "";
+        if (typeof v === "number" && kindOf(ix, f) === "num") return v;
+        return text(ix, r, f);
+      }));
+    });
+    return rows;
+  }
+
+  // ---------- Comments on records (B5b, BASE-1) ----------
+  // A synced slice of its own, "base-notes" (localStorage
+  // oros-base-notes): { ver: 1, cs: [{ id, r: record id, c: created,
+  // m, x: text } | { id, r, c, m, del: 1 }] }. Kept apart from
+  // oros-base-data so a device that does not know comments yet never
+  // drops them when it rewrites its tables (unknown row kinds go there).
+  // Per comment the newer m wins (a tie: deleted, then the larger
+  // JSON); a deleted comment stays as a tombstone row (no text).
+  var NOTES_KEY = "oros-base-notes", MAX_NOTE = 4000, MAX_NOTES = 20000;
+  function notesEmpty() { return { ver: VER, cs: [] }; }
+  function cleanNote(x) {
+    if (!isObj(x) || !okId(x.id) || !okId(x.r)) return null;
+    var m = ms(x.m), c = ms(x.c) || m;
+    if (!m) return null;
+    if (x.del === 1) return { id: x.id, r: x.r, c: c, m: m, del: 1 };
+    var tx = para(x.x, MAX_NOTE);
+    return tx.trim() ? { id: x.id, r: x.r, c: c, m: m, x: tx } : null;
+  }
+  function noteWins(a, b) {   // true when b beats a
+    if (b.m !== a.m) return b.m > a.m;
+    if (!!b.del !== !!a.del) return !!b.del;
+    return JSON.stringify(b) > JSON.stringify(a);
+  }
+  function mergeNotes(a, b) {
+    var map = {};
+    [a, b].forEach(function (d) {
+      (isObj(d) && Array.isArray(d.cs) ? d.cs : []).forEach(function (raw) {
+        var n = cleanNote(raw);
+        if (n && (!has(map, n.id) || noteWins(map[n.id], n))) map[n.id] = n;
+      });
+    });
+    var out = notesEmpty();
+    out.cs = Object.keys(map).sort().map(function (id) { return map[id]; });
+    if (out.cs.length > MAX_NOTES) {   // the oldest tombstones go first, never a live comment
+      var dead = out.cs.filter(function (n) { return n.del; }).sort(function (x, y) { return x.m - y.m; });
+      var drop = {};
+      dead.slice(0, out.cs.length - MAX_NOTES).forEach(function (n) { drop[n.id] = 1; });
+      out.cs = out.cs.filter(function (n) { return !drop[n.id]; });
+    }
+    return out;
+  }
+  function normNotes(d) { return mergeNotes(d, null); }
+  // the live comments of a record, oldest first
+  function notesOf(n, recId) {
+    return (isObj(n) && Array.isArray(n.cs) ? n.cs : []).filter(function (x) { return x.r === recId && !x.del; })
+      .sort(function (a, b) { return a.c - b.c || byId(a, b); });
+  }
+  function addNote(n, recId, text, now, id) {
+    var out = normNotes(n);
+    var x = para(text, MAX_NOTE);
+    if (!okId(recId) || !x.trim()) return { data: out, id: null };
+    if (out.cs.filter(function (c) { return !c.del; }).length >= MAX_NOTES) return { data: out, id: null, full: true };
+    var nid = id || uid(now);
+    out.cs.push({ id: nid, r: recId, c: now, m: now, x: x });
+    return { data: normNotes(out), id: nid };
+  }
+  function delNote(n, id, now) {
+    var out = normNotes(n);
+    out.cs = out.cs.map(function (c) { return c.id === id ? { id: c.id, r: c.r, c: c.c, m: Math.max(now, c.m + 1), del: 1 } : c; });
+    return normNotes(out);
+  }
+  // Undo of a delete: the comment comes back with a newer m.
+  function undelNote(n, row, now) {
+    var out = normNotes(n), x = cleanNote(row);
+    if (!x || x.del) return out;
+    out.cs = out.cs.filter(function (c) { return c.id !== x.id; });
+    var cur = (isObj(n) && Array.isArray(n.cs) ? n.cs : []).filter(function (c) { return c && c.id === x.id; })[0];
+    x.m = Math.max(now, cur ? ms(cur.m) + 1 : 0, x.m + 1);
+    out.cs.push(x);
+    return normNotes(out);
+  }
+
+  // ---------- Automations events (B5, BASE-1) ----------
+  // What one local save did, as Automations events (automations/core.js
+  // EVENTS base.add / base.change): a record that is new (not a record
+  // brought back by Undo, not one of a table made in the same save, as
+  // an import does) and each stored field whose value got a new time
+  // (not when the field itself changed in the same save, as a type
+  // change does). At most max (default 20) per save. → [{ ev, key, text }]
+  function events(before, after, max) {
+    max = typeof max === "number" ? max : 20;
+    var out = [];
+    if (!isObj(before) || !isObj(after)) return out;
+    var A = index(after), B = index(before);
+    var tombs = isObj(before.tombs) ? before.tombs : {};
+    function head(r) {
+      var tb = A.tables[r.t], b = tb ? A.bases[tb.base] : null, pf = primary(A, r.t), title = "";
+      try { title = pf ? text(A, r, pf) : ""; } catch (e) { title = ""; }
+      return line((b ? b.name + " › " : "") + (tb ? tb.name : "") + (title ? " · " + title : ""), 200);
+    }
+    for (var i = 0; i < after.recs.length && out.length < max; i++) {
+      var r = after.recs[i], old = B.recs[r.id];
+      if (!B.tables[r.t]) continue;
+      if (!old) {
+        if (has(tombs, r.id)) continue;
+        out.push({ ev: "base.add", key: "base:" + r.id + ":a", text: head(r) });
+        continue;
+      }
+      var fids = Object.keys(r.fm).sort();
+      for (var j = 0; j < fids.length && out.length < max; j++) {
+        var fid = fids[j], f = A.fields[fid], fb = B.fields[fid];
+        if (!f || !fb || NOSTORE[f.type] || f.m !== fb.m) continue;
+        if ((old.fm[fid] || 0) >= r.fm[fid]) continue;
+        var v = "";
+        try { v = text(A, r, f); } catch (e) { v = ""; }
+        out.push({ ev: "base.change", key: "base:" + r.id + ":" + fid + ":" + r.fm[fid],
+                   text: line(head(r) + " · " + f.name + ": " + v, 300) });
+      }
+    }
+    return out;
+  }
+
+  // Characters the slice takes in localStorage (the space meter).
+  function size(d) { return serialize(d).length; }
+
+  var API = {
+    VER: VER, STORAGE_KEY: STORAGE_KEY, MAX_RECS: MAX_RECS, MAX_FIELDS: MAX_FIELDS, MAX_TABLES: MAX_TABLES,
+    MAX_OPTS: MAX_OPTS, TYPES: TYPES, COMPUTED: COMPUTED, NOSTORE: NOSTORE, COLORS: COLORS,
+    MAX_LINKS: MAX_LINKS, MAX_EXPR: MAX_EXPR, ROLL_FNS: ROLL_FNS,
+    linkId: linkId, addLinkField: addLinkField, setLinks: setLinks, copyLinks: copyLinks, linked: linked,
+    kindOf: kindOf, isNumField: isNumField, show: show, isErr: isErr, exprNames: exprNames, exprIds: exprIds,
+    empty: empty, normalize: normalize, merge: merge, serialize: serialize, canon: canon,
+    index: index, primary: primary, value: value, text: text, optOf: optOf, cleanVal: cleanVal, cleanOpt: cleanOpt,
+    opsFor: opsFor, needsValue: needsValue, query: query, layout: layout, groupKey: groupKey,
+    ATT_DIR: ATT_DIR, FILE_RE: FILE_RE, MAX_ATT: MAX_ATT, attPath: attPath, usedFiles: usedFiles, cleanFiles: cleanFiles,
+    coverField: coverField, coverOf: coverOf,
+    FORM_KEY: FORM_KEY, FORM_BATCH: FORM_BATCH, keyId: keyId, addFromForms: addFromForms, formSpec: formSpec, inputVal: formVal, events: events, fmtStamp: fmtStamp,
+    NOTES_KEY: NOTES_KEY, MAX_NOTE: MAX_NOTE, notesEmpty: notesEmpty, mergeNotes: mergeNotes, normNotes: normNotes, notesOf: notesOf, addNote: addNote, delNote: delNote, undelNote: undelNote,
+    VIEW_KINDS: VIEW_KINDS, visibleFields: visibleFields, stackField: stackField, stacks: stacks, dateField: dateField, monthGrid: monthGrid, orderedFields: orderedFields, summary: summary, compare: compare,
+    uid: uid, fid: fid, oid: oid, putRow: putRow, addBase: addBase, addTable: addTable, addField: addField,
+    remove: remove, restore: restore, rowsUnder: rowsUnder, setValues: setValues, addRecord: addRecord,
+    convert: convert, parseNum: parseNum, parseDate: parseDate, parseCsv: parseCsv, guessType: guessType,
+    fromText: fromText, importRows: importRows, importTables: importTables, splitNames: splitNames,
+    sheetCell: sheetCell, onlyBase: onlyBase, toCsv: toCsv, toTable: toTable, csvCell: csvCell,
+    localYmd: localYmd, fold: fold, size: size, isNumType: isNumType, isDateType: isDateType
+  };
+  if (typeof module !== "undefined" && module.exports) module.exports = API;
+  if (root) root.OrosBaseCore = API;
+})(typeof window !== "undefined" ? window : globalThis);

@@ -48,6 +48,11 @@
 //                                 run?"): every rule in words and the
 //                                 device's recent runs with what came of
 //                                 them; never what a notice said
+//   baseTables(C, raw, opts)     Base (BASE-1 B4b): every base with its
+//                                 tables, their fields (name, type,
+//                                 choices) and how many records; with
+//                                 table its records (every field as
+//                                 Base shows it) with a ref
 //   preview(sum, lang)           → [line] what the consent card shows
 // Exposes window.OrosAssistSummary and, under Node, module.exports.
 // ============================================================
@@ -61,7 +66,7 @@
   // Apps with a summary of their own; any other app needs a Today provider.
   var OWN = { budget: "month", timesheet: "month", todo: "lists", stock: "month", kanban: "boards",
               notes: "notebooks", bookmarks: "folders", contacts: "labels", shelf: "kinds", library: "books",
-              automations: "rules" };   // AS-STRUCT
+              automations: "rules", studio: "shows", base: "tables" };   // AS-STRUCT; studio: STUDIO-POD P4; base: BASE-1 B4b
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -103,6 +108,9 @@
     if (app === "crm" && typeof args.partner === "string" && args.partner.trim()) {
       out.partner = args.partner.replace(/\s+/g, " ").trim().slice(0, 120);
     }
+    if (app === "forms" && typeof args.form === "string" && args.form.trim()) {
+      out.form = args.form.replace(/\s+/g, " ").trim().slice(0, 200);
+    }
     if (app === "kanban" && typeof args.board === "string" && args.board.trim()) {
       out.board = args.board.replace(/\s+/g, " ").trim().slice(0, 120);
     }
@@ -111,7 +119,7 @@
       return typeof args[k] === "string" && args[k].trim() ? args[k].replace(/\s+/g, " ").trim().slice(0, max || 120) : "";
     }
     var grp = { todo: ["list"], notes: ["notebook"], bookmarks: ["folder", "tag"], contacts: ["label"],
-                shelf: ["kind", "status", "tag"], library: ["status", "tag"] }[app] || [];
+                shelf: ["kind", "status", "tag"], library: ["status", "tag"], studio: ["show"], base: ["base", "table"] }[app] || [];
     grp.forEach(function (k) {
       var v = word(k, k === "folder" ? 240 : 120);
       if (v) out[k] = k === "kind" || k === "status" ? v.toLowerCase() : v;
@@ -120,6 +128,56 @@
       out.monthSet = monthSet;
       if (typeof args.label === "string" && args.label.trim()) out.label = args.label.replace(/\s+/g, " ").trim().slice(0, 40);
     }
+    return out;
+  }
+
+  // ---------- Studio: podcast shows and their episodes (STUDIO-POD P4) ----------
+  // Read only: Claude (Assistant or Gate) never publishes; an upload always
+  // needs the owner's own tap in Studio. No password, token or file path.
+  var SHOW_ID = /^h[a-z0-9]{6,20}$/, MAX_EPS = 200;
+  function studioShows(raw, opts) {
+    raw = isObj(raw) ? raw : {};
+    opts = opts || {};
+    var tombs = isObj(raw.tombs) ? raw.tombs : {};
+    var shows = arr(raw.shows).filter(function (x) { return isObj(x) && SHOW_ID.test(x.id || "") && !tombs.hasOwnProperty(x.id); });
+    var want = str(opts.show, 120).toLowerCase();
+    if (want) {
+      var hit = shows.filter(function (x) { return str(x.title, 120).toLowerCase() === want || x.id === want; });
+      if (!hit.length) return { ok: false, err: "No show is called \"" + str(opts.show, 120) + "\". The shows: " + (shows.map(function (x) { return str(x.title, 120) || "(untitled)"; }).join(", ") || "none") + "." };
+      shows = hit;
+    }
+    shows.sort(function (a, b) { var x = str(a.title, 120).toLowerCase(), y = str(b.title, 120).toLowerCase(); return x < y ? -1 : x > y ? 1 : 0; });
+    var ids = {};
+    shows.forEach(function (x) { ids[x.id] = x; });
+    var per = {}, items = [];
+    arr(raw.projects).forEach(function (p) {
+      if (!isObj(p) || !ids[p.sh] || !isObj(p.ep) || tombs.hasOwnProperty(p.id)) return;
+      var e = p.ep, sh = ids[p.sh], made = typeof e.file === "string" && /\.mp3$/.test(e.file);
+      var d = typeof e.date === "number" && e.date > 0 ? new Date(e.date).toISOString().slice(0, 10) : "";
+      var kind = e.type === "trailer" || e.type === "bonus" ? e.type : "episode";
+      var dur = made && typeof e.dur === "number" && e.dur > 0 ? Math.floor(e.dur / 60) + ":" + pad(Math.floor(e.dur % 60)) : "";
+      var c = per[sh.id] || (per[sh.id] = { episodes: 0, ready: 0, latest: "" });
+      c.episodes++;
+      if (made) c.ready++;
+      if (made && d > c.latest) c.latest = d;
+      items.push({ title: str(e.title, 120) || str(p.name, 120) || "(untitled)", date: d, by: str(sh.title, 120),
+                   text: [kind + (e.n ? " " + e.n : "") + (e.se ? ", season " + e.se : ""), made ? "episode file made" + (dur ? ", " + dur : "") : "no episode file yet"].join(" · "),
+                   n: typeof e.n === "number" ? e.n : 0 });
+    });
+    items.sort(function (a, b) { return a.by < b.by ? -1 : a.by > b.by ? 1 : (b.date > a.date ? 1 : b.date < a.date ? -1 : b.n - a.n); });
+    items.forEach(function (it) { delete it.n; });
+    var out = {
+      ok: true, app: "studio",
+      shows: shows.map(function (x) {
+        var url = typeof x.url === "string" && /^https:\/\/[^\s<>"]+\/$/.test(x.url) ? x.url : "";
+        var c = per[x.id] || { episodes: 0, ready: 0, latest: "" };
+        return { title: str(x.title, 120) || "(untitled)", author: str(x.author, 120), site: url, feed: url ? url + "feed.xml" : "",
+                 episodes: c.episodes, files_made: c.ready, latest: c.latest };
+      }),
+      items: items.slice(0, MAX_EPS),
+      note: "Read only. Publishing (ZIP, GitHub Pages, Nextcloud) is done by the owner in Studio › Export › Publish as podcast."
+    };
+    if (items.length > MAX_EPS) out.more_items = items.length - MAX_EPS;
     return out;
   }
 
@@ -451,7 +509,7 @@
           var ln = arr(k.labels).map(function (id) { return lbl[id] || ""; }).filter(Boolean);
           if (ln.length) it.labels = ln.slice(0, 10);
           var st = arr(k.subtasks).filter(isObj);
-          if (st.length) it.subtasks = st.filter(function (x) { return x.done; }).length + "/" + st.length;
+          if (st.length) it.subtasks = st.filter(function (x) { return x.done || x.completed; }).length + "/" + st.length;
           it.target = { board: b.id, col: c.id, card: k.id };   // → a ref (assistant.js)
           items.push(it);
         });
@@ -969,26 +1027,26 @@
           lbls: "Labels", lbl: "Label", nolbl: "No label", stMain: "Own stock", stSold: "sold",
           pick: "Which one", over: "overdue", nopart: "No partner called “{q}”", owes: "Owes you", owe: "You owe", settle: "settlement due",
           orders: "open orders", roy: "Royalties to pay", ctr: "Contract", next: "Next follow-up", ctrs: "Contracts", ctrNeed: "need a decision",
-          kbCard: "card", kbCards: "cards", kbArch: "Archived",
+          kbCard: "card", kbCards: "cards", kbArch: "Archived", bsRec: "record", bsRecs: "records",
           stLists: "Lists", stNbs: "Notebooks", stPages: "pages", stFolders: "Folders", stUnsorted: "Unsorted", stTags: "Tags",
           stBm: "bookmarks", stCt: "contacts", stFav: "favourites", stItems: "items", stBooks: "books",
           stReading: "reading", stFinished: "finished", stUnread: "unread", stWant: "want", stNow: "in progress", stDrop: "dropped",
           kBook: "Books", kFilm: "Films", kSeries: "Series", kAlbum: "Music", kPodcast: "Podcasts", kGame: "Games",
           auRules: "rules", auOn: "on", auRuns: "Recent runs on this device", auOff: "off", auGone: "deleted",
-          "au.sent": "notice shown", "au.late": "shown late", "au.off": "notices off", "au.skip": "skipped, an app is missing", "au.run": "opened", "au.outErr": "push or webhook not delivered" },
+          "au.sent": "notice shown", "au.late": "shown late", "au.off": "notices off", "au.skip": "skipped, an app is missing", "au.run": "opened", "au.outErr": "push or webhook not delivered", podEps: "episodes", podMade: "files made" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
           run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία", toInv: "Προς τιμολόγηση",
           lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα", stMain: "Δικό σου απόθεμα", stSold: "πουλήθηκαν",
           pick: "Ποιος από αυτούς", over: "ληξιπρόθεσμα", nopart: "Κανένας συνεργάτης με όνομα «{q}»", owes: "Σου χρωστά", owe: "Του χρωστάς", settle: "οφείλεται εκκαθάριση",
           orders: "ανοιχτές παραγγελίες", roy: "Δικαιώματα προς πληρωμή", ctr: "Συμφωνητικό", next: "Επόμενο follow-up", ctrs: "Συμφωνητικά", ctrNeed: "θέλουν απόφαση",
-          kbCard: "κάρτα", kbCards: "κάρτες", kbArch: "Στο αρχείο",
+          kbCard: "κάρτα", kbCards: "κάρτες", kbArch: "Στο αρχείο", bsRec: "εγγραφή", bsRecs: "εγγραφές",
           stLists: "Λίστες", stNbs: "Τετράδια", stPages: "σελίδες", stFolders: "Φάκελοι", stUnsorted: "Χωρίς φάκελο", stTags: "Ετικέτες",
           stBm: "σελιδοδείκτες", stCt: "επαφές", stFav: "αγαπημένες", stItems: "στοιχεία", stBooks: "βιβλία",
           stReading: "διαβάζεις", stFinished: "τελείωσαν", stUnread: "αδιάβαστα", stWant: "θέλω", stNow: "σε εξέλιξη", stDrop: "παρατημένα",
           kBook: "Βιβλία", kFilm: "Ταινίες", kSeries: "Σειρές", kAlbum: "Μουσική", kPodcast: "Podcasts", kGame: "Παιχνίδια",
           auRules: "κανόνες", auOn: "ενεργοί", auRuns: "Πρόσφατες εκτελέσεις σε αυτή τη συσκευή", auOff: "ανενεργός", auGone: "διαγράφηκε",
-          "au.sent": "εμφανίστηκε ειδοποίηση", "au.late": "εμφανίστηκε αργότερα", "au.off": "ειδοποιήσεις κλειστές", "au.skip": "παραλείφθηκε, λείπει εφαρμογή", "au.run": "το άνοιξες", "au.outErr": "η ειδοποίηση ή το webhook δεν παραδόθηκε" }
+          "au.sent": "εμφανίστηκε ειδοποίηση", "au.late": "εμφανίστηκε αργότερα", "au.off": "ειδοποιήσεις κλειστές", "au.skip": "παραλείφθηκε, λείπει εφαρμογή", "au.run": "το άνοιξες", "au.outErr": "η ειδοποίηση ή το webhook δεν παραδόθηκε", podEps: "επεισόδια", podMade: "με αρχείο" }
   };
   // A pack language (orosI18n, ../i18n.js) gets its tables here; in Node
   // (tests) there is no window and only en / el exist.
@@ -1092,6 +1150,16 @@
       out.push(w.ctrs + ": " + s.contracts_total + " · " + w.ctrNeed + ": " + s.need_decision);
       s.contracts.slice(0, 8).forEach(function (k) { out.push(k.title + (k.partner ? " · " + k.partner : "") + (k.to ? " → " + k.to : "")); });
       more((s.contracts.length > 8 ? s.contracts.length - 8 : 0) + (s.more_contracts || 0));
+    } else if (s.app === "studio" && Array.isArray(s.shows)) {
+      s.shows.forEach(function (x) { out.push(x.title + ": " + x.episodes + " " + w.podEps + " · " + x.files_made + " " + w.podMade + (x.feed ? " · " + x.feed : "")); });
+      if (!s.shows.length) out.push(w.none);
+    } else if (s.app === "base" && Array.isArray(s.bases)) {
+      s.bases.forEach(function (b) {
+        out.push(b.name + ": " + (b.tables.length ? b.tables.map(function (t) { return t.name + " (" + t.records + " " + (t.records === 1 ? w.bsRec : w.bsRecs) + ")"; }).join(", ") : "—"));
+      });
+      if (!s.bases.length) out.push(w.none);
+    } else if (s.app === "base" && s.table) {
+      out.push(s.base + " › " + s.table + ": " + s.records + " " + (s.records === 1 ? w.bsRec : w.bsRecs));
     } else if (s.app === "calendar" && Array.isArray(s.labels)) {
       out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.events + ")"; })
         .concat([w.nolbl + " (" + s.no_label + ")"]).join(", "));
@@ -1118,11 +1186,116 @@
     return out;
   }
 
+  // FORMS-4: Forms. Every live form with its questions, whether it is
+  // shared and open, how many answers and how many new; with opts.form
+  // (a title, or a form id) that form's results as Forms' own summary
+  // shows them (forms/results.js, passed as R with its words): counts,
+  // shares and averages only. Never the people's written answers, names,
+  // e-mails or phones (other people's data). Target: { form } (search.js).
+  function formsSummary(d, ans, opts, R, words) {
+    opts = opts || {};
+    var forms = (d && Array.isArray(d.forms) ? d.forms : []).filter(function (f) { return f && !f.del && typeof f.id === "string"; });
+    var rs = ans && Array.isArray(ans.rs) ? ans.rs.filter(function (r) { return r && !r.del && typeof r.f === "string"; }) : [];
+    var seen = ans && ans.seen && typeof ans.seen === "object" ? ans.seen : {};
+    var by = {};
+    rs.forEach(function (r) { (by[r.f] = by[r.f] || []).push(r); });
+    var str = function (v, n) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, n) : ""; };
+    var row = function (f) {
+      var mine = by[f.id] || [], x = f.x && typeof f.x === "object" ? f.x : {}, last = 0, nw = 0, sn = +seen[f.id] || 0;
+      mine.forEach(function (r) { var at = +r.at || 0; if (at > last) last = at; if (at > sn) nw++; });
+      var o = { title: str(f.title, 200), questions: (Array.isArray(f.qs) ? f.qs : []).filter(function (q) { return q && q.t !== "page" && q.t !== "info"; }).length,
+                shared: !!x.k, answers: mine.length, target: { form: f.id } };
+      if (x.k) o.open = x.open !== 0 && (!x.close || x.close > Date.now());
+      if (nw) o["new"] = nw;
+      if (last) o.last = new Date(last).toISOString().slice(0, 10);
+      return o;
+    };
+    var out = { app: "forms", forms: forms.map(row).sort(function (a, b) { return (b.last || "").localeCompare(a.last || ""); }).slice(0, 200) };
+    if (forms.length > 200) out.more_forms = forms.length - 200;
+    if (!opts.form) return out;
+    var want = String(opts.form).toLowerCase();
+    var f = forms.filter(function (x) { return x.id === opts.form; })[0] ||
+            forms.filter(function (x) { return str(x.title, 200).toLowerCase() === want; })[0] ||
+            forms.filter(function (x) { return str(x.title, 200).toLowerCase().indexOf(want) >= 0; })[0];
+    if (!f) return { ok: false, err: "No form called \"" + opts.form + "\". The forms: " + out.forms.map(function (x) { return x.title || "(untitled)"; }).slice(0, 30).join(", ") };
+    if (!R) return { ok: false, err: "Forms' results could not be read on this device." };
+    var res = { app: "forms", form: row(f), results: R.summary(f, by[f.id] || [], words).map(function (it) {
+      var o = { question: it.label || "", answered: it.n, of: it.of };
+      if (it.kind === "bars" || it.kind === "hist") o.counts = it.bars.map(function (b) { return { option: b.label, n: b.n, pct: b.pct }; });
+      if (it.avg !== undefined) o.average = it.avg;
+      if (it.kind === "hist" && it.n) { o.min = it.min; o.max = it.max; }
+      if (it.kind === "grid") o.grid = { columns: it.cols, rows: it.rows.map(function (r) { return { row: r.label, counts: r.counts }; }) };
+      if (it.right !== undefined) o.right = it.right;
+      if (it.kind === "list") o.note = "written answers: count only";
+      if (it.t === "multi") o.note = "several may be ticked; pct is of those who answered";
+      return o;
+    }) };
+    var qa = typeof R.quizAvg === "function" ? R.quizAvg(f, by[f.id] || []) : null;
+    if (qa && qa.n) res.quiz = { average: qa.avg, of: qa.max, scored: qa.n };
+    return res;
+  }
+
+  // ---------- Base (BASE-1 B4b) ----------
+  // C = OrosBaseCore. Every base › table with its fields (name, type,
+  // the labels of a choice field, at most 40) and how many records;
+  // with opts.table (and opts.base when names repeat) that table's
+  // records: the primary field as title and every other field as Base
+  // shows it (200 characters each), with a ref. Attachments by name.
+  var BS_TYPE = { long: "long text", check: "checkbox", select: "choice", multi: "several choices", auto: "autonumber",
+                  ctime: "created", mtime: "modified", file: "attachments" };
+  function baseTables(C, d, opts) {
+    opts = opts || {};
+    if (!C) return { ok: false, err: "Base could not be read on this device." };
+    if (!isObj(d) || !Array.isArray(d.bases)) return { app: "base", bases: [], note: "Base has not been opened on this device yet." };
+    d = C.normalize(d);
+    var ix = C.index(d), fold = C.fold;
+    var bases = d.bases.slice().sort(function (a, b) { return (a.ord || 0) - (b.ord || 0) || (a.name < b.name ? -1 : 1); });
+    function fieldsOf(tb) {
+      return (ix.tbFields[tb.id] || []).slice(0, 60).map(function (f) {
+        var o = { name: str(f.name, 120), type: BS_TYPE[f.type] || f.type };
+        if ((f.type === "select" || f.type === "multi") && f.opt && f.opt.ch) o.choices = f.opt.ch.slice(0, 40).map(function (c) { return str(c.n, 120); });
+        if (f.type === "date" && f.opt && f.opt.time) o.time = true;
+        if (C.NOSTORE[f.type]) o.read_only = true;
+        return o;
+      });
+    }
+    var out = { app: "base", bases: bases.map(function (b) {
+      return { name: str(b.name, 120), tables: (ix.baseTables[b.id] || []).map(function (tb) {
+        return { name: str(tb.name, 120), records: (ix.tbRecs[tb.id] || []).length, fields: fieldsOf(tb) };
+      }) };
+    }) };
+    if (!opts.table) return out;
+    var hits = [];
+    bases.forEach(function (b) {
+      if (opts.base && fold(b.name) !== fold(opts.base)) return;
+      (ix.baseTables[b.id] || []).forEach(function (tb) { if (fold(tb.name) === fold(opts.table)) hits.push({ b: b, tb: tb }); });
+    });
+    if (!hits.length) return { ok: false, err: "No table called \"" + opts.table + "\"" + (opts.base ? " in the base " + opts.base : "") + ". The tables: " +
+      bases.map(function (b) { return (ix.baseTables[b.id] || []).map(function (tb) { return b.name + " › " + tb.name; }).join(", "); }).filter(Boolean).join(", ").slice(0, 2000) };
+    if (hits.length > 1) return { ok: false, err: "Several bases have a table called \"" + opts.table + "\" (" + hits.map(function (h) { return h.b.name; }).join(", ") + "); give base." };
+    var h = hits[0], pf = C.primary(ix, h.tb.id), fs = (ix.tbFields[h.tb.id] || []).slice(0, 30);
+    var items = (ix.tbRecs[h.tb.id] || []).map(function (r) {
+      var vals = {};
+      fs.forEach(function (f) {
+        if (pf && f.id === pf.id) return;
+        var t = "";
+        try { t = C.text(ix, r, f); } catch (e) { t = ""; }
+        t = str(t, 200);
+        if (t) vals[str(f.name, 120)] = t;
+      });
+      var title = "";
+      try { title = pf ? str(C.text(ix, r, pf), 160) : ""; } catch (e) { title = ""; }
+      return { title: title || "—", values: vals, target: { base: h.b.id, table: h.tb.id, rec: r.id } };
+    });
+    var res = { app: "base", base: str(h.b.name, 120), table: str(h.tb.name, 120), records: items.length, fields: fieldsOf(h.tb) };
+    return capItems(res, items);
+  }
+
   var API = {
     VERSION: "1.2.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
     normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth, stockMonth: stockMonth,
     todoLists: todoLists, todoList: todoList, kanbanBoards: kanbanBoards, notesBooks: notesBooks,
-    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, calendarEvents: calendarEvents, crmPartner: crmPartner, crmContracts: crmContracts, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
+    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, studioShows: studioShows, calendarEvents: calendarEvents, crmPartner: crmPartner, crmContracts: crmContracts, formsSummary: formsSummary, baseTables: baseTables, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root && root.document) root.OrosAssistSummary = API;

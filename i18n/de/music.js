@@ -236,6 +236,8 @@ orosPack("de", "music", {
  "missing.sv": "Von einem hier nicht verbundenen Server",
  "missing.svToast": "Dieser Song liegt auf einem Server, der auf diesem Gerät nicht verbunden ist. Verbinde ihn unter Deine Bibliothek › Server.",
  "missing.toast": "Dieser Song ist nicht auf diesem Gerät. Füge seine Datei zu Dateien › Music hinzu.",
+ "play.none": "Hier gibt es noch keine Songs zum Abspielen.",
+ "play.wait": "Die Songs werden noch geladen. Sie starten, sobald sie da sind.",
  "mix.daily": "Tagesmix",
  "mix.dailySub": "Songs, die du liebst, und mehr – jeden Tag neu",
  "mix.empty": "Hier ist noch nichts. Mixe entstehen aus dem, was du auf diesem Gerät hörst.",

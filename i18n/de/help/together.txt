@@ -59,7 +59,7 @@ Zählt die Zeit, die du mit einem geliebten Menschen verbracht hast: Tage, Woche
 - `+ Treffen` fügt euer nächstes Wiedersehen hinzu: den Tag, auf Wunsch eine Uhrzeit (in deiner oder ihrer/seiner Zeit) und den Ort. Ein Countdown läuft bis zum nächsten, und die Treffen erscheinen auch im Kalender.
 
 ## Lustige Zahlen, Konfetti und Karte
-- `Lustige Zahlen` zählt die Sonnenaufgänge, Wochenenden und Vollmonde, die ihr zusammen erlebt habt (aus [Mond & Himmel](app:sky)), und wie weit ihr um die Sonne gereist seid.
+- `Lustige Zahlen` zählt die Sonnenaufgänge, Wochenenden und Vollmonde, die ihr zusammen erlebt habt (aus [Der Himmel heute Nacht](app:sky) im Wetter), und wie weit ihr um die Sonne gereist seid.
 - An einem großen Tag (Jahrestag, 100 Tage, lustige Zahl) fällt einmal ein wenig Konfetti. Schalte es in den `Einstellungen` aus; es erscheint nie, wenn dein Gerät weniger Bewegung wünscht.
 - `Karte zum Teilen` erstellt ein Bild mit euren Namen und euren Tagen, Wochen oder Jahren zusammen, auf eurem Foto. Speichere es in Dateien, lade es herunter oder teile es mit den Apps deines Handys. Nur das Bild verlässt orOS.
 - In `Momente` zeigt `Diashow` die Fotos eurer Momente nacheinander (Pfeile, Wischen oder Pause).

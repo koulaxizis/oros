@@ -1306,6 +1306,13 @@ body.dbx-mode #status { display: none; }
   .dbx-pick-row { min-height: 44px; }
 }
 
+/* Documents: the tree node lives here (shown before docs.js loads);
+ * the rest is files/docs.css, loaded with docs.js (first-open budget). */
+.doc-tree { border-top: 0; margin-top: 2px; padding-top: 0; }
+.doc-tree .tnode .glyph { color: var(--accent, #6d4aff); }
+.doc-tree .tnode.selected .glyph { color: var(--accent-ink, #fff); }
+.doc-tree .tcount { margin-left: auto; padding-left: 6px; font-size: 11px; color: var(--text-dim, #999); }
+.doc-tree .tnode.selected .tcount { color: var(--accent-ink, #fff); opacity: .8; }
 /* The HTML [hidden] attribute must always win. Without this rule
    "#empty { display: flex }" kept the "This folder is empty" block on
    screen under a full file list. KEEP THIS THE LAST RULE OF THE FILE. */
@@ -1459,3 +1466,18 @@ body.cmp-mode #status { display: none; }
   .cmp-trash-item .col-size { display: none; }
   .cmp-list .cmp-more { opacity: .9; }
 }
+
+/* Remove hidden details (STRICT-4): the report */
+#dlg-clean { max-width: min(92vw, 480px); }
+#dlg-clean .clean-file { margin: 0 0 12px; }
+#dlg-clean .clean-file p { margin: 0 0 4px; overflow-wrap: anywhere; }
+#dlg-clean ul { margin: 0 0 4px; padding-left: 20px; }
+#dlg-clean .clean-warn { color: var(--warn, #e0a030); }
+#dlg-clean .clean-note { margin: 8px 0 0; font-size: 0.9em; opacity: 0.85; }
+
+/* STRICT-5: self-deleting files */
+.exp-badge { margin-left: 6px; font-size: 0.85em; opacity: 0.85; }
+#dlg-exp .exp-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+#dlg-exp .exp-opts button { padding: 10px; border-radius: 8px; border: 1px solid var(--line, #444); background: transparent; color: inherit; font: inherit; cursor: pointer; }
+#dlg-exp p { overflow-wrap: anywhere; }
+#dlg-exp .clean-note { font-size: 0.9em; opacity: 0.85; }

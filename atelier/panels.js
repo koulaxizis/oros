@@ -196,6 +196,15 @@
   VIEWS.elements = function (body) {
     var s1 = sec(t("el.shapes"));
     var g = el("div", "el-grid");
+    if (ED.vec) {                                   // the pen (wave V1): an outline of your own
+      var pen = el("button", "el-tile ico pen-tile");
+      pen.type = "button";
+      var pl = window.orosDK.pathedit.str("pe.pen");
+      pen.title = pl; pen.setAttribute("aria-label", pl);
+      pen.innerHTML = AT.icon("pen");
+      pen.addEventListener("click", function () { if (window.matchMedia("(max-width: 760px)").matches) closeDrawer(); ED.vec.pen(); });
+      g.appendChild(pen);
+    }
     FX.SHAPES.forEach(function (sh) {
       var b = el("button", "el-tile");
       b.type = "button";
@@ -904,6 +913,7 @@
       });
       body.appendChild(s);
     }
+    if (AX.tpOf(it) && ED.vec && ED.vec.tpSet) { body.appendChild(tpSection(it)); olSection(body, it); return; }
     var s2 = sec(t("fx.curve"));
     s2.appendChild(slider(t("fx.curve"), -100, 100, 1, it.ax.cv || 0, function (v) {
       edit(function (x) {
@@ -913,7 +923,16 @@
       });
     }));
     body.appendChild(s2);
+    olSection(body, it);
   };
+  // text to outlines (vector wave V5)
+  function olSection(body, it) {
+    if (!ED.vec || !ED.vec.canTextOutline || !ED.vec.canTextOutline(it)) return;
+    var s = sec(PEs("pe.toOutlines"));
+    s.appendChild(el("p", "hint", PEs("pe.olHint")));
+    s.appendChild(btn("btn block", PEs("pe.toOutlines"), function () { ED.vec.textOutline(it.id); }));
+    body.appendChild(s);
+  }
 
   // --- Filters (photos) ---
   var filterThumbs = {};
@@ -1020,7 +1039,7 @@
           var n = AT.parseLen(v);
           if (n === null || n < 1) return;
           edit(function (x) {
-            if (x.ax.k === "text" && !x.ax.cv) { x.w = n; return; }
+            if (x.ax.k === "text" && !AX.isCurved(x)) { x.w = n; return; }
             if (x.ax.k === "icon" || x.ax.k === "text") { var k = n / x.w; x.h *= k; if (x.ax.k === "text") x.ax.size *= k; }
             x.w = n;
             ED.coverClamp(x);
@@ -1083,16 +1102,51 @@
       if (k !== "shape") bar.appendChild(sep());
       bar.appendChild(tool("blend", t("ctx.blend"), blendPop, !!bg));
     }
+    if (ED.vec && ED.vec.canCombine && ED.vec.canCombine(list)) {
+      if (k !== "shape") bar.appendChild(sep());
+      bar.appendChild(tool("ops", PEs("pe.ops"), opsMenu));
+    }
+    if (ED.vec && ED.vec.canTextPath && ED.vec.canTextPath(list)) {
+      bar.appendChild(sep());
+      bar.appendChild(tool("textpath", PEs("pe.textPath"), function () { ED.vec.textPath(); }));
+    }
     bar.appendChild(sep());
     bar.appendChild(tool("position", t("ctx.position"), function () { openView("position"); }, view === "position"));
     bar.appendChild(tool("op", t("ctx.op"), opacityPop));
     bar.appendChild(tool("link", t("ctx.link"), linkPop, list.some(function (x) { return !!AX.linkOf(x); })));
+    if (AT.io && AT.io.svgSelection && window.AtelierWeb) bar.appendChild(tool("svg", t("ctx.svg"), function (b) {
+      AT.menu(b, [{ label: t("svg.copy"), fn: function () { AT.io.svgSelection("copy"); } }, { label: t("svg.save"), fn: function () { AT.io.svgSelection("save"); } }]);
+    }));
     bar.appendChild(tool("anim", t("ctx.animate"), function () { openView("animate"); }, view === "animate"));
     bar.appendChild(tool("lock", t("ctx.lock"), function () { edit(function (it) { it.lock = 1; }); }));
     bar.appendChild(tool("copy", t("ctx.dup"), ED.duplicate));
     bar.appendChild(tool("trash", t("ctx.del"), ED.remove));
   }
   AT.renderCtx = renderCtx;
+
+  // ---------- Combine shapes, outline stroke (vector wave V2) ----------
+  function PEs(k) { return window.orosDK.pathedit.str(k); }
+  function opsMenu(anchor) {
+    AT.menu(anchor, ["union", "subtract", "intersect", "exclude"].map(function (kind) {
+      return { label: PEs("pe." + kind), fn: function () { ED.vec.combine(kind); } };
+    }));
+  }
+  // text on a path (wave V3): where it starts, which side, release
+  function tpSection(it) {
+    var tp = AX.tpOf(it), s = sec(PEs("pe.textPath"));
+    s.appendChild(slider(PEs("pe.tpStart"), 0, 100, 0.5, tp.o, function (v) { ED.vec.tpSet(it.id, { o: v }); }, function (v) { return Math.round(v) + "%"; }));
+    var row = el("div", "dlg-actions");
+    row.appendChild(btn("btn", PEs("pe.tpFlip"), function () { ED.vec.tpSet(it.id, { s: tp.s === -1 ? 1 : -1 }); }));
+    row.appendChild(btn("btn", PEs("pe.tpOff"), function () { ED.vec.tpOff(it.id); }));
+    s.appendChild(row);
+    return s;
+  }
+  function outlineBtn(m, it, close) {
+    if (!ED.vec || !ED.vec.canOutline || !ED.vec.canOutline(it)) return;
+    var row = el("div", "dlg-actions");
+    row.appendChild(btn("btn", PEs("pe.outline"), function () { if (close) close(); ED.vec.outline(it.id); }));
+    m.appendChild(row);
+  }
 
   // ---------- Blend (wave C1, blend.js) ----------
   // The blend the picked elements belong to: a step of it, or one of
@@ -1198,7 +1252,7 @@
     inp.type = "text"; inp.inputMode = "decimal"; inp.value = String(Math.round(a.size * 10) / 10);
     inp.setAttribute("aria-label", t("ctx.size")); inp.title = t("ctx.size");
     var plus = AT.iconBtn("plus", t("ctx.size"), "ctx-btn sm");
-    function setSize(v) { if (v > 0) edit(function (x) { x.ax.size = Math.min(2000, Math.max(2, v)); if (x.ax.cv) x.w = AX.curveLayout(M.normItem(x)).w; }); }
+    function setSize(v) { if (v > 0) edit(function (x) { x.ax.size = Math.min(2000, Math.max(2, v)); if (x.ax.cv && !AX.tpOf(x)) x.w = AX.curveLayout(M.normItem(x)).w; }); }
     minus.addEventListener("click", function () { setSize(Math.round(a.size / 1.1)); });
     plus.addEventListener("click", function () { setSize(Math.round(a.size * 1.1)); });
     inp.addEventListener("change", function () { var v = parseFloat(inp.value.replace(",", ".")); inp.blur(); setSize(v); });
@@ -1215,10 +1269,11 @@
     bar.appendChild(tool("spacing", t("ctx.spacing"), function (b) {
       AT.popover(b, function (m) {
         m.appendChild(slider(t("ctx.lh"), 70, 300, 5, a.lh || 120, function (v) { edit(function (x) { x.ax.lh = v; }); }, function (v) { return (v / 100).toFixed(2); }));
-        m.appendChild(slider(t("ctx.tr"), -200, 1000, 10, a.tr || 0, function (v) { edit(function (x) { x.ax.tr = v; if (x.ax.cv) x.w = AX.curveLayout(M.normItem(x)).w; }); }));
+        m.appendChild(slider(t("ctx.tr"), -200, 1000, 10, a.tr || 0, function (v) { edit(function (x) { x.ax.tr = v; if (x.ax.cv && !AX.tpOf(x)) x.w = AX.curveLayout(M.normItem(x)).w; }); }));
       });
     }));
     bar.appendChild(btn("ctx-txt" + (view === "effects" ? " on" : ""), t("ctx.effects"), function () { openView("effects"); }));
+    if (AX.tpOf(it)) bar.appendChild(tool("textpath", PEs("pe.textPath"), function () { openView("effects"); }, view === "effects"));
     bar.appendChild(tool("edit", t("ctx.edit"), function () { ED.enterText(it.id); }));
     if (AT.ai) bar.appendChild(tool("ai", t("ai.menu"), function (b) { AT.ai.textMenu(b, it); }));
   }
@@ -1229,8 +1284,9 @@
     var sb = colourBtn(t("ctx.stroke"), a.sc && it.sw > 0 ? a.sc : "", null, { kind: "stroke" });
     sb.classList.add("stroke");
     bar.appendChild(sb);
+    if (ED.vec && ED.vec.canEdit(it)) bar.appendChild(tool("nodes", window.orosDK.pathedit.str("pe.edit"), function () { ED.vec.edit(it.id); }, ED.vec.busyWith(it.id)));
     bar.appendChild(btn("ctx-txt", t("ctx.sw"), function (e) {
-      AT.popover(e.currentTarget, function (m) {
+      AT.popover(e.currentTarget, function (m, close) {
         var mx = Math.max(20, Math.round(Math.min(it.w, it.h) / 4));
         m.appendChild(slider(t("ctx.weight"), 0, mx, mx > 60 ? 1 : 0.5, it.sw || 0, function (v) {
           edit(function (x) { x.sw = v; if (v > 0 && !x.ax.sc) x.ax.sc = "#000000"; });
@@ -1240,6 +1296,7 @@
         cb.addEventListener("change", function () { edit(function (x) { x.dash = cb.checked ? 1 : 0; }); });
         c.appendChild(cb); c.appendChild(el("span", "", t("ctx.dashed")));
         m.appendChild(c);
+        outlineBtn(m, it, close);
       });
     }));
     if (a.shp === "rounded" || a.shp === "bubble") {
@@ -1263,7 +1320,7 @@
   function lineTools(bar, it) {
     bar.appendChild(colourBtn(t("ctx.colour"), it.ax.sc || "#000000", null, { kind: "fill" }));
     bar.appendChild(btn("ctx-txt", t("ctx.weight"), function (e) {
-      AT.popover(e.currentTarget, function (m) {
+      AT.popover(e.currentTarget, function (m, close) {
         var mx = Math.max(20, Math.round(Math.min(AT.doc.setup.w, AT.doc.setup.h) / 20));
         m.appendChild(slider(t("ctx.weight"), 0.5, mx, 0.5, it.sw || 1, function (v) { edit(function (x) { x.sw = v; }); }));
         var c = el("label", "chk");
@@ -1271,6 +1328,7 @@
         cb.addEventListener("change", function () { edit(function (x) { x.dash = cb.checked ? 1 : 0; }); });
         c.appendChild(cb); c.appendChild(el("span", "", t("ctx.dashed")));
         m.appendChild(c);
+        outlineBtn(m, it, close);
       });
     }));
     ["as", "ae"].forEach(function (end) {

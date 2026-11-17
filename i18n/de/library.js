@@ -1,4 +1,6 @@
 orosPack("de", "library", {
+ "hl.send": "An eine App senden…",
+ "export.sendApp": "An eine App senden…",
  "aa.fitPage": "Ganze Seite",
  "aa.fitWidth": "Breite anpassen",
  "aa.font": "Schrift",
@@ -247,6 +249,10 @@ orosPack("de", "library", {
  "notes.noneHere": "Nichts von dieser Art.",
  "q.close": "“",
  "q.open": "„",
+ "rd.preview": "Vorschau: {t}",
+ "rd.keep": "Zur Bibliothek hinzufügen",
+ "rd.keepShort": "Hinzufügen",
+ "rd.previewKeep": "Eine Vorschau behält nichts. Füge sie der Bibliothek hinzu, damit Stelle und Notizen bleiben.",
  "rd.back": "Zurück zur Bibliothek",
  "rd.bookFrame": "Buchtext",
  "rd.bookmark": "Lesezeichen für diese Seite",

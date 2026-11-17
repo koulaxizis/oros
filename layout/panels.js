@@ -237,6 +237,16 @@
     }
     s2.appendChild(g3);
     s2.appendChild(check(t("props.dash"), common(items, "dash"), function (v) { editSel(function (it) { it.dash = v; }); }));
+    var VC = LY.ed.vec, PEs = window.orosDK.pathedit.str;
+    if (VC && one && VC.canOutline(one)) { var ro = row(); ro.appendChild(btn(PEs("pe.outline"), function () { VC.outline(one.id); }, "small")); s2.appendChild(ro); }
+    if (VC && VC.canTextPath && VC.canTextPath(items)) { var rt = row(); rt.appendChild(btn(PEs("pe.textPath"), function () { VC.textPath(); }, "small")); s2.appendChild(rt); }
+    if (VC && one && VC.canTextOutline && VC.canTextOutline(one)) { var rl = row(); rl.appendChild(btn(PEs("pe.toOutlines"), function () { VC.textOutline(one.id); }, "small")); s2.appendChild(rl); }
+    if (VC && VC.canCombine(items)) {
+      s2.appendChild(el("span", "fld-lbl", PEs("pe.ops")));
+      var rc = row();
+      ["union", "subtract", "intersect", "exclude"].forEach(function (k) { rc.appendChild(btn(PEs("pe." + k), function () { VC.combine(k); }, "small")); });
+      s2.appendChild(rc);
+    }
     body.appendChild(s2);
 
     if (one && (one.t === "rect" || one.t === "ell" || one.t === "path")) body.appendChild(gradSection(one));
@@ -387,6 +397,15 @@
     s.appendChild(el("span", "fld-lbl", t("props.va")));
     s.appendChild(seg([["t", t("props.va.t")], ["c", t("props.va.c")], ["b", t("props.va.b")]], it.va, function (v) { editSel(function (x) { if (x.t !== "text") return false; x.va = v; }); }));
     if (ch.length > 1) s.appendChild(el("p", "hint", t("props.chain", { i: i + 1, n: ch.length })));
+    var tp = it.ext && it.ext.tp, VC = LY.ed.vec, PEs = window.orosDK.pathedit.str;
+    if (tp && VC && VC.tpSet) {                     // text on a path (wave V3)
+      s.appendChild(el("span", "fld-lbl", PEs("pe.textPath")));
+      s.appendChild(field(PEs("pe.tpStart") + " (%)", numInput(tp.o || 0, function (v) { VC.tpSet(it.id, { o: v }); }, { unit: "raw", min: 0, max: 100, step: 1 })));
+      var rp = row();
+      rp.appendChild(btn(PEs("pe.tpFlip"), function () { VC.tpSet(it.id, { s: tp.s === -1 ? 1 : -1 }); }, "small"));
+      rp.appendChild(btn(PEs("pe.tpOff"), function () { VC.tpOff(it.id); }, "small"));
+      s.appendChild(rp);
+    }
     var isMaster = !!M.find(doc.masters, it.pg);
     if (!isMaster) {
       var r = el("div", "pn-col");
@@ -429,6 +448,30 @@
       s.appendChild(el("p", "hint" + (ppi < 150 ? " warn" : ""), ppi < 150 ? t("props.ppiLow", { n: ppi }) : t("props.ppi", { n: ppi })));
       if (LY.A.isMissing(it.a)) s.appendChild(el("p", "hint warn", t("props.missing")));
     }
+    // what the picture shows, for screen readers and e-books (LY-OUT)
+    var alt = el("textarea", "inp");
+    alt.rows = 2; alt.maxLength = 1000;
+    alt.value = (it.ext && typeof it.ext.alt === "string") ? it.ext.alt : "";
+    alt.placeholder = t("props.altEg");
+    alt.disabled = !!(it.ext && it.ext.deco);
+    alt.addEventListener("change", function () {
+      var v = alt.value.replace(/\s+/g, " ").trim().slice(0, 1000);
+      editSel(function (x) {
+        if (x.t !== "img" || ((x.ext && x.ext.alt) || "") === v) return false;
+        x.ext = Object.assign({}, x.ext || {});
+        if (v) x.ext.alt = v; else delete x.ext.alt;
+        if (!Object.keys(x.ext).length) delete x.ext;
+      });
+    });
+    s.appendChild(field(t("props.alt"), alt));
+    s.appendChild(check(t("props.deco"), it.ext && it.ext.deco, function (v) {
+      editSel(function (x) {
+        if (x.t !== "img" || !!(x.ext && x.ext.deco) === !!v) return false;
+        x.ext = Object.assign({}, x.ext || {});
+        if (v) x.ext.deco = 1; else delete x.ext.deco;
+        if (!Object.keys(x.ext).length) delete x.ext;
+      });
+    }));
     // data merge: the CSV column with this frame's picture
     var mf = el("input", "inp");
     mf.type = "text"; mf.maxLength = 60; mf.autocomplete = "off"; mf.spellcheck = false;
@@ -796,6 +839,12 @@
         g3.appendChild(field(t("sty.brk"), select([["", t("sty.inherit")], ["any", t("sty.brkAny")], ["col", t("sty.brkCol")], ["page", t("sty.brkPage")], ["odd", t("sty.brkOdd")], ["even", t("sty.brkEven")]],
           st.ext.brk || "", function (v) { if (v) st.ext.brk = v; else delete st.ext.brk; })));
         g3.appendChild(field(t("sty.sink") + " (pt)", optNum(st.ext, "sink", 0, 600)));
+        // heading level for the e-book's contents and bookmarks (LY-OUT)
+        if (window.LY_OUT) {
+          var guess = window.LY_OUT.guessLevel(LY.doc, st.id);
+          g3.appendChild(field(t("sty.lvl"), select([["", t("sty.lvlAuto", { n: guess ? t("sty.lvlN", { n: guess }) : t("sty.lvl0") })], ["0", t("sty.lvl0")], ["1", t("sty.lvlN", { n: 1 })], ["2", t("sty.lvlN", { n: 2 })], ["3", t("sty.lvlN", { n: 3 })]],
+            st.ext.lvl === undefined ? "" : String(st.ext.lvl), function (v) { if (v === "") delete st.ext.lvl; else st.ext.lvl = +v; })));
+        }
         body.appendChild(g3);
       }
       body.appendChild(el("span", "fld-lbl", t("sty.color")));
@@ -1089,6 +1138,36 @@
     });
     g4.appendChild(field(t("new.pnStart"), pn0));
     body.appendChild(g4);
+    // the book's language and its Publishing title (LY-OUT, in ext)
+    var O = window.LY_OUT;
+    if (!O) return;
+    function setX(k, v) {
+      s.ext = s.ext || {};
+      if (v) s.ext[k] = v; else delete s.ext[k];
+      if (!Object.keys(s.ext).length) delete s.ext;
+    }
+    var g5 = el("div", "grid2");
+    var curLang = O.okLang(s.ext && s.ext.lang);
+    var langs = O.LANGS.slice();
+    if (curLang && langs.indexOf(curLang) < 0) langs.unshift(curLang);
+    g5.appendChild(field(t("new.lang"), select([["", t("new.langAuto")]].concat(langs.map(function (c) { return [c, langName(c)]; })), curLang, function (v) { setX("lang", v); })));
+    var data = LY.publishData && LY.publishData(), tombs = (data && data.tombs) || {};
+    var titles = ((data && data.titles) || []).filter(function (x) { return x && x.id && x.t && !(tombs[x.id] >= x.m); });
+    var curPub = s.ext && typeof s.ext.pub === "string" ? s.ext.pub : "";
+    if (titles.length || curPub) {
+      var opts = [["", t("new.pubNone")]].concat(titles.map(function (x) { return [x.id, String(x.t).slice(0, 80)]; }));
+      if (curPub && !titles.some(function (x) { return x.id === curPub; })) opts.push([curPub, t("new.pubGone")]);
+      g5.appendChild(field(t("new.pub"), select(opts, curPub, function (v) { setX("pub", v); })));
+    }
+    body.appendChild(g5);
+  }
+  // A language code's own name where the browser knows it ("el" → "Ελληνικά").
+  function langName(c) {
+    try {
+      var n = new Intl.DisplayNames([LY.BASE || "en"], { type: "language" }).of(c);
+      if (n && n !== c) return n.charAt(0).toLocaleUpperCase() + n.slice(1) + " (" + c + ")";
+    } catch (e) { void e; }
+    return c;
   }
 
   // The New document defaults: one A4 page, 15 mm margins, 3 mm bleed
@@ -1179,6 +1258,7 @@
   function exportDlg() {
     var doc = LY.doc;
     LY.openDialog(t("exp.title"), function (body, close) {
+      profilesSection(body, doc, close);
       body.appendChild(el("h3", "pn-h", t("exp.pdf")));
       var rangeWrap = el("div");
       var custom = el("input", "inp"); custom.type = "text"; custom.placeholder = t("exp.rangeHint"); custom.value = expPrefs.custom;
@@ -1207,6 +1287,18 @@
         LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150 });
       }, "primary"));
       body.appendChild(act);
+      // the same PDF, saved in Files › Layout › PDF and offered to an app
+      if (LY.io.canSendPdf && LY.io.canSendPdf()) {
+        var sendB = btn(t("exp.send"), function () {
+          var pages = pickPages(doc);
+          if (!pages) { LY.toast(t("exp.badRange")); return; }
+          close();
+          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150 });
+        }, "block");
+        sendB.id = "exp-send";
+        sendB.setAttribute("aria-haspopup", "dialog");
+        body.appendChild(sendB);
+      }
       // one page as an image
       body.appendChild(el("h3", "pn-h", t("exp.img")));
       var order = M.pagesInOrder(doc), cur = ED.curPage();
@@ -1216,14 +1308,17 @@
       function drawImg() {
         dpiWrap.innerHTML = ""; fmtWrap.innerHTML = "";
         dpiWrap.appendChild(seg([["72", "72 dpi"], ["150", "150 dpi"], ["300", "300 dpi"]], String(imgPrefs.dpi), function (v) { imgPrefs.dpi = +v; drawImg(); }));
-        fmtWrap.appendChild(seg([["png", "PNG"], ["jpg", "JPG"]], imgPrefs.fmt, function (v) { imgPrefs.fmt = v; drawImg(); }));
+        fmtWrap.appendChild(seg([["png", "PNG"], ["jpg", "JPG"], ["svg", "SVG"]], imgPrefs.fmt, function (v) { imgPrefs.fmt = v; drawImg(); }));
+        if (resField) resField.hidden = imgPrefs.fmt === "svg";   // an SVG has no resolution
       }
       drawImg();
       var gi = el("div", "grid2");
       gi.appendChild(field(t("exp.page"), pgSel));
       gi.appendChild(field(t("exp.format"), fmtWrap));
       body.appendChild(gi);
-      body.appendChild(field(t("exp.res"), dpiWrap));
+      var resField = field(t("exp.res"), dpiWrap);
+      resField.hidden = imgPrefs.fmt === "svg";
+      body.appendChild(resField);
       body.appendChild(btn(t("exp.imgGo"), function () { close(); LY.io.exportImage(imgPrefs); }, "block"));
       body.appendChild(el("h3", "pn-h", t("exp.merge")));
       body.appendChild(el("p", "hint", t("exp.mergeNote")));
@@ -1233,6 +1328,160 @@
       body.appendChild(btn(t("more.pkg"), function () { close(); LY.io.exportPackage(doc); }, "block"));
     });
   }
+  // ---------- Output profiles (LY-OUT) ----------
+  // One document, every edition: each profile exports with one button
+  // (its pages, its format's ISBN from Publishing, e-book extras).
+  function profName(p) { return p.n || t("out.k." + p.k); }
+  function profNote(doc, p, pub) {
+    var O = window.LY_OUT, f = O.formatOf(p, pub), bits = [];
+    bits.push(t("out.pages", { n: O.pagesFor(doc, p).length }));
+    if (f && f.isbn) bits.push("ISBN " + f.isbn);
+    else if (pub) bits.push(t("out.noIsbn"));
+    if (p.k !== "print" && p.cover) bits.push(t("out.withCover"));
+    if (p.k === "epub" && p.fx) bits.push(t("ep.fx" + p.fx + "s"));
+    if (p.k === "epub" && p.nf && p.fx !== 2) bits.push(t("ep.noFonts"));
+    return bits.join(" · ");
+  }
+  function profilesSection(body, doc, close) {
+    var O = window.LY_OUT;
+    if (!O) return;
+    body.appendChild(el("h3", "pn-h", t("out.title")));
+    var pub = O.pubOf(doc, LY.publishData());
+    body.appendChild(el("p", "hint", pub ? t("out.pubOf", { t: pub.t }) : t("out.noPub")));
+    O.list(doc).forEach(function (p) {
+      var row = el("div", "out-row");
+      var txt = el("div", "out-txt");
+      txt.appendChild(el("span", "out-name", profName(p)));
+      txt.appendChild(el("span", "hint", profNote(doc, p, pub)));
+      row.appendChild(txt);
+      row.appendChild(btn(t("out.go"), function () { close(); LY.io.exportProfile(p); }, "small primary"));
+      body.appendChild(row);
+    });
+    body.appendChild(btn(t("out.edit"), function () { close(); profilesDlg(); }, "block"));
+  }
+  // "1-3, 5" of the document's pages → page ids ([] when empty, null when invalid)
+  function rangeIds(doc, txt) {
+    var order = M.pagesInOrder(doc), out = [], ok = true;
+    String(txt || "").split(/[,;]/).forEach(function (part) {
+      part = part.trim();
+      if (!part) return;
+      var m = /^(\d+)\s*(?:-\s*(\d+))?$/.exec(part);
+      if (!m) { ok = false; return; }
+      var a = +m[1], b = m[2] ? +m[2] : a;
+      if (a < 1 || b > order.length || a > b) { ok = false; return; }
+      for (var i = a; i <= b; i++) if (out.indexOf(order[i - 1].id) < 0) out.push(order[i - 1].id);
+    });
+    return ok ? out : null;
+  }
+  function idsRange(doc, ids) {
+    var order = M.pagesInOrder(doc), want = {}, nums = [], parts = [];
+    (ids || []).forEach(function (id) { want[id] = 1; });
+    order.forEach(function (p, i) { if (want[p.id]) nums.push(i + 1); });
+    for (var i = 0; i < nums.length; i++) {
+      var a = nums[i], b = a;
+      while (i + 1 < nums.length && nums[i + 1] === b + 1) b = nums[++i];
+      parts.push(a === b ? String(a) : a + "-" + b);
+    }
+    return parts.join(", ");
+  }
+  function profilesDlg() {
+    var doc = LY.doc, O = window.LY_OUT;
+    var list = JSON.parse(JSON.stringify(O.list(doc)));
+    var pub = O.pubOf(doc, LY.publishData());
+    var covers = LY.data().docs.filter(function (d) { return d.setup && d.setup.ext && d.setup.ext.cover && !M.needsNewer(d); });
+    LY.openDialog(t("out.editTitle"), function (body, close) {
+      var wrap = el("div");
+      var bad = false;
+      function draw() {
+        wrap.innerHTML = "";
+        list.forEach(function (p, idx) {
+          var box = el("div", "out-box");
+          var nm = el("input", "inp"); nm.type = "text"; nm.maxLength = 60; nm.value = p.n; nm.placeholder = t("out.k." + p.k);
+          nm.addEventListener("input", function () { p.n = nm.value; });
+          var g = el("div", "grid2");
+          g.appendChild(field(t("out.name"), nm));
+          g.appendChild(field(t("out.kind"), select([["print", t("out.k.print")], ["ebook", t("out.k.ebook")], ["epub", t("out.k.epub")]], p.k, function (v) {
+            p.k = v;
+            if (v === "print") { p.bleed = 1; p.marks = 0; p.spreads = 0; delete p.cover; p.q = "print"; }
+            else { delete p.bleed; delete p.marks; delete p.spreads; p.q = "screen"; }
+            if (v !== "epub") { delete p.nf; delete p.npl; delete p.fx; } else { p.blank = 1; p.toc = 1; }
+            draw();
+          })));
+          box.appendChild(g);
+          if (pub) {
+            var fm = (pub.fmts || []).filter(Boolean);
+            box.appendChild(field(t("out.fmt"), select([["", t("out.fmtAuto")]].concat(fm.map(function (f) {
+              return [f.id, t("out.fmtK." + f.k) + (f.isbn ? " · " + f.isbn : "")];
+            })), p.fmt || "", function (v) { p.fmt = v; })));
+          }
+          var r = el("div", "pn-row wrap");
+          r.appendChild(check(t("out.blank"), p.blank, function (v) { p.blank = v; }));
+          r.appendChild(check(t("out.toc"), p.toc, function (v) { p.toc = v; }));
+          if (p.k === "print") {
+            r.appendChild(check(t("exp.bleed"), p.bleed, function (v) { p.bleed = v; }));
+            r.appendChild(check(t("exp.marks"), p.marks, function (v) { p.marks = v; }));
+            if (doc.setup.facing) r.appendChild(check(t("exp.spreads"), p.spreads, function (v) { p.spreads = v; }));
+          }
+          if (p.k === "epub") {
+            // reflowable, or fixed layout (E3): the pages as in print
+            box.appendChild(field(t("ep.fx"), select([["0", t("ep.fx0")], ["1", t("ep.fx1")], ["2", t("ep.fx2")]], String(p.fx || 0), function (v) {
+              if (v === "1" || v === "2") p.fx = +v; else delete p.fx;
+              draw();
+            })));
+            if (p.fx !== 2) r.appendChild(check(t("ep.fonts"), !p.nf, function (v) { if (v) delete p.nf; else p.nf = 1; }));
+            if (!p.fx) r.appendChild(check(t("ep.pageList"), !p.npl, function (v) { if (v) delete p.npl; else p.npl = 1; }));
+          }
+          box.appendChild(r);
+          var drop = el("input", "inp"); drop.type = "text"; drop.placeholder = t("exp.rangeHint"); drop.value = idsRange(doc, p.drop);
+          drop.addEventListener("input", function () {
+            var ids = rangeIds(doc, drop.value);
+            drop.classList.toggle("bad", !ids);
+            bad = !ids;
+            if (ids) { if (ids.length) p.drop = ids; else delete p.drop; }
+          });
+          box.appendChild(field(t("out.drop"), drop));
+          if (p.k !== "print") {
+            box.appendChild(field(t("out.cover"), select([["", t("out.coverNone")]].concat(covers.map(function (d) { return [d.id, LY.docTitle(d)]; })), p.cover || "", function (v) {
+              if (v) p.cover = v; else delete p.cover;
+            })));
+            if (!covers.length) box.appendChild(el("p", "hint", t("out.coverHint")));
+          }
+          var qWrap = el("div");
+          qWrap.appendChild(seg([["print", t("exp.print")], ["screen", t("exp.screen")]], p.q, function (v) { p.q = v; draw(); }));
+          box.appendChild(field(t("exp.quality"), qWrap));
+          if (list.length > 1) box.appendChild(btn(t("out.remove"), function () { list.splice(idx, 1); draw(); }, "small danger"));
+          wrap.appendChild(box);
+        });
+        if (list.length < O.MAX) wrap.appendChild(btn(t("out.add"), function () {
+          list.push({ id: O.newId(list), n: "", k: "ebook", fmt: "", blank: 1, toc: 0, q: "screen" });
+          draw();
+        }, "block"));
+      }
+      draw();
+      body.appendChild(wrap);
+      var act = el("div", "dlg-actions");
+      act.appendChild(btn(t("out.reset"), function () { list = O.defaults(); draw(); }));
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(btn(t("btn.cancel"), close));
+      act.appendChild(btn(t("btn.save"), function () {
+        if (bad) { LY.toast(t("exp.badRange")); return; }
+        close();
+        // the defaults unchanged are not stored (R27)
+        var same = JSON.stringify(O.norm({ v: 1, list: list })) === JSON.stringify(O.norm({ v: 1, list: O.defaults() }));
+        LY.op(function (d2, now) {
+          var before = JSON.stringify(d2.setup);
+          var st = JSON.parse(before);
+          O.save(st, same ? [] : list);
+          if (JSON.stringify(st) === before) return false;
+          d2.setup = M.normSetup(st);
+          d2.m = Math.max(now, d2.m + 1);
+        });
+        setTimeout(exportDlg, 0);
+      }, "primary"));
+      body.appendChild(act);
+    }, true);
+  }
+
   // "1-3, 5" → page ids (null when invalid)
   function pickPages(doc) {
     var order = M.pagesInOrder(doc);
@@ -1278,6 +1527,103 @@
     }, true);
   }
 
+  // ---------- EPUB report (LY-EPUB) ----------
+  // After an EPUB export: what went in, what was left out, the
+  // on-device check (not EPUBCheck: the hint says so), the list most
+  // e-book stores ask for, then Save / Preview in Library / Publishing.
+  // res.only: an EPUB from elsewhere, checked only.
+  function epubRow(ul, sev, text, fn) {
+    var li = el("li"), b = el(fn ? "button" : "div", "pf-item " + sev);
+    if (fn) { b.type = "button"; b.addEventListener("click", fn); }
+    b.appendChild(el("span", "pf-dot"));
+    b.appendChild(el("span", "", text));
+    li.appendChild(b);
+    ul.appendChild(li);
+  }
+  function epubCode(r) {
+    var k = "ep.c." + r.c, s = t(k);
+    if (s === k) s = r.c;
+    return s + (r.f ? " · " + r.f : "") + (r.n ? " · " + r.n : "");
+  }
+  function sizeText(n) { return n < 1024 * 1024 ? Math.max(1, Math.round(n / 1024)) + " KB" : (Math.round(n / 104857.6) / 10).toLocaleString(LY.loc ? LY.loc() : undefined) + " MB"; }
+  function epubReport(res, prof) {
+    var chk = res.check, rep = res.report, doc = LY.doc;
+    LY.openDialog(res.only ? t("ep.checkTitle", { name: res.name }) : t("ep.title"), function (body, close) {
+      var errs = chk.errors.length, warns = chk.warnings.length;
+      body.appendChild(el("p", errs ? "ep-bad" : "pf-ok", errs ? (errs === 1 ? t("ep.errors1") : t("ep.errors", { n: errs })) : warns ? (warns === 1 ? t("ep.okWarn1") : t("ep.okWarn", { n: warns })) : t("ep.ok")));
+      body.appendChild(el("p", "hint", t("ep.orosCheck")));
+      if (rep) {
+        body.appendChild(el("p", "hint", [
+          rep.fixed ? t("ep.sumFx", { h: rep.headings, i: rep.images, p: rep.pages }) : t("ep.sum", { c: rep.chapters, h: rep.headings, i: rep.images, p: rep.pages }), sizeText(rep.bytes),
+          /^urn:isbn:/.test(rep.uid) ? "ISBN " + rep.uid.slice(9) : t("ep.noIsbn")
+        ].join(" · ")));
+      }
+      var ul = el("ul", "pf-list ep-list");
+      chk.errors.forEach(function (r) { epubRow(ul, "err", epubCode(r)); });
+      // a book made here: alt text and the cover have their own rows below
+      chk.warnings.forEach(function (r) { if (!rep || (r.c !== "no-alt" && r.c !== "no-cover")) epubRow(ul, "warn", epubCode(r)); });
+      if (rep) {
+        rep.noAlt.forEach(function (x) {
+          epubRow(ul, "warn", t("ep.noAlt", { n: x.page }), function () { close(); ED.gotoItem(x.item); });
+        });
+        if (rep.overset) epubRow(ul, "warn", t("ep.overset", { n: rep.overset }));
+        if (rep.shapes) epubRow(ul, "ok", t("ep.shapes", { n: rep.shapes }));
+        if (rep.rotated) epubRow(ul, "ok", t("ep.rotated", { n: rep.rotated }));
+        if (rep.fixed) epubRow(ul, "ok", t("ep.fixedNote"));
+        rep.fonts.forEach(function (f) {
+          if (!f.ok) epubRow(ul, "warn", t("ep.fontMissing", { name: f.name }));
+          else if (f.obf) epubRow(ul, "ok", t("ep.fontObf", { name: f.name }));
+        });
+        if (prof && prof.nf) epubRow(ul, "ok", t("ep.noFonts"));
+      }
+      if (ul.childNodes.length) body.appendChild(ul);
+      if (rep) {
+        // what e-book stores usually ask for (general, no store named)
+        body.appendChild(el("h3", "pn-h", t("ep.store")));
+        var sl = el("ul", "pf-list ep-list"), info = chk.info;
+        var cov = res.cover, big = cov && cov.h ? cov.h >= 1600 && cov.w >= 1000 : !!cov;
+        epubRow(sl, cov ? (big ? "ok" : "warn") : "err", cov ? (big ? t("ep.s.cover") : t("ep.s.coverSmall")) : t("ep.s.noCover"));
+        var hasIsbn = /^urn:isbn:/.test(info.uid), badIsbn = !hasIsbn && res.ed && res.ed.isbn && !window.LY_EPUB.isbnOk(res.ed.isbn);
+        epubRow(sl, hasIsbn ? "ok" : "warn", hasIsbn ? t("ep.s.isbn") : badIsbn ? t("ep.s.badIsbn") : t("ep.s.noIsbn"));
+        epubRow(sl, rep.headings ? "ok" : "warn", rep.headings ? t("ep.s.toc") : t("ep.s.noToc"));
+        epubRow(sl, info.lang && info.lang !== "und" ? "ok" : "err", info.lang && info.lang !== "und" ? t("ep.s.lang", { l: info.lang }) : t("ep.s.noLang"));
+        epubRow(sl, rep.noAlt.length ? "warn" : "ok", rep.noAlt.length ? t("ep.s.noA11y", { n: rep.noAlt.length }) : t("ep.s.a11y"));
+        var pub = res.pub;
+        var who = pub && (pub.ppl || []).some(function (x) { return x && x.n; });
+        epubRow(sl, pub && who && pub.blurb ? "ok" : "warn", pub ? (who && pub.blurb ? t("ep.s.meta") : t("ep.s.metaPart")) : t("ep.s.noPub"));
+        body.appendChild(sl);
+      }
+      var act = el("div", "dlg-actions");
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(btn(t("btn.close"), close));
+      if (!res.only) {
+        act.appendChild(btn(t("ep.preview"), function () { LY.io.previewEpub(res); }));
+        if (res.pub && res.ed && res.ed.fmt && res.ed.fmt.k === "eb" && !errs) act.appendChild(btn(t("ep.markPub"), function () { markInPublishing(res); }));
+        act.appendChild(btn(t("ep.save"), function () {
+          LY.io.saveEpub(res).then(function (ok) { if (ok) { LY.toast(t("exp.done")); close(); } });
+        }, "primary"));
+      }
+      body.appendChild(act);
+    }, true);
+  }
+  // Publishing (proposal 2): its e-book format shows "EPUB ready, date"
+  // and the file. Publishing writes its own data (R19): it gets the
+  // facts through its deep link.
+  function markInPublishing(res) {
+    var go = function () {
+      var p = window.parent;
+      try {
+        if (p && p !== window && typeof p.__orosOpenAt === "function") {
+          p.__orosOpenAt("publish", { epubReady: { title: res.pub.id, fmt: res.ed.fmt.id, path: res.path || "", bytes: res.bytes.length, doc: LY.doc.id } });
+          return;
+        }
+      } catch (e) {}
+      LY.toast(t("ep.noPub"));
+    };
+    if (res.path) go();
+    else LY.io.previewEpub(Object.assign(res, { quiet: true })).then(function (ok) { if (ok) go(); });
+  }
+
   // ---------- Preflight ----------
   function preflightDlg() {
     var doc = LY.doc, order = {};
@@ -1312,6 +1658,7 @@
   }
 
   LY.dlg = { newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg, preflight: preflightDlg };
+  LY.panels = Object.assign(LY.panels || {}, { epubReport: epubReport, epubMarkReady: markInPublishing });
   // the small widgets, for dialogs in other files (mergeui.js)
   LY.ui = { field: field, select: select, check: check, seg: seg, btn: btn };
 
@@ -1330,7 +1677,8 @@
       { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },
       { label: t("more.selall"), fn: ED.selectAll },
       { sep: true },
-      { label: t("more.pkg"), fn: function () { LY.io.exportPackage(doc); } }
+      { label: t("more.pkg"), fn: function () { LY.io.exportPackage(doc); } },
+      { label: t("more.epubCheck"), fn: function () { LY.io.checkEpubFile(); } }
     ];
     if (doc.rec.length) items.push({ label: t("more.rec", { n: doc.rec.length }), fn: recDlg });
     LY.menu($("ed-more"), items);

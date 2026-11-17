@@ -14,7 +14,9 @@
 //        | { t: "open" }                          (orOS opens, once a day)
 //   action = { a: "notify" | "todo" | "event" | "note" | "mail" |
 //              "budget" | "open" | "timer" | "ask" | "push" | "hook" |
-//              "file" | "print" | "track" (Timesheet T4: { title, project? } | { stop: true }), …fields }
+//              "file" | "print" | "track" (Timesheet T4: { title, project? } | { stop: true }) |
+//              "card" { title, board?, column?, note? } | "crm" { text, k, who? } |
+//              "record" { text, table? } (BR-EV-2), …fields }
 //   file / print (item 25, BR-EV-BRIDGE): only in a rule that follows a
 //   new file in a folder orOS Bridge watches (when.ev "bridge.*"); the
 //   run keeps that file's key (host.js) and the tap opens the file in
@@ -56,9 +58,46 @@
   // stopEntry; key timesheet:<entry>:s|e, text "project · description").
   EVENTS.push("timesheet.start", "timesheet.stop");
   EVENT_APP["timesheet.start"] = EVENT_APP["timesheet.stop"] = "timesheet";
+  // Base B5 (BASE-1): a record is added / a field of a record changes
+  // in the Base app on this device (base/core.js events; key
+  // base:<rec>:a | base:<rec>:<field>:<stamp>, text "Base › Table ·
+  // Title" and, for a change, " · Field: value").
+  EVENTS.push("base.add", "base.change");
+  EVENT_APP["base.add"] = EVENT_APP["base.change"] = "base";
+  // Smart top bar SB2: what the shell watches itself (automations/host.js
+  // soonTick): an event of today's summary starts in N minutes (when.min,
+  // 1-120, default 10), today's till sales reach / this month's spending
+  // passes an amount (when.amount, cents). The signal carries the number
+  // (sig.n: minutes left, or the cents now).
+  EVENTS.push("event.soon", "goal.sales", "goal.spent");
+  EVENT_APP["event.soon"] = "today"; EVENT_APP["goal.sales"] = "stock"; EVENT_APP["goal.spent"] = "budget";
+  var GOALS = { "goal.sales": true, "goal.spent": true };
+  // BR-EV-2 (gap review proposal 6, 2026-11-17): more apps tell what
+  // happened. forms.answer (forms/app.js, a new answer picked up here;
+  // key forms:<form>:<answer>), invoices.paid (invoices.js, a payment
+  // settles a document; invoices:<doc>:paid:<payment>), invoices.overdue
+  // (host.js watch, a document 1-7 days past its due date;
+  // invoices:<doc>:over:<due>), kanban.done (kanban.js runArrival, a card
+  // arrives in a done column; kanban:<card>:<col>:<stamp>), stock.low
+  // (shell.js stockCheckTick, a product enters the low list;
+  // stock:<item>:<last movement>), scanpdf.signed (scanpdf.js finish, a
+  // signature request comes back signed; scanpdf:<request>),
+  // transfer.received (transfer/app.js record, files arrive;
+  // transfer:<history item>).
+  EVENTS.push("forms.answer", "invoices.paid", "invoices.overdue", "kanban.done", "stock.low", "scanpdf.signed", "transfer.received");
+  EVENT_APP["forms.answer"] = "forms"; EVENT_APP["invoices.paid"] = EVENT_APP["invoices.overdue"] = "invoices";
+  EVENT_APP["kanban.done"] = "kanban"; EVENT_APP["stock.low"] = "stock"; EVENT_APP["scanpdf.signed"] = "scanpdf";
+  EVENT_APP["transfer.received"] = "transfer";
+  var OVERDUE_DAYS = 7;                          // invoices.overdue: only documents this many days late at most
+  var SOON_MIN = 10, SOON_MAX = 120;
   var WORD_MAX = 60;
   var SIG_KEY_MAX = 200;
-  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "file", "print", "track"];
+  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "file", "print", "track", "pause", "sound", "card", "crm", "record"];
+  // SB2: steps this device does by itself, with no tap and no data
+  // written anywhere: pause what plays in orOS (music, podcasts, radio,
+  // Sound Mixer) and a short chime. Every device the rule runs on does
+  // them once per run.
+  var LOCAL = { pause: true, sound: true };
   var FILE_ACTS = { file: true, print: true };
   // Wave A5: steps that leave the device by themselves (AUTO-2 "each
   // address is confirmed once"): push = ntfy or Gotify, hook = a JSON
@@ -69,7 +108,10 @@
   var URL_MAX = 500;
   // Apps an action needs (the shell offers the action only when it is installed).
   var NEEDS = { todo: "todo", event: "calendar", note: "notes", mail: "mail", budget: "budget",
-                timer: "time", ask: "assistant", track: "timesheet" };
+                timer: "time", ask: "assistant", track: "timesheet",
+                card: "kanban", crm: "crm", record: "base" };       // BR-EV-2 tap steps
+  // BR-EV-2: what a CRM history entry can be (crm/core.js ACT_KINDS).
+  var CRM_KINDS = ["call", "mail", "meet", "msg", "note"];
   // AUTO-4: never offered, never run.
   var BLOCKED_APPS = { passwords: true };
 
@@ -109,6 +151,12 @@
     if (w.t === "event") {
       if (EVENTS.indexOf(w.ev) < 0) return null;
       var ew = { t: "event", ev: w.ev };
+      if (w.ev === "event.soon") ew.min = int(w.min, 1, SOON_MAX) || SOON_MIN;
+      if (GOALS[w.ev]) {
+        var amt = int(w.amount, 1, 100000000000);
+        if (amt === null) return null;
+        ew.amount = amt;
+      }
       var eword = line(w.word, WORD_MAX);
       if (eword) ew.word = eword;
       return ew;
@@ -194,8 +242,36 @@
       if (pj) tr.project = pj;
       return tr;
     }
+    // BR-EV-2 tap steps (AUTO-2: the app opens prefilled, the person saves)
+    if (a === "card") {
+      var ct = line(x.title, 200);
+      if (!ct) return null;
+      var cd = { a: a, title: ct };
+      var cb = line(x.board, 80), cc = line(x.column, 80), cn = str(x.note, TEXT_MAX).trim();
+      if (cb) cd.board = cb;
+      if (cc) cd.column = cc;
+      if (cn) cd.note = cn;
+      return cd;
+    }
+    if (a === "crm") {
+      var lt = str(x.text, TEXT_MAX).trim();
+      if (!lt) return null;
+      var lg = { a: a, text: lt, k: CRM_KINDS.indexOf(x.k) >= 0 ? x.k : "note" };
+      var who = line(x.who, 120);
+      if (who) lg.who = who;
+      return lg;
+    }
+    if (a === "record") {
+      var rt = line(x.text, 200);
+      if (!rt) return null;
+      var rc = { a: a, text: rt };
+      var tb = line(x.table, 120);
+      if (tb) rc.table = tb;
+      return rc;
+    }
     if (a === "file") return FILE_TO.indexOf(x.to) >= 0 ? { a: a, to: x.to } : null;
     if (a === "print") return { a: a };
+    if (LOCAL[a]) return { a: a };
     if (OUT[a]) {
       var url = cleanUrl(x.url);
       if (!url) return null;
@@ -309,6 +385,8 @@
       if (sig.name === "automations" || BLOCKED_APPS[sig.name]) return null;
       if (w0.app && w0.app !== sig.name) return null;
     } else if (w0.ev !== sig.name) return null;
+    else if (w0.ev === "event.soon" && !(typeof sig.n === "number" && sig.n >= 0 && sig.n <= (w0.min || SOON_MIN))) return null;
+    else if (GOALS[w0.ev] && !(typeof sig.n === "number" && sig.n >= w0.amount)) return null;
     if (w0.word && fold(sig.text).indexOf(fold(w0.word)) < 0) return null;
     if (!inWindow(rule["if"], now)) return null;
     return rule.id + "@s" + hash(sig.kind + "|" + sig.name + "|" + sig.key.slice(0, SIG_KEY_MAX));
@@ -501,21 +579,36 @@
       "ev.todo.done": "When I finish a task", "ev.habits.done": "When I tick a habit",
       "ev.water.goal": "When I reach my water goal", "ev.fitness.done": "When I finish a workout",
       "ev.timesheet.start": "When I start a Timesheet timer", "ev.timesheet.stop": "When I stop a Timesheet timer",
+      "ev.base.add": "When a record is added in Base", "ev.base.change": "When a field changes in Base",
       "ev.webhook.in": "When a webhook arrives",
       "ev.bridge.pdf": "When a new PDF lands in a folder on my computer",
       "ev.bridge.photo": "When a new photo lands in a folder on my computer",
       "ev.bridge.file": "When any new file lands in a folder on my computer",
+      "ev.event.soon": "{n} min before an event of my day", "ev.goal.sales": "When today's till sales reach {amount}", "ev.goal.spent": "When this month's spending passes {amount}", "amt.some": "an amount", "act.pause": "pause what is playing", "act.sound": "play a chime", "tpl.meeting-quiet": "Quiet before a meeting", "tpl.meeting-quiet.text": "Starting soon: {text}", "tpl.sales-goal": "Sales goal reached", "tpl.sales-goal.text": "Today's sales reached your goal: {text}",
       "act.file": "open the file in {app}", "act.print": "print the file",
       "file.none": "This step needs a file that orOS Bridge reported on this computer.",
       "file.off": "orOS Bridge is not running on this computer, or this file is on another computer.",
       "file.gone": "The file was changed or moved since it arrived.", "file.big": "The file is too large to open in orOS.",
       "file.printed": "Sent to the printer: {name}", "file.noprint": "This computer could not print the file.",
       "tpl.mail-todo": "Urgent e-mail to To-Do", "tpl.mail-todo.word": "urgent", "tpl.mail-todo.item": "{text}",
+      "tpl.doc-renew": "Expiring document to To-Do", "tpl.doc-renew.word": "expire", "tpl.doc-renew.item": "{text}",
       "tpl.habit-cheer": "Cheer for a habit", "tpl.habit-cheer.text": "Well done: {text}. Keep the streak going.",
       "tpl.workout-log": "After a workout", "tpl.workout-log.text": "Workout done: {text}. Drink some water.",
       "tpl.water-goal": "Water goal reached", "tpl.water-goal.text": "You drank {text} today. Well done.",
       "tpl.scan-in": "New scan into Scan PDF", "tpl.scan-in.text": "New PDF on your computer: {text}",
-      "tpl.photo-in": "New photo into Files", "tpl.photo-in.text": "New photo on your computer: {text}"
+      "tpl.photo-in": "New photo into Files", "tpl.photo-in.text": "New photo on your computer: {text}",
+      "ev.forms.answer": "When a form gets a new answer", "ev.invoices.paid": "When an invoice is paid in full",
+      "ev.invoices.overdue": "When an invoice becomes overdue", "ev.kanban.done": "When a card reaches a done column in Kanban",
+      "ev.stock.low": "When a product runs low in Stock", "ev.scanpdf.signed": "When a signature request comes back signed",
+      "ev.transfer.received": "When files arrive through Transfer",
+      "act.card": "add a card to Kanban", "act.crm": "log it in CRM", "act.record": "add a record to Base",
+      "tpl.form-answer": "New form answer", "tpl.form-answer.text": "New answer: {text}",
+      "tpl.invoice-paid": "Paid invoice into CRM", "tpl.invoice-paid.text": "Paid: {text}",
+      "tpl.invoice-overdue": "Overdue invoice to To-Do", "tpl.invoice-overdue.item": "Chase payment: {text}",
+      "tpl.stock-low": "Low stock to To-Do", "tpl.stock-low.item": "Order more: {text}",
+      "tpl.card-done": "Card done", "tpl.card-done.text": "Done: {text}",
+      "tpl.signed-in": "Signed document back", "tpl.signed-in.text": "Signed: {text}",
+      "tpl.transfer-in": "Files received", "tpl.transfer-in.text": "Received: {text}"
     },
     el: {
       "wd.0": "Κυριακή", "wd.1": "Δευτέρα", "wd.2": "Τρίτη", "wd.3": "Τετάρτη", "wd.4": "Πέμπτη",
@@ -552,21 +645,36 @@
       "ev.todo.done": "Όταν τελειώνω μια εργασία", "ev.habits.done": "Όταν τσεκάρω μια συνήθεια",
       "ev.water.goal": "Όταν φτάνω τον στόχο για νερό", "ev.fitness.done": "Όταν τελειώνω μια προπόνηση",
       "ev.timesheet.start": "Όταν ξεκινώ χρονόμετρο στο Timesheet", "ev.timesheet.stop": "Όταν σταματώ χρονόμετρο στο Timesheet",
+      "ev.base.add": "Όταν μπαίνει εγγραφή στη Βάση", "ev.base.change": "Όταν αλλάζει πεδίο στη Βάση",
       "ev.webhook.in": "Όταν έρχεται webhook",
       "ev.bridge.pdf": "Όταν μπαίνει νέο PDF σε φάκελο του υπολογιστή μου",
       "ev.bridge.photo": "Όταν μπαίνει νέα φωτογραφία σε φάκελο του υπολογιστή μου",
       "ev.bridge.file": "Όταν μπαίνει οποιοδήποτε νέο αρχείο σε φάκελο του υπολογιστή μου",
+      "ev.event.soon": "{n} λεπτά πριν από ένα ραντεβού της ημέρας μου", "ev.goal.sales": "Όταν οι σημερινές πωλήσεις του ταμείου φτάσουν το ποσό {amount}", "ev.goal.spent": "Όταν τα έξοδα του μήνα ξεπεράσουν το ποσό {amount}", "amt.some": "που ορίζεις", "act.pause": "παύση ό,τι παίζει", "act.sound": "ένας ήχος", "tpl.meeting-quiet": "Ησυχία πριν από ραντεβού", "tpl.meeting-quiet.text": "Ξεκινά σε λίγο: {text}", "tpl.sales-goal": "Ο στόχος πωλήσεων επιτεύχθηκε", "tpl.sales-goal.text": "Οι σημερινές πωλήσεις έφτασαν τον στόχο σου: {text}",
       "act.file": "άνοιγμα του αρχείου στο {app}", "act.print": "εκτύπωση του αρχείου",
       "file.none": "Αυτό το βήμα χρειάζεται ένα αρχείο που ανέφερε το orOS Bridge σε αυτόν τον υπολογιστή.",
       "file.off": "Το orOS Bridge δεν τρέχει σε αυτόν τον υπολογιστή ή το αρχείο είναι σε άλλον υπολογιστή.",
       "file.gone": "Το αρχείο άλλαξε ή μετακινήθηκε αφότου ήρθε.", "file.big": "Το αρχείο είναι πολύ μεγάλο για να ανοίξει στο orOS.",
       "file.printed": "Στάλθηκε στον εκτυπωτή: {name}", "file.noprint": "Αυτός ο υπολογιστής δεν μπόρεσε να εκτυπώσει το αρχείο.",
       "tpl.mail-todo": "Επείγον e-mail στο To-Do", "tpl.mail-todo.word": "επείγον", "tpl.mail-todo.item": "{text}",
+      "tpl.doc-renew": "Έγγραφο που λήγει στο To-Do", "tpl.doc-renew.word": "λήγει", "tpl.doc-renew.item": "{text}",
       "tpl.habit-cheer": "Μπράβο για μια συνήθεια", "tpl.habit-cheer.text": "Μπράβο: {text}. Συνέχισε το σερί.",
       "tpl.workout-log": "Μετά την προπόνηση", "tpl.workout-log.text": "Η προπόνηση τελείωσε: {text}. Πιες λίγο νερό.",
       "tpl.water-goal": "Ο στόχος για νερό", "tpl.water-goal.text": "Ήπιες {text} σήμερα. Μπράβο.",
       "tpl.scan-in": "Νέα σάρωση στο Scan PDF", "tpl.scan-in.text": "Νέο PDF στον υπολογιστή σου: {text}",
-      "tpl.photo-in": "Νέα φωτογραφία στα Αρχεία", "tpl.photo-in.text": "Νέα φωτογραφία στον υπολογιστή σου: {text}"
+      "tpl.photo-in": "Νέα φωτογραφία στα Αρχεία", "tpl.photo-in.text": "Νέα φωτογραφία στον υπολογιστή σου: {text}",
+      "ev.forms.answer": "Όταν μια φόρμα παίρνει νέα απάντηση", "ev.invoices.paid": "Όταν εξοφλείται ένα τιμολόγιο",
+      "ev.invoices.overdue": "Όταν ένα τιμολόγιο γίνεται ληξιπρόθεσμο", "ev.kanban.done": "Όταν μια κάρτα φτάνει σε στήλη ολοκλήρωσης στο Kanban",
+      "ev.stock.low": "Όταν ένα προϊόν πέφτει στο όριο στο Απόθεμα", "ev.scanpdf.signed": "Όταν ένα αίτημα υπογραφής επιστρέφει υπογεγραμμένο",
+      "ev.transfer.received": "Όταν έρχονται αρχεία μέσω Μεταφοράς",
+      "act.card": "νέα κάρτα στο Kanban", "act.crm": "καταγραφή στο CRM", "act.record": "νέα εγγραφή στη Βάση",
+      "tpl.form-answer": "Νέα απάντηση σε φόρμα", "tpl.form-answer.text": "Νέα απάντηση: {text}",
+      "tpl.invoice-paid": "Εξοφλημένο τιμολόγιο στο CRM", "tpl.invoice-paid.text": "Εξοφλήθηκε: {text}",
+      "tpl.invoice-overdue": "Ληξιπρόθεσμο τιμολόγιο στο To-Do", "tpl.invoice-overdue.item": "Υπενθύμιση πληρωμής: {text}",
+      "tpl.stock-low": "Χαμηλό απόθεμα στο To-Do", "tpl.stock-low.item": "Παραγγελία: {text}",
+      "tpl.card-done": "Κάρτα ολοκληρώθηκε", "tpl.card-done.text": "Έγινε: {text}",
+      "tpl.signed-in": "Υπογεγραμμένο έγγραφο επέστρεψε", "tpl.signed-in.text": "Υπογράφηκε: {text}",
+      "tpl.transfer-in": "Ήρθαν αρχεία", "tpl.transfer-in.text": "Ήρθαν: {text}"
     }
   };
   // The table for a language: a pack language through orosI18n (in a
@@ -600,7 +708,7 @@
   // dates), `from` the source label the receiver shows.
   function call(action, at, lang, from, said) {
     var a = cleanAction(action);
-    if (!a || a.a === "notify" || OUT[a.a]) return null;
+    if (!a || a.a === "notify" || OUT[a.a] || LOCAL[a.a]) return null;
     var f = function (s) { return fill(s, at, lang, said); };
     if (a.a === "todo") {
       var add = { from: from, items: a.items.map(function (s) { return { text: f(s).slice(0, LINE_MAX) }; }) };
@@ -625,6 +733,23 @@
                arg: { k: a.k, a: a.amount, d: ymdOf(at), n: f(a.note).slice(0, 500), src: "automations" } };
     }
     if (a.a === "open") return { fn: "openApp", app: a.app, arg: null };
+    if (a.a === "card") {
+      var nc = { title: f(a.title).slice(0, 200) };
+      if (a.board) nc.board = a.board;
+      if (a.column) nc.column = a.column;
+      if (a.note) nc.note = f(a.note).slice(0, TEXT_MAX);
+      return { fn: "openAt", app: "kanban", arg: { asNew: nc } };
+    }
+    if (a.a === "crm") {
+      var al = { text: f(a.text).slice(0, TEXT_MAX), k: a.k, from: from };
+      if (a.who) al.who = f(a.who).slice(0, 120);
+      return { fn: "openAt", app: "crm", arg: { autoLog: al } };
+    }
+    if (a.a === "record") {
+      var nr = { text: f(a.text).slice(0, 200), from: from };
+      if (a.table) nr.table = a.table;
+      return { fn: "openAt", app: "base", arg: { newRecord: nr } };
+    }
     if (a.a === "file") return { fn: "bridgeFile", app: a.to, arg: { to: a.to } };
     if (a.a === "print") return { fn: "bridgePrint", app: "", arg: null };
     if (a.a === "timer") return { fn: "openAt", app: "time", arg: { timer: { sec: a.min * 60, label: f(a.label).slice(0, 40) } } };
@@ -659,7 +784,11 @@
       var nt = when.app ? sub(w(lang, "when.noticeApp"), { app: appName ? appName(when.app) : when.app }) : w(lang, "when.notice");
       return nt + (when.word ? sub(w(lang, "when.word"), { word: when.word }) : "");
     }
-    if (when.t === "event") return w(lang, "ev." + when.ev) + (when.word ? sub(w(lang, "when.word"), { word: when.word }) : "");
+    if (when.t === "event") {
+      var et = sub(w(lang, "ev." + when.ev), { n: when.min || SOON_MIN,
+        amount: when.amount ? amountText(when.amount, lang) : w(lang, "amt.some") });
+      return et + (when.word ? sub(w(lang, "when.word"), { word: when.word }) : "");
+    }
     if (when.t === "day") {
       if (!when.wd.length) return w(lang, "when.day") + at;
       var order = [1, 2, 3, 4, 5, 6, 0].filter(function (n) { return when.wd.indexOf(n) >= 0; });
@@ -669,6 +798,13 @@
     if (when.t === "year") { var p = MD_RE.exec(when.date); return sub(w(lang, "when.year"), { date: +p[2] + "/" + +p[1] }) + at; }
     var q = YMD_RE.exec(when.date);
     return sub(w(lang, "when.once"), { date: +q[3] + "/" + +q[2] + "/" + q[1] }) + at;
+  }
+  // An amount in cents, as a plain number in the person's language (the
+  // rule does not know the currency; Budget and Stock keep their own).
+  function amountText(cents, lang) {
+    var v = cents / 100, loc = lang === "el" ? "el-GR" : lang === "de" ? "de-DE" : "en-GB";
+    try { return new Intl.NumberFormat(loc, { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }).format(v); }
+    catch (e) { return String(v); }
   }
   function actText(a, lang, appName) {
     if (a.a === "todo") return sub(w(lang, "act.todo"), { n: a.items.length });
@@ -684,14 +820,35 @@
     var parts = [], rest = [];
     rule["do"].forEach(function (a) {
       if (a.a === "notify") parts.push(fill(a.text, at, lang, said));
-      else if (OUT[a.a]) parts.push(actText(a, lang, appName));
+      else if (OUT[a.a] || LOCAL[a.a]) parts.push(actText(a, lang, appName));
       else rest.push(actText(a, lang, appName));
     });
     if (rest.length) parts.push(sub(w(lang, "notice.tap"), { what: rest.join(", ") }));
     return { title: rule.name || whenText(rule.when, lang), body: parts.join("\n").slice(0, 500) };
   }
+  // BR-EV-2 invoices.overdue: the issued documents that still owe and
+  // are 1..OVERDUE_DAYS days past their due date on `day` (a document
+  // overdue for longer gave its signal then, or happened while orOS was
+  // closed: an honest limit, so a new rule does not flood the bell with
+  // old debts). IC = invoices/core.js (OrosInvoicesCore), data = its
+  // slice. → [{ key, num, party, bal, cur, late }] (key
+  // invoices:<doc>:over:<due>, the same on every device).
+  function overdueList(IC, data, day) {
+    if (!IC || !data || !Array.isArray(data.docs)) return [];
+    var out = [];
+    IC.live(data.docs).forEach(function (d) {
+      try {
+        if (!d || !d.due || IC.status(data, d, day) !== "overdue") return;
+        var late = IC.lateDays(d, day);
+        if (late < 1 || late > OVERDUE_DAYS) return;
+        out.push({ key: "invoices:" + d.id + ":over:" + d.due, num: String(d.num || ""), party: IC.partyName(data, d) || "",
+                   bal: IC.balance(data, d), cur: typeof d.cur === "string" ? d.cur : "EUR", late: late });
+      } catch (e) {}
+    });
+    return out;
+  }
   function pending(rule) {
-    return (rule && rule["do"] || []).filter(function (a) { return a.a !== "notify" && !OUT[a.a]; });
+    return (rule && rule["do"] || []).filter(function (a) { return a.a !== "notify" && !OUT[a.a] && !LOCAL[a.a]; });
   }
 
   // ---------- Ready-made rules (templates) ----------
@@ -718,6 +875,9 @@
     // wave A2: rules that follow what happens
     { id: "mail-todo", when: { t: "notice", app: "mail", word: "@tpl.mail-todo.word" },
       "do": [{ a: "todo", items: "@tpl.mail-todo.item" }] },
+    // DOCS-1 W3: Files' reminder that a document expires (ns "files")
+    { id: "doc-renew", when: { t: "notice", app: "files", word: "@tpl.doc-renew.word" },
+      "do": [{ a: "todo", items: "@tpl.doc-renew.item" }] },
     { id: "habit-cheer", when: { t: "event", ev: "habits.done" }, "do": [{ a: "notify", text: "@tpl.habit-cheer.text" }] },
     { id: "workout-log", when: { t: "event", ev: "fitness.done" },
       "do": [{ a: "notify", text: "@tpl.workout-log.text" }, { a: "open", app: "water" }] },
@@ -726,7 +886,23 @@
     { id: "scan-in", when: { t: "event", ev: "bridge.pdf" },
       "do": [{ a: "notify", text: "@tpl.scan-in.text" }, { a: "file", to: "scanpdf" }] },
     { id: "photo-in", when: { t: "event", ev: "bridge.photo" },
-      "do": [{ a: "notify", text: "@tpl.photo-in.text" }, { a: "file", to: "files" }] }
+      "do": [{ a: "notify", text: "@tpl.photo-in.text" }, { a: "file", to: "files" }] },
+    // SB2: the smart top bar's little automations
+    { id: "meeting-quiet", when: { t: "event", ev: "event.soon", min: 5 },
+      "do": [{ a: "pause" }, { a: "notify", text: "@tpl.meeting-quiet.text" }] },
+    { id: "sales-goal", when: { t: "event", ev: "goal.sales", amount: 50000 },
+      "do": [{ a: "sound" }, { a: "notify", text: "@tpl.sales-goal.text" }] },
+    // BR-EV-2: more apps, and the Kanban / CRM / Base tap steps
+    { id: "form-answer", when: { t: "event", ev: "forms.answer" }, "do": [{ a: "notify", text: "@tpl.form-answer.text" }] },
+    { id: "invoice-paid", when: { t: "event", ev: "invoices.paid" },
+      "do": [{ a: "notify", text: "@tpl.invoice-paid.text" }, { a: "crm", k: "note", text: "@tpl.invoice-paid.text" }] },
+    { id: "invoice-overdue", when: { t: "event", ev: "invoices.overdue" }, "do": [{ a: "todo", items: "@tpl.invoice-overdue.item" }] },
+    { id: "stock-low", when: { t: "event", ev: "stock.low" }, "do": [{ a: "todo", items: "@tpl.stock-low.item" }] },
+    { id: "card-done", when: { t: "event", ev: "kanban.done" }, "do": [{ a: "sound" }, { a: "notify", text: "@tpl.card-done.text" }] },
+    { id: "signed-in", when: { t: "event", ev: "scanpdf.signed" },
+      "do": [{ a: "notify", text: "@tpl.signed-in.text" }, { a: "card", title: "@tpl.signed-in.text" }] },
+    { id: "transfer-in", when: { t: "event", ev: "transfer.received" },
+      "do": [{ a: "notify", text: "@tpl.transfer-in.text" }, { a: "open", app: "files" }] }
   ];
   function pick(v, lang, k) {
     if (typeof v !== "string" || v.charAt(0) !== "@") return v;
@@ -761,8 +937,10 @@
     lastAt: lastAt, nextAt: nextAt, due: due, fill: fill, call: call, needs: needs, runnable: runnable,
     whenText: whenText, actText: actText, notice: notice, pending: pending,
     OUT: OUT, cleanUrl: cleanUrl, hostOf: hostOf, outbound: outbound, outSteps: outSteps,
+    LOCAL: LOCAL, GOALS: GOALS, SOON_MIN: SOON_MIN, SOON_MAX: SOON_MAX, amountText: amountText,
     EVENTS: EVENTS.slice(), EVENT_APP: EVENT_APP, bridgeEvent: bridgeEvent, FILE_TO: FILE_TO.slice(), FILE_ACTS: FILE_ACTS, cleanIf: cleanIf, inWindow: inWindow, matches: matches, fold: fold,
-    templates: templates, fromTemplate: fromTemplate, ymdOf: ymdOf, from: from, STRINGS: STRINGS
+    templates: templates, fromTemplate: fromTemplate, ymdOf: ymdOf, from: from, STRINGS: STRINGS,
+    CRM_KINDS: CRM_KINDS.slice(), OVERDUE_DAYS: OVERDUE_DAYS, overdueList: overdueList
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosAutoCore = API;

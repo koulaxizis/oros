@@ -127,6 +127,7 @@
     (raw.pages || []).forEach(function (p) {
       if (typeof p.pinned !== "boolean") p.pinned = false;
       if (!Array.isArray(p.labels)) p.labels = [];
+      if (p.exp !== undefined && !expValid(p.exp)) delete p.exp;
     });
 
     state.ver       = DATA_VER;
@@ -330,6 +331,21 @@
       "labels.confirm":     "Delete this label?",      // v0.14.0
       "labels.deleted":      "Label deleted",  // v0.35.00 fix
       "page.pin":           "Pin to top",
+      "exp.menu": "Delete itself…",
+      "exp.title": "Delete this page by itself",
+      "exp.hint": "On every device, the first time orOS runs after this time. It does not wait in a Trash.",
+      "exp.in.1h": "In 1 hour",
+      "exp.in.1d": "In 1 day",
+      "exp.in.7d": "In 7 days",
+      "exp.in.30d": "In 30 days",
+      "exp.keep": "Keep it (cancel)",
+      "exp.set": "This page will delete itself",
+      "exp.off": "This page stays",
+      "exp.gone1": "A self-deleting page was deleted",
+      "exp.goneN": "{n} self-deleting pages were deleted",
+      "exp.left.d": "Deletes itself in {n} d",
+      "exp.left.h": "Deletes itself in {n} h",
+      "exp.left.m": "Deletes itself in {n} min",
       "page.unpin":         "Unpin",
       "toast.pinned":       "Pinned to top",
       "toast.unpinned":     "Unpinned",
@@ -396,6 +412,21 @@
       "labels.confirm":     "Διαγραφή αυτής της ετικέτας;",  // v0.14.0
       "labels.deleted":      "Η ετικέτα διαγράφηκε",  // v0.35.00 fix
       "page.pin":           "Καρφίτσωμα στην κορυφή",
+      "exp.menu": "Αυτοκαταστροφή…",
+      "exp.title": "Η σελίδα να σβηστεί μόνη της",
+      "exp.hint": "Σε κάθε συσκευή, την πρώτη φορά που τρέχει το orOS μετά από αυτή την ώρα. Δεν περιμένει σε Κάδο.",
+      "exp.in.1h": "Σε 1 ώρα",
+      "exp.in.1d": "Σε 1 μέρα",
+      "exp.in.7d": "Σε 7 μέρες",
+      "exp.in.30d": "Σε 30 μέρες",
+      "exp.keep": "Να μείνει (ακύρωση)",
+      "exp.set": "Η σελίδα θα σβηστεί μόνη της",
+      "exp.off": "Η σελίδα μένει",
+      "exp.gone1": "Μια σελίδα αυτοκαταστροφής σβήστηκε",
+      "exp.goneN": "Σβήστηκαν {n} σελίδες αυτοκαταστροφής",
+      "exp.left.d": "Σβήνεται σε {n} μ.",
+      "exp.left.h": "Σβήνεται σε {n} ώ.",
+      "exp.left.m": "Σβήνεται σε {n} λεπ.",
       "page.unpin":         "Αφαίρεση καρφιτσίματος",
       "toast.pinned":       "Καρφιτσώθηκε στην κορυφή",
       "toast.unpinned":     "Αφαιρέθηκε το καρφίτσωμα",
@@ -435,6 +466,178 @@
     }
   };
 
+  // Voice notes (NOTES-VOICE, notes/voice.js)
+  (function (add) {
+    ["en", "el"].forEach(function (lg) {
+      Object.keys(add[lg]).forEach(function (k) { STRINGS[lg][k] = add[lg][k]; });
+    });
+  })({
+    en: {
+      "vc.record": "Record a voice note",
+      "vc.showBar": "Recording…",
+      "vc.bar": "Voice recording",
+      "vc.recording": "Recording",
+      "vc.paused": "Paused",
+      "vc.saving": "Saving…",
+      "vc.pause": "Pause",
+      "vc.resume": "Go on recording",
+      "vc.stop": "Stop and save",
+      "vc.cancel": "Discard",
+      "vc.cancelT": "Discard this recording?",
+      "vc.cancelB": "What was recorded so far is not kept.",
+      "vc.discard": "Discard",
+      "vc.size": "about {mb} MB",
+      "vc.into": "into “{title}”",
+      "vc.saved": "Voice note saved",
+      "vc.savedNoPage": "Saved in Files › Notes › Voice (the page is gone)",
+      "vc.saveFail": "Couldn't save the recording. It is kept on this device and offered again when Notes opens.",
+      "vc.saveFailLost": "Couldn't save the recording",
+      "vc.empty": "Nothing was recorded",
+      "vc.maxed": "A recording stops at 2 hours: saved",
+      "vc.noDisk": "Voice notes need the orOS disk: open Notes inside orOS",
+      "vc.noRec": "This browser can't record sound",
+      "vc.noMic": "No microphone was found",
+      "vc.denied": "The microphone is blocked: allow it in the browser's site settings",
+      "vc.strip": "Recordings",
+      "vc.play": "Play",
+      "vc.pausePlay": "Pause",
+      "vc.seek": "Position",
+      "vc.rate": "Speed",
+      "vc.more": "More",
+      "vc.missing": "Not on this device yet",
+      "vc.download": "Download",
+      "vc.delete": "Delete",
+      "vc.delT": "Delete this recording?",
+      "vc.delB": "The line leaves the page and the file goes to the Trash in Files, where it stays for 30 days.",
+      "vc.delMissing": "The file is not on this device yet, so only the line leaves the page.",
+      "vc.delFail": "Couldn't move the recording to the Trash",
+      "vc.trashed": "Moved to the Trash",
+      "vc.unused": "Unused recordings…",
+      "vc.unusedT": "Unused recordings",
+      "vc.unusedB": "No page on this device names these files. Recordings from the last 24 hours are never listed. Ticked files go to the Trash in Files.",
+      "vc.noUnused": "No unused recordings",
+      "vc.toTrash": "Move to the Trash",
+      "vc.trashedN": "{n} moved to the Trash",
+      "vc.mb": "{mb} MB",
+      "vc.recoverT": "Unsaved recording",
+      "vc.recoverB": "A recording of {dur} was cut off before it was saved. Save it into “{title}”?",
+      "vc.recoverB2": "A recording of {dur} was cut off before it was saved. Save it into the open page?",
+      "vc.recover": "Save it",
+      "vc.transcribe": "Transcribe",
+      "vc.trim": "Trim…",
+      "vc.studio": "Send to Studio",
+      "vc.trimT": "Trim the recording",
+      "vc.trimB": "Pick the part to keep. Saving writes a new file and moves the old one to the Trash in Files.",
+      "vc.reading": "Reading the recording…",
+      "vc.decodeFail": "This browser can't read the recording",
+      "vc.trimStart": "Start",
+      "vc.trimEnd": "End",
+      "vc.trimLen": "Kept: {dur}",
+      "vc.trimPlay": "Play the part",
+      "vc.trimStop": "Stop",
+      "vc.trimSave": "Save",
+      "vc.trimming": "Writing the new file…",
+      "vc.trimmed": "Trimmed: the old file is in the Trash",
+      "vc.trimmedKept": "Trimmed. The old file stays in Notes › Voice",
+      "vc.trimFail": "Couldn't save the trimmed recording",
+      "vc.asrT": "Transcription",
+      "vc.asrNeed": "Transcription runs on this device with the Whisper model that Montage and Lyric Sync also use. It downloads once, about {mb} MB. The sound never leaves the device.",
+      "vc.asrGo": "Start",
+      "vc.asrNo": "Transcription isn't available in this browser",
+      "vc.asrDl": "Downloading the model… {p}%",
+      "vc.asrRun": "Listening… {p}%",
+      "vc.asrNone": "No speech was found",
+      "vc.asrGone": "The recording's line is no longer on the page",
+      "vc.asrCut": "Transcribed the first 30 minutes",
+      "vc.asrDone": "Transcript added below the recording",
+      "vc.asrNet": "Couldn't download the model: check the connection",
+      "vc.asrFail": "Transcription failed",
+      "vc.studioFail": "Couldn't open the recording in Studio"
+    },
+    el: {
+      "vc.record": "Ηχογράφηση φωνητικής σημείωσης",
+      "vc.showBar": "Ηχογράφηση…",
+      "vc.bar": "Ηχογράφηση φωνής",
+      "vc.recording": "Ηχογράφηση",
+      "vc.paused": "Σε παύση",
+      "vc.saving": "Αποθήκευση…",
+      "vc.pause": "Παύση",
+      "vc.resume": "Συνέχεια ηχογράφησης",
+      "vc.stop": "Τέλος και αποθήκευση",
+      "vc.cancel": "Απόρριψη",
+      "vc.cancelT": "Απόρριψη της ηχογράφησης;",
+      "vc.cancelB": "Ό,τι γράφτηκε ως τώρα δεν κρατιέται.",
+      "vc.discard": "Απόρριψη",
+      "vc.size": "περίπου {mb} MB",
+      "vc.into": "στη «{title}»",
+      "vc.saved": "Η φωνητική σημείωση αποθηκεύτηκε",
+      "vc.savedNoPage": "Αποθηκεύτηκε στο Files › Notes › Voice (η σελίδα δεν υπάρχει πια)",
+      "vc.saveFail": "Η ηχογράφηση δεν αποθηκεύτηκε. Κρατιέται σε αυτή τη συσκευή και θα προταθεί ξανά όταν ανοίξει το Notes.",
+      "vc.saveFailLost": "Η ηχογράφηση δεν αποθηκεύτηκε",
+      "vc.empty": "Δεν γράφτηκε τίποτα",
+      "vc.maxed": "Η ηχογράφηση σταματά στις 2 ώρες: αποθηκεύτηκε",
+      "vc.noDisk": "Οι φωνητικές σημειώσεις θέλουν τον δίσκο του orOS: άνοιξε το Notes μέσα στο orOS",
+      "vc.noRec": "Αυτός ο browser δεν ηχογραφεί",
+      "vc.noMic": "Δεν βρέθηκε μικρόφωνο",
+      "vc.denied": "Το μικρόφωνο είναι μπλοκαρισμένο: επίτρεψέ το στις ρυθμίσεις ιστότοπου του browser",
+      "vc.strip": "Ηχογραφήσεις",
+      "vc.play": "Αναπαραγωγή",
+      "vc.pausePlay": "Παύση",
+      "vc.seek": "Θέση",
+      "vc.rate": "Ταχύτητα",
+      "vc.more": "Περισσότερα",
+      "vc.missing": "Δεν είναι ακόμα σε αυτή τη συσκευή",
+      "vc.download": "Λήψη",
+      "vc.delete": "Διαγραφή",
+      "vc.delT": "Διαγραφή της ηχογράφησης;",
+      "vc.delB": "Η γραμμή φεύγει από τη σελίδα και το αρχείο πάει στον Κάδο του Files, όπου μένει 30 ημέρες.",
+      "vc.delMissing": "Το αρχείο δεν είναι ακόμα σε αυτή τη συσκευή, οπότε φεύγει μόνο η γραμμή από τη σελίδα.",
+      "vc.delFail": "Η ηχογράφηση δεν μπήκε στον Κάδο",
+      "vc.trashed": "Μπήκε στον Κάδο",
+      "vc.unused": "Αχρησιμοποίητες ηχογραφήσεις…",
+      "vc.unusedT": "Αχρησιμοποίητες ηχογραφήσεις",
+      "vc.unusedB": "Καμία σελίδα σε αυτή τη συσκευή δεν αναφέρει αυτά τα αρχεία. Ηχογραφήσεις των τελευταίων 24 ωρών δεν εμφανίζονται ποτέ. Τα επιλεγμένα πάνε στον Κάδο του Files.",
+      "vc.noUnused": "Καμία αχρησιμοποίητη ηχογράφηση",
+      "vc.toTrash": "Στον Κάδο",
+      "vc.trashedN": "{n} μπήκαν στον Κάδο",
+      "vc.mb": "{mb} MB",
+      "vc.recoverT": "Ηχογράφηση χωρίς αποθήκευση",
+      "vc.recoverB": "Μια ηχογράφηση {dur} κόπηκε πριν αποθηκευτεί. Να μπει στη «{title}»;",
+      "vc.recoverB2": "Μια ηχογράφηση {dur} κόπηκε πριν αποθηκευτεί. Να μπει στην ανοιχτή σελίδα;",
+      "vc.recover": "Αποθήκευση",
+      "vc.transcribe": "Μεταγραφή",
+      "vc.trim": "Κόψιμο…",
+      "vc.studio": "Στείλε στο Studio",
+      "vc.trimT": "Κόψιμο ηχογράφησης",
+      "vc.trimB": "Διάλεξε το κομμάτι που μένει. Η αποθήκευση γράφει νέο αρχείο και στέλνει το παλιό στον κάδο του Files.",
+      "vc.reading": "Διαβάζω την ηχογράφηση…",
+      "vc.decodeFail": "Αυτός ο browser δεν μπορεί να διαβάσει την ηχογράφηση",
+      "vc.trimStart": "Αρχή",
+      "vc.trimEnd": "Τέλος",
+      "vc.trimLen": "Μένει: {dur}",
+      "vc.trimPlay": "Ακρόαση κομματιού",
+      "vc.trimStop": "Διακοπή",
+      "vc.trimSave": "Αποθήκευση",
+      "vc.trimming": "Γράφω το νέο αρχείο…",
+      "vc.trimmed": "Κόπηκε: το παλιό αρχείο είναι στον κάδο",
+      "vc.trimmedKept": "Κόπηκε. Το παλιό αρχείο έμεινε στο Notes › Voice",
+      "vc.trimFail": "Δεν αποθηκεύτηκε η κομμένη ηχογράφηση",
+      "vc.asrT": "Μεταγραφή",
+      "vc.asrNeed": "Η μεταγραφή γίνεται σε αυτή τη συσκευή με το μοντέλο Whisper που χρησιμοποιούν και το Montage και το Lyric Sync. Κατεβαίνει μία φορά, περίπου {mb} MB. Ο ήχος δεν φεύγει ποτέ από τη συσκευή.",
+      "vc.asrGo": "Έναρξη",
+      "vc.asrNo": "Η μεταγραφή δεν είναι διαθέσιμη σε αυτόν τον browser",
+      "vc.asrDl": "Κατεβάζω το μοντέλο… {p}%",
+      "vc.asrRun": "Ακούω… {p}%",
+      "vc.asrNone": "Δεν βρέθηκε ομιλία",
+      "vc.asrGone": "Η γραμμή της ηχογράφησης δεν είναι πια στη σελίδα",
+      "vc.asrCut": "Μεταγράφηκαν τα πρώτα 30 λεπτά",
+      "vc.asrDone": "Η μεταγραφή μπήκε κάτω από την ηχογράφηση",
+      "vc.asrNet": "Δεν κατέβηκε το μοντέλο: έλεγξε τη σύνδεση",
+      "vc.asrFail": "Η μεταγραφή απέτυχε",
+      "vc.studioFail": "Δεν άνοιξε η ηχογράφηση στο Studio"
+    }
+  });
+
   // Markdown wave (view, toolbar, daily note, templates, exports,
   // search in every notebook).
   (function (add) {
@@ -455,6 +658,8 @@
       "fmt.task": "Checkbox",
       "fmt.link": "Link",
       "fmt.code": "Code",
+      "tr.btn": "Translate", "tr.replace": "Replace", "tr.replaceSel": "Replace the selection", "tr.below": "Add below",
+      "tr.none": "There is no text to translate yet.", "tr.fail": "The translator could not be loaded.", "tr.changed": "The page changed meanwhile, so nothing was put in.",
       "preview.empty": "Nothing here yet. Switch to Edit to write.",
       "daily.btn": "Today",
       "daily.title": "Today's note",
@@ -491,6 +696,8 @@
       "fmt.task": "Κουτάκι επιλογής",
       "fmt.link": "Σύνδεσμος",
       "fmt.code": "Κώδικας",
+      "tr.btn": "Μετάφραση", "tr.replace": "Αντικατάσταση", "tr.replaceSel": "Αντικατάσταση της επιλογής", "tr.below": "Προσθήκη από κάτω",
+      "tr.none": "Δεν υπάρχει ακόμη κείμενο για μετάφραση.", "tr.fail": "Ο μεταφραστής δεν φορτώθηκε.", "tr.changed": "Η σελίδα άλλαξε στο μεταξύ, οπότε δεν μπήκε τίποτα.",
       "preview.empty": "Δεν υπάρχει τίποτα ακόμη. Πάτα Επεξεργασία για να γράψεις.",
       "daily.btn": "Σήμερα",
       "daily.title": "Η σημερινή σελίδα",
@@ -516,6 +723,91 @@
     }
   });
   var MD = window.OrosNotesMd;
+  // NOTES-VOICE: voice notes. voice-core.js (pure, small) loads with
+  // the page; the UI (voice.js + ../files/files-core.js for the Trash)
+  // loads only when it is needed (loadVoice): the mic button, a page
+  // with a voice line, Unused recordings, or a recording to recover.
+  var VCORE = window.OrosNotesVoice || null;
+  var VUI = null;
+  var voiceCaretPage = null;   // the page whose caret the person has placed
+  var voiceLoading = null;
+  var VOICE_MIC = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/></svg>';
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = src + "?v=" + encodeURIComponent((document.querySelector('script[src*="notes.js?v="]') || { src: "" }).src.split("?v=")[1] || "");
+      sc.onload = function () { res(); };
+      sc.onerror = function () { sc.remove(); rej(new Error("load " + src)); };
+      document.head.appendChild(sc);
+    });
+  }
+  function loadVoice() {
+    if (VUI) return Promise.resolve(VUI);
+    if (!VCORE) return Promise.reject(new Error("no-voice"));
+    if (!voiceLoading) {
+      voiceLoading = (window.OrosFilesCore ? Promise.resolve() : loadScript("../files/files-core.js"))
+        .then(function () { return window.OrosNotesVoiceUI ? null : loadScript("voice.js"); })
+        .then(function () {
+          voiceInit();
+          if (!VUI) throw new Error("no-voice");
+          var p = pageById(prefs.current);
+          VUI.renderStrip(p);
+          renderPreview();
+          return VUI;
+        });
+      voiceLoading.catch(function () { voiceLoading = null; });
+    }
+    return voiceLoading;
+  }
+  // The page names a recording: the UI is needed to show its player.
+  function voiceNeeded(page) {
+    if (VUI || !VCORE || !page || String(page.text || "").indexOf("voice:") === -1) return;
+    if (VCORE.listIn(page.text).length) loadVoice().catch(function () {});
+  }
+  function voiceRefresh(page) {
+    if (VUI) VUI.renderStrip(page);
+    else {
+      var b = document.getElementById("btn-voice");
+      if (b) b.hidden = !page;
+      voiceNeeded(page);
+    }
+  }
+  function voiceInit() {
+    if (VUI || !VCORE || !window.OrosNotesVoiceUI) return;
+    VUI = window.OrosNotesVoiceUI.init({
+      t: t, tf: tf, toast: notifyTransient,
+      locale: window.orosI18n && window.orosI18n.locale ? window.orosI18n.locale() : (LANG === "el" ? "el-GR" : "en-GB"),
+      page: function (id) { return id ? pageById(id) : null; },
+      current: function () { return pageById(prefs.current); },
+      pages: function () { return state.pages; },
+      // Where a new voice line goes: the caret, when the person put
+      // it in this page; else the end of the text.
+      caret: function (id) {
+        var ta = document.getElementById("page-text");
+        return ta && id === prefs.current && voiceCaretPage === id ? ta.selectionEnd : -1;
+      },
+      setText: function (id, text, caret) {
+        var p = pageById(id);
+        if (!p || p.text === text) return;
+        p.text = text;
+        touchContent(p);
+        queueSave(p.id);
+        if (p.id === prefs.current) {
+          var ta = document.getElementById("page-text");
+          if (ta) {
+            syncField(ta, text);
+            if (caret != null && document.activeElement === ta) { try { ta.setSelectionRange(caret, caret); } catch (e) {} }
+          }
+          renderLinksStrip(p);
+          VUI.renderStrip(p);
+          renderPreview();
+        }
+      },
+      confirm: askConfirm,
+      ask: function (title, body, buttons) { uiDlg(title, body, buttons, null); },
+      download: function (blob, name, mime) { downloadBlob(blob, name, mime); }
+    });
+  }
   // Device-local names the daily note and templates are found by
   // (English, Greek and this device's language: a notebook may be
   // shared by devices in several languages). key: "daily.parent" or
@@ -1111,7 +1403,9 @@
       syncField(title, page.title || "");
       syncField(text, page.text || "");
       renderChips(page);
+      renderExp(page);
       renderLinksStrip(page);
+      voiceRefresh(page);
       renderPreview();
       return;
     }
@@ -1126,7 +1420,10 @@
     title.value = page ? page.title : "";
     text.value  = page ? page.text : "";
     renderChips(page);
+    renderExp(page);
     renderLinksStrip(page);   // v0.17.0: outgoing [[links]] + backlinks
+    voiceCaretPage = null;
+    voiceRefresh(page);   // NOTES-VOICE: the page's recordings
     var tb = document.getElementById("md-toolbar");
     if (tb) tb.classList.toggle("off", !page);
     renderPreview();
@@ -1252,7 +1549,7 @@
       t("page.delete"), function () { doDeletePage(id); });
   }
 
-  function doDeletePage(id) {
+  function doDeletePage(id, quiet) {
     var gonePage = pageById(id);
     var upTo = gonePage ? (gonePage.parent || null) : null;
     // Tombstone — delete wins on merge, resurrected pages revive
@@ -1289,7 +1586,89 @@
     saveNow();
     markSyncDirty();
     renderAll();
-    notifyTransient(t("toast.deleted"));
+    if (!quiet) notifyTransient(t("toast.deleted"));
+  }
+
+  // ---------- STRICT-5: pages that delete themselves (expire.js) ----------
+  // expire.js is loaded on first need (first-open budget): when a page
+  // carries `exp`, or when the menu is opened.
+  var expLoading = null;
+  function expApi(then) {
+    if (window.orosNotesExpire) return window.orosNotesExpire;
+    if (then) {
+      if (!expLoading) {
+        expLoading = [];
+        var sc = document.createElement("script");
+        sc.src = "expire.js";
+        sc.onload = function () { var q = expLoading; expLoading = null; q.forEach(function (f) { try { f(); } catch (e) {} }); };
+        sc.onerror = function () { expLoading = null; };
+        document.head.appendChild(sc);
+      }
+      expLoading.push(then);
+    }
+    return null;
+  }
+  function anyExp() { return state.pages.some(function (p) { return expValid(p.exp); }); }
+  function sweepExpired() {
+    if (!anyExp()) return;
+    var E = expApi(sweepExpired);
+    if (!E) return;
+    var ids = E.dueIds(state.pages, Date.now());
+    ids.forEach(function (id) { if (pageById(id)) doDeletePage(id, true); });
+    if (ids.length) notifyTransient(ids.length === 1 ? t("exp.gone1") : t("exp.goneN").replace("{n}", ids.length));
+  }
+  function setExpiry(id, ms) {
+    var page = pageById(id);
+    if (!page) return;
+    if (ms) page.exp = Date.now() + ms; else delete page.exp;
+    touchStruct(page);
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    notifyTransient(t(ms ? "exp.set" : "exp.off"));
+  }
+  function openExpMenu(page, x, y) {
+    var E = expApi(function () { openExpMenu(page, x, y); });
+    if (!E) return;
+    closeMenus();
+    var menu = document.createElement("div");
+    menu.id = "node-menu";
+    var head = document.createElement("div");
+    head.className = "node-menu-title";
+    head.textContent = t("exp.title");
+    menu.appendChild(head);
+    var hint = document.createElement("p");
+    hint.className = "exp-hint";
+    hint.textContent = t("exp.hint");
+    menu.appendChild(hint);
+    var opts = E.CHOICES.map(function (c) { return [t("exp.in." + c.id), c.ms]; });
+    if (expValid(page.exp)) opts.push([t("exp.keep"), 0]);
+    opts.forEach(function (o) {
+      var b = document.createElement("button");
+      b.className = "node-menu-item";
+      b.setAttribute("data-k", "exp-" + (o[1] || "off"));
+      b.textContent = o[0];
+      b.addEventListener("click", function (e) { e.stopPropagation(); closeMenus(); setExpiry(page.id, o[1]); });
+      menu.appendChild(b);
+    });
+    document.body.appendChild(menu);
+    clampToViewport(menu, x, y);
+  }
+  function renderExp(page) {
+    var old = document.getElementById("page-exp");
+    var E = page && expValid(page.exp) ? expApi(function () { renderExp(pageById(prefs.current)); }) : null;
+    if (!page || !expValid(page.exp) || !E) { if (old && !(page && expValid(page.exp) && expLoading)) old.remove(); return; }
+    var l = E.left(page.exp, Date.now());
+    var txt = t("exp.left." + l.unit).replace("{n}", l.n);
+    if (old && old.textContent === txt) return;
+    if (old) old.remove();
+    var header = document.getElementById("editor-header");
+    if (!header) return;
+    var el = document.createElement("span");
+    el.id = "page-exp";
+    el.textContent = txt;
+    el.title = t("exp.title");
+    header.appendChild(el);
   }
 
   function renamePage(id) {
@@ -2822,6 +3201,7 @@
     linksTimer = setTimeout(function () {
       linksTimer = null;
       renderLinksStrip(pageById(prefs.current));
+      voiceRefresh(pageById(prefs.current));
     }, 300);
   }
 
@@ -2880,8 +3260,11 @@
       wiki: function (target) {
         var r = resolveLink(target, page.nb, idx);
         return r.page ? "ok" : (r.ambiguous ? "amb" : "new");
-      }
+      },
+      voice: VCORE ? VCORE.voiceLine : null
     });
+    if (VUI) VUI.hydrate(pv, page);    // NOTES-VOICE: players in the voice blocks
+    else if (pv.querySelector("div.md-voice")) loadVoice().catch(function () {});
   }
   var previewTimer = null;
   function queuePreview() {
@@ -2929,6 +3312,7 @@
     link: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
     code: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'
   };
+  var TR_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M5.5 5c.8 3 2.8 5.3 5.5 6.5M10.5 5c-.9 3.4-3 6-6.5 7.5"/><path d="M12 21l4-9 4 9M13.5 18h5"/></svg>';
   var VIEW_ICONS = {
     edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     preview: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
@@ -2967,6 +3351,44 @@
     replaceEditorText(ta, r.text, r.a, r.b);
   }
 
+  // Translate (translate/panel.js, TRANSLATE T3): the selection, or the
+  // whole page, on the device. Replace / Add below go in as one edit of
+  // the textarea (Ctrl+Z undoes it), only if the page is still the same.
+  function translatePage() {
+    var ta = document.getElementById("page-text");
+    var page = pageById(prefs.current);
+    if (!ta || !page) return;
+    var a = ta.selectionStart, b = ta.selectionEnd, all = a === b;
+    var src = all ? ta.value : ta.value.slice(a, b);
+    if (!src.trim()) { toast(t("tr.none")); return; }
+    var pid = page.id, before = ta.value;
+    function put(fn) {
+      return function (r) {
+        var el = document.getElementById("page-text");
+        if (!el || el.disabled || prefs.current !== pid || el.value !== before) { toast(t("tr.changed")); return; }
+        fn(el, r.text);
+      };
+    }
+    var o = { text: src, lang: LANG, actions: [
+      { label: t(all ? "tr.replace" : "tr.replaceSel"), run: put(function (el, txt) {
+        var s = all ? 0 : a, e = all ? before.length : b;
+        replaceEditorText(el, before.slice(0, s) + txt + before.slice(e), s, s + txt.length);
+      }) },
+      { label: t("tr.below"), run: put(function (el, txt) {
+        var e = all ? before.length : b, gap = before.slice(0, e).replace(/[ \t]+$/, "").slice(-1) === "\n" ? "\n" : "\n\n";
+        var ins = gap + txt;
+        replaceEditorText(el, before.slice(0, e) + ins + before.slice(e), e + gap.length, e + ins.length);
+      }) }
+    ] };
+    if (window.OrosTranslatePanel) { window.OrosTranslatePanel.open(o); return; }
+    var v = window.orosI18n && window.orosI18n.ver, sc = document.createElement("script");
+    var fail = function () { toast(t("tr.fail")); };
+    sc.src = "../translate/panel.js" + (v ? "?v=" + encodeURIComponent(v) : "");
+    sc.onload = function () { if (window.OrosTranslatePanel) window.OrosTranslatePanel.open(o); else fail(); };
+    sc.onerror = fail;
+    document.head.appendChild(sc);
+  }
+
   function buildToolbar() {
     var bar = document.getElementById("md-toolbar");
     if (!bar || bar.childNodes.length) return;
@@ -2987,6 +3409,17 @@
       b.addEventListener("click", function () { applyFormat(k); });
       fmt.appendChild(b);
     });
+    var trb = document.createElement("button");
+    trb.type = "button";
+    trb.className = "fmt-btn";
+    trb.id = "btn-translate";
+    trb.title = t("tr.btn");
+    trb.setAttribute("aria-label", t("tr.btn"));
+    trb.innerHTML = TR_ICON;
+    trb.addEventListener("pointerdown", function (e) { e.preventDefault(); });
+    trb.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    trb.addEventListener("click", translatePage);
+    fmt.appendChild(trb);
     bar.appendChild(fmt);
     var vw = document.createElement("div");
     vw.className = "vw-group";
@@ -3181,6 +3614,7 @@
       [t("page.moveto"),   function () { askMoveTo(page); }],
       [page.pinned ? t("page.unpin") : t("page.pin"), function () { togglePin(page.id); }],
       [t("labels.title"),  function () { openLabelPicker(page, x, y); }],
+      [t("exp.menu"),      function () { openExpMenu(page, x, y); }],
       [t("tpl.new"),               function () { newFromTemplate(); }],
       [t("menu.exportPage"),       function () { exportPageTxt(page); }],
       [t("menu.exportPageMd"),     function () { exportPageMd(page); }],
@@ -3408,7 +3842,9 @@
   }
   var NB_KEYS    = ["id", "name", "mtime", "pos"];
   var LABEL_KEYS = ["id", "nb", "name", "color", "mtime", "pos"];
-  var PAGE_KEYS  = ["id", "nb", "parent", "title", "text", "mtime", "pos", "labels", "pinned", "ct", "st", "h", "hx", "cf"];
+  // STRICT-5: a page's self-delete time (expire.js), a structure field.
+  function expValid(v) { return typeof v === "number" && isFinite(v) && v > 0; }
+  var PAGE_KEYS  = ["id", "nb", "parent", "title", "text", "mtime", "pos", "labels", "pinned", "ct", "st", "h", "hx", "cf", "exp"];
 
   function canonTombs(tombs, notebooks, pages, labels) {
     var alive = {}, maxTs = 0, src = tombs || {}, out = {};
@@ -3444,6 +3880,7 @@
       var c = canonEntity(p, PAGE_KEYS);
       c.labels = (Array.isArray(c.labels) ? c.labels.slice() : []).sort();
       c.pinned = !!c.pinned;
+      if (!expValid(c.exp)) delete c.exp;     // STRICT-5: a structure field
       // Both clocks are always spelled out (a page written by older
       // code has none; one last touched by older code has stale
       // ones) — the same page reads the same from every side.
@@ -3489,7 +3926,7 @@
   // fields the merge never rewrites, then notebook and parent (which
   // it may repair afterwards).
   function structKey(p) {
-    return JSON.stringify([p.pos, (Array.isArray(p.labels) ? p.labels.slice().sort() : []), !!p.pinned]) +
+    return JSON.stringify([p.pos, (Array.isArray(p.labels) ? p.labels.slice().sort() : []), !!p.pinned, expValid(p.exp) ? p.exp : 0]) +
            "|" + JSON.stringify([p.nb, (p.parent === undefined ? null : p.parent)]);
   }
   function mergePage(x, y, copies) {
@@ -3530,6 +3967,7 @@
         labels: Array.isArray(other.labels) ? other.labels.slice() : [],
         pinned: false, ct: oc, cf: 1
       });
+      if (expValid(out.exp)) copies[copies.length - 1].exp = out.exp;   // a copy of a self-deleting page goes with it
     }
     return out;
   }
@@ -4050,6 +4488,9 @@
           }]
         ];
         if (IMP) actions.push([t("imp.btn"), openImport]);
+        if (VCORE) actions.push([t("vc.unused"), function () {
+          loadVoice().then(function (v) { v.openUnused(); }, function () {});
+        }]);
         if (hhOn()) actions.push([t(hhOf(nb.id) ? "hh.stop.t" : "hh.share.t"), function () { hhAsk(nb.id); }, "nt-hh"]);
         
         actions.forEach(function (pair) {
@@ -4282,6 +4723,9 @@
 
     var text = document.getElementById("page-text");
     if (text) {
+      ["focus", "click", "keyup", "select"].forEach(function (ev) {
+        text.addEventListener(ev, function () { voiceCaretPage = prefs.current; });
+      });
       text.addEventListener("input", function () {
         var p = pageById(prefs.current);
         if (!p) return;
@@ -4313,6 +4757,23 @@
       var shareRef = document.getElementById("btn-share-page");
       header.insertBefore(todayBtn, shareRef || null);
     }
+    if (VCORE && header && !document.getElementById("btn-voice")) {
+      var micBtn = document.createElement("button");
+      micBtn.id = "btn-voice";
+      micBtn.type = "button";
+      micBtn.className = "icon-btn";
+      micBtn.title = t("vc.record");
+      micBtn.setAttribute("aria-label", t("vc.record"));
+      micBtn.innerHTML = VOICE_MIC;
+      micBtn.hidden = !pageById(prefs.current);
+      micBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        loadVoice().then(function (v) { v.start(); }, function () { notifyTransient(t("vc.noRec")); });
+      });
+      header.insertBefore(micBtn, document.getElementById("btn-today"));
+    }
+    // A recording that was cut off (voice.js keeps this flag while one runs)
+    try { if (localStorage.getItem("oros-notes-rec-live")) loadVoice().catch(function () {}); } catch (e) {}
     // Page actions (⋮) in the editor header: the tree menu (rename, move,
     // delete…) is otherwise reachable only by right-click or long-press in
     // the drawer, which phones hide and draggable rows can swallow.
@@ -4397,6 +4858,8 @@
   applyI18n();
   inheritPalette();
   renderAll();
+  sweepExpired();                              // STRICT-5: before anything is shown for long
+  setInterval(function () { sweepExpired(); renderExp(pageById(prefs.current)); }, 60000);
   registerNotesSlice();
   hhBoot();
   wireUI();

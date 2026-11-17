@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Text Tools — App logic (v1.0.0)
+// orOS Text Tools — App logic (v1.4.0)
 // Paste text, pick a tool, get the result live; chain several steps
 // and keep a chain as a recipe. The tools themselves are in core.js
 // (TextToolsCore); chains run in worker.js when the browser allows.
@@ -9,7 +9,25 @@
 //   - sessionStorage oros-texttools-session: the text, the steps and
 //     the open tab, for this browser session only (never stored on
 //     the device, never synced)
-//   - device-local oros-texttools-prefs: { layout: "stack"|"side" }
+//   - device-local oros-texttools-prefs: { layout: "stack"|"side", sel }
+//   - 1.2.0 (6.26, the Case Converter folded in): group "case" runs on
+//     textcase/core.js (TextCaseCore). Its My words stay the synced
+//     slice "textcase" (oros-textcase-data, same format, same merge),
+//     which this app now registers next to its own. The Case
+//     Converter's prefs (oros-textcase-prefs) are no longer read; its
+//     unsaved text (oros-textcase-draft) comes into the Text box once,
+//     when that box is empty, and the device copy is then removed
+//     (Text Tools keeps text for the session only). "Selection only" (prefs.sel) runs the steps on
+//     the selected part of the text for the "case" tools.
+//   - 1.3.0 (Translate, T1): the group "translate" is not a step: it
+//     translates the whole text on the device with translate/engine.js
+//     (OrosTranslate, Bible "TRANSLATE"). Its languages are device-local
+//     prefs.tr = { from: "auto"|code, to: code }; the models live in
+//     IndexedDB "oros-translate", downloaded only on the person's tap.
+//   - 1.4.0 (Translate, T2): 21 languages with English (others through
+//     English), names from Intl.DisplayNames; "Where no model fits, use
+//     the Assistant's AI" (OrosTranslate.ai, off by default, this device
+//     only) translates other directions only on the button, never live.
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. State: storage, session, prefs
@@ -27,6 +45,11 @@
   "use strict";
 
   var C = window.TextToolsCore;
+  var TC = window.TextCaseCore || null;     // Letters & accents (textcase/core.js)
+  var TR = window.OrosTranslate || null;    // Translate (translate/engine.js)
+  var TR_GROUP = "translate";
+  var TR_LIVE_MAX = 4000;          // shorter texts translate as you type
+  var GROUPS = TR ? C.GROUPS.concat([TR_GROUP]) : C.GROUPS.slice();
   var STORAGE_KEY = "oros-texttools-data";
   var PREFS_KEY   = "oros-texttools-prefs";
   var SESSION_KEY = "oros-texttools-session";
@@ -52,6 +75,72 @@
       "app": "Text Tools",
       "grp.lines": "Lines", "grp.space": "Clean up", "grp.num": "Numbers", "grp.cols": "Columns", "grp.find": "Find",
       "grp.code": "Encode", "grp.cmp": "Compare",
+      "grp.case": "Letters & accents",
+      "grp.translate": "Translate",
+      "lang.el": "Greek", "lang.en": "English",
+      "tr.from": "From", "tr.to": "To", "tr.auto": "Detect", "tr.swap": "Swap the languages",
+      "tr.hint": "Translates on this device with Mozilla's Firefox Translations models. The text never leaves the device.",
+      "tr.detected": "Language: {lang}.",
+      "tr.need": "{a} → {b} needs a download of about {mb} MB, only the first time. After that it works offline too.",
+      "tr.nopair": "There is no model for these languages yet.",
+      "tr.go": "Translate", "tr.getGo": "Download ({mb} MB) and translate", "tr.stop": "Stop",
+      "tr.downloading": "Downloading… {p}%", "tr.working": "Translating… {p}%",
+      "tr.done": "Translated on this device ({a} → {b})", "tr.long": "Long text: press Translate",
+      "tr.empty": "Type or paste a text first", "tr.same": "The text is already in {lang}",
+      "tr.installed": "Languages on this device", "tr.none": "None yet.", "tr.row": "{a} → {b} · {mb} MB",
+      "tr.remove": "Remove", "tr.removeSure": "Tap again to remove", "tr.removed": "Removed from this device: {a} → {b}",
+      "err.tr.unsupported": "This browser cannot translate on the device",
+      "err.tr.download": "The download failed. Check the connection and try again.",
+      "err.tr.hash": "A downloaded file was damaged, so nothing was kept. Try again.",
+      "err.tr.quota": "There is not enough space on this device",
+      "err.tr.pair": "There is no model for these languages yet",
+      "err.tr.cancelled": "Stopped",
+      "err.tr.engine": "The translation stopped with an error",
+      "tr.ai": "Where no model fits, use the Assistant's AI",
+      "tr.hintAi": "Translates on this device with Mozilla's Firefox Translations models. Only languages without a model go to the Assistant's AI.",
+      "tr.ai.hint": "Off by default, this device only. The text then goes to the AI service you set up in the Assistant.",
+      "tr.viaAi": "No model for these languages: the Assistant's AI translates them ({name}), so the text leaves the device.",
+      "tr.viaAiNone": "No model for these languages, and no AI is set up in the Assistant.",
+      "tr.goAi": "Translate with the AI", "tr.doneAi": "Translated by {name} ({a} → {b})",
+      "err.tr.ai-off": "The Assistant's AI is off for translation",
+      "err.tr.ai-none": "Set up an AI in the Assistant first",
+      "err.tr.ai": "The Assistant's AI did not answer. Try again later.",
+      "tool.upper": "UPPERCASE", "tool.lower": "lowercase", "tool.sentence": "Sentence case", "tool.title": "Title Case",
+      "tool.capital": "Capitalize Each Word", "tool.toggle": "tOGGLE cASE", "tool.alt": "aLtErNaTiNg",
+      "tool.noaccents": "Remove accents", "tool.latin": "Greek → Latin", "tool.mixed": "Fix mixed letters",
+      "tool.codecase": "Names for code", "tool.fancy": "Fancy letters",
+      "hint.upper": "Capitals. Greek capitals lose their accents and keep the diaeresis where it belongs (τσάι → ΤΣΑΪ).",
+      "hint.lower": "Small letters, with a final ς. Capitals without accents cannot get their accents back (ΚΑΛΗΜΕΡΑ → καλημερα).",
+      "hint.sentence": "A capital at the start of each sentence. Words in My words keep their capitals.",
+      "hint.title": "Capitals for a title; small words such as “of”, “the”, “και”, “του” stay small. Words in My words keep their capitals.",
+      "hint.capital": "A capital at the start of every word. Words in My words keep their capitals.",
+      "hint.toggle": "Turns capitals into small letters and the other way round, handy after Caps Lock.",
+      "hint.alt": "Small and capital letters in turn, for fun.",
+      "hint.noaccents": "Takes away accents and diaereses, in Greek and in other languages (café → cafe).",
+      "hint.latin": "Greek in Latin letters: ELOT 743 as on passports (Θεσσαλονίκη → Thessaloniki), or casual Greeklish as in messages.",
+      "hint.mixed": "Finds Latin letters hiding in Greek words (an English A in ΑΘΗΝΑ) and the other way round.",
+      "hint.codecase": "Each line becomes one name for code. Greek is written in Latin letters unless you keep it.",
+      "hint.fancy": "Bold, italic and other Unicode letters for posts. Many screen readers read them badly; keep them for short titles. “Plain text” turns them back.",
+      "opt.lang": "Language", "val.lang.auto": "Automatic", "val.lang.en": "English", "val.lang.el": "Ελληνικά",
+      "val.lang.tr": "Türkçe", "val.lang.de": "Deutsch",
+      "opt.how": "How", "val.how.elot": "ELOT 743 (passports)", "val.how.casual": "Greeklish (messages)",
+      "opt.as": "Name style", "val.as.camel": "camelCase", "val.as.pascal": "PascalCase", "val.as.snake": "snake_case",
+      "val.as.kebab": "kebab-case", "val.as.constant": "CONSTANT_CASE", "val.as.dot": "dot.case", "val.as.path": "path/case",
+      "val.as.train": "Train-Case", "opt.keepGreek": "Keep Greek letters",
+      "opt.font": "Letters", "val.font.bold": "Bold", "val.font.italic": "Italic", "val.font.bolditalic": "Bold italic",
+      "val.font.sansbold": "Sans bold", "val.font.mono": "Monospace", "val.font.double": "Double-struck",
+      "val.font.smallcaps": "Small caps", "val.font.wide": "Fullwidth", "val.font.circled": "Circled",
+      "val.font.strike": "Strikethrough", "val.font.under": "Underline", "val.font.plain": "Plain text (undo fancy letters)",
+      "note.mixed": "{n} words fixed", "err.nocase": "The letters engine did not load: reopen the app",
+      "opt.sel": "Selection only", "sel.hint": "Select part of the text: only that part changes.",
+      "btn.words": "My words",
+      "words.title": "My words",
+      "words.hint": "These words keep their capitals in Sentence case, Title Case and Capitalize Each Word. They follow you to your other devices.",
+      "words.count": "{n} of {max}", "words.empty": "No words yet.", "words.new": "New word", "words.ph": "e.g. iPhone",
+      "words.add": "Add", "words.remove": "Remove {w}",
+      "toast.added": "Added to My words", "toast.same": "Already in My words",
+      "toast.bad": "A word has 1 to 40 characters and no spaces", "toast.full": "My words is full ({max})",
+      "toast.removed": "“{w}” removed",
       "tool.sort": "Sort", "tool.reverse": "Reverse order", "tool.dedupe": "Remove duplicates", "tool.dupes": "Only duplicates",
       "tool.count": "Count lines", "tool.noempty": "Remove empty lines", "tool.squeeze": "One empty line",
       "tool.filter": "Keep / remove lines", "tool.join": "Join lines", "tool.split": "Split into lines",
@@ -169,7 +258,7 @@
       "dlg.saveTitle": "Save as recipe", "dlg.renameTitle": "Rename recipe", "dlg.name": "Name",
       "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.close": "Close",
       "send.title": "Send the result to", "send.notes": "Notes (new page)", "send.sheet": "Spreadsheet (new sheet)",
-      "send.todo": "To-Do (one task per line)", "send.case": "Case Converter",
+      "send.todo": "To-Do (one task per line)",
       "toast.copied": "Copied", "toast.copyFail": "Could not copy: select the result and press Ctrl+C",
       "toast.pasteFail": "Could not read the clipboard: paste with Ctrl+V or a long press",
       "toast.cleared": "Text cleared", "toast.replaced": "Text replaced", "toast.undo": "Undo",
@@ -189,6 +278,72 @@
       "app": "Εργαλεία κειμένου",
       "grp.lines": "Γραμμές", "grp.space": "Καθάρισμα", "grp.num": "Αρίθμηση", "grp.cols": "Στήλες", "grp.find": "Εύρεση",
       "grp.code": "Κωδικοποίηση", "grp.cmp": "Σύγκριση",
+      "grp.case": "Γράμματα & τόνοι",
+      "grp.translate": "Μετάφραση",
+      "lang.el": "Ελληνικά", "lang.en": "Αγγλικά",
+      "tr.from": "Από", "tr.to": "Προς", "tr.auto": "Αυτόματα", "tr.swap": "Αντιστροφή γλωσσών",
+      "tr.hint": "Μεταφράζει μέσα στη συσκευή με τα μοντέλα Firefox Translations της Mozilla. Το κείμενο δεν φεύγει ποτέ από τη συσκευή.",
+      "tr.detected": "Γλώσσα: {lang}.",
+      "tr.need": "Για {a} → {b} χρειάζεται λήψη περίπου {mb} MB, μόνο την πρώτη φορά. Μετά δουλεύει και χωρίς σύνδεση.",
+      "tr.nopair": "Δεν υπάρχει ακόμη μοντέλο για αυτές τις γλώσσες.",
+      "tr.go": "Μετάφραση", "tr.getGo": "Λήψη ({mb} MB) και μετάφραση", "tr.stop": "Διακοπή",
+      "tr.downloading": "Λήψη… {p}%", "tr.working": "Μετάφραση… {p}%",
+      "tr.done": "Μεταφράστηκε στη συσκευή ({a} → {b})", "tr.long": "Μεγάλο κείμενο: πάτα Μετάφραση",
+      "tr.empty": "Γράψε ή επικόλλησε πρώτα ένα κείμενο", "tr.same": "Το κείμενο είναι ήδη στα {lang}",
+      "tr.installed": "Γλώσσες στη συσκευή", "tr.none": "Καμία ακόμη.", "tr.row": "{a} → {b} · {mb} MB",
+      "tr.remove": "Αφαίρεση", "tr.removeSure": "Πάτα ξανά για αφαίρεση", "tr.removed": "Αφαιρέθηκε από τη συσκευή: {a} → {b}",
+      "err.tr.unsupported": "Αυτός ο browser δεν μπορεί να μεταφράσει μέσα στη συσκευή",
+      "err.tr.download": "Η λήψη απέτυχε. Έλεγξε τη σύνδεση και ξαναδοκίμασε.",
+      "err.tr.hash": "Ένα αρχείο ήρθε χαλασμένο, οπότε δεν κρατήθηκε τίποτα. Ξαναδοκίμασε.",
+      "err.tr.quota": "Δεν υπάρχει αρκετός χώρος στη συσκευή",
+      "err.tr.pair": "Δεν υπάρχει ακόμη μοντέλο για αυτές τις γλώσσες",
+      "err.tr.cancelled": "Σταμάτησε",
+      "err.tr.engine": "Η μετάφραση σταμάτησε με σφάλμα",
+      "tr.ai": "Όπου δεν υπάρχει μοντέλο, να μεταφράζει η AI του Βοηθού",
+      "tr.hintAi": "Μεταφράζει μέσα στη συσκευή με τα μοντέλα Firefox Translations της Mozilla. Μόνο οι γλώσσες χωρίς μοντέλο πηγαίνουν στην AI του Βοηθού.",
+      "tr.ai.hint": "Κλειστό από πριν, μόνο σε αυτή τη συσκευή. Τότε το κείμενο πηγαίνει στην υπηρεσία AI που έχεις ρυθμίσει στον Βοηθό.",
+      "tr.viaAi": "Δεν υπάρχει μοντέλο για αυτές τις γλώσσες: θα μεταφράσει η AI του Βοηθού ({name}), οπότε το κείμενο φεύγει από τη συσκευή.",
+      "tr.viaAiNone": "Δεν υπάρχει μοντέλο για αυτές τις γλώσσες, ούτε AI ρυθμισμένη στον Βοηθό.",
+      "tr.goAi": "Μετάφραση με την AI", "tr.doneAi": "Μεταφράστηκε από {name} ({a} → {b})",
+      "err.tr.ai-off": "Η AI του Βοηθού είναι κλειστή για μετάφραση",
+      "err.tr.ai-none": "Ρύθμισε πρώτα μια AI στον Βοηθό",
+      "err.tr.ai": "Η AI του Βοηθού δεν απάντησε. Ξαναδοκίμασε αργότερα.",
+      "tool.upper": "ΚΕΦΑΛΑΙΑ", "tool.lower": "πεζά", "tool.sentence": "Κεφαλαίο στην αρχή", "tool.title": "Τίτλος",
+      "tool.capital": "Κάθε Λέξη Με Κεφαλαίο", "tool.toggle": "αΝΤΙΣΤΡΟΦΗ", "tool.alt": "εΝαΛλΑξ",
+      "tool.noaccents": "Χωρίς τόνους", "tool.latin": "Ελληνικά → λατινικά", "tool.mixed": "Διόρθωση μικτών γραμμάτων",
+      "tool.codecase": "Ονόματα για κώδικα", "tool.fancy": "Φανταχτερά γράμματα",
+      "hint.upper": "Κεφαλαία. Τα ελληνικά κεφαλαία χάνουν τους τόνους και κρατούν τα διαλυτικά όπου χρειάζονται (τσάι → ΤΣΑΪ).",
+      "hint.lower": "Πεζά, με τελικό ς. Τα κεφαλαία χωρίς τόνους δεν ξαναπαίρνουν τόνους (ΚΑΛΗΜΕΡΑ → καλημερα).",
+      "hint.sentence": "Κεφαλαίο στην αρχή κάθε πρότασης. Οι λέξεις από το «Οι λέξεις μου» κρατούν τα κεφαλαία τους.",
+      "hint.title": "Κεφαλαία για τίτλο· μικρές λέξεις όπως «και», «του», “of”, “the” μένουν πεζές. Οι λέξεις από το «Οι λέξεις μου» κρατούν τα κεφαλαία τους.",
+      "hint.capital": "Κεφαλαίο στην αρχή κάθε λέξης. Οι λέξεις από το «Οι λέξεις μου» κρατούν τα κεφαλαία τους.",
+      "hint.toggle": "Κάνει τα κεφαλαία πεζά και τα πεζά κεφαλαία, χρήσιμο όταν έμεινε πατημένο το Caps Lock.",
+      "hint.alt": "Πεζά και κεφαλαία εναλλάξ, για πλάκα.",
+      "hint.noaccents": "Βγάζει τόνους και διαλυτικά, στα ελληνικά και σε άλλες γλώσσες (café → cafe).",
+      "hint.latin": "Ελληνικά με λατινικούς χαρακτήρες: ΕΛΟΤ 743 όπως στα διαβατήρια (Θεσσαλονίκη → Thessaloniki) ή πρόχειρα Greeklish όπως στα μηνύματα.",
+      "hint.mixed": "Βρίσκει λατινικά γράμματα κρυμμένα σε ελληνικές λέξεις (ένα αγγλικό A στο ΑΘΗΝΑ) και το ανάποδο.",
+      "hint.codecase": "Κάθε γραμμή γίνεται ένα όνομα για κώδικα. Τα ελληνικά γράφονται με λατινικά, εκτός αν τα κρατήσεις.",
+      "hint.fancy": "Έντονα, πλάγια και άλλα γράμματα Unicode για αναρτήσεις. Πολλοί αναγνώστες οθόνης τα διαβάζουν λάθος· κράτησέ τα για σύντομους τίτλους. Το «Απλό κείμενο» τα γυρίζει πίσω.",
+      "opt.lang": "Γλώσσα", "val.lang.auto": "Αυτόματα", "val.lang.en": "English", "val.lang.el": "Ελληνικά",
+      "val.lang.tr": "Türkçe", "val.lang.de": "Deutsch",
+      "opt.how": "Τρόπος", "val.how.elot": "ΕΛΟΤ 743 (διαβατήρια)", "val.how.casual": "Greeklish (μηνύματα)",
+      "opt.as": "Μορφή ονόματος", "val.as.camel": "camelCase", "val.as.pascal": "PascalCase", "val.as.snake": "snake_case",
+      "val.as.kebab": "kebab-case", "val.as.constant": "CONSTANT_CASE", "val.as.dot": "dot.case", "val.as.path": "path/case",
+      "val.as.train": "Train-Case", "opt.keepGreek": "Να μείνουν ελληνικά",
+      "opt.font": "Γράμματα", "val.font.bold": "Έντονα", "val.font.italic": "Πλάγια", "val.font.bolditalic": "Έντονα πλάγια",
+      "val.font.sansbold": "Έντονα sans", "val.font.mono": "Σταθερό πλάτος", "val.font.double": "Διπλή γραμμή",
+      "val.font.smallcaps": "Μικρά κεφαλαία", "val.font.wide": "Πλατιά", "val.font.circled": "Σε κύκλο",
+      "val.font.strike": "Διαγράμμιση", "val.font.under": "Υπογράμμιση", "val.font.plain": "Απλό κείμενο (χωρίς φανταχτερά)",
+      "note.mixed": "Διορθώθηκαν {n} λέξεις", "err.nocase": "Δεν φόρτωσαν τα γράμματα: άνοιξε ξανά την εφαρμογή",
+      "opt.sel": "Μόνο η επιλογή", "sel.hint": "Επίλεξε ένα μέρος του κειμένου: αλλάζει μόνο αυτό.",
+      "btn.words": "Οι λέξεις μου",
+      "words.title": "Οι λέξεις μου",
+      "words.hint": "Αυτές οι λέξεις κρατούν τα κεφαλαία τους στις μετατροπές «Κεφαλαίο στην αρχή», «Τίτλος» και «Κάθε Λέξη Με Κεφαλαίο». Σε ακολουθούν και στις άλλες συσκευές σου.",
+      "words.count": "{n} από {max}", "words.empty": "Καμία λέξη ακόμα.", "words.new": "Νέα λέξη", "words.ph": "π.χ. iPhone",
+      "words.add": "Προσθήκη", "words.remove": "Αφαίρεση {w}",
+      "toast.added": "Προστέθηκε στις λέξεις σου", "toast.same": "Υπάρχει ήδη στις λέξεις σου",
+      "toast.bad": "Μια λέξη έχει από 1 έως 40 χαρακτήρες και χωρίς κενά", "toast.full": "Οι λέξεις σου είναι γεμάτες ({max})",
+      "toast.removed": "Η λέξη «{w}» αφαιρέθηκε",
       "tool.sort": "Ταξινόμηση", "tool.reverse": "Αντίστροφη σειρά", "tool.dedupe": "Αφαίρεση διπλότυπων", "tool.dupes": "Μόνο τα διπλότυπα",
       "tool.count": "Μέτρημα γραμμών", "tool.noempty": "Χωρίς κενές γραμμές", "tool.squeeze": "Μία κενή γραμμή",
       "tool.filter": "Κράτα / βγάλε γραμμές", "tool.join": "Ένωση γραμμών", "tool.split": "Σπάσιμο σε γραμμές",
@@ -306,7 +461,7 @@
       "dlg.saveTitle": "Αποθήκευση ως συνταγή", "dlg.renameTitle": "Μετονομασία συνταγής", "dlg.name": "Όνομα",
       "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.close": "Κλείσιμο",
       "send.title": "Στείλε το αποτέλεσμα σε", "send.notes": "Σημειώσεις (νέα σελίδα)", "send.sheet": "Υπολογιστικό φύλλο (νέο φύλλο)",
-      "send.todo": "To-Do (μία εργασία ανά γραμμή)", "send.case": "Κεφαλαία & πεζά",
+      "send.todo": "To-Do (μία εργασία ανά γραμμή)",
       "toast.copied": "Αντιγράφηκε", "toast.copyFail": "Δεν έγινε αντιγραφή: επίλεξε το αποτέλεσμα και πάτα Ctrl+C",
       "toast.pasteFail": "Δεν διάβασα το πρόχειρο: επικόλλησε με Ctrl+V ή με παρατεταμένο πάτημα",
       "toast.cleared": "Το κείμενο καθαρίστηκε", "toast.replaced": "Το κείμενο άλλαξε", "toast.undo": "Αναίρεση",
@@ -376,7 +531,8 @@
 
   // ---------- 2. State ----------
   var data = null;                 // recipes (synced)
-  var prefs = { layout: "stack" };
+  var prefs = { layout: "stack", sel: false, tr: { from: "auto", to: TR && LANG !== "en" && TR.tos().indexOf(LANG) >= 0 ? LANG : (LANG === "en" ? "en" : "el") } };
+  var words = null;                // My words (synced slice "textcase")
   // Session: the text, the steps and which step is open.
   var S = { text: "", other: "", chain: [{ tool: "sort", opts: {} }], active: 0, group: "lines", loaded: null };
 
@@ -404,8 +560,39 @@
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (p && (p.layout === "side" || p.layout === "stack")) prefs.layout = p.layout;
+      if (p) prefs.sel = p.sel === true;
+      if (p && p.tr && typeof p.tr === "object" && TR) {
+        var langs = TR.languages();
+        if (p.tr.from === "auto" || langs.indexOf(p.tr.from) >= 0) prefs.tr.from = p.tr.from;
+        if (langs.indexOf(p.tr.to) >= 0) prefs.tr.to = p.tr.to;
+      }
     } catch (e) {}
   }
+
+  // My words: the Case Converter's synced list (seed words come in
+  // with m = 1, so any real change wins over them).
+  function loadWords() {
+    if (!TC) { words = null; return; }
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(TC.DATA_KEY) || "null"); } catch (e) { raw = null; }
+    words = TC.seeded(raw);
+  }
+  var wordsFailShown = false;
+  function saveWords() {
+    try { localStorage.setItem(TC.DATA_KEY, JSON.stringify(words)); wordsFailShown = false; }
+    catch (e) { if (!wordsFailShown) { wordsFailShown = true; showToast(t("toast.save")); } return; }   // R30
+    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+  }
+  // The Case Converter's unsaved text, once (see the header).
+  function takeCaseDraft() {
+    if (!TC) return;
+    var v = null;
+    try { v = localStorage.getItem(TC.DRAFT_KEY); } catch (e) { return; }
+    if (typeof v !== "string") return;
+    if (!S.text && v) { S.text = v.slice(0, C.MAX_TEXT); saveSessionNow(); }
+    if (S.text === v.slice(0, C.MAX_TEXT) || !v) { try { localStorage.removeItem(TC.DRAFT_KEY); } catch (e) {} }
+  }
+  function wordList() { return words ? words.words.map(function (w) { return w.w; }) : []; }
   function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {} }
 
   function loadSession() {
@@ -417,7 +604,7 @@
     var chain = C.normSteps(p.chain);
     if (chain.length) S.chain = chain;
     S.active = typeof p.active === "number" && p.active >= 0 && p.active < S.chain.length ? Math.floor(p.active) : 0;
-    if (C.GROUPS.indexOf(p.group) >= 0) S.group = p.group;
+    if (GROUPS.indexOf(p.group) >= 0) S.group = p.group;
     if (typeof p.loaded === "string" && C.ID_RE.test(p.loaded)) S.loaded = p.loaded;
   }
   var sessTimer = null;
@@ -451,13 +638,13 @@
         var p = pending;
         pending = null;
         clearTimeout(p.timer);
-        if (m.ok) showResult(m.text, m.notes); else showError("err.run");
+        if (m.ok) showResult(p.wrap ? p.wrap[0] + m.text + p.wrap[1] : m.text, m.notes); else showError("err.run");
       };
       worker.onerror = function () {
         workerBroken = true;
         try { worker.terminate(); } catch (e) {}
         worker = null;
-        if (pending) { var p = pending; pending = null; clearTimeout(p.timer); runLocal(p.text, p.steps, p.ctx); }
+        if (pending) { var p = pending; pending = null; clearTimeout(p.timer); runLocal(p.text, p.steps, p.ctx, p.wrap); }
       };
     } catch (e) { workerBroken = true; worker = null; }
     return worker;
@@ -466,21 +653,41 @@
     if (worker) { try { worker.terminate(); } catch (e) {} }
     worker = null;
   }
-  function runLocal(text, steps, ctx) {
+  function runLocal(text, steps, ctx, wrap) {
     var r;
     try { r = C.run(text, steps, ctx || {}); } catch (e) { showError("err.run"); return; }
-    showResult(r.text, r.notes);
+    showResult(wrap ? wrap[0] + r.text + wrap[1] : r.text, r.notes);
+  }
+
+  // "Selection only" (Letters & accents): the part of the text that is
+  // selected, as [start, end), or null (no selection: the whole text).
+  var sel = { a: 0, b: 0 };
+  function selOn() { var st = activeStep(); return prefs.sel && !!st && !!C.TOOLS[st.tool] && C.TOOLS[st.tool].g === "case"; }
+  function selRange() {
+    if (!selOn() || !(sel.b > sel.a) || sel.b > S.text.length) return null;
+    return [sel.a, sel.b];
+  }
+  function trackSel() {
+    var ta = $("in"), a = ta.selectionStart || 0, b = ta.selectionEnd || 0;
+    if (a === sel.a && b === sel.b) return;
+    if (document.activeElement !== ta && !(b > a)) return;   // a click elsewhere keeps the last selection
+    sel.a = a; sel.b = b;
+    if (selOn()) schedule();
   }
 
   function runNow() {
     clearTimeout(liveTimer); liveTimer = null;
+    if (trOn()) { trRun(); return; }
     var text = S.text, steps = copyObj(S.chain), ctx = C.usesOther(steps) ? { other: S.other } : {};
+    if (C.usesWords(steps)) ctx.words = wordList();
+    var rg = selRange(), wrap = null;
+    if (rg) { wrap = [text.slice(0, rg[0]), text.slice(rg[1])]; text = text.slice(rg[0], rg[1]); }
     if (pending) { clearTimeout(pending.timer); pending = null; }
     $("apply-btn").hidden = true;
     var w = getWorker();
-    if (!w) { runLocal(text, steps, ctx); return; }
+    if (!w) { runLocal(text, steps, ctx, wrap); return; }
     var id = ++seq, pattern = steps.some(C.usesPattern);
-    pending = { id: id, text: text, steps: steps, ctx: ctx };
+    pending = { id: id, text: text, steps: steps, ctx: ctx, wrap: wrap };
     pending.timer = setTimeout(function () {
       if (!pending || pending.id !== id) return;
       pending = null;
@@ -489,12 +696,13 @@
     }, pattern ? PATTERN_MS : CHAIN_MS);
     setNote(t("note.working"), false);
     try { w.postMessage({ id: id, text: text, steps: steps, ctx: ctx }); }
-    catch (e) { clearTimeout(pending.timer); pending = null; runLocal(text, steps, ctx); }
+    catch (e) { clearTimeout(pending.timer); pending = null; runLocal(text, steps, ctx, wrap); }
   }
 
   // Live preview while the text is not huge; above that, "Apply".
   function schedule() {
     clearTimeout(liveTimer);
+    if (trOn()) { trSchedule(); return; }
     if (S.text.length + (C.usesOther(S.chain) ? S.other.length : 0) > C.LIVE_MAX) {
       $("apply-btn").hidden = false;
       setNote(t("note.stale"), false);
@@ -533,21 +741,23 @@
   function renderGroups() {
     var host = $("groups");
     host.innerHTML = "";
-    C.GROUPS.forEach(function (g) {
+    GROUPS.forEach(function (g) {
       var b = el("button", "tab", t("grp." + g));
       b.type = "button";
       b.setAttribute("role", "tab");
       b.setAttribute("aria-selected", g === S.group ? "true" : "false");
       b.tabIndex = g === S.group ? 0 : -1;
-      b.addEventListener("click", function () { S.group = g; saveSession(); renderGroups(); renderTools(); });
+      b.addEventListener("click", function () { var was = trOn(); S.group = g; saveSession(); renderGroups(); renderTools(); modeChanged(was); });
       b.addEventListener("keydown", function (e) {
-        var i = C.GROUPS.indexOf(S.group), d = e.key === "ArrowRight" ? 1 : (e.key === "ArrowLeft" ? -1 : 0);
+        var i = GROUPS.indexOf(S.group), d = e.key === "ArrowRight" ? 1 : (e.key === "ArrowLeft" ? -1 : 0);
         if (!d) return;
         e.preventDefault();
-        S.group = C.GROUPS[(i + d + C.GROUPS.length) % C.GROUPS.length];
+        var was = trOn();
+        S.group = GROUPS[(i + d + GROUPS.length) % GROUPS.length];
         saveSession();
         renderGroups();
         renderTools();
+        modeChanged(was);
         var on = host.querySelector('[aria-selected="true"]');
         if (on) on.focus();
       });
@@ -723,6 +933,120 @@
     });
     if (st.tool === "affix") host.appendChild(affixPresets());
     if (st.tool === "diff") host.appendChild(otherBox());
+    if (T.g === "case") host.appendChild(selRow());
+    if (C.usesWords([st])) {
+      var wb = el("button", "txt-btn words-btn", t("btn.words"));
+      wb.type = "button";
+      wb.setAttribute("aria-haspopup", "dialog");
+      wb.addEventListener("click", wordsDialog);
+      host.appendChild(wb);
+    }
+  }
+
+  // Letters & accents: "Selection only" (device-local, like the Case
+  // Converter's own switch).
+  function selRow() {
+    var row = el("label", "opt chk");
+    var cb = el("input");
+    cb.type = "checkbox";
+    cb.id = "o-sel";
+    cb.checked = prefs.sel;
+    cb.addEventListener("change", function () {
+      prefs.sel = cb.checked;
+      savePrefs();
+      $("sel-hint").hidden = !prefs.sel;
+      schedule();
+    });
+    row.appendChild(cb);
+    row.appendChild(el("span", "", t("opt.sel")));
+    var box = el("div", "");
+    box.appendChild(row);
+    var h = el("p", "hint", t("sel.hint"));
+    h.id = "sel-hint";
+    h.hidden = !prefs.sel;
+    box.appendChild(h);
+    return box;
+  }
+
+  // My words: words that keep their capitals (synced slice "textcase").
+  function wordsDialog() {
+    if (!words) { showToast(t("err.nocase")); return; }
+    var dlg = makeDialog("tt-words");
+    dlg.setAttribute("aria-labelledby", "tt-words-title");
+    var title = el("div", "dlg-title", t("words.title"));
+    title.id = "tt-words-title";
+    dlg.appendChild(title);
+    dlg.appendChild(el("p", "hint", t("words.hint")));
+    var form = el("form", "words-add");
+    var lab = el("label", "opt-lbl", t("words.new"));
+    lab.setAttribute("for", "tt-word-in");
+    var inp = el("input");
+    inp.id = "tt-word-in";
+    inp.type = "text";
+    inp.maxLength = TC.MAX_WORD_LEN;
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    inp.placeholder = t("words.ph");
+    var add = button(t("words.add"), "primary");
+    add.type = "submit";
+    form.appendChild(lab);
+    var line = el("div", "words-line");
+    line.appendChild(inp);
+    line.appendChild(add);
+    form.appendChild(line);
+    dlg.appendChild(form);
+    var count = el("div", "hint words-count");
+    var ul = el("ul", "words-list");
+    var empty = el("p", "hint", t("words.empty"));
+    dlg.appendChild(count);
+    dlg.appendChild(ul);
+    dlg.appendChild(empty);
+    function draw() {
+      ul.textContent = "";
+      var list = TC.sortedForList(words, LANG);
+      list.forEach(function (w) {
+        var li = el("li", "word");
+        li.appendChild(el("span", "word-text", w.w));
+        li.appendChild(iconBtn("mini danger", UI.x, t("words.remove", { w: w.w }), function () { remove(w); }));
+        ul.appendChild(li);
+      });
+      empty.hidden = list.length > 0;
+      count.textContent = t("words.count", { n: fmtNum(list.length), max: fmtNum(TC.MAX_WORDS) });
+    }
+    function remove(w) {
+      words = TC.removeWord(words, w.id, Date.now());
+      saveWords();
+      draw();
+      schedule();
+      inp.focus();
+      undoToast(t("toast.removed", { w: w.w }), function () {
+        var r = TC.addWord(words, w.w, Date.now());   // a newer edit resurrects (R17)
+        if (!r.ok) return;
+        words = r.data;
+        saveWords();
+        if (dlg.open) draw();
+        schedule();
+      });
+    }
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var r = TC.addWord(words, inp.value, Date.now());
+      if (!r.ok) { showToast(t("toast." + r.why, { max: fmtNum(TC.MAX_WORDS) })); inp.focus(); return; }
+      words = r.data;
+      saveWords();
+      inp.value = "";
+      draw();
+      schedule();
+      showToast(t("toast.added"));
+      inp.focus();
+    });
+    draw();
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    inp.focus();
   }
 
   // Compare: the second text. Session only, like the first one; never
@@ -804,6 +1128,265 @@
     b.title = label;
     b.addEventListener("click", fn);
     return b;
+  }
+
+  // ---------- 4b. Translate (on the device) ----------
+  // Not a step: the whole Text box goes to OrosTranslate. Nothing is
+  // downloaded before the person presses the button that says how much.
+  var tr = { busy: false, stop: false, again: false, timer: null, armed: null, st: null, ai: null };
+  function trOn() { return !!TR && S.group === TR_GROUP; }
+  function langName(l) { return TR && TR.name ? TR.name(l, LANG) : (hasKey("lang." + l) ? t("lang." + l) : l); }
+  // With the AI on, every language is on both sides; else only those a
+  // model starts from (From) or ends in (To).
+  function trLangs(from) {
+    var l = TR.ai.on() ? TR.languages() : (from ? TR.froms() : TR.tos());
+    return l.slice().sort(function (a, b) { return langName(a).localeCompare(langName(b), LANG); });
+  }
+  function trFrom() { return prefs.tr.from === "auto" ? TR.detect(S.text) : prefs.tr.from; }
+  // "Find the language" found the target language: the target turns to
+  // another one (as the person would do by hand), and the list shows it.
+  function trFix() {
+    if (prefs.tr.from !== "auto" || !S.text.trim() || trFrom() !== prefs.tr.to) return;
+    var other = prefs.tr.to !== "en" ? "en" : (LANG !== "en" && TR.tos().indexOf(LANG) >= 0 ? LANG : "el");
+    prefs.tr.to = other;
+    savePrefs();
+    if ($("tr-to")) $("tr-to").value = other;
+  }
+  function trErr(e) {
+    var c = e && e.code ? e.code : "engine";
+    return hasKey("err.tr." + c) ? "err.tr." + c : "err.tr.engine";
+  }
+
+  // Entering or leaving the group swaps the side panel.
+  function modeChanged(was) {
+    var on = trOn();
+    $("tools").hidden = on;
+    $("chain-sec").hidden = on;
+    $("opts-sec").hidden = on;
+    $("tr-sec").hidden = !on;
+    if (on === was) return;
+    if (on) {
+      clearTimeout(liveTimer); liveTimer = null;
+      if (pending) { clearTimeout(pending.timer); pending = null; }
+      $("apply-btn").hidden = true;
+      $("out").value = "";
+      setNote("", false);
+      tr.stop = false;
+      trRender();
+      trSchedule();
+    } else {
+      tr.stop = true;                       // a running job stops at its next part
+      clearTimeout(tr.timer);
+      renderChain();
+      renderOpts();
+      schedule();
+    }
+  }
+
+  function langSelect(id, withAuto) {
+    var s = el("select");
+    s.id = id;
+    (withAuto ? ["auto"] : []).concat(trLangs(withAuto)).forEach(function (l) {
+      var o = el("option", "", l === "auto" ? t("tr.auto") : langName(l));
+      o.value = l;
+      s.appendChild(o);
+    });
+    s.value = withAuto ? prefs.tr.from : prefs.tr.to;
+    s.addEventListener("change", function () {
+      if (withAuto) prefs.tr.from = s.value; else prefs.tr.to = s.value;
+      if (prefs.tr.from === prefs.tr.to) {           // never the same language on both sides
+        if (withAuto) prefs.tr.to = s.value === "en" ? (LANG !== "en" && TR.tos().indexOf(LANG) >= 0 ? LANG : "el") : "en";
+        else prefs.tr.from = "auto";
+      }
+      savePrefs();
+      trRender();
+      trSchedule();
+    });
+    return s;
+  }
+
+  function trRender() {
+    var host = $("tr-sec");
+    host.innerHTML = "";
+    host.appendChild(el("h2", "", t("grp.translate")));
+    host.appendChild(el("p", "hint", t(TR.ai.on() ? "tr.hintAi" : "tr.hint")));
+    var row = el("div", "tr-langs");
+    [["tr-from", "tr.from", true], ["tr-to", "tr.to", false]].forEach(function (r, i) {
+      var box = el("div", "opt");
+      var lab = el("label", "opt-lbl", t(r[1]));
+      lab.setAttribute("for", r[0]);
+      box.appendChild(lab);
+      box.appendChild(langSelect(r[0], r[2]));
+      row.appendChild(box);
+      if (!i) row.appendChild(iconBtn("tr-swap", UI.swap, t("tr.swap"), trSwap));
+    });
+    host.appendChild(row);
+    var info = el("p", "hint tr-info");
+    info.id = "tr-info";
+    info.setAttribute("aria-live", "polite");
+    host.appendChild(info);
+    var go = el("button", "txt-btn primary tr-go");
+    go.type = "button";
+    go.id = "tr-go";
+    go.addEventListener("click", trRun);
+    host.appendChild(go);
+    var list = el("div", "tr-list");
+    list.id = "tr-list";
+    host.appendChild(list);
+    var ai = el("label", "check tr-ai");
+    var cb = el("input");
+    cb.type = "checkbox";
+    cb.id = "tr-ai";
+    cb.checked = TR.ai.on();
+    cb.addEventListener("change", function () {
+      TR.ai.set(cb.checked);
+      tr.ai = null;
+      trRender();
+      trSchedule();
+    });
+    ai.appendChild(cb);
+    ai.appendChild(el("span", "", t("tr.ai")));
+    host.appendChild(ai);
+    host.appendChild(el("p", "hint", t("tr.ai.hint")));
+    trRefresh();
+  }
+
+  // The button, the line under the languages and the list of models.
+  function trButtons() {
+    var go = $("tr-go"), info = $("tr-info");
+    if (!go || !info) return;
+    var st = tr.st, from = TR ? trFrom() : "", to = prefs.tr.to, msg = "";
+    if (prefs.tr.from === "auto" && S.text.trim()) msg = t("tr.detected", { lang: langName(from) }) + " ";
+    var viaAi = !!st && !st.legs && TR.ai.on();
+    if (viaAi) msg += tr.ai ? t("tr.viaAi", { name: tr.ai.name }) : t("tr.viaAiNone");
+    else if (st && !st.legs) msg += t("tr.nopair");
+    else if (st && !st.ok) msg += t("tr.need", { a: langName(from), b: langName(to), mb: st.mb });
+    info.textContent = msg;
+    go.textContent = tr.busy ? t("tr.stop") : viaAi ? t("tr.goAi")
+      : (st && !st.ok && st.legs ? t("tr.getGo", { mb: st.mb }) : t("tr.go"));
+    go.disabled = !tr.busy && !!st && !st.legs && !(viaAi && tr.ai);
+  }
+  function trRefresh() {
+    if (!TR) return;
+    var from = trFrom(), to = prefs.tr.to;
+    TR.status(from, to).then(function (st) {
+      tr.st = st;
+      trButtons();
+      if (!st.legs && TR.ai.on() && !tr.ai) {
+        TR.ai.ready().then(function (a) { tr.ai = a; trButtons(); });
+      }
+    });
+    TR.installed().then(function (list) {
+      var host = $("tr-list");
+      if (!host) return;
+      host.innerHTML = "";
+      host.appendChild(el("h3", "tr-list-h", t("tr.installed")));
+      if (!list.length) { host.appendChild(el("p", "hint", t("tr.none"))); return; }
+      list.forEach(function (x) {
+        var ab = x.pair.split("-"), r = el("div", "tr-row");
+        r.appendChild(el("span", "tr-row-name", t("tr.row", { a: langName(ab[0]), b: langName(ab[1]), mb: x.mb })));
+        var b = el("button", "link-btn danger", tr.armed === x.pair ? t("tr.removeSure") : t("tr.remove"));
+        b.type = "button";
+        b.addEventListener("click", function () { trRemove(x.pair); });
+        r.appendChild(b);
+        host.appendChild(r);
+      });
+    });
+  }
+
+  function trSchedule() {
+    clearTimeout(tr.timer);
+    if (!trOn()) return;
+    tr.timer = setTimeout(function () {
+      if (!trOn()) return;
+      if (tr.busy) { tr.again = true; return; }
+      if (!S.text.trim()) { $("out").value = ""; setNote("", false); trButtons(); return; }
+      trFix();
+      var from = trFrom(), to = prefs.tr.to;
+      TR.status(from, to).then(function (st) {
+        tr.st = st;
+        trButtons();
+        if (!st.legs && TR.ai.on() && !tr.ai) TR.ai.ready().then(function (a) { tr.ai = a; trButtons(); });
+        if (!trOn() || tr.busy) return;
+        if (st.ok && S.text.length <= TR_LIVE_MAX) { trRun(); return; }
+        $("out").value = "";                 // an older translation would mislead
+        setNote(st.ok ? t("tr.long") : "", false);
+      });
+    }, 600);
+  }
+
+  function trRun() {
+    if (!TR) return;
+    if (tr.busy) { tr.stop = true; return; }          // the button says Stop
+    clearTimeout(tr.timer);
+    if (!TR.supported()) { setNote(t("err.tr.unsupported"), true); return; }
+    trFix();
+    var text = S.text, from = trFrom(), to = prefs.tr.to;
+    if (!text.trim()) { $("out").value = ""; setNote(t("tr.empty"), false); return; }
+    if (from === to) { $("out").value = text; setNote(t("tr.same", { lang: langName(to) }), false); return; }
+    tr.busy = true; tr.stop = false; tr.again = false;
+    trButtons();
+    var cancelled = function () { return tr.stop; };
+    TR.status(from, to).then(function (st) {
+      if (!st.legs && !TR.ai.on()) { var e = new Error("pair"); e.code = "pair"; throw e; }
+      if (st.ok || !st.legs) return null;
+      setNote(t("tr.downloading", { p: 0 }), false);
+      return TR.install(from, to, {
+        cancelled: cancelled,
+        progress: function (f) { setNote(t("tr.downloading", { p: Math.round(f * 100) }), false); }
+      }).then(function () { trRefresh(); });
+    }).then(function () {
+      setNote(t("tr.working", { p: 0 }), false);
+      return TR.translate(text, {
+        from: from, to: to, cancelled: cancelled,
+        progress: function (f) { if (f < 1) setNote(t("tr.working", { p: Math.round(f * 100) }), false); }
+      });
+    }).then(function (r) {
+      tr.busy = false;
+      trButtons();
+      if (!trOn() || tr.stop) return;
+      $("out").value = r.text;
+      setNote(r.engine === "ai" ? t("tr.doneAi", { name: r.via || "AI", a: langName(from), b: langName(to) })
+        : t("tr.done", { a: langName(from), b: langName(to) }), false);
+    }, function (e) {
+      tr.busy = false;
+      trButtons();
+      if (!trOn()) return;
+      var key = trErr(e);
+      setNote(t(key), key !== "err.tr.cancelled");
+    }).then(function () {
+      tr.busy = false;
+      trRefresh();
+      if (tr.again && trOn()) { tr.again = false; trSchedule(); }
+    });
+  }
+
+  // Swap: the languages change sides and the translation becomes the text.
+  function trSwap() {
+    if (tr.busy) return;
+    var from = trFrom(), to = prefs.tr.to, out = $("out").value;
+    prefs.tr.from = to;
+    prefs.tr.to = from;
+    savePrefs();
+    trRender();
+    if (out && out !== S.text) setText(out, "toast.replaced"); else trSchedule();
+  }
+
+  // Removing a model needs a second tap within 4 seconds.
+  function trRemove(pair) {
+    if (tr.busy) return;
+    if (tr.armed !== pair) {
+      tr.armed = pair;
+      trRefresh();
+      setTimeout(function () { if (tr.armed === pair) { tr.armed = null; trRefresh(); } }, 4000);
+      return;
+    }
+    tr.armed = null;
+    var ab = pair.split("-");
+    TR.remove(pair).then(function () {
+      showToast(t("tr.removed", { a: langName(ab[0]), b: langName(ab[1]) }));
+      trRefresh();
+    }, function () { showToast(t("err.tr.engine")); trRefresh(); });
   }
 
   // ---------- 5. Text panes ----------
@@ -1163,12 +1746,6 @@
     try { return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; }
     catch (e) { return null; }
   }
-  function hasApp(id) {
-    try {
-      var env = window.parent.orosTodayEnv;
-      return !!(env && typeof env.apps === "function" && env.apps().some(function (a) { return a.id === id; }));
-    } catch (e) { return false; }
-  }
   function sendTo(app, target) {
     var w = shellWin();
     if (!w) { showToast(t("toast.noBridge")); return false; }
@@ -1205,7 +1782,6 @@
       if (all.length > TODO_MAX) showToast(t("toast.todoCut"));
       sendTo("todo", { addItems: { from: t("from"), items: all.slice(0, TODO_MAX) } });
     });
-    if (hasApp("textcase")) add("send.case", function () { sendTo("textcase", { text: s }); });
     dlg.appendChild(list);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
@@ -1333,6 +1909,26 @@
     };
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("texttools", sliceGet, sliceSet, STORAGE_KEY, C.mergeRecipes);
+    // My words of Letters & accents: the Case Converter's slice, same
+    // name, key and merge as before the move (no data moves).
+    if (TC && words) api.registerSlice("textcase", wordsGet, wordsSet, TC.DATA_KEY, TC.mergeWords);
+  }
+  function wordsGet() { return TC.mergeWords(words, words); }   // canonical copy (R26)
+  function wordsSet(incoming) {
+    if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.words)) return;
+    var before = JSON.stringify(words);
+    window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
+    try {
+      words = TC.mergeWords(incoming, incoming);
+      localStorage.setItem(TC.DATA_KEY, JSON.stringify(words));
+    } catch (e) {
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+    if (JSON.stringify(words) === before) return;
+    var open = document.getElementById("tt-words");
+    if (open && open.open) { open.close(); wordsDialog(); }
+    if (C.usesWords(S.chain)) schedule();
   }
   function sliceGet() { return C.mergeRecipes(data, data); }   // canonical copy (R26)
   function sliceSet(incoming) {
@@ -1354,7 +1950,13 @@
   }
 
   // ---------- 11. Deep link, wiring & boot ----------
-  // Target { text }: another app (Case Converter, …) hands over a text.
+  // Target { text }: another app hands over a text.
+  // Target { group, tool? } (may come with text): open a group of tools,
+  // e.g. { group: "case" } from the old Case Converter id (APP-ALIAS);
+  // the open step switches to `tool`, or to the group's first tool when
+  // it is from another group.
+  // Target { group: "translate", text, tr: { from, to } } (the Assistant's
+  // and the gate's do_action translate): the languages are set first.
   // Target { openFile: { token, name, size } }: a .txt / .csv / .tsv from
   // the system's "Open with" or Android Share (BR-FILE-OPEN); the File
   // itself is taken once from the shell with __orosTakeFile(token).
@@ -1362,10 +1964,31 @@
   function openTarget(tg) {
     if (!tg || typeof tg !== "object") return;
     if (tg.openFile && typeof tg.openFile === "object") { openFileTarget(tg.openFile); return; }
+    if (tg.tr && typeof tg.tr === "object" && TR) {
+      var f = tg.tr.from, to = tg.tr.to;
+      if (TR.tos().indexOf(to) >= 0) {
+        prefs.tr.to = to;
+        prefs.tr.from = f !== to && TR.froms().indexOf(f) >= 0 ? f : "auto";
+        savePrefs();
+        if (trOn()) trRender();
+      }
+    }
+    if (typeof tg.group === "string" && GROUPS.indexOf(tg.group) >= 0) openGroup(tg.group, tg.tool);
     if (typeof tg.text !== "string") return;
     if (document.querySelector("dialog[open]")) return;
     setText(tg.text, "toast.replaced");
     $("in").focus();
+  }
+  function openGroup(g, tool) {
+    var st = activeStep(), was = trOn();
+    S.group = g;
+    if (g === TR_GROUP) { saveSession(); renderGroups(); modeChanged(was); return; }
+    var want = typeof tool === "string" && C.TOOLS[tool] && C.TOOLS[tool].g === g ? tool : null;
+    if (!want && !(C.TOOLS[st.tool] && C.TOOLS[st.tool].g === g)) want = C.toolsOf(g)[0];
+    if (want && st.tool !== want) { st.tool = want; st.opts = {}; }
+    saveSession();
+    renderGroups();
+    changedChain();
   }
   function openFileTarget(o) {
     var f = null;
@@ -1418,6 +2041,8 @@
 
   function wire() {
     $("in").addEventListener("input", onInput);
+    ["select", "keyup", "mouseup", "touchend"].forEach(function (ev) { $("in").addEventListener(ev, trackSel); });
+    document.addEventListener("selectionchange", function () { if (document.activeElement === $("in")) trackSel(); });
     $("stats").addEventListener("click", statsDialog);
     $("open-btn").addEventListener("click", openFile);
     $("paste-btn").addEventListener("click", pasteText);
@@ -1444,9 +2069,11 @@
   function boot() {
     load();
     loadPrefs();
+    loadWords();
     loadSession();
     applyI18n();
     applyLayout();
+    takeCaseDraft();
     $("in").value = S.text;
     wire();
     registerSync();
@@ -1457,7 +2084,8 @@
     renderChain();
     renderOpts();
     renderStats();
-    runNow();
+    modeChanged(false);
+    if (!trOn()) runNow();
     try {
       if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function") {
         var pending = window.parent.__orosTakeTarget("texttools");

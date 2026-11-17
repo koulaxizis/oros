@@ -3,6 +3,8 @@ orOS is built to keep your data yours. It has no accounts, no cookies and no tra
 
 The full privacy policy is on the web: [useoros.online/privacy.html](https://useoros.online/privacy.html).
 
+Working on something sensitive, or with sources? Read [Sensitive work and sources](help:t/sensitive).
+
 ## Your data stays in your browser
 Everything you create in orOS is saved in this browser, on this device. There is no orOS server that collects it. orOS uses no cookies and no tracking or analytics of any kind.
 
@@ -16,6 +18,13 @@ In the orOS Android app, [Contacts](app:contacts) and [Calendar](app:calendar) c
 
 ### Screen lock
 On a computer other people use, turn on `Screen lock` in [Settings](app:settings): orOS then asks for a PIN or a passphrase when it starts and after the idle time you choose. It keeps people away from the screen; it does not encrypt your data on the device, so someone who can read the disk or open the browser's developer tools can still get to it.
+
+On an Android phone (the orOS app or orOS Passwords) the lock can also open with your fingerprint or face, and on a computer with orOS Portable, the orOS app or orOS USB with Windows Hello or a fingerprint; your PIN still works and is asked every 14 days.
+
+### Clipboard history
+`Clipboard history` in [Settings](app:settings) (System) is off until you turn it on, on each device. Then orOS keeps the text you copy or cut inside its apps (up to 30 copies, for 1 hour, 1 day or 7 days), and [[Ctrl+Alt+Shift+V]] or `Clipboard` in Quick settings shows them; a tap copies one again. It only sees copies made in orOS apps, never what you copy in other programs. It never keeps anything from Passwords or Settings, password fields or 2FA links, and nothing while the screen is locked or [Sensitive work](help:t/sensitive) is on (turning that on also forgets the list). The list stays on this device: it never syncs and is not in backups. Pictures are not kept. Turning it off forgets everything.
+
+In the list, the pin keeps a copy until you unpin it (up to 10; `Clear all` leaves them), the search box finds a copy by its words, and the paste button puts a copy straight into the text field you were last in, in the app on screen. Typing `clipboard` in the command bar opens the list too.
 
 ## Encrypted sync
 Sync is optional and uses your own Dropbox account. orOS only works in its own app folder there.
@@ -35,13 +44,14 @@ orOS itself runs from your device, but some apps need the internet for what they
 - [Television](app:television): iptv-org, a community list of channels. The channels play from their own servers.
 - [Atelier](app:atelier): Openverse, Wikimedia Commons, Iconify and Fontsource for free photos, icons and fonts; Pixabay and Pexels only with your own key.
 - [Media Shelf](app:shelf): Open Library and MusicBrainz, only when you tap `Find details online`. Only the title and creator you typed are sent. Details and pictures can also come from Wikidata and Wikimedia Commons; films and series from TMDB only with your own key.
-- [Unit Converter](app:units): Frankfurter, for the European Central Bank's currency rates, only when you open `Currency` or tap `Update rates`.
+- [Calculator › Convert](app:units): Frankfurter, for the European Central Bank's currency rates, only when you open `Currency` or tap `Update rates`.
 - [Budget](app:budget): the same Frankfurter rates, only when an account or an entry is in another currency (at most every 6 hours). Nothing about your money is sent.
 - [Public Domain](app:pubdomain): Wikidata, for authors and their works.
 - [Reader](app:feeds) and [Podcasts](app:podcasts): the sites whose feeds you add.
 - [Meal Planner](app:meals): the recipe sites whose addresses you paste, and Open Food Facts when you search a food or scan a barcode for nutrition.
 - [Workouts](app:fitness): wger, for exercise pictures, only when you open an exercise's details.
 - [Montage](app:montage): Hugging Face, once, to download the speech model for `Make subtitles`, only when you press it. Your sound never leaves the device.
+- [Text Tools](app:texttools): GitHub Pages (orOS's own copy of Mozilla's translation models), once per language direction, only when you press the `Translate` button that names the download. Your text never leaves the device, unless you turn on `Where no model fits, use the Assistant's AI`: then the directions without a model go to the AI service you set up in the Assistant, only when you press `Translate with the AI`.
 - [Podcasts](app:podcasts): gpodder.net or your own Nextcloud, only if you connect them for sync.
 - [Mail](app:mail): your own mail provider, through the orOS mail relay, which passes your mail through and keeps nothing.
 - [Wiki](app:wiki): Wikipedia, only when you use `Start from Wikipedia`; only the title you type is sent.
@@ -54,7 +64,7 @@ orOS itself runs from your device, but some apps need the internet for what they
 
 Some apps can also work with accounts you already have elsewhere, but only after you connect them in [Settings](app:settings) › `Connected services`:
 - [Stock](app:stock): your own WooCommerce shop.
-- [Invoices](app:invoices): your timologisi.online account, to send documents to myDATA.
+- [Billing](app:invoices): your timologisi.online account, to send documents to myDATA.
 - [Newsletter](app:newsletter): your MailerLite, Mailchimp or Brevo account, to sync subscribers.
 - [CRM](app:crm): your HubSpot, Pipedrive, Invoice Ninja or Odoo account, read to bring customers and deals in; your WooCommerce shop's Revenue Splitter, read on a partner's card and never stored.
 - [Budget](app:budget): your Stripe or Invoice Ninja account, read to bring payments in.

@@ -783,6 +783,11 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .bk-bot .dlg-lbl { margin: 0; }
 .bk-bot select { flex: 1 1 160px; min-width: 0; width: auto; }
 .bk-link-row > .dlg-btn { align-self: flex-start; }
+/* BK-AT: Automatic updates, 1 to 4 set times */
+.bk-at-list { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bk-at-row { display: flex; gap: 4px; align-items: center; }
+.bk-at-row input[type="time"] { width: auto; min-width: 7.5em; }
+.bk-at-list > .dlg-btn { flex: 0 0 auto; }
 
 /* ---------- Overview tab (budget/overviewui.js) + tab bar ---------- */
 .tab-ic { display: none; }

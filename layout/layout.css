@@ -206,6 +206,19 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
   box-shadow: 0 4px 16px var(--shadow);
   font-size: 13px;
 }
+.pe-bar { top: 28px; gap: 4px; padding: 6px; flex-wrap: nowrap; overflow-x: auto; width: max-content; z-index: 6; }
+.pe-b {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  min-height: 34px; padding: 4px 10px; border-radius: 8px;
+  background: transparent; color: var(--text); border: 1px solid transparent; font: inherit; font-size: 12px; cursor: pointer;
+}
+.pe-b:hover:not(:disabled) { background: rgba(127,127,127,0.15); }
+.pe-b.on { border-color: var(--accent); color: var(--accent); }
+.pe-b.primary { background: var(--accent); color: var(--accent-ink, #fff); }
+.pe-b:disabled { opacity: 0.4; cursor: default; }
+.pe-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (max-width: 760px) { .pe-l { display: none; } .pe-b { padding: 4px 8px; min-width: 40px; justify-content: center; } }
+@media (pointer: coarse) { .pe-b { min-height: 44px; } }
 #side {
   width: var(--side-w);
   display: flex; flex-direction: column;
@@ -261,6 +274,11 @@ body.panel-closed #side { display: none; }
 .st-pf.err { color: var(--danger); border-color: var(--danger); }
 .pf-ok { color: var(--text); }
 .pf-list { list-style: none; margin: 0; padding: 0; max-height: 55vh; overflow-y: auto; }
+/* the EPUB report: its lists grow with the dialog (one scroll, not three) */
+.ep-list { max-height: none; overflow: visible; flex-shrink: 0; }
+.ep-list .pf-item, .ep-list .pf-item.warn { color: var(--text); }
+.ep-list div.pf-item { cursor: default; }
+.ep-list div.pf-item:hover { background: transparent; }
 .pf-pg { margin: 10px 0 4px; font-size: 12px; font-weight: 700; color: var(--text-dim); }
 .pf-item {
   display: flex; align-items: center; gap: 8px; width: 100%;
@@ -344,6 +362,9 @@ body.panel-closed #side { display: none; }
 .fp-row:hover, .fp-row:focus-visible { background: var(--accent-soft); }
 .fp-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fp-sub { flex: 0 0 auto; font-size: 12px; color: var(--text-dim); }
+.fp-col { display: flex; flex-direction: column; gap: 4px; margin: 4px 0 8px; }
+.fp-colh { margin: 10px 0 2px; font-size: 14px; }
+.fp-row:disabled { cursor: default; opacity: .6; background: transparent; }
 .sw-chip { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
 .sw-name { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sw-val { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -581,3 +602,11 @@ body.inframe #cv { cursor: text; }
 .in-pic-f { display: flex; flex-direction: column; gap: 4px; flex: 1 1 auto; min-width: 0; }
 .in-pic-f > .fld-lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .imp-dirs { max-height: 40vh; overflow: auto; margin-top: 6px; }
+/* Output profiles (LY-OUT) */
+.out-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.out-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.out-name { font-weight: 700; overflow-wrap: anywhere; }
+.out-txt .hint { overflow-wrap: anywhere; }
+.out-row + .btn.block, .out-row + button { margin-top: 10px; }
+.out-box { border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
+.inp.bad { border-color: var(--danger, #d33); }

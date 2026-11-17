@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "6.18.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.47.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -49,10 +49,16 @@
     wpland:          null,   // "Living land" { style, seed, motion } or null (= defaults)
     icons:           "classic", // icon pack (ICONPACK-1, iconpacks.css)
     apps:            [],
+    aliases:         [],     // APP-ALIAS: old app ids that now live inside another app (apps.json "aliases")
     running:         null,
     deferredPrompt:  null,   // PWA install event
     // sync UI state
     syncUserEmail:   null,
+    pair:            null,     // PAIR-1: Add a browser in progress (pairForSettings)
+    pairPrefill:     "",       // PAIR-1: a code that came in with #pair=
+    pairQr:          null,
+    plink:           null,     // LINK-1: a sign-in link this device sent (linkForSettings)
+    linkIn:          null,     // LINK-1: a sign-in link that opened this browser
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
     syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
     vaultClean:      null,   // VD-GC: { busy: "check"|"clean"|"", usage, result, code, err } once Settings asked
@@ -155,13 +161,10 @@
     mood: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.4"/></svg>',
     diary: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8.5h6"/></svg>',
     clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>',
-    sky: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/><path d="M17 3v3M15.5 4.5h3M20.5 8.5v2M19.5 9.5h2"/></svg>',
     calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
-    quote: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10.7 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/><path d="M16.2 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/></svg>',
     timesheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>',
     invoices: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h14v20l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 7h6"/><path d="M9 11h6"/><path d="M13 15h2"/></svg>',
     newsletter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6"/><path d="M8 16h4"/></svg>',
-    signature: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c2.5-6 4.5-9 6-9 2 0-1.5 8 .5 8 1.5 0 2.5-4 4-4 1.2 0 .8 3 2.3 3 1 0 2-1 3.2-2"/><path d="M3 21h18"/></svg>',
     certificates: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/></svg>',
     publish: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/><path d="M16 4v6l2-1.5 2 1.5V4"/></svg>',
     wiki: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M7 9l1.6 6L10.5 10 12 15l1.5-5 1.9 5L17 9"/></svg>',
@@ -198,11 +201,12 @@
     maps: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
     feeds: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>',
     museum: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 18h16M12 3l9 5H3z"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/></svg>',
+    base: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
+    forms: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1"/><line x1="11.5" y1="8.5" x2="16" y2="8.5"/><circle cx="8.5" cy="12.5" r="1"/><line x1="11.5" y1="12.5" x2="16" y2="12.5"/><polyline points="7.5 16.5 8.5 17.5 10 15.8"/><line x1="11.5" y1="16.5" x2="16" y2="16.5"/></svg>',
     spreadsheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
     writer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     layout: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/><path d="M12.5 13h5M12.5 17h5"/></svg>',
     wallpaper: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="2.5"/><path d="M2.5 15c3-3 5.5-3 8.5 0s5.5 3 10.5-1"/><path d="M2.5 10.5c3-2.5 5.5-2.5 8.5 0s5.5 2.5 10.5-1"/></svg>',
-    trees: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-8"/><path d="M12 14l-3.5-3.5M12 16l4-4"/><path d="M12 14c-5 0-8-3-8-6.5a4.5 4.5 0 0 1 4.5-4.5c1.4 0 2.6.6 3.5 1.6A4.5 4.5 0 0 1 20 7.5C20 11 17 14 12 14z"/></svg>',
     aura: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c3-1 4-5 7-7s6-1 9-5"/><path d="M4 13c2 0 3-2 5-3" opacity=".55"/><circle cx="18" cy="17" r="1.2"/><circle cx="14" cy="20" r=".8"/><circle cx="20.5" cy="12.5" r=".8"/></svg>',
     photolab: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M3 15l4-4 4 4 2-2 4 4"/><path d="M14 3l7 7"/><path d="M19 3l2 2-6 6-3 1 1-3z"/></svg>',
     capture: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M21 16v3a2 2 0 0 1-2 2h-3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="3.5"/></svg>',
@@ -213,7 +217,6 @@
     garage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .6-1.4L5 9.5l1.6-3.6A2 2 0 0 1 8.4 4.7h7.2a2 2 0 0 1 1.8 1.2L19 9.5l1.9 1.9a2 2 0 0 1 .6 1.4V16a1 1 0 0 1-1 1H19"/><path d="M5 9.5h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
     petcare: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="9.5" r="1.8"/><circle cx="8.5" cy="5" r="1.8"/><circle cx="13.5" cy="5" r="1.8"/><path d="M11 10.5c-2.8 0-5 3.3-5 5.6 0 1.6 1.2 2.4 2.7 2.4.9 0 1.5-.5 2.3-.5"/><path d="M18 12v8M14 16h8"/></svg>',
-    wheel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8.5"/><path d="M12 4.5v17M3.5 13h17M6 7l12 12M18 7L6 19"/><path d="M10 1.5h4L12 4.5z" fill="currentColor"/></svg>',
     oracle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M12 2v1.5M5 4.5l1 1M19 4.5l-1 1"/></svg>',
     slides: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="12" rx="1"/><path d="M8 11v-2M12 11V7M16 11v-3M12 15v3M8 21l4-3 4 3"/></svg>',
     baby: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4M9.5 5h5M10 5v2.5L8 10v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V10l-2-2.5V5"/><path d="M8 14h3M8 17h3"/></svg>',
@@ -221,7 +224,6 @@
     chores: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4.5"/><path d="M12 2v5.5M12 16.5V22M2 12h5.5M16.5 12H22"/></svg>',
     travel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="17" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M8 7v13M16 7v13"/></svg>',
     passwords: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10.5" width="18" height="11" rx="2"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/></svg>',
-    device: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 10.5v5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/><path d="M10.5 18.5h3"/></svg>',
     assistant: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M13 7.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>',
     automations: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>',
     today: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M8.5 15l2.3 2.3 4.7-4.6"/></svg>',
@@ -275,10 +277,8 @@
     backgammon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M5 3l2 7 2-7M15 3l2 7 2-7M5 21l2-7 2 7M15 21l2-7 2 7"/></svg>',
     calculator: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="3" x2="16" y2="3"/><line x1="8" y1="8" x2="8" y2="8"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="16" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="10" y2="16"/><line x1="12" y1="16" x2="14" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>',
     texttools: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6V4h11v2"/><path d="M8.5 4v14"/><path d="M6 18h5"/><path d="M15 11h6"/><path d="M15 15h6"/><path d="M15 19h4"/></svg>',
-    units: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="13" width="20" height="8" rx="1.5"/><path d="M6 13v3M10 13v4M14 13v3M18 13v4"/><path d="M4 6h16"/><path d="M7 3L4 6l3 3"/><path d="M17 3l3 3-3 3"/></svg>',
     stickies: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10l6-6V5a2 2 0 0 0-2-2z"/><path d="M15 21v-4a2 2 0 0 1 2-2h4"/><path d="M7 8h8"/><path d="M7 12h5"/></svg>',
     pad: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M10 13l-2 2 2 2M14 13l2 2-2 2"/></svg>',
-    textcase: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18L7.5 6 12 18"/><path d="M4.7 14h5.6"/><circle cx="17.5" cy="15" r="3"/><path d="M20.5 12v6"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
     split: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4"/><circle cx="17" cy="17" r="4"/><path d="M14 4h4a2 2 0 0 1 2 2v3"/><path d="M18 7l2 2 2-2"/><path d="M10 20H6a2 2 0 0 1-2-2v-3"/><path d="M6 17l-2-2-2 2"/></svg>',
     radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>',
@@ -290,6 +290,7 @@
     lyricsync: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h11"/><path d="M3 10h11"/><path d="M3 15h6"/><path d="M17 18V4l4 2"/><circle cx="14.5" cy="18" r="2.5"/></svg>',
     television: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>',
     montage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16M2 9h5M2 15h5M17 9h5M17 15h5"/><path d="M10.5 9.5l4 2.5-4 2.5z"/></svg>',
+    transfer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 6.5 19 12l-8.5 5.5z"/><path d="M4 9h3"/><path d="M2 12h5"/><path d="M4 15h3"/></svg>',
     mail: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>'
   };
 
@@ -413,6 +414,9 @@
     if (window.orosOsk) window.orosOsk.refresh();   // on-screen keyboard labels
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
+    if (window.orosClip) window.orosClip.refresh();         // clipboard history
+    if (window.orosEmoji) window.orosEmoji.refresh();       // emoji picker
+    if (window.orosSmartBar) window.orosSmartBar.refresh(); // smart top bar chips
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
     // known) must relabel them too, or screen readers hear English.
@@ -449,15 +453,35 @@
   // A pack restyles the app icons (desktop, Dock, menu, search) through
   // iconpacks.css; the glyphs stay ICONS. Synced shell field `icons`.
   var ICONS_KEY = "oros-icons";
-  var ICON_PACKS = ["classic", "colourful", "mix", "rainbow", "glass", "thin", "paper", "round"];
-  function iconsCanon(v) { return ICON_PACKS.indexOf(v) >= 0 ? v : undefined; }
+  var ICON_PACKS = ["classic", "colourful", "mix", "rainbow", "glass", "thin", "paper", "round", "own"];
+  // ICONPACK-3 "Mix your own": the value is "own.<shape>.<fill>.<line>";
+  // a bare "own" reads as the first choices. An older bundle does not
+  // know it and keeps its own pack without pushing (like "mix" in 6.17.00).
+  var ICON_OWN = { shape: ["square", "round", "circle"], fill: ["accent", "hue", "cat", "dark", "light", "frame"], line: ["thin", "normal", "bold"] };
+  var ICON_OWN_DEFAULT = "own.circle.hue.normal";
+  function iconsOwn(v) {
+    var m = /^own\.([a-z]+)\.([a-z]+)\.([a-z]+)$/.exec(String(v || ""));
+    if (!m || ICON_OWN.shape.indexOf(m[1]) < 0 || ICON_OWN.fill.indexOf(m[2]) < 0 || ICON_OWN.line.indexOf(m[3]) < 0) return null;
+    return { shape: m[1], fill: m[2], line: m[3] };
+  }
+  function iconsCanon(v) {
+    if (v === "own") return ICON_OWN_DEFAULT;
+    if (iconsOwn(v)) return v;
+    return ICON_PACKS.indexOf(v) >= 0 ? v : undefined;
+  }
+  function iconsPack(v) { return iconsOwn(v) ? "own" : v; }
   function applyIcons() {
-    var root = document.documentElement;
-    if (state.icons && state.icons !== "classic") root.setAttribute("data-oros-icons", state.icons);
+    var root = document.documentElement, own = iconsOwn(state.icons);
+    if (state.icons && state.icons !== "classic") root.setAttribute("data-oros-icons", iconsPack(state.icons));
     else root.removeAttribute("data-oros-icons");
+    ["shape", "fill", "line"].forEach(function (k) {
+      if (own) root.setAttribute("data-ic-" + k, own[k]);
+      else root.removeAttribute("data-ic-" + k);
+    });
   }
   function setIconsUser(id) {
-    if (!iconsCanon(id) || state.icons === id) return;
+    id = iconsCanon(id);
+    if (!id || state.icons === id) return;
     state.icons = id;
     try { localStorage.setItem(ICONS_KEY, id); } catch (e) {}
     applyIcons();
@@ -778,7 +802,7 @@
   var WP_LAND_STYLES = ["islands", "hills", "garden"];
   var wpLandCtl = null;
 
-  // Canonical { style, seed, motion } (fixed key order), or null when v
+  // Canonical { style, seed, motion, light } (fixed key order), or null when v
   // is not an object. Unknown styles read as islands; seed 0…999999.
   function wplandCanon(v) {
     if (!v || typeof v !== "object" || Array.isArray(v)) return null;
@@ -786,7 +810,8 @@
     return {
       style:  WP_LAND_STYLES.indexOf(v.style) >= 0 ? v.style : "islands",
       seed:   (isFinite(seed) && seed >= 0 && seed <= 999999) ? seed : 1,
-      motion: v.motion === 1 || v.motion === true ? 1 : 0
+      motion: v.motion === 1 || v.motion === true ? 1 : 0,
+      light:  v.light === 0 || v.light === false ? 0 : 1      // LIGHT-1: on unless turned off
     };
   }
   function wpLandRead() {
@@ -826,7 +851,7 @@
   function wpLandNewShape(change) {
     var cur = wpLandNow(), seed = cur.seed;
     if (!change) while (seed === cur.seed) seed = Math.floor(Math.random() * 1000000);
-    var next = { style: cur.style, seed: seed, motion: cur.motion };
+    var next = { style: cur.style, seed: seed, motion: cur.motion, light: cur.light };
     if (change) for (var ck in change) next[ck] = change[ck];
     state.wpland = wplandCanon(next);
     wpLandWrite(state.wpland);
@@ -901,7 +926,7 @@
     // motion stays as set in Settings. User action: syncs (LAND-1 W3).
     setLand: function (l) {
       if (!l || typeof l !== "object" || Array.isArray(l)) return false;
-      var c = wplandCanon({ style: l.style, seed: l.seed, motion: wpLandNow().motion });
+      var c = wplandCanon({ style: l.style, seed: l.seed, motion: wpLandNow().motion, light: wpLandNow().light });
       if (!c || c.style !== l.style || c.seed !== l.seed) return false;
       if (wpPic()) wpPicClear();  // a land picked here replaces the device picture
       wpLandNewShape({ style: c.style, seed: c.seed });
@@ -1040,6 +1065,7 @@
     try { w = f.contentWindow; d = f.contentDocument; } catch (e) { return; }   // not same-origin
     if (!w || !d || !d.documentElement) return;
     a11yMark(d);
+    if (window.orosUiFont) window.orosUiFont.frame(d);   // FM-5
     var r = d.documentElement, z = a11yZoom();
     if (r.hasAttribute("data-oros-zoom")) { r.style.removeProperty("zoom"); r.removeAttribute("data-oros-zoom"); }
     if (z === 1) return;
@@ -1085,8 +1111,69 @@
     return {
       size: a11y.size, sizes: A11Y_SIZES.slice(), contrast: a11y.contrast, focus: a11y.focus,
       high: a11yHigh(), forced: a11yMq("(forced-colors: active)"),
-      capped: a11yZoom() < a11y.size / 100
+      capped: a11yZoom() < a11y.size / 100,
+      font: uifGet()                                       // FM-5: null = Nunito
     };
+  }
+  // ---------- The font of orOS (FM-5, uifont.js) ----------
+  // A family of the person's (Settings › Fonts) instead of Nunito, on
+  // this device only (like the text size). uifont.js and the designkit
+  // font files load only while one is set.
+  var UIF_KEY = "oros-uifont";
+  var UIF_FILE = /^[0-9a-f]{64}\.ttf$/;
+  function uifClean(v) {
+    if (!v || typeof v !== "object" || typeof v.id !== "string" || !/^(fs_[a-z0-9_]{1,60}|uf_[0-9a-f]{16})$/.test(v.id)) return null;
+    var o = { id: v.id, name: String(v.name || v.id).replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 60) || v.id,
+              fb: v.fb === "serif" || v.fb === "mono" ? v.fb : "sans" };
+    if (o.id.indexOf("uf_") === 0) {
+      ["r", "b", "i", "bi"].forEach(function (k) { if (UIF_FILE.test(v[k] || "")) o[k] = v[k]; });
+      if (!o.r) return null;
+    }
+    return o;
+  }
+  function uifGet() {
+    var v = null;
+    try { v = JSON.parse(localStorage.getItem(UIF_KEY) || "null"); } catch (e) {}
+    return uifClean(v);
+  }
+  var uifP = null;
+  function uifLoad() {
+    if (window.orosUiFont) return Promise.resolve(window.orosUiFont);
+    if (!uifP) {
+      var one = function (src) {
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = src + "?v=" + APP_VERSION;
+          s.onload = ok;
+          s.onerror = function () { s.remove(); fail(new Error(src)); };
+          document.head.appendChild(s);
+        });
+      };
+      var dk = window.orosDK || {};
+      uifP = (dk.text ? Promise.resolve() : one("designkit/text.js"))
+        .then(function () { return (window.orosDK || {}).fonts ? null : one("designkit/fonts.js"); })
+        .then(function () { return one("uifont.js"); })
+        .then(function () { if (!window.orosUiFont) throw new Error("uifont"); return window.orosUiFont; });
+      uifP.catch(function () { uifP = null; });
+    }
+    return uifP;
+  }
+  function uifApply() {
+    var e = uifGet();
+    if (!e && !window.orosUiFont) return;
+    uifLoad().then(function (U) {
+      U.set(e, [document].concat(window.__orosAppDocs ? window.__orosAppDocs() : []));
+    }, function () {});
+  }
+  function uifSetUser(v) {
+    var e = v ? uifClean(v) : null;
+    if (v && !e) return;
+    try {
+      if (e) localStorage.setItem(UIF_KEY, JSON.stringify(e));
+      else localStorage.removeItem(UIF_KEY);
+    } catch (x) { scToast("err", window.t("a11y.savefail")); return; }
+    uifApply();
+    settingsNotify();
   }
   // The system's own contrast switch and a resize (the 320 px cap)
   // apply at once.
@@ -1581,12 +1668,22 @@
     var left = bar && bar.querySelector(".bar-left");
     var right = bar && bar.querySelector(".bar-right");
     if (!left || !right) return;
-    for (var lvl = 0; ; lvl++) {
-      applyBarFit(lvl);
+    // Smart bar (smartbar.js): its chips give way after the tight level
+    // and before the weekday, the date or the language go.
+    var SB = window.orosSmartBar && window.orosSmartBar.fitDrop ? window.orosSmartBar : null;
+    if (SB) SB.fitReset();
+    function fits() {
       var cs = getComputedStyle(bar);
       var avail = bar.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      var need = left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4;
-      if (need <= avail || lvl >= (document.getElementById("qs-btn") ? BAR_FIT_MAX : 6)) return;
+      return left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4 <= avail;
+    }
+    // The first chip stays until the last level: the person asked for it.
+    var max = document.getElementById("qs-btn") ? BAR_FIT_MAX : 6;
+    for (var lvl = 0; ; lvl++) {
+      applyBarFit(lvl);
+      if (fits()) return;
+      if (lvl === 2 && SB) { while (SB.fitDrop(1)) { if (fits()) return; } }
+      if (lvl >= max) { if (SB) { while (SB.fitDrop(0)) { if (fits()) return; } } return; }
     }
   }
 
@@ -1648,6 +1745,7 @@
       tickSafe("moodCheckInTick", moodCheckInTickThrottled); // Wave 1B: Mood check-in reminder (60s throttle)
       tickSafe("cycleCheckTick", cycleCheckTickThrottled);   // Wave 4: Cycle prediction reminder (60s throttle)
       tickSafe("davBgTick", davBgTickThrottled);         // CalDAV W6: background pass for closed apps (15 min)
+      tickSafe("bankBgTick", bankBgTickThrottled);       // BK-AT: Budget's banks at the set times (60s throttle)
       tickSafe("notifTick", notifTickThrottled);         // Wave 1A: notification sweep (60s throttle)
       tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
@@ -1658,10 +1756,12 @@
       tickSafe("mealsCheckTick", mealsCheckTickThrottled); // Meal Planner: pantry best-before reminder (60s throttle)
       tickSafe("budgetCheckTick", budgetCheckTickThrottled); // Budget: subscription charge reminders (60s throttle)
       tickSafe("crmCheckTick", crmCheckTickThrottled);     // CRM: follow-up reminders (60s throttle)
+      tickSafe("kanbanCheckTick", kanbanCheckTickThrottled); // Kanban: cards due or overdue, from 09:00 (60s throttle)
       tickSafe("contactCrmSync", contactCrmSyncThrottled); // CT-CRM: linked contacts ↔ CRM customers (60s throttle)
       tickSafe("keepCheckTick", keepCheckTickThrottled);   // Contacts: keep in touch, "reach out" (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("storageCheckTick", storageCheckTickThrottled); // Storage: warranty ends + return-by dates (60s throttle)
+      tickSafe("docsCheckTick", docsCheckTickThrottled);   // Files Documents: expiry + keep-until dates (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
@@ -1689,6 +1789,7 @@
     tickSafe("mixerTrayTick", mixerTrayTick); // Sound Mixer: playing-with-app-closed chip (cheap, 1/s)
     tickSafe("wpDailyTick", wpDailyTick);     // Wallpaper "a new picture every day" (checks once a minute)
     tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
+    if (window.orosSmartBar) tickSafe("smartbarTick", window.orosSmartBar.tick); // Smart bar chips (cheap, 1/s)
   }
 
   // SH-Q2: one engine's failure is logged once (not 1/s) and never
@@ -2019,10 +2120,12 @@
     if (!raw || !Array.isArray(raw.items) || !raw.items.length) return;
     var data = Core.merge(raw, raw);
     var low = Core.lowList(data);
+    var baseline = localStorage.getItem(STOCK_NOTIFIED_KEY) === null;
     var st = Core.toNotify(low.map(function (r) { return r.item.id; }), notified);
     if (JSON.stringify(st.next) !== JSON.stringify(notified)) {
       try { localStorage.setItem(STOCK_NOTIFIED_KEY, JSON.stringify(st.next)); } catch (e) {}
     }
+    if (!baseline) stockLowEvents(data, low, st.fresh);
     if (!prefs.notify || !st.fresh.length) return;
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
@@ -2039,6 +2142,26 @@
       title: title,
       body: tr("n.stock.body", { names: shown }),
       deepLink: st.fresh.length === 1 ? "stock:" + st.fresh[0] : "stock:reorder"
+    });
+  }
+
+  // BR-EV-2: each product that ENTERS the low list is an Automations
+  // signal (stock.low), whatever the notice switch says. The key names
+  // the last movement of that product, so every device that sees the
+  // same stock names the same run (AUTO-3); the first look on a device
+  // (no notified map yet) is a baseline and gives none.
+  function stockLowEvents(data, low, fresh) {
+    var E = window.orosEvents;
+    if (!fresh.length || !(E && typeof E.emit === "function")) return;
+    var rows = {};
+    low.forEach(function (r) { rows[r.item.id] = r; });
+    fresh.slice(0, 20).forEach(function (id) {
+      var r = rows[id], last = "";
+      if (!r) return;
+      (data.moves || []).forEach(function (m) {
+        if (m && m.v !== 1 && m.id > last && Array.isArray(m.lines) && m.lines.some(function (l) { return l && l.i === id; })) last = m.id;
+      });
+      try { E.emit("stock.low", "stock:" + id + ":" + last, r.item.name + " \u00b7 " + Math.max(0, r.q) / 1000); } catch (e) {}
     });
   }
 
@@ -2208,6 +2331,46 @@
     if (JSON.stringify(r.next) !== JSON.stringify(seen)) {
       try { localStorage.setItem(CRM_NOTIFIED_KEY, JSON.stringify(r.next)); } catch (e) {}
     }
+  }
+
+  // Kanban — cards due today or overdue (BR-PHONE v12, gap review
+  // proposal 3). Reads "oros-kanban-data" directly (works with the app
+  // CLOSED) through kanban/core.js dueCards (the Calendar feed and
+  // Today use it too), without each board's last ("Done") column and
+  // archived boards. From 09:00 on, once a day, again when the count
+  // grows; key "due-<ymd>-<n>" is the phone's and Web Push's row id
+  // (phone.js kanbanDue), so the phone's ring and this notice are one.
+  // Said in today's summary → silent. Click → the earliest card.
+  var KANBAN_HOUR = 9;
+  function kanbanCheckTick() {
+    var KC = window.OrosKanbanCore, P = window.orosPhone;
+    if (!KC || !P || typeof P.kanbanDue !== "function") return;   // stale bundle — silent
+    if (new Date().getHours() < KANBAN_HOUR) return;
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem("oros-kanban-data")); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.boards) || !raw.boards.length) return;
+    var today = sysYmd(), s = P.kanbanDue(KC, raw, today);
+    if (!s.count) return;
+    if (todayAbsorbs("kanban")) return;                 // said in today's summary
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var title = window.t("app.kanban");
+    if (title === "app.kanban") title = "Kanban";       // missing-key fallback
+    N.emit({
+      ns: "kanban",
+      key: "due-" + today + "-" + s.count,
+      type: "due",
+      title: title,
+      body: trn("rem.kanban", s.count),
+      deepLink: s.link
+    });
+  }
+  var kanbanLastTick = 0;
+  function kanbanCheckTickThrottled() {
+    var now = Date.now();
+    if (now - kanbanLastTick < 60000) return;
+    kanbanLastTick = now;
+    kanbanCheckTick();
   }
 
   var crmLastTick = 0;
@@ -2450,6 +2613,60 @@
     if (now - storageLastTick < 60000) return;
     storageLastTick = now;
     storageCheckTick();
+  }
+
+  // Files › Documents (DOCS-1 W3) — expiry dates 30 days, 7 days and on
+  // the day (up to 7 days late after orOS was closed), and keep-until
+  // dates that passed (a note only: nothing is deleted). Reads
+  // "oros-files-docs" directly (works with Files CLOSED) through
+  // files/docs-due.js (loaded by index.html, the SAME file Files, Today
+  // and Calendar use). On by default at 09:00; the hour lives in the
+  // device-local "oros-files-docs-prefs" (remind 0-23, -1 = off).
+  // Each alert is announced once per step: device-local
+  // "oros-files-docs-notified" = { alertKey: lowest step announced },
+  // pruned to alerts that still exist. One grouped notice at most per
+  // tick, ns "files" (so the Files toggle and Automations "a notice
+  // from Files" apply). A private document shows its type only.
+  function docsCheckTick() {
+    var D = window.OrosDocsDue;
+    if (!D) return;                                     // stale bundle — silent
+    var raw, prefs, notified;
+    try {
+      prefs = D.readPrefs(JSON.parse(localStorage.getItem(D.PREFS_KEY)));
+      if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+      raw = JSON.parse(localStorage.getItem(D.KEY));
+      notified = JSON.parse(localStorage.getItem(D.NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.docs) || !raw.docs.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    if (todayAbsorbs("files")) return;                  // said in today's summary
+    var today = sysYmd();
+    var all = D.alerts(raw, today);
+    var fresh = D.toNotify(all, notified);
+    try { localStorage.setItem(D.NOTIFIED_KEY, JSON.stringify(D.nextNotified(all, fresh, notified))); } catch (e) {}
+    if (!fresh.length) return;
+    var lang = state.lang === "el" ? "el" : state.lang === "de" ? "de" : "en";
+    var lines = fresh.slice(0, 3).map(function (a) { return D.alertLine(a, raw, lang); });
+    if (fresh.length > 3) lines.push(tr("n.andmore", { n: fresh.length - 3 }));
+    var title = window.t("app.files");
+    if (title === "app.files") title = "Files";        // missing-key fallback
+    N.emit({
+      ns: "files",
+      key: "docs-" + today + "-" + garageHash(fresh.map(function (a) { return a.key + ":" + a.step; }).join("|")),
+      type: "reminder",
+      title: title,
+      body: lines.join(" \u00b7 "),
+      deepLink: "files:" + (fresh.length > 1 ? "soon" : "doc:" + fresh[0].id)
+    });
+  }
+
+  var docsLastTick = 0;
+  function docsCheckTickThrottled() {
+    var now = Date.now();
+    if (now - docsLastTick < 60000) return;
+    docsLastTick = now;
+    docsCheckTick();
   }
 
   // Travel — the evening before departure ("Rome tomorrow · 6 items
@@ -3520,11 +3737,69 @@
   }
 
   // ---------- 8. Apps loading & menu ----------
+  // APP-ALIAS (app merges, 2026-11-12): an app that was folded into
+  // another one keeps its id as an alias in apps.json "aliases":
+  //   { id, name, to, target? }
+  // It is not an app any more (not in state.apps: no menu row, no
+  // folder to load), but everything that names the old id still works:
+  // __orosOpenAt(id, t) and openAppById(id) open `to` with `target`
+  // merged under t (the caller's keys win), and so do ?open=<id>
+  // links, desktop and Dock shortcuts (launcher.js), the command bar
+  // ("open case converter"), the Assistant and the Gate, which all go
+  // through these calls. The menu search still finds it by its old
+  // name. Its data (slice, storage keys) is untouched: the host app
+  // reads it. An alias whose `to` is not an internal app is dropped.
+  var ALIAS_ID_RE = /^[a-z0-9][a-z0-9_-]{0,47}$/;
+  function appAliasesFrom(data, apps) {
+    var list = (data && Array.isArray(data.aliases)) ? data.aliases : [], out = [], seen = {};
+    var ids = {};
+    (apps || []).forEach(function (a) { if (a && a.type === "internal") ids[a.id] = true; });
+    list.forEach(function (x) {
+      if (!x || typeof x !== "object" || typeof x.id !== "string" || !ALIAS_ID_RE.test(x.id)) return;
+      if (ids[x.id] || seen[x.id] || typeof x.to !== "string" || !ids[x.to]) return;
+      var tg = (x.target && typeof x.target === "object" && !Array.isArray(x.target)) ? x.target : null;
+      seen[x.id] = true;
+      var al = { id: x.id, name: typeof x.name === "string" ? x.name : x.id, to: x.to, target: tg };
+      // An alias may keep its own search (merge 7: Quote's search.js in
+      // its old folder): it stays one searchable "app" for the menu, the
+      // Assistant and the Gate, with its own switch, as before.
+      if (typeof x.search === "string" && /^[a-z0-9_-]+\.js$/.test(x.search)) {
+        al.search = x.search;
+        if (x.searchOff === true) al.searchOff = true;
+      }
+      out.push(al);
+    });
+    return out;
+  }
+  function appAlias(id) {
+    for (var i = 0; i < state.aliases.length; i++) if (state.aliases[i].id === id) return state.aliases[i];
+    return null;
+  }
+  // The target the host gets: the alias's own target with the caller's
+  // keys over it (a caller's non-object target is dropped: the host
+  // would not know what it means).
+  function aliasTarget(al, target) {
+    var out = {}, k;
+    if (al.target) for (k in al.target) if (Object.prototype.hasOwnProperty.call(al.target, k)) out[k] = al.target[k];
+    if (target && typeof target === "object" && !Array.isArray(target)) {
+      for (k in target) if (Object.prototype.hasOwnProperty.call(target, k)) out[k] = target[k];
+    }
+    return Object.keys(out).length ? out : null;
+  }
+  // The host app of an alias (for icons and labels), or null.
+  function aliasHost(id) {
+    var al = appAlias(id);
+    if (!al) return null;
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === al.to) return state.apps[i];
+    return null;
+  }
+
   function loadApps() {
     fetch("apps.json")
       .then(function (r) { return r.json(); })
       .then(function (data) {
         state.apps = (data && Array.isArray(data.apps)) ? data.apps : [];
+        state.aliases = appAliasesFrom(data, state.apps);
         renderMenu();
         splashDone();
         helpBtnRefresh();
@@ -3670,6 +3945,14 @@
     params.delete("app-at");
     if (!id) return;
     params.delete("open");
+    if (appAlias(id)) {          // APP-ALIAS: an old link (or a bookmark of the old app)
+      try {
+        var qa = params.toString();
+        window.history.replaceState(null, "", window.location.pathname + (qa ? "?" + qa : "") + window.location.hash);
+      } catch (e) {}
+      window.__orosOpenAt(id, null);
+      return;
+    }
     try {
       var qs = params.toString();
       window.history.replaceState(null, "", window.location.pathname + (qs ? "?" + qs : "") + window.location.hash);
@@ -3833,9 +4116,18 @@
     return p;
   }
   function searchApps() {
-    return state.apps.filter(function (a) {
+    var list = state.apps.filter(function (a) {
       return a && a.type === "internal" && typeof a.search === "string";
     });
+    (state.aliases || []).forEach(function (al) {
+      if (typeof al.search !== "string") return;
+      var host = null;
+      for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === al.to) host = state.apps[i];
+      if (!host) return;
+      list.push({ id: al.id, name: al.name, type: "internal", url: al.id + "/", search: al.search,
+                  icon: host.icon, searchOff: al.searchOff === true, alias: al.to });
+    });
+    return list;
   }
   function searchEnabled(id) {
     var p = searchPrefs();
@@ -3844,7 +4136,8 @@
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === id) return state.apps[i].searchOff !== true;
     }
-    return false;
+    var al = appAlias(id);
+    return !!(al && typeof al.search === "string" && al.searchOff !== true);
   }
   function setSearchEnabled(id, on) {
     var p = searchPrefs();
@@ -3867,6 +4160,12 @@
   // does not take it simply opens — nothing breaks.
   window.__orosOpenAt = function (appId, target) {
     appId = String(appId || "");
+    var al = appAlias(appId);    // APP-ALIAS: the old id opens its new home
+    if (al) { appId = al.to; target = aliasTarget(al, target); }
+    if (appId === "assistant" && aiHelper() === "claude") {   // HELPER-1
+      claudeInstead(target && typeof target === "object" && typeof target.ask === "string" ? target.ask : "");
+      return;
+    }
     var app = null;
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === appId) { app = state.apps[i]; break; }
@@ -4350,6 +4649,41 @@
     }
     return sendLoad;
   }
+  // Files wave (BR-SEND-12): a disk file for an app that takes a File
+  // (Atelier, Music from outside its folder). Read here, held as the
+  // one-shot token of BR-FO-4, then the app's own { openFile } import.
+  // → Promise<true | false | "big">.
+  function sendDiskBlob(o) {
+    var F = window.orosFS;
+    if (!o || typeof o.path !== "string" || !/^\/internal\/./.test(o.path) || o.path.indexOf("..") >= 0 || !F) return Promise.resolve(null);
+    return Promise.resolve(F.stat(o.path)).then(function (st) {
+      var max = typeof o.max === "number" ? o.max : 50 * 1024 * 1024;
+      if (st && typeof st.size === "number" && st.size > max) return "big";
+      return Promise.resolve(F.read(o.path)).then(function (b) { return b && b.size > max ? "big" : b; });
+    });
+  }
+  function sendFileHand(tg, app) {
+    if (!tg || !tg.openFile || typeof tg.openFile !== "object") { window.__orosOpenAt(app, tg); return Promise.resolve(true); }
+    var o = tg.openFile;
+    return sendDiskBlob(o).then(function (b) {
+      if (b === "big" || !b) return b === "big" ? "big" : false;
+      var name = String(o.name || o.path.replace(/^.*\//, "")).slice(0, 255);
+      var file = new File([b], name, { type: b.type || "" });
+      var tok = window.orosFileOpen && typeof window.orosFileOpen.hand === "function" ? window.orosFileOpen.hand(file) : "";
+      if (!tok) return false;
+      window.__orosOpenAt(app, { openFile: { token: tok, name: name, size: file.size } });
+      return true;
+    }, function () { return false; });
+  }
+  // Wallpaper: the sheet already asked; THIS device only (setImage).
+  function sendWallpaper(pic) {
+    return sendDiskBlob(pic).then(function (b) {
+      if (b === "big" || !b) return b === "big" ? "big" : false;
+      var ext = String(pic.path).toLowerCase().replace(/^.*\./, "");
+      var type = /^image\//.test(b.type || "") ? b.type : "image/" + (ext === "jpg" ? "jpeg" : ext);
+      return window.orosWallpaper.setImage(b.slice(0, b.size, type), { bg: "#000000" });
+    }, function () { return false; });
+  }
   window.orosSend = {
     open: function (opts) {
       var self = state.running ? state.running.id : "";
@@ -4361,6 +4695,8 @@
           apps: apps, self: self, from: from, openAt: window.__orosOpenAt,
           calendarNew: function (p) { window.__orosOpenCalendarNew(p); },
           budgetNew: function (p) { return window.__orosOpenBudgetNew(p); },
+          file: sendFileHand,
+          wallpaper: sendWallpaper,
           share: function (item) { window.orosShare.open(item); },
           icon: function (id) {
             for (var i = 0; i < state.apps.length; i++) {
@@ -4514,18 +4850,53 @@
   // Installed apps (id + shown name): the assistant offers an entry
   // card only for an app that is there (Part VI, AS-E).
   window.orosAssistInstalled = function () {
-    return state.apps.filter(function (a) { return a && a.type !== "external"; }).map(function (a) {
+    var list = state.apps.filter(function (a) { return a && a.type !== "external"; }).map(function (a) {
       var k = "app." + a.id, v = window.t(k);
       return { id: a.id, name: v === k ? (a.name || a.id) : v };
     });
+    // An app folded into another one (APP-ALIAS) keeps its id for the
+    // Assistant's entry cards while its host is there.
+    (state.aliases || []).forEach(function (al) {
+      if (!hasApp(al.to)) return;
+      var k = "app." + al.id, v = window.t(k);
+      list.push({ id: al.id, name: v === k ? al.name : v });
+    });
+    return list;
   };
   function hasApp(id) {
     for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id) return true;
     return false;
   }
+  // HELPER-1 (Settings › Connected services, synced through gate/gate.js):
+  // "both" | "assistant" | "claude". With "claude" the Assistant leaves
+  // the menu and every way into it opens Claude instead.
+  function aiHelper() {
+    try {
+      var o = JSON.parse(localStorage.getItem("oros-ai-helper") || "null");
+      return o && (o.v === "assistant" || o.v === "claude") ? o.v : "both";
+    } catch (e) { return "both"; }
+  }
+  // Claude in place of the Assistant: Claude desktop when the System
+  // extension has it here, else claude.ai in a window. A question goes
+  // to the clipboard (never into an address, which browsers keep), and
+  // a short note says so; nothing is sent until the person sends it.
+  function claudeInstead(q) {
+    var text = typeof q === "string" ? q.trim().slice(0, 2000) : "";
+    closeMenu();
+    if (text && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      navigator.clipboard.writeText(text).then(function () { scToast("ok", window.t("helper.copied")); }, function () {});
+    }
+    if (document.documentElement.getAttribute("data-oros-sys-claude") === "ready") {
+      try { document.dispatchEvent(new CustomEvent("oros-claude", { detail: "open" })); return; } catch (e) {}
+    }
+    window.open("https://claude.ai/new", "_blank", "noopener");
+  }
+  window.orosAiHelper = { mode: aiHelper, claude: claudeInstead };
+  window.addEventListener("oros-ai-helper", function () { try { renderMenu(); } catch (e) {} });
   // Ctrl+Alt+Shift+A and the menu search's "Ask the Assistant" row.
   function openAssistant(q) {
     if (!hasApp("assistant")) return;
+    if (aiHelper() === "claude") { claudeInstead(q); return; }
     if (typeof q === "string" && q.trim()) {
       closeMenu();
       window.__orosOpenAt("assistant", { ask: q.trim().slice(0, 2000) });
@@ -4536,13 +4907,12 @@
   // One line of words → one action in an app, on the device, no AI
   // (commands/core.js). Two ways in: the first row of the menu search
   // (Enter runs it) and a small bar over any app (commands/bar.js):
-  // Ctrl+K, and Ctrl+Alt+Shift+K everywhere (SC_DEFS). Notes and Wiki
-  // keep their own Ctrl+K (their search). Both files load on first use,
+  // Ctrl+Alt+Shift+K everywhere (SC_DEFS id "cmdbar"; plain Ctrl+K
+  // retired 2026-11-15). Both files load on first use,
   // with the engines they borrow (Calendar quick add, Calculator, Unit
   // Converter, "Send to an app"); a missing engine only drops its kind.
   // The last commands run are a device-local list (CMD_HIST_KEY, never
   // synced) that the bar shows while its field is empty.
-  var CMD_OWN_CTRLK = { notes: true, wiki: true };
   var CMD_HIST_KEY = "oros-cmd-history", CMD_HIST_MAX = 12;
   var cmdLoad = null;
   function cmdModule() {
@@ -4600,7 +4970,13 @@
       if (en && en["app." + a.id]) names.push(en["app." + a.id]);
       if (el && el["app." + a.id]) names.push(el["app." + a.id]);
       return { id: a.id, names: names };
-    });
+    }).concat(state.aliases.map(function (al) {   // APP-ALIAS: "open case converter" still works
+      var names = [al.name, cmdAppName(al.id)];
+      var TR = window.OROS_TRANSLATIONS || {}, en = TR.en, el = TR.el;
+      if (en && en["app." + al.id]) names.push(en["app." + al.id]);
+      if (el && el["app." + al.id]) names.push(el["app." + al.id]);
+      return { id: al.id, names: names };
+    }));
   }
   // null until commands/ is loaded (the menu row then waits for it).
   function cmdParse(q) {
@@ -4610,7 +4986,8 @@
     if (U) { try { rates = U.storedRates(JSON.parse(localStorage.getItem(U.RATES_KEY))); } catch (e) { rates = null; } }
     return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick, lang: langBase(),
                         calc: window.CalcCore, units: U, rates: rates, send: window.OrosSendCore,
-                        lockOn: !!(window.orosLock && window.orosLock.isOn()), pw: window.PwCore });
+                        lockOn: !!(window.orosLock && window.orosLock.isOn()), pw: window.PwCore,
+                        clipOn: !!(window.orosClip && window.orosClip.isOn()) });
   }
   function cmdHistory() {
     try {
@@ -4652,6 +5029,7 @@
     var N = window.orosNotifs;
     if (name === "theme") { setThemeUser(value); notifySys("dim", text); return; }
     if (name === "lock") { if (window.orosLock && window.orosLock.isOn()) window.orosLock.lock(); return; }
+    if (name === "clip") { if (window.orosClip) window.orosClip.open(); return; }   // CLIP-1 W2
     if (!N || typeof N.setSetting !== "function") return;
     if (name === "notifs") {
       if (!value) notifySys("dim", text);
@@ -4815,6 +5193,68 @@
   }
   quickWant = quickTakeHash();
   if (quickWant && quickWant.win) quickPlace();
+
+  // SB4: "#bar-win" is the desktop launcher's bar window (oros-portable,
+  // Windows): only the top bar shows, its title stays "orOS bar" (the
+  // launcher finds the window by it), and every app it would open opens
+  // in the main orOS window instead: through the "oros-barwin" channel
+  // when one is open, else the launcher opens it (/__oros-open).
+  var BARWIN = false, barCh = null;
+  (function () {
+    var h = "";
+    try { h = String(window.location.hash || ""); } catch (e) { return; }
+    if (h !== "#bar-win" || window.top !== window) return;
+    BARWIN = true;
+    try { window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search); } catch (e) {}
+    document.documentElement.classList.add("barwin");
+    document.title = "orOS bar";
+  })();
+  try { barCh = typeof BroadcastChannel === "function" ? new BroadcastChannel("oros-barwin") : null; } catch (e) { barCh = null; }
+  var BAR_APP_RE = /^[a-z0-9-]{1,40}$/;
+  // In the bar window: hand the app over. → true (always handled there).
+  function barwinOpen(id) {
+    id = BAR_APP_RE.test(String(id || "")) ? String(id) : "";
+    var asked = Date.now(), got = false;
+    if (barCh) {
+      var off = function (ev) {
+        var d = ev && ev.data;
+        if (d && d.t === "ok" && d.at === asked) { got = true; barCh.removeEventListener("message", off); }
+      };
+      barCh.addEventListener("message", off);
+      barCh.postMessage({ t: "open", id: id, at: asked });
+      setTimeout(function () {
+        barCh.removeEventListener("message", off);
+        if (!got) barwinLauncher(id);
+      }, 700);
+    } else barwinLauncher(id);
+    return true;
+  }
+  function barwinLauncher(id) {
+    try {
+      fetch("/__oros-open" + (id ? "?app=" + encodeURIComponent(id) : ""), { method: "POST", headers: { "X-Oros-Bar": "1" } })
+        .catch(function () {});
+    } catch (e) {}
+  }
+  // In a main window: open what the bar asks, and come to the front.
+  if (barCh) barCh.addEventListener("message", function (ev) {
+    var d = ev && ev.data;
+    if (BARWIN || SOLO || !d || d.t !== "open" || typeof d.at !== "number") return;
+    if (d.id && !BAR_APP_RE.test(String(d.id))) return;
+    barCh.postMessage({ t: "ok", at: d.at });
+    try { window.focus(); } catch (e) {}
+    if (d.id) openAppById(String(d.id));
+  });
+  if (BARWIN) {
+    // The menu button, the clock and the date: their app (or orOS
+    // itself) in the main window; nothing opens in the bar.
+    document.addEventListener("click", function (e) {
+      var tgt = e.target && e.target.closest ? e.target.closest("#btn-menu, #bar-time, #bar-date") : null;
+      if (!tgt) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      barwinOpen(tgt.id === "bar-time" ? "time" : tgt.id === "bar-date" ? "calendar" : "");
+    }, true);
+  }
   window.addEventListener("hashchange", function () {
     var w = quickTakeHash();
     if (!w) return;
@@ -4826,28 +5266,15 @@
     quickWant = null;
     if (w) quickLaunch(w);
   }
-  // Ctrl+K (Cmd+K on a Mac), from the desktop or from inside an app.
-  function cmdIsCtrlK(e) {
-    return (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.code === "KeyK";
-  }
-  document.addEventListener("keydown", function (e) {
-    if (!cmdIsCtrlK(e) || e.defaultPrevented) return;
-    if (window.orosCmdBar && window.orosCmdBar.isOpen()) return;
-    e.preventDefault();
-    openCmdBar();
-  });
-  // Every app frame gets the listener (one today, more with M2).
+  // The command bar opens only with Ctrl+Alt+Shift+K (SC_DEFS id
+  // "cmdbar"): plain Ctrl+K was retired on 2026-11-15 (Chris: every
+  // orOS shortcut is Ctrl+Alt+Shift+<key>). Every app frame still gets
+  // the strict mode's panic key (Escape three times).
   function cmdWireFrame(frame) {
     frame.addEventListener("load", function () {
       var w;
       try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
-      w.addEventListener("keydown", function (e) {
-        if (!cmdIsCtrlK(e)) return;
-        if (state.running && CMD_OWN_CTRLK[state.running.id]) return;   // the app's own Ctrl+K
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        openCmdBar();
-      }, true);
+      w.addEventListener("keydown", function (e) { strictPanicKey(e); }, true);
     });
   }
   appFrames().forEach(cmdWireFrame);
@@ -4877,6 +5304,7 @@
   }
   appFrames().forEach(extWireFrame);
   appFrames().forEach(a11yWireFrame);
+  if (window.orosClip) appFrames().forEach(window.orosClip.wire);   // CLIP-1
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -5156,7 +5584,7 @@
       var b = document.createElement("button");
       b.type = "button";
       b.className = "menu-hit-more menu-ask";
-      b.textContent = window.t("search.ask").replace("{q}", q.length > 60 ? q.slice(0, 59) + "…" : q);
+      b.textContent = window.t(aiHelper() === "claude" ? "search.askClaude" : "search.ask").replace("{q}", q.length > 60 ? q.slice(0, 59) + "…" : q);
       b.addEventListener("click", function () { openAssistant(q); });
       host.appendChild(b);
     }
@@ -5313,7 +5741,9 @@
       var hideOk = !!(L && typeof L.menuHidden === "function");
       var hiddenCount = 0;
       var cats = {}, catRaw = {}, catAll = {};
+      var claudeOnly = aiHelper() === "claude";   // HELPER-1: no Assistant in the menu, not even in a search
       state.apps.forEach(function (app) {
+        if (claudeOnly && app.id === "assistant") return;
         if (hideOk && L.menuHidden(app.id)) {
           hiddenCount++;
           if (!q) return;
@@ -5353,11 +5783,30 @@
         Object.keys(cats).forEach(function (c) {
           var cl = catTextOf(c);
           cats[c] = cats[c].filter(function (app) {
-            return [appLabelOf(app), app.name, app.id, cl].some(function (f) {
+            // Search words (apps.json "words" + app.<id>.words): an app is
+            // also found by what people call what it does (Lyric Sync =
+            // songbook, chords, setlist).
+            var wk = "app." + app.id + ".words", tw = window.t(wk);
+            return [appLabelOf(app), app.name, app.id, cl, app.words || "", tw === wk ? "" : tw].some(function (f) {
               return menuFold(f).indexOf(q) !== -1;
             });
           });
           if (!cats[c].length) delete cats[c];
+        });
+        // APP-ALIAS: an app folded into another one is still found by
+        // its old name; its row opens the new home at the old place.
+        state.aliases.forEach(function (al) {
+          var host = aliasHost(al.id);
+          if (!host) return;
+          var old = cmdAppName(al.id);
+          if (![old, al.name, al.id].some(function (f) { return menuFold(f).indexOf(q) !== -1; })) return;
+          var c = String(host.category || "other").toLowerCase();
+          if (!catRaw[c]) catRaw[c] = String(host.category || "other");
+          var row = {};
+          for (var k in host) if (Object.prototype.hasOwnProperty.call(host, k)) row[k] = host[k];
+          row._alias = al.id;
+          row._aliasLabel = old + " → " + appLabelOf(host);
+          (cats[c] = cats[c] || []).push(row);
         });
         if (!Object.keys(cats).length) {
           var none = document.createElement("div");
@@ -5412,7 +5861,7 @@
           btn.className = "menu-item" + (mtActive() && appLive(app.id) ? " mt-open" : "");
           btn.setAttribute("data-app", app.id);
           if (!firstMatch && q) firstMatch = app;
-          var label = appLabelOf(app);
+          var label = app._alias ? app._aliasLabel : appLabelOf(app);
           if (ICONS[app.icon]) {
             btn.innerHTML =
               '<span class="app-ico" data-cat="' + iconCat(app) + '" data-hue="' + iconHue(app) + '">' + ICONS[app.icon] + '</span>' +
@@ -5422,7 +5871,7 @@
           }
           btn.addEventListener("click", function () { openApp(app); });
           // Favourites (launcher.js): the star at the end of the row.
-          catList.appendChild(window.orosLauncher ? window.orosLauncher.menuRow(btn, app) : btn);
+          catList.appendChild(window.orosLauncher && !app._alias ? window.orosLauncher.menuRow(btn, app) : btn);
         });
         wrap.appendChild(catList);
         appsHost.appendChild(wrap);
@@ -5494,7 +5943,7 @@
     devBtn.textContent = window.t("menu.deviceInfo");
     devBtn.addEventListener("click", function () {
       closeMenu();
-      openAppById("device");
+      window.orosSettings.open("device");   // Settings › Device (APP-ALIAS)
     });
     devRow.appendChild(devBtn);
     menu.appendChild(devRow);
@@ -5601,7 +6050,35 @@
   //     sorted by id), so a converged state produces no phantom push.
   var SHELL_STAMPS_KEY = "oros-shell-stamps";   // { <field>: { t: ms, v: json } } — travels as `sm`
   var ALARM_TOMBS_KEY  = "oros-alarm-tombs";    // { <alarmId>: { t: ms, x: ms|0 } } — travels as `alarmTombs`
-  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "icons"];
+  // Default apps per file type (DEF-APPS D1): fileopen.js keeps them in
+  // localStorage "oros-file-open" { ver: 1, map: { ".txt": "pad" | "ask" } }.
+  // The synced field is the map alone, canonical by its shape only
+  // (sorted types, at most 300), never by the app list of this version,
+  // so every device makes the same string (R26). fileopen.js drops what
+  // its own table does not know when it reads it.
+  var FOPEN_KEY = "oros-file-open";
+  function fopenCanon(v) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    var out = {};
+    Object.keys(v).filter(function (k) {
+      return /^\.[a-z0-9]{1,24}$/.test(k) && typeof v[k] === "string" && /^(ask|[a-z][a-z0-9]{0,23})$/.test(v[k]);
+    }).sort().slice(0, 300).forEach(function (k) { out[k] = v[k]; });
+    return out;
+  }
+  function fopenRead() {
+    try {
+      var p = JSON.parse(localStorage.getItem(FOPEN_KEY) || "null");
+      return fopenCanon(p && p.map) || {};
+    } catch (e) { return {}; }
+  }
+  function fopenWrite(map) {
+    try {
+      if (Object.keys(map).length) localStorage.setItem(FOPEN_KEY, JSON.stringify({ ver: 1, map: map }));
+      else localStorage.removeItem(FOPEN_KEY);
+    } catch (e) {}
+  }
+
+  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "icons", "fopen", "keys"];
   var TOMB_GRACE_MS = 24 * 60 * 60 * 1000;      // a once-alarm tombstone outlives its alarm by a day (clock skew)
 
   function shellDefault(name) {
@@ -5615,6 +6092,8 @@
       case "wpart":        return null;
       case "wpland":       return null;
       case "icons":        return "classic";
+      case "fopen":        return {};
+      case "keys":         return {};
       default:             return { on: false, auto: false, lat: null, lon: null, label: "" };   // weather
     }
   }
@@ -5638,6 +6117,8 @@
         var wl = wplandCanon(v);
         return wl ? wl : undefined;
       case "icons":        return iconsCanon(v);
+      case "fopen":        return fopenCanon(v);
+      case "keys":         return keysCanon(v);
       default:
         if (!v || typeof v !== "object") return undefined;
         return {
@@ -5660,7 +6141,8 @@
       lang: state.lang, theme: state.theme, skin: state.skin,
       wallpaper: state.wallpaper, syncInterval: syncInterval,
       autoexport: state.autoexport, weather: wxRead(),
-      wpart: state.wpart, wpland: state.wpland, icons: state.icons
+      wpart: state.wpart, wpland: state.wpland, icons: state.icons,
+      fopen: fopenRead(), keys: keysRead()
     };
     var out = {};
     for (var i = 0; i < SHELL_FIELDS.length; i++) {
@@ -5857,6 +6339,8 @@
       wpart:        vals.wpart,   // "Mine" wallpaper recipe (Wallpaper Generator)
       wpland:       vals.wpland,  // "Living land" { style, seed, motion } (wallpaper/land.js)
       icons:        vals.icons,   // icon pack (ICONPACK-1)
+      fopen:        vals.fopen,   // default apps per file type (DEF-APPS D1)
+      keys:         vals.keys,    // the person's own shortcut keys (DEF-APPS D2)
       ver:          2,
       sm:           sm,
       alarmTombs:   tombs
@@ -5918,8 +6402,18 @@
       state.wpland = shellCanon("wpland", data.wpland);
       wpLandWrite(state.wpland);
     }
+    // Default apps (DEF-APPS D1): pulled, written for fileopen.js only
+    // (no push from a pull).
+    if (data.fopen !== undefined && fopenCanon(data.fopen) !== undefined) {
+      fopenWrite(fopenCanon(data.fopen));
+    }
+    // Shortcut keys (DEF-APPS D2): pulled, applied (and mirrored for
+    // orOS USB), never a push.
+    if (data.keys !== undefined && keysCanon(data.keys) !== undefined) {
+      keysWrite(keysCanon(data.keys));
+    }
     if (iconsCanon(data.icons)) {     // pulled: apply only (no push from a pull)
-      state.icons = data.icons;
+      state.icons = iconsCanon(data.icons);
       try { localStorage.setItem(ICONS_KEY, state.icons); } catch (eIc) {}
     }
     if (typeof data.syncInterval === "number" &&
@@ -6116,6 +6610,7 @@
   }
   window.orosMe = { name: meName };
 
+  var fopenHooked = false;
   function registerShellSlice() {
     if (window.orosSync) {
       // SH-D1: stamps first (first-run migration + parked-legacy
@@ -6124,6 +6619,12 @@
       // is assembled from several keys and the shell is always live.
       try { shellStampsRefresh(); } catch (e) {}
       window.orosSync.registerSlice("shell", shellSliceGet, shellSliceSet, null, shellMerge);
+    }
+    // DEF-APPS D1: a default app picked in Settings or with "Always"
+    // in the chooser is a local change of the field "fopen".
+    if (!fopenHooked && window.orosFileOpen && typeof window.orosFileOpen.onChange === "function") {
+      fopenHooked = true;
+      window.orosFileOpen.onChange(noteLocalChange);
     }
   }
 
@@ -6647,6 +7148,7 @@
     rememberTxt.textContent = window.t("sync.pass.remember");
     rememberRow.appendChild(rememberTxt);
     form.appendChild(rememberRow);
+    if (strictLevelNow()) { rememberCb.checked = false; rememberRow.hidden = true; }   // Sensitive work: never kept
 
     var errBox = document.createElement("div");
     errBox.style.cssText =
@@ -6981,10 +7483,316 @@
   }
 
   function syncDisconnectKey(r) {
+    if (r.paired) return r.provider === "webdav" ? "sync.disc.paired.dav" : "sync.disc.paired";
     if (r.revoked) return "sync.disc.revoked";
     if (r.offline) return r.provider === "webdav" ? "sync.disc.offline.dav" : "sync.disc.offline";
     if (r.provider === "webdav") return "sync.disc.local.dav";
     return "sync.disc.norevoke";
+  }
+
+  // PAIR-1: Add a browser. pair.js (loaded on first use) runs the
+  // exchange through a relay room; sync.js makes and adopts the bundle.
+  // state.pair = { role: "new"|"old", phase, code (new), check, dev,
+  // err, session (new: only for this session) }. Settings › Sync shows
+  // it (settingsState().sync.pair) and acts through settingsAct.
+  var pairSession = null, pairLoading = null;
+  function pairNeed(withQr) {
+    function one(src, have) {
+      if (have()) return Promise.resolve();
+      return new Promise(function (res, rej) {
+        var s = document.createElement("script");
+        s.src = src + "?v=" + APP_VERSION;
+        s.onload = function () { have() ? res() : rej(new Error("pair-load")); };
+        s.onerror = function () { rej(new Error("pair-load")); };
+        document.head.appendChild(s);
+      });
+    }
+    if (!pairLoading) {
+      pairLoading = one("pair.js", function () { return !!window.OrosPair; })
+        .catch(function (e) { pairLoading = null; throw e; });
+    }
+    if (!withQr) return pairLoading;
+    return pairLoading.then(function () {
+      return one("qr/qr-encode.js", function () { return !!(window.orosQR && window.orosQR.encode); }).catch(function () {});
+    });
+  }
+  function pairUa() {
+    return window.OrosPair ? window.OrosPair.browserLabel(navigator.userAgent) : "";
+  }
+  function pairSet(fields) {
+    if (!state.pair) return;
+    for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) state.pair[k] = fields[k];
+    settingsNotify();
+  }
+  function pairStop() {
+    if (pairSession) { try { pairSession.cancel(); } catch (e) {} }
+    pairSession = null;
+  }
+  function pairCancel() {
+    pairStop();
+    state.pair = null;
+    settingsNotify();
+  }
+  function pairOnState(sess) {
+    return function (phase, info) {
+      if (sess !== pairSession) return;
+      if (phase === "error") pairSet({ phase: "error", err: info.e || "net" });
+      else pairSet({ phase: phase, check: info.check || (state.pair && state.pair.check) || "",
+        dev: info.dev || (state.pair && state.pair.dev) || "" });
+      if (phase === "done" || phase === "error") pairSession = null;
+    };
+  }
+  // The new browser: make a code and wait for the signed-in device.
+  function pairNew(session) {
+    var S = window.orosSync;
+    if (!S || typeof S.pairAdopt !== "function" || S.isConnected()) return;
+    pairStop();
+    state.pair = { role: "new", phase: "opening", code: "", check: "", dev: "", err: "", session: !!session };
+    settingsNotify();
+    pairNeed(true).then(function () {
+      if (!state.pair || state.pair.role !== "new") return;
+      var P = window.OrosPair, code = P.newCode();
+      var sess = new P.Session({
+        role: "new", code: code, dev: pairUa(),
+        onBundle: function (b) {
+          var only = !!(state.pair && state.pair.session);
+          return S.pairAdopt(b, { session: only }).then(function (r) {
+            state.syncUserEmail = (b && b.acc && typeof b.acc.email === "string") ? b.acc.email : null;
+            syncUnlock(r.pw, !only);
+          });
+        },
+        onState: function (p, i) { onState(p, i); }
+      });
+      var onState = pairOnState(sess);
+      pairSession = sess;
+      state.pair.code = code;
+      sess.start();
+    }, function () { pairSet({ phase: "error", err: "net" }); });
+  }
+  // The signed-in device: join the new browser's room with its code.
+  function pairJoin(text) {
+    var S = window.orosSync;
+    if (!S || typeof S.pairBundle !== "function" || !S.isConnected() || !S.hasPassphrase()) return;
+    pairStop();
+    state.pairPrefill = "";
+    state.pair = { role: "old", phase: "connecting", code: "", check: "", dev: "", err: "", session: false };
+    settingsNotify();
+    pairNeed(false).then(function () {
+      if (!state.pair || state.pair.role !== "old") return;
+      var P = window.OrosPair, code = P.codeFromText(text);
+      if (!code) { pairSet({ phase: "error", err: "bad" }); return; }
+      var sess = new P.Session({
+        role: "old", code: code, dev: pairUa(),
+        bundle: function () { return S.pairBundle(); },
+        onState: function (p, i) { onState(p, i); }
+      });
+      var onState = pairOnState(sess);
+      pairSession = sess;
+      sess.start();
+    }, function () { pairSet({ phase: "error", err: "net" }); });
+  }
+  function pairApprove() {
+    if (pairSession && state.pair && state.pair.role === "old" && state.pair.phase === "approve") pairSession.approve();
+  }
+  function pairQrRows() {
+    var p = state.pair, P = window.OrosPair, Q = window.orosQR;
+    if (!p || p.role !== "new" || !p.code || !P || !Q || typeof Q.encode !== "function") return null;
+    if (state.pairQr && state.pairQr.code === p.code) return state.pairQr.rows;
+    var rows = null;
+    try {
+      rows = Q.encode(P.qrText(p.code, location.origin), { ecl: "M" }).modules.map(function (r) {
+        return r.map(function (d) { return d ? "1" : "0"; }).join("");
+      });
+    } catch (e) { rows = null; }
+    state.pairQr = { code: p.code, rows: rows };
+    return rows;
+  }
+  function pairForSettings() {
+    var p = state.pair;
+    if (!p) return null;
+    return { role: p.role, phase: p.phase, check: p.check || "", dev: p.dev || "", err: p.err || "",
+      session: !!p.session, code: (p.code && window.OrosPair) ? window.OrosPair.fmtCode(p.code) : "",
+      qr: pairQrRows() };
+  }
+  // A phone's camera opened orOS with #pair=<code> (pair.js qrText):
+  // Settings › Sync, with the code ready to connect.
+  function pairFromHash() {
+    var m = /^#pair=([0-9A-Za-z-]{12,20})$/.exec(location.hash || "");
+    if (!m) return;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    state.pairPrefill = m[1].toUpperCase();
+    settingsNotify();
+    var tries = 0;
+    (function open() {
+      if (document.getElementById("oro-splash") || !state.apps.length || !window.orosSettings) {
+        if (++tries > 120) return;
+        setTimeout(open, 250);
+        return;
+      }
+      window.orosSettings.open("sync");
+    })();
+  }
+
+  // LINK-1: a sign-in link. pair.js seals the same bundle as a
+  // password link of "Send to someone" (share/relay.js) that lives 15
+  // minutes; the 8-character code is shown here and never goes into
+  // the link. state.plink (signed-in device) = { phase: "making" |
+  // "ready" | "used" | "gone" | "error", url, code, exp, id, del, err };
+  // state.linkIn (new browser) = { phase: "code" | "opening" | "adopting"
+  // | "done" | "error", share, err, session, dev }. Neither is stored.
+  var linkTimer = null;
+  function linkNeed() {
+    return pairNeed(false).then(function () {
+      if (window.OrosShareRelay) return;
+      return new Promise(function (res, rej) {
+        var s = document.createElement("script");
+        s.src = "share/relay.js?v=" + APP_VERSION;
+        s.onload = function () { window.OrosShareRelay ? res() : rej(new Error("pair-load")); };
+        s.onerror = function () { rej(new Error("pair-load")); };
+        document.head.appendChild(s);
+      });
+    });
+  }
+  function linkSet(fields) {
+    if (!state.plink) return;
+    for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) state.plink[k] = fields[k];
+    settingsNotify();
+  }
+  function linkStopWatch() { if (linkTimer) { clearTimeout(linkTimer); linkTimer = null; } }
+  // While the link waits: every 15 s ask the relay whether it is still
+  // there; gone before its time means the new browser used it.
+  function linkWatch() {
+    linkStopWatch();
+    var p = state.plink;
+    if (!p || p.phase !== "ready") return;
+    linkTimer = setTimeout(function () {
+      linkTimer = null;
+      var q = state.plink;
+      if (!q || q.phase !== "ready" || q.id !== p.id) return;
+      if (Date.now() >= q.exp) { linkSet({ phase: "gone" }); return; }
+      window.OrosPair.linkAlive(q.id).then(function (alive) {
+        var r = state.plink;
+        if (!r || r.phase !== "ready" || r.id !== q.id) return;
+        if (alive === false) linkSet({ phase: Date.now() < r.exp - 5000 ? "used" : "gone" });
+        else linkWatch();
+      });
+    }, 15000);
+  }
+  function linkMake() {
+    var S = window.orosSync;
+    if (!S || typeof S.pairBundle !== "function" || !S.isConnected() || !S.hasPassphrase()) return;
+    if (state.plink && state.plink.phase === "making") return;
+    linkStopWatch();
+    state.plink = { phase: "making", url: "", code: "", exp: 0, id: "", del: "", err: "" };
+    settingsNotify();
+    linkNeed().then(function () {
+      return S.pairBundle();
+    }).then(function (b) {
+      if (!state.plink || state.plink.phase !== "making") return;
+      return window.OrosPair.sendLink(b, { dev: pairUa(), origin: location.origin }).then(function (r) {
+        if (!state.plink || state.plink.phase !== "making") {
+          window.OrosShareRelay.revoke(r.id, r.del).catch(function () {});
+          return;
+        }
+        linkSet({ phase: "ready", url: r.url, code: window.OrosPair.fmtLinkCode(r.code), exp: r.exp, id: r.id, del: r.del });
+        linkWatch();
+      });
+    }).catch(function (e) {
+      var m = String((e && e.message) || "net");
+      linkSet({ phase: "error", err: m === "pair-locked" ? "pair-locked" : m === "rate" || m === "full" || m === "nostore" ? "rate" : "net" });
+    });
+  }
+  // Cancel: the pieces are deleted on the relay (best effort; they
+  // expire anyway), and the card closes.
+  function linkCancel() {
+    var p = state.plink;
+    linkStopWatch();
+    state.plink = null;
+    settingsNotify();
+    if (p && p.id && p.del && p.phase === "ready" && window.OrosShareRelay) {
+      window.OrosShareRelay.revoke(p.id, p.del).catch(function () {});
+    }
+  }
+  // SOS (SOS-1) cancels every sign-in link this device still holds:
+  // the one in memory (a link is never stored, so links from a closed
+  // tab cannot be cancelled and expire by themselves within 15 minutes),
+  // and forgets a link that opened this browser. Resolves when the
+  // relay has answered or failed; never rejects.
+  function linkCancelAll() {
+    var p = state.plink;
+    linkStopWatch();
+    state.plink = null;
+    state.linkIn = null;
+    settingsNotify();
+    if (p && p.id && p.del && window.OrosShareRelay) {
+      return window.OrosShareRelay.revoke(p.id, p.del).then(function () { return 1; }, function () { return 0; });
+    }
+    return Promise.resolve(0);
+  }
+  window.orosPairLink = { cancelAll: linkCancelAll };
+  function linkInSet(fields) {
+    if (!state.linkIn) return;
+    for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) state.linkIn[k] = fields[k];
+    settingsNotify();
+  }
+  // The new browser: the code typed, the link opened, the bundle adopted
+  // (sync.js pairAdopt, as PAIR-1), the pieces deleted, unlocked.
+  function linkOpen(code) {
+    var S = window.orosSync, L = state.linkIn;
+    if (!L || !S || typeof S.pairAdopt !== "function") return;
+    if (L.phase === "opening" || L.phase === "adopting" || L.phase === "done") return;
+    if (S.isConnected()) { linkInSet({ phase: "error", err: "pair-connected" }); return; }
+    linkInSet({ phase: "opening", err: "" });
+    linkNeed().then(function () {
+      return window.OrosPair.openLink(L.share, code);
+    }).then(function (r) {
+      if (state.linkIn !== L) return;
+      if (r.error) {
+        // A wrong code can be typed again; anything else ends the link.
+        linkInSet({ phase: r.error === "pass" ? "code" : "error", err: r.error });
+        return;
+      }
+      linkInSet({ phase: "adopting", dev: r.dev || "" });
+      var only = !!L.session;
+      return S.pairAdopt(r.b, { session: only }).then(function (res) {
+        window.OrosShareRelay.revoke(r.id, r.del).catch(function () {});
+        state.syncUserEmail = (r.b && r.b.acc && typeof r.b.acc.email === "string") ? r.b.acc.email : null;
+        linkInSet({ phase: "done" });
+        syncUnlock(res.pw, !only);
+      });
+    }).catch(function (e) {
+      if (state.linkIn !== L) return;
+      var m = String((e && e.message) || "net");
+      linkInSet({ phase: "error", err: m === "pair-connected" ? "pair-connected" : m === "pair-bad" ? "refused" : "net" });
+    });
+  }
+  function linkForSettings() {
+    var p = state.plink;
+    return p ? { phase: p.phase, url: p.url || "", code: p.code || "", exp: p.exp || 0, err: p.err || "" } : null;
+  }
+  function linkInForSettings() {
+    var L = state.linkIn;
+    return L ? { phase: L.phase, err: L.err || "", session: !!L.session, dev: L.dev || "" } : null;
+  }
+  // A sign-in link opened orOS (#signin=…): the secret part leaves the
+  // address bar at once, and Settings › Sync asks for the code.
+  function linkFromHash() {
+    var m = /^#signin=([A-Za-z0-9_.\-]{1,200})$/.exec(location.hash || "");
+    if (!m) return;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    var share = m[1];
+    if (!/^q1\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\.[1-9]\d{0,2}\.[A-Za-z0-9_-]{22}$/.test(share)) return;
+    state.linkIn = { phase: "code", share: share, err: "", session: false, dev: "" };
+    settingsNotify();
+    var tries = 0;
+    (function open() {
+      if (document.getElementById("oro-splash") || !state.apps.length || !window.orosSettings) {
+        if (++tries > 120) return;
+        setTimeout(open, 250);
+        return;
+      }
+      window.orosSettings.open("sync");
+    })();
   }
 
   // User picked an automatic folder-backup cadence (shell slice).
@@ -7109,6 +7917,7 @@
     rt.textContent = window.t("sync.pass.remember");
     rememberRow.appendChild(rt);
     form.appendChild(rememberRow);
+    if (strictLevelNow()) { rememberCb.checked = false; rememberRow.hidden = true; }   // Sensitive work: never kept
 
     var errBox = document.createElement("div");
     errBox.style.cssText = "font-size:12px;color:var(--danger);min-height:18px;margin:2px 0 8px;";
@@ -7232,7 +8041,9 @@
     "sync.err.storage":   "settings/backup",
     "sync.err.auth":      "settings/sync",
     "sync.err.dav-auth":  "settings/sync",
-    "sync.err.version":   ""
+    "sync.err.version":   "",
+    "sync.err.cloud-reset":  "settings/sync",   // SOS-1: keep or erase, the person decides there
+    "sync.err.cloud-closed": "settings/sync"
   };
   function syncNoticeDaily(ident, text, link) {
     var N = window.orosNotifs;
@@ -7616,6 +8427,9 @@
         { name: "CodeMirror 6", url: "https://codemirror.net/",
           by: "Marijn Haverbeke & contributors", lic: "MIT",
           k: "cr.codemirror" },
+        { name: "yaml 2.9.1", url: "https://eemeli.org/yaml/",
+          by: "Eemeli Aro", lic: "ISC",
+          k: "cr.yaml" },
         { name: "three.js r180", url: "https://threejs.org/",
           by: "three.js authors", lic: "MIT",
           k: "cr.three-js" },
@@ -7643,6 +8457,12 @@
         { name: "fzstd 0.1.1", url: "https://github.com/101arrowz/fzstd",
           by: "Arjun Barrett", lic: "MIT",
           k: "cr.fzstd" },
+        { name: "brotli.js 2.1.0 (decoder) + base64-js 1.5.1", url: "https://github.com/foliojs/brotli.js",
+          by: "Devon Govett; Brotli decoder port by Google Inc.; Jameson Little", lic: "MIT + Apache-2.0",
+          k: "cr.brotli-js" },
+        { name: "polygon-clipping 0.15.7 (with splaytree 3.1.2, robust-predicates)", url: "https://github.com/mfogel/polygon-clipping",
+          by: "Mike Fogel; Alexander Milevski; Vladimir Agafonkin (after J. R. Shewchuk)", lic: "MIT + Unlicense",
+          k: "cr.polygon-clipping" },
         { name: "OpenPGP.js 6.3.1", url: "https://openpgpjs.org/",
           by: "OpenPGP.js contributors, Proton AG", lic: "LGPL-3.0-or-later",
           k: "cr.openpgp-js" },
@@ -7661,6 +8481,12 @@
         { name: "Whisper tiny (ONNX export by Xenova)", url: "https://huggingface.co/Xenova/whisper-tiny",
           by: "OpenAI; ONNX export by Joshua Lochner", lic: "MIT; Apache-2.0 (export)",
           k: "cr.whisper-tiny" },
+        { name: "Bergamot translator 0.4.9", url: "https://github.com/browsermt/bergamot-translator",
+          by: "The Bergamot project (Edinburgh, Prague, Sheffield, Tartu, Mozilla); Marian NMT", lic: "MPL-2.0",
+          k: "cr.bergamot" },
+        { name: "Firefox Translations models", url: "https://github.com/mozilla/translations",
+          by: "Mozilla", lic: "MPL-2.0",
+          k: "cr.firefox-translations" },
         { name: "NULL JSFX", url: "https://nulljsfx.tech",
           by: "Christos Koulaxizis", lic: "MIT",
           k: "cr.null-jsfx" },
@@ -7701,6 +8527,12 @@
     {
       k: "cr.g.data",
       items: [
+        { name: "Unicode CLDR annotations 49.0.0", url: "https://cldr.unicode.org/",
+          by: "Unicode, Inc.", lic: "Unicode License V3",
+          k: "cr.cldr-emoji" },
+        { name: "unicode-emoji-json 0.9.0", url: "https://github.com/muan/unicode-emoji-json",
+          by: "Mu-An Chiou", lic: "MIT",
+          k: "cr.unicode-emoji-json" },
         { name: "FSRS-6 (ts-fsrs 5.4.2)", url: "https://github.com/open-spaced-repetition/ts-fsrs",
           by: "Open Spaced Repetition", lic: "MIT",
           k: "cr.fsrs-ts" },
@@ -8044,6 +8876,9 @@
         { name: "Tor button's Go modules (ProtonMail go-crypto, CIRCL, golang.org/x/crypto, ulikunitz/xz)", url: "https://github.com/ProtonMail/go-crypto",
           by: "The Go Authors, Proton AG, Cloudflare, Ulrich Kunitz", lic: "BSD-3-Clause",
           k: "cr.tor-modules" },
+        { name: "chromium-web-store", url: "https://github.com/NeverDecaf/chromium-web-store",
+          by: "NeverDecaf and contributors", lic: "MIT",
+          k: "cr.webstore" },
         { name: "Ollama (with llama.cpp and ggml)", url: "https://github.com/ollama/ollama",
           by: "Ollama, Georgi Gerganov & contributors", lic: "MIT",
           k: "cr.ollama" },
@@ -8155,14 +8990,11 @@
   function showInfoModal() {
     if (scInfoClose) { scInfoClose(); return; }   // open → close (clean toggle)
 
-    var mac = /Mac|iPhone|iPad/i.test(navigator.platform || "");
-    var comboPrefix = mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+";
-
-    var rows = "";
-    SC_DEFS.forEach(function (def) {
-      rows += '<div class="sc-row"><span class="sc-key">' + comboPrefix +
-              def.key.toUpperCase() + '</span><span>' +
-              escapeHtml(window.t(def.label)) + '</span></div>';
+    var rows = "", usbHere = scUsbHere();
+    scTable().forEach(function (x) {
+      if (!x.code || (x.def.usb && !usbHere)) return;   // off, or another device's
+      rows += '<div class="sc-row"><span class="sc-key">' + escapeHtml(scCombo(x.code)) +
+              '</span><span>' + escapeHtml(window.t(x.def.label)) + '</span></div>';
     });
 
     var ov = document.createElement("div");
@@ -8346,24 +9178,46 @@
   // deviceOnly (screen lock, "Reset this device"): the same local
   // wipe, but the cloud and the backup folder stay; `cloud` is then the
   // last push of unsynced changes (lockDeviceReset).
-  function scFactoryReset(btn, deviceOnly) {
+  // deviceOnly "follow" (SOS-1: an SOS or a reset signal reached this
+  // device): nothing is sent, the engine is already stopped; the
+  // backup folder and this device's relay boxes go too.
+  // deviceOnly "sos" (SOS-1, Settings › System): first every relay box
+  // this person's data knows of, then the cloud becomes an SOS signal
+  // (orosSync.sosEverywhere, sosPass = the passphrase typed again),
+  // then this device; after the reload the what-now list is shown.
+  function scFactoryReset(btn, deviceOnly, sosPass) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
+    var follow = deviceOnly === "follow", sos = deviceOnly === "sos", travel = deviceOnly === "travel";
+    var S = window.orosSync;
+
+    function capped(p, ms) {
+      return Promise.race([
+        Promise.resolve(p),
+        new Promise(function (res) { setTimeout(function () { res(null); }, ms); })
+      ]).catch(function () { return null; });
+    }
 
     // Cloud wipe (15s cap — a hanging network can never freeze the
     // reset; wipeEverything suspends the engine synchronously at call).
-    var cloud = deviceOnly ? lockLastPush()
-      : (window.orosSync && typeof window.orosSync.wipeEverything === "function")
-      ? Promise.race([
-          window.orosSync.wipeEverything(),
-          new Promise(function (res) { setTimeout(function () { res(null); }, 15000); })
-        ]).catch(function () { return null; })
+    // Travel (STRICT-3): the last push like "Reset this device", then this
+    // device's own relay boxes close; the cloud stays.
+    var cloud = travel ? lockLastPush().then(function () { return capped(sosRelay(false), 5000); })
+      : follow ? Promise.resolve(S && typeof S.suspendEngine === "function" ? S.suspendEngine() : null)
+      : sos ? capped(sosRelay(true), 8000).then(function () {
+          return (S && typeof S.sosEverywhere === "function") ? capped(S.sosEverywhere(sosPass), 15000) : null;
+        })
+      : deviceOnly ? lockLastPush()
+      : (S && typeof S.wipeEverything === "function")
+      ? capped(S.wipeEverything(), 15000)
       : Promise.resolve(null);
+    if (follow) cloud = cloud.then(function () { return capped(sosRelay(false), 5000); });
 
     // Folder wipe FIRST — it needs the oros-fs handle, which the
     // upcoming local sweep would orphan. OrosFS wipe rides along —
     // independent storage, best-effort like the rest.
-    Promise.all([deviceOnly ? false : wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), wipeMapPacks(), cloud]).then(function () {
+    var keepFolder = deviceOnly === true;
+    Promise.all([keepFolder ? false : wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), wipeMapPacks(), cloud]).then(function () {
       function sweep(storage) {
         var doomed = [];
         for (var i = 0; i < storage.length; i++) {
@@ -8372,6 +9226,7 @@
         }
         for (var j = 0; j < doomed.length; j++) storage.removeItem(doomed[j]);
       }
+      wipePhoneCopies(sos || follow);
       try { sweep(sessionStorage); } catch (e) {}   // PKCE verifier
       sweep(localStorage);
 
@@ -8381,7 +9236,248 @@
       // Consumed by factoryResetPending() on the next boot, where no
       // IDB connection is open yet, so deleteDatabase() lands cleanly.
       localStorage.setItem("oros-reset-db", "1");
+      if (sos) localStorage.setItem(SOS_AFTER_KEY, String(Date.now()));   // SOS-1: the what-now list, once
+      if (sos || follow) { try { localStorage.setItem(ERASED_KEY, JSON.stringify({ at: Date.now(), kind: sos ? "sos" : "follow" })); } catch (e) {} }
       location.reload();
+    });
+  }
+
+  // ---------- SOS-1: relay boxes, the follow-up, the what-now list ----------
+  // all = true (the SOS device): every box the person's synced data
+  // holds a token for: every device's Web Push box, orOS Gate (revoke
+  // every link to Claude, then leave), this device's webhook box, every
+  // live "Send to someone" link, every household (leave). all = false
+  // (a device that obeys a signal): only this device's own boxes.
+  // Best-effort; each call is capped by the caller.
+  var SOS_AFTER_KEY = "oros-sos-after";
+  function sosRelay(all) {
+    var jobs = [];
+    function job(fn) { try { jobs.push(Promise.resolve(fn()).catch(function () {})); } catch (e) {} }
+    var P = window.orosPush, G = window.orosGate, H = window.orosHookIn, HH = window.orosHousehold;
+    if (P) job(function () {
+      var rm = all && typeof P.devices === "function" ? P.devices().map(function (d) { return P.remove(d.id); }) : [];
+      return Promise.all(rm).then(function () { return P.disable(); });
+    });
+    if (G) job(function () {
+      var first = all && typeof G.revoke === "function" ? G.revoke().catch(function () {}) : Promise.resolve();
+      return first.then(function () { return G.disable(); });
+    });
+    if (H && typeof H.off === "function") job(function () { return H.off(); });
+    // A sign-in link this device made (PAIR-1 magic link) stops working now.
+    if (window.orosPairLink && typeof window.orosPairLink.cancelAll === "function") job(function () { return window.orosPairLink.cancelAll(); });
+    if (all) {
+      job(sosRevokeShares);
+      job(sosDropCrmForm);
+      if (HH && typeof HH.list === "function" && typeof HH.leave === "function") job(function () {
+        return Promise.all(HH.list().map(function (h) { return HH.leave(h.box).catch(function () {}); }));
+      });
+    }
+    return Promise.all(jobs);
+  }
+  // Every live link in "My shared links" (share/out.js, synced): the
+  // relay drops its pieces (relay/share.js act "del").
+  function sosRevokeShares() {
+    var data = null;
+    try { data = JSON.parse(localStorage.getItem("oros-share-out") || "null"); } catch (e) {}
+    var items = (data && data.items) || {};
+    return Promise.all(Object.keys(items).map(function (id) {
+      var it = items[id];
+      if (!it || it.g || typeof it.d !== "string") return null;
+      return fetch(SOS_RELAY + "/v1", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ op: "shr", act: "del", id: id, del: it.d }), credentials: "omit", cache: "no-store"
+      }).catch(function () {});
+    }));
+  }
+  var SOS_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = share/relay.js RELAY
+  // SOS-1 S2: the CRM web form (crm/webform.js turnOff, op "crmf"
+  // "drop") stops taking messages and the relay drops the ones waiting.
+  // The form's relay is the Mail relay when one is set (webform.js
+  // relayOf), so the same address is used here.
+  function sosDropCrmForm() {
+    var d = null, m = null;
+    try { d = JSON.parse(localStorage.getItem("oros-crm-data") || "null"); } catch (e) {}
+    var w = d && d.wf;
+    if (!w || w.off || typeof w.k !== "string" || typeof w.sec !== "string") return null;
+    try { m = JSON.parse(localStorage.getItem("oros-mail-data") || "null"); } catch (e) {}
+    var u = m && m.relay && typeof m.relay.url === "string" ? m.relay.url.trim().replace(/\/+$/, "") : "";
+    if (!/^https:\/\/[^\s]+$/.test(u)) u = SOS_RELAY;
+    return fetch(u + "/v1", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ op: "crmf", act: "drop", k: w.k, sec: w.sec }), credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
+    }).catch(function () {});
+  }
+  // SOS-1 S2: the copies the orOS Android app (or orOS Passwords) keeps
+  // outside the page (phone.js, BR-PHONE): the sealed autofill lists and
+  // their Keystore keys, every fingerprint / face secret (Passwords and
+  // the screen lock), and with full = true (SOS and its follow-up) also
+  // what orOS wrote into the phone's contacts, calendar, reminders and
+  // Health Connect. Messages to the app go out at once (postMessage),
+  // before the reload.
+  function wipePhoneCopies(full) {
+    var P = window.orosPhone;
+    if (!P) return;
+    try { if (typeof P.afClear === "function") P.afClear(); } catch (e) {}
+    try {
+      var b = P.bio, info = b && typeof b.info === "function" ? b.info() : null;
+      (info && info.kids || []).forEach(function (kid) { try { b.clear(kid); } catch (e) {} });
+    } catch (e) {}
+    if (!full || typeof P.setEnabled !== "function") return;
+    ["contacts", "calendar", "reminders", "health"].forEach(function (k) { try { P.setEnabled(k, false); } catch (e) {} });
+  }
+  // SOS-1 S2: "oros-erased" { at, kind } is written after the sweep of an
+  // SOS or of its follow-up and stays (the next reset sweeps it). The
+  // orOS browser add-on reads it with the Passwords copy and forgets a
+  // copy it took before that moment (extension/pmvault.js).
+  var ERASED_KEY = "oros-erased";
+
+  // Settings › System › SOS: the typed passphrase is checked first
+  // (nothing is touched on a wrong one), then 10 s to cancel.
+  var sosTimer = null;
+  // Public entry for other parts of orOS (Sensitive work mode, strict.js):
+  // opens Settings › System on the SOS card. It never starts anything;
+  // SOS + passphrase are still typed there and the countdown still runs.
+  window.orosSOS = {
+    open: function () {
+      if (osResetting || sosTimer) return false;
+      window.__orosOpenAt("settings", { section: "system", item: "sos" });
+      return true;
+    }
+  };
+  function sosStart(pass) {
+    var S = window.orosSync;
+    if (osResetting || sosTimer) return;
+    if (S && S.isConnected()) {
+      if (!S.hasPassphrase()) { scToast("err", window.t("sos.locked")); return; }
+      if (typeof S.isPassphrase !== "function" || !S.isPassphrase(pass)) { scToast("err", window.t("sos.wrongpass")); return; }
+    }
+    var left = 10;
+    var ov = document.createElement("div");
+    ov.id = "sos-overlay";
+    ov.setAttribute("role", "alertdialog");
+    ov.setAttribute("aria-modal", "true");
+    ov.style.cssText = "position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;" +
+      "background:rgba(0,0,0,.72);padding:16px;";
+    var box = document.createElement("div");
+    box.style.cssText = "max-width:360px;width:100%;background:var(--panel-bg);color:var(--text);" +
+      "border:1px solid var(--border,#444);border-radius:14px;padding:20px;text-align:center;";
+    var h = document.createElement("div");
+    h.id = "sos-title";
+    h.style.cssText = "font-weight:700;font-size:17px;margin-bottom:8px;";
+    h.textContent = window.t("sos.count.title");
+    var n = document.createElement("div");
+    n.id = "sos-count";
+    n.setAttribute("aria-live", "assertive");
+    n.style.cssText = "font-size:44px;font-weight:800;margin:8px 0;color:#e5484d;";
+    n.textContent = String(left);
+    var p = document.createElement("p");
+    p.style.cssText = "margin:0 0 16px;font-size:14px;color:var(--text-dim,#bbb);";
+    p.textContent = window.t("sos.count.body");
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.id = "sos-cancel";
+    cancel.style.cssText = "width:100%;min-height:44px;border-radius:10px;border:1px solid var(--border,#444);" +
+      "background:var(--accent);color:var(--accent-ink, #fff);font-weight:700;font-size:15px;cursor:pointer;";
+    cancel.textContent = window.t("sos.count.cancel");
+    box.appendChild(h); box.appendChild(n); box.appendChild(p); box.appendChild(cancel);
+    ov.setAttribute("aria-labelledby", "sos-title");
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    cancel.focus();
+    function stop() {
+      clearInterval(sosTimer); sosTimer = null;
+      document.removeEventListener("keydown", onKey, true);
+      ov.remove();
+    }
+    function onKey(e) { if (e.key === "Escape") { e.preventDefault(); stop(); scToast("ok", window.t("sos.cancelled")); } }
+    document.addEventListener("keydown", onKey, true);
+    cancel.addEventListener("click", function () { stop(); scToast("ok", window.t("sos.cancelled")); });
+    sosTimer = setInterval(function () {
+      left--;
+      if (left > 0) { n.textContent = String(left); return; }
+      clearInterval(sosTimer); sosTimer = null;
+      document.removeEventListener("keydown", onKey, true);
+      cancel.remove();
+      n.textContent = "";
+      p.textContent = window.t("sc.reset.working");
+      osResetting = true;
+      scFactoryReset({ disabled: false, textContent: "" }, "sos", pass);
+    }, 1000);
+  }
+
+  // After the reload: what the person still has to do, once.
+  function sosAfterShow() {
+    var at;
+    try { at = localStorage.getItem(SOS_AFTER_KEY); } catch (e) { return; }
+    if (!at) return;
+    try { localStorage.removeItem(SOS_AFTER_KEY); } catch (e) {}
+    var ov = document.createElement("div");
+    ov.id = "sos-after";
+    ov.setAttribute("role", "dialog");
+    ov.setAttribute("aria-modal", "true");
+    ov.setAttribute("aria-labelledby", "sos-after-title");
+    ov.style.cssText = "position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;" +
+      "background:rgba(0,0,0,.6);padding:16px;";
+    var box = document.createElement("div");
+    box.style.cssText = "max-width:520px;width:100%;max-height:calc(100% - 32px);overflow:auto;background:var(--panel-bg);" +
+      "color:var(--text,#fff);border:1px solid var(--border,#444);border-radius:14px;padding:20px;box-sizing:border-box;";
+    var h = document.createElement("h2");
+    h.id = "sos-after-title";
+    h.style.cssText = "margin:0 0 8px;font-size:18px;";
+    h.textContent = window.t("sos.after.title");
+    box.appendChild(h);
+    var intro = document.createElement("p");
+    intro.style.cssText = "margin:0 0 12px;font-size:14px;";
+    intro.textContent = window.t("sos.after.intro");
+    box.appendChild(intro);
+    var ol = document.createElement("ol");
+    ol.style.cssText = "margin:0 0 16px;padding-left:20px;font-size:14px;line-height:1.5;";
+    [["sos.after.dropbox", "https://www.dropbox.com/account/security"],
+     ["sos.after.apps", "https://www.dropbox.com/account/connected_apps"],
+     ["sos.after.trash", ""],
+     ["sos.after.dav", ""],
+     ["sos.after.passwords", ""],
+     ["sos.after.addon", ""],
+     ["sos.after.again", ""]].forEach(function (r) {
+      var li = document.createElement("li");
+      li.style.marginBottom = "6px";
+      li.appendChild(document.createTextNode(window.t(r[0]) + (r[1] ? " " : "")));
+      if (r[1]) {
+        var a = document.createElement("a");
+        a.href = r[1];
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = r[1].replace(/^https:\/\/(www\.)?/, "");
+        li.appendChild(a);
+      }
+      ol.appendChild(li);
+    });
+    box.appendChild(ol);
+    var ok = document.createElement("button");
+    ok.type = "button";
+    ok.style.cssText = "width:100%;min-height:44px;border-radius:10px;border:1px solid var(--border,#444);" +
+      "background:var(--accent);color:var(--accent-ink, #fff);font-weight:700;font-size:15px;cursor:pointer;";
+    ok.textContent = window.t("sos.after.ok");
+    ok.addEventListener("click", function () { ov.remove(); });
+    box.appendChild(ok);
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    ok.focus();
+  }
+  setTimeout(sosAfterShow, 1200);
+
+  // A signal reached this device (sync.js judgeCloud): an SOS erases it
+  // at once, without a word on screen; a reset waits for the person in
+  // Settings › Sync (bell line, A72).
+  if (window.orosSync && typeof window.orosSync.onSignal === "function") {
+    window.orosSync.onSignal(function (sg) {
+      if (sg && sg.kind === "sos") {
+        if (osResetting) return;
+        osResetting = true;
+        scFactoryReset({ disabled: false, textContent: "" }, "follow");
+        return;
+      }
+      settingsNotify();
     });
   }
 
@@ -8422,7 +9518,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-music-meta", "oros-music-srv", "oros-music-lb", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-files-photos", "oros-files-thumbs", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-music-meta", "oros-music-srv", "oros-music-lb", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -8435,28 +9531,157 @@
   }
 
   // THE table. Order = documentation order. Adding a shortcut =
-  // adding one entry here (handler + i18n key) — nothing else.
+  // adding one entry here (stable id + default key + handler + i18n
+  // key) — nothing else. Every orOS shortcut is Ctrl+Alt+Shift+<key>
+  // (R12, Chris 2026-11-15: one combo for all, no plain Ctrl, no Win).
+  // id: stable forever (the person's own key is stored under it);
+  // key: the default letter; code: a default that is not a letter
+  // (e.code, e.g. "Period"); usb: handled by the orOS USB System
+  // extension, never by the shell (listed and changeable only on orOS
+  // USB; its key is mirrored on <html> as data-oros-sc-<id>).
   var SC_DEFS = [
-    { key: "p", label: "sc.desc.push",      fn: scForcePush },
-    { key: "o", label: "sc.desc.pull",      fn: scForcePull },
-    { key: "s", label: "sc.desc.snapshot",  fn: scBackupNow },
-    { key: "x", label: "sc.desc.export",    fn: scExportDb },
-    { key: "i", label: "sc.desc.info",      fn: showInfoModal },
-    { key: "u", label: "sc.desc.updates",   fn: scCheckUpdates },
-    { key: "l", label: "sc.desc.lang",      fn: scToggleLang },
-    { key: "r", label: "sc.desc.reconnect", fn: scReconnect },
-    { key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } },
-    { key: "f", label: "sc.desc.search",    fn: openMenuSearch },
-    { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } },
-    { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle },
-    { key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } },
-    { key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } },
-    { key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
-    { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
-    { key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
-    { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
-    { key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } }
+    { id: "push",       key: "p", label: "sc.desc.push",      fn: scForcePush },
+    { id: "pull",       key: "o", label: "sc.desc.pull",      fn: scForcePull },
+    { id: "snapshot",   key: "s", label: "sc.desc.snapshot",  fn: scBackupNow },
+    { id: "export",     key: "x", label: "sc.desc.export",    fn: scExportDb },
+    { id: "info",       key: "i", label: "sc.desc.info",      fn: showInfoModal },
+    { id: "updates",    key: "u", label: "sc.desc.updates",   fn: scCheckUpdates },
+    { id: "lang",       key: "l", label: "sc.desc.lang",      fn: scToggleLang },
+    { id: "reconnect",  key: "r", label: "sc.desc.reconnect", fn: scReconnect },
+    { id: "calculator", key: "c", label: "sc.desc.calculator", fn: function() { openAppById("calculator"); } },
+    { id: "search",     key: "f", label: "sc.desc.search",    fn: openMenuSearch },
+    { id: "help",       key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } },
+    { id: "timer",      key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle },
+    { id: "assistant",  key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } },
+    { id: "today",      key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } },
+    { id: "stickies",   key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
+    { id: "cmdbar",     key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
+    { id: "switcher",   key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
+    { id: "overview",   key: "e", label: "sc.desc.overview",   fn: function() { ovOpen(); } },
+    { id: "quickask",   key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick && aiHelper() !== "claude") window.orosQuick.mini(); else openAssistant(); } },
+    { id: "qs",         key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } },
+    { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } },
+    { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } },
+    { id: "screen", key: "b", label: "sc.desc.screen", fn: function() { scrMove(); } },
+    // orOS USB only (oros-usb System extension, PrtSc also takes a shot).
+    { id: "usb-shot",    key: "g", label: "sc.desc.usbshot",    usb: true },
+    { id: "usb-reader",  key: "j", label: "sc.desc.usbreader",  usb: true },
+    { id: "usb-display", key: "d", label: "sc.desc.usbdisplay", usb: true }
   ];
+
+
+  // ----- the person's own keys (SC-EDIT, DEF-APPS D2) -----
+  // localStorage "oros-shortcuts" = { <id>: "KeyB" | "Digit3" | "" (off) },
+  // only the ones that differ from the default. Synced in the shell
+  // slice (field "keys", whole map, last writer wins). Canonical by
+  // shape only (R26): an id this version does not know is kept.
+  var SC_KEYS_KEY = "oros-shortcuts";
+  var SC_CODE_RE = /^(Key[A-Z]|Digit[0-9]|Period|Comma|Slash|Semicolon|Minus|Equal|BracketLeft|BracketRight|Quote|Backquote|Backslash)$/;
+  function keysCanon(v) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    var out = {};
+    Object.keys(v).filter(function (k) {
+      return /^[a-z][a-z0-9-]{0,23}$/.test(k) && typeof v[k] === "string" && (v[k] === "" || SC_CODE_RE.test(v[k]));
+    }).sort().slice(0, 64).forEach(function (k) { out[k] = v[k]; });
+    return out;
+  }
+  function keysRead() {
+    try { return keysCanon(JSON.parse(localStorage.getItem(SC_KEYS_KEY) || "null")) || {}; }
+    catch (e) { return {}; }
+  }
+  function keysWrite(map) {
+    try {
+      if (Object.keys(map).length) localStorage.setItem(SC_KEYS_KEY, JSON.stringify(map));
+      else localStorage.removeItem(SC_KEYS_KEY);
+    } catch (e) {}
+    scMirror();
+  }
+  function scDefault(def) { return def.code || ("Key" + def.key.toUpperCase()); }
+  function scUsbHere() { return !!(state.pcFiles && state.pcFiles.fixed); }
+  // The table as it is now: [{ def, code }], code "" = off. Two entries
+  // on one key (maps from two versions met in sync) cannot both fire:
+  // the first in table order keeps it, the later one is off.
+  function scTable(map) {
+    map = map || keysRead();
+    var used = {};
+    return SC_DEFS.map(function (def) {
+      var c = Object.prototype.hasOwnProperty.call(map, def.id) ? map[def.id] : scDefault(def);
+      if (c && used[c]) c = "";
+      if (c) used[c] = true;
+      return { def: def, code: c };
+    });
+  }
+  function scCodeOf(id) {
+    var r = scTable().filter(function (x) { return x.def.id === id; })[0];
+    return r ? r.code : "";
+  }
+  var SC_KEY_LABEL = { Period: ".", Comma: ",", Slash: "/", Semicolon: ";", Minus: "-", Equal: "=",
+                       BracketLeft: "[", BracketRight: "]", Quote: "'", Backquote: "`", Backslash: "\\" };
+  function scKeyLabel(code) {
+    if (/^Key[A-Z]$/.test(code)) return code.charAt(3);
+    if (/^Digit[0-9]$/.test(code)) return code.charAt(5);
+    return SC_KEY_LABEL[code] || code;
+  }
+  function scPrefix() { return /Mac|iPhone|iPad/i.test(navigator.platform || "") ? "⌃⌥⇧" : "Ctrl+Alt+Shift+"; }
+  function scCombo(code) { return code ? scPrefix() + scKeyLabel(code) : ""; }
+  // The orOS USB System extension runs in an isolated world: it reads
+  // its keys from <html data-oros-sc-usb-shot="KeyG"> ("" = off).
+  function scMirror() {
+    try {
+      var root = document.documentElement;
+      scTable().forEach(function (x) { if (x.def.usb) root.setAttribute("data-oros-sc-" + x.def.id, x.code); });
+    } catch (e) {}
+  }
+  // Settings › System › Keyboard shortcuts. code "" = off. A key that
+  // another shortcut uses is refused unless swap: then that one takes
+  // this one's key (or goes off when this one had none). Returns
+  // true when something changed.
+  function scSetKey(id, code, swap) {
+    var def = SC_DEFS.filter(function (d) { return d.id === id; })[0];
+    if (!def || typeof code !== "string" || (code !== "" && !SC_CODE_RE.test(code))) return false;
+    var map = keysRead(), tab = scTable(map);
+    var mine = tab.filter(function (x) { return x.def.id === id; })[0].code;
+    if (mine === code) return false;
+    var other = code ? tab.filter(function (x) { return x.code === code && x.def.id !== id; })[0] : null;
+    if (other && !swap) return false;
+    function put(d, c) {
+      if (c === scDefault(d)) delete map[d.id];
+      else map[d.id] = c;
+    }
+    put(def, code);
+    if (other) put(other.def, mine);
+    keysWrite(keysCanon(map));
+    noteLocalChange();
+    settingsNotify();
+    return true;
+  }
+  function scResetAll() {
+    if (!Object.keys(keysRead()).length) return;
+    keysWrite({});
+    noteLocalChange();
+    settingsNotify();
+  }
+  // Strings that name a default combo (the Help button's tooltip, the
+  // tour…) show the person's key instead: window.t rewrites
+  // "Ctrl+Alt+Shift+H" when Help moved to another key.
+  function scRewrite(str) {
+    if (typeof str !== "string" || str.indexOf("Ctrl+Alt+Shift+") === -1) return str;
+    var map = keysRead();
+    if (!Object.keys(map).length) return str;
+    var byDefault = {};
+    scTable(map).forEach(function (x) { if (!x.def.usb && x.code) byDefault[scKeyLabel(scDefault(x.def))] = scKeyLabel(x.code); });
+    return str.replace(/Ctrl\+Alt\+Shift\+([A-Z0-9.])(?![A-Za-z0-9])/g, function (m, k) {
+      return Object.prototype.hasOwnProperty.call(byDefault, k) ? "Ctrl+Alt+Shift+" + byDefault[k] : m;
+    });
+  }
+  (function () {
+    var tBase = window.t;
+    if (typeof tBase !== "function" || tBase.scWrapped) return;
+    var tw = function (key) { return scRewrite(tBase.apply(this, arguments)); };
+    tw.scWrapped = true;
+    window.t = tw;
+  })();
+  scMirror();
 
   // Public contract consumed by iframe apps (same-origin, so this
   // is reachable — Contract Β). Returns true when the combo matched,
@@ -8466,6 +9691,7 @@
     // Match on e.code (PHYSICAL key) — e.key lies under the Greek
     // layout (physical P arrives as "π"), e.code is "KeyP" always.
     if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return false;
+    if (TILL) return false;   // TILL-1: no shell shortcuts on a till-only device
     // Χ5: focused editable target → the shortcut yields (AltGr
     // keyboards emit Ctrl+Alt natively; a typed character must never
     // trigger an OS action). Covers shell AND forwarded iframe
@@ -8477,18 +9703,19 @@
           tgt.isContentEditable) return false;
     }
     var code = e.code || "";
-    if (code.indexOf("Key") !== 0) return false;   // letters only
-    var letter = code.charAt(code.length - 1).toUpperCase();
-    for (var i = 0; i < SC_DEFS.length; i++) {
-      if (SC_DEFS[i].key.toUpperCase() === letter) {
+    if (!SC_CODE_RE.test(code)) return false;   // letters, digits, a few marks
+    var tab = scTable();
+    for (var i = 0; i < tab.length; i++) {
+      if (tab[i].code === code && !tab[i].def.usb && tab[i].def.fn) {
         if (e.preventDefault) e.preventDefault();
-        SC_DEFS[i].fn();
+        tab[i].def.fn();
         return true;
       }
     }
     return false;
   }
-  window.orosShortcuts = { handle: handleShortcutEvent };
+  // code(id): the e.code that fires a shortcut now ("" = off).
+  window.orosShortcuts = { handle: handleShortcutEvent, code: scCodeOf, combo: function (id) { return scCombo(scCodeOf(id)); } };
   
     // ---------- 9d. Weather widget (v0.18.0) ----------
   // Provider: Open-Meteo (no API key, no cookies). Settings travel
@@ -9139,6 +10366,13 @@
     registerShareOutSlice();
     registerTelevisionProxySlice();
     registerMailProxySlice();
+
+    // PAIR-1: a code from a scanned QR (#pair=…), at boot and later.
+    pairFromHash();
+    window.addEventListener("hashchange", pairFromHash);
+    // LINK-1: a sign-in link (#signin=…), at boot and later.
+    linkFromHash();
+    window.addEventListener("hashchange", linkFromHash);
 
     // OAuth return → flip the menu to connected state once tokens land
     if (window.orosSync && window.orosSync.redirectHandled) {
@@ -9969,7 +11203,7 @@
     var list = QC.dueQuotes(raw, horizon);
     var due = list.length, earliestId = due ? list[0].id : null;
     if (due === 0) return;
-    if (todayAbsorbs("quote")) return;                  // said in today's summary
+    if (todayAbsorbs("invoices")) return;               // said in today's summary (Billing, merge 7)
 
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent
@@ -10653,6 +11887,72 @@
     } catch (e) { return null; }
   };
 
+  // ---------- 9k. Things that delete themselves (STRICT-5) ----------
+  // Self-deleting Notes pages (STRICT-5, notes/expire.js): while Notes
+  // is closed the shell deletes a page whose time has come, in the
+  // stored data, as Notes' Delete would (tomb + sub-pages up); sync
+  // carries the tombs. Notes open does it itself.
+  var notesExpLoad = null;
+  function notesExpireSweep() {
+    if (osResetting || appLive("notes")) return;
+    var raw = null;
+    try { raw = localStorage.getItem("oros-notes-data"); } catch (e) { return; }
+    if (!raw || raw.indexOf('"exp":') === -1) return;
+    if (!notesExpLoad) notesExpLoad = new Promise(function (res, rej) {
+      if (window.orosNotesExpire) { res(); return; }
+      var sc = document.createElement("script");
+      sc.src = "notes/expire.js";
+      sc.onload = res;
+      sc.onerror = function () { notesExpLoad = null; rej(new Error("load")); };
+      document.head.appendChild(sc);
+    });
+    notesExpLoad.then(function () {
+      var E = window.orosNotesExpire;
+      if (!E || appLive("notes")) return;
+      var now = Date.now(), cur, data;
+      try { cur = localStorage.getItem("oros-notes-data"); data = JSON.parse(cur); } catch (e) { return; }
+      if (!data || !E.dueIds(data.pages, now).length) return;
+      var gone = E.expire(data, now);
+      if (!gone.length) return;
+      try { localStorage.setItem("oros-notes-data", JSON.stringify(data)); } catch (e) { return; }
+      try { if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty(); } catch (e) {}
+    }).catch(function () {});
+  }
+  // Self-deleting files (STRICT-5, slice "files-exp", files-core.js
+  // expSet): with Files closed the shell deletes a due file for good
+  // (orosFS reports it to the disk sync) and stores the tomb.
+  var filesExpBusy = false;
+  function filesExpireSweep() {
+    if (osResetting || filesExpBusy || appLive("files")) return;
+    var FS = window.orosFS, st = null, now = Date.now();
+    if (!FS || typeof FS.rm !== "function") return;
+    try { st = JSON.parse(localStorage.getItem("oros-files-exp") || "null"); } catch (e) { return; }
+    var items = st && Array.isArray(st.items) ? st.items : [];
+    var due = items.filter(function (f) { return f && !f.del && typeof f.p === "string" && typeof f.e === "number" && f.e <= now; });
+    if (!due.length) return;
+    filesExpBusy = true;
+    due.reduce(function (ch, f) {
+      return ch.then(function () {
+        return Promise.resolve(FS.stat(f.p)).then(function (s2) {
+          return s2 && !s2.dir ? FS.rm(f.p) : null;
+        }, function () { return null; });
+      }).then(function () {
+        f.e = undefined; delete f.e;
+        f.del = true;
+        f.m = Math.max(Math.floor(Date.now()), (f.m || 0) + 1);
+      }, function () {});
+    }, Promise.resolve()).then(function () {
+      if (appLive("files")) { filesExpBusy = false; return; }   // Files opened meanwhile: it re-reads and sweeps itself
+      try { localStorage.setItem("oros-files-exp", JSON.stringify(st)); } catch (e) {}
+      try { if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty(); } catch (e) {}
+      filesExpBusy = false;
+    });
+  }
+  function expireSweeps() { notesExpireSweep(); filesExpireSweep(); }
+  setTimeout(expireSweeps, 8000);
+  setInterval(expireSweeps, 300000);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") expireSweeps(); });
+
   // ---------- 9j. Settings app bridge (window.orosSettings) ----------
   // The Settings app (settings/, System) is a plain iframe app: it
   // never writes storage and registers no slice. Every value comes
@@ -10761,7 +12061,6 @@
       folder = localStorage.getItem(FS_FOLDER_NAME_KEY);
       lapsed = !!localStorage.getItem(FS_LAPSED_KEY);
     } catch (e) {}
-    var mac = /Mac|iPhone|iPad/i.test(navigator.platform || "");
     return {
       version: APP_VERSION,
       lang: state.lang,
@@ -10771,10 +12070,11 @@
       skins: SKINS.map(function (k) {
         return { id: k.id, color: k.color, name: skinTitle(k.id) };
       }),
-      icons: { pack: state.icons, packs: ICON_PACKS.slice() },   // ICONPACK-1
+      icons: { pack: iconsPack(state.icons), packs: ICON_PACKS.slice(),   // ICONPACK-1
+               own: iconsOwn(state.icons) || iconsOwn(ICON_OWN_DEFAULT), choices: ICON_OWN },   // ICONPACK-3
       wallpaper: pic ? "custom" : state.wallpaper,
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
-      land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, styles: WP_LAND_STYLES.slice() } : null,
+      land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, light: wpLandNow().light !== 0, styles: WP_LAND_STYLES.slice() } : null,
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;
         if (w.id === "land") {
@@ -10805,6 +12105,12 @@
         ncAvailable: !!(S && typeof S.connectNextcloud === "function"),
         ncWaiting: !!state.ncWaiting,
         moveAvailable: !!(S && typeof S.moveToWebdav === "function"),
+        pairAvailable: !!(S && typeof S.pairAdopt === "function" && typeof WebSocket === "function"),
+        paired: !!(connected && typeof S.isPaired === "function" && S.isPaired()),
+        pair: pairForSettings(),
+        pairPrefill: state.pairPrefill || "",
+        link: linkForSettings(),
+        linkIn: linkInForSettings(),
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
@@ -10820,6 +12126,8 @@
         clean: (connected && state.vaultClean) ? JSON.parse(JSON.stringify(state.vaultClean)) : null,
         cleanDays: (window.orosVault && window.orosVault.cleanMinAgeDays) || 30,
         restoring: state.syncRestoring,
+        // SOS-1: { kind: "sos"|"reset", n, verified } when a signal stopped sync here.
+        signal: (S && typeof S.cloudSignal === "function") ? S.cloudSignal() : null,
         oldPassFor: state.syncOldPassFor,
         msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text }
            : (state.syncAutoErr ? { kind: "err", text: state.syncAutoErr } : null)
@@ -10841,14 +12149,20 @@
       install: !!state.deferredPrompt,
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
+      wxdesk: (!SOLO && window.orosWxDesk) ? window.orosWxDesk.snapshot() : null,   // WX-DESK-1
       me: { name: meName(), max: ME_MAX },
       greet: SOLO ? null : { on: greetOn() },
       tips: SOLO ? null : { on: !!tipsRead().on },
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
+      night: window.orosNight ? window.orosNight.snapshot() : null,   // NIGHT-1, this device
+      smartbar: !SOLO && window.orosSmartBar && window.orosSmartBar.snapshot ? window.orosSmartBar.snapshot() : null,
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
+      // Clipboard history (cliphist.js, CLIP-1): this device only.
+      clip: window.orosClip ? window.orosClip.snapshot() : null,
+      overview: ovSnapshot(),       // OV-1: hot corner, this device only
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
       pcfiles: state.pcFiles && !state.pcFiles.fixed ? { on: state.pcFiles.state === "on" } : null,
@@ -10858,10 +12172,13 @@
       a11y: a11ySnapshot(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
-      shortcuts: SC_DEFS.map(function (d) {
-        return { combo: (mac ? "⌃⌥⇧" : "Ctrl+Alt+Shift+") + d.key.toUpperCase(),
-                 label: window.t(d.label) };
-      })
+      // SC-EDIT (DEF-APPS D2): id, the key now ("" = off), its default.
+      shortcuts: scTable().filter(function (x) { return !x.def.usb || scUsbHere(); }).map(function (x) {
+        return { id: x.def.id, code: x.code, def: scDefault(x.def),
+                 combo: scCombo(x.code), defCombo: scCombo(scDefault(x.def)),
+                 key: x.code ? scKeyLabel(x.code) : "", label: window.t(x.def.label) };
+      }),
+      shortcutsPrefix: scPrefix()
     };
   }
 
@@ -10873,6 +12190,11 @@
       case "theme":      setThemeUser(value); return;
       case "skin":       setSkinUser(value); return;
       case "icons":      setIconsUser(value); settingsNotify(); return;
+      // SC-EDIT (DEF-APPS D2): { id, code, swap } / reset to the defaults.
+      case "shortcut":
+        if (value && typeof value === "object") scSetKey(String(value.id || ""), value.code, !!value.swap);
+        return;
+      case "shortcutsReset": scResetAll(); return;
       case "wallpaper":
         if (value === "custom" && !wpPic() && !(state.wpart && wpArt())) { openAppById("wallpaper"); return; }
         setWallpaperUser(value);
@@ -10889,12 +12211,18 @@
       case "multitask":
         if (!SOLO) { mtSetUser(!!value); settingsNotify(); }
         return;
+      case "overview:corner":
+        if (!SOLO) { ovSetPref(OV_CORNER_KEY, !!value); settingsNotify(); }
+        return;
       case "pcfiles":
         if (typeof window.__orosPcFilesSet === "function") window.__orosPcFilesSet(!!value);
         return;
+      case "clip":       if (window.orosClip) window.orosClip.setOn(!!value); return;
+      case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
+      case "uiFont":       uifSetUser(value); return;
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;
       case "tips":         tipsSetUser(!!value); return;
@@ -10903,6 +12231,8 @@
         if (WP_LAND_STYLES.indexOf(value) >= 0) { wpLandNewShape({ style: value }); settingsNotify(); }
         return;
       case "wpland:motion": wpLandNewShape({ motion: value ? 1 : 0 }); settingsNotify(); return;
+      case "wpland:light":  wpLandNewShape({ light: value ? 1 : 0 }); settingsNotify(); return;
+      case "wxdesk:on":     if (window.orosWxDesk) { window.orosWxDesk.set(!!value); settingsNotify(); } return;
     }
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
@@ -10914,8 +12244,24 @@
       if (SS) SS.set(name.slice(9), value);
       return;
     }
+    if (/^night:/.test(name)) {          // nightlight.js: "night:<on|sched|from|to|warmth>"
+      if (window.orosNight) window.orosNight.set(name.slice(6), value);
+      return;
+    }
     if (/^widgets:/.test(name)) {        // widgets.js: "widgets:<kind>" on/off
       if (window.orosWidgets) window.orosWidgets.set(name.slice(8), !!value);
+      return;
+    }
+    if (/^smartbar:/.test(name)) {       // smartbar.js: "smartbar:<kind>" on/off
+      if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
+      return;
+    }
+    if (name === "smartbar-look") {      // smartbar.js SB3: "", glass, midnight, solid
+      if (window.orosSmartBar && window.orosSmartBar.setLook) window.orosSmartBar.setLook(String(value || ""));
+      return;
+    }
+    if (/^smartbar-move:/.test(name)) {  // smartbar.js: "smartbar-move:<kind>", value -1 (left) / 1 (right)
+      if (window.orosSmartBar) window.orosSmartBar.move(name.slice(14), Number(value) < 0 ? -1 : 1);
       return;
     }
     if (/^osk:/.test(name)) {
@@ -10952,6 +12298,19 @@
         if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncMoveDav(arg);
         return;
       case "sync.moveDb":     syncMoveDropbox(); return;
+      case "sync.pair.new":     pairNew(!!(arg && arg.session)); return;
+      case "sync.pair.session": if (state.pair && state.pair.role === "new" && state.pair.phase !== "done") pairSet({ session: !!(arg && arg.on) }); return;
+      case "sync.pair.join":    if (arg && typeof arg.code === "string") pairJoin(arg.code.slice(0, 200)); return;
+      case "sync.pair.approve": pairApprove(); return;
+      case "sync.pair.cancel":  pairCancel(); return;
+      case "sync.pair.clear":   state.pairPrefill = ""; settingsNotify(); return;
+      case "sync.link.make":    if (!strictLevelNow()) linkMake(); return;   // Sensitive work: no sign-in link
+      case "sync.link.cancel":  linkCancel(); return;
+      case "sync.link.open":    if (arg && typeof arg.code === "string") linkOpen(arg.code.slice(0, 40)); return;
+      case "sync.link.session": if (state.linkIn && state.linkIn.phase !== "done") linkInSet({ session: !!(arg && arg.on) }); return;
+      case "sync.link.close":   state.linkIn = null; settingsNotify(); return;
+      case "clip.clear":      if (window.orosClip) window.orosClip.clear(); return;   // CLIP-1
+      case "clip.open":       if (window.orosClip) window.orosClip.open(); return;
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -11013,6 +12372,20 @@
       // The app arms and confirms first (two taps, like the Info modal);
       // this is the same wipe, with no button of its own to update.
       case "reset":           scFactoryReset({ disabled: false, textContent: "" }); return;
+      // SOS-1: arg = the passphrase typed again ("" when sync is off).
+      case "sos":             sosStart(typeof arg === "string" ? arg : ""); return;
+      // SOS-1: a reset signal from another device stopped sync here.
+      case "sync.signal.erase":
+        if (osResetting) return;
+        osResetting = true;
+        scFactoryReset({ disabled: false, textContent: "" }, "follow");
+        return;
+      case "sync.signal.keep":
+        if (!window.orosSync || typeof window.orosSync.adoptSignal !== "function") return;
+        window.orosSync.adoptSignal().then(function (ok) {
+          if (ok) return window.orosSync.reconcile("signal-keep");
+        }).catch(function () {}).then(function () { settingsNotify(); });
+        return;
     }
   }
 
@@ -11046,6 +12419,9 @@
   if (window.orosLock && typeof window.orosLock.setHooks === "function") {
     window.orosLock.setHooks({
       reset: lockDeviceReset,
+      duress: strictDuress,
+      deadman: function () { strictDuress(false); },
+      travel: strictTravel,
       recovered: function () {
         window.orosSettings.open("lock");
         scToast("ok", window.t("lock.recovered"));
@@ -11058,6 +12434,146 @@
     });
   }
 
+  // ---------- 9a. Sensitive work (lock.js window.orosStrict) ----------
+  // A shield in the bar while the mode is on (opens its Settings page),
+  // the level and the allowed hosts handed to the service worker (in
+  // Hardcore it blocks every other address), and a short note when
+  // the worker blocked an address or the relay was used.
+  var STRICT_RELAYS = ["oros-mail-relay.koulaxizis.workers.dev"];   // = mail.js DEFAULT_RELAY
+  var strictToldAt = {};
+  function strictLevelNow() {
+    var S = window.orosStrict;
+    try { return S && typeof S.level === "function" ? S.level() : null; } catch (e) { return null; }
+  }
+  function strictTellSW() {
+    var sw = navigator.serviceWorker;
+    if (!sw || !sw.controller || !window.orosStrict) return;
+    var lv = strictLevelNow(), hosts = [];
+    try { hosts = lv ? window.orosStrict.hosts() : []; } catch (e) {}
+    try { sw.controller.postMessage({ t: "oros-strict", level: lv, hosts: hosts, relays: lv ? STRICT_RELAYS : [] }); } catch (e) {}
+  }
+  function strictBadge() {
+    var bar = document.querySelector("#oros-bar .bar-right");
+    if (!bar) return;
+    var lv = strictLevelNow(), b = document.getElementById("strict-badge");
+    if (!lv) { if (b) b.remove(); return; }
+    if (!b) {
+      b = document.createElement("button");
+      b.id = "strict-badge";
+      b.type = "button";
+      b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/></svg>';
+      b.addEventListener("click", function (e) { e.stopPropagation(); window.orosSettings.open("sensitive"); });
+      bar.insertBefore(b, bar.firstChild);
+    }
+    b.classList.toggle("strict-hard", lv === "hard");
+    var title = window.t(lv === "hard" ? "strict.badge.hard" : "strict.badge.on");
+    if (b.title !== title) { b.title = title; b.setAttribute("aria-label", title); }
+  }
+  // Duress PIN typed on the lock screen (STRICT-2): a silent wipe.
+  // cloud false: this device only, nothing is sent (the SOS "follow"
+  // wipe: backup folder and this device's relay boxes go too).
+  // cloud true: every relay box of the person's data, then the cloud
+  // (reset signal + wipe + revoke, the factory reset), then this device.
+  // No what-now list after the reload: it opens like a new orOS.
+  function strictDuress(cloud) {
+    if (osResetting) return;
+    osResetting = true;
+    var btn = { disabled: false, textContent: "" };
+    if (!cloud) { scFactoryReset(btn, "follow"); return; }
+    Promise.race([sosRelay(true), new Promise(function (r) { setTimeout(r, 8000); })])
+      .catch(function () {}).then(function () { scFactoryReset(btn, false); });
+  }
+  // Travel mode (STRICT-3): only when the sync passphrase is proven and
+  // nothing is left unsent (settings, Files queue), then this device
+  // is erased like "Reset this device" (backup folder files too).
+  function strictTravel(pass) {
+    var S = window.orosSync, V = window.orosVault;
+    if (osResetting) return Promise.resolve({ ok: false, code: "busy" });
+    if (!S || !S.isConnected() || !S.hasPassphrase()) return Promise.resolve({ ok: false, code: "nosync" });
+    function capped(p, ms) {
+      return Promise.race([Promise.resolve(p).catch(function () { return null; }),
+        new Promise(function (r) { setTimeout(r, ms); })]);
+    }
+    return Promise.resolve().then(function () { return S.checkPassphrase(pass); }).then(function (r) {
+      if (r !== true) return { ok: false, code: r === false ? "wrong" : "cantcheck" };
+      return capped(S.isDirty() ? S.push() : null, 30000).then(function () {
+        var q = V && typeof V.queueLength === "function" ? V.queueLength() : 0;
+        return capped(q && typeof V.sync === "function" ? V.sync("travel") : null, 60000);
+      }).then(function () {
+        var q = V && typeof V.queueLength === "function" ? V.queueLength() : 0;
+        if (S.isDirty() || q) return { ok: false, code: "unsynced" };
+        if (osResetting) return { ok: false, code: "busy" };
+        osResetting = true;
+        setTimeout(function () { scFactoryReset({ disabled: false, textContent: "" }, "travel"); }, 0);
+        return { ok: true };
+      });
+    }, function () { return { ok: false, code: "cantcheck" }; });
+  }
+  // Panic lock (STRICT-2): Escape three times within 1.5 s locks at once.
+  // Keys typed inside an app frame never reach this document, so
+  // cmdWireFrame passes them on too.
+  var strictEsc = [];
+  function strictPanicKey(e) {
+    if (e.key !== "Escape" || !strictLevelNow() || !window.orosLock || !window.orosLock.isOn()) return;
+    var now = Date.now();
+    strictEsc = (strictEsc || []).filter(function (t) { return now - t < 1500; });
+    strictEsc.push(now);
+    if (strictEsc.length >= 3) { strictEsc = []; window.orosLock.lock(); }
+  }
+  document.addEventListener("keydown", strictPanicKey, true);
+  // Discreet title and icon (STRICT-2): the tab says "Notes" with a
+  // plain page icon while the mode is on and the switch is set.
+  var DISC_ICON = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="6" y="3" width="20" height="26" rx="3" fill="#e8e8e8" stroke="#888" stroke-width="2"/><path d="M11 11h10M11 16h10M11 21h6" stroke="#888" stroke-width="2"/></svg>');
+  var discIcon = null, discObs = null;
+  function strictDiscreetOn() {
+    var S = window.orosStrict;
+    try { return !!(strictLevelNow() && S && typeof S.discreet === "function" && S.discreet()); } catch (e) { return false; }
+  }
+  function strictDiscreet() {
+    var on = strictDiscreetOn();
+    var icon = document.querySelector('link[rel="icon"]');
+    if (icon) {
+      if (discIcon === null) discIcon = icon.getAttribute("href");
+      var want = on ? DISC_ICON : discIcon;
+      if (icon.getAttribute("href") !== want) icon.setAttribute("href", want);
+    }
+    if (BARWIN) return;                          // SB4: the launcher finds the bar window by its title
+    var title = window.t("strict.disc.title");
+    if (on && document.title !== title) document.title = title;
+    if (on && !discObs && typeof MutationObserver === "function") {
+      var el = document.querySelector("title");
+      if (el) {
+        discObs = new MutationObserver(function () {
+          if (strictDiscreetOn() && document.title !== window.t("strict.disc.title")) document.title = window.t("strict.disc.title");
+        });
+        discObs.observe(el, { childList: true, characterData: true, subtree: true });
+      }
+    }
+    if (!on && discObs) { discObs.disconnect(); discObs = null; if (document.title === title) document.title = "orOS"; }
+  }
+  function strictUpdate() { strictBadge(); strictTellSW(); strictDiscreet(); }
+  if (window.orosStrict && typeof window.orosStrict.onChange === "function") {
+    window.orosStrict.onChange(strictUpdate);
+    strictUpdate();
+    window.addEventListener("load", strictUpdate);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) strictTellSW(); });
+    if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
+      window.orosSync.onAutoSync(function (kind) { if (kind === "start") strictTellSW(); });
+    }
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener("controllerchange", strictTellSW);
+      navigator.serviceWorker.addEventListener("message", function (e) {
+        var d = e.data;
+        if (!d || (d.t !== "oros-strict-blocked" && d.t !== "oros-strict-relay") || typeof d.host !== "string") return;
+        var key = d.t + " " + d.host, now = Date.now();
+        if (strictToldAt[key] && now - strictToldAt[key] < 60000) return;   // one note a minute per address
+        strictToldAt[key] = now;
+        var txt = window.t(d.t === "oros-strict-blocked" ? "strict.blocked" : "strict.relay").replace("{h}", d.host.slice(0, 80));
+        scToast(d.t === "oros-strict-blocked" ? "err" : "", txt, function () { window.orosSettings.open("sensitive"); });
+      });
+    }
+  }
+
   // ---------- 9b. Single apps (solo.js) ----------
   // "/?solo=<id>": this shell runs inside an installed single app
   // ("orOS Notes" …, /<id>/solo.html) and shows only that app. No
@@ -11067,7 +12583,21 @@
   // Back, which returns to the single app. Everything else (sync,
   // notifications, files, dialogs) is the shell as always.
   var SOLO = (window.orosSolo && window.orosSolo.has && window.orosSolo.has(window.orosSolo.id)) ? window.orosSolo.id : "";
+  // TILL-1 (Stock fair till F3): a till-only device runs this shell as
+  // a single app of Stock's till. Every other app, the desktop and the
+  // command bar wait behind the owner's screen-lock PIN (lock.js till).
+  var TILL = !SOLO && !!(window.orosLock && window.orosLock.till && window.orosLock.till.active());
+  if (TILL) { SOLO = "stock"; document.body.classList.add("till-mode"); }
   if (SOLO) document.body.classList.add("solo-mode");
+  // The owner typed the PIN, the owner left, or the till was turned
+  // on / off: this tab starts again in the other mode.
+  if (window.orosLock && window.orosLock.till) {
+    var tillWas = TILL;
+    window.orosLock.onChange(function () {
+      if (window.orosSolo && window.orosSolo.id) return;
+      if (window.orosLock.till.active() !== tillWas) { tillWas = !tillWas; location.reload(); }
+    });
+  }
 
   function soloAppObj() {
     for (var i = 0; i < state.apps.length; i++) {
@@ -11084,6 +12614,7 @@
       soloPackAsked = state.lang;
       I.ensure(state.lang, "solo", function () { if (SOLO) soloPaint(); });
     }
+    if (TILL) return window.t("app.stock");
     return window.orosSolo.nameOf(SOLO, state.lang);
   }
 
@@ -11131,13 +12662,13 @@
     var menu = document.createElement("div");
     menu.id = "solo-menu";
     menu.setAttribute("role", "menu");
-    [
+    (TILL ? [["till.owner", function () { window.orosLock.till.ask(); }]] : [
       ["solo.sync", function () { window.__orosOpenAt("settings", { section: "sync" }); }],
       ["solo.settings", function () { openAppById("settings"); }],
       ["solo.help", function () { openHelp(); }],
       ["solo.full", function () { window.open("/", "_blank", "noopener"); }]
     ].concat(window.orosLock && window.orosLock.isOn()
-      ? [["menu.lock", function () { window.orosLock.lock(); }]] : []).forEach(function (it) {
+      ? [["menu.lock", function () { window.orosLock.lock(); }]] : [])).forEach(function (it) {
       var b = document.createElement("button");
       b.type = "button";
       b.setAttribute("role", "menuitem");
@@ -11200,7 +12731,7 @@
   // Icon badge (Badging API, through the host page): To-Do counts the
   // open tasks due today or overdue. Others show none.
   function soloBadgeTick() {
-    var h = window.orosSolo.host(), kind = window.orosSolo.APPS[SOLO].badge;
+    var h = window.orosSolo.host(), kind = (window.orosSolo.APPS[SOLO] || {}).badge;
     if (!h || kind !== "due") return;
     var n = 0;
     try {
@@ -11255,6 +12786,7 @@
       try { if (r.el.contentDocument) out.push(r.el.contentDocument); } catch (e) {}
     });
     try { if (davBg && davBg.el.contentDocument) out.push(davBg.el.contentDocument); } catch (e) {}   // 10e
+    try { if (bankBg && bankBg.el.contentDocument) out.push(bankBg.el.contentDocument); } catch (e) {}   // 10f
     return out;
   };
 
@@ -11393,6 +12925,7 @@
     cmdWireFrame(f);
     extWireFrame(f);
     a11yWireFrame(f);
+    if (window.orosClip) window.orosClip.wire(f);   // CLIP-1
     return f;
   }
   function mtDrop(el) {
@@ -11631,6 +13164,7 @@
   }
 
   function openApp(app, at) {
+    if (app && app._alias) { window.__orosOpenAt(app._alias, null); return; }   // APP-ALIAS menu search row
     // BOOT-L1: an app opened before the late bundle is in (a launch
     // link, a notification, a quick tap) waits for it: its bridges to
     // the shell live there. The last request wins.
@@ -11640,7 +13174,11 @@
       if (first) lateWhen(function () { var o = late.open; late.open = null; if (o) openApp(o[0], o[1]); });
       return;
     }
-    if (app && app.type === "internal") davBgStop(app.id);   // 10e: the background frame of this app goes first
+    // TILL-1: on a till-only device anything but Stock needs the owner.
+    if (TILL && app && app.id !== "stock") { window.orosLock.till.ask(); return; }
+    if (typeof scrWins !== "undefined" && scrElsewhere(app)) return;   // SS1: it lives on the other screen
+    if (app && app.id === "assistant" && aiHelper() === "claude") { claudeInstead(""); return; }   // HELPER-1 (desktop, Dock, links)
+    if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
     var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;
     if (mtActive() && app.type === "internal" && (mtSideIs(app.id) || pick) && mtSideOpen(app, at)) {
@@ -11683,6 +13221,7 @@
     document.title = ((tv === nk) ? app.name : tv) + " · orOS";   // #4: title follows the running app (translated)
     if (SOLO) { soloMenuClose(); soloPaint(); }
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations pause under an app
+    if (window.orosWxDesk) window.orosWxDesk.refresh();       // WX-DESK-1: weather pauses too
     wpLandRefresh();
   }
 
@@ -11704,6 +13243,7 @@
     mb.setAttribute("title", window.t("bar.menu"));   // paint NOW — don't wait for applyLang()
     document.title = "orOS";                 // v0.18.2: back to the bare OS title
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations move again
+    if (window.orosWxDesk) window.orosWxDesk.refresh();       // WX-DESK-1: weather moves again
     wpLandRefresh();   // the desktop may have changed while hidden
     tourMaybe();   // a first-run tour put off by a launch-param app
     tipEnd();
@@ -11769,20 +13309,26 @@
     for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id && state.apps[i].type === "internal") return state.apps[i];
     return null;
   }
-  function davBgNext(todo) {
-    var id = todo.shift(), app = id && davBgApp(id);
-    if (!id) return;
-    if (!app || appLive(id) || !davBgWanted()) { davBgNext(todo); return; }
+  // A hidden app frame (10e, 10f): out of sight, out of the tab order.
+  function bgFrame(tag) {
     var f = document.createElement("iframe");
-    f.name = "oros-davbg-" + Date.now().toString(36);
+    f.name = "oros-" + tag + "-" + Date.now().toString(36);
     f.setAttribute("aria-hidden", "true");
     f.setAttribute("tabindex", "-1");
     f.className = "oros-davbg";
     f.style.cssText = "position:fixed;width:1px;height:1px;left:-10px;top:-10px;border:0;opacity:0;pointer-events:none;";
+    return f;
+  }
+  function bgUrl(app, q) { return app.url + (app.url.indexOf("?") === -1 ? "?" : "&") + q; }
+  function davBgNext(todo) {
+    var id = todo.shift(), app = id && davBgApp(id);
+    if (!id) return;
+    if (!app || appLive(id) || !davBgWanted()) { davBgNext(todo); return; }
+    var f = bgFrame("davbg");
     davBg = { id: id, el: f, todo: todo };
     davBg.timer = setTimeout(function () { davBgEnd(id, { err: "timeout" }); }, DAVBG_LIMIT);
     document.body.appendChild(f);
-    frameGo(f, app.url + (app.url.indexOf("?") === -1 ? "?" : "&") + "davbg=1");
+    frameGo(f, bgUrl(app, "davbg=1"));
   }
   // Ends the running frame (done, timed out, or the app opened). r null:
   // stopped without a result (nothing is recorded).
@@ -11825,6 +13371,87 @@
     try { off = localStorage.getItem("oros-davbg-off") === "1"; } catch (e) {}
     return { off: off, at: last.at || 0, apps: last.apps || {}, running: davBg ? davBg.id : "" };
   };
+
+  // ---------- 10f. Budget's banks at the set times (BK-AT) ----------
+  // Chris 2026-11-12: banks update by themselves at 1 to 4 times set in
+  // Budget › Banks › Automatic updates (set.bat, synced). With Budget
+  // closed, at each time the shell opens Budget in a hidden frame with
+  // ?bankbg=1; Budget runs its own update (budget/banklive.js, the same
+  // code, keys and rules as Update now), posts {oros:"bank-bg-done"} and
+  // the frame is dropped. An open Budget updates itself; opening it
+  // stops the hidden one. Only while orOS is open: the bank key stays
+  // on the device, so nothing runs with orOS closed (a time missed then
+  // runs when Budget or orOS opens next). Notifications only on errors
+  // (Chris), one per error a day. The schedule maths is budget/bankapi.js
+  // (loaded by index.html, the same file Budget runs).
+  //   oros-budget-bank-bg  { at: the last time slot tried here } (device-local)
+  var BANKBG_LIMIT = 120000;
+  var bankBg = null;                 // { el, timer } while the frame runs
+  var bankBgLastTick = 0;
+  function bankBgTickThrottled() {
+    var now = Date.now();
+    if (now - bankBgLastTick < 60000) return;
+    bankBgLastTick = now;
+    bankBgTick();
+  }
+  function bankBgJson(k) {
+    try { var v = JSON.parse(localStorage.getItem(k) || "null"); return v && typeof v === "object" ? v : null; }
+    catch (e) { return null; }
+  }
+  function bankBgTick() {
+    var K = window.OrosBudgetBankApi;
+    if (!K || typeof K.slotDue !== "function" || bankBg || SOLO || navigator.onLine === false) return;
+    if (appLive("budget")) return;
+    var app = davBgApp("budget");
+    if (!app) return;
+    var d = bankBgJson(BUDGET_DATA_KEY);
+    if (!d || !Array.isArray(d.bnk) || !d.bnk.length || !d.set) return;
+    var ts = K.times(d.set.bat);
+    if (!ts.length) return;
+    // a bank connection waiting for the bank's answer: not now
+    if (bankBgJson("oros-budget-bank-pend")) return;
+    var now = Date.now(), dev = bankBgJson("oros-budget-bank-dev") || {}, mine = bankBgJson("oros-budget-bank-bg") || {};
+    var last = Math.max(K.lastRead(d.bnk, dev.t, d.set.bam, now), typeof mine.at === "number" ? mine.at : 0);
+    var slot = K.slotDue(ts, last, now);
+    if (!slot) return;
+    try { localStorage.setItem("oros-budget-bank-bg", JSON.stringify({ at: slot })); } catch (e) { return; }
+    var f = bgFrame("bankbg");
+    bankBg = { el: f };
+    bankBg.timer = setTimeout(function () { bankBgEnd(null); }, BANKBG_LIMIT);
+    document.body.appendChild(f);
+    frameGo(f, bgUrl(app, "bankbg=1"));
+  }
+  function bankBgEnd(r) {
+    if (!bankBg) return;
+    var b = bankBg;
+    bankBg = null;
+    clearTimeout(b.timer);
+    if (r && r.text) {
+      var N = window.orosNotifs;
+      var title = window.t("app.budget");
+      if (title === "app.budget") title = "Budget";
+      if (N && typeof N.emit === "function") N.emit({
+        ns: "budget",
+        key: "bankbg:" + sysYmd() + ":" + r.err,
+        type: "reminder",
+        title: title,
+        body: r.text,
+        deepLink: "system:open:budget"
+      });
+    }
+    // Two seconds for Budget's last save to reach sync.js.
+    setTimeout(function () { mtDrop(b.el); }, r ? 2000 : 0);
+  }
+  window.addEventListener("message", function (ev) {
+    var d = ev.data;
+    if (!bankBg || !d || d.oros !== "bank-bg-done" || ev.origin !== location.origin) return;
+    if (ev.source !== bankBg.el.contentWindow || d.app !== "budget") return;
+    var err = typeof d.err === "string" && /^[a-z_]{1,24}$/.test(d.err) ? d.err : "";
+    bankBgEnd({ err: err, text: err && typeof d.text === "string" ? d.text.slice(0, 300) : "" });
+  });
+  function bankBgStop(id) {
+    if (id === "budget" && bankBg) bankBgEnd(null);
+  }
 
   // ---------- 10d. Back key (BK-1) ----------
   // The phone's Back key (and the browser's Back) does what the bar's
@@ -11889,6 +13516,8 @@
     });
     if (window.orosLauncher) window.orosLauncher.refresh();
     if (mtSw) mtSwRender();
+    if (ov) ovRenderApps();     // 10e overview
+    monChanged();               // 10e window.orosMonitor listeners
   }
   mtOnChange = mtPaint;
 
@@ -11944,6 +13573,8 @@
       row.appendChild(go);
       var sb = mtSwSplitBtn(it);
       if (sb) row.appendChild(sb);
+      var scb = mtSwScreenBtn(it);   // SS1
+      if (scb) row.appendChild(scb);
       row.appendChild(x);
       mtSwSwipe(row, it.app.id);
       box.appendChild(row);
@@ -12140,6 +13771,606 @@
     left.appendChild(btn);
   })();
 
+  // ---------- 10e. Overview and system monitor (OV-1) ----------
+  // GNOME-like Activities overview (gap list 2026-11-15, items 7 + 9):
+  // one screen with the search field, the open apps of 10b/10c and the
+  // recent files of Files, plus a small "System" strip (memory places,
+  // storage, sync). It is a union of what exists, never a second
+  // system: typing hands the text to the menu search (same results,
+  // commands and data hits), the app cards are the switcher's list
+  // (mtOpenList / mtClose / mtSideOpen) and the recent files are Files'
+  // own device-local journal ("oros-files-recents"), opened in Files.
+  // Opens with Ctrl+Alt+Shift+E (SC_DEFS "e"); this device may also
+  // open it from the top-left hot corner ("oros-ov-corner" = "1"), off
+  // by default (a corner can surprise). No Super key: one combo for all.
+  // Never while the screen is locked, in a single app (SOLO) or on a
+  // till. Recent file names stay hidden during sensitive work.
+  // window.orosMonitor is the read model Settings › Device uses too.
+  var OV_CORNER_KEY = "oros-ov-corner";
+  var OV_RECENTS_KEY = "oros-files-recents";   // = files.js RECENTS_KEY
+  var OV_RECENTS_MAX = 8;
+  var ov = null;            // { el, onKey, back } while the overview is open
+
+  function ovPref(key) {
+    try { return localStorage.getItem(key) === "1"; } catch (e) { return false; }
+  }
+  function ovSetPref(key, on) {
+    try {
+      if (on) localStorage.setItem(key, "1");
+      else localStorage.removeItem(key);
+    } catch (e) {}
+  }
+  function ovAllowed() {
+    if (SOLO || TILL) return false;
+    try { if (window.orosLock && window.orosLock.isLocked && window.orosLock.isLocked()) return false; } catch (e) {}
+    return true;
+  }
+
+  // Files' recents journal → up to `max` valid entries, newest first.
+  // Pure (tests): only paths under /internal, never "..", never Trash.
+  function ovRecentsFrom(raw, max) {
+    var list;
+    try { list = JSON.parse(raw); } catch (e) { return []; }
+    if (!Array.isArray(list)) return [];
+    var out = [], seen = {};
+    for (var i = 0; i < list.length && out.length < max; i++) {
+      var e = list[i];
+      if (!e || typeof e.p !== "string" || e.p.length > 1024) continue;
+      var p = e.p.replace(/\/+$/, "");
+      if (p.indexOf("/internal/") !== 0 || /(^|\/)\.\.?(\/|$)/.test(p) || p.indexOf("/internal/.trash") === 0) continue;
+      if (seen[p]) continue;
+      seen[p] = 1;
+      var cut = p.lastIndexOf("/");
+      out.push({ path: p, name: p.slice(cut + 1), dir: p.slice(0, cut) || "/internal",
+                 at: typeof e.at === "number" && isFinite(e.at) ? e.at : 0 });
+    }
+    return out;
+  }
+  // One line for the sync tile. Pure (tests): s = snapshot().sync.
+  // → { key, n, level } with level "" | "busy" | "warn".
+  function ovSyncState(s) {
+    if (!s || !s.connected) return { key: "ov.sys.sync.off", n: 0, level: "" };
+    var f = s.files || null, q = f && f.queued > 0 ? f.queued : 0;
+    if (f && f.lastError) return { key: "ov.sys.sync.err", n: q, level: "warn" };
+    if (f && f.busy) return { key: "ov.sys.sync.busy", n: q, level: "busy" };
+    if (q) return { key: "ov.sys.sync.files", n: q, level: "busy" };
+    if (s.dirty) return { key: "ov.sys.sync.dirty", n: 0, level: "busy" };
+    if (s.deferred > 0) return { key: "ov.sys.sync.merge", n: s.deferred, level: "busy" };
+    return { key: "ov.sys.sync.ok", n: 0, level: "" };
+  }
+  // Places taken by the open apps (front, beside, background).
+  function ovPlaces(apps) {
+    var used = 0;
+    (apps || []).forEach(function (a) { used += a.weight || 1; });
+    return used;
+  }
+
+  // ---- window.orosMonitor: what is open and how this device is doing ----
+  var monListeners = [];
+  function monChanged() {
+    (monListeners || []).slice().forEach(function (fn) { try { fn(); } catch (e) {} });
+  }
+  function monSync() {
+    var S = window.orosSync, V = window.orosVault, out = { connected: false, provider: null, dirty: false, deferred: 0, files: null };
+    try { out.connected = !!(S && S.isConnected && S.isConnected()); } catch (e) {}
+    try { out.provider = S && S.getProvider ? S.getProvider() : null; } catch (e) {}
+    try { out.dirty = !!(S && S.isDirty && S.isDirty()); } catch (e) {}
+    try { out.deferred = S && S.getDeferred ? S.getDeferred().length : 0; } catch (e) {}
+    try {
+      var st = V && V.status ? V.status() : null;
+      if (st && st.usable) {
+        out.files = { queued: st.queued || 0, busy: !!st.busy, lastOkAt: st.lastOkAt || 0,
+                      lastError: st.lastError ? String(st.lastError).slice(0, 120) : null };
+      }
+    } catch (e) {}
+    return out;
+  }
+  function monSnapshot() {
+    var apps = (SOLO ? [] : mtOpenList()).map(function (it) {
+      return { id: it.app.id, name: mtLabel(it.app), front: !!it.front, side: !!it.side,
+               at: it.at || 0, weight: mtWeight(it.app.id), stays: mtKeepable(it.app) };
+    });
+    var heap = null;
+    try {
+      var pm = performance && performance.memory;
+      if (pm && pm.usedJSHeapSize > 0) heap = { used: pm.usedJSHeapSize, limit: pm.jsHeapSizeLimit || 0 };
+    } catch (e) {}
+    var snap = {
+      multitask: !SOLO && mtActive(),
+      apps: apps,
+      places: { used: ovPlaces(apps), total: mtSlotsHere() },
+      memory: { device: typeof navigator.deviceMemory === "number" ? navigator.deviceMemory : null, heap: heap },
+      storage: null,
+      sync: monSync()
+    };
+    var st = navigator.storage;
+    if (!st || typeof st.estimate !== "function") return Promise.resolve(snap);
+    return st.estimate().then(function (e) {
+      if (e && typeof e.usage === "number") snap.storage = { usage: e.usage, quota: e.quota || 0 };
+      return snap;
+    }, function () { return snap; });
+  }
+  window.orosMonitor = {
+    snapshot: monSnapshot,        // → Promise<{ multitask, apps[], places, memory, storage, sync }>
+    close: function (id) {        // closes one open app (as the switcher's ×)
+      if (SOLO || typeof id !== "string") return false;
+      for (var i = 0; i < mtOpenList().length; i++) {
+        if (mtOpenList()[i].app.id === id) { mtClose(id); return true; }
+      }
+      return false;
+    },
+    // fn() on every change of the open apps and of the sync state;
+    // returns an unsubscribe function (an app frame must call it).
+    onChange: function (fn) {
+      if (typeof fn !== "function") return function () {};
+      monListeners.push(fn);
+      return function () {
+        var i = monListeners.indexOf(fn);
+        if (i !== -1) monListeners.splice(i, 1);
+      };
+    },
+    syncState: ovSyncState
+  };
+  if (window.orosSync && window.orosSync.onAutoSync) {
+    window.orosSync.onAutoSync(function (kind) { if (kind !== "start") { monChanged(); if (ov) ovRenderSys(); } });
+  }
+  if (window.orosVault && window.orosVault.onStatus) {
+    window.orosVault.onStatus(function () { monChanged(); if (ov) ovRenderSys(); });
+  }
+
+  // ---- The overview screen ----
+  function ovBytes(n) {
+    if (!(n >= 0)) return "";
+    var u = ["B", "KB", "MB", "GB", "TB"], i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    var d = (i === 0 || n >= 10) ? 0 : 1;
+    try { return n.toLocaleString(shLoc(), { maximumFractionDigits: d }) + " " + u[i]; }
+    catch (e) { return n.toFixed(d) + " " + u[i]; }
+  }
+  function ovClose() {
+    if (!ov) return;
+    var o = ov;
+    ov = null;
+    o.el.remove();
+    document.removeEventListener("keydown", o.onKey, true);
+    if (o.back && o.back.focus && document.contains(o.back)) { try { o.back.focus(); } catch (e) {} }
+  }
+  function ovSection(cls, titleKey) {
+    var s = document.createElement("section");
+    s.className = "ov-sec " + cls;
+    var h = document.createElement("h3");
+    h.className = "ov-h";
+    h.textContent = window.t(titleKey);
+    s.appendChild(h);
+    var body = document.createElement("div");
+    body.className = "ov-body";
+    s.appendChild(body);
+    return s;
+  }
+  function ovRenderApps() {
+    if (!ov) return;
+    var body = ov.el.querySelector(".ov-apps .ov-body");
+    var focusId = document.activeElement && document.activeElement.closest &&
+      document.activeElement.closest(".ov-app") ? document.activeElement.closest(".ov-app").getAttribute("data-app") : null;
+    body.textContent = "";
+    var on = mtActive(), list = mtOpenList();
+    var n = ov.el.querySelector(".ov-apps .ov-n");
+    if (!n) {
+      n = document.createElement("span");
+      n.className = "ov-n";
+      ov.el.querySelector(".ov-apps .ov-h").appendChild(n);
+    }
+    n.textContent = list.length ? String(list.length) : "";
+    n.hidden = !list.length;
+    if (!list.length) {
+      var em = document.createElement("p");
+      em.className = "ov-empty";
+      em.textContent = window.t(on ? "ov.apps.none" : "mt.sw.off");
+      body.appendChild(em);
+    }
+    var grid = document.createElement("div");
+    grid.className = "ov-grid";
+    grid.setAttribute("role", "list");
+    list.forEach(function (it) {
+      var card = document.createElement("div");
+      card.className = "ov-app" + (it.front ? " ov-front" : "");
+      card.setAttribute("role", "listitem");
+      card.setAttribute("data-app", it.app.id);
+      var go = document.createElement("button");
+      go.type = "button";
+      go.className = "ov-go";
+      go.innerHTML = '<span class="app-ico" data-cat="' + iconCat(it.app) + '" data-hue="' + iconHue(it.app) + '">' + (ICONS[it.app.icon] || "") + '</span>' +
+        '<span class="ov-name"></span><span class="ov-when"></span>';
+      go.querySelector(".ov-name").textContent = mtLabel(it.app);
+      go.querySelector(".ov-when").textContent = it.front ? window.t("mt.sw.now") : it.side ? window.t("mt.sw.beside") : mtAgo(it.at);
+      if (it.front) go.setAttribute("aria-current", "true");
+      go.addEventListener("click", function () {
+        ovClose();
+        if (state.running && state.running.id === it.app.id) return;
+        if (it.side) { mtSideFocus(); return; }
+        openApp(it.app);
+      });
+      card.appendChild(go);
+      var tools = document.createElement("div");
+      tools.className = "ov-tools";
+      var sb = mtSwSplitBtn(it);
+      if (sb) {
+        sb.addEventListener("click", function () { ovClose(); }, true);
+        tools.appendChild(sb);
+      }
+      var x = document.createElement("button");
+      x.type = "button";
+      x.className = "mt-sw-x ov-x";
+      x.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      var xl = window.t("mt.sw.close").replace("{app}", mtLabel(it.app));
+      x.setAttribute("aria-label", xl);
+      x.title = xl;
+      x.addEventListener("click", function () { mtClose(it.app.id); });
+      tools.appendChild(x);
+      card.appendChild(tools);
+      grid.appendChild(card);
+    });
+    if (list.length) body.appendChild(grid);
+    if (!on) {
+      if (list.length) {
+        var off = document.createElement("p");
+        off.className = "ov-empty ov-off";
+        off.textContent = window.t("mt.sw.off");
+        body.appendChild(off);
+      }
+      var set = document.createElement("button");
+      set.type = "button";
+      set.className = "ov-link";
+      set.textContent = window.t("mt.sw.settings");
+      set.addEventListener("click", function () {
+        ovClose();
+        if (window.orosSettings) window.orosSettings.open("system");
+      });
+      body.appendChild(set);
+    }
+    if (focusId) {
+      var want = body.querySelector('.ov-app[data-app="' + focusId + '"] .ov-go');
+      if (want) want.focus();
+    }
+  }
+  function ovRenderFiles() {
+    var body = ov.el.querySelector(".ov-files .ov-body");
+    body.textContent = "";
+    function note(key) {
+      var p = document.createElement("p");
+      p.className = "ov-empty";
+      p.textContent = window.t(key);
+      body.appendChild(p);
+    }
+    if (strictLevelNow()) { note("ov.files.hidden"); return; }
+    var raw = null;
+    try { raw = localStorage.getItem(OV_RECENTS_KEY); } catch (e) {}
+    var list = ovRecentsFrom(raw, OV_RECENTS_MAX);
+    if (!list.length) note("ov.files.none");
+    var ul = document.createElement("div");
+    ul.className = "ov-flist";
+    ul.setAttribute("role", "list");
+    list.forEach(function (f) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ov-file";
+      b.setAttribute("role", "listitem");
+      b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>' +
+        '<span class="ov-fname"></span><span class="ov-fwhere"></span>';
+      b.querySelector(".ov-fname").textContent = f.name;
+      var where = f.dir === "/internal" ? window.t("ov.files.root") : f.dir.slice(f.dir.lastIndexOf("/") + 1);
+      b.querySelector(".ov-fwhere").textContent = where + (f.at ? " · " + mtAgo(f.at) : "");
+      b.title = f.path.replace(/^\/internal/, "");
+      b.addEventListener("click", function () {
+        ovClose();
+        window.__orosOpenAt("files", { path: f.path });
+      });
+      ul.appendChild(b);
+    });
+    if (list.length) body.appendChild(ul);
+    var all = document.createElement("button");
+    all.type = "button";
+    all.className = "ov-link";
+    all.textContent = window.t("ov.files.all");
+    all.addEventListener("click", function () {
+      ovClose();
+      window.__orosOpenAt("files", { view: "recent" });
+    });
+    body.appendChild(all);
+  }
+  function ovTile(label, value, pct, level) {
+    var d = document.createElement("div");
+    d.className = "ov-tile" + (level ? " ov-" + level : "");
+    var l = document.createElement("span");
+    l.className = "ov-tl";
+    l.textContent = label;
+    var v = document.createElement("span");
+    v.className = "ov-tv";
+    v.textContent = value;
+    d.appendChild(l);
+    d.appendChild(v);
+    if (typeof pct === "number" && isFinite(pct)) {
+      var bar = document.createElement("span");
+      bar.className = "ov-bar";
+      var f = document.createElement("span");
+      f.style.width = Math.max(2, Math.min(100, pct)).toFixed(1) + "%";
+      bar.appendChild(f);
+      d.appendChild(bar);
+    }
+    return d;
+  }
+  var ovSysToken = 0;
+  function ovRenderSys() {
+    if (!ov) return;
+    var token = ++ovSysToken;
+    monSnapshot().then(function (s) {
+      if (!ov || token !== ovSysToken) return;
+      var body = ov.el.querySelector(".ov-sys .ov-body");
+      body.textContent = "";
+      var row = document.createElement("div");
+      row.className = "ov-tiles";
+      // Memory: the places multitasking keeps for open apps; with it
+      // off, only what the browser says about the device.
+      if (s.multitask) {
+        var memVal = window.t("ov.sys.places").replace("{n}", s.places.used).replace("{m}", s.places.total);
+        row.appendChild(ovTile(window.t("ov.sys.mem"), memVal, s.places.total ? s.places.used / s.places.total * 100 : null,
+          s.places.used > s.places.total ? "warn" : ""));
+      } else {
+        row.appendChild(ovTile(window.t("ov.sys.mem"), s.memory.device ?
+          window.t("ov.sys.memGB").replace("{n}", s.memory.device) : window.t("ov.sys.na")));
+      }
+      if (s.storage && s.storage.quota) {
+        var pct = s.storage.usage / s.storage.quota * 100;
+        row.appendChild(ovTile(window.t("ov.sys.disk"),
+          window.t("ov.sys.of").replace("{a}", ovBytes(s.storage.usage)).replace("{b}", ovBytes(s.storage.quota)), pct, pct > 85 ? "warn" : ""));
+      } else {
+        row.appendChild(ovTile(window.t("ov.sys.disk"), window.t("ov.sys.na")));
+      }
+      var sy = ovSyncState(s.sync);
+      row.appendChild(ovTile(window.t("ov.sys.sync"), window.t(sy.key).replace("{n}", sy.n), null, sy.level));
+      body.appendChild(row);
+      var more = document.createElement("button");
+      more.type = "button";
+      more.className = "ov-link";
+      more.textContent = window.t("ov.sys.more");
+      more.addEventListener("click", function () {
+        ovClose();
+        if (window.orosSettings) window.orosSettings.open("device");
+      });
+      body.appendChild(more);
+    });
+  }
+  // Typing hands over to the menu search: same field, same results.
+  function ovToMenu(text) {
+    ovClose();
+    openMenuSearch();
+    var inp = document.querySelector("#app-menu .menu-search input");
+    if (!inp) return;
+    inp.value = text;
+    try { inp.setSelectionRange(text.length, text.length); } catch (e) {}
+    inp.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  function ovOpen() {
+    if (ov) { ovClose(); return; }
+    if (!ovAllowed()) return;
+    closeMenu();
+    closeNotifPanel();
+    if (mtSw) mtSwClose();
+    var el = document.createElement("div");
+    el.id = "oros-ov";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "true");
+    el.setAttribute("aria-labelledby", "ov-title");
+    el.innerHTML =
+      '<div class="ov-box">' +
+        '<div class="ov-top"><h2 id="ov-title" class="ov-title"></h2>' +
+          '<div class="ov-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>' +
+          '<input type="search" autocomplete="off" spellcheck="false"></div>' +
+          '<button type="button" class="ov-done"></button></div>' +
+        '<div class="ov-cols"></div>' +
+      '</div>';
+    el.querySelector(".ov-title").textContent = window.t("ov.title");
+    var inp = el.querySelector(".ov-search input");
+    inp.placeholder = window.t("menu.search");
+    inp.setAttribute("aria-label", inp.placeholder);
+    var done = el.querySelector(".ov-done");
+    done.textContent = window.t("mt.sw.done");
+    done.addEventListener("click", ovClose);
+    var cols = el.querySelector(".ov-cols");
+    cols.appendChild(ovSection("ov-apps", "mt.sw.title"));
+    var side = document.createElement("div");
+    side.className = "ov-side";
+    if (hasApp("files")) side.appendChild(ovSection("ov-files", "ov.files.title"));
+    side.appendChild(ovSection("ov-sys", "ov.sys.title"));
+    cols.appendChild(side);
+    inp.addEventListener("input", function () { if (inp.value) ovToMenu(inp.value); });
+    el.addEventListener("click", function (e) { if (e.target === el) ovClose(); });
+    function onKey(e) {
+      if (!ov) return;
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); ovClose(); return; }
+      if (e.key === "Tab") {        // focus stays inside the overview
+        var f = Array.prototype.slice.call(el.querySelectorAll("button, input")).filter(function (b) { return !b.disabled && b.offsetParent !== null; });
+        if (!f.length) return;
+        var i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+        return;
+      }
+      var a = document.activeElement;
+      if (a === inp) return;
+      // Start typing anywhere: the letter goes to the search field.
+      if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && e.key !== " ") {
+        inp.focus();
+        return;
+      }
+      var cards = Array.prototype.slice.call(el.querySelectorAll(".ov-go, .ov-file"));
+      var j = cards.indexOf(a);
+      if (j >= 0 && (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowLeft")) {
+        e.preventDefault();
+        var fw = e.key === "ArrowDown" || e.key === "ArrowRight";
+        cards[(j + (fw ? 1 : cards.length - 1)) % cards.length].focus();
+      } else if ((e.key === "Delete" || e.key === "Backspace") && a.classList.contains("ov-go")) {
+        e.preventDefault();
+        mtClose(a.closest(".ov-app").getAttribute("data-app"));
+      }
+    }
+    document.body.appendChild(el);
+    document.addEventListener("keydown", onKey, true);
+    ov = { el: el, onKey: onKey, back: document.activeElement };
+    ovRenderApps();
+    if (hasApp("files")) ovRenderFiles();
+    ovRenderSys();
+    // The app left last has the focus (shortcut + Enter = back to it),
+    // else the search field.
+    var list = mtOpenList(), want = null;
+    if (list.length > 1 && list[0].front) want = el.querySelector('.ov-app[data-app="' + list[1].app.id + '"] .ov-go');
+    (want || inp).focus();
+  }
+
+  // Hot corner (opt-in): the pointer pushed into the top-left corner.
+  // Re-arms once it has left the corner area; never with a button held.
+  (function () {
+    if (SOLO) return;
+    var armed = true;
+    document.addEventListener("pointermove", function (e) {
+      if (e.pointerType !== "mouse") return;
+      if (e.clientX > 40 || e.clientY > 40) { armed = true; return; }
+      if (!armed || e.buttons || e.clientX > 1 || e.clientY > 1) return;
+      if (!ovPref(OV_CORNER_KEY) || ov) return;
+      armed = false;
+      ovOpen();
+    }, { passive: true });
+  })();
+  function ovSnapshot() {
+    if (SOLO) return null;
+    return { corner: ovPref(OV_CORNER_KEY) };
+  }
+
+  // ---------- 10g. The other screen (SS1, 2026-11-15) ----------
+  // With two screens set to Extend, an app moves to the other screen:
+  // a new orOS window opens there with that app ("/?open=<id>", the
+  // launch link, so the same shell, sync and lock run in it) and the
+  // app closes here. Never two live copies of one app (the same reason
+  // as MT-S1: an older copy in memory would undo the other's saves):
+  // opening it here again while its window lives brings that window to
+  // the front, and a click on the note brings the app back here. The
+  // other window moves an app back the same way (its opener is this
+  // window). screens.js knows the screens; without the Window
+  // Management API (Firefox, Safari, phones) nothing here shows.
+  var scrWins = {};          // app id -> the window it moved to (this session)
+  function scrAvailable() {
+    return !SOLO && !TILL && !!(window.orosScreens && window.orosScreens.available(window));
+  }
+  function scrAppOf(id) {
+    for (var i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === id && state.apps[i].type === "internal") return state.apps[i];
+    }
+    return null;
+  }
+  function scrWin(id) {
+    var w = scrWins[id];
+    if (!w) return null;
+    var gone = true;
+    try { gone = w.closed; } catch (e) {}
+    if (gone) { delete scrWins[id]; return null; }
+    return w;
+  }
+  // The app in front (or `id`) goes to the other screen.
+  function scrMove(id) {
+    if (SOLO || TILL) return;
+    var app = id ? scrAppOf(id) : (state.running && state.running.type === "internal" ? state.running : null);
+    if (!app) { scToast("info", window.t("scr.noapp")); return; }
+    if (!scrAvailable()) { scToast("info", window.t("scr.none")); return; }
+    var name = mtLabel(app);
+    // A window of this orOS that opened us: the app goes back there.
+    var op = scrOpener();
+    if (op) {
+      try { op.__orosScreenTake(app.id); } catch (e) { op = null; }
+      if (op) { scrLeave(app.id); return; }
+    }
+    var old = scrWin(app.id);
+    if (old) { try { old.focus(); } catch (e) {} scrLeave(app.id); return; }
+    var url = location.pathname + "?open=" + encodeURIComponent(app.id);
+    var w = window.orosScreens.open(url, "oros-screen-" + app.id, window);
+    if (!w) { scToast("err", window.t("scr.blocked")); return; }
+    scrWins[app.id] = w;
+    scrLeave(app.id);
+    scToast("ok", window.t("scr.moved").replace("{app}", name));
+  }
+  // The app closes here (front, beside or in the background).
+  function scrLeave(id) {
+    if (mtSw) mtSwClose();
+    if (appLive(id) || (state.running && state.running.id === id)) mtClose(id);
+    // A window opened only for apps on the other screen closes with its last one.
+    if (scrOpener() && !state.running && !mtList().length) {
+      setTimeout(function () { try { window.close(); } catch (e) {} }, 300);
+    }
+  }
+  // The orOS window that opened this one, when it is on this origin.
+  function scrOpener() {
+    var op = null;
+    try {
+      op = window.opener;
+      if (!op || op.closed || typeof op.__orosScreenTake !== "function") return null;
+    } catch (e) { return null; }
+    return op;
+  }
+  // Called by the other window: open `id` here and come to the front.
+  window.__orosScreenTake = function (id) {
+    var app = scrAppOf(String(id || ""));
+    if (!app) return false;
+    delete scrWins[app.id];
+    try { window.focus(); } catch (e) {}
+    openApp(app);
+    scToast("ok", window.t("scr.back").replace("{app}", mtLabel(app)));
+    return true;
+  };
+  // Called by the other window: close `id` there (it comes back to its opener).
+  window.__orosScreenDrop = function (id) {
+    if (!scrAppOf(String(id || ""))) return false;
+    scrLeave(String(id));
+    return true;
+  };
+  // openApp asks first: is this app open in a window on the other
+  // screen? Then that window comes to the front instead.
+  function scrElsewhere(app) {
+    if (!app || app.type !== "internal") return false;
+    var w = scrWin(app.id);
+    if (!w) return false;
+    var live = false;
+    try { live = typeof w.__orosAppLiveHere === "function" && w.__orosAppLiveHere(app.id); } catch (e) { live = false; }
+    if (!live) { delete scrWins[app.id]; return false; }
+    try { w.focus(); } catch (e) {}
+    closeMenu();
+    scToast("info", window.t("scr.there").replace("{app}", mtLabel(app)), function () {
+      var t = document.getElementById("sc-toast");
+      if (t) t.remove();
+      try { w.__orosScreenDrop(app.id); } catch (e) {}
+      delete scrWins[app.id];
+      openApp(app);
+    });
+    return true;
+  }
+  window.__orosAppLiveHere = function (id) {
+    return !!(state.running && state.running.id === id) || appLive(id);
+  };
+  // The switcher row button.
+  function mtSwScreenBtn(it) {
+    if (!scrAvailable()) return null;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "mt-sw-split mt-sw-screen";
+    b.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="2" y="5" width="12" height="9" rx="1.5"/><rect x="10" y="10" width="12" height="9" rx="1.5"/><path d="M5 18h3"/></svg>';
+    var l = window.t("scr.move").replace("{app}", mtLabel(it.app));
+    b.setAttribute("aria-label", l);
+    b.title = l;
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      scrMove(it.app.id);
+    });
+    return b;
+  }
+
   // ---------- 11. Menu open/close ----------
   // The bell's panel never sees a menu-button click (the button stops
   // it), so the menu closes it: one tray popup at a time (Chris 2026-10-12).
@@ -12269,6 +14500,8 @@
   // Direct single-click open; when the entry is missing from a
   // stale apps.json, fall back to the menu instead of dying silently.
   function openAppById(id) {
+    if (appAlias(id)) { window.__orosOpenAt(id, null); return; }   // APP-ALIAS
+    if (BARWIN && barwinOpen(id)) return;            // SB4: the bar window opens nothing itself
     if (state.running && state.running.id === id) return;   // already there
     for (var i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === id) { openApp(state.apps[i]); return; }
@@ -12354,6 +14587,9 @@
   function tourFirstRun() {
     try {
       if (localStorage.getItem(TOUR_DONE) === "1") return;
+      // LINK-1: a sign-in link is opening this browser: the person is not
+      // new (apps, menu and tips settings come with sync), so no tour.
+      if (state.linkIn || /^#signin=/.test(location.hash || "")) { localStorage.setItem(TOUR_DONE, "1"); return; }
       localStorage.setItem(TOUR_KEY, "1");
       if (profilesWanted()) localStorage.setItem(PROFILE_KEY, "1");
     } catch (e) { return; }
@@ -12788,12 +15024,22 @@
     var pending;
     try { pending = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { pending = false; }
     if (!pending || tourBox || profilesBusy) return;
+    // LINK-1: a sign-in link opened this browser: not a new user (the
+    // apps and menu come with sync), and the link card must stay in view.
+    if (state.linkIn) {
+      try { localStorage.removeItem(TOUR_KEY); localStorage.removeItem(PROFILE_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
+      return;
+    }
     var tries = 0;
     (function wait() {
       // Splash still up, apps.json not in yet, or an app on screen.
       if (document.getElementById("oro-splash") || !state.apps.length || state.running) {
         if (state.running || ++tries > 60) return;   // returnToDesktop retries
         setTimeout(wait, 250);
+        return;
+      }
+      if (state.linkIn) {
+        try { localStorage.removeItem(TOUR_KEY); localStorage.removeItem(PROFILE_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
         return;
       }
       var prof = false;
@@ -13177,25 +15423,12 @@
     openAppById("habits");
   };
 
-  // Wave 13 — Quote deep-link bridge (pattern: Todo/Time).
-  // Payload = quote id. App ανοιχτό → live push στο iframe· κλειστό
-  // → staging στο sessionStorage + άνοιγμα app (receiver στο EOF
-  // του quote.js καταναλώνει one-shot).
+  // Wave 13 — Quote deep-link bridge. Since app merge 7 the quotes
+  // are Billing's Quotes tab (APP-ALIAS "quote" → invoices { tab:
+  // "quotes" }): the quote id goes there as a deep link.
   window.__orosOpenQuote = function (quoteId) {
     if (typeof quoteId !== "string" || !quoteId) return;
-    if (appLive("quote")) {
-      appShow("quote");
-      var f = appFrameOf("quote");
-      try {
-        if (f && f.contentWindow &&
-            typeof f.contentWindow.__orosQuoteOpen === "function") {
-          f.contentWindow.__orosQuoteOpen(quoteId);
-          return;
-        }
-      } catch (e) {}
-    }
-    try { sessionStorage.setItem("oros-quote-open", quoteId); } catch (e) {}
-    openAppById("quote");
+    window.__orosOpenAt("quote", { quote: quoteId });
   };
 
   // Minimalism deep-link bridge (Wave 2 — pattern: Quote/Todo).
@@ -13590,10 +15823,10 @@
   // BR-W8-6). Strict validation here (false = rejected, nothing opens):
   // 1-50 lines, d text <= 200, q quantity 0 < q <= 100000, p unit price
   // 0 <= p <= 10000000 (2 decimals each); cur any ISO code (AAA); client <= 80 and
-  // notes <= 500 chars. Only a fresh plain copy crosses over. Quote
-  // running → live push to __orosQuoteNew; otherwise sessionStorage
-  // "oros-quote-new" (device-local, one-shot, read and removed by
-  // quote.js at boot) and open it.
+  // notes <= 500 chars. Only a fresh plain copy crosses over. Since app
+  // merge 7 it goes to Billing's Quotes tab as a deep link (the old id
+  // "quote" is an alias: { tab: "quotes", quoteNew }); false when
+  // Billing is not installed.
   window.__orosOpenQuoteNew = function (p) {
     if (!p || typeof p !== "object" || !Array.isArray(p.items)) return false;
     if (!p.items.length || p.items.length > 50) return false;
@@ -13614,24 +15847,8 @@
     else if (p.cur !== undefined) return false;
     if (typeof p.client === "string") q.client = txt(p.client, 80).trim();
     if (typeof p.notes === "string") q.notes = txt(p.notes, 500);
-    var has = false;
-    for (var k = 0; k < state.apps.length; k++) if (state.apps[k].id === "quote") has = true;
-    if (!has) return false;
-    if (appLive("quote")) {
-      appShow("quote");
-      var f = appFrameOf("quote");
-      try {
-        if (f && f.contentWindow &&
-            typeof f.contentWindow.__orosQuoteNew === "function") {
-          f.contentWindow.__orosQuoteNew(q);
-          return true;
-        }
-      } catch (e) {}
-    }
-    try {
-      sessionStorage.setItem("oros-quote-new", JSON.stringify(q));
-    } catch (e) {}
-    openAppById("quote");
+    if (!aliasHost("quote")) return false;
+    window.__orosOpenAt("quote", { quoteNew: q });
     return true;
   };
 
@@ -13723,6 +15940,10 @@
     window.orosLauncher.attach({
       apps: function () { return state.apps; },
       open: openApp,
+      // APP-ALIAS: a shortcut kept for an app that moved into another
+      // one shows that app and opens it at the old app's place.
+      aliasHost: aliasHost,
+      openAlias: function (id) { if (!appAlias(id)) return false; window.__orosOpenAt(id, null); return true; },
       running: function () { return state.running; },
       isOpen: function (id) { return mtActive() && appLive(id); },   // multitasking: alive behind
       icons: ICONS,
@@ -13759,6 +15980,7 @@
   applyIcons();
   a11yApply();
   a11yWatch();
+  uifApply();
   applyLang();
   langKeepOffline();
   // Seasonal decorations (seasonal.js, a shell component like pet.js):
@@ -13772,6 +15994,17 @@
       changed: function () { settingsNotify(); }
     });
   }
+  // Weather on the desktop (wallpaper/wxdesk.js, late bundle, WX-DESK-1): rain,
+  // snow, clouds or sun from the tray weather (the Weather app's city).
+  // Off by default, device-local; a single app has no desktop.
+  if (!SOLO) lateWhen(function () {
+    if (!window.orosWxDesk) return;
+    window.orosWxDesk.attach({
+      desktop: document.getElementById("oros-desktop"),
+      running: function () { return !!state.running; },
+      weather: function () { return wxCacheFor(wxLoc()); }
+    });
+  });
   // On-screen keyboard (osk.js, a shell component like seasonal.js):
   // touch screens without a keyboard, never on phones. A single app
   // has text fields too, so it gets one.
@@ -13822,6 +16055,13 @@
     }
     return out;
   }
+  // SB2: the Automations step "Pause sounds" (automations/host.js).
+  // Pauses every player that is playing; nothing else.
+  window.__orosPauseAll = function () {
+    var n = 0;
+    qsMedia().forEach(function (m) { if (m.playing) { try { m.toggle(); n++; } catch (e) {} } });
+    return n;
+  };
 
   // START-1: what First steps (widgets.js) ticks, read from the real
   // state: a Notes page, a To-Do task, a wallpaper or icon pack other
@@ -13944,6 +16184,64 @@
       media: qsMedia
     });
   }
+  // Clipboard history (cliphist.js, CLIP-1): what is copied inside orOS
+  // apps, opt-in, this device only. A single app gets it too.
+  if (window.orosClip) {
+    window.orosClip.attach({
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      settings: function (section) { if (window.orosSettings) window.orosSettings.open(section); },
+      toast: function (kind, msg) { scToast(kind, msg); }
+    });
+    window.orosClip.onChange(settingsNotify);
+  }
+  // Emoji picker (emoji.js, CLIP-1 W3): Ctrl+Alt+Shift+. and Quick settings.
+  // Not a start-up script (the quality gate's boot budget): this stand-in
+  // answers as window.orosEmoji until the first open, which loads emoji.js
+  // (precached), attaches it and opens it; emoji.js then replaces it.
+  (function () {
+    var emoHost = {
+      lang: function () { return state.lang; },
+      version: function () { return APP_VERSION; },
+      toast: function (kind, msg) { scToast(kind, msg); }
+    };
+    var emoLoading = null;
+    function emoLoad() {
+      var real = window.orosEmoji;
+      if (real && real !== emoStub) return Promise.resolve(real);
+      if (!emoLoading) emoLoading = new Promise(function (res, rej) {
+        var sc = document.createElement("script");
+        sc.src = "emoji.js?v=" + encodeURIComponent(APP_VERSION);
+        sc.onload = function () {
+          var api = window.orosEmoji;
+          if (api && api !== emoStub && api.attach) { api.attach(emoHost); res(api); }
+          else { emoLoading = null; window.orosEmoji = emoStub; rej(new Error("emoji.js")); }
+        };
+        sc.onerror = function () { emoLoading = null; sc.remove(); rej(new Error("emoji.js")); };
+        document.head.appendChild(sc);
+      });
+      return emoLoading;
+    }
+    function emoThen(fn) {
+      emoLoad().then(fn, function () { scToast("error", window.t("emo.fail")); });
+    }
+    var emoStub = {
+      lazy: true,
+      open: function () { emoThen(function (api) { api.open(); }); },
+      toggle: function () { emoThen(function (api) { api.toggle(); }); },
+      close: function () {},
+      isOpen: function () { return false; },
+      refresh: function () {}
+    };
+    if (!window.orosEmoji) window.orosEmoji = emoStub;
+    else window.orosEmoji.attach(emoHost);
+  })();
+  // Night Light (nightlight.js, a shell component like qsettings.js):
+  // the warm filter over the whole shell. Sunset and sunrise come from
+  // the top-bar weather's place (wxLoc). A single app gets it too.
+  if (window.orosNight) {
+    window.orosNight.attach({ loc: wxLoc });
+    window.orosNight.onChange(function () { settingsNotify(); });
+  }
   // Desktop widgets (widgets.js, a shell component like launcher.js):
   // clock, calendar, Today, weather, playing, sync on the desktop. A
   // single app has no desktop, so it gets none.
@@ -13971,6 +16269,21 @@
       toast: function (msg) { scToast("err", msg); },
       changed: function () { settingsNotify(); wxFetch(false); },
       start: { facts: startFacts, go: startGo }
+    });
+  }
+  // Smart top bar (smartbar.js): live chips (next event, focus, tasks,
+  // water, spent, till) the person switches on in Settings › Appearance.
+  // A single app keeps its plain bar.
+  if (window.orosSmartBar && !SOLO) {
+    window.orosSmartBar.attach({
+      lang: function () { return state.lang; },
+      strict: function () { return !!strictLevelNow(); },
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      open: function (id) { openAppById(id); },
+      version: function () { return APP_VERSION; },
+      toast: function (msg) { scToast("err", msg); },
+      changed: function () { settingsNotify(); },
+      fit: function () { queueFitBar(); }
     });
   }
   loadApps();

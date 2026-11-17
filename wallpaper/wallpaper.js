@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Wallpaper Generator — App logic (v1.0.0)
+// orOS Wallpaper Generator — App logic (v1.1.0)
 // Generative wallpapers from a seed: six styles (waves, flow
 // field, orbits, grid, nebula, tree), seven palettes (one follows the
 // skin), density / chaos / grain / light background, any size up
@@ -13,8 +13,11 @@
 //     every device draws it at its own screen size; "On your desktop"
 //     turns on a new picture every day and the live wallpaper
 //   - favourites: synced, LWW + tombstones, delete with Undo
-//   - the Tree style draws a Tree Sketcher tree; "Shape the tree"
-//     opens it there (__orosOpenAt("trees", { wall: recipe }))
+//   - the Tree style (APP-ALIAS: Tree Sketcher lives here since
+//     the 2026-11-12 merge) draws a trees/core.js tree: kind, season,
+//     drawing style, ground, branches, angle, wind (recipe.tree;
+//     density = leaves, chaos = randomness); "My trees" keeps named
+//     trees in the Tree Sketcher's own slice; SVG export of the tree
 //   - Living land tab (LAND-1 W3): try the three land styles and
 //     shapes on a sample desktop (land.js demo), keep favourite lands,
 //     "Set as wallpaper" = shell orosWallpaper.setLand({style, seed})
@@ -24,8 +27,13 @@
 //   - synced slice "wallpaper-lands" (oros-wallpaper-lands): favourite
 //     lands, same merge; a slice of its own so an older bundle, which
 //     knows neither, carries it untouched (no ping-pong)
+//   - synced slice "trees" (oros-trees-data): My trees, the Tree
+//     Sketcher's slice unchanged (TREES v1, TreesCore.mergeTrees)
 //   - device-local (R10): oros-wallpaper-prefs (recipe being edited,
 //     size)
+// Deep link: __orosOpenAt("wallpaper", { style?, wall?, recipe? }):
+// style picks a pattern style, wall a wallpaper recipe, recipe a Tree
+// Sketcher recipe (the old id "trees" opens { style: "tree" }).
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Favourites model: normalize, merge
@@ -34,6 +42,7 @@
 //   5. Preview
 //   6. Pickers (styles, palettes, settings, size)
 //   7. Favourites list
+//   7b. Tree style + My trees
 //   8. Export
 //   9. Set as orOS wallpaper
 //  10. Dialogs + toasts
@@ -45,6 +54,8 @@
   "use strict";
 
   var ART = window.OrosWallArt;
+  var TC  = window.TreesCore || null;
+  var TREES_KEY = "oros-trees-data";
   var LAND = window.OrosLand || null;
   var STORAGE_KEY = "oros-wallpaper-data";
   var LANDS_KEY   = "oros-wallpaper-lands";
@@ -74,8 +85,22 @@
       "sec.size": "Size", "sec.favs": "Favourites",
       "st.waves": "Waves", "st.flow": "Flow field", "st.orbits": "Orbits",
       "st.grid": "Grid", "st.nebula": "Nebula", "st.tree": "Tree",
-      "tree.hint": "Density sets the leaves and Chaos the randomness. The kind of tree, the season and the branches come from Tree Sketcher.",
-      "tree.btn": "Shape the tree in Tree Sketcher",
+      "tree.hint": "The same seed and settings always grow the same tree. Try your name.",
+      "sec.tree": "Tree", "sec.sp": "Kind of tree", "sec.season": "Season", "sec.ink": "Drawn with", "sec.ground": "Ground",
+      "sp.oak": "Oak", "sp.willow": "Willow", "sp.cypress": "Cypress", "sp.olive": "Olive", "sp.bonsai": "Bonsai", "sp.wild": "Wild",
+      "season.spring": "Spring", "season.summer": "Summer", "season.autumn": "Autumn", "season.winter": "Winter",
+      "ink.pencil": "Pencil", "ink.ink": "Ink", "ink.chalk": "Chalk", "ink.colour": "Colour",
+      "ground.none": "None", "ground.grass": "Grass", "ground.hill": "Hill",
+      "f.br": "Branches", "f.ang": "Angle", "f.wind": "Wind", "f.fol": "Leaves", "f.rnd": "Randomness",
+      "f.br.text": "{n} levels", "wind.calm": "Calm", "wind.left": "← {n}", "wind.right": "{n} →",
+      "wind.leftText": "{n} to the left", "wind.rightText": "{n} to the right",
+      "sec.mine": "My trees", "mine.name": "Name of this tree", "mine.ph": "Name",
+      "mine.save": "Save tree", "mine.saved": "Saved",
+      "mine.empty": "Trees you save appear here. They follow you to all your devices.",
+      "mine.open": "Open {name}", "mine.del": "Delete tree {name}",
+      "toast.treeSaved": "Tree saved", "toast.treeDeleted": "Tree deleted",
+      "toast.mineFull": "You have {n} trees, the most there can be",
+      "exp.svg": "SVG · the tree as a drawing",
       "pal.oros": "orOS skin", "pal.ember": "Ember", "pal.ocean": "Ocean", "pal.forest": "Forest",
       "pal.dusk": "Dusk", "pal.pastel": "Pastel", "pal.mono": "Mono",
       "f.dens": "Density", "f.chaos": "Chaos", "f.grain": "Film grain",
@@ -123,8 +148,22 @@
       "sec.size": "Μέγεθος", "sec.favs": "Αγαπημένα",
       "st.waves": "Κύματα", "st.flow": "Ροή", "st.orbits": "Τροχιές",
       "st.grid": "Πλέγμα", "st.nebula": "Νεφέλωμα", "st.tree": "Δέντρο",
-      "tree.hint": "Η Πυκνότητα ορίζει τα φύλλα και το Χάος την τυχαιότητα. Το είδος, η εποχή και τα κλαδιά έρχονται από τον Σκιτσογράφο δέντρων.",
-      "tree.btn": "Σχήμα δέντρου στον Σκιτσογράφο",
+      "tree.hint": "Η ίδια λέξη με τις ίδιες ρυθμίσεις βγάζει πάντα το ίδιο δέντρο. Δοκίμασε το όνομά σου.",
+      "sec.tree": "Δέντρο", "sec.sp": "Είδος δέντρου", "sec.season": "Εποχή", "sec.ink": "Σχέδιο με", "sec.ground": "Έδαφος",
+      "sp.oak": "Βελανιδιά", "sp.willow": "Ιτιά", "sp.cypress": "Κυπαρίσσι", "sp.olive": "Ελιά", "sp.bonsai": "Μπονσάι", "sp.wild": "Άγριο",
+      "season.spring": "Άνοιξη", "season.summer": "Καλοκαίρι", "season.autumn": "Φθινόπωρο", "season.winter": "Χειμώνας",
+      "ink.pencil": "Μολύβι", "ink.ink": "Μελάνι", "ink.chalk": "Κιμωλία", "ink.colour": "Χρώμα",
+      "ground.none": "Τίποτα", "ground.grass": "Γρασίδι", "ground.hill": "Λόφος",
+      "f.br": "Κλαδιά", "f.ang": "Γωνία", "f.wind": "Άνεμος", "f.fol": "Φύλλα", "f.rnd": "Τυχαιότητα",
+      "f.br.text": "{n} επίπεδα", "wind.calm": "Νηνεμία", "wind.left": "← {n}", "wind.right": "{n} →",
+      "wind.leftText": "{n} προς τα αριστερά", "wind.rightText": "{n} προς τα δεξιά",
+      "sec.mine": "Τα δέντρα μου", "mine.name": "Όνομα δέντρου", "mine.ph": "Όνομα",
+      "mine.save": "Αποθήκευση δέντρου", "mine.saved": "Αποθηκεύτηκε",
+      "mine.empty": "Τα δέντρα που αποθηκεύεις εμφανίζονται εδώ. Σε ακολουθούν σε όλες τις συσκευές σου.",
+      "mine.open": "Άνοιγμα του {name}", "mine.del": "Διαγραφή του δέντρου {name}",
+      "toast.treeSaved": "Το δέντρο αποθηκεύτηκε", "toast.treeDeleted": "Το δέντρο διαγράφηκε",
+      "toast.mineFull": "Έχεις {n} δέντρα, όσα χωράνε",
+      "exp.svg": "SVG · το δέντρο ως σχέδιο",
       "pal.oros": "Χρώματα του orOS", "pal.ember": "Θράκα", "pal.ocean": "Ωκεανός", "pal.forest": "Δάσος",
       "pal.dusk": "Σούρουπο", "pal.pastel": "Παστέλ", "pal.mono": "Μονόχρωμο",
       "f.dens": "Πυκνότητα", "f.chaos": "Χάος", "f.grain": "Κόκκος φιλμ",
@@ -745,8 +784,12 @@
     $("light").checked = !!r.light;
     $("light").disabled = r.style === "nebula";
     $("light-hint").hidden = r.style !== "nebula";
-    $("tree-hint").hidden = r.style !== "tree";
-    $("tree-btn").hidden = r.style !== "tree" || !openAtHost();
+    var isTree = r.style === "tree" && !!TC;
+    $("dens-lbl").textContent = t(isTree ? "f.fol" : "f.dens");
+    $("chaos-lbl").textContent = t(isTree ? "f.rnd" : "f.chaos");
+    $("tree-sec").hidden = !isTree;
+    $("mine-sec").hidden = !isTree;
+    if (isTree) renderTree();
     $("size").value = prefs.size;
     $("custom-row").hidden = prefs.size !== "custom";
     if (document.activeElement !== $("cw")) $("cw").value = prefs.cw;
@@ -955,6 +998,9 @@
     [["exp.png", "image/png", "png"], ["exp.jpg", "image/jpeg", "jpg"]].forEach(function (x) {
       list.appendChild(button(t(x[0]), "exp-btn", function () { dlg.close(); exportAs(x[1], x[2], wh); }));
     });
+    if (recipe().style === "tree" && TC) {
+      list.appendChild(button(t("exp.svg"), "exp-btn", function () { dlg.close(); exportSvg(wh); }));
+    }
     dlg.appendChild(list);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("exp.close"), "", function () { dlg.close(); }));
@@ -1083,17 +1129,202 @@
     renderSetButton();
   }
 
-  // The Tree style: shape the tree in the Tree Sketcher.
-  function openAtHost() {
+  // ---------- 7b. Tree style + My trees ----------
+  var trees = { ver: 1, trees: [], tombs: {} };
+
+  function loadTrees() {
+    if (!TC) return;
+    var raw = null;
+    try { raw = localStorage.getItem(TREES_KEY); } catch (e) {}
+    if (!raw) return;
     try {
-      var p = window.parent;
-      return (p && p !== window && typeof p.__orosOpenAt === "function") ? p : null;
-    } catch (e) { return null; }
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && Array.isArray(parsed.trees)) {
+        trees = TC.mergeTrees(parsed, parsed);
+        return;
+      }
+    } catch (e) {}
+    try { localStorage.setItem(TREES_KEY + "-broken", raw); } catch (e) {}
   }
-  function shapeTree() {
-    var p = openAtHost();
-    if (p) p.__orosOpenAt("trees", { wall: recipe() });
+  function saveTrees() {
+    try {
+      localStorage.setItem(TREES_KEY, JSON.stringify(trees));
+      saveFailShown = false;
+    } catch (e) {
+      if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
+    }
+    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
+
+  // The tree of the current recipe as a Tree Sketcher recipe.
+  function treeRecipe() { return TC.fromWallRecipe(recipe()); }
+  // A Tree Sketcher recipe on the current palette, grain and light.
+  function wallFromTree(tr) {
+    var r = TC.normRecipe(tr);
+    if (!r) return null;
+    return { seed: r.seed, style: "tree", dens: r.fol, chaos: r.rnd,
+             tree: TC.wallParams({ sp: r.sp, season: r.season, br: r.br, ang: r.ang, wind: r.wind, ink: r.ink, ground: r.ground }) };
+  }
+  function setTree(patch) {
+    var tr = TC.wallParams(recipe().tree), k;
+    for (k in patch) tr[k] = patch[k];
+    setRecipe({ tree: tr });
+  }
+
+  function treeChips(host, values, curVal, prefix, onPick) {
+    host.innerHTML = "";
+    values.forEach(function (v) {
+      var on = v === curVal;
+      var b = el("button", "chip" + (on ? " on" : ""), t(prefix + v));
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.tabIndex = on ? 0 : -1;
+      b.addEventListener("click", function () { onPick(v); });
+      host.appendChild(b);
+    });
+    host.onkeydown = function (e) {
+      var d = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : (e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0);
+      if (!d) return;
+      e.preventDefault();
+      var j = (values.indexOf(curVal) + d + values.length) % values.length;
+      onPick(values[j]);
+      var nb = host.querySelectorAll('[role="radio"]')[j];
+      if (nb) nb.focus();
+    };
+  }
+
+  function windText(v, aria) {
+    if (!v) return t("wind.calm");
+    return t((v < 0 ? "wind.left" : "wind.right") + (aria ? "Text" : ""), { n: Math.abs(v) });
+  }
+
+  function renderTree() {
+    var tr = TC.wallParams(recipe().tree);
+    treeChips($("t-sp"), TC.SPECIES, tr.sp, "sp.", function (v) {
+      if (v === TC.wallParams(recipe().tree).sp) return;
+      var d = TC.speciesDefaults(v);                 // as in Tree Sketcher
+      var x = TC.wallParams(recipe().tree);
+      x.sp = v; x.br = d.br; x.ang = d.ang;
+      setRecipe({ tree: x, dens: d.fol, chaos: d.rnd });
+    });
+    treeChips($("t-season"), TC.SEASONS, tr.season, "season.", function (v) { setTree({ season: v }); });
+    treeChips($("t-ink"), TC.INKS, tr.ink, "ink.", function (v) { setTree({ ink: v }); });
+    treeChips($("t-ground"), TC.GROUNDS, tr.ground, "ground.", function (v) { setTree({ ground: v }); });
+    ["br", "ang", "wind"].forEach(function (k) {
+      var inp = $("t-" + k), v = tr[k];
+      if (document.activeElement !== inp || String(inp.value) !== String(v)) inp.value = v;
+      var txt = k === "wind" ? windText(v) : (k === "ang" ? v + "°" : String(v));
+      $("t-" + k + "-out").textContent = txt;
+      inp.setAttribute("aria-valuetext", k === "wind" ? windText(v, true) : (k === "br" ? t("f.br.text", { n: v }) : txt));
+    });
+    renderMineButton();
+  }
+
+  function savedTree() {
+    var r = treeRecipe();
+    for (var i = 0; i < trees.trees.length; i++) {
+      if (TC.sameRecipe(trees.trees[i].r, r)) return trees.trees[i];
+    }
+    return null;
+  }
+
+  function renderMineButton() {
+    var b = $("mine-save"), f = savedTree();
+    b.textContent = t(f ? "mine.saved" : "mine.save");
+    b.disabled = !!f;
+    b.classList.toggle("on", !!f);
+  }
+
+  function saveTree() {
+    if (savedTree()) return;
+    if (trees.trees.length >= TC.MAX_TREES) { showToast(t("toast.mineFull", { n: TC.MAX_TREES })); return; }
+    var r = treeRecipe();
+    var name = TC.cleanName($("mine-name").value) || r.seed;
+    trees = TC.mergeTrees(trees, { trees: [{ id: TC.newId(Math.random), m: Date.now(), name: name, r: r }], tombs: {} });
+    saveTrees();
+    $("mine-name").value = "";
+    renderMine();
+    renderMineButton();
+    showToast(t("toast.treeSaved"));
+  }
+
+  function openTree(tr) {
+    var w = wallFromTree(tr.r);
+    if (!w) return;
+    setRecipe(w);
+    $("seed").value = recipe().seed;
+  }
+
+  function deleteTree(id) {
+    var tr = TC.findTree(trees, id);
+    if (!tr) return;
+    var snap = JSON.parse(JSON.stringify(tr)), tombs = {};
+    tombs[id] = Math.max(Date.now(), tr.m);
+    trees = TC.mergeTrees(trees, { trees: [], tombs: tombs });
+    saveTrees();
+    renderMine();
+    renderMineButton();
+    undoToast(t("toast.treeDeleted"), function () {
+      snap.m = Math.max(Date.now(), (trees.tombs[snap.id] || 0) + 1);   // R17
+      trees = TC.mergeTrees(trees, { trees: [snap], tombs: {} });
+      saveTrees();
+      renderMine();
+      renderMineButton();
+    });
+  }
+
+  function renderMine() {
+    if (!TC) return;
+    var host = $("mine"), list = TC.newestFirst(trees.trees);
+    host.innerHTML = "";
+    $("mine-empty").hidden = list.length > 0;
+    list.forEach(function (tr) {
+      var item = el("div", "fav");
+      var open = el("button", "fav-open");
+      open.type = "button";
+      open.setAttribute("aria-label", t("mine.open", { name: tr.name }));
+      open.title = tr.name + " · " + t("sp." + tr.r.sp) + " · " + t("season." + tr.r.season);
+      var sw = el("span", "fav-sw");
+      open.appendChild(sw);
+      open.appendChild(el("span", "fav-lbl", tr.name));
+      open.addEventListener("click", function () { openTree(tr); });
+      var del = el("button", "fav-del");
+      del.type = "button";
+      del.innerHTML = UI_ICONS.x;
+      del.setAttribute("aria-label", t("mine.del", { name: tr.name }));
+      del.title = t("mine.del", { name: tr.name });
+      del.addEventListener("click", function () { deleteTree(tr.id); });
+      item.appendChild(open);
+      item.appendChild(del);
+      host.appendChild(item);
+      var w = wallFromTree(tr.r), cur = recipe();
+      w.pal = cur.pal; w.grain = cur.grain; w.light = cur.light;
+      queueThumb(sw, ART.normRecipe(w), 160, 100);
+    });
+  }
+
+  function exportSvg(wh) {
+    var r = recipe(), tr = treeRecipe();
+    var w = Math.round(wh[0] / 2), h = Math.round(wh[1] / 2);
+    var svg = TC.toSVG(tr, w, h, tr.seed);
+    downloadBlob(new Blob([svg], { type: "image/svg+xml" }), fileBase(r, wh) + ".svg", "image/svg+xml",
+      [{ description: "SVG", accept: { "image/svg+xml": [".svg"] } }]);
+  }
+
+  // Deep link (also the old Tree Sketcher id, through APP-ALIAS).
+  function openTarget(target) {
+    if (!target || typeof target !== "object") return;
+    var w = null;
+    if (target.wall) w = ART.normRecipe(target.wall);
+    else if (target.recipe && TC) w = wallFromTree(target.recipe);
+    else if (ART.STYLES.indexOf(target.style) >= 0) w = { style: target.style };
+    if (!w) return;
+    setMode("art");
+    setRecipe(w);
+    $("seed").value = recipe().seed;
+  }
+  window.__orosOpenAt = function (target) { openTarget(target); };
 
   // ---------- 10. Dialogs + toasts ----------
   function button(label, cls, fn) {
@@ -1230,6 +1461,7 @@
       schedulePreview();
       renderFavs();
       renderLandFavs();
+      renderMine();
       renderSetButton();
     }
   }
@@ -1261,6 +1493,28 @@
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("wallpaper", sliceGet, sliceSet, STORAGE_KEY, mergeWall);
     api.registerSlice("wallpaper-lands", landSliceGet, landSliceSet, LANDS_KEY, mergeLands);
+    if (TC) api.registerSlice("trees", treesSliceGet, treesSliceSet, TREES_KEY, TC.mergeTrees);
+  }
+
+  function treesSliceGet() {
+    return TC.mergeTrees(trees, trees);   // canonical copy (R26)
+  }
+
+  function treesSliceSet(incoming) {
+    if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.trees)) return;
+    var before = JSON.stringify(trees);
+    window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
+    try {
+      trees = TC.mergeTrees(incoming, incoming);
+      localStorage.setItem(TREES_KEY, JSON.stringify(trees));
+    } catch (e) {
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+    if (JSON.stringify(trees) !== before) {
+      renderMine();
+      if (!$("mine-sec").hidden) renderMineButton();
+    }
   }
 
   function landSliceGet() {
@@ -1343,7 +1597,19 @@
     $("set-btn").addEventListener("click", setWallpaper);
     $("desk-daily").addEventListener("change", function () { setDesk("daily"); });
     $("desk-live").addEventListener("change", function () { setDesk("live"); });
-    $("tree-btn").addEventListener("click", shapeTree);
+    if (TC) {
+      ["br", "ang", "wind"].forEach(function (k) {
+        $("t-" + k).addEventListener("input", function () {
+          var v = parseInt($("t-" + k).value, 10);
+          if (!isFinite(v)) return;
+          var p = {}; p[k] = v;
+          setTree(p);
+        });
+      });
+      $("mine-name").placeholder = t("mine.ph");
+      $("mine-save").addEventListener("click", saveTree);
+      $("mine-name").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); saveTree(); } });
+    }
     $("export-btn").addEventListener("click", exportDialog);
     $("panel").addEventListener("submit", function (e) { e.preventDefault(); });
 
@@ -1397,6 +1663,7 @@
   function boot() {
     load();
     loadLands();
+    loadTrees();
     loadPrefs();
     applyI18n();
     buildPicker($("styles"), ART.STYLES, "st.", "style", null);
@@ -1410,6 +1677,13 @@
     renderControls();
     inheritPalette();     // also draws the preview + favourites
     watchPalette();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("wallpaper");
+        if (pending) openTarget(pending);
+      }
+    } catch (e) {}
   }
 
   boot();
