@@ -734,6 +734,8 @@ orosPack("de", "shell", {
  "rem.measure": "Zeit zum Messen: {name} ({time})",
  "rem.med": "Zeit für dein Medikament: {name} ({time})",
  "rem.title": "Erinnerung",
+ "rem.kanban.one": "{n} Karte ist fällig oder überfällig",
+ "rem.kanban.other": "{n} Karten sind fällig oder überfällig",
  "rem.todo.one": "{n} Aufgabe ist fällig oder überfällig",
  "phone.veil.rem": "Erinnerung",
  "phone.veil.body": "Öffne orOS, um sie zu sehen.",

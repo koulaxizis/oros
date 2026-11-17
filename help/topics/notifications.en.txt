@@ -34,6 +34,7 @@ Other apps send reminders too, for example tasks that are due or overdue in [To-
 - [Time](app:time) alarms and timers.
 - [Calendar](app:calendar) reminders.
 - [To-Do](app:todo) tasks that are due (at 09:00), [Water](app:water), [Habits](app:habits) and [Health](app:health) reminders.
+- [Plant Care](app:plants), [Pet Health Book](app:petcare), [Garage](app:garage) and [Chore Wheel](app:chores) at each app's reminder hour, [Billing](app:invoices) documents and [Kanban](app:kanban) cards that are due (at 09:00), [CRM](app:crm) follow-ups and [Sticky Notes](app:stickies) at their time.
 
 How it works: orOS keeps the next 7 days of reminders on the orOS relay, and at each one's time the relay sends it to your browser's push service, which wakes your device. The push service belongs to your browser's maker: **Google** in Chrome and on Android, **Microsoft** in Edge, **Mozilla** in Firefox. Each reminder is encrypted on your device first, so the push service and the relay see only an encrypted packet and the time it's sent, never what it says. Change or delete a reminder on any of your devices and the waiting copy changes or goes away too. Open orOS now and then so it can add the days ahead.
 
@@ -53,9 +54,10 @@ In the orOS app for Android, `Settings` › `Notifications` has `Reminders throu
 
 - [Time](app:time) alarms and timers, with the phone's alarm sound, until you dismiss them.
 - [Water](app:water) reminders.
-- Tasks due in [To-Do](app:todo), at 09:00 on the day.
+- Tasks due in [To-Do](app:todo), at 09:00 on the day, and [Habits](app:habits) and [Health](app:health) reminders.
+- [Plant Care](app:plants), [Pet Health Book](app:petcare), [Garage](app:garage) and [Chore Wheel](app:chores) at each app's reminder hour, [Billing](app:invoices) documents and [Kanban](app:kanban) cards that are due (at 09:00), [CRM](app:crm) follow-ups and [Sticky Notes](app:stickies) at their time.
 
-Tap one to open orOS where it points. The app knows the next two days, so open orOS now and then. If Android says reminders may be a few minutes late, tap `Allow` again and switch on alarms for orOS. While orOS is on screen, it shows reminders itself, as before. Calendar events ring through the phone's calendar instead (see the [Calendar](app:calendar) help).
+An app you switched off under `Which apps may notify` stays quiet on the phone too. Tap one to open orOS where it points. The app knows the next two days, so open orOS now and then. If Android says reminders may be a few minutes late, tap `Allow` again and switch on alarms for orOS. While orOS is on screen, it shows reminders itself, as before. Calendar events ring through the phone's calendar instead (see the [Calendar](app:calendar) help).
 
 ## System notifications
 If your browser allows it, orOS also shows notifications through your system, so you see them while orOS is in the background. orOS asks for this permission only when you save a Calendar event with a reminder. You can also allow or block it any time in your browser's site settings. Clicking one brings orOS to the front and opens what it points to, such as the event. Without it, notifications still appear inside orOS.

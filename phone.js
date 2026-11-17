@@ -34,7 +34,9 @@
 //               {t:"clear", what}
 //               {t:"applied", what, refs[, ids]}   (v2: phone changes
 //                 taken; ids: orOS id of each new contact by ref)
-//               {t:"reminders", seq, items}   (v3: see reminderRows)
+//               {t:"reminders", seq, items}   (v3: see reminderRows;
+//                 v12: also Plants, Pet care, Garage, Chores, CRM,
+//                 Billing, Kanban, Sticky Notes, same row shape)
 //               {t:"seen", v}                  (v3: orOS on screen)
 //               {t:"today", seq, data}         (v4: home-screen widget,
 //                 see widgetData; only while the phone has a widget)
@@ -100,6 +102,11 @@
   var PREF_KEY = "oros-phone";
   var KEYS = { contacts: "oros-contacts-data", calendar: "oros-calendar-data" };
   var FEEDS_KEY = "oros-phone-cal-feeds";
+  // v12: what the eight more sources read (a change re-sends at once)
+  var MORE_KEYS = ["oros-plants-data", "oros-plants-prefs", "oros-plants-hh", "oros-chores-data", "oros-chores-prefs", "oros-chores-hh",
+                   "oros-garage-data", "oros-garage-prefs", "oros-garage-notified", "oros-garage-hh", "oros-petcare-data",
+                   "oros-petcare-prefs", "oros-petcare-fired", "oros-petcare-hh", "oros-crm-data", "oros-invoices-data",
+                   "oros-kanban-data", "oros-stickies-data"];
   var HANDLED_KEY = "oros-phone-rem";    // {dedupKey: at}, reminders given to the app
   var TAKEN_KEY = "oros-phone-taken";    // [[kind:hash, id, at]], phone changes applied lately
   var MAX_TAKEN = 500;
@@ -745,8 +752,225 @@
                     title: hTitle, body: str(body, 200), link: link });
       });
     }
+    moreRows(src, now, end, days, dayAt, rows);
     rows.sort(function (a, b) { return a.at - b.at || (a.id < b.id ? -1 : 1); });
     return rows.slice(0, src.max > 0 ? src.max : 100);
+  }
+
+  // BR-PHONE v12 (gap review proposal 3): eight more apps whose shell
+  // engines (shell.js plantsCheckTick, petcareCheckTick, garageCheckTick,
+  // choresCheckTick, crmCheckTick, invoicesCheckTick, kanbanCheckTick,
+  // stickies/host.js announce) ring while orOS is open. Each row is the
+  // notice that engine would give at that moment, with the SAME dedupKey
+  // worked out by the same app core, so the phone's ring and the inbox
+  // notice are one. The daily ones are rung at the app's own reminder
+  // hour (prefs, -1 = off; 09:00 where the app has none); the engines
+  // that remember what they said (Garage, Pet care) are run forward day
+  // by day from the stored map, as the engine itself would on each day.
+  //   plants:   { core, sets: [data], prefs, wx: {data, cache, pref} }
+  //   chores:   { core, wheels: [{ data, me }], prefs }
+  //   garage:   { core, data (with shared vehicles), prefs, notified }
+  //   petcare:  { core, data (with shared pets), prefs, fired }
+  //   crm:      { core, data }
+  //   invoices: { core, data }   (invoices/core.js parse)
+  //   kanban:   { core, data }
+  //   stickies: { core, data, title, empty }  (title, empty: the app's words)
+  function txn(key, n, fb, vars) {
+    var v = { n: n };
+    if (vars) Object.keys(vars).forEach(function (k) { v[k] = vars[k]; });
+    return tx(key + (n === 1 ? ".one" : ".other"), n === 1 ? fb[0] : fb[1], v);
+  }
+  // djb2, as shell.js garageHash (Garage keys)
+  function djb2(s) {
+    var h = 5381;
+    for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+  // h * 31, as shell.js petcareCheckTick / petcareDoseCheck (Pet care keys)
+  function h31(s) {
+    var h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+  function andMore(list, cap, sep) {
+    var out = list.slice(0, cap).join(sep);
+    if (list.length > cap) out += (sep === ", " ? " " : sep) + tx("n.andmore", "and {n} more", { n: list.length - cap });
+    return out;
+  }
+  function moreRows(src, now, end, days, dayAt, rows) {
+    var lang = src.lang === "el" ? "el" : src.lang === "de" ? "de" : "en", lang2 = lang === "el" ? "el" : "en";
+    function push(ns, id, at, title, body, link) {
+      rows.push({ id: ns + ":" + id, at: at, kind: "note", ns: ns, title: str(title, 80), body: str(body, 200), link: link });
+    }
+    function each(hour, fn) {
+      if (typeof hour !== "number" || hour < 0 || hour > 23) return;
+      for (var d = 0; d < days; d++) {
+        var at = dayAt(now, d, hour);
+        if (at > end) break;
+        if (at > now) fn(at, ymdLocal(at));
+      }
+    }
+    function safe(fn) { try { fn(); } catch (e) {} }
+
+    var PL = src.plants;
+    if (PL && PL.core && Array.isArray(PL.sets) && PL.sets.length && PL.prefs) safe(function () {
+      var C = PL.core, title = tx("app.plants", "Plant Care");
+      each(PL.prefs.remind, function (at, ymd) {
+        var n = 0, names = [], outWater = false;
+        PL.sets.forEach(function (d) { var s = C.summary(d, ymd, PL.prefs.hemi); n += s.n; names = names.concat(s.names); outWater = outWater || s.outWater; });
+        if (!n) return;
+        var body = tx(names.length === 1 ? "n.plants.one" : "n.plants.other", names.length === 1 ? "Needs care: {names}" : "Need care: {names}",
+                      { names: andMore(names, 3, ", ") });
+        if (outWater && PL.wx && typeof C.weather === "function") {
+          var wx = null;
+          try { wx = C.weather(PL.wx.data, PL.wx.cache, PL.wx.pref, ymd, now); } catch (e) {}
+          if (wx && wx.rain) body += tx("n.plants.rain", ". Rain today: outdoor plants may not need water.");
+        }
+        push("plants", "due-" + ymd, at, title, body, "plants:today");
+      });
+    });
+
+    var CH = src.chores;
+    if (CH && CH.core && Array.isArray(CH.wheels) && CH.wheels.length && CH.prefs) safe(function () {
+      var C = CH.core, title = tx("app.chores", "Chore Wheel");
+      each(CH.prefs.rh, function (at, ymd) {
+        var names = [], late = 0, dn = C.localDn(new Date(at));
+        CH.wheels.forEach(function (w) { if (!w || !w.me) return; var s = C.summary(w.data, dn, w.me); names = names.concat(s.names); late += s.late; });
+        if (!names.length && !late) return;
+        var body = names.length ? tx("n.chores.today", "Today: {names}", { names: andMore(names, 3, ", ") }) : "";
+        if (late) { var lt = txn("n.chores.late", late, ["{n} late", "{n} late"]); body = body ? body + " · " + lt : lt; }
+        push("chores", "today-" + ymd, at, title, body, "chores:today");
+      });
+    });
+
+    var GA = src.garage;
+    if (GA && GA.core && GA.data && Array.isArray(GA.data.vehicles) && GA.data.vehicles.length && GA.prefs) safe(function () {
+      var C = GA.core, data = C.merge(GA.data, GA.data), title = tx("app.garage", "Garage");
+      var notified = GA.notified && typeof GA.notified === "object" ? GA.notified : {};
+      each(GA.prefs.remind, function (at, ymd) {
+        var all = C.alerts(data, ymd, GA.prefs), fresh = C.toNotify(all, notified), next = {};
+        all.forEach(function (a) { if (Object.prototype.hasOwnProperty.call(notified, a.key)) next[a.key] = notified[a.key]; });
+        fresh.forEach(function (a) { next[a.key] = a.step; });
+        notified = next;                                // the next day starts from what this one said
+        if (!fresh.length) return;
+        var lines = fresh.slice(0, 3).map(function (a) { return C.alertLine(a, data, lang2); });
+        if (fresh.length > 3) lines.push(tx("n.andmore", "and {n} more", { n: fresh.length - 3 }));
+        push("garage", "alerts-" + ymd + "-" + djb2(fresh.map(function (a) { return a.key + ":" + a.step; }).join("|")),
+             at, title, lines.join(" · "), "garage:upcoming");
+      });
+    });
+
+    var PC = src.petcare;
+    if (PC && PC.core && PC.data && Array.isArray(PC.data.pets) && PC.data.pets.length && PC.prefs) safe(function () {
+      var C = PC.core, data = C.merge(PC.data, PC.data), title = tx("app.petcare", "Pet Health Book");
+      var CARE = { bath: 1, nails: 1, brush: 1, teeth: 1, ears: 1, litter: 1, cage: 1, tank: 1 };
+      function what(it) {
+        if (it.kind === "vacc") return it.label;
+        if (it.kind === "deworm") return tx("n.pet.deworm", "deworming");
+        if (it.kind === "visit") return tx("n.pet.visit", "recheck");
+        if (it.kind === "med") return tx("n.pet.med", "last day: {name}", { name: it.label });
+        if (it.kind === "care") return CARE[it.sub] ? tx("n.pet.care." + it.sub, it.sub) : it.sub;
+        return tx("n.pet.food", "food runs out");
+      }
+      function when(d) {
+        if (d === 0) return tx("n.today", "today");
+        if (d === 1) return tx("n.tomorrow", "tomorrow");
+        if (d > 1) return tx("n.indays", "in {n} days", { n: d });
+        return txn("n.late", -d, ["{n} day late", "{n} days late"]);
+      }
+      var fired = PC.fired && typeof PC.fired === "object" ? PC.fired : {};
+      each(PC.prefs.remind, function (at, ymd) {
+        var res = C.reminders(data, ymd, PC.prefs.lead, fired);
+        fired = res.fired;
+        if (!res.items.length) return;
+        var parts = res.items.slice(0, 4).map(function (it) { return it.pet.name + ": " + what(it) + " " + when(it.diff); });
+        if (res.items.length > 4) parts.push(tx("n.andmore", "and {n} more", { n: res.items.length - 4 }));
+        push("petcare", "due-" + ymd + "-" + h31(res.items.map(function (it) { return it.key + "@" + it.due; }).join("|")),
+             at, title, parts.join(" · "), "petcare:today");
+      });
+      // Doses (prefs.doses): one notice at each dose time, grouped by time.
+      if (PC.prefs.doses && typeof C.dosesDue === "function") {
+        var times = {};
+        (data.recs || []).forEach(function (r) { if (r && r.k === "med" && Array.isArray(r.tm)) r.tm.forEach(function (hm) { if (/^\d\d:\d\d$/.test(hm)) times[hm] = 1; }); });
+        Object.keys(times).sort().forEach(function (hm) {
+          var mins = +hm.slice(0, 2) * 60 + (+hm.slice(3));
+          for (var d = 0; d < days; d++) {
+            var day = new Date(dayAt(now, d, 0)); day.setHours(Math.floor(mins / 60), mins % 60, 0, 0);
+            var at = day.getTime();
+            if (at > end) break;
+            if (at <= now) continue;
+            var list = C.dosesDue(data, ymdLocal(at), mins, {}).items.filter(function (it) { return it.tm === hm; });
+            if (!list.length) continue;
+            var body = list.slice(0, 4).map(function (it) { return it.pet.name + ": " + it.rec.n + (it.rec.ds ? " (" + it.rec.ds + ")" : ""); });
+            if (list.length > 4) body.push(tx("n.andmore", "and {n} more", { n: list.length - 4 }));
+            push("petcare", "dose-" + list[0].key.slice(-16) + "-" + h31(list.map(function (it) { return it.key; }).join("|")),
+                 at, title + " · " + tx("n.pet.dose", "dose {time}", { time: hm }), body.join(" · "),
+                 "petcare:" + (list.length === 1 ? list[0].pet.id : "today"));
+          }
+        });
+      }
+    });
+
+    // CRM: a follow-up rings on its day at its time (none: 09:00, the
+    // To-Do hour; the engine says it from midnight on while orOS runs).
+    var CR = src.crm;
+    if (CR && CR.core && CR.data && Array.isArray(CR.data.fups) && CR.data.fups.length) safe(function () {
+      var C = CR.core, data = C.norm(CR.data);
+      data.fups.forEach(function (f) {
+        if (!f || f.done || typeof f.d !== "string") return;
+        var p = f.d.split("-"), hm = typeof f.t === "string" && /^\d\d:\d\d$/.test(f.t) ? f.t : "";
+        var at = new Date(+p[0], +p[1] - 1, +p[2], hm ? +hm.slice(0, 2) : TODO_HOUR, hm ? +hm.slice(3) : 0, 0, 0).getTime();
+        if (!(at > now) || at > end) return;
+        var txt = C.reminderText(data, f, f.d, lang2);
+        push("crm", "fup-" + f.id + "|" + f.d + (f.t || ""), at, txt.title, txt.body, "crm:" + f.id);
+      });
+    });
+
+    // Billing: documents overdue or due within 2 days, at 09:00.
+    var IV = src.invoices;
+    if (IV && IV.core && IV.data && typeof IV.core.reminder === "function") safe(function () {
+      var title = tx("app.invoices", "Billing");
+      each(TODO_HOUR, function (at, ymd) {
+        var r = IV.core.reminder(IV.data, ymd, 2);
+        if (!r) return;
+        var parts = [];
+        if (r.late) parts.push(txn("n.inv.late", r.late, ["{n} overdue", "{n} overdue"]));
+        if (r.soon) parts.push(txn("n.inv.soon", r.soon, ["{n} due soon", "{n} due soon"]));
+        push("invoices", r.key, at, title,
+             txn("n.inv.body", r.late + r.soon, ["{parts} (unpaid document)", "{parts} (unpaid documents)"], { parts: parts.join(" · ") }),
+             "invoices:" + r.first);
+      });
+    });
+
+    var KB = src.kanban;
+    if (KB && KB.core && KB.data && typeof KB.core.dueCards === "function") safe(function () {
+      var title = tx("app.kanban", "Kanban");
+      each(TODO_HOUR, function (at, ymd) {
+        var s = kanbanDue(KB.core, KB.data, ymd);
+        if (!s.count) return;
+        push("kanban", "due-" + ymd + "-" + s.count, at, title,
+             txn("rem.kanban", s.count, ["{n} card is due or overdue", "{n} cards are due or overdue"]), s.link);
+      });
+    });
+
+    var ST = src.stickies;
+    if (ST && ST.core && ST.data && Array.isArray(ST.data.notes)) safe(function () {
+      var C = ST.core, title = str(ST.title, 60) || tx("app.stickies", "Sticky Notes");
+      ST.data.notes.forEach(function (n) {
+        if (!n || n.faded || !n.ring || typeof n.ring.at !== "number" || !(n.ring.at > now) || n.ring.at > end) return;
+        push("stickies", "ring-" + n.id + "-" + n.ring.at, n.ring.at, title,
+             (typeof C.firstLine === "function" ? C.firstLine(n.text) : "") || str(ST.empty, 40) || "(empty)", "stickies:" + n.id);
+      });
+    });
+  }
+  // Kanban cards due on `ymd` or before, outside each board's last
+  // ("Done") column, and the link of the earliest one: the same count
+  // for the phone row and shell.js kanbanCheckTick.
+  function kanbanDue(core, data, ymd) {
+    var list = core.dueCards(data, null, ymd, { skipLast: true }), first = null;
+    list.forEach(function (x) { if (!first || x.card.due < first.card.due) first = x; });
+    return { count: list.length,
+             link: first ? "kanban:" + first.board.id + "/" + first.col.id + "/" + first.card.id : "system:open:kanban" };
   }
 
   // Home-screen widget (v4): the Today summary (today/host.js build)
@@ -987,7 +1211,7 @@
   var api = { contactRows: contactRows, eventRows: eventRows, feedRows: feedRows, rrule: rrule, hash: fnv,
               applyCalendarChanges: applyCalendarChanges, eventIn: eventIn,
               applyContactChanges: applyContactChanges, splitTaken: splitTaken, takenKey: takenKey,
-              reminderRows: reminderRows, widgetData: widgetData, agendaData: agendaData, tickTask: tickTask,
+              reminderRows: reminderRows, kanbanDue: kanbanDue, widgetData: widgetData, agendaData: agendaData, tickTask: tickTask,
               healthOut: healthOut, healthIn: healthIn };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root || !root.document || !root.addEventListener) return;
@@ -1397,10 +1621,67 @@
     } catch (e) {}
     function tr(k, d) { var v = typeof T === "function" ? T(k) : ""; return v && v !== k ? v : d; }
     var lang = (document.documentElement.lang || "en").slice(0, 2);
-    return { alarms: alarms, water: water, todo: todo, habits: habits, health: health, lang: lang,
-             alarmTitle: tr("alarm.title", ""), todoTitle: tr("app.todo", "To-Do"),
-             habitsTitle: tr("app.habits", "Habits"),
-             healthTitle: tr("app.health", "Health") };
+    var out = { alarms: alarms, water: water, todo: todo, habits: habits, health: health, lang: lang,
+                alarmTitle: tr("alarm.title", ""), todoTitle: tr("app.todo", "To-Do"),
+                habitsTitle: tr("app.habits", "Habits"),
+                healthTitle: tr("app.health", "Health") };
+    moreSource(out);
+    return out;
+  }
+  // v12: the eight more apps, read as their shell engines read them.
+  function readLS(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+  function moreSource(out) {
+    var R = root;
+    try {
+      var PC = R.OrosPlantsCore, PH = R.OrosPlantsHouse;
+      if (PC) {
+        var sets = [], raw = readLS("oros-plants-data");
+        if (PH) PH.readMirror(readLS(PH.MIRROR_KEY)).forEach(function (g) { if (g.own.plants.length) sets.push(g.own); });
+        if (raw && Array.isArray(raw.plants) && raw.plants.length) sets.unshift(PC.merge(raw, raw));
+        out.plants = { core: PC, sets: sets, prefs: PC.readPrefs(readLS("oros-plants-prefs")),
+                       wx: { data: readLS("oros-weatherapp-data"), cache: readLS("oros-weatherapp-cache"), pref: readLS("oros-weather") } };
+      }
+    } catch (e) {}
+    try {
+      var CC = R.OrosChoresCore, CHh = R.OrosChoresHouse;
+      if (CC) {
+        var cp = CC.readPrefs(readLS("oros-chores-prefs")), craw = readLS("oros-chores-data"), wheels = [];
+        if (CHh) wheels = CHh.readMirror(readLS(CHh.MIRROR_KEY));
+        if (cp.me && craw && Array.isArray(craw.tasks) && craw.tasks.length) wheels.unshift({ data: CC.mergeChores(craw, craw), me: cp.me });
+        out.chores = { core: CC, wheels: wheels.filter(function (w) { return w && w.me; }), prefs: cp };
+      }
+    } catch (e) {}
+    try {
+      var GC = R.OrosGarageCore;
+      if (GC) {
+        var graw = readLS("oros-garage-data");
+        if (R.OrosGarageHouse) graw = R.OrosGarageHouse.withShared(graw && Array.isArray(graw.vehicles) ? graw : null);
+        out.garage = { core: GC, data: graw, prefs: GC.readPrefs(readLS("oros-garage-prefs")), notified: readLS("oros-garage-notified") || {} };
+      }
+    } catch (e) {}
+    try {
+      var PCc = R.OrosPetcareCore;
+      if (PCc) {
+        var praw = readLS("oros-petcare-data");
+        if (R.OrosPetcareHouse) praw = R.OrosPetcareHouse.withShared(praw && Array.isArray(praw.pets) ? praw : null);
+        out.petcare = { core: PCc, data: praw, prefs: PCc.readPrefs(readLS("oros-petcare-prefs")), fired: readLS("oros-petcare-fired") || {} };
+      }
+    } catch (e) {}
+    try { if (R.OrosCrmCore) out.crm = { core: R.OrosCrmCore, data: readLS("oros-crm-data") }; } catch (e) {}
+    try {
+      var IC = R.OrosInvoicesCore, iraw = localStorage.getItem("oros-invoices-data");
+      if (IC && iraw) out.invoices = { core: IC, data: IC.parse(iraw) };
+    } catch (e) {}
+    try { if (R.OrosKanbanCore) out.kanban = { core: R.OrosKanbanCore, data: readLS("oros-kanban-data") }; } catch (e) {}
+    try {
+      var SC = R.StickiesCore, SH = R.orosStickies;
+      if (SC) {
+        var sdata = readLS("oros-stickies-data");          // stored copy: never flushes an open editor
+        out.stickies = { core: SC, data: sdata && typeof SC.merge === "function" ? SC.merge(sdata, null) : sdata,
+                         title: SH && typeof SH.text === "function" ? SH.text("note") : "",
+                         empty: SH && typeof SH.text === "function" ? SH.text("note.empty") : "" };
+      }
+    } catch (e) {}
   }
   // Calendar reminders ring here, whether or not the events are also
   // copied to the phone's Calendar (the copies carry no reminder).
@@ -1421,7 +1702,8 @@
       raw = [localStorage.getItem("oros-alarms"), localStorage.getItem("oros-water-data"),
              localStorage.getItem("oros-todo-data"), localStorage.getItem("oros-notifs"),
              localStorage.getItem("oros-habits-data"), localStorage.getItem("oros-calendar-data"),
-             localStorage.getItem("oros-health-data")].join("\n");
+             localStorage.getItem("oros-health-data")].join("\n") +
+            "\n" + MORE_KEYS.map(function (k) { return localStorage.getItem(k); }).join("\n");
     } catch (e) { return; }
     // Water rows depend on the hour too: recheck every 5 minutes.
     var veil = strictVeil();
@@ -1434,7 +1716,15 @@
     } catch (e) {}
     var items = reminderRows(reminderSource(), now).concat(calendarReminders(now))
       .filter(function (r) { return !shown[r.id]; })
-      .sort(function (a, b) { return a.at - b.at; }).slice(0, 100);
+      .sort(function (a, b) { return a.at - b.at; });
+    // v12: the notification settings count here too, as for Web Push
+    // (an app switched off in Settings › Notifications never rings).
+    try {
+      var N2 = root.orosNotifs;
+      if (N2 && N2.getAppToggle) items = items.filter(function (r) { return N2.getAppToggle(r.ns); });
+      if (N2 && N2.getSetting && !N2.getSetting("enabled", true)) items = [];
+    } catch (e) {}
+    items = items.slice(0, 100);
     if (veil) items = veilReminders(items);
     if (!send({ t: "reminders", seq: ++seq, items: items })) return;
     lastSent.reminders = key;
@@ -1620,6 +1910,7 @@
     },
     // The same reminder rows, for Web Push (webpush.js): a longer
     // horizon, rung by the browser's push service instead of the app.
+    kanbanDue: kanbanDue,             // v12: shell.js kanbanCheckTick counts the same cards
     reminderRows: function (now, hours, max) {
       var src = reminderSource();
       src.hours = hours; src.max = max;
