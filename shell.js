@@ -13246,7 +13246,7 @@
   // or Space on a focused button), as a rectangle: a menu row is gone
   // by the time the app opens.
   function zoomWire() {
-    if (zoom.wired || SOLO) return;
+    if (zoom.wired || SOLO || typeof document.addEventListener !== "function") return;
     zoom.wired = true;
     document.addEventListener("click", function (e) {
       var t = e.target && e.target.closest ? e.target.closest("[data-app], button, a, [role=button], [role=option], [role=menuitem], li") : null;
