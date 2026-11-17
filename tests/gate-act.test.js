@@ -125,7 +125,7 @@ test("closed orOS: the device runs only the changes the relay may queue", () => 
   assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) return \{ ok: false/, "applyQueue checks the list");
 });
 
-test("closed orOS: a queued deletion of items is asked on the device first, one question per call (7.43.00)", () => {
+test("closed orOS: a queued deletion of items is asked on the device first, one question per call (7.44.00)", () => {
   // Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με το orOS κλειστό»: 73 Calendar events in one change_item
   assert.equal(G.delCount("change_item", { ref: "r116155", action: "delete" }), 1);
   assert.equal(G.delCount("change_item", { refs: ["r116155", "oros:r110954", "r116155"], action: "delete" }), 2, "refs counted once each");

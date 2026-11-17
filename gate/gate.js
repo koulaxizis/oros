@@ -1813,7 +1813,7 @@
     return HELPERS.indexOf(a.v) >= HELPERS.indexOf(b.v) ? a : b;
   }
 
-  // 7.43.00: how many items a queued call deletes (0: none). change_item
+  // 7.44.00: how many items a queued call deletes (0: none). change_item
   // delete by ref (1), by refs (each), or changes with action delete;
   // budget_delete its ids. An unlink deletes no item; files_delete has
   // its own question (askFiles).
@@ -2349,7 +2349,7 @@
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
             if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
-            // 7.43.00 (Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με
+            // 7.44.00 (Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με
             // το orOS κλειστό»): a deletion of items (change_item delete, budget_delete)
             // waits like files_delete: always asked here (askQueued, one question per
             // call, whatever its size); hidden, locked or unanswered, it stays queued.
@@ -2854,7 +2854,7 @@
   // More than ASK_OVER deletions: the owner says yes on the device
   // within 20 s (the relay waits 25 s for the answer).
   function askDelete(n) {
-    if (preYes && n <= preYes) { preYes = 0; return Promise.resolve(true); }   // 7.43.00: a queued deletion the owner confirmed a moment ago
+    if (preYes && n <= preYes) { preYes = 0; return Promise.resolve(true); }   // 7.44.00: a queued deletion the owner confirmed a moment ago
     return new Promise(function (ok) {
       var settled = false, wrap = null;
       function end(v) { if (settled) return; settled = true; if (wrap) wrap.remove(); ok(v); }
@@ -2870,7 +2870,7 @@
   // F3: askLast tells a queued deletion "no" (Keep) from "none" (nobody
   // answered, or orOS hidden or locked: the deletion keeps waiting).
   var askLast = "";
-  // 7.43.00: a queued deletion of items: what goes (the app, up to 10
+  // 7.44.00: a queued deletion of items: what goes (the app, up to 10
   // titles from the frame's peek), Delete or Keep. → Promise<"yes" |
   // "no" | "none"> (none: no answer in 60 s, or orOS hidden or locked;
   // it stays queued and heldAgain asks again when orOS is on screen).

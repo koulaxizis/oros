@@ -9300,7 +9300,7 @@
       return { ok: true, items: out };
     });
   }
-  // 7.43.00: what these refs are ([{ a: app name, t: title }]), for the
+  // 7.44.00: what these refs are ([{ a: app name, t: title }]), for the
   // owner's question before a queued deletion (gate.js askQueued).
   function gatePeek(refs) {
     var names = {}, out = [];

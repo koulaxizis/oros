@@ -662,7 +662,7 @@ export function cancelPlan(pend, args, now) {
   }
   return { ids: out, asked: asked, other: other.filter((x) => busy.indexOf(x) < 0), busy: other.filter((x) => busy.indexOf(x) >= 0) };
 }
-// 7.43.00: a queued call that deletes items (an unlink deletes none);
+// 7.44.00: a queued call that deletes items (an unlink deletes none);
 // the device asks the owner before it runs one (gate.js askQueued).
 export function isDeletion(name, a) {
   const o = a && typeof a === "object" ? a : {};
@@ -1972,7 +1972,7 @@ export class GateBox {
       }
       if (REF_QUEUED.indexOf(name) >= 0) {
         // 5.96.00: changes by refs from the copy's index wait too; every
-        // ref's app must be one Claude may change. 7.43.00 (Chris 2026-11-11
+        // ref's app must be one Claude may change. 7.44.00 (Chris 2026-11-11
         // «Ρύθμισε το gate ώστε να δουλεύεις και με το orOS κλειστό»):
         // deletions wait too, for the owner's Delete on the device (gate.js applyQueue).
         const ix = indexOf(cp), refs = refsIn(args);
