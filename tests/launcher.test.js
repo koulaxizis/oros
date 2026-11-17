@@ -251,3 +251,16 @@ test("menu: merge is symmetric, idempotent and per app (R5 / R26)", () => {
     assert.equal(J(p), J(q));
   }
 });
+
+test("dockSide: the chosen edge on a large screen, the bottom on a small one", () => {
+  assert.deepEqual(L.POSITIONS, ["bottom", "left", "right", "top"]);
+  for (const p of ["left", "right", "top"]) {
+    assert.equal(L.dockSide(p, 1280, 800), p);
+    assert.equal(L.dockSide(p, 600, 480), p, "the limits themselves count as large");
+    assert.equal(L.dockSide(p, 599, 800), "bottom", "narrow (phone)");
+    assert.equal(L.dockSide(p, 740, 360), "bottom", "short (phone on its side)");
+  }
+  assert.equal(L.dockSide("bottom", 1280, 800), "bottom");
+  for (const junk of [undefined, null, "", "middle", "Left", 3, {}]) assert.equal(L.dockSide(junk, 1280, 800), "bottom");
+  assert.equal(L.dockSide("left", NaN, 800), "bottom");
+});

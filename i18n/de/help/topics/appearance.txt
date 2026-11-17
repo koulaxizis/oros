@@ -147,12 +147,13 @@ Tippe oder klicke auf das Symbol, um [Wetter](app:weather) zu öffnen; in Wetter
 Bist du offline oder ist der Wert älter als 3 Stunden, zeigt das Symbol eine durchgestrichene Wolke und keine Temperatur. orOS zeigt nie eine Temperatur, die es nicht hat. Die Wetterdaten kommen von Open-Meteo (siehe [Datenschutz](help:t/privacy)).
 
 ## Dock
-Das Dock ist eine Leiste mit deinen Lieblings-Apps am unteren Rand des Desktops. Füge eine App mit dem ☆ neben ihr im Menü hinzu. In den `Einstellungen` unter `Darstellung` › `Dock`:
+Das Dock ist eine Leiste mit deinen Lieblings-Apps an einem Rand des Desktops, unten, solange du keinen anderen wählst. Füge eine App mit dem ☆ neben ihr im Menü hinzu. In den `Einstellungen` unter `Darstellung` › `Dock`:
 - `Dock anzeigen` schaltet es an oder aus.
 - `Größe` ist `Klein`, `Mittel` oder `Groß`.
+- `Position` setzt es `Unten`, `Links`, `Rechts` oder `Oben` an den Bildschirm. Auf einem Handy oder in einem kleinen Fenster bleibt es unten; auf einem größeren Bildschirm geht es wieder an deine Wahl. An der Seite lässt sich ein langes Dock nach oben und unten scrollen.
 - `Stil` ändert sein Aussehen: `Klassisch`, `Glas`, `Milchglas`, `Rauch`, `Transparent`, `Deckend`, `3D-Regal` oder `Neon`.
 - `Beim Darüberfahren vergrößern` lässt Symbole unter der Maus wachsen (nur mit Maus oder Trackpad).
-- `Automatisch ausblenden` versteckt es, bis du die Maus an den unteren Rand bewegst oder auf einem Touchscreen auf den kleinen Griff tippst.
+- `Automatisch ausblenden` versteckt es, bis du die Maus an seinen Bildschirmrand bewegst oder auf einem Touchscreen auf den kleinen Griff tippst.
 - `Über offenen Apps zeigen` lässt es sichtbar, während eine App offen ist. Es ist aus, bis du es einschaltest, damit Apps den ganzen Bildschirm bekommen.
 
 ## Barrierefreiheit
