@@ -37,7 +37,6 @@ Transfer sends big files and whole folders from the orOS disk, or from this devi
 
 ## History
 - `History` lists the finished transfers, newest first: when, to or from which device, how many files and how big, and where they went. `Open` shows a folder that arrived on the orOS disk.
-- The menu's search box finds a transfer in the history by the names of its files and folders or by the other device. Choosing one opens the history here with that row marked.
 - The history keeps only the names of the top files and folders, never their contents, and syncs with your other devices. `Clear history` (press it twice) empties it everywhere.
 
 ## Privacy and limits

@@ -1,5 +1,5 @@
-// Universal search for Household, Label Maker, Ringtone Composer and
-// Transfer (gap review proposal 11, 2026-11-17). Plain node, no DOM:
+// Universal search for Household, Label Maker and Ringtone Composer
+// (gap review proposal 11, 2026-11-17; Transfer's provider is AS-SUM8). Plain node, no DOM:
 // providers read through ctx.readJSON over an in-memory storage, in
 // the real stored shape of each app; Household asks a fake engine.
 "use strict";
@@ -12,7 +12,7 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const S = require(path.join(ROOT, "search.js"));
 const P = (id) => require(path.join(ROOT, id, "search.js"));
-const IDS = ["household", "labels", "ringtones", "transfer"];
+const IDS = ["household", "labels", "ringtones"];   // Transfer: AS-SUM8 (#1095)
 
 function store(obj) {
   const m = new Map(Object.entries(obj).map(([k, v]) => [k, JSON.stringify(v)]));
@@ -82,30 +82,6 @@ test("ringtones: melodies by name, untitled ones under the placeholder (en/el), 
 test("ringtones app takes { melody } and opens the saved melody", () => {
   const src = fs.readFileSync(path.join(ROOT, "ringtones", "ringtones.js"), "utf8");
   assert.match(src, /typeof tg\.melody === "string"[\s\S]{0,200}C\.findMelody\(data, tg\.melody\)[\s\S]{0,120}openMelody\(x\)/);
-});
-
-// ---------- Transfer ----------
-test("transfer: history entries by file name and device, tombstones left out, { hist } target", async () => {
-  const st = store({ "oros-transfer-data": { ver: 1, items: [
-    { id: "tabc123456", at: 5000, dir: "recv", n: 3, bytes: 900, what: "Holiday photos, notes.txt", dev: "Chrome · Android", mode: "direct", dest: "disk", end: "done", folder: "" },
-    { id: "tdef123456", at: 4000, dir: "sent", n: 1, bytes: 10, what: "invoice.pdf", dev: "", mode: "relay", dest: "", end: "done", folder: "" },
-    { id: "tgone12345", at: 3000, dir: "sent", n: 1, bytes: 10, what: "Holiday old.zip", dev: "", end: "done" }
-  ], tombs: { tgone12345: 3500 } } });
-  const h = await find("transfer", st, "holiday");
-  assert.deepEqual(ids(h), ["tabc123456"]);
-  assert.equal(h[0].title, "Holiday photos, notes.txt");
-  assert.equal(h[0].text, "Holiday photos, notes.txt · Chrome · Android");
-  assert.equal(h[0].when, 5000);
-  assert.deepEqual(h[0].target, { hist: "tabc123456" });
-  assert.deepEqual(ids(await find("transfer", st, "android")), ["tabc123456"]);
-  assert.deepEqual(ids(await find("transfer", st, "invoice")), ["tdef123456"]);
-});
-
-test("transfer app takes { hist } and shows the History tab with the row", () => {
-  const src = fs.readFileSync(path.join(ROOT, "transfer", "app.js"), "utf8");
-  assert.match(src, /typeof target\.hist === "string"\) \{ showHist\(/);
-  assert.match(src, /function showHist\(id\) \{[\s\S]{0,120}tab\("hist"\)/);
-  assert.match(src, /li\.dataset\.id = x\.id;/);
 });
 
 // ---------- Household ----------

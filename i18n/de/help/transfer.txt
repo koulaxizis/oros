@@ -37,7 +37,6 @@ Transfer sendet große Dateien und ganze Ordner von der orOS-Disk oder von diese
 
 ## Verlauf
 - `Verlauf` listet die abgeschlossenen Übertragungen, die neuesten zuerst: wann, an oder von welchem Gerät, wie viele Dateien und wie groß, und wohin sie gingen. `Öffnen` zeigt einen Ordner, der auf der orOS-Disk angekommen ist.
-- Die Suche im Menü findet eine Übertragung im Verlauf über die Namen ihrer Dateien und Ordner oder über das andere Gerät. Wählst du eine, öffnet sich hier der Verlauf mit dieser Zeile markiert.
 - Der Verlauf behält nur die Namen der obersten Dateien und Ordner, nie ihren Inhalt, und synchronisiert sich mit deinen anderen Geräten. `Verlauf löschen` (zweimal drücken) leert ihn überall.
 
 ## Privatsphäre und Grenzen
