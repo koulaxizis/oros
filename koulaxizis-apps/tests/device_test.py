@@ -137,8 +137,9 @@ def main():
     # Android's own confirmation ("Do you want to install this app?").
     def confirm(root):
         for n in [] if root is None else root.iter("node"):
+            # Android's package installer, not the manager's own button.
             if n.get("text", "").lower() in ("install", "update") and n.get("package", "") != PKG \
-                    and n.get("class") == "android.widget.Button":
+                    and n.get("clickable") == "true":
                 return n
         return None
 
