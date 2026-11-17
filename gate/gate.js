@@ -2339,7 +2339,7 @@
     try { o = JSON.parse(text); } catch (e) { return; }
     if (!isObj(o) || !Array.isArray(o.cq) || !k || !pref().on) return;
     whenOpen(function () {
-      var done = [], files = false;
+      var done = [], files = false, held = [];
       o.cq.slice(0, 50).reduce(function (chain, it) {
         return chain.then(function () {
           if (!isObj(it) || typeof it.id !== "string") return;
@@ -2384,10 +2384,11 @@
               writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
               return res;
             });
-          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e !== HELD) done.push(it.id); });   // never in a loop
+          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e === HELD) held.push(it.id); else done.push(it.id); });   // never in a loop
         });
       }, Promise.resolve()).then(function () {
-        try { if (sock.readyState === 1) sock.send(JSON.stringify({ cqa: done })); } catch (e) {}
+        // 7.48.00: cqh = deletions held for the owner here; the box offers them to a device on screen
+        try { if (sock.readyState === 1) sock.send(JSON.stringify(held.length ? { cqa: done, cqh: held } : { cqa: done })); } catch (e) {}
         changed();
         copySoon(2000);
         if (files) fileCopySoon(60000);
@@ -2853,15 +2854,19 @@
   }
   // More than ASK_OVER deletions: the owner says yes on the device
   // within 20 s (the relay waits 25 s for the answer).
+  // 7.48.00: askLast says how it ended: "yes", "no" (Don't delete) or
+  // "none" (nobody at this screen: hidden, locked, the background host,
+  // or no answer in 20 s). A live deletion that ends "none" is not
+  // refused: onCall answers __held and the box queues it for a screen.
   function askDelete(n) {
-    if (preYes && n <= preYes) { preYes = 0; return Promise.resolve(true); }   // 7.44.00: a queued deletion the owner confirmed a moment ago
+    if (preYes && n <= preYes) { preYes = 0; askLast = "yes"; return Promise.resolve(true); }   // 7.44.00: a queued deletion the owner confirmed a moment ago
     return new Promise(function (ok) {
       var settled = false, wrap = null;
-      function end(v) { if (settled) return; settled = true; if (wrap) wrap.remove(); ok(v); }
-      if (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false); return; }
+      function end(v, how) { if (settled) return; settled = true; askLast = how; if (wrap) wrap.remove(); ok(v); }
+      if (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
       wrap = dialog(tr("gate.del.title"), tr("gate.del.body").replace("{n}", String(n)), "", tr("gate.del.no"), tr("gate.del.yes"),
-        function () { end(false); }, function () { end(true); });
-      setTimeout(function () { end(false); }, 20000);
+        function () { end(false, "no"); }, function () { end(true, "yes"); });
+      setTimeout(function () { end(false, "none"); }, 20000);
     });
   }
 
@@ -3259,7 +3264,17 @@
       try { sock.send(JSON.stringify({ r: q.q, ok: false, c: "late" })); } catch (e) {}
       return;
     }
-    run(q.n, q.a).then(function (res) { if (res && res.ok && q.n !== "__tools") ranAdd(q.q); done(res); }, function () { done({ ok: false, c: "The call failed on the device." }); });
+    askLast = "";
+    run(q.n, q.a).then(function (res) {
+      if (res && res.ok && q.n !== "__tools") ranAdd(q.q);
+      // 7.48.00: a deletion this screen could not ask about (nobody here)
+      // is handed back to the box, which queues it for a device on screen.
+      if (res && !res.ok && askLast === "none" && core.delCount(q.n, q.a)) {
+        try { sock.send(JSON.stringify({ r: q.q, ok: false, c: "__held" })); } catch (e) {}
+        return;
+      }
+      done(res);
+    }, function () { done({ ok: false, c: "The call failed on the device." }); });
   }
 
   /* ---------- API for Settings ---------- */
