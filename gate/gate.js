@@ -1813,7 +1813,39 @@
     return HELPERS.indexOf(a.v) >= HELPERS.indexOf(b.v) ? a : b;
   }
 
-  var core = { NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
+  // 7.44.00: how many items a queued call deletes (0: none). change_item
+  // delete by ref (1), by refs (each), or changes with action delete;
+  // budget_delete its ids. An unlink deletes no item; files_delete has
+  // its own question (askFiles).
+  function delCount(name, a) {
+    if (!isObj(a)) return 0;
+    if (name === "budget_delete") return Array.isArray(a.ids) ? Math.max(1, a.ids.length) : 1;
+    if (name !== "change_item") return 0;
+    if (Array.isArray(a.changes)) return a.changes.filter(function (c) { return isObj(c) && c.action === "delete"; }).length;
+    if (a.action !== "delete") return 0;
+    return Array.isArray(a.refs) ? Math.max(1, refsOf(a).length) : 1;
+  }
+  function refsOf(a) {
+    var out = [];
+    function add(v) { v = String(v == null ? "" : v).replace(/^oros:/, "").trim(); if ((/^r\d{1,9}$/.test(v) || /^p-[A-Za-z0-9_-]{16}\.\d{1,2}$/.test(v)) && out.indexOf(v) < 0) out.push(v); }
+    if (!isObj(a)) return out;
+    if (Array.isArray(a.refs)) a.refs.forEach(add); else add(a.ref);
+    if (Array.isArray(a.changes)) a.changes.forEach(function (c) { if (isObj(c) && c.action === "delete") add(c.ref); });
+    return out;
+  }
+  // The question's words: the app(s) and up to 10 titles, one per line,
+  // from the Assistant frame's peek ([{ a: app name, t: title }]).
+  function delWhat(name, items, n, more) {
+    if (name === "budget_delete") return { app: "Budget", list: "" };
+    var l = Array.isArray(items) ? items.filter(function (x) { return isObj(x) && typeof x.t === "string"; }) : [];
+    var apps = [];
+    l.forEach(function (x) { var a = String(x.a || ""); if (a && apps.indexOf(a) < 0) apps.push(a); });
+    var shown = l.slice(0, 10), list = shown.map(function (x) { return x.t.slice(0, 100); }).join("\n");
+    if (n > shown.length && shown.length) list += "\n" + String(more || "+{n}").replace("{n}", String(n - shown.length));
+    return { app: apps.join(", "), list: list };
+  }
+
+  var core = { delCount: delCount, refsOf: refsOf, delWhat: delWhat, NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
@@ -2296,7 +2328,7 @@
   // with the same rules as a live call (the switches and a pause as they
   // are now), then the box is told which ones are done.
   // F3: queued deletions waiting for the owner (id → queue item).
-  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 };
+  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 }, DECL = { ok: false, c: "declined" };
   function heldAgain() {
     var ids = Object.keys(cqHeld);
     if (!ids.length || !ws || ws.readyState !== 1 || document.visibilityState !== "visible") return;
@@ -2317,7 +2349,12 @@
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
             if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
-            if (x.n === "change_item" && isObj(x.a) && (x.a.action === "delete" || (Array.isArray(x.a.changes) && x.a.changes.some(function (ch) { return isObj(ch) && ch.action === "delete"; })))) return { ok: false, c: "refused" };
+            // 7.44.00 (Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με
+            // το orOS κλειστό»): a deletion of items (change_item delete, budget_delete)
+            // waits like files_delete: always asked here (askQueued, one question per
+            // call, whatever its size); hidden, locked or unanswered, it stays queued.
+            var nDel = core.delCount(x.n, x.a);
+            if (nDel && (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()))) { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }
             // F3: a deletion waits for the owner's Delete on this device; hidden,
             // locked or unanswered, it stays queued (offered again when orOS is
             // on screen, and on the next connect). Writes keep a conflict copy.
@@ -2326,7 +2363,18 @@
             cqBusy[it.id] = 1;
             askLast = "";
             var at = queuedAt(x.t, Date.now());       // PEND-1 (e2): the time Claude asked
-            return run(x.n, x.a, { at: at }).then(function (res) {
+            return (nDel ? askQueued(x, nDel) : Promise.resolve("yes")).then(function (how) {
+              if (how === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // nobody answered: asked again later
+              if (how === "no") {                       // Keep: dropped, logged, nothing deleted
+                delete cqBusy[it.id]; delete cqHeld[it.id];
+                writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), { t: Date.now(), n: String(x.n).slice(0, 20), a: [], k: 0, ok: 0, q: 1 }));
+                return DECL;
+              }
+              preYes = nDel;                            // the owner just said Delete to these: no second question
+              askLast = "";
+              return run(x.n, x.a, { at: at }).then(function (res) { preYes = 0; return res; }, function (e) { preYes = 0; throw e; });
+            }).then(function (res) {
+              if (res === DECL) return res;
               delete cqBusy[it.id];
               if (res && res.ok && res.u) chgTag(res.u, it.id, at, res.made);   // PEND-1: q, p (items by index), at
               if (x.n === "files_delete" && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
@@ -2806,6 +2854,7 @@
   // More than ASK_OVER deletions: the owner says yes on the device
   // within 20 s (the relay waits 25 s for the answer).
   function askDelete(n) {
+    if (preYes && n <= preYes) { preYes = 0; return Promise.resolve(true); }   // 7.44.00: a queued deletion the owner confirmed a moment ago
     return new Promise(function (ok) {
       var settled = false, wrap = null;
       function end(v) { if (settled) return; settled = true; if (wrap) wrap.remove(); ok(v); }
@@ -2821,6 +2870,25 @@
   // F3: askLast tells a queued deletion "no" (Keep) from "none" (nobody
   // answered, or orOS hidden or locked: the deletion keeps waiting).
   var askLast = "";
+  // 7.44.00: a queued deletion of items: what goes (the app, up to 10
+  // titles from the frame's peek), Delete or Keep. → Promise<"yes" |
+  // "no" | "none"> (none: no answer in 60 s, or orOS hidden or locked;
+  // it stays queued and heldAgain asks again when orOS is on screen).
+  var preYes = 0;
+  function askQueued(x, n) {
+    var what = x.n === "change_item" ? actFrame().then(function (F) { return F && typeof F.peek === "function" ? F.peek(core.refsOf(x.a)) : []; }, function () { return []; }) : Promise.resolve([]);
+    return what.then(function (items) {
+      return new Promise(function (ok) {
+        var settled = false, wrap = null, w = core.delWhat(x.n, items, n, tr("gate.fdel.more"));
+        function end(v) { if (settled) return; settled = true; askLast = v; if (wrap) wrap.remove(); ok(v); }
+        if (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end("none"); return; }
+        var body = tr("gate.qdel.body").replace("{n}", String(n)).replace("{app}", w.app || "orOS");
+        wrap = dialog(tr("gate.qdel.title"), body, w.list, tr("gate.del.no"), tr("gate.del.yes"),
+          function () { end("no"); }, function () { end("yes"); });
+        setTimeout(function () { end("none"); }, 60000);
+      });
+    });
+  }
   function askFiles(names) {
     return new Promise(function (ok) {
       var settled = false, wrap = null, list = Array.isArray(names) ? names.map(String) : [];
