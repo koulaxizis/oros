@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.42.00
+- **Share files to Transfer and Scanner & PDF:** installed as their own apps, orOS Transfer takes any files you share (up to ten) ready to send, and orOS Scanner & PDF opens PDFs and pictures from Share and Open with, as pages.
+- **New icon shortcuts:** `Send files` for orOS Transfer and `New form` for orOS Forms.
+- **draw.io and Visio files open from your system:** with orOS installed, `Open with` › orOS opens a .drawio or .vsdx file in Whiteboard.
+
 ## Version 7.41.00
 - **Send files to more apps:** `Send to an app…` now hands files to Transfer, Photo Lab, Scanner & PDF, Library, Music and Atelier, and a picture can become the wallpaper of this device (it asks first).
 - **Studio, Screen Capture and Layout send too:** a mix, a screenshot or recording, and a Layout PDF go straight to `Send to an app…`.

@@ -140,6 +140,8 @@ Beim ersten Mal wird die Texterkennung (Tesseract, etwa 7 MB mit Griechisch und 
 PDFs, die du in Dateien › PDF speicherst, findest du in der orOS-Suche über ihren Namen und den aus ihnen gelesenen Text. Wählst du eins, öffnet es sich hier. Die Liste bleibt auf diesem Gerät (bis zu 100 PDFs) und wird nie synchronisiert; ein PDF, das du in Dateien löschst oder verschiebst, fällt heraus. `Vergessen` in `Optionen` leert sie.
 
 ## Aus Dateien
+Mit installiertem orOS oder orOS Scanner & PDF öffnet sich ein PDF oder Bild auch aus deinem System hier: `Öffnen mit` › orOS Scanner & PDF unter Windows und Linux oder `Teilen` › orOS Scanner & PDF auf Android (bis zu zehn Dateien auf einmal). Im ganzen orOS öffnen sich PDFs weiter in der Bibliothek, außer du wählst Scanner & PDF.
+
 Wähle in Dateien ein oder mehrere PDFs oder mehrere Bilder aus und wähle `In Scanner & PDF öffnen` im Menü oder in der Auswahlleiste. Die App öffnet sich mit ihren Seiten, in der Reihenfolge der Auswahl.
 
 ## Tastenkürzel

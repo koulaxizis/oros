@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v7.41.00";
+var CACHE_VERSION = "oros-v7.42.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
@@ -2702,11 +2702,21 @@ function shareTargetPost(request) {
     var f = files[0];
     if (f.size > SHARE_MAX) return go("share-files=big");
     var id = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
-    var headers = { "Content-Type": f.type || "application/octet-stream",
-                    "X-Name": encodeURIComponent(String(f.name || "file").slice(0, 255)) };
+    function hdr(x) {
+      return { "Content-Type": x.type || "application/octet-stream",
+               "X-Name": encodeURIComponent(String(x.name || "file").slice(0, 255)) };
+    }
+    var headers = hdr(f);
     if (files.length > 1) headers["X-More"] = "1";
+    // SHARE-MANY (wave 2 of the files gap review): the files after the
+    // first wait too, at /__share/<id>/<n> (≤ 10 in all, each ≤
+    // SHARE_MAX). Only an app that takes several (single Transfer)
+    // reads them; the inbox is emptied after every read either way.
+    var more = files.slice(1, 10).filter(function (x) { return x.size <= SHARE_MAX; });
     return caches.open(SHARE_INBOX).then(function (c) {
-      return c.put("/__share/" + id, new Response(f, { headers: headers }));
+      return c.put("/__share/" + id, new Response(f, { headers: headers })).then(function () {
+        return Promise.all(more.map(function (x, i) { return c.put("/__share/" + id + "/" + (i + 1), new Response(x, { headers: hdr(x) })); }));
+      });
     }).then(function () { return go("share-files=" + id); });
   }).catch(function () { return go(""); });
 }

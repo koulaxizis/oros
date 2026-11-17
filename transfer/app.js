@@ -1285,8 +1285,31 @@
     });
   }
   // A link or another app hands over a code: { receive: code }
+  // Files shared with the single app / opened with it (fileopen.js
+  // deliverAll, BR-FO-4 tokens): { openFiles: [{ token }] } or one
+  // { openFile: { token } }; they join the Send list, nothing goes
+  // before Create link. { tab: "send" }: the icon shortcut "Send files".
+  function takeHanded(list) {
+    var p = null;
+    try { p = window.parent; } catch (e) { p = null; }
+    if (!p || p === window || typeof p.__orosTakeFile !== "function") return;
+    var files = [];
+    list.slice(0, 10).forEach(function (o) {
+      if (!o || typeof o.token !== "string") return;
+      var f = null;
+      try { f = p.__orosTakeFile(o.token.slice(0, 200)); } catch (e) { f = null; }
+      if (f && typeof f.size === "number") files.push(f);
+    });
+    if (!files.length || sender) return;
+    tab("send");
+    if (!$("share").hidden) { chosen = []; expanded = null; show("share", false); show("pick", true); }
+    addFiles(files);
+  }
   window.__orosOpenAt = function (target) {
     if (target && Array.isArray(target.send)) { takeSend(target.send); return; }
+    if (target && Array.isArray(target.openFiles)) { takeHanded(target.openFiles); return; }
+    if (target && target.openFile && typeof target.openFile === "object") { takeHanded([target.openFile]); return; }
+    if (target && target.tab === "send") { if ($("tab-send")) tab("send"); return; }
     var c = target && typeof target.receive === "string" ? C.normCode(target.receive) : "";
     var link = target && X && X.okLink(target.link) ? target.link : "";
     if (!c) return;

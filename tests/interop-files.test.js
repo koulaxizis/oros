@@ -26,7 +26,11 @@ test("insideFor: the table's apps, plus Music for songs (inside orOS only)", () 
   // Songs never reach the system's "Open with" (the manifest).
   const exts = [];
   FO.manifestHandlers().forEach((h) => Object.values(h.accept).forEach((l) => exts.push(...l)));
-  FO.INSIDE.forEach((h) => h.exts.forEach((x) => assert.ok(!exts.includes(x), x + " is not in the manifest")));
+  // (Scanner & PDF is only a second choice for PDFs inside orOS; the whole orOS keeps Library for .pdf.)
+  FO.INSIDE.filter((h) => h.app !== "scanpdf").forEach((h) => h.exts.forEach((x) => assert.ok(!exts.includes(x), x + " is not in the manifest")));
+  assert.deepEqual(FO.insideFor(".pdf"), ["library", "scanpdf"]);
+  assert.deepEqual(FO.insideFor(".png"), ["photolab"]);
+  assert.ok(!FO.manifestHandlers().some((h) => /file-open=scanpdf$/.test(h.action)));
 });
 
 test("chooseInside: saved choice, the only app, or ask", () => {

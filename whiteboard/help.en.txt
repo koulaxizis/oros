@@ -51,6 +51,7 @@ Whiteboard is an endless board for ideas: sticky notes, text, shapes, arrows tha
 - `Align and space` lines the selection up by its left, centre or right edges, or its top, middle or bottom edges. With three or more, `Same space across` and `Same space down` leave the same gap between each two, the first and last staying put.
 
 ## draw.io, Visio and Mermaid
+- With orOS installed from Chrome or Edge, a .drawio or .vsdx file also opens from your system: `Open with` › orOS opens it here, the same way.
 - `More` › `Open a draw.io or Visio file…` opens a .drawio file (also compressed ones, .xml and .drawio.svg) from draw.io or diagrams.net. Each page becomes a new board: flowchart, UML and network shapes become the matching diagram shapes, swimlanes become frames, lines stay joined to their shapes with their heads and right angles, and colours take the nearest of the board's ten. Shapes it does not know come in as plain rectangles with their text, and it tells you how many.
 - `Export` › `draw.io` saves the board (or the selection) as a .drawio file that opens in draw.io and diagrams.net; brought back into Whiteboard it is the same as before.
 - `More` › `Draw from Mermaid text…` turns a Mermaid flowchart (it starts with `graph TD` or `flowchart LR`) into shapes and arrows, laid out as a flow; `subgraph` blocks become frames. The Assistant can do the same.
