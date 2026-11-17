@@ -5305,6 +5305,7 @@
   appFrames().forEach(extWireFrame);
   appFrames().forEach(a11yWireFrame);
   if (window.orosClip) appFrames().forEach(window.orosClip.wire);   // CLIP-1
+  if (window.orosTextRepl) appFrames().forEach(window.orosTextRepl.wire);   // TEXTREPL-1
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -12926,6 +12927,7 @@
     extWireFrame(f);
     a11yWireFrame(f);
     if (window.orosClip) window.orosClip.wire(f);   // CLIP-1
+    if (window.orosTextRepl) window.orosTextRepl.wire(f);   // TEXTREPL-1
     return f;
   }
   function mtDrop(el) {
@@ -16193,6 +16195,16 @@
       toast: function (kind, msg) { scToast(kind, msg); }
     });
     window.orosClip.onChange(settingsNotify);
+  }
+  // Text replacements (textrepl.js, TEXTREPL-1): ";addr" + space becomes
+  // the whole text in every app's text fields; synced (slice "textrepl"),
+  // edited in Settings › Language. A single app gets it too.
+  if (window.orosTextRepl) {
+    window.orosTextRepl.attach({
+      lang: function () { return state.lang || "en"; },   // {date}/{time} in the orOS language
+      toast: function (kind, msg) { scToast(kind, msg); }
+    });
+    window.orosTextRepl.onChange(settingsNotify);
   }
   // Emoji picker (emoji.js, CLIP-1 W3): Ctrl+Alt+Shift+. and Quick settings.
   // Not a start-up script (the quality gate's boot budget): this stand-in

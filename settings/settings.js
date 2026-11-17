@@ -3454,6 +3454,7 @@
     host.appendChild(c1);
 
     if (s.osk) secOsk(host, s.osk);
+    if (textRepl()) secTextRepl(host);
 
     // Help translate (settings/translate.js, loaded on demand).
     if (window.orosI18n && window.orosI18n.LANGS.some(function (l) { return l.code !== "en" && l.code !== "el"; })) {
@@ -3562,6 +3563,110 @@
       c.appendChild(list);
       c.appendChild(el("p", "hint", t("o.layouts.hint")));
     }
+    host.appendChild(c);
+  }
+
+  // Text replacements (textrepl.js in the shell, TEXTREPL-1): codes and
+  // their texts, synced. The editor keeps its draft here so a repaint
+  // (a sync, another setting) never takes what is being typed. It is
+  // marked data-oros-noexpand (and Settings is never wired anyway), so
+  // typing a code into the text never replaces it.
+  function textRepl() {
+    var p = parentWin();
+    try {
+      var R = p && p.orosTextRepl;
+      return (R && typeof R.list === "function" && typeof R.put === "function") ? R : null;
+    } catch (e) { return null; }
+  }
+  var rpDraft = { id: "", k: "", t: "", err: "" }, rpQ = "";
+  function secTextRepl(host) {
+    var R = textRepl();
+    var c = card(t("rp.title"), "textrepl");
+    c.setAttribute("data-oros-noexpand", "");
+    c.appendChild(el("p", "hint", t("rp.hint")));
+    c.appendChild(el("p", "hint", t("rp.hint.ph")));
+    if (R.paused && R.paused()) c.appendChild(el("p", "hint warn", t("rp.paused")));
+
+    // The form: code + text, Add (or Save / Cancel while editing).
+    var form = el("div", "rp-form");
+    var code = el("input");
+    code.id = "f-rp-code";
+    code.type = "text";
+    code.autocomplete = "off";
+    code.spellcheck = false;
+    code.maxLength = (R.limits && R.limits.code) || 32;
+    code.placeholder = t("rp.code.ph");
+    code.value = rpDraft.k;
+    code.setAttribute("data-k", "rp:code");
+    code.addEventListener("input", function () { rpDraft.k = code.value; });
+    form.appendChild(labelled(t("rp.code"), "rp-code", code));
+    var text = el("textarea");
+    text.id = "f-rp-text";
+    text.rows = 3;
+    text.maxLength = (R.limits && R.limits.text) || 4000;
+    text.placeholder = t("rp.text.ph");
+    text.value = rpDraft.t;
+    text.setAttribute("data-k", "rp:text");
+    text.addEventListener("input", function () { rpDraft.t = text.value; });
+    form.appendChild(labelled(t("rp.text"), "rp-text", text));
+    if (rpDraft.err) {
+      var err = el("p", "msg msg-err", t("rp.err." + rpDraft.err));
+      err.setAttribute("role", "alert");
+      form.appendChild(err);
+    }
+    function save() {
+      var why = R.put({ id: rpDraft.id || undefined, k: rpDraft.k, t: rpDraft.t });
+      rpDraft = why ? { id: rpDraft.id, k: rpDraft.k, t: rpDraft.t, err: why } : { id: "", k: "", t: "", err: "" };
+      render();
+      if (!why) { var f = $("f-rp-code"); if (f) f.focus(); }
+    }
+    code.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); text.focus(); } });
+    form.appendChild(actions(
+      button(rpDraft.id ? t("rp.save") : t("rp.add"), "rp:save", save, "primary"),
+      rpDraft.id ? button(t("rp.cancel"), "rp:cancel", function () { rpDraft = { id: "", k: "", t: "", err: "" }; render(); }) : null));
+    c.appendChild(form);
+
+    // The list: search once there are more than 8, then one row each.
+    var all = R.list(""), dup = R.dupes ? R.dupes() : {};
+    if (all.length > 8) {
+      var q = el("input", "rp-q");
+      q.type = "search";
+      q.id = "f-rp-q";
+      q.placeholder = t("rp.search");
+      q.setAttribute("aria-label", t("rp.search"));
+      q.value = rpQ;
+      q.setAttribute("data-k", "rp:q");
+      q.addEventListener("input", function () { rpQ = q.value; render(); });
+      c.appendChild(q);
+    }
+    var shown = rpQ ? R.list(rpQ) : all;
+    if (!all.length) c.appendChild(el("p", "hint", t("rp.empty")));
+    else if (!shown.length) c.appendChild(el("p", "hint", t("rp.nomatch")));
+    var ul = el("ul", "rp-list");
+    shown.forEach(function (it) {
+      var li = el("li", "rp-item");
+      var head = el("div", "rp-main");
+      head.appendChild(el("code", "rp-code", it.k));
+      var one = it.t.replace(/\s+/g, " ").trim();
+      head.appendChild(el("span", "rp-text", one.length > 90 ? one.slice(0, 89) + "…" : one));
+      li.appendChild(head);
+      if (dup[it.k]) li.appendChild(el("p", "hint warn", t("rp.dupe")));
+      li.appendChild(actions(
+        button(t("rp.edit"), "rp:edit:" + it.id, function () {
+          rpDraft = { id: it.id, k: it.k, t: it.t, err: "" };
+          render();
+          var f = $("f-rp-text"); if (f) f.focus();
+        }, "btn-sm"),
+        confirmBtn(t("rp.del"), t("rp.del.confirm"), "rp:del:" + it.id, function () {
+          R.remove(it.id);
+          if (rpDraft.id === it.id) rpDraft = { id: "", k: "", t: "", err: "" };
+          render();
+        }, "btn-sm danger")));
+      ul.appendChild(li);
+    });
+    if (shown.length) c.appendChild(ul);
+    if (all.length) c.appendChild(el("p", "hint", t("rp.count", { n: all.length, max: (R.limits && R.limits.live) || 500 })));
+    c.appendChild(el("p", "hint", t("rp.never")));
     host.appendChild(c);
   }
 
@@ -4576,7 +4681,7 @@
     var ae = document.activeElement;
     var keepKey = ae && ae.getAttribute ? ae.getAttribute("data-k") : null;
     var caret = null;
-    if (ae && ae.tagName === "INPUT" && /^(text|password)$/.test(ae.type)) {
+    if (ae && ((ae.tagName === "INPUT" && /^(text|password|search)$/.test(ae.type)) || ae.tagName === "TEXTAREA")) {
       try { caret = [ae.selectionStart, ae.selectionEnd]; } catch (e) {}
     }
     var top = page.scrollTop;
@@ -4620,6 +4725,7 @@
   function findOk(s, need) {
     if (need.indexOf("app:") === 0) return (s.apps || []).indexOf(need.slice(4)) !== -1;
     if (need === "phone") return !!phone();
+    if (need === "textrepl") return !!textRepl();
     if (need === "push") return !!webPush() && !phone();
     if (need === "translate") return !!(window.orosI18n && window.orosI18n.LANGS.some(function (l) { return l.code !== "en" && l.code !== "el"; }));
     return !!s[need];

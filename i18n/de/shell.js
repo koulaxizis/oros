@@ -1196,6 +1196,7 @@ orosPack("de", "shell", {
  "clip.copied": "Kopiert. Mit Strg+V einfügen.",
  "clip.nocopy": "Der Browser hat das Kopieren nicht erlaubt. Markiere den Text und kopiere ihn von Hand.",
  "clip.full": "Der Zwischenablage-Verlauf konnte nicht gespeichert werden: Der Speicher dieses Geräts ist voll.",
+ "trp.full": "Die Textersetzungen konnten nicht gespeichert werden: Der Speicher dieses Geräts ist voll.",
  "clip.desk": "Zwischenablage-Verlauf…",
  "clip.now": "gerade eben",
  "clip.min": "vor {n} Min.",
