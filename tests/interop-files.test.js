@@ -51,7 +51,7 @@ test("files kind: only paths of the orOS disk, ≤ 10, to Mail as attachments", 
   assert.equal(C.norm("files", { items: [{ path: "/tmp/a" }] }), null);
   const many = C.norm("files", { items: Array.from({ length: 15 }, (_, i) => ({ path: "/internal/f" + i })) });
   assert.equal(many.items.length, 10);
-  assert.deepEqual(C.appsFor("files", { items: [{ path: "/internal/a.txt" }] }, C.ORDER, "files"), ["mail"]);
+  assert.deepEqual(C.appsFor("files", { items: [{ path: "/internal/a.txt" }] }, C.ORDER, "files"), ["mail", "transfer"]);
   assert.deepEqual(C.target("mail", "files", { items: [{ path: "/internal/a.txt" }] }),
     { compose: { subject: "a.txt", attach: [{ path: "/internal/a.txt", name: "a.txt" }] } });
   assert.match(src("mail/mail.js"), /handedFiles\(c\.attach\)/);

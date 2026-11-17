@@ -45,6 +45,7 @@
       "btn.take":      "Take screenshot",
       "btn.stop":      "Stop sharing",
       "btn.save":      "Save to Pictures",
+      "btn.send":      "Send to an app…",
       "btn.copy":      "Copy",
       "btn.uncrop":    "Whole picture",
       "btn.again":     "Take another",
@@ -77,6 +78,7 @@
       "btn.resume":    "Resume",
       "btn.end":       "Stop recording",
       "btn.rsave":     "Save to Videos",
+      "btn.rsend":     "Save and send to an app…",
       "btn.ragain":    "Record another",
       "live.hintRec":  "You can also take screenshots while you record.",
       "rec.paused":    "Paused",
@@ -101,6 +103,7 @@
       "btn.take":      "Λήψη",
       "btn.stop":      "Τέλος κοινής χρήσης",
       "btn.save":      "Αποθήκευση στα Pictures",
+      "btn.send":      "Στείλε σε εφαρμογή…",
       "btn.copy":      "Αντιγραφή",
       "btn.uncrop":    "Όλη η εικόνα",
       "btn.again":     "Άλλη λήψη",
@@ -133,6 +136,7 @@
       "btn.resume":    "Συνέχεια",
       "btn.end":       "Τέλος εγγραφής",
       "btn.rsave":     "Αποθήκευση στα Videos",
+      "btn.rsend":     "Αποθήκευση και αποστολή σε εφαρμογή…",
       "btn.ragain":    "Νέα εγγραφή",
       "live.hintRec":  "Όσο γράφεις, μπορείς να τραβάς και στιγμιότυπα.",
       "rec.paused":    "Σε παύση",
@@ -182,6 +186,16 @@
   function fsApi() {
     try { return (window.parent && window.parent.orosFS) || window.orosFS || null; }
     catch (e) { return window.orosFS || null; }
+  }
+  // The shell's "Send to…" sheet (BR-SEND-12): a saved screenshot or
+  // recording goes to Transfer, Mail, Photo Lab… from there.
+  function sendApi() {
+    try { var p = window.parent; return p && p !== window && p.orosSend && typeof p.orosSend.open === "function" ? p.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function sendSaved(path) {
+    var api = sendApi();
+    if (api) api.open({ kind: "files", data: { items: [{ path: path, name: path.slice(path.lastIndexOf("/") + 1) }] } });
   }
   function openAt(app, target) {
     try {
@@ -487,8 +501,9 @@
     clip = null;
   }
 
-  function saveRec() {
+  function saveRec(send) {
     if (!clip) return;
+    send = send === true;
     var name = C.fileName(t("file.rec"), clip.at, C.recExt(clip.type));
     var blob = clip.blob;
     var F = fsApi();
@@ -499,7 +514,8 @@
       F.stat(path).then(function () { n++; if (n < 100) tryName(); else toast(t("err.save")); }, function () {
         F.write(path, blob).then(function () {
           toast(t("toast.rsaved", { name: path.slice(C.VIDEOS.length) }));
-          if (prefs.montage) openAt("montage", { openFile: path });
+          if (send) sendSaved(path);
+          else if (prefs.montage) openAt("montage", { openFile: path });
         }, function () { toast(t("err.save")); });
       });
     })();
@@ -605,8 +621,9 @@
   }
 
   // ---------- 8. Save and copy ----------
-  function save() {
+  function save(send) {
     if (!shot.canvas) return;
+    send = send === true;
     var name = C.fileName(t("file.base"), new Date(), "png");
     pngOf(function (png) {
       if (!png) { toast(t("err.save")); return; }
@@ -618,7 +635,8 @@
         F.stat(path).then(function () { n++; if (n < 100) tryName(); else toast(t("err.save")); }, function () {
           F.write(path, png).then(function () {
             toast(t("toast.saved", { name: path.slice(C.FOLDER.length) }));
-            if (prefs.edit) openAt("photolab", { openFile: path });
+            if (send) sendSaved(path);
+            else if (prefs.edit) openAt("photolab", { openFile: path });
           }, function () { toast(t("err.save")); });
         });
       })();
@@ -667,7 +685,9 @@
     $("b-start").addEventListener("click", start);
     $("b-take").addEventListener("click", take);
     $("b-stop").addEventListener("click", function () { stopStream(); show("idle"); });
-    $("b-save").addEventListener("click", save);
+    $("b-save").addEventListener("click", function () { save(false); });
+    $("b-send").addEventListener("click", function () { save(true); });
+    $("b-send").hidden = $("b-rsend").hidden = !(sendApi() && fsApi());
     $("b-copy").addEventListener("click", copy);
     $("b-uncrop").addEventListener("click", function () { shot.crop = null; paintCrop(); });
     $("b-again").addEventListener("click", again);
@@ -683,7 +703,8 @@
     $("b-rec").addEventListener("click", startRec);
     $("b-pause").addEventListener("click", pauseRec);
     $("b-end").addEventListener("click", endRec);
-    $("b-rsave").addEventListener("click", saveRec);
+    $("b-rsave").addEventListener("click", function () { saveRec(false); });
+    $("b-rsend").addEventListener("click", function () { saveRec(true); });
     $("b-ragain").addEventListener("click", recAgain);
     $("b-rdrop").addEventListener("click", recDiscard);
     wireCrop();

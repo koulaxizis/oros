@@ -421,6 +421,40 @@
     }).catch(function () { LY.toast(t("ep.fail")); });
   }
 
+  // "Send to an app…" (BR-SEND-12): the PDF goes to Files › Layout › PDF
+  // (a free name, never over another file), then the shell's "Send
+  // to…" sheet offers it to Mail, Transfer, Scan & PDF, Library…
+  var PDF_DIR = "/internal/Layout/PDF";
+  function sendApi() {
+    try { var p = window.parent; return p && p !== window && p.orosSend && typeof p.orosSend.open === "function" ? p.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function canSendPdf() { return !!(sendApi() && diskFs()); }
+  function freePdfPath(fs, name) {
+    var base = name.replace(/\.pdf$/i, ""), n = 1;
+    function next() {
+      var p = PDF_DIR + "/" + (n === 1 ? base : base + " (" + n + ")") + ".pdf";
+      return Promise.resolve(fs.stat(p)).then(function (st) { return !!st; }, function () { return false; }).then(function (taken) {
+        if (!taken) return p;
+        n++;
+        return n > 500 ? null : next();
+      });
+    }
+    return next();
+  }
+  function sendPdf(blob, name) {
+    var fs = diskFs(), api = sendApi();
+    if (!fs || !api) return Promise.reject(new Error("nosend"));
+    return Promise.resolve(fs.mkdir ? fs.mkdir(PDF_DIR) : null).then(null, function () {}).then(function () { return freePdfPath(fs, name); }).then(function (p) {
+      if (!p) throw new Error("full");
+      return Promise.resolve(fs.writeBlob(p, blob)).then(function () {
+        LY.toast(t("exp.sentAt", { path: p.slice("/internal/".length) }));
+        api.open({ kind: "files", data: { items: [{ path: p, name: p.slice(p.lastIndexOf("/") + 1) }] } });
+        return "sent";
+      });
+    });
+  }
+
   var exporting = false;
   function exportPdf(opts) {
     var doc = LY.doc;
@@ -429,9 +463,11 @@
     exporting = true;
     LY.toast(t("exp.working"));
     pdfBlob(doc, opts).then(function (blob) {
+      if (opts && opts.send) return sendPdf(blob, fileName(doc, ".pdf"));
       return saveBlob(blob, fileName(doc, ".pdf"), "application/pdf", "PDF", ".pdf");
     }).then(function (ok) {
       exporting = false;
+      if (ok === "sent") return;
       if (ok) LY.toast(t("exp.done"));
     }, function (e) {
       exporting = false;
@@ -1384,7 +1420,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName

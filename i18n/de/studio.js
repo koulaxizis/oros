@@ -179,6 +179,7 @@ orosPack("de", "studio", {
  "btn.stop": "Stopp",
  "btn.toLyrics": "Liedtext synchronisieren",
  "btn.toMusic": "Zu Musik hinzufügen",
+ "btn.sendApp": "An eine App senden…",
  "btn.undo": "Rückgängig",
  "btn.up": "Nach oben",
  "btn.zoomIn": "Vergrößern",

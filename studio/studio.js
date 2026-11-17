@@ -251,7 +251,7 @@
       "ld.refNoMatch": "Measure the song first, so the reference can play at its loudness.", "ld.refGain": "The reference plays {n} dB {dir}.", "ld.louder": "louder", "ld.quieter": "quieter",
       "bk.deliver": "Check and deliver", "bk.aac": "M4B for the book", "bk.aacN": "{n} kbit/s AAC, mono, 44.1 kHz", "bk.m4b": "One M4B with chapters", "bk.m4bMixing": "Mixing {i} of {n}: {name}…", "bk.m4bEncoding": "Encoding {i} of {n}: {name}", "bk.m4bEmpty": "Every part is empty: there is nothing to export.", "bk.m4bDone": "{name} is in {path} on the orOS disk: {d}, {n} chapters.", "bk.dur": "Write the length to Publishing ({n} min)", "bk.durSame": "Publishing has this length ({n} min)", "bk.check": "Check all", "bk.checking": "Checking {i} of {n}: {name}…", "bk.norm": "Normalise all", "bk.norming": "Normalising {i} of {n}: {name}…", "bk.normDone": "Every part is at RMS -20 dBFS, its peaks held at -3.5 dB", "bk.normHint": "Normalising adds a gain and the NULL Limiter (true peak, -3.5 dB) at the end of each part's master chain. The recordings stay as they are, and Remove normalising takes both out again.", "bk.unnorm": "Remove normalising", "bk.sample": "Use this chapter's loop as the retail sample", "bk.sampleSet": "Retail sample: {name}, {a} to {b}", "bk.sampleNone": "No retail sample yet: set a loop of 1 to 5 minutes in a chapter and press the button.", "bk.sampleBad": "Set a loop of 1 to 5 minutes in a chapter of this book first.", "bk.kbps": "MP3 for the book", "bk.kbpsN": "{n} kbit/s CBR, mono, 44.1 kHz", "bk.export": "Export the book", "bk.exporting": "Exporting {i} of {n}: {name}…", "bk.exported": "{n} files are in {path} on the orOS disk, with report.txt.", "bk.exportDone": "The book is exported", "bk.emptyPart": "{name} is empty: it was left out.", "bk.noCover": "No cover: link the book to a Publishing title with a cover.", "bk.missing": "Some sounds of “{name}” are not on this device yet.", "bk.fullFx": "The master chain of “{name}” is full.", "bk.failPart": "“{name}” could not be mixed.", "bk.st.ok": "{spec}: passes", "bk.st.bad": "{spec}: {n} checks do not pass", "bk.st.bad1": "{spec}: 1 check does not pass", "bk.st.old": "changed since the check", "bk.sumOk": "Every part passes {spec}.", "bk.sumBad": "{n} parts do not pass {spec} yet. Open one and its Loudness window shows what to fix.", "bk.sumBad1": "1 part does not pass {spec} yet. Open it and its Loudness window shows what to fix.", "ld.go": "Go there",
       "bk.view": "Show", "bk.songs": "Songs", "bk.books": "Books", "bk.new": "New book", "bk.all": "All books", "bk.empty": "No books yet. A book is a row of chapters, each one a project of its own, with opening and closing credits.", "bk.nameAsk": "Name of the book", "bk.rename": "Rename", "bk.desc": "{n} chapters · {t} · {spec}", "bk.pub": "Title in Publishing", "bk.pubNone": "None (fill in below)", "bk.pubInfo": "Author: {a} · Narrator: {n} · Audiobook ISBN: {isbn}", "bk.pubMissing": "That title is no longer in Publishing.", "bk.author": "Author", "bk.narrator": "Narrator", "bk.spec": "Requirements", "bk.spec.acx": "ACX (Audible)", "bk.spec.storytel": "Storytel", "bk.parts": "Chapters", "bk.open": "Opening credits", "bk.close": "Closing credits", "bk.chapterN": "Chapter {n}", "bk.addCh": "New chapter", "bk.partDesc": "{k} · {t}", "bk.k.open": "Opening", "bk.k.close": "Closing", "bk.k.chapter": "Chapter {n}", "bk.up": "Move up", "bk.down": "Move down", "bk.delCh": "Delete", "bk.openPart": "Open", "bk.rt": "Room tone", "bk.rtHint": "Record about 30 seconds of the quiet room with the same microphone and settings, select that clip and press the button below. Gaps between takes are then filled with it, because ACX rejects digital silence.", "bk.rtUse": "Use the selected clip as room tone", "bk.rtNone": "No room tone yet.", "bk.rtOk": "Room tone {d} s, noise floor {f} dBFS: the room is quiet enough.", "bk.rtBad": "Room tone {d} s, noise floor {f} dBFS: above -60 dBFS, so the recordings will be too noisy. Quieten the room, or try NULL Noise Reduction or Gate.", "bk.rtShort": "Select an audio clip of at least 5 seconds first.", "bk.rtSaved": "Room tone saved", "bk.fill": "Fill the gaps in “{name}”", "bk.fillNone": "Fill the gaps of a chapter", "bk.filled": "{n} gaps filled with room tone", "bk.noGaps": "There are no gaps to fill", "bk.notChapter": "Open a chapter of this book first.", "bk.needRt": "Choose the room tone first.", "bk.rtTrack": "Room tone", "bk.voice": "Voice", "bk.del": "Delete book", "bk.deleted": "Book deleted", "bk.maxBooks": "You have {n} books, more do not fit", "bk.maxCh": "Books hold up to {n} chapters together", "bk.flac": "Saving the take (FLAC)… {n}%", "bk.sub": "{book} · {part}", "bk.fail": "That did not work",
-      "btn.toMusic": "Add to Music", "btn.toLyrics": "Sync lyrics", "toast.toMusic": "Added to Music", "toast.toMusicFail": "Could not add it to Music",
+      "btn.toMusic": "Add to Music", "btn.sendApp": "Send to an app…", "btn.toLyrics": "Sync lyrics", "toast.toMusic": "Added to Music", "toast.toMusicFail": "Could not add it to Music",
       "btn.ringtone": "Make a ringtone", "toast.ringNoNotes": "Ringtone Composer needs notes: add an instrument track.",
       "au.btn": "A", "au.show": "Automation", "au.title": "Automation: {name}", "au.param": "Parameter",
       "au.vol": "Volume", "au.pan": "Pan", "au.on": "Lane on", "au.delPt": "Delete point", "au.clear": "Clear lane",
@@ -490,7 +490,7 @@
       "ld.refNoMatch": "Μέτρησε πρώτα το τραγούδι, για να παίξει η αναφορά στην ένταση του.", "ld.refGain": "Η αναφορά παίζει {n} dB {dir}.", "ld.louder": "πιο δυνατά", "ld.quieter": "πιο σιγά",
       "bk.deliver": "Έλεγχος και παράδοση", "bk.aac": "M4B για το βιβλίο", "bk.aacN": "{n} kbit/s AAC, mono, 44,1 kHz", "bk.m4b": "Ένα M4B με κεφάλαια", "bk.m4bMixing": "Μίξη {i} από {n}: {name}…", "bk.m4bEncoding": "Κωδικοποίηση {i} από {n}: {name}", "bk.m4bEmpty": "Όλα τα μέρη είναι άδεια: δεν υπάρχει τίποτα για εξαγωγή.", "bk.m4bDone": "Το αρχείο {name} είναι στο {path} στον δίσκο του orOS: {d}, {n} κεφάλαια.", "bk.dur": "Γράψε τη διάρκεια στο Publishing ({n} λεπ.)", "bk.durSame": "Το Publishing έχει αυτή τη διάρκεια ({n} λεπ.)", "bk.check": "Έλεγχος όλων", "bk.checking": "Έλεγχος {i} από {n}: {name}…", "bk.norm": "Κανονικοποίηση όλων", "bk.norming": "Κανονικοποίηση {i} από {n}: {name}…", "bk.normDone": "Όλα τα μέρη είναι σε RMS -20 dBFS, με τις κορυφές κρατημένες στα -3,5 dB", "bk.normHint": "Η κανονικοποίηση βάζει ένα κέρδος και τον NULL Limiter (true peak, -3,5 dB) στο τέλος της αλυσίδας master κάθε μέρους. Οι ηχογραφήσεις μένουν όπως είναι, και η Αφαίρεση κανονικοποίησης τα βγάζει πάλι.", "bk.unnorm": "Αφαίρεση κανονικοποίησης", "bk.sample": "Το loop αυτού του κεφαλαίου ως δείγμα", "bk.sampleSet": "Δείγμα: {name}, {a} έως {b}", "bk.sampleNone": "Δεν υπάρχει ακόμη δείγμα: βάλε ένα loop 1 έως 5 λεπτών σε ένα κεφάλαιο και πάτα το κουμπί.", "bk.sampleBad": "Βάλε πρώτα ένα loop 1 έως 5 λεπτών σε ένα κεφάλαιο αυτού του βιβλίου.", "bk.kbps": "MP3 για το βιβλίο", "bk.kbpsN": "{n} kbit/s CBR, mono, 44,1 kHz", "bk.export": "Εξαγωγή βιβλίου", "bk.exporting": "Εξαγωγή {i} από {n}: {name}…", "bk.exported": "{n} αρχεία είναι στο {path} στον δίσκο του orOS, μαζί με το report.txt.", "bk.exportDone": "Το βιβλίο εξήχθη", "bk.emptyPart": "Το {name} είναι άδειο: έμεινε έξω.", "bk.noCover": "Χωρίς εξώφυλλο: σύνδεσε το βιβλίο με έναν τίτλο του Publishing που έχει εξώφυλλο.", "bk.missing": "Κάποιοι ήχοι του «{name}» δεν είναι ακόμη σε αυτή τη συσκευή.", "bk.fullFx": "Η αλυσίδα master του «{name}» είναι γεμάτη.", "bk.failPart": "Η μίξη του «{name}» δεν έγινε.", "bk.st.ok": "{spec}: περνά", "bk.st.bad": "{spec}: {n} έλεγχοι δεν περνούν", "bk.st.bad1": "{spec}: 1 έλεγχος δεν περνά", "bk.st.old": "άλλαξε μετά τον έλεγχο", "bk.sumOk": "Όλα τα μέρη περνούν το {spec}.", "bk.sumBad": "{n} μέρη δεν περνούν ακόμη το {spec}. Άνοιξε ένα και το παράθυρο Ένταση δείχνει τι να διορθώσεις.", "bk.sumBad1": "1 μέρος δεν περνά ακόμη το {spec}. Άνοιξέ το και το παράθυρο Ένταση δείχνει τι να διορθώσεις.", "ld.go": "Πήγαινε εκεί",
       "bk.view": "Εμφάνιση", "bk.songs": "Τραγούδια", "bk.books": "Βιβλία", "bk.new": "Νέο βιβλίο", "bk.all": "Όλα τα βιβλία", "bk.empty": "Δεν υπάρχουν ακόμη βιβλία. Ένα βιβλίο είναι μια σειρά κεφαλαίων, το καθένα δικό του έργο, με εισαγωγή και κλείσιμο.", "bk.nameAsk": "Όνομα του βιβλίου", "bk.rename": "Μετονομασία", "bk.desc": "{n} κεφάλαια · {t} · {spec}", "bk.pub": "Τίτλος στο Publishing", "bk.pubNone": "Κανένας (συμπλήρωσε παρακάτω)", "bk.pubInfo": "Συγγραφέας: {a} · Αφηγητής: {n} · ISBN ηχητικού βιβλίου: {isbn}", "bk.pubMissing": "Αυτός ο τίτλος δεν υπάρχει πια στο Publishing.", "bk.author": "Συγγραφέας", "bk.narrator": "Αφηγητής", "bk.spec": "Προδιαγραφές", "bk.spec.acx": "ACX (Audible)", "bk.spec.storytel": "Storytel", "bk.parts": "Κεφάλαια", "bk.open": "Εισαγωγή", "bk.close": "Κλείσιμο", "bk.chapterN": "Κεφάλαιο {n}", "bk.addCh": "Νέο κεφάλαιο", "bk.partDesc": "{k} · {t}", "bk.k.open": "Εισαγωγή", "bk.k.close": "Κλείσιμο", "bk.k.chapter": "Κεφάλαιο {n}", "bk.up": "Πάνω", "bk.down": "Κάτω", "bk.delCh": "Διαγραφή", "bk.openPart": "Άνοιγμα", "bk.rt": "Room tone", "bk.rtHint": "Ηχογράφησε περίπου 30 δευτερόλεπτα το ήσυχο δωμάτιο με το ίδιο μικρόφωνο και τις ίδιες ρυθμίσεις, επίλεξε εκείνο το clip και πάτα το κουμπί από κάτω. Τα κενά ανάμεσα στις λήψεις γεμίζουν μετά με αυτό, γιατί η ACX απορρίπτει την ψηφιακή σιωπή.", "bk.rtUse": "Το επιλεγμένο clip ως room tone", "bk.rtNone": "Δεν υπάρχει ακόμη room tone.", "bk.rtOk": "Room tone {d} s, θόρυβος βάθους {f} dBFS: το δωμάτιο είναι αρκετά ήσυχο.", "bk.rtBad": "Room tone {d} s, θόρυβος βάθους {f} dBFS: πάνω από -60 dBFS, άρα οι ηχογραφήσεις θα έχουν πολύ θόρυβο. Κάνε πιο ήσυχο το δωμάτιο ή δοκίμασε το NULL Noise Reduction ή το Gate.", "bk.rtShort": "Επίλεξε πρώτα ένα clip ήχου τουλάχιστον 5 δευτερολέπτων.", "bk.rtSaved": "Το room tone αποθηκεύτηκε", "bk.fill": "Γέμισμα κενών στο «{name}»", "bk.fillNone": "Γέμισμα κενών ενός κεφαλαίου", "bk.filled": "{n} κενά γέμισαν με room tone", "bk.noGaps": "Δεν υπάρχουν κενά για γέμισμα", "bk.notChapter": "Άνοιξε πρώτα ένα κεφάλαιο αυτού του βιβλίου.", "bk.needRt": "Διάλεξε πρώτα το room tone.", "bk.rtTrack": "Room tone", "bk.voice": "Φωνή", "bk.del": "Διαγραφή βιβλίου", "bk.deleted": "Το βιβλίο διαγράφηκε", "bk.maxBooks": "Έχεις {n} βιβλία, δεν χωράνε άλλα", "bk.maxCh": "Τα βιβλία χωράνε έως {n} κεφάλαια συνολικά", "bk.flac": "Αποθήκευση λήψης (FLAC)… {n}%", "bk.sub": "{book} · {part}", "bk.fail": "Αυτό δεν έγινε",
-      "btn.toMusic": "Στη Μουσική", "btn.toLyrics": "Συγχρονισμός στίχων", "toast.toMusic": "Μπήκε στη Μουσική", "toast.toMusicFail": "Δεν μπόρεσε να μπει στη Μουσική",
+      "btn.toMusic": "Στη Μουσική", "btn.sendApp": "Στείλε σε εφαρμογή…", "btn.toLyrics": "Συγχρονισμός στίχων", "toast.toMusic": "Μπήκε στη Μουσική", "toast.toMusicFail": "Δεν μπόρεσε να μπει στη Μουσική",
       "btn.ringtone": "Κάνε το ήχο κλήσης", "toast.ringNoNotes": "Ο Ήχος κλήσης χρειάζεται νότες: πρόσθεσε ένα κανάλι οργάνου.",
       "au.btn": "A", "au.show": "Αυτοματισμός", "au.title": "Αυτοματισμός: {name}", "au.param": "Παράμετρος",
       "au.vol": "Ένταση", "au.pan": "Pan", "au.on": "Λωρίδα ενεργή", "au.delPt": "Διαγραφή σημείου", "au.clear": "Καθαρισμός λωρίδας",
@@ -3394,6 +3394,7 @@
     $("export-music").hidden = !musicFs() || !shellHas();
     $("export-lyrics").hidden = !musicFs() || !shellHas();
     $("export-ring").hidden = !shellHas();
+    $("export-send").hidden = !musicFs() || !sendApi();
     renderExportChips();
     renderCredits();
     showDlg("export-dlg");
@@ -3895,7 +3896,7 @@
       return new Promise(function (res) { oc.oncomplete = function (e) { res(e.renderedBuffer); }; });
     }).then(function (out) { return [out.getChannelData(0).subarray(skip, skip + len), out.getChannelData(1).subarray(skip, skip + len)]; });
   }
-  function exportBusy(on) { ["export-go", "export-music", "export-lyrics", "export-ring"].forEach(function (id) { $(id).disabled = on; }); }
+  function exportBusy(on) { ["export-go", "export-music", "export-lyrics", "export-ring", "export-send"].forEach(function (id) { $(id).disabled = on; }); }
   // dest "music": the file goes onto the orOS disk under /internal/Music
   // and plays in Music ("lyrics": opens in Lyric Sync instead);
   // otherwise the save dialog, as always.
@@ -3917,7 +3918,8 @@
         exportBusy(false);
         $("export-status").textContent = "";
         hideDlg("export-dlg");
-        if (dest === "music" || dest === "lyrics") addToMusic(new Blob([bytes], { type: mime }), C.fileName(title, ext), dest === "lyrics" ? title : null);
+        if (dest === "send") sendMix(new Blob([bytes], { type: mime }), C.fileName(title, ext));
+        else if (dest === "music" || dest === "lyrics") addToMusic(new Blob([bytes], { type: mime }), C.fileName(title, ext), dest === "lyrics" ? title : null);
         else saveBlob(new Blob([bytes], { type: mime }), C.fileName(title, ext), mime, desc, "." + ext);
       };
       var broke = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.exportFail")); };
@@ -3976,6 +3978,23 @@
       showToast(t("toast.toMusic"));
       if (lyricsFor != null) shellOpen("lyricsync", { musicPath: p, title: String(lyricsFor).slice(0, 200) });
       else shellOpen("music", { playPath: p });
+    }, function () { showToast(t("toast.toMusicFail")); });
+  }
+  // "Send to an app…" (BR-SEND-12): the mix goes to /internal/Music like
+  // Add to Music, then the shell's "Send to…" sheet offers it (Transfer,
+  // Mail, Music…). The share item lets "Send to someone…" send it too.
+  function sendApi() {
+    try { var w = window.parent; return w && w !== window && w.orosSend && typeof w.orosSend.open === "function" ? w.orosSend : null; } catch (e) { return null; }
+  }
+  function sendMix(blob, name) {
+    var fs = musicFs(), api = sendApi();
+    if (!fs || !api) { showToast(t("toast.toMusicFail")); return; }
+    Promise.resolve(fs.mkdir(MUSIC_DIR)).then(function () { return freeMusicPath(fs, name); }).then(function (p) {
+      if (!p) throw new Error("full");
+      return Promise.resolve(fs.writeBlob(p, blob)).then(function () { return p; });
+    }).then(function (p) {
+      showToast(t("toast.toMusic"));
+      api.open({ kind: "files", data: { items: [{ path: p, name: p.split("/").pop() }] } });
     }, function () { showToast(t("toast.toMusicFail")); });
   }
   // The audible instrument notes of the export range (no drum kit) as
@@ -5872,6 +5891,7 @@
     $("export-music").addEventListener("click", function () { doExport("music"); });
     $("export-lyrics").addEventListener("click", function () { doExport("lyrics"); });
     $("export-ring").addEventListener("click", makeRingtone);
+    $("export-send").addEventListener("click", function () { doExport("send"); });
     $("export-pod").addEventListener("click", function () { if (!Pod) return; hideDlg("export-dlg"); Pod.open(); });
     $("export-mk").addEventListener("click", function () { if (!Pod) return; hideDlg("export-dlg"); Pod.markers(); });
     $("more-close").addEventListener("click", function () { hideDlg("more-dlg"); });

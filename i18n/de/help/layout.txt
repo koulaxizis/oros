@@ -48,6 +48,7 @@ Ein Bild, das aus einer anderen App mit `Senden an…` kommt (zum Beispiel aus [
 Das Abzeichen `Preflight` in der Statusleiste wird grün, orange oder rot. Klick darauf für die Liste der Probleme: `Übersatztext`, `Bild fehlt`, geringe Auflösung, Objekte, die bis zum Endformat, aber nicht in den Beschnitt reichen, Text kleiner als 6 pt und leere Rahmen. Wähle ein Problem, um sein Objekt auszuwählen.
 
 `Exportieren` erstellt ein PDF aller Seiten, der aktuellen Seite oder eines Bereichs, wahlweise mit `Doppelseiten`, `Mit Beschnitt` und `Schnittmarken`, und mit Bildern in `Druck (300 ppi)` oder `Bildschirm (150 ppi)`. `Als Paket speichern (.oroslayout)` speichert eine Datei mit dem Dokument und seinen Bildern; `Datei öffnen` › `Eine Datei (.oroslayout, .sla, .idml, .pdf, .svg)…` auf der Startseite öffnet sie wieder. Das Paket ist eine offene ZIP-Datei: Entpackst du sie, findest du `content.json` (das Dokument), `media` (seine Bilder) und ein Vorschaubild. `Datei öffnen` › `Einen entpackten Paketordner…` holt so einen Ordner zurück, auch wenn du darin ein Bild geändert hast.
+`Das PDF an eine App senden…` im selben Fenster erstellt dieses PDF, speichert es in Dateien › Layout › PDF (nie über eine andere Datei) und lässt dich es an Mail, Transfer, Scanner & PDF oder Bibliothek senden.
 
 `Bild (PNG / JPG)` exportiert eine Seite als Bild mit 72, 150 oder 300 dpi (bis 16 Megapixel).
 

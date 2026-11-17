@@ -4586,6 +4586,41 @@
     }
     return sendLoad;
   }
+  // Files wave (BR-SEND-12): a disk file for an app that takes a File
+  // (Atelier, Music from outside its folder). Read here, held as the
+  // one-shot token of BR-FO-4, then the app's own { openFile } import.
+  // → Promise<true | false | "big">.
+  function sendDiskBlob(o) {
+    var F = window.orosFS;
+    if (!o || typeof o.path !== "string" || !/^\/internal\/./.test(o.path) || o.path.indexOf("..") >= 0 || !F) return Promise.resolve(null);
+    return Promise.resolve(F.stat(o.path)).then(function (st) {
+      var max = typeof o.max === "number" ? o.max : 50 * 1024 * 1024;
+      if (st && typeof st.size === "number" && st.size > max) return "big";
+      return Promise.resolve(F.read(o.path)).then(function (b) { return b && b.size > max ? "big" : b; });
+    });
+  }
+  function sendFileHand(tg, app) {
+    if (!tg || !tg.openFile || typeof tg.openFile !== "object") { window.__orosOpenAt(app, tg); return Promise.resolve(true); }
+    var o = tg.openFile;
+    return sendDiskBlob(o).then(function (b) {
+      if (b === "big" || !b) return b === "big" ? "big" : false;
+      var name = String(o.name || o.path.replace(/^.*\//, "")).slice(0, 255);
+      var file = new File([b], name, { type: b.type || "" });
+      var tok = window.orosFileOpen && typeof window.orosFileOpen.hand === "function" ? window.orosFileOpen.hand(file) : "";
+      if (!tok) return false;
+      window.__orosOpenAt(app, { openFile: { token: tok, name: name, size: file.size } });
+      return true;
+    }, function () { return false; });
+  }
+  // Wallpaper: the sheet already asked; THIS device only (setImage).
+  function sendWallpaper(pic) {
+    return sendDiskBlob(pic).then(function (b) {
+      if (b === "big" || !b) return b === "big" ? "big" : false;
+      var ext = String(pic.path).toLowerCase().replace(/^.*\./, "");
+      var type = /^image\//.test(b.type || "") ? b.type : "image/" + (ext === "jpg" ? "jpeg" : ext);
+      return window.orosWallpaper.setImage(b.slice(0, b.size, type), { bg: "#000000" });
+    }, function () { return false; });
+  }
   window.orosSend = {
     open: function (opts) {
       var self = state.running ? state.running.id : "";
@@ -4597,6 +4632,8 @@
           apps: apps, self: self, from: from, openAt: window.__orosOpenAt,
           calendarNew: function (p) { window.__orosOpenCalendarNew(p); },
           budgetNew: function (p) { return window.__orosOpenBudgetNew(p); },
+          file: sendFileHand,
+          wallpaper: sendWallpaper,
           share: function (item) { window.orosShare.open(item); },
           icon: function (id) {
             for (var i = 0; i < state.apps.length; i++) {
