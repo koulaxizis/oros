@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 46528 of 47039 (98%)
+- Strings: 46544 of 47055 (98%)
 - Help pages: 155 of 155 (100%)
 - Shown in the language list: yes
 
@@ -27,7 +27,7 @@ text is still written in the code. They switch over wave by wave
 | budget | 90% | 1065 / 1182 |
 | calculator | 100% | 170 / 170 |
 | calendar | 90% | 578 / 637 |
-| capture | 100% | 54 / 54 |
+| capture | 100% | 56 / 56 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
 | certificates | 100% | 391 / 391 |
@@ -74,7 +74,7 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | 100% | 90 / 90 |
 | kanban | 99% | 355 / 358 |
 | labels | 100% | 88 / 88 |
-| layout | 99% | 1093 / 1101 |
+| layout | 99% | 1095 / 1103 |
 | library | 100% | 327 / 327 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
@@ -130,7 +130,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 99% | 1690 / 1705 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1373 / 1378 |
+| shell | 99% | 1375 / 1380 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 375 / 375 |
@@ -138,7 +138,7 @@ text is still written in the code. They switch over wave by wave
 | slides | 100% | 427 / 427 |
 | snake | 100% | 53 / 53 |
 | solitaire | 100% | 103 / 103 |
-| solo | English for now | 92 / 92 |
+| solo | English for now | 101 / 101 |
 | split | 100% | 356 / 356 |
 | spot | 100% | 55 / 55 |
 | spreadsheet | 82% | 409 / 495 |
@@ -146,7 +146,7 @@ text is still written in the code. They switch over wave by wave
 | stickies | 100% | 124 / 124 |
 | stock | 99% | 808 / 813 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 935 / 935 |
+| studio | 100% | 936 / 936 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 60 / 60 |

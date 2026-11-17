@@ -1128,6 +1128,7 @@
     list.textContent = "";
     hist.items.forEach(function (x) {
       var li = el("li");
+      li.dataset.id = x.id;
       li.appendChild(el("span", "arrow", x.dir === "recv" ? "↓" : "↑"));
       var body = el("div", "body");
       body.appendChild(el("span", "what", x.what || "—"));
@@ -1305,7 +1306,20 @@
     if (!$("share").hidden) { chosen = []; expanded = null; show("share", false); show("pick", true); }
     addFiles(files);
   }
+  // { hist: id } (menu search, transfer/search.js): the History tab
+  // with that row in view, outlined for a moment.
+  function showHist(id) {
+    if (!$("tab-hist")) return;
+    tab("hist");
+    var li = null;
+    [].forEach.call($("hist-list").children, function (n) { if (n.dataset.id === id) li = n; });
+    if (!li) return;
+    try { li.scrollIntoView({ block: "nearest" }); } catch (e) {}
+    li.classList.add("found");
+    setTimeout(function () { li.classList.remove("found"); }, 2400);
+  }
   window.__orosOpenAt = function (target) {
+    if (target && typeof target.hist === "string") { showHist(target.hist.slice(0, 40)); return; }
     if (target && Array.isArray(target.send)) { takeSend(target.send); return; }
     if (target && Array.isArray(target.openFiles)) { takeHanded(target.openFiles); return; }
     if (target && target.openFile && typeof target.openFile === "object") { takeHanded([target.openFile]); return; }

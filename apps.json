@@ -177,6 +177,7 @@
       "category": "Lifestyle",
       "icon": "household",
       "url": "household/",
+      "search": "search.js",
       "type": "internal",
       "today": ["recent.js", "today.js"]
     },
@@ -411,6 +412,7 @@
       "category": "Creativity",
       "icon": "labels",
       "url": "labels/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -713,6 +715,7 @@
       "category": "Internet",
       "icon": "transfer",
       "url": "transfer/",
+      "search": "search.js",
       "type": "internal"
     },
     {
@@ -798,6 +801,7 @@
       "category": "Sound",
       "icon": "ringtones",
       "url": "ringtones/",
+      "search": "search.js",
       "type": "internal"
     },
     {

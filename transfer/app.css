@@ -147,6 +147,7 @@ h2.big { overflow-wrap: anywhere; }
 .rows .name.link:hover { color: var(--accent); }
 .rows input[type="checkbox"] { width: 20px; height: 20px; flex: none; accent-color: var(--accent); }
 #hist-list li { border-color: var(--glass-line); background: var(--well); }
+#hist-list li.found { outline: 2px solid var(--accent); outline-offset: 2px; }
 #hist-list .arrow { font-weight: 800; color: var(--accent); }
 #hist-list .body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 #hist-list .what { font-weight: 700; overflow-wrap: anywhere; }
