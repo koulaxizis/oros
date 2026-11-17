@@ -164,3 +164,23 @@ test("Today: one line for the contracts that need a decision; a contract's follo
   assert.deepEqual(info.target, { ctrs: "needs" });
   assert.deepEqual(info.more.slice(0, 2), ["1 ended", "1 end within 90 days"]);
 });
+
+test("Dashboard counts: in force, need a decision (ended / soon), next end day ahead", () => {
+  const d = C.norm({ cust: [cust("aaaaaa1", "A")], ctr: [
+    ctr("ctr0001", { to: "2026-10-10" }),                 // ended, needs
+    ctr("ctr0002", { to: "2026-12-02" }),                 // soon, needs
+    ctr("ctr0003", { to: "2027-06-01" }),                 // on
+    ctr("ctr0004", { to: "2026-11-20" }),                 // ended by agreement: not the next one
+    ctr("ctr0005", { t: "Open" })                         // no end day
+  ], cx: [{ id: "ctr0004", m: 20, end: "2026-09-01" }] });
+  const s = C.ctrDash(d, today);
+  assert.equal(s.n, 5);
+  assert.equal(s.on, 3);
+  assert.equal(s.needs, 2);
+  assert.equal(s.needEnded, 1);
+  assert.equal(s.needSoon, 1);
+  assert.equal(s.ended, 1);
+  assert.equal(s.term, 1);
+  assert.equal(s.next.ctr.id, "ctr0002");
+  assert.equal(C.ctrDash(C.norm({ cust: [cust("aaaaaa1", "A")] }), today).next, null);
+});

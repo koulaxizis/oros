@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.47.01
+- **Contracts on the CRM Dashboard.** The Dashboard now starts with your contracts: how many are in force, how many need a decision and the next end day, then the first five that need a decision with their quick actions. The sales tiles and the stage bars show only once you have a deal in `Pipeline`, so you no longer see a row of zeros.
+- **Pick the Kanban board for contract cards from a list.** In CRM Settings › Contracts, `Kanban board for contract cards` now lists your boards instead of asking you to type a name.
+
 ## Version 7.47.00
 - **More apps in Today:** Scanner & PDF shows how many signature requests still wait, those signed or declined in the last day and a signing link about to end; Transfer shows what arrived in the last day and when a link you sent through your Dropbox stops working; Base shows records of today and the next three days from date fields with `Show in Calendar` on. With Sensitive work on, these lines name no document, person or file.
 
