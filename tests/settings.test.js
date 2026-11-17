@@ -57,7 +57,7 @@ test("core: t() falls back and fills variables", () => {
 });
 
 test("core: sections and deep-link targets", () => {
-  assert.deepEqual(C.SECTIONS, ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device"]);
+  assert.deepEqual(C.SECTIONS, ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device", "screentime"]);
   assert.equal(C.sectionOf({ section: "sync" }), "sync");
   assert.equal(C.sectionOf("backup"), "backup");
   [null, undefined, {}, { section: "nope" }, { section: 3 }, "__proto__", "constructor"]
@@ -177,7 +177,8 @@ test("app: owns no data, palette contract, safe DOM", () => {
   }
   // Inline style only from the shell's own palette / wallpaper CSS.
   for (const m of APP.matchAll(/\.style\.(\w+)\s*=\s*([^;]+);/g)) {
-    assert.match(m[2].trim(), /^(k\.color|w\.css|"cover"|"center")$/, m[0]);
+    // ST-1: Screen time's bars get a clamped percentage from stPct().
+    assert.match(m[2].trim(), /^(k\.color|w\.css|"cover"|"center"|stPct\([^;]*\))$/, m[0]);
   }
 });
 

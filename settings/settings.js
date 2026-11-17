@@ -86,6 +86,7 @@
     system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     fonts: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19 8.5 5h1L15 19M5.2 14h7.6"/><path d="M21 19v-5.5a2.75 2.75 0 0 0-5.5 0M21 16.2c-1-.9-5.6-1.2-5.6 1.2 0 2.4 4.4 2 5.6-.6"/></svg>',
     device: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 10.5v5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/><path d="M10.5 18.5h3"/></svg>',
+    screentime: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 2.5h11"/><path d="M6.5 21.5h11"/><path d="M7.5 2.5v3.2a4.5 4.5 0 0 0 1.6 3.4L12 12l2.9-2.9a4.5 4.5 0 0 0 1.6-3.4V2.5"/><path d="M7.5 21.5v-3.2a4.5 4.5 0 0 1 1.6-3.4L12 12l2.9 2.9a4.5 4.5 0 0 1 1.6 3.4v3.2"/></svg>',
     files: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M12 11v6"/></svg>',
     menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
     users: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 5.5 4.8"/></svg>',
@@ -4182,6 +4183,9 @@
     return devLoad;
   }
   function secDevice(host) {
+    var lc = card(null);                                // ST-1: Screen time is its own section
+    lc.appendChild(linkRow(t("st.link"), "dv.screentime", function () { go("screentime", true); }));
+    host.appendChild(lc);
     if (window.SettingsDevice) { window.SettingsDevice.mount(host); return; }
     var wait = el("p", "hint", t("dv.loading"));
     host.appendChild(wait);
@@ -4191,6 +4195,107 @@
       window.SettingsDevice.mount(host);
       if (lit && lit.row[1] === "device" && Date.now() < lit.until) lightUp(true);
     }, function () { wait.textContent = t("dv.loadFail"); });
+  }
+
+  // ---------- Section: Screen time (ST-1) ----------
+  // screentime.js through the shell: the switch, today or a picked day
+  // (its apps, longest first), the last 7 days as columns and Clear
+  // history. Everything stays on this device. The picked day lives in
+  // memory only (R10).
+  var stPick = null;
+  function stLocale() { return LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB"; }
+  function stDayDate(key) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date();
+  }
+  function stDayName(key, today, long) {
+    if (key === today && long) return t("st.today");   // a column keeps its weekday (narrow screens)
+    try { return stDayDate(key).toLocaleDateString(stLocale(), long ? { weekday: "long", day: "numeric", month: "long" } : { weekday: "short" }); }
+    catch (e) { return key; }
+  }
+  function stPct(part, whole, min) {   // a bar's length: 0-100 %
+    var v = whole > 0 ? Math.round(part / whole * 100) : 0;
+    if (part > 0) v = Math.max(min || 0, v);
+    return Math.max(0, Math.min(100, v)) + "%";
+  }
+  function stAppName(a) {
+    return a.id === "~desk" ? t("st.desk") : a.id === "~sens" ? t("st.sens") : (a.name || a.id);
+  }
+  function secScreenTime(host, s) {
+    var st = s.screentime;
+    if (!st) { host.appendChild(el("p", "hint card-note", t("st.wait"))); return; }
+    var c1 = card(null);
+    c1.appendChild(row(t("st.on"), switchBtn(st.on, "screentime", function (v) { set("screentime", v); }, t("st.on")),
+      { scope: "screentime", hint: t("st.hint") }));
+    if (!st.on && st.has) c1.appendChild(el("p", "hint", t("st.offKept")));
+    host.appendChild(c1);
+    if (!st.on && !st.has) return;
+
+    var days = st.days || [];
+    var pick = null;
+    days.forEach(function (d) { if (d.day === stPick) pick = d; });
+    if (!pick) { pick = days[days.length - 1] || { day: st.today, total: 0, apps: [] }; stPick = null; }
+
+    // The picked day: its total and its apps.
+    var c2 = card(stDayName(pick.day, st.today, true));
+    var tot = el("div", "st-total");
+    tot.appendChild(el("span", "st-total-num", C.stDur(LANG, pick.total)));
+    tot.appendChild(el("span", "hint", t("st.total")));
+    c2.appendChild(tot);
+    if (!pick.apps.length) c2.appendChild(el("p", "hint", t("st.none")));
+    else {
+      var ul = el("ul", "st-list");
+      var top = pick.apps[0].secs || 1;
+      pick.apps.forEach(function (a) {
+        var li = el("li", "st-app");
+        var hd = el("div", "st-app-head");
+        hd.appendChild(el("span", "st-app-name", stAppName(a)));
+        hd.appendChild(el("span", "st-app-time", C.stDur(LANG, a.secs)));
+        li.appendChild(hd);
+        var bar = el("div", "st-bar");
+        var fill = el("span", "st-bar-fill");
+        fill.style.width = stPct(a.secs, top, 2);
+        bar.appendChild(fill);
+        li.appendChild(bar);
+        ul.appendChild(li);
+      });
+      c2.appendChild(ul);
+    }
+    host.appendChild(c2);
+
+    // The last 7 days: one column each, the picked one marked.
+    var c3 = card(t("st.week"));
+    var max = 1;
+    days.forEach(function (d) { if (d.total > max) max = d.total; });
+    var wk = el("div", "st-week");
+    days.forEach(function (d) {
+      var b = el("button", "st-col" + (d.day === pick.day ? " on" : "") + (d.day === st.today ? " today" : ""));
+      b.type = "button";
+      b.setAttribute("data-k", "st-day:" + d.day);
+      b.setAttribute("aria-pressed", d.day === pick.day ? "true" : "false");
+      b.setAttribute("aria-label", t("st.dayAria", { day: stDayName(d.day, st.today, true), time: C.stDur(LANG, d.total) }));
+      var col = el("span", "st-col-bar");
+      var f = el("span", "st-col-fill");
+      f.style.height = stPct(d.total, max, 4);
+      col.appendChild(f);
+      b.appendChild(col);
+      b.appendChild(el("span", "st-col-day", stDayName(d.day, st.today, false)));
+      b.addEventListener("click", function () { stPick = d.day; render(); });
+      wk.appendChild(b);
+    });
+    c3.appendChild(wk);
+    c3.appendChild(el("p", "hint", t("st.weekHint")));
+    host.appendChild(c3);
+
+    if (st.has) {
+      var c4 = card(null);
+      c4.appendChild(row(t("st.clear"), null, { hint: t("st.clear.hint") }));
+      c4.appendChild(actions(confirmBtn(t("st.clear"), t("st.clearSure"), "st.clear", function () {
+        stPick = null;
+        set("screentimeClear", true);
+      }, "danger")));
+      host.appendChild(c4);
+    }
   }
 
   // ---------- Section: Fonts (FM-1) ----------
@@ -4525,7 +4630,7 @@
   var SECTION_FN = {
     appearance: secAppearance, fonts: secFonts, accessibility: secAccessibility, menu: secMenu, notifications: secNotifications, sync: secSync, lock: secLock, sensitive: secSensitive, users: secUsers,
     backup: secBackup, language: secLanguage, files: secFiles, solo: secSolo, services: secServices, system: secSystem,
-    device: secDevice
+    device: secDevice, screentime: secScreenTime
   };
 
   function renderNav(s) {

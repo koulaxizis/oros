@@ -8,7 +8,7 @@
   "use strict";
 
   // The groups, in the order shown. A deep link names one of these.
-  var SECTIONS = ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device"];
+  var SECTIONS = ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device", "screentime"];
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
@@ -21,7 +21,7 @@
     theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    fopen: "all", keys: "all", multitask: "device", pcfiles: "device", clip: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", night: "device", backupenc: "device", caldav: "device", gate: "device", helper: "all"
+    fopen: "all", keys: "all", multitask: "device", pcfiles: "device", clip: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", night: "device", screentime: "device", backupenc: "device", caldav: "device", gate: "device", helper: "all"
   };
 
   // Search settings: one row per setting, in page order.
@@ -148,7 +148,10 @@
     ["dv-network", "device", "dv.network"],
     ["dv-screen", "device", "dv.screen"],
     ["dv-features", "device", "dv.features"],
-    ["dv-report", "device", "dv.report"]
+    ["dv-report", "device", "dv.report"],
+    ["screentime", "screentime", "st.on"],
+    ["screentime-week", "screentime", "st.week", null, "st.on"],
+    ["screentime-clear", "screentime", "st.clear", null, "st.on"]
   ];
 
   var POSITIONS = ["top-left", "top", "top-right", "right",
@@ -1451,7 +1454,31 @@
       "w.dv-network": "device info network connection online offline speed",
       "w.dv-screen": "device info screen resolution window pixel ratio touch screens monitor second screen projector extend duplicate",
       "w.dv-features": "device info browser features permissions notifications location missing",
-      "w.dv-report": "device info report problem copy support"
+      "w.dv-report": "device info report problem copy support",
+      "s.screentime": "Screen time",
+      "d.screentime": "Time in each app, on this device only",
+      "st.on": "Count screen time on this device",
+      "st.hint": "Counts the app in front while orOS is on screen, unlocked and in use (or playing sound or video). It stays on this device: never synced, never in a backup, never seen by the Assistant or orOS Gate. Kept for 4 weeks.",
+      "st.offKept": "Counting is off. What was counted before stays until you clear it.",
+      "st.today": "Today",
+      "st.total": "In total",
+      "st.week": "Last 7 days",
+      "st.weekHint": "Tap a day to see its apps.",
+      "st.none": "Nothing counted on this day.",
+      "st.desk": "Desktop",
+      "st.sens": "Sensitive work",
+      "st.hm": "{h} h {m} min",
+      "st.m": "{m} min",
+      "st.lt1": "under 1 min",
+      "st.dayAria": "{day}: {time}",
+      "st.clear": "Clear history",
+      "st.clearSure": "Tap again to clear",
+      "st.clear.hint": "Removes every counted day from this device.",
+      "st.wait": "Screen time starts a few seconds after orOS. Open this section again in a moment.",
+      "st.link": "Screen time: time in each app",
+      "w.screentime": "screen time usage wellbeing digital how long apps time spent minutes hours habit",
+      "w.screentime-week": "screen time week days chart history",
+      "w.screentime-clear": "screen time clear delete history erase"
     },
     el: {
       "app": "Ρυθμίσεις", "back": "Πίσω", "sections": "Ενότητες ρυθμίσεων",
@@ -2745,7 +2772,31 @@
       "w.dv-network": "πληροφορίες συσκευής δίκτυο σύνδεση ίντερνετ ταχύτητα",
       "w.dv-screen": "πληροφορίες συσκευής οθόνη ανάλυση παράθυρο αφή οθόνες δεύτερη οθόνη προβολέας επέκταση διπλότυπο",
       "w.dv-features": "πληροφορίες συσκευής δυνατότητες browser άδειες ειδοποιήσεις τοποθεσία",
-      "w.dv-report": "πληροφορίες συσκευής αναφορά πρόβλημα αντιγραφή"
+      "w.dv-report": "πληροφορίες συσκευής αναφορά πρόβλημα αντιγραφή",
+      "s.screentime": "Χρόνος οθόνης",
+      "d.screentime": "Χρόνος σε κάθε εφαρμογή, μόνο σε αυτή τη συσκευή",
+      "st.on": "Μέτρηση χρόνου οθόνης σε αυτή τη συσκευή",
+      "st.hint": "Μετράει την εφαρμογή που είναι μπροστά, όσο το orOS φαίνεται, είναι ξεκλείδωτο και το χρησιμοποιείς (ή παίζει ήχος ή βίντεο). Μένει σε αυτή τη συσκευή: δεν συγχρονίζεται, δεν μπαίνει σε αντίγραφο ασφαλείας και δεν το βλέπουν ποτέ ο Βοηθός ή το orOS Gate. Κρατιέται 4 εβδομάδες.",
+      "st.offKept": "Η μέτρηση είναι κλειστή. Ό,τι μετρήθηκε πριν μένει μέχρι να το σβήσεις.",
+      "st.today": "Σήμερα",
+      "st.total": "Συνολικά",
+      "st.week": "Τελευταίες 7 ημέρες",
+      "st.weekHint": "Πάτησε μια ημέρα για να δεις τις εφαρμογές της.",
+      "st.none": "Δεν μετρήθηκε τίποτα αυτή την ημέρα.",
+      "st.desk": "Επιφάνεια εργασίας",
+      "st.sens": "Ευαίσθητη δουλειά",
+      "st.hm": "{h} ώρ. {m} λεπ.",
+      "st.m": "{m} λεπ.",
+      "st.lt1": "κάτω από 1 λεπ.",
+      "st.dayAria": "{day}: {time}",
+      "st.clear": "Σβήσε το ιστορικό",
+      "st.clearSure": "Πάτησε ξανά για σβήσιμο",
+      "st.clear.hint": "Σβήνει όλες τις ημέρες που μετρήθηκαν από αυτή τη συσκευή.",
+      "st.wait": "Ο χρόνος οθόνης ξεκινά λίγα δευτερόλεπτα μετά το orOS. Άνοιξε ξανά την ενότητα σε λίγο.",
+      "st.link": "Χρόνος οθόνης: χρόνος σε κάθε εφαρμογή",
+      "w.screentime": "χρόνος οθόνης χρήση ψηφιακή ευεξία πόση ώρα εφαρμογές λεπτά ώρες συνήθεια screen time",
+      "w.screentime-week": "χρόνος οθόνης εβδομάδα ημέρες γράφημα ιστορικό",
+      "w.screentime-clear": "χρόνος οθόνης σβήσιμο διαγραφή ιστορικό"
     }
   };
 
@@ -2889,6 +2940,14 @@
   }
 
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+  // ST-1: seconds of screen time as "2 h 5 min", "12 min", "under 1 min".
+  function stDur(lang, secs) {
+    var m = Math.floor((Number(secs) || 0) / 60);
+    if (m < 1) return t(lang, "st.lt1");
+    if (m < 60) return t(lang, "st.m", { m: m });
+    return t(lang, "st.hm", { h: Math.floor(m / 60), m: m % 60 });
+  }
   function hourLabel(h) { return pad2(h) + ":00"; }
 
   // The same full shape the menu writes (isQuietHour reads the numbers,
@@ -2943,6 +3002,7 @@
   var api = {
     SECTIONS: SECTIONS, SCOPE: SCOPE, STRINGS: STRINGS, FIND: FIND,
     usersPassOk: usersPassOk,
+    stDur: stDur,
     POSITIONS: POSITIONS, STYLES: STYLES, SOUNDS: SOUNDS, DURATIONS: DURATIONS,
     t: t, langOf: langOf, isSection: isSection, sectionOf: sectionOf, scopeOf: scopeOf,
     hourLabel: hourLabel, quietValue: quietValue, readQuiet: readQuiet,
