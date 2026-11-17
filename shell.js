@@ -415,6 +415,7 @@
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
     if (window.orosClip) window.orosClip.refresh();         // clipboard history
+    if (window.orosRead) window.orosRead.refresh();         // read aloud bar (READ-1)
     if (window.orosEmoji) window.orosEmoji.refresh();       // emoji picker
     if (window.orosSmartBar) window.orosSmartBar.refresh(); // smart top bar chips
     // The sync button and the app frame are labelled once at injection /
@@ -9563,6 +9564,7 @@
     { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } },
     { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } },
     { id: "screen", key: "b", label: "sc.desc.screen", fn: function() { scrMove(); } },
+    { id: "read", key: "z", label: "sc.desc.read", fn: function() { if (window.orosRead) window.orosRead.toggle(); } },
     // orOS USB only (oros-usb System extension, PrtSc also takes a shot).
     { id: "usb-shot",    key: "g", label: "sc.desc.usbshot",    usb: true },
     { id: "usb-reader",  key: "j", label: "sc.desc.usbreader",  usb: true },
@@ -12170,6 +12172,7 @@
       // where the launcher has no users API (Settings › Users explains).
       users: state.users || null,
       a11y: a11ySnapshot(),
+      read: window.orosRead ? window.orosRead.snapshot() : null,   // READ-1, this device
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       // SC-EDIT (DEF-APPS D2): id, the key now ("" = off), its default.
@@ -12219,6 +12222,8 @@
         return;
       case "clip":       if (window.orosClip) window.orosClip.setOn(!!value); return;
       case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
+      case "readAloud":  if (window.orosRead) window.orosRead.setOn(!!value); return;      // READ-1
+      case "readRate":   if (window.orosRead) window.orosRead.setRate(Number(value)); return;
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
@@ -16234,6 +16239,91 @@
     };
     if (!window.orosEmoji) window.orosEmoji = emoStub;
     else window.orosEmoji.attach(emoHost);
+  })();
+  // Read aloud (READ-1, readaloud.js): selected text in any app read
+  // with this device's own voices. Off by default (Chris 2026-11-17);
+  // the switch and the speed are device-local here, key
+  // "oros-readaloud" = { v:1, on:1, rate } (absent = off; never synced,
+  // not in exports, the factory-reset oros-* sweep removes it). The
+  // engine is not a start-up script (boot budget): the first read
+  // loads readaloud.js (precached) and attaches it.
+  (function () {
+    var RA_KEY = "oros-readaloud", RA_RATES = [0.8, 1, 1.2, 1.4, 1.6, 2];
+    function raPrefs() {
+      var o = null;
+      try { o = JSON.parse(localStorage.getItem(RA_KEY) || "null"); } catch (e) { o = null; }
+      var on = !!(o && o.v === 1 && o.on === 1);
+      return { on: on, rate: on && RA_RATES.indexOf(o.rate) !== -1 ? o.rate : 1 };
+    }
+    function raWrite(p) {
+      try {
+        if (p.on) localStorage.setItem(RA_KEY, JSON.stringify({ v: 1, on: 1, rate: p.rate }));
+        else localStorage.removeItem(RA_KEY);
+      } catch (e) { return false; }
+      return true;
+    }
+    function raAvailable() { return !!(window.speechSynthesis && typeof window.SpeechSynthesisUtterance === "function"); }
+    var raEngine = null, raLoading = null;
+    var raHost = {
+      frames: function () { return appFrames(); },
+      lang: function () { return state.lang; },
+      rate: function () { return raPrefs().rate; },
+      setRate: function (r) { var p = raPrefs(); if (p.on && RA_RATES.indexOf(r) !== -1) { p.rate = r; raWrite(p); settingsNotify(); } },
+      toast: function (kind, msg) { scToast(kind, msg); },
+      changed: function () { settingsNotify(); }
+    };
+    function raLoad() {
+      if (raEngine) return Promise.resolve(raEngine);
+      if (!raLoading) raLoading = new Promise(function (res, rej) {
+        var sc = document.createElement("script");
+        sc.src = "readaloud.js?v=" + encodeURIComponent(APP_VERSION);
+        sc.onload = function () {
+          var api = window.orosReadEngine;
+          if (api && api.attach) { api.attach(raHost); raEngine = api; res(api); }
+          else { raLoading = null; rej(new Error("readaloud.js")); }
+        };
+        sc.onerror = function () { raLoading = null; sc.remove(); rej(new Error("readaloud.js")); };
+        document.head.appendChild(sc);
+      });
+      return raLoading;
+    }
+    // Run fn(engine) when Read aloud may be used now; otherwise say why.
+    function raThen(fn) {
+      if (!raPrefs().on) {
+        scToast("", window.t("ra.off"), function () { if (window.orosSettings) window.orosSettings.open("accessibility"); });
+        return;
+      }
+      if (strictLevelNow()) { scToast("err", window.t("ra.strict")); return; }
+      raLoad().then(fn, function () { scToast("err", window.t("ra.loadfail")); });
+    }
+    window.orosRead = {
+      isOn: function () { return raPrefs().on && !strictLevelNow(); },
+      // Ctrl+Alt+Shift+Z and Quick settings: stop a reading, or read the
+      // text selected in the app in front.
+      toggle: function () {
+        if (raEngine && raEngine.active()) { raEngine.stop(); return; }
+        raThen(function (e) { e.readSelection(); });
+      },
+      // The selection menu (quickmenu.js): { text, lang, app, secret }
+      read: function (sel) { raThen(function (e) { e.read(sel); }); },
+      stop: function () { if (raEngine) raEngine.stop(); },
+      active: function () { return !!(raEngine && raEngine.active()); },
+      playing: function () { return !!(raEngine && raEngine.playing()); },
+      // Settings › Accessibility
+      snapshot: function () {
+        var p = raPrefs();
+        return { on: p.on, rate: p.rate, rates: RA_RATES.slice(), strict: !!strictLevelNow(), available: raAvailable() };
+      },
+      setOn: function (on) {
+        var p = raPrefs();
+        if (!!on === p.on) return;
+        if (!on && raEngine) raEngine.stop();
+        raWrite({ on: !!on, rate: p.rate });
+        settingsNotify();
+      },
+      setRate: function (r) { raHost.setRate(Number(r)); if (raEngine) raEngine.refresh(); },
+      refresh: function () { if (raEngine) raEngine.refresh(); }
+    };
   })();
   // Night Light (nightlight.js, a shell component like qsettings.js):
   // the warm filter over the whole shell. Sunset and sunrise come from

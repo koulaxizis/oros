@@ -21,7 +21,7 @@
     theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    fopen: "all", keys: "all", multitask: "device", pcfiles: "device", clip: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", night: "device", backupenc: "device", caldav: "device", gate: "device", helper: "all"
+    fopen: "all", keys: "all", multitask: "device", pcfiles: "device", clip: "device", read: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", night: "device", backupenc: "device", caldav: "device", gate: "device", helper: "all"
   };
 
   // Search settings: one row per setting, in page order.
@@ -68,6 +68,8 @@
     ["uifont", "accessibility", "ac.font"],
     ["contrast", "accessibility", "ac.contrast"],
     ["focus", "accessibility", "ac.focus"],
+    ["readaloud", "accessibility", "ac.read.on", "ac.read", null, "read"],
+    ["readaloud-rate", "accessibility", "ac.read.rate", "ac.read", "ac.read.on", "read"],
     ["menuapps", "menu", "m.apps"],
     ["profiles", "menu", "m.profiles", "m.apps", "m.apps"],
     ["notifs", "notifications", "n.enabled"],
@@ -201,6 +203,12 @@
       "ac.font.choose": "Choose in Fonts",
       "ac.font.hint": "The font of menus, buttons and the apps, on this device. Open a font in Settings › Fonts and press Use for orOS. Documents keep their own fonts.",
       "ac.font.nunito": "Nunito (the orOS font)",
+      "ac.read": "Read aloud",
+      "ac.read.on": "Read selected text aloud",
+      "ac.read.hint": "Select text in any orOS app, then press Ctrl+Alt+Shift+Z, choose Read aloud when you right-click it (or on the button under it, on a touch screen or in a text field), or use Quick settings › Read aloud. Only the voices installed on this device are used, so nothing leaves it. Never in Passwords, in password fields or while Sensitive work is on.",
+      "ac.read.rate": "Speed",
+      "ac.read.none": "This browser cannot read aloud.",
+      "ac.read.strict": "Read aloud is off while Sensitive work is on.",
 
       "a.theme": "Theme", "a.dark": "Dark", "a.light": "Light",
       "a.skin": "System colour", "a.wallpaper": "Wallpaper",
@@ -1343,6 +1351,8 @@
       "w.uifont": "orOS font system font interface typeface dyslexia readable legible nunito menus",
       "w.contrast": "black white accessibility forced colors colours",
       "w.focus": "keyboard tab outline accessibility",
+      "w.readaloud": "read aloud speak voice text to speech tts listen selected",
+      "w.readaloud-rate": "read aloud speed rate voice faster slower",
       "w.menuapps": "hide show hidden apps list start",
       "w.profiles": "profile work home set",
       "w.notifs": "alerts pop-up toast on off",
@@ -1496,6 +1506,12 @@
       "ac.font.choose": "Επιλογή στις Γραμματοσειρές",
       "ac.font.hint": "Η γραμματοσειρά των μενού, των κουμπιών και των εφαρμογών, σε αυτή τη συσκευή. Άνοιξε μια γραμματοσειρά στις Ρυθμίσεις › Γραμματοσειρές και πάτα Χρήση για το orOS. Τα έγγραφα κρατούν τις δικές τους γραμματοσειρές.",
       "ac.font.nunito": "Nunito (η γραμματοσειρά του orOS)",
+      "ac.read": "Ανάγνωση φωναχτά",
+      "ac.read.on": "Ανάγνωση επιλεγμένου κειμένου φωναχτά",
+      "ac.read.hint": "Επίλεξε κείμενο σε οποιαδήποτε εφαρμογή του orOS και πάτα Ctrl+Alt+Shift+Z, διάλεξε «Ανάγνωση φωναχτά» με δεξί κλικ (ή στο κουμπί κάτω από το κείμενο, σε οθόνη αφής ή μέσα σε πεδίο κειμένου), ή πήγαινε στις Γρήγορες ρυθμίσεις › Ανάγνωση φωναχτά. Χρησιμοποιούνται μόνο οι φωνές που είναι εγκατεστημένες σε αυτή τη συσκευή, οπότε τίποτα δεν φεύγει από αυτήν. Ποτέ στα Passwords, σε πεδία κωδικών ή όσο είναι ανοιχτή η Ευαίσθητη εργασία.",
+      "ac.read.rate": "Ταχύτητα",
+      "ac.read.none": "Αυτός ο browser δεν μπορεί να διαβάσει φωναχτά.",
+      "ac.read.strict": "Η ανάγνωση φωναχτά είναι κλειστή όσο είναι ανοιχτή η Ευαίσθητη εργασία.",
 
       "a.theme": "Θέμα", "a.dark": "Σκοτεινό", "a.light": "Φωτεινό",
       "a.skin": "Χρώμα συστήματος", "a.wallpaper": "Ταπετσαρία",
@@ -2637,6 +2653,8 @@
       "w.uifont": "γραμματοσειρά του orOS γραμματοσειρά συστήματος δυσλεξία ευανάγνωστη nunito μενού",
       "w.contrast": "αντίθεση μαύρο άσπρο προσβασιμότητα",
       "w.focus": "πληκτρολόγιο tab περίγραμμα εστίαση προσβασιμότητα",
+      "w.readaloud": "ανάγνωση φωναχτά ομιλία φωνή εκφώνηση ακρόαση επιλεγμένο",
+      "w.readaloud-rate": "ανάγνωση φωναχτά ταχύτητα φωνή γρηγορότερα αργότερα",
       "w.menuapps": "απόκρυψη εμφάνιση κρυφές εφαρμογές λίστα",
       "w.profiles": "προφίλ δουλειά σπίτι",
       "w.notifs": "ειδοποιήσεις αναδυόμενα ενεργές",

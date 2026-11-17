@@ -25,6 +25,7 @@ orOS hat eine Reihe von Tastenkürzeln, die überall funktionieren: auf dem Desk
 - [[Ctrl+Alt+Shift+V]]: `Zwischenablage-Verlauf`
 - [[Ctrl+Alt+Shift+.]]: `Emoji`
 - [[Ctrl+Alt+Shift+B]]: `Die App auf den anderen Bildschirm verschieben`
+- [[Ctrl+Alt+Shift+Z]]: `Markierten Text vorlesen`
 - [[Ctrl+Alt+Shift+G]]: `Bildschirmfoto (orOS USB)`
 - [[Ctrl+Alt+Shift+J]]: `Bildschirmleser an / aus (orOS USB)`
 - [[Ctrl+Alt+Shift+D]]: `Bildschirme wechseln: erweitern, duplizieren oder nur einer (orOS USB)`
@@ -48,6 +49,7 @@ orOS hat eine Reihe von Tastenkürzeln, die überall funktionieren: auf dem Desk
 - **Zwischenablage-Verlauf** zeigt, was du in orOS-Apps kopiert hast, wenn du ihn in den Einstellungen eingeschaltet hast. Siehe [Datenschutz](help:t/privacy).
 - **Emoji** öffnet die Emoji-Auswahl: Suche auf Deutsch, Englisch oder Griechisch, oder wähle aus einer Gruppe. Das Emoji kommt in das Textfeld, in dem du zuletzt warst, in der App auf dem Bildschirm, und die Auswahl bleibt für weitere offen ([[Esc]] schließt sie); ohne ein solches Feld wird es kopiert. `Emoji` in den Schnelleinstellungen öffnet sie ebenfalls.
 - **Übersicht** zeigt auf einem Bildschirm das Suchfeld, deine offenen Apps, zuletzt verwendete Dateien und einen kleinen System-Streifen (Speicher, Speicherplatz, Synchronisierung). Fang an zu tippen, um zu suchen: Der Text geht in die Menüsuche. Siehe [Das Menü](help:t/menu#overview).
+- **Markierten Text vorlesen** liest, was du in der App vorne markiert hast, mit den auf diesem Gerät installierten Stimmen vor, sobald du `Vorlesen` unter Einstellungen › Barrierefreiheit eingeschaltet hast; dieselben Tasten beenden es. In einem Textfeld bleiben die Tasten beim Feld: Nutze Vorlesen auf der Schaltfläche unter der Markierung oder in den Schnelleinstellungen. Nie in Passwords oder solange Sensible Arbeit an ist.
 - **Hilfe zur offenen App** öffnet die Hilfe auf der Seite der App, die du gerade nutzt. Auf dem Desktop öffnet sie die Startseite der Hilfe.
 
 ## Ein Kürzel ändern

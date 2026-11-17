@@ -568,8 +568,8 @@
   }
 
   // ---------- 4a. Section: Accessibility ----------
-  // Text size, high contrast and the focus ring (shell.js 5e). All
-  // three stay on this device; older shells send no s.a11y.
+  // Text size, high contrast and the focus ring (shell.js 5e), Read
+  // aloud (READ-1). All stay on this device; older shells send no s.a11y.
   function secAccessibility(host, s) {
     var a = s.a11y;
     if (!a) { host.appendChild(el("p", "hint card-note", t("noShell"))); return; }
@@ -594,6 +594,24 @@
     c3.appendChild(row(t("ac.focus"), switchBtn(a.focus, "focusRing", function (v) { set("focusRing", v); }, t("ac.focus")),
       { scope: "a11y", hint: t("ac.focus.hint") }));
     host.appendChild(c3);
+
+    // READ-1: Read aloud (shell.js window.orosRead, readaloud.js), off by
+    // default, this device only; older shells send no s.read.
+    var r = s.read;
+    if (r) {
+      var c5 = card(t("ac.read"), "read");
+      c5.appendChild(row(t("ac.read.on"), switchBtn(r.on, "readAloud", function (v) { set("readAloud", v); }, t("ac.read.on")),
+        { hint: t("ac.read.hint") }));
+      if (r.on) {
+        var dec = LANG === "en" ? "." : ",";
+        c5.appendChild(segRow(t("ac.read.rate"), segmented(r.rates.map(function (n) {
+          return { value: n, label: String(n).replace(".", dec) + "\u00d7" };
+        }), r.rate, "readRate", function (v) { set("readRate", v); }, t("ac.read.rate"))));
+      }
+      if (!r.available) c5.appendChild(el("p", "hint", t("ac.read.none")));
+      if (r.strict) c5.appendChild(el("p", "hint", t("ac.read.strict")));
+      host.appendChild(c5);
+    }
 
     // FM-5: the font of orOS (chosen on a font's page in Fonts)
     if ("font" in a) {
