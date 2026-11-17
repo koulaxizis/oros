@@ -44,7 +44,7 @@
       "app.name": "Sticky Notes",
       "sub.count": "{n} on the desktop", "sub.count1": "1 on the desktop", "sub.none": "No notes on the desktop",
       "btn.new": "New note", "btn.more": "Sticky Notes settings", "btn.close": "Close",
-      "btn.edit": "Edit", "btn.show": "Show", "btn.delete": "Delete", "btn.restore": "Restore", "btn.deleteNow": "Delete now",
+      "btn.edit": "Edit", "btn.show": "Show", "btn.sendApp": "Send to an app…", "btn.delete": "Delete", "btn.restore": "Restore", "btn.deleteNow": "Delete now",
       "btn.test": "Play", "btn.tidy": "Tidy up the desktop", "btn.export": "Export as text",
       "tab.notes": "On the desktop", "tab.faded": "Faded",
       "f.search": "Search your notes", "ph.search": "Search your notes",
@@ -77,7 +77,7 @@
       "app.name": "Post-it",
       "sub.count": "{n} στην επιφάνεια", "sub.count1": "1 στην επιφάνεια", "sub.none": "Κανένα post-it στην επιφάνεια",
       "btn.new": "Νέο post-it", "btn.more": "Ρυθμίσεις για τα post-it", "btn.close": "Κλείσιμο",
-      "btn.edit": "Επεξεργασία", "btn.show": "Εμφάνιση", "btn.delete": "Διαγραφή", "btn.restore": "Επαναφορά", "btn.deleteNow": "Διαγραφή τώρα",
+      "btn.edit": "Επεξεργασία", "btn.show": "Εμφάνιση", "btn.sendApp": "Στείλε σε εφαρμογή…", "btn.delete": "Διαγραφή", "btn.restore": "Επαναφορά", "btn.deleteNow": "Διαγραφή τώρα",
       "btn.test": "Άκουσμα", "btn.tidy": "Τακτοποίηση της επιφάνειας", "btn.export": "Εξαγωγή ως κείμενο",
       "tab.notes": "Στην επιφάνεια", "tab.faded": "Ξεθωριασμένα",
       "f.search": "Αναζήτηση στα post-it", "ph.search": "Αναζήτηση στα post-it",
@@ -168,6 +168,19 @@
     return b;
   }
 
+  // "Send to an app" (shell send/, BR-SEND): the note as text, as
+  // written ("[ ] " / "[x] " tick boxes, which To-Do strips: one task
+  // per line).
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function sendNote(n) {
+    var api = sendApi();
+    if (!api || !n.text) return;
+    api.open({ kind: "text", data: { title: C.firstLine(n.text).slice(0, 200), text: String(n.text) } });
+  }
+
   function renderNotes() {
     var d = data(), now = Date.now(), q = $("q").value.trim();
     var all = C.newestFirst(C.live(d));
@@ -186,6 +199,7 @@
       var acts = el("div", "acts");
       acts.appendChild(action(t("btn.edit"), function () { H.edit(n.id); }, "pri"));
       if (H.prefs().show) acts.appendChild(action(t("btn.show"), function () { H.show(n.id); }));
+      if (n.text && sendApi()) acts.appendChild(action(t("btn.sendApp"), function () { sendNote(n); }));
       acts.appendChild(action(t("btn.delete"), function () { H.remove(n.id); }, "danger"));
       li.appendChild(acts);
       ul.appendChild(li);

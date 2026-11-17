@@ -84,7 +84,7 @@
       "last.never": "no contact yet", "last.today": "contacted today", "last.yday": "contacted yesterday",
       "last.days": "contacted {n} days ago", "last.date": "contacted {d}",
       "next": "next: {d}",
-      "act.call": "Call", "act.mail": "Email", "act.map": "Map", "act.log": "Log contact", "act.fup": "Follow-up", "act.deal": "Deal",
+      "act.call": "Call", "act.mail": "Email", "act.map": "Map", "act.log": "Log contact", "act.fup": "Follow-up", "act.deal": "Deal", "act.sendApp": "Send to an app…",
       "k.call": "Call", "k.mail": "Email", "k.meet": "Meeting", "k.msg": "Message", "k.note": "Note",
       "sec.info": "Details", "sec.people": "People", "sec.notes": "Notes",
       "sec.ctdiff": "Different in Contacts",
@@ -398,7 +398,7 @@
       "last.never": "καμία επαφή ακόμη", "last.today": "επαφή σήμερα", "last.yday": "επαφή χθες",
       "last.days": "επαφή πριν από {n} μέρες", "last.date": "επαφή {d}",
       "next": "επόμενο: {d}",
-      "act.call": "Κλήση", "act.mail": "Email", "act.map": "Χάρτης", "act.log": "Καταγραφή", "act.fup": "Follow-up", "act.deal": "Ευκαιρία",
+      "act.call": "Κλήση", "act.mail": "Email", "act.map": "Χάρτης", "act.log": "Καταγραφή", "act.fup": "Follow-up", "act.deal": "Ευκαιρία", "act.sendApp": "Στείλε σε εφαρμογή…",
       "k.call": "Κλήση", "k.mail": "Email", "k.meet": "Συνάντηση", "k.msg": "Μήνυμα", "k.note": "Σημείωση",
       "sec.info": "Στοιχεία", "sec.people": "Άνθρωποι", "sec.notes": "Σημειώσεις",
       "sec.ctdiff": "Διαφορές με τις Επαφές",
@@ -2961,6 +2961,34 @@
   }
 
   // ---------- 6. Customer page ----------
+  // "Send to an app" (shell send/, BR-SEND): the customer's card as
+  // text (facts, people, notes); a prefill for the other app.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function custText(c) {
+    var L = [c.name];
+    var sub = [t("kind." + c.kind), hasRoles(c) ? rolesText(c) : "", c.alias || ""].filter(Boolean).join(" · ");
+    if (sub) L.push(sub);
+    [["afm", c.afm], ["doy", c.doy], ["job", c.job], ["addr", c.addr], ["country", c.country],
+     ["phone", c.phone], ["email", c.email], ["web", c.web]].forEach(function (f) {
+      if (f[1]) L.push(t("fact." + f[0]) + ": " + f[1]);
+    });
+    var ppl = (c.people || []).map(function (p) {
+      var v = personView(p);
+      return "- " + [v.name + (p.role ? " (" + p.role + ")" : ""), v.phone, v.email].filter(Boolean).join(" · ");
+    });
+    if (ppl.length) L.push("", t("sec.people"), ppl.join("\n"));
+    if (c.note) L.push("", t("sec.notes"), c.note);
+    return L.join("\n");
+  }
+  function sendCustomer(c) {
+    var api = sendApi();
+    if (!api || !c) return;
+    api.open({ kind: "text", data: { title: c.name, text: custText(c) } });
+  }
+
   function renderDetail() {
     var box = $("cust-detail");
     box.innerHTML = "";
@@ -3012,6 +3040,7 @@
     if (canInvoice()) acts.appendChild(txtBtn("doc", t("act.inv"), function () { newInvoice(c, null); }));
     if (canQuote()) acts.appendChild(txtBtn("doc", t("act.quote"), function () { newQuote(c, null); }));
     if (c.email || c.phone || c.web) acts.appendChild(txtBtn("", t("en.one"), function () { enrichOpen([c]); }));
+    if (sendApi()) acts.appendChild(txtBtn("", t("act.sendApp"), function () { sendCustomer(c); }));
     box.appendChild(acts);
 
     // details
@@ -5059,6 +5088,14 @@
     if (x && typeof x === "object" && x.openFile) { if (recFile) recFile.openTarget(x.openFile); return !!recFile; }
     if (!x || typeof x !== "object" || document.querySelector("dialog[open]")) return false;
     var id = function (v) { return typeof v === "string" && C.ID_RE.test(v) ? v : ""; };
+    // "Send to an app" (BR-SEND): { logNote: { text ≤ 2000 } } opens a
+    // new history entry of kind Note with that text; the customer is
+    // picked in the window (the open one first); nothing is saved
+    // before Save.
+    if (x.logNote && typeof x.logNote === "object" && typeof x.logNote.text === "string" && x.logNote.text.trim()) {
+      logEditor(null, prefs.sel || "", { k: "note", text: x.logNote.text.slice(0, 2000) });
+      return true;
+    }
     // Today's "Done" tick: the same code as the Agenda's tick (Undo,
     // "Log it"); a follow-up already done or gone only shows a note.
     if (x.done && typeof x.done === "object") {

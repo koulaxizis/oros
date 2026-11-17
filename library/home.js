@@ -630,6 +630,10 @@
     // text; BR: __orosOpenAt("notes", { add }), at most 20,000 characters)
     var plain = C.notesMarkdown(b, LIB.data.marks, LIB.LANG, { date: C.ymdOf(new Date()), max: 20000 });
     var hasHl = LIB.data.marks.some(function (k) { return k.b === id && (k.k === "hl" || k.n); });
+    if (hasHl && LIB.sendApi()) acts.appendChild(LIB.textBtn("btn", t("export.sendApp"), function () {
+      dlg.close();
+      LIB.sendApi().open({ kind: "text", data: { title: t("export.notesTitle", { title: b.title }), text: plain.text } });
+    }));
     if (hasHl && LIB.parentWin()) acts.appendChild(LIB.textBtn("btn", t("export.notes"), function () {
       dlg.close();
       if (LIB.openApp("notes", { add: { title: t("export.notesTitle", { title: b.title }), text: plain.text } })) {

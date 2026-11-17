@@ -39,6 +39,8 @@ Am Computer kannst du einen Termin in der Ansicht `Monat` auf einen anderen Tag 
 
 Tippe oder klicke auf einen Ort, um ihn in [Karten](app:maps) zu öffnen. Karten kann auch eine geplante Route als neuen Termin an den Kalender schicken.
 
+`An eine App senden…` im Fenster eines gespeicherten Termins schickt ihn als Text (Titel, Tag und Uhrzeit, Ort, Notiz) an eine andere orOS-App, etwa [Notizen](app:notes), [Aufgaben](app:todo) oder [Mail](app:mail); bei einem wiederkehrenden Termin geht der Tag, den du geöffnet hast. Die andere App öffnet sich nur damit ausgefüllt.
+
 ## Labels und Feeds
 Die Chips über dem Kalender sind deine Labels. Am Anfang hast du `Privat`, `Arbeit` und `Familie`. Tippe oder klicke auf einen Chip, um diese Termine aus- oder einzublenden. `＋ Labels verwalten` lässt dich Labels hinzufügen, umbenennen, umfärben und löschen; ein Label, das noch von Terminen benutzt wird, kann nicht gelöscht werden. Auf einem Handy sind die Chips hinter einem Knopf `Labels & Feeds` zusammengefaltet, der zeigt, wie viele an sind; tippe darauf, um die Liste zu öffnen oder zu schließen. Dein Gerät merkt sich, ob du sie offen gelassen hast.
 

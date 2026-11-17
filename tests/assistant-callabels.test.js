@@ -331,3 +331,8 @@ test("refs take up to 200; label lists and calendar lists reach 200; the card su
   assert.equal(out.items.length, 200);
   assert.equal(out.more_items, 30);
 });
+
+test("change_item takes the gate's long refs (r116155 from a closed-orOS search)", () => {
+  assert.equal(ok({ ref: "r116155", action: "delete" }).ref, "r116155");
+  assert.equal(E.normArgs({ ref: "r1234567890", action: "delete" }).ok, false, "still a bounded ref");
+});
