@@ -145,7 +145,7 @@ test("pages that load i18n.js name a real app, before their own scripts", () => 
     const s = fs.readFileSync(path.join(ROOT, p.page), "utf8");
     for (const a of p.apps) if (!S.appKeys(a, ALL).size) bad.push(p.page + ': data-app="' + a + '" has no strings');
     const i = s.indexOf("i18n.js");
-    const first = /<script src="(?!(?:\.\.\/)?i18n\.js)[^"]+"/.exec(s);
+    const first = /<script src="(?!(?:\.\.\/|\/)?i18n\.js)[^"]+"/.exec(s);
     if (first && first.index < i) bad.push(p.page + ": i18n.js must come before " + first[0]);
   }
   assert.deepEqual(bad, []);

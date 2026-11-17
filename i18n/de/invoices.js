@@ -676,5 +676,19 @@ orosPack("de", "invoices", {
  "pi.title": "Rechnungs-PDFs importieren",
  "pi.w.lines": "Die Positionen ergeben nicht den Nettobetrag",
  "pi.w.pay": "Der Zahlbetrag stimmt nicht",
- "pi.w.sum": "Netto + USt. ergibt nicht die Summe"
+ "pi.w.sum": "Netto + USt. ergibt nicht die Summe",
+ "o-groc": "Lebensmittel",
+ "o-eat": "Auswärts essen",
+ "o-bills": "Rechnungen",
+ "o-home": "Miete & Wohnen",
+ "o-trans": "Verkehr",
+ "o-health": "Gesundheit",
+ "o-fun": "Freizeit",
+ "o-cloth": "Kleidung",
+ "o-gift": "Geschenke",
+ "o-other": "Sonstiges",
+ "i-salary": "Gehalt",
+ "i-free": "Freiberuflich",
+ "i-gift": "Geschenke",
+ "i-other": "Sonstiges"
 });

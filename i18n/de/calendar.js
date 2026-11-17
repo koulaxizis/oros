@@ -576,5 +576,15 @@ orosPack("de", "calendar", {
  "gu.rv.err": "Die Einladungslinks konnten nicht aktualisiert werden. Versuch es später noch einmal.",
  "gu.rv.err.net": "Keine Verbindung. Die Links brauchen Internet.",
  "gu.rv.err.full": "Der Einladungsdienst ist gerade voll. Versuch es später noch einmal.",
- "gu.inv": "Einladung…"
+ "gu.inv": "Einladung…",
+ "feed.crm.ctr": "Vertrag endet",
+ "feed.crm.ctrEnded": "Vertrag beendet",
+ "lbl.acts": "Schnellfilter",
+ "lbl.f.all": "Alle",
+ "lbl.f.all.hint": "Jeden Chip zeigen (Mond & Himmel, Medikamente und Arzttermine bleiben, wie sie sind)",
+ "lbl.f.none": "Keine",
+ "lbl.f.none.hint": "Jeden Chip ausblenden, dann nur die gewünschten einschalten",
+ "lbl.f.mine": "Meine Termine",
+ "lbl.f.mine.hint": "Nur deine eigenen Termine: jedes Label und Kein Label, keine Feeds",
+ "lbl.chip.hint": "Klick: zeigen oder ausblenden. Rechtsklick, Alt+Klick oder lange drücken: nur dieser (noch einmal: alle)"
 });

@@ -413,5 +413,22 @@ orosPack("de", "texttools", {
  "words.new": "Neues Wort",
  "words.ph": "z. B. iPhone",
  "words.remove": "{w} entfernen",
- "words.title": "Meine Wörter"
+ "words.title": "Meine Wörter",
+ "hint.upper": "Großbuchstaben. Griechische Großbuchstaben verlieren ihre Akzente und behalten das Trema, wo es hingehört (τσάι → ΤΣΑΪ).",
+ "hint.sentence": "Ein Großbuchstabe am Anfang jedes Satzes. Wörter in Meine Wörter behalten ihre Großbuchstaben.",
+ "hint.title": "Großbuchstaben für einen Titel; kleine Wörter wie „of“, „the“, „και“, „του“ bleiben klein. Wörter in Meine Wörter behalten ihre Großbuchstaben.",
+ "hint.capital": "Ein Großbuchstabe am Anfang jedes Wortes. Wörter in Meine Wörter behalten ihre Großbuchstaben.",
+ "hint.alt": "Klein- und Großbuchstaben im Wechsel, zum Spaß.",
+ "hint.latin": "Griechisch in lateinischen Buchstaben: ELOT 743 wie in Reisepässen (Θεσσαλονίκη → Thessaloniki) oder lockeres Greeklish wie in Nachrichten.",
+ "hint.mixed": "Findet lateinische Buchstaben, die sich in griechischen Wörtern verstecken (ein englisches A in ΑΘΗΝΑ), und umgekehrt.",
+ "hint.fancy": "Fette, kursive und andere Unicode-Buchstaben für Beiträge. Viele Screenreader lesen sie schlecht vor; nimm sie nur für kurze Titel. „Einfacher Text“ macht sie wieder normal.",
+ "val.as.camel": "camelCase",
+ "val.as.pascal": "PascalCase",
+ "val.as.snake": "snake_case",
+ "val.as.kebab": "kebab-case",
+ "val.as.constant": "CONSTANT_CASE",
+ "val.as.dot": "dot.case",
+ "val.as.path": "path/case",
+ "val.as.train": "Train-Case",
+ "err.nocase": "Die Buchstaben-Engine wurde nicht geladen: öffne die App neu"
 });
