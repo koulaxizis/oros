@@ -1,4 +1,5 @@
 orosPack("de", "calendar", {
+ "ev.sendApp": "An eine App senden…",
  "tdy.span": "{s}–{e}",
  "tdy.days": "Vom {s} bis {e}",
  "tdy.tipLeave": "Beginnt um {t} in „{p}“: schau rechtzeitig nach dem Weg.",

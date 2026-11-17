@@ -1,4 +1,7 @@
 orosPack("de", "base", {
+ "menu.sendTable": "Als Tabelle an eine App senden…",
+ "menu.sendList": "Als Liste an eine App senden…",
+ "rec.sendApp": "An eine App senden…",
  "app": "Datenbank",
  "base.rec1": "1 Eintrag",
  "base.recs": "{n} Einträge",

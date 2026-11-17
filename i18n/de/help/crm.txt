@@ -11,6 +11,8 @@ Die Liste hat ein Suchfeld, ein Sortiermenü und Filter: `Leads`, `Aktiv`, `Ehem
 
 Tippe unter `Personen` auf `+ Person`. Wähle jemanden `Aus Kontakte` (Telefon und E-Mail werden aus [Kontakte](app:contacts) gelesen und bleiben aktuell) oder gib einen Namen mit Telefon und E-Mail ein. `Zu Kontakte hinzufügen` öffnet Kontakte mit dieser Person ausgefüllt; gespeichert wird dort erst, wenn du auf Speichern tippst.
 
+`An eine App senden…` bei den Schaltflächen eines Kunden schickt den Kunden als Text (Angaben, Personen und Notizen) an eine andere orOS-App, etwa [Notizen](app:notes), [Mail](app:mail) oder [Kanban](app:kanban). Die andere App öffnet sich nur damit ausgefüllt.
+
 ## Verlauf, Wiedervorlagen und die Agenda
 `Kontakt notieren` hält einen Anruf, eine E-Mail, ein Treffen, eine Nachricht oder eine Notiz fest, mit Datum und Uhrzeit, mit wem du gesprochen hast und um welchen Deal es ging. Wähle `Nächste Wiedervorlage`, um im selben Fenster den nächsten Schritt zu planen.
 

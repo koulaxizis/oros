@@ -13,6 +13,8 @@ Under `People` tap `+ Person`. Pick someone `From Contacts` (their phone and ema
 
 A customer of kind `Person` linked to a contact is kept in sync with it both ways: change the name, phone, email, website, profession, address or country in either app and the other follows (the newer change wins; tax ID, notes and tags stay apart). When a company is renamed, its linked people whose company field still says the old name follow. If the two already differed before the link, the customer page shows `Different in Contacts`: nothing changes until you pick `Keep this` or `Keep the contact's`.
 
+`Send to an app…` among a customer's buttons sends the customer as text (details, people and notes) to another orOS app, such as [Notes](app:notes), [Mail](app:mail) or [Kanban](app:kanban). The other app only opens with it filled in.
+
 ## History, follow-ups and the agenda
 `Log contact` records a call, email, meeting, message or note with its date and time, who you spoke to and the deal it was about. Pick `Next follow-up` to plan the next step in the same window.
 

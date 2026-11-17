@@ -73,6 +73,8 @@ A trip's `More` menu also has `orOS file (.orostrip)`: the whole trip in one fil
 - Polarsteps: in the app's account settings, ask for your data ("Download my data") and pick the .zip you get by e-mail. Each step becomes an itinerary entry with its place on the map, and the step texts go to the journal. Photos and the recorded route are not imported.
 - TripIt: in TripIt's settings, open the calendar feed and save it as an .ics file (or export a trip to a calendar). The whole-trip event becomes the trip; flights, hotels (check-in to check-out), trains, car hire and restaurants become entries, and anything else an `Other` entry with its text as a note. Times in UTC show in this device's time zone.
 
+`Send the trip to an app…` in the same menu sends the trip as text (the same text as `Copy as text`) to another orOS app, such as [Notes](app:notes), [Writer](app:writer) or [Mail](app:mail); `Send the itinerary to an app…` sends the itinerary as a list, one item per entry with its day, to [To-Do](app:todo), [Kanban](app:kanban) and others. The other app only opens with it filled in.
+
 ## Sync and backup
 Trips, packing lists, itineraries, map points, budgets, expenses, journal texts and your templates sync between your devices through [orOS sync](help:t/sync). A tick on your phone and a change on your computer both survive. Attached files and journal photos are on the orOS disk and reach your other devices through Vault Drive; until then they show `Not on this device yet`. The open trip, tab, map day and filters stay on each device. Besides the JSON export, the orOS [backup](help:t/backup) keeps a copy.
 

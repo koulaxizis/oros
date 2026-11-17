@@ -143,7 +143,7 @@
       "iss.early": "The date is before {n} ({d}) of the same series.",
       "iss.go": "Issue",
       "vw.pdf": "PDF", "vw.share": "Share PDF", "vw.email": "Email", "vw.pay": "Add payment", "vw.paid": "Mark as paid",
-      "vw.sent": "Mark as sent", "vw.unsent": "Not sent", "vw.dup": "Duplicate", "vw.credit": "Credit note",
+      "vw.sent": "Mark as sent", "vw.unsent": "Not sent", "vw.dup": "Duplicate", "vw.sendApp": "Send the lines to an app…", "vw.credit": "Credit note",
       "ed.prof": "Business", "set.profs": "Business profiles", "set.addBiz": "Add a business profile", "set.newBiz": "New business",
       "set.profsHint": "Another business? Each profile has its own details, logo, bank lines, terms and footer; pick it on each document. Give it its own numbering series below (Profile) to keep separate numbers.",
       "set.delBiz": "Delete this profile", "set.main": "Main", "set.serProf": "Profile", "set.serAny": "Any", "set.editing": "Editing", "toast.bizDel": "Profile deleted",
@@ -308,7 +308,7 @@
       "iss.early": "Η ημερομηνία είναι πριν από το {n} ({d}) της ίδιας σειράς.",
       "iss.go": "Έκδοση",
       "vw.pdf": "PDF", "vw.share": "Κοινοποίηση PDF", "vw.email": "Email", "vw.pay": "Νέα πληρωμή", "vw.paid": "Εξόφληση",
-      "vw.sent": "Σημείωση ως σταλμένο", "vw.unsent": "Δεν στάλθηκε", "vw.dup": "Αντίγραφο", "vw.credit": "Πιστωτικό",
+      "vw.sent": "Σημείωση ως σταλμένο", "vw.unsent": "Δεν στάλθηκε", "vw.dup": "Αντίγραφο", "vw.sendApp": "Στείλε τις γραμμές σε εφαρμογή…", "vw.credit": "Πιστωτικό",
       "ed.prof": "Επιχείρηση", "set.profs": "Επιχειρηματικά προφίλ", "set.addBiz": "Προσθήκη προφίλ επιχείρησης", "set.newBiz": "Νέα επιχείρηση",
       "set.profsHint": "Κι άλλη επιχείρηση; Κάθε προφίλ έχει δικά του στοιχεία, λογότυπο, τράπεζες, όρους και υποσέλιδο· το διαλέγεις σε κάθε παραστατικό. Δώσε του δική του σειρά αρίθμησης πιο κάτω (Προφίλ) για χωριστή αρίθμηση.",
       "set.delBiz": "Διαγραφή προφίλ", "set.main": "Κύριο", "set.serProf": "Προφίλ", "set.serAny": "Όλα", "set.editing": "Επεξεργασία", "toast.bizDel": "Το προφίλ διαγράφηκε",
@@ -1735,6 +1735,46 @@
   }
 
   // ---------- 8. Viewer ----------
+  // "Send to an app" (shell send/, BR-SEND): the document's lines as a
+  // table (amounts in the currency, not cents), then net, VAT and the
+  // total; a prefill for Spreadsheet, Writer, Mail…
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function linesTable(d) {
+    var lines = (d.lines || []).slice(0, 495);
+    var code = lines.some(function (l) { return l.code; }), unit = lines.some(function (l) { return l.unit; });
+    var head = [t("ed.desc"), t("ed.qty")];
+    if (unit) head.push(t("ed.unit"));
+    head.push(t("ed.price"), t("ed.disc"), t("ed.vat"), t("tot.net"));
+    if (code) head.unshift(t("ed.code"));
+    var rows = [head], pad = head.length - 2;
+    lines.forEach(function (l) {
+      var r = [l.d || "", l.q];
+      if (unit) r.push(l.unit || "");
+      r.push(l.p / 100, l.disc || 0, l.vat || 0, C.lineNet(l) / 100);
+      if (code) r.unshift(l.code || "");
+      rows.push(r);
+    });
+    var tt = C.totals(d);
+    function foot(label, cents) {
+      var r = [label];
+      for (var i = 0; i < pad; i++) r.push("");
+      r.push(cents / 100);
+      if (code) r.unshift("");
+      rows.push(r);
+    }
+    foot(t("tot.net"), tt.net);
+    foot(t("ed.vatAmt"), tt.vat);
+    foot(t("tot.total"), tt.total);
+    return rows;
+  }
+  function sendLines(d) {
+    var api = sendApi();
+    if (!api) return;
+    api.open({ kind: "table", data: { name: (kindName(d.kind) + " " + (d.num || "")).trim(), rows: linesTable(d) } });
+  }
   function openDoc(id) {
     var d = findDoc(id);
     if (!d) { showToast(t("toast.gone")); return; }
@@ -1787,6 +1827,7 @@
     }));
     if (d.kind === "ext") acts.appendChild(btn(t("vw.edit"), "", function () { editDoc(d.id); }));
     if (d.kind !== "ext") acts.appendChild(btn(t("vw.dup"), "", function () { duplicate(d); }));
+    if (d.kind !== "ext" && (d.lines || []).length && sendApi()) acts.appendChild(btn(t("vw.sendApp"), "", function () { sendLines(d); }));
     if (d.st === "issued" && (d.kind === "inv" || d.kind === "rcpt")) acts.appendChild(btn(t("vw.credit"), "", function () { creditFor(d); }));
     if (d.st === "issued" && d.kind === "pro") acts.appendChild(btn(t("vw.convert"), "", function () { convertPro(d); }));
     var stockReq = stockShell() ? C.stockOut(d) : null;

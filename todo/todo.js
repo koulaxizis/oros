@@ -87,6 +87,8 @@
       "save":          "Save",
       "list.settings": "List settings",
       "list.share":    "Send to someone…",
+      "list.sendApp":  "Send the list to an app…",
+      "item.sendApp":  "Send to an app…",
       "list.share.empty": "This list is empty: nothing to send",
       "list.name":     "Name",
       "list.delete":   "Delete list",
@@ -270,6 +272,8 @@
       "save":          "Αποθήκευση",
       "list.settings": "Ρυθμίσεις λίστας",
       "list.share":    "Στείλε σε κάποιον…",
+      "list.sendApp":  "Στείλε τη λίστα σε εφαρμογή…",
+      "item.sendApp":  "Στείλε σε εφαρμογή…",
       "list.share.empty": "Η λίστα είναι άδεια: δεν υπάρχει κάτι να στείλεις",
       "list.name":     "Όνομα",
       "list.delete":   "Διαγραφή λίστας",
@@ -1843,9 +1847,20 @@
   // Which controls make sense in this view.
   var shareApi = null;
   try { shareApi = window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; } catch (e) {}
+  // "Send to an app" (shell send/, BR-SEND): the list or one task as
+  // items; a prefill for the other app, nothing is written here.
+  var sendApi = null;
+  try { sendApi = window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; } catch (e) {}
+  function sendItem(it) {
+    var note = String(it.notes || "");
+    var subs = (Array.isArray(it.subs) ? it.subs : []).map(function (st) { return (st.done ? "[x] " : "- ") + st.text; }).join("\n");
+    if (subs) note = note ? note + "\n" + subs : subs;
+    return note ? { text: it.text, note: note } : { text: it.text };
+  }
   function updateControls(cv) {
     $("clear-completed").hidden = !!cv;
     $("list-share").hidden = !!cv || !shareApi;
+    $("list-send").hidden = !!cv || !sendApi;
     $("list-settings").hidden = !!(cv && cv.smart);
     var ls = $("list-settings");
     var key = cv && cv.filter ? "flt.edit" : "list.settings";
@@ -2221,6 +2236,7 @@
   }
   function renderTsSpent(item) {
     var box = $("f-ts-spent"), btn = $("f-track");
+    if ($("f-send")) $("f-send").hidden = !(item && item.id && sendApi);
     var on = !!(item && item.id && tsApi());
     if (btn) btn.hidden = !on;
     if (!box) return;
@@ -2240,6 +2256,15 @@
     p.__orosOpenAt("timesheet", { startTimer: { title: title, project: list && list.name ? String(list.name) : "", src: "todo:" + id } });
   }
   if ($("f-track")) $("f-track").addEventListener("click", trackItem);
+  function sendTask() {
+    var id = editingItemId;
+    if (!sendApi || !id) return;
+    $("dlg-item").close();         // persistence commits in the close handler
+    var hit = findItem(id), item = hit ? hit.item : null;
+    if (!item || !String(item.text || "").trim()) return;
+    sendApi.open({ kind: "items", data: { title: item.text, items: [sendItem(item)] } });
+  }
+  if ($("f-send")) $("f-send").addEventListener("click", sendTask);
 
   function openItemDialog(listId, itemId) {
     var list = listById(listId);
@@ -3982,6 +4007,21 @@
         t: list.name || t("new.list"),
         i: list.items.map(function (it) { return { x: it.text, n: it.notes || "", d: it.done ? 1 : 0 }; })
       } });
+    });
+
+    $("list-send").hidden = !sendApi;
+    $("list-send").addEventListener("click", function () {
+      var list = activeList();
+      if (!sendApi) return;
+      if (!list.items.length) { showToast(t("list.share.empty"), false); return; }
+      var data = { title: list.name || t("new.list"), items: list.items.filter(function (it) { return !it.done; }).map(sendItem) };
+      if (!data.items.length) data.items = list.items.map(sendItem);
+      var arg = { kind: "items", data: data };
+      if (shareApi) arg.share = { kind: "list", data: {
+        t: list.name || t("new.list"),
+        i: list.items.map(function (it) { return { x: it.text, n: it.notes || "", d: it.done ? 1 : 0 }; })
+      } };
+      sendApi.open(arg);
     });
 
     // New list

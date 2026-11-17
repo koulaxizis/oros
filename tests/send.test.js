@@ -262,3 +262,30 @@ test("files wave: the shell hands disk files over and asks before a wallpaper", 
   assert.match(src("layout/panels.js"), /exp-send/);
   assert.match(src("layout/io.js"), /\/internal\/Layout\/PDF/);
 });
+
+test("data apps send to an app (gap review proposal 4)", () => {
+  // Each sender asks for parent.orosSend and shows its entry only inside orOS.
+  for (const f of ["todo/todo.js", "calendar/calendar.js", "contacts/contacts.js", "diary/diary.js", "crm/crm.js",
+    "invoices/invoices.js", "quote/view.js", "base/app.js", "forms/app.js", "library/app.js", "meals/meals.js",
+    "travel/travel.js", "stickies/stickies.js"]) {
+    assert.match(src(f), /parent\.orosSend/, f);
+    assert.match(src(f), /\{ kind: "(text|items|table)", data: /, f);
+  }
+  assert.match(src("todo/index.html"), /id="list-send" hidden/);
+  assert.match(src("todo/index.html"), /id="f-send" hidden/);
+  assert.match(src("calendar/index.html"), /id="ev-send"[^>]*hidden/);
+  assert.match(src("diary/index.html"), /id="send-btn"[^>]*hidden/);
+  assert.match(src("meals/index.html"), /id="sh-send" hidden/);
+  assert.match(src("quote/view.js"), /qv-send-app/);
+  assert.match(src("library/reader.js"), /LIB\.sendQuote\(/);
+  assert.match(src("library/home.js"), /export\.sendApp/);
+  assert.match(src("base/app.js"), /sendView\("table"\)/);
+  assert.match(src("base/app.js"), /sendView\("items"\)/);
+  assert.match(src("travel/travel.js"), /sendPlan\(id\)/);
+  // Passwords stays out.
+  for (const f of fs.readdirSync(path.join(ROOT, "passwords")).filter((x) => /\.js$/.test(x))) assert.doesNotMatch(src("passwords/" + f), /orosSend/, f);
+  // What they send is a valid item of its kind.
+  assert.ok(C.norm("table", { name: "Invoice 12", rows: [["Description", "Qty", "Unit price", "Net"], ["Design", 2, 40.5, 81], ["Total", "", "", 100.44]] }));
+  assert.ok(C.norm("items", { title: "Groceries", items: [{ text: "2 eggs", note: "From: Omelette" }, { text: "milk" }] }));
+  assert.deepEqual(C.target("todo", "text", { title: "Shop", text: "[ ] eggs\n[x] milk\nbread" }).addItems.items.map((i) => i.text), ["eggs", "milk", "bread"]);
+});

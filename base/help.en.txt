@@ -55,6 +55,8 @@ Base keeps records with structure, like a small database: a catalogue of your bo
 - Open this view in Spreadsheet sends them to [Spreadsheet](app:spreadsheet) as a new sheet (up to 499 records).
 - Base menu (`⋯`) › Save as orOS file (.orosbase) saves the whole base, with its tables, views and links, as one file for a copy or another device (attachments go by name; the files stay on the orOS disk). Opening it adds what is missing and never deletes; records already here stay as they are unless you tick `Update with newer versions`. The file also holds a CSV of each table (in `preview/`) and is not encrypted.
 
+The view's menu has `Send as a table to an app…` and `Send as a list to an app…`: the records on screen (after the view's filter and your search, up to 499 as a table and 200 as a list) go to another orOS app, a table to [Spreadsheet](app:spreadsheet), [Writer](app:writer) or [Mail](app:mail), a list (the primary field as the item, the other fields as its note) to [To-Do](app:todo) or [Kanban](app:kanban). `Send to an app…` in a record's window sends that record as text. The other app only opens with them filled in.
+
 ## Your data
 - Everything stays on this device and is saved as you go. With orOS sync on in [Settings](app:settings), your bases follow you to your other devices, encrypted.
 - When two devices change different fields of the same record, both changes are kept.
