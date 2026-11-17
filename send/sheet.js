@@ -12,7 +12,11 @@
 //            share/, shown as one more button that calls env.share)
 //   env  = { apps: [{ id, name }], icon(id) → Node|null, self, from,
 //            openAt(app, target), share(item),
-//            calendarNew(p), budgetNew(p) }   (wave A3: BR-W8 / BR-B1)
+//            calendarNew(p), budgetNew(p),   (wave A3: BR-W8 / BR-B1)
+//            file(target, app) → Promise<bool>,   (files wave: a disk
+//              file handed over as a one-shot token, BR-FO-4)
+//            wallpaper(picture) → Promise<bool> } (files wave: after
+//              this sheet's own "Use as wallpaper", THIS device only)
 // Nothing is stored, nothing is synced. Text through textContent only;
 // the icons are the shell's own constant SVG nodes.
 // ES5, like the shell. Strings EN/EL here.
@@ -26,17 +30,28 @@
       title: "Send to an app", close: "Close", copy: "Copy", copied: "Copied", someone: "Send to someone…",
       copyFail: "Could not copy.", none: "No app in your orOS takes this.",
       failed: "Something went wrong. Try again.",
-      hint: "It opens in the app you pick. Nothing is saved until you save it there."
+      hint: "It opens in the app you pick. Nothing is saved until you save it there.",
+      wallAsk: "Use “{name}” as the wallpaper of this device?",
+      wallHint: "Only on this device, nothing syncs. Settings › Wallpaper changes it back.",
+      wallYes: "Use as wallpaper", cancel: "Cancel", wallDone: "The wallpaper of this device is set.",
+      big: "This file is too big for that app."
     },
     el: {
       title: "Στείλε σε εφαρμογή", close: "Κλείσιμο", copy: "Αντιγραφή", copied: "Αντιγράφηκε", someone: "Στείλε σε κάποιον…",
       copyFail: "Η αντιγραφή απέτυχε.", none: "Καμία εφαρμογή του orOS σου δεν το δέχεται.",
       failed: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
-      hint: "Ανοίγει στην εφαρμογή που θα διαλέξεις. Τίποτα δεν αποθηκεύεται πριν το αποθηκεύσεις εκεί."
+      hint: "Ανοίγει στην εφαρμογή που θα διαλέξεις. Τίποτα δεν αποθηκεύεται πριν το αποθηκεύσεις εκεί.",
+      wallAsk: "Να γίνει το «{name}» ταπετσαρία αυτής της συσκευής;",
+      wallHint: "Μόνο σε αυτή τη συσκευή, δεν συγχρονίζεται. Το αλλάζεις πάλι στις Ρυθμίσεις › Ταπετσαρία.",
+      wallYes: "Ως ταπετσαρία", cancel: "Άκυρο", wallDone: "Η ταπετσαρία αυτής της συσκευής άλλαξε.",
+      big: "Το αρχείο είναι πολύ μεγάλο για αυτή την εφαρμογή."
     }
   };
   function lang() { return window.orosLang === "el" ? "el" : "en"; }
-  function T(k) { return (STR[lang()] || STR.en)[k]; }
+  function T(k, name) {
+    var s = (STR[lang()] || STR.en)[k];
+    return name === undefined ? s : s.split("{name}").join(String(name).slice(0, 120));
+  }
   function toast(text) {
     try {
       if (window.orosNotifs && typeof window.orosNotifs.transient === "function") {
@@ -146,7 +161,8 @@
         // (BR-W8, BR-B1); every other app through __orosOpenAt.
         var via = C.via ? C.via(id) : "";
         try {
-          if (via) { if (typeof env[via] !== "function" || env[via](tg) === false) toast(T("failed")); }
+          if (via === "wallpaper") askWallpaper(tg.picture, env);
+          else if (via) { if (typeof env[via] !== "function" || settle(env[via](tg, id)) === false) toast(T("failed")); }
           else env.openAt(id, tg);
         } catch (e) { toast(T("failed")); }
       });
@@ -176,6 +192,56 @@
     document.body.appendChild(dlg);
     dlg.showModal();
     try { (grid.firstChild || dlg.querySelector("button")).focus(); } catch (e) {}
+  }
+
+  // A Promise from env.file / env.wallpaper: "big" or false → a toast.
+  function settle(r) {
+    if (r && typeof r.then === "function") {
+      r.then(function (ok) { if (ok === "big") toast(T("big")); else if (!ok) toast(T("failed")); }, function () { toast(T("failed")); });
+      return true;
+    }
+    return r;
+  }
+  // Wallpaper: a picture changes the desktop at once, so the sheet asks
+  // first (BR-SEND-4: nothing changes before the person's own yes).
+  function askWallpaper(pic, env) {
+    if (!pic || typeof env.wallpaper !== "function") { toast(T("failed")); return; }
+    var dlg = el("dialog");
+    dlg.id = "osd-wall";
+    dlg.className = "osd-wall";
+    dlg.style.cssText = "border:1px solid var(--border);border-radius:14px;background:var(--panel-bg);color:var(--text);" +
+      "padding:18px;width:min(380px,calc(100vw - 32px));box-sizing:border-box";
+    var h = el("h3", "", T("wallAsk", pic.name));
+    h.style.cssText = "margin:0 0 6px;font-size:15px;overflow-wrap:anywhere";
+    dlg.appendChild(h);
+    var p = el("p", "", T("wallHint"));
+    p.style.cssText = "margin:0 0 14px;font-size:12.5px;line-height:1.5;color:var(--text-dim)";
+    dlg.appendChild(p);
+    var row = el("div");
+    row.style.cssText = "display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap";
+    function b(label, pri, fn) {
+      var x = el("button", "", label);
+      x.type = "button";
+      x.style.cssText = "padding:10px 14px;border:1px solid " + (pri ? "var(--accent)" : "var(--border)") +
+        ";border-radius:10px;background:transparent;color:var(--text);font:inherit;font-size:13.5px;cursor:pointer;min-height:40px";
+      x.addEventListener("click", fn);
+      row.appendChild(x);
+      return x;
+    }
+    b(T("cancel"), false, function () { dlg.close(); });
+    var yes = b(T("wallYes"), true, function () {
+      dlg.close();
+      var r;
+      try { r = env.wallpaper(pic); } catch (e) { r = false; }
+      Promise.resolve(r).then(function (ok) {
+        toast(ok === true ? T("wallDone") : ok === "big" ? T("big") : T("failed"));
+      }, function () { toast(T("failed")); });
+    });
+    dlg.appendChild(row);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    try { yes.focus(); } catch (e) {}
   }
 
   window.__orosSendImpl = { open: open };

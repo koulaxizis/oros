@@ -1287,6 +1287,18 @@
         LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150 });
       }, "primary"));
       body.appendChild(act);
+      // the same PDF, saved in Files › Layout › PDF and offered to an app
+      if (LY.io.canSendPdf && LY.io.canSendPdf()) {
+        var sendB = btn(t("exp.send"), function () {
+          var pages = pickPages(doc);
+          if (!pages) { LY.toast(t("exp.badRange")); return; }
+          close();
+          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150 });
+        }, "block");
+        sendB.id = "exp-send";
+        sendB.setAttribute("aria-haspopup", "dialog");
+        body.appendChild(sendB);
+      }
       // one page as an image
       body.appendChild(el("h3", "pn-h", t("exp.img")));
       var order = M.pagesInOrder(doc), cur = ED.curPage();

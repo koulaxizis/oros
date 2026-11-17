@@ -142,6 +142,7 @@ Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während
 - `MP3`: 64 bis 320 kbit/s (für Sprache reichen 64–96). Läuft überall; Studios eigener Encoder erstellt es auf diesem Gerät, und Player starten und beenden es ohne Lücke.
 - `Opus (OGG)`: eine kleinere Datei bei gleicher Qualität, immer 48 kHz. Angeboten, wo der Browser Opus kodieren kann (Chrome, Edge, Firefox).
 - `Zu Musik hinzufügen` erstellt dieselbe Datei im gewählten Format, legt sie in den Ordner Music auf der orOS-Disk und spielt sie in Musik ab.
+- `An eine App senden…` macht dasselbe und öffnet dann `An eine App senden`: sende die Datei an Transfer, Mail oder eine andere deiner Apps.
 - `Klingelton machen` macht aus den Noten der Instrumentenspuren (ohne Schlagzeug) eine einstimmige Melodie und öffnet sie im Klingelton-Komponisten: Wo Noten sich überlappen, gewinnt die höchste, und du drückst dort `Importieren`, um sie zu behalten.
 
 ## Marker

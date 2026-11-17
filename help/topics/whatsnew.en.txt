@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.41.00
+- **Send files to more apps:** `Send to an app…` now hands files to Transfer, Photo Lab, Scanner & PDF, Library, Music and Atelier, and a picture can become the wallpaper of this device (it asks first).
+- **Studio, Screen Capture and Layout send too:** a mix, a screenshot or recording, and a Layout PDF go straight to `Send to an app…`.
+- **Fixed:** files sent from Files to Scanner & PDF now really appear as pages.
+
 ## Version 7.40.00
 - **Four more apps install on their own:** orOS Transfer, Scanner & PDF, Stock and Forms, each with its own icon and window, also as Android apps. Invoices is now **orOS Billing**.
 - **New users see every app:** each app is now in at least one starting profile, and help and settings name the merged apps by their new home (Billing › Quotes, Calculator › Convert, Weather › Sky tonight).

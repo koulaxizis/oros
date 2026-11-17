@@ -54,6 +54,8 @@ orosPack("de", "layout", {
  "exp.fail": "Das PDF konnte nicht erstellt werden.",
  "exp.format": "Format",
  "exp.go": "PDF exportieren",
+ "exp.send": "Das PDF an eine App senden…",
+ "exp.sentAt": "PDF gespeichert in Dateien › {path}",
  "exp.img": "Bild (PNG / JPG / SVG)",
  "exp.imgGo": "Bild exportieren",
  "exp.marks": "Schnittmarken",

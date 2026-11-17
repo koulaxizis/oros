@@ -32,6 +32,9 @@
 // send/detect.js finds what they need in it (a day or time, an amount
 // in euro, a phone or e-mail, an address), and then they come first
 // in the sheet (SMART).
+// Files wave (BR-SEND-12, 2026-11-17): files also go to Transfer, Photo
+// Lab, Scanner & PDF, Library, Music, Atelier and (after the sheet's own
+// yes) the Wallpaper of this device; via(app) "file" / "wallpaper".
 // ============================================================
 (function (root) {
   "use strict";
@@ -39,6 +42,20 @@
   var KINDS = ["text", "link", "items", "table", "files"];
   var MAX_FILES = 10;            // Mail's handed-files cap
   var PIC_RE = /\.(png|jpe?g|webp|gif)$/i;   // what Layout places
+  // Files wave (proposal 1, 2026-11-17): what each new receiver reads,
+  // the same lists as the apps' own (photolab/io.js IMG_EXT without the
+  // camera RAW types, scanpdf/core.js kindOf, library/core.js kindOf,
+  // fileopen.js INSIDE music, atelier/io.js importAnyFile).
+  var LAB_RE = /\.(png|jpe?g|webp|gif|bmp|avif|svg|psd|ora|kra|orosphoto)$/i;
+  var SCAN_RE = /\.(pdf|png|jpe?g|webp|gif|bmp|avif)$/i;
+  var BOOK_RE = /\.(epub|pdf|fb2|fb2\.zip|cbz|cbr)$/i;
+  var SONG_RE = /\.(mp3|m4a|m4b|aac|ogg|oga|opus|flac|wav|wave|weba)$/i;
+  var WALL_RE = /\.(png|jpe?g|webp|gif|bmp|avif)$/i;
+  var ATELIER_RE = /\.(png|jpe?g|webp|gif|bmp|svg|pptx|orosdesign)$/i;
+  var MUSIC_DIR = "/internal/Music/";
+  var MAX_HAND = 50 * 1024 * 1024;       // fileopen.js MAX_BYTES
+  var MAX_SONG = 500 * 1024 * 1024;      // fileopen.js INSIDE music max
+  var MAX_WALL = 20 * 1024 * 1024;       // shell.js WP_PIC_MAX
   var MAX_TEXT = 200000;
   var MAX_TITLE = 200;
   var MAX_ITEMS = 200;
@@ -476,11 +493,67 @@
       // A label is one short line.
       ok: function (k, d) { var s = d.text.trim(); return s.indexOf("\n") < 0 && Array.from(s).length <= LABEL_MAX; },
       build: function (k, d) { return { text: d.text.trim() }; }
+    },
+    // ---- Files wave (proposal 1, 2026-11-17) ----
+    // Each opens the app's own screen with the file(s) in it; the
+    // person still presses Send / Save / Add there (BR-SEND-4). Targets
+    // { openFile: { path, name, max } } go through the shell (via
+    // "file"): it reads the disk file and hands it over as the one-shot
+    // token of BR-FO-4, the way Files' "Open with" does.
+    // Transfer: the files are ticked on its Send tab ({ send }).
+    transfer: {
+      kinds: ["files"],
+      build: function (k, d) { return { send: d.items.map(function (f) { return f.path; }) }; }
+    },
+    // Photo Lab: one picture opens as a new project (it reads the disk).
+    photolab: {
+      kinds: ["files"],
+      ok: function (k, d) { return d.items.length === 1 && LAB_RE.test(d.items[0].name); },
+      build: function (k, d) { return { openFile: d.items[0].path }; }
+    },
+    // Scan & PDF: PDFs and pictures become pages of the job.
+    scanpdf: {
+      kinds: ["files"],
+      ok: function (k, d) { return d.items.every(function (f) { return SCAN_RE.test(f.name); }); },
+      build: function (k, d) { return { paths: d.items.map(function (f) { return f.path; }) }; }
+    },
+    // Music: one song plays; a song from outside the music folder is
+    // copied in first (Music's own "Open with" way).
+    music: {
+      kinds: ["files"],
+      via: "file",
+      ok: function (k, d) { return d.items.length === 1 && SONG_RE.test(d.items[0].name); },
+      build: function (k, d) {
+        var f = d.items[0];
+        if (f.path.indexOf(MUSIC_DIR) === 0) return { playPath: f.path };
+        return { openFile: { path: f.path, name: f.name, max: MAX_SONG } };
+      }
+    },
+    // Library: one book opens (Library { path } adds it, as from Files).
+    library: {
+      kinds: ["files"],
+      ok: function (k, d) { return d.items.length === 1 && BOOK_RE.test(d.items[0].name); },
+      build: function (k, d) { return { path: d.items[0].path }; }
+    },
+    // Atelier: a picture, a .pptx or a design → Import (a new design).
+    atelier: {
+      kinds: ["files"],
+      via: "file",
+      ok: function (k, d) { return d.items.length === 1 && ATELIER_RE.test(d.items[0].name); },
+      build: function (k, d) { return { openFile: { path: d.items[0].path, name: d.items[0].name, max: MAX_HAND } }; }
+    },
+    // Wallpaper: one picture as THIS device's wallpaper (orosWallpaper.
+    // setImage, never synced), only after the sheet's own Yes.
+    wallpaper: {
+      kinds: ["files"],
+      via: "wallpaper",
+      ok: function (k, d) { return d.items.length === 1 && WALL_RE.test(d.items[0].name); },
+      build: function (k, d) { return { picture: { path: d.items[0].path, name: d.items[0].name, max: MAX_WALL } }; }
     }
   };
   // The sheet's order: the everyday places first.
-  var ORDER = ["notes", "todo", "writer", "mail", "kanban", "slides", "bookmarks", "spreadsheet", "base", "invoices", "wiki", "diary", "mindmap", "prompter",
-    "flashcards", "typing", "layout", "assistant", "texttools", "labels"];
+  var ORDER = ["notes", "todo", "writer", "mail", "transfer", "kanban", "slides", "bookmarks", "spreadsheet", "base", "invoices", "wiki", "diary", "mindmap", "prompter",
+    "flashcards", "typing", "photolab", "scanpdf", "library", "music", "layout", "atelier", "wallpaper", "assistant", "texttools", "labels"];
   // Shown before ORDER: they take an item only when it holds what they
   // need, so when they show they are the likely pick.
   var SMART = ["calendar", "budget", "contacts", "maps"];

@@ -144,6 +144,7 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - `MP3`: 64 to 320 kbit/s (64–96 is enough for speech). Plays everywhere; Studio's own encoder makes it on this device, and players start and end it without a gap.
 - `Opus (OGG)`: a smaller file at the same quality, always 48 kHz. Offered where the browser can encode Opus (Chrome, Edge, Firefox).
 - `Add to Music` makes the same file in the chosen format, puts it in the Music folder on the orOS disk and plays it in Music.
+- `Send to an app…` does the same and then opens `Send to an app`: send the file to Transfer, Mail or another app of yours.
 - `Make a ringtone` turns the notes of the instrument tracks (not the drum kit) into a one-voice melody and opens it in Ringtone Composer: where notes overlap the highest one wins, and you press `Import` there to keep it.
 
 ## Loudness

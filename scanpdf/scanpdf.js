@@ -780,13 +780,17 @@
   function addPaths(paths) {
     var fs = fsApi();
     if (!fs || !paths.length) return;
-    paths.forEach(function (p) {
-      adding = adding.then(function () {
+    // Read in order, then one addBlobs call: addBlobs queues on `adding`
+    // itself, so calling it from inside an `adding` step waited on its
+    // own step and nothing was ever added (fix with BR-SEND-12).
+    var list = [];
+    paths.reduce(function (c, p) {
+      return c.then(function () {
         return fs.readBlob(p).then(function (b) {
-          return addBlobs([{ name: p.slice(p.lastIndexOf("/") + 1), blob: b }]);
+          list.push({ name: p.slice(p.lastIndexOf("/") + 1), blob: b });
         }, function () { showToast(t("err.read")); });
       });
-    });
+    }, Promise.resolve()).then(function () { if (list.length) addBlobs(list); });
   }
 
   function pickFiles() {

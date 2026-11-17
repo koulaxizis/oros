@@ -10,6 +10,7 @@ Mach ein Bild von deinem ganzen Bildschirm, einem Fenster oder einem Browser-Tab
 ## Zuschneiden, speichern und kopieren
 - Zieh über das Bild, um nur einen Teil davon zu behalten. `Ganzes Bild` holt alles zurück.
 - `In Pictures speichern` speichert ein PNG in Dateien › Pictures, benannt nach Datum und Uhrzeit.
+- `An eine App senden…` speichert es genauso und lässt dich dann die App wählen: Fotolabor, Transfer, Mail, Seitenlayout…
 - Mit `Nach dem Speichern im Fotolabor öffnen` öffnet sich das Bild im [Fotolabor](app:photolab), um darauf zu zeichnen oder Text hinzuzufügen.
 - `Kopieren` legt das Bild in die Zwischenablage, um es in einer anderen App einzufügen.
 - `Noch eins` geht zurück zur Live-Ansicht; `Verwerfen` wirft das Bild weg.
@@ -20,6 +21,7 @@ Mach ein Bild von deinem ganzen Bildschirm, einem Fenster oder einem Browser-Tab
 - `Mikrofon aufnehmen` fügt deine Stimme hinzu. Beide Töne werden zu einer Spur gemischt.
 - Drück `Aufnahme starten` (nach der Verzögerung, falls gewählt). Mit `Pause` und `Weiter` lässt du einen Teil aus; `Aufnahme beenden` beendet sie. Während der Aufnahme kannst du auch Bildschirmfotos machen.
 - Sieh dir das Video an und drück `In Videos speichern`. Es wird als MP4 gespeichert, wo der Browser das kann, sonst als WebM.
+- `Speichern und an eine App senden…` speichert das Video genauso und sendet es an Transfer oder Mail.
 - Mit `Nach dem Speichern in Montage öffnen` öffnet sich das Video in [Montage](app:montage), um es zu schneiden oder Musik und Titel hinzuzufügen.
 - Eine Aufnahme bleibt im Speicher, bis du sie speicherst, und stoppt bei 1 GB von selbst. Schließt du die App vorher, ist sie verloren.
 
