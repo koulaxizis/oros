@@ -33,6 +33,7 @@
   var DAY_CAP = 20;                              // signal runs per rule per day on this device
   var REF_KEY = "oros-automations-ref";          // device-local: the file a bridge.* run is about (item 25)
   var REF_MAX = 50;
+  var SEEN_MAX = 200;                            // BR-EV-2: signal runs remembered on this device
   var bootAt = Date.now();
   var listeners = [];
 
@@ -104,8 +105,11 @@
       if (o && o.lk && typeof o.lk === "object") {
         Object.keys(o.lk).forEach(function (k) { if (C.ID_RE.test(k) && typeof o.lk[k] === "string" && o.lk[k].length <= 90) lk[k] = o.lk[k]; });
       }
-      return { done: done, day: day, cnt: cnt, lk: lk };
-    } catch (e) { return { done: {}, day: "", cnt: {}, lk: {} }; }
+      // BR-EV-2: the last signal runs this device handled (any rule), so a
+      // state the shell watches (several overdue invoices) is one run each
+      var sk = o && Array.isArray(o.sk) ? o.sk.filter(function (k) { return typeof k === "string" && k.length <= 90; }).slice(-SEEN_MAX) : [];
+      return { done: done, day: day, cnt: cnt, lk: lk, sk: sk };
+    } catch (e) { return { done: {}, day: "", cnt: {}, lk: {}, sk: [] }; }
   }
   function writeLocal(o) { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(o)); } catch (e) {} }
   function readLog() {
@@ -224,7 +228,7 @@
   var todayRes = null, todayAt = 0, todayBusy = false, posLoad = 0;
   function wants(data) {
     var o = {};
-    data.rules.forEach(function (r) { if (r.on && r.when.t === "event" && /^(event\.soon|goal\.)/.test(r.when.ev)) o[r.when.ev] = true; });
+    data.rules.forEach(function (r) { if (r.on && r.when.t === "event" && /^(event\.soon|goal\.|invoices\.overdue$)/.test(r.when.ev)) o[r.when.ev] = true; });
     return o;
   }
   function strictOn() { try { return !!(root.orosStrict && root.orosStrict.level()); } catch (e) { return false; } }
@@ -244,6 +248,15 @@
       var d = new Date(now), ym = d.getFullYear() + "-" + pad(d.getMonth() + 1);
       var sp = SB ? SB.monthSpent(readJSON("oros-budget-data"), ym) : null;
       if (sp) signal("event", "goal.spent", "spent:" + ym, strictOn() ? "" : money(sp.cents, sp.cur), null, sp.cents);
+    }
+    if (w["invoices.overdue"]) {
+      // BR-EV-2: documents that became overdue (invoices/core.js, in the
+      // shell bundle); the amount stays out in sensitive work mode.
+      var quiet = strictOn();
+      C.overdueList(root.OrosInvoicesCore, readJSON("oros-invoices-data"), C.ymdOf(now)).forEach(function (x) {
+        var said = [x.num, x.party, quiet ? "" : money(x.bal, x.cur)].filter(Boolean).join(" \u00b7 ");
+        signal("event", "invoices.overdue", x.key, said, null, x.late);
+      });
     }
     if (w["goal.sales"]) {
       var P = root.OrosStockPosCore;
@@ -362,8 +375,10 @@
     if (local.day !== today) { local.day = today; local.cnt = {}; }
     data.rules.forEach(function (rule) {
       var rk = C.matches(rule, sig, now);
-      if (!rk || local.lk[rule.id] === rk) return;              // SB2: this device already handled it
+      if (!rk || local.lk[rule.id] === rk || local.sk.indexOf(rk) >= 0) return;   // SB2: this device already handled it
       local.lk[rule.id] = rk;
+      local.sk.push(rk);
+      if (local.sk.length > SEEN_MAX) local.sk.splice(0, local.sk.length - SEEN_MAX);
       runLocal(rule);                                          // SB2: pause / chime here
       if (inboxHas("automations:" + rk)) return;
       if ((local.cnt[rule.id] || 0) >= DAY_CAP) return;

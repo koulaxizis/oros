@@ -300,6 +300,7 @@
       "rel.other": "Other",
       "ct.back": "Back",
       "ct.share": "Share",
+      "ct.sendApp": "Send to an app…",
       "ct.familytree": "Family tree", "ct.together": "Together",
       "ct.qr": "QR code",
       "ct.crm": "Customer: {name}", "ct.crmIn": "owes you {v}", "ct.crmOut": "you owe {v}",
@@ -621,6 +622,7 @@
       "rel.other": "Αλλη",
       "ct.back": "Πίσω",
       "ct.share": "Κοινοποίηση",
+      "ct.sendApp": "Στείλε σε εφαρμογή…",
       "ct.familytree": "Οικογενειακό δέντρο", "ct.together": "Μαζί",
       "ct.qr": "Κωδικός QR",
       "ct.crm": "Πελάτης: {name}", "ct.crmIn": "σου χρωστά {v}", "ct.crmOut": "του χρωστάς {v}",
@@ -2416,6 +2418,23 @@ function openViewCard(c) {
     else shareContact(c);
   });
   foot.appendChild(sh);
+  // "Send to an app" (shell send/, BR-SEND): the card as text; Send to
+  // someone rides along (kind contact).
+  var sendApi = null;
+  try { sendApi = window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; } catch (e) {}
+  if (sendApi) {
+    var sa = document.createElement("button");
+    sa.type = "button";
+    sa.className = "ct-view-share";
+    sa.textContent = t("ct.sendApp");
+    sa.addEventListener("click", function () {
+      var arg = { kind: "text", data: { title: displayName(c), text: shareText(c) } };
+      try { if (window.parent.orosShare) arg.share = { kind: "contact", data: sharePayload(c) }; } catch (e) {}
+      closeViewCard();
+      sendApi.open(arg);
+    });
+    foot.appendChild(sa);
+  }
   // Family Tree (read-only bridge, generic deep link): the person
   // linked to this contact, or Family Tree's "Build from Contacts"
   // starting here. Shown only inside the shell.

@@ -76,8 +76,8 @@ test("Automations: base.add and base.change are BR-EV events of Base, EN/EL/DE, 
   const sig = { kind: "event", name: "base.change", key: "base:r2:fst:300", text: "Events › Guests · Bob · Status: Done" };
   assert.ok(AC.matches(rule, sig, Date.now()));
   assert.ok(!AC.matches(rule, Object.assign({}, sig, { text: "Events › Guests · Bob · Status: Open" }), Date.now()));
-  const src = read("assistant/core.js");
-  assert.match(src, /"goal\.spent", "base\.add", "base\.change"\] \}/);
+  const ev = require("../assistant/core.js").TOOL_RULE.params.properties.when.properties.event.enum;
+  assert.ok(ev.includes("base.add") && ev.includes("base.change"));
 });
 
 test("comments (B5b): their own slice, merge both ways, delete and Undo", () => {

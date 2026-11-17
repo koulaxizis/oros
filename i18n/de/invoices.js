@@ -1,4 +1,5 @@
 orosPack("de", "invoices", {
+ "vw.sendApp": "Positionen an eine App senden…",
  "tdy.tipOwed": "Fälligkeit überschritten: eine kurze, freundliche Erinnerung an den Kunden hilft meistens.",
  "tdy.tipBill": "Fälligkeit überschritten: bezahle sie oder vereinbare mit dem Lieferanten ein neues Datum.",
  "acct": "Konto",

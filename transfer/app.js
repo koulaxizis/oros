@@ -1121,6 +1121,12 @@
     saveHist();
     renderHist();
     var root = shell();
+    // BR-EV-2: files that arrived HERE are an Automations signal
+    // (transfer.received, key transfer:<history item>, text "what · from").
+    if (root && o.dir === "recv" && o.end === "done" && root.orosEvents && typeof root.orosEvents.emit === "function") {
+      var said = item.what + (item.dev ? " \u00b7 " + item.dev : "");
+      setTimeout(function () { try { root.orosEvents.emit("transfer.received", "transfer:" + item.id, said); } catch (e) {} }, 0);
+    }
     if (root && o.end === "done" && document.hidden) {
       try { if (root.orosNotifs && typeof root.orosNotifs.transient === "function") root.orosNotifs.transient({ ns: APP_ID, title: t(o.dir === "recv" ? "note.recv" : "note.sent", { what: item.what }) }); } catch (e) {}
     }
