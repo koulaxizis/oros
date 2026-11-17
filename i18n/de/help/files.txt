@@ -28,6 +28,13 @@ Links stehen die Ordner, rechts der Inhalt des aktuellen Ordners. Auf dem Handy 
 - `Zu Favoriten hinzufügen` heftet einen Ordner oder eine Datei oben im Baum an. Tippe dort auf den Stern daneben, oder wähle `Aus Favoriten entfernen`, um sie wieder zu lösen.
 - Favoriten folgen einer Umbenennung oder Verschiebung in Dateien und werden mit deinen anderen Geräten synchronisiert. Ein Favorit, der ein Gerät noch nicht erreicht hat, erscheint blass.
 
+### Schlagwörter
+- Gib jeder Datei und jedem Ordner der Festplatte farbige Schlagwörter: Klicke mit der rechten Maustaste darauf (oder wähle es aus und öffne `Weitere Aktionen`) und wähle `Schlagwörter…`. Hake die Schlagwörter an, die es haben soll, oder gib einen neuen Namen ein und drücke `Hinzufügen`. Sind mehrere Elemente ausgewählt, heißt ein Strich, dass nur einige das Schlagwort haben; lass es so, damit es so bleibt.
+- Elemente mit Schlagwörtern zeigen kleine farbige Punkte nach ihrem Namen. `Schlagwörter` im Baum listet jedes Schlagwort und wie viele Elemente es haben; öffne eins, um alle zu sehen, wo auch immer sie liegen.
+- Der Stift neben einem Schlagwort (oder ein Rechtsklick darauf) benennt es um, gibt ihm eine von zwölf Farben oder löscht es. Löschen nimmt das Schlagwort von jedem Element; die Dateien selbst bleiben, wie sie sind.
+- Es ist eine Liste mit `Dokumente`: Ein hier angelegtes Schlagwort erscheint auch dort, und die Schlagwörter eines Dokuments sind die seiner Datei.
+- Schlagwörter folgen einer Umbenennung oder Verschiebung in Dateien, bleiben im `Papierkorb` beim Element, sodass Wiederherstellen sie zurückbringt, und werden mit deinen anderen Geräten synchronisiert. Eine auf einem anderen Gerät verschobene Datei wird an ihrem Inhalt wiedererkannt. In `Fotos` zeigen die Fotos ihre Schlagwörter, `Auswählen` › `Schlagwörter…` versieht viele auf einmal, und `⋯` › `Ein Schlagwort zeigen…` zeigt nur die Fotos mit einem Schlagwort.
+
 ### Versteckte Angaben entfernen
 - `Versteckte Angaben entfernen` (im Menü) legt neben jedem ausgewählten Foto (JPEG, PNG, WebP), PDF oder Word-, Excel-, PowerPoint- oder OpenDocument-Datei eine saubere Kopie „Name (clean).ext“ an. Das Original bleibt, wie es ist.
 - Es entfernt, was die Datei darüber verrät, wer sie gemacht hat, wo, wann und womit: GPS-Standort und Kameraangaben aus Fotos; Autor, Programm, Daten und frühere gespeicherte Fassungen aus PDFs; Autor, letzten Bearbeiter, Daten, Firma, Vorlage, benutzerdefinierte Eigenschaften und Word-Bearbeitungssitzungs-Codes aus Office-Dateien. Bild und Text bleiben Byte für Byte gleich; ein gedrehtes Foto behält nur seine Ausrichtung.
