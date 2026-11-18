@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.51.00
+- **Claude can record invoices you issued elsewhere.** Through orOS Gate, Claude can now add invoices and receipts you issued with another provider (or in myDATA) to Invoices as recorded documents: their own number, client, amounts with withholding, lines, payment, ΜΑΡΚ and Budget area. They are never drafts, never take a number from your orOS series and nothing is sent anywhere; a document already in Invoices is skipped. It works only where you let Claude change Invoices, you are told of each change and you can undo it.
+
 ## Version 7.49.00
 - **Ask the Assistant and Claude about eight more apps.** The Assistant and Claude through orOS Gate can now give you a summary of Meal Planner (this week's plan and what in the pantry is close to its date), Travel (your trips and what is still open), Plant Care (what needs water or care), Garage (each vehicle's renewals, service and costs), Habits (today and your streaks), Scanner & PDF (where each signature request stands), Transfer (your transfer history, never the files themselves) and Whiteboard (your boards and the text of their notes). It only reads: nothing is changed. Claude reads an app only where you allow it in orOS Gate. Transfer history is now also found by search.
 
