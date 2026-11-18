@@ -150,7 +150,7 @@
       var png = /\.png$/.test(it.a);
       cv.getContext("2d").drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cw, ch);
       return toBlob(cv, png ? "image/png" : "image/jpeg", 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
-        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi };
+        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi, down: cw < Math.round(src.w) - 1 };
       });
     });
   }
@@ -160,13 +160,23 @@
   // an e-book (LY-OUT): rgb, lang, links, outline, layout (of `doc`),
   // cover ({ doc, page } a Book cover's page: its front panel first).
   function pdfBlob(doc, opts) {
+    return pdfDoc(doc, opts).then(function (pdf) { return pdf.output("blob"); });
+  }
+  // ...the jsPDF document itself (its orosBoxes: TrimBox / BleedBox per
+  // PDF page, read by the PDF/X step, LY-PRO W1); opts.imgStat (an
+  // object) gets { n, down } (pictures out, pictures resampled).
+  function pdfDoc(doc, opts) {
     var images = {}, JsPDF;
     var pages = opts.pages || M.pagesInOrder(doc).map(function (p) { return p.id; });
     return loadJsPDF().then(function (J) {
       JsPDF = J;
       var chain = Promise.resolve();
       imageItems(doc, pages).forEach(function (it) {
-        chain = chain.then(function () { return cropImage(it, opts.ppi || 300); }).then(function (im) { if (im) images[it.id] = im; });
+        chain = chain.then(function () { return cropImage(it, opts.ppi || 300); }).then(function (im) {
+          if (!im) return;
+          images[it.id] = im;
+          if (opts.imgStat) { opts.imgStat.n = (opts.imgStat.n || 0) + 1; if (im.down) opts.imgStat.down = (opts.imgStat.down || 0) + 1; }
+        });
       });
       return chain;
     }).then(function () {
@@ -175,7 +185,7 @@
       var L = opts.layout || (doc === LY.doc && ED.L ? ED.L : LY.R.computeLayout(doc));
       var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name, rgb: !!opts.rgb, lang: opts.lang || "" },
         { jsPDF: JsPDF, layout: L, images: images, pdf: first, links: opts.links, outline: opts.outline });
-      return pdf.output("blob");
+      return pdf;
     });
   }
 
@@ -1420,7 +1430,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName
