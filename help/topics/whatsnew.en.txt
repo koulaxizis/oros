@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 7.62.00
+## Version 7.63.00
 - **Text replacements.** Type a short code like `;addr` and a space or punctuation in any orOS app and it becomes your full text; [[Backspace]] right after puts the code back. `{date}`, `{time}` and `{cursor}` work in the text. It works in Writer, Mail and Slides too, and the on-screen keyboard shows the text above the keys. Settings › Language & search › Text replacements; import your list from Gboard or from a Mac or iPhone. Synced to your devices, encrypted; never in Passwords or while Sensitive work is on.
+
+## Version 7.62.00
+- **Sections and master pages in Layout.** Any page can start a section with its own numbers: roman numerals for the front matter, 1 again for the book, letters with a prefix for an appendix. Page numbers, running heads, the contents and the PDF follow. A master can be based on another master and add to it. The Assistant and Claude (through orOS Gate) can do all of this too, and move, copy and give masters to whole ranges of pages.
 
 ## Version 7.61.00
 - **What each contract grants, in CRM.** A contract now keeps its rights: what it grants, the formats it covers, each right with its share (print, e-book, audio, translation, stage and screen, merchandise), the territory, sell-off after the end and the Creative Commons licence. The new `Rights` chip in `Contracts` shows what is on sale with no running right, rights with no release yet (an e-book or audiobook you could make) and the renewals of the next 90 days with what happens after the end. Publishing shows a short rights line on each title. Claude or the Assistant fill them in from your contracts, each change on a card with Undo.

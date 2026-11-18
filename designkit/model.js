@@ -217,6 +217,49 @@
     return isFinite(v) && v >= 0 && v <= 9999 ? v : 1;
   }
 
+  // Sections (LY-PRO W3, page.ext.sec, absent = the book goes on):
+  // a page that opens a section restarts or keeps the count (n, −1 =
+  // go on), in a number style (f: 1 | i | I | a | A) with a prefix
+  // (pre, up to 8 characters: "A-" for an appendix).
+  var SEC_FMT = { "1": 1, i: 1, I: 1, a: 1, A: 1 };
+  function secOfPage(p) {
+    var v = p && p.ext && p.ext.sec;
+    if (!v || typeof v !== "object") return null;
+    var n = Math.floor(Number(v.n));
+    return { n: isFinite(n) && n >= 0 && n <= 9999 ? n : -1, f: SEC_FMT[v.f] ? v.f : "1", pre: typeof v.pre === "string" ? v.pre.replace(/[\u0000-\u001f]/g, "").slice(0, 8) : "" };
+  }
+  function roman(n) {
+    if (n <= 0 || n > 3999) return String(n);
+    var R = [[1000, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]], out = "";
+    R.forEach(function (r) { while (n >= r[0]) { out += r[1]; n -= r[0]; } });
+    return out;
+  }
+  function letters(n) {
+    if (n <= 0) return String(n);
+    var out = "";
+    while (n > 0) { n--; out = String.fromCharCode(97 + n % 26) + out; n = Math.floor(n / 26); }
+    return out;
+  }
+  function numFmt(n, f) {
+    if (f === "i") return roman(n);
+    if (f === "I") return roman(n).toUpperCase();
+    if (f === "a") return letters(n);
+    if (f === "A") return letters(n).toUpperCase();
+    return String(n);
+  }
+  // Every page's number and label, in order: [{ id, no, label, sec }]
+  // (sec: the index of the page's section, 0 = before any).
+  function pageLabels(doc) {
+    var no = firstNumber(doc), f = "1", pre = "", k = 0;
+    return pagesInOrder(doc).map(function (p, i) {
+      var sc = secOfPage(p);
+      if (sc) { k++; f = sc.f; pre = sc.pre; if (sc.n >= 0) no = sc.n; }
+      else if (i > 0) no++;
+      if (sc && sc.n < 0 && i > 0) no++;
+      return { id: p.id, no: no, label: pre + numFmt(no, f), sec: k };
+    });
+  }
+
   function normPage(p) {
     if (!p || !isId(p.id)) return null;
     return withX({ id: p.id, m: stamp(p.m), pos: num(p.pos, -1e12, 1e12, 0), ms: isId(p.ms) ? p.ms : "" }, p);
@@ -727,7 +770,17 @@
     if (!page || !page.ms) return [];
     var gone = {};
     doc.items.forEach(function (it) { if (it.pg === page.id && it.ov) gone[it.ov] = 1; });
-    return itemsOn(doc, page.ms, side).filter(function (it) { return !gone[it.id]; });
+    // a master based on another (master.ext.base, LY-PRO W3): the
+    // base's items first, up to 8 levels, never in a loop
+    var chainIds = [], cur = page.ms, seen = {};
+    while (cur && !seen[cur] && chainIds.length < 8) {
+      seen[cur] = 1; chainIds.unshift(cur);
+      var ms = find(doc.masters, cur);
+      cur = ms && ms.ext && typeof ms.ext.base === "string" ? ms.ext.base : "";
+    }
+    var out = [];
+    chainIds.forEach(function (id) { if (find(doc.masters, id)) out = out.concat(itemsOn(doc, id, side)); });
+    return out.filter(function (it) { return !gone[it.id]; });
   }
   // Frames of a story, in reading order.
   function chain(doc, storyId) {
@@ -762,7 +815,7 @@
     normSetup: normSetup, normItem: normItem, normStory: normStory, normPs: normPs, normCs: normCs,
     normSwatch: normSwatch, normPage: normPage, normMaster: normMaster, normGuide: normGuide, normPara: normPara,
     normDoc: normDoc, copyDoc: copyDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,
-    newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstLeft: firstLeft, bleeds: bleeds, slugOf: slugOf, firstNumber: firstNumber, spreads: spreads, margins: margins,
+    newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstLeft: firstLeft, bleeds: bleeds, slugOf: slugOf, firstNumber: firstNumber, pageLabels: pageLabels, numFmt: numFmt, secOfPage: secOfPage, spreads: spreads, margins: margins,
     itemsOn: itemsOn, masterItems: masterItems, chain: chain, find: find, owner: owner, byZ: byZ,
     swatchColor: swatchColor, cssColor: cssColor, story: storyOfDoc, docBytes: docBytes,
     COLLECTIONS: COLLECTIONS.map(function (c) { return c[0]; })
