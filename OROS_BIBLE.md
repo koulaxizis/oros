@@ -7334,7 +7334,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-11 — Mail: search, formatted writing and HTML signatures (#165) — 0.71.00
 - Search: magnifier or `/`; typing filters loaded messages (sender, recipients, subject, accents ignored); Enter or "Search the whole folder on the server" uses the relay `search` op (newest 100 hits; "Everywhere" also searches the text). Results act like normal rows.
-- Formatted writing: bar for bold, italic, underline, lists, link, colour, Clear (Ctrl+B/I/U/K); formatted mail goes as multipart/alternative, plain stays text only; replies quote as blockquote; paste/drop insert text only.
+- Formatted writing: bar for bold, italic, underline, lists, link, colour, Clear (Ctrl+B/I/U/K); formatted mail goes as multipart/alternative (the HTML side is wrapped by compose.js `content()` with `<meta charset>` and `<meta name="viewport" content="width=device-width, initial-scale=1">`; Newsletter issues go through the same wrapper), plain stays text only; replies quote as blockquote; paste/drop insert text only.
 - HTML signatures (`accounts[].sigHtml`, ≤ 60 KB, synced next to text `sig`) with a small picture (≤ 300×150) sent inline (cid, multipart/related).
 - New `mail/rich.js`: editor + allowlist `clean()` (inert DOMParser, escapes all text/attributes, builds the text copy). Precached. Tests 1347; Playwright E2E at 360px. Not tested: real Papaki/Gmail rendering of the sent HTML.
 
