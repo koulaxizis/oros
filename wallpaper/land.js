@@ -483,7 +483,7 @@
     function motionSync() {
       if (stopped) return;
       var st = (o.get && o.get()) || {};
-      // Energy saver (qsettings.js 1.2.0) decides when it is there.
+      // Energy saver (qsettings.js 1.3.0) decides when it is there.
       var sv = document.documentElement.getAttribute("data-oros-saver");
       var why = stillReason({ motion: st.land && st.land.motion, reduced: reduced(),
         battery: sv === null ? battery : sv === "1" ? { level: 0, charging: false } : null, slow: slow });

@@ -95,7 +95,7 @@
   var host = null, layer = null, canvas = null, ctx = null;
   var shown = "", scene = null, raf = 0, lastTs = 0, ema = 33, slowFrames = 0;
   var lowBattery = false, slow = false, mqReduce = null, t0 = 0;
-  // Energy saver (qsettings.js 1.2.0): <html data-oros-saver> "1"/"0"
+  // Energy saver (qsettings.js 1.3.0): <html data-oros-saver> "1"/"0"
   // replaces the own low-battery rule; missing = the rule as before.
   function saverOr(low) {
     var v = typeof document !== "undefined" ? document.documentElement.getAttribute("data-oros-saver") : null;

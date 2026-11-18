@@ -340,7 +340,7 @@
   var preview = null;          // event id shown by "Try it now" (memory only)
   var previewAt = 0;
   var lowBattery = false;
-  // Energy saver (qsettings.js 1.2.0): <html data-oros-saver> "1"/"0"
+  // Energy saver (qsettings.js 1.3.0): <html data-oros-saver> "1"/"0"
   // replaces the own low-battery rule; missing = the rule as before.
   function saverOr(low) {
     var v = typeof document !== "undefined" ? document.documentElement.getAttribute("data-oros-saver") : null;

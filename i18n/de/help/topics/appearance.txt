@@ -39,6 +39,29 @@ Wenn du orOS zum ersten Mal startest, wartet auf dem Desktop die Karte `Erste Sc
 
 Auf einem Computer haben die Ersten Schritte auch `Nutze orOS auch auf dem Handy`. Das fügt eine Karte `Auf dem Handy` mit einem QR-Code hinzu: Scanne ihn mit der Kamera des Handys, um orOS dort zu öffnen. Der Code enthält nur die Adresse von orOS (diese Seite, oder useoros.online, wenn orOS aus einer lokalen Kopie läuft), nie deine Daten. Damit du auf beiden dasselbe siehst, schalte auf jedem Gerät die Synchronisierung mit derselben Passphrase ein. Die Karte lässt sich wie jedes Widget entfernen.
 
+## Smarte obere Leiste
+Die obere Leiste kann neben der Uhr ein paar Live-Elemente zeigen. Hake sie in den `Einstellungen` unter `Darstellung` in `Obere Leiste` an und lege ihre Reihenfolge mit den Pfeilen fest. Anfangs ist keines an, und deine Wahl bleibt auf diesem Gerät.
+- `Nächster Termin`: das nächste Element mit Uhrzeit von heute aus [Heute](app:today) (deine Kalendertermine und die anderen Apps, die Heute eine Uhrzeit geben). Ab einer Stunde vorher zählt es herunter („in 20 Min.“); während es läuft, steht dort `Jetzt`. Tippe darauf, um den Termin zu öffnen.
+- `Fokus-Timer`: die verbleibenden Minuten des Pomodoro, der in [Zeit](app:time) läuft, Fokus oder Pause.
+- `Aufgaben für heute`: wie viele Aufgaben überfällig oder heute fällig sind.
+- `Wasser heute`: was du getrunken hast, verglichen mit deinem Ziel in [Wasser](app:water).
+- `Ausgaben diesen Monat`: die Ausgaben dieses Monats in [Budget](app:budget).
+- `Kassenumsatz heute`: die heutigen Verkäufe an der Kasse in [Bestand](app:stock).
+- `Gewohnheiten für heute`, `Pflanzen zu versorgen`, `Hausarbeiten für heute` und `Fällige Kanban-Karten`: wie viele für heute anstehen oder überfällig sind in [Gewohnheiten](app:habits), [Pflanzenpflege](app:plants), [Hausarbeitsrad](app:chores) und [Kanban](app:kanban).
+- `Zeiterfassung läuft`: die Zeit auf dem Timer der [Zeiterfassung](app:timesheet), solange er läuft, und sein Projekt.
+- `Überfällige Rechnungen`: wie viele Rechnungen in der [Abrechnung](app:invoices) über ihrem Tag und unbezahlt sind.
+- `Nächste Reise`: in wie vielen Tagen deine nächste Reise in [Reisen](app:travel) beginnt (bis zu einem Monat voraus).
+- `Heutige Mahlzeiten`: die heutigen Mahlzeiten aus deinem Plan im [Essensplaner](app:meals).
+- `Das Buch, das du liest`: das Buch, das in der [Bibliothek](app:library) offen ist, und wie weit du bist.
+
+Jedes Element erscheint nur, wenn es etwas zu sagen hat, und ein Tippen öffnet seine App. Auf einem Handy liegen alle hinter einem Knopf mit einem kleinen Kartenstapel und ihrer Zahl: Tippe darauf, und sie klappen unter der Leiste auf, jedes mit seinem vollen Text. Auf einem breiteren Bildschirm bleiben sie in der Leiste; ist sie voll, wandern die letzten in denselben Knopf (er zeigt dann `+2` und so weiter). Tippe auf ein Element in der Liste, um seine App zu öffnen; `Esc` oder ein Tippen woanders klappt sie wieder zu. Solange `Sensible Arbeit` an ist, sind die Geldelemente (und die überfälligen Rechnungen), die Mahlzeiten, das Buch und die Namen von Terminen und Reisen verborgen. Termine von Apps, die aus der Suche herausgehalten werden (Gesundheit, Zyklus, Ein-Satz-Tagebuch und ähnliche), erscheinen nie in der Leiste.
+
+Dieselben Zahlen können eine Regel in [Automatisierungen](app:automations) starten: ein paar Minuten vor einem Termin (zum Beispiel die Musik pausieren) oder wenn der Kassenumsatz oder die Ausgaben des Monats einen Betrag erreichen (ein Klang und ein Hinweis).
+
+Unter `Aussehen der Leiste` kannst du die Leiste als abgerundeten Streifen schweben lassen: `Glas` lässt die Farben dahinter durch, `Mitternacht` bleibt auch in einem hellen Thema dunkel, `Deckend` folgt deinem Thema. `Klassisch` ist die Leiste, wie sie immer war. Hoher Kontrast behält immer die klassische Leiste.
+
+Unter Windows, mit installiertem orOS, hat das Menü des Symbols im Infobereich „Smarte Leiste auf dem Desktop“: dieselbe Leiste, mit deinen Elementen und deinem Aussehen, bleibt oben am Bildschirm, auch wenn das orOS-Fenster geschlossen ist, und ein Tippen öffnet diese App in orOS.
+
 ## Begrüßung beim Start
 Wenn du orOS an einem Tag zum ersten Mal startest, erscheint kurz eine Begrüßung über dem Desktop: Guten Morgen, Guten Tag oder Guten Abend (mit deinem Namen, wenn du ihn unter `Dein Name` festgelegt hast), das Datum und, wenn [Heute](app:today) etwas hat, wie viel heute fällig und wie viel überfällig ist. Tippe auf diese Zeile, um Heute zu öffnen. Die Begrüßung geht nach ein paar Sekunden von selbst, oder wenn du irgendwo tippst, eine Taste drückst oder eine App öffnest. Sie erscheint nie über einer App und nie an deinem allerersten Tag. Du schaltest sie in den `Einstellungen` unter `Darstellung` mit `Begrüßung beim Start` aus; das bleibt auf diesem Gerät.
 
@@ -70,7 +93,7 @@ Wähle in den `Einstellungen` unter `Darstellung` neben `Design` entweder `Dunke
 ## Skins
 Die farbigen Punkte unter `Systemfarbe` sind Skins: Jeder gibt orOS und seinen Apps eine andere Akzentfarbe. Sie sind nach Linux-Systemen benannt, etwa `Ubuntu`, `Fedora`, `Mint` oder `Pop!_OS`; fahr mit der Maus über einen Punkt, um seinen Namen zu sehen. Standard ist `Oros`, in Gold.
 
-> Hast du noch das Standard-Hintergrundbild (`Desert Sand`), wechselt ein Skin auch zum passenden Hintergrundbild. Sobald du selbst ein Hintergrundbild wählst, lassen Skins es in Ruhe.
+> Jeder Skin bringt ein vorgeschlagenes Hintergrundbild mit, markiert mit einem ★ unter `Hintergrundbild`. Wählst du einen Skin, wechselt auch das Hintergrundbild zu seinem, solange du noch das Standard-Hintergrundbild (`Desert Sand`) oder das für deinen vorigen Skin vorgeschlagene hast. Sobald du selbst ein anderes Hintergrundbild wählst, lassen Skins es in Ruhe, und du kannst weiterhin jedes Hintergrundbild mit jedem Skin wählen.
 
 ## Hintergrundbilder
 Tippe oder klicke unter `Hintergrundbild` auf ein Bild, um es als Desktop-Hintergrund zu nutzen. Zur Wahl stehen `Adwaita Dusk`, `Midnight`, `Aubergine`, `Forest Night`, `Ember`, `Nordic Frost`, `Aurora`, `Desert Sand`, `Monochrome`, `Nebula`, `Nordic Aurora`, `Hex Grid`, `Obsidian Veil` und `Retro Terrazzo`. `Keiner` nutzt den schlichten Hintergrund deines Designs.
@@ -149,12 +172,13 @@ Tippe oder klicke auf das Symbol, um [Wetter](app:weather) zu öffnen; in Wetter
 Bist du offline oder ist der Wert älter als 3 Stunden, zeigt das Symbol eine durchgestrichene Wolke und keine Temperatur. orOS zeigt nie eine Temperatur, die es nicht hat. Die Wetterdaten kommen von Open-Meteo (siehe [Datenschutz](help:t/privacy)).
 
 ## Dock
-Das Dock ist eine Leiste mit deinen Lieblings-Apps am unteren Rand des Desktops. Füge eine App mit dem ☆ neben ihr im Menü hinzu. In den `Einstellungen` unter `Darstellung` › `Dock`:
+Das Dock ist eine Leiste mit deinen Lieblings-Apps an einem Rand des Desktops, unten, solange du keinen anderen wählst. Füge eine App mit dem ☆ neben ihr im Menü hinzu. In den `Einstellungen` unter `Darstellung` › `Dock`:
 - `Dock anzeigen` schaltet es an oder aus.
 - `Größe` ist `Klein`, `Mittel` oder `Groß`.
+- `Position` setzt es `Unten`, `Links`, `Rechts` oder `Oben` an den Bildschirm. Auf einem Handy oder in einem kleinen Fenster bleibt es unten; auf einem größeren Bildschirm geht es wieder an deine Wahl. An der Seite lässt sich ein langes Dock nach oben und unten scrollen.
 - `Stil` ändert sein Aussehen: `Klassisch`, `Glas`, `Milchglas`, `Rauch`, `Transparent`, `Deckend`, `3D-Regal` oder `Neon`.
 - `Beim Darüberfahren vergrößern` lässt Symbole unter der Maus wachsen (nur mit Maus oder Trackpad).
-- `Automatisch ausblenden` versteckt es, bis du die Maus an den unteren Rand bewegst oder auf einem Touchscreen auf den kleinen Griff tippst.
+- `Automatisch ausblenden` versteckt es, bis du die Maus an seinen Bildschirmrand bewegst oder auf einem Touchscreen auf den kleinen Griff tippst.
 - `Über offenen Apps zeigen` lässt es sichtbar, während eine App offen ist. Es ist aus, bis du es einschaltest, damit Apps den ganzen Bildschirm bekommen.
 
 ## Barrierefreiheit
@@ -162,8 +186,10 @@ In den `Einstellungen` › `Barrierefreiheit`, für orOS und jede App:
 - `Textgröße` macht den Text und alles drumherum größer: `100%`, `115%`, `130%` oder `150%`. Sie gilt in jeder App, in den Einstellungen, in der Hilfe und im Menü, wie ein Zoom der Seite; die obere Leiste und der Desktop behalten ihre Größe (das Dock hat seine eigene `Größe`). Auf einem schmalen Bildschirm vergrößert orOS nur so weit, dass jede App noch hineinpasst (mindestens 320 Pixel breit), und die Karte sagt es dir.
 - `Hoher Kontrast` stellt orOS und die Apps auf Schwarz und Weiß mit einer kräftigen Farbe um, mit klaren Rahmen, unterstrichenen Links und einem schlichten Desktop ohne Hintergrundbild. `Automatisch` (die Voreinstellung) schaltet ihn ein, solange dein Gerät mehr Kontrast verlangt, zum Beispiel mit dem hohen Kontrast von Windows; mit `An` und `Aus` entscheidest du selbst. Wenn Windows eigene Kontrastfarben erzwingt, folgt orOS ihnen und markiert gewählte Optionen mit einem Rahmen.
 - `Fokusrahmen immer zeigen` zeichnet einen dicken Rahmen um das, was den Tastaturfokus hat, wenn du dich mit der Taste [[Tab]] bewegst, auch in Apps, die nur einen blassen zeigen.
+- `Farbfilter` ändert die Farben des ganzen Bildschirms: `Grau`, `Rot-Grün, schwaches Rot (Protanopie)`, `Rot-Grün, schwaches Grün (Deuteranopie)`, `Blau-Gelb (Tritanopie)` oder `Farben umkehren`. Die Filter Rot-Grün und Blau-Gelb rücken schwer unterscheidbare Farben weiter auseinander; `Stärke` (25% bis 100%) legt fest, wie sehr, auch für `Grau`. Der farbige Streifen unter der Liste zeigt das Ergebnis sofort. `Farben umkehren` macht helle Bildschirme dunkel, lässt aber Fotos, Videos und Zeichnungen in den orOS-Apps, wie sie sind (Seiten anderer Websites, etwa Kartenkacheln, werden ganz umgekehrt). Gespeicherte und exportierte Dateien behalten ihre echten Farben; ein Bildschirmfoto oder eine Bildschirmaufnahme zeigt den Bildschirm, wie du ihn siehst. Die Taste `Farbfilter` in den Schnelleinstellungen schaltet den zuletzt gewählten Filter ein und aus; ihr Pfeil öffnet diese Einstellungen.
+- `Zeigergröße` (nur mit Maus oder Touchpad): `Normal`, `Groß` oder `Sehr groß`, in orOS und jeder App. Chrome und Edge blenden `Sehr groß` aus, solange er den Fensterrand berührt. Spiele und Zeichenwerkzeuge mit eigenem Zeiger behalten ihn.
 
-Diese drei bleiben auf diesem Gerät: ein Handy und ein großer Bildschirm brauchen oft eine andere Größe.
+Diese Einstellungen bleiben auf diesem Gerät: ein Handy und ein großer Bildschirm brauchen oft eine andere Größe.
 
 ## Dein Name
 Unter Einstellungen › Darstellung › `Dein Name` schreibst du, wie orOS dich nennen soll. Anfangs ist das Feld leer. Mit einem Namen begrüßen dich [Heute](app:today) und die Startseite damit, zum Beispiel `Guten Abend, Maria`. Der Name bleibt auf deinen Geräten: Mit eingeschalteter [Synchronisierung](help:t/sync) geht er verschlüsselt auf deine anderen Geräte, wie deine übrigen Einstellungen. Er geht nie an den [Assistenten](app:assistant) oder sonstwohin. Leere das Feld, um ihn zu entfernen.

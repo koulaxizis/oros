@@ -30,6 +30,7 @@ Drück eine Taste auf der Handy-Tastatur, und die Note wird geschrieben und gesp
 - `Neue Melodie` beginnt eine leere.
 - In der Liste spielt die Wiedergabetaste eine Melodie, ohne sie zu öffnen. Die Kopiertaste macht ein Duplikat, und das × löscht sie; `Rückgängig` holt sie zurück.
 - `Fertige Melodien` sind alte gemeinfreie Melodien zum Loslegen. Tippst du auf eine, öffnet sie sich als neue Melodie.
+- Die Suche im Menü findet deine Melodien über ihren Namen (eine ohne Namen als „Unbenannte Melodie“). Wählst du eine, öffnet sie sich hier, bereit zum Abspielen.
 
 ## Nimm sie mit
 - `WAV herunterladen` speichert die Melodie als Tondatei, die du auf deinem Handy als Klingelton einstellen kannst.

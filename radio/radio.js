@@ -152,7 +152,8 @@ var STRINGS = {
     "imp.undone":     "Import undone",
     "imp.bad":        "Radio can't read this file. Use an M3U, M3U8, PLS, XSPF or CSV station list.",
     "imp.big":        "This file is too large to import.",
-    "imp.empty":      "No stations found in this file."
+    "imp.empty":      "No stations found in this file.",
+    "viz.btn":        "Light show"
   },
   el: {
     "tab.countries":  "Χώρες",
@@ -256,7 +257,8 @@ var STRINGS = {
     "imp.undone":     "Η εισαγωγή αναιρέθηκε",
     "imp.bad":        "Το Ραδιόφωνο δεν μπορεί να διαβάσει αυτό το αρχείο. Χρησιμοποίησε λίστα σταθμών M3U, M3U8, PLS, XSPF ή CSV.",
     "imp.big":        "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.",
-    "imp.empty":      "Δεν βρέθηκαν σταθμοί σε αυτό το αρχείο."
+    "imp.empty":      "Δεν βρέθηκαν σταθμοί σε αυτό το αρχείο.",
+    "viz.btn":        "Φωτορυθμικό"
   }
 };
 
@@ -580,8 +582,98 @@ function ensureHost(){
     host.flags.buffering = false; host.notify();
   });
   audio.addEventListener("error", function(){
+    // MU-VIZ: a stream loaded for the light show (crossOrigin) that
+    // does not load that way plays plain again, once, and its host is
+    // remembered for the session.
+    if(vizRetry()) return;
     host.flags.error = true; host.flags.buffering = false; host.notify();
   });
+  audio.addEventListener("playing", function(){ vizCapture(); });
+
+  // ---------- Light show (MU-VIZ wave 2) ----------
+  // The light reads a copy of the sound (audio.captureStream(), Chrome
+  // and Edge; Firefox's mozCaptureStream would take the sound away, so
+  // it is never used) through an AnalyserNode that goes nowhere: the
+  // stream keeps playing straight from the element, untouched. A copy
+  // is readable only when the station's server allows CORS: probed
+  // once per host for the session (a GET aborted at the headers), then
+  // the stream loads with crossOrigin="anonymous". Without the light
+  // show nothing of this runs and streams load exactly as before.
+  var viz = { on: false, ok: {}, retried: "", ctx: null, an: null, src: null, track: null, f: null, w: null };
+  function vizOrigin(u){ try{ return new w.URL(u, w.location.href).origin; }catch(e){ return ""; } }
+  function vizProbe(u){
+    var o = vizOrigin(u);
+    if(!o) return Promise.resolve(false);
+    if(o === w.location.origin || /^blob:/.test(u)) return Promise.resolve(true);
+    if(o in viz.ok) return Promise.resolve(viz.ok[o]);
+    if(typeof w.fetch !== "function" || typeof w.AbortController !== "function") return Promise.resolve(false);
+    var ctl = new w.AbortController();
+    var tm = w.setTimeout(function(){ ctl.abort(); }, 8000);
+    return w.fetch(u, { method: "GET", mode: "cors", credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer", signal: ctl.signal }).then(function(r){
+      w.clearTimeout(tm); try{ ctl.abort(); }catch(e){}
+      return (viz.ok[o] = !!(r.ok || r.status === 206));
+    }, function(){ w.clearTimeout(tm); return (viz.ok[o] = false); });
+  }
+  // Before a station's address is set: crossOrigin only for a host
+  // known to allow it while the light show is on.
+  function vizBefore(u){
+    var ok = viz.on && viz.ok[vizOrigin(u)] === true;
+    if(ok) audio.crossOrigin = "anonymous";
+    else audio.removeAttribute("crossorigin");
+  }
+  // The light show is on, the station plays plain and its host is not
+  // known yet: ask, and when it allows it load the stream again with
+  // crossOrigin (one short gap).
+  function vizUpgrade(){
+    var cur = host.current;
+    if(!viz.on || !cur || audio.crossOrigin) return;
+    var u = audio.getAttribute("src") || "";
+    if(!u || viz.ok[vizOrigin(u)] === false) return;
+    vizProbe(u).then(function(ok){
+      if(!ok || !viz.on || host.current !== cur || audio.getAttribute("src") !== u || audio.crossOrigin) return;
+      var was = !audio.paused;
+      audio.crossOrigin = "anonymous";
+      audio.src = u;
+      if(was){ var p = audio.play(); if(p && p.catch) p.catch(function(){}); }
+    });
+  }
+  function vizRetry(){
+    var u = audio.getAttribute("src") || "";
+    if(!audio.crossOrigin || !u || viz.retried === u) return false;
+    viz.retried = u;
+    viz.ok[vizOrigin(u)] = false;
+    audio.removeAttribute("crossorigin");
+    audio.src = u;
+    var p = audio.play(); if(p && p.catch) p.catch(function(){});
+    return true;
+  }
+  function vizCapture(){
+    if(!viz.on || !audio.crossOrigin || typeof audio.captureStream !== "function") return;
+    var AC = w.AudioContext || w.webkitAudioContext;
+    if(!AC) return;
+    try{
+      if(!viz.ctx){
+        viz.ctx = new AC();
+        viz.an = viz.ctx.createAnalyser();
+        viz.an.fftSize = 1024;
+        viz.an.smoothingTimeConstant = 0.72;
+        viz.f = new Uint8Array(viz.an.frequencyBinCount);
+        viz.w = new Uint8Array(viz.an.fftSize);
+      }
+      if(viz.ctx.state === "suspended"){ try{ viz.ctx.resume().catch(function(){}); }catch(e){} }
+      var ms = audio.captureStream(), tr = ms.getAudioTracks()[0] || null;
+      if(!tr || tr === viz.track) return;
+      if(viz.src){ try{ viz.src.disconnect(); }catch(e){} }
+      viz.track = tr;
+      viz.src = viz.ctx.createMediaStreamSource(new w.MediaStream([tr]));
+      viz.src.connect(viz.an);
+    }catch(e){ viz.src = null; viz.track = null; }
+  }
+  function vizStop(){
+    if(viz.src){ try{ viz.src.disconnect(); }catch(e){} }
+    viz.src = null; viz.track = null;
+    if(viz.ctx){ try{ viz.ctx.suspend(); }catch(e){} }
+  }
 
   host.api = {
     play: function(station){
@@ -605,6 +697,7 @@ function ensureHost(){
       host.flags.buffering = true;
       host.flags.error = false;
       host.lastEvent = null;
+      vizBefore(url);
       audio.src = url;
       applyMediaSession(w, station);
       var p = audio.play();
@@ -613,7 +706,7 @@ function ensureHost(){
         host.notify();
       });
       host.notify();
-      
+      vizUpgrade();
       return true;
     },
     toggle: function(){
@@ -689,6 +782,22 @@ function ensureHost(){
         host.lastEvent = "sleep-cancel";
         host.notify();
       }
+    },
+    // MU-VIZ: the light show (see vizCapture). → on
+    viz: function(on){
+      viz.on = !!on;
+      if(viz.on){
+        if(viz.ctx && viz.ctx.state === "suspended"){ try{ viz.ctx.resume().catch(function(){}); }catch(e){} }
+        if(audio.crossOrigin) vizCapture(); else vizUpgrade();
+      }else vizStop();
+      return viz.on;
+    },
+    // → { live, f, w, rate } (arrays of the shell window, read only) or null.
+    vizFrame: function(){
+      if(!viz.on) return null;
+      var live = !!(viz.src && viz.track && viz.track.readyState === "live" && !audio.paused && viz.ctx && viz.ctx.state === "running");
+      if(live){ try{ viz.an.getByteFrequencyData(viz.f); viz.an.getByteTimeDomainData(viz.w); }catch(e){ live = false; } }
+      return { live: live, f: viz.f, w: viz.w, rate: viz.ctx ? viz.ctx.sampleRate : 48000 };
     },
     favoriteToggle: function(){
       if(!host.current) return;
@@ -2176,6 +2285,55 @@ function recDone(r){
   transientNote(r.ok ? (r.why === "limit" ? t("rec.limit") + " " : "") + tf("rec.saved", { p: p }) : t("rec.failed"));
 }
 
+/* ===== LIGHT SHOW (MU-VIZ wave 2) =====
+   ../vizkit.js (OrosViz), loaded on first use with this app's ?v=; its
+   stage is a full-window light over the app. The host reads a copy of
+   the sound only from stations whose server allows it; the others get
+   light that moves on its own, and the stage says so. The style is
+   device-local ("oros-radio-viz"). */
+var VIZ_KEY = "oros-radio-viz", vizStage = null, vizWait = null;
+function hasViz(){ return !!(host && host.api && typeof host.api.viz === "function" && typeof host.api.vizFrame === "function"); }
+function vizLabel(){ return t("viz.btn"); }
+function vizStyle(){ try{ var o = JSON.parse(localStorage.getItem(VIZ_KEY) || "null"); return o && typeof o.st === "string" ? o.st : "glow"; }catch(e){ return "glow"; } }
+function vizKit(){
+  if(window.OrosViz) return Promise.resolve(window.OrosViz);
+  if(vizWait) return vizWait;
+  var ver = (document.querySelector('script[src*="radio.js"]') || {}).src || "";
+  var q = (ver.match(/\?v=[^"&]+/) || [""])[0];
+  vizWait = new Promise(function(resolve){
+    var sc = document.createElement("script");
+    sc.src = "../vizkit.js" + q;
+    sc.onload = function(){ resolve(window.OrosViz || null); };
+    sc.onerror = function(){ vizWait = null; sc.remove(); resolve(null); };
+    document.head.appendChild(sc);
+  });
+  return vizWait;
+}
+function lightShow(){
+  if(!hasViz() || vizStage) return;
+  host.api.viz(true);
+  vizKit().then(function(V){
+    if(!V || vizStage){ if(!V) host.api.viz(false); return; }
+    var unsub = host.api.subscribe(function(){ if(vizStage){ if(getHostState().current) vizStage.paint(); else vizStage.close(); } });
+    vizStage = V.stage({
+      lang: activeLang(), style: vizStyle(),
+      title: function(){ var c = getHostState().current; return c ? c.name : ""; },
+      sub: function(){
+        var c = getHostState().current, api = engineApi(), now = api ? api.now() : null;
+        return now && now.s ? "♪ " + now.s : c ? [c.country, c.tags ? String(c.tags).split(",")[0] : ""].filter(Boolean).join(" · ") : "";
+      },
+      playing: function(){ return getHostState().playing; },
+      toggle: function(){ host.api.toggle(); },
+      source: function(){ return host.api.vizFrame(); },
+      colors: function(){ return { a: (getComputedStyle(document.documentElement).getPropertyValue("--accent") || "").trim(), bg: "#08080d" }; },
+      onStyle: function(id){ try{ localStorage.setItem(VIZ_KEY, JSON.stringify({ st: id })); }catch(e){} },
+      onClose: function(){ vizStage = null; try{ unsub(); }catch(e){} try{ host.api.viz(false); }catch(e){} }
+    });
+    // The note (light on its own) follows the stream as it loads.
+    var iv = setInterval(function(){ if(!vizStage){ clearInterval(iv); return; } vizStage.paint(); }, 1000);
+  });
+}
+
 function toggleRec(){
   var api = engineApi(), st = getHostState();
   if(!api || !st.current) return;
@@ -2272,6 +2430,12 @@ function buildMore(){
   var now = el("p", "rx-now"); now.id = "rx-more-now";
   sec.appendChild(now);
   sec.appendChild(btn(t("hist.open"), "rx-sleep-preset", openHistory));
+  // MU-VIZ wave 2: the light show over the whole window.
+  if(cur && hasViz()){
+    var lb = btn(vizLabel(), "rx-sleep-preset", function(){ $("rx-more-dlg").close(); lightShow(); });
+    lb.id = "rx-viz-btn";
+    sec.appendChild(lb);
+  }
   box.appendChild(sec);
 
   // Recording

@@ -172,12 +172,13 @@ Tap or click the icon to open [Weather](app:weather); inside Weather, it takes y
 When you are offline, or the reading is more than 3 hours old, the icon shows a crossed-out cloud and no temperature. orOS never shows a temperature it doesn't have. Weather data comes from Open-Meteo (see [Privacy](help:t/privacy)).
 
 ## Dock
-The Dock is a bar of your favourite apps along the bottom of the desktop. Add an app with the ☆ next to it in the menu. In `Settings`, under `Appearance` › `Dock`:
+The Dock is a bar of your favourite apps along an edge of the desktop, at the bottom unless you choose another. Add an app with the ☆ next to it in the menu. In `Settings`, under `Appearance` › `Dock`:
 - `Show the Dock` turns it on or off.
 - `Size` is `Small`, `Medium` or `Large`.
+- `Position` puts it at the `Bottom`, `Left`, `Right` or `Top` of the screen. On a phone or a small window it stays at the bottom; it goes back to your choice on a larger screen. At the side, a long Dock scrolls up and down.
 - `Style` changes its look: `Classic`, `Glass`, `Frosted`, `Smoke`, `Transparent`, `Solid`, `3D shelf` or `Neon`.
 - `Magnify on hover` makes icons grow under the mouse (only with a mouse or trackpad).
-- `Hide automatically` tucks it away until you move the mouse to the bottom edge, or tap the small handle on a touch screen.
+- `Hide automatically` tucks it away until you move the mouse to its edge of the screen, or tap the small handle on a touch screen.
 - `Show over open apps` keeps it visible while an app is open. It is off until you turn it on, so apps get the whole screen.
 
 ## Accessibility
@@ -185,8 +186,10 @@ In `Settings` › `Accessibility`, for orOS and every app:
 - `Text size` makes text and everything around it larger: `100%`, `115%`, `130%` or `150%`. It works in every app, in Settings, in Help and in the menu, like zooming the page; the top bar and the desktop keep their size (the Dock has its own `Size`). On a narrow screen orOS goes only as far as every app still fits (at least 320 pixels across), and the card says so.
 - `High contrast` switches orOS and the apps to black and white with one strong colour, clear borders, underlined links and a plain desktop without a wallpaper. `Automatic` (the default) turns it on while your device asks for more contrast, for example with Windows high contrast; `On` and `Off` decide yourself. When Windows forces its own contrast colours, orOS follows them and marks chosen options with an outline.
 - `Always show the focus ring` draws a thick outline around whatever has the keyboard focus when you move with the [[Tab]] key, also in apps that show only a faint one.
+- `Colour filter` changes the colours of the whole screen: `Grey`, `Red-green, red weak (protanopia)`, `Red-green, green weak (deuteranopia)`, `Blue-yellow (tritanopia)` or `Invert colours`. The red-green and blue-yellow filters move colours that are hard to tell apart further from each other; `Strength` (25% to 100%) sets how much, also for `Grey`. The coloured strip under the list shows the result at once. `Invert colours` turns light screens dark but keeps photos, videos and drawings as they are in the orOS apps (pages from other sites, such as map tiles, turn round completely). The files you save and export keep their real colours; a screenshot or a screen recording shows the screen as you see it. The `Colour filter` button in Quick settings turns the last filter you chose on and off; its arrow opens these settings.
+- `Pointer size` (only with a mouse or touchpad): `Normal`, `Large` or `Extra large`, in orOS and every app. Chrome and Edge hide `Extra large` while it touches the edge of the window. Games and drawing tools that have their own pointer keep it.
 
-These three stay on this device: a phone and a large screen often need a different size.
+These stay on this device: a phone and a large screen often need a different size.
 
 ## Your name
 In Settings › Appearance › `Your name` you can type what orOS should call you. It is empty at first. With a name, [Today](app:today) and the Start page greet you with it, for example `Good evening, Maria`. The name stays on your devices: with [sync](help:t/sync) on it goes to your other devices encrypted, like your other settings. It never goes to the [Assistant](app:assistant) or anywhere else. Empty the field to remove it.

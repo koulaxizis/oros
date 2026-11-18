@@ -48,6 +48,9 @@ Wähle unter `An andere Apps senden` eine Ausgabe (wenn der Titel mehrere hat), 
 
 In der anderen App wird nichts gespeichert, bevor du es dort speicherst.
 
+## Verträge
+An einem Titel zeigt `Verträge` jeden Vertrag, den das [CRM](app:crm) für ihn führt, eine Zeile pro Format: bis wann er läuft, wie viele Tage bleiben oder dass er ohne Entscheidung beendet ist. Die Titelliste zeigt den, der am dringendsten einen Blick braucht, als Abzeichen. Ist der Vertrag eines Formats beendet, dieses Format aber noch mit einem Shop-Produkt verknüpft, bittet ein Hinweis dich zu prüfen, ob es noch verkauft werden soll (im Shop wird nichts geändert). `Verlängern`, `Aufschieben`, `E-Mail`, `Beenden` und `Mehr…` öffnen die Aktionen dieses Vertrags im CRM, das fragt, bevor es etwas ändert. Verknüpfe einen Vertrag im CRM mit seinem Titel (der `Titel im Verlag` des Vertrags); ein Titel mit demselben Namen wird von selbst gefunden.
+
 ## Honorare
 Bei einem Titel sagt der Abschnitt `Honorare`, wer dafür bezahlt wird: Name, Prozentsatz, `Auf` den Ladenpreis oder auf die Einnahmen (netto), welche Ausgaben (oder alle) und den Vorschuss bei Vertragsunterzeichnung. Mehrere Bedingungen pro Titel sind möglich (Taschenbuch 10 % vom Ladenpreis, E-Book 25 % netto, 2 % für die Übersetzung).
 
@@ -64,6 +67,23 @@ Für Musikveröffentlichungen liest `Verkaufsbericht importieren…` im Tab `Hon
 - Ein Titel mit Anteilen unter `Rechte an der Aufnahme (Master)` zahlt jedem Inhaber seinen Anteil an den Einnahmen; jeder andere Titel und eine als Ganzes verkaufte Veröffentlichung zahlen die Honorarbedingungen der Veröffentlichung, die für alle Formate gelten.
 - Pro Person und Währung entsteht eine Abrechnung; nichts wird umgerechnet. Vorschüsse sind in deiner Verlagswährung, eine Abrechnung in anderer Währung verrechnet sie also nicht. Eine Abrechnung für Monate, die schon auf einer früheren stehen, wird markiert und nicht angehakt.
 - Ausgestellte Abrechnungen sind Belege wie alle anderen: drucken, E-Mail, Budget, bezahlt, stornieren.
+
+## Kosten & Ergebnis
+Was jedes Buch gekostet und was es eingebracht hat, gelesen aus deinem WooCommerce-Shop: Production Ledger (ein Noxpress-Plugin) führt die Verkäufe und Kosten, Revenue Splitter, wer einen Anteil bekommt. Verbinde den Shop einmal in den [Einstellungen](app:settings) › Verbundene Dienste (ein Leseschlüssel genügt); in den Shop wird nichts geschrieben, und von diesen Zahlen bleibt nichts in orOS: Jedes Lesen zeigt den Shop, wie er jetzt ist. Alle Beträge sind ohne Mehrwertsteuer.
+
+Ein Titel zählt, sobald eines seiner Formate im Shop ist: gesendet über `An andere Apps senden` › `Entwurf in meinem Shop` oder ein Shop-Produkt mit derselben ISBN als Artikelnummer (mit oder ohne Bindestriche).
+
+An einem Titel zeigt der Abschnitt `Kosten & Ergebnis`:
+- Einnahmen: Shop-Verkäufe und Verkäufe an Buchhandlungen mit ihren Exemplaren, Verkäufe außerhalb des Shops (eine Messe, eine Lesung) und die Versandkosten, die Kunden bezahlt haben;
+- Kosten: jede Kategorie (Druck, Lektorat, Gestaltung…) mit ihren Rechnungen (Datum, Lieferant, Rechnungsnummer, Notiz), dann der Anteil des Buchs an den Kurierrechnungen jedes Monats, an Verbrauchsmaterial und an Zahlungsgebühren (nach den Bestellungen, in denen es war), und die Anteile der Urheber;
+- das Ergebnis, das Ergebnis seit Beginn des Ledgers und, solange es negativ ist, wie viele Exemplare es noch decken;
+- die Mehrwertsteuer auf Verkäufe und Kosten und die Differenz, die ans Finanzamt geht: Mehrwertsteuer ist weder Einnahme noch Kosten, also ist das Ergebnis ohne sie.
+
+Die Anteile der Urheber sind das, was Revenue Splitter auszahlt; Anteile an den Verlag sind deine, keine Kosten (der Verlagsname in den Einstellungen und `Weitere Namen, unter denen du auftrittst` für andere Schreibweisen). Wenn Revenue Splitter für ein Buch niemandem etwas zahlt und der Ledger keine Kosten «Creators» für es hat, werden die Honorare aus den eigenen Bedingungen des Titels (Abschnitt `Honorare`) und den verkauften Exemplaren berechnet, wobei der Vorschuss ganz zählt, bis er eingespielt ist.
+
+Der Tab `Kosten & Ergebnis` listet jeden Titel mit seinen Exemplaren, Einnahmen, Kosten und dem Ergebnis, das schlechteste zuerst, dann die übrigen Produkte des Shops und die allgemeinen Ausgaben, die kein Buch trägt: Die letzte Zeile ist das ganze Ergebnis des Shops, dasselbe wie im Bericht des Ledgers. Wähle den Zeitraum (seit Beginn des Ledgers, dieses Jahr, letztes Jahr); `Erneut lesen` liest den Shop neu.
+
+Das ganze Bild braucht Production Ledger 1.1 oder neuer im Shop; mit 1.0 erscheinen nur die eigenen Kosten und Verkäufe des Buchs.
 
 ## Einsendungen
 Manuskripte, die man dir schickt. `+ Einsendung` legt eine von Hand an; öffne in [Mail](app:mail) die Nachricht und wähle `Andere Apps` › `Manuskript-Einsendung in Verlag`, um sie mit Absender, Betreff und Text anzulegen.
