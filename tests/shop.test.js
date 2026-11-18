@@ -49,7 +49,7 @@ const DIGEST = {
   errors: { titles: "nope", users: "x" }
 };
 const ANSWERS = [REP("45.50", "40.00", 3, 4), REP("228.20", "210.00", 12, 20), REP("1507.80", "1400.00", 85, 123),
-  ok([{ title: "First Book", product_id: 1, quantity: 20 }]), ok({ code: "EUR", name: "Euro", symbol: "€" }), ok(DIGEST)];
+  ok([{ name: "First Book", product_id: 1, quantity: 20 }]), ok({ code: "EUR", name: "Euro", symbol: "€" }), ok(DIGEST)];
 
 test("the requests pass the WooCommerce allowlist, in the app and the relay", async () => {
   const X = await import("../relay/ext.js");

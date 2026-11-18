@@ -87,7 +87,7 @@
   // /reports/top_sellers → [{ title, product_id, quantity }]
   function parseTop(d) {
     if (!Array.isArray(d)) return [];
-    return d.filter(isObj).map(function (x) { return { id: int(x.product_id), n: name(x.title), q: int(x.quantity) }; })
+    return d.filter(isObj).map(function (x) { return { id: int(x.product_id), n: name(x.name || x.title), q: int(x.quantity) }; })
       .filter(function (x) { return x.n; }).slice(0, MAX_TOP);
   }
 
