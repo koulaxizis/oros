@@ -313,6 +313,9 @@
       if (p.base) e.based_on = psName[p.base] || p.base;
       ["font", "size", "lead", "align", "b", "i", "caps", "track", "sb", "sa", "fi", "li", "ri"].forEach(function (k) { if (p[k] !== undefined && p[k] !== "" && p[k] !== 0) e[k] = p[k]; });
       if (p.ext && p.ext.fam) e.family = p.ext.fam;
+      if (p.ext && Array.isArray(p.ext.nest) && p.ext.nest[0]) e.nested = p.ext.nest.map(function (q) { return { character_style: csName[q.cs] || q.cs, through: q.to }; });
+      if (p.ext && p.ext.kwn) e.keep_with_next = true;
+      if (p.ext && p.ext.brk) e.starts = p.ext.brk;
       return e;
     });
     o.character_styles = (doc.cstyles || []).map(function (c) {
@@ -328,8 +331,256 @@
     return o;
   }
 
+
+  // ---------- W2: styles, text frames, house pages ----------
+  // A style by id or by any of its names (case and white space folded).
+  function styleNamed(list, v) {
+    if (!v) return null;
+    var want = String(v).replace(/\s+/g, " ").trim().toLocaleLowerCase(), hit = null;
+    (list || []).forEach(function (e) {
+      if (hit) return;
+      if (e.id === v) { hit = e; return; }
+      var n = e.name, names = n && typeof n === "object" ? Object.keys(n).map(function (k) { return n[k]; }) : [n];
+      names.forEach(function (x) { if (!hit && typeof x === "string" && x.replace(/\s+/g, " ").trim().toLocaleLowerCase() === want) hit = e; });
+    });
+    return hit;
+  }
+  function slugId(pre, name, list, idf) {
+    var base = fold(name).replace(/[^a-z0-9]+/g, "").slice(0, 14);
+    var id = base ? pre + "-ly" + base : (idf || M.newId)(pre);
+    if (!(list || []).some(function (e) { return e.id === id; })) return id;
+    return (idf || M.newId)(pre);
+  }
+  // defstyle: a paragraph (kind para) or character style made or
+  // changed by name. Lengths in pt; nest_cs + nest_to: a nested style.
+  // → number of styles made or changed (0 when nothing differs).
+  var PS_SET = { font: 1, size: 1, lead: 1, align: 1, track: 1, sb: 1, sa: 1, fi: 1, li: 1, ri: 1 };
+  function defStyle(doc, st, now, idf) {
+    var para = st.kind !== "char", list = para ? doc.pstyles : doc.cstyles, pre = para ? "ps" : "cs";
+    if (!st.name) return 0;
+    var cur = styleNamed(list, st.name), made = 0;
+    if (!cur) {
+      cur = { id: slugId(pre, st.name, list, idf), m: now, name: String(st.name).slice(0, 60) };
+      if (para) cur.base = "ps-base";
+      list.push(cur); made = 1;
+    }
+    var set = {};
+    if (st.base) { var b = styleNamed(list, st.base); if (b && b.id !== cur.id) set.base = b.id; }
+    Object.keys(PS_SET).forEach(function (k) {
+      if (!para && !{ font: 1, size: 1, track: 1 }[k]) return;
+      if (st[k] === undefined || st[k] === null || st[k] === "" || (typeof st[k] === "number" && st[k] < 0)) return;
+      if ((k === "size" || k === "lead" || k === "track") && st[k] === 0) return;   // 0: as it is (as the style command)
+      set[k] = st[k];
+    });
+    [["bold", "b"], ["ital", "i"], ["caps", "caps"], ["under", "u"]].forEach(function (kv) { var v = st[kv[0]]; if (v === "on" || v === "off") set[kv[1]] = v === "on" ? 1 : 0; });
+    if (st.color) { var sw = swatchFor(doc, st.color, now); if (sw) set.color = sw; }
+    var n = made;
+    Object.keys(set).forEach(function (k) { if (cur[k] !== set[k]) { cur[k] = set[k]; n = 1; } });
+    var x = cur.ext || {};
+    if (para && st.nest_cs && st.nest_cs !== "none") {
+      var cs = styleNamed(doc.cstyles, st.nest_cs), to = String(st.nest_to || ":").slice(0, 4);
+      if (cs) {
+        var want = [{ cs: cs.id, to: to }];
+        if (JSON.stringify(x.nest || null) !== JSON.stringify(want)) { x.nest = want; n = 1; }
+      }
+    }
+    if (para && st.nest_cs === "none" && x.nest) { delete x.nest; n = 1; }
+    if (para) {
+      if (st.keep === "on" || st.keep === "off") { var kv2 = st.keep === "on" ? 1 : 0; if (x.kwn !== kv2) { x.kwn = kv2; n = 1; } }
+      if (st.brk) { var bv = st.brk === "any" ? "" : st.brk; if ((x.brk || "") !== bv) { x.brk = bv; n = 1; } }
+      if (st.hyph === "on" || st.hyph === "off") { var hv = st.hyph === "on" ? 1 : 0; if (x.hyph !== hv) { x.hyph = hv; n = 1; } }
+    }
+    if (Object.keys(x).length) cur.ext = x;
+    if (n) M.touch(cur, now);
+    return n;
+  }
+  // "#1a6fb0" (or a swatch's name) → a swatch id; a new RGB swatch is
+  // made for a colour the document does not have.
+  function swatchFor(doc, v, now) {
+    var hit = styleNamed(doc.swatches, v);
+    if (hit) return hit.id;
+    var m = /^#?([0-9a-f]{6})$/i.exec(String(v).trim());
+    if (!m) return "";
+    var hex = m[1].toLowerCase(), rgb = [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4), 16)];
+    var same = (doc.swatches || []).filter(function (w) { return w.mode === "rgb" && w.v && w.v[0] === rgb[0] && w.v[1] === rgb[1] && w.v[2] === rgb[2]; })[0];
+    if (same) return same.id;
+    var id = "sw-ly" + hex;
+    doc.swatches = doc.swatches || [];
+    if (!doc.swatches.some(function (w) { return w.id === id; })) doc.swatches.push({ id: id, m: now, name: "#" + hex, mode: "rgb", v: rgb });
+    return id;
+  }
+  // A play's styles (spec item 18): cast list, act and scene headings,
+  // dialogue with the speaker as a nested character style up to ":",
+  // stage directions, songs. Names in the book's language (el / en).
+  // i18n-inline-ok: style names that go into the document, in the book's language
+  var PLAY = {
+    el: { speaker: "Ομιλητής", cast_h: "Πρόσωπα (τίτλος)", cast: "Πρόσωπα", act: "Πράξη", scene: "Σκηνή", line: "Διάλογος", dir: "Σκηνική οδηγία", song: "Τραγούδι" },
+    en: { speaker: "Speaker", cast_h: "Cast list heading", cast: "Cast list", act: "Act heading", scene: "Scene heading", line: "Dialogue", dir: "Stage direction", song: "Song" }
+  };
+  function playStyles(doc, lang, now) {
+    var N = PLAY[lang] || PLAY.el, base = M.find(doc.pstyles, "ps-base") || {}, sz = base.size || 11, n = 0;
+    function cs(key, o) { if (M.find(doc.cstyles, "cs-play" + key)) return; doc.cstyles.push(Object.assign({ id: "cs-play" + key, m: now, name: N[key] }, o)); n++; }
+    function ps(key, o, x) { if (M.find(doc.pstyles, "ps-play" + key)) return; var e = Object.assign({ id: "ps-play" + key, m: now, name: N[key], base: "ps-base" }, o); if (x) e.ext = x; doc.pstyles.push(e); n++; }
+    cs("speaker", { b: 1, caps: 1, track: 20 });
+    ps("cast_h", { size: r3(sz * 1.25), b: 1, align: "c", sa: r3(sz) }, { kwn: 1, hyph: 0 });
+    ps("cast", { sa: r3(sz * 0.3) }, { hyph: 0 });
+    ps("act", { size: r3(sz * 1.6), b: 1, caps: 1, align: "c", sb: r3(sz * 2), sa: r3(sz) }, { kwn: 1, hyph: 0, brk: "page" });
+    ps("scene", { size: r3(sz * 1.15), b: 1, align: "c", sb: r3(sz), sa: r3(sz * 0.5) }, { kwn: 1, hyph: 0 });
+    ps("line", { sa: r3(sz * 0.35) }, { nest: [{ cs: "cs-playspeaker", to: ":" }] });
+    ps("dir", { i: 1, li: r3(sz * 1.6), sa: r3(sz * 0.35) });
+    ps("song", { i: 1, li: r3(sz * 3.2), sa: 0 }, { hyph: 0 });
+    return n;
+  }
+  // Paragraphs as the model writes them: "[Style] text" picks the
+  // paragraph style, "{Char style|text}" a character style; anything
+  // else is text. → [{ ps, runs }]
+  function parseParas(doc, list, def) {
+    var dps = (def && styleNamed(doc.pstyles, def)) || null;
+    return (list || []).map(function (raw) {
+      var t = String(raw == null ? "" : raw), ps = dps ? dps.id : "ps-base";
+      var m = /^\s*\[([^\[\]]{1,60})\]\s?/.exec(t);
+      if (m) { var hit = styleNamed(doc.pstyles, m[1]); if (hit) { ps = hit.id; t = t.slice(m[0].length); } }
+      var runs = [], re = /\{([^{}|]{1,60})\|([^{}]*)\}/g, at = 0, k;
+      while ((k = re.exec(t))) {
+        var c = styleNamed(doc.cstyles, k[1]);
+        if (!c) continue;
+        if (k.index > at) runs.push({ t: t.slice(at, k.index) });
+        if (k[2]) runs.push({ t: k[2], cs: c.id });
+        at = k.index + k[0].length;
+      }
+      if (at < t.length) runs.push({ t: t.slice(at) });
+      return { ps: ps, runs: runs };
+    });
+  }
+  // frame: a text frame with its own story on a page (1-based), at a
+  // box in mm (x/y/w/h −1: the page's margins), above what is there.
+  // → { id, story } or null
+  function addFrame(doc, st, now, idf) {
+    var nid = idf || M.newId, order = M.pagesInOrder(doc), pg = order[(st.page || 1) - 1];
+    if (!pg) return null;
+    var idx = order.indexOf(pg), mg = M.margins(doc, M.sideOf(doc, idx)), s = doc.setup;
+    var box = { x: mg.l, y: mg.t, w: s.w - mg.l - mg.r, h: s.h - mg.t - mg.b };
+    var x = st.x >= 0 ? st.x * MM : box.x, y = st.y >= 0 ? st.y * MM : box.y;
+    var w = st.w > 0 ? st.w * MM : (st.x >= 0 ? s.w - mg.r - x : box.w), h = st.h > 0 ? st.h * MM : (st.y >= 0 ? s.h - mg.b - y : box.h);
+    var paras = parseParas(doc, st.lines, st.style);
+    if (st.clear) clearPage(doc, pg.id, now);
+    var sid = nid("st"), id = nid("it");
+    doc.stories.push({ id: sid, m: now, h: [], paras: paras.length ? paras : [{ ps: "ps-base", runs: [] }] });
+    var z = doc.items.reduce(function (a, it) { return it.pg === pg.id ? Math.max(a, it.z || 0) : a; }, 0) + 16;
+    var it = { id: id, m: now, t: "text", pg: pg.id, story: sid, x: r3(x), y: r3(y), w: r3(Math.max(5, w)), h: r3(Math.max(5, h)), z: z,
+               cols: st.ncol || 1, gut: r3((st.gut >= 0 ? st.gut : 5) * MM), ins: r3((st.ins > 0 ? st.ins : 0) * MM), va: st.va || "t", sw: 0 };
+    if (st.fill) { var f = swatchFor(doc, st.fill, now); if (f) it.fill = f; }
+    if (st.opacity >= 0 && st.opacity < 100) it.op = st.opacity;
+    doc.items.push(it);
+    return { id: id, story: sid };
+  }
+  // Everything on a page goes (tombstones, so the deletion syncs); a
+  // story goes with its last frame.
+  function clearPage(doc, pgId, now) {
+    var gone = 0, left = {};
+    if (!doc.tombs) doc.tombs = {};
+    doc.items = doc.items.filter(function (it) {
+      if (it.pg !== pgId) return true;
+      doc.tombs[it.id] = Math.max(now, doc.tombs[it.id] || 0); gone++;
+      if (it.story) left[it.story] = 1;
+      return false;
+    });
+    doc.items.forEach(function (it) { if (it.story) delete left[it.story]; });
+    doc.stories = doc.stories.filter(function (s) {
+      if (!left[s.id]) return true;
+      doc.tombs[s.id] = Math.max(now, doc.tombs[s.id] || 0);
+      return false;
+    });
+    return gone;
+  }
+  // retext: replace the paragraphs of a story (by id, or the story of
+  // a frame id) with new ones.
+  function setStory(doc, st, now) {
+    var sid = st.story, fr = !sid && st.frame ? M.find(doc.items, st.frame) : null;
+    if (fr && fr.t === "text") sid = fr.story;
+    var story = sid && M.find(doc.stories, sid);
+    if (!story) return 0;
+    var paras = parseParas(doc, st.lines, st.style);
+    story.paras = paras.length ? paras : [{ ps: "ps-base", runs: [] }];
+    M.touch(story, now);
+    return 1;
+  }
+
+  // house_pages: the front and back pages of a house style document
+  // (LY-HS: pages before / after its body page) copied into the book,
+  // scaled to its trim, their fields ({title} {author} …) filled from
+  // meta; blank pages pad the book to a multiple of `pad` (before the
+  // back pages), and with keep the first page of the book keeps its
+  // side. → { front, back, blank }
+  function housePages(doc, house, meta, st, now, idf, fill) {
+    var nid = idf || M.newId, out = { front: 0, back: 0, blank: 0 };
+    if (!house) return out;
+    var ho = M.pagesInOrder(house), bi = -1;
+    ho.forEach(function (p, i) { if (bi < 0 && p.ext && p.ext.hs === "body") bi = i; });
+    var front = bi < 0 ? ho.slice() : ho.slice(0, bi), back = bi < 0 ? [] : ho.slice(bi + 1);
+    if (st.where === "front") back = [];
+    if (st.where === "back") front = [];
+    if (st.where === "none") { front = []; back = []; }
+    var sx = doc.setup.w / house.setup.w, sy = doc.setup.h / house.setup.h, k = Math.min(sx, sy);
+    var have = {};
+    ["pstyles", "cstyles", "swatches"].forEach(function (list) { (doc[list] || []).forEach(function (e) { have[e.id] = 1; }); });
+    function needStyle(list, id) {
+      var seen = 0;
+      while (id && !have[id] && seen++ < 16) {
+        var e = M.find(house[list] || [], id);
+        if (!e) return;
+        var c = JSON.parse(JSON.stringify(e)); c.m = now;
+        doc[list] = doc[list] || [];
+        doc[list].push(c); have[id] = 1;
+        if (c.color) needStyle("swatches", c.color);
+        id = c.base;
+      }
+    }
+    var stories = [], items = [];
+    function copyPage(p) {
+      var np = { id: nid("pg"), m: now, pos: 0, ms: M.find(doc.masters, p.ms) ? p.ms : "" };
+      house.items.forEach(function (it) {
+        if (it.pg !== p.id) return;
+        var c = JSON.parse(JSON.stringify(it));
+        c.id = nid("it"); c.pg = np.id; c.m = now;
+        c.x = r3(c.x * sx); c.y = r3(c.y * sy); c.w = r3(c.w * (c.t === "text" ? sx : k)); c.h = r3(c.h * (c.t === "text" ? sy : k));
+        if (c.t === "img" || c.t === "rect" || c.t === "ell" || c.t === "path") { c.x = r3(it.x * sx + (it.w * sx - c.w) / 2); c.y = r3(it.y * sy + (it.h * sy - c.h) / 2); }
+        if (c.fill) needStyle("swatches", c.fill);
+        if (c.stroke) needStyle("swatches", c.stroke);
+        if (c.t === "text") {
+          var s0 = M.find(house.stories, it.story);
+          if (!s0) return;
+          var sc = JSON.parse(JSON.stringify(s0)); sc.id = nid("st"); sc.m = now; sc.h = [];
+          sc.paras.forEach(function (pa) { needStyle("pstyles", pa.ps); (pa.runs || []).forEach(function (r) { if (r.cs) needStyle("cstyles", r.cs); }); });
+          c.story = sc.id;
+          stories.push(sc);
+        }
+        items.push(c);
+      });
+      return np;
+    }
+    var F = front.map(copyPage), B = back.map(copyPage);
+    var order = M.pagesInOrder(doc);
+    var lead = F.slice();
+    if (st.keep && doc.setup.facing && F.length % 2 === 1) { lead.push({ id: nid("pg"), m: now, pos: 0, ms: order[0] ? order[0].ms : "" }); out.blank++; }
+    var total = lead.length + order.length + B.length, pad = st.pad || 0, fillN = pad > 1 ? (pad - total % pad) % pad : 0;
+    fillN = Math.min(fillN, M.MAX_PAGES - total);
+    var mid = [];
+    for (var i = 0; i < fillN; i++) mid.push({ id: nid("pg"), m: now, pos: 0, ms: order.length ? order[order.length - 1].ms : "" });
+    out.blank += mid.length;
+    var all = lead.concat(order, mid, B).slice(0, M.MAX_PAGES);
+    renumber(all, now);
+    doc.pages = all;
+    doc.items = doc.items.concat(items);
+    doc.stories = doc.stories.concat(stories);
+    if (fill && meta) { var tmp = { stories: stories }; fill(tmp, meta); }
+    out.front = F.length; out.back = B.length;
+    return out;
+  }
+
   var api = { natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
-              fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC };
+              fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC,
+              styleNamed: styleNamed, defStyle: defStyle, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
   if (node) module.exports = api;
   else root.LayoutPro = api;
 })(typeof window !== "undefined" ? window : this);

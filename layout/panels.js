@@ -723,6 +723,12 @@
       s1.appendChild(styleRow(ps, "ps", curPs === ps.id, open));
     });
     s1.appendChild(btn(t("styles.new"), function () { styleDlg("ps", null); }, "small"));
+    // LY-PRO W2 (spec item 18): the styles of a play in one go
+    if (window.LayoutPro) s1.appendChild(btn(t("styles.play"), function () {
+      var n = 0;
+      LY.op(function (d2, now) { n = window.LayoutPro.playStyles(d2, LY.LANG === "el" ? "el" : "en", now); return n ? undefined : false; });
+      LY.toast(n ? t("styles.playDone", { n: n }) : t("styles.playHave"));
+    }, "small"));
     body.appendChild(s1);
     var s2 = section(t("styles.char"));
     var none = el("div", "sty-row");
@@ -839,6 +845,16 @@
         g3.appendChild(field(t("sty.brk"), select([["", t("sty.inherit")], ["any", t("sty.brkAny")], ["col", t("sty.brkCol")], ["page", t("sty.brkPage")], ["odd", t("sty.brkOdd")], ["even", t("sty.brkEven")]],
           st.ext.brk || "", function (v) { if (v) st.ext.brk = v; else delete st.ext.brk; })));
         g3.appendChild(field(t("sty.sink") + " (pt)", optNum(st.ext, "sink", 0, 600)));
+        // nested style (LY-PRO W2): a character style from the start
+        // of the paragraph through the first `to` (a play's speaker)
+        var n0 = Array.isArray(st.ext.nest) && st.ext.nest[0] ? st.ext.nest[0] : { cs: "", to: ":" };
+        function setNest(cs, to) { if (cs && to) st.ext.nest = [{ cs: cs, to: to.slice(0, 4) }]; else delete st.ext.nest; }
+        var nestTo = el("input", "inp");
+        nestTo.type = "text"; nestTo.maxLength = 4; nestTo.value = n0.to;
+        var nestCs = select([["", t("sty.nestNone")]].concat(LY.doc.cstyles.map(function (c) { return [c.id, LY.label(c.name)]; })), n0.cs, function (v) { n0.cs = v; setNest(n0.cs, nestTo.value); });
+        nestTo.addEventListener("change", function () { n0.to = nestTo.value; setNest(n0.cs, nestTo.value); });
+        g3.appendChild(field(t("sty.nest"), nestCs));
+        g3.appendChild(field(t("sty.nestTo"), nestTo));
         // heading level for the e-book's contents and bookmarks (LY-OUT)
         if (window.LY_OUT) {
           var guess = window.LY_OUT.guessLevel(LY.doc, st.id);
