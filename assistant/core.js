@@ -3412,7 +3412,8 @@
         bleed: { type: "boolean", description: "Include the bleed (default true for pdfx4 and print)." },
         marks: { type: "array", items: { type: "string", "enum": PDF_MARKS }, description: "Printer's marks, outside the bleed (default for pdfx4: crop)." },
         spreads: { type: "boolean", description: "Facing pages side by side (default false: single pages, as printers want)." },
-        downsample: { type: "boolean", description: "Pictures above 450 ppi go down to 300 ppi (default true); false keeps every picture as it is." }
+        downsample: { type: "boolean", description: "Pictures above 450 ppi go down to 300 ppi (default true); false keeps every picture as it is." },
+        creep: { type: "number", description: "Creep for a saddle-stitched book in mm, 0-5 (default 0): the innermost pages' content moves this far towards the spine, the outer ones less." }
       }
     }
   };
@@ -3434,8 +3435,10 @@
       }
     } else if (preset === "pdfx4") marks.crop = 1;
     var bleed = typeof a.bleed === "boolean" ? a.bleed : preset !== "screen";
+    var creep = a.creep === undefined || a.creep === null || a.creep === "" ? 0 : Number(a.creep);
+    if (!isFinite(creep) || creep < 0 || creep > 5) return { ok: false, err: "creep is 0-5 (mm)." };
     return { ok: true, doc: doc, preset: preset, pages: pages === "all" ? "" : pages, bleed: bleed ? 1 : 0, marks: marks,
-             spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1 };
+             spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1, creep: Math.round(creep * 100) / 100 };
   }
   var PDF_PATH = /^\/internal\/Layout\/PDF\/[^\/]{1,200}\.pdf$/, PF_CODE = /^[a-z][a-zA-Z0-9]{0,19}$/;
   // Layout's report → what the model gets (numbers, codes and pages only).

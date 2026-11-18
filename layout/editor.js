@@ -55,13 +55,17 @@
     var idx = 0;
     M.spreads(doc).forEach(function (sp) {
       var ps = [];
-      var x0 = s.facing ? (sp.length === 2 ? -s.w : (idx === 0 ? 0 : -s.w)) : -s.w / 2;
+      // each page its own size (M.pageSize, LY-PRO W3b); the spine at x 0
+      var sz = sp.map(function (p) { return M.pageSize(doc, p); });
+      var x0 = s.facing ? (sp.length === 2 ? -sz[0].w : (M.sideOf(doc, idx) === "R" ? 0 : -sz[0].w)) : -sz[0].w / 2;
+      var hh = 0, xx = x0;
       sp.forEach(function (p, k) {
-        ps.push({ id: p.id, page: p, x: x0 + k * s.w, y: y, w: s.w, h: s.h, side: M.sideOf(doc, idx), idx: idx, master: false });
+        ps.push({ id: p.id, page: p, x: xx, y: y, w: sz[k].w, h: sz[k].h, side: M.sideOf(doc, idx), idx: idx, master: false });
+        xx += sz[k].w; hh = Math.max(hh, sz[k].h);
         idx++;
       });
-      world.push({ pages: ps, x: ps[0].x, y: y, w: s.w * ps.length, h: s.h });
-      y += s.h + GAP;
+      world.push({ pages: ps, x: ps[0].x, y: y, w: xx - x0, h: hh });
+      y += hh + GAP;
     });
   }
   function allP() { var o = []; world.forEach(function (sp) { o = o.concat(sp.pages); }); return o; }
@@ -197,8 +201,8 @@
   ED.addPageAfter = addPageAfter;
 
   // Margin box of a page side, in page coordinates.
-  function marginBox(doc, side) {
-    var m = M.margins(doc, side), s = doc.setup;
+  function marginBox(doc, side, pg) {
+    var m = M.margins(doc, side), s = pg ? M.pageSize(doc, pg) : doc.setup;
     return { x: m.l, y: m.t, w: Math.max(10, s.w - m.l - m.r), h: Math.max(10, s.h - m.t - m.b) };
   }
   ED.marginBox = marginBox;
@@ -362,7 +366,7 @@
   }
 
   function drawGuides(P, sc) {
-    var doc = LY.doc, s = doc.setup;
+    var doc = LY.doc, s = Object.assign({}, doc.setup, { w: P.w, h: P.h });   // the page's own size (W3b)
     var m = M.margins(doc, P.side || "R");
     ctx.setTransform(sc * dpr, 0, 0, sc * dpr, (P.x - ED.camX) * sc * dpr, (P.y - ED.camY) * sc * dpr);
     ctx.lineWidth = 1 / sc;
@@ -544,7 +548,7 @@
     }
     var w = toWorld(p[0], p[1]), P = pageAt(w[0], w[1], true);
     if (!P) return;
-    var s = LY.doc.setup, b = s.bleed;
+    var s = Object.assign({}, LY.doc.setup, { w: P.w, h: P.h }), b = s.bleed;
     var pos = d.o === "v" ? w[0] - P.x : w[1] - P.y;
     pos = Math.round(Math.max(-b, Math.min((d.o === "v" ? s.w : s.h) + b, pos)) * 100) / 100;
     LY.op(function (doc, now) {
@@ -832,7 +836,7 @@
 
   // Snap candidates for an owner P (owner coordinates).
   function snapLines(P, excludeIds) {
-    var doc = LY.doc, s = doc.setup, xs = [0, s.w / 2, s.w], ys = [0, s.h / 2, s.h];
+    var doc = LY.doc, s = Object.assign({}, doc.setup, { w: P.w, h: P.h }), xs = [0, s.w / 2, s.w], ys = [0, s.h / 2, s.h];
     var m = M.margins(doc, P.side || "R");
     xs.push(m.l, s.w - m.r); ys.push(m.t, s.h - m.b);
     if (s.cols > 1) {
@@ -1201,7 +1205,7 @@
       var x = Math.min(x0, x1), y = Math.min(y0, y1), ww = Math.abs(x1 - x0), hh = Math.abs(y1 - y0);
       if (small) {
         if (typ === "text") {
-          var mb = marginBox(LY.doc, P.side || "R");
+          var mb = marginBox(LY.doc, P.side || "R", P.page);
           ww = Math.min(mb.w, 220); hh = 120;
         } else { ww = 100; hh = typ === "img" ? 75 : 100; }
       }
@@ -1349,7 +1353,7 @@
     var doc = LY.doc, target;
     if (items.length === 1) {
       var P = pOf(items[0]);
-      target = marginBox(doc, P ? P.side || "R" : "R");
+      target = marginBox(doc, P ? P.side || "R" : "R", P ? P.page : null);
     } else {
       target = null;
       items.forEach(function (it) { var b = R.itemBox(it); target = target ? union(target, b) : b; });
