@@ -24,7 +24,8 @@
 // settings object whole) and still honour quietHours, which stays
 // the Sleep schedule.
 //
-// Loads before notifications.js; window.orosFocus. The pure model is
+// Loads with the late bundle (index.html <template data-oros-late>,
+// first), after notifications.js; window.orosFocus. The pure model is
 // also module.exports for the tests.
 (function (root) {
   "use strict";
@@ -317,4 +318,7 @@
     // notifications.js calls this after a pull and every minute
     changed: changed
   };
+  // notifications.js may already be up (focus.js comes with the late
+  // bundle): let it migrate an old Do Not Disturb and repaint now.
+  try { if (root.orosNotifs && typeof root.orosNotifs.focusReady === "function") root.orosNotifs.focusReady(); } catch (e) {}
 })(typeof window !== "undefined" ? window : globalThis);

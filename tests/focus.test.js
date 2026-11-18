@@ -124,8 +124,10 @@ test("wiring: notifications.js asks focus before every pop-up, migrates DND once
   assert.match(read("automations/host.js"), /N\.silent\("automations"\)/);
   assert.match(read("stickies/host.js"), /N\.silent\("stickies"\)/);
   const page = read("index.html");
-  assert.ok(page.indexOf('<script src="focus.js?v=') > 0 && page.indexOf('<script src="focus.js?v=') < page.indexOf('<script src="notifications.js?v='));
-  assert.match(page, /<link rel="preload" as="script" href="focus\.js\?v=/);
+  const late = page.indexOf("<template data-oros-late>", page.indexOf('<script src="notifications.js?v='));
+  assert.ok(late > 0 && page.indexOf('<script src="focus.js?v=') > late, "focus.js comes with the late bundle (start-up script budget)");
+  assert.match(n, /focusReady: function \(\)/);
+  assert.match(read("focus.js"), /root\.orosNotifs\.focusReady\(\)/);
 });
 
 test("wiring: Quick settings pill and the Settings card", () => {

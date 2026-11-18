@@ -323,6 +323,13 @@
     if (F && state.slice) {
       try { return F.silent(ns, now); } catch (e) {}
     }
+    // focus.js loads with the late bundle (after the desktop is drawn).
+    // Until then a running manual mode keeps EVERY app quiet (the safe
+    // side: nothing is lost, it all waits in the bell).
+    try {
+      var fa = state.slice && state.slice.settings && state.slice.settings.focus && state.slice.settings.focus.act;
+      if (fa && typeof fa.id === 'string' && fa.id && (!fa.until || fa.until > now)) return true;
+    } catch (e) {}
     return isQuietHour(now);
   }
 
@@ -1382,6 +1389,12 @@
     // FOCUS-1: is a pop-up or sound of this app kept silent right now?
     silent: (ns) => quietFor(String(ns || ''), Date.now()),
     setFocus,
+    // focus.js calls this once it has loaded (late bundle).
+    focusReady: function () {
+      if (!state.ready) return;
+      migrateDnd();
+      try { var F = focusApi(); if (F) F.changed(); } catch (e) {}
+    },
     
     // Direct access (for debugging)
     getState: () => state,
