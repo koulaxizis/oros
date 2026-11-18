@@ -1,0 +1,124 @@
+{
+  "name": "orOS Library",
+  "short_name": "Library",
+  "description": "orOS Library: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/library/solo.html",
+  "start_url": "/library/solo.html",
+  "scope": "/library/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/library.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/library-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/library-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/library-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Continue reading",
+      "short_name": "Continue reading",
+      "url": "/library/solo.html?do=resume",
+      "icons": [
+        {
+          "src": "/icons/solo/library-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Free books",
+      "short_name": "Free books",
+      "url": "/library/solo.html?do=free",
+      "icons": [
+        {
+          "src": "/icons/solo/library-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/library/solo.html?file-open=library",
+      "accept": {
+        "application/epub+zip": [
+          ".epub"
+        ],
+        "application/pdf": [
+          ".pdf"
+        ],
+        "application/x-fictionbook+xml": [
+          ".fb2"
+        ],
+        "application/vnd.comicbook+zip": [
+          ".cbz"
+        ],
+        "application/vnd.comicbook-rar": [
+          ".cbr"
+        ],
+        "application/x-oros-library": [
+          ".oroslibrary"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/library/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/epub+zip",
+            ".epub",
+            "application/pdf",
+            ".pdf",
+            "application/x-fictionbook+xml",
+            ".fb2",
+            "application/vnd.comicbook+zip",
+            ".cbz",
+            "application/vnd.comicbook-rar",
+            ".cbr",
+            "application/x-oros-library",
+            ".oroslibrary"
+          ]
+        }
+      ]
+    }
+  }
+}

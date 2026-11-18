@@ -44,13 +44,14 @@ function report(code, all) {
   for (const p of S.packApps()) p.apps.forEach((a) => loading.add(a));
   const rows = [];
   for (const app of [...apps].sort()) {
-    const en = S.appKeys(app, all), tbl = packs[app] || {};
-    let done = 0;
+    const en = S.appKeys(app, all), tbl = packs[app] || {}, inl = S.inlineKeys(app, code, all);
+    let done = 0, inline = 0;
     for (const [k, v] of en) {
       const t = tbl[k];
       if (typeof t === "string" && t.trim() && (v === null || (S.placeholders(v) === S.placeholders(t) && S.tags(v) === S.tags(t)))) done++;
+      else if (inl.has(k)) { done++; inline++; }
     }
-    rows.push({ app, keys: en.size, done, loads: loading.has(app) });
+    rows.push({ app, keys: en.size, done, inline, loads: loading.has(app) });
   }
   const help = S.helpPages();
   const files = new Set(S.packFiles(code));
@@ -71,16 +72,22 @@ function statusMd(lang, r) {
     "- Strings: " + done + " of " + keys + " (" + pct(done, keys) + ")",
     "- Help pages: " + r.help.done + " of " + r.help.total + " (" + pct(r.help.done, r.help.total) + ")",
     "- Shown in the language list: " + (lang.status === "hidden" ? "not yet (try it with ?lang=" + lang.code + ")" : "yes"),
-    "",
+    ""
+  ];
+  if (r.rows.some((x) => !x.loads)) lines.push(
     "Apps marked \"English for now\" do not load language packs yet: their",
     "text is still written in the code. They switch over wave by wave",
     "(see the plan in docs/translate/README.md).",
-    "",
-    "| App | Translated | Strings |",
-    "|---|---|---|"
-  ];
+    "");
+  if (r.rows.some((x) => x.inline)) lines.push(
+    "\"in the code\": a shared module or a public page that runs where no",
+    "app pack is loaded keeps these lines in its own table (" + lang.code + ": {…} after",
+    "en and el); translators change them there, not in a pack.",
+    "");
+  lines.push("| App | Translated | Strings |", "|---|---|---|");
   for (const x of r.rows) {
-    lines.push("| " + x.app + " | " + (x.loads ? pct(x.done, x.keys) : "English for now") + " | " + x.done + " / " + x.keys + " |");
+    lines.push("| " + x.app + " | " + (x.loads ? pct(x.done, x.keys) : "English for now") + " | " + x.done + " / " + x.keys +
+      (x.inline ? " (" + x.inline + " in the code)" : "") + " |");
   }
   if (r.issues && r.issues.length) {
     lines.push("", "## Lines to fix", "", "These show English until fixed (usually the English text changed).", "");

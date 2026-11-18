@@ -538,5 +538,6 @@ orosPack("de", "music", {
  "sh.ready": "Die Datei ist bereit zum Senden.",
  "sh.none": "Teilen ist hier nicht verfügbar.",
  "sh.playAll": "Alle abspielen",
- "sh.savePl": "Als meine Playlist speichern"
+ "sh.savePl": "Als meine Playlist speichern",
+ "o.fromQueue": "Die Liste wurde diesmal nicht geladen. Das sind die Songs, die von hier aus laufen."
 });

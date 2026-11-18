@@ -36,7 +36,7 @@
 //            ser, seq, num, date, due, cur, cli, c{party}, s{party}?,
 //            lines[{code, d, q, unit, p, disc, vat}], gDisc, wht,
 //            exempt, terms, notes, ref, crm, mark, file, sent, plang,
-//            xnet, xvat, m }
+//            xnet, xvat, xl?, m }
 //   - money is integer cents; percentages are numbers 0–100 with at
 //     most 2 decimals; quantities have at most 3 decimals
 //   - totals, paid amounts, balances and statuses are NEVER stored:
@@ -46,6 +46,9 @@
 //     lines, client and seller are copied into it (c, s)
 //   - "ext" = an invoice issued elsewhere (myDATA, a provider) and
 //     only recorded here: typed number, net + VAT, optional ΜΑΡΚ
+//     (INV-EXT: optional xl = its printed lines, information only;
+//     flat extras dm = Budget area id, xs = source, xu = the provider's
+//     document id, xa = its authentication code, xt = myDATA type)
 //   - merge: per id, newer m wins, a tombstone wins ties, then the
 //     larger JSON (R5, R17); every list sorted by id (R26)
 //   - default series are implicit (never stored) until edited (R16)
@@ -189,7 +192,7 @@
     client: ["id", "name", "afm", "doy", "job", "addr", "country", "email", "phone", "note", "crm", "m", "del"],
     doc:    ["id", "kind", "st", "ser", "seq", "num", "date", "due", "cur", "cli", "c", "s", "lines",
              "gDisc", "wht", "exempt", "terms", "notes", "ref", "crm", "mark", "file", "sent", "plang",
-             "xnet", "xvat", "src", "m", "del"],
+             "xnet", "xvat", "xl", "src", "m", "del"],
     pay:    ["id", "doc", "date", "amt", "how", "note", "bud", "m", "del"],
     tpl:    ["id", "name", "kind", "cli", "cur", "lines", "gDisc", "wht", "exempt", "terms", "notes",
              "rep", "next", "dom", "m", "del"],
@@ -313,6 +316,10 @@
     if (x.kind === "ext") {
       out.xnet = cents(x.xnet);
       out.xvat = cents(x.xvat);
+      // INV-EXT: the lines as printed on the document issued elsewhere,
+      // for the record only (totals stay xnet + xvat); written only when set
+      var xl = normLines(x.xl);
+      if (xl.length) out.xl = xl;
     }
     out.m = x.m;
     return withExtras(out, x, KNOWN.doc);
