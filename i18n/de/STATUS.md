@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 47242 of 47242 (100%)
+- Strings: 47268 of 47268 (100%)
 - Help pages: 155 of 155 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 1930 / 1930 |
+| assistant | 100% | 1951 / 1951 |
 | atelier | 100% | 1429 / 1429 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 322 / 322 |
@@ -157,7 +157,7 @@ en and el); translators change them there, not in a pack.
 | today | 100% | 155 / 155 |
 | todo | 100% | 273 / 273 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 139 / 139 |
+| transfer | 100% | 144 / 144 |
 | travel | 100% | 558 / 558 |
 | typewriter | 100% | 46 / 46 |
 | typing | 100% | 170 / 170 |

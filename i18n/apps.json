@@ -1133,6 +1133,7 @@
    "app": "transfer",
    "files": [
     "transfer/app.js",
+    "transfer/search.js",
     "transfer/today.js"
    ]
   },
