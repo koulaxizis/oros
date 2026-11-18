@@ -139,11 +139,12 @@
   //     overset: { storyId: true }, pageOf: { pageId: index } }
   function computeLayout(doc) {
     var pages = M.pagesInOrder(doc), idx = {}, info = {}, first = M.firstNumber(doc);
-    pages.forEach(function (p, i) { idx[p.id] = i; info[p.id] = { side: M.sideOf(doc, i), label: String(i + first), no: i + first }; });
+    var labels = M.pageLabels ? M.pageLabels(doc) : null;   // sections (LY-PRO W3)
+    pages.forEach(function (p, i) { idx[p.id] = i; info[p.id] = { side: M.sideOf(doc, i), label: labels ? labels[i].label : String(i + first), no: labels ? labels[i].no : i + first }; });
     var styles = { ps: doc.pstyles, cs: doc.cstyles };
     var masterIds = {};
     doc.masters.forEach(function (m) { masterIds[m.id] = 1; });
-    var out = { frames: {}, master: {}, overset: {}, pageOf: idx };
+    var out = { frames: {}, master: {}, overset: {}, pageOf: idx, labels: labels };
 
     // wrap objects per owner (page or master)
     var wrapsBy = {};

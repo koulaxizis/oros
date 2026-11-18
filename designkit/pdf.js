@@ -395,7 +395,7 @@
         if (marks.reg) regMarks(pdf, ox0, oy0, tw, s.h, b, slug);
         if (marks.bars) colourBars(pdf, ox0, oy0, tw, s.h, b, slug);
         if (marks.info) pageInfo(pdf, ox0, oy0, tw, s.h, b, slug, (opts.title || doc.name || "") + "  ·  " +
-          g.map(function (p) { return String(L.pageOf[p.id] + M.firstNumber(doc)); }).join("-") + (opts.stamp ? "  ·  " + opts.stamp : ""));
+          g.map(function (p) { var lb = L.labels && L.labels[L.pageOf[p.id]]; return lb ? lb.label : String(L.pageOf[p.id] + M.firstNumber(doc)); }).join("-") + (opts.stamp ? "  ·  " + opts.stamp : ""));
       }
     });
     pdf.orosBoxes = boxes;
