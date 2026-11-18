@@ -741,6 +741,7 @@
     try { return set ? !!L.apps.state(ns) : !L.apps.allowed(ns); } catch (e) { return true; }
   }
   function lockAppName(ns) {
+    try { if (window.orosLock.apps.state(ns) === 'hide') return 'orOS'; } catch (e) {}   // W2: a hidden app is not named
     var k = 'app.' + ns, v = typeof window.t === 'function' ? window.t(k) : k;
     return v && v !== k ? v : ns;
   }

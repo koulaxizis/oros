@@ -72,6 +72,8 @@ Under `App lock`, choose apps that ask for the same PIN or passphrase (or your f
 - While it is locked, its items stay out of search, Today and widgets, and its notifications show only the app's name and `New notification`. The Assistant and orOS Gate never read a locked app, even while you have it open.
 - `Lock` › `Only the chosen apps` lets orOS start without the PIN, so only those apps ask for it. Leaving orOS alone or hiding the page locks them again. `Lock now` still locks all of orOS. With `Sensitive work` on, the lock always covers all of orOS.
 
+- `Hide` (on a locked app, or next to `Lock` when you add one) also takes the app out of the menu and its search, the Dock, desktop shortcuts, the desktop menu, the command bar, Today and the weekly suggestion; its notifications say only `orOS` and `New notification`. Find it under `Hidden apps` at the end of the menu: that row asks for the PIN and then shows the hidden apps for a minute. `Show in lists` asks for the PIN first. A hidden app always stays locked too.
+
 The list stays on this device and is never synced; set it on each device where you want it. Like the screen lock, it protects the screen, not the disk. Other apps may still show a locked app's items in their own lists (for example a Health appointment in Calendar); that is being closed app by app.
 
 ### Users

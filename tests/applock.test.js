@@ -75,7 +75,7 @@ test("shell: a locked app never loads before the PIN, from any way in", () => {
   assert.match(src, /if \(!appLockOk\(appId\)\) \{ appLockAsk\(app, function \(\) \{ window\.__orosOpenAt\(appId, target\); \}\); return; \}/, "deep links and live apps too");
   assert.match(src, /appLockFront\(prev, app\);/);
   assert.match(src, /appLockFront\(prev, null\);/);
-  assert.match(src, /window\.orosLock\.onChange\(function \(\) \{ appLockCover\(\); \}\)/, "an app in front that locks again is covered");
+  assert.match(src, /window\.orosLock\.onChange\(function \(\) \{\n\s+appLockCover\(\);/, "an app in front that locks again is covered");
   assert.match(src, /cancel: !\(SOLO && app\.id === SOLO\)/, "a single app has no way past its own box");
 });
 
@@ -115,4 +115,28 @@ test("strings EN / EL / DE", () => {
   }
   assert.match(read("settings/help.en.txt"), /### App lock/);
   assert.match(read("settings/help.el.txt"), /### Κλείδωμα εφαρμογών/);
+});
+
+test("W2 hidden apps: out of every list until the PIN shows them for a minute", () => {
+  const sh = read("shell.js");
+  assert.match(sh, /function appHiddenNow\(id\) \{\n\s+var A = appLockApi\(\);\n\s+try \{ return !!\(A && A\.state\(id\) === "hide" && !A\.allowed\(id\)\); \} catch \(e\) \{ return true; \}/);
+  assert.match(sh, /if \(appHiddenNow\(app\.id\)\) return;\s+\/\/ APPLOCK-1 W2: a hidden app is not even found/);
+  for (const re of [/apps: function \(\) \{ return shownApps\(\); \},\s+\/\/ APPLOCK-1 W2: no hidden app on the desktop or the Dock/,
+                    /function cmdApps\(\) \{\n\s+return shownApps\(\)/, /window\.orosTodayEnv = \{\n\s+apps: function \(\) \{\n\s+return shownApps\(\)/]) assert.match(sh, re);
+  assert.match(sh, /LA\.reveal\(\)\.then\(function \(ok\) \{ if \(ok\) renderMenu\(\); \}\)/);
+  assert.match(sh, /name: hid \? "" : appLockName\(app\)/, "a hidden app is never named in its box");
+  const src = read("lock.js");
+  assert.match(src, /if \(l\.apps\[k\] === "hide" && !Object\.prototype\.hasOwnProperty\.call\(o, k\)\) o\[k\] = now;/, "the row shows them as just left: one minute");
+  assert.match(src, /if \(!opts\.reveal && appAllowed\(id\)\) return Promise\.resolve\(true\);/);
+  assert.match(read("notifications.js"), /if \(window\.orosLock\.apps\.state\(ns\) === 'hide'\) return 'orOS';/);
+  const tr = read("translations.js"), de = read("i18n/de/shell.js");
+  for (const k of ["applock.coverAny", "applock.hiddenRow", "lock.app.reveal"]) {
+    assert.equal(tr.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"' + k + '":'), k + " DE");
+  }
+  const sc = read("settings/core.js"), sd = read("i18n/de/settings.js");
+  for (const k of ["l.apps.isLocked", "l.apps.isHidden", "l.apps.hide", "l.apps.unhide", "l.apps.hidden", "l.apps.askShow", "l.apps.shown"]) {
+    assert.equal(sc.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(sd.includes('"' + k + '":'), k + " DE");
+  }
 });

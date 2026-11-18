@@ -2686,21 +2686,33 @@
     var ids = Object.keys(st.apps).sort(function (a, b) { return String(names[a] || a).localeCompare(String(names[b] || b)); });
     if (!ids.length) c.appendChild(el("p", "hint", t("l.apps.none")));
     ids.forEach(function (id) {
-      var r = row(names[id] || id, null, { scope: "lock-app:" + id });
-      r.appendChild(button(t("l.apps.remove"), "lk-app-off:" + id, function () {
-        lk.appPend = { id: id, value: "" };
-        lk.appCur = "";
-        lk.appMsg = null;
-        render();
-        var f = $("f-lk-appcur"); if (f) f.focus();
-      }));
+      var hid = st.apps[id] === "hide";
+      var r = row(names[id] || id, null, { scope: "lock-app:" + id, hint: t(hid ? "l.apps.isHidden" : "l.apps.isLocked") });
+      var pend = function (value) {
+        return function () {
+          lk.appPend = { id: id, value: value };
+          lk.appCur = "";
+          lk.appMsg = null;
+          render();
+          var f = $("f-lk-appcur"); if (f) f.focus();
+        };
+      };
+      // W2: hiding needs nothing; showing it in the lists again needs the PIN.
+      var btns = el("div", "actions");
+      btns.appendChild(hid ? button(t("l.apps.unhide"), "lk-app-show:" + id, pend("lock"))
+        : button(t("l.apps.hide"), "lk-app-hide:" + id, function () {
+            L.apps.set(id, "hide").then(function (x) { lockAppResult(x, "l.apps.hidden", { app: names[id] || id }); },
+                                        function () { lockAppResult(null); });
+          }));
+      btns.appendChild(button(t("l.apps.remove"), "lk-app-off:" + id, pend("")));
+      r.appendChild(btns);
       c.appendChild(r);
     });
-    if (lk.appPend && (lk.appPend.value !== "" || st.apps[lk.appPend.id] || st.broken)) {
+    if (lk.appPend && (st.apps[lk.appPend.id] || st.broken)) {
       var form = el("form", "pass dav-form");
       form.setAttribute("autocomplete", "off");
       var kind = k.kind || "pin";
-      form.appendChild(el("p", "hint", t("l.apps.askPin", { app: names[lk.appPend.id] || lk.appPend.id })));
+      form.appendChild(el("p", "hint", t(lk.appPend.value === "lock" ? "l.apps.askShow" : "l.apps.askPin", { app: names[lk.appPend.id] || lk.appPend.id })));
       var wrap = el("div", "dav-field");
       var lab = el("label", "row-label", t("l.current." + kind));
       lab.htmlFor = "f-lk-appcur";
@@ -2717,7 +2729,7 @@
       inp.addEventListener("input", function () { lk.appCur = inp.value; });
       wrap.appendChild(inp);
       form.appendChild(wrap);
-      var go = el("button", "btn primary", t("l.apps.removeGo"));
+      var go = el("button", "btn primary", t(lk.appPend.value === "lock" ? "l.apps.unhide" : "l.apps.removeGo"));
       go.type = "submit";
       go.setAttribute("data-k", "lk-app-go");
       form.appendChild(actions(go, button(t("l.cancel"), "lk-app-cancel", function () { lk.appPend = null; lk.appCur = ""; render(); })));
@@ -2726,7 +2738,7 @@
         if (lockApi() !== L || !lk.appPend) return;
         var p = lk.appPend, cur = lk.appCur;
         lk.appCur = "";
-        L.apps.set(p.id, p.value, cur).then(function (r) { lockAppResult(r, "l.apps.removed", { app: names[p.id] || p.id }); },
+        L.apps.set(p.id, p.value, cur).then(function (r) { lockAppResult(r, p.value === "lock" ? "l.apps.shown" : "l.apps.removed", { app: names[p.id] || p.id }); },
                                             function () { lockAppResult(null); });
       });
       c.appendChild(form);
@@ -2746,6 +2758,12 @@
         L.apps.set(id, "lock").then(function (r) { lockAppResult(r, "l.apps.locked", { app: names[id] || id }); },
                                     function () { lockAppResult(null); });
       }, "primary"),
+      button(t("l.apps.hide"), "lk-app-addhide", function () {
+        var id = pick.v || ($("f-lk-app-add") || {}).value;
+        if (!id) return;
+        L.apps.set(id, "hide").then(function (r) { lockAppResult(r, "l.apps.hidden", { app: names[id] || id }); },
+                                    function () { lockAppResult(null); });
+      }),
       ids.length ? button(t("l.apps.now"), "lk-app-now", function () { L.apps.relock(); lk.appMsg = { kind: "ok", key: "l.apps.nowDone" }; render(); }) : null));
     if (lk.appMsg) c.appendChild(el("p", "msg msg-" + lk.appMsg.kind, t(lk.appMsg.key, lk.appMsg.vars)));
     c.appendChild(el("p", "hint", t("l.apps.honest")));

@@ -4775,7 +4775,7 @@
   // language and each app's static shell icon (shell markup, not data).
   window.orosTodayEnv = {
     apps: function () {
-      return state.apps.filter(function (a) { return a && a.type === "internal"; }).map(function (a) {
+      return shownApps().filter(function (a) { return a && a.type === "internal"; }).map(function (a) {   // APPLOCK-1 W2: Today, suggestions
         var k = "app." + a.id, v = window.t(k);
         return { id: a.id, name: v === k ? (a.name || a.id) : v, type: a.type, url: a.url,
                  today: Array.isArray(a.today) ? a.today.slice() : a.today, searchOff: a.searchOff === true };
@@ -4851,7 +4851,7 @@
   // Installed apps (id + shown name): the assistant offers an entry
   // card only for an app that is there (Part VI, AS-E).
   window.orosAssistInstalled = function () {
-    var list = state.apps.filter(function (a) { return a && a.type !== "external"; }).map(function (a) {
+    var list = state.apps.filter(function (a) { return a && a.type !== "external" && !appLockSet(a.id); }).map(function (a) {   // APPLOCK-1
       var k = "app." + a.id, v = window.t(k);
       return { id: a.id, name: v === k ? (a.name || a.id) : v };
     });
@@ -4965,7 +4965,7 @@
   }
   // The installed apps with the names a user may type (EN, EL, apps.json).
   function cmdApps() {
-    return state.apps.filter(function (a) { return a && a.type === "internal"; }).map(function (a) {
+    return shownApps().filter(function (a) { return a && a.type === "internal"; }).map(function (a) {   // APPLOCK-1 W2
       var names = [a.name, cmdAppName(a.id)];
       var TR = window.OROS_TRANSLATIONS || {}, en = TR.en, el = TR.el;
       if (en && en["app." + a.id]) names.push(en["app." + a.id]);
@@ -5745,6 +5745,7 @@
       var claudeOnly = aiHelper() === "claude";   // HELPER-1: no Assistant in the menu, not even in a search
       state.apps.forEach(function (app) {
         if (claudeOnly && app.id === "assistant") return;
+        if (appHiddenNow(app.id)) return;   // APPLOCK-1 W2: a hidden app is not even found
         if (hideOk && L.menuHidden(app.id)) {
           hiddenCount++;
           if (!q) return;
@@ -5891,6 +5892,21 @@
           if (window.orosSettings) window.orosSettings.open("menu");
         });
         appsHost.appendChild(hidBtn);
+      }
+      // APPLOCK-1 W2: the hidden apps (Settings › Screen lock) behind
+      // the lock's PIN; they then show for a minute.
+      var LA = appLockApi(), lockHid = 0;
+      try { lockHid = LA && typeof LA.hiddenCount === "function" ? LA.hiddenCount() : 0; } catch (e) { lockHid = 0; }
+      if (!q && lockHid && state.apps.some(function (a) { return appHiddenNow(a.id); })) {
+        var lhBtn = document.createElement("button");
+        lhBtn.type = "button";
+        lhBtn.className = "menu-hidden-row";
+        lhBtn.setAttribute("data-applock-hidden", "1");
+        lhBtn.textContent = window.t("applock.hiddenRow");
+        lhBtn.addEventListener("click", function () {
+          LA.reveal().then(function (ok) { if (ok) renderMenu(); });
+        });
+        appsHost.appendChild(lhBtn);
       }
     }
     }   // renderAppList
@@ -13180,6 +13196,13 @@
     try { return !!(A && A.state(id)); } catch (e) { return true; }
   }
   window.__orosAppLocked = appLockSet;
+  // W2: set as hidden and not unlocked now: out of every list (menu,
+  // menu search, Dock, desktop, desktop menu, command bar, suggestions).
+  function appHiddenNow(id) {
+    var A = appLockApi();
+    try { return !!(A && A.state(id) === "hide" && !A.allowed(id)); } catch (e) { return true; }
+  }
+  function shownApps() { return state.apps.filter(function (a) { return a && !appHiddenNow(a.id); }); }
   function appLockOk(id) {
     var A = appLockApi();
     try { return !A || A.allowed(id); } catch (e) { return false; }
@@ -13191,7 +13214,9 @@
   function appLockAsk(app, then) {
     var A = appLockApi();
     if (!A) return;
-    A.ask(app.id, { name: appLockName(app), cancel: !(SOLO && app.id === SOLO) }).then(function (ok) { if (ok) then(); });
+    var hid = false;
+    try { hid = A.state(app.id) === "hide"; } catch (e) { hid = true; }
+    A.ask(app.id, { name: hid ? "" : appLockName(app), cancel: !(SOLO && app.id === SOLO) }).then(function (ok) { if (ok) then(); });   // W2: a hidden app is not named
   }
   function appLockFront(prev, app) {
     var A = appLockApi();
@@ -13230,13 +13255,15 @@
       cv.appendChild(b);
       run.appendChild(cv);
     }
-    cv.querySelector("p").textContent = window.t("applock.cover").split("{app}").join(appLockName(hid));
+    var hidden = false;
+    try { hidden = appLockApi().state(hid.id) === "hide"; } catch (e) { hidden = true; }
+    cv.querySelector("p").textContent = hidden ? window.t("applock.coverAny") : window.t("applock.cover").split("{app}").join(appLockName(hid));
     var btn = cv.querySelector("button");
     btn.textContent = window.t("applock.unlock");
     btn.onclick = function () {
       var A = appLockApi(), app = hid;
       if (!A) return;
-      A.ask(app.id, { name: appLockName(app), cancel: true }).then(function (ok) {
+      A.ask(app.id, { name: hidden ? "" : appLockName(app), cancel: true }).then(function (ok) {
         if (!ok) return;
         try { if (state.running && state.running.id === app.id) A.enter(app.id); } catch (e) {}
         appLockCover();
@@ -13248,7 +13275,12 @@
     });
     try { var ae = document.activeElement; if (ae && ae.tagName === "IFRAME" && ae.blur) ae.blur(); } catch (e) {}
   }
-  if (window.orosLock && typeof window.orosLock.onChange === "function") window.orosLock.onChange(function () { appLockCover(); });
+  if (window.orosLock && typeof window.orosLock.onChange === "function") window.orosLock.onChange(function () {
+    appLockCover();
+    // W2: a hidden app shown for a minute goes again (desktop, Dock, open menu)
+    try { if (window.orosLauncher && typeof window.orosLauncher.refresh === "function") window.orosLauncher.refresh(); } catch (e) {}
+    try { var m = document.getElementById("app-menu"); if (m && m.classList.contains("open")) renderMenu(); } catch (e) {}
+  });
 
   function openApp(app, at) {
     if (app && app._alias) { window.__orosOpenAt(app._alias, null); return; }   // APP-ALIAS menu search row
@@ -16028,7 +16060,7 @@
   // shortcuts and their sync slice. A bundle without it draws nothing.
   if (window.orosLauncher) {
     window.orosLauncher.attach({
-      apps: function () { return state.apps; },
+      apps: function () { return shownApps(); },   // APPLOCK-1 W2: no hidden app on the desktop or the Dock
       open: openApp,
       // APP-ALIAS: a shortcut kept for an app that moved into another
       // one shows that app and opens it at the old app's place.
@@ -16051,7 +16083,7 @@
   if (window.orosQuick && !SOLO) {
     window.orosQuick.attach({
       desktop: document.getElementById("oros-desktop"),
-      apps: function () { return state.apps; },
+      apps: function () { return shownApps(); },   // APPLOCK-1 W2
       open: openApp,
       running: function () { return state.running || null; },
       isOpen: function (id) { return mtActive() && appLive(id); },   // multitasking: alive behind

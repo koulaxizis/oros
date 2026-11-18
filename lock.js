@@ -745,8 +745,21 @@
   function idleDue() {
     return !!(cfg && cfg.idle && Date.now() - lastActive >= cfg.idle * 60000);
   }
+  // An app left a minute ago locks again now: listeners repaint (the
+  // shell hides a hidden app again, W2).
+  function appsExpire() {
+    var raw = null;
+    try { raw = root.sessionStorage.getItem(APPS_OPEN_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var o = openGet(), had = {};
+    try { had = JSON.parse(raw) || {}; } catch (e) { had = {}; }
+    if (Object.keys(had).length === Object.keys(o).length) return;
+    openPut(o);
+    emit();
+  }
   function tick() {
     if (!cfg || locked) return;
+    appsExpire();
     hookFrames(doc, 0);
     if (idleDue() && (lock("idle") || cfg.scope !== "apps")) return;   // scope "apps": the apps lock again, orOS stays open
     markSeen();
@@ -1278,9 +1291,15 @@
     try { a.done(!!ok); } catch (e) {}
   }
   function appSay(key, kind, vars) { if (appUi) say(appUi.msg, key, kind, vars); }
+  // id "" = the hidden apps' row (W2): every hidden app may open for
+  // the next minute, as if it had just been left.
   function appOpened(id) {
     var o = openGet();
-    o[id] = 0;
+    if (id) o[id] = 0;
+    else {
+      var l = appsList(), now = Date.now();
+      Object.keys(l.apps).forEach(function (k) { if (l.apps[k] === "hide" && !Object.prototype.hasOwnProperty.call(o, k)) o[k] = now; });
+    }
     openPut(o);
     clearTries();
     lastActive = Date.now();
@@ -1346,7 +1365,7 @@
   function appAsk(id, opts) {
     id = String(id || "");
     opts = opts || {};
-    if (appAllowed(id)) return Promise.resolve(true);
+    if (!opts.reveal && appAllowed(id)) return Promise.resolve(true);
     if (locked || resetting || !doc.body || !load()) return Promise.resolve(false);
     appClose(false);
     var stay = opts.cancel === false;
@@ -1359,7 +1378,7 @@
       ico.innerHTML = LOCK_SVG;                          // static icon
       box.appendChild(ico);
       var name = typeof opts.name === "string" ? opts.name.slice(0, 80) : "";
-      var title = node("h2", "lk-title", name ? t("lock.app.title", { app: name }) : t("lock.app.titleAny"));
+      var title = node("h2", "lk-title", opts.reveal ? t("lock.app.reveal") : name ? t("lock.app.title", { app: name }) : t("lock.app.titleAny"));
       title.id = "oros-applock-title";
       box.appendChild(title);
       var form = node("form", "lk-view");
@@ -1402,7 +1421,7 @@
         appClose(false);
       });
       blurAll();
-      appUi = { dlg: dlg, id: id, done: done, input: input, msg: msg, go: go, bioBox: bioBox, bioBtn: null, busy: false };
+      appUi = { dlg: dlg, id: opts.reveal ? "" : id, reveal: !!opts.reveal, done: done, input: input, msg: msg, go: go, bioBox: bioBox, bioBtn: null, busy: false };
       doc.body.appendChild(dlg);
       try { dlg.showModal(); } catch (e) { dlg.setAttribute("open", ""); }
       bioWatch();
@@ -1571,6 +1590,14 @@
       },
       // The app's own PIN box → Promise<boolean>.
       ask: function (id, opts) { return appAsk(id, opts); },
+      // Hidden apps (W2): how many, and the PIN that shows them for a
+      // minute (the menu's "Hidden apps" row) → Promise<boolean>.
+      hiddenCount: function () {
+        if (!load()) return 0;
+        var l = appsList();
+        return Object.keys(l.apps).filter(function (k) { return l.apps[k] === "hide"; }).length;
+      },
+      reveal: function () { return appAsk("", { reveal: true }); },
       // The shell: the app came to the front / left it (the minute
       // starts). Only apps unlocked in this tab are kept.
       enter: function (id) {
