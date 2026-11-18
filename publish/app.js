@@ -65,7 +65,7 @@
       "gaps.n": "{n} missing",
       "ctr.sec": "Contracts", "ctr.none": "No contract in CRM for this title. Add it on the creator's card in CRM, with its end day.", "ctr.noCrm": "CRM keeps the contracts: open it once on this device.",
       "ctr.until": "until {d}", "ctr.soon": "ends {d} · in {n} days", "ctr.today": "ends today", "ctr.ended": "ended {d} · no decision yet", "ctr.term": "ended by agreement {d}", "ctr.noEnd": "no end day", "ctr.snz": "decision on {d}",
-      "ctr.fmt.p": "Print", "ctr.fmt.e": "Digital", "ctr.fmt.x": "Contract",
+      "ctr.fmt.p": "Print", "ctr.fmt.e": "Digital", "ctr.fmt.x": "Contract", "ctr.rights": "Rights: {v}", "ctr.rt.print": "print", "ctr.rt.ebook": "e-book", "ctr.rt.audio": "audio",
       "ctr.renew": "Renew", "ctr.post": "Put off", "ctr.mail": "Email", "ctr.end": "End", "ctr.more": "More…", "ctr.all": "All contracts in CRM",
       "ctr.sale": "{f}: the contract has ended, but this format is still linked to a shop product. Check whether it should still be sold.",
       "ctr.badge.soon": "Contract ends {d}", "ctr.badge.ended": "Contract ended", "ctr.badge.on": "Contract until {d}", "ctr.badge.term": "Contract ended by agreement",
@@ -521,7 +521,7 @@
       "gaps.n": "λείπουν {n}",
       "ctr.sec": "Συμφωνητικά", "ctr.none": "Κανένα συμφωνητικό στο CRM για αυτόν τον τίτλο. Πρόσθεσέ το στην καρτέλα του δημιουργού στο CRM, με τη λήξη του.", "ctr.noCrm": "Τα συμφωνητικά τα κρατά το CRM: άνοιξέ το μία φορά σε αυτή τη συσκευή.",
       "ctr.until": "έως {d}", "ctr.soon": "λήγει {d} · σε {n} ημέρες", "ctr.today": "λήγει σήμερα", "ctr.ended": "έληξε {d} · χωρίς απόφαση", "ctr.term": "λύθηκε {d}", "ctr.noEnd": "χωρίς λήξη", "ctr.snz": "απόφαση στις {d}",
-      "ctr.fmt.p": "Έντυπο", "ctr.fmt.e": "Ψηφιακό", "ctr.fmt.x": "Συμφωνητικό",
+      "ctr.fmt.p": "Έντυπο", "ctr.fmt.e": "Ψηφιακό", "ctr.fmt.x": "Συμφωνητικό", "ctr.rights": "Δικαιώματα: {v}", "ctr.rt.print": "έντυπο", "ctr.rt.ebook": "ebook", "ctr.rt.audio": "ηχητικό",
       "ctr.renew": "Ανανέωση", "ctr.post": "Αναβολή", "ctr.mail": "Email", "ctr.end": "Λύση", "ctr.more": "Περισσότερα…", "ctr.all": "Όλα τα συμφωνητικά στο CRM",
       "ctr.sale": "{f}: το συμφωνητικό έχει λήξει, αλλά αυτή η μορφή είναι ακόμη συνδεδεμένη με προϊόν του καταστήματος. Έλεγξε αν πρέπει να συνεχίσει να πωλείται.",
       "ctr.badge.soon": "Λήξη συμφωνητικού {d}", "ctr.badge.ended": "Έληξε συμφωνητικό", "ctr.badge.on": "Συμφωνητικό έως {d}", "ctr.badge.term": "Συμφωνητικό λύθηκε",
@@ -3670,6 +3670,26 @@
     });
     return out;
   }
+  // RIGHTS (CRM 1.11): "Rights: print ✓ e-book ✓ audio –" from the
+  // running contracts' recorded rights; "" while none are recorded.
+  var RT_MARK = { granted: "✓", consent: "±", free: "○" };
+  function ctrRightsLine(list) {
+    var K = window.OrosCrmCore, d = crmData();
+    if (!K || !d || typeof K.rtStatus !== "function") return "";
+    var any = false, rank = { granted: 0, consent: 1, free: 2 };
+    var bits = ["print", "ebook", "audio"].map(function (k) {
+      var b = "";
+      list.forEach(function (r) {
+        if (r.st !== "on" && r.st !== "soon") return;
+        var x = K.rtOf(d, r.ctr.id);
+        if (x && Object.keys(x).length > 2) any = true;
+        var s = K.rtStatus(d, r.ctr, k);
+        if (rank[s] !== undefined && (b === "" || rank[s] < rank[b])) b = s;
+      });
+      return t("ctr.rt." + k) + " " + (RT_MARK[b] || "–");
+    });
+    return any ? t("ctr.rights", { v: bits.join(" ") }) : "";
+  }
   function renderCtrSec() {
     var box = $("ed-ctr"), tt = currentTitle();
     if (!box || !tt) return;
@@ -3679,6 +3699,8 @@
     var list = ctrsOf(tt);
     if (!list.length) { box.appendChild(el("p", "muted", t("ctr.none"))); return; }
     ctrSaleWarn(tt, list).forEach(function (f) { box.appendChild(el("p", "warnbox", t("ctr.sale", { f: t("ctr.fmt." + f) }))); });
+    var rl = ctrRightsLine(list);
+    if (rl) box.appendChild(el("p", "ctr-rights", rl));
     list.forEach(function (r) {
       var row = el("div", "fmt ctr-line" + (r.needs ? " needs" : "") + (r.st === "ended" ? " over" : ""));
       var head = el("p", "ctr-head");

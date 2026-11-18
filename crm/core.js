@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — core.js (shared logic, v1.9.0)
+// orOS CRM — core.js (shared logic, v1.11.0)
 // One file holds the model, the merge and every derived number,
 // so the app, the universal search provider, the shell reminder,
 // the Calendar feed, the Today provider, Contacts and (later)
@@ -80,6 +80,13 @@
 //     own list like rsl; an emptied row stays (an unlink must not come
 //     back from another device's copy). The other apps are never
 //     changed.
+//   Rights (1.11, RIGHTS): RT_RIGHTS, RT_STATUS, normRt, rtOf(data,
+//     ctrId), rtRow(data, ctrId, args) → { row } | { err } (the Gate's
+//     words, see rtRow), rtStatus(data, r, k), rightsBoard(data, today,
+//     titles) → the three flags of the Contracts tab's Rights view;
+//     rt?: [{ id = contract id, m, tpl?, grant?, cov?, r?, ter?, ext?,
+//     so?, cd?, cc?, ccp?, rev?, src?, chk?, note? }] (see normRt). Its
+//     own list like cx; a row whose contract is gone leaves with it.
 // Data (synced slice "crm", key oros-crm-data):
 //   { ver: 1, cust, deals, acts, fups, tags, stg: [row…] each
 //     sorted by id, pt?: partners (1.5), ctr?: contracts (1.6), rsl?: Revenue Splitter links (1.7), prefs: { pm, cur, forget }, wf?: web form,
@@ -98,7 +105,7 @@
   var DAY_MS = 86400000;
   var TOMB_DAYS = 365;
   var VAL_MAX = 99999999999;          // cents: just under a billion
-  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000, ctr: 5000, cx: 5000, rsl: 2000, rsNames: 5, cs: 2000, csOld: 5, ix: 2000, items: 50 };
+  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000, ctr: 5000, cx: 5000, rt: 5000, rsl: 2000, rsNames: 5, cs: 2000, csOld: 5, ix: 2000, items: 50 };
   var STAGES = ["new", "contact", "proposal", "nego", "won", "lost"];
   var OPEN_STAGES = ["new", "contact", "proposal", "nego"];      // the built-in open stages
   var STAGE_PROB = { "new": 10, contact: 25, proposal: 50, nego: 75, won: 100, lost: 0 };
@@ -106,7 +113,7 @@
   var ACT_KINDS = ["call", "mail", "meet", "msg", "note"];
   var CUST_ST = ["lead", "active", "past"];
   var CURRENCIES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "CAD", "AUD", "JPY"];
-  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "cx", "rsl", "cs", "ix"];
+  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "cx", "rt", "rsl", "cs", "ix"];
 
   // ---------- Small helpers ----------
   function isInt(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n; }
@@ -718,6 +725,266 @@
       return fmtRank(a.fmt) - fmtRank(b.fmt) || cmpStr(a.ctr.to || "9999", b.ctr.to || "9999") || cmpStr(a.ctr.id, b.ctr.id);
     });
   }
+  // ---------- Rights per contract (1.11, RIGHTS) ----------
+  // rt?: [{ id = contract id, m,
+  //   tpl?: "A" | "B" | "C" | "D" (the contract's template),
+  //   grant?: "all" (every economic right) | "excl" (an exclusive
+  //     licence) | "free" (free digital posting only),
+  //   cov?: ["p"] | ["e"] | ["p", "e"] the formats the contract covers
+  //     (print, digital); absent = the contract's own format (ctrFmt),
+  //   r?: { <right>: { s: RT_STATUS, sh?: "10%" | "50/50" … } } one
+  //     entry per right in RT_RIGHTS; absent = what the grant implies,
+  //   ter?: "gr" (Greece) | "none" (not set by the contract),
+  //   ext?: "agree" (extension by mutual agreement) | "none",
+  //   so?: months the stock may still be sold after the end (1-36),
+  //   cd?: days within which sales stop after the end (1-365),
+  //   cc?: true (released under CC BY-NC-SA), ccp?: true (for ever),
+  //   rev?: true (rights return when out of print and not reprinted),
+  //   src?: "pdf" | "oral" | "lost" (where the terms come from),
+  //   chk?: the day the terms were last checked, note? }].
+  // Its own list like cx, so a device before 1.11 can't strip it from
+  // the ctr rows; ended by agreement stays cx.end (no second field).
+  var RT_RIGHTS = ["print", "ebook", "audio", "transl", "adapt", "merch", "free", "promo"];
+  var RT_STATUS = ["granted", "consent", "free", "none"];
+  var RT_TPL = ["A", "B", "C", "D"], RT_GRANT = ["all", "excl", "free"], RT_SRC = ["pdf", "oral", "lost"];
+  var SHARE_RE = /^[0-9][0-9.,/% ]{0,15}$/;
+  function rtCov(v) {
+    if (!Array.isArray(v)) return null;
+    var o = [];
+    if (v.indexOf("p") >= 0) o.push("p");
+    if (v.indexOf("e") >= 0) o.push("e");
+    return o.length ? o : null;
+  }
+  function normRt(x) {
+    if (!x || typeof x !== "object" || !ID_RE.test(x.id) || !stamp(x)) return null;
+    var o = { id: x.id, m: x.m };
+    if (RT_TPL.indexOf(x.tpl) >= 0) o.tpl = x.tpl;
+    if (RT_GRANT.indexOf(x.grant) >= 0) o.grant = x.grant;
+    var cov = rtCov(x.cov);
+    if (cov) o.cov = cov;
+    if (x.r && typeof x.r === "object" && !Array.isArray(x.r)) {
+      var r = {};
+      RT_RIGHTS.forEach(function (k) {
+        var e = x.r[k];
+        if (!e || typeof e !== "object" || RT_STATUS.indexOf(e.s) < 0) return;
+        var one = { s: e.s };
+        var sh = cleanText(e.sh, 16);
+        if (sh && SHARE_RE.test(sh)) one.sh = sh;
+        r[k] = one;
+      });
+      if (Object.keys(r).length) o.r = r;
+    }
+    if (x.ter === "gr" || x.ter === "none") o.ter = x.ter;
+    if (x.ext === "agree" || x.ext === "none") o.ext = x.ext;
+    if (isInt(x.so) && x.so >= 1 && x.so <= 36) o.so = x.so;
+    if (isInt(x.cd) && x.cd >= 1 && x.cd <= 365) o.cd = x.cd;
+    if (x.cc === true) o.cc = true;
+    if (x.ccp === true) o.ccp = true;
+    if (x.rev === true) o.rev = true;
+    if (RT_SRC.indexOf(x.src) >= 0) o.src = x.src;
+    if (isYmd(x.chk)) o.chk = x.chk;
+    put(o, "note", str(x, "note", 500, true));
+    return o;
+  }
+  function rtOf(data, ctrId) { return (data && byId(data.rt, ctrId)) || null; }
+  // What one right is for a contract: its own entry, else what the
+  // grant implies (print and e-book, where the contract covers that
+  // format, for every economic right or an exclusive licence; only
+  // free posting for "free"); "" = not known.
+  function rtStatus(data, c, k) {
+    var x = rtOf(data, c.id);
+    if (!x) return "";
+    if (x.r && x.r[k]) return x.r[k].s;
+    if (x.grant === "free") return k === "free" || k === "ebook" ? "free" : "none";
+    if ((x.grant === "all" || x.grant === "excl") && (k === "print" || k === "ebook")) {
+      return rtCovers(data, c).indexOf(k === "print" ? "p" : "e") >= 0 ? "granted" : "none";
+    }
+    return "";
+  }
+  // The formats a contract covers: its own cov, else its format
+  function rtCovers(data, c) {
+    var x = rtOf(data, c.id);
+    if (x && x.cov) return x.cov.slice();
+    var f = ctrFmt(data, c);
+    return f ? [f] : [];
+  }
+  // The Gate's words (orOS Gate change_item "rights" on a contract) →
+  // the rt row to save: the stored one with the given keys changed (a
+  // key set to null leaves; rights merge right by right, a right set
+  // to null leaves). → { row } | { err }. m is set by the caller.
+  // each Gate word → the field(s) it sets (null clears them)
+  var RT_ARGS = { template: "tpl", grant: "grant", covers: "cov", per_right: "r", territory: "ter", extend: "ext", sell_off_months: "so",
+                  cease_days: "cd", cc: "cc", cc_perpetual: "ccp", reversion_oop: "rev", source: "src", checked: "chk", note: "note" };
+  var RT_WORDS = {
+    grant: { all_economic: "all", exclusive_licence: "excl", free_posting_only: "free" },
+    covers: { print: "p", digital: "e" },
+    per_right: { print: "print", ebook: "ebook", audio: "audio", translation: "transl", adaptation: "adapt", merch: "merch", free_posting: "free", excerpts: "promo" },
+    status: { granted: "granted", consent: "consent", free_only: "free", not_mentioned: "none" },
+    territory: { greece: "gr", not_set: "none" }, extend: { by_agreement: "agree", not_mentioned: "none" }
+  };
+  function rtWord(map, v, what) {
+    if (typeof v === "string" && Object.prototype.hasOwnProperty.call(map, v)) return map[v];
+    return { err: what + " must be one of: " + Object.keys(map).join(", ") + "." };
+  }
+  function rtRow(data, ctrId, args) {
+    if (!args || typeof args !== "object" || Array.isArray(args)) return { err: "rights must be an object." };
+    if (!byId(data.ctr, ctrId)) return { err: "That contract is no longer in CRM." };
+    var bad = Object.keys(args).filter(function (k) { return !RT_ARGS[k]; });
+    if (bad.length) return { err: "rights has no " + bad.join(", ") + ". Its keys: " + Object.keys(RT_ARGS).join(", ") + "." };
+    var o = own(rtOf(data, ctrId) || { id: ctrId, m: 0 });
+    o.r = own(o.r);
+    var err = "";
+    function set(k, v) { if (v === null || v === undefined) delete o[k]; else o[k] = v; }
+    function word(map, v, what) { var w = rtWord(map, v, what); if (typeof w === "object") { err = err || w.err; return undefined; } return w; }
+    Object.keys(args).forEach(function (k) {
+      var v = args[k];
+      if (err) return;
+      if (v === null) { if (k === "per_right") o.r = {}; else delete o[RT_ARGS[k]]; return; }
+      if (k === "template") { if (RT_TPL.indexOf(v) < 0) err = "template must be A, B, C or D."; else set("tpl", v); }
+      else if (k === "grant") set("grant", word(RT_WORDS.grant, v, "grant"));
+      else if (k === "covers") {
+        if (!Array.isArray(v) || !v.length) { err = "covers must be a list: print and/or digital."; return; }
+        var cv = v.map(function (w) { return word(RT_WORDS.covers, w, "covers"); });
+        if (!err) set("cov", rtCov(cv));
+      } else if (k === "per_right") {
+        if (!v || typeof v !== "object" || Array.isArray(v)) { err = "per_right must be an object { print: { status, share } … }."; return; }
+        Object.keys(v).forEach(function (rk) {
+          if (err) return;
+          var key = word(RT_WORDS.per_right, rk, "a right in per_right");
+          if (err) return;
+          var e = v[rk];
+          if (e === null) { delete o.r[key]; return; }
+          if (typeof e === "string") e = { status: e };
+          if (!e || typeof e !== "object") { err = "per_right." + rk + " must be { status, share }."; return; }
+          var st = word(RT_WORDS.status, e.status, "per_right." + rk + ".status");
+          if (err) return;
+          var one = { s: st };
+          if (e.share !== undefined && e.share !== null && e.share !== "") {
+            var sh = cleanText(e.share, 16);
+            if (!SHARE_RE.test(sh)) { err = "per_right." + rk + ".share must be like 10%, 50/50 or 70/30."; return; }
+            one.sh = sh;
+          }
+          o.r[key] = one;
+        });
+      } else if (k === "territory") set("ter", word(RT_WORDS.territory, v, "territory"));
+      else if (k === "extend") set("ext", word(RT_WORDS.extend, v, "extend"));
+      else if (k === "sell_off_months") { if (!isInt(v) || v < 0 || v > 36) err = "sell_off_months must be a whole number 0-36 (0 = none)."; else set("so", v || null); }
+      else if (k === "cease_days") { if (!isInt(v) || v < 0 || v > 365) err = "cease_days must be a whole number 0-365 (0 = none)."; else set("cd", v || null); }
+      else if (k === "cc" || k === "cc_perpetual" || k === "reversion_oop") {
+        if (typeof v !== "boolean") err = k + " must be true or false.";
+        else set({ cc: "cc", cc_perpetual: "ccp", reversion_oop: "rev" }[k], v || null);
+      } else if (k === "source") { if (RT_SRC.indexOf(v) < 0) err = "source must be pdf, oral or lost."; else set("src", v); }
+      else if (k === "checked") { if (!isYmd(v)) err = "checked must be a day YYYY-MM-DD."; else set("chk", v); }
+      else if (k === "note") { if (typeof v !== "string") err = "note must be text."; else set("note", cleanText(v, 500, true) || null); }
+    });
+    if (err) return { err: err };
+    if (!Object.keys(o.r).length) delete o.r;
+    var row = normRt(Object.assign({}, o, { m: o.m || 1 }));
+    if (!row) return { err: "Those rights can't be kept." };
+    row.m = o.m;
+    return { row: row };
+  }
+  // Publishing formats → print / digital / audio
+  var PUB_KIND = { pb: "p", hb: "p", eb: "e", ab: "a" };
+  // May a contract sell format f (p | e | a) on this day, paid or free?
+  // A running contract that covers it, or (print only) one in its
+  // sell-off months after the end.
+  function rtAllows(data, r, f, paid, today) {
+    var c = r.ctr, x = rtOf(data, c.id), cov = rtCovers(data, c);
+    var on = r.st === "on" || r.st === "soon";
+    if (!on && f === "p" && r.st === "ended" && x && x.so && c.to && today <= addMonths(c.to, x.so)) on = true;
+    if (!on) return false;
+    if (f === "a") {
+      var sa = rtStatus(data, c, "audio");
+      return sa === "granted" || (!paid && (sa === "free" || sa === "consent"));
+    }
+    if (cov.indexOf(f) < 0) return false;
+    var s = rtStatus(data, c, f === "p" ? "print" : "ebook");
+    if (s === "") s = "granted";   // terms not filled in yet: its format is enough
+    return s === "granted" || (!paid && (s === "free" || s === "consent"));
+  }
+  function addMonths(ymd, n) {
+    var y = +ymd.slice(0, 4), mo = +ymd.slice(5, 7) - 1 + n, d = +ymd.slice(8, 10);
+    y += Math.floor(mo / 12); mo = ((mo % 12) + 12) % 12;
+    var last = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate();
+    return y + "-" + (mo < 9 ? "0" : "") + (mo + 1) + "-" + (Math.min(d, last) < 10 ? "0" : "") + Math.min(d, last);
+  }
+  // The Rights view (Contracts tab): every Publishing title with a
+  // contract, and the three flags. titles = Publishing's titles ({ id,
+  // t, ppl, fmts: [{ k, price, wp? }] }); a format "in the shop" is one
+  // linked to a shop product (wp), "paid" when its price is above 0.
+  // → { titles: [{ ti, t, list: [ctrInfo], best: { right: status } }],
+  //     sold: [{ ti, t, f, price, ctr? }] (in the shop with no running
+  //       right; ctr = the contract that last covered it),
+  //     freeCc: [same] (free, no running right, released under CC),
+  //     unreleased: [{ ti, t, f: "e" | "a", ctr }] (a running right,
+  //       no such format in Publishing),
+  //     renew: [{ info: ctrInfo, so, ext }] (ending within SOON_DAYS),
+  //     unlinked: n (contracts with no Publishing title),
+  //     unfilled: n (contracts without rights recorded) }
+  var RT_RANK = { granted: 0, consent: 1, free: 2, none: 3, "": 4 };
+  function rightsBoard(data, today, titles) {
+    var list = Array.isArray(titles) ? titles : [], groups = {}, order = [];
+    var out = { titles: [], sold: [], freeCc: [], unreleased: [], renew: [], unlinked: 0, unfilled: 0 };
+    (data.ctr || []).forEach(function (c) {
+      if (!byId(data.cust, c.cust)) return;
+      var info = ctrInfo(data, c, today);
+      var xr = rtOf(data, c.id);
+      if (!xr || Object.keys(xr).length <= 2) out.unfilled++;   // none, or emptied by an Undo
+      if (info.st === "soon") { var x = rtOf(data, c.id); out.renew.push({ info: info, so: x && x.so ? x.so : 0, ext: x && x.ext ? x.ext : "" }); }
+      var tt = ctrTitle(data, c, list);
+      if (!tt) { out.unlinked++; return; }
+      if (!groups[tt.id]) { groups[tt.id] = { tt: tt, list: [] }; order.push(tt.id); }
+      groups[tt.id].list.push(info);
+    });
+    out.renew.sort(function (a, b) { return cmpStr(a.info.ctr.to, b.info.ctr.to) || cmpStr(a.info.ctr.id, b.info.ctr.id); });
+    order.forEach(function (id) {
+      var g = groups[id], tt = g.tt, name = cleanText(tt.t, 200);
+      g.list.sort(function (a, b) { return fmtRank(a.fmt) - fmtRank(b.fmt) || cmpStr(a.ctr.to || "9999", b.ctr.to || "9999") || cmpStr(a.ctr.id, b.ctr.id); });
+      var best = {};
+      RT_RIGHTS.forEach(function (k) {
+        var b = "";
+        g.list.forEach(function (r) {
+          if (r.st !== "on" && r.st !== "soon") return;
+          var s = rtStatus(data, r.ctr, k);
+          if (RT_RANK[s] < RT_RANK[b]) b = s;
+        });
+        best[k] = b;
+      });
+      out.titles.push({ ti: id, t: name, list: g.list, best: best });
+      var fmts = Array.isArray(tt.fmts) ? tt.fmts : [], kinds = {};
+      fmts.forEach(function (fm) {
+        var f = fm && PUB_KIND[fm.k];
+        if (!f) return;
+        kinds[f] = 1;
+        if (!fm.wp) return;
+        var price = typeof fm.price === "number" && fm.price > 0 ? fm.price : 0;
+        if (g.list.some(function (r) { return rtAllows(data, r, f, price > 0, today); })) return;
+        // the contract it was last sold under: the one that covers it, else the title's latest
+        var last = null;
+        g.list.forEach(function (r) {
+          var fits = f === "a" ? !!rtStatus(data, r.ctr, "audio") : rtCovers(data, r.ctr).indexOf(f) >= 0;
+          if (fits && (!last || cmpStr(r.ctr.to || "", last.ctr.to || "") > 0)) last = r;
+        });
+        var cc = g.list.some(function (r) { var x = rtOf(data, r.ctr.id); return x && x.cc; });
+        var row = { ti: id, t: name, f: f, price: price, wp: fm.wp.id || 0, ctr: last ? last.ctr.id : "" };
+        if (!price && cc) out.freeCc.push(row); else out.sold.push(row);
+      });
+      ["e", "a"].forEach(function (f) {
+        if (kinds[f]) return;
+        var hit = null;
+        g.list.forEach(function (r) {
+          if (hit || (r.st !== "on" && r.st !== "soon")) return;
+          var s = rtStatus(data, r.ctr, f === "e" ? "ebook" : "audio");
+          if (s === "granted" && (f === "a" || rtCovers(data, r.ctr).indexOf("e") >= 0)) hit = r;
+        });
+        if (hit) out.unreleased.push({ ti: id, t: name, f: f, ctr: hit.ctr.id });
+      });
+    });
+    function byT(a, b) { return cmpStr(fold(a.t), fold(b.t)) || cmpStr(a.ti, b.ti) || cmpStr(a.f || "", b.f || ""); }
+    out.titles.sort(byT); out.sold.sort(byT); out.freeCc.sort(byT); out.unreleased.sort(byT);
+    return out;
+  }
   // Contracts whose follow-up is missing (made by the Assistant or
   // orOS Gate before 1.10, or done/removed while the contract still
   // runs): [{ ctr, fup: id, d }] for the app to write.
@@ -898,7 +1165,7 @@
     return o;
   }
 
-  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr, cx: normCx, rsl: normRsl, cs: normCs, ix: normIx };
+  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr, cx: normCx, rt: normRt, rsl: normRsl, cs: normCs, ix: normIx };
 
   // The web form (crm/webform.js, relay /crm/f/<k>): one record, last
   // writer wins by m. { m, k, sec, priv (RSA-OAEP-256 private JWK),
@@ -992,11 +1259,11 @@
         if (id in tombs && tombs[id] >= x.m) return;
         // an emptied pt, rsl or ix row stays: dropping it would let another
         // device's older copy bring the link back
-        if (k === "cx" ? !aliveCtr[x.id] : (k === "pt" || k === "rsl" || k === "cs" || k === "ix" ? !aliveCust[x.id] : (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust]))) return;
+        if (k === "cx" || k === "rt" ? !aliveCtr[x.id] : (k === "pt" || k === "rsl" || k === "cs" || k === "ix" ? !aliveCust[x.id] : (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust]))) return;
         if (list.length >= LIMITS[k]) return;
         list.push(x);
       });
-      if ((k !== "pt" && k !== "ctr" && k !== "cx" && k !== "rsl" && k !== "cs" && k !== "ix") || list.length) out[k] = list;
+      if ((k !== "pt" && k !== "ctr" && k !== "cx" && k !== "rt" && k !== "rsl" && k !== "cs" && k !== "ix") || list.length) out[k] = list;
       if (k === "cust") list.forEach(function (c) { aliveCust[c.id] = true; });
       if (k === "ctr") list.forEach(function (c) { aliveCtr[c.id] = true; });
     });
@@ -1547,6 +1814,7 @@
     normRsl: normRsl, CS_FIELDS: CS_FIELDS, normCs: normCs, csJoin: csJoin, rsOf: rsOf, rsRow: rsRow, normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
     SOON_DAYS: SOON_DAYS, CX_KINDS: CX_KINDS, normCx: normCx, normCset: normCset, cxOf: cxOf, cxRow: cxRow, ctrFmt: ctrFmt, ctrBook: ctrBook, addYears: addYears,
     ctrFupId: ctrFupId, ctrSnooze: ctrSnooze, ctrFupDay: ctrFupDay, ctrInfo: ctrInfo, ctrAll: ctrAll, ctrDash: ctrDash, ctrTitle: ctrTitle, ctrForTitle: ctrForTitle,
+    RT_RIGHTS: RT_RIGHTS, RT_STATUS: RT_STATUS, normRt: normRt, rtOf: rtOf, rtRow: rtRow, rtStatus: rtStatus, rtCovers: rtCovers, rightsBoard: rightsBoard,
     ctrHeal: ctrHeal, ctrEndsOn: ctrEndsOn, portalPayload: portalPayload, portalPlan: portalPlan,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove

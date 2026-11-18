@@ -1871,6 +1871,8 @@
   // Wave 48: changes to records the user already shared (assistant/
   // edits.js). The user sees a before → after card and presses Apply;
   // nothing changes before that.
+  // RIGHTS (CRM 1.11): one right of a contract (crm/core.js rtRow)
+  var RT_ONE = { type: "object", properties: { status: { type: "string", "enum": ["granted", "consent", "free_only", "not_mentioned"] }, share: { type: "string" } } };
   var TOOL_CHANGE = {
     name: "change_item",
     description: "Propose a change to an existing item that search_data or app_summary returned in this " +
@@ -1890,7 +1892,7 @@
       "crm (a customer, update: title = name / nickname = alias / job_title / tax_id = VAT or tax number / tax_office / " +
       "phone, email, website, address = fill when empty, replace with old_phone… / address_replace / note / note_add / roles / rs_beneficiary; bank " +
       "details or a bio go in note_add; a deal, update: title / amount / date = expected close / stage / probability / reason / note, " +
-      "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start) · " +
+      "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start; a contract, update: rights) · " +
       "kanban (reschedule: date = due, update: title / date / note / labels / plan_start / milestone / depends_on, move: column and/or board (to another board: board, column optional, default its first), delete) · " +
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
@@ -1963,6 +1965,24 @@
                           description: "crm customer: the partner's beneficiary name(s) in the shop's Revenue Splitter, exactly as written there (replaces; [] unlinks). Not together with roles." },
         stage: { type: "string", description: "crm deal: the pipeline stage's name, e.g. Proposal, Won, Lost." },
         probability: { type: "integer", description: "crm deal: chance to win, 0-100." },
+        rights: { type: "object", description: "crm contract (a contract's ref): what it grants, alone in its change; only the keys given change, null clears one. Never guess a term the contract does not say.",
+                  properties: {
+                    template: { type: "string", "enum": ["A", "B", "C", "D"] },
+                    grant: { type: "string", "enum": ["all_economic", "exclusive_licence", "free_posting_only"] },
+                    covers: { type: "array", items: { type: "string", "enum": ["print", "digital"] }, description: "the formats the contract covers" },
+                    per_right: { type: "object", description: "merges right by right; each { status: granted | consent | free_only | not_mentioned, share: e.g. 10%, 50/50 }",
+                                 properties: { print: RT_ONE, ebook: RT_ONE, audio: RT_ONE, translation: RT_ONE, adaptation: RT_ONE, merch: RT_ONE, free_posting: RT_ONE, excerpts: RT_ONE } },
+                    territory: { type: "string", "enum": ["greece", "not_set"] },
+                    extend: { type: "string", "enum": ["by_agreement", "not_mentioned"] },
+                    sell_off_months: { type: "integer", description: "months the stock may be sold after the end (0 = none)" },
+                    cease_days: { type: "integer", description: "days within which sales stop after the end (0 = none)" },
+                    cc: { type: "boolean", description: "released under CC BY-NC-SA" },
+                    cc_perpetual: { type: "boolean" },
+                    reversion_oop: { type: "boolean", description: "rights return when out of print" },
+                    source: { type: "string", "enum": ["pdf", "oral", "lost"] },
+                    checked: { type: "string", description: "YYYY-MM-DD" },
+                    note: { type: "string" }
+                  } },
         reason: { type: "string", description: "crm deal at stage Lost: why it was lost." },
         org: { type: "string", description: "contacts: new organisation / company." },
         phone: { type: "string", description: "contacts: a phone number to add (the old ones stay); stock supplier: the phone (replaces)." },
