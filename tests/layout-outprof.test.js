@@ -153,3 +153,18 @@ test("e-book PDF: RGB only, /Lang, links from the contents, bookmarks", () => {
   assert.ok(/ k\n/.test(print), "the print PDF keeps CMYK");
   assert.ok(!/\/Subtype \/Link/.test(print) && !/\/Lang/.test(print));
 });
+
+test("screen PDF: web and e-mail addresses are links (Chris 2026-11-18)", () => {
+  global.window = global.window || global;
+  const { jsPDF } = require(path.join(ROOT, "vendor/jspdf.umd.min.js"));
+  const PRO = require(path.join(ROOT, "layout/pro.js")), CMD = require(path.join(ROOT, "layout/commands.js"));
+  const d = PRO.makeDoc(CMD.check([{ op: "create", title: "Σύνδεσμοι", w: 148, h: 210, n: 1, mm: 3 }]).steps[0], 10);
+  CMD.apply(d, CMD.check([{ op: "frame", page: 1, lines: ["Δείτε https://glarolykoi.net/vythos και www.example.com/a, γράψτε στο info@example.gr.", "Κανένας σύνδεσμος εδώ, ούτε στο τέλος."] }]).steps[0], { now: 2, idf: ((n) => (p) => p + "-u" + (++n))(0) });
+  const L = R.computeLayout(d), links = O.urlLinks(d, L);
+  assert.deepEqual(links.map((l) => l.url), ["https://glarolykoi.net/vythos", "https://www.example.com/a", "mailto:info@example.gr"]);
+  assert.ok(links.every((l) => l.w > 0 && l.h > 0 && l.pg === M.pagesInOrder(d)[0].id));
+  const out = pdfText(P.build(d, { rgb: true }, { jsPDF, layout: L, links: links.concat([{ pg: links[0].pg, x: 1, y: 1, w: 5, h: 5, url: "javascript:alert(1)" }]) }));
+  assert.equal((out.match(/\/Subtype \/Link/g) || []).length, 3, "three links, the javascript: one left out");
+  assert.ok(/\/URI \(https:\/\/glarolykoi\.net\/vythos\)/.test(out));
+  assert.ok(!/javascript/.test(out));
+});

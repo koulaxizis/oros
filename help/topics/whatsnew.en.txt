@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.68.01
+- **Layout: a better view.** The pages sit in the middle of the window with the spine centred, scroll bars show where you are and move the view, and the view keeps its place when the window or a panel changes size. Double-click the Hand tool to fit the spread again.
+- **Layout and Claude: fonts, frames, page numbers.** Claude can add a free font (Fontsource, for example Carlito with Greek) or a font file from a local folder to your fonts and use it in a style by name; change or remove one frame; put page numbers and running heads on a master and hide them on chosen pages; switch a book to CMYK for print; read whole paragraphs and the latest preflight; and try commands without changing anything. Every run says which pages it added and on which side.
+- **Layout: busy no more.** When Layout is still working on Claude's earlier commands, Claude is told what it is doing, and you can press Stop (or Claude can cancel it). Proofs also go to your local export folder, and web and e-mail addresses are clickable in the screen PDF.
+- **Local folders for Claude: no more waiting.** A picture from a local folder that does not answer no longer keeps Layout busy: after 15 s for a file (60 s without progress for the whole run) Layout stops, changes nothing more and takes the next command, and Claude is told why and which path form to use. Claude can now list the open local folders through orOS Gate, a full Windows path (C:\\Users\\…) works even when it was not typed in Settings, and folders added by path in orOS Setup stay after a restart.
+
 ## Version 7.68.00
 - **Screen time.** Settings › Screen time counts how long each app is in front of you, on this device only: today's apps, the last 7 days as columns, and `Clear history`. It is off until you turn it on, never synced, never in a backup and never seen by the Assistant or orOS Gate; only minutes per app and day are kept, for 4 weeks. `Daily limits` gives any app a limit from 15 minutes to 8 hours: a quiet notice 5 minutes before, then a `Time for a break?` card over the app, which stays open under it (`15 more minutes`, `No more reminders today` or `Go to the desktop`). A limit never closes or blocks an app, and an app past its limit shows a small hourglass in the menu.
 
