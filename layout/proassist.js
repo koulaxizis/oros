@@ -215,11 +215,26 @@
         }
       }).then(function () {
         // the scratch copy follows, so later steps see this one
-        C.apply(scratch, st, Object.assign(envOf(envs[i]), { now: now, grey: ctx.grey || {}, notes: notes }));
+        C.apply(scratch, st, Object.assign(envOf(envs[i]), { now: now, grey: ctx.grey || {}, notes: notes, docs: LY.data().docs, meta: metaFor(doc), fill: window.LY_AUTO ? window.LY_AUTO.fillFields : null }));
       });
     });
     return chain.then(function () { return { envs: envs, saved: saved }; });
   }
 
-  LY.pro = { prepare: prepare, envOf: envOf, thumbs: thumbs, folders: folders, PROOF_DIR: PROOF_DIR };
+  // The book's details for house_pages: the Publishing app's title of
+  // the document's name (read only, as houseui.js pubTitles).
+  function metaFor(doc) {
+    var data = null, name = String((doc && doc.name) || "").trim().toLocaleLowerCase(), out = { title: (doc && doc.name) || "" };
+    try { data = JSON.parse(localStorage.getItem("oros-publish-data") || "null"); } catch (e) { data = null; }
+    var tombs = (data && data.tombs) || {};
+    var x = ((data && data.titles) || []).filter(function (x) { return x && x.id && x.t && !(tombs[x.id] >= x.m) && String(x.t).trim().toLocaleLowerCase() === name; })[0];
+    if (!x) return out;
+    out.title = String(x.t); out.subtitle = String(x.sub || "");
+    out.author = (x.ppl || []).filter(function (p) { return p && p.r === "a" && p.n; }).map(function (p) { return p.n; }).join(", ");
+    (x.fmts || []).some(function (f) { if (f && f.isbn) { out.isbn = String(f.isbn); return true; } return false; });
+    if (/^\d{4}/.test(x.rel || "")) out.year = x.rel.slice(0, 4);
+    return out;
+  }
+
+  LY.pro = { metaFor: metaFor, prepare: prepare, envOf: envOf, thumbs: thumbs, folders: folders, PROOF_DIR: PROOF_DIR };
 })();
