@@ -171,7 +171,7 @@ export const TOOLS = [
   },
   {
     name: "invoice_list",
-    description: "Invoices: issued documents (invoices, receipts, credit notes, proformas, ones issued elsewhere; drafts left out) between two days with client, totals, paid, balance, status and lines; or, with received: true, invoices received from suppliers. Oldest first, 500 per page, amounts as decimal strings.",
+    description: "Invoices: issued documents (invoices, receipts, credit notes, proformas, ones issued elsewhere; drafts left out) between two days with client, totals, paid, balance, status and lines (one issued elsewhere also its area, source, provider_uid, auth_code and mydata_type when recorded); or, with received: true, invoices received from suppliers. Oldest first, 500 per page, amounts as decimal strings.",
     inputSchema: {
       type: "object",
       properties: {
@@ -468,6 +468,57 @@ export const TOOLS = [
   }
   ,
   {
+    name: "invoices_record",
+    description: "Records documents ISSUED ELSEWHERE (another invoicing provider, myDATA) in Invoices, at most 100 per call, all or none: each becomes an issued «recorded» document with its own series and number, never a draft, never numbered from orOS's series, never sent to myDATA or anyone. A document whose number (or provider_uid) Invoices already has is skipped and listed, not refused. The client is matched as Invoices does (tax id, then name) or made. Amounts are decimal strings; withholding is the amount withheld (e.g. 20% of net) and total_payable, when given, must equal net + vat − withholding. paid records one payment of the whole amount payable (it does not go to Budget by itself). area: a Budget area name (budget_lines areas). Works when the owner lets Claude change Invoices and has not paused changes; with orOS closed it waits and is applied when orOS opens. The owner is notified and can undo it. Returns the new document ids and the skipped ones.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        documents: { type: "array", minItems: 1, maxItems: 100, items: {
+          type: "object",
+          properties: {
+            number: { type: "string", description: "Series and number as printed, e.g. \"ΤΠΥ0148\" (at most 40 characters)." },
+            date: { type: "string", description: "The issue day, YYYY-MM-DD." },
+            client: { type: "string", description: "The client's name on the document." },
+            client_vat_id: { type: "string", description: "The client's tax id (ΑΦΜ), if any." },
+            net: { type: "string", description: "Net amount, e.g. \"600.00\"." },
+            vat: { type: "string", description: "VAT amount, e.g. \"144.00\" (\"0\" when exempt)." },
+            withholding: { type: "string", description: "Amount withheld, e.g. \"120.00\"; left out = none." },
+            total_payable: { type: "string", description: "What the client pays (a check)." },
+            currency: { type: "string", description: "ISO code; EUR when left out." },
+            lines: { type: "array", maxItems: 50, items: {
+              type: "object",
+              properties: {
+                text: { type: "string", description: "The line's description (at most 500 characters)." },
+                qty: { type: "number", description: "1 when left out." },
+                price: { type: "string", description: "Unit price before VAT, e.g. \"25.00\"." },
+                vat_rate: { type: "number", description: "VAT %, e.g. 24." }
+              },
+              required: ["text"],
+              additionalProperties: false
+            }, description: "The printed lines, kept for the record (the totals are net and vat above)." },
+            paid: { type: "object", properties: {
+              method: { type: "string", enum: ["bank", "cash", "card", "iris", "paypal", "other"] },
+              date: { type: "string", description: "YYYY-MM-DD; the issue day when left out." }
+            }, required: ["method"], additionalProperties: false, description: "Paid in full: how and when." },
+            mark: { type: "string", description: "The myDATA ΜΑΡΚ, if any." },
+            mydata_type: { type: "string", description: "The myDATA document type, e.g. \"1.1\", \"2.1\", \"11.1\", \"11.2\"." },
+            provider_uid: { type: "string", description: "The provider's own id of the document (e.g. invoiceUid), to match it later." },
+            auth_code: { type: "string", description: "The provider's authentication code, if any." },
+            area: { type: "string", description: "A Budget area name (budget_lines areas)." },
+            source: { type: "string", description: "Where it was issued, e.g. \"timologisi.online\" (at most 60 characters)." },
+            note: { type: "string", description: "At most 2000 characters." }
+          },
+          required: ["number", "date", "client", "net", "vat"],
+          additionalProperties: false
+        } }
+      },
+      required: ["documents"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  }
+  ,
+  {
     name: "files_link",
     description: "A one-time download link (15 minutes, one download) for a file in Claude's folders on the orOS disk, made from the owner's sealed copy of those folders (it works with orOS closed; the answer says of when). Use it for PDFs, images, audio, video and other files a tool answer cannot carry: fetch the link with curl or similar. Paths are as files_list shows them. Files not in the copy (too big, media, over the owner's quota) have no link.",
     inputSchema: {
@@ -574,6 +625,7 @@ export function pendApp(n, a, byRef) {
   if (n === "create_items") return typeof o.app === "string" ? o.app.replace(/^(crm|travel)_.*$/, "$1") : "";
   if (/^budget_/.test(n)) return "budget";
   if (/^kanban_/.test(n)) return "kanban";
+  if (/^invoices_/.test(n)) return "invoices";
   if (/^files_/.test(n)) return "files";
   const r = refsIn(o)[0];
   return r && byRef && byRef[r] ? byRef[r] : "";
