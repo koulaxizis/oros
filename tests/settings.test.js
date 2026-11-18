@@ -57,7 +57,7 @@ test("core: t() falls back and fills variables", () => {
 });
 
 test("core: sections and deep-link targets", () => {
-  assert.deepEqual(C.SECTIONS, ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device"]);
+  assert.deepEqual(C.SECTIONS, ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device", "screentime"]);
   assert.equal(C.sectionOf({ section: "sync" }), "sync");
   assert.equal(C.sectionOf("backup"), "backup");
   [null, undefined, {}, { section: "nope" }, { section: 3 }, "__proto__", "constructor"]
@@ -117,8 +117,8 @@ test("bridge: every set() and act() name the app uses exists in the shell", () =
   sets.forEach((n) => {
     if (n.endsWith(":")) return;                 // "search:" + id, checked below
     if (/^dock:/.test(n)) {                      // matched by one pattern in the shell
-      assert.match(BRIDGE, /\^dock:\(on\|size\|magnify\|autohide\|over\|style\|hover\)\$/);
-      assert.match(n, /^dock:(on|size|magnify|autohide|over|style|hover)$/, n);
+      assert.match(BRIDGE, /\^dock:\(on\|size\|magnify\|autohide\|over\|style\|hover\|pos\)\$/);
+      assert.match(n, /^dock:(on|size|magnify|autohide|over|style|hover|pos)$/, n);
       return;
     }
     if (/^seasonal:/.test(n)) {                  // passed on to seasonal.js by prefix
@@ -177,7 +177,8 @@ test("app: owns no data, palette contract, safe DOM", () => {
   }
   // Inline style only from the shell's own palette / wallpaper CSS.
   for (const m of APP.matchAll(/\.style\.(\w+)\s*=\s*([^;]+);/g)) {
-    assert.match(m[2].trim(), /^(k\.color|w\.css|"cover"|"center")$/, m[0]);
+    // ST-1: Screen time's bars get a clamped percentage from stPct().
+    assert.match(m[2].trim(), /^(k\.color|w\.css|"cover"|"center"|stPct\([^;]*\))$/, m[0]);
   }
 });
 
@@ -260,7 +261,7 @@ test("find: every row names a known section and real labels, with words", () => 
     assert.ok(C.isSection(f[1]), f[0] + " section");
     [f[2], f[3], f[4]].forEach((k) => { if (k) assert.ok(C.STRINGS.en[k] && C.STRINGS.el[k], f[0] + " label " + k); });
     assert.ok(C.STRINGS.en["w." + f[0]] && C.STRINGS.el["w." + f[0]], f[0] + " words");
-    if (f[5]) assert.match(f[5], /^(app:[a-z]+|dock|seasonal|phone|push|osk|translate|install|multitask|overview|pcfiles|widgets|smartbar|night|clip|read)$/, f[0] + " need");
+    if (f[5]) assert.match(f[5], /^(app:[a-z]+|dock|seasonal|phone|push|osk|translate|install|multitask|overview|pcfiles|widgets|smartbar|night|clip|textrepl|a11yfx|a11yfine|cont|read)$/, f[0] + " need");
   });
   // every need the core can name is answered by the app
   assert.match(APP, /function findOk\(s, need\)/);

@@ -22,14 +22,41 @@ Whiteboard ist ein endloses Board für Ideen: Haftnotizen, Text, Formen, Pfeile,
 - Die Tasten unten rechts verkleinern, zeigen den Zoom (antippen für 100 %), vergrößern und `Alles zeigen`.
 
 ## Tastatur
-- [[V]] [[H]] [[N]] [[T]] [[S]] [[A]] [[P]] [[F]] wählen ein Werkzeug, [[I]] fügt ein Bild hinzu.
+- [[V]] [[H]] [[N]] [[T]] [[S]] [[A]] [[P]] [[F]] wählen ein Werkzeug, [[I]] fügt ein Bild hinzu, [[L]] öffnet die Diagrammformen.
 - [[Tab]] geht von einem Objekt zum nächsten, und der Screenreader liest es vor. Die Pfeiltasten verschieben die Auswahl (mit [[Shift]] in kleinen Schritten), [[Delete]] entfernt sie.
 - [[Ctrl+A]] wählt alles aus, [[Ctrl+D]] dupliziert, [[Ctrl+C]], [[Ctrl+X]] und [[Ctrl+V]] kopieren, schneiden aus und fügen ein, auf diesem Board.
 - [[+]] und [[-]] zoomen, [[0]] geht auf 100 %, [[1]] zeigt alles, [[Esc]] hebt die Auswahl auf.
 
 ## Exportieren
-- `Exportieren` in der oberen Leiste speichert `Ganzes Board`, die `Auswahl` oder, bei einem ausgewählten Rahmen, `Dieser Rahmen` als PNG, SVG oder PDF, auf `Papier` oder `Transparent`. `In Dateien speichern` legt es in Dateien › Whiteboard ab.
+- `Exportieren` in der oberen Leiste speichert `Ganzes Board`, die `Auswahl` oder, bei einem ausgewählten Rahmen, `Dieser Rahmen` als PNG, SVG, PDF oder draw.io, auf `Papier` oder `Transparent`. `In Dateien speichern` legt es in Dateien › Whiteboard ab.
 - Ein ausgewählter Rahmen hat in seiner Leiste auch `Diesen Rahmen exportieren`, so werden Rahmen zu praktischen Seiten.
+
+## Diagrammformen
+- `Mehr` › `Diagrammformen…` (oder [[L]]) öffnet die Bibliothek: `Flussdiagramm` (Prozessschritt, Entscheidung, Start oder Ende, Daten, Dokument, Datenbank, Verzögerung und mehr), `Organigramm` (Personenkarte, Team oder Abteilung), `UML` (Klasse, Schnittstelle, Akteur, Anwendungsfall, Paket, Komponente, Kommentar, Knoten, Start- und Endpunkte), `Grundformen` (Sechseck, Stern, Kreuz, Blockpfeile, Wolke, Sprechblase) und `Netzwerk und IT` (Server, Router, Switch, Firewall, Internet, Laptop, Desktop, Telefon, Tablet, Datenbankserver, Speicher, Benutzer, Drucker, WLAN). Tippe in `Formen suchen`, um eine nach Namen zu finden.
+- Tippe auf eine Form, um sie in die Mitte des Bildschirms zu setzen. Sie ist eine gewöhnliche Form: Tippe ihren Text, gib ihr Farbe und Füllung, ändere ihre Größe und verbinde sie mit Pfeilen mit anderen.
+- Mit ausgewählten Formen macht `Form` › `Weitere Formen` alle zu der Form, auf die du tippst, und eine Grundform macht sie wieder zurück.
+- Eine UML-Klasse nimmt ihre Fächer aus ihrem Text: Die ersten Zeilen sind ihr Name, eine Zeile `--` beginnt die Attribute und eine weitere `--` die Methoden.
+- Formen aus Netzwerk und IT setzen ihren Text unter das Bild.
+- Auf einem Gerät mit einem älteren orOS erscheint eine Diagrammform als einfaches Rechteck, als Raute oder Ellipse mit demselben Text, bis das Gerät aktualisiert ist; nichts geht verloren.
+
+## Diagrammverbinder
+- Bei einem ausgewählten Pfeil wählt `Linienform` `Gerade`, `Rechtwinklig, um Formen herum` (Winkellinie: Die Linie biegt nur rechtwinklig ab und findet ihren Weg um die Formen dazwischen) oder `Gebogen`. Neue Pfeile nehmen die Linienform, die du zuletzt gewählt hast.
+- Bei einer rechtwinkligen oder gebogenen Linie: Lass das Ende eines Pfeils nahe einer Seite einer Form los (oben, rechts, unten oder links), dann verlässt oder erreicht die Linie sie immer auf dieser Seite. Lass es in der Mitte los, dann wählt sie die Seite, die zum anderen Ende zeigt.
+- `Anfang des Pfeils` und `Ende des Pfeils` stellen jede Spitze für sich ein: `Pfeil`, `Offener Pfeil`, `Leeres Dreieck (UML: erbt)`, `Gefüllte Raute (UML: besteht aus)`, `Leere Raute (UML: hat)`, `Punkt` oder `Nichts`.
+- Der Weg einer Winkellinie wird beim Zeichnen des Boards berechnet, also folgt sie den Formen, wenn du sie verschiebst. Auf einem Gerät mit einem älteren orOS erscheinen diese Pfeile als gerade Linien mit einfachen Spitzen, bis es aktualisiert ist; nichts geht verloren.
+
+## Anordnen und ausrichten
+- Wähle Haftnotizen, Texte und Formen aus, die mit Pfeilen verbunden sind, und drück `Als Diagramm anordnen`: Baum setzt jede unter die, von der ihr Pfeil kommt, mit den Eltern mittig über ihren Kindern (Organigramme, Hierarchien); Ablauf setzt sie in Ebenen entlang der Pfeile, mit so wenigen Kreuzungen wie möglich (Flussdiagramme, Prozesse). Beides geht von oben nach unten oder von links nach rechts. `Mehr` › `Board anordnen…` tut dasselbe für das ganze Board.
+- Die Gruppe behält ihre obere linke Ecke, Pfeile folgen, und Rahmen, Bilder und Zeichnungen bleiben, wo sie sind. Ein `Rückgängig` stellt alles wieder her.
+- `Ausrichten und verteilen` richtet die Auswahl an ihren linken, mittleren oder rechten Kanten aus, oder an ihren oberen, mittleren oder unteren. Bei drei oder mehr lassen `Gleicher Abstand waagerecht` und `Gleicher Abstand senkrecht` zwischen je zwei denselben Abstand, die erste und die letzte bleiben stehen.
+
+## draw.io, Visio und Mermaid
+- Mit orOS, das aus Chrome oder Edge installiert ist, öffnet sich eine .drawio- oder .vsdx-Datei auch aus deinem System: „Öffnen mit“ › orOS öffnet sie hier, genauso.
+- `Mehr` › `draw.io- oder Visio-Datei öffnen…` öffnet eine .drawio-Datei (auch komprimierte, .xml und .drawio.svg) aus draw.io oder diagrams.net. Jede Seite wird zu einem neuen Board: Formen aus Flussdiagrammen, UML und Netzwerken werden zu den passenden Diagrammformen, Swimlanes zu Rahmen, Linien bleiben mit ihren Spitzen und rechten Winkeln an ihren Formen, und Farben nehmen die nächste der zehn des Boards. Formen, die es nicht kennt, kommen als einfache Rechtecke mit ihrem Text, und es sagt dir, wie viele.
+- `Exportieren` › draw.io speichert das Board (oder die Auswahl) als .drawio-Datei, die sich in draw.io und diagrams.net öffnet; zurück im Whiteboard ist sie wie vorher.
+- `Mehr` › `Aus Mermaid-Text zeichnen…` macht aus einem Mermaid-Flussdiagramm (es beginnt mit `graph TD` oder `flowchart LR`) Formen und Pfeile, als Ablauf angeordnet; `subgraph`-Blöcke werden zu Rahmen. Der Assistent kann dasselbe.
+- Derselbe Eintrag öffnet Visio-Dateien .vsdx, einfacher: Jede Seite wird zu einem Board, Formen aus Flussdiagrammen, Organigrammen, UML und Netzwerken werden an ihren Namen erkannt, mit Text, Größe, Farbe und Verbindern; andere Visio-Formen kommen als Rechtecke mit ihrem Text, und die eigenen Zeichnungen und Bilder von Visio bleiben draußen. Alte .vsd-Dateien müssen zuerst in Visio als .vsdx gespeichert werden.
+- Eine draw.io- oder Visio-Datei wird nur gelesen: Nichts darin wird aus dem Web geholt, und als HTML geschriebene Beschriftungen werden zu reinem Text.
 
 ## Vorlagen
 - `Mehr` (die drei Punkte oben rechts) › `Vorlagen…` setzt ein fertiges Board in die Mitte des Bildschirms: `Brainstorming` (ein Thema mit Platz für Ideen rundherum), `Retrospektive` (was gut lief, was besser werden soll, was wir als Nächstes tun), `SWOT` und `Roadmap` (jetzt, als Nächstes und später auf einer Zeitachse). Es ist ein Schritt: `Rückgängig` nimmt alles zurück.

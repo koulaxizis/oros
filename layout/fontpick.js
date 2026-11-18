@@ -185,5 +185,5 @@
     });
   }
 
-  LY.fonts = { pick: pick, add: add, setDocCol: setDocCol };
+  LY.fonts = { pick: pick, add: add, setDocCol: setDocCol, cols: CB };
 })();

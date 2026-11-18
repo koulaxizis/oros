@@ -21,7 +21,9 @@
 //     device's random id for the stats), oros-library-paths (which
 //     disk file is which book on this device), covers in IndexedDB "oros-library-cache".
 // Deep link: __orosOpenAt("library", { book, loc? }) opens a book
-// (at loc or where you stopped); { openFile: { token } } takes a
+// (at loc or where you stopped); { resume: true } the last book being
+// read and { catalog: true } the free catalogues (the single app's
+// icon shortcuts, SOLO-1); { openFile: { token } } takes a
 // file handed over by the shell (BR-FILE-OPEN); { path } opens a
 // book file of the orOS disk; { preview: { path } } shows an EPUB of
 // /internal/Layout/EPUB/ without adding it (Layout's EPUB export).
@@ -558,6 +560,16 @@
       LIB.openBook(target.book, typeof target.loc === "string" && C.LOC_RE.test(target.loc) ? target.loc : null);
       return;
     }
+    // Single app "orOS Library" icon shortcuts (SOLO-1): Continue
+    // reading opens the last book opened and not finished (none: the
+    // shelf stays), Free books opens the free catalogues.
+    if (target.resume === true) {
+      var last = C.continueList(LIB.data, 1)[0];
+      if (last) LIB.openBook(last.id);
+      else LIB.toast(LIB.t("msg.noResume"));
+      return;
+    }
+    if (target.catalog === true) { LIB.catalog.open(); return; }
     // "Open with" (fileopen.js): { openFile: { token } }, the File taken
     // once with window.parent.__orosTakeFile(token): an .oroslibrary
     // file goes to the record kit, a book file is added and opened.
@@ -592,6 +604,34 @@
       LIB.reader.open(b, path, loc);
     });
   };
+
+  // CONT-1 W4: tell the shell which book is open (continue.js keeps the
+  // book's id and title only; the reading place travels with the books
+  // as always). When the reader is ready, and once at the first tap or
+  // key after the start; nothing before that, so a restored book never
+  // hides the one from the other device. A preview is not a book yet.
+  var contLive = false;
+  LIB.contNote = function () {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      var c = W && LIB.reader && LIB.reader.current();
+      var b = c && c.book;
+      if (b && !b.preview && b.title && typeof b.id === "string" && C.BOOK_ID_RE.test(b.id))
+        W.note("library", { target: { book: b.id }, title: String(b.title) });
+    } catch (e) {}
+  };
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      LIB.contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
 
   // ---------- Boot ----------
   function boot() {

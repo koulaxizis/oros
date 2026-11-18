@@ -50,7 +50,10 @@ const TEXT = {
     siteHowto: "Στο κινητό πάτα το κουμπί ή σκάναρε τον κωδικό QR από το F-Droid ή το Droid-ify. Μετά εγκατέστησε όποια εφαρμογή του orOS θέλεις· οι ενημερώσεις έρχονται μόνες τους."
   }
 };
-const LOCALE = { en: "en-US", el: "el" };
+// German (the third orOS language): only for an app whose texts.json
+// has a "de" part (its own name, summary and description); F-Droid
+// shows English to German phones for the others.
+const LOCALE = { en: "en-US", el: "el", de: "de-DE" };
 
 // Every APK the android workflow publishes: oros.apk, oros-<id>.apk and
 // oros-drive.apk (orOS Drive, DRIVE-APP: its own source repository)
@@ -87,9 +90,9 @@ function feature(id) {
 }
 
 function texts(a, l) {
-  const T = TEXT[l];
-  const name = a.name || (a.id === "oros" ? "orOS" : S.nameOf(a.id, l));
+  const T = TEXT[l] || TEXT.en;
   const own = store(a.id);
+  const name = (own && own[l] && own[l].name) || a.name || (a.id === "oros" ? "orOS" : S.nameOf(a.id, l));
   if (own && own[l] && own[l].summary && own[l].description) {
     return { name, summary: own[l].summary, description: own[l].description };
   }
@@ -98,6 +101,12 @@ function texts(a, l) {
     summary: a.id === "oros" ? T.orosSummary : T.summary,
     description: a.id === "oros" ? T.oros : T.body(name)
   };
+}
+
+// The store languages of one app: English, Greek, and German when its
+// texts.json has a German part.
+function langs(own) {
+  return Object.keys(TEXT).concat(own && own.de && own.de.summary && own.de.description ? ["de"] : []);
 }
 
 function category(a) {
@@ -202,7 +211,8 @@ function write(dir, opts) {
     apks[a.apk] = a.pkg;
     fs.mkdirSync(meta, { recursive: true });
     fs.writeFileSync(path.join(meta, a.pkg + ".yml"), yml(a));
-    for (const l of Object.keys(TEXT)) {
+    const own = store(a.id);
+    for (const l of langs(own)) {
       const d = path.join(meta, a.pkg, LOCALE[l]);
       fs.mkdirSync(d, { recursive: true });
       const t = texts(a, l);
@@ -240,4 +250,4 @@ if (require.main === module) {
   const apks = write(dir);
   console.log("metadata for " + Object.keys(apks).length + " apps");
 }
-module.exports = { list, texts, category, shots, feature, site, write, TEXT };
+module.exports = { list, texts, category, shots, feature, site, write, langs, TEXT };

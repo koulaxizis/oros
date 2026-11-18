@@ -1277,7 +1277,36 @@
     prefs.last = path;
     savePrefs();
     if (!hadSearch) refresh();
+    contNote();
   }
+
+  // CONT-1 W3: tell the shell which folder is open (continue.js keeps the
+  // path and the folder's name only, never a listing). The top folder and
+  // the trash are not worth continuing. On navigating, and once at the
+  // first tap or key after the start; nothing before that, so a restored
+  // folder never hides the one from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      if (!W || view !== "files" || typeof cwd !== "string" || cwd.indexOf(ROOT + "/") !== 0 || CORE.isTrashPath(cwd)) return;
+      var name = cwd.replace(/\/+$/, "");
+      name = name.slice(name.lastIndexOf("/") + 1);
+      if (name) W.note("files", { target: { path: cwd, dir: 1 }, title: name });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
 
   function clearSelection() {
     selectedPaths = {};
