@@ -472,6 +472,7 @@
         b.addEventListener("levelchange", up); b.addEventListener("chargingchange", up);
       }).catch(function () {});
     } catch (e) {}
+    document.addEventListener("oros-power", function () { motionSync(); });
 
     function motionStop() {
       if (raf) cancelAnimationFrame(raf);
@@ -482,7 +483,10 @@
     function motionSync() {
       if (stopped) return;
       var st = (o.get && o.get()) || {};
-      var why = stillReason({ motion: st.land && st.land.motion, reduced: reduced(), battery: battery, slow: slow });
+      // Energy saver (qsettings.js 1.2.0) decides when it is there.
+      var sv = document.documentElement.getAttribute("data-oros-saver");
+      var why = stillReason({ motion: st.land && st.land.motion, reduced: reduced(),
+        battery: sv === null ? battery : sv === "1" ? { level: 0, charging: false } : null, slow: slow });
       if (why || !cur || (o.paused && o.paused()) || document.hidden) { motionStop(); return; }
       if (!fx) {
         fx = document.createElement("canvas");

@@ -109,3 +109,59 @@ test("text on the accent: black or white, whichever reads better", () => {
   assert.equal(Q.onAccent("rgb(20, 20, 60)"), "#fff");
   assert.equal(Q.onAccent("red"), "");
 });
+
+test("Keep awake: one hour, two hours, until turned off, expiry (PWR-1)", () => {
+  const now = new Date(2026, 10, 18, 23, 30, 0).getTime();
+  assert.equal(Q.awakeUntil("hour", now), now + 3600000);
+  assert.equal(Q.awakeUntil("2h", now), now + 7200000);
+  assert.equal(Q.awakeUntil("on", now), "on");
+  assert.deepEqual(Q.awakeState("on", now), { on: true, until: 0 });
+  assert.deepEqual(Q.awakeState(String(now + 5), now), { on: true, until: now + 5 });
+  assert.deepEqual(Q.awakeState(String(now - 5), now), { on: false, until: 0 });
+  assert.deepEqual(Q.awakeState("", now), { on: false, until: 0 });
+  assert.deepEqual(Q.awakeState("junk", now), { on: false, until: 0 });
+  const t = (k) => ({ "qs.awake.until": "Until {t}", "qs.awake.untiltomorrow": "Until tomorrow {t}",
+    "qs.awake.untiloff": "Until you turn it off" })[k];
+  const fmt = (d) => String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  assert.equal(Q.awakeSub({ on: false }, now, fmt, t), "");
+  assert.equal(Q.awakeSub({ on: true, until: 0 }, now, fmt, t), "Until you turn it off");
+  // 23:30 + 2 hours runs past midnight.
+  assert.equal(Q.awakeSub({ on: true, until: Q.awakeUntil("2h", now) }, now, fmt, t), "Until tomorrow 01:30");
+  assert.equal(Q.awakeSub({ on: true, until: now + 600000 }, now, fmt, t), "Until 23:40");
+});
+
+test("Energy saver: manual, by itself under 20 %, a refusal holds until the charger (PWR-1)", () => {
+  const low = { level: 0.15, charging: false }, lowCharging = { level: 0.15, charging: true }, ok = { level: 0.6, charging: false };
+  assert.equal(Q.lowBattery(low), true);
+  assert.equal(Q.lowBattery(lowCharging), false);
+  assert.equal(Q.lowBattery({ level: 0.2, charging: false }), false);
+  assert.equal(Q.lowBattery(null), false);
+  assert.deepEqual(Q.saverState("", ok), { on: false, auto: false });
+  assert.deepEqual(Q.saverState("on", ok), { on: true, auto: false });
+  assert.deepEqual(Q.saverState("", low), { on: true, auto: true });
+  assert.deepEqual(Q.saverState("", lowCharging), { on: false, auto: false });
+  assert.deepEqual(Q.saverState("", null), { on: false, auto: false });
+  // Turned off on a low battery: stays off until the charger.
+  assert.equal(Q.saverToggle("", low), "off-low");
+  assert.deepEqual(Q.saverState("off-low", low), { on: false, auto: false });
+  assert.equal(Q.saverStored("off-low", low), "off-low");
+  assert.equal(Q.saverStored("off-low", lowCharging), "");
+  assert.equal(Q.saverStored("on", lowCharging), "on");
+  // Manual on stays on, also on the charger; off again by hand.
+  assert.equal(Q.saverToggle("", ok), "on");
+  assert.equal(Q.saverToggle("on", ok), "");
+  assert.equal(Q.saverToggle("off-low", low), "on");
+});
+
+test("Energy saver: the desktop's moving parts read <html data-oros-saver> (PWR-1)", () => {
+  assert.match(read("qsettings.js"), /setAttribute\("data-oros-saver", sv\.on \? "1" : "0"\)/);
+  assert.match(read("qsettings.js"), /new CustomEvent\("oros-power"/);
+  assert.match(read("qsettings.js"), /wakeLock\.request|W\.request\("screen"\)/);
+  for (const f of ["shell.js", "seasonal.js", "widgets.js", "wallpaper/land.js", "wallpaper/wxdesk.js"]) {
+    const s = read(f);
+    assert.ok(s.includes("data-oros-saver"), f + " reads the saver flag");
+  }
+  for (const f of ["shell.js", "seasonal.js", "wallpaper/land.js", "wallpaper/wxdesk.js"]) {
+    assert.ok(read(f).includes('addEventListener("oros-power"'), f + " follows the switch");
+  }
+});

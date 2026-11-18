@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — qsettings.js (Quick settings, GNOME style, v1.1.0)
+// orOS — qsettings.js (Quick settings, GNOME style, v1.2.0)
 // ------------------------------------------------------------
 // A shell component, like osk.js and quickmenu.js: it runs IN the
 // shell document. shell.js calls attach() once at boot (also in a
@@ -27,7 +27,9 @@
 //                 High contrast, On-screen keyboard (not on phones),
 //                 Clipboard (1.1.0, only while the clipboard history
 //                 of cliphist.js is on: opens its panel), Emoji (1.1.0,
-//                 emoji.js: the emoji picker);
+//                 emoji.js: the emoji picker), Keep awake (1.2.0:
+//                 › = 1 hour, 2 hours, until I turn it off), Energy
+//                 saver (1.2.0, see "Power");
 //       playing   one row per sound that plays in the shell (Music,
 //                 Podcasts, Radio, Sound Mixer) with Play / Pause.
 //     Every switch goes through the shell's own setter (theme,
@@ -52,13 +54,28 @@
 //   never opens the panel itself. Nothing here depends on it; an
 //   older stick keeps its own System button.
 //
+// Power (1.2.0, PWR-1), device-local like Do Not Disturb:
+//   • Keep awake ("oros-awake": "on" or the end in ms) holds a Screen
+//     Wake Lock while orOS is on screen (re-requested when it comes
+//     back) and sets <html data-oros-awake="1">; the orOS USB system
+//     extension pauses the screen blanking and sleep while it is set.
+//   • Energy saver ("oros-saver": "on", or "off-low" = turned off on a
+//     low battery, until the next charge) also turns on by itself under
+//     20 % battery while not charging, and off again on the charger.
+//     <html data-oros-saver> is always "1" or "0" once this file runs;
+//     the live wallpaper (shell.js), Living land, the weather desktop,
+//     seasonal effects, the app open/close animation and widgets read
+//     it (their own battery rule only runs where the attribute is
+//     missing). The DOM event "oros-power" on document says it changed.
+//     Sync, notifications, alarms and sound never wait for it.
+//
 // Pure logic (DND times, labels, the battery rule) is unit-tested in
 // node (tests/qsettings.test.js).
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var HOUR = 3600000;
 
   // ---------- 1. Model (pure) ----------
@@ -125,8 +142,53 @@
   // Large text: on from 130 % up to the largest; off = 100 %.
   function bigOn(size) { return size >= 130; }
 
+  // Keep awake: the stored value for a choice ("hour", "2h", "on").
+  function awakeUntil(choice, now) {
+    if (choice === "hour") return now + HOUR;
+    if (choice === "2h") return now + 2 * HOUR;
+    return "on";
+  }
+  // The stored "oros-awake" → { on, until } (until 0 = until turned off).
+  function awakeState(raw, now) {
+    if (raw === "on") return { on: true, until: 0 };
+    var n = Number(raw);
+    if (raw && isFinite(n) && n > now) return { on: true, until: n };
+    return { on: false, until: 0 };
+  }
+  // The second line of the Keep awake button.
+  function awakeSub(a, now, fmtTime, t) {
+    if (!a || !a.on) return "";
+    if (!a.until) return t("qs.awake.untiloff");
+    var d = new Date(a.until), n = new Date(now);
+    var same = d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+    return t(same ? "qs.awake.until" : "qs.awake.untiltomorrow").replace("{t}", fmtTime(d));
+  }
+  // Low battery, the rule seasonal.js and the wallpapers always used.
+  function lowBattery(b) {
+    return !!(b && typeof b.level === "number" && isFinite(b.level) && b.level < 0.2 && !b.charging);
+  }
+  // Energy saver from the stored "oros-saver" and the battery:
+  // { on, auto } (auto = it turned on by itself on a low battery).
+  function saverState(stored, b) {
+    if (stored === "on") return { on: true, auto: false };
+    if (lowBattery(b) && stored !== "off-low") return { on: true, auto: true };
+    return { on: false, auto: false };
+  }
+  // What to store after a press: on → off (held until the next charge
+  // when the battery is low), off → on.
+  function saverToggle(stored, b) {
+    if (saverState(stored, b).on) return lowBattery(b) ? "off-low" : "";
+    return "on";
+  }
+  // On the charger a refusal ("off-low") is forgotten.
+  function saverStored(stored, b) {
+    return stored === "off-low" && b && b.charging ? "" : (stored || "");
+  }
+
   var model = { VER: VER, dndUntil: dndUntil, dndSub: dndSub, syncKey: syncKey,
-                batteryShown: batteryShown, batteryPct: batteryPct, batteryAttr: batteryAttr, bigOn: bigOn, onAccent: onAccent, nightSub: nightSub };
+                batteryShown: batteryShown, batteryPct: batteryPct, batteryAttr: batteryAttr, bigOn: bigOn, onAccent: onAccent, nightSub: nightSub,
+                awakeUntil: awakeUntil, awakeState: awakeState, awakeSub: awakeSub, lowBattery: lowBattery,
+                saverState: saverState, saverToggle: saverToggle, saverStored: saverStored };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -231,7 +293,9 @@
     signout: SV + '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>',
     play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
     pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
-    music: SV + '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>'
+    music: SV + '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+    cup: SV + '<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3v3M12 3v3"/></svg>',
+    leaf: SV + '<path d="M5 19c0-9 6-14 15-14 0 9-5 15-14 15"/><path d="M5 19l8-8"/></svg>'
   };
   function batteryIcon(b) {
     var w = Math.max(1, Math.round(batteryPct(b) / 100 * 12));
@@ -277,12 +341,16 @@
     var d = dnd();
     var html = (online ? IC.net : IC.netOff);
     if (d && d.on) html += IC.bellOff;
+    var aw = awake(), sv = saver();
+    if (aw.on) html += IC.cup;
+    if (sv.on) html += IC.leaf;
     var b = bat();
     if (batteryShown(b)) html += batteryIcon(b) + '<span>' + batteryPct(b) + "%</span>";
     html += IC.power;
     if (btn.__qsHtml !== html) { btn.innerHTML = html; btn.__qsHtml = html; }
     var label = t("qs.title") + " · " + t(online ? "qs.net.on" : "qs.net.off") +
       (d && d.on ? " · " + t("qs.dnd") : "") +
+      (aw.on ? " · " + t("qs.awake") : "") + (sv.on ? " · " + t("qs.saver") : "") +
       (batteryShown(b) ? " · " + t("qs.battery").replace("{p}", batteryPct(b)) : "");
     btn.setAttribute("aria-label", label);
     btn.title = label;
@@ -304,10 +372,61 @@
   function watchBattery() {
     if (!navigator.getBattery) return;
     navigator.getBattery().then(function (b) {
-      var up = function () { battery = { level: b.level, charging: b.charging }; paintBtn(); if (panel) paint(); };
+      var up = function () { battery = { level: b.level, charging: b.charging }; applyPower(); paintBtn(); if (panel) paint(); };
       ["levelchange", "chargingchange"].forEach(function (ev) { b.addEventListener(ev, up); });
       up();
     }).catch(function () {});
+  }
+
+  // ---------- 3b. Power: Keep awake + Energy saver ----------
+  var AWAKE_KEY = "oros-awake", SAVER_KEY = "oros-saver";
+  var wakeSentinel = null, wakeAsking = false, powerKey = "";
+  function lsGet(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
+  function lsSet(k, v) { try { if (v) localStorage.setItem(k, String(v)); else localStorage.removeItem(k); } catch (e) {} }
+  function awake() { return awakeState(lsGet(AWAKE_KEY), Date.now()); }
+  function saver() { return saverState(lsGet(SAVER_KEY), bat()); }
+  // Keep awake is offered where the browser can hold the screen on, or
+  // where the orOS USB extension does it.
+  function awakeOk() {
+    return !!(navigator.wakeLock && typeof navigator.wakeLock.request === "function") ||
+      doc.documentElement.getAttribute("data-oros-qs-sys") === "1";
+  }
+  function setAwake(v) { lsSet(AWAKE_KEY, v || ""); applyPower(); paintBtn(); if (panel) paint(); }
+  function toggleSaver() { lsSet(SAVER_KEY, saverToggle(lsGet(SAVER_KEY), bat())); applyPower(); paintBtn(); if (panel) paint(); }
+
+  function holdScreen(on) {
+    var W = navigator.wakeLock;
+    if (!on || doc.hidden) {
+      if (wakeSentinel) { var s0 = wakeSentinel; wakeSentinel = null; call(function () { s0.release().catch(function () {}); }); }
+      return;
+    }
+    if (wakeSentinel || wakeAsking || !W || typeof W.request !== "function") return;
+    wakeAsking = true;
+    try {
+      W.request("screen").then(function (s) {
+        wakeAsking = false;
+        if (!awake().on || doc.hidden) { s.release().catch(function () {}); return; }
+        wakeSentinel = s;
+        s.addEventListener("release", function () { if (wakeSentinel === s) wakeSentinel = null; });
+      }, function () { wakeAsking = false; });
+    } catch (e) { wakeAsking = false; }
+  }
+
+  // Applies both to <html> and the wake lock; tells the desktop when
+  // something changed. Cheap: runs with the 2 s repaint.
+  function applyPower() {
+    var raw = lsGet(SAVER_KEY), next = saverStored(raw, bat());
+    if (next !== raw) lsSet(SAVER_KEY, next);
+    var a = awake(), sv = saver(), de = doc.documentElement;
+    if (!a.on && lsGet(AWAKE_KEY)) lsSet(AWAKE_KEY, "");
+    de.setAttribute("data-oros-saver", sv.on ? "1" : "0");
+    if (a.on) de.setAttribute("data-oros-awake", "1"); else de.removeAttribute("data-oros-awake");
+    holdScreen(a.on);
+    var key = (sv.on ? "s" : "") + (a.on ? "a" : "");
+    if (key !== powerKey) {
+      powerKey = key;
+      try { doc.dispatchEvent(new CustomEvent("oros-power", { detail: { saver: sv.on, awake: a.on } })); } catch (e) {}
+    }
   }
 
   // ---------- 4. Panel ----------
@@ -461,7 +580,11 @@
     parts.clip = pill(IC.clip, then(function () { call(function () { root.orosClip.open(); }); }), null);
     // Emoji picker (emoji.js): writes into the field you were in.
     parts.emoji = pill(IC.emoji, then(function () { call(function () { root.orosEmoji.open(); }); }), null);
-    [parts.net, parts.sync, parts.dark, parts.night, parts.dnd, parts.gate, parts.big, parts.contrast, parts.osk, parts.clip, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
+    // Keep awake: tap = until turned off / off; the arrow = for how long.
+    parts.awake = pill(IC.cup, function () { setAwake(awake().on ? "" : "on"); },
+      function () { setSub(sub === "awake" ? "" : "awake"); }, t("qs.awake.more"));
+    parts.saver = pill(IC.leaf, toggleSaver, null);
+    [parts.net, parts.sync, parts.dark, parts.night, parts.dnd, parts.awake, parts.saver, parts.gate, parts.big, parts.contrast, parts.osk, parts.clip, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
     panel.appendChild(grid);
 
     parts.dndMenu = el("div", "qs-menu");
@@ -475,6 +598,16 @@
     parts.dndOff = menuItem("", t("qs.dnd.turnoff"), function () { setDnd(false); setSub(""); });
     parts.dndMenu.appendChild(parts.dndOff);
     panel.appendChild(parts.dndMenu);
+
+    parts.awakeMenu = el("div", "qs-menu");
+    parts.awakeMenu.setAttribute("role", "group");
+    parts.awakeMenu.appendChild(el("h3")).textContent = t("qs.awake");
+    [["hour", "qs.awake.hour"], ["2h", "qs.awake.2h"], ["on", "qs.awake.untiloff"]].forEach(function (c) {
+      parts.awakeMenu.appendChild(menuItem("", t(c[1]), function () { setAwake(awakeUntil(c[0], Date.now())); setSub(""); }));
+    });
+    parts.awakeOff = menuItem("", t("qs.awake.turnoff"), function () { setAwake(""); setSub(""); });
+    parts.awakeMenu.appendChild(parts.awakeOff);
+    panel.appendChild(parts.awakeMenu);
 
     parts.gateMenu = el("div", "qs-menu");
     parts.gateMenu.setAttribute("role", "group");
@@ -575,6 +708,15 @@
     parts.dndMenu.hidden = sub !== "dnd" || !d;
     if (parts.dnd.more) parts.dnd.more.setAttribute("aria-expanded", sub === "dnd" ? "true" : "false");
     parts.dndOff.hidden = !(d && d.on);
+    var aw = awake(), ok = awakeOk();
+    parts.awake.box.hidden = !ok;
+    if (ok) setPill(parts.awake, t("qs.awake"), awakeSub(aw, now, fmtTime, t), aw.on, true);
+    parts.awakeMenu.hidden = sub !== "awake" || !ok;
+    if (parts.awake.more) parts.awake.more.setAttribute("aria-expanded", sub === "awake" ? "true" : "false");
+    parts.awakeOff.hidden = !aw.on;
+    var sv = saver();
+    setPill(parts.saver, t("qs.saver"), sv.auto ? t("qs.saver.auto") : "", sv.on, true);
+
     var g = gate();
     parts.gate.box.hidden = !g;
     if (g) setPill(parts.gate, t("qs.gate"), !g.hold ? t("qs.gate.on") : g.hold >= 8e15 ? t("qs.gate.paused") : t("qs.gate.until").replace("{t}", fmtTime(new Date(g.hold))), !g.hold, true);
@@ -644,10 +786,18 @@
     injectCss();
     mountBtn();
     watchBattery();
+    applyPower();
+    // Back on screen: the browser dropped the wake lock when it hid.
+    doc.addEventListener("visibilitychange", function () { applyPower(); });
+    // Another orOS tab on this device changed a switch.
+    root.addEventListener("storage", function (e) {
+      if (e.key === AWAKE_KEY || e.key === SAVER_KEY) { applyPower(); paintBtn(); if (panel) paint(); }
+    });
     root.addEventListener("online", function () { paintBtn(); if (panel) paint(); });
     root.addEventListener("offline", function () { paintBtn(); if (panel) paint(); });
     // Cheap repaint: DND running out, sync state, playing sounds.
     setInterval(function () {
+      applyPower();
       paintBtn();
       if (panel) paint();
     }, 2000);
@@ -661,6 +811,8 @@
     close: function () { close(); },
     toggle: toggle,
     isOpen: isOpen,
+    // Power (1.2.0): what the desktop's moving parts and the USB read.
+    power: function () { var a = awake(), s = saver(); return { awake: a.on, awakeUntil: a.until, saver: s.on, saverAuto: s.auto }; },
     // The shell calls this after a language change.
     refresh: function () {
       paintBtn();
