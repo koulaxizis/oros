@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.55.00
+- **The Dock at any edge.** The Dock can now sit at the left, right or top of the screen as well as the bottom: Settings › Appearance › Dock › `Position`. Shortcuts, widgets and notes on the desktop make room for it. On a phone or a small window it stays at the bottom.
+
 ## Version 7.54.00
 - **New app: Shop.** Your own WooCommerce shop's figures inside orOS: today's orders and sales, this month and this year, the products that sell and stock that runs out. With the free orOS Connect plugin also costs and result, partners' shares and consignments. It only reads, keeps totals only (never customer data) and opens offline with the last read. Connect your shop in Settings › Connected services.
 

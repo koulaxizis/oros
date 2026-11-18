@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.54.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.55.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -12000,6 +12000,9 @@
                over: !!p.over, fine: !!p.fine, pinned: Number(p.pinned) || 0,
                style: typeof p.style === "string" ? p.style : null,
                hover: typeof p.hover === "string" ? p.hover : null,
+               pos: typeof p.pos === "string" ? p.pos : null,
+               side: typeof p.side === "string" ? p.side : null,
+               positions: Array.isArray(p.positions) ? p.positions.filter(function (k) { return typeof k === "string"; }) : [],
                hovers: Array.isArray(p.hovers) ? p.hovers.filter(function (k) { return typeof k === "string"; }) : [],
                styles: Array.isArray(p.styles) ? p.styles.filter(function (k) { return typeof k === "string"; }) : [] };
     } catch (e) { return null; }
@@ -12237,7 +12240,7 @@
       case "wpland:light":  wpLandNewShape({ light: value ? 1 : 0 }); settingsNotify(); return;
       case "wxdesk:on":     if (window.orosWxDesk) { window.orosWxDesk.set(!!value); settingsNotify(); } return;
     }
-    if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
+    if (/^dock:(on|size|magnify|autohide|over|style|hover|pos)$/.test(name)) {
       var L = settingsLauncher();
       if (L) { L.setPref(name.slice(5), value); settingsNotify(); }
       return;
