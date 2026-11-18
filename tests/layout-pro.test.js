@@ -241,6 +241,16 @@ test("export_pdf: checked arguments, the report the model gets, the gate lists",
   assert.match(read("gate/gate.js"), /"export_pdf"/);
 });
 
+test("pro: a create + folder + bleed fill + pictures request is valid as the model sends it", () => {
+  const r = CMD.check([{ op: "create", title: "x", w: 180, h: 250, u: "mm", facing: 1, side: "right", mm: 3 },
+    { op: "images", folder: "/internal/Drive/PC/Vythos", side: "right" }, { op: "bleedfill", mode: "smart" }, { op: "thumbs", pages: "1-3", dpi: 72 }]);
+  assert.equal(r.ok, true, r.err);
+  assert.deepEqual(r.steps[1].paths, []);
+  assert.equal(r.steps[1].folder, "/internal/Drive/PC/Vythos");
+  assert.equal(CMD.check([{ op: "images" }]).ok, false, "needs paths or folder");
+  assert.equal(CMD.check([{ op: "images", paths: ["a.jpg"] }, { op: "create", w: 100, h: 100 }]).ok, false, "create first only");
+});
+
 test("pro: the read-back gives the setup, pages and frames in mm", () => {
   const d = PRO.makeDoc(BOOK, 10);
   PRO.placePictures(d, pics(3), { fit: "trim" }, 20, idf());

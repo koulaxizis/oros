@@ -90,7 +90,11 @@
     });
     Object.keys(def.args).forEach(function (k) { if (def.args[k].req && !given(raw[k])) bad.push(k + " is missing"); });
     if (typeof raw.pages === "string" && !S.pageTest(raw.pages)) bad.push("pages " + JSON.stringify(raw.pages) + " is not a page list");
-    var st = bad.length ? null : R.normStep(raw, wrap(raw.op));
+    // an optional list left out is an empty list (recipes/core.js arg
+    // refuses a missing list: images with a folder and no paths)
+    var full = Object.assign({}, raw);
+    Object.keys(def.args).forEach(function (k) { if (def.args[k].t === "list" && !def.args[k].req && !given(full[k])) full[k] = []; });
+    var st = bad.length ? null : R.normStep(full, wrap(raw.op));
     if (!st) return { err: raw.op + ": " + (bad.join("; ") || "not valid") };
     return { step: st };
   }
