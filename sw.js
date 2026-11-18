@@ -704,6 +704,7 @@ var PRECACHE_URLS = [
   "transfer/engine.js",
   "transfer/store.js",
   "transfer/app.js",
+  "transfer/search.js",
   "transfer/help.en.txt",
   "transfer/help.el.txt",
   "mail/",
