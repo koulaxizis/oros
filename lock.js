@@ -100,7 +100,40 @@
     if (typeof c.i !== "number" || c.i !== Math.floor(c.i) || c.i < ITER_MIN || c.i > ITER_MAX) return null;
     return { v: 1, kind: c.kind, salt: c.salt, hash: c.hash, i: c.i,
              idle: IDLES.indexOf(c.idle) !== -1 ? c.idle : DEFAULT_IDLE,
-             hidden: c.hidden === true, scope: c.scope === "apps" ? "apps" : "all" };
+             hidden: c.hidden === true, scope: c.scope === "apps" ? "apps" : "all",
+             info: parseInfo(c.info) };
+  }
+
+  // ----- Lock-screen info (APPLOCK-1 wave 4, idea 13) -----
+  // `oros-lock` field `info` = { ev, mu, nc }: the next event's time,
+  // music buttons, the number of notices. Off unless set to true; never
+  // a title, a place, a song or an app's name.
+  var INFO_KEYS = ["ev", "mu", "nc"];
+  function parseInfo(o) {
+    var out = { ev: false, mu: false, nc: false };
+    if (o && typeof o === "object" && !Array.isArray(o)) INFO_KEYS.forEach(function (k) { out[k] = o[k] === true; });
+    return out;
+  }
+  // What the lock screen may show now: null under Sensitive work (any
+  // level) or on a till, or when nothing is switched on.
+  function infoShown(c, level, till) {
+    if (!c || till || (level && level !== "off")) return null;
+    var i = parseInfo(c.info);
+    return (i.ev || i.mu || i.nc) ? i : null;
+  }
+  // The next event row → { day: 0 today | 1 tomorrow, time: "HH:MM" } or
+  // null. Rows are Today rows ({ id, due, time }); only real events
+  // ("ev:"), only timed ones, today from now on and tomorrow.
+  function nextEvent(rows, today, tomorrow, hm) {
+    var best = null;
+    (Array.isArray(rows) ? rows : []).forEach(function (r) {
+      if (!r || typeof r.id !== "string" || r.id.indexOf("ev:") !== 0) return;
+      if (typeof r.time !== "string" || !/^\d{2}:\d{2}$/.test(r.time)) return;
+      var day = r.due === today ? 0 : r.due === tomorrow ? 1 : -1;
+      if (day < 0 || (day === 0 && r.time < hm)) return;
+      if (!best || day < best.day || (day === best.day && r.time < best.time)) best = { day: day, time: r.time };
+    });
+    return best;
   }
 
   // ----- App lock (APPLOCK-1) -----
@@ -299,7 +332,8 @@
     STRICT_KEY: STRICT_KEY, parseStrict: parseStrict, strictCaps: strictCaps, clampCfg: clampCfg, loosens: loosens,
     parseDuress: parseDuress, DMS_DAYS: DMS_DAYS, parseDms: parseDms, dmsDue: dmsDue,
     APPS_KEY: APPS_KEY, APPS_OPEN_KEY: APPS_OPEN_KEY, APPS_FREE: APPS_FREE, RELOCK_MS: RELOCK_MS,
-    parseApps: parseApps, appState: appState, parseOpen: parseOpen
+    parseApps: parseApps, appState: appState, parseOpen: parseOpen,
+    parseInfo: parseInfo, infoShown: infoShown, nextEvent: nextEvent
   };
 
   // ---------- 2. Crypto ----------
@@ -332,7 +366,8 @@
     return derive(secret, salt, ITER).then(function (hash) {
       return { v: 1, kind: kind, salt: b64(salt), hash: hash, i: ITER,
                idle: prev ? prev.idle : DEFAULT_IDLE, hidden: prev ? prev.hidden : false,
-               scope: prev && prev.scope === "apps" ? "apps" : "all" };
+               scope: prev && prev.scope === "apps" ? "apps" : "all",
+               info: parseInfo(prev ? prev.info : null) };
     });
   }
   function matches(cfg, secret) {
@@ -910,6 +945,8 @@
     clock.appendChild(time);
     clock.appendChild(date);
     box.appendChild(clock);
+    var info = buildInfo();
+    box.appendChild(info.box);
     var ico = node("div", "lk-ico");
     ico.innerHTML = LOCK_SVG;                          // static icon
     box.appendChild(ico);
@@ -968,7 +1005,104 @@
     });
     return { dlg: dlg, time: time, date: date, main: main, input: input, msg: msg, fv: fv,
              kind: kind, recInput: null, recMsg: null, rbtn: null, modal: false, restacking: false,
-             bioBox: bioBox, bioBtn: null, bioBusy: false, bioAsked: false };
+             bioBox: bioBox, bioBtn: null, bioBusy: false, bioAsked: false, info: info };
+  }
+
+  // Lock-screen info (wave 4): three quiet lines under the clock, filled
+  // from the shell's window.__orosLockInfo = { next() → Promise<rows>,
+  // count() → n, media() → { playing, next, prev } | null, cmd(c) }. The
+  // boxes are made once, so a 15 s repaint keeps the focus on a button.
+  var INFO_ICONS = {
+    prev: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>',
+    play: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>',
+    pause: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+    next: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>'
+  };
+  var infoSeq = 0;
+  function buildInfo() {
+    var box = node("div", "lk-info");
+    box.hidden = true;
+    var ev = node("p", "lk-info-line lk-info-ev");
+    var nc = node("p", "lk-info-line lk-info-nc");
+    var mu = node("div", "lk-info-mu");
+    mu.setAttribute("role", "group");
+    mu.setAttribute("aria-label", t("lock.info.music"));
+    var btn = {};
+    ["prev", "play", "next"].forEach(function (k) {
+      var b = node("button", "lk-mu-btn");
+      b.type = "button";
+      b.setAttribute("data-mu", k);
+      b.innerHTML = INFO_ICONS[k];                       // static icons
+      b.setAttribute("aria-label", t("lock.info." + k));
+      b.title = t("lock.info." + k);
+      b.addEventListener("click", function () { infoCmd(k === "play" ? "toggle" : k); });
+      mu.appendChild(b);
+      btn[k] = b;
+    });
+    ev.hidden = nc.hidden = mu.hidden = true;
+    box.appendChild(ev);
+    box.appendChild(mu);
+    box.appendChild(nc);
+    return { box: box, ev: ev, nc: nc, mu: mu, btn: btn };
+  }
+  function infoApi() {
+    var P = root.__orosLockInfo;
+    return P && typeof P === "object" ? P : null;
+  }
+  function infoCmd(c) {
+    var P = infoApi();
+    if (!P || typeof P.cmd !== "function" || !ui || !ui.info) return;
+    try { P.cmd(c); } catch (e) {}
+    setTimeout(paintInfo, 250);
+  }
+  function ymdLocal(d) {
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }
+  function paintInfo() {
+    if (!ui || !ui.info) return;
+    var I = ui.info, on = infoShown(cfg, strictLevel(), tillOn()), P = infoApi();
+    if (!on || !P) {
+      I.box.hidden = true;
+      I.ev.hidden = I.nc.hidden = I.mu.hidden = true;
+      I.ev.textContent = I.nc.textContent = "";
+      return;
+    }
+    I.box.hidden = false;
+    // Notices: a number, nothing else.
+    var n = 0;
+    if (on.nc) { try { n = Math.max(0, Math.floor(Number(P.count()) || 0)); } catch (e) { n = 0; } }
+    I.nc.hidden = !n;
+    I.nc.textContent = n ? (n === 1 ? t("lock.info.one") : t("lock.info.many", { n: n > 99 ? "99+" : n })) : "";
+    // Music: buttons only, for whatever already plays.
+    var m = null;
+    if (on.mu && typeof P.media === "function") { try { m = P.media(); } catch (e) { m = null; } }
+    I.mu.hidden = !m;
+    if (m) {
+      var pb = I.btn.play, k = m.playing ? "pause" : "play";
+      if (pb.getAttribute("data-state") !== k) {
+        pb.setAttribute("data-state", k);
+        pb.innerHTML = INFO_ICONS[k];
+        pb.setAttribute("aria-label", t("lock.info." + k));
+        pb.title = t("lock.info." + k);
+      }
+      I.btn.next.hidden = !m.next;
+      I.btn.prev.hidden = !m.prev;
+    }
+    // The next event: its time only (async, the newest answer wins).
+    if (!on.ev || typeof P.next !== "function") { I.ev.hidden = true; I.ev.textContent = ""; return; }
+    var seq = ++infoSeq, now = new Date(), tom = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    var hm = (now.getHours() < 10 ? "0" : "") + now.getHours() + ":" + (now.getMinutes() < 10 ? "0" : "") + now.getMinutes();
+    var got;
+    try { got = Promise.resolve(P.next()); } catch (e) { got = Promise.resolve(null); }
+    got.then(function (rows) {
+      if (seq !== infoSeq || !ui || ui.info !== I) return;
+      var e = nextEvent(rows, ymdLocal(now), ymdLocal(tom), hm);
+      I.ev.hidden = !e;
+      I.ev.textContent = e ? t(e.day === 0 ? "lock.info.today" : "lock.info.tomorrow", { t: e.time }) : "";
+    }, function () {
+      if (seq === infoSeq && ui && ui.info === I) { I.ev.hidden = true; I.ev.textContent = ""; }
+    });
   }
 
   // The sync passphrase (when this device is connected), else only
@@ -1084,7 +1218,8 @@
     }
     guardStart();
     paintClock();
-    clockTimer = setInterval(paintClock, 15000);
+    paintInfo();
+    clockTimer = setInterval(function () { paintClock(); paintInfo(); }, 15000);
     bioWatch();
     fillBio();
     show("main");
@@ -1487,7 +1622,7 @@
       var c = load();
       return { available: available(), on: !!c, kind: c ? c.kind : null,
                idle: c ? c.idle : DEFAULT_IDLE, hidden: c ? c.hidden : false, scope: c ? c.scope : "all",
-               idles: IDLES.slice(), busy: busy, locked: locked, wait: waitMs() };
+               info: parseInfo(c ? c.info : null), idles: IDLES.slice(), busy: busy, locked: locked, wait: waitMs() };
     },
     // Turn the lock on (no lock yet) with a new PIN / passphrase.
     enable: function (kind, secret) {
@@ -1545,6 +1680,11 @@
       if (name === "idle" && IDLES.indexOf(Number(value)) !== -1) c.idle = Number(value);
       else if (name === "hidden") c.hidden = !!value;
       else if (name === "scope" && (value === "all" || value === "apps")) c.scope = value;   // APPLOCK-1
+      else if (name === "info" && value && typeof value === "object") {                       // APPLOCK-1 W4
+        var i = parseInfo(c.info);
+        INFO_KEYS.forEach(function (k) { if (typeof value[k] === "boolean") i[k] = value[k]; });
+        c.info = i;
+      }
       else return false;
       var ok = save(c);
       lastActive = Date.now();

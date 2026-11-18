@@ -1321,6 +1321,9 @@
     // Wave 6 — the shell's toggle UI renders from THIS list
     // (single source of truth, no mirrored arrays)
     getKnownApps: () => KNOWN_APPS.slice(),
+    // APPLOCK-1 W4: how many notices are unread (the lock screen shows
+    // the number only, when its owner switched that on).
+    unread: () => (state.slice && Array.isArray(state.slice.items) ? state.slice.items.filter(i => !i.readAt).length : 0),
  
     // Manual operations
     fireToast,

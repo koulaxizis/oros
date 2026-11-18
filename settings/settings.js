@@ -2643,6 +2643,7 @@
       if (caps && caps.hidden) hsw.disabled = true;     // Sensitive work keeps it on
       c2.appendChild(row(t("l.hidden"), hsw, { hint: t("l.hidden.hint") }));
       host.appendChild(c2);
+      if (k.info) secLockInfo(host, L, k, strict);
       if (L.apps) secLockApps(host, L, k, s, strict);
     }
 
@@ -2652,6 +2653,22 @@
     c3.appendChild(el("p", "hint", t("l.honest")));
     c3.appendChild(el("p", "hint", t("l.forgot")));
     host.appendChild(c3);
+  }
+
+  // Lock-screen info (APPLOCK-1 wave 4, idea 13): off by default; the
+  // next event's time, music buttons, the number of notices. lock.js
+  // hides it all under Sensitive work and on a till.
+  function secLockInfo(host, L, k, strict) {
+    var c = card(t("l.info"), "lock-info");
+    c.appendChild(el("p", "hint", t("l.info.hint")));
+    [["ev", "l.info.ev"], ["mu", "l.info.mu"], ["nc", "l.info.nc"]].forEach(function (x) {
+      var sw = switchBtn(!!k.info[x[0]], "lk-info-" + x[0], function (v) {
+        var o = {}; o[x[0]] = !!v; L.option("info", o); render();
+      }, t(x[1]));
+      c.appendChild(row(t(x[1]), sw));
+    });
+    if (strict) c.appendChild(el("p", "hint", t("l.info.strict")));
+    host.appendChild(c);
   }
 
   // App lock (APPLOCK-1, lock.js orosLock.apps): which apps ask the PIN

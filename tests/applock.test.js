@@ -171,3 +171,58 @@ test("W3: Calendar, Mood, the switcher and reminders that leave the screen leave
   assert.match(wp, /function payload\(r\) \{\n\s+\/\/ APPLOCK-1 W3[^\n]*\n\s+try \{ if \(root && typeof root\.__orosLockMask === "function"\) r = root\.__orosLockMask\(r\); \} catch \(e\) \{\}/);
   assert.match(wp, /APPLOCK-1: locking an app sends again/);
 });
+
+test("W4 lock-screen info: off by default, hidden under Sensitive work and on a till, time only", () => {
+  assert.deepEqual(L.parseInfo(undefined), { ev: false, mu: false, nc: false });
+  assert.deepEqual(L.parseInfo({ ev: true, mu: 1, nc: "yes", x: true }), { ev: true, mu: false, nc: false }, "only true counts");
+  assert.deepEqual(L.parseInfo([true]), { ev: false, mu: false, nc: false });
+  const good = { v: 1, kind: "pin", salt: "c2FsdA==", hash: "aGFzaA==", i: 600000, idle: 10 };
+  assert.deepEqual(L.parseCfg(JSON.stringify(good)).info, { ev: false, mu: false, nc: false }, "a lock from before shows nothing");
+  const on = L.parseCfg(JSON.stringify(Object.assign({ info: { ev: true, nc: true } }, good)));
+  assert.deepEqual(L.infoShown(on, "off", false), { ev: true, mu: false, nc: true });
+  assert.equal(L.infoShown(on, "on", false), null, "Sensitive work");
+  assert.equal(L.infoShown(on, "hard", false), null, "Hardcore");
+  assert.equal(L.infoShown(on, "off", true), null, "a till");
+  assert.equal(L.infoShown(L.parseCfg(JSON.stringify(good)), "off", false), null, "nothing switched on");
+  assert.deepEqual(L.clampCfg(on, "on").info, on.info, "Sensitive work keeps the choice, it only hides it");
+  // The next event: real timed events only, today from now on, then tomorrow.
+  const rows = [
+    { id: "ev:a:2026-11-18", due: "2026-11-18", time: "08:00" },
+    { id: "hol:x", due: "2026-11-18", time: "10:00" },
+    { id: "ev:b", due: "2026-11-18" },
+    { id: "ev:c", due: "2026-11-19", time: "09:00" },
+    { id: "ev:d", due: "2026-11-18", time: "14:30" },
+    { id: "ev:e", due: "2026-11-20", time: "07:00" }
+  ];
+  assert.deepEqual(L.nextEvent(rows, "2026-11-18", "2026-11-19", "09:15"), { day: 0, time: "14:30" });
+  assert.deepEqual(L.nextEvent(rows, "2026-11-18", "2026-11-19", "15:00"), { day: 1, time: "09:00" });
+  assert.equal(L.nextEvent(rows.slice(0, 3), "2026-11-18", "2026-11-19", "15:00"), null);
+  assert.equal(L.nextEvent(null, "2026-11-18", "2026-11-19", "15:00"), null);
+});
+
+test("W4 wiring: the shell gives lock.js times and counts, never titles; Settings has three switches", () => {
+  const lk = read("lock.js");
+  assert.match(lk, /function paintInfo\(\) \{\n\s+if \(!ui \|\| !ui\.info\) return;\n\s+var I = ui\.info, on = infoShown\(cfg, strictLevel\(\), tillOn\(\)\)/);
+  assert.match(lk, /clockTimer = setInterval\(function \(\) \{ paintClock\(\); paintInfo\(\); \}, 15000\);/);
+  assert.match(lk, /else if \(name === "info" && value && typeof value === "object"\)/);
+  const sh = read("shell.js");
+  const api = sh.slice(sh.indexOf("window.__orosLockInfo = {"), sh.indexOf("// SB2: the Automations step"));
+  assert.match(api, /appLockSet\("calendar"\)\) return Promise\.resolve\(\[\]\)/);
+  assert.match(api, /return \{ id: String\(r\.id \|\| ""\)\.slice\(0, 3\), due: r\.due, time: r\.time \};/, "only id prefix, day and time leave the shell");
+  assert.ok(!/title|name|text/.test(api.replace(/\/\/[^\n]*/g, "")), "no title, name or text in the lock-screen API");
+  assert.match(api, /qsMedia\(\)\.filter\(function \(m\) \{ return !appLockSet\(m\.id\); \}\)/);
+  assert.match(read("notifications.js"), /unread: \(\) => \(state\.slice && Array\.isArray\(state\.slice\.items\)/);
+  const st = read("settings/settings.js");
+  assert.match(st, /if \(k\.info\) secLockInfo\(host, L, k, strict\);/);
+  assert.match(st, /\[\["ev", "l\.info\.ev"\], \["mu", "l\.info\.mu"\], \["nc", "l\.info\.nc"\]\]/);
+  const tr = read("translations.js"), de = read("i18n/de/shell.js");
+  for (const k of ["today", "tomorrow", "one", "many", "music", "play", "pause", "next", "prev"]) {
+    assert.equal(tr.split('"lock.info.' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"lock.info.' + k + '":'), k + " DE");
+  }
+  const sc = read("settings/core.js"), sd = read("i18n/de/settings.js");
+  for (const k of ["l.info", "l.info.hint", "l.info.ev", "l.info.mu", "l.info.nc", "l.info.strict", "w.lock-info"]) {
+    assert.equal(sc.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(sd.includes('"' + k + '":'), k + " DE");
+  }
+});

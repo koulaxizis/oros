@@ -16164,14 +16164,16 @@
       var ms = mu.getState();
       if (ms && ms.cur) out.push({ id: "music", name: label("music"), playing: !!ms.playing,
         title: (ms.cur.t || "") + (ms.cur.a ? " · " + ms.cur.a : ""),
-        toggle: function () { mu.toggle(); }, open: function () { openAppById("music"); } });
+        toggle: function () { mu.toggle(); }, open: function () { openAppById("music"); },
+        next: ms.hasNext ? function () { mu.next(); } : null, prev: function () { mu.prev(); } });
     }
     var pc = window.__orosPodcastsHost;
     if (pc && typeof pc.getState === "function") {
       var ps = pc.getState();
       if (ps && ps.cur) out.push({ id: "podcasts", name: label("podcasts"), playing: !!ps.playing,
         title: (ps.cur.title || "") + (ps.cur.show ? " · " + ps.cur.show : ""),
-        toggle: function () { pc.toggle(); }, open: function () { openAppById("podcasts"); } });
+        toggle: function () { pc.toggle(); }, open: function () { openAppById("podcasts"); },
+        next: function () { pc.next(); } });
     }
     var rx = window.__orosRadioHost;
     if (rx && rx.audio && rx.api && typeof rx.api.getState === "function") {
@@ -16192,6 +16194,36 @@
     }
     return out;
   }
+  // Lock-screen info (APPLOCK-1 wave 4, lock.js paintInfo): what the
+  // lock screen may show when the owner switched it on. Never a title,
+  // a place, a song or an app's name: the next event's rows go to lock.js
+  // only to read the time, players of a locked or hidden app give no
+  // buttons, notices give a number.
+  window.__orosLockInfo = {
+    next: function () {
+      var T = window.orosToday;
+      if (!T || typeof T.agenda !== "function" || appLockSet("calendar")) return Promise.resolve([]);
+      return T.agenda("calendar", 1).then(function (rows) {
+        return (rows || []).map(function (r) { return { id: String(r.id || "").slice(0, 3), due: r.due, time: r.time }; });
+      }, function () { return []; });
+    },
+    count: function () {
+      var N = window.orosNotifs;
+      try { return N && typeof N.unread === "function" ? N.unread() : 0; } catch (e) { return 0; }
+    },
+    media: function () {
+      var list = qsMedia().filter(function (m) { return !appLockSet(m.id); });
+      var m = list.filter(function (x) { return x.playing; })[0] || list[0];
+      return m ? { playing: !!m.playing, next: !!m.next, prev: !!m.prev } : null;
+    },
+    cmd: function (c) {
+      var list = qsMedia().filter(function (m) { return !appLockSet(m.id); });
+      var m = list.filter(function (x) { return x.playing; })[0] || list[0];
+      if (!m) return;
+      if (c === "toggle") m.toggle();
+      else if ((c === "next" || c === "prev") && typeof m[c] === "function") m[c]();
+    }
+  };
   // SB2: the Automations step "Pause sounds" (automations/host.js).
   // Pauses every player that is playing; nothing else.
   window.__orosPauseAll = function () {

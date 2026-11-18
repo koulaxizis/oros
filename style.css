@@ -2043,6 +2043,16 @@ dialog#oros-lock::backdrop { background: var(--bg-desktop, var(--bg)); }
 :is(#oros-lock, #oros-applock) .lk-time { font-size: 56px; font-weight: 300; line-height: 1.05; font-variant-numeric: tabular-nums; }
 :is(#oros-lock, #oros-applock) .lk-date { font-size: 15px; color: var(--text-dim); }
 :is(#oros-lock, #oros-applock) .lk-ico { color: var(--accent); display: flex; justify-content: center; }
+/* Lock-screen info (APPLOCK-1 W4): quiet lines under the clock, no titles */
+#oros-lock .lk-info { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: -4px 0 4px; }
+#oros-lock .lk-info[hidden], #oros-lock .lk-info [hidden] { display: none; }
+#oros-lock .lk-info-line { margin: 0; font-size: 14px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+#oros-lock .lk-info-mu { display: flex; gap: 8px; justify-content: center; }
+#oros-lock .lk-mu-btn {
+  width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: 50%; background: var(--panel-bg); color: var(--text); cursor: pointer;
+}
+#oros-lock .lk-mu-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 :is(#oros-lock, #oros-applock) .lk-title { margin: 0; font-size: 20px; font-weight: 600; }
 :is(#oros-lock, #oros-applock) .lk-sub { margin: 0; font-size: 17px; font-weight: 600; }
 :is(#oros-lock, #oros-applock) .lk-view, :is(#oros-lock, #oros-applock) .lk-rec, :is(#oros-lock, #oros-applock) .lk-reset { display: flex; flex-direction: column; gap: 10px; }

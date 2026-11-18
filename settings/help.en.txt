@@ -76,6 +76,9 @@ Under `App lock`, choose apps that ask for the same PIN or passphrase (or your f
 
 The list stays on this device and is never synced; set it on each device where you want it. Like the screen lock, it protects the screen, not the disk. Calendar leaves out the rows of a locked app (a Health appointment, Cycle's days, a Budget payment), Mood leaves out Cycle's days, the app switcher and Overview leave out a hidden app, and reminders that reach your phone or push notifications carry only the app's name. Some apps still read what they need from another one: locking Contacts protects the Contacts app, while Mail, Invoices or CRM still suggest your contacts.
 
+### Lock screen info
+Settings › Screen lock › Lock screen info is off until you switch it on. It can show three things under the clock: the time of your next event today or tomorrow (never its title or place), buttons to play, pause or skip what Music, Podcasts or Radio already play (never the song), and how many notifications you have (never what they say). An app you locked gives nothing. With Sensitive work on, or on a till, the lock screen shows none of it.
+
 ### Users
 With orOS Portable, orOS USB or the orOS app installed on a computer, everyone who shares it can have their own orOS: their own apps, files, settings, password and sync account. Nobody sees anyone else's data, because each person gets a browser profile of their own.
 
