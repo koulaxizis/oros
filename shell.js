@@ -415,6 +415,7 @@
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
     if (window.orosClip) window.orosClip.refresh();         // clipboard history
+    if (window.orosPocket) window.orosPocket.refresh();     // the Pocket (POCKET-1)
     if (window.orosEmoji) window.orosEmoji.refresh();       // emoji picker
     if (window.orosSmartBar) window.orosSmartBar.refresh(); // smart top bar chips
     // The sync button and the app frame are labelled once at injection /
@@ -4686,13 +4687,20 @@
   }
   window.orosSend = {
     open: function (opts) {
-      var self = state.running ? state.running.id : "";
+      // POCKET-1: an item sent out of the Pocket comes from the app it
+      // was kept in (opts.pocketFrom), and every app can take it, the
+      // one on screen too.
+      var pk = !!(opts && typeof opts.pocketFrom === "string");
+      var self = pk ? "" : state.running ? state.running.id : "";
+      var src = pk ? opts.pocketFrom : self;
       var apps = window.orosAssistInstalled();
       var from = "";
-      apps.forEach(function (a) { if (a.id === self) from = a.name; });
+      apps.forEach(function (a) { if (a.id === src) from = a.name; });
       sendModule().then(function (m) {
         m.open(opts, {
           apps: apps, self: self, from: from, openAt: window.__orosOpenAt,
+          // "Keep in pocket" (POCKET-1): not for an item already in it.
+          pocket: pk || !window.orosPocket.canKeep(src) ? null : function (kind, data) { window.orosPocket.keep(kind, data, src); },
           calendarNew: function (p) { window.__orosOpenCalendarNew(p); },
           budgetNew: function (p) { return window.__orosOpenBudgetNew(p); },
           file: sendFileHand,
@@ -4715,6 +4723,177 @@
       });
     }
   };
+  // ---------- The Pocket (pocket.js, POCKET-1) ----------
+  // Keep a text, link, list, table or disk files from any app and send
+  // it into another app later (Chris 2026-11-17 idea 11, name and rules
+  // 2026-11-18). This device only, never synced. pocket.js (the panel
+  // and Keep) loads on first use after the Send modules; the shell only
+  // reads the count for the button: at the end of the Dock while the
+  // Dock is on screen, else in the top bar, and only while the Pocket
+  // holds something. Never from Passwords or Settings; Sensitive work
+  // empties it.
+  var POCKET_KEY = "oros-pocket";
+  var POCKET_SKIP = { passwords: 1, settings: 1 };
+  var POCKET_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v7a8 8 0 0 1-16 0z"/><path d="m8.5 10 3.5 3.5 3.5-3.5"/></svg>';
+  var pocketLoad = null;
+  function pocketCount() {
+    try {
+      var o = JSON.parse(localStorage.getItem(POCKET_KEY) || "null");
+      return o && o.v === 1 && Array.isArray(o.items) ? Math.min(o.items.length, 99) : 0;
+    } catch (e) { return 0; }
+  }
+  function pocketLocked() {
+    try { return !!(window.orosLock && window.orosLock.isLocked && window.orosLock.isLocked()); } catch (e) { return false; }
+  }
+  function pocketModule() {
+    if (window.__orosPocketImpl && window.OrosSendCore) return Promise.resolve(window.__orosPocketImpl);
+    if (!pocketLoad) {
+      pocketLoad = sendModule().then(function () {
+        if (window.__orosPocketImpl) return null;
+        return new Promise(function (resolve, reject) {
+          var sc = document.createElement("script");
+          sc.src = "pocket.js?v=" + APP_VERSION;
+          sc.onload = resolve;
+          sc.onerror = reject;
+          document.head.appendChild(sc);
+        });
+      }).then(function () {
+        var m = window.__orosPocketImpl;
+        if (!m) throw new Error("pocket module missing");
+        m.attach({
+          toast: function (kind, msg) { scToast(kind === "ok" ? "" : kind, msg); },
+          appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+          send: function (it) { window.orosSend.open({ kind: it.kind, data: it.data, pocketFrom: it.app || "" }); },
+          stat: function (path) { return window.orosFS ? window.orosFS.stat(path) : Promise.resolve(null); },
+          strict: function () { return !!strictLevelNow(); },
+          locked: pocketLocked,
+          changed: pocketChanged
+        });
+        return m;
+      });
+      pocketLoad.catch(function () { pocketLoad = null; });
+    }
+    return pocketLoad;
+  }
+  function pocketLoadFail() { notifySys("dim", window.t("share.loadfail")); }
+  // Is the Dock on screen (not hidden behind a running app)?
+  function pocketDockShows() {
+    var d = document.getElementById("ld-dock"), run = document.getElementById("oros-running");
+    return !!d && !(d.classList.contains("ld-noover") && run && run.classList.contains("active"));
+  }
+  function pocketLabel(n) { return n === 1 ? window.t("pk.chip1") : window.t("pk.chip").replace("{n}", String(n)); }
+  function pocketPaintBar() {
+    var bar = document.querySelector("#oros-bar .bar-right");
+    if (!bar) return;
+    var n = strictLevelNow() ? 0 : pocketCount();
+    var chip = document.getElementById("pocket-chip");
+    if (!n || pocketDockShows()) { if (chip) { chip.remove(); queueFitBar(); } return; }
+    if (!chip) {
+      chip = document.createElement("button");
+      chip.id = "pocket-chip";
+      chip.type = "button";
+      chip.innerHTML = POCKET_IC + '<span class="pk-n"></span>';   // static shell icon, not data
+      chip.addEventListener("click", function (e) { e.stopPropagation(); window.orosPocket.open(); });
+      bar.insertBefore(chip, document.getElementById("btn-lang"));
+      queueFitBar();
+    }
+    chip.lastChild.textContent = String(n);
+    chip.setAttribute("aria-label", pocketLabel(n));
+    chip.title = pocketLabel(n);
+  }
+  // The Dock's last button (launcher.js host.dockExtra), or null.
+  function pocketDockButton() {
+    var n = strictLevelNow() ? 0 : pocketCount();
+    if (!n) return null;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "ld-dk ld-pocket";
+    b.setAttribute("aria-label", pocketLabel(n));
+    var tile = document.createElement("span");
+    tile.className = "ld-tile ld-pk-tile";
+    tile.innerHTML = POCKET_IC;                       // static shell icon, not data
+    b.appendChild(tile);
+    var badge = document.createElement("span");
+    badge.className = "ld-pk-n";
+    badge.textContent = String(n);
+    b.appendChild(badge);
+    var dot = document.createElement("span");
+    dot.className = "ld-dot";
+    b.appendChild(dot);
+    var tip = document.createElement("span");
+    tip.className = "ld-tip";
+    tip.setAttribute("aria-hidden", "true");
+    tip.textContent = window.t("pk.title");
+    b.appendChild(tip);
+    b.addEventListener("click", function () { window.orosPocket.open(); });
+    return b;
+  }
+  var pocketQueued = false;
+  function pocketPaint() {
+    if (pocketQueued) return;
+    pocketQueued = true;
+    requestAnimationFrame(function () {
+      pocketQueued = false;
+      pocketPaintBar();
+    });
+  }
+  function pocketChanged() {
+    if (window.orosLauncher && window.orosLauncher.refreshDock) window.orosLauncher.refreshDock();
+    pocketPaint();
+    settingsNotify();
+  }
+  function pocketWipe() {
+    try { if (localStorage.getItem(POCKET_KEY) !== null) { localStorage.removeItem(POCKET_KEY); pocketChanged(); } } catch (e) {}
+    if (window.__orosPocketImpl) window.__orosPocketImpl.close();
+  }
+  window.orosPocket = {
+    count: pocketCount,
+    canKeep: function (app) { return !POCKET_SKIP[String(app || "")] && !strictLevelNow() && !pocketLocked(); },
+    keep: function (kind, data, app) {
+      if (!window.orosPocket.canKeep(app)) return;
+      pocketModule().then(function (m) { m.keep(kind, data, app); }, pocketLoadFail);
+    },
+    open: function () {
+      if (pocketLocked()) return;
+      pocketModule().then(function (m) { m.open(); }, pocketLoadFail);
+    },
+    toggle: function () {
+      var m = window.__orosPocketImpl;
+      if (m && m.isOpen()) m.close(); else window.orosPocket.open();
+    },
+    clear: function () { pocketWipe(); },
+    snapshot: function () { return { n: pocketCount(), strict: !!strictLevelNow() }; },
+    dockButton: pocketDockButton,
+    paint: pocketPaint,
+    refresh: function () { pocketChanged(); if (window.__orosPocketImpl) window.__orosPocketImpl.refresh(); }
+  };
+  (function () {
+    // Sensitive work on: the Pocket is emptied (and takes nothing while on).
+    try { window.orosStrict.onChange(function () { if (strictLevelNow()) pocketWipe(); else pocketChanged(); }); } catch (e) {}
+    if (strictLevelNow()) pocketWipe();
+    // Another tab changed it (or a factory reset removed it).
+    window.addEventListener("storage", function (e) {
+      if (e.key !== POCKET_KEY && e.key !== null) return;
+      pocketChanged();
+      if (window.__orosPocketImpl) window.__orosPocketImpl.repaint();
+    });
+    // The Dock comes and goes, and hides behind a running app.
+    var run = document.getElementById("oros-running");
+    if (run && window.MutationObserver) {
+      new MutationObserver(pocketPaint).observe(run, { attributes: true, attributeFilter: ["class"] });
+      new MutationObserver(function (ms) {
+        for (var i = 0; i < ms.length; i++) {
+          var nodes = Array.prototype.slice.call(ms[i].addedNodes).concat(Array.prototype.slice.call(ms[i].removedNodes));
+          for (var j = 0; j < nodes.length; j++) if (nodes[j].id === "ld-dock") { pocketPaint(); return; }
+        }
+      }).observe(document.body, { childList: true });
+    }
+    // The desktop menu (quickmenu.js) lists "Pocket…" while it holds something.
+    (window.__orosDeskItems = window.__orosDeskItems || []).push(function () {
+      return pocketCount() && !strictLevelNow() ? [{ label: window.t("pk.desk"), run: window.orosPocket.open }] : [];
+    });
+    pocketPaint();
+  })();
   var pendingShareIn = false;
   (function () {
     try {
@@ -9562,6 +9741,7 @@
     { id: "qs",         key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } },
     { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } },
     { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } },
+    { id: "pocket", code: "Comma", label: "sc.desc.pocket", fn: function() { if (window.orosPocket) window.orosPocket.toggle(); } },
     { id: "screen", key: "b", label: "sc.desc.screen", fn: function() { scrMove(); } },
     // orOS USB only (oros-usb System extension, PrtSc also takes a shot).
     { id: "usb-shot",    key: "g", label: "sc.desc.usbshot",    usb: true },
@@ -12162,6 +12342,7 @@
       multitask: mtSnapshot(),
       // Clipboard history (cliphist.js, CLIP-1): this device only.
       clip: window.orosClip ? window.orosClip.snapshot() : null,
+      pocket: !SOLO && window.orosPocket ? window.orosPocket.snapshot() : null,   // POCKET-1, this device
       overview: ovSnapshot(),       // OV-1: hot corner, this device only
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
@@ -12311,6 +12492,8 @@
       case "sync.link.close":   state.linkIn = null; settingsNotify(); return;
       case "clip.clear":      if (window.orosClip) window.orosClip.clear(); return;   // CLIP-1
       case "clip.open":       if (window.orosClip) window.orosClip.open(); return;
+      case "pocket.open":     if (window.orosPocket) window.orosPocket.open(); return;    // POCKET-1
+      case "pocket.clear":    if (window.orosPocket) window.orosPocket.clear(); return;
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -15953,7 +16136,9 @@
         return (v === k) ? app.name : v;
       },
       desktop: document.getElementById("oros-desktop"),
-      menuChanged: function () { renderMenu(); }
+      menuChanged: function () { renderMenu(); },
+      // The Pocket's button at the Dock's end (POCKET-1), or null.
+      dockExtra: function () { return window.orosPocket ? window.orosPocket.dockButton() : null; }
     });
   }
   // Desktop menu (quickmenu.js, a shell component like launcher.js):

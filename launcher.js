@@ -1057,6 +1057,11 @@
       wireIcon(b, id, "dock");
       bar2.appendChild(b);
     });
+    // One more button after the apps (the Pocket, POCKET-1): the shell
+    // builds it; it is not an app and is never dragged or reordered.
+    var extra = null;
+    try { extra = host.dockExtra ? host.dockExtra() : null; } catch (e) { extra = null; }
+    if (extra) bar2.appendChild(extra);
     setVars(p, true);
     if (focusId) focusIcon(focusId, "dock");
   }
@@ -1126,7 +1131,7 @@
     bar.addEventListener("pointerdown", function (e) {
       if (e.pointerType !== "mouse" || e.button !== 0) return;
       var b = e.target.closest(".ld-dk");
-      if (!b) return;
+      if (!b || !b.hasAttribute("data-app")) return;      // the Pocket button stays last
       dragging = null;
       sx = e.clientX;
       var onMove = function (ev) {
@@ -1137,12 +1142,13 @@
           b.classList.add("drag");
           unmagnify();
         }
-        var bs = Array.prototype.filter.call(bar.children, function (x) { return x !== dragging; });
+        var bs = Array.prototype.filter.call(bar.children, function (x) { return x !== dragging && x.hasAttribute("data-app"); });
         var before = null;
         for (var i = 0; i < bs.length; i++) {
           var r = bs[i].getBoundingClientRect();
           if (ev.clientX < r.left + r.width / 2) { before = bs[i]; break; }
         }
+        if (!before) before = bar.querySelector(".ld-pocket");     // apps stay before the Pocket
         if (before !== dragging.nextSibling) bar.insertBefore(dragging, before);
       };
       var onUp = function () {
@@ -1173,7 +1179,9 @@
   // ---------- 12. Public API ----------
   // host = { apps(), open(app), running(), label(app), icons, lang(), desktop,
   //          menuChanged(), isOpen(id) optional: alive behind (multitasking),
-  //          aliasHost(id) / openAlias(id) optional: APP-ALIAS (1.5.0) }
+  //          aliasHost(id) / openAlias(id) optional: APP-ALIAS (1.5.0),
+  //          dockExtra() optional: one more button after the apps, or null
+  //          (the Pocket, POCKET-1) }
   function attach(h) {
     if (host) return;
     host = h || {};
@@ -1219,6 +1227,7 @@
     model: model,
     attach: attach,
     refresh: paint,
+    refreshDock: function () { paintDock(); },     // the Pocket's count changed (POCKET-1)
     menuRow: menuRow,
     renderSettings: renderSettings,
     prefs: publicPrefs,

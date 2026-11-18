@@ -49,6 +49,8 @@
 //     new one (AS-FRESH).
 //   • 1.3.2: the selection menu's Copy also goes into the clipboard
 //     history (cliphist.js note(), only while it is on; CLIP-1).
+//   • POCKET-1: the selection menu's "Keep in pocket" keeps the text
+//     in the shell's Pocket (shell.js orosPocket, never Passwords).
 //
 // Data (synced, slice "quickmenu", key oros-quick-menu):
 //   { ver:1, items:[{ id, k, n, p, app, send, o, d, m }] }
@@ -878,6 +880,7 @@
   // read when the menu opens; nothing leaves before Send.
   var CHIP_KEY = "oros-quick-selchip";      // "0" = no button under selected text (this device)
   var SKIP_APPS = { assistant: 1, passwords: 1 };
+  var IC_POCKET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v7a8 8 0 0 1-16 0z"/><path d="m8.5 10 3.5 3.5 3.5-3.5"/></svg>';
   var IC_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>';
   var SEL_ACTS = ["explain", "sum", "tr", "fix", "ask"];
 
@@ -952,6 +955,10 @@
         copyText(c.text);
         if (root.orosClip) root.orosClip.note(c.text, s.app || "");   // clipboard history (cliphist.js)
       });
+      // The Pocket (POCKET-1): keep the selection and send it into another app later.
+      if (root.orosPocket && root.orosPocket.canKeep(s.app || "")) {
+        item(tr("sel.pocket"), IC_POCKET, function () { root.orosPocket.keep("text", { text: c.text }, s.app || ""); });
+      }
       sep();
       if (!hasAssistant()) return;
       SEL_ACTS.forEach(function (k) {
