@@ -1,0 +1,180 @@
+/* ============================================================
+   orOS Shop — stylesheet
+   The colours come from the shell (inheritPalette + watchPalette
+   in app.js); the values below are only the fallback for a page
+   opened with ?standalone. Works from 360 px wide, no sideways
+   scroll, touch targets at least 40 px.
+   ============================================================ */
+
+:root {
+  --bg:           #14120d;
+  --text:         #f0ead9;
+  --text-dim:     #a89f8a;
+  --accent:       #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --panel-bg:     #1d1a13;
+  --border:       #322d20;
+  --danger:       #e06c75;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.45 "Nunito", system-ui, sans-serif;
+}
+
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+#toolbar h1 { font-size: 17px; font-weight: 700; }
+
+#toolbar { flex-wrap: wrap; }
+#toolbar #status { flex: 1; min-width: 0; }
+#shop-pick {
+  min-height: 40px;
+  max-width: 50%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+}
+
+#tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px 0;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+}
+#tabs:empty { display: none; }
+.tab {
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tab.on { color: var(--text); border-bottom-color: var(--accent); font-weight: 700; }
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+#main { max-width: 980px; margin: 0 auto; padding: 12px 16px 32px; }
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.tile {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+  min-width: 0;
+}
+.tile.big { border-color: var(--accent); }
+.tile .tl { color: var(--text-dim); font-size: 13px; }
+.tile .tv { font-size: 22px; font-weight: 700; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.tile .ts, .ts { color: var(--text-dim); font-size: 13px; }
+.tile.neg .tv { color: var(--danger); }
+.tile.warnv .tv { color: var(--accent); }
+
+.sec { margin: 16px 0; }
+.sec h2 { font-size: 16px; margin-bottom: 8px; }
+.sec h3, #main h3 { font-size: 14px; margin: 10px 0 4px; color: var(--text-dim); }
+.hintbox {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+}
+.hintbox .chip, .hintbox .link { margin-top: 10px; display: inline-block; }
+.note { margin: 6px 0; }
+.note.warn { color: var(--danger); }
+.dim { color: var(--text-dim); }
+.small { font-size: 13px; }
+.link { color: var(--accent); }
+
+ul.plain { list-style: none; }
+ul.plain li { padding: 3px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+
+.filter {
+  width: 100%;
+  min-height: 40px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.tw { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--text-dim); font-weight: 600; position: sticky; top: 0; background: var(--panel-bg); }
+td.n, th.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+tfoot td { font-weight: 700; border-bottom: 0; }
+td:first-child { min-width: 140px; overflow-wrap: anywhere; }
+.badge {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.badge.late { background: var(--danger); color: #fff; }
+
+.chip {
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.chip.pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #111); font-weight: 700; }
+.chip.pri:hover { background: var(--accent-hover); }
+.chip:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip:disabled { opacity: .6; cursor: default; }
+
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+#toast.show { opacity: 1; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) { #toast { transition: none; } }

@@ -817,5 +817,6 @@ orosPack("de", "files", {
  "tg.c.9": "Rosa",
  "tg.c.10": "Braun",
  "tg.c.11": "Grau",
- "tg.withTags": "Schlagwörter: {list}"
+ "tg.withTags": "Schlagwörter: {list}",
+ "menu.transfer": "Mit Transfer senden…"
 });
