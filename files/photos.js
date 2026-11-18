@@ -134,6 +134,7 @@
       "ph.next":        "Next",
       "ph.info":        "Details",
       "ph.edit":        "Edit in Photo Lab",
+      "ph.text":        "Copy text from this photo",
       "ph.inFolder":    "Show in folder",
       "ph.i.date":      "Taken",
       "ph.i.src.exif":  "from the camera",
@@ -238,6 +239,7 @@
       "ph.next":        "Επόμενο",
       "ph.info":        "Λεπτομέρειες",
       "ph.edit":        "Επεξεργασία στο Photo Lab",
+      "ph.text":        "Αντιγραφή κειμένου από τη φωτογραφία",
       "ph.inFolder":    "Εμφάνιση στον φάκελο",
       "ph.i.date":      "Λήψη",
       "ph.i.src.exif":  "από την κάμερα",
@@ -287,6 +289,7 @@
     edit:   SVG('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', 20),
     folder: SVG('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', 20),
     send:   SVG('<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>', 20),
+    text:   SVG('<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M8 8h8M12 8v8"/>', 20),
     album:  SVG('<rect x="3" y="7" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/>', 20),
     back:   SVG('<path d="M15 18l-6-6 6-6"/>'),
     star:   SVG('<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>', 20),
@@ -1907,6 +1910,9 @@
     var title = el("div", "ph-vtitle");
     top.appendChild(title);
     var editBtn = iconBtn("ph-vbtn", ICON.edit, t("ph.edit"), function () { editCurrent(); });
+    // LIVE-TEXT: a round button on the picture, bottom right, like a
+    // phone's Live Text; the toolbar stays as it was at 360 px.
+    var textBtn = iconBtn("ph-vbtn ph-vtext", ICON.text, t("ph.text"), function () { toggleText(); });
     var folderBtn = iconBtn("ph-vbtn", ICON.folder, t("ph.inFolder"), function () { inFolder(); });
     var sendBtn = iconBtn("ph-vbtn", ICON.send, t("ph.send"), function () { if (viewer.rec) sendPaths([viewer.rec.k]); });
     var infoBtn = iconBtn("ph-vbtn", ICON.info, t("ph.info"), function () { toggleInfo(); });
@@ -1921,11 +1927,12 @@
     var prev = iconBtn("ph-vnav prev", ICON.prev, t("ph.prev"), function () { step(-1); });
     var next = iconBtn("ph-vnav next", ICON.next, t("ph.next"), function () { step(1); });
     root.appendChild(prev); root.appendChild(next);
+    root.appendChild(textBtn);
     var info = el("aside", "ph-info");
     info.hidden = true;
     root.appendChild(info);
     document.body.appendChild(root);
-    viewer = { root: root, stage: stage, title: title, info: info, closeBtn: closeBtn, editBtn: editBtn,
+    viewer = { root: root, stage: stage, title: title, info: info, closeBtn: closeBtn, editBtn: editBtn, textBtn: textBtn, ocr: null,
                sendBtn: sendBtn, coverBtn: coverBtn, prev: prev, next: next, i: -1, rec: null, url: null, gen: 0, zoom: 1, fetched: null };
     root.addEventListener("keydown", function (e) {
       if (e.key === "Escape") { e.preventDefault(); closeViewer(); }
@@ -1985,6 +1992,7 @@
   }
   function releaseCurrent() {
     if (!viewer) return;
+    textOff();
     var v = viewer.stage.querySelector("video");
     if (v) { try { v.pause(); } catch (e) {} v.removeAttribute("src"); try { v.load(); } catch (e2) {} }
     if (viewer.url) { URL.revokeObjectURL(viewer.url); viewer.url = null; }
@@ -2001,6 +2009,7 @@
     viewer.prev.disabled = i <= 0;
     viewer.next.disabled = i >= order.length - 1;
     viewer.editBtn.hidden = r.kind !== "image";
+    viewer.textBtn.hidden = r.kind !== "image" || !(ctx && ctx.ocr);
     viewer.sendBtn.hidden = r.kind !== "image" || !shareApi();
     viewer.coverBtn.hidden = !albumId;
     var fs = disk(), v = vault();
@@ -2081,6 +2090,35 @@
     var tile = document.querySelector('.ph-tile[data-i="' + viewer.i + '"]');
     viewer.i = -1; viewer.rec = null;
     if (tile) tile.focus();
+  }
+  // LIVE-TEXT: the words of the photo, through Files' ocrKit (../ocrkit.js)
+  function textOff() {
+    var c = viewer && viewer.ocr;
+    if (!viewer) return;
+    viewer.ocr = null;
+    viewer.textBtn.classList.remove("on");
+    viewer.textBtn.setAttribute("aria-pressed", "false");
+    if (c) c.close();
+  }
+  function toggleText() {
+    if (!viewer || !viewer.rec || viewer.rec.kind !== "image" || !ctx || !ctx.ocr) return;
+    if (viewer.ocr) { textOff(); return; }
+    var img = viewer.stage.querySelector("img"), r = viewer.rec, gen = viewer.gen;
+    if (!img) return;
+    viewer.zoom = 1;
+    if (viewer.resetPan) viewer.resetPan();
+    applyZoom(0, 0);
+    viewer.textBtn.classList.add("on");
+    viewer.textBtn.setAttribute("aria-pressed", "true");
+    ctx.ocr().then(function (K) {
+      if (!viewer || gen !== viewer.gen || viewer.root.hidden) return null;
+      return K.open({ el: img, key: r.k, title: baseName(r.k), onClose: function () {
+        if (viewer && viewer.ocr) { viewer.ocr = null; viewer.textBtn.classList.remove("on"); viewer.textBtn.setAttribute("aria-pressed", "false"); }
+      } });
+    }).then(function (c) {
+      if (c && viewer && gen === viewer.gen) viewer.ocr = c;
+      else { if (c) c.close(); if (viewer) viewer.textBtn.classList.remove("on"); }
+    }, function () { if (viewer) viewer.textBtn.classList.remove("on"); });
   }
   function editCurrent() {
     var r = viewer && viewer.rec, p = shell();

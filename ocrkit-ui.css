@@ -1,0 +1,73 @@
+/* ============================================================
+   orOS Core — ocrkit-ui.css: the Text mode over a picture (LIVE-TEXT)
+   Loaded with ocrkit-ui.js on the first press of Text. Colours come
+   from the app's palette (--accent, --panel-bg, …, G3), with dark
+   fallbacks.
+   ============================================================ */
+.ocx-host { position: relative; }
+.ocx-layer {
+  position: absolute; z-index: 5; touch-action: none; cursor: text;
+  -webkit-user-select: none; user-select: none; transform-origin: 50% 50%;
+}
+.ocx-box { position: absolute; }
+.ocx-layer.lit .ocx-box { background: rgba(0, 0, 0, .18); border-radius: 4px; }
+.ocx-w {
+  position: absolute; box-sizing: border-box; border-radius: 3px;
+  background: rgba(255, 255, 255, .22);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .55), 0 0 0 2px rgba(0, 0, 0, .25);
+}
+.ocx-w.on {
+  background: color-mix(in srgb, var(--accent, #6d4aff) 45%, transparent);
+  box-shadow: 0 0 0 2px var(--accent, #6d4aff);
+}
+.ocx-band {
+  position: absolute; border: 1px dashed var(--accent, #6d4aff);
+  background: color-mix(in srgb, var(--accent, #6d4aff) 12%, transparent); pointer-events: none;
+}
+.ocx-layer.scan .ocx-box {
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .22) 50%, transparent 70%) 0 0 / 250% 100%;
+  animation: ocx-scan 1.6s linear infinite;
+}
+@keyframes ocx-scan { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .ocx-layer.scan .ocx-box { animation: none; background: rgba(255, 255, 255, .12); }
+}
+
+.ocx-dock {
+  position: fixed; z-index: 2147483000; left: 50%; bottom: max(12px, env(safe-area-inset-bottom));
+  transform: translateX(-50%); width: min(680px, calc(100vw - 16px)); box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 8px;
+  font: 14px/1.4 Nunito, "M PLUS Rounded 1c", system-ui, sans-serif; color: var(--text, #eee);
+}
+.ocx-bar, .ocx-panel {
+  background: var(--panel-bg, #1e1d22); border: 1px solid var(--border, #2c2b31); border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .35); box-sizing: border-box;
+}
+.ocx-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 12px; }
+.ocx-status { flex: 1 1 180px; min-width: 0; color: var(--text-dim, #aaa); overflow-wrap: anywhere; }
+.ocx-acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
+.ocx-btn {
+  font: inherit; font-weight: 600; min-height: 36px; padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--border, #2c2b31); background: transparent; color: var(--text, #eee);
+}
+.ocx-btn:hover { background: var(--accent-soft, rgba(109, 74, 255, .2)); }
+.ocx-btn.primary { background: var(--accent, #6d4aff); color: var(--accent-ink, #fff); border-color: transparent; }
+.ocx-btn.primary:hover { background: var(--accent-hover, #7d5aff); }
+.ocx-btn.on { border-color: var(--accent, #6d4aff); background: var(--accent-soft, rgba(109, 74, 255, .2)); }
+.ocx-btn:disabled { opacity: .45; cursor: default; }
+.ocx-btn:focus-visible { outline: 2px solid var(--accent, #6d4aff); outline-offset: 2px; }
+.ocx-x { min-width: 36px; padding: 6px 8px; font-size: 18px; line-height: 1; }
+.ocx-panel { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.ocx-plab { color: var(--text-dim, #aaa); font-size: 13px; }
+.ocx-area {
+  width: 100%; box-sizing: border-box; min-height: 120px; height: min(34vh, 260px); resize: vertical;
+  font: 15px/1.5 Nunito, "M PLUS Rounded 1c", system-ui, sans-serif; color: var(--text, #eee);
+  background: var(--bg, #141317); border: 1px solid var(--border, #2c2b31); border-radius: 8px; padding: 8px 10px;
+}
+.ocx-area:focus { outline: 2px solid var(--accent, #6d4aff); outline-offset: 0; }
+.ocx-pacts { display: flex; justify-content: flex-end; }
+@media (max-width: 420px) {
+  .ocx-bar { padding: 8px; }
+  .ocx-btn { padding: 6px 10px; }
+  .ocx-acts { justify-content: flex-start; }
+}
