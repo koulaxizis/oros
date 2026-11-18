@@ -768,5 +768,6 @@ orosPack("de", "files", {
  "ph.trashed": "In den Papierkorb verschoben: {n}",
  "ph.tree": "Fotos",
  "ph.years": "Jahre",
- "ph.yesterday": "Gestern"
+ "ph.yesterday": "Gestern",
+ "menu.transfer": "Mit Transfer senden…"
 });
