@@ -352,6 +352,17 @@
       "type": "internal"
     },
     {
+      "id": "shop",
+      "name": "Shop",
+      "category": "Business",
+      "icon": "shop",
+      "url": "shop/",
+      "search": "search.js",
+      "searchOff": true,
+      "today": "today.js",
+      "type": "internal"
+    },
+    {
       "id": "invoices",
       "name": "Billing",
       "category": "Business",

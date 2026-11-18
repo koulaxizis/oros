@@ -138,6 +138,7 @@ orosPack("de", "shell", {
  "app.base": "Datenbank",
  "app.forms": "Formulare",
  "app.stickies": "Haftnotizen",
+ "app.shop": "Shop",
  "app.stock": "Bestand",
  "app.storage": "Inventar",
  "app.studio": "Studio",
