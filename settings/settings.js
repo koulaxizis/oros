@@ -422,6 +422,12 @@
           return { value: k, label: t("k.size." + k) };
         }), d.size, "dock:size", function (v) { set("dock:size", v); }, t("k.size")));
         c5.appendChild(sizeRow);
+        if (d.pos && d.positions && d.positions.length) {      // launcher 1.6.0: which edge
+          c5.appendChild(row(t("k.pos"), segmented(d.positions.map(function (k) {
+            return { value: k, label: t("k.pos." + k) };
+          }), d.pos, "dock:pos", function (v) { set("dock:pos", v); }, t("k.pos")),
+            { stack: true, hint: d.side && d.side !== d.pos ? t("k.pos.narrow") : t("k.pos.hint") }));
+        }
         if (d.style && d.styles && d.styles.length) {
           var stRow = row(t("k.style"), select(d.styles.map(function (k) {
             return { value: k, label: t("k.style." + k) };

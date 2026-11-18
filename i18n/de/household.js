@@ -140,5 +140,6 @@ orosPack("de", "household", {
  "st.err": "Aktualisieren ging nicht ({e}).",
  "st.offline": "Offline: Änderungen warten auf diesem Gerät und gehen später raus.",
  "st.ok": "Aktuell",
- "st.sync": "Wird aktualisiert…"
+ "st.sync": "Wird aktualisiert…",
+ "n.wake": "Etwas hat sich geändert. Öffne orOS, um es zu sehen."
 });

@@ -41,18 +41,10 @@
       locked: "Με το κλείδωμα οθόνης ενεργό, οι αγαπημένες σου μένουν μέσα στο orOS.",
       tor: "Νέο παράθυρο Tor", torHint: "ανοίγει τον Tor Browser", oros: "Άνοιγμα orOS",
       vpn: "Πρόσθετο VPN", vpnHint: "πώς το βάζεις", picks: "Προτεινόμενα VPN:", paid: "μόνο επί πληρωμή"
-    },
-    de: {
-      title: "Start", morning: "Guten Morgen", afternoon: "Guten Tag", evening: "Guten Abend",
-      q: "Im Web suchen", qPh: "Mit DuckDuckGo suchen oder Adresse eingeben",
-      qHint: "Mit „oros “ beginnen, um in orOS zu suchen",
-      favs: "Favoriten", all: "Alle Lesezeichen", none: "Markiere ein Lesezeichen in Lesezeichen mit einem Stern, dann erscheint es hier.",
-      locked: "Mit aktiver Bildschirmsperre bleiben deine Favoriten in orOS.",
-      tor: "Neues Tor-Fenster", torHint: "öffnet den Tor Browser", oros: "orOS öffnen",
-      vpn: "VPN-Erweiterung", vpnHint: "so fügst du eine hinzu", picks: "Empfohlene VPNs:", paid: "nur kostenpflichtig"
     }
   };
-  var LOCALE = { en: "en-GB", el: "el-GR", de: "de-DE" };
+  var LOCALE = { en: "en-GB", el: "el-GR" };
+  function loc() { return LOCALE[lang] || (I && I.locale ? I.locale(lang) : "en-GB"); }
   var MAX_FAVS = 24;
   var NAME_MAX = 40;
 
@@ -60,11 +52,15 @@
   function readJson(k) { try { return JSON.parse(read(k) || "null"); } catch (e) { return null; } }
   function $(id) { return document.getElementById(id); }
 
+  // English and Greek live here; any other language (German…) comes from
+  // its pack, i18n/<code>/startpage.js, through ../i18n.js.
+  var I = typeof window !== "undefined" ? window.orosI18n : null;
   var lang = (function () {
     var l = read("oros-lang") || (navigator.language || "en").slice(0, 2);
-    return STR[l] ? l : "en";
+    return STR[l] || (I && I.known(l)) ? l : "en";
   })();
-  function t(k) { return STR[lang][k] || STR.en[k]; }
+  var L = STR.en;
+  function t(k) { return L[k] || STR.en[k]; }
 
   // The name from Settings › Appearance › Your name (ME v1), or "".
   function myName() {
@@ -156,8 +152,8 @@
 
   function paintClock() {
     var now = new Date();
-    $("clock").textContent = now.toLocaleTimeString(LOCALE[lang], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-    var day = now.toLocaleDateString(LOCALE[lang], { weekday: "long", day: "numeric", month: "long" });
+    $("clock").textContent = now.toLocaleTimeString(loc(), { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+    var day = now.toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long" });
     var name = locked ? "" : myName();
     $("greet").textContent = day + " · " + t(greeting(now.getHours())) + (name ? ", " + name : "");
   }
@@ -275,6 +271,16 @@
     if (!matchMedia("(pointer: coarse)").matches) $("q").focus();
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
+  // The pack is written in by i18n.js for the stored language; a language
+  // only the browser names (no orOS on this device) loads it here first.
+  function start() {
+    L = STR[lang] || (I ? I.table(STR, "startpage", lang) : STR.en);
+    boot();
+  }
+  function ready() {
+    if (STR[lang] || !I) start();
+    else I.ensure(lang, "startpage", start);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready);
+  else ready();
 })();

@@ -41,7 +41,7 @@
            "household", "minimalism", "stickies", "bookmarks", "transfer", "television", "shelf",
            "mood", "diary", "zen", "fitness", "cycle", "baby", "familytree", "together"],
     work: ["writer", "spreadsheet", "slides", "kanban", "mail", "timesheet", "invoices", "crm",
-           "stock", "newsletter", "certificates", "converter", "storage",
+           "stock", "shop", "newsletter", "certificates", "converter", "storage",
            "forms", "base", "scanpdf", "publish", "transfer", "whiteboard", "pad", "automations"],
     school: ["writer", "spreadsheet", "slides", "wiki", "mindmap", "texttools", "library",
              "museum", "maps", "habits", "pubdomain", "qr",

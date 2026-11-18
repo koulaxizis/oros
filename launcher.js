@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.5.0)
+// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.6.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -26,6 +26,9 @@
 //     menuPreset (mtime 1: any real choice wins the merge).
 //   • 1.5.0: a shortcut of an app that became an alias (apps.json
 //     "aliases") shows its new home and opens it at the old place.
+//   • 1.6.0: the Dock can sit at the bottom (default), left, right or
+//     top edge (Settings › Dock › Position). Narrow or short screens
+//     (phones) keep it at the bottom whatever is chosen (dockSide).
 //
 // Data (synced, slice "launcher", key oros-launcher-data):
 //   { ver:1, items:[{ id, desk, dock, mtime }] }
@@ -47,7 +50,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.5.0";
+  var VER = "1.6.0";
   var DATA_KEY = "oros-launcher-data";
   var MENU_KEY = "oros-menu-apps";
   var MAX_ITEMS = 500;
@@ -259,9 +262,21 @@
     return menuNormalize({ apps: Object.keys(byId).map(function (id) { return byId[id]; }) });
   }
 
+  // ---------- 1c. Dock position (pure) ----------
+  // The edge the Dock really uses: the chosen one on a screen at least
+  // SIDE_W wide and SIDE_H tall, else the bottom (a phone, a small
+  // window). Unknown values are the bottom.
+  var POSITIONS = ["bottom", "left", "right", "top"];
+  var SIDE_W = 600, SIDE_H = 480;
+  function dockSide(pos, w, h) {
+    if (POSITIONS.indexOf(pos) < 1) return "bottom";
+    return (Number(w) >= SIDE_W && Number(h) >= SIDE_H) ? pos : "bottom";
+  }
+
   var model = { normalize: normalize, merge: merge, list: list, isPinned: isPinned, pin: pin, move: move, moveTo: moveTo, VER: VER, DATA_KEY: DATA_KEY,
                 menuNormalize: menuNormalize, menuMerge: menuMerge, menuHiddenIds: menuHiddenIds,
-                menuSetHidden: menuSetHidden, menuPreset: menuPreset, MENU_KEY: MENU_KEY };
+                menuSetHidden: menuSetHidden, menuPreset: menuPreset, MENU_KEY: MENU_KEY,
+                dockSide: dockSide, POSITIONS: POSITIONS.slice() };
 
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (!root || !root.document) return;
@@ -405,7 +420,8 @@
 
   // ---------- 3. Dock preferences (DEVICE-LOCAL, never synced) ----------
   // A phone and a PC want different docks, so only the pins travel.
-  // oros-launcher-prefs = { on, size: s|m|l, magnify, autohide, over, style }
+  // oros-launcher-prefs = { on, size: s|m|l, magnify, autohide, over, style, pos }
+  // pos: the edge (POSITIONS, launcher 1.6.0); unknown = "bottom".
   // over: null = never chosen = off (Chris 2026-10-10; it used to follow
   // the pointer). A stored true / false is the user's own choice and wins.
   // style: the look of the bar (STYLES); unknown = "classic".
@@ -434,7 +450,8 @@
       magnify: hover === "magnify",
       autohide: p.autohide === true,
       over: (p.over === true || p.over === false) ? p.over : null,
-      style: STYLES.indexOf(p.style) >= 0 ? p.style : "classic"
+      style: STYLES.indexOf(p.style) >= 0 ? p.style : "classic",
+      pos: POSITIONS.indexOf(p.pos) >= 0 ? p.pos : "bottom"
     };
   }
   function savePrefs(p) {
@@ -476,8 +493,9 @@
     ".ld-lbl{font-size:12px;color:var(--text-dim);padding:6px 10px 0}",
     // desktop grid (the Dock lifts it through --tb-h)
     "#ld-desk{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px 4px;",
-    "padding:14px 10px calc(150px + var(--tb-h,0px));max-width:960px;align-content:start}",
-    "@media (min-width:600px){#ld-desk{grid-template-columns:repeat(auto-fill,96px);padding:20px 20px calc(150px + var(--tb-h,0px))}}",
+    "padding:calc(14px + var(--ld-st,0px)) 10px calc(150px + var(--tb-h,0px)) calc(10px + var(--ld-sl,0px));max-width:960px;align-content:start}",
+    "@media (min-width:600px){#ld-desk{grid-template-columns:repeat(auto-fill,96px);",
+    "padding:calc(20px + var(--ld-st,0px)) 20px calc(150px + var(--tb-h,0px)) calc(20px + var(--ld-sl,0px))}}",
     ".ld-ic{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;min-height:44px;",
     "background:transparent;border:1px solid transparent;border-radius:10px;color:var(--text);cursor:pointer;",
     "-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}",
@@ -498,7 +516,7 @@
     ".ld-menu .ld-danger{color:var(--danger)}",
     // the Dock (z 950: over a running app at 900, under the menu at 999)
     "#ld-dock{position:fixed;left:50%;bottom:calc(6px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);",
-    "z-index:950;max-width:calc(100vw - 16px);transition:transform .22s ease,opacity .22s ease}",
+    "z-index:950;max-width:calc(100vw - 16px);transition:transform .22s ease,opacity .22s ease;--ld-dx:0;--ld-dy:-1}",
     "#ld-dock.ld-hidden{transform:translate(-50%,calc(100% + 12px));opacity:0;pointer-events:none}",
     ".ld-bar{display:flex;align-items:flex-end;gap:6px;padding:6px calc(8px + var(--ld-mag,0px));border-radius:18px;transition:padding .12s ease;",
     "background:color-mix(in srgb,var(--panel-bg) 86%,transparent);border:1px solid var(--border);",
@@ -520,7 +538,9 @@
     // hover effects (Settings › Dock › Hover effect): one class on #ld-dock,
     // on the tile only (the button's own transform belongs to magnify)
     ".ld-dk .ld-tile{transition:transform .18s ease,box-shadow .18s ease,outline-color .18s ease,filter .18s ease}",
-    "@keyframes ld-bounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-14px)}55%{transform:translateY(0)}72%{transform:translateY(-6px)}88%{transform:translateY(0)}}",
+    // bounce and lift move away from the Dock's edge (--ld-dx / --ld-dy)
+    "@keyframes ld-bounce{0%,55%,88%,100%{transform:translate(0,0)}30%{transform:translate(calc(var(--ld-dx) * 14px),calc(var(--ld-dy) * 14px))}",
+    "72%{transform:translate(calc(var(--ld-dx) * 6px),calc(var(--ld-dy) * 6px))}}",
     "@keyframes ld-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}",
     "@keyframes ld-wiggle{0%,100%{transform:rotate(0)}20%{transform:rotate(-9deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(3deg)}}",
     "@media (hover:hover) and (pointer:fine){",
@@ -528,7 +548,7 @@
     "#ld-dock.ld-h-pulse .ld-dk:hover .ld-tile{animation:ld-pulse 1s ease-in-out infinite}",
     "#ld-dock.ld-h-frame .ld-dk:hover .ld-tile{outline:2px solid var(--accent);outline-offset:3px}",
     "#ld-dock.ld-h-glow .ld-dk:hover .ld-tile{box-shadow:0 0 0 1px var(--accent),0 0 18px color-mix(in srgb,var(--accent) 70%,transparent)}",
-    "#ld-dock.ld-h-lift .ld-dk:hover .ld-tile{transform:translateY(-10px);box-shadow:0 10px 16px var(--shadow)}",
+    "#ld-dock.ld-h-lift .ld-dk:hover .ld-tile{transform:translate(calc(var(--ld-dx) * 10px),calc(var(--ld-dy) * 10px));box-shadow:0 10px 16px var(--shadow)}",
     "#ld-dock.ld-h-wiggle .ld-dk:hover .ld-tile{animation:ld-wiggle .5s ease}",
     "}",
     "@media (prefers-reduced-motion:reduce){#ld-dock .ld-dk .ld-tile{animation:none!important}",
@@ -565,8 +585,49 @@
     "#oros-running.active ~ #ld-dock.ld-noover,#oros-running.active ~ #ld-edge.ld-noover{display:none}",
     // a pinned (not auto-hidden) Dock over apps: the app ends above it
     "html.ld-push #oros-running.active{bottom:calc(var(--tb-h,0px) + env(safe-area-inset-bottom,0px))}",
+    "html.ld-push-l #oros-running.active{left:var(--ld-sl,0px)}",
+    "html.ld-push-r #oros-running.active{right:var(--ld-sr,0px)}",
+    "html.ld-push-t #oros-running.active{top:calc(40px + env(safe-area-inset-top,0px) + var(--ld-st,0px))}",
     "@media (max-width:480px){.ld-bar{overflow-x:auto;overscroll-behavior:contain;scrollbar-width:none}",
-    ".ld-bar::-webkit-scrollbar{display:none}}"
+    ".ld-bar::-webkit-scrollbar{display:none}}",
+    // position (Settings › Dock › Position, launcher 1.6.0): one ld-p-<edge>
+    // class on #ld-dock and #ld-edge; ld-v = a column (left, right).
+    // Side docks sit in the middle of the space under the top bar (40 px).
+    "#ld-dock.ld-v{top:calc(50% + 20px + env(safe-area-inset-top,0px) / 2);bottom:auto;max-width:none;",
+    "--ld-maxh:calc(100vh - 56px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));max-height:var(--ld-maxh)}",
+    "#ld-dock.ld-p-left{left:calc(6px + env(safe-area-inset-left,0px));transform:translateY(-50%);--ld-dx:1;--ld-dy:0}",
+    "#ld-dock.ld-p-right{left:auto;right:calc(6px + env(safe-area-inset-right,0px));transform:translateY(-50%);--ld-dx:-1;--ld-dy:0}",
+    "#ld-dock.ld-p-top{top:calc(46px + env(safe-area-inset-top,0px));bottom:auto;--ld-dy:1}",
+    "#ld-dock.ld-p-left.ld-hidden{transform:translate(calc(-100% - 12px),-50%)}",
+    "#ld-dock.ld-p-right.ld-hidden{transform:translate(calc(100% + 12px),-50%)}",
+    "#ld-dock.ld-p-top.ld-hidden{transform:translate(-50%,calc(-100% - 52px))}",
+    "#ld-dock.ld-v .ld-bar{flex-direction:column;padding:calc(8px + var(--ld-mag,0px)) 6px;max-height:var(--ld-maxh);box-sizing:border-box}",
+    "#ld-dock.ld-v.ld-scroll .ld-bar{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}",
+    "#ld-dock.ld-p-left .ld-bar{align-items:flex-start}",
+    "#ld-dock.ld-p-right .ld-bar{align-items:flex-end}",
+    "#ld-dock.ld-p-top .ld-bar{align-items:flex-start}",
+    "#ld-dock.ld-p-left .ld-dk{flex-direction:row-reverse;transform-origin:0 50%}",
+    "#ld-dock.ld-p-right .ld-dk{flex-direction:row;transform-origin:100% 50%}",
+    "#ld-dock.ld-p-top .ld-dk{flex-direction:column-reverse;transform-origin:50% 0}",
+    "#ld-dock.ld-v .ld-dot{margin:0 3px}",
+    "#ld-dock.ld-p-top .ld-dot{margin:0 0 3px}",
+    "#ld-dock.ld-p-left .ld-tip{bottom:auto;top:50%;left:calc(100% + 8px);transform:translateY(-50%)}",
+    "#ld-dock.ld-p-right .ld-tip{bottom:auto;top:50%;left:auto;right:calc(100% + 8px);transform:translateY(-50%)}",
+    "#ld-dock.ld-p-top .ld-tip{bottom:auto;top:calc(100% + 8px)}",
+    // the 3D shelf tilts towards the bottom only; elsewhere a flat slab
+    "#ld-dock.ld-v.ld-s-3d .ld-bar,#ld-dock.ld-p-top.ld-s-3d .ld-bar{padding-bottom:calc(8px + var(--ld-mag,0px))}",
+    "#ld-dock.ld-p-top.ld-s-3d .ld-bar{padding-bottom:6px}",
+    "#ld-dock.ld-v.ld-s-3d .ld-bar::before,#ld-dock.ld-p-top.ld-s-3d .ld-bar::before{left:2px;right:2px;top:2px;bottom:2px;height:auto;transform:none;border-bottom-width:1px}",
+    // the auto-hide strip along the chosen edge
+    "#ld-edge.ld-p-left,#ld-edge.ld-p-right{top:calc(40px + env(safe-area-inset-top,0px));bottom:0;height:auto;align-items:center;padding:0}",
+    "#ld-edge.ld-p-left{right:auto;width:calc(10px + env(safe-area-inset-left,0px));justify-content:flex-start}",
+    "#ld-edge.ld-p-right{left:auto;width:calc(10px + env(safe-area-inset-right,0px));justify-content:flex-end}",
+    "#ld-edge.ld-p-left span,#ld-edge.ld-p-right span{width:4px;height:44px;margin:0 3px}",
+    "#ld-edge.ld-p-top{top:calc(40px + env(safe-area-inset-top,0px));bottom:auto;height:10px;align-items:flex-start;padding:0}",
+    "#ld-edge.ld-p-top span{margin:3px 0 0}",
+    "@media (pointer:coarse){#ld-edge.ld-p-left,#ld-edge.ld-p-right{width:24px;height:80px;top:calc(50% - 20px);bottom:auto}",
+    "#ld-edge.ld-p-left{left:0;right:auto}#ld-edge.ld-p-right{left:auto;right:0}",
+    "#ld-edge.ld-p-top{left:calc(50% - 40px);right:auto;width:80px;height:24px}}"
   ].join("\n");
 
   function injectCss() {
@@ -859,7 +920,14 @@
     doc.body.appendChild(m);
     var r = m.getBoundingClientRect();
     var vw = root.innerWidth, vh = root.innerHeight;
-    if (place === "dock") y = y - r.height - 8;     // open upwards from the Dock
+    if (place === "dock") {                         // open away from the Dock's edge
+      var side = dockEdge();
+      var ar = anchor.getBoundingClientRect();
+      if (side === "left") { x = ar.right + 8; y = ar.top; }
+      else if (side === "right") { x = ar.left - r.width - 8; y = ar.top; }
+      else if (side === "top") y = ar.bottom + 8;
+      else y = y - r.height - 8;                     // upwards from a bottom Dock
+    }
     m.style.left = Math.max(8, Math.min(x, vw - r.width - 8)) + "px";
     m.style.top = Math.max(8, Math.min(y, vh - r.height - 8)) + "px";
     ctx = { el: m, back: anchor };
@@ -968,12 +1036,35 @@
 
   function dockHeight(p) { return SIZES[p.size] + 7 + 12 + 2 + 6; }   // tile + dot + padding + border + gap
 
-  function setVars(p, visible) {
+  // The space a shown, pinned Dock takes from its edge: --tb-h at the
+  // bottom (the old hook: pet, desktop grid, widgets, notes), --ld-sl /
+  // --ld-sr / --ld-st at the left, right and top. ld-push[-l|-r|-t]
+  // ends a running app at the Dock ("over open apps").
+  var SIDE_VAR = { bottom: "--tb-h", left: "--ld-sl", right: "--ld-sr", top: "--ld-st" };
+  var SIDE_PUSH = { bottom: "ld-push", left: "ld-push-l", right: "ld-push-r", top: "ld-push-t" };
+  function setVars(p, visible, side) {
     var de = doc.documentElement;
     var lift = (visible && !p.autohide) ? dockHeight(p) + 6 : 0;
-    if (lift) de.style.setProperty("--tb-h", lift + "px");
-    else de.style.removeProperty("--tb-h");
-    de.classList.toggle("ld-push", !!lift && overApps(p));
+    POSITIONS.forEach(function (k) {
+      var on = !!lift && k === side;
+      if (on) de.style.setProperty(SIDE_VAR[k], lift + "px");
+      else de.style.removeProperty(SIDE_VAR[k]);
+      de.classList.toggle(SIDE_PUSH[k], on && overApps(p));
+    });
+  }
+  function sideNow(p) { return dockSide(p.pos, root.innerWidth, root.innerHeight); }
+  function vertical() { return !!dock && dock.classList.contains("ld-v"); }
+  // The edge the painted Dock sits at now ("bottom" when there is none).
+  function dockEdge() {
+    for (var i = 1; i < POSITIONS.length; i++) if (dock && dock.classList.contains("ld-p-" + POSITIONS[i])) return POSITIONS[i];
+    return "bottom";
+  }
+  // A column longer than the screen scrolls (and does not magnify).
+  function fitColumn() {
+    if (!dock) return;
+    dock.classList.remove("ld-scroll");
+    var bar = dock.firstChild;
+    if (vertical() && bar && bar.scrollHeight > bar.clientHeight + 1) dock.classList.add("ld-scroll");
   }
 
   function removeDock() {
@@ -1001,7 +1092,8 @@
     if (!host) return;
     var p = prefs();
     var ids = p.on ? shown("dock") : [];
-    if (!ids.length) { removeDock(); setVars(p, false); return; }
+    var side = sideNow(p);
+    if (!ids.length) { removeDock(); setVars(p, false, side); return; }
     var act = doc.activeElement;
     var focusId = act && dock && dock.contains(act) ? act.getAttribute("data-app") : null;
     if (!dock) {
@@ -1032,10 +1124,18 @@
     edge.tabIndex = -1;                 // keyboard users reach the Dock itself (focus reveals it)
     if (!p.autohide) { clearTimeout(hideTimer); dock.classList.remove("ld-hidden"); }
     dock.style.setProperty("--ld-t", SIZES[p.size] + "px");
+    POSITIONS.forEach(function (k) {
+      if (k === "bottom") return;
+      dock.classList.toggle("ld-p-" + k, side === k);
+      edge.classList.toggle("ld-p-" + k, side === k);
+    });
+    dock.classList.toggle("ld-v", side === "left" || side === "right");
+    dock.setAttribute("aria-orientation", vertical() ? "vertical" : "horizontal");
     STYLES.forEach(function (k) { dock.classList.toggle("ld-s-" + k, p.style === k); });
     HOVERS.forEach(function (k) { dock.classList.toggle("ld-h-" + k, p.hover === k); });
     var bar2 = dock.firstChild;
     bar2.textContent = "";
+    bar2.style.removeProperty("--ld-mag");
     var run = runningId();
     ids.forEach(function (id, pos) {
       var app = appById(id);
@@ -1062,7 +1162,8 @@
     var extra = null;
     try { extra = host.dockExtra ? host.dockExtra() : null; } catch (e) { extra = null; }
     if (extra) bar2.appendChild(extra);
-    setVars(p, true);
+    setVars(p, true, side);
+    fitColumn();
     if (focusId) focusIcon(focusId, "dock");
   }
 
@@ -1079,12 +1180,13 @@
 
     // Arrow keys walk the icons.
     bar.addEventListener("keydown", function (e) {
-      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+      var back = e.key === "ArrowLeft" || e.key === "ArrowUp", fwd = e.key === "ArrowRight" || e.key === "ArrowDown";
+      if (!back && !fwd && e.key !== "Home" && e.key !== "End") return;
       var bs = Array.prototype.slice.call(bar.querySelectorAll(".ld-dk"));
       var i = bs.indexOf(doc.activeElement);
       if (i === -1) return;
       e.preventDefault();
-      var j = e.key === "Home" ? 0 : e.key === "End" ? bs.length - 1 : i + (e.key === "ArrowLeft" ? -1 : 1);
+      var j = e.key === "Home" ? 0 : e.key === "End" ? bs.length - 1 : i + (back ? -1 : 1);
       if (bs[j]) bs[j].focus();
     });
 
@@ -1093,20 +1195,26 @@
     // so grown icons never overlap; the bar widens by the same amount on
     // both sides, which keeps every icon's resting centre where it was.
     // Distances use layout positions (offsetLeft), never the transformed
-    // boxes, so the effect does not feed back into itself.
+    // boxes, so the effect does not feed back into itself. A side Dock
+    // (1.6.0) does the same along its column (offsetTop, translateY);
+    // a column that scrolls does not magnify.
     bar.addEventListener("mousemove", function (e) {
       var p = prefs();
       if (p.hover !== "magnify" || !finePointer() || dragging) return;
+      var v = vertical();
+      if (v && dk.classList.contains("ld-scroll")) return;
       var t = SIZES[p.size];
       var bs = bar.querySelectorAll(".ld-dk");
       var br = bar.getBoundingClientRect();
-      var x = e.clientX - br.left - bar.clientLeft + bar.scrollLeft;
+      var x = v ? e.clientY - br.top - bar.clientTop + bar.scrollTop
+                : e.clientX - br.left - bar.clientLeft + bar.scrollLeft;
       var sc = [], extra = [], total = 0;
       for (var i = 0; i < bs.length; i++) {
-        var c = bs[i].offsetLeft + bs[i].offsetWidth / 2;
+        var len = v ? bs[i].offsetHeight : bs[i].offsetWidth;
+        var c = (v ? bs[i].offsetTop : bs[i].offsetLeft) + len / 2;
         var d = Math.abs(x - c);
         sc[i] = 1 + MAG * Math.max(0, 1 - d / (t * 2.2));
-        extra[i] = (sc[i] - 1) * bs[i].offsetWidth;
+        extra[i] = (sc[i] - 1) * len;
         total += extra[i];
       }
       var before = 0;
@@ -1114,7 +1222,7 @@
         var shift = before + extra[k] / 2 - total / 2;
         before += extra[k];
         bs[k].style.transform = sc[k] > 1.001 || Math.abs(shift) > 0.1
-          ? "translateX(" + shift.toFixed(2) + "px) scale(" + sc[k].toFixed(3) + ")" : "";
+          ? (v ? "translateY(" : "translateX(") + shift.toFixed(2) + "px) scale(" + sc[k].toFixed(3) + ")" : "";
       }
       bar.style.setProperty("--ld-mag", (total / 2).toFixed(2) + "px");
     });
@@ -1127,16 +1235,17 @@
 
     // Drag to reorder (mouse; touch uses the long-press menu, because
     // a finger dragging across a phone Dock scrolls it).
-    var dragging = null, sx = 0, startIdx = -1;
+    var dragging = null, sx = 0, sy = 0, startIdx = -1;
     bar.addEventListener("pointerdown", function (e) {
       if (e.pointerType !== "mouse" || e.button !== 0) return;
       var b = e.target.closest(".ld-dk");
       if (!b || !b.hasAttribute("data-app")) return;      // the Pocket button stays last
       dragging = null;
-      sx = e.clientX;
+      sx = e.clientX; sy = e.clientY;
+      var v = vertical();
       var onMove = function (ev) {
         if (!dragging) {
-          if (Math.abs(ev.clientX - sx) < 6) return;
+          if (Math.abs(v ? ev.clientY - sy : ev.clientX - sx) < 6) return;
           dragging = b;
           startIdx = Array.prototype.indexOf.call(bar.children, b);
           b.classList.add("drag");
@@ -1146,7 +1255,7 @@
         var before = null;
         for (var i = 0; i < bs.length; i++) {
           var r = bs[i].getBoundingClientRect();
-          if (ev.clientX < r.left + r.width / 2) { before = bs[i]; break; }
+          if (v ? ev.clientY < r.top + r.height / 2 : ev.clientX < r.left + r.width / 2) { before = bs[i]; break; }
         }
         if (!before) before = bar.querySelector(".ld-pocket");     // apps stay before the Pocket
         if (before !== dragging.nextSibling) bar.insertBefore(dragging, before);
@@ -1194,6 +1303,18 @@
     if (run && root.MutationObserver) {
       new root.MutationObserver(function () { paintDock(); }).observe(run, { attributes: true, attributeFilter: ["class"] });
     }
+    // A window made narrow or short moves a side Dock to the bottom
+    // and back; a column that no longer fits starts to scroll.
+    var resizeRaf = 0;
+    root.addEventListener("resize", function () {
+      if (resizeRaf || !dock) return;
+      resizeRaf = (root.requestAnimationFrame || setTimeout)(function () {
+        resizeRaf = 0;
+        if (!dock) return;
+        var side = sideNow(prefs());
+        if (side !== dockEdge()) paintDock(); else fitColumn();
+      });
+    });
   }
 
   // For the Settings app: read and write the Dock settings without the
@@ -1203,6 +1324,7 @@
     return { on: p.on, size: p.size, magnify: p.magnify, autohide: p.autohide,
              over: overApps(p), style: p.style, styles: STYLES.slice(),
              hover: p.hover, hovers: HOVERS.slice(),
+             pos: p.pos, positions: POSITIONS.slice(), side: sideNow(p),
              fine: finePointer(), pinned: shown("dock").length };
   }
   var PREF_OK = {
@@ -1212,7 +1334,8 @@
     autohide: function (v) { return typeof v === "boolean"; },
     over: function (v) { return typeof v === "boolean" || v === null; },
     style: function (v) { return STYLES.indexOf(v) >= 0; },
-    hover: function (v) { return HOVERS.indexOf(v) >= 0; }
+    hover: function (v) { return HOVERS.indexOf(v) >= 0; },
+    pos: function (v) { return POSITIONS.indexOf(v) >= 0; }
   };
   function setPref(k, v) {
     if (!Object.prototype.hasOwnProperty.call(PREF_OK, k) || !PREF_OK[k](v)) return false;

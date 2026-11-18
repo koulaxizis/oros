@@ -353,5 +353,8 @@ orosPack("de", "kanban", {
  "deps.added": "Abhängigkeit hinzugefügt",
  "deps.shift": "Die nächsten mitverschieben",
  "deps.shifted": "Die nächsten Karten wurden verschoben",
- "tl.cp": "Kritischer Pfad"
+ "tl.cp": "Kritischer Pfad",
+ "ctr.chip": "Vertrag endet {d}",
+ "ctr.chipEnded": "Vertrag beendet",
+ "ctr.chipHint": "Den Vertrag im CRM öffnen"
 });

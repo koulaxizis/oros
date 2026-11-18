@@ -11,6 +11,7 @@ Wähle unter der großen Uhr einen Stil: `Digital`, `Analog`, `Binär`, `Klapp` 
 - Tippe auf einen Schnell-Chip (`+ Athens`, `+ London`, `+ New York`, `+ Tokyo`) oder auf `Hinzufügen` und gib eine Stadt oder eine Zeitzone ein, auf Englisch oder Griechisch (Akzente spielen keine Rolle). Über 500 Städte sind eingebaut, dazu jede Zeitzone, die dein Browser kennt. Tippe auf ein Ergebnis, um es hinzuzufügen.
 - Jede Zeile zeigt die Uhrzeit dort und wie sie sich zu deiner verhält, zum Beispiel „Heute, +3 Std.“ oder „Morgen, −7 Std.“.
 - Doppelklicke auf einen Namen, um ihn zu ändern (`Zone ändern`). Das × löscht ihn (`Zone löschen`). Eine Zeile ist eine Zeitzone: Wählst du eine andere Stadt in derselben Zone, wird die Zeile umbenannt.
+- Unten in Zeit stellt `Anzeigen` neben `Zeitzonenrechner` deine Uhrzeit und jeden Ort der Weltuhr in einer Reihe nebeneinander.
 
 ## Besprechungsplaner
 

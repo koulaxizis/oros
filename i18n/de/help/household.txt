@@ -27,6 +27,7 @@ Teile Listen mit den Menschen, mit denen du wohnst: Familie, Partner, Mitbewohne
 - Ein Admin kann den Haushalt umbenennen, jemand anderen zum Admin machen und eine Person entfernen. Das Entfernen ändert den Schlüssel des Haushalts, sodass alles, was danach dazukommt, mit der alten Kopie nicht mehr lesbar ist.
 - `Diesen Haushalt verlassen` nimmt die geteilten Listen von deinen Geräten; Aufgaben behält von jeder eine eigene Kopie.
 - `Haushalt löschen` (Admins) entfernt ihn für alle; alle behalten ihre eigene Kopie der Listen.
+- Die Suche im Menü findet einen Haushalt über seinen Namen, die Namen seiner Personen und die Titel dessen, was darin geteilt ist. Wählst du ihn, öffnet er sich hier.
 
 ## Kürzlich entfernt
 - Eine Liste, die jemand nicht mehr teilt, bleibt hier 30 Tage. `Wieder teilen` bringt sie zurück in den Haushalt.

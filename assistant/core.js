@@ -1799,6 +1799,10 @@
       "forms (every form: questions, shared and open or not, how many answers and how many new, with a ref; with form one form's results: counts, shares and averages per question, never what people wrote) " +
       "studio lists the podcast shows made in Studio (feed address, how many episodes, how many have their episode file) and every episode with its show, number, date and whether its file is made; with show only that show. Read only: publishing is always the user's own tap in Studio. " +
       "base (Base, the user's own databases: every base with its tables, each table's fields with their type and choices and how many records; with table that table's records with every field and a ref; use it before create_items base) " +
+      "Read only, each app whole (AS-SUM8): meals (stored recipes with a ref, how many ready ones, this and next week's plan, pantry items near their best-before day), travel (every trip with dates, now / upcoming / past and what is left to pack; the itinerary of the trips not over yet with a ref), " +
+      "plants (every plant: room, species, watering interval, last watered, next care days, late ones; ref), garage (every vehicle with km and this year's costs; renewals and service plans with due day or km and level; ref), " +
+      "habits (every habit: schedule, goal, today done / to do / skipped, streak, best streak, score; ref), scanpdf (signature requests: document, signer, status waiting / signed / declined / revoked / expired, sent, expires, answered; never an e-mail or link), " +
+      "transfer (the History: sent and received, files, size, device, path; never the files), whiteboard (every board with how many notes, shapes, arrows, drawings and pictures, and the texts of notes, shapes, frames and arrow labels with a ref; with board only that board). " +
       "automations lists every rule in words (with a ref; on or off) and this device's recent runs: when, which rule, whether it was a time or something that happened, and what came of it (notice shown, notices off, skipped because an app is missing, opened); use it for 'why did this run?' and to suggest a better rule with propose_rule. " +
       "The user sees the summary first and may hold it back.",
     params: {
@@ -1813,7 +1817,7 @@
         tag: { type: "string", description: "bookmarks, shelf, library: only the items with this tag." },
         kind: { type: "string", "enum": ["book", "film", "series", "album", "podcast", "game"], description: "shelf: only this kind (album = music)." },
         status: { type: "string", "enum": ["want", "now", "done", "drop", "reading", "finished", "unread"], description: "shelf: want, now (in progress), done, drop. library: reading, finished, unread." },
-        board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board)." },
+        board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board). whiteboard: one board's name: only its texts." },
         show: { type: "string", description: "studio: one podcast show's title: only its episodes." },
         table: { type: "string", description: "base: one table's name: list its records with every field and a ref (leave out for the bases, tables and fields)." },
         base: { type: "string", description: "base, with table: the base's name, when several bases have a table of that name." },
