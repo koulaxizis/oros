@@ -9,7 +9,7 @@ const path = require("path");
 const fs = require("fs");
 
 const ROOT = path.join(__dirname, "..");
-const F = require(path.join(ROOT, "focus.js"));
+const F = require(path.join(ROOT, "focus/core.js"));
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 const at = (h, m) => new Date(2026, 10, 18, h, m || 0, 0).getTime();
 const QH = { enabled: true, quietHoursStart: 22, quietHoursEnd: 8 };
@@ -125,9 +125,9 @@ test("wiring: notifications.js asks focus before every pop-up, migrates DND once
   assert.match(read("stickies/host.js"), /N\.silent\("stickies"\)/);
   const page = read("index.html");
   const late = page.indexOf("<template data-oros-late>", page.indexOf('<script src="notifications.js?v='));
-  assert.ok(late > 0 && page.indexOf('<script src="focus.js?v=') > late, "focus.js comes with the late bundle (start-up script budget)");
+  assert.ok(late > 0 && page.indexOf('<script src="focus/core.js?v=') > late, "focus.js comes with the late bundle (start-up script budget)");
   assert.match(n, /focusReady: function \(\)/);
-  assert.match(read("focus.js"), /root\.orosNotifs\.focusReady\(\)/);
+  assert.match(read("focus/core.js"), /root\.orosNotifs\.focusReady\(\)/);
 });
 
 test("wiring: Quick settings pill and the Settings card", () => {

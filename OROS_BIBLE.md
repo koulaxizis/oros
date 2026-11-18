@@ -813,7 +813,7 @@ Duplicate or extend is the system's choice (Windows Win+P, Live USB Ctrl+Alt+Shi
 - Limits: in a browser and Portable only orOS's own window is tinted; a full-screen video inside a cross-origin frame of an app keeps its colours there, as do screenshots taken by the OS.
 - Tests: `tests/nightlight.test.js` (sun times Athens June/December, polar, normalize, own hours across midnight with fades, fallback, the tap, colours, wiring, EN/EL/DE strings, help), `tests/settings.test.js` (bridge prefix, need). Help `appearance` "Night Light" EN/EL/DE, Settings help.
 
-### `focus.js` (Focus modes, shell component) [FOCUS-1]
+### `focus/core.js` (Focus modes, shell component) [FOCUS-1]
 
 - Chris 2026-11-17 23:12 (big-OS ideas, `/mnt/project-files/strategy/big-os-ideas-2026-11-17.md` item 1, "Ναι, όλο"); plan `/mnt/project-files/focus-modes/plan.md` (waves F1 manual modes + Quick settings + Settings, F2 weekly schedule + Calendar events, F3 hide widgets/desk icons + bar icon, F4 notification summary + Web Push + Automations). Decisions in Part IX "Focus modes". Wave F1 is this section.
 - Loads first in the late bundle (`<template data-oros-late>` after `notifications.js`; the start-up script budget is 27 + 10 %), then calls `orosNotifs.focusReady()` (migrates an old DND, fires `changed`). Until it is there, `quietFor` keeps every app quiet while `settings.focus.act` holds a live mode (safe side) and quiet hours apply as before; `window.orosFocus` (`VER`, `model`, `list()`, `active(now)`, `start(id, { until })`, `stop()`, `last()`, `edit(id, patch)`, `add(name, icon)`, `remove(id)`, `silent(ns, now)`, `merge`, `touched`, `onChange(fn)`, `changed()`). The pure model is `module.exports` for the tests.
