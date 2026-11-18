@@ -55,7 +55,10 @@
     ["a4", 210, 297], ["a5", 148, 210], ["a3", 297, 420], ["a6", 105, 148],
     ["b5", 176, 250], ["letter", 215.9, 279.4], ["legal", 215.9, 355.6],
     ["card", 85, 55], ["dl", 99, 210], ["square", 1080 * 25.4 / 72, 1080 * 25.4 / 72],
-    ["poster", 500, 700]
+    ["poster", 500, 700],
+    // book trims (LY-PRO W1)
+    ["bk120x190", 120, 190], ["bk140x210", 140, 210], ["bk170x240", 170, 240],
+    ["bk180x250", 180, 250], ["bk215x215", 215, 215]
   ];
   function preset(id) {
     for (var i = 0; i < PRESETS.length; i++) if (PRESETS[i][0] === id) {
@@ -675,14 +678,36 @@
     return doc.pages.slice().sort(function (a, b) { return a.pos - b.pos || cmpStr(a.id, b.id); });
   }
   // Side of the n-th page (0-based): a facing document starts on a
-  // right-hand page.
-  function sideOf(doc, idx) { return doc.setup.facing ? (idx % 2 === 0 ? "R" : "L") : "R"; }
+  // right-hand page, or on a left-hand one with setup.ext.first "L"
+  // (LY-PRO W1, R39: absent = right).
+  function firstLeft(doc) { var x = doc && doc.setup && doc.setup.ext; return !!(x && x.first === "L" && doc.setup.facing); }
+  function sideOf(doc, idx) {
+    if (!doc.setup.facing) return "R";
+    return (idx % 2 === 0) !== firstLeft(doc) ? "R" : "L";
+  }
   function spreads(doc) {
     var pages = pagesInOrder(doc), out = [];
     if (!doc.setup.facing) { pages.forEach(function (p) { out.push([p]); }); return out; }
-    if (pages.length) out.push([pages[0]]);
-    for (var i = 1; i < pages.length; i += 2) out.push(pages.slice(i, i + 2));
+    var i = 0;
+    if (!firstLeft(doc)) { if (pages.length) out.push([pages[0]]); i = 1; }
+    for (; i < pages.length; i += 2) out.push(pages.slice(i, i + 2));
     return out;
+  }
+  // The bleed of each side in points (LY-PRO W1): setup.ext.bl
+  // { t, b, i, o } (inside / outside, as the margins), else setup.bleed
+  // on every side. `side` "L" swaps inside and outside to left / right.
+  function bleeds(doc, side) {
+    var s = doc.setup, x = s.ext && s.ext.bl, d = s.bleed;
+    function v(k) { var n = x && typeof x[k] === "number" && isFinite(x[k]) ? x[k] : d; return Math.max(0, Math.min(72, n)); }
+    var o = { t: v("t"), b: v("b"), i: v("i"), o: v("o") };
+    var lr = s.facing && side === "L" ? { l: o.o, r: o.i } : { l: o.i, r: o.o };
+    return { t: o.t, b: o.b, i: o.i, o: o.o, l: lr.l, r: lr.r };
+  }
+  // The slug (room for marks and notes outside the bleed) in points:
+  // setup.ext.slug, else 0.
+  function slugOf(doc) {
+    var x = doc.setup.ext, n = x && typeof x.slug === "number" && isFinite(x.slug) ? x.slug : 0;
+    return Math.max(0, Math.min(144, n));
   }
   // Margins in page coordinates (left/right swap on left pages).
   function margins(doc, side) {
@@ -737,7 +762,7 @@
     normSetup: normSetup, normItem: normItem, normStory: normStory, normPs: normPs, normCs: normCs,
     normSwatch: normSwatch, normPage: normPage, normMaster: normMaster, normGuide: normGuide, normPara: normPara,
     normDoc: normDoc, copyDoc: copyDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,
-    newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstNumber: firstNumber, spreads: spreads, margins: margins,
+    newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstLeft: firstLeft, bleeds: bleeds, slugOf: slugOf, firstNumber: firstNumber, spreads: spreads, margins: margins,
     itemsOn: itemsOn, masterItems: masterItems, chain: chain, find: find, owner: owner, byZ: byZ,
     swatchColor: swatchColor, cssColor: cssColor, story: storyOfDoc, docBytes: docBytes,
     COLLECTIONS: COLLECTIONS.map(function (c) { return c[0]; })
