@@ -347,6 +347,27 @@
     var s = lastSlot(ts, now);
     return s && (!last || last < s) ? s : 0;
   }
+  // BK-AO (Chris 2026-11-18 «ρύθμισε το orOS ώστε να κάνει αυτόματα την
+  // ενημέρωση»): the mode of the automatic updates, from Budget's set:
+  // "off" (set.bao = 1: only Update now and Claude's budget_refresh),
+  // "set" (the times in set.bat) or "six" (every 6 hours). Every mode
+  // but "off" also runs with Budget closed while orOS is open (shell.js 10f).
+  function autoMode(set) {
+    var st = set && typeof set === "object" ? set : {};
+    if (st.bao === 1) return "off";
+    return times(st.bat).length ? "set" : "six";
+  }
+  // Is an automatic update due now? → the stamp to keep for it (ms), or 0.
+  // devT = this device's last update, bgAt = the last run the shell
+  // started here; rows = Budget's bank rows (their bt, set times only).
+  function autoDue(set, rows, devT, bgAt, now) {
+    var mode = autoMode(set), st = set || {};
+    var mine = typeof bgAt === "number" && isFinite(bgAt) && bgAt <= now ? bgAt : 0;
+    if (mode === "off") return 0;
+    if (mode === "set") return slotDue(times(st.bat), Math.max(lastRead(rows, devT, st.bam, now), mine), now);
+    var last = Math.max(typeof devT === "number" && isFinite(devT) && devT <= now ? devT : 0, mine);
+    return due(last, now) ? now : 0;
+  }
   // Rows of a renewed (or repeated) consent: an account already linked
   // (same identification hash, else same bank + last four + currency)
   // keeps its row, Budget account and fetch point; a new one gets a row.
@@ -465,7 +486,7 @@
     banks: banks, newState: newState, authBody: authBody, session: session, tail: tail,
     items: items, balance: balance, available: available, view: view, isCard: isCard, recard: recard, uniqueFits: uniqueFits, fromDate: fromDate, lastBooked: lastBooked,
     daysLeft: daysLeft, needsRenew: needsRenew, due: due,
-    MAX_TIMES: MAX_TIMES, times: times, timesText: timesText, lastSlot: lastSlot, lastRead: lastRead, slotDue: slotDue, matchLink: matchLink, ymdOf: ymdOf,
+    MAX_TIMES: MAX_TIMES, times: times, timesText: timesText, lastSlot: lastSlot, lastRead: lastRead, slotDue: slotDue, autoMode: autoMode, autoDue: autoDue, matchLink: matchLink, ymdOf: ymdOf,
     PP_PAGE: PP_PAGE, ppStamp: ppStamp, ppWindows: ppWindows, ppPath: ppPath, ppPage: ppPage, ppKind: ppKind, ppItems: ppItems
   };
   if (NODE) module.exports = api;
