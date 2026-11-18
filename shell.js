@@ -1006,6 +1006,14 @@
   //            Quick settings button turns on again.
   //   pointer  "normal" | "large" | "xl": big SVG cursors, only with a
   //            mouse or touchpad.
+  //   motion   true: reduce motion on top of the system's own setting
+  //            (W2). data-oros-motion on every document stills CSS
+  //            animations and transitions, and i18n.js makes
+  //            matchMedia("(prefers-reduced-motion: reduce)") match in
+  //            the shell and every app, so code that honours the
+  //            system setting follows this switch too.
+  //   transp   true: reduce transparency (no blur, solid panels);
+  //            also on while the system asks for it.
   // A11Y_CSS goes into the shell and into every same-origin app
   // document (on load and on every change) and only acts through the
   // data-oros-* attributes of that document's root, so nothing looks
@@ -1017,6 +1025,14 @@
   var A11Y_STRENGTHS = [25, 50, 75, 100];
   var A11Y_POINTERS = ["normal", "large", "xl"];
   var A11Y_CSS =
+    // Reduce motion (W2): CSS animations and transitions end at once
+    // (transitionend/animationend still fire, so code waiting on them goes on).
+    "html[data-oros-motion] *, html[data-oros-motion] *::before, html[data-oros-motion] *::after {" +
+    " animation-duration: 0.01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important;" +
+    " transition-duration: 0.01ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }\n" +
+    // Reduce transparency (W2): no blur behind panels.
+    "html[data-oros-transparency] *, html[data-oros-transparency] *::before, html[data-oros-transparency] *::after {" +
+    " -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }\n" +
     "html[data-oros-focus] :focus-visible, html[data-oros-contrast] :focus-visible {" +
     " outline: 3px solid var(--accent, Highlight) !important; outline-offset: 2px !important; }\n" +
     "html[data-oros-contrast] a[href] { text-decoration: underline !important; }\n" +
@@ -1040,12 +1056,16 @@
       filter: A11Y_FILTERS.indexOf(v.filter) !== -1 ? v.filter : "off",
       strength: A11Y_STRENGTHS.indexOf(v.strength) !== -1 ? v.strength : 100,
       last: A11Y_FILTERS.indexOf(v.last) > 0 ? v.last : "grey",
-      pointer: A11Y_POINTERS.indexOf(v.pointer) !== -1 ? v.pointer : "normal"
+      pointer: A11Y_POINTERS.indexOf(v.pointer) !== -1 ? v.pointer : "normal",
+      motion: v.motion === true,
+      transp: v.transp === true
     };
   }
   function a11yMq(q) {
     try { return !!(window.matchMedia && window.matchMedia(q).matches); } catch (e) { return false; }
   }
+  function a11yLessTransp() { return a11y.transp || a11yMq("(prefers-reduced-transparency: reduce)"); }
+  function a11yLessMotion() { return a11y.motion || a11yMq("(prefers-reduced-motion: reduce)"); }
   function a11yHigh() {
     if (a11y.contrast === "on") return true;
     if (a11y.contrast === "off") return false;
@@ -1075,6 +1095,12 @@
     if (s.textContent !== css) s.textContent = css;
     a11yAttr(r, "data-oros-contrast", a11yHigh() ? "high" : null);
     a11yAttr(r, "data-oros-focus", a11y.focus ? "on" : null);
+    a11yAttr(r, "data-oros-motion", a11y.motion ? "reduce" : null);
+    a11yAttr(r, "data-oros-transparency", a11yLessTransp() ? "reduce" : null);
+    // matchMedia follows the switch (i18n.js); an app without i18n.js gets it now.
+    var w = doc.defaultView;
+    if (w && !w.__orosMotion && window.__orosMotionShim) { try { window.__orosMotionShim(w); } catch (e) {} }
+    if (w && w.__orosMotion) { try { w.__orosMotion.refresh(); } catch (e) {} }
     if (window.orosA11yFx) window.orosA11yFx.mark(doc);       // smart invert, pointer
   }
   // One app frame. Chromium and WebKit scale a zoomed frame's page
@@ -1152,6 +1178,12 @@
       var st = Number(value);
       if (A11Y_STRENGTHS.indexOf(st) === -1 || st === a11y.strength) return;
       a11y.strength = st;
+    } else if (name === "reduceMotion") {
+      if (!!value === a11y.motion) return;
+      a11y.motion = !!value;
+    } else if (name === "reduceTransparency") {
+      if (!!value === a11y.transp) return;
+      a11y.transp = !!value;
     } else if (name === "pointerSize") {
       if (A11Y_POINTERS.indexOf(value) === -1 || value === a11y.pointer) return;
       a11y.pointer = value;
@@ -1173,12 +1205,24 @@
       filter: a11y.filter, filters: A11Y_FILTERS.slice(), last: a11y.last,
       strength: a11y.strength, strengths: A11Y_STRENGTHS.slice(),
       pointer: a11y.pointer, pointers: A11Y_POINTERS.slice(),
-      fine: a11yMq("(any-pointer: fine)")
+      fine: a11yMq("(any-pointer: fine)"),
+      // Reduce motion and transparency (W2): the switch, and whether the
+      // system already asks for it (the real query, not the switch)
+      motion: a11y.motion, motionSys: a11ySysMotion(),
+      transp: a11y.transp, transpSys: a11yMq("(prefers-reduced-transparency: reduce)")
     };
   }
   // For other features (Screen time's Bedtime): a temporary filter on
   // top of the person's own, never stored. overlayFilter(name, "grey" |
   // null, { fadeMs }) → true when taken.
+  // The system's own motion setting, past i18n.js's wrapper.
+  function a11ySysMotion() {
+    try { return !!(window.__orosRealMatchMedia || window.matchMedia)("(prefers-reduced-motion: reduce)").matches; }
+    catch (e) { return false; }
+  }
+  // For new code (the app open/close animation, ...): true while motion
+  // should be reduced, by this switch or by the system.
+  window.orosMotion = { reduced: a11yLessMotion };
   window.orosA11y = {
     overlayFilter: function (name, kind, opts) {
       if (!name || (kind !== null && kind !== "grey")) return false;
@@ -1251,7 +1295,8 @@
   // The system's own contrast switch and a resize (the 320 px cap)
   // apply at once.
   function a11yWatch() {
-    ["(prefers-contrast: more)", "(forced-colors: active)"].forEach(function (q) {
+    ["(prefers-contrast: more)", "(forced-colors: active)", "(prefers-reduced-transparency: reduce)",
+     "(prefers-reduced-motion: reduce)"].forEach(function (q) {
       var mq = window.matchMedia ? window.matchMedia(q) : null;
       if (!mq) return;
       var on = function () { a11yApply(); settingsNotify(); };
@@ -12307,7 +12352,9 @@
       case "focusRing":
       case "colourFilter":
       case "filterStrength":
-      case "pointerSize":  a11ySetUser(name, value); return;
+      case "pointerSize":
+      case "reduceMotion":
+      case "reduceTransparency": a11ySetUser(name, value); return;
       case "uiFont":       uifSetUser(value); return;
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;

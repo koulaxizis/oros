@@ -610,6 +610,18 @@
       { scope: "a11y", hint: t("ac.focus.hint") }));
     host.appendChild(c3);
 
+    // Reduce motion and transparency (W2); an older shell sends no motion.
+    if ("motion" in a) {
+      var c7 = card(null);
+      c7.appendChild(row(t("ac.motion"), switchBtn(a.motion, "reduceMotion", function (v) { set("reduceMotion", v); }, t("ac.motion")),
+        { scope: "a11y", hint: t("ac.motion.hint") }));
+      if (a.motionSys) c7.appendChild(el("p", "hint", t("ac.motion.sys")));
+      c7.appendChild(row(t("ac.transp"), switchBtn(a.transp, "reduceTransparency", function (v) { set("reduceTransparency", v); }, t("ac.transp")),
+        { scope: "a11y", hint: t("ac.transp.hint") }));
+      if (a.transpSys) c7.appendChild(el("p", "hint", t("ac.transp.sys")));
+      host.appendChild(c7);
+    }
+
     // Colour filter and pointer size (a11yfx.js); an older bundle sends no fx.
     if (a.fx) {
       var c5 = card(t("ac.filter"), "a11y");
