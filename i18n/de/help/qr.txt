@@ -16,6 +16,8 @@ Bei manchen Typen füllt eine Schaltfläche das Formular für dich aus, ohne in 
 
 Es geht auch andersherum: `QR-Code` auf der Karte eines Kontakts in Kontakte, im Bearbeitungsfenster eines Termins in Kalender oder eines Lesezeichens in Lesezeichen öffnet diese App mit einem schon ausgefüllten neuen Code. Der Code, den du offen hattest, bleibt, wie er war, und `Rückgängig` in der Meldung holt ihn zurück. Bei einem wiederkehrenden Termin bekommt der Code das Datum des Vorkommens, das du geöffnet hast.
 
+`An eine App senden…` in einer anderen orOS-App kann einen Link oder einen kurzen Text (bis 2000 Zeichen) hierher schicken: Daraus wird ein neuer URL- oder Text-Code, der erst gespeichert wird, wenn du ihn speicherst; `Rückgängig` in der Meldung geht zurück.
+
 ## Aussehen ändern
 Unter `Aussehen` kannst du einstellen:
 - `Fehlerkorrektur`, von `Niedrig (7%)` bis `Sehr hoch (30%)`. Höher übersteht Flecken und Kratzer, aber der Code wird dichter.

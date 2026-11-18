@@ -84,7 +84,7 @@
       "last.never": "no contact yet", "last.today": "contacted today", "last.yday": "contacted yesterday",
       "last.days": "contacted {n} days ago", "last.date": "contacted {d}",
       "next": "next: {d}",
-      "act.call": "Call", "act.mail": "Email", "act.map": "Map", "act.log": "Log contact", "act.fup": "Follow-up", "act.deal": "Deal",
+      "act.call": "Call", "act.mail": "Email", "act.map": "Map", "act.log": "Log contact", "act.fup": "Follow-up", "act.deal": "Deal", "act.sendApp": "Send to an app…",
       "k.call": "Call", "k.mail": "Email", "k.meet": "Meeting", "k.msg": "Message", "k.note": "Note",
       "sec.info": "Details", "sec.people": "People", "sec.notes": "Notes",
       "sec.ctdiff": "Different in Contacts",
@@ -281,7 +281,7 @@
       "pd.old": "{shop} does not take the production stage yet: Revenue Splitter 1.18.0 or later is needed.",
       "pd.autoSkip": "{shop} skipped {n} production rows (CRM › Contracts › Production stage…).",
       "pd.autoFail": "The production stage could not be sent to {shop}.",
-      "cx.set": "Contracts", "cx.lbl": "Calendar label for the end days", "cx.lbl.own": "CRM (its own chip)", "cx.kb": "Kanban board for contract cards", "cx.kbPh": "Empty = the board that is open",
+      "cx.set": "Contracts", "cx.lbl": "Calendar label for the end days", "cx.lbl.own": "CRM (its own chip)", "cx.kb": "Kanban board for contract cards", "cx.kbPh": "The board that is open",
       "toast.ctrDel": "Contract deleted", "toast.noDisk": "The orOS disk is not available here.", "toast.fileSaved": "Saved in Files: {p}", "toast.fileBig": "Up to 20 MB per file.",
       "act.inv": "Invoice", "act.quote": "Quote",
       "docs.inv": "Invoices", "docs.quote": "Quotes", "docs.allInv": "All in Billing",
@@ -327,6 +327,7 @@
       "d.open": "Open pipeline", "d.openSub": "Deals: {n} · weighted {w}", "d.wonM": "Won this month", "d.wonY": "Won this year",
       "d.rate": "Win rate", "d.rateSub": "this year", "d.rateNone": "–", "d.late": "Late follow-ups", "d.today": "Due today",
       "d.forgot": "Not contacted", "d.forgotSub": "{n}+ days", "d.leads": "New leads", "d.leadsSub": "this month",
+      "d.ctrOn": "Contracts in force", "d.ctrOnSub": "of {n}", "d.ctrNeeds": "Need a decision", "d.ctrNeedsSub": "{e} ended · {s} ending soon", "d.ctrNext": "Next end day", "d.ctrNone": "none ahead", "d.ctrList": "Contracts that need a decision", "d.ctrAll": "All contracts",
       "d.byStage": "Open deals by stage", "d.byStatus": "Customers", "d.forgotList": "Time to get in touch",
       "d.none": "Add customers and deals to see numbers here.",
       "d.unpaid": "Unpaid invoices", "d.unpaidSub": "overdue {v}", "d.unpaidNone": "nothing overdue",
@@ -398,7 +399,7 @@
       "last.never": "καμία επαφή ακόμη", "last.today": "επαφή σήμερα", "last.yday": "επαφή χθες",
       "last.days": "επαφή πριν από {n} μέρες", "last.date": "επαφή {d}",
       "next": "επόμενο: {d}",
-      "act.call": "Κλήση", "act.mail": "Email", "act.map": "Χάρτης", "act.log": "Καταγραφή", "act.fup": "Follow-up", "act.deal": "Ευκαιρία",
+      "act.call": "Κλήση", "act.mail": "Email", "act.map": "Χάρτης", "act.log": "Καταγραφή", "act.fup": "Follow-up", "act.deal": "Ευκαιρία", "act.sendApp": "Στείλε σε εφαρμογή…",
       "k.call": "Κλήση", "k.mail": "Email", "k.meet": "Συνάντηση", "k.msg": "Μήνυμα", "k.note": "Σημείωση",
       "sec.info": "Στοιχεία", "sec.people": "Άνθρωποι", "sec.notes": "Σημειώσεις",
       "sec.ctdiff": "Διαφορές με τις Επαφές",
@@ -595,7 +596,7 @@
       "pd.old": "Το {shop} δεν δέχεται ακόμα το στάδιο παραγωγής: χρειάζεται Revenue Splitter 1.18.0 ή νεότερο.",
       "pd.autoSkip": "Το {shop} παρέλειψε {n} γραμμές παραγωγής (CRM › Λήξεις › Στάδιο παραγωγής…).",
       "pd.autoFail": "Το στάδιο παραγωγής δεν στάλθηκε στο {shop}.",
-      "cx.set": "Συμφωνητικά", "cx.lbl": "Ετικέτα Ημερολογίου για τις λήξεις", "cx.lbl.own": "CRM (δική του ετικέτα)", "cx.kb": "Πίνακας Kanban για κάρτες συμφωνητικών", "cx.kbPh": "Κενό = ο πίνακας που είναι ανοιχτός",
+      "cx.set": "Συμφωνητικά", "cx.lbl": "Ετικέτα Ημερολογίου για τις λήξεις", "cx.lbl.own": "CRM (δική του ετικέτα)", "cx.kb": "Πίνακας Kanban για κάρτες συμφωνητικών", "cx.kbPh": "Ο πίνακας που είναι ανοιχτός",
       "toast.ctrDel": "Το συμφωνητικό διαγράφηκε", "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "toast.fileSaved": "Αποθηκεύτηκε στα Αρχεία: {p}", "toast.fileBig": "Έως 20 MB ανά αρχείο.",
       "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
       "docs.inv": "Τιμολόγια", "docs.quote": "Προσφορές", "docs.allInv": "Όλα στην Τιμολόγηση",
@@ -641,6 +642,7 @@
       "d.open": "Ανοιχτό pipeline", "d.openSub": "Ευκαιρίες: {n} · σταθμισμένη {w}", "d.wonM": "Κερδισμένα του μήνα", "d.wonY": "Κερδισμένα του έτους",
       "d.rate": "Ποσοστό επιτυχίας", "d.rateSub": "φέτος", "d.rateNone": "–", "d.late": "Follow-ups σε καθυστέρηση", "d.today": "Για σήμερα",
       "d.forgot": "Χωρίς επαφή", "d.forgotSub": "{n}+ μέρες", "d.leads": "Νέοι υποψήφιοι", "d.leadsSub": "αυτόν τον μήνα",
+      "d.ctrOn": "Συμφωνητικά σε ισχύ", "d.ctrOnSub": "από {n}", "d.ctrNeeds": "Θέλουν απόφαση", "d.ctrNeedsSub": "{e} έληξαν · {s} λήγουν σύντομα", "d.ctrNext": "Επόμενη λήξη", "d.ctrNone": "καμία μπροστά", "d.ctrList": "Συμφωνητικά που θέλουν απόφαση", "d.ctrAll": "Όλα τα συμφωνητικά",
       "d.byStage": "Ανοιχτές ευκαιρίες ανά στάδιο", "d.byStatus": "Πελάτες", "d.forgotList": "Ώρα να τους μιλήσεις",
       "d.none": "Πρόσθεσε πελάτες και ευκαιρίες για να δεις αριθμούς εδώ.",
       "d.unpaid": "Ανεξόφλητα τιμολόγια", "d.unpaidSub": "ληξιπρόθεσμα {v}", "d.unpaidNone": "τίποτα ληξιπρόθεσμο",
@@ -2704,6 +2706,20 @@
       return d && Array.isArray(d.labels) ? d.labels.filter(function (l) { return l && typeof l.id === "string" && /^[A-Za-z0-9_-]{1,60}$/.test(l.id) && typeof l.name === "string" && l.name.trim(); }) : [];
     } catch (e) { return []; }
   }
+  // Kanban's boards on this device (names, not archived, not templates),
+  // read only, for the contract-card board picker. Kanban finds the
+  // board by name (asNew), so the name is what is kept.
+  function kbBoards() {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-kanban-data") || "null"), seen = {}, out = [];
+      (d && Array.isArray(d.boards) ? d.boards : []).forEach(function (b) {
+        if (!b || b.archived || typeof b.id !== "string" || b.id.indexOf("tpl-") === 0 || typeof b.name !== "string") return;
+        var n = b.name.trim().slice(0, 60);
+        if (n && !seen[n]) { seen[n] = 1; out.push(n); }
+      });
+      return out;
+    } catch (e) { return []; }
+  }
   function ctrSettings(dlg) {
     dlg.appendChild(el("h3", "dlg-lbl", t("cx.set")));
     var cs = data.cset || {};
@@ -2711,7 +2727,10 @@
     var opts = [["", t("cx.lbl.own")]].concat(labels.map(function (l) { return [l.id, l.name.slice(0, 40)]; }));
     if (cs.lbl && !labels.some(function (l) { return l.id === cs.lbl; })) opts.push([cs.lbl, cs.lbl]);
     var lbl = field(dlg, t("cx.lbl"), selectEl(opts, cs.lbl || ""));
-    var kb = field(dlg, t("cx.kb"), inp("text", cs.kb || "", 60, t("cx.kbPh")));
+    var boards = kbBoards();
+    var kbOpts = [["", t("cx.kbPh")]].concat(boards.map(function (n) { return [n, n]; }));
+    if (cs.kb && boards.indexOf(cs.kb) < 0) kbOpts.push([cs.kb, cs.kb]);   // a board this device has not seen yet
+    var kb = field(dlg, t("cx.kb"), selectEl(kbOpts, cs.kb || ""));
     function save() {
       var next = C.normCset({ m: 1, lbl: lbl.value, kb: kb.value });
       if ((next.lbl || "") === (cs.lbl || "") && (next.kb || "") === (cs.kb || "")) return;
@@ -2961,6 +2980,34 @@
   }
 
   // ---------- 6. Customer page ----------
+  // "Send to an app" (shell send/, BR-SEND): the customer's card as
+  // text (facts, people, notes); a prefill for the other app.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function custText(c) {
+    var L = [c.name];
+    var sub = [t("kind." + c.kind), hasRoles(c) ? rolesText(c) : "", c.alias || ""].filter(Boolean).join(" · ");
+    if (sub) L.push(sub);
+    [["afm", c.afm], ["doy", c.doy], ["job", c.job], ["addr", c.addr], ["country", c.country],
+     ["phone", c.phone], ["email", c.email], ["web", c.web]].forEach(function (f) {
+      if (f[1]) L.push(t("fact." + f[0]) + ": " + f[1]);
+    });
+    var ppl = (c.people || []).map(function (p) {
+      var v = personView(p);
+      return "- " + [v.name + (p.role ? " (" + p.role + ")" : ""), v.phone, v.email].filter(Boolean).join(" · ");
+    });
+    if (ppl.length) L.push("", t("sec.people"), ppl.join("\n"));
+    if (c.note) L.push("", t("sec.notes"), c.note);
+    return L.join("\n");
+  }
+  function sendCustomer(c) {
+    var api = sendApi();
+    if (!api || !c) return;
+    api.open({ kind: "text", data: { title: c.name, text: custText(c) } });
+  }
+
   function renderDetail() {
     var box = $("cust-detail");
     box.innerHTML = "";
@@ -3012,6 +3059,7 @@
     if (canInvoice()) acts.appendChild(txtBtn("doc", t("act.inv"), function () { newInvoice(c, null); }));
     if (canQuote()) acts.appendChild(txtBtn("doc", t("act.quote"), function () { newQuote(c, null); }));
     if (c.email || c.phone || c.web) acts.appendChild(txtBtn("", t("en.one"), function () { enrichOpen([c]); }));
+    if (sendApi()) acts.appendChild(txtBtn("", t("act.sendApp"), function () { sendCustomer(c); }));
     box.appendChild(acts);
 
     // details
@@ -3727,17 +3775,50 @@
     if (sub) b.appendChild(el("span", "", sub));
     return b;
   }
+  // Contracts on the Dashboard (CTR-DASH): three tiles and the first
+  // five that need a decision, each opening its quick actions.
+  function ctrDashSec(cs, today) {
+    var sec = el("section", "sec");
+    var tiles = el("div", "tiles");
+    function go(f) { return function () { prefs.cf = f; savePrefs(); setTab("ctr"); }; }
+    tiles.appendChild(tile(t("d.ctrOn"), String(cs.on), t("d.ctrOnSub", { n: cs.n }), go("all")));
+    tiles.appendChild(tile(t("d.ctrNeeds"), String(cs.needs), t("d.ctrNeedsSub", { e: cs.needEnded, s: cs.needSoon }), go("needs")));
+    var nx = cs.next;
+    tiles.appendChild(tile(t("d.ctrNext"), nx ? fmtDate(nx.ctr.to) : t("d.ctrNone"), nx ? nx.ctr.t : "", nx ? function () { ctrActions(nx.ctr.id); } : null));
+    sec.appendChild(tiles);
+    var need = C.ctrAll(data, today, "needs");
+    if (need.length) {
+      sec.appendChild(secHead(t("d.ctrList")));
+      var rows = el("div", "rows");
+      need.slice(0, 5).forEach(function (r) { rows.appendChild(ctrRowEl(r, true)); });
+      sec.appendChild(rows);
+      if (need.length > 5) {
+        var more = el("button", "link-btn", t("d.ctrAll"));
+        more.type = "button";
+        more.addEventListener("click", go("needs"));
+        sec.appendChild(more);
+      }
+    }
+    return sec;
+  }
   function renderDash() {
     var box = $("view-dash");
     box.innerHTML = "";
     if (!data.cust.length) { box.appendChild(el("div", "empty", t("d.none"))); return; }
     var now = Date.now(), today = todayYmd();
     var s = C.dashboard(data, now, today);
+    // Sales tiles and the stage bars only once there is a deal: someone
+    // who never uses the Pipeline sees no row of zeros.
+    var sales = data.deals.length > 0;
+    var cs = (data.ctr || []).length ? C.ctrDash(data, today) : null;
+    if (cs) box.appendChild(ctrDashSec(cs, today));
     var tiles = el("div", "tiles");
-    tiles.appendChild(tile(t("d.open"), money(s.openVal), t("d.openSub", { n: s.openN, w: money(s.openW) }), function () { setTab("pipe"); }));
-    tiles.appendChild(tile(t("d.wonM"), money(s.wonMonth), ""));
-    tiles.appendChild(tile(t("d.wonY"), money(s.wonYear), ""));
-    tiles.appendChild(tile(t("d.rate"), s.winRate === null ? t("d.rateNone") : s.winRate + "%", t("d.rateSub")));
+    if (sales) {
+      tiles.appendChild(tile(t("d.open"), money(s.openVal), t("d.openSub", { n: s.openN, w: money(s.openW) }), function () { setTab("pipe"); }));
+      tiles.appendChild(tile(t("d.wonM"), money(s.wonMonth), ""));
+      tiles.appendChild(tile(t("d.wonY"), money(s.wonYear), ""));
+      tiles.appendChild(tile(t("d.rate"), s.winRate === null ? t("d.rateNone") : s.winRate + "%", t("d.rateSub")));
+    }
     tiles.appendChild(tile(t("d.late"), String(s.late), "", function () { setTab("agenda"); }));
     tiles.appendChild(tile(t("d.today"), String(s.today), "", function () { setTab("agenda"); }));
     tiles.appendChild(tile(t("d.forgot"), String(s.forgotten), t("d.forgotSub", { n: data.prefs.forget }), function () {
@@ -3756,6 +3837,10 @@
     }
     box.appendChild(tiles);
 
+    if (sales) dashStages(box);
+    dashRest(box, s, now);
+  }
+  function dashStages(box) {
     var p = C.pipeline(data), max = 0;
     var openIds = C.stages(data).filter(function (x) { return x.open; }).map(function (x) { return x.id; });
     openIds.forEach(function (st) { if (p[st].val > max) max = p[st].val; });
@@ -3775,7 +3860,8 @@
     });
     sec.appendChild(bars);
     box.appendChild(sec);
-
+  }
+  function dashRest(box, s, now) {
     var sec2 = el("section", "sec");
     sec2.appendChild(secHead(t("d.byStatus")));
     var chips = el("div", "chips");
@@ -4914,6 +5000,21 @@
     return true;
   }
 
+  // BR-EV-2: an Automations step (C.autoLog cleans it): the New history
+  // entry form prefilled with its customer guessed (the person can
+  // change it); nothing is saved before Save.
+  function autoLogTo(raw) {
+    var n = C.autoLog(raw);
+    if (!n) return false;
+    if (needCustomer()) return true;
+    var c = C.autoLogCust(data, n, function (p) { return personView(p).email; });
+    var cid = c ? c.id : (C.byId(data.cust, prefs.sel) ? prefs.sel : data.cust[0].id);
+    prefs.sel = cid; prefs.sub = "hist"; savePrefs();
+    setTab("cust");
+    logEditor(null, cid, { k: n.k, at: Date.now(), text: n.text });
+    return true;
+  }
+
   // Assistant entry card (BR-W8-6): the New customer form prefilled
   // (C.asNewCust clamps it); nothing is saved before Save. An email a
   // customer already has → that customer instead.
@@ -5044,6 +5145,14 @@
     if (x && typeof x === "object" && x.openFile) { if (recFile) recFile.openTarget(x.openFile); return !!recFile; }
     if (!x || typeof x !== "object" || document.querySelector("dialog[open]")) return false;
     var id = function (v) { return typeof v === "string" && C.ID_RE.test(v) ? v : ""; };
+    // "Send to an app" (BR-SEND): { logNote: { text ≤ 2000 } } opens a
+    // new history entry of kind Note with that text; the customer is
+    // picked in the window (the open one first); nothing is saved
+    // before Save.
+    if (x.logNote && typeof x.logNote === "object" && typeof x.logNote.text === "string" && x.logNote.text.trim()) {
+      logEditor(null, prefs.sel || "", { k: "note", text: x.logNote.text.slice(0, 2000) });
+      return true;
+    }
     // Today's "Done" tick: the same code as the Agenda's tick (Undo,
     // "Log it"); a follow-up already done or gone only shows a note.
     if (x.done && typeof x.done === "object") {
@@ -5055,6 +5164,7 @@
       return true;
     }
     if (x.log) return mailToLog(x.log);
+    if (x.autoLog) return autoLogTo(x.autoLog);
     if (x.asNew) return asNewCust(x.asNew);
     // Single app icon shortcut: an empty New customer form.
     if (x.newCust) { setTab("cust"); custEditor(null, {}); return true; }

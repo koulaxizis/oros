@@ -124,3 +124,30 @@ test("closed orOS: the device runs only the changes the relay may queue", () => 
   const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
   assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) return \{ ok: false/, "applyQueue checks the list");
 });
+
+test("closed orOS: a queued deletion of items is asked on the device first, one question per call (7.44.00)", () => {
+  // Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με το orOS κλειστό»: 73 Calendar events in one change_item
+  assert.equal(G.delCount("change_item", { ref: "r116155", action: "delete" }), 1);
+  assert.equal(G.delCount("change_item", { refs: ["r116155", "oros:r110954", "r116155"], action: "delete" }), 2, "refs counted once each");
+  assert.equal(G.delCount("change_item", { changes: [{ ref: "r1", action: "delete" }, { ref: "r2", action: "update" }] }), 1);
+  assert.equal(G.delCount("change_item", { ref: "r1", action: "update" }), 0);
+  assert.equal(G.delCount("budget_delete", { ids: ["a", "b", "c"] }), 3, "Budget deletions too, even 3 (live asks over 5)");
+  assert.equal(G.delCount("link_items", { links: [{ customer: "r1", item: "r2" }], unlink: true }), 0, "an unlink deletes no item");
+  assert.equal(G.delCount("files_delete", { paths: ["/internal/x"] }), 0, "files keep their own question");
+  assert.deepEqual(G.refsOf({ refs: ["r1", "x", "oros:r2", "p-ABCDEFGHIJKLMNOP.3"] }), ["r1", "r2", "p-ABCDEFGHIJKLMNOP.3"]);
+  const items = []; for (let i = 0; i < 12; i++) items.push({ a: "Calendar", t: "Λήξη " + i });
+  const w = G.delWhat("change_item", items, 73, "and {n} more");
+  assert.equal(w.app, "Calendar");
+  assert.equal(w.list.split("\n").length, 11, "10 titles and one line for the rest");
+  assert.match(w.list, /and 63 more$/);
+  assert.deepEqual(G.delWhat("budget_delete", [], 2), { app: "Budget", list: "" });
+  const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
+  const aq = src.slice(src.indexOf("function applyQueue("), src.indexOf("function seatRead("));
+  assert.doesNotMatch(aq, /action === "delete"[^\n]*refused/, "deletions are no longer refused");
+  assert.match(aq, /nDel \? askQueued\(x, nDel\)/, "every queued deletion is asked");
+  assert.match(aq, /how === "none"\) \{ ranDrop\(it\.id\); cqHeld\[it\.id\] = it; throw HELD; \}/, "no answer: it stays queued");
+  assert.match(aq, /if \(nDel && \(away\(\) \|\| document\.visibilityState !== "visible"/, "hidden or locked: held, never asked off screen");
+  const ak = src.slice(src.indexOf("function askQueued("), src.indexOf("function askFiles("));
+  assert.match(ak, /setTimeout\(function \(\) \{ end\("none"\); \}/, "a timeout never says yes");
+  assert.match(src, /if \(preYes && n <= preYes\) \{ preYes = 0;/, "the one Delete covers the frame's own question over 5");
+});

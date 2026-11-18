@@ -1,4 +1,5 @@
 orosPack("de", "crm", {
+ "act.sendApp": "An eine App senden…",
  "ac.bill": "+ Eingangsrechnung",
  "ac.folder": "Ordner",
  "ac.hours": "Stunden",

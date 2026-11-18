@@ -127,6 +127,8 @@
       "actions.save_template":"Save as Template",
       "actions.duplicate":    "Duplicate",
       "actions.invoice":      "Make invoice",
+      "actions.send_app":     "Send the lines to an app…",
+      "items.amount":         "Amount",
       "invoiced.label":       "Invoiced: {n}",
       "invoiced.draft":       "draft",
       "invoice.note":         "From quote {n}",
@@ -287,6 +289,8 @@
       "actions.save_template":"Αποθήκευση ως Πρότυπο",
       "actions.duplicate":    "Αντιγραφή",
       "actions.invoice":      "Έκδοση τιμολογίου",
+      "actions.send_app":     "Στείλε τις γραμμές σε εφαρμογή…",
+      "items.amount":         "Ποσό",
       "invoiced.label":       "Τιμολογήθηκε: {n}",
       "invoiced.draft":       "πρόχειρο",
       "invoice.note":         "Από την προσφορά {n}",
@@ -788,7 +792,42 @@
   // Billing (app merge 7, K2): the host's own hook opens the new
   // invoice on the same screen (Billing's Invoices tab).
   function newInvoiceHook() { return typeof opts.newInvoice === "function" ? opts.newInvoice : null; }
+  // "Send to an app" (shell send/, BR-SEND): the quote's lines as a
+  // table, then subtotal, VAT and total; a prefill only.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function linesTable(q) {
+    var items = (q.items || []).filter(function (it) { return String(it.desc || "").trim() || it.price; }).slice(0, 495);
+    var code = items.some(function (it) { return it.code; });
+    var head = [t("items.desc"), t("items.qty"), t("items.unit_price"), t("items.disc"), t("items.vat"), t("items.amount")];
+    if (code) head.unshift(t("items.code"));
+    var rows = [head];
+    items.forEach(function (it) {
+      var r = [String(it.desc || ""), it.qty || 0, it.price || 0, it.disc || 0, it.vat || 0,
+               round2((it.qty || 0) * (it.price || 0) * (1 - (it.disc || 0) / 100))];
+      if (code) r.unshift(String(it.code || ""));
+      rows.push(r);
+    });
+    var tt = calcTotals(q);
+    [[t("totals.subtotal"), tt.subtotal], [t("totals.vat"), tt.vat], [t("totals.total"), tt.total]].forEach(function (f) {
+      var r = [f[0], "", "", "", "", f[1]];
+      if (code) r.unshift("");
+      rows.push(r);
+    });
+    return { rows: rows, n: items.length };
+  }
+  function sendLines() {
+    var api = sendApi();
+    if (!api || !cur) return;
+    var tb = linesTable(cur);
+    if (!tb.n) { showToast(t("items.empty")); return; }
+    api.open({ kind: "table", data: { name: String(cur.num || t("tab.create")).slice(0, 100), rows: tb.rows } });
+  }
   function syncInvoiceBtn() {
+    var sb = $("send-app");
+    if (sb) sb.hidden = !(cur && sendApi());
     var b = $("invoice-quote");
     if (b) b.hidden = !(cur && cur.status === "accepted" && (newInvoiceHook() || invoicesOpener()));
     syncInvoiced(b);
@@ -2449,6 +2488,7 @@
     $("open-templates").addEventListener("click", openTemplateLibrary);
     $("duplicate-quote").addEventListener("click", duplicateCurrent);
     $("invoice-quote").addEventListener("click", sendToInvoices);
+    if ($("send-app")) $("send-app").addEventListener("click", sendLines);
     $("delete-quote").addEventListener("click", deleteCurrent);
     $("export-btn").addEventListener("click", function () { exportPdf(); });
     $("send-btn").addEventListener("click", function () { sendEmail(); });
@@ -3134,6 +3174,8 @@
     "                data-qv=\"actions.save_template\">Save as Template</button>",
     "        <button id=\"qv-duplicate-quote\" type=\"button\" class=\"ghost\"",
     "                data-qv=\"actions.duplicate\">Duplicate</button>",
+    "        <button id=\"qv-send-app\" type=\"button\" class=\"ghost\" hidden",
+    "                data-qv=\"actions.send_app\">Send the lines to an app…</button>",
     "        <button id=\"qv-invoice-quote\" type=\"button\" class=\"ghost\" hidden",
     "                data-qv=\"actions.invoice\">Make invoice</button>",
     "        <button id=\"qv-accept-link\" type=\"button\" class=\"ghost\" hidden",

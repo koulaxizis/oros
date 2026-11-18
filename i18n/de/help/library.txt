@@ -46,6 +46,8 @@ Wähle Text aus und nimm eine von vier Farben, um ihn zu markieren. In derselben
 
 `Notizen und Markierungen` listet sie alle, mit Filtern, und `Notizen exportieren` speichert sie als Markdown-Text auf der Disk, als Download oder in der Zwischenablage. Die Datei beginnt mit Titel, Autor, der Zahl der Markierungen und Notizen und dem Datum, dann folgt jede Markierung als Zitat unter ihrem Kapitel, mit ihrer Stelle im Buch und deiner Notiz darunter, bereit für Obsidian oder jede Markdown-App. Im selben Fenster macht `An Notizen senden` eine Seite mit deinen Markierungen und Notizen in [Notizen](app:notes), im selben Markdown.
 
+`An eine App senden…` (die Schaltfläche mit vier Quadraten) in der Auswahlleiste, an einer Markierung und in `Notizen und Markierungen` schickt die Stelle als Text, in Anführungszeichen mit dem Buch, dem Autor, ihrer Stelle und deiner Notiz, an eine andere orOS-App, etwa [Notizen](app:notes), [Writer](app:writer) oder [Karteikarten](app:flashcards). In `Notizen exportieren` schickt `An eine App senden…` alle Markierungen und Notizen des Buchs.
+
 ### Markierungen aus einem anderen Reader importieren
 `Mehr` › `Markierungen importieren…` fügt die Markierungen, Notizen und Lesezeichen, die du in einem anderen Reader gemacht hast, zu denselben Büchern in deiner Bibliothek hinzu:
 - **Kindle**: Schließ den Kindle an einen Computer an und nimm `My Clippings.txt` aus seinem Ordner `documents`.

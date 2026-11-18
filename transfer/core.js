@@ -543,6 +543,37 @@
     });
   }
 
+  // ----- Links that wait in this device's Dropbox (TODAY-GAP) -----
+  // Device-local (R10, never synced): "oros-transfer-links" =
+  // { v: 1, items: [{ id, exp, what, n }] }, one per "Through my
+  // Dropbox" send made on this device, so Today can say when a link
+  // stops working. Written when the link is ready, removed on "Delete
+  // now"; a passed expiry is dropped when read. At most LINKS_MAX.
+  var LINKS_KEY = "oros-transfer-links", LINKS_MAX = 50;
+  function cleanLinks(raw, now) {
+    now = now || Date.now();
+    var out = [], seen = {};
+    (raw && Array.isArray(raw.items) ? raw.items : []).forEach(function (x) {
+      if (!x || typeof x !== "object") return;
+      var id = String(x.id || ""), exp = +x.exp;
+      if (!/^[a-z0-9]{6,40}$/.test(id) || seen[id] || !(exp > now) || Math.floor(exp) !== exp) return;
+      seen[id] = true;
+      var n = +x.n;
+      out.push({ id: id, exp: exp, what: String(x.what || "").replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 120),
+                 n: n >= 0 && Math.floor(n) === n ? n : 0 });
+    });
+    out.sort(function (a, b) { return (a.exp - b.exp) || (a.id < b.id ? -1 : 1); });
+    return { v: 1, items: out.slice(0, LINKS_MAX) };
+  }
+  function addLink(raw, link, now) {
+    var cur = cleanLinks(raw, now);
+    return cleanLinks({ items: cur.items.filter(function (x) { return x.id !== link.id; }).concat([link]) }, now);
+  }
+  function dropLink(raw, id, now) {
+    var cur = cleanLinks(raw, now);
+    return { v: 1, items: cur.items.filter(function (x) { return x.id !== id; }) };
+  }
+
   var api = {
     VERSION: VERSION, PROTO: PROTO, NS: NS, CODE_RE: CODE_RE, PIECE: PIECE, HEAD: HEAD, MAX_CTRL: MAX_CTRL,
     MAX_FILES: MAX_FILES, DISK_MAX: DISK_MAX, MEM_MAX: MEM_MAX,
@@ -553,7 +584,8 @@
     cleanName: cleanName, cleanPath: cleanPath, buildManifest: buildManifest, checkManifest: checkManifest,
     topNames: topNames, freeName: freeName, splitManifest: splitManifest,
     fmtSize: fmtSize, browserLabel: browserLabel, cleanDev: cleanDev,
-    HIST_KEY: HIST_KEY, HIST_MAX: HIST_MAX, mergeHistory: mergeHistory, historyItem: historyItem, cleanItem: cleanItem
+    HIST_KEY: HIST_KEY, HIST_MAX: HIST_MAX, mergeHistory: mergeHistory, historyItem: historyItem, cleanItem: cleanItem,
+    LINKS_KEY: LINKS_KEY, LINKS_MAX: LINKS_MAX, cleanLinks: cleanLinks, addLink: addLink, dropLink: dropLink
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.OrosTransferCore = api;

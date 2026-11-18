@@ -1,4 +1,7 @@
 orosPack("de", "travel", {
+ "menu.sendTrip": "Reise an eine App senden…",
+ "menu.sendPlan": "Reiseplan an eine App senden…",
+ "send.planTitle": "Reiseplan: {trip}",
  "activity": "Aktivität",
  "app": "Reisen",
  "at": "{what} um {time}",
