@@ -5305,7 +5305,6 @@
   appFrames().forEach(extWireFrame);
   appFrames().forEach(a11yWireFrame);
   if (window.orosClip) appFrames().forEach(window.orosClip.wire);   // CLIP-1
-  if (window.orosTextRepl) appFrames().forEach(window.orosTextRepl.wire);   // TEXTREPL-1
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -16199,13 +16198,19 @@
   // Text replacements (textrepl.js, TEXTREPL-1): ";addr" + space becomes
   // the whole text in every app's text fields; synced (slice "textrepl"),
   // edited in Settings › Language. A single app gets it too.
-  if (window.orosTextRepl) {
+  // textrepl.js is in the late bundle (BOOT-L1: nothing on the first
+  // screen needs it, and an app opens only after the bundle), so it is
+  // attached and wired when the bundle is in; frames made later are wired
+  // by mtNewFrame.
+  window.orosLate.when(function () {
+    if (!window.orosTextRepl) return;
     window.orosTextRepl.attach({
       lang: function () { return state.lang || "en"; },   // {date}/{time} in the orOS language
       toast: function (kind, msg) { scToast(kind, msg); }
     });
     window.orosTextRepl.onChange(settingsNotify);
-  }
+    appFrames().forEach(window.orosTextRepl.wire);
+  });
   // Emoji picker (emoji.js, CLIP-1 W3): Ctrl+Alt+Shift+. and Quick settings.
   // Not a start-up script (the quality gate's boot budget): this stand-in
   // answers as window.orosEmoji until the first open, which loads emoji.js

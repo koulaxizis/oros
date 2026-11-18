@@ -148,11 +148,13 @@ test("wiring: start-up script, sync slice with a merge, frames, Settings › Lan
   // The script line, its preload and the sw.js precache line come in the
   // stamp commit (merge queue rule 14, /mnt/project-files/textrepl/stamp-notes-w1.md).
   if (html.includes("textrepl.js")) {
-    assert.match(html, /<script src="textrepl\.js\?v=[^"]+"><\/script>/);
-    assert.match(html, /<link rel="preload" as="script" href="textrepl\.js\?v=/);
-    assert.ok(html.indexOf('<script src="textrepl.js') < html.indexOf('<script src="shell.js'), "before shell.js");
+    // In the late bundle (BOOT-L1), never preloaded at start-up.
+    const late = [...html.matchAll(/<template data-oros-late>([\s\S]*?)<\/template>/g)].map((m) => m[1]).join("\n");
+    assert.match(late, /<script src="textrepl\.js\?v=[^"]+"><\/script>/);
+    assert.ok(!/<link rel="preload" as="script" href="textrepl\.js/.test(html));
     assert.match(read("sw.js"), /"\.\/textrepl\.js",/);
   }
+  assert.match(shell, /window\.orosLate\.when\(function \(\) \{\s+if \(!window\.orosTextRepl\) return;/);
   assert.match(src, /api\.registerSlice\(SLICE, sliceGet, sliceSet, KEY, merge\)/, "merge is the fifth argument (Part V)");
   assert.match(shell, /appFrames\(\)\.forEach\(window\.orosTextRepl\.wire\)/);
   assert.match(shell, /window\.orosTextRepl\.wire\(f\)/);
