@@ -53,9 +53,16 @@ test("greeting: morning, afternoon, evening", () => {
   assert.equal(SP.greeting(18), "evening");
 });
 
-test("strings: EN, EL and DE carry the same keys", () => {
+test("strings: EN and EL here, DE from its pack, with the same keys", () => {
   const en = Object.keys(SP.STR.en).sort();
-  ["el", "de"].forEach((l) => assert.deepEqual(Object.keys(SP.STR[l]).sort(), en, l));
+  assert.deepEqual(Object.keys(SP.STR.el).sort(), en, "el");
+  assert.equal(SP.STR.de, undefined, "a pack language lives in i18n/<code>/startpage.js");
+  const S = require("../.github/i18n/scan.js");
+  const de = S.readPack("i18n/de/startpage.js");
+  assert.deepEqual(Object.keys(de.table).sort(), en, "de pack");
+  // i18n.js comes first, so the stored language's pack is there before the page starts
+  const html = read("startpage/index.html");
+  assert.ok(html.indexOf('../i18n.js') > 0 && html.indexOf('../i18n.js') < html.indexOf('startpage.js?'));
 });
 
 test("page: titles and addresses only through textContent / http(s) href; reads, never writes", () => {

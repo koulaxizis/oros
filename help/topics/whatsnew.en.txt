@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 7.51.00
+## Version 7.52.00
 - **Claude can record invoices you issued elsewhere.** Through orOS Gate, Claude can now add invoices and receipts you issued with another provider (or in myDATA) to Invoices as recorded documents: their own number, client, amounts with withholding, lines, payment, ΜΑΡΚ and Budget area. They are never drafts, never take a number from your orOS series and nothing is sent anywhere; a document already in Invoices is skipped. It works only where you let Claude change Invoices, you are told of each change and you can undo it.
+
+## Version 7.51.00
+- **German everywhere again.** Every German text and help page is up to date again, including the browser start page and the names Layout gives a rebuilt document. German has not yet been read by a native speaker, so tell us what sounds wrong.
 
 ## Version 7.50.00
 - **Library and Base as their own apps.** orOS Library and orOS Base now install on their own, with their own icon and window, and as Android apps (APK, and in the orOS F-Droid repository). Books, comics and PDFs (.epub, .pdf, .fb2, .cbz, .cbr) open with Library from your file manager, and .orosbase files with Base. Long-press the icon for `Continue reading` and `Free books` in Library, or `New base` and `Last base` in Base.

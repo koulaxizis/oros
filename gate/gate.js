@@ -254,7 +254,7 @@
     return { ok: true, data: data };
   }
 
-  // INV-EXT (7.51.00, thread «Καταγραφή εξωτερικών τιμολογίων στο orOS»,
+  // INV-EXT (7.52.00, thread «Καταγραφή εξωτερικών τιμολογίων στο orOS»,
   // Chris 2026-11-18 card «Νέο εργαλείο στο Gate»): invoices_record —
   // documents ISSUED ELSEWHERE (another invoicing provider, myDATA)
   // recorded in Invoices as kind "ext": issued at once, never a draft,

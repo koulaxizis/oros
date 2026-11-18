@@ -1,4 +1,4 @@
-// orOS Gate INV-EXT (7.51.00): invoices_record — documents issued
+// orOS Gate INV-EXT (7.52.00): invoices_record — documents issued
 // elsewhere recorded in Invoices as kind "ext" (issued, never a draft,
 // no orOS numbering), duplicates skipped by number or provider uid,
 // clients matched or made, a payment that never goes to Budget by
