@@ -4691,6 +4691,25 @@
   // (localroots.js in the shell), listed read-only; Layout or Files must
   // be readable for Claude.
   function localBridge() { try { var p = window.parent && window.parent !== window ? window.parent : window; return p.orosLocal || null; } catch (e) { return null; } }
+  // LOCAL-1: what a local-folder error means and the path form to use
+  // (Chris's bug 2026-11-18: an error must name the form)
+  var LOCAL_SAY = {
+    notAllowedRoot: "that path is not inside a local folder the owner opened for Claude, or it goes through a link",
+    badPath: "that is not a usable local path",
+    notThere: "there is no such file or folder there",
+    notFile: "that is a folder, not a file", notFolder: "that is a file, not a folder",
+    needsReconnect: "the browser lost its permission for the folder after a restart: the owner must press Reconnect on the bar at the bottom of orOS, then try again",
+    bridgePaused: "the owner paused the local folders (the bar at the bottom of orOS has Resume)",
+    noBridge: "this orOS has no local folders", tooBig: "the file is larger than 80 MB",
+    timeout: "a file did not answer in time (15 s for a read, 60 s without progress for the whole run), so Layout stopped; nothing more was changed and Layout takes the next command"
+  };
+  function localHint() {
+    var L = localBridge(), l = [];
+    try { l = L && typeof L.names === "function" ? L.names() : []; } catch (e) { l = []; }
+    var roots = l.map(function (r) { return "local:" + r.name + (r.mode === "w" ? " (write)" : ""); });
+    return " Use local:<root>/<path inside it> with / between the parts, as files_list shows it (files_list with no path lists the roots" +
+      (roots.length ? "; open now: " + roots.slice(0, 8).join(", ") : "; none is open now") + ").";
+  }
   function localRoots() {
     var L = localBridge();
     if (!L) return Promise.resolve([]);
@@ -9566,6 +9585,8 @@
     });
   }
   // The tool list Claude sees through the gate (MCP shape).
+  // LOCAL-1: local folders open on this device (files_list shows them)
+  function localOpen() { var L = localBridge(); try { return !!(L && typeof L.names === "function" && L.names().length); } catch (e) { return false; } }
   function gateToolList() {
     var ga = gateApps();
     var crIds = createApps(ga.write).map(function (a) { return a.id; }).filter(function (id) { return id !== "budget" && id !== "files"; });
@@ -9584,7 +9605,7 @@
                              entries: on && entryKinds().length > 0, recipes: on ? recipeApps().filter(function (a) { return rd[a.id]; }).map(function (a) { return a.id; }) : [],
                              rules: on && rd.automations && !!window.OrosAutoCore, newsletter: on && rd.newsletter, cover: on && rd.layout,
                              rebuild: on && rd.layout, house: on && rd.layout, epub: on && rd.layout,
-                             files: !cfRaw().length || !rd.files ? false : appOf(ga.write, "files") ? "write" : true });
+                             files: (!cfRaw().length || !rd.files) && !(rd.layout && localOpen()) ? false : rd.files && cfRaw().length && appOf(ga.write, "files") ? "write" : true });
     // edit_in_app only for the documents Claude may change
     var wc = editCats(ga.write), ed = Object.keys(wc).length ? C.toolsFor({ data: true, edits: wc }).filter(function (x) { return x.name === "edit_in_app"; }) : [];
     tools = tools.filter(function (x) { return x.name !== "edit_in_app"; }).concat(ed);
@@ -9689,7 +9710,13 @@
   }
   // The app's report → the gate's answer; with Undo in the change history.
   function gateTake(rep, p, name) {
-    if (!rep || rep.failed || !rep.ok) return { ok: false, c: name + " could not apply the commands (" + String(rep && rep.why || "error") + "). Nothing was changed." };
+    if (!rep || rep.failed || !rep.ok) {
+      var why = String(rep && rep.why || "error"), notes = rep && Array.isArray(rep.notes) ? rep.notes.slice(0, 5).map(function (n) { return String(n).slice(0, 300); }) : [];
+      var said = LOCAL_SAY[why] ? ": " + LOCAL_SAY[why] : "";
+      var local = LOCAL_SAY[why] || notes.some(function (n) { return /local:/i.test(n); });
+      return { ok: false, c: name + " could not apply the commands (" + why + said + ")." + (notes.length ? " " + notes.join("; ") + "." : "") +
+        (local && why !== "timeout" && why !== "bridgePaused" && why !== "needsReconnect" ? localHint() : "") + " Nothing was changed." };
+    }
     var per = Array.isArray(rep.per) ? rep.per.slice(0, 50).map(function (x) { return { name: String(x && x.name || "").slice(0, 120), n: +(x && x.n) || 0 }; }) : [];
     var out = { applied: true, changed: +rep.n || 0, designs: per };
     if (+rep.cut) out.backgrounds_removed = +rep.cut;
@@ -9697,7 +9724,10 @@
     if (+rep.files) out.files_for_the_owner = +rep.files;
     if (Array.isArray(rep.saved) && rep.saved.length) out.saved_files = savedPaths(rep.saved);
     if (Array.isArray(rep.notes) && rep.notes.length) out.notes = rep.notes.slice(0, 10).map(String);
-    if (rep.stopped) out.stopped_by_owner = true;
+    if (rep.stopped) {
+      if (Array.isArray(rep.notes) && rep.notes.some(function (n) { return /^timeout/.test(String(n)); })) out.stopped = LOCAL_SAY.timeout;
+      else out.stopped_by_owner = true;
+    }
     var uid = "";
     if (typeof rep.tok === "string" && rep.tok) {
       uid = attId();

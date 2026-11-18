@@ -17,7 +17,7 @@
   var PRO = window.LayoutPro, C = window.LayoutCommands, S = window.LayoutRecipes;
   if (!PRO || !C) return;
   var A = window.orosDK.assets;
-  var PROOF_DIR = "/internal/Layout/Proofs";
+  var PROOF_DIR = "/internal/Layout/Proofs", TICK = null;
   var MAX_BYTES = 80 * 1024 * 1024;
 
   function shellWin() { try { return window.parent && window.parent !== window ? window.parent : window; } catch (e) { return window; } }
@@ -37,7 +37,7 @@
   // LOCAL-1: the local-folder bridge (localroots.js in the shell)
   function local() { try { return shellWin().orosLocal || null; } catch (e) { return null; } }
   function isLocal(p) { return typeof p === "string" && /^local:/i.test(p.trim()); }
-  function localWhy(e) { return e && /^(notAllowedRoot|badPath|bridgePaused|needsReconnect|notThere|notFile|notFolder)$/.test(e.why) ? e.why : "unreadable"; }
+  function localWhy(e) { return e && /^(notAllowedRoot|badPath|bridgePaused|needsReconnect|notThere|notFile|notFolder|timeout)$/.test(e.why) ? e.why : "unreadable"; }
   function readBytes(path) {
     if (isLocal(path)) {
       var L = local();
@@ -184,11 +184,12 @@
     var L = LY.R.computeLayout(doc), scale = st.dpi / 72, dir = PROOF_DIR + "/" + safeName(doc.name) + "/" + stampNow(), saved = [];
     // pictures first, so every page draws them
     var pre = Promise.resolve();
-    doc.items.forEach(function (it) { if (it.t === "img" && it.a) pre = pre.then(function () { return A.load(it.a); }); });
+    doc.items.forEach(function (it) { if (it.t === "img" && it.a) pre = pre.then(function () { if (TICK) TICK(); return A.load(it.a); }); });
     return pre.then(function () { return mkdirs(F, dir); }).then(function () {
       var chain = Promise.resolve();
       groups.forEach(function (g) {
         chain = chain.then(function () {
+          if (TICK) TICK();
           // each page at its own size, side by side, tops aligned
           var sz = g.map(function (p) { var z = M.pageSize(doc, p); return { w: Math.round(z.w * scale), h: Math.round(z.h * scale) }; });
           var cv = document.createElement("canvas");
@@ -242,22 +243,31 @@
     steps.forEach(function (st, i) {
       chain = chain.then(function () {
         if (ctl && ctl.signal && ctl.signal.aborted) return;
+        if (ctl && ctl.tick) ctl.tick();
         var env = envs[i];
         if (st.op === "images") {
+          if (ctl && ctl.tick) ctl.tick(st.folder || (st.paths || [])[0] || "");
           return pathsOf(st).then(function (paths) {
             var pics = [], c2 = Promise.resolve();
-            paths.slice(0, 400).forEach(function (p) { c2 = c2.then(function () { return importPath(p).then(function (x) { pics.push(x); }); }); });
+            paths.slice(0, 400).forEach(function (p) {
+              c2 = c2.then(function () {
+                if (ctl && ctl.signal && ctl.signal.aborted) return;
+                if (ctl && ctl.tick) ctl.tick(p);
+                return importPath(p).then(function (x) { pics.push(x); if (ctl && ctl.tick) ctl.tick(); });
+              });
+            });
             return c2.then(function () { env.pics = pics; });
           });
         }
         if (st.op === "bleedfill") {
           LY_DOC_FOR_FILL = scratch;
           var list = PRO.bleedTargets(scratch, S.pageTest(st.pages)), fills = {}, c3 = Promise.resolve();
-          list.forEach(function (it) { c3 = c3.then(function () { return fillOne(it, st.mode).then(function (f) { if (f) fills[it.id] = f; }); }); });
+          list.forEach(function (it) { c3 = c3.then(function () { if (ctl && ctl.tick) ctl.tick(); return fillOne(it, st.mode).then(function (f) { if (f) fills[it.id] = f; }); }); });
           return c3.then(function () { env.fills = fills; LY_DOC_FOR_FILL = null; }, function (e) { LY_DOC_FOR_FILL = null; throw e; });
         }
         if (st.op === "thumbs") {
-          return thumbs(scratch, st).then(function (list) { saved = saved.concat(list); });
+          TICK = ctl && ctl.tick ? function () { ctl.tick(); } : null;
+          return thumbs(scratch, st).then(function (list) { TICK = null; saved = saved.concat(list); }, function (e) { TICK = null; throw e; });
         }
       }).then(function () {
         // the scratch copy follows, so later steps see this one

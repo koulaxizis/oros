@@ -89,7 +89,7 @@
   }
   function title(d) { return d.name || t("doc.untitled"); }
 
-  var busy = false;
+  var busy = false, WATCH_MS = 60000;
   var PRO_ASYNC = { images: 1, bleedfill: 1, thumbs: 1 };
   function edit(rq) {
     var key = rq && typeof rq.key === "string" ? rq.key : "";
@@ -116,6 +116,19 @@
       snaps.push({ id: nd.id, made: 1 });
     }
     if (slow) LY.toast(t("as.working"));
+    // LOCAL-1 bug (2026-11-18): a step that never answers (a local file,
+    // a picture that does not decode) may not keep Layout busy for ever.
+    // 60 s without progress stops the run; nothing more is changed and
+    // the report says "timeout" with the file it waited for.
+    var last = Date.now(), ended = false;
+    ctl.tick = function (at) { last = Date.now(); if (at) ctl.at = at; };
+    var dog = setInterval(function () {
+      if (ended || Date.now() - last < WATCH_MS) return;
+      ctl.signal.aborted = true;
+      why = "timeout";
+      notes.push("timeout: no answer for " + Math.round(WATCH_MS / 1000) + " s" + (ctl.at ? " (" + String(ctl.at).slice(0, 200) + ")" : ""));
+      finish({ why: "timeout" });
+    }, 2000);
     function oneDoc(id) {
       var cur = LY.findDoc(id);
       if (!cur) return Promise.resolve();
@@ -126,7 +139,7 @@
         if (!slow || !LY.pro) return { ctx: ctx, envs: null };
         return LY.pro.prepare(cur, steps, ctx, notes, ctl).then(function (pr) { saved = saved.concat(pr.saved); return { ctx: ctx, envs: pr.envs }; });
       }).then(function (pp) {
-        if (!pp) return;
+        if (!pp || ctl.signal.aborted) return;
         var ctx = pp.ctx;
         cur = LY.findDoc(id);   // it may have changed while the copies were made
         if (!cur) return;
@@ -157,12 +170,16 @@
     var chain = Promise.resolve();
     ids.forEach(function (id) { chain = chain.then(function () { return oneDoc(id); }); });
     chain.then(function () { return finish(null); }, function (e) {
+      if (ended) return;
       why = e && typeof e.why === "string" ? e.why : "";
       if (why) notes.push(why + (e.path ? ": " + String(e.path).slice(0, 200) : ""));
       else { try { console.error("[orOS] layout: the Assistant's change failed", e); } catch (x) {} }
       return finish(e);
     });
     function finish(err) {
+      if (ended) return Promise.resolve();
+      ended = true;
+      clearInterval(dog);
       busy = false;
       snaps.forEach(function (x) { if (x.made && !x.fp) x.fp = fp(LY.findDoc(x.id)); });
       var rec = snaps.length ? { tok: newTok(), at: Date.now(), docs: snaps } : null;

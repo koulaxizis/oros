@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.67.01
+- **Local folders for Claude: no more waiting.** A picture from a local folder that does not answer no longer keeps Layout busy: after 15 s for a file (60 s without progress for the whole run) Layout stops, changes nothing more and takes the next command, and Claude is told why and which path form to use. Claude can now list the open local folders through orOS Gate, a full Windows path (C:\\Users\\…) works even when it was not typed in Settings, and folders added by path in orOS Setup stay after a restart.
+
 ## Version 7.67.00
 - **Local folders for Claude (temporary).** Until the material is on the orOS disk, Settings › Connected services › orOS Gate › `Local folders for Claude (temporary)` lets Layout use folders of this computer through orOS Gate. A read folder is only read: Layout copies what it uses into the document and never changes, renames or deletes anything there. A write folder only takes new files (a name that exists gets -2, -3), such as the print PDF and page proofs. Each folder ends after 30 days (`30 more days`), a bar shows while folders are open, `Pause` stops them all at once, and every read and write shows in the Gate history. `Move to Claude's folders` copies a folder onto the orOS disk. Works in Chrome and Edge on a computer, and in the orOS window of orOS Setup and orOS Portable, where a folder is added by its path (C:\Users\…) and needs no permission again after a restart.
 
